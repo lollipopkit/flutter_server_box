@@ -13,7 +13,18 @@ import type { WindowHandle } from '../sys/window.svelte'
 import type { Intent } from '../windows.svelte'
 import type { MenuEntry } from '../lk/Menu.svelte'
 import type { IconTone } from '../lk/AppIcon.svelte'
-import { isCall, PROTOCOL, type ActionItem, type AppTheme, type Event, type MenuDescription, type Reply, type ToolbarDescription } from '../../../../sdk/serverbox-desk/src/protocol'
+import {
+  isCall,
+  PROTOCOL,
+  type ActionItem,
+  type AppTheme,
+  type Event,
+  type JobView,
+  type MenuDescription,
+  type Reply,
+  type SudoAsk,
+  type ToolbarDescription,
+} from '../../../../sdk/serverbox-desk/src/protocol'
 
 const MAX_MESSAGE_BYTES = 1 << 20
 const MAX_IN_FLIGHT = 32
@@ -59,6 +70,47 @@ function actionItems(value: unknown): ActionItem[] {
   })
 }
 
+/// A refusal the frame gets as its code and, from a backend, its words.
+export class BridgeError extends Error {
+  constructor(
+    code: string,
+    readonly detail?: string,
+  ) {
+    super(code)
+  }
+}
+
+/// What the desk's sudo dialog gave: sudo's password (empty to use the one
+/// remembered, or none), and whether the agent should keep it.
+export interface SudoGiven {
+  password: string
+  remember: boolean
+}
+
+/// The app's backend on the agent (`/apps/{id}/call`, `/jobs`), and the
+/// desk's own dialog before anything of it runs as root.
+export interface BackendHost {
+  call(fn: string, args: unknown, sudo?: SudoGiven): Promise<unknown>
+  job(fn: string, args: unknown, sudo?: SudoGiven): Promise<JobView>
+  view(since: number): Promise<JobView | null>
+  cancel(): Promise<void>
+  /// Shows [ask] and, once confirmed, runs [run] with what was typed; the
+  /// dialog stays while sudo refuses the password. Rejects `declined`.
+  sudo<T>(ask: SudoAsk, run: (given: SudoGiven) => Promise<T>): Promise<T>
+}
+
+/// What a frame may have the desk's dialog say: plain text, bounded.
+function sudoAsk(value: unknown): SudoAsk | undefined {
+  if (value === undefined || value === null) return undefined
+  const v = value as Record<string, unknown>
+  const title = text(v.title, MAX_LABEL)
+  const body = text(v.body, 600)
+  if (!title || body === undefined) throw new BridgeError('invalidArgs')
+  const word = v.confirmWord
+  if (word !== undefined && (typeof word !== 'string' || !/^[a-z0-9-]{1,32}$/.test(word))) throw new BridgeError('invalidArgs')
+  return { title, body, confirmWord: word as string | undefined }
+}
+
 /// The desk's end of the frame's channel (a `MessagePort`).
 export interface BridgePort {
   postMessage(message: unknown): void
@@ -75,8 +127,8 @@ export interface BridgeHost {
   locale(): string
   /// The desk's design system served to this frame, once launched.
   stylesheet?(): string | null
-  /// Runs [method] of the app's backend, when it has one.
-  backend?: (method: string, params: unknown) => Promise<{ ok?: unknown; error?: string }>
+  /// The app's backend, when it has one (`kind: wasm`).
+  backend?: BackendHost
 }
 
 export class WebAppBridge {
@@ -151,7 +203,8 @@ export class WebAppBridge {
       const value = await this.#answer(call.call, call.args)
       this.#reply({ sbm: PROTOCOL, re: call.id, ok: true, value })
     } catch (err) {
-      this.#reply({ sbm: PROTOCOL, re: call.id, ok: false, error: err instanceof Error ? err.message : 'failed' })
+      const detail = err instanceof BridgeError && err.detail ? { message: err.detail.slice(0, 2000) } : {}
+      this.#reply({ sbm: PROTOCOL, re: call.id, ok: false, error: err instanceof Error ? err.message : 'failed', ...detail })
     } finally {
       this.#inFlight--
     }
@@ -265,13 +318,24 @@ export class WebAppBridge {
         this.#keepAlive.delete(token)
         return
       }
-      case 'backend.call': {
-        const method = text(a.method, 64)
-        if (!method || !this.#host.backend) throw new Error('noBackend')
-        const reply = await this.#host.backend(method, a.params ?? null)
-        if (reply && typeof reply === 'object' && 'error' in reply && reply.error !== undefined) throw new Error(String(reply.error))
-        return reply?.ok ?? null
+      case 'backend.call':
+      case 'backend.job': {
+        const b = this.#host.backend
+        const fn = text(a.function, 64)
+        if (!b) throw new BridgeError('noBackend')
+        if (!fn) throw new BridgeError('invalidArgs')
+        const ask = sudoAsk(a.sudo)
+        const run = (given?: SudoGiven) => (name === 'backend.call' ? b.call(fn, a.args ?? {}, given) : b.job(fn, a.args ?? {}, given))
+        return ask ? b.sudo(ask, run) : run()
       }
+      case 'backend.jobView': {
+        if (!this.#host.backend) throw new BridgeError('noBackend')
+        const since = typeof a.since === 'number' && Number.isSafeInteger(a.since) && a.since >= 0 ? a.since : 0
+        return this.#host.backend.view(since)
+      }
+      case 'backend.cancel':
+        if (!this.#host.backend) throw new BridgeError('noBackend')
+        return this.#host.backend.cancel()
       case 'close':
         return h.close()
       default:

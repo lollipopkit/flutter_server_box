@@ -77,6 +77,7 @@
     {#each shown as spec, i (spec.id)}
       <button
         class="apps-panel-app"
+        data-app={spec.id}
         style:animation-delay="{i * 30}ms"
         onclick={() => {
           if (!closingMenu) desk.open(spec.id)

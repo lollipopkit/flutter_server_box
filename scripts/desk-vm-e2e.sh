@@ -6,12 +6,15 @@
 #   scripts/desk-vm-e2e.sh <node> kernel       # restarts the VM twice
 #   scripts/desk-vm-e2e.sh <node> ubuntu_pro   # SBM_E2E_PRO_TOKEN to attach
 #   scripts/desk-vm-e2e.sh <node> cleanup      # junk of each kind made first
+#   scripts/desk-vm-e2e.sh <node> cleanup_app  # the same, Cleanup as a package
 #   scripts/desk-vm-e2e.sh <node> tailscale    # Headscale and a peer made first
 #
 # Builds the agent on SBM_E2E_BUILD_HOST (lkd-wsl) and the panel here;
 # starts a VM; runs the agent there as an ordinary account with a sudo
 # password, a systemd user service started at boot, over TLS with a
 # self-signed certificate; then runs frontend/e2e/<spec>.e2e.ts against it.
+# A `<name>_app` spec gets the package of `monitor/apps/<name>`, built here
+# (`scripts/build-desk-app.sh`), as SBM_E2E_APP_PACKAGE.
 # For `kernel` it picks a version of the running kernel's flavour older than
 # it (SBM_E2E_KERNEL_VERSION). The passwords are made for the run and never
 # leave environment variables. SBM_E2E_KEEP=1 keeps the VM.
@@ -35,6 +38,11 @@ rsync -az --delete \
 remote ". \"\$HOME/.cargo/env\" 2>/dev/null; cd ~/$src && cargo build -q -p server_box_monitor --profile monitor-test"
 echo "==> build: panel"
 (cd "$root/monitor/frontend" && npm run build >/dev/null)
+case $spec in *_app)
+  echo "==> build: package ${spec%_app}"
+  SBM_E2E_APP_PACKAGE=$("$root/scripts/build-desk-app.sh" "${spec%_app}" | tail -n 1 | cut -d' ' -f1)
+  export SBM_E2E_APP_PACKAGE ;;
+esac
 
 echo "==> vm: up"
 set -- $("$lab" up "$node" | tail -n 1)
@@ -80,7 +88,7 @@ export SBM_E2E_KERNEL_VERSION
 echo "==> vm $id: $(vm uname -r) running, $SBM_E2E_KERNEL_VERSION to install"
 fi
 
-if [ "$spec" = cleanup ]; then
+if [ "$spec" = cleanup ] || [ "$spec" = cleanup_app ]; then
 # Something of each kind to clean: a downloaded package, one nothing needs,
 # old logs, a crash report, the account's trash and caches, and a folder a
 # removed web app left (a file in it root's, as a container's would be).
@@ -141,5 +149,5 @@ fi
 
 cd "$root/monitor/frontend"
 echo "==> $spec.e2e.ts"
-SBM_E2E_CLEANUP=1 npx playwright test "$spec" --reporter=line --output="e2e/.results/$spec"
+SBM_E2E_CLEANUP=1 npx playwright test "/$spec.e2e.ts" --reporter=line --output="e2e/.results/$spec"
 echo "==> all passed"

@@ -1,6 +1,6 @@
 {
   "name": "serverbox-desk",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Build apps for the ServerBox monitor's desk: the client of its app bridge, drawn in the lollipopkit Design System.",
   "keywords": ["serverbox", "desk", "lollipopkit"],
   "type": "module",

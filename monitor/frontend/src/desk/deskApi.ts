@@ -5,8 +5,16 @@
 import { ApiError, errorFrom, errorFromBody, fetchFor, readEventStream, requestFor } from '../lib/api'
 import type { ErrorBody } from '../lib/api'
 import type { InstalledApp } from '../types'
+import type { JobView as AppJobView } from '../../../sdk/serverbox-desk/src/protocol'
 import type { ServerEntry } from '../lib/servers.svelte'
 import type { StoredWindow } from './windows.svelte'
+
+/// sudo's password for one call or job, from the desk's dialog: empty uses
+/// the one the agent remembers.
+export interface AppSudo {
+  password: string | null
+  remember: boolean
+}
 
 export interface DeskIcon {
   id: string
@@ -209,16 +217,43 @@ export const deskApi = {
   launchApp: (entry: ServerEntry, id: string) =>
     requestFor<{ url: string; version: string; stylesheet?: string }>(entry, `/apps/${encodeURIComponent(id)}/launch`, {}),
 
-  /// Runs [method] of an installed app's backend (`kind: wasm`) as the
-  /// signed-in account; answers the backend's own reply.
-  callApp: (entry: ServerEntry, id: string, method: string, params: unknown) =>
-    requestFor<{ ok?: unknown; error?: string }>(
+  /// One of an installed app's backend's `api` functions (`kind: wasm`),
+  /// as the signed-in account: `{ value }`. [sudo] only after the desk's own
+  /// dialog asked for it.
+  callApp: (entry: ServerEntry, id: string, fn: string, args: unknown, sudo?: AppSudo) =>
+    requestFor<{ value: unknown }>(
       entry,
       `/apps/${encodeURIComponent(id)}/call`,
-      { method: 'POST', body: JSON.stringify({ method, params: params ?? null }) },
+      { method: 'POST', body: JSON.stringify({ function: fn, args: args ?? {}, sudo }) },
       undefined,
-      60_000,
+      // The agent ends a call after 60 s.
+      70_000,
     ),
+
+  /// Starts one of its `jobs`; its view.
+  startAppJob: (entry: ServerEntry, id: string, fn: string, args: unknown, sudo?: AppSudo) =>
+    requestFor<AppJobView>(entry, `/apps/${encodeURIComponent(id)}/jobs`, {
+      method: 'POST',
+      body: JSON.stringify({ function: fn, args: args ?? {}, sudo }),
+    }),
+
+  /// Its job running now or its last, lines from [since]; null when it has
+  /// had none since the agent started.
+  appJob: async (entry: ServerEntry, id: string, since: number) => {
+    try {
+      return await requestFor<AppJobView>(entry, `/apps/${encodeURIComponent(id)}/jobs?since=${since}`, {})
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 404) return null
+      throw e
+    }
+  },
+
+  cancelAppJob: (entry: ServerEntry, id: string) =>
+    requestFor<AppJobView>(entry, `/apps/${encodeURIComponent(id)}/jobs/cancel`, { method: 'POST' }),
+
+  /// Whether the agent keeps a sudo password for this account (Agent mode's
+  /// and the apps', 15 minutes).
+  sudoRemembered: (entry: ServerEntry) => requestFor<{ remembered: boolean }>(entry, '/apps/sudo', {}),
 
   notifications: (entry: ServerEntry, limit = 80) =>
     requestFor<{ notifications: DeskNotification[]; unread: number }>(

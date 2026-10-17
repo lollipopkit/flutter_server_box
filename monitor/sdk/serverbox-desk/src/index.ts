@@ -7,10 +7,12 @@
 ///   desk.toolbar({ actions: [{ id: 'refresh', label: 'Refresh', icon: 'refresh' }] })
 ///   desk.on('action', ({ id }) => …)
 
-import { PROTOCOL, type AppTheme, type MenuDescription, type ToolbarDescription } from './protocol.js'
+import { PROTOCOL, type AppTheme, type JobView, type MenuDescription, type SudoAsk, type ToolbarDescription } from './protocol.js'
 import { applyTheme, useStylesheet } from './ui.js'
 
-export type { ActionItem, AppTheme, MenuDescription, ToolbarDescription } from './protocol.js'
+export type { ActionItem, AppTheme, JobView, MenuDescription, SudoAsk, ToolbarDescription } from './protocol.js'
+export { translator, type Dictionary, type Translate } from './i18n.js'
+export { formatBytes, formatTime } from './format.js'
 
 export type Lifecycle = 'active' | 'visible' | 'background' | 'suspended'
 
@@ -46,8 +48,29 @@ export interface Events {
   action: { id: string }
 }
 
-/// Thrown for a refusal: `notPermitted`, `tooLarge`, `busy`, a backend's own code…
-export class DeskError extends Error {}
+/// Thrown for a refusal: `notPermitted`, `tooLarge`, `busy`, a backend's own
+/// code (gRPC's: `invalidArgument`, `failedPrecondition`, …) with its words
+/// in [detail]; `declined` when the sudo dialog was closed.
+export class DeskError extends Error {
+  constructor(
+    code: string,
+    readonly detail?: string,
+  ) {
+    super(code)
+  }
+}
+
+export interface CallOptions {
+  /// Runs as root: the desk's dialog says this first.
+  sudo?: SudoAsk
+}
+
+export interface JobOptions extends CallOptions {
+  /// Each line of the job's log as it comes.
+  onLine?: (text: string) => void
+  /// How often the job is read while it runs (ms, default 1000).
+  every?: number
+}
 
 export interface Desk {
   readonly info: Hello
@@ -75,8 +98,19 @@ export interface Desk {
   /// 10 minutes pass). Needs `background`.
   keepAlive(reason: string): Promise<() => Promise<void>>
   close(): Promise<void>
-  /// Calls the app's backend (`kind: wasm`), as the signed-in account.
-  backend<T = unknown>(method: string, params?: unknown): Promise<T>
+  /// A function of the backend's `api` (`kind: wasm`), by name, with its
+  /// parameters by name; its value.
+  call<T = unknown>(fn: string, args?: Record<string, unknown>, options?: CallOptions): Promise<T>
+  /// One of the backend's `jobs`: started, its lines to `onLine`, its value
+  /// once it ends. One job at a time per app.
+  job<T = unknown>(fn: string, args?: Record<string, unknown>, options?: JobOptions): Promise<T>
+  /// The job running now or the last one (after the window reopened), from
+  /// line [since].
+  jobView(since?: number): Promise<JobView | null>
+  /// Follows the job running now until it ends; as `job`.
+  follow<T = unknown>(options?: Omit<JobOptions, 'sudo'>): Promise<T>
+  /// Asks the running job to stop.
+  cancelJob(): Promise<void>
 }
 
 /// Where the desk's port arrives: this frame's window, from its parent.
@@ -127,7 +161,7 @@ export async function connect(options: ConnectOptions = {}): Promise<Desk> {
       if (!w) return
       waiting.delete(m.re)
       if (m.ok) w.resolve(m.value)
-      else w.reject(new DeskError(m.error ?? 'failed'))
+      else w.reject(new DeskError(m.error ?? 'failed', (m as { message?: string }).message))
     } else if (typeof m.event === 'string') {
       for (const f of listeners.get(m.event) ?? []) f(m.data)
     }
@@ -150,6 +184,18 @@ export async function connect(options: ConnectOptions = {}): Promise<Desk> {
     if (info.ui?.stylesheet) await useStylesheet(info.ui.stylesheet)
   }
   let keep = 0
+
+  async function follow<T>(options: Omit<JobOptions, 'sudo'> = {}, since = 0): Promise<T> {
+    for (;;) {
+      const view = await call<JobView | null>('backend.jobView', { since })
+      if (!view) throw new DeskError('notFound')
+      for (const l of view.lines) options.onLine?.(l.text)
+      since = view.next
+      if (view.state === 'succeeded') return view.value as T
+      if (view.state !== 'running') throw new DeskError(view.error?.error ?? view.state, view.error?.message)
+      await new Promise((r) => setTimeout(r, options.every ?? 1000))
+    }
+  }
 
   return {
     info,
@@ -186,6 +232,14 @@ export async function connect(options: ConnectOptions = {}): Promise<Desk> {
       return () => call('release', { token })
     },
     close: () => call('close'),
-    backend: (method, params) => call('backend.call', { method, params: params ?? null }),
+    call: (fn, args, options) => call('backend.call', { function: fn, args: args ?? {}, sudo: options?.sudo }),
+    async job(fn, args, options = {}) {
+      const started = await call<JobView>('backend.job', { function: fn, args: args ?? {}, sudo: options.sudo })
+      void started
+      return follow(options)
+    },
+    jobView: (since = 0) => call('backend.jobView', { since }),
+    follow: (options) => follow(options),
+    cancelJob: () => call('backend.cancel'),
   }
 }

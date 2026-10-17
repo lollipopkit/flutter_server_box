@@ -115,8 +115,8 @@ pub struct AppState {
     pub blobs: Arc<crate::core::blobs::Blobs>,
     /// Agent mode's tasks and the pi runtime they run in — see `agent_mode`.
     pub agent: Arc<crate::agent_mode::AgentMode>,
-    /// Desk app backend calls running now (`api::app_runtime`).
-    pub app_calls: crate::api::app_runtime::AppCalls,
+    /// Desk apps' backends: compiled components, calls, jobs (`apps`).
+    pub apps: Arc<crate::apps::Apps>,
     /// The web apps this agent deployed, their jobs and proxies — see
     /// `stacks`.
     pub stacks: Arc<crate::stacks::Stacks>,
@@ -194,6 +194,7 @@ pub(super) fn agent_state(config: &Config) -> crate::core::fs_roots::Protected {
         crate::stacks::Stacks::protect_beside(&db, &mut protected);
         protected.tree(&crate::container_backups::ContainerBackups::dir_beside(&db));
         protected.tree(&crate::inference::Inference::dir_beside(&db));
+        protected.tree(&crate::apps::Apps::dir_beside(&db));
     }
     protected.file(&config.jwt_secret_path());
     protected.file(&crate::db::bootstrap::initial_credentials_path(&url));
@@ -275,7 +276,7 @@ impl AppState {
             inference: Arc::new(crate::inference::Inference::new(sqlite_file_of(&db).as_deref())),
             agent_tools: Arc::default(),
             proxy: Arc::default(),
-            app_calls: Default::default(),
+            apps: Arc::new(crate::apps::Apps::new(sqlite_file_of(&db).as_deref())),
             process_sample: Arc::new(tokio::sync::Mutex::new(None)),
             virt: Arc::new(crate::api::virt::VirtState::default()),
             config,

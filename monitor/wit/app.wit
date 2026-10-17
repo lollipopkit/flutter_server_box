@@ -1,0 +1,97 @@
+/// What the agent offers a desk app's backend (`docs/dev/desk-sys.md`).
+///
+/// An app's own package names its service, as a gRPC service is named:
+///
+///     package acme:notes;
+///     interface api { list: func(folder: string) -> result<list<note>, error>; }
+///     interface jobs { reindex: func() -> result<u32, error>; }
+///     world notes { include sbm:app/imports; export api; export jobs; }
+///
+/// `api` functions are unary calls, bounded in time; `jobs` functions run as
+/// the app's job (one at a time), their lines streamed to the frame, until
+/// they return or are cancelled. Every function returns `result<T, error>`.
+/// The frame names a function and passes its parameters as a JSON object;
+/// values cross as JSON (`docs/dev/desk-sys.md`, "Values").
+///
+/// Each call or job is a fresh instance: what lasts goes through `kv`.
+package sbm:app@0.1.0;
+
+interface types {
+  /// gRPC's canonical status codes an app answers with, and the host too.
+  variant error {
+    invalid-argument(string),
+    not-found(string),
+    already-exists(string),
+    /// The app does not hold the permission, or no sudo password was given.
+    permission-denied(string),
+    /// The machine is not in the state this needs (not scanned, changed since).
+    failed-precondition(string),
+    /// Busy, not on this platform, a tool missing.
+    unavailable(string),
+    deadline-exceeded,
+    cancelled,
+    internal(string),
+  }
+
+  record output {
+    status: s32,
+    stdout: list<u8>,
+    stderr: list<u8>,
+  }
+}
+
+interface host {
+  use types.{error, output};
+
+  enum level { debug, info, warn, error }
+
+  log: func(level: level, message: string);
+
+  /// `sh -c` with [script], as the agent's account (`process`).
+  exec: func(script: string, stdin: option<list<u8>>) -> result<output, error>;
+
+  /// As root (`root`), with the sudo password the caller confirmed in the
+  /// desk for this call or job; the app never sees it.
+  exec-root: func(script: string) -> result<output, error>;
+
+  /// The app's storage for the calling account: JSON texts by key.
+  kv-get: func(key: string) -> option<string>;
+  kv-set: func(key: string, value: string) -> result<_, error>;
+  kv-remove: func(key: string);
+
+  /// The agent's account's home directory.
+  home: func() -> option<string>;
+
+  /// The current status sample (`ServerStatus` JSON, `system`).
+  status: func() -> result<string, error>;
+}
+
+/// What only the agent knows about this machine.
+interface agent {
+  /// Whether [path] holds the agent's own state (never to be removed).
+  holds-state: func(path: string) -> bool;
+
+  /// Folders under the web apps' directory no deployed app owns: (app id,
+  /// path).
+  stack-leftovers: func() -> list<tuple<string, string>>;
+}
+
+/// A job's own: nothing here works in a unary call.
+interface job {
+  use types.{error};
+
+  /// A line of the job's log, streamed to the caller.
+  line: func(text: string);
+
+  /// As `host.exec-root`, its output going to the job's log line by line as
+  /// it comes; the exit status.
+  run-root: func(script: string) -> result<s32, error>;
+}
+
+/// What every app imports; an app's world includes it and exports `api`
+/// and, when it has jobs, `jobs`.
+world imports {
+  import host;
+  import agent;
+  import job;
+}

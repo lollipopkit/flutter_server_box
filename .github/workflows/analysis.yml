@@ -216,6 +216,12 @@ jobs:
 
       - uses: ./.github/actions/setup-rust-pinned
 
+      # Desk app backends are components: `tests/apps_api.rs` builds its
+      # guest (`monitor/tests/apps/probe`) for this target.
+      - name: Add the wasm32-wasip2 target
+        shell: bash
+        run: rustup target add wasm32-wasip2
+
       # This job's own `cargo` builds into `target/`, so rust-cache applies
       # here, unlike to the build hook (see `build-hook-cache`). After the
       # toolchain step: the key includes the rustc it finds. Saved from main

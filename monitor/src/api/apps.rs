@@ -23,9 +23,10 @@
 //! it cannot rewrite approved code.
 //!
 //! A `web` app is UI only: its permissions are the desk's (`notifications`,
-//! `background`). A `wasm` app adds `backend.wasm`, run by the agent
-//! (`api::app_runtime`), and may ask for what that reaches (`status`,
-//! `files.read`, `exec`), each still bounded by the transport rule.
+//! `background`). A `wasm` app (API 2) adds `backend.wasm`, a component the
+//! agent runs (`apps::runtime`, `api::app_backend`), and may ask for what
+//! that reaches (`status`, `process`, `root`), each still bounded by the
+//! transport rule.
 
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::io::Read;
@@ -55,12 +56,16 @@ const MAX_PATH_BYTES: usize = 200;
 const MAX_MANIFEST_BYTES: u64 = 64 << 10;
 /// How long a launch ticket opens the UI for.
 const TICKET_SECS: i64 = 12 * 3600;
-const API_VERSION: u32 = 1;
+/// `web`: API 1 or 2 (the same). `wasm`: API 2, a component backend; API 1's
+/// core module is refused (TODO: drop API 1 once no `web` package names it).
+const WEB_APIS: &[u32] = &[1, 2];
+const WASM_API: u32 = 2;
 
-/// What a `web` app may ask for. A backend's (`files.read`, `exec`, …)
-/// come with `wasm`.
+/// What a `web` app may ask for. A backend's come with `wasm`: the status
+/// sample, programs as the agent's account, scripts as root (with a sudo
+/// password the desk asks for each time).
 const WEB_PERMISSIONS: &[&str] = &["notifications", "background"];
-const WASM_PERMISSIONS: &[&str] = &["notifications", "background", "status", "files.read", "exec"];
+const WASM_PERMISSIONS: &[&str] = &["notifications", "background", "status", "process", "root"];
 const TONES: &[&str] = &["berry", "soft", "ink", "sky", "teal", "violet", "amber", "leaf", "pale", "bright", "mist"];
 
 // -----------------------------------------------------------------------------
@@ -149,14 +154,14 @@ pub fn check_manifest(m: &Manifest) -> Result<(), Refusal> {
     if !short_text(&m.version, 32) {
         return Err(refused("invalidVersion"));
     }
-    if m.api != API_VERSION {
-        return Err(refused("unsupportedApi"));
-    }
-    let allowed = match m.kind.as_str() {
-        "web" => WEB_PERMISSIONS,
-        "wasm" => WASM_PERMISSIONS,
+    let (allowed, api_ok) = match m.kind.as_str() {
+        "web" => (WEB_PERMISSIONS, WEB_APIS.contains(&m.api)),
+        "wasm" => (WASM_PERMISSIONS, m.api == WASM_API),
         _ => return Err(refused("invalidKind")),
     };
+    if !api_ok {
+        return Err(refused("unsupportedApi"));
+    }
     let title_ok = match &m.title {
         serde_json::Value::String(t) => short_text(t, 64),
         serde_json::Value::Object(map) => {
@@ -294,6 +299,11 @@ pub fn read_package(bytes: &[u8]) -> Result<Package, Refusal> {
         return Err(refused("backendMismatch"));
     }
     Ok(Package { manifest, files, sha256 })
+}
+
+/// The digest of [package]'s `backend.wasm`, as the blob store names it.
+fn backend_sha_of(package: &Package) -> Option<String> {
+    package.files.get("backend.wasm").map(|b| hex::encode(Sha256::digest(b)))
 }
 
 /// The type a served file is given, by extension. Anything else is served
@@ -464,6 +474,12 @@ async fn store(db: &sqlx::SqlitePool, blobs: &Arc<Blobs>, package: &Package) -> 
 // -----------------------------------------------------------------------------
 
 
+/// The digest of [id]'s `backend.wasm`, whose compiled copy goes when the
+/// package does.
+async fn backend_sha(db: &sqlx::SqlitePool, id: &str) -> Option<String> {
+    sqlx::query_scalar("SELECT sha256 FROM desk_app_file WHERE app_id = ? AND path = 'backend.wasm'").bind(id).fetch_optional(db).await.ok().flatten()
+}
+
 fn not_found() -> HttpResponse {
     HttpResponse::NotFound().json(&refused("notFound"))
 }
@@ -500,8 +516,20 @@ pub async fn install(
         }
         Err(_) => return Ok(HttpResponse::InternalServerError().json(&refused("internal"))),
     };
+    // Compiled now (and kept): a backend that is not a component of the
+    // agent's world is refused here rather than at its first call.
+    if let (Some(sha), Some(bytes)) = (backend_sha_of(&package), package.files.get("backend.wasm").cloned())
+        && let Err(e) = state.apps.backend(&sha, move || Some(bytes)).await
+    {
+        tracing::info!("app backend refused: {e}");
+        return Ok(HttpResponse::BadRequest().json(&serde_json::json!({ "error": "invalidBackend", "detail": e.chars().take(300).collect::<String>() })));
+    }
+    let before = backend_sha(&state.db, &package.manifest.id()).await;
     match store(&state.db, &state.blobs, &package).await {
         Ok(app) => {
+            if let Some(sha) = before.filter(|sha| backend_sha_of(&package).as_deref() != Some(sha)) {
+                state.apps.forget(&sha);
+            }
             audit(&req, &state, Action::Write, format!("app install {} {} {}", app.id, app.version, package.sha256)).await;
             Ok(HttpResponse::Ok().json(&app))
         }
@@ -570,6 +598,7 @@ pub async fn remove(
     require!(authz::acting_caller(&req, &state).await);
     let password = body.and_then(|b| b.into_inner().current_password);
     require!(reauth(&req, &state, password.as_deref()).await);
+    let backend = backend_sha(&state.db, &id).await;
     let mut tx = match state.db.begin().await {
         Ok(tx) => tx,
         Err(e) => return Ok(super::respond::internal(&e)),
@@ -591,6 +620,9 @@ pub async fn remove(
                 return Ok(not_found());
             }
             state.blobs.collect_soon(&state.db);
+            if let Some(sha) = backend {
+                state.apps.forget(&sha);
+            }
             audit(&req, &state, Action::Write, format!("app remove {}", id.as_str())).await;
             Ok(HttpResponse::NoContent().finish())
         }
@@ -717,7 +749,10 @@ mod tests {
             (|m| m.name = String::new(), "invalidId"),
             (|m| m.name = "my-notes".into(), "invalidId"),
             (|m| m.version = String::new(), "invalidVersion"),
-            (|m| m.api = 2, "unsupportedApi"),
+            (|m| m.api = 3, "unsupportedApi"),
+            // A backend of API 1 was a core module the agent no longer runs.
+            (|m| m.kind = "wasm".into(), "unsupportedApi"),
+            (|m| (m.kind, m.api, m.permissions) = ("wasm".into(), 2, vec!["files.read".into()]), "invalidPermission"),
             (|m| m.kind = "native".into(), "invalidKind"),
             (|m| m.title = serde_json::json!({ "de": "Notizen" }), "invalidTitle"),
             (|m| m.title = serde_json::json!(""), "invalidTitle"),

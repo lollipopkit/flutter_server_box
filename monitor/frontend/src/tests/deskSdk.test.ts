@@ -1,12 +1,27 @@
 import { describe, expect, it, vi } from 'vitest'
 import { connect } from '../../../sdk/serverbox-desk/src/index'
 import { applyTheme } from '../../../sdk/serverbox-desk/src/ui'
-import { WebAppBridge } from '../desk/webapps/bridge.svelte'
+import { BridgeError, WebAppBridge, type BackendHost } from '../desk/webapps/bridge.svelte'
 import type { WindowHandle } from '../desk/sys/window.svelte'
 
 /// The SDK in a frame and the desk's bridge, joined by a real port pair,
 /// handed over the way the frame window would be.
 function joined(permissions: string[], stylesheet: string | null = null) {
+  let reads = 0
+  const backend: BackendHost = {
+    call: async (fn, args) => {
+      if (fn === 'refuse') throw new BridgeError('failedPrecondition', 'notScanned')
+      return { fn, args }
+    },
+    job: async (fn) => ({ id: 1, function: fn, state: 'running', lines: [], next: 0 }),
+    // Running, then done with the line it printed.
+    view: async (since) =>
+      ++reads < 2
+        ? { id: 1, function: 'scan', state: 'running', lines: [], next: since }
+        : { id: 1, function: 'scan', state: 'succeeded', lines: [{ seq: 0, text: 'found 3' }], next: 1, value: 3 },
+    cancel: async () => {},
+    sudo: (_ask, run) => run({ password: 'pw', remember: false }),
+  }
   const listeners: ((e: MessageEvent) => void)[] = []
   const parent = {}
   const handle = {
@@ -25,7 +40,7 @@ function joined(permissions: string[], stylesheet: string | null = null) {
     theme: () => ({ dark: true, tokens: { '--color-accent': '#6750a4' } }),
     locale: () => 'de',
     stylesheet: () => stylesheet,
-    backend: async () => ({ ok: 7 }),
+    backend,
   })
   const channel = { parent, self: { addEventListener: (_: 'message', f: (e: MessageEvent) => void) => listeners.push(f) } }
   const connecting = connect({ channel })
@@ -45,7 +60,11 @@ describe('the desk SDK against the bridge', () => {
     await desk.setTitle('Draft')
     expect(handle.setTitle).toHaveBeenCalledWith('Draft')
     expect(await desk.storage.get('k')).toBe('v')
-    expect(await desk.backend('sum', [3, 4])).toBe(7)
+    expect(await desk.call('sum', { a: 3 })).toEqual({ fn: 'sum', args: { a: 3 } })
+    await expect(desk.call('refuse')).rejects.toMatchObject({ message: 'failedPrecondition', detail: 'notScanned' })
+    const lines: string[] = []
+    expect(await desk.job('scan', {}, { every: 1, onLine: (l) => lines.push(l), sudo: { title: 'Scan', body: 'As root' } })).toBe(3)
+    expect(lines).toEqual(['found 3'])
     await desk.notify({ title: 'Saved' })
     expect(handle.notify).toHaveBeenCalled()
 

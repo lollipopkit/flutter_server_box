@@ -12,7 +12,10 @@ An installed app runs in a sandboxed frame of the panel. It has no network
 access and cannot use the agent's API. It reaches the desk only through what
 its permissions allow: its window, notifications, and storage of its own. An
 app of the `wasm` kind also has a backend that the agent runs, which can read
-the server's status, read files, or run commands when its permissions allow.
+the server's status, run programs, or run scripts as root when its
+permissions allow. Before anything runs as root the desk shows its own dialog,
+naming the app and what it says it does, and asks for sudo's password; the
+password goes to the agent with that request, never to the app.
 
 ## Install an app
 
@@ -38,11 +41,11 @@ it with what the publisher lists.
 | `notifications` | Showing notifications on the desk |
 | `background` | Running while its window is hidden |
 | `status` | `wasm` only: reading the server's status |
-| `files.read` | `wasm` only: reading files the agent's system account can read |
-| `exec` | `wasm` only: running commands as the agent's system account |
+| `process` | `wasm` only: running programs as the agent's system account |
+| `root` | `wasm` only: running scripts as root, each time after you confirm in the desk's dialog with sudo's password (it can be remembered for 15 minutes) |
 
 What a backend may do is bounded by the permissions the app was approved with
-and by the agent's transport rule: `files.read` and `exec` need HTTPS or a
+and by the agent's transport rule: `process` and `root` need HTTPS or a
 caller on the same host, as the rest of the agent does. They reach what the
 system account the agent runs as can reach; see
 [Access](/docs/advanced/monitor-agent/#access).

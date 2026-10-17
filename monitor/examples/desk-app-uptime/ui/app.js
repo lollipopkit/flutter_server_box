@@ -6,7 +6,7 @@
   const show = (id, text) => (document.getElementById(id).textContent = text)
   async function refresh() {
     try {
-      const s = await desk.call('backend.call', { method: 'status' })
+      const s = await desk.call('backend.call', { function: 'status', args: {} })
       show('host', s.host || 'This server')
       show('uptime', String(s.uptime ?? '—'))
       show('error', '')
@@ -23,8 +23,8 @@
   desk.on('action', async ({ id }) => {
     if (id === 'refresh') return refresh()
     try {
-      const r = await desk.call('backend.call', { method: 'who' })
-      show('who', r.who || '(nobody)')
+      const r = await desk.call('backend.call', { function: 'who', args: {} })
+      show('who', r || '(nobody)')
     } catch (e) {
       show('error', e.message)
     }

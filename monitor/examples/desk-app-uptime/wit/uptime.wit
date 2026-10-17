@@ -1,0 +1,24 @@
+/// The example's service (`docs/dev/desk-sys.md`, "The backend").
+package example:uptime;
+
+interface api {
+  use sbm:app/types@0.1.0.{error};
+
+  record sample {
+    host: option<string>,
+    /// As the agent's sample has it.
+    uptime: option<string>,
+    cpu: option<f64>,
+  }
+
+  /// The machine's name, uptime and CPU use, from the agent's sample.
+  status: func() -> result<sample, error>;
+
+  /// `who`, run as the agent's account (`process`).
+  who: func() -> result<string, error>;
+}
+
+world uptime {
+  include sbm:app/imports@0.1.0;
+  export api;
+}

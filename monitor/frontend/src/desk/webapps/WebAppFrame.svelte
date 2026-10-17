@@ -13,7 +13,11 @@
   import Spinner from '../lk/Spinner.svelte'
   import AppToolbar from '../sys/AppToolbar.svelte'
   import { useIntents, useMenus, useWindow } from '../sys/window.svelte'
-  import { WebAppBridge } from './bridge.svelte'
+  import { ApiError } from '../../lib/api'
+  import type { SudoAsk } from '../../../../sdk/serverbox-desk/src/protocol'
+  import AppSudoDialog from './AppSudoDialog.svelte'
+  import { app } from '../registry.svelte'
+  import { BridgeError, WebAppBridge, type BackendHost, type SudoGiven } from './bridge.svelte'
 
   const win = useWindow()
   const desk = useDesk()
@@ -28,16 +32,62 @@
   /// system's own), which `serverbox-desk` sets on the app's page.
   const appTheme = () => ({ dark: theme.dark, tokens: desk.themes?.vars(theme.dark) ?? {} })
 
-  const bridge = new WebAppBridge(
-    {
-      handle: win,
-      allows: (p) => desk.allows(win.appId, p),
-      theme: () => appTheme(),
-      locale: () => get(locale),
-      stylesheet: () => stylesheet,
-      backend: (method, params) => deskApi.callApp(desk.entry, win.appId, method, params),
+  /// The sudo dialog shown now: what the app said, what runs once
+  /// confirmed, and how the frame's call ends.
+  let sudo = $state<{ ask: SudoAsk; remembered: boolean; run: (g: SudoGiven) => Promise<void>; decline: () => void } | null>(null)
+
+  /// A refusal from the agent as the frame gets it: the backend's code and
+  /// words.
+  function bridged<T>(p: Promise<T>): Promise<T> {
+    return p.catch((e: unknown) => {
+      if (e instanceof ApiError) throw new BridgeError(e.code ?? (e.body?.error as string | undefined) ?? 'failed', (e.body?.message as string | undefined) ?? undefined)
+      throw e
+    })
+  }
+
+  const asSudo = (g?: SudoGiven) => (g ? { password: g.password || null, remember: g.remember } : undefined)
+
+  const backend: BackendHost = {
+    call: (fn, args, given) => bridged(deskApi.callApp(desk.entry, win.appId, fn, args, asSudo(given)).then((r) => r.value)),
+    job: (fn, args, given) => bridged(deskApi.startAppJob(desk.entry, win.appId, fn, args, asSudo(given))),
+    view: (since) => bridged(deskApi.appJob(desk.entry, win.appId, since)),
+    cancel: () => bridged(deskApi.cancelAppJob(desk.entry, win.appId).then(() => undefined)),
+    async sudo(ask, run) {
+      if (sudo) throw new BridgeError('busy')
+      const remembered = await deskApi.sudoRemembered(desk.entry).then((r) => r.remembered, () => false)
+      return new Promise((resolve, reject) => {
+        sudo = {
+          ask,
+          remembered,
+          // sudo's refusal stays in the dialog; anything else is the frame's.
+          run: async (given) => {
+            try {
+              resolve(await run(given))
+            } catch (e) {
+              if (e instanceof BridgeError && (e.message === 'sudo_rejected' || e.message === 'sudo_unavailable')) {
+                throw new ApiError(e.message, 403, e.message)
+              }
+              reject(e)
+            }
+            sudo = null
+          },
+          decline: () => {
+            reject(new BridgeError('declined'))
+            sudo = null
+          },
+        }
+      })
     },
-  )
+  }
+
+  const bridge = new WebAppBridge({
+    handle: win,
+    allows: (p) => desk.allows(win.appId, p),
+    theme: () => appTheme(),
+    locale: () => get(locale),
+    stylesheet: () => stylesheet,
+    backend,
+  })
 
   /// The frame's first page gets the bridge's port. A second load is the app
   /// navigating away from its bundle (somewhere CSP does not reach): the
@@ -80,7 +130,10 @@
   $effect(() => bridge.send('lifecycle', win.lifecycle))
   $effect(() => bridge.send('theme', appTheme()))
   $effect(() => bridge.send('locale', $locale))
-  onDestroy(() => bridge.close())
+  onDestroy(() => {
+    sudo?.decline()
+    bridge.close()
+  })
 </script>
 
 <AppToolbar title={bridge.toolbar.title} subtitle={bridge.toolbar.subtitle}>
@@ -115,3 +168,5 @@
     <div class="flex h-full items-center justify-center"><Spinner /></div>
   {/if}
 </div>
+
+<AppSudoDialog app={app(win.appId)?.title($LL) ?? win.appId} ask={sudo?.ask ?? null} remembered={sudo?.remembered ?? false} run={(g) => sudo?.run(g) ?? Promise.resolve()} onclose={() => sudo?.decline()} />

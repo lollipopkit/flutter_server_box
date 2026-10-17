@@ -12,7 +12,7 @@ The full design, including the message protocol, is
 | Kind | What it contains | What it can reach |
 |---|---|---|
 | `web` | A static bundle (HTML, JavaScript, CSS) | The desk, through `serverbox-desk` |
-| `wasm` | A `web` bundle and `backend.wasm`, a WebAssembly module the agent runs | The desk, and its backend through `desk.backend()` |
+| `wasm` | A `web` bundle and `backend.wasm`, a WebAssembly component the agent runs | The desk, and its backend's service through `desk.call()` and `desk.job()` |
 
 ## Start from the template
 
@@ -59,7 +59,8 @@ returned object offers:
 | Storage | `storage.get/set/remove/keys`: JSON per app, kept on the agent (256 KiB per app) |
 | Other apps | `open(appId, { path })` opens another app, optionally with a file or folder; `handlers(path, kind)` lists the apps that can open it |
 | Background | `keepAlive(reason)`, with the `background` permission |
-| Backend | `backend(method, params)`, `wasm` apps only |
+| Backend | `call(fn, args, { sudo })`, `job(fn, args, { sudo, onLine })`, `jobView`, `follow`, `cancelJob`; `wasm` apps only |
+| Words and numbers | `translator(dictionaries, locale)` (the panel's `{value}` and `{{one\|other}}` syntax), `formatBytes`, `formatTime` |
 
 Events (`desk.on`): `lifecycle` (`active`, `visible`, `background`,
 `suspended`), `theme`, `locale`, `intent`, `action`. `desk.info` holds what the
@@ -114,12 +115,12 @@ fields.
 |---|---|
 | `publisher`, `name` | Each `[a-z][a-z0-9_]*`, at most 24 characters, a publisher at least 2. The app's id is `<publisher>.<name>`; the panel's own `serverbox` publisher is refused |
 | `version` | Up to 32 characters |
-| `api` | `1` |
+| `api` | `2` (`1` is still accepted for `web`) |
 | `kind` | `web` or `wasm` |
 | `title` | A string, or translations by locale with `en` required; up to 64 characters |
 | `glyph` | A Material Symbols Rounded name, such as `sticky_note_2` |
 | `tone` | `berry`, `soft`, `ink`, `sky`, `teal`, `violet`, `amber`, `leaf`, `pale`, `bright` or `mist` |
-| `permissions` | See [Permissions](/docs/advanced/monitor-desk-apps/#permissions). A `web` app may ask for `notifications` and `background`; a `wasm` app also for `status`, `files.read` and `exec` |
+| `permissions` | See [Permissions](/docs/advanced/monitor-desk-apps/#permissions). A `web` app may ask for `notifications` and `background`; a `wasm` app also for `status`, `process` and `root` |
 | `instances` | How many windows may be open, 1 to 8 (default 1) |
 | `size`, `min_size` | `{ "width", "height" }`: the first window's size and the smallest allowed |
 | `opens` | `{ "ext": ["md", "txt"], "dirs": false }`: the files (`"*"` for any) and whether folders the app offers to open in Files' "Open with" |
@@ -137,32 +138,70 @@ the template's `npm run pack` does this.
 
 ## A backend (`wasm`)
 
-The agent runs `backend.wasm` with an interpreter, in a fresh instance for each
-call, as the system account the agent runs as. The module exports `memory`,
-`sbm_alloc(len) -> ptr` and `sbm_call(ptr, len) -> (ptr << 32) | len`. A call
-receives `{ method, params }` as JSON and answers
-`{ "ok": … }` or `{ "error": … }`. The module imports `sbm.host(ptr, len)` for
-host functions, called with `{ fn, args }`:
+`backend.wasm` is a WebAssembly component (`wasm32-wasip2`). Its world
+includes `sbm:app/imports`
+([`monitor/wit/app.wit`](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/wit/app.wit))
+and exports the app's own service, written in WIT as a gRPC service is in
+protobuf: `api`, functions the frame calls and waits for, and `jobs`, longer
+work the agent runs as the app's job (one at a time), its lines streamed to
+the frame. Every function returns `result<T, error>`; `error` holds gRPC's
+canonical codes, which the frame gets as `DeskError` with the app's words in
+`detail`.
+
+```wit
+package acme:notes;
+
+interface api {
+  use sbm:app/types@0.1.0.{error};
+  record note { title: string, words: u32 }
+  list: func(folder: string) -> result<list<note>, error>;
+}
+
+world notes {
+  include sbm:app/imports@0.1.0;
+  export api;
+}
+```
+
+```ts
+const notes = await desk.call<Note[]>('list', { folder: 'work' })
+```
+
+Parameters go as one object by name and values cross as JSON: names in
+camelCase, a `variant` as `{ tag, val }`, an `option` as `null` or its value, a
+`result` as `{ ok }` or `{ err }`. The agent checks the component when it is
+installed and refuses one whose functions take or answer resources or
+streams.
+
+The agent runs it with wasmtime, in a fresh instance for each call or job;
+what an app keeps goes through `kv`. It has no files, network or environment
+of its own. Host functions:
 
 | Function | Needs |
 |---|---|
 | `log` | — |
-| `kv.get`, `kv.set`, `kv.remove`, `kv.keys` | — (the app's own storage) |
+| `kv-get`, `kv-set`, `kv-remove` | — (the calling account's app storage, JSON texts) |
 | `status` | `status` |
-| `fs.list`, `fs.read` | `files.read`; 1 MiB per read |
-| `exec` | `exec` |
+| `exec` | `process`: a script as the agent's system account |
+| `exec-root` | `root`, and the sudo password the desk asked for with this call or job |
+| `job.line`, `job.run-root` | In a job: a line of its log; a script as root, its output streamed to the log |
 
-Each call is bounded: 10 seconds, 64 MiB of memory, 1000 host calls, a 1 MiB
-request and a 4 MiB answer. At most 8 calls run at once; more are answered
-`busy`. `fs.*` and `exec` also follow the agent's transport rule: HTTPS or a
-caller on the same host, unless `[remote_access] allow_insecure`.
+To run as root, the frame asks with `sudo: { title, body, confirmWord? }`;
+the desk shows its own dialog with that text under the app's name, and sends
+sudo's password to the agent with the request. Each call has 64 MiB of memory,
+10 seconds of its own CPU time and 60 seconds in all; a job runs until it
+returns or is cancelled. `process` and `root` follow the agent's transport
+rule: HTTPS or a caller on the same host, unless `[remote_access]
+allow_insecure`.
 
 [`monitor/examples/desk-app-uptime`](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor/examples/desk-app-uptime)
-is a complete example in Rust:
+is a small example in Rust (wit-bindgen), and
+[`monitor/apps/cleanup`](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor/apps/cleanup)
+a complete one with jobs and root:
 
 ```sh
-cargo build --release --target wasm32-unknown-unknown
-cp target/wasm32-unknown-unknown/release/desk_app_uptime.wasm backend.wasm
+cargo build --release --target wasm32-wasip2
+cp target/wasm32-wasip2/release/desk_app_uptime.wasm backend.wasm
 COPYFILE_DISABLE=1 tar -czf example.uptime.fsba manifest.json backend.wasm ui
 ```
 

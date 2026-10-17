@@ -12,10 +12,10 @@ export function permissionText(ll: TranslationFunctions, permission: string): st
       return ll.settingsPermBackground()
     case 'status':
       return ll.settingsPermStatus()
-    case 'files.read':
-      return ll.settingsPermFilesRead()
-    case 'exec':
-      return ll.settingsPermExec()
+    case 'process':
+      return ll.settingsPermProcess()
+    case 'root':
+      return ll.settingsPermRoot()
     default:
       return permission
   }

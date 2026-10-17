@@ -49,6 +49,8 @@ pub enum JobKind {
     Cleanup,
     /// Tailscale installed, signed in or out, connected or set (`api::tailscale`).
     Tailscale,
+    /// A desk app's job (`apps::runtime`).
+    App,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -141,6 +143,11 @@ impl Job {
 
     pub fn cancel(&self) {
         self.cancel.cancel();
+    }
+
+    /// What a step the job runs watches to stop.
+    pub fn cancel_token(&self) -> Cancel {
+        self.cancel.clone()
     }
 
     pub fn finish(&self, state: JobState, error: Option<String>) {

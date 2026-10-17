@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { WebAppBridge } from '../desk/webapps/bridge.svelte'
+import { BridgeError, WebAppBridge, type BackendHost } from '../desk/webapps/bridge.svelte'
 import type { WindowHandle } from '../desk/sys/window.svelte'
 
 function setup(permissions: string[] = []) {
@@ -108,22 +108,46 @@ describe('the bridge to an installed app', () => {
 })
 
 describe('the bridge to an app backend', () => {
-  it('answers what the backend said, or its error', async () => {
+  function backendSetup() {
     const port = { postMessage: vi.fn(), onmessage: null }
-    const backend = vi.fn(async (method: string) => (method === 'ok' ? { ok: { n: 1 } } : { error: 'nope' }))
-    const bridge = new WebAppBridge({
-      handle: { id: 'w', appId: 'a' } as unknown as WindowHandle,
-      allows: () => false,
-      theme: () => ({ dark: false }),
-      locale: () => 'en',
-      backend,
-    })
+    const asked: unknown[] = []
+    const backend: BackendHost = {
+      call: vi.fn(async (fn: string, _args: unknown, sudo?: unknown) => {
+        if (fn === 'bad') throw new BridgeError('failedPrecondition', 'notScanned')
+        return { fn, sudo: sudo ?? null }
+      }),
+      job: vi.fn(async (fn: string) => ({ id: 1, function: fn, state: 'running' as const, lines: [], next: 0 })),
+      view: vi.fn(async () => null),
+      cancel: vi.fn(async () => {}),
+      sudo: vi.fn((ask, run) => {
+        asked.push(ask)
+        return run({ password: 'pw', remember: true })
+      }),
+    }
+    const bridge = new WebAppBridge({ handle: { id: 'w', appId: 'a' } as unknown as WindowHandle, allows: () => false, theme: () => ({ dark: false }), locale: () => 'en', backend })
     bridge.attach(port)
-    const post = port.postMessage
-    await bridge.receive({ sbm: 1, id: 1, call: 'backend.call', args: { method: 'ok', params: { x: 1 } } })
-    await bridge.receive({ sbm: 1, id: 2, call: 'backend.call', args: { method: 'bad' } })
-    expect(backend).toHaveBeenCalledWith('ok', { x: 1 })
-    expect(post.mock.calls[0][0]).toMatchObject({ re: 1, ok: true, value: { n: 1 } })
-    expect(post.mock.calls[1][0]).toMatchObject({ re: 2, ok: false, error: 'nope' })
+    return { bridge, backend, asked, post: port.postMessage }
+  }
+
+  it('answers what the backend said, or its code and words', async () => {
+    const { bridge, backend, post } = backendSetup()
+    await bridge.receive({ sbm: 1, id: 1, call: 'backend.call', args: { function: 'ok', args: { x: 1 } } })
+    await bridge.receive({ sbm: 1, id: 2, call: 'backend.call', args: { function: 'bad' } })
+    expect(backend.call).toHaveBeenCalledWith('ok', { x: 1 }, undefined)
+    expect(post.mock.calls[0][0]).toMatchObject({ re: 1, ok: true, value: { fn: 'ok', sudo: null } })
+    expect(post.mock.calls[1][0]).toMatchObject({ re: 2, ok: false, error: 'failedPrecondition', message: 'notScanned' })
+  })
+
+  it('runs as root only through the desk’s own dialog', async () => {
+    const { bridge, backend, asked, post } = backendSetup()
+    const sudo = { title: 'Clean', body: 'Removes caches', confirmWord: 'clean' }
+    await bridge.receive({ sbm: 1, id: 1, call: 'backend.job', args: { function: 'clean', args: {}, sudo } })
+    expect(asked).toEqual([sudo])
+    expect(backend.job).toHaveBeenCalledWith('clean', {}, { password: 'pw', remember: true })
+    expect(post.mock.calls[0][0]).toMatchObject({ re: 1, ok: true, value: { function: 'clean', state: 'running' } })
+    // What the dialog may be made to say is checked.
+    await bridge.receive({ sbm: 1, id: 2, call: 'backend.call', args: { function: 'x', sudo: { title: 'T', body: 'B', confirmWord: '<b>' } } })
+    expect(post.mock.calls[1][0]).toMatchObject({ re: 2, ok: false, error: 'invalidArgs' })
+    expect(backend.call).not.toHaveBeenCalled()
   })
 })

@@ -1,0 +1,45 @@
+{
+  "publisher": "lollipopkit",
+  "name": "cleanup",
+  "version": "1.0.0",
+  "api": 2,
+  "kind": "wasm",
+  "title": {
+    "en": "Cleanup",
+    "de": "Bereinigung",
+    "es": "Limpieza",
+    "fr": "Nettoyage",
+    "id": "Pembersihan",
+    "it": "Pulizia",
+    "ja": "クリーンアップ",
+    "ko": "정리",
+    "nl": "Opschonen",
+    "pt": "Limpeza",
+    "ru": "Очистка",
+    "tr": "Temizlik",
+    "uk": "Очищення",
+    "zh-CN": "清理",
+    "zh-TW": "清理"
+  },
+  "keywords": [
+    "cleanup",
+    "apt",
+    "journal",
+    "cache",
+    "junk",
+    "trash"
+  ],
+  "glyph": "cleaning_services",
+  "tone": "teal",
+  "permissions": [
+    "root"
+  ],
+  "size": {
+    "width": 820,
+    "height": 700
+  },
+  "min_size": {
+    "width": 360,
+    "height": 400
+  }
+}

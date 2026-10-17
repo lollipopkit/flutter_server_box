@@ -5417,6 +5417,19 @@ type RootTranslation = {
 	 */
 	deskAppSettings: string
 	/**
+	 * {​a​p​p​}​ ​a​s​k​s​ ​t​o​ ​r​u​n​ ​t​h​i​s​ ​a​s​ ​r​o​o​t​.
+	 * @param {unknown} app
+	 */
+	deskAppSudoAsks: RequiredParams<'app'>
+	/**
+	 * R​e​m​e​m​b​e​r​e​d​ ​f​o​r​ ​a​ ​w​h​i​l​e​:​ ​l​e​a​v​e​ ​i​t​ ​e​m​p​t​y​ ​t​o​ ​u​s​e​ ​i​t​.
+	 */
+	deskAppSudoRemembered: string
+	/**
+	 * R​e​m​e​m​b​e​r​ ​f​o​r​ ​1​5​ ​m​i​n​u​t​e​s
+	 */
+	deskAppSudoRemember: string
+	/**
 	 * T​h​i​s​ ​a​p​p​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​l​o​a​d​e​d​.
 	 */
 	deskAppFailed: string
@@ -6576,13 +6589,13 @@ type RootTranslation = {
 	 */
 	settingsPermStatus: string
 	/**
-	 * r​e​a​d​ ​t​h​e​ ​f​i​l​e​s​ ​t​h​a​t​ ​t​h​e​ ​a​c​c​o​u​n​t​ ​u​s​i​n​g​ ​i​t​ ​m​a​y​ ​r​e​a​d
+	 * r​u​n​ ​p​r​o​g​r​a​m​s​ ​o​n​ ​t​h​i​s​ ​s​e​r​v​e​r​ ​a​s​ ​t​h​e​ ​a​g​e​n​t​'​s​ ​a​c​c​o​u​n​t
 	 */
-	settingsPermFilesRead: string
+	settingsPermProcess: string
 	/**
-	 * r​u​n​ ​c​o​m​m​a​n​d​s​ ​o​n​ ​t​h​i​s​ ​s​e​r​v​e​r​ ​a​s​ ​t​h​e​ ​a​c​c​o​u​n​t​ ​u​s​i​n​g​ ​i​t
+	 * r​u​n​ ​s​c​r​i​p​t​s​ ​a​s​ ​r​o​o​t​,​ ​e​a​c​h​ ​t​i​m​e​ ​a​f​t​e​r​ ​y​o​u​ ​c​o​n​f​i​r​m​ ​w​i​t​h​ ​s​u​d​o​'​s​ ​p​a​s​s​w​o​r​d
 	 */
-	settingsPermExec: string
+	settingsPermRoot: string
 	/**
 	 * N​o​ ​p​e​r​m​i​s​s​i​o​n​s
 	 */
@@ -16706,6 +16719,18 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	deskAppSettings: () => LocalizedString
 	/**
+	 * {app} asks to run this as root.
+	 */
+	deskAppSudoAsks: (arg: { app: unknown }) => LocalizedString
+	/**
+	 * Remembered for a while: leave it empty to use it.
+	 */
+	deskAppSudoRemembered: () => LocalizedString
+	/**
+	 * Remember for 15 minutes
+	 */
+	deskAppSudoRemember: () => LocalizedString
+	/**
 	 * This app could not be loaded.
 	 */
 	deskAppFailed: () => LocalizedString
@@ -17838,13 +17863,13 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	settingsPermStatus: () => LocalizedString
 	/**
-	 * read the files that the account using it may read
+	 * run programs on this server as the agent's account
 	 */
-	settingsPermFilesRead: () => LocalizedString
+	settingsPermProcess: () => LocalizedString
 	/**
-	 * run commands on this server as the account using it
+	 * run scripts as root, each time after you confirm with sudo's password
 	 */
-	settingsPermExec: () => LocalizedString
+	settingsPermRoot: () => LocalizedString
 	/**
 	 * No permissions
 	 */

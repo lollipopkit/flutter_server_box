@@ -345,14 +345,22 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::get().to(crate::api::apps::list))
                     .route(web::post().to(crate::api::apps::install)),
             )
+            .service(web::resource("/apps/sudo").route(web::get().to(crate::api::app_backend::sudo)))
             .service(web::resource("/apps/{id}").route(web::delete().to(crate::api::apps::remove)))
             .service(web::resource("/apps/{id}/approval").route(web::put().to(crate::api::apps::approve)))
             .service(web::resource("/apps/{id}/launch").route(web::get().to(crate::api::apps::launch)))
             .service(
                 web::resource("/apps/{id}/call")
-                    .state(web::types::JsonConfig::default().limit(crate::api::app_runtime::MAX_REQUEST))
-                    .route(web::post().to(crate::api::app_runtime::call)),
+                    .state(web::types::JsonConfig::default().limit(crate::api::app_backend::MAX_REQUEST))
+                    .route(web::post().to(crate::api::app_backend::call)),
             )
+            .service(
+                web::resource("/apps/{id}/jobs")
+                    .state(web::types::JsonConfig::default().limit(crate::api::app_backend::MAX_REQUEST))
+                    .route(web::get().to(crate::api::app_backend::job))
+                    .route(web::post().to(crate::api::app_backend::start_job)),
+            )
+            .service(web::resource("/apps/{id}/jobs/cancel").route(web::post().to(crate::api::app_backend::cancel_job)))
             .service(web::resource("/apps/{id}/ui/{ticket}/{path}*").route(web::get().to(crate::api::apps::ui)))
             .service(web::resource("/storage").route(web::get().to(crate::api::storage::view)))
             .service(web::resource("/storage/health").route(web::post().to(crate::api::storage::health)))

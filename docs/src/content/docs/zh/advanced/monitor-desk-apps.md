@@ -10,7 +10,9 @@ description: 在 Monitor 面板的桌面中安装第三方应用
 
 已安装的应用运行在面板的沙箱 frame 中，没有网络访问，也不能调用 agent 的 API。它只能
 通过权限允许的功能使用桌面：自己的窗口、通知和自己的存储。`wasm` 类型的应用还带有一个
-由 agent 运行的后端，在权限允许时可以读取服务器状态、读取文件或运行命令。
+由 agent 运行的后端，在权限允许时可以读取服务器状态、运行程序，或以 root 身份运行脚本。以 root
+身份运行任何内容之前，桌面会弹出自己的对话框，写明是哪个应用以及它要做什么，并要求输入 sudo
+密码；密码随这次请求发给 agent，应用拿不到。
 
 ## 安装应用
 
@@ -32,10 +34,10 @@ description: 在 Monitor 面板的桌面中安装第三方应用
 | `notifications` | 在桌面上显示通知 |
 | `background` | 窗口隐藏时继续运行 |
 | `status` | 仅 `wasm`：读取服务器状态 |
-| `files.read` | 仅 `wasm`：读取 agent 的系统账户可以读取的文件 |
-| `exec` | 仅 `wasm`：以 agent 的系统账户运行命令 |
+| `process` | 仅 `wasm`：以 agent 的系统账户运行程序 |
+| `root` | 仅 `wasm`：以 root 身份运行脚本，每次都需要你在桌面的对话框中输入 sudo 密码确认（可以记住 15 分钟） |
 
-后端能做什么，由应用批准时获得的权限和 agent 的传输规则决定：`files.read` 和 `exec`
+后端能做什么，由应用批准时获得的权限和 agent 的传输规则决定：`process` 和 `root`
 与 agent 的其他功能一样，需要 HTTPS 或同机调用方。它们能访问的范围就是 agent 运行所用的
 系统账户能访问的范围，见[访问](/docs/zh/advanced/monitor-agent/#访问)。
 

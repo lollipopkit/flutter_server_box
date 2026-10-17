@@ -10,7 +10,7 @@ use ntex::http::Method;
 use ntex::web::test::{self as web_test, TestServer};
 use ntex::web::{self, App};
 use serde_json::json;
-use server_box_monitor::api::{app_runtime, apps};
+use server_box_monitor::api::{app_backend, apps};
 use server_box_monitor::api::auth::generate_token;
 use server_box_monitor::api::server::AppState;
 use server_box_monitor::core::config::Config;
@@ -37,7 +37,11 @@ async fn server() -> TestServer {
                     .service(web::resource("/apps/{id}").route(web::delete().to(apps::remove)))
                     .service(web::resource("/apps/{id}/approval").route(web::put().to(apps::approve)))
                     .service(web::resource("/apps/{id}/launch").route(web::get().to(apps::launch)))
-                    .service(web::resource("/apps/{id}/call").route(web::post().to(app_runtime::call)))
+                    .service(web::resource("/apps/{id}/call").route(web::post().to(app_backend::call)))
+                    .service(
+                        web::resource("/apps/{id}/jobs").route(web::get().to(app_backend::job)).route(web::post().to(app_backend::start_job)),
+                    )
+                    .service(web::resource("/apps/{id}/jobs/cancel").route(web::post().to(app_backend::cancel_job)))
                     .service(web::resource("/apps/{id}/ui/{ticket}/{path}*").route(web::get().to(apps::ui))),
             )
         }
@@ -274,60 +278,33 @@ async fn a_package_is_refused_whole_for_any_bad_entry() {
 }
 
 // ---------------------------------------------------------------------------
-// Backends (`kind: wasm`)
+// Backends (`kind: wasm`, API 2: a component)
 // ---------------------------------------------------------------------------
 
-/// A guest in the agent's ABI: a bump allocator, and `sbm_call` doing [body]
-/// (which may use `$ptr`/`$len`, the request, and the data at 16).
-fn guest(data: &str, body: &str) -> Vec<u8> {
-    let escaped = data.replace('\\', "\\\\").replace('"', "\\\"");
-    wat::parse_str(format!(
-        r#"(module
-          (import "sbm" "host" (func $host (param i32 i32) (result i64)))
-          (memory (export "memory") 1)
-          (global $next (mut i32) (i32.const 4096))
-          (data (i32.const 16) "{escaped}")
-          (func (export "sbm_alloc") (param $len i32) (result i32)
-            (local $p i32)
-            global.get $next
-            local.set $p
-            global.get $next
-            local.get $len
-            i32.add
-            global.set $next
-            (block $done
-              (loop $grow
-                global.get $next
-                memory.size
-                i32.const 65536
-                i32.mul
-                i32.le_u
-                br_if $done
-                i32.const 1
-                memory.grow
-                i32.const -1
-                i32.eq
-                if
-                  unreachable
-                end
-                br $grow))
-            local.get $p)
-          (func (export "sbm_call") (param $ptr i32) (param $len i32) (result i64)
-            {body}))"#
-    ))
-    .unwrap()
-}
-
-const ECHO: &str = "local.get $ptr i64.extend_i32_u i64.const 32 i64.shl local.get $len i64.extend_i32_u i64.or";
-
-/// Asks the host [request] (the data at 16) and answers what it said.
-fn asking(request: &str) -> Vec<u8> {
-    guest(request, &format!("i32.const 16 i32.const {} call $host", request.len()))
+/// `tests/apps/probe` built for wasm32-wasip2, once per test binary.
+fn probe() -> Vec<u8> {
+    static WASM: std::sync::OnceLock<Vec<u8>> = std::sync::OnceLock::new();
+    WASM.get_or_init(|| {
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/apps/probe");
+        let target = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../target/app-guests");
+        let status = std::process::Command::new(env!("CARGO"))
+            .args(["build", "--release", "--target", "wasm32-wasip2", "--manifest-path"])
+            .arg(dir.join("Cargo.toml"))
+            .arg("--target-dir")
+            .arg(&target)
+            .env_remove("RUSTFLAGS")
+            .status()
+            .expect("cargo");
+        assert!(status.success(), "building the probe needs `rustup target add wasm32-wasip2`");
+        std::fs::read(target.join("wasm32-wasip2/release/sbm_app_probe.wasm")).unwrap()
+    })
+    .clone()
 }
 
 fn wasm_package(wasm: Vec<u8>, permissions: &[&str]) -> Vec<u8> {
     let mut m = manifest(permissions);
     m["kind"] = json!("wasm");
+    m["api"] = json!(2);
     package(&[
         ("manifest.json", m.to_string().into_bytes()),
         ("ui/index.html", b"<p>backend</p>".to_vec()),
@@ -335,66 +312,147 @@ fn wasm_package(wasm: Vec<u8>, permissions: &[&str]) -> Vec<u8> {
     ])
 }
 
-async fn installed_backend(srv: &TestServer, wasm: Vec<u8>, permissions: &[&str]) {
-    let r = install(srv, wasm_package(wasm, permissions)).await;
+async fn installed_backend(srv: &TestServer, permissions: &[&str]) {
+    let r = install(srv, wasm_package(probe(), permissions)).await;
     assert_eq!(r.status, 200, "{}", r.json);
     assert_eq!(approve(srv, permissions, common::PASSWORD).await.status, 200);
 }
 
-async fn call_backend(srv: &TestServer, method: &str, params: serde_json::Value) -> Reply {
-    let body = json!({ "method": method, "params": params }).to_string().into_bytes();
+async fn call_fn(srv: &TestServer, function: &str, args: serde_json::Value) -> Reply {
+    let body = json!({ "function": function, "args": args }).to_string().into_bytes();
     call(srv, true, Method::POST, "/api/v1/apps/acme.notes/call", Some((body, "application/json"))).await
 }
 
+async fn start_job(srv: &TestServer, function: &str, args: serde_json::Value) -> Reply {
+    let body = json!({ "function": function, "args": args }).to_string().into_bytes();
+    call(srv, true, Method::POST, "/api/v1/apps/acme.notes/jobs", Some((body, "application/json"))).await
+}
+
+/// The job once it is no longer running.
+async fn ended(srv: &TestServer) -> serde_json::Value {
+    for _ in 0..200 {
+        let r = call(srv, true, Method::GET, "/api/v1/apps/acme.notes/jobs", None).await;
+        if r.json["state"] != "running" {
+            return r.json;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+    }
+    panic!("the job did not end");
+}
+
 #[ntex::test]
-async fn a_backend_answers_the_call() {
+async fn a_backend_answers_typed_calls_in_json() {
     let srv = server().await;
-    installed_backend(&srv, guest("", ECHO), &[]).await;
-    let r = call_backend(&srv, "ping", json!({ "n": 1 })).await;
+    installed_backend(&srv, &[]).await;
+    let args = json!({ "text": "hi", "count": 3, "tags": ["a"], "maybeNote": null, "shade": "veryDark", "shape": { "tag": "circle", "val": 2 } });
+    let r = call_fn(&srv, "echo", args.clone()).await;
     assert_eq!(r.status, 200, "{}", r.json);
-    assert_eq!(r.json, json!({ "method": "ping", "params": { "n": 1 } }));
+    assert_eq!(r.json["value"], args);
+
+    let r = call_fn(&srv, "echo", json!({ "text": "hi", "count": -1, "tags": [], "shade": "light", "shape": { "tag": "noneAtAll" } })).await;
+    assert_eq!((r.status, r.json["error"].as_str()), (400, Some("invalidArgument")), "{}", r.json);
+    assert_eq!(r.json["message"], "$.count: not an integer in range");
+    let r = call_fn(&srv, "echo", json!({ "nope": 1 })).await;
+    assert_eq!((r.status, r.json["message"].as_str()), (400, Some("$: unknown parameter nope")));
+    assert_eq!(call_fn(&srv, "missing", json!(null)).await.json["error"], "unknownFunction");
+    // A job is not a call.
+    assert_eq!(call_fn(&srv, "count", json!({ "lines": 1 })).await.status, 404);
+
+    // The app's own error, by gRPC's code.
+    let r = call_fn(&srv, "refuse", json!(null)).await;
+    assert_eq!((r.status, r.json.clone()), (409, json!({ "error": "failedPrecondition", "message": "notScanned" })));
 }
 
 #[ntex::test]
 async fn a_backend_is_stopped_by_its_bounds() {
     let srv = server().await;
-    installed_backend(&srv, guest("", "(loop $l br $l) i64.const 0"), &[]).await;
-    let r = call_backend(&srv, "spin", json!(null)).await;
-    assert_eq!((r.status, r.json["error"].as_str()), (422, Some("tooLong")));
-
-    // 64 MiB is 1024 pages; asking for 2000 more is refused.
-    let srv = server().await;
-    installed_backend(&srv, guest("", "i32.const 2000 memory.grow drop i32.const 2000 memory.grow i64.extend_i32_s"), &[]).await;
-    let r = call_backend(&srv, "grow", json!(null)).await;
-    assert_eq!(r.status, 422, "{}", r.json);
+    installed_backend(&srv, &[]).await;
+    // 64 MiB of memory.
+    let r = call_fn(&srv, "grow", json!(null)).await;
+    assert_eq!((r.status, r.json["error"].as_str()), (422, Some("trap")), "{}", r.json);
+    // 10 s of its own work.
+    let r = call_fn(&srv, "spin", json!(null)).await;
+    assert_eq!((r.status, r.json["error"].as_str()), (422, Some("trap")), "{}", r.json);
+    // The agent is still here.
+    assert_eq!(call_fn(&srv, "refuse", json!(null)).await.status, 409);
 }
 
 #[ntex::test]
 async fn host_functions_need_the_permission() {
-    // Not approved for `exec`: refused whoever calls.
     let srv = server().await;
-    installed_backend(&srv, asking(r#"{"fn":"exec","args":{"cmd":"echo hi"}}"#), &[]).await;
-    let r = call_backend(&srv, "run", json!(null)).await;
-    assert_eq!(r.json, json!({ "error": "notPermitted" }));
+    installed_backend(&srv, &[]).await;
+    let r = call_fn(&srv, "run", json!({ "script": "echo hi" })).await;
+    assert_eq!((r.status, r.json.clone()), (403, json!({ "error": "permissionDenied", "message": "process" })));
+    let r = call_fn(&srv, "asRoot", json!({ "script": "id -u" })).await;
+    assert_eq!(r.json["message"], "root");
 
-    // Approved: runs.
     let srv = server().await;
-    installed_backend(&srv, asking(r#"{"fn":"exec","args":{"cmd":"echo hi"}}"#), &["exec"]).await;
-    let r = call_backend(&srv, "run", json!(null)).await;
-    assert_eq!(r.json["ok"]["stdout"], "hi\n", "{}", r.json);
+    installed_backend(&srv, &["process", "root"]).await;
+    let r = call_fn(&srv, "run", json!({ "script": "echo hi" })).await;
+    assert_eq!(r.json["value"], "hi\n", "{}", r.json);
+    // Root needs the desk's sudo password with the call, whatever was
+    // approved.
+    let r = call_fn(&srv, "asRoot", json!({ "script": "id -u" })).await;
+    assert_eq!((r.status, r.json["message"].as_str()), (403, Some("sudo")));
+    // `job` is a job's own.
+    let r = call_fn(&srv, "lineOutside", json!(null)).await;
+    assert_eq!(r.json, json!({ "error": "failedPrecondition", "message": "notAJob" }));
 }
 
 #[ntex::test]
 async fn a_backend_keeps_what_it_stores() {
     let srv = server().await;
-    installed_backend(&srv, asking(r#"{"fn":"kv.set","args":{"key":"k","value":42}}"#), &[]).await;
-    assert_eq!(call_backend(&srv, "set", json!(null)).await.json, json!({ "ok": null }));
-    let srv2 = srv;
-    // Read back by a module that asks for it.
-    let r = install(&srv2, wasm_package(asking(r#"{"fn":"kv.get","args":{"key":"k"}}"#), &[])).await;
+    installed_backend(&srv, &[]).await;
+    assert_eq!(call_fn(&srv, "get", json!({ "key": "k" })).await.json["value"], json!(null));
+    assert_eq!(call_fn(&srv, "put", json!({ "key": "k", "value": "{\"n\":42}" })).await.status, 200);
+    assert_eq!(call_fn(&srv, "get", json!({ "key": "k" })).await.json["value"], "{\"n\":42}");
+    // JSON texts only: the frame's storage reads the same rows.
+    let r = call_fn(&srv, "put", json!({ "key": "k", "value": "{" })).await;
+    assert_eq!((r.status, r.json["error"].as_str()), (400, Some("invalidArgument")));
+    let r = call(&srv, true, Method::GET, "/api/v1/apps", None).await;
     assert_eq!(r.status, 200);
-    assert_eq!(approve(&srv2, &[], common::PASSWORD).await.status, 200);
-    assert_eq!(call_backend(&srv2, "get", json!(null)).await.json, json!({ "ok": 42 }));
+}
+
+#[ntex::test]
+async fn a_job_streams_its_lines_and_answers_once_done() {
+    let srv = server().await;
+    installed_backend(&srv, &[]).await;
+    let r = start_job(&srv, "count", json!({ "lines": 3 })).await;
+    assert_eq!(r.status, 202, "{}", r.json);
+    assert_eq!(r.json["function"], "count");
+    let done = ended(&srv).await;
+    assert_eq!(done["state"], "succeeded", "{done}");
+    assert_eq!(done["value"], 3);
+    let lines: Vec<&str> = done["lines"].as_array().unwrap().iter().map(|l| l["text"].as_str().unwrap()).collect();
+    assert_eq!(lines, ["line 0", "line 1", "line 2"]);
+    // A call is not a job.
+    assert_eq!(start_job(&srv, "echo", json!(null)).await.status, 404);
+}
+
+#[ntex::test]
+async fn a_job_runs_alone_and_stops_when_cancelled() {
+    let srv = server().await;
+    installed_backend(&srv, &[]).await;
+    assert_eq!(start_job(&srv, "forever", json!(null)).await.status, 202);
+    let r = start_job(&srv, "count", json!({ "lines": 1 })).await;
+    assert_eq!((r.status, r.json["message"].as_str()), (409, Some("busy")));
+    let r = call(&srv, true, Method::POST, "/api/v1/apps/acme.notes/jobs/cancel", None).await;
+    assert_eq!(r.status, 202);
+    let done = ended(&srv).await;
+    assert_eq!((done["state"].as_str(), done["error"]["error"].as_str()), (Some("cancelled"), Some("cancelled")), "{done}");
+}
+
+#[ntex::test]
+async fn a_backend_must_be_a_component_of_api_2() {
+    let srv = server().await;
+    // API 1's core module.
+    let mut m = manifest(&[]);
+    m["kind"] = json!("wasm");
+    let old = package(&[("manifest.json", m.to_string().into_bytes()), ("ui/index.html", b"x".to_vec()), ("backend.wasm", probe())]);
+    assert_eq!(install(&srv, old).await.json["error"], "unsupportedApi");
+    // Not a component.
+    let r = install(&srv, wasm_package(wat::parse_str("(module)").unwrap(), &[])).await;
+    assert_eq!((r.status, r.json["error"].as_str()), (400, Some("invalidBackend")), "{}", r.json);
 }
 
 #[ntex::test]
@@ -402,39 +460,17 @@ async fn a_package_brings_a_backend_only_as_wasm() {
     let srv = server().await;
     let mut m = manifest(&[]);
     m["kind"] = json!("wasm");
+    m["api"] = json!(2);
     let no_backend = package(&[("manifest.json", m.to_string().into_bytes()), ("ui/index.html", b"x".to_vec())]);
     assert_eq!(install(&srv, no_backend).await.json["error"], "backendMismatch");
     let stray = package(&[
         ("manifest.json", manifest(&[]).to_string().into_bytes()),
         ("ui/index.html", b"x".to_vec()),
-        ("backend.wasm", guest("", ECHO)),
+        ("backend.wasm", probe()),
     ]);
     assert_eq!(install(&srv, stray).await.json["error"], "backendMismatch");
     // A web app has no backend to call.
     install(&srv, good(&[])).await;
     approve(&srv, &[], common::PASSWORD).await;
-    assert_eq!(call_backend(&srv, "x", json!(null)).await.status, 404);
-}
-
-#[ntex::test]
-async fn a_guest_reentering_the_host_traps_rather_than_overflowing() {
-    let srv = server().await;
-    // `sbm_alloc` itself asks the host, so answering any host call recurses.
-    let wasm = wat::parse_str(
-        r#"(module
-          (import "sbm" "host" (func $host (param i32 i32) (result i64)))
-          (memory (export "memory") 1)
-          (data (i32.const 16) "{}")
-          (func (export "sbm_alloc") (param i32) (result i32)
-            i32.const 16 i32.const 2 call $host drop
-            i32.const 1024)
-          (func (export "sbm_call") (param i32 i32) (result i64)
-            i32.const 16 i32.const 2 call $host))"#,
-    )
-    .unwrap();
-    installed_backend(&srv, wasm, &[]).await;
-    let r = call_backend(&srv, "x", json!(null)).await;
-    assert_eq!((r.status, r.json["error"].as_str()), (422, Some("trap")), "{}", r.json);
-    // The agent is still here.
-    assert_eq!(call_backend(&srv, "x", json!(null)).await.status, 422);
+    assert_eq!(call_fn(&srv, "x", json!(null)).await.status, 404);
 }

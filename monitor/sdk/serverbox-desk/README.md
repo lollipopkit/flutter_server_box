@@ -18,6 +18,11 @@ await desk.toolbar({ actions: [{ id: 'refresh', label: 'Refresh', icon: 'refresh
 desk.on('action', ({ id }) => { /* … */ })
 const count = (await desk.storage.get<number>('count')) ?? 0
 await desk.storage.set('count', count + 1)
+
+// A `wasm` app's backend: a function of its WIT `api`, and one of its `jobs`
+// run as root after the desk's own sudo dialog.
+const notes = await desk.call('list', { folder: 'work' })
+await desk.job('reindex', {}, { sudo: { title: 'Reindex', body: 'Reads every folder as root.' }, onLine: console.log })
 ```
 
 Once `connect()` resolves, the page is in the desk's design system: the desk

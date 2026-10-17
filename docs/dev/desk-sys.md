@@ -10,7 +10,7 @@ Status: phases 1–5 are implemented (see [Phases](#phases)); the rest is the ag
 |---|---|---|---|
 | `system` | Svelte components in this repo (`desk/apps/<name>/`) | The panel's page | `sys`, `lk`, the agent's HTTP API |
 | `web` | A static bundle (HTML/JS/CSS) installed on the agent | A sandboxed iframe | `sys` only, over a message bridge. No agent API, no network |
-| `wasm` | A `web` bundle plus a WebAssembly module installed on the agent | Frontend: a sandboxed iframe. Backend: the agent's WASM runtime | `sys`, and its own backend through `sys.backend`. The backend reaches the machine only through host functions its permissions allow |
+| `wasm` | A `web` bundle plus a WebAssembly component installed on the agent (API 2) | Frontend: a sandboxed iframe. Backend: the agent's wasmtime runtime | `sys`, and its own backend's service through `call`/`job`. The backend reaches the machine only through host functions its permissions allow |
 
 A third-party app never runs in the panel's own page. Code in the page can read the session token and act as the signed-in account; an iframe with `sandbox="allow-scripts"` (no `allow-same-origin`) runs in an opaque origin, which is the only boundary the browser enforces. The agent serves an installed bundle with `Content-Security-Policy: sandbox allow-scripts allow-forms; default-src 'self'; connect-src 'none'`, so the bundle stays sandboxed even when it is opened directly.
 
@@ -70,7 +70,7 @@ One import for system apps: `import { … } from '../../sys'`. Third-party apps 
 | Intents | `open(appId, { intent })`, `useIntents(handler)`, `handlers(path, kind)`, `opens` in the manifest | An intent is `{ action, data }`, delivered once to the window it opened (held until the app's handler is mounted, so none is lost to timing). `open` (`data: { path, kind }`) is the desk's; others are named by the receiving app (`terminal.type`, `lib/snippetIntent`). Files lists the apps whose `opens` match under "Open with" |
 | Clipboard | `clipboard.writeText` | Read is not offered (browsers prompt; an app gets text by paste) |
 | Theme and locale | `theme` (`{ dark, tokens }`), `locale` | Third-party: the desk's design system is put on the page by `connect()` (see UI) |
-| Backend | `backend.call(method, params)`, `backend.events(handler)` | `wasm` apps only |
+| Backend | `call(fn, args, { sudo })`, `job(fn, args, { sudo, onLine })`, `jobView`, `follow`, `cancelJob` | `wasm` apps only |
 
 ## UI (third-party apps)
 
@@ -89,20 +89,19 @@ A third-party manifest lists what it needs. The agent decides on every call: wha
 |---|---|---|
 | `notifications` | `notify` | — |
 | `background` | Background running and `keepAlive` | — |
-| `files.read`, `files.write` | The backend's `fs` host functions | yes |
-| `exec` | The backend's `exec` host function | yes |
-| `net` | The backend's outbound TCP, to the addresses listed in the manifest | yes |
 | `status` | The backend's read of the status sample | — |
+| `process` | The backend's `exec`: a script as the agent's account | yes |
+| `root` | The backend's `exec-root` and a job's `run-root`: a script as root, with the sudo password the desk asked for that call or job | yes |
 
 The owner installs an app and approves it in Settings → Apps. An approval names the package (its SHA-256) and asks the agent's password again; an upload asks none, so **any new package, whatever its version or permissions, waits for approval again**. Ids of the panel's own apps are refused. Removing an app removes what it kept in its storage.
 
 ## Packages and installation (`web`, `wasm`)
 
-A package is a `.fsba` (gzipped tar): `manifest.json`, `ui/` (the bundle, `ui/index.html` the entry), `backend.wasm` (`wasm` only), `LICENSE`. Endpoints: `GET /apps`, `POST /apps` (upload), `PUT /apps/{id}/approval`, `DELETE /apps/{id}`. The agent checks the manifest, the size limits (bundle 20 MiB, backend 20 MiB) and paths (no `..`, no links), stores the package under its data directory and serves `ui/` at `/apps/{id}/ui/*`.
+A package is a `.fsba` (gzipped tar): `manifest.json`, `ui/` (the bundle, `ui/index.html` the entry), `backend.wasm` (`wasm` only, a component; checked and compiled at install, `invalidBackend` otherwise), `LICENSE`. `web` takes API 1 or 2, `wasm` API 2 (API 1's core module is refused, `unsupportedApi`). Endpoints: `GET /apps`, `POST /apps` (upload), `PUT /apps/{id}/approval`, `DELETE /apps/{id}`. The agent checks the manifest, the size limits (bundle 20 MiB, backend 20 MiB) and paths (no `..`, no links), stores the package under its data directory and serves `ui/` at `/apps/{id}/ui/*`.
 
 ## The bridge (phase 3)
 
-The desk posts `{ sbm: 1, event: 'connect' }` with a `MessagePort` to the frame's first page; the frame posts calls `{ sbm: 1, id, call, args }` on that port and gets `{ sbm: 1, re, ok, value | error }`; the desk sends events `{ sbm: 1, event, data }` (held until the frame's `hello`). Only the port is heard, and every shape and size is checked (1 MiB, 32 calls in flight, `appState` ≤ 16 KiB, three `open`s per 10 s).
+The desk posts `{ sbm: 1, event: 'connect' }` with a `MessagePort` to the frame's first page; the frame posts calls `{ sbm: 1, id, call, args }` on that port and gets `{ sbm: 1, re, ok, value | error, message? }` (`message`: a backend's words); the desk sends events `{ sbm: 1, event, data }` (held until the frame's `hello`). Only the port is heard, and every shape and size is checked (1 MiB, 32 calls in flight, `appState` ≤ 16 KiB, three `open`s per 10 s).
 
 | Call | Does |
 |---|---|
@@ -113,26 +112,25 @@ The desk posts `{ sbm: 1, event: 'connect' }` with a `MessagePort` to the frame'
 | `storage.get/set/remove/keys` | The app's own storage |
 | `open` `{ appId, newWindow, intent }` | The only intent it may hand on is `open` of a path (an app must not make Terminal type) |
 | `handlers` `{ path, kind }`, `keepAlive`/`release` `{ token, reason }` (needs `background`) | |
-| `backend.call` `{ method, params }` | Its backend (`wasm` apps) |
+| `backend.call`, `backend.job` `{ function, args, sudo? }` | Its backend's `api` function (`{ value }`) or one of its `jobs` (the job's view). With `sudo` (`{ title, body, confirmWord? }`, plain text, bounded) the desk first shows its own dialog naming the app (`AppSudoDialog`): sudo's password (or the one remembered) goes from the desk to the agent with that request, never to the frame; closing it answers `declined` |
+| `backend.jobView` `{ since }`, `backend.cancel` | The app's job running or last (lines from `since`, then `value` or `error`), and asking it to stop |
 
 Events: `lifecycle`, `theme`, `locale`, `intent` (`{ action, data, from }`), `action`.
 
 Intents carry `from`, set by the desk: an app acts on one only from the apps it expects (Terminal takes `terminal.type` from Snippets alone).
 
-## The WASM backend (phase 4)
+## The backend (API 2)
 
-- The agent runs `backend.wasm`, a core WebAssembly module, with wasmi (an interpreter: no JIT, no executable memory; `portable-dispatch`, so a long loop cannot overflow the stack in any build). One fresh instance per call on a thread of its own; what an app keeps between calls goes through `kv`.
-- ABI: the module exports `memory`, `sbm_alloc(len) -> ptr` and `sbm_call(ptr, len) -> (ptr << 32) | len`; the request is `{ method, params }`, the reply `{ ok }` or `{ error }`. It imports `sbm.host(ptr, len)`, called with `{ fn, args }` and answered the same way. A Rust example: `monitor/examples/desk-app-uptime`.
-- Host functions: `log`; `kv.get/set/remove/keys` (the app's storage); `status` (`status`); `fs.list`, `fs.read` (`files.read` and the transport rule, never the agent's own state, 1 MiB per read); `exec` (`exec` and the transport rule, `[remote_access.exec]`'s bounds, audited like `/exec`). Nothing else of the host is linked.
-- Bounds per call: 2·10⁹ fuel or 10 s, whichever ends first (checked between fuel slices); 64 MiB of memory, one instance; 1000 host calls; 1 MiB request, 4 MiB reply. A bound reached answers `422 { error: "tooLong" | "trap" | … }`.
-- `POST /apps/{id}/call` (`{ method, params }`) runs it as the agent's system account; the frame reaches it with the bridge's `backend.call`. Calls are logged with the app.
-- At most 8 calls at once (`429 busy`). A host function is never re-entered (the guest's allocator calling `sbm.host` traps), and the clock is checked before each host call.
-- Not yet: `fs.write`, `net`, events pushed from a backend.
+- `backend.wasm` is a WebAssembly **component** (WASI 0.2, `wasm32-wasip2`) of a world that includes `sbm:app/imports` (`monitor/wit/app.wit`) and exports the app's service: `api` (unary calls) and, when it has any, `jobs`. Every function returns `result<T, error>`, `error` being gRPC's canonical codes (`invalid-argument`, `not-found`, `already-exists`, `permission-denied`, `failed-precondition`, `unavailable`, `deadline-exceeded`, `cancelled`, `internal`). The app's own WIT is its typed contract: wit-bindgen for the Rust guest; the frame names a function and passes its parameters as one JSON object (`apps::value`: camelCase names, `variant` as `{ tag, val }`, `option` as `null`, `result` as `{ ok }`/`{ err }`; resources, streams and nested options are refused at install). Examples: `monitor/apps/cleanup`, `monitor/examples/desk-app-uptime`, the test guest `monitor/tests/apps/probe`.
+- The agent runs it with wasmtime (`apps::runtime`): compiled once per package into `<database dir>/apps/cache/<sha256>.cwasm` (a protected tree, only the agent writes it), a fresh instance per call or job (what lasts goes through `kv`), no preopens, environment, arguments or network.
+- Host functions (`host`, `agent`, `job`): `log`; `kv-get/set/remove` (the calling account's app storage, JSON texts); `home`; `status` (`status`); `exec` (`process`, `[remote_access.exec]`'s bounds); `exec-root` (`root`, with the request's sudo password, else `permission-denied("sudo")`); `holds-state` and `stack-leftovers` (what the agent knows of its own state and its web apps' folders); in a job, `line` (its log) and `run-root` (as root, its output streamed to the log). A permission is checked with the transport rule when the function runs.
+- Bounds: 64 MiB of memory; CPU by epoch interruption every 10 ms, yielding at each tick, a trap after 10 s of the guest's own work (time in host calls is not counted); a call ends after 60 s; at most 8 calls at once (`429`). A trap is `422 { error: "trap" }`.
+- `POST /apps/{id}/call` and `POST /apps/{id}/jobs` take `{ function, args, sudo? }` (`sudo`: `{ password, remember }`, tried first: `403 sudo_rejected`; `remember` keeps it in memory with Agent mode's for 15 minutes, `GET /apps/sudo` says whether one is kept). A job runs alone per app (`409`), until it returns or `POST /apps/{id}/jobs/cancel`; `GET /apps/{id}/jobs?since=` reads it. Root work and every job are audited with the app.
 
 ## Phases
 
 1. **sys core, system apps** (done, `656d5872`): manifests and registry, `sys` (window, identity, menus, shortcuts, lifecycle, background setting), the shell reading it; apps import only `sys`, `lk` and shared code (lint-enforced).
 2. **Services** (done): per-app background choice (`background_denied`, migration 018), storage, notifications, dock menus, `keepAlive`, Control Centre's background list, intents and "Open with" (Snippets → Terminal moved onto them), app settings pages.
 3. **`web` apps** (done): the agent's package store (`api::apps`, migration 018), the frame host and bridge (`desk/webapps/`: `protocol.ts`, `bridge.svelte.ts`, `WebAppFrame.svelte`), Settings → Apps (install, approve, remove), an example (`monitor/examples/desk-app-hello`). The SDK package moves to phase 5.
-4. **`wasm` apps** (done): `api::app_runtime`, `/apps/{id}/call`, host functions, bounds; the bridge's `backend.call`. Events from a backend and `fs.write`/`net` are left.
-5. **SDK** (done): `monitor/sdk/serverbox-desk` (the client, on npm as `serverbox-desk`, Apache-2.0; `protocol.ts` is the one copy of the protocol, the panel's bridge imports it), `monitor/sdk/template` (vite, relative URLs, `npm run pack`), examples `monitor/examples/desk-app-hello` (`web`) and `desk-app-uptime` (`wasm`, Rust).
+4. **`wasm` apps** (done; API 2 since 2026-10, `docs/dev/app-platform.md` §B): wasmtime components with a typed service (`apps::runtime`, `api::app_backend`), jobs, root through the desk's own sudo dialog. First-party apps leave the panel this way (`monitor/apps/<name>`, `scripts/build-desk-app.sh`).
+5. **SDK** (done): `monitor/sdk/serverbox-desk` (the client, on npm as `serverbox-desk`, Apache-2.0; `protocol.ts` is the one copy of the protocol, the panel's bridge imports it), `monitor/sdk/template` (vite, relative URLs, `npm run pack`), examples `monitor/examples/desk-app-hello` (`web`) and `desk-app-uptime` (`wasm`, a Rust component).
