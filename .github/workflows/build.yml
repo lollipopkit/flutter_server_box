@@ -908,11 +908,27 @@ jobs:
           for f in *_"${BUILD_NUMBER}"_*.zip; do
             mv "$f" "${f/_${BUILD_NUMBER}_/_v1.0.${BUILD_NUMBER}_}"
           done
+      - name: Install WiX Toolset
+        shell: pwsh
+        run: dotnet tool install --global wix --version 4.0.5
+      - name: Package MSI
+        shell: pwsh
+        run: |
+          $bundle = (Resolve-Path "build/windows/x64/runner/Release").Path
+          $output = "${env:APP_NAME}_v1.0.${env:BUILD_NUMBER}_windows_amd64.msi"
+          & "$env:USERPROFILE\.dotnet\tools\wix.exe" build windows/installer/Package.wxs `
+            -arch x64 `
+            -d "AppDir=$bundle" `
+            -d "MsiVersion=1.0.$env:BUILD_NUMBER" `
+            -o $output
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Upload artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-windows
-          path: ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_windows_amd64.zip
+          path: |
+            ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_windows_amd64.zip
+            ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_windows_amd64.msi
           if-no-files-found: error
           retention-days: 14
 
@@ -989,6 +1005,7 @@ jobs:
             "${APP_NAME}_${TAG}_amd64.AppImage"
             "${APP_NAME}_${TAG}_legacy_amd64.AppImage"
             "${APP_NAME}_${TAG}_windows_amd64.zip"
+            "${APP_NAME}_${TAG}_windows_amd64.msi"
           )
 
           echo "collected:"

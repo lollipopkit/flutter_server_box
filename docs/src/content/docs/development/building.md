@@ -82,7 +82,8 @@ dart run fl_build -p windows
 ```
 
 Requires Visual Studio with the **Desktop development with C++** workload and
-ATL support.
+ATL support. The GitHub release workflow also packages an MSI installer with a
+Start Menu shortcut, alongside the portable ZIP.
 
 ## Build Monitor agent
 
