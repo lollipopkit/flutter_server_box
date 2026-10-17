@@ -316,6 +316,7 @@
   "keyPageDown": "ページダウン",
   "keyPageUp": "ページアップ",
   "termTextView": "テキストで表示",
+  "termTextLetGo": "保持されなくなった以前の行: {count}",
   "waitConnection": "接続の確立を待ってください",
   "wakeLock": "起動を保つ",
   "watchNotPaired": "ペアリングされたApple Watchがありません",

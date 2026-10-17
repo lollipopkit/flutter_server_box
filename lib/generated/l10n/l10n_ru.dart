@@ -1390,6 +1390,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get termTextView => 'Показать как текст';
 
   @override
+  String termTextLetGo(int count) {
+    return 'Более ранние строки больше не хранятся: $count';
+  }
+
+  @override
   String get waitConnection => 'Пожалуйста, дождитесь установки соединения';
 
   @override

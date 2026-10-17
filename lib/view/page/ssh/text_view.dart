@@ -30,9 +30,10 @@ final class _TerminalTextPageState extends State<TerminalTextPage> {
 
   /// One per buffer: a full-screen program draws on the alternate one, and
   /// leaving it brings the main one back as it was.
-  final _transcripts = Expando<TerminalTranscript>();
+  final _transcripts = <Buffer, TerminalTranscript>{};
 
   List<String> _lines = const [];
+  var _letGo = 0;
   Timer? _throttle;
 
   TerminalTranscript get _transcript {
@@ -51,6 +52,9 @@ final class _TerminalTextPageState extends State<TerminalTextPage> {
   void dispose() {
     _terminal.removeListener(_onChange);
     _throttle?.cancel();
+    for (final transcript in _transcripts.values) {
+      transcript.dispose();
+    }
     super.dispose();
   }
 
@@ -66,6 +70,7 @@ final class _TerminalTextPageState extends State<TerminalTextPage> {
   void _sync() {
     final transcript = _transcript..sync();
     _lines = transcript.lines;
+    _letGo = transcript.letGo;
   }
 
   @override
@@ -75,11 +80,24 @@ final class _TerminalTextPageState extends State<TerminalTextPage> {
       body: SelectionArea(
         child: ListView.builder(
           padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
-          itemCount: _lines.length,
-          itemBuilder: (_, i) => Text(
-            _lines[i],
-            style: const TextStyle(fontFamily: 'monospace'),
-          ),
+          itemCount: _lines.length + (_letGo > 0 ? 1 : 0),
+          itemBuilder: (context, i) {
+            if (_letGo > 0) {
+              if (i == 0) {
+                return Text(
+                  l10n.termTextLetGo(_letGo),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                );
+              }
+              i--;
+            }
+            return Text(
+              _lines[i],
+              style: const TextStyle(fontFamily: 'monospace'),
+            );
+          },
         ),
       ),
       bottomNavigationBar: SafeArea(

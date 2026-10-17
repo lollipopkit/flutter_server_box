@@ -2482,6 +2482,12 @@ abstract class AppLocalizations {
   /// **'View as text'**
   String get termTextView;
 
+  /// Shown at the top of the terminal text view once its oldest lines were dropped to bound memory.
+  ///
+  /// In en, this message translates to:
+  /// **'Earlier lines no longer kept: {count}'**
+  String termTextLetGo(int count);
+
   /// User-facing label or message for wait connection.
   ///
   /// In en, this message translates to:

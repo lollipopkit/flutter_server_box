@@ -316,6 +316,7 @@
   "keyPageDown": "Halaman bawah",
   "keyPageUp": "Halaman atas",
   "termTextView": "Lihat sebagai teks",
+  "termTextLetGo": "Baris sebelumnya tidak lagi disimpan: {count}",
   "waitConnection": "Harap tunggu koneksi akan dibuat.",
   "wakeLock": "Tetap terjaga",
   "watchNotPaired": "Tidak ada Apple Watch yang dipasangkan",

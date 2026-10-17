@@ -1385,6 +1385,11 @@ class AppLocalizationsAz extends AppLocalizations {
   String get termTextView => 'Mətn kimi bax';
 
   @override
+  String termTextLetGo(int count) {
+    return 'Artıq saxlanmayan əvvəlki sətirlər: $count';
+  }
+
+  @override
   String get waitConnection => 'Əlaqə qurulana qədər gözlə.';
 
   @override

@@ -1401,6 +1401,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get termTextView => 'Ver como texto';
 
   @override
+  String termTextLetGo(int count) {
+    return 'Líneas anteriores que ya no se conservan: $count';
+  }
+
+  @override
   String get waitConnection =>
       'Por favor, espera a que la conexión se establezca';
 

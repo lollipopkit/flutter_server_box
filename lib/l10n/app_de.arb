@@ -316,6 +316,7 @@
   "keyPageDown": "Bild ab",
   "keyPageUp": "Bild auf",
   "termTextView": "Als Text anzeigen",
+  "termTextLetGo": "Ältere Zeilen nicht mehr gespeichert: {count}",
   "waitConnection": "Bitte warte, bis die Verbindung hergestellt wurde.",
   "wakeLock": "Wach halten",
   "watchNotPaired": "Keine gekoppelte Apple Watch",

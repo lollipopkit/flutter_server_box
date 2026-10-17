@@ -1315,6 +1315,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get termTextView => '텍스트로 보기';
 
   @override
+  String termTextLetGo(int count) {
+    return '더 이상 보관되지 않는 이전 줄: $count';
+  }
+
+  @override
   String get waitConnection => '연결이 설정될 때까지 기다려 주세요.';
 
   @override

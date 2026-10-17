@@ -383,6 +383,7 @@
   "keyPageDown": "向下翻页",
   "keyPageUp": "向上翻页",
   "termTextView": "以文本查看",
+  "termTextLetGo": "更早的输出已不再保留：{count} 行",
   "waitConnection": "请等待连接建立",
   "wakeLock": "保持唤醒",
   "watchNotPaired": "没有已配对的 Apple Watch",

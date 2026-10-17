@@ -1386,6 +1386,11 @@ class AppLocalizationsUk extends AppLocalizations {
   String get termTextView => 'Переглянути як текст';
 
   @override
+  String termTextLetGo(int count) {
+    return 'Ранніші рядки більше не зберігаються: $count';
+  }
+
+  @override
   String get waitConnection =>
       'Будь ласка, зачекайте, доки з\'єднання буде встановлено.';
 

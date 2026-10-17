@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/ssh/terminal_a11y.dart';
@@ -41,9 +39,12 @@ void main() {
   test('announcesAfter skips plain characters', () {
     expect(announcesAfter('a'), isFalse);
     expect(announcesAfter('ls'), isFalse);
-    for (final key in ['\r', ' ', '\t', '\x7f', '\x1b', '\x1b[A']) {
+    for (final key in ['\r', '\t', '\x7f', '\x1b', '\x1b[A']) {
       expect(announcesAfter(key), isTrue, reason: key);
     }
+    // Left to the announcer, which reads a space only by what it changed.
+    expect(announcesAfter(' '), isFalse);
+    expect(announcesAfter('git commit '), isFalse);
   });
 
   group('TerminalAnnouncer', () {
@@ -80,6 +81,39 @@ void main() {
         terminal.write('*');
         async.elapse(const Duration(milliseconds: 400));
         expect(said, ['[*] one']);
+      });
+    });
+
+    test('a space at a prompt reads nothing, word after word', () {
+      fakeAsync((async) {
+        final terminal = _terminal()..write(r'$ git');
+        final said = <String>[];
+        final announcer = TerminalAnnouncer(terminal, announce: said.add);
+        announcer.onTyped(' ');
+        terminal.write(' ');
+        async.elapse(const Duration(seconds: 1));
+        for (final c in 'commit'.split('')) {
+          announcer.onTyped(c);
+          terminal.write(c);
+        }
+        announcer.onTyped(' ');
+        terminal.write(' ');
+        announcer.onTyped('-');
+        terminal.write('-');
+        async.elapse(const Duration(seconds: 3));
+        expect(said, isEmpty);
+      });
+    });
+
+    test('a key that is not a space still reads the cursor row', () {
+      fakeAsync((async) {
+        final terminal = _terminal()..write('> one\r\n  two\x1b[1;1H');
+        final said = <String>[];
+        final announcer = TerminalAnnouncer(terminal, announce: said.add);
+        announcer.onTyped(' ');
+        announcer.onTyped('\x1b[A');
+        async.elapse(const Duration(seconds: 1));
+        expect(said, ['> one']);
       });
     });
 
@@ -168,63 +202,84 @@ void main() {
       expect(transcript.lines, written);
     });
 
-    test('droppedByReflow takes the longest overlap', () {
-      int dropped(List<String> before, List<String> after) =>
-          TerminalTranscript.droppedByReflow(before, after);
-      // The first X is not the one left: both old ones are gone but the last.
-      expect(dropped(['A', 'X', 'X'], ['X']), 2);
-      expect(dropped(['p', '', 'q', '', 'q'], ['', 'q']), 3);
-      expect(dropped(['a', 'b', 'c'], ['a', 'b', 'c']), 0);
-      // The last line was redrawn since.
-      expect(dropped(['a', 'b', r'$ l'], ['a', 'b', r'$ ls']), 0);
-      expect(dropped(['a', 'b'], ['c']), 2);
+    test('keeps what scrolled away between two syncs', () {
+      final terminal = _terminal(rows: 3, maxLines: 5);
+      final transcript = TerminalTranscript(terminal.buffer)..sync();
+      terminal.write([for (var i = 0; i < 40; i++) 'line $i'].join('\r\n'));
+      transcript.sync();
+      expect(transcript.lines, [for (var i = 0; i < 40; i++) 'line $i']);
     });
 
-    test('droppedByReflow agrees with trying every overlap', () {
-      // The quadratic version it replaced, as the reference.
-      int reference(List<String> before, List<String> after) {
-        bool tail(int end, int m) {
-          for (var i = 0; i < m; i++) {
-            if (before[end - m + i] != after[i]) return false;
-          }
-          return true;
-        }
-
-        for (var m = math.min(before.length, after.length); m > 0; m--) {
-          if (tail(before.length, m)) return before.length - m;
-          if (m < before.length && tail(before.length - 1, m)) {
-            return before.length - 1 - m;
-          }
-        }
-        return before.length;
+    test('a scroll region over a full buffer loses no line', () {
+      // apt's progress bar: a region above a footer row. Each new line is an
+      // insert under the region, which trims the oldest line of a full buffer
+      // while the rows below it keep their indexes.
+      final terminal = _terminal(rows: 4, maxLines: 6)
+        ..write('\x1b[1;3r\x1b[4;1Hfooter\x1b[3;1H');
+      final transcript = TerminalTranscript(terminal.buffer)..sync();
+      final n = terminal.buffer.lines.maxLength * 2;
+      for (var i = 0; i < n; i++) {
+        terminal.write('\r\nline $i');
+        transcript.sync();
       }
+      final lines = transcript.lines;
+      for (var i = 0; i < n; i++) {
+        expect(lines.where((l) => l == 'line $i'), hasLength(1), reason: '$i');
+      }
+      expect(lines.last, 'footer');
+    });
 
-      final random = math.Random(1528);
-      List<String> lines(int n) => [
-        for (var i = 0; i < n; i++) ['', 'a', 'b'][random.nextInt(3)],
-      ];
-      for (var run = 0; run < 2000; run++) {
-        final before = lines(random.nextInt(9));
-        final after = lines(random.nextInt(9));
+    test('a reverse scroll over the last row repeats nothing', () {
+      // less or vim going back: each row moves down one, and the last is
+      // overwritten by the one above it.
+      final terminal = _terminal(rows: 3, maxLines: 10)
+        ..write([for (var i = 0; i < 5; i++) 'line $i'].join('\r\n'));
+      final transcript = TerminalTranscript(terminal.buffer)..sync();
+      for (var i = 0; i < 3; i++) {
+        terminal.write('\x1b[H\x1bM');
+        transcript.sync();
+      }
+      final lines = transcript.lines;
+      expect(lines.take(2), ['line 0', 'line 1']);
+      for (var i = 0; i < 5; i++) {
         expect(
-          TerminalTranscript.droppedByReflow(before, after),
-          reference(before, after),
-          reason: '$before / $after',
+          lines.where((l) => l == 'line $i').length,
+          lessThanOrEqualTo(1),
+          reason: '$i',
         );
       }
     });
 
-    test('droppedByReflow is linear', () {
-      final before = [for (var i = 0; i < 10000; i++) 'old $i'];
-      final after = [for (var i = 0; i < 10000; i++) 'new $i'];
-      final watch = Stopwatch()..start();
-      expect(TerminalTranscript.droppedByReflow(before, after), 10000);
-      final repeated = List.filled(10000, 'x');
-      expect(
-        TerminalTranscript.droppedByReflow(repeated, [...repeated, 'y']),
-        0,
-      );
-      expect(watch.elapsedMilliseconds, lessThan(200));
+    test('lets go of the oldest lines past its limit, and says how many', () {
+      final terminal = _terminal(rows: 2, maxLines: 2);
+      final held = terminal.buffer.lines.maxLength;
+      final transcript = TerminalTranscript(terminal.buffer, maxKept: 10);
+      const n = 200;
+      terminal.write([for (var i = 0; i < n; i++) 'line $i'].join('\r\n'));
+      transcript.sync();
+      final lines = transcript.lines;
+      expect(transcript.letGo, greaterThan(0));
+      expect(lines, [for (var i = transcript.letGo; i < n; i++) 'line $i']);
+      expect(lines.length, lessThanOrEqualTo(10 + 1 + held));
+    });
+
+    test('stops listening once disposed', () {
+      final terminal = _terminal(rows: 2, maxLines: 2);
+      final held = terminal.buffer.lines.maxLength;
+      final transcript = TerminalTranscript(terminal.buffer)..dispose();
+      final n = held + 5;
+      terminal.write([for (var i = 0; i < n; i++) 'line $i'].join('\r\n'));
+      transcript.sync();
+      expect(transcript.lines.first, 'line 5');
+      expect(transcript.lines, hasLength(held));
+    });
+
+    test('a row wrapped onto a line that left is joined to it', () {
+      final terminal = _terminal(cols: 4, rows: 2, maxLines: 2);
+      final transcript = TerminalTranscript(terminal.buffer);
+      terminal.write('abcdefghij');
+      transcript.sync();
+      expect(transcript.lines, ['abcdefghij']);
     });
 
     test('a wrapped row is joined to the line it continues', () {

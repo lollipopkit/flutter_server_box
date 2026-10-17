@@ -316,6 +316,7 @@
   "keyPageDown": "Pagina omlaag",
   "keyPageUp": "Pagina omhoog",
   "termTextView": "Als tekst bekijken",
+  "termTextLetGo": "Eerdere regels niet meer bewaard: {count}",
   "waitConnection": "Wacht alstublieft tot de verbinding tot stand is gebracht.",
   "wakeLock": "Wakker houden",
   "watchNotPaired": "Geen gekoppelde Apple Watch",

@@ -1396,6 +1396,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get termTextView => 'Als Text anzeigen';
 
   @override
+  String termTextLetGo(int count) {
+    return 'Ältere Zeilen nicht mehr gespeichert: $count';
+  }
+
+  @override
   String get waitConnection =>
       'Bitte warte, bis die Verbindung hergestellt wurde.';
 

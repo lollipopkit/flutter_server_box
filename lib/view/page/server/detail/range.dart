@@ -180,8 +180,14 @@ extension on _ServerDetailPageState {
           ),
         ),
       );
-      // Which window is on is drawn as a fill alone.
-      return Semantics(button: true, selected: on, child: body);
+      // Which window is on is drawn as a fill alone, and which are out of
+      // reach as a fainter label. Still tappable: the tap says why.
+      return Semantics(
+        button: true,
+        selected: on,
+        enabled: enabled,
+        child: body,
+      );
     }
 
     return Container(

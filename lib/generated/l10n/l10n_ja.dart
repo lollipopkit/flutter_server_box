@@ -1311,6 +1311,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get termTextView => 'テキストで表示';
 
   @override
+  String termTextLetGo(int count) {
+    return '保持されなくなった以前の行: $count';
+  }
+
+  @override
   String get waitConnection => '接続の確立を待ってください';
 
   @override
