@@ -402,6 +402,8 @@ const ru = {
 	terminalProgramDismiss: 'Скрыть',
 	terminalConnect: 'Подключиться',
 	terminalResume: 'Вернуться к прошлой сессии',
+	terminalScreenReader: 'Режим экранного диктора',
+	terminalScreenReaderHint: 'Позволяет экранному диктору читать терминал. Пока режим включён, Tab переводит фокус из терминала вместо автодополнения в оболочке.',
 	terminalDisconnect: 'Завершить сессию',
 	terminalSubmit: 'Отправить',
 	terminalReconnecting: 'Переподключение…',

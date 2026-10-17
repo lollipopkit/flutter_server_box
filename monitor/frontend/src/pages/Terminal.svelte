@@ -28,6 +28,7 @@
   import { tmuxIssueText } from '../lib/tmux'
   import { mountTerminal, type TerminalHandle } from '../lib/xterm'
   import ProgramStatusBar from '../components/ProgramStatusBar.svelte'
+  import ScreenReaderToggle from '../components/ScreenReaderToggle.svelte'
   import type { TmuxSession, TmuxView } from '../types'
 
   const session = new TerminalSession()
@@ -589,6 +590,10 @@
   {/if}
 
   <ProgramStatusBar records={terminal?.status ?? null} />
+
+  <div class="flex justify-end">
+    <ScreenReaderToggle />
+  </div>
 
   <!-- Takes whatever the cards above leave, down to a floor that keeps the
        terminal usable on a short window -->

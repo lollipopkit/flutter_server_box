@@ -402,6 +402,8 @@ const id = {
 	terminalProgramDismiss: 'Tutup',
 	terminalConnect: 'Hubungkan',
 	terminalResume: 'Gabung kembali ke sesi sebelumnya',
+	terminalScreenReader: 'Mode pembaca layar',
+	terminalScreenReaderHint: 'Memungkinkan pembaca layar membaca terminal. Selama aktif, Tab memindahkan fokus keluar dari terminal alih-alih melengkapi di shell.',
 	terminalDisconnect: 'Akhiri sesi',
 	terminalSubmit: 'Kirim',
 	terminalReconnecting: 'Menghubungkan ulang…',

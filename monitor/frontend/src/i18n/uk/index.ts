@@ -402,6 +402,8 @@ const uk = {
 	terminalProgramDismiss: 'Закрити',
 	terminalConnect: 'Підключитися',
 	terminalResume: 'Повернутися до попереднього сеансу',
+	terminalScreenReader: 'Режим екранного зчитувача',
+	terminalScreenReaderHint: 'Дає змогу екранному зчитувачу читати термінал. Поки режим увімкнено, Tab переводить фокус із термінала замість автодоповнення в оболонці.',
 	terminalDisconnect: 'Завершити сеанс',
 	terminalSubmit: 'Надіслати',
 	terminalReconnecting: 'Перепідключення…',

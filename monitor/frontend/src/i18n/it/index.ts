@@ -402,6 +402,8 @@ const it = {
 	terminalProgramDismiss: 'Ignora',
 	terminalConnect: 'Connetti',
 	terminalResume: 'Rientra nella sessione precedente',
+	terminalScreenReader: 'Modalità screen reader',
+	terminalScreenReaderHint: 'Permette a uno screen reader di leggere il terminale. Quando è attiva, Tab sposta il focus fuori dal terminale invece di completare nella shell.',
 	terminalDisconnect: 'Termina sessione',
 	terminalSubmit: 'Invia',
 	terminalReconnecting: 'Riconnessione…',

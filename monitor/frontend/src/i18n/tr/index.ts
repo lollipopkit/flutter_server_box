@@ -402,6 +402,8 @@ const tr = {
 	terminalProgramDismiss: 'Kapat',
 	terminalConnect: 'Bağlan',
 	terminalResume: 'Önceki oturuma geri dön',
+	terminalScreenReader: 'Ekran okuyucu modu',
+	terminalScreenReaderHint: 'Ekran okuyucunun terminali okumasını sağlar. Açıkken Tab, kabukta tamamlama yerine odağı terminalin dışına taşır.',
 	terminalDisconnect: 'Oturumu sonlandır',
 	terminalSubmit: 'Gönder',
 	terminalReconnecting: 'Yeniden bağlanılıyor…',

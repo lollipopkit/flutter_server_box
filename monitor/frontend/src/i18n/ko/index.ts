@@ -402,6 +402,8 @@ const ko = {
 	terminalProgramDismiss: '닫기',
 	terminalConnect: '연결',
 	terminalResume: '이전 세션에 다시 연결',
+	terminalScreenReader: '화면 낭독기 모드',
+	terminalScreenReaderHint: '화면 낭독기가 터미널을 읽을 수 있게 합니다. 켜져 있는 동안 Tab은 셸 자동 완성 대신 포커스를 터미널 밖으로 옮깁니다.',
 	terminalDisconnect: '세션 종료',
 	terminalSubmit: '제출',
 	terminalReconnecting: '다시 연결하는 중…',

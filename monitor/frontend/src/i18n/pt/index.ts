@@ -402,6 +402,8 @@ const pt = {
 	terminalProgramDismiss: 'Dispensar',
 	terminalConnect: 'Conectar',
 	terminalResume: 'Retomar a sessão anterior',
+	terminalScreenReader: 'Modo de leitor de tela',
+	terminalScreenReaderHint: 'Permite que um leitor de tela leia o terminal. Enquanto ativo, Tab tira o foco do terminal em vez de completar no shell.',
 	terminalDisconnect: 'Encerrar sessão',
 	terminalSubmit: 'Enviar',
 	terminalReconnecting: 'Reconectando…',

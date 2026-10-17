@@ -6,6 +6,7 @@
 /// and the fit-after-a-frame dance is what keeps the size sent to the agent
 /// correct.
 import { attachProgramStatus, ProgramStatusRecords } from './programStatus'
+import { screenReader } from './screenReader.svelte'
 import type { Renderer, TerminalSession } from './terminal.svelte'
 
 export interface TerminalHandle {
@@ -67,10 +68,7 @@ export async function mountTerminal(
   const term = new Terminal({
     convertEol: false,
     cursorBlink: true,
-    // Always on: a page cannot tell whether a screen reader is running. It
-    // mirrors the rows into an offscreen accessibility tree and announces
-    // new output; nothing visible changes.
-    screenReaderMode: true,
+    screenReaderMode: screenReader.enabled,
     fontSize: 13,
     fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
     theme: terminalTheme(),
@@ -82,6 +80,10 @@ export async function mountTerminal(
 
   const status = new ProgramStatusRecords()
   const detachStatus = attachProgramStatus(term.parser, status, (data) => session.input(data))
+
+  const unwatchScreenReader = screenReader.watch((on) => {
+    term.options.screenReaderMode = on
+  })
 
   term.onData((data) => session.input(data))
   term.onResize(({ cols, rows }) => session.resize(cols, rows))
@@ -127,6 +129,7 @@ export async function mountTerminal(
     },
     dispose() {
       resizeObserver?.disconnect()
+      unwatchScreenReader()
       detachStatus()
       term.dispose()
     },

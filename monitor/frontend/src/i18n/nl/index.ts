@@ -402,6 +402,8 @@ const nl = {
 	terminalProgramDismiss: 'Negeren',
 	terminalConnect: 'Verbinden',
 	terminalResume: 'Vorige sessie hervatten',
+	terminalScreenReader: 'Schermlezermodus',
+	terminalScreenReaderHint: 'Laat een schermlezer de terminal voorlezen. Zolang deze aan staat, verplaatst Tab de focus uit de terminal in plaats van aan te vullen in de shell.',
 	terminalDisconnect: 'Sessie beëindigen',
 	terminalSubmit: 'Versturen',
 	terminalReconnecting: 'Opnieuw verbinden…',
