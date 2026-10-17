@@ -316,6 +316,7 @@
   "keyPageDown": "Sayfa aşağı",
   "keyPageUp": "Sayfa yukarı",
   "termTextView": "Metin olarak görüntüle",
+  "termTextLetGo": "Artık saklanmayan önceki satırlar: {count}",
   "waitConnection": "Lütfen bağlantının kurulmasını bekleyin.",
   "wakeLock": "Uyanık tut",
   "watchNotPaired": "Eşleştirilmiş Apple Watch yok",

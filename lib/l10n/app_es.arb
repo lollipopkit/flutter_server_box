@@ -316,6 +316,7 @@
   "keyPageDown": "Avanzar página",
   "keyPageUp": "Retroceder página",
   "termTextView": "Ver como texto",
+  "termTextLetGo": "Líneas anteriores que ya no se conservan: {count}",
   "waitConnection": "Por favor, espera a que la conexión se establezca",
   "wakeLock": "Mantener despierto",
   "watchNotPaired": "No hay un Apple Watch emparejado",

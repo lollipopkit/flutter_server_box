@@ -378,6 +378,7 @@
   "keyPageDown": "向下翻頁",
   "keyPageUp": "向上翻頁",
   "termTextView": "以文字檢視",
+  "termTextLetGo": "更早的輸出已不再保留：{count} 行",
   "waitConnection": "請等待連線建立",
   "wakeLock": "保持喚醒",
   "watchNotPaired": "沒有已配對的 Apple Watch",

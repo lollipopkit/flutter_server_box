@@ -1754,6 +1754,15 @@
   "@termTextView": {
     "description": "Opens the terminal output as selectable text, for screen readers."
   },
+  "termTextLetGo": "Earlier lines no longer kept: {count}",
+  "@termTextLetGo": {
+    "description": "Shown at the top of the terminal text view once its oldest lines were dropped to bound memory.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "waitConnection": "Please wait for the connection to be established.",
   "@waitConnection": {
     "description": "User-facing label or message for wait connection."

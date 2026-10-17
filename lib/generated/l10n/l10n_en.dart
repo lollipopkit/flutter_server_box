@@ -1373,6 +1373,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get termTextView => 'View as text';
 
   @override
+  String termTextLetGo(int count) {
+    return 'Earlier lines no longer kept: $count';
+  }
+
+  @override
   String get waitConnection =>
       'Please wait for the connection to be established.';
 

@@ -317,6 +317,7 @@
   "keyPageDown": "Сторінка вниз",
   "keyPageUp": "Сторінка вгору",
   "termTextView": "Переглянути як текст",
+  "termTextLetGo": "Ранніші рядки більше не зберігаються: {count}",
   "waitConnection": "Будь ласка, зачекайте, доки з'єднання буде встановлено.",
   "wakeLock": "Залишити активним",
   "watchNotPaired": "Немає спарованого Apple Watch",

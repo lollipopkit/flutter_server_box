@@ -1383,6 +1383,11 @@ class AppLocalizationsTr extends AppLocalizations {
   String get termTextView => 'Metin olarak görüntüle';
 
   @override
+  String termTextLetGo(int count) {
+    return 'Artık saklanmayan önceki satırlar: $count';
+  }
+
+  @override
   String get waitConnection => 'Lütfen bağlantının kurulmasını bekleyin.';
 
   @override

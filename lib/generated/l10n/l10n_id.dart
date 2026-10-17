@@ -1385,6 +1385,11 @@ class AppLocalizationsId extends AppLocalizations {
   String get termTextView => 'Lihat sebagai teks';
 
   @override
+  String termTextLetGo(int count) {
+    return 'Baris sebelumnya tidak lagi disimpan: $count';
+  }
+
+  @override
   String get waitConnection => 'Harap tunggu koneksi akan dibuat.';
 
   @override

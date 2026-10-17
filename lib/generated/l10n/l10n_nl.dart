@@ -1388,6 +1388,11 @@ class AppLocalizationsNl extends AppLocalizations {
   String get termTextView => 'Als tekst bekijken';
 
   @override
+  String termTextLetGo(int count) {
+    return 'Eerdere regels niet meer bewaard: $count';
+  }
+
+  @override
   String get waitConnection =>
       'Wacht alstublieft tot de verbinding tot stand is gebracht.';
 

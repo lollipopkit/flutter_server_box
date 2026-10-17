@@ -388,6 +388,7 @@
   "keyPageDown": "Səhifə aşağı",
   "keyPageUp": "Səhifə yuxarı",
   "termTextView": "Mətn kimi bax",
+  "termTextLetGo": "Artıq saxlanmayan əvvəlki sətirlər: {count}",
   "waitConnection": "Əlaqə qurulana qədər gözlə.",
   "wakeLock": "Oyaq saxla",
   "watchNotPaired": "Cütləşdirilmiş Apple Watch yoxdur",

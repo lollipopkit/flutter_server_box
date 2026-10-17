@@ -1288,6 +1288,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get termTextView => '以文本查看';
 
   @override
+  String termTextLetGo(int count) {
+    return '更早的输出已不再保留：$count 行';
+  }
+
+  @override
   String get waitConnection => '请等待连接建立';
 
   @override
@@ -6836,6 +6841,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get termTextView => '以文字檢視';
+
+  @override
+  String termTextLetGo(int count) {
+    return '更早的輸出已不再保留：$count 行';
+  }
 
   @override
   String get waitConnection => '請等待連線建立';

@@ -356,6 +356,7 @@
   "keyPageDown": "페이지 다운",
   "keyPageUp": "페이지 업",
   "termTextView": "텍스트로 보기",
+  "termTextLetGo": "더 이상 보관되지 않는 이전 줄: {count}",
   "waitConnection": "연결이 설정될 때까지 기다려 주세요.",
   "wakeLock": "화면 깨우기 유지",
   "watchNotPaired": "페어링된 Apple Watch가 없습니다",
