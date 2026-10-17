@@ -1466,6 +1466,7 @@ const uk = {
 	settingsPermStatus: 'читати стан цього сервера',
 	settingsPermProcess: 'запускати програми на цьому сервері від імені облікового запису agent',
 	settingsPermRoot: 'запускати скрипти від імені root після кожного підтвердження паролем sudo',
+	settingsPermProviders: 'використовувати провайдери моделей режиму Agent, зокрема їхні ключі',
 	settingsAppNoPermissions: 'Немає дозволів',
 	settingsAppRefused: 'Пакет відхилено: {reason}',
 	settingsAppApproveRisk: 'Застосунок працює з правами облікового запису, який його відкрив, і може надсилати прочитані дані сервера в інші місця.',

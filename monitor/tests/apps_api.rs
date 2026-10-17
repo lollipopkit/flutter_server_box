@@ -12,14 +12,18 @@ use ntex::web::{self, App};
 use serde_json::json;
 use server_box_monitor::api::{app_backend, apps};
 use server_box_monitor::api::auth::generate_token;
+use server_box_monitor::agent_mode::config;
 use server_box_monitor::api::server::AppState;
 use server_box_monitor::core::config::Config;
 
 const SECRET: &str = "test-secret-that-is-long-enough-32ch";
 
 async fn server() -> TestServer {
+    server_on(common::database().await).await
+}
+
+async fn server_on(db: sqlx::SqlitePool) -> TestServer {
     let _ = rustls::crypto::ring::default_provider().install_default();
-    let db = common::database().await;
     let config = Config { jwt_secret: Some(SECRET.to_string()), ..Default::default() };
     common::add_owner(&db).await;
     let state: Arc<AppState> = AppState::new(Arc::new(config), db);
@@ -399,6 +403,44 @@ async fn host_functions_need_the_permission() {
     // `job` is a job's own.
     let r = call_fn(&srv, "lineOutside", json!(null)).await;
     assert_eq!(r.json, json!({ "error": "failedPrecondition", "message": "notAJob" }));
+}
+
+#[ntex::test]
+async fn providers_and_their_keys_need_their_permission() {
+    let db = common::database().await;
+    let settings: config::SettingsWrite = serde_json::from_value(json!({
+        "model": { "provider": "local", "id": "m" },
+        "providers": [{ "id": "local", "name": "Local", "api": "openai-completions", "baseUrl": "http://127.0.0.1:9/v1", "models": [{ "id": "m" }] }],
+        "credentials": { "local": "sk-probe" },
+    }))
+    .unwrap();
+    config::store(&db, &settings).await.unwrap();
+    let srv = server_on(db).await;
+    installed_backend(&srv, &[]).await;
+    let r = call_fn(&srv, "providers", json!(null)).await;
+    assert_eq!((r.status, r.json.clone()), (403, json!({ "error": "permissionDenied", "message": "providers" })));
+
+    // The same app asking for them, approved again.
+    installed_backend(&srv, &["providers"]).await;
+    let r = call_fn(&srv, "providers", json!(null)).await;
+    assert_eq!(r.json["value"], json!([["local"], "sk-probe"]), "{}", r.json);
+}
+
+#[ntex::test]
+async fn a_job_runs_a_script_as_the_account_with_its_lines() {
+    let srv = server().await;
+    installed_backend(&srv, &[]).await;
+    assert_eq!(start_job(&srv, "shell", json!({ "script": "echo a" })).await.status, 202);
+    let done = ended(&srv).await;
+    assert_eq!(done["error"]["message"], "process", "{done}");
+
+    let srv = server().await;
+    installed_backend(&srv, &["process"]).await;
+    assert_eq!(start_job(&srv, "shell", json!({ "script": "echo a; echo b; exit 3" })).await.status, 202);
+    let done = ended(&srv).await;
+    assert_eq!((done["state"].as_str(), done["value"].as_i64()), (Some("succeeded"), Some(3)), "{done}");
+    let lines: Vec<&str> = done["lines"].as_array().unwrap().iter().map(|l| l["text"].as_str().unwrap()).collect();
+    assert_eq!(lines, ["# echo a; echo b; exit 3", "a", "b"]);
 }
 
 #[ntex::test]

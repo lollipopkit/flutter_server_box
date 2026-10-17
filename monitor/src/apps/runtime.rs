@@ -365,17 +365,17 @@ impl Ctx {
     }
 }
 
-/// Runs [script] as root (`sudo -S` with [password], an empty one for root
-/// and `NOPASSWD`); each line to [on_line].
-async fn root(
-    password: Zeroizing<String>,
+/// Runs [script] as the account, or as root with [password] (`sudo -S`, an
+/// empty one for root and `NOPASSWD`); each line to [on_line].
+async fn streamed(
+    password: Option<Zeroizing<String>>,
     script: &str,
     timeout: Duration,
     cancel: fl_pi_llm::host::Cancel,
     mut on_line: impl FnMut(Stream, String) + Send,
 ) -> Result<i32, AppError> {
     let (tx, mut rx) = mpsc::unbounded_channel::<(Stream, String)>();
-    let run = command::run(Spec { command: script, sudo_password: Some(&password), timeout }, tx, &cancel);
+    let run = command::run(Spec { command: script, sudo_password: password.as_deref().map(String::as_str), timeout }, tx, &cancel);
     let drain = async {
         while let Some((stream, line)) = rx.recv().await {
             on_line(stream, line);
@@ -433,7 +433,7 @@ impl sbm::app::host::Host for Ctx {
         self.grant.may("root")?;
         let password = self.password.clone().ok_or_else(|| AppError::PermissionDenied("sudo".into()))?;
         let (mut stdout, mut stderr) = (Vec::new(), Vec::new());
-        let status = root(password, &script, self.script_timeout(), self.cancel(), |stream, line| {
+        let status = streamed(Some(password), &script, self.script_timeout(), self.cancel(), |stream, line| {
             let buf = if stream == Stream::Out { &mut stdout } else { &mut stderr };
             if buf.len() + line.len() < MAX_OUTPUT {
                 buf.extend_from_slice(line.as_bytes());
@@ -506,6 +506,21 @@ impl sbm::app::agent::Host for Ctx {
             .collect()
     }
 
+    async fn providers(&mut self) -> Result<Vec<sbm::app::agent::Provider>, AppError> {
+        self.grant.may("providers")?;
+        let all = self.grant.state.agent.addressed_providers().await.map_err(|e| AppError::Internal(e.to_string()))?;
+        Ok(all
+            .into_iter()
+            .map(|(p, models)| sbm::app::agent::Provider { id: p.id, name: p.name, api: p.api, base_url: p.base_url, models })
+            .collect())
+    }
+
+    async fn endpoint(&mut self, id: String) -> Result<Option<sbm::app::agent::Address>, AppError> {
+        self.grant.may("providers")?;
+        let found = self.grant.state.agent.endpoint(&id).await.map_err(|e| AppError::Internal(e.to_string()))?;
+        Ok(found.map(|(p, key)| sbm::app::agent::Address { api: p.api, base_url: p.base_url, key }))
+    }
+
     async fn stack_leftovers(&mut self) -> Vec<(String, String)> {
         let state = self.grant.state.clone();
         let installed: Vec<String> = crate::stacks::store::all(&state.db).await.map(|rows| rows.into_iter().map(|r| r.id).collect()).unwrap_or_default();
@@ -525,7 +540,14 @@ impl sbm::app::job::Host for Ctx {
         self.grant.may("root")?;
         let password = self.password.clone().ok_or_else(|| AppError::PermissionDenied("sudo".into()))?;
         job.push(format!("# {script}"));
-        root(password, &script, JOB_SCRIPT_TIMEOUT, job.cancel_token(), |_, line| job.push(line)).await
+        streamed(Some(password), &script, JOB_SCRIPT_TIMEOUT, job.cancel_token(), |_, line| job.push(line)).await
+    }
+
+    async fn run(&mut self, script: String) -> Result<i32, AppError> {
+        let job = self.job.clone().ok_or_else(|| AppError::FailedPrecondition("notAJob".into()))?;
+        self.grant.may("process")?;
+        job.push(format!("# {script}"));
+        streamed(None, &script, JOB_SCRIPT_TIMEOUT, job.cancel_token(), |_, line| job.push(line)).await
     }
 
     async fn private_file(&mut self, contents: Vec<u8>) -> Result<String, AppError> {

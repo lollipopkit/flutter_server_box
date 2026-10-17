@@ -16,6 +16,8 @@ export function permissionText(ll: TranslationFunctions, permission: string): st
       return ll.settingsPermProcess()
     case 'root':
       return ll.settingsPermRoot()
+    case 'providers':
+      return ll.settingsPermProviders()
     default:
       return permission
   }

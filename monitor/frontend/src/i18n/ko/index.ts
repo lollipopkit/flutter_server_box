@@ -1466,6 +1466,7 @@ const ko = {
 	settingsPermStatus: '이 서버의 상태 읽기',
 	settingsPermProcess: '이 서버에서 agent 계정으로 프로그램 실행',
 	settingsPermRoot: 'sudo 비밀번호로 매번 확인한 뒤 root로 스크립트 실행',
+	settingsPermProviders: 'Agent 모드의 모델 제공업체와 해당 키 사용',
 	settingsAppNoPermissions: '권한 없음',
 	settingsAppRefused: '패키지가 거부되었습니다: {reason}',
 	settingsAppApproveRisk: '앱을 연 계정으로 실행되며 서버에서 읽은 데이터를 다른 곳으로 보낼 수 있습니다.',

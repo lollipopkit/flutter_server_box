@@ -1466,6 +1466,7 @@ const fr = {
 	settingsPermStatus: 'lire l’état de ce serveur',
 	settingsPermProcess: 'exécuter des programmes sur ce serveur avec le compte de l’agent',
 	settingsPermRoot: 'exécuter des scripts en tant que root, après chaque confirmation avec le mot de passe sudo',
+	settingsPermProviders: 'utiliser les fournisseurs de modèles du mode Agent, clés comprises',
 	settingsAppNoPermissions: 'Aucune autorisation',
 	settingsAppRefused: 'Le paquet a été refusé : {reason}',
 	settingsAppApproveRisk: 'Elle s’exécute avec le compte de la personne qui l’ouvre et peut envoyer ailleurs les données qu’elle lit sur le serveur.',

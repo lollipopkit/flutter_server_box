@@ -149,31 +149,13 @@ pub async fn providers(req: HttpRequest, state: web::types::State<Arc<AppState>>
     if let Err(r) = machine::gate(&req, &state, "agent tools providers").await {
         return Ok(r);
     }
-    let settings = match crate::agent_mode::config::load(&state.db).await {
-        Ok(s) => s,
-        Err(e) => return Ok(super::respond::internal(&e)),
+    let all = match state.agent.addressed_providers().await {
+        Ok(all) => all,
+        Err(e) => return Ok(HttpResponse::InternalServerError().json(&json!({ "error": e.to_string() }))),
     };
-    let mut all = settings.providers;
-    for a in state.agent.app_providers() {
-        if !all.iter().any(|p| p.id == a.provider.id) {
-            all.push(a.provider);
-        }
-    }
-    // Their models as pi lists them, when it can.
-    let listed = state.agent.available_models().await.unwrap_or(Value::Null);
     let out: Vec<Value> = all
         .into_iter()
-        .map(|p| {
-            let mut models: Vec<String> = p.models.iter().map(|m| m.id.clone()).collect();
-            for m in listed.as_array().into_iter().flatten().filter(|m| m["provider"] == p.id.as_str()) {
-                if let Some(id) = m["id"].as_str()
-                    && !models.iter().any(|x| x == id)
-                {
-                    models.push(id.to_string());
-                }
-            }
-            json!({ "id": p.id, "name": p.name, "api": p.api, "baseUrl": p.base_url, "models": models })
-        })
+        .map(|(p, models)| json!({ "id": p.id, "name": p.name, "api": p.api, "baseUrl": p.base_url, "models": models }))
         .collect();
     Ok(HttpResponse::Ok().json(&json!({ "providers": out })))
 }

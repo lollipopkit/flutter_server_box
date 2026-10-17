@@ -3,7 +3,7 @@ wit_bindgen::generate!({ path: ["../../../wit", "wit"], world: "test:probe/probe
 use exports::test::probe::api::{self, Echoed, Shade, Shape};
 use exports::test::probe::jobs;
 use sbm::app::types::Error;
-use sbm::app::{host, job};
+use sbm::app::{agent, host, job};
 
 struct Probe;
 
@@ -53,6 +53,15 @@ impl api::Guest for Probe {
         job::line("nobody reads this");
         job::run_root("true").map(|_| ())
     }
+
+    fn providers() -> Result<(Vec<String>, Option<String>), Error> {
+        let all = agent::providers()?;
+        let key = match all.first() {
+            Some(p) => agent::endpoint(&p.id)?.and_then(|e| e.key),
+            None => None,
+        };
+        Ok((all.into_iter().map(|p| p.id).collect(), key))
+    }
 }
 
 impl jobs::Guest for Probe {
@@ -61,6 +70,10 @@ impl jobs::Guest for Probe {
             job::line(&format!("line {i}"));
         }
         Ok(lines)
+    }
+
+    fn shell(script: String) -> Result<i32, Error> {
+        job::run(&script)
     }
 
     fn forever() -> Result<(), Error> {

@@ -6597,6 +6597,10 @@ type RootTranslation = {
 	 */
 	settingsPermRoot: string
 	/**
+	 * u​s​e​ ​A​g​e​n​t​ ​m​o​d​e​'​s​ ​m​o​d​e​l​ ​p​r​o​v​i​d​e​r​s​,​ ​t​h​e​i​r​ ​k​e​y​s​ ​i​n​c​l​u​d​e​d
+	 */
+	settingsPermProviders: string
+	/**
 	 * N​o​ ​p​e​r​m​i​s​s​i​o​n​s
 	 */
 	settingsAppNoPermissions: string
@@ -17890,6 +17894,10 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * run scripts as root, each time after you confirm with sudo's password
 	 */
 	settingsPermRoot: () => LocalizedString
+	/**
+	 * use Agent mode's model providers, their keys included
+	 */
+	settingsPermProviders: () => LocalizedString
 	/**
 	 * No permissions
 	 */

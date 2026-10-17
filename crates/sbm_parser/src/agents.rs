@@ -290,6 +290,30 @@ pub fn config_files(tool: Tool) -> &'static [&'static str] {
     }
 }
 
+/// Prints `$HOME/<rel>` (one of [`config_files`]); exits non-zero when it is
+/// not there.
+pub fn read_file_command(rel: &str) -> String {
+    format!("cat \"$HOME/{}\"", rel.replace(['"', '$', '`', '\\'], ""))
+}
+
+/// Writes its standard input to `$HOME/<rel>` (one of [`Write`]'s paths),
+/// 0600 in a 0700 folder, through a staged file so a reader never sees half
+/// of it. The content (a key) is on stdin alone.
+pub fn write_private_script(rel: &str) -> String {
+    let rel = rel.replace(['"', '$', '`', '\\'], "");
+    format!(
+        r#"set -e
+umask 077
+f="$HOME/{rel}"
+d=$(dirname "$f")
+mkdir -p "$d"
+chmod 700 "$d"
+cat > "$f.sbm-part"
+chmod 600 "$f.sbm-part"
+mv -f "$f.sbm-part" "$f""#
+    )
+}
+
 /// Why [`configure`] refused: codes a client words.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase", tag = "error")]
@@ -465,6 +489,35 @@ fn set_env_line(text: &str, name: &str, value: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(unix)]
+    #[test]
+    fn a_config_file_is_written_from_stdin_private_and_read_back() {
+        use std::io::Write as _;
+        use std::os::unix::fs::PermissionsExt;
+        use std::process::{Command, Stdio};
+        let home = tempfile::tempdir().unwrap();
+        let sh = |script: &str, stdin: &[u8]| {
+            let mut child = Command::new("sh")
+                .args(["-c", script])
+                .env("HOME", home.path())
+                .stdin(Stdio::piped())
+                .stdout(Stdio::piped())
+                .spawn()
+                .unwrap();
+            child.stdin.take().unwrap().write_all(stdin).unwrap();
+            child.wait_with_output().unwrap()
+        };
+        assert!(!sh(&read_file_command(".codex/config.toml"), b"").status.success());
+        assert!(sh(&write_private_script(".codex/config.toml"), b"key = 'sk'\n").status.success());
+        let file = home.path().join(".codex/config.toml");
+        assert_eq!(std::fs::metadata(&file).unwrap().permissions().mode() & 0o777, 0o600);
+        assert_eq!(std::fs::metadata(file.parent().unwrap()).unwrap().permissions().mode() & 0o777, 0o700);
+        let out = sh(&read_file_command(".codex/config.toml"), b"");
+        assert!(out.status.success());
+        assert_eq!(out.stdout, b"key = 'sk'\n");
+        assert!(!home.path().join(".codex/config.toml.sbm-part").exists());
+    }
 
     fn target(api: Api) -> Target {
         Target { base_url: "http://127.0.0.1:11434/v1".into(), api, key: "sk-local".into(), model: "qwen3:0.6b".into() }

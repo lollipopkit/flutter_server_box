@@ -68,6 +68,8 @@ interface host {
 
 /// What only the agent knows about this machine.
 interface agent {
+  use types.{error};
+
   /// Whether [path] holds the agent's own state (never to be removed).
   holds-state: func(path: string) -> bool;
 
@@ -85,6 +87,29 @@ interface agent {
 
   /// The web apps deployed here that have a web UI.
   web-apps: func() -> list<web-app>;
+
+  /// One of Agent mode's providers with an address here: the operator's,
+  /// or a model server of this machine's.
+  record provider {
+    id: string,
+    name: string,
+    /// `openai-completions`, `openai-responses`, `anthropic-messages`.
+    api: string,
+    base-url: string,
+    models: list<string>,
+  }
+
+  /// Where a provider is reached, and its key.
+  record address {
+    api: string,
+    base-url: string,
+    key: option<string>,
+  }
+
+  /// Agent mode's providers (`providers`).
+  providers: func() -> result<list<provider>, error>;
+  /// [id]'s address and key (`providers`); none for no such provider.
+  endpoint: func(id: string) -> result<option<address>, error>;
 }
 
 /// A job's own: nothing here works in a unary call.
@@ -97,6 +122,10 @@ interface job {
   /// As `host.exec-root`, its output going to the job's log line by line as
   /// it comes; the exit status.
   run-root: func(script: string) -> result<s32, error>;
+
+  /// [script] as the agent's account (`process`), its output going to the
+  /// job's log line by line as it comes; the exit status.
+  run: func(script: string) -> result<s32, error>;
 
   /// A file holding [contents] (a token, a key) readable by the agent's
   /// account alone, removed when the job ends; its path, for a script to

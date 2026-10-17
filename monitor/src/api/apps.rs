@@ -63,9 +63,9 @@ const WASM_API: u32 = 2;
 
 /// What a `web` app may ask for. A backend's come with `wasm`: the status
 /// sample, programs as the agent's account, scripts as root (with a sudo
-/// password the desk asks for each time).
+/// password the desk asks for each time), Agent mode's providers and keys.
 const WEB_PERMISSIONS: &[&str] = &["notifications", "background"];
-const WASM_PERMISSIONS: &[&str] = &["notifications", "background", "status", "process", "root"];
+const WASM_PERMISSIONS: &[&str] = &["notifications", "background", "status", "process", "root", "providers"];
 const TONES: &[&str] = &["berry", "soft", "ink", "sky", "teal", "violet", "amber", "leaf", "pale", "bright", "mist"];
 
 // -----------------------------------------------------------------------------

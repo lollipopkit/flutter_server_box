@@ -26,6 +26,8 @@ interface api {
   get: func(key: string) -> result<option<string>, error>;
   /// Not a job: `job.line` does nothing here, `run-root` refuses.
   line-outside: func() -> result<_, error>;
+  /// Agent mode's providers' ids, and the first one's key.
+  providers: func() -> result<tuple<list<string>, option<string>>, error>;
 }
 
 interface jobs {
@@ -34,6 +36,8 @@ interface jobs {
   count: func(lines: u32) -> result<u32, error>;
   /// Never ends on its own: lines until cancelled.
   forever: func() -> result<_, error>;
+  /// [script] as the account, its lines in the log.
+  shell: func(script: string) -> result<s32, error>;
 }
 
 world probe {

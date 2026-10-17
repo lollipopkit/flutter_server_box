@@ -9,6 +9,7 @@
 #   scripts/desk-vm-e2e.sh <node> <spec>_app   # the same, the app as a package
 #   scripts/desk-vm-e2e.sh <node> tailscale    # Headscale and a peer made first
 #   scripts/desk-vm-e2e.sh <node> proxy_app    # a web service to send to made first
+#   scripts/desk-vm-e2e.sh <node> agent_tools_app
 #
 # Builds the agent on SBM_E2E_BUILD_HOST (lkd-wsl) and the panel here;
 # starts a VM; runs the agent there as an ordinary account with a sudo
@@ -45,7 +46,8 @@ rsync -az --delete \
   "$root/" "$build:$src/"
 remote ". \"\$HOME/.cargo/env\" 2>/dev/null; cd ~/$src && cargo build -q -p server_box_monitor --profile monitor-test"
 echo "==> build: panel"
-(cd "$root/monitor/frontend" && npm run build >/dev/null)
+# Quiet unless it fails: svelte-check says why on standard output.
+out=$(cd "$root/monitor/frontend" && npm run build 2>&1) || { printf '%s\n' "$out" | tail -n 40; exit 1; }
 
 echo "==> vm: up"
 set -- $("$lab" up "$node" | tail -n 1)
@@ -112,6 +114,10 @@ if [ "${spec%_app}" = proxy ]; then
 echo "==> vm $id: a web service on 127.0.0.1:18080"
 vm 'mkdir -p /srv/sbm-e2e && echo sbm-e2e-ok > /srv/sbm-e2e/index.html
   systemd-run --unit=sbm-e2e-web python3 -m http.server 18080 --bind 127.0.0.1 --directory /srv/sbm-e2e >/dev/null'
+export SBM_E2E_VM="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR root@$addr"
+fi
+
+if [ "$spec" = agent_tools_app ]; then
 export SBM_E2E_VM="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR root@$addr"
 fi
 

@@ -1,0 +1,50 @@
+{
+  "publisher": "serverbox",
+  "name": "agent_tools",
+  "version": "1.0.0",
+  "api": 2,
+  "kind": "wasm",
+  "title": {
+    "en": "AI agents",
+    "de": "KI-Agenten",
+    "es": "Agentes de IA",
+    "fr": "Agents IA",
+    "id": "Agen AI",
+    "it": "Agenti IA",
+    "ja": "AI エージェント",
+    "ko": "AI 에이전트",
+    "nl": "AI-agents",
+    "pt": "Agentes de IA",
+    "ru": "ИИ-агенты",
+    "tr": "Yapay zekâ ajanları",
+    "uk": "ШІ-агенти",
+    "zh-CN": "AI 智能体",
+    "zh-TW": "AI 智慧體"
+  },
+  "keywords": [
+    "ai",
+    "agents",
+    "coding",
+    "cli",
+    "codex",
+    "claude code",
+    "pi",
+    "opencode",
+    "hermes",
+    "openclaw"
+  ],
+  "glyph": "smart_toy",
+  "tone": "teal",
+  "permissions": [
+    "process",
+    "providers"
+  ],
+  "size": {
+    "width": 980,
+    "height": 700
+  },
+  "min_size": {
+    "width": 360,
+    "height": 400
+  }
+}

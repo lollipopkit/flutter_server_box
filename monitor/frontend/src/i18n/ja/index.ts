@@ -1466,6 +1466,7 @@ const ja = {
 	settingsPermStatus: 'このサーバーの状態を読み取る',
 	settingsPermProcess: 'このサーバー上で agent のアカウントとしてプログラムを実行する',
 	settingsPermRoot: 'root としてスクリプトを実行する（毎回 sudo のパスワードで確認）',
+	settingsPermProviders: 'Agent モードのモデルプロバイダー（そのキーを含む）を使用する',
 	settingsAppNoPermissions: '権限なし',
 	settingsAppRefused: 'パッケージは拒否されました: {reason}',
 	settingsAppApproveRisk: '開いたアカウントの権限で実行され、サーバーから読み取ったデータを外部に送信できます。',

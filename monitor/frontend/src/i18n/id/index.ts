@@ -1466,6 +1466,7 @@ const id = {
 	settingsPermStatus: 'membaca status server ini',
 	settingsPermProcess: 'menjalankan program di server ini dengan akun agent',
 	settingsPermRoot: 'menjalankan skrip sebagai root, setiap kali setelah dikonfirmasi dengan kata sandi sudo',
+	settingsPermProviders: 'menggunakan penyedia model mode Agent, termasuk kuncinya',
 	settingsAppNoPermissions: 'Tanpa izin',
 	settingsAppRefused: 'Paket ditolak: {reason}',
 	settingsAppApproveRisk: 'Aplikasi berjalan dengan akun yang membukanya dan dapat mengirim data yang dibacanya dari server ke tempat lain.',

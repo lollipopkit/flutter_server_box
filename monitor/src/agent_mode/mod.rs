@@ -1312,6 +1312,29 @@ impl AgentMode {
         Ok(self.ready_runtime().await?.request("providers.available", json!({})).await.map_err(|e| anyhow::anyhow!("{e}"))?)
     }
 
+    /// The added and app providers, each with its models: those it lists
+    /// and those pi lists for it, when it can. To point another program at
+    /// one (`endpoint`).
+    pub async fn addressed_providers(&self) -> Result<Vec<(config::Provider, Vec<String>)>, FlowError> {
+        let settings = config::load(&self.db).await?;
+        let listed = self.available_models().await.unwrap_or(Value::Null);
+        Ok(self
+            .providers(&settings)
+            .into_iter()
+            .map(|p| {
+                let mut models: Vec<String> = p.models.iter().map(|m| m.id.clone()).collect();
+                for m in listed.as_array().into_iter().flatten().filter(|m| m["provider"] == p.id.as_str()) {
+                    if let Some(id) = m["id"].as_str()
+                        && !models.iter().any(|x| x == id)
+                    {
+                        models.push(id.to_string());
+                    }
+                }
+                (p, models)
+            })
+            .collect())
+    }
+
     /// An added or app provider's endpoint and its key, to point another
     /// program at it (`api::agent_tools`). Built-in providers have no
     /// address of their own here.

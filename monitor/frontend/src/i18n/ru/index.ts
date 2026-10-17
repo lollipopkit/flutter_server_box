@@ -1466,6 +1466,7 @@ const ru = {
 	settingsPermStatus: 'читать состояние этого сервера',
 	settingsPermProcess: 'запускать программы на этом сервере от имени учётной записи agent',
 	settingsPermRoot: 'запускать скрипты от имени root после каждого подтверждения паролем sudo',
+	settingsPermProviders: 'использовать провайдеры моделей режима Agent, включая их ключи',
 	settingsAppNoPermissions: 'Нет разрешений',
 	settingsAppRefused: 'Пакет отклонён: {reason}',
 	settingsAppApproveRisk: 'Приложение работает с правами открывшей его учётной записи и может отправлять прочитанные данные сервера в другие места.',
