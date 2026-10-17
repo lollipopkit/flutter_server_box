@@ -10,6 +10,7 @@
 #   scripts/desk-vm-e2e.sh <node> proxy_app        # a web service to send to made first
 #   scripts/desk-vm-e2e.sh <node> agent_tools_app
 #   scripts/desk-vm-e2e.sh <node> inference_app    # Docker and a fake Ollama made first
+#   scripts/desk-vm-e2e.sh <node> catalog_apps     # Docker, a 64 GiB disk and 6 GiB of memory
 #   scripts/desk-vm-e2e.sh <node> <spec>           # any other frontend/e2e/<spec>.e2e.ts
 #
 # Builds the agent on SBM_E2E_BUILD_HOST (lkd-wsl) and the panel here;
@@ -52,7 +53,12 @@ echo "==> build: panel"
 out=$(cd "$root/monitor/frontend" && npm run build 2>&1) || { printf '%s\n' "$out" | tail -n 40; exit 1; }
 
 echo "==> vm: up"
-set -- $("$lab" up "$node" | tail -n 1)
+# The catalog's web apps want room for their images and memory to run.
+if [ "$spec" = catalog_apps ]; then
+  set -- $(SBM_E2E_VM_MEMORY=6144 SBM_E2E_VM_ROOT_GIB=64 "$lab" up "$node" | tail -n 1)
+else
+  set -- $("$lab" up "$node" | tail -n 1)
+fi
 id=$1
 addr=$2
 case $id in '' | *[!0-9]*) echo "the VM did not come up" >&2; exit 1 ;; esac
@@ -133,6 +139,18 @@ vm 'apt-get update -qq >/dev/null; DEBIAN_FRONTEND=noninteractive apt-get -qq in
 scp -q -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "$root/scripts/e2e-fake-ollama.py" "root@$addr:/srv/"
 vm 'systemd-run --unit=sbm-e2e-ollama python3 /srv/e2e-fake-ollama.py >/dev/null'
 export SBM_E2E_INFERENCE_APP=1
+fi
+
+if [ "$spec" = catalog_apps ]; then
+# Docker as Ubuntu packages it, pulling through SBM_E2E_VM_PROXY when there
+# is one.
+echo "==> vm $id: Docker"
+vm "set -e; df -h / | tail -n 1
+  if [ -n '$p' ]; then mkdir -p /etc/systemd/system/docker.service.d
+    printf '[Service]\\nEnvironment=HTTP_PROXY=%s HTTPS_PROXY=%s NO_PROXY=127.0.0.1,localhost\\n' '$p' '$p' > /etc/systemd/system/docker.service.d/proxy.conf; fi
+  apt-get update -qq >/dev/null; DEBIAN_FRONTEND=noninteractive apt-get -qq install -y docker.io docker-compose-v2 >/dev/null
+  chmod 666 /var/run/docker.sock"
+export SBM_E2E_CATALOG=1
 fi
 
 if [ "$spec" = agent_tools_app ]; then

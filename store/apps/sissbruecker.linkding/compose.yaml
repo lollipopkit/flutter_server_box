@@ -1,0 +1,31 @@
+# linkding 1.47.0 (MIT), https://github.com/sissbruecker/linkding/tree/v1.47.0
+#
+# Adapted from the release's docker-compose.yml and .env.sample for
+# ServerBox Monitor (2026-10-17):
+# - no `name:` and no `container_name`: the agent names the project;
+# - the image pinned (upstream: latest); the data folder, the published
+#   address and port come from the env file the agent writes;
+# - the administrator is made at the first start from LD_SUPERUSER_*;
+# - linkding_custom.py is the image's custom settings module
+#   (bookmarks/settings/custom.py, imported last by prod.py).
+
+services:
+  linkding:
+    image: sissbruecker/linkding:${LINKDING_VERSION}
+    ports:
+      - '${LINKDING_BIND}:${LINKDING_PORT}:9090'
+    volumes:
+      - ${LINKDING_DATA}:/etc/linkding/data
+      - ./linkding_custom.py:/etc/linkding/bookmarks/settings/custom.py:ro
+    environment:
+      TZ: ${SBM_TZ}
+      LD_SUPERUSER_NAME: ${LD_SUPERUSER_NAME}
+      LD_SUPERUSER_PASSWORD: ${LD_SUPERUSER_PASSWORD}
+    restart: unless-stopped
+    # /health is the route the image's own HEALTHCHECK uses; the image has curl.
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:9090/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s

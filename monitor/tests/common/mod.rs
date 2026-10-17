@@ -259,3 +259,114 @@ pub mod package {
         }
     }
 }
+
+/// Catalog apps (`store/apps`) on a real Docker, for the e2e tests that
+/// deploy them: each a copy under a name of its own (`<name>_e2e`, its built
+/// images too), so a copy an agent on the same machine deployed is never
+/// touched.
+pub mod catalog {
+    use std::time::{Duration, Instant};
+
+    use ntex::http::Method;
+    use ntex::web::test::TestServer;
+    use serde_json::{Value, json};
+
+    use super::machine::call;
+
+    /// `store/apps/<id>` copied as `<id>_e2e` into [dir]; the copy's id.
+    pub fn copy_app(id: &str, dir: &std::path::Path) -> String {
+        let from = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../store/apps").join(id);
+        let (publisher, name) = id.split_once('.').unwrap();
+        let copy = format!("{publisher}.{name}_e2e");
+        let to = dir.join(&copy);
+        std::fs::create_dir(&to).unwrap();
+        for entry in std::fs::read_dir(&from).unwrap() {
+            let entry = entry.unwrap();
+            let mut text = std::fs::read_to_string(entry.path()).unwrap();
+            if entry.file_name() == "manifest.toml" {
+                text = text.replacen(&format!("name = \"{name}\""), &format!("name = \"{name}_e2e\""), 1);
+            } else {
+                // The image a package builds, which a purge removes.
+                text = text.replace(&format!("localhost/{publisher}-{name}:"), &format!("localhost/{publisher}-{name}_e2e:"));
+            }
+            std::fs::write(to.join(entry.file_name()), text).unwrap();
+        }
+        copy
+    }
+
+    /// The compose project of app [id].
+    pub fn project(id: &str) -> String {
+        let (publisher, name) = id.split_once('.').unwrap();
+        format!("sbm-{publisher}-{name}")
+    }
+
+    /// The containers of app [id]'s project, by `docker ps -a`.
+    pub fn containers(id: &str) -> Vec<String> {
+        let out = std::process::Command::new("docker")
+            .args(["ps", "-aq", "--filter", &format!("label=com.docker.compose.project={}", project(id))])
+            .output()
+            .unwrap();
+        String::from_utf8_lossy(&out.stdout).split_whitespace().map(str::to_string).collect()
+    }
+
+    /// Waits for app [id]'s job to end; its state, and its log on failure.
+    pub async fn finished(srv: &TestServer, id: &str) -> String {
+        let deadline = Instant::now() + Duration::from_secs(1800);
+        loop {
+            let (_, job) = call(srv, true, Method::GET, &format!("/api/v1/stacks/{id}/job"), None).await;
+            let state = job["state"].as_str().unwrap_or_default().to_string();
+            if state != "running" {
+                if state != "succeeded" {
+                    let lines: Vec<&str> = job["lines"].as_array().into_iter().flatten().filter_map(|l| l["text"].as_str()).collect();
+                    eprintln!("job {state}:\n{}", lines.join("\n"));
+                }
+                return state;
+            }
+            assert!(Instant::now() < deadline, "the job did not end");
+            tokio::time::sleep(Duration::from_secs(2)).await;
+        }
+    }
+
+    /// The app's containers and network gone, should the test end early (its
+    /// data is in a temporary folder of the agent's).
+    pub struct Cleanup(pub String);
+
+    impl Drop for Cleanup {
+        fn drop(&mut self) {
+            let project = project(&self.0);
+            let _ = std::process::Command::new("sh")
+                .arg("-c")
+                .arg(format!("docker ps -aq --filter label=com.docker.compose.project={project} | xargs -r docker rm -f; docker network rm {project}_default"))
+                .output();
+        }
+    }
+
+    /// App [id] deployed with the settings its check offers, licence and
+    /// notices accepted; those settings, once the deploy succeeded.
+    pub async fn deploy(srv: &TestServer, id: &str) -> (Value, Cleanup) {
+        let (status, check) = call(srv, true, Method::POST, &format!("/api/v1/stacks/{id}/check"), Some(json!({ "settings": {} }))).await;
+        assert_eq!(status, 200, "{check}");
+        let (status, body) = call(
+            srv,
+            true,
+            Method::POST,
+            &format!("/api/v1/stacks/{id}"),
+            Some(json!({ "current_password": super::PASSWORD, "settings": check["settings"], "acknowledged": true, "accept_license": true })),
+        )
+        .await;
+        assert_eq!(status, 202, "{body}");
+        let cleanup = Cleanup(id.to_string());
+        assert_eq!(finished(srv, id).await, "succeeded", "{id} deployed");
+        (check["settings"].clone(), cleanup)
+    }
+
+    /// App [id] and its data removed through the agent: nothing of its
+    /// project is left.
+    pub async fn remove(srv: &TestServer, id: &str) {
+        let (status, body) =
+            call(srv, true, Method::DELETE, &format!("/api/v1/stacks/{id}"), Some(json!({ "current_password": super::PASSWORD, "purge": true }))).await;
+        assert_eq!(status, 202, "{body}");
+        assert_eq!(finished(srv, id).await, "succeeded", "{id} removed");
+        assert_eq!(containers(id), Vec::<String>::new(), "{id}: containers left");
+    }
+}

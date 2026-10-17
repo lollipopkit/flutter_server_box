@@ -7,7 +7,9 @@ import type { Locator } from '@playwright/test'
 export async function fillSecret(field: Locator, value: string) {
   await field.evaluate((el, v) => {
     const input = el as HTMLInputElement
-    input.value = v
+    // The prototype's setter, not the element's: React tracks a field's value
+    // through its own and ignores an input event that did not change it.
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, v)
     input.dispatchEvent(new Event('input', { bubbles: true }))
   }, value)
 }

@@ -396,6 +396,28 @@ fn sign_in_page() -> Response<Body> {
     )
 }
 
+/// Whether a request is a page the browser shows (a window, a tab), not
+/// one of the page's own requests.
+fn wants_page(headers: &HeaderMap) -> bool {
+    headers.get(header::ACCEPT).and_then(|v| v.to_str().ok()).is_some_and(|a| a.contains("text/html"))
+}
+
+/// The service is not listening (yet: it is starting, or restarting). A page
+/// asks again on its own every few seconds, so a window opened while the app
+/// starts shows it once it answers.
+fn not_answering(page: bool) -> Response<Body> {
+    if !page {
+        return full(StatusCode::BAD_GATEWAY, "text/plain; charset=utf-8", "The app is not answering yet.");
+    }
+    full(
+        StatusCode::BAD_GATEWAY,
+        "text/html; charset=utf-8",
+        "<!doctype html><meta charset=utf-8><meta name=viewport content=\"width=device-width\">\
+         <meta http-equiv=refresh content=3><title>ServerBox</title>\
+         <p style=\"font:15px system-ui;margin:3em;text-align:center\">The app is starting…</p>",
+    )
+}
+
 /// The query's [name], percent-decoded.
 fn query_param(query: Option<&str>, name: &str) -> Option<String> {
     url::form_urlencoded::parse(query?.as_bytes()).find(|(k, _)| k == name).map(|(_, v)| v.into_owned())
@@ -548,6 +570,7 @@ async fn handle(ctx: &Ctx, mut req: Request<Incoming>, peer: SocketAddr, secure:
     };
 
     let host = req.headers().get(header::HOST).and_then(|v| v.to_str().ok()).unwrap_or("").to_string();
+    let page = wants_page(req.headers());
     let upgrade = is_upgrade(req.headers());
     let client_upgrade = upgrade.then(|| hyper::upgrade::on(&mut req));
 
@@ -580,7 +603,7 @@ async fn handle(ctx: &Ctx, mut req: Request<Incoming>, peer: SocketAddr, secure:
         Ok(resp) => resp,
         Err(e) => {
             tracing::debug!("app proxy {}: {e}", ctx.stack);
-            return full(StatusCode::BAD_GATEWAY, "text/plain; charset=utf-8", "The app is not answering yet.");
+            return not_answering(page);
         }
     };
 
@@ -646,6 +669,22 @@ mod tests {
         assert_eq!(with_port.app_of("serverbox-testweb.apps.lan:8443").as_deref(), Some("serverbox.testweb"));
         for bad in ["apps.example.com", "ftp://*.x", "https://apps.example.com", "https://*.x/path", "https://*."] {
             assert!(Hosts::parse(bad).is_err(), "{bad}");
+        }
+    }
+
+    #[test]
+    fn a_page_waits_for_a_starting_app_and_a_request_is_told() {
+        let mut h = HeaderMap::new();
+        assert!(!wants_page(&h));
+        h.insert(header::ACCEPT, HeaderValue::from_static("text/html,application/xhtml+xml,*/*;q=0.8"));
+        assert!(wants_page(&h));
+        h.insert(header::ACCEPT, HeaderValue::from_static("application/json"));
+        assert!(!wants_page(&h));
+
+        for (page, kind) in [(true, "text/html; charset=utf-8"), (false, "text/plain; charset=utf-8")] {
+            let resp = not_answering(page);
+            assert_eq!(resp.status(), StatusCode::BAD_GATEWAY);
+            assert_eq!(resp.headers()[header::CONTENT_TYPE], kind);
         }
     }
 

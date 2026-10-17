@@ -1,0 +1,86 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# ntfy, push notifications over HTTP: deployed with Docker Compose from
+# compose.yaml beside this file, shown in a desk window through the agent.
+
+schema = 1
+publisher = "binwiederhier"
+name = "ntfy"
+project = "ntfy"
+developer = "Philipp C. Heckel"
+version = "2.28.0"
+homepage = "https://ntfy.sh"
+source = "https://github.com/binwiederhier/ntfy/tree/v2.28.0"
+glyph = "notifications"
+tone = "teal"
+categories = ["tools", "monitoring"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "ntfy"
+
+[description]
+en = "Send notifications to your phone or browser with a plain HTTP request from any script. Every topic needs the administrator's sign-in until you grant access to others."
+zh = "在任何脚本中用一个普通的 HTTP 请求向手机或浏览器发送通知。在你给其他人授权之前，每个主题都需要管理员登录。"
+zh-TW = "在任何腳本中用一個普通的 HTTP 請求向手機或瀏覽器傳送通知。在你授權給其他人之前，每個主題都需要管理員登入。"
+
+[license]
+spdx = "Apache-2.0 OR GPL-2.0"
+url = "https://github.com/binwiederhier/ntfy/blob/v2.28.0/LICENSE"
+
+[requirements]
+arch = ["amd64", "arm64", "arm"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+NTFY_VERSION = "v2.28.0"
+NTFY_ADMIN_USER = "admin"
+
+[[secrets]]
+env = "NTFY_ADMIN_PASSWORD"
+length = 32
+
+[login]
+user = "admin"
+password = "NTFY_ADMIN_PASSWORD"
+note = { en = "Scripts and the phone app sign in with this account, or with a token made in the web app's account page.", zh = "脚本和手机应用使用此账号登录，也可以使用在网页版账号页面中创建的令牌。", zh-TW = "腳本和手機應用程式使用此帳號登入，也可以使用在網頁版帳號頁面中建立的權杖。" }
+
+[[settings]]
+key = "data"
+type = "path"
+env = "NTFY_DATA"
+default = "{stack}/data"
+data = true
+label = { en = "Data", zh = "数据", zh-TW = "資料" }
+help = { en = "The message cache, accounts and attachments.", zh = "消息缓存、账号和附件。", zh-TW = "訊息快取、帳號和附件。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "NTFY_PORT"
+default = 8093
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "For the phone app and scripts on other machines. Off: only this machine and the desk.", zh = "供手机应用和其他机器上的脚本使用。关闭时只有本机和桌面可以访问。", zh-TW = "供手機應用程式和其他機器上的腳本使用。關閉時只有本機和桌面可以存取。" }
+on = { NTFY_BIND = "0.0.0.0" }
+off = { NTFY_BIND = "127.0.0.1" }
+
+[[settings]]
+key = "base_url"
+type = "text"
+env = "NTFY_BASE_URL"
+optional = true
+pattern = '^https?://[A-Za-z0-9.:\[\]-]+(/[A-Za-z0-9._~/-]*)?$'
+label = { en = "Public address", zh = "公开地址", zh-TW = "公開位址" }
+help = { en = "The address phones reach it at (https://ntfy.example.com). Needed for attachments and the web app's push notifications.", zh = "手机访问它的地址（https://ntfy.example.com）。附件和网页版推送通知需要它。", zh-TW = "手機存取它的位址（https://ntfy.example.com）。附件和網頁版推播通知需要它。" }

@@ -1,6 +1,5 @@
 account_tree
 add
-alt_route
 api
 apps
 arrow_back
@@ -21,6 +20,7 @@ battery_5_bar
 bedtime
 block
 bolt
+bookmarks
 box
 bug_report
 cable
@@ -28,7 +28,6 @@ call
 cancel
 cards
 category
-chat
 check
 check_circle
 chevron_left
@@ -44,6 +43,7 @@ cloud_off
 code
 code_blocks
 comment
+commit
 compare_arrows
 compress
 computer
@@ -82,6 +82,7 @@ flag
 folder
 folder_open
 folder_shared
+forum
 forward
 fullscreen
 fullscreen_exit
@@ -89,8 +90,10 @@ function
 gradient
 grid_view
 group
+handyman
 hard_drive
 hardware
+headphones
 health_and_safety
 height
 help
@@ -100,7 +103,6 @@ hourglass_empty
 hourglass_top
 html
 http
-hub
 image
 info
 input
@@ -139,7 +141,6 @@ more
 more_horiz
 nat
 navigation
-neurology
 note
 notifications
 notifications_off
@@ -152,7 +153,6 @@ padding
 palette
 password
 pause
-pause_circle
 pending
 percent
 person
@@ -162,6 +162,7 @@ picture_as_pdf
 pill
 play_arrow
 play_circle
+podcasts
 policy
 pool
 power
@@ -180,6 +181,7 @@ reply
 report
 resize
 restart_alt
+restaurant
 resume
 rss_feed
 rule
@@ -203,7 +205,7 @@ shield_lock
 shift
 side_navigation
 sleep
-smart_toy
+spa
 space
 speed
 splitscreen_bottom
@@ -238,11 +240,9 @@ transform
 tune
 unfold_more
 update
-upgrade
 upload
 upload_file
 usb
-verified_user
 vertical_align_bottom
 vertical_split
 view_column

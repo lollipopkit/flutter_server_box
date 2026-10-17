@@ -102,6 +102,16 @@ cargo test -p server_box_monitor --lib stacks::
 
 which reads every folder in `store/apps/` with the agent's own reader.
 
+Then deploy it on a machine with Docker through the agent, as a desk window
+reaches it (HTTPS, through the agent's proxy, signed in with what `[login]`
+shows):
+
+```sh
+SBM_E2E_DOCKER=1 SBM_E2E_CATALOG_APPS=<publisher>.<name> cargo test -p server_box_monitor --test stacks_catalog_e2e -- --ignored --nocapture
+```
+
+and add the app's sign-in to that test's `sign_in`.
+
 ### 5. Try it
 
 The quickest way is a Monitor agent itself: put the folder in a directory

@@ -25,6 +25,8 @@ use server_box_monitor::api::server::AppState;
 use server_box_monitor::core::config::{Config, StacksConfig};
 use server_box_monitor::stacks::mcp::Credential;
 
+use common::catalog;
+
 /// The catalog apps tested by default: their MCP server connects with what
 /// the deploy wrote, or with a token [provision] makes as the person would.
 const AUTOMATIC: &[&str] =
@@ -33,81 +35,8 @@ const AUTOMATIC: &[&str] =
 /// The password of the accounts this test makes in an app.
 const PASSWORD: &str = "e2e-Passw0rd-not-kept";
 
-/// `store/apps/<id>` copied as `<id>_e2e` into [dir].
-fn copy_app(id: &str, dir: &std::path::Path) -> String {
-    let from = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../store/apps").join(id);
-    let (publisher, name) = id.split_once('.').unwrap();
-    let copy = format!("{publisher}.{name}_e2e");
-    let to = dir.join(&copy);
-    std::fs::create_dir(&to).unwrap();
-    for entry in std::fs::read_dir(&from).unwrap() {
-        let entry = entry.unwrap();
-        let mut text = std::fs::read_to_string(entry.path()).unwrap();
-        if entry.file_name() == "manifest.toml" {
-            text = text.replacen(&format!("name = \"{name}\""), &format!("name = \"{name}_e2e\""), 1);
-        }
-        std::fs::write(to.join(entry.file_name()), text).unwrap();
-    }
-    copy
-}
-
 async fn call(srv: &TestServer, method: Method, path: &str, body: Option<Value>) -> (u16, Value) {
     common::machine::call(srv, true, method, path, body).await
-}
-
-/// Waits for app [id]'s job to end; its state, and its log on failure.
-async fn finished(srv: &TestServer, id: &str) -> String {
-    let deadline = Instant::now() + Duration::from_secs(900);
-    loop {
-        let (_, job) = call(srv, Method::GET, &format!("/api/v1/stacks/{id}/job"), None).await;
-        let state = job["state"].as_str().unwrap_or_default().to_string();
-        if state != "running" {
-            if state != "succeeded" {
-                let lines: Vec<&str> = job["lines"].as_array().into_iter().flatten().filter_map(|l| l["text"].as_str()).collect();
-                eprintln!("job {state}:\n{}", lines.join("\n"));
-            }
-            return state;
-        }
-        assert!(Instant::now() < deadline, "the job did not end");
-        tokio::time::sleep(Duration::from_secs(2)).await;
-    }
-}
-
-/// The app's containers and network gone, should the test end early (its
-/// data is in a temporary folder of the agent's).
-struct Cleanup(String);
-
-impl Drop for Cleanup {
-    fn drop(&mut self) {
-        let (publisher, name) = self.0.split_once('.').unwrap();
-        let project = format!("sbm-{publisher}-{name}");
-        let _ = std::process::Command::new("sh")
-            .arg("-c")
-            .arg(format!(
-                "docker ps -aq --filter label=com.docker.compose.project={project} | xargs -r docker rm -f; docker network rm {project}_default"
-            ))
-            .output();
-    }
-}
-
-/// Removes the app and its data through the agent.
-struct Removed<'a> {
-    srv: &'a TestServer,
-    id: String,
-}
-
-impl Removed<'_> {
-    async fn now(self) {
-        let (status, body) = call(
-            self.srv,
-            Method::DELETE,
-            &format!("/api/v1/stacks/{}", self.id),
-            Some(json!({ "current_password": common::PASSWORD, "purge": true })),
-        )
-        .await;
-        assert_eq!(status, 202, "{body}");
-        assert_eq!(finished(self.srv, &self.id).await, "succeeded");
-    }
 }
 
 /// A JSON request to an app's own API on loopback.
@@ -279,23 +208,11 @@ async fn api_key_setting(state: &Arc<AppState>, id: &str, settings: &Value) -> O
 
 async fn verify(srv: &TestServer, state: &Arc<AppState>, id: &str) {
     eprintln!("== {id}");
-    let (status, check) = call(srv, Method::POST, &format!("/api/v1/stacks/{id}/check"), Some(json!({ "settings": {} }))).await;
-    assert_eq!(status, 200, "{check}");
-    let (status, body) = call(
-        srv,
-        Method::POST,
-        &format!("/api/v1/stacks/{id}"),
-        Some(json!({ "current_password": common::PASSWORD, "settings": check["settings"], "acknowledged": true, "accept_license": true })),
-    )
-    .await;
-    assert_eq!(status, 202, "{body}");
-    let _cleanup = Cleanup(id.to_string());
-    let removed = Removed { srv, id: id.to_string() };
-    assert_eq!(finished(srv, id).await, "succeeded", "{id} deployed");
+    let (settings, _cleanup) = catalog::deploy(srv, id).await;
 
     // The service's own key into its settings, deployed again.
-    if let Some((key, value)) = api_key_setting(state, id, &check["settings"]).await {
-        let mut settings = check["settings"].clone();
+    if let Some((key, value)) = api_key_setting(state, id, &settings).await {
+        let mut settings = settings.clone();
         settings[key] = json!(value);
         let (status, body) = call(
             srv,
@@ -305,7 +222,7 @@ async fn verify(srv: &TestServer, state: &Arc<AppState>, id: &str) {
         )
         .await;
         assert_eq!(status, 202, "{id}: {body}");
-        assert_eq!(finished(srv, id).await, "succeeded", "{id} set up again");
+        assert_eq!(catalog::finished(srv, id).await, "succeeded", "{id} set up again");
     }
 
     // Agent mode finds it, with the credential the deploy wrote, or once the
@@ -314,13 +231,13 @@ async fn verify(srv: &TestServer, state: &Arc<AppState>, id: &str) {
     let mut app = find().await;
     if let Credential::Asked { given, .. } = &app.credential {
         assert!(!given);
-        let token = provision(state, id, &check["settings"]).await;
+        let token = provision(state, id, &settings).await;
         let (status, body) = call(srv, Method::PUT, &format!("/api/v1/agent/mcp/apps/{id}/{}", app.index), Some(json!({ "token": token }))).await;
         assert_eq!(status, 200, "{body}");
         app = find().await;
         assert!(app.header.is_some(), "{id}: the token was not taken");
     } else if app.credential == Credential::OAuth {
-        let base = format!("http://127.0.0.1:{}", check["settings"]["port"]);
+        let base = format!("http://127.0.0.1:{}", settings["port"]);
         set_up_home_assistant(state, &base).await;
         let url = app.url.clone();
         sign_in(srv, state, id, &url, &base).await;
@@ -382,7 +299,7 @@ async fn verify(srv: &TestServer, state: &Arc<AppState>, id: &str) {
         let res = fetch.fetch(req).await.unwrap();
         assert_eq!(res.status, 401, "{id}: answered without its token");
     }
-    removed.now().await;
+    catalog::remove(srv, id).await;
 }
 
 #[ntex::test]
@@ -395,7 +312,7 @@ async fn catalog_apps_mcp_servers_answer_agent_mode() {
     let picked = std::env::var("SBM_E2E_MCP_APPS").map(|v| v.split(',').map(str::to_string).collect::<Vec<_>>());
     let picked = picked.unwrap_or_else(|_| AUTOMATIC.iter().map(|s| s.to_string()).collect());
     let apps = tempfile::tempdir().unwrap();
-    let copies: Vec<String> = picked.iter().map(|id| copy_app(id, apps.path())).collect();
+    let copies: Vec<String> = picked.iter().map(|id| catalog::copy_app(id, apps.path())).collect();
     let config = Config { stacks: Some(StacksConfig { local_apps: Some(apps.path().display().to_string()), ..Default::default() }), ..Default::default() };
     let (srv, state) = common::machine::server_with(config).await;
     for id in &copies {

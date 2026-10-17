@@ -1,0 +1,76 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# linkding, a bookmark manager: deployed with Docker Compose from
+# compose.yaml beside this file, shown in a desk window through the agent.
+
+schema = 1
+publisher = "sissbruecker"
+name = "linkding"
+project = "linkding"
+developer = "Sascha Ißbrücker"
+version = "1.47.0"
+homepage = "https://linkding.link"
+source = "https://github.com/sissbruecker/linkding/tree/v1.47.0"
+glyph = "bookmarks"
+tone = "sky"
+categories = ["productivity"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "linkding"
+
+[description]
+en = "Save, tag and search your bookmarks, with browser extensions and an archive of each page's snapshot."
+zh = "保存、标记和搜索书签，提供浏览器扩展，并可存档网页快照。"
+zh-TW = "儲存、標記和搜尋書籤，提供瀏覽器擴充功能，並可封存網頁快照。"
+
+[license]
+spdx = "MIT"
+url = "https://github.com/sissbruecker/linkding/blob/v1.47.0/LICENSE.txt"
+
+[requirements]
+arch = ["amd64", "arm64", "arm"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+LINKDING_VERSION = "1.47.0"
+LD_SUPERUSER_NAME = "admin"
+
+[[secrets]]
+env = "LD_SUPERUSER_PASSWORD"
+length = 32
+
+[login]
+user = "admin"
+password = "LD_SUPERUSER_PASSWORD"
+
+[[settings]]
+key = "data"
+type = "path"
+env = "LINKDING_DATA"
+default = "{stack}/data"
+data = true
+label = { en = "Data", zh = "数据", zh-TW = "資料" }
+help = { en = "The database, favicons and page snapshots.", zh = "数据库、网站图标和网页快照。", zh-TW = "資料庫、網站圖示和網頁快照。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "LINKDING_PORT"
+default = 9090
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "For the browser extensions on other computers. Off: only through the desk.", zh = "供其他电脑上的浏览器扩展连接。关闭时只能通过桌面访问。", zh-TW = "供其他電腦上的瀏覽器擴充功能連線。關閉時只能透過桌面存取。" }
+on = { LINKDING_BIND = "0.0.0.0" }
+off = { LINKDING_BIND = "127.0.0.1" }

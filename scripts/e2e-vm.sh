@@ -13,6 +13,8 @@
 #   SBM_E2E_VM_GW      its gateway (192.168.31.1)
 #   SBM_E2E_VM_PROXY   an HTTP proxy apt uses, kept in the template (none)
 #   SBM_E2E_VM_KEY     the public key the VM lets in as root (~/.ssh/id_ed25519.pub)
+#   SBM_E2E_VM_MEMORY  the VM's memory in MiB (the template's 2048)
+#   SBM_E2E_VM_ROOT_GIB  its system disk in GiB (the template's 8), grown at first boot
 #   SBM_E2E_VM_IMAGE   the cloud image on the node
 #                      (/var/lib/vz/template/iso/ubuntu-26.04-server-cloudimg-amd64.img)
 #
@@ -89,6 +91,14 @@ case $cmd in
     # A VM that does not come up goes again.
     trap 'pve "qm stop $id --skiplock 1 >/dev/null 2>&1; qm destroy $id --purge 1 --destroy-unreferenced-disks 1 >/dev/null 2>&1"' EXIT
     pve "qm clone $TEMPLATE $id --name sbm-e2e-$id >/dev/null && qm set $id --ipconfig0 ip=$ip,gw=$gw >/dev/null"
+    if [ -n "${SBM_E2E_VM_MEMORY:-}" ]; then
+      number "$SBM_E2E_VM_MEMORY" SBM_E2E_VM_MEMORY
+      pve "qm set $id --memory $SBM_E2E_VM_MEMORY >/dev/null"
+    fi
+    if [ -n "${SBM_E2E_VM_ROOT_GIB:-}" ]; then
+      number "$SBM_E2E_VM_ROOT_GIB" SBM_E2E_VM_ROOT_GIB
+      pve "qm disk resize $id scsi0 ${SBM_E2E_VM_ROOT_GIB}G >/dev/null"
+    fi
     i=0
     while [ "$i" -lt "$disks" ]; do
       pve "qm set $id --scsi$((20 + i)) local-lvm:$size,serial=sbmdisk$i >/dev/null"
