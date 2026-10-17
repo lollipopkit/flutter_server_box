@@ -1669,5 +1669,8 @@
   "kbServerList": "Server: Serverliste",
   "kbServerClose": "Server: Details schließen",
   "termMetricsBar": "Serverwerte unter dem Terminal",
-  "termMetricsBarTip": "CPU, Arbeitsspeicher, Netzwerk und Festplatte, wie auf der Serverkarte. Auf dem Telefon über den virtuellen Tasten."
+  "termMetricsBarTip": "CPU, Arbeitsspeicher, Netzwerk und Festplatte, wie auf der Serverkarte. Auf dem Telefon über den virtuellen Tasten.",
+  "launchFailedTitle": "ServerBox konnte nicht starten",
+  "launchFailedBody": "Kopiere den Fehler unten und melde ihn mit den Logdateien in einem GitHub-Issue.",
+  "launchFailedLogs": "Logs: {path}"
 }

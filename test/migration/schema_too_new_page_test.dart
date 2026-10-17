@@ -20,6 +20,7 @@ import 'package:material_ui/material_ui.dart'
     show FilledButton, LinearProgressIndicator;
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/store/schema.dart';
+import 'package:server_box/view/page/rescue_app.dart';
 import 'package:server_box/view/page/schema_too_new.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -134,8 +135,10 @@ void main() {
 
   Future<void> pump(WidgetTester tester) async {
     await tester.pumpWidget(
-      const SchemaTooNewApp(
-        err: SchemaTooNewException(stored: 23, supported: 21),
+      const RescueApp(
+        page: SchemaTooNewPage(
+          err: SchemaTooNewException(stored: 23, supported: 21),
+        ),
       ),
     );
     await tester.pump();

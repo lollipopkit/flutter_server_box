@@ -6024,4 +6024,16 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get termMetricsBarTip =>
       'CPU, mémoire, réseau et disque, comme sur la carte du serveur. Sur téléphone, au-dessus des touches virtuelles.';
+
+  @override
+  String get launchFailedTitle => 'ServerBox n\'a pas pu démarrer';
+
+  @override
+  String get launchFailedBody =>
+      'Copiez l\'erreur ci-dessous et signalez-la dans une issue GitHub, avec les fichiers journaux.';
+
+  @override
+  String launchFailedLogs(String path) {
+    return 'Journaux : $path';
+  }
 }

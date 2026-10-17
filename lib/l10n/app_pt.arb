@@ -1669,5 +1669,8 @@
   "kbServerList": "Servidores: lista de servidores",
   "kbServerClose": "Servidores: fechar detalhes",
   "termMetricsBar": "Leituras do servidor sob o terminal",
-  "termMetricsBarTip": "CPU, memória, rede e disco, como no cartão do servidor. No telefone, acima das teclas virtuais."
+  "termMetricsBarTip": "CPU, memória, rede e disco, como no cartão do servidor. No telefone, acima das teclas virtuais.",
+  "launchFailedTitle": "O ServerBox não conseguiu iniciar",
+  "launchFailedBody": "Copie o erro abaixo e relate-o numa issue do GitHub, com os arquivos de log.",
+  "launchFailedLogs": "Logs: {path}"
 }

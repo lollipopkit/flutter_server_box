@@ -1669,5 +1669,8 @@
   "kbServerList": "Serveurs : liste des serveurs",
   "kbServerClose": "Serveurs : fermer les détails",
   "termMetricsBar": "Mesures du serveur sous le terminal",
-  "termMetricsBarTip": "CPU, mémoire, réseau et disque, comme sur la carte du serveur. Sur téléphone, au-dessus des touches virtuelles."
+  "termMetricsBarTip": "CPU, mémoire, réseau et disque, comme sur la carte du serveur. Sur téléphone, au-dessus des touches virtuelles.",
+  "launchFailedTitle": "ServerBox n'a pas pu démarrer",
+  "launchFailedBody": "Copiez l'erreur ci-dessous et signalez-la dans une issue GitHub, avec les fichiers journaux.",
+  "launchFailedLogs": "Journaux : {path}"
 }

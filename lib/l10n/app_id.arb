@@ -1669,5 +1669,8 @@
   "kbServerList": "Server: daftar server",
   "kbServerClose": "Server: tutup detail",
   "termMetricsBar": "Pembacaan server di bawah terminal",
-  "termMetricsBarTip": "CPU, memori, jaringan, dan disk, seperti pada kartu server. Di ponsel, di atas tombol virtual."
+  "termMetricsBarTip": "CPU, memori, jaringan, dan disk, seperti pada kartu server. Di ponsel, di atas tombol virtual.",
+  "launchFailedTitle": "ServerBox tidak dapat dimulai",
+  "launchFailedBody": "Salin galat di bawah dan laporkan di issue GitHub, beserta berkas log.",
+  "launchFailedLogs": "Log: {path}"
 }

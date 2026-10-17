@@ -1669,5 +1669,8 @@
   "kbServerList": "サーバー: サーバー一覧",
   "kbServerClose": "サーバー: 詳細を閉じる",
   "termMetricsBar": "ターミナル下部にサーバーの状態を表示",
-  "termMetricsBarTip": "CPU、メモリ、ネットワーク、ディスクをサーバーカードと同じ形式で表示します。スマートフォンでは仮想キーの上に表示されます。"
+  "termMetricsBarTip": "CPU、メモリ、ネットワーク、ディスクをサーバーカードと同じ形式で表示します。スマートフォンでは仮想キーの上に表示されます。",
+  "launchFailedTitle": "ServerBox を起動できませんでした",
+  "launchFailedBody": "下のエラーをコピーし、ログファイルと一緒に GitHub の issue で報告してください。",
+  "launchFailedLogs": "ログ: {path}"
 }

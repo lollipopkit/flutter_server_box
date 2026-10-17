@@ -1669,5 +1669,8 @@
   "kbServerList": "Sunucular: sunucu listesi",
   "kbServerClose": "Sunucular: ayrıntıları kapat",
   "termMetricsBar": "Terminalin altında sunucu değerleri",
-  "termMetricsBarTip": "CPU, bellek, ağ ve disk, sunucu kartındaki gibi. Telefonda sanal tuşların üstünde."
+  "termMetricsBarTip": "CPU, bellek, ağ ve disk, sunucu kartındaki gibi. Telefonda sanal tuşların üstünde.",
+  "launchFailedTitle": "ServerBox başlatılamadı",
+  "launchFailedBody": "Aşağıdaki hatayı kopyalayıp günlük dosyalarıyla birlikte bir GitHub issue'sunda bildirin.",
+  "launchFailedLogs": "Günlükler: {path}"
 }

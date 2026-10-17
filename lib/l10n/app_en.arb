@@ -7728,5 +7728,22 @@
   "termMetricsBarTip": "CPU, memory, network and disk, as the server card shows them. Above the virtual keys on a phone.",
   "@termMetricsBarTip": {
     "description": "Explains the terminal readings bar setting."
+  },
+  "launchFailedTitle": "ServerBox could not start",
+  "@launchFailedTitle": {
+    "description": "Title of the screen shown when the app fails during startup."
+  },
+  "launchFailedBody": "Copy the error below and report it in a GitHub issue, with the log files.",
+  "@launchFailedBody": {
+    "description": "Asks the user to report a startup failure."
+  },
+  "launchFailedLogs": "Logs: {path}",
+  "@launchFailedLogs": {
+    "description": "Where the log files are.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
   }
 }

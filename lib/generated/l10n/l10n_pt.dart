@@ -5982,4 +5982,16 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get termMetricsBarTip =>
       'CPU, memória, rede e disco, como no cartão do servidor. No telefone, acima das teclas virtuais.';
+
+  @override
+  String get launchFailedTitle => 'O ServerBox não conseguiu iniciar';
+
+  @override
+  String get launchFailedBody =>
+      'Copie o erro abaixo e relate-o numa issue do GitHub, com os arquivos de log.';
+
+  @override
+  String launchFailedLogs(String path) {
+    return 'Logs: $path';
+  }
 }

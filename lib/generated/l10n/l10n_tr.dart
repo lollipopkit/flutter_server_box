@@ -5914,4 +5914,16 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get termMetricsBarTip =>
       'CPU, bellek, ağ ve disk, sunucu kartındaki gibi. Telefonda sanal tuşların üstünde.';
+
+  @override
+  String get launchFailedTitle => 'ServerBox başlatılamadı';
+
+  @override
+  String get launchFailedBody =>
+      'Aşağıdaki hatayı kopyalayıp günlük dosyalarıyla birlikte bir GitHub issue\'sunda bildirin.';
+
+  @override
+  String launchFailedLogs(String path) {
+    return 'Günlükler: $path';
+  }
 }
