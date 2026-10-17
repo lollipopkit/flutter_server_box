@@ -54,6 +54,10 @@ const JOB_SCRIPT_TIMEOUT: Duration = Duration::from_secs(3 * 3600);
 const MAX_OUTPUT: usize = 8 << 20;
 /// A log line from an app.
 const MAX_LOG: usize = 1024;
+/// A private file's contents, and how many a job may hold.
+const MAX_PRIVATE_FILE: usize = 64 << 10;
+#[cfg(unix)]
+const MAX_PRIVATE_FILES: usize = 8;
 /// A JSON text an app keeps under one key (the app's whole storage is
 /// bounded by `desk_storage`).
 const MAX_KV_VALUE: usize = 256 << 10;
@@ -322,6 +326,9 @@ pub struct Ctx {
     grant: Grant,
     password: Option<Zeroizing<String>>,
     job: Option<Arc<Job>>,
+    /// The job's private files, removed with it.
+    #[cfg(unix)]
+    private: Vec<crate::api::machine::PrivateScript>,
 }
 
 impl Ctx {
@@ -338,6 +345,8 @@ impl Ctx {
             grant,
             password,
             job,
+            #[cfg(unix)]
+            private: Vec::new(),
         }
     }
 
@@ -409,7 +418,9 @@ impl sbm::app::host::Host for Ctx {
         self.grant.may("process")?;
         let stdin = stdin.map(|b| String::from_utf8_lossy(&b).into_owned());
         let state = self.grant.state.clone();
-        let out = crate::api::exec::run(&script, stdin.as_deref(), None, &state.remote_access.exec)
+        // A listing (packages, kernels) is longer than `/exec`'s own cap.
+        let limits = crate::api::machine::at_least(&state.remote_access.exec, MAX_OUTPUT);
+        let out = crate::api::exec::run(&script, stdin.as_deref(), None, &limits)
             .await
             .map_err(|e| AppError::Internal(e.to_string()))?;
         if out.timed_out {
@@ -502,5 +513,30 @@ impl sbm::app::job::Host for Ctx {
         let password = self.password.clone().ok_or_else(|| AppError::PermissionDenied("sudo".into()))?;
         job.push(format!("# {script}"));
         root(password, &script, JOB_SCRIPT_TIMEOUT, job.cancel_token(), |_, line| job.push(line)).await
+    }
+
+    async fn private_file(&mut self, contents: Vec<u8>) -> Result<String, AppError> {
+        if self.job.is_none() {
+            return Err(AppError::FailedPrecondition("notAJob".into()));
+        }
+        if contents.len() > MAX_PRIVATE_FILE {
+            return Err(AppError::InvalidArgument("tooLarge".into()));
+        }
+        #[cfg(unix)]
+        {
+            if self.private.len() >= MAX_PRIVATE_FILES {
+                return Err(AppError::Unavailable("tooMany".into()));
+            }
+            let text = String::from_utf8(contents).map_err(|_| AppError::InvalidArgument("utf8".into()))?;
+            let file = crate::api::machine::PrivateScript::write(&text).map_err(|e| AppError::Internal(e.to_string()))?;
+            let path = file.path().to_string_lossy().into_owned();
+            self.private.push(file);
+            Ok(path)
+        }
+        #[cfg(not(unix))]
+        {
+            let _ = contents;
+            Err(AppError::Unavailable("notUnix".into()))
+        }
     }
 }

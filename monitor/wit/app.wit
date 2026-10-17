@@ -86,6 +86,11 @@ interface job {
   /// As `host.exec-root`, its output going to the job's log line by line as
   /// it comes; the exit status.
   run-root: func(script: string) -> result<s32, error>;
+
+  /// A file holding [contents] (a token, a key) readable by the agent's
+  /// account alone, removed when the job ends; its path, for a script to
+  /// read it from, so the secret is never in a script, a log or an argument.
+  private-file: func(contents: list<u8>) -> result<string, error>;
 }
 
 /// What every app imports; an app's world includes it and exports `api`

@@ -16,6 +16,7 @@
   import { ApiError } from '../../lib/api'
   import type { SudoAsk } from '../../../../sdk/serverbox-desk/src/protocol'
   import AppSudoDialog from './AppSudoDialog.svelte'
+  import PowerModal from '../../components/PowerModal.svelte'
   import { app } from '../registry.svelte'
   import { BridgeError, WebAppBridge, type BackendHost, type SudoGiven } from './bridge.svelte'
 
@@ -80,6 +81,8 @@
     },
   }
 
+  let power = $state<'reboot' | 'shutdown' | null>(null)
+
   const bridge = new WebAppBridge({
     handle: win,
     allows: (p) => desk.allows(win.appId, p),
@@ -87,6 +90,7 @@
     locale: () => get(locale),
     stylesheet: () => stylesheet,
     backend,
+    power: (action) => (power = action),
   })
 
   /// The frame's first page gets the bridge's port. A second load is the app
@@ -170,3 +174,4 @@
 </div>
 
 <AppSudoDialog app={app(win.appId)?.title($LL) ?? win.appId} ask={sudo?.ask ?? null} remembered={sudo?.remembered ?? false} run={(g) => sudo?.run(g) ?? Promise.resolve()} onclose={() => sudo?.decline()} />
+{#if power}<PowerModal open initial={power} onclose={() => (power = null)} />{/if}

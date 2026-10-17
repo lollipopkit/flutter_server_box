@@ -56,6 +56,7 @@ await desk.storage.set('count', count + 1)
 | 其他应用 | `open(appId, { path })` 打开另一个应用，可以带上文件或目录；`handlers(path, kind)` 列出能打开它的应用 |
 | 后台 | `keepAlive(reason)`，需要 `background` 权限 |
 | 后端 | `call(fn, args, { sudo })`、`job(fn, args, { sudo, onLine })`、`jobView`、`follow`、`cancelJob`，仅 `wasm` 应用 |
+| 链接和电源 | `openUrl(url)` 在新标签页打开 http(s) 页面（frame 内的链接无法打开）；`power('reboot')` 显示桌面自己的重启对话框，需要 `root` 权限 |
 | 文字和数字 | `translator(dictionaries, locale)`（与面板相同的 `{value}` 和 `{{one\|other}}` 写法）、`formatBytes`、`formatTime` |
 
 事件（`desk.on`）：`lifecycle`（`active`、`visible`、`background`、`suspended`）、
@@ -116,6 +117,7 @@ await desk.storage.set('count', count + 1)
 | `size`、`min_size` | `{ "width", "height" }`：首个窗口的大小和允许的最小尺寸 |
 | `opens` | `{ "ext": ["md", "txt"], "dirs": false }`：在 Files 的“打开方式”中可打开的文件（`"*"` 表示任意）及是否可打开目录 |
 | `keywords` | Spotlight 额外匹配的词 |
+| `os` | 应用适用的系统，按 `/etc/os-release` 的 `ID`（`["ubuntu"]`）；agent 的目录只在这些系统上提供它。缺省为任意系统 |
 
 ## 打包
 

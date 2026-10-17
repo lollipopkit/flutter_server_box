@@ -2649,6 +2649,8 @@ export interface PackageManifest {
   min_size?: { width: number; height: number }
   opens?: { dirs?: boolean; ext?: string[] }
   keywords?: string[]
+  /// The systems it is for (`/etc/os-release` `ID`); any when absent.
+  os?: string[]
 }
 
 export interface InstalledApp {

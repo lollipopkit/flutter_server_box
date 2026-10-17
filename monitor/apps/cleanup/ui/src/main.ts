@@ -1,6 +1,6 @@
 import { mount } from 'svelte'
 import App from './App.svelte'
-import './desk'
-import './app.css'
+import '$common/desk'
+import '$common/page.css'
 
 mount(App, { target: document.getElementById('app')! })

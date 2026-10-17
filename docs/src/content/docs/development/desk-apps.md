@@ -60,6 +60,7 @@ returned object offers:
 | Other apps | `open(appId, { path })` opens another app, optionally with a file or folder; `handlers(path, kind)` lists the apps that can open it |
 | Background | `keepAlive(reason)`, with the `background` permission |
 | Backend | `call(fn, args, { sudo })`, `job(fn, args, { sudo, onLine })`, `jobView`, `follow`, `cancelJob`; `wasm` apps only |
+| Links and power | `openUrl(url)` opens an http(s) page in a tab (a link in the frame cannot); `power('reboot')` shows the desk's own restart dialog, with the `root` permission |
 | Words and numbers | `translator(dictionaries, locale)` (the panel's `{value}` and `{{one\|other}}` syntax), `formatBytes`, `formatTime` |
 
 Events (`desk.on`): `lifecycle` (`active`, `visible`, `background`,
@@ -125,6 +126,7 @@ fields.
 | `size`, `min_size` | `{ "width", "height" }`: the first window's size and the smallest allowed |
 | `opens` | `{ "ext": ["md", "txt"], "dirs": false }`: the files (`"*"` for any) and whether folders the app offers to open in Files' "Open with" |
 | `keywords` | Extra words Spotlight matches |
+| `os` | The systems the app is for, by `/etc/os-release`'s `ID` (`["ubuntu"]`); the agent's catalog offers it only there. Any when absent |
 
 ## Package
 

@@ -1,0 +1,29 @@
+{
+  "publisher": "serverbox",
+  "name": "tailscale",
+  "version": "1.0.0",
+  "api": 2,
+  "kind": "wasm",
+  "title": "Tailscale",
+  "keywords": [
+    "tailscale",
+    "vpn",
+    "headscale",
+    "exit node",
+    "wireguard"
+  ],
+  "glyph": "hub",
+  "tone": "ink",
+  "permissions": [
+    "process",
+    "root"
+  ],
+  "size": {
+    "width": 860,
+    "height": 720
+  },
+  "min_size": {
+    "width": 360,
+    "height": 420
+  }
+}

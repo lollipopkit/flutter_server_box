@@ -12,7 +12,7 @@ import { applyTheme, useStylesheet } from './ui.js'
 
 export type { ActionItem, AppTheme, JobView, MenuDescription, SudoAsk, ToolbarDescription } from './protocol.js'
 export { translator, type Dictionary, type Translate } from './i18n.js'
-export { formatBytes, formatTime } from './format.js'
+export { formatBytes, formatDate, formatTime } from './format.js'
 
 export type Lifecycle = 'active' | 'visible' | 'background' | 'suspended'
 
@@ -111,6 +111,12 @@ export interface Desk {
   follow<T = unknown>(options?: Omit<JobOptions, 'sudo'>): Promise<T>
   /// Asks the running job to stop.
   cancelJob(): Promise<void>
+  /// Opens a web page (http or https) in a tab of its own: links in the
+  /// app's frame cannot open one themselves.
+  openUrl(url: string): Promise<void>
+  /// The desk's own dialog to restart (or shut down) the machine, which the
+  /// user confirms there. Needs `root`.
+  power(action?: 'reboot' | 'shutdown'): Promise<void>
 }
 
 /// Where the desk's port arrives: this frame's window, from its parent.
@@ -241,5 +247,7 @@ export async function connect(options: ConnectOptions = {}): Promise<Desk> {
     jobView: (since = 0) => call('backend.jobView', { since }),
     follow: (options) => follow(options),
     cancelJob: () => call('backend.cancel'),
+    power: (action = 'reboot') => call('power', { action }),
+    openUrl: (url) => call('openUrl', { url }),
   }
 }

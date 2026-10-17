@@ -107,7 +107,7 @@ function sudoAsk(value: unknown): SudoAsk | undefined {
   const body = text(v.body, 600)
   if (!title || body === undefined) throw new BridgeError('invalidArgs')
   const word = v.confirmWord
-  if (word !== undefined && (typeof word !== 'string' || !/^[a-z0-9-]{1,32}$/.test(word))) throw new BridgeError('invalidArgs')
+  if (word !== undefined && (typeof word !== 'string' || !/^[A-Za-z0-9._+~-]{1,64}$/.test(word))) throw new BridgeError('invalidArgs')
   return { title, body, confirmWord: word as string | undefined }
 }
 
@@ -129,6 +129,9 @@ export interface BridgeHost {
   stylesheet?(): string | null
   /// The app's backend, when it has one (`kind: wasm`).
   backend?: BackendHost
+  /// The desk's own restart dialog (`PowerModal`), which the user confirms
+  /// there.
+  power?: (action: 'reboot' | 'shutdown') => void
 }
 
 export class WebAppBridge {
@@ -332,6 +335,28 @@ export class WebAppBridge {
         if (!this.#host.backend) throw new BridgeError('noBackend')
         const since = typeof a.since === 'number' && Number.isSafeInteger(a.since) && a.since >= 0 ? a.since : 0
         return this.#host.backend.view(since)
+      }
+      case 'openUrl': {
+        // A page of the web, opened by the desk in a tab of its own (the
+        // frame has no popups): http(s) only, not often.
+        const url = text(a.url, 2048) ?? ''
+        if (!/^https?:\/\/[^\s]+$/.test(url)) throw new BridgeError('invalidArgs')
+        const now = Date.now()
+        this.#opens = this.#opens.filter((t) => now - t < OPEN_WINDOW_MS)
+        if (this.#opens.length >= MAX_OPENS) throw new BridgeError('busy')
+        this.#opens.push(now)
+        window.open(url, '_blank', 'noopener,noreferrer')
+        return
+      }
+      case 'power': {
+        // Only the desk's dialog opens, which the user confirms; an app that
+        // may run as root may ask for it, not often.
+        if (!this.#host.allows('root') || !this.#host.power) throw new BridgeError('notPermitted')
+        const now = Date.now()
+        this.#opens = this.#opens.filter((t) => now - t < OPEN_WINDOW_MS)
+        if (this.#opens.length >= MAX_OPENS) throw new BridgeError('busy')
+        this.#opens.push(now)
+        return this.#host.power(a.action === 'shutdown' ? 'shutdown' : 'reboot')
       }
       case 'backend.cancel':
         if (!this.#host.backend) throw new BridgeError('noBackend')

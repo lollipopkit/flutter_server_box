@@ -1,0 +1,48 @@
+{
+  "publisher": "serverbox",
+  "name": "ubuntu_pro",
+  "version": "1.0.0",
+  "api": 2,
+  "kind": "wasm",
+  "title": {
+    "en": "Ubuntu Pro",
+    "de": "Ubuntu Pro",
+    "es": "Ubuntu Pro",
+    "fr": "Ubuntu Pro",
+    "id": "Ubuntu Pro",
+    "it": "Ubuntu Pro",
+    "ja": "Ubuntu Pro",
+    "ko": "Ubuntu Pro",
+    "nl": "Ubuntu Pro",
+    "pt": "Ubuntu Pro",
+    "ru": "Ubuntu Pro",
+    "tr": "Ubuntu Pro",
+    "uk": "Ubuntu Pro",
+    "zh-CN": "Ubuntu Pro",
+    "zh-TW": "Ubuntu Pro"
+  },
+  "keywords": [
+    "ubuntu",
+    "pro",
+    "livepatch",
+    "esm",
+    "canonical"
+  ],
+  "glyph": "verified_user",
+  "tone": "amber",
+  "permissions": [
+    "process",
+    "root"
+  ],
+  "size": {
+    "width": 820,
+    "height": 700
+  },
+  "min_size": {
+    "width": 360,
+    "height": 400
+  },
+  "os": [
+    "ubuntu"
+  ]
+}

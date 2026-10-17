@@ -17,3 +17,8 @@ export function formatBytes(bytes: number): string {
 export function formatTime(ms: number, locale: string): string {
   return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(ms))
 }
+
+/// [when] (Unix milliseconds or an ISO text) as a date in [locale]: `17 Oct 2026`.
+export function formatDate(when: number | string, locale: string): string {
+  return new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'short', day: 'numeric' }).format(new Date(when))
+}

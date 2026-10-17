@@ -15,8 +15,9 @@
   import Spinner from '$lk/Spinner.svelte'
   import { DeskError, formatBytes, formatTime, translator } from 'serverbox-desk'
   import { SvelteSet } from 'svelte/reactivity'
-  import { desk } from './desk'
-  import JobLog from './JobLog.svelte'
+  import { desk } from '$common/desk'
+  import JobLog from '$common/JobLog.svelte'
+  import { JobRun } from '$common/job.svelte'
   import { dictionaries } from './locales'
   import { GROUPS, chosenBytes, groupLabel, itemLabel, type Item, type Report } from './model'
 
@@ -27,8 +28,8 @@
   let report = $state<Report | null>(null)
   let loaded = $state(false)
   let error = $state('')
-  let job = $state<{ fn: string; state: 'running' | 'succeeded' | 'failed' | 'cancelled'; lines: string[] } | null>(null)
-  const running = $derived(job?.state === 'running')
+  const job = new JobRun()
+  const running = $derived(job.running)
   const chosen = new SvelteSet<string>()
 
   const items = $derived(report?.items ?? [])
@@ -57,15 +58,11 @@
   /// [fn] as root, followed until it ends; a scan that ends well leaves only
   /// what it found, anything else stays on screen.
   async function run(fn: 'scan' | 'clean', args: Record<string, unknown>, sudo: { title: string; body: string; confirmWord?: string }) {
-    const lines: string[] = []
-    try {
-      job = { fn, state: 'running', lines }
-      report = await desk.job<Report>(fn, args, { sudo, onLine: (l) => job && (job.lines = [...job.lines, l].slice(-2000)) })
-      job = fn === 'scan' ? null : { ...job!, state: 'succeeded' }
-      if (fn === 'clean') chosen.clear()
-    } catch (e) {
-      if (e instanceof DeskError && e.message === 'declined') job = null
-      else if (job) job = { ...job, state: e instanceof DeskError && e.message === 'cancelled' ? 'cancelled' : 'failed', lines: [...job.lines, `✕ ${said(e)}`] }
+    const found = await job.start<Report>(fn, args, sudo, said)
+    if (found) {
+      report = found
+      if (fn === 'scan') job.dismiss()
+      else chosen.clear()
     }
     void load()
   }
@@ -97,17 +94,10 @@
   desk.on('action', ({ id }) => (id === 'scan' ? scan() : id === 'refresh' ? void load() : undefined))
 
   // A job started before this window opened (or before it reopened).
-  void desk.jobView().then(async (v) => {
-    if (v?.state !== 'running') return
-    job = { fn: v.function, state: 'running', lines: [] }
-    try {
-      await desk.follow({ onLine: (l) => job && (job.lines = [...job.lines, l]) })
-      job = v.function === 'scan' ? null : { ...job!, state: 'succeeded' }
-    } catch {
-      if (job) job = { ...job, state: 'failed' }
-    }
+  void job.resume(said).then((fn) => {
+    if (fn === 'scan') job.dismiss()
     void load()
-  }, () => {})
+  })
   void load()
 </script>
 
@@ -115,13 +105,13 @@
   {#if error}
     <Card><p class="error"><Icon name="error" size={17} /><span>{error}</span></p></Card>
   {/if}
-  {#if job}
+  {#if job.status}
     <JobLog
       {t}
-      status={job.state}
-      title={job.state === 'running' ? (job.fn === 'scan' ? t('scanning') : t('cleaning')) : job.state === 'succeeded' ? t('done') : t('failed')}
+      status={job.status}
+      title={job.running ? (job.fn === 'scan' ? t('scanning') : t('cleaning')) : job.status === 'succeeded' ? t('done') : t('failed')}
       lines={job.lines}
-      oncancel={() => void desk.cancelJob()}
+      oncancel={() => job.cancel()}
     />
   {/if}
 

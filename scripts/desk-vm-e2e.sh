@@ -6,7 +6,7 @@
 #   scripts/desk-vm-e2e.sh <node> kernel       # restarts the VM twice
 #   scripts/desk-vm-e2e.sh <node> ubuntu_pro   # SBM_E2E_PRO_TOKEN to attach
 #   scripts/desk-vm-e2e.sh <node> cleanup      # junk of each kind made first
-#   scripts/desk-vm-e2e.sh <node> cleanup_app  # the same, Cleanup as a package
+#   scripts/desk-vm-e2e.sh <node> <spec>_app   # the same, the app as a package
 #   scripts/desk-vm-e2e.sh <node> tailscale    # Headscale and a peer made first
 #
 # Builds the agent on SBM_E2E_BUILD_HOST (lkd-wsl) and the panel here;
@@ -81,7 +81,7 @@ i=0; until [ -f /home/sbm/app/initial-admin-credentials.txt ] || [ \$i -gt 30 ];
 SBM_E2E_PANEL_PASSWORD=$(vm "awk '/^password:/{print \$2}' /home/sbm/app/initial-admin-credentials.txt")
 export SBM_E2E_PANEL_PASSWORD SBM_E2E_PANEL_URL="https://$addr:3770"
 
-if [ "$spec" = kernel ]; then
+if [ "${spec%_app}" = kernel ]; then
 # The newest version of the running flavour older than it.
 SBM_E2E_KERNEL_VERSION=$(vm 'apt-get update -q >/dev/null 2>&1; r=$(uname -r); f=${r#*-*-}
   apt list "linux-image-*-$f" 2>/dev/null | sed -n "s,^linux-image-\([0-9][^/]*-$f\)/.*,\1,p" | sort -V | awk -v r="$r" "\$0 == r { exit } { v = \$0 } END { print v }"')
@@ -90,7 +90,7 @@ export SBM_E2E_KERNEL_VERSION
 echo "==> vm $id: $(vm uname -r) running, $SBM_E2E_KERNEL_VERSION to install"
 fi
 
-if [ "$spec" = cleanup ] || [ "$spec" = cleanup_app ]; then
+if [ "${spec%_app}" = cleanup ]; then
 # Something of each kind to clean: a downloaded package, one nothing needs,
 # old logs, a crash report, the account's trash and caches, and a folder a
 # removed web app left (a file in it root's, as a container's would be).
@@ -106,7 +106,7 @@ vm 'set -e; export DEBIAN_FRONTEND=noninteractive
   head -c 1000000 /dev/urandom > /home/sbm/app/stacks/sbm.leftover/data/root-owned'
 fi
 
-if [ "$spec" = tailscale ]; then
+if [ "${spec%_app}" = tailscale ]; then
 # A tailnet of its own: Headscale on the VM and a second, userspace
 # tailscaled as the peer (offering an exit node and a route, approved).
 # Both pinned and checked here; the machine's Tailscale is the app's to

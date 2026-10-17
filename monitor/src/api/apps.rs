@@ -99,6 +99,17 @@ pub struct Manifest {
     pub opens: Option<Opens>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub keywords: Vec<String>,
+    /// The systems it is for (`/etc/os-release`'s `ID`: `ubuntu`); any when
+    /// empty. Elsewhere the catalog does not offer it.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub os: Vec<String>,
+}
+
+impl Manifest {
+    /// Whether it is for a machine whose `/etc/os-release` `ID` is [os].
+    pub fn for_os(&self, os: Option<&str>) -> bool {
+        self.os.is_empty() || os.is_some_and(|os| self.os.iter().any(|o| o == os))
+    }
 }
 
 impl Manifest {
@@ -208,6 +219,9 @@ pub fn check_manifest(m: &Manifest, first_party: bool) -> Result<(), Refusal> {
     }
     if m.keywords.len() > 16 || !m.keywords.iter().all(|k| short_text(k, 32)) {
         return Err(refused("invalidKeywords"));
+    }
+    if m.os.len() > 16 || !m.os.iter().all(|o| (1..=32).contains(&o.len()) && o.bytes().all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b"._-".contains(&b))) {
+        return Err(refused("invalidOs"));
     }
     Ok(())
 }
@@ -597,8 +611,10 @@ struct OfferedView<'a> {
 pub async fn catalog(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     require!(authz::jwt_caller(&req, &state).await);
     let offered = state.stacks.catalog.desk.all();
+    let os = super::machine::os_id();
     let apps: Vec<OfferedView> = offered
         .iter()
+        .filter(|o| o.package.manifest.for_os(os))
         .map(|o| OfferedView {
             id: o.package.manifest.id(),
             version: &o.package.manifest.version,
@@ -618,6 +634,9 @@ pub async fn catalog(req: HttpRequest, state: web::types::State<Arc<AppState>>) 
 pub async fn install_offered(req: HttpRequest, id: web::types::Path<String>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     require!(authz::acting_caller(&req, &state).await);
     let Some(offered) = state.stacks.catalog.desk.get(&id) else { return Ok(not_found()) };
+    if !offered.package.manifest.for_os(super::machine::os_id()) {
+        return Ok(HttpResponse::Conflict().json(&refused("notForThisSystem")));
+    }
     let bytes = offered.bytes.clone();
     let package = match tokio::task::spawn_blocking(move || read_package(&bytes)).await {
         Ok(Ok(p)) => p,
@@ -803,6 +822,7 @@ mod tests {
             min_size: None,
             opens: Some(Opens { dirs: false, ext: vec!["md".into(), "txt".into()] }),
             keywords: vec![],
+            os: Vec::new(),
         }
     }
 
@@ -847,6 +867,7 @@ mod tests {
             (|m| m.instances = Some(0), "invalidInstances"),
             (|m| m.size = Some(Size { width: 10, height: 10 }), "invalidSize"),
             (|m| m.opens = Some(Opens { dirs: false, ext: vec![".md".into()] }), "invalidOpens"),
+            (|m| m.os = vec!["Ubuntu 26.04".into()], "invalidOs"),
         ];
         for (change, code) in cases {
             let mut m = manifest();

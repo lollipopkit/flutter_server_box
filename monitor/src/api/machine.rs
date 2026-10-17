@@ -112,7 +112,7 @@ fn features_for(os: Option<&str>) -> Vec<&'static str> {
 
 /// `/etc/os-release`'s `ID`, read once: the distribution does not change
 /// under a running agent.
-fn os_id() -> Option<&'static str> {
+pub(crate) fn os_id() -> Option<&'static str> {
     static ID: std::sync::OnceLock<Option<String>> = std::sync::OnceLock::new();
     ID.get_or_init(|| std::fs::read_to_string("/etc/os-release").ok().and_then(|t| sbm_parser::common::parse_os_id(&t))).as_deref()
 }

@@ -12,7 +12,8 @@
     "test": "vitest",
     "test:coverage": "vitest --coverage",
     "typesafe-i18n": "typesafe-i18n --no-watch",
-    "icons": "uv run scripts/icons.py"
+    "icons": "uv run scripts/icons.py",
+    "check:apps": "svelte-check --workspace ../apps --tsconfig ../apps/tsconfig.json"
   },
   "dependencies": {
     "@devolutions/iron-remote-desktop": "0.11.0",

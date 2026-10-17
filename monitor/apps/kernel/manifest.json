@@ -1,0 +1,44 @@
+{
+  "publisher": "serverbox",
+  "name": "kernel",
+  "version": "1.0.0",
+  "api": 2,
+  "kind": "wasm",
+  "title": {
+    "en": "Kernels",
+    "de": "Kernel",
+    "es": "Kernels",
+    "fr": "Noyaux",
+    "id": "Kernel",
+    "it": "Kernel",
+    "ja": "カーネル",
+    "ko": "커널",
+    "nl": "Kernels",
+    "pt": "Kernels",
+    "ru": "Ядра",
+    "tr": "Çekirdekler",
+    "uk": "Ядра",
+    "zh-CN": "内核",
+    "zh-TW": "核心"
+  },
+  "keywords": [
+    "kernel",
+    "linux",
+    "grub",
+    "boot"
+  ],
+  "glyph": "memory",
+  "tone": "ink",
+  "permissions": [
+    "process",
+    "root"
+  ],
+  "size": {
+    "width": 860,
+    "height": 680
+  },
+  "min_size": {
+    "width": 360,
+    "height": 380
+  }
+}

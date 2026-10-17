@@ -50,3 +50,42 @@ body {
   color: var(--color-danger);
   word-break: break-all;
 }
+
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.wrap {
+  flex-wrap: wrap;
+}
+
+.grow {
+  flex: 1;
+  min-width: 200px;
+}
+
+.pad {
+  padding: 11px 13px;
+}
+
+.hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.link {
+  color: var(--color-accent);
+  text-decoration: underline;
+  word-break: break-all;
+}
+
+.danger {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-danger);
+}

@@ -2,7 +2,8 @@ import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { fileURLToPath } from 'node:url'
 import { defineConfig, type Plugin } from 'vite'
 
-// A first-party desk app's UI (`monitor/apps/<SBM_APP>/ui`), built into
+// A first-party desk app's UI (`monitor/apps/<SBM_APP>/ui`, with what they
+// share in `monitor/apps/common/ui` as `$common`), built into
 // `monitor/apps/<SBM_APP>/target/ui` for its package
 // (`scripts/build-desk-app.sh`). It bundles the desk's `lk` components (they
 // are ours; the frame stays an opaque origin) and `serverbox-desk`; the
@@ -35,6 +36,7 @@ export default defineConfig({
   resolve: {
     alias: {
       $lk: here('src/desk/lk'),
+      $common: here('../apps/common/ui'),
       'serverbox-desk': here('../sdk/serverbox-desk/src/index.ts'),
     },
   },
