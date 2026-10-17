@@ -2,12 +2,38 @@ import 'dart:async';
 
 import 'package:xterm/core.dart';
 
-/// The rows of [buffer] on screen, top first, each without its trailing
-/// blanks.
-List<String> viewportRows(Buffer buffer) => [
+/// How one cell is drawn: its foreground, its background and its attributes
+/// ([CellAttr]), as the line holds them.
+typedef CellStyle = (int, int, int);
+
+/// One row on screen: its text, without trailing blanks, and how each of its
+/// cells is drawn.
+///
+/// The styles are what a menu drawn by `dialog`, `whiptail` or `nmtui` moves
+/// when an arrow is pressed: those leave the text and the cursor where they
+/// were and only paint another item as the selected one.
+final class ScreenRow {
+  const ScreenRow(this.text, [this.styles = const []]);
+
+  final String text;
+  final List<CellStyle> styles;
+
+  static const _plain = (0, 0, 0);
+
+  CellStyle styleAt(int index) =>
+      index < styles.length ? styles[index] : _plain;
+}
+
+/// The rows of [buffer] on screen, top first.
+List<ScreenRow> viewportRows(Buffer buffer) => [
   for (var i = buffer.scrollBack; i < buffer.height; i++)
-    buffer.lines[i].getText(),
+    _screenRow(buffer.lines[i]),
 ];
+
+ScreenRow _screenRow(BufferLine line) => ScreenRow(line.getText(), [
+  for (var c = 0; c < line.length; c++)
+    (line.getForeground(c), line.getBackground(c), line.getAttributes(c)),
+]);
 
 /// The text of the row the cursor is on.
 String cursorRow(Buffer buffer) {
@@ -16,12 +42,9 @@ String cursorRow(Buffer buffer) {
   return buffer.lines[y].getText();
 }
 
-/// Which rows of [after] are not in [before], in order, blank ones left out.
-///
-/// The screen is first lined up with how far it scrolled — the shift that
-/// keeps the most rows in place — so output that pushed everything up counts
-/// as the new rows at the bottom, not as a whole screen that changed.
-List<String> changedRows(List<String> before, List<String> after) {
+/// How far [after] scrolled from [before]: the shift that keeps the most rows
+/// in place.
+int _scrolled(List<String> before, List<String> after) {
   var shift = 0;
   var best = -1;
   for (var k = 0; k <= before.length; k++) {
@@ -34,6 +57,16 @@ List<String> changedRows(List<String> before, List<String> after) {
       shift = k;
     }
   }
+  return shift;
+}
+
+/// Which rows of [after] are not in [before], in order, blank ones left out.
+///
+/// The screen is first lined up with how far it scrolled, so output that
+/// pushed everything up counts as the new rows at the bottom, not as a whole
+/// screen that changed.
+List<String> changedRows(List<String> before, List<String> after) {
+  final shift = _scrolled(before, after);
   return [
     for (var i = 0; i < after.length; i++)
       if (!(i + shift < before.length && before[i + shift] == after[i]) &&
@@ -42,17 +75,81 @@ List<String> changedRows(List<String> before, List<String> after) {
   ];
 }
 
-/// What to read out after a key: the rows it changed, or, when it changed
-/// none — an arrow moving through a menu — the row the cursor is on, unless
+/// The row of [after] that a change of style alone made the selected one, or
+/// null when no row with text was repainted.
+///
+/// Moving through a menu repaints two rows: the item that lost the highlight
+/// and the one that took it. The one read is the row that took on inverse
+/// video, and otherwise the one now drawn in the style least used on the
+/// screen — a highlight is what one item has and the rest do not.
+String? restyledRow(List<ScreenRow> before, List<ScreenRow> after) {
+  final shift = _scrolled(
+    [for (final row in before) row.text],
+    [for (final row in after) row.text],
+  );
+  final uses = <CellStyle, int>{};
+  for (final row in after) {
+    for (final style in row.styles) {
+      uses[style] = (uses[style] ?? 0) + 1;
+    }
+  }
+  String? best;
+  var bestInverse = false;
+  var bestRarity = 0;
+  for (var i = 0; i < after.length; i++) {
+    final j = i + shift;
+    if (j >= before.length) continue;
+    final now = after[i];
+    final was = before[j];
+    if (now.text != was.text || now.text.trim().isEmpty) continue;
+    final width = now.styles.length > was.styles.length
+        ? now.styles.length
+        : was.styles.length;
+    var repainted = false;
+    var inverse = false;
+    var rarity = 1 << 30;
+    for (var c = 0; c < width; c++) {
+      final style = now.styleAt(c);
+      final old = was.styleAt(c);
+      if (style == old) continue;
+      repainted = true;
+      if (style.$3 & CellAttr.inverse != 0 && old.$3 & CellAttr.inverse == 0) {
+        inverse = true;
+      }
+      final n = uses[style] ?? 0;
+      if (n < rarity) rarity = n;
+    }
+    if (!repainted) continue;
+    final better =
+        best == null ||
+        (inverse && !bestInverse) ||
+        (inverse == bestInverse && rarity < bestRarity);
+    if (better) {
+      best = now.text.trim();
+      bestInverse = inverse;
+      bestRarity = rarity;
+    }
+  }
+  return best;
+}
+
+/// What to read out after a key: the rows it changed; when it changed no text,
+/// the row it repainted as the selected one; and when it did neither — the
+/// cursor moved along a line — the row the cursor is on, unless
 /// [cursorIfUnchanged] is false.
 String? announcementFor({
-  required List<String> before,
-  required List<String> after,
+  required List<ScreenRow> before,
+  required List<ScreenRow> after,
   required String cursor,
   bool cursorIfUnchanged = true,
 }) {
-  final changed = changedRows(before, after);
+  final changed = changedRows(
+    [for (final row in before) row.text],
+    [for (final row in after) row.text],
+  );
   if (changed.isNotEmpty) return changed.join('\n');
+  final restyled = restyledRow(before, after);
+  if (restyled != null) return restyled;
   if (!cursorIfUnchanged) return null;
   final row = cursor.trim();
   return row.isEmpty ? null : row;
@@ -100,7 +197,7 @@ final class TerminalAnnouncer {
 
   /// The screen when the first key of this round was typed; null between
   /// rounds.
-  List<String>? _before;
+  List<ScreenRow>? _before;
   bool _changed = false;
 
   /// Whether every key of this round was a space.

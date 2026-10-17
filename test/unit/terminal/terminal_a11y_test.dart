@@ -28,12 +28,81 @@ void main() {
     });
   });
 
+  List<ScreenRow> rows(List<String> texts) => [
+    for (final text in texts) ScreenRow(text),
+  ];
+
   test('announcementFor falls back to the cursor row', () {
     expect(
-      announcementFor(before: ['a', 'b'], after: ['a', 'b'], cursor: ' b '),
+      announcementFor(
+        before: rows(['a', 'b']),
+        after: rows(['a', 'b']),
+        cursor: ' b ',
+      ),
       'b',
     );
-    expect(announcementFor(before: [''], after: [''], cursor: ''), isNull);
+    expect(
+      announcementFor(before: rows(['']), after: rows(['']), cursor: ''),
+      isNull,
+    );
+  });
+
+  group('restyledRow', () {
+    // A dialog menu: the items, then the buttons the cursor stays on.
+    const menu = '[ ] a Apple\r\n[ ] b Banana\r\n[ ] c Cherry\r\n  <OK>';
+
+    /// [menu] with item [selected] drawn as [highlight] and the cursor on the
+    /// OK button.
+    Terminal drawn(int selected, String highlight) {
+      final terminal = _terminal(cols: 16, rows: 4);
+      final lines = menu.split('\r\n');
+      for (var i = 0; i < lines.length; i++) {
+        if (i > 0) terminal.write('\r\n');
+        terminal.write(
+          i == selected ? '$highlight${lines[i]}\x1b[0m' : lines[i],
+        );
+      }
+      terminal.write('\x1b[4;4H');
+      return terminal;
+    }
+
+    for (final (name, highlight) in [
+      ('inverse video', '\x1b[7m'),
+      ('a colour pair', '\x1b[37;44m'),
+    ]) {
+      test('an arrow that moved the $name highlight reads the new item', () {
+        final before = viewportRows(drawn(0, highlight).buffer);
+        final down = drawn(1, highlight).buffer;
+        expect(
+          announcementFor(
+            before: before,
+            after: viewportRows(down),
+            cursor: cursorRow(down),
+          ),
+          '[ ] b Banana',
+        );
+        final up = viewportRows(drawn(0, highlight).buffer);
+        expect(restyledRow(viewportRows(down), up), '[ ] a Apple');
+      });
+    }
+
+    test('a screen drawn the same is not a restyle', () {
+      final screen = viewportRows(drawn(2, '\x1b[7m').buffer);
+      expect(restyledRow(screen, screen), isNull);
+    });
+
+    test('a changed text still wins over a restyle', () {
+      final before = viewportRows(drawn(0, '\x1b[7m').buffer);
+      final terminal = drawn(1, '\x1b[7m')..write('\x1b[2;2H*');
+      expect(
+        announcementFor(
+          before: before,
+          after: viewportRows(terminal.buffer),
+          cursor: cursorRow(terminal.buffer),
+        ),
+        '[*] b Banana',
+      );
+    });
   });
 
   test('announcesAfter skips plain characters', () {
