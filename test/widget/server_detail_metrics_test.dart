@@ -693,6 +693,35 @@ void main() {
     expect(find.text(app_locale.l10n.rangeLive), findsOneWidget);
   });
 
+  /// Drawn fainter, so said to a screen reader too: a range there is no
+  /// stored history for is a button that is not enabled.
+  testWidgets('a range there is no history for is not enabled', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    await pump(tester, size: const Size(1200, 900));
+
+    expect(
+      tester.getSemantics(find.text('24h')),
+      isSemantics(
+        label: '24h',
+        isButton: true,
+        hasEnabledState: true,
+        isEnabled: false,
+      ),
+    );
+    expect(
+      tester.getSemantics(find.text(app_locale.l10n.rangeLive)),
+      isSemantics(
+        isButton: true,
+        hasEnabledState: true,
+        isEnabled: true,
+        isSelected: true,
+      ),
+    );
+    handle.dispose();
+  });
+
   testWidgets('the threads unfold under the CPU chart, as many a line as fit', (
     tester,
   ) async {
