@@ -50,6 +50,7 @@ pub mod stacks;
 pub mod inference;
 pub mod agent_tools;
 pub mod proxy;
+pub mod kernel;
 pub mod waf;
 pub mod shares;
 pub mod storage;

@@ -10681,6 +10681,191 @@ type RootTranslation = {
 	 * W​e​b​ ​a​p​p​l​i​c​a​t​i​o​n​ ​f​i​r​e​w​a​l​l
 	 */
 	wafSiteToggle: string
+	/**
+	 * K​e​r​n​e​l​s
+	 */
+	kernel: string
+	/**
+	 * k​e​r​n​e​l​ ​b​o​o​t​ ​g​r​u​b​ ​l​i​n​u​x​-​i​m​a​g​e
+	 */
+	kernelKeywords: string
+	/**
+	 * K​e​r​n​e​l​s​ ​a​r​e​ ​m​a​n​a​g​e​d​ ​h​e​r​e​ ​o​n​ ​D​e​b​i​a​n​ ​a​n​d​ ​U​b​u​n​t​u​ ​w​i​t​h​ ​G​R​U​B​.
+	 */
+	kernelUnsupported: string
+	/**
+	 * T​h​e​ ​a​r​c​h​i​v​e​ ​d​o​e​s​ ​n​o​t​ ​o​f​f​e​r​ ​t​h​a​t​ ​p​a​c​k​a​g​e​.
+	 */
+	kernelNotOffered: string
+	/**
+	 * T​h​a​t​ ​i​s​ ​i​n​s​t​a​l​l​e​d​ ​a​l​r​e​a​d​y​.
+	 */
+	kernelAlreadyInstalled: string
+	/**
+	 * T​h​a​t​ ​k​e​r​n​e​l​ ​i​s​ ​n​o​t​ ​i​n​s​t​a​l​l​e​d​.
+	 */
+	kernelUnknown: string
+	/**
+	 * T​h​e​ ​r​u​n​n​i​n​g​ ​k​e​r​n​e​l​ ​c​a​n​n​o​t​ ​b​e​ ​r​e​m​o​v​e​d​.
+	 */
+	kernelRemoveRunning: string
+	/**
+	 * G​R​U​B​ ​b​o​o​t​s​ ​t​h​i​s​ ​k​e​r​n​e​l​:​ ​b​o​o​t​ ​a​n​o​t​h​e​r​ ​o​n​e​ ​f​i​r​s​t​.
+	 */
+	kernelRemoveBooted: string
+	/**
+	 * T​h​e​ ​l​a​s​t​ ​k​e​r​n​e​l​ ​c​a​n​n​o​t​ ​b​e​ ​r​e​m​o​v​e​d​.
+	 */
+	kernelRemoveLast: string
+	/**
+	 * A​ ​s​e​r​i​e​s​ ​t​h​i​s​ ​m​a​c​h​i​n​e​ ​f​o​l​l​o​w​s​ ​n​e​e​d​s​ ​t​h​i​s​ ​k​e​r​n​e​l​.
+	 */
+	kernelRemoveNeeded: string
+	/**
+	 * I​n​s​t​a​l​l​ ​{​p​a​c​k​a​g​e​}
+	 * @param {unknown} package
+	 */
+	kernelInstallTitle: RequiredParams<'package'>
+	/**
+	 * T​h​e​ ​p​a​c​k​a​g​e​ ​a​n​d​ ​w​h​a​t​ ​i​t​ ​n​e​e​d​s​ ​a​r​e​ ​i​n​s​t​a​l​l​e​d​ ​f​r​o​m​ ​t​h​e​ ​m​a​c​h​i​n​e​'​s​ ​a​r​c​h​i​v​e​.​ ​G​R​U​B​ ​o​f​f​e​r​s​ ​t​h​e​ ​n​e​w​ ​k​e​r​n​e​l​;​ ​i​t​ ​r​u​n​s​ ​a​f​t​e​r​ ​a​ ​r​e​s​t​a​r​t​.
+	 */
+	kernelInstallBody: string
+	/**
+	 * R​e​m​o​v​e​ ​{​r​e​l​e​a​s​e​}
+	 * @param {unknown} release
+	 */
+	kernelRemoveTitle: RequiredParams<'release'>
+	/**
+	 * I​t​s​ ​i​m​a​g​e​ ​a​n​d​ ​m​o​d​u​l​e​s​ ​a​r​e​ ​p​u​r​g​e​d​.​ ​N​o​t​h​i​n​g​ ​e​l​s​e​ ​i​s​ ​r​e​m​o​v​e​d​:​ ​i​f​ ​a​n​y​t​h​i​n​g​ ​e​l​s​e​ ​w​o​u​l​d​ ​g​o​ ​w​i​t​h​ ​t​h​e​m​,​ ​t​h​e​ ​r​e​m​o​v​a​l​ ​s​t​o​p​s​.
+	 */
+	kernelRemoveBody: string
+	/**
+	 * B​o​o​t​ ​{​r​e​l​e​a​s​e​}
+	 * @param {unknown} release
+	 */
+	kernelBootTitle: RequiredParams<'release'>
+	/**
+	 * G​R​U​B​ ​b​o​o​t​s​ ​t​h​i​s​ ​k​e​r​n​e​l​ ​f​r​o​m​ ​n​o​w​ ​o​n​,​ ​u​n​t​i​l​ ​a​n​o​t​h​e​r​ ​i​s​ ​c​h​o​s​e​n​ ​o​r​ ​t​h​e​ ​n​e​w​e​s​t​ ​a​g​a​i​n​.​ ​I​t​ ​r​u​n​s​ ​a​f​t​e​r​ ​a​ ​r​e​s​t​a​r​t​.
+	 */
+	kernelBootBody: string
+	/**
+	 * B​o​o​t​ ​{​r​e​l​e​a​s​e​}​ ​o​n​c​e
+	 * @param {unknown} release
+	 */
+	kernelBootOnceTitle: RequiredParams<'release'>
+	/**
+	 * G​R​U​B​ ​b​o​o​t​s​ ​t​h​i​s​ ​k​e​r​n​e​l​ ​a​t​ ​t​h​e​ ​n​e​x​t​ ​r​e​s​t​a​r​t​ ​o​n​l​y​;​ ​t​h​e​ ​o​n​e​ ​a​f​t​e​r​ ​b​o​o​t​s​ ​t​h​e​ ​d​e​f​a​u​l​t​ ​a​g​a​i​n​.
+	 */
+	kernelBootOnceBody: string
+	/**
+	 * B​o​o​t​ ​t​h​e​ ​n​e​w​e​s​t​ ​k​e​r​n​e​l
+	 */
+	kernelBootNewestTitle: string
+	/**
+	 * G​R​U​B​ ​b​o​o​t​s​ ​t​h​e​ ​n​e​w​e​s​t​ ​i​n​s​t​a​l​l​e​d​ ​k​e​r​n​e​l​ ​a​g​a​i​n​,​ ​a​s​ ​i​t​ ​d​o​e​s​ ​w​i​t​h​o​u​t​ ​b​e​i​n​g​ ​t​o​l​d​.
+	 */
+	kernelBootNewestBody: string
+	/**
+	 * W​o​r​k​i​n​g​…
+	 */
+	kernelWorking: string
+	/**
+	 * D​o​n​e
+	 */
+	kernelDone: string
+	/**
+	 * D​i​d​ ​n​o​t​ ​f​i​n​i​s​h
+	 */
+	kernelFailed: string
+	/**
+	 * R​u​n​n​i​n​g
+	 */
+	kernelRunning: string
+	/**
+	 * B​o​o​t​s​ ​b​y​ ​d​e​f​a​u​l​t
+	 */
+	kernelBoots: string
+	/**
+	 * C​h​o​s​e​n​ ​h​e​r​e
+	 */
+	kernelPinned: string
+	/**
+	 * T​h​e​ ​n​e​w​e​s​t​ ​i​n​s​t​a​l​l​e​d
+	 */
+	kernelNewest: string
+	/**
+	 * B​o​o​t​ ​n​e​w​e​s​t
+	 */
+	kernelBootNewest: string
+	/**
+	 * N​e​x​t​ ​r​e​s​t​a​r​t​ ​o​n​l​y
+	 */
+	kernelNextBoot: string
+	/**
+	 * {​r​e​l​e​a​s​e​}​ ​r​u​n​s​ ​a​f​t​e​r​ ​a​ ​r​e​s​t​a​r​t​.
+	 * @param {unknown} release
+	 */
+	kernelRestartToBoot: RequiredParams<'release'>
+	/**
+	 * T​h​e​ ​m​a​c​h​i​n​e​ ​a​s​k​s​ ​f​o​r​ ​a​ ​r​e​s​t​a​r​t​.
+	 */
+	kernelRestartRequired: string
+	/**
+	 * I​n​s​t​a​l​l​e​d
+	 */
+	kernelInstalled: string
+	/**
+	 * R​u​n​n​i​n​g
+	 */
+	kernelBadgeRunning: string
+	/**
+	 * D​e​f​a​u​l​t
+	 */
+	kernelBadgeDefault: string
+	/**
+	 * N​e​x​t​ ​b​o​o​t
+	 */
+	kernelBadgeNext: string
+	/**
+	 * B​o​o​t​ ​b​y​ ​d​e​f​a​u​l​t
+	 */
+	kernelBoot: string
+	/**
+	 * B​o​o​t​ ​o​n​c​e
+	 */
+	kernelBootOnce: string
+	/**
+	 * R​e​m​o​v​e
+	 */
+	kernelRemove: string
+	/**
+	 * S​e​r​i​e​s
+	 */
+	kernelSeries: string
+	/**
+	 * F​o​l​l​o​w​e​d
+	 */
+	kernelFollowed: string
+	/**
+	 * U​p​d​a​t​e
+	 */
+	kernelUpdate: string
+	/**
+	 * I​n​s​t​a​l​l
+	 */
+	kernelInstall: string
+	/**
+	 * O​t​h​e​r​ ​v​e​r​s​i​o​n​s
+	 */
+	kernelVersions: string
+	/**
+	 * V​e​r​s​i​o​n
+	 */
+	kernelVersion: string
+	/**
+	 * V​e​r​s​i​o​n​s​ ​o​f​ ​t​h​e​ ​r​u​n​n​i​n​g​ ​k​e​r​n​e​l​'​s​ ​f​l​a​v​o​u​r​.​ ​A​ ​s​e​r​i​e​s​ ​i​n​s​t​a​l​l​s​ ​t​h​e​ ​n​e​w​e​s​t​ ​o​f​ ​i​t​s​ ​k​i​n​d​ ​a​n​d​ ​k​e​e​p​s​ ​i​t​ ​u​p​d​a​t​e​d​;​ ​a​ ​v​e​r​s​i​o​n​ ​s​t​a​y​s​ ​a​s​ ​i​t​ ​i​s​.
+	 */
+	kernelVersionsNote: string
 }
 
 export type TranslationFunctions = {
@@ -20964,6 +21149,186 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Web application firewall
 	 */
 	wafSiteToggle: () => LocalizedString
+	/**
+	 * Kernels
+	 */
+	kernel: () => LocalizedString
+	/**
+	 * kernel boot grub linux-image
+	 */
+	kernelKeywords: () => LocalizedString
+	/**
+	 * Kernels are managed here on Debian and Ubuntu with GRUB.
+	 */
+	kernelUnsupported: () => LocalizedString
+	/**
+	 * The archive does not offer that package.
+	 */
+	kernelNotOffered: () => LocalizedString
+	/**
+	 * That is installed already.
+	 */
+	kernelAlreadyInstalled: () => LocalizedString
+	/**
+	 * That kernel is not installed.
+	 */
+	kernelUnknown: () => LocalizedString
+	/**
+	 * The running kernel cannot be removed.
+	 */
+	kernelRemoveRunning: () => LocalizedString
+	/**
+	 * GRUB boots this kernel: boot another one first.
+	 */
+	kernelRemoveBooted: () => LocalizedString
+	/**
+	 * The last kernel cannot be removed.
+	 */
+	kernelRemoveLast: () => LocalizedString
+	/**
+	 * A series this machine follows needs this kernel.
+	 */
+	kernelRemoveNeeded: () => LocalizedString
+	/**
+	 * Install {package}
+	 */
+	kernelInstallTitle: (arg: { package: unknown }) => LocalizedString
+	/**
+	 * The package and what it needs are installed from the machine's archive. GRUB offers the new kernel; it runs after a restart.
+	 */
+	kernelInstallBody: () => LocalizedString
+	/**
+	 * Remove {release}
+	 */
+	kernelRemoveTitle: (arg: { release: unknown }) => LocalizedString
+	/**
+	 * Its image and modules are purged. Nothing else is removed: if anything else would go with them, the removal stops.
+	 */
+	kernelRemoveBody: () => LocalizedString
+	/**
+	 * Boot {release}
+	 */
+	kernelBootTitle: (arg: { release: unknown }) => LocalizedString
+	/**
+	 * GRUB boots this kernel from now on, until another is chosen or the newest again. It runs after a restart.
+	 */
+	kernelBootBody: () => LocalizedString
+	/**
+	 * Boot {release} once
+	 */
+	kernelBootOnceTitle: (arg: { release: unknown }) => LocalizedString
+	/**
+	 * GRUB boots this kernel at the next restart only; the one after boots the default again.
+	 */
+	kernelBootOnceBody: () => LocalizedString
+	/**
+	 * Boot the newest kernel
+	 */
+	kernelBootNewestTitle: () => LocalizedString
+	/**
+	 * GRUB boots the newest installed kernel again, as it does without being told.
+	 */
+	kernelBootNewestBody: () => LocalizedString
+	/**
+	 * Working…
+	 */
+	kernelWorking: () => LocalizedString
+	/**
+	 * Done
+	 */
+	kernelDone: () => LocalizedString
+	/**
+	 * Did not finish
+	 */
+	kernelFailed: () => LocalizedString
+	/**
+	 * Running
+	 */
+	kernelRunning: () => LocalizedString
+	/**
+	 * Boots by default
+	 */
+	kernelBoots: () => LocalizedString
+	/**
+	 * Chosen here
+	 */
+	kernelPinned: () => LocalizedString
+	/**
+	 * The newest installed
+	 */
+	kernelNewest: () => LocalizedString
+	/**
+	 * Boot newest
+	 */
+	kernelBootNewest: () => LocalizedString
+	/**
+	 * Next restart only
+	 */
+	kernelNextBoot: () => LocalizedString
+	/**
+	 * {release} runs after a restart.
+	 */
+	kernelRestartToBoot: (arg: { release: unknown }) => LocalizedString
+	/**
+	 * The machine asks for a restart.
+	 */
+	kernelRestartRequired: () => LocalizedString
+	/**
+	 * Installed
+	 */
+	kernelInstalled: () => LocalizedString
+	/**
+	 * Running
+	 */
+	kernelBadgeRunning: () => LocalizedString
+	/**
+	 * Default
+	 */
+	kernelBadgeDefault: () => LocalizedString
+	/**
+	 * Next boot
+	 */
+	kernelBadgeNext: () => LocalizedString
+	/**
+	 * Boot by default
+	 */
+	kernelBoot: () => LocalizedString
+	/**
+	 * Boot once
+	 */
+	kernelBootOnce: () => LocalizedString
+	/**
+	 * Remove
+	 */
+	kernelRemove: () => LocalizedString
+	/**
+	 * Series
+	 */
+	kernelSeries: () => LocalizedString
+	/**
+	 * Followed
+	 */
+	kernelFollowed: () => LocalizedString
+	/**
+	 * Update
+	 */
+	kernelUpdate: () => LocalizedString
+	/**
+	 * Install
+	 */
+	kernelInstall: () => LocalizedString
+	/**
+	 * Other versions
+	 */
+	kernelVersions: () => LocalizedString
+	/**
+	 * Version
+	 */
+	kernelVersion: () => LocalizedString
+	/**
+	 * Versions of the running kernel's flavour. A series installs the newest of its kind and keeps it updated; a version stays as it is.
+	 */
+	kernelVersionsNote: () => LocalizedString
 }
 
 export type Formatters = {}

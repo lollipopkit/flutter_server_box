@@ -1,9 +1,10 @@
 <script lang="ts">
   /// One change made as root, asked about: what it does, for one that loses
   /// data the name typed back, and sudo's password for the agent's account.
-  /// [run] makes it; a refusal is said here and the dialog stays. sudo's own
-  /// refusals and a job already running are said the same way everywhere;
-  /// [refusal] words the page's own codes.
+  /// [run] makes it, then the dialog closes ([onclose]); a refusal is said
+  /// here and the dialog stays. sudo's own refusals and a job already
+  /// running are said the same way everywhere; [refusal] words the page's
+  /// own codes.
 
   import { Button, Dialog, Input } from '../desk/lk'
   import { ApiError } from '../lib/api'
@@ -64,6 +65,7 @@
     error = ''
     try {
       await run(password)
+      onclose()
     } catch (e) {
       error = said(e)
       busy = false

@@ -20,8 +20,7 @@
 //!
 //! Every change is audited (`Kind::Machine`), never a password.
 
-use crate::utils::lock::LockExt;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use ntex::web::{self, HttpRequest, HttpResponse};
 use sbm_parser::shares::{self as sh, NfsExport, SmbShare};
@@ -31,29 +30,8 @@ use serde_json::json;
 use super::authz;
 use super::server::AppState;
 use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
-use crate::stacks::job::{Job, JobKind, JobState};
+use crate::stacks::job::{JobKind, JobState};
 
-/// The install running or last run.
-#[derive(Default)]
-pub struct SharesJobs {
-    job: Mutex<Option<Arc<Job>>>,
-}
-
-impl SharesJobs {
-    fn job(&self) -> Option<Arc<Job>> {
-        self.job.locked().clone()
-    }
-
-    fn begin(&self) -> Option<Arc<Job>> {
-        let mut job = self.job.locked();
-        if job.as_ref().is_some_and(|j| j.running()) {
-            return None;
-        }
-        let next = Arc::new(Job::new(JobKind::Shares));
-        *job = Some(next.clone());
-        Some(next)
-    }
-}
 
 
 async fn read(state: &AppState) -> Option<sh::Shares> {
@@ -80,7 +58,7 @@ pub async fn view(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> 
         return Ok(super::respond::error_u16(409, "notLinux"));
     }
     let Some(shares) = read(&state).await else { return Ok(super::respond::error_u16(502, "unreadable")) };
-    let job = state.shares.job().map(|j| serde_json::to_value(j.view(0)).unwrap_or_default());
+    let job = state.shares.current().map(|j| serde_json::to_value(j.view(0)).unwrap_or_default());
     Ok(answer(shares, job))
 }
 
@@ -222,7 +200,7 @@ pub async fn install(req: HttpRequest, body: web::types::Json<InstallBody>, stat
     let password = sudo_password.unwrap_or_default();
     // Tried first, so a wrong password is said here rather than in a log.
     require!(as_root(&state, "true", Some(&password).filter(|p| !p.is_empty()).map(String::as_str), false).await);
-    let Some(job) = state.shares.begin() else { return Ok(super::respond::error_u16(409, "busy")) };
+    let Some(job) = state.shares.begin(JobKind::Shares) else { return Ok(super::respond::error_u16(409, "busy")) };
     let what = if nfs { "nfs" } else { "samba" };
     record(&req, &state, format!("shares install {what}")).await;
     let script = sh::install_script(nfs);
@@ -247,7 +225,7 @@ pub struct JobQuery {
 
 pub async fn job(req: HttpRequest, query: web::types::Query<JobQuery>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     require!(authz::acting_caller(&req, &state).await);
-    match state.shares.job() {
+    match state.shares.current() {
         Some(job) => Ok(HttpResponse::Ok().json(&job.view(query.since))),
         None => Ok(super::respond::error_u16(404, "notFound")),
     }

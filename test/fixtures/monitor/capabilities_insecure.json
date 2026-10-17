@@ -49,6 +49,7 @@
         "agent_tools",
         "proxy",
         "waf",
+        "kernel",
         "alerts",
         "audit",
         "live"

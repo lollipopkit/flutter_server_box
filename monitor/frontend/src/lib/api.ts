@@ -17,6 +17,8 @@ import type {
   ProxyServerId,
   ProxySite,
   ProxyView,
+  KernelAction,
+  KernelView,
   WafEvent,
   WafSettings,
   WafView,
@@ -1284,6 +1286,10 @@ export const api = {
     request<StackJob>(`/waf/${server}/install`, { method: 'POST', body: JSON.stringify({ sudo_password: sudoPassword || null }) }),
   wafEvents: (server: ProxyServerId, sudoPassword: string) =>
     request<{ events: WafEvent[] }>(`/waf/${server}/events`, { method: 'POST', body: JSON.stringify({ sudo_password: sudoPassword || null }) }),
+  getKernel: () => request<KernelView>('/kernel', {}),
+  kernelAct: (action: KernelAction, sudoPassword: string) =>
+    request<StackJob>('/kernel/act', { method: 'POST', body: JSON.stringify({ ...action, sudo_password: sudoPassword || null }) }),
+  kernelJob: (since: number) => request<StackJob>(`/kernel/job?since=${since}`, {}),
   getProxy: () => request<ProxyView>('/proxy', {}),
   setProxySites: (server: ProxyServerId, sites: ProxySite[], sudoPassword: string) =>
     request<ProxyView>(`/proxy/${server}/sites`, { method: 'PUT', body: JSON.stringify({ sites, sudo_password: sudoPassword || null }) }),

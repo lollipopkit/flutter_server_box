@@ -116,7 +116,7 @@ pub async fn install(
     };
     let password = body.into_inner().sudo_password.unwrap_or_default();
     require!(as_root(&state, "true", Some(&password).filter(|p| !p.is_empty()).map(String::as_str), false).await);
-    let Some(job) = state.proxy.begin() else { return Ok(super::respond::error_u16(409, "busy")) };
+    let Some(job) = state.proxy.begin(crate::stacks::job::JobKind::Install) else { return Ok(super::respond::error_u16(409, "busy")) };
     record(&req, &state, format!("waf install {id}")).await;
     let job2 = job.clone();
     tokio::spawn(async move {

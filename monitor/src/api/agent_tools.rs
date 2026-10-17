@@ -10,7 +10,7 @@
 //! audit.
 
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use ntex::web::{self, HttpRequest, HttpResponse};
 use serde::Deserialize;
@@ -19,29 +19,8 @@ use serde_json::{Value, json};
 use super::machine;
 use super::server::AppState;
 use super::ws::audit::{Action, Event, Kind, Outcome};
-use crate::stacks::job::{Job, JobKind, JobState};
-use crate::utils::lock::LockExt;
+use crate::stacks::job::{JobKind, JobState};
 use sbm_parser::agents::{self as model, Api, GatewayAction, Tool};
-
-/// The one job of this page's at a time: an install, update or removal.
-#[derive(Default)]
-pub struct AgentToolsJobs(Mutex<Option<Arc<Job>>>);
-
-impl AgentToolsJobs {
-    fn current(&self) -> Option<Arc<Job>> {
-        self.0.locked().clone()
-    }
-
-    fn begin(&self, kind: JobKind) -> Option<Arc<Job>> {
-        let mut slot = self.0.locked();
-        if slot.as_ref().is_some_and(|j| j.running()) {
-            return None;
-        }
-        let job = Arc::new(Job::new(kind));
-        *slot = Some(job.clone());
-        Some(job)
-    }
-}
 
 fn refused(status: u16, error: &str) -> HttpResponse {
     let status = ntex::http::StatusCode::from_u16(status).unwrap_or(ntex::http::StatusCode::BAD_REQUEST);

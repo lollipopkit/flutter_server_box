@@ -181,6 +181,7 @@ export type MachineFeature =
   | 'inference'
   | 'agent_tools'
   | 'proxy'
+  | 'kernel'
   | 'waf'
   /// Whether a newer agent is out and how this one is updated (`/update`).
   | 'update'
@@ -2781,7 +2782,7 @@ export interface StackRow {
   last_error?: string | null
 }
 
-export type StackJobKind = 'install' | 'update' | 'reconfigure' | 'start' | 'stop' | 'restart' | 'remove' | 'backup' | 'restore' | 'storage' | 'shares'
+export type StackJobKind = 'install' | 'update' | 'reconfigure' | 'start' | 'stop' | 'restart' | 'remove' | 'backup' | 'restore' | 'storage' | 'shares' | 'kernel'
 
 /// A deploy, update, start, stop or removal (`stacks::job::JobView`).
 export interface StackJob {
@@ -3282,6 +3283,50 @@ export interface ProxyView {
   listening: number[]
   job: StackJob | null
 }
+
+/// The machine's kernels (`sbm_parser::kernel`, `GET /kernel`).
+export interface KernelInstalled {
+  /// `uname -r`'s form.
+  release: string
+  package: string
+  version: string
+  running: boolean
+  /// GRUB boots it unless told otherwise.
+  default: boolean
+  /// GRUB boots it next time only.
+  next: boolean
+  /// A followed series that depends on it.
+  neededBy: string | null
+}
+
+export interface KernelSeries {
+  package: string
+  version: string
+  installed: string | null
+}
+
+export interface KernelOffered {
+  package: string
+  release: string
+  version: string
+}
+
+export interface KernelView {
+  supported: boolean
+  running: string
+  installed: KernelInstalled[]
+  pinned: string | null
+  series: KernelSeries[]
+  versions: KernelOffered[]
+  rebootRequired: boolean
+  job: StackJob | null
+}
+
+export type KernelAction =
+  | { action: 'install'; package: string }
+  | { action: 'remove'; release: string }
+  | { action: 'boot'; release: string; once: boolean }
+  | { action: 'bootNewest' }
 
 /// The web application firewall (`sbm_parser::waf`).
 export interface WafSettings {

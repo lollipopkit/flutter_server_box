@@ -9,7 +9,7 @@
 //! - `POST /proxy/{server}/install`: `{acme_email?, sudo_password}`, the
 //!   server installed as a job (`GET /proxy/job`).
 
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use ntex::web::{self, HttpRequest, HttpResponse};
 use serde::Deserialize;
@@ -17,29 +17,8 @@ use serde::Deserialize;
 use super::authz;
 use super::server::AppState;
 use super::shares::{as_root, record};
-use crate::stacks::job::{Job, JobKind, JobState};
-use crate::utils::lock::LockExt;
+use crate::stacks::job::{JobKind, JobState};
 use sbm_parser::proxy::{self as px, Server, Site};
-
-/// The install running or last run.
-#[derive(Default)]
-pub struct ProxyJobs(Mutex<Option<Arc<Job>>>);
-
-impl ProxyJobs {
-    fn job(&self) -> Option<Arc<Job>> {
-        self.0.locked().clone()
-    }
-
-    pub(crate) fn begin(&self) -> Option<Arc<Job>> {
-        let mut slot = self.0.locked();
-        if slot.as_ref().is_some_and(|j| j.running()) {
-            return None;
-        }
-        let next = Arc::new(Job::new(JobKind::Install));
-        *slot = Some(next.clone());
-        Some(next)
-    }
-}
 
 async fn read(state: &AppState) -> Option<px::ProxyView> {
     let limits = super::machine::at_least(&state.remote_access.exec, 4 << 20);
@@ -64,7 +43,7 @@ pub async fn view(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> 
     }
     let Some(view) = read(&state).await else { return Ok(super::respond::error_u16(502, "unreadable")) };
     let mut body = serde_json::to_value(view).unwrap_or_default();
-    body["job"] = state.proxy.job().map(|j| serde_json::to_value(j.view(0)).unwrap_or_default()).unwrap_or_default();
+    body["job"] = state.proxy.current().map(|j| serde_json::to_value(j.view(0)).unwrap_or_default()).unwrap_or_default();
     Ok(HttpResponse::Ok().json(&body))
 }
 
@@ -148,7 +127,7 @@ pub async fn install(
     let password = sudo_password.unwrap_or_default();
     // Tried first, so a wrong password is said here rather than in a log.
     require!(as_root(&state, "true", Some(&password).filter(|p| !p.is_empty()).map(String::as_str), false).await);
-    let Some(job) = state.proxy.begin() else { return Ok(super::respond::error_u16(409, "busy")) };
+    let Some(job) = state.proxy.begin(JobKind::Install) else { return Ok(super::respond::error_u16(409, "busy")) };
     record(&req, &state, format!("proxy install {id}")).await;
     let job2 = job.clone();
     tokio::spawn(async move {
@@ -171,7 +150,7 @@ pub struct JobQuery {
 
 pub async fn job(req: HttpRequest, query: web::types::Query<JobQuery>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     require!(authz::acting_caller(&req, &state).await);
-    match state.proxy.job() {
+    match state.proxy.current() {
         Some(job) => Ok(HttpResponse::Ok().json(&job.view(query.since))),
         None => Ok(super::respond::error_u16(404, "notFound")),
     }

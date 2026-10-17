@@ -83,6 +83,8 @@ pub const FEATURES: &[&str] = &[
     // The web application firewall in front of the proxies' sites
     // (`api::waf`): nginx's ModSecurity, Traefik's through it.
     "waf",
+    // The machine's kernels and which one GRUB boots (`api::kernel`).
+    "kernel",
     // The monitoring rules firing now (`GET /alerts`, `api::desk`).
     "alerts",
     // The audit log read back (`GET /audit`, `api::audit_log`).

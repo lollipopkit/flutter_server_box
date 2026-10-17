@@ -29,6 +29,7 @@ pub mod cron;
 pub mod gpu;
 pub mod inference;
 pub mod iperf;
+pub mod kernel;
 pub mod linux;
 pub mod monitor_agent;
 pub mod output;

@@ -7,7 +7,7 @@
 
 use crate::utils::lock::LockExt;
 use std::collections::VecDeque;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
 
@@ -40,6 +40,8 @@ pub enum JobKind {
     Storage,
     /// Samba or the NFS server installed (`api::shares`).
     Shares,
+    /// A kernel installed, removed or booted (`api::kernel`).
+    Kernel,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -79,6 +81,27 @@ pub struct Job {
 }
 
 static IDS: AtomicU64 = AtomicU64::new(1);
+
+/// A page's one job at a time: the one running, or the last.
+#[derive(Default)]
+pub struct JobSlot(Mutex<Option<Arc<Job>>>);
+
+impl JobSlot {
+    pub fn current(&self) -> Option<Arc<Job>> {
+        self.0.locked().clone()
+    }
+
+    /// A new job in the slot, unless one is running.
+    pub fn begin(&self, kind: JobKind) -> Option<Arc<Job>> {
+        let mut slot = self.0.locked();
+        if slot.as_ref().is_some_and(|j| j.running()) {
+            return None;
+        }
+        let job = Arc::new(Job::new(kind));
+        *slot = Some(job.clone());
+        Some(job)
+    }
+}
 
 impl Job {
     pub fn new(kind: JobKind) -> Self {

@@ -123,12 +123,14 @@ pub struct AppState {
     /// Local inference (`inference`).
     pub inference: Arc<crate::inference::Inference>,
     /// AI agents' installs (`api::agent_tools`).
-    pub agent_tools: Arc<crate::api::agent_tools::AgentToolsJobs>,
+    pub agent_tools: Arc<crate::stacks::job::JobSlot>,
     /// Reverse proxies' installs (`api::proxy`).
-    pub proxy: Arc<crate::api::proxy::ProxyJobs>,
+    pub proxy: Arc<crate::stacks::job::JobSlot>,
     pub container_backups: Arc<crate::container_backups::ContainerBackups>,
     pub storage: Arc<crate::api::storage::StorageJobs>,
-    pub shares: Arc<crate::api::shares::SharesJobs>,
+    pub shares: Arc<crate::stacks::job::JobSlot>,
+    /// Kernel changes (`api::kernel`).
+    pub kernel: Arc<crate::stacks::job::JobSlot>,
     /// The last process table read, which the next one's read and write
     /// speeds are differenced against — see `api::process`.
     pub process_sample: Arc<tokio::sync::Mutex<Option<crate::api::process::ProcessSample>>>,
@@ -255,6 +257,7 @@ impl AppState {
             container_backups: Arc::new(crate::container_backups::ContainerBackups::new(sqlite_file_of(&db).as_deref())),
             storage: Arc::default(),
             shares: Arc::default(),
+            kernel: Arc::default(),
             stacks: Arc::new(crate::stacks::Stacks::new(
                 sqlite_file_of(&db).as_deref(),
                 config.get_stacks().local_apps.as_deref().map(std::path::Path::new),
