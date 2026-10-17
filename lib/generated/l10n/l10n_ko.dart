@@ -6289,6 +6289,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get webAppsEmpty => '아직 웹 앱이 없습니다. Monitor 패널의 App Store에서 배포하세요.';
 
   @override
+  String get deskAppOpensInPanel => '패널에서 열립니다';
+
+  @override
   String get webAppVersion => '버전';
 
   @override

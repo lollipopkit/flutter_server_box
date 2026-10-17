@@ -6553,6 +6553,9 @@ class AppLocalizationsTr extends AppLocalizations {
       'Henüz web uygulaması yok. Monitor panelinin App Store\'undan dağıtın.';
 
   @override
+  String get deskAppOpensInPanel => 'Panelde açılır';
+
+  @override
   String get webAppVersion => 'Sürüm';
 
   @override

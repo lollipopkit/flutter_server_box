@@ -1,4 +1,5 @@
-//! Local inference on this machine, for real: its hardware read, llmfit's
+//! Local inference on this machine, for real, through the Local inference
+//! package (`serverbox.inference`) and the agent's stacks: its hardware read, llmfit's
 //! models for it, each engine deployed or started with a small model, asked
 //! through its OpenAI-compatible API, and run as Agent mode's model for a
 //! task. Opt-in: it downloads llmfit, engines and models.
@@ -21,6 +22,7 @@ mod common;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
+use common::package::App;
 use ntex::http::Method;
 use ntex::web::test::TestServer;
 use serde_json::{Value, json};
@@ -64,6 +66,8 @@ async fn provider(state: &Arc<AppState>, id: &str) -> server_box_monitor::agent_
 async fn server() -> (TestServer, Arc<AppState>) {
     common::machine::server_with(Config::default()).await
 }
+
+const PACKAGE: &str = "serverbox.inference";
 
 /// Waits until [base]`/models` answers with the key, up to [limit].
 async fn serving(base: &str, key: &str, limit: Duration) -> Value {
@@ -152,24 +156,22 @@ async fn this_machine_is_read_and_models_fit_it() {
         return;
     }
     let (srv, _state) = server().await;
-    let (status, view) = call(&srv, Method::GET, "/api/v1/inference", None).await;
-    assert_eq!(status, 200, "{view}");
+    let app = common::package::install(&srv, PACKAGE).await;
+    let view = app.call("view", json!(null), false).await.unwrap();
     eprintln!("hardware: {}", view["hardware"]);
     assert!(!view["hardware"]["os"].as_str().unwrap_or_default().is_empty(), "{view}");
     assert_eq!(view["engines"].as_array().unwrap().len(), 5);
-    let (status, rec) = call(&srv, Method::POST, "/api/v1/inference/recommend", Some(json!({ "limit": 5 }))).await;
-    assert_eq!(status, 200, "{rec}");
+    let rec = app.call("recommend", json!({ "useCase": null, "allPublishers": false }), false).await.unwrap();
     let best = rec["engines"][0].as_str().expect("an engine runs here").to_string();
-    let found = rec["candidates"][&best].as_array().unwrap();
+    let found: Vec<&Value> = rec["candidates"].as_array().unwrap().iter().filter(|c| c["engine"] == best.as_str()).collect();
     assert!(!found.is_empty(), "nothing fits {best}: {rec}");
     for c in found.iter().take(3) {
-        eprintln!("{best}: {} {} ({} GiB, {:?} tok/s)", c["name"], c["model"], c["memoryGib"], c["tokensPerSecond"]);
+        eprintln!("{best}: {} {} ({} GiB, {:?} tok/s)", c["name"], c["setting"], c["memoryGib"], c["tokensPerSecond"]);
     }
     // A coding use case narrows llmfit's list; an unknown one is refused.
-    let (status, _) = call(&srv, Method::POST, "/api/v1/inference/recommend", Some(json!({ "useCase": "coding" }))).await;
-    assert_eq!(status, 200);
-    let (status, _) = call(&srv, Method::POST, "/api/v1/inference/recommend", Some(json!({ "useCase": "x;y" }))).await;
-    assert_eq!(status, 400);
+    app.call("recommend", json!({ "useCase": "coding", "allPublishers": false }), false).await.unwrap();
+    let refusal = app.call("recommend", json!({ "useCase": "x;y", "allPublishers": false }), false).await.unwrap_err();
+    assert_eq!(refusal.error, "invalidArgument", "{refusal:?}");
 }
 
 #[ntex::test]
@@ -179,22 +181,10 @@ async fn mlx_serves_a_model_to_agent_mode() {
         return;
     }
     let (srv, _state) = server().await;
-    let (status, job) = call(&srv, Method::POST, "/api/v1/inference/mlx/install", None).await;
-    assert_eq!(status, 202, "{job}");
-    let deadline = Instant::now() + Duration::from_secs(900);
-    loop {
-        let (_, j) = call(&srv, Method::GET, "/api/v1/inference/job", None).await;
-        match j["state"].as_str() {
-            Some("running") => {}
-            Some("succeeded") => break,
-            _ => panic!("installing mlx-lm: {j}"),
-        }
-        assert!(Instant::now() < deadline, "installing mlx-lm did not end");
-        tokio::time::sleep(Duration::from_secs(3)).await;
-    }
+    let app = common::package::install(&srv, PACKAGE).await;
+    app.job_ok("mlxInstall", json!(null), false, Duration::from_secs(900)).await;
     let model = "mlx-community/Qwen3-0.6B-4bit";
-    let (status, body) = call(&srv, Method::PUT, "/api/v1/inference/mlx", Some(json!({ "model": model, "port": 18585 }))).await;
-    assert_eq!(status, 204, "{body}");
+    app.call("mlxStart", json!({ "model": model, "port": 18585 }), false).await.unwrap();
     /// The job goes, should the test end early.
     struct Stop;
     impl Drop for Stop {
@@ -206,13 +196,12 @@ async fn mlx_serves_a_model_to_agent_mode() {
     let base = "http://127.0.0.1:18585/v1";
     serving(base, "local", Duration::from_secs(900)).await;
     eprintln!("MLX: {}", chat(base, "local", model).await);
-    let (_, view) = call(&srv, Method::GET, "/api/v1/inference", None).await;
+    let view = app.call("view", json!(null), false).await.unwrap();
     assert_eq!(view["mlx"]["service"]["running"], true, "{view}");
     assert_eq!(view["mlx"]["service"]["model"], model, "{view}");
     agent_task(&srv, "app.mlx", model).await;
-    let (status, _) = call(&srv, Method::DELETE, "/api/v1/inference/mlx", None).await;
-    assert_eq!(status, 204);
-    let (_, view) = call(&srv, Method::GET, "/api/v1/inference", None).await;
+    app.call("mlxStop", json!(null), false).await.unwrap();
+    let view = app.call("view", json!(null), false).await.unwrap();
     assert_eq!(view["mlx"]["service"]["running"], false, "{view}");
 }
 
@@ -248,7 +237,7 @@ impl Drop for Cleanup {
     }
 }
 
-async fn engine(srv: &TestServer, state: &Arc<AppState>, id: &str, accel: Option<&str>) {
+async fn engine(srv: &TestServer, app: &App<'_>, state: &Arc<AppState>, id: &str, accel: Option<&str>) {
     eprintln!("== {id}");
     let (publisher, name) = id.split_once('.').unwrap();
     let project = format!("sbm-{publisher}-{name}");
@@ -261,7 +250,7 @@ async fn engine(srv: &TestServer, state: &Arc<AppState>, id: &str, accel: Option
         "sglang.sglang" => Some("sglang"),
         _ => None,
     } {
-        let (_, view) = call(srv, Method::GET, "/api/v1/inference", None).await;
+        let view = app.call("view", json!(null), false).await.unwrap();
         let fit = view["engines"].as_array().unwrap().iter().find(|e| e["engine"] == engine).cloned().unwrap_or_default();
         // A card older than the engine's kernels is said so, and not deployed
         // (SGLang on a Turing card).
@@ -309,22 +298,9 @@ async fn engine(srv: &TestServer, state: &Arc<AppState>, id: &str, accel: Option
     assert_eq!(finished(srv, id).await, "succeeded", "{id} deployed");
 
     if id == "ollama.ollama" {
-        let (status, body) = call(srv, Method::POST, &format!("/api/v1/inference/ollama/{id}/pull"), Some(json!({ "model": model }))).await;
-        assert_eq!(status, 202, "{body}");
-        let deadline = Instant::now() + Duration::from_secs(1800);
-        loop {
-            let (_, view) = call(srv, Method::GET, "/api/v1/inference", None).await;
-            let pull = view["pulls"].as_array().unwrap().iter().find(|p| p["model"] == model).cloned().unwrap_or_default();
-            if pull["done"] == true {
-                assert!(pull["error"].is_null(), "{pull}");
-                break;
-            }
-            assert!(Instant::now() < deadline, "the pull did not end: {pull}");
-            tokio::time::sleep(Duration::from_secs(3)).await;
-        }
-        let (status, models) = call(srv, Method::GET, &format!("/api/v1/inference/ollama/{id}/models"), None).await;
-        assert_eq!(status, 200, "{models}");
-        assert!(models["models"].as_array().unwrap().iter().any(|m| m["name"] == model), "{models}");
+        app.job_ok("ollamaPull", json!({ "instance": id, "model": model }), false, Duration::from_secs(1800)).await;
+        let models = app.call("ollamaModels", json!({ "instance": id }), false).await.unwrap();
+        assert!(models.as_array().unwrap().iter().any(|m| m["name"] == model), "{models}");
     }
 
     let p = provider(state, &format!("app.{id}")).await;
@@ -338,8 +314,7 @@ async fn engine(srv: &TestServer, state: &Arc<AppState>, id: &str, accel: Option
     agent_task(srv, &p.provider.id, model).await;
 
     if id == "ollama.ollama" {
-        let (status, _) = call(srv, Method::POST, &format!("/api/v1/inference/ollama/{id}/delete"), Some(json!({ "model": model }))).await;
-        assert_eq!(status, 204);
+        app.call("ollamaDelete", json!({ "instance": id, "model": model }), false).await.unwrap();
     }
     let (status, body) = call(srv, Method::DELETE, &format!("/api/v1/stacks/{id}"), Some(json!({ "current_password": common::PASSWORD, "purge": true }))).await;
     assert_eq!(status, 202, "{body}");
@@ -361,7 +336,8 @@ async fn engines_serve_agent_mode() {
     let picked = std::env::var("SBM_E2E_ENGINES").unwrap_or_else(|_| "ollama.ollama,ggml.llama_cpp".into());
     let accel = std::env::var("SBM_E2E_ACCEL").ok();
     let (srv, state) = server().await;
+    let app = common::package::install(&srv, PACKAGE).await;
     for id in picked.split(',') {
-        engine(&srv, &state, id, accel.as_deref()).await;
+        engine(&srv, &app, &state, id, accel.as_deref()).await;
     }
 }

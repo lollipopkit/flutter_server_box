@@ -42,10 +42,7 @@ export function webAppSpec(app: InstalledApp): AppSpec {
 }
 
 /// Adds [entry]'s approved apps; the returned function takes them away. An
-/// app whose id a built-in app has is skipped, never replaced, unless it is
-/// the first-party package of that app (signed, `serverbox.*`): the built-in
-/// apps that leave the panel are installed that way (TODO: remove the
-/// override once they have left).
+/// app whose id a built-in app has is skipped, never replaced.
 ///
 /// [before] runs once the list has arrived, just before adding: the desk
 /// takes away what it added last, so a reload never leaves both.
@@ -57,7 +54,7 @@ export async function registerWebApps(entry: ServerEntry, before: () => void = (
     if (!app.approved_permissions) continue
     try {
       const spec = webAppSpec(app)
-      offs.push(app.signed_by && app.id.startsWith('serverbox.') ? registry.override(spec) : registry.register(spec))
+      offs.push(registry.register(spec))
     } catch (e) {
       console.warn(`desk app ${app.id} not added:`, e)
     }

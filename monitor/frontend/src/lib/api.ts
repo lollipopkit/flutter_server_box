@@ -13,26 +13,6 @@ import type {
   MaintenanceTask,
   NfsExport,
   SharesView,
-  InferenceView,
-  AgentToolId,
-  ProxyServerId,
-  ProxySite,
-  ProxyView,
-  KernelAction,
-  KernelView,
-  ProAction,
-  CleanupView,
-  TailscaleAction,
-  TailscaleView,
-  ProView,
-  WafEvent,
-  WafSettings,
-  WafView,
-  AgentToolProvider,
-  AgentToolView,
-  InferenceRecommend,
-  OllamaModels,
-  OllamaPull,
   ShareConnections,
   SmbShare,
   StorageAction,
@@ -1285,61 +1265,6 @@ export const api = {
   /// Runs a scheduled task now, as the schedule would.
   runStorageMaintenance: (task: MaintenanceKind) =>
     request<{ maintenance: MaintenanceTask[] }>(`/storage/maintenance/${task}/run`, { method: 'POST' }),
-  getWaf: () => request<WafView>('/waf', {}),
-  setWaf: (server: ProxyServerId, settings: WafSettings, sudoPassword: string) =>
-    request<WafView>(`/waf/${server}`, { method: 'PUT', body: JSON.stringify({ settings, sudo_password: sudoPassword || null }) }),
-  installWaf: (server: ProxyServerId, sudoPassword: string) =>
-    request<StackJob>(`/waf/${server}/install`, { method: 'POST', body: JSON.stringify({ sudo_password: sudoPassword || null }) }),
-  wafEvents: (server: ProxyServerId, sudoPassword: string) =>
-    request<{ events: WafEvent[] }>(`/waf/${server}/events`, { method: 'POST', body: JSON.stringify({ sudo_password: sudoPassword || null }) }),
-  getTailscale: () => request<TailscaleView>('/tailscale', {}),
-  tailscaleAct: (action: TailscaleAction, sudoPassword: string, authKey?: string) =>
-    request<StackJob>('/tailscale/act', { method: 'POST', body: JSON.stringify({ ...action, auth_key: authKey || null, sudo_password: sudoPassword || null }) }),
-  tailscaleJob: (since: number) => request<StackJob>(`/tailscale/job?since=${since}`, {}),
-  tailscaleCancel: () => request<void>('/tailscale/job/cancel', { method: 'POST' }),
-  tailscalePing: (ip: string) => request<{ ok: boolean; output: string }>('/tailscale/ping', { method: 'POST', body: JSON.stringify({ ip }) }),
-  getCleanup: () => request<CleanupView>('/cleanup', {}),
-  cleanupScan: (sudoPassword: string) => request<StackJob>('/cleanup/scan', { method: 'POST', body: JSON.stringify({ sudo_password: sudoPassword || null }) }),
-  cleanupClean: (ids: string[], sudoPassword: string) =>
-    request<StackJob>('/cleanup/clean', { method: 'POST', body: JSON.stringify({ ids, sudo_password: sudoPassword || null }) }),
-  cleanupJob: (since: number) => request<StackJob>(`/cleanup/job?since=${since}`, {}),
-  getUbuntuPro: () => request<ProView>('/ubuntu-pro', {}),
-  ubuntuProAct: (action: ProAction, sudoPassword: string, token?: string) =>
-    request<StackJob>('/ubuntu-pro/act', { method: 'POST', body: JSON.stringify({ ...action, token: token ?? null, sudo_password: sudoPassword || null }) }),
-  ubuntuProJob: (since: number) => request<StackJob>(`/ubuntu-pro/job?since=${since}`, {}),
-  getKernel: () => request<KernelView>('/kernel', {}),
-  kernelAct: (action: KernelAction, sudoPassword: string) =>
-    request<StackJob>('/kernel/act', { method: 'POST', body: JSON.stringify({ ...action, sudo_password: sudoPassword || null }) }),
-  kernelJob: (since: number) => request<StackJob>(`/kernel/job?since=${since}`, {}),
-  getProxy: () => request<ProxyView>('/proxy', {}),
-  setProxySites: (server: ProxyServerId, sites: ProxySite[], sudoPassword: string) =>
-    request<ProxyView>(`/proxy/${server}/sites`, { method: 'PUT', body: JSON.stringify({ sites, sudo_password: sudoPassword || null }) }),
-  installProxy: (server: ProxyServerId, acmeEmail: string, sudoPassword: string) =>
-    request<StackJob>(`/proxy/${server}/install`, { method: 'POST', body: JSON.stringify({ acme_email: acmeEmail || null, sudo_password: sudoPassword || null }) }),
-  proxyJob: (since: number) => request<StackJob>(`/proxy/job?since=${since}`, {}),
-  getAgentTools: () => request<{ tools: AgentToolView[]; job: StackJob | null }>('/agent-tools', {}),
-  agentToolProviders: () => request<{ providers: AgentToolProvider[] }>('/agent-tools/providers', {}),
-  changeAgentTool: (tool: AgentToolId, verb: 'install' | 'update' | 'uninstall', purge = false) =>
-    request<StackJob>(`/agent-tools/${tool}/${verb}`, { method: 'POST', body: JSON.stringify({ purge }) }),
-  agentToolsJob: (since: number) => request<StackJob>(`/agent-tools/job?since=${since}`, {}),
-  cancelAgentToolsJob: () => request<void>('/agent-tools/job/cancel', { method: 'POST' }),
-  configureAgentTool: (tool: AgentToolId, provider: string, model: string) =>
-    request<void>(`/agent-tools/${tool}/configure`, { method: 'POST', body: JSON.stringify({ provider, model }) }),
-  agentToolGateway: (tool: AgentToolId, action: 'status' | 'install' | 'start' | 'stop') =>
-    request<{ exitCode: number | null; output: string }>(`/agent-tools/${tool}/gateway`, { method: 'POST', body: JSON.stringify({ action }) }),
-  getInference: () => request<InferenceView>('/inference', {}),
-  recommendModels: (useCase: string | null, allPublishers: boolean) =>
-    request<InferenceRecommend>('/inference/recommend', { method: 'POST', body: JSON.stringify({ useCase, allPublishers }) }),
-  inferenceJob: (since: number) => request<StackJob>(`/inference/job?since=${since}`, {}),
-  cancelInferenceJob: () => request<void>('/inference/job/cancel', { method: 'POST' }),
-  installMlx: () => request<StackJob>('/inference/mlx/install', { method: 'POST' }),
-  startMlx: (model: string, port: number) => request<void>('/inference/mlx', { method: 'PUT', body: JSON.stringify({ model, port }) }),
-  stopMlx: () => request<void>('/inference/mlx', { method: 'DELETE' }),
-  ollamaModels: (instance: string) => request<OllamaModels>(`/inference/ollama/${encodeURIComponent(instance)}/models`, {}),
-  pullOllama: (instance: string, model: string) =>
-    request<{ pulls: OllamaPull[] }>(`/inference/ollama/${encodeURIComponent(instance)}/pull`, { method: 'POST', body: JSON.stringify({ model }) }),
-  deleteOllama: (instance: string, model: string) =>
-    request<void>(`/inference/ollama/${encodeURIComponent(instance)}/delete`, { method: 'POST', body: JSON.stringify({ model }) }),
   getShares: () => request<SharesView>('/shares', {}),
   shareConnections: (sudoPassword = '') =>
     request<ShareConnections>(

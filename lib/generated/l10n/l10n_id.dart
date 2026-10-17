@@ -6564,6 +6564,9 @@ class AppLocalizationsId extends AppLocalizations {
       'Belum ada aplikasi web. Pasang dari App Store di panel Monitor.';
 
   @override
+  String get deskAppOpensInPanel => 'Dibuka di panel';
+
+  @override
   String get webAppVersion => 'Versi';
 
   @override

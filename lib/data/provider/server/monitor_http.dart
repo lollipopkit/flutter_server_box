@@ -13,6 +13,7 @@ import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/monitor_agent.dart';
 import 'package:server_box/data/model/server/monitor_backup.dart';
 import 'package:server_box/data/model/server/monitor_capabilities.dart';
+import 'package:server_box/data/model/server/monitor_desk_app.dart';
 import 'package:server_box/data/model/server/monitor_exec_output.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/monitor_metrics.dart';
@@ -574,6 +575,15 @@ class MonitorHttpClient {
 
   /// The agent's address, which a proxy without a host of its own shares.
   Uri get agentUri => Uri.parse(_addr);
+
+  // ------------------------------------------------------------ desk apps
+  //
+  // `/api/v1/apps`: the apps installed on the agent's desk, any account.
+
+  /// The approved desk apps, in the agent's order.
+  Future<List<MonitorDeskApp>> deskApps() => _access(
+    () async => MonitorDeskApp.approved(await _object('/api/v1/apps')),
+  );
 
   // ------------------------------------------------------------ overview
   //

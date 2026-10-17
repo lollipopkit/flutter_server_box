@@ -169,6 +169,9 @@ impl api::Guest for App {
         } else {
             None
         };
+        // What Agent mode offers follows what this page shows (an Ollama
+        // started since, MLX's server).
+        agent::models_changed();
         Ok(Overview {
             hardware: Hardware {
                 os: hw.os.clone(),

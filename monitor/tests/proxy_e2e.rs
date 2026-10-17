@@ -1,5 +1,6 @@
 //! Reverse proxies for real, as root on a throwaway Linux (a container):
-//! each server installed through the agent, a site written and served
+//! the Reverse proxy package (`serverbox.proxy`, the one the agent ships)
+//! installed, each server installed through it, a site written and served
 //! (a request for its name reaches the upstream this test runs), a change
 //! the server refuses rolled back while the site keeps answering, HTTPS
 //! through Caddy's own CA, and the sites taken away again.
@@ -15,17 +16,12 @@ mod common;
 
 use std::time::{Duration, Instant};
 
-use ntex::http::Method;
-use ntex::web::test::TestServer;
+use common::package::App;
 use serde_json::{Value, json};
 use server_box_monitor::core::config::Config;
 
 const UPSTREAM: u16 = 18980;
 const MARK: &str = "sbm-proxy-ok";
-
-async fn call(srv: &TestServer, method: Method, path: &str, body: Option<Value>) -> (u16, Value) {
-    common::machine::call(srv, true, method, path, body).await
-}
 
 /// The service the sites send on to: every request answered with [MARK].
 fn upstream() {
@@ -42,7 +38,7 @@ fn upstream() {
 }
 
 fn site(domain: &str, tls: bool, upstream: &str) -> Value {
-    json!({ "name": "e2e", "domains": [domain], "upstream": upstream, "tls": tls })
+    json!({ "name": "e2e", "domains": [domain], "upstream": upstream, "tls": tls, "cert": null, "key": null, "maxBodyMb": null, "waf": false, "managed": true })
 }
 
 /// What a request for [host] gets through the proxy on this machine.
@@ -77,33 +73,17 @@ async fn served(host: &str, https: bool) -> bool {
     }
 }
 
-async fn view(srv: &TestServer, server: &str) -> Value {
-    let (status, body) = call(srv, Method::GET, "/api/v1/proxy", None).await;
-    assert_eq!(status, 200, "{body}");
-    body["servers"].as_array().unwrap().iter().find(|s| s["server"] == server).cloned().unwrap()
+async fn view(app: &App<'_>, server: &str) -> Value {
+    let v = app.call("view", json!(null), false).await.unwrap();
+    v["servers"].as_array().unwrap().iter().find(|s| s["server"] == server).cloned().unwrap()
 }
 
-async fn install(srv: &TestServer, server: &str) {
-    let (status, body) = call(srv, Method::POST, &format!("/api/v1/proxy/{server}/install"), Some(json!({}))).await;
-    assert_eq!(status, 202, "{server}: {body}");
-    let deadline = Instant::now() + Duration::from_secs(1200);
-    loop {
-        let (_, job) = call(srv, Method::GET, "/api/v1/proxy/job", None).await;
-        match job["state"].as_str() {
-            Some("running") => {}
-            Some("succeeded") => break,
-            _ => {
-                let lines: Vec<&str> = job["lines"].as_array().into_iter().flatten().filter_map(|l| l["text"].as_str()).collect();
-                panic!("{server} install: {}\n{}", job["state"], lines.join("\n"));
-            }
-        }
-        assert!(Instant::now() < deadline, "{server}: the install did not end");
-        tokio::time::sleep(Duration::from_secs(2)).await;
-    }
+async fn install(app: &App<'_>, server: &str) {
+    app.job_ok("install", json!({ "server": server, "acmeEmail": null }), true, Duration::from_secs(1200)).await;
 }
 
-async fn put(srv: &TestServer, server: &str, sites: Value) -> (u16, Value) {
-    call(srv, Method::PUT, &format!("/api/v1/proxy/{server}/sites"), Some(json!({ "sites": sites }))).await
+async fn put(app: &App<'_>, server: &str, sites: Value) -> Result<Value, common::package::Refusal> {
+    app.call("setSites", json!({ "server": server, "sites": sites }), true).await
 }
 
 fn stop(server: &str) {
@@ -116,36 +96,34 @@ fn stop(server: &str) {
     std::thread::sleep(Duration::from_secs(2));
 }
 
-async fn verify(srv: &TestServer, server: &str) {
+async fn verify(app: &App<'_>, server: &str) {
     eprintln!("== {server}");
-    install(srv, server).await;
-    let v = view(srv, server).await;
+    install(app, server).await;
+    let v = view(app, server).await;
     eprintln!("{server} {} active={}", v["version"], v["active"]);
     assert_eq!(v["installed"], true, "{v}");
 
     // A site, served.
-    let (status, body) = put(srv, server, json!([site("e2e.test", false, &format!("http://127.0.0.1:{UPSTREAM}"))])).await;
-    assert_eq!(status, 200, "{server}: {body}");
-    let v = view(srv, server).await;
+    put(app, server, json!([site("e2e.test", false, &format!("http://127.0.0.1:{UPSTREAM}"))])).await.unwrap();
+    let v = view(app, server).await;
     assert!(v["sites"].as_array().unwrap().iter().any(|s| s["name"] == "e2e" && s["managed"] == true), "{v}");
     assert!(served("e2e.test", false).await, "{server}: e2e.test is not sent on");
 
     // nginx refuses an upstream it cannot resolve; the site before stays.
     if server == "nginx" {
-        let (status, body) = put(srv, server, json!([site("e2e.test", false, "http://no-such-host.invalid:1")])).await;
-        assert_eq!((status, body["error"].as_str()), (409, Some("refused")), "{body}");
+        let refusal = put(app, server, json!([site("e2e.test", false, "http://no-such-host.invalid:1")])).await.unwrap_err();
+        assert_eq!(refusal.error, "failedPrecondition", "{refusal:?}");
+        assert!(refusal.message.starts_with("refused\n"), "{refusal:?}");
         assert!(served("e2e.test", false).await, "nginx: the previous site did not stay");
     }
     // Caddy's own certificate for a local name.
     if server == "caddy" {
-        let (status, body) = put(srv, server, json!([site("e2e.localhost", true, &format!("http://127.0.0.1:{UPSTREAM}"))])).await;
-        assert_eq!(status, 200, "{body}");
+        put(app, server, json!([site("e2e.localhost", true, &format!("http://127.0.0.1:{UPSTREAM}"))])).await.unwrap();
         assert!(served("e2e.localhost", true).await, "caddy: no HTTPS for e2e.localhost");
     }
 
     // Taken away.
-    let (status, body) = put(srv, server, json!([])).await;
-    assert_eq!(status, 200, "{body}");
+    put(app, server, json!([])).await.unwrap();
     // Traefik notices its folder changed within a few seconds.
     let deadline = Instant::now() + Duration::from_secs(30);
     while fetch("e2e.test", false).await.as_deref() == Some(MARK) {
@@ -166,9 +144,10 @@ async fn proxies_serve_and_roll_back() {
     assert_eq!(unsafe { libc_geteuid() }, 0, "root only, on a throwaway machine");
     upstream();
     let (srv, _state) = common::machine::server_with(Config::default()).await;
+    let app = common::package::install(&srv, "serverbox.proxy").await;
     let picked = std::env::var("SBM_E2E_PROXY_SERVERS").unwrap_or_else(|_| "nginx,caddy,traefik".into());
     for server in picked.split(',') {
-        verify(&srv, server).await;
+        verify(&app, server).await;
     }
 }
 

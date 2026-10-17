@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/server/monitor_desk_app.dart';
 import 'package:server_box/data/model/server/monitor_stack.dart';
 import 'package:server_box/data/provider/server/web_apps.dart';
 import 'package:server_box/view/page/server/detail/readout.dart';
@@ -33,4 +34,13 @@ Future<void> openWebApp(WidgetRef ref, String serverId, String id) async {
   } catch (e) {
     Toast.error(libL10n.fail, body: '$e');
   }
+}
+
+/// Opens desk app [app] of server [serverId] in the device's browser: the
+/// panel at the agent, which opens it once signed in. The browser signs in
+/// to the panel itself.
+Future<void> openDeskApp(WidgetRef ref, String serverId, MonitorDeskApp app) async {
+  final uri = ref.read(webAppsProvider(serverId).notifier).deskUri(app);
+  if (uri == null) return;
+  if (!await uri.toString().launchUrl()) Toast.error(libL10n.fail);
 }

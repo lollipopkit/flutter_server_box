@@ -6668,6 +6668,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'Aucune application web pour l\'instant. Déployez-les depuis l\'App Store du panneau Monitor.';
 
   @override
+  String get deskAppOpensInPanel => 'S’ouvre dans le panneau';
+
+  @override
   String get webAppVersion => 'Version';
 
   @override

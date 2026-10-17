@@ -1845,6 +1845,7 @@
   "webAppDown": "Fora do ar",
   "webAppInstalling": "Instalando",
   "webAppsEmpty": "Ainda não há apps web. Implante-os pela App Store do painel do Monitor.",
+  "deskAppOpensInPanel": "Abre no painel",
   "webAppVersion": "Versão",
   "webAppHomepage": "Site",
   "webAppUpdate": "A versão {version} está disponível. Atualize pelo painel do Monitor.",

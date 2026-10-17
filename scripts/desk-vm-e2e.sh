@@ -3,14 +3,14 @@
 # Proxmox VE VM made and destroyed for the run (`scripts/e2e-vm.sh`; its
 # template once with `scripts/e2e-vm.sh template <node>`):
 #
-#   scripts/desk-vm-e2e.sh <node> kernel       # restarts the VM twice
-#   scripts/desk-vm-e2e.sh <node> ubuntu_pro   # SBM_E2E_PRO_TOKEN to attach
-#   scripts/desk-vm-e2e.sh <node> cleanup      # junk of each kind made first
-#   scripts/desk-vm-e2e.sh <node> <spec>_app   # the same, the app as a package
-#   scripts/desk-vm-e2e.sh <node> tailscale    # Headscale and a peer made first
-#   scripts/desk-vm-e2e.sh <node> proxy_app    # a web service to send to made first
+#   scripts/desk-vm-e2e.sh <node> kernel_app       # restarts the VM twice
+#   scripts/desk-vm-e2e.sh <node> ubuntu_pro_app   # SBM_E2E_PRO_TOKEN to attach
+#   scripts/desk-vm-e2e.sh <node> cleanup_app      # junk of each kind made first
+#   scripts/desk-vm-e2e.sh <node> tailscale_app    # Headscale and a peer made first
+#   scripts/desk-vm-e2e.sh <node> proxy_app        # a web service to send to made first
 #   scripts/desk-vm-e2e.sh <node> agent_tools_app
-#   scripts/desk-vm-e2e.sh <node> inference_app  # Docker and a fake Ollama made first
+#   scripts/desk-vm-e2e.sh <node> inference_app    # Docker and a fake Ollama made first
+#   scripts/desk-vm-e2e.sh <node> <spec>           # any other frontend/e2e/<spec>.e2e.ts
 #
 # Builds the agent on SBM_E2E_BUILD_HOST (lkd-wsl) and the panel here;
 # starts a VM; runs the agent there as an ordinary account with a sudo
@@ -19,7 +19,7 @@
 # A `<name>_app` spec gets the package of `monitor/apps/<name>` built here
 # into store/desk/ (`scripts/build-desk-app.sh --store`), so the agent offers
 # it in the App Store.
-# For `kernel` it picks a version of the running kernel's flavour older than
+# For `kernel_app` it picks a version of the running kernel's flavour older than
 # it (SBM_E2E_KERNEL_VERSION). SBM_E2E_VM_PROXY (an HTTP proxy) reaches the
 # agent's environment. The passwords are made for the run and never
 # leave environment variables. SBM_E2E_KEEP=1 keeps the VM.

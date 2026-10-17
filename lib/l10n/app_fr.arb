@@ -1845,6 +1845,7 @@
   "webAppDown": "Hors service",
   "webAppInstalling": "Installation en cours",
   "webAppsEmpty": "Aucune application web pour l'instant. Déployez-les depuis l'App Store du panneau Monitor.",
+  "deskAppOpensInPanel": "S’ouvre dans le panneau",
   "webAppVersion": "Version",
   "webAppHomepage": "Site web",
   "webAppUpdate": "La version {version} est disponible. Mettez-la à jour depuis le panneau Monitor.",

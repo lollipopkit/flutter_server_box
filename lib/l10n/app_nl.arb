@@ -1845,6 +1845,7 @@
   "webAppDown": "Uitgevallen",
   "webAppInstalling": "Wordt geïnstalleerd",
   "webAppsEmpty": "Nog geen webapps. Installeer ze via de App Store van het Monitor-paneel.",
+  "deskAppOpensInPanel": "Opent in het paneel",
   "webAppVersion": "Versie",
   "webAppHomepage": "Website",
   "webAppUpdate": "Versie {version} is beschikbaar. Werk deze bij via het Monitor-paneel.",

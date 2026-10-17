@@ -11205,6 +11205,12 @@ abstract class AppLocalizations {
   /// **'No web apps yet. Deploy them from the App Store of the Monitor panel.'**
   String get webAppsEmpty;
 
+  /// Web apps tab: subtitle of an app installed on the Monitor panel desk, which opens the panel in the browser.
+  ///
+  /// In en, this message translates to:
+  /// **'Opens in the panel'**
+  String get deskAppOpensInPanel;
+
   /// Web app details: the deployed version.
   ///
   /// In en, this message translates to:

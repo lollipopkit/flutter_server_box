@@ -71,26 +71,6 @@ pub const FEATURES: &[&str] = &[
     // Web apps deployed with Docker Compose and shown through the agent's
     // proxy (`api::stacks`).
     "stacks",
-    // Local inference (`api::inference`): engines and models for this
-    // machine, its engines deployed as stacks.
-    "inference",
-    // AI agents (Codex, Claude Code, pi, opencode, Hermes, OpenClaw) for the
-    // agent's account (`api::agent_tools`).
-    "agent_tools",
-    // Reverse proxies (nginx, Caddy, Traefik) and their sites (`api::proxy`).
-    // Linux only, like `shares`.
-    "proxy",
-    // The web application firewall in front of the proxies' sites
-    // (`api::waf`): nginx's ModSecurity, Traefik's through it.
-    "waf",
-    // The machine's kernels and which one GRUB boots (`api::kernel`).
-    "kernel",
-    // Ubuntu Pro: attach, services, Livepatch (`api::ubuntu_pro`).
-    "ubuntu_pro",
-    // What can go to free space, and removing it (`api::cleanup`).
-    "cleanup",
-    // Tailscale: sign-in, peers, settings (`api::tailscale`).
-    "tailscale",
     // The monitoring rules firing now (`GET /alerts`, `api::desk`).
     "alerts",
     // The audit log read back (`GET /audit`, `api::audit_log`).
@@ -99,15 +79,9 @@ pub const FEATURES: &[&str] = &[
     "live",
 ];
 
-/// [`FEATURES`] this machine has a use for, as `/capabilities` lists them:
-/// Ubuntu Pro attaches Ubuntu alone, so elsewhere a panel offers no app for
-/// it.
+/// [`FEATURES`], as `/capabilities` lists them.
 pub fn features() -> Vec<&'static str> {
-    features_for(os_id())
-}
-
-fn features_for(os: Option<&str>) -> Vec<&'static str> {
-    FEATURES.iter().copied().filter(|f| *f != "ubuntu_pro" || os == Some("ubuntu")).collect()
+    FEATURES.to_vec()
 }
 
 /// `/etc/os-release`'s `ID`, read once: the distribution does not change
@@ -309,16 +283,6 @@ const ROOT_SCRIPT_VAR: &str = "SBM_ROOT_SCRIPT";
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn ubuntu_pro_is_offered_on_ubuntu_alone() {
-        assert!(features_for(Some("ubuntu")).contains(&"ubuntu_pro"));
-        for os in [Some("debian"), Some("fedora"), None] {
-            let f = features_for(os);
-            assert!(!f.contains(&"ubuntu_pro") && f.contains(&"kernel"), "{os:?}");
-        }
-        assert_eq!(features_for(Some("ubuntu")).len(), FEATURES.len());
-    }
 
     #[test]
     fn the_password_is_the_only_thing_on_stdin() {

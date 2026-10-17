@@ -1845,6 +1845,7 @@
   "webAppDown": "Не работает",
   "webAppInstalling": "Установка",
   "webAppsEmpty": "Веб-приложений пока нет. Разверните их из App Store панели Monitor.",
+  "deskAppOpensInPanel": "Открывается в панели",
   "webAppVersion": "Версия",
   "webAppHomepage": "Сайт",
   "webAppUpdate": "Доступна версия {version}. Обновите её в панели Monitor.",

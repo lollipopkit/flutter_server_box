@@ -6631,6 +6631,9 @@ class AppLocalizationsIt extends AppLocalizations {
       'Nessuna app web. Installale dall\'App Store del pannello Monitor.';
 
   @override
+  String get deskAppOpensInPanel => 'Si apre nel pannello';
+
+  @override
   String get webAppVersion => 'Versione';
 
   @override

@@ -6289,6 +6289,9 @@ class AppLocalizationsJa extends AppLocalizations {
       'Web アプリはまだありません。Monitor パネルの App Store からデプロイしてください。';
 
   @override
+  String get deskAppOpensInPanel => 'パネルで開きます';
+
+  @override
   String get webAppVersion => 'バージョン';
 
   @override

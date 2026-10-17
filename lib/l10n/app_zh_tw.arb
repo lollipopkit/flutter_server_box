@@ -1845,6 +1845,7 @@
   "webAppDown": "無法使用",
   "webAppInstalling": "正在安裝",
   "webAppsEmpty": "尚無 Web 應用程式。請在 Monitor 面板的 App Store 中部署。",
+  "deskAppOpensInPanel": "在面板中開啟",
   "webAppVersion": "版本",
   "webAppHomepage": "首頁",
   "webAppUpdate": "有新版本 {version}，請在 Monitor 面板中更新。",

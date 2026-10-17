@@ -8542,6 +8542,10 @@
   "@webAppsEmpty": {
     "description": "Web apps tab: no server has a deployed Monitor web app."
   },
+  "deskAppOpensInPanel": "Opens in the panel",
+  "@deskAppOpensInPanel": {
+    "description": "Web apps tab: subtitle of an app installed on the Monitor panel desk, which opens the panel in the browser."
+  },
   "webAppVersion": "Version",
   "@webAppVersion": {
     "description": "Web app details: the deployed version."

@@ -1845,6 +1845,7 @@
   "webAppDown": "Non attiva",
   "webAppInstalling": "Installazione in corso",
   "webAppsEmpty": "Nessuna app web. Installale dall'App Store del pannello Monitor.",
+  "deskAppOpensInPanel": "Si apre nel pannello",
   "webAppVersion": "Versione",
   "webAppHomepage": "Sito web",
   "webAppUpdate": "È disponibile la versione {version}. Aggiornala dal pannello Monitor.",

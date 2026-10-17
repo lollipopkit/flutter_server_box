@@ -172,3 +172,90 @@ pub mod machine {
         (status, String::from_utf8_lossy(&bytes).into_owned())
     }
 }
+
+/// A first-party package the agent ships (`store/desk/<id>.fsba`), installed
+/// from its catalog and approved on a [`machine`] server, its backend called
+/// as the desk calls it. Root's work gets an empty sudo password: these run
+/// as root on a throwaway machine.
+pub mod package {
+    use std::time::{Duration, Instant};
+
+    use ntex::http::Method;
+    use ntex::web::test::TestServer;
+    use serde_json::{Value, json};
+
+    use super::machine::call;
+
+    pub struct App<'a> {
+        srv: &'a TestServer,
+        id: String,
+    }
+
+    /// A function's failure: the agent's code (`failedPrecondition`, …) and
+    /// its words.
+    #[derive(Debug, PartialEq, Eq)]
+    pub struct Refusal {
+        pub error: String,
+        pub message: String,
+    }
+
+    /// A job that ended: its state, its value or error, its lines.
+    #[derive(Debug)]
+    pub struct Ended {
+        pub state: String,
+        pub value: Value,
+        pub error: Value,
+        pub lines: Vec<String>,
+    }
+
+    /// [id] installed from the catalog and approved with what it asks for.
+    pub async fn install<'a>(srv: &'a TestServer, id: &str) -> App<'a> {
+        let (status, app) = call(srv, true, Method::POST, &format!("/api/v1/apps/catalog/{id}/install"), None).await;
+        assert_eq!(status, 200, "{id}: {app}");
+        let body = json!({ "sha256": app["sha256"], "permissions": app["manifest"]["permissions"], "current_password": super::PASSWORD });
+        let (status, approved) = call(srv, true, Method::PUT, &format!("/api/v1/apps/{id}/approval"), Some(body)).await;
+        assert_eq!(status, 200, "{id}: {approved}");
+        App { srv, id: id.to_string() }
+    }
+
+    fn sudo(root: bool) -> Value {
+        if root { json!({ "password": "" }) } else { Value::Null }
+    }
+
+    impl App<'_> {
+        /// [function] of the backend's `api`, as root when [root].
+        pub async fn call(&self, function: &str, args: Value, root: bool) -> Result<Value, Refusal> {
+            let body = json!({ "function": function, "args": args, "sudo": sudo(root) });
+            let (status, r) = call(self.srv, true, Method::POST, &format!("/api/v1/apps/{}/call", self.id), Some(body)).await;
+            if status == 200 {
+                return Ok(r["value"].clone());
+            }
+            Err(Refusal { error: r["error"].as_str().unwrap_or_default().into(), message: r["message"].as_str().unwrap_or_default().into() })
+        }
+
+        /// [function] of its `jobs`, as root when [root], followed until it
+        /// ends (at most [wait]).
+        pub async fn job(&self, function: &str, args: Value, root: bool, wait: Duration) -> Ended {
+            let body = json!({ "function": function, "args": args, "sudo": sudo(root) });
+            let (status, r) = call(self.srv, true, Method::POST, &format!("/api/v1/apps/{}/jobs", self.id), Some(body)).await;
+            assert_eq!(status, 202, "{function}: {r}");
+            let deadline = Instant::now() + wait;
+            loop {
+                let (_, v) = call(self.srv, true, Method::GET, &format!("/api/v1/apps/{}/jobs", self.id), None).await;
+                if v["state"] != "running" {
+                    let lines = v["lines"].as_array().into_iter().flatten().filter_map(|l| l["text"].as_str().map(str::to_string)).collect();
+                    return Ended { state: v["state"].as_str().unwrap_or_default().into(), value: v["value"].clone(), error: v["error"].clone(), lines };
+                }
+                assert!(Instant::now() < deadline, "{function}: did not end");
+                tokio::time::sleep(Duration::from_secs(2)).await;
+            }
+        }
+
+        /// As [Self::job], which must end well; its value.
+        pub async fn job_ok(&self, function: &str, args: Value, root: bool, wait: Duration) -> Value {
+            let ended = self.job(function, args, root, wait).await;
+            assert_eq!(ended.state, "succeeded", "{function}: {:?}\n{}", ended.error, ended.lines.join("\n"));
+            ended.value
+        }
+    }
+}

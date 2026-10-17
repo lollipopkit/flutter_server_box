@@ -1845,6 +1845,7 @@
   "webAppDown": "다운",
   "webAppInstalling": "설치 중",
   "webAppsEmpty": "아직 웹 앱이 없습니다. Monitor 패널의 App Store에서 배포하세요.",
+  "deskAppOpensInPanel": "패널에서 열립니다",
   "webAppVersion": "버전",
   "webAppHomepage": "홈페이지",
   "webAppUpdate": "{version} 버전을 사용할 수 있습니다. Monitor 패널에서 업데이트하세요.",

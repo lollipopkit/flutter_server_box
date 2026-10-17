@@ -6623,6 +6623,9 @@ class AppLocalizationsNl extends AppLocalizations {
       'Nog geen webapps. Installeer ze via de App Store van het Monitor-paneel.';
 
   @override
+  String get deskAppOpensInPanel => 'Opent in het paneel';
+
+  @override
   String get webAppVersion => 'Versie';
 
   @override

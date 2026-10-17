@@ -6612,6 +6612,9 @@ class AppLocalizationsRu extends AppLocalizations {
       'Веб-приложений пока нет. Разверните их из App Store панели Monitor.';
 
   @override
+  String get deskAppOpensInPanel => 'Открывается в панели';
+
+  @override
   String get webAppVersion => 'Версия';
 
   @override

@@ -22,18 +22,6 @@ class AppRegistry {
     }
   }
 
-  /// Puts [spec] in place of the app registered with its id; the returned
-  /// function puts that one back. For an installed first-party package that
-  /// replaces a built-in app (TODO: remove once no app is both).
-  override(spec: AppSpec): () => void {
-    const previous = this.#apps.find((a) => a.id === spec.id)
-    if (!previous) return this.register(spec)
-    this.#apps = this.#apps.map((a) => (a === previous ? spec : a))
-    return () => {
-      this.#apps = this.#apps.map((a) => (a === spec ? previous : a))
-    }
-  }
-
   get(id: string): AppSpec | undefined {
     return this.#apps.find((a) => a.id === id)
   }

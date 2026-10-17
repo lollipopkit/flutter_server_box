@@ -24,6 +24,27 @@ import type { MenuEntry } from './lk/Menu.svelte'
 import { AppData } from './appData'
 import { AgentStore } from './agent/agentStore.svelte'
 import { registerWebApps } from './webapps/register'
+
+/// `?app=<id>` in the page's address: an app to open once the desk is up
+/// (the ServerBox app opens an installed app in the browser this way). Taken
+/// once and dropped from the address, so a reload does not open it again.
+export function takeAskedApp(): string | null {
+  try {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once, never kept
+    const url = new URL(window.location.href)
+    const id = url.searchParams.get('app')
+    if (id === null) return null
+    url.searchParams.delete('app')
+    window.history.replaceState(window.history.state, '', url)
+    return /^[a-z0-9_-]+\.[a-z0-9_-]+$/.test(id) ? id : null
+  } catch {
+    return null
+  }
+}
+
+/// The panel's own apps that became App Store packages (`monitor/apps`).
+/// TODO: remove with `#noticeMoved`.
+const MOVED_TO_STORE = ['serverbox.agent_tools', 'serverbox.cleanup', 'serverbox.inference', 'serverbox.kernel', 'serverbox.proxy', 'serverbox.tailscale', 'serverbox.ubuntu_pro']
 import { registerStackApps } from './stacks/register'
 import { DeskNotifications } from './notifications.svelte'
 import { DeskPrefs } from './prefs.svelte'
@@ -230,9 +251,30 @@ export class Desk {
       this.themes?.load(),
     ])
     if (this.#abort.signal.aborted) return
-    // Nothing came back: the app this browser opens at start.
-    if (this.windows.windows.length === 0 && system.openOnStart !== 'none') this.open(system.openOnStart)
+    this.#noticeMoved()
+    // The app the page was opened for, else, when nothing came back, the
+    // app this browser opens at start.
+    const asked = takeAskedApp()
+    const opened = asked !== null && this.open(asked) !== null
+    if (!opened && this.windows.windows.length === 0 && system.openOnStart !== 'none') this.open(system.openOnStart)
     if (storage.events) void this.#listen(storage)
+  }
+
+  /// A dock that still holds an app that left the panel for the App Store,
+  /// not installed here: said once per browser, the notice opening the
+  /// store. TODO: remove once no desk from before the move is left.
+  #noticeMoved() {
+    const dock = this.prefs?.value.dock ?? []
+    if (!MOVED_TO_STORE.some((id) => dock.includes(id) && !app(id)) || !this.notifications) return
+    const key = `sbm.movedToStore.${this.entry.id}`
+    try {
+      if (localStorage.getItem(key)) return
+      localStorage.setItem(key, '1')
+    } catch {
+      return
+    }
+    const ll = get(LL)
+    this.notifications.posted('serverbox.store', { title: ll.deskMovedToStoreTitle(), body: ll.deskMovedToStore() })
   }
 
   /// Reads the catalog's web apps (`/stacks`) as desk apps of their own.

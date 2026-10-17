@@ -1845,6 +1845,7 @@
   "webAppDown": "Çalışmıyor",
   "webAppInstalling": "Yükleniyor",
   "webAppsEmpty": "Henüz web uygulaması yok. Monitor panelinin App Store'undan dağıtın.",
+  "deskAppOpensInPanel": "Panelde açılır",
   "webAppVersion": "Sürüm",
   "webAppHomepage": "Web sitesi",
   "webAppUpdate": "{version} sürümü mevcut. Monitor panelinden güncelleyin.",

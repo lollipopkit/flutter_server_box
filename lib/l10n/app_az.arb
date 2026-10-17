@@ -1845,6 +1845,7 @@
   "webAppDown": "İşləmir",
   "webAppInstalling": "Quraşdırılır",
   "webAppsEmpty": "Hələ veb tətbiq yoxdur. Onları Monitor panelinin App Store bölməsindən quraşdırın.",
+  "deskAppOpensInPanel": "Paneldə açılır",
   "webAppVersion": "Versiya",
   "webAppHomepage": "Veb sayt",
   "webAppUpdate": "{version} versiyası mövcuddur. Onu Monitor panelində yeniləyin.",

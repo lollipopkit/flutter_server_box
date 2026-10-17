@@ -6187,6 +6187,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get webAppsEmpty => '还没有 Web 应用。请在 Monitor 面板的 App Store 中部署。';
 
   @override
+  String get deskAppOpensInPanel => '在面板中打开';
+
+  @override
   String get webAppVersion => '版本';
 
   @override
@@ -12767,6 +12770,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get webAppsEmpty => '尚無 Web 應用程式。請在 Monitor 面板的 App Store 中部署。';
+
+  @override
+  String get deskAppOpensInPanel => '在面板中開啟';
 
   @override
   String get webAppVersion => '版本';

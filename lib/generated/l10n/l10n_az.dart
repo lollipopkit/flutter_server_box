@@ -6560,6 +6560,9 @@ class AppLocalizationsAz extends AppLocalizations {
       'Hələ veb tətbiq yoxdur. Onları Monitor panelinin App Store bölməsindən quraşdırın.';
 
   @override
+  String get deskAppOpensInPanel => 'Paneldə açılır';
+
+  @override
   String get webAppVersion => 'Versiya';
 
   @override

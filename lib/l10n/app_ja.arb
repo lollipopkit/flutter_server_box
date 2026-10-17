@@ -1845,6 +1845,7 @@
   "webAppDown": "ダウン",
   "webAppInstalling": "インストール中",
   "webAppsEmpty": "Web アプリはまだありません。Monitor パネルの App Store からデプロイしてください。",
+  "deskAppOpensInPanel": "パネルで開きます",
   "webAppVersion": "バージョン",
   "webAppHomepage": "ホームページ",
   "webAppUpdate": "バージョン {version} があります。Monitor パネルで更新してください。",

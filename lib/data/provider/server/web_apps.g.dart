@@ -8,18 +8,21 @@ part of 'web_apps.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// The web apps a server's `monitor` agent deployed (its `stacks` feature),
-/// read while something shows them.
+/// The web apps a server's `monitor` agent deployed (its `stacks` feature)
+/// and the apps installed on its desk (`desk`), read while something shows
+/// them.
 
 @ProviderFor(WebAppsNotifier)
 final webAppsProvider = WebAppsNotifierFamily._();
 
-/// The web apps a server's `monitor` agent deployed (its `stacks` feature),
-/// read while something shows them.
+/// The web apps a server's `monitor` agent deployed (its `stacks` feature)
+/// and the apps installed on its desk (`desk`), read while something shows
+/// them.
 final class WebAppsNotifierProvider
     extends $NotifierProvider<WebAppsNotifier, WebAppsState> {
-  /// The web apps a server's `monitor` agent deployed (its `stacks` feature),
-  /// read while something shows them.
+  /// The web apps a server's `monitor` agent deployed (its `stacks` feature)
+  /// and the apps installed on its desk (`desk`), read while something shows
+  /// them.
   WebAppsNotifierProvider._({
     required WebAppsNotifierFamily super.from,
     required String super.argument,
@@ -64,10 +67,11 @@ final class WebAppsNotifierProvider
   }
 }
 
-String _$webAppsNotifierHash() => r'0de6e56ab3506f5d0a0f6fddabd7e154b07fe64e';
+String _$webAppsNotifierHash() => r'c93b3d6dd42ee797607b512f7013ffd62dd100c0';
 
-/// The web apps a server's `monitor` agent deployed (its `stacks` feature),
-/// read while something shows them.
+/// The web apps a server's `monitor` agent deployed (its `stacks` feature)
+/// and the apps installed on its desk (`desk`), read while something shows
+/// them.
 
 final class WebAppsNotifierFamily extends $Family
     with
@@ -87,8 +91,9 @@ final class WebAppsNotifierFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// The web apps a server's `monitor` agent deployed (its `stacks` feature),
-  /// read while something shows them.
+  /// The web apps a server's `monitor` agent deployed (its `stacks` feature)
+  /// and the apps installed on its desk (`desk`), read while something shows
+  /// them.
 
   WebAppsNotifierProvider call(String serverId) =>
       WebAppsNotifierProvider._(argument: serverId, from: this);
@@ -97,8 +102,9 @@ final class WebAppsNotifierFamily extends $Family
   String toString() => r'webAppsProvider';
 }
 
-/// The web apps a server's `monitor` agent deployed (its `stacks` feature),
-/// read while something shows them.
+/// The web apps a server's `monitor` agent deployed (its `stacks` feature)
+/// and the apps installed on its desk (`desk`), read while something shows
+/// them.
 
 abstract class _$WebAppsNotifier extends $Notifier<WebAppsState> {
   late final _$args = ref.$arg as String;

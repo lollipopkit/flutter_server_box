@@ -6568,6 +6568,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'No web apps yet. Deploy them from the App Store of the Monitor panel.';
 
   @override
+  String get deskAppOpensInPanel => 'Opens in the panel';
+
+  @override
   String get webAppVersion => 'Version';
 
   @override

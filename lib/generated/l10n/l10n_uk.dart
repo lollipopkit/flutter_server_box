@@ -6612,6 +6612,9 @@ class AppLocalizationsUk extends AppLocalizations {
       'Вебзастосунків поки немає. Розгорніть їх з App Store панелі Monitor.';
 
   @override
+  String get deskAppOpensInPanel => 'Відкривається в панелі';
+
+  @override
   String get webAppVersion => 'Версія';
 
   @override

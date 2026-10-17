@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/server/monitor_desk_app.dart';
 import 'package:server_box/data/model/server/monitor_stack.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/web_apps.dart';
@@ -13,11 +14,12 @@ import 'package:server_box/view/page/web_apps/detail.dart';
 import 'package:server_box/view/page/web_apps/status.dart';
 
 /// The web apps the agents deployed, a group per server, an app with an
-/// update first.
+/// update first, then the apps installed on its desk.
 ///
 /// A tap opens the app in the device's browser, which is what it is listed
-/// for; the info button its page. Deploying, updating and removing stay in
-/// the panel: this is where the apps are used, not run.
+/// for (a desk app: the panel, opening it); the info button a web app's
+/// page. Deploying, installing, updating and removing stay in the panel:
+/// this is where the apps are used, not run.
 class MonitorAppsView extends ConsumerStatefulWidget {
   const MonitorAppsView({super.key, required this.servers, required this.bar});
 
@@ -79,7 +81,7 @@ class _MonitorAppsViewState extends ConsumerState<MonitorAppsView> {
   Widget _buildList(List<({Spi spi, WebAppsState state})> servers) {
     final needle = _search.needle;
     final locale = Localizations.localeOf(context).toLanguageTag();
-    final groups = <({Spi spi, String? error, List<MonitorWebApp> apps})>[];
+    final groups = <({Spi spi, String? error, List<MonitorWebApp> apps, List<MonitorDeskApp> deskApps})>[];
     var waiting = false;
     for (final (:spi, :state) in servers) {
       final apps = state.apps;
@@ -87,7 +89,7 @@ class _MonitorAppsViewState extends ConsumerState<MonitorAppsView> {
         if (state.error == null) {
           waiting = true;
         } else {
-          groups.add((spi: spi, error: state.error, apps: const []));
+          groups.add((spi: spi, error: state.error, apps: const [], deskApps: const []));
         }
         continue;
       }
@@ -101,7 +103,15 @@ class _MonitorAppsViewState extends ConsumerState<MonitorAppsView> {
       ];
       // Stable: the agent's order within each half.
       final ordered = [...matched.where((a) => a.updatable), ...matched.where((a) => !a.updatable)];
-      if (ordered.isNotEmpty) groups.add((spi: spi, error: null, apps: ordered));
+      final desk = [
+        if (!_updatesOnly)
+          for (final app in state.deskApps ?? const <MonitorDeskApp>[])
+            if (needle.isEmpty ||
+                app.titleIn(locale).toLowerCase().contains(needle) ||
+                spi.name.toLowerCase().contains(needle))
+              app,
+      ];
+      if (ordered.isNotEmpty || desk.isNotEmpty) groups.add((spi: spi, error: null, apps: ordered, deskApps: desk));
     }
     if (groups.isEmpty) {
       if (waiting) return UIs.centerLoading;
@@ -120,7 +130,7 @@ class _MonitorAppsViewState extends ConsumerState<MonitorAppsView> {
         for (final group in groups)
           MonitorGroup(
             title: group.spi.name,
-            right: group.error == null ? '${group.apps.length}' : null,
+            right: group.error == null ? '${group.apps.length + group.deskApps.length}' : null,
             children: [
               if (group.error case final error?)
                 MonitorRow(
@@ -128,11 +138,24 @@ class _MonitorAppsViewState extends ConsumerState<MonitorAppsView> {
                   title: libL10n.fail,
                   subtitle: error,
                 )
-              else
+              else ...[
                 for (final app in group.apps) _buildRow(group.spi, app, locale),
+                for (final app in group.deskApps) _buildDeskRow(group.spi, app, locale),
+              ],
             ],
           ),
       ],
+    );
+  }
+
+  Widget _buildDeskRow(Spi spi, MonitorDeskApp app, String locale) {
+    return MonitorRow(
+      key: ValueKey('${spi.id}/desk/${app.id}'),
+      leading: const Icon(Icons.widgets_outlined, size: 18),
+      title: app.titleIn(locale),
+      subtitle: l10n.deskAppOpensInPanel,
+      trailing: const Icon(Icons.open_in_new, size: 18),
+      onTap: () => openDeskApp(ref, spi.id, app),
     );
   }
 

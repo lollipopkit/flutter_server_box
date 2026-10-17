@@ -1845,6 +1845,7 @@
   "webAppDown": "Mati",
   "webAppInstalling": "Menginstal",
   "webAppsEmpty": "Belum ada aplikasi web. Pasang dari App Store di panel Monitor.",
+  "deskAppOpensInPanel": "Dibuka di panel",
   "webAppVersion": "Versi",
   "webAppHomepage": "Situs web",
   "webAppUpdate": "Versi {version} tersedia. Perbarui dari panel Monitor.",

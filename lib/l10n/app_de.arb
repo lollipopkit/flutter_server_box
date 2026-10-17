@@ -1845,6 +1845,7 @@
   "webAppDown": "Ausgefallen",
   "webAppInstalling": "Wird installiert",
   "webAppsEmpty": "Noch keine Web-Apps. Installiere sie im App Store des Monitor-Panels.",
+  "deskAppOpensInPanel": "Wird im Panel geöffnet",
   "webAppVersion": "Version",
   "webAppHomepage": "Website",
   "webAppUpdate": "Version {version} ist verfügbar. Aktualisiere sie im Monitor-Panel.",

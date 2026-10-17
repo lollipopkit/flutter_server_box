@@ -1,4 +1,5 @@
-//! AI agents installed for real, in a home of their own: each tool installed
+//! AI agents installed for real, in a home of their own, through the AI
+//! agents package (`serverbox.agent_tools`): each tool installed
 //! by its project's installer, found with its version, pointed at a small
 //! model (Ollama in a container, which speaks Chat Completions, Responses and
 //! Anthropic Messages), asked one question non-interactively, updated, its
@@ -15,6 +16,7 @@ mod common;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
+use common::package::App;
 use ntex::http::Method;
 use ntex::web::test::TestServer;
 use serde_json::{Value, json};
@@ -64,28 +66,11 @@ async fn start_ollama() -> Ollama {
     guard
 }
 
-/// The job's end state; its lines on failure.
-async fn finished(srv: &TestServer) -> String {
-    let deadline = Instant::now() + Duration::from_secs(1800);
-    loop {
-        let (_, job) = call(srv, Method::GET, "/api/v1/agent-tools/job", None).await;
-        let state = job["state"].as_str().unwrap_or_default().to_string();
-        if state != "running" {
-            if state != "succeeded" {
-                let lines: Vec<&str> = job["lines"].as_array().into_iter().flatten().filter_map(|l| l["text"].as_str()).collect();
-                eprintln!("job {state}:\n{}", lines.join("\n"));
-            }
-            return state;
-        }
-        assert!(Instant::now() < deadline, "the job did not end");
-        tokio::time::sleep(Duration::from_secs(2)).await;
-    }
-}
+const JOB: Duration = Duration::from_secs(1800);
 
-async fn tool(srv: &TestServer, id: &str) -> Value {
-    let (status, body) = call(srv, Method::GET, "/api/v1/agent-tools", None).await;
-    assert_eq!(status, 200, "{body}");
-    body["tools"].as_array().unwrap().iter().find(|t| t["tool"] == id).cloned().unwrap()
+async fn tool(app: &App<'_>, id: &str) -> Value {
+    let tools = app.call("view", json!(null), false).await.unwrap();
+    tools.as_array().unwrap().iter().find(|t| t["tool"] == id).cloned().unwrap()
 }
 
 /// One non-interactive question, as a person would ask it in a terminal.
@@ -103,20 +88,17 @@ fn ask(id: &str) -> String {
     format!("{}\ncd \"$(mktemp -d)\" && {run} </dev/null", sbm_parser::agents::PATH_PRELUDE)
 }
 
-async fn verify(srv: &TestServer, id: &str, provider: &str, model: &str) {
+async fn verify(app: &App<'_>, id: &str, provider: &str, model: &str) {
     eprintln!("== {id}");
-    let (status, body) = call(srv, Method::POST, &format!("/api/v1/agent-tools/{id}/install"), None).await;
-    assert_eq!(status, 202, "{body}");
-    assert_eq!(finished(srv).await, "succeeded", "{id} installed");
-    let found = tool(srv, id).await;
+    app.job_ok("install", json!({ "tool": id }), false, JOB).await;
+    let found = tool(app, id).await;
     eprintln!("{id}: {} at {}", found["version"], found["path"]);
     assert!(found["version"].is_string(), "{id}: no version: {found}");
     if let Some(pinned) = found["pinned"].as_str() {
         assert_eq!(found["version"], pinned, "{id}: not the pinned release");
     }
 
-    let (status, body) = call(srv, Method::POST, &format!("/api/v1/agent-tools/{id}/configure"), Some(json!({ "provider": provider, "model": model }))).await;
-    assert_eq!(status, 204, "{id}: {body}");
+    app.call("configure", json!({ "tool": id, "provider": provider, "model": model }), false).await.unwrap();
     // Async, so the runtime keeps the server's connections while it thinks.
     let out = tokio::process::Command::new("sh").arg("-c").arg(ask(id)).output().await.unwrap();
     let said = format!("{}{}", String::from_utf8_lossy(&out.stdout), String::from_utf8_lossy(&out.stderr));
@@ -124,20 +106,14 @@ async fn verify(srv: &TestServer, id: &str, provider: &str, model: &str) {
     assert!(out.status.success(), "{id} could not answer through the model");
 
     if found["gateway"] == true {
-        let (status, body) = call(srv, Method::POST, &format!("/api/v1/agent-tools/{id}/gateway"), Some(json!({ "action": "status" }))).await;
-        assert_eq!(status, 200, "{body}");
-        eprintln!("{id} gateway: {}", body["output"].as_str().unwrap_or_default().lines().next().unwrap_or_default());
+        let out = app.call("gateway", json!({ "tool": id, "action": "status" }), false).await.unwrap();
+        eprintln!("{id} gateway: {}", out["output"].as_str().unwrap_or_default().lines().next().unwrap_or_default());
     }
 
-    let (status, _) = call(srv, Method::POST, &format!("/api/v1/agent-tools/{id}/update"), None).await;
-    assert_eq!(status, 202);
-    assert_eq!(finished(srv).await, "succeeded", "{id} updated");
-
-    let (status, _) = call(srv, Method::POST, &format!("/api/v1/agent-tools/{id}/uninstall"), Some(json!({ "purge": true }))).await;
-    assert_eq!(status, 202);
-    assert_eq!(finished(srv).await, "succeeded", "{id} removed");
+    app.job_ok("update", json!({ "tool": id }), false, JOB).await;
+    app.job_ok("uninstall", json!({ "tool": id, "purge": true }), false, JOB).await;
     // Another copy on the machine's own `PATH` may remain; this one is gone.
-    assert_ne!(tool(srv, id).await["path"], found["path"], "{id} is still there");
+    assert_ne!(tool(app, id).await["path"], found["path"], "{id} is still there");
 }
 
 #[ntex::test]
@@ -170,8 +146,9 @@ async fn agent_tools_install_answer_and_go() {
     )
     .await;
     assert_eq!(status, 200, "{body}");
-    let (_, providers) = call(&srv, Method::GET, "/api/v1/agent-tools/providers", None).await;
-    assert!(providers["providers"].as_array().unwrap().iter().any(|p| p["id"] == "chat"), "{providers}");
+    let app = common::package::install(&srv, "serverbox.agent_tools").await;
+    let providers = app.call("providers", json!(null), false).await.unwrap();
+    assert!(providers.as_array().unwrap().iter().any(|p| p["id"] == "chat"), "{providers}");
 
     let picked = std::env::var("SBM_E2E_AGENT_TOOLS_PICK").unwrap_or_else(|_| "pi,opencode,codex,claude,hermes,openclaw".into());
     for id in picked.split(',') {
@@ -181,7 +158,7 @@ async fn agent_tools_install_answer_and_go() {
             _ => "chat",
         };
         let model = if matches!(id, "hermes" | "openclaw") { LONG_MODEL } else { MODEL };
-        verify(&srv, id, provider, model).await;
+        verify(&app, id, provider, model).await;
     }
     drop(state);
 }

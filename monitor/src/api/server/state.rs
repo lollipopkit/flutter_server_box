@@ -120,23 +120,9 @@ pub struct AppState {
     /// The web apps this agent deployed, their jobs and proxies — see
     /// `stacks`.
     pub stacks: Arc<crate::stacks::Stacks>,
-    /// Local inference (`inference`).
-    pub inference: Arc<crate::inference::Inference>,
-    /// AI agents' installs (`api::agent_tools`).
-    pub agent_tools: Arc<crate::stacks::job::JobSlot>,
-    /// Reverse proxies' installs (`api::proxy`).
-    pub proxy: Arc<crate::stacks::job::JobSlot>,
     pub container_backups: Arc<crate::container_backups::ContainerBackups>,
     pub storage: Arc<crate::api::storage::StorageJobs>,
     pub shares: Arc<crate::stacks::job::JobSlot>,
-    /// Kernel changes (`api::kernel`).
-    pub kernel: Arc<crate::stacks::job::JobSlot>,
-    /// Ubuntu Pro changes (`api::ubuntu_pro`).
-    pub ubuntu_pro: Arc<crate::stacks::job::JobSlot>,
-    /// The last scan and the cleanup's job (`api::cleanup`).
-    pub cleanup: Arc<crate::api::cleanup::Cleanup>,
-    /// Tailscale changes (`api::tailscale`).
-    pub tailscale: Arc<crate::stacks::job::JobSlot>,
     /// The last process table read, which the next one's read and write
     /// speeds are differenced against — see `api::process`.
     pub process_sample: Arc<tokio::sync::Mutex<Option<crate::api::process::ProcessSample>>>,
@@ -193,7 +179,7 @@ pub(super) fn agent_state(config: &Config) -> crate::core::fs_roots::Protected {
         protected.tree(&crate::agent_mode::AgentMode::dir_beside(&db));
         crate::stacks::Stacks::protect_beside(&db, &mut protected);
         protected.tree(&crate::container_backups::ContainerBackups::dir_beside(&db));
-        protected.tree(&crate::inference::Inference::dir_beside(&db));
+        protected.tree(&crate::inference::legacy_dir_beside(&db));
         protected.tree(&crate::apps::Apps::dir_beside(&db));
     }
     protected.file(&config.jwt_secret_path());
@@ -264,18 +250,11 @@ impl AppState {
             container_backups: Arc::new(crate::container_backups::ContainerBackups::new(sqlite_file_of(&db).as_deref())),
             storage: Arc::default(),
             shares: Arc::default(),
-            kernel: Arc::default(),
-            ubuntu_pro: Arc::default(),
-            cleanup: Arc::default(),
-            tailscale: Arc::default(),
             stacks: Arc::new(crate::stacks::Stacks::new(
                 sqlite_file_of(&db).as_deref(),
                 config.get_stacks().local_apps.as_deref().map(std::path::Path::new),
                 config.get_stacks().shared_dir.as_deref().map(std::path::Path::new),
             )),
-            inference: Arc::new(crate::inference::Inference::new(sqlite_file_of(&db).as_deref())),
-            agent_tools: Arc::default(),
-            proxy: Arc::default(),
             apps: Arc::new(crate::apps::Apps::new(sqlite_file_of(&db).as_deref())),
             process_sample: Arc::new(tokio::sync::Mutex::new(None)),
             virt: Arc::new(crate::api::virt::VirtState::default()),
