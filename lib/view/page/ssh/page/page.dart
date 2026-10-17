@@ -1013,11 +1013,15 @@ class SSHPageState extends ConsumerState<SSHPage>
         tooltip: libL10n.snippet,
         icon: const Icon(Icons.code),
       ),
-      IconButton(
-        onPressed: openTextView,
-        tooltip: l10n.termTextView,
-        icon: const Icon(Icons.article_outlined),
-      ),
+      // Only for a screen reader, which has no other way to the output: a
+      // phone's title bar is short of room, and there is no menu in it to put
+      // this behind for everyone else, who can select on the terminal itself.
+      if (MediaQuery.accessibleNavigationOf(context))
+        IconButton(
+          onPressed: openTextView,
+          tooltip: l10n.termTextView,
+          icon: const Icon(Icons.article_outlined),
+        ),
     ];
     // Only where there is a sudo password to insert. This device's shell is
     // already whoever is running the app.
