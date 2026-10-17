@@ -931,20 +931,49 @@ jobs:
           UPGRADE_CODE: '{C7D0B8EE-B911-4E82-8CF9-196A6F17866D}'
         run: |
           $bundle = (Resolve-Path "build/windows/x64/runner/Release").Path
-          $output = "${env:APP_NAME}_v1.0.${env:BUILD_NUMBER}_windows_amd64.msi"
-          & "$env:USERPROFILE\.dotnet\tools\wix.exe" build windows/installer/Package.wxs `
-            -arch x64 `
-            -d "AppDir=$bundle" `
-            -d "MsiVersion=1.0.$env:BUILD_NUMBER" `
-            -d "ProductName=$env:PRODUCT_NAME" `
-            -d "InstallFolder=$env:INSTALL_FOLDER" `
-            -d "InstallDirectoryId=INSTALLFOLDERX64" `
-            -d "ShortcutFolder=$env:SHORTCUT_FOLDER" `
-            -d "RegistryKey=$env:REGISTRY_KEY" `
-            -d "UpgradeCode=$env:UPGRADE_CODE" `
-            -ext WixToolset.UI.wixext `
-            -bindvariable "WixUILicenseRtf=$env:RUNNER_TEMP\ServerBox-License.rtf" `
-            -o $output
+          $wix = "$env:USERPROFILE\.dotnet\tools\wix.exe"
+          $locales = @(
+            @{ Culture = 'en-US'; Language = '1033'; Suffix = 'en-US' },
+            @{ Culture = 'zh-CN'; Language = '2052'; Suffix = 'zh-CN' }
+          )
+          foreach ($locale in $locales) {
+            $output = "${env:APP_NAME}_v1.0.${env:BUILD_NUMBER}_windows_amd64_$($locale.Suffix).msi"
+            & $wix build windows/installer/Package.wxs `
+              -arch x64 `
+              -culture $locale.Culture `
+              -d "AppDir=$bundle" `
+              -d "MsiVersion=1.0.$env:BUILD_NUMBER" `
+              -d "MsiLanguage=$($locale.Language)" `
+              -d "ProductName=$env:PRODUCT_NAME" `
+              -d "InstallFolder=$env:INSTALL_FOLDER" `
+              -d "InstallDirectoryId=INSTALLFOLDERX64" `
+              -d "ShortcutFolder=$env:SHORTCUT_FOLDER" `
+              -d "RegistryKey=$env:REGISTRY_KEY" `
+              -d "UpgradeCode=$env:UPGRADE_CODE" `
+              -ext WixToolset.UI.wixext `
+              -bindvariable "WixUILicenseRtf=$env:RUNNER_TEMP\ServerBox-License.rtf" `
+              -o $output
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          $programFilesX86 = [Environment]::GetEnvironmentVariable('ProgramFiles(x86)')
+          $compiler = Join-Path $programFilesX86 'Inno Setup 6\ISCC.exe'
+          if (-not (Test-Path $compiler)) {
+            choco install innosetup --yes --no-progress
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+          if (-not (Test-Path $compiler)) { throw 'Inno Setup compiler was not installed.' }
+      - name: Package language-selecting setup
+        shell: pwsh
+        run: |
+          $env:APP_NAME = '${{ env.APP_NAME }}'
+          $env:APP_VERSION = "1.0.${env:BUILD_NUMBER}"
+          $env:MSI_EN_PATH = (Resolve-Path "${env:APP_NAME}_v1.0.${env:BUILD_NUMBER}_windows_amd64_en-US.msi").Path
+          $env:MSI_ZH_PATH = (Resolve-Path "${env:APP_NAME}_v1.0.${env:BUILD_NUMBER}_windows_amd64_zh-CN.msi").Path
+          $compiler = Join-Path ([Environment]::GetEnvironmentVariable('ProgramFiles(x86)')) 'Inno Setup 6\ISCC.exe'
+          & $compiler windows/installer/Setup.iss
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Upload artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -952,7 +981,9 @@ jobs:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-windows-amd64
           path: |
             ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_windows_amd64.zip
-            ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_windows_amd64.msi
+            ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_windows_amd64_en-US.msi
+            ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_windows_amd64_zh-CN.msi
+            ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_windows_amd64_Setup.exe
           if-no-files-found: error
           retention-days: 14
 
@@ -1032,7 +1063,9 @@ jobs:
             "${APP_NAME}_${TAG}_amd64.AppImage"
             "${APP_NAME}_${TAG}_legacy_amd64.AppImage"
             "${APP_NAME}_${TAG}_windows_amd64.zip"
-            "${APP_NAME}_${TAG}_windows_amd64.msi"
+            "${APP_NAME}_${TAG}_windows_amd64_en-US.msi"
+            "${APP_NAME}_${TAG}_windows_amd64_zh-CN.msi"
+            "${APP_NAME}_${TAG}_windows_amd64_Setup.exe"
           )
 
           echo "collected:"

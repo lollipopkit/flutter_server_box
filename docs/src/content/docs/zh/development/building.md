@@ -73,7 +73,7 @@ dart run fl_build -p linux
 dart run fl_build -p windows
 ```
 
-需要安装 Visual Studio，并选择 **Desktop development with C++** workload 和 ATL 支持。GitHub Release 流程目前仅发布 x64 MSI 安装包和便携 ZIP。Flutter 发布 Windows ARM64 SDK 前，ARM64 打包暂时停用。
+需要安装 Visual Studio，并选择 **Desktop development with C++** workload 和 ATL 支持。GitHub Release 流程会发布 x64 `Setup.exe`，按 Windows 显示语言预选 English 或简体中文；两种语言的 MSI 也可单独下载，并提供便携 ZIP。Flutter 发布 Windows ARM64 SDK 前，ARM64 打包暂时停用。
 
 ## 构建 Monitor agent
 

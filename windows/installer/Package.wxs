@@ -5,6 +5,7 @@
     Name="$(var.ProductName)"
     Manufacturer="tech.lolli"
     Version="$(var.MsiVersion)"
+    Language="$(var.MsiLanguage)"
     UpgradeCode="$(var.UpgradeCode)"
     Scope="perMachine">
     <MajorUpgrade DowngradeErrorMessage="A newer version of Server Box is already installed." />
