@@ -1,6 +1,12 @@
 name: Set up Flutter
 description: The Flutter this project is built with, in the one place that says so.
 
+inputs:
+  architecture:
+    description: Flutter SDK executable architecture; override on Windows ARM when cross-compiling.
+    required: false
+    default: ''
+
 # Which Flutter CI uses was an `env: FLUTTER_VERSION` in every workflow that
 # needed one, read by ten copies of the same four-line step. Bumping it meant
 # finding all of them, and a workflow left behind built the app on a different
@@ -22,3 +28,4 @@ runs:
       with:
         channel: stable
         flutter-version: 3.47.5
+        architecture: ${{ inputs.architecture || runner.arch }}
