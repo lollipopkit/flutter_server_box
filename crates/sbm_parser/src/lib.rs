@@ -45,6 +45,7 @@ pub mod storage;
 pub mod system;
 pub mod tmux;
 pub mod types;
+pub mod ubuntu_pro;
 pub mod users;
 pub mod waf;
 pub mod windows;

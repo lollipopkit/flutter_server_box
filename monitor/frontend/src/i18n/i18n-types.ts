@@ -10866,6 +10866,184 @@ type RootTranslation = {
 	 * V​e​r​s​i​o​n​s​ ​o​f​ ​t​h​e​ ​r​u​n​n​i​n​g​ ​k​e​r​n​e​l​'​s​ ​f​l​a​v​o​u​r​.​ ​A​ ​s​e​r​i​e​s​ ​i​n​s​t​a​l​l​s​ ​t​h​e​ ​n​e​w​e​s​t​ ​o​f​ ​i​t​s​ ​k​i​n​d​ ​a​n​d​ ​k​e​e​p​s​ ​i​t​ ​u​p​d​a​t​e​d​;​ ​a​ ​v​e​r​s​i​o​n​ ​s​t​a​y​s​ ​a​s​ ​i​t​ ​i​s​.
 	 */
 	kernelVersionsNote: string
+	/**
+	 * U​b​u​n​t​u​ ​P​r​o
+	 */
+	ubuntuPro: string
+	/**
+	 * u​b​u​n​t​u​ ​p​r​o​ ​s​u​b​s​c​r​i​p​t​i​o​n​ ​l​i​v​e​p​a​t​c​h​ ​e​s​m​ ​f​i​p​s
+	 */
+	ubuntuProKeywords: string
+	/**
+	 * U​b​u​n​t​u​ ​P​r​o​ ​a​t​t​a​c​h​e​s​ ​U​b​u​n​t​u​ ​m​a​c​h​i​n​e​s​ ​o​n​l​y​.
+	 */
+	ubuntuProNotUbuntu: string
+	/**
+	 * T​h​e​ ​U​b​u​n​t​u​ ​P​r​o​ ​c​l​i​e​n​t​ ​(​p​r​o​)​ ​i​s​ ​n​o​t​ ​i​n​s​t​a​l​l​e​d​.
+	 */
+	ubuntuProNoClient: string
+	/**
+	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​i​s​ ​a​t​t​a​c​h​e​d​ ​a​l​r​e​a​d​y​.
+	 */
+	ubuntuProAlreadyAttached: string
+	/**
+	 * A​t​t​a​c​h​ ​t​h​i​s​ ​m​a​c​h​i​n​e​ ​t​o​ ​a​ ​s​u​b​s​c​r​i​p​t​i​o​n​ ​f​i​r​s​t​.
+	 */
+	ubuntuProNotAttached: string
+	/**
+	 * T​h​e​ ​s​u​b​s​c​r​i​p​t​i​o​n​ ​d​o​e​s​ ​n​o​t​ ​c​o​v​e​r​ ​t​h​a​t​ ​s​e​r​v​i​c​e​.
+	 */
+	ubuntuProNotEntitled: string
+	/**
+	 * T​h​a​t​ ​d​o​e​s​ ​n​o​t​ ​l​o​o​k​ ​l​i​k​e​ ​a​ ​t​o​k​e​n​ ​f​r​o​m​ ​t​h​e​ ​P​r​o​ ​d​a​s​h​b​o​a​r​d​.
+	 */
+	ubuntuProInvalidToken: string
+	/**
+	 * I​n​s​t​a​l​l​ ​t​h​e​ ​U​b​u​n​t​u​ ​P​r​o​ ​c​l​i​e​n​t
+	 */
+	ubuntuProInstallTitle: string
+	/**
+	 * u​b​u​n​t​u​-​p​r​o​-​c​l​i​e​n​t​ ​i​s​ ​i​n​s​t​a​l​l​e​d​ ​f​r​o​m​ ​t​h​e​ ​m​a​c​h​i​n​e​'​s​ ​a​r​c​h​i​v​e​.
+	 */
+	ubuntuProInstallBody: string
+	/**
+	 * A​t​t​a​c​h​ ​t​o​ ​U​b​u​n​t​u​ ​P​r​o
+	 */
+	ubuntuProAttachTitle: string
+	/**
+	 * T​h​e​ ​m​a​c​h​i​n​e​ ​j​o​i​n​s​ ​t​h​e​ ​s​u​b​s​c​r​i​p​t​i​o​n​ ​t​h​e​ ​t​o​k​e​n​ ​b​e​l​o​n​g​s​ ​t​o​.​ ​N​o​ ​s​e​r​v​i​c​e​ ​i​s​ ​t​u​r​n​e​d​ ​o​n​;​ ​t​u​r​n​ ​o​n​ ​w​h​a​t​ ​y​o​u​ ​n​e​e​d​ ​b​e​l​o​w​.
+	 */
+	ubuntuProAttachBody: string
+	/**
+	 * T​h​e​ ​m​a​c​h​i​n​e​ ​j​o​i​n​s​ ​t​h​e​ ​s​u​b​s​c​r​i​p​t​i​o​n​ ​t​h​e​ ​t​o​k​e​n​ ​b​e​l​o​n​g​s​ ​t​o​,​ ​a​n​d​ ​t​h​e​ ​s​e​r​v​i​c​e​s​ ​t​h​e​ ​s​u​b​s​c​r​i​p​t​i​o​n​ ​r​e​c​o​m​m​e​n​d​s​ ​a​r​e​ ​t​u​r​n​e​d​ ​o​n​.
+	 */
+	ubuntuProAttachAutoBody: string
+	/**
+	 * D​e​t​a​c​h​ ​f​r​o​m​ ​U​b​u​n​t​u​ ​P​r​o
+	 */
+	ubuntuProDetachTitle: string
+	/**
+	 * T​h​e​ ​m​a​c​h​i​n​e​ ​l​e​a​v​e​s​ ​t​h​e​ ​s​u​b​s​c​r​i​p​t​i​o​n​ ​a​n​d​ ​e​v​e​r​y​ ​P​r​o​ ​s​e​r​v​i​c​e​ ​i​s​ ​t​u​r​n​e​d​ ​o​f​f​.
+	 */
+	ubuntuProDetachBody: string
+	/**
+	 * T​u​r​n​ ​o​n​ ​{​s​e​r​v​i​c​e​}
+	 * @param {unknown} service
+	 */
+	ubuntuProEnableTitle: RequiredParams<'service'>
+	/**
+	 * p​r​o​ ​t​u​r​n​s​ ​t​h​e​ ​s​e​r​v​i​c​e​ ​o​n​:​ ​i​t​ ​m​a​y​ ​i​n​s​t​a​l​l​ ​p​a​c​k​a​g​e​s​ ​o​r​ ​a​ ​s​n​a​p​.
+	 */
+	ubuntuProEnableBody: string
+	/**
+	 * T​u​r​n​ ​o​f​f​ ​{​s​e​r​v​i​c​e​}
+	 * @param {unknown} service
+	 */
+	ubuntuProDisableTitle: RequiredParams<'service'>
+	/**
+	 * p​r​o​ ​t​u​r​n​s​ ​t​h​e​ ​s​e​r​v​i​c​e​ ​o​f​f​;​ ​w​h​a​t​ ​i​t​ ​i​n​s​t​a​l​l​e​d​ ​m​a​y​ ​s​t​a​y​.
+	 */
+	ubuntuProDisableBody: string
+	/**
+	 * W​o​r​k​i​n​g​…
+	 */
+	ubuntuProWorking: string
+	/**
+	 * D​o​n​e
+	 */
+	ubuntuProDone: string
+	/**
+	 * D​i​d​ ​n​o​t​ ​f​i​n​i​s​h
+	 */
+	ubuntuProFailed: string
+	/**
+	 * I​n​s​t​a​l​l
+	 */
+	ubuntuProInstallClient: string
+	/**
+	 * S​u​b​s​c​r​i​p​t​i​o​n
+	 */
+	ubuntuProSubscription: string
+	/**
+	 * A​t​t​a​c​h​e​d
+	 */
+	ubuntuProAttached: string
+	/**
+	 * N​o​t​ ​a​t​t​a​c​h​e​d
+	 */
+	ubuntuProUnattached: string
+	/**
+	 * C​o​n​t​r​a​c​t
+	 */
+	ubuntuProContract: string
+	/**
+	 * A​c​c​o​u​n​t
+	 */
+	ubuntuProAccount: string
+	/**
+	 * E​x​p​i​r​e​s
+	 */
+	ubuntuProExpires: string
+	/**
+	 * S​u​p​p​o​r​t
+	 */
+	ubuntuProSupport: string
+	/**
+	 * R​e​l​e​a​s​e
+	 */
+	ubuntuProRelease: string
+	/**
+	 * A​t​t​a​c​h
+	 */
+	ubuntuProAttach: string
+	/**
+	 * T​o​k​e​n
+	 */
+	ubuntuProToken: string
+	/**
+	 * F​r​o​m​ ​u​b​u​n​t​u​.​c​o​m​/​p​r​o​/​d​a​s​h​b​o​a​r​d​.​ ​F​r​e​e​ ​f​o​r​ ​p​e​r​s​o​n​a​l​ ​u​s​e​ ​o​n​ ​u​p​ ​t​o​ ​f​i​v​e​ ​m​a​c​h​i​n​e​s​.
+	 */
+	ubuntuProTokenHint: string
+	/**
+	 * T​u​r​n​ ​o​n​ ​t​h​e​ ​r​e​c​o​m​m​e​n​d​e​d​ ​s​e​r​v​i​c​e​s
+	 */
+	ubuntuProAutoEnable: string
+	/**
+	 * P​a​t​c​h​e​s
+	 */
+	ubuntuProLivepatchState: string
+	/**
+	 * K​e​r​n​e​l
+	 */
+	ubuntuProLivepatchKernel: string
+	/**
+	 * P​a​t​c​h​ ​v​e​r​s​i​o​n
+	 */
+	ubuntuProLivepatchVersion: string
+	/**
+	 * K​e​r​n​e​l​ ​s​u​p​p​o​r​t
+	 */
+	ubuntuProLivepatchSupport: string
+	/**
+	 * S​e​r​v​i​c​e​s
+	 */
+	ubuntuProServices: string
+	/**
+	 * N​o​t​ ​c​o​v​e​r​e​d
+	 */
+	ubuntuProNotEntitledBadge: string
+	/**
+	 * S​e​r​v​i​c​e​s​ ​c​a​n​ ​b​e​ ​t​u​r​n​e​d​ ​o​n​ ​o​n​c​e​ ​t​h​e​ ​m​a​c​h​i​n​e​ ​i​s​ ​a​t​t​a​c​h​e​d​.
+	 */
+	ubuntuProServicesNote: string
+	/**
+	 * D​e​t​a​c​h
+	 */
+	ubuntuProDetach: string
+	/**
+	 * L​e​a​v​e​ ​t​h​e​ ​s​u​b​s​c​r​i​p​t​i​o​n​;​ ​P​r​o​ ​s​e​r​v​i​c​e​s​ ​g​o​ ​o​f​f​.
+	 */
+	ubuntuProDetachNote: string
 }
 
 export type TranslationFunctions = {
@@ -21329,6 +21507,182 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Versions of the running kernel's flavour. A series installs the newest of its kind and keeps it updated; a version stays as it is.
 	 */
 	kernelVersionsNote: () => LocalizedString
+	/**
+	 * Ubuntu Pro
+	 */
+	ubuntuPro: () => LocalizedString
+	/**
+	 * ubuntu pro subscription livepatch esm fips
+	 */
+	ubuntuProKeywords: () => LocalizedString
+	/**
+	 * Ubuntu Pro attaches Ubuntu machines only.
+	 */
+	ubuntuProNotUbuntu: () => LocalizedString
+	/**
+	 * The Ubuntu Pro client (pro) is not installed.
+	 */
+	ubuntuProNoClient: () => LocalizedString
+	/**
+	 * This machine is attached already.
+	 */
+	ubuntuProAlreadyAttached: () => LocalizedString
+	/**
+	 * Attach this machine to a subscription first.
+	 */
+	ubuntuProNotAttached: () => LocalizedString
+	/**
+	 * The subscription does not cover that service.
+	 */
+	ubuntuProNotEntitled: () => LocalizedString
+	/**
+	 * That does not look like a token from the Pro dashboard.
+	 */
+	ubuntuProInvalidToken: () => LocalizedString
+	/**
+	 * Install the Ubuntu Pro client
+	 */
+	ubuntuProInstallTitle: () => LocalizedString
+	/**
+	 * ubuntu-pro-client is installed from the machine's archive.
+	 */
+	ubuntuProInstallBody: () => LocalizedString
+	/**
+	 * Attach to Ubuntu Pro
+	 */
+	ubuntuProAttachTitle: () => LocalizedString
+	/**
+	 * The machine joins the subscription the token belongs to. No service is turned on; turn on what you need below.
+	 */
+	ubuntuProAttachBody: () => LocalizedString
+	/**
+	 * The machine joins the subscription the token belongs to, and the services the subscription recommends are turned on.
+	 */
+	ubuntuProAttachAutoBody: () => LocalizedString
+	/**
+	 * Detach from Ubuntu Pro
+	 */
+	ubuntuProDetachTitle: () => LocalizedString
+	/**
+	 * The machine leaves the subscription and every Pro service is turned off.
+	 */
+	ubuntuProDetachBody: () => LocalizedString
+	/**
+	 * Turn on {service}
+	 */
+	ubuntuProEnableTitle: (arg: { service: unknown }) => LocalizedString
+	/**
+	 * pro turns the service on: it may install packages or a snap.
+	 */
+	ubuntuProEnableBody: () => LocalizedString
+	/**
+	 * Turn off {service}
+	 */
+	ubuntuProDisableTitle: (arg: { service: unknown }) => LocalizedString
+	/**
+	 * pro turns the service off; what it installed may stay.
+	 */
+	ubuntuProDisableBody: () => LocalizedString
+	/**
+	 * Working…
+	 */
+	ubuntuProWorking: () => LocalizedString
+	/**
+	 * Done
+	 */
+	ubuntuProDone: () => LocalizedString
+	/**
+	 * Did not finish
+	 */
+	ubuntuProFailed: () => LocalizedString
+	/**
+	 * Install
+	 */
+	ubuntuProInstallClient: () => LocalizedString
+	/**
+	 * Subscription
+	 */
+	ubuntuProSubscription: () => LocalizedString
+	/**
+	 * Attached
+	 */
+	ubuntuProAttached: () => LocalizedString
+	/**
+	 * Not attached
+	 */
+	ubuntuProUnattached: () => LocalizedString
+	/**
+	 * Contract
+	 */
+	ubuntuProContract: () => LocalizedString
+	/**
+	 * Account
+	 */
+	ubuntuProAccount: () => LocalizedString
+	/**
+	 * Expires
+	 */
+	ubuntuProExpires: () => LocalizedString
+	/**
+	 * Support
+	 */
+	ubuntuProSupport: () => LocalizedString
+	/**
+	 * Release
+	 */
+	ubuntuProRelease: () => LocalizedString
+	/**
+	 * Attach
+	 */
+	ubuntuProAttach: () => LocalizedString
+	/**
+	 * Token
+	 */
+	ubuntuProToken: () => LocalizedString
+	/**
+	 * From ubuntu.com/pro/dashboard. Free for personal use on up to five machines.
+	 */
+	ubuntuProTokenHint: () => LocalizedString
+	/**
+	 * Turn on the recommended services
+	 */
+	ubuntuProAutoEnable: () => LocalizedString
+	/**
+	 * Patches
+	 */
+	ubuntuProLivepatchState: () => LocalizedString
+	/**
+	 * Kernel
+	 */
+	ubuntuProLivepatchKernel: () => LocalizedString
+	/**
+	 * Patch version
+	 */
+	ubuntuProLivepatchVersion: () => LocalizedString
+	/**
+	 * Kernel support
+	 */
+	ubuntuProLivepatchSupport: () => LocalizedString
+	/**
+	 * Services
+	 */
+	ubuntuProServices: () => LocalizedString
+	/**
+	 * Not covered
+	 */
+	ubuntuProNotEntitledBadge: () => LocalizedString
+	/**
+	 * Services can be turned on once the machine is attached.
+	 */
+	ubuntuProServicesNote: () => LocalizedString
+	/**
+	 * Detach
+	 */
+	ubuntuProDetach: () => LocalizedString
+	/**
+	 * Leave the subscription; Pro services go off.
+	 */
+	ubuntuProDetachNote: () => LocalizedString
 }
 
 export type Formatters = {}

@@ -51,6 +51,7 @@ pub mod inference;
 pub mod agent_tools;
 pub mod proxy;
 pub mod kernel;
+pub mod ubuntu_pro;
 pub mod waf;
 pub mod shares;
 pub mod storage;

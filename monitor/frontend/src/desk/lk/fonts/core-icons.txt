@@ -240,6 +240,7 @@ upgrade
 upload
 upload_file
 usb
+verified_user
 vertical_align_bottom
 vertical_split
 view_column

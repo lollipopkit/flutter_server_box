@@ -27,6 +27,7 @@
   let tools = $state<AgentToolView[]>([])
   let selected = $state<AgentToolId>('codex')
   let job = $state<StackJob | null>(null)
+  const running = $derived(job?.state === 'running')
   let error = $state('')
   let loading = $state(true)
   let providers = $state<AgentToolProvider[]>([])
@@ -158,8 +159,9 @@
           title={job.state === 'running' ? $LL.agentToolsWorking() : job.state === 'succeeded' ? $LL.agentToolsDone() : $LL.agentToolsFailed()}
           read={(since) => api.agentToolsJob(since)}
           stop={() => api.cancelAgentToolsJob()}
-          ondone={() => {
-            job = null
+          ondone={(done) => {
+            // Kept on screen: a failure says why.
+            job = done
             void load()
           }}
         />
@@ -178,10 +180,10 @@
       </Group>
       <div class="flex flex-wrap gap-[9px]">
         {#if !current.path}
-          <Button variant="primary" icon="download" disabled={!!job} onclick={() => void change('install')}>{$LL.agentToolsInstall()}</Button>
+          <Button variant="primary" icon="download" disabled={running} onclick={() => void change('install')}>{$LL.agentToolsInstall()}</Button>
         {:else}
-          <Button variant="secondary" icon="upgrade" disabled={!!job} onclick={() => void change('update')}>{$LL.agentToolsUpdate()}</Button>
-          <Button variant="destructive" disabled={!!job} onclick={() => (removing = true)}>{$LL.agentToolsRemove()}</Button>
+          <Button variant="secondary" icon="upgrade" disabled={running} onclick={() => void change('update')}>{$LL.agentToolsUpdate()}</Button>
+          <Button variant="destructive" disabled={running} onclick={() => (removing = true)}>{$LL.agentToolsRemove()}</Button>
         {/if}
         <a class="self-center px-[5px] text-[13px] text-(--color-accent-text) hover:underline" href={current.homepage} target="_blank" rel="noreferrer noopener">{$LL.agentToolsHomepage()}</a>
       </div>

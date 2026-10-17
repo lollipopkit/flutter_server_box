@@ -42,6 +42,8 @@ pub enum JobKind {
     Shares,
     /// A kernel installed, removed or booted (`api::kernel`).
     Kernel,
+    /// Ubuntu Pro attached, detached or a service changed (`api::ubuntu_pro`).
+    UbuntuPro,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]

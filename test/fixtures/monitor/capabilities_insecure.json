@@ -50,6 +50,7 @@
         "proxy",
         "waf",
         "kernel",
+        "ubuntu_pro",
         "alerts",
         "audit",
         "live"

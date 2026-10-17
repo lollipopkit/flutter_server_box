@@ -20,6 +20,7 @@
   let view = $state<KernelView | null>(null)
   let error = $state('')
   let job = $state<StackJob | null>(null)
+  const running = $derived(job?.state === 'running')
   let pending = $state<{ title: string; body: string; confirmWord?: string; action: KernelAction } | null>(null)
   let version = $state('')
   let restart = $state(false)
@@ -105,8 +106,9 @@
           title={job.state === 'running' ? $LL.kernelWorking() : job.state === 'succeeded' ? $LL.kernelDone() : $LL.kernelFailed()}
           read={(since) => api.kernelJob(since)}
           stop={null}
-          ondone={() => {
-            job = null
+          ondone={(done) => {
+            // Kept on screen: a failure says why.
+            job = done
             void load()
           }}
         />
@@ -123,7 +125,7 @@
         <Row label={$LL.kernelRunning()} value={view.running} mono />
         <Row label={$LL.kernelBoots()} value={booted?.release ?? '—'} mono sub={view.pinned ? $LL.kernelPinned() : $LL.kernelNewest()}>
           {#if view.pinned && view.supported}
-            <Button size="sm" variant="secondary" disabled={!!job} onclick={() => ask({ action: 'bootNewest' })}>{$LL.kernelBootNewest()}</Button>
+            <Button size="sm" variant="secondary" disabled={running} onclick={() => ask({ action: 'bootNewest' })}>{$LL.kernelBootNewest()}</Button>
           {/if}
         </Row>
         {#if next}
@@ -148,13 +150,13 @@
             {#if k.next}<Badge tone="warning">{$LL.kernelBadgeNext()}</Badge>{/if}
             {#if view.supported}
               {#if !k.default || view.pinned === null}
-                <Button size="sm" variant="ghost" disabled={!!job} onclick={() => ask({ action: 'boot', release: k.release, once: false })}>{$LL.kernelBoot()}</Button>
+                <Button size="sm" variant="ghost" disabled={running} onclick={() => ask({ action: 'boot', release: k.release, once: false })}>{$LL.kernelBoot()}</Button>
               {/if}
               {#if !k.next && !k.running}
-                <Button size="sm" variant="ghost" disabled={!!job} onclick={() => ask({ action: 'boot', release: k.release, once: true })}>{$LL.kernelBootOnce()}</Button>
+                <Button size="sm" variant="ghost" disabled={running} onclick={() => ask({ action: 'boot', release: k.release, once: true })}>{$LL.kernelBootOnce()}</Button>
               {/if}
               {#if removable(k)}
-                <IconButton icon="delete" label={$LL.kernelRemove()} disabled={!!job} onclick={() => ask({ action: 'remove', release: k.release })} />
+                <IconButton icon="delete" label={$LL.kernelRemove()} disabled={running} onclick={() => ask({ action: 'remove', release: k.release })} />
               {/if}
             {/if}
           </Row>
@@ -167,7 +169,7 @@
             <Row label={s.package} mono sub={s.installed ? (s.installed === s.version ? s.version : `${s.installed} → ${s.version}`) : s.version}>
               {#if s.installed}<Badge tone="success">{$LL.kernelFollowed()}</Badge>{/if}
               {#if s.installed !== s.version}
-                <Button size="sm" variant="ghost" disabled={!!job} onclick={() => ask({ action: 'install', package: s.package })}>
+                <Button size="sm" variant="ghost" disabled={running} onclick={() => ask({ action: 'install', package: s.package })}>
                   {s.installed ? $LL.kernelUpdate() : $LL.kernelInstall()}
                 </Button>
               {/if}
@@ -185,7 +187,7 @@
               options={view.versions.map((o) => ({ value: o.package, label: `${o.release} · ${o.version}` }))}
               bind:value={version}
             />
-            <Button variant="primary" icon="download" disabled={!!job || !version} onclick={() => ask({ action: 'install', package: version })}>{$LL.kernelInstall()}</Button>
+            <Button variant="primary" icon="download" disabled={running || !version} onclick={() => ask({ action: 'install', package: version })}>{$LL.kernelInstall()}</Button>
           </div>
           <p class="px-[13px] pb-[11px] text-[12px] text-(--text-tertiary)">{$LL.kernelVersionsNote()}</p>
         </Group>

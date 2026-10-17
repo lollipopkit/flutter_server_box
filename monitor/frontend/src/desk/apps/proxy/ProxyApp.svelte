@@ -26,6 +26,7 @@
   let selected = $state<ProxyServerId>('caddy')
   let error = $state('')
   let job = $state<StackJob | null>(null)
+  const running = $derived(job?.state === 'running')
   let pending = $state<{ title: string; body: string; run: (sudo: string) => Promise<void> } | null>(null)
   let draft = $state<ProxySite | null>(null)
   let replacing = $state<string | null>(null)
@@ -159,8 +160,9 @@
           title={job.state === 'running' ? $LL.proxyInstalling() : job.state === 'succeeded' ? $LL.proxyDone() : $LL.proxyFailed()}
           read={(since) => api.proxyJob(since)}
           stop={null}
-          ondone={() => {
-            job = null
+          ondone={(done) => {
+            // Kept on screen: a failure says why.
+            job = done
             void load()
           }}
         />
@@ -186,7 +188,7 @@
           {#if current.server === 'traefik'}
             <Input label={$LL.proxyAcmeEmail()} placeholder="ops@example.com" bind:value={acmeEmail} hint={$LL.proxyAcmeHint()} />
           {/if}
-          <Button variant="primary" icon="download" disabled={!!job} onclick={install}>{$LL.proxyInstall()}</Button>
+          <Button variant="primary" icon="download" disabled={running} onclick={install}>{$LL.proxyInstall()}</Button>
         </Card>
       {:else if !current.writable}
         <Card class="flex items-start gap-[9px] text-[13px] text-(--text-secondary)"><Icon name="info" size={17} /><p>{$LL.proxyNotWritable()}</p></Card>

@@ -2,7 +2,7 @@
 /// restarts: another version of the running kernel installed, booted by
 /// default (restart: it runs), the first one booted once (restart: it runs,
 /// the other stays the default), the newest booted again, and the installed
-/// one removed. `scripts/kernel-e2e.sh <node>` makes the machine and runs it.
+/// one removed. `scripts/desk-vm-e2e.sh <node> kernel` makes the machine and runs it.
 ///
 ///     SBM_E2E_PANEL_URL=https://192.168.31.231:3770 SBM_E2E_PANEL_PASSWORD=… SBM_E2E_SUDO_PASSWORD=… \
 ///     SBM_E2E_KERNEL_VERSION=7.0.0-31-generic npx playwright test kernel

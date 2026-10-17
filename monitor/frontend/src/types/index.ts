@@ -182,6 +182,7 @@ export type MachineFeature =
   | 'agent_tools'
   | 'proxy'
   | 'kernel'
+  | 'ubuntu_pro'
   | 'waf'
   /// Whether a newer agent is out and how this one is updated (`/update`).
   | 'update'
@@ -2782,7 +2783,7 @@ export interface StackRow {
   last_error?: string | null
 }
 
-export type StackJobKind = 'install' | 'update' | 'reconfigure' | 'start' | 'stop' | 'restart' | 'remove' | 'backup' | 'restore' | 'storage' | 'shares' | 'kernel'
+export type StackJobKind = 'install' | 'update' | 'reconfigure' | 'start' | 'stop' | 'restart' | 'remove' | 'backup' | 'restore' | 'storage' | 'shares' | 'kernel' | 'ubuntuPro'
 
 /// A deploy, update, start, stop or removal (`stacks::job::JobView`).
 export interface StackJob {
@@ -3327,6 +3328,47 @@ export type KernelAction =
   | { action: 'remove'; release: string }
   | { action: 'boot'; release: string; once: boolean }
   | { action: 'bootNewest' }
+
+/// Ubuntu Pro (`sbm_parser::ubuntu_pro`, `GET /ubuntu-pro`).
+export interface ProService {
+  name: string
+  description: string
+  available: boolean
+  /// The contract covers it (attached only).
+  entitled: boolean | null
+  /// `enabled`, `disabled`, `warning`, `n/a` (attached only).
+  status: string | null
+  statusDetails: string | null
+}
+
+export interface ProLivepatch {
+  kernel: string | null
+  state: string | null
+  version: string | null
+  supported: string | null
+}
+
+export interface ProView {
+  ubuntu: boolean
+  release: string | null
+  /// The client's version; null when it is not installed.
+  client: string | null
+  attached: boolean
+  account: string | null
+  contract: string | null
+  expires: string | null
+  techSupport: string | null
+  services: ProService[]
+  livepatch: ProLivepatch | null
+  job: StackJob | null
+}
+
+export type ProAction =
+  | { action: 'installClient' }
+  | { action: 'attach'; autoEnable: boolean }
+  | { action: 'detach' }
+  | { action: 'enable'; service: string }
+  | { action: 'disable'; service: string }
 
 /// The web application firewall (`sbm_parser::waf`).
 export interface WafSettings {

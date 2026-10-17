@@ -85,6 +85,8 @@ pub const FEATURES: &[&str] = &[
     "waf",
     // The machine's kernels and which one GRUB boots (`api::kernel`).
     "kernel",
+    // Ubuntu Pro: attach, services, Livepatch (`api::ubuntu_pro`).
+    "ubuntu_pro",
     // The monitoring rules firing now (`GET /alerts`, `api::desk`).
     "alerts",
     // The audit log read back (`GET /audit`, `api::audit_log`).

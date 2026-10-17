@@ -19,6 +19,8 @@ import type {
   ProxyView,
   KernelAction,
   KernelView,
+  ProAction,
+  ProView,
   WafEvent,
   WafSettings,
   WafView,
@@ -1286,6 +1288,10 @@ export const api = {
     request<StackJob>(`/waf/${server}/install`, { method: 'POST', body: JSON.stringify({ sudo_password: sudoPassword || null }) }),
   wafEvents: (server: ProxyServerId, sudoPassword: string) =>
     request<{ events: WafEvent[] }>(`/waf/${server}/events`, { method: 'POST', body: JSON.stringify({ sudo_password: sudoPassword || null }) }),
+  getUbuntuPro: () => request<ProView>('/ubuntu-pro', {}),
+  ubuntuProAct: (action: ProAction, sudoPassword: string, token?: string) =>
+    request<StackJob>('/ubuntu-pro/act', { method: 'POST', body: JSON.stringify({ ...action, token: token ?? null, sudo_password: sudoPassword || null }) }),
+  ubuntuProJob: (since: number) => request<StackJob>(`/ubuntu-pro/job?since=${since}`, {}),
   getKernel: () => request<KernelView>('/kernel', {}),
   kernelAct: (action: KernelAction, sudoPassword: string) =>
     request<StackJob>('/kernel/act', { method: 'POST', body: JSON.stringify({ ...action, sudo_password: sudoPassword || null }) }),

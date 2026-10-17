@@ -375,8 +375,9 @@
               title={job.state === 'running' ? $LL.inferenceInstallingMlx() : job.state === 'succeeded' ? $LL.inferenceInstalled() : $LL.inferenceInstallFailed()}
               read={(since) => api.inferenceJob(since)}
               stop={() => api.cancelInferenceJob()}
-              ondone={() => {
-                job = null
+              ondone={(done) => {
+                // Kept on screen: a failure says why.
+                job = done
                 void load()
               }}
             />
