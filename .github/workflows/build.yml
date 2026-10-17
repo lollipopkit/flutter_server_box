@@ -959,12 +959,15 @@ jobs:
         shell: pwsh
         run: |
           $programFilesX86 = [Environment]::GetEnvironmentVariable('ProgramFiles(x86)')
-          $compiler = Join-Path $programFilesX86 'Inno Setup 6\ISCC.exe'
-          if (-not (Test-Path $compiler)) {
-            choco install innosetup --yes --no-progress
+          $innoDir = Join-Path $programFilesX86 'Inno Setup 6'
+          $compiler = Join-Path $innoDir 'ISCC.exe'
+          $chineseMessages = Join-Path $innoDir 'Languages\ChineseSimplified.isl'
+          if (-not (Test-Path $compiler) -or -not (Test-Path $chineseMessages)) {
+            choco install innosetup --yes --no-progress --force
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
           if (-not (Test-Path $compiler)) { throw 'Inno Setup compiler was not installed.' }
+          if (-not (Test-Path $chineseMessages)) { throw 'Inno Setup Simplified Chinese language file is missing.' }
       - name: Package language-selecting setup
         shell: pwsh
         run: |
