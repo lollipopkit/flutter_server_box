@@ -59,7 +59,7 @@
     <p class="text-sm text-muted-fg">{$LL.reauthBody()}</p>
     <div class="space-y-1">
       <span class="text-sm text-muted-fg">{$LL.currentPassword()}</span>
-      <Input type="password" autocomplete="current-password" bind:value={password} />
+      <Input type="password" autocomplete="current-password" data-autofocus bind:value={password} />
     </div>
     {#if error}
       <p class="text-sm text-danger">{error}</p>

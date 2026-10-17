@@ -81,6 +81,7 @@
   const gridFractions = [0, 0.25, 0.5, 0.75, 1]
 
   let hoverIndex = $state<number | null>(null)
+  let tableOpen = $state(false)
 
   function onPointerMove(e: PointerEvent) {
     if (labels.length === 0) return
@@ -254,8 +255,10 @@
         {fmtAxisTime(labels[labels.length - 1])}
       </text>
     </svg>
-    <details class="mt-2 text-xs">
+    <details class="mt-2 text-xs" bind:open={tableOpen}>
       <summary class="cursor-pointer text-muted-fg hover:text-fg">{$LL.chartShowData()}</summary>
+      <!-- Only while open: up to MAX_POINTS rows per chart, on every refresh -->
+      {#if tableOpen}
       <div class="mt-2 max-h-64 overflow-auto">
         <table class="w-full tabular-nums">
           <caption class="sr-only">{title ?? series.map((s) => s.label).join(', ')}</caption>
@@ -279,6 +282,7 @@
           </tbody>
         </table>
       </div>
+      {/if}
     </details>
   {/if}
   </div>

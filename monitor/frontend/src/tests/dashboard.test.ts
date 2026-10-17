@@ -222,6 +222,24 @@ describe('Dashboard card arrangement', () => {
     expect(screen.getByRole('button', { name: 'Move CPU later' })).toHaveFocus()
   })
 
+  it('keeps the order when another server is removed', async () => {
+    servers.list = [
+      { id: 'a', url: 'https://a.example', token: 't', username: 'admin' },
+      { id: 'b', url: 'https://b.example', token: 't', username: 'admin' },
+    ]
+    servers.currentId = 'a'
+    capabilitiesStore.byServer['a'] = caps([])
+    mocked.getCardOrder.mockResolvedValue({ card_order: ['disk', 'cpu', 'memory', 'network'] })
+    render(Dashboard)
+    await rendered()
+    await waitFor(() => expect(cardLabels()[0]).toBe('Disk'))
+
+    servers.remove('b')
+    await new Promise((r) => setTimeout(r, 10))
+    expect(cardLabels()[0]).toBe('Disk')
+    expect(mocked.getCardOrder).toHaveBeenCalledOnce()
+  })
+
   it("drops an order that arrives after the server changed, and saves none to the new one", async () => {
     servers.list = [
       { id: 'a', url: 'https://a.example', token: 't', username: 'admin' },
