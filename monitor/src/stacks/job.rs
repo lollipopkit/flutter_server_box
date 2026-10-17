@@ -47,6 +47,8 @@ pub enum JobKind {
     /// What can go measured, or removed (`api::cleanup`).
     Scan,
     Cleanup,
+    /// Tailscale installed, signed in or out, connected or set (`api::tailscale`).
+    Tailscale,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]

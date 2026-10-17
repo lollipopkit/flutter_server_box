@@ -21,6 +21,8 @@ import type {
   KernelView,
   ProAction,
   CleanupView,
+  TailscaleAction,
+  TailscaleView,
   ProView,
   WafEvent,
   WafSettings,
@@ -1289,6 +1291,12 @@ export const api = {
     request<StackJob>(`/waf/${server}/install`, { method: 'POST', body: JSON.stringify({ sudo_password: sudoPassword || null }) }),
   wafEvents: (server: ProxyServerId, sudoPassword: string) =>
     request<{ events: WafEvent[] }>(`/waf/${server}/events`, { method: 'POST', body: JSON.stringify({ sudo_password: sudoPassword || null }) }),
+  getTailscale: () => request<TailscaleView>('/tailscale', {}),
+  tailscaleAct: (action: TailscaleAction, sudoPassword: string, authKey?: string) =>
+    request<StackJob>('/tailscale/act', { method: 'POST', body: JSON.stringify({ ...action, auth_key: authKey || null, sudo_password: sudoPassword || null }) }),
+  tailscaleJob: (since: number) => request<StackJob>(`/tailscale/job?since=${since}`, {}),
+  tailscaleCancel: () => request<void>('/tailscale/job/cancel', { method: 'POST' }),
+  tailscalePing: (ip: string) => request<{ ok: boolean; output: string }>('/tailscale/ping', { method: 'POST', body: JSON.stringify({ ip }) }),
   getCleanup: () => request<CleanupView>('/cleanup', {}),
   cleanupScan: (sudoPassword: string) => request<StackJob>('/cleanup/scan', { method: 'POST', body: JSON.stringify({ sudo_password: sudoPassword || null }) }),
   cleanupClean: (ids: string[], sudoPassword: string) =>

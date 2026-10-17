@@ -44,6 +44,7 @@ pub mod snippet;
 pub mod stack;
 pub mod storage;
 pub mod system;
+pub mod tailscale;
 pub mod tmux;
 pub mod types;
 pub mod ubuntu_pro;

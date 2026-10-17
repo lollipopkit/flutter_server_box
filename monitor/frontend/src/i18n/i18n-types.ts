@@ -11192,6 +11192,276 @@ type RootTranslation = {
 	 * T​h​e​ ​c​h​o​s​e​n​ ​i​t​e​m​s​ ​a​r​e​ ​r​e​m​o​v​e​d​,​ ​r​e​m​o​v​e​d​ ​w​e​b​ ​a​p​p​s​'​ ​f​o​l​d​e​r​s​ ​w​i​t​h​ ​t​h​e​i​r​ ​d​a​t​a​:​ ​d​e​p​l​o​y​i​n​g​ ​t​h​e​ ​a​p​p​ ​a​g​a​i​n​ ​s​t​a​r​t​s​ ​e​m​p​t​y​.
 	 */
 	cleanupCleanAppsBody: string
+	/**
+	 * t​a​i​l​s​c​a​l​e​ ​v​p​n​ ​t​a​i​l​n​e​t​ ​m​e​s​h​ ​e​x​i​t​ ​n​o​d​e
+	 */
+	tailscaleKeywords: string
+	/**
+	 * T​a​i​l​s​c​a​l​e​ ​i​s​ ​i​n​s​t​a​l​l​e​d​ ​h​e​r​e​ ​f​r​o​m​ ​i​t​s​ ​r​e​p​o​s​i​t​o​r​y​ ​o​n​ ​D​e​b​i​a​n​ ​a​n​d​ ​U​b​u​n​t​u​.
+	 */
+	tailscaleNotInstallable: string
+	/**
+	 * T​a​i​l​s​c​a​l​e​ ​i​s​ ​n​o​t​ ​i​n​s​t​a​l​l​e​d​.
+	 */
+	tailscaleNotInstalled: string
+	/**
+	 * I​n​s​t​a​l​l
+	 */
+	tailscaleInstall: string
+	/**
+	 * t​a​i​l​s​c​a​l​e​d​ ​i​s​ ​n​o​t​ ​r​u​n​n​i​n​g​.
+	 */
+	tailscaleDaemonStopped: string
+	/**
+	 * S​t​a​r​t
+	 */
+	tailscaleStart: string
+	/**
+	 * W​i​t​h​o​u​t​ ​L​A​N​ ​a​c​c​e​s​s​,​ ​t​h​i​s​ ​m​a​c​h​i​n​e​'​s​ ​l​o​c​a​l​ ​n​e​t​w​o​r​k​ ​g​o​e​s​ ​t​h​r​o​u​g​h​ ​t​h​e​ ​e​x​i​t​ ​n​o​d​e​ ​t​o​o​,​ ​w​h​i​c​h​ ​c​u​t​s​ ​o​f​f​ ​a​ ​p​a​n​e​l​ ​t​h​a​t​ ​r​e​a​c​h​e​s​ ​i​t​ ​o​v​e​r​ ​t​h​e​ ​L​A​N​.
+	 */
+	tailscaleLanCut: string
+	/**
+	 * A​ ​m​a​c​h​i​n​e​ ​c​a​n​n​o​t​ ​o​f​f​e​r​ ​a​n​ ​e​x​i​t​ ​n​o​d​e​ ​a​n​d​ ​u​s​e​ ​o​n​e​ ​a​t​ ​t​h​e​ ​s​a​m​e​ ​t​i​m​e​.
+	 */
+	tailscaleExitNodeConflict: string
+	/**
+	 * T​h​a​t​ ​p​e​e​r​ ​d​o​e​s​ ​n​o​t​ ​o​f​f​e​r​ ​a​n​ ​e​x​i​t​ ​n​o​d​e​.
+	 */
+	tailscaleNotExitNode: string
+	/**
+	 * R​o​u​t​e​s​ ​a​r​e​ ​I​P​ ​p​r​e​f​i​x​e​s​ ​s​u​c​h​ ​a​s​ ​1​9​2​.​1​6​8​.​1​.​0​/​2​4​.
+	 */
+	tailscaleInvalidRoute: string
+	/**
+	 * A​ ​h​o​s​t​n​a​m​e​ ​i​s​ ​l​e​t​t​e​r​s​,​ ​d​i​g​i​t​s​ ​a​n​d​ ​h​y​p​h​e​n​s​.
+	 */
+	tailscaleInvalidHostname: string
+	/**
+	 * T​h​e​ ​c​o​n​t​r​o​l​ ​s​e​r​v​e​r​ ​i​s​ ​a​n​ ​h​t​t​p​(​s​)​ ​a​d​d​r​e​s​s​.
+	 */
+	tailscaleInvalidServer: string
+	/**
+	 * T​h​a​t​ ​d​o​e​s​ ​n​o​t​ ​l​o​o​k​ ​l​i​k​e​ ​a​n​ ​a​u​t​h​ ​k​e​y​.
+	 */
+	tailscaleInvalidAuthKey: string
+	/**
+	 * I​n​s​t​a​l​l​ ​T​a​i​l​s​c​a​l​e
+	 */
+	tailscaleInstallTitle: string
+	/**
+	 * T​a​i​l​s​c​a​l​e​'​s​ ​r​e​p​o​s​i​t​o​r​y​ ​i​s​ ​a​d​d​e​d​ ​t​o​ ​t​h​e​ ​m​a​c​h​i​n​e​'​s​ ​p​a​c​k​a​g​e​ ​s​o​u​r​c​e​s​ ​a​n​d​ ​t​a​i​l​s​c​a​l​e​d​ ​i​n​s​t​a​l​l​e​d​ ​a​n​d​ ​s​t​a​r​t​e​d​.
+	 */
+	tailscaleInstallBody: string
+	/**
+	 * S​t​a​r​t​ ​t​a​i​l​s​c​a​l​e​d
+	 */
+	tailscaleStartTitle: string
+	/**
+	 * t​a​i​l​s​c​a​l​e​d​ ​i​s​ ​s​t​a​r​t​e​d​ ​a​n​d​ ​s​e​t​ ​t​o​ ​s​t​a​r​t​ ​a​t​ ​b​o​o​t​.
+	 */
+	tailscaleStartBody: string
+	/**
+	 * S​i​g​n​ ​i​n​ ​t​o​ ​T​a​i​l​s​c​a​l​e
+	 */
+	tailscaleLoginTitle: string
+	/**
+	 * T​h​e​ ​m​a​c​h​i​n​e​ ​j​o​i​n​s​ ​t​h​e​ ​t​a​i​l​n​e​t​ ​t​h​e​ ​a​u​t​h​ ​k​e​y​ ​b​e​l​o​n​g​s​ ​t​o​.
+	 */
+	tailscaleLoginKeyBody: string
+	/**
+	 * T​h​e​ ​s​i​g​n​-​i​n​ ​w​a​i​t​s​ ​u​n​t​i​l​ ​i​t​s​ ​a​d​d​r​e​s​s​,​ ​s​h​o​w​n​ ​h​e​r​e​,​ ​i​s​ ​o​p​e​n​e​d​ ​a​n​d​ ​a​p​p​r​o​v​e​d​.
+	 */
+	tailscaleLoginUrlBody: string
+	/**
+	 * S​i​g​n​ ​o​u​t​ ​o​f​ ​T​a​i​l​s​c​a​l​e
+	 */
+	tailscaleLogoutTitle: string
+	/**
+	 * T​h​e​ ​m​a​c​h​i​n​e​ ​l​e​a​v​e​s​ ​t​h​e​ ​t​a​i​l​n​e​t​;​ ​c​o​n​n​e​c​t​i​o​n​s​ ​o​v​e​r​ ​i​t​ ​e​n​d​.
+	 */
+	tailscaleLogoutBody: string
+	/**
+	 * C​o​n​n​e​c​t
+	 */
+	tailscaleConnectTitle: string
+	/**
+	 * T​h​e​ ​m​a​c​h​i​n​e​ ​c​o​n​n​e​c​t​s​ ​t​o​ ​i​t​s​ ​t​a​i​l​n​e​t​ ​a​g​a​i​n​ ​w​i​t​h​ ​t​h​e​ ​s​e​t​t​i​n​g​s​ ​i​t​ ​h​a​d​.
+	 */
+	tailscaleConnectBody: string
+	/**
+	 * D​i​s​c​o​n​n​e​c​t
+	 */
+	tailscaleDisconnectTitle: string
+	/**
+	 * C​o​n​n​e​c​t​i​o​n​s​ ​o​v​e​r​ ​t​h​e​ ​t​a​i​l​n​e​t​ ​e​n​d​;​ ​t​h​e​ ​m​a​c​h​i​n​e​ ​s​t​a​y​s​ ​s​i​g​n​e​d​ ​i​n​.
+	 */
+	tailscaleDisconnectBody: string
+	/**
+	 * S​a​v​e​ ​T​a​i​l​s​c​a​l​e​ ​s​e​t​t​i​n​g​s
+	 */
+	tailscaleSaveTitle: string
+	/**
+	 * T​h​e​ ​c​h​a​n​g​e​d​ ​s​e​t​t​i​n​g​s​ ​a​p​p​l​y​ ​a​t​ ​o​n​c​e​.
+	 */
+	tailscaleSaveBody: string
+	/**
+	 * T​h​e​ ​c​h​a​n​g​e​d​ ​s​e​t​t​i​n​g​s​ ​a​p​p​l​y​ ​a​t​ ​o​n​c​e​;​ ​t​h​i​s​ ​m​a​c​h​i​n​e​'​s​ ​i​n​t​e​r​n​e​t​ ​t​r​a​f​f​i​c​ ​g​o​e​s​ ​t​h​r​o​u​g​h​ ​t​h​e​ ​e​x​i​t​ ​n​o​d​e​.
+	 */
+	tailscaleSaveExitBody: string
+	/**
+	 * W​o​r​k​i​n​g​…
+	 */
+	tailscaleWorking: string
+	/**
+	 * D​o​n​e
+	 */
+	tailscaleDone: string
+	/**
+	 * D​i​d​ ​n​o​t​ ​f​i​n​i​s​h
+	 */
+	tailscaleFailed: string
+	/**
+	 * O​p​e​n​ ​t​h​i​s​ ​a​d​d​r​e​s​s​ ​t​o​ ​s​i​g​n​ ​t​h​e​ ​m​a​c​h​i​n​e​ ​i​n​:
+	 */
+	tailscaleOpenToSignIn: string
+	/**
+	 * S​i​g​n​ ​i​n
+	 */
+	tailscaleSignIn: string
+	/**
+	 * C​o​n​t​r​o​l​ ​s​e​r​v​e​r
+	 */
+	tailscaleServer: string
+	/**
+	 * E​m​p​t​y​ ​i​s​ ​T​a​i​l​s​c​a​l​e​'​s​ ​o​w​n​;​ ​a​ ​H​e​a​d​s​c​a​l​e​ ​s​e​r​v​e​r​'​s​ ​a​d​d​r​e​s​s​ ​o​t​h​e​r​w​i​s​e​.
+	 */
+	tailscaleServerHint: string
+	/**
+	 * H​o​s​t​n​a​m​e
+	 */
+	tailscaleHostname: string
+	/**
+	 * A​u​t​h​ ​k​e​y
+	 */
+	tailscaleAuthKey: string
+	/**
+	 * O​p​t​i​o​n​a​l​.​ ​W​i​t​h​o​u​t​ ​o​n​e​,​ ​t​h​e​ ​s​i​g​n​-​i​n​ ​w​a​i​t​s​ ​f​o​r​ ​i​t​s​ ​a​d​d​r​e​s​s​ ​t​o​ ​b​e​ ​o​p​e​n​e​d​.
+	 */
+	tailscaleAuthKeyHint: string
+	/**
+	 * C​o​n​n​e​c​t​e​d
+	 */
+	tailscaleConnected: string
+	/**
+	 * D​i​s​c​o​n​n​e​c​t​e​d
+	 */
+	tailscaleDisconnected: string
+	/**
+	 * C​o​n​n​e​c​t
+	 */
+	tailscaleConnect: string
+	/**
+	 * D​i​s​c​o​n​n​e​c​t
+	 */
+	tailscaleDisconnect: string
+	/**
+	 * A​d​d​r​e​s​s​e​s
+	 */
+	tailscaleAddresses: string
+	/**
+	 * T​a​i​l​n​e​t
+	 */
+	tailscaleTailnet: string
+	/**
+	 * U​s​e​r
+	 */
+	tailscaleUser: string
+	/**
+	 * S​i​g​n​ ​o​u​t
+	 */
+	tailscaleLogout: string
+	/**
+	 * S​e​t​t​i​n​g​s
+	 */
+	tailscaleSettings: string
+	/**
+	 * E​x​i​t​ ​n​o​d​e
+	 */
+	tailscaleExitNode: string
+	/**
+	 * N​o​n​e
+	 */
+	tailscaleNoExitNode: string
+	/**
+	 * A​l​l​o​w​ ​L​A​N​ ​a​c​c​e​s​s​ ​w​h​i​l​e​ ​u​s​i​n​g​ ​a​n​ ​e​x​i​t​ ​n​o​d​e
+	 */
+	tailscaleAllowLan: string
+	/**
+	 * U​s​e​ ​r​o​u​t​e​s​ ​o​t​h​e​r​ ​m​a​c​h​i​n​e​s​ ​a​d​v​e​r​t​i​s​e
+	 */
+	tailscaleAcceptRoutes: string
+	/**
+	 * U​s​e​ ​T​a​i​l​s​c​a​l​e​ ​D​N​S
+	 */
+	tailscaleAcceptDns: string
+	/**
+	 * T​a​i​l​s​c​a​l​e​ ​S​S​H
+	 */
+	tailscaleSsh: string
+	/**
+	 * B​l​o​c​k​ ​i​n​c​o​m​i​n​g​ ​c​o​n​n​e​c​t​i​o​n​s
+	 */
+	tailscaleShieldsUp: string
+	/**
+	 * O​f​f​e​r​ ​t​h​i​s​ ​m​a​c​h​i​n​e​ ​a​s​ ​a​n​ ​e​x​i​t​ ​n​o​d​e
+	 */
+	tailscaleAdvertiseExitNode: string
+	/**
+	 * A​d​v​e​r​t​i​s​e​d​ ​r​o​u​t​e​s
+	 */
+	tailscaleRoutes: string
+	/**
+	 * S​u​b​n​e​t​s​ ​t​h​i​s​ ​m​a​c​h​i​n​e​ ​r​o​u​t​e​s​ ​f​o​r​ ​t​h​e​ ​t​a​i​l​n​e​t​;​ ​a​p​p​r​o​v​e​d​ ​o​n​ ​t​h​e​ ​c​o​n​t​r​o​l​ ​s​e​r​v​e​r​.
+	 */
+	tailscaleRoutesHint: string
+	/**
+	 * S​a​v​e
+	 */
+	tailscaleSave: string
+	/**
+	 * P​e​e​r​s
+	 */
+	tailscalePeers: string
+	/**
+	 * d​i​r​e​c​t​ ​{​a​d​d​r​}
+	 * @param {unknown} addr
+	 */
+	tailscaleDirect: RequiredParams<'addr'>
+	/**
+	 * r​e​l​a​y​ ​{​r​e​l​a​y​}
+	 * @param {unknown} relay
+	 */
+	tailscaleRelay: RequiredParams<'relay'>
+	/**
+	 * E​x​i​t​ ​n​o​d​e
+	 */
+	tailscaleExitNodeInUse: string
+	/**
+	 * O​f​f​e​r​s​ ​e​x​i​t​ ​n​o​d​e
+	 */
+	tailscaleOffersExitNode: string
+	/**
+	 * O​n​l​i​n​e
+	 */
+	tailscaleOnline: string
+	/**
+	 * O​f​f​l​i​n​e
+	 */
+	tailscaleOffline: string
+	/**
+	 * N​o​ ​p​e​e​r​s
+	 */
+	tailscaleNoPeers: string
 }
 
 export type TranslationFunctions = {
@@ -21975,6 +22245,274 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * The chosen items are removed, removed web apps' folders with their data: deploying the app again starts empty.
 	 */
 	cleanupCleanAppsBody: () => LocalizedString
+	/**
+	 * tailscale vpn tailnet mesh exit node
+	 */
+	tailscaleKeywords: () => LocalizedString
+	/**
+	 * Tailscale is installed here from its repository on Debian and Ubuntu.
+	 */
+	tailscaleNotInstallable: () => LocalizedString
+	/**
+	 * Tailscale is not installed.
+	 */
+	tailscaleNotInstalled: () => LocalizedString
+	/**
+	 * Install
+	 */
+	tailscaleInstall: () => LocalizedString
+	/**
+	 * tailscaled is not running.
+	 */
+	tailscaleDaemonStopped: () => LocalizedString
+	/**
+	 * Start
+	 */
+	tailscaleStart: () => LocalizedString
+	/**
+	 * Without LAN access, this machine's local network goes through the exit node too, which cuts off a panel that reaches it over the LAN.
+	 */
+	tailscaleLanCut: () => LocalizedString
+	/**
+	 * A machine cannot offer an exit node and use one at the same time.
+	 */
+	tailscaleExitNodeConflict: () => LocalizedString
+	/**
+	 * That peer does not offer an exit node.
+	 */
+	tailscaleNotExitNode: () => LocalizedString
+	/**
+	 * Routes are IP prefixes such as 192.168.1.0/24.
+	 */
+	tailscaleInvalidRoute: () => LocalizedString
+	/**
+	 * A hostname is letters, digits and hyphens.
+	 */
+	tailscaleInvalidHostname: () => LocalizedString
+	/**
+	 * The control server is an http(s) address.
+	 */
+	tailscaleInvalidServer: () => LocalizedString
+	/**
+	 * That does not look like an auth key.
+	 */
+	tailscaleInvalidAuthKey: () => LocalizedString
+	/**
+	 * Install Tailscale
+	 */
+	tailscaleInstallTitle: () => LocalizedString
+	/**
+	 * Tailscale's repository is added to the machine's package sources and tailscaled installed and started.
+	 */
+	tailscaleInstallBody: () => LocalizedString
+	/**
+	 * Start tailscaled
+	 */
+	tailscaleStartTitle: () => LocalizedString
+	/**
+	 * tailscaled is started and set to start at boot.
+	 */
+	tailscaleStartBody: () => LocalizedString
+	/**
+	 * Sign in to Tailscale
+	 */
+	tailscaleLoginTitle: () => LocalizedString
+	/**
+	 * The machine joins the tailnet the auth key belongs to.
+	 */
+	tailscaleLoginKeyBody: () => LocalizedString
+	/**
+	 * The sign-in waits until its address, shown here, is opened and approved.
+	 */
+	tailscaleLoginUrlBody: () => LocalizedString
+	/**
+	 * Sign out of Tailscale
+	 */
+	tailscaleLogoutTitle: () => LocalizedString
+	/**
+	 * The machine leaves the tailnet; connections over it end.
+	 */
+	tailscaleLogoutBody: () => LocalizedString
+	/**
+	 * Connect
+	 */
+	tailscaleConnectTitle: () => LocalizedString
+	/**
+	 * The machine connects to its tailnet again with the settings it had.
+	 */
+	tailscaleConnectBody: () => LocalizedString
+	/**
+	 * Disconnect
+	 */
+	tailscaleDisconnectTitle: () => LocalizedString
+	/**
+	 * Connections over the tailnet end; the machine stays signed in.
+	 */
+	tailscaleDisconnectBody: () => LocalizedString
+	/**
+	 * Save Tailscale settings
+	 */
+	tailscaleSaveTitle: () => LocalizedString
+	/**
+	 * The changed settings apply at once.
+	 */
+	tailscaleSaveBody: () => LocalizedString
+	/**
+	 * The changed settings apply at once; this machine's internet traffic goes through the exit node.
+	 */
+	tailscaleSaveExitBody: () => LocalizedString
+	/**
+	 * Working…
+	 */
+	tailscaleWorking: () => LocalizedString
+	/**
+	 * Done
+	 */
+	tailscaleDone: () => LocalizedString
+	/**
+	 * Did not finish
+	 */
+	tailscaleFailed: () => LocalizedString
+	/**
+	 * Open this address to sign the machine in:
+	 */
+	tailscaleOpenToSignIn: () => LocalizedString
+	/**
+	 * Sign in
+	 */
+	tailscaleSignIn: () => LocalizedString
+	/**
+	 * Control server
+	 */
+	tailscaleServer: () => LocalizedString
+	/**
+	 * Empty is Tailscale's own; a Headscale server's address otherwise.
+	 */
+	tailscaleServerHint: () => LocalizedString
+	/**
+	 * Hostname
+	 */
+	tailscaleHostname: () => LocalizedString
+	/**
+	 * Auth key
+	 */
+	tailscaleAuthKey: () => LocalizedString
+	/**
+	 * Optional. Without one, the sign-in waits for its address to be opened.
+	 */
+	tailscaleAuthKeyHint: () => LocalizedString
+	/**
+	 * Connected
+	 */
+	tailscaleConnected: () => LocalizedString
+	/**
+	 * Disconnected
+	 */
+	tailscaleDisconnected: () => LocalizedString
+	/**
+	 * Connect
+	 */
+	tailscaleConnect: () => LocalizedString
+	/**
+	 * Disconnect
+	 */
+	tailscaleDisconnect: () => LocalizedString
+	/**
+	 * Addresses
+	 */
+	tailscaleAddresses: () => LocalizedString
+	/**
+	 * Tailnet
+	 */
+	tailscaleTailnet: () => LocalizedString
+	/**
+	 * User
+	 */
+	tailscaleUser: () => LocalizedString
+	/**
+	 * Sign out
+	 */
+	tailscaleLogout: () => LocalizedString
+	/**
+	 * Settings
+	 */
+	tailscaleSettings: () => LocalizedString
+	/**
+	 * Exit node
+	 */
+	tailscaleExitNode: () => LocalizedString
+	/**
+	 * None
+	 */
+	tailscaleNoExitNode: () => LocalizedString
+	/**
+	 * Allow LAN access while using an exit node
+	 */
+	tailscaleAllowLan: () => LocalizedString
+	/**
+	 * Use routes other machines advertise
+	 */
+	tailscaleAcceptRoutes: () => LocalizedString
+	/**
+	 * Use Tailscale DNS
+	 */
+	tailscaleAcceptDns: () => LocalizedString
+	/**
+	 * Tailscale SSH
+	 */
+	tailscaleSsh: () => LocalizedString
+	/**
+	 * Block incoming connections
+	 */
+	tailscaleShieldsUp: () => LocalizedString
+	/**
+	 * Offer this machine as an exit node
+	 */
+	tailscaleAdvertiseExitNode: () => LocalizedString
+	/**
+	 * Advertised routes
+	 */
+	tailscaleRoutes: () => LocalizedString
+	/**
+	 * Subnets this machine routes for the tailnet; approved on the control server.
+	 */
+	tailscaleRoutesHint: () => LocalizedString
+	/**
+	 * Save
+	 */
+	tailscaleSave: () => LocalizedString
+	/**
+	 * Peers
+	 */
+	tailscalePeers: () => LocalizedString
+	/**
+	 * direct {addr}
+	 */
+	tailscaleDirect: (arg: { addr: unknown }) => LocalizedString
+	/**
+	 * relay {relay}
+	 */
+	tailscaleRelay: (arg: { relay: unknown }) => LocalizedString
+	/**
+	 * Exit node
+	 */
+	tailscaleExitNodeInUse: () => LocalizedString
+	/**
+	 * Offers exit node
+	 */
+	tailscaleOffersExitNode: () => LocalizedString
+	/**
+	 * Online
+	 */
+	tailscaleOnline: () => LocalizedString
+	/**
+	 * Offline
+	 */
+	tailscaleOffline: () => LocalizedString
+	/**
+	 * No peers
+	 */
+	tailscaleNoPeers: () => LocalizedString
 }
 
 export type Formatters = {}

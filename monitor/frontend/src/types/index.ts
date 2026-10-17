@@ -184,6 +184,7 @@ export type MachineFeature =
   | 'kernel'
   | 'ubuntu_pro'
   | 'cleanup'
+  | 'tailscale'
   | 'waf'
   /// Whether a newer agent is out and how this one is updated (`/update`).
   | 'update'
@@ -2784,7 +2785,7 @@ export interface StackRow {
   last_error?: string | null
 }
 
-export type StackJobKind = 'install' | 'update' | 'reconfigure' | 'start' | 'stop' | 'restart' | 'remove' | 'backup' | 'restore' | 'storage' | 'shares' | 'kernel' | 'ubuntuPro' | 'scan' | 'cleanup'
+export type StackJobKind = 'install' | 'update' | 'reconfigure' | 'start' | 'stop' | 'restart' | 'remove' | 'backup' | 'restore' | 'storage' | 'shares' | 'kernel' | 'ubuntuPro' | 'scan' | 'cleanup' | 'tailscale'
 
 /// A deploy, update, start, stop or removal (`stacks::job::JobView`).
 export interface StackJob {
@@ -3329,6 +3330,83 @@ export type KernelAction =
   | { action: 'remove'; release: string }
   | { action: 'boot'; release: string; once: boolean }
   | { action: 'bootNewest' }
+
+/// Tailscale on this machine (`sbm_parser::tailscale`, `GET /tailscale`).
+export interface TailscalePeer {
+  id: string
+  name: string
+  dnsName: string | null
+  ips: string[]
+  os: string | null
+  online: boolean
+  active: boolean
+  /// It offers itself as an exit node.
+  exitNodeOption: boolean
+  /// This machine uses it as its exit node.
+  exitNode: boolean
+  routes: string[]
+  /// Reached directly at this address; null is through a relay.
+  direct: string | null
+  relay: string | null
+  rxBytes: number
+  txBytes: number
+}
+
+export interface TailscalePrefs {
+  controlUrl: string
+  hostname: string
+  acceptRoutes: boolean
+  acceptDns: boolean
+  ssh: boolean
+  shieldsUp: boolean
+  wantRunning: boolean
+  loggedOut: boolean
+  exitNodeId: string
+  exitNodeIp: string
+  exitNodeAllowLan: boolean
+  advertiseRoutes: string[]
+  advertiseExitNode: boolean
+  operator: string
+}
+
+export interface TailscaleView {
+  installable: boolean
+  version: string | null
+  daemon: boolean
+  state: string | null
+  authUrl: string | null
+  name: string | null
+  dnsName: string | null
+  ips: string[]
+  tailnet: string | null
+  user: string | null
+  health: string[]
+  peers: TailscalePeer[]
+  prefs: TailscalePrefs | null
+  job: StackJob | null
+}
+
+/// What `tailscale set` changes; an absent field stays as it is.
+export interface TailscaleSettings {
+  exitNode?: string
+  exitNodeAllowLan?: boolean
+  acceptRoutes?: boolean
+  acceptDns?: boolean
+  ssh?: boolean
+  shieldsUp?: boolean
+  hostname?: string
+  advertiseExitNode?: boolean
+  advertiseRoutes?: string[]
+}
+
+export type TailscaleAction =
+  | { action: 'install' }
+  | { action: 'startDaemon' }
+  | { action: 'login'; loginServer?: string; hostname?: string }
+  | { action: 'logout' }
+  | { action: 'connect' }
+  | { action: 'disconnect' }
+  | { action: 'set'; settings: TailscaleSettings; lanCutOk?: boolean }
 
 /// What can go to free space (`sbm_parser::cleanup`, `GET /cleanup`).
 export interface CleanupItem {

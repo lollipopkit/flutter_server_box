@@ -89,6 +89,8 @@ pub const FEATURES: &[&str] = &[
     "ubuntu_pro",
     // What can go to free space, and removing it (`api::cleanup`).
     "cleanup",
+    // Tailscale: sign-in, peers, settings (`api::tailscale`).
+    "tailscale",
     // The monitoring rules firing now (`GET /alerts`, `api::desk`).
     "alerts",
     // The audit log read back (`GET /audit`, `api::audit_log`).

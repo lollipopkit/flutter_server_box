@@ -6,6 +6,7 @@
 #   scripts/desk-vm-e2e.sh <node> kernel       # restarts the VM twice
 #   scripts/desk-vm-e2e.sh <node> ubuntu_pro   # SBM_E2E_PRO_TOKEN to attach
 #   scripts/desk-vm-e2e.sh <node> cleanup      # junk of each kind made first
+#   scripts/desk-vm-e2e.sh <node> tailscale    # Headscale and a peer made first
 #
 # Builds the agent on SBM_E2E_BUILD_HOST (lkd-wsl) and the panel here;
 # starts a VM; runs the agent there as an ordinary account with a sudo
@@ -18,7 +19,7 @@ set -eu
 
 node=${1:-}
 spec=${2:-}
-[ -n "$node" ] && [ -f "$(dirname "$0")/../monitor/frontend/e2e/$spec.e2e.ts" ] || { sed -n '2,17p' "$0" >&2; exit 2; }
+[ -n "$node" ] && [ -f "$(dirname "$0")/../monitor/frontend/e2e/$spec.e2e.ts" ] || { sed -n '2,18p' "$0" >&2; exit 2; }
 build=${SBM_E2E_BUILD_HOST:-lkd-wsl}
 root=$(cd "$(dirname "$0")/.." && pwd)
 src='src/flutter_server_box'
@@ -93,6 +94,49 @@ vm 'set -e; export DEBIAN_FRONTEND=noninteractive
     head -c 5000000 /dev/urandom > ~/.cache/sbm-e2e-app/blob; head -c 2000000 /dev/urandom > ~/.npm/_cacache/blob
     head -c 1000000 /dev/urandom > ~/.local/share/Trash/files/old; head -c 3000000 /dev/urandom > ~/app/stacks/sbm.leftover/data/db"
   head -c 1000000 /dev/urandom > /home/sbm/app/stacks/sbm.leftover/data/root-owned'
+fi
+
+if [ "$spec" = tailscale ]; then
+# A tailnet of its own: Headscale on the VM and a second, userspace
+# tailscaled as the peer (offering an exit node and a route, approved).
+# Both pinned and checked here; the machine's Tailscale is the app's to
+# install. Nothing reaches a real tailnet.
+echo "==> vm $id: headscale and a peer"
+hs=0.29.4 hs_sha=212ed0a884c0d3541e094c4bebbe94397df6f4e01bd3d7f059c520cb55e0d757
+tsv=1.102.5 ts_sha=65e6d7f19ad7e1c87d20c2a21e92f38a96795cb897af54b04536590e1c148d12
+curl -fsSL -o "$work/headscale" "https://github.com/juanfont/headscale/releases/download/v$hs/headscale_${hs}_linux_amd64"
+curl -fsSL -o "$work/ts.tgz" "https://pkgs.tailscale.com/stable/tailscale_${tsv}_amd64.tgz"
+curl -fsSL -o "$work/headscale.yaml" "https://raw.githubusercontent.com/juanfont/headscale/v$hs/config-example.yaml"
+printf '%s  %s\n%s  %s\n' "$hs_sha" "$work/headscale" "$ts_sha" "$work/ts.tgz" | shasum -a 256 -c - >/dev/null
+python3 - "$work/headscale.yaml" <<'PY'
+import re, sys
+p = sys.argv[1]
+s = open(p).read()
+s = re.sub(r"(?m)^  urls:\n(    - .*\n)+", "  urls: []\n", s)
+s = s.replace("  paths: []", "  paths:\n    - /etc/headscale/derp.yaml", 1)
+s = s.replace("  auto_update_enabled: true", "  auto_update_enabled: false").replace("  override_local_dns: true", "  override_local_dns: false")
+s = s.replace("base_domain: example.com", "base_domain: e2e.test")
+open(p, "w").write(s)
+PY
+scp -q -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "$work/headscale" "$work/ts.tgz" "$work/headscale.yaml" "root@$addr:/tmp/"
+SBM_E2E_TS_KEY=$(vm 'set -e
+  install -m 755 /tmp/headscale /usr/local/bin/headscale; mkdir -p /etc/headscale /var/lib/headscale /opt/ts-peer /var/lib/ts-peer /run/ts-peer
+  mv /tmp/headscale.yaml /etc/headscale/config.yaml
+  # A relay nobody reaches: both nodes are on this machine and talk directly.
+  printf "regions:\n  900:\n    regionid: 900\n    regioncode: none\n    regionname: None\n    nodes:\n      - name: 900a\n        regionid: 900\n        hostname: derp.invalid\n        stunport: -1\n        derpport: 0\n" > /etc/headscale/derp.yaml
+  tar -xzf /tmp/ts.tgz -C /opt/ts-peer --strip-components=1
+  systemd-run --unit=sbm-headscale /usr/local/bin/headscale serve >/dev/null
+  i=0; until headscale users list >/dev/null 2>&1 || [ $i -gt 20 ]; do i=$((i+1)); sleep 1; done
+  headscale users create e2e >/dev/null
+  key=$(headscale preauthkeys create --user 1 --reusable --expiration 2h 2>/dev/null | tail -n 1)
+  systemd-run --unit=sbm-ts-peer /opt/ts-peer/tailscaled --tun=userspace-networking --socket=/run/ts-peer/s.sock --statedir=/var/lib/ts-peer --port=41642 >/dev/null
+  sleep 2
+  /opt/ts-peer/tailscale --socket=/run/ts-peer/s.sock up --login-server=http://127.0.0.1:8080 --auth-key="$key" --hostname=peer --advertise-exit-node --advertise-routes=10.99.0.0/24 --timeout=60s >/dev/null
+  headscale nodes approve-routes --identifier 1 --routes 0.0.0.0/0,::/0,10.99.0.0/24 >/dev/null
+  printf %s "$key"')
+[ -n "$SBM_E2E_TS_KEY" ] || { echo "headscale gave no key" >&2; exit 1; }
+export SBM_E2E_TS_KEY SBM_E2E_TS_SERVER=http://127.0.0.1:8080
+export SBM_E2E_TS_REGISTER="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR root@$addr headscale auth register --user e2e --auth-id"
 fi
 
 cd "$root/monitor/frontend"

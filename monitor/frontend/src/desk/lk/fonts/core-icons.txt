@@ -100,6 +100,7 @@ hourglass_empty
 hourglass_top
 html
 http
+hub
 image
 info
 input

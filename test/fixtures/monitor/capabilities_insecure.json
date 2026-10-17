@@ -52,6 +52,7 @@
         "kernel",
         "ubuntu_pro",
         "cleanup",
+        "tailscale",
         "alerts",
         "audit",
         "live"

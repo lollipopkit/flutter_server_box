@@ -55,6 +55,7 @@ pub mod kernel;
 pub mod ubuntu_pro;
 pub mod waf;
 pub mod shares;
+pub mod tailscale;
 pub mod storage;
 pub mod auth;
 pub mod benchmark;
