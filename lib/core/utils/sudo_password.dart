@@ -2,7 +2,6 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/widgets.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/misc.dart';
-import 'package:server_box/data/res/store.dart';
 
 /// A server's sudo password, wherever something asks for it.
 ///
@@ -123,11 +122,6 @@ abstract final class SudoPassword {
     final pwd = spi.ssh?.pwd;
     if (pwd == null || pwd.isEmpty) return null;
     return pwd;
-  }
-
-  static Future<bool> authenticateIfNeeded() async {
-    if (!Stores.setting.useBioAuth.fetch()) return true;
-    return await LocalAuth.goWithResult() == AuthResult.success;
   }
 
   /// Returns true if [trimmed] looks like an active sudo password prompt.

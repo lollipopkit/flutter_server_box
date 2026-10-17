@@ -14,6 +14,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/llm/scope.dart';
 import 'package:server_box/core/service/program_status_alerts.dart';
+import 'package:server_box/core/utils/app_auth.dart';
 import 'package:server_box/core/utils/ssh_exec.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
@@ -1392,7 +1393,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     if (shell == null) return;
     bool stillFor() => mounted && identical(_session, shell);
 
-    final authed = await SudoPassword.authenticateIfNeeded();
+    final authed = await AppAuth.confirm();
     if (!authed) {
       if (!mounted) return;
       Toast.error(libL10n.fail);
