@@ -365,6 +365,10 @@ pub struct AgentMode {
     /// The model servers on this machine offered as providers
     /// ([`Self::set_app_providers`]).
     apps: Arc<std::sync::RwLock<Vec<config::AppProvider>>>,
+    /// The machine's model servers are worked out one at a time
+    /// (`inference::refresh_providers`), asks made meanwhile counting as one.
+    pub app_refresh: tokio::sync::Mutex<()>,
+    pub app_refresh_asked: std::sync::atomic::AtomicBool,
 }
 
 /// Agent mode's network: [`ReqwestFetch`], kept to this machine when asked
@@ -440,6 +444,8 @@ impl AgentMode {
             mcp_oauth: mcp_oauth::Flows::default(),
             skills_root: skills::root(&dir),
             apps: Arc::default(),
+            app_refresh: tokio::sync::Mutex::new(()),
+            app_refresh_asked: std::sync::atomic::AtomicBool::new(false),
             dir,
         }
     }

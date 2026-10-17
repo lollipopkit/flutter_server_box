@@ -183,11 +183,15 @@ pub async fn start_job(
     if !backend.names(Kind::Job).contains(&body.function.as_str()) {
         return Ok(refusal(404, "unknownFunction", ""));
     }
+    let Ok(slot) = state.apps.job_slots.clone().try_acquire_owned() else {
+        return Ok(refusal(429, "unavailable", "busy"));
+    };
     let Some(app_job) = state.apps.begin(&id, &body.function) else { return Ok(refusal(409, "unavailable", "busy")) };
     record(&req, &state, format!("app {} job {}{}", id.as_str(), body.function, if sudo { " as root" } else { "" })).await;
     let ctx = ctx.with_job(app_job.job.clone());
     let (run, args, function) = (app_job.clone(), body.args, body.function);
     tokio::spawn(async move {
+        let _slot = slot;
         let answer = backend.invoke(Kind::Job, &function, &args, ctx).await;
         let (state, outcome) = match answer {
             Ok(value) => (JobState::Succeeded, Outcome { value: Some(value), error: None }),

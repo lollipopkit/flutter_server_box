@@ -9,20 +9,21 @@
 //!
 //! Bounds per instance: linear memory ([`MAX_MEMORY`]); CPU by epoch
 //! interruption every [`TICK`], yielding to the executor at each tick so one
-//! app never holds a thread, and a trap after [`MAX_CPU_TICKS`] of the
-//! guest's own work (time in host calls, a script's, is not counted); a call
-//! ends after [`CALL_WALL`].
+//! app never holds a thread, and a trap after [`MAX_GUEST_TIME`] of the
+//! guest's own running (time in host calls, a script's or a download's, is
+//! measured by the store's call hook and left out); a call ends after
+//! [`CALL_WALL`].
 
 use std::collections::BTreeMap;
 use std::path::Path;
 use std::sync::{Arc, OnceLock};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use serde_json::Value;
 use tokio::sync::mpsc;
 use wasmtime::component::types::ComponentItem;
 use wasmtime::component::{Component, ComponentExportIndex, HasSelf, InstancePre, Linker, Resource, ResourceTable, Type, Val};
-use wasmtime::{Config, Engine, Store, StoreLimits, StoreLimitsBuilder, UpdateDeadline};
+use wasmtime::{CallHook, Config, Engine, Store, StoreLimits, StoreLimitsBuilder, UpdateDeadline};
 use wasmtime_wasi::{WasiCtx, WasiCtxView, WasiView};
 use zeroize::Zeroizing;
 
@@ -45,8 +46,8 @@ pub const MAX_MEMORY: usize = 64 << 20;
 /// Core instances in one component (the app, the WASI adapter, shims).
 const MAX_CORE_INSTANCES: usize = 16;
 const TICK: Duration = Duration::from_millis(10);
-/// 10 s of the guest's own work.
-const MAX_CPU_TICKS: u64 = 1000;
+/// The guest's own running at most, host calls left out.
+const MAX_GUEST_TIME: Duration = Duration::from_secs(10);
 /// A unary call's longest, a script it runs as root included.
 pub const CALL_WALL: Duration = Duration::from_secs(60);
 /// A job's script's longest run: an install over a slow line.
@@ -238,11 +239,24 @@ impl Backend {
         let run = async {
             let mut store = Store::new(engine(), ctx);
             store.limiter(|c| &mut c.limits);
-            store.set_epoch_deadline(1);
-            store.epoch_deadline_callback(|mut s| {
+            store.call_hook(|mut s, hook| {
                 let c = s.data_mut();
-                c.cpu_ticks += 1;
-                if c.cpu_ticks > MAX_CPU_TICKS {
+                match hook {
+                    CallHook::CallingHost => c.in_host = Some(Instant::now()),
+                    CallHook::ReturningFromHost => {
+                        if let Some(at) = c.in_host.take() {
+                            c.host_time += at.elapsed();
+                        }
+                    }
+                    _ => {}
+                }
+                Ok(())
+            });
+            store.set_epoch_deadline(1);
+            store.epoch_deadline_callback(|s| {
+                let c = s.data();
+                let guest = c.started.elapsed().saturating_sub(c.host_time);
+                if guest > MAX_GUEST_TIME {
                     return Ok(UpdateDeadline::Interrupt);
                 }
                 Ok(UpdateDeadline::Yield(1))
@@ -330,7 +344,11 @@ pub struct Ctx {
     wasi: WasiCtx,
     table: ResourceTable,
     limits: StoreLimits,
-    cpu_ticks: u64,
+    /// When the instance started, the time its host calls took, and the one
+    /// running now: the guest's own running is the rest.
+    started: Instant,
+    host_time: Duration,
+    in_host: Option<Instant>,
     grant: Grant,
     password: Option<Zeroizing<String>>,
     job: Option<Arc<Job>>,
@@ -349,7 +367,9 @@ impl Ctx {
             wasi: WasiCtx::builder().build(),
             table: ResourceTable::new(),
             limits: StoreLimitsBuilder::new().memory_size(MAX_MEMORY).instances(MAX_CORE_INSTANCES).build(),
-            cpu_ticks: 0,
+            started: Instant::now(),
+            host_time: Duration::ZERO,
+            in_host: None,
             grant,
             password,
             job,
@@ -424,7 +444,8 @@ impl sbm::app::host::Host for Ctx {
 
     async fn exec(&mut self, script: String, stdin: Option<Vec<u8>>) -> Result<Output, AppError> {
         self.grant.may("process")?;
-        let stdin = stdin.map(|b| String::from_utf8_lossy(&b).into_owned());
+        // Text only: nothing is changed on its way to the script.
+        let stdin = stdin.map(String::from_utf8).transpose().map_err(|_| AppError::InvalidArgument("stdin: UTF-8 text".into()))?;
         let state = self.grant.state.clone();
         // A listing (packages, kernels) is longer than `/exec`'s own cap.
         let limits = crate::api::machine::at_least(&state.remote_access.exec, MAX_OUTPUT);

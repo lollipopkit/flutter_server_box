@@ -3,7 +3,10 @@
 //! repository of the store's, read with the web apps' catalog
 //! (`stacks::catalog`) and kept in `<stacks>/.desk-catalog/` so an agent
 //! that cannot reach them keeps what it last read. One id, one package: the
-//! store's, else the shipped one.
+//! newer of the store's and the shipped one by version (the store's when
+//! they are the same or either is not a version), so an agent upgraded
+//! before the store is, or offline with an older cache, offers what it
+//! ships.
 //!
 //! Every package is read as an upload is (`api::apps::read_package`:
 //! checks and signature); installing one is uploading it, so it waits for
@@ -65,7 +68,7 @@ static SHIPPED: LazyLock<BTreeMap<String, Arc<Offered>>> = LazyLock::new(|| {
 
 /// A repository's address and its `(path, bytes)` files, or `Err` when it
 /// could not be read.
-pub type RepoFiles<'a> = (String, Result<Vec<(&'a String, &'a Vec<u8>)>, ()>);
+pub type RepoFiles = (String, Result<Vec<(String, Vec<u8>)>, ()>);
 
 pub struct DeskCatalog {
     cache: PathBuf,
@@ -80,7 +83,7 @@ impl DeskCatalog {
     }
 
     pub fn get(&self, id: &str) -> Option<Arc<Offered>> {
-        self.store.read_locked().get(id).cloned().or_else(|| SHIPPED.get(id).cloned())
+        newer(self.store.read_locked().get(id), SHIPPED.get(id))
     }
 
     /// Every package on offer, by id.
@@ -89,13 +92,13 @@ impl DeskCatalog {
         let mut ids: Vec<&String> = store.keys().chain(SHIPPED.keys()).collect();
         ids.sort();
         ids.dedup();
-        ids.into_iter().filter_map(|id| store.get(id).or_else(|| SHIPPED.get(id)).cloned()).collect()
+        ids.into_iter().filter_map(|id| newer(store.get(id), SHIPPED.get(id))).collect()
     }
 
     /// The repositories' packages as just read: [read] each repository's
     /// address and its files, or `Err` for one that could not be read, whose
     /// packages stay as they were.
-    pub fn replace(&self, read: &[RepoFiles<'_>]) {
+    pub fn replace(&self, read: &[RepoFiles]) {
         let previous = self.store.read_locked().clone();
         let mut next: BTreeMap<String, Arc<Offered>> = BTreeMap::new();
         for (address, files) in read {
@@ -120,11 +123,25 @@ impl DeskCatalog {
     }
 }
 
+/// The store's package, unless the shipped one is a newer version.
+fn newer(store: Option<&Arc<Offered>>, shipped: Option<&Arc<Offered>>) -> Option<Arc<Offered>> {
+    match (store, shipped) {
+        (Some(s), Some(b)) => {
+            let version = |o: &Offered| semver::Version::parse(&o.package.manifest.version).ok();
+            match (version(s), version(b)) {
+                (Some(sv), Some(bv)) if bv > sv => Some(b.clone()),
+                _ => Some(s.clone()),
+            }
+        }
+        (s, b) => s.or(b).cloned(),
+    }
+}
+
 /// A repository's `desk/<id>.fsba` files, each read whole; one that is
 /// wrong is left out and said so.
-fn packages_in(address: &str, files: &[(&String, &Vec<u8>)]) -> BTreeMap<String, Arc<Offered>> {
+fn packages_in(address: &str, files: &[(String, Vec<u8>)]) -> BTreeMap<String, Arc<Offered>> {
     let mut out = BTreeMap::new();
-    for &(path, bytes) in files {
+    for (path, bytes) in files {
         let Some(id) = path.strip_prefix("desk/").and_then(|n| n.strip_suffix(".fsba")).filter(|n| !n.contains('/')) else { continue };
         match read_package(bytes) {
             Ok(package) if package.manifest.id() == id => {
@@ -180,6 +197,23 @@ fn write_cache(cache: &Path, entries: &BTreeMap<String, Arc<Offered>>) -> std::i
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn offered(version: &str, source: Source) -> Arc<Offered> {
+        let (_, bytes) = BUNDLED.iter().find(|(id, _)| *id == "serverbox.cleanup").unwrap();
+        let mut package = read_package(bytes).unwrap();
+        package.manifest.version = version.into();
+        Arc::new(Offered { bytes: bytes.to_vec(), package, source, repo: None })
+    }
+
+    #[test]
+    fn the_newer_of_the_store_and_the_shipped_package_is_offered() {
+        let pick = |s: &str, b: &str| newer(Some(&offered(s, Source::Store)), Some(&offered(b, Source::Bundled))).unwrap().source;
+        assert_eq!(pick("1.0.0", "1.1.0"), Source::Bundled);
+        assert_eq!(pick("1.2.0", "1.1.0"), Source::Store);
+        assert_eq!(pick("1.1.0", "1.1.0"), Source::Store);
+        assert_eq!(pick("x", "1.1.0"), Source::Store);
+        assert_eq!(newer(None, Some(&offered("1.0.0", Source::Bundled))).unwrap().source, Source::Bundled);
+    }
 
     #[test]
     fn every_shipped_package_is_store_desk_and_reads_signed() {

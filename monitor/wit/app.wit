@@ -47,7 +47,8 @@ interface host {
 
   log: func(level: level, message: string);
 
-  /// `sh -c` with [script], as the agent's account (`process`).
+  /// `sh -c` with [script], as the agent's account (`process`); [stdin]
+  /// UTF-8 text.
   exec: func(script: string, stdin: option<list<u8>>) -> result<output, error>;
 
   /// As root (`root`), with the sudo password the caller confirmed in the

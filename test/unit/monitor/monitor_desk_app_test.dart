@@ -25,7 +25,8 @@ void main() {
     expect(apps.first.titleIn('zh-CN'), '内核');
     expect(apps.first.titleIn('de'), 'Kernels');
     expect(apps.last.titleIn('en'), 'Plain');
-    final uri = apps.first.uri(Uri.parse('https://10.0.0.2:3770/panel?x=1#y'));
-    expect(uri.toString(), 'https://10.0.0.2:3770/?app=serverbox.kernel');
+    expect(apps.first.uri(Uri.parse('https://10.0.0.2:3770')).toString(), 'https://10.0.0.2:3770/?app=serverbox.kernel');
+    // Behind a proxy that serves it under a path; its own query dropped.
+    expect(apps.first.uri(Uri.parse('https://example.com/monitor?x=1#y')).toString(), 'https://example.com/monitor/?app=serverbox.kernel');
   });
 }

@@ -41,6 +41,13 @@ class MonitorDeskApp {
   String titleIn(String locale) =>
       title[locale] ?? title[locale.split(RegExp('[-_]')).first] ?? title['en'] ?? title.values.firstOrNull ?? id;
 
-  /// The panel at [agent], opening this app once signed in (`?app=`).
-  Uri uri(Uri agent) => Uri(scheme: agent.scheme, host: agent.host, port: agent.port, path: '/', queryParameters: {'app': id});
+  /// The panel at [agent] (under its path, behind a proxy that serves it
+  /// there), opening this app once signed in (`?app=`).
+  Uri uri(Uri agent) => Uri(
+    scheme: agent.scheme,
+    host: agent.host,
+    port: agent.port,
+    path: agent.path.endsWith('/') ? agent.path : '${agent.path}/',
+    queryParameters: {'app': id},
+  );
 }

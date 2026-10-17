@@ -71,10 +71,11 @@ flate2 = "1"
 ring = "0.17"
 # Desk app backends as components (`apps::runtime`): Cranelift, async with
 # epoch interruption, so a call yields and a loop is cut off.
-wasmtime = { version = "49", default-features = false, features = ["runtime", "cranelift", "component-model", "async", "std", "pooling-allocator"] }
+wasmtime = { version = "49", default-features = false, features = ["runtime", "cranelift", "component-model", "async", "std", "pooling-allocator", "call-hook"] }
 wasmtime-wasi = { version = "49", default-features = false, features = ["p2"] }
 base64 = "0.22"
 hex = "0.4"
+semver = "1.0"
 
 # Configuration
 dotenvy = "0.15"

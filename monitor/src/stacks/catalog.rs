@@ -64,7 +64,7 @@ pub struct Catalog {
     read: tokio::sync::Mutex<Option<Instant>>,
     source: RwLock<(String, Arc<dyn Fetch>)>,
     /// The same repositories' desk app packages (`desk/*.fsba`).
-    pub desk: crate::apps::catalog::DeskCatalog,
+    pub desk: Arc<crate::apps::catalog::DeskCatalog>,
 }
 
 impl Catalog {
@@ -75,7 +75,7 @@ impl Catalog {
         let parts = builtin::parts().iter().map(|p| (p.manifest.id.clone(), Arc::new(p.clone()))).collect();
         let store = read_cache(&cache);
         let local = local.map(read_local).unwrap_or_default();
-        let desk = crate::apps::catalog::DeskCatalog::new(cache.with_file_name(DESK_CACHE_DIR));
+        let desk = Arc::new(crate::apps::catalog::DeskCatalog::new(cache.with_file_name(DESK_CACHE_DIR)));
         Self {
             desk,
             cache,
@@ -147,7 +147,9 @@ impl Catalog {
                 .get(&repo::archive_url_of(address), repo::MAX_ARCHIVE_BYTES)
                 .await
                 .and_then(|bytes| repo::read_archive(&bytes).map_err(|e| e.0));
-            archives.push((address.clone(), files.as_ref().ok().cloned()));
+            // Only its desk packages, for `desk` below.
+            let desk_files = files.as_ref().map(|f| f.iter().filter(|(p, _)| p.starts_with("desk/")).map(|(p, b)| (p.clone(), b.clone())).collect::<Vec<_>>());
+            archives.push((address.clone(), desk_files.map_err(|_| ())));
             match files {
                 Ok(files) => {
                     for (id, package) in apps_in(&files) {
@@ -168,8 +170,12 @@ impl Catalog {
             tracing::warn!("app catalog: keeping it in {}: {e}", self.cache.display());
         }
         *self.store.write_locked() = next;
-        let read: Vec<_> = archives.iter().map(|(a, f)| (a.clone(), f.as_ref().map(|f| f.iter().collect()).ok_or(()))).collect();
-        self.desk.replace(&read);
+        // Inflating and checking every package, and writing them: off the
+        // worker.
+        let desk = self.desk.clone();
+        if let Err(e) = tokio::task::spawn_blocking(move || desk.replace(&archives)).await {
+            tracing::warn!("desk app catalog: {e}");
+        }
     }
 }
 

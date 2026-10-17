@@ -83,6 +83,9 @@ pub async fn run(spec: Spec<'_>, lines: mpsc::UnboundedSender<(Stream, String)>,
     command.process_group(0);
     let mut child = command.spawn()?;
     let pid = child.id();
+    // Dropped before the command ended (its caller's own timeout or cancel
+    // dropped this future): the group goes too, not the leader alone.
+    let mut group = Group(pid);
 
     let stdin = child.stdin.take();
     let password = spec.sudo_password.map(|p| format!("{p}\n"));
@@ -99,7 +102,7 @@ pub async fn run(spec: Spec<'_>, lines: mpsc::UnboundedSender<(Stream, String)>,
         let (_, _, status) = tokio::join!(out, err, child.wait());
         status
     };
-    tokio::select! {
+    let finished = tokio::select! {
         status = work => {
             let status = status?;
             Ok(Finished { exit_code: status.code(), timed_out: false, cancelled: false, duration: started.elapsed() })
@@ -112,6 +115,45 @@ pub async fn run(spec: Spec<'_>, lines: mpsc::UnboundedSender<(Stream, String)>,
             stop(pid).await;
             Ok(Finished { exit_code: None, timed_out: false, cancelled: true, duration: started.elapsed() })
         }
+    };
+    group.0 = None;
+    finished
+}
+
+/// The process group a [run] leads, ended when the run is dropped before it
+/// finished: `kill_on_drop` reaches the leader alone (`sudo`, the shell),
+/// and what they started would keep running.
+struct Group(Option<u32>);
+
+impl Drop for Group {
+    fn drop(&mut self) {
+        let Some(pid) = self.0.take() else { return };
+        #[cfg(unix)]
+        {
+            let pid = pid as i32;
+            // SAFETY: a signal to a process group this process created; one
+            // already gone answers ESRCH.
+            unsafe {
+                libc::kill(-pid, libc::SIGTERM);
+            }
+            std::thread::spawn(move || {
+                std::thread::sleep(Duration::from_secs(3));
+                // SAFETY: as above.
+                unsafe {
+                    libc::kill(-pid, libc::SIGKILL);
+                }
+            });
+        }
+        #[cfg(windows)]
+        {
+            let _ = std::process::Command::new("taskkill")
+                .args(["/T", "/F", "/PID", &pid.to_string()])
+                .stdout(Stdio::null())
+                .stderr(Stdio::null())
+                .spawn();
+        }
+        #[cfg(not(any(unix, windows)))]
+        let _ = pid;
     }
 }
 
@@ -233,6 +275,20 @@ mod tests {
         let cmd = format!("(sleep 2; touch {}) & sleep 30", marker.display());
         let (done, _) = collect(&cmd, Duration::from_millis(300), &Cancel::new()).await;
         assert!(done.timed_out);
+        tokio::time::sleep(Duration::from_secs(3)).await;
+        assert!(!marker.exists(), "the background child was left running");
+    }
+
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn a_run_dropped_midway_stops_the_whole_group() {
+        let marker = std::env::temp_dir().join(format!("sbm-agent-cmd-drop-{}", std::process::id()));
+        let cmd = format!("(sleep 2; touch {}) & sleep 30", marker.display());
+        let (tx, _rx) = mpsc::unbounded_channel();
+        let cancel = Cancel::new();
+        // The caller's own bound, as a desk app's call has: the run dropped.
+        let r = tokio::time::timeout(Duration::from_millis(300), run(Spec { command: &cmd, sudo_password: None, timeout: Duration::from_secs(60) }, tx, &cancel)).await;
+        assert!(r.is_err());
         tokio::time::sleep(Duration::from_secs(3)).await;
         assert!(!marker.exists(), "the background child was left running");
     }

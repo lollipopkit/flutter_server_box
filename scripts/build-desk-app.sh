@@ -62,6 +62,9 @@ print(out, os.path.getsize(out) >> 10, 'KiB')
 PY
 if [ "${2:-}" = --store ]; then
   pkg=$(python3 -I -c 'import json, sys; m = json.load(open(sys.argv[1])); print(m["publisher"] + "." + m["name"] + ".fsba")' "$app/manifest.json")
+  # A repository's file is at most 8 MiB (fl_theme's MAX_ENTRY_BYTES): a
+  # larger one would leave the whole store unreadable to agents.
+  [ "$(wc -c < "$app/target/$pkg")" -le 8388608 ] || { echo "$pkg is over 8 MiB, more than the store takes" >&2; exit 1; }
   cp "$app/target/$pkg" "$root/store/desk/$pkg"
   echo "$root/store/desk/$pkg"
 fi

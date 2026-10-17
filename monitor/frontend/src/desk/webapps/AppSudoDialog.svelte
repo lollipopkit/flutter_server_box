@@ -34,6 +34,8 @@
     if (ask) {
       typed = ''
       password = ''
+      // Never carried over: each dialog asks anew whether to keep the password.
+      remember = false
       error = ''
       busy = false
     }

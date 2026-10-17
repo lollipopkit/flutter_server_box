@@ -9,6 +9,7 @@
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+use std::sync::atomic::Ordering;
 use std::time::Duration;
 
 use sbm_parser::inference as model;
@@ -116,10 +117,16 @@ fn app_provider(id: &str, name: &str, base_url: String, key: String) -> AppProvi
 }
 
 /// Works out [providers] again and hands them to Agent mode; in the
-/// background, so a slow server holds up nothing.
+/// background, so a slow server holds up nothing. One at a time, so an older
+/// answer never lands after a newer one; asks made meanwhile are one more.
 pub fn refresh_providers(state: &Arc<AppState>) {
+    state.agent.app_refresh_asked.store(true, Ordering::SeqCst);
     let state = state.clone();
     tokio::spawn(async move {
+        let _one = state.agent.app_refresh.lock().await;
+        if !state.agent.app_refresh_asked.swap(false, Ordering::SeqCst) {
+            return;
+        }
         let apps = providers(&state).await;
         if let Err(e) = state.agent.set_app_providers(apps).await {
             tracing::warn!("inference: offering the model servers to Agent mode: {e:#}");

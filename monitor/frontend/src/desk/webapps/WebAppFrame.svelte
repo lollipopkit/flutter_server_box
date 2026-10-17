@@ -47,6 +47,9 @@
     })
   }
 
+  /// A sudo dialog is asked for or open: one at a time.
+  let asking = false
+
   const asSudo = (g?: SudoGiven) => (g ? { password: g.password || null, remember: g.remember } : undefined)
 
   const backend: BackendHost = {
@@ -55,7 +58,9 @@
     view: (since) => bridged(deskApi.appJob(desk.entry, win.appId, since)),
     cancel: () => bridged(deskApi.cancelAppJob(desk.entry, win.appId).then(() => undefined)),
     async sudo(ask, run) {
-      if (sudo) throw new BridgeError('busy')
+      // Taken before the first await: two asks at once must not both pass.
+      if (asking) throw new BridgeError('busy')
+      asking = true
       const remembered = await deskApi.sudoRemembered(desk.entry).then((r) => r.remembered, () => false)
       return new Promise((resolve, reject) => {
         sudo = {
@@ -72,10 +77,12 @@
               reject(e)
             }
             sudo = null
+            asking = false
           },
           decline: () => {
             reject(new BridgeError('declined'))
             sudo = null
+            asking = false
           },
         }
       })

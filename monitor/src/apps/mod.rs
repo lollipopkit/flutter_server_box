@@ -20,6 +20,9 @@ use runtime::Backend;
 /// Calls running at once, across apps: each holds an instance (up to
 /// `runtime::MAX_MEMORY`) until it ends.
 const MAX_CALLS: usize = 8;
+/// Jobs running at once, across apps (one per app): each holds an instance
+/// for as long as it runs, so apart from the calls'.
+const MAX_JOBS: usize = 4;
 
 /// How a job ended, beside its lines: the function's value or its error.
 #[derive(Clone, Serialize)]
@@ -47,19 +50,32 @@ pub struct AppJob {
     pub outcome: Mutex<Option<Outcome>>,
 }
 
+/// An app's job as the frame reads it: the job's lines and state, its
+/// function, and how it ended (`error` the app's or the host's refusal, one
+/// key, never the job's own text beside it).
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AppJobView {
-    #[serde(flatten)]
-    pub job: JobView,
+    pub id: u64,
+    pub kind: crate::stacks::job::JobKind,
+    pub state: crate::stacks::job::JobState,
+    pub lines: Vec<crate::stacks::job::Line>,
+    pub next: u64,
     pub function: String,
-    #[serde(flatten)]
-    pub outcome: Option<Outcome>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub value: Option<Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<Refusal>,
 }
 
 impl AppJob {
     pub fn view(&self, since: u64) -> AppJobView {
-        AppJobView { job: self.job.view(since), function: self.function.clone(), outcome: self.outcome.locked().clone() }
+        let JobView { id, kind, state, error, lines, next } = self.job.view(since);
+        let Outcome { value, error: refusal } = self.outcome.locked().clone().unwrap_or(Outcome { value: None, error: None });
+        // Ended with no outcome of the app's (the host's own failure): the
+        // job's words.
+        let error = refusal.or_else(|| error.map(|e| Refusal { error: e, message: String::new() }));
+        AppJobView { id, kind, state, lines, next, function: self.function.clone(), value, error }
     }
 }
 
@@ -78,6 +94,7 @@ pub struct Apps {
     backends: Mutex<HashMap<String, Arc<Backend>>>,
     jobs: Mutex<HashMap<String, Slot>>,
     pub calls: Arc<tokio::sync::Semaphore>,
+    pub job_slots: Arc<tokio::sync::Semaphore>,
 }
 
 impl Apps {
@@ -90,7 +107,7 @@ impl Apps {
             Some(f) => std::path::absolute(Self::dir_beside(f)).unwrap_or_else(|_| Self::dir_beside(f)),
             None => std::env::temp_dir().join(format!("sbm-apps-{}", std::process::id())),
         };
-        Self { cache: dir.join("cache"), data: dir.join("data"), backends: Mutex::default(), jobs: Mutex::default(), calls: Arc::new(tokio::sync::Semaphore::new(MAX_CALLS)) }
+        Self { cache: dir.join("cache"), data: dir.join("data"), backends: Mutex::default(), jobs: Mutex::default(), calls: Arc::new(tokio::sync::Semaphore::new(MAX_CALLS)), job_slots: Arc::new(tokio::sync::Semaphore::new(MAX_JOBS)) }
     }
 
     /// The backend whose component's digest is [sha256], compiled from
@@ -127,6 +144,17 @@ impl Apps {
             std::fs::set_permissions(&dir, std::fs::Permissions::from_mode(0o700))?;
         }
         Ok(dir)
+    }
+
+    /// [app] went: its job cancelled and forgotten, so neither outlives it
+    /// nor shows to an app installed under its id later; the job, to wait
+    /// for.
+    pub fn end_jobs(&self, app: &str) -> Option<Arc<AppJob>> {
+        let last = self.jobs.locked().remove(app).and_then(|s| s.last)?;
+        if last.job.running() {
+            last.job.cancel();
+        }
+        Some(last)
     }
 
     /// [app] went: its folder too.

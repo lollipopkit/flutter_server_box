@@ -231,7 +231,7 @@ pub fn check_manifest(m: &Manifest, first_party: bool) -> Result<(), Refusal> {
 // Package
 // -----------------------------------------------------------------------------
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Package {
     pub manifest: Manifest,
     /// By path relative to the package root: `ui/index.html`, `LICENSE`.
@@ -547,14 +547,6 @@ pub async fn install(
 
 /// Stores [package] as an upload of it, waiting for approval.
 async fn install_package(req: &HttpRequest, state: &AppState, package: Package) -> Result<HttpResponse, web::Error> {
-    // Compiled now (and kept): a backend that is not a component of the
-    // agent's world is refused here rather than at its first call.
-    if let (Some(sha), Some(bytes)) = (backend_sha_of(&package), package.files.get("backend.wasm").cloned())
-        && let Err(e) = state.apps.backend(&sha, move || Some(bytes)).await
-    {
-        tracing::info!("app backend refused: {e}");
-        return Ok(HttpResponse::BadRequest().json(&serde_json::json!({ "error": "invalidBackend", "detail": e.chars().take(300).collect::<String>() })));
-    }
     // An app its publisher signed is replaced only by a package with the
     // same signature.
     let signed: Option<Option<String>> = match sqlx::query_scalar("SELECT signed_by FROM desk_app_package WHERE app_id = ?")
@@ -571,6 +563,14 @@ async fn install_package(req: &HttpRequest, state: &AppState, package: Package) 
         return Ok(HttpResponse::Conflict().json(&refused("publisherChanged")));
     }
     let before = backend_sha(&state.db, &package.manifest.id()).await;
+    // Compiled now (and kept once stored): a backend that is not a component of the
+    // agent's world is refused here rather than at its first call.
+    if let (Some(sha), Some(bytes)) = (backend_sha_of(&package), package.files.get("backend.wasm").cloned())
+        && let Err(e) = state.apps.backend(&sha, move || Some(bytes)).await
+    {
+        tracing::info!("app backend refused: {e}");
+        return Ok(HttpResponse::BadRequest().json(&serde_json::json!({ "error": "invalidBackend", "detail": e.chars().take(300).collect::<String>() })));
+    }
     match store(&state.db, &state.blobs, &package).await {
         Ok(app) => {
             if let Some(sha) = before.filter(|sha| backend_sha_of(&package).as_deref() != Some(sha)) {
@@ -579,7 +579,13 @@ async fn install_package(req: &HttpRequest, state: &AppState, package: Package) 
             audit(req, state, Action::Write, format!("app install {} {} {}", app.id, app.version, package.sha256)).await;
             Ok(HttpResponse::Ok().json(&app))
         }
-        Err(e) => Ok(super::respond::internal(&format!("{e:#}"))),
+        Err(e) => {
+            // Not stored: its compiled backend is no app's.
+            if let Some(sha) = backend_sha_of(&package).filter(|sha| before.as_deref() != Some(sha)) {
+                state.apps.forget(&sha);
+            }
+            Ok(super::respond::internal(&format!("{e:#}")))
+        }
     }
 }
 
@@ -638,13 +644,8 @@ pub async fn install_offered(req: HttpRequest, id: web::types::Path<String>, sta
     if !offered.package.manifest.for_os(super::machine::os_id()) {
         return Ok(HttpResponse::Conflict().json(&refused("notForThisSystem")));
     }
-    let bytes = offered.bytes.clone();
-    let package = match tokio::task::spawn_blocking(move || read_package(&bytes)).await {
-        Ok(Ok(p)) => p,
-        Ok(Err(refusal)) => return Ok(HttpResponse::BadRequest().json(&refusal)),
-        Err(_) => return Ok(HttpResponse::InternalServerError().json(&refused("internal"))),
-    };
-    install_package(&req, &state, package).await
+    // Read and checked when the catalog took it.
+    install_package(&req, &state, offered.package.clone()).await
 }
 
 pub async fn approve(
@@ -723,6 +724,15 @@ pub async fn remove(
             state.blobs.collect_soon(&state.db);
             if let Some(sha) = backend {
                 state.apps.forget(&sha);
+            }
+            // Its job ends before its folder goes: a script may be writing there.
+            if let Some(job) = state.apps.end_jobs(&id) {
+                for _ in 0..50 {
+                    if !job.job.running() {
+                        break;
+                    }
+                    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+                }
             }
             let (apps, app) = (state.apps.clone(), id.to_string());
             let _ = tokio::task::spawn_blocking(move || apps.forget_data(&app)).await;

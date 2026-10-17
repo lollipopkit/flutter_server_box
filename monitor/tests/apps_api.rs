@@ -531,6 +531,21 @@ async fn a_job_runs_alone_and_stops_when_cancelled() {
 }
 
 #[ntex::test]
+async fn removing_an_app_ends_its_job() {
+    let srv = server().await;
+    installed_backend(&srv, &[]).await;
+    assert_eq!(start_job(&srv, "forever", json!(null)).await.status, 202);
+    let body = json!({ "current_password": common::PASSWORD }).to_string().into_bytes();
+    let r = call(&srv, true, Method::DELETE, "/api/v1/apps/acme.notes", Some((body, "application/json"))).await;
+    assert!(r.status < 300, "{}", r.json);
+    // Installed again: none of the old one's job.
+    installed_backend(&srv, &[]).await;
+    let r = call(&srv, true, Method::GET, "/api/v1/apps/acme.notes/jobs", None).await;
+    assert_eq!(r.status, 404, "{}", r.json);
+    assert_eq!(start_job(&srv, "count", json!({ "lines": 1 })).await.status, 202);
+}
+
+#[ntex::test]
 async fn a_backend_must_be_a_component_of_api_2() {
     let srv = server().await;
     // API 1's core module.

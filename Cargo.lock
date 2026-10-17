@@ -5028,6 +5028,7 @@ dependencies = [
  "sbm_parser",
  "sbm_redfish",
  "sbm_virt",
+ "semver",
  "serde",
  "serde_json",
  "sha2 0.11.0",
