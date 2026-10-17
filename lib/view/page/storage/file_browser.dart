@@ -1327,23 +1327,31 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
           child: Row(
             children: [
               Expanded(
-                child: TextField(
-                  // Named, because it is a text field that is always on
-                  // screen: a test looking for "the field a dialog just
-                  // opened" would otherwise find two.
-                  key: FileBrowserPage.pathFieldKey,
-                  controller: controller,
-                  focusNode: node,
-                  // The path is one line, however long it is, and a soft
-                  // keyboard should offer a key that acts rather than one
-                  // that wraps.
-                  maxLines: 1,
-                  textInputAction: TextInputAction.go,
-                  onSubmitted: _gotoTyped,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                  decoration: bareInputDecoration(
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                // Drawn with no label, since the path in it says what it is;
+                // a screen reader was told only the path. Merged, so the name
+                // is on the field's own node.
+                child: MergeSemantics(
+                  child: Semantics(
+                    label: libL10n.path,
+                    child: TextField(
+                      // Named, because it is a text field that is always on
+                      // screen: a test looking for "the field a dialog just
+                      // opened" would otherwise find two.
+                      key: FileBrowserPage.pathFieldKey,
+                      controller: controller,
+                      focusNode: node,
+                      // The path is one line, however long it is, and a soft
+                      // keyboard should offer a key that acts rather than one
+                      // that wraps.
+                      maxLines: 1,
+                      textInputAction: TextInputAction.go,
+                      onSubmitted: _gotoTyped,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                      decoration: bareInputDecoration(
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                      ),
+                    ),
                   ),
                 ),
               ),
