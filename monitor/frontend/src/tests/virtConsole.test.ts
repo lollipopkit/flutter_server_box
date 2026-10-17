@@ -6,6 +6,7 @@ import VirtConsole from '../components/VirtConsole.svelte'
 import { api } from '../lib/api'
 import { openConsoleSocket } from '../lib/virtConsole'
 import { theme } from '../lib/theme.svelte'
+import { screenReader } from '../lib/screenReader.svelte'
 import type { VirtConsoleAnswer, VirtGuest } from '../types'
 
 vi.mock('../lib/api', async (importOriginal) => ({
@@ -131,5 +132,22 @@ describe('VirtConsole', () => {
     theme.set('dark')
     flushSync()
     expect(terminals[0].options.theme).toMatchObject({ background: '#0b0f14' })
+  })
+
+  it('starts without screen reader mode and follows its toggle', async () => {
+    mockedConsole.mockResolvedValue(answer)
+    mockedSocket.mockResolvedValue(fakeSocket())
+    render(VirtConsole, { guest, kind: 'text', sudoPassword: null })
+    const toggle = screen.getByRole('button', { name: 'Screen reader mode' })
+    expect(toggle).toHaveAttribute('aria-pressed', 'false')
+    await fireEvent.click(screen.getByRole('button', { name: 'Open' }))
+    await waitFor(() => expect(terminals).toHaveLength(1))
+    expect(terminals[0].options.screenReaderMode).toBe(false)
+
+    await fireEvent.click(toggle)
+    flushSync()
+    expect(toggle).toHaveAttribute('aria-pressed', 'true')
+    expect(terminals[0].options.screenReaderMode).toBe(true)
+    screenReader.set(false)
   })
 })

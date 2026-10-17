@@ -402,6 +402,8 @@ const zh_CN = {
 	terminalProgramDismiss: '清除',
 	terminalConnect: '连接',
 	terminalResume: '重新接入上次会话',
+	terminalScreenReader: '读屏模式',
+	terminalScreenReaderHint: '让屏幕阅读器读取终端内容。开启后 Tab 会把焦点移出终端，不再用于 shell 补全。',
 	terminalDisconnect: '结束会话',
 	terminalSubmit: '提交',
 	terminalReconnecting: '正在重连…',

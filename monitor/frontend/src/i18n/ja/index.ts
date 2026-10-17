@@ -402,6 +402,8 @@ const ja = {
 	terminalProgramDismiss: 'クリア',
 	terminalConnect: '接続',
 	terminalResume: '前回のセッションに再接続',
+	terminalScreenReader: 'スクリーンリーダーモード',
+	terminalScreenReaderHint: 'スクリーンリーダーで端末を読み上げられるようにします。オンの間、Tab はシェルの補完ではなく端末の外へフォーカスを移動します。',
 	terminalDisconnect: 'セッションを終了',
 	terminalSubmit: '送信',
 	terminalReconnecting: '再接続しています…',

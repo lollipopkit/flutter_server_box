@@ -402,6 +402,8 @@ const zh_TW = {
 	terminalProgramDismiss: '清除',
 	terminalConnect: '連線',
 	terminalResume: '重新接入上次工作階段',
+	terminalScreenReader: '讀屏模式',
+	terminalScreenReaderHint: '讓螢幕閱讀器讀取終端內容。開啟後 Tab 會把焦點移出終端，不再用於 shell 補全。',
 	terminalDisconnect: '結束工作階段',
 	terminalSubmit: '送出',
 	terminalReconnecting: '正在重新連線…',

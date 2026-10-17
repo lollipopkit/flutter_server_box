@@ -403,6 +403,8 @@ const en = {
 	terminalProgramDismiss: 'Dismiss',
 	terminalConnect: 'Connect',
 	terminalResume: 'Rejoin previous session',
+	terminalScreenReader: 'Screen reader mode',
+	terminalScreenReaderHint: 'Lets a screen reader read the terminal. While on, Tab moves focus out of the terminal instead of completing in the shell.',
 	terminalDisconnect: 'End session',
 	terminalSubmit: 'Submit',
 	terminalReconnecting: 'Reconnecting...',

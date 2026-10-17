@@ -1,6 +1,8 @@
 <script lang="ts">
   import { Button, Card, Input, Spinner } from '@serverbox/webui'
   import VncViewer from './VncViewer.svelte'
+  import ScreenReaderToggle from './ScreenReaderToggle.svelte'
+  import { screenReader } from '../lib/screenReader.svelte'
   import { api } from '../lib/api'
   import { RelayChannel, parseControl } from '../lib/desktop.svelte'
   import { theme } from '../lib/theme.svelte'
@@ -44,6 +46,11 @@
     // `theme.current` is the trigger; the colours are read from the document
     void theme.current
     if (term) term.options.theme = terminalTheme()
+  })
+
+  $effect(() => {
+    const on = screenReader.enabled
+    if (term) term.options.screenReaderMode = on
   })
 
   function close() {
@@ -105,8 +112,7 @@
     if (gen !== generation) return
     term = new Terminal({
       cursorBlink: true,
-      // As in lib/xterm.ts: whether a screen reader runs cannot be known.
-      screenReaderMode: true,
+      screenReaderMode: screenReader.enabled,
       fontSize: 13,
       fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
       theme: terminalTheme(),
@@ -163,6 +169,9 @@
     <div class="flex items-center gap-2">
       {#if phase === 'opening'}
         <Spinner size="sm" />
+      {/if}
+      {#if kind === 'text'}
+        <ScreenReaderToggle />
       {/if}
       {#if phase === 'open'}
         <Button variant="secondary" size="sm" onclick={() => ended(null)}>{$LL.virtConsoleClose()}</Button>

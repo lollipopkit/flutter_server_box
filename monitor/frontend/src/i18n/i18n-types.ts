@@ -1674,6 +1674,14 @@ type RootTranslation = {
 	 */
 	terminalResume: string
 	/**
+	 * S​c​r​e​e​n​ ​r​e​a​d​e​r​ ​m​o​d​e
+	 */
+	terminalScreenReader: string
+	/**
+	 * L​e​t​s​ ​a​ ​s​c​r​e​e​n​ ​r​e​a​d​e​r​ ​r​e​a​d​ ​t​h​e​ ​t​e​r​m​i​n​a​l​.​ ​W​h​i​l​e​ ​o​n​,​ ​T​a​b​ ​m​o​v​e​s​ ​f​o​c​u​s​ ​o​u​t​ ​o​f​ ​t​h​e​ ​t​e​r​m​i​n​a​l​ ​i​n​s​t​e​a​d​ ​o​f​ ​c​o​m​p​l​e​t​i​n​g​ ​i​n​ ​t​h​e​ ​s​h​e​l​l​.
+	 */
+	terminalScreenReaderHint: string
+	/**
 	 * E​n​d​ ​s​e​s​s​i​o​n
 	 */
 	terminalDisconnect: string
@@ -7440,6 +7448,14 @@ export type TranslationFunctions = {
 	 * Rejoin previous session
 	 */
 	terminalResume: () => LocalizedString
+	/**
+	 * Screen reader mode
+	 */
+	terminalScreenReader: () => LocalizedString
+	/**
+	 * Lets a screen reader read the terminal. While on, Tab moves focus out of the terminal instead of completing in the shell.
+	 */
+	terminalScreenReaderHint: () => LocalizedString
 	/**
 	 * End session
 	 */

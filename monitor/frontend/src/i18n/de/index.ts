@@ -402,6 +402,8 @@ const de = {
 	terminalProgramDismiss: 'Schließen',
 	terminalConnect: 'Verbinden',
 	terminalResume: 'Vorherige Sitzung fortsetzen',
+	terminalScreenReader: 'Screenreader-Modus',
+	terminalScreenReaderHint: 'Ermöglicht einem Screenreader, das Terminal zu lesen. Solange er aktiv ist, verschiebt Tab den Fokus aus dem Terminal, statt in der Shell zu vervollständigen.',
 	terminalDisconnect: 'Sitzung beenden',
 	terminalSubmit: 'Absenden',
 	terminalReconnecting: 'Verbindung wird wiederhergestellt…',
