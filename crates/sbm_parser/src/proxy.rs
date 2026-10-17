@@ -126,10 +126,15 @@ pub struct ProxyView {
 
 /// What is installed and running, and every site; sections by `### <name>`
 /// lines ([`parse`]). Readable without root (the configurations are
-/// world-readable; a key file is never read).
-pub const READ_COMMAND: &str = r####"echo '### tools'; for t in nginx caddy traefik; do command -v $t >/dev/null 2>&1 && echo $t; done
+/// world-readable; a key file is never read). Running is this machine's
+/// own server, not a container's process of the same name.
+pub fn read_command() -> String {
+    format!("{}\n{READ_BODY}", crate::script::HOST_RUNNING_FN)
+}
+
+const READ_BODY: &str = r####"echo '### tools'; for t in nginx caddy traefik; do command -v $t >/dev/null 2>&1 && echo $t; done
 echo '### versions'; command -v nginx >/dev/null 2>&1 && nginx -v 2>&1; command -v caddy >/dev/null 2>&1 && echo "caddy $(caddy version 2>/dev/null)"; command -v traefik >/dev/null 2>&1 && echo "traefik $(traefik version 2>/dev/null | awk '/^Version/ {print $2}')"
-echo '### active'; for s in nginx caddy traefik; do if [ "$(systemctl is-active $s 2>/dev/null)" = active ] || pgrep -x $s >/dev/null 2>&1; then echo $s; fi; done
+echo '### active'; for s in nginx caddy traefik; do if [ "$(systemctl is-active $s 2>/dev/null)" = active ] || host_running $s; then echo $s; fi; done
 echo '### listening'; ss -ltnH 2>/dev/null | awk '{print $4}' | grep -E ':(80|443)$'
 echo '### nginxManaged'; cat /etc/nginx/conf.d/serverbox.conf 2>/dev/null
 echo '### nginxOther'; for f in /etc/nginx/nginx.conf /etc/nginx/conf.d/*.conf /etc/nginx/sites-enabled/* /etc/nginx/http.d/*.conf; do [ -f "$f" ] && [ "$f" != /etc/nginx/conf.d/serverbox.conf ] && cat "$f" 2>/dev/null; done
@@ -157,7 +162,7 @@ fn sections(out: &str) -> std::collections::HashMap<&str, String> {
     map
 }
 
-/// [`READ_COMMAND`]'s output.
+/// [`read_command`]'s output.
 pub fn parse(out: &str) -> ProxyView {
     let s = sections(out);
     let get = |k: &str| s.get(k).map(String::as_str).unwrap_or("");
@@ -190,7 +195,8 @@ pub fn parse(out: &str) -> ProxyView {
                 server,
                 installed: tools.contains(&id),
                 version: version_of(id),
-                active: active.contains(&id),
+                // Nothing of this machine's runs when it is not installed.
+                active: tools.contains(&id) && active.contains(&id),
                 writable: server != Server::Traefik || traefik_static.contains(TRAEFIK_DIR),
                 tls_resolver: server == Server::Traefik && traefik_static.contains(&format!("{TRAEFIK_RESOLVER}:")),
                 sites,
@@ -465,21 +471,22 @@ pub const EXIT_REFUSED: i32 = 4;
 /// again: through systemd where it runs, else the server's own command.
 fn reload(server: Server) -> String {
     let own = match server {
-        Server::Nginx => "if pgrep -x nginx >/dev/null; then nginx -s reload; else nginx </dev/null >/dev/null 2>&1; fi",
+        Server::Nginx => "if host_running nginx; then nginx -s reload; else nginx </dev/null >/dev/null 2>&1; fi",
         // What `caddy start` leaves running keeps its output: not the
         // script's, which a job reads to its end.
         Server::Caddy => {
-            "if pgrep -x caddy >/dev/null; then caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile; else caddy start --config /etc/caddy/Caddyfile --adapter caddyfile </dev/null >>/var/log/caddy-start.log 2>&1; fi"
+            "if host_running caddy; then caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile; else caddy start --config /etc/caddy/Caddyfile --adapter caddyfile </dev/null >>/var/log/caddy-start.log 2>&1; fi"
         }
         // It watches its folder; started when it is not running.
         Server::Traefik => {
-            "pgrep -x traefik >/dev/null || { nohup traefik --configFile=/etc/traefik/traefik.yml </dev/null >>/var/log/traefik.log 2>&1 & }"
+            "host_running traefik || { nohup traefik --configFile=/etc/traefik/traefik.yml </dev/null >>/var/log/traefik.log 2>&1 & }"
         }
     };
     let id = server.id();
     format!(
-        "if [ -d /run/systemd/system ] && systemctl list-unit-files {id}.service >/dev/null 2>&1; then \
+        "{}\nif [ -d /run/systemd/system ] && systemctl list-unit-files {id}.service >/dev/null 2>&1; then \
          if systemctl is-active -q {id}; then {}; else systemctl enable --now {id}; fi; else {own}; fi",
+        crate::script::HOST_RUNNING_FN,
         if server == Server::Traefik { "true".to_string() } else { format!("systemctl reload {id}") }
     )
 }
@@ -656,7 +663,7 @@ mod tests {
     #[test]
     fn reads_the_machine() {
         let out = format!(
-            "### tools\nnginx\ncaddy\n### versions\nnginx version: nginx/1.28.0\ncaddy v2.10.2 h1:abc\n### active\ncaddy\n### listening\n0.0.0.0:80\n[::]:80\n0.0.0.0:3770\n\
+            "### tools\nnginx\ncaddy\n### versions\nnginx version: nginx/1.28.0\ncaddy v2.10.2 h1:abc\n### active\ncaddy\ntraefik\n### listening\n0.0.0.0:80\n[::]:80\n0.0.0.0:3770\n\
              ### nginxManaged\n### nginxOther\nserver {{\n  listen 80 default_server;\n  server_name _;\n  root /var/www/html;\n}}\n\
              server {{ listen 443 ssl; server_name blog.example.com www.example.com; # x\n  location / {{ proxy_pass http://127.0.0.1:8080; }} }}\n\
              ### caddyfile\n{{\n  email a@b.c\n}}\n:80 {{\n  root * /usr/share/caddy\n  file_server\n}}\n(snip) {{\n}}\nimport /etc/caddy/serverbox.caddy\nnotes.example.com {{\n  reverse_proxy /api/* localhost:9000\n}}\n\
@@ -677,6 +684,7 @@ mod tests {
         assert_eq!(names, [("photos", true), (":80", false), ("notes.example.com", false)]);
         assert_eq!(caddy.sites[2].upstream, "localhost:9000");
         assert!(!v.servers[2].installed && !v.servers[2].writable);
+        assert!(!v.servers[2].active, "what runs without being installed is not this machine's");
         assert_eq!(v.listening, [80]);
     }
 

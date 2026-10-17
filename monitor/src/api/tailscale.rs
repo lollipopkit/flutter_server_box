@@ -26,7 +26,7 @@ use sbm_parser::tailscale::{self as ts, Action};
 /// named by them).
 async fn read(state: &AppState) -> Option<(ts::TailscaleView, String, String)> {
     let limits = super::machine::at_least(&state.remote_access.exec, 4 << 20);
-    match super::exec::run(ts::READ_COMMAND, None, None, &limits).await {
+    match super::exec::run(&ts::read_command(), None, None, &limits).await {
         Ok(out) if !out.timed_out => {
             let mut os = out.stdout.split("### os\n").nth(1).unwrap_or("").lines().map(|l| l.trim().to_string());
             let (id, codename) = (os.next().unwrap_or_default(), os.next().unwrap_or_default());

@@ -21,10 +21,15 @@ use serde_json::Value;
 
 use crate::script::shell_quote_unix as q;
 
-/// What [`parse`] reads, by `### <name>` sections.
-pub const READ_COMMAND: &str = r####"echo '### os'; ( . /etc/os-release 2>/dev/null; echo "$ID"; echo "$VERSION_CODENAME" )
+/// What [`parse`] reads, by `### <name>` sections: tailscaled is this
+/// machine's, not a container's (`script::HOST_RUNNING_FN`).
+pub fn read_command() -> String {
+    format!("{}\n{READ_BODY}", crate::script::HOST_RUNNING_FN)
+}
+
+const READ_BODY: &str = r####"echo '### os'; ( . /etc/os-release 2>/dev/null; echo "$ID"; echo "$VERSION_CODENAME" )
 echo '### version'; command -v tailscale >/dev/null && tailscale version 2>/dev/null | head -n 1
-echo '### daemon'; if command -v systemctl >/dev/null && [ -d /run/systemd/system ]; then systemctl is-active tailscaled 2>/dev/null; else pgrep -x tailscaled >/dev/null && echo active; fi
+echo '### daemon'; if command -v systemctl >/dev/null && [ -d /run/systemd/system ]; then systemctl is-active tailscaled 2>/dev/null; else host_running tailscaled && echo active; fi
 echo '### status'; command -v tailscale >/dev/null && tailscale status --json 2>/dev/null
 echo
 echo '### prefs'; command -v tailscale >/dev/null && tailscale debug prefs 2>/dev/null
@@ -144,7 +149,7 @@ fn prefs(v: &Value) -> Prefs {
     }
 }
 
-/// [`READ_COMMAND`]'s output.
+/// [`read_command`]'s output.
 pub fn parse(out: &str) -> TailscaleView {
     let s = sections(out);
     let os: Vec<String> = s.get("os").map(|o| o.lines().map(|l| l.trim().to_string()).collect()).unwrap_or_default();

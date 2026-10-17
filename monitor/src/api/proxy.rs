@@ -22,7 +22,7 @@ use sbm_parser::proxy::{self as px, Server, Site};
 
 async fn read(state: &AppState) -> Option<px::ProxyView> {
     let limits = super::machine::at_least(&state.remote_access.exec, 4 << 20);
-    match super::exec::run(px::READ_COMMAND, None, None, &limits).await {
+    match super::exec::run(&px::read_command(), None, None, &limits).await {
         Ok(out) if !out.timed_out => Some(px::parse(&out.stdout)),
         Ok(_) => None,
         Err(e) => {

@@ -235,7 +235,8 @@ fn engine_conf() -> String {
 fn nginx_reload(start: bool) -> String {
     let otherwise = if start { "if [ -d /run/systemd/system ]; then systemctl enable --now nginx; else nginx; fi" } else { "true" };
     format!(
-        "if pgrep -x nginx >/dev/null; then if [ -d /run/systemd/system ] && systemctl is-active -q nginx; then systemctl reload nginx; else nginx -s reload; fi; else {otherwise}; fi"
+        "{}\nif host_running nginx; then if [ -d /run/systemd/system ] && systemctl is-active -q nginx; then systemctl reload nginx; else nginx -s reload; fi; else {otherwise}; fi",
+        crate::script::HOST_RUNNING_FN
     )
 }
 

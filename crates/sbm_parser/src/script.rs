@@ -1232,6 +1232,14 @@ fn windows_command(func: ShellFunc, opts: &ScriptOptions) -> String {
     }
 }
 
+/// A shell function, `host_running NAME`: whether a process named NAME runs
+/// on this machine itself. `pgrep` on a host also sees the processes of its
+/// containers (an nginx image's nginx), which are not the machine's server;
+/// they are told apart by their cgroup (`/proc/<pid>/cgroup`, readable by
+/// any account): Docker, containerd, Podman, Kubernetes, LXC.
+pub const HOST_RUNNING_FN: &str =
+    r#"host_running() { for p in $(pgrep -x "$1" 2>/dev/null); do grep -qE 'docker|containerd|libpod|kubepods|/lxc' "/proc/$p/cgroup" 2>/dev/null || return 0; done; return 1; }"#;
+
 /// Root's script that writes [content] to [file] (0644, through a staged
 /// file), keeps the previous one while [check] runs and puts it back when
 /// that fails, exiting [refused]. [content] is a quoted heredoc ended by the
