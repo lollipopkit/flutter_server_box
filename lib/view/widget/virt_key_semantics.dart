@@ -28,7 +28,9 @@ final class VirtKeySemantics extends StatelessWidget {
         button: true,
         enabled: enabled,
         label: item.semanticLabel,
-        hint: item.help,
+        // The keyboard and sudo keys are named by what they do, and a hint
+        // saying it again was read straight after the name.
+        hint: item.help == item.semanticLabel ? null : item.help,
         toggled: item.toggleable ? armed : null,
         child: child,
       ),

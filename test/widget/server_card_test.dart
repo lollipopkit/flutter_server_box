@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:fl_lib/fl_lib.dart';
@@ -741,6 +742,24 @@ void main() {
     // what says the promotion took, since a card with no promotion draws the
     // CPU's `--`.
     expect(find.text('50.0%'), findsOneWidget);
+  });
+
+  testWidgets('the connection button is named by what it does', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    for (final (conn, name) in [
+      (ServerConn.finished, 'Disconnect'),
+      (ServerConn.disconnected, 'Connect'),
+    ]) {
+      await pump(tester, promoted: null, onPromote: (_) {}, conn: conn);
+      final data = tester
+          .getSemantics(find.bySemanticsLabel(name))
+          .getSemanticsData();
+      expect(data.flagsCollection.isButton, isTrue, reason: conn.name);
+      expect(data.hasAction(ui.SemanticsAction.tap), isTrue, reason: conn.name);
+    }
+    handle.dispose();
   });
 
   group('the three densities', () {

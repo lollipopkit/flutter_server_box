@@ -54,6 +54,26 @@ void main() {
     handle.dispose();
   });
 
+  testWidgets('a key named by what it does is not hinted the same', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    for (final item in [VirtKey.ime, VirtKey.sudo]) {
+      await tester.pumpWidget(_key(item));
+      final data = tester
+          .getSemantics(find.byType(VirtKeySemantics))
+          .getSemanticsData();
+      expect(data.label, item.semanticLabel, reason: item.name);
+      expect(data.hint, isEmpty, reason: item.name);
+    }
+    await tester.pumpWidget(_key(VirtKey.sftp));
+    final sftp = tester
+        .getSemantics(find.byType(VirtKeySemantics))
+        .getSemanticsData();
+    expect(sftp.hint, VirtKey.sftp.help);
+    handle.dispose();
+  });
+
   test('every key has a name', () {
     for (final key in VirtKey.values) {
       expect(key.semanticLabel, isNotEmpty, reason: key.name);
