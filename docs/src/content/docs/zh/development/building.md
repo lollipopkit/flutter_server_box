@@ -73,7 +73,7 @@ dart run fl_build -p linux
 dart run fl_build -p windows
 ```
 
-需要安装 Visual Studio，并选择 **Desktop development with C++** workload 和 ATL 支持。GitHub Release 流程还会生成 MSI 安装包（含开始菜单快捷方式）和便携 ZIP。
+需要安装 Visual Studio，并选择 **Desktop development with C++** workload 和 ATL 支持。GitHub Release 流程会将 Windows x64 与 ARM64 分为独立 job 构建；每种架构均提供可选择安装位置、含开始菜单快捷方式的 MSI 安装包，以及便携 ZIP。
 
 ## 构建 Monitor agent
 

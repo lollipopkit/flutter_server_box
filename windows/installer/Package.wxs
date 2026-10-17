@@ -1,12 +1,16 @@
-<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+<Wix
+  xmlns="http://wixtoolset.org/schemas/v4/wxs"
+  xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
   <Package
-    Name="Server Box"
+    Name="$(var.ProductName)"
     Manufacturer="tech.lolli"
     Version="$(var.MsiVersion)"
-    UpgradeCode="{C7D0B8EE-B911-4E82-8CF9-196A6F17866D}"
+    UpgradeCode="$(var.UpgradeCode)"
     Scope="perMachine">
     <MajorUpgrade DowngradeErrorMessage="A newer version of Server Box is already installed." />
     <MediaTemplate EmbedCab="yes" />
+    <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="$(var.InstallDirectoryId)" />
+    <UIRef Id="WixUI_ErrorProgressText" />
     <Feature Id="Main" Title="Server Box" Level="1">
       <ComponentGroupRef Id="ApplicationFiles" />
       <ComponentRef Id="StartMenuShortcut" />
@@ -15,26 +19,26 @@
 
   <Fragment>
     <StandardDirectory Id="ProgramFiles64Folder">
-      <Directory Id="INSTALLFOLDER" Name="Server Box" />
+      <Directory Id="$(var.InstallDirectoryId)" Name="$(var.InstallFolder)" />
     </StandardDirectory>
     <StandardDirectory Id="ProgramMenuFolder">
-      <Directory Id="ApplicationProgramsFolder" Name="Server Box" />
+      <Directory Id="ApplicationProgramsFolder" Name="$(var.ShortcutFolder)" />
     </StandardDirectory>
 
-    <ComponentGroup Id="ApplicationFiles" Directory="INSTALLFOLDER">
+    <ComponentGroup Id="ApplicationFiles" Directory="$(var.InstallDirectoryId)">
       <Files Include="$(var.AppDir)\**" />
     </ComponentGroup>
 
     <Component Id="StartMenuShortcut" Directory="ApplicationProgramsFolder" Guid="*">
       <Shortcut
         Id="ApplicationShortcut"
-        Name="Server Box"
-        Target="[INSTALLFOLDER]ServerBox.exe"
-        WorkingDirectory="INSTALLFOLDER" />
+        Name="$(var.ProductName)"
+        Target="[$(var.InstallDirectoryId)]ServerBox.exe"
+        WorkingDirectory="$(var.InstallDirectoryId)" />
       <RemoveFolder Id="RemoveApplicationProgramsFolder" On="uninstall" />
       <RegistryValue
         Root="HKLM"
-        Key="Software\tech.lolli\ServerBox"
+        Key="Software\tech.lolli\$(var.RegistryKey)"
         Name="Installed"
         Type="integer"
         Value="1"
