@@ -184,7 +184,10 @@ the app is deployed. At most 4.
 A sidecar joins the app's compose file:
 
 - its image pinned by digest (`ghcr.io/…/mcp@sha256:…`), so what holds the
-  credential never changes under the app;
+  credential never changes under the app; or, for a server that speaks
+  stdio only, built here (`build:`) from a package Dockerfile whose every
+  `FROM` is pinned by digest, a bridge to HTTP beside it
+  (`store/apps/karakeep.karakeep/karakeep-mcp.Dockerfile`);
 - the service by its compose name on the stack's network
   (`http://app:8080`), and the credential from the env file;
 - its own port setting, published on `127.0.0.1` alone

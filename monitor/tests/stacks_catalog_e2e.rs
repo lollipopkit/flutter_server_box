@@ -116,11 +116,11 @@ impl Browser {
         for _ in 0..10 {
             let page = self.get(&path).await;
             let Some(to) = page.location.clone().filter(|_| (300..400).contains(&page.status)) else { return page };
-            path = match to.strip_prefix(&self.origin) {
-                Some(rest) => rest.to_string(),
-                None if to.starts_with('/') => to,
-                None => panic!("{path} redirected off the window's origin to {to}"),
-            };
+            // Resolved as the browser would, against the page that redirected.
+            let here = url::Url::parse(&format!("{}{path}", self.origin)).unwrap();
+            let there = here.join(&to).unwrap_or_else(|e| panic!("{path} redirected to {to}: {e}"));
+            assert_eq!(there.origin(), here.origin(), "{path} redirected off the window's origin to {to}");
+            path = there[url::Position::BeforePath..].to_string();
         }
         panic!("{path}: too many redirects")
     }
@@ -290,6 +290,40 @@ async fn sign_in(browser: &mut Browser, id: &str, user: Option<&str>, password: 
             // Sign-up is off.
             let signup = browser.open("/user/sign_up").await;
             assert!(!signup.body.contains("name=\"user_name\""), "{id}: sign-up is open");
+        }
+        "karakeep.karakeep" => {
+            // Its API key exchange, as its browser extension signs in.
+            let made = browser
+                .post_json("/api/trpc/apiKeys.exchange", json!({ "json": { "keyName": "e2e", "email": need(user), "password": need(password) } }), &[])
+                .await;
+            assert_eq!(made.status, 200, "{id}: {}", made.body);
+            let key = made.json()["result"]["data"]["json"]["key"].as_str().unwrap().to_string();
+            let me = browser.send(Method::GET, "/api/v1/users/me", None, &[("authorization", format!("Bearer {key}"))]).await;
+            assert_eq!(me.status, 200, "{id}: {}", me.body);
+            // Sign-up is off for everyone else.
+            let signup = browser
+                .post_json("/api/trpc/users.create", json!({ "json": { "name": "x", "email": "x@e2e.invalid", "password": PASSWORD, "confirmPassword": PASSWORD } }), &[])
+                .await;
+            assert_eq!(signup.status, 403, "{id}: sign-up is open: {}", signup.body);
+        }
+        "searxng.searxng" => {
+            // No account: a search answers with its results page.
+            let results = browser.open("/search?q=serverbox").await;
+            assert_eq!(results.status, 200, "{id}");
+            assert!(results.body.contains("serverbox"), "{id}: not a results page");
+        }
+        "sonarr.sonarr" | "radarr.radarr" | "prowlarr.prowlarr" => {
+            let api = if catalog == "prowlarr.prowlarr" { "v1" } else { "v3" };
+            assert_eq!(browser.get(&format!("/api/{api}/system/status")).await.status, 401, "{id}: answered before signing in");
+            let page = browser.post_form("/login", &[("username", &need(user)), ("password", &need(password)), ("rememberMe", "on")]).await;
+            assert_eq!(page.status, 302, "{id}: {}", page.body);
+            assert!(!page.location.as_deref().unwrap_or_default().contains("loginFailed"), "{id}: the sign-in was refused");
+            // Signed in, the page is given the API key its own requests carry.
+            let init = browser.get("/initialize.json").await;
+            assert_eq!(init.status, 200, "{id}: {}", init.body);
+            let key = init.json()["apiKey"].as_str().unwrap_or_else(|| panic!("{id}: no API key: {}", init.body)).to_string();
+            let status = browser.send(Method::GET, &format!("/api/{api}/system/status"), None, &[("x-api-key", key)]).await;
+            assert_eq!(status.status, 200, "{id}: {}", status.body);
         }
         "corentinth.it_tools" => {
             // Nothing to sign in to: one of its own routes, which the server

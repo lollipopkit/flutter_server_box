@@ -175,8 +175,9 @@ pub struct Mcp {
     pub port: String,
     pub path: String,
     pub publisher: McpPublisher,
-    /// The compose service a sidecar is: its image pinned by digest, its
-    /// port published on loopback alone (it holds the service's credential).
+    /// The compose service a sidecar is: its image pinned by digest (or
+    /// built from a package Dockerfile whose bases are), its port published
+    /// on loopback alone (it holds the service's credential).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub service: Option<String>,
     /// Where a sidecar's code is, shown before deploying.
@@ -1270,9 +1271,19 @@ impl Package {
                 problems.push(problem(format!("mcp[{i}].service"), format!("{service} is not a service of the compose files")));
                 continue;
             };
-            let image = block.iter().filter_map(|l| yaml_entry(l)).find(|(k, _)| *k == "image").map(|(_, v)| v);
-            if !image.is_some_and(pinned) {
-                problems.push(problem(format!("mcp[{i}].service"), format!("{service}: an image pinned by digest (@sha256:…)")));
+            let entry = |key: &str| block.iter().filter_map(|l| yaml_entry(l)).find(|(k, _)| *k == key).map(|(_, v)| v);
+            let image = entry("image");
+            // Built here: from a Dockerfile of the package whose every base is pinned.
+            let built_pinned = image.is_some_and(|i| i.starts_with(BUILT_PREFIX))
+                && entry("dockerfile").and_then(|d| texts.get(d)).is_some_and(|d| {
+                    let bases = base_images(d);
+                    !bases.is_empty() && bases.iter().all(|b| pinned(b))
+                });
+            if !image.is_some_and(pinned) && !built_pinned {
+                problems.push(problem(
+                    format!("mcp[{i}].service"),
+                    format!("{service}: an image pinned by digest (@sha256:…), or built from a Dockerfile whose every FROM is"),
+                ));
             }
             let env = manifest.settings.iter().find(|s| s.key() == m.port).and_then(|s| match s {
                 Setting::Port { env, .. } => Some(env.as_str()),
@@ -1681,6 +1692,15 @@ label = { en = "Port" }
         assert_eq!(at(&problems(&sidecar, &open)), ["mcp[0].service"]);
         assert_eq!(at(&problems(&sidecar.replace("service = \"mcp\"", "service = \"other\""), &good)), ["mcp[0].service"]);
         assert_eq!(at(&problems(&sidecar.replace("source = \"https://example.com/mcp\"\n", ""), &good)), ["mcp[0].publisher"]);
+
+        // Or built here, from a Dockerfile whose every base is pinned.
+        let built = sidecar.replace("tone = \"teal\"\n", "tone = \"teal\"\nnotices = [\"buildsImages\"]\n");
+        let compose = compose("localhost/demo-mcp:1\n    build:\n      context: .\n      dockerfile: mcp.Dockerfile", "127.0.0.1:${MCP_PORT}");
+        let read = |dockerfile: &str| Package::read(&files(&built, &compose, &[("mcp.Dockerfile", dockerfile)]));
+        let pinned = format!("ARG V=1\nFROM ghcr.io/acme/mcp:${{V}}@sha256:{digest}\nCOPY <<EOF /bridge.js\nFROM nothing\nEOF\n");
+        assert!(read(&pinned).is_ok(), "{:?}", read(&pinned).err());
+        let loose = read("FROM ghcr.io/acme/mcp:1\n").unwrap_err();
+        assert_eq!(at(&loose), ["mcp[0].service"]);
     }
 
     #[test]

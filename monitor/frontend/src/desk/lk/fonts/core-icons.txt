@@ -42,6 +42,7 @@ cloud_download
 cloud_off
 code
 code_blocks
+collections_bookmark
 comment
 commit
 compare_arrows
@@ -124,10 +125,12 @@ link
 link_off
 list
 list_alt
+live_tv
 lock
 lock_open
 login
 logout
+manage_search
 memory
 memory_alt
 menu
@@ -139,6 +142,7 @@ monitoring
 mop
 more
 more_horiz
+movie
 nat
 navigation
 note
@@ -237,7 +241,9 @@ token
 toolbar
 tooltip
 transform
+travel_explore
 tune
+tv
 unfold_more
 update
 upload

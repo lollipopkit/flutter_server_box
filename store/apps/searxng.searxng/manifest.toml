@@ -1,0 +1,85 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# SearXNG, a metasearch engine: deployed with Docker Compose from compose.yaml
+# beside this file, shown in a desk window through the agent.
+
+schema = 1
+publisher = "searxng"
+name = "searxng"
+project = "SearXNG"
+developer = "SearXNG"
+version = "2026.9.29-4e2c1ea7f"
+homepage = "https://docs.searxng.org"
+source = "https://github.com/searxng/searxng/tree/4e2c1ea7f"
+glyph = "travel_explore"
+tone = "sky"
+categories = ["tools", "network"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "SearXNG"
+
+[description]
+en = "Search the web through many search engines at once, without them profiling you. Anyone who reaches the page can search: there is no account."
+zh = "同时通过多个搜索引擎搜索网页，且不会被它们追踪画像。能打开页面的人都能搜索：它没有账号。"
+zh-TW = "同時透過多個搜尋引擎搜尋網頁，且不會被它們追蹤分析。能開啟頁面的人都能搜尋：它沒有帳號。"
+
+[license]
+spdx = "AGPL-3.0"
+url = "https://github.com/searxng/searxng/blob/4e2c1ea7f/LICENSE"
+accept = true
+
+[requirements]
+arch = ["amd64", "arm64", "arm"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+SEARXNG_VERSION = "2026.9.29-4e2c1ea7f"
+VALKEY_VERSION = "9.0.3-alpine"
+
+[[settings]]
+key = "config"
+type = "path"
+env = "SEARXNG_CONFIG"
+default = "{stack}/config"
+data = true
+label = { en = "Settings", zh = "设置", zh-TW = "設定" }
+help = { en = "settings.yml: engines, theme, what results show.", zh = "settings.yml：搜索引擎、主题和结果显示方式。", zh-TW = "settings.yml：搜尋引擎、主題和結果顯示方式。" }
+
+[[settings]]
+key = "cache"
+type = "path"
+env = "SEARXNG_CACHE"
+default = "{stack}/cache"
+data = true
+label = { en = "Cache", zh = "缓存", zh-TW = "快取" }
+
+[[settings]]
+key = "valkey"
+type = "path"
+env = "SEARXNG_VALKEY"
+default = "{stack}/valkey"
+data = true
+label = { en = "Valkey data", zh = "Valkey 数据", zh-TW = "Valkey 資料" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "SEARXNG_PORT"
+default = 8096
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "To use it as the browser's search engine on other devices. Anyone on the network can then search through it. Off: only through the desk.", zh = "供其他设备的浏览器把它设为搜索引擎。开启后网络中的任何人都能通过它搜索。关闭时只能通过桌面访问。", zh-TW = "供其他裝置的瀏覽器將它設為搜尋引擎。開啟後網路中的任何人都能透過它搜尋。關閉時只能透過桌面存取。" }
+on = { SEARXNG_BIND = "0.0.0.0" }
+off = { SEARXNG_BIND = "127.0.0.1" }

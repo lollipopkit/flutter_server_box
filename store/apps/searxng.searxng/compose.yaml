@@ -1,0 +1,49 @@
+# SearXNG 2026.9.29-4e2c1ea7f (AGPL-3.0), https://github.com/searxng/searxng/tree/4e2c1ea7f
+#
+# Adapted from the commit's container/docker-compose.yml for ServerBox
+# Monitor (2026-10-18):
+# - no `name:` and no `container_name`: the agent names the project;
+# - images pinned (upstream: searxng:latest, valkey:9-alpine); bind mounts
+#   from the env file instead of named volumes;
+# - the image writes settings.yml from its template on the first start, with
+#   a secret key of its own (container/entrypoint.sh); it is the admin's to
+#   edit in the config folder afterwards;
+# - run as the shared folder's owner, so that file is the admin's to edit
+#   (the entrypoint only warns that the folders are not searxng's);
+# - Valkey is SearXNG's cache, named by SEARXNG_VALKEY_URL.
+
+services:
+  core:
+    image: docker.io/searxng/searxng:${SEARXNG_VERSION}
+    user: "${SBM_UID}:${SBM_GID}"
+    restart: unless-stopped
+    ports:
+      - '${SEARXNG_BIND}:${SEARXNG_PORT}:8080'
+    environment:
+      TZ: ${SBM_TZ}
+      SEARXNG_VALKEY_URL: valkey://valkey:6379/0
+    volumes:
+      - ${SEARXNG_CONFIG}:/etc/searxng/
+      - ${SEARXNG_CACHE}:/var/cache/searxng/
+    depends_on:
+      valkey:
+        condition: service_healthy
+    # /healthz is SearXNG's own health route; the image has wget.
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  valkey:
+    image: docker.io/valkey/valkey:${VALKEY_VERSION}
+    command: valkey-server --save 30 1 --loglevel warning
+    restart: unless-stopped
+    volumes:
+      - ${SEARXNG_VALKEY}:/data/
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

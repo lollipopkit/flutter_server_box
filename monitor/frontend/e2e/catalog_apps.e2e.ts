@@ -92,6 +92,45 @@ const APPS: Record<string, { id: string; use: (frame: FrameLocator, login: Login
       await expect(frame.locator('pngx-dashboard, app-dashboard, pngx-app-frame').first()).toBeAttached({ timeout: 120_000 })
     },
   },
+  Karakeep: {
+    id: 'karakeep.karakeep',
+    use: async (frame, login) => {
+      await signInForm(frame, frame.locator('input[type=email], input[name=email]').first(), login)
+      await expect(frame.locator('input[type=password]')).toHaveCount(0, { timeout: 60_000 })
+      await expect(frame.getByPlaceholder(/Search titles/).first()).toBeVisible({ timeout: 60_000 })
+    },
+  },
+  SearXNG: {
+    id: 'searxng.searxng',
+    use: async (frame) => {
+      const q = frame.locator('input[name=q]').first()
+      await expect(q).toBeVisible({ timeout: 10 * 60_000 })
+      await q.fill('serverbox')
+      await q.press('Enter')
+      await expect(frame.locator('#results, #urls').first()).toBeAttached({ timeout: 60_000 })
+    },
+  },
+  Sonarr: {
+    id: 'sonarr.sonarr',
+    use: async (frame, login) => {
+      await signInForm(frame, frame.locator('input[name=username]'), login)
+      await expect(frame.getByText('Series', { exact: true }).first()).toBeVisible({ timeout: 60_000 })
+    },
+  },
+  Radarr: {
+    id: 'radarr.radarr',
+    use: async (frame, login) => {
+      await signInForm(frame, frame.locator('input[name=username]'), login)
+      await expect(frame.getByText('Movies', { exact: true }).first()).toBeVisible({ timeout: 60_000 })
+    },
+  },
+  Prowlarr: {
+    id: 'prowlarr.prowlarr',
+    use: async (frame, login) => {
+      await signInForm(frame, frame.locator('input[name=username]'), login)
+      await expect(frame.getByText('Indexers', { exact: true }).first()).toBeVisible({ timeout: 60_000 })
+    },
+  },
   'Open WebUI': {
     id: 'openwebui.open_webui',
     use: async (frame, login) => {

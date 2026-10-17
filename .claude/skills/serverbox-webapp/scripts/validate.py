@@ -214,6 +214,40 @@ def service_block(compose: str, name: str) -> list[str] | None:
 PINNED = re.compile(r"^.+@sha256:[0-9a-fA-F]{64}$")
 
 
+def base_images(dockerfile: str) -> list[str]:
+    """The images a Dockerfile starts from, as the agent reads them
+    (`stacks::manifest::base_images`): stages and `scratch` left out, `${ARG}`
+    from the `ARG` defaults before it, heredoc bodies skipped."""
+    images, stages, args, heredoc = [], set(), {}, None
+    for line in dockerfile.splitlines():
+        trimmed = line.strip()
+        if heredoc is not None:
+            if trimmed == heredoc:
+                heredoc = None
+            continue
+        if "<<" in trimmed:
+            marker = re.match(r"[A-Za-z0-9_]*", trimmed.split("<<", 1)[1].lstrip("-").strip("'\"")).group(0)
+            if marker:
+                heredoc = marker
+        words = trimmed.split()
+        if not words:
+            continue
+        if words[0].upper() == "ARG":
+            for arg in words[1:]:
+                if "=" in arg:
+                    name, value = arg.split("=", 1)
+                    args[name] = value.strip("'\"")
+        elif words[0].upper() == "FROM":
+            rest = [w for w in words[1:] if not w.startswith("--")]
+            if rest:
+                image = re.sub(r"\$\{(\w+)\}|\$(\w+)", lambda m: args.get(m.group(1) or m.group(2), m.group(0)), rest[0])
+                if image != "scratch" and image not in stages and image not in images:
+                    images.append(image)
+            if len(rest) >= 3 and rest[1].lower() == "as":
+                stages.add(rest[2])
+    return images
+
+
 def published_entries(line: str) -> list[str]:
     """The entries a compose line lists: `- "a:b"`, or `ports: ['a:b', 'c:d']`."""
     line = line.strip()
@@ -243,9 +277,12 @@ def check_mcp(m: dict, settings: list, texts: dict[str, str], rep: Report) -> No
         if block is None:
             rep.error(f"{at}.service: {service} is not a service of the compose files")
             continue
-        image = next((v for k, v in yaml_entries("\n".join(block)) if k == "image"), "")
-        if not PINNED.match(image):
-            rep.error(f"{at}.service: {service}: an image pinned by digest (@sha256:…)")
+        entries = dict(yaml_entries("\n".join(block)))
+        image = entries.get("image", "")
+        # Built here: from a Dockerfile of the package whose every base is pinned.
+        bases = base_images(texts.get(entries.get("dockerfile", ""), "")) if image.startswith(BUILT_PREFIX) else []
+        if not PINNED.match(image) and not (bases and all(PINNED.match(b) for b in bases)):
+            rep.error(f"{at}.service: {service}: an image pinned by digest (@sha256:…), or built from a Dockerfile whose every FROM is")
         if port is not None:
             ref = "${" + port.get("env", "") + "}"
             published = [e for l in block for e in published_entries(l) if ref in e]

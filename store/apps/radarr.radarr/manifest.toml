@@ -1,0 +1,93 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Radarr: deployed with Docker Compose from compose.yaml beside this
+# file, shown in a desk window through the agent.
+
+schema = 1
+publisher = "radarr"
+name = "radarr"
+project = "Radarr"
+developer = "Servarr"
+version = "6.4.4.10685"
+homepage = "https://radarr.video"
+source = "https://github.com/Radarr/Radarr/tree/v6.4.4.10685"
+glyph = "movie"
+tone = "amber"
+categories = ["media", "files"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Radarr"
+
+[description]
+en = "Follow movies: wanted films are searched for through your indexers (Prowlarr), sent to a download client and filed into the movie library."
+zh = "追踪电影：通过索引器（Prowlarr）搜索想看的电影，交给下载客户端下载，并整理进电影库。"
+zh-TW = "追蹤電影：透過索引器（Prowlarr）搜尋想看的電影，交給下載用戶端下載，並整理進電影庫。"
+
+[license]
+spdx = "GPL-3.0"
+url = "https://github.com/Radarr/Radarr/blob/v6.4.4.10685/LICENSE"
+accept = true
+
+# linuxserver.io builds amd64 and arm64.
+[requirements]
+arch = ["amd64", "arm64"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+jobs = ["seed-login"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+RADARR_TAG = "6.4.4.10685-ls318"
+
+[[secrets]]
+env = "RADARR_PASSWORD"
+length = 32
+
+[login]
+user = "admin"
+password = "RADARR_PASSWORD"
+note = { en = "Other apps reach Radarr at host.docker.internal:<its port> once it is reachable from the network; its API key is in Settings → General.", zh = "开启“允许从网络访问”后，其他应用可通过 host.docker.internal:<端口> 连接 Radarr；API 密钥在 Settings → General 中。", zh-TW = "開啟「允許從網路存取」後，其他應用可透過 host.docker.internal:<連接埠> 連線 Radarr；API 金鑰在 Settings → General 中。" }
+
+[[settings]]
+key = "config"
+type = "path"
+env = "RADARR_CONFIG"
+default = "{stack}/config"
+data = true
+label = { en = "Configuration and database", zh = "配置和数据库", zh-TW = "設定和資料庫" }
+
+[[settings]]
+key = "movies"
+type = "path"
+env = "RADARR_LIBRARY"
+default = "{shared}/media/movies"
+label = { en = "Movie library", zh = "电影库", zh-TW = "電影庫" }
+
+[[settings]]
+key = "downloads"
+type = "path"
+env = "DOWNLOADS_LOCATION"
+default = "{shared}/downloads"
+label = { en = "Downloads", zh = "下载", zh-TW = "下載" }
+help = { en = "Where the download clients put their files (qBittorrent's and Transmission's default), at /downloads.", zh = "下载客户端保存文件的位置（qBittorrent 和 Transmission 的默认位置），位于 /downloads。", zh-TW = "下載用戶端儲存檔案的位置（qBittorrent 和 Transmission 的預設位置），位於 /downloads。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "RADARR_PORT"
+default = 7878
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "Also what the other apps need to reach it. Off: only through the desk.", zh = "其他应用连接它也需要开启。关闭时只能通过桌面访问。", zh-TW = "其他應用連線它也需要開啟。關閉時只能透過桌面存取。" }
+on = { RADARR_BIND = "0.0.0.0" }
+off = { RADARR_BIND = "127.0.0.1" }

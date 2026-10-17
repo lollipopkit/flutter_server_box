@@ -30,7 +30,7 @@ use common::catalog;
 /// The catalog apps tested by default: their MCP server connects with what
 /// the deploy wrote, or with a token [provision] makes as the person would.
 const AUTOMATIC: &[&str] =
-    &["transmission.transmission", "adguard.adguard_home", "usememos.memos", "homeassistant.home_assistant", "futo.immich", "jellyfin.jellyfin"];
+    &["transmission.transmission", "adguard.adguard_home", "usememos.memos", "homeassistant.home_assistant", "futo.immich", "jellyfin.jellyfin", "karakeep.karakeep"];
 
 /// The password of the accounts this test makes in an app.
 const PASSWORD: &str = "e2e-Passw0rd-not-kept";
@@ -275,6 +275,7 @@ async fn verify(srv: &TestServer, state: &Arc<AppState>, id: &str) {
     // do not (a ping).
     let named = match id.trim_end_matches("_e2e") {
         "futo.immich" => Some("list_albums"),
+        "karakeep.karakeep" => Some("get-lists"),
         _ => None,
     };
     let read = listed
