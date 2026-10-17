@@ -123,9 +123,9 @@ abstract final class SudoPassword {
     return pwd;
   }
 
-  /// Whether [trimmed] is sudo asking for the password: its own prompt,
-  /// `[sudo] …:` in any translation, or the bare `Password:` it prints on
-  /// macOS and the BSDs. Nothing else — `ssh`'s `user@host's password:`,
+  /// Whether [line] is sudo asking for the password: its own prompt,
+  /// `[sudo] …:` naming a password in one of sudo's translations, or the bare
+  /// `Password:` it prints on macOS and the BSDs. Nothing else — `ssh`'s `user@host's password:`,
   /// `mysql -p` or git would be handed this server's password.
   static bool isPromptText(String line) {
     final t = line.trim();
@@ -133,7 +133,12 @@ abstract final class SudoPassword {
     return _sudoPrompt.hasMatch(t) || _barePrompt.hasMatch(t);
   }
 
-  static final _sudoPrompt = RegExp(r'^\[sudo\]', caseSensitive: false);
+  static final _sudoPrompt = RegExp(
+    r'^\[sudo\].*(password|passwort|mot de passe|contraseña|senha|parola|'
+    r'wachtwoord|hasło|heslo|jelszó|salasana|lösenord|adgangskode|passord|'
+    r'пароль|パスワード|密码|密碼|비밀번호)',
+    caseSensitive: false,
+  );
   static final _barePrompt = RegExp(r'^(password|密码)\s*[:：]$', caseSensitive: false);
 
   /// Strips ANSI escape sequences and normalizes line endings.

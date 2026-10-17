@@ -1441,6 +1441,17 @@ class SSHPageState extends ConsumerState<SSHPage>
     Toast.success(libL10n.success);
   }
 
+  /// Types [cmd] and answers the sudo prompt it brings up — [_answerSudo].
+  /// What the shell printed before goes first: a prompt already there is not
+  /// this command's.
+  Future<void> _runAnsweringSudo(String cmd) {
+    _sess.drainOutput();
+    _sess.clearOutputTail();
+    _terminal.textInput(cmd);
+    _terminal.keyInput(TerminalKey.enter);
+    return _answerSudo();
+  }
+
   /// Answers the sudo prompt the command just typed brings up, with the
   /// password typed for this server this session — without asking, and only
   /// for a prompt that shows within a few seconds of the command, so nothing
