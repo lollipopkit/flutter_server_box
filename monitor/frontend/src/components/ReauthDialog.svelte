@@ -34,6 +34,13 @@
     }
   })
 
+  /// Cancel and the close button: the typed password goes with the dialog.
+  function dismiss() {
+    password = ''
+    error = null
+    onclose()
+  }
+
   async function submit(event: SubmitEvent) {
     event.preventDefault()
     if (!password || busy) return
@@ -51,21 +58,21 @@
   }
 </script>
 
-<Modal {open} title={$LL.reauthTitle()} {onclose}>
+<Modal {open} title={$LL.reauthTitle()} onclose={dismiss}>
   <form class="space-y-4" onsubmit={submit}>
     {#if message}
       <p class="text-sm text-fg">{message}</p>
     {/if}
     <p class="text-sm text-muted-fg">{$LL.reauthBody()}</p>
-    <div class="space-y-1">
+    <label class="block space-y-1">
       <span class="text-sm text-muted-fg">{$LL.currentPassword()}</span>
       <Input type="password" autocomplete="current-password" data-autofocus bind:value={password} />
-    </div>
+    </label>
     {#if error}
       <p class="text-sm text-danger">{error}</p>
     {/if}
     <div class="flex justify-end gap-2">
-      <Button variant="ghost" type="button" onclick={onclose}>{$LL.cancel()}</Button>
+      <Button variant="ghost" type="button" onclick={dismiss}>{$LL.cancel()}</Button>
       <Button type="submit" disabled={!password || busy}>
         {#if busy}<Spinner class="w-4 h-4" />{/if}
         {$LL.confirm()}

@@ -86,7 +86,10 @@
   function onPointerMove(e: PointerEvent) {
     if (labels.length === 0) return
     const rect = (e.currentTarget as SVGSVGElement).getBoundingClientRect()
-    const frac = (e.clientX - rect.left - PAD.left) / plotW
+    if (rect.width <= 0) return
+    // CSS pixels to viewBox units: below the 320 minimum the SVG is scaled down
+    const vx = ((e.clientX - rect.left) * W) / rect.width
+    const frac = (vx - PAD.left) / plotW
     hoverIndex = Math.min(
       labels.length - 1,
       Math.max(0, Math.round(frac * (labels.length - 1))),

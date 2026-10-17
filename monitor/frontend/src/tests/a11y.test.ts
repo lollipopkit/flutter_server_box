@@ -124,6 +124,19 @@ describe('LineChart', () => {
     expect(slider.getAttribute('aria-valuetext')).toContain('CPU: 10%')
   })
 
+  it.each([
+    ['narrower than the viewBox', 160],
+    ['wider than the viewBox', 640],
+  ])('picks the hovered point when the chart is drawn %s', async (_, width) => {
+    render(LineChart, props)
+    const svg = document.querySelector('svg')!
+    svg.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, width, height: 220, right: width, bottom: 220, x: 0, y: 0, toJSON() {} }) as DOMRect
+    // The middle point sits at viewBox x 46 + (320 - 46 - 8) / 2 = 179
+    await fireEvent.pointerMove(svg, { clientX: (179 * width) / 320 })
+    expect(screen.getByRole('slider', { name: 'Usage' })).toHaveAttribute('aria-valuenow', '1')
+  })
+
   it('lists every point in a table, built only once opened', async () => {
     const { container } = render(LineChart, props)
     expect(container.querySelector('table')).toBeNull()

@@ -18,6 +18,18 @@ function contrast(a: string, b: string): number {
   return (hi + 0.05) / (lo + 0.05)
 }
 
+/// `color` at `alpha` over `ground`, as `bg-success/10` draws it.
+function mix(color: string, ground: string, alpha: number): string {
+  const channel = (hex: string, i: number) => parseInt(hex.slice(i, i + 2), 16)
+  return (
+    '#' +
+    [1, 3, 5]
+      .map((i) => Math.round(channel(color, i) * alpha + channel(ground, i) * (1 - alpha)))
+      .map((v) => v.toString(16).padStart(2, '0'))
+      .join('')
+  )
+}
+
 const light = tokens(css.slice(css.indexOf(':root {'), css.indexOf('\n.dark {')))
 const dark = tokens(css.slice(css.indexOf('\n.dark {'), css.indexOf('@media')))
 const darkMedia = tokens(css.slice(css.indexOf('@media'), css.indexOf('@theme')))
@@ -30,6 +42,14 @@ describe.each([
     for (const tier of ['stone', 'silver', 'success', 'warning', 'danger']) {
       expect(contrast(t[tier], t.white), tier).toBeGreaterThanOrEqual(4.5)
       expect(contrast(t[tier], t.snow), tier).toBeGreaterThanOrEqual(4.5)
+    }
+  })
+
+  it('keep status text 4.5:1 on its own 10% tint (Badge)', () => {
+    for (const tier of ['success', 'warning', 'danger']) {
+      for (const ground of [t.white, t.snow]) {
+        expect(contrast(t[tier], mix(t[tier], ground, 0.1)), `${tier} on ${ground}`).toBeGreaterThanOrEqual(4.5)
+      }
     }
   })
 
