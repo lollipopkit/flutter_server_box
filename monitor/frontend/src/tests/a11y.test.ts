@@ -137,6 +137,19 @@ describe('LineChart', () => {
     expect(screen.getByRole('slider', { name: 'Usage' })).toHaveAttribute('aria-valuenow', '1')
   })
 
+  it('keeps the readout within the data when a refresh brings fewer points', async () => {
+    const { rerender } = render(LineChart, props)
+    const slider = screen.getByRole('slider', { name: 'Usage' })
+    await fireEvent.keyDown(slider, { key: 'End' })
+    expect(slider).toHaveAttribute('aria-valuenow', '2')
+
+    await rerender({ ...props, labels: props.labels.slice(0, 2), series: [{ ...props.series[0], values: [10, 20] }] })
+    expect(slider).toHaveAttribute('aria-valuenow', '1')
+    expect(slider.getAttribute('aria-valuetext')).toContain('CPU: 20%')
+    await fireEvent.keyDown(slider, { key: 'ArrowLeft' })
+    expect(slider).toHaveAttribute('aria-valuenow', '0')
+  })
+
   it('lists every point in a table, built only once opened', async () => {
     const { container } = render(LineChart, props)
     expect(container.querySelector('table')).toBeNull()

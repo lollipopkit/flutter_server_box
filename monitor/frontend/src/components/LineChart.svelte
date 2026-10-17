@@ -96,7 +96,12 @@
     )
   }
 
-  const readoutIndex = $derived(hoverIndex ?? labels.length - 1)
+  /// The hovered point, within the data as it is now: a refresh can bring
+  /// fewer points than the one the pointer or the keyboard was on.
+  const point = $derived(
+    hoverIndex === null || labels.length === 0 ? null : Math.min(hoverIndex, labels.length - 1),
+  )
+  const readoutIndex = $derived(point ?? labels.length - 1)
 
   function valueAt(s: ChartSeries, i: number): string {
     const v = s.values[i]
@@ -113,7 +118,7 @@
   function onKeyDown(e: KeyboardEvent) {
     const last = labels.length - 1
     const step = Math.max(1, Math.round(labels.length / 10))
-    const current = hoverIndex ?? last
+    const current = point ?? last
     let next: number
     switch (e.key) {
       case 'ArrowLeft':
@@ -227,10 +232,10 @@
         {/each}
       {/each}
 
-      {#if hoverIndex !== null}
+      {#if point !== null}
         <line
-          x1={x(hoverIndex)}
-          x2={x(hoverIndex)}
+          x1={x(point)}
+          x2={x(point)}
           y1={PAD.top}
           y2={PAD.top + plotH}
           class="stroke-faint-fg"

@@ -24,35 +24,44 @@
   let password = $state('')
   let busy = $state(false)
   let error = $state<string | null>(null)
+  /// Which showing of the dialog a request belongs to. A request still in
+  /// flight when the dialog is dismissed must not close, or report into, the
+  /// prompt opened after it for another change.
+  let generation = 0
+
+  function reset() {
+    generation++
+    password = ''
+    error = null
+    busy = false
+  }
 
   // A fresh field each time it opens: a password kept from the last change
   // would be a password sitting in memory for no reason.
   $effect(() => {
-    if (open) {
-      password = ''
-      error = null
-    }
+    if (open) reset()
   })
 
   /// Cancel and the close button: the typed password goes with the dialog.
   function dismiss() {
-    password = ''
-    error = null
+    reset()
     onclose()
   }
 
   async function submit(event: SubmitEvent) {
     event.preventDefault()
     if (!password || busy) return
+    const mine = generation
     busy = true
     error = null
     try {
       await onconfirm(password)
-      password = ''
+      if (mine !== generation) return
+      reset()
       onclose()
     } catch (e) {
+      if (mine !== generation) return
       error = accessMessage(e, $LL)
-    } finally {
       busy = false
     }
   }
