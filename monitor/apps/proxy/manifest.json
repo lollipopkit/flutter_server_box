@@ -1,0 +1,47 @@
+{
+  "publisher": "serverbox",
+  "name": "proxy",
+  "version": "1.0.0",
+  "api": 2,
+  "kind": "wasm",
+  "title": {
+    "en": "Reverse proxy",
+    "de": "Reverse-Proxy",
+    "es": "Proxy inverso",
+    "fr": "Proxy inverse",
+    "id": "Proxy terbalik",
+    "it": "Proxy inverso",
+    "ja": "リバースプロキシ",
+    "ko": "리버스 프록시",
+    "nl": "Reverse proxy",
+    "pt": "Proxy reverso",
+    "ru": "Обратный прокси-сервер",
+    "tr": "Ters proxy",
+    "uk": "Зворотний проксі-сервер",
+    "zh-CN": "反向代理",
+    "zh-TW": "反向代理"
+  },
+  "keywords": [
+    "proxy",
+    "nginx",
+    "caddy",
+    "traefik",
+    "waf",
+    "firewall",
+    "https"
+  ],
+  "glyph": "alt_route",
+  "tone": "sky",
+  "permissions": [
+    "process",
+    "root"
+  ],
+  "size": {
+    "width": 980,
+    "height": 700
+  },
+  "min_size": {
+    "width": 360,
+    "height": 400
+  }
+}

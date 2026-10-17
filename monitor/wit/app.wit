@@ -74,6 +74,17 @@ interface agent {
   /// Folders under the web apps' directory no deployed app owns: (app id,
   /// path).
   stack-leftovers: func() -> list<tuple<string, string>>;
+
+  record web-app {
+    id: string,
+    /// Its title by locale (`en` always there).
+    title: list<tuple<string, string>>,
+    /// Where its web UI listens on this machine.
+    port: u16,
+  }
+
+  /// The web apps deployed here that have a web UI.
+  web-apps: func() -> list<web-app>;
 }
 
 /// A job's own: nothing here works in a unary call.

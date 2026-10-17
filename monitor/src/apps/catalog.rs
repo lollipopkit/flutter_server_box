@@ -26,7 +26,7 @@ macro_rules! desk {
 
 /// The shipped packages, by app id. A test holds this list equal to
 /// `store/desk/`.
-const BUNDLED: &[(&str, &[u8])] = desk!["serverbox.cleanup", "serverbox.kernel", "serverbox.tailscale", "serverbox.ubuntu_pro"];
+const BUNDLED: &[(&str, &[u8])] = desk!["serverbox.cleanup", "serverbox.kernel", "serverbox.proxy", "serverbox.tailscale", "serverbox.ubuntu_pro"];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -63,6 +63,10 @@ static SHIPPED: LazyLock<BTreeMap<String, Arc<Offered>>> = LazyLock::new(|| {
         .collect()
 });
 
+/// A repository's address and its `(path, bytes)` files, or `Err` when it
+/// could not be read.
+pub type RepoFiles<'a> = (String, Result<Vec<(&'a String, &'a Vec<u8>)>, ()>);
+
 pub struct DeskCatalog {
     cache: PathBuf,
     store: RwLock<BTreeMap<String, Arc<Offered>>>,
@@ -91,7 +95,7 @@ impl DeskCatalog {
     /// The repositories' packages as just read: [read] each repository's
     /// address and its files, or `Err` for one that could not be read, whose
     /// packages stay as they were.
-    pub fn replace(&self, read: &[(String, Result<Vec<(&String, &Vec<u8>)>, ()>)]) {
+    pub fn replace(&self, read: &[RepoFiles<'_>]) {
         let previous = self.store.read_locked().clone();
         let mut next: BTreeMap<String, Arc<Offered>> = BTreeMap::new();
         for (address, files) in read {

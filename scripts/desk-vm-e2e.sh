@@ -8,6 +8,7 @@
 #   scripts/desk-vm-e2e.sh <node> cleanup      # junk of each kind made first
 #   scripts/desk-vm-e2e.sh <node> <spec>_app   # the same, the app as a package
 #   scripts/desk-vm-e2e.sh <node> tailscale    # Headscale and a peer made first
+#   scripts/desk-vm-e2e.sh <node> proxy_app    # a web service to send to made first
 #
 # Builds the agent on SBM_E2E_BUILD_HOST (lkd-wsl) and the panel here;
 # starts a VM; runs the agent there as an ordinary account with a sudo
@@ -104,6 +105,14 @@ vm 'set -e; export DEBIAN_FRONTEND=noninteractive
     head -c 5000000 /dev/urandom > ~/.cache/sbm-e2e-app/blob; head -c 2000000 /dev/urandom > ~/.npm/_cacache/blob
     head -c 1000000 /dev/urandom > ~/.local/share/Trash/files/old; head -c 3000000 /dev/urandom > ~/app/stacks/sbm.leftover/data/db"
   head -c 1000000 /dev/urandom > /home/sbm/app/stacks/sbm.leftover/data/root-owned'
+fi
+
+if [ "${spec%_app}" = proxy ]; then
+# A web service the sites send to, and the machine for the test to ask.
+echo "==> vm $id: a web service on 127.0.0.1:18080"
+vm 'mkdir -p /srv/sbm-e2e && echo sbm-e2e-ok > /srv/sbm-e2e/index.html
+  systemd-run --unit=sbm-e2e-web python3 -m http.server 18080 --bind 127.0.0.1 --directory /srv/sbm-e2e >/dev/null'
+export SBM_E2E_VM="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR root@$addr"
 fi
 
 if [ "${spec%_app}" = tailscale ]; then

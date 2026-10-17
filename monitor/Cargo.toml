@@ -140,6 +140,9 @@ libc = "0.2"
 sysinfo = { version = "0.39", default-features = false, features = ["system"] }
 
 [dev-dependencies]
+# ntex's test server otherwise turns on every crate's trace log, which
+# makes Cranelift compiling a component take tens of seconds.
+ntex = { version = "3", features = ["no-test-logging"] }
 # Repository trees for `tests/theme_store.rs` (`fl_theme::repo::Index`).
 indexmap = "2"
 # Building theme packages in `tests/desk_themes.rs`.

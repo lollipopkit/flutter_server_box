@@ -1,0 +1,106 @@
+/// Reverse proxy's service: nginx, Caddy and Traefik and their sites
+/// (`sbm_parser::proxy`), and the web application firewall for nginx's and
+/// Traefik's sites (`sbm_parser::waf`).
+package serverbox:proxy;
+
+interface api {
+  use sbm:app/types@0.1.0.{error};
+
+  enum server { nginx, caddy, traefik }
+
+  record site {
+    /// What the files call it.
+    name: string,
+    domains: list<string>,
+    /// `http(s)://host[:port]`.
+    upstream: string,
+    tls: bool,
+    /// nginx: the certificate and key files.
+    cert: option<string>,
+    key: option<string>,
+    max-body-mb: option<u32>,
+    /// Behind the firewall.
+    waf: bool,
+    /// ServerBox's own (changed here); others are shown.
+    managed: bool,
+  }
+
+  record server-view {
+    server: server,
+    installed: bool,
+    version: option<string>,
+    active: bool,
+    /// ServerBox's file can be written (Traefik: its file provider names the folder).
+    writable: bool,
+    tls-resolver: bool,
+    sites: list<site>,
+  }
+
+  record proxies {
+    servers: list<server-view>,
+    /// Ports listening on the machine.
+    listening: list<u16>,
+  }
+
+  enum mode { off, detect, block }
+
+  record waf-settings {
+    mode: mode,
+    paranoia: u8,
+    exclusions: list<u32>,
+  }
+
+  record server-waf {
+    ready: bool,
+    installable: bool,
+    settings: option<waf-settings>,
+  }
+
+  record firewall {
+    nginx: server-waf,
+    traefik: server-waf,
+    crs: option<string>,
+  }
+
+  record waf-event {
+    time: string,
+    client: string,
+    host: string,
+    method: string,
+    uri: string,
+    status: option<u16>,
+    /// The rules that matched: id and message.
+    rules: list<tuple<string, string>>,
+  }
+
+  /// A deployed web app, as an address to send to.
+  record web-app {
+    title: list<tuple<string, string>>,
+    url: string,
+  }
+
+  view: func() -> result<proxies, error>;
+  waf: func() -> result<firewall, error>;
+  web-apps: func() -> result<list<web-app>, error>;
+  /// ServerBox's whole list of sites for [server], written as root and
+  /// checked by the server (the previous file back on a refusal: the error's
+  /// message is `refused` and the server's words on the next line).
+  set-sites: func(server: server, sites: list<site>) -> result<proxies, error>;
+  set-waf: func(server: server, settings: waf-settings) -> result<firewall, error>;
+  /// The firewall's audit log, read as root, newest first.
+  waf-events: func(server: server) -> result<list<waf-event>, error>;
+}
+
+interface jobs {
+  use sbm:app/types@0.1.0.{error};
+  use api.{server};
+
+  install: func(server: server, acme-email: option<string>) -> result<_, error>;
+  install-waf: func(server: server) -> result<_, error>;
+}
+
+world proxy {
+  include sbm:app/imports@0.1.0;
+  export api;
+  export jobs;
+}

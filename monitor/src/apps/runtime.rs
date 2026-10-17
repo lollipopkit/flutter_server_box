@@ -493,6 +493,19 @@ impl sbm::app::agent::Host for Ctx {
         self.grant.state.remote_access.fs.roots.check_mutable(&canonical).is_err()
     }
 
+    async fn web_apps(&mut self) -> Vec<sbm::app::agent::WebApp> {
+        let state = self.grant.state.clone();
+        let rows = crate::stacks::store::all(&state.db).await.unwrap_or_default();
+        rows.into_iter()
+            .filter(|r| r.state == "installed")
+            .filter_map(|r| {
+                let package = state.stacks.package(&r.id)?;
+                let port = package.manifest.web_port(&r.settings)?;
+                Some(sbm::app::agent::WebApp { id: r.id, title: package.manifest.title.clone().into_iter().collect(), port })
+            })
+            .collect()
+    }
+
     async fn stack_leftovers(&mut self) -> Vec<(String, String)> {
         let state = self.grant.state.clone();
         let installed: Vec<String> = crate::stacks::store::all(&state.db).await.map(|rows| rows.into_iter().map(|r| r.id).collect()).unwrap_or_default();
