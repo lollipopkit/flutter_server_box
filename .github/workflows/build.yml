@@ -31,10 +31,22 @@ permissions:
 env:
   BUILD_TAG: test-build-${{ github.run_number }}-${{ github.sha }}
 
+# Build jobs run on `vars.{LINUX,MACOS,WINDOWS}_BUILD_RUNNER` when the
+# repository sets them (Settings → Secrets and variables → Actions →
+# Variables), for a larger or faster runner: a GitHub larger runner (an
+# organization on Team/Enterprise only), a third-party one, or a self-hosted
+# label. Unset, they are GitHub's standard runners. The legacy Linux build
+# stays on ubuntu-22.04 for its glibc, and this job stays standard — it only
+# reads files.
 jobs:
   reproducibilityCheck:
     # Static build-input validation. The independent byte-for-byte Android
     # builds live in android-reproducible.yml, run by hand.
+    #
+    # No Flutter: the only step that needed it was `flutter pub get
+    # --enforce-lockfile`, and every platform job already does that (Android
+    # inside `build-fdroid.sh`, the others as an explicit step). Installing
+    # the SDK here serialized every build behind ~90 seconds of download.
     name: Build input checks
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -67,12 +79,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          lfs: true
-          submodules: recursive
           persist-credentials: false
-          fetch-depth: 0
-      - name: Install Flutter
-        uses: ./.github/actions/setup-flutter
+          fetch-depth: 1
       - name: Require tagged releases
         if: inputs.release == true && github.ref_type != 'tag'
         shell: bash
@@ -179,14 +187,6 @@ jobs:
           canonical=",$(echo "$selected" | tr -s '[:space:]' ',' | sed 's/^,//;s/,$//'),"
           echo "selected=$canonical" >> "$GITHUB_OUTPUT"
           echo "Running:$selected"
-      - name: Check locked dependencies
-        shell: bash
-        run: |
-          flutter pub get --enforce-lockfile
-          git diff --exit-code -- pubspec.yaml pubspec.lock
-      - name: Check JNI build-id patch
-        shell: bash
-        run: scripts/release/patch-jni-build-id.sh
       - name: Read the app name
         id: appName
         shell: bash
@@ -262,9 +262,11 @@ jobs:
         include:
           - arch: arm64
             xcarch: arm64
+            rust_target: aarch64-apple-darwin
           - arch: amd64
             xcarch: x86_64
-    runs-on: macos-latest
+            rust_target: x86_64-apple-darwin
+    runs-on: ${{ vars.MACOS_BUILD_RUNNER || 'macos-latest' }}
     timeout-minutes: 45
     # Read-only, on a release run as on any other. Nothing here writes to the
     # repository: the artifact is handed to `publishRelease`, which is the one
@@ -276,23 +278,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          lfs: true
           submodules: recursive
           persist-credentials: false
           fetch-depth: 1
       - name: Install Flutter
         uses: ./.github/actions/setup-flutter
-      # sbm_ffi is built by the build hook, into a target directory and on a
-      # toolchain rust-cache never covered, so it cached nothing this build
-      # used. Not `build-hook-cache` either: a tag cannot save under main's
-      # rule, and what main saves is a debug build this one does not reuse.
-      # The minimal profile skips what the hook's implicit install would fetch
-      # and this build never runs (docs, clippy, rustfmt).
-      - name: Install the build hook's Rust toolchain
-        working-directory: crates/sbm_ffi
-        run: rustup toolchain install --profile minimal --no-self-update
+      # Release artifacts, keyed separately from the debug cache analysis.yml
+      # saves on main. A tag restores that release key when the hash matches;
+      # a dispatch from main is what writes it.
+      - uses: ./.github/actions/build-hook-cache
+        with:
+          step: restore
+          key-suffix: -release-${{ matrix.arch }}
+          targets: ${{ matrix.rust_target }}
       - name: Install dependencies
-        run: flutter pub get
+        run: flutter pub get --enforce-lockfile
       - name: Sign locally
         shell: bash
         run: |
@@ -332,7 +332,7 @@ jobs:
         env:
           FLUTTER_XCODE_ARCHS: ${{ matrix.xcarch }}
         run: |
-          flutter build macos --release \
+          flutter build macos --release --no-pub \
             --build-number="${BUILD_NUMBER}" \
             --build-name="1.0.${BUILD_NUMBER}"
       # Verify every Mach-O instead of trusting the requested architecture.
@@ -467,6 +467,10 @@ jobs:
           path: build/macos/Build/Products/Release/**/*.dSYM
           if-no-files-found: error
           retention-days: 90
+      - uses: ./.github/actions/build-hook-cache
+        with:
+          step: save
+          key-suffix: -release-${{ matrix.arch }}
 
   verifyMonitor:
     name: Verify monitor ${{ matrix.platform }}-${{ matrix.arch }}
@@ -506,8 +510,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          lfs: true
-          submodules: recursive
           persist-credentials: false
       - name: Install musl toolchain
         if: matrix.platform == 'linux'
@@ -533,7 +535,11 @@ jobs:
     env:
       APP_NAME: ${{ needs.reproducibilityCheck.outputs.appName }}
       BUILD_NUMBER: ${{ needs.reproducibilityCheck.outputs.buildNumber }}
-    runs-on: ubuntu-latest
+      # Isolated pub/gradle/proot tree `android-build-env.sh` otherwise puts
+      # under `$RUNNER_TEMP`. Caching it here is what makes the second
+      # dispatch skip the pub get and Gradle downloads the script always does.
+      FDROID_CACHE_DIR: ${{ github.workspace }}/.ci-cache/fdroid
+    runs-on: ${{ vars.LINUX_BUILD_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 45
     strategy:
       fail-fast: false
@@ -541,10 +547,13 @@ jobs:
         include:
           - abi: arm64
             target: android-arm64
+            rust_target: aarch64-linux-android
           - abi: arm
             target: android-arm
+            rust_target: armv7-linux-androideabi
           - abi: amd64
             target: android-x64
+            rust_target: x86_64-linux-android
     # See `buildMacOS` — publication is one job, and it is the only one that
     # needs to write.
     permissions:
@@ -553,16 +562,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          lfs: true
           submodules: recursive
           persist-credentials: false
-          fetch-depth: 0
+          fetch-depth: 1
       - name: Install Flutter
         uses: ./.github/actions/setup-flutter
       - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: "zulu"
           java-version: "21"
+      - name: Restore F-Droid caches
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.FDROID_CACHE_DIR }}
+          key: fdroid-${{ runner.os }}-${{ matrix.abi }}-${{ hashFiles('pubspec.lock', 'android/gradle/wrapper/gradle-wrapper.properties', 'android/**/*.gradle', 'android/**/*.gradle.kts') }}
+          restore-keys: fdroid-${{ runner.os }}-${{ matrix.abi }}-
+      # Release hook outputs, per ABI: the three matrix legs share an OS/arch
+      # but not a Rust target, so one key would let the last save overwrite
+      # the others.
+      - uses: ./.github/actions/build-hook-cache
+        with:
+          step: restore
+          key-suffix: -release-${{ matrix.abi }}
+          targets: ${{ matrix.rust_target }}
       - name: Fix the Android build epoch
         shell: bash
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)" >> "$GITHUB_ENV"
@@ -580,17 +602,27 @@ jobs:
             "ndk;$ndk_version"
           echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$ndk_version" >> "$GITHUB_ENV"
           echo "APKSIGNER=$ANDROID_HOME/build-tools/$build_tools/apksigner" >> "$GITHUB_ENV"
-      - name: Fetch dependencies
-        run: flutter pub get --enforce-lockfile
       # The script F-Droid runs, so what it rebuilds from this commit is this
       # APK without its signature. `fl_build` ran a plain `flutter build apk`
       # instead: no dev plugins pruned, the plugin registrant left at a path
       # under `.dart_tool`, so `libapp.so` came out different from F-Droid's
       # (#1274) and tied to this runner's checkout path. The script also
-      # patches jni and builds proot for arm64.
+      # patches jni, runs `flutter pub get --enforce-lockfile` and builds
+      # proot for arm64. The workflow used to pub-get first into `~/.pub-cache`,
+      # which the script never reads.
       - name: Build
         shell: bash
         run: scripts/release/build-fdroid.sh ${{ matrix.abi }}
+      - uses: ./.github/actions/build-hook-cache
+        with:
+          step: save
+          key-suffix: -release-${{ matrix.abi }}
+      - name: Save F-Droid caches
+        if: github.ref == 'refs/heads/main'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.FDROID_CACHE_DIR }}
+          key: fdroid-${{ runner.os }}-${{ matrix.abi }}-${{ hashFiles('pubspec.lock', 'android/gradle/wrapper/gradle-wrapper.properties', 'android/**/*.gradle', 'android/**/*.gradle.kts') }}
       # After the build, not before: with `key.properties` present Gradle signs
       # the release itself, and the unsigned APK above is never produced.
       - name: Fetch secrets
@@ -722,7 +754,7 @@ jobs:
     env:
       APP_NAME: ${{ needs.reproducibilityCheck.outputs.appName }}
       BUILD_NUMBER: ${{ needs.reproducibilityCheck.outputs.buildNumber }}
-    runs-on: macos-latest
+    runs-on: ${{ vars.MACOS_BUILD_RUNNER || 'macos-latest' }}
     timeout-minutes: 45
     # See `buildMacOS` — publication is one job, and it is the only one that
     # needs to write.
@@ -732,12 +764,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          lfs: true
           submodules: recursive
           persist-credentials: false
-          fetch-depth: 0
+          fetch-depth: 1
       - name: Install Flutter
         uses: ./.github/actions/setup-flutter
+      - uses: ./.github/actions/build-hook-cache
+        with:
+          step: restore
+          key-suffix: -release
+          targets: aarch64-apple-ios
+      - name: Install dependencies
+        run: flutter pub get --enforce-lockfile
       - name: Turn the Linux engine on
         shell: bash
         run: |
@@ -757,7 +795,7 @@ jobs:
       - name: Build (unsigned)
         shell: bash
         run: |
-          flutter build ios --release --no-codesign \
+          flutter build ios --release --no-codesign --no-pub \
             --build-number="${BUILD_NUMBER}" \
             --build-name="1.0.${BUILD_NUMBER}"
       # The step above asked for the engine; this is what says it arrived. It
@@ -789,6 +827,10 @@ jobs:
           path: build/ios/Release-iphoneos/**/*.dSYM
           if-no-files-found: error
           retention-days: 90
+      - uses: ./.github/actions/build-hook-cache
+        with:
+          step: save
+          key-suffix: -release
 
   buildLinux:
     name: Build linux
@@ -811,7 +853,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - runs_on: ubuntu-latest
+          - runs_on: ${{ vars.LINUX_BUILD_RUNNER || 'ubuntu-latest' }}
             release_suffix: ""
             artifact_suffix: ""
           - runs_on: ubuntu-22.04
@@ -823,12 +865,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          lfs: true
           submodules: recursive
           persist-credentials: false
-          fetch-depth: 0
+          fetch-depth: 1
       - name: Install Flutter
         uses: ./.github/actions/setup-flutter
+      - uses: ./.github/actions/build-hook-cache
+        with:
+          step: restore
+          key-suffix: -release${{ matrix.artifact_suffix }}
+          targets: x86_64-unknown-linux-gnu
       - name: Install dependencies
         run: |
           sudo apt update
@@ -838,6 +884,8 @@ jobs:
           # so without this the Linux build fails outright — its CMake makes a
           # missing appindicator a FATAL_ERROR.
           sudo apt install -y libayatana-appindicator3-dev
+      - name: Fetch dependencies
+        run: flutter pub get --enforce-lockfile
       - name: Build (release)
         if: needs.reproducibilityCheck.outputs.isRelease == 'true'
         shell: bash
@@ -864,6 +912,10 @@ jobs:
           path: ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}${{ matrix.release_suffix }}_amd64.AppImage
           if-no-files-found: error
           retention-days: 14
+      - uses: ./.github/actions/build-hook-cache
+        with:
+          step: save
+          key-suffix: -release${{ matrix.artifact_suffix }}
 
   buildWindows:
     name: Build windows
@@ -878,7 +930,7 @@ jobs:
     env:
       APP_NAME: ${{ needs.reproducibilityCheck.outputs.appName }}
       BUILD_NUMBER: ${{ needs.reproducibilityCheck.outputs.buildNumber }}
-    runs-on: windows-latest
+    runs-on: ${{ vars.WINDOWS_BUILD_RUNNER || 'windows-latest' }}
     timeout-minutes: 45
     # See `buildMacOS` — publication is one job, and it is the only one that
     # needs to write.
@@ -888,12 +940,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          lfs: true
           submodules: recursive
           persist-credentials: false
-          fetch-depth: 0
+          fetch-depth: 1
       - name: Install Flutter
         uses: ./.github/actions/setup-flutter
+      - uses: ./.github/actions/build-hook-cache
+        with:
+          step: restore
+          key-suffix: -release
+          targets: x86_64-pc-windows-msvc
+      - name: Install dependencies
+        run: flutter pub get --enforce-lockfile
       - name: Build (release)
         if: needs.reproducibilityCheck.outputs.isRelease == 'true'
         shell: bash
@@ -915,6 +973,10 @@ jobs:
           path: ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_windows_amd64.zip
           if-no-files-found: error
           retention-days: 14
+      - uses: ./.github/actions/build-hook-cache
+        with:
+          step: save
+          key-suffix: -release
 
   # The one job that publishes, and the only one with a write-capable token.
   #

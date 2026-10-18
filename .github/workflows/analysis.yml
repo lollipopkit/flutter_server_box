@@ -27,6 +27,10 @@ permissions:
   # For the `changes` job's file list. Read-only, and only for this repo.
   pull-requests: read
 
+# Build and test jobs run on `vars.{LINUX,MACOS,WINDOWS}_BUILD_RUNNER` when
+# the repository sets them (Settings → Secrets and variables → Actions →
+# Variables). Unset, they are GitHub's standard runners. The light jobs stay
+# on those regardless.
 jobs:
   # Which of the jobs this diff can actually affect.
   #
@@ -442,7 +446,7 @@ jobs:
   macosBuild:
     name: macOS build
     if: github.event_name == 'workflow_dispatch'
-    runs-on: macos-latest
+    runs-on: ${{ vars.MACOS_BUILD_RUNNER || 'macos-latest' }}
     timeout-minutes: 45
 
     steps:
@@ -458,6 +462,7 @@ jobs:
       - uses: ./.github/actions/build-hook-cache
         with:
           step: restore
+          targets: aarch64-apple-darwin
 
       - name: Install dependencies
         run: flutter pub get
@@ -507,7 +512,7 @@ jobs:
   windowsBuild:
     name: Windows build
     if: github.event_name == 'workflow_dispatch'
-    runs-on: windows-latest
+    runs-on: ${{ vars.WINDOWS_BUILD_RUNNER || 'windows-latest' }}
     timeout-minutes: 30
 
     steps:
@@ -524,6 +529,7 @@ jobs:
       - uses: ./.github/actions/build-hook-cache
         with:
           step: restore
+          targets: x86_64-pc-windows-msvc
 
       - name: Install dependencies
         run: flutter pub get --enforce-lockfile
@@ -541,7 +547,7 @@ jobs:
     name: Android unit tests
     needs: changes
     if: needs.changes.outputs.android == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.LINUX_BUILD_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 20
 
     steps:
@@ -612,7 +618,7 @@ jobs:
     name: tests (${{ matrix.shard }}/3)
     needs: changes
     if: needs.changes.outputs.dart == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.LINUX_BUILD_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -649,6 +655,7 @@ jobs:
       - uses: ./.github/actions/build-hook-cache
         with:
           step: restore
+          targets: x86_64-unknown-linux-gnu
 
       # Every third file, from a sorted list, so the split is stable and a new
       # test file lands in exactly one shard. `git ls-files` rather than a
