@@ -9,11 +9,16 @@ export default defineConfig({
   plugins: [svelte(), svelteTesting()],
   test: {
     projects: [
-      { test: { name: 'node', environment: 'node', include: ['src/tests/{format,fsPath,agentUrl}.test.ts'], setupFiles: ['./src/tests/setupNode.ts'] } },
+      { test: {
+        name: 'node', environment: 'node', include: ['src/tests/{format,fsPath,agentUrl,themeContrast}.test.ts'],
+        setupFiles: ['./src/tests/setupNode.ts'],
+        // CSS is emptied in tests unless included; themeContrast reads the theme `?raw`
+        css: { include: [/\.css\?raw$/] },
+      } },
       { extends: true, test: {
         name: 'browser', globals: true, environment: 'jsdom',
         include: ['src/**/*.test.ts'],
-        exclude: ['src/tests/{format,fsPath,agentUrl}.test.ts'],
+        exclude: ['src/tests/{format,fsPath,agentUrl,themeContrast}.test.ts'],
         setupFiles: ['./src/tests/setup.ts'],
         // A stylesheet read as text (`?raw`, the theme hooks' test) is its
         // text; any other stays empty, as Vitest leaves them.

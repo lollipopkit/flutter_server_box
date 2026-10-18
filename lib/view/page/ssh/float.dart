@@ -15,6 +15,7 @@ import 'package:server_box/data/res/terminal.dart';
 import 'package:server_box/data/ssh/terminal_session.dart';
 import 'package:server_box/view/page/ssh/present_server.dart';
 import 'package:server_box/view/widget/float_shell.dart';
+import 'package:server_box/view/widget/virt_key_semantics.dart';
 import 'package:xterm/core.dart';
 import 'package:xterm/ui.dart' hide TerminalThemes;
 
@@ -226,21 +227,27 @@ extension _Widgets on _FloatTerminalState {
     };
     final color = isDark ? Colors.white : Colors.black;
 
-    return InkWell(
-      onTap: () => _press(item, notifier),
-      child: SizedBox(
-        width: _keyWidth,
-        height: _keyRowHeight,
-        child: Center(
-          child: item.icon != null
-              ? Icon(item.icon, size: 17, color: color)
-              : Text(
-                  item.text,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: armed ? UIs.primaryColor : color,
-                  ),
-                ),
+    return VirtKeySemantics(
+      item: item,
+      armed: armed,
+      child: InkWell(
+        onTap: () => _press(item, notifier),
+        child: SizedBox(
+          width: _keyWidth,
+          height: _keyRowHeight,
+          child: Center(
+            child: ExcludeSemantics(
+              child: item.icon != null
+                  ? Icon(item.icon, size: 17, color: color)
+                  : Text(
+                      item.text,
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: armed ? UIs.primaryColor : color,
+                      ),
+                    ),
+            ),
+          ),
         ),
       ),
     );

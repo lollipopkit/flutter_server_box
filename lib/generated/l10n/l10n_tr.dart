@@ -6964,4 +6964,76 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get monitorUpdateNoAnswer => 'Ajan geri gelmedi. Sunucuda denetleyin.';
+
+  @override
+  String get keyArrowDown => 'Aşağı ok';
+
+  @override
+  String get keyArrowLeft => 'Sol ok';
+
+  @override
+  String get keyArrowRight => 'Sağ ok';
+
+  @override
+  String get keyArrowUp => 'Yukarı ok';
+
+  @override
+  String get keyControl => 'Control';
+
+  @override
+  String get keyEscape => 'Escape';
+
+  @override
+  String get keyPageDown => 'Sayfa aşağı';
+
+  @override
+  String get keyPageUp => 'Sayfa yukarı';
+
+  @override
+  String get termTextView => 'Metin olarak görüntüle';
+
+  @override
+  String termTextLetGo(int count) {
+    return 'Artık saklanmayan önceki satırlar: $count';
+  }
+
+  @override
+  String get systemGroups => 'Gruplar';
+
+  @override
+  String get userGid => 'GID';
+
+  @override
+  String get userGroupMembers => 'Üyeler';
+
+  @override
+  String get userPrimaryMembers => 'Birincil üyeler';
+
+  @override
+  String get userSystemGroup => 'Sistem grubu';
+
+  @override
+  String get userMembersHint => 'alice,bob';
+
+  @override
+  String get userRegularGroup => 'Regular';
+
+  @override
+  String get termMetricsBar => 'Terminalin altında sunucu değerleri';
+
+  @override
+  String get termMetricsBarTip =>
+      'CPU, bellek, ağ ve disk, sunucu kartındaki gibi. Telefonda sanal tuşların üstünde.';
+
+  @override
+  String get launchFailedTitle => 'ServerBox başlatılamadı';
+
+  @override
+  String get launchFailedBody =>
+      'Aşağıdaki hatayı kopyalayıp günlük dosyalarıyla birlikte bir GitHub issue\'sunda bildirin.';
+
+  @override
+  String launchFailedLogs(String path) {
+    return 'Günlükler: $path';
+  }
 }

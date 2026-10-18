@@ -6583,6 +6583,76 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get monitorUpdateNoAnswer => 'agent 没有恢复，请到服务器上检查。';
+
+  @override
+  String get keyArrowDown => '下箭头';
+
+  @override
+  String get keyArrowLeft => '左箭头';
+
+  @override
+  String get keyArrowRight => '右箭头';
+
+  @override
+  String get keyArrowUp => '上箭头';
+
+  @override
+  String get keyControl => 'Ctrl 键';
+
+  @override
+  String get keyEscape => 'Esc 键';
+
+  @override
+  String get keyPageDown => '向下翻页';
+
+  @override
+  String get keyPageUp => '向上翻页';
+
+  @override
+  String get termTextView => '以文本查看';
+
+  @override
+  String termTextLetGo(int count) {
+    return '更早的输出已不再保留：$count 行';
+  }
+
+  @override
+  String get systemGroups => '用户组';
+
+  @override
+  String get userGid => 'GID';
+
+  @override
+  String get userGroupMembers => '成员';
+
+  @override
+  String get userPrimaryMembers => '主组成员';
+
+  @override
+  String get userSystemGroup => '系统组';
+
+  @override
+  String get userMembersHint => 'alice,bob';
+
+  @override
+  String get userRegularGroup => '普通组';
+
+  @override
+  String get termMetricsBar => '终端下方显示服务器状态';
+
+  @override
+  String get termMetricsBarTip => 'CPU、内存、网络、磁盘，与服务器卡片一致；手机上位于虚拟按键上方。';
+
+  @override
+  String get launchFailedTitle => 'ServerBox 无法启动';
+
+  @override
+  String get launchFailedBody => '请复制下方的错误信息，连同日志文件一起在 GitHub issue 中反馈。';
+
+  @override
+  String launchFailedLogs(String path) {
+    return '日志：$path';
+  }
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -13168,4 +13238,74 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get monitorUpdateNoAnswer => 'agent 沒有恢復，請到伺服器上檢查。';
+
+  @override
+  String get keyArrowDown => '下箭頭';
+
+  @override
+  String get keyArrowLeft => '左箭頭';
+
+  @override
+  String get keyArrowRight => '右箭頭';
+
+  @override
+  String get keyArrowUp => '上箭頭';
+
+  @override
+  String get keyControl => 'Ctrl 鍵';
+
+  @override
+  String get keyEscape => 'Esc 鍵';
+
+  @override
+  String get keyPageDown => '向下翻頁';
+
+  @override
+  String get keyPageUp => '向上翻頁';
+
+  @override
+  String get termTextView => '以文字檢視';
+
+  @override
+  String termTextLetGo(int count) {
+    return '更早的輸出已不再保留：$count 行';
+  }
+
+  @override
+  String get systemGroups => '群組';
+
+  @override
+  String get userGid => 'GID';
+
+  @override
+  String get userGroupMembers => '成員';
+
+  @override
+  String get userPrimaryMembers => '主要成員';
+
+  @override
+  String get userSystemGroup => '系統群組';
+
+  @override
+  String get userMembersHint => 'alice,bob';
+
+  @override
+  String get userRegularGroup => '一般群組';
+
+  @override
+  String get termMetricsBar => '終端下方顯示伺服器狀態';
+
+  @override
+  String get termMetricsBarTip => 'CPU、記憶體、網路、磁碟，與伺服器卡片一致；手機上位於虛擬按鍵上方。';
+
+  @override
+  String get launchFailedTitle => 'ServerBox 無法啟動';
+
+  @override
+  String get launchFailedBody => '請複製下方的錯誤訊息，連同日誌檔一起在 GitHub issue 中回報。';
+
+  @override
+  String launchFailedLogs(String path) {
+    return '日誌：$path';
+  }
 }

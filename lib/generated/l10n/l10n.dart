@@ -11870,6 +11870,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The agent has not come back. Check it on the server.'**
   String get monitorUpdateNoAnswer;
+
+  /// Screen reader name of the down arrow virtual key.
+  ///
+  /// In en, this message translates to:
+  /// **'Down arrow'**
+  String get keyArrowDown;
+
+  /// Screen reader name of the left arrow virtual key.
+  ///
+  /// In en, this message translates to:
+  /// **'Left arrow'**
+  String get keyArrowLeft;
+
+  /// Screen reader name of the right arrow virtual key.
+  ///
+  /// In en, this message translates to:
+  /// **'Right arrow'**
+  String get keyArrowRight;
+
+  /// Screen reader name of the up arrow virtual key.
+  ///
+  /// In en, this message translates to:
+  /// **'Up arrow'**
+  String get keyArrowUp;
+
+  /// Screen reader name of the control virtual key.
+  ///
+  /// In en, this message translates to:
+  /// **'Control'**
+  String get keyControl;
+
+  /// Screen reader name of the escape virtual key.
+  ///
+  /// In en, this message translates to:
+  /// **'Escape'**
+  String get keyEscape;
+
+  /// Screen reader name of the page down virtual key.
+  ///
+  /// In en, this message translates to:
+  /// **'Page down'**
+  String get keyPageDown;
+
+  /// Screen reader name of the page up virtual key.
+  ///
+  /// In en, this message translates to:
+  /// **'Page up'**
+  String get keyPageUp;
+
+  /// Opens the terminal output as selectable text, for screen readers.
+  ///
+  /// In en, this message translates to:
+  /// **'View as text'**
+  String get termTextView;
+
+  /// Shown at the top of the terminal text view once its oldest lines were dropped to bound memory.
+  ///
+  /// In en, this message translates to:
+  /// **'Earlier lines no longer kept: {count}'**
+  String termTextLetGo(int count);
+
+  /// Tab label for the machine's groups, next to Users.
+  ///
+  /// In en, this message translates to:
+  /// **'Groups'**
+  String get systemGroups;
+
+  /// Column header for a group's numeric id.
+  ///
+  /// In en, this message translates to:
+  /// **'GID'**
+  String get userGid;
+
+  /// Label for a group's supplementary members.
+  ///
+  /// In en, this message translates to:
+  /// **'Members'**
+  String get userGroupMembers;
+
+  /// Accounts whose primary group is this group.
+  ///
+  /// In en, this message translates to:
+  /// **'Primary members'**
+  String get userPrimaryMembers;
+
+  /// Label for a group below the machine's GID_MIN.
+  ///
+  /// In en, this message translates to:
+  /// **'System group'**
+  String get userSystemGroup;
+
+  /// Hint for the group members field.
+  ///
+  /// In en, this message translates to:
+  /// **'alice,bob'**
+  String get userMembersHint;
+
+  /// Section and filter label for groups at or above the machine's GID_MIN.
+  ///
+  /// In en, this message translates to:
+  /// **'Regular'**
+  String get userRegularGroup;
+
+  /// Setting: show a bar under the terminal with its server's CPU, memory, network and disk readings.
+  ///
+  /// In en, this message translates to:
+  /// **'Server readings under the terminal'**
+  String get termMetricsBar;
+
+  /// Explains the terminal readings bar setting.
+  ///
+  /// In en, this message translates to:
+  /// **'CPU, memory, network and disk, as the server card shows them. Above the virtual keys on a phone.'**
+  String get termMetricsBarTip;
+
+  /// Title of the screen shown when the app fails during startup.
+  ///
+  /// In en, this message translates to:
+  /// **'ServerBox could not start'**
+  String get launchFailedTitle;
+
+  /// Asks the user to report a startup failure.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy the error below and report it in a GitHub issue, with the log files.'**
+  String get launchFailedBody;
+
+  /// Where the log files are.
+  ///
+  /// In en, this message translates to:
+  /// **'Logs: {path}'**
+  String launchFailedLogs(String path);
 }
 
 class _AppLocalizationsDelegate

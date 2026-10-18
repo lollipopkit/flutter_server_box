@@ -12,6 +12,7 @@ export interface ServerEntry {
 }
 
 import { probe } from './probe'
+import { readPref, removePref, writePref } from './prefs'
 import { isSecureAgentUrl, normalizeAgentUrl } from './agentUrl'
 
 const KEY = 'servers.v1'
@@ -67,20 +68,20 @@ class ServersStore {
   lastOnline = $state<Record<string, number>>({})
 
   constructor() {
-    const sessions = readJson<Record<string, string>>(window.sessionStorage, SESSION_KEY) ?? {}
-    this.lastOnline = readJson(window.localStorage, ONLINE_KEY) ?? {}
+    const sessions = readJson<Record<string, string>>(SESSION_KEY, 'sessionStorage') ?? {}
+    this.lastOnline = readJson(ONLINE_KEY) ?? {}
     // TODO: remove with SESSION_KEY_V1, SESSION_KEY_V2 and ACCOUNTS_KEY.
-    const v1 = readJson<Record<string, { token: string }>>(window.sessionStorage, SESSION_KEY_V1) ?? {}
-    const v2 = readJson<Record<string, { active: string | null; tokens: Record<string, string> }>>(window.sessionStorage, SESSION_KEY_V2) ?? {}
+    const v1 = readJson<Record<string, { token: string }>>(SESSION_KEY_V1, 'sessionStorage') ?? {}
+    const v2 = readJson<Record<string, { active: string | null; tokens: Record<string, string> }>>(SESSION_KEY_V2, 'sessionStorage') ?? {}
     for (const [id, { token }] of Object.entries(v1)) sessions[id] ??= token
     for (const [id, { active, tokens }] of Object.entries(v2)) {
       const token = active !== null ? tokens[active] : undefined
       if (token) sessions[id] ??= token
     }
-    window.sessionStorage.removeItem(SESSION_KEY_V1)
-    window.sessionStorage.removeItem(SESSION_KEY_V2)
-    window.localStorage.removeItem(ACCOUNTS_KEY)
-    const raw = window.localStorage.getItem(KEY)
+    removePref(SESSION_KEY_V1, 'sessionStorage')
+    removePref(SESSION_KEY_V2, 'sessionStorage')
+    removePref(ACCOUNTS_KEY)
+    const raw = readPref(KEY)
     if (raw) {
       try {
         const parsed = JSON.parse(raw) as { list?: ServerEntry[]; currentId?: string }
@@ -99,7 +100,7 @@ class ServersStore {
         {
           id: LOCAL_ID,
           url: '',
-          token: window.sessionStorage.getItem('token') ?? window.localStorage.getItem('token'),
+          token: readPref('token', 'sessionStorage') ?? readPref('token'),
         },
       ]
       this.currentId = LOCAL_ID
@@ -108,8 +109,8 @@ class ServersStore {
     if (!this.list.some((s) => s.id === this.currentId)) {
       this.currentId = this.list[0]?.id ?? ''
     }
-    window.localStorage.removeItem('token')
-    window.localStorage.removeItem('username')
+    removePref('token')
+    removePref('username')
     this.#persist()
   }
 
@@ -203,11 +204,7 @@ class ServersStore {
   markOnline(id: string) {
     if (!this.list.some((s) => s.id === id)) return
     this.lastOnline[id] = Date.now()
-    try {
-      window.localStorage.setItem(ONLINE_KEY, JSON.stringify($state.snapshot(this.lastOnline)))
-    } catch {
-      // Only "last online" is lost.
-    }
+    writePref(ONLINE_KEY, JSON.stringify($state.snapshot(this.lastOnline)))
   }
 
   select(id: string) {
@@ -240,15 +237,15 @@ class ServersStore {
 
   #persist() {
     const list = $state.snapshot(this.list).map(({ id, url }) => ({ id, url, token: null }))
-    window.localStorage.setItem(KEY, JSON.stringify({ list, currentId: this.currentId }))
+    writePref(KEY, JSON.stringify({ list, currentId: this.currentId }))
     const sessions = Object.fromEntries(this.list.filter((e) => e.token).map((e) => [e.id, e.token]))
-    window.sessionStorage.setItem(SESSION_KEY, JSON.stringify(sessions))
+    writePref(SESSION_KEY, JSON.stringify(sessions), 'sessionStorage')
   }
 }
 
-function readJson<T>(storage: Storage, key: string): T | null {
+function readJson<T>(key: string, area?: 'sessionStorage'): T | null {
   try {
-    const raw = storage.getItem(key)
+    const raw = readPref(key, area)
     return raw ? (JSON.parse(raw) as T) : null
   } catch {
     // Corrupt state is equivalent to none.

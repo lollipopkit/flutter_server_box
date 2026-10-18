@@ -7023,4 +7023,76 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get monitorUpdateNoAnswer =>
       'Агент не повернувся. Перевірте його на сервері.';
+
+  @override
+  String get keyArrowDown => 'Стрілка вниз';
+
+  @override
+  String get keyArrowLeft => 'Стрілка вліво';
+
+  @override
+  String get keyArrowRight => 'Стрілка вправо';
+
+  @override
+  String get keyArrowUp => 'Стрілка вгору';
+
+  @override
+  String get keyControl => 'Control';
+
+  @override
+  String get keyEscape => 'Escape';
+
+  @override
+  String get keyPageDown => 'Сторінка вниз';
+
+  @override
+  String get keyPageUp => 'Сторінка вгору';
+
+  @override
+  String get termTextView => 'Переглянути як текст';
+
+  @override
+  String termTextLetGo(int count) {
+    return 'Ранніші рядки більше не зберігаються: $count';
+  }
+
+  @override
+  String get systemGroups => 'Групи';
+
+  @override
+  String get userGid => 'GID';
+
+  @override
+  String get userGroupMembers => 'Учасники';
+
+  @override
+  String get userPrimaryMembers => 'Основні учасники';
+
+  @override
+  String get userSystemGroup => 'Системна група';
+
+  @override
+  String get userMembersHint => 'alice,bob';
+
+  @override
+  String get userRegularGroup => 'Regular';
+
+  @override
+  String get termMetricsBar => 'Показники сервера під терміналом';
+
+  @override
+  String get termMetricsBarTip =>
+      'CPU, пам\'ять, мережа та диск — як на картці сервера. На телефоні над віртуальними клавішами.';
+
+  @override
+  String get launchFailedTitle => 'ServerBox не вдалося запустити';
+
+  @override
+  String get launchFailedBody =>
+      'Скопіюйте помилку нижче й повідомте про неї в issue на GitHub, додавши файли журналу.';
+
+  @override
+  String launchFailedLogs(String path) {
+    return 'Журнали: $path';
+  }
 }

@@ -73,8 +73,11 @@ void main() {
     ];
   }
 
-  Future<void> pump(WidgetTester tester) async {
-    tester.view.physicalSize = const Size(1200, 900);
+  Future<void> pump(
+    WidgetTester tester, {
+    Size size = const Size(1200, 900),
+  }) async {
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
 
@@ -296,5 +299,49 @@ void main() {
     await pump(tester);
 
     expect(find.byType(SSHPage), findsOneWidget);
+  });
+
+  group('the text view', () {
+    /// A phone's terminal leaves timers running; they end with the tree.
+    Future<void> closeAll(WidgetTester tester) async {
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(minutes: 1));
+    }
+
+    Future<void> openOnPhone(WidgetTester tester) async {
+      // A phone opens the terminal's help once; not what this is about.
+      Stores.setting.sshTermHelpShown.put(true);
+      Stores.server.put(
+        spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u'),
+      );
+      await saveTabs([
+        {'sourceId': 'srv-1'},
+      ]);
+      await pump(tester, size: const Size(400, 800));
+      expect(find.byType(SSHPage), findsOneWidget);
+    }
+
+    testWidgets('is behind the menu, taking no button from the bar', (
+      tester,
+    ) async {
+      await openOnPhone(tester);
+      expect(find.byTooltip(l10n.termTextView), findsNothing);
+
+      await tester.tap(find.byType(ContextMenuButton));
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(find.text(l10n.termTextView), findsOneWidget);
+      await closeAll(tester);
+    });
+
+    testWidgets('is a button of its own for a screen reader', (tester) async {
+      tester.platformDispatcher.accessibilityFeaturesTestValue =
+          const FakeAccessibilityFeatures(accessibleNavigation: true);
+      addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+      await openOnPhone(tester);
+      expect(find.byTooltip(l10n.termTextView), findsOneWidget);
+      await closeAll(tester);
+    });
   });
 }

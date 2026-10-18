@@ -87,18 +87,72 @@
   const gridFractions = [0, 0.25, 0.5, 0.75, 1]
 
   let hoverIndex = $state<number | null>(null)
+  let tableOpen = $state(false)
 
   function onPointerMove(e: PointerEvent) {
     if (labels.length === 0) return
     const rect = (e.currentTarget as SVGSVGElement).getBoundingClientRect()
-    const frac = (e.clientX - rect.left - PAD.left) / plotW
+    if (rect.width <= 0) return
+    // CSS pixels to viewBox units: below the 320 minimum the SVG is scaled down
+    const vx = ((e.clientX - rect.left) * W) / rect.width
+    const frac = (vx - PAD.left) / plotW
     hoverIndex = Math.min(
       labels.length - 1,
       Math.max(0, Math.round(frac * (labels.length - 1))),
     )
   }
 
-  const readoutIndex = $derived(hoverIndex ?? labels.length - 1)
+  /// The hovered point, within the data as it is now: a refresh can bring
+  /// fewer points than the one the pointer or the keyboard was on.
+  const point = $derived(
+    hoverIndex === null || labels.length === 0 ? null : Math.min(hoverIndex, labels.length - 1),
+  )
+  const readoutIndex = $derived(point ?? labels.length - 1)
+
+  function valueAt(s: ChartSeries, i: number): string {
+    const v = s.values[i]
+    return v != null ? format(v) : '--'
+  }
+
+  /// One point in words: the time and every series' reading.
+  function pointText(i: number): string {
+    return [fmtAxisTime(labels[i]), ...series.map((s) => `${s.label}: ${valueAt(s, i)}`)].join(', ')
+  }
+
+  /// The keyboard counterpart of hovering: the arrows step through the points,
+  /// Page Up/Down by a tenth, Home/End to either end.
+  function onKeyDown(e: KeyboardEvent) {
+    const last = labels.length - 1
+    const step = Math.max(1, Math.round(labels.length / 10))
+    const current = point ?? last
+    let next: number
+    switch (e.key) {
+      case 'ArrowLeft':
+      case 'ArrowDown':
+        next = current - 1
+        break
+      case 'ArrowRight':
+      case 'ArrowUp':
+        next = current + 1
+        break
+      case 'PageDown':
+        next = current - step
+        break
+      case 'PageUp':
+        next = current + step
+        break
+      case 'Home':
+        next = 0
+        break
+      case 'End':
+        next = last
+        break
+      default:
+        return
+    }
+    e.preventDefault()
+    hoverIndex = Math.min(last, Math.max(0, next))
+  }
 </script>
 
 <Card variant="raised" padding="15px 17px">
@@ -109,7 +163,7 @@
         <i class="h-[7px] w-[7px] rounded-full" style:background={s.color}></i>
         {s.label}
         <span class="lk-num font-semibold text-(--text-primary)">
-          {labels.length > 0 && s.values[readoutIndex] != null ? format(s.values[readoutIndex]) : '--'}
+          {labels.length > 0 ? valueAt(s, readoutIndex) : '--'}
         </span>
       </span>
     {/each}
@@ -118,20 +172,28 @@
       <span class="lk-num text-[12px] text-(--text-tertiary)">{fmtAxisTime(labels[readoutIndex])}</span>
     {/if}
   </div>
-
   <div bind:clientWidth={chartWidth}>
     {#if labels.length < 2}
       <div class="flex h-40 items-center justify-center text-[13px] text-(--text-tertiary)">
         {$LL.collectingData()}
       </div>
     {:else}
+      <!-- A slider to assistive technology: its value is the point it is on,
+           read out by pointText. -->
       <svg
         viewBox="0 0 {W} {H}"
-        class="h-[220px] w-full touch-none overflow-visible"
-        role="img"
+        class="chart h-[220px] w-full touch-none overflow-visible"
+        role="slider"
+        tabindex="0"
         aria-label={title ?? series.map((s) => s.label).join(', ')}
+        aria-valuemin={0}
+        aria-valuemax={labels.length - 1}
+        aria-valuenow={readoutIndex}
+        aria-valuetext={pointText(readoutIndex)}
         onpointermove={onPointerMove}
         onpointerleave={() => (hoverIndex = null)}
+        onkeydown={onKeyDown}
+        onblur={() => (hoverIndex = null)}
       >
         {#each gridFractions as f (f)}
           <line
@@ -162,10 +224,10 @@
           {/each}
         {/each}
 
-        {#if hoverIndex !== null}
+        {#if point !== null}
           <line
-            x1={x(hoverIndex)}
-            x2={x(hoverIndex)}
+            x1={x(point)}
+            x2={x(point)}
             y1={PAD.top}
             y2={PAD.top + plotH}
             stroke="var(--border-strong)"
@@ -180,11 +242,45 @@
           {fmtAxisTime(labels[labels.length - 1])}
         </text>
       </svg>
+      <details class="mt-[9px] text-[12px]" bind:open={tableOpen}>
+        <summary class="cursor-pointer text-(--text-secondary) hover:text-(--text-primary)">{$LL.chartShowData()}</summary>
+        <!-- Only while open: up to MAX_POINTS rows per chart, on every refresh -->
+        {#if tableOpen}
+          <div class="mt-[9px] max-h-64 overflow-auto">
+            <table class="lk-num w-full">
+              <caption class="sr-only">{title ?? series.map((s) => s.label).join(', ')}</caption>
+              <thead class="sticky top-0 bg-(--surface-raised)">
+                <tr>
+                  <th scope="col" class="py-[3px] pr-[13px] text-left font-semibold text-(--text-secondary)">{$LL.chartTime()}</th>
+                  {#each series as s (s.label)}
+                    <th scope="col" class="py-[3px] pl-[13px] text-right font-semibold text-(--text-secondary)">{s.label}</th>
+                  {/each}
+                </tr>
+              </thead>
+              <tbody>
+                {#each labels as ts, i (i)}
+                  <tr class="border-t border-(--border-hairline)">
+                    <th scope="row" class="py-[3px] pr-[13px] text-left font-normal">{fmtAxisTime(ts)}</th>
+                    {#each series as s (s.label)}
+                      <td class="py-[3px] pl-[13px] text-right">{valueAt(s, i)}</td>
+                    {/each}
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          </div>
+        {/if}
+      </details>
     {/if}
   </div>
 </Card>
 
 <style>
+  .chart:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+  }
   .axis {
     fill: var(--text-tertiary);
     font-size: var(--text-11);

@@ -39,6 +39,8 @@ import 'package:server_box/data/store/tables.dart';
 import 'package:server_box/hive/hive_registrar.g.dart';
 import 'package:server_box/hive/legacy_adapters.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
+import 'package:server_box/view/page/launch_failed.dart';
+import 'package:server_box/view/page/rescue_app.dart';
 import 'package:server_box/view/page/schema_too_new.dart';
 
 Future<void> main() async {
@@ -50,40 +52,24 @@ Future<void> main() async {
     try {
       await _initApp(container);
     } on SchemaTooNewException catch (e) {
-      // The one failure with something to say. Every other way `_initApp` can
-      // throw goes to the zone handler, which logs it and leaves the launch
-      // with no window at all — right for a bug, wrong for this: the data is
-      // intact, the fix is to reinstall the newer build, and both of those
-      // were only ever written to a file on the device.
+      // The failure with the most to say: the data is intact, and the fix is
+      // to reinstall the newer build.
       //
       // Caught here rather than made non-fatal further down, because nothing
       // after `_doDbMigrate` may run: the refusal is only worth anything while
       // nothing has been written. See [SchemaTooNewException].
       Loggers.app.severe('Storage is newer than this build', e);
-      // On desktop the window is created hidden — `hiddenWindowAtLaunch()` on
-      // macOS, no `WS_VISIBLE` on Windows, no `gtk_widget_show` on Linux — and
-      // the only `windowManager.show()` at launch is inside `_initWindow`,
-      // which is *after* the throw. Without this the rescue screen is drawn
-      // into a window nobody ever sees: still no window, still no message,
-      // which is the failure it exists to fix.
-      //
-      // Measured, by running a build with this call commented out against a
-      // v25 database: the widget tree was there, and `window_manager` had no
-      // window at all. Asking it anything is then fatal rather than false —
-      // `WindowManager.mainWindow` force-unwraps, so `isVisible()` took the
-      // process down with `EXC_BREAKPOINT` in `WindowManager.swift:60`. So this
-      // is not only about the user seeing the screen; without it the plugin is
-      // a landmine for anything that later asks about the window.
-      //
-      // Not `_initWindow`, which reads the size and the title-bar preference
-      // out of the database this build has just refused to touch. Fixed
-      // arguments instead: this window holds one screen of text.
-      try {
-        await SystemUIs.initDesktopWindow(hideTitleBar: false);
-      } catch (e, s) {
-        Loggers.app.warning('Could not show the rescue window', e, s);
-      }
-      runApp(SchemaTooNewApp(err: e));
+      await _showRescueWindow();
+      runApp(RescueApp(page: SchemaTooNewPage(err: e)));
+      return;
+    } catch (e, s) {
+      // Anything else. Left to the zone, it was recorded and the launch
+      // stopped with the window still hidden: a process and nothing on
+      // screen, which is what a zero-filled preferences file looked like on
+      // Windows (#1633).
+      _onUncaught(e, s);
+      await _showRescueWindow();
+      runApp(RescueApp(page: LaunchFailedPage(err: e, stack: s, logDir: _logDir())));
       return;
     }
     runApp(UncontrolledProviderScope(container: container, child: const MyApp()));
@@ -97,36 +83,76 @@ Future<void> _runInZone(Future<void> Function() body) async {
     },
   );
 
-  await runZonedGuarded(body, (e, s) {
-    // `CrashLog.handleErrors` also installs `PlatformDispatcher.onError`,
-    // and inside a guarded zone that handler is never reached: the zone
-    // takes async errors first, and the two are alternatives rather than
-    // layers. So this is the only place an uncaught async error is seen,
-    // and marking has to happen here or not at all.
-    //
-    // Reporting has to happen here for the same reason, and it is the same
-    // reason again that it cannot be left to `CrashLog`: that class only
-    // sees what its own handlers catch, and this is precisely what they do
-    // not. Most uncaught errors in this app are async, so without this the
-    // sink hears about almost none of them.
-    //
-    // `LocalDiagnosticsSink.error` logs it, so logging it here as well would
-    // record it twice — and with no sink installed nothing would be recorded
-    // at all, which is what the fallback covers.
-    if (Diag.enabled) {
-      Diag.error(e, s, 'Zone error');
-    } else {
-      Loggers.app.severe('Zone error', e, s);
-    }
-    // Recorded either way above; only what the next launch does about it is
-    // gated. A server that answers with something this app cannot parse is
-    // not the app ending badly — see [CrashReport.isAppFault].
-    //
-    // The error travels into the marker so the next launch can report it if
-    // nothing here did. Whether it is kept is decided by `CrashLog`, against
-    // whether a sink was uploading at this moment — see [CrashLog.uploadsNow].
-    if (CrashReport.isAppFault(e)) CrashLog.markUnhandled(e, s);
-  }, zoneSpecification: zoneSpec);
+  await runZonedGuarded(body, _onUncaught, zoneSpecification: zoneSpec);
+}
+
+/// An error nothing else caught: the zone's, and the launch's own.
+void _onUncaught(Object e, StackTrace s) {
+  // `CrashLog.handleErrors` also installs `PlatformDispatcher.onError`,
+  // and inside a guarded zone that handler is never reached: the zone
+  // takes async errors first, and the two are alternatives rather than
+  // layers. So this is the only place an uncaught async error is seen,
+  // and marking has to happen here or not at all.
+  //
+  // Reporting has to happen here for the same reason, and it is the same
+  // reason again that it cannot be left to `CrashLog`: that class only
+  // sees what its own handlers catch, and this is precisely what they do
+  // not. Most uncaught errors in this app are async, so without this the
+  // sink hears about almost none of them.
+  //
+  // `LocalDiagnosticsSink.error` logs it, so logging it here as well would
+  // record it twice — and with no sink installed nothing would be recorded
+  // at all, which is what the fallback covers.
+  if (Diag.enabled) {
+    Diag.error(e, s, 'Zone error');
+  } else {
+    Loggers.app.severe('Zone error', e, s);
+  }
+  // Recorded either way above; only what the next launch does about it is
+  // gated. A server that answers with something this app cannot parse is
+  // not the app ending badly — see [CrashReport.isAppFault].
+  //
+  // The error travels into the marker so the next launch can report it if
+  // nothing here did. Whether it is kept is decided by `CrashLog`, against
+  // whether a sink was uploading at this moment — see [CrashLog.uploadsNow].
+  if (CrashReport.isAppFault(e)) CrashLog.markUnhandled(e, s);
+}
+
+/// Shows the window a launch that stopped early never showed.
+///
+/// On desktop the window is created hidden — `hiddenWindowAtLaunch()` on
+/// macOS, no `WS_VISIBLE` on Windows, no `gtk_widget_show` on Linux — and
+/// the only `windowManager.show()` at launch is inside `_initWindow`,
+/// which is *after* the throw. Without this the rescue screen is drawn
+/// into a window nobody ever sees: still no window, still no message,
+/// which is the failure it exists to fix.
+///
+/// Measured, by running a build with this call commented out against a
+/// v25 database: the widget tree was there, and `window_manager` had no
+/// window at all. Asking it anything is then fatal rather than false —
+/// `WindowManager.mainWindow` force-unwraps, so `isVisible()` took the
+/// process down with `EXC_BREAKPOINT` in `WindowManager.swift:60`. So this
+/// is not only about the user seeing the screen; without it the plugin is
+/// a landmine for anything that later asks about the window.
+///
+/// Not `_initWindow`, which reads the size and the title-bar preference
+/// out of the database this build has just refused to touch. Fixed
+/// arguments instead: this window holds one screen of text.
+Future<void> _showRescueWindow() async {
+  try {
+    await SystemUIs.initDesktopWindow(hideTitleBar: false);
+  } catch (e, s) {
+    Loggers.app.warning('Could not show the rescue window', e, s);
+  }
+}
+
+/// Where the logs are, if the launch got as far as `Paths.init`.
+String? _logDir() {
+  try {
+    return Paths.doc.joinPath('logs');
+  } catch (_) {
+    return null;
+  }
 }
 
 Future<void> _initApp(ProviderContainer container) async {

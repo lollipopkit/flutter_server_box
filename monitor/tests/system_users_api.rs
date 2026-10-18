@@ -31,6 +31,7 @@ async fn the_read_lists_the_machine_or_says_why_not() {
     assert_eq!(status, 200, "{body}");
     assert_eq!(body["part"], "list");
     assert!(body["users"].is_array(), "{body}");
+    assert!(body["groups"].is_array(), "{body}");
     if system_type() != SystemType::Linux {
         assert_eq!(body["available"], false);
         assert_eq!(body["reason_kind"], "unsupported_platform", "{body}");
@@ -82,6 +83,9 @@ async fn a_write_the_endpoint_will_not_build_is_refused_and_recorded() {
         (json!({"action": "create", "draft": {"name": "bad;touch /tmp/pwned"}}), 400, "invalidName"),
         (json!({"action": "create"}), 400, "missingDraft"),
         (json!({"action": "delete"}), 400, "missingName"),
+        (json!({"action": "create", "kind": "group"}), 400, "missingDraft"),
+        (json!({"action": "delete", "kind": "group"}), 400, "missingName"),
+        (json!({"action": "delete", "kind": "group", "name": "sbm-no-such-group"}), 404, "noSuchGroup"),
     ];
     for (body, status, code) in cases {
         let (got_status, got) = act(&srv, body).await;

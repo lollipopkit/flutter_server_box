@@ -13,6 +13,8 @@
   import { DATE_TIME, fmtBytes, fmtBytesPerSec, fmtDate, fmtPercent } from '../../../lib/format'
   import { LL } from '../../../i18n/i18n-svelte'
   import { Poller } from '../../../lib/poller.svelte'
+  import { moveAmongVisible } from '../../../lib/cardOrder'
+  import { tick } from 'svelte'
   import type { CustomCmdOutput, HistoryPoint, ProcessView } from '../../../types'
 
   const metrics = new Poller(api.getMetrics, systemPrefs.refreshMs)
@@ -89,8 +91,13 @@
     }
   }
 
+  /// Derived to a flag so the effect below reruns when sign-in changes, not on
+  /// every edit of the server list that `authenticated` reads (another server
+  /// removed, a token refreshed), which would read the order again over a move.
+  const canReadOrder = $derived(servers.authenticated)
+
   $effect(() => {
-    if (servers.authenticated) void loadCardOrder()
+    if (canReadOrder) void loadCardOrder()
   })
 
   let dragId = $state<CardId | null>(null)
@@ -110,9 +117,34 @@
     const next = [...cardOrder]
     next.splice(from, 1)
     next.splice(to, 0, dragId)
-    cardOrder = next
     dragId = null
+    saveCardOrder(next)
+  }
+
+  function saveCardOrder(next: CardId[]) {
+    cardOrder = next
     void api.updateCardOrder(cardOrder).catch(() => {})
+  }
+
+  /// The keyboard and screen reader way to rearrange: dragging is pointer-only,
+  /// so this mode puts move buttons under every card.
+  let arranging = $state(false)
+  /// Read out by the live region after a move: the focused button keeps its
+  /// label, so nothing else says where the card went.
+  let arrangeStatus = $state('')
+  let cardGrid = $state<HTMLElement | null>(null)
+
+  async function moveCard(id: CardId, delta: -1 | 1) {
+    saveCardOrder(moveAmongVisible(cardOrder, visibleCardOrder, id, delta))
+    const position = visibleCardOrder.indexOf(id) + 1
+    arrangeStatus = $LL.cardMoved({ name: detailTitles[id], position, total: visibleCardOrder.length })
+    // The keyed list moves the card's node, which drops focus in some
+    // browsers: put it back on the same button, or on its sibling at an end.
+    await tick()
+    const wrapper = cardGrid?.querySelector<HTMLElement>(`[data-card="${id}"]`)
+    const same = wrapper?.querySelector<HTMLButtonElement>(`[data-move="${delta}"]`)
+    const other = wrapper?.querySelector<HTMLButtonElement>(`[data-move="${-delta}"]`)
+    ;(same && !same.disabled ? same : other)?.focus()
   }
 
   const RANGES = [
@@ -401,6 +433,7 @@
       { separator: true },
       ...visibleCardOrder.map((id) => ({ label: detailTitles[id], checked: detail === id, action: () => (detail = id) })),
       { separator: true },
+      ...(canArrange ? [{ label: $LL.arrangeCards(), icon: 'swap_horiz', checked: arranging, action: () => (arranging = !arranging) }] : []),
       { label: paused ? $LL.deskResumeRefresh() : $LL.deskPauseRefresh(), icon: paused ? 'play_arrow' : 'pause', action: () => (paused = !paused) },
       { label: $LL.refresh(), icon: 'refresh', shortcut: '⌘R', action: refresh },
     ]
@@ -479,13 +512,16 @@
       </header>
 
       <!-- Card order is the agent's, shared by every browser that views it;
-           rearranged by dragging. -->
-      <div class="grid grid-cols-[repeat(auto-fit,minmax(138px,1fr))] gap-[9px]" role="list">
-        {#each visibleCardOrder as id (id)}
+           rearranged by dragging, or with the move buttons View → Rearrange
+           cards puts under each. -->
+      <p class="sr-only" aria-live="polite">{arranging ? arrangeStatus : ''}</p>
+      <div bind:this={cardGrid} class="grid grid-cols-[repeat(auto-fit,minmax(138px,1fr))] gap-[9px]" role="list">
+        {#each visibleCardOrder as id, i (id)}
           {@const t = tile(id)}
           {#if t}
             <div
               role="listitem"
+              data-card={id}
               draggable={canArrange}
               title={canArrange ? undefined : whyText(capabilities?.access?.why, $LL)}
               ondragstart={() => onCardDragStart(id)}
@@ -494,6 +530,24 @@
               class="min-w-0"
             >
               <StatTile {...t} />
+              {#if arranging}
+                <div class="mt-[5px] flex justify-center gap-[7px]">
+                  <IconButton
+                    data-move="-1"
+                    icon="chevron_left"
+                    label={$LL.cardMoveEarlier({ name: detailTitles[id] })}
+                    disabled={i === 0}
+                    onclick={() => void moveCard(id, -1)}
+                  />
+                  <IconButton
+                    data-move="1"
+                    icon="chevron_right"
+                    label={$LL.cardMoveLater({ name: detailTitles[id] })}
+                    disabled={i === visibleCardOrder.length - 1}
+                    onclick={() => void moveCard(id, 1)}
+                  />
+                </div>
+              {/if}
             </div>
           {/if}
         {/each}

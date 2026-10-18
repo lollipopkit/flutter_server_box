@@ -7062,4 +7062,76 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get monitorUpdateNoAnswer =>
       'Der Agent ist nicht zurückgekommen. Prüfen Sie ihn auf dem Server.';
+
+  @override
+  String get keyArrowDown => 'Pfeil nach unten';
+
+  @override
+  String get keyArrowLeft => 'Pfeil nach links';
+
+  @override
+  String get keyArrowRight => 'Pfeil nach rechts';
+
+  @override
+  String get keyArrowUp => 'Pfeil nach oben';
+
+  @override
+  String get keyControl => 'Steuerung';
+
+  @override
+  String get keyEscape => 'Escape';
+
+  @override
+  String get keyPageDown => 'Bild ab';
+
+  @override
+  String get keyPageUp => 'Bild auf';
+
+  @override
+  String get termTextView => 'Als Text anzeigen';
+
+  @override
+  String termTextLetGo(int count) {
+    return 'Ältere Zeilen nicht mehr gespeichert: $count';
+  }
+
+  @override
+  String get systemGroups => 'Gruppen';
+
+  @override
+  String get userGid => 'GID';
+
+  @override
+  String get userGroupMembers => 'Mitglieder';
+
+  @override
+  String get userPrimaryMembers => 'Primäre Mitglieder';
+
+  @override
+  String get userSystemGroup => 'Systemgruppe';
+
+  @override
+  String get userMembersHint => 'alice,bob';
+
+  @override
+  String get userRegularGroup => 'Regular';
+
+  @override
+  String get termMetricsBar => 'Serverwerte unter dem Terminal';
+
+  @override
+  String get termMetricsBarTip =>
+      'CPU, Arbeitsspeicher, Netzwerk und Festplatte, wie auf der Serverkarte. Auf dem Telefon über den virtuellen Tasten.';
+
+  @override
+  String get launchFailedTitle => 'ServerBox konnte nicht starten';
+
+  @override
+  String get launchFailedBody =>
+      'Kopiere den Fehler unten und melde ihn mit den Logdateien in einem GitHub-Issue.';
+
+  @override
+  String launchFailedLogs(String path) {
+    return 'Logs: $path';
+  }
 }

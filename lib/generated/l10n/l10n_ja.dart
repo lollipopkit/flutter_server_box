@@ -6693,4 +6693,76 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get monitorUpdateNoAnswer => 'エージェントが戻りません。サーバーで確認してください。';
+
+  @override
+  String get keyArrowDown => '下矢印';
+
+  @override
+  String get keyArrowLeft => '左矢印';
+
+  @override
+  String get keyArrowRight => '右矢印';
+
+  @override
+  String get keyArrowUp => '上矢印';
+
+  @override
+  String get keyControl => 'Ctrl キー';
+
+  @override
+  String get keyEscape => 'Esc キー';
+
+  @override
+  String get keyPageDown => 'ページダウン';
+
+  @override
+  String get keyPageUp => 'ページアップ';
+
+  @override
+  String get termTextView => 'テキストで表示';
+
+  @override
+  String termTextLetGo(int count) {
+    return '保持されなくなった以前の行: $count';
+  }
+
+  @override
+  String get systemGroups => 'グループ';
+
+  @override
+  String get userGid => 'GID';
+
+  @override
+  String get userGroupMembers => 'メンバー';
+
+  @override
+  String get userPrimaryMembers => 'プライマリメンバー';
+
+  @override
+  String get userSystemGroup => 'システムグループ';
+
+  @override
+  String get userMembersHint => 'alice,bob';
+
+  @override
+  String get userRegularGroup => '一般グループ';
+
+  @override
+  String get termMetricsBar => 'ターミナル下部にサーバーの状態を表示';
+
+  @override
+  String get termMetricsBarTip =>
+      'CPU、メモリ、ネットワーク、ディスクをサーバーカードと同じ形式で表示します。スマートフォンでは仮想キーの上に表示されます。';
+
+  @override
+  String get launchFailedTitle => 'ServerBox を起動できませんでした';
+
+  @override
+  String get launchFailedBody =>
+      '下のエラーをコピーし、ログファイルと一緒に GitHub の issue で報告してください。';
+
+  @override
+  String launchFailedLogs(String path) {
+    return 'ログ: $path';
+  }
 }

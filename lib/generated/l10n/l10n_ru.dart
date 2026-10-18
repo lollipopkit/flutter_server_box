@@ -7025,4 +7025,76 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get monitorUpdateNoAnswer =>
       'Агент не вернулся. Проверьте его на сервере.';
+
+  @override
+  String get keyArrowDown => 'Стрелка вниз';
+
+  @override
+  String get keyArrowLeft => 'Стрелка влево';
+
+  @override
+  String get keyArrowRight => 'Стрелка вправо';
+
+  @override
+  String get keyArrowUp => 'Стрелка вверх';
+
+  @override
+  String get keyControl => 'Control';
+
+  @override
+  String get keyEscape => 'Escape';
+
+  @override
+  String get keyPageDown => 'Страница вниз';
+
+  @override
+  String get keyPageUp => 'Страница вверх';
+
+  @override
+  String get termTextView => 'Показать как текст';
+
+  @override
+  String termTextLetGo(int count) {
+    return 'Более ранние строки больше не хранятся: $count';
+  }
+
+  @override
+  String get systemGroups => 'Группы';
+
+  @override
+  String get userGid => 'GID';
+
+  @override
+  String get userGroupMembers => 'Участники';
+
+  @override
+  String get userPrimaryMembers => 'Основные участники';
+
+  @override
+  String get userSystemGroup => 'Системная группа';
+
+  @override
+  String get userMembersHint => 'alice,bob';
+
+  @override
+  String get userRegularGroup => 'Regular';
+
+  @override
+  String get termMetricsBar => 'Показатели сервера под терминалом';
+
+  @override
+  String get termMetricsBarTip =>
+      'CPU, память, сеть и диск — как на карточке сервера. На телефоне над виртуальными клавишами.';
+
+  @override
+  String get launchFailedTitle => 'ServerBox не удалось запустить';
+
+  @override
+  String get launchFailedBody =>
+      'Скопируйте ошибку ниже и сообщите о ней в issue на GitHub, приложив файлы журнала.';
+
+  @override
+  String launchFailedLogs(String path) {
+    return 'Журналы: $path';
+  }
 }

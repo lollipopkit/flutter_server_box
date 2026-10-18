@@ -7036,4 +7036,76 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get monitorUpdateNoAnswer =>
       'O agente não voltou. Verifique-o no servidor.';
+
+  @override
+  String get keyArrowDown => 'Seta para baixo';
+
+  @override
+  String get keyArrowLeft => 'Seta para a esquerda';
+
+  @override
+  String get keyArrowRight => 'Seta para a direita';
+
+  @override
+  String get keyArrowUp => 'Seta para cima';
+
+  @override
+  String get keyControl => 'Control';
+
+  @override
+  String get keyEscape => 'Escape';
+
+  @override
+  String get keyPageDown => 'Página abaixo';
+
+  @override
+  String get keyPageUp => 'Página acima';
+
+  @override
+  String get termTextView => 'Ver como texto';
+
+  @override
+  String termTextLetGo(int count) {
+    return 'Linhas anteriores que já não são guardadas: $count';
+  }
+
+  @override
+  String get systemGroups => 'Grupos';
+
+  @override
+  String get userGid => 'GID';
+
+  @override
+  String get userGroupMembers => 'Membros';
+
+  @override
+  String get userPrimaryMembers => 'Membros primários';
+
+  @override
+  String get userSystemGroup => 'Grupo do sistema';
+
+  @override
+  String get userMembersHint => 'alice,bob';
+
+  @override
+  String get userRegularGroup => 'Comum';
+
+  @override
+  String get termMetricsBar => 'Leituras do servidor sob o terminal';
+
+  @override
+  String get termMetricsBarTip =>
+      'CPU, memória, rede e disco, como no cartão do servidor. No telefone, acima das teclas virtuais.';
+
+  @override
+  String get launchFailedTitle => 'O ServerBox não conseguiu iniciar';
+
+  @override
+  String get launchFailedBody =>
+      'Copie o erro abaixo e relate-o numa issue do GitHub, com os arquivos de log.';
+
+  @override
+  String launchFailedLogs(String path) {
+    return 'Logs: $path';
+  }
 }

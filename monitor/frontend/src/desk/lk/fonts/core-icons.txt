@@ -1,3 +1,4 @@
+accessibility_new
 account_tree
 add
 api
@@ -95,6 +96,7 @@ function
 gradient
 grid_view
 group
+groups
 handyman
 hard_drive
 hardware
@@ -237,10 +239,10 @@ storefront
 stream
 subscriptions
 subtitles
+swap_horiz
 switch
 sync
 tab
-table_chart
 target
 task
 terminal

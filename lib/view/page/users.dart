@@ -11,11 +11,18 @@ import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/system_user.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/service/user_manager.dart';
+import 'package:server_box/view/page/group_detail.dart';
 import 'package:server_box/view/page/user_detail.dart';
+
+enum _Subject { users, groups }
 
 enum _UserFilter { all, regular, system, disabled }
 
 enum _UserSort { uid, name }
+
+enum _GroupFilter { all, regular, system }
+
+enum _GroupSort { gid, name }
 
 
 /// Below this the Status column is dropped and the mono line loses the group,
@@ -46,11 +53,15 @@ final class _UsersPageState extends ConsumerState<UsersPage> {
   final _searchCtrl = TextEditingController();
 
   ServerUserCatalog? _catalog;
+  _Subject _subject = _Subject.users;
   _UserFilter _filter = _UserFilter.all;
   _UserSort _sort = _UserSort.uid;
+  _GroupFilter _groupFilter = _GroupFilter.all;
+  _GroupSort _groupSort = _GroupSort.gid;
   bool _searching = false;
   String _query = '';
   bool _systemExpanded = true;
+  bool _groupSystemExpanded = true;
   bool _busy = false;
   bool _unsupported = false;
   String? _failure;
@@ -77,15 +88,26 @@ final class _UsersPageState extends ConsumerState<UsersPage> {
         supported && !_unsupported && _failure == null && _catalog != null;
     return Scaffold(
       appBar: CustomAppBar(
-        title: TwoLineText(up: l10n.systemUsers, down: widget.args.spi.name),
+        title: TwoLineText(
+          up: _subject == _Subject.users ? l10n.systemUsers : l10n.systemGroups,
+          down: widget.args.spi.name,
+        ),
         actions: _buildActions(canMutate),
       ),
       body: RefreshIndicator(onRefresh: _refresh, child: _buildBody()),
       floatingActionButton: canMutate
           ? FloatingActionButton(
               tooltip: libL10n.add,
-              onPressed: _busy ? null : () => _editUser(),
-              child: const Icon(Icons.person_add_alt_1),
+              onPressed: _busy
+                  ? null
+                  : _subject == _Subject.users
+                  ? () => _editUser()
+                  : () => _editGroup(),
+              child: Icon(
+                _subject == _Subject.users
+                    ? Icons.person_add_alt_1
+                    : Icons.group_add,
+              ),
             )
           : null,
     );
@@ -105,17 +127,29 @@ extension on _UsersPageState {
       ContextMenuButton(
         tooltip: libL10n.sort,
         enabled: canMutate,
-        actions: () => [
-          for (final (sort, text) in [
-            (_UserSort.uid, l10n.userUid),
-            (_UserSort.name, libL10n.sortByName),
-          ])
-            ContextMenuAction(
-              text: text,
-              checked: sort == _sort,
-              onTap: () => _rebuild(() => _sort = sort),
-            ),
-        ],
+        actions: () => _subject == _Subject.users
+            ? [
+                for (final (sort, text) in [
+                  (_UserSort.uid, l10n.userUid),
+                  (_UserSort.name, libL10n.sortByName),
+                ])
+                  ContextMenuAction(
+                    text: text,
+                    checked: sort == _sort,
+                    onTap: () => _rebuild(() => _sort = sort),
+                  ),
+              ]
+            : [
+                for (final (sort, text) in [
+                  (_GroupSort.gid, l10n.userGid),
+                  (_GroupSort.name, libL10n.sortByName),
+                ])
+                  ContextMenuAction(
+                    text: text,
+                    checked: sort == _groupSort,
+                    onTap: () => _rebuild(() => _groupSort = sort),
+                  ),
+              ],
         child: const Padding(
           padding: EdgeInsets.all(7),
           child: Icon(Icons.sort, size: 18),
@@ -157,21 +191,30 @@ extension on _UsersPageState {
       builder: (_, constraints) {
         final wide = constraints.maxWidth >= _kWideWidth;
         final users = _visibleUsers(catalog);
+        final groups = _visibleGroups(catalog);
+        final empty = _subject == _Subject.users ? users.isEmpty : groups.isEmpty;
         return CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverToBoxAdapter(child: _buildSearchField()),
-            SliverToBoxAdapter(child: _buildFilters(catalog, wide: wide)),
+            SliverToBoxAdapter(child: _buildSubjectTabs()),
+            SliverToBoxAdapter(
+              child: _subject == _Subject.users
+                  ? _buildFilters(catalog, wide: wide)
+                  : _buildGroupFilters(catalog),
+            ),
             if (_busy)
               const SliverToBoxAdapter(
                 child: LinearProgressIndicator(minHeight: 2),
               ),
-            if (users.isEmpty)
+            if (empty)
               SliverToBoxAdapter(
                 child: CenterGreyTitle(libL10n.empty).paddingOnly(top: 80),
               )
+            else if (_subject == _Subject.users)
+              ..._buildSections(catalog, users, wide: wide)
             else
-              ..._buildSections(catalog, users, wide: wide),
+              ..._buildGroupSections(catalog, groups, wide: wide),
             const SliverToBoxAdapter(child: SizedBox(height: 90)),
           ],
         );
@@ -227,6 +270,27 @@ extension on _UsersPageState {
     );
   }
 
+  Widget _buildSubjectTabs() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(13, 8, 13, 0),
+      child: SegmentedTabs<_Subject>(
+        expand: true,
+        segments: [
+          SegmentedTab(
+            value: _Subject.users,
+            label: '${l10n.systemUsers} ${_catalog?.users.length ?? 0}',
+          ),
+          SegmentedTab(
+            value: _Subject.groups,
+            label: '${l10n.systemGroups} ${_catalog?.groups.length ?? 0}',
+          ),
+        ],
+        selected: _subject,
+        onSelected: (subject) => _rebuild(() => _subject = subject),
+      ),
+    );
+  }
+
   /// The same segmented control the Container page switches tabs with: these
   /// are four views of one list, and a row of chips read as four independent
   /// toggles when only one of them can be on.
@@ -259,6 +323,25 @@ extension on _UsersPageState {
         ],
         selected: _filter,
         onSelected: (filter) => _rebuild(() => _filter = filter),
+      ),
+    );
+  }
+
+  Widget _buildGroupFilters(ServerUserCatalog catalog) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
+      child: SegmentedTabs<_GroupFilter>(
+        expand: true,
+        segments: [
+          for (final filter in _GroupFilter.values)
+            SegmentedTab(
+              value: filter,
+              label:
+                  '${_groupFilterLabel(filter)} ${_groupFilterCount(catalog, filter)}',
+            ),
+        ],
+        selected: _groupFilter,
+        onSelected: (filter) => _rebuild(() => _groupFilter = filter),
       ),
     );
   }
@@ -360,6 +443,29 @@ extension on _UsersPageState {
           Expanded(child: Text(libL10n.user, style: style)),
           const SizedBox(width: 13),
           SizedBox(width: 150, child: Text(l10n.userLoginStatus, style: style)),
+          const SizedBox(width: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGroupColumnHeader() {
+    final style = UIs.text11Grey;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: _hairline)),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 44,
+            child: Text(l10n.userGid, textAlign: TextAlign.end, style: style),
+          ),
+          const SizedBox(width: 13),
+          Expanded(child: Text(l10n.systemGroups, style: style)),
+          const SizedBox(width: 13),
+          SizedBox(width: 150, child: Text(l10n.userGroupMembers, style: style)),
           const SizedBox(width: 24),
         ],
       ),
@@ -669,6 +775,299 @@ extension on _UsersPageState {
     ];
     return parts.join(' · ');
   }
+
+  List<Widget> _buildGroupSections(
+    ServerUserCatalog catalog,
+    List<ServerGroup> groups, {
+    required bool wide,
+  }) {
+    if (_groupFilter != _GroupFilter.all) {
+      return [_buildGroupSectionCard(catalog, null, groups, wide: wide)];
+    }
+
+    final regular = groups
+        .where((group) => !group.isSystem(catalog.gidMin))
+        .toList(growable: false);
+    final system = groups
+        .where((group) => group.isSystem(catalog.gidMin))
+        .toList(growable: false);
+
+    return [
+      if (regular.isNotEmpty)
+        _buildGroupSectionCard(
+          catalog,
+          _GroupSectionSpec(title: l10n.userRegularGroup, groups: regular),
+          regular,
+          wide: wide,
+        ),
+      if (system.isNotEmpty)
+        _buildGroupSectionCard(
+          catalog,
+          _GroupSectionSpec(
+            title: libL10n.system,
+            groups: system,
+            collapsible: true,
+            expanded: _groupSystemExpanded,
+          ),
+          _groupSystemExpanded ? system : const [],
+          wide: wide,
+        ),
+    ];
+  }
+
+  Widget _buildGroupSectionCard(
+    ServerUserCatalog catalog,
+    _GroupSectionSpec? section,
+    List<ServerGroup> groups, {
+    required bool wide,
+  }) {
+    final theme = Theme.of(context);
+    final cardColor =
+        theme.cardTheme.color ?? theme.colorScheme.surfaceContainerLow;
+    const radius = BorderRadius.all(Radius.circular(13));
+
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(13, 0, 13, 10),
+      sliver: DecoratedSliver(
+        decoration: BoxDecoration(color: cardColor, borderRadius: radius),
+        sliver: SliverMainAxisGroup(
+          slivers: [
+            if (wide) SliverToBoxAdapter(child: _buildGroupColumnHeader()),
+            if (section != null)
+              SliverToBoxAdapter(
+                child: _buildGroupSectionHeader(section, rounded: !wide),
+              ),
+            SliverList.builder(
+              itemCount: groups.length,
+              itemBuilder: (_, index) => _buildGroup(
+                groups[index],
+                catalog,
+                wide: wide,
+                last: index == groups.length - 1,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGroupSectionHeader(
+    _GroupSectionSpec section, {
+    required bool rounded,
+  }) {
+    final scheme = Theme.of(context).colorScheme;
+    final header = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainer,
+        borderRadius: rounded
+            ? const BorderRadius.vertical(top: Radius.circular(13))
+            : null,
+      ),
+      child: Row(
+        children: [
+          Text(
+            '${section.title} · ${section.groups.length}',
+            style: TextStyle(fontSize: 11, color: scheme.onSurfaceVariant),
+          ),
+          const Spacer(),
+          if (section.collapsible)
+            Icon(
+              section.expanded ? Icons.expand_less : Icons.expand_more,
+              size: 15,
+              color: UIs.textGrey.color,
+            ),
+        ],
+      ),
+    );
+    if (!section.collapsible) return header;
+    return InkWell(
+      onTap: () => _rebuild(() => _groupSystemExpanded = !_groupSystemExpanded),
+      child: header,
+    );
+  }
+
+  Widget _buildGroup(
+    ServerGroup group,
+    ServerUserCatalog catalog, {
+    required bool wide,
+    required bool last,
+  }) {
+    final scheme = Theme.of(context).colorScheme;
+    final isSystem = group.isSystem(catalog.gidMin);
+    final nameColor = isSystem && !group.isRoot ? scheme.onSurfaceVariant : null;
+
+    final row = Container(
+      decoration: BoxDecoration(
+        border: last ? null : Border(bottom: BorderSide(color: _hairline)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+      child: Row(
+        children: [
+          SizedBox(
+            width: wide ? 44 : 38,
+            child: Text(
+              '${group.gid}',
+              textAlign: TextAlign.end,
+              style: _monoStyle(12),
+            ),
+          ),
+          SizedBox(width: wide ? 13 : 9),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildGroupTitle(group, nameColor),
+                const SizedBox(height: 2),
+                Text(
+                  _groupDetailLine(group, wide: wide),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: _monoStyle(11),
+                ),
+              ],
+            ),
+          ),
+          if (wide) ...[
+            const SizedBox(width: 13),
+            SizedBox(
+              width: 150,
+              child: Text(
+                group.members.isEmpty ? '—' : group.members.join(', '),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
+              ),
+            ),
+          ],
+          if (wide)
+            _buildGroupMenu(group)
+          else
+            SizedBox(
+              width: 24,
+              child: Icon(
+                Icons.chevron_right,
+                size: 17,
+                color: UIs.textGrey.color,
+              ),
+            ),
+        ],
+      ),
+    );
+
+    if (wide) return row;
+    return InkWell(
+      key: ValueKey('group-row-${group.gid}-${group.name}'),
+      onTap: () => _openGroupDetail(group, catalog),
+      child: row,
+    );
+  }
+
+  Widget _buildGroupTitle(ServerGroup group, Color? color) {
+    final scheme = Theme.of(context).colorScheme;
+    return Wrap(
+      spacing: 7,
+      runSpacing: 4,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Text(
+          group.name,
+          style: TextStyle(fontWeight: FontWeight.w500, color: color),
+        ),
+        if (group.isRoot)
+          _tag('root', scheme.onErrorContainer, scheme.errorContainer),
+      ],
+    );
+  }
+
+  Widget _buildGroupMenu(ServerGroup group) {
+    if (_busy) return const SizedBox(width: 24);
+    return SizedBox(
+      width: 24,
+      child: ContextMenuButton(
+        tooltip: libL10n.more,
+        actions: () => [
+          if (group.local)
+            ContextMenuAction(
+              text: libL10n.edit,
+              icon: Icons.edit_outlined,
+              onTap: () => _editGroup(group),
+            ),
+          if (UserManager.groupDeletable(group))
+            ContextMenuAction(
+              text: libL10n.delete,
+              icon: Icons.delete_outline,
+              destructive: true,
+              onTap: () => _deleteGroup(group),
+            ),
+        ],
+      ),
+    );
+  }
+
+  String _groupFilterLabel(_GroupFilter filter) => switch (filter) {
+    _GroupFilter.all => libL10n.all,
+    _GroupFilter.regular => l10n.userRegularGroup,
+    _GroupFilter.system => libL10n.system,
+  };
+
+  int _groupFilterCount(ServerUserCatalog catalog, _GroupFilter filter) {
+    return switch (filter) {
+      _GroupFilter.all => catalog.groups.length,
+      _GroupFilter.regular => catalog.groups
+          .where((group) => !group.isSystem(catalog.gidMin))
+          .length,
+      _GroupFilter.system => catalog.groups
+          .where((group) => group.isSystem(catalog.gidMin))
+          .length,
+    };
+  }
+
+  List<ServerGroup> _visibleGroups(ServerUserCatalog catalog) {
+    final filtered = switch (_groupFilter) {
+      _GroupFilter.all => catalog.groups,
+      _GroupFilter.regular => catalog.groups
+          .where((group) => !group.isSystem(catalog.gidMin))
+          .toList(),
+      _GroupFilter.system => catalog.groups
+          .where((group) => group.isSystem(catalog.gidMin))
+          .toList(),
+    };
+
+    final query = _query.trim().toLowerCase();
+    final matched = query.isEmpty
+        ? [...filtered]
+        : filtered
+              .where(
+                (group) =>
+                    group.name.toLowerCase().contains(query) ||
+                    '${group.gid}'.contains(query) ||
+                    group.members.any(
+                      (member) => member.toLowerCase().contains(query),
+                    ),
+              )
+              .toList();
+
+    matched.sort(switch (_groupSort) {
+      _GroupSort.gid => (a, b) => a.gid.compareTo(b.gid),
+      _GroupSort.name => (a, b) =>
+          a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+    });
+    return matched;
+  }
+
+  String _groupDetailLine(ServerGroup group, {required bool wide}) {
+    final primary = group.primaryMembers;
+    final parts = [
+      if (!wide && group.members.isNotEmpty)
+        group.members.join(', ')
+      else
+        '${l10n.userGroupMembers} ${group.members.length}',
+      if (primary.isNotEmpty) '${l10n.userPrimaryMembers} ${primary.length}',
+    ];
+    return parts.join(' · ');
+  }
 }
 
 final class _SectionSpec {
@@ -681,6 +1080,20 @@ final class _SectionSpec {
 
   final String title;
   final List<ServerUser> users;
+  final bool collapsible;
+  final bool expanded;
+}
+
+final class _GroupSectionSpec {
+  const _GroupSectionSpec({
+    required this.title,
+    required this.groups,
+    this.collapsible = false,
+    this.expanded = true,
+  });
+
+  final String title;
+  final List<ServerGroup> groups;
   final bool collapsible;
   final bool expanded;
 }
@@ -753,6 +1166,45 @@ extension on _UsersPageState {
     );
     if (confirmed != true || !mounted) return false;
     final script = UserManager.deleteScript(user, removeHome: removeHome);
+    if (!await _runMutation(script)) return false;
+    await _refresh();
+    return true;
+  }
+
+  void _openGroupDetail(ServerGroup group, ServerUserCatalog catalog) {
+    GroupDetailPage.route.go(
+      context,
+      GroupDetailPageArgs(
+        spi: widget.args.spi,
+        group: group,
+        catalog: catalog,
+        onEdit: _editGroup,
+        onDelete: _deleteGroup,
+      ),
+    );
+  }
+
+  Future<bool> _editGroup([ServerGroup? group]) async {
+    final catalog = _catalog;
+    if (catalog == null) return false;
+    final draft = await _showGroupEditor(group);
+    if (draft == null || !mounted) return false;
+    final script = group == null
+        ? UserManager.createGroupScript(draft, catalog)
+        : UserManager.editGroupScript(group, draft, catalog);
+    if (!await _runMutation(script)) return false;
+    await _refresh();
+    return true;
+  }
+
+  Future<bool> _deleteGroup(ServerGroup group) async {
+    final confirmed = await context.showRoundDialog<bool>(
+      title: libL10n.attention,
+      child: Text(libL10n.delFmt(l10n.systemGroups, group.name)),
+      actions: Btnx.cancelRedOk,
+    );
+    if (confirmed != true || !mounted) return false;
+    final script = UserManager.deleteGroupScript(group);
     if (!await _runMutation(script)) return false;
     await _refresh();
     return true;
@@ -969,6 +1421,94 @@ extension on _UsersPageState {
           user == null &&
           catalog.users.any((existing) => existing.name == draft.name);
       final validation = UserManager.validateDraft(draft);
+      if (validation != null || duplicate) {
+        Toast.error(validation ?? l10n.nameAlreadyExistsFmt(draft.name));
+        continue;
+      }
+      return draft;
+    }
+    return null;
+  }
+
+  Future<ServerGroupDraft?> _showGroupEditor(ServerGroup? group) async {
+    final catalog = _catalog;
+    if (catalog == null) return null;
+    var name = group?.name ?? '';
+    var membersText = group?.members.join(',') ?? '';
+    var systemGroup = group?.isSystem(catalog.gidMin) ?? false;
+
+    while (mounted) {
+      final nameCtrl = TextEditingController(text: name);
+      final membersCtrl = TextEditingController(text: membersText);
+      final submitted = await context.showRoundDialog<bool>(
+        title: group == null ? libL10n.add : libL10n.edit,
+        child: DisposeWith(
+          notifiers: [nameCtrl, membersCtrl],
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 520,
+              maxHeight: MediaQuery.sizeOf(context).height * 0.72,
+            ),
+            child: StatefulBuilder(
+              builder: (context, setDialogState) => SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Input(
+                      controller: nameCtrl,
+                      label: libL10n.name,
+                      icon: Icons.group_outlined,
+                      enabled: group == null,
+                      autoFocus: group == null,
+                      suggestion: false,
+                    ),
+                    Input(
+                      controller: membersCtrl,
+                      label: l10n.userGroupMembers,
+                      hint: l10n.userMembersHint,
+                      icon: Icons.groups_outlined,
+                      suggestion: false,
+                    ),
+                    if (group == null)
+                      SwitchListTile(
+                        value: systemGroup,
+                        title: Text(l10n.userSystemGroup),
+                        onChanged: (value) {
+                          setDialogState(() => systemGroup = value);
+                        },
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        actions: Btnx.cancelOk,
+      );
+      name = nameCtrl.text;
+      membersText = membersCtrl.text;
+      if (submitted != true || !mounted) return null;
+
+      final members = membersText
+          .split(RegExp(r'[\s,]+'))
+          .map((value) => value.trim())
+          .where((value) => value.isNotEmpty)
+          .toSet()
+          .toList()
+        ..sort();
+      final draft = ServerGroupDraft(
+        name: group?.name ?? name.trim(),
+        members: members,
+        system: systemGroup,
+      );
+      final duplicate =
+          group == null &&
+          catalog.groups.any((existing) => existing.name == draft.name);
+      final validation = UserManager.validateGroupDraft(
+        draft,
+        catalog,
+        original: group,
+      );
       if (validation != null || duplicate) {
         Toast.error(validation ?? l10n.nameAlreadyExistsFmt(draft.name));
         continue;

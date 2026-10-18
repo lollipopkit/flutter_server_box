@@ -8,6 +8,7 @@
   import { mountTerminal, type TerminalHandle } from '../../../lib/xterm'
   import { openConsoleSocket, resizeMessage } from '../../../lib/virtConsole'
   import { virtErrorText } from '../../../lib/virt'
+  import ScreenReaderToggle from '../../../components/ScreenReaderToggle.svelte'
   import { onDestroy } from 'svelte'
   import { LL } from '../../../i18n/i18n-svelte'
   import type { VirtConsoleKind, VirtGuest } from '../../../types'
@@ -89,8 +90,8 @@
       }
     } catch (e) {
       if (gone()) return
-      phase = 'failed'
-      error = errorText(e)
+      // A socket already open (the terminal chunk failed to load) goes too
+      ended(errorText(e))
     }
   }
 
@@ -119,7 +120,7 @@
       handle.renderer.write(new Uint8Array(event.data as ArrayBuffer), () => {})
     }
     ws.onclose = () => {
-      if (phase === 'open') {
+      if (!gone() && phase === 'open') {
         phase = 'failed'
         if (!error) error = $LL.virtConsoleEnded()
       }
@@ -128,8 +129,10 @@
     handle.focus()
   }
 
+  /// The console is over, by the Close button or because the viewer ended:
+  /// its socket and terminal go with it.
   function ended(message: string | null) {
-    channel = null
+    close()
     phase = message ? 'failed' : 'idle'
     error = message ?? ''
   }
@@ -141,6 +144,9 @@
     <div class="flex items-center gap-[9px]">
       {#if phase === 'opening'}
         <Spinner size="sm" />
+      {/if}
+      {#if kind === 'text'}
+        <ScreenReaderToggle />
       {/if}
       {#if phase === 'open'}
         <Button variant="secondary" size="sm" onclick={() => ended(null)}>{$LL.virtConsoleClose()}</Button>

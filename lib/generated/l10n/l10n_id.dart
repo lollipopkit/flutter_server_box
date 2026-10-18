@@ -6977,4 +6977,76 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get monitorUpdateNoAnswer => 'Agen tidak kembali. Periksa di server.';
+
+  @override
+  String get keyArrowDown => 'Panah bawah';
+
+  @override
+  String get keyArrowLeft => 'Panah kiri';
+
+  @override
+  String get keyArrowRight => 'Panah kanan';
+
+  @override
+  String get keyArrowUp => 'Panah atas';
+
+  @override
+  String get keyControl => 'Control';
+
+  @override
+  String get keyEscape => 'Escape';
+
+  @override
+  String get keyPageDown => 'Halaman bawah';
+
+  @override
+  String get keyPageUp => 'Halaman atas';
+
+  @override
+  String get termTextView => 'Lihat sebagai teks';
+
+  @override
+  String termTextLetGo(int count) {
+    return 'Baris sebelumnya tidak lagi disimpan: $count';
+  }
+
+  @override
+  String get systemGroups => 'Grup';
+
+  @override
+  String get userGid => 'GID';
+
+  @override
+  String get userGroupMembers => 'Anggota';
+
+  @override
+  String get userPrimaryMembers => 'Anggota utama';
+
+  @override
+  String get userSystemGroup => 'Grup sistem';
+
+  @override
+  String get userMembersHint => 'alice,bob';
+
+  @override
+  String get userRegularGroup => 'Regular';
+
+  @override
+  String get termMetricsBar => 'Pembacaan server di bawah terminal';
+
+  @override
+  String get termMetricsBarTip =>
+      'CPU, memori, jaringan, dan disk, seperti pada kartu server. Di ponsel, di atas tombol virtual.';
+
+  @override
+  String get launchFailedTitle => 'ServerBox tidak dapat dimulai';
+
+  @override
+  String get launchFailedBody =>
+      'Salin galat di bawah dan laporkan di issue GitHub, beserta berkas log.';
+
+  @override
+  String launchFailedLogs(String path) {
+    return 'Log: $path';
+  }
 }

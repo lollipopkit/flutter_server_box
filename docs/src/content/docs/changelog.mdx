@@ -67,6 +67,35 @@ Every released version, newest first. Downloads and per-release notes are on
 - Error messages from notification channels no longer include the request URL,
   which could contain a token.
 
+## v1.0.1787 — 2026-10-16
+
+### Added
+
+- **Server readings under the terminal:** an optional bar with the server's
+  CPU, memory, network and disk, above the virtual keys on a phone. Turn it on
+  in Settings → SSH, or from the terminal tab's menu.
+
+### Changed
+
+- Sheets can be resized by dragging, pickers open as a sheet on phones, and
+  the network's arrows come before their values.
+- Remote desktop follows the latest IronRDP.
+
+### Fixed
+
+- Android: the notification shows the app's glyph instead of a solid ring.
+- Long Agent chats open again; chats are kept in SQLite and loaded page by
+  page.
+- Terminal: holes in the buffer and lines left behind after a resize or a
+  scroll, and the virtual keys' Ctrl, Alt and Shift no longer forget they were
+  pressed.
+- Desktop: Settings opened from the tray appears beside the rail instead of
+  over the window, and can be left again.
+- Windows: installing the status script no longer fails when the exit status
+  arrives after the output has ended.
+- Closing a workspace while one of its shells is still ending no longer
+  errors.
+
 ## v1.0.1773 — 2026-10-13
 
 ### Added

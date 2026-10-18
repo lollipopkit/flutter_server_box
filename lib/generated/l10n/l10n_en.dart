@@ -6981,4 +6981,76 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get monitorUpdateNoAnswer =>
       'The agent has not come back. Check it on the server.';
+
+  @override
+  String get keyArrowDown => 'Down arrow';
+
+  @override
+  String get keyArrowLeft => 'Left arrow';
+
+  @override
+  String get keyArrowRight => 'Right arrow';
+
+  @override
+  String get keyArrowUp => 'Up arrow';
+
+  @override
+  String get keyControl => 'Control';
+
+  @override
+  String get keyEscape => 'Escape';
+
+  @override
+  String get keyPageDown => 'Page down';
+
+  @override
+  String get keyPageUp => 'Page up';
+
+  @override
+  String get termTextView => 'View as text';
+
+  @override
+  String termTextLetGo(int count) {
+    return 'Earlier lines no longer kept: $count';
+  }
+
+  @override
+  String get systemGroups => 'Groups';
+
+  @override
+  String get userGid => 'GID';
+
+  @override
+  String get userGroupMembers => 'Members';
+
+  @override
+  String get userPrimaryMembers => 'Primary members';
+
+  @override
+  String get userSystemGroup => 'System group';
+
+  @override
+  String get userMembersHint => 'alice,bob';
+
+  @override
+  String get userRegularGroup => 'Regular';
+
+  @override
+  String get termMetricsBar => 'Server readings under the terminal';
+
+  @override
+  String get termMetricsBarTip =>
+      'CPU, memory, network and disk, as the server card shows them. Above the virtual keys on a phone.';
+
+  @override
+  String get launchFailedTitle => 'ServerBox could not start';
+
+  @override
+  String get launchFailedBody =>
+      'Copy the error below and report it in a GitHub issue, with the log files.';
+
+  @override
+  String launchFailedLogs(String path) {
+    return 'Logs: $path';
+  }
 }

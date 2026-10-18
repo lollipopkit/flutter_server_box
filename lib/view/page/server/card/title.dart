@@ -2,6 +2,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/server.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
@@ -153,11 +154,12 @@ class ServerCardConnAction extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final (child, onTap) = switch (srv.conn) {
+    final (child, onTap, label) = switch (srv.conn) {
       ServerConn.connecting ||
       ServerConn.loading ||
       ServerConn.connected => (
         const SizedBox.square(dimension: 19, child: SizedLoading(19, padding: 2)),
+        null,
         null,
       ),
       ServerConn.failed => (
@@ -172,14 +174,17 @@ class ServerCardConnAction extends ConsumerWidget {
           TryLimiter.reset(srv.spi.id);
           ref.read(serversProvider.notifier).refresh(spi: srv.spi);
         },
+        srv.needsInteractiveAuth ? libL10n.login : libL10n.retry,
       ),
       ServerConn.disconnected => (
         const Icon(MingCute.link_3_line, size: 19, color: Colors.grey),
         () => ref.read(serversProvider.notifier).refresh(spi: srv.spi),
+        l10n.connect,
       ),
       ServerConn.finished => (
         const Icon(MingCute.unlink_2_line, size: 17, color: Colors.grey),
         () => ref.read(serversProvider.notifier).closeServer(id: srv.spi.id),
+        l10n.disconnect,
       ),
     };
 
@@ -189,10 +194,23 @@ class ServerCardConnAction extends ConsumerWidget {
       child: Center(child: child),
     );
     if (onTap == null) return wrapped;
-    return InkWell(
-      borderRadius: BorderRadius.circular(7),
-      onTap: onTap,
-      child: wrapped,
+    // An icon alone, which a screen reader announced as a button with no
+    // name, on the one control that disconnects the server.
+    // A node of its own: the card around it is a button too, and would
+    // otherwise take the name.
+    return Semantics(
+      container: true,
+      button: true,
+      label: label,
+      child: Tooltip(
+        message: label,
+        excludeFromSemantics: true,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(7),
+          onTap: onTap,
+          child: wrapped,
+        ),
+      ),
     );
   }
 }

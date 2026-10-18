@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/rendering.dart' show SemanticsNode;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -153,6 +155,44 @@ final typedField = find.byWidgetPredicate(
     );
     await tester.pumpAndSettle();
   }
+
+  testWidgets('an empty directory reads as empty; nothing on it is nameless', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    await pump(tester, _MapBackend({'/': []}));
+
+    expect(find.bySemanticsLabel(libL10n.empty), findsOneWidget);
+    var root = tester.getSemantics(find.byType(FileBrowserPage));
+    while (root.parent != null) {
+      root = root.parent!;
+    }
+    final nameless = <Rect>[];
+    void walk(SemanticsNode node) {
+      final data = node.getSemanticsData();
+      if (data.hasAction(ui.SemanticsAction.tap) &&
+          data.label.isEmpty &&
+          data.tooltip.isEmpty &&
+          data.value.isEmpty) {
+        nameless.add(node.rect);
+      }
+      node.visitChildren((child) {
+        walk(child);
+        return true;
+      });
+    }
+
+    walk(root);
+    expect(nameless, isEmpty);
+
+    final path = tester
+        .getSemantics(find.byKey(FileBrowserPage.pathFieldKey))
+        .getSemanticsData();
+    expect(path.flagsCollection.isTextField, isTrue);
+    expect(path.label, libL10n.path);
+    expect(path.value, '/');
+    handle.dispose();
+  });
 
   testWidgets('opening a directory shows what is in it', (tester) async {
     final backend = _MapBackend({

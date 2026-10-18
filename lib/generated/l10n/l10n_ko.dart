@@ -6691,4 +6691,75 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get monitorUpdateNoAnswer => '에이전트가 돌아오지 않았습니다. 서버에서 확인하세요.';
+
+  @override
+  String get keyArrowDown => '아래쪽 화살표';
+
+  @override
+  String get keyArrowLeft => '왼쪽 화살표';
+
+  @override
+  String get keyArrowRight => '오른쪽 화살표';
+
+  @override
+  String get keyArrowUp => '위쪽 화살표';
+
+  @override
+  String get keyControl => 'Ctrl 키';
+
+  @override
+  String get keyEscape => 'Esc 키';
+
+  @override
+  String get keyPageDown => '페이지 다운';
+
+  @override
+  String get keyPageUp => '페이지 업';
+
+  @override
+  String get termTextView => '텍스트로 보기';
+
+  @override
+  String termTextLetGo(int count) {
+    return '더 이상 보관되지 않는 이전 줄: $count';
+  }
+
+  @override
+  String get systemGroups => '그룹';
+
+  @override
+  String get userGid => 'GID';
+
+  @override
+  String get userGroupMembers => '구성원';
+
+  @override
+  String get userPrimaryMembers => '기본 구성원';
+
+  @override
+  String get userSystemGroup => '시스템 그룹';
+
+  @override
+  String get userMembersHint => 'alice,bob';
+
+  @override
+  String get userRegularGroup => 'Regular';
+
+  @override
+  String get termMetricsBar => '터미널 아래에 서버 상태 표시';
+
+  @override
+  String get termMetricsBarTip =>
+      'CPU, 메모리, 네트워크, 디스크를 서버 카드와 같은 형식으로 표시합니다. 휴대폰에서는 가상 키 위에 표시됩니다.';
+
+  @override
+  String get launchFailedTitle => 'ServerBox를 시작할 수 없습니다';
+
+  @override
+  String get launchFailedBody => '아래 오류를 복사해 로그 파일과 함께 GitHub 이슈로 알려 주세요.';
+
+  @override
+  String launchFailedLogs(String path) {
+    return '로그: $path';
+  }
 }

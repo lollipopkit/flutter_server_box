@@ -7084,4 +7084,76 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get monitorUpdateNoAnswer =>
       'L\'agent n\'est pas revenu. Vérifiez-le sur le serveur.';
+
+  @override
+  String get keyArrowDown => 'Flèche bas';
+
+  @override
+  String get keyArrowLeft => 'Flèche gauche';
+
+  @override
+  String get keyArrowRight => 'Flèche droite';
+
+  @override
+  String get keyArrowUp => 'Flèche haut';
+
+  @override
+  String get keyControl => 'Contrôle';
+
+  @override
+  String get keyEscape => 'Échap';
+
+  @override
+  String get keyPageDown => 'Page suivante';
+
+  @override
+  String get keyPageUp => 'Page précédente';
+
+  @override
+  String get termTextView => 'Afficher en texte';
+
+  @override
+  String termTextLetGo(int count) {
+    return 'Lignes antérieures non conservées : $count';
+  }
+
+  @override
+  String get systemGroups => 'Groupes';
+
+  @override
+  String get userGid => 'GID';
+
+  @override
+  String get userGroupMembers => 'Membres';
+
+  @override
+  String get userPrimaryMembers => 'Membres principaux';
+
+  @override
+  String get userSystemGroup => 'Groupe système';
+
+  @override
+  String get userMembersHint => 'alice,bob';
+
+  @override
+  String get userRegularGroup => 'Regular';
+
+  @override
+  String get termMetricsBar => 'Mesures du serveur sous le terminal';
+
+  @override
+  String get termMetricsBarTip =>
+      'CPU, mémoire, réseau et disque, comme sur la carte du serveur. Sur téléphone, au-dessus des touches virtuelles.';
+
+  @override
+  String get launchFailedTitle => 'ServerBox n\'a pas pu démarrer';
+
+  @override
+  String get launchFailedBody =>
+      'Copiez l\'erreur ci-dessous et signalez-la dans une issue GitHub, avec les fichiers journaux.';
+
+  @override
+  String launchFailedLogs(String path) {
+    return 'Journaux : $path';
+  }
 }

@@ -238,6 +238,15 @@ async function main() {
   check('neither has to sign', status(w5).state === 'success', status(w5))
   check('and nothing is posted', w5.comments.length === 0)
 
+  section('a coding agent committing through a User account')
+  const cursorAgent = { login: 'cursoragent', id: 199161495, type: 'User' }
+  const w13 = fresh(world)
+  await onPr(w13, openPr(alice, 13), [commitBy(alice), commitBy(cursorAgent)])
+  check('does not have to sign', status(w13).state === 'success', status(w13))
+  const w14 = fresh(world)
+  await onPr(w14, openPr(alice, 14), [commitBy({ ...cursorAgent, id: 778 })])
+  check('but its login on another account does', status(w14).state === 'failure', status(w14))
+
   section('a commit whose author is not a GitHub account')
   const w6 = makeWorld()
   await onPr(w6, openPr(maintainer, 6), [

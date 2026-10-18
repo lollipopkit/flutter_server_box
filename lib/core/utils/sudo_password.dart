@@ -1,8 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/widgets.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/res/misc.dart';
-import 'package:server_box/data/res/store.dart';
 
 /// A server's sudo password, wherever something asks for it.
 ///
@@ -116,32 +114,35 @@ abstract final class SudoPassword {
     return secureProp(serverId).write(null);
   }
 
+  /// The typed one, else the saved one, else the SSH login's. Throws when
+  /// the saved one cannot be read: falling through would type the login's
+  /// password where the saved one was meant.
   static Future<String?> resolveForTerminal(Spi spi) async {
-    final known_ = await known(spi.id);
-    if (known_ != null) return known_;
+    if (_typed[spi.id] case final typed?) return typed;
+    if (await readOverride(spi.id) case final saved?) return saved;
 
     final pwd = spi.ssh?.pwd;
     if (pwd == null || pwd.isEmpty) return null;
     return pwd;
   }
 
-  static Future<bool> authenticateIfNeeded() async {
-    if (!Stores.setting.useBioAuth.fetch()) return true;
-    return await LocalAuth.goWithResult() == AuthResult.success;
+  /// Whether [line] is sudo asking for the password: its own prompt,
+  /// `[sudo] …:` naming a password in one of sudo's translations, or the bare
+  /// `Password:` it prints on macOS and the BSDs. Nothing else — `ssh`'s `user@host's password:`,
+  /// `mysql -p` or git would be handed this server's password.
+  static bool isPromptText(String line) {
+    final t = line.trim();
+    if (!t.endsWith(':') && !t.endsWith('：')) return false;
+    return _sudoPrompt.hasMatch(t) || _barePrompt.hasMatch(t);
   }
 
-  /// Returns true if [trimmed] looks like an active sudo password prompt.
-  /// [trimmed] should already be trimmed.
-  static bool isPromptText(String trimmed) {
-    final lower = trimmed.toLowerCase();
-    if (Miscs.pwdRequestWithUserReg.hasMatch(trimmed)) return true;
-    if (lower.contains('[sudo] password')) return true;
-    if ((lower.endsWith(':') || lower.endsWith('：')) &&
-        (lower.contains('password') || lower.contains('密码'))) {
-      return true;
-    }
-    return false;
-  }
+  static final _sudoPrompt = RegExp(
+    r'^\[sudo\].*(password|passwort|mot de passe|contraseña|senha|parola|'
+    r'wachtwoord|hasło|heslo|jelszó|salasana|lösenord|adgangskode|passord|'
+    r'пароль|パスワード|密码|密碼|비밀번호)',
+    caseSensitive: false,
+  );
+  static final _barePrompt = RegExp(r'^(password|密码)\s*[:：]$', caseSensitive: false);
 
   /// Strips ANSI escape sequences and normalizes line endings.
   static String normalizeOutput(String value) {

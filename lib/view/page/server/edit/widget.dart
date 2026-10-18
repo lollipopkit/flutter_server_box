@@ -996,6 +996,7 @@ extension _Widgets on _ServerEditPageState {
             : Text(l10n.pveCertUnpinned, style: UIs.textGrey),
         trailing: has
             ? Btn.icon(
+                text: libL10n.delete,
                 icon: const Icon(Icons.delete_outline),
                 onTap: _onTapForgetPveCert,
               )

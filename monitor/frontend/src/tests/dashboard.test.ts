@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/svelte'
+import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
+import { flushSync } from 'svelte'
 import Dashboard from '../desk/apps/status/StatusApp.svelte'
 import { api } from '../lib/api'
 import { capabilitiesStore } from '../lib/capabilities.svelte'
@@ -194,5 +195,58 @@ describe('Dashboard iperf action', () => {
     render(Dashboard)
     await rendered()
     expect(menuLabels().some((l) => /^iperf/i.test(l))).toBe(true)
+  })
+})
+
+describe('Dashboard card arrangement', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    servers.list = [{ id: 'local', url: '', token: 't' }]
+    servers.currentId = 'local'
+    capabilitiesStore.byServer['local'] = caps([])
+    mocked.getMetrics.mockResolvedValue(metrics())
+    mocked.getHistory.mockResolvedValue([])
+    mocked.getCardOrder.mockResolvedValue({ card_order: [] })
+    mocked.updateCardOrder.mockResolvedValue(undefined as never)
+  })
+
+  /// The View menu's Rearrange cards, as the menubar would run it.
+  const toggleArranging = () => {
+    const item = (menus.provide?.() ?? [])
+      .flatMap((m) => m.items)
+      .find((i) => i.label === 'Rearrange cards') as { action: () => void } | undefined
+    if (!item) throw new Error('no Rearrange cards item')
+    flushSync(() => item.action())
+  }
+
+  it('moves a card from the keyboard and says where it went', async () => {
+    render(Dashboard)
+    await rendered()
+    toggleArranging()
+    expect(screen.getByRole('button', { name: 'Move CPU earlier' })).toBeDisabled()
+
+    const later = screen.getByRole('button', { name: 'Move CPU later' })
+    later.focus()
+    await fireEvent.click(later)
+    expect(mocked.updateCardOrder.mock.calls[0][0].slice(0, 2)).toEqual(['memory', 'cpu'])
+    expect(await screen.findByText(/^CPU moved to position 2 of \d+$/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Move CPU later' })).toHaveFocus()
+  })
+
+  it('keeps the order when another server is removed', async () => {
+    servers.list = [
+      { id: 'a', url: 'https://a.example', token: 't' },
+      { id: 'b', url: 'https://b.example', token: 't' },
+    ]
+    servers.currentId = 'a'
+    capabilitiesStore.byServer['a'] = caps([])
+    mocked.getCardOrder.mockResolvedValue({ card_order: ['disk', 'cpu', 'memory', 'network'] })
+    render(Dashboard)
+    await rendered()
+    await waitFor(() => expect(mocked.getCardOrder).toHaveBeenCalledOnce())
+
+    servers.remove('b')
+    await new Promise((r) => setTimeout(r, 10))
+    expect(mocked.getCardOrder).toHaveBeenCalledOnce()
   })
 })

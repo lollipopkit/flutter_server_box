@@ -7038,4 +7038,76 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get monitorUpdateNoAnswer =>
       'De agent is niet teruggekomen. Controleer hem op de server.';
+
+  @override
+  String get keyArrowDown => 'Pijl omlaag';
+
+  @override
+  String get keyArrowLeft => 'Pijl links';
+
+  @override
+  String get keyArrowRight => 'Pijl rechts';
+
+  @override
+  String get keyArrowUp => 'Pijl omhoog';
+
+  @override
+  String get keyControl => 'Control';
+
+  @override
+  String get keyEscape => 'Escape';
+
+  @override
+  String get keyPageDown => 'Pagina omlaag';
+
+  @override
+  String get keyPageUp => 'Pagina omhoog';
+
+  @override
+  String get termTextView => 'Als tekst bekijken';
+
+  @override
+  String termTextLetGo(int count) {
+    return 'Eerdere regels niet meer bewaard: $count';
+  }
+
+  @override
+  String get systemGroups => 'Groepen';
+
+  @override
+  String get userGid => 'GID';
+
+  @override
+  String get userGroupMembers => 'Leden';
+
+  @override
+  String get userPrimaryMembers => 'Primaire leden';
+
+  @override
+  String get userSystemGroup => 'Systeemgroep';
+
+  @override
+  String get userMembersHint => 'alice,bob';
+
+  @override
+  String get userRegularGroup => 'Regular';
+
+  @override
+  String get termMetricsBar => 'Servermetingen onder de terminal';
+
+  @override
+  String get termMetricsBarTip =>
+      'CPU, geheugen, netwerk en schijf, zoals op de serverkaart. Op een telefoon boven de virtuele toetsen.';
+
+  @override
+  String get launchFailedTitle => 'ServerBox kon niet starten';
+
+  @override
+  String get launchFailedBody =>
+      'Kopieer de fout hieronder en meld die in een GitHub-issue, samen met de logbestanden.';
+
+  @override
+  String launchFailedLogs(String path) {
+    return 'Logs: $path';
+  }
 }

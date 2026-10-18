@@ -31,6 +31,13 @@ void main() {
       expect(SudoPassword.isPromptText('Password:'), isTrue);
     });
 
+    test("detects sudo's prompt in other languages", () {
+      expect(SudoPassword.isPromptText('[sudo] Passwort für alice: '), isTrue);
+      expect(SudoPassword.isPromptText('[sudo] Mot de passe de alice : '), isTrue);
+      expect(SudoPassword.isPromptText('[sudo] alice のパスワード:'), isTrue);
+      expect(SudoPassword.isPromptText('[sudo] пароль для alice: '), isTrue);
+    });
+
     test('detects Chinese password prompt with ASCII colon', () {
       expect(SudoPassword.isPromptText('密码:'), isTrue);
     });
@@ -49,6 +56,19 @@ void main() {
 
     test('ignores unrelated terminal output', () {
       expect(SudoPassword.isPromptText('gt610@host:~\$'), isFalse);
+    });
+
+    test("ignores another program's password prompt", () {
+      // Each would be sent this server's password.
+      expect(SudoPassword.isPromptText("alice@other's password:"), isFalse);
+      expect(SudoPassword.isPromptText('Enter password:'), isFalse);
+      expect(
+        SudoPassword.isPromptText("Password for 'https://alice@github.com':"),
+        isFalse,
+      );
+      expect(SudoPassword.isPromptText('Enter PEM pass phrase:'), isFalse);
+      // sudo's prefix on a line that asks for nothing.
+      expect(SudoPassword.isPromptText('[sudo] command completed:'), isFalse);
     });
 
     test('detects sudo prompt in SSH output tail', () {

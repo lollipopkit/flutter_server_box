@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import SystemUsers from '../desk/apps/system_users/SystemUsersApp.svelte'
 import { api } from '../lib/api'
-import type { UserRow, UserView } from '../types'
+import type { GroupRow, UserRow, UserView } from '../types'
 
 vi.mock('../lib/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../lib/api')>()),
@@ -36,10 +36,23 @@ const view = (): UserView => ({
   reason: null,
   agent_account: 'agent',
   uid_min: 1000,
+  gid_min: 1000,
   users: [
     row('root', 0, { is_root: true, deletable: false, system: true }),
     row('agent', 1000, { agent_account: true, deletable: false }),
     row('deploy', 1001),
+  ],
+  groups: [
+    {
+      name: 'ops',
+      gid: 1001,
+      members: ['deploy'],
+      is_root: false,
+      system: false,
+      primary_members: [],
+      local: true,
+      deletable: true,
+    } satisfies GroupRow,
   ],
   name: null,
   detail: null,
@@ -90,6 +103,20 @@ describe('System users page', () => {
     expect(await screen.findByText('Removed deploy.')).toBeInTheDocument()
   })
 
+  it('edits a group the same way as an account', async () => {
+    actSystemUser.mockResolvedValue(ok)
+    render(SystemUsers)
+    await fireEvent.click(await screen.findByRole('tab', { name: /^groups$/i }))
+    await fireEvent.click(await screen.findByRole('button', { name: /^ops/ }))
+    await fireEvent.click(screen.getByRole('button', { name: /edit group/i }))
+    await fireEvent.click(screen.getByRole('button', { name: /^save$/i }))
+    await waitFor(() =>
+      expect(actSystemUser).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'edit', kind: 'group', name: 'ops' }),
+      ),
+    )
+  })
+
   it('says why a machine cannot be listed', async () => {
     getSystemUsers.mockResolvedValue({
       ...view(),
@@ -97,7 +124,9 @@ describe('System users page', () => {
       reason_kind: 'unsupported_platform',
       agent_account: null,
       uid_min: null,
+      gid_min: null,
       users: [],
+      groups: [],
     })
     render(SystemUsers)
     expect(await screen.findByText(/linux/i)).toBeInTheDocument()

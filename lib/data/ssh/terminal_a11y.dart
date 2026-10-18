@@ -1,0 +1,342 @@
+import 'dart:async';
+
+import 'package:xterm/core.dart';
+
+/// How one cell is drawn: its foreground, its background and its attributes
+/// ([CellAttr]), as the line holds them.
+typedef CellStyle = (int, int, int);
+
+/// One row on screen: its text, without trailing blanks, and how each of its
+/// cells is drawn.
+///
+/// The styles are what a menu drawn by `dialog`, `whiptail` or `nmtui` moves
+/// when an arrow is pressed: those leave the text and the cursor where they
+/// were and only paint another item as the selected one.
+final class ScreenRow {
+  const ScreenRow(this.text, [this.styles = const []]);
+
+  final String text;
+  final List<CellStyle> styles;
+
+  static const _plain = (0, 0, 0);
+
+  CellStyle styleAt(int index) =>
+      index < styles.length ? styles[index] : _plain;
+}
+
+/// The rows of [buffer] on screen, top first.
+List<ScreenRow> viewportRows(Buffer buffer) => [
+  for (var i = buffer.scrollBack; i < buffer.height; i++)
+    _screenRow(buffer.lines[i]),
+];
+
+ScreenRow _screenRow(BufferLine line) => ScreenRow(line.getText(), [
+  for (var c = 0; c < line.length; c++)
+    (line.getForeground(c), line.getBackground(c), line.getAttributes(c)),
+]);
+
+/// The text of the row the cursor is on.
+String cursorRow(Buffer buffer) {
+  final y = buffer.absoluteCursorY;
+  if (y < 0 || y >= buffer.height) return '';
+  return buffer.lines[y].getText();
+}
+
+/// How far [after] scrolled from [before]: the shift that keeps the most rows
+/// in place.
+int _scrolled(List<String> before, List<String> after) {
+  var shift = 0;
+  var best = -1;
+  for (var k = 0; k <= before.length; k++) {
+    var same = 0;
+    for (var i = 0; i < after.length && i + k < before.length; i++) {
+      if (before[i + k] == after[i]) same++;
+    }
+    if (same > best) {
+      best = same;
+      shift = k;
+    }
+  }
+  return shift;
+}
+
+/// Which rows of [after] are not in [before], in order, blank ones left out.
+///
+/// The screen is first lined up with how far it scrolled, so output that
+/// pushed everything up counts as the new rows at the bottom, not as a whole
+/// screen that changed.
+List<String> changedRows(List<String> before, List<String> after) {
+  final shift = _scrolled(before, after);
+  return [
+    for (var i = 0; i < after.length; i++)
+      if (!(i + shift < before.length && before[i + shift] == after[i]) &&
+          after[i].trim().isNotEmpty)
+        after[i].trim(),
+  ];
+}
+
+/// The row of [after] that a change of style alone made the selected one, or
+/// null when no row with text was repainted.
+///
+/// Moving through a menu repaints two rows: the item that lost the highlight
+/// and the one that took it. The one read is the row that took on inverse
+/// video, and otherwise the one now drawn in the style least used on the
+/// screen — a highlight is what one item has and the rest do not.
+String? restyledRow(List<ScreenRow> before, List<ScreenRow> after) {
+  final shift = _scrolled(
+    [for (final row in before) row.text],
+    [for (final row in after) row.text],
+  );
+  final uses = <CellStyle, int>{};
+  for (final row in after) {
+    for (final style in row.styles) {
+      uses[style] = (uses[style] ?? 0) + 1;
+    }
+  }
+  String? best;
+  var bestInverse = false;
+  var bestRarity = 0;
+  for (var i = 0; i < after.length; i++) {
+    final j = i + shift;
+    if (j >= before.length) continue;
+    final now = after[i];
+    final was = before[j];
+    if (now.text != was.text || now.text.trim().isEmpty) continue;
+    final width = now.styles.length > was.styles.length
+        ? now.styles.length
+        : was.styles.length;
+    var repainted = false;
+    var inverse = false;
+    var rarity = 1 << 30;
+    for (var c = 0; c < width; c++) {
+      final style = now.styleAt(c);
+      final old = was.styleAt(c);
+      if (style == old) continue;
+      repainted = true;
+      if (style.$3 & CellAttr.inverse != 0 && old.$3 & CellAttr.inverse == 0) {
+        inverse = true;
+      }
+      final n = uses[style] ?? 0;
+      if (n < rarity) rarity = n;
+    }
+    if (!repainted) continue;
+    final better =
+        best == null ||
+        (inverse && !bestInverse) ||
+        (inverse == bestInverse && rarity < bestRarity);
+    if (better) {
+      best = now.text.trim();
+      bestInverse = inverse;
+      bestRarity = rarity;
+    }
+  }
+  return best;
+}
+
+/// What to read out after a key: the rows it changed; when it changed no text,
+/// the row it repainted as the selected one; and when it did neither — the
+/// cursor moved along a line — the row the cursor is on, unless
+/// [cursorIfUnchanged] is false.
+String? announcementFor({
+  required List<ScreenRow> before,
+  required List<ScreenRow> after,
+  required String cursor,
+  bool cursorIfUnchanged = true,
+}) {
+  final changed = changedRows(
+    [for (final row in before) row.text],
+    [for (final row in after) row.text],
+  );
+  if (changed.isNotEmpty) return changed.join('\n');
+  final restyled = restyledRow(before, after);
+  if (restyled != null) return restyled;
+  if (!cursorIfUnchanged) return null;
+  final row = cursor.trim();
+  return row.isEmpty ? null : row;
+}
+
+/// Whether what was typed is worth reading the screen out after.
+///
+/// Not plain characters: the keyboard already speaks those, and reading the
+/// line after every letter would talk over it. Anything else — Enter, Tab,
+/// Backspace, an arrow or any other escape sequence — is a key whose effect
+/// is only on the screen. Space is both, and is left to
+/// [TerminalAnnouncer.onTyped].
+bool announcesAfter(String typed) {
+  for (final unit in typed.codeUnits) {
+    if (unit < 0x20 || unit == 0x7f) return true;
+  }
+  return false;
+}
+
+/// Reads out what a key did to the screen, for a screen reader.
+///
+/// Armed by [onTyped]; the screen is read once output has stopped for
+/// [quiet], or after [firstOutput] if nothing arrived, and in any case by
+/// [maxWait], so a program that never stops drawing — `top` — is read every
+/// so often instead of never.
+///
+/// Space ticks a box in a menu and separates words at a prompt. So after a
+/// space alone only rows it changed are read — a ticked box, never the line
+/// at a prompt, where a trailing blank changes nothing — and typing on past
+/// it drops the round, since the next word would change the line.
+final class TerminalAnnouncer {
+  TerminalAnnouncer(
+    this.terminal, {
+    required this.announce,
+    this.quiet = const Duration(milliseconds: 300),
+    this.firstOutput = const Duration(milliseconds: 800),
+    this.maxWait = const Duration(seconds: 2),
+  });
+
+  final Terminal terminal;
+  final void Function(String message) announce;
+  final Duration quiet;
+  final Duration firstOutput;
+  final Duration maxWait;
+
+  /// The screen when the first key of this round was typed; null between
+  /// rounds.
+  List<ScreenRow>? _before;
+  bool _changed = false;
+
+  /// Whether every key of this round was a space.
+  bool _spaceOnly = false;
+  Timer? _quietTimer;
+  Timer? _deadline;
+
+  void onTyped(String data) {
+    final space = data == ' ';
+    if (!space && !announcesAfter(data)) {
+      if (_spaceOnly) _stop();
+      return;
+    }
+    if (_before == null) {
+      _before = viewportRows(terminal.buffer);
+      _changed = false;
+      _spaceOnly = space;
+      _deadline = Timer(maxWait, _fire);
+      terminal.addListener(_onChange);
+    } else if (!space) {
+      _spaceOnly = false;
+    }
+    _restart();
+  }
+
+  void _onChange() {
+    _changed = true;
+    _restart();
+  }
+
+  void _restart() {
+    _quietTimer?.cancel();
+    _quietTimer = Timer(_changed ? quiet : firstOutput, _fire);
+  }
+
+  void _fire() {
+    final before = _before;
+    final spaceOnly = _spaceOnly;
+    _stop();
+    if (before == null) return;
+    final buffer = terminal.buffer;
+    final message = announcementFor(
+      before: before,
+      after: viewportRows(buffer),
+      cursor: cursorRow(buffer),
+      cursorIfUnchanged: !spaceOnly,
+    );
+    if (message != null) announce(message);
+  }
+
+  void _stop() {
+    _quietTimer?.cancel();
+    _deadline?.cancel();
+    _quietTimer = null;
+    _deadline = null;
+    if (_before != null) terminal.removeListener(_onChange);
+    _before = null;
+    _spaceOnly = false;
+  }
+
+  void dispose() => _stop();
+}
+
+/// Everything one [Buffer] has shown, as lines of text, for reading at a
+/// screen reader's pace.
+///
+/// What is still in [buffer] is read again on every [sync] — a progress bar
+/// redrawn with `\r` stays one line — and what leaves it off the top is kept
+/// as it was when it left, told by the buffer itself: no count of the rows
+/// that are left can say how many went, since a row overwritten in place, an
+/// insert into a full buffer or a reflow all move or replace them as well.
+///
+/// Up to [maxKept] lines of that, the oldest let go of first; [letGo] says
+/// how many.
+final class TerminalTranscript {
+  TerminalTranscript(this.buffer, {this.maxKept = 10000}) {
+    buffer.lines.addEvictListener(_onEvict);
+  }
+
+  final Buffer buffer;
+  final int maxKept;
+
+  /// Lines no longer in [buffer], oldest first, a wrapped row already joined
+  /// to the one it continues.
+  final _gone = <String>[];
+
+  /// How many lines were let go of off the top of what was kept.
+  int get letGo => _letGo;
+  var _letGo = 0;
+
+  /// The lines at the last [sync].
+  List<String> get lines => _lines;
+  var _lines = const <String>[];
+
+  void _onEvict(BufferLine line) {
+    final text = line.getText();
+    if (line.isWrapped && _gone.isNotEmpty) {
+      _gone.last += text;
+    } else {
+      _gone.add(text);
+    }
+    // A tenth over before trimming, so a buffer scrolling at full speed does
+    // not shift the whole list for every line.
+    if (_gone.length > maxKept + maxKept ~/ 10) {
+      final over = _gone.length - maxKept;
+      _gone.removeRange(0, over);
+      _letGo += over;
+    }
+  }
+
+  /// Reads the rows [buffer] has now. Only these are joined again: what left
+  /// it was joined as it went.
+  void sync() {
+    final rows = buffer.lines;
+    final live = <String>[];
+    // The first row may continue the last line that left.
+    String? continued;
+    for (var i = 0; i < buffer.height; i++) {
+      final row = rows[i];
+      final text = row.getText();
+      if (!row.isWrapped) {
+        live.add(text);
+      } else if (live.isNotEmpty) {
+        live.last += text;
+      } else if (_gone.isNotEmpty) {
+        continued = text;
+      } else {
+        live.add(text);
+      }
+    }
+    while (live.isNotEmpty && live.last.trim().isEmpty) {
+      live.removeLast();
+    }
+    _lines = [
+      ..._gone.take(continued == null ? _gone.length : _gone.length - 1),
+      if (continued != null) _gone.last + continued,
+      ...live,
+    ];
+  }
+
+  void dispose() => buffer.lines.removeEvictListener(_onEvict);
+}

@@ -5,6 +5,8 @@
 
 import { flushSync } from 'svelte'
 
+import { readPref, writePref } from './prefs'
+
 export type Theme = 'light' | 'dark' | 'system'
 
 const ORDER: Theme[] = ['system', 'light', 'dark']
@@ -87,7 +89,7 @@ class ThemeStore {
   }
 
   #stored(): Theme {
-    const v = window.localStorage.getItem('theme')
+    const v = readPref('theme')
     return v === 'light' || v === 'dark' ? v : 'system'
   }
 
@@ -107,7 +109,7 @@ class ThemeStore {
   }
 
   set(value: Theme) {
-    window.localStorage.setItem('theme', value)
+    writePref('theme', value)
     const dark = this.dark
     const update = () => {
       this.current = value

@@ -300,28 +300,37 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
     );
   }
 
-  PreferredSizeWidget get _tabBar => PreferredSizeListenBuilder(
-    // Both: the bar shows which tab is current *and* how the picker behind it
-    // is sorted.
-    listenable: Listenable.merge([_sessions, _sortVersion]),
-    // The wrapper is what the `Scaffold` measures, so it has to be told;
-    // its own default is a full toolbar.
-    preferSize: const Size.fromHeight(SessionTabBar.height),
-    builder: () => SessionTabBar(
-      names: _sessions.names,
-      index: _sessions.index,
-      onTap: _sessions.select,
-      onClose: _confirmClose,
-      detailOf: _sessionAddr,
-      leadingOf: _sessions.statusOf,
-      sessionActions: _serverActions,
-      leadingActions: [_sortAction, _searchAction, _settingsAction],
-      // In place of the strip, not over it. Only on the picker: a search here
-      // narrows that list, and the tabs beside it are open terminals rather
-      // than anything to find.
-      search: _search,
-    ),
-  );
+  PreferredSizeWidget get _tabBar {
+    // Read here, in the page's build, so a screen reader turned on or off
+    // builds the bar again.
+    final reader = MediaQuery.accessibleNavigationOf(context);
+    return PreferredSizeListenBuilder(
+      // Both: the bar shows which tab is current *and* how the picker behind it
+      // is sorted.
+      listenable: Listenable.merge([_sessions, _sortVersion]),
+      // The wrapper is what the `Scaffold` measures, so it has to be told;
+      // its own default is a full toolbar.
+      preferSize: const Size.fromHeight(SessionTabBar.height),
+      builder: () => SessionTabBar(
+        names: _sessions.names,
+        index: _sessions.index,
+        onTap: _sessions.select,
+        onClose: _confirmClose,
+        detailOf: _sessionAddr,
+        leadingOf: _sessions.statusOf,
+        // A button of its own for a screen reader, which has no other way to
+        // the output; behind ⋮ otherwise, so on a phone it never takes a slot
+        // from a button that is used more.
+        sessionActions: _serverActions(textView: reader),
+        sessionMenu: reader ? null : () => [_textViewMenuItem],
+        leadingActions: [_sortAction, _searchAction, _settingsAction],
+        // In place of the strip, not over it. Only on the picker: a search here
+        // narrows that list, and the tabs beside it are open terminals rather
+        // than anything to find.
+        search: _search,
+      ),
+    );
+  }
 
   /// What a session's row in the sheet says under the name: the machine the
   /// shell is on. Nothing for a shell on this device — its name already says
@@ -344,9 +353,10 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
         // stays up with none of them open there may be no such terminal. A
         // button that looks tappable and does nothing is worse than no button.
         actions: [
+          // Wide, there is room for every button.
           for (final action in current == null
               ? [_settingsAction]
-              : _serverActions)
+              : _serverActions(textView: true))
             action.button(),
           const SizedBox(width: 7),
         ],
@@ -667,7 +677,7 @@ extension _Actions on _SSHTabPageState {
   ///
   /// [_floatBtn] is last, which puts it in the corner of the window — the
   /// place a control over the window itself belongs.
-  List<BarAction> get _serverActions {
+  List<BarAction> _serverActions({required bool textView}) {
     final current = _sessions.current;
     if (current == null) return const [];
     final onServer = current.data.page.args.spi != null;
@@ -681,11 +691,19 @@ extension _Actions on _SSHTabPageState {
             status,
             _agentAction,
             _snippetAction,
+            if (textView) _textViewAction,
+            _metricsAction,
             _settingsAction,
             _moveAction,
             _floatAction,
           ]
-        : [status, _snippetAction, _settingsAction, _floatAction];
+        : [
+            status,
+            _snippetAction,
+            if (textView) _textViewAction,
+            _settingsAction,
+            _floatAction,
+          ];
   }
 
   /// Sends the terminal on screen into the window that floats over every tab,
@@ -738,6 +756,20 @@ extension _Actions on _SSHTabPageState {
     label: l10n.askAi,
     onTap: () =>
         _sessions.current?.data.pageKey.currentState?.openAgentFromToolbar(),
+  );
+
+  /// Shows and hides the server's readings under the terminal: the setting,
+  /// reachable from where it takes effect.
+  BarAction get _metricsAction => BarAction.listen(
+    listenable: Stores.setting.termMetricsBar.listenable(),
+    build: (_) {
+      final on = Stores.setting.termMetricsBar.fetch();
+      return BarAction(
+        icon: on ? Icons.speed : Icons.speed_outlined,
+        label: l10n.termMetricsBar,
+        onTap: () => Stores.setting.termMetricsBar.put(!on),
+      );
+    },
   );
 
   /// Carries the terminal on screen into a workspace, still connected.
@@ -803,6 +835,21 @@ extension _Actions on _SSHTabPageState {
     onTap: () =>
         _sessions.current?.data.pageKey.currentState?.pickSnippetFromToolbar(),
   );
+
+  BarAction get _textViewAction => BarAction(
+    icon: Icons.article_outlined,
+    label: l10n.termTextView,
+    onTap: _openTextView,
+  );
+
+  ContextMenuAction get _textViewMenuItem => ContextMenuAction(
+    icon: Icons.article_outlined,
+    text: l10n.termTextView,
+    onTap: _openTextView,
+  );
+
+  void _openTextView() =>
+      _sessions.current?.data.pageKey.currentState?.openTextView();
 
   BarAction get _sortAction => BarAction(
     icon: _SortOrder.stored.icon,

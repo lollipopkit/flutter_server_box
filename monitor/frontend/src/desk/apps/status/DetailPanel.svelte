@@ -102,7 +102,10 @@
 </script>
 
 {#snippet sortTh(label: string, active: boolean, dir: 1 | -1, align: 'left' | 'right', onclick: () => void)}
-  <th class="lk-caps {align === 'left' ? 'text-left' : 'text-right'}">
+  <th
+    class="lk-caps {align === 'left' ? 'text-left' : 'text-right'}"
+    aria-sort={active ? (dir === 1 ? 'ascending' : 'descending') : 'none'}
+  >
     <button type="button" class="inline-flex items-center gap-[5px] py-[7px] text-(--text-secondary) hover:text-(--text-primary)" {onclick}>
       {#if active && dir === -1}<Icon name="arrow_downward" size={12} />{/if}
       {label}

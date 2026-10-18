@@ -1488,6 +1488,22 @@ type RootTranslation = {
 	 */
 	terminalProgramDismiss: string
 	/**
+	 * C​o​n​n​e​c​t
+	 */
+	terminalConnect: string
+	/**
+	 * R​e​j​o​i​n​ ​p​r​e​v​i​o​u​s​ ​s​e​s​s​i​o​n
+	 */
+	terminalResume: string
+	/**
+	 * S​c​r​e​e​n​ ​r​e​a​d​e​r​ ​m​o​d​e
+	 */
+	terminalScreenReader: string
+	/**
+	 * L​e​t​s​ ​a​ ​s​c​r​e​e​n​ ​r​e​a​d​e​r​ ​r​e​a​d​ ​t​h​e​ ​t​e​r​m​i​n​a​l​.​ ​W​h​i​l​e​ ​o​n​,​ ​T​a​b​ ​m​o​v​e​s​ ​f​o​c​u​s​ ​o​u​t​ ​o​f​ ​t​h​e​ ​t​e​r​m​i​n​a​l​ ​i​n​s​t​e​a​d​ ​o​f​ ​c​o​m​p​l​e​t​i​n​g​ ​i​n​ ​t​h​e​ ​s​h​e​l​l​.
+	 */
+	terminalScreenReaderHint: string
+	/**
 	 * E​n​d​ ​s​e​s​s​i​o​n
 	 */
 	terminalDisconnect: string
@@ -2072,6 +2088,111 @@ type RootTranslation = {
 	 * S​y​s​t​e​m​ ​a​c​c​o​u​n​t​s
 	 */
 	systemUsersGroupSystem: string
+	/**
+	 * G​r​o​u​p​s
+	 */
+	systemGroups: string
+	/**
+	 * N​e​w​ ​g​r​o​u​p
+	 */
+	groupAdd: string
+	/**
+	 * D​e​l​e​t​e​ ​g​r​o​u​p
+	 */
+	groupDelete: string
+	/**
+	 * D​e​l​e​t​e​ ​{​n​a​m​e​}​?​ ​A​c​c​o​u​n​t​s​ ​t​h​a​t​ ​h​a​v​e​ ​i​t​ ​a​s​ ​a​ ​s​u​p​p​l​e​m​e​n​t​a​r​y​ ​g​r​o​u​p​ ​k​e​e​p​ ​t​h​e​i​r​ ​o​t​h​e​r​ ​g​r​o​u​p​s​.
+	 * @param {unknown} name
+	 */
+	groupDeleteConfirm: RequiredParams<'name'>
+	/**
+	 * C​r​e​a​t​e​d​ ​{​n​a​m​e​}​.
+	 * @param {unknown} name
+	 */
+	groupDoneCreated: RequiredParams<'name'>
+	/**
+	 * R​e​m​o​v​e​d​ ​{​n​a​m​e​}​.
+	 * @param {unknown} name
+	 */
+	groupDoneDeleted: RequiredParams<'name'>
+	/**
+	 * C​h​a​n​g​e​d​ ​{​n​a​m​e​}​.
+	 * @param {unknown} name
+	 */
+	groupDoneEdited: RequiredParams<'name'>
+	/**
+	 * E​d​i​t​ ​g​r​o​u​p
+	 */
+	groupEdit: string
+	/**
+	 * N​o​ ​g​r​o​u​p​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 */
+	groupEmpty: string
+	/**
+	 * A​ ​g​r​o​u​p​ ​w​i​t​h​ ​t​h​a​t​ ​n​a​m​e​ ​a​l​r​e​a​d​y​ ​e​x​i​s​t​s​.
+	 */
+	groupExists: string
+	/**
+	 * G​I​D
+	 */
+	groupGid: string
+	/**
+	 * T​h​i​s​ ​g​r​o​u​p​ ​i​s​ ​a​n​ ​a​c​c​o​u​n​t​'​s​ ​p​r​i​m​a​r​y​ ​g​r​o​u​p​,​ ​s​o​ ​i​t​ ​i​s​ ​n​o​t​ ​r​e​m​o​v​e​d​ ​h​e​r​e​.
+	 */
+	groupInUse: string
+	/**
+	 * O​n​l​y​ ​g​r​o​u​p​s​ ​i​n​ ​/​e​t​c​/​g​r​o​u​p​ ​c​a​n​ ​b​e​ ​c​h​a​n​g​e​d​ ​h​e​r​e​.
+	 */
+	groupNotLocal: string
+	/**
+	 * T​h​a​t​ ​m​e​m​b​e​r​ ​i​s​ ​n​o​t​ ​a​n​ ​a​c​c​o​u​n​t​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 */
+	groupUnknownMember: string
+	/**
+	 * M​e​m​b​e​r​s
+	 */
+	groupMembers: string
+	/**
+	 * S​e​p​a​r​a​t​e​d​ ​b​y​ ​s​p​a​c​e​s​.​ ​C​l​e​a​r​i​n​g​ ​i​t​ ​r​e​m​o​v​e​s​ ​e​v​e​r​y​ ​s​u​p​p​l​e​m​e​n​t​a​r​y​ ​m​e​m​b​e​r​.
+	 */
+	groupMembersHint: string
+	/**
+	 * N​o​ ​g​r​o​u​p​ ​m​a​t​c​h​e​s​ ​t​h​e​ ​f​i​l​t​e​r​.
+	 */
+	groupNoMatch: string
+	/**
+	 * T​h​a​t​ ​g​r​o​u​p​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​i​n​ ​t​h​e​ ​c​a​t​a​l​o​g​.​ ​T​h​e​ ​l​i​s​t​ ​w​a​s​ ​r​e​-​r​e​a​d​.
+	 */
+	groupNoSuchGroup: string
+	/**
+	 * P​r​i​m​a​r​y​ ​f​o​r
+	 */
+	groupPrimaryMembers: string
+	/**
+	 * T​h​e​ ​r​o​o​t​ ​g​r​o​u​p​ ​c​a​n​n​o​t​ ​b​e​ ​r​e​m​o​v​e​d​.
+	 */
+	groupRootNotDeletable: string
+	/**
+	 * N​a​m​e​,​ ​G​I​D​ ​o​r​ ​m​e​m​b​e​r
+	 */
+	groupSearchHint: string
+	/**
+	 * {​c​o​u​n​t​}​ ​g​r​o​u​p​s
+	 * @param {unknown} count
+	 */
+	groupSubtitle: RequiredParams<'count'>
+	/**
+	 * S​y​s​t​e​m​ ​g​r​o​u​p
+	 */
+	groupSystem: string
+	/**
+	 * G​r​o​u​p​s
+	 */
+	groupTab: string
+	/**
+	 * U​s​e​r​s
+	 */
+	userTab: string
 	/**
 	 * S​n​i​p​p​e​t​s
 	 */
@@ -10056,6 +10177,43 @@ type RootTranslation = {
 	 * C​l​e​a​n​u​p
 	 */
 	cleanup: string
+	/**
+	 * S​k​i​p​ ​t​o​ ​c​o​n​t​e​n​t
+	 */
+	skipToContent: string
+	/**
+	 * R​e​a​r​r​a​n​g​e​ ​c​a​r​d​s
+	 */
+	arrangeCards: string
+	/**
+	 * M​o​v​e​ ​{​n​a​m​e​}​ ​e​a​r​l​i​e​r
+	 * @param {string} name
+	 */
+	cardMoveEarlier: RequiredParams<'name'>
+	/**
+	 * M​o​v​e​ ​{​n​a​m​e​}​ ​l​a​t​e​r
+	 * @param {string} name
+	 */
+	cardMoveLater: RequiredParams<'name'>
+	/**
+	 * {​n​a​m​e​}​ ​m​o​v​e​d​ ​t​o​ ​p​o​s​i​t​i​o​n​ ​{​p​o​s​i​t​i​o​n​}​ ​o​f​ ​{​t​o​t​a​l​}
+	 * @param {string} name
+	 * @param {number} position
+	 * @param {number} total
+	 */
+	cardMoved: RequiredParams<'name' | 'position' | 'total'>
+	/**
+	 * H​i​s​t​o​r​y​ ​r​a​n​g​e
+	 */
+	historyRange: string
+	/**
+	 * S​h​o​w​ ​d​a​t​a
+	 */
+	chartShowData: string
+	/**
+	 * T​i​m​e
+	 */
+	chartTime: string
 }
 
 export type TranslationFunctions = {
@@ -11484,6 +11642,22 @@ export type TranslationFunctions = {
 	 */
 	terminalProgramDismiss: () => LocalizedString
 	/**
+	 * Connect
+	 */
+	terminalConnect: () => LocalizedString
+	/**
+	 * Rejoin previous session
+	 */
+	terminalResume: () => LocalizedString
+	/**
+	 * Screen reader mode
+	 */
+	terminalScreenReader: () => LocalizedString
+	/**
+	 * Lets a screen reader read the terminal. While on, Tab moves focus out of the terminal instead of completing in the shell.
+	 */
+	terminalScreenReaderHint: () => LocalizedString
+	/**
 	 * End session
 	 */
 	terminalDisconnect: () => LocalizedString
@@ -12059,6 +12233,106 @@ export type TranslationFunctions = {
 	 * System accounts
 	 */
 	systemUsersGroupSystem: () => LocalizedString
+	/**
+	 * Groups
+	 */
+	systemGroups: () => LocalizedString
+	/**
+	 * New group
+	 */
+	groupAdd: () => LocalizedString
+	/**
+	 * Delete group
+	 */
+	groupDelete: () => LocalizedString
+	/**
+	 * Delete {name}? Accounts that have it as a supplementary group keep their other groups.
+	 */
+	groupDeleteConfirm: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Created {name}.
+	 */
+	groupDoneCreated: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Removed {name}.
+	 */
+	groupDoneDeleted: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Changed {name}.
+	 */
+	groupDoneEdited: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Edit group
+	 */
+	groupEdit: () => LocalizedString
+	/**
+	 * No groups on this machine.
+	 */
+	groupEmpty: () => LocalizedString
+	/**
+	 * A group with that name already exists.
+	 */
+	groupExists: () => LocalizedString
+	/**
+	 * GID
+	 */
+	groupGid: () => LocalizedString
+	/**
+	 * This group is an account's primary group, so it is not removed here.
+	 */
+	groupInUse: () => LocalizedString
+	/**
+	 * Only groups in /etc/group can be changed here.
+	 */
+	groupNotLocal: () => LocalizedString
+	/**
+	 * That member is not an account on this machine.
+	 */
+	groupUnknownMember: () => LocalizedString
+	/**
+	 * Members
+	 */
+	groupMembers: () => LocalizedString
+	/**
+	 * Separated by spaces. Clearing it removes every supplementary member.
+	 */
+	groupMembersHint: () => LocalizedString
+	/**
+	 * No group matches the filter.
+	 */
+	groupNoMatch: () => LocalizedString
+	/**
+	 * That group is no longer in the catalog. The list was re-read.
+	 */
+	groupNoSuchGroup: () => LocalizedString
+	/**
+	 * Primary for
+	 */
+	groupPrimaryMembers: () => LocalizedString
+	/**
+	 * The root group cannot be removed.
+	 */
+	groupRootNotDeletable: () => LocalizedString
+	/**
+	 * Name, GID or member
+	 */
+	groupSearchHint: () => LocalizedString
+	/**
+	 * {count} groups
+	 */
+	groupSubtitle: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * System group
+	 */
+	groupSystem: () => LocalizedString
+	/**
+	 * Groups
+	 */
+	groupTab: () => LocalizedString
+	/**
+	 * Users
+	 */
+	userTab: () => LocalizedString
 	/**
 	 * Snippets
 	 */
@@ -19731,6 +20005,38 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Cleanup
 	 */
 	cleanup: () => LocalizedString
+	/**
+	 * Skip to content
+	 */
+	skipToContent: () => LocalizedString
+	/**
+	 * Rearrange cards
+	 */
+	arrangeCards: () => LocalizedString
+	/**
+	 * Move {name} earlier
+	 */
+	cardMoveEarlier: (arg: { name: string }) => LocalizedString
+	/**
+	 * Move {name} later
+	 */
+	cardMoveLater: (arg: { name: string }) => LocalizedString
+	/**
+	 * {name} moved to position {position} of {total}
+	 */
+	cardMoved: (arg: { name: string, position: number, total: number }) => LocalizedString
+	/**
+	 * History range
+	 */
+	historyRange: () => LocalizedString
+	/**
+	 * Show data
+	 */
+	chartShowData: () => LocalizedString
+	/**
+	 * Time
+	 */
+	chartTime: () => LocalizedString
 }
 
 export type Formatters = {}

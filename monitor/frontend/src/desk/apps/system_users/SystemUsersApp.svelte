@@ -2,7 +2,8 @@
   import Spinner from '../../lk/Spinner.svelte'
   import { errorText } from '../../../lib/errorText'
   import { AppToolbar } from '../../sys'
-  import { Badge, Button, Card, Checkbox, Dialog, Icon, IconButton, Input } from '../../lk'
+  import { Badge, Button, Card, Checkbox, Dialog, Icon, IconButton, Input, SegmentedControl } from '../../lk'
+  import GroupForm, { groupFormState, type GroupFormState } from './GroupForm.svelte'
   import UserForm, { userFormState, type UserFormState } from './UserForm.svelte'
   import UserSecurity from './UserSecurity.svelte'
   import { api } from '../../../lib/api'
@@ -11,7 +12,7 @@
   import { useScope } from '../../../lib/scope.svelte'
   import { untrack } from 'svelte'
   import { userRefusalText } from '../../../lib/userRefusal'
-  import type { UserRow, UserView } from '../../../types'
+  import type { GroupRow, UserRow, UserView } from '../../../types'
 
   let view = $state<UserView | null>(null)
   let loading = $state(true)
@@ -40,6 +41,14 @@
   let removeHome = $state(false)
   let needsSudo = $state(false)
   let sudoPassword = $state('')
+  /// Accounts or groups: the list, the filter and the add button follow it.
+  let subject = $state<'users' | 'groups'>('users')
+  /// The group whose detail is open and the group the form is about, as for
+  /// accounts.
+  let openedGroup = $state<GroupRow | undefined>(undefined)
+  let editingGroup = $state<GroupRow | null | undefined>(undefined)
+  let groupForm = $state<GroupFormState>(groupFormState())
+  let removingGroup = $state(false)
 
   /// A reply that arrives after the desk has switched servers belongs to
   /// neither.
@@ -58,6 +67,10 @@
       if (opened) {
         opened = next.users.find((user) => user.name === opened?.name)
         if (!opened) removing = false
+      }
+      if (openedGroup) {
+        openedGroup = (next.groups ?? []).find((group) => group.name === openedGroup?.name)
+        if (!openedGroup) removingGroup = false
       }
     } catch (e) {
       if (stale(serverId)) return
@@ -132,7 +145,72 @@
     void load()
   }
 
+  async function removeGroup(asRoot = false) {
+    const group = openedGroup
+    if (!group) return
+    busy = true
+    notice = ''
+    actionError = ''
+    try {
+      const result = await api.actSystemUser({
+        action: 'delete',
+        kind: 'group',
+        name: group.name,
+        ...(asRoot && sudoPassword ? { password: sudoPassword } : {}),
+      })
+      if (result.sudo_rejected) {
+        if (asRoot) {
+          actionError = $LL.powerRejected()
+          sudoPassword = ''
+        } else needsSudo = true
+        return
+      }
+      if (!result.succeeded) {
+        actionError = result.stderr.trim() || result.stdout.trim() || $LL.userCommandFailed()
+        return
+      }
+      notice = $LL.groupDoneDeleted({ name: group.name })
+      openedGroup = undefined
+      removingGroup = false
+      needsSudo = false
+      sudoPassword = ''
+      await load()
+    } catch (e) {
+      actionError = userRefusalText(errorText(e))
+    } finally {
+      busy = false
+    }
+  }
+
+  function openGroup(group: GroupRow) {
+    openedGroup = group
+    removingGroup = false
+    needsSudo = false
+    sudoPassword = ''
+    actionError = ''
+  }
+
+  function openGroupForm(group: GroupRow | null) {
+    groupForm = groupFormState(group ?? undefined)
+    editingGroup = group
+    actionError = ''
+  }
+
+  function onGroupSaved(name: string, created: boolean) {
+    notice = created ? $LL.groupDoneCreated({ name }) : $LL.groupDoneEdited({ name })
+    editingGroup = undefined
+    void load()
+  }
+
+  /// Why a group cannot be removed, in the agent's order of reasons.
+  function groupKeptText(group: GroupRow): string {
+    if (group.is_root) return $LL.groupRootNotDeletable()
+    if (!group.local) return $LL.groupNotLocal()
+    return $LL.groupInUse()
+  }
+
   const users = $derived(view?.users ?? [])
+  const groups = $derived(view?.groups ?? [])
 
   const visible = $derived.by(() => {
     const needle = query.trim().toLowerCase()
@@ -142,6 +220,17 @@
         user.name.toLowerCase().includes(needle) ||
         user.home.toLowerCase().includes(needle) ||
         String(user.uid).includes(needle),
+    )
+  })
+
+  const visibleGroups = $derived.by(() => {
+    const needle = query.trim().toLowerCase()
+    if (!needle) return groups
+    return groups.filter(
+      (group) =>
+        group.name.toLowerCase().includes(needle) ||
+        String(group.gid).includes(needle) ||
+        group.members.some((member) => member.toLowerCase().includes(needle)),
     )
   })
 
@@ -162,7 +251,7 @@
 
   function subtitle(): string | undefined {
     if (!view?.available) return undefined
-    return $LL.userSubtitle({ count: users.length })
+    return subject === 'groups' ? $LL.groupSubtitle({ count: groups.length }) : $LL.userSubtitle({ count: users.length })
   }
 
   /// The accounts in the two groups the machine's own flag draws: the ones
@@ -179,7 +268,13 @@
 
 <AppToolbar subtitle={subtitle()}>
   {#snippet actions()}
-    {#if view?.available}<Button size="sm" variant="tinted" icon="add" onclick={() => openForm(null)}>{$LL.userAdd()}</Button>{/if}
+    {#if view?.available}
+      {#if subject === 'groups'}
+        <Button size="sm" variant="tinted" icon="add" onclick={() => openGroupForm(null)}>{$LL.groupAdd()}</Button>
+      {:else}
+        <Button size="sm" variant="tinted" icon="add" onclick={() => openForm(null)}>{$LL.userAdd()}</Button>
+      {/if}
+    {/if}
     <IconButton icon="refresh" label={$LL.refresh()} onclick={() => void load()} disabled={loading} />
   {/snippet}
 </AppToolbar>
@@ -196,9 +291,44 @@
       {#if view.reason && view.reason_kind !== 'unsupported_platform'}<pre class="lk-mono mt-[9px] whitespace-pre-wrap break-all text-[12px] text-(--text-tertiary)">{view.reason}</pre>{/if}
     </Card>
   {:else if view}
-    <Input bind:value={query} icon="search" placeholder={$LL.userSearchHint()} />
+    <SegmentedControl
+      label={$LL.systemGroups()}
+      options={[
+        { value: 'users', label: $LL.userTab() },
+        { value: 'groups', label: $LL.groupTab() },
+      ]}
+      value={subject}
+      onchange={(next) => (subject = next)}
+    />
+    <Input bind:value={query} icon="search" placeholder={subject === 'groups' ? $LL.groupSearchHint() : $LL.userSearchHint()} />
 
-    {#if visible.length === 0}
+    {#if subject === 'groups'}
+      {#if visibleGroups.length === 0}
+        <div class="flex flex-col items-center gap-[9px] py-[34px] text-(--text-tertiary)">
+          <Icon name="groups" size={48} weight={300} />
+          <span class="text-[13px]">{query ? $LL.groupNoMatch() : $LL.groupEmpty()}</span>
+        </div>
+      {:else}
+        <ul class="space-y-[7px]">
+          {#each visibleGroups as group (group.name)}
+            <li>
+              <Card padding="11px 13px" onclick={() => openGroup(group)}>
+                <div class="min-w-0">
+                  <div class="flex flex-wrap items-center gap-[7px]">
+                    <span class="truncate text-[13px] font-semibold">{group.name}</span>
+                    {#if group.is_root}<Badge tone="danger">root</Badge>{/if}
+                    {#if group.system}<Badge tone="neutral">{$LL.groupSystem()}</Badge>{/if}
+                  </div>
+                  <p class="lk-num truncate text-[12px] text-(--text-tertiary)">
+                    {$LL.groupGid()} {group.gid}{#if group.members.length} · {group.members.join(', ')}{/if}
+                  </p>
+                </div>
+              </Card>
+            </li>
+          {/each}
+        </ul>
+      {/if}
+    {:else if visible.length === 0}
       <div class="flex flex-col items-center gap-[9px] py-[34px] text-(--text-tertiary)">
         <Icon name="group" size={48} weight={300} />
         <span class="text-[13px]">{query ? $LL.systemUsersNoMatch() : $LL.systemUsersEmptyState()}</span>
@@ -298,6 +428,50 @@
       fields={formState}
       onsaved={onSaved}
       oncancel={() => (editing = undefined)}
+    />
+  </Dialog>
+{/if}
+
+{#if openedGroup && editingGroup === undefined}
+  {@const group = openedGroup}
+  <Dialog open wide title={group.name} onclose={() => (openedGroup = undefined)}>
+    {#snippet actions()}
+      {#if !removingGroup}
+        <Button variant="secondary" icon="edit" disabled={!group.local} onclick={() => openGroupForm(group)}>{$LL.groupEdit()}</Button>
+        <Button variant="destructive" icon="delete" disabled={!group.deletable} onclick={() => (removingGroup = true)}>{$LL.groupDelete()}</Button>
+        <Button variant="secondary" onclick={() => (openedGroup = undefined)}>{$LL.close()}</Button>
+      {:else}
+        <Button variant="destructive" disabled={busy} onclick={() => void removeGroup(needsSudo)}>{$LL.groupDelete()}</Button>
+        <Button variant="secondary" onclick={() => (removingGroup = false)}>{$LL.cancel()}</Button>
+      {/if}
+    {/snippet}
+    {#if removingGroup}<p class="mb-[13px] text-[13px] text-(--text-secondary)">{$LL.groupDeleteConfirm({ name: group.name })}</p>{/if}
+    <div class="flex flex-wrap gap-[7px]">
+      {#if group.is_root}<Badge tone="danger">root</Badge>{/if}
+      {#if group.system}<Badge tone="neutral">{$LL.groupSystem()}</Badge>{/if}
+    </div>
+    <dl class="mt-[13px] grid grid-cols-2 gap-x-[13px] @2xl:grid-cols-3">
+      <div class="border-t border-(--border-hairline) py-[7px]"><dt class="text-[12px] text-(--text-secondary)">{$LL.groupGid()}</dt><dd class="lk-num text-right">{group.gid}</dd></div>
+      <div class="col-span-1 border-t border-(--border-hairline) py-[7px] @2xl:col-span-2"><dt class="text-[12px] text-(--text-secondary)">{$LL.groupPrimaryMembers()}</dt><dd class="break-all text-right text-[12px]">{group.primary_members.join(', ') || '—'}</dd></div>
+      <div class="col-span-2 border-t border-(--border-hairline) py-[7px] @2xl:col-span-3"><dt class="text-[12px] text-(--text-secondary)">{$LL.groupMembers()}</dt><dd class="break-all text-right text-[12px]">{group.members.join(', ') || '—'}</dd></div>
+    </dl>
+    {#if removingGroup && needsSudo}
+      <!-- The second attempt. The password travels separately, never in the
+           machine's process list or the agent's audit row. -->
+      <div class="mt-[13px]"><Input id="group-delete-sudo" label={$LL.powerPassword()} type="password" bind:value={sudoPassword} hint={$LL.powerPasswordHint()} /></div>
+    {/if}
+    {#if actionError}<pre class="mt-[9px] whitespace-pre-wrap break-all text-[13px] text-(--color-danger)">{actionError}</pre>{/if}
+    {#if !group.deletable && !removingGroup}<p class="mt-[9px] text-[12px] text-(--text-tertiary)">{groupKeptText(group)}</p>{/if}
+  </Dialog>
+{/if}
+
+{#if editingGroup !== undefined}
+  <Dialog open wide title={editingGroup ? $LL.groupEdit() : $LL.groupAdd()} onclose={() => (editingGroup = undefined)}>
+    <GroupForm
+      group={editingGroup ?? undefined}
+      fields={groupForm}
+      onsaved={onGroupSaved}
+      oncancel={() => (editingGroup = undefined)}
     />
   </Dialog>
 {/if}

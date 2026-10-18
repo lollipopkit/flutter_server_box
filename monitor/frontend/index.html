@@ -8,11 +8,14 @@
     <script>
       // Apply the theme before first paint: the mode in effect as
       // data-theme (the desk's design system keys on it);
-      // lib/theme.svelte.ts keeps it up to date afterwards.
-      const theme = localStorage.getItem('theme')
+      // lib/theme.svelte.ts keeps it up to date afterwards. Storage can
+      // throw; the system preference then applies.
+      let theme = null
+      try {
+        theme = localStorage.getItem('theme')
+      } catch {}
       const dark = theme === 'dark' || (theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)
       document.documentElement.dataset.theme = dark ? 'dark' : 'light'
-
     </script>
   </head>
   <body class="lk">

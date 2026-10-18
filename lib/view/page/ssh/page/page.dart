@@ -7,12 +7,14 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show Composer;
 import 'package:flutter/foundation.dart' show ValueListenable;
+import 'package:flutter/semantics.dart' show SemanticsService;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/llm/scope.dart';
 import 'package:server_box/core/service/program_status_alerts.dart';
+import 'package:server_box/core/utils/app_auth.dart';
 import 'package:server_box/core/utils/ssh_exec.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
@@ -34,6 +36,7 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/terminal.dart';
 import 'package:server_box/data/ssh/persistent_shell.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
+import 'package:server_box/data/ssh/terminal_a11y.dart';
 import 'package:server_box/data/ssh/terminal_session.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/data/ssh/terminal_status.dart';
@@ -43,15 +46,18 @@ import 'package:server_box/data/ssh/tmux/tmux_ids.dart';
 import 'package:server_box/src/rust/api/files.dart';
 import 'package:server_box/view/page/agent/view.dart';
 import 'package:server_box/view/page/ssh/ask_ai_layout.dart';
+import 'package:server_box/view/page/ssh/metrics_bar.dart';
 import 'package:server_box/view/page/ssh/page/tmux_page_controller.dart';
 import 'package:server_box/view/page/ssh/page/virt_key_intro.dart';
 import 'package:server_box/view/page/ssh/present_server.dart';
+import 'package:server_box/view/page/ssh/text_view.dart';
 import 'package:server_box/view/page/storage/server_file.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
 import 'package:server_box/view/widget/terminal_connection_progress.dart';
 import 'package:server_box/view/widget/terminal_status_dot.dart';
 import 'package:server_box/view/widget/tmux_session_picker_sheet.dart';
 import 'package:server_box/view/widget/tmux_window_bar.dart';
+import 'package:server_box/view/widget/virt_key_semantics.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:xterm/core.dart';
 import 'package:xterm/ui.dart' hide TerminalThemes;
@@ -452,6 +458,39 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   Future<void> pickSnippetFromToolbar() => _pickSnippet();
 
+  /// The output as plain text, for a screen reader or for selecting by line.
+  void openTextView() => TerminalTextPage.route.go(context, _terminal);
+
+  /// Reads out what a key did, while a screen reader is on.
+  TerminalAnnouncer? _announcer;
+
+  void _syncAnnouncer() {
+    final on = MediaQuery.accessibleNavigationOf(context);
+    if (on == (_announcer != null)) return;
+    final current = _announcer;
+    if (current != null) {
+      _sess.removeTypedListener(current.onTyped);
+      current.dispose();
+      _announcer = null;
+      return;
+    }
+    final announcer = TerminalAnnouncer(_terminal, announce: _announce);
+    _sess.addTypedListener(announcer.onTyped);
+    _announcer = announcer;
+  }
+
+  void _announce(String message) {
+    final ctx = contextSafe;
+    if (ctx == null) return;
+    unawaited(
+      SemanticsService.sendAnnouncement(
+        View.of(ctx),
+        message,
+        Directionality.of(ctx),
+      ),
+    );
+  }
+
   Future<void> openAgentFromToolbar() => _showAskAiPanel();
 
   @override
@@ -485,6 +524,10 @@ class SSHPageState extends ConsumerState<SSHPage>
     final session = _sess;
     WidgetsBinding.instance.addPostFrameCallback((_) => shell.hideIf(session));
     _releaseAgentHost?.call();
+    if (_announcer case final announcer?) {
+      _sess.removeTypedListener(announcer.onTyped);
+      announcer.dispose();
+    }
     _virtKeyLongPressTimer?.cancel();
     final introListener = _introVisibilityListener;
     if (introListener != null) {
@@ -643,6 +686,7 @@ class SSHPageState extends ConsumerState<SSHPage>
   void didChangeDependencies() {
     super.didChangeDependencies();
     _initStoredCfg();
+    _syncAnnouncer();
     _isDark = TerminalLook.isDark(context);
     _media = context.mediaQuery;
 
@@ -911,6 +955,14 @@ class SSHPageState extends ConsumerState<SSHPage>
           onClosePane: (pane) => unawaited(_closeTmuxPane(pane.id)),
         ),
         Expanded(child: terminalContent),
+        // Under the terminal and above the keys, which are the `Scaffold`'s
+        // bottom bar. With no keys under it — a desktop, or a phone with the
+        // lot hidden — it keeps clear of the home indicator itself.
+        if (widget.args.spi case final spi?)
+          TerminalMetricsBar(
+            serverId: spi.id,
+            bottomInset: _virtKeysHeight == 0 ? _media.padding.bottom : 0,
+          ),
       ],
     );
   }
@@ -985,6 +1037,15 @@ class SSHPageState extends ConsumerState<SSHPage>
         tooltip: libL10n.snippet,
         icon: const Icon(Icons.code),
       ),
+      // Only for a screen reader, which has no other way to the output: a
+      // phone's title bar is short of room, and there is no menu in it to put
+      // this behind for everyone else, who can select on the terminal itself.
+      if (MediaQuery.accessibleNavigationOf(context))
+        IconButton(
+          onPressed: openTextView,
+          tooltip: l10n.termTextView,
+          icon: const Icon(Icons.article_outlined),
+        ),
     ];
     // Only where there is a sudo password to insert. This device's shell is
     // already whoever is running the app.
@@ -1144,37 +1205,42 @@ class SSHPageState extends ConsumerState<SSHPage>
     final lit = group == null || item.group == group;
     final available = !_virtKeysUnavailable.contains(item);
 
-    return InkWell(
-      onTap: available ? () => _doVirtualKey(item, virtKeyNotifier) : null,
-      // Held rather than tapped, and only where there is something to say —
-      // null otherwise, so a key with no help does not answer a hold with a
-      // splash and nothing else. The arrows are out either way: a hold there
-      // repeats the key, and their label is already the whole answer.
-      onLongPress: !available || item.canLongPress || item.help == null
-          ? null
-          : () => _showVirtKeyHelp(item),
-      onTapDown: (details) {
-        if (available && item.canLongPress) {
-          _virtKeyLongPressTimer = Timer.periodic(
-            const Duration(milliseconds: 137),
-            (_) => _doVirtualKey(item, virtKeyNotifier),
-          );
-        }
-      },
-      onTapCancel: () => _virtKeyLongPressTimer?.cancel(),
-      onTapUp: (_) => _virtKeyLongPressTimer?.cancel(),
-      child: AnimatedOpacity(
-        opacity: !lit
-            ? 0.25
-            : available
-            ? 1
-            : 0.38,
-        duration: Durations.medium1,
-        curve: Curves.easeOut,
-        child: SizedBox(
-          width: virtKeyWidth,
-          height: _kVirtKeyRowHeight,
-          child: Center(child: child),
+    return VirtKeySemantics(
+      item: item,
+      armed: selected,
+      enabled: available,
+      child: InkWell(
+        onTap: available ? () => _doVirtualKey(item, virtKeyNotifier) : null,
+        // Held rather than tapped, and only where there is something to say —
+        // null otherwise, so a key with no help does not answer a hold with a
+        // splash and nothing else. The arrows are out either way: a hold there
+        // repeats the key, and their label is already the whole answer.
+        onLongPress: !available || item.canLongPress || item.help == null
+            ? null
+            : () => _showVirtKeyHelp(item),
+        onTapDown: (details) {
+          if (available && item.canLongPress) {
+            _virtKeyLongPressTimer = Timer.periodic(
+              const Duration(milliseconds: 137),
+              (_) => _doVirtualKey(item, virtKeyNotifier),
+            );
+          }
+        },
+        onTapCancel: () => _virtKeyLongPressTimer?.cancel(),
+        onTapUp: (_) => _virtKeyLongPressTimer?.cancel(),
+        child: AnimatedOpacity(
+          opacity: !lit
+              ? 0.25
+              : available
+              ? 1
+              : 0.38,
+          duration: Durations.medium1,
+          curve: Curves.easeOut,
+          child: SizedBox(
+            width: virtKeyWidth,
+            height: _kVirtKeyRowHeight,
+            child: Center(child: ExcludeSemantics(child: child)),
+          ),
         ),
       ),
     );
@@ -1350,7 +1416,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     if (shell == null) return;
     bool stillFor() => mounted && identical(_session, shell);
 
-    final authed = await SudoPassword.authenticateIfNeeded();
+    final authed = await AppAuth.confirm();
     if (!authed) {
       if (!mounted) return;
       Toast.error(libL10n.fail);
@@ -1358,7 +1424,14 @@ class SSHPageState extends ConsumerState<SSHPage>
     }
     if (!stillFor()) return;
 
-    final password = await SudoPassword.resolveForTerminal(spi);
+    final String? password;
+    try {
+      password = await SudoPassword.resolveForTerminal(spi);
+    } catch (e, s) {
+      Loggers.app.warning('Reading the saved sudo password', e, s);
+      if (mounted) Toast.error(libL10n.fail);
+      return;
+    }
     if (password == null || password.isEmpty) {
       if (!mounted) return;
       Toast.show(libL10n.empty);
@@ -1396,6 +1469,17 @@ class SSHPageState extends ConsumerState<SSHPage>
     if (!mounted) return;
     _focusTerminal();
     Toast.success(libL10n.success);
+  }
+
+  /// Types [cmd] and answers the sudo prompt it brings up — [_answerSudo].
+  /// What the shell printed before goes first: a prompt already there is not
+  /// this command's.
+  Future<void> _runAnsweringSudo(String cmd) {
+    _sess.drainOutput();
+    _sess.clearOutputTail();
+    _terminal.textInput(cmd);
+    _terminal.keyInput(TerminalKey.enter);
+    return _answerSudo();
   }
 
   /// Answers the sudo prompt the command just typed brings up, with the

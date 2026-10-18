@@ -6971,4 +6971,76 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get monitorUpdateNoAnswer => 'Agent qayıtmadı. Serverdə yoxlayın.';
+
+  @override
+  String get keyArrowDown => 'Aşağı ox';
+
+  @override
+  String get keyArrowLeft => 'Sol ox';
+
+  @override
+  String get keyArrowRight => 'Sağ ox';
+
+  @override
+  String get keyArrowUp => 'Yuxarı ox';
+
+  @override
+  String get keyControl => 'Control';
+
+  @override
+  String get keyEscape => 'Escape';
+
+  @override
+  String get keyPageDown => 'Səhifə aşağı';
+
+  @override
+  String get keyPageUp => 'Səhifə yuxarı';
+
+  @override
+  String get termTextView => 'Mətn kimi bax';
+
+  @override
+  String termTextLetGo(int count) {
+    return 'Artıq saxlanmayan əvvəlki sətirlər: $count';
+  }
+
+  @override
+  String get systemGroups => 'Qruplar';
+
+  @override
+  String get userGid => 'GID';
+
+  @override
+  String get userGroupMembers => 'Üzvlər';
+
+  @override
+  String get userPrimaryMembers => 'Əsas üzvlər';
+
+  @override
+  String get userSystemGroup => 'Sistem qrupu';
+
+  @override
+  String get userMembersHint => 'alice,bob';
+
+  @override
+  String get userRegularGroup => 'Regular';
+
+  @override
+  String get termMetricsBar => 'Terminalın altında server göstəriciləri';
+
+  @override
+  String get termMetricsBarTip =>
+      'CPU, yaddaş, şəbəkə və disk, server kartındakı kimi. Telefonda virtual düymələrin üstündə.';
+
+  @override
+  String get launchFailedTitle => 'ServerBox başlaya bilmədi';
+
+  @override
+  String get launchFailedBody =>
+      'Aşağıdakı xətanı kopyalayın və log faylları ilə birlikdə GitHub issue-da bildirin.';
+
+  @override
+  String launchFailedLogs(String path) {
+    return 'Loglar: $path';
+  }
 }

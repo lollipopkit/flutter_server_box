@@ -56,7 +56,7 @@ beforeEach(() => {
   mocked.shareConnections.mockResolvedValue({ smb: [], nfs: [] })
   mocked.getStorage.mockResolvedValue({ disks: [], busy: {}, arrays: [], pools: [], tools: [], job: null } satisfies StorageView)
   mocked.getSystemUsers.mockResolvedValue({
-    part: 'list', available: true, reason_kind: null, reason: null, agent_account: 'sbm', uid_min: 1000, name: null, detail: null,
+    part: 'list', available: true, reason_kind: null, reason: null, agent_account: 'sbm', uid_min: 1000, gid_min: 1000, groups: [], name: null, detail: null,
     users: [
       { name: 'root', uid: 0, gid: 0, comment: '', home: '/root', shell: '/bin/sh', primary_group: 'root', supplementary_groups: [], is_root: true, system: true, login_disabled: false, agent_account: false, deletable: false },
       { name: 'alice', uid: 1000, gid: 1000, comment: '', home: '/home/alice', shell: '/bin/bash', primary_group: 'alice', supplementary_groups: [], is_root: false, system: false, login_disabled: false, agent_account: false, deletable: true },

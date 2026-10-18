@@ -24,6 +24,7 @@
   import { mountTerminal, type TerminalHandle } from '../../../lib/xterm'
   import { loadLook } from './look'
   import ProgramStatusBar from '../../../components/ProgramStatusBar.svelte'
+  import { screenReader } from '../../../lib/screenReader.svelte'
   import type { TmuxSession, TmuxView } from '../../../types'
 
   const win = useWindow()
@@ -346,6 +347,13 @@
         disabled: session.phase !== 'running',
         action: disconnect,
       },
+      { separator: true },
+      {
+        label: $LL.terminalScreenReader(),
+        icon: 'accessibility_new',
+        checked: screenReader.enabled,
+        action: () => screenReader.toggle(),
+      },
     )
     if (tmuxOffered) {
       items.push({ separator: true })
@@ -563,6 +571,6 @@
         {$LL.terminalTmuxCreate()}
       </Button>
     {/snippet}
-    <Input bind:value={tmuxName} placeholder={$LL.terminalTmuxNewName()} />
+    <Input bind:value={tmuxName} placeholder={$LL.terminalTmuxNewName()} aria-label={$LL.terminalTmuxNewName()} />
   </Dialog>
 {/if}

@@ -10,8 +10,11 @@
 
   --sb-black: #000000;
   --sb-near-black: #262626;
-  --sb-stone: #737373;
-  --sb-silver: #a3a3a3;
+  /* Text tiers, by contrast on --sb-snow (WCAG AA is 4.5:1): stone 6.71,
+     silver 4.74. Status colors are text too (badges, errors), so they meet
+     4.5:1 on white, on snow and on their own 10% tint (worst 5.26). */
+  --sb-stone: #595959;
+  --sb-silver: #707070;
   --sb-border: #d4d4d4;
   --sb-light-gray: #e5e5e5;
   --sb-snow: #fafafa;
@@ -27,6 +30,9 @@
   --sb-button-primary-fg: var(--sb-white);
   --sb-icon-button-border: transparent;
   --sb-radius-control: 9999px;
+  --sb-success: #166534;
+  --sb-warning: #92400e;
+  --sb-danger: #b91c1c;
 
   --sb-radius-container: 12px;
 
@@ -35,18 +41,25 @@
   --sb-font-mono: ui-monospace, 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', monospace;
 }
 
+/* On --sb-white (#171717): stone 7.11, silver 5.54 (4.68 on --sb-light-gray),
+   success 7.87, warning 5.63, danger 6.48; on their own 10% tint at least
+   5.42. Silver stays below stone, as in light: a placeholder as bright as the
+   text it stands in for (#d4d4d4 against #e5e5e5, 1.18:1) reads as a value. */
 .dark {
   color-scheme: dark;
 
   --sb-black: #f5f5f5;
   --sb-near-black: #e5e5e5;
   --sb-stone: #a3a3a3;
-  --sb-silver: #d4d4d4;
+  --sb-silver: #8f8f8f;
   --sb-border: #404040;
   --sb-light-gray: #262626;
   --sb-snow: #0f0f0f;
   --sb-white: #171717;
   --sb-ring: rgba(147, 197, 253, 0.55);
+  --sb-success: #22c55e;
+  --sb-warning: #d97706;
+  --sb-danger: #f87171;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -56,12 +69,15 @@
     --sb-black: #f5f5f5;
     --sb-near-black: #e5e5e5;
     --sb-stone: #a3a3a3;
-    --sb-silver: #d4d4d4;
+    --sb-silver: #8f8f8f;
     --sb-border: #404040;
     --sb-light-gray: #262626;
     --sb-snow: #0f0f0f;
     --sb-white: #171717;
     --sb-ring: rgba(147, 197, 253, 0.55);
+    --sb-success: #22c55e;
+    --sb-warning: #d97706;
+    --sb-danger: #f87171;
   }
 }
 
@@ -80,9 +96,9 @@
 
   --color-accent: #3b82f6;
   --color-primary: var(--sb-primary);
-  --color-success: #16a34a;
-  --color-warning: #d97706;
-  --color-danger: #dc2626;
+  --color-success: var(--sb-success);
+  --color-warning: var(--sb-warning);
+  --color-danger: var(--sb-danger);
 
   --radius-container: var(--sb-radius-container);
 
