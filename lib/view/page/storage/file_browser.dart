@@ -1837,16 +1837,13 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   /// The theme's `file.<ext>` glyph when it has one, else an alias such as
   /// `file.css` for `.scss`, else `file.default`, else the built-in glyph.
   Widget _iconOf(FileEntry entry) {
-    final material = Icon(switch (entry.kind) {
-      FileKind.dir => Icons.folder_open,
-      FileKind.link => Icons.link,
-      _ => Icons.insert_drive_file,
-    });
     final key = ThemeFileIcon.keyOf(
       name: entry.name,
       isDir: entry.isDir,
       isLink: entry.kind == FileKind.link,
     );
+    final built = ThemeFileIcon.builtIn(key);
+    final material = Icon(built.$1, color: built.$2);
     if (key == ThemeFileIcon.dir || key == ThemeFileIcon.link) {
       return _ThemedFileIcon(keyName: key, fallback: material);
     }
@@ -1922,13 +1919,13 @@ class _ThemedFileIcon extends StatelessWidget {
       if (path == null) return fallback;
       final iconTheme = IconTheme.of(context);
       final scheme = Theme.of(context).colorScheme;
+      // Only an explicit icons.colors entry tints a Files glyph. Language
+      // logos keep the fills they were drawn with; flattening them to the
+      // list's icon color made every extension look the same.
       return PackageImage(
         path: path,
         size: iconTheme.size ?? 24,
-        color:
-            ThemePackages.activeTheme?.iconColor(keyName, scheme) ??
-            iconTheme.color ??
-            scheme.onSurface,
+        color: ThemePackages.activeTheme?.iconColor(keyName, scheme),
         fallback: fallback,
       );
     },

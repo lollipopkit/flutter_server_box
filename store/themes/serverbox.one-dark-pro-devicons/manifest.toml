@@ -168,18 +168,6 @@ style = "classic"
 "nav.folder" = 0xFFE5C07B
 "file.dir" = 0xFFE5C07B
 "file.link" = "primary"
-"file.py" = 0xFFE5C07B
-"file.sh" = "tertiary"
-"file.js" = 0xFFE5C07B
-"file.ts" = "primary"
-"file.json" = 0xFFE5C07B
-"file.yml" = "secondary"
-"file.rs" = 0xFFD19A66
-"file.go" = 0xFF56B6C2
-"file.md" = "tertiary"
-"file.html" = "error"
-"file.dockerfile" = "primary"
-"file.conf" = "tertiary"
 
 [splash]
 color = "surface"
