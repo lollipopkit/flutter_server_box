@@ -463,7 +463,10 @@ async fn store(db: &sqlx::SqlitePool, blobs: &Arc<Blobs>, package: &Package) -> 
     for (path, bytes) in &package.files {
         files.push((path, blobs.put(bytes).await?, bytes.len() as i64));
     }
-    let mut tx = db.begin().await?;
+    // IMMEDIATE: it reads the row it replaces, then writes; a deferred
+    // transaction upgrading to write beside another writer fails busy at once
+    // (an agent starting, installing its own apps while it writes elsewhere).
+    let mut tx = db.begin_with("BEGIN IMMEDIATE").await?;
     let previous: Option<(String, Option<String>)> =
         sqlx::query_as("SELECT sha256, approved_permissions FROM desk_app_package WHERE app_id = ?")
             .bind(&id)
