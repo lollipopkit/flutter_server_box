@@ -453,7 +453,9 @@ repository 可在 `themes/` 旁边包含 `plugins/` 目录。本构建只读取�
 ## 主题来源
 
 主题商店中的官方主题 One Dark Pro，把下面这个 VS Code 主题的 UI 调色板改编到
-Material 的表面、选中态、卡片和按钮上。这一改编与 VS Code 扩展包无关。官方主题
+Material 的表面、选中态、卡片和按钮上。这一改编与 VS Code 扩展包无关。One Dark
+Pro Devicons 变体使用同一套调色板，并把编辑器风格图标换成
+[Devicon](https://github.com/devicons/devicon) 字形。官方主题
 VS Code 则把 VS Code 自带的 Dark Modern / Light Modern 工作区颜色做同样的改编。
 字体和终端/编辑器配色仍是单独的设置。AMOLED 是 ServerBox 原创的调色板，在 dark
 下使用纯黑表面、在 light 下使用生成色，因此支持 System 外观。
@@ -496,6 +498,32 @@ Source: [One Dark Pro](https://github.com/Binaryify/OneDark-Pro)
 The MIT License (MIT)
 
 Copyright (c) 2013-2022 Binaryify
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+**Devicon**
+
+Source: [Devicon](https://github.com/devicons/devicon)
+
+The MIT License (MIT)
+
+Copyright (c) 2015 konpa
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
