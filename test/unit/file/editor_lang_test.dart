@@ -25,6 +25,14 @@ void main() {
     expect(editorLangFor('notes.YML'), ProgLang.yaml);
   });
 
+  test('a systemd unit is INI, including .service', () {
+    expect(editorLangFor('sshd.service'), ProgLang.ini);
+    expect(editorLangFor('/etc/systemd/system/Foo.SERVICE'), ProgLang.ini);
+    expect(editorLangFor('docker.socket'), ProgLang.ini);
+    expect(editorLangFor('apt-daily.timer'), ProgLang.ini);
+    expect(editorLangFor('multi-user.target'), ProgLang.ini);
+  });
+
   test('a name with no known suffix is left unknown', () {
     expect(editorLangFor('README'), isNull);
     expect(editorLangFor('file.unknownext'), isNull);

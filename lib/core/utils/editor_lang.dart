@@ -12,12 +12,28 @@ const _jsonLikeSuffixes = {
   'har',
 };
 
+/// systemd unit types from `systemd.unit(5)`. The files are INI
+/// (`[Unit]`, `[Service]`, `Key=value`).
+const _systemdUnitSuffixes = {
+  'service',
+  'socket',
+  'device',
+  'mount',
+  'automount',
+  'swap',
+  'target',
+  'path',
+  'timer',
+  'slice',
+  'scope',
+};
+
 /// The highlighter for a path opened in the file editor.
 ///
 /// [ProgLang.parseFileName] matches suffixes as they are spelled in the
 /// enum, so `package.JSON` is not `json`. A second look lowercases the
 /// extension, and JSON-shaped names that are not `.json` still use the JSON
-/// highlighter.
+/// highlighter. systemd units such as `.service` use the INI highlighter.
 ProgLang? editorLangFor(String? path) {
   if (path == null || path.isEmpty) return null;
   final name = path.split(RegExp(r'[/\\]')).last;
@@ -27,5 +43,6 @@ ProgLang? editorLangFor(String? path) {
   if (dot <= 0 || dot == name.length - 1) return null;
   final ext = name.substring(dot + 1).toLowerCase();
   if (_jsonLikeSuffixes.contains(ext)) return ProgLang.json;
+  if (_systemdUnitSuffixes.contains(ext)) return ProgLang.ini;
   return ProgLang.parseFileName('file.$ext');
 }
