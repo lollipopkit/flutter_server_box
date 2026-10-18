@@ -41,15 +41,75 @@ void main() {
     );
   });
 
-  test('a language with no formatter returns null', () {
-    expect(formatEditorText('[Service]\nExecStart=/bin/true', lang: ProgLang.ini), isNull);
-    expect(formatEditorText('echo hi', lang: ProgLang.shell), isNull);
+  test('INI and systemd units get Key=value', () {
+    expect(
+      formatEditorText(
+        '[Service]\nExecStart = /bin/true\n',
+        lang: ProgLang.ini,
+      ),
+      '[Service]\nExecStart=/bin/true\n',
+    );
   });
 
-  test('content that looks like JSON is formatted without a lang', () {
+  test('brace languages are re-indented', () {
     expect(
-      formatEditorText('[1,2]'),
-      '[\n  1,\n  2\n]',
+      formatEditorText('void f() {\nreturn;\n}', lang: ProgLang.c),
+      'void f() {\n  return;\n}',
     );
+    expect(
+      formatEditorText(
+        'if (x) {\ny();\n} else {\nz();\n}',
+        lang: ProgLang.javascript,
+      ),
+      'if (x) {\n  y();\n} else {\n  z();\n}',
+    );
+  });
+
+  test('braces inside strings do not change indent', () {
+    expect(
+      formatEditorText('x = "{";\ny();', lang: ProgLang.javascript),
+      'x = "{";\ny();',
+    );
+  });
+
+  test('Python and YAML only lose trailing whitespace', () {
+    expect(
+      formatEditorText('def f():   \n    return 1', lang: ProgLang.python),
+      'def f():\n    return 1',
+    );
+    expect(
+      formatEditorText('a:\n  b: 1  ', lang: ProgLang.yaml),
+      'a:\n  b: 1',
+    );
+  });
+
+  test('Apache directives collapse spaces and indent sections', () {
+    expect(
+      formatEditorText(
+        '<Directory /var/www>\nRequire   all   granted\n</Directory>',
+        lang: ProgLang.apache,
+      ),
+      '<Directory /var/www>\n  Require all granted\n</Directory>',
+    );
+  });
+
+  test('a file with no language still formats', () {
+    expect(formatEditorText('[1,2]'), '[\n  1,\n  2\n]');
+    expect(formatEditorText('hello   '), 'hello');
+    expect(
+      formatEditorText('fn() {\nreturn;\n}'),
+      'fn() {\n  return;\n}',
+    );
+  });
+
+  test('every language formats a plain line', () {
+    for (final lang in ProgLang.values) {
+      if (lang == ProgLang.json) continue;
+      expect(
+        formatEditorText('hello', lang: lang),
+        'hello',
+        reason: lang.name,
+      );
+    }
   });
 }

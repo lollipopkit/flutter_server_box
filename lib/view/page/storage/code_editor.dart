@@ -12,7 +12,7 @@ const _kCloseAfterSave = false;
 
 /// The file editor used by local storage, SFTP and raw settings.
 ///
-/// Same as fl_lib's [EditorPage], with a Format action for JSON and XML.
+/// Same as fl_lib's [EditorPage], with a Format action.
 class FileEditorPage extends StatefulWidget {
   final EditorPageArgs? args;
 
@@ -181,10 +181,6 @@ extension on _FileEditorPageState {
         lang: widget.args?.lang,
         path: widget.args?.path,
       );
-      if (formatted == null) {
-        Toast.show(libL10n.unsupported);
-        return;
-      }
       if (formatted == text) return;
       _controller.text = formatted;
       _saved = false;
