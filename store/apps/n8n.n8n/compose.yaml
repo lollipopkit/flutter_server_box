@@ -6,9 +6,9 @@
 # - image pinned to the release; a bind mount from the env file instead of
 #   the named volume; run as the shared folder's owner;
 # - the owner account is managed from the environment
-#   (N8N_INSTANCE_OWNER_MANAGED_BY_ENV): its bcrypt hash is made from the
-#   generated password when the container starts, so the instance has its
-#   owner before it first answers, and nobody can claim it first;
+#   (N8N_INSTANCE_OWNER_MANAGED_BY_ENV) with the generated password's bcrypt
+#   hash, so the instance has its owner before it first answers, and nobody
+#   can claim it first;
 # - N8N_SECURE_COOKIE off: the agent's proxy marks cookies Secure itself
 #   over HTTPS, and a desk without HTTPS still signs in; N8N_PROXY_HOPS: the
 #   proxy's forwarded scheme and host are taken;
@@ -33,23 +33,13 @@ services:
       N8N_INSTANCE_OWNER_EMAIL: ${N8N_OWNER_EMAIL}
       N8N_INSTANCE_OWNER_FIRST_NAME: Admin
       N8N_INSTANCE_OWNER_LAST_NAME: Owner
-      N8N_OWNER_PASSWORD: ${N8N_OWNER_PASSWORD}
+      N8N_INSTANCE_OWNER_PASSWORD_HASH: ${N8N_OWNER_PASSWORD_BCRYPT}
       N8N_MCP_MANAGED_BY_ENV: 'true'
       N8N_MCP_ACCESS_ENABLED: 'true'
     volumes:
       - ${N8N_DATA}:/home/node/.n8n
     ports:
       - '${N8N_BIND}:${N8N_PORT}:5678'
-    entrypoint: ["sh", "-c"]
-    command:
-      - |
-        N8N_INSTANCE_OWNER_PASSWORD_HASH=$$(node -e '
-          const bcrypt = require("/usr/local/lib/node_modules/n8n/node_modules/bcryptjs");
-          process.stdout.write(bcrypt.hashSync(process.env.N8N_OWNER_PASSWORD, 10));
-        ') || exit 1
-        export N8N_INSTANCE_OWNER_PASSWORD_HASH
-        unset N8N_OWNER_PASSWORD
-        exec tini -- /docker-entrypoint.sh
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:5678/healthz/readiness"]

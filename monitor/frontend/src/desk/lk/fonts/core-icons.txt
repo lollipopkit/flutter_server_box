@@ -51,6 +51,7 @@ computer
 content_copy
 create_new_folder
 dark_mode
+dashboard_customize
 data_usage
 database
 delete
@@ -60,6 +61,7 @@ description
 desk
 desktop_windows
 developer_board
+devices
 difference
 dns
 do_not_disturb_on
@@ -106,6 +108,7 @@ hourglass_empty
 hourglass_top
 html
 http
+hub
 image
 info
 input
@@ -116,6 +119,7 @@ key
 key_off
 keyboard_arrow_down
 keyboard_arrow_up
+kitchen
 label
 lan
 laptop_mac
@@ -150,6 +154,7 @@ navigation
 note
 note_stack
 notifications
+notifications_active
 notifications_off
 opacity
 open_in_full
@@ -177,6 +182,7 @@ power_settings_new
 productivity
 progress_activity
 psychology
+query_stats
 radio
 radio_button_checked
 radio_button_unchecked
@@ -196,6 +202,7 @@ save
 scale
 scan
 schedule
+schema
 script
 search
 search_off
@@ -228,10 +235,12 @@ storage
 store
 storefront
 stream
+subscriptions
 subtitles
 switch
 sync
 tab
+table_chart
 target
 task
 terminal
@@ -256,10 +265,12 @@ usb
 vertical_align_bottom
 vertical_split
 view_column
+view_kanban
 view_list
 view_timeline
 visibility
 visibility_off
+vpn_lock
 wallpaper
 warning
 web

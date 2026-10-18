@@ -29,7 +29,7 @@ interface Login {
 
 /// Each app by its title: its id, and how it is signed in to inside its
 /// window and what says it worked.
-const APPS: Record<string, { id: string; use: (frame: FrameLocator, login: Login) => Promise<void> }> = {
+const APPS: Record<string, { id: string; use: (frame: FrameLocator, login: Login, page: Page) => Promise<void> }> = {
   'IT-Tools': {
     id: 'corentinth.it_tools',
     use: async (frame) => {
@@ -184,6 +184,147 @@ const APPS: Record<string, { id: string; use: (frame: FrameLocator, login: Login
       await expect(frame.locator('.fancytree-container, .tree-wrapper').first()).toBeAttached({ timeout: 60_000 })
     },
   },
+  'draw.io': {
+    id: 'jgraph.drawio',
+    use: async (frame) => {
+      await expect(frame.locator('.geDiagramContainer, .geEditor, .geDialog').first()).toBeVisible({ timeout: 120_000 })
+    },
+  },
+  PairDrop: {
+    id: 'schlagmichdoch.pairdrop',
+    use: async (frame) => {
+      await expect(frame.locator('x-peers, #displayName, .center').first()).toBeAttached({ timeout: 60_000 })
+    },
+  },
+  Gotify: {
+    id: 'gotify.gotify',
+    use: async (frame, login) => {
+      await signInForm(frame, frame.locator('input[name=username], input#username').first(), login)
+      await expect(frame.getByText(/All Messages/i).first()).toBeVisible({ timeout: 60_000 })
+    },
+  },
+  Miniflux: {
+    id: 'miniflux.miniflux',
+    use: async (frame, login) => {
+      await signInForm(frame, frame.locator('input[name=username]'), login)
+      await expect(frame.locator('a[href$="/unread"]').first()).toBeAttached({ timeout: 60_000 })
+      await expect(frame.locator('input[type=password]')).toHaveCount(0)
+    },
+  },
+  PhotoPrism: {
+    id: 'photoprism.photoprism',
+    use: async (frame, login) => {
+      await signInForm(frame, frame.locator('input[name=username], input[autocomplete=username]').first(), login)
+      await expect(frame.locator('input[type=password]')).toHaveCount(0, { timeout: 60_000 })
+      await expect(frame.locator('.p-navigation, nav').first()).toBeAttached({ timeout: 60_000 })
+    },
+  },
+  SiYuan: {
+    id: 'siyuan.siyuan',
+    use: async (frame, login) => {
+      // Its field is in no form: sent with its button.
+      await passwordForm(frame, login, frame.locator('button[onclick="submitAuth()"]'))
+      await expect(frame.locator('#toolbar, .layout__center, .toolbar').first()).toBeAttached({ timeout: 60_000 })
+    },
+  },
+  Kiwix: {
+    id: 'kiwix.kiwix',
+    use: async (frame) => {
+      await expect(frame.locator('#kiwixSearchBox, .kiwixNav, kiwix-search').first()).toBeAttached({ timeout: 60_000 })
+    },
+  },
+  'File Browser': {
+    id: 'filebrowser.filebrowser',
+    use: async (frame, login) => {
+      await signInForm(frame, frame.locator('input[type=text]').first(), login)
+      await expect(frame.locator('input[type=password]')).toHaveCount(0, { timeout: 60_000 })
+      await expect(frame.locator('#listing, .listing, #nav').first()).toBeAttached({ timeout: 60_000 })
+    },
+  },
+  Kanboard: {
+    id: 'kanboard.kanboard',
+    use: async (frame, login) => {
+      await signInForm(frame, frame.locator('input[name=username]'), login)
+      await expect(frame.locator('input[type=password]')).toHaveCount(0, { timeout: 60_000 })
+      await expect(frame.locator('.header, header').first()).toBeAttached({ timeout: 60_000 })
+    },
+  },
+  Grocy: {
+    id: 'grocy.grocy',
+    use: async (frame, login) => {
+      // Its button's handler encodes the password (password_base64).
+      await signInForm(frame, frame.locator('input[name=username]'), login, frame.locator('form button[type=submit], form #login-button').first())
+      await expect(frame.locator('input[type=password]')).toHaveCount(0, { timeout: 60_000 })
+      await expect(frame.locator('#sidebarResponsive, .navbar').first()).toBeAttached({ timeout: 60_000 })
+    },
+  },
+  Wallos: {
+    id: 'ellite.wallos',
+    use: async (frame, login) => {
+      await signInForm(frame, frame.locator('input[name=username]'), login)
+      await expect(frame.locator('input[type=password]')).toHaveCount(0, { timeout: 60_000 })
+      await expect(frame.locator('header, .toptoolbar, .subscriptions').first()).toBeAttached({ timeout: 60_000 })
+    },
+  },
+  Homebox: {
+    id: 'sysadminsmedia.homebox',
+    use: async (frame, login) => {
+      await signInForm(frame, frame.locator('input[type=email], input[type=text]').first(), login, frame.getByRole('button', { name: /login|sign in/i }).first())
+      await expect(frame.locator('input[type=password]')).toHaveCount(0, { timeout: 60_000 })
+    },
+  },
+  'Node-RED': {
+    id: 'nodered.node_red',
+    use: async (frame, login) => {
+      await signInForm(frame, frame.locator('#node-dialog-login-username'), login, frame.locator('.ui-dialog-buttonpane button, #node-dialog-login-submit').last())
+      await expect(frame.locator('#red-ui-workspace').first()).toBeVisible({ timeout: 60_000 })
+    },
+  },
+  Backrest: {
+    id: 'garethgeorge.backrest',
+    use: async (frame, login) => {
+      await signInForm(frame, frame.locator('input:not([type=password]):not([type=hidden])').first(), login, frame.getByRole('button', { name: /log ?in/i }).first())
+      await expect(frame.locator('input[type=password]')).toHaveCount(0, { timeout: 60_000 })
+      await expect(frame.getByText(/Add Repo|Repositories/i).first()).toBeVisible({ timeout: 60_000 })
+    },
+  },
+  Langfuse: {
+    id: 'langfuse.langfuse',
+    use: async (frame, login) => {
+      await signInForm(frame, frame.locator('input[type=email], input[name=email]').first(), login, frame.getByRole('button', { name: /^sign in$/i }).first())
+      await expect(frame.locator('input[type=password]')).toHaveCount(0, { timeout: 60_000 })
+      await expect(frame.getByText(/Default|Tracing|Projects/).first()).toBeVisible({ timeout: 60_000 })
+    },
+  },
+  AFFiNE: {
+    id: 'toeverything.affine',
+    use: async (frame, login, page) => {
+      // It opens on a demo workspace kept in the browser: its sign-in page
+      // asks for the email, then the password.
+      await expect(frame.locator('body')).toBeAttached({ timeout: 10 * 60_000 })
+      await page.locator('.desk-window[data-app-id="toeverything.affine"] iframe').first().evaluate((el) => {
+        const frame = el as HTMLIFrameElement
+        frame.src = new URL('/sign-in', frame.src).href
+      })
+      const email = frame.locator('input[type=email], input[name=email]').first()
+      await expect(email).toBeVisible({ timeout: 10 * 60_000 })
+      await email.fill(login.user ?? '')
+      await email.press('Enter')
+      await passwordForm(frame, login, frame.getByRole('button', { name: /sign in/i }).first())
+      await expect(frame.locator('input[type=password]')).toHaveCount(0, { timeout: 60_000 })
+    },
+  },
+  Headscale: {
+    id: 'juanfont.headscale',
+    use: async (frame, _login, page) => {
+      // Its sign-in note: the API key in the data folder, read as Files would.
+      const field = frame.locator('input[name=api_key]')
+      await expect(field).toBeVisible({ timeout: 10 * 60_000 })
+      await fillSecret(field, await dataFile(page, 'juanfont.headscale', 'headplane-api-key'))
+      await submitForm(field)
+      await expect(field).toHaveCount(0, { timeout: 60_000 })
+    },
+  },
   'Open WebUI': {
     id: 'openwebui.open_webui',
     use: async (frame, login) => {
@@ -206,12 +347,28 @@ async function signInForm(frame: FrameLocator, user: Locator, login: Login, butt
   else await submitForm(pass)
 }
 
-/// A page's sign-in form that asks for the password alone.
-async function passwordForm(frame: FrameLocator, login: Login) {
+/// A page's sign-in form that asks for the password alone, sent (with
+/// [button] when given).
+async function passwordForm(frame: FrameLocator, login: Login, button?: Locator) {
   const pass = frame.locator('input[type=password]').first()
   await expect(pass).toBeVisible({ timeout: 10 * 60_000 })
   await fillSecret(pass, login.password ?? '')
-  await submitForm(pass)
+  if (button) await button.click()
+  else await submitForm(pass)
+}
+
+/// The text of [name] in app [id]'s data folder, read through the agent's
+/// files API as the Files app does.
+async function dataFile(page: Page, id: string, name: string): Promise<string> {
+  const login = await page.request.post('/api/v1/login', { data: { password: env.SBM_E2E_PANEL_PASSWORD } })
+  expect(login.ok(), await login.text()).toBeTruthy()
+  const headers = { Authorization: `Bearer ${(await login.json()).token}` }
+  const stacks = await (await page.request.get('/api/v1/stacks', { headers })).json()
+  const app = stacks.apps.find((a: { manifest: { id: string } }) => a.manifest.id === id)
+  const folder = app?.stack?.settings?.data as string
+  const file = await page.request.get(`/api/v1/fs/read?path=${encodeURIComponent(`${folder}/${name}`)}`, { headers })
+  expect(file.ok(), await file.text()).toBeTruthy()
+  return (await file.text()).trim()
 }
 
 async function openStore(page: Page, title: string): Promise<Locator> {
@@ -285,7 +442,7 @@ for (const title of picked) {
       await test.step('its window shows the app, signed in to there', async () => {
         await store.getByRole('button', { name: 'Open', exact: true }).first().click()
         const win = page.locator(`.desk-window[data-app-id="${app.id}"]`)
-        await app.use(win.frameLocator('iframe').first(), login)
+        await app.use(win.frameLocator('iframe').first(), login, page)
         await win.getByRole('button', { name: 'Close', exact: true }).first().click()
       })
 

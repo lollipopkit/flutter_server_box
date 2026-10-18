@@ -1,0 +1,83 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Homebox: deployed with Docker Compose from compose.yaml beside this file,
+# shown in a desk window through the agent.
+
+schema = 1
+publisher = "sysadminsmedia"
+name = "homebox"
+project = "Homebox"
+developer = "sysadminsmedia"
+version = "0.27.0"
+homepage = "https://homebox.software"
+source = "https://github.com/sysadminsmedia/homebox/tree/v0.27.0"
+glyph = "inventory_2"
+tone = "amber"
+categories = ["home"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Homebox"
+
+[description]
+en = "An inventory of your home: what you own and where it is, with photos, receipts, warranties, labels and QR codes for boxes and shelves."
+zh = "家庭物品清单：记录你拥有什么、放在哪里，附带照片、收据、保修信息、标签，以及贴在箱子和架子上的二维码。"
+zh-TW = "家庭物品清單：記錄你擁有什麼、放在哪裡，附帶相片、收據、保固資訊、標籤，以及貼在箱子和架子上的 QR 碼。"
+
+[license]
+spdx = "AGPL-3.0"
+url = "https://github.com/sysadminsmedia/homebox/blob/v0.27.0/LICENSE"
+accept = true
+
+[requirements]
+arch = ["amd64", "arm64", "arm"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+jobs = ["seed-admin"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+HOMEBOX_VERSION = "0.27.0"
+HOMEBOX_ADMIN_EMAIL = "admin@homebox.local"
+
+[[secrets]]
+env = "HOMEBOX_PASSWORD"
+length = 32
+
+[[secrets]]
+env = "HOMEBOX_API_KEY_PEPPER"
+length = 48
+
+[login]
+user = "admin@homebox.local"
+password = "HOMEBOX_PASSWORD"
+note = { en = "Registration is off: invite people with a link from your group's settings. Change the password in Profile.", zh = "注册已关闭：在群组设置中生成邀请链接来邀请他人。在 Profile 中修改密码。", zh-TW = "註冊已關閉：在群組設定中產生邀請連結來邀請他人。在 Profile 中修改密碼。" }
+
+[[settings]]
+key = "data"
+type = "path"
+env = "HOMEBOX_DATA"
+default = "{stack}/data"
+data = true
+label = { en = "Data", zh = "数据", zh-TW = "資料" }
+help = { en = "The database and attached photos and documents.", zh = "数据库及附带的照片和文档。", zh-TW = "資料庫及附帶的相片和文件。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "HOMEBOX_PORT"
+default = 7745
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "For phones scanning its QR codes. Off: only through the desk.", zh = "供手机扫描它的二维码时使用。关闭时只能通过桌面访问。", zh-TW = "供手機掃描它的 QR 碼時使用。關閉時只能透過桌面存取。" }
+on = { HOMEBOX_BIND = "0.0.0.0" }
+off = { HOMEBOX_BIND = "127.0.0.1" }

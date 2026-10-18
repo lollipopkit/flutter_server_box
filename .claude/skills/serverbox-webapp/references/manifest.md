@@ -223,7 +223,12 @@ name is set by exactly one of:
 
 - `[env]`: fixed values (`IMAGE_TAG = "v1.2.3"`).
 - `[[secrets]]`: `env`, `length` (16–128, default 32). Generated once
-  (alphanumeric), kept across updates, never shown in the panel.
+  (alphanumeric, with an upper-case letter, a lower-case letter and a
+  digit), kept across updates, never shown in the panel. `bcrypt = "NAME"`
+  also writes its bcrypt hash to `NAME`, for a service that takes its first
+  password hashed (`store/apps/filebrowser.filebrowser`); the secret is then
+  72 characters at most. `hex = true` makes it lowercase hex (an even
+  `length`), for a key a service takes as hex (`openssl rand -hex 32`).
 - `[[settings]]`: what the deploy dialog asks, below.
 
 The agent also writes, for every app (a manifest uses them and never sets

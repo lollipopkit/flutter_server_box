@@ -50,6 +50,7 @@ N8N_OWNER_EMAIL = "admin@n8n.local"
 [[secrets]]
 env = "N8N_OWNER_PASSWORD"
 length = 32
+bcrypt = "N8N_OWNER_PASSWORD_BCRYPT"
 
 [[secrets]]
 env = "MCP_TOKEN"

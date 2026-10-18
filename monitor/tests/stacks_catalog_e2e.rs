@@ -63,6 +63,8 @@ impl Browser {
         let client = reqwest::Client::builder()
             .no_proxy()
             .danger_accept_invalid_certs(true)
+            // A browser's: some apps tell a page from an API client by it.
+            .user_agent("Mozilla/5.0 (X11; Linux x86_64) ServerBox-e2e")
             .redirect(reqwest::redirect::Policy::none())
             .timeout(Duration::from_secs(60))
             .build()
@@ -114,7 +116,9 @@ impl Browser {
     async fn open(&mut self, path: &str) -> Page {
         let mut path = path.to_string();
         for _ in 0..10 {
-            let page = self.get(&path).await;
+            // A navigation's Accept: some apps answer an API request with
+            // JSON and a page with their sign-in.
+            let page = self.send(Method::GET, &path, None, &[("accept", "text/html,application/xhtml+xml,*/*;q=0.8".into())]).await;
             let Some(to) = page.location.clone().filter(|_| (300..400).contains(&page.status)) else { return page };
             // Resolved as the browser would, against the page that redirected.
             let here = url::Url::parse(&format!("{}{path}", self.origin)).unwrap();
@@ -201,7 +205,7 @@ async fn healthy(srv: &TestServer, state: &Arc<AppState>, id: &str) {
 
 /// Signs in to app [id] in [browser] with the sign-in its details show, as
 /// the person would on its page, and checks the app now knows them.
-async fn sign_in(browser: &mut Browser, id: &str, user: Option<&str>, password: Option<&str>) {
+async fn sign_in(browser: &mut Browser, id: &str, user: Option<&str>, password: Option<&str>, settings: &Value) {
     let catalog = id.trim_end_matches("_e2e");
     let need = |v: Option<&str>| v.unwrap_or_else(|| panic!("{id}: its details show no sign-in")).to_string();
     match catalog {
@@ -381,6 +385,172 @@ async fn sign_in(browser: &mut Browser, id: &str, user: Option<&str>, password: 
             assert_eq!(page.status, 302, "{id}: {}", page.body);
             assert_eq!(logged_in(browser.get("/bootstrap").await), true, "{id}: the sign-in was refused");
         }
+        "jgraph.drawio" => {
+            // Nothing to sign in to: the editor's own page.
+            assert!(browser.open("/").await.body.contains("draw.io"), "{id}: not draw.io's page");
+        }
+        "schlagmichdoch.pairdrop" => {
+            assert!(browser.open("/").await.body.contains("PairDrop"), "{id}: not PairDrop's page");
+        }
+        "gotify.gotify" => {
+            use base64::Engine;
+            let basic = |p: &str| format!("Basic {}", base64::engine::general_purpose::STANDARD.encode(format!("{}:{p}", need(user))));
+            assert_eq!(browser.get("/current/user").await.status, 401, "{id}: answered before signing in");
+            let wrong = browser.send(Method::GET, "/current/user", None, &[("authorization", basic(PASSWORD))]).await;
+            assert_eq!(wrong.status, 401, "{id}: a wrong password signed in");
+            let me = browser.send(Method::GET, "/current/user", None, &[("authorization", basic(&need(password)))]).await;
+            assert_eq!(me.json()["admin"], true, "{id}: {}", me.body);
+        }
+        "miniflux.miniflux" => {
+            let form = browser.open("/").await;
+            let csrf = input_value(&form.body, "csrf").unwrap_or_else(|| panic!("{id}: no CSRF token"));
+            let wrong = browser.post_form("/login", &[("csrf", &csrf), ("username", &need(user)), ("password", PASSWORD)]).await;
+            assert_ne!(wrong.status, 302, "{id}: a wrong password signed in");
+            let form = browser.open("/").await;
+            let csrf = input_value(&form.body, "csrf").unwrap_or_else(|| panic!("{id}: no CSRF token"));
+            let page = browser.post_form("/login", &[("csrf", &csrf), ("username", &need(user)), ("password", &need(password))]).await;
+            assert_eq!(page.status, 302, "{id}: the sign-in was refused: {}", page.body);
+            let unread = browser.open("/unread").await;
+            assert!(unread.status == 200 && !unread.body.contains("name=\"password\""), "{id}: not signed in: HTTP {}", unread.status);
+            use base64::Engine;
+            let basic = format!("Basic {}", base64::engine::general_purpose::STANDARD.encode(format!("{}:{}", need(user), need(password))));
+            let me = browser.send(Method::GET, "/v1/me", None, &[("authorization", basic)]).await;
+            assert_eq!(me.json()["is_admin"], true, "{id}: {}", me.body);
+        }
+        "photoprism.photoprism" => {
+            let wrong = browser.post_json("/api/v1/session", json!({ "username": need(user), "password": PASSWORD }), &[]).await;
+            assert_eq!(wrong.status, 401, "{id}: a wrong password signed in");
+            let page = browser.post_json("/api/v1/session", json!({ "username": need(user), "password": need(password) }), &[]).await;
+            assert_eq!(page.status, 200, "{id}: {}", page.body);
+            assert_eq!(page.json()["user"]["Role"], "admin", "{id}: {}", page.body);
+        }
+        "siyuan.siyuan" => {
+            let before = browser.post_json("/api/notebook/lsNotebooks", json!({}), &[]).await;
+            assert_eq!(before.status, 401, "{id}: answered before signing in");
+            let wrong = browser.post_json("/api/system/loginAuth", json!({ "authCode": PASSWORD }), &[]).await;
+            assert_ne!(wrong.json()["code"], 0, "{id}: a wrong code signed in");
+            let page = browser.post_json("/api/system/loginAuth", json!({ "authCode": need(password) }), &[]).await;
+            assert_eq!(page.json()["code"], 0, "{id}: {}", page.body);
+            let now = browser.post_json("/api/notebook/lsNotebooks", json!({}), &[]).await;
+            assert_eq!(now.json()["code"], 0, "{id}: {}", now.body);
+        }
+        "filebrowser.filebrowser" => {
+            let wrong = browser.post_json("/api/login", json!({ "username": need(user), "password": PASSWORD }), &[]).await;
+            assert_eq!(wrong.status, 403, "{id}: a wrong password signed in");
+            let page = browser.post_json("/api/login", json!({ "username": need(user), "password": need(password) }), &[]).await;
+            assert_eq!(page.status, 200, "{id}: {}", page.body);
+            let files = browser.send(Method::GET, "/api/resources/", None, &[("x-auth", page.body.clone())]).await;
+            assert_eq!(files.status, 200, "{id}: {}", files.body);
+        }
+        "kiwix.kiwix" => {
+            // No account: its library page.
+            assert!(browser.open("/").await.body.to_ascii_lowercase().contains("kiwix"), "{id}: not Kiwix's page");
+        }
+        "kanboard.kanboard" => {
+            use base64::Engine;
+            let basic = |p: &str| format!("Basic {}", base64::engine::general_purpose::STANDARD.encode(format!("{}:{p}", need(user))));
+            let get_me = json!({ "jsonrpc": "2.0", "method": "getMe", "id": 1 });
+            // Its default password no longer signs in.
+            let old = browser.post_json("/jsonrpc.php", get_me.clone(), &[("authorization", basic("admin"))]).await;
+            assert_eq!(old.status, 401, "{id}: admin/admin still signs in");
+            let me = browser.post_json("/jsonrpc.php", get_me, &[("authorization", basic(&need(password)))]).await;
+            assert_eq!(me.json()["result"]["role"], "app-admin", "{id}: {}", me.body);
+        }
+        "grocy.grocy" => {
+            let old = browser.post_form("/login", &[("username", &need(user)), ("password", "admin")]).await;
+            assert!(old.location.as_deref().unwrap_or_default().contains("invalid"), "{id}: admin/admin still signs in");
+            let page = browser.post_form("/login", &[("username", &need(user)), ("password", &need(password))]).await;
+            assert!(page.status == 302 && !page.location.as_deref().unwrap_or_default().contains("invalid"), "{id}: the sign-in was refused");
+            let me = browser.get("/api/user").await;
+            assert_eq!(me.json()[0]["username"], "admin", "{id}: {}", me.body);
+        }
+        "nodered.node_red" => {
+            assert_eq!(browser.get("/flows").await.status, 401, "{id}: the editor's API answered before signing in");
+            fn token(p: &str) -> [(&str, &str); 5] {
+                [("client_id", "node-red-editor"), ("grant_type", "password"), ("scope", "*"), ("username", "admin"), ("password", p)]
+            }
+            let wrong = browser.post_form("/auth/token", &token(PASSWORD)).await;
+            assert_ne!(wrong.status, 200, "{id}: a wrong password signed in");
+            let password = need(password);
+            let page = browser.post_form("/auth/token", &token(&password)).await;
+            assert_eq!(page.status, 200, "{id}: {}", page.body);
+            let token = page.json()["access_token"].as_str().unwrap_or_else(|| panic!("{id}: no token: {}", page.body)).to_string();
+            let flows = browser.send(Method::GET, "/flows", None, &[("authorization", format!("Bearer {token}"))]).await;
+            assert_eq!(flows.status, 200, "{id}: {}", flows.body);
+        }
+        "ellite.wallos" => {
+            // Registration closed once its administrator is made.
+            let signup = browser.get("/registration.php").await;
+            assert!(signup.location.as_deref().unwrap_or_default().contains("login"), "{id}: registration is open: HTTP {}", signup.status);
+            let wrong = browser.post_form("/login.php", &[("username", &need(user)), ("password", PASSWORD)]).await;
+            assert_ne!(wrong.status, 302, "{id}: a wrong password signed in");
+            let page = browser.post_form("/login.php", &[("username", &need(user)), ("password", &need(password))]).await;
+            assert_eq!(page.status, 302, "{id}: the sign-in was refused: {}", page.body);
+            let settings = browser.open("/settings.php").await;
+            assert!(settings.status == 200 && !settings.body.contains("name=\"password\""), "{id}: not signed in: HTTP {}", settings.status);
+        }
+        "sysadminsmedia.homebox" => {
+            let signup = browser.post_json("/api/v1/users/register", json!({ "name": "x", "email": "x@e2e.invalid", "password": PASSWORD }), &[]).await;
+            assert_eq!(signup.status, 403, "{id}: registration is open: {}", signup.body);
+            let wrong = browser.post_json("/api/v1/users/login", json!({ "username": need(user), "password": PASSWORD }), &[]).await;
+            assert!(wrong.status >= 400, "{id}: a wrong password signed in");
+            let page = browser.post_json("/api/v1/users/login", json!({ "username": need(user), "password": need(password), "stayLoggedIn": false }), &[]).await;
+            assert_eq!(page.status, 200, "{id}: {}", page.body);
+            let token = page.json()["token"].as_str().unwrap_or_else(|| panic!("{id}: no token: {}", page.body)).to_string();
+            let me = browser.send(Method::GET, "/api/v1/users/self", None, &[("authorization", token)]).await;
+            assert_eq!(me.status, 200, "{id}: {}", me.body);
+        }
+        "garethgeorge.backrest" => {
+            // Its Connect API, as its page signs in.
+            let login = |p: &str| json!({ "username": "admin", "password": p });
+            let config = browser.post_json("/v1.Backrest/GetConfig", json!({}), &[]).await;
+            assert_eq!(config.status, 401, "{id}: answered before signing in: {}", config.body);
+            let wrong = browser.post_json("/v1.Authentication/Login", login(PASSWORD), &[]).await;
+            assert_ne!(wrong.status, 200, "{id}: a wrong password signed in");
+            let page = browser.post_json("/v1.Authentication/Login", login(&need(password)), &[]).await;
+            assert_eq!(page.status, 200, "{id}: {}", page.body);
+            let token = page.json()["token"].as_str().unwrap_or_else(|| panic!("{id}: no token: {}", page.body)).to_string();
+            let config = browser.post_json("/v1.Backrest/GetConfig", json!({}), &[("authorization", format!("Bearer {token}"))]).await;
+            assert_eq!(config.status, 200, "{id}: {}", config.body);
+            assert_eq!(config.json()["instance"], "serverbox", "{id}: {}", config.body);
+        }
+        "langfuse.langfuse" => {
+            // NextAuth's credentials sign-in, as its page sends it.
+            let csrf = browser.get("/api/auth/csrf").await.json()["csrfToken"].as_str().unwrap_or_default().to_string();
+            assert!(!csrf.is_empty(), "{id}: no CSRF token");
+            let page = browser.post_form("/api/auth/callback/credentials", &[("email", &need(user)), ("password", &need(password)), ("csrfToken", &csrf), ("json", "true")]).await;
+            assert!(page.status < 400 && !page.location.as_deref().unwrap_or_default().contains("error"), "{id}: the sign-in was refused: HTTP {} {:?}", page.status, page.location);
+            let session = browser.get("/api/auth/session").await;
+            assert_eq!(session.json()["user"]["email"], need(user), "{id}: {}", session.body);
+            // Sign-up is off.
+            let signup = browser.post_json("/api/auth/signup", json!({ "name": "x", "email": "x@e2e.invalid", "password": PASSWORD }), &[]).await;
+            assert!(signup.status >= 400, "{id}: sign-up is open: {}", signup.body);
+        }
+        "toeverything.affine" => {
+            let version = [("x-affine-version", "0.27.4".to_string())];
+            let wrong = browser.post_json("/api/auth/sign-in", json!({ "email": need(user), "password": PASSWORD }), &version).await;
+            assert!(wrong.status >= 400, "{id}: a wrong password signed in");
+            let page = browser.post_json("/api/auth/sign-in", json!({ "email": need(user), "password": need(password) }), &version).await;
+            assert_eq!(page.status, 200, "{id}: {}", page.body);
+            let session = browser.get("/api/auth/session").await;
+            assert_eq!(session.json()["user"]["email"], need(user), "{id}: {}", session.body);
+            // Sign-up is off: an unknown address is refused a sign-in link
+            // (which would make its account).
+            let signup = browser.post_json("/api/auth/sign-in", json!({ "email": "x@e2e.invalid" }), &version).await;
+            assert_eq!(signup.status, 403, "{id}: sign-up is open: {}", signup.body);
+        }
+        "juanfont.headscale" => {
+            // The API key its note points to, in the data folder.
+            let file = std::path::Path::new(settings["data"].as_str().expect("the data folder")).join("headplane-api-key");
+            let key = std::fs::read_to_string(&file).unwrap_or_else(|e| panic!("{id}: {}: {e}", file.display())).trim().to_string();
+            assert!(key.starts_with("hskey-api-"), "{id}: not an API key");
+            let wrong = browser.post_form("/admin/login", &[("api_key", "hskey-api-wrong")]).await;
+            assert_ne!(wrong.status, 302, "{id}: a wrong key signed in");
+            let page = browser.post_form("/admin/login", &[("api_key", &key)]).await;
+            assert_eq!(page.status, 302, "{id}: the sign-in was refused: {}", &page.body[..page.body.len().min(400)]);
+            let machines = browser.open("/admin/machines").await;
+            assert!(machines.status == 200 && !machines.body.contains("name=\"api_key\""), "{id}: not signed in: HTTP {}", machines.status);
+        }
         "excalidraw.excalidraw" => {
             // Nothing to sign in to: the app's own page.
             assert!(browser.open("/").await.body.contains("Excalidraw"), "{id}: not Excalidraw's page");
@@ -396,10 +566,33 @@ async fn sign_in(browser: &mut Browser, id: &str, user: Option<&str>, password: 
     }
 }
 
+/// A ZIM file put in Kiwix's folder (`SBM_E2E_KIWIX_ZIM`, a small one such as
+/// wikipedia_en_ray-charles_nopic) is served within its minute, without a
+/// restart.
+async fn kiwix_serves_a_zim(browser: &mut Browser, settings: &Value) {
+    let Ok(zim) = std::env::var("SBM_E2E_KIWIX_ZIM") else {
+        eprintln!("kiwix: SBM_E2E_KIWIX_ZIM is not set: no ZIM file served");
+        return;
+    };
+    let folder = std::path::PathBuf::from(settings["zims"].as_str().expect("the ZIM folder"));
+    let copy = folder.join("sbm-e2e.zim");
+    std::fs::copy(&zim, &copy).unwrap();
+    let deadline = Instant::now() + Duration::from_secs(120);
+    loop {
+        let entries = browser.get("/catalog/v2/entries").await;
+        if entries.body.contains("<entry>") {
+            break;
+        }
+        assert!(Instant::now() < deadline, "kiwix: the ZIM file never served: {}", entries.body);
+        tokio::time::sleep(Duration::from_secs(5)).await;
+    }
+    std::fs::remove_file(&copy).unwrap();
+}
+
 async fn verify(srv: &TestServer, state: &Arc<AppState>, id: &str) {
     eprintln!("== {id}");
     let started = Instant::now();
-    let (_settings, _cleanup) = catalog::deploy(srv, id).await;
+    let (settings, _cleanup) = catalog::deploy(srv, id).await;
     healthy(srv, state, id).await;
 
     let mut browser = Browser::enter(srv, id).await;
@@ -409,7 +602,10 @@ async fn verify(srv: &TestServer, state: &Arc<AppState>, id: &str) {
     assert!(page.body.to_ascii_lowercase().contains("<html"), "{id}: not a page: {}", &page.body[..page.body.len().min(400)]);
 
     let (user, password) = login(srv, id).await;
-    sign_in(&mut browser, id, user.as_deref(), password.as_deref()).await;
+    sign_in(&mut browser, id, user.as_deref(), password.as_deref(), &settings).await;
+    if id.trim_end_matches("_e2e") == "kiwix.kiwix" {
+        kiwix_serves_a_zim(&mut browser, &settings).await;
+    }
 
     catalog::remove(srv, id).await;
     eprintln!("{id}: ok in {:?}", started.elapsed());

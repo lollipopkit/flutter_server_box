@@ -347,15 +347,27 @@ async fn write_files(state: &AppState, id: &str, package: &Package, settings: &B
     }
     let env_path = dir.join(ENV_FILE);
     let earlier = tokio::fs::read_to_string(&env_path).await.unwrap_or_default();
-    let names: Vec<&str> = package.manifest.secrets.iter().map(|s| s.env.as_str()).collect();
+    let names: Vec<&str> = package.manifest.secrets.iter().flat_map(|s| s.env_names()).collect();
     let mut secrets = read_env(&earlier, &names);
     for s in &package.manifest.secrets {
         if !secrets.contains_key(&s.env) {
-            let value = crate::utils::secrets::random_password(s.length).map_err(|e| {
+            let value = if s.hex { crate::utils::secrets::random_hex(s.length / 2) } else { crate::utils::secrets::random_password(s.length) };
+            let value = value.map_err(|e| {
                 tracing::error!("stack {id}: {e}");
                 refusal(500, "writeFailed")
             })?;
             secrets.insert(s.env.clone(), value);
+        }
+        // The hash kept while it is the secret's (bcrypt salts each one).
+        if let Some(name) = &s.bcrypt {
+            let value = &secrets[&s.env];
+            if !secrets.get(name).is_some_and(|h| bcrypt::verify(value, h).unwrap_or(false)) {
+                let hash = bcrypt::hash(value, bcrypt::DEFAULT_COST).map_err(|e| {
+                    tracing::error!("stack {id}: {e}");
+                    refusal(500, "writeFailed")
+                })?;
+                secrets.insert(name.clone(), hash);
+            }
         }
     }
     let host = host_env(state.stacks.shared()).await.map_err(|e| {

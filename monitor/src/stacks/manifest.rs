@@ -299,10 +299,25 @@ pub struct Secret {
     pub env: String,
     #[serde(default = "secret_length")]
     pub length: usize,
+    /// An env name also given the secret's bcrypt hash, for a service that
+    /// takes its first password hashed (n8n, File Browser, Node-RED).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bcrypt: Option<String>,
+    /// Lowercase hex instead of letters and digits, for a key a service
+    /// takes as hex (`openssl rand -hex 32`); `length` is then even.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub hex: bool,
 }
 
 fn secret_length() -> usize {
     32
+}
+
+impl Secret {
+    /// The env names it sets: the secret, and its hash when asked.
+    pub fn env_names(&self) -> Vec<&str> {
+        std::iter::once(self.env.as_str()).chain(self.bcrypt.as_deref()).collect()
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -698,8 +713,12 @@ impl Manifest {
         }
         for (i, s) in self.secrets.iter().enumerate() {
             sources.entry(&s.env).or_default().push(format!("secrets[{i}]"));
-            if !(16..=128).contains(&s.length) {
-                out.push(problem(format!("secrets[{i}].length"), "16 to 128"));
+            if let Some(hash) = &s.bcrypt {
+                sources.entry(hash).or_default().push(format!("secrets[{i}].bcrypt"));
+            }
+            // bcrypt reads 72 bytes at most; hex comes in pairs.
+            if !(16..=128).contains(&s.length) || (s.bcrypt.is_some() && s.length > 72) || (s.hex && s.length % 2 == 1) {
+                out.push(problem(format!("secrets[{i}].length"), "16 to 128; 72 at most with bcrypt; even with hex"));
             }
         }
         for (name, value) in &self.env {
@@ -866,7 +885,7 @@ impl Manifest {
         if self.llm.as_ref().is_some_and(|l| l.tools.is_some()) {
             names.insert(TOOL_PARSER_ENV.to_string());
         }
-        names.extend(self.secrets.iter().map(|s| s.env.clone()));
+        names.extend(self.secrets.iter().flat_map(|s| s.env_names()).map(String::from));
         for s in &self.settings {
             names.extend(s.env_names().into_iter().map(String::from));
         }
@@ -942,9 +961,9 @@ impl Manifest {
     /// Every value the env file sets, by name.
     pub fn env_values(&self, settings: &BTreeMap<String, Value>, secrets: &BTreeMap<String, String>) -> BTreeMap<String, String> {
         let mut values: BTreeMap<String, String> = self.env.clone();
-        for s in &self.secrets {
-            if let Some(v) = secrets.get(&s.env) {
-                values.insert(s.env.clone(), v.clone());
+        for name in self.secrets.iter().flat_map(|s| s.env_names()) {
+            if let Some(v) = secrets.get(name) {
+                values.insert(name.to_string(), v.clone());
             }
         }
         for s in &self.settings {
@@ -1762,6 +1781,23 @@ label = { en = "Port" }
         assert!(package(&colon, "x: ${PORT}\n").unwrap_err().iter().any(|p| p.at == "web.basic_auth"));
         let bare = MINIMAL.replace("web = { port = \"port\" }", "web = { port = \"port\", basic_auth = true }");
         assert!(package(&bare, "x: ${PORT}\n").unwrap_err().iter().any(|p| p.at == "web.basic_auth"));
+    }
+
+    #[test]
+    fn a_secret_can_be_given_hashed() {
+        let ok = format!("{MINIMAL}\n[[secrets]]\nenv = \"PASS\"\nbcrypt = \"PASS_HASH\"\n");
+        let m = package(&ok, "x: ${PORT} ${PASS_HASH}\n").expect("package").manifest;
+        assert!(m.provided().contains("PASS_HASH"));
+        let secrets = BTreeMap::from([("PASS".to_string(), "p".to_string()), ("PASS_HASH".to_string(), "$2b$12$h".to_string())]);
+        assert_eq!(m.env_values(&BTreeMap::new(), &secrets).get("PASS_HASH").map(String::as_str), Some("$2b$12$h"));
+        // Its name is set once, and bcrypt reads 72 bytes at most.
+        let twice = ok.replace("bcrypt = \"PASS_HASH\"", "bcrypt = \"PASS\"");
+        assert!(package(&twice, "x: ${PORT}\n").unwrap_err().iter().any(|p| p.at == "secrets[0].bcrypt"));
+        let long = ok.replace("env = \"PASS\"", "env = \"PASS\"\nlength = 100");
+        assert!(package(&long, "x: ${PORT}\n").unwrap_err().iter().any(|p| p.at == "secrets[0].length"));
+        let odd = format!("{MINIMAL}\n[[secrets]]\nenv = \"KEY\"\nhex = true\nlength = 63\n");
+        assert!(package(&odd, "x: ${PORT}\n").unwrap_err().iter().any(|p| p.at == "secrets[0].length"));
+        assert!(package(&odd.replace("63", "64"), "x: ${PORT}\n").expect("package").manifest.secrets[0].hex);
     }
 
     #[test]

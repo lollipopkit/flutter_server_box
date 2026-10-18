@@ -324,6 +324,13 @@ def check_manifest(m: dict, folder: Path, texts: dict[str, str], rep: Report) ->
             rep.error(f"env.{name}: no ', line break or NUL; at most 1024 bytes")
     for i, s in enumerate(m.get("secrets", [])):
         sources.setdefault(s.get("env", ""), []).append(f"secrets[{i}]")
+        if "bcrypt" in s:
+            sources.setdefault(s["bcrypt"], []).append(f"secrets[{i}].bcrypt")
+            # bcrypt reads 72 bytes at most.
+            if s.get("length", 32) > 72:
+                rep.error(f"secrets[{i}].length: 72 at most with bcrypt")
+        if s.get("hex") and s.get("length", 32) % 2:
+            rep.error(f"secrets[{i}].length: even with hex")
 
     keys: set[str] = set()
     settings = m.get("settings", [])
@@ -436,7 +443,9 @@ def defaults_env(m: dict, stack: Path) -> str:
     """The env file the agent writes for the defaults, on a machine with no GPU."""
     values = {k: str(v) for k, v in m.get("env", {}).items()}
     for s in m.get("secrets", []):
-        values[s["env"]] = "x" * s.get("length", 32)
+        values[s["env"]] = ("a" if s.get("hex") else "x") * s.get("length", 32)
+        if "bcrypt" in s:
+            values[s["bcrypt"]] = "$2b$12$" + "x" * 53
     for s in m.get("settings", []):
         kind = s.get("type")
         if kind == "path":

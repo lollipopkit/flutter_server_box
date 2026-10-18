@@ -1,0 +1,76 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# SiYuan: deployed with Docker Compose from compose.yaml beside this file,
+# shown in a desk window through the agent.
+
+schema = 1
+publisher = "siyuan"
+name = "siyuan"
+project = "SiYuan"
+developer = "B3log"
+version = "3.8.7"
+homepage = "https://b3log.org/siyuan/"
+source = "https://github.com/siyuan-note/siyuan/tree/v3.8.7"
+glyph = "edit_note"
+tone = "berry"
+categories = ["productivity"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "SiYuan"
+
+[description]
+en = "A privacy-first knowledge base of blocks: write in Markdown, reference and embed any block, and review with flashcards and databases."
+zh = "以块为单位、注重隐私的个人知识库：用 Markdown 写作，任意块都可以引用和嵌入，还有闪卡复习和数据库。"
+zh-TW = "以區塊為單位、注重隱私的個人知識庫：用 Markdown 寫作，任意區塊都可以引用和嵌入，還有閃卡複習和資料庫。"
+
+[license]
+spdx = "AGPL-3.0"
+url = "https://github.com/siyuan-note/siyuan/blob/v3.8.7/LICENSE"
+accept = true
+
+[requirements]
+arch = ["amd64", "arm64"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+SIYUAN_VERSION = "v3.8.7"
+
+[[secrets]]
+env = "SIYUAN_AUTH_CODE"
+length = 32
+
+[login]
+password = "SIYUAN_AUTH_CODE"
+note = { en = "Its page asks for this access authorization code only. The app sets it at every start, so change it here, not in SiYuan.", zh = "页面只要求输入此访问授权码。应用每次启动都会设置它，请勿在思源中修改。", zh-TW = "頁面只要求輸入此存取授權碼。應用每次啟動都會設定它，請勿在思源中修改。" }
+
+[[settings]]
+key = "workspace"
+type = "path"
+env = "SIYUAN_WORKSPACE"
+default = "{stack}/workspace"
+data = true
+label = { en = "Workspace", zh = "工作空间", zh-TW = "工作空間" }
+help = { en = "The notebooks, assets and settings.", zh = "笔记本、资源文件和设置。", zh-TW = "筆記本、資源檔案和設定。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "SIYUAN_PORT"
+default = 6806
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "Off: only through the desk.", zh = "关闭时只能通过桌面访问。", zh-TW = "關閉時只能透過桌面存取。" }
+on = { SIYUAN_BIND = "0.0.0.0" }
+off = { SIYUAN_BIND = "127.0.0.1" }

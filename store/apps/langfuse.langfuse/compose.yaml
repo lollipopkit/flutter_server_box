@@ -1,0 +1,207 @@
+# Langfuse 4.63.0 (MIT, ee/ folders excepted), https://github.com/langfuse/langfuse/tree/v4.63.0
+#
+# Adapted from the release's docker-compose.yml for ServerBox Monitor
+# (2026-10-18):
+# - no `name:` and no `container_name`: the agent names the project;
+# - images pinned (upstream: langfuse:4, langfuse-worker:4, clickhouse:25.12,
+#   chainguard minio, redis:7, postgres:17); bind mounts from the env file
+#   instead of named volumes; every password, the salt and the encryption key
+#   generated once; only the web port published (upstream also publishes the
+#   databases and MinIO on loopback);
+# - the administrator, an organization and a project with its API keys are
+#   made at the first start (LANGFUSE_INIT_*), and sign-up is off
+#   (AUTH_DISABLE_SIGNUP);
+# - MinIO stays inside the stack, so media attachments uploaded from outside
+#   it (an SDK's presigned upload) are not taken;
+# - Langfuse's own MCP server (/api/public/mcp) asks for the project's keys as
+#   HTTP basic auth: mcp-gate (nginx, mcp-gate.conf.template) alone is
+#   published for it, on loopback, asks Agent mode for MCP_TOKEN and passes
+#   requests on with the keys.
+
+x-langfuse-env: &langfuse-env
+  NEXTAUTH_URL: ${LANGFUSE_URL}
+  DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/postgres
+  SALT: ${LANGFUSE_SALT}
+  ENCRYPTION_KEY: ${LANGFUSE_ENCRYPTION_KEY}
+  TELEMETRY_ENABLED: 'true'
+  LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES: 'false'
+  CLICKHOUSE_MIGRATION_URL: clickhouse://clickhouse:9000
+  CLICKHOUSE_URL: http://clickhouse:8123
+  CLICKHOUSE_USER: clickhouse
+  CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+  CLICKHOUSE_CLUSTER_ENABLED: 'false'
+  LANGFUSE_S3_EVENT_UPLOAD_BUCKET: langfuse
+  LANGFUSE_S3_EVENT_UPLOAD_REGION: auto
+  LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID: minio
+  LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY: ${MINIO_PASSWORD}
+  LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT: http://minio:9000
+  LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE: 'true'
+  LANGFUSE_S3_EVENT_UPLOAD_PREFIX: events/
+  LANGFUSE_S3_MEDIA_UPLOAD_BUCKET: langfuse
+  LANGFUSE_S3_MEDIA_UPLOAD_REGION: auto
+  LANGFUSE_S3_MEDIA_UPLOAD_ACCESS_KEY_ID: minio
+  LANGFUSE_S3_MEDIA_UPLOAD_SECRET_ACCESS_KEY: ${MINIO_PASSWORD}
+  LANGFUSE_S3_MEDIA_UPLOAD_ENDPOINT: http://minio:9000
+  LANGFUSE_S3_MEDIA_UPLOAD_FORCE_PATH_STYLE: 'true'
+  LANGFUSE_S3_MEDIA_UPLOAD_PREFIX: media/
+  REDIS_HOST: redis
+  REDIS_PORT: '6379'
+  REDIS_AUTH: ${REDIS_PASSWORD}
+  REDIS_TLS_ENABLED: 'false'
+
+services:
+  # One-shot: the folders of the services that run as their own users
+  # (ClickHouse 101, MinIO 65532), made theirs before they start.
+  prepare-data:
+    image: redis:${REDIS_VERSION}
+    user: "0:0"
+    volumes:
+      - ${LANGFUSE_DATA}:/data
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        set -eu
+        mkdir -p /data/clickhouse /data/clickhouse-logs /data/minio
+        chown -R 101:101 /data/clickhouse /data/clickhouse-logs
+        chown -R 65532:65532 /data/minio
+    restart: "no"
+
+  langfuse-worker:
+    image: langfuse/langfuse-worker:${LANGFUSE_VERSION}
+    restart: unless-stopped
+    depends_on: &langfuse-depends-on
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    environment:
+      <<: *langfuse-env
+      TZ: ${SBM_TZ}
+
+  langfuse-web:
+    image: langfuse/langfuse:${LANGFUSE_VERSION}
+    restart: unless-stopped
+    depends_on: *langfuse-depends-on
+    ports:
+      - '${LANGFUSE_BIND}:${LANGFUSE_PORT}:3000'
+    environment:
+      <<: *langfuse-env
+      TZ: ${SBM_TZ}
+      # Next.js listens on $HOSTNAME, the container's name otherwise: every
+      # address, so its health check reaches it on loopback.
+      HOSTNAME: 0.0.0.0
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      AUTH_DISABLE_SIGNUP: 'true'
+      LANGFUSE_INIT_ORG_ID: serverbox
+      LANGFUSE_INIT_ORG_NAME: ServerBox
+      LANGFUSE_INIT_PROJECT_ID: default
+      LANGFUSE_INIT_PROJECT_NAME: Default
+      LANGFUSE_INIT_PROJECT_PUBLIC_KEY: pk-lf-${LANGFUSE_PUBLIC_KEY}
+      LANGFUSE_INIT_PROJECT_SECRET_KEY: sk-lf-${LANGFUSE_SECRET_KEY}
+      LANGFUSE_INIT_USER_EMAIL: ${LANGFUSE_ADMIN_EMAIL}
+      LANGFUSE_INIT_USER_NAME: Admin
+      LANGFUSE_INIT_USER_PASSWORD: ${LANGFUSE_PASSWORD}
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/public/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:${CLICKHOUSE_VERSION}
+    restart: unless-stopped
+    user: "101:101"
+    depends_on:
+      prepare-data:
+        condition: service_completed_successfully
+    environment:
+      CLICKHOUSE_DB: default
+      CLICKHOUSE_USER: clickhouse
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+    volumes:
+      - ${LANGFUSE_DATA}/clickhouse:/var/lib/clickhouse
+      - ${LANGFUSE_DATA}/clickhouse-logs:/var/log/clickhouse-server
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit 1
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 1s
+
+  minio:
+    image: cgr.dev/chainguard/minio@sha256:709099319add48dfb44aa596a7070d3ddd8dd04d7ae881765719aec29df9e510
+    restart: unless-stopped
+    depends_on:
+      prepare-data:
+        condition: service_completed_successfully
+    entrypoint: sh
+    command: -c 'mkdir -p /data/langfuse && minio server --address ":9000" --console-address ":9001" /data'
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD}
+    volumes:
+      - ${LANGFUSE_DATA}/minio:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 1s
+      timeout: 5s
+      retries: 5
+      start_period: 1s
+
+  redis:
+    image: redis:${REDIS_VERSION}
+    restart: unless-stopped
+    command: >
+      --requirepass ${REDIS_PASSWORD}
+      --maxmemory-policy noeviction
+    volumes:
+      - ${LANGFUSE_DATA}/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 10s
+      retries: 10
+
+  postgres:
+    image: postgres:${POSTGRES_VERSION}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: postgres
+      TZ: UTC
+      PGTZ: UTC
+    volumes:
+      - ${LANGFUSE_DATA}/postgres:/var/lib/postgresql
+
+  mcp-gate:
+    image: nginx:1.29.8-alpine@sha256:5616878291a2eed594aee8db4dade5878cf7edcb475e59193904b198d9b830de
+    depends_on:
+      langfuse-web:
+        condition: service_healthy
+    environment:
+      MCP_TOKEN: ${MCP_TOKEN}
+      PUBLIC_KEY: pk-lf-${LANGFUSE_PUBLIC_KEY}
+      SECRET_KEY: sk-lf-${LANGFUSE_SECRET_KEY}
+    volumes:
+      - ./mcp-gate.conf.template:/etc/nginx/templates/default.conf.template:ro
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        LANGFUSE_BASIC=$$(printf '%s:%s' "$$PUBLIC_KEY" "$$SECRET_KEY" | base64 | tr -d '\n')
+        export LANGFUSE_BASIC
+        unset PUBLIC_KEY SECRET_KEY
+        exec /docker-entrypoint.sh nginx -g 'daemon off;'
+    ports:
+      - '127.0.0.1:${MCP_PORT}:8080'
+    restart: unless-stopped

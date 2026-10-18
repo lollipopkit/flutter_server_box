@@ -40,6 +40,7 @@ const AUTOMATIC: &[&str] = &[
     "grafana.grafana",
     "n8n.n8n",
     "triliumnext.trilium",
+    "langfuse.langfuse",
 ];
 
 /// The password of the accounts this test makes in an app.

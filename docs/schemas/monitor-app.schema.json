@@ -169,7 +169,9 @@
         "required": ["env"],
         "properties": {
           "env": { "$ref": "#/$defs/envName" },
-          "length": { "type": "integer", "minimum": 16, "maximum": 128, "default": 32 }
+          "length": { "type": "integer", "minimum": 16, "maximum": 128, "default": 32 },
+          "bcrypt": { "$ref": "#/$defs/envName", "description": "An env name also given the secret's bcrypt hash, for a service that takes its first password hashed. The secret is then 72 characters at most." },
+          "hex": { "type": "boolean", "default": false, "description": "Lowercase hex instead of letters and digits, for a key a service takes as hex; the length is then even." }
         }
       }
     },

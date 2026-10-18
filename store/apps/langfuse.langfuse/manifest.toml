@@ -1,0 +1,155 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Langfuse: deployed with Docker Compose from compose.yaml and
+# mcp-gate.conf.template beside this file, shown in a desk window through the
+# agent.
+
+schema = 1
+publisher = "langfuse"
+name = "langfuse"
+project = "Langfuse"
+developer = "Langfuse"
+version = "4.63.0"
+homepage = "https://langfuse.com"
+source = "https://github.com/langfuse/langfuse/tree/v4.63.0"
+glyph = "query_stats"
+tone = "ink"
+categories = ["ai", "monitoring", "development"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Langfuse"
+
+[description]
+en = "Observability for LLM apps: traces of every call with its cost and latency, prompt management, datasets and evaluations. Agent mode can read traces and prompts."
+zh = "LLM 应用的可观测性平台：追踪每次调用及其成本和延迟，管理提示词、数据集和评估。Agent 模式可以读取追踪记录和提示词。"
+zh-TW = "LLM 應用的可觀測性平台：追蹤每次呼叫及其成本和延遲，管理提示詞、資料集和評估。Agent 模式可以讀取追蹤紀錄和提示詞。"
+
+[license]
+spdx = "MIT"
+url = "https://github.com/langfuse/langfuse/blob/v4.63.0/LICENSE"
+accept = true
+
+[requirements]
+memory_min_mib = 4096
+memory_recommended_mib = 8192
+arch = ["amd64", "arm64"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+jobs = ["prepare-data"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+LANGFUSE_VERSION = "4.63.0"
+CLICKHOUSE_VERSION = "25.12"
+REDIS_VERSION = "8.8.3-alpine"
+POSTGRES_VERSION = "18.6-alpine"
+LANGFUSE_ADMIN_EMAIL = "admin@langfuse.local"
+
+[[secrets]]
+env = "LANGFUSE_PASSWORD"
+length = 32
+
+[[secrets]]
+env = "NEXTAUTH_SECRET"
+length = 48
+
+[[secrets]]
+env = "LANGFUSE_SALT"
+length = 32
+
+[[secrets]]
+env = "LANGFUSE_ENCRYPTION_KEY"
+length = 64
+hex = true
+
+[[secrets]]
+env = "LANGFUSE_PUBLIC_KEY"
+length = 32
+
+[[secrets]]
+env = "LANGFUSE_SECRET_KEY"
+length = 48
+
+[[secrets]]
+env = "POSTGRES_PASSWORD"
+length = 32
+
+[[secrets]]
+env = "CLICKHOUSE_PASSWORD"
+length = 32
+
+[[secrets]]
+env = "MINIO_PASSWORD"
+length = 32
+
+[[secrets]]
+env = "REDIS_PASSWORD"
+length = 32
+
+[[secrets]]
+env = "MCP_TOKEN"
+length = 48
+
+[login]
+user = "admin@langfuse.local"
+password = "LANGFUSE_PASSWORD"
+note = { en = "Sign-up is off: add people in the organization's settings. The Default project's API keys are in its settings, for your apps' SDKs.", zh = "注册已关闭：在组织设置中添加成员。Default 项目的 API 密钥在项目设置中，供你的应用 SDK 使用。", zh-TW = "註冊已關閉：在組織設定中新增成員。Default 專案的 API 金鑰在專案設定中，供你的應用 SDK 使用。" }
+
+[[settings]]
+key = "data"
+type = "path"
+env = "LANGFUSE_DATA"
+default = "{stack}/data"
+data = true
+label = { en = "Data", zh = "数据", zh-TW = "資料" }
+help = { en = "Its PostgreSQL, ClickHouse, Redis and MinIO data.", zh = "PostgreSQL、ClickHouse、Redis 和 MinIO 的数据。", zh-TW = "PostgreSQL、ClickHouse、Redis 和 MinIO 的資料。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "LANGFUSE_PORT"
+default = 3020
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "Also what apps sending traces from other machines need. Off: only through the desk.", zh = "其他机器上的应用发送追踪数据也需要开启。关闭时只能通过桌面访问。", zh-TW = "其他機器上的應用傳送追蹤資料也需要開啟。關閉時只能透過桌面存取。" }
+on = { LANGFUSE_BIND = "0.0.0.0" }
+off = { LANGFUSE_BIND = "127.0.0.1" }
+
+[[settings]]
+key = "url"
+type = "text"
+env = "LANGFUSE_URL"
+default = "http://localhost:3020"
+pattern = '^https?://[A-Za-z0-9.:\[\]-]+(/[A-Za-z0-9._~/-]*)?$'
+label = { en = "Public address", zh = "公开地址", zh-TW = "公開位址" }
+help = { en = "The address Langfuse's links name. Set it when it is reachable from the network.", zh = "Langfuse 生成的链接使用的地址。允许从网络访问时请设置。", zh-TW = "Langfuse 產生的連結使用的位址。允許從網路存取時請設定。" }
+
+[[settings]]
+key = "mcp_port"
+type = "port"
+env = "MCP_PORT"
+default = 3021
+label = { en = "MCP server port", zh = "MCP 服务端口", zh-TW = "MCP 服務連接埠" }
+help = { en = "Agent mode's connection to Langfuse, on this machine only.", zh = "Agent 模式连接 Langfuse 用，仅限本机。", zh-TW = "Agent 模式連線 Langfuse 用，僅限本機。" }
+
+# Langfuse's own MCP server, behind a gate that asks for MCP_TOKEN and holds
+# the project's keys.
+[[mcp]]
+port = "mcp_port"
+path = "/mcp"
+publisher = "official"
+service = "mcp-gate"
+source = "https://github.com/langfuse/langfuse/tree/v4.63.0/web/src/features/mcp"
+[mcp.auth]
+scheme = "Bearer"
+secret = "MCP_TOKEN"

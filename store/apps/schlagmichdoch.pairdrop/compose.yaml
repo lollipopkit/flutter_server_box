@@ -1,0 +1,21 @@
+# PairDrop 1.11.2 (GPL-3.0), https://github.com/schlagmichdoch/PairDrop/tree/v1.11.2
+# Image: linuxserver.io's build, https://github.com/linuxserver/docker-pairdrop
+# (tag v1.11.2-ls147), the image PairDrop's docs point to.
+#
+# Written for ServerBox Monitor (2026-10-18) from linuxserver.io's compose
+# example:
+# - no `name:` and no `container_name`: the agent names the project;
+# - PUID/PGID/TZ come from the agent (SBM_UID, SBM_GID, SBM_TZ);
+# - files go from browser to browser (WebRTC); the server only introduces
+#   them and keeps nothing.
+
+services:
+  pairdrop:
+    image: lscr.io/linuxserver/pairdrop:${PAIRDROP_TAG}
+    environment:
+      PUID: ${SBM_UID}
+      PGID: ${SBM_GID}
+      TZ: ${SBM_TZ}
+    ports:
+      - '${PAIRDROP_BIND}:${PAIRDROP_PORT}:3000'
+    restart: unless-stopped
