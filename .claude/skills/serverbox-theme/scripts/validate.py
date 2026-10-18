@@ -355,8 +355,15 @@ def check_theme(manifest: dict, folder: Path, key: str | None, lo, rep: Report, 
     splash = manifest.get("splash")
     background = table_of(manifest.get("background"))
 
-    # Icons.
+    # Icons. The schema can bind a listed key to its file name; JSON Schema
+    # cannot do that for an arbitrary file.* key, so the stem is checked here
+    # the way the installer does (icon_asset_path).
     for ikey, rel in images.items():
+        stem = str(ikey).replace(".", "_")
+        if str(rel) not in (f"icons/{stem}.png", f"icons/{stem}.svg"):
+            rep.error(
+                f'{where}icons.images."{ikey}": {rel} must be icons/{stem}.png or .svg'
+            )
         f = safe_file(folder, str(rel))
         used.add(str(rel))
         if f is None:

@@ -312,8 +312,9 @@ background 或 iOS 的 launch storyboard）在构建应用时确定，只能随�
 
 以上是 ServerBox 会绘制的 key。这一格式与基于同一个库的其他 app 共用，为其他 app
 准备的 key（点分隔的小写单词，如 `tab.chat`）会被接受并保留，但 ServerBox 不绘制。
-格式不合法的 key 会被拒绝。编辑器用的 schema 列出 tab 和 nav 的 key，并以模式接受
-任意合法的 `file.*` key，而不是枚举扩展名。
+格式不合法的 key 会被拒绝。编辑器用的 schema 列出 tab、nav，以及本 app 会绘制的
+`file.*` key，每个都绑定到 `icons/<key 的点换成下划线>.png` 或 `.svg`。其它合法的
+`file.*` 仍用模式接受，安装器同样要求文件名由 key 导出。
 
 压缩包和解压后总内容各限制 16 MiB。`manifest.toml` 限制 64 KiB。icon 限制
 256 KiB，splash logo 512 KiB，背景 8 MiB、单边 8192 像素、总计 6400 万像素。写入隔离的

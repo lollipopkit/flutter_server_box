@@ -98,7 +98,10 @@ void main() {
   test('icon keys, and the file name each maps to', () {
     final images = _map(properties['icons']['properties']['images']);
     expect(images['additionalProperties'], false);
-    expect(images['properties'].keys.toSet(), ThemePackages.iconKeys);
+    expect(
+      images['properties'].keys.toSet(),
+      ThemePackages.iconKeys.union(ThemeFileIcon.schemaKeys),
+    );
     expect(
       _map(images['patternProperties']).keys.toSet(),
       {ThemeFileIcon.keyPattern.pattern},

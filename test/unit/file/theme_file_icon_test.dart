@@ -16,6 +16,10 @@ void main() {
     expect(ThemeFileIcon.forName('archive.7z'), isNull);
     expect(ThemeFileIcon.keyPattern.hasMatch('file.py'), isTrue);
     expect(ThemeFileIcon.keyPattern.hasMatch('file.7z'), isFalse);
+    expect(
+      ThemeFileIcon.schemaKeys,
+      containsAll(['file.dir', 'file.py', 'file.scss', 'file.makefile']),
+    );
   });
 
   test('aliases related extensions onto a glyph the package may share', () {
