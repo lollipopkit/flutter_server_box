@@ -604,7 +604,9 @@
                 ? $LL.groupRootNotDeletable()
                 : !openedGroup.local
                   ? $LL.groupNotLocal()
-                  : $LL.groupInUse()}
+                  : openedGroup.primary_members.length
+                    ? $LL.groupInUse()
+                    : $LL.userInvalidName()}
             </span>
           {/if}
         </div>
