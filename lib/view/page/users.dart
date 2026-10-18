@@ -775,7 +775,6 @@ extension on _UsersPageState {
     ];
     return parts.join(' · ');
   }
-}
 
   List<Widget> _buildGroupSections(
     ServerUserCatalog catalog,
