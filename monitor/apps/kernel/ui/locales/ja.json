@@ -1,5 +1,6 @@
 {
  "alreadyInstalled": "このパッケージはすでにインストールされています。",
+ "available": "利用可能",
  "badgeDefault": "既定",
  "badgeNext": "次回起動",
  "badgeRunning": "実行中",

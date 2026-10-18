@@ -1,7 +1,7 @@
 {
   "publisher": "serverbox",
   "name": "proxy",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "api": 2,
   "kind": "wasm",
   "title": {

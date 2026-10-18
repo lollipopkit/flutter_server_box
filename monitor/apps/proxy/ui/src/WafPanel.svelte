@@ -17,6 +17,8 @@
 
   interface Props {
     t: Translate
+    /// The group's title; the firewall's name by default.
+    title?: string
     server: ServerId
     waf: ServerWaf
     crs: string | null
@@ -27,7 +29,7 @@
     onchanged: () => void
   }
 
-  const { t, server, waf, crs, busy, install, said, onchanged }: Props = $props()
+  const { t, title, server, waf, crs, busy, install, said, onchanged }: Props = $props()
 
   let draft = $state<WafSettings>({ mode: 'detect', paranoia: 1, exclusions: [] })
   let exclusionsText = $state('')
@@ -73,7 +75,7 @@
   }
 </script>
 
-<Group title={t('wafTitle')}>
+<Group title={title ?? t('wafTitle')}>
   {#if !waf.ready}
     <Row label={t('wafNotReady')} sub={waf.installable ? undefined : t('wafNotInstallable')}>
       {#if waf.installable}<Button size="sm" icon="download" disabled={busy} onclick={install}>{t('wafInstall')}</Button>{/if}

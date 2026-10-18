@@ -420,10 +420,15 @@ export class Desk {
         void this.prefs?.load()
         void this.themes?.load()
         break
+      case 'apps':
+        // Installed, updated or removed here, elsewhere or by the agent.
+        void this.reloadWebApps()
+        break
       case 'resync':
         void this.prefs?.load()
         void this.themes?.load()
         void this.notifications?.load()
+        void this.reloadWebApps()
         break
     }
   }

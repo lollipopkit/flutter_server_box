@@ -17,6 +17,7 @@
   import { DeskError, formatDate, translator, type SudoAsk } from 'serverbox-desk'
   import { desk } from '$common/desk'
   import JobLog from '$common/JobLog.svelte'
+  import { Pages } from '$common/pages.svelte'
   import { JobRun } from '$common/job.svelte'
   import { dictionaries } from './locales'
 
@@ -95,8 +96,29 @@
 
   const statusTone = (s: string | null) => (s === 'enabled' ? 'success' : s === 'warning' ? 'warning' : 'neutral')
 
+  /// The subscription, its services and Livepatch, chosen in the window's
+  /// sidebar once the client is here.
+  const pages = new Pages(['subscription', 'services', 'livepatch'] as const, 'subscription')
+  const paged = $derived(!!view?.ubuntu && !!view.client)
+  const page = $derived(pages.current === 'livepatch' && !view?.livepatch ? 'subscription' : pages.current)
+  const titles = $derived({ subscription: t('subscription'), services: t('services'), livepatch: 'Livepatch' })
+
   $effect(() => {
-    void desk.toolbar({ actions: [{ id: 'refresh', label: t('refresh'), icon: 'refresh' }] })
+    if (!view || !paged) return pages.draw([])
+    const on = view.services.filter((s) => s.status === 'enabled' || s.status === 'warning').length
+    pages.draw([
+      {
+        items: [
+          { id: 'subscription', label: titles.subscription, icon: 'verified_user' },
+          { id: 'services', label: titles.services, icon: 'tune', trailing: view.attached ? String(on) : undefined },
+          ...(view.livepatch ? [{ id: 'livepatch', label: titles.livepatch, icon: 'healing' }] : []),
+        ],
+      },
+    ])
+  })
+
+  $effect(() => {
+    void desk.toolbar({ title: paged ? titles[page] : undefined, actions: [{ id: 'refresh', label: t('refresh'), icon: 'refresh' }] })
   })
   desk.on('action', ({ id }) => id === 'refresh' && void load())
 
@@ -123,7 +145,7 @@
         <Button variant="primary" icon="download" disabled={job.running} onclick={() => void run('installClient', {}, { title: t('installTitle'), body: t('installBody') })}>{t('installClient')}</Button>
       </div>
     </Card>
-  {:else}
+  {:else if page === 'subscription'}
     <Group>
       <Row label={t('subscription')}>
         <Badge tone={view.attached ? 'success' : 'neutral'}>{view.attached ? t('attached') : t('unattached')}</Badge>
@@ -136,7 +158,6 @@
       {/if}
       <Row label={t('release')} value={`Ubuntu ${view.release ?? ''} · pro ${view.client}`} />
     </Group>
-
     {#if !view.attached}
       <Group title={t('attach')}>
         <div class="intro pad">
@@ -149,17 +170,15 @@
         </div>
       </Group>
     {/if}
-
-    {#if view.livepatch}
-      <Group title="Livepatch">
-        <Row label={t('livepatchState')} value={view.livepatch.state ?? '—'} />
-        {#if view.livepatch.kernel}<Row label={t('livepatchKernel')} value={view.livepatch.kernel} mono />{/if}
-        {#if view.livepatch.version}<Row label={t('livepatchVersion')} value={view.livepatch.version} mono />{/if}
-        {#if view.livepatch.supported}<Row label={t('livepatchSupport')} value={view.livepatch.supported} />{/if}
+    {#if view.attached}
+      <Group>
+        <Row label={t('detach')} sub={t('detachNote')}>
+          <Button size="sm" variant="destructive" disabled={job.running} onclick={() => void run('detach', {}, { title: t('detachTitle'), body: t('detachBody'), confirmWord: 'detach' })}>{t('detach')}</Button>
+        </Row>
       </Group>
     {/if}
-
-    <Group title={t('services')}>
+  {:else if page === 'services'}
+    <Group>
       {#each shown as s (s.name)}
         <Row label={s.name} sub={s.statusDetails || s.description}>
           {#if view.attached}
@@ -176,13 +195,12 @@
       {/each}
       {#if !view.attached}<p class="pad hint">{t('servicesNote')}</p>{/if}
     </Group>
-
-    {#if view.attached}
-      <Group>
-        <Row label={t('detach')} sub={t('detachNote')}>
-          <Button size="sm" variant="destructive" disabled={job.running} onclick={() => void run('detach', {}, { title: t('detachTitle'), body: t('detachBody'), confirmWord: 'detach' })}>{t('detach')}</Button>
-        </Row>
-      </Group>
-    {/if}
+  {:else if view.livepatch}
+    <Group>
+      <Row label={t('livepatchState')} value={view.livepatch.state ?? '—'} />
+      {#if view.livepatch.kernel}<Row label={t('livepatchKernel')} value={view.livepatch.kernel} mono />{/if}
+      {#if view.livepatch.version}<Row label={t('livepatchVersion')} value={view.livepatch.version} mono />{/if}
+      {#if view.livepatch.supported}<Row label={t('livepatchSupport')} value={view.livepatch.supported} />{/if}
+    </Group>
   {/if}
 </main>

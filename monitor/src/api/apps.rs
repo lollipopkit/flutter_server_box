@@ -42,6 +42,7 @@ use crate::core::blobs::Blobs;
 use super::admin::{Reauth, reauth};
 use super::authz;
 use super::server::AppState;
+use super::desk::DeskEvent;
 use super::ws::audit::{Action, Event, Kind, Outcome};
 
 /// The upload, compressed.
@@ -610,6 +611,7 @@ async fn install_package(req: &HttpRequest, state: &AppState, package: Package) 
                 return Ok(super::respond::internal(&e));
             }
             audit(req, state, Action::Write, format!("app install {} {} {}", app.id, app.version, package.sha256)).await;
+            state.desk.send(DeskEvent::Apps);
             Ok(HttpResponse::Ok().json(&app))
         }
         Err(PutError::PublisherChanged) => Ok(HttpResponse::Conflict().json(&refused("publisherChanged"))),
@@ -686,6 +688,7 @@ pub async fn keep_first_party(state: &AppState) {
         match grant(&state.db, &app).await {
             Ok(true) => {
                 tracing::info!("desk app {id} {} installed", app.version);
+                state.desk.send(DeskEvent::Apps);
                 Event::new(Kind::Admin, Action::Write, Outcome::Ok)
                     .detail(format!("app preinstall {id} {} {}", app.version, app.sha256))
                     .record(&state.db)
@@ -780,6 +783,7 @@ pub async fn approve(
     match grant(&state.db, &app).await {
         Ok(true) => {
             audit(&req, &state, Action::Write, format!("app approve {} {} {}", app.id, app.version, app.sha256)).await;
+            state.desk.send(DeskEvent::Apps);
             match load(&state.db, &app.id).await {
                 Ok(Some(app)) => Ok(HttpResponse::Ok().json(&app)),
                 Ok(None) => Ok(not_found()),
@@ -849,6 +853,7 @@ pub async fn remove(
             let (apps, app) = (state.apps.clone(), id.to_string());
             let _ = tokio::task::spawn_blocking(move || apps.forget_data(&app)).await;
             audit(&req, &state, Action::Write, format!("app remove {}", id.as_str())).await;
+            state.desk.send(DeskEvent::Apps);
             Ok(HttpResponse::NoContent().finish())
         }
         (Err(e), _) | (_, Err(e)) => Ok(super::respond::internal(&e)),

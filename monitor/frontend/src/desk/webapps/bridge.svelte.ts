@@ -428,7 +428,9 @@ export class WebAppBridge {
     this.#post(reply)
   }
 
+  /// A snapshot goes: a message may hold the desk's reactive state (a
+  /// window's `appState` after a reload), which a port cannot clone.
   #post(message: Reply | Event) {
-    this.#port?.postMessage(message)
+    this.#port?.postMessage($state.snapshot(message))
   }
 }

@@ -13,7 +13,7 @@
 import { expect, test, type Page } from '@playwright/test'
 import { fillSecret } from './secret'
 import { signIn } from './signin'
-import { frameOf, installFromStore, openApp, row, sudoDialog } from './desk_app'
+import { frameOf, installFromStore, navigate, openApp, row, sudoDialog } from './desk_app'
 
 const env = process.env
 const sudo = env.SBM_E2E_SUDO_PASSWORD ?? ''
@@ -69,9 +69,11 @@ test('Kernels as a package installs, boots and removes a kernel', async ({ page 
   expect(first).not.toBe(version)
 
   await test.step(`${version} is installed`, async () => {
+    await navigate(page, APP, 'Available')
     await app.getByLabel('Version').selectOption(`linux-image-${version}`)
     await app.getByRole('button', { name: 'Install', exact: true }).last().click()
     await confirm(page, `Install linux-image-${version}`)
+    await navigate(page, APP, 'Installed')
     await expect(row(app, version)).toBeVisible({ timeout: 60_000 })
   })
 

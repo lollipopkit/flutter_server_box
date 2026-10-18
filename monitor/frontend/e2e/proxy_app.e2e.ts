@@ -12,7 +12,7 @@
 import { execSync } from 'node:child_process'
 import { expect, test, type Page } from '@playwright/test'
 import { signIn } from './signin'
-import { frameOf, installFromStore, openApp, row, sudoDialog } from './desk_app'
+import { frameOf, installFromStore, openApp, row, sudoDialog, navigate } from './desk_app'
 
 const env = process.env
 const sudo = env.SBM_E2E_SUDO_PASSWORD ?? ''
@@ -57,7 +57,7 @@ test('Reverse proxy as a package serves sites through Caddy and nginx behind the
   const app = frameOf(page, APP)
 
   await test.step('Caddy installed, a site answered through it', async () => {
-    await app.getByRole('tab', { name: 'Caddy' }).click()
+    await navigate(page, APP, 'Caddy')
     await app.getByRole('button', { name: 'Install', exact: true }).click()
     await job(page, 'Install Caddy')
     await expect(row(app, 'Caddy')).toContainText('Running', { timeout: 60_000 })
@@ -68,10 +68,12 @@ test('Reverse proxy as a package serves sites through Caddy and nginx behind the
 
   await test.step('nginx and its firewall installed, blocking', async () => {
     await page.getByRole('button', { name: 'Refresh', exact: true }).click()
-    await app.getByRole('tab', { name: 'nginx' }).click()
+    await navigate(page, APP, 'nginx')
     await app.getByRole('button', { name: 'Install', exact: true }).click()
     await job(page, 'Install nginx')
     await expect(row(app, 'nginx')).toContainText('Running', { timeout: 60_000 })
+    // The firewall is a page of its own, for each server that takes one.
+    await navigate(page, APP, 'Firewall')
     await app.getByRole('button', { name: 'Install', exact: true }).click()
     await job(page, 'Install the firewall')
     await app.getByRole('tab', { name: 'Block' }).click()
@@ -81,9 +83,11 @@ test('Reverse proxy as a package serves sites through Caddy and nginx behind the
   })
 
   await test.step('a site behind it: a plain request passes, a script is refused and listed', async () => {
+    await navigate(page, APP, 'nginx')
     await addSite(page, 'nginx', 'nginx.e2e.test', true)
     await expect.poll(() => fetchOn('nginx.e2e.test').body, { timeout: 60_000 }).toContain('sbm-e2e-ok')
     expect(fetchOn('nginx.e2e.test', '/?q=%3Cscript%3Ealert(1)%3C/script%3E').status).toBe(403)
+    await navigate(page, APP, 'Firewall')
     await app.getByRole('button', { name: 'Read', exact: true }).click()
     await sudoDialog(page, 'Reverse proxy', 'Recent events', { password: sudo })
     await expect(app.getByText('Refused', { exact: true }).first()).toBeVisible({ timeout: 60_000 })

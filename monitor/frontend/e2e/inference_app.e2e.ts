@@ -11,7 +11,7 @@
 
 import { expect, test } from '@playwright/test'
 import { signIn } from './signin'
-import { frameOf, installFromStore, openApp, row } from './desk_app'
+import { frameOf, installFromStore, openApp, row, navigate } from './desk_app'
 
 const env = process.env
 const APP = 'serverbox.inference'
@@ -35,7 +35,7 @@ test('Local inference as a package reads the machine, scores models and pulls to
   })
 
   await test.step("llmfit's models; Run opens the desk's setup with the model", async () => {
-    await app.getByRole('tab', { name: 'Models' }).click()
+    await navigate(page, APP, 'Models')
     await expect(app.getByRole('button', { name: 'Run' }).first()).toBeVisible({ timeout: 10 * 60_000 })
     await app.getByRole('tab', { name: 'llama.cpp' }).click()
     const first = app.locator('.lk-setrow').filter({ has: app.getByRole('button', { name: 'Run' }) }).first()
@@ -52,7 +52,7 @@ test('Local inference as a package reads the machine, scores models and pulls to
   })
 
   await test.step("Ollama's models: one pulled with its progress, then removed", async () => {
-    await app.getByRole('tab', { name: 'This machine' }).click()
+    await navigate(page, APP, 'This machine')
     await row(app, 'Ollama').click()
     await expect(row(app, 'tiny:latest')).toContainText('Loaded', { timeout: 60_000 })
     await app.getByLabel('Model to pull').fill('tiny2:latest')

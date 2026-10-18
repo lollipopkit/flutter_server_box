@@ -1,5 +1,6 @@
 {
  "alreadyInstalled": "해당 패키지가 이미 설치되어 있습니다.",
+ "available": "설치 가능",
  "badgeDefault": "기본값",
  "badgeNext": "다음 부팅",
  "badgeRunning": "실행 중",

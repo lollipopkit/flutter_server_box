@@ -20,6 +20,7 @@
   import { DeskError, formatBytes, translator, type SudoAsk } from 'serverbox-desk'
   import { desk } from '$common/desk'
   import JobLog from '$common/JobLog.svelte'
+  import { Pages } from '$common/pages.svelte'
   import { JobRun } from '$common/job.svelte'
   import { dictionaries } from './locales'
   import { type Draft, type Peer, type Status, changes, draftOf } from './model'
@@ -38,10 +39,8 @@
   let pings = $state<Record<string, string>>({})
   const job = new JobRun()
 
-  type Page = 'device' | 'peers' | 'exit' | 'network'
-  const PAGES: Page[] = ['device', 'peers', 'exit', 'network']
-  const kept = (desk.info.appState as { page?: unknown } | null)?.page
-  let page = $state<Page>(PAGES.includes(kept as Page) ? (kept as Page) : 'device')
+  const pages = new Pages(['device', 'peers', 'exit', 'network'] as const, 'device')
+  const page = $derived(pages.current)
 
   function said(e: unknown): string {
     if (!(e instanceof DeskError)) return String(e)
@@ -118,35 +117,28 @@
   const stateTone = (s: string | null) => (s === 'Running' ? 'success' : s === 'Stopped' ? 'warning' : 'neutral')
 
   $effect(() => {
-    void desk.toolbar({ actions: [{ id: 'refresh', label: t('refresh'), icon: 'refresh' }] })
+    const titles = { device: t('thisDevice'), peers: t('peers'), exit: t('exitNode'), network: t('network') }
+    void desk.toolbar({ title: paged ? titles[page] : undefined, actions: [{ id: 'refresh', label: t('refresh'), icon: 'refresh' }] })
   })
 
   // The pages exist once there is a tailnet to show; before that the window
   // is the one step it waits on.
   const paged = $derived(!!view?.version && !!view.daemon && signedIn)
   $effect(() => {
-    void desk.sidebar(
+    pages.draw(
       paged
-        ? {
-            sections: [
-              {
-                items: [
-                  { id: 'device', label: t('thisDevice'), icon: 'computer' },
-                  { id: 'peers', label: t('peers'), icon: 'lan', trailing: String(view?.peers.length ?? 0) },
-                  { id: 'exit', label: t('exitNode'), icon: 'output' },
-                  { id: 'network', label: t('network'), icon: 'tune' },
-                ],
-              },
-            ],
-            selected: page,
-          }
-        : { sections: [] },
+        ? [
+            {
+              items: [
+                { id: 'device', label: t('thisDevice'), icon: 'computer' },
+                { id: 'peers', label: t('peers'), icon: 'lan', trailing: String(view?.peers.length ?? 0) },
+                { id: 'exit', label: t('exitNode'), icon: 'output' },
+                { id: 'network', label: t('network'), icon: 'tune' },
+              ],
+            },
+          ]
+        : [],
     )
-  })
-  desk.on('navigate', ({ id }) => {
-    if (!PAGES.includes(id as Page)) return
-    page = id as Page
-    void desk.setAppState({ page })
   })
 
   const saveSettings = () =>

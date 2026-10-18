@@ -17,6 +17,7 @@
   import { SvelteSet } from 'svelte/reactivity'
   import { desk } from '$common/desk'
   import JobLog from '$common/JobLog.svelte'
+  import { Pages } from '$common/pages.svelte'
   import { JobRun } from '$common/job.svelte'
   import { dictionaries } from './locales'
   import { GROUPS, chosenBytes, groupLabel, itemLabel, type Item, type Report } from './model'
@@ -83,8 +84,37 @@
     return parts.join(' · ') || undefined
   }
 
+  /// Everything found, or one kind of it, chosen in the window's sidebar
+  /// with what each could free; what is chosen stays chosen across them.
+  const pages = new Pages(['all', ...GROUPS] as const, 'all')
+  const page = $derived(pages.current)
+  const ICONS = { system: 'settings', account: 'person', apps: 'apps', containers: 'deployed_code' } as const
+  /// What [group] could free (its cleanable items).
+  const groupBytes = (group: string) => items.filter((i) => i.group === group && i.cleanable).reduce((s, i) => s + i.bytes, 0)
+
+  $effect(() => {
+    pages.draw(
+      report
+        ? [
+            {
+              items: [
+                { id: 'all', label: t('everything'), icon: 'cleaning_services', trailing: formatBytes(total) },
+                ...GROUPS.filter((g) => items.some((i) => i.group === g)).map((g) => ({
+                  id: g,
+                  label: groupLabel(t, g),
+                  icon: ICONS[g],
+                  trailing: g === 'containers' ? undefined : formatBytes(groupBytes(g)),
+                })),
+              ],
+            },
+          ]
+        : [],
+    )
+  })
+
   $effect(() => {
     void desk.toolbar({
+      title: report ? (page === 'all' ? t('everything') : groupLabel(t, page)) : undefined,
       actions: [
         { id: 'scan', label: t('scan'), icon: 'search', disabled: running },
         { id: 'refresh', label: t('refresh'), icon: 'refresh' },
@@ -131,7 +161,7 @@
         <Button size="sm" variant="primary" disabled={running || chosen.size === 0} onclick={clean}>{t('clean')}</Button>
       </Row>
     </Group>
-    {#each GROUPS as g (g)}
+    {#each GROUPS.filter((g) => page === 'all' || g === page) as g (g)}
       {@const list = items.filter((i) => i.group === g && (i.bytes > 0 || i.group === 'apps'))}
       {#if list.length}
         <Group title={groupLabel(t, g)}>

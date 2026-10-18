@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { BridgeError, WebAppBridge, type BackendHost } from '../desk/webapps/bridge.svelte'
 import type { WindowHandle } from '../desk/sys/window.svelte'
+import { reactive } from './fixtures/reactive.svelte'
 
 function setup(permissions: string[] = []) {
   const port = { postMessage: vi.fn(), onmessage: null as ((e: MessageEvent) => void) | null }
@@ -97,6 +98,15 @@ describe('the bridge to an installed app', () => {
     expect(menu.label).toBe('File')
     expect(menu.items).toHaveLength(2)
     expect(handle.storage.get).toHaveBeenCalledWith('n')
+  })
+
+  it('sends what a port can clone, the window’s reactive state included', async () => {
+    const { call, handle } = setup()
+    const kept = reactive({ page: 'peers' })
+    ;(handle as { appState: unknown }).appState = kept
+    const hello = await call('hello')
+    expect(hello).toMatchObject({ ok: true, value: { appState: { page: 'peers' } } })
+    expect(() => structuredClone(hello)).not.toThrow()
   })
 
   it('draws the app’s places and tells it which one was chosen', async () => {

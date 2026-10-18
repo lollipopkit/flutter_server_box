@@ -15,13 +15,13 @@
   import IconButton from '$lk/IconButton.svelte'
   import Input from '$lk/Input.svelte'
   import Row from '$lk/Row.svelte'
-  import SegmentedControl from '$lk/SegmentedControl.svelte'
   import Select from '$lk/Select.svelte'
   import Spinner from '$lk/Spinner.svelte'
   import Switch from '$lk/Switch.svelte'
   import { DeskError, translator } from 'serverbox-desk'
   import { desk } from '$common/desk'
   import JobLog from '$common/JobLog.svelte'
+  import { Pages } from '$common/pages.svelte'
   import { JobRun } from '$common/job.svelte'
   import { dictionaries } from './locales'
   import { type Firewall, type Proxies, type ServerId, type Site, nameFor, withSite, withoutSite } from './model'
@@ -35,7 +35,11 @@
 
   let view = $state<Proxies | null>(null)
   let waf = $state<Firewall | null>(null)
-  let selected = $state<ServerId>('caddy')
+  /// A page per server (its sites), and the web application firewall of the
+  /// servers that take one, chosen in the window's sidebar.
+  const pages = new Pages(['nginx', 'caddy', 'traefik', 'waf'] as const, 'caddy')
+  /// The server whose sites are shown; on the firewall's page, none.
+  const selected = $derived<ServerId>(pages.current === 'waf' ? 'nginx' : pages.current)
   let error = $state('')
   let draft = $state<Site | null>(null)
   let replacing = $state<string | null>(null)
@@ -122,16 +126,35 @@
     void load()
   }
 
-  async function installWaf() {
-    await job.start('installWaf', { server: selected }, { title: t('wafInstallTitle'), body: selected === 'nginx' ? t('wafInstallNginx') : t('wafInstallTraefik') }, said)
+  async function installWaf(server: ServerId) {
+    await job.start('installWaf', { server }, { title: t('wafInstallTitle'), body: server === 'nginx' ? t('wafInstallNginx') : t('wafInstallTraefik') }, said)
     void load()
   }
 
+  const sitesPage = $derived(pages.current !== 'waf')
+  /// The servers installed here that take the firewall.
+  const wafServers = $derived((view?.servers ?? []).filter((s) => s.installed && s.server !== 'caddy'))
+
+  function stateText(s: { installed: boolean; active: boolean }): string {
+    return s.active ? t('running') : s.installed ? t('stopped') : t('notInstalled')
+  }
+
+  $effect(() => {
+    pages.draw(
+      view
+        ? [
+            { title: t('servers'), items: view.servers.map((s) => ({ id: s.server, label: NAMES[s.server], icon: s.active ? 'dns' : 'cloud_off', trailing: s.installed ? stateText(s) : undefined })) },
+            { items: [{ id: 'waf', label: t('firewall'), icon: 'shield' }] },
+          ]
+        : [],
+    )
+  })
+
   $effect(() => {
     void desk.toolbar({
-      title: NAMES[selected],
+      title: view ? (sitesPage ? NAMES[selected] : t('firewall')) : undefined,
       actions: [
-        ...(current?.installed && current.writable ? [{ id: 'add', label: t('addSite'), icon: 'add' }] : []),
+        ...(sitesPage && current?.installed && current.writable ? [{ id: 'add', label: t('addSite'), icon: 'add' }] : []),
         { id: 'refresh', label: t('refresh'), icon: 'refresh' },
       ],
     })
@@ -144,14 +167,6 @@
 </script>
 
 <main class="page">
-  {#if view}
-    <SegmentedControl
-      label={t('title')}
-      options={view.servers.map((s) => ({ value: s.server, label: NAMES[s.server] }))}
-      value={selected}
-      onchange={(v) => (selected = v as ServerId)}
-    />
-  {/if}
   {#if error}
     <Card><p class="error"><Icon name="error" size={17} /><span>{error}</span></p></Card>
   {/if}
@@ -161,6 +176,24 @@
 
   {#if !view}
     {#if !error}<div class="center"><Spinner /></div>{/if}
+  {:else if !sitesPage}
+    {#each wafServers as s (s.server)}
+      {#if waf}
+        <WafPanel
+          {t}
+          title={`${t('wafTitle')} · ${NAMES[s.server]}`}
+          server={s.server}
+          waf={s.server === 'nginx' ? waf.nginx : waf.traefik}
+          crs={waf.crs}
+          busy={job.running}
+          install={() => void installWaf(s.server)}
+          {said}
+          onchanged={() => void load()}
+        />
+      {/if}
+    {:else}
+      <Card><p class="note"><Icon name="info" size={17} /><span>{t('wafNoServer')}</span></p></Card>
+    {/each}
   {:else if current}
     <Group>
       <Row label={NAMES[current.server]} sub={current.version ?? undefined}>
@@ -205,18 +238,6 @@
           <p class="pad hint">{t('noOwnSites')}</p>
         {/each}
       </Group>
-      {#if waf && current.server !== 'caddy'}
-        <WafPanel
-          {t}
-          server={current.server}
-          waf={current.server === 'nginx' ? waf.nginx : waf.traefik}
-          crs={waf.crs}
-          busy={job.running}
-          install={() => void installWaf()}
-          {said}
-          onchanged={() => void load()}
-        />
-      {/if}
       {#if others.length}
         <Group title={t('otherSites')}>
           {#each others as s (s.name + s.domains.join())}

@@ -11,13 +11,13 @@
   import Checkbox from '$lk/Checkbox.svelte'
   import Group from '$lk/Group.svelte'
   import Icon from '$lk/Icon.svelte'
-  import IconButton from '$lk/IconButton.svelte'
   import Row from '$lk/Row.svelte'
   import Select from '$lk/Select.svelte'
   import Spinner from '$lk/Spinner.svelte'
   import { DeskError, translator } from 'serverbox-desk'
   import { desk } from '$common/desk'
   import JobLog from '$common/JobLog.svelte'
+  import { Pages } from '$common/pages.svelte'
   import { JobRun } from '$common/job.svelte'
   import { dictionaries } from './locales'
 
@@ -53,7 +53,9 @@
   desk.on('locale', (l) => (locale = l))
 
   let tools = $state<Found[] | null>(null)
-  let selected = $state<ToolId>('codex')
+  /// The tool shown, one page each in the window's sidebar.
+  const pages = new Pages(['codex', 'claude', 'pi', 'opencode', 'hermes', 'openclaw'] as const, 'codex')
+  const selected = $derived(pages.current)
   let providers = $state<Provider[]>([])
   let provider = $state('')
   let model = $state('')
@@ -102,12 +104,26 @@
     if (!models.includes(model)) model = models[0] ?? ''
   })
 
-  function choose(id: ToolId) {
-    selected = id
+  // What was said about one tool goes when another is shown.
+  $effect(() => {
+    void selected
     saved = ''
     gatewayOut = ''
     removing = false
-  }
+  })
+
+  $effect(() => {
+    pages.draw(
+      tools
+        ? [{ items: tools.map((x) => ({ id: x.tool, label: NAMES[x.tool], icon: x.path ? 'smart_toy' : 'download', trailing: x.version ?? undefined })) }]
+        : [],
+    )
+  })
+
+  $effect(() => {
+    void desk.toolbar({ title: tools ? NAMES[selected] : undefined, actions: [{ id: 'refresh', label: t('refresh'), icon: 'refresh' }] })
+  })
+  desk.on('action', ({ id }) => id === 'refresh' && void load())
 
   async function change(fn: 'install' | 'update' | 'uninstall') {
     removing = false
@@ -152,11 +168,7 @@
   void loadProviders()
 </script>
 
-<main class="page tools">
-  <div class="trail">
-    <span class="grow"></span>
-    <IconButton icon="refresh" label={t('refresh')} onclick={() => void load()} />
-  </div>
+<main class="page">
   {#if error}
     <Card><p class="error"><Icon name="error" size={17} /><span>{error}</span></p></Card>
   {/if}
@@ -172,114 +184,74 @@
 
   {#if !tools}
     {#if !error}<div class="center"><Spinner /></div>{/if}
-  {:else}
-    <div class="split">
-      <Group>
-        {#each tools as x (x.tool)}
-          <Row label={NAMES[x.tool]} sub={x.version ?? t('notInstalled')} class={x.tool === selected ? 'chosen' : ''} onclick={() => choose(x.tool)} />
-        {/each}
+  {:else if current}
+    <Group>
+      <Row label={NAMES[current.tool]} sub={current.path ?? t('notInstalled')} mono={!!current.path}>
+        {#if current.version}<Badge tone="success">{current.version}</Badge>{/if}
+      </Row>
+      {#if current.pinned}<Row label={t('release')} value={current.pinned} mono />{/if}
+      <Row label={t('modelApis')} value={current.apis.map(apiText).join(', ')} />
+    </Group>
+    <div class="trail wrap">
+      {#if !current.path}
+        <Button variant="primary" icon="download" disabled={job.running} onclick={() => void change('install')}>{t('install')}</Button>
+      {:else}
+        <Button variant="secondary" icon="upgrade" disabled={job.running} onclick={() => void change('update')}>{t('update')}</Button>
+        <Button variant="destructive" disabled={job.running} onclick={() => (removing = true)}>{t('remove')}</Button>
+      {/if}
+      <button type="button" class="link plain" onclick={() => void desk.openUrl(current.homepage)}>{t('homepage')}</button>
+    </div>
+    {#if removing}
+      <Card>
+        <div class="intro">
+          <p>{t('removeAsk', { name: NAMES[current.tool] })}</p>
+          <Checkbox label={t('purge')} bind:checked={purge} />
+          <div class="trail">
+            <Button variant="destructive" onclick={() => void change('uninstall')}>{t('remove')}</Button>
+            <Button variant="ghost" onclick={() => (removing = false)}>{t('cancel')}</Button>
+          </div>
+        </div>
+      </Card>
+    {/if}
+
+    {#if current.path}
+      <Group title={t('model')}>
+        {#if usable.length}
+          <div class="trail wrap pad">
+            <Select
+              class="grow"
+              label={t('provider')}
+              options={usable.map((p) => ({ value: p.id, label: p.name }))}
+              bind:value={provider}
+            />
+            <Select class="grow" label={t('model')} options={models.map((m) => ({ value: m, label: m }))} bind:value={model} />
+            <Button variant="primary" disabled={busy || !provider || !model} onclick={configure}>{t('use')}</Button>
+          </div>
+          <div class="pad">
+            {#if saved}<p class="hint ok">{saved}</p>{/if}
+            <p class="hint">{t('keyNote')}</p>
+          </div>
+        {:else}
+          <p class="hint pad">{t('noProvider', { apis: current.apis.map(apiText).join(', ') })}</p>
+        {/if}
       </Group>
 
-      {#if current}
-        <div class="detail">
-          <Group>
-            <Row label={NAMES[current.tool]} sub={current.path ?? t('notInstalled')} mono={!!current.path}>
-              {#if current.version}<Badge tone="success">{current.version}</Badge>{/if}
-            </Row>
-            {#if current.pinned}<Row label={t('release')} value={current.pinned} mono />{/if}
-            <Row label={t('modelApis')} value={current.apis.map(apiText).join(', ')} />
-          </Group>
-          <div class="trail wrap">
-            {#if !current.path}
-              <Button variant="primary" icon="download" disabled={job.running} onclick={() => void change('install')}>{t('install')}</Button>
-            {:else}
-              <Button variant="secondary" icon="upgrade" disabled={job.running} onclick={() => void change('update')}>{t('update')}</Button>
-              <Button variant="destructive" disabled={job.running} onclick={() => (removing = true)}>{t('remove')}</Button>
-            {/if}
-            <button type="button" class="link plain" onclick={() => void desk.openUrl(current.homepage)}>{t('homepage')}</button>
+      {#if current.gateway}
+        <Group title={t('gateway')}>
+          <div class="trail wrap pad">
+            <Button size="sm" variant="secondary" disabled={busy} onclick={() => void gateway('status')}>{t('gatewayStatus')}</Button>
+            <Button size="sm" variant="secondary" disabled={busy} onclick={() => void gateway('install')}>{t('gatewayInstall')}</Button>
+            <Button size="sm" variant="secondary" disabled={busy} onclick={() => void gateway('start')}>{t('gatewayStart')}</Button>
+            <Button size="sm" variant="secondary" disabled={busy} onclick={() => void gateway('stop')}>{t('gatewayStop')}</Button>
           </div>
-          {#if removing}
-            <Card>
-              <div class="intro">
-                <p>{t('removeAsk', { name: NAMES[current.tool] })}</p>
-                <Checkbox label={t('purge')} bind:checked={purge} />
-                <div class="trail">
-                  <Button variant="destructive" onclick={() => void change('uninstall')}>{t('remove')}</Button>
-                  <Button variant="ghost" onclick={() => (removing = false)}>{t('cancel')}</Button>
-                </div>
-              </div>
-            </Card>
-          {/if}
-
-          {#if current.path}
-            <Group title={t('model')}>
-              {#if usable.length}
-                <div class="trail wrap pad">
-                  <Select
-                    class="grow"
-                    label={t('provider')}
-                    options={usable.map((p) => ({ value: p.id, label: p.name }))}
-                    bind:value={provider}
-                  />
-                  <Select class="grow" label={t('model')} options={models.map((m) => ({ value: m, label: m }))} bind:value={model} />
-                  <Button variant="primary" disabled={busy || !provider || !model} onclick={configure}>{t('use')}</Button>
-                </div>
-                <div class="pad">
-                  {#if saved}<p class="hint ok">{saved}</p>{/if}
-                  <p class="hint">{t('keyNote')}</p>
-                </div>
-              {:else}
-                <p class="hint pad">{t('noProvider', { apis: current.apis.map(apiText).join(', ') })}</p>
-              {/if}
-            </Group>
-
-            {#if current.gateway}
-              <Group title={t('gateway')}>
-                <div class="trail wrap pad">
-                  <Button size="sm" variant="secondary" disabled={busy} onclick={() => void gateway('status')}>{t('gatewayStatus')}</Button>
-                  <Button size="sm" variant="secondary" disabled={busy} onclick={() => void gateway('install')}>{t('gatewayInstall')}</Button>
-                  <Button size="sm" variant="secondary" disabled={busy} onclick={() => void gateway('start')}>{t('gatewayStart')}</Button>
-                  <Button size="sm" variant="secondary" disabled={busy} onclick={() => void gateway('stop')}>{t('gatewayStop')}</Button>
-                </div>
-                {#if gatewayOut}<pre class="lk-mono out">{gatewayOut}</pre>{/if}
-              </Group>
-            {/if}
-          {/if}
-        </div>
+          {#if gatewayOut}<pre class="lk-mono out">{gatewayOut}</pre>{/if}
+        </Group>
       {/if}
-    </div>
+    {/if}
   {/if}
 </main>
 
 <style>
-  .tools {
-    max-width: 980px;
-  }
-
-  /* The tools beside the chosen one when there is room, above it when not. */
-  .split {
-    display: grid;
-    gap: 13px;
-    align-items: start;
-  }
-
-  @media (min-width: 720px) {
-    .split {
-      grid-template-columns: 240px minmax(0, 1fr);
-    }
-  }
-
-  .detail {
-    display: flex;
-    flex-direction: column;
-    gap: 13px;
-    min-width: 0;
-  }
-
-  .split :global(.chosen) {
-    background: var(--color-accent-soft);
-  }
-
   .plain {
     border: 0;
     background: none;

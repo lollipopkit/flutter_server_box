@@ -12,7 +12,7 @@
 import { execSync } from 'node:child_process'
 import { expect, test, type APIRequestContext } from '@playwright/test'
 import { signIn } from './signin'
-import { frameOf, installFromStore, openApp, row } from './desk_app'
+import { frameOf, installFromStore, openApp, row, navigate } from './desk_app'
 
 const env = process.env
 const APP = 'serverbox.agent_tools'
@@ -50,7 +50,7 @@ test('AI agents as a package installs opencode, points it at a provider and remo
   const app = frameOf(page, APP)
 
   await test.step('opencode installed by its installer as a job', async () => {
-    await row(app, 'opencode').first().click()
+    await navigate(page, APP, 'opencode')
     await expect(row(app, 'opencode').first()).toContainText('Not installed', { timeout: 60_000 })
     await app.getByRole('button', { name: 'Install', exact: true }).click()
     await expect(app.getByText('Done', { exact: true })).toBeVisible({ timeout: 10 * 60_000 })

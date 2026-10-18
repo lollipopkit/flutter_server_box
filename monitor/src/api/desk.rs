@@ -75,6 +75,10 @@ pub enum DeskEvent {
     /// Another tab of `user` wrote its session (or preferences).
     Session { user: i64, device: String, revision: i64 },
     Preferences { user: i64 },
+    /// The installed desk apps changed (installed, approved, updated or
+    /// removed, by an admin or by the agent itself): every desk reads them
+    /// again.
+    Apps,
 }
 
 pub struct DeskHub {
@@ -928,7 +932,7 @@ async fn mark_ids(db: &SqlitePool, user: i64, ids: &[i64]) -> Result<(), sqlx::E
 /// `text/event-stream`, one `data:` line of JSON per event:
 /// `{"type":"notification","notification":{…}}`,
 /// `{"type":"session","device":…,"revision":…}`, `{"type":"preferences"}`,
-/// and `{"type":"resync"}` when events were dropped (refetch everything).
+/// `{"type":"apps"}` (the installed desk apps changed), and `{"type":"resync"}` when events were dropped (refetch everything).
 /// Ends when the account's password changes or the account goes.
 pub async fn events(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     let (caller, user) = require!(account(&req, &state).await);
@@ -948,6 +952,7 @@ pub async fn events(req: HttpRequest, state: web::types::State<Arc<AppState>>) -
                             serde_json::json!({ "type": "session", "device": device, "revision": revision })
                         }
                         Ok(DeskEvent::Preferences { user: u }) if u == user => serde_json::json!({ "type": "preferences" }),
+                        Ok(DeskEvent::Apps) => serde_json::json!({ "type": "apps" }),
                         Ok(_) => continue,
                         Err(broadcast::error::RecvError::Lagged(_)) => serde_json::json!({ "type": "resync" }),
                         Err(broadcast::error::RecvError::Closed) => break,

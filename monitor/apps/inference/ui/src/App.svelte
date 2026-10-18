@@ -21,6 +21,7 @@
   import { DeskError, formatBytes, translator } from 'serverbox-desk'
   import { desk } from '$common/desk'
   import JobLog from '$common/JobLog.svelte'
+  import { Pages } from '$common/pages.svelte'
   import { JobRun } from '$common/job.svelte'
   import { dictionaries } from './locales'
   import { ENGINE_NAMES, gib, mibAsGib, type Candidate, type Engine, type EngineFit, type OllamaModel, type Overview, type Recommendation } from './model'
@@ -29,8 +30,10 @@
   const t = $derived(translator(dictionaries, locale))
   desk.on('locale', (l) => (locale = l))
 
-  type Page = 'overview' | 'models' | Engine
-  let page = $state<Page>('overview')
+  /// This machine, the models that fit, and one page per engine, chosen in
+  /// the window's sidebar.
+  const pages = new Pages(['overview', 'models', 'ollama', 'llamacpp', 'vllm', 'sglang', 'mlx'] as const, 'overview')
+  const page = $derived(pages.current)
   let view = $state<Overview | null>(null)
   let error = $state('')
 
@@ -160,7 +163,7 @@
     if (c.engine === 'mlx') mlxModel = c.setting
     else if (c.engine === 'ollama' && view?.ollama.length) pullModel = c.setting
     else void setUp(f, c)
-    page = c.engine
+    pages.go(c.engine)
   }
 
   async function installMlx() {
@@ -220,27 +223,33 @@
     { value: 'multimodal', label: t('useMultimodal') },
     { value: 'embedding', label: t('useEmbedding') },
   ])
-  const top = $derived(page === 'overview' || page === 'models' ? page : 'overview')
+  $effect(() => {
+    pages.draw(
+      view
+        ? [
+            {
+              items: [
+                { id: 'overview', label: t('thisMachine'), icon: 'memory' },
+                { id: 'models', label: t('models'), icon: 'auto_awesome' },
+              ],
+            },
+            { title: t('engines'), items: engines.map((f) => ({ id: f.engine, label: ENGINE_NAMES[f.engine], icon: f.blocked ? 'block' : 'dns', trailing: f.deployed || f.engine === 'mlx' ? stateOf(f).text : undefined })) },
+          ]
+        : [],
+    )
+  })
+
+  $effect(() => {
+    const title = page === 'overview' ? t('thisMachine') : page === 'models' ? t('models') : ENGINE_NAMES[page]
+    void desk.toolbar({ title: view ? title : undefined, actions: [{ id: 'refresh', label: t('refresh'), icon: 'refresh' }] })
+  })
+  desk.on('action', ({ id }) => id === 'refresh' && void (page === 'models' ? recommend() : load()))
 
   void job.resume(said).then(() => load())
   void load()
 </script>
 
 <main class="page wide">
-  <div class="trail">
-    <div class="grow">
-      <SegmentedControl
-        label={t('title')}
-        options={[
-          { value: 'overview', label: t('thisMachine') },
-          { value: 'models', label: t('models') },
-        ]}
-        value={top}
-        onchange={(v) => (page = v as Page)}
-      />
-    </div>
-    <IconButton icon="refresh" label={t('refresh')} onclick={() => void (page === 'models' ? recommend() : load())} />
-  </div>
   {#if error}
     <Card><p class="error"><Icon name="error" size={17} /><span>{error}</span></p></Card>
   {/if}
@@ -279,7 +288,7 @@
         <Row
           label={ENGINE_NAMES[f.engine]}
           sub={f.blocked ? undefined : [i === 0 ? t('bestHere') : f.backend.toUpperCase(), f.cpuBecause ? blockedText(f.cpuBecause) : ''].filter(Boolean).join(' · ')}
-          onclick={() => (page = f.engine)}
+          onclick={() => pages.go(f.engine)}
         >
           <Badge tone={st.tone}>{st.text}</Badge>
         </Row>
@@ -329,10 +338,6 @@
     {/if}
   {:else}
     {@const f = fit(page)}
-    <div class="trail">
-      <Button size="sm" variant="ghost" icon="chevron_left" onclick={() => (page = 'overview')}>{t('thisMachine')}</Button>
-      <strong class="grow">{ENGINE_NAMES[page]}</strong>
-    </div>
     {#if f?.blocked}
       <Card><p class="note"><Icon name="info" size={17} /><span>{blockedText(f.blocked)}</span></p></Card>
     {/if}
