@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
+import 'package:server_box/core/utils/editor_lang.dart';
 import 'package:server_box/core/utils/local_files.dart';
 import 'package:server_box/core/utils/sftp_escalation.dart';
 import 'package:server_box/core/utils/sftp_sudo.dart';
@@ -687,6 +688,7 @@ extension _Edit on _SftpPageState {
       context,
       args: EditorPageArgs(
         path: localPath,
+        lang: editorLangFor(remotePath),
         onSave: (_) => _saveBack(handle, localPath, remotePath, useSudo),
         closeAfterSave: Stores.setting.closeAfterSave.fetch(),
         softWrap: Stores.setting.editorSoftWrap.fetch(),
