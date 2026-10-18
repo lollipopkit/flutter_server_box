@@ -71,6 +71,15 @@ jobs:
             // Logins that never need to sign: the copyright holder, GitHub's own
             // committer identity, and bots (bots are also filtered by account type).
             const ALLOWLIST = new Set(['lollipopkit', 'web-flow'])
+            // Coding agents that commit through ordinary `User` accounts, so the
+            // bot filter misses them. Matched by id, since logins can be renamed
+            // and reused. The human who drives the agent still signs as the
+            // pull request's opener.
+            const AGENT_IDS = new Set([
+              199161495, // cursoragent (Cursor Agent, cursoragent@cursor.com)
+              81847, // claude (Claude Code, noreply@anthropic.com)
+              267193182, // codex (OpenAI Codex)
+            ])
 
             const { owner, repo } = context.repo
             const CLA_URL = `https://github.com/${owner}/${repo}/blob/main/CLA.md`
@@ -111,6 +120,7 @@ jobs:
             const addRequired = (user) => {
               if (!user || !user.login) return
               if (user.type === 'Bot' || user.login.endsWith('[bot]')) return
+              if (AGENT_IDS.has(user.id)) return
               if (ALLOWLIST.has(user.login.toLowerCase())) return
               required.set(user.login.toLowerCase(), { login: user.login, id: user.id })
             }
