@@ -167,6 +167,21 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
             "/api/v1/watch-token",
             Some(json!({ "client_id": "widget:test" })),
         ),
+        (
+            Method::GET,
+            "/api/v1/api-tokens",
+            None,
+        ),
+        (
+            Method::POST,
+            "/api/v1/api-tokens",
+            Some(json!({ "name": "mcp", "scopes": [], "current_password": "nope" })),
+        ),
+        (
+            Method::DELETE,
+            "/api/v1/api-tokens/absent",
+            None,
+        ),
         // The gateway to the terminal. `GET /terminal/ws` takes no bearer
         // token at all — it is admitted by a single-use ticket — so refusing
         // to mint the ticket is what keeps a watch token away from a shell.

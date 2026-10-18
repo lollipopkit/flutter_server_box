@@ -109,6 +109,9 @@ pub struct AppState {
     /// taken yet — see `api::ws::listen`.
     pub pending: Arc<PendingStore>,
     pub login_throttle: Arc<LoginThrottle>,
+    /// Per-IP limiter for `POST /mcp`. Checked in the handler rather than as
+    /// middleware so a test that mounts [`configure_api`] is still limited.
+    pub mcp_limiter: Arc<ntex_ratelimiter::RateLimiter>,
     /// Fired when a role or an account changed, carrying the code a client
     /// whose connection ends because of it is told (`permission_revoked`, or
     /// `full_access_disabled` for the panel's legacy switch).
@@ -207,6 +210,7 @@ impl AppState {
             sessions,
             pending: Arc::new(PendingStore::default()),
             login_throttle: Arc::new(LoginThrottle::new()),
+            mcp_limiter: ntex_ratelimiter::RateLimiter::new(120, 60),
             grants_changed: broadcast::channel(16).0,
             process_sample: Arc::new(tokio::sync::Mutex::new(None)),
             virt: Arc::new(crate::api::virt::VirtState::default()),
@@ -317,6 +321,15 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                 web::resource("/watch-token")
                     .route(web::post().to(issue_watch_token))
                     .route(web::delete().to(revoke_watch_token)),
+            )
+            .service(
+                web::resource("/api-tokens")
+                    .route(web::get().to(crate::api::api_tokens::list))
+                    .route(web::post().to(crate::api::api_tokens::create)),
+            )
+            .service(
+                web::resource("/api-tokens/{id}")
+                    .route(web::delete().to(crate::api::api_tokens::revoke)),
             )
             .route("/status", web::get().to(get_status))
             .route("/metrics", web::get().to(get_metrics))
@@ -543,6 +556,9 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             .route("/velocity", web::get().to(get_velocity))
             .route("/velocity/history", web::get().to(get_velocity_history)),
     );
+    // Streamable HTTP JSON, at the app root: MCP clients look for `/mcp`,
+    // not a versioned REST path, and a watch token must not reach it.
+    cfg.route("/mcp", web::post().to(crate::api::mcp::handle));
 }
 
 pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
@@ -870,7 +886,7 @@ async fn get_metrics(
 
 /// Keep the established numeric fields for existing clients, while exposing
 /// exact decimal forms for browser clients that cannot represent every u64.
-fn metrics_json(metrics: &SystemMetrics) -> serde_json::Result<serde_json::Value> {
+pub(crate) fn metrics_json(metrics: &SystemMetrics) -> serde_json::Result<serde_json::Value> {
     let mut value = serde_json::to_value(metrics)?;
     add_exact_counters(
         &mut value,
@@ -972,6 +988,9 @@ struct CapabilitiesView {
     /// What the caller's role lets them do over this link, grant by grant —
     /// see `authz::grants_view`.
     grants: serde_json::Value,
+    /// Whether this agent serves `POST /mcp` (issue #1681). Always true
+    /// here: an older agent leaves the field out, which a client reads as no.
+    mcp: bool,
 }
 
 #[derive(Serialize)]
@@ -1015,9 +1034,18 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
         Reader::Account(caller) => Some(caller),
         Reader::Watch => None,
     };
+    let secure = ws::is_secure_transport(&req, app_state.tls_active);
+    Ok(HttpResponse::Ok().json(&capabilities_view(caller, &app_state, secure).await))
+}
+
+/// The body of `/capabilities`, shared with the MCP `get_capabilities` tool.
+pub(crate) async fn capabilities_view(
+    caller: Option<&Caller>,
+    app_state: &AppState,
+    secure: bool,
+) -> serde_json::Value {
     let platform = monitoring::system_type();
     let capabilities = monitoring::effective_capabilities(platform);
-    let secure = ws::is_secure_transport(&req, app_state.tls_active);
     // Indexed by timestamp, so this is a seek rather than a scan. Failure is
     // not fatal to the answer: a client that cannot learn the oldest sample
     // falls back to offering the fixed windows, which is what it did before
@@ -1027,7 +1055,7 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
             .fetch_one(&app_state.db)
             .await
             .unwrap_or(None);
-    Ok(HttpResponse::Ok().json(&CapabilitiesView {
+    serde_json::to_value(CapabilitiesView {
         capabilities,
         platform,
         version: env!("CARGO_PKG_VERSION"),
@@ -1044,7 +1072,7 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
         features: crate::api::machine::FEATURES,
         remote_access: {
             let ok = |grant| {
-                caller.is_some_and(|c: &Caller| c.check(grant, &app_state, secure).is_ok())
+                caller.is_some_and(|c: &Caller| c.check(grant, app_state, secure).is_ok())
             };
             RemoteAccessView {
                 terminal: ok(Grant::SshTerminal) || ok(Grant::Shell),
@@ -1059,8 +1087,10 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
             role: c.role.name.clone(),
             admin: c.role.admin,
         }),
-        grants: authz::grants_view(caller, &app_state, secure),
-    }))
+        grants: authz::grants_view(caller, app_state, secure),
+        mcp: true,
+    })
+    .unwrap_or(serde_json::Value::Null)
 }
 
 /// Exchanges the caller's JWT for a short-lived, single-use ticket that

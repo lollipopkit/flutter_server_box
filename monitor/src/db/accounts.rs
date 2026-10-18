@@ -225,6 +225,10 @@ pub async fn set_password_hash(pool: &SqlitePool, username: &str, hash: &str) ->
         .bind(username)
         .execute(&mut *tx)
         .await?;
+    sqlx::query("DELETE FROM api_tokens WHERE subject = ?")
+        .bind(username)
+        .execute(&mut *tx)
+        .await?;
     tx.commit().await?;
     Ok(())
 }
@@ -301,6 +305,10 @@ pub async fn delete_account(pool: &SqlitePool, username: &str) -> Result<Guarded
         return unguarded(pool, username).await;
     }
     sqlx::query("DELETE FROM watch_tokens WHERE subject = ?")
+        .bind(username)
+        .execute(&mut *tx)
+        .await?;
+    sqlx::query("DELETE FROM api_tokens WHERE subject = ?")
         .bind(username)
         .execute(&mut *tx)
         .await?;

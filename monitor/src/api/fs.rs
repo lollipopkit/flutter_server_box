@@ -47,7 +47,7 @@ const CHUNK: usize = 32 * 1024;
 static REPLACE: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
 
 #[derive(Serialize)]
-struct EntryView {
+pub(crate) struct EntryView {
     name: String,
     /// `file` | `dir` | `link` | `other`, matching the app's `FileKind`.
     kind: &'static str,
@@ -595,7 +595,7 @@ async fn set_mode(_path: &Path, _mode: u32) -> Result<HttpResponse, web::Error> 
 /// `symlink_metadata` rather than `metadata`: a listing should say "this is a
 /// link", not silently describe whatever it points at — which may be outside
 /// the roots, or may not exist.
-async fn view_of(path: &Path) -> EntryView {
+pub(crate) async fn view_of(path: &Path) -> EntryView {
     let name = path
         .file_name()
         .map(|n| n.to_string_lossy().into_owned())
@@ -685,7 +685,7 @@ async fn version_at(path: &Path) -> Option<String> {
 /// app's `FileBackend` contract. Windows canonical paths also carry a `\\?\`
 /// prefix that is useful to the OS but not a path a user should have to see or
 /// send back.
-fn exposed_path(path: &Path) -> String {
+pub(crate) fn exposed_path(path: &Path) -> String {
     let raw = path.to_string_lossy();
     #[cfg(windows)]
     {
@@ -719,7 +719,7 @@ fn mode_of(_meta: &std::fs::Metadata) -> Option<u32> {
 const STAGING_MARK: &str = ".sbm-part-";
 
 /// Whether a name is a write's staged copy.
-fn is_staging_name(name: &str) -> bool {
+pub(crate) fn is_staging_name(name: &str) -> bool {
     name.contains(STAGING_MARK)
 }
 

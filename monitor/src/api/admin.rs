@@ -92,7 +92,7 @@ async fn audit(req: &HttpRequest, state: &AppState, caller: &Caller, action: Act
 }
 
 /// Checks [password] against [caller]'s own, through the login throttle.
-async fn reauth(
+pub(crate) async fn reauth(
     req: &HttpRequest,
     state: &AppState,
     caller: &Caller,

@@ -120,6 +120,13 @@ async fn a_cli_reset_ends_what_the_old_password_paid_for() {
     .execute(&pool)
     .await
     .unwrap();
+    sqlx::query(
+        "INSERT INTO api_tokens (id, subject, name, token_hash, scopes, created_at, expires_at) \
+         VALUES ('t1', 'ops', 'mcp', 'h', '[]', 0, 9999999999)",
+    )
+    .execute(&pool)
+    .await
+    .unwrap();
     let (_, _, before) = accounts::account_since(&pool, "ops").await.unwrap().unwrap();
 
     assert_eq!(
@@ -135,6 +142,11 @@ async fn a_cli_reset_ends_what_the_old_password_paid_for() {
         .await
         .unwrap();
     assert_eq!(tokens, 0);
+    let api: i64 = sqlx::query_scalar("SELECT count(*) FROM api_tokens WHERE subject = 'ops'")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(api, 0);
 }
 
 #[tokio::test]

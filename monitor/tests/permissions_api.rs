@@ -169,6 +169,9 @@ async fn each_role_reaches_what_it_holds_and_nothing_else() {
         ("viewer", Method::PUT, "/api/v1/card-order".into(), Some(json!({ "card_order": [] })), false),
         ("viewer", Method::GET, "/api/v1/users".into(), None, false),
         ("admin", Method::GET, "/api/v1/users".into(), None, true),
+        ("viewer", Method::GET, "/api/v1/api-tokens".into(), None, true),
+        ("viewer", Method::GET, "/api/v1/api-tokens?all=1".into(), None, false),
+        ("admin", Method::GET, "/api/v1/api-tokens?all=1".into(), None, true),
         // `shell`.
         ("admin", Method::POST, "/api/v1/exec".into(), Some(json!({ "cmd": "true" })), true),
         ("ops", Method::POST, "/api/v1/exec".into(), Some(json!({ "cmd": "true" })), false),
