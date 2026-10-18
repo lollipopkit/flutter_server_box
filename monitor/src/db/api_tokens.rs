@@ -85,6 +85,18 @@ pub fn scope_names_from_json(raw: &str) -> Result<Vec<String>> {
     Ok(serde_json::from_str(raw)?)
 }
 
+type TokenRow = (
+    String,
+    String,
+    String,
+    String,
+    i64,
+    i64,
+    Option<i64>,
+    Option<String>,
+);
+
+#[allow(clippy::too_many_arguments)]
 pub async fn insert(
     pool: &SqlitePool,
     id: &str,
@@ -112,15 +124,8 @@ pub async fn insert(
     Ok(())
 }
 
-async fn row_of(
-    id: String,
-    subject: String,
-    name: String,
-    scopes: String,
-    created_at: i64,
-    expires_at: i64,
-    last_used_at: Option<i64>,
-    last_used_ip: Option<String>,
+fn token_from_row(
+    (id, subject, name, scopes, created_at, expires_at, last_used_at, last_used_ip): TokenRow,
 ) -> Result<ApiToken> {
     Ok(ApiToken {
         id,
@@ -135,16 +140,7 @@ async fn row_of(
 }
 
 pub async fn list_for(pool: &SqlitePool, subject: &str) -> Result<Vec<ApiToken>> {
-    let rows: Vec<(
-        String,
-        String,
-        String,
-        String,
-        i64,
-        i64,
-        Option<i64>,
-        Option<String>,
-    )> = sqlx::query_as(
+    let rows: Vec<TokenRow> = sqlx::query_as(
         "SELECT id, subject, name, scopes, created_at, expires_at, last_used_at, last_used_ip \
          FROM api_tokens WHERE subject = ? ORDER BY created_at DESC",
     )
@@ -152,70 +148,28 @@ pub async fn list_for(pool: &SqlitePool, subject: &str) -> Result<Vec<ApiToken>>
     .fetch_all(pool)
     .await?;
     let mut out = Vec::with_capacity(rows.len());
-    for (id, subject, name, scopes, created_at, expires_at, last_used_at, last_used_ip) in rows {
-        out.push(
-            row_of(
-                id,
-                subject,
-                name,
-                scopes,
-                created_at,
-                expires_at,
-                last_used_at,
-                last_used_ip,
-            )
-            .await?,
-        );
+    for row in rows {
+        out.push(token_from_row(row)?);
     }
     Ok(out)
 }
 
 pub async fn list_all(pool: &SqlitePool) -> Result<Vec<ApiToken>> {
-    let rows: Vec<(
-        String,
-        String,
-        String,
-        String,
-        i64,
-        i64,
-        Option<i64>,
-        Option<String>,
-    )> = sqlx::query_as(
+    let rows: Vec<TokenRow> = sqlx::query_as(
         "SELECT id, subject, name, scopes, created_at, expires_at, last_used_at, last_used_ip \
          FROM api_tokens ORDER BY subject, created_at DESC",
     )
     .fetch_all(pool)
     .await?;
     let mut out = Vec::with_capacity(rows.len());
-    for (id, subject, name, scopes, created_at, expires_at, last_used_at, last_used_ip) in rows {
-        out.push(
-            row_of(
-                id,
-                subject,
-                name,
-                scopes,
-                created_at,
-                expires_at,
-                last_used_at,
-                last_used_ip,
-            )
-            .await?,
-        );
+    for row in rows {
+        out.push(token_from_row(row)?);
     }
     Ok(out)
 }
 
 pub async fn get(pool: &SqlitePool, id: &str) -> Result<Option<ApiToken>> {
-    let row: Option<(
-        String,
-        String,
-        String,
-        String,
-        i64,
-        i64,
-        Option<i64>,
-        Option<String>,
-    )> = sqlx::query_as(
+    let row: Option<TokenRow> = sqlx::query_as(
         "SELECT id, subject, name, scopes, created_at, expires_at, last_used_at, last_used_ip \
          FROM api_tokens WHERE id = ?",
     )
@@ -223,21 +177,7 @@ pub async fn get(pool: &SqlitePool, id: &str) -> Result<Option<ApiToken>> {
     .fetch_optional(pool)
     .await?;
     match row {
-        Some((id, subject, name, scopes, created_at, expires_at, last_used_at, last_used_ip)) => {
-            Ok(Some(
-                row_of(
-                    id,
-                    subject,
-                    name,
-                    scopes,
-                    created_at,
-                    expires_at,
-                    last_used_at,
-                    last_used_ip,
-                )
-                .await?,
-            ))
-        }
+        Some(row) => Ok(Some(token_from_row(row)?)),
         None => Ok(None),
     }
 }
@@ -248,16 +188,7 @@ pub async fn find_live(
     token_hash: &str,
     now: i64,
 ) -> Result<Option<ApiToken>> {
-    let row: Option<(
-        String,
-        String,
-        String,
-        String,
-        i64,
-        i64,
-        Option<i64>,
-        Option<String>,
-    )> = sqlx::query_as(
+    let row: Option<TokenRow> = sqlx::query_as(
         "SELECT id, subject, name, scopes, created_at, expires_at, last_used_at, last_used_ip \
          FROM api_tokens WHERE token_hash = ? AND expires_at > ?",
     )
@@ -266,21 +197,7 @@ pub async fn find_live(
     .fetch_optional(pool)
     .await?;
     match row {
-        Some((id, subject, name, scopes, created_at, expires_at, last_used_at, last_used_ip)) => {
-            Ok(Some(
-                row_of(
-                    id,
-                    subject,
-                    name,
-                    scopes,
-                    created_at,
-                    expires_at,
-                    last_used_at,
-                    last_used_ip,
-                )
-                .await?,
-            ))
-        }
+        Some(row) => Ok(Some(token_from_row(row)?)),
         None => Ok(None),
     }
 }
