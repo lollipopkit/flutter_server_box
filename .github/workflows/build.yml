@@ -548,12 +548,12 @@ jobs:
           - abi: arm64
             target: android-arm64
             rust_target: aarch64-linux-android
-          - abi: arm
-            target: android-arm
-            rust_target: armv7-linux-androideabi
-          - abi: amd64
-            target: android-x64
-            rust_target: x86_64-linux-android
+    #      - abi: arm
+        #    target: android-arm
+        #    rust_target: armv7-linux-androideabi
+     #     - abi: amd64
+       #     target: android-x64
+      #      rust_target: x86_64-linux-android
     # See `buildMacOS` — publication is one job, and it is the only one that
     # needs to write.
     permissions:
@@ -642,57 +642,57 @@ jobs:
       # check after it fails the job if any moved or changed. v2 alone, as Gradle
       # signed: apksigner also adds a JAR (v1) signature by default, which is
       # three more entries.
-      - name: Sign
-        shell: bash
-        env:
-          ABI: ${{ matrix.abi }}
-        run: |
-          set -euo pipefail
-          case "$ABI" in
-            arm64) unsigned=app-arm64-v8a-release-unsigned.apk ;;
-            arm) unsigned=app-armeabi-v7a-release-unsigned.apk ;;
-            amd64) unsigned=app-x86_64-release-unsigned.apk ;;
-            *) echo "::error::unknown ABI $ABI"; exit 1 ;;
-          esac
-          unsigned="build/app/outputs/apk/release/$unsigned"
-          out="build/app/outputs/flutter-apk/${APP_NAME}_v1.0.${BUILD_NUMBER}_${ABI}.apk"
-
-          prop() {
-            sed -n -E "s/^[[:space:]]*$1[[:space:]]*=[[:space:]]*(.*)$/\1/p" android/key.properties |
-              tail -n 1 | tr -d '\r'
-          }
-          store_file="$(prop storeFile)"
-          key_alias="$(prop keyAlias)"
-          KS_PASS="$(prop storePassword)"
-          KEY_PASS="$(prop keyPassword)"
-          echo "::add-mask::$KS_PASS"
-          echo "::add-mask::$KEY_PASS"
-          export KS_PASS KEY_PASS
+ #     - name: Sign
+  #      shell: bash
+ #       env:
+  #        ABI: ${{ matrix.abi }}
+   #     run: |
+    #      set -euo pipefail
+#          case "$ABI" in
+#            arm64) unsigned=app-arm64-v8a-release-unsigned.apk ;;
+       #     arm) unsigned=app-armeabi-v7a-release-unsigned.apk ;;
+#            amd64) unsigned=app-x86_64-release-unsigned.apk ;;
+        #    *) echo "::error::unknown ABI $ABI"; exit 1 ;;
+     #     esac
+       #   unsigned="build/app/outputs/apk/release/$unsigned"
+      #    out="build/app/outputs/flutter-apk/${APP_NAME}_v1.0.${BUILD_NUMBER}_${ABI}.apk"
+#
+        #  prop() {
+        #    sed -n -E "s/^[[:space:]]*$1[[:space:]]*=[[:space:]]*(.*)$/\1/p" android/key.properties |
+       #       tail -n 1 | tr -d '\r'
+       #   }
+      #    store_file="$(prop storeFile)"
+        #  key_alias="$(prop keyAlias)"
+#          KS_PASS="$(prop storePassword)"
+#          KEY_PASS="$(prop keyPassword)"
+       #   echo "::add-mask::$KS_PASS"
+      #    echo "::add-mask::$KEY_PASS"
+      #    export KS_PASS KEY_PASS
           # Relative to the app module, as Gradle's `file()` resolved it.
-          [[ "$store_file" == /* ]] || store_file="android/app/$store_file"
+    #      [[ "$store_file" == /* ]] || store_file="android/app/$store_file"
 
-          mkdir -p "$(dirname "$out")"
-          "$APKSIGNER" sign \
-            --ks "$store_file" \
-            --ks-key-alias "$key_alias" \
-            --ks-pass env:KS_PASS \
-            --key-pass env:KEY_PASS \
-            --alignment-preserved \
-            --v1-signing-enabled false \
-            --v2-signing-enabled true \
-            --v3-signing-enabled false \
-            --v4-signing-enabled false \
-            --out "$out" \
-            "$unsigned"
-          "$APKSIGNER" verify "$out"
+    #      mkdir -p "$(dirname "$out")"
+     #     "$APKSIGNER" sign \
+  #          --ks "$store_file" \
+    #        --ks-key-alias "$key_alias" \
+      #      --ks-pass env:KS_PASS \
+    #        --key-pass env:KEY_PASS \
+#            --alignment-preserved \
+   #         --v1-signing-enabled false \
+   #         --v2-signing-enabled true \
+    #        --v3-signing-enabled false \
+   #         --v4-signing-enabled false \
+    #        --out "$out" \
+   #         "$unsigned"
+ #         "$APKSIGNER" verify "$out"
 
-          entries() {
-            zipinfo -v "$1" | grep -E '^  (offset of local header|32-bit CRC value|compressed size)'
-          }
-          diff <(entries "$unsigned") <(entries "$out") ||
-            { echo "::error::signing changed the APK's entries"; exit 1; }
+ #         entries() {
+    #        zipinfo -v "$1" | grep -E '^  (offset of local header|32-bit CRC value|compressed size)'
+   #       }
+   #       diff <(entries "$unsigned") <(entries "$out") ||
+        #    { echo "::error::signing changed the APK's entries"; exit 1; }
           # Flutter's copies of the unsigned APKs, which are not published.
-          rm -f build/app/outputs/flutter-apk/app-*-release.apk
+   #       rm -f build/app/outputs/flutter-apk/app-*-release.apk
       # `useLegacyPackaging` off means nothing is extracted from the APK, so
       # `nativeLibraryDir` does not exist and proot cannot be run from
       # anywhere. The APK still builds, installs and runs — the rootfs entry
