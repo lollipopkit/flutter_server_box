@@ -359,8 +359,8 @@ on the same library, so a key made for one of them — dotted lowercase words,
 such as `tab.chat` — is accepted and kept, and ServerBox does not draw it. A
 key that is not well formed is rejected. The editor schema lists the tab and
 nav keys and the Files-window keys this app draws, each bound to
-`icons/<key with dots as underscores>.png` or `.svg`. Any other well-formed
-`file.*` key is still accepted; the installer requires the same file name.
+`icons/<key with dots as underscores>.png` or `.svg`. The installer still
+accepts any other well-formed `file.*` key, with the same file name.
 
 The compressed archive and total extracted content are each limited to 16 MiB.
 `manifest.toml` is limited to 64 KiB. An icon is limited to 256 KiB, the splash

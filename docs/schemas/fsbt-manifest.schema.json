@@ -204,13 +204,6 @@
             "file.yml": { "enum": ["icons/file_yml.png", "icons/file_yml.svg"] },
             "file.zip": { "enum": ["icons/file_zip.png", "icons/file_zip.svg"] },
             "file.zsh": { "enum": ["icons/file_zsh.png", "icons/file_zsh.svg"] }
-          },
-          "patternProperties": {
-            "^file\\.[a-z][a-z0-9]*$": {
-              "description": "Any other Files-window glyph. Listed file.* keys above use the same stem-bound enum as tab and nav; JSON Schema cannot bind an arbitrary key to its file name, so the installer still requires icons/<key with dots as underscores>.",
-              "type": "string",
-              "pattern": "^icons/file_[a-z][a-z0-9]*\\.(png|svg)$"
-            }
           }
         },
         "colors": {

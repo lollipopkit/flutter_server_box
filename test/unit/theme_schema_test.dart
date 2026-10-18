@@ -103,8 +103,9 @@ void main() {
       ThemePackages.iconKeys.union(ThemeFileIcon.schemaKeys),
     );
     expect(
-      _map(images['patternProperties']).keys.toSet(),
-      {ThemeFileIcon.keyPattern.pattern},
+      images.containsKey('patternProperties'),
+      isFalse,
+      reason: 'an open file.* value pattern cannot bind the stem to the key',
     );
     expect(
       _map(properties['icons']['properties']['colors'])['properties']

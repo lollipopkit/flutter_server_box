@@ -50,13 +50,12 @@ abstract final class ThemeFileIcon {
   static const fallback = 'file.default';
 
   /// Well-formed Files-window keys, including any `file.<ext>` a package
-  /// chooses to ship. The editor schema lists [schemaKeys] with a stem-bound
-  /// path and matches this for any other extension.
+  /// chooses to ship. The editor schema lists [schemaKeys]; the installer
+  /// still accepts any key that matches this.
   static final keyPattern = RegExp(r'^file\.[a-z][a-z0-9]*$');
 
   /// Keys the editor schema names with the same path rule as tab and nav.
-  /// JSON Schema cannot bind an arbitrary property to its file name, so
-  /// anything else still matches [keyPattern] only.
+  /// JSON Schema cannot bind an arbitrary property to its file name.
   static Set<String> get schemaKeys => {
     ..._builtIn.keys,
     for (final ext in _alias.keys) 'file.$ext',
