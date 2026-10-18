@@ -609,6 +609,7 @@ const it = {
 	groupExists: 'Esiste già un gruppo con questo nome.',
 	groupGid: 'GID',
 	groupInUse: 'Questo gruppo è il gruppo primario di un account, quindi non viene rimosso qui.',
+	groupNotLocal: 'Qui si possono modificare solo i gruppi in /etc/group.',
 	groupUnknownMember: 'Questo membro non è un account di questa macchina.',
 	groupMembers: 'Membri',
 	groupMembersHint: 'Separati da spazi. Svuotare il campo rimuove ogni membro supplementare.',

@@ -361,9 +361,9 @@ pub struct UserActRequest {
 impl UserActRequest {
     /// What was asked of which account or group, for the audit row.
     ///
-    /// Control characters are dropped: this string is recorded by `gate`
-    /// before `command` validates the name, and a newline in it would be a
-    /// second line in the log, not part of the name.
+    /// The name is what the caller sent, recorded by `gate` before `command`
+    /// validates it, so it is escaped (a newline reads as `\n`, not as a
+    /// line break in the panel's audit view) and cut at [`SUBJECT_NAME_CHARS`].
     fn subject(&self) -> String {
         let raw = match self.kind {
             ActKind::User => self
@@ -378,7 +378,14 @@ impl UserActRequest {
                 .or(self.name.as_deref()),
         }
         .unwrap_or_default();
-        let target: String = raw.chars().filter(|c| !c.is_control()).collect();
+        let mut target: String = raw
+            .chars()
+            .take(SUBJECT_NAME_CHARS)
+            .flat_map(char::escape_debug)
+            .collect();
+        if raw.chars().nth(SUBJECT_NAME_CHARS).is_some() {
+            target.push('…');
+        }
         match self.kind {
             ActKind::User => format!("{} {target}", self.action.as_str()),
             ActKind::Group => format!("group {} {target}", self.action.as_str()),
@@ -485,6 +492,9 @@ impl UserActRequest {
             .ok_or(Refusal::of("missingName"))
     }
 }
+
+/// Longer than any name `useradd` or `groupadd` accepts (32).
+const SUBJECT_NAME_CHARS: usize = 64;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -646,6 +656,10 @@ daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\n\
 admin:x:1000:1000:Admin User:/home/admin:/bin/bash\n\
 deploy:x:1001:1000:Deploy:/srv/deploy:/bin/sh\n\
 SrvBoxUsers.Group\n\
+root:x:0:\n\
+users:x:1000:admin\n\
+docker:x:998:admin,deploy\n\
+SrvBoxUsers.LocalGroup\n\
 root:x:0:\n\
 users:x:1000:admin\n\
 docker:x:998:admin,deploy\n";
@@ -905,7 +919,7 @@ docker:x:998:admin,deploy\n";
         request.group = Some(wanted);
         assert_eq!(
             request.command(&catalog).unwrap(),
-            "gpasswd -M 'admin' 'docker'"
+            "gpasswd -d 'deploy' 'docker'"
         );
     }
 
@@ -918,14 +932,18 @@ docker:x:998:admin,deploy\n";
     }
 
     #[test]
-    fn the_audit_subject_does_not_carry_control_characters() {
+    fn the_audit_subject_escapes_and_bounds_the_name() {
         let mut create = group_request(UserAction::Create);
         create.group = Some(group_draft("ops\nDenied: forged"));
-        assert_eq!(create.subject(), "group create opsDenied: forged");
+        assert_eq!(create.subject(), "group create ops\\nDenied: forged");
         assert!(!create.subject().chars().any(char::is_control));
 
         let mut named = group_request(UserAction::Delete);
         named.name = Some("root\r\n".into());
-        assert_eq!(named.subject(), "group delete root");
+        assert_eq!(named.subject(), "group delete root\\r\\n");
+
+        let mut long = group_request(UserAction::Delete);
+        long.name = Some("a".repeat(10_000));
+        assert_eq!(long.subject(), format!("group delete {}…", "a".repeat(SUBJECT_NAME_CHARS)));
     }
 }

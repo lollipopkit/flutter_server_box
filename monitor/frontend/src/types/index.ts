@@ -1541,6 +1541,8 @@ export interface SystemGroup {
   members: string[]
   /// Accounts whose primary gid is this group.
   primary_members: string[]
+  /// Whether `/etc/group` holds it. A group from LDAP or SSSD is read-only.
+  local: boolean
 }
 
 export interface GroupRow extends SystemGroup {
@@ -1611,6 +1613,7 @@ export type UserRefusalCode =
   | 'unknownMember'
   | 'rootGroupNotDeletable'
   | 'groupInUse'
+  | 'groupNotLocal'
   | 'groupExists'
   | 'noSuchGroup'
 

@@ -609,6 +609,7 @@ const de = {
 	groupExists: 'Eine Gruppe dieses Namens gibt es bereits.',
 	groupGid: 'GID',
 	groupInUse: 'Diese Gruppe ist die primäre Gruppe eines Kontos und wird hier nicht entfernt.',
+	groupNotLocal: 'Nur Gruppen in /etc/group lassen sich hier ändern.',
 	groupUnknownMember: 'Dieses Mitglied ist kein Konto auf dieser Maschine.',
 	groupMembers: 'Mitglieder',
 	groupMembersHint: 'Durch Leerzeichen getrennt. Leeren entfernt jedes Zusatzmitglied.',

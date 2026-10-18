@@ -13,7 +13,7 @@ use sbm_parser::users::{self, GroupDraft, SystemGroup, SystemUser, UserDraft, Us
 /// (`invalidName`, `lineBreak`, `invalidPrimaryGroup`,
 /// `invalidSupplementaryGroup`, `passwordLineBreak`, `renaming`,
 /// `rootNotDeletable`, `currentUserUnknown`, `unknownMember`,
-/// `rootGroupNotDeletable`, `groupInUse`), or `malformed` for JSON the
+/// `rootGroupNotDeletable`, `groupInUse`, `groupNotLocal`), or `malformed` for JSON the
 /// app should never have sent.
 #[derive(Debug, Clone)]
 pub struct UserFfiError {

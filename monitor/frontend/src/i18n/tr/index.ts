@@ -609,6 +609,7 @@ const tr = {
 	groupExists: 'Bu adda bir grup zaten var.',
 	groupGid: 'GID',
 	groupInUse: 'Bu grup bir hesabın birincil grubu, bu yüzden burada silinmez.',
+	groupNotLocal: 'Burada yalnızca /etc/group içindeki gruplar değiştirilebilir.',
 	groupUnknownMember: 'Bu üye bu makinedeki bir hesap değil.',
 	groupMembers: 'Üyeler',
 	groupMembersHint: 'Boşlukla ayrılır. Temizlemek tüm ek üyeleri kaldırır.',

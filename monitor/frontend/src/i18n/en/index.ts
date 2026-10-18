@@ -610,6 +610,7 @@ const en = {
 	groupExists: 'A group with that name already exists.',
 	groupGid: 'GID',
 	groupInUse: "This group is an account's primary group, so it is not removed here.",
+	groupNotLocal: 'Only groups in /etc/group can be changed here.',
 	groupUnknownMember: 'That member is not an account on this machine.',
 	groupMembers: 'Members',
 	groupMembersHint: 'Separated by spaces. Clearing it removes every supplementary member.',

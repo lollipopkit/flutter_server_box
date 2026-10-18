@@ -609,6 +609,7 @@ const id = {
 	groupExists: 'Sudah ada grup dengan nama itu.',
 	groupGid: 'GID',
 	groupInUse: 'Grup ini adalah grup utama suatu akun, jadi tidak dihapus di sini.',
+	groupNotLocal: 'Hanya grup di /etc/group yang dapat diubah di sini.',
 	groupUnknownMember: 'Anggota itu bukan akun di mesin ini.',
 	groupMembers: 'Anggota',
 	groupMembersHint: 'Dipisah spasi. Mengosongkannya menghapus semua anggota tambahan.',

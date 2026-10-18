@@ -176,6 +176,7 @@ abstract final class UserManager {
     'unknownMember' => 'A member is not an account on this server',
     'rootGroupNotDeletable' => 'The root group cannot be deleted',
     'groupInUse' => "This group is an account's primary group",
+    'groupNotLocal' => 'Only groups in /etc/group can be changed',
     _ => code,
   };
 }

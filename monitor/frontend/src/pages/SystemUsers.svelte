@@ -582,7 +582,11 @@
         </Card>
       {:else}
         <div class="flex flex-wrap items-center gap-2">
-          <Button variant="secondary" onclick={() => openGroupForm(openedGroup!)}>
+          <Button
+            variant="secondary"
+            disabled={!openedGroup.local}
+            onclick={() => openGroupForm(openedGroup!)}
+          >
             <Pencil class="w-4 h-4" />
             {$LL.groupEdit()}
           </Button>
@@ -596,7 +600,11 @@
           </Button>
           {#if !openedGroup.deletable}
             <span class="text-xs text-faint-fg">
-              {openedGroup.is_root ? $LL.groupRootNotDeletable() : $LL.groupInUse()}
+              {openedGroup.is_root
+                ? $LL.groupRootNotDeletable()
+                : !openedGroup.local
+                  ? $LL.groupNotLocal()
+                  : $LL.groupInUse()}
             </span>
           {/if}
         </div>

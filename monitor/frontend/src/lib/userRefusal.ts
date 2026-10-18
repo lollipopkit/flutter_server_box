@@ -44,6 +44,8 @@ export function userRefusalText(code: string): string {
       return ll.groupRootNotDeletable()
     case 'groupInUse':
       return ll.groupInUse()
+    case 'groupNotLocal':
+      return ll.groupNotLocal()
     case 'groupExists':
       return ll.groupExists()
     case 'noSuchGroup':

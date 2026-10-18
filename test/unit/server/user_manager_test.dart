@@ -51,6 +51,10 @@ SrvBoxUsers.Group
 root:x:0:
 users:x:1000:admin
 docker:x:998:admin,deploy
+SrvBoxUsers.LocalGroup
+root:x:0:
+users:x:1000:admin
+docker:x:998:admin,deploy
 ''';
 
   const admin = ServerUser(
@@ -303,6 +307,7 @@ SrvBoxUserDetail.Sudo
       gid: 105,
       members: ['Gone'],
       primaryMembers: [],
+      local: true,
     );
     final draft = groupDraft(name: 'Debian-exim', members: const ['Gone', 'admin']);
     expect(
@@ -311,7 +316,7 @@ SrvBoxUserDetail.Sudo
     );
     expect(
       UserManager.editGroupScript(original, draft, catalog),
-      "gpasswd -M 'Gone,admin' 'Debian-exim'",
+      "gpasswd -a 'admin' 'Debian-exim'",
     );
   });
 

@@ -58,6 +58,7 @@ final class ServerGroup {
     required this.gid,
     required this.members,
     required this.primaryMembers,
+    required this.local,
   });
 
   final String name;
@@ -69,12 +70,16 @@ final class ServerGroup {
   /// Accounts whose primary group this is.
   final List<String> primaryMembers;
 
+  /// Whether `/etc/group` holds it. A group from LDAP or SSSD is read-only.
+  final bool local;
+
   /// `sbm_parser::users::SystemGroup` as serde writes it.
   factory ServerGroup.fromJson(Map<String, Object?> json) => ServerGroup(
     name: json['name'] as String,
     gid: json['gid'] as int,
     members: (json['members'] as List).cast<String>(),
     primaryMembers: (json['primary_members'] as List).cast<String>(),
+    local: json['local'] as bool,
   );
 
   Map<String, Object?> toJson() => {
@@ -82,6 +87,7 @@ final class ServerGroup {
     'gid': gid,
     'members': members,
     'primary_members': primaryMembers,
+    'local': local,
   };
 
   /// `SystemGroup::is_root`.

@@ -50,6 +50,7 @@ const view = (): UserView => ({
       is_root: false,
       system: false,
       primary_members: [],
+      local: true,
       deletable: true,
     } satisfies GroupRow,
   ],

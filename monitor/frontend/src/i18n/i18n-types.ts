@@ -2517,6 +2517,10 @@ type RootTranslation = {
 	 */
 	groupInUse: string
 	/**
+	 * O​n​l​y​ ​g​r​o​u​p​s​ ​i​n​ ​/​e​t​c​/​g​r​o​u​p​ ​c​a​n​ ​b​e​ ​c​h​a​n​g​e​d​ ​h​e​r​e​.
+	 */
+	groupNotLocal: string
+	/**
 	 * T​h​a​t​ ​m​e​m​b​e​r​ ​i​s​ ​n​o​t​ ​a​n​ ​a​c​c​o​u​n​t​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
 	 */
 	groupUnknownMember: string
@@ -8377,6 +8381,10 @@ export type TranslationFunctions = {
 	 * This group is an account's primary group, so it is not removed here.
 	 */
 	groupInUse: () => LocalizedString
+	/**
+	 * Only groups in /etc/group can be changed here.
+	 */
+	groupNotLocal: () => LocalizedString
 	/**
 	 * That member is not an account on this machine.
 	 */

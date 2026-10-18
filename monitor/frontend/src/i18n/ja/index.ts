@@ -609,6 +609,7 @@ const ja = {
 	groupExists: '同じ名前のグループがすでにあります。',
 	groupGid: 'GID',
 	groupInUse: 'このグループはあるアカウントのプライマリグループなので、ここでは削除しません。',
+	groupNotLocal: '変更できるのは /etc/group のグループだけです。',
 	groupUnknownMember: 'このメンバーはこのマシンのアカウントではありません。',
 	groupMembers: 'メンバー',
 	groupMembersHint: '空白区切り。空にすると補助メンバーをすべて外します。',

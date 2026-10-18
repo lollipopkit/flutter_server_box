@@ -988,11 +988,12 @@ extension on _UsersPageState {
       child: ContextMenuButton(
         tooltip: libL10n.more,
         actions: () => [
-          ContextMenuAction(
-            text: libL10n.edit,
-            icon: Icons.edit_outlined,
-            onTap: () => _editGroup(group),
-          ),
+          if (group.local)
+            ContextMenuAction(
+              text: libL10n.edit,
+              icon: Icons.edit_outlined,
+              onTap: () => _editGroup(group),
+            ),
           if (UserManager.groupDeletable(group))
             ContextMenuAction(
               text: libL10n.delete,

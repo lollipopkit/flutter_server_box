@@ -51,11 +51,12 @@ final class _GroupDetailPageState extends ConsumerState<GroupDetailPage> {
       appBar: CustomAppBar(
         title: TwoLineText(up: _group.name, down: widget.args.spi.name),
         actions: [
-          Btn.icon(
-            text: libL10n.edit,
-            icon: const Icon(Icons.edit_outlined, size: 18),
-            onTap: () => _run(widget.args.onEdit),
-          ),
+          if (_group.local)
+            Btn.icon(
+              text: libL10n.edit,
+              icon: const Icon(Icons.edit_outlined, size: 18),
+              onTap: () => _run(widget.args.onEdit),
+            ),
           if (UserManager.groupDeletable(_group))
             ContextMenuButton(
               tooltip: libL10n.more,

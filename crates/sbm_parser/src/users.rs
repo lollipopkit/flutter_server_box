@@ -63,6 +63,8 @@ pub const UID_MIN_MARKER: &str = "SrvBoxUsers.UidMin\t";
 pub const GID_MIN_MARKER: &str = "SrvBoxUsers.GidMin\t";
 pub const PASSWD_MARKER: &str = "SrvBoxUsers.Passwd";
 pub const GROUP_MARKER: &str = "SrvBoxUsers.Group";
+/// `/etc/group` itself, which is all `groupadd`, `gpasswd` and `groupdel` write.
+pub const LOCAL_GROUP_MARKER: &str = "SrvBoxUsers.LocalGroup";
 
 pub const DETAIL_SHADOW_MARKER: &str = "SrvBoxUserDetail.Shadow";
 pub const DETAIL_STATUS_MARKER: &str = "SrvBoxUserDetail.Status";
@@ -106,6 +108,10 @@ printf 'SrvBoxUsers.Group\n'
 if command -v getent >/dev/null 2>&1; then
   getent group
 elif [ -r /etc/group ]; then
+  cat /etc/group
+fi
+printf 'SrvBoxUsers.LocalGroup\n'
+if [ -r /etc/group ]; then
   cat /etc/group
 fi
 "#;
@@ -174,6 +180,9 @@ pub struct SystemGroup {
     pub members: Vec<String>,
     /// Accounts whose primary gid is this group, sorted.
     pub primary_members: Vec<String>,
+    /// Whether this record is `/etc/group`'s. One from LDAP or SSSD is read
+    /// here and never written: the group commands only change that file.
+    pub local: bool,
 }
 
 impl SystemGroup {
@@ -191,6 +200,9 @@ impl SystemGroup {
     pub fn delete_refusal(&self) -> Option<UserError> {
         if self.is_root() {
             return Some(UserError::RootGroupNotDeletable);
+        }
+        if !self.local {
+            return Some(UserError::GroupNotLocal);
         }
         if !valid_name(&self.name) {
             return Some(UserError::InvalidName);
@@ -375,6 +387,8 @@ pub enum UserError {
     RootGroupNotDeletable,
     /// See [`SystemGroup::delete_refusal`].
     GroupInUse,
+    /// See [`SystemGroup::local`].
+    GroupNotLocal,
 }
 
 impl UserError {
@@ -393,6 +407,7 @@ impl UserError {
             Self::UnknownMember => "unknownMember",
             Self::RootGroupNotDeletable => "rootGroupNotDeletable",
             Self::GroupInUse => "groupInUse",
+            Self::GroupNotLocal => "groupNotLocal",
         }
     }
 }
@@ -418,13 +433,11 @@ pub fn parse_list(output: &str) -> Result<UserCatalog, UserError> {
     let mut uid_min: u32 = 1000;
     let mut gid_min: u32 = 1000;
     let mut passwd: Vec<Vec<&str>> = Vec::new();
-    let mut groups: Vec<SystemGroup> = Vec::new();
-    let mut groups_by_gid: HashMap<u32, String> = HashMap::new();
-    let mut supplementary: HashMap<String, Vec<String>> = HashMap::new();
+    let mut listed_groups: Vec<SystemGroup> = Vec::new();
+    let mut local_groups: Vec<SystemGroup> = Vec::new();
     // `getent` lists every source in turn, so files and LDAP can both name
-    // one account or group. The first wins, as it does for the libc lookups.
+    // one account. The first wins, as it does for the libc lookups.
     let mut seen_users: HashSet<String> = HashSet::new();
-    let mut seen_groups: HashSet<String> = HashSet::new();
     let mut section = "";
 
     // Bound to a local: every row below borrows from it.
@@ -451,6 +464,10 @@ pub fn parse_list(output: &str) -> Result<UserCatalog, UserError> {
             section = GROUP_MARKER;
             continue;
         }
+        if line == LOCAL_GROUP_MARKER {
+            section = LOCAL_GROUP_MARKER;
+            continue;
+        }
         if line.is_empty() {
             continue;
         }
@@ -466,38 +483,36 @@ pub fn parse_list(output: &str) -> Result<UserCatalog, UserError> {
             {
                 passwd.push(fields);
             }
-        } else if section == GROUP_MARKER {
-            let fields: Vec<&str> = line.split(':').collect();
-            if fields.len() < 4 {
-                continue;
+        } else if let Some(group) = group_record(line) {
+            match section {
+                GROUP_MARKER => listed_groups.push(group),
+                LOCAL_GROUP_MARKER => local_groups.push(SystemGroup {
+                    local: true,
+                    ..group
+                }),
+                _ => {}
             }
-            let Ok(gid) = fields[2].parse::<u32>() else {
-                continue;
-            };
-            if !seen_groups.insert(fields[0].to_string()) {
-                continue;
-            }
-            let mut members: Vec<String> = fields[3]
-                .split(',')
-                .map(str::trim)
-                .filter(|name| !name.is_empty())
-                .map(str::to_string)
-                .collect();
-            members.sort();
-            members.dedup();
-            groups_by_gid.insert(gid, fields[0].to_string());
-            for member in &members {
-                supplementary
-                    .entry(member.clone())
-                    .or_default()
-                    .push(fields[0].to_string());
-            }
-            groups.push(SystemGroup {
-                name: fields[0].to_string(),
-                gid,
-                members,
-                primary_members: Vec::new(),
-            });
+        }
+    }
+
+    // `/etc/group`'s record wins over one of the same name from another
+    // source, whichever `nsswitch.conf` lists first: it is the one a write
+    // changes, so it is the one an edit has to be read against.
+    let mut seen_groups: HashSet<String> = HashSet::new();
+    let mut groups: Vec<SystemGroup> = local_groups
+        .into_iter()
+        .chain(listed_groups)
+        .filter(|group| seen_groups.insert(group.name.clone()))
+        .collect();
+    let mut groups_by_gid: HashMap<u32, String> = HashMap::new();
+    let mut supplementary: HashMap<String, Vec<String>> = HashMap::new();
+    for group in &groups {
+        groups_by_gid.insert(group.gid, group.name.clone());
+        for member in &group.members {
+            supplementary
+                .entry(member.clone())
+                .or_default()
+                .push(group.name.clone());
         }
     }
 
@@ -548,6 +563,30 @@ pub fn parse_list(output: &str) -> Result<UserCatalog, UserError> {
         gid_min,
         users,
         groups,
+    })
+}
+
+/// One `/etc/group`-shaped line, as a group from no source in particular.
+fn group_record(line: &str) -> Option<SystemGroup> {
+    let fields: Vec<&str> = line.split(':').collect();
+    if fields.len() < 4 {
+        return None;
+    }
+    let gid = fields[2].parse::<u32>().ok()?;
+    let mut members: Vec<String> = fields[3]
+        .split(',')
+        .map(str::trim)
+        .filter(|name| !name.is_empty())
+        .map(str::to_string)
+        .collect();
+    members.sort();
+    members.dedup();
+    Some(SystemGroup {
+        name: fields[0].to_string(),
+        gid,
+        members,
+        primary_members: Vec::new(),
+        local: false,
     })
 }
 
@@ -786,6 +825,7 @@ pub fn validate_group_draft(
     match original {
         None if !valid_name(&draft.name) => return Some(UserError::InvalidName),
         Some(original) if draft.name != original.name => return Some(UserError::Renaming),
+        Some(original) if !original.local => return Some(UserError::GroupNotLocal),
         _ => {}
     }
     let kept = original.map(|group| group.members.as_slice()).unwrap_or_default();
@@ -980,8 +1020,12 @@ pub fn group_create_command(draft: &GroupDraft, accounts: &[String]) -> Result<S
     ))
 }
 
-/// The command that changes a group's members, naming only the list when it
-/// differs from `original`.
+/// The command that changes a group's members: `gpasswd -d` for each one
+/// dropped, then `gpasswd -a` for each one added.
+///
+/// Not `gpasswd -M` with the whole list, which refuses every name that is no
+/// longer an account — and `/etc/group` keeps the names of deleted accounts,
+/// so one stale member would make every edit of the group fail.
 ///
 /// A group cannot be renamed: `groupmod -n` leaves every file and sudoers line
 /// that names the old group behind.
@@ -993,10 +1037,25 @@ pub fn group_edit_command(
     if let Some(error) = validate_group_draft(draft, Some(original), accounts) {
         return Err(error);
     }
-    if sorted_members(&draft.members) == original.members {
-        return Ok(":".to_string());
-    }
-    Ok(gpasswd_members(&original.name, &draft.members))
+    let wanted = sorted_members(&draft.members);
+    let group = single_quote(&original.name);
+    let steps: Vec<String> = original
+        .members
+        .iter()
+        .filter(|member| !wanted.contains(member))
+        .map(|member| format!("gpasswd -d {} {group}", single_quote(member)))
+        .chain(
+            wanted
+                .iter()
+                .filter(|member| !original.members.contains(member))
+                .map(|member| format!("gpasswd -a {} {group}", single_quote(member))),
+        )
+        .collect();
+    Ok(match steps.len() {
+        0 => ":".to_string(),
+        1 => steps.concat(),
+        _ => format!("set -e\n{}", steps.join("\n")),
+    })
 }
 
 /// The command that removes a group, refused as [`SystemGroup::delete_refusal`]
@@ -1008,8 +1067,8 @@ pub fn group_delete_command(group: &SystemGroup) -> Result<String, UserError> {
     }
 }
 
-/// `gpasswd -M` replaces the member list. An empty list is an empty `-M`
-/// argument, which is how every supplementary member is dropped.
+/// `gpasswd -M` sets the member list of a group [`group_create_command`] has
+/// just made, so every name in it is an account.
 fn gpasswd_members(group: &str, members: &[String]) -> String {
     let list = sorted_members(members).join(",");
     format!("gpasswd -M {} {}", single_quote(&list), single_quote(group))

@@ -29,6 +29,10 @@ deploy:x:1001:1000:Deploy:/srv/deploy:/bin/sh\n\
 SrvBoxUsers.Group\n\
 root:x:0:\n\
 users:x:1000:admin\n\
+docker:x:998:admin,deploy\n\
+SrvBoxUsers.LocalGroup\n\
+root:x:0:\n\
+users:x:1000:admin\n\
 docker:x:998:admin,deploy\n";
 
 fn user(name: &str, home: &str) -> SystemUser {
@@ -564,6 +568,7 @@ fn group(name: &str, gid: u32, members: &[&str]) -> SystemGroup {
         gid,
         members: members.iter().map(|member| member.to_string()).collect(),
         primary_members: Vec::new(),
+        local: true,
     }
 }
 
@@ -659,7 +664,7 @@ fn a_group_edit_is_only_the_member_list_that_changed() {
     draft.members = vec!["admin".to_string(), "svc".to_string()];
     assert_eq!(
         group_edit_command(&original, &draft, &known).expect("a valid draft"),
-        "gpasswd -M 'admin,svc' 'deploy'"
+        "gpasswd -a 'svc' 'deploy'"
     );
 
     draft.members = vec!["admin".to_string()];
@@ -671,19 +676,63 @@ fn a_group_edit_is_only_the_member_list_that_changed() {
     draft.members.clear();
     assert_eq!(
         group_edit_command(&original, &draft, &known).expect("a valid draft"),
-        "gpasswd -M '' 'deploy'"
+        "gpasswd -d 'admin' 'deploy'"
     );
 }
 
 #[test]
 fn a_group_edit_keeps_members_and_a_name_the_machine_already_has() {
-    // Debian ships `Debian-exim`, which no new name may look like.
-    let original = group("Debian-exim", 105, &["Gone"]);
+    // Debian ships `Debian-exim`, which no new name may look like. `Gone` is
+    // a deleted account `/etc/group` still names, which `gpasswd -M` refuses.
+    let original = group("Debian-exim", 105, &["Gone", "admin"]);
     let mut draft = group_draft("Debian-exim");
-    draft.members = vec!["Gone".to_string(), "svc".to_string()];
+    draft.members = vec!["Gone".to_string(), "admin".to_string(), "svc".to_string()];
+    let known = accounts(&["admin", "svc"]);
     assert_eq!(
-        group_edit_command(&original, &draft, &accounts(&["svc"])).expect("kept as is"),
-        "gpasswd -M 'Gone,svc' 'Debian-exim'"
+        group_edit_command(&original, &draft, &known).expect("kept as is"),
+        "gpasswd -a 'svc' 'Debian-exim'"
+    );
+
+    draft.members = vec!["svc".to_string()];
+    assert_eq!(
+        group_edit_command(&original, &draft, &known).expect("a valid draft"),
+        "set -e\n\
+gpasswd -d 'Gone' 'Debian-exim'\n\
+gpasswd -d 'admin' 'Debian-exim'\n\
+gpasswd -a 'svc' 'Debian-exim'"
+    );
+}
+
+#[test]
+fn the_local_record_wins_and_only_it_is_written() {
+    // `group: sss files` lists the directory's `admins` first.
+    let catalog = parse_list(
+        "SrvBoxUsers.Current\tadmin\n\
+SrvBoxUsers.Passwd\n\
+admin:x:1000:1000::/home/admin:/bin/sh\n\
+SrvBoxUsers.Group\n\
+admins:x:5000:admin\n\
+admins:x:1001:\n\
+staff:x:5001:\n\
+SrvBoxUsers.LocalGroup\n\
+admins:x:1001:\n",
+    )
+    .expect("the listing parses");
+
+    let admins = catalog.find_group("admins").expect("listed");
+    assert!(admins.local);
+    assert_eq!(admins.gid, 1001);
+    assert!(admins.members.is_empty());
+    assert!(catalog.users[0].supplementary_groups.is_empty());
+
+    let staff = catalog.find_group("staff").expect("listed");
+    assert!(!staff.local);
+    assert_eq!(staff.delete_refusal(), Some(UserError::GroupNotLocal));
+    let mut draft = group_draft("staff");
+    draft.members = vec!["admin".to_string()];
+    assert_eq!(
+        group_edit_command(staff, &draft, &catalog.account_names()),
+        Err(UserError::GroupNotLocal)
     );
 }
 
