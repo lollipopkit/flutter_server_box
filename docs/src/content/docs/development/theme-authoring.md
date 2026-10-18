@@ -345,13 +345,21 @@ Supported icon keys are `tab.<tab>` and `tab.<tab>.selected` for `server`, `ssh`
 are `nav.more`, `nav.settings`, `nav.tune`, `nav.privacy`, `nav.agent`,
 `nav.tabs`, `nav.server`, `nav.sort`, `nav.terminal`, `nav.folder`, `nav.cloud`,
 `nav.snippet`, `nav.inbox`, `nav.key`, `nav.info`, `nav.download`, and
-`nav.desktop`.
+`nav.desktop`. The Files window also draws `file.dir`, `file.link`,
+`file.default`, and `file.<ext>` for a file's extension (`file.py`,
+`file.rs`, `file.gitignore`). A name whose extension the package does not
+carry falls back to a related key when there is one (`file.css` for
+`.scss`, `file.sh` for `.bash`), then to `file.default`, then to the
+built-in glyph. A package
+may carry at most 48 icon keys, so a full tab and nav set leaves room for a
+handful of Files-window glyphs.
 
 These are the keys ServerBox draws. The format is shared with other apps built
 on the same library, so a key made for one of them — dotted lowercase words,
 such as `tab.chat` — is accepted and kept, and ServerBox does not draw it. A
-key that is not well formed is rejected. The editor schema lists only
-ServerBox's keys, so it still flags a misspelled one as you edit.
+key that is not well formed is rejected. The editor schema lists the tab and
+nav keys, and accepts any well-formed `file.*` key rather than enumerating
+extensions.
 
 The compressed archive and total extracted content are each limited to 16 MiB.
 `manifest.toml` is limited to 64 KiB. An icon is limited to 256 KiB, the splash

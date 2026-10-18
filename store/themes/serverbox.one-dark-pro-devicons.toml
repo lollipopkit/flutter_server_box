@@ -4,10 +4,10 @@ homepage = "https://github.com/lollipopkit/flutter_server_box/tree/main/store/th
 license = "MIT"
 
 [description]
-en = "Atom's One Dark, after the One Dark Pro VS Code theme by Binaryify (MIT): the same syntax accents and tight corners, with Devicon glyphs in place of the editor-style icons."
-fr = "Le One Dark d'Atom, d'après le thème VS Code One Dark Pro de Binaryify (MIT) : les mêmes accents de syntaxe et coins serrés, avec des glyphes Devicon à la place des icônes style éditeur."
-zh = "Atom 的 One Dark，取自 Binaryify 的 VS Code 主题 One Dark Pro（MIT）：同样的语法高亮强调色和紧凑圆角，图标换成 Devicon 字形。"
-zh-TW = "Atom 的 One Dark，取自 Binaryify 的 VS Code 主題 One Dark Pro（MIT）：同樣的語法高亮強調色和緊湊圓角，圖示換成 Devicon 字形。"
+en = "Atom's One Dark, after the One Dark Pro VS Code theme by Binaryify (MIT): the same syntax accents and tight corners, with Devicon glyphs in place of the editor-style icons, including Files-window extensions."
+fr = "Le One Dark d'Atom, d'après le thème VS Code One Dark Pro de Binaryify (MIT) : les mêmes accents de syntaxe et coins serrés, avec des glyphes Devicon à la place des icônes style éditeur, y compris les extensions dans Files."
+zh = "Atom 的 One Dark，取自 Binaryify 的 VS Code 主题 One Dark Pro（MIT）：同样的语法高亮强调色和紧凑圆角，图标换成 Devicon 字形，含 Files 窗口的扩展名图标。"
+zh-TW = "Atom 的 One Dark，取自 Binaryify 的 VS Code 主題 One Dark Pro（MIT）：同樣的語法高亮強調色和緊湊圓角，圖示換成 Devicon 字形，含 Files 視窗的副檔名圖示。"
 
 # Versions are appended by scripts/publish-themes.py, which packs the folder
 # beside this file and records the digest of what it built.

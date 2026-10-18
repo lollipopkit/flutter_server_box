@@ -133,6 +133,21 @@ style = "classic"
 "nav.info" = "icons/nav_info.svg"
 "nav.download" = "icons/nav_download.svg"
 "nav.desktop" = "icons/nav_desktop.svg"
+"file.dir" = "icons/file_dir.svg"
+"file.link" = "icons/file_link.svg"
+"file.default" = "icons/file_default.svg"
+"file.py" = "icons/file_py.svg"
+"file.sh" = "icons/file_sh.svg"
+"file.js" = "icons/file_js.svg"
+"file.ts" = "icons/file_ts.svg"
+"file.json" = "icons/file_json.svg"
+"file.yml" = "icons/file_yml.svg"
+"file.rs" = "icons/file_rs.svg"
+"file.go" = "icons/file_go.svg"
+"file.md" = "icons/file_md.svg"
+"file.html" = "icons/file_html.svg"
+"file.dockerfile" = "icons/file_dockerfile.svg"
+"file.conf" = "icons/file_conf.svg"
 
 # Syntax colors: strings green, keywords purple, classes yellow, numbers orange,
 # support cyan. Hex where One Dark has a color Material has no role for.
@@ -151,6 +166,20 @@ style = "classic"
 "nav.agent" = "secondary"
 "nav.download" = "tertiary"
 "nav.folder" = 0xFFE5C07B
+"file.dir" = 0xFFE5C07B
+"file.link" = "primary"
+"file.py" = 0xFFE5C07B
+"file.sh" = "tertiary"
+"file.js" = 0xFFE5C07B
+"file.ts" = "primary"
+"file.json" = 0xFFE5C07B
+"file.yml" = "secondary"
+"file.rs" = 0xFFD19A66
+"file.go" = 0xFF56B6C2
+"file.md" = "tertiary"
+"file.html" = "error"
+"file.dockerfile" = "primary"
+"file.conf" = "tertiary"
 
 [splash]
 color = "surface"
