@@ -71,4 +71,21 @@ void main() {
     expect(editorLangFor(null), isNull);
     expect(editorLangFor(''), isNull);
   });
+
+  test('markdown names are markdown, including extra suffixes', () {
+    expect(editorLangFor('README.md'), ProgLang.markdown);
+    expect(editorLangFor('notes.MD'), ProgLang.markdown);
+    expect(editorLangFor('CHANGELOG.markdown'), ProgLang.markdown);
+    expect(editorLangFor('doc.mdown'), ProgLang.markdown);
+    expect(editorLangFor('doc.mkd'), ProgLang.markdown);
+    expect(editorLangFor('doc.mdwn'), ProgLang.markdown);
+  });
+
+  test('the editor offers a Markdown view for markdown files only', () {
+    expect(editorIsMarkdown(path: 'README.md'), isTrue);
+    expect(editorIsMarkdown(lang: ProgLang.markdown), isTrue);
+    expect(editorIsMarkdown(path: 'package.json'), isFalse);
+    expect(editorIsMarkdown(lang: ProgLang.json, path: 'README.md'), isFalse);
+    expect(editorIsMarkdown(), isFalse);
+  });
 }
