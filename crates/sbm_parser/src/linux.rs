@@ -275,14 +275,19 @@ fn lsblk_fs_fields(device: &serde_json::Value) -> (u64, u64, u64, u32) {
 /// type, by what [`Disk::is_storage`] asks of one.
 /// Also accepts df -h K/M/G/T suffixes
 ///
-/// The header is skipped unread: `df` translates it (`文件系统 类型 … 挂载点`),
-/// so whether there is a type column is decided by the rows themselves.
+/// Whether there is a type column is read from an English header. `df`
+/// translates it (`文件系统 类型 … 挂载点`), and under such a header each row
+/// answers for itself: see [`df_row_typed`].
 fn parse_df(raw: &str) -> Vec<Disk> {
     let mut disks = Vec::new();
     let mut rows: Vec<Vec<&str>> = Vec::new();
     let mut path_cache: Option<&str> = None;
 
-    for line in raw.trim().split('\n').skip(1) {
+    let mut lines = raw.trim().split('\n');
+    let header: Vec<&str> = lines.next().unwrap_or_default().split_whitespace().collect();
+    let header_typed = (header.first() == Some(&"Filesystem")).then(|| header.get(1) == Some(&"Type"));
+
+    for line in lines {
         let mut fields: Vec<&str> = line.split_whitespace().collect();
         if fields.is_empty() {
             continue;
@@ -302,20 +307,8 @@ fn parse_df(raw: &str) -> Vec<Disk> {
         rows.push(fields);
     }
 
-    // A type column is a word where a size would be, followed by the size.
-    // Counted over the rows rather than read from one: macOS names a few
-    // filesystems with a space (`map auto_home`), which puts a word in that
-    // place on a table that has no type column.
-    let typed_rows = rows
-        .iter()
-        .filter(|fields| {
-            fields.get(1).is_some_and(|f| df_size_kib(f).is_none())
-                && fields.get(2).is_some_and(|f| df_size_kib(f).is_some())
-        })
-        .count();
-    let typed = typed_rows * 2 > rows.len();
-
     for mut fields in rows {
+        let typed = header_typed.unwrap_or_else(|| df_row_typed(&fields));
         let fs_type = typed.then(|| fields.get(1).map(|t| t.to_string())).flatten();
         if typed && fields.len() > 1 {
             fields.remove(1);
@@ -350,6 +343,18 @@ fn parse_df(raw: &str) -> Vec<Disk> {
     let mut seen = std::collections::HashSet::new();
     disks.retain(|d| seen.insert((d.path.clone(), d.size, d.used)));
     disks
+}
+
+/// Whether a row under a translated header has a type column: a word where the
+/// size would be, followed by the size.
+///
+/// Only asked where the header cannot answer, which is Linux under a
+/// non-English locale: its `df` escapes a space in a source as `\040`. macOS
+/// names some filesystems with one (`map auto_home`), which would read as a
+/// type here — under its English header it is never asked.
+fn df_row_typed(fields: &[&str]) -> bool {
+    fields.get(1).is_some_and(|f| df_size_kib(f).is_none())
+        && fields.get(2).is_some_and(|f| df_size_kib(f).is_some())
 }
 
 /// df size column → KiB: plain numbers are KiB (df -k), K/M/G/T suffixes converted base-1024 (df -h)

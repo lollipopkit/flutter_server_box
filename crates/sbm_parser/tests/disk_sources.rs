@@ -128,6 +128,22 @@ fn a_translated_header_is_read_like_any_other() {
     assert_eq!(root.size, 61549628);
 }
 
+/// An English header decides for the whole table. macOS names autofs maps
+/// with a space, and rows like these outnumbering the disks once read as a
+/// type column, which took the size off the root row and dropped it.
+#[test]
+fn a_spaced_source_is_not_a_type_column() {
+    let df = "Filesystem     1024-blocks      Used Available Capacity iused ifree %iused  Mounted on\n\
+        /dev/disk3s1s1   482797652  10759236 172384600     6%  425798 1723846000    0%   /\n\
+        map auto_home            0         0         0   100%       0          0     -   /System/Volumes/Data/home\n\
+        map -hosts               0         0         0   100%       0          0     -   /net\n\
+        map -static              0         0         0   100%       0          0     -   /Volumes/static\n";
+    let disks = linux::parse_disk(df);
+    let root = find(&disks, "/").expect("root");
+    assert_eq!(root.fs_type, None);
+    assert_eq!(root.size, 482797652);
+}
+
 /// ZFS: every dataset reports its own used space and the pool's free space.
 /// Summed per dataset, a 1 TB pool with three datasets read as 3 TB.
 #[test]
