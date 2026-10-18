@@ -1,0 +1,13 @@
+id = "serverbox.vscode"
+name = "VS Code"
+homepage = "https://github.com/lollipopkit/flutter_server_box/tree/main/store/themes/serverbox.vscode"
+license = "MIT"
+
+[description]
+en = "VS Code Dark Modern and Light Modern as an independent UI adaptation (MIT): workbench blue, compact corners, editor-style icons. Not a VS Code extension; fonts and the terminal stay separate."
+fr = "Dark Modern et Light Modern de VS Code, adaptés à l’interface (MIT) : bleu workbench, coins compacts, icônes style éditeur. Ce n’est pas une extension VS Code ; polices et terminal restent à part."
+zh = "把 VS Code 的 Dark Modern / Light Modern 改编到应用界面（MIT）：工作区蓝、紧凑圆角、编辑器风格图标。不是 VS Code 扩展；字体和终端配色仍单独设置。"
+zh-TW = "把 VS Code 的 Dark Modern / Light Modern 改編到應用介面（MIT）：工作區藍、緊湊圓角、編輯器風格圖示。不是 VS Code 擴充；字體和終端配色仍單獨設定。"
+
+# Versions are appended by scripts/publish-themes.py, which packs the folder
+# beside this file and records the digest of what it built.

@@ -1,0 +1,418 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/fsbt-manifest.schema.json
+# The colors are adapted from VS Code Dark Modern and Light Modern
+# (https://github.com/microsoft/vscode), used under the MIT License, whose
+# notice travels with this package:
+#
+# MIT License
+#
+# Copyright (c) 2015 - present Microsoft Corporation
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+id = "serverbox.vscode"
+name = "VS Code"
+modes = ["light", "dark"]
+
+# Schema 3 components and [layout]; schema 2's SVG icons, icon colors and splash.
+[schema]
+min = 3
+max = 3
+
+[colors]
+mode = 2
+seed = 0xFF0078D4
+
+# Workbench chrome for the page, the editor pane for cards, syntax colors as
+# the extra accents. surfaceTint stays off so elevated surfaces keep these greys.
+[colors.palette.dark]
+primary = 0xFF0078D4
+onPrimary = 0xFFFFFFFF
+primaryContainer = 0xFF183347
+onPrimaryContainer = 0xFFD6E8F7
+secondary = 0xFFC586C0
+onSecondary = 0xFF1F1F1F
+secondaryContainer = 0xFF3A2A3A
+onSecondaryContainer = 0xFFF0D5EE
+tertiary = 0xFF4EC9B0
+onTertiary = 0xFF1F1F1F
+tertiaryContainer = 0xFF1A3D36
+onTertiaryContainer = 0xFFC8F0E6
+error = 0xFFF85149
+onError = 0xFF1F1F1F
+errorContainer = 0xFF5A1A18
+onErrorContainer = 0xFFFFDAD6
+surface = 0xFF1F1F1F
+surfaceDim = 0xFF141414
+surfaceBright = 0xFF3C3C3C
+surfaceContainerLowest = 0xFF181818
+surfaceContainerLow = 0xFF242424
+surfaceContainer = 0xFF292929
+surfaceContainerHigh = 0xFF2E2E2E
+surfaceContainerHighest = 0xFF313131
+onSurface = 0xFFCCCCCC
+onSurfaceVariant = 0xFF9D9D9D
+outline = 0xFF6E6E6E
+outlineVariant = 0xFF2B2B2B
+inverseSurface = 0xFFF3F3F3
+onInverseSurface = 0xFF1F1F1F
+inversePrimary = 0xFF005FB8
+shadow = 0xFF000000
+scrim = 0xFF000000
+surfaceTint = 0x00000000
+
+[colors.palette.light]
+primary = 0xFF005FB8
+onPrimary = 0xFFFFFFFF
+primaryContainer = 0xFFD6E5F4
+onPrimaryContainer = 0xFF001C38
+secondary = 0xFFAF00DB
+onSecondary = 0xFFFFFFFF
+secondaryContainer = 0xFFF3D6FB
+onSecondaryContainer = 0xFF3B004F
+tertiary = 0xFF267F99
+onTertiary = 0xFFFFFFFF
+tertiaryContainer = 0xFFC5E8F0
+onTertiaryContainer = 0xFF003440
+error = 0xFFC72E0F
+onError = 0xFFFFFFFF
+errorContainer = 0xFFFFDAD6
+onErrorContainer = 0xFF410002
+surface = 0xFFF8F8F8
+surfaceDim = 0xFFD4D4D4
+surfaceBright = 0xFFFFFFFF
+surfaceContainerLowest = 0xFFFFFFFF
+surfaceContainerLow = 0xFFF3F3F3
+surfaceContainer = 0xFFEEEEEE
+surfaceContainerHigh = 0xFFE8E8E8
+surfaceContainerHighest = 0xFFE0E0E0
+onSurface = 0xFF3B3B3B
+onSurfaceVariant = 0xFF5C5C5C
+outline = 0xFF8B8B8B
+outlineVariant = 0xFFE5E5E5
+inverseSurface = 0xFF1F1F1F
+onInverseSurface = 0xFFCCCCCC
+inversePrimary = 0xFF4DAAFC
+shadow = 0xFF000000
+scrim = 0xFF000000
+surfaceTint = 0x00000000
+
+[icons]
+style = "classic"
+
+[icons.images]
+"tab.server" = "icons/tab_server.svg"
+"tab.server.selected" = "icons/tab_server_selected.svg"
+"tab.ssh" = "icons/tab_ssh.svg"
+"tab.ssh.selected" = "icons/tab_ssh_selected.svg"
+"tab.file" = "icons/tab_file.svg"
+"tab.file.selected" = "icons/tab_file_selected.svg"
+"tab.snippet" = "icons/tab_snippet.svg"
+"tab.snippet.selected" = "icons/tab_snippet_selected.svg"
+"tab.agent" = "icons/tab_agent.svg"
+"tab.agent.selected" = "icons/tab_agent_selected.svg"
+"tab.benchmark" = "icons/tab_benchmark.svg"
+"tab.benchmark.selected" = "icons/tab_benchmark_selected.svg"
+"tab.remoteDesktop" = "icons/tab_remoteDesktop.svg"
+"tab.remoteDesktop.selected" = "icons/tab_remoteDesktop_selected.svg"
+"tab.virt" = "icons/tab_virt.svg"
+"tab.virt.selected" = "icons/tab_virt_selected.svg"
+"nav.more" = "icons/nav_more.svg"
+"nav.settings" = "icons/nav_settings.svg"
+"nav.tune" = "icons/nav_tune.svg"
+"nav.privacy" = "icons/nav_privacy.svg"
+"nav.agent" = "icons/nav_agent.svg"
+"nav.tabs" = "icons/nav_tabs.svg"
+"nav.server" = "icons/nav_server.svg"
+"nav.sort" = "icons/nav_sort.svg"
+"nav.terminal" = "icons/nav_terminal.svg"
+"nav.folder" = "icons/nav_folder.svg"
+"nav.cloud" = "icons/nav_cloud.svg"
+"nav.snippet" = "icons/nav_snippet.svg"
+"nav.inbox" = "icons/nav_inbox.svg"
+"nav.key" = "icons/nav_key.svg"
+"nav.info" = "icons/nav_info.svg"
+"nav.download" = "icons/nav_download.svg"
+"nav.desktop" = "icons/nav_desktop.svg"
+
+# Dark+ / Light+ syntax, via palette roles so both modes stay in family:
+# types teal, keywords magenta, accent blue.
+[icons.colors]
+"tab.server.selected" = "primary"
+"tab.ssh.selected" = "tertiary"
+"tab.file.selected" = "primary"
+"tab.snippet.selected" = "secondary"
+"tab.agent.selected" = "secondary"
+"tab.benchmark.selected" = "tertiary"
+"tab.remoteDesktop.selected" = "primary"
+"tab.virt.selected" = "tertiary"
+"nav.terminal" = "tertiary"
+"nav.agent" = "secondary"
+"nav.key" = "primary"
+"nav.folder" = "primary"
+"nav.cloud" = "tertiary"
+
+[splash]
+color = "surface"
+logo = "splash_logo.svg"
+duration = 600
+
+[shapes]
+card = 4
+tile = 2
+button = 2
+
+[components.card]
+backgroundColor = "surfaceContainer"
+radius = 4
+borderWidth = 0
+elevation = 0
+surfaceTintColor = 0x00000000
+margin = [5, 4, 5, 4]
+
+[components.light.card]
+backgroundColor = "surfaceContainerLowest"
+borderColor = "outlineVariant"
+borderWidth = 1
+
+[components.tile]
+selectedTileColor = 0xFF37373D
+selectedColor = "onSurface"
+iconColor = "onSurfaceVariant"
+radius = 2
+
+[components.light.tile]
+selectedTileColor = 0xFFE8E8E8
+
+[components.button]
+backgroundColor = "primary"
+foregroundColor = "onPrimary"
+radius = 2
+elevation = 0
+padding = [16, 9, 16, 9]
+minHeight = 32
+
+[components.button.hovered]
+backgroundColor = 0xFF026EC1
+
+[components.light.button.hovered]
+backgroundColor = 0xFF0258A8
+
+[components.button.pressed]
+overlayColor = 0x26000000
+
+[components.button.focused]
+borderColor = "primary"
+borderWidth = 2
+
+[components.button.disabled]
+backgroundColor = "surfaceContainerHighest"
+foregroundColor = "outline"
+
+[components.input]
+filled = true
+fillColor = 0xFF313131
+radius = 2
+borderColor = "outlineVariant"
+borderWidth = 1
+focusedBorderColor = "primary"
+errorBorderColor = "error"
+padding = [12, 8, 12, 8]
+
+[components.light.input]
+fillColor = 0xFFFFFFFF
+borderColor = 0xFFCECECE
+
+[components.navigation]
+backgroundColor = "surfaceContainerLowest"
+indicatorColor = "primaryContainer"
+indicatorRadius = 4
+selectedIconColor = "primary"
+unselectedIconColor = "outline"
+selectedLabelColor = "primary"
+unselectedLabelColor = "onSurfaceVariant"
+elevation = 0
+
+[components.dialog]
+backgroundColor = "surfaceContainerHigh"
+radius = 6
+borderColor = "outlineVariant"
+borderWidth = 1
+elevation = 0
+surfaceTintColor = 0x00000000
+barrierColor = 0x99000000
+
+[components.light.dialog]
+backgroundColor = "surfaceContainerLowest"
+barrierColor = 0x66000000
+
+[components.sheet]
+backgroundColor = "surfaceContainer"
+radius = 8
+elevation = 0
+surfaceTintColor = 0x00000000
+dragHandleColor = "outline"
+
+[components.light.sheet]
+backgroundColor = "surfaceContainerLowest"
+
+[components.textButton]
+foregroundColor = "primary"
+overlayColor = 0x140078D4
+radius = 2
+padding = [8, 4, 8, 4]
+minHeight = 28
+
+[components.textButton.disabled]
+foregroundColor = "outline"
+
+[components.outlinedButton]
+foregroundColor = "onSurface"
+borderColor = "outlineVariant"
+borderWidth = 1
+radius = 2
+padding = [14, 6, 14, 6]
+minHeight = 32
+
+[components.outlinedButton.hovered]
+borderColor = "primary"
+
+[components.iconButton]
+foregroundColor = "onSurfaceVariant"
+overlayColor = 0x14CCCCCC
+radius = 2
+iconSize = 18
+
+[components.search]
+backgroundColor = 0xFF313131
+radius = 2
+borderColor = "outlineVariant"
+borderWidth = 1
+iconColor = "outline"
+textColor = "onSurface"
+hintColor = "outline"
+height = 30
+
+[components.light.search]
+backgroundColor = 0xFFFFFFFF
+borderColor = 0xFFCECECE
+
+[components.appBar]
+backgroundColor = "surfaceContainerLowest"
+foregroundColor = "onSurface"
+iconColor = "onSurfaceVariant"
+elevation = 0
+surfaceTintColor = 0x00000000
+
+[components.segmented]
+backgroundColor = "surfaceContainerLowest"
+selectedColor = 0xFF37373D
+textColor = "onSurfaceVariant"
+selectedTextColor = "onSurface"
+radius = 2
+
+[components.light.segmented]
+selectedColor = 0xFFE8E8E8
+
+[components.sidebar]
+selectedColor = 0xFF37373D
+textColor = "onSurfaceVariant"
+selectedTextColor = "onSurface"
+iconColor = "outline"
+selectedIconColor = "primary"
+radius = 2
+
+[components.light.sidebar]
+selectedColor = 0xFFE8E8E8
+
+[components.menu]
+backgroundColor = "surfaceContainerLow"
+textColor = "onSurface"
+radius = 4
+borderColor = "outlineVariant"
+borderWidth = 1
+elevation = 2
+surfaceTintColor = 0x00000000
+
+[components.light.menu]
+backgroundColor = "surfaceContainerLowest"
+
+[components.tooltip]
+backgroundColor = "surfaceContainerHighest"
+textColor = "onSurface"
+radius = 2
+borderColor = "outlineVariant"
+borderWidth = 1
+padding = [8, 4, 8, 4]
+
+[components.toast]
+backgroundColor = "surfaceContainerHigh"
+textColor = "onSurface"
+radius = 4
+borderColor = "outlineVariant"
+borderWidth = 1
+elevation = 2
+
+[components.switch]
+thumbColor = "outline"
+trackColor = "surfaceContainerHighest"
+trackOutlineColor = "outlineVariant"
+selectedThumbColor = "onPrimary"
+selectedTrackColor = "primary"
+selectedTrackOutlineColor = 0x00000000
+
+[components.slider]
+activeTrackColor = "primary"
+inactiveTrackColor = "outlineVariant"
+thumbColor = "primary"
+trackHeight = 3
+
+[components.progress]
+color = "primary"
+trackColor = "outlineVariant"
+thickness = 3
+radius = 2
+
+[components.badge]
+backgroundColor = "primary"
+textColor = "onPrimary"
+
+[components.chip]
+backgroundColor = "surfaceContainerHigh"
+selectedColor = 0xFF37373D
+textColor = "onSurface"
+radius = 2
+borderWidth = 0
+
+[components.light.chip]
+selectedColor = 0xFFE8E8E8
+
+[components.divider]
+color = "outlineVariant"
+thickness = 1
+
+[components.scrollbar]
+thumbColor = 0x805A5A5A
+radius = 2
+thickness = 6
+
+[components.light.scrollbar]
+thumbColor = 0x80C6C6C6
+
+[layout]
+density = "compact"

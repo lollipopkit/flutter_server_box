@@ -37,6 +37,8 @@ class Hand:
 HANDS = {
     # Editor-like: medium strokes, modest radius.
     "serverbox.one-dark-pro": Hand(1.75, "round", "round", 1.0, 0.28),
+    # VS Code workbench: a tighter, squarer hand than One Dark Pro.
+    "serverbox.vscode": Hand(1.55, "round", "round", 0.6, 0.22),
 }
 
 

@@ -517,16 +517,43 @@ Catalog and repository tree size limits are documented in
 
 The official One Dark Pro theme in the theme store adapts the UI palette of
 this VS Code theme to Material surfaces, selection states, cards and buttons.
-It is an independent adaptation, not a VS Code extension bundle. Fonts and
-terminal/editor color settings remain separate. AMOLED is an original
-ServerBox palette. It uses black surfaces in dark mode and generated colors in
-light mode, allowing System appearance.
+It is an independent adaptation, not a VS Code extension bundle. The official
+VS Code theme does the same for VS Code's own Dark Modern and Light Modern
+workbench colors. Fonts and terminal/editor color settings remain separate.
+AMOLED is an original ServerBox palette. It uses black surfaces in dark mode
+and generated colors in light mode, allowing System appearance.
 
 Muted text colors are adjusted where needed to keep normal text at a contrast
 ratio of at least 4.5:1.
 
 <details>
 <summary>Upstream attribution</summary>
+
+**VS Code**
+
+Source: [VS Code theme defaults](https://github.com/microsoft/vscode/tree/main/extensions/theme-defaults) (Dark Modern, Light Modern)
+
+The MIT License (MIT)
+
+Copyright (c) 2015 - present Microsoft Corporation
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 
 **One Dark Pro**
 
