@@ -416,7 +416,7 @@ button.lk-table__th:hover{background:var(--fill-hover)}
 .lk-side__item--on{background:var(--lk-sidebar-selected-color,var(--surface-selected));color:var(--lk-sidebar-selected-text-color,var(--lk-sidebar-text-color,var(--text-primary)));font-weight:var(--weight-semibold)}
 .lk-side__item--on:hover{background:var(--lk-sidebar-selected-color,var(--surface-selected))}
 .lk-side__label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.lk-side__trail{font-size:var(--text-12);color:var(--text-tertiary);font-variant-numeric:tabular-nums}
+.lk-side__trail{max-width:50%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:var(--text-12);color:var(--text-tertiary);font-variant-numeric:tabular-nums}
 
 /* ---------- Spotlight ---------- */
 .lk-spot{width:640px;max-width:calc(100vw - 34px);border-radius:var(--radius-panel);background:var(--glass-panel);-webkit-backdrop-filter:var(--blur-menu);backdrop-filter:var(--blur-menu);box-shadow:var(--shadow-window),inset 0 0 0 .5px var(--border-glass);overflow:hidden;animation:lk-pop-in var(--dur-slow) var(--ease-spring)}

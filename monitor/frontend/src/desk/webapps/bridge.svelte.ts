@@ -83,7 +83,7 @@ function sidebarSections(value: unknown): SidebarSection[] {
       const i = rawItem as Record<string, unknown> | null
       const id = text(i?.id, 64)
       const label = text(i?.label, MAX_LABEL)
-      return id && label ? [{ id, label, icon: glyph(i?.icon), trailing: text(i?.trailing, 16) }] : []
+      return id && label ? [{ id, label, icon: glyph(i?.icon), trailing: text(i?.trailing, 32) }] : []
     })
     return items.length ? [{ title: text(v.title, MAX_LABEL), items }] : []
   })

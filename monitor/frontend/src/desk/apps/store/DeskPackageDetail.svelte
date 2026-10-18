@@ -68,8 +68,10 @@
     if (asking === 'remove') {
       await api.removeApp(id, password)
     } else if (offered) {
-      const app = installed && installed.sha256 === offered.sha256 ? installed : await api.installOffered(id)
-      await api.approveApp(app.id, app.sha256, app.manifest.permissions, password)
+      // The same package waiting: approved. Another (or none): installed and
+      // approved at once, so the one installed stays as it is until then.
+      if (installed && installed.sha256 === offered.sha256) await api.approveApp(id, installed.sha256, installed.manifest.permissions, password)
+      else await api.installOffered(id, offered.sha256, offered.manifest.permissions, password)
     }
     await load()
     await win.reloadApps()

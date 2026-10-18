@@ -59,8 +59,11 @@ pub async fn list(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> 
     // known now.
     let st = state.get_ref().clone();
     tokio::spawn(async move {
-        st.stacks.catalog.refresh(false).await;
-        super::apps::keep_first_party(&st).await;
+        // The agent's own apps follow a catalog actually read again, not
+        // every listing.
+        if st.stacks.catalog.refresh(false).await {
+            super::apps::keep_first_party(&st).await;
+        }
     });
     answer_list(&state).await
 }

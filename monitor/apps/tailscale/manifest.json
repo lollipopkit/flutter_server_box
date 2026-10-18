@@ -1,7 +1,7 @@
 {
   "publisher": "serverbox",
   "name": "tailscale",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "api": 2,
   "kind": "wasm",
   "title": "Tailscale",
@@ -42,5 +42,8 @@
   "min_size": {
     "width": 360,
     "height": 420
-  }
+  },
+  "os": [
+    "linux"
+  ]
 }

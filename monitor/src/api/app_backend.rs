@@ -229,7 +229,8 @@ pub async fn job(
 }
 
 pub async fn cancel_job(req: HttpRequest, id: web::types::Path<String>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
-    require!(authz::jwt_caller(&req, &state).await);
+    // Ending a job (one running as root, mid-way) acts on the machine.
+    require!(authz::acting_caller(&req, &state).await);
     match state.apps.job(&id) {
         Some(j) => {
             j.job.cancel();

@@ -41,23 +41,64 @@ export function webAppSpec(app: InstalledApp): AppSpec {
   return { ...spec, kind: 'web', permissions: app.approved_permissions ?? [] }
 }
 
-/// Adds [entry]'s approved apps; the returned function takes them away. An
-/// app whose id a built-in app has is skipped, never replaced.
-///
-/// [before] runs once the list has arrived, just before adding: the desk
-/// takes away what it added last, so a reload never leaves both.
-export async function registerWebApps(entry: ServerEntry, before: () => void = () => {}): Promise<() => void> {
-  const { apps } = await deskApi.apps(entry)
-  before()
-  const offs: (() => void)[] = []
-  for (const app of apps) {
-    if (!app.approved_permissions) continue
-    try {
-      const spec = webAppSpec(app)
-      offs.push(registry.register(spec))
-    } catch (e) {
-      console.warn(`desk app ${app.id} not added:`, e)
+/// [entry]'s approved apps in the registry for one desk, kept in step with
+/// the agent. An app whose package and grant are unchanged keeps its
+/// registration, so its open windows stay as they are (a frame mid-form, a
+/// sudo dialog waiting); one removed, replaced or no longer approved goes,
+/// and a new one is added. An app whose id a built-in app has is skipped,
+/// never replaced.
+export class WebApps {
+  readonly #entry: ServerEntry
+  /// By app id: what was registered (its package and grant) and how to take
+  /// it away.
+  readonly #held = new Map<string, { key: string; off: () => void }>()
+  /// One read at a time, in order: several changes may be said at once.
+  #queue: Promise<void> = Promise.resolve()
+  #closed = false
+
+  constructor(entry: ServerEntry) {
+    this.#entry = entry
+  }
+
+  /// Reads the installed apps again and registers what changed.
+  reload(): Promise<void> {
+    this.#queue = this.#queue.then(
+      () => this.#reload(),
+      () => this.#reload(),
+    )
+    return this.#queue
+  }
+
+  async #reload() {
+    const { apps } = await deskApi.apps(this.#entry)
+    if (this.#closed) return
+    const next = new Map(apps.filter((a) => a.approved_permissions).map((a) => [a.id, a]))
+    for (const [id, held] of this.#held) {
+      const app = next.get(id)
+      if (!app || keyOf(app) !== held.key) {
+        held.off()
+        this.#held.delete(id)
+      }
+    }
+    for (const [id, app] of next) {
+      if (this.#held.has(id)) continue
+      try {
+        this.#held.set(id, { key: keyOf(app), off: registry.register(webAppSpec(app)) })
+      } catch (e) {
+        console.warn(`desk app ${id} not added:`, e)
+      }
     }
   }
-  return () => offs.forEach((off) => off())
+
+  /// Takes every app away, for good: the desk is going.
+  close() {
+    this.#closed = true
+    for (const held of this.#held.values()) held.off()
+    this.#held.clear()
+  }
+}
+
+/// What a registration stands for: the package and what it was granted.
+function keyOf(app: InstalledApp): string {
+  return `${app.sha256}|${(app.approved_permissions ?? []).join(',')}`
 }

@@ -119,20 +119,21 @@
   )
   const current = $derived(apps?.find((a) => a.manifest.id === open) ?? null)
   const deskOpen = $derived(open?.startsWith('desk:') ? open.slice('desk:'.length) : null)
-  /// The open desk app's title, for the title bar.
-  let deskTitle = $state<string | null>(null)
+  /// The open desk app's title (in every language), for the title bar.
+  let deskTitleText = $state<string | Record<string, string> | null>(null)
   $effect(() => {
     const id = deskOpen
-    deskTitle = null
+    deskTitleText = null
     if (!id) return
     void api.appCatalog().then(
       (c) => {
         const o = c.apps.find((a) => a.id === id)
-        if (o && deskOpen === id) deskTitle = textOf(o.manifest.title, $locale)
+        if (o && deskOpen === id) deskTitleText = o.manifest.title
       },
       () => {},
     )
   })
+  const deskTitle = $derived(deskTitleText === null ? null : textOf(deskTitleText, $locale))
 
   const CATEGORY_ICONS: Record<string, string> = {
     photos: 'photo_library',

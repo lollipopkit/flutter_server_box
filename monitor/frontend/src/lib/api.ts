@@ -1325,8 +1325,14 @@ export const api = {
   },
   /// The desk app packages the agent offers (shipped, and the store's).
   appCatalog: () => request<{ apps: OfferedApp[] }>('/apps/catalog', {}),
-  /// Installs one of them as an upload is: it waits for approval.
-  installOffered: (id: string) => request<InstalledApp>(`/apps/catalog/${encodeURIComponent(id)}/install`, { method: 'POST' }),
+  /// Installs one of them and approves exactly what it asks for, with the
+  /// account's password, in one step: an update never leaves the app
+  /// waiting for an approval that a wrong password did not give.
+  installOffered: (id: string, sha256: string, permissions: string[], currentPassword: string) =>
+    request<InstalledApp>(`/apps/catalog/${encodeURIComponent(id)}/install`, {
+      method: 'POST',
+      body: JSON.stringify({ sha256, permissions, current_password: currentPassword }),
+    }),
   approveApp: (id: string, sha256: string, permissions: string[], currentPassword: string) =>
     request<InstalledApp>(
       `/apps/${encodeURIComponent(id)}/approval`,

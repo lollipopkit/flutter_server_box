@@ -593,16 +593,20 @@ async fn the_catalog_offers_the_shipped_packages_signed() {
     let srv = server().await;
     let r = call(&srv, true, Method::GET, "/api/v1/apps/catalog", None).await;
     assert_eq!(r.status, 200, "{}", r.json);
-    let cleanup = r.json["apps"].as_array().unwrap().iter().find(|a| a["id"] == "serverbox.cleanup").cloned().expect("Cleanup is offered");
-    assert_eq!((cleanup["signedBy"].as_str(), cleanup["source"].as_str()), (Some("serverbox-2026"), Some("bundled")));
-    assert_eq!(cleanup["manifest"]["permissions"], json!(["root"]));
+    let agents = r.json["apps"].as_array().unwrap().iter().find(|a| a["id"] == "serverbox.agent_tools").cloned().expect("AI agents is offered");
+    assert_eq!((agents["signedBy"].as_str(), agents["source"].as_str()), (Some("serverbox-2026"), Some("bundled")));
+    assert_eq!(agents["manifest"]["permissions"], json!(["process", "providers"]));
+    // Only where it runs: Kernels on Debian and Ubuntu.
+    let systems = server_box_monitor::api::machine::systems();
+    let kernels = r.json["apps"].as_array().unwrap().iter().any(|a| a["id"] == "serverbox.kernel");
+    assert_eq!(kernels, systems.iter().any(|s| s == "debian" || s == "ubuntu"), "{systems:?}");
 
     // Installed from it as an upload is: waiting, then approved.
-    let r = call(&srv, true, Method::POST, "/api/v1/apps/catalog/serverbox.cleanup/install", None).await;
+    let r = call(&srv, true, Method::POST, "/api/v1/apps/catalog/serverbox.agent_tools/install", None).await;
     assert_eq!(r.status, 200, "{}", r.json);
     assert_eq!((r.json["signed_by"].as_str(), r.json["approved_permissions"].is_null()), (Some("serverbox-2026"), true));
-    let body = json!({ "sha256": r.json["sha256"], "permissions": ["root"], "current_password": common::PASSWORD }).to_string().into_bytes();
-    let r = call(&srv, true, Method::PUT, "/api/v1/apps/serverbox.cleanup/approval", Some((body, "application/json"))).await;
+    let body = json!({ "sha256": r.json["sha256"], "permissions": ["process", "providers"], "current_password": common::PASSWORD }).to_string().into_bytes();
+    let r = call(&srv, true, Method::PUT, "/api/v1/apps/serverbox.agent_tools/approval", Some((body, "application/json"))).await;
     assert_eq!(r.status, 200, "{}", r.json);
     assert_eq!(call(&srv, true, Method::POST, "/api/v1/apps/catalog/nobody.here/install", None).await.status, 404);
 
@@ -631,23 +635,45 @@ async fn the_shipped_apps_are_installed_on_their_own_and_stay_removed_once_remov
     let (srv, state) = server_and_state(common::database().await).await;
     apps::keep_first_party(&state).await;
     let apps = installed(&srv).await;
-    for id in ["serverbox.agent_tools", "serverbox.cleanup", "serverbox.inference", "serverbox.kernel", "serverbox.proxy", "serverbox.tailscale"] {
+    for id in ["serverbox.agent_tools", "serverbox.inference"] {
         assert!(apps.contains(&(id.to_string(), true)), "{id} installed and approved: {apps:?}");
     }
-    // Only where the machine is Ubuntu.
-    let ubuntu = server_box_monitor::api::machine::os_id() == Some("ubuntu");
-    assert_eq!(apps.iter().any(|(id, _)| id == "serverbox.ubuntu_pro"), ubuntu);
+    // The others only on the systems they are for.
+    let systems = server_box_monitor::api::machine::systems();
+    let is = |name: &str| systems.iter().any(|s| s == name);
+    let debian = is("debian") || is("ubuntu");
+    for (id, here) in [
+        ("serverbox.cleanup", is("linux")),
+        ("serverbox.proxy", is("linux")),
+        ("serverbox.tailscale", is("linux")),
+        ("serverbox.kernel", debian),
+        ("serverbox.ubuntu_pro", is("ubuntu")),
+    ] {
+        assert_eq!(apps.contains(&(id.to_string(), true)), here, "{id} on {systems:?}: {apps:?}");
+    }
 
     // Removed: not back on the next pass.
     let body = json!({ "current_password": common::PASSWORD }).to_string().into_bytes();
-    assert_eq!(call(&srv, true, Method::DELETE, "/api/v1/apps/serverbox.kernel", Some((body, "application/json"))).await.status, 204);
+    assert_eq!(call(&srv, true, Method::DELETE, "/api/v1/apps/serverbox.agent_tools", Some((body, "application/json"))).await.status, 204);
     apps::keep_first_party(&state).await;
-    assert!(!installed(&srv).await.iter().any(|(id, _)| id == "serverbox.kernel"));
+    assert!(!installed(&srv).await.iter().any(|(id, _)| id == "serverbox.agent_tools"));
 
-    // Installed again from the store: it waits for approval like any
-    // install, and is the agent's to keep again.
-    let r = call(&srv, true, Method::POST, "/api/v1/apps/catalog/serverbox.kernel/install", None).await;
+    // Installed again from the store without the password: it waits for the
+    // admin's approval, which the agent does not give in their place.
+    let r = call(&srv, true, Method::POST, "/api/v1/apps/catalog/serverbox.agent_tools/install", None).await;
     assert_eq!((r.status, r.json["approved_permissions"].is_null()), (200, true), "{}", r.json);
+    let sha = r.json["sha256"].clone();
     apps::keep_first_party(&state).await;
-    assert!(installed(&srv).await.contains(&("serverbox.kernel".to_string(), true)));
+    assert!(installed(&srv).await.contains(&("serverbox.agent_tools".to_string(), false)));
+
+    // With the password and what the manifest asks: installed and approved at
+    // once; asking for other permissions is a screen out of date.
+    let offered = |permissions: serde_json::Value| {
+        json!({ "sha256": sha, "permissions": permissions, "current_password": common::PASSWORD }).to_string().into_bytes()
+    };
+    let r = call(&srv, true, Method::POST, "/api/v1/apps/catalog/serverbox.agent_tools/install", Some((offered(json!(["process"])), "application/json"))).await;
+    assert_eq!((r.status, r.json["error"].as_str()), (409, Some("permissionsChanged")), "{}", r.json);
+    let r = call(&srv, true, Method::POST, "/api/v1/apps/catalog/serverbox.agent_tools/install", Some((offered(json!(["process", "providers"])), "application/json"))).await;
+    assert_eq!(r.status, 200, "{}", r.json);
+    assert!(installed(&srv).await.contains(&("serverbox.agent_tools".to_string(), true)));
 }

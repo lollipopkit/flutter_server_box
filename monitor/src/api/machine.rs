@@ -84,11 +84,21 @@ pub fn features() -> Vec<&'static str> {
     FEATURES.to_vec()
 }
 
-/// `/etc/os-release`'s `ID`, read once: the distribution does not change
-/// under a running agent.
-pub fn os_id() -> Option<&'static str> {
-    static ID: std::sync::OnceLock<Option<String>> = std::sync::OnceLock::new();
-    ID.get_or_init(|| std::fs::read_to_string("/etc/os-release").ok().and_then(|t| sbm_parser::common::parse_os_id(&t))).as_deref()
+/// What this machine is, as a desk app package's `os` names it: `linux` and
+/// `/etc/os-release`'s `ID` on Linux, `macos`, `windows`, else the platform's
+/// own name. Read once: the system does not change under a running agent.
+pub fn systems() -> &'static [String] {
+    static SYSTEMS: std::sync::OnceLock<Vec<String>> = std::sync::OnceLock::new();
+    SYSTEMS.get_or_init(|| {
+        let mut out = vec![match std::env::consts::OS {
+            "macos" => "macos".to_string(),
+            other => other.to_string(),
+        }];
+        if let Some(id) = std::fs::read_to_string("/etc/os-release").ok().and_then(|t| sbm_parser::common::parse_os_id(&t)) {
+            out.push(id);
+        }
+        out
+    })
 }
 
 /// Who is asking, and from where, once [`gate`] let them through.

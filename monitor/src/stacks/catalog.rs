@@ -122,11 +122,11 @@ impl Catalog {
     }
 
     /// Reads the store again when it was read more than an hour ago (or
-    /// never), or when [force].
-    pub async fn refresh(&self, force: bool) {
+    /// never), or when [force]; whether it read it.
+    pub async fn refresh(&self, force: bool) -> bool {
         let mut read = self.read.lock().await;
         if !force && read.is_some_and(|at| at.elapsed() < TTL) {
-            return;
+            return false;
         }
         *read = Some(Instant::now());
         let (catalog_url, fetch) = self.source.read_locked().clone();
@@ -176,6 +176,7 @@ impl Catalog {
         if let Err(e) = tokio::task::spawn_blocking(move || desk.replace(&archives)).await {
             tracing::warn!("desk app catalog: {e}");
         }
+        true
     }
 }
 

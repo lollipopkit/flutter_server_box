@@ -105,16 +105,19 @@ pub struct Manifest {
     pub opens: Option<Opens>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub keywords: Vec<String>,
-    /// The systems it is for (`/etc/os-release`'s `ID`: `ubuntu`); any when
-    /// empty. Elsewhere the catalog does not offer it.
+    /// The systems it is for: `linux`, `macos`, `windows`, or a Linux
+    /// distribution by `/etc/os-release`'s `ID` (`ubuntu`); any when empty.
+    /// Elsewhere the catalog does not offer it, nor does the agent install it
+    /// on its own.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub os: Vec<String>,
 }
 
 impl Manifest {
-    /// Whether it is for a machine whose `/etc/os-release` `ID` is [os].
-    pub fn for_os(&self, os: Option<&str>) -> bool {
-        self.os.is_empty() || os.is_some_and(|os| self.os.iter().any(|o| o == os))
+    /// Whether it is for a machine that is [systems]
+    /// (`api::machine::systems`).
+    pub fn for_os(&self, systems: &[String]) -> bool {
+        self.os.is_empty() || self.os.iter().any(|o| systems.contains(o))
     }
 }
 
@@ -451,11 +454,27 @@ async fn load(db: &sqlx::SqlitePool, id: &str) -> Result<Option<Installed>, sqlx
     Ok(row.and_then(installed))
 }
 
-/// Stores [package], replacing an installed version. Its approval stays only
-/// for the very same package (an upload needs no password; an approval does,
-/// so new code always waits for one). Its files go to [blobs] first, the rows
-/// naming them after.
-async fn store(db: &sqlx::SqlitePool, blobs: &Arc<Blobs>, package: &Package) -> anyhow::Result<Installed> {
+/// Who stores a package, and so what it is granted.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Install {
+    /// An upload, or the catalog's package without a password: its approval
+    /// stays only for the very same package (an upload needs no password; an
+    /// approval does, so new code always waits for one).
+    Upload,
+    /// The admin installing with the password, approving exactly what the
+    /// manifest asks for.
+    Approved,
+    /// The agent itself, for a first-party package it ships: approved as
+    /// asked, unless the admin uninstalled the app (`desk_app_declined`).
+    Agent,
+}
+
+/// Stores [package] as [how] says, replacing an installed version: none when
+/// the agent's own install finds the app declined. An admin's install takes
+/// a decline back. Its files go to [blobs] first, the rows naming them after;
+/// the decline is read in the transaction that writes, so an uninstall
+/// beside it either comes first and wins or comes after.
+async fn store(db: &sqlx::SqlitePool, blobs: &Arc<Blobs>, package: &Package, how: Install) -> anyhow::Result<Option<Installed>> {
     let m = &package.manifest;
     let id = m.id();
     let writing = blobs.writing().await;
@@ -472,7 +491,21 @@ async fn store(db: &sqlx::SqlitePool, blobs: &Arc<Blobs>, package: &Package) -> 
             .bind(&id)
             .fetch_optional(&mut *tx)
             .await?;
-    let kept = previous.and_then(|(sha, approved)| approved.filter(|_| sha == package.sha256));
+    let declined: bool = sqlx::query_scalar("SELECT COUNT(*) > 0 FROM desk_app_declined WHERE app_id = ?").bind(&id).fetch_one(&mut *tx).await?;
+    if how == Install::Agent && declined {
+        drop(tx);
+        drop(writing);
+        // The files put above belong to nothing.
+        blobs.collect_soon(db);
+        return Ok(None);
+    }
+    if how != Install::Agent {
+        sqlx::query("DELETE FROM desk_app_declined WHERE app_id = ?").bind(&id).execute(&mut *tx).await?;
+    }
+    let kept = match how {
+        Install::Upload => previous.and_then(|(sha, approved)| approved.filter(|_| sha == package.sha256)),
+        Install::Approved | Install::Agent => Some(serde_json::to_string(&m.permissions).unwrap_or_default()),
+    };
     let now = chrono::Utc::now().to_rfc3339();
     sqlx::query("DELETE FROM desk_app_file WHERE app_id = ?").bind(&id).execute(&mut *tx).await?;
     sqlx::query(
@@ -480,7 +513,7 @@ async fn store(db: &sqlx::SqlitePool, blobs: &Arc<Blobs>, package: &Package) -> 
          VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(app_id) DO UPDATE SET version = excluded.version, signed_by = excluded.signed_by, \
          manifest = excluded.manifest, sha256 = excluded.sha256, approved_permissions = excluded.approved_permissions, \
          installed_at = excluded.installed_at, \
-         approved_at = CASE WHEN excluded.approved_permissions IS NULL THEN NULL ELSE desk_app_package.approved_at END",
+         approved_at = CASE WHEN excluded.approved_permissions IS NULL THEN NULL WHEN ? THEN excluded.approved_at ELSE desk_app_package.approved_at END",
     )
     .bind(&id)
     .bind(&m.version)
@@ -490,6 +523,8 @@ async fn store(db: &sqlx::SqlitePool, blobs: &Arc<Blobs>, package: &Package) -> 
     .bind(&now)
     .bind(kept.as_ref().map(|_| now.clone()))
     .bind(package.signed_by)
+    // Approved now, rather than an approval kept from before.
+    .bind(how != Install::Upload)
     .execute(&mut *tx)
     .await?;
     for (path, sha, size) in &files {
@@ -505,7 +540,7 @@ async fn store(db: &sqlx::SqlitePool, blobs: &Arc<Blobs>, package: &Package) -> 
     drop(writing);
     // The files of the version it replaced.
     blobs.collect_soon(db);
-    Ok(load(db, &id).await?.expect("just stored"))
+    Ok(Some(load(db, &id).await?.expect("just stored")))
 }
 
 // -----------------------------------------------------------------------------
@@ -555,7 +590,7 @@ pub async fn install(
         }
         Err(_) => return Ok(HttpResponse::InternalServerError().json(&refused("internal"))),
     };
-    install_package(&req, &state, package).await
+    install_package(&req, &state, package, Install::Upload).await
 }
 
 /// Why a package was not stored.
@@ -567,9 +602,9 @@ enum PutError {
     Internal(String),
 }
 
-/// Stores [package] as an upload of it: waiting for approval unless it is
-/// the very package approved before.
-async fn put(state: &AppState, package: &Package) -> Result<Installed, PutError> {
+/// Stores [package] as [how] says (`store`); none when the agent's own
+/// install finds the app declined.
+async fn put(state: &AppState, package: &Package, how: Install) -> Result<Option<Installed>, PutError> {
     let signed: Option<Option<String>> = sqlx::query_scalar("SELECT signed_by FROM desk_app_package WHERE app_id = ?")
         .bind(package.manifest.id())
         .fetch_optional(&state.db)
@@ -588,12 +623,18 @@ async fn put(state: &AppState, package: &Package) -> Result<Installed, PutError>
     {
         return Err(PutError::InvalidBackend(e));
     }
-    match store(&state.db, &state.blobs, package).await {
-        Ok(app) => {
+    match store(&state.db, &state.blobs, package, how).await {
+        Ok(Some(app)) => {
             if let Some(sha) = before.filter(|sha| backend_sha_of(package).as_deref() != Some(sha)) {
                 state.apps.forget(&sha);
             }
-            Ok(app)
+            Ok(Some(app))
+        }
+        Ok(None) => {
+            if let Some(sha) = backend_sha_of(package).filter(|sha| before.as_deref() != Some(sha)) {
+                state.apps.forget(&sha);
+            }
+            Ok(None)
         }
         Err(e) => {
             // Not stored: its compiled backend is no app's.
@@ -605,18 +646,17 @@ async fn put(state: &AppState, package: &Package) -> Result<Installed, PutError>
     }
 }
 
-/// Stores [package] as an upload of it, waiting for approval. An app the
-/// admin removed and installs again is no longer declined.
-async fn install_package(req: &HttpRequest, state: &AppState, package: Package) -> Result<HttpResponse, web::Error> {
-    match put(state, &package).await {
-        Ok(app) => {
-            if let Err(e) = sqlx::query("DELETE FROM desk_app_declined WHERE app_id = ?").bind(&app.id).execute(&state.db).await {
-                return Ok(super::respond::internal(&e));
-            }
-            audit(req, state, Action::Write, format!("app install {} {} {}", app.id, app.version, package.sha256)).await;
+/// Stores [package] as the admin's [how] (an upload waits for approval);
+/// an app the admin had uninstalled is no longer declined.
+async fn install_package(req: &HttpRequest, state: &AppState, package: Package, how: Install) -> Result<HttpResponse, web::Error> {
+    match put(state, &package, how).await {
+        Ok(Some(app)) => {
+            let verb = if how == Install::Approved { "install approved" } else { "install" };
+            audit(req, state, Action::Write, format!("app {verb} {} {} {}", app.id, app.version, package.sha256)).await;
             state.desk.send(DeskEvent::Apps);
             Ok(HttpResponse::Ok().json(&app))
         }
+        Ok(None) => Ok(super::respond::internal(&"an admin install was refused as declined")),
         Err(PutError::PublisherChanged) => Ok(HttpResponse::Conflict().json(&refused("publisherChanged"))),
         Err(PutError::InvalidBackend(e)) => {
             tracing::info!("app backend refused: {e}");
@@ -654,42 +694,33 @@ fn later(a: &str, b: &str) -> bool {
 pub async fn keep_first_party(state: &AppState) {
     static RUNNING: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
     let _one = RUNNING.lock().await;
-    let os = super::machine::os_id();
+    let systems = super::machine::systems();
     for offered in state.stacks.catalog.desk.all() {
         let package = &offered.package;
         let Some(key) = package.signed_by else { continue };
-        if !package.manifest.for_os(os) {
+        if !package.manifest.for_os(systems) {
             continue;
         }
         let id = package.manifest.id();
-        let declined = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM desk_app_declined WHERE app_id = ?").bind(&id).fetch_one(&state.db).await;
-        let installed = load(&state.db, &id).await;
-        let (declined, installed) = match (declined, installed) {
-            (Ok(d), Ok(i)) => (d > 0, i),
-            (Err(e), _) | (_, Err(e)) => {
+        let installed = match load(&state.db, &id).await {
+            Ok(i) => i,
+            Err(e) => {
                 tracing::warn!("desk app {id}: {e}");
                 continue;
             }
         };
-        if declined {
+        // Not installed, or an earlier version of the same signature. A
+        // package waiting for approval (the admin's install, not yet
+        // approved with the password) is the admin's to approve.
+        let wanted = match &installed {
+            None => true,
+            Some(i) => i.signed_by.as_deref() == Some(key) && i.sha256 != package.sha256 && later(&package.manifest.version, &i.version),
+        };
+        if !wanted {
             continue;
         }
-        let app = match installed {
-            Some(i) if i.signed_by.as_deref() != Some(key) => continue,
-            Some(i) if i.sha256 == package.sha256 && i.approved_permissions.is_some() => continue,
-            Some(i) if i.sha256 == package.sha256 => i,
-            Some(i) if !later(&package.manifest.version, &i.version) => continue,
-            _ => match put(state, package).await {
-                Ok(app) => app,
-                Err(PutError::PublisherChanged) => continue,
-                Err(PutError::InvalidBackend(e) | PutError::Internal(e)) => {
-                    tracing::error!("desk app {id}: {e}");
-                    continue;
-                }
-            },
-        };
-        match grant(&state.db, &app).await {
-            Ok(true) => {
+        match put(state, package, Install::Agent).await {
+            Ok(Some(app)) => {
                 tracing::info!("desk app {id} {} installed", app.version);
                 state.desk.send(DeskEvent::Apps);
                 Event::new(Kind::Admin, Action::Write, Outcome::Ok)
@@ -697,8 +728,9 @@ pub async fn keep_first_party(state: &AppState) {
                     .record(&state.db)
                     .await;
             }
-            Ok(false) => {}
-            Err(e) => tracing::warn!("desk app {id}: {e}"),
+            // Uninstalled by the admin.
+            Ok(None) | Err(PutError::PublisherChanged) => {}
+            Err(PutError::InvalidBackend(e) | PutError::Internal(e)) => tracing::error!("desk app {id}: {e}"),
         }
     }
 }
@@ -732,7 +764,7 @@ struct OfferedView<'a> {
 pub async fn catalog(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     require!(authz::jwt_caller(&req, &state).await);
     let offered = state.stacks.catalog.desk.all();
-    let os = super::machine::os_id();
+    let os = super::machine::systems();
     let apps: Vec<OfferedView> = offered
         .iter()
         .filter(|o| o.package.manifest.for_os(os))
@@ -750,16 +782,41 @@ pub async fn catalog(req: HttpRequest, state: web::types::State<Arc<AppState>>) 
     Ok(HttpResponse::Ok().json(&serde_json::json!({ "apps": apps })))
 }
 
-/// `POST /apps/catalog/{id}/install`: the catalog's package, installed as
-/// an upload of it is: waiting for approval.
-pub async fn install_offered(req: HttpRequest, id: web::types::Path<String>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+#[derive(Deserialize, Default)]
+#[serde(deny_unknown_fields)]
+pub struct OfferedInstall {
+    /// The package the admin looked at, and exactly what its manifest asks.
+    sha256: String,
+    permissions: Vec<String>,
+    current_password: Option<String>,
+}
+
+/// `POST /apps/catalog/{id}/install`: the catalog's package. With the
+/// password and what the admin saw (`sha256`, `permissions`), installed and
+/// approved at once, so an update never leaves the app waiting; without a
+/// body, installed as an upload is: waiting for approval.
+pub async fn install_offered(
+    req: HttpRequest,
+    id: web::types::Path<String>,
+    body: Option<web::types::Json<OfferedInstall>>,
+    state: web::types::State<Arc<AppState>>,
+) -> Result<HttpResponse, web::Error> {
     require!(authz::acting_caller(&req, &state).await);
     let Some(offered) = state.stacks.catalog.desk.get(&id) else { return Ok(not_found()) };
-    if !offered.package.manifest.for_os(super::machine::os_id()) {
+    if !offered.package.manifest.for_os(super::machine::systems()) {
         return Ok(HttpResponse::Conflict().json(&refused("notForThisSystem")));
     }
-    // Read and checked when the catalog took it.
-    install_package(&req, &state, offered.package.clone()).await
+    let Some(body) = body.map(|b| b.into_inner()) else {
+        // Read and checked when the catalog took it.
+        return install_package(&req, &state, offered.package.clone(), Install::Upload).await;
+    };
+    require!(reauth(&req, &state, body.current_password.as_deref()).await);
+    let asked: BTreeSet<&String> = offered.package.manifest.permissions.iter().collect();
+    let given: BTreeSet<&String> = body.permissions.iter().collect();
+    if body.sha256 != offered.package.sha256 || asked != given || body.permissions.len() != given.len() {
+        return Ok(HttpResponse::Conflict().json(&refused("permissionsChanged")));
+    }
+    install_package(&req, &state, offered.package.clone(), Install::Approved).await
 }
 
 pub async fn approve(

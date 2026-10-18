@@ -11,7 +11,7 @@ use std::time::{Duration, Instant};
 
 use fl_pi_llm::host::Cancel;
 use tokio::io::{AsyncBufReadExt, AsyncRead, AsyncReadExt, AsyncWriteExt, BufReader};
-use tokio::process::Command;
+use tokio::process::{Child, Command};
 use tokio::sync::mpsc;
 
 /// The longest line kept; the rest of it is dropped.
@@ -81,11 +81,10 @@ pub async fn run(spec: Spec<'_>, lines: mpsc::UnboundedSender<(Stream, String)>,
         .kill_on_drop(true);
     #[cfg(unix)]
     command.process_group(0);
-    let mut child = command.spawn()?;
-    let pid = child.id();
     // Dropped before the command ended (its caller's own timeout or cancel
     // dropped this future): the group goes too, not the leader alone.
-    let mut group = Group(pid);
+    let mut group = Group(Some(command.spawn()?));
+    let child = group.0.as_mut().expect("just spawned");
 
     let stdin = child.stdin.take();
     let password = spec.sudo_password.map(|p| format!("{p}\n"));
@@ -102,58 +101,59 @@ pub async fn run(spec: Spec<'_>, lines: mpsc::UnboundedSender<(Stream, String)>,
         let (_, _, status) = tokio::join!(out, err, child.wait());
         status
     };
-    let finished = tokio::select! {
-        status = work => {
-            let status = status?;
-            Ok(Finished { exit_code: status.code(), timed_out: false, cancelled: false, duration: started.elapsed() })
-        }
-        _ = tokio::time::sleep(spec.timeout) => {
-            stop(pid).await;
-            Ok(Finished { exit_code: None, timed_out: true, cancelled: false, duration: started.elapsed() })
-        }
-        _ = cancel.cancelled() => {
-            stop(pid).await;
-            Ok(Finished { exit_code: None, timed_out: false, cancelled: true, duration: started.elapsed() })
-        }
+    enum End {
+        Exited(std::io::Result<std::process::ExitStatus>),
+        TimedOut,
+        Cancelled,
+    }
+    let end = tokio::select! {
+        status = work => End::Exited(status),
+        _ = tokio::time::sleep(spec.timeout) => End::TimedOut,
+        _ = cancel.cancelled() => End::Cancelled,
     };
-    group.0 = None;
-    finished
+    let (timed_out, cancelled) = match end {
+        End::Exited(status) => {
+            // Ended on its own and reaped: nothing left to stop.
+            group.0 = None;
+            let status = status?;
+            return Ok(Finished { exit_code: status.code(), timed_out: false, cancelled: false, duration: started.elapsed() });
+        }
+        End::TimedOut => (true, false),
+        End::Cancelled => (false, true),
+    };
+    if let Some(leader) = group.0.take() {
+        stop(leader).await;
+    }
+    Ok(Finished { exit_code: None, timed_out, cancelled, duration: started.elapsed() })
 }
 
-/// The process group a [run] leads, ended when the run is dropped before it
-/// finished: `kill_on_drop` reaches the leader alone (`sudo`, the shell),
-/// and what they started would keep running.
-struct Group(Option<u32>);
+/// The process group a [run] leads, by its leader, ended when the run is
+/// dropped before it finished: `kill_on_drop` reaches the leader alone
+/// (`sudo`, the shell), and what they started would keep running.
+struct Group(Option<Child>);
 
 impl Drop for Group {
     fn drop(&mut self) {
-        let Some(pid) = self.0.take() else { return };
-        #[cfg(unix)]
-        {
-            let pid = pid as i32;
-            // SAFETY: a signal to a process group this process created; one
-            // already gone answers ESRCH.
-            unsafe {
-                libc::kill(-pid, libc::SIGTERM);
+        let Some(leader) = self.0.take() else { return };
+        match tokio::runtime::Handle::try_current() {
+            Ok(rt) => {
+                rt.spawn(stop(leader));
             }
-            std::thread::spawn(move || {
-                std::thread::sleep(Duration::from_secs(3));
-                // SAFETY: as above.
-                unsafe {
-                    libc::kill(-pid, libc::SIGKILL);
+            // No runtime to wait on: the leader goes now, with the group, and
+            // is reaped when dropped.
+            Err(_) => {
+                #[cfg(unix)]
+                if let Some(pid) = leader.id() {
+                    // SAFETY: a signal to the process group this process
+                    // created; its leader is not reaped yet, so the id is
+                    // still that group's.
+                    unsafe {
+                        libc::kill(-(pid as i32), libc::SIGKILL);
+                    }
                 }
-            });
+                drop(leader);
+            }
         }
-        #[cfg(windows)]
-        {
-            let _ = std::process::Command::new("taskkill")
-                .args(["/T", "/F", "/PID", &pid.to_string()])
-                .stdout(Stdio::null())
-                .stderr(Stdio::null())
-                .spawn();
-        }
-        #[cfg(not(any(unix, windows)))]
-        let _ = pid;
     }
 }
 
@@ -184,26 +184,31 @@ fn powershell(script: &str) -> Command {
     c
 }
 
-/// Ends the process group [pid] leads: what the shell started goes with it.
-async fn stop(pid: Option<u32>) {
+/// Ends the process group [leader] leads: what the shell started goes with it.
+async fn stop(mut leader: Child) {
+    let pid = leader.id();
     #[cfg(unix)]
     if let Some(pid) = pid {
-        // SAFETY: a signal to a process group this process created.
-        unsafe {
-            libc::kill(-(pid as i32), libc::SIGTERM);
-        }
         let pid = pid as i32;
+        // SAFETY: a signal to the process group this process created.
+        unsafe {
+            libc::kill(-pid, libc::SIGTERM);
+        }
+        // The leader stays unreaped until the group is sent SIGKILL: a
+        // process not yet waited for keeps its id, so the group's id cannot
+        // have been given to another group meanwhile.
         tokio::spawn(async move {
             tokio::time::sleep(Duration::from_secs(3)).await;
             // SAFETY: as above; a group already gone answers ESRCH.
             unsafe {
                 libc::kill(-pid, libc::SIGKILL);
             }
+            let _ = leader.wait().await;
         });
     }
     // The tree under PowerShell: Windows has no process groups to signal.
     // Waited for: the tree is found through its root, which `kill_on_drop`
-    // ends as soon as this returns.
+    // ends as soon as the leader is dropped.
     #[cfg(windows)]
     if let Some(pid) = pid {
         let _ = Command::new("taskkill")
@@ -212,9 +217,10 @@ async fn stop(pid: Option<u32>) {
             .stderr(Stdio::null())
             .status()
             .await;
+        let _ = leader.wait().await;
     }
     #[cfg(not(any(unix, windows)))]
-    let _ = pid;
+    let _ = (pid, &mut leader);
 }
 
 async fn pump(reader: impl AsyncRead + Unpin, stream: Stream, tx: mpsc::UnboundedSender<(Stream, String)>) {

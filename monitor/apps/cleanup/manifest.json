@@ -1,7 +1,7 @@
 {
   "publisher": "serverbox",
   "name": "cleanup",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "api": 2,
   "kind": "wasm",
   "title": {
@@ -58,5 +58,8 @@
   "min_size": {
     "width": 360,
     "height": 400
-  }
+  },
+  "os": [
+    "linux"
+  ]
 }

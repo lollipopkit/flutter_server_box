@@ -23,7 +23,7 @@ import type { IconTone } from './lk/AppIcon.svelte'
 import type { MenuEntry } from './lk/Menu.svelte'
 import { AppData } from './appData'
 import { AgentStore } from './agent/agentStore.svelte'
-import { registerWebApps } from './webapps/register'
+import { WebApps } from './webapps/register'
 
 /// `?app=<id>` in the page's address: an app to open once the desk is up
 /// (the ServerBox app opens an installed app in the browser this way). Taken
@@ -112,7 +112,7 @@ export class Desk {
   paneDrop = $state<PaneDrop | null>(null)
 
   #abort = new AbortController()
-  #offWebApps: (() => void) | null = null
+  #webApps: WebApps | null = null
   #offStackApps: (() => void) | null = null
   #intents = new SvelteMap<string, Intent[]>()
 
@@ -268,13 +268,14 @@ export class Desk {
     }
   }
 
-  /// Reads the installed apps again (one approved or removed in Settings).
+  /// Reads the installed apps again (one installed, approved, updated or
+  /// removed, here, elsewhere or by the agent); unchanged ones keep their
+  /// windows.
   async reloadWebApps() {
-    if (!this.caps?.features?.includes('desk')) return
+    if (!this.caps?.features?.includes('desk') || this.#abort.signal.aborted) return
     try {
-      const off = await registerWebApps(this.entry, () => this.#offWebApps?.())
-      if (this.#abort.signal.aborted) off()
-      else this.#offWebApps = off
+      this.#webApps ??= new WebApps(this.entry)
+      await this.#webApps.reload()
     } catch {
       // The desk works without them; they come back on the next start.
     }
@@ -372,8 +373,8 @@ export class Desk {
   async stop() {
     this.#abort.abort()
     this.agent?.stop()
-    this.#offWebApps?.()
-    this.#offWebApps = null
+    this.#webApps?.close()
+    this.#webApps = null
     this.#offStackApps?.()
     this.#offStackApps = null
     this.prefs?.close()

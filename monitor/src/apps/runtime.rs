@@ -332,6 +332,13 @@ pub struct Grant {
 }
 
 impl Grant {
+    /// What the agent knows of the machine's own state (its web apps, their
+    /// folders, what it protects): for an app granted to act on the machine
+    /// (`process` or `root`); another gets nothing of it.
+    fn knows_machine(&self) -> bool {
+        self.may("process").is_ok() || self.may("root").is_ok()
+    }
+
     fn may(&self, permission: &str) -> Result<(), AppError> {
         if !self.permissions.iter().any(|p| p == permission) {
             return Err(AppError::PermissionDenied(permission.into()));
@@ -524,11 +531,18 @@ impl sbm::app::host::Host for Ctx {
 
 impl sbm::app::agent::Host for Ctx {
     async fn holds_state(&mut self, path: String) -> bool {
+        // Not told: everything holds state, so nothing is offered to clean.
+        if !self.grant.knows_machine() {
+            return true;
+        }
         let canonical = std::fs::canonicalize(&path).unwrap_or_else(|_| Path::new(&path).to_path_buf());
         self.grant.state.remote_access.fs.roots.check_mutable(&canonical).is_err()
     }
 
     async fn web_apps(&mut self) -> Vec<sbm::app::agent::WebApp> {
+        if !self.grant.knows_machine() {
+            return Vec::new();
+        }
         let state = self.grant.state.clone();
         let rows = crate::stacks::store::all(&state.db).await.unwrap_or_default();
         rows.into_iter()
@@ -542,10 +556,16 @@ impl sbm::app::agent::Host for Ctx {
     }
 
     async fn shared_dir(&mut self) -> String {
+        if !self.grant.knows_machine() {
+            return String::new();
+        }
         self.grant.state.stacks.shared().to_string_lossy().into_owned()
     }
 
     async fn stacks(&mut self) -> Vec<sbm::app::agent::StackState> {
+        if !self.grant.knows_machine() {
+            return Vec::new();
+        }
         let state = self.grant.state.clone();
         let rows = crate::stacks::store::all(&state.db).await.unwrap_or_default();
         rows.into_iter()
@@ -562,6 +582,9 @@ impl sbm::app::agent::Host for Ctx {
     }
 
     async fn models_changed(&mut self) {
+        if !self.grant.knows_machine() {
+            return;
+        }
         crate::inference::refresh_providers(&self.grant.state);
     }
 
@@ -581,6 +604,9 @@ impl sbm::app::agent::Host for Ctx {
     }
 
     async fn stack_leftovers(&mut self) -> Vec<(String, String)> {
+        if !self.grant.knows_machine() {
+            return Vec::new();
+        }
         let state = self.grant.state.clone();
         let installed: Vec<String> = crate::stacks::store::all(&state.db).await.map(|rows| rows.into_iter().map(|r| r.id).collect()).unwrap_or_default();
         state.stacks.leftovers(&installed).into_iter().map(|(id, path)| (id, path.to_string_lossy().into_owned())).collect()

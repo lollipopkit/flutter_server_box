@@ -36,7 +36,8 @@ export function stackAppSpec(app: StackApp): AppSpec {
 }
 
 /// Adds the catalog's apps; the returned function takes them away. [before]
-/// runs once the list has arrived, just before adding (see `registerWebApps`).
+/// runs once the list has arrived, just before adding: the desk takes away
+/// what it added last, so a reload never leaves both.
 export async function registerStackApps(before: () => void = () => {}): Promise<() => void> {
   const { apps } = await api.listStacks()
   before()
