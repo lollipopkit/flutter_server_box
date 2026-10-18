@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { api, getCapabilitiesFor, loginTo } from '../lib/api'
+import { api, getCapabilitiesFor, getStatusFor, loginTo } from '../lib/api'
 import { PROTOCOL, PROTOCOL_HEADER } from '../lib/protocol'
 import { servers } from '../lib/servers.svelte'
 
@@ -28,8 +28,12 @@ describe('protocol', () => {
     for (const headers of sent) expect(headers.get(PROTOCOL_HEADER)).toBe(String(PROTOCOL))
   })
 
-  it('a 426 says the panel is the one to update', async () => {
+  it('a 426 says the panel is the one to update, whichever way the request went', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response('{"error":"client_too_old"}', { status: 426 })))
-    await expect(api.getSettings()).rejects.toMatchObject({ status: 426, code: 'client_too_old' })
+    const tooOld = { status: 426, code: 'client_too_old' }
+    await expect(api.getSettings()).rejects.toMatchObject(tooOld)
+    await expect(getCapabilitiesFor(servers.current!)).rejects.toMatchObject(tooOld)
+    await expect(getStatusFor(servers.current!)).rejects.toMatchObject(tooOld)
+    await expect(loginTo('https://agent.example', { username: 'admin', password: 'pw' })).rejects.toMatchObject(tooOld)
   })
 })

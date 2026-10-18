@@ -144,11 +144,7 @@ export class ApiError extends Error {
 /// account and role ones `{"error": "<code>", "message": "..."}`. A body with
 /// a `message` is the second, and its `error` is the code.
 async function errorFrom(res: Response, fallback: string): Promise<ApiError> {
-  // A panel hosted away from the agent can be older than it; one the agent
-  // serves never is.
-  if (res.status === CLIENT_TOO_OLD) {
-    return new ApiError('This panel is older than the agent supports; reload it or update where it is hosted.', res.status, 'client_too_old')
-  }
+  if (res.status === CLIENT_TOO_OLD) return clientTooOld()
   try {
     const body = (await res.json()) as { error?: string; message?: string } & Record<string, unknown>
     if (body.message) return new ApiError(body.message, res.status, body.error, body)
@@ -157,6 +153,16 @@ async function errorFrom(res: Response, fallback: string): Promise<ApiError> {
     // Non-JSON error body: keep the fallback message
   }
   return new ApiError(fallback, res.status)
+}
+
+/// The agent no longer answers this panel. A panel hosted away from the agent
+/// can be older than it; one the agent serves never is.
+function clientTooOld(): ApiError {
+  return new ApiError(
+    'This panel is older than the agent supports; reload it or update where it is hosted.',
+    CLIENT_TOO_OLD,
+    'client_too_old',
+  )
 }
 
 function requestSignal(signal?: AbortSignal, timeoutMs = TIMEOUT_MS): AbortSignal {
@@ -247,6 +253,7 @@ export async function getCapabilitiesFor(entry: ServerEntry, signal?: AbortSigna
     headers: { Authorization: `Bearer ${entry.token}`, ...protocolHeaders },
     signal: requestSignal(signal),
   })
+  if (res.status === CLIENT_TOO_OLD) throw clientTooOld()
   if (!res.ok) throw new ApiError('Failed to fetch capabilities')
   return res.json() as Promise<Capabilities>
 }
@@ -261,6 +268,7 @@ export async function getStatusFor(entry: ServerEntry, signal?: AbortSignal): Pr
     headers: { Authorization: `Bearer ${entry.token}`, ...protocolHeaders },
     signal: requestSignal(signal),
   })
+  if (res.status === CLIENT_TOO_OLD) throw clientTooOld()
   if (!res.ok) throw new ApiError('Failed to fetch status')
   return res.json() as Promise<StatusResponse>
 }
@@ -291,6 +299,7 @@ export async function loginTo(url: string, credentials: LoginRequest): Promise<L
   } catch {
     throw new ApiError('Login failed')
   }
+  if (res.status === CLIENT_TOO_OLD) throw clientTooOld()
   if (!res.ok) {
     let message = 'Login failed'
     try {
