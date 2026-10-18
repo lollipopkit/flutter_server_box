@@ -1,3 +1,8 @@
+# Codegen 2.13 names the Android/iOS library from `cargo metadata` on
+# rust_root. If that fails, the Dart loader stem becomes UNKNOWN and the
+# app dlopens libUNKNOWN.so. Run generate with the toolchain in
+# crates/sbm_ffi/rust-toolchain.toml:
+#   RUSTUP_TOOLCHAIN=1.98.1 flutter_rust_bridge_codegen generate
 rust_input: crate::api
 rust_root: crates/sbm_ffi/
 dart_output: lib/src/rust
