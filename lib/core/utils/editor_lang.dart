@@ -69,6 +69,13 @@ const _powershellLikeSuffixes = {
   'psd1',
 };
 
+/// Markdown names that [ProgLang.markdown] does not list (`md`, `markdown`).
+const _markdownLikeSuffixes = {
+  'mdown',
+  'mkd',
+  'mdwn',
+};
+
 /// Whole filenames, lowercased. `.bashrc` has its only dot at index 0, so
 /// suffix matching never sees `bashrc`.
 const _langByFileName = {
@@ -121,6 +128,12 @@ ProgLang? editorLangFor(String? path) {
   if (_xmlLikeSuffixes.contains(ext)) return ProgLang.xml;
   if (_shellLikeSuffixes.contains(ext)) return ProgLang.shell;
   if (_powershellLikeSuffixes.contains(ext)) return ProgLang.powershell;
+  if (_markdownLikeSuffixes.contains(ext)) return ProgLang.markdown;
   if (ext == 'env') return ProgLang.properties;
   return ProgLang.parseFileName('file.$ext');
+}
+
+/// Whether the file editor should offer a rendered Markdown view.
+bool editorIsMarkdown({ProgLang? lang, String? path}) {
+  return (lang ?? editorLangFor(path)) == ProgLang.markdown;
 }

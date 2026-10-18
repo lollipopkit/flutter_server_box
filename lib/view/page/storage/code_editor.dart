@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:computer/computer.dart';
@@ -7,12 +9,13 @@ import 'package:flutter_highlight/themes/monokai.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:re_editor/re_editor.dart';
 import 'package:server_box/core/utils/editor_format.dart';
+import 'package:server_box/core/utils/editor_lang.dart';
 
 const _kCloseAfterSave = false;
 
 /// The file editor used by local storage, SFTP and raw settings.
 ///
-/// Same as fl_lib's [EditorPage], with a Format action.
+/// Same as fl_lib's [EditorPage], with Format and a Markdown preview.
 class FileEditorPage extends StatefulWidget {
   final EditorPageArgs? args;
 
@@ -31,16 +34,17 @@ class _FileEditorPageState extends State<FileEditorPage> {
   final _focusNode = FocusNode();
 
   final _controller = CodeLineEditingController();
-  late final _findController = CodeFindController(_controller);
+  late final CodeFindController _findController;
   late Map<String, TextStyle> _codeTheme;
   late final _modesMap = _parseModesMap;
 
   var _saved = false;
+  var _previewing = false;
 
   @override
   void dispose() {
-    _controller.dispose();
     _findController.dispose();
+    _controller.dispose();
     _focusNode.dispose();
     super.dispose();
   }
@@ -48,6 +52,8 @@ class _FileEditorPageState extends State<FileEditorPage> {
   @override
   void initState() {
     super.initState();
+    _findController = CodeFindController(_controller);
+    _previewing = _isMarkdown;
     _setupCtrl();
   }
 
@@ -60,13 +66,15 @@ class _FileEditorPageState extends State<FileEditorPage> {
     } else {
       _codeTheme = widget.args?.lightTheme?.theme ?? a11yLightTheme;
     }
-    _focusNode.requestFocus();
+    if (!_previewing) _focusNode.requestFocus();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _codeTheme['root']?.backgroundColor,
+      backgroundColor: _previewing
+          ? Theme.of(context).colorScheme.surface
+          : _codeTheme['root']?.backgroundColor,
       appBar: _buildAppBar(),
       body: _buildBody(),
     );
@@ -76,7 +84,7 @@ class _FileEditorPageState extends State<FileEditorPage> {
     return CustomAppBar(
       title: TwoLineText(
         up: widget.args?.title ?? widget.args?.path?.getFileName() ?? libL10n.unknown,
-        down: libL10n.editor,
+        down: _previewing ? libL10n.preview : libL10n.editor,
       ),
       leading: IconButton(
         icon: const Icon(Icons.arrow_back),
@@ -84,16 +92,24 @@ class _FileEditorPageState extends State<FileEditorPage> {
         onPressed: _onPop,
       ),
       actions: [
-        IconButton(
-          icon: const Icon(Icons.search),
-          tooltip: libL10n.search,
-          onPressed: () => _findController.findMode(),
-        ),
-        IconButton(
-          icon: const Icon(Icons.format_align_left),
-          tooltip: libL10n.format,
-          onPressed: _onFormat,
-        ),
+        if (_isMarkdown)
+          IconButton(
+            icon: Icon(_previewing ? Icons.edit_outlined : Icons.visibility_outlined),
+            tooltip: _previewing ? libL10n.edit : libL10n.preview,
+            onPressed: _toggleMarkdownPreview,
+          ),
+        if (!_previewing) ...[
+          IconButton(
+            icon: const Icon(Icons.search),
+            tooltip: libL10n.search,
+            onPressed: () => _findController.findMode(),
+          ),
+          IconButton(
+            icon: const Icon(Icons.format_align_left),
+            tooltip: libL10n.format,
+            onPressed: _onFormat,
+          ),
+        ],
         IconButton(
           icon: const Icon(Icons.save),
           tooltip: libL10n.save,
@@ -104,6 +120,7 @@ class _FileEditorPageState extends State<FileEditorPage> {
   }
 
   Widget _buildBody() {
+    if (_previewing) return _buildMarkdownPreview();
     final bodyMedium = Theme.of(context).textTheme.bodyMedium;
     return CodeEditor(
       style: CodeEditorStyle(
@@ -136,16 +153,27 @@ class _FileEditorPageState extends State<FileEditorPage> {
           widget.args?.toolbarController ?? (isMobile ? AdaptiveSelectionToolbarController() : null),
     );
   }
-}
 
-extension on _FileEditorPageState {
+  Widget _buildMarkdownPreview() {
+    return ColoredBox(
+      color: Theme.of(context).colorScheme.surface,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        child: SimpleMarkdown(
+          data: _controller.text,
+          selectable: true,
+        ),
+      ),
+    );
+  }
+
   Future<void> _setupCtrl() async {
     final path = widget.args?.path;
     final text = widget.args?.text;
     if (path != null) {
       final String? code;
       try {
-        code = await Computer.shared.startNoParam(() => editorReadUtf8(path));
+        code = await Computer.shared.startNoParam(() => _readUtf8(path));
       } catch (e, s) {
         Loggers.app.warning('Editor: read $path', e, s);
         _closeWith(libL10n.fail);
@@ -157,20 +185,39 @@ extension on _FileEditorPageState {
       }
       if (!mounted) return;
       _controller.text = code;
+      // [SimpleMarkdown] is not a listener of the controller.
+      if (_previewing) setState(() {});
     } else if (text != null) {
       _controller.text = text;
     }
   }
 
+  void _toggleMarkdownPreview() {
+    setState(() {
+      _previewing = !_previewing;
+      if (_previewing) {
+        _focusNode.unfocus();
+      } else {
+        _focusNode.requestFocus();
+      }
+    });
+  }
+}
+
+extension on _FileEditorPageState {
   void _closeWith(String message) {
     if (!mounted) return;
     Toast.show(message);
     context.pop();
   }
 
+  ProgLang? get _editorLang =>
+      widget.args?.lang ?? editorLangFor(widget.args?.path);
+
+  bool get _isMarkdown => editorIsMarkdown(lang: widget.args?.lang, path: widget.args?.path);
+
   Map<String, CodeHighlightThemeMode> get _parseModesMap {
-    final lang = widget.args?.lang ?? ProgLang.parseFileName(widget.args?.path);
-    return lang?.editorLangs ?? ProgLang.defaultLangModeMap;
+    return _editorLang?.editorLangs ?? ProgLang.defaultLangModeMap;
   }
 
   void _onFormat() {
@@ -206,7 +253,7 @@ extension on _FileEditorPageState {
       _saved = true;
 
       final pop_ = widget.args?.closeAfterSave ?? _kCloseAfterSave;
-      if (pop_) Future.microtask(_pop);
+      if (pop_) unawaited(Future.microtask(_pop));
       return;
     }
 
@@ -215,7 +262,7 @@ extension on _FileEditorPageState {
     _saved = true;
 
     final pop_ = widget.args?.closeAfterSave ?? _kCloseAfterSave;
-    if (pop_) Future.microtask(_pop);
+    if (pop_) unawaited(Future.microtask(_pop));
   }
 
   void _pop() async {
@@ -254,5 +301,19 @@ extension on _FileEditorPageState {
       _onSave();
     }
     if (shouldSave != null) contextSafe?.pop();
+  }
+}
+
+/// The file as UTF-8 text, or null when it is not text.
+///
+/// Top-level so it can run in a worker. Bytes and an explicit decode rather
+/// than `readAsString`, so "not text" is an answer instead of the same
+/// `FileSystemException` a missing file throws.
+String? _readUtf8(String path) {
+  final bytes = File(path).readAsBytesSync();
+  try {
+    return utf8.decode(bytes);
+  } on FormatException {
+    return null;
   }
 }
