@@ -34,7 +34,7 @@ class _FileEditorPageState extends State<FileEditorPage> {
   final _focusNode = FocusNode();
 
   final _controller = CodeLineEditingController();
-  late final _findController = CodeFindController(_controller);
+  late final CodeFindController _findController;
   late Map<String, TextStyle> _codeTheme;
   late final _modesMap = _parseModesMap;
 
@@ -43,8 +43,8 @@ class _FileEditorPageState extends State<FileEditorPage> {
 
   @override
   void dispose() {
-    _controller.dispose();
     _findController.dispose();
+    _controller.dispose();
     _focusNode.dispose();
     super.dispose();
   }
@@ -52,6 +52,7 @@ class _FileEditorPageState extends State<FileEditorPage> {
   @override
   void initState() {
     super.initState();
+    _findController = CodeFindController(_controller);
     _previewing = _isMarkdown;
     _setupCtrl();
   }
@@ -165,9 +166,7 @@ class _FileEditorPageState extends State<FileEditorPage> {
       ),
     );
   }
-}
 
-extension on _FileEditorPageState {
   Future<void> _setupCtrl() async {
     final path = widget.args?.path;
     final text = widget.args?.text;
@@ -193,6 +192,19 @@ extension on _FileEditorPageState {
     }
   }
 
+  void _toggleMarkdownPreview() {
+    setState(() {
+      _previewing = !_previewing;
+      if (_previewing) {
+        _focusNode.unfocus();
+      } else {
+        _focusNode.requestFocus();
+      }
+    });
+  }
+}
+
+extension on _FileEditorPageState {
   void _closeWith(String message) {
     if (!mounted) return;
     Toast.show(message);
@@ -206,17 +218,6 @@ extension on _FileEditorPageState {
 
   Map<String, CodeHighlightThemeMode> get _parseModesMap {
     return _editorLang?.editorLangs ?? ProgLang.defaultLangModeMap;
-  }
-
-  void _toggleMarkdownPreview() {
-    setState(() {
-      _previewing = !_previewing;
-      if (_previewing) {
-        _focusNode.unfocus();
-      } else {
-        _focusNode.requestFocus();
-      }
-    });
   }
 
   void _onFormat() {
