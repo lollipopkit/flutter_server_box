@@ -599,7 +599,7 @@ extension _App on _AppSettingsPageState {
     /// Encode [map] to String with indent `\t`
     final text = jsonIndentEncoder.convert(mapForEditor);
     final editorFont = _setting.editorFontFamily.fetch();
-    await EditorPage.route.go(
+    await FileEditorPage.route.go(
       context,
       target: _SettingsWidth.pageTarget(context),
       args: EditorPageArgs(
