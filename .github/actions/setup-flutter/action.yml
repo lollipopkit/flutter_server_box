@@ -22,3 +22,8 @@ runs:
       with:
         channel: stable
         flutter-version: 3.47.5
+        # The SDK and the default pub cache. The key includes this version and
+        # `pubspec.lock`; a hit is the same bytes a cold install would fetch,
+        # and a key that already exists is not written again, so a pull
+        # request that did not change the lockfile adds nothing to the 10 GB.
+        cache: true
