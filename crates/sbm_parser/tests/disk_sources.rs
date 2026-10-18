@@ -103,6 +103,47 @@ fn df_alone_still_parses() {
     assert_eq!(disks[0].fs_type.as_deref(), Some("ext4"));
 }
 
+/// `df` under `LANG=zh_CN.UTF-8` (#1747): a translated header, with and
+/// without the type column. Both used to be dropped whole, which left the
+/// agent with a disk total of 0 and its disk rule never evaluated.
+#[test]
+fn a_translated_header_is_read_like_any_other() {
+    let typed = "文件系统       类型       1K的块     已用     可用 已用% 挂载点\n\
+        udev           devtmpfs   910160        0   910160    0% /dev\n\
+        /dev/vda3      ext4     61549628 46179808 12639780   79% /\n\
+        /dev/loop0     squashfs    75776    75776        0  100% /snap/core22/2955\n\
+        /dev/vda2      vfat       192559    12045   180514    7% /boot/efi\n";
+    let disks = linux::parse_disk(typed);
+    let root = find(&disks, "/").expect("root");
+    assert_eq!(root.fs_type.as_deref(), Some("ext4"));
+    assert_eq!((root.size, root.used), (61549628, 46179808));
+    assert!(find(&disks, "/snap/core22/2955").is_none(), "{disks:?}");
+
+    let plain = "文件系统         1K的块     已用     可用 已用% 挂载点\n\
+        /dev/vda3      61549628 46179808 12639780   79% /\n\
+        /dev/vda2        192559    12045   180514    7% /boot/efi\n";
+    let disks = linux::parse_disk(&output("", plain));
+    let root = find(&disks, "/").expect("root");
+    assert_eq!(root.fs_type, None);
+    assert_eq!(root.size, 61549628);
+}
+
+/// An English header decides for the whole table. macOS names autofs maps
+/// with a space, and rows like these outnumbering the disks once read as a
+/// type column, which took the size off the root row and dropped it.
+#[test]
+fn a_spaced_source_is_not_a_type_column() {
+    let df = "Filesystem     1024-blocks      Used Available Capacity iused ifree %iused  Mounted on\n\
+        /dev/disk3s1s1   482797652  10759236 172384600     6%  425798 1723846000    0%   /\n\
+        map auto_home            0         0         0   100%       0          0     -   /System/Volumes/Data/home\n\
+        map -hosts               0         0         0   100%       0          0     -   /net\n\
+        map -static              0         0         0   100%       0          0     -   /Volumes/static\n";
+    let disks = linux::parse_disk(df);
+    let root = find(&disks, "/").expect("root");
+    assert_eq!(root.fs_type, None);
+    assert_eq!(root.size, 482797652);
+}
+
 /// ZFS: every dataset reports its own used space and the pool's free space.
 /// Summed per dataset, a 1 TB pool with three datasets read as 3 TB.
 #[test]

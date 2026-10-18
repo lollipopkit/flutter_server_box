@@ -267,6 +267,11 @@ pub struct ScriptOptions {
 /// directory goes with the move, which is also how a deleted command stops
 /// running — there is nothing else to remember to remove.
 ///
+/// A backup with no directory beside it is an earlier install interrupted
+/// between its two moves, and the set the status script is reading. It is
+/// moved back before anything is deleted, so this install being interrupted
+/// in turn leaves that set in place.
+///
 /// Contents travel base64-encoded. A custom command is arbitrary text that a
 /// user typed, and a heredoc carrying it verbatim would end wherever the text
 /// happened to say so.
@@ -280,6 +285,8 @@ pub fn install_custom_cmds_script(system: SystemType, cmds: &[(u32, String, Stri
                 "$ErrorActionPreference = 'Stop'\n\
                  $dir = {CUSTOM_CMD_DIR_WINDOWS}\n\
                  $tmp = \"$dir.new\"\n\
+                 $bak = \"$dir.bak\"\n\
+                 if (-not (Test-Path $dir) -and (Test-Path $bak)) {{ Rename-Item $bak $dir -Force }}\n\
                  if (Test-Path $tmp) {{ Remove-Item -Recurse -Force $tmp }}\n\
                  New-Item -ItemType Directory -Force -Path $tmp | Out-Null\n"
             );
@@ -292,8 +299,7 @@ pub fn install_custom_cmds_script(system: SystemType, cmds: &[(u32, String, Stri
                 ));
             }
             out.push_str(
-                "$bak = \"$dir.bak\"\n\
-                 if (Test-Path $bak) { Remove-Item -Recurse -Force $bak }\n\
+                "if (Test-Path $bak) { Remove-Item -Recurse -Force $bak }\n\
                  if (Test-Path $dir) { Rename-Item $dir $bak -Force }\n\
                  try {\n\
                  \x20 Move-Item $tmp $dir -ErrorAction Stop\n\
@@ -312,6 +318,7 @@ pub fn install_custom_cmds_script(system: SystemType, cmds: &[(u32, String, Stri
                  d=\"{CUSTOM_CMD_DIR_UNIX}\"\n\
                  t=\"$d.new\"\n\
                  b=\"$d.bak\"\n\
+                 if [ ! -e \"$d\" ] && [ -e \"$b\" ]; then mv \"$b\" \"$d\"; fi\n\
                  rm -rf \"$t\" \"$b\"\n\
                  mkdir -p \"$t\"\n"
             );
@@ -801,7 +808,9 @@ fn unix_header(build_number: &str) -> String {
 # Script for ServerBox app v1.0.{build_number}
 # DO NOT delete this file while app is running
 
-export LANG=en_US.UTF-8
+# LC_ALL, not LANG: a session's own LC_ALL or LC_MESSAGES outranks LANG, and
+# the parsers read English output.
+export LC_ALL=en_US.UTF-8
 
 # If macSign & bsdSign are both empty, then it's linux
 macSign=$(uname -a 2>&1 | grep \"Darwin\")

@@ -105,10 +105,17 @@ fn run_lenient(cmd: &str, args: &[&str]) -> String {
     run_command_with_timeout(command(cmd, args), COMMAND_TIMEOUT, true)
 }
 
+const NATIVE_LOCALE: &str = "C.UTF-8";
+
+/// `LC_ALL` is fixed because the parsers read English output (`df`'s header,
+/// `uptime`'s load average) and a service inherits the machine's language.
+/// `C.UTF-8` rather than `C`, so a mount path outside ASCII is printed as is;
+/// where it is not installed, the C library falls back to `C`.
 fn command(cmd: &str, args: &[&str]) -> Command {
     let mut command = Command::new(cmd);
     command
         .args(args)
+        .env("LC_ALL", NATIVE_LOCALE)
         .stdin(Stdio::null())
         .stderr(Stdio::null());
     command
@@ -334,12 +341,13 @@ pub fn block_devices() -> String {
     run("lsblk", &linux::LSBLK_ARGS)
 }
 
-/// `df -kT`, or `df -k` where `-T` is not understood (busybox): told apart by
-/// the header rather than the status, and both kept whatever the status —
-/// GNU df exits 1 when any one mount is unreadable and prints the rest anyway.
+/// `df -kT`, or `df -k` where `-T` is not understood (busybox, which prints
+/// its usage to stderr and nothing to stdout): told apart by the output rather
+/// than the status, and both kept whatever the status — GNU df exits 1 when
+/// any one mount is unreadable and prints the rest anyway.
 fn df() -> String {
     let typed = run_lenient("df", &["-kT"]);
-    if typed.lines().next().is_some_and(|h| h.contains("Type")) {
+    if !typed.trim().is_empty() {
         typed
     } else {
         run_lenient("df", &["-k"])
@@ -416,6 +424,18 @@ mod tests {
         let root = find(&status.disks, "/").expect("a root filesystem");
         assert!(root.fs_type.is_some(), "{root:?}");
         assert!(root.size > 0, "{root:?}");
+    }
+
+    /// #1747: under the service's `LANG=zh_CN.UTF-8`, `df` printed a
+    /// translated header and the disk list came back empty.
+    #[test]
+    fn a_native_command_runs_in_a_fixed_locale() {
+        let command = command("df", &["-kT"]);
+        let locale = command
+            .get_envs()
+            .find(|(key, _)| *key == "LC_ALL")
+            .and_then(|(_, value)| value);
+        assert_eq!(locale, Some(std::ffi::OsStr::new(NATIVE_LOCALE)));
     }
 
     #[test]

@@ -129,6 +129,42 @@ fn custom_cmd_installer_replaces_the_directory() {
     }
 }
 
+/// An earlier install stopped between its two moves leaves the backup as the
+/// only set, and the one the status script reads. Another install that stops
+/// early must leave it there rather than delete it first.
+#[cfg(unix)]
+#[test]
+fn custom_cmd_installer_keeps_an_interrupted_installs_backup() {
+    use std::process::Command;
+    let home = std::env::temp_dir().join(format!("sbm-custom-cmds-{}", std::process::id()));
+    let dir = home.join(".config/server_box/custom_cmds");
+    let bak = dir.with_extension("bak");
+    let _ = std::fs::remove_dir_all(&home);
+    std::fs::create_dir_all(&bak).unwrap();
+    let kept = script::custom_cmd_file_name(100, "kept");
+    std::fs::write(bak.join(&kept), "uptime").unwrap();
+    // `base64` failing stops the install while it writes the new set.
+    let bin = home.join("bin");
+    std::fs::create_dir_all(&bin).unwrap();
+    std::fs::write(bin.join("base64"), "#!/bin/sh\nexit 1\n").unwrap();
+    Command::new("chmod").arg("+x").arg(bin.join("base64")).status().unwrap();
+
+    let install = script::install_custom_cmds_script(
+        SystemType::Linux,
+        &[(100, "new".to_string(), "df -h".to_string())],
+    );
+    let status = Command::new("sh")
+        .args(["-c", &install])
+        .env("HOME", &home)
+        .env("PATH", format!("{}:{}", bin.display(), std::env::var("PATH").unwrap_or_default()))
+        .status()
+        .unwrap();
+
+    assert!(!status.success());
+    assert!(dir.join(&kept).is_file(), "the earlier set is back in place");
+    let _ = std::fs::remove_dir_all(&home);
+}
+
 /// The directory does not follow the script.
 ///
 /// The script's own directory defaults to a temp one and is swapped at runtime
@@ -471,7 +507,7 @@ fn script_headers() {
     assert!(unix.starts_with("#!/bin/sh"));
     assert!(unix.contains("# Script for ServerBox app v1.0.1466"));
     assert!(unix.contains("DO NOT delete this file"));
-    assert!(unix.contains("export LANG=en_US.UTF-8"));
+    assert!(unix.contains("export LC_ALL=en_US.UTF-8"));
 }
 
 #[test]
