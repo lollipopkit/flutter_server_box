@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:fl_lib/theme.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/data/model/app/theme_style.dart';
 
 /// `docs/schemas/fsbt-manifest.schema.json` is what an editor reads while a
 /// manifest is typed; the parser is what an install runs. Nothing else holds
@@ -99,11 +100,21 @@ void main() {
     expect(images['additionalProperties'], false);
     expect(images['properties'].keys.toSet(), ThemePackages.iconKeys);
     expect(
+      _map(images['patternProperties']).keys.toSet(),
+      {ThemeFileIcon.keyPattern.pattern},
+    );
+    expect(
       _map(properties['icons']['properties']['colors'])['properties']
           .keys
           .toSet(),
       ThemePackages.iconKeys,
       reason: 'a color for a key no image carries is refused anyway',
+    );
+    expect(
+      _map(_map(properties['icons']['properties']['colors'])['patternProperties'])
+          .keys
+          .toSet(),
+      {ThemeFileIcon.keyPattern.pattern},
     );
     for (final entry in _map(images['properties']).entries) {
       final key = entry.key;

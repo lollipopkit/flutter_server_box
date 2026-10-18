@@ -87,11 +87,13 @@ expected (`backgroundColor = "surfaceContainer"`).
 
 Only when asked; details in `references/manifest.md`.
 
-- **Icons**: `[icons.images]` maps a key (`"tab.server"`, `"nav.settings"`, …)
-  to `icons/<key with dots as underscores>.svg|.png`; no other name is
-  accepted. Icons are tinted one color — draw SVGs with `currentColor`. An SVG
-  may not contain `<script>`, `<style>`, `<foreignObject>`, a DTD, or any
-  `href`/`url(…)` that is not a `#fragment` of the same file.
+- **Icons**: `[icons.images]` maps a key (`"tab.server"`, `"nav.settings"`,
+  `"file.py"`, …) to `icons/<key with dots as underscores>.svg|.png`; no
+  other name is accepted. Files-window keys are `file.dir`, `file.link`,
+  `file.default`, and `file.<ext>`. Icons are tinted one color — draw SVGs
+  with `currentColor`. An SVG may not contain `<script>`, `<style>`,
+  `<foreignObject>`, a DTD, or any `href`/`url(…)` that is not a `#fragment`
+  of the same file.
 - **Background**: `type = "gradient"` (from the palette) or `"image"` with
   `image = "background.png"`, `opacity` 0–0.6, `blur` 0–30. For a repeating
   pattern add `tile` (16–1024 logical px, schema 3) and draw one seamless,

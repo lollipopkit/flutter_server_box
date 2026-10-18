@@ -345,13 +345,21 @@ Supported icon keys are `tab.<tab>` and `tab.<tab>.selected` for `server`, `ssh`
 are `nav.more`, `nav.settings`, `nav.tune`, `nav.privacy`, `nav.agent`,
 `nav.tabs`, `nav.server`, `nav.sort`, `nav.terminal`, `nav.folder`, `nav.cloud`,
 `nav.snippet`, `nav.inbox`, `nav.key`, `nav.info`, `nav.download`, and
-`nav.desktop`.
+`nav.desktop`. The Files window also draws `file.dir`, `file.link`,
+`file.default`, and `file.<ext>` for a file's extension (`file.py`,
+`file.rs`, `file.gitignore`). A name whose extension the package does not
+carry falls back to a related key when there is one (`file.css` for
+`.scss`, `file.sh` for `.bash`), then to `file.default`, then to the
+built-in glyph. A package
+may carry at most 48 icon keys, so a full tab and nav set leaves room for a
+handful of Files-window glyphs.
 
 These are the keys ServerBox draws. The format is shared with other apps built
 on the same library, so a key made for one of them — dotted lowercase words,
 such as `tab.chat` — is accepted and kept, and ServerBox does not draw it. A
-key that is not well formed is rejected. The editor schema lists only
-ServerBox's keys, so it still flags a misspelled one as you edit.
+key that is not well formed is rejected. The editor schema lists the tab and
+nav keys, and accepts any well-formed `file.*` key rather than enumerating
+extensions.
 
 The compressed archive and total extracted content are each limited to 16 MiB.
 `manifest.toml` is limited to 64 KiB. An icon is limited to 256 KiB, the splash
@@ -517,16 +525,46 @@ Catalog and repository tree size limits are documented in
 
 The official One Dark Pro theme in the theme store adapts the UI palette of
 this VS Code theme to Material surfaces, selection states, cards and buttons.
-It is an independent adaptation, not a VS Code extension bundle. Fonts and
-terminal/editor color settings remain separate. AMOLED is an original
-ServerBox palette. It uses black surfaces in dark mode and generated colors in
-light mode, allowing System appearance.
+It is an independent adaptation, not a VS Code extension bundle. The One Dark
+Pro Devicons variant uses that same palette with
+[Devicon](https://github.com/devicons/devicon) glyphs in place of the
+editor-style icons. The official VS Code theme does the same for VS Code's
+own Dark Modern and Light Modern workbench colors. Fonts and terminal/editor
+color settings remain separate.
+AMOLED is an original ServerBox palette. It uses black surfaces in dark mode
+and generated colors in light mode, allowing System appearance.
 
 Muted text colors are adjusted where needed to keep normal text at a contrast
 ratio of at least 4.5:1.
 
 <details>
 <summary>Upstream attribution</summary>
+
+**VS Code**
+
+Source: [VS Code theme defaults](https://github.com/microsoft/vscode/tree/main/extensions/theme-defaults) (Dark Modern, Light Modern)
+
+The MIT License (MIT)
+
+Copyright (c) 2015 - present Microsoft Corporation
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 
 **One Dark Pro**
 
@@ -535,6 +573,32 @@ Source: [One Dark Pro](https://github.com/Binaryify/OneDark-Pro)
 The MIT License (MIT)
 
 Copyright (c) 2013-2022 Binaryify
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+**Devicon**
+
+Source: [Devicon](https://github.com/devicons/devicon)
+
+The MIT License (MIT)
+
+Copyright (c) 2015 konpa
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

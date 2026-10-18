@@ -304,12 +304,16 @@ background 或 iOS 的 launch storyboard）在构建应用时确定，只能随�
 `ssh`、`file`、`snippet`、`agent`、`benchmark`、`remoteDesktop`、`virt`。navigation key 有
 `nav.more`、`nav.settings`、`nav.tune`、`nav.privacy`、`nav.agent`、`nav.tabs`、
 `nav.server`、`nav.sort`、`nav.terminal`、`nav.folder`、`nav.cloud`、`nav.snippet`、
-`nav.inbox`、`nav.key`、`nav.info`、`nav.download`、`nav.desktop`。
+`nav.inbox`、`nav.key`、`nav.info`、`nav.download`、`nav.desktop`。Files 窗口还会绘制
+`file.dir`、`file.link`、`file.default`，以及按扩展名的 `file.<ext>`（如 `file.py`、
+`file.rs`、`file.gitignore`）。主题没有该扩展名时，先回退到相近的 key（如 `.scss` 用 `file.css`，`.bash` 用
+`file.sh`），再回退到 `file.default`，再回退到内置图标。
+一套主题最多 48 个 icon key，因此铺满 tab 和 nav 之后，Files 窗口只能再放下少量扩展名图标。
 
 以上是 ServerBox 会绘制的 key。这一格式与基于同一个库的其他 app 共用，为其他 app
 准备的 key（点分隔的小写单词，如 `tab.chat`）会被接受并保留，但 ServerBox 不绘制。
-格式不合法的 key 会被拒绝。编辑器用的 schema 只列出 ServerBox 的 key，所以编辑时
-拼错的 key 仍会被标出。
+格式不合法的 key 会被拒绝。编辑器用的 schema 列出 tab 和 nav 的 key，并以模式接受
+任意合法的 `file.*` key，而不是枚举扩展名。
 
 压缩包和解压后总内容各限制 16 MiB。`manifest.toml` 限制 64 KiB。icon 限制
 256 KiB，splash logo 512 KiB，背景 8 MiB、单边 8192 像素、总计 6400 万像素。写入隔离的
@@ -453,14 +457,43 @@ repository 可在 `themes/` 旁边包含 `plugins/` 目录。本构建只读取�
 ## 主题来源
 
 主题商店中的官方主题 One Dark Pro，把下面这个 VS Code 主题的 UI 调色板改编到
-Material 的表面、选中态、卡片和按钮上。这一改编与 VS Code 扩展包无关。字体和
-终端/编辑器配色仍是单独的设置。AMOLED 是 ServerBox 原创的调色板，在 dark 下使用
-纯黑表面、在 light 下使用生成色，因此支持 System 外观。
+Material 的表面、选中态、卡片和按钮上。这一改编与 VS Code 扩展包无关。One Dark
+Pro Devicons 变体使用同一套调色板，并把编辑器风格图标换成
+[Devicon](https://github.com/devicons/devicon) 字形。官方主题
+VS Code 则把 VS Code 自带的 Dark Modern / Light Modern 工作区颜色做同样的改编。
+字体和终端/编辑器配色仍是单独的设置。AMOLED 是 ServerBox 原创的调色板，在 dark
+下使用纯黑表面、在 light 下使用生成色，因此支持 System 外观。
 
 必要时会调整次要文字颜色，使正常文字的对比度不低于 4.5:1。
 
 <details>
 <summary>上游署名</summary>
+
+**VS Code**
+
+Source: [VS Code theme defaults](https://github.com/microsoft/vscode/tree/main/extensions/theme-defaults) (Dark Modern, Light Modern)
+
+The MIT License (MIT)
+
+Copyright (c) 2015 - present Microsoft Corporation
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 
 **One Dark Pro**
 
@@ -469,6 +502,32 @@ Source: [One Dark Pro](https://github.com/Binaryify/OneDark-Pro)
 The MIT License (MIT)
 
 Copyright (c) 2013-2022 Binaryify
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+**Devicon**
+
+Source: [Devicon](https://github.com/devicons/devicon)
+
+The MIT License (MIT)
+
+Copyright (c) 2015 konpa
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

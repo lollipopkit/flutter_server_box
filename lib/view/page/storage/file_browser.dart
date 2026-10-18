@@ -3,11 +3,13 @@ import 'dart:io';
 import 'package:cross_file/cross_file.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_lib/theme.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/theme_style.dart';
 import 'package:server_box/data/model/file/browse_path.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 import 'package:server_box/data/model/file/file_issue.dart';
@@ -1739,11 +1741,7 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   }) {
     final full = _fullPath(entry);
     final label = widget.args.labelOf?.call(entry, full);
-    final icon = Icon(switch (entry.kind) {
-      FileKind.dir => Icons.folder_open,
-      FileKind.link => Icons.link,
-      _ => Icons.insert_drive_file,
-    });
+    final icon = _iconOf(entry);
 
     /// A click that carries a modifier, or lands while a selection is open,
     /// picks rather than opens.
@@ -1836,6 +1834,31 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     );
   }
 
+  /// The theme's `file.<ext>` glyph when it has one, else an alias such as
+  /// `file.css` for `.scss`, else `file.default`, else the built-in glyph.
+  Widget _iconOf(FileEntry entry) {
+    final key = ThemeFileIcon.keyOf(
+      name: entry.name,
+      isDir: entry.isDir,
+      isLink: entry.kind == FileKind.link,
+    );
+    final built = ThemeFileIcon.builtIn(key);
+    final material = Icon(built.$1, color: built.$2);
+    if (key == ThemeFileIcon.dir || key == ThemeFileIcon.link) {
+      return _ThemedFileIcon(keyName: key, fallback: material);
+    }
+    final generic = _ThemedFileIcon(
+      keyName: ThemeFileIcon.fallback,
+      fallback: material,
+    );
+    if (key == ThemeFileIcon.fallback) return generic;
+    final aliased = ThemeFileIcon.aliasOf(key);
+    final next = aliased == null
+        ? generic
+        : _ThemedFileIcon(keyName: aliased, fallback: generic);
+    return _ThemedFileIcon(keyName: key, fallback: next);
+  }
+
   /// How this list is shown: what it is ordered by, and whether it hides the
   /// dotfiles. One menu, because both are the same kind of decision and the
   /// toolbar has no room for a button each.
@@ -1874,6 +1897,39 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     },
   );
 
+}
+
+/// A Files-window glyph. [ThemeIconAsset] only draws tab/nav keys, so this
+/// looks the package up directly for `file.*`.
+class _ThemedFileIcon extends StatelessWidget {
+  const _ThemedFileIcon({required this.keyName, required this.fallback});
+
+  final String keyName;
+  final Widget fallback;
+
+  @override
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: Listenable.merge([
+      ThemeHost.settings.appThemePackage.listenable(),
+      ThemeHost.settings.appThemePreset.listenable(),
+      ThemePackages.preview,
+    ]),
+    builder: (context, _) {
+      final path = ThemePackages.activeTheme?.iconPath(keyName);
+      if (path == null) return fallback;
+      final iconTheme = IconTheme.of(context);
+      final scheme = Theme.of(context).colorScheme;
+      // Only an explicit icons.colors entry tints a Files glyph. Language
+      // logos keep the fills they were drawn with; flattening them to the
+      // list's icon color made every extension look the same.
+      return PackageImage(
+        path: path,
+        size: iconTheme.size ?? 24,
+        color: ThemePackages.activeTheme?.iconColor(keyName, scheme),
+        fallback: fallback,
+      );
+    },
+  );
 }
 
 @immutable
