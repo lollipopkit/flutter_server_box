@@ -16,6 +16,8 @@ analyzer:
     # It imports its own siblings by relative path, which this project's
     # `always_use_package_imports` forbids and the generator will not change.
     - "**/*.pb.dart"
+    # flutter_rust_bridge_codegen 2.13 emits relative imports the same way.
+    - "lib/src/rust/**"
     - "**/*.pbenum.dart"
     - "**/*.pbjson.dart"
     - build/**
