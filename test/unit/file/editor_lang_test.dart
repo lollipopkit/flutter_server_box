@@ -25,6 +25,46 @@ void main() {
     expect(editorLangFor('notes.YML'), ProgLang.yaml);
   });
 
+  test('a systemd unit is INI, including .service', () {
+    expect(editorLangFor('sshd.service'), ProgLang.ini);
+    expect(editorLangFor('/etc/systemd/system/Foo.SERVICE'), ProgLang.ini);
+    expect(editorLangFor('docker.socket'), ProgLang.ini);
+    expect(editorLangFor('apt-daily.timer'), ProgLang.ini);
+    expect(editorLangFor('multi-user.target'), ProgLang.ini);
+  });
+
+  test('INI-shaped config that is not .ini still highlights as INI', () {
+    expect(editorLangFor('my.cnf'), ProgLang.ini);
+    expect(editorLangFor('app.cfg'), ProgLang.ini);
+    expect(editorLangFor('Cargo.toml'), ProgLang.ini);
+    expect(editorLangFor('foo.desktop'), ProgLang.ini);
+    expect(editorLangFor('10-eth.network'), ProgLang.ini);
+    expect(editorLangFor('quadlet.container'), ProgLang.ini);
+  });
+
+  test('XML-shaped markup highlights as XML', () {
+    expect(editorLangFor('index.html'), ProgLang.xml);
+    expect(editorLangFor('Info.plist'), ProgLang.xml);
+    expect(editorLangFor('logo.SVG'), ProgLang.xml);
+  });
+
+  test('shell rc files and extra suffixes are shell', () {
+    expect(editorLangFor('/home/u/.bashrc'), ProgLang.shell);
+    expect(editorLangFor('.zshrc'), ProgLang.shell);
+    expect(editorLangFor('.profile'), ProgLang.shell);
+    expect(editorLangFor('script.ksh'), ProgLang.shell);
+    expect(editorLangFor('script.fish'), ProgLang.shell);
+  });
+
+  test('dotfiles and config names without a suffix', () {
+    expect(editorLangFor('.env'), ProgLang.properties);
+    expect(editorLangFor('.gitconfig'), ProgLang.ini);
+    expect(editorLangFor('.htaccess'), ProgLang.apache);
+    expect(editorLangFor('sshd_config'), ProgLang.apache);
+    expect(editorLangFor('Dockerfile'), ProgLang.dockerfile);
+    expect(editorLangFor('makefile'), ProgLang.makefile);
+  });
+
   test('a name with no known suffix is left unknown', () {
     expect(editorLangFor('README'), isNull);
     expect(editorLangFor('file.unknownext'), isNull);
