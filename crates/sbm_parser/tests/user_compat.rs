@@ -20,12 +20,17 @@ use sbm_parser::users::*;
 /// The catalog the Dart suite parses.
 const LISTING: &str = "SrvBoxUsers.Current\tadmin\n\
 SrvBoxUsers.UidMin\t1000\n\
+SrvBoxUsers.GidMin\t1000\n\
 SrvBoxUsers.Passwd\n\
 root:x:0:0:root:/root:/bin/bash\n\
 daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\n\
 admin:x:1000:1000:Admin User:/home/admin:/bin/bash\n\
 deploy:x:1001:1000:Deploy:/srv/deploy:/bin/sh\n\
 SrvBoxUsers.Group\n\
+root:x:0:\n\
+users:x:1000:admin\n\
+docker:x:998:admin,deploy\n\
+SrvBoxUsers.LocalGroup\n\
 root:x:0:\n\
 users:x:1000:admin\n\
 docker:x:998:admin,deploy\n";
@@ -77,6 +82,17 @@ fn parses_passwd_and_group_catalogs() {
     assert_eq!(admin.primary_group.as_deref(), Some("users"));
     assert_eq!(admin.supplementary_groups, ["docker"]);
     assert!(!admin.is_system(catalog.uid_min));
+
+    assert_eq!(catalog.gid_min, 1000);
+    assert_eq!(catalog.groups.len(), 3);
+    assert!(catalog.groups[0].is_root());
+    let docker = catalog.find_group("docker").expect("the fixture has it");
+    assert_eq!(docker.gid, 998);
+    assert_eq!(docker.members, ["admin", "deploy"]);
+    assert!(docker.is_system(catalog.gid_min));
+    let users = catalog.find_group("users").expect("the fixture has it");
+    assert_eq!(users.members, ["admin"]);
+    assert!(!users.is_system(catalog.gid_min));
 }
 
 #[test]
@@ -133,7 +149,9 @@ fn the_system_threshold_defaults_to_a_thousand() {
     let catalog = parse_list("SrvBoxUsers.Current\tadmin\nSrvBoxUsers.UidMin\tgarbage\n")
         .expect("the listing parses");
     assert_eq!(catalog.uid_min, 1000);
+    assert_eq!(catalog.gid_min, 1000);
     assert!(catalog.find("admin").is_none());
+    assert!(catalog.groups.is_empty());
 }
 
 // ---------------------------------------------------------------------------
@@ -154,6 +172,7 @@ fn the_catalog_script_is_sh_and_says_which_machine_it_read() {
     for marker in [
         CURRENT_MARKER,
         UID_MIN_MARKER,
+        GID_MIN_MARKER,
         PASSWD_MARKER,
         GROUP_MARKER,
     ] {
@@ -533,4 +552,251 @@ fn root_is_refused_by_name_as_well_as_uid() {
         supplementary_groups: Vec::new(),
     };
     assert_eq!(delete_command(&forged, false), Err(UserError::RootNotDeletable));
+}
+
+fn group_draft(name: &str) -> GroupDraft {
+    GroupDraft {
+        name: name.to_string(),
+        members: Vec::new(),
+        system: false,
+    }
+}
+
+fn group(name: &str, gid: u32, members: &[&str]) -> SystemGroup {
+    SystemGroup {
+        name: name.to_string(),
+        gid,
+        members: members.iter().map(|member| member.to_string()).collect(),
+        primary_members: Vec::new(),
+        local: true,
+    }
+}
+
+fn accounts(names: &[&str]) -> Vec<String> {
+    names.iter().map(|name| name.to_string()).collect()
+}
+
+// ---------------------------------------------------------------------------
+// Groups
+// ---------------------------------------------------------------------------
+
+#[test]
+fn the_group_listing_is_ordered_by_gid_and_then_by_name() {
+    let catalog = parse_list(
+        "SrvBoxUsers.Current\tadmin\n\
+SrvBoxUsers.GidMin\t500\n\
+SrvBoxUsers.Passwd\n\
+admin:x:1000:1000::/home/admin:/bin/sh\n\
+SrvBoxUsers.Group\n\
+b:x:1001:admin\n\
+a:x:1001:\n\
+root:x:0:\n",
+    )
+    .expect("the listing parses");
+
+    let names: Vec<&str> = catalog.groups.iter().map(|group| group.name.as_str()).collect();
+    assert_eq!(names, ["root", "a", "b"]);
+    assert_eq!(catalog.gid_min, 500);
+}
+
+#[test]
+fn a_group_lists_the_accounts_whose_primary_group_it_is() {
+    let catalog = parse_list(LISTING).expect("the fixture parses");
+    let users = catalog.find_group("users").expect("the fixture has it");
+    assert_eq!(users.primary_members, ["admin", "deploy"]);
+    assert_eq!(users.members, ["admin"]);
+    let docker = catalog.find_group("docker").expect("the fixture has it");
+    assert!(docker.primary_members.is_empty());
+}
+
+#[test]
+fn a_name_listed_by_two_sources_is_read_once() {
+    // `getent` on a host with files and LDAP can print a name twice.
+    let catalog = parse_list(
+        "SrvBoxUsers.Current\tadmin\n\
+SrvBoxUsers.Passwd\n\
+admin:x:1000:1000::/home/admin:/bin/sh\n\
+admin:x:5000:5000::/home/ldap/admin:/bin/sh\n\
+SrvBoxUsers.Group\n\
+admins:x:1000:\n\
+admins:x:5000:admin\n",
+    )
+    .expect("the listing parses");
+
+    assert_eq!(catalog.users.len(), 1);
+    assert_eq!(catalog.users[0].uid, 1000);
+    assert_eq!(catalog.groups.len(), 1);
+    assert_eq!(catalog.groups[0].gid, 1000);
+    assert!(catalog.groups[0].members.is_empty());
+}
+
+#[test]
+fn builds_a_quoted_group_create_script_and_sets_members_through_gpasswd() {
+    let known = accounts(&["admin", "svc"]);
+    let mut draft = group_draft("deploy");
+    draft.members = known.clone();
+    let script = group_create_command(&draft, &known).expect("a valid draft");
+    assert!(script.starts_with("set -e\ncommand -v gpasswd >/dev/null || "));
+    assert!(
+        script.find("command -v gpasswd") < script.find("groupadd 'deploy'"),
+        "gpasswd is looked for before the group exists: {script}"
+    );
+    assert!(script.contains("gpasswd -M 'admin,svc' 'deploy'"));
+
+    assert_eq!(
+        group_create_command(&group_draft("deploy"), &[]).expect("a valid draft"),
+        "groupadd 'deploy'"
+    );
+
+    let mut system = group_draft("docker");
+    system.system = true;
+    assert_eq!(
+        group_create_command(&system, &[]).expect("a valid draft"),
+        "groupadd -r 'docker'"
+    );
+}
+
+#[test]
+fn a_group_edit_is_only_the_member_list_that_changed() {
+    let known = accounts(&["admin", "svc"]);
+    let original = group("deploy", 1001, &["admin"]);
+    let mut draft = group_draft("deploy");
+    draft.members = vec!["admin".to_string(), "svc".to_string()];
+    assert_eq!(
+        group_edit_command(&original, &draft, &known).expect("a valid draft"),
+        "gpasswd -a 'svc' 'deploy'"
+    );
+
+    draft.members = vec!["admin".to_string()];
+    assert_eq!(
+        group_edit_command(&original, &draft, &known).expect("a valid draft"),
+        ":"
+    );
+
+    draft.members.clear();
+    assert_eq!(
+        group_edit_command(&original, &draft, &known).expect("a valid draft"),
+        "gpasswd -d 'admin' 'deploy'"
+    );
+}
+
+#[test]
+fn a_group_edit_keeps_members_and_a_name_the_machine_already_has() {
+    // Debian ships `Debian-exim`, which no new name may look like. `Gone` is
+    // a deleted account `/etc/group` still names, which `gpasswd -M` refuses.
+    let original = group("Debian-exim", 105, &["Gone", "admin"]);
+    let mut draft = group_draft("Debian-exim");
+    draft.members = vec!["Gone".to_string(), "admin".to_string(), "svc".to_string()];
+    let known = accounts(&["admin", "svc"]);
+    assert_eq!(
+        group_edit_command(&original, &draft, &known).expect("kept as is"),
+        "gpasswd -a 'svc' 'Debian-exim'"
+    );
+
+    draft.members = vec!["svc".to_string()];
+    assert_eq!(
+        group_edit_command(&original, &draft, &known).expect("a valid draft"),
+        "set -e\n\
+gpasswd -d 'Gone' 'Debian-exim'\n\
+gpasswd -d 'admin' 'Debian-exim'\n\
+gpasswd -a 'svc' 'Debian-exim'"
+    );
+}
+
+#[test]
+fn the_local_record_wins_and_only_it_is_written() {
+    // `group: sss files` lists the directory's `admins` first.
+    let catalog = parse_list(
+        "SrvBoxUsers.Current\tadmin\n\
+SrvBoxUsers.Passwd\n\
+admin:x:1000:1000::/home/admin:/bin/sh\n\
+SrvBoxUsers.Group\n\
+admins:x:5000:admin\n\
+admins:x:1001:\n\
+staff:x:5001:\n\
+SrvBoxUsers.LocalGroup\n\
+admins:x:1001:\n",
+    )
+    .expect("the listing parses");
+
+    let admins = catalog.find_group("admins").expect("listed");
+    assert!(admins.local);
+    assert_eq!(admins.gid, 1001);
+    assert!(admins.members.is_empty());
+    assert!(catalog.users[0].supplementary_groups.is_empty());
+
+    let staff = catalog.find_group("staff").expect("listed");
+    assert!(!staff.local);
+    assert_eq!(staff.delete_refusal(), Some(UserError::GroupNotLocal));
+    let mut draft = group_draft("staff");
+    draft.members = vec!["admin".to_string()];
+    assert_eq!(
+        group_edit_command(staff, &draft, &catalog.account_names()),
+        Err(UserError::GroupNotLocal)
+    );
+}
+
+#[test]
+fn a_member_being_added_must_be_an_account() {
+    let known = accounts(&["admin"]);
+    let mut draft = group_draft("deploy");
+    draft.members = vec!["deplyo".to_string()];
+    assert_eq!(
+        group_create_command(&draft, &known),
+        Err(UserError::UnknownMember)
+    );
+    assert_eq!(
+        group_edit_command(&group("deploy", 1001, &[]), &draft, &known),
+        Err(UserError::UnknownMember)
+    );
+
+    draft.members = vec!["wheel; rm -rf /".to_string()];
+    assert_eq!(
+        validate_group_draft(&draft, None, &known),
+        Some(UserError::UnknownMember)
+    );
+}
+
+#[test]
+fn a_group_rename_is_refused() {
+    let original = group("deploy", 1001, &[]);
+    assert_eq!(
+        group_edit_command(&original, &group_draft("deploy2"), &[]),
+        Err(UserError::Renaming)
+    );
+}
+
+#[test]
+fn rejects_unsafe_group_names_and_root_deletion() {
+    assert_eq!(
+        group_create_command(&group_draft("bad;touch /tmp/pwned"), &[]),
+        Err(UserError::InvalidName)
+    );
+
+    let catalog = parse_list(LISTING).expect("the fixture parses");
+    let root = catalog.find_group("root").expect("the fixture has it");
+    assert_eq!(
+        group_delete_command(root),
+        Err(UserError::RootGroupNotDeletable)
+    );
+
+    let users = catalog.find_group("users").expect("the fixture has it");
+    assert_eq!(group_delete_command(users), Err(UserError::GroupInUse));
+
+    let docker = catalog.find_group("docker").expect("the fixture has it");
+    assert_eq!(docker.delete_refusal(), None);
+    assert_eq!(
+        group_delete_command(docker).expect("supplementary-only"),
+        "groupdel 'docker'"
+    );
+}
+
+#[test]
+fn root_group_is_refused_by_name_as_well_as_gid() {
+    let forged = group("root", 1, &[]);
+    assert!(forged.is_root());
+    assert_eq!(
+        group_delete_command(&forged),
+        Err(UserError::RootGroupNotDeletable)
+    );
 }

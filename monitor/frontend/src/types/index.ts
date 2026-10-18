@@ -1500,7 +1500,10 @@ export interface UserView {
   agent_account: string | null
   /// The uid below which this machine counts an account as a system one.
   uid_min: number | null
+  /// The gid below which this machine counts a group as a system one.
+  gid_min: number | null
   users: UserRow[]
+  groups: GroupRow[]
   /// The account a detail is about, echoed because a response is read beside a
   /// request that may be older.
   name: string | null
@@ -1530,6 +1533,34 @@ export interface UserDraft {
   password?: string
 }
 
+/// One group, as `/etc/group` describes it. `members` is supplementary
+/// membership, not the accounts whose primary gid is this group.
+export interface SystemGroup {
+  name: string
+  gid: number
+  members: string[]
+  /// Accounts whose primary gid is this group.
+  primary_members: string[]
+  /// Whether `/etc/group` holds it. A group from LDAP or SSSD is read-only.
+  local: boolean
+}
+
+export interface GroupRow extends SystemGroup {
+  is_root: boolean
+  system: boolean
+  /// Whether the agent would remove it: false for root and for a group that
+  /// is anyone's primary group.
+  deletable: boolean
+}
+
+export interface GroupDraft {
+  name: string
+  members: string[]
+  system: boolean
+}
+
+export type ActKind = 'user' | 'group'
+
 export type UserAction = 'create' | 'edit' | 'delete'
 
 /// One write, as the page describes it.
@@ -1539,9 +1570,12 @@ export type UserAction = 'create' | 'edit' | 'delete'
 /// until the first attempt comes back `sudo_rejected`.
 export interface UserActRequest {
   action: UserAction
+  /// Omitted is an account, so an older client still writes users.
+  kind?: ActKind
   draft?: UserDraft
-  /// Which account a change or a removal is about. The account as it is comes
-  /// from a catalog the agent reads at the moment of the write.
+  group?: GroupDraft
+  /// Which account or group a change or a removal is about. The record as it
+  /// is comes from a catalog the agent reads at the moment of the write.
   name?: string
   /// Whether a removal takes the home directory with it.
   remove_home?: boolean
@@ -1576,6 +1610,12 @@ export type UserRefusalCode =
   | 'userExists'
   | 'agentAccount'
   | 'noSuchUser'
+  | 'unknownMember'
+  | 'rootGroupNotDeletable'
+  | 'groupInUse'
+  | 'groupNotLocal'
+  | 'groupExists'
+  | 'noSuchGroup'
 
 /// A snippet saved on the agent (`/snippets`, migration 013). The library is
 /// the agent's rather than this browser's: `localStorage` is lost with the

@@ -3,6 +3,7 @@
   import { Pencil, Plus, RefreshCw, Search, Trash2 } from '@lucide/svelte'
   import FeatureTabs from '../components/FeatureTabs.svelte'
   import PageHeader from '../components/PageHeader.svelte'
+  import GroupForm, { groupFormState, type GroupFormState } from '../components/GroupForm.svelte'
   import UserForm, { userFormState, type UserFormState } from '../components/UserForm.svelte'
   import UserSecurity from '../components/UserSecurity.svelte'
   import { api } from '../lib/api'
@@ -10,7 +11,7 @@
   import { servers } from '../lib/servers.svelte'
   import { untrack } from 'svelte'
   import { userRefusalText } from '../lib/userRefusal'
-  import type { UserRow, UserView } from '../types'
+  import type { GroupRow, UserRow, UserView } from '../types'
 
   interface Props {
     onback: () => void
@@ -45,6 +46,11 @@
   let removeHome = $state(false)
   let needsSudo = $state(false)
   let sudoPassword = $state('')
+  let subject = $state<'users' | 'groups'>('users')
+  let openedGroup = $state<GroupRow | undefined>(undefined)
+  let editingGroup = $state<GroupRow | null | undefined>(undefined)
+  let groupForm = $state<GroupFormState>(groupFormState())
+  let removingGroup = $state(false)
 
   /// The page follows the sidebar, so a reply that arrives after the user has
   /// switched servers belongs to neither.
@@ -65,6 +71,10 @@
       if (opened) {
         opened = next.users.find((user) => user.name === opened?.name)
         if (!opened) removing = false
+      }
+      if (openedGroup) {
+        openedGroup = (next.groups ?? []).find((group) => group.name === openedGroup?.name)
+        if (!openedGroup) removingGroup = false
       }
     } catch (e) {
       if (stale(serverId)) return
@@ -139,7 +149,65 @@
     void load()
   }
 
+  async function removeGroup(asRoot = false) {
+    const group = openedGroup
+    if (!group) return
+    busy = true
+    notice = ''
+    actionError = ''
+    try {
+      const result = await api.actSystemUser({
+        action: 'delete',
+        kind: 'group',
+        name: group.name,
+        ...(asRoot && sudoPassword ? { password: sudoPassword } : {}),
+      })
+      if (result.sudo_rejected) {
+        if (asRoot) {
+          actionError = $LL.powerRejected()
+          sudoPassword = ''
+        } else needsSudo = true
+        return
+      }
+      if (!result.succeeded) {
+        actionError = result.stderr.trim() || result.stdout.trim() || $LL.userCommandFailed()
+        return
+      }
+      notice = $LL.groupDoneDeleted({ name: group.name })
+      openedGroup = undefined
+      removingGroup = false
+      needsSudo = false
+      sudoPassword = ''
+      await load()
+    } catch (e) {
+      actionError = userRefusalText(e instanceof Error ? e.message : String(e))
+    } finally {
+      busy = false
+    }
+  }
+
+  function openGroup(group: GroupRow) {
+    openedGroup = group
+    removingGroup = false
+    needsSudo = false
+    sudoPassword = ''
+    actionError = ''
+  }
+
+  function openGroupForm(group: GroupRow | null) {
+    groupForm = groupFormState(group ?? undefined)
+    editingGroup = group
+    actionError = ''
+  }
+
+  function onGroupSaved(name: string, created: boolean) {
+    notice = created ? $LL.groupDoneCreated({ name }) : $LL.groupDoneEdited({ name })
+    editingGroup = undefined
+    void load()
+  }
+
   const users = $derived(view?.users ?? [])
+  const groups = $derived(view?.groups ?? [])
 
   const visible = $derived.by(() => {
     const needle = query.trim().toLowerCase()
@@ -149,6 +217,17 @@
         user.name.toLowerCase().includes(needle) ||
         user.home.toLowerCase().includes(needle) ||
         String(user.uid).includes(needle),
+    )
+  })
+
+  const visibleGroups = $derived.by(() => {
+    const needle = query.trim().toLowerCase()
+    if (!needle) return groups
+    return groups.filter(
+      (group) =>
+        group.name.toLowerCase().includes(needle) ||
+        String(group.gid).includes(needle) ||
+        group.members.some((member) => member.toLowerCase().includes(needle)),
     )
   })
 
@@ -169,7 +248,9 @@
 
   function subtitle(): string | undefined {
     if (!view?.available) return undefined
-    return $LL.userSubtitle({ count: users.length })
+    return subject === 'groups'
+      ? $LL.groupSubtitle({ count: groups.length })
+      : $LL.userSubtitle({ count: users.length })
   }
 </script>
 
@@ -185,7 +266,10 @@
 
   {#snippet actions()}
     {#if view?.available}
-      <IconButton label={$LL.userAdd()} onclick={() => openForm(null)}>
+      <IconButton
+        label={subject === 'groups' ? $LL.groupAdd() : $LL.userAdd()}
+        onclick={() => (subject === 'groups' ? openGroupForm(null) : openForm(null))}
+      >
         <Plus class="w-4 h-4" />
       </IconButton>
     {/if}
@@ -218,14 +302,58 @@
       {/if}
     </Card>
   {:else if view}
+    <div class="flex gap-2">
+      <Button variant={subject === 'users' ? 'primary' : 'secondary'} onclick={() => (subject = 'users')}>
+        {$LL.userTab()}
+      </Button>
+      <Button variant={subject === 'groups' ? 'primary' : 'secondary'} onclick={() => (subject = 'groups')}>
+        {$LL.groupTab()}
+      </Button>
+    </div>
+
     <Card>
       <div class="relative">
         <Search class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-faint-fg" />
-        <Input class="pl-8" bind:value={query} placeholder={$LL.userSearchHint()} />
+        <Input
+          class="pl-8"
+          bind:value={query}
+          placeholder={subject === 'groups' ? $LL.groupSearchHint() : $LL.userSearchHint()}
+        />
       </div>
     </Card>
 
-    {#if visible.length === 0}
+    {#if subject === 'groups'}
+      {#if visibleGroups.length === 0}
+        <Card>
+          <p class="text-sm text-muted-fg">{query ? $LL.groupNoMatch() : $LL.groupEmpty()}</p>
+        </Card>
+      {:else}
+        <Card class="divide-y divide-line p-0">
+          {#each visibleGroups as group (group.name)}
+            <button
+              class="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-soft/40"
+              onclick={() => openGroup(group)}
+            >
+              <span class="min-w-0 flex-1">
+                <span class="flex flex-wrap items-baseline gap-2">
+                  <span class="truncate text-sm font-medium text-fg-strong">{group.name}</span>
+                  {#if group.is_root}
+                    <Badge tone="danger">root</Badge>
+                  {/if}
+                  {#if group.system}
+                    <Badge tone="neutral">{$LL.groupSystem()}</Badge>
+                  {/if}
+                </span>
+                <span class="block truncate text-xs text-muted-fg">
+                  {$LL.groupGid()} {group.gid}
+                  {#if group.members.length} · {group.members.join(', ')}{/if}
+                </span>
+              </span>
+            </button>
+          {/each}
+        </Card>
+      {/if}
+    {:else if visible.length === 0}
       <Card>
         <p class="text-sm text-muted-fg">{query ? $LL.userNoMatch() : $LL.userEmpty()}</p>
       </Card>
@@ -394,6 +522,110 @@
       fields={formState}
       onsaved={onSaved}
       oncancel={() => (editing = undefined)}
+    />
+  </Modal>
+{/if}
+
+{#if openedGroup && editingGroup === undefined}
+  <Modal open title={openedGroup.name} onclose={() => (openedGroup = undefined)}>
+    <div class="space-y-4">
+      <div class="flex flex-wrap items-center gap-2">
+        {#if openedGroup.is_root}
+          <Badge tone="danger">root</Badge>
+        {/if}
+        {#if openedGroup.system}
+          <Badge tone="neutral">{$LL.groupSystem()}</Badge>
+        {/if}
+      </div>
+
+      <dl class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs sm:grid-cols-3">
+        <div>
+          <dt class="text-faint-fg">{$LL.groupGid()}</dt>
+          <dd class="text-muted-fg">{openedGroup.gid}</dd>
+        </div>
+        <div class="col-span-1 sm:col-span-2">
+          <dt class="text-faint-fg">{$LL.groupPrimaryMembers()}</dt>
+          <dd class="text-muted-fg break-all">
+            {openedGroup.primary_members.join(', ') || '—'}
+          </dd>
+        </div>
+        <div class="col-span-2 sm:col-span-3">
+          <dt class="text-faint-fg">{$LL.groupMembers()}</dt>
+          <dd class="text-muted-fg break-all">
+            {openedGroup.members.join(', ') || '—'}
+          </dd>
+        </div>
+      </dl>
+
+      {#if actionError}
+        <pre class="text-sm text-danger whitespace-pre-wrap break-all">{actionError}</pre>
+      {/if}
+
+      {#if removingGroup}
+        <Card class="space-y-2">
+          <p class="text-sm text-fg">{$LL.groupDeleteConfirm({ name: openedGroup.name })}</p>
+          {#if needsSudo}
+            <div class="space-y-1">
+              <label class="text-sm text-muted-fg" for="group-delete-sudo"
+                >{$LL.powerPassword()}</label
+              >
+              <Input id="group-delete-sudo" type="password" bind:value={sudoPassword} />
+              <p class="text-xs text-muted-fg">{$LL.powerPasswordHint()}</p>
+            </div>
+          {/if}
+          <div class="flex justify-end gap-2">
+            <Button variant="secondary" onclick={() => (removingGroup = false)}>{$LL.cancel()}</Button>
+            <Button disabled={busy} onclick={() => void removeGroup(needsSudo)}>
+              {$LL.groupDelete()}
+            </Button>
+          </div>
+        </Card>
+      {:else}
+        <div class="flex flex-wrap items-center gap-2">
+          <Button
+            variant="secondary"
+            disabled={!openedGroup.local}
+            onclick={() => openGroupForm(openedGroup!)}
+          >
+            <Pencil class="w-4 h-4" />
+            {$LL.groupEdit()}
+          </Button>
+          <Button
+            variant="secondary"
+            disabled={!openedGroup.deletable}
+            onclick={() => (removingGroup = true)}
+          >
+            <Trash2 class="w-4 h-4" />
+            {$LL.groupDelete()}
+          </Button>
+          {#if !openedGroup.deletable}
+            <span class="text-xs text-faint-fg">
+              {openedGroup.is_root
+                ? $LL.groupRootNotDeletable()
+                : !openedGroup.local
+                  ? $LL.groupNotLocal()
+                  : openedGroup.primary_members.length
+                    ? $LL.groupInUse()
+                    : $LL.userInvalidName()}
+            </span>
+          {/if}
+        </div>
+      {/if}
+    </div>
+  </Modal>
+{/if}
+
+{#if editingGroup !== undefined}
+  <Modal
+    open
+    title={editingGroup ? $LL.groupEdit() : $LL.groupAdd()}
+    onclose={() => (editingGroup = undefined)}
+  >
+    <GroupForm
+      group={editingGroup ?? undefined}
+      fields={groupForm}
+      onsaved={onGroupSaved}
+      oncancel={() => (editingGroup = undefined)}
     />
   </Modal>
 {/if}

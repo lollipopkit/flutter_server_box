@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -1992,6 +1993,27 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get userPasswordEditTip => '現在のパスワードを保持する場合は空のままにします。';
+
+  @override
+  String get systemGroups => 'グループ';
+
+  @override
+  String get userGid => 'GID';
+
+  @override
+  String get userGroupMembers => 'メンバー';
+
+  @override
+  String get userPrimaryMembers => 'プライマリメンバー';
+
+  @override
+  String get userSystemGroup => 'システムグループ';
+
+  @override
+  String get userMembersHint => 'alice,bob';
+
+  @override
+  String get userRegularGroup => '一般グループ';
 
   @override
   String funcUnavailableFmt(String func) {

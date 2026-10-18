@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -2108,6 +2109,27 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get userPasswordEditTip =>
       'Mevcut parolayı korumak için alanı boş bırakın.';
+
+  @override
+  String get systemGroups => 'Gruplar';
+
+  @override
+  String get userGid => 'GID';
+
+  @override
+  String get userGroupMembers => 'Üyeler';
+
+  @override
+  String get userPrimaryMembers => 'Birincil üyeler';
+
+  @override
+  String get userSystemGroup => 'Sistem grubu';
+
+  @override
+  String get userMembersHint => 'alice,bob';
+
+  @override
+  String get userRegularGroup => 'Regular';
 
   @override
   String funcUnavailableFmt(String func) {

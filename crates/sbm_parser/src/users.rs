@@ -1,5 +1,6 @@
-//! The machine's accounts — the passwd and group catalogs, one account's own
-//! detail, and the commands that create, change and remove one.
+//! The machine's accounts and groups — the passwd and group catalogs, one
+//! account's own detail, and the commands that create, change and remove one
+//! account or one group.
 //!
 //! Ported from the app's Dart implementation, whose cases `tests/user_compat.rs`
 //! holds. The app now reaches this through FFI (`sbm_ffi::api::users`) and the
@@ -41,9 +42,12 @@
 //! **`useradd`, `usermod`, `userdel` dialects.** BusyBox has all three with a
 //! subset of the flags, and its `useradd` has no `-M`. The flags used here are
 //! the ones both accept, and a machine that refuses one says so in `stderr`,
-//! which the caller reports verbatim.
+//! which the caller reports verbatim. Groups use `groupadd`, `groupdel` and
+//! `gpasswd -M` (the group-side equivalent of `usermod -G`), which come from
+//! shadow-utils: BusyBox has `addgroup` / `delgroup` instead and no `gpasswd`,
+//! so on a bare BusyBox machine a group write fails with `not found`.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::LazyLock;
 
 use regex::Regex;
@@ -55,8 +59,12 @@ use crate::script::shell_quote_unix as single_quote;
 pub const CURRENT_MARKER: &str = "SrvBoxUsers.Current\t";
 /// The uid below which an account is a system account, from `/etc/login.defs`.
 pub const UID_MIN_MARKER: &str = "SrvBoxUsers.UidMin\t";
+/// The gid below which a group is a system group, from `/etc/login.defs`.
+pub const GID_MIN_MARKER: &str = "SrvBoxUsers.GidMin\t";
 pub const PASSWD_MARKER: &str = "SrvBoxUsers.Passwd";
 pub const GROUP_MARKER: &str = "SrvBoxUsers.Group";
+/// `/etc/group` itself, which is all `groupadd`, `gpasswd` and `groupdel` write.
+pub const LOCAL_GROUP_MARKER: &str = "SrvBoxUsers.LocalGroup";
 
 pub const DETAIL_SHADOW_MARKER: &str = "SrvBoxUserDetail.Shadow";
 pub const DETAIL_STATUS_MARKER: &str = "SrvBoxUserDetail.Status";
@@ -88,6 +96,8 @@ printf 'SrvBoxUsers.Current\t'
 id -un
 printf 'SrvBoxUsers.UidMin\t'
 awk '$1 == "UID_MIN" { print $2; found=1; exit } END { if (!found) print 1000 }' /etc/login.defs 2>/dev/null || printf '1000\n'
+printf 'SrvBoxUsers.GidMin\t'
+awk '$1 == "GID_MIN" { print $2; found=1; exit } END { if (!found) print 1000 }' /etc/login.defs 2>/dev/null || printf '1000\n'
 printf 'SrvBoxUsers.Passwd\n'
 if command -v getent >/dev/null 2>&1; then
   getent passwd
@@ -98,6 +108,10 @@ printf 'SrvBoxUsers.Group\n'
 if command -v getent >/dev/null 2>&1; then
   getent group
 elif [ -r /etc/group ]; then
+  cat /etc/group
+fi
+printf 'SrvBoxUsers.LocalGroup\n'
+if [ -r /etc/group ]; then
   cat /etc/group
 fi
 "#;
@@ -152,20 +166,90 @@ impl SystemUser {
     }
 }
 
-/// The machine's accounts and the two facts the catalog carries about itself.
+/// One group, as `/etc/group` describes it.
+///
+/// `members` is the fourth field — supplementary membership. The accounts
+/// whose primary gid is this group are a fact of passwd, and [`parse_list`]
+/// puts them in `primary_members`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SystemGroup {
+    pub name: String,
+    pub gid: u32,
+    /// Names from the group's member field, sorted. Empty means nobody is in
+    /// it as a supplementary group.
+    pub members: Vec<String>,
+    /// Accounts whose primary gid is this group, sorted.
+    pub primary_members: Vec<String>,
+    /// Whether this record is `/etc/group`'s. One from LDAP or SSSD is read
+    /// here and never written: the group commands only change that file.
+    pub local: bool,
+}
+
+impl SystemGroup {
+    /// gid 0, or the name `root`: a group arrives from a caller, and a record
+    /// carrying root's name with another gid must not reach `groupdel 'root'`.
+    pub fn is_root(&self) -> bool {
+        self.gid == 0 || self.name == "root"
+    }
+
+    /// Why [`group_delete_command`] would refuse this group, or `None`.
+    ///
+    /// A group that is some account's primary group cannot be removed:
+    /// `groupdel` refuses it, and the accounts that have it would be left with
+    /// a gid that names nothing.
+    pub fn delete_refusal(&self) -> Option<UserError> {
+        if self.is_root() {
+            return Some(UserError::RootGroupNotDeletable);
+        }
+        if !self.local {
+            return Some(UserError::GroupNotLocal);
+        }
+        if !valid_name(&self.name) {
+            return Some(UserError::InvalidName);
+        }
+        if !self.primary_members.is_empty() {
+            return Some(UserError::GroupInUse);
+        }
+        None
+    }
+
+    /// Whether this is a system group by the machine's own threshold.
+    ///
+    /// The threshold is [`UserCatalog::gid_min`], read from `/etc/login.defs`
+    /// rather than assumed to be 1000.
+    pub fn is_system(&self, gid_min: u32) -> bool {
+        self.gid < gid_min
+    }
+}
+
+/// The machine's accounts and groups, and the facts the catalog carries about
+/// itself.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct UserCatalog {
     /// The account that ran the script.
     pub current_user: String,
     /// The uid below which an account is a system account.
     pub uid_min: u32,
+    /// The gid below which a group is a system group.
+    pub gid_min: u32,
     /// Sorted by uid, then by name.
     pub users: Vec<SystemUser>,
+    /// Sorted by gid, then by name.
+    pub groups: Vec<SystemGroup>,
 }
 
 impl UserCatalog {
     pub fn find(&self, name: &str) -> Option<&SystemUser> {
         self.users.iter().find(|user| user.name == name)
+    }
+
+    pub fn find_group(&self, name: &str) -> Option<&SystemGroup> {
+        self.groups.iter().find(|group| group.name == name)
+    }
+
+    /// Every account's name, which is what a group member must be.
+    pub fn account_names(&self) -> Vec<String> {
+        self.users.iter().map(|user| user.name.clone()).collect()
     }
 }
 
@@ -254,6 +338,22 @@ pub struct UserDraft {
     pub password: Option<String>,
 }
 
+/// What a caller wants a group to be.
+///
+/// The same fields for a new group and for a change to one; [`group_edit_command`]
+/// reads the difference against the group as it is. A group's name cannot be
+/// changed, for the same reason an account's cannot.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct GroupDraft {
+    pub name: String,
+    #[serde(default)]
+    pub members: Vec<String>,
+    /// A system group, with a gid below the machine's threshold. Only the
+    /// create form offers it.
+    #[serde(default)]
+    pub system: bool,
+}
+
 /// Why a draft, a name or a command was refused.
 ///
 /// The case is what the caller is told, and the client phrases it: an agent
@@ -280,6 +380,15 @@ pub enum UserError {
     /// The catalog script did not print the account it ran as, so nothing about
     /// this output can be trusted to be about this machine.
     CurrentUserUnknown,
+    /// A member being added is not an account on this machine. `gpasswd -M`
+    /// would refuse it, after `groupadd` had already run.
+    UnknownMember,
+    /// See [`SystemGroup::is_root`].
+    RootGroupNotDeletable,
+    /// See [`SystemGroup::delete_refusal`].
+    GroupInUse,
+    /// See [`SystemGroup::local`].
+    GroupNotLocal,
 }
 
 impl UserError {
@@ -295,6 +404,10 @@ impl UserError {
             Self::Renaming => "renaming",
             Self::RootNotDeletable => "rootNotDeletable",
             Self::CurrentUserUnknown => "currentUserUnknown",
+            Self::UnknownMember => "unknownMember",
+            Self::RootGroupNotDeletable => "rootGroupNotDeletable",
+            Self::GroupInUse => "groupInUse",
+            Self::GroupNotLocal => "groupNotLocal",
         }
     }
 }
@@ -318,9 +431,13 @@ impl std::fmt::Display for UserError {
 pub fn parse_list(output: &str) -> Result<UserCatalog, UserError> {
     let mut current_user: Option<String> = None;
     let mut uid_min: u32 = 1000;
+    let mut gid_min: u32 = 1000;
     let mut passwd: Vec<Vec<&str>> = Vec::new();
-    let mut groups_by_gid: HashMap<u32, String> = HashMap::new();
-    let mut supplementary: HashMap<String, Vec<String>> = HashMap::new();
+    let mut listed_groups: Vec<SystemGroup> = Vec::new();
+    let mut local_groups: Vec<SystemGroup> = Vec::new();
+    // `getent` lists every source in turn, so files and LDAP can both name
+    // one account. The first wins, as it does for the libc lookups.
+    let mut seen_users: HashSet<String> = HashSet::new();
     let mut section = "";
 
     // Bound to a local: every row below borrows from it.
@@ -335,12 +452,20 @@ pub fn parse_list(output: &str) -> Result<UserCatalog, UserError> {
             uid_min = rest.trim().parse().unwrap_or(1000);
             continue;
         }
+        if let Some(rest) = line.strip_prefix(GID_MIN_MARKER) {
+            gid_min = rest.trim().parse().unwrap_or(1000);
+            continue;
+        }
         if line == PASSWD_MARKER {
             section = PASSWD_MARKER;
             continue;
         }
         if line == GROUP_MARKER {
             section = GROUP_MARKER;
+            continue;
+        }
+        if line == LOCAL_GROUP_MARKER {
+            section = LOCAL_GROUP_MARKER;
             continue;
         }
         if line.is_empty() {
@@ -351,29 +476,43 @@ pub fn parse_list(output: &str) -> Result<UserCatalog, UserError> {
             let fields: Vec<&str> = line.split(':').collect();
             // The two numeric fields are what a row is worth reading for, and
             // a line without them is a comment, a blank or a file this is not.
-            if fields.len() >= 7 && fields[2].parse::<u32>().is_ok() && fields[3].parse::<u32>().is_ok()
+            if fields.len() >= 7
+                && fields[2].parse::<u32>().is_ok()
+                && fields[3].parse::<u32>().is_ok()
+                && seen_users.insert(fields[0].to_string())
             {
                 passwd.push(fields);
             }
-        } else if section == GROUP_MARKER {
-            let fields: Vec<&str> = line.split(':').collect();
-            if fields.len() < 4 {
-                continue;
+        } else if let Some(group) = group_record(line) {
+            match section {
+                GROUP_MARKER => listed_groups.push(group),
+                LOCAL_GROUP_MARKER => local_groups.push(SystemGroup {
+                    local: true,
+                    ..group
+                }),
+                _ => {}
             }
-            let Ok(gid) = fields[2].parse::<u32>() else {
-                continue;
-            };
-            groups_by_gid.insert(gid, fields[0].to_string());
-            for member in fields[3].split(',') {
-                let name = member.trim();
-                if name.is_empty() {
-                    continue;
-                }
-                supplementary
-                    .entry(name.to_string())
-                    .or_default()
-                    .push(fields[0].to_string());
-            }
+        }
+    }
+
+    // `/etc/group`'s record wins over one of the same name from another
+    // source, whichever `nsswitch.conf` lists first: it is the one a write
+    // changes, so it is the one an edit has to be read against.
+    let mut seen_groups: HashSet<String> = HashSet::new();
+    let mut groups: Vec<SystemGroup> = local_groups
+        .into_iter()
+        .chain(listed_groups)
+        .filter(|group| seen_groups.insert(group.name.clone()))
+        .collect();
+    let mut groups_by_gid: HashMap<u32, String> = HashMap::new();
+    let mut supplementary: HashMap<String, Vec<String>> = HashMap::new();
+    for group in &groups {
+        groups_by_gid.insert(group.gid, group.name.clone());
+        for member in &group.members {
+            supplementary
+                .entry(member.clone())
+                .or_default()
+                .push(group.name.clone());
         }
     }
 
@@ -408,11 +547,46 @@ pub fn parse_list(output: &str) -> Result<UserCatalog, UserError> {
         })
         .collect();
     users.sort_by(|a, b| a.uid.cmp(&b.uid).then_with(|| a.name.cmp(&b.name)));
+    for group in &mut groups {
+        group.primary_members = users
+            .iter()
+            .filter(|user| user.gid == group.gid)
+            .map(|user| user.name.clone())
+            .collect();
+        group.primary_members.sort();
+    }
+    groups.sort_by(|a, b| a.gid.cmp(&b.gid).then_with(|| a.name.cmp(&b.name)));
 
     Ok(UserCatalog {
         current_user,
         uid_min,
+        gid_min,
         users,
+        groups,
+    })
+}
+
+/// One `/etc/group`-shaped line, as a group from no source in particular.
+fn group_record(line: &str) -> Option<SystemGroup> {
+    let fields: Vec<&str> = line.split(':').collect();
+    if fields.len() < 4 {
+        return None;
+    }
+    let gid = fields[2].parse::<u32>().ok()?;
+    let mut members: Vec<String> = fields[3]
+        .split(',')
+        .map(str::trim)
+        .filter(|name| !name.is_empty())
+        .map(str::to_string)
+        .collect();
+    members.sort();
+    members.dedup();
+    Some(SystemGroup {
+        name: fields[0].to_string(),
+        gid,
+        members,
+        primary_members: Vec::new(),
+        local: false,
     })
 }
 
@@ -636,6 +810,35 @@ pub fn valid_name(name: &str) -> bool {
     USER_NAME.is_match(name)
 }
 
+/// What is wrong with a group draft, or `None`.
+///
+/// `original` is the group as it is for a change, and `None` for a new one.
+/// A change keeps the name, which the machine already accepted, so only a new
+/// name is checked. `accounts` is every account's name: a member being added
+/// must be one, while a member already listed is kept even when its account
+/// is gone.
+pub fn validate_group_draft(
+    draft: &GroupDraft,
+    original: Option<&SystemGroup>,
+    accounts: &[String],
+) -> Option<UserError> {
+    match original {
+        None if !valid_name(&draft.name) => return Some(UserError::InvalidName),
+        Some(original) if draft.name != original.name => return Some(UserError::Renaming),
+        Some(original) if !original.local => return Some(UserError::GroupNotLocal),
+        _ => {}
+    }
+    let kept = original.map(|group| group.members.as_slice()).unwrap_or_default();
+    if draft
+        .members
+        .iter()
+        .any(|member| !kept.contains(member) && !accounts.contains(member))
+    {
+        return Some(UserError::UnknownMember);
+    }
+    None
+}
+
 /// What is wrong with a draft, or `None`.
 pub fn validate_draft(draft: &UserDraft) -> Option<UserError> {
     if !valid_name(&draft.name) {
@@ -791,6 +994,91 @@ pub fn delete_command(user: &SystemUser, remove_home: bool) -> Result<String, Us
 /// The user's password is asked for there, by `su`, and nowhere else.
 pub fn login_shell_command(user: &str) -> String {
     format!("su - {}", single_quote(user))
+}
+
+/// The command that creates a group, then sets its members when the draft
+/// names any. `gpasswd -M` is the group-side equivalent of `usermod -G`: it
+/// replaces the member list rather than appending, so a create with a list is
+/// one write, not a loop of `-a`.
+pub fn group_create_command(draft: &GroupDraft, accounts: &[String]) -> Result<String, UserError> {
+    if let Some(error) = validate_group_draft(draft, None, accounts) {
+        return Err(error);
+    }
+    let mut command = String::from("groupadd ");
+    if draft.system {
+        command.push_str("-r ");
+    }
+    command.push_str(&single_quote(&draft.name));
+    if draft.members.is_empty() {
+        return Ok(command);
+    }
+    // Checked before `groupadd`, so a machine without `gpasswd` is left
+    // without the group rather than with an empty one.
+    Ok(format!(
+        "set -e\ncommand -v gpasswd >/dev/null || {{ echo 'gpasswd: not found' >&2; exit 127; }}\n{command}\n{}",
+        gpasswd_members(&draft.name, &draft.members)
+    ))
+}
+
+/// The command that changes a group's members: `gpasswd -d` for each one
+/// dropped, then `gpasswd -a` for each one added.
+///
+/// Not `gpasswd -M` with the whole list, which refuses every name that is no
+/// longer an account — and `/etc/group` keeps the names of deleted accounts,
+/// so one stale member would make every edit of the group fail.
+///
+/// A group cannot be renamed: `groupmod -n` leaves every file and sudoers line
+/// that names the old group behind.
+pub fn group_edit_command(
+    original: &SystemGroup,
+    draft: &GroupDraft,
+    accounts: &[String],
+) -> Result<String, UserError> {
+    if let Some(error) = validate_group_draft(draft, Some(original), accounts) {
+        return Err(error);
+    }
+    let wanted = sorted_members(&draft.members);
+    let group = single_quote(&original.name);
+    let steps: Vec<String> = original
+        .members
+        .iter()
+        .filter(|member| !wanted.contains(member))
+        .map(|member| format!("gpasswd -d {} {group}", single_quote(member)))
+        .chain(
+            wanted
+                .iter()
+                .filter(|member| !original.members.contains(member))
+                .map(|member| format!("gpasswd -a {} {group}", single_quote(member))),
+        )
+        .collect();
+    Ok(match steps.len() {
+        0 => ":".to_string(),
+        1 => steps.concat(),
+        _ => format!("set -e\n{}", steps.join("\n")),
+    })
+}
+
+/// The command that removes a group, refused as [`SystemGroup::delete_refusal`]
+/// says.
+pub fn group_delete_command(group: &SystemGroup) -> Result<String, UserError> {
+    match group.delete_refusal() {
+        Some(error) => Err(error),
+        None => Ok(format!("groupdel {}", single_quote(&group.name))),
+    }
+}
+
+/// `gpasswd -M` sets the member list of a group [`group_create_command`] has
+/// just made, so every name in it is an account.
+fn gpasswd_members(group: &str, members: &[String]) -> String {
+    let list = sorted_members(members).join(",");
+    format!("gpasswd -M {} {}", single_quote(&list), single_quote(group))
+}
+
+fn sorted_members(members: &[String]) -> Vec<String> {
+    let mut list = members.to_vec();
+    list.sort();
+    list.dedup();
+    list
 }
 
 /// [`command`], with the account's password set after it.

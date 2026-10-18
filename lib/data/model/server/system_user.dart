@@ -52,11 +52,57 @@ final class ServerUser {
   }
 }
 
+final class ServerGroup {
+  const ServerGroup({
+    required this.name,
+    required this.gid,
+    required this.members,
+    required this.primaryMembers,
+    required this.local,
+  });
+
+  final String name;
+  final int gid;
+
+  /// Supplementary members, from the group's own member field.
+  final List<String> members;
+
+  /// Accounts whose primary group this is.
+  final List<String> primaryMembers;
+
+  /// Whether `/etc/group` holds it. A group from LDAP or SSSD is read-only.
+  final bool local;
+
+  /// `sbm_parser::users::SystemGroup` as serde writes it.
+  factory ServerGroup.fromJson(Map<String, Object?> json) => ServerGroup(
+    name: json['name'] as String,
+    gid: json['gid'] as int,
+    members: (json['members'] as List).cast<String>(),
+    primaryMembers: (json['primary_members'] as List).cast<String>(),
+    local: json['local'] as bool,
+  );
+
+  Map<String, Object?> toJson() => {
+    'name': name,
+    'gid': gid,
+    'members': members,
+    'primary_members': primaryMembers,
+    'local': local,
+  };
+
+  /// `SystemGroup::is_root`.
+  bool get isRoot => gid == 0 || name == 'root';
+
+  bool isSystem(int gidMin) => gid < gidMin;
+}
+
 final class ServerUserCatalog {
   const ServerUserCatalog({
     required this.currentUser,
     required this.uidMin,
+    required this.gidMin,
     required this.users,
+    required this.groups,
   });
 
   /// `sbm_parser::users::UserCatalog` as serde writes it.
@@ -64,15 +110,31 @@ final class ServerUserCatalog {
       ServerUserCatalog(
         currentUser: json['current_user'] as String,
         uidMin: json['uid_min'] as int,
+        gidMin: json['gid_min'] as int,
         users: [
           for (final user in json['users'] as List)
             ServerUser.fromJson(user as Map<String, Object?>),
+        ],
+        groups: [
+          for (final group in json['groups'] as List)
+            ServerGroup.fromJson(group as Map<String, Object?>),
         ],
       );
 
   final String currentUser;
   final int uidMin;
+  final int gidMin;
   final List<ServerUser> users;
+  final List<ServerGroup> groups;
+
+  ServerGroup? findGroup(String name) {
+    for (final group in groups) {
+      if (group.name == name) return group;
+    }
+    return null;
+  }
+
+  List<String> get accountNames => [for (final user in users) user.name];
 }
 
 final class ServerUserDraft {
@@ -112,6 +174,25 @@ final class ServerUserDraft {
     'move_home': moveHome,
     'system': system,
     'password': password,
+  };
+}
+
+final class ServerGroupDraft {
+  const ServerGroupDraft({
+    required this.name,
+    required this.members,
+    required this.system,
+  });
+
+  final String name;
+  final List<String> members;
+  final bool system;
+
+  /// `sbm_parser::users::GroupDraft` as serde reads it.
+  Map<String, Object?> toJson() => {
+    'name': name,
+    'members': members,
+    'system': system,
   };
 }
 

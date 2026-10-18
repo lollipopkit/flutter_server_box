@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -2141,6 +2142,27 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get userPasswordEditTip =>
       'Deja la contraseña vacía para conservar la actual.';
+
+  @override
+  String get systemGroups => 'Grupos';
+
+  @override
+  String get userGid => 'GID';
+
+  @override
+  String get userGroupMembers => 'Miembros';
+
+  @override
+  String get userPrimaryMembers => 'Miembros primarios';
+
+  @override
+  String get userSystemGroup => 'Grupo del sistema';
+
+  @override
+  String get userMembersHint => 'alice,bob';
+
+  @override
+  String get userRegularGroup => 'Regular';
 
   @override
   String funcUnavailableFmt(String func) {
