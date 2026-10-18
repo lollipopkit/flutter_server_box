@@ -360,20 +360,25 @@ pub struct UserActRequest {
 
 impl UserActRequest {
     /// What was asked of which account or group, for the audit row.
+    ///
+    /// Control characters are dropped: this string is recorded by `gate`
+    /// before `command` validates the name, and a newline in it would be a
+    /// second line in the log, not part of the name.
     fn subject(&self) -> String {
-        let target = match self.kind {
+        let raw = match self.kind {
             ActKind::User => self
                 .draft
                 .as_ref()
-                .map(|draft| draft.name.clone())
-                .or_else(|| self.name.clone()),
+                .map(|draft| draft.name.as_str())
+                .or(self.name.as_deref()),
             ActKind::Group => self
                 .group
                 .as_ref()
-                .map(|draft| draft.name.clone())
-                .or_else(|| self.name.clone()),
+                .map(|draft| draft.name.as_str())
+                .or(self.name.as_deref()),
         }
         .unwrap_or_default();
+        let target: String = raw.chars().filter(|c| !c.is_control()).collect();
         match self.kind {
             ActKind::User => format!("{} {target}", self.action.as_str()),
             ActKind::Group => format!("group {} {target}", self.action.as_str()),
@@ -910,5 +915,17 @@ docker:x:998:admin,deploy\n";
         create.group = Some(group_draft("ops"));
         assert_eq!(create.subject(), "group create ops");
         assert!(!create.carries_secret());
+    }
+
+    #[test]
+    fn the_audit_subject_does_not_carry_control_characters() {
+        let mut create = group_request(UserAction::Create);
+        create.group = Some(group_draft("ops\nDenied: forged"));
+        assert_eq!(create.subject(), "group create opsDenied: forged");
+        assert!(!create.subject().chars().any(char::is_control));
+
+        let mut named = group_request(UserAction::Delete);
+        named.name = Some("root\r\n".into());
+        assert_eq!(named.subject(), "group delete root");
     }
 }
