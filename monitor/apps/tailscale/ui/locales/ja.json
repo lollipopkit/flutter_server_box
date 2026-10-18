@@ -39,6 +39,7 @@
  "logout": "サインアウト",
  "logoutBody": "マシンは tailnet から離脱し、tailnet 経由の接続は終了します。",
  "logoutTitle": "Tailscale からサインアウト",
+ "network": "ネットワーク",
  "noExitNode": "なし",
  "noPeers": "ピアなし",
  "notExitNode": "このピアは出口ノードを提供していません。",
@@ -68,6 +69,7 @@
  "startBody": "tailscaled を起動し、システム起動時にも起動するよう設定します。",
  "startTitle": "tailscaled を起動",
  "tailnet": "tailnet",
+ "thisDevice": "このデバイス",
  "user": "ユーザー",
  "working": "処理中…"
 }

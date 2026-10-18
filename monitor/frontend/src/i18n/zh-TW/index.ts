@@ -2078,6 +2078,8 @@ const zh_TW = {
 	storeRefresh: '檢查新應用程式和新版本',
 	storeLocal: '本機',
 	storeDeskApps: '桌面 App',
+	storeWebApps: '網頁應用程式',
+	storeExtend: '擴充功能',
 	storeInstall: '安裝',
 	storeFirstParty: 'ServerBox',
 	storeUnknownPublisher: '未知的發行者',

@@ -2078,6 +2078,8 @@ const nl = {
 	storeRefresh: 'Controleren op nieuwe apps en versies',
 	storeLocal: 'Lokaal',
 	storeDeskApps: 'Desk-apps',
+	storeWebApps: 'Web-apps',
+	storeExtend: 'Uitbreidingen',
 	storeInstall: 'Installeren',
 	storeFirstParty: 'ServerBox',
 	storeUnknownPublisher: 'Onbekende uitgever',

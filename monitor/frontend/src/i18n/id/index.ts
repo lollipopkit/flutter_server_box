@@ -2078,6 +2078,8 @@ const id = {
 	storeRefresh: 'Periksa aplikasi dan versi baru',
 	storeLocal: 'Lokal',
 	storeDeskApps: 'Aplikasi desktop',
+	storeWebApps: 'Aplikasi web',
+	storeExtend: 'Ekstensi',
 	storeInstall: 'Pasang',
 	storeFirstParty: 'ServerBox',
 	storeUnknownPublisher: 'Penerbit tidak dikenal',

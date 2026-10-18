@@ -39,6 +39,7 @@
  "logout": "Oturumu kapat",
  "logoutBody": "Makine tailnet'ten ayrılır; tailnet üzerinden bağlantılar sona erer.",
  "logoutTitle": "Tailscale oturumunu kapat",
+ "network": "Ağ",
  "noExitNode": "Yok",
  "noPeers": "Eş yok",
  "notExitNode": "Bu eş çıkış düğümü sunmuyor.",
@@ -68,6 +69,7 @@
  "startBody": "tailscaled başlatılır ve açılışta otomatik başlaması ayarlanır.",
  "startTitle": "tailscaled'i başlat",
  "tailnet": "tailnet",
+ "thisDevice": "Bu cihaz",
  "user": "Kullanıcı",
  "working": "İşleniyor…"
 }

@@ -2078,6 +2078,8 @@ const pt = {
 	storeRefresh: 'Procurar novas aplicações e versões',
 	storeLocal: 'Local',
 	storeDeskApps: 'Apps do desktop',
+	storeWebApps: 'Aplicativos web',
+	storeExtend: 'Extensões',
 	storeInstall: 'Instalar',
 	storeFirstParty: 'ServerBox',
 	storeUnknownPublisher: 'Editor desconhecido',

@@ -2078,6 +2078,8 @@ const tr = {
 	storeRefresh: 'Yeni uygulama ve sürümleri kontrol et',
 	storeLocal: 'Yerel',
 	storeDeskApps: 'Masaüstü uygulamaları',
+	storeWebApps: 'Web uygulamaları',
+	storeExtend: 'Uzantılar',
 	storeInstall: 'Yükle',
 	storeFirstParty: 'ServerBox',
 	storeUnknownPublisher: 'Bilinmeyen yayıncı',

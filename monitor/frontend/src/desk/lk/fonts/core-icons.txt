@@ -24,6 +24,7 @@ bolt
 bookmarks
 box
 bug_report
+build
 cable
 call
 cancel
@@ -70,6 +71,7 @@ domain
 done
 done_all
 download
+download_done
 draw
 edit
 edit_note
@@ -221,12 +223,14 @@ shield_lock
 shift
 side_navigation
 sleep
+smart_toy
 spa
 space
 speed
 splitscreen_bottom
 splitscreen_right
 stacks
+star
 start
 step
 steps
@@ -245,6 +249,7 @@ sync
 tab
 target
 task
+task_alt
 terminal
 thermostat
 timer
@@ -277,6 +282,7 @@ wallpaper
 warning
 web
 webhook
+widgets
 width
 window
 work

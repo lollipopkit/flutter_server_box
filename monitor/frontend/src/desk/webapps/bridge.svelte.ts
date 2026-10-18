@@ -23,6 +23,8 @@ import {
   type JobView,
   type MenuDescription,
   type Reply,
+  type SidebarDescription,
+  type SidebarSection,
   type SudoAsk,
   type ToolbarDescription,
 } from '../../../../sdk/serverbox-desk/src/protocol'
@@ -31,6 +33,7 @@ const MAX_MESSAGE_BYTES = 1 << 20
 const MAX_IN_FLIGHT = 32
 const MAX_ITEMS = 64
 const MAX_MENUS = 8
+const MAX_SECTIONS = 8
 const MAX_LABEL = 80
 const MAX_KEEP_ALIVE = 4
 const MAX_APP_STATE = 16 * 1024
@@ -68,6 +71,21 @@ function actionItems(value: unknown): ActionItem[] {
         danger: v.danger === true,
       },
     ]
+  })
+}
+
+function sidebarSections(value: unknown): SidebarSection[] {
+  if (!Array.isArray(value)) return []
+  return value.slice(0, MAX_SECTIONS).flatMap((raw): SidebarSection[] => {
+    const v = raw as Record<string, unknown> | null
+    if (!v || typeof v !== 'object' || !Array.isArray(v.items)) return []
+    const items = v.items.slice(0, MAX_ITEMS).flatMap((rawItem) => {
+      const i = rawItem as Record<string, unknown> | null
+      const id = text(i?.id, 64)
+      const label = text(i?.label, MAX_LABEL)
+      return id && label ? [{ id, label, icon: glyph(i?.icon), trailing: text(i?.trailing, 16) }] : []
+    })
+    return items.length ? [{ title: text(v.title, MAX_LABEL), items }] : []
   })
 }
 
@@ -142,6 +160,7 @@ export class WebAppBridge {
   /// What the app asked the desk to draw for it.
   toolbar = $state<ToolbarDescription>({})
   menus = $state<MenuDescription[]>([])
+  sidebar = $state<SidebarDescription>({ sections: [] })
   /// The frame said it is listening.
   ready = $state(false)
 
@@ -167,6 +186,14 @@ export class WebAppBridge {
   /// A row or button the desk drew was used.
   action(id: string) {
     this.send('action', { id })
+  }
+
+  /// A place in the sidebar the desk drew was chosen: shown chosen at once,
+  /// and the app told.
+  navigate(id: string) {
+    if (!this.sidebar.sections.some((s) => s.items.some((i) => i.id === id))) return
+    this.sidebar = { ...this.sidebar, selected: id }
+    this.send('navigate', { id })
   }
 
   /// Rows for `useMenus`, each sending its id back.
@@ -277,6 +304,12 @@ export class WebAppBridge {
           return label ? [{ label, items: actionItems(m?.items) }] : []
         })
         return
+      case 'sidebar': {
+        const sections = sidebarSections(a.sections)
+        const selected = text(a.selected, 64)
+        this.sidebar = { sections, selected: sections.some((s) => s.items.some((i) => i.id === selected)) ? selected : undefined }
+        return
+      }
       case 'notify':
         if (!this.#host.allows('notifications')) throw new Error('notPermitted')
         return h.notify({ title: text(a.title, 200) ?? '', body: text(a.body, 2000), level: a.level as never })

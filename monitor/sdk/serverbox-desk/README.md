@@ -16,6 +16,9 @@ import { connect } from 'serverbox-desk'
 const desk = await connect()
 await desk.toolbar({ actions: [{ id: 'refresh', label: 'Refresh', icon: 'refresh' }] })
 desk.on('action', ({ id }) => { /* … */ })
+// Pages of its own, in the window's sidebar like the desk's apps
+await desk.sidebar({ sections: [{ items: [{ id: 'status', label: 'Status', icon: 'info' }, { id: 'logs', label: 'Logs', icon: 'article' }] }], selected: 'status' })
+desk.on('navigate', ({ id }) => { /* … */ })
 const count = (await desk.storage.get<number>('count')) ?? 0
 await desk.storage.set('count', count + 1)
 

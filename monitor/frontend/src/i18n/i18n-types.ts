@@ -8599,6 +8599,14 @@ type RootTranslation = {
 	 */
 	storeDeskApps: string
 	/**
+	 * W​e​b​ ​a​p​p​s
+	 */
+	storeWebApps: string
+	/**
+	 * E​x​t​e​n​s​i​o​n​s
+	 */
+	storeExtend: string
+	/**
 	 * I​n​s​t​a​l​l
 	 */
 	storeInstall: string
@@ -18525,6 +18533,14 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Desk apps
 	 */
 	storeDeskApps: () => LocalizedString
+	/**
+	 * Web apps
+	 */
+	storeWebApps: () => LocalizedString
+	/**
+	 * Extensions
+	 */
+	storeExtend: () => LocalizedString
 	/**
 	 * Install
 	 */

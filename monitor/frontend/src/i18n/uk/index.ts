@@ -2078,6 +2078,8 @@ const uk = {
 	storeRefresh: 'Перевірити наявність нових програм і версій',
 	storeLocal: 'Локальний',
 	storeDeskApps: 'Застосунки для робочого столу',
+	storeWebApps: 'Вебзастосунки',
+	storeExtend: 'Розширення',
 	storeInstall: 'Встановити',
 	storeFirstParty: 'ServerBox',
 	storeUnknownPublisher: 'Невідомий видавець',

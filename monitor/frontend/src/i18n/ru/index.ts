@@ -2078,6 +2078,8 @@ const ru = {
 	storeRefresh: 'Проверить наличие новых приложений и версий',
 	storeLocal: 'Локальный',
 	storeDeskApps: 'Приложения для рабочего стола',
+	storeWebApps: 'Веб-приложения',
+	storeExtend: 'Расширения',
 	storeInstall: 'Установить',
 	storeFirstParty: 'ServerBox',
 	storeUnknownPublisher: 'Неизвестный издатель',

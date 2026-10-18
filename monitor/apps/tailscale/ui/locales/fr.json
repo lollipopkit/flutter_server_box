@@ -39,6 +39,7 @@
  "logout": "Se déconnecter",
  "logoutBody": "La machine quitte le tailnet ; les connexions qui l’empruntent prennent fin.",
  "logoutTitle": "Se déconnecter de Tailscale",
+ "network": "Réseau",
  "noExitNode": "Aucun",
  "noPeers": "Aucun pair",
  "notExitNode": "Ce pair ne propose pas de nœud de sortie.",
@@ -68,6 +69,7 @@
  "startBody": "tailscaled est démarré et configuré pour se lancer au démarrage du système.",
  "startTitle": "Démarrer tailscaled",
  "tailnet": "tailnet",
+ "thisDevice": "Cet appareil",
  "user": "Utilisateur",
  "working": "En cours…"
 }

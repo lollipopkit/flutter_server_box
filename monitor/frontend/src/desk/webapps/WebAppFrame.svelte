@@ -10,6 +10,8 @@
   import { deskApi } from '../deskApi'
   import { useDesk } from '../deskState.svelte'
   import IconButton from '../lk/IconButton.svelte'
+  import SidebarItem from '../lk/SidebarItem.svelte'
+  import SidebarSection from '../lk/SidebarSection.svelte'
   import Spinner from '../lk/Spinner.svelte'
   import AppToolbar from '../sys/AppToolbar.svelte'
   import { useIntents, useMenus, useWindow } from '../sys/window.svelte'
@@ -139,6 +141,14 @@
     }
   })
 
+  // The app's places, in the window's own inset sidebar. Pushed rather than
+  // drawn through `SplitView`, which would remount the frame (a second load,
+  // which ends it) when the app first describes them.
+  $effect(() => {
+    if (!win.chrome || bridge.sidebar.sections.length === 0) return
+    return win.chrome.pushSidebar({ content: places, width: 196 })
+  })
+
   useMenus(() => bridge.menuEntries())
   useIntents((intent) => bridge.intent(intent))
   $effect(() => bridge.send('lifecycle', win.lifecycle))
@@ -149,6 +159,16 @@
     bridge.close()
   })
 </script>
+
+{#snippet places()}
+  {#each bridge.sidebar.sections as section, i (i)}
+    <SidebarSection title={section.title}>
+      {#each section.items as item (item.id)}
+        <SidebarItem label={item.label} icon={item.icon} trailing={item.trailing} active={bridge.sidebar.selected === item.id} onclick={() => bridge.navigate(item.id)} />
+      {/each}
+    </SidebarSection>
+  {/each}
+{/snippet}
 
 <AppToolbar title={bridge.toolbar.title} subtitle={bridge.toolbar.subtitle}>
   {#snippet actions()}

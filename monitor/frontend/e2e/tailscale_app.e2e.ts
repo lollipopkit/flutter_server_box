@@ -3,7 +3,8 @@
 /// (`scripts/desk-vm-e2e.sh <node> tailscale`: Headscale on it and a peer
 /// offering an exit node and a route), through the panel: Tailscale
 /// installed, signed in with an auth key to that control server, the peer
-/// listed and pinged directly, the peer's exit node used (LAN access kept,
+/// listed and pinged directly (each on its page, chosen in the window's
+/// sidebar), the peer's exit node used (LAN access kept,
 /// so the panel stays reachable) with its routes, disconnected and connected
 /// again with those settings, signed out, then signed in by opening the URL
 /// the sign-in waits on (approved on Headscale).
@@ -16,7 +17,7 @@ import { execSync } from 'node:child_process'
 import { expect, test, type Page } from '@playwright/test'
 import { fillSecret } from './secret'
 import { signIn } from './signin'
-import { frameOf, installFromStore, openApp, sudoDialog } from './desk_app'
+import { frameOf, installFromStore, navigate, openApp, sudoDialog } from './desk_app'
 
 const env = process.env
 const sudo = env.SBM_E2E_SUDO_PASSWORD ?? ''
@@ -45,7 +46,10 @@ async function confirm(page: Page, button: string, wait = true) {
 /// The exit node picker: the select offering the peer.
 const exitNodePicker = (page: Page) => app(page).getByRole('combobox').filter({ has: app(page).locator('option', { hasText: /^peer · / }) })
 
-/// A setting's switch in the Settings group.
+/// One of the app's pages, from its window's sidebar.
+const go = (page: Page, label: 'This device' | 'Peers' | 'Exit node' | 'Network') => navigate(page, APP, label)
+
+/// A setting's switch.
 const toggle = (page: Page, label: string) => app(page).getByRole('switch', { name: label, exact: true })
 
 async function signInForm(page: Page, key: string) {
@@ -71,6 +75,7 @@ test('Tailscale as a package signs in, uses an exit node and signs out', async (
     await signInForm(page, env.SBM_E2E_TS_KEY!)
     await confirm(page, 'Sign in to Tailscale')
     await expect(row(page, 'main')).toContainText('Connected', { timeout: 60_000 })
+    await go(page, 'Peers')
     await expect(row(page, 'peer')).toContainText('Online', { timeout: 60_000 })
     await expect(row(page, 'peer')).toContainText('Offers exit node')
     await row(page, 'peer').getByRole('button', { name: 'Ping' }).click()
@@ -78,31 +83,39 @@ test('Tailscale as a package signs in, uses an exit node and signs out', async (
   })
 
   await test.step("the peer's exit node and routes used, LAN access kept", async () => {
+    await go(page, 'Exit node')
     const select = exitNodePicker(page)
     await select.selectOption((await select.locator('option', { hasText: /^peer · / }).getAttribute('value'))!)
     await expect(toggle(page, 'Allow LAN access while using an exit node')).toHaveAttribute('aria-checked', 'true')
+    // A change on one page is kept on the other, and saved together.
+    await go(page, 'Network')
     await toggle(page, 'Use routes other machines advertise').click()
     await app(page).getByRole('button', { name: 'Save', exact: true }).click()
     await confirm(page, 'Save Tailscale settings')
     await page.getByRole('button', { name: 'Refresh', exact: true }).click()
-    await expect(row(page, 'peer')).toContainText('Exit node', { timeout: 60_000 })
     await expect(toggle(page, 'Use routes other machines advertise')).toHaveAttribute('aria-checked', 'true')
+    await go(page, 'Peers')
+    await expect(row(page, 'peer')).toContainText('Exit node', { timeout: 60_000 })
   })
 
   await test.step('disconnected, connected again with its settings', async () => {
+    await go(page, 'This device')
     await row(page, 'main').getByRole('button', { name: 'Disconnect' }).click()
     await confirm(page, 'Disconnect')
     await expect(row(page, 'main')).toContainText('Disconnected', { timeout: 60_000 })
     await row(page, 'main').getByRole('button', { name: 'Connect' }).click()
     await confirm(page, 'Connect')
     await expect(row(page, 'main')).toContainText('Connected', { timeout: 60_000 })
+    await go(page, 'Peers')
     await expect(row(page, 'peer')).toContainText('Exit node', { timeout: 60_000 })
   })
 
   await test.step('signed out, signed in again by opening the sign-in URL', async () => {
+    await go(page, 'Exit node')
     await exitNodePicker(page).selectOption('')
     await app(page).getByRole('button', { name: 'Save', exact: true }).click()
     await confirm(page, 'Save Tailscale settings')
+    await go(page, 'This device')
     await app(page).getByRole('button', { name: 'Sign out', exact: true }).click()
     await confirm(page, 'Sign out of Tailscale')
     await expect(app(page).getByRole('button', { name: 'Sign in', exact: true })).toBeVisible({ timeout: 60_000 })

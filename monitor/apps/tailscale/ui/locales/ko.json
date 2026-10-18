@@ -39,6 +39,7 @@
  "logout": "로그아웃",
  "logoutBody": "머신이 tailnet에서 나가며 tailnet을 통한 연결이 종료됩니다.",
  "logoutTitle": "Tailscale 로그아웃",
+ "network": "네트워크",
  "noExitNode": "없음",
  "noPeers": "피어 없음",
  "notExitNode": "해당 피어는 출구 노드를 제공하지 않습니다.",
@@ -68,6 +69,7 @@
  "startBody": "tailscaled를 시작하고 부팅 시 자동으로 시작하도록 설정합니다.",
  "startTitle": "tailscaled 시작",
  "tailnet": "tailnet",
+ "thisDevice": "이 기기",
  "user": "사용자",
  "working": "작업 중…"
 }

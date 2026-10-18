@@ -39,6 +39,7 @@
  "logout": "退出登录",
  "logoutBody": "这台机器离开 tailnet，经由它的连接会断开。",
  "logoutTitle": "退出 Tailscale",
+ "network": "网络",
  "noExitNode": "不使用",
  "noPeers": "没有节点",
  "notExitNode": "这个节点不提供出口节点。",
@@ -68,6 +69,7 @@
  "startBody": "启动 tailscaled 并设为开机启动。",
  "startTitle": "启动 tailscaled",
  "tailnet": "Tailnet",
+ "thisDevice": "本机",
  "user": "用户",
  "working": "正在处理…"
 }

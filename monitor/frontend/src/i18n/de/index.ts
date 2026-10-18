@@ -2078,6 +2078,8 @@ const de = {
 	storeRefresh: 'Nach neuen Apps und Versionen suchen',
 	storeLocal: 'Lokal',
 	storeDeskApps: 'Desk-Apps',
+	storeWebApps: 'Web-Apps',
+	storeExtend: 'Erweiterungen',
 	storeInstall: 'Installieren',
 	storeFirstParty: 'ServerBox',
 	storeUnknownPublisher: 'Unbekannter Herausgeber',

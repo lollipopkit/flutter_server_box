@@ -15,7 +15,9 @@ export async function openApp(page: Page, id: string) {
 /// the built-in app of its id gives way to it.
 export async function installFromStore(page: Page, id: string, title: string) {
   await openApp(page, 'serverbox.store')
-  const card = page.locator('.lk-card').filter({ has: page.getByText(title, { exact: true }) }).filter({ hasText: 'ServerBox' })
+  const store = page.locator('.desk-window').filter({ has: page.getByPlaceholder('Search apps') })
+  await store.locator('.lk-window__sidebar').getByRole('button', { name: 'Desk apps' }).click()
+  const card = store.locator('.lk-card').filter({ has: page.getByText(title, { exact: true }) }).filter({ hasText: 'ServerBox' })
   const open = card.getByRole('button', { name: 'Open', exact: true })
   const install = card.getByRole('button', { name: 'Install', exact: true })
   await expect(open.or(install)).toBeVisible({ timeout: 60_000 })
@@ -33,6 +35,13 @@ export async function installFromStore(page: Page, id: string, title: string) {
 }
 
 export const frameOf = (page: Page, id: string): FrameLocator => page.frameLocator(`iframe[title="${id}"]`)
+
+/// Chooses the place labelled [label] in the sidebar of app [id]'s window
+/// (`desk.sidebar`).
+export async function navigate(page: Page, id: string, label: string) {
+  const win = page.locator('.desk-window').filter({ has: page.locator(`iframe[title="${id}"]`) })
+  await win.locator('.lk-window__sidebar').getByRole('button', { name: new RegExp(`^${label}`) }).click()
+}
 
 /// The row labelled exactly [label] (`Row`), in the page or a frame.
 export const row = (scope: FrameLocator | Page, label: string) =>

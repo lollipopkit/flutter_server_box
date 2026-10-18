@@ -6,11 +6,13 @@
 ///   document.body.innerHTML = '<button class="lk-btn lk-btn--primary">Run</button>'
 ///   desk.toolbar({ actions: [{ id: 'refresh', label: 'Refresh', icon: 'refresh' }] })
 ///   desk.on('action', ({ id }) => …)
+///   desk.sidebar({ sections: [{ items: [{ id: 'status', label: 'Status', icon: 'info' }] }], selected: 'status' })
+///   desk.on('navigate', ({ id }) => …)
 
-import { PROTOCOL, type AppTheme, type JobView, type MenuDescription, type SudoAsk, type ToolbarDescription } from './protocol.js'
+import { PROTOCOL, type AppTheme, type JobView, type MenuDescription, type SidebarDescription, type SudoAsk, type ToolbarDescription } from './protocol.js'
 import { applyTheme, useStylesheet } from './ui.js'
 
-export type { ActionItem, AppTheme, JobView, MenuDescription, SudoAsk, ToolbarDescription } from './protocol.js'
+export type { ActionItem, AppTheme, JobView, MenuDescription, SidebarDescription, SidebarItem, SidebarSection, SudoAsk, ToolbarDescription } from './protocol.js'
 export { translator, type Dictionary, type Translate } from './i18n.js'
 export { formatBytes, formatDate, formatTime } from './format.js'
 
@@ -46,6 +48,8 @@ export interface Events {
   intent: Intent
   /// A toolbar button or menu row the app described was used.
   action: { id: string }
+  /// A place in the app's sidebar was chosen.
+  navigate: { id: string }
 }
 
 /// Thrown for a refusal: `notPermitted`, `tooLarge`, `busy`, a backend's own
@@ -83,6 +87,9 @@ export interface Desk {
   setAppState(state: unknown): Promise<void>
   toolbar(toolbar: ToolbarDescription): Promise<void>
   menus(menus: MenuDescription[]): Promise<void>
+  /// The app's places, drawn as the window's sidebar; `navigate` says which
+  /// one was chosen. Send it again with `selected` when the app moves itself.
+  sidebar(sidebar: SidebarDescription): Promise<void>
   notify(notice: { title: string; body?: string; level?: 'info' | 'warning' | 'critical' }): Promise<void>
   readonly storage: {
     get<T = unknown>(key: string): Promise<T | undefined>
@@ -225,6 +232,7 @@ export async function connect(options: ConnectOptions = {}): Promise<Desk> {
     setAppState: (state) => call('setAppState', { state }),
     toolbar: (toolbar) => call('toolbar', toolbar),
     menus: (menus) => call('menus', { menus }),
+    sidebar: (sidebar) => call('sidebar', sidebar),
     notify: (notice) => call('notify', notice),
     storage: {
       get: (key) => call('storage.get', { key }),

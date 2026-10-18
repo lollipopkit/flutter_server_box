@@ -113,6 +113,7 @@ The desk posts `{ sbm: 1, event: 'connect' }` with a `MessagePort` to the frame'
 | `hello` | Answers app and window id, `appState`, lifecycle, theme, locale, granted permissions |
 | `setTitle`, `setAppName`, `setIcon`, `setBadge`, `setAppState`, `close` | As the window handle |
 | `toolbar` `{ title, subtitle, actions }`, `menus` `{ menus }` | Described, drawn by the desk with `lk`; a use sends `action { id }` |
+| `sidebar` `{ sections: [{ title?, items: [{ id, label, icon?, trailing? }] }], selected? }` | The app's places, drawn as the window's own inset sidebar (folded in a narrow window); choosing one shows it chosen and sends `navigate { id }`; no sections, no sidebar |
 | `notify` | Needs `notifications` |
 | `storage.get/set/remove/keys` | The app's own storage |
 | `open` `{ appId, newWindow, intent }` | The only intent it may hand on is `open` of a path (an app must not make Terminal type) |

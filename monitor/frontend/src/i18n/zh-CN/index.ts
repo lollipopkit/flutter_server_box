@@ -2077,6 +2077,8 @@ const zh_CN = {
 	storeRefresh: '检查新应用和新版本',
 	storeLocal: '本地',
 	storeDeskApps: '桌面应用',
+	storeWebApps: '网页应用',
+	storeExtend: '扩展',
 	storeInstall: '安装',
 	storeFirstParty: 'ServerBox',
 	storeUnknownPublisher: '未知发布者',

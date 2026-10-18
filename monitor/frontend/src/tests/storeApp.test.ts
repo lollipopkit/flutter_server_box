@@ -61,12 +61,24 @@ describe('the App Store', () => {
     capabilitiesStore.byServer = { local: caps(false) }
     render(StoreApp)
     expect(await screen.findByText('Immich does things.')).toBeInTheDocument()
-    expect(screen.getByText('Installed')).toBeInTheDocument()
+    // The badge, beside the sidebar's place of the same name
+    expect(screen.getAllByText('Installed')).toHaveLength(2)
     // Installed, but its containers are not running.
     expect(screen.getByText('Down')).toBeInTheDocument()
     expect(screen.getByText('Media does things.')).toBeInTheDocument()
     await fireEvent.input(screen.getByPlaceholderText('Search apps'), { target: { value: 'media' } })
     expect(screen.queryByText('Immich does things.')).toBeNull()
+    expect(screen.getByText('Media does things.')).toBeInTheDocument()
+  })
+
+  it('shows the place chosen in the sidebar, and searches every place', async () => {
+    capabilitiesStore.byServer = { local: caps(false) }
+    render(StoreApp)
+    expect(await screen.findByText('Media does things.')).toBeInTheDocument()
+    await fireEvent.click(screen.getByRole('button', { name: /^Installed/ }))
+    expect(screen.getByText('Immich does things.')).toBeInTheDocument()
+    expect(screen.queryByText('Media does things.')).toBeNull()
+    await fireEvent.input(screen.getByPlaceholderText('Search apps'), { target: { value: 'media' } })
     expect(screen.getByText('Media does things.')).toBeInTheDocument()
   })
 

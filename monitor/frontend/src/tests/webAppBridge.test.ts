@@ -99,6 +99,24 @@ describe('the bridge to an installed app', () => {
     expect(handle.storage.get).toHaveBeenCalledWith('n')
   })
 
+  it('draws the app’s places and tells it which one was chosen', async () => {
+    const { bridge, call, port } = setup()
+    await call('hello')
+    await call('sidebar', {
+      sections: [{ title: 'Places', items: [{ id: 'a', label: 'A', icon: 'home' }, { id: 'b', label: 'B', icon: '<x>', trailing: '3' }, { label: 'no id' }] }, { items: [] }],
+      selected: 'gone',
+    })
+    expect(bridge.sidebar.sections).toEqual([{ title: 'Places', items: [{ id: 'a', label: 'A', icon: 'home', trailing: undefined }, { id: 'b', label: 'B', icon: undefined, trailing: '3' }] }])
+    expect(bridge.sidebar.selected).toBeUndefined()
+
+    bridge.navigate('nowhere')
+    bridge.navigate('b')
+    expect(bridge.sidebar.selected).toBe('b')
+    await new Promise((r) => setTimeout(r, 0))
+    const events = port.postMessage.mock.calls.map(([m]) => m).filter((m) => m.event === 'navigate')
+    expect(events).toEqual([{ sbm: 1, event: 'navigate', data: { id: 'b' } }])
+  })
+
   it('drops icon names that are not glyphs and refuses unknown calls', async () => {
     const { bridge, call } = setup()
     await call('toolbar', { actions: [{ id: 'a', label: 'A', icon: '<img src=x>' }] })

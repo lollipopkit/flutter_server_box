@@ -39,6 +39,7 @@
  "logout": "Cerrar sesión",
  "logoutBody": "La máquina abandona el tailnet; las conexiones a través de él finalizan.",
  "logoutTitle": "Cerrar sesión en Tailscale",
+ "network": "Red",
  "noExitNode": "Ninguno",
  "noPeers": "No hay pares",
  "notExitNode": "Ese par no ofrece un nodo de salida.",
@@ -68,6 +69,7 @@
  "startBody": "Se inicia tailscaled y se configura para que arranque al iniciar el sistema.",
  "startTitle": "Iniciar tailscaled",
  "tailnet": "tailnet",
+ "thisDevice": "Este dispositivo",
  "user": "Usuario",
  "working": "En curso…"
 }

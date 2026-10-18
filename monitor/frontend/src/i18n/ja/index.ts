@@ -2078,6 +2078,8 @@ const ja = {
 	storeRefresh: '新しいアプリとバージョンを確認',
 	storeLocal: 'ローカル',
 	storeDeskApps: 'デスクアプリ',
+	storeWebApps: 'Web アプリ',
+	storeExtend: '拡張機能',
 	storeInstall: 'インストール',
 	storeFirstParty: 'ServerBox',
 	storeUnknownPublisher: '不明な発行元',

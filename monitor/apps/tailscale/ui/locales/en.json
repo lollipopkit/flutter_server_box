@@ -39,6 +39,7 @@
  "logout": "Sign out",
  "logoutBody": "The machine leaves the tailnet; connections over it end.",
  "logoutTitle": "Sign out of Tailscale",
+ "network": "Network",
  "noExitNode": "None",
  "noPeers": "No peers",
  "notExitNode": "That peer does not offer an exit node.",
@@ -68,6 +69,7 @@
  "startBody": "tailscaled is started and set to start at boot.",
  "startTitle": "Start tailscaled",
  "tailnet": "Tailnet",
+ "thisDevice": "This device",
  "user": "User",
  "working": "Working…"
 }

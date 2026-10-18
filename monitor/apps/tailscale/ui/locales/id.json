@@ -39,6 +39,7 @@
  "logout": "Keluar",
  "logoutBody": "Mesin meninggalkan tailnet; koneksi yang melaluinya akan berakhir.",
  "logoutTitle": "Keluar dari Tailscale",
+ "network": "Jaringan",
  "noExitNode": "Tidak ada",
  "noPeers": "Tidak ada peer",
  "notExitNode": "Peer tersebut tidak menawarkan exit node.",
@@ -68,6 +69,7 @@
  "startBody": "tailscaled dijalankan dan diatur agar mulai saat boot.",
  "startTitle": "Mulai tailscaled",
  "tailnet": "tailnet",
+ "thisDevice": "Perangkat ini",
  "user": "Pengguna",
  "working": "Sedang diproses…"
 }

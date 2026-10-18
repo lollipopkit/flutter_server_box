@@ -1,10 +1,11 @@
 <script lang="ts">
   /// Tailscale on this machine: installed and running or not, signed in
   /// (with an auth key, or by opening the URL a sign-in waits on; a control
-  /// server of one's own, Headscale, too), this device, its peers (reached
-  /// directly or through a relay, ping), and its settings: exit node,
-  /// routes, DNS, SSH. Changes are jobs run as root after the desk's sudo
-  /// dialog; the auth key goes to the backend once.
+  /// server of one's own, Headscale, too), then a page each, chosen in the
+  /// window's sidebar: this device, its peers (reached directly or through a
+  /// relay, ping), the exit node, and the network settings (routes, DNS,
+  /// SSH). Changes are jobs run as root after the desk's sudo dialog; the
+  /// auth key goes to the backend once.
 
   import Badge from '$lk/Badge.svelte'
   import Button from '$lk/Button.svelte'
@@ -36,6 +37,11 @@
   let saved = $state<Draft | null>(null)
   let pings = $state<Record<string, string>>({})
   const job = new JobRun()
+
+  type Page = 'device' | 'peers' | 'exit' | 'network'
+  const PAGES: Page[] = ['device', 'peers', 'exit', 'network']
+  const kept = (desk.info.appState as { page?: unknown } | null)?.page
+  let page = $state<Page>(PAGES.includes(kept as Page) ? (kept as Page) : 'device')
 
   function said(e: unknown): string {
     if (!(e instanceof DeskError)) return String(e)
@@ -114,11 +120,59 @@
   $effect(() => {
     void desk.toolbar({ actions: [{ id: 'refresh', label: t('refresh'), icon: 'refresh' }] })
   })
+
+  // The pages exist once there is a tailnet to show; before that the window
+  // is the one step it waits on.
+  const paged = $derived(!!view?.version && !!view.daemon && signedIn)
+  $effect(() => {
+    void desk.sidebar(
+      paged
+        ? {
+            sections: [
+              {
+                items: [
+                  { id: 'device', label: t('thisDevice'), icon: 'computer' },
+                  { id: 'peers', label: t('peers'), icon: 'lan', trailing: String(view?.peers.length ?? 0) },
+                  { id: 'exit', label: t('exitNode'), icon: 'output' },
+                  { id: 'network', label: t('network'), icon: 'tune' },
+                ],
+              },
+            ],
+            selected: page,
+          }
+        : { sections: [] },
+    )
+  })
+  desk.on('navigate', ({ id }) => {
+    if (!PAGES.includes(id as Page)) return
+    page = id as Page
+    void desk.setAppState({ page })
+  })
+
+  const saveSettings = () =>
+    void run('set', { settings: changed, lanCutOk: false }, { title: t('saveTitle'), body: draft?.exitNode ? t('saveExitBody') : t('saveBody') })
   desk.on('action', ({ id }) => id === 'refresh' && void load())
 
   void job.resume(said).then(() => load())
   void load()
 </script>
+
+{#snippet toggle(key: 'exitNodeAllowLan' | 'acceptRoutes' | 'acceptDns' | 'ssh' | 'shieldsUp' | 'advertiseExitNode', label: string)}
+  {#if draft}
+    <div class="trail">
+      <Switch {label} bind:checked={draft[key]} />
+      <span>{label}</span>
+    </div>
+  {/if}
+{/snippet}
+
+<!-- One Save for the settings of both pages: a change on one is kept while
+     the other is shown. -->
+{#snippet save()}
+  <div class="trail">
+    <Button variant="primary" disabled={job.running || !anyChange} onclick={saveSettings}>{t('save')}</Button>
+  </div>
+{/snippet}
 
 <main class="page">
   {#if error}
@@ -174,7 +228,7 @@
         <Button variant="primary" disabled={job.running} onclick={signIn}>{t('signIn')}</Button>
       </div>
     </Group>
-  {:else}
+  {:else if page === 'device'}
     <Group>
       <Row label={view.name ?? '—'} sub={view.dnsName ?? undefined}>
         <span class="trail">
@@ -199,41 +253,8 @@
         {#each view.health as h (h)}<p class="note"><Icon name="warning" size={15} /><span>{h}</span></p>{/each}
       </Card>
     {/if}
-
-    {#if draft}
-      <Group title={t('settings')}>
-        <div class="intro pad">
-          <Select
-            label={t('exitNode')}
-            options={[{ value: '', label: t('noExitNode') }, ...exitNodes.map((p) => ({ value: p.id, label: `${p.name} · ${p.ips[0] ?? ''}` }))]}
-            bind:value={draft.exitNode}
-          />
-          {#each [
-            ['exitNodeAllowLan', t('allowLan')],
-            ['acceptRoutes', t('acceptRoutes')],
-            ['acceptDns', t('acceptDns')],
-            ['ssh', t('ssh')],
-            ['shieldsUp', t('shieldsUp')],
-            ['advertiseExitNode', t('advertiseExitNode')],
-          ] as [key, label] (key)}
-            <div class="trail">
-              <Switch {label} bind:checked={draft[key as 'ssh']} />
-              <span>{label}</span>
-            </div>
-          {/each}
-          <Input label={t('hostname')} mono bind:value={draft.hostname} />
-          <Input label={t('routes')} mono placeholder="192.168.1.0/24" bind:value={draft.advertiseRoutes} hint={t('routesHint')} />
-          {#if draft.exitNode && !draft.exitNodeAllowLan}<p class="danger">{t('lanCut')}</p>{/if}
-          <Button
-            variant="primary"
-            disabled={job.running || !anyChange}
-            onclick={() => void run('set', { settings: changed, lanCutOk: false }, { title: t('saveTitle'), body: draft?.exitNode ? t('saveExitBody') : t('saveBody') })}
-          >{t('save')}</Button>
-        </div>
-      </Group>
-    {/if}
-
-    <Group title={t('peers')}>
+  {:else if page === 'peers'}
+    <Group>
       {#each view.peers as p (p.id)}
         <Row label={p.name} sub={[p.ips.join(', '), p.os, p.direct ? t('direct', { addr: p.direct }) : p.relay ? t('relay', { relay: p.relay }) : '', pings[p.id]].filter(Boolean).join(' · ')}>
           <span class="trail wrap">
@@ -248,5 +269,39 @@
         <p class="pad hint">{t('noPeers')}</p>
       {/each}
     </Group>
+  {:else if draft && page === 'exit'}
+    <Group>
+      <div class="intro pad">
+        <Select
+          label={t('exitNode')}
+          options={[{ value: '', label: t('noExitNode') }, ...exitNodes.map((p) => ({ value: p.id, label: `${p.name} · ${p.ips[0] ?? ''}` }))]}
+          bind:value={draft.exitNode}
+        />
+        {@render toggle('exitNodeAllowLan', t('allowLan'))}
+        {#if draft.exitNode && !draft.exitNodeAllowLan}<p class="danger">{t('lanCut')}</p>{/if}
+      </div>
+    </Group>
+    <Group>
+      <div class="intro pad">
+        {@render toggle('advertiseExitNode', t('advertiseExitNode'))}
+      </div>
+    </Group>
+    {@render save()}
+  {:else if draft && page === 'network'}
+    <Group>
+      <div class="intro pad">
+        {@render toggle('acceptRoutes', t('acceptRoutes'))}
+        {@render toggle('acceptDns', t('acceptDns'))}
+        {@render toggle('ssh', t('ssh'))}
+        {@render toggle('shieldsUp', t('shieldsUp'))}
+      </div>
+    </Group>
+    <Group>
+      <div class="intro pad">
+        <Input label={t('hostname')} mono bind:value={draft.hostname} />
+        <Input label={t('routes')} mono placeholder="192.168.1.0/24" bind:value={draft.advertiseRoutes} hint={t('routesHint')} />
+      </div>
+    </Group>
+    {@render save()}
   {/if}
 </main>

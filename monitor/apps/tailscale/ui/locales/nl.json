@@ -39,6 +39,7 @@
  "logout": "Afmelden",
  "logoutBody": "De machine verlaat het tailnet; verbindingen via het tailnet worden beëindigd.",
  "logoutTitle": "Afmelden bij Tailscale",
+ "network": "Netwerk",
  "noExitNode": "Geen",
  "noPeers": "Geen peers",
  "notExitNode": "Deze peer biedt geen exit node aan.",
@@ -68,6 +69,7 @@
  "startBody": "tailscaled wordt gestart en zo ingesteld dat deze bij het opstarten start.",
  "startTitle": "tailscaled starten",
  "tailnet": "tailnet",
+ "thisDevice": "Dit apparaat",
  "user": "Gebruiker",
  "working": "Bezig…"
 }

@@ -2078,6 +2078,8 @@ const es = {
 	storeRefresh: 'Buscar apps y versiones nuevas',
 	storeLocal: 'Local',
 	storeDeskApps: 'Apps del escritorio',
+	storeWebApps: 'Aplicaciones web',
+	storeExtend: 'Extensiones',
 	storeInstall: 'Instalar',
 	storeFirstParty: 'ServerBox',
 	storeUnknownPublisher: 'Editor desconocido',

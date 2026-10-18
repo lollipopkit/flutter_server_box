@@ -1,15 +1,16 @@
 <script lang="ts">
   /// The App Store: the web apps this agent can deploy (its catalog: shipped,
-  /// the store's repositories, the operator's own folder), to
-  /// browse by category or search, each with a page of its own
-  /// (`StackDetail`: what it is, and installing, updating and uninstalling
-  /// it).
+  /// the store's repositories, the operator's own folder), browsed by the
+  /// sidebar's places (all, recommended, installed, each category) or
+  /// searched, each with a page of its own (`StackDetail`: what it is, and
+  /// installing, updating and uninstalling it); and the desk apps the agent
+  /// offers, a place of their own. A search looks through both.
 
-  import { AppIcon, Badge, Card, Icon, IconButton, SearchField, SegmentedControl, Spinner } from '../../lk'
+  import { AppIcon, Badge, Card, Icon, IconButton, SearchField, SidebarItem, SidebarSection, Spinner } from '../../lk'
 
   import { errorText } from '../../../lib/errorText'
   import type { IconTone } from '../../lk'
-  import { AppToolbar, PageStack, useWindow } from '../../sys'
+  import { AppToolbar, PageStack, SplitView, useWindow } from '../../sys'
   import StackDetail from '../../../components/stack/StackDetail.svelte'
   import DeskPackages from './DeskPackages.svelte'
   import { healthBadge } from '../../../components/stack/health'
@@ -27,13 +28,16 @@
   let apps = $state<StackApp[] | null>(null)
   let error = $state('')
   let query = $state('')
-  let category = $state('all')
+  type Kept = { app?: string; place?: string } | null
+  /// The sidebar's place: `all`, `recommended`, `installed`, `desk` (the desk
+  /// apps) or a category; kept with the window.
+  let place = $state(untrack(() => (win.appState as Kept)?.place ?? 'all'))
   /// The app whose page is open, kept with the window.
-  let open = $state<string | null>(untrack(() => (win.appState as { app?: string } | null)?.app ?? null))
+  let open = $state<string | null>(untrack(() => (win.appState as Kept)?.app ?? null))
   let left = $state<string | null>(null)
   // Opened again on another app's page (a notification about it).
   $effect(() => {
-    const asked = (win.appState as { app?: string } | null)?.app ?? null
+    const asked = (win.appState as Kept)?.app ?? null
     if (asked && asked !== untrack(() => open)) open = asked
   })
 
@@ -69,21 +73,37 @@
   function show(id: string | null) {
     if (open && !id) left = open
     open = id
-    win.setAppState(id ? { app: id } : null)
+    win.setAppState(id ? { app: id, place } : { place })
     if (!id) void load()
   }
 
-  /// `recommended` (the first-run guide's apps) leads the manifests' own.
-  const categories = $derived([
-    'all',
-    ...((apps ?? []).some((a) => a.manifest.recommended) ? ['recommended'] : []),
-    ...new Set((apps ?? []).flatMap((a) => a.manifest.categories)),
-  ])
+  function go(next: string) {
+    place = next
+    left = null
+    show(null)
+  }
+
+  const categories = $derived([...new Set((apps ?? []).flatMap((a) => a.manifest.categories))].sort((a, b) => categoryText(a).localeCompare(categoryText(b))))
+  const hasRecommended = $derived((apps ?? []).some((a) => a.manifest.recommended))
+  const searching = $derived(query.trim() !== '')
+
+  function inPlace(a: StackApp, at: string): boolean {
+    switch (at) {
+      case 'all':
+        return true
+      case 'recommended':
+        return !!a.manifest.recommended
+      case 'installed':
+        return !!a.stack
+      default:
+        return a.manifest.categories.includes(at)
+    }
+  }
+
   const shown = $derived(
     (apps ?? []).filter((a) => {
-      if (category === 'recommended' ? !a.manifest.recommended : category !== 'all' && !a.manifest.categories.includes(category)) {
-        return false
-      }
+      // A search looks through every web app, whatever place is chosen.
+      if (!searching && !inPlace(a, place)) return false
       const q = query.trim().toLowerCase()
       if (!q) return true
       return [pick(a.manifest.title, $locale), a.manifest.project, pick(a.manifest.description, $locale), a.manifest.developer ?? '']
@@ -91,6 +111,27 @@
     }),
   )
   const current = $derived(apps?.find((a) => a.manifest.id === open) ?? null)
+
+  const CATEGORY_ICONS: Record<string, string> = {
+    photos: 'photo_library',
+    media: 'movie',
+    files: 'folder',
+    documents: 'description',
+    productivity: 'task_alt',
+    development: 'code',
+    ai: 'smart_toy',
+    home: 'home',
+    network: 'lan',
+    monitoring: 'monitoring',
+    security: 'shield',
+    tools: 'build',
+  }
+
+  function placeText(at: string): string {
+    if (at === 'installed') return $LL.stackInstalled()
+    if (at === 'desk') return $LL.storeDeskApps()
+    return categoryText(at)
+  }
 
   function categoryText(c: string): string {
     const map: Record<string, () => string> = {
@@ -124,7 +165,34 @@
   }
 </script>
 
-<AppToolbar title={current ? pick(current.manifest.title, $locale) : undefined} back={open ? () => show(null) : undefined}>
+<SplitView>
+  {#snippet sidebar()}
+    <SidebarSection>
+      <SidebarItem label={$LL.storeAll()} icon="apps" active={place === 'all'} trailing={apps?.length} onclick={() => go('all')} />
+      {#if hasRecommended}
+        <SidebarItem label={$LL.storeRecommended()} icon="star" active={place === 'recommended'} onclick={() => go('recommended')} />
+      {/if}
+      <SidebarItem
+        label={$LL.stackInstalled()}
+        icon="download_done"
+        active={place === 'installed'}
+        trailing={apps?.filter((a) => a.stack).length || undefined}
+        onclick={() => go('installed')}
+      />
+    </SidebarSection>
+    {#if categories.length}
+      <SidebarSection title={$LL.storeCategories()}>
+        {#each categories as c (c)}
+          <SidebarItem label={categoryText(c)} icon={CATEGORY_ICONS[c] ?? 'category'} active={place === c} onclick={() => go(c)} />
+        {/each}
+      </SidebarSection>
+    {/if}
+    <SidebarSection title={$LL.storeExtend()}>
+      <SidebarItem label={$LL.storeDeskApps()} icon="widgets" active={place === 'desk'} onclick={() => go('desk')} />
+    </SidebarSection>
+  {/snippet}
+
+<AppToolbar title={current ? pick(current.manifest.title, $locale) : searching ? undefined : placeText(place)} back={open ? () => show(null) : undefined}>
   {#snippet actions()}
     {#if !open && canChange}
       <IconButton icon="refresh" label={$LL.storeRefresh()} disabled={refreshing} onclick={() => void refresh()} />
@@ -136,9 +204,9 @@
 </AppToolbar>
 
 <PageStack
-  key={open ?? 'home'}
+  key={open ?? `home:${place}`}
   depth={open ? 1 : 0}
-  back={open ? { key: 'home', go: () => show(null) } : null}
+  back={open ? { key: `home:${place}`, go: () => show(null) } : null}
   forward={!open && left ? { key: left, go: () => show(left) } : null}
 >
   {#if open}
@@ -153,48 +221,47 @@
           <p>{error}</p>
         </Card>
       {/if}
-      <DeskPackages {query} {canChange} />
-      {#if !apps}
-        {#if !error}<div class="flex justify-center py-12"><Spinner size={48} /></div>{/if}
-      {:else}
-        {#if categories.length > 2}
-          <SegmentedControl
-            size="sm"
-            label={$LL.storeCategories()}
-            value={category}
-            options={categories.map((c) => ({ value: c, label: categoryText(c) }))}
-            onchange={(c) => (category = c)}
-          />
-        {/if}
-        {#if shown.length === 0}
-          <div class="flex flex-col items-center gap-[9px] py-[55px] text-(--text-tertiary)">
-            <Icon name="storefront" size={48} />
-            <p class="text-[13px]">{$LL.storeEmpty()}</p>
-          </div>
+      {#if place === 'desk' || searching}
+        <DeskPackages {query} {canChange} heading={searching} />
+      {/if}
+      {#if place !== 'desk' || searching}
+        {#if !apps}
+          {#if !error}<div class="flex justify-center py-12"><Spinner size={48} /></div>{/if}
+        {:else if shown.length === 0}
+          {#if !searching}
+            <div class="flex flex-col items-center gap-[9px] py-[55px] text-(--text-tertiary)">
+              <Icon name="storefront" size={48} />
+              <p class="text-[13px]">{$LL.storeEmpty()}</p>
+            </div>
+          {/if}
         {:else}
-          <div class="grid grid-cols-1 gap-[13px] @2xl:grid-cols-2 @5xl:grid-cols-3">
-            {#each shown as a (a.manifest.id)}
-              {@const badge = stateBadge(a)}
-              <button class="text-left" onclick={() => show(a.manifest.id)}>
-                <Card variant="raised" class="flex h-full items-start gap-[13px] transition-transform active:scale-[0.98]">
-                  <AppIcon glyph={a.manifest.glyph} tone={a.manifest.tone as IconTone} size={52} />
-                  <div class="min-w-0 flex-1 space-y-[3px]">
-                    <div class="flex items-center gap-[7px]">
-                      <span class="truncate text-[15px] font-semibold text-(--text-primary)">{pick(a.manifest.title, $locale)}</span>
-                      {#if badge}<Badge tone={badge.tone}>{badge.text}</Badge>{/if}
-                      {#if a.source === 'local'}<Badge tone="neutral">{$LL.storeLocal()}</Badge>{/if}
+          <section class="space-y-[9px]">
+            {#if searching}<h3 class="lk-caps text-(--text-secondary)">{$LL.storeWebApps()}</h3>{/if}
+            <div class="grid grid-cols-1 gap-[13px] @2xl:grid-cols-2 @5xl:grid-cols-3">
+              {#each shown as a (a.manifest.id)}
+                {@const badge = stateBadge(a)}
+                <button class="text-left" onclick={() => show(a.manifest.id)}>
+                  <Card variant="raised" class="flex h-full items-start gap-[13px] transition-transform active:scale-[0.98]">
+                    <AppIcon glyph={a.manifest.glyph} tone={a.manifest.tone as IconTone} size={52} />
+                    <div class="min-w-0 flex-1 space-y-[3px]">
+                      <div class="flex items-center gap-[7px]">
+                        <span class="truncate text-[15px] font-semibold text-(--text-primary)">{pick(a.manifest.title, $locale)}</span>
+                        {#if badge}<Badge tone={badge.tone}>{badge.text}</Badge>{/if}
+                        {#if a.source === 'local'}<Badge tone="neutral">{$LL.storeLocal()}</Badge>{/if}
+                      </div>
+                      <p class="truncate text-[12px] text-(--text-tertiary)">
+                        {a.manifest.project}{#if a.manifest.developer}{` · ${a.manifest.developer}`}{/if}
+                      </p>
+                      <p class="line-clamp-2 text-[13px] text-(--text-secondary)">{pick(a.manifest.description, $locale)}</p>
                     </div>
-                    <p class="truncate text-[12px] text-(--text-tertiary)">
-                      {a.manifest.project}{#if a.manifest.developer}{` · ${a.manifest.developer}`}{/if}
-                    </p>
-                    <p class="line-clamp-2 text-[13px] text-(--text-secondary)">{pick(a.manifest.description, $locale)}</p>
-                  </div>
-                </Card>
-              </button>
-            {/each}
-          </div>
+                  </Card>
+                </button>
+              {/each}
+            </div>
+          </section>
         {/if}
       {/if}
     </main>
   {/if}
 </PageStack>
+</SplitView>

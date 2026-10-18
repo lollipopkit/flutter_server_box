@@ -39,6 +39,7 @@
  "logout": "Esci",
  "logoutBody": "La macchina lascia il tailnet; le connessioni tramite esso terminano.",
  "logoutTitle": "Esci da Tailscale",
+ "network": "Rete",
  "noExitNode": "Nessuno",
  "noPeers": "Nessun peer",
  "notExitNode": "Quel peer non offre un nodo di uscita.",
@@ -68,6 +69,7 @@
  "startBody": "tailscaled viene avviato e configurato per avviarsi all’accensione.",
  "startTitle": "Avvia tailscaled",
  "tailnet": "tailnet",
+ "thisDevice": "Questo dispositivo",
  "user": "Utente",
  "working": "Operazione in corso…"
 }

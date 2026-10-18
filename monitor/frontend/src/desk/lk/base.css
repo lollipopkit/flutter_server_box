@@ -114,22 +114,28 @@
   }
 }
 
-/* Scrollbars: thin, tinted, inset from the window's edge. */
+/* Scrollbars: thin, tinted, inset from the window's edge. `body.lk` for a
+   page that scrolls its body (an installed app's, `frame.css`). */
+body.lk,
 .lk * {
   scrollbar-width: thin;
   scrollbar-color: var(--lk-scrollbar-thumb-color, color-mix(in srgb, var(--text-primary) 22%, transparent))
     var(--lk-scrollbar-track-color, transparent);
 }
 /* A theme's thickness is the thumb's; the 3px inset stays around it. */
+body.lk::-webkit-scrollbar,
 .lk ::-webkit-scrollbar {
   width: calc(var(--lk-scrollbar-thickness, 5px) + 6px);
   height: calc(var(--lk-scrollbar-thickness, 5px) + 6px);
   background: transparent;
 }
+body.lk::-webkit-scrollbar-track,
+body.lk::-webkit-scrollbar-corner,
 .lk ::-webkit-scrollbar-track,
 .lk ::-webkit-scrollbar-corner {
   background: var(--lk-scrollbar-track-color, transparent);
 }
+body.lk::-webkit-scrollbar-thumb,
 .lk ::-webkit-scrollbar-thumb {
   background: var(--lk-scrollbar-thumb-color, color-mix(in srgb, var(--text-primary) 18%, transparent));
   border-radius: var(--lk-scrollbar-radius, 11px);
@@ -137,6 +143,7 @@
   background-clip: padding-box;
   min-height: 34px;
 }
+body.lk::-webkit-scrollbar-thumb:hover,
 .lk ::-webkit-scrollbar-thumb:hover {
   background-color: color-mix(in srgb, var(--text-primary) 36%, transparent);
   border-width: 2px;

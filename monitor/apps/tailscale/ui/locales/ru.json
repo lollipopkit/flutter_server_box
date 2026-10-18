@@ -39,6 +39,7 @@
  "logout": "Выйти",
  "logoutBody": "Машина покидает tailnet; соединения через него завершаются.",
  "logoutTitle": "Выйти из Tailscale",
+ "network": "Сеть",
  "noExitNode": "Нет",
  "noPeers": "Нет узлов",
  "notExitNode": "Этот узел не предлагает узел выхода.",
@@ -68,6 +69,7 @@
  "startBody": "tailscaled запускается и настраивается для автоматического запуска при загрузке.",
  "startTitle": "Запустить tailscaled",
  "tailnet": "tailnet",
+ "thisDevice": "Это устройство",
  "user": "Пользователь",
  "working": "Выполняется…"
 }

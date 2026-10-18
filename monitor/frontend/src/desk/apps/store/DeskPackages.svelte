@@ -21,9 +21,11 @@
     query: string
     /// Whether the account may act over this link.
     canChange: boolean
+    /// Titled, beside the web apps (a search); untitled on a page of its own.
+    heading?: boolean
   }
 
-  const { query, canChange }: Props = $props()
+  const { query, canChange, heading = false }: Props = $props()
   const win = useWindow()
 
   let offered = $state<OfferedApp[]>([])
@@ -89,7 +91,7 @@
 {/if}
 {#if shown.length}
   <section class="space-y-[9px]">
-    <h3 class="lk-caps text-(--text-secondary)">{$LL.storeDeskApps()}</h3>
+    {#if heading}<h3 class="lk-caps text-(--text-secondary)">{$LL.storeDeskApps()}</h3>{/if}
     <div class="grid grid-cols-1 gap-[13px] @2xl:grid-cols-2 @5xl:grid-cols-3">
       {#each shown as o (o.id)}
         {@const s = standing(o)}

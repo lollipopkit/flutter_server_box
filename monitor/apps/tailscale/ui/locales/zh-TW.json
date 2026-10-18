@@ -39,6 +39,7 @@
  "logout": "登出",
  "logoutBody": "這台機器會離開 tailnet；透過它建立的連線也會結束。",
  "logoutTitle": "登出 Tailscale",
+ "network": "網路",
  "noExitNode": "無",
  "noPeers": "沒有節點",
  "notExitNode": "該節點未提供出口節點。",
@@ -68,6 +69,7 @@
  "startBody": "啟動 tailscaled，並設定為開機時自動啟動。",
  "startTitle": "啟動 tailscaled",
  "tailnet": "tailnet",
+ "thisDevice": "本機",
  "user": "使用者",
  "working": "處理中…"
 }

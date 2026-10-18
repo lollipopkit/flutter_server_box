@@ -2078,6 +2078,8 @@ const ko = {
 	storeRefresh: '새 앱과 버전 확인',
 	storeLocal: '로컬',
 	storeDeskApps: '데스크 앱',
+	storeWebApps: '웹 앱',
+	storeExtend: '확장 기능',
 	storeInstall: '설치',
 	storeFirstParty: 'ServerBox',
 	storeUnknownPublisher: '알 수 없는 게시자',

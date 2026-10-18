@@ -83,6 +83,29 @@ export interface ToolbarDescription {
   actions?: ActionItem[]
 }
 
+/// One place in the app's sidebar; the desk sends `navigate` with its id when
+/// it is chosen.
+export interface SidebarItem {
+  id: string
+  label: string
+  icon?: string
+  /// A count or short value at the right.
+  trailing?: string
+}
+
+export interface SidebarSection {
+  title?: string
+  items: SidebarItem[]
+}
+
+/// The app's places, drawn by the desk as the window's own inset sidebar
+/// (folded behind a title-bar button in a narrow window). No sections: none.
+export interface SidebarDescription {
+  sections: SidebarSection[]
+  /// The place shown now.
+  selected?: string
+}
+
 export function isCall(data: unknown): data is Call {
   const d = data as Partial<Call> | null
   return !!d && d.sbm === PROTOCOL && typeof d.id === 'number' && Number.isSafeInteger(d.id) && typeof d.call === 'string'
