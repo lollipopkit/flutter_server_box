@@ -100,6 +100,7 @@ import type {
   DesktopsView,
 } from '../types'
 import { isSecureAgentUrl } from './agentUrl'
+import { CLIENT_TOO_OLD, protocolHeaders } from './protocol'
 import { servers, type ServerEntry } from './servers.svelte'
 
 const TIMEOUT_MS = 10_000
@@ -143,6 +144,11 @@ export class ApiError extends Error {
 /// account and role ones `{"error": "<code>", "message": "..."}`. A body with
 /// a `message` is the second, and its `error` is the code.
 async function errorFrom(res: Response, fallback: string): Promise<ApiError> {
+  // A panel hosted away from the agent can be older than it; one the agent
+  // serves never is.
+  if (res.status === CLIENT_TOO_OLD) {
+    return new ApiError('This panel is older than the agent supports; reload it or update where it is hosted.', res.status, 'client_too_old')
+  }
   try {
     const body = (await res.json()) as { error?: string; message?: string } & Record<string, unknown>
     if (body.message) return new ApiError(body.message, res.status, body.error, body)
@@ -173,7 +179,7 @@ async function request<T>(
 ): Promise<T> {
   const server = servers.current ? { ...servers.current } : undefined
   requireSecureUrl(server?.url ?? '')
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', ...protocolHeaders }
   if (server?.token) headers.Authorization = `Bearer ${server.token}`
 
   let res: Response
@@ -214,7 +220,7 @@ async function fsBytes(
 ): Promise<Response> {
   const server = servers.current ? { ...servers.current } : undefined
   requireSecureUrl(server?.url ?? '')
-  const headers: Record<string, string> = { ...(init.headers as Record<string, string> | undefined) }
+  const headers: Record<string, string> = { ...(init.headers as Record<string, string> | undefined), ...protocolHeaders }
   if (server?.token) headers.Authorization = `Bearer ${server.token}`
 
   let res: Response
@@ -238,7 +244,7 @@ export async function getCapabilitiesFor(entry: ServerEntry, signal?: AbortSigna
   if (!entry.token) throw new ApiError('Not authenticated')
   requireSecureUrl(entry.url)
   const res = await fetch(`${entry.url}/api/v1/capabilities`, {
-    headers: { Authorization: `Bearer ${entry.token}` },
+    headers: { Authorization: `Bearer ${entry.token}`, ...protocolHeaders },
     signal: requestSignal(signal),
   })
   if (!res.ok) throw new ApiError('Failed to fetch capabilities')
@@ -252,7 +258,7 @@ export async function getStatusFor(entry: ServerEntry, signal?: AbortSignal): Pr
   if (!entry.token) throw new ApiError('Not authenticated')
   requireSecureUrl(entry.url)
   const res = await fetch(`${entry.url}/api/v1/status`, {
-    headers: { Authorization: `Bearer ${entry.token}` },
+    headers: { Authorization: `Bearer ${entry.token}`, ...protocolHeaders },
     signal: requestSignal(signal),
   })
   if (!res.ok) throw new ApiError('Failed to fetch status')
@@ -278,7 +284,7 @@ export async function loginTo(url: string, credentials: LoginRequest): Promise<L
   try {
     res = await fetch(`${url}/api/v1/login`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...protocolHeaders },
       body: JSON.stringify(credentials),
       signal: requestSignal(),
     })

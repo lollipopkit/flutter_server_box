@@ -15,6 +15,7 @@ import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/monitor_metrics.dart';
 import 'package:server_box/data/model/server/monitor_push.dart';
 import 'package:server_box/data/model/server/monitor_settings.dart';
+import 'package:server_box/src/rust/api/protocol.dart';
 
 /// Talks to one server's `monitor` HTTP API. One instance is owned per
 /// `ServerNotifier` (see `single.dart`), mirroring how `PveNotifier` owns its
@@ -36,6 +37,11 @@ class MonitorHttpClient {
 
   Dio? _dio;
   String? _token;
+
+  /// Whether `/health` said the two of us understand each other; asked once,
+  /// before the first sign-in. An agent replaced later by one that no longer
+  /// answers this app says so with `426` instead.
+  bool _protocolChecked = false;
   Future<void>? _loginFuture;
   bool _disposed = false;
 
@@ -66,6 +72,7 @@ class MonitorHttpClient {
               connectTimeout: _connectTimeout,
               sendTimeout: _sendTimeout,
               receiveTimeout: _receiveTimeout,
+              headers: {MonitorProtocol.header: '${MonitorProtocol.current}'},
             ),
           )
           ..httpClientAdapter = IOHttpClientAdapter(
@@ -102,6 +109,8 @@ class MonitorHttpClient {
     final user = monitor.user?.trim() ?? '';
     final pwd = monitor.pwd ?? '';
     try {
+      await _checkProtocol();
+      if (_disposed) return;
       final resp = await _object(
         '/api/v1/login',
         post: {'username': user, 'password': pwd},
@@ -119,6 +128,45 @@ class MonitorHttpClient {
     } on DioException catch (e) {
       if (_disposed) return;
       throw _toMonitorHttpErr(e);
+    }
+  }
+
+  /// Refuses an agent this app cannot talk to, before signing in to it —
+  /// `sbm_parser::protocol::compat` on what `/health` says.
+  Future<void> _checkProtocol() async {
+    if (_protocolChecked) return;
+    Map<String, dynamic> health = const {};
+    try {
+      health = await _object('/api/v1/health');
+    } on DioException catch (e) {
+      // Answered, but not with numbers — an agent from before `/health`, or a
+      // proxy in front of it: the first protocol, like an agent naming none.
+      // A link that failed is still that.
+      if (e.response == null) rethrow;
+    } on MonitorHttpErr catch (e) {
+      if (e.type != MonitorHttpErrType.invalidResponse) rethrow;
+    }
+    final agent = switch (health['protocol']) {
+      final int n => n,
+      _ => null,
+    };
+    final minClient = switch (health['min_client_protocol']) {
+      final int n => n,
+      _ => null,
+    };
+    switch (monitorProtocolCompat(agent: agent, minClient: minClient)) {
+      case ProtocolCompat.ok:
+        _protocolChecked = true;
+      case ProtocolCompat.agentTooOld:
+        throw MonitorHttpErr(
+          type: MonitorHttpErrType.agentTooOld,
+          message: 'The monitor agent speaks protocol $agent, older than this app reads',
+        );
+      case ProtocolCompat.clientTooOld:
+        throw MonitorHttpErr(
+          type: MonitorHttpErrType.clientTooOld,
+          message: 'The monitor agent answers protocol $minClient and later; this app speaks ${MonitorProtocol.current}',
+        );
     }
   }
 
@@ -979,6 +1027,7 @@ class MonitorHttpClient {
             // `?ticket=` for that reason and answers 401 to anything that
             // still sends it that way.
             protocols: [terminalWsProtocol(ticket)],
+            headers: {MonitorProtocol.header: '${MonitorProtocol.current}'},
             // Carries `ignoreCert` onto the upgrade: this is the same endpoint the
             // status poll uses, so it has to trust the same certs
             customClient: _httpClient(),
@@ -1022,9 +1071,21 @@ class MonitorHttpClient {
         message: e.toString(),
       );
     }
+    if (e.response?.statusCode == 426) {
+      return MonitorHttpErr(
+        type: MonitorHttpErrType.clientTooOld,
+        message: e.toString(),
+      );
+    }
     return MonitorHttpErr(
       type: MonitorHttpErrType.unknown,
       message: e.toString(),
     );
   }
+}
+
+/// `sbm_parser::protocol` as this app speaks it, read once.
+abstract final class MonitorProtocol {
+  static final header = monitorProtocolHeader();
+  static final current = monitorProtocol();
 }

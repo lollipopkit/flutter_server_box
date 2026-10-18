@@ -4864,6 +4864,18 @@ abstract class AppLocalizations {
   /// **'This agent is set up for monitoring only. You can\'t open a terminal, run commands, or browse files here. To enable these features, edit [remote_access] in the agent\'s config.toml.'**
   String get monitorNoRemoteAccess;
 
+  /// Shown when the Monitor agent speaks an older protocol than this app reads.
+  ///
+  /// In en, this message translates to:
+  /// **'This Monitor agent is older than this version of ServerBox supports. Update the agent on the server.'**
+  String get monitorAgentTooOld;
+
+  /// Shown when the Monitor agent no longer answers this app's protocol (HTTP 426).
+  ///
+  /// In en, this message translates to:
+  /// **'This Monitor agent no longer supports this version of ServerBox. Update the app.'**
+  String get monitorClientTooOld;
+
   /// User-facing label or message for alerts.
   ///
   /// In en, this message translates to:

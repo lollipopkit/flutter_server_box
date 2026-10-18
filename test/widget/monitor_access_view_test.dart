@@ -17,9 +17,13 @@ import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/server/monitor_settings/access.dart';
 import 'package:server_box/view/page/server/monitor_settings/view.dart';
 
+import '../helpers/rust_lib_helper.dart';
 import '../helpers/test_db.dart';
 
 void main() {
+  // `MonitorHttpClient` names its protocol from Rust.
+  setUpAll(initRustLibForTest);
+
   late HttpServer server;
   late List<String> asked;
   var admin = false;

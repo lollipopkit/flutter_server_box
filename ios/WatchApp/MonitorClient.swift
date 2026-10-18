@@ -11,6 +11,10 @@
 
 import Foundation
 
+/// `sbm_parser::protocol::PROTOCOL`, named in `X-SBM-Protocol`;
+/// `crates/sbm_parser/tests/protocol_clients.rs` keeps it equal.
+private let sbmProtocol = "1"
+
 enum MonitorError: LocalizedError {
     case badUrl(String)
     case http(Int, String)
@@ -162,6 +166,7 @@ final class MonitorClient: NSObject {
             throw MonitorError.http(401, "No read-only watch token")
         }
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        req.setValue(sbmProtocol, forHTTPHeaderField: "X-SBM-Protocol")
         let data = try await send(req)
         do {
             return try JSONDecoder().decode(T.self, from: data)

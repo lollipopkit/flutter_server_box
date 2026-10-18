@@ -138,6 +138,12 @@ enum MonitorHttpErrType {
 
   /// The agent rejected the request's contents — a name, a password too short.
   badRequest,
+
+  /// The agent is older than this app reads (`sbm_parser::protocol`).
+  agentTooOld,
+
+  /// The agent no longer answers this app: `426`, or what `/health` said.
+  clientTooOld,
 }
 
 class MonitorHttpErr extends Err<MonitorHttpErrType> {
@@ -147,6 +153,8 @@ class MonitorHttpErr extends Err<MonitorHttpErrType> {
   String? get solution => switch (type) {
     MonitorHttpErrType.auth => l10n.authFailTip,
     MonitorHttpErrType.notGranted => l10n.monitorNoRemoteAccess,
+    MonitorHttpErrType.agentTooOld => l10n.monitorAgentTooOld,
+    MonitorHttpErrType.clientTooOld => l10n.monitorClientTooOld,
     _ => null,
   };
 }

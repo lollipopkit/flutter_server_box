@@ -538,6 +538,8 @@
   "schemaTooNewWipeDone": "Data dihapus. Buka kembali aplikasi untuk memulai dari awal.",
   "schemaTooNewWipeFailed": "Sebagian data tidak dapat dihapus, dan versi ini masih tidak dapat membuka data yang tersisa. Instal kembali versi yang lebih baru untuk mengaksesnya.",
   "monitorNoRemoteAccess": "Agen ini hanya dikonfigurasi untuk pemantauan. Anda tidak dapat membuka terminal, menjalankan perintah, atau menjelajahi berkas dari sini. Untuk mengaktifkan fitur tersebut, edit [remote_access] dalam config.toml agen.",
+  "monitorAgentTooOld": "Agen Monitor ini lebih lama dari yang didukung versi ServerBox ini. Perbarui agen di server.",
+  "monitorClientTooOld": "Agen Monitor ini tidak lagi mendukung versi ServerBox ini. Perbarui aplikasi.",
   "remoteDesktop": "Desktop jarak jauh",
   "containerReclaimable": "Reclaimable",
   "processSearchHint": "Nama, pengguna, atau PID",

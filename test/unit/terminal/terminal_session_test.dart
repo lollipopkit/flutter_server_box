@@ -15,6 +15,8 @@ import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/ssh/terminal_session.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
 
+import '../../helpers/rust_lib_helper.dart';
+
 /// A shell whose bytes the test writes itself.
 class _FakeShell implements ShellSession {
   final _stdout = StreamController<Uint8List>();
@@ -61,6 +63,9 @@ Future<void> flushed() =>
     Future<void>.delayed(const Duration(milliseconds: 50));
 
 void main() {
+  // `MonitorHttpClient` names its protocol from Rust.
+  setUpAll(initRustLibForTest);
+
   final ssh = Spi(
     name: 'ssh',
     id: 'ssh',

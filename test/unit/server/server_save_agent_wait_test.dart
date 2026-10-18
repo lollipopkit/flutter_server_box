@@ -9,6 +9,8 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
 
+import '../../helpers/rust_lib_helper.dart';
+
 /// Saving or deleting a server must not wait on the agent it is leaving.
 ///
 /// Both hand that agent its scoped tokens back — `revokeScopedTokensLeftBehind`
@@ -24,6 +26,9 @@ import 'package:server_box/data/res/store.dart';
 /// handed the `Spi` rather than re-reading one — and these assert both halves:
 /// the request goes out, and the mutation does not wait for it.
 void main() {
+  // `MonitorHttpClient` names its protocol from Rust.
+  setUpAll(initRustLibForTest);
+
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late Directory tempDir;

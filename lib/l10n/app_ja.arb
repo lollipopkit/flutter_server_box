@@ -538,6 +538,8 @@
   "schemaTooNewWipeDone": "データを削除しました。アプリを再度開いて最初から始めてください。",
   "schemaTooNewWipeFailed": "一部のデータを削除できなかったため、このバージョンでは残りのデータも開けません。新しいバージョンを再インストールしてアクセスしてください。",
   "monitorNoRemoteAccess": "この agent は監視専用に設定されています。ここからターミナルを開いたり、コマンドを実行したり、ファイルを閲覧したりすることはできません。これらの機能を有効にするには、agent の config.toml にある [remote_access] を編集してください。",
+  "monitorAgentTooOld": "この Monitor agent は、このバージョンの ServerBox がサポートするより古いバージョンです。サーバー上の agent を更新してください。",
+  "monitorClientTooOld": "この Monitor agent は、このバージョンの ServerBox をサポートしていません。アプリを更新してください。",
   "remoteDesktop": "リモートデスクトップ",
   "containerReclaimable": "Reclaimable",
   "processSearchHint": "名前、ユーザー、PID",

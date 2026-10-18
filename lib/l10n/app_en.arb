@@ -3684,6 +3684,14 @@
   "@monitorNoRemoteAccess": {
     "description": "User-facing label or message for monitor no remote access."
   },
+  "monitorAgentTooOld": "This Monitor agent is older than this version of ServerBox supports. Update the agent on the server.",
+  "@monitorAgentTooOld": {
+    "description": "Shown when the Monitor agent speaks an older protocol than this app reads."
+  },
+  "monitorClientTooOld": "This Monitor agent no longer supports this version of ServerBox. Update the app.",
+  "@monitorClientTooOld": {
+    "description": "Shown when the Monitor agent no longer answers this app's protocol (HTTP 426)."
+  },
   "alerts": "Alerts",
   "@alerts": {
     "description": "User-facing label or message for alerts."
