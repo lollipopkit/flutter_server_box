@@ -74,11 +74,10 @@
     />
   </div>
   <div class="apps-panel-grid">
-    {#each shown as spec, i (spec.id)}
+    {#each shown as spec (spec.id)}
       <button
         class="apps-panel-app"
         data-app={spec.id}
-        style:animation-delay="{i * 30}ms"
         onclick={() => {
           if (!closingMenu) desk.open(spec.id)
         }}
@@ -146,7 +145,6 @@
     font-weight: var(--weight-semibold);
     color: var(--text-primary);
     cursor: default;
-    animation: lk-pop-in var(--dur-window) var(--ease-spring-bouncy) both;
     transition: transform var(--dur-slow) var(--ease-spring-bouncy);
   }
   .apps-panel-app:active {
