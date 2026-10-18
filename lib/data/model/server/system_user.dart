@@ -52,11 +52,42 @@ final class ServerUser {
   }
 }
 
+final class ServerGroup {
+  const ServerGroup({
+    required this.name,
+    required this.gid,
+    required this.members,
+  });
+
+  final String name;
+  final int gid;
+  final List<String> members;
+
+  /// `sbm_parser::users::SystemGroup` as serde writes it.
+  factory ServerGroup.fromJson(Map<String, Object?> json) => ServerGroup(
+    name: json['name'] as String,
+    gid: json['gid'] as int,
+    members: (json['members'] as List).cast<String>(),
+  );
+
+  Map<String, Object?> toJson() => {
+    'name': name,
+    'gid': gid,
+    'members': members,
+  };
+
+  bool get isRoot => gid == 0 || name == 'root';
+
+  bool isSystem(int gidMin) => gid < gidMin;
+}
+
 final class ServerUserCatalog {
   const ServerUserCatalog({
     required this.currentUser,
     required this.uidMin,
+    required this.gidMin,
     required this.users,
+    required this.groups,
   });
 
   /// `sbm_parser::users::UserCatalog` as serde writes it.
@@ -64,15 +95,47 @@ final class ServerUserCatalog {
       ServerUserCatalog(
         currentUser: json['current_user'] as String,
         uidMin: json['uid_min'] as int,
+        gidMin: json['gid_min'] as int? ?? 1000,
         users: [
           for (final user in json['users'] as List)
             ServerUser.fromJson(user as Map<String, Object?>),
+        ],
+        groups: [
+          for (final group in json['groups'] as List? ?? const [])
+            ServerGroup.fromJson(group as Map<String, Object?>),
         ],
       );
 
   final String currentUser;
   final int uidMin;
+  final int gidMin;
   final List<ServerUser> users;
+  final List<ServerGroup> groups;
+
+  Map<String, Object?> toJson() => {
+    'current_user': currentUser,
+    'uid_min': uidMin,
+    'gid_min': gidMin,
+    'users': [for (final user in users) user.toJson()],
+    'groups': [for (final group in groups) group.toJson()],
+  };
+
+  ServerGroup? findGroup(String name) {
+    for (final group in groups) {
+      if (group.name == name) return group;
+    }
+    return null;
+  }
+
+  /// Accounts whose primary gid is [group], sorted. Not the supplementary
+  /// member list on the group itself.
+  List<String> primaryMembersOf(ServerGroup group) {
+    final names = [
+      for (final user in users)
+        if (user.gid == group.gid || user.primaryGroup == group.name) user.name,
+    ]..sort();
+    return names;
+  }
 }
 
 final class ServerUserDraft {
@@ -112,6 +175,25 @@ final class ServerUserDraft {
     'move_home': moveHome,
     'system': system,
     'password': password,
+  };
+}
+
+final class ServerGroupDraft {
+  const ServerGroupDraft({
+    required this.name,
+    required this.members,
+    required this.system,
+  });
+
+  final String name;
+  final List<String> members;
+  final bool system;
+
+  /// `sbm_parser::users::GroupDraft` as serde reads it.
+  Map<String, Object?> toJson() => {
+    'name': name,
+    'members': members,
+    'system': system,
   };
 }
 

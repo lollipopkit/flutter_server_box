@@ -2687,6 +2687,30 @@
   "@userPasswordEditTip": {
     "description": "Help text for the user password edit setting or action."
   },
+  "systemGroups": "Groups",
+  "@systemGroups": {
+    "description": "Tab label for the machine's groups, next to Users."
+  },
+  "userGid": "GID",
+  "@userGid": {
+    "description": "Column header for a group's numeric id."
+  },
+  "userGroupMembers": "Members",
+  "@userGroupMembers": {
+    "description": "Label for a group's supplementary members."
+  },
+  "userPrimaryMembers": "Primary members",
+  "@userPrimaryMembers": {
+    "description": "Accounts whose primary group is this group."
+  },
+  "userSystemGroup": "System group",
+  "@userSystemGroup": {
+    "description": "Label for a group below the machine's GID_MIN."
+  },
+  "userMembersHint": "docker,wheel",
+  "@userMembersHint": {
+    "description": "Hint for the group members field."
+  },
   "funcUnavailableFmt": "{func} is not available over this server's connection.",
   "@funcUnavailableFmt": {
     "description": "Formatted user-facing message for func unavailable; runtime values are supplied by placeholders.",

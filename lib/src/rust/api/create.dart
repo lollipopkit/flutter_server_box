@@ -4,9 +4,10 @@
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
-import 'package:server_box/src/rust/api/bmc.dart';
-import 'package:server_box/src/rust/api/pve.dart';
-import 'package:server_box/src/rust/frb_generated.dart';
+
+import '../frb_generated.dart';
+import 'bmc.dart';
+import 'pve.dart';
 
 // These functions are ignored because they are not marked as `pub`: `host`, `ids`, `issue_name`, `kind`, `read_opt`, `read`, `write`
 

@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -1954,6 +1955,24 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get userPasswordEditTip => '密码留空将保留现有密码。';
+
+  @override
+  String get systemGroups => '用户组';
+
+  @override
+  String get userGid => 'GID';
+
+  @override
+  String get userGroupMembers => '成员';
+
+  @override
+  String get userPrimaryMembers => '主组成员';
+
+  @override
+  String get userSystemGroup => '系统组';
+
+  @override
+  String get userMembersHint => 'docker,wheel';
 
   @override
   String funcUnavailableFmt(String func) {
@@ -7519,6 +7538,24 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get userPasswordEditTip => '密碼留空將保留現有密碼。';
+
+  @override
+  String get systemGroups => '群組';
+
+  @override
+  String get userGid => 'GID';
+
+  @override
+  String get userGroupMembers => '成員';
+
+  @override
+  String get userPrimaryMembers => '主要成員';
+
+  @override
+  String get userSystemGroup => '系統群組';
+
+  @override
+  String get userMembersHint => 'docker,wheel';
 
   @override
   String funcUnavailableFmt(String func) {

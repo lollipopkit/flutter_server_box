@@ -1,5 +1,6 @@
-//! The machine's accounts — the passwd and group catalogs, one account's own
-//! detail, and the commands that create, change and remove one.
+//! The machine's accounts and groups — the passwd and group catalogs, one
+//! account's own detail, and the commands that create, change and remove one
+//! account or one group.
 //!
 //! Ported from the app's Dart implementation, whose cases `tests/user_compat.rs`
 //! holds. The app now reaches this through FFI (`sbm_ffi::api::users`) and the
@@ -41,7 +42,10 @@
 //! **`useradd`, `usermod`, `userdel` dialects.** BusyBox has all three with a
 //! subset of the flags, and its `useradd` has no `-M`. The flags used here are
 //! the ones both accept, and a machine that refuses one says so in `stderr`,
-//! which the caller reports verbatim.
+//! which the caller reports verbatim. Groups are the same: `groupadd` /
+//! `groupdel` both have, and a group's member list is set with `gpasswd -M`,
+//! the group-side equivalent of `usermod -G`. BusyBox has no `gpasswd`; a
+//! machine without it says so in `stderr`, like `useradd -M`.
 
 use std::collections::HashMap;
 use std::sync::LazyLock;
@@ -55,6 +59,8 @@ use crate::script::shell_quote_unix as single_quote;
 pub const CURRENT_MARKER: &str = "SrvBoxUsers.Current\t";
 /// The uid below which an account is a system account, from `/etc/login.defs`.
 pub const UID_MIN_MARKER: &str = "SrvBoxUsers.UidMin\t";
+/// The gid below which a group is a system group, from `/etc/login.defs`.
+pub const GID_MIN_MARKER: &str = "SrvBoxUsers.GidMin\t";
 pub const PASSWD_MARKER: &str = "SrvBoxUsers.Passwd";
 pub const GROUP_MARKER: &str = "SrvBoxUsers.Group";
 
@@ -88,6 +94,8 @@ printf 'SrvBoxUsers.Current\t'
 id -un
 printf 'SrvBoxUsers.UidMin\t'
 awk '$1 == "UID_MIN" { print $2; found=1; exit } END { if (!found) print 1000 }' /etc/login.defs 2>/dev/null || printf '1000\n'
+printf 'SrvBoxUsers.GidMin\t'
+awk '$1 == "GID_MIN" { print $2; found=1; exit } END { if (!found) print 1000 }' /etc/login.defs 2>/dev/null || printf '1000\n'
 printf 'SrvBoxUsers.Passwd\n'
 if command -v getent >/dev/null 2>&1; then
   getent passwd
@@ -152,20 +160,57 @@ impl SystemUser {
     }
 }
 
-/// The machine's accounts and the two facts the catalog carries about itself.
+/// One group, as `/etc/group` describes it.
+///
+/// `members` is the fourth field — supplementary membership — not the accounts
+/// whose primary gid is this group. Those are a fact of passwd, shown beside
+/// this list by the client.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SystemGroup {
+    pub name: String,
+    pub gid: u32,
+    /// Names from the group's member field, sorted. Empty means nobody is in
+    /// it as a supplementary group.
+    pub members: Vec<String>,
+}
+
+impl SystemGroup {
+    pub fn is_root(&self) -> bool {
+        self.gid == 0
+    }
+
+    /// Whether this is a system group by the machine's own threshold.
+    ///
+    /// The threshold is [`UserCatalog::gid_min`], read from `/etc/login.defs`
+    /// rather than assumed to be 1000.
+    pub fn is_system(&self, gid_min: u32) -> bool {
+        self.gid < gid_min
+    }
+}
+
+/// The machine's accounts and groups, and the facts the catalog carries about
+/// itself.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct UserCatalog {
     /// The account that ran the script.
     pub current_user: String,
     /// The uid below which an account is a system account.
     pub uid_min: u32,
+    /// The gid below which a group is a system group.
+    pub gid_min: u32,
     /// Sorted by uid, then by name.
     pub users: Vec<SystemUser>,
+    /// Sorted by gid, then by name.
+    pub groups: Vec<SystemGroup>,
 }
 
 impl UserCatalog {
     pub fn find(&self, name: &str) -> Option<&SystemUser> {
         self.users.iter().find(|user| user.name == name)
+    }
+
+    pub fn find_group(&self, name: &str) -> Option<&SystemGroup> {
+        self.groups.iter().find(|group| group.name == name)
     }
 }
 
@@ -254,6 +299,22 @@ pub struct UserDraft {
     pub password: Option<String>,
 }
 
+/// What a caller wants a group to be.
+///
+/// The same fields for a new group and for a change to one; [`group_edit_command`]
+/// reads the difference against the group as it is. A group's name cannot be
+/// changed, for the same reason an account's cannot.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct GroupDraft {
+    pub name: String,
+    #[serde(default)]
+    pub members: Vec<String>,
+    /// A system group, with a gid below the machine's threshold. Only the
+    /// create form offers it.
+    #[serde(default)]
+    pub system: bool,
+}
+
 /// Why a draft, a name or a command was refused.
 ///
 /// The case is what the caller is told, and the client phrases it: an agent
@@ -280,6 +341,16 @@ pub enum UserError {
     /// The catalog script did not print the account it ran as, so nothing about
     /// this output can be trusted to be about this machine.
     CurrentUserUnknown,
+    /// A member name `usermod` / `gpasswd` would not accept.
+    InvalidMember,
+    /// gid 0, or the name `root`: the group arrives from a caller, and a
+    /// record carrying root's name with another gid would otherwise reach
+    /// `groupdel 'root'`.
+    RootGroupNotDeletable,
+    /// A group that is some account's primary group cannot be removed:
+    /// `groupdel` refuses it, and the accounts that have it would be left
+    /// with a gid that names nothing.
+    GroupInUse,
 }
 
 impl UserError {
@@ -295,6 +366,9 @@ impl UserError {
             Self::Renaming => "renaming",
             Self::RootNotDeletable => "rootNotDeletable",
             Self::CurrentUserUnknown => "currentUserUnknown",
+            Self::InvalidMember => "invalidMember",
+            Self::RootGroupNotDeletable => "rootGroupNotDeletable",
+            Self::GroupInUse => "groupInUse",
         }
     }
 }
@@ -318,7 +392,9 @@ impl std::fmt::Display for UserError {
 pub fn parse_list(output: &str) -> Result<UserCatalog, UserError> {
     let mut current_user: Option<String> = None;
     let mut uid_min: u32 = 1000;
+    let mut gid_min: u32 = 1000;
     let mut passwd: Vec<Vec<&str>> = Vec::new();
+    let mut groups: Vec<SystemGroup> = Vec::new();
     let mut groups_by_gid: HashMap<u32, String> = HashMap::new();
     let mut supplementary: HashMap<String, Vec<String>> = HashMap::new();
     let mut section = "";
@@ -333,6 +409,10 @@ pub fn parse_list(output: &str) -> Result<UserCatalog, UserError> {
         }
         if let Some(rest) = line.strip_prefix(UID_MIN_MARKER) {
             uid_min = rest.trim().parse().unwrap_or(1000);
+            continue;
+        }
+        if let Some(rest) = line.strip_prefix(GID_MIN_MARKER) {
+            gid_min = rest.trim().parse().unwrap_or(1000);
             continue;
         }
         if line == PASSWD_MARKER {
@@ -363,17 +443,26 @@ pub fn parse_list(output: &str) -> Result<UserCatalog, UserError> {
             let Ok(gid) = fields[2].parse::<u32>() else {
                 continue;
             };
+            let mut members: Vec<String> = fields[3]
+                .split(',')
+                .map(str::trim)
+                .filter(|name| !name.is_empty())
+                .map(str::to_string)
+                .collect();
+            members.sort();
+            members.dedup();
             groups_by_gid.insert(gid, fields[0].to_string());
-            for member in fields[3].split(',') {
-                let name = member.trim();
-                if name.is_empty() {
-                    continue;
-                }
+            for member in &members {
                 supplementary
-                    .entry(name.to_string())
+                    .entry(member.clone())
                     .or_default()
                     .push(fields[0].to_string());
             }
+            groups.push(SystemGroup {
+                name: fields[0].to_string(),
+                gid,
+                members,
+            });
         }
     }
 
@@ -408,11 +497,14 @@ pub fn parse_list(output: &str) -> Result<UserCatalog, UserError> {
         })
         .collect();
     users.sort_by(|a, b| a.uid.cmp(&b.uid).then_with(|| a.name.cmp(&b.name)));
+    groups.sort_by(|a, b| a.gid.cmp(&b.gid).then_with(|| a.name.cmp(&b.name)));
 
     Ok(UserCatalog {
         current_user,
         uid_min,
+        gid_min,
         users,
+        groups,
     })
 }
 
@@ -636,6 +728,20 @@ pub fn valid_name(name: &str) -> bool {
     USER_NAME.is_match(name)
 }
 
+/// What is wrong with a group draft, or `None`.
+pub fn validate_group_draft(draft: &GroupDraft) -> Option<UserError> {
+    if !valid_name(&draft.name) {
+        return Some(UserError::InvalidName);
+    }
+    if has_line_break(&draft.name) {
+        return Some(UserError::LineBreak);
+    }
+    if draft.members.iter().any(|member| !valid_name(member)) {
+        return Some(UserError::InvalidMember);
+    }
+    None
+}
+
 /// What is wrong with a draft, or `None`.
 pub fn validate_draft(draft: &UserDraft) -> Option<UserError> {
     if !valid_name(&draft.name) {
@@ -791,6 +897,88 @@ pub fn delete_command(user: &SystemUser, remove_home: bool) -> Result<String, Us
 /// The user's password is asked for there, by `su`, and nowhere else.
 pub fn login_shell_command(user: &str) -> String {
     format!("su - {}", single_quote(user))
+}
+
+/// The command that creates a group, then sets its members when the draft
+/// names any. `gpasswd -M` is the group-side equivalent of `usermod -G`: it
+/// replaces the member list rather than appending, so a create with a list is
+/// one write, not a loop of `-a`.
+pub fn group_create_command(draft: &GroupDraft) -> Result<String, UserError> {
+    if let Some(error) = validate_group_draft(draft) {
+        return Err(error);
+    }
+    let mut args: Vec<String> = vec!["groupadd".to_string()];
+    if draft.system {
+        args.push("-r".to_string());
+    }
+    args.push(single_quote(&draft.name));
+    Ok(with_group_members(
+        &args.join(" "),
+        &draft.name,
+        &draft.members,
+    ))
+}
+
+/// The command that changes a group's members, naming only the list when it
+/// differs from [`original`].
+///
+/// A group cannot be renamed: `groupmod -n` leaves every file, sudoers line
+/// and account whose primary group still names the old login.
+pub fn group_edit_command(original: &SystemGroup, draft: &GroupDraft) -> Result<String, UserError> {
+    if let Some(error) = validate_group_draft(draft) {
+        return Err(error);
+    }
+    if draft.name != original.name {
+        return Err(UserError::Renaming);
+    }
+    if sorted_members(&draft.members) == original.members {
+        return Ok(":".to_string());
+    }
+    Ok(gpasswd_members(&original.name, &draft.members))
+}
+
+/// The command that removes a group.
+///
+/// Refused for gid 0 *or* the name `root`, and for a group that is any
+/// account's primary group: `groupdel` would refuse the latter in its own
+/// words, and the parser says so first so the client can phrase it.
+pub fn group_delete_command(group: &SystemGroup, users: &[SystemUser]) -> Result<String, UserError> {
+    if group.is_root() || group.name == "root" {
+        return Err(UserError::RootGroupNotDeletable);
+    }
+    if !valid_name(&group.name) {
+        return Err(UserError::InvalidName);
+    }
+    if users.iter().any(|user| {
+        user.gid == group.gid || user.primary_group.as_deref() == Some(group.name.as_str())
+    }) {
+        return Err(UserError::GroupInUse);
+    }
+    Ok(format!("groupdel {}", single_quote(&group.name)))
+}
+
+/// [`command`], with the group's members set after it when the list is not
+/// empty. A new group with no members is `groupadd` alone — `gpasswd -M` of
+/// an empty list is a change, not a create.
+fn with_group_members(command: &str, group: &str, members: &[String]) -> String {
+    if members.is_empty() {
+        return command.to_string();
+    }
+    format!("set -e\n{command}\n{}", gpasswd_members(group, members))
+}
+
+/// `gpasswd -M` replaces the member list. An empty list is an empty `-M`
+/// argument, which is how every supplementary member is dropped.
+fn gpasswd_members(group: &str, members: &[String]) -> String {
+    let list = sorted_members(members).join(",");
+    format!("gpasswd -M {} {}", single_quote(&list), single_quote(group))
+}
+
+fn sorted_members(members: &[String]) -> Vec<String> {
+    let mut list = members.to_vec();
+    list.sort();
+    list.dedup();
+    list
 }
 
 /// [`command`], with the account's password set after it.

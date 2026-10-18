@@ -4,7 +4,8 @@
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
-import 'package:server_box/src/rust/frb_generated.dart';
+
+import '../frb_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `command_kind`, `image_back`, `image_item`, `item`, `runtime`, `status_name`, `status`
 

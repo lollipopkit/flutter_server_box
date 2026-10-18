@@ -2465,6 +2465,107 @@ type RootTranslation = {
 	 */
 	systemUsers: string
 	/**
+	 * G​r​o​u​p​s
+	 */
+	systemGroups: string
+	/**
+	 * N​e​w​ ​g​r​o​u​p
+	 */
+	groupAdd: string
+	/**
+	 * D​e​l​e​t​e​ ​g​r​o​u​p
+	 */
+	groupDelete: string
+	/**
+	 * D​e​l​e​t​e​ ​{​n​a​m​e​}​?​ ​A​c​c​o​u​n​t​s​ ​t​h​a​t​ ​h​a​v​e​ ​i​t​ ​a​s​ ​a​ ​s​u​p​p​l​e​m​e​n​t​a​r​y​ ​g​r​o​u​p​ ​k​e​e​p​ ​t​h​e​i​r​ ​o​t​h​e​r​ ​g​r​o​u​p​s​.
+	 * @param {unknown} name
+	 */
+	groupDeleteConfirm: RequiredParams<'name'>
+	/**
+	 * C​r​e​a​t​e​d​ ​{​n​a​m​e​}​.
+	 * @param {unknown} name
+	 */
+	groupDoneCreated: RequiredParams<'name'>
+	/**
+	 * R​e​m​o​v​e​d​ ​{​n​a​m​e​}​.
+	 * @param {unknown} name
+	 */
+	groupDoneDeleted: RequiredParams<'name'>
+	/**
+	 * C​h​a​n​g​e​d​ ​{​n​a​m​e​}​.
+	 * @param {unknown} name
+	 */
+	groupDoneEdited: RequiredParams<'name'>
+	/**
+	 * E​d​i​t​ ​g​r​o​u​p
+	 */
+	groupEdit: string
+	/**
+	 * N​o​ ​g​r​o​u​p​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 */
+	groupEmpty: string
+	/**
+	 * A​ ​g​r​o​u​p​ ​w​i​t​h​ ​t​h​a​t​ ​n​a​m​e​ ​a​l​r​e​a​d​y​ ​e​x​i​s​t​s​.
+	 */
+	groupExists: string
+	/**
+	 * G​I​D
+	 */
+	groupGid: string
+	/**
+	 * T​h​i​s​ ​g​r​o​u​p​ ​i​s​ ​a​n​ ​a​c​c​o​u​n​t​'​s​ ​p​r​i​m​a​r​y​ ​g​r​o​u​p​,​ ​s​o​ ​i​t​ ​i​s​ ​n​o​t​ ​r​e​m​o​v​e​d​ ​h​e​r​e​.
+	 */
+	groupInUse: string
+	/**
+	 * T​h​a​t​ ​i​s​ ​n​o​t​ ​a​ ​m​e​m​b​e​r​ ​n​a​m​e​ ​t​h​i​s​ ​m​a​c​h​i​n​e​ ​a​c​c​e​p​t​s​.
+	 */
+	groupInvalidMember: string
+	/**
+	 * M​e​m​b​e​r​s
+	 */
+	groupMembers: string
+	/**
+	 * S​e​p​a​r​a​t​e​d​ ​b​y​ ​s​p​a​c​e​s​.​ ​C​l​e​a​r​i​n​g​ ​i​t​ ​r​e​m​o​v​e​s​ ​e​v​e​r​y​ ​s​u​p​p​l​e​m​e​n​t​a​r​y​ ​m​e​m​b​e​r​.
+	 */
+	groupMembersHint: string
+	/**
+	 * N​o​ ​g​r​o​u​p​ ​m​a​t​c​h​e​s​ ​t​h​e​ ​f​i​l​t​e​r​.
+	 */
+	groupNoMatch: string
+	/**
+	 * T​h​a​t​ ​g​r​o​u​p​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​i​n​ ​t​h​e​ ​c​a​t​a​l​o​g​.​ ​T​h​e​ ​l​i​s​t​ ​w​a​s​ ​r​e​-​r​e​a​d​.
+	 */
+	groupNoSuchGroup: string
+	/**
+	 * P​r​i​m​a​r​y​ ​f​o​r
+	 */
+	groupPrimaryMembers: string
+	/**
+	 * T​h​e​ ​r​o​o​t​ ​g​r​o​u​p​ ​c​a​n​n​o​t​ ​b​e​ ​r​e​m​o​v​e​d​.
+	 */
+	groupRootNotDeletable: string
+	/**
+	 * N​a​m​e​,​ ​G​I​D​ ​o​r​ ​m​e​m​b​e​r
+	 */
+	groupSearchHint: string
+	/**
+	 * {​c​o​u​n​t​}​ ​g​r​o​u​p​s
+	 * @param {unknown} count
+	 */
+	groupSubtitle: RequiredParams<'count'>
+	/**
+	 * S​y​s​t​e​m​ ​g​r​o​u​p
+	 */
+	groupSystem: string
+	/**
+	 * G​r​o​u​p​s
+	 */
+	groupTab: string
+	/**
+	 * U​s​e​r​s
+	 */
+	userTab: string
+	/**
 	 * S​n​i​p​p​e​t​s
 	 */
 	snippets: string
@@ -8228,6 +8329,102 @@ export type TranslationFunctions = {
 	 * Users
 	 */
 	systemUsers: () => LocalizedString
+	/**
+	 * Groups
+	 */
+	systemGroups: () => LocalizedString
+	/**
+	 * New group
+	 */
+	groupAdd: () => LocalizedString
+	/**
+	 * Delete group
+	 */
+	groupDelete: () => LocalizedString
+	/**
+	 * Delete {name}? Accounts that have it as a supplementary group keep their other groups.
+	 */
+	groupDeleteConfirm: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Created {name}.
+	 */
+	groupDoneCreated: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Removed {name}.
+	 */
+	groupDoneDeleted: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Changed {name}.
+	 */
+	groupDoneEdited: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Edit group
+	 */
+	groupEdit: () => LocalizedString
+	/**
+	 * No groups on this machine.
+	 */
+	groupEmpty: () => LocalizedString
+	/**
+	 * A group with that name already exists.
+	 */
+	groupExists: () => LocalizedString
+	/**
+	 * GID
+	 */
+	groupGid: () => LocalizedString
+	/**
+	 * This group is an account's primary group, so it is not removed here.
+	 */
+	groupInUse: () => LocalizedString
+	/**
+	 * That is not a member name this machine accepts.
+	 */
+	groupInvalidMember: () => LocalizedString
+	/**
+	 * Members
+	 */
+	groupMembers: () => LocalizedString
+	/**
+	 * Separated by spaces. Clearing it removes every supplementary member.
+	 */
+	groupMembersHint: () => LocalizedString
+	/**
+	 * No group matches the filter.
+	 */
+	groupNoMatch: () => LocalizedString
+	/**
+	 * That group is no longer in the catalog. The list was re-read.
+	 */
+	groupNoSuchGroup: () => LocalizedString
+	/**
+	 * Primary for
+	 */
+	groupPrimaryMembers: () => LocalizedString
+	/**
+	 * The root group cannot be removed.
+	 */
+	groupRootNotDeletable: () => LocalizedString
+	/**
+	 * Name, GID or member
+	 */
+	groupSearchHint: () => LocalizedString
+	/**
+	 * {count} groups
+	 */
+	groupSubtitle: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * System group
+	 */
+	groupSystem: () => LocalizedString
+	/**
+	 * Groups
+	 */
+	groupTab: () => LocalizedString
+	/**
+	 * Users
+	 */
+	userTab: () => LocalizedString
 	/**
 	 * Snippets
 	 */

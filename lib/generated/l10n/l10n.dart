@@ -3688,6 +3688,42 @@ abstract class AppLocalizations {
   /// **'Leave the password empty to keep the existing password.'**
   String get userPasswordEditTip;
 
+  /// Tab label for the machine's groups, next to Users.
+  ///
+  /// In en, this message translates to:
+  /// **'Groups'**
+  String get systemGroups;
+
+  /// Column header for a group's numeric id.
+  ///
+  /// In en, this message translates to:
+  /// **'GID'**
+  String get userGid;
+
+  /// Label for a group's supplementary members.
+  ///
+  /// In en, this message translates to:
+  /// **'Members'**
+  String get userGroupMembers;
+
+  /// Accounts whose primary group is this group.
+  ///
+  /// In en, this message translates to:
+  /// **'Primary members'**
+  String get userPrimaryMembers;
+
+  /// Label for a group below the machine's GID_MIN.
+  ///
+  /// In en, this message translates to:
+  /// **'System group'**
+  String get userSystemGroup;
+
+  /// Hint for the group members field.
+  ///
+  /// In en, this message translates to:
+  /// **'docker,wheel'**
+  String get userMembersHint;
+
   /// Formatted user-facing message for func unavailable; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:

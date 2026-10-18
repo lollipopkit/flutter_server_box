@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -2121,6 +2122,24 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get userPasswordEditTip =>
       'Mövcud parolu saxlamaq üçün parolu boş saxlayın.';
+
+  @override
+  String get systemGroups => 'Qruplar';
+
+  @override
+  String get userGid => 'GID';
+
+  @override
+  String get userGroupMembers => 'Üzvlər';
+
+  @override
+  String get userPrimaryMembers => 'Əsas üzvlər';
+
+  @override
+  String get userSystemGroup => 'Sistem qrupu';
+
+  @override
+  String get userMembersHint => 'docker,wheel';
 
   @override
   String funcUnavailableFmt(String func) {

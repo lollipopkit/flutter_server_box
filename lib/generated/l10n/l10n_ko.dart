@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -1997,6 +1998,24 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get userPasswordEditTip => '기존 비밀번호를 유지하려면 비워 두세요.';
+
+  @override
+  String get systemGroups => '그룹';
+
+  @override
+  String get userGid => 'GID';
+
+  @override
+  String get userGroupMembers => '구성원';
+
+  @override
+  String get userPrimaryMembers => '기본 구성원';
+
+  @override
+  String get userSystemGroup => '시스템 그룹';
+
+  @override
+  String get userMembersHint => 'docker,wheel';
 
   @override
   String funcUnavailableFmt(String func) {

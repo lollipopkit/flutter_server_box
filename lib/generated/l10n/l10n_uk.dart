@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -2127,6 +2128,24 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get userPasswordEditTip =>
       'Залиште поле порожнім, щоб зберегти поточний пароль.';
+
+  @override
+  String get systemGroups => 'Групи';
+
+  @override
+  String get userGid => 'GID';
+
+  @override
+  String get userGroupMembers => 'Учасники';
+
+  @override
+  String get userPrimaryMembers => 'Основні учасники';
+
+  @override
+  String get userSystemGroup => 'Системна група';
+
+  @override
+  String get userMembersHint => 'docker,wheel';
 
   @override
   String funcUnavailableFmt(String func) {
