@@ -43,9 +43,7 @@ where
     ntex::forward_shutdown!(service);
 
     async fn call(&self, req: WebRequest<E>, ctx: ServiceCtx<'_, Self>) -> Result<WebResponse, Self::Error> {
-        let exempt = req.method() == Method::OPTIONS
-            || req.path().ends_with("/health")
-            || req.headers().contains_key(header::UPGRADE);
+        let exempt = req.method() == Method::OPTIONS || req.path().ends_with("/health") || is_ws_upgrade(&req);
         if !exempt {
             let named = req.headers().get(protocol::HEADER).map(|v| v.to_str().unwrap_or(""));
             let refusal = match protocol::client_protocol(named) {
@@ -65,4 +63,15 @@ where
         }
         ctx.call(&self.service, req).await
     }
+}
+
+/// A WebSocket upgrade to one of the `/…/ws` routes. An `Upgrade` header on
+/// any other request exempts nothing.
+fn is_ws_upgrade<E>(req: &WebRequest<E>) -> bool {
+    req.path().ends_with("/ws")
+        && req
+            .headers()
+            .get(header::UPGRADE)
+            .and_then(|v| v.to_str().ok())
+            .is_some_and(|v| v.eq_ignore_ascii_case("websocket"))
 }

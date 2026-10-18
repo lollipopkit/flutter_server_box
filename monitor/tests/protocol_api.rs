@@ -73,6 +73,12 @@ async fn health_preflights_and_upgrades_are_not_checked() {
 }
 
 #[ntex::test]
+async fn an_upgrade_header_alone_exempts_nothing() {
+    let (srv, _) = server().await;
+    assert_eq!(call(&srv, Method::GET, "/api/v1/capabilities", Some(&too_old()), true).await.0, 426);
+}
+
+#[ntex::test]
 async fn a_protocol_that_is_not_a_number_is_refused() {
     let (srv, _) = server().await;
     let (status, body) = call(&srv, Method::GET, "/api/v1/capabilities", Some("two"), false).await;
