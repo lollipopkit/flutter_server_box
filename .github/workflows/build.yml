@@ -625,17 +625,17 @@ jobs:
           key: fdroid-${{ runner.os }}-${{ matrix.abi }}-${{ hashFiles('pubspec.lock', 'android/gradle/wrapper/gradle-wrapper.properties', 'android/**/*.gradle', 'android/**/*.gradle.kts') }}
       # After the build, not before: with `key.properties` present Gradle signs
       # the release itself, and the unsigned APK above is never produced.
-      - name: Fetch secrets
+    #  - name: Fetch secrets
         # Through the environment, and quoted. Expanded into the script the way
         # they were, a space or a shell metacharacter in either value is parsed
         # as script rather than as part of the value.
-        env:
-          BASIC_AUTH: ${{ secrets.BASIC_AUTH }}
-          URL_PREFIX: ${{ secrets.URL_PREFIX }}
-        run: |
-          set -euo pipefail
-          curl --fail --show-error --location -u "$BASIC_AUTH" -o android/app/app.key "${URL_PREFIX}app.key"
-          curl --fail --show-error --location -u "$BASIC_AUTH" -o android/key.properties "${URL_PREFIX}key.properties"
+     #   env:
+     #     BASIC_AUTH: ${{ secrets.BASIC_AUTH }}
+     #     URL_PREFIX: ${{ secrets.URL_PREFIX }}
+#        run: |
+      #    set -euo pipefail
+       #   curl --fail --show-error --location -u "$BASIC_AUTH" -o android/app/app.key "${URL_PREFIX}app.key"
+      #    curl --fail --show-error --location -u "$BASIC_AUTH" -o android/key.properties "${URL_PREFIX}key.properties"
       # Signing adds a signing block and touches no entry, which is what lets
       # F-Droid copy the signature onto its own build to compare the two.
       # `--alignment-preserved` keeps the entries where Gradle put them; the
