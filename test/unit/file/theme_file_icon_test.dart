@@ -24,6 +24,15 @@ void main() {
     expect(ThemeFileIcon.aliasOf('file.py'), isNull);
   });
 
+  test('built-in glyphs differ by extension', () {
+    expect(ThemeFileIcon.builtIn('file.py').$1,
+        isNot(ThemeFileIcon.builtIn('file.rs').$1));
+    expect(ThemeFileIcon.builtIn('file.scss').$1,
+        ThemeFileIcon.builtIn('file.css').$1);
+    expect(ThemeFileIcon.builtIn('file.jpg').$1,
+        isNot(ThemeFileIcon.builtIn('file.pdf').$1));
+  });
+
   test('dirs and links ignore the name', () {
     expect(
       ThemeFileIcon.keyOf(name: 'src', isDir: true, isLink: false),

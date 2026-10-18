@@ -105,6 +105,7 @@ LIMITS = {
     "icon": 256 * KIB,
     "splash": 512 * KIB,
     "background": 8 * MIB,
+    "icons": 192,
 }
 ID_PATTERN = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
 BACKGROUNDS = {"background.png", "background.jpg", "background.jpeg"}
@@ -356,6 +357,10 @@ def check_theme(manifest: dict, folder: Path, key: str | None, lo, rep: Report, 
     background = table_of(manifest.get("background"))
 
     # Icons.
+    if len(images) > LIMITS["icons"]:
+        rep.error(
+            f"{where}icons.images: {len(images)} keys, over {LIMITS['icons']}"
+        )
     for ikey, rel in images.items():
         f = safe_file(folder, str(rel))
         used.add(str(rel))

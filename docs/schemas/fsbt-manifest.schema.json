@@ -80,8 +80,9 @@
           "enum": ["classic", "mingcute"]
         },
         "images": {
-          "description": "Icon key to the file that carries it, inside icons/. The file name must be the key with dots replaced by underscores, and either extension; nothing else can be named. A PNG is at most 512x512 and 256 KiB, an SVG at most 256 KiB and is checked as a document. Both are tinted with one color, so a drawing should use currentColor.",
+          "description": "Icon key to the file that carries it, inside icons/. The file name must be the key with dots replaced by underscores, and either extension; nothing else can be named. A PNG is at most 512x512 and 256 KiB, an SVG at most 256 KiB and is checked as a document. Both are tinted with one color, so a drawing should use currentColor. At most 192 keys.",
           "type": "object",
+          "maxProperties": 192,
           "additionalProperties": false,
           "properties": {
             "tab.server": { "enum": ["icons/tab_server.png", "icons/tab_server.svg"] },

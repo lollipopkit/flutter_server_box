@@ -132,7 +132,7 @@ pub async fn create(
         return Ok(bad_request(&e));
     }
     let days = body.expires_days.unwrap_or(DEFAULT_TTL_DAYS);
-    if days < 1 || days > MAX_TTL_DAYS {
+    if !(1..=MAX_TTL_DAYS).contains(&days) {
         return Ok(bad_request(&format!(
             "expires_days must be 1..={MAX_TTL_DAYS}"
         )));

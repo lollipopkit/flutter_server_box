@@ -351,8 +351,8 @@ are `nav.more`, `nav.settings`, `nav.tune`, `nav.privacy`, `nav.agent`,
 carry falls back to a related key when there is one (`file.css` for
 `.scss`, `file.sh` for `.bash`), then to `file.default`, then to the
 built-in glyph. A package
-may carry at most 48 icon keys, so a full tab and nav set leaves room for a
-handful of Files-window glyphs.
+may carry at most 192 icon keys, so a full tab and nav set still leaves room
+for a Files-window glyph per common extension.
 
 These are the keys ServerBox draws. The format is shared with other apps built
 on the same library, so a key made for one of them — dotted lowercase words,
