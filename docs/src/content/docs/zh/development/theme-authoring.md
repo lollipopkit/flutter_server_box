@@ -304,12 +304,16 @@ background 或 iOS 的 launch storyboard）在构建应用时确定，只能随�
 `ssh`、`file`、`snippet`、`agent`、`benchmark`、`remoteDesktop`、`virt`。navigation key 有
 `nav.more`、`nav.settings`、`nav.tune`、`nav.privacy`、`nav.agent`、`nav.tabs`、
 `nav.server`、`nav.sort`、`nav.terminal`、`nav.folder`、`nav.cloud`、`nav.snippet`、
-`nav.inbox`、`nav.key`、`nav.info`、`nav.download`、`nav.desktop`。
+`nav.inbox`、`nav.key`、`nav.info`、`nav.download`、`nav.desktop`。Files 窗口还会绘制
+`file.dir`、`file.link`、`file.default`，以及按扩展名的 `file.<ext>`（如 `file.py`、
+`file.rs`、`file.gitignore`）。主题没有该扩展名时，先回退到相近的 key（如 `.scss` 用 `file.css`，`.bash` 用
+`file.sh`），再回退到 `file.default`，再回退到内置图标。
+一套主题最多 48 个 icon key，因此铺满 tab 和 nav 之后，Files 窗口只能再放下少量扩展名图标。
 
 以上是 ServerBox 会绘制的 key。这一格式与基于同一个库的其他 app 共用，为其他 app
 准备的 key（点分隔的小写单词，如 `tab.chat`）会被接受并保留，但 ServerBox 不绘制。
-格式不合法的 key 会被拒绝。编辑器用的 schema 只列出 ServerBox 的 key，所以编辑时
-拼错的 key 仍会被标出。
+格式不合法的 key 会被拒绝。编辑器用的 schema 列出 tab 和 nav 的 key，并以模式接受
+任意合法的 `file.*` key，而不是枚举扩展名。
 
 压缩包和解压后总内容各限制 16 MiB。`manifest.toml` 限制 64 KiB。icon 限制
 256 KiB，splash logo 512 KiB，背景 8 MiB、单边 8192 像素、总计 6400 万像素。写入隔离的

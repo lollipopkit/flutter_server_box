@@ -119,6 +119,13 @@
             "nav.info": { "enum": ["icons/nav_info.png", "icons/nav_info.svg"] },
             "nav.download": { "enum": ["icons/nav_download.png", "icons/nav_download.svg"] },
             "nav.desktop": { "enum": ["icons/nav_desktop.png", "icons/nav_desktop.svg"] }
+          },
+          "patternProperties": {
+            "^file\\.[a-z][a-z0-9]*$": {
+              "description": "A Files-window glyph: file.dir, file.link, file.default, or file.<ext> for an extension. The file name is the key with dots as underscores.",
+              "type": "string",
+              "pattern": "^icons/file_[a-z][a-z0-9]*\\.(png|svg)$"
+            }
           }
         },
         "colors": {
@@ -161,6 +168,9 @@
             "nav.info": { "$ref": "#/definitions/color" },
             "nav.download": { "$ref": "#/definitions/color" },
             "nav.desktop": { "$ref": "#/definitions/color" }
+          },
+          "patternProperties": {
+            "^file\\.[a-z][a-z0-9]*$": { "$ref": "#/definitions/color" }
           }
         }
       }
