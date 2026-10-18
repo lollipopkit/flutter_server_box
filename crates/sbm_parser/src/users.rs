@@ -730,13 +730,27 @@ pub fn valid_name(name: &str) -> bool {
 
 /// What is wrong with a group draft, or `None`.
 pub fn validate_group_draft(draft: &GroupDraft) -> Option<UserError> {
+    validate_group_draft_with_existing(draft, &[])
+}
+
+fn validate_group_draft_with_existing(
+    draft: &GroupDraft,
+    existing_members: &[String],
+) -> Option<UserError> {
     if !valid_name(&draft.name) {
         return Some(UserError::InvalidName);
     }
     if has_line_break(&draft.name) {
         return Some(UserError::LineBreak);
     }
-    if draft.members.iter().any(|member| !valid_name(member)) {
+    if draft.members.iter().any(|member| has_line_break(member)) {
+        return Some(UserError::LineBreak);
+    }
+    if draft
+        .members
+        .iter()
+        .any(|member| !existing_members.contains(member) && !valid_name(member))
+    {
         return Some(UserError::InvalidMember);
     }
     None
@@ -925,7 +939,7 @@ pub fn group_create_command(draft: &GroupDraft) -> Result<String, UserError> {
 /// A group cannot be renamed: `groupmod -n` leaves every file, sudoers line
 /// and account whose primary group still names the old login.
 pub fn group_edit_command(original: &SystemGroup, draft: &GroupDraft) -> Result<String, UserError> {
-    if let Some(error) = validate_group_draft(draft) {
+    if let Some(error) = validate_group_draft_with_existing(draft, &original.members) {
         return Err(error);
     }
     if draft.name != original.name {

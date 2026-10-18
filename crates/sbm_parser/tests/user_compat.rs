@@ -635,6 +635,23 @@ fn a_group_edit_is_only_the_member_list_that_changed() {
 }
 
 #[test]
+fn a_group_edit_keeps_existing_members_that_the_draft_would_refuse() {
+    let original = group("deploy", 1001, &["Admin"]);
+    let mut draft = group_draft("deploy");
+    draft.members = vec!["Admin".to_string(), "svc".to_string()];
+    assert_eq!(
+        group_edit_command(&original, &draft).expect("an existing member is kept"),
+        "gpasswd -M 'Admin,svc' 'deploy'"
+    );
+
+    draft.members = vec!["Admin".to_string(), "not a user".to_string()];
+    assert_eq!(
+        group_edit_command(&original, &draft),
+        Err(UserError::InvalidMember)
+    );
+}
+
+#[test]
 fn a_group_rename_is_refused() {
     let original = group("deploy", 1001, &[]);
     assert_eq!(

@@ -59,7 +59,10 @@
         ...(asRoot && sudoPassword ? { password: sudoPassword } : {}),
       })
       if (result.sudo_rejected) {
-        if (asRoot) error = $LL.powerRejected()
+        if (asRoot) {
+          error = $LL.powerRejected()
+          sudoPassword = ''
+        }
         else needsSudo = true
         return
       }

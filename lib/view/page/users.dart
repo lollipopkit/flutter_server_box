@@ -1511,7 +1511,18 @@ extension on _UsersPageState {
       final duplicate =
           group == null &&
           catalog.groups.any((existing) => existing.name == draft.name);
-      final validation = UserManager.validateGroupDraft(draft);
+      final membersToValidate = group == null
+          ? draft.members
+          : draft.members
+              .where((member) => !group.members.contains(member))
+              .toList();
+      final validation = UserManager.validateGroupDraft(
+        ServerGroupDraft(
+          name: draft.name,
+          members: membersToValidate,
+          system: draft.system,
+        ),
+      );
       if (validation != null || duplicate) {
         Toast.error(validation ?? l10n.nameAlreadyExistsFmt(draft.name));
         continue;
