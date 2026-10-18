@@ -625,91 +625,136 @@ jobs:
           key: fdroid-${{ runner.os }}-${{ matrix.abi }}-${{ hashFiles('pubspec.lock', 'android/gradle/wrapper/gradle-wrapper.properties', 'android/**/*.gradle', 'android/**/*.gradle.kts') }}
       # After the build, not before: with `key.properties` present Gradle signs
       # the release itself, and the unsigned APK above is never produced.
-    #  - name: Fetch secrets
+      #
+      # On a fork (or any repo that has not stored BASIC_AUTH / URL_PREFIX),
+      # curl would try to download `app.key` as a hostname and fail the job
+      # after a successful compile. A release still requires those secrets.
+      # A dispatch without them signs with the Android debug keystore so the
+      # APK is installable and the rest of the job (proot check, upload) runs.
+      - name: Fetch secrets
+        id: signing
         # Through the environment, and quoted. Expanded into the script the way
         # they were, a space or a shell metacharacter in either value is parsed
         # as script rather than as part of the value.
-     #   env:
-     #     BASIC_AUTH: ${{ secrets.BASIC_AUTH }}
-     #     URL_PREFIX: ${{ secrets.URL_PREFIX }}
-#        run: |
-      #    set -euo pipefail
-       #   curl --fail --show-error --location -u "$BASIC_AUTH" -o android/app/app.key "${URL_PREFIX}app.key"
-      #    curl --fail --show-error --location -u "$BASIC_AUTH" -o android/key.properties "${URL_PREFIX}key.properties"
+        env:
+          BASIC_AUTH: ${{ secrets.BASIC_AUTH }}
+          URL_PREFIX: ${{ secrets.URL_PREFIX }}
+          IS_RELEASE: ${{ needs.reproducibilityCheck.outputs.isRelease }}
+        run: |
+          set -euo pipefail
+          if [[ -n "${URL_PREFIX}" && -n "${BASIC_AUTH}" ]]; then
+            curl --fail --show-error --location -u "$BASIC_AUTH" -o android/app/app.key "${URL_PREFIX}app.key"
+            curl --fail --show-error --location -u "$BASIC_AUTH" -o android/key.properties "${URL_PREFIX}key.properties"
+            echo "mode=release" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ "$IS_RELEASE" == "true" ]]; then
+            echo "::error::BASIC_AUTH and URL_PREFIX are required to sign a release APK."
+            exit 1
+          fi
+          echo "::notice::BASIC_AUTH/URL_PREFIX are unset; signing with the Android debug keystore."
+          echo "mode=debug" >> "$GITHUB_OUTPUT"
       # Signing adds a signing block and touches no entry, which is what lets
       # F-Droid copy the signature onto its own build to compare the two.
       # `--alignment-preserved` keeps the entries where Gradle put them; the
       # check after it fails the job if any moved or changed. v2 alone, as Gradle
       # signed: apksigner also adds a JAR (v1) signature by default, which is
       # three more entries.
- #     - name: Sign
-  #      shell: bash
- #       env:
-  #        ABI: ${{ matrix.abi }}
-   #     run: |
-    #      set -euo pipefail
-#          case "$ABI" in
-#            arm64) unsigned=app-arm64-v8a-release-unsigned.apk ;;
-       #     arm) unsigned=app-armeabi-v7a-release-unsigned.apk ;;
-#            amd64) unsigned=app-x86_64-release-unsigned.apk ;;
-        #    *) echo "::error::unknown ABI $ABI"; exit 1 ;;
-     #     esac
-       #   unsigned="build/app/outputs/apk/release/$unsigned"
-      #    out="build/app/outputs/flutter-apk/${APP_NAME}_v1.0.${BUILD_NUMBER}_${ABI}.apk"
-#
-        #  prop() {
-        #    sed -n -E "s/^[[:space:]]*$1[[:space:]]*=[[:space:]]*(.*)$/\1/p" android/key.properties |
-       #       tail -n 1 | tr -d '\r'
-       #   }
-      #    store_file="$(prop storeFile)"
-        #  key_alias="$(prop keyAlias)"
-#          KS_PASS="$(prop storePassword)"
-#          KEY_PASS="$(prop keyPassword)"
-       #   echo "::add-mask::$KS_PASS"
-      #    echo "::add-mask::$KEY_PASS"
-      #    export KS_PASS KEY_PASS
-          # Relative to the app module, as Gradle's `file()` resolved it.
-    #      [[ "$store_file" == /* ]] || store_file="android/app/$store_file"
+      - name: Sign
+        shell: bash
+        env:
+          ABI: ${{ matrix.abi }}
+          SIGN_MODE: ${{ steps.signing.outputs.mode }}
+        run: |
+          set -euo pipefail
+          case "$ABI" in
+            arm64) unsigned=app-arm64-v8a-release-unsigned.apk ;;
+            arm) unsigned=app-armeabi-v7a-release-unsigned.apk ;;
+            amd64) unsigned=app-x86_64-release-unsigned.apk ;;
+            *) echo "::error::unknown ABI $ABI"; exit 1 ;;
+          esac
+          unsigned="build/app/outputs/apk/release/$unsigned"
+          out="build/app/outputs/flutter-apk/${APP_NAME}_v1.0.${BUILD_NUMBER}_${ABI}.apk"
 
-    #      mkdir -p "$(dirname "$out")"
-     #     "$APKSIGNER" sign \
-  #          --ks "$store_file" \
-    #        --ks-key-alias "$key_alias" \
-      #      --ks-pass env:KS_PASS \
-    #        --key-pass env:KEY_PASS \
-#            --alignment-preserved \
-   #         --v1-signing-enabled false \
-   #         --v2-signing-enabled true \
-    #        --v3-signing-enabled false \
-   #         --v4-signing-enabled false \
-    #        --out "$out" \
-   #         "$unsigned"
- #         "$APKSIGNER" verify "$out"
+          if [[ "$SIGN_MODE" == "release" ]]; then
+            prop() {
+              sed -n -E "s/^[[:space:]]*$1[[:space:]]*=[[:space:]]*(.*)$/\1/p" android/key.properties |
+                tail -n 1 | tr -d '\r'
+            }
+            store_file="$(prop storeFile)"
+            key_alias="$(prop keyAlias)"
+            KS_PASS="$(prop storePassword)"
+            KEY_PASS="$(prop keyPassword)"
+            echo "::add-mask::$KS_PASS"
+            echo "::add-mask::$KEY_PASS"
+            export KS_PASS KEY_PASS
+            # Relative to the app module, as Gradle's `file()` resolved it.
+            [[ "$store_file" == /* ]] || store_file="android/app/$store_file"
+            ks_args=(
+              --ks "$store_file"
+              --ks-key-alias "$key_alias"
+              --ks-pass env:KS_PASS
+              --key-pass env:KEY_PASS
+            )
+          else
+            mkdir -p "$HOME/.android"
+            store_file="$HOME/.android/debug.keystore"
+            if [[ ! -f "$store_file" ]]; then
+              keytool -genkeypair \
+                -noprompt \
+                -keystore "$store_file" \
+                -storepass android \
+                -alias androiddebugkey \
+                -keypass android \
+                -keyalg RSA \
+                -keysize 2048 \
+                -validity 10000 \
+                -dname 'CN=Android Debug,O=Android,C=US'
+            fi
+            ks_args=(
+              --ks "$store_file"
+              --ks-key-alias androiddebugkey
+              --ks-pass pass:android
+              --key-pass pass:android
+            )
+          fi
 
- #         entries() {
-    #        zipinfo -v "$1" | grep -E '^  (offset of local header|32-bit CRC value|compressed size)'
-   #       }
-   #       diff <(entries "$unsigned") <(entries "$out") ||
-        #    { echo "::error::signing changed the APK's entries"; exit 1; }
+          mkdir -p "$(dirname "$out")"
+          "$APKSIGNER" sign \
+            "${ks_args[@]}" \
+            --alignment-preserved \
+            --v1-signing-enabled false \
+            --v2-signing-enabled true \
+            --v3-signing-enabled false \
+            --v4-signing-enabled false \
+            --out "$out" \
+            "$unsigned"
+          "$APKSIGNER" verify "$out"
+
+          entries() {
+            zipinfo -v "$1" | grep -E '^  (offset of local header|32-bit CRC value|compressed size)'
+          }
+          diff <(entries "$unsigned") <(entries "$out") ||
+            { echo "::error::signing changed the APK's entries"; exit 1; }
           # Flutter's copies of the unsigned APKs, which are not published.
-   #       rm -f build/app/outputs/flutter-apk/app-*-release.apk
+          rm -f build/app/outputs/flutter-apk/app-*-release.apk
       # `useLegacyPackaging` off means nothing is extracted from the APK, so
       # `nativeLibraryDir` does not exist and proot cannot be run from
       # anywhere. The APK still builds, installs and runs — the rootfs entry
       # simply never appears. Checked here because nothing else would say so.
-#      - name: Check proot shipped
- #       if: matrix.abi == 'arm64'
-#        shell: bash
-#        run: |
-#          shopt -s nullglob
- #         apks=(build/app/outputs/flutter-apk/*_arm64.apk)
-     #     [ ${#apks[@]} -gt 0 ] || { echo "no arm64 APK was built"; exit 1; }
-    #      for apk in "${apks[@]}"; do
-   #         unzip -l "$apk" | grep -q 'lib/arm64-v8a/libproot.so' ||
-     #         { echo "$apk carries no proot; the Linux userland would be missing"; exit 1; }
-     #       unzip -l "$apk" | grep -q 'lib/arm64-v8a/libproot-loader.so' ||
-      #        { echo "$apk carries proot but not its loader; entering the rootfs would be refused"; exit 1; }
-   #       done
+      - name: Check proot shipped
+        if: matrix.abi == 'arm64'
+        shell: bash
+        run: |
+          shopt -s nullglob
+          apks=(build/app/outputs/flutter-apk/*_arm64.apk)
+          [ ${#apks[@]} -gt 0 ] || { echo "no arm64 APK was built"; exit 1; }
+          for apk in "${apks[@]}"; do
+            unzip -l "$apk" | grep -q 'lib/arm64-v8a/libproot.so' ||
+              { echo "$apk carries no proot; the Linux userland would be missing"; exit 1; }
+            unzip -l "$apk" | grep -q 'lib/arm64-v8a/libproot-loader.so' ||
+              { echo "$apk carries proot but not its loader; entering the rootfs would be refused"; exit 1; }
+          done
       # Each matrix leg names one exact APK. Besides making a missing ABI fail
       # at its source, this keeps the release build invocation identical to the
       # one F-Droid runs for that ABI.
