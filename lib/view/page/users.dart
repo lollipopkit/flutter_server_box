@@ -796,7 +796,7 @@ extension on _UsersPageState {
       if (regular.isNotEmpty)
         _buildGroupSectionCard(
           catalog,
-          _GroupSectionSpec(title: l10n.userRegularAccount, groups: regular),
+          _GroupSectionSpec(title: l10n.userRegularGroup, groups: regular),
           regular,
           wide: wide,
         ),
@@ -897,7 +897,6 @@ extension on _UsersPageState {
     final scheme = Theme.of(context).colorScheme;
     final isSystem = group.isSystem(catalog.gidMin);
     final nameColor = isSystem && !group.isRoot ? scheme.onSurfaceVariant : null;
-    final primary = catalog.primaryMembersOf(group);
 
     final row = Container(
       decoration: BoxDecoration(
@@ -922,7 +921,7 @@ extension on _UsersPageState {
                 _buildGroupTitle(group, nameColor),
                 const SizedBox(height: 2),
                 Text(
-                  _groupDetailLine(group, primary, wide: wide),
+                  _groupDetailLine(group, wide: wide),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: _monoStyle(11),
@@ -943,7 +942,7 @@ extension on _UsersPageState {
             ),
           ],
           if (wide)
-            _buildGroupMenu(group, catalog, primary: primary)
+            _buildGroupMenu(group)
           else
             SizedBox(
               width: 24,
@@ -982,14 +981,8 @@ extension on _UsersPageState {
     );
   }
 
-  Widget _buildGroupMenu(
-    ServerGroup group,
-    ServerUserCatalog catalog, {
-    required List<String> primary,
-  }) {
-    if (!UserManager.validName(group.name) || _busy) {
-      return const SizedBox(width: 24);
-    }
+  Widget _buildGroupMenu(ServerGroup group) {
+    if (_busy) return const SizedBox(width: 24);
     return SizedBox(
       width: 24,
       child: ContextMenuButton(
@@ -1000,7 +993,7 @@ extension on _UsersPageState {
             icon: Icons.edit_outlined,
             onTap: () => _editGroup(group),
           ),
-          if (!group.isRoot && primary.isEmpty)
+          if (UserManager.groupDeletable(group))
             ContextMenuAction(
               text: libL10n.delete,
               icon: Icons.delete_outline,
@@ -1014,7 +1007,7 @@ extension on _UsersPageState {
 
   String _groupFilterLabel(_GroupFilter filter) => switch (filter) {
     _GroupFilter.all => libL10n.all,
-    _GroupFilter.regular => l10n.userRegularAccount,
+    _GroupFilter.regular => l10n.userRegularGroup,
     _GroupFilter.system => libL10n.system,
   };
 
@@ -1063,15 +1056,14 @@ extension on _UsersPageState {
     return matched;
   }
 
-  String _groupDetailLine(
-    ServerGroup group,
-    List<String> primary, {
-    required bool wide,
-  }) {
+  String _groupDetailLine(ServerGroup group, {required bool wide}) {
+    final primary = group.primaryMembers;
     final parts = [
-      if (!wide && group.members.isNotEmpty) group.members.join(', '),
+      if (!wide && group.members.isNotEmpty)
+        group.members.join(', ')
+      else
+        '${l10n.userGroupMembers} ${group.members.length}',
       if (primary.isNotEmpty) '${l10n.userPrimaryMembers} ${primary.length}',
-      '${group.members.length}',
     ];
     return parts.join(' · ');
   }
@@ -1192,26 +1184,26 @@ extension on _UsersPageState {
   }
 
   Future<bool> _editGroup([ServerGroup? group]) async {
+    final catalog = _catalog;
+    if (catalog == null) return false;
     final draft = await _showGroupEditor(group);
     if (draft == null || !mounted) return false;
     final script = group == null
-        ? UserManager.createGroupScript(draft)
-        : UserManager.editGroupScript(group, draft);
+        ? UserManager.createGroupScript(draft, catalog)
+        : UserManager.editGroupScript(group, draft, catalog);
     if (!await _runMutation(script)) return false;
     await _refresh();
     return true;
   }
 
   Future<bool> _deleteGroup(ServerGroup group) async {
-    final catalog = _catalog;
-    if (catalog == null) return false;
     final confirmed = await context.showRoundDialog<bool>(
       title: libL10n.attention,
       child: Text(libL10n.delFmt(l10n.systemGroups, group.name)),
       actions: Btnx.cancelRedOk,
     );
     if (confirmed != true || !mounted) return false;
-    final script = UserManager.deleteGroupScript(group, catalog);
+    final script = UserManager.deleteGroupScript(group);
     if (!await _runMutation(script)) return false;
     await _refresh();
     return true;
@@ -1463,7 +1455,7 @@ extension on _UsersPageState {
                   children: [
                     Input(
                       controller: nameCtrl,
-                      label: l10n.systemGroups,
+                      label: libL10n.name,
                       icon: Icons.group_outlined,
                       enabled: group == null,
                       autoFocus: group == null,
@@ -1504,24 +1496,17 @@ extension on _UsersPageState {
           .toList()
         ..sort();
       final draft = ServerGroupDraft(
-        name: name.trim(),
+        name: group?.name ?? name.trim(),
         members: members,
         system: systemGroup,
       );
       final duplicate =
           group == null &&
           catalog.groups.any((existing) => existing.name == draft.name);
-      final membersToValidate = group == null
-          ? draft.members
-          : draft.members
-              .where((member) => !group.members.contains(member))
-              .toList();
       final validation = UserManager.validateGroupDraft(
-        ServerGroupDraft(
-          name: draft.name,
-          members: membersToValidate,
-          system: draft.system,
-        ),
+        draft,
+        catalog,
+        original: group,
       );
       if (validation != null || duplicate) {
         Toast.error(validation ?? l10n.nameAlreadyExistsFmt(draft.name));

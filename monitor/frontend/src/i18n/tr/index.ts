@@ -609,7 +609,7 @@ const tr = {
 	groupExists: 'Bu adda bir grup zaten var.',
 	groupGid: 'GID',
 	groupInUse: 'Bu grup bir hesabın birincil grubu, bu yüzden burada silinmez.',
-	groupInvalidMember: 'Bu üye adını bu makine kabul etmez.',
+	groupUnknownMember: 'Bu üye bu makinedeki bir hesap değil.',
 	groupMembers: 'Üyeler',
 	groupMembersHint: 'Boşlukla ayrılır. Temizlemek tüm ek üyeleri kaldırır.',
 	groupNoMatch: 'Süzgeçle eşleşen grup yok.',

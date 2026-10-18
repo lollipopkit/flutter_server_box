@@ -38,8 +38,8 @@ export function userRefusalText(code: string): string {
       return ll.userUnsupportedPlatform()
     case 'unreadable':
       return ll.userUnreadable()
-    case 'invalidMember':
-      return ll.groupInvalidMember()
+    case 'unknownMember':
+      return ll.groupUnknownMember()
     case 'rootGroupNotDeletable':
       return ll.groupRootNotDeletable()
     case 'groupInUse':

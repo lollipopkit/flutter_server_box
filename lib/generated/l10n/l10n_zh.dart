@@ -1972,7 +1972,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get userSystemGroup => '系统组';
 
   @override
-  String get userMembersHint => 'docker,wheel';
+  String get userMembersHint => 'alice,bob';
+
+  @override
+  String get userRegularGroup => '普通组';
 
   @override
   String funcUnavailableFmt(String func) {
@@ -7555,7 +7558,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get userSystemGroup => '系統群組';
 
   @override
-  String get userMembersHint => 'docker,wheel';
+  String get userMembersHint => 'alice,bob';
+
+  @override
+  String get userRegularGroup => '一般群組';
 
   @override
   String funcUnavailableFmt(String func) {

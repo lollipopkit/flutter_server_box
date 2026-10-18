@@ -609,7 +609,7 @@ const ko = {
 	groupExists: '같은 이름의 그룹이 이미 있습니다.',
 	groupGid: 'GID',
 	groupInUse: '이 그룹은 어떤 계정의 기본 그룹이라 여기서 삭제하지 않습니다.',
-	groupInvalidMember: '이 멤버 이름은 이 머신이 받지 않습니다.',
+	groupUnknownMember: '이 멤버는 이 머신의 계정이 아닙니다.',
 	groupMembers: '구성원',
 	groupMembersHint: '공백으로 구분합니다. 비우면 모든 보조 구성원을 제거합니다.',
 	groupNoMatch: '필터에 맞는 그룹이 없습니다.',

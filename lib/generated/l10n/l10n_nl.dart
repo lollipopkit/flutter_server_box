@@ -2144,7 +2144,10 @@ class AppLocalizationsNl extends AppLocalizations {
   String get userSystemGroup => 'Systeemgroep';
 
   @override
-  String get userMembersHint => 'docker,wheel';
+  String get userMembersHint => 'alice,bob';
+
+  @override
+  String get userRegularGroup => 'Regular';
 
   @override
   String funcUnavailableFmt(String func) {

@@ -609,7 +609,7 @@ const zh_CN = {
 	groupExists: '已有同名用户组。',
 	groupGid: 'GID',
 	groupInUse: '该组是某个账户的主组，因此不会在此删除。',
-	groupInvalidMember: '该成员名不被本机接受。',
+	groupUnknownMember: '该成员不是本机上的账户。',
 	groupMembers: '成员',
 	groupMembersHint: '用空格分隔。清空会移除所有附加成员。',
 	groupNoMatch: '没有匹配筛选的用户组。',

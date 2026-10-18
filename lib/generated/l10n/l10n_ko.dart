@@ -2015,7 +2015,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get userSystemGroup => '시스템 그룹';
 
   @override
-  String get userMembersHint => 'docker,wheel';
+  String get userMembersHint => 'alice,bob';
+
+  @override
+  String get userRegularGroup => 'Regular';
 
   @override
   String funcUnavailableFmt(String func) {

@@ -2517,9 +2517,9 @@ type RootTranslation = {
 	 */
 	groupInUse: string
 	/**
-	 * T​h​a​t​ ​i​s​ ​n​o​t​ ​a​ ​m​e​m​b​e​r​ ​n​a​m​e​ ​t​h​i​s​ ​m​a​c​h​i​n​e​ ​a​c​c​e​p​t​s​.
+	 * T​h​a​t​ ​m​e​m​b​e​r​ ​i​s​ ​n​o​t​ ​a​n​ ​a​c​c​o​u​n​t​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
 	 */
-	groupInvalidMember: string
+	groupUnknownMember: string
 	/**
 	 * M​e​m​b​e​r​s
 	 */
@@ -8378,9 +8378,9 @@ export type TranslationFunctions = {
 	 */
 	groupInUse: () => LocalizedString
 	/**
-	 * That is not a member name this machine accepts.
+	 * That member is not an account on this machine.
 	 */
-	groupInvalidMember: () => LocalizedString
+	groupUnknownMember: () => LocalizedString
 	/**
 	 * Members
 	 */

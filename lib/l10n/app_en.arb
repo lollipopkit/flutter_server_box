@@ -2707,9 +2707,13 @@
   "@userSystemGroup": {
     "description": "Label for a group below the machine's GID_MIN."
   },
-  "userMembersHint": "docker,wheel",
+  "userMembersHint": "alice,bob",
   "@userMembersHint": {
     "description": "Hint for the group members field."
+  },
+  "userRegularGroup": "Regular",
+  "@userRegularGroup": {
+    "description": "Section and filter label for groups at or above the machine's GID_MIN."
   },
   "funcUnavailableFmt": "{func} is not available over this server's connection.",
   "@funcUnavailableFmt": {

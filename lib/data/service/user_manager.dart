@@ -103,34 +103,51 @@ abstract final class UserManager {
         ),
       );
 
-  /// Why [draft] cannot be sent, or null when it can.
-  static String? validateGroupDraft(ServerGroupDraft draft) {
-    final code = ffi.groupsValidateDraft(draftJson: _json(draft.toJson()));
+  /// Why [draft] cannot be sent, or null when it can. [original] is the
+  /// group being changed, null for a new one.
+  static String? validateGroupDraft(
+    ServerGroupDraft draft,
+    ServerUserCatalog catalog, {
+    ServerGroup? original,
+  }) {
+    final code = ffi.groupsValidateDraft(
+      draftJson: _json(draft.toJson()),
+      originalJson: original == null ? null : _json(original.toJson()),
+      accounts: catalog.accountNames,
+    );
     if (code == null) return null;
     if (code == 'invalidName') return 'Invalid group name';
     return _message(code);
   }
 
-  static String createGroupScript(ServerGroupDraft draft) => _command(
-    () => ffi.groupsCreateCommand(draftJson: _json(draft.toJson())),
-  );
-
-  static String editGroupScript(ServerGroup original, ServerGroupDraft draft) =>
-      _command(
-        () => ffi.groupsEditCommand(
-          originalJson: _json(original.toJson()),
-          draftJson: _json(draft.toJson()),
-        ),
-      );
-
-  static String deleteGroupScript(
-    ServerGroup group,
+  static String createGroupScript(
+    ServerGroupDraft draft,
     ServerUserCatalog catalog,
   ) => _command(
-    () => ffi.groupsDeleteCommand(
-      groupJson: _json(group.toJson()),
-      catalogJson: _json(catalog.toJson()),
+    () => ffi.groupsCreateCommand(
+      draftJson: _json(draft.toJson()),
+      accounts: catalog.accountNames,
     ),
+  );
+
+  static String editGroupScript(
+    ServerGroup original,
+    ServerGroupDraft draft,
+    ServerUserCatalog catalog,
+  ) => _command(
+    () => ffi.groupsEditCommand(
+      originalJson: _json(original.toJson()),
+      draftJson: _json(draft.toJson()),
+      accounts: catalog.accountNames,
+    ),
+  );
+
+  /// Whether [deleteGroupScript] would build a command for [group].
+  static bool groupDeletable(ServerGroup group) =>
+      ffi.groupsDeleteRefusal(groupJson: _json(group.toJson())) == null;
+
+  static String deleteGroupScript(ServerGroup group) => _command(
+    () => ffi.groupsDeleteCommand(groupJson: _json(group.toJson())),
   );
 
   /// A refused draft or account is a caller's mistake — the form validates
@@ -156,7 +173,7 @@ abstract final class UserManager {
     'renaming' => 'Renaming is not supported',
     'rootNotDeletable' => 'The root user cannot be deleted',
     'currentUserUnknown' => 'Unable to determine the current user',
-    'invalidMember' => 'Invalid member name',
+    'unknownMember' => 'A member is not an account on this server',
     'rootGroupNotDeletable' => 'The root group cannot be deleted',
     'groupInUse' => "This group is an account's primary group",
     _ => code,

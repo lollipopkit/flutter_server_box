@@ -7,14 +7,12 @@
 //! drafts cross as `sbm_parser::users`' serde JSON, parsed results the same
 //! way, and a refusal as [`UserFfiError`], whose `code` the app phrases.
 
-use sbm_parser::users::{
-    self, GroupDraft, SystemGroup, SystemUser, UserCatalog, UserDraft, UserError,
-};
+use sbm_parser::users::{self, GroupDraft, SystemGroup, SystemUser, UserDraft, UserError};
 
 /// A refused account or draft. `code` is `sbm_parser::users::UserError`'s
 /// (`invalidName`, `lineBreak`, `invalidPrimaryGroup`,
 /// `invalidSupplementaryGroup`, `passwordLineBreak`, `renaming`,
-/// `rootNotDeletable`, `currentUserUnknown`, `invalidMember`,
+/// `rootNotDeletable`, `currentUserUnknown`, `unknownMember`,
 /// `rootGroupNotDeletable`, `groupInUse`), or `malformed` for JSON the
 /// app should never have sent.
 #[derive(Debug, Clone)]
@@ -49,10 +47,6 @@ fn group(json: &str) -> Result<SystemGroup, UserFfiError> {
 }
 
 fn group_draft(json: &str) -> Result<GroupDraft, UserFfiError> {
-    serde_json::from_str(json).map_err(malformed)
-}
-
-fn catalog(json: &str) -> Result<UserCatalog, UserFfiError> {
     serde_json::from_str(json).map_err(malformed)
 }
 
@@ -114,33 +108,53 @@ pub fn users_login_shell_command(user: String) -> String {
     users::login_shell_command(&user)
 }
 
-/// Why a group draft cannot be sent, as an error code, or `None` when it can
+/// Why a group draft cannot be sent, as an error code, or `None` when it can.
+/// `original_json` is the group being changed, absent for a new one;
+/// `accounts` every account's name.
 #[flutter_rust_bridge::frb(sync)]
-pub fn groups_validate_draft(draft_json: String) -> Result<Option<String>, UserFfiError> {
-    Ok(users::validate_group_draft(&group_draft(&draft_json)?).map(|error| error.as_str().to_string()))
+pub fn groups_validate_draft(
+    draft_json: String,
+    original_json: Option<String>,
+    accounts: Vec<String>,
+) -> Result<Option<String>, UserFfiError> {
+    let original = original_json.as_deref().map(group).transpose()?;
+    Ok(
+        users::validate_group_draft(&group_draft(&draft_json)?, original.as_ref(), &accounts)
+            .map(|error| error.as_str().to_string()),
+    )
 }
 
 /// `groupadd`, and `gpasswd -M` when the draft names members; needs root
 #[flutter_rust_bridge::frb(sync)]
-pub fn groups_create_command(draft_json: String) -> Result<String, UserFfiError> {
-    Ok(users::group_create_command(&group_draft(&draft_json)?)?)
+pub fn groups_create_command(draft_json: String, accounts: Vec<String>) -> Result<String, UserFfiError> {
+    Ok(users::group_create_command(&group_draft(&draft_json)?, &accounts)?)
 }
 
 /// `gpasswd -M` for a member list that changed; needs root
 #[flutter_rust_bridge::frb(sync)]
-pub fn groups_edit_command(original_json: String, draft_json: String) -> Result<String, UserFfiError> {
+pub fn groups_edit_command(
+    original_json: String,
+    draft_json: String,
+    accounts: Vec<String>,
+) -> Result<String, UserFfiError> {
     Ok(users::group_edit_command(
         &group(&original_json)?,
         &group_draft(&draft_json)?,
+        &accounts,
     )?)
 }
 
-/// `groupdel`; refused for root and for a group that is an account's primary
-/// group. `catalog_json` is the listing this was decided against.
+/// Why `groupdel` would be refused, as an error code, or `None`
 #[flutter_rust_bridge::frb(sync)]
-pub fn groups_delete_command(group_json: String, catalog_json: String) -> Result<String, UserFfiError> {
-    Ok(users::group_delete_command(
-        &group(&group_json)?,
-        &catalog(&catalog_json)?.users,
-    )?)
+pub fn groups_delete_refusal(group_json: String) -> Result<Option<String>, UserFfiError> {
+    Ok(group(&group_json)?
+        .delete_refusal()
+        .map(|error| error.as_str().to_string()))
+}
+
+/// `groupdel`; refused for root and for a group that is an account's primary
+/// group
+#[flutter_rust_bridge::frb(sync)]
+pub fn groups_delete_command(group_json: String) -> Result<String, UserFfiError> {
+    Ok(users::group_delete_command(&group(&group_json)?)?)
 }

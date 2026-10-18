@@ -2126,7 +2126,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get userSystemGroup => 'Sistem grubu';
 
   @override
-  String get userMembersHint => 'docker,wheel';
+  String get userMembersHint => 'alice,bob';
+
+  @override
+  String get userRegularGroup => 'Regular';
 
   @override
   String funcUnavailableFmt(String func) {

@@ -609,7 +609,7 @@ const nl = {
 	groupExists: 'Er bestaat al een groep met die naam.',
 	groupGid: 'GID',
 	groupInUse: 'Deze groep is de primaire groep van een account, dus hij wordt hier niet verwijderd.',
-	groupInvalidMember: 'Die lidnaam accepteert deze machine niet.',
+	groupUnknownMember: 'Dat lid is geen account op deze machine.',
 	groupMembers: 'Leden',
 	groupMembersHint: 'Gescheiden door spaties. Legen verwijdert elk extra lid.',
 	groupNoMatch: 'Geen groep komt overeen met het filter.',

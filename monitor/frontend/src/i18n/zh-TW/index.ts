@@ -609,7 +609,7 @@ const zh_TW = {
 	groupExists: '已有同名群組。',
 	groupGid: 'GID',
 	groupInUse: '該群組是某個帳戶的主要群組，因此不會在此刪除。',
-	groupInvalidMember: '該成員名稱不被本機接受。',
+	groupUnknownMember: '該成員不是本機上的帳號。',
 	groupMembers: '成員',
 	groupMembersHint: '用空格分隔。清空會移除所有附加成員。',
 	groupNoMatch: '沒有符合篩選的群組。',

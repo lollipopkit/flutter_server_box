@@ -32,7 +32,7 @@ Flutter app for managing servers, in a Rust workspace monorepo. Feature notes li
 ### Rust / FFI
 
 - `cargo build -p sbm_ffi` before FFI tests (`test/helpers/rust_lib_helper.dart` loads it from `target/`) and after codegen.
-- `flutter_rust_bridge_codegen generate` after changing `crates/sbm_ffi/src/api` (output `lib/src/rust/`, never edit). **Never run `flutter_rust_bridge_codegen integrate`.** Use the toolchain in `crates/sbm_ffi/rust-toolchain.toml` (`RUSTUP_TOOLCHAIN=1.98.1`): codegen 2.13 calls `cargo metadata`, and if that fails (workspace edition 2024 vs cargo 1.83) it writes `stem: 'UNKNOWN'` — Android then dlopens `libUNKNOWN.so` and never starts.
+- `flutter_rust_bridge_codegen generate` after changing `crates/sbm_ffi/src/api` (output `lib/src/rust/`, never edit). **Never run `flutter_rust_bridge_codegen integrate`.**
 - `flutter_rust_bridge` in `pubspec.yaml` and `crates/sbm_ffi/Cargo.toml` must equal the codegen version, or `RustLib.init` fails. A bump is both manifests + `cargo install flutter_rust_bridge_codegen --version <v>` + regenerate.
 - `crates/sbm_ffi/rust-toolchain.toml` lists every shipped target (a missing one silently builds for the host). Rust is built by `hook/build.dart`.
 

@@ -163,8 +163,10 @@
         ...(asRoot && sudoPassword ? { password: sudoPassword } : {}),
       })
       if (result.sudo_rejected) {
-        if (asRoot) actionError = $LL.powerRejected()
-        else needsSudo = true
+        if (asRoot) {
+          actionError = $LL.powerRejected()
+          sudoPassword = ''
+        } else needsSudo = true
         return
       }
       if (!result.succeeded) {
@@ -544,13 +546,13 @@
         <div class="col-span-1 sm:col-span-2">
           <dt class="text-faint-fg">{$LL.groupPrimaryMembers()}</dt>
           <dd class="text-muted-fg break-all">
-            {openedGroup.primary_members.join(', ') || $LL.userPasswordNone()}
+            {openedGroup.primary_members.join(', ') || '—'}
           </dd>
         </div>
         <div class="col-span-2 sm:col-span-3">
           <dt class="text-faint-fg">{$LL.groupMembers()}</dt>
           <dd class="text-muted-fg break-all">
-            {openedGroup.members.join(', ') || $LL.userPasswordNone()}
+            {openedGroup.members.join(', ') || '—'}
           </dd>
         </div>
       </dl>

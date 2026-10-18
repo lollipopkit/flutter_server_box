@@ -2010,7 +2010,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get userSystemGroup => 'システムグループ';
 
   @override
-  String get userMembersHint => 'docker,wheel';
+  String get userMembersHint => 'alice,bob';
+
+  @override
+  String get userRegularGroup => '一般グループ';
 
   @override
   String funcUnavailableFmt(String func) {

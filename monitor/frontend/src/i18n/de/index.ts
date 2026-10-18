@@ -609,7 +609,7 @@ const de = {
 	groupExists: 'Eine Gruppe dieses Namens gibt es bereits.',
 	groupGid: 'GID',
 	groupInUse: 'Diese Gruppe ist die primäre Gruppe eines Kontos und wird hier nicht entfernt.',
-	groupInvalidMember: 'Diesen Mitgliedsnamen nimmt diese Maschine nicht an.',
+	groupUnknownMember: 'Dieses Mitglied ist kein Konto auf dieser Maschine.',
 	groupMembers: 'Mitglieder',
 	groupMembersHint: 'Durch Leerzeichen getrennt. Leeren entfernt jedes Zusatzmitglied.',
 	groupNoMatch: 'Keine Gruppe passt zum Filter.',

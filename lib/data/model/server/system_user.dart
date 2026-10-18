@@ -57,25 +57,34 @@ final class ServerGroup {
     required this.name,
     required this.gid,
     required this.members,
+    required this.primaryMembers,
   });
 
   final String name;
   final int gid;
+
+  /// Supplementary members, from the group's own member field.
   final List<String> members;
+
+  /// Accounts whose primary group this is.
+  final List<String> primaryMembers;
 
   /// `sbm_parser::users::SystemGroup` as serde writes it.
   factory ServerGroup.fromJson(Map<String, Object?> json) => ServerGroup(
     name: json['name'] as String,
     gid: json['gid'] as int,
     members: (json['members'] as List).cast<String>(),
+    primaryMembers: (json['primary_members'] as List).cast<String>(),
   );
 
   Map<String, Object?> toJson() => {
     'name': name,
     'gid': gid,
     'members': members,
+    'primary_members': primaryMembers,
   };
 
+  /// `SystemGroup::is_root`.
   bool get isRoot => gid == 0 || name == 'root';
 
   bool isSystem(int gidMin) => gid < gidMin;
@@ -95,13 +104,13 @@ final class ServerUserCatalog {
       ServerUserCatalog(
         currentUser: json['current_user'] as String,
         uidMin: json['uid_min'] as int,
-        gidMin: json['gid_min'] as int? ?? 1000,
+        gidMin: json['gid_min'] as int,
         users: [
           for (final user in json['users'] as List)
             ServerUser.fromJson(user as Map<String, Object?>),
         ],
         groups: [
-          for (final group in json['groups'] as List? ?? const [])
+          for (final group in json['groups'] as List)
             ServerGroup.fromJson(group as Map<String, Object?>),
         ],
       );
@@ -112,14 +121,6 @@ final class ServerUserCatalog {
   final List<ServerUser> users;
   final List<ServerGroup> groups;
 
-  Map<String, Object?> toJson() => {
-    'current_user': currentUser,
-    'uid_min': uidMin,
-    'gid_min': gidMin,
-    'users': [for (final user in users) user.toJson()],
-    'groups': [for (final group in groups) group.toJson()],
-  };
-
   ServerGroup? findGroup(String name) {
     for (final group in groups) {
       if (group.name == name) return group;
@@ -127,15 +128,7 @@ final class ServerUserCatalog {
     return null;
   }
 
-  /// Accounts whose primary gid is [group], sorted. Not the supplementary
-  /// member list on the group itself.
-  List<String> primaryMembersOf(ServerGroup group) {
-    final names = [
-      for (final user in users)
-        if (user.gid == group.gid || user.primaryGroup == group.name) user.name,
-    ]..sort();
-    return names;
-  }
+  List<String> get accountNames => [for (final user in users) user.name];
 }
 
 final class ServerUserDraft {

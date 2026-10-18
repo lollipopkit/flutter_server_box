@@ -4,8 +4,7 @@
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
-
-import '../frb_generated.dart';
+import 'package:server_box/src/rust/frb_generated.dart';
 
 /// Why a route cannot be saved, as `ProfileError`'s code, or `None`. The
 /// input is `ProfileInput` JSON; JSON the app should never send is

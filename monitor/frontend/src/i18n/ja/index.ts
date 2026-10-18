@@ -609,7 +609,7 @@ const ja = {
 	groupExists: '同じ名前のグループがすでにあります。',
 	groupGid: 'GID',
 	groupInUse: 'このグループはあるアカウントのプライマリグループなので、ここでは削除しません。',
-	groupInvalidMember: 'このメンバー名はこのマシンでは使えません。',
+	groupUnknownMember: 'このメンバーはこのマシンのアカウントではありません。',
 	groupMembers: 'メンバー',
 	groupMembersHint: '空白区切り。空にすると補助メンバーをすべて外します。',
 	groupNoMatch: 'フィルタに合うグループがありません。',

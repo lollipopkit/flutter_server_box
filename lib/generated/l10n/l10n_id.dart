@@ -2133,7 +2133,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get userSystemGroup => 'Grup sistem';
 
   @override
-  String get userMembersHint => 'docker,wheel';
+  String get userMembersHint => 'alice,bob';
+
+  @override
+  String get userRegularGroup => 'Regular';
 
   @override
   String funcUnavailableFmt(String func) {

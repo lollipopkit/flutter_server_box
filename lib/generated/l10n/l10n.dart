@@ -3721,8 +3721,14 @@ abstract class AppLocalizations {
   /// Hint for the group members field.
   ///
   /// In en, this message translates to:
-  /// **'docker,wheel'**
+  /// **'alice,bob'**
   String get userMembersHint;
+
+  /// Section and filter label for groups at or above the machine's GID_MIN.
+  ///
+  /// In en, this message translates to:
+  /// **'Regular'**
+  String get userRegularGroup;
 
   /// Formatted user-facing message for func unavailable; runtime values are supplied by placeholders.
   ///

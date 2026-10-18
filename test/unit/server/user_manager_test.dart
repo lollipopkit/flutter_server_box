@@ -116,10 +116,7 @@ docker:x:998:admin,deploy
     expect(docker.gid, 998);
     expect(docker.members, ['admin', 'deploy']);
     expect(docker.isSystem(catalog.gidMin), isTrue);
-    expect(catalog.primaryMembersOf(catalog.findGroup('users')!), [
-      'admin',
-      'deploy',
-    ]);
+    expect(catalog.findGroup('users')!.primaryMembers, ['admin', 'deploy']);
   });
 
   test('a listing that fails or names no current user is refused', () async {
@@ -276,29 +273,54 @@ SrvBoxUserDetail.Sudo
     bool system = false,
   }) => ServerGroupDraft(name: name, members: members, system: system);
 
-  test('a group draft reaches Rust whole', () {
-    expect(UserManager.validateGroupDraft(groupDraft()), isNull);
+  test('a group draft reaches Rust whole', () async {
+    final catalog = await UserManager.parse(listing);
+    expect(UserManager.validateGroupDraft(groupDraft(), catalog), isNull);
     expect(
-      UserManager.validateGroupDraft(groupDraft(name: 'Bad Name')),
+      UserManager.validateGroupDraft(groupDraft(name: 'Bad Name'), catalog),
       'Invalid group name',
     );
     expect(
-      UserManager.validateGroupDraft(groupDraft(members: const ['not a user'])),
-      'Invalid member name',
+      UserManager.validateGroupDraft(
+        groupDraft(members: const ['deplyo']),
+        catalog,
+      ),
+      'A member is not an account on this server',
     );
 
     final script = UserManager.createGroupScript(
       groupDraft(members: const ['admin', 'deploy'], system: true),
+      catalog,
     );
     expect(script, contains('groupadd -r'));
     expect(script, contains("gpasswd -M 'admin,deploy' 'ops'"));
   });
 
+  test('an edit keeps a name and members the machine already has', () async {
+    final catalog = await UserManager.parse(listing);
+    const original = ServerGroup(
+      name: 'Debian-exim',
+      gid: 105,
+      members: ['Gone'],
+      primaryMembers: [],
+    );
+    final draft = groupDraft(name: 'Debian-exim', members: const ['Gone', 'admin']);
+    expect(
+      UserManager.validateGroupDraft(draft, catalog, original: original),
+      isNull,
+    );
+    expect(
+      UserManager.editGroupScript(original, draft, catalog),
+      "gpasswd -M 'Gone,admin' 'Debian-exim'",
+    );
+  });
+
   test('a group deletion is refused when it is a primary group', () async {
     final catalog = await UserManager.parse(listing);
     final users = catalog.findGroup('users')!;
+    expect(UserManager.groupDeletable(users), isFalse);
     expect(
-      () => UserManager.deleteGroupScript(users, catalog),
+      () => UserManager.deleteGroupScript(users),
       throwsA(
         isA<ArgumentError>().having(
           (e) => e.message,
@@ -308,9 +330,7 @@ SrvBoxUserDetail.Sudo
       ),
     );
     final docker = catalog.findGroup('docker')!;
-    expect(
-      UserManager.deleteGroupScript(docker, catalog),
-      "groupdel 'docker'",
-    );
+    expect(UserManager.groupDeletable(docker), isTrue);
+    expect(UserManager.deleteGroupScript(docker), "groupdel 'docker'");
   });
 }

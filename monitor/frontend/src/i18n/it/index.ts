@@ -609,7 +609,7 @@ const it = {
 	groupExists: 'Esiste già un gruppo con questo nome.',
 	groupGid: 'GID',
 	groupInUse: 'Questo gruppo è il gruppo primario di un account, quindi non viene rimosso qui.',
-	groupInvalidMember: 'Questo nome di membro non è accettato da questa macchina.',
+	groupUnknownMember: 'Questo membro non è un account di questa macchina.',
 	groupMembers: 'Membri',
 	groupMembersHint: 'Separati da spazi. Svuotare il campo rimuove ogni membro supplementare.',
 	groupNoMatch: 'Nessun gruppo corrisponde al filtro.',

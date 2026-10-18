@@ -563,7 +563,12 @@ fn group(name: &str, gid: u32, members: &[&str]) -> SystemGroup {
         name: name.to_string(),
         gid,
         members: members.iter().map(|member| member.to_string()).collect(),
+        primary_members: Vec::new(),
     }
+}
+
+fn accounts(names: &[&str]) -> Vec<String> {
+    names.iter().map(|name| name.to_string()).collect()
 }
 
 // ---------------------------------------------------------------------------
@@ -590,64 +595,116 @@ root:x:0:\n",
 }
 
 #[test]
+fn a_group_lists_the_accounts_whose_primary_group_it_is() {
+    let catalog = parse_list(LISTING).expect("the fixture parses");
+    let users = catalog.find_group("users").expect("the fixture has it");
+    assert_eq!(users.primary_members, ["admin", "deploy"]);
+    assert_eq!(users.members, ["admin"]);
+    let docker = catalog.find_group("docker").expect("the fixture has it");
+    assert!(docker.primary_members.is_empty());
+}
+
+#[test]
+fn a_name_listed_by_two_sources_is_read_once() {
+    // `getent` on a host with files and LDAP can print a name twice.
+    let catalog = parse_list(
+        "SrvBoxUsers.Current\tadmin\n\
+SrvBoxUsers.Passwd\n\
+admin:x:1000:1000::/home/admin:/bin/sh\n\
+admin:x:5000:5000::/home/ldap/admin:/bin/sh\n\
+SrvBoxUsers.Group\n\
+admins:x:1000:\n\
+admins:x:5000:admin\n",
+    )
+    .expect("the listing parses");
+
+    assert_eq!(catalog.users.len(), 1);
+    assert_eq!(catalog.users[0].uid, 1000);
+    assert_eq!(catalog.groups.len(), 1);
+    assert_eq!(catalog.groups[0].gid, 1000);
+    assert!(catalog.groups[0].members.is_empty());
+}
+
+#[test]
 fn builds_a_quoted_group_create_script_and_sets_members_through_gpasswd() {
+    let known = accounts(&["admin", "svc"]);
     let mut draft = group_draft("deploy");
-    draft.members = vec!["admin".to_string(), "svc".to_string()];
-    let script = group_create_command(&draft).expect("a valid draft");
-    assert!(script.starts_with("set -e\ngroupadd "));
-    assert!(script.contains("groupadd 'deploy'"));
+    draft.members = known.clone();
+    let script = group_create_command(&draft, &known).expect("a valid draft");
+    assert!(script.starts_with("set -e\ncommand -v gpasswd >/dev/null || "));
+    assert!(
+        script.find("command -v gpasswd") < script.find("groupadd 'deploy'"),
+        "gpasswd is looked for before the group exists: {script}"
+    );
     assert!(script.contains("gpasswd -M 'admin,svc' 'deploy'"));
 
     assert_eq!(
-        group_create_command(&group_draft("deploy")).expect("a valid draft"),
+        group_create_command(&group_draft("deploy"), &[]).expect("a valid draft"),
         "groupadd 'deploy'"
     );
 
     let mut system = group_draft("docker");
     system.system = true;
     assert_eq!(
-        group_create_command(&system).expect("a valid draft"),
+        group_create_command(&system, &[]).expect("a valid draft"),
         "groupadd -r 'docker'"
     );
 }
 
 #[test]
 fn a_group_edit_is_only_the_member_list_that_changed() {
+    let known = accounts(&["admin", "svc"]);
     let original = group("deploy", 1001, &["admin"]);
     let mut draft = group_draft("deploy");
     draft.members = vec!["admin".to_string(), "svc".to_string()];
     assert_eq!(
-        group_edit_command(&original, &draft).expect("a valid draft"),
+        group_edit_command(&original, &draft, &known).expect("a valid draft"),
         "gpasswd -M 'admin,svc' 'deploy'"
     );
 
     draft.members = vec!["admin".to_string()];
     assert_eq!(
-        group_edit_command(&original, &draft).expect("a valid draft"),
+        group_edit_command(&original, &draft, &known).expect("a valid draft"),
         ":"
     );
 
     draft.members.clear();
     assert_eq!(
-        group_edit_command(&original, &draft).expect("a valid draft"),
+        group_edit_command(&original, &draft, &known).expect("a valid draft"),
         "gpasswd -M '' 'deploy'"
     );
 }
 
 #[test]
-fn a_group_edit_keeps_existing_members_that_the_draft_would_refuse() {
-    let original = group("deploy", 1001, &["Admin"]);
-    let mut draft = group_draft("deploy");
-    draft.members = vec!["Admin".to_string(), "svc".to_string()];
+fn a_group_edit_keeps_members_and_a_name_the_machine_already_has() {
+    // Debian ships `Debian-exim`, which no new name may look like.
+    let original = group("Debian-exim", 105, &["Gone"]);
+    let mut draft = group_draft("Debian-exim");
+    draft.members = vec!["Gone".to_string(), "svc".to_string()];
     assert_eq!(
-        group_edit_command(&original, &draft).expect("an existing member is kept"),
-        "gpasswd -M 'Admin,svc' 'deploy'"
+        group_edit_command(&original, &draft, &accounts(&["svc"])).expect("kept as is"),
+        "gpasswd -M 'Gone,svc' 'Debian-exim'"
+    );
+}
+
+#[test]
+fn a_member_being_added_must_be_an_account() {
+    let known = accounts(&["admin"]);
+    let mut draft = group_draft("deploy");
+    draft.members = vec!["deplyo".to_string()];
+    assert_eq!(
+        group_create_command(&draft, &known),
+        Err(UserError::UnknownMember)
+    );
+    assert_eq!(
+        group_edit_command(&group("deploy", 1001, &[]), &draft, &known),
+        Err(UserError::UnknownMember)
     );
 
-    draft.members = vec!["Admin".to_string(), "not a user".to_string()];
+    draft.members = vec!["wheel; rm -rf /".to_string()];
     assert_eq!(
-        group_edit_command(&original, &draft),
-        Err(UserError::InvalidMember)
+        validate_group_draft(&draft, None, &known),
+        Some(UserError::UnknownMember)
     );
 }
 
@@ -655,7 +712,7 @@ fn a_group_edit_keeps_existing_members_that_the_draft_would_refuse() {
 fn a_group_rename_is_refused() {
     let original = group("deploy", 1001, &[]);
     assert_eq!(
-        group_edit_command(&original, &group_draft("deploy2")),
+        group_edit_command(&original, &group_draft("deploy2"), &[]),
         Err(UserError::Renaming)
     );
 }
@@ -663,30 +720,24 @@ fn a_group_rename_is_refused() {
 #[test]
 fn rejects_unsafe_group_names_and_root_deletion() {
     assert_eq!(
-        group_create_command(&group_draft("bad;touch /tmp/pwned")),
+        group_create_command(&group_draft("bad;touch /tmp/pwned"), &[]),
         Err(UserError::InvalidName)
     );
-
-    let mut members = group_draft("deploy");
-    members.members = vec!["wheel; rm -rf /".to_string()];
-    assert_eq!(group_create_command(&members), Err(UserError::InvalidMember));
 
     let catalog = parse_list(LISTING).expect("the fixture parses");
     let root = catalog.find_group("root").expect("the fixture has it");
     assert_eq!(
-        group_delete_command(root, &catalog.users),
+        group_delete_command(root),
         Err(UserError::RootGroupNotDeletable)
     );
 
     let users = catalog.find_group("users").expect("the fixture has it");
-    assert_eq!(
-        group_delete_command(users, &catalog.users),
-        Err(UserError::GroupInUse)
-    );
+    assert_eq!(group_delete_command(users), Err(UserError::GroupInUse));
 
     let docker = catalog.find_group("docker").expect("the fixture has it");
+    assert_eq!(docker.delete_refusal(), None);
     assert_eq!(
-        group_delete_command(docker, &catalog.users).expect("supplementary-only"),
+        group_delete_command(docker).expect("supplementary-only"),
         "groupdel 'docker'"
     );
 }
@@ -694,8 +745,9 @@ fn rejects_unsafe_group_names_and_root_deletion() {
 #[test]
 fn root_group_is_refused_by_name_as_well_as_gid() {
     let forged = group("root", 1, &[]);
+    assert!(forged.is_root());
     assert_eq!(
-        group_delete_command(&forged, &[]),
+        group_delete_command(&forged),
         Err(UserError::RootGroupNotDeletable)
     );
 }

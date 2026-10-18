@@ -1539,13 +1539,13 @@ export interface SystemGroup {
   name: string
   gid: number
   members: string[]
+  /// Accounts whose primary gid is this group.
+  primary_members: string[]
 }
 
 export interface GroupRow extends SystemGroup {
   is_root: boolean
   system: boolean
-  /// Accounts whose primary gid is this group.
-  primary_members: string[]
   /// Whether the agent would remove it: false for root and for a group that
   /// is anyone's primary group.
   deletable: boolean
@@ -1608,7 +1608,7 @@ export type UserRefusalCode =
   | 'userExists'
   | 'agentAccount'
   | 'noSuchUser'
-  | 'invalidMember'
+  | 'unknownMember'
   | 'rootGroupNotDeletable'
   | 'groupInUse'
   | 'groupExists'

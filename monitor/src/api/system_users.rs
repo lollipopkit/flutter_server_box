@@ -139,37 +139,21 @@ struct UserRow {
 struct GroupRow {
     #[serde(flatten)]
     group: SystemGroup,
-    /// `gid == 0`. Here rather than derived in the panel, so the rule has one
-    /// implementation — the one [`group_delete_command`] refuses on.
+    /// [`SystemGroup::is_root`]. Here rather than derived in the panel, so the
+    /// rule has one implementation.
     is_root: bool,
     /// Below [`UserListResponse::gid_min`].
     system: bool,
-    /// Accounts whose primary gid is this group, sorted. Not the same list as
-    /// [`SystemGroup::members`], which is supplementary membership.
-    primary_members: Vec<String>,
-    /// Whether this endpoint would remove it: not root, and not anyone's
-    /// primary group.
+    /// Whether this endpoint would remove it: [`SystemGroup::delete_refusal`].
     deletable: bool,
 }
 
 impl GroupRow {
-    fn of(group: &SystemGroup, catalog: &UserCatalog) -> Self {
-        let is_root = group.is_root() || group.name == "root";
-        let mut primary_members: Vec<String> = catalog
-            .users
-            .iter()
-            .filter(|user| {
-                user.gid == group.gid || user.primary_group.as_deref() == Some(group.name.as_str())
-            })
-            .map(|user| user.name.clone())
-            .collect();
-        primary_members.sort();
-        primary_members.dedup();
+    fn of(group: &SystemGroup, gid_min: u32) -> Self {
         Self {
-            is_root,
-            system: group.is_system(catalog.gid_min),
-            deletable: !is_root && primary_members.is_empty(),
-            primary_members,
+            is_root: group.is_root(),
+            system: group.is_system(gid_min),
+            deletable: group.delete_refusal().is_none(),
             group: group.clone(),
         }
     }
@@ -241,7 +225,7 @@ pub async fn list(
         groups: catalog
             .groups
             .iter()
-            .map(|group| GroupRow::of(group, &catalog))
+            .map(|group| GroupRow::of(group, catalog.gid_min))
             .collect(),
         name: None,
         detail: None,
@@ -351,8 +335,7 @@ pub async fn act(
 #[derive(Debug, Deserialize)]
 pub struct UserActRequest {
     action: UserAction,
-    /// An account or a group. Omitted is an account, so an older panel that
-    /// never sent this still writes users.
+    /// An account or a group; an account when omitted.
     #[serde(default)]
     kind: ActKind,
     /// The account as the caller wants it, for a create or a change of one.
@@ -442,23 +425,38 @@ impl UserActRequest {
         }
     }
 
+    /// The agent's own account is refused here as it is for an account write:
+    /// a member list that adds or drops it could take away the access the
+    /// agent runs with.
     fn group_command(&self, catalog: &UserCatalog) -> Result<String, Refusal> {
+        let agent_in = |members: &[String]| members.contains(&catalog.current_user);
+        let accounts = catalog.account_names();
         match self.action {
             UserAction::Create => {
                 let draft = self.group.as_ref().ok_or(Refusal::of("missingDraft"))?;
                 if catalog.find_group(&draft.name).is_some() {
                     return Err(Refusal::of("groupExists"));
                 }
-                group_create_command(draft).map_err(|error| Refusal::of(error.as_str()))
+                let command = group_create_command(draft, &accounts)
+                    .map_err(|error| Refusal::of(error.as_str()))?;
+                if agent_in(&draft.members) {
+                    return Err(Refusal::of("agentAccount"));
+                }
+                Ok(command)
             }
             UserAction::Edit => {
                 let draft = self.group.as_ref().ok_or(Refusal::of("missingDraft"))?;
-                group_edit_command(self.target_group(catalog)?, draft)
-                    .map_err(|error| Refusal::of(error.as_str()))
+                let group = self.target_group(catalog)?;
+                let command = group_edit_command(group, draft, &accounts)
+                    .map_err(|error| Refusal::of(error.as_str()))?;
+                if agent_in(&draft.members) != agent_in(&group.members) {
+                    return Err(Refusal::of("agentAccount"));
+                }
+                Ok(command)
             }
             UserAction::Delete => {
-                let group = self.target_group(catalog)?;
-                group_delete_command(group, &catalog.users).map_err(|error| Refusal::of(error.as_str()))
+                group_delete_command(self.target_group(catalog)?)
+                    .map_err(|error| Refusal::of(error.as_str()))
             }
         }
     }
@@ -476,13 +474,10 @@ impl UserActRequest {
     }
 
     fn target_name(&self) -> Result<&str, Refusal> {
-        let named = self.name.as_deref().filter(|name| !name.is_empty());
-        let from_draft = match self.kind {
-            ActKind::User => self.draft.as_ref().map(|draft| draft.name.as_str()),
-            ActKind::Group => self.group.as_ref().map(|draft| draft.name.as_str()),
-        }
-        .filter(|name| !name.is_empty());
-        named.or(from_draft).ok_or(Refusal::of("missingName"))
+        self.name
+            .as_deref()
+            .filter(|name| !name.is_empty())
+            .ok_or(Refusal::of("missingName"))
     }
 }
 
@@ -813,16 +808,16 @@ docker:x:998:admin,deploy\n";
         let catalog = catalog();
         let row = |name: &str| {
             let group = catalog.find_group(name).expect("the fixture has it");
-            GroupRow::of(group, &catalog)
+            GroupRow::of(group, catalog.gid_min)
         };
         let root = row("root");
         assert!(root.is_root && !root.deletable);
         let users = row("users");
         assert!(!users.system && !users.deletable);
-        assert_eq!(users.primary_members, ["admin", "deploy"]);
+        assert_eq!(users.group.primary_members, ["admin", "deploy"]);
         let docker = row("docker");
         assert!(docker.system && docker.deletable);
-        assert!(docker.primary_members.is_empty());
+        assert!(docker.group.primary_members.is_empty());
         assert_eq!(docker.group.members, ["admin", "deploy"]);
     }
 
@@ -854,6 +849,45 @@ docker:x:998:admin,deploy\n";
         rename.group = Some(group_draft("docker2"));
         assert_eq!(code(rename), "renaming");
         assert_eq!(code(group_request(UserAction::Delete)), "missingName");
+        let mut unnamed = group_request(UserAction::Edit);
+        unnamed.group = Some(group_draft("docker"));
+        assert_eq!(code(unnamed), "missingName");
+        let mut stranger = group_request(UserAction::Create);
+        stranger.group = Some(GroupDraft {
+            members: vec!["deplyo".to_string()],
+            ..group_draft("ops")
+        });
+        assert_eq!(code(stranger), "unknownMember");
+    }
+
+    #[test]
+    fn a_group_write_never_moves_the_agent_account() {
+        let catalog = catalog();
+        let code = |request: UserActRequest| match request.command(&catalog) {
+            Err(refusal) => refusal.code,
+            Ok(command) => panic!("not refused: {command}"),
+        };
+        let mut drop = group_request(UserAction::Edit);
+        drop.name = Some("docker".to_string());
+        drop.group = Some(GroupDraft {
+            members: vec!["deploy".to_string()],
+            ..group_draft("docker")
+        });
+        assert_eq!(code(drop), "agentAccount");
+        let mut add = group_request(UserAction::Create);
+        add.group = Some(GroupDraft {
+            members: vec!["admin".to_string()],
+            ..group_draft("ops")
+        });
+        assert_eq!(code(add), "agentAccount");
+    }
+
+    #[test]
+    fn an_account_write_names_its_target_only_through_name() {
+        let catalog = catalog();
+        let mut edit = request(UserAction::Edit);
+        edit.draft = Some(draft("deploy"));
+        assert_eq!(edit.command(&catalog).unwrap_err().code, "missingName");
     }
 
     #[test]

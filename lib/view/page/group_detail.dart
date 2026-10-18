@@ -47,7 +47,6 @@ final class _GroupDetailPageState extends ConsumerState<GroupDetailPage> {
   @override
   Widget build(BuildContext context) {
     final catalog = widget.args.catalog;
-    final primary = catalog.primaryMembersOf(_group);
     return Scaffold(
       appBar: CustomAppBar(
         title: TwoLineText(up: _group.name, down: widget.args.spi.name),
@@ -57,9 +56,7 @@ final class _GroupDetailPageState extends ConsumerState<GroupDetailPage> {
             icon: const Icon(Icons.edit_outlined, size: 18),
             onTap: () => _run(widget.args.onEdit),
           ),
-          if (UserManager.validName(_group.name) &&
-              !_group.isRoot &&
-              primary.isEmpty)
+          if (UserManager.groupDeletable(_group))
             ContextMenuButton(
               tooltip: libL10n.more,
               actions: () => [
@@ -82,7 +79,7 @@ final class _GroupDetailPageState extends ConsumerState<GroupDetailPage> {
         children: [
           _buildIdentity(catalog),
           UIs.height13,
-          _buildGroupCard(primary),
+          _buildGroupCard(),
           if (_group.isRoot) ...[UIs.height13, _buildRootWarning()],
         ],
       ),
@@ -148,7 +145,8 @@ final class _GroupDetailPageState extends ConsumerState<GroupDetailPage> {
     );
   }
 
-  Widget _buildGroupCard(List<String> primary) {
+  Widget _buildGroupCard() {
+    final primary = _group.primaryMembers;
     return _card(l10n.systemGroups, [
       _field(l10n.userGid, '${_group.gid}', mono: true),
       if (primary.isNotEmpty)

@@ -4,10 +4,9 @@
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
+import 'package:server_box/src/rust/frb_generated.dart';
 
-import '../frb_generated.dart';
-
-// These functions are ignored because they are not marked as `pub`: `account`, `catalog`, `draft`, `group_draft`, `group`, `malformed`
+// These functions are ignored because they are not marked as `pub`: `account`, `draft`, `group_draft`, `group`, `malformed`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `fmt`, `from`
 
 /// The passwd and group catalogs, the current account and `UID_MIN`
@@ -62,37 +61,52 @@ String usersDeleteCommand({
 String usersLoginShellCommand({required String user}) =>
     RustLib.instance.api.crateApiUsersUsersLoginShellCommand(user: user);
 
-/// Why a group draft cannot be sent, as an error code, or `None` when it can
-String? groupsValidateDraft({required String draftJson}) =>
-    RustLib.instance.api.crateApiUsersGroupsValidateDraft(draftJson: draftJson);
+/// Why a group draft cannot be sent, as an error code, or `None` when it can.
+/// `original_json` is the group being changed, absent for a new one;
+/// `accounts` every account's name.
+String? groupsValidateDraft({
+  required String draftJson,
+  String? originalJson,
+  required List<String> accounts,
+}) => RustLib.instance.api.crateApiUsersGroupsValidateDraft(
+  draftJson: draftJson,
+  originalJson: originalJson,
+  accounts: accounts,
+);
 
 /// `groupadd`, and `gpasswd -M` when the draft names members; needs root
-String groupsCreateCommand({required String draftJson}) =>
-    RustLib.instance.api.crateApiUsersGroupsCreateCommand(draftJson: draftJson);
+String groupsCreateCommand({
+  required String draftJson,
+  required List<String> accounts,
+}) => RustLib.instance.api.crateApiUsersGroupsCreateCommand(
+  draftJson: draftJson,
+  accounts: accounts,
+);
 
 /// `gpasswd -M` for a member list that changed; needs root
 String groupsEditCommand({
   required String originalJson,
   required String draftJson,
+  required List<String> accounts,
 }) => RustLib.instance.api.crateApiUsersGroupsEditCommand(
   originalJson: originalJson,
   draftJson: draftJson,
+  accounts: accounts,
 );
 
+/// Why `groupdel` would be refused, as an error code, or `None`
+String? groupsDeleteRefusal({required String groupJson}) =>
+    RustLib.instance.api.crateApiUsersGroupsDeleteRefusal(groupJson: groupJson);
+
 /// `groupdel`; refused for root and for a group that is an account's primary
-/// group. `catalog_json` is the listing this was decided against.
-String groupsDeleteCommand({
-  required String groupJson,
-  required String catalogJson,
-}) => RustLib.instance.api.crateApiUsersGroupsDeleteCommand(
-  groupJson: groupJson,
-  catalogJson: catalogJson,
-);
+/// group
+String groupsDeleteCommand({required String groupJson}) =>
+    RustLib.instance.api.crateApiUsersGroupsDeleteCommand(groupJson: groupJson);
 
 /// A refused account or draft. `code` is `sbm_parser::users::UserError`'s
 /// (`invalidName`, `lineBreak`, `invalidPrimaryGroup`,
 /// `invalidSupplementaryGroup`, `passwordLineBreak`, `renaming`,
-/// `rootNotDeletable`, `currentUserUnknown`, `invalidMember`,
+/// `rootNotDeletable`, `currentUserUnknown`, `unknownMember`,
 /// `rootGroupNotDeletable`, `groupInUse`), or `malformed` for JSON the
 /// app should never have sent.
 class UserFfiError implements FrbException {
