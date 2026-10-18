@@ -29,8 +29,18 @@ use common::catalog;
 
 /// The catalog apps tested by default: their MCP server connects with what
 /// the deploy wrote, or with a token [provision] makes as the person would.
-const AUTOMATIC: &[&str] =
-    &["transmission.transmission", "adguard.adguard_home", "usememos.memos", "homeassistant.home_assistant", "futo.immich", "jellyfin.jellyfin", "karakeep.karakeep"];
+const AUTOMATIC: &[&str] = &[
+    "transmission.transmission",
+    "adguard.adguard_home",
+    "usememos.memos",
+    "homeassistant.home_assistant",
+    "futo.immich",
+    "jellyfin.jellyfin",
+    "karakeep.karakeep",
+    "grafana.grafana",
+    "n8n.n8n",
+    "triliumnext.trilium",
+];
 
 /// The password of the accounts this test makes in an app.
 const PASSWORD: &str = "e2e-Passw0rd-not-kept";
@@ -272,19 +282,23 @@ async fn verify(srv: &TestServer, state: &Arc<AppState>, id: &str) {
         .unwrap();
     let listed = client.list_tools().await.unwrap();
     // One that needs the app's credential where the server also has some that
-    // do not (a ping).
+    // do not (a ping), or has none without arguments.
     let named = match id.trim_end_matches("_e2e") {
-        "futo.immich" => Some("list_albums"),
-        "karakeep.karakeep" => Some("get-lists"),
+        "futo.immich" => Some(("list_albums", json!({}))),
+        "karakeep.karakeep" => Some(("get-lists", json!({}))),
+        "grafana.grafana" => Some(("list_datasources", json!({}))),
+        "n8n.n8n" => Some(("search_workflows", json!({}))),
+        "triliumnext.trilium" => Some(("search_notes", json!({ "query": "root" }))),
         _ => None,
     };
     let read = listed
         .iter()
-        .find(|t| named.is_some_and(|n| t.name == n))
+        .find(|t| named.as_ref().is_some_and(|(n, _)| t.name == *n))
         .or_else(|| listed.iter().find(|t| named.is_none() && t.read_only && t.input_schema["required"].as_array().is_none_or(|r| r.is_empty())))
         .or_else(|| listed.iter().find(|t| t.input_schema["required"].as_array().is_none_or(|r| r.is_empty()) && t.name.contains("stats")))
         .unwrap_or_else(|| panic!("{id}: no tool to call without arguments: {:?}", listed.iter().map(|t| &t.name).collect::<Vec<_>>()));
-    let answer = client.call(&read.name, json!({}), &Cancel::new()).await;
+    let args = named.map(|(_, args)| args).unwrap_or_else(|| json!({}));
+    let answer = client.call(&read.name, args, &Cancel::new()).await;
     eprintln!("{id}: {} -> {:?}", read.name, answer.as_ref().map(|r| r.content.first().cloned()));
     assert!(answer.is_ok(), "{id}: {} failed: {answer:?}", read.name);
 

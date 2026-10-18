@@ -204,7 +204,15 @@ Prefer a credential the agent knows at deploy (`secret`: a key the service
 reads from env, a password it is seeded with). A service that makes its API
 keys only once set up takes one as an optional `text` setting the sidecar
 reads, set by the admin afterwards (Immich, Jellyfin; a sidecar that exits
-without one waits instead, as Jellyfin's does). `asked` is for a token the service's own server takes.
+without one waits instead, as Jellyfin's does). Better, where the service
+lets an account make one through its API: a one-shot job (`[compose] jobs`)
+signs in with the seeded password once the service is healthy, makes the
+key and writes it, mode 0600, into a folder of the data path only the
+sidecar or gate mounts; the gate reads it at start into the header it sends
+on (`store/apps/n8n.n8n`, `store/apps/triliumnext.trilium`), a sidecar into
+its own env (`store/apps/grafana.grafana`). The agent then never holds the
+service's key, and an optional setting still overrides it. `asked` is for a
+token the service's own server takes.
 
 ## The env file
 

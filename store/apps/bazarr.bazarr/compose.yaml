@@ -1,0 +1,77 @@
+# Bazarr 1.6.2 (GPL-3.0), https://github.com/morpheus65535/bazarr/tree/v1.6.2
+# Image: linuxserver.io's build, https://github.com/linuxserver/docker-bazarr
+# (tag v1.6.2-ls368). Upstream publishes no image.
+#
+# Written for ServerBox Monitor (2026-10-18) from linuxserver.io's compose
+# example:
+# - no `name:` and no `container_name`: the agent names the project;
+# - PUID/PGID/TZ come from the agent (SBM_UID, SBM_GID, SBM_TZ);
+# - host.docker.internal is this machine, so Sonarr and Radarr are reached
+#   at their published ports when they are reachable from the network;
+# - seed-login is a one-shot job: while Bazarr has no sign-in, it sets form
+#   sign-in for admin with the generated password through its own API
+#   (system/settings, the key read from config.yaml), as its settings page
+#   would. The key and the password never reach a command line.
+
+services:
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:${BAZARR_TAG}
+    environment:
+      PUID: ${SBM_UID}
+      PGID: ${SBM_GID}
+      TZ: ${SBM_TZ}
+    volumes:
+      - ${BAZARR_CONFIG}:/config
+      - ${BAZARR_MOVIES}:/movies
+      - ${BAZARR_TV}:/tv
+    ports:
+      - '${BAZARR_BIND}:${BAZARR_PORT}:6767'
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    restart: unless-stopped
+    # The system status needs the key: the port alone says it is up.
+    healthcheck:
+      test: ["CMD", "nc", "-z", "127.0.0.1", "6767"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  seed-login:
+    image: lscr.io/linuxserver/bazarr:${BAZARR_TAG}
+    user: "${SBM_UID}:${SBM_GID}"
+    depends_on:
+      bazarr:
+        condition: service_healthy
+    environment:
+      ADMIN_PASSWORD: ${BAZARR_PASSWORD}
+    volumes:
+      - ${BAZARR_CONFIG}:/config:ro
+    working_dir: /app/bazarr/bin
+    entrypoint: ["python3", "-c"]
+    command:
+      - |
+        import json, os, sys, time, urllib.parse, urllib.request
+        sys.path.insert(0, "libs")
+        import yaml
+        # Written once Bazarr has started, with its key.
+        for _ in range(60):
+            try:
+                auth = yaml.safe_load(open("/config/config/config.yaml"))["auth"]
+                if auth.get("apikey"):
+                    break
+            except (OSError, KeyError, TypeError):
+                pass
+            time.sleep(2)
+        else:
+            sys.exit("no config.yaml with an API key")
+        if auth.get("type") and auth.get("username"):
+            sys.exit(0)
+        form = urllib.parse.urlencode({
+            "settings-auth-type": "form",
+            "settings-auth-username": "admin",
+            "settings-auth-password": os.environ["ADMIN_PASSWORD"],
+        }).encode()
+        req = urllib.request.Request("http://bazarr:6767/api/system/settings", data=form, headers={"X-API-KEY": auth["apikey"]})
+        urllib.request.urlopen(req, timeout=30)
+    restart: "no"

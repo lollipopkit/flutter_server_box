@@ -60,12 +60,14 @@ description
 desk
 desktop_windows
 developer_board
+difference
 dns
 do_not_disturb_on
 domain
 done
 done_all
 download
+draw
 edit
 edit_note
 eject
@@ -146,6 +148,7 @@ movie
 nat
 navigation
 note
+note_stack
 notifications
 notifications_off
 opacity
@@ -225,6 +228,7 @@ storage
 store
 storefront
 stream
+subtitles
 switch
 sync
 tab

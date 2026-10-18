@@ -1,0 +1,59 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Excalidraw, a whiteboard for hand-drawn diagrams: deployed with Docker
+# Compose from compose.yaml beside this file, shown in a desk window through
+# the agent.
+
+schema = 1
+publisher = "excalidraw"
+name = "excalidraw"
+project = "Excalidraw"
+developer = "Excalidraw"
+version = "2026.05.06-b2b2815"
+homepage = "https://excalidraw.com"
+source = "https://github.com/excalidraw/excalidraw/tree/b2b2815954f6561f0980bef8997750dabec16e87"
+glyph = "draw"
+tone = "violet"
+categories = ["productivity", "tools"]
+notices = ["pullsImages", "publishesPort"]
+
+[title]
+en = "Excalidraw"
+
+[description]
+en = "A whiteboard for sketching diagrams that look hand-drawn. Drawings are kept in the browser that made them; a shareable link and live collaboration go through excalidraw.com's servers, end-to-end encrypted."
+zh = "绘制手绘风格图表的白板。图画保存在绘制它的浏览器中；分享链接和实时协作经过 excalidraw.com 的服务器，端到端加密。"
+zh-TW = "繪製手繪風格圖表的白板。圖畫儲存在繪製它的瀏覽器中；分享連結和即時協作經過 excalidraw.com 的伺服器，端對端加密。"
+
+[license]
+spdx = "MIT"
+url = "https://github.com/excalidraw/excalidraw/blob/b2b2815954f6561f0980bef8997750dabec16e87/LICENSE"
+
+[requirements]
+arch = ["amd64", "arm64", "arm"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+EXCALIDRAW_DIGEST = "sha256:f7ee194addd607bf831d2af0f0a34463dd4225e426cf35199ef0b12a803398e9"
+
+[[settings]]
+key = "port"
+type = "port"
+env = "EXCALIDRAW_PORT"
+default = 8099
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "Off: only through the desk.", zh = "关闭时只能通过桌面访问。", zh-TW = "關閉時只能透過桌面存取。" }
+on = { EXCALIDRAW_BIND = "0.0.0.0" }
+off = { EXCALIDRAW_BIND = "127.0.0.1" }

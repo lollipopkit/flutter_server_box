@@ -1,0 +1,118 @@
+# n8n 2.43.7 (Sustainable Use License), https://github.com/n8n-io/n8n/tree/n8n@2.43.7
+#
+# Written for ServerBox Monitor (2026-10-18) from n8n's Docker guide
+# (docs.n8n.io, "Docker" and "Docker Compose"):
+# - no `name:` and no `container_name`: the agent names the project;
+# - image pinned to the release; a bind mount from the env file instead of
+#   the named volume; run as the shared folder's owner;
+# - the owner account is managed from the environment
+#   (N8N_INSTANCE_OWNER_MANAGED_BY_ENV): its bcrypt hash is made from the
+#   generated password when the container starts, so the instance has its
+#   owner before it first answers, and nobody can claim it first;
+# - N8N_SECURE_COOKIE off: the agent's proxy marks cookies Secure itself
+#   over HTTPS, and a desk without HTTPS still signs in; N8N_PROXY_HOPS: the
+#   proxy's forwarded scheme and host are taken;
+# - instance-level MCP access on (N8N_MCP_MANAGED_BY_ENV). seed-mcp is a
+#   one-shot job: it signs in as the owner and makes the MCP API key, once,
+#   into a folder only mcp-gate reads; mcp-gate (nginx, mcp-gate.conf.template)
+#   alone is published, on loopback, asks for MCP_TOKEN and passes requests
+#   on with the key.
+
+services:
+  n8n:
+    image: n8nio/n8n:${N8N_VERSION}
+    user: "${SBM_UID}:${SBM_GID}"
+    environment:
+      TZ: ${SBM_TZ}
+      GENERIC_TIMEZONE: ${SBM_TZ}
+      N8N_PROXY_HOPS: '1'
+      N8N_SECURE_COOKIE: 'false'
+      WEBHOOK_URL: ${N8N_URL}
+      N8N_RUNNERS_ENABLED: 'true'
+      N8N_INSTANCE_OWNER_MANAGED_BY_ENV: 'true'
+      N8N_INSTANCE_OWNER_EMAIL: ${N8N_OWNER_EMAIL}
+      N8N_INSTANCE_OWNER_FIRST_NAME: Admin
+      N8N_INSTANCE_OWNER_LAST_NAME: Owner
+      N8N_OWNER_PASSWORD: ${N8N_OWNER_PASSWORD}
+      N8N_MCP_MANAGED_BY_ENV: 'true'
+      N8N_MCP_ACCESS_ENABLED: 'true'
+    volumes:
+      - ${N8N_DATA}:/home/node/.n8n
+    ports:
+      - '${N8N_BIND}:${N8N_PORT}:5678'
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        N8N_INSTANCE_OWNER_PASSWORD_HASH=$$(node -e '
+          const bcrypt = require("/usr/local/lib/node_modules/n8n/node_modules/bcryptjs");
+          process.stdout.write(bcrypt.hashSync(process.env.N8N_OWNER_PASSWORD, 10));
+        ') || exit 1
+        export N8N_INSTANCE_OWNER_PASSWORD_HASH
+        unset N8N_OWNER_PASSWORD
+        exec tini -- /docker-entrypoint.sh
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:5678/healthz/readiness"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  seed-mcp:
+    image: n8nio/n8n:${N8N_VERSION}
+    user: "${SBM_UID}:${SBM_GID}"
+    depends_on:
+      n8n:
+        condition: service_healthy
+    environment:
+      OWNER_EMAIL: ${N8N_OWNER_EMAIL}
+      OWNER_PASSWORD: ${N8N_OWNER_PASSWORD}
+    volumes:
+      - ${N8N_DATA}:/data
+    entrypoint: ["node", "-e"]
+    command:
+      - |
+        const fs = require("fs");
+        const dir = "/data/serverbox-mcp";
+        fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+        if (fs.existsSync(dir + "/key")) process.exit(0);
+        // The session is bound to the browser-id it signed in with.
+        const headers = { "content-type": "application/json", "browser-id": "serverbox-seed-mcp" };
+        const base = "http://n8n:5678/rest";
+        (async () => {
+          const body = JSON.stringify({ emailOrLdapLoginId: process.env.OWNER_EMAIL, password: process.env.OWNER_PASSWORD });
+          // Ready before the owner is applied from the environment: asked again.
+          let login;
+          for (let i = 0; ; i++) {
+            login = await fetch(base + "/login", { method: "POST", headers, body }).catch(() => null);
+            if (login?.ok) break;
+            if (i > 60) throw new Error("login: HTTP " + login?.status + " " + (await login?.text()));
+            await new Promise((r) => setTimeout(r, 2000));
+          }
+          const cookie = login.headers.getSetCookie().map((c) => c.split(";")[0]).join("; ");
+          // A new key (any earlier one dropped): one shown in full once.
+          const made = await fetch(base + "/mcp/api-key/rotate", { method: "POST", headers: { ...headers, cookie } });
+          if (!made.ok) throw new Error("MCP API key: HTTP " + made.status + " " + (await made.text()));
+          fs.writeFileSync(dir + "/key", (await made.json()).data.apiKey, { mode: 0o600 });
+        })().catch((e) => { console.error(e.message); process.exit(1); });
+    restart: "no"
+
+  mcp-gate:
+    image: nginx:1.29.8-alpine@sha256:5616878291a2eed594aee8db4dade5878cf7edcb475e59193904b198d9b830de
+    depends_on:
+      seed-mcp:
+        condition: service_completed_successfully
+    environment:
+      MCP_TOKEN: ${MCP_TOKEN}
+    volumes:
+      - ./mcp-gate.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - ${N8N_DATA}/serverbox-mcp:/key:ro
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        N8N_MCP_KEY=$$(cat /key/key) || exit 1
+        export N8N_MCP_KEY
+        exec /docker-entrypoint.sh nginx -g 'daemon off;'
+    ports:
+      - '127.0.0.1:${MCP_PORT}:8080'
+    restart: unless-stopped

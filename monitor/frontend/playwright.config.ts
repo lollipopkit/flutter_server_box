@@ -15,5 +15,8 @@ export default defineConfig({
     viewport: { width: 1500, height: 950 },
     screenshot: 'only-on-failure',
     trace: 'retain-on-failure',
+    // A browser macOS has not given Local Network access (one started from a
+    // background process) reaches a LAN agent only through a local proxy.
+    proxy: process.env.SBM_E2E_BROWSER_PROXY ? { server: process.env.SBM_E2E_BROWSER_PROXY } : undefined,
   },
 })

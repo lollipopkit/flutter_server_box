@@ -1,0 +1,117 @@
+# Trilium Notes 0.106.0 (AGPL-3.0), https://github.com/TriliumNext/Trilium/tree/v0.106.0
+#
+# Adapted from the release's docker-compose.yml for ServerBox Monitor
+# (2026-10-18):
+# - no `name:` and no `container_name`: the agent names the project;
+# - image pinned to the release; the data folder from the env file; runs as
+#   the shared folder's owner (USER_UID/USER_GID, start-docker.sh); the
+#   timezone from the agent instead of /etc/timezone;
+# - seed-mcp is a one-shot job that runs once Trilium answers: it creates the
+#   new document and sets the generated password, as the setup screen would,
+#   so the window opens on the sign-in. It then turns on Trilium's own MCP
+#   server (Options → AI / LLM) and makes an ETAPI token for it, once, into a
+#   folder only mcp-gate reads; mcp-gate (nginx, mcp-gate.conf.template) alone
+#   is published, on loopback, asks for MCP_TOKEN and passes requests on with
+#   the token.
+
+services:
+  trilium:
+    image: triliumnext/trilium:${TRILIUM_VERSION}
+    environment:
+      TZ: ${SBM_TZ}
+      USER_UID: ${SBM_UID}
+      USER_GID: ${SBM_GID}
+      TRILIUM_DATA_DIR: /home/node/trilium-data
+    volumes:
+      - ${TRILIUM_DATA}:/home/node/trilium-data
+    ports:
+      - '${TRILIUM_BIND}:${TRILIUM_PORT}:8080'
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/api/setup/status').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  seed-mcp:
+    image: triliumnext/trilium:${TRILIUM_VERSION}
+    user: "${SBM_UID}:${SBM_GID}"
+    depends_on:
+      trilium:
+        condition: service_healthy
+    environment:
+      PASSWORD: ${TRILIUM_PASSWORD}
+    volumes:
+      - ${TRILIUM_DATA}:/data
+    entrypoint: ["node", "-e"]
+    command:
+      - |
+        const fs = require("fs");
+        const dir = "/data/serverbox-mcp";
+        fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+        const base = "http://trilium:8080";
+        const password = process.env.PASSWORD;
+        const json = { "content-type": "application/json" };
+        const call = async (path, init = {}) => {
+          const r = await fetch(base + path, { redirect: "manual", ...init });
+          if (r.status >= 400) throw new Error(path + ": HTTP " + r.status + " " + (await r.text()));
+          return r;
+        };
+        (async () => {
+          let status = await (await call("/api/setup/status")).json();
+          if (!status.isInitialized) {
+            await call("/api/setup/new-document", { method: "POST", headers: json, body: "{}" });
+            for (let i = 0; !status.isInitialized; i++) {
+              if (i > 120) throw new Error("the new document was never made");
+              await new Promise((r) => setTimeout(r, 1000));
+              status = await (await call("/api/setup/status")).json();
+            }
+          }
+          // Set while no password is (set-password answers 400 once one is).
+          const set = await fetch(base + "/set-password", { method: "POST", redirect: "manual", body: new URLSearchParams({ password1: password, password2: password }) });
+          if (set.status >= 500) throw new Error("set-password: HTTP " + set.status);
+          if (fs.existsSync(dir + "/token") || fs.existsSync(dir + "/none")) return;
+          try {
+            // Signed in, as the options page: the MCP server turned on.
+            const login = await call("/login", { method: "POST", body: new URLSearchParams({ password }) });
+            const cookie = login.headers.getSetCookie().map((c) => c.split(";")[0]).join("; ");
+            // The CSRF token, and the cookie it is checked against.
+            const page = await call("/bootstrap", { headers: { cookie } });
+            const csrf = page.headers.getSetCookie().map((c) => c.split(";")[0]);
+            const boot = await page.json();
+            if (!boot.csrfToken) throw new Error("not signed in");
+            await call("/api/options/mcpEnabled/true", { method: "PUT", headers: { cookie: [cookie, ...csrf].join("; "), "x-csrf-token": boot.csrfToken } });
+            const made = await (await call("/etapi/auth/login", { method: "POST", headers: json, body: JSON.stringify({ password }) })).json();
+            fs.writeFileSync(dir + "/token", made.authToken, { mode: 0o600 });
+          } catch (e) {
+            // A password changed since leaves Agent mode to the admin (the app's note).
+            console.error("no token for Agent mode: " + e.message);
+            fs.writeFileSync(dir + "/none", "");
+          }
+        })().catch((e) => { console.error(e.message); process.exit(1); });
+    restart: "no"
+
+  mcp-gate:
+    image: nginx:1.29.8-alpine@sha256:5616878291a2eed594aee8db4dade5878cf7edcb475e59193904b198d9b830de
+    depends_on:
+      seed-mcp:
+        condition: service_completed_successfully
+    environment:
+      MCP_TOKEN: ${MCP_TOKEN}
+      TRILIUM_MCP_TOKEN: ${TRILIUM_MCP_TOKEN:-}
+    volumes:
+      - ./mcp-gate.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - ${TRILIUM_DATA}/serverbox-mcp:/key:ro
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        # The admin's own token (the app's setting) first, else the seed job's.
+        TRILIUM_ETAPI_TOKEN=$${TRILIUM_MCP_TOKEN:-$$(cat /key/token 2>/dev/null)}
+        unset TRILIUM_MCP_TOKEN
+        [ -n "$$TRILIUM_ETAPI_TOKEN" ] || echo "no ETAPI token for Agent mode: set one in the app's settings"
+        export TRILIUM_ETAPI_TOKEN
+        exec /docker-entrypoint.sh nginx -g 'daemon off;'
+    ports:
+      - '127.0.0.1:${MCP_PORT}:8080'
+    restart: unless-stopped

@@ -72,7 +72,7 @@ label = { en = "Valkey data", zh = "Valkey 数据", zh-TW = "Valkey 資料" }
 key = "port"
 type = "port"
 env = "SEARXNG_PORT"
-default = 8096
+default = 8888
 label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
 
 [[settings]]

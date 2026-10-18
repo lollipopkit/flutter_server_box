@@ -1,0 +1,115 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# n8n, workflow automation: deployed with Docker Compose from compose.yaml
+# and mcp-gate.conf.template beside this file, shown in a desk window through
+# the agent.
+
+schema = 1
+publisher = "n8n"
+name = "n8n"
+project = "n8n"
+developer = "n8n"
+version = "2.43.7"
+homepage = "https://n8n.io"
+source = "https://github.com/n8n-io/n8n/tree/n8n@2.43.7"
+glyph = "account_tree"
+tone = "berry"
+categories = ["productivity", "development", "ai"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "n8n"
+
+[description]
+en = "Automate work across apps and services with workflows built from nodes: triggers, webhooks, schedules, code and AI agents. Agent mode can find and run the workflows made available to it."
+zh = "用节点搭建的工作流在各种应用和服务之间自动完成工作：触发器、Webhook、定时任务、代码和 AI 智能体。Agent 模式可以查找并运行向它开放的工作流。"
+zh-TW = "用節點搭建的工作流程在各種應用和服務之間自動完成工作：觸發器、Webhook、排程、程式碼和 AI 代理。Agent 模式可以尋找並執行向它開放的工作流程。"
+
+[license]
+spdx = "LicenseRef-n8n-Sustainable-Use"
+url = "https://github.com/n8n-io/n8n/blob/n8n@2.43.7/LICENSE.md"
+accept = true
+
+[requirements]
+memory_min_mib = 512
+memory_recommended_mib = 1024
+arch = ["amd64", "arm64"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+jobs = ["seed-mcp"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+N8N_VERSION = "2.43.7"
+N8N_OWNER_EMAIL = "admin@n8n.local"
+
+[[secrets]]
+env = "N8N_OWNER_PASSWORD"
+length = 32
+
+[[secrets]]
+env = "MCP_TOKEN"
+length = 48
+
+[login]
+user = "admin@n8n.local"
+password = "N8N_OWNER_PASSWORD"
+note = { en = "The owner's email and password are set at every start, so change them here, not in n8n. Agent mode sees a workflow once it is made available in MCP (its settings, or Settings → Instance-level MCP).", zh = "所有者的邮箱和密码在每次启动时设置，请勿在 n8n 中修改。工作流在 MCP 中开放后（工作流设置，或 Settings → Instance-level MCP），Agent 模式才能看到。", zh-TW = "擁有者的電子郵件和密碼在每次啟動時設定，請勿在 n8n 中修改。工作流程在 MCP 中開放後（工作流程設定，或 Settings → Instance-level MCP），Agent 模式才能看到。" }
+
+[[settings]]
+key = "data"
+type = "path"
+env = "N8N_DATA"
+default = "{stack}/data"
+data = true
+label = { en = "Data", zh = "数据", zh-TW = "資料" }
+help = { en = "The database (workflows, credentials, executions) and its encryption key.", zh = "数据库（工作流、凭据、执行记录）及其加密密钥。", zh-TW = "資料庫（工作流程、憑證、執行紀錄）及其加密金鑰。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "N8N_PORT"
+default = 5678
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "Also what webhooks from other machines need. Off: only through the desk.", zh = "接收其他机器的 Webhook 也需要开启。关闭时只能通过桌面访问。", zh-TW = "接收其他機器的 Webhook 也需要開啟。關閉時只能透過桌面存取。" }
+on = { N8N_BIND = "0.0.0.0" }
+off = { N8N_BIND = "127.0.0.1" }
+
+[[settings]]
+key = "url"
+type = "text"
+env = "N8N_URL"
+default = "http://localhost:5678/"
+pattern = '^https?://[A-Za-z0-9.:\[\]-]+(/[A-Za-z0-9._~/-]*)?$'
+label = { en = "Public address", zh = "公开地址", zh-TW = "公開位址" }
+help = { en = "The address webhook URLs are shown with. Set it when it is reachable from the network.", zh = "显示 Webhook URL 时使用的地址。允许从网络访问时请设置。", zh-TW = "顯示 Webhook URL 時使用的位址。允許從網路存取時請設定。" }
+
+[[settings]]
+key = "mcp_port"
+type = "port"
+env = "MCP_PORT"
+default = 5679
+label = { en = "MCP server port", zh = "MCP 服务端口", zh-TW = "MCP 服務連接埠" }
+help = { en = "Agent mode's connection to n8n, on this machine only.", zh = "Agent 模式连接 n8n 用，仅限本机。", zh-TW = "Agent 模式連線 n8n 用，僅限本機。" }
+
+# n8n's own instance-level MCP server, behind a gate that asks for MCP_TOKEN
+# and holds n8n's key.
+[[mcp]]
+port = "mcp_port"
+path = "/mcp"
+publisher = "official"
+service = "mcp-gate"
+source = "https://github.com/n8n-io/n8n/tree/n8n@2.43.7/packages/cli/src/modules/mcp"
+[mcp.auth]
+scheme = "Bearer"
+secret = "MCP_TOKEN"

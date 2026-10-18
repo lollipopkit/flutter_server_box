@@ -312,8 +312,8 @@ async fn sign_in(browser: &mut Browser, id: &str, user: Option<&str>, password: 
             assert_eq!(results.status, 200, "{id}");
             assert!(results.body.contains("serverbox"), "{id}: not a results page");
         }
-        "sonarr.sonarr" | "radarr.radarr" | "prowlarr.prowlarr" => {
-            let api = if catalog == "prowlarr.prowlarr" { "v1" } else { "v3" };
+        "sonarr.sonarr" | "radarr.radarr" | "prowlarr.prowlarr" | "lidarr.lidarr" => {
+            let api = if matches!(catalog, "prowlarr.prowlarr" | "lidarr.lidarr") { "v1" } else { "v3" };
             assert_eq!(browser.get(&format!("/api/{api}/system/status")).await.status, 401, "{id}: answered before signing in");
             let page = browser.post_form("/login", &[("username", &need(user)), ("password", &need(password)), ("rememberMe", "on")]).await;
             assert_eq!(page.status, 302, "{id}: {}", page.body);
@@ -324,6 +324,66 @@ async fn sign_in(browser: &mut Browser, id: &str, user: Option<&str>, password: 
             let key = init.json()["apiKey"].as_str().unwrap_or_else(|| panic!("{id}: no API key: {}", init.body)).to_string();
             let status = browser.send(Method::GET, &format!("/api/{api}/system/status"), None, &[("x-api-key", key)]).await;
             assert_eq!(status.status, 200, "{id}: {}", status.body);
+        }
+        "bazarr.bazarr" => {
+            // Signed in, its page is given the API key its own requests carry.
+            let key = regex::Regex::new(r#""apiKey":\s*"([0-9a-f]+)""#).unwrap();
+            assert!(!key.is_match(&browser.open("/").await.body), "{id}: the API key shown before signing in");
+            let wrong = browser.post_form("/api/system/account", &[("action", "login"), ("username", &need(user)), ("password", PASSWORD)]).await;
+            assert_eq!(wrong.status, 403, "{id}: a wrong password signed in");
+            let page = browser.post_form("/api/system/account", &[("action", "login"), ("username", &need(user)), ("password", &need(password))]).await;
+            assert_eq!(page.status, 204, "{id}: {}", page.body);
+            let index = browser.open("/").await;
+            let key = key.captures(&index.body).unwrap_or_else(|| panic!("{id}: no API key once signed in"))[1].to_string();
+            let status = browser.send(Method::GET, "/api/system/status", None, &[("x-api-key", key)]).await;
+            assert_eq!(status.status, 200, "{id}: {}", status.body);
+        }
+        "dgtlmoon.changedetection" => {
+            // Its page asks for the password from the first start on.
+            let form = browser.open("/").await;
+            assert!(form.body.contains("name=\"password\""), "{id}: no password asked");
+            let csrf = input_value(&form.body, "csrf_token").unwrap_or_else(|| panic!("{id}: no CSRF token"));
+            let wrong = browser.post_form("/login", &[("csrf_token", &csrf), ("password", PASSWORD)]).await;
+            assert!(browser.open(wrong.location.as_deref().unwrap_or("/")).await.body.contains("name=\"password\""), "{id}: a wrong password signed in");
+            let form = browser.open("/login").await;
+            let csrf = input_value(&form.body, "csrf_token").unwrap_or_else(|| panic!("{id}: no CSRF token"));
+            let page = browser.post_form("/login", &[("csrf_token", &csrf), ("password", &need(password))]).await;
+            assert_eq!(page.status, 302, "{id}: {}", page.body);
+            let watches = browser.open("/").await;
+            assert!(watches.status == 200 && !watches.body.contains("name=\"password\""), "{id}: the sign-in was refused: HTTP {}", watches.status);
+        }
+        "grafana.grafana" => {
+            assert_eq!(browser.get("/api/user").await.status, 401, "{id}: answered before signing in");
+            let page = browser.post_json("/login", json!({ "user": need(user), "password": need(password) }), &[]).await;
+            assert_eq!(page.status, 200, "{id}: {}", page.body);
+            let me = browser.get("/api/user").await;
+            assert_eq!(me.json()["isGrafanaAdmin"], true, "{id}: {}", me.body);
+            // Sign-up is off.
+            let signup = browser.post_json("/api/user/signup", json!({ "email": "x@e2e.invalid" }), &[]).await;
+            assert!(matches!(signup.status, 401 | 403 | 404), "{id}: sign-up is open: HTTP {}", signup.status);
+        }
+        "n8n.n8n" => {
+            // Its session is bound to the browser-id header its page sends.
+            let browser_id = [("browser-id", "sbm-e2e".to_string())];
+            assert_eq!(browser.send(Method::GET, "/rest/login", None, &browser_id).await.status, 401, "{id}: signed in before signing in");
+            let body = json!({ "emailOrLdapLoginId": need(user), "password": need(password) });
+            let page = browser.post_json("/rest/login", body, &browser_id).await;
+            assert_eq!(page.status, 200, "{id}: {}", page.body);
+            let me = browser.send(Method::GET, "/rest/login", None, &browser_id).await;
+            assert_eq!(me.json()["data"]["role"], "global:owner", "{id}: {}", me.body);
+        }
+        "triliumnext.trilium" => {
+            let logged_in = |page: Page| page.json()["loggedIn"].clone();
+            assert_eq!(logged_in(browser.get("/bootstrap").await), false, "{id}: signed in before signing in");
+            browser.post_form("/login", &[("password", PASSWORD)]).await;
+            assert_eq!(logged_in(browser.get("/bootstrap").await), false, "{id}: a wrong password signed in");
+            let page = browser.post_form("/login", &[("password", &need(password))]).await;
+            assert_eq!(page.status, 302, "{id}: {}", page.body);
+            assert_eq!(logged_in(browser.get("/bootstrap").await), true, "{id}: the sign-in was refused");
+        }
+        "excalidraw.excalidraw" => {
+            // Nothing to sign in to: the app's own page.
+            assert!(browser.open("/").await.body.contains("Excalidraw"), "{id}: not Excalidraw's page");
         }
         "corentinth.it_tools" => {
             // Nothing to sign in to: one of its own routes, which the server

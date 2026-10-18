@@ -131,6 +131,59 @@ const APPS: Record<string, { id: string; use: (frame: FrameLocator, login: Login
       await expect(frame.getByText('Indexers', { exact: true }).first()).toBeVisible({ timeout: 60_000 })
     },
   },
+  Lidarr: {
+    id: 'lidarr.lidarr',
+    use: async (frame, login) => {
+      await signInForm(frame, frame.locator('input[name=username]'), login)
+      await expect(frame.getByText('Calendar', { exact: true }).first()).toBeVisible({ timeout: 60_000 })
+    },
+  },
+  Bazarr: {
+    id: 'bazarr.bazarr',
+    use: async (frame, login) => {
+      await signInForm(frame, frame.locator('input:not([type=password]):not([type=hidden])').first(), login)
+      await expect(frame.locator('input[type=password]')).toHaveCount(0, { timeout: 60_000 })
+      // Signed in, a new Bazarr opens on its general settings.
+      await expect(frame.getByText('API Key', { exact: true }).first()).toBeVisible({ timeout: 60_000 })
+    },
+  },
+  'changedetection.io': {
+    id: 'dgtlmoon.changedetection',
+    use: async (frame, login) => {
+      await passwordForm(frame, login)
+      await expect(frame.locator('input[name=url]').first()).toBeVisible({ timeout: 60_000 })
+    },
+  },
+  Excalidraw: {
+    id: 'excalidraw.excalidraw',
+    use: async (frame) => {
+      await expect(frame.locator('canvas.interactive, .excalidraw canvas').first()).toBeVisible({ timeout: 60_000 })
+    },
+  },
+  Grafana: {
+    id: 'grafana.grafana',
+    use: async (frame, login) => {
+      await signInForm(frame, frame.locator('input[name=user]'), login)
+      await expect(frame.getByText(/Welcome to Grafana/).first()).toBeVisible({ timeout: 60_000 })
+    },
+  },
+  n8n: {
+    id: 'n8n.n8n',
+    use: async (frame, login) => {
+      // Its fields are in no form: sent with its button.
+      await signInForm(frame, frame.locator('input[type=email], input[name=emailOrLdapLoginId]').first(), login, frame.getByRole('button', { name: /sign in/i }))
+      await expect(frame.locator('input[type=password]')).toHaveCount(0, { timeout: 60_000 })
+      // Signed in, a new owner is asked about themselves first.
+      await expect(frame.getByText(/Customize n8n to you/).first()).toBeVisible({ timeout: 60_000 })
+    },
+  },
+  'Trilium Notes': {
+    id: 'triliumnext.trilium',
+    use: async (frame, login) => {
+      await passwordForm(frame, login)
+      await expect(frame.locator('.fancytree-container, .tree-wrapper').first()).toBeAttached({ timeout: 60_000 })
+    },
+  },
   'Open WebUI': {
     id: 'openwebui.open_webui',
     use: async (frame, login) => {
@@ -141,13 +194,22 @@ const APPS: Record<string, { id: string; use: (frame: FrameLocator, login: Login
 }
 
 /// A page's own sign-in form: [user] and the password field filled with
-/// what the app's details showed, then sent.
-async function signInForm(frame: FrameLocator, user: Locator, login: Login) {
+/// what the app's details showed, then sent (with [button] when given).
+async function signInForm(frame: FrameLocator, user: Locator, login: Login, button?: Locator) {
   // The window may open on "The app is starting…" (Open WebUI fetches its
   // embedding model first), which reloads itself until the app answers.
   await expect(user).toBeVisible({ timeout: 10 * 60_000 })
   await user.fill(login.user ?? '')
   const pass = frame.locator('input[type=password]').first()
+  await fillSecret(pass, login.password ?? '')
+  if (button) await button.click()
+  else await submitForm(pass)
+}
+
+/// A page's sign-in form that asks for the password alone.
+async function passwordForm(frame: FrameLocator, login: Login) {
+  const pass = frame.locator('input[type=password]').first()
+  await expect(pass).toBeVisible({ timeout: 10 * 60_000 })
   await fillSecret(pass, login.password ?? '')
   await submitForm(pass)
 }
