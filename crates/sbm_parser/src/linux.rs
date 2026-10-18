@@ -97,13 +97,7 @@ pub fn parse_disk(raw: &str) -> Vec<Disk> {
         } else {
             Vec::new()
         };
-        let df = df.trim();
-        let df = if df.contains("Filesystem") && df.contains("Mounted on") {
-            parse_df(df)
-        } else {
-            Vec::new()
-        };
-        return merge_disks(lsblk, df);
+        return merge_disks(lsblk, parse_df(df));
     }
     let raw = raw.trim();
     if raw.is_empty() {
@@ -121,10 +115,7 @@ pub fn parse_disk(raw: &str) -> Vec<Disk> {
             }
         }
     }
-    if raw.contains("Filesystem") && raw.contains("Mounted on") {
-        return parse_df(raw);
-    }
-    Vec::new()
+    parse_df(raw)
 }
 
 /// One list of `lsblk`'s devices and `df`'s mounted filesystems.
@@ -278,26 +269,26 @@ fn lsblk_fs_fields(device: &serde_json::Value) -> (u64, u64, u64, u32) {
     (size("fssize"), size("fsused"), size("fsavail"), percent)
 }
 
-/// df table, in KiB: `df -k`, or `df -kT` with its `Type` column.
+/// df table, in KiB: `df -k`, or `df -kT` with its type column.
 /// Handles wrapped lines caused by overlong filesystem names (a single-field line
 /// is buffered onto the next), filtered by [`disk_should_calc`] and, with a
 /// type, by what [`Disk::is_storage`] asks of one.
 /// Also accepts df -h K/M/G/T suffixes
+///
+/// The header is skipped unread: `df` translates it (`文件系统 类型 … 挂载点`),
+/// so whether there is a type column is decided by the rows themselves.
 fn parse_df(raw: &str) -> Vec<Disk> {
     let mut disks = Vec::new();
-    let mut lines = raw.trim().split('\n');
-    let typed = lines
-        .next()
-        .is_some_and(|header| header.split_whitespace().nth(1) == Some("Type"));
-    let mut path_cache = String::new();
+    let mut rows: Vec<Vec<&str>> = Vec::new();
+    let mut path_cache: Option<&str> = None;
 
-    for line in lines {
-        if line.is_empty() {
+    for line in raw.trim().split('\n').skip(1) {
+        let mut fields: Vec<&str> = line.split_whitespace().collect();
+        if fields.is_empty() {
             continue;
         }
-        let mut fields: Vec<&str> = line.split_whitespace().collect();
         if fields.len() == 1 {
-            path_cache = fields[0].to_string();
+            path_cache = Some(fields[0]);
             continue;
         }
         // The buffered name belongs *in front of* this line's columns, which
@@ -305,9 +296,26 @@ fn parse_df(raw: &str) -> Vec<Disk> {
         // left five fields, which the `>= 6` check below then dropped — so a
         // stock Ubuntu LVM install ("/dev/mapper/ubuntu--vg-ubuntu--lv", long
         // enough that df wraps it) reported no root filesystem at all.
-        if !path_cache.is_empty() && !fields.is_empty() {
-            fields.insert(0, path_cache.as_str());
+        if let Some(path) = path_cache.take() {
+            fields.insert(0, path);
         }
+        rows.push(fields);
+    }
+
+    // A type column is a word where a size would be, followed by the size.
+    // Counted over the rows rather than read from one: macOS names a few
+    // filesystems with a space (`map auto_home`), which puts a word in that
+    // place on a table that has no type column.
+    let typed_rows = rows
+        .iter()
+        .filter(|fields| {
+            fields.get(1).is_some_and(|f| df_size_kib(f).is_none())
+                && fields.get(2).is_some_and(|f| df_size_kib(f).is_some())
+        })
+        .count();
+    let typed = typed_rows * 2 > rows.len();
+
+    for mut fields in rows {
         let fs_type = typed.then(|| fields.get(1).map(|t| t.to_string())).flatten();
         if typed && fields.len() > 1 {
             fields.remove(1);
@@ -329,7 +337,6 @@ fn parse_df(raw: &str) -> Vec<Disk> {
             };
             disk.is_storage().then_some(disk)
         })();
-        path_cache.clear();
         if let Some(disk) = parsed {
             disks.push(disk);
         }

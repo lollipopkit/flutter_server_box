@@ -471,7 +471,7 @@ fn script_headers() {
     assert!(unix.starts_with("#!/bin/sh"));
     assert!(unix.contains("# Script for ServerBox app v1.0.1466"));
     assert!(unix.contains("DO NOT delete this file"));
-    assert!(unix.contains("export LANG=en_US.UTF-8"));
+    assert!(unix.contains("export LC_ALL=en_US.UTF-8"));
 }
 
 #[test]

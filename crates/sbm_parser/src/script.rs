@@ -801,7 +801,9 @@ fn unix_header(build_number: &str) -> String {
 # Script for ServerBox app v1.0.{build_number}
 # DO NOT delete this file while app is running
 
-export LANG=en_US.UTF-8
+# LC_ALL, not LANG: a session's own LC_ALL or LC_MESSAGES outranks LANG, and
+# the parsers read English output.
+export LC_ALL=en_US.UTF-8
 
 # If macSign & bsdSign are both empty, then it's linux
 macSign=$(uname -a 2>&1 | grep \"Darwin\")
