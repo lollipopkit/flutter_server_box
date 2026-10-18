@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
+import 'package:server_box/core/utils/editor_lang.dart';
 import 'package:server_box/core/utils/local_files.dart';
 import 'package:server_box/core/utils/sftp_escalation.dart';
 import 'package:server_box/core/utils/sftp_sudo.dart';
@@ -25,6 +26,7 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/src/rust/api/files.dart' as files;
 import 'package:server_box/view/page/ssh/page/page.dart';
+import 'package:server_box/view/page/storage/code_editor.dart';
 import 'package:server_box/view/page/storage/file_browser.dart';
 import 'package:server_box/view/page/storage/local.dart';
 import 'package:server_box/view/page/storage/show_transfers.dart';
@@ -683,10 +685,11 @@ extension _Edit on _SftpPageState {
     if (!await _fetch(remotePath, localPath, useSudo: useSudo)) return;
     if (!mounted) return;
 
-    await EditorPage.route.go(
+    await FileEditorPage.route.go(
       context,
       args: EditorPageArgs(
         path: localPath,
+        lang: editorLangFor(remotePath),
         onSave: (_) => _saveBack(handle, localPath, remotePath, useSudo),
         closeAfterSave: Stores.setting.closeAfterSave.fetch(),
         softWrap: Stores.setting.editorSoftWrap.fetch(),

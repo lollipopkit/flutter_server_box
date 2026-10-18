@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/utils/editor_lang.dart';
 import 'package:server_box/core/utils/local_file_backend.dart';
 import 'package:server_box/core/utils/local_files.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
@@ -11,6 +12,7 @@ import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/view/page/storage/code_editor.dart';
 import 'package:server_box/view/page/storage/file_browser.dart';
 import 'package:server_box/view/page/storage/show_transfers.dart';
 
@@ -204,10 +206,11 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> {
     }
     if (!mounted) return;
 
-    await EditorPage.route.go(
+    await FileEditorPage.route.go(
       context,
       args: EditorPageArgs(
         path: LocalFileBackend.nativePath(fullPath),
+        lang: editorLangFor(fullPath),
         onSave: (_) {
           Toast.show(libL10n.saved);
           handle.refresh();
