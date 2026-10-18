@@ -20,7 +20,7 @@ use serde::Serialize;
 use crate::api::server::{AppState, bearer_token, verify_watch_token};
 use crate::api::{auth, ws};
 use crate::core::permissions::{Grant, Grants, Role};
-use crate::db::accounts;
+use crate::db::{accounts, api_tokens};
 
 /// An account, and the role it held when this request was resolved.
 #[derive(Debug, Clone)]
@@ -175,6 +175,64 @@ pub async fn admin_caller(req: &HttpRequest, state: &AppState) -> Result<Caller,
 pub enum Reader {
     Account(Caller),
     Watch,
+}
+
+/// An MCP API token: the account it belongs to, with grants narrowed to the
+/// token's scopes intersected with the role. `admin` is never set.
+#[derive(Debug, Clone)]
+pub struct TokenCaller {
+    pub caller: Caller,
+    pub token_id: String,
+    pub token_name: String,
+}
+
+/// The account behind a live `sbt_` token, with grants the token may use.
+pub async fn token_caller(
+    req: &HttpRequest,
+    state: &AppState,
+) -> Result<TokenCaller, HttpResponse> {
+    let Ok(raw) = bearer_token(req) else {
+        return Err(unauthorized());
+    };
+    resolve_api_token(state, raw, ws::audit::peer_ip(req)).await
+}
+
+pub async fn resolve_api_token(
+    state: &AppState,
+    raw: &str,
+    ip: Option<String>,
+) -> Result<TokenCaller, HttpResponse> {
+    if !api_tokens::looks_like(raw) {
+        return Err(unauthorized());
+    }
+    let now = chrono::Utc::now().timestamp();
+    let found = match api_tokens::find_live(&state.db, &api_tokens::hash(raw), now).await {
+        Ok(found) => found,
+        Err(e) => {
+            tracing::warn!("Could not look up an API token: {e}");
+            return Err(unauthorized());
+        }
+    };
+    let Some(token) = found else {
+        return Err(unauthorized());
+    };
+    let Some(mut caller) = caller_named(state, &token.subject).await else {
+        return Err(unauthorized());
+    };
+    let grants = match api_tokens::parse_scopes(&token.scopes, caller.grants()) {
+        Ok(grants) => grants,
+        Err(_) => return Err(unauthorized()),
+    };
+    caller.role.admin = false;
+    caller.role.grants = grants;
+    if let Err(e) = api_tokens::touch(&state.db, &token.id, now, ip.as_deref()).await {
+        tracing::warn!("Could not touch API token {}: {e}", token.id);
+    }
+    Ok(TokenCaller {
+        caller,
+        token_id: token.id,
+        token_name: token.name,
+    })
 }
 
 pub async fn read_caller(req: &HttpRequest, state: &AppState) -> Result<Reader, HttpResponse> {

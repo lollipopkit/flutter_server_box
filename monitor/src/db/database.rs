@@ -97,7 +97,8 @@ fn connect_options(database_url: &str) -> Result<SqliteConnectOptions> {
         // the file and only risks the most recent transactions, which for a
         // metrics row seconds away from its successor costs nothing — but this
         // database is not only metrics. `users` carries the panel credential,
-        // `watch_tokens` is what revoking a watch's access deletes from, and
+        // `watch_tokens` is what revoking a watch's access deletes from,
+        // `api_tokens` is the same for an MCP credential, and
         // `access_log` and `config_audit_log` exist to be readable after
         // exactly the kind of event that would lose an unsynced commit. A
         // password change or a revocation silently not having happened is not

@@ -1034,6 +1034,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "dashmap"
+version = "6.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e6361d5c062261c78a176addb82d4c821ae42bed6089de0e12603cd25de2059c"
+dependencies = [
+ "cfg-if",
+ "crossbeam-utils",
+ "hashbrown 0.14.5",
+ "lock_api",
+ "once_cell",
+ "parking_lot_core",
+]
+
+[[package]]
 name = "data-encoding"
 version = "2.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3160,6 +3174,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "ntex-ratelimiter"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "71562fd857752295d2b3585568603b2cc9521a2226e110acb9fc2df473398e3d"
+dependencies = [
+ "dashmap 6.2.1",
+ "itoa",
+ "ntex",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "ntex-router"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3464,7 +3492,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "80d2043d1f61d77cb2f4b1f7b7b2295f40507f5f8e9d1c8bf10a1ca5f97a3969"
 dependencies = [
  "cc",
- "dashmap",
+ "dashmap 5.5.3",
  "log",
 ]
 
@@ -4874,6 +4902,7 @@ dependencies = [
  "libc",
  "ntex",
  "ntex-files",
+ "ntex-ratelimiter",
  "percent-encoding",
  "portable-pty",
  "rcgen",
@@ -5531,7 +5560,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd"
 dependencies = [
  "fastrand",
- "getrandom 0.3.4",
+ "getrandom 0.4.3",
  "once_cell",
  "rustix",
  "windows-sys 0.61.2",

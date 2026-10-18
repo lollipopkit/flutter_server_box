@@ -60,6 +60,9 @@ pub enum Kind {
     /// account; the detail the verb, the blob's name and its size — never its
     /// contents.
     Backup,
+    /// The MCP endpoint (`api::mcp`). The subject is the account; the detail
+    /// is the tool name, never a token or a command's output.
+    Mcp,
 }
 
 impl Kind {
@@ -76,6 +79,7 @@ impl Kind {
             Kind::Admin => "admin",
             Kind::Machine => "machine",
             Kind::Backup => "backup",
+            Kind::Mcp => "mcp",
         }
     }
 }

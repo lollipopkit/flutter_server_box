@@ -19,6 +19,10 @@ sbm_native = { path = "../crates/sbm_native" }
 # Web framework
 ntex = { version = "3", features = ["tokio", "rustls"] }
 ntex-files = "3.2"
+# Per-IP limiter for `/mcp` (issue #1681). 0.3 is peer-IP only; a per-token
+# key waits on 0.4. Held on `AppState` and checked in the handler so every
+# mount of `configure_api` — tests included — is limited.
+ntex-ratelimiter = "0.3"
 
 # TLS (ring instead of aws-lc: no cmake/assembly dependency for static musl builds)
 rustls = { version = "0.23", default-features = false, features = ["ring", "logging", "std", "tls12"] }
