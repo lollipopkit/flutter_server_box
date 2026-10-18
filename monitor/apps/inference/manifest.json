@@ -1,7 +1,7 @@
 {
   "publisher": "serverbox",
   "name": "inference",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "api": 2,
   "kind": "wasm",
   "title": {
@@ -20,6 +20,23 @@
     "uk": "Локальний інференс",
     "zh-CN": "本地推理",
     "zh-TW": "本機推論"
+  },
+  "description": {
+    "en": "Runs models on this machine: picks an engine and a model that fit its GPU and memory, sets up Ollama, llama.cpp, vLLM or SGLang (MLX on a Mac), and offers them to Agent mode.",
+    "de": "Führt Modelle auf diesem Rechner aus: wählt eine Engine und ein Modell passend zu GPU und Speicher, richtet Ollama, llama.cpp, vLLM oder SGLang ein (MLX auf einem Mac) und stellt sie dem Agent-Modus bereit.",
+    "es": "Ejecuta modelos en esta máquina: elige un motor y un modelo que caben en su GPU y memoria, configura Ollama, llama.cpp, vLLM o SGLang (MLX en un Mac) y los ofrece al modo Agente.",
+    "fr": "Exécute des modèles sur cette machine : choisit un moteur et un modèle adaptés à son GPU et à sa mémoire, installe Ollama, llama.cpp, vLLM ou SGLang (MLX sur Mac) et les propose au mode Agent.",
+    "id": "Menjalankan model di mesin ini: memilih mesin dan model yang sesuai dengan GPU dan memorinya, menyiapkan Ollama, llama.cpp, vLLM, atau SGLang (MLX di Mac), dan menyediakannya untuk mode Agen.",
+    "it": "Esegue modelli su questa macchina: sceglie un motore e un modello adatti a GPU e memoria, configura Ollama, llama.cpp, vLLM o SGLang (MLX su Mac) e li offre alla modalità Agente.",
+    "ja": "このマシンでモデルを実行します：GPU とメモリに合うエンジンとモデルを選び、Ollama、llama.cpp、vLLM、SGLang（Mac では MLX）を設定して Agent モードで使えるようにします。",
+    "ko": "이 컴퓨터에서 모델을 실행합니다: GPU와 메모리에 맞는 엔진과 모델을 고르고, Ollama, llama.cpp, vLLM 또는 SGLang(Mac에서는 MLX)을 설정해 Agent 모드에 제공합니다.",
+    "nl": "Draait modellen op deze machine: kiest een engine en model die bij de GPU en het geheugen passen, zet Ollama, llama.cpp, vLLM of SGLang op (MLX op een Mac) en biedt ze aan de Agent-modus aan.",
+    "pt": "Executa modelos nesta máquina: escolhe um motor e um modelo adequados à GPU e à memória, configura Ollama, llama.cpp, vLLM ou SGLang (MLX num Mac) e oferece-os ao modo Agente.",
+    "ru": "Запускает модели на этой машине: подбирает движок и модель под её GPU и память, настраивает Ollama, llama.cpp, vLLM или SGLang (MLX на Mac) и предлагает их режиму агента.",
+    "tr": "Bu makinede model çalıştırır: GPU'ya ve belleğe uyan bir motor ve model seçer, Ollama, llama.cpp, vLLM veya SGLang'i (Mac'te MLX) kurar ve Ajan moduna sunar.",
+    "uk": "Запускає моделі на цій машині: добирає рушій і модель під її GPU та пам’ять, налаштовує Ollama, llama.cpp, vLLM або SGLang (MLX на Mac) і пропонує їх режиму агента.",
+    "zh-CN": "在本机运行模型：按 GPU 和内存挑选合适的引擎与模型，部署 Ollama、llama.cpp、vLLM 或 SGLang（Mac 上为 MLX），并提供给 Agent 模式使用。",
+    "zh-TW": "在本機執行模型：依 GPU 和記憶體挑選合適的引擎與模型，部署 Ollama、llama.cpp、vLLM 或 SGLang（Mac 上為 MLX），並提供給 Agent 模式使用。"
   },
   "keywords": [
     "ai",

@@ -24,11 +24,16 @@ async fn server() -> TestServer {
 }
 
 async fn server_on(db: sqlx::SqlitePool) -> TestServer {
+    server_and_state(db).await.0
+}
+
+async fn server_and_state(db: sqlx::SqlitePool) -> (TestServer, Arc<AppState>) {
     let _ = rustls::crypto::ring::default_provider().install_default();
     let config = Config { jwt_secret: Some(SECRET.to_string()), ..Default::default() };
     common::add_owner(&db).await;
     let state: Arc<AppState> = AppState::new(Arc::new(config), db);
-    web_test::server(move || {
+    let kept = state.clone();
+    let srv = web_test::server(move || {
         let state = state.clone();
         async move {
             App::new().state(state).service(
@@ -56,7 +61,8 @@ async fn server_on(db: sqlx::SqlitePool) -> TestServer {
             )
         }
     })
-    .await
+    .await;
+    (srv, kept)
 }
 
 struct Reply {
@@ -612,4 +618,36 @@ async fn the_catalog_offers_the_shipped_packages_signed() {
     m["name"] = json!("cleanup");
     let swapped = package(&[("manifest.json", m.to_string().into_bytes()), ("ui/index.html", b"x".to_vec()), ("SIGNATURE", br#"{"key":"other","signature":"AA=="}"#.to_vec())]);
     assert_eq!(install(&srv, swapped).await.json["error"], "invalidId");
+}
+
+/// The installed apps' ids, each with whether it is approved.
+async fn installed(srv: &TestServer) -> Vec<(String, bool)> {
+    let r = call(srv, true, Method::GET, "/api/v1/apps", None).await;
+    r.json["apps"].as_array().unwrap().iter().map(|a| (a["id"].as_str().unwrap().to_string(), !a["approved_permissions"].is_null())).collect()
+}
+
+#[ntex::test]
+async fn the_shipped_apps_are_installed_on_their_own_and_stay_removed_once_removed() {
+    let (srv, state) = server_and_state(common::database().await).await;
+    apps::keep_first_party(&state).await;
+    let apps = installed(&srv).await;
+    for id in ["serverbox.agent_tools", "serverbox.cleanup", "serverbox.inference", "serverbox.kernel", "serverbox.proxy", "serverbox.tailscale"] {
+        assert!(apps.contains(&(id.to_string(), true)), "{id} installed and approved: {apps:?}");
+    }
+    // Only where the machine is Ubuntu.
+    let ubuntu = server_box_monitor::api::machine::os_id() == Some("ubuntu");
+    assert_eq!(apps.iter().any(|(id, _)| id == "serverbox.ubuntu_pro"), ubuntu);
+
+    // Removed: not back on the next pass.
+    let body = json!({ "current_password": common::PASSWORD }).to_string().into_bytes();
+    assert_eq!(call(&srv, true, Method::DELETE, "/api/v1/apps/serverbox.kernel", Some((body, "application/json"))).await.status, 204);
+    apps::keep_first_party(&state).await;
+    assert!(!installed(&srv).await.iter().any(|(id, _)| id == "serverbox.kernel"));
+
+    // Installed again from the store: it waits for approval like any
+    // install, and is the agent's to keep again.
+    let r = call(&srv, true, Method::POST, "/api/v1/apps/catalog/serverbox.kernel/install", None).await;
+    assert_eq!((r.status, r.json["approved_permissions"].is_null()), (200, true), "{}", r.json);
+    apps::keep_first_party(&state).await;
+    assert!(installed(&srv).await.contains(&("serverbox.kernel".to_string(), true)));
 }

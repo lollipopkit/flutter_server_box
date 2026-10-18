@@ -42,7 +42,7 @@ use crate::core::blobs::Blobs;
 use super::admin::{Reauth, reauth};
 use super::authz;
 use super::server::AppState;
-use super::ws::audit::Action;
+use super::ws::audit::{Action, Event, Kind, Outcome};
 
 /// The upload, compressed.
 pub const MAX_PACKAGE_BYTES: usize = 20 << 20;
@@ -86,6 +86,10 @@ pub struct Manifest {
     pub kind: String,
     /// A string, or translations by locale (`en` required then).
     pub title: serde_json::Value,
+    /// What it does, in a sentence or two, shown on its App Store page: as
+    /// `title`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub description: Option<serde_json::Value>,
     pub glyph: String,
     pub tone: String,
     #[serde(default)]
@@ -155,6 +159,19 @@ fn short_text(text: &str, max: usize) -> bool {
     (1..=max).contains(&text.chars().count()) && !text.chars().any(char::is_control)
 }
 
+/// A string of at most [max] bytes, or such strings by locale with `en`.
+fn localized(text: &serde_json::Value, max: usize) -> bool {
+    match text {
+        serde_json::Value::String(t) => short_text(t, max),
+        serde_json::Value::Object(map) => {
+            map.contains_key("en")
+                && map.len() <= 32
+                && map.iter().all(|(locale, t)| short_text(locale, 16) && t.as_str().is_some_and(|t| short_text(t, max)))
+        }
+        _ => false,
+    }
+}
+
 fn valid_size(s: &Size) -> bool {
     (200..=4000).contains(&s.width) && (150..=4000).contains(&s.height)
 }
@@ -176,19 +193,11 @@ pub fn check_manifest(m: &Manifest, first_party: bool) -> Result<(), Refusal> {
     if !api_ok {
         return Err(refused("unsupportedApi"));
     }
-    let title_ok = match &m.title {
-        serde_json::Value::String(t) => short_text(t, 64),
-        serde_json::Value::Object(map) => {
-            map.contains_key("en")
-                && map.len() <= 32
-                && map.iter().all(|(locale, t)| {
-                    short_text(locale, 16) && t.as_str().is_some_and(|t| short_text(t, 64))
-                })
-        }
-        _ => false,
-    };
-    if !title_ok {
+    if !localized(&m.title, 64) {
         return Err(refused("invalidTitle"));
+    }
+    if m.description.as_ref().is_some_and(|d| !localized(d, 600)) {
+        return Err(refused("invalidDescription"));
     }
     if !(1..=64).contains(&m.glyph.len()) || !m.glyph.bytes().all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'_') {
         return Err(refused("invalidGlyph"));
@@ -545,46 +554,145 @@ pub async fn install(
     install_package(&req, &state, package).await
 }
 
-/// Stores [package] as an upload of it, waiting for approval.
-async fn install_package(req: &HttpRequest, state: &AppState, package: Package) -> Result<HttpResponse, web::Error> {
-    // An app its publisher signed is replaced only by a package with the
-    // same signature.
-    let signed: Option<Option<String>> = match sqlx::query_scalar("SELECT signed_by FROM desk_app_package WHERE app_id = ?")
+/// Why a package was not stored.
+enum PutError {
+    /// An app its publisher signed is replaced only by a package with the
+    /// same signature.
+    PublisherChanged,
+    InvalidBackend(String),
+    Internal(String),
+}
+
+/// Stores [package] as an upload of it: waiting for approval unless it is
+/// the very package approved before.
+async fn put(state: &AppState, package: &Package) -> Result<Installed, PutError> {
+    let signed: Option<Option<String>> = sqlx::query_scalar("SELECT signed_by FROM desk_app_package WHERE app_id = ?")
         .bind(package.manifest.id())
         .fetch_optional(&state.db)
         .await
-    {
-        Ok(v) => v,
-        Err(e) => return Ok(super::respond::internal(&e)),
-    };
+        .map_err(|e| PutError::Internal(e.to_string()))?;
     if let Some(Some(key)) = signed
         && package.signed_by != Some(key.as_str())
     {
-        return Ok(HttpResponse::Conflict().json(&refused("publisherChanged")));
+        return Err(PutError::PublisherChanged);
     }
     let before = backend_sha(&state.db, &package.manifest.id()).await;
     // Compiled now (and kept once stored): a backend that is not a component of the
     // agent's world is refused here rather than at its first call.
-    if let (Some(sha), Some(bytes)) = (backend_sha_of(&package), package.files.get("backend.wasm").cloned())
+    if let (Some(sha), Some(bytes)) = (backend_sha_of(package), package.files.get("backend.wasm").cloned())
         && let Err(e) = state.apps.backend(&sha, move || Some(bytes)).await
     {
-        tracing::info!("app backend refused: {e}");
-        return Ok(HttpResponse::BadRequest().json(&serde_json::json!({ "error": "invalidBackend", "detail": e.chars().take(300).collect::<String>() })));
+        return Err(PutError::InvalidBackend(e));
     }
-    match store(&state.db, &state.blobs, &package).await {
+    match store(&state.db, &state.blobs, package).await {
         Ok(app) => {
-            if let Some(sha) = before.filter(|sha| backend_sha_of(&package).as_deref() != Some(sha)) {
+            if let Some(sha) = before.filter(|sha| backend_sha_of(package).as_deref() != Some(sha)) {
                 state.apps.forget(&sha);
+            }
+            Ok(app)
+        }
+        Err(e) => {
+            // Not stored: its compiled backend is no app's.
+            if let Some(sha) = backend_sha_of(package).filter(|sha| before.as_deref() != Some(sha)) {
+                state.apps.forget(&sha);
+            }
+            Err(PutError::Internal(format!("{e:#}")))
+        }
+    }
+}
+
+/// Stores [package] as an upload of it, waiting for approval. An app the
+/// admin removed and installs again is no longer declined.
+async fn install_package(req: &HttpRequest, state: &AppState, package: Package) -> Result<HttpResponse, web::Error> {
+    match put(state, &package).await {
+        Ok(app) => {
+            if let Err(e) = sqlx::query("DELETE FROM desk_app_declined WHERE app_id = ?").bind(&app.id).execute(&state.db).await {
+                return Ok(super::respond::internal(&e));
             }
             audit(req, state, Action::Write, format!("app install {} {} {}", app.id, app.version, package.sha256)).await;
             Ok(HttpResponse::Ok().json(&app))
         }
-        Err(e) => {
-            // Not stored: its compiled backend is no app's.
-            if let Some(sha) = backend_sha_of(&package).filter(|sha| before.as_deref() != Some(sha)) {
-                state.apps.forget(&sha);
+        Err(PutError::PublisherChanged) => Ok(HttpResponse::Conflict().json(&refused("publisherChanged"))),
+        Err(PutError::InvalidBackend(e)) => {
+            tracing::info!("app backend refused: {e}");
+            Ok(HttpResponse::BadRequest().json(&serde_json::json!({ "error": "invalidBackend", "detail": e.chars().take(300).collect::<String>() })))
+        }
+        Err(PutError::Internal(e)) => Ok(super::respond::internal(&e)),
+    }
+}
+
+/// Grants [app] exactly what its manifest asks for, if it is still the
+/// package [app] names: false when it was replaced meanwhile.
+async fn grant(db: &sqlx::SqlitePool, app: &Installed) -> Result<bool, sqlx::Error> {
+    let done = sqlx::query("UPDATE desk_app_package SET approved_permissions = ?, approved_at = ? WHERE app_id = ? AND sha256 = ?")
+        .bind(serde_json::to_string(&app.manifest.permissions).unwrap_or_default())
+        .bind(chrono::Utc::now().to_rfc3339())
+        .bind(&app.id)
+        .bind(&app.sha256)
+        .execute(db)
+        .await?;
+    Ok(done.rows_affected() == 1)
+}
+
+/// Whether [a] is a later version than [b] (both semver; otherwise not).
+fn later(a: &str, b: &str) -> bool {
+    matches!((semver::Version::parse(a), semver::Version::parse(b)), (Ok(a), Ok(b)) if a > b)
+}
+
+/// The desk apps the agent ships signed with a first-party key (and the
+/// store's later first-party versions of them) are part of the desk, as the
+/// panel's own apps were: installed and approved on their own, on the
+/// systems they are for, and kept at the latest version. One the admin
+/// removed (`desk_app_declined`) stays removed until installed again; an
+/// installed app of another signature, or a later version, is left alone.
+/// Run at start and after the catalog is read.
+pub async fn keep_first_party(state: &AppState) {
+    static RUNNING: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+    let _one = RUNNING.lock().await;
+    let os = super::machine::os_id();
+    for offered in state.stacks.catalog.desk.all() {
+        let package = &offered.package;
+        let Some(key) = package.signed_by else { continue };
+        if !package.manifest.for_os(os) {
+            continue;
+        }
+        let id = package.manifest.id();
+        let declined = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM desk_app_declined WHERE app_id = ?").bind(&id).fetch_one(&state.db).await;
+        let installed = load(&state.db, &id).await;
+        let (declined, installed) = match (declined, installed) {
+            (Ok(d), Ok(i)) => (d > 0, i),
+            (Err(e), _) | (_, Err(e)) => {
+                tracing::warn!("desk app {id}: {e}");
+                continue;
             }
-            Ok(super::respond::internal(&format!("{e:#}")))
+        };
+        if declined {
+            continue;
+        }
+        let app = match installed {
+            Some(i) if i.signed_by.as_deref() != Some(key) => continue,
+            Some(i) if i.sha256 == package.sha256 && i.approved_permissions.is_some() => continue,
+            Some(i) if i.sha256 == package.sha256 => i,
+            Some(i) if !later(&package.manifest.version, &i.version) => continue,
+            _ => match put(state, package).await {
+                Ok(app) => app,
+                Err(PutError::PublisherChanged) => continue,
+                Err(PutError::InvalidBackend(e) | PutError::Internal(e)) => {
+                    tracing::error!("desk app {id}: {e}");
+                    continue;
+                }
+            },
+        };
+        match grant(&state.db, &app).await {
+            Ok(true) => {
+                tracing::info!("desk app {id} {} installed", app.version);
+                Event::new(Kind::Admin, Action::Write, Outcome::Ok)
+                    .detail(format!("app preinstall {id} {} {}", app.version, app.sha256))
+                    .record(&state.db)
+                    .await;
+            }
+            Ok(false) => {}
+            Err(e) => tracing::warn!("desk app {id}: {e}"),
         }
     }
 }
@@ -669,15 +777,8 @@ pub async fn approve(
     if body.sha256 != app.sha256 || asked != given || body.permissions.len() != given.len() {
         return Ok(HttpResponse::Conflict().json(&serde_json::json!({ "error": "permissionsChanged", "app": app })));
     }
-    let done = sqlx::query("UPDATE desk_app_package SET approved_permissions = ?, approved_at = ? WHERE app_id = ? AND sha256 = ?")
-        .bind(serde_json::to_string(&app.manifest.permissions).unwrap_or_default())
-        .bind(chrono::Utc::now().to_rfc3339())
-        .bind(&app.id)
-        .bind(&app.sha256)
-        .execute(&state.db)
-        .await;
-    match done {
-        Ok(r) if r.rows_affected() == 1 => {
+    match grant(&state.db, &app).await {
+        Ok(true) => {
             audit(&req, &state, Action::Write, format!("app approve {} {} {}", app.id, app.version, app.sha256)).await;
             match load(&state.db, &app.id).await {
                 Ok(Some(app)) => Ok(HttpResponse::Ok().json(&app)),
@@ -686,7 +787,7 @@ pub async fn approve(
             }
         }
         // Replaced between the read and the write.
-        Ok(_) => Ok(HttpResponse::Conflict().json(&refused("permissionsChanged"))),
+        Ok(false) => Ok(HttpResponse::Conflict().json(&refused("permissionsChanged"))),
         Err(e) => Ok(super::respond::internal(&e)),
     }
 }
@@ -715,11 +816,22 @@ pub async fn remove(
     let package = sqlx::query("DELETE FROM desk_app_package WHERE app_id = ?").bind(id.as_str()).execute(&mut *tx).await;
     match (files, package) {
         (Ok(_), Ok(r)) => {
-            if let Err(e) = tx.commit().await {
-                return Ok(super::respond::internal(&e));
-            }
             if r.rows_affected() == 0 {
                 return Ok(not_found());
+            }
+            // A first-party app the agent installs on its own stays removed.
+            if state.stacks.catalog.desk.get(&id).is_some_and(|o| o.package.signed_by.is_some()) {
+                let declined = sqlx::query("INSERT INTO desk_app_declined (app_id, declined_at) VALUES (?, ?) ON CONFLICT(app_id) DO NOTHING")
+                    .bind(id.as_str())
+                    .bind(chrono::Utc::now().to_rfc3339())
+                    .execute(&mut *tx)
+                    .await;
+                if let Err(e) = declined {
+                    return Ok(super::respond::internal(&e));
+                }
+            }
+            if let Err(e) = tx.commit().await {
+                return Ok(super::respond::internal(&e));
             }
             state.blobs.collect_soon(&state.db);
             if let Some(sha) = backend {
@@ -827,6 +939,7 @@ mod tests {
             api: 1,
             kind: "web".into(),
             title: serde_json::json!({ "en": "Notes", "de": "Notizen" }),
+            description: Some(serde_json::json!("Notes kept on the server.")),
             glyph: "sticky_note_2".into(),
             tone: "amber".into(),
             permissions: vec!["notifications".into()],
@@ -873,6 +986,8 @@ mod tests {
             (|m| m.kind = "native".into(), "invalidKind"),
             (|m| m.title = serde_json::json!({ "de": "Notizen" }), "invalidTitle"),
             (|m| m.title = serde_json::json!(""), "invalidTitle"),
+            (|m| m.description = Some(serde_json::json!({ "de": "Notizen" })), "invalidDescription"),
+            (|m| m.description = Some(serde_json::json!("x".repeat(601))), "invalidDescription"),
             (|m| m.glyph = "<svg>".into(), "invalidGlyph"),
             (|m| m.tone = "red".into(), "invalidTone"),
             (|m| m.permissions = vec!["exec".into()], "invalidPermission"),

@@ -5530,14 +5530,6 @@ type RootTranslation = {
 	 */
 	deskDock: string
 	/**
-	 * A​p​p​s​ ​m​o​v​e​d​ ​t​o​ ​t​h​e​ ​A​p​p​ ​S​t​o​r​e
-	 */
-	deskMovedToStoreTitle: string
-	/**
-	 * K​e​r​n​e​l​s​,​ ​C​l​e​a​n​u​p​,​ ​T​a​i​l​s​c​a​l​e​,​ ​U​b​u​n​t​u​ ​P​r​o​,​ ​R​e​v​e​r​s​e​ ​p​r​o​x​y​,​ ​L​o​c​a​l​ ​i​n​f​e​r​e​n​c​e​ ​a​n​d​ ​A​I​ ​a​g​e​n​t​s​ ​a​r​e​ ​i​n​s​t​a​l​l​e​d​ ​f​r​o​m​ ​t​h​e​ ​A​p​p​ ​S​t​o​r​e​ ​n​o​w​.​ ​Y​o​u​r​ ​d​o​c​k​ ​k​e​e​p​s​ ​a​ ​p​l​a​c​e​ ​f​o​r​ ​t​h​e​m​ ​u​n​t​i​l​ ​t​h​e​y​ ​a​r​e​.
-	 */
-	deskMovedToStore: string
-	/**
 	 * S​t​a​t​u​s
 	 */
 	deskAppStatus: string
@@ -8606,6 +8598,35 @@ type RootTranslation = {
 	 * E​x​t​e​n​s​i​o​n​s
 	 */
 	storeExtend: string
+	/**
+	 * U​n​i​n​s​t​a​l​l
+	 */
+	storeDeskUninstall: string
+	/**
+	 * U​n​i​n​s​t​a​l​l​ ​{​n​a​m​e​}​ ​f​r​o​m​ ​t​h​i​s​ ​s​e​r​v​e​r​,​ ​w​i​t​h​ ​w​h​a​t​ ​i​t​ ​k​e​p​t​.​ ​I​t​ ​i​s​ ​n​o​t​ ​i​n​s​t​a​l​l​e​d​ ​a​g​a​i​n​ ​o​n​ ​i​t​s​ ​o​w​n​ ​u​n​t​i​l​ ​y​o​u​ ​i​n​s​t​a​l​l​ ​i​t​ ​h​e​r​e​.
+	 * @param {unknown} name
+	 */
+	storeDeskUninstallMessage: RequiredParams<'name'>
+	/**
+	 * F​r​o​m
+	 */
+	storeDeskFrom: string
+	/**
+	 * S​h​i​p​p​e​d​ ​w​i​t​h​ ​t​h​e​ ​a​g​e​n​t
+	 */
+	storeDeskShipped: string
+	/**
+	 * C​o​m​e​s​ ​w​i​t​h​ ​S​e​r​v​e​r​B​o​x​:​ ​i​n​s​t​a​l​l​e​d​ ​o​n​ ​i​t​s​ ​o​w​n​ ​a​n​d​ ​k​e​p​t​ ​u​p​ ​t​o​ ​d​a​t​e​.​ ​U​n​i​n​s​t​a​l​l​e​d​,​ ​i​t​ ​s​t​a​y​s​ ​s​o​ ​u​n​t​i​l​ ​y​o​u​ ​i​n​s​t​a​l​l​ ​i​t​ ​a​g​a​i​n​.
+	 */
+	storeDeskBuiltIn: string
+	/**
+	 * R​u​n​s​ ​o​n
+	 */
+	storeDeskRunsOn: string
+	/**
+	 * U​p​d​a​t​e
+	 */
+	storeDeskUpdate: string
 	/**
 	 * I​n​s​t​a​l​l
 	 */
@@ -15574,14 +15595,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	deskDock: () => LocalizedString
 	/**
-	 * Apps moved to the App Store
-	 */
-	deskMovedToStoreTitle: () => LocalizedString
-	/**
-	 * Kernels, Cleanup, Tailscale, Ubuntu Pro, Reverse proxy, Local inference and AI agents are installed from the App Store now. Your dock keeps a place for them until they are.
-	 */
-	deskMovedToStore: () => LocalizedString
-	/**
 	 * Status
 	 */
 	deskAppStatus: () => LocalizedString
@@ -18541,6 +18554,34 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Extensions
 	 */
 	storeExtend: () => LocalizedString
+	/**
+	 * Uninstall
+	 */
+	storeDeskUninstall: () => LocalizedString
+	/**
+	 * Uninstall {name} from this server, with what it kept. It is not installed again on its own until you install it here.
+	 */
+	storeDeskUninstallMessage: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * From
+	 */
+	storeDeskFrom: () => LocalizedString
+	/**
+	 * Shipped with the agent
+	 */
+	storeDeskShipped: () => LocalizedString
+	/**
+	 * Comes with ServerBox: installed on its own and kept up to date. Uninstalled, it stays so until you install it again.
+	 */
+	storeDeskBuiltIn: () => LocalizedString
+	/**
+	 * Runs on
+	 */
+	storeDeskRunsOn: () => LocalizedString
+	/**
+	 * Update
+	 */
+	storeDeskUpdate: () => LocalizedString
 	/**
 	 * Install
 	 */

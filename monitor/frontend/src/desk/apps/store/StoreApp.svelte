@@ -13,6 +13,8 @@
   import { AppToolbar, PageStack, SplitView, useWindow } from '../../sys'
   import StackDetail from '../../../components/stack/StackDetail.svelte'
   import DeskPackages from './DeskPackages.svelte'
+  import DeskPackageDetail from './DeskPackageDetail.svelte'
+  import { textOf } from './deskPackage'
   import { healthBadge } from '../../../components/stack/health'
   import { pick } from '../../../components/stack/text'
   import { LL, locale } from '../../../i18n/i18n-svelte'
@@ -32,7 +34,8 @@
   /// The sidebar's place: `all`, `recommended`, `installed`, `desk` (the desk
   /// apps) or a category; kept with the window.
   let place = $state(untrack(() => (win.appState as Kept)?.place ?? 'all'))
-  /// The app whose page is open, kept with the window.
+  /// The app whose page is open, kept with the window: a web app's id, or
+  /// `desk:<id>` for a desk app's.
   let open = $state<string | null>(untrack(() => (win.appState as Kept)?.app ?? null))
   let left = $state<string | null>(null)
   // Opened again on another app's page (a notification about it).
@@ -42,6 +45,9 @@
   })
 
   let refreshing = $state(false)
+  /// Rises with each read of the catalogs, which the desk apps follow (the
+  /// agent may have installed or updated one meanwhile).
+  let revision = $state(0)
   const caps = $derived(capabilitiesStore.byServer[servers.currentId])
   /// Whether the account may act over this link: setting up, changing and
   /// removing all need it.
@@ -62,6 +68,7 @@
   async function refresh() {
     refreshing = true
     await load(servers.currentId, true)
+    revision++
     refreshing = false
   }
 
@@ -111,6 +118,21 @@
     }),
   )
   const current = $derived(apps?.find((a) => a.manifest.id === open) ?? null)
+  const deskOpen = $derived(open?.startsWith('desk:') ? open.slice('desk:'.length) : null)
+  /// The open desk app's title, for the title bar.
+  let deskTitle = $state<string | null>(null)
+  $effect(() => {
+    const id = deskOpen
+    deskTitle = null
+    if (!id) return
+    void api.appCatalog().then(
+      (c) => {
+        const o = c.apps.find((a) => a.id === id)
+        if (o && deskOpen === id) deskTitle = textOf(o.manifest.title, $locale)
+      },
+      () => {},
+    )
+  })
 
   const CATEGORY_ICONS: Record<string, string> = {
     photos: 'photo_library',
@@ -192,7 +214,7 @@
     </SidebarSection>
   {/snippet}
 
-<AppToolbar title={current ? pick(current.manifest.title, $locale) : searching ? undefined : placeText(place)} back={open ? () => show(null) : undefined}>
+<AppToolbar title={current ? pick(current.manifest.title, $locale) : deskOpen ? (deskTitle ?? undefined) : searching ? undefined : placeText(place)} back={open ? () => show(null) : undefined}>
   {#snippet actions()}
     {#if !open && canChange}
       <IconButton icon="refresh" label={$LL.storeRefresh()} disabled={refreshing} onclick={() => void refresh()} />
@@ -209,7 +231,11 @@
   back={open ? { key: `home:${place}`, go: () => show(null) } : null}
   forward={!open && left ? { key: left, go: () => show(left) } : null}
 >
-  {#if open}
+  {#if deskOpen}
+    <main class="pane-reading pb-[21px] pt-[5px]">
+      {#key deskOpen}<DeskPackageDetail id={deskOpen} {canChange} />{/key}
+    </main>
+  {:else if open}
     <main class="pane-reading pb-[21px] pt-[5px]">
       {#key open}<StackDetail stackId={open} />{/key}
     </main>
@@ -222,7 +248,7 @@
         </Card>
       {/if}
       {#if place === 'desk' || searching}
-        <DeskPackages {query} {canChange} heading={searching} />
+        <DeskPackages {query} {revision} heading={searching} onopen={(id) => show(`desk:${id}`)} />
       {/if}
       {#if place !== 'desk' || searching}
         {#if !apps}

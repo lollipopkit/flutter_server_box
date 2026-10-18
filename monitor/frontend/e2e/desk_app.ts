@@ -10,17 +10,18 @@ export async function openApp(page: Page, id: string) {
   await page.locator(`.apps-panel .apps-panel-app[data-app="${id}"]`).click()
 }
 
-/// Installs and approves the app titled [title] from the App Store's desk
-/// apps (the signed package the agent ships), unless it is there already;
-/// the built-in app of its id gives way to it.
+/// Makes sure the app titled [title] is installed and approved: the agent
+/// installs the first-party ones on its own, so its App Store page (Desk
+/// apps, the app's card) shows Open; otherwise Install there, with the
+/// account's password.
 export async function installFromStore(page: Page, id: string, title: string) {
   await openApp(page, 'serverbox.store')
-  const store = page.locator('.desk-window').filter({ has: page.getByPlaceholder('Search apps') })
+  const store = page.locator('.desk-window').filter({ has: page.locator('.lk-window__sidebar').getByRole('button', { name: 'Desk apps' }) })
   await store.locator('.lk-window__sidebar').getByRole('button', { name: 'Desk apps' }).click()
-  const card = store.locator('.lk-card').filter({ has: page.getByText(title, { exact: true }) }).filter({ hasText: 'ServerBox' })
-  const open = card.getByRole('button', { name: 'Open', exact: true })
-  const install = card.getByRole('button', { name: 'Install', exact: true })
-  await expect(open.or(install)).toBeVisible({ timeout: 60_000 })
+  await store.locator('.lk-card').filter({ has: page.getByText(title, { exact: true }) }).click()
+  const open = store.getByRole('button', { name: 'Open', exact: true })
+  const install = store.getByRole('button', { name: /^(Install|Approve|Update to .*)$/ })
+  await expect(open.or(install).first()).toBeVisible({ timeout: 60_000 })
   if (await install.isVisible()) {
     await install.click()
     const field = page.locator('.lk-dialog').last().getByLabel('Current password')

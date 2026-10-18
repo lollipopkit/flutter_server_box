@@ -1,7 +1,7 @@
 {
   "publisher": "serverbox",
   "name": "cleanup",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "api": 2,
   "kind": "wasm",
   "title": {
@@ -20,6 +20,23 @@
     "uk": "Очищення",
     "zh-CN": "清理",
     "zh-TW": "清理"
+  },
+  "description": {
+    "en": "Finds what can go: package caches, old journals and logs, crash reports, the trash, caches, old snaps and what removed web apps left behind. Cleans what you choose, as root.",
+    "de": "Findet, was weg kann: Paket-Caches, alte Journale und Logs, Absturzberichte, den Papierkorb, Caches, alte Snaps und Reste entfernter Web-Apps. Bereinigt als root, was Sie auswählen.",
+    "es": "Encuentra lo que sobra: cachés de paquetes, diarios y registros antiguos, informes de fallos, la papelera, cachés, snaps antiguos y lo que dejaron las aplicaciones web eliminadas. Limpia como root lo que elijas.",
+    "fr": "Repère ce qui peut partir : caches de paquets, anciens journaux, rapports de plantage, corbeille, caches, anciens snaps et restes d’applications web supprimées. Nettoie en root ce que vous choisissez.",
+    "id": "Menemukan yang bisa dihapus: cache paket, jurnal dan log lama, laporan crash, tempat sampah, cache, snap lama, dan sisa aplikasi web yang dihapus. Membersihkan yang Anda pilih sebagai root.",
+    "it": "Trova ciò che si può eliminare: cache dei pacchetti, vecchi journal e log, rapporti di crash, cestino, cache, vecchi snap e i resti delle app web rimosse. Pulisce come root ciò che scegli.",
+    "ja": "削除できるものを探します：パッケージキャッシュ、古いジャーナルとログ、クラッシュレポート、ゴミ箱、キャッシュ、古い snap、削除した Web アプリの残り。選んだものを root で削除します。",
+    "ko": "지울 수 있는 것을 찾습니다: 패키지 캐시, 오래된 저널과 로그, 충돌 보고서, 휴지통, 캐시, 오래된 snap, 제거한 웹 앱이 남긴 것. 선택한 항목을 root로 정리합니다.",
+    "nl": "Vindt wat weg kan: pakketcaches, oude journals en logs, crashrapporten, de prullenbak, caches, oude snaps en resten van verwijderde web-apps. Ruimt als root op wat u kiest.",
+    "pt": "Encontra o que pode sair: caches de pacotes, journals e logs antigos, relatórios de falhas, a lixeira, caches, snaps antigos e o que apps web removidos deixaram. Limpa como root o que escolher.",
+    "ru": "Находит то, что можно удалить: кэши пакетов, старые журналы и логи, отчёты о сбоях, корзину, кэши, старые snap и остатки удалённых веб-приложений. Очищает выбранное от имени root.",
+    "tr": "Silinebilecekleri bulur: paket önbellekleri, eski günlükler, çökme raporları, çöp kutusu, önbellekler, eski snap'ler ve kaldırılan web uygulamalarından kalanlar. Seçtiklerinizi root olarak temizler.",
+    "uk": "Знаходить те, що можна прибрати: кеші пакетів, старі журнали й логи, звіти про збої, кошик, кеші, старі snap і залишки видалених вебзастосунків. Очищує вибране від імені root.",
+    "zh-CN": "找出可以清理的内容：软件包缓存、旧日志、崩溃报告、回收站、缓存、旧 snap，以及已卸载网页应用的残留。以 root 清理你选中的项目。",
+    "zh-TW": "找出可以清理的內容：套件快取、舊日誌、當機報告、垃圾桶、快取、舊 snap，以及已移除網頁應用程式的殘留。以 root 清理你選取的項目。"
   },
   "keywords": [
     "cleanup",

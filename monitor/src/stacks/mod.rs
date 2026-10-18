@@ -562,7 +562,12 @@ pub async fn start_proxy(state: &Arc<AppState>, row: &StackRow) {
 /// deployed app gets its proxy back.
 pub async fn resume(state: &Arc<AppState>) {
     let st = state.clone();
-    tokio::spawn(async move { st.stacks.catalog.refresh(true).await });
+    tokio::spawn(async move {
+        // What the agent ships first, then the store's later versions.
+        crate::api::apps::keep_first_party(&st).await;
+        st.stacks.catalog.refresh(true).await;
+        crate::api::apps::keep_first_party(&st).await;
+    });
     tokio::spawn(health::watch(state.clone()));
     match store::fail_interrupted(&state.db).await {
         Ok(0) => {}

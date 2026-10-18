@@ -2681,6 +2681,8 @@ export interface PackageManifest {
   api: number
   kind: 'web' | 'wasm'
   title: string | Record<string, string>
+  /// What it does, shown on its App Store page.
+  description?: string | Record<string, string>
   glyph: string
   tone: string
   permissions: string[]

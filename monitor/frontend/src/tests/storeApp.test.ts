@@ -5,11 +5,20 @@ import StoreApp from '../desk/apps/store/StoreApp.svelte'
 import { api } from '../lib/api'
 import { capabilitiesStore } from '../lib/capabilities.svelte'
 import { servers } from '../lib/servers.svelte'
-import type { Capabilities, StackApp, StackManifest } from '../types'
+import type { Capabilities, InstalledApp, OfferedApp, StackApp, StackManifest } from '../types'
 
 vi.mock('../lib/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../lib/api')>()),
-  api: { listStacks: vi.fn(), refreshStacks: vi.fn(), prepareStack: vi.fn() },
+  api: {
+    listStacks: vi.fn(),
+    refreshStacks: vi.fn(),
+    prepareStack: vi.fn(),
+    appCatalog: vi.fn(),
+    listApps: vi.fn(),
+    removeApp: vi.fn(),
+    installOffered: vi.fn(),
+    approveApp: vi.fn(),
+  },
 }))
 
 const mocked = vi.mocked(api)
@@ -54,7 +63,33 @@ beforeEach(() => {
   servers.list = [{ id: 'local', url: '', token: 't' }]
   servers.currentId = 'local'
   mocked.listStacks.mockResolvedValue({ apps: structuredClone(apps) })
+  mocked.appCatalog.mockResolvedValue({ apps: [offered] })
+  mocked.listApps.mockResolvedValue({ apps: [installedKernel] })
 })
+
+const kernelManifest = {
+  publisher: 'serverbox',
+  name: 'kernel',
+  version: '1.1.0',
+  api: 2,
+  kind: 'wasm' as const,
+  title: { en: 'Kernels' },
+  description: { en: 'The kernels GRUB boots.' },
+  glyph: 'memory',
+  tone: 'ink',
+  permissions: ['root'],
+}
+const offered: OfferedApp = { id: 'serverbox.kernel', version: '1.1.0', sha256: 'a'.repeat(64), size: 2048, manifest: kernelManifest, signedBy: 'serverbox-2026', source: 'bundled', repo: null }
+const installedKernel: InstalledApp = {
+  id: 'serverbox.kernel',
+  version: '1.1.0',
+  sha256: 'a'.repeat(64),
+  manifest: kernelManifest,
+  approved_permissions: ['root'],
+  installed_at: '2026-10-18T00:00:00Z',
+  approved_at: '2026-10-18T00:00:00Z',
+  signed_by: 'serverbox-2026',
+}
 
 describe('the App Store', () => {
   it('lists the catalog with each app state, filtered by search', async () => {
@@ -80,6 +115,20 @@ describe('the App Store', () => {
     expect(screen.queryByText('Media does things.')).toBeNull()
     await fireEvent.input(screen.getByPlaceholderText('Search apps'), { target: { value: 'media' } })
     expect(screen.getByText('Media does things.')).toBeInTheDocument()
+  })
+
+  it("opens a desk app's page and uninstalls it with the password", async () => {
+    capabilitiesStore.byServer = { local: caps(true) }
+    mocked.removeApp.mockResolvedValue(undefined as never)
+    render(StoreApp)
+    await fireEvent.click(await screen.findByRole('button', { name: /^Desk apps/ }))
+    await fireEvent.click(await screen.findByText('The kernels GRUB boots.'))
+    expect(await screen.findByText(/run scripts as root/)).toBeInTheDocument()
+    expect(screen.getByText('Shipped with the agent')).toBeInTheDocument()
+    await fireEvent.click(screen.getByRole('button', { name: 'Uninstall' }))
+    await fireEvent.input(screen.getByLabelText('Current password'), { target: { value: 'pw' } })
+    await fireEvent.click(screen.getByRole('button', { name: 'Confirm' }))
+    await vi.waitFor(() => expect(mocked.removeApp).toHaveBeenCalledWith('serverbox.kernel', 'pw'))
   })
 
   it("opens an app's page: set up where the account may act, otherwise told why not", async () => {

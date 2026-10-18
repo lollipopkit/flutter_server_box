@@ -11,6 +11,7 @@
 #   scripts/desk-vm-e2e.sh <node> agent_tools_app
 #   scripts/desk-vm-e2e.sh <node> inference_app    # Docker and a fake Ollama made first
 #   scripts/desk-vm-e2e.sh <node> catalog_apps     # Docker, a 64 GiB disk and 6 GiB of memory
+#   scripts/desk-vm-e2e.sh <node> desk_apps        # the shipped desk apps installed on their own
 #   scripts/desk-vm-e2e.sh <node> <spec>           # any other frontend/e2e/<spec>.e2e.ts
 #
 # Builds the agent on SBM_E2E_BUILD_HOST (lkd-wsl) and the panel here;
@@ -28,7 +29,7 @@ set -eu
 
 node=${1:-}
 spec=${2:-}
-[ -n "$node" ] && [ -f "$(dirname "$0")/../monitor/frontend/e2e/$spec.e2e.ts" ] || { sed -n '2,18p' "$0" >&2; exit 2; }
+[ -n "$node" ] && [ -f "$(dirname "$0")/../monitor/frontend/e2e/$spec.e2e.ts" ] || { sed -n '2,19p' "$0" >&2; exit 2; }
 build=${SBM_E2E_BUILD_HOST:-lkd-wsl}
 root=$(cd "$(dirname "$0")/.." && pwd)
 src='src/flutter_server_box'

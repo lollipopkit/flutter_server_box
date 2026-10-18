@@ -1,10 +1,27 @@
 {
   "publisher": "serverbox",
   "name": "tailscale",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "api": 2,
   "kind": "wasm",
   "title": "Tailscale",
+  "description": {
+    "en": "This machine on your tailnet: sign in (Tailscale's or your own Headscale), its peers, an exit node, routes, DNS and Tailscale SSH.",
+    "de": "Dieser Rechner in Ihrem Tailnet: Anmeldung (bei Tailscale oder Ihrem eigenen Headscale), seine Peers, ein Exit-Node, Routen, DNS und Tailscale SSH.",
+    "es": "Esta máquina en tu tailnet: inicio de sesión (en Tailscale o en tu propio Headscale), sus pares, un nodo de salida, rutas, DNS y Tailscale SSH.",
+    "fr": "Cette machine sur votre tailnet : connexion (Tailscale ou votre propre Headscale), ses pairs, un nœud de sortie, les routes, le DNS et Tailscale SSH.",
+    "id": "Mesin ini di tailnet Anda: masuk (Tailscale atau Headscale Anda sendiri), peer-nya, exit node, rute, DNS, dan Tailscale SSH.",
+    "it": "Questa macchina nella tua tailnet: accesso (a Tailscale o al tuo Headscale), i suoi peer, un exit node, rotte, DNS e Tailscale SSH.",
+    "ja": "tailnet 上のこのマシン：サインイン（Tailscale または独自の Headscale）、ピア、出口ノード、ルート、DNS、Tailscale SSH。",
+    "ko": "tailnet의 이 컴퓨터: 로그인(Tailscale 또는 자체 Headscale), 피어, 출구 노드, 경로, DNS, Tailscale SSH.",
+    "nl": "Deze machine in uw tailnet: aanmelden (bij Tailscale of uw eigen Headscale), de peers, een exit-node, routes, DNS en Tailscale SSH.",
+    "pt": "Esta máquina na sua tailnet: login (no Tailscale ou no seu próprio Headscale), seus pares, um nó de saída, rotas, DNS e Tailscale SSH.",
+    "ru": "Эта машина в вашем tailnet: вход (в Tailscale или собственный Headscale), её узлы, выходной узел, маршруты, DNS и Tailscale SSH.",
+    "tr": "Bu makine tailnet'inizde: oturum açma (Tailscale veya kendi Headscale'iniz), eşleri, çıkış düğümü, rotalar, DNS ve Tailscale SSH.",
+    "uk": "Ця машина у вашому tailnet: вхід (у Tailscale або власний Headscale), її вузли, вихідний вузол, маршрути, DNS і Tailscale SSH.",
+    "zh-CN": "本机在 tailnet 中的一切：登录（Tailscale 或自建的 Headscale）、节点、出口节点、路由、DNS 和 Tailscale SSH。",
+    "zh-TW": "本機在 tailnet 中的一切：登入（Tailscale 或自架的 Headscale）、節點、出口節點、路由、DNS 和 Tailscale SSH。"
+  },
   "keywords": [
     "tailscale",
     "vpn",

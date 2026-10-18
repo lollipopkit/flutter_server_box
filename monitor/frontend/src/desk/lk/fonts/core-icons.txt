@@ -266,9 +266,11 @@ tune
 tv
 unfold_more
 update
+upgrade
 upload
 upload_file
 usb
+verified
 vertical_align_bottom
 vertical_split
 view_column

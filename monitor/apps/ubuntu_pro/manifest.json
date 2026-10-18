@@ -1,7 +1,7 @@
 {
   "publisher": "serverbox",
   "name": "ubuntu_pro",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "api": 2,
   "kind": "wasm",
   "title": {
@@ -20,6 +20,23 @@
     "uk": "Ubuntu Pro",
     "zh-CN": "Ubuntu Pro",
     "zh-TW": "Ubuntu Pro"
+  },
+  "description": {
+    "en": "Attach this Ubuntu machine to Ubuntu Pro and turn its services on and off: ESM, Livepatch, FIPS, USG and more.",
+    "de": "Diesen Ubuntu-Rechner mit Ubuntu Pro verbinden und seine Dienste ein- und ausschalten: ESM, Livepatch, FIPS, USG und mehr.",
+    "es": "Vincula esta máquina Ubuntu a Ubuntu Pro y activa o desactiva sus servicios: ESM, Livepatch, FIPS, USG y más.",
+    "fr": "Rattachez cette machine Ubuntu à Ubuntu Pro et activez ou désactivez ses services : ESM, Livepatch, FIPS, USG et d’autres.",
+    "id": "Hubungkan mesin Ubuntu ini ke Ubuntu Pro dan nyalakan atau matikan layanannya: ESM, Livepatch, FIPS, USG, dan lainnya.",
+    "it": "Collega questa macchina Ubuntu a Ubuntu Pro e attiva o disattiva i suoi servizi: ESM, Livepatch, FIPS, USG e altri.",
+    "ja": "この Ubuntu マシンを Ubuntu Pro に接続し、ESM、Livepatch、FIPS、USG などのサービスを有効・無効にします。",
+    "ko": "이 Ubuntu 컴퓨터를 Ubuntu Pro에 연결하고 ESM, Livepatch, FIPS, USG 등의 서비스를 켜고 끕니다.",
+    "nl": "Koppel deze Ubuntu-machine aan Ubuntu Pro en zet de diensten aan en uit: ESM, Livepatch, FIPS, USG en meer.",
+    "pt": "Associe esta máquina Ubuntu ao Ubuntu Pro e ative ou desative os seus serviços: ESM, Livepatch, FIPS, USG e outros.",
+    "ru": "Подключите эту машину Ubuntu к Ubuntu Pro и включайте или отключайте её службы: ESM, Livepatch, FIPS, USG и другие.",
+    "tr": "Bu Ubuntu makinesini Ubuntu Pro'ya bağlayın ve hizmetlerini açıp kapatın: ESM, Livepatch, FIPS, USG ve dahası.",
+    "uk": "Під’єднайте цю машину Ubuntu до Ubuntu Pro та вмикайте чи вимикайте її служби: ESM, Livepatch, FIPS, USG та інші.",
+    "zh-CN": "将这台 Ubuntu 机器接入 Ubuntu Pro，并开关其服务：ESM、Livepatch、FIPS、USG 等。",
+    "zh-TW": "將這台 Ubuntu 機器接入 Ubuntu Pro，並開關其服務：ESM、Livepatch、FIPS、USG 等。"
   },
   "keywords": [
     "ubuntu",

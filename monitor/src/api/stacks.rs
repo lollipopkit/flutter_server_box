@@ -58,7 +58,10 @@ pub async fn list(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> 
     // Read again in the background when an hour old; this answer is what is
     // known now.
     let st = state.get_ref().clone();
-    tokio::spawn(async move { st.stacks.catalog.refresh(false).await });
+    tokio::spawn(async move {
+        st.stacks.catalog.refresh(false).await;
+        super::apps::keep_first_party(&st).await;
+    });
     answer_list(&state).await
 }
 
@@ -66,6 +69,7 @@ pub async fn list(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> 
 pub async fn refresh(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     require!(authz::acting_caller(&req, &state).await);
     state.stacks.catalog.refresh(true).await;
+    super::apps::keep_first_party(&state).await;
     answer_list(&state).await
 }
 
