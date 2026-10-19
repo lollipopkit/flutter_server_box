@@ -5591,6 +5591,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String launchFailedLogs(String path) {
     return '日志：$path';
   }
+
+  @override
+  String get reconnect => '重新连接';
+
+  @override
+  String get reconnectEndsShell =>
+      '没有可以重新接入的 tmux 会话，重新连接会结束当前 shell 及其中仍在运行的程序，并清除屏幕上的输出。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -11183,4 +11190,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String launchFailedLogs(String path) {
     return '日誌：$path';
   }
+
+  @override
+  String get reconnect => '重新連線';
+
+  @override
+  String get reconnectEndsShell =>
+      '沒有可以重新接入的 tmux 工作階段，重新連線會結束目前的 shell 及其中仍在執行的程式，並清除畫面上的輸出。';
 }

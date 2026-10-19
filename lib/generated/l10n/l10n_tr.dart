@@ -5948,4 +5948,11 @@ class AppLocalizationsTr extends AppLocalizations {
   String launchFailedLogs(String path) {
     return 'Günlükler: $path';
   }
+
+  @override
+  String get reconnect => 'Yeniden bağlan';
+
+  @override
+  String get reconnectEndsShell =>
+      'Yeniden bağlanacak bir tmux oturumu yok; yeniden bağlanmak bu kabuğu ve içinde hâlâ çalışan her şeyi sonlandırır ve ekrandaki çıktısını temizler.';
 }

@@ -5959,4 +5959,11 @@ class AppLocalizationsId extends AppLocalizations {
   String launchFailedLogs(String path) {
     return 'Log: $path';
   }
+
+  @override
+  String get reconnect => 'Sambungkan ulang';
+
+  @override
+  String get reconnectEndsShell =>
+      'Tidak ada sesi tmux untuk dipasang kembali, jadi menyambungkan ulang akan mengakhiri shell ini dan semua yang masih berjalan di dalamnya, serta menghapus keluarannya dari layar.';
 }

@@ -1679,5 +1679,7 @@
   "termMetricsBarTip": "CPU, bellek, ağ ve disk, sunucu kartındaki gibi. Telefonda sanal tuşların üstünde.",
   "launchFailedTitle": "ServerBox başlatılamadı",
   "launchFailedBody": "Aşağıdaki hatayı kopyalayıp günlük dosyalarıyla birlikte bir GitHub issue'sunda bildirin.",
-  "launchFailedLogs": "Günlükler: {path}"
+  "launchFailedLogs": "Günlükler: {path}",
+  "reconnect": "Yeniden bağlan",
+  "reconnectEndsShell": "Yeniden bağlanacak bir tmux oturumu yok; yeniden bağlanmak bu kabuğu ve içinde hâlâ çalışan her şeyi sonlandırır ve ekrandaki çıktısını temizler."
 }

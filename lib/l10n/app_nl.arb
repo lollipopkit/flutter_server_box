@@ -1679,5 +1679,7 @@
   "termMetricsBarTip": "CPU, geheugen, netwerk en schijf, zoals op de serverkaart. Op een telefoon boven de virtuele toetsen.",
   "launchFailedTitle": "ServerBox kon niet starten",
   "launchFailedBody": "Kopieer de fout hieronder en meld die in een GitHub-issue, samen met de logbestanden.",
-  "launchFailedLogs": "Logs: {path}"
+  "launchFailedLogs": "Logs: {path}",
+  "reconnect": "Opnieuw verbinden",
+  "reconnectEndsShell": "Er is geen tmux-sessie om opnieuw aan te koppelen, dus opnieuw verbinden beëindigt deze shell en alles wat er nog in draait, en wist de uitvoer van het scherm."
 }

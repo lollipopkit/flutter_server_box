@@ -1679,5 +1679,7 @@
   "termMetricsBarTip": "CPU、内存、网络、磁盘，与服务器卡片一致；手机上位于虚拟按键上方。",
   "launchFailedTitle": "ServerBox 无法启动",
   "launchFailedBody": "请复制下方的错误信息，连同日志文件一起在 GitHub issue 中反馈。",
-  "launchFailedLogs": "日志：{path}"
+  "launchFailedLogs": "日志：{path}",
+  "reconnect": "重新连接",
+  "reconnectEndsShell": "没有可以重新接入的 tmux 会话，重新连接会结束当前 shell 及其中仍在运行的程序，并清除屏幕上的输出。"
 }

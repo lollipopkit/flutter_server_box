@@ -6037,4 +6037,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String launchFailedLogs(String path) {
     return 'Logs: $path';
   }
+
+  @override
+  String get reconnect => 'Neu verbinden';
+
+  @override
+  String get reconnectEndsShell =>
+      'Es gibt keine tmux-Sitzung zum erneuten Anhängen. Neu verbinden beendet diese Shell und alles, was darin noch läuft, und löscht ihre Ausgabe vom Bildschirm.';
 }

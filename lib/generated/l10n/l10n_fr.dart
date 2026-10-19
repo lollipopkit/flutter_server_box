@@ -6058,4 +6058,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String launchFailedLogs(String path) {
     return 'Journaux : $path';
   }
+
+  @override
+  String get reconnect => 'Reconnecter';
+
+  @override
+  String get reconnectEndsShell =>
+      'Aucune session tmux à rattacher : reconnecter ferme ce shell et tout ce qui s’y exécute encore, et efface sa sortie de l’écran.';
 }
