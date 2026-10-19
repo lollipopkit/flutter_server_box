@@ -556,6 +556,10 @@ extension _App on _AppSettingsPageState {
           // settings store, and half of an edit is not a state to leave behind.
           SqliteStore.transact(() {
             for (final entry in newSettings.entries) {
+              // Internal keys are shown but not the user's to change either:
+              // an edited schema version would have the next launch migrate
+              // from a version the data is not at, or refuse the store.
+              if (Stores.setting.isInternalKey(entry.key)) continue;
               final value = entry.value;
               // A key set to null means "clear this". Skipping it instead left
               // the previous value in place, and the key being present kept it
