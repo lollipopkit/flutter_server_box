@@ -9,10 +9,10 @@ For installation and configuration, see
 
 ## Protocol version
 
-The App and the agent compare one number, the protocol
-(`sbm_parser::protocol`). It changes only when the API breaks: a field
-removed or renamed, a meaning changed, a route removed. New features do not
-change it; they are listed in `features`.
+The App and agent use a single protocol version number
+(`sbm_parser::protocol`). It changes only for breaking API changes, such as
+removing or renaming a field, changing a field's meaning, or removing a route.
+New features do not change the protocol version; they are listed in `features`.
 
 - `GET /api/v1/health` needs no sign-in and reports `protocol` and
   `min_client_protocol`. It does not report the release version, which is in
@@ -22,9 +22,9 @@ change it; they are listed in `features`.
   `426` and `{"error": "client_too_old", "protocol", "min_client_protocol"}`.
   `/health`, preflights and WebSocket upgrades are not checked; the
   `/ws-ticket` request before an upgrade is.
-- Before signing in, the App reads `/health`. It reports "update the agent"
-  when the agent is older than the App reads, and "update the App" when the
-  agent no longer answers it.
+- Before signing in, the App reads `/health`. It prompts you to update the
+  agent when its protocol is too old, or to update the App when the agent
+  requires a newer protocol.
 - Each side supports the previous protocol at least: the agent answers an
   older client in that client's format, and the App still reads an older
   agent.

@@ -56,9 +56,9 @@ be changed at any time in **Settings → Application → Privacy**.
 | **Nothing** | Nothing. Local logs remain on this device, and you can still prepare a manual report. |
 | **Basic information** | Captured crashes and errors, with build and platform information and deliberately recorded diagnostic breadcrumbs attached when relevant. Nothing is sent continuously while the app is operating normally. |
 
-The default on every platform is **Nothing**. Nothing is uploaded until you
-choose **Basic information**, on the intro page or in Settings. On builds where
-automatic diagnostics is available, the intro page is shown before the first
+The default on every platform is **Nothing**. No data is uploaded until you
+choose **Basic information** on the intro page or in Settings. On builds where
+automatic diagnostics is available, the intro page appears before the first
 automatic upload.
 
 Changing the level to **Nothing** stops automatic delivery immediately; it does

@@ -79,22 +79,21 @@ Every released version, newest first. Downloads and per-release notes are on
 
 - Sheets can be resized by dragging, pickers open as a sheet on phones, and
   the network's arrows come before their values.
-- Remote desktop follows the latest IronRDP.
+- Updated the IronRDP dependency used by remote desktop.
 
 ### Fixed
 
 - Android: the notification shows the app's glyph instead of a solid ring.
-- Long Agent chats open again; chats are kept in SQLite and loaded page by
-  page.
-- Terminal: holes in the buffer and lines left behind after a resize or a
-  scroll, and the virtual keys' Ctrl, Alt and Shift no longer forget they were
-  pressed.
+- Long Agent chats can be opened again. Their messages are stored in SQLite
+  and loaded a page at a time.
+- Fixed terminal buffer gaps and stale lines after resizing or scrolling.
+  Virtual Ctrl, Alt, and Shift keys now retain their pressed state.
 - Desktop: Settings opened from the tray appears beside the rail instead of
-  over the window, and can be left again.
+  covering the window, and can be closed normally.
 - Windows: installing the status script no longer fails when the exit status
   arrives after the output has ended.
-- Closing a workspace while one of its shells is still ending no longer
-  errors.
+- Closing a workspace no longer errors while one of its shells is shutting
+  down.
 
 ## v1.0.1773 — 2026-10-13
 
@@ -110,9 +109,9 @@ Every released version, newest first. Downloads and per-release notes are on
 
 ### Fixed
 
-- Android: the Linux system installs with its hard links and read-only
-  directories intact; temporary files go to /tmp.
-- A connection dropped while the app was in the background is noticed and
+- Android: Linux installations now preserve hard links and read-only
+  directories; temporary files go to /tmp.
+- Connections dropped while the app is in the background are detected and
   reconnected instead of left hanging. On iOS, a file transfer keeps running
   for a while after the app leaves the foreground.
 - The terminal's Agent panel stays above the keyboard and shows when a reply
@@ -147,11 +146,11 @@ Every released version, newest first. Downloads and per-release notes are on
 - Disks are read from both lsblk and df, so the disk list and disk total match
   on every page.
 - Memory in use no longer counts the page cache.
-- ARM CPUs are named by implementer and part, and every core type is listed.
+- ARM CPUs show their manufacturer and model, and every core type is listed.
 
 ### Fixed
 
-- The app failed to open in Italian, Korean and Azerbaijani.
+- Fixed a launch failure in Italian, Korean and Azerbaijani.
 - A terminal opened at launch failed when the server refused the first
   connection; it now retries.
 - A terminal restored on another tab took the focus and the keyboard.
@@ -159,8 +158,8 @@ Every released version, newest first. Downloads and per-release notes are on
 - Agent replies and their code can be selected on every platform.
 - Remote desktop: keyboard input, long press and VNC passwords.
 - Themes are included in backups.
-- A charged battery is no longer reported as an alert; a low battery on its
-  own power is.
+- A fully charged battery no longer triggers an alert; a low battery does
+  when the device is running on battery power.
 - A host without /etc/hostname now shows a name.
 
 ## v1.0.1719 — 2026-10-01

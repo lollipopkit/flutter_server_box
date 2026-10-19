@@ -316,7 +316,7 @@ background 或 iOS 的 launch storyboard）在构建应用时确定，只能随�
 `file.dir`、`file.link`、`file.default`，以及按扩展名的 `file.<ext>`（如 `file.py`、
 `file.rs`、`file.gitignore`）。主题没有该扩展名时，先回退到相近的 key（如 `.scss` 用 `file.css`，`.bash` 用
 `file.sh`），再回退到 `file.default`，再回退到内置图标。
-一套主题最多 128 个 icon key，铺满 tab 和 nav 之后，仍可为常见扩展名都放上 Files 窗口图标。超过 48 个需要 `min = 4`（见 Schema 版本一节）。
+一套主题最多可包含 128 个 icon key。超过 48 个时需要 `min = 4`（见 Schema 版本一节）；其余额度可用于 tab、nav 和 Files 窗口的扩展名图标。
 
 以上是 ServerBox 会绘制的 key。这一格式与基于同一个库的其他 app 共用，为其他 app
 准备的 key（点分隔的小写单词，如 `tab.chat`）会被接受并保留，但 ServerBox 不绘制。
@@ -389,8 +389,8 @@ max = 4
 `[icons]`：不能有 `modes`、配色、形状、组件、背景或 splash，也不能有 `icons.style`，
 该项仍由主题决定。key、文件名和上限与主题相同。`icons.colors` 中的 role 按当前主题解析。
 
-图标包含有的 key 使用图标包的图片，不论主题是否也有；图标包没有的 key 使用主题的图片，
-再回退到内置字形。在 App 中，于 **设置 → 外观 → 图标包** 选择，或在主题商店的
+图标包包含的 key 始终使用包内图片；缺少的 key 则使用主题图片，没有对应主题图片时再回退到内置字形。
+在 App 中，可通过 **设置 → 外观 → 图标包** 选择图标包，也可在主题商店的
 **图标包** 标签页中点选；选择 **主题自带图标** 即恢复主题自己的图标。备份会包含已安装的
 图标包和当前的选择。
 
@@ -407,7 +407,7 @@ max = 4
 
 主题列表会保留到下次启动，因此页面打开时可立即显示上次读取的内容。标题栏下方会注明
 列表来自哪些 repository，以及读取时间。点按该行旁边的刷新按钮可重新读取 catalog。
-当前版本无法读取的主题仍会列出并标注状态，便于查看其状态。
+当前版本无法读取的主题仍会列出，并注明无法读取的原因。
 
 
 ```toml
@@ -501,8 +501,8 @@ repository 可在 `themes/` 和 `icons/` 旁边包含 `plugins/` 目录。本构
 主题商店中的官方主题 One Dark Pro，把下面这个 VS Code 主题的 UI 调色板改编到
 Material 的表面、选中态、卡片和按钮上。这一改编与 VS Code 扩展包无关。官方图标包
 Devicons 使用 [Devicon](https://github.com/devicons/devicon) 的语言和工具 logo（MIT）
-标示文件类型；这些产品及其 logo 是各自所有者的商标。官方主题
-VS Code 则把 VS Code 自带的 Dark Modern / Light Modern 工作区颜色做同样的改编。
+标示文件类型；这些产品及其 logo 是各自所有者的商标。官方 VS Code 主题则将 VS Code 自带的
+Dark Modern 和 Light Modern 工作区配色改编为 ServerBox 主题。
 字体和终端/编辑器配色仍是单独的设置。AMOLED 是 ServerBox 原创的调色板，在 dark
 下使用纯黑表面、在 light 下使用生成色，因此支持 System 外观。
 
