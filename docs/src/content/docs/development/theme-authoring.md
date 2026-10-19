@@ -61,7 +61,9 @@ logo = "splash_logo.svg"
 duration = 900
 ```
 
-Only `id`, `name`, `modes`, and the `schema` table are required. Omitted fields use
+Only `id`, `name`, `modes`, and the `schema` table are required; an
+[icon pack](#icon-packs) has no `modes` and requires `kind` and `icons.images`
+instead. Omitted fields use
 these defaults; an entire table may be omitted. Partial tables override only
 the fields supplied. Explicit zero values are preserved, and invalid values
 are rejected rather than replaced with defaults.
@@ -101,7 +103,7 @@ Legacy AMOLED settings migrate to Dark + AMOLED; Auto AMOLED migrates to
 System + AMOLED. AMOLED is no longer a ThemeMode option.
 `format` versions the ZIP manifest structure. `schema` is the inclusive range
 of theme UI schema versions the package supports. The app currently supports
-schema **v1–v3** and shows this range in the **Install theme** help text. The
+schema **v1–v4** and shows this range in the **Install theme** help text. The
 installer requires the package range to overlap the app range and checks it again when
 loading an installed theme. Both `schema.min` and `schema.max` are required.
 `seed` and palette colors are ARGB integers; hexadecimal TOML values such as
@@ -452,6 +454,7 @@ a pack is chosen in **Settings → Appearance → Icon pack**, or by tapping it 
 the theme store's **Icon packs** tab; **Theme's icons** goes back to the
 theme's own. A backup carries the installed packs and which one is chosen.
 
+## Theme store
 
 The store reads two levels. A **catalog** is a TOML file that lists
 repositories without naming themes or versions. Each **repository** is a git
@@ -560,8 +563,9 @@ the address to the bytes: the store installs nothing without one, and nothing
 whose digest does not match. To add a repository to the app's catalog, open a
 pull request to this repository that adds a `[[repo]]` entry.
 
-Repositories may contain a `plugins/` section alongside `themes/`. This build
-only reads themes and skips that section without rejecting the repository.
+Repositories may contain a `plugins/` section alongside `themes/` and
+`icons/`. This build reads themes and icon packs and skips that section without
+rejecting the repository.
 
 Direct URL installation accepts HTTPS `.fsbt` links without a store. The
 installer follows at most three HTTPS redirects and does not send credentials.

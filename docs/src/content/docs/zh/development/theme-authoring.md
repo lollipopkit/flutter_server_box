@@ -57,7 +57,8 @@ logo = "splash_logo.svg"
 duration = 900
 ```
 
-必填项只有 `id`、`name`、`modes` 和 `schema` 表。省略的字段取下表默认值；整张表
+必填项只有 `id`、`name`、`modes` 和 `schema` 表；[图标包](#图标包)没有 `modes`，
+改为必须有 `kind` 和 `icons.images`。省略的字段取下表默认值；整张表
 都可以省略。只写部分字段的表只覆盖写出的字段。显式的 0 会被保留；非法值会被拒绝，
 不会被默认值替换。
 
@@ -92,7 +93,7 @@ Light 和 Dark 均可选。
 旧的 AMOLED 设置迁移为 Dark + AMOLED，Auto AMOLED 迁移为 System + AMOLED；AMOLED
 不再是 ThemeMode 的选项。
 `format` 表示 ZIP 中 manifest 结构的版本。`schema` 表示该包支持的 theme UI schema
-版本范围，包含首尾。应用目前支持 schema **v1–v3**，并在 **Install theme** 的帮助文字
+版本范围，包含首尾。应用目前支持 schema **v1–v4**，并在 **Install theme** 的帮助文字
 中显示该范围。安装器要求包与应用支持的范围有交集；加载已安装主题时也会再次检查。
 `schema.min`
 和 `schema.max` 都是必填。
@@ -487,8 +488,8 @@ splash。使用 schema 3 组件或 `[layout]` 的版本必须设置 `schema_min 
 的内容，同样不会安装。若要将 repository 加入应用 catalog，请向本仓库提交包含新增
 `[[repo]]` 条目的 pull request。
 
-repository 可在 `themes/` 旁边包含 `plugins/` 目录。本构建只读取主题，因此会跳过该
-目录，不会因此拒绝整个 repository。
+repository 可在 `themes/` 和 `icons/` 旁边包含 `plugins/` 目录。本构建只读取主题和
+图标包，因此会跳过该目录，不会因此拒绝整个 repository。
 
 直接 URL 安装接受 HTTPS 的 `.fsbt` 链接，无需商店。安装器最多跟随三次 HTTPS
 重定向，不发送凭据。catalog 和 repository 树各自的大小上限见

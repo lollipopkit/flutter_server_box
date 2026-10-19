@@ -30,7 +30,9 @@ push the listings afterwards: the store reads the repository's default branch.
 **The package is deterministic**, which is what makes "changed" answerable:
 entries sorted, one fixed timestamp, fixed permissions, and stored rather than
 deflated, so the bytes depend on the files alone — not on a checkout's mtimes
-or a machine's zlib. Dotfiles are left out.
+or a machine's zlib. Dotfiles are left out. A folder `validate.py` refuses is
+not packed, nor is one holding a symlink: packing would follow it and put the
+bytes it points at into the package.
 
 Rules it keeps:
 
@@ -91,10 +93,14 @@ def github_slug(root: Path) -> str:
 
 
 def pack(folder: Path) -> bytes:
-    files = sorted(
+    entries = [
         p for p in folder.rglob("*")
-        if p.is_file() and not any(part.startswith(".") for part in p.relative_to(folder).parts)
-    )
+        if not any(part.startswith(".") for part in p.relative_to(folder).parts)
+    ]
+    # rglob does not descend into a symlinked directory, but lists it.
+    if links := [p.relative_to(folder).as_posix() for p in entries if p.is_symlink()]:
+        sys.exit(f"{folder.name}: symlinks are not packed: {', '.join(links)}")
+    files = sorted(p for p in entries if p.is_file())
     with tempfile.SpooledTemporaryFile() as buf:
         with zipfile.ZipFile(buf, "w", zipfile.ZIP_STORED) as z:
             for f in files:
@@ -191,6 +197,15 @@ def main() -> int:
         if not isinstance(schema.get("min"), int) or not isinstance(schema.get("max"), int):
             sys.exit(f"{tid}: manifest declares no [schema] min and max")
 
+        # What the installer would refuse — a stray file, a bad icon — is not
+        # uploaded and recorded under a version.
+        check = subprocess.run(
+            [sys.executable, str(Path(__file__).with_name("validate.py")), str(folder)],
+            capture_output=True, text=True,
+        )
+        if check.returncode != 0:
+            errors = [l for l in check.stdout.splitlines() if l.startswith("error")]
+            sys.exit(f"{tid}: validate.py refuses it:\n" + "\n".join(errors or [check.stdout + check.stderr]))
         data = pack(folder)
         if len(data) > 16 * 1024 * 1024:
             sys.exit(f"{tid}: the package is over 16 MiB")
