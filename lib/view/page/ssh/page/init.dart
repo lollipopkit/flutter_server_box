@@ -632,6 +632,44 @@ extension _Init on SSHPageState {
     unawaited(_showDisconnectDialog());
   }
 
+  /// Reconnects, because the user asked for it — the toolbar button.
+  ///
+  /// Not [_onConnectionLossSuspected]: that path reports a link it found dead
+  /// and, when it cannot get it back, asks whether to leave the page. A
+  /// deliberate reconnect has neither problem. The link may well have been
+  /// fine, and the question would be an answer to a loss that never happened —
+  /// pressing reconnect on a slow server must not offer to throw the terminal
+  /// away. So this says what happened and stops there.
+  Future<void> reconnect() async {
+    if (!mounted || _disconnectDialogOpen || _openingTerminal) return;
+
+    _disconnectDialogOpen = true;
+    // Stop the keep-alive from firing the automatic path underneath this one.
+    _discontinuityTimer?.cancel();
+    _missedKeepAliveCount = 0;
+    _writeLn('\n\n${libL10n.reconnecting}\r\n');
+
+    final restored = await _tryReconnect(tmuxSession: _tmuxCurrentSession);
+    if (!mounted) return;
+
+    if (restored) {
+      _disconnectDialogOpen = false;
+      _reportedDisconnected = false;
+      TermSessionManager.updateStatus(_sessionId, TermSessionStatus.connected);
+      // The timer was cancelled above and the automatic path only arms it on
+      // a resume; without this a live reconnect would go unchecked from here.
+      _setupDiscontinuityTimer();
+      return;
+    }
+
+    // Cancelled, or the reconnect itself gave up. The terminal is left as it
+    // is, and the button works again — a server that is merely slow comes back
+    // on the next press.
+    _writeLn(libL10n.fail);
+    _disconnectDialogOpen = false;
+    TermSessionManager.updateStatus(_sessionId, TermSessionStatus.disconnected);
+  }
+
   /// Re-establish SSH, re-attaching [tmuxSession] when there is one, and
   /// showing a cancellable progress dialog while it runs.
   ///

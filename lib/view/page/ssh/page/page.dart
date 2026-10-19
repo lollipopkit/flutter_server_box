@@ -994,6 +994,16 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   List<Widget> _buildAppBarActions() {
     final actions = <Widget>[
+      // A link that dropped is noticed by the terminal, but a link that is
+      // alive-looking and dead — a half-open socket, a NAT that gave up, a
+      // server that stopped answering — is not. This is the reconnect the
+      // health check runs, asked for by hand: it re-attaches tmux when there
+      // is a session to re-attach, and says so plainly if it cannot.
+      IconButton(
+        onPressed: _disconnectDialogOpen ? null : reconnect,
+        tooltip: libL10n.refresh,
+        icon: const Icon(Icons.refresh),
+      ),
       if (widget.args.detachInput != null)
         IconButton(
           onPressed: detach,
