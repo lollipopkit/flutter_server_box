@@ -538,6 +538,8 @@
   "schemaTooNewWipeDone": "Dados excluídos. Abra o app novamente para começar do zero.",
   "schemaTooNewWipeFailed": "Não foi possível excluir alguns dados, e esta versão ainda não consegue abrir o que restou. Reinstale a versão mais recente para acessá-los.",
   "monitorNoRemoteAccess": "Este agente está configurado apenas para monitorização. Não pode abrir um terminal, executar comandos ou navegar pelos ficheiros a partir daqui. Para ativar estas funções, edite [remote_access] no config.toml do agente.",
+  "monitorAgentTooOld": "Este agente Monitor é mais antigo do que esta versão do ServerBox suporta. Atualize o agente no servidor.",
+  "monitorClientTooOld": "Este agente Monitor já não suporta esta versão do ServerBox. Atualize a aplicação.",
   "remoteDesktop": "Área de trabalho remota",
   "containerReclaimable": "Recuperável",
   "processSearchHint": "Nome, usuário ou PID",

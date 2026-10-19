@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -2681,6 +2680,14 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get monitorNoRemoteAccess =>
       '이 agent는 모니터링 전용으로 설정되어 있습니다. 여기서 터미널을 열거나 명령을 실행하거나 파일을 탐색할 수 없습니다. 이 기능을 사용하려면 agent의 config.toml에서 [remote_access]를 수정하세요.';
+
+  @override
+  String get monitorAgentTooOld =>
+      '이 Monitor agent는 현재 ServerBox 버전이 지원하는 것보다 오래되었습니다. 서버에서 agent를 업데이트하세요.';
+
+  @override
+  String get monitorClientTooOld =>
+      '이 Monitor agent는 더 이상 현재 ServerBox 버전을 지원하지 않습니다. 앱을 업데이트하세요.';
 
   @override
   String get alerts => '알림';

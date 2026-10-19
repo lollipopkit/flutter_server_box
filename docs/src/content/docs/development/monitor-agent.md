@@ -7,6 +7,28 @@ The App uses the API behavior described here when it connects to Monitor agent.
 For installation and configuration, see
 [Monitor Agent](/docs/advanced/monitor-agent/).
 
+## Protocol version
+
+The App and the agent compare one number, the protocol
+(`sbm_parser::protocol`). It changes only when the API breaks: a field
+removed or renamed, a meaning changed, a route removed. New features do not
+change it; they are listed in `features`.
+
+- `GET /api/v1/health` needs no sign-in and reports `protocol` and
+  `min_client_protocol`. It does not report the release version, which is in
+  `/capabilities`. An agent without these fields speaks protocol 1.
+- Every request carries `X-SBM-Protocol: <n>`. A request without it is
+  protocol 1. An agent answers a client below `min_client_protocol` with
+  `426` and `{"error": "client_too_old", "protocol", "min_client_protocol"}`.
+  `/health`, preflights and WebSocket upgrades are not checked; the
+  `/ws-ticket` request before an upgrade is.
+- Before signing in, the App reads `/health`. It reports "update the agent"
+  when the agent is older than the App reads, and "update the App" when the
+  agent no longer answers it.
+- Each side supports the previous protocol at least: the agent answers an
+  older client in that client's format, and the App still reads an older
+  agent.
+
 ## Capability discovery
 
 The App calls `GET /api/v1/capabilities` to learn which features an agent

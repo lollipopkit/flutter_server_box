@@ -13,6 +13,10 @@
 
 import Foundation
 
+/// `sbm_parser::protocol::PROTOCOL`, named in `X-SBM-Protocol`;
+/// `crates/sbm_parser/tests/protocol_clients.rs` keeps it equal.
+private let sbmProtocol = "1"
+
 enum WidgetError: LocalizedError {
     case notConfigured
     case noToken
@@ -154,6 +158,7 @@ final class WidgetMonitorClient: NSObject {
 
         var req = URLRequest(url: url)
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        req.setValue(sbmProtocol, forHTTPHeaderField: "X-SBM-Protocol")
         // Shorter than the app's. A widget's timeline refresh is given a few
         // seconds by the system; spending thirty of them on one request means
         // being killed rather than answering.

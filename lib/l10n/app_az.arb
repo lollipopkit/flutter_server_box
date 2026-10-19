@@ -538,6 +538,8 @@
   "schemaTooNewWipeDone": "Məlumatlar silindi. Tətbiqi yenidən aç və sıfırdan başla.",
   "schemaTooNewWipeFailed": "Məlumatların bir hissəsini silmək mümkün olmadı və bu versiya qalan məlumatları hələ də aça bilmir. Onlara giriş üçün daha yeni versiyanı yenidən quraşdır.",
   "monitorNoRemoteAccess": "Bu agent yalnız monitorinq üçündür. Buradan terminal aça, əmrlər işlədə və fayllara baxa bilməzsiniz. Bu funksiyaları aktivləşdirmək üçün agentin config.toml faylında [remote_access] bölməsini redaktə edin.",
+  "monitorAgentTooOld": "Bu Monitor agenti ServerBox-un bu versiyasının dəstəklədiyindən köhnədir. Serverdə agenti yeniləyin.",
+  "monitorClientTooOld": "Bu Monitor agenti artıq ServerBox-un bu versiyasını dəstəkləmir. Tətbiqi yeniləyin.",
   "remoteDesktop": "Uzaq masaüstü",
   "containerReclaimable": "Reclaimable",
   "processSearchHint": "Ad, istifadəçi və ya PID",

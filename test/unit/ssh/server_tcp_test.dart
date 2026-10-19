@@ -22,9 +22,14 @@ import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 
+import '../../helpers/fake_agent_health.dart';
+import '../../helpers/rust_lib_helper.dart';
 import '../../helpers/tunnel_client.dart';
 
 void main() {
+  // `MonitorHttpClient` names its protocol from Rust.
+  setUpAll(initRustLibForTest);
+
   late _Echo echo;
 
   setUp(() async {
@@ -637,6 +642,7 @@ class _FakeAgent {
 
   void _serve() {
     _server.listen((request) async {
+      if (await answerAgentHealth(request)) return;
       if (request.uri.path == '/api/v1/login') {
         logins++;
         await request.drain<void>();

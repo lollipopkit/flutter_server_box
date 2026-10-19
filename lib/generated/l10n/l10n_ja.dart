@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -2677,6 +2676,14 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get monitorNoRemoteAccess =>
       'この agent は監視専用に設定されています。ここからターミナルを開いたり、コマンドを実行したり、ファイルを閲覧したりすることはできません。これらの機能を有効にするには、agent の config.toml にある [remote_access] を編集してください。';
+
+  @override
+  String get monitorAgentTooOld =>
+      'この Monitor agent は、このバージョンの ServerBox がサポートするより古いバージョンです。サーバー上の agent を更新してください。';
+
+  @override
+  String get monitorClientTooOld =>
+      'この Monitor agent は、このバージョンの ServerBox をサポートしていません。アプリを更新してください。';
 
   @override
   String get alerts => 'アラート';
