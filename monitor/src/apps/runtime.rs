@@ -10,13 +10,17 @@
 //! Bounds per instance: linear memory ([`MAX_MEMORY`]); CPU by epoch
 //! interruption every [`TICK`], yielding to the executor at each tick so one
 //! app never holds a thread, and a trap after [`MAX_GUEST_TIME`] of the
-//! guest's own running (time in host calls, a script's or a download's, is
-//! measured by the store's call hook and left out); a call ends after
+//! guest's own running (`Clock`: time on a thread, so neither waiting for
+//! the executor after a yield nor a host call, a script's or a download's,
+//! counts); a call ends after
 //! [`CALL_WALL`].
 
 use std::collections::BTreeMap;
 use std::path::Path;
-use std::sync::{Arc, OnceLock};
+use std::future::Future;
+use std::pin::Pin;
+use std::sync::{Arc, Mutex, OnceLock};
+use std::task::{Context, Poll};
 use std::time::{Duration, Instant};
 
 use serde_json::Value;
@@ -28,6 +32,7 @@ use wasmtime_wasi::{WasiCtx, WasiCtxView, WasiView};
 use zeroize::Zeroizing;
 
 use super::value;
+use crate::utils::lock::LockExt;
 use crate::agent_mode::command::{self, Spec, Stream};
 use crate::api::server::AppState;
 use crate::stacks::job::Job;
@@ -236,27 +241,22 @@ impl Backend {
             .collect::<Result<_, _>>()
             .map_err(Failure::Arguments)?;
         let cancel = ctx.job.as_ref().map(|j| j.cancel_token());
+        let clock = ctx.clock.clone();
         let run = async {
             let mut store = Store::new(engine(), ctx);
             store.limiter(|c| &mut c.limits);
-            store.call_hook(|mut s, hook| {
-                let c = s.data_mut();
+            store.call_hook(|s, hook| {
+                let mut clock = s.data().clock.locked();
                 match hook {
-                    CallHook::CallingHost => c.in_host = Some(Instant::now()),
-                    CallHook::ReturningFromHost => {
-                        if let Some(at) = c.in_host.take() {
-                            c.host_time += at.elapsed();
-                        }
-                    }
+                    CallHook::CallingHost => clock.enter_host(),
+                    CallHook::ReturningFromHost => clock.leave_host(),
                     _ => {}
                 }
                 Ok(())
             });
             store.set_epoch_deadline(1);
             store.epoch_deadline_callback(|s| {
-                let c = s.data();
-                let guest = c.started.elapsed().saturating_sub(c.host_time);
-                if guest > MAX_GUEST_TIME {
+                if s.data().clock.locked().guest() > MAX_GUEST_TIME {
                     return Ok(UpdateDeadline::Interrupt);
                 }
                 Ok(UpdateDeadline::Yield(1))
@@ -268,6 +268,7 @@ impl Backend {
             let [answer] = results;
             Ok::<_, Failure>(answer)
         };
+        let run = Timed { inner: Box::pin(run), clock };
         let answer = match (kind, cancel) {
             (Kind::Job, Some(cancel)) => tokio::select! {
                 answer = run => answer?,
@@ -347,15 +348,75 @@ impl Grant {
     }
 }
 
+/// The time an instance ran on a thread: inside a poll of its call ([`Timed`])
+/// and not in a host call. Waiting to be polled again after a yield (on a
+/// busy agent) and waiting on a host call (a script, a download) do not
+/// count.
+#[derive(Default)]
+struct Clock {
+    ran: Duration,
+    since: Option<Instant>,
+    polled: bool,
+    in_host: bool,
+}
+
+impl Clock {
+    fn run(&mut self) {
+        if self.polled && !self.in_host && self.since.is_none() {
+            self.since = Some(Instant::now());
+        }
+    }
+
+    fn stop(&mut self) {
+        if let Some(at) = self.since.take() {
+            self.ran += at.elapsed();
+        }
+    }
+
+    fn enter_host(&mut self) {
+        self.stop();
+        self.in_host = true;
+    }
+
+    fn leave_host(&mut self) {
+        self.in_host = false;
+        self.run();
+    }
+
+    fn guest(&self) -> Duration {
+        self.ran + self.since.map_or(Duration::ZERO, |at| at.elapsed())
+    }
+}
+
+/// A call's future, its time inside each poll on [clock].
+struct Timed<F> {
+    inner: Pin<Box<F>>,
+    clock: Arc<Mutex<Clock>>,
+}
+
+impl<F: Future> Future for Timed<F> {
+    type Output = F::Output;
+
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<F::Output> {
+        {
+            let mut clock = self.clock.locked();
+            clock.polled = true;
+            clock.run();
+        }
+        let out = self.inner.as_mut().poll(cx);
+        let mut clock = self.clock.locked();
+        clock.stop();
+        clock.polled = false;
+        out
+    }
+}
+
 pub struct Ctx {
     wasi: WasiCtx,
     table: ResourceTable,
     limits: StoreLimits,
-    /// When the instance started, the time its host calls took, and the one
-    /// running now: the guest's own running is the rest.
-    started: Instant,
-    host_time: Duration,
-    in_host: Option<Instant>,
+    /// The guest's own running, for [`MAX_GUEST_TIME`].
+    clock: Arc<Mutex<Clock>>,
     grant: Grant,
     password: Option<Zeroizing<String>>,
     job: Option<Arc<Job>>,
@@ -374,9 +435,7 @@ impl Ctx {
             wasi: WasiCtx::builder().build(),
             table: ResourceTable::new(),
             limits: StoreLimitsBuilder::new().memory_size(MAX_MEMORY).instances(MAX_CORE_INSTANCES).build(),
-            started: Instant::now(),
-            host_time: Duration::ZERO,
-            in_host: None,
+            clock: Arc::default(),
             grant,
             password,
             job,
@@ -816,5 +875,32 @@ impl sbm::app::job::Host for Ctx {
             let _ = contents;
             Err(AppError::Unavailable("notUnix".into()))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn only_running_on_a_thread_counts_as_the_guests_time() {
+        let clock = Arc::new(Mutex::new(Clock::default()));
+        let c = clock.clone();
+        Timed {
+            inner: Box::pin(async move {
+                // Running: counted.
+                std::thread::sleep(Duration::from_millis(100));
+                // Waiting to be polled again: not.
+                tokio::time::sleep(Duration::from_millis(300)).await;
+                // In a host call, even one that blocks the thread: not.
+                c.locked().enter_host();
+                std::thread::sleep(Duration::from_millis(300));
+                c.locked().leave_host();
+            }),
+            clock: clock.clone(),
+        }
+        .await;
+        let guest = clock.locked().guest();
+        assert!(guest >= Duration::from_millis(100) && guest < Duration::from_millis(300), "{guest:?}");
     }
 }

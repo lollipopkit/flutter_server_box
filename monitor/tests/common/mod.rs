@@ -125,10 +125,12 @@ pub mod machine {
                 format!("Bearer {}", generate_token(SECRET).unwrap()),
             );
         }
+        let started = std::time::Instant::now();
         let resp = match body {
-            Some(body) => req.send_json(&body).await.unwrap(),
-            None => req.send().await.unwrap(),
-        };
+            Some(body) => req.send_json(&body).await,
+            None => req.send().await,
+        }
+        .unwrap_or_else(|e| panic!("{path}: {e:?} after {:?}", started.elapsed()));
         let status = resp.status().as_u16();
         // A process table is well past the client's default body limit.
         let bytes = resp.body().limit(16 * 1024 * 1024).await.unwrap_or_default();

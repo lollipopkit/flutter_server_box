@@ -77,10 +77,12 @@ async fn call(srv: &TestServer, signed: bool, method: Method, path: &str, body: 
     if signed {
         req = req.header("Authorization", format!("Bearer {}", generate_token(SECRET).unwrap()));
     }
+    let started = std::time::Instant::now();
     let resp = match body {
-        Some((body, kind)) => req.header("content-type", kind).send_body(body).await.unwrap(),
-        None => req.send().await.unwrap(),
-    };
+        Some((body, kind)) => req.header("content-type", kind).send_body(body).await,
+        None => req.send().await,
+    }
+    .unwrap_or_else(|e| panic!("{path}: {e:?} after {:?}", started.elapsed()));
     let bytes = resp.body().limit(32 << 20).await.unwrap_or_default().to_vec();
     Reply {
         status: resp.status().as_u16(),

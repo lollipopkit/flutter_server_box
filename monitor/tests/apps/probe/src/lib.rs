@@ -102,13 +102,12 @@ impl jobs::Guest for Probe {
         job::run(&script)
     }
 
+    // Waiting rather than spinning (`spin` is the CPU bound's): a sleep is a
+    // host call, so it runs until cancelled however slow the machine is.
     fn forever() -> Result<(), Error> {
-        let mut i: u64 = 0;
         loop {
-            i += 1;
-            if i % 1_000_000 == 0 {
-                job::line("still here");
-            }
+            job::line("still here");
+            std::thread::sleep(std::time::Duration::from_millis(100));
         }
     }
 }
