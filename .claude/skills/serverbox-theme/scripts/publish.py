@@ -173,7 +173,13 @@ def main() -> int:
     for a in args.themes:
         tid, _, ver = a.partition("=")
         wanted[tid] = ver or None
-    listed = {p.stem: d for d in kinds for p in sorted((root / d).glob("*.toml"))}
+    # One id is one package: its assets share one release, named by the id.
+    listed: dict[str, str] = {}
+    for d in kinds:
+        for p in sorted((root / d).glob("*.toml")):
+            if p.stem in listed:
+                sys.exit(f"{p.stem}: listed in both {listed[p.stem]}/ and {d}/; an id names one package")
+            listed[p.stem] = d
     ids = list(wanted) or sorted(listed)
 
     repo = github_slug(root)
