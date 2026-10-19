@@ -630,7 +630,8 @@ impl ThemeStore {
                 .map(str::to_string)
                 .unwrap_or_else(|| url::Url::parse(&address).map(|u| repo::label_of(&u)).unwrap_or_default());
             repos.push(label.clone());
-            for listing in &index.themes {
+            // Themes only: the desk has no icon packs to install.
+            for listing in index.listings.iter().filter(|l| l.kind == repo::Kind::Theme) {
                 items.push(StoreItem {
                     repo: label.clone(),
                     repo_url: address.clone(),

@@ -21,6 +21,9 @@ void initThemeHost() => ThemeHost.init(
     icons: ThemeIcons(
       tabs: [for (final tab in AppTab.values) tab.name],
       symbols: _symbols,
+      // The Files window's `file.<ext>`; language logos keep their fills.
+      namespaces: {ThemeFileIcon.namespace},
+      untinted: {ThemeFileIcon.namespace},
     ),
     catalogUrl: Urls.themeCatalog,
     catalogAsset: themeCatalogAsset,

@@ -156,7 +156,7 @@ mod tests {
         // reset (ntex does not linger), which discards the answer.
         match send("/api/nope", vec![0u8; MAX_DRAIN + (64 << 10)]).await {
             Ok(large) => assert_eq!((large.status().as_u16(), connection(&large).as_deref()), (404, Some("close"))),
-            Err(ntex::client::error::SendRequestError::Send(e)) => {
+            Err(ntex::client::error::ClientError::Send(e)) => {
                 assert!(matches!(e.kind(), std::io::ErrorKind::ConnectionReset | std::io::ErrorKind::ConnectionAborted), "{e}")
             }
             Err(e) => panic!("{e:?}"),

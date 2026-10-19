@@ -384,11 +384,7 @@ extension _Widgets on _FileBrowserPageState {
   }) {
     final full = _fullPath(entry);
     final label = widget.args.labelOf?.call(entry, full);
-    final icon = Icon(switch (entry.kind) {
-      FileKind.dir => Icons.folder_open,
-      FileKind.link => Icons.link,
-      _ => Icons.insert_drive_file,
-    });
+    final icon = _iconOf(entry);
 
     /// A click that carries a modifier, or lands while a selection is open,
     /// picks rather than opens.
@@ -479,5 +475,31 @@ extension _Widgets on _FileBrowserPageState {
       style: UIs.textGrey,
       textAlign: TextAlign.right,
     );
+  }
+
+  /// The icon pack's or theme's `file.<ext>` glyph when either has one, else
+  /// an alias such as `file.css` for `.scss`, else `file.default`, else the
+  /// built-in glyph.
+  Widget _iconOf(FileEntry entry) {
+    final key = ThemeFileIcon.keyOf(
+      name: entry.name,
+      isDir: entry.isDir,
+      isLink: entry.kind == FileKind.link,
+    );
+    final built = ThemeFileIcon.builtIn(key);
+    final material = Icon(built.$1, color: built.$2);
+    if (key == ThemeFileIcon.dir || key == ThemeFileIcon.link) {
+      return ThemeIconAsset(keyName: key, fallback: material);
+    }
+    final generic = ThemeIconAsset(
+      keyName: ThemeFileIcon.fallback,
+      fallback: material,
+    );
+    if (key == ThemeFileIcon.fallback) return generic;
+    final aliased = ThemeFileIcon.aliasOf(key);
+    final next = aliased == null
+        ? generic
+        : ThemeIconAsset(keyName: aliased, fallback: generic);
+    return ThemeIconAsset(keyName: key, fallback: next);
   }
 }

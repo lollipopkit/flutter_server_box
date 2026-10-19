@@ -119,7 +119,8 @@ installation id.
 
 Official themes live in `store/` in this repository: `store/repo.toml`, and
 for each theme a listing `store/themes/<id>.toml` beside its source folder
-`store/themes/<id>/`. `test/unit/theme_store_tree_test.dart` checks this folder
+`store/themes/<id>/`, and for each icon pack the same under `store/icons/`.
+`test/unit/theme_store_tree_test.dart` checks this folder
 with the store's reader. A rejected listing fails the test instead of silently
 disappearing from the store.
 

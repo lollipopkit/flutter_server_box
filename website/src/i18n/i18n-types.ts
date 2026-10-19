@@ -346,6 +346,14 @@ type RootTranslation = {
 		 * P​r​e​v​i​e​w​s​ ​s​h​o​w​ ​t​h​e​ ​t​h​e​m​e​'​s​ ​i​c​o​n​s​ ​a​n​d​ ​c​o​l​o​r​s​;​ ​t​h​e​ ​r​e​s​t​ ​o​f​ ​t​h​e​ ​i​n​t​e​r​f​a​c​e​ ​i​s​ ​i​l​l​u​s​t​r​a​t​i​v​e​.
 		 */
 		previewNote: string
+		/**
+		 * I​c​o​n​ ​p​a​c​k​s
+		 */
+		iconPacks: string
+		/**
+		 * I​c​o​n​s​ ​c​h​o​s​e​n​ ​a​p​a​r​t​ ​f​r​o​m​ ​t​h​e​ ​t​h​e​m​e​ ​a​n​d​ ​d​r​a​w​n​ ​o​v​e​r​ ​w​h​i​c​h​e​v​e​r​ ​o​n​e​ ​i​s​ ​i​n​ ​u​s​e​.​ ​I​n​s​t​a​l​l​ ​t​h​e​m​ ​i​n​ ​t​h​e​ ​a​p​p​ ​f​r​o​m​ ​S​e​t​t​i​n​g​s​ ​→​ ​A​p​p​e​a​r​a​n​c​e​ ​→​ ​T​h​e​m​e​ ​s​t​o​r​e​ ​→​ ​I​c​o​n​ ​p​a​c​k​s​.
+		 */
+		iconPacksSubtitle: string
 	}
 	plugins: {
 		/**
@@ -747,6 +755,14 @@ export type TranslationFunctions = {
 		 * Previews show the theme's icons and colors; the rest of the interface is illustrative.
 		 */
 		previewNote: () => LocalizedString
+		/**
+		 * Icon packs
+		 */
+		iconPacks: () => LocalizedString
+		/**
+		 * Icons chosen apart from the theme and drawn over whichever one is in use. Install them in the app from Settings → Appearance → Theme store → Icon packs.
+		 */
+		iconPacksSubtitle: () => LocalizedString
 	}
 	plugins: {
 		/**

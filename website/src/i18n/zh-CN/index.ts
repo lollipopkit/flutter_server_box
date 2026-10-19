@@ -114,6 +114,9 @@ const zhCN: Translation = {
     retry: '重试',
     previewNote:
       '预览仅展示主题的图标和配色，其他界面仅作示意。',
+    iconPacks: '图标包',
+    iconPacksSubtitle:
+      '独立于主题选择的图标，显示在当前使用的任意主题上。在 App 中通过 设置 → 外观 → 主题商店 → 图标包 安装。',
   },
   plugins: {
     title: '插件。',

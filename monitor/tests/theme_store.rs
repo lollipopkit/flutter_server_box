@@ -47,6 +47,6 @@ fn the_shipped_catalog_reads() {
 #[test]
 fn the_official_store_tree_reads() {
     let index = Index::from_files(&tree(&root().join("store"))).unwrap();
-    assert!(index.themes.iter().any(|t| t.id == "serverbox.piggy"));
-    assert!(index.themes.iter().all(|t| t.installable().is_some()), "{:?}", index.themes);
+    assert!(index.listings.iter().any(|t| t.kind == fl_theme::repo::Kind::Theme && t.id == "serverbox.piggy"));
+    assert!(index.listings.iter().all(|t| t.installable().is_some()), "{:?}", index.listings);
 }

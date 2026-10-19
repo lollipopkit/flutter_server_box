@@ -92,7 +92,7 @@ listing 的 `description` 可以是字符串，也可以是以语言标签为键
 ## 官方主题
 
 官方主题放在本仓库的 `store/` 中：`store/repo.toml`，以及每个主题的 listing
-`store/themes/<id>.toml` 和与之并列的源目录 `store/themes/<id>/`。
+`store/themes/<id>.toml` 和与之并列的源目录 `store/themes/<id>/`；图标包同样放在 `store/icons/` 下。
 `test/unit/theme_store_tree_test.dart` 使用商店的读取器检查该目录。读取器拒绝的 listing
 会导致测试失败，不会悄悄从商店列表中消失。
 

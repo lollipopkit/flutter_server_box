@@ -74,7 +74,10 @@ void main() {
     final id = manifest['id'] as String;
     expect(ThemePackages.idPattern.hasMatch(id), isTrue);
     expect(ThemeRepoLayout.pathOf(id), 'themes/$id.toml');
-    expect(ThemeRepoLayout.idOf('themes/$id.toml'), id);
+    expect(
+      ThemeRepoLayout.listedAt('themes/$id.toml'),
+      (ThemeListingKind.theme, id),
+    );
   });
 
   test('does not carry the catalog in a backup', () {
