@@ -151,7 +151,15 @@ mod tests {
         }
         let read = send("/api/read", b"body".to_vec()).await.unwrap();
         assert_eq!((read.status().as_u16(), connection(&read)), (204, None));
-        let large = send("/api/nope", vec![0u8; MAX_DRAIN + (64 << 10)]).await.unwrap();
-        assert_eq!((large.status().as_u16(), connection(&large).as_deref()), (404, Some("close")));
+        // Ended either way: the answer says so, or, when the close comes
+        // while the client is still sending, the unread rest makes it a
+        // reset (ntex does not linger), which discards the answer.
+        match send("/api/nope", vec![0u8; MAX_DRAIN + (64 << 10)]).await {
+            Ok(large) => assert_eq!((large.status().as_u16(), connection(&large).as_deref()), (404, Some("close"))),
+            Err(ntex::client::error::SendRequestError::Send(e)) => {
+                assert!(matches!(e.kind(), std::io::ErrorKind::ConnectionReset | std::io::ErrorKind::ConnectionAborted), "{e}")
+            }
+            Err(e) => panic!("{e:?}"),
+        }
     }
 }
