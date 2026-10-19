@@ -908,11 +908,166 @@ jobs:
           for f in *_"${BUILD_NUMBER}"_*.zip; do
             mv "$f" "${f/_${BUILD_NUMBER}_/_v1.0.${BUILD_NUMBER}_}"
           done
+      - name: Install WiX Toolset
+        shell: pwsh
+        run: |
+          dotnet tool install --global wix --version 5.0.2
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $wix = "$env:USERPROFILE\.dotnet\tools\wix.exe"
+          & $wix extension add -g WixToolset.UI.wixext/5.0.2
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $license = Get-Content LICENSE -Raw
+          $license = $license.Replace('\', '\\').Replace('{', '\{').Replace('}', '\}')
+          $license = $license -replace '\r?\n', '\par '
+          $rtf = "{\rtf1\ansi\deff0{\fonttbl{\f0\fmodern Consolas;}}\f0\fs18 $license}"
+          [IO.File]::WriteAllText("$env:RUNNER_TEMP\ServerBox-License.rtf", $rtf, [Text.Encoding]::ASCII)
+      - name: Package MSI
+        shell: pwsh
+        env:
+          PRODUCT_NAME: Server Box
+          INSTALL_FOLDER: Server Box
+          SHORTCUT_FOLDER: Server Box
+          REGISTRY_KEY: ServerBox
+          UPGRADE_CODE: '{C7D0B8EE-B911-4E82-8CF9-196A6F17866D}'
+        run: |
+          $bundle = (Resolve-Path "build/windows/x64/runner/Release").Path
+          $wix = "$env:USERPROFILE\.dotnet\tools\wix.exe"
+          $locales = @(
+            @{ Culture = 'en-US'; Language = '1033'; Suffix = 'en-US' },
+            @{ Culture = 'zh-CN'; Language = '2052'; Suffix = 'zh-CN' }
+          )
+          foreach ($locale in $locales) {
+            $output = "${env:APP_NAME}_v1.0.${env:BUILD_NUMBER}_windows_amd64_$($locale.Suffix).msi"
+            & $wix build windows/installer/Package.wxs `
+              -arch x64 `
+              -culture $locale.Culture `
+              -d "AppDir=$bundle" `
+              -d "MsiVersion=1.0.$env:BUILD_NUMBER" `
+              -d "MsiLanguage=$($locale.Language)" `
+              -d "ProductName=$env:PRODUCT_NAME" `
+              -d "InstallFolder=$env:INSTALL_FOLDER" `
+              -d "InstallDirectoryId=INSTALLFOLDERX64" `
+              -d "ShortcutFolder=$env:SHORTCUT_FOLDER" `
+              -d "RegistryKey=$env:REGISTRY_KEY" `
+              -d "UpgradeCode=$env:UPGRADE_CODE" `
+              -ext WixToolset.UI.wixext `
+              -bindvariable "WixUILicenseRtf=$env:RUNNER_TEMP\ServerBox-License.rtf" `
+              -o $output
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
       - name: Upload artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-windows
-          path: ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_windows_amd64.zip
+          name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-windows-amd64
+          path: |
+            ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_windows_amd64.zip
+            ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_windows_amd64_en-US.msi
+            ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_windows_amd64_zh-CN.msi
+          if-no-files-found: error
+          retention-days: 14
+
+  buildWindowsArm:
+    name: Build Windows ARM64
+    if: >-
+      github.ref_type == 'tag'
+      || contains(needs.reproducibilityCheck.outputs.selected, ',windows,')
+    needs: reproducibilityCheck
+    env:
+      APP_NAME: ${{ needs.reproducibilityCheck.outputs.appName }}
+      BUILD_NUMBER: ${{ needs.reproducibilityCheck.outputs.buildNumber }}
+    runs-on: windows-11-arm
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          lfs: true
+          submodules: recursive
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Install Flutter x64 SDK
+        uses: ./.github/actions/setup-flutter
+        with:
+          architecture: x64
+      - name: Install dependencies
+        run: flutter pub get --enforce-lockfile
+      - name: Build ARM64
+        shell: bash
+        env:
+          FLUTTER_HOST_ARCH: arm64
+        run: |
+          flutter build windows --release --no-pub \
+            --build-number="${BUILD_NUMBER}" \
+            --build-name="1.0.${BUILD_NUMBER}"
+      - name: Package ARM64 ZIP
+        shell: bash
+        run: pwsh -File scripts/release/package-windows-zip.ps1 -BundleDirectory 'build/windows/arm64/runner/Release' -OutputPath "${APP_NAME}_v1.0.${BUILD_NUMBER}_windows_arm64.zip"
+      - name: Verify ARM64 executable
+        shell: pwsh
+        run: |
+          $exe = 'build/windows/arm64/runner/Release/ServerBox.exe'
+          if (-not (Test-Path $exe)) { throw "ARM64 executable not found: $exe" }
+          $bytes = [IO.File]::ReadAllBytes($exe)
+          $peOffset = [BitConverter]::ToInt32($bytes, 0x3C)
+          $machine = [BitConverter]::ToUInt16($bytes, $peOffset + 4)
+          if ($machine -ne 0xAA64) { throw ('Expected ARM64 PE machine 0xAA64, got 0x{0:X4}' -f $machine) }
+      - name: Install WiX Toolset
+        shell: pwsh
+        run: |
+          dotnet tool install --global wix --version 5.0.2
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $wix = "$env:USERPROFILE\.dotnet\tools\wix.exe"
+          & $wix extension add -g WixToolset.UI.wixext/5.0.2
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $license = Get-Content LICENSE -Raw
+          $license = $license.Replace('\', '\\').Replace('{', '\{').Replace('}', '\}')
+          $license = $license -replace '\r?\n', '\par '
+          $rtf = "{\rtf1\ansi\deff0{\fonttbl{\f0\fmodern Consolas;}}\f0\fs18 $license}"
+          [IO.File]::WriteAllText("$env:RUNNER_TEMP\ServerBox-License.rtf", $rtf, [Text.Encoding]::ASCII)
+      - name: Package ARM64 MSI files
+        shell: pwsh
+        env:
+          PRODUCT_NAME: Server Box ARM64
+          INSTALL_FOLDER: Server Box ARM64
+          SHORTCUT_FOLDER: Server Box ARM64
+          REGISTRY_KEY: ServerBoxArm64
+          UPGRADE_CODE: '{C8E1C2D4-9913-4A82-9BE8-1A9A75FCA217}'
+        run: |
+          $bundle = (Resolve-Path 'build/windows/arm64/runner/Release').Path
+          $wix = "$env:USERPROFILE\.dotnet\tools\wix.exe"
+          $locales = @(
+            @{ Culture = 'en-US'; Language = '1033'; Suffix = 'en-US' },
+            @{ Culture = 'zh-CN'; Language = '2052'; Suffix = 'zh-CN' }
+          )
+          foreach ($locale in $locales) {
+            $output = "${env:APP_NAME}_v1.0.${env:BUILD_NUMBER}_windows_arm64_$($locale.Suffix).msi"
+            & $wix build windows/installer/Package.wxs `
+              -arch arm64 `
+              -culture $locale.Culture `
+              -d "AppDir=$bundle" `
+              -d "MsiVersion=1.0.$env:BUILD_NUMBER" `
+              -d "MsiLanguage=$($locale.Language)" `
+              -d "ProductName=$env:PRODUCT_NAME" `
+              -d "InstallFolder=$env:INSTALL_FOLDER" `
+              -d "InstallDirectoryId=INSTALLFOLDERARM64" `
+              -d "ShortcutFolder=$env:SHORTCUT_FOLDER" `
+              -d "RegistryKey=$env:REGISTRY_KEY" `
+              -d "UpgradeCode=$env:UPGRADE_CODE" `
+              -ext WixToolset.UI.wixext `
+              -bindvariable "WixUILicenseRtf=$env:RUNNER_TEMP\ServerBox-License.rtf" `
+              -o $output
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+      - name: Upload ARM64 artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-windows-arm64
+          path: |
+            ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_windows_arm64.zip
+            ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_windows_arm64_en-US.msi
+            ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_windows_arm64_zh-CN.msi
           if-no-files-found: error
           retention-days: 14
 
@@ -941,6 +1096,7 @@ jobs:
       - buildIOS
       - buildLinux
       - buildWindows
+      - buildWindowsArm
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -989,6 +1145,11 @@ jobs:
             "${APP_NAME}_${TAG}_amd64.AppImage"
             "${APP_NAME}_${TAG}_legacy_amd64.AppImage"
             "${APP_NAME}_${TAG}_windows_amd64.zip"
+            "${APP_NAME}_${TAG}_windows_amd64_en-US.msi"
+            "${APP_NAME}_${TAG}_windows_amd64_zh-CN.msi"
+            "${APP_NAME}_${TAG}_windows_arm64.zip"
+            "${APP_NAME}_${TAG}_windows_arm64_en-US.msi"
+            "${APP_NAME}_${TAG}_windows_arm64_zh-CN.msi"
           )
 
           echo "collected:"
