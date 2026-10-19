@@ -117,6 +117,9 @@ const en: BaseTranslation = {
     retry: 'Try again',
     previewNote:
       'Previews show the theme\'s icons and colors; the rest of the interface is illustrative.',
+    iconPacks: 'Icon packs',
+    iconPacksSubtitle:
+      'Icons chosen apart from the theme and drawn over whichever one is in use. Install them in the app from Settings → Appearance → Theme store → Icon packs.',
   },
   plugins: {
     title: 'Plugins.',

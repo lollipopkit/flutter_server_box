@@ -117,6 +117,9 @@ const fr: Translation = {
     retry: 'Réessayer',
     previewNote:
       'Les aperçus montrent les icônes et les couleurs du thème ; le reste de l’interface est indicatif.',
+    iconPacks: 'Packs d’icônes',
+    iconPacksSubtitle:
+      'Des icônes choisies indépendamment du thème et dessinées par-dessus celui utilisé. Installez-les dans l’app depuis Réglages → Apparence → Boutique de thèmes → Packs d’icônes.',
   },
   plugins: {
     title: 'Plugins.',

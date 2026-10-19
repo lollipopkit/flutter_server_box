@@ -116,6 +116,9 @@ const kr: Translation = {
     retry: '다시 시도',
     previewNote:
       '미리보기는 테마의 아이콘과 색상만 보여 줍니다. 나머지 화면은 참고용입니다.',
+    iconPacks: '아이콘 팩',
+    iconPacksSubtitle:
+      '테마와 별도로 선택해 사용 중인 테마 위에 표시하는 아이콘입니다. 앱의 설정 → 모양 → 테마 스토어 → 아이콘 팩에서 설치하세요.',
   },
   plugins: {
     title: '플러그인.',

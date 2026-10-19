@@ -61,7 +61,9 @@ logo = "splash_logo.svg"
 duration = 900
 ```
 
-Only `id`, `name`, `modes`, and the `schema` table are required. Omitted fields use
+Only `id`, `name`, `modes`, and the `schema` table are required; an
+[icon pack](#icon-packs) has no `modes` and requires `kind` and `icons.images`
+instead. Omitted fields use
 these defaults; an entire table may be omitted. Partial tables override only
 the fields supplied. Explicit zero values are preserved, and invalid values
 are rejected rather than replaced with defaults.
@@ -101,7 +103,7 @@ Legacy AMOLED settings migrate to Dark + AMOLED; Auto AMOLED migrates to
 System + AMOLED. AMOLED is no longer a ThemeMode option.
 `format` versions the ZIP manifest structure. `schema` is the inclusive range
 of theme UI schema versions the package supports. The app currently supports
-schema **v1–v3** and shows this range in the **Install theme** help text. The
+schema **v1–v4** and shows this range in the **Install theme** help text. The
 installer requires the package range to overlap the app range and checks it again when
 loading an installed theme. Both `schema.min` and `schema.max` are required.
 `seed` and palette colors are ARGB integers; hexadecimal TOML values such as
@@ -167,8 +169,13 @@ Schema **3** added the components beyond schema 2's seven (`textButton`,
 `divider`, `scrollbar`), the `minHeight` field of button tables,
 `background.tile`, and the `[layout]` and `[variants]` tables. A package using any of them must declare `min = 3`: a schema
 2 build refuses an unknown table, and the store needs to know that before the
-download. The current ceiling is `max = 3`; a package whose range extends
-beyond it can still be installed if the ranges overlap.
+download.
+
+Schema **4** raised the icon limit from 48 to 128, and added
+[icon packs](#icon-packs). A package carrying more than 48 icons, and every
+icon pack, must declare `min = 4`: a schema 3 build refuses either. The current
+ceiling is `max = 4`; a package whose range extends beyond it can still be
+installed if the ranges overlap.
 
 ## Icons
 
@@ -203,6 +210,10 @@ otherwise. With it, each entry overrides that color for one icon:
 
 A color for a key the package carries no image for is refused: it would be a
 typo that shows up as nothing at all.
+
+The Files window's `file.*` icons are the exception: they keep the colors they
+were drawn with, since language logos all look alike in one color. Only an
+`icons.colors` entry tints one, and its `currentColor` is the text color.
 
 ## Color palettes
 
@@ -345,13 +356,22 @@ Supported icon keys are `tab.<tab>` and `tab.<tab>.selected` for `server`, `ssh`
 are `nav.more`, `nav.settings`, `nav.tune`, `nav.privacy`, `nav.agent`,
 `nav.tabs`, `nav.server`, `nav.sort`, `nav.terminal`, `nav.folder`, `nav.cloud`,
 `nav.snippet`, `nav.inbox`, `nav.key`, `nav.info`, `nav.download`, and
-`nav.desktop`.
+`nav.desktop`. The Files window also draws `file.dir`, `file.link`,
+`file.default`, and `file.<ext>` for a file's extension (`file.py`,
+`file.rs`, `file.gitignore`). A name whose extension the package does not
+carry falls back to a related key when there is one (`file.css` for
+`.scss`, `file.sh` for `.bash`), then to `file.default`, then to the
+built-in glyph. A package may carry at most 128 icon keys, enough for a full
+tab and nav set and a Files-window glyph for every common extension. More than
+48 needs `min = 4` (see Schema versions).
 
 These are the keys ServerBox draws. The format is shared with other apps built
 on the same library, so a key made for one of them — dotted lowercase words,
 such as `tab.chat` — is accepted and kept, and ServerBox does not draw it. A
-key that is not well formed is rejected. The editor schema lists only
-ServerBox's keys, so it still flags a misspelled one as you edit.
+key that is not well formed is rejected. The editor schema lists the tab and
+nav keys and the Files-window keys this app draws, each bound to
+`icons/<key with dots as underscores>.png` or `.svg`. The installer still
+accepts any other well-formed `file.*` key, with the same file name.
 
 The compressed archive and total extracted content are each limited to 16 MiB.
 `manifest.toml` is limited to 64 KiB. An icon is limited to 256 KiB, the splash
@@ -398,6 +418,42 @@ so a variant may set `icons.style` and `icons.colors` but not `icons.images`.
 The installer checks every variant as a complete theme and refuses a file
 that no variant uses. The first variant is the one a new install applies.
 
+## Icon packs
+
+An icon pack is a package of icons only, chosen apart from the theme and drawn
+over whichever theme is in use, like a VS Code file icon theme. Its manifest
+says `kind = "icons"` and needs schema 4:
+
+```toml
+id = "yourname.devicons"
+name = "Devicons"
+kind = "icons"
+
+[schema]
+min = 4
+max = 4
+
+[icons.images]
+"file.py" = "icons/file_py.svg"
+"file.rs" = "icons/file_rs.svg"
+"tab.server" = "icons/tab_server.svg"
+
+[icons.colors]
+"tab.server" = "primary"
+```
+
+It carries `format`, `schema`, `id`, `name`, `kind` and `[icons]` with `images`
+and `colors`, and nothing else: no `modes`, colors, shapes, components,
+background or splash, and no `icons.style`, which stays the theme's. Its keys,
+file names and limits are a theme's. A role in `icons.colors` is resolved
+against the theme in use.
+
+A key the pack carries is drawn from the pack, whatever the theme carries for
+it; a key it does not carry is the theme's, then the built-in glyph. In the app
+a pack is chosen in **Settings → Appearance → Icon pack**, or by tapping it in
+the theme store's **Icon packs** tab; **Theme's icons** goes back to the
+theme's own. A backup carries the installed packs and which one is chosen.
+
 ## Theme store
 
 The store reads two levels. A **catalog** is a TOML file that lists
@@ -437,8 +493,9 @@ official theme, see [Themes](/docs/development/themes/#official-themes).
 ### A theme repository
 
 `repo.toml` identifies the repository and its schema. Each theme has a file
-under `themes/`, named after its `id`; files whose paths do not match their IDs
-are rejected.
+under `themes/`, and each icon pack one under `icons/`, named after its `id`;
+files whose paths do not match their IDs are rejected. An icon pack's listing
+is written like a theme's.
 
 ```toml
 schema = 1
@@ -492,7 +549,8 @@ version listed. Themes with only newer, unreadable versions remain listed with
 an explanation. Versions using schema 2 features must set `schema_min = 2`;
 setting it to 1 could offer older apps a package that installs but silently
 loses its icon, color, or splash screen. Versions using schema 3 components or
-`[layout]` must set `schema_min = 3`.
+`[layout]` must set `schema_min = 3`, and versions with more than 48 icons
+`schema_min = 4`.
 
 A third-party theme is released from its author's own repository; only official
 themes are released from this one. The serverbox-theme skill's
@@ -505,8 +563,9 @@ the address to the bytes: the store installs nothing without one, and nothing
 whose digest does not match. To add a repository to the app's catalog, open a
 pull request to this repository that adds a `[[repo]]` entry.
 
-Repositories may contain a `plugins/` section alongside `themes/`. This build
-only reads themes and skips that section without rejecting the repository.
+Repositories may contain a `plugins/` section alongside `themes/` and
+`icons/`. This build reads themes and icon packs and skips that section without
+rejecting the repository.
 
 Direct URL installation accepts HTTPS `.fsbt` links without a store. The
 installer follows at most three HTTPS redirects and does not send credentials.
@@ -517,16 +576,46 @@ Catalog and repository tree size limits are documented in
 
 The official One Dark Pro theme in the theme store adapts the UI palette of
 this VS Code theme to Material surfaces, selection states, cards and buttons.
-It is an independent adaptation, not a VS Code extension bundle. Fonts and
-terminal/editor color settings remain separate. AMOLED is an original
-ServerBox palette. It uses black surfaces in dark mode and generated colors in
-light mode, allowing System appearance.
+It is an independent adaptation, not a VS Code extension bundle. The official
+Devicons icon pack draws file types with
+[Devicon](https://github.com/devicons/devicon)'s language and tool logos (MIT);
+the products and their logos are their owners' trademarks. The official VS Code theme does the same for VS Code's
+own Dark Modern and Light Modern workbench colors. Fonts and terminal/editor
+color settings remain separate.
+AMOLED is an original ServerBox palette. It uses black surfaces in dark mode
+and generated colors in light mode, allowing System appearance.
 
 Muted text colors are adjusted where needed to keep normal text at a contrast
 ratio of at least 4.5:1.
 
 <details>
 <summary>Upstream attribution</summary>
+
+**VS Code**
+
+Source: [VS Code theme defaults](https://github.com/microsoft/vscode/tree/main/extensions/theme-defaults) (Dark Modern, Light Modern)
+
+The MIT License (MIT)
+
+Copyright (c) 2015 - present Microsoft Corporation
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 
 **One Dark Pro**
 
@@ -535,6 +624,32 @@ Source: [One Dark Pro](https://github.com/Binaryify/OneDark-Pro)
 The MIT License (MIT)
 
 Copyright (c) 2013-2022 Binaryify
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+**Devicon**
+
+Source: [Devicon](https://github.com/devicons/devicon)
+
+The MIT License (MIT)
+
+Copyright (c) 2015 konpa
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
