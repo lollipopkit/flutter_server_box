@@ -26,6 +26,10 @@ void main() {
     expect(ThemeFileIcon.aliasOf('file.scss'), 'file.css');
     expect(ThemeFileIcon.aliasOf('file.bash'), 'file.sh');
     expect(ThemeFileIcon.aliasOf('file.py'), isNull);
+    for (final key in ThemeFileIcon.schemaKeys) {
+      final to = ThemeFileIcon.aliasOf(key);
+      if (to != null) expect(ThemeFileIcon.schemaKeys, contains(to));
+    }
   });
 
   test('built-in glyphs differ by extension', () {

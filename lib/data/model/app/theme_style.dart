@@ -59,6 +59,7 @@ abstract final class ThemeFileIcon {
   static Set<String> get schemaKeys => {
     ..._builtIn.keys,
     for (final ext in _alias.keys) 'file.$ext',
+    for (final to in _alias.values) 'file.$to',
     for (final mapped in _named.values) 'file.$mapped',
   };
 

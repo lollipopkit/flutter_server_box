@@ -106,6 +106,7 @@ LIMITS = {
     "splash": 512 * KIB,
     "background": 8 * MIB,
 }
+MAX_ICONS = 128
 ID_PATTERN = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
 BACKGROUNDS = {"background.png", "background.jpg", "background.jpeg"}
 SPLASH_LOGOS = {
@@ -358,6 +359,8 @@ def check_theme(manifest: dict, folder: Path, key: str | None, lo, rep: Report, 
     # Icons. The schema binds listed keys to their file names; JSON Schema
     # cannot do that for an arbitrary file.* key the installer still accepts,
     # so the stem is checked here the way the installer does (icon_asset_path).
+    if len(images) > MAX_ICONS:
+        rep.error(f"{where}icons.images: {len(images)} keys, over {MAX_ICONS}")
     for ikey, rel in images.items():
         stem = str(ikey).replace(".", "_")
         if str(rel) not in (f"icons/{stem}.png", f"icons/{stem}.svg"):
@@ -373,7 +376,9 @@ def check_theme(manifest: dict, folder: Path, key: str | None, lo, rep: Report, 
         if len(data) > LIMITS["icon"]:
             rep.error(f"{rel}: {len(data)} bytes, over 256 KiB")
         if str(rel).endswith(".svg"):
-            check_svg(f, data, rep)
+            # The Files window tints a file.* glyph only when icons.colors names it.
+            tinted = not str(ikey).startswith("file.") or ikey in colors
+            check_svg(f, data, rep, tinted=tinted)
         else:
             check_raster(f, data, 512, 512 * 512, rep)
     for ikey in colors:
