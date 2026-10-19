@@ -3,13 +3,13 @@ title: Workspace
 description: Several views of several servers side by side, with keyboard shortcuts
 ---
 
-The **Workspace** tab shows several server views side by side. For example,
-you can place a server's terminal beside its status page, or show one server's
-shell above another server's containers. Each pane hosts a page you can also
-open from a server's detail page.
+The **Workspace** tab arranges server views in panes. For example, put a
+server's terminal beside its status page, or show one server's shell above
+another server's containers. Each pane can show a view available from a
+server's detail page.
 
-A fresh install does not put the tab in the bar: open it from **More**, or add
-it under **Settings › Application › Home Tabs**.
+The tab is hidden by default. Open it from **More**, or add it under
+**Settings › Application › Home Tabs**.
 
 ## Workspaces, panes and tabs
 
@@ -25,8 +25,8 @@ Drag a tab to another pane's edge to split that pane, or to its middle to add
 it there. On iOS and Android, press and hold a tab before dragging. If the
 pane is on a phone or too narrow to show its tabs, drag the pane bar instead.
 
-A narrow window shows two panes at a time: the focused one and the one focused
-before it. The panes button at the top lists every pane and moves the focus.
+A narrow window shows the focused pane and the one you focused just before it.
+The panes button at the top lists every pane and moves the focus.
 
 **Maximize** fills the workspace with one pane and hides the others until you
 restore it. Double-clicking a pane's strip of tabs does the same. A narrow

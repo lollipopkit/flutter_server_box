@@ -72,7 +72,7 @@ App 不会安装 native crash signal handler。平台提供 native crash、ANR �
 
 **任何级别都不会自动上传 App 日志。** 基本信息可能发送导致运行结束的错误及 stack trace，并附带上文描述的构建和平台信息，但不包含日志行。如果错误发生在上报通道启动之前，App 可能在下一次启动时把它作为错误补发。保存在本机的手动报告会一直保留，直到你删除它，或后续崩溃用新报告替换它。
 
-因此，手动报告不保证匿名。提交到 GitHub 的内容会公开，并受 [GitHub 隐私声明](https://docs.github.com/site-policy/privacy-policies/github-privacy-statement)约束。
+之前的日志、曾连接过的主机信息，以及 App 无法识别的值仍可能出现在手动报告中，因此报告不保证匿名。提交到 GitHub 的内容会公开，并受 [GitHub 隐私声明](https://docs.github.com/site-policy/privacy-policies/github-privacy-statement)约束。
 
 ## AI 请求
 

@@ -54,33 +54,6 @@ Thanks to <a href="https://openai.com">OpenAI</a> for providing six months of Ch
 </details>
 
 <details>
-<summary><b>iPad</b> — 10 screenshots</summary>
-<br>
-<table>
-  <tr>
-    <td><img width="280px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/ipad/home.jpg" alt="Server list"></td>
-    <td><img width="280px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/ipad/server-details.jpg" alt="Server details"></td>
-    <td><img width="280px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/ipad/terminal.jpg" alt="Terminal"></td>
-  </tr>
-  <tr>
-    <td><img width="280px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/ipad/files.jpg" alt="Files"></td>
-    <td><img width="280px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/ipad/container.jpg" alt="Containers"></td>
-    <td><img width="280px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/ipad/process.jpg" alt="Processes"></td>
-  </tr>
-  <tr>
-    <td><img width="280px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/ipad/services.jpg" alt="Services"></td>
-    <td><img width="280px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/ipad/globe.jpg" alt="Globe"></td>
-    <td><img width="280px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/ipad/agent.jpg" alt="Agent"></td>
-  </tr>
-  <tr>
-    <td><img width="280px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/ipad/settings.jpg" alt="Settings"></td>
-    <td></td>
-    <td></td>
-  </tr>
-</table>
-</details>
-
-<details>
 <summary><b>macOS</b> — 10 screenshots</summary>
 <br>
 <table>
@@ -122,7 +95,7 @@ Download packages only from sources you trust.
 
 - Status charts for CPU, sensors, GPU, and other metrics; an SSH terminal; SFTP; [RDP and VNC through SSH](https://serverbox.lolli.tech/docs/advanced/remote-desktop/); Docker, process, and service management; and S.M.A.R.T.
 - Platform features include biometric authentication, push notifications, home-screen widgets, a watchOS app, and system color themes.
-- 16 languages. The current list is in `lib/l10n/`; its git history records the translators.
+- 16 languages.
 
 ## Help
 
@@ -132,7 +105,7 @@ Download packages only from sources you trust.
   <a href="https://discord.gg/SsVNbRhK7w"><img alt="discord" src="https://img.shields.io/badge/Discord-lpkt-purple"></a>
 </div>
 
-- [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor) is an agent you install on your servers. It is required for features that need to work while the app is closed — **push notifications**, **home-screen widgets**, and the **watch app**. It also offers another way to add a server: the app can connect to it over HTTP instead of SSH, which suits hosts whose SSH port you prefer not to expose, and gives charts historical data from before the app's first connection. Monitor also serves its own web panel. See its [Chinese documentation](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/README_zh.md) for setup and details on what each remote-access switch allows.
+- [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor) is an agent you install on your servers. It is required for features that need to work while the app is closed — **push notifications**, **home-screen widgets**, and the **watch app**. It also offers another way to add a server: the app can connect to it over HTTP instead of SSH, which suits hosts whose SSH port you prefer not to expose, and gives charts historical data from before the app's first connection. Monitor also serves its own web panel.
 - **Common issues** are listed in the [app wiki](https://github.com/lollipopkit/flutter_server_box/wiki/主页).
 - **Agent skills:** This repository includes three skills for AI agents. Add them with
 
@@ -158,7 +131,7 @@ Before opening an issue, please:
 
 Any positive contribution is welcome. [CONTRIBUTING.md](CONTRIBUTING.md) covers the development setup, the commit convention, the checks to run, and how translations work.
 
-Contributors sign the [CLA](CLA.md) ([Chinese version](CLA_zh.md)) once by leaving a comment on their first pull request. It grants the right to ship your work in App Store builds alongside the AGPLv3 source. You retain the copyright to your work.
+Contributors sign the [CLA](CLA.md) once by leaving a comment on their first pull request. It grants the right to ship your work in App Store builds alongside the AGPLv3 source. You retain the copyright to your work.
 
 If I forgot to add your name to the contributors list, please add a comment in the issue or PR you opened to let me know, I will add it as soon as possible.
 

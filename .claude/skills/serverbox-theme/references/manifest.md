@@ -75,7 +75,8 @@ benchmark remoteDesktop virt`; `nav.more nav.settings nav.tune nav.privacy
 nav.agent nav.tabs nav.server nav.sort nav.terminal nav.folder nav.cloud
 nav.snippet nav.inbox nav.key nav.info nav.download nav.desktop`; Files
 window `file.dir file.link file.default` and `file.<ext>` (`file.py`,
-`file.rs`, `file.gitignore`). At most 128 icon keys per package; more than 48 needs `min = 4`.
+`file.rs`, `file.gitignore`). A package may contain up to 128 icon keys; one
+with more than 48 needs `min = 4`.
 
 PNG: ≤ 512×512, ≤ 256 KiB. SVG: ≤ 256 KiB, UTF-8, root `<svg>`, no DTD or
 entity, no `<script>`/`<style>`/`<foreignObject>`, no processing instruction,

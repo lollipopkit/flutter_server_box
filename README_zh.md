@@ -55,33 +55,6 @@
 </details>
 
 <details>
-<summary><b>iPad</b> — 10 张</summary>
-<br>
-<table>
-  <tr>
-    <td><img width="280px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/ipad/home.jpg" alt="服务器列表"></td>
-    <td><img width="280px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/ipad/server-details.jpg" alt="服务器详情"></td>
-    <td><img width="280px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/ipad/terminal.jpg" alt="终端"></td>
-  </tr>
-  <tr>
-    <td><img width="280px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/ipad/files.jpg" alt="文件"></td>
-    <td><img width="280px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/ipad/container.jpg" alt="容器"></td>
-    <td><img width="280px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/ipad/process.jpg" alt="进程"></td>
-  </tr>
-  <tr>
-    <td><img width="280px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/ipad/services.jpg" alt="服务"></td>
-    <td><img width="280px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/ipad/globe.jpg" alt="地球"></td>
-    <td><img width="280px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/ipad/agent.jpg" alt="Agent"></td>
-  </tr>
-  <tr>
-    <td><img width="280px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/ipad/settings.jpg" alt="设置"></td>
-    <td></td>
-    <td></td>
-  </tr>
-</table>
-</details>
-
-<details>
 <summary><b>macOS</b> — 10 张</summary>
 <br>
 <table>
@@ -123,7 +96,7 @@
 
 - 支持 CPU、传感器、GPU 等状态图表，SSH 终端，SFTP，[通过 SSH 使用 RDP 和 VNC](https://serverbox.lolli.tech/docs/zh/advanced/remote-desktop/)，Docker、进程和服务管理，以及 S.M.A.R.T。
 - 支持生物认证、推送通知、桌面小组件、watchOS App 和跟随系统颜色。
-- 支持 16 种语言。当前清单见 `lib/l10n/`，译者信息记录在该目录的 git history 中。
+- 支持 16 种语言。
 
 ## 帮助
 
@@ -133,7 +106,7 @@
   <a href="https://discord.gg/SsVNbRhK7w"><img alt="discord" src="https://img.shields.io/badge/Discord-lpkt-purple"></a>
 </div>
 
-- [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor) 是安装在你服务器上的 agent。不打开 ServerBox app 时仍需工作的功能都依赖它 —— **推送服务**、**桌面小部件** 和 **手表 app**；它同时也是添加服务器的第二种方式：app 可以经 HTTP 而不是 SSH 访问它，适用于不便暴露 SSH 端口的主机，并且图表在 app 首次连接前就已有历史数据。它自己还提供一个网页面板。安装方法和各个远程访问开关的含义详见其[中文文档](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/README_zh.md)。  
+- [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor) 是安装在你服务器上的 agent。不打开 ServerBox app 时仍需工作的功能都依赖它 —— **推送通知**、**桌面小部件** 和 **手表 app**；它同时也是添加服务器的第二种方式：app 可以经 HTTP 而不是 SSH 访问它，适用于不便暴露 SSH 端口的主机，并且图表在 app 首次连接前就已有历史数据。Monitor 还提供网页面板。
 - **常见问题** 可以在 [app wiki](https://github.com/lollipopkit/flutter_server_box/wiki/主页) 查看。
 - **Agent skills：** 本仓库包含三份供 AI agent 使用的 skill。使用下面的命令添加：
 
