@@ -1674,5 +1674,5 @@
   "launchFailedBody": "請複製下方的錯誤訊息，連同日誌檔一起在 GitHub issue 中回報。",
   "launchFailedLogs": "日誌：{path}",
   "reconnect": "重新連線",
-  "reconnectEndsShell": "沒有可以重新接入的 tmux 工作階段，重新連線會結束目前的 shell 及其中仍在執行的程式。"
+  "reconnectEndsShell": "沒有可以重新接入的 tmux 工作階段，重新連線會結束目前的 shell 及其中仍在執行的程式，並清除畫面上的輸出。"
 }

@@ -1674,5 +1674,5 @@
   "launchFailedBody": "Aşağıdakı xətanı kopyalayın və log faylları ilə birlikdə GitHub issue-da bildirin.",
   "launchFailedLogs": "Loglar: {path}",
   "reconnect": "Yenidən qoşul",
-  "reconnectEndsShell": "Yenidən qoşulmaq üçün tmux sessiyası yoxdur, ona görə yenidən qoşulmaq bu shell-i və içində hələ işləyən hər şeyi bağlayır."
+  "reconnectEndsShell": "Yenidən qoşulmaq üçün tmux sessiyası yoxdur, ona görə yenidən qoşulmaq bu shell-i və içində hələ işləyən hər şeyi bağlayır və ekrandakı çıxışını təmizləyir."
 }

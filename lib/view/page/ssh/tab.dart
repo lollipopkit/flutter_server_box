@@ -680,8 +680,8 @@ extension _Actions on _SSHTabPageState {
   List<BarAction> _serverActions({required bool textView}) {
     final current = _sessions.current;
     if (current == null) return const [];
-    final spi = current.data.page.args.spi;
-    final onServer = spi != null;
+    final args = current.data.page.args;
+    final onServer = args.spi != null;
     final status = terminalStatusAction(
       session: current.data.session,
       paneLabel: (pane) =>
@@ -690,9 +690,7 @@ extension _Actions on _SSHTabPageState {
     return onServer
         ? [
             status,
-            // From the page's own [SSHPageState.canReconnect], which may not
-            // have built yet.
-            if (!spi.local) _reconnectAction,
+            if (args.canReconnect) _reconnectAction,
             _agentAction,
             _snippetAction,
             if (textView) _textViewAction,
@@ -703,6 +701,7 @@ extension _Actions on _SSHTabPageState {
           ]
         : [
             status,
+            if (args.canReconnect) _reconnectAction,
             _snippetAction,
             if (textView) _textViewAction,
             _settingsAction,

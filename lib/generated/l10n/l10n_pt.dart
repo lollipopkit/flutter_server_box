@@ -6000,5 +6000,5 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get reconnectEndsShell =>
-      'Não há uma sessão do tmux para reanexar, então reconectar encerra este shell e tudo o que ainda estiver em execução nele.';
+      'Não há uma sessão do tmux para reanexar, então reconectar encerra este shell e tudo o que ainda estiver em execução nele, e apaga a saída da tela.';
 }

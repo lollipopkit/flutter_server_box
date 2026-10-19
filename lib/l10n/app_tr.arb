@@ -1674,5 +1674,5 @@
   "launchFailedBody": "Aşağıdaki hatayı kopyalayıp günlük dosyalarıyla birlikte bir GitHub issue'sunda bildirin.",
   "launchFailedLogs": "Günlükler: {path}",
   "reconnect": "Yeniden bağlan",
-  "reconnectEndsShell": "Yeniden bağlanacak bir tmux oturumu yok; yeniden bağlanmak bu kabuğu ve içinde hâlâ çalışan her şeyi sonlandırır."
+  "reconnectEndsShell": "Yeniden bağlanacak bir tmux oturumu yok; yeniden bağlanmak bu kabuğu ve içinde hâlâ çalışan her şeyi sonlandırır ve ekrandaki çıktısını temizler."
 }

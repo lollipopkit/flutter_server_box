@@ -5950,5 +5950,5 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reconnectEndsShell =>
-      'There is no tmux session to re-attach, so reconnecting ends this shell and anything still running in it.';
+      'There is no tmux session to re-attach, so reconnecting ends this shell and anything still running in it, and clears its output from the screen.';
 }

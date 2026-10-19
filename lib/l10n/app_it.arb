@@ -1674,5 +1674,5 @@
   "launchFailedBody": "Copia l'errore qui sotto e segnalalo in una issue su GitHub, insieme ai file di log.",
   "launchFailedLogs": "Log: {path}",
   "reconnect": "Riconnetti",
-  "reconnectEndsShell": "Non c’è una sessione tmux da ricollegare: riconnettere chiude questa shell e tutto ciò che vi è ancora in esecuzione."
+  "reconnectEndsShell": "Non c’è una sessione tmux da ricollegare: riconnettere chiude questa shell e tutto ciò che vi è ancora in esecuzione, e ne cancella l’output dallo schermo."
 }

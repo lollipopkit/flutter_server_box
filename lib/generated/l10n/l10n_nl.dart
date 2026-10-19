@@ -5998,5 +5998,5 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get reconnectEndsShell =>
-      'Er is geen tmux-sessie om opnieuw aan te koppelen, dus opnieuw verbinden beëindigt deze shell en alles wat er nog in draait.';
+      'Er is geen tmux-sessie om opnieuw aan te koppelen, dus opnieuw verbinden beëindigt deze shell en alles wat er nog in draait, en wist de uitvoer van het scherm.';
 }

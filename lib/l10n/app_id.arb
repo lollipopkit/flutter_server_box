@@ -1674,5 +1674,5 @@
   "launchFailedBody": "Salin galat di bawah dan laporkan di issue GitHub, beserta berkas log.",
   "launchFailedLogs": "Log: {path}",
   "reconnect": "Sambungkan ulang",
-  "reconnectEndsShell": "Tidak ada sesi tmux untuk dipasang kembali, jadi menyambungkan ulang akan mengakhiri shell ini dan semua yang masih berjalan di dalamnya."
+  "reconnectEndsShell": "Tidak ada sesi tmux untuk dipasang kembali, jadi menyambungkan ulang akan mengakhiri shell ini dan semua yang masih berjalan di dalamnya, serta menghapus keluarannya dari layar."
 }

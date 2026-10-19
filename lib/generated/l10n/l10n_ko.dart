@@ -5676,5 +5676,5 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get reconnectEndsShell =>
-      '다시 연결할 tmux 세션이 없으므로, 다시 연결하면 이 셸과 그 안에서 아직 실행 중인 작업이 종료됩니다.';
+      '다시 연결할 tmux 세션이 없으므로, 다시 연결하면 이 셸과 그 안에서 아직 실행 중인 작업이 종료되고 화면의 출력도 지워집니다.';
 }

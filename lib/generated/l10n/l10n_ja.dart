@@ -5677,5 +5677,5 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get reconnectEndsShell =>
-      '再アタッチできる tmux セッションがないため、再接続するとこのシェルと、その中でまだ実行中のものが終了します。';
+      '再アタッチできる tmux セッションがないため、再接続するとこのシェルと、その中でまだ実行中のものが終了し、画面上の出力も消去されます。';
 }

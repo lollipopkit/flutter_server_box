@@ -1674,5 +1674,5 @@
   "launchFailedBody": "Kopiere den Fehler unten und melde ihn mit den Logdateien in einem GitHub-Issue.",
   "launchFailedLogs": "Logs: {path}",
   "reconnect": "Neu verbinden",
-  "reconnectEndsShell": "Es gibt keine tmux-Sitzung zum erneuten Anhängen. Neu verbinden beendet diese Shell und alles, was darin noch läuft."
+  "reconnectEndsShell": "Es gibt keine tmux-Sitzung zum erneuten Anhängen. Neu verbinden beendet diese Shell und alles, was darin noch läuft, und löscht ihre Ausgabe vom Bildschirm."
 }

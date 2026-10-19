@@ -5932,5 +5932,5 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get reconnectEndsShell =>
-      'Yeniden bağlanacak bir tmux oturumu yok; yeniden bağlanmak bu kabuğu ve içinde hâlâ çalışan her şeyi sonlandırır.';
+      'Yeniden bağlanacak bir tmux oturumu yok; yeniden bağlanmak bu kabuğu ve içinde hâlâ çalışan her şeyi sonlandırır ve ekrandaki çıktısını temizler.';
 }

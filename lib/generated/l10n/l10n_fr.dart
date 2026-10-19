@@ -6042,5 +6042,5 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get reconnectEndsShell =>
-      'Aucune session tmux à rattacher : reconnecter ferme ce shell et tout ce qui s’y exécute encore.';
+      'Aucune session tmux à rattacher : reconnecter ferme ce shell et tout ce qui s’y exécute encore, et efface sa sortie de l’écran.';
 }

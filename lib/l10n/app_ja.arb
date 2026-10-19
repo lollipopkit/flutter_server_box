@@ -1674,5 +1674,5 @@
   "launchFailedBody": "下のエラーをコピーし、ログファイルと一緒に GitHub の issue で報告してください。",
   "launchFailedLogs": "ログ: {path}",
   "reconnect": "再接続",
-  "reconnectEndsShell": "再アタッチできる tmux セッションがないため、再接続するとこのシェルと、その中でまだ実行中のものが終了します。"
+  "reconnectEndsShell": "再アタッチできる tmux セッションがないため、再接続するとこのシェルと、その中でまだ実行中のものが終了し、画面上の出力も消去されます。"
 }

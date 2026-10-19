@@ -78,6 +78,14 @@ final class SshPageArgs {
     LocalSource() || ConsoleSource() => null,
   };
 
+  /// Whether there is a link to re-establish by hand: a server's shell or a
+  /// guest's console, and not one on this device.
+  bool get canReconnect => switch (source) {
+    ServerSource(:final spi) => !spi.local,
+    ConsoleSource() => true,
+    LocalSource() => false,
+  };
+
   final String? initCmd;
 
   /// Whether [initCmd] is what the shell is for, and so typed again into the
@@ -396,13 +404,6 @@ class SSHPageState extends ConsumerState<SSHPage>
   /// is already gone takes the route under it instead, which here is the app.
   NavigatorState? _reconnectDialogNav;
   bool _disconnectDialogOpen = false;
-
-  /// Whether there is a link to re-establish by hand: a server's shell, and
-  /// not one on this device.
-  bool get canReconnect => switch (widget.args.spi) {
-    final spi? => !spi.local,
-    null => false,
-  };
   bool _reportedDisconnected = false;
   VoidCallback? _visibilityListener;
   bool _isPickingSnippet = false;
@@ -1012,7 +1013,7 @@ class SSHPageState extends ConsumerState<SSHPage>
       // Not this device's shell: there is no link to re-establish, and a
       // "reconnect" would only end the shell. Always enabled: a reconnect in
       // progress, or the question after a lost link, is a modal dialog.
-      if (canReconnect)
+      if (widget.args.canReconnect)
         IconButton(
           onPressed: reconnect,
           tooltip: l10n.reconnect,

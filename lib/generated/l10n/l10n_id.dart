@@ -5943,5 +5943,5 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get reconnectEndsShell =>
-      'Tidak ada sesi tmux untuk dipasang kembali, jadi menyambungkan ulang akan mengakhiri shell ini dan semua yang masih berjalan di dalamnya.';
+      'Tidak ada sesi tmux untuk dipasang kembali, jadi menyambungkan ulang akan mengakhiri shell ini dan semua yang masih berjalan di dalamnya, serta menghapus keluarannya dari layar.';
 }

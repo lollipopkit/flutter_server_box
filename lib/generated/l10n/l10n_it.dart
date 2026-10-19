@@ -6011,5 +6011,5 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get reconnectEndsShell =>
-      'Non c’è una sessione tmux da ricollegare: riconnettere chiude questa shell e tutto ciò che vi è ancora in esecuzione.';
+      'Non c’è una sessione tmux da ricollegare: riconnettere chiude questa shell e tutto ciò che vi è ancora in esecuzione, e ne cancella l’output dallo schermo.';
 }

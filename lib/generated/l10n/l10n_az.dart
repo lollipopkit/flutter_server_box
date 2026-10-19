@@ -5942,5 +5942,5 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get reconnectEndsShell =>
-      'Yenidən qoşulmaq üçün tmux sessiyası yoxdur, ona görə yenidən qoşulmaq bu shell-i və içində hələ işləyən hər şeyi bağlayır.';
+      'Yenidən qoşulmaq üçün tmux sessiyası yoxdur, ona görə yenidən qoşulmaq bu shell-i və içində hələ işləyən hər şeyi bağlayır və ekrandakı çıxışını təmizləyir.';
 }

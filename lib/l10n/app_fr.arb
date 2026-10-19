@@ -1674,5 +1674,5 @@
   "launchFailedBody": "Copiez l'erreur ci-dessous et signalez-la dans une issue GitHub, avec les fichiers journaux.",
   "launchFailedLogs": "Journaux : {path}",
   "reconnect": "Reconnecter",
-  "reconnectEndsShell": "Aucune session tmux à rattacher : reconnecter ferme ce shell et tout ce qui s’y exécute encore."
+  "reconnectEndsShell": "Aucune session tmux à rattacher : reconnecter ferme ce shell et tout ce qui s’y exécute encore, et efface sa sortie de l’écran."
 }
