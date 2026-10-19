@@ -27,13 +27,40 @@ void main() {
 
   group('top level', () {
     test('the schema names the tables the parser accepts', () {
-      expect(properties.keys.toSet(), unorderedEquals(ThemePackages.sections));
+      expect(
+        properties.keys.toSet(),
+        unorderedEquals({
+          ...ThemePackages.sections,
+          ...ThemePackages.iconPackSections,
+        }),
+      );
     });
 
     test('the schema requires the keys that have no default', () {
+      expect(raw['required'], unorderedEquals(['id', 'name', 'schema']));
+      expect(raw['if'], {
+        'required': ['kind'],
+      });
+      expect(raw['else'], {
+        'required': ['modes'],
+      });
+    });
+
+    test('an icon pack is held to its own tables', () {
+      final pack = raw['then'] as Map<String, dynamic>;
       expect(
-        raw['required'],
-        unorderedEquals(['id', 'name', 'modes', 'schema']),
+        (pack['propertyNames'] as Map)['enum'],
+        unorderedEquals(ThemePackages.iconPackSections),
+      );
+      final icons = (pack['properties'] as Map)['icons'] as Map;
+      expect(
+        (icons['propertyNames'] as Map)['enum'],
+        unorderedEquals(ThemePackages.iconPackFields),
+      );
+      expect(
+        (((pack['properties'] as Map)['schema'] as Map)['properties']
+            as Map)['min'],
+        {'minimum': ThemePackages.iconSchema},
       );
     });
 

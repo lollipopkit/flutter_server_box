@@ -27,8 +27,8 @@ Condensed from the theme authoring guide and the JSON Schema
 Schema 2 added SVG icons, `[icons.colors]` and `[splash]`; a package using any
 of them declares `min = 2`. Schema 3 added the components marked ³ below,
 `minHeight` on button tables, `background.tile`, `[layout]` and `[variants]`; a package using any of them
-declares `min = 3`. Schema 4 allows more than 48 icons; such a package declares
-`min = 4`.
+declares `min = 3`. Schema 4 allows more than 48 icons, and icon packs; such a
+package declares `min = 4`.
 
 Unknown top-level tables and fields are rejected. Explicit zero values are
 kept; invalid values are errors, never replaced by defaults.
@@ -196,6 +196,9 @@ schema = 1
 name = "Somebody's themes"
 ```
 
+An icon pack's listing is the same file under `icons/<id>.toml`, beside its
+folder `icons/<id>/`.
+
 ```toml
 # themes/<id>.toml — the file name is the theme's id
 id = "yourname.mytheme"
@@ -223,3 +226,31 @@ schema range can read. Never change the bytes behind a recorded version; publish
 version instead. To appear in the app's store, open a pull request adding
 `[[repo]] url = "…"` to `assets/catalog/repos.toml` in flutter_server_box.
 Limits: tree ≤ 16 MiB compressed, 64 MiB unpacked, 8 MiB per file.
+
+## Icon packs
+
+`kind = "icons"` makes the package an icon pack: icons only, chosen apart from
+the theme (Settings → Appearance → Icon pack, or the store's Icon packs tab) and
+drawn over whichever theme is in use. A key it carries wins over the theme's;
+one it does not carry is the theme's.
+
+```toml
+id = "yourname.devicons"
+name = "Devicons"
+kind = "icons"
+
+[schema]
+min = 4                 # required: icon packs are schema 4
+max = 4
+
+[icons.images]          # at least one; keys, file names and limits as a theme's
+"file.py" = "icons/file_py.svg"
+
+[icons.colors]          # optional; a role is the theme in use's
+"file.py" = "primary"
+```
+
+Allowed: `format`, `schema`, `id`, `name`, `kind`, `[icons]` with `images` and
+`colors`. Refused: every other table (`modes`, `colors`, `shapes`, …) and
+`icons.style`. `file.*` icons keep their own fills unless `icons.colors` names
+them.

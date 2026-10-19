@@ -1834,8 +1834,9 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     );
   }
 
-  /// The theme's `file.<ext>` glyph when it has one, else an alias such as
-  /// `file.css` for `.scss`, else `file.default`, else the built-in glyph.
+  /// The icon pack's or theme's `file.<ext>` glyph when either has one, else
+  /// an alias such as `file.css` for `.scss`, else `file.default`, else the
+  /// built-in glyph.
   Widget _iconOf(FileEntry entry) {
     final key = ThemeFileIcon.keyOf(
       name: entry.name,
@@ -1845,9 +1846,9 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     final built = ThemeFileIcon.builtIn(key);
     final material = Icon(built.$1, color: built.$2);
     if (key == ThemeFileIcon.dir || key == ThemeFileIcon.link) {
-      return _ThemedFileIcon(keyName: key, fallback: material);
+      return ThemeIconAsset(keyName: key, fallback: material);
     }
-    final generic = _ThemedFileIcon(
+    final generic = ThemeIconAsset(
       keyName: ThemeFileIcon.fallback,
       fallback: material,
     );
@@ -1855,8 +1856,8 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     final aliased = ThemeFileIcon.aliasOf(key);
     final next = aliased == null
         ? generic
-        : _ThemedFileIcon(keyName: aliased, fallback: generic);
-    return _ThemedFileIcon(keyName: key, fallback: next);
+        : ThemeIconAsset(keyName: aliased, fallback: generic);
+    return ThemeIconAsset(keyName: key, fallback: next);
   }
 
   /// How this list is shown: what it is ordered by, and whether it hides the
@@ -1897,39 +1898,6 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     },
   );
 
-}
-
-/// A Files-window glyph. [ThemeIconAsset] only draws tab/nav keys, so this
-/// looks the package up directly for `file.*`.
-class _ThemedFileIcon extends StatelessWidget {
-  const _ThemedFileIcon({required this.keyName, required this.fallback});
-
-  final String keyName;
-  final Widget fallback;
-
-  @override
-  Widget build(BuildContext context) => ListenableBuilder(
-    listenable: Listenable.merge([
-      ThemeHost.settings.appThemePackage.listenable(),
-      ThemeHost.settings.appThemePreset.listenable(),
-      ThemePackages.preview,
-    ]),
-    builder: (context, _) {
-      final path = ThemePackages.activeTheme?.iconPath(keyName);
-      if (path == null) return fallback;
-      final iconTheme = IconTheme.of(context);
-      final scheme = Theme.of(context).colorScheme;
-      // Only an explicit icons.colors entry tints a Files glyph. Language
-      // logos keep the fills they were drawn with; flattening them to the
-      // list's icon color made every extension look the same.
-      return PackageImage(
-        path: path,
-        size: iconTheme.size ?? 24,
-        color: ThemePackages.activeTheme?.iconColor(keyName, scheme),
-        fallback: fallback,
-      );
-    },
-  );
 }
 
 @immutable

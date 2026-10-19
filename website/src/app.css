@@ -1210,3 +1210,23 @@ body {
     align-items: flex-start;
   }
 }
+
+/* Icon packs: below the themes, their icons in their own fills. */
+.store-packs-head {
+  margin-top: 3rem;
+}
+
+.store-pack-icons {
+  margin-bottom: 0.75rem;
+}
+
+.store-pack-icon {
+  display: inline-flex;
+  width: 26px;
+  height: 26px;
+}
+
+.store-pack-icon svg {
+  width: 100%;
+  height: 100%;
+}

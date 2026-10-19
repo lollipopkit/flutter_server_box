@@ -1,0 +1,13 @@
+id = "serverbox.devicons"
+name = "Devicons"
+homepage = "https://github.com/lollipopkit/flutter_server_box/tree/main/store/icons/serverbox.devicons"
+license = "MIT"
+
+[description]
+en = "Files-window icons for common file types, with Devicon's language and tool logos (MIT). Goes with any theme."
+fr = "Icônes de la fenêtre Files pour les types de fichiers courants, avec les logos de langages et d’outils de Devicon (MIT). Compatible avec tous les thèmes."
+zh = "Files 窗口的常见文件类型图标，使用 Devicon 的语言和工具 logo（MIT）。可与任意主题搭配。"
+zh-TW = "Files 視窗的常見檔案類型圖示，使用 Devicon 的語言和工具 logo（MIT）。可與任何主題搭配。"
+
+# Versions are appended by scripts/publish-themes.py, which packs the folder
+# beside this file and records the digest of what it built.

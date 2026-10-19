@@ -169,8 +169,9 @@ Schema **3** added the components beyond schema 2's seven (`textButton`,
 2 build refuses an unknown table, and the store needs to know that before the
 download.
 
-Schema **4** raised the icon limit from 48 to 128. A package carrying more than
-48 icons must declare `min = 4`: a schema 3 build refuses it. The current
+Schema **4** raised the icon limit from 48 to 128, and added
+[icon packs](#icon-packs). A package carrying more than 48 icons, and every
+icon pack, must declare `min = 4`: a schema 3 build refuses either. The current
 ceiling is `max = 4`; a package whose range extends beyond it can still be
 installed if the ranges overlap.
 
@@ -207,6 +208,10 @@ otherwise. With it, each entry overrides that color for one icon:
 
 A color for a key the package carries no image for is refused: it would be a
 typo that shows up as nothing at all.
+
+The Files window's `file.*` icons are the exception: they keep the colors they
+were drawn with, since language logos all look alike in one color. Only an
+`icons.colors` entry tints one, and its `currentColor` is the text color.
 
 ## Color palettes
 
@@ -411,7 +416,42 @@ so a variant may set `icons.style` and `icons.colors` but not `icons.images`.
 The installer checks every variant as a complete theme and refuses a file
 that no variant uses. The first variant is the one a new install applies.
 
-## Theme store
+## Icon packs
+
+An icon pack is a package of icons only, chosen apart from the theme and drawn
+over whichever theme is in use, like a VS Code file icon theme. Its manifest
+says `kind = "icons"` and needs schema 4:
+
+```toml
+id = "yourname.devicons"
+name = "Devicons"
+kind = "icons"
+
+[schema]
+min = 4
+max = 4
+
+[icons.images]
+"file.py" = "icons/file_py.svg"
+"file.rs" = "icons/file_rs.svg"
+"tab.server" = "icons/tab_server.svg"
+
+[icons.colors]
+"tab.server" = "primary"
+```
+
+It carries `format`, `schema`, `id`, `name`, `kind` and `[icons]` with `images`
+and `colors`, and nothing else: no `modes`, colors, shapes, components,
+background or splash, and no `icons.style`, which stays the theme's. Its keys,
+file names and limits are a theme's. A role in `icons.colors` is resolved
+against the theme in use.
+
+A key the pack carries is drawn from the pack, whatever the theme carries for
+it; a key it does not carry is the theme's, then the built-in glyph. In the app
+a pack is chosen in **Settings → Appearance → Icon pack**, or by tapping it in
+the theme store's **Icon packs** tab; **Theme's icons** goes back to the
+theme's own. A backup carries the installed packs and which one is chosen.
+
 
 The store reads two levels. A **catalog** is a TOML file that lists
 repositories without naming themes or versions. Each **repository** is a git
@@ -450,8 +490,9 @@ official theme, see [Themes](/docs/development/themes/#official-themes).
 ### A theme repository
 
 `repo.toml` identifies the repository and its schema. Each theme has a file
-under `themes/`, named after its `id`; files whose paths do not match their IDs
-are rejected.
+under `themes/`, and each icon pack one under `icons/`, named after its `id`;
+files whose paths do not match their IDs are rejected. An icon pack's listing
+is written like a theme's.
 
 ```toml
 schema = 1
@@ -531,10 +572,10 @@ Catalog and repository tree size limits are documented in
 
 The official One Dark Pro theme in the theme store adapts the UI palette of
 this VS Code theme to Material surfaces, selection states, cards and buttons.
-It is an independent adaptation, not a VS Code extension bundle. The One Dark
-Pro Devicons variant uses that same palette with
-[Devicon](https://github.com/devicons/devicon) glyphs in place of the
-editor-style icons. The official VS Code theme does the same for VS Code's
+It is an independent adaptation, not a VS Code extension bundle. The official
+Devicons icon pack draws file types with
+[Devicon](https://github.com/devicons/devicon)'s language and tool logos (MIT);
+the products and their logos are their owners' trademarks. The official VS Code theme does the same for VS Code's
 own Dark Modern and Light Modern workbench colors. Fonts and terminal/editor
 color settings remain separate.
 AMOLED is an original ServerBox palette. It uses black surfaces in dark mode

@@ -117,6 +117,9 @@ const it: Translation = {
     retry: 'Riprova',
     previewNote:
       'Le anteprime mostrano icone e colori del tema; il resto dell’interfaccia è indicativo.',
+    iconPacks: 'Pacchetti di icone',
+    iconPacksSubtitle:
+      'Icone scelte a parte dal tema e disegnate sopra quello in uso. Installale nell’app da Impostazioni → Aspetto → Negozio dei temi → Pacchetti di icone.',
   },
   plugins: {
     title: 'Plugin.',

@@ -148,8 +148,8 @@ Schema **3** 增加了 schema 2 七个组件之外的组件（`textButton`、`ou
 按钮表的 `minHeight` 字段、`background.tile`，以及 `[layout]` 和 `[variants]` 表。使用其中任一项的包必须声明
 `min = 3`：schema 2 的构建会拒绝未知的表，商店需要在下载前得知这一点。
 
-Schema **4** 把 icon 上限从 48 提高到 128。icon 超过 48 个的包必须声明 `min = 4`：
-schema 3 的构建会拒绝这样的包。当前上限为 `max = 4`；即使包的范围高于该值，只要与应用
+Schema **4** 把 icon 上限从 48 提高到 128，并增加了[图标包](#图标包)。icon 超过 48 个的包，
+以及所有图标包，都必须声明 `min = 4`：schema 3 的构建会拒绝这两种包。当前上限为 `max = 4`；即使包的范围高于该值，只要与应用
 支持的范围有交集，仍可安装。
 
 ## Icons
@@ -179,6 +179,9 @@ UTF-8，根元素必须是 `svg`，最大 256 KiB。DTD、实体声明、`<scrip
 ```
 
 如果为包中没有对应 image 的 key 指定颜色，安装器会拒绝该包，避免无效配置被静默接受。
+
+Files 窗口的 `file.*` icon 是例外：它们保持绘制时的颜色，因为语言 logo 统一着色后无法
+区分。只有 `icons.colors` 中的条目会为其着色；其中的 `currentColor` 取文字颜色。
 
 ## 调色板
 
@@ -357,6 +360,38 @@ tile = 120
 `icons.colors`，但不能设置 `icons.images`。安装器会把每个变体当作完整主题检查，并拒绝
 没有任何变体使用的文件。新安装时应用第一个变体。
 
+## 图标包
+
+图标包是只含 icon 的包，独立于主题选择，并绘制在当前使用的任意主题上，类似 VS Code 的
+文件图标主题。它的 manifest 声明 `kind = "icons"`，需要 schema 4：
+
+```toml
+id = "yourname.devicons"
+name = "Devicons"
+kind = "icons"
+
+[schema]
+min = 4
+max = 4
+
+[icons.images]
+"file.py" = "icons/file_py.svg"
+"file.rs" = "icons/file_rs.svg"
+"tab.server" = "icons/tab_server.svg"
+
+[icons.colors]
+"tab.server" = "primary"
+```
+
+图标包只能包含 `format`、`schema`、`id`、`name`、`kind`，以及含 `images` 和 `colors` 的
+`[icons]`：不能有 `modes`、配色、形状、组件、背景或 splash，也不能有 `icons.style`，
+该项仍由主题决定。key、文件名和上限与主题相同。`icons.colors` 中的 role 按当前主题解析。
+
+图标包含有的 key 使用图标包的图片，不论主题是否也有；图标包没有的 key 使用主题的图片，
+再回退到内置字形。在 App 中，于 **设置 → 外观 → 图标包** 选择，或在主题商店的
+**图标包** 标签页中点选；选择 **主题自带图标** 即恢复主题自己的图标。备份会包含已安装的
+图标包和当前的选择。
+
 ## 主题商店
 
 商店分两层读取。第一层是 **catalog**，即逐条列出 repository 的 TOML 文件，不包含
@@ -391,8 +426,9 @@ repository URL 必须使用 HTTPS，可以指向 git 仓库或 tarball。对于 
 
 ### 主题 repository
 
-`repo.toml` 声明该 repository 及其 schema；`themes/` 下一个主题一个文件，文件名取
-主题的 `id`，路径与 id 不一致的文件会被拒绝。
+`repo.toml` 声明该 repository 及其 schema；`themes/` 下一个主题一个文件，`icons/` 下
+一个图标包一个文件，文件名取其 `id`，路径与 id 不一致的文件会被拒绝。图标包的 listing
+写法与主题相同。
 
 ```toml
 schema = 1
@@ -461,9 +497,9 @@ repository 可在 `themes/` 旁边包含 `plugins/` 目录。本构建只读取�
 ## 主题来源
 
 主题商店中的官方主题 One Dark Pro，把下面这个 VS Code 主题的 UI 调色板改编到
-Material 的表面、选中态、卡片和按钮上。这一改编与 VS Code 扩展包无关。One Dark
-Pro Devicons 变体使用同一套调色板，并把编辑器风格图标换成
-[Devicon](https://github.com/devicons/devicon) 字形。官方主题
+Material 的表面、选中态、卡片和按钮上。这一改编与 VS Code 扩展包无关。官方图标包
+Devicons 使用 [Devicon](https://github.com/devicons/devicon) 的语言和工具 logo（MIT）
+标示文件类型；这些产品及其 logo 是各自所有者的商标。官方主题
 VS Code 则把 VS Code 自带的 Dark Modern / Light Modern 工作区颜色做同样的改编。
 字体和终端/编辑器配色仍是单独的设置。AMOLED 是 ServerBox 原创的调色板，在 dark
 下使用纯黑表面、在 light 下使用生成色，因此支持 System 外观。

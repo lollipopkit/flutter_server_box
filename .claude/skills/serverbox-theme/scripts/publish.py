@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Publish the themes of a theme repository that changed since their last version.
+"""Publish the themes and icon packs of a theme repository that changed since their last version.
 
     python3 publish.py                       # every theme, in the repository around the working directory
     python3 publish.py --root path/to/repo   # a theme repository elsewhere
@@ -14,8 +14,10 @@ A theme repository is what the ServerBox theme store reads:
     repo.toml              schema = 1, name = "..."
     themes/<id>.toml       the listing: id, name, description, license, [[version]]s
     themes/<id>/           the theme itself: manifest.toml, icons/, ...
+    icons/<id>.toml        an icon pack's listing, the same way
+    icons/<id>/            the icon pack (`kind = "icons"`): manifest.toml, icons/
 
-For each theme it packs `themes/<id>/` and compares the package with the newest
+For each theme it packs `themes/<id>/` (an icon pack `icons/<id>/`) and compares the package with the newest
 version the listing records. The same bytes mean nothing changed and the theme
 is skipped; different bytes are a new version — the patch number bumped (or
 `--bump`, or `<id>=<version>`), 1.0.0 for a theme with no version yet.
@@ -158,21 +160,28 @@ def main() -> int:
     root = (args.root.resolve() if args.root else find_root(Path.cwd().resolve()))
     if root is None or not (root / "repo.toml").is_file():
         sys.exit("no repo.toml here or above: pass --root, or start one with --init")
-    themes_dir = root / "themes"
+    # The directory a listing is in says what it is; the manifest has to agree.
+    kinds = {"themes": None, "icons": "icons"}
 
     wanted: dict[str, str | None] = {}
     for a in args.themes:
         tid, _, ver = a.partition("=")
         wanted[tid] = ver or None
-    ids = list(wanted) or sorted(p.stem for p in themes_dir.glob("*.toml"))
+    listed = {p.stem: d for d in kinds for p in sorted((root / d).glob("*.toml"))}
+    ids = list(wanted) or sorted(listed)
 
     repo = github_slug(root)
     plan = []  # (id, version, bytes, digest, listing path, schema)
     for tid in ids:
-        folder, listing_path = themes_dir / tid, themes_dir / f"{tid}.toml"
-        if not folder.is_dir() or not listing_path.is_file():
-            sys.exit(f"{tid}: needs themes/{tid}/ and themes/{tid}.toml")
+        if tid not in listed:
+            sys.exit(f"{tid}: needs themes/{tid}/ and themes/{tid}.toml, or icons/{tid}/ and icons/{tid}.toml")
+        kind_dir = listed[tid]
+        folder, listing_path = root / kind_dir / tid, root / kind_dir / f"{tid}.toml"
+        if not folder.is_dir():
+            sys.exit(f"{tid}: needs {kind_dir}/{tid}/ beside {kind_dir}/{tid}.toml")
         manifest = tomllib.loads((folder / "manifest.toml").read_text("utf-8"))
+        if manifest.get("kind") != kinds[kind_dir]:
+            sys.exit(f"{tid}: kind {manifest.get('kind')!r} does not belong in {kind_dir}/")
         listing = tomllib.loads(listing_path.read_text("utf-8"))
         # The app installs what the manifest says, and the store checks a
         # listing's file name against its id: all three are one spelling.
@@ -211,7 +220,7 @@ def main() -> int:
         gh("release", "create", release, "--repo", repo, "--title", "Themes",
            "--prerelease", "--latest=false",
            "--notes", "Theme packages for the ServerBox theme store, one asset per version. "
-                      "Listed in the repository's themes/ folder.")
+                      "Listed in the repository's themes/ and icons/ folders.")
         print(f"created release {release} (pre-release, never Latest)")
     # Before anything goes up: a themes release that is Latest is a mistake to
     # fix first, not one to publish more packages into.
@@ -250,7 +259,7 @@ def main() -> int:
                 f'sha256 = "{digest}"\n'
                 f"size = {len(data)}\n"
             )
-        print(f"  {tid} {version} added to themes/{tid}.toml")
+        print(f"  {tid} {version} added to {listing_path.relative_to(root)}")
 
     print("commit and push the listings")
     return 0

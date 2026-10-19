@@ -4,7 +4,8 @@
 // The same folder the site serves as /store.tar.gz for the app's theme store
 // (scripts/store-tarball.sh), so the page and the app offer the same versions.
 // Only what a visitor needs is exported: the newest version of each, where it
-// downloads from and its digest, and for a theme the colors of its palette.
+// downloads from and its digest, for a theme the colors of its palette, and
+// for an icon pack its icons.
 import { createHash } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs'
@@ -244,6 +245,52 @@ function readThemes(store) {
     .sort((a, b) => a.name.localeCompare(b.name))
 }
 
+// What an icon pack's role colors are drawn as: Material's dark baseline, as
+// the cards are dark. A pack has no palette; in the app a role is the theme's.
+const packRoles = { primary: '#d0bcff', secondary: '#ccc2dc', tertiary: '#efb8c8', error: '#f2b8b5' }
+
+/**
+ * `icons/<id>.toml` beside `icons/<id>/`: icon packs, each with every icon
+ * inline — a pack is a handful of small files and has no palette to preview.
+ * An icon with a color is drawn as a mask in it, as the app tints it; one
+ * without keeps its own fills, its `currentColor` the card's text color.
+ */
+function readIconPacks(store) {
+  const dir = path.join(store, 'icons')
+  return tomlFiles(dir)
+    .filter((f) => path.dirname(f) === dir)
+    .map((file) => {
+      const listing = parse(readFileSync(file, 'utf8'))
+      const packDir = path.join(dir, listing.id)
+      const manifestPath = path.join(packDir, 'manifest.toml')
+      const manifest = existsSync(manifestPath) ? parse(readFileSync(manifestPath, 'utf8')) : {}
+      const colors = manifest.icons?.colors ?? {}
+      const icons = Object.entries(manifest.icons?.images ?? {})
+        .filter(([, rel]) => existsSync(path.join(packDir, rel)))
+        .map(([key, rel]) => {
+          const file = path.join(packDir, rel)
+          const tint = colors[key] == null ? null : color(colors[key], packRoles)
+          // Inline, so its currentColor is the card's; the installer has
+          // checked these files (no scripts, nothing outside the file).
+          if (!tint && rel.endsWith('.svg')) return { key, svg: readFileSync(file, 'utf8') }
+          return { key, src: dataUri(file), color: tint }
+        })
+        .sort((a, b) => a.key.localeCompare(b.key))
+      return {
+        id: listing.id,
+        name: listing.name,
+        description: listing.description ?? '',
+        homepage: listing.homepage ?? null,
+        license: listing.license ?? null,
+        icons,
+        latest: release(newest(listing.version)),
+        updated: updatedAt(file),
+      }
+    })
+    .filter((p) => p.latest)
+    .sort((a, b) => a.name.localeCompare(b.name))
+}
+
 function readPlugins(store) {
   return tomlFiles(path.join(store, 'plugins'))
     .map((file) => {
@@ -284,7 +331,7 @@ export function storeData(store) {
         delete v.preview
       }
     }
-    return { data: { themes, plugins: readPlugins(store) }, files }
+    return { data: { themes, iconPacks: readIconPacks(store), plugins: readPlugins(store) }, files }
   }
 
   const plugin = {

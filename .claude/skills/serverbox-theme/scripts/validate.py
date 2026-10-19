@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Check a ServerBox theme folder the way the app's installer will.
+"""Check a ServerBox theme or icon pack folder the way the app's installer will.
 
-    python3 validate.py <theme-folder> [--schema <fsbt-manifest.schema.json>]
+    python3 validate.py <folder> [--schema <fsbt-manifest.schema.json>]
 
 Two layers:
 
@@ -13,7 +13,8 @@ Two layers:
    image, schema 2 features under `min = 1`, schema 3 components or `[layout]`
    under `min < 3`, more than 48 icons under `min < 4`, the files themselves (names, sizes,
    PNG/JPEG dimensions, SVG content), stray files the installer refuses, and
-   the contrast of the text pairs a palette sets.
+   the contrast of the text pairs a palette sets. An icon pack
+   (`kind = "icons"`) is held to its own, shorter rules.
 
 Exit status 0 means no errors; warnings do not fail. Standard library only
 (Python 3.11+ for tomllib).
@@ -45,6 +46,9 @@ APP_SCHEMA = (1, 4)
 FEATURE_SCHEMA = 2
 COMPONENT_SCHEMA = 3
 ICON_SCHEMA = 4
+# What an icon pack may say (fl_theme `ICON_PACK_SECTIONS`, `ICON_PACK_FIELDS`).
+ICON_PACK_SECTIONS = {"format", "schema", "id", "name", "kind", "icons"}
+ICON_PACK_FIELDS = {"images", "colors"}
 
 # The components and fields schema 2 had (ThemeComponents.schema2 in the app).
 # Anything else under [components], and [layout], needs schema.min = 3.
@@ -329,6 +333,61 @@ def safe_file(folder: Path, rel: str) -> Path | None:
     return f if f.is_file() else None
 
 
+def check_icons(images: dict, colors: dict, folder: Path, rep: Report, where: str, used: set[str]) -> None:
+    """A theme's or an icon pack's icons; adds the files they use to [used]."""
+    # Icons. The schema binds listed keys to their file names; JSON Schema
+    # cannot do that for an arbitrary file.* key the installer still accepts,
+    # so the stem is checked here the way the installer does (icon_asset_path).
+    if len(images) > MAX_ICONS:
+        rep.error(f"{where}icons.images: {len(images)} keys, over {MAX_ICONS}")
+    for ikey, rel in images.items():
+        stem = str(ikey).replace(".", "_")
+        if str(rel) not in (f"icons/{stem}.png", f"icons/{stem}.svg"):
+            rep.error(
+                f'{where}icons.images."{ikey}": {rel} must be icons/{stem}.png or .svg'
+            )
+        f = safe_file(folder, str(rel))
+        used.add(str(rel))
+        if f is None:
+            rep.error(f"{where}icons.images.{ikey}: {rel} does not exist or is a symlink (the app would show the built-in glyph)")
+            continue
+        data = f.read_bytes()
+        if len(data) > LIMITS["icon"]:
+            rep.error(f"{rel}: {len(data)} bytes, over 256 KiB")
+        if str(rel).endswith(".svg"):
+            # The Files window tints a file.* glyph only when icons.colors names it.
+            tinted = not str(ikey).startswith("file.") or ikey in colors
+            check_svg(f, data, rep, tinted=tinted)
+        else:
+            check_raster(f, data, 512, 512 * 512, rep)
+    for ikey in colors:
+        if ikey not in images:
+            rep.error(f'{where}icons.colors."{ikey}" names an icon the package carries no image for')
+
+
+def check_icon_pack(manifest: dict, folder: Path, lo, rep: Report) -> set[str]:
+    """An icon pack's rules; answers the package files it used."""
+    for section in manifest:
+        if section not in ICON_PACK_SECTIONS:
+            rep.error(f"[{section}]: an icon pack carries icons only; it goes with whichever theme is in use")
+    if isinstance(lo, int) and lo < ICON_SCHEMA:
+        rep.error(f"an icon pack is a schema 4 feature: set schema.min = {ICON_SCHEMA}")
+    icons = manifest.get("icons")
+    if not isinstance(icons, dict):
+        rep.error("icons must be a table with images")
+        icons = {}
+    for field in icons:
+        if field not in ICON_PACK_FIELDS:
+            rep.error(f"icons.{field}: an icon pack has only images and colors (style is the theme's)")
+    images = icons.get("images") if isinstance(icons.get("images"), dict) else {}
+    colors = icons.get("colors") if isinstance(icons.get("colors"), dict) else {}
+    if not images:
+        rep.error("icons.images is empty: an icon pack carries at least one icon")
+    used: set[str] = set()
+    check_icons(images, colors, folder, rep, "", used)
+    return used
+
+
 def check_theme(manifest: dict, folder: Path, key: str | None, lo, rep: Report, where: str):
     """One theme's own rules; answers the package files it used and its contrast lines."""
     used: set[str] = set()
@@ -359,34 +418,7 @@ def check_theme(manifest: dict, folder: Path, key: str | None, lo, rep: Report, 
     splash = manifest.get("splash")
     background = table_of(manifest.get("background"))
 
-    # Icons. The schema binds listed keys to their file names; JSON Schema
-    # cannot do that for an arbitrary file.* key the installer still accepts,
-    # so the stem is checked here the way the installer does (icon_asset_path).
-    if len(images) > MAX_ICONS:
-        rep.error(f"{where}icons.images: {len(images)} keys, over {MAX_ICONS}")
-    for ikey, rel in images.items():
-        stem = str(ikey).replace(".", "_")
-        if str(rel) not in (f"icons/{stem}.png", f"icons/{stem}.svg"):
-            rep.error(
-                f'{where}icons.images."{ikey}": {rel} must be icons/{stem}.png or .svg'
-            )
-        f = safe_file(folder, str(rel))
-        used.add(str(rel))
-        if f is None:
-            rep.error(f"{where}icons.images.{ikey}: {rel} does not exist or is a symlink (the app would show the built-in glyph)")
-            continue
-        data = f.read_bytes()
-        if len(data) > LIMITS["icon"]:
-            rep.error(f"{rel}: {len(data)} bytes, over 256 KiB")
-        if str(rel).endswith(".svg"):
-            # The Files window tints a file.* glyph only when icons.colors names it.
-            tinted = not str(ikey).startswith("file.") or ikey in colors
-            check_svg(f, data, rep, tinted=tinted)
-        else:
-            check_raster(f, data, 512, 512 * 512, rep)
-    for ikey in colors:
-        if ikey not in images:
-            rep.error(f'{where}icons.colors."{ikey}" names an icon the package carries no image for')
+    check_icons(images, colors, folder, rep, where, used)
 
     # Background and splash.
     if background.get("type") == "image":
@@ -504,6 +536,10 @@ def main() -> int:
         if hi < APP_SCHEMA[0] or lo > APP_SCHEMA[1]:
             rep.error(f"schema {lo}..{hi} does not overlap the app's {APP_SCHEMA[0]}..{APP_SCHEMA[1]}")
 
+    pack = manifest.get("kind") == "icons"
+    if "kind" in manifest and not pack:
+        rep.error(f"kind = {manifest['kind']!r}: the only kind is \"icons\" (an icon pack); a theme has none")
+
     # The themes the package installs as: itself, or each of its variants —
     # the base tables with the variant's drawn over them, reading
     # variants/<key>/<file> in place of the package's file of that name.
@@ -525,7 +561,7 @@ def main() -> int:
                 rep.error(f"variants.{key}.icons.images: a variant shares the package's icon files")
             overrides = {k: v for k, v in table.items() if k != "name"}
             themes.append((f"variant {key}", merge(base, overrides), key))
-    else:
+    elif not pack:
         themes.append(("", manifest, None))
     if variants and isinstance(lo, int) and lo < COMPONENT_SCHEMA:
         rep.error("[variants] is a schema 3 feature: set schema.min = 3")
@@ -564,6 +600,8 @@ def main() -> int:
 
     used = {"manifest.toml"}
     lines = []
+    if pack:
+        used |= check_icon_pack(manifest, folder, lo, rep)
     for label, theme, key in themes:
         where = f"{label}: " if label else ""
         found, contrast_lines = check_theme(theme, folder, key, lo, rep, where)
@@ -575,7 +613,7 @@ def main() -> int:
         if rel not in used:
             rep.error(f"{rel}: no theme in the package uses it, and the installer refuses it")
 
-    print(f"theme  {tid}  ({manifest_path})")
+    print(f"{'icons' if pack else 'theme'}  {tid}  ({manifest_path})")
     print(f"schema {schema_ref}")
     if lines:
         print("contrast:")

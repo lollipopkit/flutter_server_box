@@ -1,6 +1,6 @@
 ---
 name: serverbox-theme
-description: Make a ServerBox app theme — a `.fsbt` package (a folder with `manifest.toml`, optional icons, background and splash) — from a description, a brand color or an existing color scheme, then validate it, pack it and share it. Use this whenever someone wants to create, port, tweak, fix, validate or publish a theme for ServerBox (flutter_server_box), including requests that never say ".fsbt" or "manifest", such as "make ServerBox look like Nord", "port my VS Code theme to the app", "a dark purple theme for server box", "why does my theme fail to install", "add custom tab icons", or "put my theme in the theme store".
+description: Make a ServerBox app theme — a `.fsbt` package (a folder with `manifest.toml`, optional icons, background and splash) — or an icon pack (icons only, chosen apart from the theme) from a description, a brand color or an existing color scheme, then validate it, pack it and share it. Use this whenever someone wants to create, port, tweak, fix, validate or publish a theme for ServerBox (flutter_server_box), including requests that never say ".fsbt" or "manifest", such as "make ServerBox look like Nord", "port my VS Code theme to the app", "a dark purple theme for server box", "why does my theme fail to install", "add custom tab icons", or "put my theme in the theme store".
 ---
 
 # ServerBox themes
@@ -23,6 +23,12 @@ density, corner radii, in-app icons, a background, and a launch splash. It does
 **not** change fonts, the launcher icon, or terminal/editor colors — say so if
 the request asks for those, rather than inventing fields: the installer rejects
 unknown tables and fields.
+
+An **icon pack** is the same kind of folder with `kind = "icons"` and only
+`[icons]` (`images`, `colors`): icons the user picks apart from the theme, drawn
+over whichever theme is in use — such as Files-window `file.<ext>` logos. Make
+one when the request is about icons alone and should work with any theme; it
+needs `[schema] min = 4`. See "Icon packs" in `references/manifest.md`.
 
 The format is strict on purpose: every field is checked, and a misspelled table
 is an error, not a no-op. So write the manifest from the reference, validate it
@@ -59,7 +65,7 @@ Schema range: `[schema] min = 1, max = 4` unless the theme uses an SVG icon,
 `min = 2`, or an older app installs the theme and silently drops them. Any
 component beyond card, tile, button, input, navigation, dialog and sheet, a
 button `minHeight`, `background.tile`, `[layout]`, or `[variants]` is schema 3 and needs `min = 3`. More than 48
-icons is schema 4 and needs `min = 4`.
+icons is schema 4 and needs `min = 4`; so is every icon pack.
 
 ### 3. Colors
 
@@ -152,7 +158,8 @@ theme repository listing needs. Ways to share, simplest first:
   published by maintainers with `scripts/publish-themes.py` (this skill's
   `publish.py` with `store/` as the repository); propose one with a pull
   request adding `store/themes/<id>/` (the folder) and `store/themes/<id>.toml`
-  (the listing, without versions). Only official themes are released from
+  (the listing, without versions) — an icon pack under `store/icons/` the
+  same way. Only official themes are released from
   flutter_server_box.
 
 ## Publishing in your own repository
@@ -164,7 +171,8 @@ releasing, the same tool the official themes use:
 ```sh
 # once, in a new GitHub repository (git remote origin set):
 python3 <skill>/scripts/publish.py --init --name "Somebody's themes"
-# then per theme: themes/<id>/ (the folder) and themes/<id>.toml:
+# then per theme: themes/<id>/ (the folder) and themes/<id>.toml
+# (an icon pack: icons/<id>/ and icons/<id>.toml):
 #   id = "<id>"   name = "..."   description = "..."   license = "MIT"
 python3 <skill>/scripts/publish.py --dry-run   # what changed, and the versions it would get
 python3 <skill>/scripts/publish.py             # upload, then append [[version]]s

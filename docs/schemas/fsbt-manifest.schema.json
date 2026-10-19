@@ -2,14 +2,32 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/fsbt-manifest.schema.json",
   "title": "ServerBox theme package manifest",
-  "description": "manifest.toml at the root of a .fsbt archive. The installer refuses an unknown table, an unknown field, and a value out of range rather than replacing it with a default, so this schema is as strict as the installer: it is meant to name a mistake while you type instead of after an install. See https://serverbox.lollipopkit.com/docs/development/theme-authoring/\n\nOne rule cannot be written here: a color under icons.colors whose key has no entry under icons.images is refused, because a cross-table check is not something a JSON Schema expresses. Every table is optional; the four required keys are the ones no default exists for.",
+  "description": "manifest.toml at the root of a .fsbt archive. The installer refuses an unknown table, an unknown field, and a value out of range rather than replacing it with a default, so this schema is as strict as the installer: it is meant to name a mistake while you type instead of after an install. See https://serverbox.lollipopkit.com/docs/development/theme-authoring/\n\nOne rule cannot be written here: a color under icons.colors whose key has no entry under icons.images is refused, because a cross-table check is not something a JSON Schema expresses. Every table is optional; the required keys are the ones no default exists for.\n\nWith kind = \"icons\" the manifest is an icon pack (schema 4): icons only, chosen apart from the theme and drawn over whichever one is in use, so none of a theme's tables.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["id", "name", "modes", "schema"],
+  "required": ["id", "name", "schema"],
+  "if": { "required": ["kind"] },
+  "then": {
+    "required": ["icons"],
+    "propertyNames": { "enum": ["format", "schema", "id", "name", "kind", "icons"] },
+    "properties": {
+      "schema": { "properties": { "min": { "minimum": 4 } } },
+      "icons": {
+        "required": ["images"],
+        "propertyNames": { "enum": ["images", "colors"] },
+        "properties": { "images": { "minProperties": 1 } }
+      }
+    }
+  },
+  "else": { "required": ["modes"] },
   "properties": {
     "format": {
       "description": "Archive manifest structure version. Only 1 exists.",
       "const": 1
+    },
+    "kind": {
+      "description": "\"icons\" for an icon pack (schema 4): icons only, chosen apart from the theme. Absent for a theme.",
+      "const": "icons"
     },
     "id": {
       "description": "Stable identifier. A theme repository names the file for a theme after this.",
