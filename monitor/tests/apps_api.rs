@@ -405,7 +405,7 @@ async fn host_functions_need_the_permission() {
     let srv = server().await;
     installed_backend(&srv, &["process", "root"]).await;
     let r = call_fn(&srv, "run", json!({ "script": "echo hi" })).await;
-    assert_eq!(r.json["value"], "hi\n", "{}", r.json);
+    assert_eq!(r.json["value"], if cfg!(windows) { "hi\r\n" } else { "hi\n" }, "{}", r.json);
     // Root needs the desk's sudo password with the call, whatever was
     // approved.
     let r = call_fn(&srv, "asRoot", json!({ "script": "id -u" })).await;

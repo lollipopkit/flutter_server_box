@@ -222,8 +222,14 @@ pub(super) async fn command_output_with_timeout(
         .stderr(Stdio::piped())
         .kill_on_drop(true);
     let deadline = tokio::time::Instant::now() + command_timeout;
+    #[cfg(unix)]
     let mut child = command.spawn()?;
-    let process_group = child.id();
+    #[cfg(unix)]
+    let tree = Tree(child.id());
+    #[cfg(windows)]
+    let (mut child, job) = crate::utils::job::spawn(&mut command, 0)?;
+    #[cfg(windows)]
+    let tree = Tree(job);
     let stdout = child.stdout.take().expect("stdout was requested as piped");
     let stderr = child.stderr.take().expect("stderr was requested as piped");
     // Whichever pipe fills first says so, and the wait below stops waiting.
@@ -282,7 +288,7 @@ pub(super) async fn command_output_with_timeout(
             tracing::warn!(
                 "{label} produced more than {MAX_COMMAND_OUTPUT_BYTES} bytes and was terminated"
             );
-            terminate_command(&mut child, process_group).await?;
+            terminate_command(&mut child, &tree);
             stdout_abort.abort();
             stderr_abort.abort();
             tokio::spawn(async move { let _ = child.wait().await; });
@@ -299,7 +305,7 @@ pub(super) async fn command_output_with_timeout(
                 "{label} exceeded {} seconds and was terminated",
                 command_timeout.as_secs()
             );
-            terminate_command(&mut child, process_group).await?;
+            terminate_command(&mut child, &tree);
             // A shell can leave descendants holding either pipe. Do not join
             // their readers after the deadline: a timed-out collection must
             // never turn into an unbounded wait on inherited handles.
@@ -331,7 +337,7 @@ pub(super) async fn command_output_with_timeout(
         Ok(output) => output?,
         Err(_) => {
             tracing::warn!("{label} left output pipes open after exit and was terminated");
-            terminate_process_group(process_group);
+            terminate_process_group(&tree);
             stdout_abort.abort();
             stderr_abort.abort();
             return Ok(None);
@@ -351,60 +357,26 @@ pub(super) async fn command_output_with_timeout(
     }))
 }
 
-pub(super) async fn terminate_command(child: &mut Child, process_group: Option<u32>) -> std::io::Result<()> {
-    if terminate_process_group(process_group) {
-        return Ok(());
-    }
+/// What a command started, ended with it: the process group the direct
+/// child leads on Unix, its job on Windows (`utils::job`).
+pub(super) struct Tree(
+    #[cfg(unix)] Option<u32>,
+    #[cfg(windows)] crate::utils::job::Job,
+);
 
-    #[cfg(windows)]
-    if let Some(pid) = child.id() {
-        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-        if TokioCommand::new("taskkill")
-            .args(["/PID", &pid.to_string(), "/T", "/F"])
-            .creation_flags(CREATE_NO_WINDOW)
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .status()
-            .await
-            .is_ok_and(|status| status.success())
-        {
-            return Ok(());
-        }
+pub(super) fn terminate_command(child: &mut Child, tree: &Tree) {
+    if !terminate_process_group(tree) {
+        let _ = child.start_kill();
     }
-
-    child.start_kill()
 }
 
-pub(super) fn terminate_process_group(_process_group: Option<u32>) -> bool {
+pub(super) fn terminate_process_group(tree: &Tree) -> bool {
+    // `process_group(0)` above makes the direct child's PID its process
+    // group ID. A negative PID is POSIX's "signal the group" form.
     #[cfg(unix)]
-    if let Some(id) = _process_group
-        // `process_group(0)` above makes the direct child's PID its process
-        // group ID. A negative PID is POSIX's "signal the group" form.
-        && unsafe { kill_process_group(-(id as i32), 9) } == 0
-    {
-        return true;
-    }
-    // Windows has no group to signal, and `start_kill` — which is all this
-    // used to fall back to — ends the process that was spawned and nothing it
-    // spawned in turn. A `powershell -File` running the status script leaves
-    // whatever it started (smartctl, a battery query) alive and holding the
-    // pipes it inherited, so the reader that timed out cannot finish and the
-    // next extended cycle starts another one beside it. `taskkill /T` walks
-    // the tree by parent PID, which is the relationship Windows does keep.
-    //
-    // Not awaited, and still answers `false`: this runs on a path where the
-    // caller has stopped reading, and `terminate_command`'s own `start_kill`
-    // stays as the guarantee about the direct child.
+    return tree.0.is_some_and(|id| unsafe { kill_process_group(-(id as i32), 9) } == 0);
     #[cfg(windows)]
-    if let Some(id) = _process_group {
-        let _ = std::process::Command::new("taskkill")
-            .args(["/T", "/F", "/PID", &id.to_string()])
-            .stdin(Stdio::null())
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .spawn();
-    }
-    false
+    return tree.0.kill();
 }
 
 #[cfg(unix)]

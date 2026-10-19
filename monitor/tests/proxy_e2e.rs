@@ -12,6 +12,8 @@
 //! `SBM_E2E_PROXY_SERVERS=nginx,caddy,traefik` picks the servers (one at a
 //! time on ports 80 and 443, each stopped after).
 
+#![cfg(target_os = "linux")]
+
 mod common;
 
 use std::time::{Duration, Instant};
@@ -141,7 +143,7 @@ async fn proxies_serve_and_roll_back() {
         return;
     }
     // SAFETY: a libc call with no arguments.
-    assert_eq!(unsafe { libc_geteuid() }, 0, "root only, on a throwaway machine");
+    assert_eq!(unsafe { libc::geteuid() }, 0, "root only, on a throwaway machine");
     upstream();
     let (srv, _state) = common::machine::server_with(Config::default()).await;
     let app = common::package::install(&srv, "serverbox.proxy").await;
@@ -149,9 +151,4 @@ async fn proxies_serve_and_roll_back() {
     for server in picked.split(',') {
         verify(&app, server).await;
     }
-}
-
-unsafe extern "C" {
-    #[link_name = "geteuid"]
-    fn libc_geteuid() -> u32;
 }

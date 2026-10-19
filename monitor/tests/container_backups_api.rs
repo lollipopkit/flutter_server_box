@@ -84,10 +84,12 @@ async fn backing_up_checks_its_containers_and_restoring_asks_the_password() {
 #[ntex::test]
 async fn backups_go_where_they_are_told_on_the_schedule_set() {
     let srv = setup().await;
-    let (status, body) =
-        call(&srv, Method::PUT, "/api/v1/container-backups/settings", Some(json!({ "destination": "/nowhere/at/all", "keep": 3 }))).await;
-    assert_eq!((status, body["error"].as_str()), (400, Some("destinationMissing")));
     let disk = tempfile::tempdir().unwrap();
+    // Absolute, as the destination must be, on any system.
+    let nowhere = disk.path().join("nowhere/at/all");
+    let (status, body) =
+        call(&srv, Method::PUT, "/api/v1/container-backups/settings", Some(json!({ "destination": nowhere.to_str().unwrap(), "keep": 3 }))).await;
+    assert_eq!((status, body["error"].as_str()), (400, Some("destinationMissing")));
     let (status, body) = call(
         &srv,
         Method::PUT,

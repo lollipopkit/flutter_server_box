@@ -143,7 +143,8 @@ async fn the_configured_timeout_is_what_kills_a_command() {
         .await,
     )
     .await;
-    let cmd = platform_command("sleep 20", "timeout /t 20 /nobreak");
+    // Not `timeout /t`: without a console it exits at once.
+    let cmd = platform_command("sleep 20", "ping -n 21 127.0.0.1");
     let body = post(&srv, json!({ "cmd": cmd })).await.unwrap();
 
     assert_eq!(body["timed_out"], true);

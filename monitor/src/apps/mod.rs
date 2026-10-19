@@ -95,6 +95,8 @@ pub struct Apps {
     jobs: Mutex<HashMap<String, Slot>>,
     pub calls: Arc<tokio::sync::Semaphore>,
     pub job_slots: Arc<tokio::sync::Semaphore>,
+    /// One pass over the shipped apps at a time (`api::apps::keep_first_party`).
+    pub first_party: tokio::sync::Mutex<()>,
 }
 
 impl Apps {
@@ -107,7 +109,7 @@ impl Apps {
             Some(f) => std::path::absolute(Self::dir_beside(f)).unwrap_or_else(|_| Self::dir_beside(f)),
             None => std::env::temp_dir().join(format!("sbm-apps-{}", std::process::id())),
         };
-        Self { cache: dir.join("cache"), data: dir.join("data"), backends: Mutex::default(), jobs: Mutex::default(), calls: Arc::new(tokio::sync::Semaphore::new(MAX_CALLS)), job_slots: Arc::new(tokio::sync::Semaphore::new(MAX_JOBS)) }
+        Self { cache: dir.join("cache"), data: dir.join("data"), backends: Mutex::default(), jobs: Mutex::default(), calls: Arc::new(tokio::sync::Semaphore::new(MAX_CALLS)), job_slots: Arc::new(tokio::sync::Semaphore::new(MAX_JOBS)), first_party: tokio::sync::Mutex::const_new(()) }
     }
 
     /// The backend whose component's digest is [sha256], compiled from

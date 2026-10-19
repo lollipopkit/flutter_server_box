@@ -10,6 +10,8 @@
 //! `SBM_E2E_WAF_SERVERS=nginx,traefik` picks the servers (Traefik fetches
 //! its plugin from the network).
 
+#![cfg(target_os = "linux")]
+
 mod common;
 
 use std::time::{Duration, Instant};
@@ -109,7 +111,7 @@ async fn the_firewall_refuses_and_lets_through() {
         return;
     }
     // SAFETY: a libc call with no arguments.
-    assert_eq!(unsafe { libc_geteuid() }, 0, "root only, on a throwaway machine");
+    assert_eq!(unsafe { libc::geteuid() }, 0, "root only, on a throwaway machine");
     upstream();
     let (srv, _state) = common::machine::server_with(Config::default()).await;
     let app = common::package::install(&srv, "serverbox.proxy").await;
@@ -120,9 +122,4 @@ async fn the_firewall_refuses_and_lets_through() {
         let _ = std::process::Command::new("sh").arg("-c").arg(stop).output();
         std::thread::sleep(Duration::from_secs(2));
     }
-}
-
-unsafe extern "C" {
-    #[link_name = "geteuid"]
-    fn libc_geteuid() -> u32;
 }

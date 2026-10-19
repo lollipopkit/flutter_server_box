@@ -173,7 +173,7 @@ async fn the_check_shows_what_deploying_would_do() {
     let images: Vec<&str> = body["images"].as_array().unwrap().iter().filter_map(|i| i.as_str()).collect();
     assert!(images.contains(&"ghcr.io/immich-app/immich-server:v3.3.1"), "{images:?}");
     assert_eq!(body["data_paths"].as_array().unwrap().len(), 2);
-    assert!(body["settings"]["library"].as_str().unwrap().ends_with("/futo.immich/library"));
+    assert!(std::path::Path::new(body["settings"]["library"].as_str().unwrap()).ends_with("futo.immich/library"), "{body}");
     let (status, body) =
         call(&srv, Method::POST, "/api/v1/stacks/futo.immich/check", Some(json!({ "settings": { "port": 0 } }))).await;
     assert_eq!((status, body["field"].as_str()), (400, Some("port")));

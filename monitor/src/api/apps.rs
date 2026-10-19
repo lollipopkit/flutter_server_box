@@ -692,8 +692,7 @@ fn later(a: &str, b: &str) -> bool {
 /// installed app of another signature, or a later version, is left alone.
 /// Run at start and after the catalog is read.
 pub async fn keep_first_party(state: &AppState) {
-    static RUNNING: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
-    let _one = RUNNING.lock().await;
+    let _one = state.apps.first_party.lock().await;
     let systems = super::machine::systems();
     for offered in state.stacks.catalog.desk.all() {
         let package = &offered.package;

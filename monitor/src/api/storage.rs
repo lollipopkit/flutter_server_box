@@ -264,10 +264,7 @@ pub async fn act(req: HttpRequest, body: web::types::Json<ActBody>, state: web::
     };
     // Never reached: anywhere but Linux was answered `notLinux` above.
     #[cfg(not(unix))]
-    let key: Option<std::convert::Infallible> = {
-        let _ = passphrase;
-        None
-    };
+    let _ = passphrase;
     #[cfg(unix)]
     let key_path = key.as_ref().map(|k| k.path().to_string_lossy().into_owned());
     #[cfg(not(unix))]
@@ -304,6 +301,7 @@ pub async fn act(req: HttpRequest, body: web::types::Json<ActBody>, state: web::
     let (state2, job2) = (state.get_ref().clone(), job.clone());
     tokio::spawn(async move {
         let result = job2.run_root(&script, &password).await;
+        #[cfg(unix)]
         drop(key);
         let outcome = if result.is_ok() { Outcome::Ok } else { Outcome::Error };
         match &result {

@@ -4,7 +4,7 @@
 //! task is.
 //!
 //! The shell is `/bin/sh` on Unix and Windows PowerShell on Windows, where
-//! there is no `sudo` and the process tree is ended with `taskkill /T`.
+//! there is no `sudo` and the process tree is a job object (`utils::job`).
 
 use std::process::Stdio;
 use std::time::{Duration, Instant};
@@ -83,8 +83,15 @@ pub async fn run(spec: Spec<'_>, lines: mpsc::UnboundedSender<(Stream, String)>,
     command.process_group(0);
     // Dropped before the command ended (its caller's own timeout or cancel
     // dropped this future): the group goes too, not the leader alone.
-    let mut group = Group(Some(command.spawn()?));
-    let child = group.0.as_mut().expect("just spawned");
+    #[cfg(not(windows))]
+    let leader = Leader { child: command.spawn()? };
+    #[cfg(windows)]
+    let leader = {
+        let (child, job) = crate::utils::job::spawn(&mut command, crate::utils::job::CREATE_NO_WINDOW)?;
+        Leader { child, job }
+    };
+    let mut group = Group(Some(leader));
+    let child = &mut group.0.as_mut().expect("just spawned").child;
 
     let stdin = child.stdin.take();
     let password = spec.sudo_password.map(|p| format!("{p}\n"));
@@ -130,7 +137,7 @@ pub async fn run(spec: Spec<'_>, lines: mpsc::UnboundedSender<(Stream, String)>,
 /// The process group a [run] leads, by its leader, ended when the run is
 /// dropped before it finished: `kill_on_drop` reaches the leader alone
 /// (`sudo`, the shell), and what they started would keep running.
-struct Group(Option<Child>);
+struct Group(Option<Leader>);
 
 impl Drop for Group {
     fn drop(&mut self) {
@@ -143,7 +150,7 @@ impl Drop for Group {
             // is reaped when dropped.
             Err(_) => {
                 #[cfg(unix)]
-                if let Some(pid) = leader.id() {
+                if let Some(pid) = leader.child.id() {
                     // SAFETY: a signal to the process group this process
                     // created; its leader is not reaped yet, so the id is
                     // still that group's.
@@ -151,6 +158,8 @@ impl Drop for Group {
                         libc::kill(-(pid as i32), libc::SIGKILL);
                     }
                 }
+                #[cfg(windows)]
+                leader.job.kill();
                 drop(leader);
             }
         }
@@ -166,7 +175,6 @@ impl Drop for Group {
 #[cfg(windows)]
 fn powershell(script: &str) -> Command {
     use base64::Engine;
-    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
     let wrapped = format!(
         "$ProgressPreference = 'SilentlyContinue'\n\
          [Console]::OutputEncoding = [Text.Encoding]::UTF8\n\
@@ -179,13 +187,30 @@ fn powershell(script: &str) -> Command {
     let utf16: Vec<u8> = wrapped.encode_utf16().flat_map(u16::to_le_bytes).collect();
     let mut c = Command::new("powershell.exe");
     c.args(["-NoLogo", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-EncodedCommand"])
-        .arg(base64::engine::general_purpose::STANDARD.encode(utf16))
-        .creation_flags(CREATE_NO_WINDOW);
+        .arg(base64::engine::general_purpose::STANDARD.encode(utf16));
     c
 }
 
+/// The command a [run] spawned, and on Windows the job it and what it starts
+/// are in.
+struct Leader {
+    child: Child,
+    #[cfg(windows)]
+    job: crate::utils::job::Job,
+}
+
 /// Ends the process group [leader] leads: what the shell started goes with it.
-async fn stop(mut leader: Child) {
+async fn stop(leader: Leader) {
+    // The tree under PowerShell: its job.
+    #[cfg(windows)]
+    {
+        leader.job.kill();
+        let mut child = leader.child;
+        let _ = child.wait().await;
+    }
+    #[cfg(not(windows))]
+    let Leader { child: mut leader } = leader;
+    #[cfg(not(windows))]
     let pid = leader.id();
     #[cfg(unix)]
     if let Some(pid) = pid {
@@ -205,19 +230,6 @@ async fn stop(mut leader: Child) {
             }
             let _ = leader.wait().await;
         });
-    }
-    // The tree under PowerShell: Windows has no process groups to signal.
-    // Waited for: the tree is found through its root, which `kill_on_drop`
-    // ends as soon as the leader is dropped.
-    #[cfg(windows)]
-    if let Some(pid) = pid {
-        let _ = Command::new("taskkill")
-            .args(["/T", "/F", "/PID", &pid.to_string()])
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .status()
-            .await;
-        let _ = leader.wait().await;
     }
     #[cfg(not(any(unix, windows)))]
     let _ = (pid, &mut leader);
