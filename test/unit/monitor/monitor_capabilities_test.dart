@@ -4,6 +4,7 @@ import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
 import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/monitor_access.dart';
+import 'package:server_box/data/model/server/monitor_capabilities.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
@@ -245,6 +246,41 @@ void main() {
       );
       // Everything else still asks the union.
       expect(ServerFuncBtn.files.availableOn(spi, insecure), isTrue);
+    });
+  });
+
+  // TODO: remove with the fallbacks when MIN_AGENT_PROTOCOL reaches 2.
+  group('access, as each protocol says it', () {
+    MonitorAccess of(Map<String, dynamic> json) => MonitorCapabilities.fromJson(json).access;
+
+    test('protocol 2 says access', () {
+      expect(of({'access': {'ok': true}}), MonitorAccess.granted);
+      expect(
+        of({'access': {'ok': false, 'why': 'insecure_transport'}}),
+        const MonitorAccess(ok: false, why: MonitorAccessWhy.insecureTransport),
+      );
+    });
+
+    test('protocol 1 says it as the shell grant', () {
+      expect(of({'grants': {'shell': {'ok': true}, 'files': {'ok': false}}}), MonitorAccess.granted);
+      expect(
+        of({'grants': {'shell': {'ok': false, 'why': 'insecure_transport'}}}),
+        const MonitorAccess(ok: false, why: MonitorAccessWhy.insecureTransport),
+      );
+      expect(of({'grants': {'shell': {'ok': false, 'why': 'not_granted'}}}).ok, isFalse);
+    });
+
+    test('an agent from before roles says it as full access', () {
+      expect(of({'remote_access': {'full_access': true}}), MonitorAccess.granted);
+      expect(of({'remote_access': {'full_access': false}}), MonitorAccess.none);
+    });
+
+    test('access wins over what an agent answering both protocols adds', () {
+      expect(of({'access': {'ok': false}, 'grants': {'shell': {'ok': true}}}).ok, isFalse);
+    });
+
+    test('nothing said grants nothing', () {
+      expect(of(const {}), MonitorAccess.none);
     });
   });
 }

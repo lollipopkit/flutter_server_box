@@ -73,8 +73,11 @@ async fn call(
 ) -> (u16, Value) {
     // Generous: a password change is two bcrypt rounds at the real cost, and a
     // debug build on a shared Windows runner took longer than the default.
+    // A current client, which names its protocol (a first-protocol one is
+    // `protocol_api.rs`'s).
     let mut req = srv
         .request(method, srv.url(path))
+        .header(sbm_parser::protocol::HEADER, sbm_parser::protocol::PROTOCOL.to_string())
         .timeout(std::time::Duration::from_secs(30));
     if let Some(token) = token {
         req = req.header("Authorization", format!("Bearer {token}"));
@@ -421,6 +424,7 @@ async fn the_clients_capabilities_fixture_is_what_a_plaintext_link_gets() {
     let req = TestRequest::with_uri("/api/v1/capabilities")
         .peer_addr("203.0.113.7:40000".parse().unwrap())
         .header("Authorization", format!("Bearer {}", jwt()))
+        .header(sbm_parser::protocol::HEADER, sbm_parser::protocol::PROTOCOL.to_string())
         .to_request();
     let resp = call_service(&app, req).await;
     assert_eq!(resp.status().as_u16(), 200);

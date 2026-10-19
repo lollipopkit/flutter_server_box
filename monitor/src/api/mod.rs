@@ -40,6 +40,7 @@ pub mod respond;
 pub mod cors;
 pub mod unread_body;
 pub mod protocol;
+pub mod compat_v1;
 pub mod admin;
 pub mod audit_log;
 pub mod app_backend;

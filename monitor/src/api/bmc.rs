@@ -142,6 +142,17 @@ fn upstream(e: &sbm_redfish::Error) -> HttpResponse {
     }))
 }
 
+/// The targets, as `GET` and `PUT /bmc` answer them.
+fn list_answer(req: &HttpRequest, rows: Vec<Row>) -> HttpResponse {
+    let view = ListResponse { targets: rows.into_iter().map(|row| row.view()).collect() };
+    let mut body = serde_json::to_value(&view).unwrap_or_default();
+    // TODO: remove when MIN_CLIENT_PROTOCOL reaches 2.
+    if super::compat_v1::applies(req) {
+        super::compat_v1::bmc_list(&mut body);
+    }
+    HttpResponse::Ok().json(&body)
+}
+
 pub async fn list(
     req: HttpRequest,
     state: web::types::State<Arc<AppState>>,
@@ -150,9 +161,7 @@ pub async fn list(
         return Ok(refused);
     }
     match load(&state.db).await {
-        Ok(rows) => Ok(HttpResponse::Ok().json(&ListResponse {
-            targets: rows.into_iter().map(|row| row.view()).collect(),
-        })),
+        Ok(rows) => Ok(list_answer(&req, rows)),
         Err(e) => Ok(super::respond::internal(&e)),
     }
 }
@@ -180,9 +189,7 @@ pub async fn replace(
         .await;
     match result {
         Ok(()) => match load(&state.db).await {
-            Ok(rows) => Ok(HttpResponse::Ok().json(&ListResponse {
-                targets: rows.into_iter().map(|row| row.view()).collect(),
-            })),
+            Ok(rows) => Ok(list_answer(&req, rows)),
             Err(e) => Ok(super::respond::internal(&e)),
         },
         Err(e) => Ok(super::respond::internal(&e)),

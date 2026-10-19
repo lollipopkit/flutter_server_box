@@ -659,7 +659,7 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
             .fetch_one(&app_state.db)
             .await
             .unwrap_or(None);
-    Ok(HttpResponse::Ok().json(&CapabilitiesView {
+    let view = CapabilitiesView {
         capabilities,
         platform,
         version: env!("CARGO_PKG_VERSION"),
@@ -684,7 +684,13 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
             None => Vec::new(),
         },
         access: authz::access_view(caller, &app_state, secure),
-    }))
+    };
+    let mut body = serde_json::to_value(&view).unwrap_or_default();
+    // TODO: remove when MIN_CLIENT_PROTOCOL reaches 2.
+    if crate::api::compat_v1::applies(&req) {
+        crate::api::compat_v1::capabilities(&mut body);
+    }
+    Ok(HttpResponse::Ok().json(&body))
 }
 
 /// Exchanges the caller's JWT for a short-lived, single-use ticket that

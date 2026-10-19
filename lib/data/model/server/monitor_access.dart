@@ -33,6 +33,18 @@ class MonitorAccess {
 
   static const granted = MonitorAccess(ok: true);
 
+  /// From a whole `/capabilities` answer. An agent at protocol 1 says it as
+  /// the `shell` grant, one from before roles as `remote_access.full_access`:
+  /// the same question, asked of the account this app signed in as.
+  ///
+  /// TODO: remove the fallbacks when MIN_AGENT_PROTOCOL reaches 2.
+  factory MonitorAccess.fromCapabilities(Map<String, dynamic> json) {
+    if (json['access'] is Map) return MonitorAccess.fromJson(json['access']);
+    if (json['grants'] case {'shell': final Map shell}) return MonitorAccess.fromJson(shell);
+    if (json['remote_access'] case {'full_access': final bool full}) return full ? granted : none;
+    return none;
+  }
+
   factory MonitorAccess.fromJson(Object? json) {
     if (json is! Map) return none;
     final ok = json['ok'] == true;

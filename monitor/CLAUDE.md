@@ -69,6 +69,7 @@ cargo sqlx migrate run / cargo sqlx prepare # migrations; offline query cache in
 
 - `PROTOCOL` counts breaking API changes only; additions go in `features`. `/health` (no sign-in) reports `protocol` and `min_client_protocol`; every client sends `X-SBM-Protocol` (none = 1); below the minimum is `426 client_too_old`. `/health`, OPTIONS and upgrades are exempt; `/ws-ticket` is checked.
 - **A breaking change raises `PROTOCOL`** and answers a client still at `PROTOCOL - 1` in its shape (TODO-marked shims, removed when `MIN_CLIENT_PROTOCOL` rises). The panel and the native widgets write the number themselves: `crates/sbm_parser/tests/protocol_clients.rs` keeps them equal.
+- **2** (one account): `/capabilities` says `access` instead of `remote_access`, `grants` and `me`; `/bmc` lost `editable`; `/users`, `/roles`, `/me`, `/remote-access/full-access` and the SSH terminal are gone. A client at 1 (or naming none) gets `remote_access` and `grants` back from `access` and `editable: true` (`api::compat_v1`, all shims there, `protocol::client_of` reads the client's number; `tests/protocol_api.rs`); `me` stays absent, which a client reads as an agent with no accounts to manage. Not shimmed: acting (settings, push, backups, BMC changes) now needs TLS or loopback, and the removed routes answer 404. The app reads a protocol-1 agent's `grants.shell` or `remote_access.full_access` as `access` (`MonitorAccess.fromCapabilities`).
 
 ### `POST /api/v1/exec`
 
