@@ -61,11 +61,12 @@ Better TOML/Tombi report mistakes as you type. For every field, its range and
 default, read `references/manifest.md`.
 
 Schema range: `[schema] min = 1, max = 4` unless the theme uses an SVG icon,
-`[icons.colors]` or `[splash]` — those are schema 2 features and need
-`min = 2`, or an older app installs the theme and silently drops them. Any
-component beyond card, tile, button, input, navigation, dialog and sheet, a
-button `minHeight`, `background.tile`, `[layout]`, or `[variants]` is schema 3 and needs `min = 3`. More than 48
-icons is schema 4 and needs `min = 4`; so is every icon pack.
+`[icons.colors]`, or `[splash]`. These schema 2 features require `min = 2`, or
+an older app may install the theme but silently drop them. Schema 3 features
+require `min = 3`: components beyond card, tile, button, input, navigation,
+dialog, and sheet; button `minHeight`; `background.tile`; `[layout]`; or
+`[variants]`. Packages with more than 48 icons and all icon packs require schema 4 and
+`min = 4`.
 
 ### 3. Colors
 

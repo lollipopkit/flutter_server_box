@@ -361,9 +361,9 @@ are `nav.more`, `nav.settings`, `nav.tune`, `nav.privacy`, `nav.agent`,
 `file.rs`, `file.gitignore`). A name whose extension the package does not
 carry falls back to a related key when there is one (`file.css` for
 `.scss`, `file.sh` for `.bash`), then to `file.default`, then to the
-built-in glyph. A package may carry at most 128 icon keys, enough for a full
-tab and nav set and a Files-window glyph for every common extension. More than
-48 needs `min = 4` (see Schema versions).
+built-in glyph. A package may carry at most 128 icon keys. More than 48
+requires `min = 4` (see Schema versions); the remaining keys can cover tabs,
+navigation and common file extensions.
 
 These are the keys ServerBox draws. The format is shared with other apps built
 on the same library, so a key made for one of them — dotted lowercase words,
@@ -577,10 +577,10 @@ Catalog and repository tree size limits are documented in
 The official One Dark Pro theme in the theme store adapts the UI palette of
 this VS Code theme to Material surfaces, selection states, cards and buttons.
 It is an independent adaptation, not a VS Code extension bundle. The official
-Devicons icon pack draws file types with
-[Devicon](https://github.com/devicons/devicon)'s language and tool logos (MIT);
-the products and their logos are their owners' trademarks. The official VS Code theme does the same for VS Code's
-own Dark Modern and Light Modern workbench colors. Fonts and terminal/editor
+Devicons icon pack uses [Devicon](https://github.com/devicons/devicon)'s
+language and tool logos (MIT) to identify file types; those products and logos
+are their owners' trademarks. The official VS Code theme adapts VS Code's own
+Dark Modern and Light Modern workbench colors to ServerBox. Fonts and terminal/editor
 color settings remain separate.
 AMOLED is an original ServerBox palette. It uses black surfaces in dark mode
 and generated colors in light mode, allowing System appearance.
