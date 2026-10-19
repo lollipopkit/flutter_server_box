@@ -54,11 +54,12 @@ fill it in. Its first line is a schema directive, so editors with Taplo/Even
 Better TOML/Tombi report mistakes as you type. For every field, its range and
 default, read `references/manifest.md`.
 
-Schema range: `[schema] min = 1, max = 3` unless the theme uses an SVG icon,
+Schema range: `[schema] min = 1, max = 4` unless the theme uses an SVG icon,
 `[icons.colors]` or `[splash]` — those are schema 2 features and need
 `min = 2`, or an older app installs the theme and silently drops them. Any
 component beyond card, tile, button, input, navigation, dialog and sheet, a
-button `minHeight`, `background.tile`, `[layout]`, or `[variants]` is schema 3 and needs `min = 3`.
+button `minHeight`, `background.tile`, `[layout]`, or `[variants]` is schema 3 and needs `min = 3`. More than 48
+icons is schema 4 and needs `min = 4`.
 
 ### 3. Colors
 
@@ -118,7 +119,8 @@ python3 <skill>/scripts/validate.py path/to/my-theme
 It runs the published JSON Schema (via `uvx`/`pipx` `check-jsonschema`; it
 tells you if neither is installed) and then the rules only the installer
 knows: icon color keys without an image, schema 2 features under `min = 1`,
-schema 3 components or `[layout]` under `min < 3`,
+schema 3 components or `[layout]` under `min < 3`, more than 48 icons under
+`min < 4`,
 file names, sizes, image dimensions, SVG content, stray files, and contrast.
 Fix every error; read every warning and either fix it or tell the user why it
 stays. Don't hand over a theme that has not passed.

@@ -146,8 +146,11 @@ Schema **3** 增加了 schema 2 七个组件之外的组件（`textButton`、`ou
 `iconButton`、`search`、`appBar`、`segmented`、`sidebar`、`menu`、`tooltip`、
 `toast`、`switch`、`slider`、`progress`、`badge`、`chip`、`divider`、`scrollbar`）、
 按钮表的 `minHeight` 字段、`background.tile`，以及 `[layout]` 和 `[variants]` 表。使用其中任一项的包必须声明
-`min = 3`：schema 2 的构建会拒绝未知的表，商店需要在下载前得知这一点。当前上限为
-`max = 3`；即使包的范围高于该值，只要与应用支持的范围有交集，仍可安装。
+`min = 3`：schema 2 的构建会拒绝未知的表，商店需要在下载前得知这一点。
+
+Schema **4** 把 icon 上限从 48 提高到 128。icon 超过 48 个的包必须声明 `min = 4`：
+schema 3 的构建会拒绝这样的包。当前上限为 `max = 4`；即使包的范围高于该值，只要与应用
+支持的范围有交集，仍可安装。
 
 ## Icons
 
@@ -308,7 +311,7 @@ background 或 iOS 的 launch storyboard）在构建应用时确定，只能随�
 `file.dir`、`file.link`、`file.default`，以及按扩展名的 `file.<ext>`（如 `file.py`、
 `file.rs`、`file.gitignore`）。主题没有该扩展名时，先回退到相近的 key（如 `.scss` 用 `file.css`，`.bash` 用
 `file.sh`），再回退到 `file.default`，再回退到内置图标。
-一套主题最多 128 个 icon key，铺满 tab 和 nav 之后，仍可为常见扩展名都放上 Files 窗口图标。提高这一上限之前的版本会拒绝超过 48 个的主题。
+一套主题最多 128 个 icon key，铺满 tab 和 nav 之后，仍可为常见扩展名都放上 Files 窗口图标。超过 48 个需要 `min = 4`（见 Schema 版本一节）。
 
 以上是 ServerBox 会绘制的 key。这一格式与基于同一个库的其他 app 共用，为其他 app
 准备的 key（点分隔的小写单词，如 `tab.chat`）会被接受并保留，但 ServerBox 不绘制。
@@ -438,7 +441,7 @@ zh-TW = "紫色調色盤"
 可以同时服务不同版本的应用：**应用会安装自己支持的最新主题版本**，不一定是列表中的
 最新版本。若主题只有当前应用无法读取的版本，仍会显示并注明原因。使用 schema 2 功能的
 版本必须设置 `schema_min = 2`；若误设为 1，旧版应用可能安装后静默丢弃 icon、颜色或
-splash。使用 schema 3 组件或 `[layout]` 的版本必须设置 `schema_min = 3`。
+splash。使用 schema 3 组件或 `[layout]` 的版本必须设置 `schema_min = 3`，icon 超过 48 个的版本必须设置 `schema_min = 4`。
 
 第三方主题在作者自己的仓库发布，只有官方主题在本仓库发布。serverbox-theme skill 的
 `scripts/publish.py` 按官方主题的方式发布：检测哪些主题有变化，把包上传到作者仓库的

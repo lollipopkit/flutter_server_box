@@ -167,8 +167,12 @@ Schema **3** added the components beyond schema 2's seven (`textButton`,
 `divider`, `scrollbar`), the `minHeight` field of button tables,
 `background.tile`, and the `[layout]` and `[variants]` tables. A package using any of them must declare `min = 3`: a schema
 2 build refuses an unknown table, and the store needs to know that before the
-download. The current ceiling is `max = 3`; a package whose range extends
-beyond it can still be installed if the ranges overlap.
+download.
+
+Schema **4** raised the icon limit from 48 to 128. A package carrying more than
+48 icons must declare `min = 4`: a schema 3 build refuses it. The current
+ceiling is `max = 4`; a package whose range extends beyond it can still be
+installed if the ranges overlap.
 
 ## Icons
 
@@ -351,8 +355,8 @@ are `nav.more`, `nav.settings`, `nav.tune`, `nav.privacy`, `nav.agent`,
 carry falls back to a related key when there is one (`file.css` for
 `.scss`, `file.sh` for `.bash`), then to `file.default`, then to the
 built-in glyph. A package may carry at most 128 icon keys, enough for a full
-tab and nav set and a Files-window glyph for every common extension. Releases
-before this limit was raised refuse a package with more than 48.
+tab and nav set and a Files-window glyph for every common extension. More than
+48 needs `min = 4` (see Schema versions).
 
 These are the keys ServerBox draws. The format is shared with other apps built
 on the same library, so a key made for one of them — dotted lowercase words,
@@ -501,7 +505,8 @@ version listed. Themes with only newer, unreadable versions remain listed with
 an explanation. Versions using schema 2 features must set `schema_min = 2`;
 setting it to 1 could offer older apps a package that installs but silently
 loses its icon, color, or splash screen. Versions using schema 3 components or
-`[layout]` must set `schema_min = 3`.
+`[layout]` must set `schema_min = 3`, and versions with more than 48 icons
+`schema_min = 4`.
 
 A third-party theme is released from its author's own repository; only official
 themes are released from this one. The serverbox-theme skill's

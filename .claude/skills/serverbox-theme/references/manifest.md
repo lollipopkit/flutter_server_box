@@ -22,12 +22,13 @@ Condensed from the theme authoring guide and the JSON Schema
 | `name` | yes | shown in Theme preset |
 | `modes` | yes | `["light"]`, `["dark"]` or `["light", "dark"]`; no duplicates |
 | `format` | no | `1` (default) |
-| `[schema] min`, `max` | yes | inclusive range; the app reads 1–3 and needs overlap |
+| `[schema] min`, `max` | yes | inclusive range; the app reads 1–4 and needs overlap |
 
 Schema 2 added SVG icons, `[icons.colors]` and `[splash]`; a package using any
 of them declares `min = 2`. Schema 3 added the components marked ³ below,
 `minHeight` on button tables, `background.tile`, `[layout]` and `[variants]`; a package using any of them
-declares `min = 3`.
+declares `min = 3`. Schema 4 allows more than 48 icons; such a package declares
+`min = 4`.
 
 Unknown top-level tables and fields are rejected. Explicit zero values are
 kept; invalid values are errors, never replaced by defaults.
@@ -74,7 +75,7 @@ benchmark remoteDesktop virt`; `nav.more nav.settings nav.tune nav.privacy
 nav.agent nav.tabs nav.server nav.sort nav.terminal nav.folder nav.cloud
 nav.snippet nav.inbox nav.key nav.info nav.download nav.desktop`; Files
 window `file.dir file.link file.default` and `file.<ext>` (`file.py`,
-`file.rs`, `file.gitignore`). At most 128 icon keys per package (48 before ServerBox raised it).
+`file.rs`, `file.gitignore`). At most 128 icon keys per package; more than 48 needs `min = 4`.
 
 PNG: ≤ 512×512, ≤ 256 KiB. SVG: ≤ 256 KiB, UTF-8, root `<svg>`, no DTD or
 entity, no `<script>`/`<style>`/`<foreignObject>`, no processing instruction,

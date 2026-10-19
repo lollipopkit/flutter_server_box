@@ -11,7 +11,7 @@ Two layers:
    single table can say: unknown fields, ranges, enums, icon paths.
 2. What the schema cannot say, checked here: an `icons.colors` key without an
    image, schema 2 features under `min = 1`, schema 3 components or `[layout]`
-   under `min < 3`, the files themselves (names, sizes,
+   under `min < 3`, more than 48 icons under `min < 4`, the files themselves (names, sizes,
    PNG/JPEG dimensions, SVG content), stray files the installer refuses, and
    the contrast of the text pairs a palette sets.
 
@@ -41,9 +41,10 @@ SCHEMA_URL = (
     "docs/schemas/fsbt-manifest.schema.json"
 )
 # The app's supported theme schema range. Raise with the app.
-APP_SCHEMA = (1, 3)
+APP_SCHEMA = (1, 4)
 FEATURE_SCHEMA = 2
 COMPONENT_SCHEMA = 3
+ICON_SCHEMA = 4
 
 # The components and fields schema 2 had (ThemeComponents.schema2 in the app).
 # Anything else under [components], and [layout], needs schema.min = 3.
@@ -107,6 +108,8 @@ LIMITS = {
     "background": 8 * MIB,
 }
 MAX_ICONS = 128
+# What a build reading only schema 3 or older accepts.
+MAX_ICONS_BEFORE_ICON_SCHEMA = 48
 ID_PATTERN = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
 BACKGROUNDS = {"background.png", "background.jpg", "background.jpeg"}
 SPLASH_LOGOS = {
@@ -430,6 +433,13 @@ def check_theme(manifest: dict, folder: Path, key: str | None, lo, rep: Report, 
     if uses_v3 and isinstance(lo, int) and lo < COMPONENT_SCHEMA:
         shown = ", ".join(uses_v3[:4]) + (" ..." if len(uses_v3) > 4 else "")
         rep.error(f"{where}{shown}: schema 3 features, set schema.min = 3")
+
+    # Schema 4: more than 48 icons, which a build reading only 3 refuses.
+    if len(images) > MAX_ICONS_BEFORE_ICON_SCHEMA and isinstance(lo, int) and lo < ICON_SCHEMA:
+        rep.error(
+            f"{where}icons.images: {len(images)} keys, over "
+            f"{MAX_ICONS_BEFORE_ICON_SCHEMA} is a schema 4 feature: set schema.min = 4"
+        )
 
     # Modes vs palettes: a palette for a mode the theme does not declare is
     # never shown.

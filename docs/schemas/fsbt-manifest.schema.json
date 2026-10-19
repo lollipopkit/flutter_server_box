@@ -32,7 +32,7 @@
       "items": { "enum": ["light", "dark"] }
     },
     "schema": {
-      "description": "Inclusive range of theme schema versions this package is readable at, not the theme's own version. min is what a reader has to understand: a package that uses a schema 2 feature and says min = 1 is refused, and so is one that uses a schema 3 component, field or [layout] and says a min below 3. See \"Schema versions\" in https://serverbox.lollipopkit.com/docs/development/theme-authoring/",
+      "description": "Inclusive range of theme schema versions this package is readable at, not the theme's own version. min is what a reader has to understand: a package that uses a schema 2 feature and says min = 1 is refused, and so is one that uses a schema 3 component, field or [layout] and says a min below 3, or carries more than 48 icons and says a min below 4. See \"Schema versions\" in https://serverbox.lollipopkit.com/docs/development/theme-authoring/",
       "type": "object",
       "additionalProperties": false,
       "required": ["min", "max"],
