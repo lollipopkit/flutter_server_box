@@ -39,6 +39,7 @@ pub mod push;
 pub mod respond;
 pub mod cors;
 pub mod unread_body;
+pub mod protocol;
 pub mod admin;
 pub mod audit_log;
 pub mod app_backend;

@@ -2615,6 +2615,14 @@ class AppLocalizationsKo extends AppLocalizations {
       '이 agent는 암호화되지 않은 HTTP에서는 모니터링 외의 작업을 거부합니다. HTTPS로 연결하거나 agent([remote_access] allow_insecure)와 이 앱 모두에서 HTTP를 허용하세요.';
 
   @override
+  String get monitorAgentTooOld =>
+      '이 Monitor agent는 현재 ServerBox 버전이 지원하는 것보다 오래되었습니다. 서버에서 agent를 업데이트하세요.';
+
+  @override
+  String get monitorClientTooOld =>
+      '이 Monitor agent는 더 이상 현재 ServerBox 버전을 지원하지 않습니다. 앱을 업데이트하세요.';
+
+  @override
   String get alerts => '알림';
 
   @override
@@ -6604,10 +6612,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get monitorLiveNoDevices => '로그인한 기기가 없습니다.';
 
   @override
-  String get monitorAgentTooOld =>
-      '이 에이전트는 앱보다 오래되어 사용자 이름을 요구합니다. 에이전트를 업데이트하세요.';
-
-  @override
   String get monitorUpdateAgent => '에이전트 업데이트';
 
   @override
@@ -6762,4 +6766,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String launchFailedLogs(String path) {
     return '로그: $path';
   }
+
+  @override
+  String get reconnect => '다시 연결';
+
+  @override
+  String get reconnectEndsShell =>
+      '다시 연결할 tmux 세션이 없으므로, 다시 연결하면 이 셸과 그 안에서 아직 실행 중인 작업이 종료되고 화면의 출력도 지워집니다.';
 }

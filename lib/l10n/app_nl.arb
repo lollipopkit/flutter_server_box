@@ -528,6 +528,8 @@
   "schemaTooNewWipeDone": "Gegevens verwijderd. Open de app opnieuw om opnieuw te beginnen.",
   "schemaTooNewWipeFailed": "Sommige gegevens konden niet worden verwijderd en deze versie kan de resterende gegevens nog steeds niet openen. Installeer de nieuwere versie opnieuw om erbij te kunnen.",
   "monitorNoRemoteAccess": "Deze agent weigert via onversleutelde HTTP alles behalve monitoring. Maak verbinding via HTTPS, of sta HTTP toe op zowel de agent ([remote_access] allow_insecure) als deze app.",
+  "monitorAgentTooOld": "Deze Monitor-agent is ouder dan deze versie van ServerBox ondersteunt. Werk de agent op de server bij.",
+  "monitorClientTooOld": "Deze Monitor-agent ondersteunt deze versie van ServerBox niet meer. Werk de app bij.",
   "remoteDesktop": "Extern bureaublad",
   "containerReclaimable": "Reclaimable",
   "processSearchHint": "Naam, gebruiker of PID",
@@ -1930,7 +1932,6 @@
   "monitorLiveNoConnections": "Er wordt niets doorgestuurd.",
   "monitorLiveNoTokens": "Er is geen horloge of widget gekoppeld.",
   "monitorLiveNoDevices": "Er heeft zich geen apparaat aangemeld.",
-  "monitorAgentTooOld": "Deze agent is ouder dan de app en vraagt om een gebruikersnaam. Werk de agent bij.",
   "monitorUpdateAgent": "Agent bijwerken",
   "monitorAgentTooOldTip": "Het Monitor-tabblad beschrijft hoe u hem bijwerkt.",
   "monitorAgentTooOldBody": "Deze agent is van vóór het ene wachtwoord; de app kan niet aanmelden. Na de update is het wachtwoord dat van het oudste beheerdersaccount.",
@@ -1977,5 +1978,7 @@
   "termMetricsBarTip": "CPU, geheugen, netwerk en schijf, zoals op de serverkaart. Op een telefoon boven de virtuele toetsen.",
   "launchFailedTitle": "ServerBox kon niet starten",
   "launchFailedBody": "Kopieer de fout hieronder en meld die in een GitHub-issue, samen met de logbestanden.",
-  "launchFailedLogs": "Logs: {path}"
+  "launchFailedLogs": "Logs: {path}",
+  "reconnect": "Opnieuw verbinden",
+  "reconnectEndsShell": "Er is geen tmux-sessie om opnieuw aan te koppelen, dus opnieuw verbinden beëindigt deze shell en alles wat er nog in draait, en wist de uitvoer van het scherm."
 }

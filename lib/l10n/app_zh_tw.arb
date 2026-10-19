@@ -701,6 +701,8 @@
   "corsOrigins": "CORS 允許來源",
   "corsOriginsTip": "允許瀏覽器面板從哪些來源呼叫此 agent。留空表示僅同源。",
   "monitorNoRemoteAccess": "此 agent 拒絕透過明文 HTTP 執行監控以外的操作。請改用 HTTPS 連線，或在 agent（[remote_access] allow_insecure）和本 App 中同時允許 HTTP。",
+  "monitorAgentTooOld": "此 Monitor agent 版本過舊，目前版本的 ServerBox 已不再支援。請在伺服器上更新 agent。",
+  "monitorClientTooOld": "此 Monitor agent 已不再支援目前版本的 ServerBox。請更新 App。",
   "remoteDesktop": "遠端桌面",
   "containerReclaimable": "可回收",
   "processSearchHint": "名稱、使用者或 PID",
@@ -1930,7 +1932,6 @@
   "monitorLiveNoConnections": "沒有轉送或中繼的連線。",
   "monitorLiveNoTokens": "沒有配對的手錶或小工具。",
   "monitorLiveNoDevices": "沒有登入過的裝置。",
-  "monitorAgentTooOld": "此 agent 比本 App 舊，仍要求使用者名稱。請更新 agent。",
   "monitorUpdateAgent": "更新 agent",
   "monitorAgentTooOldTip": "更新步驟見 Monitor 分頁。",
   "monitorAgentTooOldBody": "此 agent 來自只用一個密碼之前的版本，本 App 無法登入。更新後，它的密碼是原先最早的管理員帳戶的密碼。",
@@ -1977,5 +1978,7 @@
   "termMetricsBarTip": "CPU、記憶體、網路、磁碟，與伺服器卡片一致；手機上位於虛擬按鍵上方。",
   "launchFailedTitle": "ServerBox 無法啟動",
   "launchFailedBody": "請複製下方的錯誤訊息，連同日誌檔一起在 GitHub issue 中回報。",
-  "launchFailedLogs": "日誌：{path}"
+  "launchFailedLogs": "日誌：{path}",
+  "reconnect": "重新連線",
+  "reconnectEndsShell": "沒有可以重新接入的 tmux 工作階段，重新連線會結束目前的 shell 及其中仍在執行的程式，並清除畫面上的輸出。"
 }

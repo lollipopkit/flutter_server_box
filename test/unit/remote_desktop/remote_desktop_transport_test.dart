@@ -30,6 +30,7 @@ import 'package:server_box/data/store/remote_desktop.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 
+import '../../helpers/fake_agent_health.dart';
 import '../../helpers/rust_lib_helper.dart';
 import '../../helpers/test_db.dart';
 
@@ -54,6 +55,7 @@ class _FakeAgent {
 
   void _serve() {
     _server.listen((request) async {
+      if (await answerAgentHealth(request)) return;
       if (request.uri.path == '/api/v1/login') {
         await request.drain<void>();
         return _json(request, {'token': 'test-token'});

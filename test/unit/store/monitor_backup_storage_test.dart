@@ -9,7 +9,9 @@ import 'package:server_box/core/utils/monitor_backup_storage.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 
+import '../../helpers/fake_agent_health.dart';
 import '../../helpers/local_http.dart';
+import '../../helpers/rust_lib_helper.dart';
 
 /// One request as the fake agent read it.
 final class _Seen {
@@ -37,6 +39,7 @@ Future<_Fake> _serve(FutureOr<void> Function(HttpRequest, _Seen) handler) async 
   final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
   final seen = <_Seen>[];
   server.listen((request) async {
+    if (await answerAgentHealth(request)) return;
     final body = <int>[];
     await for (final chunk in request) {
       body.addAll(chunk);
@@ -87,6 +90,9 @@ Map<String, Object?> _listing({int maxBytes = 1 << 20}) => {
 };
 
 void main() {
+  // `MonitorHttpClient` names its protocol from Rust.
+  setUpAll(initRustLibForTest);
+
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late Directory tempDir;

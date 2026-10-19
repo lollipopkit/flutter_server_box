@@ -20,6 +20,9 @@ import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/provider/server/monitor_http.dart';
 
+import '../../helpers/fake_agent_health.dart';
+import '../../helpers/rust_lib_helper.dart';
+
 /// A stand-in for the agent's relay endpoint.
 ///
 /// Speaks the real protocol — `open`, `ready`, `error`, `exit`, binary bytes —
@@ -57,6 +60,7 @@ class _FakeAgent {
 
   void _serve() {
     _server.listen((request) async {
+      if (await answerAgentHealth(request)) return;
       // The login the client does before anything else, then the ticket it
       // exchanges that for. Both are the agent's real contract; only what is
       // interesting here — the relay — is faked beyond the shape of the reply.
@@ -137,6 +141,9 @@ Future<void> realHttp(Future<void> Function() body) =>
     HttpOverrides.runWithHttpOverrides(body, _RealHttp());
 
 void main() {
+  // `MonitorHttpClient` names its protocol from Rust.
+  setUpAll(initRustLibForTest);
+
   test('dials the address it was given, on the socket rather than in the URL',
       () async {
     final agent = await _FakeAgent.start(target: '127.0.0.1:3389');

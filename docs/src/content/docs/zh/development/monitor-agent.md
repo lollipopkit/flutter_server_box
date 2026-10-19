@@ -6,6 +6,15 @@ description: Capability 上报、指标历史和 remote access 行为
 本页说明 App 连接 Monitor agent 时依赖的 API 行为。安装和配置见
 [Monitor Agent](/docs/zh/advanced/monitor-agent/)。
 
+## 协议版本
+
+App 和 agent 之间只比较一个数字：协议版本（`sbm_parser::protocol`）。只有 API 发生破坏性变化时才增加，例如删除或重命名字段、改变字段含义、删除 route。新增功能不改变协议版本，而是列在 `features` 中。
+
+- `GET /api/v1/health` 不需要登录，返回 `protocol` 和 `min_client_protocol`，不返回发布版本（发布版本在 `/capabilities` 中）。没有这两个字段的 agent 视为协议 1。
+- 每个请求都带有 `X-SBM-Protocol: <n>`，没有这个 header 的请求视为协议 1。客户端低于 `min_client_protocol` 时，agent 返回 `426` 和 `{"error": "client_too_old", "protocol", "min_client_protocol"}`。`/health`、preflight 和 WebSocket upgrade 不检查；upgrade 之前的 `/ws-ticket` 请求会检查。
+- App 登录前先读取 `/health`：agent 低于 App 支持的范围时提示更新 agent，agent 不再支持 App 时提示更新 App。
+- 双方都至少支持上一个协议版本：agent 按旧版客户端的格式回应它，App 仍能读取旧版 agent。
+
 ## Capability discovery
 
 App 通过 `GET /api/v1/capabilities` 查询 agent 支持的功能，以及当前调用者能否使用它们。返回内容包括：

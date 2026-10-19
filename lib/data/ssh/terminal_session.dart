@@ -590,6 +590,24 @@ class TerminalSession {
     }
   }
 
+  /// Ends the shell and lets go of the source behind it, closing that only
+  /// when this session opened it: a borrowed connection that still answers
+  /// keeps serving whoever else holds it — the status poller, other tabs.
+  void releaseBackend() {
+    final shell = _foreground;
+    unbindForeground();
+    try {
+      shell?.close();
+    } catch (e, st) {
+      Loggers.app.warning('Failed to close the foreground shell', e, st);
+    }
+    if (_ownsBackend) {
+      closeBackend();
+    } else {
+      _backend = null;
+    }
+  }
+
   /// Drops a backend after a failed initial shell open without closing a
   /// healthy connection borrowed from the status poller.
   void resetAfterFailedOpen() {

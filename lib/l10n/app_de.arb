@@ -528,6 +528,8 @@
   "schemaTooNewWipeDone": "Daten gelöscht. Öffne die App erneut, um neu zu beginnen.",
   "schemaTooNewWipeFailed": "Ein Teil der Daten konnte nicht gelöscht werden, und diese Version kann die verbleibenden Daten weiterhin nicht öffnen. Installiere die neuere Version erneut, um darauf zuzugreifen.",
   "monitorNoRemoteAccess": "Dieser Agent verweigert über unverschlüsseltes HTTP alles außer der Überwachung. Verbinden Sie sich über HTTPS oder erlauben Sie HTTP sowohl im Agent ([remote_access] allow_insecure) als auch in dieser App.",
+  "monitorAgentTooOld": "Dieser Monitor-Agent ist älter, als diese Version von ServerBox unterstützt. Aktualisieren Sie den Agenten auf dem Server.",
+  "monitorClientTooOld": "Dieser Monitor-Agent unterstützt diese Version von ServerBox nicht mehr. Aktualisieren Sie die App.",
   "remoteDesktop": "Remotedesktop",
   "containerReclaimable": "Reclaimable",
   "processSearchHint": "Name, Benutzer oder PID",
@@ -1930,7 +1932,6 @@
   "monitorLiveNoConnections": "Nichts wird weitergeleitet.",
   "monitorLiveNoTokens": "Keine Uhr und kein Widget ist gekoppelt.",
   "monitorLiveNoDevices": "Kein Gerät hat sich angemeldet.",
-  "monitorAgentTooOld": "Dieser Agent ist älter als die App und verlangt einen Benutzernamen. Aktualisieren Sie den Agent.",
   "monitorUpdateAgent": "Agent aktualisieren",
   "monitorAgentTooOldTip": "Die Schritte zum Aktualisieren stehen im Monitor-Tab.",
   "monitorAgentTooOldBody": "Dieser Agent stammt aus der Zeit vor dem einzelnen Passwort; die App kann sich nicht anmelden. Nach dem Update gilt das Passwort seines ältesten Admin-Kontos.",
@@ -1977,5 +1978,7 @@
   "termMetricsBarTip": "CPU, Arbeitsspeicher, Netzwerk und Festplatte, wie auf der Serverkarte. Auf dem Telefon über den virtuellen Tasten.",
   "launchFailedTitle": "ServerBox konnte nicht starten",
   "launchFailedBody": "Kopiere den Fehler unten und melde ihn mit den Logdateien in einem GitHub-Issue.",
-  "launchFailedLogs": "Logs: {path}"
+  "launchFailedLogs": "Logs: {path}",
+  "reconnect": "Neu verbinden",
+  "reconnectEndsShell": "Es gibt keine tmux-Sitzung zum erneuten Anhängen. Neu verbinden beendet diese Shell und alles, was darin noch läuft, und löscht ihre Ausgabe vom Bildschirm."
 }

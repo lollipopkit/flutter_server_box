@@ -2745,6 +2745,14 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu agent şifrelenmemiş HTTP üzerinden izleme dışındaki her şeyi reddeder. HTTPS ile bağlanın veya HTTP\'ye hem agent\'ta ([remote_access] allow_insecure) hem de bu uygulamada izin verin.';
 
   @override
+  String get monitorAgentTooOld =>
+      'Bu Monitor agent\'ı, ServerBox\'ın bu sürümünün desteklediğinden daha eski. Sunucudaki agent\'ı güncelleyin.';
+
+  @override
+  String get monitorClientTooOld =>
+      'Bu Monitor agent\'ı artık ServerBox\'ın bu sürümünü desteklemiyor. Uygulamayı güncelleyin.';
+
+  @override
   String get alerts => 'Uyarılar';
 
   @override
@@ -6871,10 +6879,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get monitorLiveNoDevices => 'Oturum açmış cihaz yok.';
 
   @override
-  String get monitorAgentTooOld =>
-      'Bu ajan uygulamadan eski ve kullanıcı adı istiyor. Ajanı güncelleyin.';
-
-  @override
   String get monitorUpdateAgent => 'Ajanı güncelle';
 
   @override
@@ -7036,4 +7040,11 @@ class AppLocalizationsTr extends AppLocalizations {
   String launchFailedLogs(String path) {
     return 'Günlükler: $path';
   }
+
+  @override
+  String get reconnect => 'Yeniden bağlan';
+
+  @override
+  String get reconnectEndsShell =>
+      'Yeniden bağlanacak bir tmux oturumu yok; yeniden bağlanmak bu kabuğu ve içinde hâlâ çalışan her şeyi sonlandırır ve ekrandaki çıktısını temizler.';
 }

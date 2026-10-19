@@ -4744,6 +4744,18 @@ abstract class AppLocalizations {
   /// **'This agent refuses everything beyond monitoring over plain HTTP. Connect over HTTPS, or allow plain HTTP on both the agent ([remote_access] allow_insecure) and this app.'**
   String get monitorNoRemoteAccess;
 
+  /// Shown when the Monitor agent speaks an older protocol than this app reads.
+  ///
+  /// In en, this message translates to:
+  /// **'This Monitor agent is older than this version of ServerBox supports. Update the agent on the server.'**
+  String get monitorAgentTooOld;
+
+  /// Shown when the Monitor agent no longer answers this app's protocol (HTTP 426).
+  ///
+  /// In en, this message translates to:
+  /// **'This Monitor agent no longer supports this version of ServerBox. Update the app.'**
+  String get monitorClientTooOld;
+
   /// User-facing label or message for alerts.
   ///
   /// In en, this message translates to:
@@ -11715,12 +11727,6 @@ abstract class AppLocalizations {
   /// **'No device has signed in.'**
   String get monitorLiveNoDevices;
 
-  /// Signing in to a monitor agent from before it had one account, which wants a user name.
-  ///
-  /// In en, this message translates to:
-  /// **'This agent is older than this app and asks for a user name. Update the agent.'**
-  String get monitorAgentTooOld;
-
   /// Title of the guide to updating a monitor agent.
   ///
   /// In en, this message translates to:
@@ -12002,6 +12008,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Logs: {path}'**
   String launchFailedLogs(String path);
+
+  /// Terminal toolbar action that re-establishes the connection by hand.
+  ///
+  /// In en, this message translates to:
+  /// **'Reconnect'**
+  String get reconnect;
+
+  /// Confirmation before a manual reconnect that cannot re-attach tmux and so replaces the running shell.
+  ///
+  /// In en, this message translates to:
+  /// **'There is no tmux session to re-attach, so reconnecting ends this shell and anything still running in it, and clears its output from the screen.'**
+  String get reconnectEndsShell;
 }
 
 class _AppLocalizationsDelegate

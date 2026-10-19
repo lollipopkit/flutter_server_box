@@ -528,6 +528,8 @@
   "schemaTooNewWipeDone": "Dati eliminati. Riapri l’app per ricominciare da zero.",
   "schemaTooNewWipeFailed": "Non è stato possibile eliminare alcuni dati e questa versione non può ancora aprire ciò che rimane. Reinstalla la versione più recente per accedervi.",
   "monitorNoRemoteAccess": "Questo agent rifiuta su HTTP non cifrato tutto ciò che va oltre il monitoraggio. Connettiti tramite HTTPS oppure consenti HTTP sia sull'agent ([remote_access] allow_insecure) sia in questa app.",
+  "monitorAgentTooOld": "Questo agent Monitor è più vecchio di quanto supportato da questa versione di ServerBox. Aggiorna l'agent sul server.",
+  "monitorClientTooOld": "Questo agent Monitor non supporta più questa versione di ServerBox. Aggiorna l'app.",
   "remoteDesktop": "Desktop remoto",
   "containerReclaimable": "Recuperabile",
   "processSearchHint": "Nome, utente o PID",
@@ -1930,7 +1932,6 @@
   "monitorLiveNoConnections": "Nessun inoltro attivo.",
   "monitorLiveNoTokens": "Nessun orologio o widget associato.",
   "monitorLiveNoDevices": "Nessun dispositivo ha effettuato l’accesso.",
-  "monitorAgentTooOld": "Questo agente è più vecchio dell’app e chiede un nome utente. Aggiorna l’agente.",
   "monitorUpdateAgent": "Aggiorna l’agente",
   "monitorAgentTooOldTip": "La scheda Monitor indica come aggiornarlo.",
   "monitorAgentTooOldBody": "Questo agente è precedente alla password unica e l’app non riesce ad accedere. Dopo l’aggiornamento, la password è quella del suo account amministratore più vecchio.",
@@ -1977,5 +1978,7 @@
   "termMetricsBarTip": "CPU, memoria, rete e disco, come nella scheda del server. Sul telefono, sopra i tasti virtuali.",
   "launchFailedTitle": "ServerBox non è riuscito ad avviarsi",
   "launchFailedBody": "Copia l'errore qui sotto e segnalalo in una issue su GitHub, insieme ai file di log.",
-  "launchFailedLogs": "Log: {path}"
+  "launchFailedLogs": "Log: {path}",
+  "reconnect": "Riconnetti",
+  "reconnectEndsShell": "Non c’è una sessione tmux da ricollegare: riconnettere chiude questa shell e tutto ciò che vi è ancora in esecuzione, e ne cancella l’output dallo schermo."
 }

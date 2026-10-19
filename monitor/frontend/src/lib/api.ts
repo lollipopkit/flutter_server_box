@@ -122,6 +122,7 @@ import type {
   DesktopsView,
 } from '../types'
 import { isSecureAgentUrl } from './agentUrl'
+import { CLIENT_TOO_OLD, protocolHeaders } from './protocol'
 import { servers, type ServerEntry } from './servers.svelte'
 
 const TIMEOUT_MS = 10_000
@@ -174,6 +175,7 @@ export type ErrorBody = { error?: string; message?: string } & Record<string, un
 /// [errorFrom] for a body already read (an XHR's). One without words of its
 /// own (a proxy's page, an empty body) is said by its status.
 export function errorFromBody(status: number, body: ErrorBody | null): ApiError {
+  if (status === CLIENT_TOO_OLD) return clientTooOld()
   if (body?.message) return new ApiError(body.message, status, body.error, body)
   if (body?.error) return new ApiError(body.error, status, undefined, body)
   return new ApiError(get(LL).agentAnswered({ status }), status)
@@ -191,9 +193,10 @@ function sessionExpired(entry: ServerEntry | undefined): ApiError {
   return new ApiError(get(LL).agentSessionExpired(), 401)
 }
 
-/// [entry]'s bearer, over [headers].
+/// [entry]'s bearer and the protocol this panel speaks, over [headers].
 function authHeaders(entry: ServerEntry | undefined, headers: Record<string, string> = {}): Record<string, string> {
-  return entry?.token ? { ...headers, Authorization: `Bearer ${entry.token}` } : headers
+  const named = { ...headers, ...protocolHeaders }
+  return entry?.token ? { ...named, Authorization: `Bearer ${entry.token}` } : named
 }
 
 /// One request to [entry]'s agent: the URL checked, the bearer sent, a 401
@@ -216,10 +219,21 @@ export async function fetchFor(
 async function fetchAt(url: string, path: string, init: RequestInit, signal?: AbortSignal): Promise<Response> {
   requireSecureUrl(url)
   try {
-    return await fetch(`${url}/api/v1${path}`, { ...init, signal })
+    const headers = { ...(init.headers as Record<string, string> | undefined), ...protocolHeaders }
+    return await fetch(`${url}/api/v1${path}`, { ...init, headers, signal })
   } catch {
     throw unreachable()
   }
+}
+
+/// The agent no longer answers this panel. A panel hosted away from the agent
+/// can be older than it; one the agent serves never is.
+function clientTooOld(): ApiError {
+  return new ApiError(
+    'This panel is older than the agent supports; reload it or update where it is hosted.',
+    CLIENT_TOO_OLD,
+    'client_too_old',
+  )
 }
 
 function requestSignal(signal?: AbortSignal, timeoutMs = TIMEOUT_MS): AbortSignal {

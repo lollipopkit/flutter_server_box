@@ -528,6 +528,8 @@
   "schemaTooNewWipeDone": "Məlumatlar silindi. Tətbiqi yenidən aç və sıfırdan başla.",
   "schemaTooNewWipeFailed": "Məlumatların bir hissəsini silmək mümkün olmadı və bu versiya qalan məlumatları hələ də aça bilmir. Onlara giriş üçün daha yeni versiyanı yenidən quraşdır.",
   "monitorNoRemoteAccess": "Bu agent şifrələnməmiş HTTP üzərindən monitorinqdən başqa hər şeyi rədd edir. HTTPS ilə qoşulun və ya HTTP-yə həm agent-də ([remote_access] allow_insecure), həm də bu tətbiqdə icazə verin.",
+  "monitorAgentTooOld": "Bu Monitor agenti ServerBox-un bu versiyasının dəstəklədiyindən köhnədir. Serverdə agenti yeniləyin.",
+  "monitorClientTooOld": "Bu Monitor agenti artıq ServerBox-un bu versiyasını dəstəkləmir. Tətbiqi yeniləyin.",
   "remoteDesktop": "Uzaq masaüstü",
   "containerReclaimable": "Reclaimable",
   "processSearchHint": "Ad, istifadəçi və ya PID",
@@ -1930,7 +1932,6 @@
   "monitorLiveNoConnections": "Yönləndirilən bağlantı yoxdur.",
   "monitorLiveNoTokens": "Qoşulmuş saat və ya vidcet yoxdur.",
   "monitorLiveNoDevices": "Daxil olmuş cihaz yoxdur.",
-  "monitorAgentTooOld": "Bu agent tətbiqdən köhnədir və istifadəçi adı istəyir. Agenti yeniləyin.",
   "monitorUpdateAgent": "Agenti yenilə",
   "monitorAgentTooOldTip": "Yeniləmə addımları Monitor tabındadır.",
   "monitorAgentTooOldBody": "Bu agent tək parol dövründən əvvəlkidir və tətbiq daxil ola bilmir. Yeniləmədən sonra onun parolu ən köhnə admin hesabının parolu olur.",
@@ -1977,5 +1978,7 @@
   "termMetricsBarTip": "CPU, yaddaş, şəbəkə və disk, server kartındakı kimi. Telefonda virtual düymələrin üstündə.",
   "launchFailedTitle": "ServerBox başlaya bilmədi",
   "launchFailedBody": "Aşağıdakı xətanı kopyalayın və log faylları ilə birlikdə GitHub issue-da bildirin.",
-  "launchFailedLogs": "Loglar: {path}"
+  "launchFailedLogs": "Loglar: {path}",
+  "reconnect": "Yenidən qoşul",
+  "reconnectEndsShell": "Yenidən qoşulmaq üçün tmux sessiyası yoxdur, ona görə yenidən qoşulmaq bu shell-i və içində hələ işləyən hər şeyi bağlayır və ekrandakı çıxışını təmizləyir."
 }

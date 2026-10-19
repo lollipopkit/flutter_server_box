@@ -2787,6 +2787,14 @@ class AppLocalizationsDe extends AppLocalizations {
       'Dieser Agent verweigert über unverschlüsseltes HTTP alles außer der Überwachung. Verbinden Sie sich über HTTPS oder erlauben Sie HTTP sowohl im Agent ([remote_access] allow_insecure) als auch in dieser App.';
 
   @override
+  String get monitorAgentTooOld =>
+      'Dieser Monitor-Agent ist älter, als diese Version von ServerBox unterstützt. Aktualisieren Sie den Agenten auf dem Server.';
+
+  @override
+  String get monitorClientTooOld =>
+      'Dieser Monitor-Agent unterstützt diese Version von ServerBox nicht mehr. Aktualisieren Sie die App.';
+
+  @override
   String get alerts => 'Warnungen';
 
   @override
@@ -6966,10 +6974,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get monitorLiveNoDevices => 'Kein Gerät hat sich angemeldet.';
 
   @override
-  String get monitorAgentTooOld =>
-      'Dieser Agent ist älter als die App und verlangt einen Benutzernamen. Aktualisieren Sie den Agent.';
-
-  @override
   String get monitorUpdateAgent => 'Agent aktualisieren';
 
   @override
@@ -7134,4 +7138,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String launchFailedLogs(String path) {
     return 'Logs: $path';
   }
+
+  @override
+  String get reconnect => 'Neu verbinden';
+
+  @override
+  String get reconnectEndsShell =>
+      'Es gibt keine tmux-Sitzung zum erneuten Anhängen. Neu verbinden beendet diese Shell und alles, was darin noch läuft, und löscht ihre Ausgabe vom Bildschirm.';
 }

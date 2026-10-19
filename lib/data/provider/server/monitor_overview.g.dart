@@ -72,7 +72,7 @@ final class MonitorOverviewNotifierProvider
 }
 
 String _$monitorOverviewNotifierHash() =>
-    r'bf91ab6473a3515319c8eebf56ef6a878c887c74';
+    r'5981074df87f24fc3898baea9a129c1cc3260297';
 
 /// One server's `monitor` agent for the Monitor tab: its firing rules and
 /// notifications, polled while something shows them, and the audit log and

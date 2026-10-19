@@ -23,6 +23,7 @@ import 'package:server_box/src/rust/api/hardware.dart';
 import 'package:server_box/src/rust/api/iperf.dart';
 import 'package:server_box/src/rust/api/parser.dart';
 import 'package:server_box/src/rust/api/proc.dart';
+import 'package:server_box/src/rust/api/protocol.dart';
 import 'package:server_box/src/rust/api/pve.dart';
 import 'package:server_box/src/rust/api/remote_desktop.dart';
 import 'package:server_box/src/rust/api/resource.dart';
@@ -733,6 +734,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   PowerState dco_decode_power_state(dynamic raw);
+
+  @protected
+  ProtocolCompat dco_decode_protocol_compat(dynamic raw);
 
   @protected
   PveConsoleKind dco_decode_pve_console_kind(dynamic raw);
@@ -1716,6 +1720,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   PowerState sse_decode_power_state(SseDeserializer deserializer);
+
+  @protected
+  ProtocolCompat sse_decode_protocol_compat(SseDeserializer deserializer);
 
   @protected
   PveConsoleKind sse_decode_pve_console_kind(SseDeserializer deserializer);
@@ -2914,6 +2921,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_power_state(PowerState self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_protocol_compat(
+    ProtocolCompat self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_pve_console_kind(

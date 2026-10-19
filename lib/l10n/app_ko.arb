@@ -528,6 +528,8 @@
   "schemaTooNewWipeDone": "데이터가 삭제되었습니다. 앱을 다시 열어 처음부터 시작하세요.",
   "schemaTooNewWipeFailed": "일부 데이터를 삭제하지 못했으며, 이 버전은 남은 데이터도 열 수 없습니다. 최신 버전을 다시 설치하여 접근하세요.",
   "monitorNoRemoteAccess": "이 agent는 암호화되지 않은 HTTP에서는 모니터링 외의 작업을 거부합니다. HTTPS로 연결하거나 agent([remote_access] allow_insecure)와 이 앱 모두에서 HTTP를 허용하세요.",
+  "monitorAgentTooOld": "이 Monitor agent는 현재 ServerBox 버전이 지원하는 것보다 오래되었습니다. 서버에서 agent를 업데이트하세요.",
+  "monitorClientTooOld": "이 Monitor agent는 더 이상 현재 ServerBox 버전을 지원하지 않습니다. 앱을 업데이트하세요.",
   "remoteDesktop": "원격 데스크톱",
   "containerReclaimable": "Reclaimable",
   "processSearchHint": "이름, 사용자 또는 PID",
@@ -1930,7 +1932,6 @@
   "monitorLiveNoConnections": "전달 또는 중계 중인 연결이 없습니다.",
   "monitorLiveNoTokens": "페어링된 워치나 위젯이 없습니다.",
   "monitorLiveNoDevices": "로그인한 기기가 없습니다.",
-  "monitorAgentTooOld": "이 에이전트는 앱보다 오래되어 사용자 이름을 요구합니다. 에이전트를 업데이트하세요.",
   "monitorUpdateAgent": "에이전트 업데이트",
   "monitorAgentTooOldTip": "업데이트 방법은 Monitor 탭에 있습니다.",
   "monitorAgentTooOldBody": "이 에이전트는 단일 비밀번호 이전 버전이라 앱에서 로그인할 수 없습니다. 업데이트 후 비밀번호는 가장 오래된 관리자 계정의 비밀번호가 됩니다.",
@@ -1977,5 +1978,7 @@
   "termMetricsBarTip": "CPU, 메모리, 네트워크, 디스크를 서버 카드와 같은 형식으로 표시합니다. 휴대폰에서는 가상 키 위에 표시됩니다.",
   "launchFailedTitle": "ServerBox를 시작할 수 없습니다",
   "launchFailedBody": "아래 오류를 복사해 로그 파일과 함께 GitHub 이슈로 알려 주세요.",
-  "launchFailedLogs": "로그: {path}"
+  "launchFailedLogs": "로그: {path}",
+  "reconnect": "다시 연결",
+  "reconnectEndsShell": "다시 연결할 tmux 세션이 없으므로, 다시 연결하면 이 셸과 그 안에서 아직 실행 중인 작업이 종료되고 화면의 출력도 지워집니다."
 }

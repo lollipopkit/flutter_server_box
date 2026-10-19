@@ -2756,6 +2756,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'This agent refuses everything beyond monitoring over plain HTTP. Connect over HTTPS, or allow plain HTTP on both the agent ([remote_access] allow_insecure) and this app.';
 
   @override
+  String get monitorAgentTooOld =>
+      'This Monitor agent is older than this version of ServerBox supports. Update the agent on the server.';
+
+  @override
+  String get monitorClientTooOld =>
+      'This Monitor agent no longer supports this version of ServerBox. Update the app.';
+
+  @override
   String get alerts => 'Alerts';
 
   @override
@@ -6887,10 +6895,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get monitorLiveNoDevices => 'No device has signed in.';
 
   @override
-  String get monitorAgentTooOld =>
-      'This agent is older than this app and asks for a user name. Update the agent.';
-
-  @override
   String get monitorUpdateAgent => 'Update the agent';
 
   @override
@@ -7053,4 +7057,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String launchFailedLogs(String path) {
     return 'Logs: $path';
   }
+
+  @override
+  String get reconnect => 'Reconnect';
+
+  @override
+  String get reconnectEndsShell =>
+      'There is no tmux session to re-attach, so reconnecting ends this shell and anything still running in it, and clears its output from the screen.';
 }

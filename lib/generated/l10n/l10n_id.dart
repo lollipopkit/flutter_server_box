@@ -2754,6 +2754,14 @@ class AppLocalizationsId extends AppLocalizations {
       'Agen ini menolak semua hal selain pemantauan melalui HTTP tanpa enkripsi. Hubungkan melalui HTTPS, atau izinkan HTTP di agen ([remote_access] allow_insecure) dan di aplikasi ini.';
 
   @override
+  String get monitorAgentTooOld =>
+      'Agen Monitor ini lebih lama dari yang didukung versi ServerBox ini. Perbarui agen di server.';
+
+  @override
+  String get monitorClientTooOld =>
+      'Agen Monitor ini tidak lagi mendukung versi ServerBox ini. Perbarui aplikasi.';
+
+  @override
   String get alerts => 'Peringatan';
 
   @override
@@ -6884,10 +6892,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get monitorLiveNoDevices => 'Belum ada perangkat yang masuk.';
 
   @override
-  String get monitorAgentTooOld =>
-      'Agen ini lebih lama dari aplikasi dan meminta nama pengguna. Perbarui agen.';
-
-  @override
   String get monitorUpdateAgent => 'Perbarui agen';
 
   @override
@@ -7049,4 +7053,11 @@ class AppLocalizationsId extends AppLocalizations {
   String launchFailedLogs(String path) {
     return 'Log: $path';
   }
+
+  @override
+  String get reconnect => 'Sambungkan ulang';
+
+  @override
+  String get reconnectEndsShell =>
+      'Tidak ada sesi tmux untuk dipasang kembali, jadi menyambungkan ulang akan mengakhiri shell ini dan semua yang masih berjalan di dalamnya, serta menghapus keluarannya dari layar.';
 }

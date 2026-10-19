@@ -136,9 +136,13 @@ enum MonitorHttpErrType {
   /// The agent rejected the request's contents — a password too short, say.
   badRequest,
 
-  /// The agent is from before it had one account and wants a user name to
-  /// sign in: it has to be updated before this app can reach it.
+  /// The agent has to be updated before this app can reach it: older than
+  /// this app reads (`sbm_parser::protocol`), or from before it had one
+  /// account and wanting a user name to sign in.
   agentTooOld,
+
+  /// The agent no longer answers this app: `426`, or what `/health` said.
+  clientTooOld,
 
   /// Starting the agent's update needs root, and sudo refused the password
   /// given (or none was).
@@ -153,6 +157,7 @@ class MonitorHttpErr extends Err<MonitorHttpErrType> {
     MonitorHttpErrType.auth => l10n.authFailTip,
     MonitorHttpErrType.notGranted => l10n.monitorNoRemoteAccess,
     MonitorHttpErrType.agentTooOld => l10n.monitorAgentTooOldTip,
+    MonitorHttpErrType.clientTooOld => l10n.monitorClientTooOld,
     _ => null,
   };
 }

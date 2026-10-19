@@ -2565,6 +2565,14 @@ class AppLocalizationsZh extends AppLocalizations {
       '此 agent 拒绝通过明文 HTTP 执行监控以外的操作。请改用 HTTPS 连接，或在 agent（[remote_access] allow_insecure）和本 App 中同时允许 HTTP。';
 
   @override
+  String get monitorAgentTooOld =>
+      '此 Monitor agent 版本过旧，当前版本的 ServerBox 已不再支持。请在服务器上更新 agent。';
+
+  @override
+  String get monitorClientTooOld =>
+      '此 Monitor agent 已不再支持当前版本的 ServerBox。请更新 App。';
+
+  @override
   String get alerts => '告警';
 
   @override
@@ -6499,9 +6507,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get monitorLiveNoDevices => '没有登录过的设备。';
 
   @override
-  String get monitorAgentTooOld => '此 agent 比本 App 旧，仍要求用户名。请更新 agent。';
-
-  @override
   String get monitorUpdateAgent => '更新 agent';
 
   @override
@@ -6653,6 +6658,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String launchFailedLogs(String path) {
     return '日志：$path';
   }
+
+  @override
+  String get reconnect => '重新连接';
+
+  @override
+  String get reconnectEndsShell =>
+      '没有可以重新接入的 tmux 会话，重新连接会结束当前 shell 及其中仍在运行的程序，并清除屏幕上的输出。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -9212,6 +9224,14 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get monitorNoRemoteAccess =>
       '此 agent 拒絕透過明文 HTTP 執行監控以外的操作。請改用 HTTPS 連線，或在 agent（[remote_access] allow_insecure）和本 App 中同時允許 HTTP。';
+
+  @override
+  String get monitorAgentTooOld =>
+      '此 Monitor agent 版本過舊，目前版本的 ServerBox 已不再支援。請在伺服器上更新 agent。';
+
+  @override
+  String get monitorClientTooOld =>
+      '此 Monitor agent 已不再支援目前版本的 ServerBox。請更新 App。';
 
   @override
   String get alerts => '警示';
@@ -13154,9 +13174,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get monitorLiveNoDevices => '沒有登入過的裝置。';
 
   @override
-  String get monitorAgentTooOld => '此 agent 比本 App 舊，仍要求使用者名稱。請更新 agent。';
-
-  @override
   String get monitorUpdateAgent => '更新 agent';
 
   @override
@@ -13308,4 +13325,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String launchFailedLogs(String path) {
     return '日誌：$path';
   }
+
+  @override
+  String get reconnect => '重新連線';
+
+  @override
+  String get reconnectEndsShell =>
+      '沒有可以重新接入的 tmux 工作階段，重新連線會結束目前的 shell 及其中仍在執行的程式，並清除畫面上的輸出。';
 }

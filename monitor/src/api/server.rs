@@ -78,6 +78,9 @@ pub fn configure_api(exec_max_request: usize) -> impl FnOnce(&mut web::ServiceCo
 fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
     cfg.service(
         web::scope("/api/v1")
+            .middleware(crate::api::protocol::Protocol)
+            // Outermost, so an answer the protocol check gives first reads
+            // the body too.
             .middleware(crate::api::unread_body::CloseUnreadBody)
             .route("/login", web::post().to(login))
             .service(
@@ -763,10 +766,15 @@ async fn issue_ws_ticket(
     }
 }
 
+/// Unauthenticated, so a client can tell before signing in whether the two
+/// of them still understand each other (`sbm_parser::protocol::compat`).
+/// The release version is left to `/capabilities`, behind sign-in.
 async fn health_check() -> HttpResponse {
     HttpResponse::Ok().json(&serde_json::json!({
         "status": "healthy",
-        "timestamp": chrono::Utc::now().to_rfc3339()
+        "timestamp": chrono::Utc::now().to_rfc3339(),
+        "protocol": sbm_parser::protocol::PROTOCOL,
+        "min_client_protocol": sbm_parser::protocol::MIN_CLIENT_PROTOCOL,
     }))
 }
 

@@ -528,6 +528,8 @@
   "schemaTooNewWipeDone": "Données supprimées. Rouvrez l’application pour repartir de zéro.",
   "schemaTooNewWipeFailed": "Certaines données n’ont pas pu être supprimées et cette version ne peut toujours pas ouvrir ce qui reste. Réinstallez la version plus récente pour y accéder.",
   "monitorNoRemoteAccess": "Cet agent refuse tout ce qui dépasse la surveillance via HTTP non chiffré. Connectez-vous en HTTPS, ou autorisez HTTP à la fois sur l'agent ([remote_access] allow_insecure) et dans cette app.",
+  "monitorAgentTooOld": "Cet agent Monitor est plus ancien que ce que prend en charge cette version de ServerBox. Mettez à jour l'agent sur le serveur.",
+  "monitorClientTooOld": "Cet agent Monitor ne prend plus en charge cette version de ServerBox. Mettez à jour l'application.",
   "remoteDesktop": "Bureau à distance",
   "containerReclaimable": "Reclaimable",
   "processSearchHint": "Nom, utilisateur ou PID",
@@ -1930,7 +1932,6 @@
   "monitorLiveNoConnections": "Rien n’est transféré ni relayé.",
   "monitorLiveNoTokens": "Aucune montre ni widget n’est associé.",
   "monitorLiveNoDevices": "Aucun appareil ne s’est connecté.",
-  "monitorAgentTooOld": "Cet agent est plus ancien que l’app et demande un nom d’utilisateur. Mettez l’agent à jour.",
   "monitorUpdateAgent": "Mettre l’agent à jour",
   "monitorAgentTooOldTip": "L’onglet Monitor donne les étapes pour le mettre à jour.",
   "monitorAgentTooOldBody": "Cet agent date d’avant le mot de passe unique et l’app ne peut pas s’y connecter. Après la mise à jour, son mot de passe est celui de son plus ancien compte administrateur.",
@@ -1977,5 +1978,7 @@
   "termMetricsBarTip": "CPU, mémoire, réseau et disque, comme sur la carte du serveur. Sur téléphone, au-dessus des touches virtuelles.",
   "launchFailedTitle": "ServerBox n'a pas pu démarrer",
   "launchFailedBody": "Copiez l'erreur ci-dessous et signalez-la dans une issue GitHub, avec les fichiers journaux.",
-  "launchFailedLogs": "Journaux : {path}"
+  "launchFailedLogs": "Journaux : {path}",
+  "reconnect": "Reconnecter",
+  "reconnectEndsShell": "Aucune session tmux à rattacher : reconnecter ferme ce shell et tout ce qui s’y exécute encore, et efface sa sortie de l’écran."
 }

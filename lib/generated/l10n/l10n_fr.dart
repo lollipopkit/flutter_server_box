@@ -2804,6 +2804,14 @@ class AppLocalizationsFr extends AppLocalizations {
       'Cet agent refuse tout ce qui dépasse la surveillance via HTTP non chiffré. Connectez-vous en HTTPS, ou autorisez HTTP à la fois sur l\'agent ([remote_access] allow_insecure) et dans cette app.';
 
   @override
+  String get monitorAgentTooOld =>
+      'Cet agent Monitor est plus ancien que ce que prend en charge cette version de ServerBox. Mettez à jour l\'agent sur le serveur.';
+
+  @override
+  String get monitorClientTooOld =>
+      'Cet agent Monitor ne prend plus en charge cette version de ServerBox. Mettez à jour l\'application.';
+
+  @override
   String get alerts => 'Alertes';
 
   @override
@@ -6989,10 +6997,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get monitorLiveNoDevices => 'Aucun appareil ne s’est connecté.';
 
   @override
-  String get monitorAgentTooOld =>
-      'Cet agent est plus ancien que l’app et demande un nom d’utilisateur. Mettez l’agent à jour.';
-
-  @override
   String get monitorUpdateAgent => 'Mettre l’agent à jour';
 
   @override
@@ -7156,4 +7160,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String launchFailedLogs(String path) {
     return 'Journaux : $path';
   }
+
+  @override
+  String get reconnect => 'Reconnecter';
+
+  @override
+  String get reconnectEndsShell =>
+      'Aucune session tmux à rattacher : reconnecter ferme ce shell et tout ce qui s’y exécute encore, et efface sa sortie de l’écran.';
 }

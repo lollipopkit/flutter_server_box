@@ -2769,6 +2769,14 @@ class AppLocalizationsRu extends AppLocalizations {
       'Этот агент по незашифрованному HTTP отклоняет всё, кроме мониторинга. Подключитесь по HTTPS или разрешите HTTP и в агенте ([remote_access] allow_insecure), и в этом приложении.';
 
   @override
+  String get monitorAgentTooOld =>
+      'Этот агент Monitor старее, чем поддерживает эта версия ServerBox. Обновите агент на сервере.';
+
+  @override
+  String get monitorClientTooOld =>
+      'Этот агент Monitor больше не поддерживает эту версию ServerBox. Обновите приложение.';
+
+  @override
   String get alerts => 'Оповещения';
 
   @override
@@ -6931,10 +6939,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get monitorLiveNoDevices => 'Ни одно устройство не входило.';
 
   @override
-  String get monitorAgentTooOld =>
-      'Этот агент старше приложения и требует имя пользователя. Обновите агент.';
-
-  @override
   String get monitorUpdateAgent => 'Обновить агент';
 
   @override
@@ -7097,4 +7101,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String launchFailedLogs(String path) {
     return 'Журналы: $path';
   }
+
+  @override
+  String get reconnect => 'Переподключиться';
+
+  @override
+  String get reconnectEndsShell =>
+      'Нет сеанса tmux для повторного подключения, поэтому переподключение завершит эту оболочку и всё, что в ней ещё выполняется, и очистит её вывод на экране.';
 }

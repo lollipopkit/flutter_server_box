@@ -52,6 +52,7 @@ Flutter app for managing servers, in a Rust workspace monorepo. Feature notes li
 - Themes are fl_lib's (`package:fl_lib/theme.dart`); this app describes itself in `lib/core/service/theme_host.dart`. `SettingStore` keys are fixed — renaming one loses it. `store/` is the official theme repository (and `store/apps/`, the Monitor's web apps: the `serverbox-webapp` skill) (details: `docs/src/content/docs/development/themes.md`, the `serverbox-theme` skill); no store theme is bundled in the app (a committed `.fsbt` is a binary git cannot diff).
 - `lollipopkit/shellbox-rootfs` is not a submodule: the app reads its signed manifest (`assets/rootfs_manifest.json` offline, key `RootfsManifestTrust.publicKey`).
 - `ScriptConstants.version` and the `v<N>` in `ScriptConstants.scriptFile` must stay equal.
+- **A breaking change to the agent API raises `sbm_parser::protocol::PROTOCOL`**, and both sides keep answering / reading the previous one (`monitor/CLAUDE.md`, Protocol).
 
 ### Connection methods
 

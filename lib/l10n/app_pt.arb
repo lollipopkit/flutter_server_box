@@ -528,6 +528,8 @@
   "schemaTooNewWipeDone": "Dados excluídos. Abra o app novamente para começar do zero.",
   "schemaTooNewWipeFailed": "Não foi possível excluir alguns dados, e esta versão ainda não consegue abrir o que restou. Reinstale a versão mais recente para acessá-los.",
   "monitorNoRemoteAccess": "Este agente recusa por HTTP não cifrado tudo o que vá além da monitorização. Ligue-se por HTTPS ou permita HTTP tanto no agente ([remote_access] allow_insecure) como nesta app.",
+  "monitorAgentTooOld": "Este agente Monitor é mais antigo do que esta versão do ServerBox suporta. Atualize o agente no servidor.",
+  "monitorClientTooOld": "Este agente Monitor já não suporta esta versão do ServerBox. Atualize a aplicação.",
   "remoteDesktop": "Área de trabalho remota",
   "containerReclaimable": "Recuperável",
   "processSearchHint": "Nome, usuário ou PID",
@@ -1930,7 +1932,6 @@
   "monitorLiveNoConnections": "Nada está a ser reencaminhado.",
   "monitorLiveNoTokens": "Nenhum relógio ou widget emparelhado.",
   "monitorLiveNoDevices": "Nenhum dispositivo iniciou sessão.",
-  "monitorAgentTooOld": "Este agente é mais antigo do que a app e pede um nome de utilizador. Atualize o agente.",
   "monitorUpdateAgent": "Atualizar o agente",
   "monitorAgentTooOldTip": "O separador Monitor tem os passos para o atualizar.",
   "monitorAgentTooOldBody": "Este agente é anterior à palavra-passe única e a app não consegue entrar. Após a atualização, a palavra-passe é a da conta de administrador mais antiga.",
@@ -1977,5 +1978,7 @@
   "termMetricsBarTip": "CPU, memória, rede e disco, como no cartão do servidor. No telefone, acima das teclas virtuais.",
   "launchFailedTitle": "O ServerBox não conseguiu iniciar",
   "launchFailedBody": "Copie o erro abaixo e relate-o numa issue do GitHub, com os arquivos de log.",
-  "launchFailedLogs": "Logs: {path}"
+  "launchFailedLogs": "Logs: {path}",
+  "reconnect": "Reconectar",
+  "reconnectEndsShell": "Não há uma sessão do tmux para reanexar, então reconectar encerra este shell e tudo o que ainda estiver em execução nele, e apaga a saída da tela."
 }

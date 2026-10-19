@@ -17,7 +17,13 @@ import 'package:server_box/data/model/server/monitor_capabilities.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/provider/server/monitor_http.dart';
 
+import '../../helpers/fake_agent_health.dart';
+import '../../helpers/rust_lib_helper.dart';
+
 void main() {
+  // `MonitorHttpClient` names its protocol from Rust.
+  setUpAll(initRustLibForTest);
+
   group('the client', () {
     late HttpServer server;
     late MonitorHttpClient client;
@@ -32,6 +38,7 @@ void main() {
       MonitorLoginDevices.resetForTest();
       server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
       server.listen((req) async {
+        if (await answerAgentHealth(req)) return;
         final raw = await utf8.decoder.bind(req).join();
         final body = raw.isEmpty ? null : jsonDecode(raw);
         final path = req.uri.path;

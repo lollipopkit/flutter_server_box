@@ -528,6 +528,8 @@
   "schemaTooNewWipeDone": "Data dihapus. Buka kembali aplikasi untuk memulai dari awal.",
   "schemaTooNewWipeFailed": "Sebagian data tidak dapat dihapus, dan versi ini masih tidak dapat membuka data yang tersisa. Instal kembali versi yang lebih baru untuk mengaksesnya.",
   "monitorNoRemoteAccess": "Agen ini menolak semua hal selain pemantauan melalui HTTP tanpa enkripsi. Hubungkan melalui HTTPS, atau izinkan HTTP di agen ([remote_access] allow_insecure) dan di aplikasi ini.",
+  "monitorAgentTooOld": "Agen Monitor ini lebih lama dari yang didukung versi ServerBox ini. Perbarui agen di server.",
+  "monitorClientTooOld": "Agen Monitor ini tidak lagi mendukung versi ServerBox ini. Perbarui aplikasi.",
   "remoteDesktop": "Desktop jarak jauh",
   "containerReclaimable": "Reclaimable",
   "processSearchHint": "Nama, pengguna, atau PID",
@@ -1930,7 +1932,6 @@
   "monitorLiveNoConnections": "Tidak ada yang diteruskan.",
   "monitorLiveNoTokens": "Tidak ada jam tangan atau widget yang dipasangkan.",
   "monitorLiveNoDevices": "Belum ada perangkat yang masuk.",
-  "monitorAgentTooOld": "Agen ini lebih lama dari aplikasi dan meminta nama pengguna. Perbarui agen.",
   "monitorUpdateAgent": "Perbarui agen",
   "monitorAgentTooOldTip": "Langkah memperbaruinya ada di tab Monitor.",
   "monitorAgentTooOldBody": "Agen ini dari sebelum hanya memakai satu kata sandi, dan aplikasi tidak bisa masuk. Setelah diperbarui, kata sandinya adalah milik akun admin tertuanya.",
@@ -1977,5 +1978,7 @@
   "termMetricsBarTip": "CPU, memori, jaringan, dan disk, seperti pada kartu server. Di ponsel, di atas tombol virtual.",
   "launchFailedTitle": "ServerBox tidak dapat dimulai",
   "launchFailedBody": "Salin galat di bawah dan laporkan di issue GitHub, beserta berkas log.",
-  "launchFailedLogs": "Log: {path}"
+  "launchFailedLogs": "Log: {path}",
+  "reconnect": "Sambungkan ulang",
+  "reconnectEndsShell": "Tidak ada sesi tmux untuk dipasang kembali, jadi menyambungkan ulang akan mengakhiri shell ini dan semua yang masih berjalan di dalamnya, serta menghapus keluarannya dari layar."
 }

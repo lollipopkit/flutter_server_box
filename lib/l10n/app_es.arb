@@ -528,6 +528,8 @@
   "schemaTooNewWipeDone": "Datos eliminados. Abre la aplicación de nuevo para empezar desde cero.",
   "schemaTooNewWipeFailed": "No se han podido eliminar algunos datos y esta versión aún no puede abrir lo que queda. Vuelve a instalar la versión más reciente para acceder a ellos.",
   "monitorNoRemoteAccess": "Este agente rechaza por HTTP sin cifrar todo lo que no sea supervisión. Conéctate por HTTPS o permite HTTP tanto en el agente ([remote_access] allow_insecure) como en esta app.",
+  "monitorAgentTooOld": "Este agente Monitor es más antiguo de lo que admite esta versión de ServerBox. Actualiza el agente en el servidor.",
+  "monitorClientTooOld": "Este agente Monitor ya no admite esta versión de ServerBox. Actualiza la app.",
   "remoteDesktop": "Escritorio remoto",
   "containerReclaimable": "Reclaimable",
   "processSearchHint": "Nombre, usuario o PID",
@@ -1930,7 +1932,6 @@
   "monitorLiveNoConnections": "No hay nada reenviado ni retransmitido.",
   "monitorLiveNoTokens": "No hay ningún reloj ni widget vinculado.",
   "monitorLiveNoDevices": "Ningún dispositivo ha iniciado sesión.",
-  "monitorAgentTooOld": "Este agente es más antiguo que la app y pide un nombre de usuario. Actualiza el agente.",
   "monitorUpdateAgent": "Actualizar el agente",
   "monitorAgentTooOldTip": "La pestaña Monitor tiene los pasos para actualizarlo.",
   "monitorAgentTooOldBody": "Este agente es anterior a tener una sola contraseña y la app no puede iniciar sesión. Tras actualizarlo, su contraseña es la de su cuenta de administrador más antigua.",
@@ -1977,5 +1978,7 @@
   "termMetricsBarTip": "CPU, memoria, red y disco, como en la tarjeta del servidor. En el teléfono, sobre las teclas virtuales.",
   "launchFailedTitle": "ServerBox no pudo iniciarse",
   "launchFailedBody": "Copia el error de abajo y repórtalo en un issue de GitHub, junto con los archivos de registro.",
-  "launchFailedLogs": "Registros: {path}"
+  "launchFailedLogs": "Registros: {path}",
+  "reconnect": "Reconectar",
+  "reconnectEndsShell": "No hay una sesión de tmux a la que volver, así que reconectar cierra esta shell y todo lo que siga ejecutándose en ella, y borra su salida de la pantalla."
 }

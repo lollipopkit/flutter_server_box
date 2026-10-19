@@ -21,6 +21,7 @@ import 'package:server_box/data/model/server/monitor_overview.dart';
 import 'package:server_box/data/model/server/monitor_push.dart';
 import 'package:server_box/data/model/server/monitor_settings.dart';
 import 'package:server_box/data/model/server/monitor_stack.dart';
+import 'package:server_box/src/rust/api/protocol.dart';
 
 /// A [MonitorHttpClient] shared by every holder of a lease on the same
 /// credential: one sign-in, one connection pool. The status poll, the Monitor
@@ -83,6 +84,11 @@ class MonitorHttpClient {
 
   Dio? _dio;
   String? _token;
+
+  /// Whether `/health` said the two of us understand each other; asked once,
+  /// before the first sign-in. An agent replaced later by one that no longer
+  /// answers this app says so with `426` instead.
+  bool _protocolChecked = false;
   Future<void>? _loginFuture;
   bool _disposed = false;
 
@@ -117,6 +123,7 @@ class MonitorHttpClient {
               connectTimeout: _connectTimeout,
               sendTimeout: _sendTimeout,
               receiveTimeout: _receiveTimeout,
+              headers: {MonitorProtocol.header: '${MonitorProtocol.current}'},
             ),
           )
           ..httpClientAdapter = IOHttpClientAdapter(
@@ -156,6 +163,8 @@ class MonitorHttpClient {
     if (_disposed) return;
     final pwd = monitor.pwd ?? '';
     try {
+      await _checkProtocol();
+      if (_disposed) return;
       final resp = await MonitorLoginDevices.signingIn(abandoned: _abandoned.future, monitor.addr, (device) async {
         final resp = await _object(
           '/api/v1/login',
@@ -187,6 +196,45 @@ class MonitorHttpClient {
         throw MonitorHttpErr(type: MonitorHttpErrType.agentTooOld, message: l10n.monitorAgentTooOld);
       }
       throw _toMonitorHttpErr(e);
+    }
+  }
+
+  /// Refuses an agent this app cannot talk to, before signing in to it —
+  /// `sbm_parser::protocol::compat` on what `/health` says.
+  Future<void> _checkProtocol() async {
+    if (_protocolChecked) return;
+    Map<String, dynamic> health = const {};
+    try {
+      health = await _object('/api/v1/health');
+    } on DioException catch (e) {
+      // Answered, but not with numbers — an agent from before `/health`, or a
+      // proxy in front of it: the first protocol, like an agent naming none.
+      // A link that failed is still that.
+      if (e.response == null) rethrow;
+    } on MonitorHttpErr catch (e) {
+      if (e.type != MonitorHttpErrType.invalidResponse) rethrow;
+    }
+    final agent = switch (health['protocol']) {
+      final int n => n,
+      _ => null,
+    };
+    final minClient = switch (health['min_client_protocol']) {
+      final int n => n,
+      _ => null,
+    };
+    switch (monitorProtocolCompat(agent: agent, minClient: minClient)) {
+      case ProtocolCompat.ok:
+        _protocolChecked = true;
+      case ProtocolCompat.agentTooOld:
+        throw MonitorHttpErr(
+          type: MonitorHttpErrType.agentTooOld,
+          message: 'The monitor agent speaks protocol $agent, older than this app reads',
+        );
+      case ProtocolCompat.clientTooOld:
+        throw MonitorHttpErr(
+          type: MonitorHttpErrType.clientTooOld,
+          message: 'The monitor agent answers protocol $minClient and later; this app speaks ${MonitorProtocol.current}',
+        );
     }
   }
 
@@ -1182,6 +1230,7 @@ class MonitorHttpClient {
             // `?ticket=` for that reason and answers 401 to anything that
             // still sends it that way.
             protocols: [terminalWsProtocol(ticket)],
+            headers: {MonitorProtocol.header: '${MonitorProtocol.current}'},
             // Carries `ignoreCert` onto the upgrade: this is the same endpoint the
             // status poll uses, so it has to trust the same certs
             customClient: _httpClient(),
@@ -1231,6 +1280,15 @@ class MonitorHttpClient {
     if (status == 401) {
       return MonitorHttpErr(type: MonitorHttpErrType.auth, message: message);
     }
+    if (status == 426) {
+      return MonitorHttpErr(type: MonitorHttpErrType.clientTooOld, message: message);
+    }
     return MonitorHttpErr(type: MonitorHttpErrType.unknown, message: message);
   }
+}
+
+/// `sbm_parser::protocol` as this app speaks it, read once.
+abstract final class MonitorProtocol {
+  static final header = monitorProtocolHeader();
+  static final current = monitorProtocol();
 }

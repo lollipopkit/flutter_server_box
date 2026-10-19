@@ -36,6 +36,7 @@ pub mod monitor_agent;
 pub mod output;
 pub mod proc;
 pub mod proxy;
+pub mod protocol;
 pub mod script;
 pub mod service;
 pub mod shares;
