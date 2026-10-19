@@ -1672,5 +1672,7 @@
   "termMetricsBarTip": "CPU, yaddaş, şəbəkə və disk, server kartındakı kimi. Telefonda virtual düymələrin üstündə.",
   "launchFailedTitle": "ServerBox başlaya bilmədi",
   "launchFailedBody": "Aşağıdakı xətanı kopyalayın və log faylları ilə birlikdə GitHub issue-da bildirin.",
-  "launchFailedLogs": "Loglar: {path}"
+  "launchFailedLogs": "Loglar: {path}",
+  "reconnect": "Yenidən qoşul",
+  "reconnectEndsShell": "Yenidən qoşulmaq üçün tmux sessiyası yoxdur, ona görə yenidən qoşulmaq bu shell-i və içində hələ işləyən hər şeyi bağlayır."
 }

@@ -5670,4 +5670,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String launchFailedLogs(String path) {
     return '로그: $path';
   }
+
+  @override
+  String get reconnect => '다시 연결';
+
+  @override
+  String get reconnectEndsShell =>
+      '다시 연결할 tmux 세션이 없으므로, 다시 연결하면 이 셸과 그 안에서 아직 실행 중인 작업이 종료됩니다.';
 }

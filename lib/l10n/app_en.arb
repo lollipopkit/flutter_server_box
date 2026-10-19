@@ -7745,5 +7745,13 @@
         "type": "String"
       }
     }
+  },
+  "reconnect": "Reconnect",
+  "@reconnect": {
+    "description": "Terminal toolbar action that re-establishes the connection by hand."
+  },
+  "reconnectEndsShell": "There is no tmux session to re-attach, so reconnecting ends this shell and anything still running in it.",
+  "@reconnectEndsShell": {
+    "description": "Confirmation before a manual reconnect that cannot re-attach tmux and so replaces the running shell."
   }
 }

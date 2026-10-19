@@ -1672,5 +1672,7 @@
   "termMetricsBarTip": "CPU, memoria, rete e disco, come nella scheda del server. Sul telefono, sopra i tasti virtuali.",
   "launchFailedTitle": "ServerBox non è riuscito ad avviarsi",
   "launchFailedBody": "Copia l'errore qui sotto e segnalalo in una issue su GitHub, insieme ai file di log.",
-  "launchFailedLogs": "Log: {path}"
+  "launchFailedLogs": "Log: {path}",
+  "reconnect": "Riconnetti",
+  "reconnectEndsShell": "Non c’è una sessione tmux da ricollegare: riconnettere chiude questa shell e tutto ciò che vi è ancora in esecuzione."
 }

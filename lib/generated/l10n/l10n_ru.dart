@@ -5984,4 +5984,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String launchFailedLogs(String path) {
     return 'Журналы: $path';
   }
+
+  @override
+  String get reconnect => 'Переподключиться';
+
+  @override
+  String get reconnectEndsShell =>
+      'Нет сеанса tmux для повторного подключения, поэтому переподключение завершит эту оболочку и всё, что в ней ещё выполняется.';
 }

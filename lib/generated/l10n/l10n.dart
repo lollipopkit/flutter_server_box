@@ -10172,6 +10172,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Logs: {path}'**
   String launchFailedLogs(String path);
+
+  /// Terminal toolbar action that re-establishes the connection by hand.
+  ///
+  /// In en, this message translates to:
+  /// **'Reconnect'**
+  String get reconnect;
+
+  /// Confirmation before a manual reconnect that cannot re-attach tmux and so replaces the running shell.
+  ///
+  /// In en, this message translates to:
+  /// **'There is no tmux session to re-attach, so reconnecting ends this shell and anything still running in it.'**
+  String get reconnectEndsShell;
 }
 
 class _AppLocalizationsDelegate

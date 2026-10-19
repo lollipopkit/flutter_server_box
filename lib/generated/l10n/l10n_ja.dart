@@ -5671,4 +5671,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String launchFailedLogs(String path) {
     return 'ログ: $path';
   }
+
+  @override
+  String get reconnect => '再接続';
+
+  @override
+  String get reconnectEndsShell =>
+      '再アタッチできる tmux セッションがないため、再接続するとこのシェルと、その中でまだ実行中のものが終了します。';
 }

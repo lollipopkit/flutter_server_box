@@ -680,7 +680,8 @@ extension _Actions on _SSHTabPageState {
   List<BarAction> _serverActions({required bool textView}) {
     final current = _sessions.current;
     if (current == null) return const [];
-    final onServer = current.data.page.args.spi != null;
+    final spi = current.data.page.args.spi;
+    final onServer = spi != null;
     final status = terminalStatusAction(
       session: current.data.session,
       paneLabel: (pane) =>
@@ -689,6 +690,9 @@ extension _Actions on _SSHTabPageState {
     return onServer
         ? [
             status,
+            // From the page's own [SSHPageState.canReconnect], which may not
+            // have built yet.
+            if (!spi.local) _reconnectAction,
             _agentAction,
             _snippetAction,
             if (textView) _textViewAction,
@@ -828,6 +832,14 @@ extension _Actions on _SSHTabPageState {
       l10n.workspaceMoved(spi.name, ref.read(workspacesProvider).current.name),
     );
   }
+
+  /// Re-establishes the link of the terminal on screen, for one that looks
+  /// alive and is not; see [SSHPageState.reconnectFromToolbar].
+  BarAction get _reconnectAction => BarAction(
+    icon: Icons.refresh,
+    label: l10n.reconnect,
+    onTap: () => _sessions.current?.data.pageKey.currentState?.reconnectFromToolbar(),
+  );
 
   BarAction get _snippetAction => BarAction(
     icon: Icons.code,

@@ -1672,5 +1672,7 @@
   "termMetricsBarTip": "CPU、メモリ、ネットワーク、ディスクをサーバーカードと同じ形式で表示します。スマートフォンでは仮想キーの上に表示されます。",
   "launchFailedTitle": "ServerBox を起動できませんでした",
   "launchFailedBody": "下のエラーをコピーし、ログファイルと一緒に GitHub の issue で報告してください。",
-  "launchFailedLogs": "ログ: {path}"
+  "launchFailedLogs": "ログ: {path}",
+  "reconnect": "再接続",
+  "reconnectEndsShell": "再アタッチできる tmux セッションがないため、再接続するとこのシェルと、その中でまだ実行中のものが終了します。"
 }

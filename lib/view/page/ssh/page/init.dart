@@ -640,8 +640,24 @@ extension _Init on SSHPageState {
   /// fine, and the question would be an answer to a loss that never happened —
   /// pressing reconnect on a slow server must not offer to throw the terminal
   /// away. So this says what happened and stops there.
+  ///
+  /// Re-attaching tmux keeps what runs in it. Without a session to re-attach,
+  /// the reconnect opens a new shell and the one on screen — perhaps fine, only
+  /// slow — ends with whatever it was running, so that is asked first.
   Future<void> reconnect() async {
-    if (!mounted || _disconnectDialogOpen || _openingTerminal) return;
+    if (!mounted || !canReconnect) return;
+    if (_disconnectDialogOpen || _openingTerminal) return;
+    final tmux = _tmuxCurrentSession;
+    if (tmux == null || tmux.isEmpty) {
+      final confirmed = await context.showRoundDialog<bool>(
+        title: l10n.reconnect,
+        child: Text(l10n.reconnectEndsShell),
+        actions: Btnx.cancelOk,
+      );
+      if (confirmed != true || !mounted) return;
+      // The automatic path may have started while the question was up.
+      if (_disconnectDialogOpen || _openingTerminal) return;
+    }
 
     _disconnectDialogOpen = true;
     // Stop the keep-alive from firing the automatic path underneath this one.
@@ -662,9 +678,10 @@ extension _Init on SSHPageState {
       return;
     }
 
-    // Cancelled, or the reconnect itself gave up. The terminal is left as it
-    // is, and the button works again — a server that is merely slow comes back
-    // on the next press.
+    // Cancelled, or the reconnect itself gave up. The old link was closed
+    // before the first attempt, so the terminal is disconnected and the
+    // keep-alive has nothing to ask; the button tries again — a server that is
+    // merely slow comes back on the next press.
     _writeLn(libL10n.fail);
     _disconnectDialogOpen = false;
     TermSessionManager.updateStatus(_sessionId, TermSessionStatus.disconnected);

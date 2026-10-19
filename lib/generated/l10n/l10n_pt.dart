@@ -5994,4 +5994,11 @@ class AppLocalizationsPt extends AppLocalizations {
   String launchFailedLogs(String path) {
     return 'Logs: $path';
   }
+
+  @override
+  String get reconnect => 'Reconectar';
+
+  @override
+  String get reconnectEndsShell =>
+      'Não há uma sessão do tmux para reanexar, então reconectar encerra este shell e tudo o que ainda estiver em execução nele.';
 }
