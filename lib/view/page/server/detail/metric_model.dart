@@ -328,8 +328,8 @@ List<DetailMetric> serverDetailMetrics(
     );
   }
 
-  if (ss.mem.total > 0) {
-    final used = ss.mem.usedPercent * 100;
+  if (ss.mem.usedPercent case final ratio?) {
+    final used = ratio * 100;
     final total = (ss.mem.total * 1024).bytes2Str;
     views.add(
       DetailMetric(
@@ -342,7 +342,7 @@ List<DetailMetric> serverDetailMetrics(
         percent: used / 100,
         stats: [
           (k: 'free', v: ReadingFmt.pct(ss.mem.free / ss.mem.total * 100)),
-          (k: 'avail', v: ReadingFmt.pct(ss.mem.availPercent * 100)),
+          (k: 'avail', v: ReadingFmt.pct((1 - ratio) * 100)),
         ],
         series: [HistorySeries(libL10n.memory, ChartPalette.accent, w.mem)],
         format: ReadingFmt.pct,

@@ -101,6 +101,10 @@ class _ServerGlobeState extends ConsumerState<ServerGlobe> {
   /// change happened to land while the loop was idle.
   bool _resolveAgain = false;
 
+  /// Bumped by [_onGeoData], so a pass that ran against the previous data
+  /// does not commit its answers as settled.
+  int _geoGen = 0;
+
   @override
   void initState() {
     super.initState();
@@ -120,6 +124,7 @@ class _ServerGlobeState extends ConsumerState<ServerGlobe> {
 
   void _onGeoData() {
     if (!mounted) return;
+    _geoGen++;
     _resolvedFrom.clear();
     _located.clear();
     _unplaceable.clear();
@@ -216,6 +221,7 @@ class _ServerGlobeState extends ConsumerState<ServerGlobe> {
   /// pass: a server resolved halfway through is not drawn until the frame
   /// after, and that frame is this one.
   Future<void> _resolvePass() async {
+    final gen = _geoGen;
     final located = <String, ResolvedGeo>{};
     final unplaceable = <String, GeoMiss>{};
     final resolvedFrom = <String, ({String? host, GeoCoord? manual})>{};
@@ -273,7 +279,7 @@ class _ServerGlobeState extends ConsumerState<ServerGlobe> {
       }
     }
 
-    if (!mounted || resolvedFrom.isEmpty) return;
+    if (!mounted || resolvedFrom.isEmpty || gen != _geoGen) return;
     setState(() {
       _resolvedFrom.addAll(resolvedFrom);
       for (final id in located.keys) {
@@ -451,9 +457,13 @@ class _ServerGlobeState extends ConsumerState<ServerGlobe> {
       builder: (context, ref, _) {
         final srv = ref.watch(serverProvider(id));
         final scheme = Theme.of(context).colorScheme;
+        // A reading not taken yet is a dash, not 0%: the CPU needs two
+        // samples, and memory may not have been read at all.
+        String pct(double? v) => v == null ? '--' : '${v.toStringAsFixed(0)}%';
+        final mem = srv.status.mem.usedPercent;
         final status = srv.conn == ServerConn.finished
-            ? '${(srv.status.cpu.usedPercent() ?? 0).toStringAsFixed(0)}% · '
-                  '${(srv.status.mem.usedPercent * 100).toStringAsFixed(0)}%'
+            ? '${pct(srv.status.cpu.usedPercent())} · '
+                  '${pct(mem == null ? null : mem * 100)}'
             : srv.conn.name;
 
         return Material(
