@@ -622,6 +622,7 @@
   "diskFailingFmt": "{count} з помилками",
   "diskSmartOpenTip": "Натисніть, щоб побачити атрибути",
   "cycle": "Цикли",
+  "showAllFmt": "Показати всі ({count})",
   "shownOfFmt": "{shown} із {total} ({what})",
   "countOfFmt": "{what}: {count}",
   "unitDevices": "пристрої",

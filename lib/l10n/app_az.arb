@@ -622,6 +622,7 @@
   "diskFailingFmt": "{count} nasaz",
   "diskSmartOpenTip": "Atributları üçün toxunun",
   "cycle": "Dövr",
+  "showAllFmt": "Hamısını göstər ({count})",
   "shownOfFmt": "{total} {what} arasından {shown}",
   "countOfFmt": "{count} {what}",
   "unitDevices": "cihaz",

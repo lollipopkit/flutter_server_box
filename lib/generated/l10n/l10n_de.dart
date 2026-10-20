@@ -2358,6 +2358,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get oneDeviceAtLeast => 'Mindestens ein Gerät bleibt im Diagramm.';
 
   @override
+  String showAllFmt(int count) {
+    return 'Alle $count anzeigen';
+  }
+
+  @override
   String shownOfFmt(int shown, int total, String what) {
     return '$shown von $total $what';
   }

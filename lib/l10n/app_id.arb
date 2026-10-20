@@ -622,6 +622,7 @@
   "diskFailingFmt": "{count} bermasalah",
   "diskSmartOpenTip": "Ketuk untuk melihat atributnya",
   "cycle": "Siklus",
+  "showAllFmt": "Tampilkan semua {count}",
   "shownOfFmt": "{shown} dari {total} {what}",
   "countOfFmt": "{count} {what}",
   "unitDevices": "perangkat",

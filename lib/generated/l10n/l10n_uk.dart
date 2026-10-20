@@ -2351,6 +2351,11 @@ class AppLocalizationsUk extends AppLocalizations {
       'Щонайменше один пристрій лишається на графіку.';
 
   @override
+  String showAllFmt(int count) {
+    return 'Показати всі ($count)';
+  }
+
+  @override
   String shownOfFmt(int shown, int total, String what) {
     return '$shown із $total ($what)';
   }

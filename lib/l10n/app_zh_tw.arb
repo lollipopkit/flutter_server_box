@@ -583,6 +583,7 @@
   "diskFailingFmt": "{count} 個異常",
   "diskSmartOpenTip": "點按查看該磁碟的屬性",
   "cycle": "循環次數",
+  "showAllFmt": "顯示全部 {count} 個",
   "shownOfFmt": "{total} 個{what}中的 {shown} 個",
   "countOfFmt": "{count} 個{what}",
   "unitDevices": "裝置",

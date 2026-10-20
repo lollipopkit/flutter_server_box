@@ -244,6 +244,13 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
 
   void _toggleCard(String key) => _cardsOpen[key] = !(_cardsOpen[key] ?? false);
 
+  /// Which cards list every row rather than the first [kReadoutCardRows], by
+  /// their `cardKey`; kept here for the reason [_cardsOpen] is.
+  final _cardsFull = <String>{};
+
+  void _toggleFull(String key) =>
+      _cardsFull.contains(key) ? _cardsFull.remove(key) : _cardsFull.add(key);
+
   /// What the parts of this page held in extensions change state through:
   /// `setState` is protected, and an extension is not a subclass.
   void _rebuild(VoidCallback update) {

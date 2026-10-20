@@ -622,6 +622,7 @@
   "diskFailingFmt": "{count} defect",
   "diskSmartOpenTip": "Tik voor de attributen",
   "cycle": "Cycli",
+  "showAllFmt": "Alle {count} tonen",
   "shownOfFmt": "{shown} van {total} {what}",
   "countOfFmt": "{count} {what}",
   "unitDevices": "apparaten",

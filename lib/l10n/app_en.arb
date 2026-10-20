@@ -3002,6 +3002,15 @@
   "@oneDeviceAtLeast": {
     "description": "User-facing label or message for one device at least."
   },
+  "showAllFmt": "Show all {count}",
+  "@showAllFmt": {
+    "description": "Button that lists every row of a card cut to its first few.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "shownOfFmt": "{shown} of {total} {what}",
   "@shownOfFmt": {
     "description": "Formatted user-facing message for shown of; runtime values are supplied by placeholders.",
