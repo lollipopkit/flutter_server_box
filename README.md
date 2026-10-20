@@ -3,14 +3,14 @@ English | [简体中文](README_zh.md)
 <h2 align="center">Flutter Server Box</h2>
 
 <div align="center">
-  <a href="https://cdn.lollipopkit.com/donate"><img alt="donate" src="https://img.shields.io/badge/donate-me-pink"></a>
+  <a href="https://lollipopkit.com/donate"><img alt="donate" src="https://img.shields.io/badge/donate-me-pink"></a>
   <img alt="lang" src="https://img.shields.io/badge/lang-dart-cyan">
   <img alt="license" src="https://img.shields.io/badge/license-AGPLv3-yellow">
   <a href="https://deepwiki.com/lollipopkit/flutter_server_box"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </div>
 
 <p align="center">
-A Flutter project which provides charts to display Linux, Unix and Windows server status and tools to manage servers.
+A Flutter+Rust project which provides charts to display Linux, Unix and Windows server status and tools to manage servers.
 <br>
 Read the <a href="https://serverbox.lolli.tech/docs/">documentation site</a> for user guides, architecture notes, and development instructions.
 </p>
@@ -62,9 +62,32 @@ Download packages only from sources you trust.
 
 ## Features
 
-- Status charts for CPU, sensors, GPU, and other metrics; an SSH terminal; SFTP; [RDP and VNC through SSH](https://serverbox.lolli.tech/docs/advanced/remote-desktop/); Docker, process, and service management; and S.M.A.R.T.
-- Platform features include biometric authentication, push notifications, home-screen widgets, a watchOS app, and system color themes.
-- 16 languages.
+**Connecting**
+
+- Connect directly over SSH, through a jump host or with a `ProxyCommand`; You can also connect over HTTP through the [Monitor agent](https://serverbox.lollipopkit.com/docs/advanced/monitor-agent/) when you do not want to expose a host's SSH port. A server can use both methods, with automatic fallback if one is unavailable.
+- Open a shell on this device or install a Linux userland ([local terminal](https://serverbox.lollipopkit.com/docs/advanced/local-terminal/)) on supported platforms.
+
+**Watching**
+
+- Live and historical charts for CPU, memory, swap, disks, disk I/O and network, plus sensors, GPUs (NVIDIA, AMD), batteries and disk S.M.A.R.T.
+- See all servers at a glance, filter them by tag or view them on a [globe](https://serverbox.lollipopkit.com/docs/advanced/globe/).
+- Push alerts, [home-screen widgets](https://serverbox.lollipopkit.com/docs/advanced/widgets/) and a watchOS app. The Monitor agent keeps these features working while the app is closed.
+
+**Working on a server**
+
+- A full terminal with virtual keys on phones, plus a [workspace](https://serverbox.lollipopkit.com/docs/advanced/workspace/) with split panes that can send input to several terminals at once.
+- Browse, upload, download and edit files over SFTP or SCP. Markdown files open in a rendered preview.
+- [RDP and VNC](https://serverbox.lollipopkit.com/docs/advanced/remote-desktop/), to the server itself or to a desktop it can reach.
+- Docker and Podman, processes, systemd services, users and groups, firewall rules (ufw, firewalld), scheduled tasks, port forwards and snippets.
+- Virtual machines and containers on libvirt and Proxmox VE, and a server's BMC over Redfish ([BMC](https://serverbox.lollipopkit.com/docs/advanced/bmc/)).
+- Benchmarks (YABS) and iperf.
+- An [AI Agent](https://serverbox.lollipopkit.com/docs/advanced/agent/) that works with your servers and the model providers, MCP servers and skills you choose.
+
+**Making it yours**
+
+- Install [themes and icon packs](https://serverbox.lollipopkit.com/docs/advanced/theme-packages/) from the built-in store, or make your own.
+- Biometric app lock, and backups to iCloud, WebDAV, GitHub Gist or a Monitor agent, encrypted with a password you choose.
+- iOS, Android, macOS, Linux and Windows, in 16 languages.
 
 ## Help
 
@@ -74,8 +97,7 @@ Download packages only from sources you trust.
   <a href="https://discord.gg/SsVNbRhK7w"><img alt="discord" src="https://img.shields.io/badge/Discord-lpkt-purple"></a>
 </div>
 
-- [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor) is an agent you install on your servers. It is required for features that need to work while the app is closed — **push notifications**, **home-screen widgets**, and the **watch app**. It also offers another way to add a server: the app can connect to it over HTTP instead of SSH, which suits hosts whose SSH port you prefer not to expose, and gives charts historical data from before the app's first connection. Monitor also serves its own web panel.
-- **Common issues** are listed in the [app wiki](https://github.com/lollipopkit/flutter_server_box/wiki/主页).
+- [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor) is an agent you install on your servers. It is required for features that need to work while the app is closed — **push notifications**, **home-screen widgets**, and the **watch app**. It also offers another way to add a server: the app can connect to it over HTTP instead of SSH, which suits hosts whose SSH port you prefer not to expose, and gives charts historical data from before the app's first connection.  
 - **Agent skills:** This repository includes three skills for AI agents. Add them with
 
   ```sh
@@ -98,7 +120,7 @@ Before opening an issue, please:
 
 ## Contributions
 
-Any positive contribution is welcome. [CONTRIBUTING.md](CONTRIBUTING.md) covers the development setup, the commit convention, the checks to run, and how translations work.
+[CONTRIBUTING.md](CONTRIBUTING.md) covers the development setup, the commit convention, the checks to run, and how translations work.
 
 Contributors sign the [CLA](CLA.md) once by leaving a comment on their first pull request. It grants the right to ship your work in App Store builds alongside the AGPLv3 source. You retain the copyright to your work.
 
