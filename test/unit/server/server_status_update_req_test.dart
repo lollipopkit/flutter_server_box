@@ -422,6 +422,16 @@ __SBM_GPU_END__
       expect(result.sectionErrs, isEmpty);
     });
 
+    test('memory that ran and said nothing is a failure', () async {
+      // Every machine has memory, so an empty segment is not absence — and
+      // without a reason the page showed a 1 KiB placeholder instead (#1082).
+      final result = await parse({StatusCmdType.mem.name: ''});
+
+      expect(result.mem.total, 0);
+      expect(result.sectionErrs['mem'], isNotNull);
+      expect(result.sectionErrs['swap'], isNotNull);
+    });
+
     test('one command feeding two sections fails both', () async {
       final result = await parse({
         StatusCmdType.mem.name: 'cat: /proc/meminfo: Permission denied',

@@ -143,13 +143,22 @@ void _noteFailedSections(
   Map<String, String> raw,
   SystemType system,
 ) {
-  void check(List<String> cmds, List<String> sections, bool parsed) {
+  /// [always]: every machine has one, so a segment that ran and said nothing
+  /// is a failure too. A missing segment is still absence — the command can be
+  /// turned off for the server.
+  void check(
+    List<String> cmds,
+    List<String> sections,
+    bool parsed, {
+    bool always = false,
+  }) {
     if (parsed) return;
     final said = cmds
         .map((cmd) => raw[cmd]?.trim() ?? '')
         .firstWhere((text) => text.isNotEmpty, orElse: () => '');
-    if (said.isEmpty) return;
-    final reason = _reasonOf(said);
+    final ran = cmds.any(raw.containsKey);
+    if (said.isEmpty && !(always && ran)) return;
+    final reason = said.isEmpty ? libL10n.empty : _reasonOf(said);
     for (final section in sections) {
       // A parse that threw said something more specific about this section and
       // has already recorded it.
@@ -160,7 +169,12 @@ void _noteFailedSections(
   bool list(String key) => (status[key] as List?)?.isNotEmpty ?? false;
 
   check(const ['cpu'], const ['cpu'], list('cpu'));
-  check(const ['mem'], const ['mem', 'swap'], status['mem'] != null);
+  check(
+    const ['mem'],
+    const ['mem', 'swap'],
+    status['mem'] != null,
+    always: true,
+  );
   check(const ['disk'], const ['disk'], list('disks'));
   // Windows' interface counters are a second parse of the same segment, and
   // the shared one is empty there by design — asking it would report every

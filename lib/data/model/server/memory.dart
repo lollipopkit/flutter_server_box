@@ -7,13 +7,14 @@ class Memory {
   const Memory({required this.total, required this.free, required this.avail});
 
   double get availPercent {
+    if (total == 0) return 0;
     if (avail == 0) {
       return free / total;
     }
     return avail / total;
   }
 
-  double get usedPercent => 1 - availPercent;
+  double get usedPercent => total == 0 ? 0 : 1 - availPercent;
 
   /// In use, in KiB: what is not available, so the page cache the kernel
   /// gives back on demand does not count. `MemFree` where the kernel has no

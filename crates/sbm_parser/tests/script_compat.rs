@@ -450,6 +450,32 @@ fn decode_utf16le_b64(b64: &str) -> String {
     String::from_utf16(&utf16).unwrap()
 }
 
+/// `~` in a quoted word is a literal: the home script directory was installed
+/// under a directory named `~` in the session's working directory (#1082).
+#[test]
+fn unix_home_script_paths_expand_remote_home() {
+    let install = install_command(
+        SystemType::Linux,
+        "~/.config/server_box",
+        "~/.config/server_box/srvboxm.sh",
+    );
+    assert_eq!(
+        install,
+        "mkdir -p \"$HOME\"/'.config/server_box'\n\
+cat > \"$HOME\"/'.config/server_box/srvboxm.sh'\n\
+chmod 755 \"$HOME\"/'.config/server_box/srvboxm.sh'\n"
+    );
+    assert_eq!(
+        exec_command(SystemType::Linux, "~/a b/s.sh", ShellFunc::Status),
+        "sh \"$HOME\"/'a b/s.sh' -s"
+    );
+    // Only a leading `~/` is the home directory; the rest stays literal.
+    assert_eq!(
+        exec_command(SystemType::Linux, "/tmp/~x/$s.sh", ShellFunc::Status),
+        "sh '/tmp/~x/$s.sh' -s"
+    );
+}
+
 /// Dart 'exec commands are generated correctly for all platforms'
 #[test]
 fn exec_commands() {

@@ -8,7 +8,10 @@ import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/temp.dart';
 
 abstract final class InitStatus {
-  static const Memory mem = Memory(total: 1, free: 1, avail: 1);
+  /// No reading: a total of 0, which every view takes for "not read" — a
+  /// placeholder of 1 KiB drew as a machine with 1024 B of memory, and hid the
+  /// section's error behind it (#1082).
+  static const Memory mem = Memory(total: 0, free: 0, avail: 0);
 
   // The time series start out genuinely empty. They used to be seeded with two
   // synthetic all-zero samples so `pre`/`now` would never throw, which made

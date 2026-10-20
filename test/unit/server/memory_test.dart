@@ -14,4 +14,10 @@ void main() {
     expect(mem.used, 600);
     expect(mem.used / mem.total, closeTo(mem.usedPercent, 1e-9));
   });
+
+  test('no reading is 0%, not NaN', () {
+    const mem = Memory(total: 0, free: 0, avail: 0);
+    expect(mem.usedPercent, 0);
+    expect(mem.availPercent, 0);
+  });
 }

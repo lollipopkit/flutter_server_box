@@ -533,6 +533,21 @@ fn shell_path_ps(s: &str) -> String {
     shell_quote_ps(s)
 }
 
+/// The Unix counterpart of [`shell_path_ps`]: the home script directory
+/// (`~/.config/server_box`), and a custom one the reader typed the same way,
+/// start with `~`, which a quoted word never expands — the install then made a
+/// directory named `~` under wherever the session started, `/` on a NAS user
+/// with no home, and failed (#1082).
+fn shell_path_unix(s: &str) -> String {
+    if s == "~" {
+        return "\"$HOME\"".to_owned();
+    }
+    match s.strip_prefix("~/") {
+        Some(tail) => format!("\"$HOME\"/{}", shell_quote_unix(tail)),
+        None => shell_quote_unix(s),
+    }
+}
+
 pub fn install_command(system: SystemType, script_dir: &str, script_path: &str) -> String {
     match system {
         SystemType::Windows => {
@@ -550,9 +565,9 @@ Set-Content -Path {qpath} -Value $sb.ToString() -Encoding UTF8"
         }
         _ => format!(
             "mkdir -p {}\ncat > {}\nchmod 755 {}\n",
-            shell_quote_unix(script_dir),
-            shell_quote_unix(script_path),
-            shell_quote_unix(script_path)
+            shell_path_unix(script_dir),
+            shell_path_unix(script_path),
+            shell_path_unix(script_path)
         ),
     }
 }
@@ -582,7 +597,7 @@ pub fn exec_command(system: SystemType, script_path: &str, func: ShellFunc) -> S
             shell_path_ps(script_path),
             func.flag()
         )),
-        _ => format!("sh {} -{}", shell_quote_unix(script_path), func.flag()),
+        _ => format!("sh {} -{}", shell_path_unix(script_path), func.flag()),
     }
 }
 
