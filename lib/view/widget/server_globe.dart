@@ -451,9 +451,12 @@ class _ServerGlobeState extends ConsumerState<ServerGlobe> {
       builder: (context, ref, _) {
         final srv = ref.watch(serverProvider(id));
         final scheme = Theme.of(context).colorScheme;
+        final mem = srv.status.mem;
         final status = srv.conn == ServerConn.finished
             ? '${(srv.status.cpu.usedPercent() ?? 0).toStringAsFixed(0)}% · '
-                  '${(srv.status.mem.usedPercent * 100).toStringAsFixed(0)}%'
+                  // Unlike the CPU's first sample, memory not read stays
+                  // unread: a dash, not 0%.
+                  '${mem.total > 0 ? '${(mem.usedPercent * 100).toStringAsFixed(0)}%' : '--'}'
             : srv.conn.name;
 
         return Material(

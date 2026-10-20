@@ -547,6 +547,32 @@ void main() {
     expect(find.text('0% · 75%'), findsOneWidget);
   });
 
+  testWidgets('memory not read is a dash on the card', (tester) async {
+    addServer('a', '8.8.8.8', name: 'washington');
+    tester.view.physicalSize = const Size(500, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          serverProvider('a').overrideWith(
+            () => _Fixed(
+              ServerState(
+                spi: Stores.server.fetch().first,
+                status: InitStatus.status,
+                conn: ServerConn.finished,
+              ),
+            ),
+          ),
+        ],
+        child: tree(['a']),
+      ),
+    );
+    await settle(tester);
+    addTearDown(() => tester.pumpWidget(const SizedBox.shrink()));
+    expect(find.text('0% · --'), findsOneWidget);
+  });
+
   testWidgets('several servers on one address are all placed', (tester) async {
     // Every one of them is looked up on its own now — there is no cache keyed
     // by host any more — and the point is that they all arrive. A lookup is a
