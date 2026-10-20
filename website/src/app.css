@@ -22,7 +22,8 @@
   --dark-surface: #0f0b0e;
   --stone: #6c6269;
   --mid-gray: #574e55;
-  --silver: #9c929a;
+  /* At least 4.5:1 on --white and --snow; stays lighter than --stone. */
+  --silver: #766c74;
   --border-light: #dcd3d9;
   --light-gray: #ece6ea;
   --snow: #f7f3f6;
@@ -53,7 +54,7 @@
     --dark-surface: #0f0b0e;
     --stone: #a89da5;
     --mid-gray: #857a83;
-    --silver: #6f646c;
+    --silver: #918690;
     --border-light: #3a3037;
     --light-gray: #2a2228;
     --snow: #171216;

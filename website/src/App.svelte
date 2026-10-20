@@ -213,10 +213,16 @@
     stackMotion.set({ x: 0, y: 0 })
   }
 
+  // Smooth unless the reader asked for reduced motion; the CSS rule for it
+  // covers transitions, not scrolling started from here.
+  function scrollBehavior() {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+  }
+
   function scrollToSection(event, id) {
     event.preventDefault()
     document.getElementById(id)?.scrollIntoView({
-      behavior: 'smooth',
+      behavior: scrollBehavior(),
       block: 'start',
     })
   }
@@ -323,7 +329,7 @@
                 class="tour-item"
                 class:active={index === activeFeature}
                 aria-pressed={index === activeFeature}
-                onclick={() => featureItems[index]?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+                onclick={() => featureItems[index]?.scrollIntoView({ behavior: scrollBehavior(), block: 'center' })}
               >
                 <span class="tour-tag">{feature.tag}</span>
                 <span class="tour-title">{$LL.features[feature.key].title()}</span>
