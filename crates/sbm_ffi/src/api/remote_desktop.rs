@@ -675,9 +675,13 @@ async fn run_rdp(
 
     let destination = Destination::from_parts(params.server_name.clone(), params.server_port);
     let tcp_destination = Destination::from_parts(params.connect_host.clone(), params.connect_port);
+    // With the password given, log on with it: without the flag xrdp shows its
+    // own login screen and asks for it again.
+    let autologon = !params.password.is_empty();
     let mut builder = ConfigBuilder::new()
         .with_destination(destination)
         .with_tcp_destination(tcp_destination)
+        .with_autologon(autologon)
         .with_username(params.username)
         .with_password(params.password)
         .with_client_build(0)
@@ -691,6 +695,10 @@ async fn run_rdp(
         .with_tls(true)
         .with_server_pointer(true)
         .with_pointer_software_rendering(false)
+        // EGFX: krdp (KDE) and gnome-remote-desktop send graphics only over it
+        // and disconnect a client that does not advertise it (#1644). A server
+        // without it keeps the bitmap path.
+        .with_graphics_pipeline(true)
         .with_clipboard(ClipboardType::Disable);
     let pinned = match params.trusted_cert_sha256.as_deref().map(parse_sha256_fingerprint).transpose() {
         Ok(pinned) => pinned,
@@ -2079,5 +2087,82 @@ mod tests {
         let latest = frame_rx.borrow_and_update().clone().unwrap();
         assert!(latest.sequence >= 1800);
         assert_eq!(latest.bgra.len(), 1920 * 1080 * 4);
+    }
+
+    /// Opt-in against a real server: `SBM_E2E_RDP_HOST` (and `_PORT`, `_USER`,
+    /// `_PASSWORD`). The certificate is pinned from the first attempt's
+    /// request, then a frame with more than one colour has to arrive.
+    /// `SBM_E2E_RDP_DUMP` writes the latest frame two seconds later as a PPM.
+    #[test]
+    #[ignore]
+    fn rdp_e2e_draws_a_desktop() {
+        let Ok(host) = std::env::var("SBM_E2E_RDP_HOST") else {
+            return;
+        };
+        let port = std::env::var("SBM_E2E_RDP_PORT").map_or(3389, |p| p.parse().unwrap());
+        let params = |pin: Option<String>| RdpSessionParams {
+            connect_host: host.clone(),
+            connect_port: port,
+            access_token: None,
+            server_name: host.clone(),
+            server_port: port,
+            username: std::env::var("SBM_E2E_RDP_USER").unwrap(),
+            password: std::env::var("SBM_E2E_RDP_PASSWORD").unwrap(),
+            domain: None,
+            trusted_cert_sha256: pin,
+            width: 1024,
+            height: 768,
+            scale_factor: 100,
+        };
+        let runtime = Builder::new_current_thread().enable_all().build().unwrap();
+        runtime.block_on(async {
+            let first = RemoteDesktopSessionHandle::start_rdp(params(None)).unwrap();
+            let pin = loop {
+                match first.next_event().await.expect("ended before a certificate request") {
+                    RemoteDesktopEvent::CertificateRequest { sha256, .. } => break sha256,
+                    RemoteDesktopEvent::Ended { reason, message } => panic!("ended: {reason:?} {message:?}"),
+                    _ => {}
+                }
+            };
+            first.close();
+
+            let session = RemoteDesktopSessionHandle::start_rdp(params(Some(pin))).unwrap();
+            let drawn = tokio::time::timeout(Duration::from_secs(30), async {
+                loop {
+                    match session.next_event().await.expect("ended before a frame") {
+                        RemoteDesktopEvent::Frame { bgra, width, height, .. } => {
+                            let pixels = bgra.as_chunks::<4>().0;
+                            if pixels.iter().any(|px| px != &pixels[0]) {
+                                return (bgra, width, height);
+                            }
+                        }
+                        RemoteDesktopEvent::Ended { reason, message } => panic!("ended: {reason:?} {message:?}"),
+                        _ => {}
+                    }
+                }
+            })
+            .await;
+            let drawn = drawn.expect("no desktop drawn within 30 s");
+
+            if let Ok(path) = std::env::var("SBM_E2E_RDP_DUMP") {
+                let mut last = Some(drawn);
+                let _ = tokio::time::timeout(Duration::from_secs(2), async {
+                    while let Some(event) = session.next_event().await {
+                        if let RemoteDesktopEvent::Frame { bgra, width, height, .. } = event {
+                            last = Some((bgra, width, height));
+                        }
+                    }
+                })
+                .await;
+                if let Some((bgra, width, height)) = last {
+                    let mut ppm = format!("P6 {width} {height} 255\n").into_bytes();
+                    for px in bgra.as_chunks::<4>().0 {
+                        ppm.extend_from_slice(&[px[2], px[1], px[0]]);
+                    }
+                    std::fs::write(path, ppm).unwrap();
+                }
+            }
+            session.close();
+        });
     }
 }
