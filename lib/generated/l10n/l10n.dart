@@ -3922,6 +3922,12 @@ abstract class AppLocalizations {
   /// **'At least one device stays on the chart.'**
   String get oneDeviceAtLeast;
 
+  /// Button that lists every row of a card cut to its first few.
+  ///
+  /// In en, this message translates to:
+  /// **'Show all {count}'**
+  String showAllFmt(int count);
+
   /// Formatted user-facing message for shown of; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:

@@ -1664,7 +1664,12 @@ class GlobalAgentToolService {
   Map<String, dynamic> _statusJson(ServerState state) {
     final status = state.status;
     final cpuUsedPercent = _jsonSafePercent(status.cpu.usedPercent());
-    final memoryUsedPercent = _jsonSafePercent(status.mem.usedPercent * 100);
+    final memoryUsedPercent = _jsonSafePercent(
+      switch (status.mem.usedPercent) {
+        final ratio? => ratio * 100,
+        null => null,
+      },
+    );
     return {
       'id': state.spi.id,
       'name': state.spi.name,

@@ -31,40 +31,69 @@ const kr: Translation = {
     three: 'ServerBox 터미널 스크린샷',
     four: 'ServerBox 파일 브라우저 스크린샷',
   },
-  gallery: {
-    title: '모든 화면을, 모든 기기에서.',
-    subtitle:
-      'iPhone, iPad, macOS의 스크린샷 31장. 페이지를 가볍게 유지하기 위해 열기 전에는 불러오지 않습니다.',
-    count: '{count}장',
-  },
   features: {
     title: '일상적인 서버 관리를 위한 컴팩트한 작업 공간.',
     subtitle:
       '장식 없이 실제 운영 흐름에 맞춘 밀도 높은 인터페이스입니다.',
+    list: {
+      title: '서버 목록',
+      description:
+        '모든 서버의 연결 상태와 CPU, 메모리, 디스크, 네트워크 사용량을 한눈에 확인합니다. 태그로 필터링하거나 지구본에서 볼 수 있습니다.',
+    },
     charts: {
       title: '상태 차트',
       description:
-        'CPU, 메모리, 센서, GPU, 네트워크, 디스크, 호스트 상태를 모바일 차트로 확인합니다.',
-    },
-    workspace: {
-      title: '크로스 플랫폼 작업 공간',
-      description:
-        'iOS, Android, macOS, Linux, Windows에서 같은 Flutter 인터페이스를 사용합니다.',
+        'CPU, 메모리, 스왑, 디스크, 디스크 I/O, 네트워크의 실시간 차트와 센서, GPU, 배터리. 기록으로 전환하거나 각 항목의 세부 정보를 열 수 있습니다.',
     },
     terminal: {
-      title: 'SSH 터미널과 SFTP',
+      title: 'SSH 터미널',
       description:
-        '서버 카드에서 바로 터미널과 파일 세션을 열 수 있으며 dartssh2와 xterm.dart를 사용합니다.',
+        '휴대폰에서도 가상 키를 갖춘 터미널로 htop, vim 등 다양한 프로그램을 실행할 수 있습니다. 직접 연결, 점프 호스트, ProxyCommand를 지원합니다.',
     },
-    native: {
-      title: '네이티브 기기 기능',
+    files: {
+      title: 'SFTP 파일',
       description:
-        '생체 인증, 푸시 알림, 홈 위젯, watchOS 지원으로 서버 상태를 가까이에 둡니다.',
+        '파일을 탐색하고 업로드·다운로드하거나 바로 편집할 수 있습니다. Markdown 파일은 미리 보기로 열립니다.',
     },
-    platforms: {
-      title: 'Docker, 프로세스, systemd',
+    containers: {
+      title: 'Docker와 Podman',
       description:
-        '모니터링 흐름을 벗어나지 않고 컨테이너, 프로세스, 서비스를 확인합니다.',
+        'Compose 프로젝트별 컨테이너와 CPU, 메모리, 네트워크 사용량을 확인합니다. 컨테이너를 시작·중지·재시작·삭제하고, 로그를 보거나 내부에서 셸을 열 수 있습니다. 이미지와 설정은 별도 탭에 있습니다.',
+    },
+    processes: {
+      title: '프로세스',
+      description:
+        '모든 프로세스의 CPU와 메모리를 원하는 순서로 정렬하고 이름, 사용자, PID로 검색합니다. 목록에서 바로 종료할 수 있습니다.',
+    },
+    services: {
+      title: 'Systemd 서비스',
+      description:
+        '실패한 유닛이 먼저, 나머지는 그다음. 한 번 탭으로 재시작하거나 로그를 확인합니다.',
+    },
+    users: {
+      title: '사용자와 그룹',
+      description:
+        '로그인 셸과 sudo가 표시된 시스템 계정 목록. 사용자를 추가·삭제하고 그룹을 추가·수정·삭제합니다.',
+    },
+    agent: {
+      title: 'AI 에이전트',
+      description:
+        '서버를 아는 앱 안의 어시스턴트. 모델 제공자, MCP 서버, 스킬은 직접 고릅니다.',
+    },
+    bench: {
+      title: '벤치마크',
+      description:
+        'Yet Another Bench Script로 서버의 디스크, 네트워크, CPU를 측정하고 결과를 저장합니다. 더보기 메뉴에서 스니펫, 원격 데스크톱, 가상화도 열 수 있습니다.',
+    },
+    virt: {
+      title: '가상화',
+      description:
+        'libvirt와 Proxmox VE의 가상 머신과 컨테이너를 시작·중지하고 vCPU, 메모리, 디스크를 바꾸며 콘솔을 엽니다.',
+    },
+    themes: {
+      title: '테마 스토어',
+      description:
+        '고유한 색상, 배경, 스플래시를 가진 공식 테마를 앱 안에서 설치합니다. 직접 만들 수도 있습니다.',
     },
   },
   capabilities: {
@@ -129,7 +158,7 @@ const kr: Translation = {
   download: {
     title: '모든 플랫폼, 모든 배포 경로.',
     subtitle:
-      '기기에 맞는 신뢰할 수 있는 배포 경로를 선택하세요. iOS 버전은 App Store에서 받을 수 있습니다. macOS App Store 버전은 Apple silicon만 지원하며, Intel Mac에서는 GitHub Releases 또는 Homebrew로 설치할 수 있습니다. Android, Linux, Windows용 직접 다운로드도 제공됩니다.',
+      '기기에 맞는 신뢰할 수 있는 배포 경로를 선택하세요. iOS는 App Store에서 받거나, GitHub Releases의 서명되지 않은 .ipa를 직접 서명해 설치할 수 있습니다. macOS 버전은 Apple silicon과 Intel을 지원하며 GitHub Releases와 Homebrew로 제공됩니다. Android, Linux, Windows는 직접 다운로드할 수 있습니다.',
     copied: '설치 명령을 복사했습니다',
     copyPrompt: '이 설치 명령을 복사하세요:',
     note:

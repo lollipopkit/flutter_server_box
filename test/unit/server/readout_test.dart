@@ -1,4 +1,7 @@
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/view/page/server/detail/readout.dart';
 
 /// The lines a card row draws from a command's output.
@@ -30,5 +33,69 @@ void main() {
     expect(readoutCommandLines('no newline'), ['no newline']);
     expect(readoutCommandLines('a\nb'), ['a', 'b']);
     expect(readoutCommandLines(''), ['']);
+  });
+
+  cardTests();
+}
+
+/// A card cut to its first [kReadoutCardRows] rows lists the rest on demand:
+/// a host with nine sensors showed six, and nothing reached the other three.
+void cardTests() {
+  testWidgets('a cut-off card lists every row on demand', (tester) async {
+    var full = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: StatefulBuilder(
+              builder: (context, setState) => ServerDetailReadoutCard(
+                icon: Icons.thermostat,
+                title: 'Sensors',
+                rows: [
+                  for (var i = 0; i < 9; i++)
+                    ServerDetailReadoutRow(k: 'sensor $i', v: ''),
+                ],
+                footer: readoutCountNote(9, 'sensors', full: full),
+                expanded: true,
+                full: full,
+                onFull: () => setState(() => full = !full),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('sensor 5'), findsOneWidget);
+    expect(find.text('sensor 6'), findsNothing);
+    expect(find.text('6 of 9 sensors'), findsOneWidget);
+
+    await tester.tap(find.text(l10n.showAllFmt(9)));
+    await tester.pumpAndSettle();
+    expect(find.text('sensor 8'), findsOneWidget);
+    expect(find.text('9 sensors'), findsOneWidget);
+
+    await tester.tap(find.text(libL10n.fold));
+    await tester.pumpAndSettle();
+    expect(find.text('sensor 6'), findsNothing);
+  });
+
+  testWidgets('a card that fits has no such row', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ServerDetailReadoutCard(
+            icon: Icons.thermostat,
+            title: 'Sensors',
+            rows: [
+              for (var i = 0; i < kReadoutCardRows; i++)
+                ServerDetailReadoutRow(k: 'sensor $i', v: ''),
+            ],
+            expanded: true,
+          ),
+        ),
+      ),
+    );
+    expect(find.text(l10n.showAllFmt(kReadoutCardRows)), findsNothing);
   });
 }

@@ -602,6 +602,7 @@
   "diskFailingFmt": "{count} en échec",
   "diskSmartOpenTip": "Touchez pour voir ses attributs",
   "cycle": "Cycles",
+  "showAllFmt": "Afficher les {count}",
   "shownOfFmt": "{shown} sur {total} {what}",
   "countOfFmt": "{count} {what}",
   "unitDevices": "périphériques",

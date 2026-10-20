@@ -2270,6 +2270,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get oneDeviceAtLeast => 'At least one device stays on the chart.';
 
   @override
+  String showAllFmt(int count) {
+    return 'Show all $count';
+  }
+
+  @override
   String shownOfFmt(int shown, int total, String what) {
     return '$shown of $total $what';
   }

@@ -2146,6 +2146,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get oneDeviceAtLeast => '차트에는 장치를 최소 하나 남깁니다.';
 
   @override
+  String showAllFmt(int count) {
+    return '모두 보기 ($count)';
+  }
+
+  @override
   String shownOfFmt(int shown, int total, String what) {
     return '$what $total개 중 $shown개';
   }

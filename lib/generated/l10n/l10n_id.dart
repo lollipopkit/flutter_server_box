@@ -2272,6 +2272,11 @@ class AppLocalizationsId extends AppLocalizations {
       'Setidaknya satu perangkat tetap ada di grafik.';
 
   @override
+  String showAllFmt(int count) {
+    return 'Tampilkan semua $count';
+  }
+
+  @override
   String shownOfFmt(int shown, int total, String what) {
     return '$shown dari $total $what';
   }

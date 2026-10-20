@@ -602,6 +602,7 @@
   "diskFailingFmt": "{count}개 불량",
   "diskSmartOpenTip": "탭하면 속성을 봅니다",
   "cycle": "사이클",
+  "showAllFmt": "모두 보기 ({count})",
   "shownOfFmt": "{what} {total}개 중 {shown}개",
   "countOfFmt": "{what} {count}개",
   "unitDevices": "장치",

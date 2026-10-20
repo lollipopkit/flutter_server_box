@@ -2141,6 +2141,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get oneDeviceAtLeast => 'グラフには少なくとも 1 台を残します。';
 
   @override
+  String showAllFmt(int count) {
+    return 'すべて表示（$count）';
+  }
+
+  @override
   String shownOfFmt(int shown, int total, String what) {
     return '$what $total 件中 $shown 件';
   }

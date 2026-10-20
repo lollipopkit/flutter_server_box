@@ -67,6 +67,47 @@ Every released version, newest first. Downloads and per-release notes are on
 - Error messages from notification channels no longer include the request URL,
   which could contain a token.
 
+## v1.0.1816 — 2026-10-20
+
+### Added
+
+- **Icon packs:** icons chosen apart from the theme, and themable icons in the
+  Files window, looked up by file extension.
+- **Markdown preview:** Markdown files open rendered in the file editor, with
+  an Edit button for the source.
+- **Reconnect button in the terminal,** for a connection that looks alive but
+  no longer answers.
+- **System groups** beside system users, in the app and the Monitor panel.
+- **Screen readers:** the terminal can be read with a screen reader, the
+  benchmark log is read as text, icon-only buttons have names, and the
+  Monitor panel can be used with a keyboard and a screen reader. The panel's
+  terminal reader mode is opt-in.
+- The app and the Monitor agent check that they speak the same protocol
+  version, and say which one needs updating when they do not.
+
+### Changed
+
+- Saved private keys are hidden by default in the editor and can be shown after
+  app-lock authentication.
+- Agent: thinking levels follow the selected model, and favorites and the
+  composer show which provider a model is from.
+
+### Fixed
+
+- Remote desktop: KDE Plasma's built-in RDP server (krdp) no longer
+  disconnects right after login, and xrdp logs on with the saved password
+  instead of showing its own login screen.
+- Server details: cards with more than six rows (sensors, GPUs, batteries, BMC,
+  custom commands, disk health) can show every row.
+- When the status script cannot be placed in `/tmp`, the fallback directory in
+  the user's home now works. Memory that could not be read shows the reason
+  instead of "100% of 1024 B".
+- Monitor: disks are read on machines whose language is not English.
+- A launch that fails shows why instead of opening no window, and an
+  unreadable preferences file no longer stops the app from starting. On
+  Windows and Linux, preferences are written atomically, so an interrupted
+  write no longer damages them.
+
 ## v1.0.1787 — 2026-10-16
 
 ### Added

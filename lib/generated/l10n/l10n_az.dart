@@ -2278,6 +2278,11 @@ class AppLocalizationsAz extends AppLocalizations {
   String get oneDeviceAtLeast => 'Qrafikdə ən azı bir cihaz qalır.';
 
   @override
+  String showAllFmt(int count) {
+    return 'Hamısını göstər ($count)';
+  }
+
+  @override
   String shownOfFmt(int shown, int total, String what) {
     return '$total $what arasından $shown';
   }

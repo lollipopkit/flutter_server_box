@@ -2098,6 +2098,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get oneDeviceAtLeast => '图表至少保留一个设备。';
 
   @override
+  String showAllFmt(int count) {
+    return '显示全部 $count 个';
+  }
+
+  @override
   String shownOfFmt(int shown, int total, String what) {
     return '$total 个$what中的 $shown 个';
   }
@@ -8757,6 +8762,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get oneDeviceAtLeast => '圖表至少保留一個裝置。';
+
+  @override
+  String showAllFmt(int count) {
+    return '顯示全部 $count 個';
+  }
 
   @override
   String shownOfFmt(int shown, int total, String what) {

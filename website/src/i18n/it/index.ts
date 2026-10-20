@@ -31,40 +31,69 @@ const it: Translation = {
     three: 'Screenshot terminale ServerBox',
     four: 'Screenshot del browser file di ServerBox',
   },
-  gallery: {
-    title: 'Ogni schermata, su ogni dispositivo.',
-    subtitle:
-      '31 screenshot su iPhone, iPad e macOS, richiusi per mantenere leggera la pagina finché non li apri.',
-    count: '{count} screenshot',
-  },
   features: {
     title: 'Uno spazio compatto per la manutenzione quotidiana.',
     subtitle:
       'Una superficie operativa focalizzata: ogni blocco corrisponde a un flusso reale di manutenzione.',
+    list: {
+      title: 'Elenco server',
+      description:
+        'Stato della connessione e utilizzo di CPU, memoria, disco e rete di ogni server a colpo d’occhio. Filtra per tag o cercali sul globo.',
+    },
     charts: {
       title: 'Grafici di stato',
       description:
-        'Controlla CPU, memoria, sensori, GPU, rete, disco e salute host da grafici mobili densi.',
-    },
-    workspace: {
-      title: 'Spazio multipiattaforma',
-      description:
-        'Usa ServerBox su iOS, Android, macOS, Linux e Windows con la stessa interfaccia Flutter.',
+        'Grafici in tempo reale di CPU, memoria, swap, dischi, I/O dei dischi e rete, oltre a sensori, GPU e batterie. Consulta lo storico o apri una metrica per i dettagli.',
     },
     terminal: {
-      title: 'Terminale SSH e SFTP',
+      title: 'Terminale SSH',
       description:
-        'Apri sessioni terminale e file da una scheda server, con dartssh2 e xterm.dart.',
+        'Un terminale completo con tasti virtuali sul telefono, pronto per htop, vim e molto altro. Connettiti direttamente, tramite jump host o con un ProxyCommand.',
     },
-    native: {
-      title: 'Integrazioni native',
+    files: {
+      title: 'File via SFTP',
       description:
-        'Autenticazione biometrica, notifiche, widget e watchOS mantengono vicino il contesto server.',
+        'Sfoglia, carica, scarica e modifica i file sul posto. I file Markdown si aprono con un’anteprima formattata.',
     },
-    platforms: {
-      title: 'Docker, processi, systemd',
+    containers: {
+      title: 'Docker e Podman',
       description:
-        'Ispeziona container, processi e servizi senza uscire dal flusso di monitoraggio.',
+        'Visualizza i container raggruppati per progetto Compose e il loro utilizzo di CPU, memoria e rete. Avviali, arrestali, riavviali o rimuovili; consulta i log o apri una shell al loro interno. Immagini e impostazioni hanno schede dedicate.',
+    },
+    processes: {
+      title: 'Processi',
+      description:
+        "Tutti i processi con CPU e memoria, ordinati come preferisci e ricercabili per nome, utente o PID. Arrestane uno dall'elenco.",
+    },
+    services: {
+      title: 'Servizi systemd',
+      description:
+        "Prima le unità in errore, poi tutte le altre. Riavvia un'unità o leggi i suoi log con un tocco.",
+    },
+    users: {
+      title: 'Utenti e gruppi',
+      description:
+        'Visualizza gli account di sistema con shell di login e accesso a sudo evidenziati. Aggiungi o elimina utenti e aggiungi, modifica o elimina gruppi.',
+    },
+    agent: {
+      title: 'Agente IA',
+      description:
+        "Un assistente nell'app che conosce i tuoi server, con i fornitori di modelli, i server MCP e le skill che scegli.",
+    },
+    bench: {
+      title: 'Benchmark',
+      description:
+        'Esegui Yet Another Bench Script per misurare disco, rete e CPU di un server e conservarne i risultati. Il menu Altro permette anche di aprire snippet, desktop remoto e virtualizzazione.',
+    },
+    virt: {
+      title: 'Virtualizzazione',
+      description:
+        'Macchine virtuali e container su libvirt e Proxmox VE: avviali e arrestali, modifica vCPU, memoria e dischi, apri le loro console.',
+    },
+    themes: {
+      title: 'Store dei temi',
+      description:
+        "Temi ufficiali con colori, sfondi e schermate di avvio propri, installati dall'app. Puoi anche crearne uno tuo.",
     },
   },
   capabilities: {
@@ -131,7 +160,7 @@ const it: Translation = {
   download: {
     title: 'Ogni piattaforma, ogni sorgente.',
     subtitle:
-      'Scegli una fonte affidabile per il tuo dispositivo. Su iOS, l’app è disponibile su App Store. Su macOS, la versione di App Store supporta solo i Mac con chip Apple; chi usa un Mac Intel può installarla da GitHub Releases o Homebrew. Sono disponibili anche download diretti per Android, Linux e Windows.',
+      'Scegli una fonte affidabile per il tuo dispositivo. iOS è su App Store, oppure come .ipa non firmato su GitHub Releases da firmare da te. Le versioni macOS per chip Apple e Intel sono su GitHub Releases e Homebrew. Android, Linux e Windows hanno download diretti.',
     copied: 'Comando copiato',
     copyPrompt: 'Copia questo comando:',
     note:

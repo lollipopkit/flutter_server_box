@@ -596,6 +596,7 @@
   "diskFailingFmt": "{count} 个异常",
   "diskSmartOpenTip": "点按查看该盘的属性",
   "cycle": "循环次数",
+  "showAllFmt": "显示全部 {count} 个",
   "shownOfFmt": "{total} 个{what}中的 {shown} 个",
   "countOfFmt": "{count} 个{what}",
   "unitDevices": "设备",

@@ -1019,8 +1019,7 @@ jobs:
           set -euo pipefail
           files=(*)
           sha256sum -- "${files[@]}" > SHA256SUMS
-          md5sum -- "${files[@]}" > MD5SUMS
-          cat SHA256SUMS MD5SUMS
+          cat SHA256SUMS
       # As a draft, so nothing is downloadable until the step below says so.
       # `action-gh-release` sends `draft` on an update too, so a second call
       # without it would publish the release — which is exactly what the step

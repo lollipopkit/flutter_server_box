@@ -58,7 +58,10 @@ extension ServerStatusHistoryX on ServerStatus {
     history.add(
       timeMs: timeMs,
       cpu: cpu.usedPercent(),
-      mem: mem.total > 0 ? mem.usedPercent * 100 : null,
+      mem: switch (mem.usedPercent) {
+        final ratio? => ratio * 100,
+        null => null,
+      },
       swap: swap.total > 0 ? swap.usedPercent * 100 : null,
       disk: diskUsage?.usedPercent,
       netRx: netSpeed.speedInBytesOf(),

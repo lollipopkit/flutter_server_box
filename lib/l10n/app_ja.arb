@@ -602,6 +602,7 @@
   "diskFailingFmt": "{count} 台が異常",
   "diskSmartOpenTip": "タップすると属性を表示",
   "cycle": "サイクル",
+  "showAllFmt": "すべて表示（{count}）",
   "shownOfFmt": "{what} {total} 件中 {shown} 件",
   "countOfFmt": "{what} {count} 件",
   "unitDevices": "デバイス",

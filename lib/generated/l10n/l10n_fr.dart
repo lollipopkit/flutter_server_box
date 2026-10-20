@@ -2299,6 +2299,11 @@ class AppLocalizationsFr extends AppLocalizations {
       'Au moins un périphérique reste sur le graphique.';
 
   @override
+  String showAllFmt(int count) {
+    return 'Afficher les $count';
+  }
+
+  @override
   String shownOfFmt(int shown, int total, String what) {
     return '$shown sur $total $what';
   }

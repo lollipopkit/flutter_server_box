@@ -602,6 +602,7 @@
   "diskFailingFmt": "{count} fehlerhaft",
   "diskSmartOpenTip": "Für die Attribute antippen",
   "cycle": "Zyklen",
+  "showAllFmt": "Alle {count} anzeigen",
   "shownOfFmt": "{shown} von {total} {what}",
   "countOfFmt": "{count} {what}",
   "unitDevices": "Geräten",

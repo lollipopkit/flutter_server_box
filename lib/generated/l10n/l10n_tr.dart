@@ -2264,6 +2264,11 @@ class AppLocalizationsTr extends AppLocalizations {
   String get oneDeviceAtLeast => 'Grafikte en az bir aygıt kalır.';
 
   @override
+  String showAllFmt(int count) {
+    return 'Tümünü göster ($count)';
+  }
+
+  @override
   String shownOfFmt(int shown, int total, String what) {
     return '$total $what içinden $shown';
   }

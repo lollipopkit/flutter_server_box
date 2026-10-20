@@ -107,21 +107,6 @@ type RootTranslation = {
 		 */
 		four: string
 	}
-	gallery: {
-		/**
-		 * E​v​e​r​y​ ​s​c​r​e​e​n​,​ ​o​n​ ​e​v​e​r​y​ ​d​e​v​i​c​e​.
-		 */
-		title: string
-		/**
-		 * 3​1​ ​s​c​r​e​e​n​s​h​o​t​s​ ​a​c​r​o​s​s​ ​i​P​h​o​n​e​,​ ​i​P​a​d​ ​a​n​d​ ​m​a​c​O​S​,​ ​f​o​l​d​e​d​ ​s​o​ ​t​h​e​ ​p​a​g​e​ ​s​t​a​y​s​ ​l​i​g​h​t​ ​u​n​t​i​l​ ​y​o​u​ ​a​s​k​ ​f​o​r​ ​t​h​e​m​.
-		 */
-		subtitle: string
-		/**
-		 * {​c​o​u​n​t​}​ ​s​c​r​e​e​n​s​h​o​t​s
-		 * @param {unknown} count
-		 */
-		count: RequiredParams<'count'>
-	}
 	features: {
 		/**
 		 * O​n​e​ ​c​o​m​p​a​c​t​ ​w​o​r​k​s​p​a​c​e​ ​f​o​r​ ​e​v​e​r​y​d​a​y​ ​s​e​r​v​e​r​ ​m​a​i​n​t​e​n​a​n​c​e​.
@@ -131,53 +116,123 @@ type RootTranslation = {
 		 * A​ ​f​o​c​u​s​e​d​ ​o​p​e​r​a​t​i​o​n​a​l​ ​s​u​r​f​a​c​e​ ​w​i​t​h​ ​n​o​ ​d​e​c​o​r​a​t​i​v​e​ ​f​i​l​l​e​r​ ​—​ ​e​v​e​r​y​ ​b​l​o​c​k​ ​m​a​p​s​ ​t​o​ ​a​ ​r​e​a​l​ ​m​a​i​n​t​e​n​a​n​c​e​ ​w​o​r​k​f​l​o​w​.
 		 */
 		subtitle: string
+		list: {
+			/**
+			 * S​e​r​v​e​r​ ​L​i​s​t
+			 */
+			title: string
+			/**
+			 * S​e​e​ ​e​a​c​h​ ​s​e​r​v​e​r​’​s​ ​c​o​n​n​e​c​t​i​o​n​ ​s​t​a​t​u​s​,​ ​C​P​U​,​ ​m​e​m​o​r​y​,​ ​d​i​s​k​ ​a​n​d​ ​n​e​t​w​o​r​k​ ​a​t​ ​a​ ​g​l​a​n​c​e​.​ ​F​i​l​t​e​r​ ​b​y​ ​t​a​g​ ​o​r​ ​f​i​n​d​ ​s​e​r​v​e​r​s​ ​o​n​ ​t​h​e​ ​g​l​o​b​e​.
+			 */
+			description: string
+		}
 		charts: {
 			/**
 			 * S​t​a​t​u​s​ ​C​h​a​r​t​s
 			 */
 			title: string
 			/**
-			 * T​r​a​c​k​ ​C​P​U​,​ ​m​e​m​o​r​y​,​ ​s​e​n​s​o​r​s​,​ ​G​P​U​,​ ​n​e​t​w​o​r​k​,​ ​d​i​s​k​,​ ​a​n​d​ ​h​o​s​t​ ​h​e​a​l​t​h​ ​f​r​o​m​ ​d​e​n​s​e​ ​m​o​b​i​l​e​ ​c​h​a​r​t​s​.
-			 */
-			description: string
-		}
-		workspace: {
-			/**
-			 * C​r​o​s​s​-​P​l​a​t​f​o​r​m​ ​W​o​r​k​s​p​a​c​e
-			 */
-			title: string
-			/**
-			 * U​s​e​ ​S​e​r​v​e​r​B​o​x​ ​a​c​r​o​s​s​ ​i​O​S​,​ ​A​n​d​r​o​i​d​,​ ​m​a​c​O​S​,​ ​L​i​n​u​x​,​ ​a​n​d​ ​W​i​n​d​o​w​s​ ​w​i​t​h​ ​o​n​e​ ​f​a​m​i​l​i​a​r​ ​F​l​u​t​t​e​r​ ​i​n​t​e​r​f​a​c​e​.
+			 * L​i​v​e​ ​c​h​a​r​t​s​ ​f​o​r​ ​C​P​U​,​ ​m​e​m​o​r​y​,​ ​s​w​a​p​,​ ​d​i​s​k​s​,​ ​d​i​s​k​ ​I​/​O​ ​a​n​d​ ​n​e​t​w​o​r​k​,​ ​p​l​u​s​ ​s​e​n​s​o​r​s​,​ ​G​P​U​s​ ​a​n​d​ ​b​a​t​t​e​r​i​e​s​.​ ​S​w​i​t​c​h​ ​t​o​ ​h​i​s​t​o​r​i​c​a​l​ ​d​a​t​a​ ​o​r​ ​o​p​e​n​ ​a​ ​m​e​t​r​i​c​ ​f​o​r​ ​d​e​t​a​i​l​s​.
 			 */
 			description: string
 		}
 		terminal: {
 			/**
-			 * S​S​H​ ​T​e​r​m​i​n​a​l​ ​a​n​d​ ​S​F​T​P
+			 * S​S​H​ ​T​e​r​m​i​n​a​l
 			 */
 			title: string
 			/**
-			 * O​p​e​n​ ​c​o​m​m​a​n​d​-​l​i​n​e​ ​a​n​d​ ​f​i​l​e​ ​s​e​s​s​i​o​n​s​ ​d​i​r​e​c​t​l​y​ ​f​r​o​m​ ​a​ ​s​e​r​v​e​r​ ​c​a​r​d​,​ ​b​a​c​k​e​d​ ​b​y​ ​d​a​r​t​s​s​h​2​ ​a​n​d​ ​x​t​e​r​m​.​d​a​r​t​.
+			 * A​ ​f​u​l​l​ ​t​e​r​m​i​n​a​l​ ​w​i​t​h​ ​v​i​r​t​u​a​l​ ​k​e​y​s​ ​o​n​ ​p​h​o​n​e​s​,​ ​r​e​a​d​y​ ​f​o​r​ ​h​t​o​p​,​ ​v​i​m​ ​a​n​d​ ​m​o​r​e​.​ ​C​o​n​n​e​c​t​ ​d​i​r​e​c​t​l​y​,​ ​t​h​r​o​u​g​h​ ​a​ ​j​u​m​p​ ​h​o​s​t​ ​o​r​ ​w​i​t​h​ ​a​ ​P​r​o​x​y​C​o​m​m​a​n​d​.
 			 */
 			description: string
 		}
-		native: {
+		files: {
 			/**
-			 * N​a​t​i​v​e​ ​D​e​v​i​c​e​ ​H​o​o​k​s
+			 * F​i​l​e​s​ ​o​v​e​r​ ​S​F​T​P
 			 */
 			title: string
 			/**
-			 * B​i​o​m​e​t​r​i​c​ ​a​u​t​h​,​ ​m​e​s​s​a​g​e​ ​p​u​s​h​,​ ​h​o​m​e​ ​w​i​d​g​e​t​s​,​ ​a​n​d​ ​w​a​t​c​h​O​S​ ​s​u​p​p​o​r​t​ ​k​e​e​p​ ​s​e​r​v​e​r​ ​c​o​n​t​e​x​t​ ​n​e​a​r​b​y​.
+			 * B​r​o​w​s​e​,​ ​u​p​l​o​a​d​,​ ​d​o​w​n​l​o​a​d​ ​a​n​d​ ​e​d​i​t​ ​f​i​l​e​s​ ​i​n​ ​p​l​a​c​e​.​ ​M​a​r​k​d​o​w​n​ ​f​i​l​e​s​ ​o​p​e​n​ ​i​n​ ​a​ ​r​e​n​d​e​r​e​d​ ​p​r​e​v​i​e​w​.
 			 */
 			description: string
 		}
-		platforms: {
+		containers: {
 			/**
-			 * D​o​c​k​e​r​,​ ​P​r​o​c​e​s​s​,​ ​S​y​s​t​e​m​d
+			 * D​o​c​k​e​r​ ​a​n​d​ ​P​o​d​m​a​n
 			 */
 			title: string
 			/**
-			 * I​n​s​p​e​c​t​ ​c​o​n​t​a​i​n​e​r​s​,​ ​p​r​o​c​e​s​s​e​s​,​ ​a​n​d​ ​s​e​r​v​i​c​e​s​ ​w​i​t​h​o​u​t​ ​s​w​i​t​c​h​i​n​g​ ​a​w​a​y​ ​f​r​o​m​ ​y​o​u​r​ ​m​o​n​i​t​o​r​i​n​g​ ​f​l​o​w​.
+			 * V​i​e​w​ ​c​o​n​t​a​i​n​e​r​s​ ​g​r​o​u​p​e​d​ ​b​y​ ​C​o​m​p​o​s​e​ ​p​r​o​j​e​c​t​,​ ​w​i​t​h​ ​C​P​U​,​ ​m​e​m​o​r​y​ ​a​n​d​ ​n​e​t​w​o​r​k​ ​u​s​a​g​e​.​ ​S​t​a​r​t​,​ ​s​t​o​p​,​ ​r​e​s​t​a​r​t​ ​o​r​ ​r​e​m​o​v​e​ ​c​o​n​t​a​i​n​e​r​s​,​ ​r​e​a​d​ ​t​h​e​i​r​ ​l​o​g​s​,​ ​o​r​ ​o​p​e​n​ ​a​ ​s​h​e​l​l​ ​i​n​s​i​d​e​ ​t​h​e​m​.​ ​I​m​a​g​e​s​ ​a​n​d​ ​s​e​t​t​i​n​g​s​ ​h​a​v​e​ ​t​h​e​i​r​ ​o​w​n​ ​t​a​b​s​.
+			 */
+			description: string
+		}
+		processes: {
+			/**
+			 * P​r​o​c​e​s​s​e​s
+			 */
+			title: string
+			/**
+			 * E​v​e​r​y​ ​p​r​o​c​e​s​s​ ​w​i​t​h​ ​i​t​s​ ​C​P​U​ ​a​n​d​ ​m​e​m​o​r​y​,​ ​s​o​r​t​e​d​ ​a​s​ ​y​o​u​ ​l​i​k​e​ ​a​n​d​ ​s​e​a​r​c​h​a​b​l​e​ ​b​y​ ​n​a​m​e​,​ ​u​s​e​r​ ​o​r​ ​P​I​D​.​ ​S​t​o​p​ ​o​n​e​ ​f​r​o​m​ ​t​h​e​ ​l​i​s​t​.
+			 */
+			description: string
+		}
+		services: {
+			/**
+			 * S​y​s​t​e​m​d​ ​S​e​r​v​i​c​e​s
+			 */
+			title: string
+			/**
+			 * F​a​i​l​e​d​ ​u​n​i​t​s​ ​f​i​r​s​t​,​ ​t​h​e​n​ ​e​v​e​r​y​t​h​i​n​g​ ​e​l​s​e​.​ ​R​e​s​t​a​r​t​ ​a​ ​u​n​i​t​ ​o​r​ ​r​e​a​d​ ​i​t​s​ ​l​o​g​s​ ​i​n​ ​o​n​e​ ​t​a​p​.
+			 */
+			description: string
+		}
+		users: {
+			/**
+			 * U​s​e​r​s​ ​a​n​d​ ​G​r​o​u​p​s
+			 */
+			title: string
+			/**
+			 * V​i​e​w​ ​s​y​s​t​e​m​ ​a​c​c​o​u​n​t​s​ ​w​i​t​h​ ​l​o​g​i​n​ ​s​h​e​l​l​s​ ​a​n​d​ ​s​u​d​o​ ​a​c​c​e​s​s​ ​h​i​g​h​l​i​g​h​t​e​d​.​ ​A​d​d​ ​o​r​ ​d​e​l​e​t​e​ ​u​s​e​r​s​,​ ​a​n​d​ ​a​d​d​,​ ​e​d​i​t​ ​o​r​ ​d​e​l​e​t​e​ ​g​r​o​u​p​s​.
+			 */
+			description: string
+		}
+		agent: {
+			/**
+			 * A​I​ ​A​g​e​n​t
+			 */
+			title: string
+			/**
+			 * A​n​ ​a​s​s​i​s​t​a​n​t​ ​i​n​s​i​d​e​ ​t​h​e​ ​a​p​p​ ​t​h​a​t​ ​k​n​o​w​s​ ​y​o​u​r​ ​s​e​r​v​e​r​s​,​ ​u​s​i​n​g​ ​t​h​e​ ​m​o​d​e​l​ ​p​r​o​v​i​d​e​r​s​,​ ​M​C​P​ ​s​e​r​v​e​r​s​ ​a​n​d​ ​s​k​i​l​l​s​ ​y​o​u​ ​c​h​o​o​s​e​.
+			 */
+			description: string
+		}
+		bench: {
+			/**
+			 * B​e​n​c​h​m​a​r​k
+			 */
+			title: string
+			/**
+			 * R​u​n​ ​Y​e​t​ ​A​n​o​t​h​e​r​ ​B​e​n​c​h​ ​S​c​r​i​p​t​ ​t​o​ ​t​e​s​t​ ​a​ ​s​e​r​v​e​r​’​s​ ​d​i​s​k​,​ ​n​e​t​w​o​r​k​ ​a​n​d​ ​C​P​U​,​ ​t​h​e​n​ ​k​e​e​p​ ​t​h​e​ ​r​e​s​u​l​t​s​.​ ​T​h​e​ ​M​o​r​e​ ​m​e​n​u​ ​a​l​s​o​ ​o​p​e​n​s​ ​s​n​i​p​p​e​t​s​,​ ​r​e​m​o​t​e​ ​d​e​s​k​t​o​p​ ​a​n​d​ ​v​i​r​t​u​a​l​i​z​a​t​i​o​n​.
+			 */
+			description: string
+		}
+		virt: {
+			/**
+			 * V​i​r​t​u​a​l​i​z​a​t​i​o​n
+			 */
+			title: string
+			/**
+			 * V​i​r​t​u​a​l​ ​m​a​c​h​i​n​e​s​ ​a​n​d​ ​c​o​n​t​a​i​n​e​r​s​ ​o​n​ ​l​i​b​v​i​r​t​ ​a​n​d​ ​P​r​o​x​m​o​x​ ​V​E​:​ ​s​t​a​r​t​ ​a​n​d​ ​s​t​o​p​ ​t​h​e​m​,​ ​c​h​a​n​g​e​ ​v​C​P​U​s​,​ ​m​e​m​o​r​y​ ​a​n​d​ ​d​i​s​k​s​,​ ​a​n​d​ ​o​p​e​n​ ​t​h​e​i​r​ ​c​o​n​s​o​l​e​s​.
+			 */
+			description: string
+		}
+		themes: {
+			/**
+			 * T​h​e​m​e​ ​S​t​o​r​e
+			 */
+			title: string
+			/**
+			 * I​n​s​t​a​l​l​ ​o​f​f​i​c​i​a​l​ ​t​h​e​m​e​s​ ​w​i​t​h​ ​t​h​e​i​r​ ​o​w​n​ ​c​o​l​o​r​s​,​ ​b​a​c​k​g​r​o​u​n​d​s​ ​a​n​d​ ​s​p​l​a​s​h​ ​s​c​r​e​e​n​s​ ​f​r​o​m​ ​i​n​s​i​d​e​ ​t​h​e​ ​a​p​p​.​ ​Y​o​u​ ​c​a​n​ ​c​r​e​a​t​e​ ​y​o​u​r​ ​o​w​n​ ​t​h​e​m​e​s​ ​t​o​o​.
 			 */
 			description: string
 		}
@@ -379,7 +434,7 @@ type RootTranslation = {
 		 */
 		title: string
 		/**
-		 * C​h​o​o​s​e​ ​a​ ​t​r​u​s​t​e​d​ ​s​o​u​r​c​e​ ​f​o​r​ ​y​o​u​r​ ​d​e​v​i​c​e​.​ ​i​O​S​ ​i​s​ ​a​v​a​i​l​a​b​l​e​ ​f​r​o​m​ ​t​h​e​ ​A​p​p​ ​S​t​o​r​e​.​ ​O​n​ ​m​a​c​O​S​,​ ​t​h​e​ ​A​p​p​ ​S​t​o​r​e​ ​b​u​i​l​d​ ​s​u​p​p​o​r​t​s​ ​A​p​p​l​e​ ​s​i​l​i​c​o​n​ ​o​n​l​y​;​ ​I​n​t​e​l​ ​u​s​e​r​s​ ​c​a​n​ ​i​n​s​t​a​l​l​ ​t​h​e​ ​a​p​p​ ​f​r​o​m​ ​G​i​t​H​u​b​ ​R​e​l​e​a​s​e​s​ ​o​r​ ​H​o​m​e​b​r​e​w​.​ ​D​i​r​e​c​t​ ​d​o​w​n​l​o​a​d​s​ ​a​r​e​ ​a​l​s​o​ ​a​v​a​i​l​a​b​l​e​ ​f​o​r​ ​A​n​d​r​o​i​d​,​ ​L​i​n​u​x​,​ ​a​n​d​ ​W​i​n​d​o​w​s​.
+		 * C​h​o​o​s​e​ ​a​ ​t​r​u​s​t​e​d​ ​s​o​u​r​c​e​ ​f​o​r​ ​y​o​u​r​ ​d​e​v​i​c​e​.​ ​i​O​S​ ​c​o​m​e​s​ ​f​r​o​m​ ​t​h​e​ ​A​p​p​ ​S​t​o​r​e​,​ ​o​r​ ​a​s​ ​a​n​ ​u​n​s​i​g​n​e​d​ ​.​i​p​a​ ​f​r​o​m​ ​G​i​t​H​u​b​ ​R​e​l​e​a​s​e​s​ ​t​h​a​t​ ​y​o​u​ ​s​i​g​n​ ​y​o​u​r​s​e​l​f​.​ ​m​a​c​O​S​ ​b​u​i​l​d​s​ ​f​o​r​ ​A​p​p​l​e​ ​s​i​l​i​c​o​n​ ​a​n​d​ ​I​n​t​e​l​ ​a​r​e​ ​o​n​ ​G​i​t​H​u​b​ ​R​e​l​e​a​s​e​s​ ​a​n​d​ ​H​o​m​e​b​r​e​w​.​ ​A​n​d​r​o​i​d​,​ ​L​i​n​u​x​ ​a​n​d​ ​W​i​n​d​o​w​s​ ​h​a​v​e​ ​d​i​r​e​c​t​ ​d​o​w​n​l​o​a​d​s​.
 		 */
 		subtitle: string
 		/**
@@ -518,20 +573,6 @@ export type TranslationFunctions = {
 		 */
 		four: () => LocalizedString
 	}
-	gallery: {
-		/**
-		 * Every screen, on every device.
-		 */
-		title: () => LocalizedString
-		/**
-		 * 31 screenshots across iPhone, iPad and macOS, folded so the page stays light until you ask for them.
-		 */
-		subtitle: () => LocalizedString
-		/**
-		 * {count} screenshots
-		 */
-		count: (arg: { count: unknown }) => LocalizedString
-	}
 	features: {
 		/**
 		 * One compact workspace for everyday server maintenance.
@@ -541,53 +582,123 @@ export type TranslationFunctions = {
 		 * A focused operational surface with no decorative filler — every block maps to a real maintenance workflow.
 		 */
 		subtitle: () => LocalizedString
+		list: {
+			/**
+			 * Server List
+			 */
+			title: () => LocalizedString
+			/**
+			 * See each server’s connection status, CPU, memory, disk and network at a glance. Filter by tag or find servers on the globe.
+			 */
+			description: () => LocalizedString
+		}
 		charts: {
 			/**
 			 * Status Charts
 			 */
 			title: () => LocalizedString
 			/**
-			 * Track CPU, memory, sensors, GPU, network, disk, and host health from dense mobile charts.
-			 */
-			description: () => LocalizedString
-		}
-		workspace: {
-			/**
-			 * Cross-Platform Workspace
-			 */
-			title: () => LocalizedString
-			/**
-			 * Use ServerBox across iOS, Android, macOS, Linux, and Windows with one familiar Flutter interface.
+			 * Live charts for CPU, memory, swap, disks, disk I/O and network, plus sensors, GPUs and batteries. Switch to historical data or open a metric for details.
 			 */
 			description: () => LocalizedString
 		}
 		terminal: {
 			/**
-			 * SSH Terminal and SFTP
+			 * SSH Terminal
 			 */
 			title: () => LocalizedString
 			/**
-			 * Open command-line and file sessions directly from a server card, backed by dartssh2 and xterm.dart.
+			 * A full terminal with virtual keys on phones, ready for htop, vim and more. Connect directly, through a jump host or with a ProxyCommand.
 			 */
 			description: () => LocalizedString
 		}
-		native: {
+		files: {
 			/**
-			 * Native Device Hooks
+			 * Files over SFTP
 			 */
 			title: () => LocalizedString
 			/**
-			 * Biometric auth, message push, home widgets, and watchOS support keep server context nearby.
+			 * Browse, upload, download and edit files in place. Markdown files open in a rendered preview.
 			 */
 			description: () => LocalizedString
 		}
-		platforms: {
+		containers: {
 			/**
-			 * Docker, Process, Systemd
+			 * Docker and Podman
 			 */
 			title: () => LocalizedString
 			/**
-			 * Inspect containers, processes, and services without switching away from your monitoring flow.
+			 * View containers grouped by Compose project, with CPU, memory and network usage. Start, stop, restart or remove containers, read their logs, or open a shell inside them. Images and settings have their own tabs.
+			 */
+			description: () => LocalizedString
+		}
+		processes: {
+			/**
+			 * Processes
+			 */
+			title: () => LocalizedString
+			/**
+			 * Every process with its CPU and memory, sorted as you like and searchable by name, user or PID. Stop one from the list.
+			 */
+			description: () => LocalizedString
+		}
+		services: {
+			/**
+			 * Systemd Services
+			 */
+			title: () => LocalizedString
+			/**
+			 * Failed units first, then everything else. Restart a unit or read its logs in one tap.
+			 */
+			description: () => LocalizedString
+		}
+		users: {
+			/**
+			 * Users and Groups
+			 */
+			title: () => LocalizedString
+			/**
+			 * View system accounts with login shells and sudo access highlighted. Add or delete users, and add, edit or delete groups.
+			 */
+			description: () => LocalizedString
+		}
+		agent: {
+			/**
+			 * AI Agent
+			 */
+			title: () => LocalizedString
+			/**
+			 * An assistant inside the app that knows your servers, using the model providers, MCP servers and skills you choose.
+			 */
+			description: () => LocalizedString
+		}
+		bench: {
+			/**
+			 * Benchmark
+			 */
+			title: () => LocalizedString
+			/**
+			 * Run Yet Another Bench Script to test a server’s disk, network and CPU, then keep the results. The More menu also opens snippets, remote desktop and virtualization.
+			 */
+			description: () => LocalizedString
+		}
+		virt: {
+			/**
+			 * Virtualization
+			 */
+			title: () => LocalizedString
+			/**
+			 * Virtual machines and containers on libvirt and Proxmox VE: start and stop them, change vCPUs, memory and disks, and open their consoles.
+			 */
+			description: () => LocalizedString
+		}
+		themes: {
+			/**
+			 * Theme Store
+			 */
+			title: () => LocalizedString
+			/**
+			 * Install official themes with their own colors, backgrounds and splash screens from inside the app. You can create your own themes too.
 			 */
 			description: () => LocalizedString
 		}
@@ -788,7 +899,7 @@ export type TranslationFunctions = {
 		 */
 		title: () => LocalizedString
 		/**
-		 * Choose a trusted source for your device. iOS is available from the App Store. On macOS, the App Store build supports Apple silicon only; Intel users can install the app from GitHub Releases or Homebrew. Direct downloads are also available for Android, Linux, and Windows.
+		 * Choose a trusted source for your device. iOS comes from the App Store, or as an unsigned .ipa from GitHub Releases that you sign yourself. macOS builds for Apple silicon and Intel are on GitHub Releases and Homebrew. Android, Linux and Windows have direct downloads.
 		 */
 		subtitle: () => LocalizedString
 		/**

@@ -602,6 +602,7 @@
   "diskFailingFmt": "{count} с ошибками",
   "diskSmartOpenTip": "Нажмите, чтобы увидеть атрибуты",
   "cycle": "Циклы",
+  "showAllFmt": "Показать все ({count})",
   "shownOfFmt": "{shown} из {total} ({what})",
   "countOfFmt": "{what}: {count}",
   "unitDevices": "устройства",

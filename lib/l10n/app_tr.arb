@@ -602,6 +602,7 @@
   "diskFailingFmt": "{count} arızalı",
   "diskSmartOpenTip": "Özniteliklerini görmek için dokunun",
   "cycle": "Çevrim",
+  "showAllFmt": "Tümünü göster ({count})",
   "shownOfFmt": "{total} {what} içinden {shown}",
   "countOfFmt": "{count} {what}",
   "unitDevices": "aygıt",

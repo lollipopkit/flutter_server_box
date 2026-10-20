@@ -2287,6 +2287,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get oneDeviceAtLeast => 'Хотя бы одно устройство остаётся на графике.';
 
   @override
+  String showAllFmt(int count) {
+    return 'Показать все ($count)';
+  }
+
+  @override
   String shownOfFmt(int shown, int total, String what) {
     return '$shown из $total ($what)';
   }
