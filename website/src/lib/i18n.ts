@@ -8,7 +8,7 @@ type LocaleOption = {
 
 export const defaultLocale = baseLocale
 
-export const locales: LocaleOption[] = [
+const allLocales: LocaleOption[] = [
   { code: 'en', label: 'English' },
   { code: 'zh-CN', label: '简体中文' },
   { code: 'fr', label: 'Français' },
@@ -16,7 +16,9 @@ export const locales: LocaleOption[] = [
   { code: 'kr', label: '한국어' },
   { code: 'ja', label: '日本語' },
   { code: 'es', label: 'Español' },
-].filter((locale) => generatedLocales.includes(locale.code))
+]
+
+export const locales = allLocales.filter((locale) => generatedLocales.includes(locale.code))
 
 export const localeStorageKey = 'serverbox.website.locale'
 
