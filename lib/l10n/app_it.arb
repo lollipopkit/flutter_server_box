@@ -622,6 +622,7 @@
   "diskFailingFmt": "{count} in errore",
   "diskSmartOpenTip": "Tocca per vedere i suoi attributi",
   "cycle": "Cicli",
+  "showAllFmt": "Mostra tutti ({count})",
   "shownOfFmt": "{shown} di {total} {what}",
   "countOfFmt": "{count} {what}",
   "unitDevices": "dispositivi",

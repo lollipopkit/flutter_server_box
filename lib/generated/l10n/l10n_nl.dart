@@ -2350,6 +2350,11 @@ class AppLocalizationsNl extends AppLocalizations {
       'Ten minste één apparaat blijft in de grafiek.';
 
   @override
+  String showAllFmt(int count) {
+    return 'Alle $count tonen';
+  }
+
+  @override
   String shownOfFmt(int shown, int total, String what) {
     return '$shown van $total $what';
   }

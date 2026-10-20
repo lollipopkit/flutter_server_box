@@ -2365,6 +2365,11 @@ class AppLocalizationsEs extends AppLocalizations {
       'Al menos un dispositivo permanece en el gráfico.';
 
   @override
+  String showAllFmt(int count) {
+    return 'Mostrar los $count';
+  }
+
+  @override
   String shownOfFmt(int shown, int total, String what) {
     return '$shown de $total $what';
   }
