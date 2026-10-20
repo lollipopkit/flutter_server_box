@@ -531,6 +531,25 @@ jobs:
       - name: Build the Windows app
         run: flutter build windows --debug --no-pub
 
+      # `windows/CMakeLists.txt` installs these app-local.
+      - name: Check the VC++ runtime is bundled
+        shell: bash
+        run: |
+          set -euo pipefail
+          dir='build/windows/x64/runner/Debug'
+          for dll in msvcp140.dll vcruntime140.dll vcruntime140_1.dll; do
+            [ -f "$dir/$dll" ] || { echo "::error::$dll is not next to the exe"; exit 1; }
+          done
+
+      # The same script a release compiles (`fl_build`), against this build.
+      - name: Compile the installer
+        shell: pwsh
+        run: |
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" /Q /DAppName=ServerBox /DAppVersion=1.0.0 `
+            "/DSourceDir=$PWD\build\windows\x64\runner\Debug" "/DOutputDir=$PWD" `
+            /DOutputBaseFilename=installer_check windows\installer.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - uses: ./.github/actions/build-hook-cache
         with:
           step: save
