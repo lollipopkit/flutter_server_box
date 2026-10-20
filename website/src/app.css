@@ -3,7 +3,7 @@
    lower-priority layer. */
 @layer theme, base, utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;700&display=swap');
 
 /* Import Tailwind utilities without preflight because this site defines its
    own reset, then load the shared component tokens. */
@@ -15,41 +15,55 @@
 :root {
   color-scheme: light;
 
-  --black: #000000;
-  --near-black: #262626;
-  --dark-surface: #090909;
-  --stone: #737373;
-  --mid-gray: #525252;
-  --silver: #a3a3a3;
-  --border-light: #d4d4d4;
-  --light-gray: #e5e5e5;
-  --snow: #fafafa;
-  --white: #ffffff;
-  --ring-blue: rgba(59, 130, 246, 0.5);
+  /* Neutrals carry a trace of the brand's plum, so the raspberry below sits in
+     them instead of on top. Names are roles kept from the original grays. */
+  --black: #1a1418;
+  --near-black: #2c242a;
+  --dark-surface: #0f0b0e;
+  --stone: #6c6269;
+  --mid-gray: #574e55;
+  --silver: #9c929a;
+  --border-light: #dcd3d9;
+  --light-gray: #ece6ea;
+  --snow: #f7f3f6;
+  --white: #fdfbfc;
+  --ring-blue: rgba(136, 14, 79, 0.45);
 
-  --radius-container: 12px;
+  /* The app's own default seed color (ChartPalette._fallbackSeed). */
+  --brand: #880e4f;
+  --brand-ink: #ffffff;
+  --brand-tint: #f6e6ee;
+  --brand-glow: rgba(136, 14, 79, 0.16);
+  --ok: #22c55e;
+
+  --radius-container: 14px;
   --radius-pill: 9999px;
 
-  --font-display: 'Plus Jakarta Sans', 'SF Pro Rounded', system-ui, -apple-system, sans-serif;
+  --font-display: 'Bricolage Grotesque', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   --font-body: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-mono: ui-monospace, 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', monospace;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', monospace;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
 
-    --black: #f5f5f5;
-    --near-black: #e5e5e5;
-    --dark-surface: #0f0f0f;
-    --stone: #a3a3a3;
-    --mid-gray: #737373;
-    --silver: #d4d4d4;
-    --border-light: #404040;
-    --light-gray: #262626;
-    --snow: #171717;
-    --white: #090909;
-    --ring-blue: rgba(147, 197, 253, 0.55);
+    --black: #f4eef2;
+    --near-black: #e2dae0;
+    --dark-surface: #0f0b0e;
+    --stone: #a89da5;
+    --mid-gray: #857a83;
+    --silver: #6f646c;
+    --border-light: #3a3037;
+    --light-gray: #2a2228;
+    --snow: #171216;
+    --white: #0e0b0d;
+    --ring-blue: rgba(232, 112, 166, 0.6);
+
+    --brand: #e8609c;
+    --brand-ink: #1a0a12;
+    --brand-tint: #2a121f;
+    --brand-glow: rgba(232, 96, 156, 0.18);
   }
 }
 
@@ -90,26 +104,36 @@ body {
 
 .site-nav {
   position: sticky;
-  top: 1.5rem;
+  top: 1rem;
   z-index: 40;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: min(1080px, 92vw);
-  margin: 0 auto;
-  padding: 0.65rem 1.25rem;
+  width: min(1120px, 92vw);
+  margin: 1rem auto 0;
+  padding: 0.5rem 0.6rem 0.5rem 0.9rem;
   border-radius: var(--radius-pill);
-  border: 1px solid var(--light-gray);
-  background: var(--white);
+  border: 1px solid color-mix(in srgb, var(--light-gray) 80%, transparent);
+  background: color-mix(in srgb, var(--white) 78%, transparent);
+  backdrop-filter: saturate(1.4) blur(14px);
+  -webkit-backdrop-filter: saturate(1.4) blur(14px);
+  box-shadow: 0 6px 24px -14px rgba(26, 20, 24, 0.25);
 }
 
 .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
   text-decoration: none;
   color: var(--black);
   font-weight: 700;
-  font-size: 1.05rem;
+  font-size: 1.08rem;
   letter-spacing: -0.02em;
   font-family: var(--font-display);
+}
+
+.brand img {
+  border-radius: 7px;
 }
 
 .site-nav nav {
@@ -202,56 +226,90 @@ body {
 }
 
 .page-section {
-  width: min(1080px, 92vw);
+  width: min(1120px, 92vw);
   margin: 0 auto;
-  padding: clamp(5rem, 12vw, 9rem) 0;
+  padding: clamp(4rem, 8vw, 6.5rem) 0;
 }
 
-/* Match the nav and section width so the hero keeps the same mobile gutters. */
+/* Copy on the left, the phones on the right; one column below 960px. */
 .hero {
-  width: min(1080px, 92vw);
+  position: relative;
+  width: min(1120px, 92vw);
   margin: 0 auto;
-  text-align: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(2rem, 4vw, 4rem);
+  padding: clamp(4.5rem, 10vw, 8rem) 0 clamp(4rem, 8vw, 6rem);
+}
+
+/* The brand's glow behind the phones, the one colored light on the page. */
+.hero::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  right: -8%;
+  top: 8%;
+  width: 62%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--brand-glow), transparent 72%);
+  pointer-events: none;
+}
+
+.hero-copy {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 1.5rem;
-  padding: clamp(6rem, 16vw, 12rem) 0 clamp(5rem, 10vw, 7rem);
+  align-items: flex-start;
+  gap: 1.4rem;
+}
+
+.hero-platforms {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  color: var(--stone);
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--light-gray);
+  border-radius: var(--radius-pill);
+  background: var(--white);
 }
 
 .hero h1 {
   font-family: var(--font-display);
-  font-size: clamp(2.5rem, 5.5vw, 3.5rem);
-  font-weight: 700;
-  line-height: 1.05;
+  font-size: clamp(2.8rem, 6.2vw, 5rem);
+  font-weight: 800;
+  font-variation-settings: 'opsz' 96;
+  line-height: 1;
   letter-spacing: -0.03em;
   color: var(--black);
-  max-width: 18ch;
+}
+
+.hero h1 span {
+  color: var(--brand);
 }
 
 .hero-subtitle {
   color: var(--stone);
-  font-size: clamp(1rem, 1.4vw, 1.15rem);
-  line-height: 1.6;
-  max-width: 52ch;
+  font-size: clamp(1.02rem, 1.35vw, 1.15rem);
+  line-height: 1.65;
+  max-width: 46ch;
 }
 
 .hero-actions {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
   gap: 0.75rem;
-  margin-top: 0.5rem;
+  margin-top: 0.4rem;
 }
 
 .screenshot-stack {
   position: relative;
-  width: min(1040px, 92vw);
-  height: clamp(430px, 58vw, 620px);
-  margin-top: clamp(2rem, 5vw, 4rem);
+  width: 100%;
+  height: clamp(420px, 48vw, 600px);
   perspective: 1200px;
   outline: none;
-  --spread: clamp(148px, 24vw, 250px);
+  --spread: clamp(96px, 11vw, 150px);
 }
 
 .screenshot-stack:focus-visible {
@@ -265,12 +323,12 @@ body {
   left: 50%;
   top: 50%;
   z-index: var(--z);
-  width: min(220px, 21vw);
-  aspect-ratio: 9 / 20;
-  border-radius: 0;
-  border: 0;
-  background: transparent;
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.14);
+  width: min(220px, 17vw);
+  aspect-ratio: 662 / 1440;
+  border-radius: 18px;
+  border: 1px solid var(--light-gray);
+  background: var(--snow);
+  box-shadow: 0 24px 50px -18px rgba(26, 20, 24, 0.35);
   object-fit: cover;
   transform:
     translate3d(calc(-50% + var(--base-x) + var(--move-x)), calc(-50% + var(--base-y) + var(--move-y)), 0)
@@ -286,7 +344,7 @@ body {
 }
 
 .screenshot-stack:hover .screenshot-card {
-  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.16);
+  box-shadow: 0 28px 60px -18px rgba(26, 20, 24, 0.4);
   transform:
     translate3d(calc(-50% + (var(--hover-slot) * var(--spread)) + var(--move-x)), calc(-50% + var(--move-y)), 0)
     rotateZ(var(--hover-r))
@@ -299,31 +357,156 @@ body {
 
 
 .section-head {
-  margin-bottom: 2.5rem;
+  margin-bottom: clamp(2rem, 4vw, 3.25rem);
 }
 
 .section-head h2 {
   font-family: var(--font-display);
-  font-size: clamp(1.75rem, 3.2vw, 2.25rem);
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 750;
+  font-variation-settings: 'opsz' 72;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
   color: var(--black);
-  max-width: 28ch;
+  max-width: 22ch;
 }
 
 .section-head p {
-  margin-top: 0.75rem;
+  margin-top: 0.9rem;
   color: var(--stone);
-  font-size: 1rem;
-  line-height: 1.6;
-  max-width: 55ch;
+  font-size: 1.05rem;
+  line-height: 1.65;
+  max-width: 58ch;
 }
 
-.feature-grid {
+/* The feature tour: the list on the left, one phone on the right that shows
+   the feature scrolled to (or pressed). Below 860px each item carries its own
+   picture in a swipeable row instead. */
+.tour {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr);
+  gap: clamp(2rem, 6vw, 6rem);
+  align-items: start;
+}
+
+.tour-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.tour-list li {
+  display: flex;
+  align-items: center;
+  /* On the item rather than the button, so the line runs unbroken. */
+  border-left: 2px solid var(--light-gray);
+  transition: border-color 0.25s ease;
+}
+
+.tour-list li:has(.tour-item.active) {
+  border-left-color: var(--brand);
+}
+
+.tour-item {
+  width: 100%;
+  display: grid;
+  gap: 0.3rem;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  padding: 2.5rem 0 2.5rem 1.4rem;
+  cursor: pointer;
+  transition: border-color 0.25s ease, background 0.25s ease;
+}
+
+.tour-item:focus-visible {
+  outline: 2px solid var(--ring-blue);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.tour-tag {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--silver);
+  transition: color 0.25s ease;
+}
+
+.tour-title {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--stone);
+  transition: color 0.25s ease;
+}
+
+.tour-desc {
+  color: var(--stone);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  max-width: 52ch;
+  opacity: 0.75;
+  transition: opacity 0.25s ease;
+}
+
+.tour-item.active .tour-tag {
+  color: var(--brand);
+}
+
+.tour-item.active .tour-title {
+  color: var(--black);
+}
+
+.tour-item.active .tour-desc {
+  opacity: 1;
+}
+
+.tour-shot-inline {
+  display: none;
+}
+
+.tour-device {
+  position: sticky;
+  top: calc(50vh - min(36vh, 320px) + 2rem);
+  display: flex;
+  justify-content: center;
+}
+
+/* A phone drawn in CSS: a bezel the color of the text, the screenshot inside. */
+.device-frame {
+  position: relative;
+  height: min(72vh, 640px);
+  aspect-ratio: 662 / 1440;
+  max-width: 100%;
+  border-radius: 40px;
+  padding: 5px;
+  /* A phone's bezel is dark in either scheme. */
+  background: #1a1418;
+  box-shadow:
+    0 0 0 1px var(--border-light),
+    0 40px 80px -30px rgba(26, 20, 24, 0.5),
+    0 0 120px -20px var(--brand-glow);
+}
+
+.device-frame img {
+  position: absolute;
+  inset: 5px;
+  width: calc(100% - 10px);
+  height: calc(100% - 10px);
+  object-fit: cover;
+  border-radius: 35px;
+  opacity: 0;
+  transform: scale(0.985);
+  transition: opacity 0.45s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.device-frame img.shown {
+  opacity: 1;
+  transform: none;
 }
 
 .feature-card {
@@ -341,17 +524,6 @@ body {
   border-color: var(--border-light);
 }
 
-.feature-card .icon {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-container);
-  background: var(--snow);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-}
-
 .feature-card h3 {
   font-family: var(--font-display);
   font-size: 1rem;
@@ -363,10 +535,6 @@ body {
   color: var(--stone);
   font-size: 0.88rem;
   line-height: 1.55;
-}
-
-.feature-card.wide {
-  grid-column: span 2;
 }
 
 /* Themes and plugins from store/ (virtual:store). A theme is shown as the app
@@ -789,91 +957,8 @@ body {
   }
 }
 
-/* Use one native <details> per device class so collapsing works without JS and
-   lazy-loaded images remain outside the viewport until their group opens. */
-.gallery {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.gallery-group {
-  border: 1px solid var(--light-gray);
-  border-radius: var(--radius-container);
-  background: var(--white);
-}
-
-.gallery-group > summary {
-  cursor: pointer;
-  list-style: none;
-  padding: 1rem 1.25rem;
-  display: flex;
-  align-items: baseline;
-  gap: 0.6rem;
-  font-family: var(--font-display);
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--black);
-}
-
-/* Safari draws its own triangle and ignores `list-style`. */
-.gallery-group > summary::-webkit-details-marker {
-  display: none;
-}
-
-.gallery-group > summary::after {
-  content: '+';
-  margin-left: auto;
-  color: var(--stone);
-  font-size: 1.1rem;
-  line-height: 1;
-}
-
-.gallery-group[open] > summary::after {
-  content: '−';
-}
-
-.gallery-count {
-  color: var(--stone);
-  font-size: 0.85rem;
-  font-weight: 400;
-}
-
-.gallery-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
-  padding: 0 1.25rem 1.25rem;
-}
-
-/* Desktop shots are landscape and unreadable four across. */
-.gallery-grid.desktop {
-  grid-template-columns: repeat(2, 1fr);
-}
-
-.gallery-grid figure {
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.gallery-grid img {
-  width: 100%;
-  height: auto;
-  border-radius: var(--radius-container);
-  border: 1px solid var(--light-gray);
-  background: var(--snow);
-}
-
-.gallery-grid figcaption {
-  color: var(--stone);
-  font-size: 0.8rem;
-  text-align: center;
-}
-
 .protocol-section {
-  width: min(1080px, 92vw);
+  width: min(1120px, 92vw);
   margin: 0 auto;
   padding: clamp(4rem, 8vw, 6rem) 0;
 }
@@ -889,16 +974,17 @@ body {
   border-radius: var(--radius-pill);
   border: 1px solid var(--light-gray);
   background: var(--white);
-  padding: 0.45rem 1rem;
-  font-size: 0.85rem;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.8rem;
   font-weight: 500;
-  color: var(--near-black);
+  color: var(--mid-gray);
   font-family: var(--font-mono);
-  transition: background 0.2s ease;
+  transition: border-color 0.2s ease, color 0.2s ease;
 }
 
 .protocol-badge:hover {
-  background: var(--snow);
+  border-color: var(--brand);
+  color: var(--black);
 }
 
 .code-block {
@@ -978,15 +1064,15 @@ body {
 }
 
 .cta-section {
-  width: min(1080px, 92vw);
+  width: min(1120px, 92vw);
   margin: 0 auto;
   padding: clamp(4rem, 10vw, 8rem) 0;
 }
 
 .download-section {
-  width: min(1080px, 92vw);
+  width: min(1120px, 92vw);
   margin: 0 auto;
-  padding: clamp(5rem, 12vw, 9rem) 0;
+  padding: clamp(4rem, 8vw, 6.5rem) 0;
 }
 
 .download-list {
@@ -998,14 +1084,15 @@ body {
   grid-template-columns: minmax(130px, 0.45fr) minmax(0, 1.55fr);
   align-items: center;
   gap: 1rem;
-  padding: 1rem 0;
+  padding: 1.2rem 0;
   border-bottom: 1px solid var(--light-gray);
 }
 
 .download-platform-copy h3 {
   font-family: var(--font-display);
-  font-size: 1.05rem;
-  font-weight: 500;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   color: var(--black);
 }
 
@@ -1038,14 +1125,19 @@ body {
 }
 
 .download-icon-btn:hover {
-  background: var(--snow);
-  border-color: var(--border-light);
-  opacity: 0.9;
+  background: var(--brand-tint);
+  border-color: var(--brand);
 }
 
 .download-icon-btn span {
   font-weight: 500;
   font-size: 0.92rem;
+}
+
+.download-icon-btn small {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--stone);
 }
 
 .download-note {
@@ -1057,10 +1149,12 @@ body {
 }
 
 .cta-block {
-  border-radius: var(--radius-container);
+  border-radius: 28px;
   border: 1px solid var(--light-gray);
-  background: var(--white);
-  padding: clamp(2rem, 4vw, 3.5rem);
+  background:
+    radial-gradient(120% 140% at 50% 0%, var(--brand-tint), transparent 60%),
+    var(--white);
+  padding: clamp(2.5rem, 6vw, 5rem) clamp(1.5rem, 4vw, 3rem);
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -1070,10 +1164,10 @@ body {
 
 .cta-block h2 {
   font-family: var(--font-display);
-  font-size: clamp(1.5rem, 3vw, 2rem);
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  font-size: clamp(2rem, 4.2vw, 3.2rem);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
   max-width: 22ch;
 }
 
@@ -1091,7 +1185,7 @@ body {
 }
 
 .site-footer {
-  width: min(1080px, 92vw);
+  width: min(1120px, 92vw);
   margin: 0 auto;
   padding: 1.5rem 0 3rem;
   border-top: 1px solid var(--light-gray);
@@ -1119,6 +1213,98 @@ body {
   gap: 1.5rem;
 }
 
+@media (max-width: 960px) {
+  .hero {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .hero-copy {
+    align-items: center;
+  }
+
+  .hero::before {
+    right: 50%;
+    top: auto;
+    bottom: 0;
+    width: 90%;
+    transform: translateX(50%);
+  }
+
+  .screenshot-card {
+    width: min(200px, 26vw);
+  }
+
+  .screenshot-stack {
+    --spread: clamp(96px, 20vw, 190px);
+  }
+}
+
+/* The tour as a swipeable row: no sticky phone, each card its own picture. */
+@media (max-width: 860px) {
+  .tour {
+    grid-template-columns: 1fr;
+  }
+
+  .tour-device {
+    display: none;
+  }
+
+  .tour-list {
+    flex-direction: row;
+    gap: 1rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    margin-inline: calc(-4vw);
+    padding: 0.25rem 4vw 1rem;
+    scrollbar-width: none;
+  }
+
+  .tour-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tour-list li {
+    flex: 0 0 min(78vw, 300px);
+    scroll-snap-align: center;
+    display: flex;
+    flex-direction: column-reverse;
+    justify-content: flex-end;
+    align-items: stretch;
+    gap: 0.9rem;
+    min-height: 0;
+    border-left: 0;
+  }
+
+  .tour-item,
+  .tour-item.active {
+    padding: 0;
+    cursor: default;
+  }
+
+  .tour-item .tour-tag {
+    color: var(--brand);
+  }
+
+  .tour-item .tour-title {
+    color: var(--black);
+  }
+
+  .tour-item .tour-desc {
+    opacity: 1;
+  }
+
+  .tour-shot-inline {
+    display: block;
+    width: 100%;
+    aspect-ratio: 662 / 1440;
+    border-radius: 24px;
+    border: 1px solid var(--light-gray);
+    background: var(--snow);
+    box-shadow: 0 20px 40px -24px rgba(26, 20, 24, 0.45);
+  }
+}
+
 @media (max-width: 768px) {
   .site-nav nav {
     display: none;
@@ -1128,19 +1314,6 @@ body {
      truncating labels or changing width when the selection changes. */
   .language-switcher select {
     min-width: 7.2rem;
-  }
-
-  .feature-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .feature-card.wide {
-    grid-column: span 1;
-  }
-
-  .gallery-grid,
-  .gallery-grid.desktop {
-    grid-template-columns: repeat(2, 1fr);
   }
 
   .testimonial-grid {
@@ -1187,13 +1360,12 @@ body {
 
   .screenshot-stack {
     width: min(100%, 92vw);
-    height: 390px;
-    margin-top: 1.75rem;
-    --spread: clamp(88px, 28vw, 124px);
+    height: 400px;
+    --spread: clamp(88px, 26vw, 116px);
   }
 
   .screenshot-card {
-    width: min(104px, 24vw);
+    width: min(150px, 38vw);
   }
 
   .protocol-badges {
@@ -1229,4 +1401,15 @@ body {
 .store-pack-icon svg {
   width: 100%;
   height: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screenshot-card,
+  .device-frame img,
+  .tour-item,
+  .tour-title,
+  .tour-desc,
+  .tour-tag {
+    transition: none;
+  }
 }
