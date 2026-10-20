@@ -170,8 +170,9 @@ void _noteFailedSections(
   check(const ['cpu'], const ['cpu'], list('cpu'));
   check(
     const ['mem'],
-    // Only Linux reads swap, and out of the same /proc/meminfo.
-    ['mem', if (system == SystemType.linux) 'swap'],
+    // Only Linux reads swap, out of the same /proc/meminfo, and a swap that
+    // parsed is not failed by a missing MemTotal.
+    ['mem', if (system == SystemType.linux && status['swap'] == null) 'swap'],
     status['mem'] != null,
     always: true,
   );

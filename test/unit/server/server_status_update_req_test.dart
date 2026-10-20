@@ -434,6 +434,16 @@ __SBM_GPU_END__
       expect(result.sectionErrs['swap'], isNotNull);
     });
 
+    test('swap that parsed is not failed with memory', () async {
+      final result = await parse({
+        StatusCmdType.mem.name: 'SwapTotal: 1024 kB\nSwapFree: 512 kB\n',
+      });
+
+      expect(result.sectionErrs['mem'], isNotNull);
+      expect(result.swap.total, 1024);
+      expect(result.sectionErrs.keys, isNot(contains('swap')));
+    });
+
     test('a BSD memory failure is not a swap failure', () async {
       // Only Linux reads swap.
       final result = await parse({
