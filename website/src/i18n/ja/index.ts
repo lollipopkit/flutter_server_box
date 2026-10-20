@@ -158,7 +158,7 @@ const ja: Translation = {
   download: {
     title: 'すべてのプラットフォーム、すべての配布元。',
     subtitle:
-      'デバイスに合った信頼できる配布元を選んでください。iOS 版は App Store から入手できます。macOS の App Store 版は Apple シリコンにのみ対応しており、Intel Mac では GitHub Releases または Homebrew からインストールできます。Android、Linux、Windows 向けには直接ダウンロードも用意されています。',
+      'デバイスに合った信頼できる配布元を選んでください。iOS 版は App Store から、または GitHub Releases の未署名 .ipa を自分で署名して入手できます。macOS 版は Apple シリコンと Intel に対応し、GitHub Releases と Homebrew で配布しています。Android、Linux、Windows は直接ダウンロードできます。',
     copied: 'インストールコマンドをコピーしました',
     copyPrompt: 'このインストールコマンドをコピーしてください:',
     note:

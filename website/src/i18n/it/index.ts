@@ -160,7 +160,7 @@ const it: Translation = {
   download: {
     title: 'Ogni piattaforma, ogni sorgente.',
     subtitle:
-      'Scegli una fonte affidabile per il tuo dispositivo. Su iOS, l’app è disponibile su App Store. Su macOS, la versione di App Store supporta solo i Mac con chip Apple; chi usa un Mac Intel può installarla da GitHub Releases o Homebrew. Sono disponibili anche download diretti per Android, Linux e Windows.',
+      'Scegli una fonte affidabile per il tuo dispositivo. iOS è su App Store, oppure come .ipa non firmato su GitHub Releases da firmare da te. Le versioni macOS per chip Apple e Intel sono su GitHub Releases e Homebrew. Android, Linux e Windows hanno download diretti.',
     copied: 'Comando copiato',
     copyPrompt: 'Copia questo comando:',
     note:

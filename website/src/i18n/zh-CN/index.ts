@@ -156,7 +156,7 @@ const zhCN: Translation = {
   download: {
     title: '所有平台，所有来源。',
     subtitle:
-      '请为你的设备选择可信的下载来源。iOS 版本可从 App Store 获取。macOS App Store 版本仅支持 Apple silicon；Intel Mac 用户可通过 GitHub Releases 或 Homebrew 安装。Android、Linux 和 Windows 也可直接下载安装包。',
+      '请为你的设备选择可信的下载来源。iOS 版本可从 App Store 获取，也可从 GitHub Releases 下载未签名的 .ipa 自行签名。macOS 版本支持 Apple silicon 和 Intel，可通过 GitHub Releases 或 Homebrew 安装。Android、Linux 和 Windows 可直接下载安装包。',
     copied: '已复制安装命令',
     copyPrompt: '复制此安装命令：',
     note:

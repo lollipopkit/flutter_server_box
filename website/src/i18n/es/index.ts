@@ -160,7 +160,7 @@ const es: Translation = {
   download: {
     title: 'Cada plataforma, cada fuente.',
     subtitle:
-      'Elige una fuente de confianza para tu dispositivo. En iOS, la aplicación está disponible en App Store. En macOS, la versión de App Store solo es compatible con Apple silicon; los usuarios de Intel pueden instalarla desde GitHub Releases o Homebrew. También hay descargas directas para Android, Linux y Windows.',
+      'Elige una fuente de confianza para tu dispositivo. iOS está en App Store, o como .ipa sin firmar en GitHub Releases para que lo firmes tú. Las versiones de macOS para Apple silicon e Intel están en GitHub Releases y Homebrew. Android, Linux y Windows tienen descargas directas.',
     copied: 'Comando copiado',
     copyPrompt: 'Copia este comando:',
     note:

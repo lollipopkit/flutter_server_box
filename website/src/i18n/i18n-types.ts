@@ -434,7 +434,7 @@ type RootTranslation = {
 		 */
 		title: string
 		/**
-		 * C​h​o​o​s​e​ ​a​ ​t​r​u​s​t​e​d​ ​s​o​u​r​c​e​ ​f​o​r​ ​y​o​u​r​ ​d​e​v​i​c​e​.​ ​i​O​S​ ​i​s​ ​a​v​a​i​l​a​b​l​e​ ​f​r​o​m​ ​t​h​e​ ​A​p​p​ ​S​t​o​r​e​.​ ​O​n​ ​m​a​c​O​S​,​ ​t​h​e​ ​A​p​p​ ​S​t​o​r​e​ ​b​u​i​l​d​ ​s​u​p​p​o​r​t​s​ ​A​p​p​l​e​ ​s​i​l​i​c​o​n​ ​o​n​l​y​;​ ​I​n​t​e​l​ ​u​s​e​r​s​ ​c​a​n​ ​i​n​s​t​a​l​l​ ​t​h​e​ ​a​p​p​ ​f​r​o​m​ ​G​i​t​H​u​b​ ​R​e​l​e​a​s​e​s​ ​o​r​ ​H​o​m​e​b​r​e​w​.​ ​D​i​r​e​c​t​ ​d​o​w​n​l​o​a​d​s​ ​a​r​e​ ​a​l​s​o​ ​a​v​a​i​l​a​b​l​e​ ​f​o​r​ ​A​n​d​r​o​i​d​,​ ​L​i​n​u​x​,​ ​a​n​d​ ​W​i​n​d​o​w​s​.
+		 * C​h​o​o​s​e​ ​a​ ​t​r​u​s​t​e​d​ ​s​o​u​r​c​e​ ​f​o​r​ ​y​o​u​r​ ​d​e​v​i​c​e​.​ ​i​O​S​ ​c​o​m​e​s​ ​f​r​o​m​ ​t​h​e​ ​A​p​p​ ​S​t​o​r​e​,​ ​o​r​ ​a​s​ ​a​n​ ​u​n​s​i​g​n​e​d​ ​.​i​p​a​ ​f​r​o​m​ ​G​i​t​H​u​b​ ​R​e​l​e​a​s​e​s​ ​t​h​a​t​ ​y​o​u​ ​s​i​g​n​ ​y​o​u​r​s​e​l​f​.​ ​m​a​c​O​S​ ​b​u​i​l​d​s​ ​f​o​r​ ​A​p​p​l​e​ ​s​i​l​i​c​o​n​ ​a​n​d​ ​I​n​t​e​l​ ​a​r​e​ ​o​n​ ​G​i​t​H​u​b​ ​R​e​l​e​a​s​e​s​ ​a​n​d​ ​H​o​m​e​b​r​e​w​.​ ​A​n​d​r​o​i​d​,​ ​L​i​n​u​x​ ​a​n​d​ ​W​i​n​d​o​w​s​ ​h​a​v​e​ ​d​i​r​e​c​t​ ​d​o​w​n​l​o​a​d​s​.
 		 */
 		subtitle: string
 		/**
@@ -899,7 +899,7 @@ export type TranslationFunctions = {
 		 */
 		title: () => LocalizedString
 		/**
-		 * Choose a trusted source for your device. iOS is available from the App Store. On macOS, the App Store build supports Apple silicon only; Intel users can install the app from GitHub Releases or Homebrew. Direct downloads are also available for Android, Linux, and Windows.
+		 * Choose a trusted source for your device. iOS comes from the App Store, or as an unsigned .ipa from GitHub Releases that you sign yourself. macOS builds for Apple silicon and Intel are on GitHub Releases and Homebrew. Android, Linux and Windows have direct downloads.
 		 */
 		subtitle: () => LocalizedString
 		/**

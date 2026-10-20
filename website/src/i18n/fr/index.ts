@@ -160,7 +160,7 @@ const fr: Translation = {
   download: {
     title: 'Toutes les plateformes, toutes les sources.',
     subtitle:
-      'Choisissez une source fiable pour votre appareil. Sous iOS, l’application est disponible sur l’App Store. Sous macOS, l’App Store ne prend en charge que les Mac avec puce Apple ; les utilisateurs de Mac Intel peuvent l’installer depuis GitHub Releases ou Homebrew. Des téléchargements directs sont aussi proposés pour Android, Linux et Windows.',
+      'Choisissez une source fiable pour votre appareil. iOS est sur l’App Store, ou en .ipa non signé sur GitHub Releases, à signer vous-même. Les versions macOS pour puce Apple et Intel sont sur GitHub Releases et Homebrew. Android, Linux et Windows ont des téléchargements directs.',
     copied: 'Commande copiée',
     copyPrompt: 'Copiez cette commande :',
     note:
