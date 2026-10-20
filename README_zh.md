@@ -25,12 +25,8 @@
 
 ## 截屏
 
-<!-- 按平台折叠，每张图都带 `loading="lazy"`：三个设备形态共 31 张，全部展开
-     会在读者决定要不要看之前就先加载几 MB。想让某一组默认展开，给对应的
-     `<details>` 加上 `open`。 -->
-
 <details>
-<summary><b>iPhone</b> — 11 张</summary>
+<summary><b>iPhone</b> — 12 张</summary>
 <br>
 <table>
   <tr>
@@ -43,43 +39,17 @@
     <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/container.jpg" alt="容器"></td>
     <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/process.jpg" alt="进程"></td>
     <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/services.jpg" alt="服务"></td>
-    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/snippets.jpg" alt="代码片段"></td>
+    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/users.jpg" alt="用户"></td>
   </tr>
   <tr>
     <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/agent.jpg" alt="Agent"></td>
     <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/bench.jpg" alt="基准测试"></td>
-    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/settings.jpg" alt="设置"></td>
-    <td></td>
+    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/virt.jpg" alt="虚拟化"></td>
+    <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/themes.jpg" alt="主题商店"></td>
   </tr>
 </table>
 </details>
 
-<details>
-<summary><b>macOS</b> — 10 张</summary>
-<br>
-<table>
-  <tr>
-    <td><img width="380px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/home.jpg" alt="服务器列表"></td>
-    <td><img width="380px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/server-details.jpg" alt="服务器详情"></td>
-  </tr>
-  <tr>
-    <td><img width="380px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/terminal.jpg" alt="终端"></td>
-    <td><img width="380px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/files.jpg" alt="文件"></td>
-  </tr>
-  <tr>
-    <td><img width="380px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/container.jpg" alt="容器"></td>
-    <td><img width="380px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/process.jpg" alt="进程"></td>
-  </tr>
-  <tr>
-    <td><img width="380px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/services.jpg" alt="服务"></td>
-    <td><img width="380px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/globe.jpg" alt="地球"></td>
-  </tr>
-  <tr>
-    <td><img width="380px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/agent.jpg" alt="Agent"></td>
-    <td><img width="380px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/mac/settings.jpg" alt="设置"></td>
-  </tr>
-</table>
-</details>
 
 ## 安装
 
@@ -124,7 +94,7 @@
 
 提交 issue 前请确认：
 
-1. 反馈问题请附带 log（点击首页右上角），并以 bug 模版提交。
+1. 使用 bug 报告模板提交。
 2. 确认问题确实由 ServerBox 引起。
 3. 欢迎具体、建设性的反馈。主观偏好，例如更喜欢其他 UI，可能不会被采纳。
 
