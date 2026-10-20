@@ -143,9 +143,8 @@ void _noteFailedSections(
   Map<String, String> raw,
   SystemType system,
 ) {
-  /// [always]: every machine has one, so a segment that ran and said nothing
-  /// is a failure too. A missing segment is still absence — the command can be
-  /// turned off for the server.
+  /// [always]: every machine has one, so an empty segment is a failure too; a
+  /// missing one is still a disabled command.
   void check(
     List<String> cmds,
     List<String> sections,
@@ -171,7 +170,8 @@ void _noteFailedSections(
   check(const ['cpu'], const ['cpu'], list('cpu'));
   check(
     const ['mem'],
-    const ['mem', 'swap'],
+    // Only Linux reads swap, and out of the same /proc/meminfo.
+    ['mem', if (system == SystemType.linux) 'swap'],
     status['mem'] != null,
     always: true,
   );

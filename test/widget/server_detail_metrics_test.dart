@@ -67,10 +67,24 @@ void main() {
     await SqliteDb.close();
   });
 
-  /// A machine with memory worth a figure and nothing in swap, which is the
-  /// shape [InitStatus] has: one disk, no swap, no interfaces.
+  /// A machine with memory worth a figure, one disk, no swap and no
+  /// interfaces.
   ServerStatus statusOf() {
     final status = InitStatus.status;
+    status.disk = [
+      Disk(
+        path: '/dev/sda1',
+        mount: '/',
+        usedPercent: 50,
+        used: BigInt.from(50 << 20),
+        size: BigInt.from(100 << 20),
+        avail: BigInt.from(50 << 20),
+      ),
+    ];
+    status.diskUsage = DiskUsage(
+      used: BigInt.from(50 << 20),
+      size: BigInt.from(100 << 20),
+    );
     status.more[StatusCmdType.host] = 'test-host';
     status.more[StatusCmdType.sys] = 'Ubuntu 24.04';
     status.more[StatusCmdType.uptime] = 'up 12 days';

@@ -386,9 +386,12 @@ __SBM_GPU_END__
   /// absence; something said and nothing parsed is a failure, and what was said
   /// is the reason the page prints where the reading would be.
   group('a section that could not be read says why', () {
-    Future<ServerStatus> parse(Map<String, String> output) => getStatus(
+    Future<ServerStatus> parse(
+      Map<String, String> output, {
+      SystemType system = SystemType.linux,
+    }) => getStatus(
       ServerStatusUpdateReq(
-        system: SystemType.linux,
+        system: system,
         ss: InitStatus.status,
         parsedOutput: {StatusCmdType.time.name: '1710000000', ...output},
       ),
@@ -423,13 +426,22 @@ __SBM_GPU_END__
     });
 
     test('memory that ran and said nothing is a failure', () async {
-      // Every machine has memory, so an empty segment is not absence — and
-      // without a reason the page showed a 1 KiB placeholder instead (#1082).
+      // Every machine has memory, so an empty segment is not absence (#1082).
       final result = await parse({StatusCmdType.mem.name: ''});
 
       expect(result.mem.total, 0);
       expect(result.sectionErrs['mem'], isNotNull);
       expect(result.sectionErrs['swap'], isNotNull);
+    });
+
+    test('a BSD memory failure is not a swap failure', () async {
+      // Only Linux reads swap.
+      final result = await parse({
+        StatusCmdType.mem.name: '',
+      }, system: SystemType.bsd);
+
+      expect(result.sectionErrs['mem'], isNotNull);
+      expect(result.sectionErrs.keys, isNot(contains('swap')));
     });
 
     test('one command feeding two sections fails both', () async {

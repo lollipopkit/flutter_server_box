@@ -6,18 +6,18 @@ void main() {
     // The page cache is neither free nor in use: the kernel gives it back.
     const mem = Memory(total: 2000000, free: 200000, avail: 800000);
     expect(mem.used, 1200000);
-    expect(mem.used / mem.total, closeTo(mem.usedPercent, 1e-9));
+    expect(mem.used / mem.total, closeTo(mem.usedPercent!, 1e-9));
   });
 
   test('a kernel without MemAvailable falls back to MemFree', () {
     const mem = Memory(total: 1000, free: 400, avail: 0);
     expect(mem.used, 600);
-    expect(mem.used / mem.total, closeTo(mem.usedPercent, 1e-9));
+    expect(mem.used / mem.total, closeTo(mem.usedPercent!, 1e-9));
   });
 
-  test('no reading is 0%, not NaN', () {
+  test('no reading is no percentage', () {
     const mem = Memory(total: 0, free: 0, avail: 0);
-    expect(mem.usedPercent, 0);
-    expect(mem.availPercent, 0);
+    expect(mem.usedPercent, isNull);
+    expect(mem.availPercent, isNull);
   });
 }

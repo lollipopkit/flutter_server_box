@@ -533,19 +533,19 @@ fn shell_path_ps(s: &str) -> String {
     shell_quote_ps(s)
 }
 
-/// The Unix counterpart of [`shell_path_ps`]: the home script directory
-/// (`~/.config/server_box`), and a custom one the reader typed the same way,
-/// start with `~`, which a quoted word never expands — the install then made a
-/// directory named `~` under wherever the session started, `/` on a NAS user
-/// with no home, and failed (#1082).
+/// The Unix counterpart of [`shell_path_ps`]: a leading `~` or `$HOME` is
+/// expanded, failing when `HOME` is empty; the rest is a literal.
 fn shell_path_unix(s: &str) -> String {
-    if s == "~" {
-        return "\"$HOME\"".to_owned();
+    const HOME: &str = "\"${HOME:?}\"";
+    for prefix in ["~", "$HOME"] {
+        if s == prefix {
+            return HOME.to_owned();
+        }
+        if let Some(tail) = s.strip_prefix(prefix).and_then(|t| t.strip_prefix('/')) {
+            return format!("{HOME}/{}", shell_quote_unix(tail));
+        }
     }
-    match s.strip_prefix("~/") {
-        Some(tail) => format!("\"$HOME\"/{}", shell_quote_unix(tail)),
-        None => shell_quote_unix(s),
-    }
+    shell_quote_unix(s)
 }
 
 pub fn install_command(system: SystemType, script_dir: &str, script_path: &str) -> String {
