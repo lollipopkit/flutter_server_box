@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -2209,6 +2208,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get oneDeviceAtLeast => 'グラフには少なくとも 1 台を残します。';
 
   @override
+  String showAllFmt(int count) {
+    return 'すべて表示（$count）';
+  }
+
+  @override
   String shownOfFmt(int shown, int total, String what) {
     return '$what $total 件中 $shown 件';
   }
@@ -2677,6 +2681,14 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get monitorNoRemoteAccess =>
       'この agent は監視専用に設定されています。ここからターミナルを開いたり、コマンドを実行したり、ファイルを閲覧したりすることはできません。これらの機能を有効にするには、agent の config.toml にある [remote_access] を編集してください。';
+
+  @override
+  String get monitorAgentTooOld =>
+      'この Monitor agent は、このバージョンの ServerBox がサポートするより古いバージョンです。サーバー上の agent を更新してください。';
+
+  @override
+  String get monitorClientTooOld =>
+      'この Monitor agent は、このバージョンの ServerBox をサポートしていません。アプリを更新してください。';
 
   @override
   String get alerts => 'アラート';
@@ -5693,4 +5705,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String launchFailedLogs(String path) {
     return 'ログ: $path';
   }
+
+  @override
+  String get reconnect => '再接続';
+
+  @override
+  String get reconnectEndsShell =>
+      '再アタッチできる tmux セッションがないため、再接続するとこのシェルと、その中でまだ実行中のものが終了し、画面上の出力も消去されます。';
 }

@@ -8,8 +8,8 @@ waiting for you, finished or failed. Server Box shows that next to the
 terminal's name and, when the terminal is out of sight, as a notification.
 
 No server-side software is required. The program writes a short escape
-sequence to its output. The App reads it from SSH, a Monitor agent terminal,
-or a terminal on this device, alongside the rest of the output.
+sequence to its output, which reaches the App through SSH, a Monitor agent
+terminal, or a terminal on this device, alongside the rest of the output.
 
 ## What Server Box reads
 

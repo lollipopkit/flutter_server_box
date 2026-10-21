@@ -4321,9 +4321,9 @@ dependencies = [
 
 [[package]]
 name = "russh"
-version = "0.64.0"
+version = "0.64.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f098a8511efc1ff60585e60d484fccf646e387961f0c122d7e1d26a90f189090"
+checksum = "ba61e87b9ec9a39a59a6bbed4c0b8ff7fb07073405b24a767a1f2c8560ac8f58"
 dependencies = [
  "aes",
  "bitflags 2.13.1",

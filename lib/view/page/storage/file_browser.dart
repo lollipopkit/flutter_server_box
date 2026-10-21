@@ -3,11 +3,13 @@ import 'dart:io';
 import 'package:cross_file/cross_file.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_lib/theme.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/theme_style.dart';
 import 'package:server_box/data/model/file/browse_path.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 import 'package:server_box/data/model/file/file_issue.dart';
@@ -1739,11 +1741,7 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   }) {
     final full = _fullPath(entry);
     final label = widget.args.labelOf?.call(entry, full);
-    final icon = Icon(switch (entry.kind) {
-      FileKind.dir => Icons.folder_open,
-      FileKind.link => Icons.link,
-      _ => Icons.insert_drive_file,
-    });
+    final icon = _iconOf(entry);
 
     /// A click that carries a modifier, or lands while a selection is open,
     /// picks rather than opens.
@@ -1834,6 +1832,32 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
       style: UIs.textGrey,
       textAlign: TextAlign.right,
     );
+  }
+
+  /// The icon pack's or theme's `file.<ext>` glyph when either has one, else
+  /// an alias such as `file.css` for `.scss`, else `file.default`, else the
+  /// built-in glyph.
+  Widget _iconOf(FileEntry entry) {
+    final key = ThemeFileIcon.keyOf(
+      name: entry.name,
+      isDir: entry.isDir,
+      isLink: entry.kind == FileKind.link,
+    );
+    final built = ThemeFileIcon.builtIn(key);
+    final material = Icon(built.$1, color: built.$2);
+    if (key == ThemeFileIcon.dir || key == ThemeFileIcon.link) {
+      return ThemeIconAsset(keyName: key, fallback: material);
+    }
+    final generic = ThemeIconAsset(
+      keyName: ThemeFileIcon.fallback,
+      fallback: material,
+    );
+    if (key == ThemeFileIcon.fallback) return generic;
+    final aliased = ThemeFileIcon.aliasOf(key);
+    final next = aliased == null
+        ? generic
+        : ThemeIconAsset(keyName: aliased, fallback: generic);
+    return ThemeIconAsset(keyName: key, fallback: next);
   }
 
   /// How this list is shown: what it is ordered by, and whether it hides the

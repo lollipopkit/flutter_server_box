@@ -538,6 +538,8 @@
   "schemaTooNewWipeDone": "데이터가 삭제되었습니다. 앱을 다시 열어 처음부터 시작하세요.",
   "schemaTooNewWipeFailed": "일부 데이터를 삭제하지 못했으며, 이 버전은 남은 데이터도 열 수 없습니다. 최신 버전을 다시 설치하여 접근하세요.",
   "monitorNoRemoteAccess": "이 agent는 모니터링 전용으로 설정되어 있습니다. 여기서 터미널을 열거나 명령을 실행하거나 파일을 탐색할 수 없습니다. 이 기능을 사용하려면 agent의 config.toml에서 [remote_access]를 수정하세요.",
+  "monitorAgentTooOld": "이 Monitor agent는 현재 ServerBox 버전이 지원하는 것보다 오래되었습니다. 서버에서 agent를 업데이트하세요.",
+  "monitorClientTooOld": "이 Monitor agent는 더 이상 현재 ServerBox 버전을 지원하지 않습니다. 앱을 업데이트하세요.",
   "remoteDesktop": "원격 데스크톱",
   "containerReclaimable": "Reclaimable",
   "processSearchHint": "이름, 사용자 또는 PID",
@@ -620,6 +622,7 @@
   "diskFailingFmt": "{count}개 불량",
   "diskSmartOpenTip": "탭하면 속성을 봅니다",
   "cycle": "사이클",
+  "showAllFmt": "모두 보기 ({count})",
   "shownOfFmt": "{what} {total}개 중 {shown}개",
   "countOfFmt": "{what} {count}개",
   "unitDevices": "장치",
@@ -1679,5 +1682,7 @@
   "termMetricsBarTip": "CPU, 메모리, 네트워크, 디스크를 서버 카드와 같은 형식으로 표시합니다. 휴대폰에서는 가상 키 위에 표시됩니다.",
   "launchFailedTitle": "ServerBox를 시작할 수 없습니다",
   "launchFailedBody": "아래 오류를 복사해 로그 파일과 함께 GitHub 이슈로 알려 주세요.",
-  "launchFailedLogs": "로그: {path}"
+  "launchFailedLogs": "로그: {path}",
+  "reconnect": "다시 연결",
+  "reconnectEndsShell": "다시 연결할 tmux 세션이 없으므로, 다시 연결하면 이 셸과 그 안에서 아직 실행 중인 작업이 종료되고 화면의 출력도 지워집니다."
 }

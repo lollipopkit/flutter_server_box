@@ -549,15 +549,19 @@ extension _Init on SSHPageState {
       final attempts = immediate ? SSHPageState._maxKeepAliveFailures : 1;
       Object? lastError;
       StackTrace? lastStackTrace;
+      // A reconnect may replace the backend while a ping is out; what the old
+      // one answers says nothing about the new one.
+      final backend = _backend!;
       for (var attempt = 0; attempt < attempts; attempt++) {
         if (attempt > 0) {
           // Only ever paid by a link that is slow. One that is gone says so at
           // once, and the check below leaves the loop without waiting.
           await Future.delayed(SSHPageState._connectionCheckRetryDelay);
-          if (!mounted || _backend == null) return;
+          if (!mounted || !identical(_backend, backend)) return;
         }
         try {
-          await _backend!.ping().timeout(SSHPageState._connectionCheckTimeout);
+          await backend.ping().timeout(SSHPageState._connectionCheckTimeout);
+          if (!mounted || !identical(_backend, backend)) return;
           _missedKeepAliveCount = 0;
           if (_reportedDisconnected) {
             _reportedDisconnected = false;
@@ -568,10 +572,11 @@ extension _Init on SSHPageState {
           }
           return;
         } on Object catch (error, stackTrace) {
+          if (!mounted || !identical(_backend, backend)) return;
           lastError = error;
           lastStackTrace = stackTrace;
           // The transport itself says it is gone. Nothing to wait for.
-          if (_backend?.isClosed ?? true) break;
+          if (backend.isClosed) break;
         }
       }
       _handleConnectionCheckFailure(
@@ -640,8 +645,43 @@ extension _Init on SSHPageState {
   /// fine, and the question would be an answer to a loss that never happened —
   /// pressing reconnect on a slow server must not offer to throw the terminal
   /// away. So this says what happened and stops there.
+  ///
+  /// Re-attaching tmux keeps what runs in it. Without a session to re-attach,
+  /// the reconnect opens a new shell and the one on screen — perhaps fine, only
+  /// slow — ends with whatever it was running and what it printed, so that is
+  /// asked first.
+  ///
+  /// A link that still answers is not closed: it may be the status poller's,
+  /// shared with other tabs and the file browser. Only this terminal's shell
+  /// is replaced then.
   Future<void> reconnect() async {
-    if (!mounted || _disconnectDialogOpen || _openingTerminal) return;
+    if (!mounted || !widget.args.canReconnect) return;
+    if (_disconnectDialogOpen || _openingTerminal) return;
+    // Never connected: there is no shell to end, and the first connection is
+    // what the overlay's retry makes.
+    if (!_adopted && _connectionStep != TerminalConnectionStep.ready) {
+      unawaited(_initTerminal());
+      return;
+    }
+    final shell = _session;
+    final backend = _backend;
+    final tmux = _tmuxCurrentSession;
+    if (tmux == null || tmux.isEmpty) {
+      final confirmed = await context.showRoundDialog<bool>(
+        title: l10n.reconnect,
+        child: Text(l10n.reconnectEndsShell),
+        actions: Btnx.cancelOk,
+      );
+      if (confirmed != true || !mounted) return;
+      // The keep-alive may have found the link dead and replaced it while the
+      // question was up: what was asked about is gone.
+      if (_disconnectDialogOpen ||
+          _openingTerminal ||
+          !identical(_session, shell) ||
+          !identical(_backend, backend)) {
+        return;
+      }
+    }
 
     _disconnectDialogOpen = true;
     // Stop the keep-alive from firing the automatic path underneath this one.
@@ -649,36 +689,51 @@ extension _Init on SSHPageState {
     _missedKeepAliveCount = 0;
     _writeLn('\n\n${libL10n.reconnecting}\r\n');
 
-    final restored = await _tryReconnect(tmuxSession: _tmuxCurrentSession);
+    final answers = await _answers(backend);
+    if (!mounted) return;
+    final restored = await _tryReconnect(
+      tmuxSession: _tmuxCurrentSession,
+      keepLink: answers,
+    );
     if (!mounted) return;
 
+    // [_reconnect] armed the keep-alive and binding the shell said connected.
     if (restored) {
       _disconnectDialogOpen = false;
       _reportedDisconnected = false;
-      TermSessionManager.updateStatus(_sessionId, TermSessionStatus.connected);
-      // The timer was cancelled above and the automatic path only arms it on
-      // a resume; without this a live reconnect would go unchecked from here.
-      _setupDiscontinuityTimer();
       return;
     }
 
-    // Cancelled, or the reconnect itself gave up. The terminal is left as it
-    // is, and the button works again — a server that is merely slow comes back
-    // on the next press.
+    // Cancelled, or the reconnect itself gave up. The old shell was let go
+    // before the first attempt, so the terminal is disconnected and the
+    // keep-alive has nothing to ask; the button tries again — a server that is
+    // merely slow comes back on the next press.
     _writeLn(libL10n.fail);
     _disconnectDialogOpen = false;
     TermSessionManager.updateStatus(_sessionId, TermSessionStatus.disconnected);
   }
 
+  /// Whether [backend] still answers, within the keep-alive's own timeout.
+  Future<bool> _answers(ShellBackend? backend) async {
+    if (backend == null || backend.isClosed) return false;
+    try {
+      await backend.ping().timeout(SSHPageState._connectionCheckTimeout);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// Re-establish SSH, re-attaching [tmuxSession] when there is one, and
-  /// showing a cancellable progress dialog while it runs.
+  /// showing a cancellable progress dialog while it runs. [keepLink] lets go
+  /// of a borrowed link that still answers instead of closing it.
   ///
   /// Returns `true` when the terminal was restored.
-  Future<bool> _tryReconnect({String? tmuxSession}) async {
+  Future<bool> _tryReconnect({String? tmuxSession, bool keepLink = false}) async {
     _reconnectCancelled = false;
     if (mounted) _showReconnectingDialog();
     try {
-      return await _reconnect(tmuxSession: tmuxSession);
+      return await _reconnect(tmuxSession: tmuxSession, keepLink: keepLink);
     } catch (e, st) {
       Loggers.app.warning('SSH reconnect threw', e, st);
       _closeFailedReconnectClient();
@@ -799,9 +854,14 @@ extension _Init on SSHPageState {
   /// session was re-attached or, as a fallback, a raw shell was opened). Returns
   /// `false` only when the SSH transport itself could not be re-established, in
   /// which case the caller falls back to the disconnect prompt.
-  Future<bool> _reconnect({String? tmuxSession}) async {
-    // Tear down the stale SSH session/client first.
-    _sess.closeBackend();
+  Future<bool> _reconnect({String? tmuxSession, bool keepLink = false}) async {
+    // Tear down the stale SSH session/client first — only the shell, when the
+    // link is borrowed and still answers.
+    if (keepLink) {
+      _sess.releaseBackend();
+    } else {
+      _sess.closeBackend();
+    }
 
     TermSessionManager.updateStatus(_sessionId, TermSessionStatus.connecting);
 
@@ -870,7 +930,6 @@ extension _Init on SSHPageState {
 
     final shell = await _sess.openShell();
     if (shell == null || !mounted || _reconnectCancelled) {
-      if (mounted) _writeLn(libL10n.fail);
       _closeFailedReconnectClient();
       return false;
     }

@@ -538,6 +538,8 @@
   "schemaTooNewWipeDone": "Дані видалено. Відкрийте програму знову, щоб почати з чистого аркуша.",
   "schemaTooNewWipeFailed": "Не вдалося видалити частину даних, і ця версія досі не може відкрити те, що залишилося. Перевстановіть новішу версію, щоб отримати до них доступ.",
   "monitorNoRemoteAccess": "Цей агент налаштовано лише для моніторингу. Тут не можна відкрити термінал, виконувати команди чи переглядати файли. Щоб увімкнути ці функції, відредагуйте розділ [remote_access] у config.toml агента.",
+  "monitorAgentTooOld": "Цей агент Monitor старіший, ніж підтримує ця версія ServerBox. Оновіть агент на сервері.",
+  "monitorClientTooOld": "Цей агент Monitor більше не підтримує цю версію ServerBox. Оновіть застосунок.",
   "remoteDesktop": "Віддалений робочий стіл",
   "containerReclaimable": "Reclaimable",
   "processSearchHint": "Назва, користувач або PID",
@@ -620,6 +622,7 @@
   "diskFailingFmt": "{count} з помилками",
   "diskSmartOpenTip": "Натисніть, щоб побачити атрибути",
   "cycle": "Цикли",
+  "showAllFmt": "Показати всі ({count})",
   "shownOfFmt": "{shown} із {total} ({what})",
   "countOfFmt": "{what}: {count}",
   "unitDevices": "пристрої",
@@ -1679,5 +1682,7 @@
   "termMetricsBarTip": "CPU, пам'ять, мережа та диск — як на картці сервера. На телефоні над віртуальними клавішами.",
   "launchFailedTitle": "ServerBox не вдалося запустити",
   "launchFailedBody": "Скопіюйте помилку нижче й повідомте про неї в issue на GitHub, додавши файли журналу.",
-  "launchFailedLogs": "Журнали: {path}"
+  "launchFailedLogs": "Журнали: {path}",
+  "reconnect": "Перепідключитися",
+  "reconnectEndsShell": "Немає сеансу tmux для повторного під’єднання, тому перепідключення завершить цю оболонку й усе, що в ній ще виконується, та очистить її вивід на екрані."
 }

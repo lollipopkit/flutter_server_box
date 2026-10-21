@@ -78,6 +78,14 @@ final class SshPageArgs {
     LocalSource() || ConsoleSource() => null,
   };
 
+  /// Whether there is a link to re-establish by hand: a server's shell or a
+  /// guest's console, and not one on this device.
+  bool get canReconnect => switch (source) {
+    ServerSource(:final spi) => !spi.local,
+    ConsoleSource() => true,
+    LocalSource() => false,
+  };
+
   final String? initCmd;
 
   /// Whether [initCmd] is what the shell is for, and so typed again into the
@@ -455,6 +463,9 @@ class SSHPageState extends ConsumerState<SSHPage>
   late final int _sessionStartMs = DateTime.now().millisecondsSinceEpoch;
 
   Future<void> pickSnippetFromToolbar() => _pickSnippet();
+
+  /// The tab bar's reconnect button; see [reconnect].
+  Future<void> reconnectFromToolbar() => reconnect();
 
   /// The output as plain text, for a screen reader or for selecting by line.
   void openTextView() => TerminalTextPage.route.go(context, _terminal);
@@ -999,11 +1010,15 @@ class SSHPageState extends ConsumerState<SSHPage>
       // server that stopped answering — is not. This is the reconnect the
       // health check runs, asked for by hand: it re-attaches tmux when there
       // is a session to re-attach, and says so plainly if it cannot.
-      IconButton(
-        onPressed: _disconnectDialogOpen ? null : reconnect,
-        tooltip: libL10n.refresh,
-        icon: const Icon(Icons.refresh),
-      ),
+      // Not this device's shell: there is no link to re-establish, and a
+      // "reconnect" would only end the shell. Always enabled: a reconnect in
+      // progress, or the question after a lost link, is a modal dialog.
+      if (widget.args.canReconnect)
+        IconButton(
+          onPressed: reconnect,
+          tooltip: l10n.reconnect,
+          icon: const Icon(Icons.refresh),
+        ),
       if (widget.args.detachInput != null)
         IconButton(
           onPressed: detach,

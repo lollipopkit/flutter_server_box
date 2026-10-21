@@ -8,9 +8,14 @@ import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/provider/server/monitor_http.dart';
 
+import '../../helpers/fake_agent_health.dart';
 import '../../helpers/local_http.dart';
+import '../../helpers/rust_lib_helper.dart';
 
 void main() {
+  // `MonitorHttpClient` names its protocol from Rust.
+  setUpAll(initRustLibForTest);
+
   test('monitor file backends share login and roots probes', () async {
     var logins = 0;
     var roots = 0;
@@ -189,6 +194,7 @@ Future<HttpServer> _serve(
 ) async {
   final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
   server.listen((request) async {
+    if (await answerAgentHealth(request)) return;
     try {
       await handler(request);
     } catch (_) {

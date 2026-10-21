@@ -542,9 +542,34 @@ void main() {
     await settle(tester);
     addTearDown(() => tester.pumpWidget(const SizedBox.shrink()));
     // 1 - 250/1000 is 75%. The CPU has had one sample, so it has no percentage
-    // yet and falls back to zero rather than to nothing — a connected card
-    // with a blank where a number goes reads as broken.
-    expect(find.text('0% · 75%'), findsOneWidget);
+    // yet: a dash, which says so, where 0% would claim an idle machine.
+    expect(find.text('-- · 75%'), findsOneWidget);
+  });
+
+  testWidgets('readings not taken are dashes on the card', (tester) async {
+    addServer('a', '8.8.8.8', name: 'washington');
+    tester.view.physicalSize = const Size(500, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          serverProvider('a').overrideWith(
+            () => _Fixed(
+              ServerState(
+                spi: Stores.server.fetch().first,
+                status: InitStatus.status,
+                conn: ServerConn.finished,
+              ),
+            ),
+          ),
+        ],
+        child: tree(['a']),
+      ),
+    );
+    await settle(tester);
+    addTearDown(() => tester.pumpWidget(const SizedBox.shrink()));
+    expect(find.text('-- · --'), findsOneWidget);
   });
 
   testWidgets('several servers on one address are all placed', (tester) async {

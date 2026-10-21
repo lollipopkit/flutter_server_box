@@ -533,6 +533,21 @@ fn shell_path_ps(s: &str) -> String {
     shell_quote_ps(s)
 }
 
+/// The Unix counterpart of [`shell_path_ps`]: a leading `~` or `$HOME` is
+/// expanded, failing when `HOME` is empty; the rest is a literal.
+fn shell_path_unix(s: &str) -> String {
+    const HOME: &str = "\"${HOME:?}\"";
+    for prefix in ["~", "$HOME"] {
+        if s == prefix {
+            return HOME.to_owned();
+        }
+        if let Some(tail) = s.strip_prefix(prefix).and_then(|t| t.strip_prefix('/')) {
+            return format!("{HOME}/{}", shell_quote_unix(tail));
+        }
+    }
+    shell_quote_unix(s)
+}
+
 pub fn install_command(system: SystemType, script_dir: &str, script_path: &str) -> String {
     match system {
         SystemType::Windows => {
@@ -550,9 +565,9 @@ Set-Content -Path {qpath} -Value $sb.ToString() -Encoding UTF8"
         }
         _ => format!(
             "mkdir -p {}\ncat > {}\nchmod 755 {}\n",
-            shell_quote_unix(script_dir),
-            shell_quote_unix(script_path),
-            shell_quote_unix(script_path)
+            shell_path_unix(script_dir),
+            shell_path_unix(script_path),
+            shell_path_unix(script_path)
         ),
     }
 }
@@ -582,7 +597,7 @@ pub fn exec_command(system: SystemType, script_path: &str, func: ShellFunc) -> S
             shell_path_ps(script_path),
             func.flag()
         )),
-        _ => format!("sh {} -{}", shell_quote_unix(script_path), func.flag()),
+        _ => format!("sh {} -{}", shell_path_unix(script_path), func.flag()),
     }
 }
 

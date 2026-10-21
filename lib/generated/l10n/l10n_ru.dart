@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -2355,6 +2354,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get oneDeviceAtLeast => 'Хотя бы одно устройство остаётся на графике.';
 
   @override
+  String showAllFmt(int count) {
+    return 'Показать все ($count)';
+  }
+
+  @override
   String shownOfFmt(int shown, int total, String what) {
     return '$shown из $total ($what)';
   }
@@ -2835,6 +2839,14 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get monitorNoRemoteAccess =>
       'Этот агент настроен только для мониторинга. Здесь нельзя открыть терминал, выполнять команды и просматривать файлы. Чтобы включить эти функции, измените раздел [remote_access] в config.toml агента.';
+
+  @override
+  String get monitorAgentTooOld =>
+      'Этот агент Monitor старее, чем поддерживает эта версия ServerBox. Обновите агент на сервере.';
+
+  @override
+  String get monitorClientTooOld =>
+      'Этот агент Monitor больше не поддерживает эту версию ServerBox. Обновите приложение.';
 
   @override
   String get alerts => 'Оповещения';
@@ -6006,4 +6018,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String launchFailedLogs(String path) {
     return 'Журналы: $path';
   }
+
+  @override
+  String get reconnect => 'Переподключиться';
+
+  @override
+  String get reconnectEndsShell =>
+      'Нет сеанса tmux для повторного подключения, поэтому переподключение завершит эту оболочку и всё, что в ней ещё выполняется, и очистит её вывод на экране.';
 }

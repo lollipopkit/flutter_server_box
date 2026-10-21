@@ -27,6 +27,7 @@ pub mod iperf;
 pub mod linux;
 pub mod output;
 pub mod proc;
+pub mod protocol;
 pub mod script;
 pub mod service;
 pub mod smart;

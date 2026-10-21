@@ -31,40 +31,69 @@ const en: BaseTranslation = {
     three: 'ServerBox terminal screenshot',
     four: 'ServerBox file browser screenshot',
   },
-  gallery: {
-    title: 'Every screen, on every device.',
-    subtitle:
-      '31 screenshots across iPhone, iPad and macOS, folded so the page stays light until you ask for them.',
-    count: '{count} screenshots',
-  },
   features: {
     title: 'One compact workspace for everyday server maintenance.',
     subtitle:
       'A focused operational surface with no decorative filler — every block maps to a real maintenance workflow.',
+    list: {
+      title: 'Server List',
+      description:
+        'See each server’s connection status, CPU, memory, disk and network at a glance. Filter by tag or find servers on the globe.',
+    },
     charts: {
       title: 'Status Charts',
       description:
-        'Track CPU, memory, sensors, GPU, network, disk, and host health from dense mobile charts.',
-    },
-    workspace: {
-      title: 'Cross-Platform Workspace',
-      description:
-        'Use ServerBox across iOS, Android, macOS, Linux, and Windows with one familiar Flutter interface.',
+        'Live charts for CPU, memory, swap, disks, disk I/O and network, plus sensors, GPUs and batteries. Switch to historical data or open a metric for details.',
     },
     terminal: {
-      title: 'SSH Terminal and SFTP',
+      title: 'SSH Terminal',
       description:
-        'Open command-line and file sessions directly from a server card, backed by dartssh2 and xterm.dart.',
+        'A full terminal with virtual keys on phones, ready for htop, vim and more. Connect directly, through a jump host or with a ProxyCommand.',
     },
-    native: {
-      title: 'Native Device Hooks',
+    files: {
+      title: 'Files over SFTP',
       description:
-        'Biometric auth, message push, home widgets, and watchOS support keep server context nearby.',
+        'Browse, upload, download and edit files in place. Markdown files open in a rendered preview.',
     },
-    platforms: {
-      title: 'Docker, Process, Systemd',
+    containers: {
+      title: 'Docker and Podman',
       description:
-        'Inspect containers, processes, and services without switching away from your monitoring flow.',
+        'View containers grouped by Compose project, with CPU, memory and network usage. Start, stop, restart or remove containers, read their logs, or open a shell inside them. Images and settings have their own tabs.',
+    },
+    processes: {
+      title: 'Processes',
+      description:
+        'Every process with its CPU and memory, sorted as you like and searchable by name, user or PID. Stop one from the list.',
+    },
+    services: {
+      title: 'Systemd Services',
+      description:
+        'Failed units first, then everything else. Restart a unit or read its logs in one tap.',
+    },
+    users: {
+      title: 'Users and Groups',
+      description:
+        'View system accounts with login shells and sudo access highlighted. Add or delete users, and add, edit or delete groups.',
+    },
+    agent: {
+      title: 'AI Agent',
+      description:
+        'An assistant inside the app that knows your servers, using the model providers, MCP servers and skills you choose.',
+    },
+    bench: {
+      title: 'Benchmark',
+      description:
+        'Run Yet Another Bench Script to test a server’s disk, network and CPU, then keep the results. The More menu also opens snippets, remote desktop and virtualization.',
+    },
+    virt: {
+      title: 'Virtualization',
+      description:
+        'Virtual machines and containers on libvirt and Proxmox VE: start and stop them, change vCPUs, memory and disks, and open their consoles.',
+    },
+    themes: {
+      title: 'Theme Store',
+      description:
+        'Install official themes with their own colors, backgrounds and splash screens from inside the app. You can create your own themes too.',
     },
   },
   capabilities: {
@@ -117,6 +146,9 @@ const en: BaseTranslation = {
     retry: 'Try again',
     previewNote:
       'Previews show the theme\'s icons and colors; the rest of the interface is illustrative.',
+    iconPacks: 'Icon packs',
+    iconPacksSubtitle:
+      'Icons chosen apart from the theme and drawn over whichever one is in use. Install them in the app from Settings → Appearance → Theme store → Icon packs.',
   },
   plugins: {
     title: 'Plugins.',
@@ -128,7 +160,7 @@ const en: BaseTranslation = {
   download: {
     title: 'Every platform, every source.',
     subtitle:
-      'Choose a trusted source for your device. iOS is available from the App Store. On macOS, the App Store build supports Apple silicon only; Intel users can install the app from GitHub Releases or Homebrew. Direct downloads are also available for Android, Linux, and Windows.',
+      'Choose a trusted source for your device. iOS comes from the App Store, or as an unsigned .ipa from GitHub Releases that you sign yourself. macOS builds for Apple silicon and Intel are on GitHub Releases and Homebrew. Android, Linux and Windows have direct downloads.',
     copied: 'Install command copied',
     copyPrompt: 'Copy this install command:',
     note:

@@ -34,9 +34,8 @@ const _kCardColumnWidth = 340.0;
 
 /// How many rows a card lists before its footer takes over.
 ///
-/// A card is a summary. A host with twenty sensors or fifteen guests has a
-/// page for them; what belongs here is enough to recognise the answer, and a
-/// last line saying how much was left out.
+/// A card is a summary: enough to recognise the answer, a last line saying
+/// how much was left out, and a row listing the rest on demand.
 const kReadoutCardRows = 6;
 
 /// One card: a conclusion, a few lines of detail, and a last line saying
@@ -68,6 +67,8 @@ class ServerDetailReadoutCard extends StatelessWidget {
     this.onTap,
     this.expanded = false,
     this.onToggle,
+    this.full = false,
+    this.onFull,
   });
 
   final IconData icon;
@@ -88,7 +89,8 @@ class ServerDetailReadoutCard extends StatelessWidget {
   /// The conclusion under the title, and what it is out of.
   final ({String value, String note})? headline;
 
-  /// The detail, of which the first [kReadoutCardRows] are shown.
+  /// The detail, of which the first [kReadoutCardRows] are shown unless
+  /// [full].
   final List<Widget> rows;
 
   /// Below [rows] and never cut off with them.
@@ -108,6 +110,12 @@ class ServerDetailReadoutCard extends StatelessWidget {
 
   /// What pressing the title does to a card that opens in place.
   final VoidCallback? onToggle;
+
+  /// Whether every one of [rows] is showing, held like [expanded].
+  final bool full;
+
+  /// What pressing the row under cut-off [rows] does.
+  final VoidCallback? onFull;
 
   /// Whether a card with these opens in place: it has something to open, and
   /// is not a way to somewhere else.
@@ -236,7 +244,24 @@ class ServerDetailReadoutCard extends StatelessWidget {
             child: open
                 ? Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [...rows.take(kReadoutCardRows), ...extra],
+                    children: [
+                      ...full ? rows : rows.take(kReadoutCardRows),
+                      if (rows.length > kReadoutCardRows)
+                        InkWell(
+                          onTap: onFull,
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(17, 7, 17, 7),
+                            child: Text(
+                              full ? libL10n.fold : l10n.showAllFmt(rows.length),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: scheme.primary,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ...extra,
+                    ],
                   )
                 : const SizedBox(width: double.infinity),
           ),
@@ -423,7 +448,9 @@ class ServerDetailCardGrid extends StatelessWidget {
 /// three is read as a host with three devices — and one that goes quiet
 /// when it is showing everything leaves the reader counting rows to find
 /// out. [what] is the noun the card is a list of.
-String readoutCountNote(int total, String what) => total <= kReadoutCardRows
+/// [full] is the card's own.
+String readoutCountNote(int total, String what, {bool full = false}) =>
+    full || total <= kReadoutCardRows
     ? l10n.countOfFmt(total, what)
     : l10n.shownOfFmt(kReadoutCardRows, total, what);
 

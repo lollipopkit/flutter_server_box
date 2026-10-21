@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:fl_lib/theme.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/data/model/app/theme_style.dart';
 
 /// `docs/schemas/fsbt-manifest.schema.json` is what an editor reads while a
 /// manifest is typed; the parser is what an install runs. Nothing else holds
@@ -26,13 +27,40 @@ void main() {
 
   group('top level', () {
     test('the schema names the tables the parser accepts', () {
-      expect(properties.keys.toSet(), unorderedEquals(ThemePackages.sections));
+      expect(
+        properties.keys.toSet(),
+        unorderedEquals({
+          ...ThemePackages.sections,
+          ...ThemePackages.iconPackSections,
+        }),
+      );
     });
 
     test('the schema requires the keys that have no default', () {
+      expect(raw['required'], unorderedEquals(['id', 'name', 'schema']));
+      expect(raw['if'], {
+        'required': ['kind'],
+      });
+      expect(raw['else'], {
+        'required': ['modes'],
+      });
+    });
+
+    test('an icon pack is held to its own tables', () {
+      final pack = raw['then'] as Map<String, dynamic>;
       expect(
-        raw['required'],
-        unorderedEquals(['id', 'name', 'modes', 'schema']),
+        (pack['propertyNames'] as Map)['enum'],
+        unorderedEquals(ThemePackages.iconPackSections),
+      );
+      final icons = (pack['properties'] as Map)['icons'] as Map;
+      expect(
+        (icons['propertyNames'] as Map)['enum'],
+        unorderedEquals(ThemePackages.iconPackFields),
+      );
+      expect(
+        (((pack['properties'] as Map)['schema'] as Map)['properties']
+            as Map)['min'],
+        {'minimum': ThemePackages.iconSchema},
       );
     });
 
@@ -97,13 +125,27 @@ void main() {
   test('icon keys, and the file name each maps to', () {
     final images = _map(properties['icons']['properties']['images']);
     expect(images['additionalProperties'], false);
-    expect(images['properties'].keys.toSet(), ThemePackages.iconKeys);
+    expect(
+      images['properties'].keys.toSet(),
+      ThemePackages.iconKeys.union(ThemeFileIcon.schemaKeys),
+    );
+    expect(
+      images.containsKey('patternProperties'),
+      isFalse,
+      reason: 'an open file.* value pattern cannot bind the stem to the key',
+    );
     expect(
       _map(properties['icons']['properties']['colors'])['properties']
           .keys
           .toSet(),
       ThemePackages.iconKeys,
       reason: 'a color for a key no image carries is refused anyway',
+    );
+    expect(
+      _map(_map(properties['icons']['properties']['colors'])['patternProperties'])
+          .keys
+          .toSet(),
+      {ThemeFileIcon.keyPattern.pattern},
     );
     for (final entry in _map(images['properties']).entries) {
       final key = entry.key;

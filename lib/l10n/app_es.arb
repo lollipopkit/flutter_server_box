@@ -538,6 +538,8 @@
   "schemaTooNewWipeDone": "Datos eliminados. Abre la aplicación de nuevo para empezar desde cero.",
   "schemaTooNewWipeFailed": "No se han podido eliminar algunos datos y esta versión aún no puede abrir lo que queda. Vuelve a instalar la versión más reciente para acceder a ellos.",
   "monitorNoRemoteAccess": "Este agente está configurado solo para supervisar. Aquí no puedes abrir un terminal, ejecutar comandos ni explorar archivos. Para activar estas funciones, edita [remote_access] en el config.toml del agente.",
+  "monitorAgentTooOld": "Este agente Monitor es más antiguo de lo que admite esta versión de ServerBox. Actualiza el agente en el servidor.",
+  "monitorClientTooOld": "Este agente Monitor ya no admite esta versión de ServerBox. Actualiza la app.",
   "remoteDesktop": "Escritorio remoto",
   "containerReclaimable": "Reclaimable",
   "processSearchHint": "Nombre, usuario o PID",
@@ -620,6 +622,7 @@
   "diskFailingFmt": "{count} con fallos",
   "diskSmartOpenTip": "Toca uno para ver sus atributos",
   "cycle": "Ciclos",
+  "showAllFmt": "Mostrar los {count}",
   "shownOfFmt": "{shown} de {total} {what}",
   "countOfFmt": "{count} {what}",
   "unitDevices": "dispositivos",
@@ -1679,5 +1682,7 @@
   "termMetricsBarTip": "CPU, memoria, red y disco, como en la tarjeta del servidor. En el teléfono, sobre las teclas virtuales.",
   "launchFailedTitle": "ServerBox no pudo iniciarse",
   "launchFailedBody": "Copia el error de abajo y repórtalo en un issue de GitHub, junto con los archivos de registro.",
-  "launchFailedLogs": "Registros: {path}"
+  "launchFailedLogs": "Registros: {path}",
+  "reconnect": "Reconectar",
+  "reconnectEndsShell": "No hay una sesión de tmux a la que volver, así que reconectar cierra esta shell y todo lo que siga ejecutándose en ella, y borra su salida de la pantalla."
 }

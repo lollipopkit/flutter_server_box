@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -2166,6 +2165,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get oneDeviceAtLeast => '图表至少保留一个设备。';
 
   @override
+  String showAllFmt(int count) {
+    return '显示全部 $count 个';
+  }
+
+  @override
   String shownOfFmt(int shown, int total, String what) {
     return '$total 个$what中的 $shown 个';
   }
@@ -2631,6 +2635,14 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get monitorNoRemoteAccess =>
       '此 agent 目前只能查看监控数据，不能打开终端、执行命令或浏览文件。要开启这些功能，请修改 agent 的 config.toml，在 [remote_access] 下打开对应选项。';
+
+  @override
+  String get monitorAgentTooOld =>
+      '此 Monitor agent 版本过旧，当前版本的 ServerBox 已不再支持。请在服务器上更新 agent。';
+
+  @override
+  String get monitorClientTooOld =>
+      '此 Monitor agent 已不再支持当前版本的 ServerBox。请更新 App。';
 
   @override
   String get alerts => '告警';
@@ -5591,6 +5603,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String launchFailedLogs(String path) {
     return '日志：$path';
   }
+
+  @override
+  String get reconnect => '重新连接';
+
+  @override
+  String get reconnectEndsShell =>
+      '没有可以重新接入的 tmux 会话，重新连接会结束当前 shell 及其中仍在运行的程序，并清除屏幕上的输出。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -7752,6 +7771,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get oneDeviceAtLeast => '圖表至少保留一個裝置。';
 
   @override
+  String showAllFmt(int count) {
+    return '顯示全部 $count 個';
+  }
+
+  @override
   String shownOfFmt(int shown, int total, String what) {
     return '$total 個$what中的 $shown 個';
   }
@@ -8217,6 +8241,14 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get monitorNoRemoteAccess =>
       '此 agent 目前只能查看監控資料，不能開啟終端、執行命令或瀏覽檔案。若要開啟這些功能，請修改 agent 的 config.toml，在 [remote_access] 下開啟對應選項。';
+
+  @override
+  String get monitorAgentTooOld =>
+      '此 Monitor agent 版本過舊，目前版本的 ServerBox 已不再支援。請在伺服器上更新 agent。';
+
+  @override
+  String get monitorClientTooOld =>
+      '此 Monitor agent 已不再支援目前版本的 ServerBox。請更新 App。';
 
   @override
   String get alerts => '警示';
@@ -11183,4 +11215,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String launchFailedLogs(String path) {
     return '日誌：$path';
   }
+
+  @override
+  String get reconnect => '重新連線';
+
+  @override
+  String get reconnectEndsShell =>
+      '沒有可以重新接入的 tmux 工作階段，重新連線會結束目前的 shell 及其中仍在執行的程式，並清除畫面上的輸出。';
 }

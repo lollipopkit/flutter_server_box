@@ -616,6 +616,7 @@
   "diskFailingFmt": "{count} 个异常",
   "diskSmartOpenTip": "点按查看该盘的属性",
   "cycle": "循环次数",
+  "showAllFmt": "显示全部 {count} 个",
   "shownOfFmt": "{total} 个{what}中的 {shown} 个",
   "countOfFmt": "{count} 个{what}",
   "unitDevices": "设备",
@@ -788,6 +789,8 @@
   "corsOrigins": "CORS 允许来源",
   "corsOriginsTip": "允许浏览器面板从哪些来源调用此 agent。留空表示仅同源。",
   "monitorNoRemoteAccess": "此 agent 目前只能查看监控数据，不能打开终端、执行命令或浏览文件。要开启这些功能，请修改 agent 的 config.toml，在 [remote_access] 下打开对应选项。",
+  "monitorAgentTooOld": "此 Monitor agent 版本过旧，当前版本的 ServerBox 已不再支持。请在服务器上更新 agent。",
+  "monitorClientTooOld": "此 Monitor agent 已不再支持当前版本的 ServerBox。请更新 App。",
   "remoteDesktop": "远程桌面",
   "alerts": "告警",
   "densityCards": "卡片",
@@ -1679,5 +1682,7 @@
   "termMetricsBarTip": "CPU、内存、网络、磁盘，与服务器卡片一致；手机上位于虚拟按键上方。",
   "launchFailedTitle": "ServerBox 无法启动",
   "launchFailedBody": "请复制下方的错误信息，连同日志文件一起在 GitHub issue 中反馈。",
-  "launchFailedLogs": "日志：{path}"
+  "launchFailedLogs": "日志：{path}",
+  "reconnect": "重新连接",
+  "reconnectEndsShell": "没有可以重新接入的 tmux 会话，重新连接会结束当前 shell 及其中仍在运行的程序，并清除屏幕上的输出。"
 }

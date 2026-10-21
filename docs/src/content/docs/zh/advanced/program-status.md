@@ -5,7 +5,7 @@ description: 查看终端中的程序何时正在等待你、已完成或执行�
 
 终端中运行的程序可以向 Server Box 报告自身状态：正在运行、等待你操作、已完成或执行失败。Server Box 会在终端名称旁显示状态；终端当前不可见时，也会发送通知。
 
-服务器无需安装任何内容。程序只需向输出写入一段简短的 escape sequence，Server Box 就能通过 SSH、Monitor agent 的终端或本机终端接收它，就像接收其他终端输出一样。
+服务器无需安装额外软件。程序会将简短的 escape sequence 写入输出，Server Box 可像读取其他终端输出一样，通过 SSH、Monitor agent 终端或本机终端接收。
 
 ## Server Box 读取的内容
 

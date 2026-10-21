@@ -1,6 +1,6 @@
 ---
 name: serverbox-theme
-description: Make a ServerBox app theme — a `.fsbt` package (a folder with `manifest.toml`, optional icons, background and splash) — from a description, a brand color or an existing color scheme, then validate it, pack it and share it. Use this whenever someone wants to create, port, tweak, fix, validate or publish a theme for ServerBox (flutter_server_box), including requests that never say ".fsbt" or "manifest", such as "make ServerBox look like Nord", "port my VS Code theme to the app", "a dark purple theme for server box", "why does my theme fail to install", "add custom tab icons", or "put my theme in the theme store".
+description: Make a ServerBox app theme — a `.fsbt` package (a folder with `manifest.toml`, optional icons, background and splash) — or an icon pack (icons only, chosen apart from the theme) from a description, a brand color or an existing color scheme, then validate it, pack it and share it. Use this whenever someone wants to create, port, tweak, fix, validate or publish a theme for ServerBox (flutter_server_box), including requests that never say ".fsbt" or "manifest", such as "make ServerBox look like Nord", "port my VS Code theme to the app", "a dark purple theme for server box", "why does my theme fail to install", "add custom tab icons", or "put my theme in the theme store".
 ---
 
 # ServerBox themes
@@ -23,6 +23,12 @@ density, corner radii, in-app icons, a background, and a launch splash. It does
 **not** change fonts, the launcher icon, or terminal/editor colors — say so if
 the request asks for those, rather than inventing fields: the installer rejects
 unknown tables and fields.
+
+An **icon pack** is the same kind of folder with `kind = "icons"` and only
+`[icons]` (`images`, `colors`): icons the user picks apart from the theme, drawn
+over whichever theme is in use — such as Files-window `file.<ext>` logos. Make
+one when the request is about icons alone and should work with any theme; it
+needs `[schema] min = 4`. See "Icon packs" in `references/manifest.md`.
 
 The format is strict on purpose: every field is checked, and a misspelled table
 is an error, not a no-op. So write the manifest from the reference, validate it
@@ -54,11 +60,13 @@ fill it in. Its first line is a schema directive, so editors with Taplo/Even
 Better TOML/Tombi report mistakes as you type. For every field, its range and
 default, read `references/manifest.md`.
 
-Schema range: `[schema] min = 1, max = 3` unless the theme uses an SVG icon,
-`[icons.colors]` or `[splash]` — those are schema 2 features and need
-`min = 2`, or an older app installs the theme and silently drops them. Any
-component beyond card, tile, button, input, navigation, dialog and sheet, a
-button `minHeight`, `background.tile`, `[layout]`, or `[variants]` is schema 3 and needs `min = 3`.
+Schema range: `[schema] min = 1, max = 4` unless the theme uses an SVG icon,
+`[icons.colors]`, or `[splash]`. These schema 2 features require `min = 2`, or
+an older app may install the theme but silently drop them. Schema 3 features
+require `min = 3`: components beyond card, tile, button, input, navigation,
+dialog, and sheet; button `minHeight`; `background.tile`; `[layout]`; or
+`[variants]`. Packages with more than 48 icons and all icon packs require schema 4 and
+`min = 4`.
 
 ### 3. Colors
 
@@ -87,11 +95,13 @@ expected (`backgroundColor = "surfaceContainer"`).
 
 Only when asked; details in `references/manifest.md`.
 
-- **Icons**: `[icons.images]` maps a key (`"tab.server"`, `"nav.settings"`, …)
-  to `icons/<key with dots as underscores>.svg|.png`; no other name is
-  accepted. Icons are tinted one color — draw SVGs with `currentColor`. An SVG
-  may not contain `<script>`, `<style>`, `<foreignObject>`, a DTD, or any
-  `href`/`url(…)` that is not a `#fragment` of the same file.
+- **Icons**: `[icons.images]` maps a key (`"tab.server"`, `"nav.settings"`,
+  `"file.py"`, …) to `icons/<key with dots as underscores>.svg|.png`; no
+  other name is accepted. Files-window keys are `file.dir`, `file.link`,
+  `file.default`, and `file.<ext>`. Icons are tinted one color — draw SVGs
+  with `currentColor`. An SVG may not contain `<script>`, `<style>`,
+  `<foreignObject>`, a DTD, or any `href`/`url(…)` that is not a `#fragment`
+  of the same file.
 - **Background**: `type = "gradient"` (from the palette) or `"image"` with
   `image = "background.png"`, `opacity` 0–0.6, `blur` 0–30. For a repeating
   pattern add `tile` (16–1024 logical px, schema 3) and draw one seamless,
@@ -116,7 +126,8 @@ python3 <skill>/scripts/validate.py path/to/my-theme
 It runs the published JSON Schema (via `uvx`/`pipx` `check-jsonschema`; it
 tells you if neither is installed) and then the rules only the installer
 knows: icon color keys without an image, schema 2 features under `min = 1`,
-schema 3 components or `[layout]` under `min < 3`,
+schema 3 components or `[layout]` under `min < 3`, more than 48 icons under
+`min < 4`,
 file names, sizes, image dimensions, SVG content, stray files, and contrast.
 Fix every error; read every warning and either fix it or tell the user why it
 stays. Don't hand over a theme that has not passed.
@@ -148,7 +159,8 @@ theme repository listing needs. Ways to share, simplest first:
   published by maintainers with `scripts/publish-themes.py` (this skill's
   `publish.py` with `store/` as the repository); propose one with a pull
   request adding `store/themes/<id>/` (the folder) and `store/themes/<id>.toml`
-  (the listing, without versions). Only official themes are released from
+  (the listing, without versions) — an icon pack under `store/icons/` the
+  same way. Only official themes are released from
   flutter_server_box.
 
 ## Publishing in your own repository
@@ -160,7 +172,8 @@ releasing, the same tool the official themes use:
 ```sh
 # once, in a new GitHub repository (git remote origin set):
 python3 <skill>/scripts/publish.py --init --name "Somebody's themes"
-# then per theme: themes/<id>/ (the folder) and themes/<id>.toml:
+# then per theme: themes/<id>/ (the folder) and themes/<id>.toml
+# (an icon pack: icons/<id>/ and icons/<id>.toml):
 #   id = "<id>"   name = "..."   description = "..."   license = "MIT"
 python3 <skill>/scripts/publish.py --dry-run   # what changed, and the versions it would get
 python3 <skill>/scripts/publish.py             # upload, then append [[version]]s

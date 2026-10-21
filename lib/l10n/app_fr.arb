@@ -538,6 +538,8 @@
   "schemaTooNewWipeDone": "Données supprimées. Rouvrez l’application pour repartir de zéro.",
   "schemaTooNewWipeFailed": "Certaines données n’ont pas pu être supprimées et cette version ne peut toujours pas ouvrir ce qui reste. Réinstallez la version plus récente pour y accéder.",
   "monitorNoRemoteAccess": "Cet agent est configuré pour la surveillance uniquement. Vous ne pouvez pas ouvrir de terminal, exécuter de commandes ni parcourir les fichiers ici. Pour activer ces fonctions, modifiez [remote_access] dans le config.toml de l'agent.",
+  "monitorAgentTooOld": "Cet agent Monitor est plus ancien que ce que prend en charge cette version de ServerBox. Mettez à jour l'agent sur le serveur.",
+  "monitorClientTooOld": "Cet agent Monitor ne prend plus en charge cette version de ServerBox. Mettez à jour l'application.",
   "remoteDesktop": "Bureau à distance",
   "containerReclaimable": "Reclaimable",
   "processSearchHint": "Nom, utilisateur ou PID",
@@ -620,6 +622,7 @@
   "diskFailingFmt": "{count} en échec",
   "diskSmartOpenTip": "Touchez pour voir ses attributs",
   "cycle": "Cycles",
+  "showAllFmt": "Afficher les {count}",
   "shownOfFmt": "{shown} sur {total} {what}",
   "countOfFmt": "{count} {what}",
   "unitDevices": "périphériques",
@@ -1679,5 +1682,7 @@
   "termMetricsBarTip": "CPU, mémoire, réseau et disque, comme sur la carte du serveur. Sur téléphone, au-dessus des touches virtuelles.",
   "launchFailedTitle": "ServerBox n'a pas pu démarrer",
   "launchFailedBody": "Copiez l'erreur ci-dessous et signalez-la dans une issue GitHub, avec les fichiers journaux.",
-  "launchFailedLogs": "Journaux : {path}"
+  "launchFailedLogs": "Journaux : {path}",
+  "reconnect": "Reconnecter",
+  "reconnectEndsShell": "Aucune session tmux à rattacher : reconnecter ferme ce shell et tout ce qui s’y exécute encore, et efface sa sortie de l’écran."
 }

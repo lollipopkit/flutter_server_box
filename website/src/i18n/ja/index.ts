@@ -31,40 +31,69 @@ const ja: Translation = {
     three: 'ServerBox ターミナルのスクリーンショット',
     four: 'ServerBox ファイルブラウザのスクリーンショット',
   },
-  gallery: {
-    title: 'すべての画面を、すべてのデバイスで。',
-    subtitle:
-      'iPhone・iPad・macOS の 31 枚のスクリーンショット。ページを軽く保つため、開くまで読み込みません。',
-    count: '{count} 枚',
-  },
   features: {
     title: '日常のサーバーメンテナンスに使える小さな作業場。',
     subtitle:
       '装飾を抑え、実際のメンテナンス作業に対応する機能だけを集めています。',
-    charts: {
-      title: '状態チャート',
+    list: {
+      title: 'サーバー一覧',
       description:
-        'CPU、メモリ、センサー、GPU、ネットワーク、ディスク、ホスト状態をモバイルチャートで確認できます。',
+        '各サーバーの接続状態や CPU・メモリ・ディスク・ネットワークの使用状況を一覧できます。タグで絞り込んだり、地球儀上で確認したりできます。',
     },
-    workspace: {
-      title: 'クロスプラットフォーム',
+    charts: {
+      title: 'ステータスチャート',
       description:
-        'iOS、Android、macOS、Linux、Windows で同じ Flutter インターフェースを使えます。',
+        'CPU・メモリ・スワップ・ディスク・ディスク I/O・ネットワークのリアルタイムチャートに加え、センサー・GPU・バッテリーも。履歴に切り替えたり、各項目の詳細を開いたりできます。',
     },
     terminal: {
-      title: 'SSH ターミナルと SFTP',
+      title: 'SSH ターミナル',
       description:
-        'サーバーカードからターミナルとファイルセッションを直接開けます。dartssh2 と xterm.dart を使用しています。',
+        'スマートフォンでは仮想キーを使える本格的なターミナル。htop や vim などを実行できます。直接接続、踏み台ホスト経由、ProxyCommand に対応しています。',
     },
-    native: {
-      title: 'ネイティブ連携',
+    files: {
+      title: 'SFTP でファイル操作',
       description:
-        '生体認証、通知、ホームウィジェット、watchOS により、サーバーの状況を近くに保てます。',
+        'ファイルの閲覧・アップロード・ダウンロードに加え、その場で編集できます。Markdown ファイルはプレビュー表示で開きます。',
     },
-    platforms: {
-      title: 'Docker、プロセス、systemd',
+    containers: {
+      title: 'Docker と Podman',
       description:
-        '監視の流れを離れずに、コンテナ、プロセス、サービスを確認できます。',
+        'Compose プロジェクトごとにコンテナを表示し、CPU・メモリ・ネットワークも確認。起動・停止・再起動・削除、ログの確認、コンテナ内のシェルに対応。イメージと設定は別タブです。',
+    },
+    processes: {
+      title: 'プロセス',
+      description:
+        'すべてのプロセスの CPU とメモリ。並べ替えや名前・ユーザー・PID での検索ができ、一覧から停止できます。',
+    },
+    services: {
+      title: 'Systemd サービス',
+      description:
+        '失敗したユニットを先頭に表示。ワンタップで再起動やログ確認ができます。',
+    },
+    users: {
+      title: 'ユーザーとグループ',
+      description:
+        'システムアカウントの一覧で、ログインシェルと sudo を表示。ユーザーの追加・削除、グループの追加・編集・削除ができます。',
+    },
+    agent: {
+      title: 'AI エージェント',
+      description:
+        'サーバーのことを知っているアプリ内アシスタント。モデルプロバイダー、MCP サーバー、スキルは自分で選べます。',
+    },
+    bench: {
+      title: 'ベンチマーク',
+      description:
+        'Yet Another Bench Script でサーバーのディスク・ネットワーク・CPU を計測し、結果を保存できます。「その他」メニューからスニペット、リモートデスクトップ、仮想化も開けます。',
+    },
+    virt: {
+      title: '仮想化',
+      description:
+        'libvirt と Proxmox VE の仮想マシンとコンテナを起動・停止し、vCPU・メモリ・ディスクを変更し、コンソールを開けます。',
+    },
+    themes: {
+      title: 'テーマストア',
+      description:
+        '独自の配色・背景・スプラッシュを持つ公式テーマを、アプリ内からインストール。自分で作ることもできます。',
     },
   },
   capabilities: {
@@ -116,6 +145,9 @@ const ja: Translation = {
     retry: '再試行',
     previewNote:
       'プレビューで正確なのはテーマのアイコンと配色のみです。そのほかの画面は参考用です。',
+    iconPacks: 'アイコンパック',
+    iconPacksSubtitle:
+      'テーマとは別に選び、使用中のテーマの上に表示するアイコンです。アプリの 設定 → 外観 → テーマストア → アイコンパック からインストールできます。',
   },
   plugins: {
     title: 'プラグイン。',
@@ -126,7 +158,7 @@ const ja: Translation = {
   download: {
     title: 'すべてのプラットフォーム、すべての配布元。',
     subtitle:
-      'デバイスに合った信頼できる配布元を選んでください。iOS 版は App Store から入手できます。macOS の App Store 版は Apple シリコンにのみ対応しており、Intel Mac では GitHub Releases または Homebrew からインストールできます。Android、Linux、Windows 向けには直接ダウンロードも用意されています。',
+      'デバイスに合った信頼できる配布元を選んでください。iOS 版は App Store から、または GitHub Releases の未署名 .ipa を自分で署名して入手できます。macOS 版は Apple シリコンと Intel に対応し、GitHub Releases と Homebrew で配布しています。Android、Linux、Windows は直接ダウンロードできます。',
     copied: 'インストールコマンドをコピーしました',
     copyPrompt: 'このインストールコマンドをコピーしてください:',
     note:

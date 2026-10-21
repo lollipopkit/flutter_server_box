@@ -344,9 +344,9 @@ String? _read(ServerStatus status, TrayMetric metric) {
       final used = status.cpu.usedPercent();
       return used == null ? null : '${used.round()}%';
     case TrayMetric.mem:
-      final total = status.mem.total;
-      if (total == 0) return null;
-      return '${(status.mem.usedPercent * 100).round()}%';
+      final ratio = status.mem.usedPercent;
+      if (ratio == null) return null;
+      return '${(ratio * 100).round()}%';
     case TrayMetric.swap:
       final total = status.swap.total;
       if (total == 0) return null;

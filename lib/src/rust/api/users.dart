@@ -107,7 +107,7 @@ String groupsDeleteCommand({required String groupJson}) =>
 /// (`invalidName`, `lineBreak`, `invalidPrimaryGroup`,
 /// `invalidSupplementaryGroup`, `passwordLineBreak`, `renaming`,
 /// `rootNotDeletable`, `currentUserUnknown`, `unknownMember`,
-/// `rootGroupNotDeletable`, `groupInUse`), or `malformed` for JSON the
+/// `rootGroupNotDeletable`, `groupInUse`, `groupNotLocal`), or `malformed` for JSON the
 /// app should never have sent.
 class UserFfiError implements FrbException {
   final String code;
