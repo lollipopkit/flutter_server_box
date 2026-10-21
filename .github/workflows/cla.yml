@@ -3,8 +3,9 @@
 # The logic and its tests live in lollipopkit/cla-actions; signatures stay on
 # this repository's `cla-signatures` branch.
 #
-# Setup, once: add `CLA` as a required status check for `main`. Without that,
-# this workflow reports but does not block.
+# The verdict is this job's check run, named `CLA`: make that a required check
+# for `main`. A comment run is not attached to the head commit, so after a
+# signature or `recheck` it re-runs the latest `pull_request_target` run.
 #
 # Security note: this runs on `pull_request_target`, so it holds a write token
 # while a pull request from a fork is in play. The action never checks out or
@@ -21,7 +22,7 @@ on:
 permissions:
   contents: write # append to the cla-signatures branch
   pull-requests: write # post the "please sign" comment
-  statuses: write # report the CLA status on the head commit
+  actions: write # re-run the check after a signature
 
 concurrency:
   # Never cancel in progress: a cancelled run could drop a signature write.
@@ -30,11 +31,7 @@ concurrency:
 
 jobs:
   cla:
-    # Deliberately not named `CLA`: the branch protection rule should require the
-    # commit status this job publishes, not the job itself. A run triggered by a
-    # comment is not attached to the pull request's head commit, so only the
-    # status turns green the moment someone signs.
-    name: Verify CLA signatures
+    name: CLA
     runs-on: ubuntu-latest
     timeout-minutes: 5
     # Skip on forks of this repository, and skip the vast majority of comments
@@ -47,7 +44,7 @@ jobs:
         (contains(github.event.comment.body, 'I have read the CLA Document and I hereby sign the CLA') ||
          contains(github.event.comment.body, 'recheck'))))
     steps:
-      - uses: lollipopkit/cla-actions@61a372f0adbffc8f4f80037dcef0f2aeadbcd058 # v1.0.0
+      - uses: lollipopkit/cla-actions@cb8ab238a96f2736f19a9bf258a49af3c6eed7bd # v2.0.0
         with:
           note: >-
             It lets this work ship in the App Store builds alongside the

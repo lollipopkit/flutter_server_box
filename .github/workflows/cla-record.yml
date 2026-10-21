@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: lollipopkit/cla-actions/record@61a372f0adbffc8f4f80037dcef0f2aeadbcd058 # v1.0.0
+      - uses: lollipopkit/cla-actions/record@cb8ab238a96f2736f19a9bf258a49af3c6eed7bd # v2.0.0
         with:
           login: ${{ inputs.login }}
           reference: ${{ inputs.reference }}
