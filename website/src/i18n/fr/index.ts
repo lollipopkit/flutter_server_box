@@ -31,40 +31,69 @@ const fr: Translation = {
     three: 'Capture du terminal ServerBox',
     four: 'Capture du navigateur de fichiers ServerBox',
   },
-  gallery: {
-    title: "Chaque écran, sur chaque appareil.",
-    subtitle:
-      "31 captures sur iPhone, iPad et macOS, repliées pour garder la page légère jusqu'à ce que vous les demandiez.",
-    count: "{count} captures",
-  },
   features: {
     title: 'Un espace compact pour la maintenance quotidienne.',
     subtitle:
       'Une surface opérationnelle dense et directe, où chaque bloc correspond à un vrai flux de maintenance.',
-    charts: {
-      title: 'Graphiques d’état',
+    list: {
+      title: 'Liste des serveurs',
       description:
-        'Suivez CPU, mémoire, capteurs, GPU, réseau, disque et santé de l’hôte depuis des graphiques mobiles denses.',
+        "Consultez d'un coup d'œil l'état de connexion et l'utilisation du CPU, de la mémoire, du disque et du réseau de chaque serveur. Filtrez par étiquette ou repérez-les sur le globe.",
     },
-    workspace: {
-      title: 'Espace multiplateforme',
+    charts: {
+      title: "Graphiques d'état",
       description:
-        'Utilisez ServerBox sur iOS, Android, macOS, Linux et Windows avec la même interface Flutter familière.',
+        "Graphiques en temps réel du CPU, de la mémoire, du swap, des disques, des E/S disque et du réseau, ainsi que des capteurs, GPU et batteries. Consultez l'historique ou ouvrez une mesure pour en voir les détails.",
     },
     terminal: {
-      title: 'Terminal SSH et SFTP',
+      title: 'Terminal SSH',
       description:
-        'Ouvrez des sessions terminal et fichiers depuis une carte serveur, avec dartssh2 et xterm.dart.',
+        'Un terminal complet avec touches virtuelles sur mobile, prêt pour htop, vim et bien plus. Connectez-vous directement, via un hôte bastion ou avec un ProxyCommand.',
     },
-    native: {
-      title: 'Intégrations natives',
+    files: {
+      title: 'Fichiers via SFTP',
       description:
-        'Authentification biométrique, notifications, widgets et watchOS gardent le contexte serveur à portée.',
+        "Parcourez, envoyez, téléchargez et modifiez les fichiers sur place. Les fichiers Markdown s'ouvrent dans un aperçu mis en forme.",
     },
-    platforms: {
-      title: 'Docker, processus, systemd',
+    containers: {
+      title: 'Docker et Podman',
       description:
-        'Inspectez conteneurs, processus et services sans quitter le flux de surveillance.',
+        'Consultez les conteneurs regroupés par projet Compose et leur utilisation du CPU, de la mémoire et du réseau. Démarrez-les, arrêtez-les, redémarrez-les ou supprimez-les ; consultez leurs logs ou ouvrez-y un shell. Les images et les réglages ont leurs propres onglets.',
+    },
+    processes: {
+      title: 'Processus',
+      description:
+        'Tous les processus avec leur CPU et leur mémoire, triés à votre guise et recherchables par nom, utilisateur ou PID. Arrêtez-en un depuis la liste.',
+    },
+    services: {
+      title: 'Services systemd',
+      description:
+        "Les unités en échec d'abord, puis le reste. Redémarrez une unité ou lisez ses logs d'un geste.",
+    },
+    users: {
+      title: 'Utilisateurs et groupes',
+      description:
+        'Consultez les comptes système avec le shell de connexion et l’accès à sudo mis en évidence. Créez ou supprimez des utilisateurs, et créez, modifiez ou supprimez des groupes.',
+    },
+    agent: {
+      title: 'Agent IA',
+      description:
+        "Un assistant dans l'app qui connaît vos serveurs, avec les fournisseurs de modèles, serveurs MCP et skills de votre choix.",
+    },
+    bench: {
+      title: 'Benchmark',
+      description:
+        'Lancez Yet Another Bench Script pour tester le disque, le réseau et le CPU d’un serveur, puis conserver les résultats. Le menu Plus permet aussi d’ouvrir les snippets, le bureau à distance et la virtualisation.',
+    },
+    virt: {
+      title: 'Virtualisation',
+      description:
+        'Machines virtuelles et conteneurs sur libvirt et Proxmox VE : démarrez-les, arrêtez-les, modifiez vCPU, mémoire et disques, ouvrez leurs consoles.',
+    },
+    themes: {
+      title: 'Boutique de thèmes',
+      description:
+        "Des thèmes officiels avec leurs couleurs, fonds et écrans de démarrage, installés depuis l'app. Vous pouvez aussi créer le vôtre.",
     },
   },
   capabilities: {
@@ -117,6 +146,9 @@ const fr: Translation = {
     retry: 'Réessayer',
     previewNote:
       'Les aperçus montrent les icônes et les couleurs du thème ; le reste de l’interface est indicatif.',
+    iconPacks: 'Packs d’icônes',
+    iconPacksSubtitle:
+      'Des icônes choisies indépendamment du thème et dessinées par-dessus celui utilisé. Installez-les dans l’app depuis Réglages → Apparence → Boutique de thèmes → Packs d’icônes.',
   },
   plugins: {
     title: 'Plugins.',
@@ -128,7 +160,7 @@ const fr: Translation = {
   download: {
     title: 'Toutes les plateformes, toutes les sources.',
     subtitle:
-      'Choisissez une source fiable pour votre appareil. Sous iOS, l’application est disponible sur l’App Store. Sous macOS, l’App Store ne prend en charge que les Mac avec puce Apple ; les utilisateurs de Mac Intel peuvent l’installer depuis GitHub Releases ou Homebrew. Des téléchargements directs sont aussi proposés pour Android, Linux et Windows.',
+      'Choisissez une source fiable pour votre appareil. iOS est sur l’App Store, ou en .ipa non signé sur GitHub Releases, à signer vous-même. Les versions macOS pour puce Apple et Intel sont sur GitHub Releases et Homebrew. Android, Linux et Windows ont des téléchargements directs.',
     copied: 'Commande copiée',
     copyPrompt: 'Copiez cette commande :',
     note:

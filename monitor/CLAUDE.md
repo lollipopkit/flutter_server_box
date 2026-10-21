@@ -54,6 +54,11 @@ cargo sqlx migrate run / cargo sqlx prepare # migrations; offline query cache in
 
 ## Endpoints
 
+### Protocol (`sbm_parser::protocol`, `api/protocol.rs`)
+
+- `PROTOCOL` counts breaking API changes only; additions go in `features`. `/health` (no sign-in) reports `protocol` and `min_client_protocol`; every client sends `X-SBM-Protocol` (none = 1); below the minimum is `426 client_too_old`. `/health`, OPTIONS and upgrades are exempt; `/ws-ticket` is checked.
+- **A breaking change raises `PROTOCOL`** and answers a client still at `PROTOCOL - 1` in its shape (TODO-marked shims, removed when `MIN_CLIENT_PROTOCOL` rises). The panel and the native widgets write the number themselves: `crates/sbm_parser/tests/protocol_clients.rs` keeps them equal.
+
 ### `POST /api/v1/exec`
 
 One command → `{exit_code, stdout, stderr, truncated, timed_out}`; in: `{cmd, stdin?, env?}` (`stdin` carries a sudo password, `env` avoids quoting). Not a terminal frame: a PTY is shared with the user's typing (`terminal.rs` rejects an `exec` frame, tested). **Timeout, output cap and request-body limit are `[remote_access.exec]`**: the operator's trade, never raised per request or per action; the body limit is passed to `configure_api` because ntex applies it before handlers. Work that must outlive it starts detached and is polled. `tests/exec_api.rs`.

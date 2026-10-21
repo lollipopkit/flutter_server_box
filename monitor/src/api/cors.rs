@@ -23,6 +23,10 @@ use ntex::web::{ErrorRenderer, HttpResponse, WebRequest, WebResponse};
 /// against that drifting again.
 const ALLOW_METHODS: &str = "GET, POST, PUT, DELETE";
 
+/// Headers a cross-origin panel may send; `x-sbm-protocol` is
+/// `sbm_parser::protocol::HEADER`, sent with every request.
+const ALLOW_HEADERS: &str = "authorization, content-type, x-sbm-protocol";
+
 pub struct Cors {
     origins: Rc<Vec<String>>,
 }
@@ -76,7 +80,7 @@ where
             let res = HttpResponse::NoContent()
                 .header(header::ACCESS_CONTROL_ALLOW_ORIGIN, origin.as_str())
                 .header(header::ACCESS_CONTROL_ALLOW_METHODS, ALLOW_METHODS)
-                .header(header::ACCESS_CONTROL_ALLOW_HEADERS, "authorization, content-type")
+                .header(header::ACCESS_CONTROL_ALLOW_HEADERS, ALLOW_HEADERS)
                 .header(header::ACCESS_CONTROL_MAX_AGE, "3600")
                 .header(header::VARY, "Origin")
                 .finish();
@@ -97,7 +101,12 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::ALLOW_METHODS;
+    use super::{ALLOW_HEADERS, ALLOW_METHODS};
+
+    #[test]
+    fn allow_headers_carry_the_protocol() {
+        assert!(ALLOW_HEADERS.split(',').any(|h| h.trim() == sbm_parser::protocol::HEADER));
+    }
 
     /// Reads the route table's source rather than taking a hand-maintained
     /// list on faith: any `web::<method>()` that appears in `server.rs` must

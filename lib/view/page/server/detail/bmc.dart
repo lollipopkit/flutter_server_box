@@ -81,7 +81,11 @@ extension on _ServerDetailPageState {
       // the actions, and a truncated list must not be able to hide them.
       extra: [if (bmc.hasData) _buildBmcPower(si)],
       footer: readoutFooter([
-        readoutCountNote(rows.length, l10n.unitReadings),
+        readoutCountNote(
+          rows.length,
+          l10n.unitReadings,
+          full: _cardsFull.contains('bmc'),
+        ),
         // Said rather than left to look like the whole truth
         if (bmc.sensorsTruncated) l10n.bmcSensorsTruncated,
         // The same reason, for the same kind of cut: discovery takes the first

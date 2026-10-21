@@ -16,6 +16,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
+import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/memory.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -215,6 +216,20 @@ void main() {
     final status = InitStatus.status;
     status.more[StatusCmdType.host] = 'test-host';
     status.mem = const Memory(total: 134217728, free: 8388608, avail: 16777216);
+    status.disk = [
+      Disk(
+        path: '/dev/sda1',
+        mount: '/',
+        usedPercent: 50,
+        used: BigInt.from(50 << 20),
+        size: BigInt.from(100 << 20),
+        avail: BigInt.from(50 << 20),
+      ),
+    ];
+    status.diskUsage = DiskUsage(
+      used: BigInt.from(50 << 20),
+      size: BigInt.from(100 << 20),
+    );
     status.sectionErrs['mem'] = 'sensors: command not found';
     notifier.updateStatus(status);
     await settle(tester);

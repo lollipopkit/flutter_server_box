@@ -26,17 +26,67 @@
   const capabilities = [
     'Status chart', 'SSH Terminal', 'SFTP', 'SCP', 'Docker', 'Process',
     'Systemd', 'S.M.A.R.T', 'GPU', 'Sensors', 'Push', 'Home Widget', 'watchOS',
-    'Monitor Agent', 'AI Agent', 'Globe', 'Benchmark',
-    'Port Forward', 'Local Shell',
+    'Monitor Agent', 'AI Agent', 'Globe', 'Benchmark', 'iperf',
+    'Port Forward', 'Local Shell', 'Workspace', 'RDP', 'VNC', 'libvirt',
+    'Proxmox VE', 'Redfish', 'Firewall', 'Cron', 'Users & Groups', 'Themes',
   ]
 
+  // One per screenshot, in the order of the README's table. Features without
+  // a screenshot are in `capabilities` above. `tag` is what the screen talks
+  // to on the server, so it stays untranslated.
   const features = [
-    { key: 'charts', icon: '⬡', wide: false },
-    { key: 'workspace', icon: '⬡', wide: true },
-    { key: 'terminal', icon: '⬡', wide: false },
-    { key: 'native', icon: '⬡', wide: false },
-    { key: 'platforms', icon: '⬡', wide: false },
+    { key: 'list', shot: 'home', tag: 'ssh · monitor' },
+    { key: 'charts', shot: 'server-details', tag: '/proc · /sys' },
+    { key: 'terminal', shot: 'terminal', tag: 'ssh' },
+    { key: 'files', shot: 'files', tag: 'sftp' },
+    { key: 'containers', shot: 'container', tag: 'docker · podman' },
+    { key: 'processes', shot: 'process', tag: 'ps' },
+    { key: 'services', shot: 'services', tag: 'systemctl' },
+    { key: 'users', shot: 'users', tag: '/etc/passwd' },
+    { key: 'agent', shot: 'agent', tag: 'llm · mcp' },
+    { key: 'bench', shot: 'bench', tag: 'yabs' },
+    { key: 'virt', shot: 'virt', tag: 'libvirt · pve' },
+    { key: 'themes', shot: 'themes', tag: '.fsbt' },
   ]
+
+  // Which feature the phone shows: the one scrolled to the middle of the
+  // viewport, or the one last pressed.
+  let activeFeature = $state(0)
+  let featureItems = $state([])
+
+  // The item whose middle is nearest the viewport's middle, read on every
+  // scroll frame: a band-crossing observer missed items a fast wheel jumped.
+  $effect(() => {
+    const items = featureItems.filter(Boolean)
+    if (!items.length) return
+    let frame = 0
+    const update = () => {
+      frame = 0
+      // The phone column is hidden below 860px; nothing to follow then.
+      if (!window.matchMedia('(min-width: 861px)').matches) return
+      const middle = window.innerHeight / 2
+      let best = activeFeature
+      let bestDistance = Infinity
+      items.forEach((item, index) => {
+        const rect = item.getBoundingClientRect()
+        const distance = Math.abs(rect.top + rect.height / 2 - middle)
+        if (distance < bestDistance) {
+          bestDistance = distance
+          best = index
+        }
+      })
+      activeFeature = best
+    }
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    update()
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      if (frame) cancelAnimationFrame(frame)
+    }
+  })
 
   // The CDN stores original PNGs and 1440px JPEGs for the web under matching
   // names, so refreshing an image does not require a source-code change.
@@ -51,55 +101,32 @@
     { src: `${shotBase}/iphone/files.jpg`, key: 'four', x: 18, y: -2, hoverSlot: 1.5, rotate: 8, hoverRotate: 1.8, motion: 20 },
   ]
 
-  // These labels match the app's English screen names and are intentionally
-  // not localized independently from the app.
-  const shotLabels = {
-    home: 'Server list',
-    'server-details': 'Server details',
-    terminal: 'Terminal',
-    files: 'Files',
-    container: 'Containers',
-    process: 'Processes',
-    services: 'Services',
-    snippets: 'Snippets',
-    agent: 'Agent',
-    bench: 'Benchmark',
-    globe: 'Globe',
-    settings: 'Settings',
-  }
+  const releases = 'https://github.com/lollipopkit/flutter_server_box/releases'
 
-  // Group all screenshots by device in collapsed `<details>` elements.
-  // `loading="lazy"` defers each group's images until the group is opened.
-  const gallery = [
-    { platform: 'iPhone', dir: 'iphone', shots: ['home', 'server-details', 'terminal', 'files', 'container', 'process', 'services', 'snippets', 'agent', 'bench', 'settings'] },
-    { platform: 'iPad', dir: 'ipad', shots: ['home', 'server-details', 'terminal', 'files', 'container', 'process', 'services', 'globe', 'agent', 'settings'] },
-    { platform: 'macOS', dir: 'mac', shots: ['home', 'server-details', 'terminal', 'files', 'container', 'process', 'services', 'globe', 'agent', 'settings'] },
-  ]
-
+  // `file` says what the source gives you; formats and commands stay untranslated.
   const downloadGroups = [
     {
       key: 'ios',
       label: 'iOS',
       sources: [
         { label: 'App Store', href: 'https://apps.apple.com/app/id1586449703' },
+        // Unsigned: the user signs it themselves.
+        { label: 'GitHub Releases', file: '_NoSign.ipa', href: releases },
       ],
     },
     {
       key: 'macos',
       label: 'macOS',
       sources: [
-        { label: 'App Store', href: 'https://apps.apple.com/app/id1586449703' },
-        // The App Store build supports Apple silicon only. Intel Mac users
-        // must install the app from GitHub Releases or Homebrew.
-        { label: 'GitHub Releases', href: 'https://github.com/lollipopkit/flutter_server_box/releases' },
-        { label: 'Homebrew Cask', command: 'brew install --cask server-box' },
+        { label: 'GitHub Releases', file: '.dmg arm64 / amd64', href: releases },
+        { label: 'Homebrew Cask', file: 'brew install --cask server-box', command: 'brew install --cask server-box' },
       ],
     },
     {
       key: 'android',
       label: 'Android',
       sources: [
-        { label: 'GitHub Releases', href: 'https://github.com/lollipopkit/flutter_server_box/releases' },
+        { label: 'GitHub Releases', file: '.apk arm64 / arm / amd64', href: releases },
         { label: 'F-Droid', href: 'https://f-droid.org/packages/tech.lolli.toolbox' },
         { label: 'OpenAPK', href: 'https://www.openapk.net/serverbox/tech.lolli.toolbox/' },
       ],
@@ -108,14 +135,14 @@
       key: 'linux',
       label: 'Linux',
       sources: [
-        { label: 'GitHub Releases', href: 'https://github.com/lollipopkit/flutter_server_box/releases' },
+        { label: 'GitHub Releases', file: '.AppImage', href: releases },
       ],
     },
     {
       key: 'windows',
       label: 'Windows',
       sources: [
-        { label: 'GitHub Releases', href: 'https://github.com/lollipopkit/flutter_server_box/releases' },
+        { label: 'GitHub Releases', file: '.zip', href: releases },
       ],
     },
   ]
@@ -186,10 +213,16 @@
     stackMotion.set({ x: 0, y: 0 })
   }
 
+  // Smooth unless the reader asked for reduced motion; the CSS rule for it
+  // covers transitions, not scrolling started from here.
+  function scrollBehavior() {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+  }
+
   function scrollToSection(event, id) {
     event.preventDefault()
     document.getElementById(id)?.scrollIntoView({
-      behavior: 'smooth',
+      behavior: scrollBehavior(),
       block: 'start',
     })
   }
@@ -214,7 +247,10 @@
 {#if locale}
   <main class="site">
     <header class="site-nav" id="top">
-      <a class="brand" href="#top" onclick={(event) => scrollToSection(event, 'top')}>ServerBox</a>
+      <a class="brand" href="#top" onclick={(event) => scrollToSection(event, 'top')}>
+        <img src="/app_icon.png" alt="" width="26" height="26" />
+        ServerBox
+      </a>
       <nav>
         <a href="#features" onclick={(event) => scrollToSection(event, 'features')}>{$LL.nav.features()}</a>
         <a href="#capabilities" onclick={(event) => scrollToSection(event, 'capabilities')}>{$LL.nav.capabilities()}</a>
@@ -244,13 +280,16 @@
     </header>
 
     <section class="hero" id="hero">
-      <h1>{$LL.hero.titlePrefix()}<br />{$LL.hero.titleSuffix()}</h1>
-      <p class="hero-subtitle">
-        {$LL.hero.subtitle()}
-      </p>
-      <div class="hero-actions">
-        <Button href="#download" onclick={(event) => scrollToSection(event, 'download')}>{$LL.hero.primaryAction()}</Button>
-        <Button variant="secondary" href="#features" onclick={(event) => scrollToSection(event, 'features')}>{$LL.hero.secondaryAction()}</Button>
+      <div class="hero-copy">
+        <p class="hero-platforms">iOS · Android · macOS · Linux · Windows</p>
+        <h1>{$LL.hero.titlePrefix()}<br /><span>{$LL.hero.titleSuffix()}</span></h1>
+        <p class="hero-subtitle">
+          {$LL.hero.subtitle()}
+        </p>
+        <div class="hero-actions">
+          <Button href="#download" onclick={(event) => scrollToSection(event, 'download')}>{$LL.hero.primaryAction()}</Button>
+          <Button variant="secondary" href="#features" onclick={(event) => scrollToSection(event, 'features')}>{$LL.hero.secondaryAction()}</Button>
+        </div>
       </div>
 
       <div
@@ -281,48 +320,48 @@
         </p>
       </div>
 
-      <div class="feature-grid">
-        {#each features as feature}
-          <article class="feature-card" class:wide={feature.wide}>
-            <div class="icon">{feature.icon}</div>
-            <h3>{$LL.features[feature.key].title()}</h3>
-            <p>{$LL.features[feature.key].description()}</p>
-          </article>
-        {/each}
-      </div>
-    </section>
-
-    <section class="page-section" id="screenshots">
-      <div class="section-head">
-        <h2>{$LL.gallery.title()}</h2>
-        <p>
-          {$LL.gallery.subtitle()}
-        </p>
-      </div>
-
-      <div class="gallery">
-        {#each gallery as group}
-          <details class="gallery-group">
-            <summary>
-              <span class="gallery-platform">{group.platform}</span>
-              <span class="gallery-count">{$LL.gallery.count({ count: group.shots.length })}</span>
-            </summary>
-            <div class="gallery-grid" class:desktop={group.dir === 'mac'}>
-              {#each group.shots as shot}
-                <figure>
-                  <img
-                    src={`${shotBase}/${group.dir}/${shot}.jpg`}
-                    alt={`ServerBox on ${group.platform} — ${shotLabels[shot]}`}
-                    loading="lazy"
-                    decoding="async"
-                    referrerpolicy="no-referrer"
-                  />
-                  <figcaption>{shotLabels[shot]}</figcaption>
-                </figure>
-              {/each}
-            </div>
-          </details>
-        {/each}
+      <div class="tour">
+        <ol class="tour-list">
+          {#each features as feature, index}
+            <li bind:this={featureItems[index]}>
+              <button
+                type="button"
+                class="tour-item"
+                class:active={index === activeFeature}
+                aria-pressed={index === activeFeature}
+                onclick={() => featureItems[index]?.scrollIntoView({ behavior: scrollBehavior(), block: 'center' })}
+              >
+                <span class="tour-tag">{feature.tag}</span>
+                <span class="tour-title">{$LL.features[feature.key].title()}</span>
+                <span class="tour-desc">{$LL.features[feature.key].description()}</span>
+              </button>
+              <!-- Phones get the picture beside its text; wider screens, the
+                   one device frame. -->
+              <img
+                class="tour-shot-inline"
+                src={`${shotBase}/iphone/${feature.shot}.jpg`}
+                alt=""
+                loading="lazy"
+                decoding="async"
+                referrerpolicy="no-referrer"
+              />
+            </li>
+          {/each}
+        </ol>
+        <div class="tour-device">
+          <div class="device-frame">
+            {#each features as feature, index}
+              <img
+                class:shown={index === activeFeature}
+                src={`${shotBase}/iphone/${feature.shot}.jpg`}
+                alt={index === activeFeature ? $LL.features[feature.key].title() : ''}
+                loading="lazy"
+                decoding="async"
+                referrerpolicy="no-referrer"
+              />
+            {/each}
+          </div>
+        </div>
       </div>
     </section>
 
@@ -448,10 +487,12 @@
                         {source.label}
                       {/if}
                     </span>
+                    {#if source.file}<small>{source.file}</small>{/if}
                   </button>
                 {:else}
                   <a class="download-icon-btn" href={source.href} aria-label={`${group.label} ${source.label}`}>
                     <span>{source.label}</span>
+                    {#if source.file}<small>{source.file}</small>{/if}
                     <ExternalLink size={14} strokeWidth={1.8} aria-hidden="true" />
                   </a>
                 {/if}

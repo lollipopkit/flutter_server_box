@@ -12,6 +12,7 @@ pub mod hardware;
 pub mod iperf;
 pub mod parser;
 pub mod proc;
+pub mod protocol;
 pub mod pve;
 pub mod resource;
 pub mod service;

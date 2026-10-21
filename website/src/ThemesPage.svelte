@@ -80,6 +80,14 @@
       )
   })
 
+  // Icon packs: matched by the same query, and by no mode — a pack has none.
+  const shownPacks = $derived.by(() => {
+    const q = query.trim().toLowerCase()
+    return (store.iconPacks ?? []).filter((p) =>
+      !q || [p.name, p.id, ...allTexts(p.description)].some((s) => s.toLowerCase().includes(q)),
+    )
+  })
+
   // --- detail, by hash ---
   let openId = $state(null)
   let openKey = $state(null)
@@ -449,6 +457,52 @@
           </article>
         {/each}
       </div>
+
+      {#if shownPacks.length}
+        <div class="section-head store-packs-head">
+          <h2>{$LL.themes.iconPacks()}</h2>
+          <p>{$LL.themes.iconPacksSubtitle()}</p>
+        </div>
+        <div class="store-grid">
+          {#each shownPacks as pack (pack.id)}
+            <article class="feature-card store-card" id={pack.id}>
+              <div class="icon-grid store-pack-icons">
+                {#each pack.icons as icon (icon.key)}
+                  <div class="icon-cell" title={icon.key}>
+                    {#if icon.svg}
+                      <span class="store-pack-icon" role="img" aria-label={icon.key}>{@html icon.svg}</span>
+                    {:else}
+                      <ThemeIcon src={icon.src} color={icon.color ?? 'currentColor'} size={26} label={icon.key} />
+                    {/if}
+                  </div>
+                {/each}
+              </div>
+              <div class="store-card-head"><h3>{pack.name}</h3></div>
+              {#if textOf(pack.description)}<p>{textOf(pack.description)}</p>{/if}
+              <div class="store-meta">
+                {#if pack.latest}<span class="protocol-badge">v{pack.latest.version}</span>{/if}
+                {#if pack.license}<span class="protocol-badge">{pack.license}</span>{/if}
+                <span class="protocol-badge">{pack.id}</span>
+              </div>
+              <div class="store-actions">
+                {#if pack.latest?.url}
+                  <a class="download-icon-btn" href={pack.latest.url}>
+                    <span>{$LL.themes.download()}</span>
+                    <small class="muted">{kib(pack.latest.size)}</small>
+                    <ExternalLink size={14} strokeWidth={1.8} aria-hidden="true" />
+                  </a>
+                {/if}
+                {#if pack.homepage}
+                  <a class="download-icon-btn" href={pack.homepage}>
+                    <span>{$LL.themes.source()}</span>
+                    <ExternalLink size={14} strokeWidth={1.8} aria-hidden="true" />
+                  </a>
+                {/if}
+              </div>
+            </article>
+          {/each}
+        </div>
+      {/if}
 
       <div class="store-footer">
         <p class="download-note">{$LL.themes.note()}</p>

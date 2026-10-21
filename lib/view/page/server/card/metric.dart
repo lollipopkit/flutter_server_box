@@ -513,8 +513,8 @@ List<ServerMetric> _readings(ServerState srv) {
     ),
   );
 
-  if (ss.mem.total > 0) {
-    final used = ss.mem.usedPercent * 100;
+  if (ss.mem.usedPercent case final ratio?) {
+    final used = ratio * 100;
     out.add(
       ServerMetric(
         kind: ServerMetricKind.mem,

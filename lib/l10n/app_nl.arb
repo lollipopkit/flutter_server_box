@@ -538,6 +538,8 @@
   "schemaTooNewWipeDone": "Gegevens verwijderd. Open de app opnieuw om opnieuw te beginnen.",
   "schemaTooNewWipeFailed": "Sommige gegevens konden niet worden verwijderd en deze versie kan de resterende gegevens nog steeds niet openen. Installeer de nieuwere versie opnieuw om erbij te kunnen.",
   "monitorNoRemoteAccess": "Deze agent is alleen ingesteld voor monitoring. U kunt hier geen terminal openen, opdrachten uitvoeren of bestanden bekijken. Bewerk [remote_access] in de config.toml van de agent om deze functies in te schakelen.",
+  "monitorAgentTooOld": "Deze Monitor-agent is ouder dan deze versie van ServerBox ondersteunt. Werk de agent op de server bij.",
+  "monitorClientTooOld": "Deze Monitor-agent ondersteunt deze versie van ServerBox niet meer. Werk de app bij.",
   "remoteDesktop": "Extern bureaublad",
   "containerReclaimable": "Reclaimable",
   "processSearchHint": "Naam, gebruiker of PID",
@@ -620,6 +622,7 @@
   "diskFailingFmt": "{count} defect",
   "diskSmartOpenTip": "Tik voor de attributen",
   "cycle": "Cycli",
+  "showAllFmt": "Alle {count} tonen",
   "shownOfFmt": "{shown} van {total} {what}",
   "countOfFmt": "{count} {what}",
   "unitDevices": "apparaten",
@@ -1679,5 +1682,7 @@
   "termMetricsBarTip": "CPU, geheugen, netwerk en schijf, zoals op de serverkaart. Op een telefoon boven de virtuele toetsen.",
   "launchFailedTitle": "ServerBox kon niet starten",
   "launchFailedBody": "Kopieer de fout hieronder en meld die in een GitHub-issue, samen met de logbestanden.",
-  "launchFailedLogs": "Logs: {path}"
+  "launchFailedLogs": "Logs: {path}",
+  "reconnect": "Opnieuw verbinden",
+  "reconnectEndsShell": "Er is geen tmux-sessie om opnieuw aan te koppelen, dus opnieuw verbinden beëindigt deze shell en alles wat er nog in draait, en wist de uitvoer van het scherm."
 }

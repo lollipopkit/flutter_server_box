@@ -1,0 +1,79 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/fsbt-manifest.schema.json
+# The language and tool logos (icons/file_*.svg other than file_default,
+# file_dir, file_link and file_conf) are taken from Devicon
+# (https://github.com/devicons/devicon), used under the MIT License:
+#
+# Copyright (c) 2015 konpa
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal in
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+# the Software, and to permit persons to whom the Software is furnished to do so,
+# subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+# IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
+# The products these logos stand for, and the logos, are trademarks of their
+# respective owners; they are shown only to mark a file's type.
+
+id = "serverbox.devicons"
+name = "Devicons"
+kind = "icons"
+
+# Icon packs are schema 4.
+[schema]
+min = 4
+max = 4
+
+# Files-window icons only: the theme in use keeps its tabs and navigation.
+[icons.images]
+"file.dir" = "icons/file_dir.svg"
+"file.link" = "icons/file_link.svg"
+"file.default" = "icons/file_default.svg"
+"file.conf" = "icons/file_conf.svg"
+"file.c" = "icons/file_c.svg"
+"file.cpp" = "icons/file_cpp.svg"
+"file.css" = "icons/file_css.svg"
+"file.dart" = "icons/file_dart.svg"
+"file.dockerfile" = "icons/file_dockerfile.svg"
+"file.erl" = "icons/file_erl.svg"
+"file.ex" = "icons/file_ex.svg"
+"file.gitignore" = "icons/file_gitignore.svg"
+"file.go" = "icons/file_go.svg"
+"file.graphql" = "icons/file_graphql.svg"
+"file.html" = "icons/file_html.svg"
+"file.java" = "icons/file_java.svg"
+"file.js" = "icons/file_js.svg"
+"file.json" = "icons/file_json.svg"
+"file.jsx" = "icons/file_jsx.svg"
+"file.kt" = "icons/file_kt.svg"
+"file.lua" = "icons/file_lua.svg"
+"file.md" = "icons/file_md.svg"
+"file.php" = "icons/file_php.svg"
+"file.pl" = "icons/file_pl.svg"
+"file.py" = "icons/file_py.svg"
+"file.rb" = "icons/file_rb.svg"
+"file.rs" = "icons/file_rs.svg"
+"file.sass" = "icons/file_sass.svg"
+"file.scss" = "icons/file_scss.svg"
+"file.sh" = "icons/file_sh.svg"
+"file.swift" = "icons/file_swift.svg"
+"file.ts" = "icons/file_ts.svg"
+"file.tsx" = "icons/file_tsx.svg"
+"file.vue" = "icons/file_vue.svg"
+"file.xml" = "icons/file_xml.svg"
+"file.yml" = "icons/file_yml.svg"
+
+# The logos keep their own fills; the folder and link follow the theme.
+[icons.colors]
+"file.dir" = "tertiary"
+"file.link" = "primary"

@@ -70,6 +70,9 @@ object WidgetApi {
 
     private const val TIMEOUT_MS = 8_000
 
+    /** `sbm_parser::protocol::PROTOCOL`; `crates/sbm_parser/tests/protocol_clients.rs` keeps it equal. */
+    private const val SBM_PROTOCOL = "1"
+
     /**
      * How many history points to ask the agent for.
      *
@@ -159,6 +162,7 @@ object WidgetApi {
                 setRequestProperty("Authorization", "Bearer $token")
                 setRequestProperty("Accept", "application/json")
                 setRequestProperty("User-Agent", "ServerBox-Widget/2")
+                setRequestProperty("X-SBM-Protocol", SBM_PROTOCOL)
             }
             val code = connection.responseCode
             if (code == 401 || code == 403) throw RejectedTokenException()

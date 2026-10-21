@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -2340,6 +2339,11 @@ class AppLocalizationsId extends AppLocalizations {
       'Setidaknya satu perangkat tetap ada di grafik.';
 
   @override
+  String showAllFmt(int count) {
+    return 'Tampilkan semua $count';
+  }
+
+  @override
   String shownOfFmt(int shown, int total, String what) {
     return '$shown dari $total $what';
   }
@@ -2820,6 +2824,14 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get monitorNoRemoteAccess =>
       'Agen ini hanya dikonfigurasi untuk pemantauan. Anda tidak dapat membuka terminal, menjalankan perintah, atau menjelajahi berkas dari sini. Untuk mengaktifkan fitur tersebut, edit [remote_access] dalam config.toml agen.';
+
+  @override
+  String get monitorAgentTooOld =>
+      'Agen Monitor ini lebih lama dari yang didukung versi ServerBox ini. Perbarui agen di server.';
+
+  @override
+  String get monitorClientTooOld =>
+      'Agen Monitor ini tidak lagi mendukung versi ServerBox ini. Perbarui aplikasi.';
 
   @override
   String get alerts => 'Peringatan';
@@ -5959,4 +5971,11 @@ class AppLocalizationsId extends AppLocalizations {
   String launchFailedLogs(String path) {
     return 'Log: $path';
   }
+
+  @override
+  String get reconnect => 'Sambungkan ulang';
+
+  @override
+  String get reconnectEndsShell =>
+      'Tidak ada sesi tmux untuk dipasang kembali, jadi menyambungkan ulang akan mengakhiri shell ini dan semua yang masih berjalan di dalamnya, serta menghapus keluarannya dari layar.';
 }

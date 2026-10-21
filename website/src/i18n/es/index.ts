@@ -31,40 +31,69 @@ const es: Translation = {
     three: 'Captura del terminal de ServerBox',
     four: 'Captura del explorador de archivos de ServerBox',
   },
-  gallery: {
-    title: 'Cada pantalla, en cada dispositivo.',
-    subtitle:
-      '31 capturas de iPhone, iPad y macOS, plegadas para que la página siga siendo ligera hasta que las pidas.',
-    count: '{count} capturas',
-  },
   features: {
     title: 'Un espacio compacto para el mantenimiento diario.',
     subtitle:
       'Una superficie operativa enfocada: cada bloque corresponde a un flujo real de mantenimiento.',
-    charts: {
-      title: 'Gráficas de estado',
+    list: {
+      title: 'Lista de servidores',
       description:
-        'Controla CPU, memoria, sensores, GPU, red, disco y salud del host desde gráficas móviles densas.',
+        'Consulta de un vistazo el estado de conexión y el uso de CPU, memoria, disco y red de cada servidor. Filtra por etiqueta o búscalos en el globo.',
     },
-    workspace: {
-      title: 'Espacio multiplataforma',
+    charts: {
+      title: 'Gráficos de estado',
       description:
-        'Usa ServerBox en iOS, Android, macOS, Linux y Windows con la misma interfaz Flutter.',
+        'Gráficos en tiempo real de CPU, memoria, swap, discos, E/S de disco y red, además de sensores, GPU y baterías. Consulta el historial o abre una métrica para ver sus detalles.',
     },
     terminal: {
-      title: 'Terminal SSH y SFTP',
+      title: 'Terminal SSH',
       description:
-        'Abre sesiones de terminal y archivos desde una tarjeta de servidor, con dartssh2 y xterm.dart.',
+        'Una terminal completa con teclas virtuales en el móvil, lista para htop, vim y mucho más. Conéctate directamente, mediante un host de salto o con un ProxyCommand.',
     },
-    native: {
-      title: 'Integraciones nativas',
+    files: {
+      title: 'Archivos por SFTP',
       description:
-        'Autenticación biométrica, notificaciones, widgets y watchOS mantienen cerca el contexto del servidor.',
+        'Explora, sube, descarga y edita archivos directamente. Los archivos Markdown se abren con una vista previa renderizada.',
     },
-    platforms: {
-      title: 'Docker, procesos, systemd',
+    containers: {
+      title: 'Docker y Podman',
       description:
-        'Inspecciona contenedores, procesos y servicios sin salir del flujo de monitorización.',
+        'Consulta los contenedores agrupados por proyecto de Compose y su uso de CPU, memoria y red. Inícialos, detenlos, reinícialos o elimínalos; consulta sus logs o abre una shell dentro. Las imágenes y los ajustes tienen sus propias pestañas.',
+    },
+    processes: {
+      title: 'Procesos',
+      description:
+        'Todos los procesos con su CPU y memoria, ordenados como quieras y buscables por nombre, usuario o PID. Detén uno desde la lista.',
+    },
+    services: {
+      title: 'Servicios de systemd',
+      description:
+        'Primero las unidades fallidas, luego el resto. Reinicia una unidad o lee sus logs con un toque.',
+    },
+    users: {
+      title: 'Usuarios y grupos',
+      description:
+        'Consulta las cuentas del sistema con la shell de inicio de sesión y el acceso a sudo destacados. Crea o elimina usuarios, y crea, edita o elimina grupos.',
+    },
+    agent: {
+      title: 'Agente de IA',
+      description:
+        'Un asistente dentro de la app que conoce tus servidores, con los proveedores de modelos, servidores MCP y skills que elijas.',
+    },
+    bench: {
+      title: 'Benchmark',
+      description:
+        'Ejecuta Yet Another Bench Script para medir el disco, la red y la CPU de un servidor, y guarda los resultados. El menú Más también permite abrir snippets, el escritorio remoto y la virtualización.',
+    },
+    virt: {
+      title: 'Virtualización',
+      description:
+        'Máquinas virtuales y contenedores en libvirt y Proxmox VE: inícialos y detenlos, cambia vCPU, memoria y discos, y abre sus consolas.',
+    },
+    themes: {
+      title: 'Tienda de temas',
+      description:
+        'Temas oficiales con sus propios colores, fondos y pantallas de inicio, instalados desde la app. También puedes crear el tuyo.',
     },
   },
   capabilities: {
@@ -117,6 +146,9 @@ const es: Translation = {
     retry: 'Reintentar',
     previewNote:
       'Las vistas previas muestran los iconos y colores del tema; el resto de la interfaz es orientativo.',
+    iconPacks: 'Paquetes de iconos',
+    iconPacksSubtitle:
+      'Iconos que se eligen aparte del tema y se dibujan sobre el que esté en uso. Instálalos en la app desde Ajustes → Apariencia → Tienda de temas → Paquetes de iconos.',
   },
   plugins: {
     title: 'Plugins.',
@@ -128,7 +160,7 @@ const es: Translation = {
   download: {
     title: 'Cada plataforma, cada fuente.',
     subtitle:
-      'Elige una fuente de confianza para tu dispositivo. En iOS, la aplicación está disponible en App Store. En macOS, la versión de App Store solo es compatible con Apple silicon; los usuarios de Intel pueden instalarla desde GitHub Releases o Homebrew. También hay descargas directas para Android, Linux y Windows.',
+      'Elige una fuente de confianza para tu dispositivo. iOS está en App Store, o como .ipa sin firmar en GitHub Releases para que lo firmes tú. Las versiones de macOS para Apple silicon e Intel están en GitHub Releases y Homebrew. Android, Linux y Windows tienen descargas directas.',
     copied: 'Comando copiado',
     copyPrompt: 'Copia este comando:',
     note:

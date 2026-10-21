@@ -40,6 +40,8 @@ extension on _ServerDetailPageState {
             initiallyExpanded ?? _getInitExpand(rows.length),
           ),
       onToggle: () => _rebuild(() => _toggleCard(cardKey)),
+      full: _cardsFull.contains(cardKey),
+      onFull: () => _rebuild(() => _toggleFull(cardKey)),
     );
   }
 
@@ -123,7 +125,11 @@ extension on _ServerDetailPageState {
               ].join(' · '),
             ),
       rows: gpus.map(_buildGpuItem).toList(),
-      footer: readoutCountNote(gpus.length, l10n.unitGpus),
+      footer: readoutCountNote(
+        gpus.length,
+        l10n.unitGpus,
+        full: _cardsFull.contains('gpu'),
+      ),
       initiallyExpanded: _getInitExpand(gpus.length, 3),
     );
   }
@@ -252,7 +258,8 @@ extension on _ServerDetailPageState {
       if (hours != null && (oldest == null || hours > oldest)) oldest = hours;
     }
 
-    final truncated = smarts.length > kReadoutCardRows;
+    final truncated =
+        smarts.length > kReadoutCardRows && !_cardsFull.contains('smart');
     return _buildReadoutCard(
       cardKey: 'smart',
       icon: ServerDetailCards.smart.icon,
@@ -465,7 +472,11 @@ extension on _ServerDetailPageState {
       icon: ServerDetailCards.battery.icon,
       title: libL10n.battery,
       rows: ss.batteries.map(_buildBatteryItem).toList(),
-      footer: readoutCountNote(ss.batteries.length, l10n.unitBatteries),
+      footer: readoutCountNote(
+        ss.batteries.length,
+        l10n.unitBatteries,
+        full: _cardsFull.contains('battery'),
+      ),
       initiallyExpanded: _getInitExpand(ss.batteries.length, 2),
     );
   }
@@ -502,7 +513,11 @@ extension on _ServerDetailPageState {
       icon: Icons.thermostat,
       title: libL10n.sensors,
       rows: ss.sensors.map(_buildSensorItem).toList(),
-      footer: readoutCountNote(ss.sensors.length, l10n.unitSensors),
+      footer: readoutCountNote(
+        ss.sensors.length,
+        l10n.unitSensors,
+        full: _cardsFull.contains('sensor'),
+      ),
       initiallyExpanded: _getInitExpand(ss.sensors.length, 2),
     );
   }
@@ -557,7 +572,11 @@ extension on _ServerDetailPageState {
       icon: MingCute.command_line,
       title: l10n.customCmd,
       rows: ss.customCmds.entries.map(_buildCustomCmdItem).toList(),
-      footer: readoutCountNote(ss.customCmds.length, l10n.unitCommands),
+      footer: readoutCountNote(
+        ss.customCmds.length,
+        l10n.unitCommands,
+        full: _cardsFull.contains('custom'),
+      ),
       initiallyExpanded: _getInitExpand(ss.customCmds.length),
     );
   }

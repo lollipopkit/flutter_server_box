@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'l10n.dart';
 
 // ignore_for_file: type=lint
@@ -2367,6 +2366,11 @@ class AppLocalizationsFr extends AppLocalizations {
       'Au moins un périphérique reste sur le graphique.';
 
   @override
+  String showAllFmt(int count) {
+    return 'Afficher les $count';
+  }
+
+  @override
   String shownOfFmt(int shown, int total, String what) {
     return '$shown sur $total $what';
   }
@@ -2870,6 +2874,14 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get monitorNoRemoteAccess =>
       'Cet agent est configuré pour la surveillance uniquement. Vous ne pouvez pas ouvrir de terminal, exécuter de commandes ni parcourir les fichiers ici. Pour activer ces fonctions, modifiez [remote_access] dans le config.toml de l\'agent.';
+
+  @override
+  String get monitorAgentTooOld =>
+      'Cet agent Monitor est plus ancien que ce que prend en charge cette version de ServerBox. Mettez à jour l\'agent sur le serveur.';
+
+  @override
+  String get monitorClientTooOld =>
+      'Cet agent Monitor ne prend plus en charge cette version de ServerBox. Mettez à jour l\'application.';
 
   @override
   String get alerts => 'Alertes';
@@ -6058,4 +6070,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String launchFailedLogs(String path) {
     return 'Journaux : $path';
   }
+
+  @override
+  String get reconnect => 'Reconnecter';
+
+  @override
+  String get reconnectEndsShell =>
+      'Aucune session tmux à rattacher : reconnecter ferme ce shell et tout ce qui s’y exécute encore, et efface sa sortie de l’écran.';
 }

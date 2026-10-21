@@ -447,7 +447,7 @@ jobs:
       # that did not fire fail here, in the job that would know why, rather
       # than by publishing a release with whatever else happened to be there.
       - name: Upload artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-macos-${{ matrix.arch }}
           path: build/artifacts/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_NoSign_${{ matrix.arch }}.dmg
@@ -461,7 +461,7 @@ jobs:
       # Upload dSYMs per architecture because each file resolves addresses only
       # for the binary slice built alongside it.
       - name: Upload dSYMs
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-macos-${{ matrix.arch }}-dsyms
           path: build/macos/Build/Products/Release/**/*.dSYM
@@ -682,7 +682,7 @@ jobs:
       # at its source, this keeps the release build invocation identical to the
       # one F-Droid runs for that ABI.
       - name: Upload artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-android-${{ matrix.abi }}
           path: build/app/outputs/flutter-apk/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_${{ matrix.abi }}.apk
@@ -702,7 +702,7 @@ jobs:
           mv build/app/outputs/native-debug-symbols/release/native-debug-symbols.zip \
             build/app/outputs/native-debug-symbols/release/native-debug-symbols-${{ matrix.abi }}.zip
       - name: Upload native debug symbols
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-android-${{ matrix.abi }}-symbols
           path: build/app/outputs/native-debug-symbols/release/native-debug-symbols-${{ matrix.abi }}.zip
@@ -772,7 +772,7 @@ jobs:
         shell: bash
         run: APP_ASSET_NAME="${APP_NAME}" scripts/release/package-unsigned-ipa.sh
       - name: Upload artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-ios
           path: build/artifacts/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_NoSign.ipa
@@ -783,7 +783,7 @@ jobs:
       # crashed. `dwarf-with-dsym` was already set for Release; these were
       # simply thrown away with the runner.
       - name: Upload dSYMs
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-ios-dsyms
           path: build/ios/Release-iphoneos/**/*.dSYM
@@ -858,7 +858,7 @@ jobs:
         run: |
           mv "${APP_NAME}_v1.0.${BUILD_NUMBER}_amd64.AppImage" "${APP_NAME}_v1.0.${BUILD_NUMBER}${{ matrix.release_suffix }}_amd64.AppImage"
       - name: Upload artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-linux${{ matrix.artifact_suffix }}
           path: ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}${{ matrix.release_suffix }}_amd64.AppImage
@@ -909,7 +909,7 @@ jobs:
             mv "$f" "${f/_${BUILD_NUMBER}_/_v1.0.${BUILD_NUMBER}_}"
           done
       - name: Upload artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-windows
           path: ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_windows_amd64.zip
@@ -956,7 +956,7 @@ jobs:
       TAG: v1.0.${{ needs.reproducibilityCheck.outputs.buildNumber }}
     steps:
       - name: Collect the platform artifacts
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           pattern: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-*
           path: assets
@@ -1032,8 +1032,7 @@ jobs:
           set -euo pipefail
           files=(*)
           sha256sum -- "${files[@]}" > SHA256SUMS
-          md5sum -- "${files[@]}" > MD5SUMS
-          cat SHA256SUMS MD5SUMS
+          cat SHA256SUMS
       # As a draft, so nothing is downloadable until the step below says so.
       # `action-gh-release` sends `draft` on an update too, so a second call
       # without it would publish the release — which is exactly what the step
