@@ -905,14 +905,19 @@ jobs:
       - name: Rename
         shell: bash
         run: |
-          for f in *_"${BUILD_NUMBER}"_*.zip; do
+          shopt -s nullglob
+          for f in *_"${BUILD_NUMBER}"_*.zip *_"${BUILD_NUMBER}"_*.exe; do
             mv "$f" "${f/_${BUILD_NUMBER}_/_v1.0.${BUILD_NUMBER}_}"
           done
       - name: Upload artifacts
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-windows
-          path: ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_windows_amd64.zip
+          # The zip beside the installer: releases up to v1.0.1719 update only
+          # from a zip. TODO: drop the zip a release or two after the installer.
+          path: |
+            ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_windows_amd64.exe
+            ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_windows_amd64.zip
           if-no-files-found: error
           retention-days: 14
 
@@ -988,6 +993,8 @@ jobs:
             "${APP_NAME}_${TAG}_amd64.apk"
             "${APP_NAME}_${TAG}_amd64.AppImage"
             "${APP_NAME}_${TAG}_legacy_amd64.AppImage"
+            "${APP_NAME}_${TAG}_windows_amd64.exe"
+            # TODO: remove with the zip, see `buildWindows`.
             "${APP_NAME}_${TAG}_windows_amd64.zip"
           )
 
@@ -1098,6 +1105,6 @@ jobs:
 
           ./komac update lollipopkit.serverbox \
             --version "$VERSION" \
-            --urls "https://github.com/${GITHUB_REPOSITORY}/releases/download/v${VERSION}/${APP_NAME}_v${VERSION}_windows_amd64.zip" \
+            --urls "https://github.com/${GITHUB_REPOSITORY}/releases/download/v${VERSION}/${APP_NAME}_v${VERSION}_windows_amd64.exe" \
             --release-notes-url "https://github.com/${GITHUB_REPOSITORY}/releases/tag/v${VERSION}" \
             --submit
