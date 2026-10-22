@@ -9,7 +9,7 @@ import 'package:server_box/src/rust/api/container.dart' as ffi;
 import '../../helpers/rust_lib_helper.dart';
 
 /// Records what it was asked to run instead of running it.
-class _RecordingExec implements ServerExec {
+class _RecordingExec implements CommandExec {
   String? script;
   String? entry;
   String? stdin;

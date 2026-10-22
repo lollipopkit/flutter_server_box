@@ -1,5 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:server_box/core/utils/local_exec.dart';
+import 'package:fl_tty/fl_tty.dart';
 import 'package:server_box/data/model/server/system.dart';
 
 /// The device the app runs on, added as a server — see `Spi.local`.

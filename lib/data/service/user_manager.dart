@@ -23,7 +23,7 @@ abstract final class UserManager {
   /// first `if ...; then` — so the page showed fish's diagnostic where the
   /// user list should have been. The create, edit and delete scripts already
   /// reach `sh` through `PrivilegedExec`.
-  static Future<ServerUserCatalog> list(ServerExec exec) async {
+  static Future<ServerUserCatalog> list(CommandExec exec) async {
     final result = await exec.run(ffi.usersListScript(), entry: 'sh');
     if (!result.succeeded) {
       final detail = result.combined.trim();
@@ -49,7 +49,7 @@ abstract final class UserManager {
   /// login shell — which is what runs a command given without an entry — may
   /// be fish, which does not read one.
   static Future<ServerUserDetail> detail(
-    ServerExec exec,
+    CommandExec exec,
     ServerUser user,
   ) async {
     final result = await exec.run(detailScript(user), entry: 'sh');

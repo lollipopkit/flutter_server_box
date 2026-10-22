@@ -28,7 +28,7 @@ class MonitorHttpDataSource implements ServerDataSource {
 
   /// Runs commands through the agent, on the session the status poll already
   /// authenticated — so the process list does not log in again per command.
-  late final ServerExec exec = MonitorExec(_client);
+  late final CommandExec exec = MonitorExec(_client);
 
   /// What the agent says it allows, and what it runs on.
   ///

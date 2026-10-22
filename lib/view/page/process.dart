@@ -1199,14 +1199,14 @@ extension _ProcessPageActions on _ProcessPageState {
   }
 
   Future<ProcKillOutcome> _runKill(
-    Future<ExecResult> Function(ServerExec exec) run,
+    Future<ExecResult> Function(CommandExec exec) run,
   ) async {
     final result = await _runExec(run);
     return ProcKill.outcome(result.stdout);
   }
 
   Future<ExecResult> _runExec(
-    Future<ExecResult> Function(ServerExec exec) run,
+    Future<ExecResult> Function(CommandExec exec) run,
   ) async {
     final exec = await ref.read(_provider.notifier).ensureExec();
     return run(exec).timeout(_processCommandTimeout);

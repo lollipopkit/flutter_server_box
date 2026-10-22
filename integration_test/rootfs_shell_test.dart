@@ -3,14 +3,9 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_tty/fl_tty.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:server_box/core/utils/android_rootfs.dart';
-import 'package:server_box/core/utils/local_exec.dart';
-import 'package:server_box/core/utils/local_shell.dart';
-import 'package:server_box/core/utils/rootfs.dart';
-import 'package:server_box/data/model/app/linux_distro.dart';
-import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
@@ -27,7 +22,7 @@ import '../test/helpers/test_db.dart';
 /// tab makes.
 ///
 /// Skipped where there is no proot to run: a build that did not run
-/// `scripts/build-proot-android.sh`, or a device that is not arm64.
+/// `packages/fl_tty/scripts/build-proot-android.sh`, or a device that is not arm64.
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 

@@ -100,14 +100,14 @@ void main() {
   });
 }
 
-/// Hands out a prepared [ServerExec].
+/// Hands out a prepared [CommandExec].
 class _FakeServerNotifier extends ServerNotifier {
   _FakeServerNotifier(this.exec);
 
-  final ServerExec exec;
+  final CommandExec exec;
 
   @override
-  Future<ServerExec> ensureExec({VoidCallback? onSshDial}) async => exec;
+  Future<CommandExec> ensureExec({VoidCallback? onSshDial}) async => exec;
 }
 
 /// A systemd host whose account has [uid], recording what it was asked to run.
@@ -115,7 +115,7 @@ Map<String, String?> get _commands => {
   for (final c in ffi.serviceListingCommands(managerName: 'systemd')) c.name: c.command,
 };
 
-class _SystemdExec implements ServerExec {
+class _SystemdExec implements CommandExec {
   _SystemdExec({required this.uid});
 
   final int uid;

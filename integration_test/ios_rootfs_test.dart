@@ -3,12 +3,10 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_tty/fl_tty.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:server_box/core/utils/ios_rootfs.dart';
-import 'package:server_box/core/utils/ish_exec.dart';
-import 'package:server_box/data/model/app/linux_distro.dart';
 
 /// The Linux userland on iOS, through the API the app will use.
 ///
@@ -16,9 +14,8 @@ import 'package:server_box/data/model/app/linux_distro.dart';
 /// is linked into the app binary and reached by looking its symbols up in the
 /// running process, so a plain `flutter test` would find nothing to call.
 ///
-/// Skipped where the switch is off (`SBM_ISH = 0` in
-/// `ios/Flutter/Ish.xcconfig`), which is the default — a checkout that has not
-/// run `scripts/build-ish-ios.sh` has no engine to link.
+/// Skipped where the engine is left out (fl_tty's `ish: false` hook
+/// user-define).
 ///
 /// Nothing is staged: the app downloads and unpacks the userland itself, which
 /// is what `realfs` bought and what the first test here exercises.
@@ -31,7 +28,7 @@ void main() {
     // Not an assertion either way: this test runs on a build that may have
     // been made with the switch off, and that is a valid build.
     if (!IosRootfs.isAvailable) {
-      markTestSkipped('this build carries no engine (SBM_ISH = 0)');
+      markTestSkipped('this build carries no engine (fl_tty `ish: false`)');
       return;
     }
     expect(IosRootfs.root, isNotNull);
@@ -58,7 +55,7 @@ void main() {
 
   testWidgets('the app installs a userland by itself', (_) async {
     if (!IosRootfs.isAvailable) {
-      markTestSkipped('this build carries no engine (SBM_ISH = 0)');
+      markTestSkipped('this build carries no engine (fl_tty `ish: false`)');
       return;
     }
     // The real path, with nothing staged: download the pinned release, check
@@ -92,7 +89,7 @@ void main() {
 
   testWidgets('a guest runs inside the app and answers', (_) async {
     if (!IosRootfs.isAvailable) {
-      markTestSkipped('this build carries no engine (SBM_ISH = 0)');
+      markTestSkipped('this build carries no engine (fl_tty `ish: false`)');
       return;
     }
     // Installed by the test above, or already there. Only when there is
@@ -140,7 +137,7 @@ void main() {
   // metadata was the part worth refusing.
   testWidgets('/dev has what a userland expects', (_) async {
     if (!IosRootfs.isAvailable) {
-      markTestSkipped('this build carries no engine (SBM_ISH = 0)');
+      markTestSkipped('this build carries no engine (fl_tty `ish: false`)');
       return;
     }
     await IosRootfs.install(distro: LinuxDistro.alpine);
@@ -188,11 +185,11 @@ void main() {
   }, skip: !Platform.isIOS);
 
   // What the Agent's shell tool goes through. The terminal's backend is the
-  // other half and is exercised above; this one is `ServerExec`, which promises
+  // other half and is exercised above; this one is `CommandExec`, which promises
   // things a console cannot keep — hence the two files it runs commands with.
   testWidgets('the Agent runs its commands inside the guest', (_) async {
     if (!IshExec.isSupported) {
-      markTestSkipped('this build carries no engine (SBM_ISH = 0)');
+      markTestSkipped('this build carries no engine (fl_tty `ish: false`)');
       return;
     }
     await IosRootfs.install(distro: LinuxDistro.alpine);
@@ -251,7 +248,7 @@ void main() {
   // is a refusal rather than a command quietly cut short.
   testWidgets('the engine refuses a command it cannot fit', (_) async {
     if (!IosRootfs.isAvailable) {
-      markTestSkipped('this build carries no engine (SBM_ISH = 0)');
+      markTestSkipped('this build carries no engine (fl_tty `ish: false`)');
       return;
     }
     await IosRootfs.install(distro: LinuxDistro.alpine);
@@ -281,7 +278,7 @@ void main() {
   // says nothing about length and points at the guest rather than at the app.
   testWidgets('a script the engine cannot hold still runs', (_) async {
     if (!IshExec.isSupported) {
-      markTestSkipped('this build carries no engine (SBM_ISH = 0)');
+      markTestSkipped('this build carries no engine (fl_tty `ish: false`)');
       return;
     }
     await IosRootfs.install(distro: LinuxDistro.alpine);
@@ -328,7 +325,7 @@ void main() {
   // one that was noticed.
   testWidgets('the guest clock is a clock', (_) async {
     if (!IshExec.isSupported) {
-      markTestSkipped('this build carries no engine (SBM_ISH = 0)');
+      markTestSkipped('this build carries no engine (fl_tty `ish: false`)');
       return;
     }
     await IosRootfs.install(distro: LinuxDistro.alpine);
@@ -398,7 +395,7 @@ void main() {
   // reported a negative duration, which is what found this.
   testWidgets('/proc/uptime keeps its two decimal places', (_) async {
     if (!IshExec.isSupported) {
-      markTestSkipped('this build carries no engine (SBM_ISH = 0)');
+      markTestSkipped('this build carries no engine (fl_tty `ish: false`)');
       return;
     }
     await IosRootfs.install(distro: LinuxDistro.alpine);

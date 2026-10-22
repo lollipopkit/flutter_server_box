@@ -123,10 +123,9 @@ flutter pub get
 dart run build_runner build
 ```
 
-`flutter clean` removes `build/`, including the iOS Linux engine libraries
-when that engine is enabled. Rebuild the required target with
-`scripts/build-ish-ios.sh device`, `simulator`, or `macos`; otherwise linking
-will fail because those engine files are missing.
+The iOS Linux engine's libraries live in `packages/fl_tty/build/ish`, outside
+what `flutter clean` removes, and fl_tty's build hook fetches them again when
+they are missing.
 
 ### Dependency version conflict
 

@@ -21,7 +21,7 @@ abstract final class CronManager {
   /// script is parsed by the account's login shell, and fish rejects
   /// `LC_ALL=C` and `|| { ... }` outright — which the page reported as
   /// "crontab is not available" with fish's own diagnostic under it.
-  static Future<CronCatalog> list(ServerExec exec) async {
+  static Future<CronCatalog> list(CommandExec exec) async {
     final result = await exec.run(ffi.cronListScript(), entry: 'sh');
     try {
       final listing = ffi.cronReadListing(
@@ -47,7 +47,7 @@ abstract final class CronManager {
   }
 
   /// The document goes in on stdin, so it has no entry.
-  static Future<void> save(ServerExec exec, CronDocument document) async {
+  static Future<void> save(CommandExec exec, CronDocument document) async {
     final result = await exec.run(
       ffi.cronSaveCommand(),
       stdin: document.render(),

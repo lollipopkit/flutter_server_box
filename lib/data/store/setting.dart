@@ -2,9 +2,9 @@ import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/theme.dart';
+import 'package:fl_tty/fl_tty.dart';
 import 'package:server_box/data/model/app/diagnostics_level.dart';
 import 'package:server_box/data/model/app/float_shell_config.dart';
-import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/motion.dart';
 import 'package:server_box/data/model/app/server_sort.dart';
@@ -192,7 +192,7 @@ class SettingStore extends SqliteStore with ThemeSettings {
   /// Not per distribution: this is the network the device is on. Read through
   /// `linuxNameservers()`, which is also what decides what counts as an address
   /// in it.
-  late final linuxDns = propertyDefault('linuxDns', Defaults.linuxDns);
+  late final linuxDns = propertyDefault('linuxDns', FlTty.defaultDns);
 
   // Editor theme
   late final editorTheme = propertyDefault('editorTheme', Defaults.editorTheme);

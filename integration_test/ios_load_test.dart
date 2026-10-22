@@ -1,11 +1,9 @@
 import 'dart:io';
 
+import 'package:fl_tty/fl_tty.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:server_box/core/utils/ios_rootfs.dart';
-import 'package:server_box/core/utils/ish_exec.dart';
-import 'package:server_box/data/model/app/linux_distro.dart';
 
 /// What the Linux guest costs the app while it is working.
 ///
@@ -36,7 +34,7 @@ void main() {
 
   testWidgets('the guest works hard and the app is still there', (_) async {
     if (!IshExec.isSupported) {
-      markTestSkipped('this build carries no engine (SBM_ISH = 0)');
+      markTestSkipped('this build carries no engine (fl_tty `ish: false`)');
       return;
     }
     // Only when there is nothing: `install` without `into:` adds a system
@@ -96,7 +94,7 @@ echo DONE
     // and every package was missing. `IosRootfs` seeds one now — at install,
     // and at startup for a userland unpacked before it did.
     if (!IshExec.isSupported) {
-      markTestSkipped('this build carries no engine (SBM_ISH = 0)');
+      markTestSkipped('this build carries no engine (fl_tty `ish: false`)');
       return;
     }
     await IosRootfs.prepare();

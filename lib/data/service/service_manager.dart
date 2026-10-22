@@ -35,7 +35,7 @@ final class ServiceManager {
 
   /// Asks the machine which manager it runs. Handed to `sh`: the account's
   /// login shell may be fish, which does not read the script.
-  static Future<ServiceManagerProbe> probe(ServerExec exec) async {
+  static Future<ServiceManagerProbe> probe(CommandExec exec) async {
     final result = await exec.run(ffi.serviceDetectScript(), entry: 'sh');
     if (!result.succeeded) throw StateError(result.combined.trim());
     final probe = ffi.serviceParseProbe(raw: result.stdout);
@@ -52,7 +52,7 @@ final class ServiceManager {
   /// and none depends on another — and each is settled as it is started: one
   /// that throws (a dropped connection) is a command that failed, not an
   /// unobserved error.
-  Future<ServiceListing> list(ServerExec exec) async {
+  Future<ServiceListing> list(CommandExec exec) async {
     final commands = ffi.serviceListingCommands(managerName: type.name);
     final outputs = await Future.wait([
       for (final c in commands) _run(exec, c),
@@ -68,7 +68,7 @@ final class ServiceManager {
     }
   }
 
-  static Future<ffi.ServiceCommandOutput> _run(ServerExec exec, ffi.ServiceCommand c) async {
+  static Future<ffi.ServiceCommandOutput> _run(CommandExec exec, ffi.ServiceCommand c) async {
     final command = c.command;
     if (command == null) {
       return ffi.ServiceCommandOutput(name: c.name, stdout: '', stderr: 'no such command', succeeded: false);
@@ -93,7 +93,7 @@ final class ServiceManager {
 
   /// The last [lines] of the unit's log. Null where the manager keeps no log
   /// that can be read by unit.
-  Future<ServiceLog?> recentLog(ServerExec exec, ServiceUnit unit, {int lines = 5}) async {
+  Future<ServiceLog?> recentLog(CommandExec exec, ServiceUnit unit, {int lines = 5}) async {
     final command = ffi.serviceRecentLogCommand(managerName: type.name, unitJson: _unit(unit), lines: lines);
     if (command == null) return null;
     final r = await exec.run(command);

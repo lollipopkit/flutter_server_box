@@ -8,7 +8,7 @@ import 'package:server_box/src/rust/frb_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `manager`, `unit`
 
-/// POSIX `sh`, for `ServerExec.run(script, entry: 'sh')`.
+/// POSIX `sh`, for `CommandExec.run(script, entry: 'sh')`.
 String serviceDetectScript() =>
     RustLib.instance.api.crateApiServiceServiceDetectScript();
 
