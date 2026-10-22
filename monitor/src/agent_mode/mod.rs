@@ -513,7 +513,7 @@ impl AgentMode {
         self.files.recover(&known).await;
         let chats = self.dir.join("chats");
         tokio::task::spawn_blocking(move || {
-            for chat in fl_pi_llm::db::list(&chats)? {
+            for chat in fl_pi_llm::db::list(&chats, None)? {
                 if !known.contains(&chat.id) {
                     fl_pi_llm::db::remove(&chats, &chat.id)?;
                 }
@@ -574,6 +574,8 @@ impl AgentMode {
         }
         let r = Runtime::start(PiConfig {
             dir: self.dir.clone(),
+            // Chats stay in clear, as they were before fl_pi_llm could encrypt them.
+            key: None,
             credentials: Arc::new(config::AppCredentials { db: config::DbCredentials(self.db.clone()), apps: self.apps.clone() }),
             fetch: self.fetch.clone(),
             logger: Some(Arc::new(|level, message| match level {
