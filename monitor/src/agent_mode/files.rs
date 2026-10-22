@@ -396,7 +396,7 @@ fn unique(name: &str, used: &mut HashSet<String>) -> String {
     candidate
 }
 
-async fn private_dir(dir: &Path) -> std::io::Result<()> {
+pub(super) async fn private_dir(dir: &Path) -> std::io::Result<()> {
     tokio::fs::create_dir_all(dir).await?;
     #[cfg(unix)]
     {

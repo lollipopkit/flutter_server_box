@@ -511,17 +511,19 @@ impl AgentMode {
         self.drop_legacy_sessions().await?;
         let known: HashSet<String> = sqlx::query_scalar("SELECT id FROM agent_flow").fetch_all(&self.db).await?.into_iter().collect();
         self.files.recover(&known).await;
+        // Owner only, chats in clear included: the directory holds every
+        // task's prompts, commands and output, under a 0755 data directory.
+        files::private_dir(&self.dir).await?;
         let chats = self.dir.join("chats");
-        tokio::task::spawn_blocking(move || {
-            for chat in fl_pi_llm::db::list(&chats, None)? {
-                if !known.contains(&chat.id) {
-                    fl_pi_llm::db::remove(&chats, &chat.id)?;
-                }
+        // Names only: `db::list` would open every chat to read its creation time.
+        let Ok(mut entries) = tokio::fs::read_dir(&chats).await else { return Ok(()) };
+        while let Some(entry) = entries.next_entry().await? {
+            let Some(id) = entry.file_name().to_str().and_then(fl_pi_llm::db::id_of) else { continue };
+            if !known.contains(&id) {
+                fl_pi_llm::db::remove(&chats, &id).map_err(anyhow::Error::msg)?;
             }
-            Ok::<_, String>(())
-        })
-        .await?
-        .map_err(anyhow::Error::msg)
+        }
+        Ok(())
     }
 
     /// TODO: remove once no agent keeps a task from before fl_pi_llm kept
@@ -572,9 +574,11 @@ impl AgentMode {
         if let Some(r) = rt.as_ref() {
             return Ok(r.clone());
         }
+        files::private_dir(&self.dir).await?;
         let r = Runtime::start(PiConfig {
             dir: self.dir.clone(),
-            // Chats stay in clear, as they were before fl_pi_llm could encrypt them.
+            // In clear: the agent has no keychain to keep a key apart from the
+            // chats, and their directory is owner-only (`files::private_dir`).
             key: None,
             credentials: Arc::new(config::AppCredentials { db: config::DbCredentials(self.db.clone()), apps: self.apps.clone() }),
             fetch: self.fetch.clone(),
@@ -1697,7 +1701,8 @@ mod tests {
     use super::*;
 
     /// A task kept before chats were SQLite goes with its session; one in
-    /// the current format stays, and a chat no task names goes.
+    /// the current format stays, a chat no task names goes, and the
+    /// directory is the owner's alone.
     #[tokio::test]
     async fn recover_drops_legacy_tasks_and_orphan_chats() {
         let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
@@ -1730,6 +1735,11 @@ mod tests {
         files.sort();
         assert_eq!(files, [fl_pi_llm::db::file_name("new")]);
         assert!(!agent.dir.join("meta").exists() && !agent.dir.join("sessions").exists());
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            assert_eq!(std::fs::metadata(&agent.dir).unwrap().permissions().mode() & 0o777, 0o700);
+        }
     }
 
     /// The sudo password goes when its time is up, without being asked for.
