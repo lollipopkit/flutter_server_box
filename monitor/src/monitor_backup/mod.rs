@@ -297,19 +297,24 @@ pub async fn set_settings(state: &AppState, next: SetSettings) -> Result<View, R
     .execute(&state.db)
     .await
     .map_err(db_error)?;
+    if same_folder && stored.as_ref().is_some_and(|r| next.keep < r.keep) {
+        state.monitor_backup.prune_due.store(true, Ordering::Relaxed);
+    }
     drop(_lock);
     state.monitor_backup.wake();
     Ok(view(state).await)
 }
 
-/// Backs up to [folder] with [fetched]'s key and as the monitor that made it,
-/// from now on: what a restore on a new machine (the CLI) leaves, so it
-/// carries on that monitor's backups.
+/// Backs up to [folder] with [fetched]'s key from now on: what a restore on a
+/// new machine (the CLI) leaves, so it carries on that monitor's backups as
+/// that monitor. A machine with backup settings of its own keeps its
+/// instance: taking the other's while that one still runs would have each
+/// prune the other's backups.
 pub async fn adopt(db: &SqlitePool, folder: &url::Url, username: &str, password: Option<&str>, allow_insecure: bool, fetched: &Fetched) -> sqlx::Result<()> {
     sqlx::query(
         "INSERT INTO monitor_backup (id, instance, url, username, password, allow_insecure, recipient, updated_at) \
          VALUES (1, ?7, ?1, ?2, ?3, ?4, ?5, ?6) \
-         ON CONFLICT(id) DO UPDATE SET instance = ?7, url = ?1, username = ?2, password = ?3, allow_insecure = ?4, recipient = ?5, \
+         ON CONFLICT(id) DO UPDATE SET url = ?1, username = ?2, password = ?3, allow_insecure = ?4, recipient = ?5, \
          updated_at = ?6, stable_hash = NULL, full_hash = NULL, last_backup_at = NULL, last_name = NULL, last_error = NULL, \
          last_error_at = NULL",
     )
@@ -451,6 +456,22 @@ async fn put_making_folder(dav: &Dav, name: &str, bytes: Vec<u8>) -> Result<(), 
 
 static SCRATCH: AtomicU64 = AtomicU64::new(0);
 
+/// Whether process [pid] exists (or cannot be told apart from one that does).
+#[cfg(unix)]
+fn running(pid: u32) -> bool {
+    let Ok(pid) = libc::pid_t::try_from(pid) else { return false };
+    // SAFETY: signal 0 only checks that the process exists.
+    unsafe { libc::kill(pid, 0) == 0 || std::io::Error::last_os_error().raw_os_error() == Some(libc::EPERM) }
+}
+
+#[cfg(windows)]
+fn running(pid: u32) -> bool {
+    let pid = sysinfo::Pid::from_u32(pid);
+    let mut system = sysinfo::System::new();
+    system.refresh_processes(sysinfo::ProcessesToUpdate::Some(&[pid]), true);
+    system.process(pid).is_some()
+}
+
 /// A folder of its own (0700), removed with this value.
 pub struct Scratch(PathBuf);
 
@@ -478,6 +499,8 @@ pub struct MonitorBackup {
     running: AtomicBool,
     /// A backup asked for now, changed or not.
     forced: AtomicBool,
+    /// `keep` went down: the next check prunes even when nothing changed.
+    prune_due: AtomicBool,
     wake: Notify,
     /// Whether a restore may restart the monitor (`utils::supervisor`); off in
     /// tests, whose process it would end.
@@ -492,7 +515,7 @@ impl MonitorBackup {
             Some(db) => Self::dir_beside(db),
             None => std::env::temp_dir().join(format!("sbm-monitor-backup-{}", std::process::id())),
         };
-        Self { dir, lock: tokio::sync::Mutex::new(()), running: AtomicBool::new(false), forced: AtomicBool::new(false), wake: Notify::new(), restart: AtomicBool::new(true) }
+        Self { dir, lock: tokio::sync::Mutex::new(()), running: AtomicBool::new(false), forced: AtomicBool::new(false), prune_due: AtomicBool::new(false), wake: Notify::new(), restart: AtomicBool::new(true) }
     }
 
     pub fn dir_beside(db: &Path) -> PathBuf {
@@ -513,6 +536,25 @@ impl MonitorBackup {
         .await
         .map_err(std::io::Error::other)??;
         Ok(Scratch(path))
+    }
+
+    /// Removes the working folders a process no longer running left (killed,
+    /// or exited after a restore before its own removal ran): they hold
+    /// `settings.db` unencrypted. One a running CLI is using stays.
+    pub fn sweep(&self) {
+        let Ok(entries) = std::fs::read_dir(&self.dir) else { return };
+        for entry in entries.flatten() {
+            let name = entry.file_name();
+            let Some(pid) = name.to_str().and_then(|n| n.strip_prefix("work-")).and_then(|r| r.split('-').next()).and_then(|p| p.parse::<u32>().ok()) else {
+                continue;
+            };
+            if pid == std::process::id() || running(pid) {
+                continue;
+            }
+            if let Err(e) = std::fs::remove_dir_all(entry.path()) {
+                tracing::warn!("monitor backup: removing {}: {e}", entry.path().display());
+            }
+        }
     }
 
     /// Checks again now.
@@ -641,15 +683,17 @@ async fn make(host: &Host<'_>, stored: &Row, recipient: &str, force: bool) -> Re
         .is_none_or(|t| chrono::Utc::now().signed_duration_since(t) >= chrono::Duration::hours(24));
     let unchanged = stored.stable_hash.as_deref() == Some(digest.stable.as_str())
         && (stored.full_hash.as_deref() == Some(digest.full.as_str()) || !day_old);
-    if unchanged && !force && stored.last_error.is_none() {
+    let prune_due = host.work.prune_due.swap(false, Ordering::Relaxed);
+    if unchanged && !force && stored.last_error.is_none() && !prune_due {
         return Ok((Outcome::Unchanged, digest));
     }
 
     let dav = stored.dav().map_err(Failure::dav)?;
     let id = key_id(recipient);
     let listed = dav.list().await.map_err(Failure::dav)?;
-    // Unchanged after a failure: asked again so the failure shown is
-    // current, and the last backup sent again only if it is not there.
+    // Unchanged after a failure or a lower `keep`: asked again so the
+    // failure shown is current and the surplus goes, and the last backup
+    // sent again only if it is not there.
     if unchanged && !force && stored.last_name.as_ref().is_some_and(|n| listed.iter().any(|e| &e.name == n)) {
         let pruned = prune(&dav, &listed, stored.keep, &stored.instance, &id).await.err();
         return Ok((Outcome::Checked(pruned), digest));
@@ -671,23 +715,29 @@ async fn make(host: &Host<'_>, stored: &Row, recipient: &str, force: bool) -> Re
     };
     // A row naming a file that is gone is backed up without it, as the monitor
     // serves it now.
+    // Opened now and streamed into the archive, never held in memory.
     let mut files = Vec::new();
     let mut total = 0u64;
     for sha in blobs {
-        if let Some(bytes) = host.blobs.read(&sha).await.map_err(|e| Failure::new("io", e))? {
-            total += bytes.len() as u64;
-            if total > MAX_BYTES {
-                return Err(Failure::new("tooLarge", "past the largest backup"));
-            }
-            files.push((sha, bytes));
+        let Some(path) = host.blobs.path(&sha) else { continue };
+        let file = match std::fs::File::open(&path) {
+            Ok(f) => f,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => continue,
+            Err(e) => return Err(Failure::new("io", e)),
+        };
+        let len = file.metadata().map_err(|e| Failure::new("io", e))?.len();
+        total += len;
+        if total > MAX_BYTES {
+            return Err(Failure::new("tooLarge", "past the largest backup"));
         }
+        files.push((sha, file, len));
     }
     let archive = scratch.path().join("backup.tar.gz");
     let encrypted = scratch.path().join("backup.age");
     let recipient = recipient.to_string();
     let (a, e, d) = (archive.clone(), encrypted.clone(), db_file.clone());
     tokio::task::spawn_blocking(move || -> Result<(), Failure> {
-        snapshot::write_archive(&a, &manifest, config.as_deref(), &d, &files).map_err(|e| Failure::new("io", format!("{e:#}")))?;
+        snapshot::write_archive(&a, &manifest, config.as_deref(), &d, files).map_err(|e| Failure::new("io", format!("{e:#}")))?;
         if std::fs::metadata(&a).map_err(|e| Failure::new("io", e))?.len() > MAX_BYTES {
             return Err(Failure::new("tooLarge", "past the largest backup"));
         }
@@ -875,10 +925,15 @@ pub async fn apply(db: &SqlitePool, blobs: &Blobs, config_lock: &tokio::sync::Mu
         match std::str::from_utf8(bytes).ok().and_then(|t| toml::from_str::<crate::core::config::Config>(t).ok()) {
             Some(backup) => {
                 let _lock = config_lock.lock().await;
-                let current = crate::core::config_file::read_async().await.unwrap_or_default();
-                match crate::core::config_file::write_async(&snapshot::merge_config(current, &backup)).await {
-                    Ok(()) => restored.config = true,
-                    Err(e) => tracing::error!("monitor backup: writing config.toml: {e}"),
+                // Merged into this machine's file only: one that is missing
+                // (a CLI run from another directory) or unreadable would be
+                // replaced by defaults, losing its addresses, TLS and limits.
+                match crate::core::config_file::read_async().await {
+                    Ok(current) => match crate::core::config_file::write_async(&snapshot::merge_config(current, &backup)).await {
+                        Ok(()) => restored.config = true,
+                        Err(e) => tracing::error!("monitor backup: writing config.toml: {e}"),
+                    },
+                    Err(e) => tracing::error!("monitor backup: config.toml kept as it is: {e}"),
                 }
             }
             None => tracing::warn!("monitor backup: the backup's config.toml is not one this monitor reads; kept this machine's"),
@@ -917,6 +972,8 @@ pub async fn restore(state: &Arc<AppState>, name: &str, passphrase: &str) -> Res
 
 /// Backs up on its own until the monitor stops.
 pub async fn start(state: Arc<AppState>) {
+    let sweeping = state.clone();
+    let _ = tokio::task::spawn_blocking(move || sweeping.monitor_backup.sweep()).await;
     tokio::select! {
         _ = tokio::time::sleep(Duration::from_secs(60)) => {}
         _ = state.monitor_backup.wake.notified() => {}

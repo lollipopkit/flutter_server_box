@@ -115,7 +115,8 @@ impl Blobs {
         }
     }
 
-    fn path(&self, sha: &str) -> Option<PathBuf> {
+    /// Where [sha]'s file is (there or not); `None` when it is not a digest.
+    pub fn path(&self, sha: &str) -> Option<PathBuf> {
         let digest = sha.len() == 64 && sha.bytes().all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b));
         digest.then(|| self.dir.join(&sha[..2]).join(sha))
     }

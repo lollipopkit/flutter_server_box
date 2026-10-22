@@ -234,6 +234,13 @@ async fn backups_are_made_kept_and_restored() {
     snippet(&state, "s2").await;
     monitor_backup::check(&state, false).await;
     assert_eq!(backups(&store).len(), 2);
+    // Fewer kept with nothing else changed: the surplus goes at the next check.
+    let (status, _) = call(&srv, true, Method::PUT, "/api/v1/monitor-backup", Some(settings(None, 1))).await;
+    assert_eq!(status, 200);
+    monitor_backup::check(&state, false).await;
+    assert_eq!(backups(&store).len(), 1, "pruned to the lower keep");
+    let (status, _) = call(&srv, true, Method::PUT, "/api/v1/monitor-backup", Some(settings(None, 2))).await;
+    assert_eq!(status, 200);
 
     // A new passphrase is a new key; the old key stays while a backup needs it.
     let second_pass = "second passphrase, long enough";

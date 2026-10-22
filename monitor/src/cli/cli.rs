@@ -365,6 +365,8 @@ async fn handle_backup(matches: &clap::ArgMatches) -> anyhow::Result<()> {
             }
             if restored.config {
                 println!("  config.toml: monitoring, push channels, name, allowed origins");
+            } else if fetched.unpacked.config.is_some() {
+                println!("  config.toml: not restored (see the log); run this in the monitor's directory, beside its config.toml");
             }
             println!("The password is the backup's. Restart a running monitor to apply the settings and end what the old password opened.");
         }

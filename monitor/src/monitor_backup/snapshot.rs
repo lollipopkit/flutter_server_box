@@ -13,7 +13,7 @@
 //! only what is not this machine's ([`merge_config`]).
 
 use std::collections::BTreeSet;
-use std::io::Read;
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
@@ -152,7 +152,7 @@ const OWNER: &str = "id = (SELECT MIN(id) FROM main.users)";
 /// The hashes of what a backup taken now would hold, beside [config] (the
 /// file's bytes).
 pub async fn digest(db: &SqlitePool, config: Option<&[u8]>) -> sqlx::Result<Digest> {
-    let mut conn = db.acquire().await?;
+    let mut conn = Guarded::acquire(db).await?;
     let mut stable = Sha256::new();
     let mut full = Sha256::new();
     let mut both = |bytes: &[u8]| {
@@ -193,9 +193,52 @@ pub async fn digest(db: &SqlitePool, config: Option<&[u8]>) -> sqlx::Result<Dige
         Ok(())
     }
     .await;
-    let _ = conn.execute("COMMIT").await;
+    let committed = conn.execute("COMMIT").await;
     result?;
+    committed?;
+    conn.done();
     Ok(Digest { stable: hex::encode(stable.finalize()), full: hex::encode(full.finalize()) })
+}
+
+/// A pooled connection closed, not given back, when dropped before
+/// [`Guarded::done`]: a future dropped mid-transaction (a client gone during
+/// a restore) would leave the transaction open and `other` attached in the
+/// pool, holding up every writer and refusing the next `ATTACH`.
+struct Guarded {
+    conn: sqlx::pool::PoolConnection<sqlx::Sqlite>,
+    done: bool,
+}
+
+impl Guarded {
+    async fn acquire(db: &SqlitePool) -> sqlx::Result<Self> {
+        Ok(Self { conn: db.acquire().await?, done: false })
+    }
+
+    /// The transaction and the attachment are over: back to the pool.
+    fn done(&mut self) {
+        self.done = true;
+    }
+}
+
+impl std::ops::Deref for Guarded {
+    type Target = SqliteConnection;
+    fn deref(&self) -> &SqliteConnection {
+        &self.conn
+    }
+}
+
+impl std::ops::DerefMut for Guarded {
+    fn deref_mut(&mut self) -> &mut SqliteConnection {
+        &mut self.conn
+    }
+}
+
+impl Drop for Guarded {
+    fn drop(&mut self) {
+        if !self.done {
+            self.conn.close_on_drop();
+        }
+    }
 }
 
 /// A database at [path] with this build's schema, every table empty.
@@ -237,12 +280,14 @@ async fn attach(conn: &mut SqliteConnection, file: &Path) -> anyhow::Result<()> 
     Ok(())
 }
 
-/// Ends what [result] left open on [conn] and detaches `other`.
-async fn detach<T>(conn: &mut SqliteConnection, result: anyhow::Result<T>) -> anyhow::Result<T> {
+/// Ends what [result] left open on [conn] and detaches `other`; only then
+/// may the connection go back to the pool.
+async fn detach<T>(conn: &mut Guarded, result: anyhow::Result<T>) -> anyhow::Result<T> {
     if result.is_err() {
         let _ = conn.execute("ROLLBACK").await;
     }
-    sqlx::query("DETACH DATABASE other").execute(&mut *conn).await?;
+    sqlx::query("DETACH DATABASE other").execute(&mut **conn).await?;
+    conn.done();
     result
 }
 
@@ -250,7 +295,7 @@ async fn detach<T>(conn: &mut SqliteConnection, result: anyhow::Result<T>) -> an
 /// rows name.
 pub async fn write_database(db: &SqlitePool, path: &Path) -> anyhow::Result<Vec<String>> {
     empty_database(path).await?;
-    let mut conn = db.acquire().await?;
+    let mut conn = Guarded::acquire(db).await?;
     attach(&mut conn, path).await?;
     let result = copy_out(&mut conn).await;
     detach(&mut conn, result).await
@@ -282,25 +327,30 @@ const MAX_INFLATED: u64 = 1 << 30;
 
 /// Writes the archive to [out]: [manifest], [config], the database at [db]
 /// and [blobs] (`(sha256, bytes)`).
-pub fn write_archive(out: &Path, manifest: &Manifest, config: Option<&[u8]>, db: &Path, blobs: &[(String, Vec<u8>)]) -> anyhow::Result<()> {
+/// [blobs]: each file open, with its length, streamed into the archive.
+pub fn write_archive(out: &Path, manifest: &Manifest, config: Option<&[u8]>, db: &Path, blobs: Vec<(String, std::fs::File, u64)>) -> anyhow::Result<()> {
     let file = std::fs::File::create(out)?;
     let gz = flate2::write::GzEncoder::new(file, flate2::Compression::default());
     let mut tar = tar::Builder::new(gz);
     tar.mode(tar::HeaderMode::Deterministic);
-    let mut add = |name: &str, bytes: &[u8]| -> std::io::Result<()> {
+    let mut add = |name: &str, len: u64, data: &mut dyn Read| -> std::io::Result<()> {
         let mut header = tar::Header::new_gnu();
-        header.set_size(bytes.len() as u64);
+        header.set_size(len);
         header.set_mode(0o600);
         header.set_cksum();
-        tar.append_data(&mut header, name, bytes)
+        tar.append_data(&mut header, name, data)
     };
-    add(MANIFEST, &serde_json::to_vec_pretty(manifest)?)?;
+    let manifest = serde_json::to_vec_pretty(manifest)?;
+    add(MANIFEST, manifest.len() as u64, &mut manifest.as_slice())?;
     if let Some(c) = config {
-        add(CONFIG, c)?;
+        add(CONFIG, c.len() as u64, &mut &c[..])?;
     }
-    add(DATABASE, &std::fs::read(db)?)?;
-    for (sha, bytes) in blobs {
-        add(&format!("blobs/{sha}"), bytes)?;
+    let mut db = std::fs::File::open(db)?;
+    let len = db.metadata()?.len();
+    add(DATABASE, len, &mut db)?;
+    for (sha, file, len) in blobs {
+        // At the length measured: a file that changed since is not this blob.
+        add(&format!("blobs/{sha}"), len, &mut file.take(len))?;
     }
     tar.into_inner()?.finish()?.sync_all()?;
     Ok(())
@@ -322,6 +372,23 @@ pub enum Invalid {
     Format(String),
     #[error("{0}")]
     Io(#[from] std::io::Error),
+}
+
+/// The most the manifest or `config.toml` may be: both are read whole.
+const MAX_SMALL: u64 = 1 << 20;
+
+/// A file written and hashed at once.
+struct Hashing(std::fs::File, Sha256);
+
+impl Write for Hashing {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        let n = self.0.write(buf)?;
+        self.1.update(&buf[..n]);
+        Ok(n)
+    }
+    fn flush(&mut self) -> std::io::Result<()> {
+        self.0.flush()
+    }
 }
 
 fn is_sha(name: &str) -> bool {
@@ -353,23 +420,31 @@ pub fn unpack(archive: &Path, dir: &Path) -> Result<Unpacked, Invalid> {
         if inflated > MAX_INFLATED {
             return Err(bad("too large"));
         }
-        let mut bytes = Vec::with_capacity(entry.size().min(1 << 20) as usize);
-        (&mut entry).take(MAX_INFLATED).read_to_end(&mut bytes)?;
+        // Files go to disk as they are read; only the small ones are held.
+        let small = |entry: &mut tar::Entry<'_, _>| -> Result<Vec<u8>, Invalid> {
+            if entry.size() > MAX_SMALL {
+                return Err(bad("too large"));
+            }
+            let mut bytes = Vec::new();
+            entry.take(MAX_SMALL).read_to_end(&mut bytes)?;
+            Ok(bytes)
+        };
         match name.as_str() {
-            MANIFEST => manifest = Some(serde_json::from_slice::<Manifest>(&bytes).map_err(|_| bad("its manifest"))?),
-            CONFIG => config = Some(bytes),
+            MANIFEST => manifest = Some(serde_json::from_slice::<Manifest>(&small(&mut entry)?).map_err(|_| bad("its manifest"))?),
+            CONFIG => config = Some(small(&mut entry)?),
             DATABASE => {
                 let path = dir.join(DATABASE);
-                std::fs::write(&path, &bytes)?;
+                std::io::copy(&mut (&mut entry).take(MAX_INFLATED), &mut std::fs::File::create(&path)?)?;
                 database = Some(path);
             }
             other => {
                 let sha = other.strip_prefix("blobs/").filter(|s| is_sha(s)).ok_or_else(|| bad("an unknown entry"))?;
-                if hex::encode(Sha256::digest(&bytes)) != sha {
+                let path = dir.join(format!("blob-{sha}"));
+                let mut out = Hashing(std::fs::File::create(&path)?, Sha256::new());
+                std::io::copy(&mut (&mut entry).take(MAX_INFLATED), &mut out)?;
+                if hex::encode(out.1.finalize()) != sha {
                     return Err(bad("a file that does not match its name"));
                 }
-                let path = dir.join(format!("blob-{sha}"));
-                std::fs::write(&path, &bytes)?;
                 blobs.push((sha.to_string(), path));
             }
         }
@@ -437,7 +512,7 @@ pub async fn restore_database(db: &SqlitePool, store: &Blobs, unpacked: &Unpacke
             return Err(RestoreError::Invalid("a file that does not match its name".into()));
         }
     }
-    let mut conn = db.acquire().await?;
+    let mut conn = Guarded::acquire(db).await?;
     attach(&mut conn, &unpacked.database).await?;
     let result = copy_in(&mut conn, unpacked.blobs.len()).await;
     Ok(detach(&mut conn, result).await?)
@@ -587,7 +662,8 @@ mod tests {
         assert_eq!(named, vec![sha.clone()]);
         let archive = dir.path().join("a.tar.gz");
         let manifest = Manifest { format: FORMAT, monitor_version: "t".into(), migration: 39, host: "h".into(), created_at: "now".into() };
-        write_archive(&archive, &manifest, Some(b"x = 1"), &file, &[(sha.clone(), b"a wallpaper".to_vec())]).unwrap();
+        let wallpaper = std::fs::File::open(blobs.path(&sha).unwrap()).unwrap();
+        write_archive(&archive, &manifest, Some(b"x = 1"), &file, vec![(sha.clone(), wallpaper, 11)]).unwrap();
         let out = dir.path().join("out");
         std::fs::create_dir(&out).unwrap();
         let unpacked = unpack(&archive, &out).unwrap();
@@ -628,6 +704,20 @@ mod tests {
             .unwrap();
         conn.close().await.unwrap();
         assert!(matches!(upgrade(&file).await, Err(RestoreError::Newer)));
+    }
+
+    #[test]
+    fn a_file_that_does_not_match_its_name_is_refused() {
+        let dir = tempfile::tempdir().unwrap();
+        let archive = dir.path().join("a.tar.gz");
+        let gz = flate2::write::GzEncoder::new(std::fs::File::create(&archive).unwrap(), flate2::Compression::default());
+        let mut tar = tar::Builder::new(gz);
+        let mut header = tar::Header::new_gnu();
+        header.set_size(1);
+        header.set_cksum();
+        tar.append_data(&mut header, format!("blobs/{}", "0".repeat(64)), &b"x"[..]).unwrap();
+        tar.into_inner().unwrap().finish().unwrap();
+        assert!(matches!(unpack(&archive, dir.path()), Err(Invalid::Format(_))));
     }
 
     #[test]

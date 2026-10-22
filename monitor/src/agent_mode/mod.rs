@@ -515,15 +515,22 @@ impl AgentMode {
         // task's prompts, commands and output, under a 0755 data directory.
         files::private_dir(&self.dir).await?;
         let chats = self.dir.join("chats");
-        // Names only: `db::list` would open every chat to read its creation time.
-        let Ok(mut entries) = tokio::fs::read_dir(&chats).await else { return Ok(()) };
-        while let Some(entry) = entries.next_entry().await? {
-            let Some(id) = entry.file_name().to_str().and_then(fl_pi_llm::db::id_of) else { continue };
-            if !known.contains(&id) {
-                fl_pi_llm::db::remove(&chats, &id).map_err(anyhow::Error::msg)?;
+        tokio::task::spawn_blocking(move || -> anyhow::Result<()> {
+            // Names only: `db::list` would open every chat to read its creation time.
+            let entries = match std::fs::read_dir(&chats) {
+                Ok(e) => e,
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+                Err(e) => anyhow::bail!("list chats: {e}"),
+            };
+            for entry in entries {
+                let Some(id) = entry?.file_name().to_str().and_then(fl_pi_llm::db::id_of) else { continue };
+                if !known.contains(&id) {
+                    fl_pi_llm::db::remove(&chats, &id).map_err(anyhow::Error::msg)?;
+                }
             }
-        }
-        Ok(())
+            Ok(())
+        })
+        .await?
     }
 
     /// TODO: remove once no agent keeps a task from before fl_pi_llm kept

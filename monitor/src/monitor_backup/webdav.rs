@@ -130,6 +130,9 @@ pub fn same_origin(a: &Url, b: &Url) -> bool {
 
 pub struct Dav {
     client: reqwest::Client,
+    /// For a PUT: no read timeout, which would count the upload itself (the
+    /// server answers once the body is in); [`upload_timeout`] bounds it.
+    uploads: reqwest::Client,
     folder: Url,
     username: String,
     password: Option<Zeroizing<String>>,
@@ -139,22 +142,31 @@ pub struct Dav {
 /// requests and the next check's.
 fn client() -> &'static reqwest::Client {
     static CLIENT: std::sync::OnceLock<reqwest::Client> = std::sync::OnceLock::new();
-    CLIENT.get_or_init(|| {
-        // reqwest is built without a crypto provider; the monitor's is ring.
-        let _ = rustls::crypto::ring::default_provider().install_default();
-        reqwest::Client::builder()
-            .redirect(reqwest::redirect::Policy::none())
-            .connect_timeout(Duration::from_secs(20))
-            .read_timeout(Duration::from_secs(120))
-            .build()
-            .expect("a valid HTTP client")
-    })
+    CLIENT.get_or_init(|| builder().read_timeout(Duration::from_secs(120)).build().expect("a valid HTTP client"))
+}
+
+fn upload_client() -> &'static reqwest::Client {
+    static CLIENT: std::sync::OnceLock<reqwest::Client> = std::sync::OnceLock::new();
+    CLIENT.get_or_init(|| builder().build().expect("a valid HTTP client"))
+}
+
+fn builder() -> reqwest::ClientBuilder {
+    // reqwest is built without a crypto provider; the monitor's is ring.
+    let _ = rustls::crypto::ring::default_provider().install_default();
+    reqwest::Client::builder().redirect(reqwest::redirect::Policy::none()).connect_timeout(Duration::from_secs(20))
+}
+
+/// How long a PUT of [len] bytes may take: two minutes, and the body at
+/// 32 KiB/s (a 100 MB backup gets about 55 minutes).
+fn upload_timeout(len: u64) -> Duration {
+    Duration::from_secs(120 + len / (32 * 1024))
 }
 
 impl Dav {
     pub fn new(folder: Url, username: &str, password: Option<&str>) -> Self {
         Self {
             client: client().clone(),
+            uploads: upload_client().clone(),
             folder,
             username: username.to_string(),
             password: password.map(|p| Zeroizing::new(p.to_string())),
@@ -165,15 +177,20 @@ impl Dav {
         &self.folder
     }
 
+    /// [name] in the folder, as one path segment: a name read from the
+    /// server's listing (`?`, `#`, `/`, `%`) is escaped rather than read as
+    /// the URL's query, fragment or another folder.
     fn file(&self, name: &str) -> Url {
-        // Names are this module's callers' own (`[A-Za-z0-9._-]`), so joining
-        // never leaves the folder.
-        debug_assert!(name.bytes().all(|b| b.is_ascii_alphanumeric() || b"._-".contains(&b)));
-        self.folder.join(name).expect("a plain file name")
+        let mut url = self.folder.clone();
+        url.path_segments_mut().expect("an http(s) folder").pop_if_empty().push(name);
+        url
     }
 
     fn request(&self, method: Method, url: Url) -> reqwest::RequestBuilder {
-        let req = self.client.request(method, url);
+        self.authorized(self.client.request(method, url))
+    }
+
+    fn authorized(&self, req: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
         if self.username.is_empty() && self.password.is_none() {
             return req;
         }
@@ -263,7 +280,11 @@ impl Dav {
     /// never looks like a finished file.
     async fn put(&self, name: &str, body: reqwest::Body, len: u64) -> Result<(), DavError> {
         let part = format!("{name}.part");
-        let req = self.request(Method::PUT, self.file(&part)).header("Content-Length", len).body(body);
+        let req = self
+            .authorized(self.uploads.request(Method::PUT, self.file(&part)))
+            .timeout(upload_timeout(len))
+            .header("Content-Length", len)
+            .body(body);
         if let Err(e) = self.send(req).await {
             let _ = self.delete(&part).await;
             return Err(e);
@@ -400,6 +421,14 @@ fn decode(path: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_listed_name_stays_one_file_in_the_folder() {
+        let dav = Dav::new(folder_url("https://dav.example.com/my box", false).unwrap(), "", None);
+        assert_eq!(dav.file("a.age").as_str(), "https://dav.example.com/my%20box/a.age");
+        assert_eq!(dav.file("x?y#z.part").as_str(), "https://dav.example.com/my%20box/x%3Fy%23z.part");
+        assert_eq!(dav.file("../up").as_str(), "https://dav.example.com/my%20box/..%2Fup");
+    }
 
     #[test]
     fn only_addresses_credentials_may_go_to_are_taken() {
