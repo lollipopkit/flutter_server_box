@@ -167,6 +167,7 @@
     const d = depth
     untrack(() => {
       if (k === shown.key || !root) return
+      restoring?.()
       const page = livePage()
       if (page) remember(shown.key, page, page.scrollTop)
       plan = swapping ? 'none' : d > shown.depth ? 'push' : d < shown.depth ? 'pop' : 'fade'
@@ -184,7 +185,7 @@
       if (!changed || !root) return
       changed = false
       const page = livePage()
-      if (page && host) page.scrollTop = toScroll
+      if (page && host) restore(page, toScroll)
       if (swapping) {
         clearTimeout(swapTimer)
         swapping.copy.remove()
@@ -194,6 +195,40 @@
       }
     })
   })
+
+  /// Stops a restore still waiting for its page to grow.
+  let restoring: (() => void) | null = null
+  const RESTORE_MS = 3000
+  const USER_EVENTS = ['wheel', 'pointerdown', 'touchstart', 'keydown'] as const
+
+  /// Scrolls [page] to [to], and again as it grows: a page that fetches what
+  /// it shows arrives short (a spinner), and the browser clamps the position
+  /// to what fits. Given up once the person scrolls or touches it, or after
+  /// [RESTORE_MS].
+  function restore(page: HTMLElement, to: number) {
+    restoring?.()
+    page.scrollTop = to
+    if (page.scrollTop >= to - 1) return
+    const ro = new ResizeObserver(() => {
+      page.scrollTop = to
+      if (page.scrollTop >= to - 1) stop()
+    })
+    for (const child of page.children) ro.observe(child)
+    const mo = new MutationObserver((records) => {
+      for (const r of records) for (const n of r.addedNodes) if (n instanceof Element) ro.observe(n)
+    })
+    mo.observe(page, { childList: true })
+    const timer = window.setTimeout(() => stop(), RESTORE_MS)
+    function stop() {
+      ro.disconnect()
+      mo.disconnect()
+      clearTimeout(timer)
+      for (const ev of USER_EVENTS) page.removeEventListener(ev, stop)
+      if (restoring === stop) restoring = null
+    }
+    for (const ev of USER_EVENTS) page.addEventListener(ev, stop, { passive: true })
+    restoring = stop
+  }
 
   /// While pages move the bar stays blurred over both (the page arriving may
   /// be at its top while the one leaving was scrolled): `data-page-moving` on
@@ -498,6 +533,7 @@
   })
 
   $effect(() => () => {
+    restoring?.()
     clearTimeout(swapTimer)
     clearTimeout(wheelEnd)
   })
