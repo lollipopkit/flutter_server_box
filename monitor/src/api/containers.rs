@@ -39,7 +39,7 @@
 //!
 //! # Privilege
 //!
-//! The `shell` grant for both halves (`api::machine::gate`): changing a
+//! The transport rule, both ways (`api::machine::gate`): changing a
 //! container is running code, and a container's log and its command line are
 //! where a secret it was started with shows.
 //!
@@ -61,7 +61,6 @@ use super::exec::{ExecResponse, Limits, run};
 use super::machine;
 use super::server::AppState;
 use super::ws::audit::{Action, Event, Kind, Outcome};
-use crate::core::permissions::Grant;
 use crate::monitoring::system_type;
 use sbm_parser::container::{
     Container, ContainerAction, ContainerActionError, ContainerCmd, ContainerImage, ContainerStats,
@@ -204,13 +203,15 @@ struct ContainerRow {
 /// would otherwise re-derive.
 ///
 /// `dangling` is [`ContainerImage::is_dangling`] — whether the image has no
-/// name to lose. Sent rather than derived by the panel, which decides nothing
+/// name to lose — and `reference` [`ContainerImage::reference`], what it is
+/// named by. Sent rather than derived by the panel, which decides nothing
 /// about a runtime.
 #[derive(Serialize)]
 struct ImageRow {
     #[serde(flatten)]
     image: ContainerImage,
     dangling: bool,
+    reference: String,
 }
 
 /// Reads one part of the machine's container state.
@@ -219,7 +220,7 @@ pub async fn list(
     query: web::types::Query<ContainerQuery>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    if let Err(refused) = machine::gate(&req, &state, Grant::Shell, "containers list").await {
+    if let Err(refused) = machine::gate(&req, &state, "containers list").await {
         return Ok(refused);
     }
     let exec = &state.remote_access.exec;
@@ -250,7 +251,7 @@ pub async fn act(
 ) -> Result<HttpResponse, web::Error> {
     let action = body.into_inner();
     let what = format!("containers {}", action_subject(&action));
-    let gated = match machine::gate(&req, &state, Grant::Shell, &what).await {
+    let gated = match machine::gate(&req, &state, &what).await {
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),
     };
@@ -275,7 +276,6 @@ pub async fn act(
     // Recorded before it runs; the subject is the account, the detail the
     // action and the container it named — never a command line.
     Event::new(Kind::Machine, Action::Open, Outcome::Ok)
-        .subject(&gated.caller.username)
         .remote_ip(gated.remote_ip.clone())
         .detail(&what)
         .record(&state.db)
@@ -294,7 +294,6 @@ pub async fn act(
     };
     if let Some(why) = failed {
         Event::new(Kind::Machine, Action::Close, Outcome::Error)
-            .subject(&gated.caller.username)
             .remote_ip(gated.remote_ip)
             .detail(format!("{what}: {why}"))
             .record(&state.db)
@@ -329,7 +328,6 @@ async fn refuse(
     issue: ContainerActionError,
 ) -> HttpResponse {
     Event::new(Kind::Machine, Action::Denied, Outcome::Denied)
-        .subject(&gated.caller.username)
         .remote_ip(gated.remote_ip.clone())
         .detail(format!("{what}: {}", issue.code()))
         .record(&state.db)
@@ -643,6 +641,7 @@ async fn finish(part: ContainerPart, probe: Probe) -> ContainerListResponse {
                 .into_iter()
                 .map(|image| ImageRow {
                     dangling: image.is_dangling(),
+                    reference: image.reference(),
                     image,
                 })
                 .collect();

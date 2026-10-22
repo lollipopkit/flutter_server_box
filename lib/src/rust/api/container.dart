@@ -8,6 +8,10 @@ import 'package:server_box/src/rust/frb_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `command_kind`, `image_back`, `image_item`, `item`, `runtime`, `status_name`, `status`
 
+/// What [image] is named by (`sbm_parser::container::ContainerImage::reference`).
+String containerImageReference({required ContainerImageItem image}) =>
+    RustLib.instance.api.crateApiContainerContainerImageReference(image: image);
+
 /// The prefix of the marker echoed between batched commands.
 String containerSeparatorPrefix() =>
     RustLib.instance.api.crateApiContainerContainerSeparatorPrefix();

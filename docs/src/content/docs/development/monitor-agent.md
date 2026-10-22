@@ -32,24 +32,24 @@ New features do not change the protocol version; they are listed in `features`.
 ## Capability discovery
 
 The App calls `GET /api/v1/capabilities` to learn which features an agent
-supports and what the signed-in account may use. The response answers for the
-caller:
+supports and whether the signed-in caller may use them. The response includes:
 
-- `me`: `username`, `role`, and `admin`. A watch token gets no `me`.
-- `grants`: one entry for each of `shell`, `ssh_terminal`, `files`,
-  `connect`, and `listen`, with `ok` and, when it is not usable, `why`:
-  `not_granted` (the role does not hold it), `insecure_transport` (it needs
-  TLS, a loopback caller, or `[remote_access] allow_insecure`), or
-  `not_configured` (`files` with no `roots`). A grant also carries its
-  options: `files.mode`, `connect.allow`, `listen.public`, and
-  `listen.ports`. For a watch token every grant is `not_granted`.
-- `remote_access`: the booleans agents reported before roles, derived from
-  `grants` for older Apps (`terminal` is `ssh_terminal` or `shell`,
-  `full_access` is `shell`, `stream` is `connect`). The App reads `grants`
-  when it is present.
-
-TODO: Remove the legacy `remote_access` response when the minimum supported
-App version reads `grants`.
+- `access`: `ok`, and when it is false, `why`. `insecure_transport` means
+  the request needs TLS, a loopback caller, or
+  `[remote_access] allow_insecure`. For a watch token `access` is
+  `{"ok": false}`.
+- `features`: the machine-management endpoints the agent serves, such as
+  `power`. A client offers a page when its name is listed and `access.ok`.
+  `container_exec`, `iperf`, and `tmux` are terminal targets rather than
+  pages; each is offered only where it is listed. `alerts`, `audit`, and
+  `live` are the Monitor tab's sections (`GET /alerts`, `GET /audit`,
+  `/live*`), and `desk` its notifications. `update` is `GET /update`: the
+  agent's version, the newest release it read (`?check=1` reads again),
+  `outdated`, how it was installed (`install`: `script`, `container`, `nix`,
+  `other`) and, for `script`, the `command` that updates it, whether starting
+  it needs the sudo password, and the last update's `run` (state and output).
+  `POST /update/run` starts it apart from the agent, which survives the
+  agent's restart.
 
 Do not infer feature availability from the agent version or configuration
 defaults. Use the capabilities response from the running agent.
@@ -82,104 +82,78 @@ now. The App includes `minutes` in each request, so agents that predate
 
 ## Access model
 
-Each account has one role, and a role holds grants. The full contract,
-including every request and response shape, is
+The agent has one account, signed in with its password alone, and it may do
+whatever the system account the agent runs as may do. There are no roles,
+grants, or file roots. The full contract, including every request and response
+shape, is
 [docs/dev/monitor-permissions.md](https://github.com/lollipopkit/flutter_server_box/blob/main/docs/dev/monitor-permissions.md) in the repository.
 
-| Grant | Endpoints |
-|---|---|
-| `shell` | `POST /api/v1/exec`, the App's terminal (a local PTY on `/api/v1/terminal/ws`), running custom commands |
-| `ssh_terminal` | The web panel's terminal on `/api/v1/terminal/ws`, which signs in to `ssh_addr` with SSH credentials |
-| `files` | `/api/v1/fs/*`; `mode = "read"` allows `roots`, `list`, `stat`, and `read` only |
-| `connect` | `open` on `/api/v1/stream/ws`, checked against `allow` |
-| `listen` | `/api/v1/listen/ws`, and `accept` on `/api/v1/stream/ws` |
-
 Reading status, metrics, history, velocity, capabilities, and the card order
-needs any account or a watch token. A watch token can do nothing else.
+needs a login or a watch token. A watch token can do nothing else; every other
+endpoint answers it `401`.
 
-### Accounts and roles
-
-Only an account in the `admin` role may call these, apart from the two `/me`
-routes, which any account may call:
+### Signing in and the password
 
 | Endpoint | Body |
 |---|---|
-| `GET /api/v1/me` | — answers `username` and the full `role` |
+| `POST /api/v1/login` | `password`; a `username` field is ignored |
 | `PUT /api/v1/me/password` | `current_password`, `new_password` (at least 8 characters) |
-| `GET /api/v1/users` | — |
-| `POST /api/v1/users` | `username`, `password`, `role`, `current_password` |
-| `PUT /api/v1/users/{username}` | optional `role` and `password`, `current_password` |
-| `DELETE /api/v1/users/{username}` | `current_password` |
-| `GET /api/v1/roles` | — |
-| `POST /api/v1/roles` | `role`, `current_password` |
-| `PUT /api/v1/roles/{name}` | `role`, `current_password` |
-| `DELETE /api/v1/roles/{name}` | `current_password` |
 
-`current_password` is the calling admin's own password. It goes through the
-login throttle, so a run of wrong ones answers `429 throttled` with
-`Retry-After`. The agent's settings (`/settings`, `/push`, `/push/test`,
-`PUT /card-order`) are admin-only as well, and `PUT /custom-cmds` also needs a
-usable `shell`, because the agent runs custom commands.
+`server_box_monitor password` sets the password on the database from the
+command line (`--password-env VAR` reads it from the environment), creating
+the account if there is none.
+
+Some changes ask for the current password again in the body
+(`current_password`): changing the password, deploying a web app, changing its
+settings or removing it, revealing its first login, restoring or deleting a
+container backup, and approving or removing a desk app. It goes through the
+login throttle, per source address and on a counter only signed-in callers
+share. A wrong or missing one answers `403 reauth`; a run of wrong ones
+answers `429 throttled` with `Retry-After`.
 
 Errors are `{"error": "<code>", "message": "..."}`:
 
 | Code | Status | Meaning |
 |---|---|---|
-| `bad_request` | 400 | The body has the wrong shape, including an unknown grant |
-| `unauthorized` | 401 | No valid login; a deleted account's token gets this everywhere |
-| `forbidden` | 403 | Not an admin, or the role lacks the grant |
+| `bad_request` | 400 | The body has the wrong shape |
+| `unauthorized` | 401 | No valid login, a token issued before the last password change, or a watch token outside its scope |
+| `forbidden` | 403 | The transport rule refuses it |
 | `reauth` | 403 | `current_password` is missing or wrong |
-| `not_found` | 404 | No such account or role |
-| `conflict` | 409 | The name exists, or the role is still in use |
-| `last_admin` | 409 | The change would leave no admin account |
+| `throttled` | 429 | Too many failed attempts |
 
-### Live sessions
+### Password change
 
-A change to an account or a role applies immediately. A terminal, relay, or
-listener whose account no longer holds the grant it needs receives
-`{"type":"error","code":"permission_revoked"}` and is closed. A WebSocket
-request that needs a grant the account lacks answers `forbidden`; a `listen`
-outside the role's `public` or `ports` limits answers `not_permitted`.
-The legacy `DELETE /api/v1/remote-access/full-access` removes `shell`,
-`connect`, and `listen` from every role and closes the sessions that lost a
-grant with `full_access_disabled`. TODO: Remove the endpoint once the panel's
-prompt edits roles itself.
+A password change signs out everything else. Panel tokens issued before it
+answer `401` everywhere, watch tokens are deleted, and in a running agent
+terminal sessions, outstanding tickets, running Agent mode tasks, web app
+windows, relays, and listeners receive
+`{"type":"error","code":"password_changed"}` and are closed. A reset from the
+command line cannot reach a running agent's open connections; they end when
+the agent restarts.
 
 ### Transport
 
-Every grant needs TLS or a loopback caller, which includes a reverse proxy on
-the same host, unless `[remote_access] allow_insecure = true`. TODO: Remove the
-legacy `allow_insecure` keys when existing configurations no longer need them.
-Until then, they cover only their previous scopes:
-`[remote_access.terminal] allow_insecure` for `shell`, `ssh_terminal`,
-`connect` and `listen`, `[remote_access.fs] allow_insecure` for `files`. A plaintext connection from the App also needs
-**Allow insecure HTTP** for that server. Without either, the grant is reported
-with `why: insecure_transport`.
-
-### Connections and listeners
-
-`connect.allow` entries are an IP address or CIDR range with an optional port
-or port range, with IPv6 written as `[addr]:port`. When a connection names a
-host, the agent resolves it, requires every resulting address to be allowed,
-and dials those addresses. `localhost` often resolves to both `127.0.0.1` and
-`::1`, so a client should send the address it means.
-
-`listen` binds loopback addresses only unless `public` is on, and only ports
-inside `ports` when that is set.
+Everything beyond reading needs TLS or a loopback caller, which includes a
+reverse proxy on the same host, unless `[remote_access] allow_insecure = true`.
+TODO: Remove the legacy `allow_insecure` keys when existing configurations no
+longer need them. Until then, `[remote_access.terminal] allow_insecure` and
+`[remote_access.fs] allow_insecure` count as it. A plaintext connection from
+the App also needs **Allow insecure HTTP** for that server. Without either,
+capabilities report `access` with `why: insecure_transport`, and the
+endpoints answer `forbidden`.
 
 ### File API
 
-The `files` grant reaches only the directories listed in
-`[remote_access.fs] roots`. The agent resolves requested paths, follows
-symlinks, rejects `..`, and verifies that the resolved path remains under a
-configured root. A symlink cannot be used to escape those roots. Setting
-`roots = ["/"]` exposes the complete filesystem and triggers a startup
-warning.
+`/api/v1/fs/*` reaches whatever the agent's system account can, except the
+agent's own state: its database and journal files, `jwt.secret`,
+`initial-admin-credentials.txt`, `config.toml` and its backups, `.env`, the
+TLS certificate and key, the custom-commands directory, the blob store,
+stacks' `.env` files, and container backups. These paths are matched after
+resolving symlinks, refused with `403`, left out of listings, and their
+directories cannot be renamed, removed, or chmod-ed.
 
 ### Terminal endpoint
 
-The web-panel terminal connects to `ssh_addr` as an SSH client and uses the
-SSH account's permissions; it needs `ssh_terminal`. The App terminal uses the
-agent process user's local shell and needs `shell`. The endpoint's first
-message may contain an SSH password, which is why it follows the transport
-rule above.
+The terminal of the App and of the web panel is a local shell running as the
+agent process user, on a PTY. The agent does not sign in to sshd: an `open`
+carrying SSH credentials is refused.

@@ -24,9 +24,9 @@ import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/connection_stat.dart';
 import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
+import 'package:server_box/data/model/server/monitor_access.dart';
 import 'package:server_box/data/model/server/monitor_capabilities.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
-import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -97,7 +97,7 @@ abstract class ServerState with _$ServerState {
     /// asking them to assert something the server knows — and being wrong
     /// either way, since a "yes" the agent refuses is a row of dead buttons
     /// and a "no" it would have allowed hides features that are there.
-    MonitorRemoteAccess? remoteAccess,
+    MonitorAccess? agentAccess,
 
     /// The agent's version, as it reported it, or null for a server with no
     /// agent — and for an agent built before it said so.
@@ -123,7 +123,7 @@ abstract class ServerState with _$ServerState {
   /// hiding half of them behind a preference about *ordering* would take
   /// features away for no reason the user could see.
   ServerCapabilities get capabilities =>
-      ServerCapabilities.ofSpi(spi, granted: remoteAccess);
+      ServerCapabilities.ofSpi(spi, granted: agentAccess);
 
   /// Whether running a command would have to open a connection first, i.e.
   /// whether a caller is about to make the user wait.
@@ -613,7 +613,7 @@ class ServerNotifier extends _$ServerNotifier {
           // platform it reports decides which script gets installed.
           if (!_isRefreshCurrent(operation, spi)) return;
           state = state.copyWith(
-            remoteAccess: caps.remoteAccess,
+            agentAccess: caps.access,
             agentVersion: caps.version,
             agentCapabilities: caps,
           );

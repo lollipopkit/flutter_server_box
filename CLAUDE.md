@@ -26,7 +26,7 @@ Flutter app for managing servers, in a Rust workspace monorepo. Feature notes li
 - `iOS Linux engine`, `macOS build`, `Windows build` (`analysis.yml`) are manual: `gh workflow run analysis.yml --ref <branch>`, and wait before marking a PR ready. Otherwise say in the PR they were not needed.
   - iOS: `ios/`, `third_party/`, `crates/sbm_ffi/`, `packages/{fl_tty,fl_pi_llm}`, `plain_notification_token`, `watch_connectivity`.
   - macOS / Windows: `macos/`, `windows/`, `hook/`, `crates/`, `Cargo.{toml,lock}`, `packages/{fl_tty,fl_pi_llm}`.
-  - All three: `pubspec.{yaml,lock}`, `.github/actions/`, `analysis.yml`. Not on its own: `lib/`, `test/`, a pure-Dart submodule bump.
+  - All three: `pubspec.{yaml,lock}`, `.github/actions/`, `analysis.yml`. Not on its own: `lib/`, `test/`, a pure-Dart submodule bump, a `pubspec` change that only names a pure-Dart package already in the lock (the lock's diff is `transitive` → `direct main`, no version or package change).
 - Caches save from main only. A job's own `cargo` uses `Swatinem/rust-cache`; `flutter build`/`test` build `sbm_ffi` through the hook into `.dart_tool/hooks_runner` (env allowlist: no `RUSTC_WRAPPER`/`RUSTUP_TOOLCHAIN`), cached by `.github/actions/build-hook-cache`.
 
 ### Rust / FFI
@@ -42,16 +42,17 @@ Flutter app for managing servers, in a Rust workspace monorepo. Feature notes li
 - `crates/sbm_parser/` — status command manifest, scripts, parsers (pure, raw counters; rates stay with the caller), locked by `tests/dart_compat.rs` / `script_compat.rs`. Porting: move a module's Dart tests to Rust first, delete the Dart side only once the FFI result matches. `ProcKill` checks a PID against the process table's `START_ID`.
 - `crates/sbm_virt/` — one virtualization model for libvirt (pure command layer) and the PVE API client (session, TOTP, tickets, pinning, console; over a stream the caller dials: `TcpDial` agent, `LoopbackDial` app).
 - `crates/sbm_redfish/` — the BMC client; app via `sbm_ffi::api::bmc`. Also decides PVE certificate pins (`certPinAccepts`); pins are SHA-256 lowercase hex.
+- Theme packages (`.fsbt`) and the theme store are read and checked in Rust, in fl_lib: `packages/fl_lib/rust/theme` (`fl_theme`, its own Cargo workspace), which the agent depends on by path and the app reaches through fl_lib's build hook. Flutter tests load `build/native_assets/<os>/libfl_lib_ffi.*`, which fl_lib's build hook writes (`test/flutter_test_config.dart`).
 - `crates/sbm_ffi/` — FRB bindings. `crates/sbm_native/` — native sampler, monitor only.
-- `monitor/` — the agent (Rust + Svelte panel), see `monitor/CLAUDE.md`. Machine pages are listed as `features` in `/capabilities`.
+- `monitor/` — the agent (Rust + Svelte panel), see `monitor/CLAUDE.md`. `monitor/sdk/`: what installed desk apps use: `serverbox-desk` (the bridge client, on npm; Apache-2.0 for closed third-party apps; it also puts the desk's design system, served by the agent, on the app's page) and a template. Machine pages are listed as `features` in `/capabilities`.
 - `lib/core/` utilities, `lib/view/` UI, `lib/data/{model,provider,store}/`, `lib/src/rust/` generated, `lib/hive/` legacy adapters for `HiveImport` only (TODO: remove).
 - `packages/` — Dart forks as submodules (dartssh2, xterm, fl_lib, fl_build, …) and the in-repo `webui`. `packages/fl_tty` — the shell on this device, shared with LLMBox: pty, rootfs (`Rootfs`, manifest), proot (Android) and ish-arm64 (iOS, `packages/fl_tty/third_party/ish-arm64`), all built by its hook; ServerBox sets it up in `lib/core/tty.dart` and names the device in `lib/core/utils/local_device.dart`. `third_party/` — `ironrdp`. `website/` — Svelte + bun.
-- `third_party/ironrdp` is upstream IronRDP's **main**, not a release, plus a few ServerBox commits (branch `serverbox`); `sbm_ffi` takes every IronRDP crate from it by path, on ring (`rustls-ring`). Certificate pinning is `sbm_ffi`'s, on upstream's validation callback; accepted advisories are in `.cargo/audit.toml`. `serverbox` is squash-merged, so ServerBox's own commits live on the latest `patches/upstream-<sha>` tag. To follow upstream: branch from its main, `git cherry-pick $(git rev-list --reverse --first-parent --no-merges <old upstream sha>..<tag>)`, then `git merge -s ours origin/serverbox` (so the squash merges cleanly, without a force push), and tag the new patches again.
-- **The Agent is `packages/fl_pi_llm`** (submodule shared with GPT Box, its own Cargo workspace; PR changes there). This app hooks in at `lib/core/llm/` (`LlmHost`, `AgentTools`, `AgentScope`/`TerminalHosts`/`AgentChats`). `.claude/skills/serverbox-help` ships as assets: a new file needs its directory in `pubspec.yaml`, and its docs links must exist (`builtin_skill_test.dart`). Tests load `build/native_assets/<os>/libfl_pi_llm.*`.
-- Themes are fl_lib's (`package:fl_lib/theme.dart`); this app describes itself in `lib/core/service/theme_host.dart`. `SettingStore` keys are fixed — renaming one loses it. `store/` is the official theme repository (details: `docs/src/content/docs/development/themes.md`, the `serverbox-theme` skill); **editing a theme bundled as `assets/store_themes/<id>.fsbt` means repacking it** (`theme_bundled_test.dart`).
+- `third_party/ironrdp` is upstream IronRDP's **main** plus ServerBox's commits (branch `serverbox`, squash-merged; the commits live on the latest `patches/upstream-<sha>` tag); `sbm_ffi` takes every IronRDP crate from it by path, on ring. Following upstream: `docs/dev/ironrdp.md`.
+- **The Agent is `packages/fl_pi_llm`** (submodule shared with GPT Box and the monitor, its own Cargo workspace; PR changes there). Memory, skills and MCP tools are its Rust (`rust/src/{memory,skills,mcp}.rs`); `ui` keeps files, fetching and the mcp_dart client. This app hooks in at `lib/core/llm/` (`LlmHost`, `AgentTools`, `AgentScope`/`TerminalHosts`/`AgentChats`). `.claude/skills/serverbox-help` ships as assets: a new file needs its directory in `pubspec.yaml`, and its docs links must exist (`builtin_skill_test.dart`). Tests load `build/native_assets/<os>/libfl_pi_llm.*`.
+- Themes are fl_lib's (`package:fl_lib/theme.dart`); this app describes itself in `lib/core/service/theme_host.dart`. `SettingStore` keys are fixed — renaming one loses it. `store/` is the official theme repository (and `store/apps/`, the Monitor's web apps: the `serverbox-webapp` skill) (details: `docs/src/content/docs/development/themes.md`, the `serverbox-theme` skill); no store theme is bundled in the app (a committed `.fsbt` is a binary git cannot diff).
 - `lollipopkit/shellbox-rootfs` is not a submodule: fl_tty reads its signed manifest (`packages/fl_tty/assets/rootfs_manifest.json` offline, URL and key `RootfsManifestConfig.shellbox`, verified by `RootfsManifestTrust`).
 - `ScriptConstants.version` and the `v<N>` in `ScriptConstants.scriptFile` must stay equal.
-- **A breaking change to the agent API raises `sbm_parser::protocol::PROTOCOL`**, and both sides keep answering / reading the previous one (`monitor/CLAUDE.md`, Protocol).
+- **A breaking change to the agent API raises `sbm_parser::protocol::PROTOCOL`**, and both sides keep answering / reading the previous one (`monitor/CLAUDE.md`).
 
 ### Connection methods
 
@@ -60,21 +61,21 @@ A server is reached over SSH, a monitor agent, both, or is this device (`Spi.loc
 - `Spix.transport` picks the lead (SSH when both, unless `preferredTransport`); `Spix.fallbackTransport` is the other. At least one is required (DB `CHECK`).
 - **`ServerNotifier.ensureExec()` is the one place a command reaches a server**, falling back to the other transport; a monitor-only server never uses sshd. `ensureShellClient()` is SSH-only.
 - **`ServerTcpDialer` is the one place a TCP connection from the server's side is made** (SSH direct-tcpip, the agent's `/stream/ws`, or local).
+- A long-lived user of an agent (status poll, Monitor tab, web apps, files, Agent tasks, tunnels, forwards) holds the server's shared client through `MonitorClientLease` (one sign-in per agent); a provider that polls one goes through `AgentPoll` (one read at a time, none in the background).
 - Ask `ServerCapabilities`, never the transport (both transports answer the union: `byteStream` for SFTP/forwards, `tcpRelay` for remote desktop/PVE); the agent itself is `Spix.monitor`.
 - SSH is direct, jump server or `ProxyCommand` (`genClient`); host keys are always verified.
 
 ## Rules
 
 - **Never run code formatters.**
+- Git LFS holds images, fonts, `.fsbt` and PDFs under `monitor/`, `docs/`, `website/`, `store/` only: F-Droid clones without LFS, so nothing the app's build or `fastlane/` reads goes there (`.gitattributes`). `scripts/check-lfs.sh` fails a build that finds a pointer.
 - Never hand-edit `*.g.dart` / `*.freezed.dart`. `flutter gen-l10n` after ARB edits; check `libL10n` (fl_lib) first.
 - GetIt for stores and services. `fl_lib` widgets (`CustomAppBar`, `context.showRoundDialog`, `Input`, `Btnx.cancelOk`; context7 `lppcg fl_lib KEYWORD`). Split UI into build / actions / utils with `extension on`.
 
-### Storage (`lib/data/store/CLAUDE.md`)
+### Storage (`lib/data/store/CLAUDE.md` before any change)
 
-- One encrypted SQLite file; Drift owns the DDL, queries are hand-written and synchronous.
-- **A schema step is three edits**: the class, `SchemaVersion.current`, `kSchemaMigrations`, plus a permanent test fed by data the previous release wrote; never regenerate a fixture to pass.
-- **A constraint change is create-copy-drop-rename** (`m017`/`m028`): `foreign_keys` off outside the transaction, `legacy_alter_table` on.
-- Ids as keys, never names. Lists/maps are child tables. Enums by name. Use `EntityStore.upsert`, not `INSERT OR REPLACE`. `SqliteStore.set` values need `toJson`. Non-user writes: `updateLastUpdateTsOnSet: false` / `at:`. `lib/hive/` adapters are frozen.
+- One encrypted SQLite file; Drift owns the DDL, queries are hand-written and synchronous. Ids as keys, never names; lists/maps are child tables; enums by name.
+- **A schema step is three edits** (the class, `SchemaVersion.current`, `kSchemaMigrations`) plus a permanent test fed by data the previous release wrote; never regenerate a fixture to pass.
 
 ### Tabs
 
@@ -91,4 +92,4 @@ A server is reached over SSH, a monitor agent, both, or is this device (`Spi.loc
 
 ## Feature notes
 
-`crates/sbm_ffi/CLAUDE.md` (SSH crypto) · `ios/CLAUDE.md` · `macos/CLAUDE.md` · `android/CLAUDE.md` · `lib/data/store/CLAUDE.md` · `lib/data/model/file/CLAUDE.md` (SFTP/SCP) · `lib/data/model/server/benchmark/CLAUDE.md` · `lib/core/service/CLAUDE.md` (watch, home widgets) · `lib/view/page/server/monitor_settings/CLAUDE.md` · `docs/dev/virt.md` · `monitor/CLAUDE.md`.
+`crates/sbm_ffi/CLAUDE.md` (SSH crypto) · `ios/CLAUDE.md` · `macos/CLAUDE.md` · `android/CLAUDE.md` · `lib/data/store/CLAUDE.md` · `lib/data/model/file/CLAUDE.md` (SFTP/SCP) · `lib/data/model/server/benchmark/CLAUDE.md` · `lib/core/service/CLAUDE.md` (watch, home widgets) · `lib/view/page/server/monitor_settings/CLAUDE.md` · `monitor/CLAUDE.md` · `monitor/frontend/src/desk/CLAUDE.md` (the panel's desk). References in `docs/dev/`: `virt.md`, `monitor-api.md`, `monitor-permissions.md`, `desk.md`, `desk-sys.md`, `ironrdp.md`.

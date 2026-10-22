@@ -19,7 +19,7 @@
 //!
 //! # Privilege
 //!
-//! `shell`: reading a firewall needs root (ufw keeps its rule files `0640`,
+//! The transport rule: reading a firewall needs root (ufw keeps its rule files `0640`,
 //! firewalld answers root), and changing one can shut the machine off the
 //! network. Reads and changes go through `sudo` unless the agent is root; the
 //! `sudo` password is a request field written to its stdin
@@ -46,7 +46,6 @@ use super::exec::Limits;
 use super::machine;
 use super::server::AppState;
 use super::ws::audit::{Action, Event, Kind, Outcome};
-use crate::core::permissions::Grant;
 use crate::monitoring::system_type;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -134,7 +133,7 @@ pub async fn read(
     body: web::types::Json<ReadRequest>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    if let Err(refused) = machine::gate(&req, &state, Grant::Shell, "firewall read").await {
+    if let Err(refused) = machine::gate(&req, &state, "firewall read").await {
         return Ok(refused);
     }
     let request = body.into_inner();
@@ -265,7 +264,7 @@ pub async fn plan(
 ) -> Result<HttpResponse, web::Error> {
     let request = body.into_inner();
     let what = format!("firewall plan {}", request.change.verb());
-    if let Err(refused) = machine::gate(&req, &state, Grant::Shell, &what).await {
+    if let Err(refused) = machine::gate(&req, &state, &what).await {
         return Ok(refused);
     }
     let (accesses, _) = accesses(&req, &state);
@@ -300,13 +299,12 @@ pub async fn act(
 ) -> Result<HttpResponse, web::Error> {
     let request = body.into_inner();
     let what = format!("firewall {}", request.change.verb());
-    let gated = match machine::gate(&req, &state, Grant::Shell, &what).await {
+    let gated = match machine::gate(&req, &state, &what).await {
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),
     };
     let record = |action, outcome, detail: Option<&str>| {
         Event::new(Kind::Machine, action, outcome)
-            .subject(&gated.caller.username)
             .remote_ip(gated.remote_ip.clone())
             .detail(match detail {
                 Some(detail) => format!("{what}: {detail}"),

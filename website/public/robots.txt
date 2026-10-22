@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://serverbox.lolli.tech/sitemap.xml
+Sitemap: https://serverbox.lollipopkit.com/sitemap.xml

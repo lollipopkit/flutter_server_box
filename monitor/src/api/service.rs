@@ -24,7 +24,7 @@
 //!
 //! # Privilege
 //!
-//! The `shell` grant for both halves (`api::machine::gate`): anyone with a
+//! The transport rule, both ways (`api::machine::gate`): anyone with a
 //! shell can run `systemctl`, and a unit's definition and log are the
 //! machine's configuration rather than its numbers. A `sudo` password travels
 //! in the body, never in a command line, and a refusal comes back as a field
@@ -40,7 +40,6 @@ use super::exec::Limits;
 use super::machine;
 use super::server::AppState;
 use super::ws::audit::{Action, Event, Kind, Outcome};
-use crate::core::permissions::Grant;
 use crate::monitoring::system_type;
 use sbm_parser::SystemType;
 use sbm_parser::output::CommandOutput;
@@ -191,7 +190,7 @@ pub async fn list(
     query: web::types::Query<ServiceQuery>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    if let Err(refused) = machine::gate(&req, &state, Grant::Shell, "service list").await {
+    if let Err(refused) = machine::gate(&req, &state, "service list").await {
         return Ok(refused);
     }
     let exec = &state.remote_access.exec;
@@ -281,14 +280,13 @@ pub async fn act(
 ) -> Result<HttpResponse, web::Error> {
     let request = body.into_inner();
     let what = format!("service {} {}", request.action.as_str(), request.key);
-    let gated = match machine::gate(&req, &state, Grant::Shell, &what).await {
+    let gated = match machine::gate(&req, &state, &what).await {
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),
     };
     let exec = &state.remote_access.exec;
     let record = |action, outcome, detail: Option<&str>| {
         Event::new(Kind::Machine, action, outcome)
-            .subject(&gated.caller.username)
             .remote_ip(gated.remote_ip.clone())
             .detail(match detail {
                 Some(detail) => format!("{what}: {detail}"),

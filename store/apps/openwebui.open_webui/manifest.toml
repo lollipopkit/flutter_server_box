@@ -1,0 +1,85 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Open WebUI, a chat page for language models: deployed with Docker Compose
+# from compose.yaml beside this file, shown in a desk window through the agent.
+
+schema = 1
+publisher = "openwebui"
+name = "open_webui"
+project = "Open WebUI"
+developer = "Open WebUI"
+version = "0.11.4"
+homepage = "https://openwebui.com"
+source = "https://github.com/open-webui/open-webui/tree/v0.11.4"
+glyph = "forum"
+tone = "ink"
+categories = ["ai"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Open WebUI"
+
+[description]
+en = "Chat with language models in the browser: the models of Local inference or any OpenAI-compatible or Ollama server, added in its admin settings."
+zh = "在浏览器中与语言模型对话：本地推理的模型，或在管理设置中添加的任意 OpenAI 兼容或 Ollama 服务。"
+zh-TW = "在瀏覽器中與語言模型對話：本機推論的模型，或在管理設定中新增的任意 OpenAI 相容或 Ollama 服務。"
+
+[license]
+spdx = "LicenseRef-Open-WebUI"
+url = "https://github.com/open-webui/open-webui/blob/v0.11.4/LICENSE"
+accept = true
+
+[requirements]
+memory_min_mib = 1024
+memory_recommended_mib = 2048
+arch = ["amd64", "arm64"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+jobs = ["seed-cache"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+OPEN_WEBUI_VERSION = "v0.11.4"
+WEBUI_ADMIN_EMAIL = "admin@localhost"
+
+[[secrets]]
+env = "WEBUI_SECRET_KEY"
+length = 64
+
+[[secrets]]
+env = "WEBUI_ADMIN_PASSWORD"
+length = 32
+
+[login]
+user = "admin@localhost"
+password = "WEBUI_ADMIN_PASSWORD"
+note = { en = "Sign-up is off once the administrator is made. Add model servers in Admin Panel → Settings → Connections: a Local inference engine is reached at the machine's address once it is reachable from the network.", zh = "管理员创建后注册即关闭。在 Admin Panel → Settings → Connections 中添加模型服务：本地推理的引擎需开启“允许从网络访问”后，通过本机地址连接。", zh-TW = "管理員建立後註冊即關閉。在 Admin Panel → Settings → Connections 中新增模型服務：本機推論的引擎需開啟「允許從網路存取」後，透過本機位址連線。" }
+
+[[settings]]
+key = "data"
+type = "path"
+env = "OPEN_WEBUI_DATA"
+default = "{stack}/data"
+data = true
+label = { en = "Data", zh = "数据", zh-TW = "資料" }
+help = { en = "The database, uploaded files and downloaded embedding models.", zh = "数据库、上传的文件和下载的嵌入模型。", zh-TW = "資料庫、上傳的檔案和下載的嵌入模型。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "OPEN_WEBUI_PORT"
+default = 3000
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "Off: only through the desk.", zh = "关闭时只能通过桌面访问。", zh-TW = "關閉時只能透過桌面存取。" }
+on = { OPEN_WEBUI_BIND = "0.0.0.0" }
+off = { OPEN_WEBUI_BIND = "127.0.0.1" }

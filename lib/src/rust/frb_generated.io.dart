@@ -11,6 +11,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_io.dart';
 import 'package:server_box/src/rust/api/backup.dart';
 import 'package:server_box/src/rust/api/bench.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
+import 'package:server_box/src/rust/api/command_risk.dart';
 import 'package:server_box/src/rust/api/container.dart';
 import 'package:server_box/src/rust/api/create.dart';
 import 'package:server_box/src/rust/api/cron.dart';
@@ -28,9 +29,11 @@ import 'package:server_box/src/rust/api/remote_desktop.dart';
 import 'package:server_box/src/rust/api/resource.dart';
 import 'package:server_box/src/rust/api/script.dart';
 import 'package:server_box/src/rust/api/service.dart';
+import 'package:server_box/src/rust/api/shares.dart';
 import 'package:server_box/src/rust/api/snippet.dart';
 import 'package:server_box/src/rust/api/ssh_asym.dart';
 import 'package:server_box/src/rust/api/ssh_crypto.dart';
+import 'package:server_box/src/rust/api/storage.dart';
 import 'package:server_box/src/rust/api/tmux.dart';
 import 'package:server_box/src/rust/api/users.dart';
 import 'package:server_box/src/rust/api/virt.dart';
@@ -274,6 +277,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  ContainerImageItem dco_decode_box_autoadd_container_image_item(dynamic raw);
+
+  @protected
   ContainerStatsItem dco_decode_box_autoadd_container_stats_item(dynamic raw);
 
   @protected
@@ -392,6 +398,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ChangeError dco_decode_change_error(dynamic raw);
+
+  @protected
+  CommandRisk dco_decode_command_risk(dynamic raw);
 
   @protected
   CommandSpec dco_decode_command_spec(dynamic raw);
@@ -609,6 +618,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<VirtOverlay> dco_decode_list_virt_overlay(dynamic raw);
 
   @protected
+  MonitorReleasePage dco_decode_monitor_release_page(dynamic raw);
+
+  @protected
   String? dco_decode_opt_String(dynamic raw);
 
   @protected
@@ -806,6 +818,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ServiceProbe dco_decode_service_probe(dynamic raw);
 
   @protected
+  SharesFfiError dco_decode_shares_ffi_error(dynamic raw);
+
+  @protected
   ShellFileRecord dco_decode_shell_file_record(dynamic raw);
 
   @protected
@@ -819,6 +834,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   SnippetFfiError dco_decode_snippet_ffi_error(dynamic raw);
+
+  @protected
+  StorageFfiError dco_decode_storage_ffi_error(dynamic raw);
 
   @protected
   TmuxSessionItem dco_decode_tmux_session_item(dynamic raw);
@@ -1125,6 +1143,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  ContainerImageItem sse_decode_box_autoadd_container_image_item(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   ContainerStatsItem sse_decode_box_autoadd_container_stats_item(
     SseDeserializer deserializer,
   );
@@ -1289,6 +1312,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ChangeError sse_decode_change_error(SseDeserializer deserializer);
+
+  @protected
+  CommandRisk sse_decode_command_risk(SseDeserializer deserializer);
 
   @protected
   CommandSpec sse_decode_command_spec(SseDeserializer deserializer);
@@ -1554,6 +1580,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<VirtOverlay> sse_decode_list_virt_overlay(SseDeserializer deserializer);
 
   @protected
+  MonitorReleasePage sse_decode_monitor_release_page(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   String? sse_decode_opt_String(SseDeserializer deserializer);
 
   @protected
@@ -1783,6 +1814,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ServiceProbe sse_decode_service_probe(SseDeserializer deserializer);
 
   @protected
+  SharesFfiError sse_decode_shares_ffi_error(SseDeserializer deserializer);
+
+  @protected
   ShellFileRecord sse_decode_shell_file_record(SseDeserializer deserializer);
 
   @protected
@@ -1800,6 +1834,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   SnippetFfiError sse_decode_snippet_ffi_error(SseDeserializer deserializer);
+
+  @protected
+  StorageFfiError sse_decode_storage_ffi_error(SseDeserializer deserializer);
 
   @protected
   TmuxSessionItem sse_decode_tmux_session_item(SseDeserializer deserializer);
@@ -2145,6 +2182,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_box_autoadd_container_image_item(
+    ContainerImageItem self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_container_stats_item(
     ContainerStatsItem self,
     SseSerializer serializer,
@@ -2350,6 +2393,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_change_error(ChangeError self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_command_risk(CommandRisk self, SseSerializer serializer);
 
   @protected
   void sse_encode_command_spec(CommandSpec self, SseSerializer serializer);
@@ -2700,6 +2746,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_monitor_release_page(
+    MonitorReleasePage self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_opt_String(String? self, SseSerializer serializer);
 
   @protected
@@ -2997,6 +3049,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_service_probe(ServiceProbe self, SseSerializer serializer);
 
   @protected
+  void sse_encode_shares_ffi_error(
+    SharesFfiError self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_shell_file_record(
     ShellFileRecord self,
     SseSerializer serializer,
@@ -3020,6 +3078,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_snippet_ffi_error(
     SnippetFfiError self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_storage_ffi_error(
+    StorageFfiError self,
     SseSerializer serializer,
   );
 

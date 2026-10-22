@@ -6,8 +6,9 @@
 //! command and its output — `sbm_parser::tmux`'s, so the app and this endpoint
 //! read one machine the same way.
 //!
-//! `shell` for the grant, like every other machine endpoint: a session is a
-//! shell, so whoever may attach to one may already open one.
+//! The transport rule (`api::machine::gate`), like every other machine
+//! endpoint: a session is a shell, so whoever may attach to one may already
+//! open one.
 
 use std::sync::Arc;
 
@@ -17,7 +18,6 @@ use serde_json::json;
 use super::exec::{ExecResponse, run};
 use super::machine;
 use super::server::AppState;
-use crate::core::permissions::Grant;
 
 /// The machine's tmux sessions, or `available: false` when tmux is not
 /// installed.
@@ -31,7 +31,7 @@ pub async fn list(
     req: HttpRequest,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    if let Err(refused) = machine::gate(&req, &state, Grant::Shell, "tmux list").await {
+    if let Err(refused) = machine::gate(&req, &state, "tmux list").await {
         return Ok(refused);
     }
     let exec = &state.remote_access.exec;

@@ -1,0 +1,58 @@
+# Homebox 0.27.0 (AGPL-3.0), https://github.com/sysadminsmedia/homebox/tree/v0.27.0
+#
+# Adapted from the Docker Compose example of Homebox's docs (Quick Start) for
+# ServerBox Monitor (2026-10-18):
+# - no `name:` and no `container_name`: the agent names the project;
+# - image pinned to the release (upstream: homebox:latest); a bind mount from
+#   the env file instead of the named volume; runs as the shared folder's
+#   owner;
+# - registration is off (HBOX_OPTIONS_ALLOW_REGISTRATION), so the service the
+#   window reaches never takes a sign-up. seed-admin is a one-shot job that
+#   runs first: once, it runs Homebox alone in its own container on loopback
+#   with registration on, registers the administrator with the generated
+#   password, and stops it. The password never reaches a command line.
+
+services:
+  seed-admin:
+    image: ghcr.io/sysadminsmedia/homebox:${HOMEBOX_VERSION}
+    user: "${SBM_UID}:${SBM_GID}"
+    environment:
+      HBOX_AUTH_API_KEY_PEPPER: ${HOMEBOX_API_KEY_PEPPER}
+      ADMIN_EMAIL: ${HOMEBOX_ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${HOMEBOX_PASSWORD}
+    volumes:
+      - ${HOMEBOX_DATA}:/data
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        set -eu
+        [ -f /data/.serverbox-admin ] && exit 0
+        HBOX_WEB_HOST=127.0.0.1 HBOX_WEB_PORT=7999 HBOX_OPTIONS_ALLOW_REGISTRATION=true /app/api /data/config.yml > /dev/null 2>&1 &
+        server=$$!
+        for i in $$(seq 60); do wget -q -O /dev/null http://127.0.0.1:7999/api/v1/status && break; sleep 1; done
+        body=$$(mktemp)
+        trap 'rm -f "$$body"; kill $$server' EXIT
+        printf '{"name":"Admin","email":"%s","password":"%s"}' "$$ADMIN_EMAIL" "$$ADMIN_PASSWORD" > "$$body"
+        wget -q -O /dev/null --header 'content-type: application/json' --post-file "$$body" http://127.0.0.1:7999/api/v1/users/register
+        touch /data/.serverbox-admin
+    restart: "no"
+
+  homebox:
+    image: ghcr.io/sysadminsmedia/homebox:${HOMEBOX_VERSION}
+    user: "${SBM_UID}:${SBM_GID}"
+    depends_on:
+      seed-admin:
+        condition: service_completed_successfully
+    environment:
+      TZ: ${SBM_TZ}
+      HBOX_LOG_LEVEL: info
+      HBOX_LOG_FORMAT: text
+      HBOX_WEB_MAX_FILE_UPLOAD: '10'
+      HBOX_OPTIONS_ALLOW_REGISTRATION: 'false'
+      HBOX_OPTIONS_ALLOW_ANALYTICS: 'false'
+      HBOX_AUTH_API_KEY_PEPPER: ${HOMEBOX_API_KEY_PEPPER}
+    volumes:
+      - ${HOMEBOX_DATA}:/data
+    ports:
+      - '${HOMEBOX_BIND}:${HOMEBOX_PORT}:7745'
+    restart: unless-stopped

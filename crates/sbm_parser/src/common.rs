@@ -23,6 +23,53 @@ pub fn parse_uptime(raw: &str) -> Option<String> {
     Some(first.to_string())
 }
 
+/// [text] with every line ending a `\n`: Windows' `\r\n` and a lone `\r`
+/// alike, before it is split into lines.
+pub fn normalize_newlines(text: &str) -> String {
+    text.replace("\r\n", "\n").replace('\r', "\n")
+}
+
+/// The seconds a [`parse_uptime`] string (or the monitor agent's
+/// `format_uptime`, the same shape) says the machine has been up: an
+/// optional day count, then `H:MM` or one unit (`min[s]`, `hr[s]`,
+/// `sec[s]`). `None` for anything else: a sort puts an unknown last rather
+/// than guessing a number for it.
+pub fn uptime_seconds(formatted: &str) -> Option<u64> {
+    const DAY: u64 = 86_400;
+    let rest = formatted.trim();
+    let (days, rest) = match rest.split_once(' ') {
+        Some((n, after)) if n.bytes().all(|b| b.is_ascii_digit()) && !n.is_empty() => {
+            let after = after.trim_start();
+            match after.strip_prefix("days").or_else(|| after.strip_prefix("day")) {
+                Some("") => return n.parse::<u64>().ok().map(|d| d * DAY),
+                // A day count followed by anything but `, <time>` is not read.
+                Some(tail) => (n.parse::<u64>().ok()?, tail.strip_prefix(',')?.trim_start()),
+                None => (0, rest),
+            }
+        }
+        _ => (0, rest),
+    };
+    let digits = |s: &str| !s.is_empty() && s.bytes().all(|b| b.is_ascii_digit());
+    if let Some((h, m)) = rest.split_once(':') {
+        if !(digits(h) && digits(m) && m.len() == 2) {
+            return None;
+        }
+        return Some(days * DAY + h.parse::<u64>().ok()? * 3600 + m.parse::<u64>().ok()? * 60);
+    }
+    let split = rest.find(|c: char| !c.is_ascii_digit())?;
+    let (count, unit) = rest.split_at(split);
+    let per = match unit.trim_start() {
+        "hr" | "hrs" => 3600,
+        "min" | "mins" => 60,
+        "sec" | "secs" => 1,
+        _ => return None,
+    };
+    if !digits(count) {
+        return None;
+    }
+    Some(days * DAY + count.parse::<u64>().ok()? * per)
+}
+
 /// What `uptime(1)` prints after the day count: `H:MM`, or a single unit when
 /// the other is zero — `10 min` (procps, busybox), `3 hrs` / `14 mins` /
 /// `30 secs` (BSD and macOS `w.c`). Dropping the unit form lost the hours and
@@ -266,5 +313,42 @@ inet 45.32.10.20/23 eth0:1");
         assert!(parse_ips("sh: ip: not found").is_empty());
         // Words made only of hex letters are candidates and must still fail.
         assert!(parse_ips("deadbeef cafe face").is_empty());
+    }
+}
+
+#[cfg(test)]
+mod uptime_tests {
+    use super::*;
+
+    /// Moved from the app's sort (`ServerSortOrder.uptimeSeconds`), which
+    /// read the same strings in Dart.
+    #[test]
+    fn uptime_seconds_reads_every_shape_parse_uptime_keeps() {
+        let (day, hour, minute) = (86_400, 3600, 60);
+        assert_eq!(uptime_seconds("61 days, 18:16"), Some(61 * day + 18 * hour + 16 * minute));
+        assert_eq!(uptime_seconds("1 day, 2:34"), Some(day + 2 * hour + 34 * minute));
+        assert_eq!(uptime_seconds("5 days"), Some(5 * day));
+        assert_eq!(uptime_seconds("2:34"), Some(2 * hour + 34 * minute));
+        assert_eq!(uptime_seconds("34 min"), Some(34 * minute));
+        // A zero hour or minute prints a unit instead of H:MM: procps and
+        // busybox `min`, BSD and macOS `hr[s]`, `min[s]` and `sec[s]`.
+        assert_eq!(uptime_seconds("5 days, 10 min"), Some(5 * day + 10 * minute));
+        assert_eq!(uptime_seconds("2 days, 3 hrs"), Some(2 * day + 3 * hour));
+        assert_eq!(uptime_seconds("1 day, 1 hr"), Some(day + hour));
+        assert_eq!(uptime_seconds("3 days, 14 mins"), Some(3 * day + 14 * minute));
+        assert_eq!(uptime_seconds("14 mins"), Some(14 * minute));
+        assert_eq!(uptime_seconds("30 secs"), Some(30));
+        assert_eq!(uptime_seconds("1 sec"), Some(1));
+        // The monitor agent's `format_uptime`, which pluralises every count.
+        assert_eq!(uptime_seconds("1 days, 1:00"), Some(day + hour));
+        // What `parse_uptime` gives for real lines.
+        assert_eq!(uptime_seconds(&parse_uptime(" 10:00:00 up 61 days, 18:16,  1 user,  load average: 0.1").unwrap()), Some(61 * day + 18 * hour + 16 * minute));
+    }
+
+    #[test]
+    fn uptime_seconds_refuses_what_it_cannot_read() {
+        for raw in ["invalid uptime format", "", "   ", "18:16:30", "5 days, garbled", "5 days, 3 weeks", "2:3", "days"] {
+            assert_eq!(uptime_seconds(raw), None, "{raw}");
+        }
     }
 }

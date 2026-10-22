@@ -1,0 +1,63 @@
+{
+    "cpu": "supported",
+    "cpu_brand": "supported",
+    "mem": "supported",
+    "swap": "hardware_dependent",
+    "disks": "supported",
+    "net": "supported",
+    "temps": "hardware_dependent",
+    "conn": "not_implemented",
+    "uptime": "supported",
+    "sys": "supported",
+    "host": "supported",
+    "diskio": "hardware_dependent",
+    "batteries": "not_implemented",
+    "sensors": "not_implemented",
+    "nvidia": "not_implemented",
+    "amd": "not_implemented",
+    "gpu": "not_implemented",
+    "disk_smart": "hardware_dependent",
+    "platform": "bsd",
+    "version": "0.1.3",
+    "retention_days": 30,
+    "oldest_sample": "2026-10-01T09:04:43.798257+00:00",
+    "features": [
+        "power",
+        "process",
+        "services",
+        "cron",
+        "containers",
+        "container_exec",
+        "container_backups",
+        "monitor_backup",
+        "storage",
+        "shares",
+        "iperf",
+        "tmux",
+        "benchmark",
+        "system_users",
+        "snippets",
+        "desktop",
+        "backup",
+        "bmc",
+        "virt",
+        "firewall",
+        "update",
+        "desk",
+        "agent_mode",
+        "stacks",
+        "alerts",
+        "audit",
+        "live"
+    ],
+    "stacks": [
+        {
+            "id": "immich",
+            "state": "installed"
+        }
+    ],
+    "access": {
+        "ok": false,
+        "why": "insecure_transport"
+    }
+}

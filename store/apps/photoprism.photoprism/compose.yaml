@@ -1,0 +1,79 @@
+# PhotoPrism 261007-65faaae5d (AGPL-3.0), https://github.com/photoprism/photoprism/tree/261007-65faaae5d
+#
+# Adapted from PhotoPrism's compose.yaml (dl.photoprism.app/docker/compose.yaml)
+# for ServerBox Monitor (2026-10-18):
+# - no `name:` and no `container_name`: the agent names the project;
+# - images pinned (upstream: photoprism:latest, mariadb:12.3); bind mounts from
+#   the env file; the database passwords generated once; files written as the
+#   shared folder's owner (PHOTOPRISM_UID/GID);
+# - the administrator (admin) is made at the first start with the generated
+#   password (PHOTOPRISM_ADMIN_PASSWORD);
+# - its own HTTPS off (the agent's proxy is the window's HTTPS), so its
+#   self-signed certificate and the "https" init step go;
+# - without upstream's `security_opt` (seccomp and AppArmor unconfined),
+#   which only old Docker releases need;
+# - the optional Ollama service and its settings left out.
+
+services:
+  photoprism:
+    image: photoprism/photoprism:${PHOTOPRISM_TAG}
+    stop_grace_period: 15s
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    ports:
+      - '${PHOTOPRISM_BIND}:${PHOTOPRISM_PORT}:2342'
+    environment:
+      TZ: ${SBM_TZ}
+      PHOTOPRISM_UID: ${SBM_UID}
+      PHOTOPRISM_GID: ${SBM_GID}
+      PHOTOPRISM_ADMIN_USER: admin
+      PHOTOPRISM_ADMIN_PASSWORD: ${PHOTOPRISM_ADMIN_PASSWORD}
+      PHOTOPRISM_AUTH_MODE: password
+      PHOTOPRISM_DISABLE_TLS: 'true'
+      PHOTOPRISM_SITE_URL: ${PHOTOPRISM_URL}
+      PHOTOPRISM_SITE_TITLE: PhotoPrism
+      PHOTOPRISM_SITE_CAPTION: AI-Powered Photos App
+      PHOTOPRISM_READONLY: 'false'
+      PHOTOPRISM_SIDECAR_YAML: 'true'
+      PHOTOPRISM_BACKUP_ALBUMS: 'true'
+      PHOTOPRISM_BACKUP_DATABASE: 'true'
+      PHOTOPRISM_BACKUP_SCHEDULE: daily
+      PHOTOPRISM_UPLOAD_NSFW: 'true'
+      PHOTOPRISM_DATABASE_DRIVER: mysql
+      PHOTOPRISM_DATABASE_SERVER: mariadb:3306
+      PHOTOPRISM_DATABASE_NAME: photoprism
+      PHOTOPRISM_DATABASE_USER: photoprism
+      PHOTOPRISM_DATABASE_PASSWORD: ${MARIADB_PASSWORD}
+    working_dir: /photoprism
+    volumes:
+      - ${PHOTOPRISM_ORIGINALS}:/photoprism/originals
+      - ${PHOTOPRISM_STORAGE}:/photoprism/storage
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "photoprism", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  mariadb:
+    image: mariadb:${MARIADB_VERSION}
+    restart: unless-stopped
+    stop_grace_period: 15s
+    command: --innodb-buffer-pool-size=512M --transaction-isolation=READ-COMMITTED --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --max-connections=512 --innodb-rollback-on-timeout=OFF --innodb-lock-wait-timeout=120
+    volumes:
+      - ${PHOTOPRISM_DB}:/var/lib/mysql
+    environment:
+      MARIADB_AUTO_UPGRADE: '1'
+      MARIADB_INITDB_SKIP_TZINFO: '1'
+      MARIADB_DATABASE: photoprism
+      MARIADB_USER: photoprism
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s

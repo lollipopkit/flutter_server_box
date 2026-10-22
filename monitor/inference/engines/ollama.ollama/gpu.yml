@@ -1,0 +1,24 @@
+# Ollama's GPU backends, written for ServerBox Monitor from Ollama's Docker
+# page (docs.ollama.com/docker). One service per option; compose.yaml extends
+# the one the admin chose.
+
+services:
+  cpu: {}
+
+  nvidia:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  # The image's -rocm tag (the option sets it), with the ROCm devices.
+  rocm:
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
+    group_add:
+      - video
+      - "${SBM_RENDER_GID}"

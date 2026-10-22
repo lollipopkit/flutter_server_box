@@ -1,0 +1,27 @@
+# OpenList v4.2.6 (AGPL-3.0): https://github.com/OpenListTeam/OpenList/tree/v4.2.6
+# Based on the official Docker image and Docker installation documentation. Adjusted for ServerBox Monitor:
+# - the official OPENLIST_ADMIN_PASSWORD env seeds the initial admin password;
+# - no project/container name is fixed; the Monitor supplies the Compose project name;
+# - the web UI listens on 5244 in the container, published on a configurable host port and address;
+# - the folder every app shares is mounted at /opt/openlist/shared, to add as local storage.
+
+services:
+  openlist:
+    image: openlistteam/openlist:${OPENLIST_VERSION}
+    user: "${SBM_UID}:${SBM_GID}"
+    environment:
+      UMASK: "022"
+      TZ: ${SBM_TZ}
+      OPENLIST_ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+    volumes:
+      - ${OPENLIST_DATA}:/opt/openlist/data
+      - ${OPENLIST_SHARED}:/opt/openlist/shared
+    ports:
+      - '${OPENLIST_BIND}:${OPENLIST_WEB_PORT}:5244'
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:5244/ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s

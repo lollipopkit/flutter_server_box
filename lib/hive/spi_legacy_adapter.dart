@@ -262,7 +262,7 @@ MonitorHttpCredential? _monitorCredential(
   if (value == null) return null;
   return MonitorHttpCredential(
     addr: value.addr,
-    user: value.user,
+    legacyUser: value.user,
     pwd: value.pwd,
     ignoreCert: value.ignoreCert,
   );

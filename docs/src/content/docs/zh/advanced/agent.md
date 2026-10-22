@@ -98,8 +98,7 @@ Agent 因此可以回答关于 App 本身的问题，也可以在你批准后帮
 App 更新，可以关闭，但不能删除。
 
 Agent 的文件工具需要 SSH。仅配置 Monitor HTTP 的服务器不提供这些工具。其独立的
-**文件** 标签页可以在运维人员开启 `[remote_access.fs]` 且请求路径位于 `roots` 下时，
-使用 Monitor agent 的文件 API。
+**文件** 标签页可以使用 Monitor agent 的文件 API。
 
 ## 审核操作
 

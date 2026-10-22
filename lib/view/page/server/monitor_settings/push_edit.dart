@@ -54,36 +54,127 @@ final class MonitorPushEditPage extends StatefulWidget {
   State<MonitorPushEditPage> createState() => _MonitorPushEditPageState();
 }
 
-/// What a new channel of each type starts with — the fields the agent's own
-/// example config documents. An existing channel is rendered from whatever the
-/// agent sent instead, so a key that is not here is still editable once it is
-/// in the file.
-const _templates = <String, Map<String, dynamic>>{
-  'webhook': {
+/// One type's template.
+final class _Template {
+  /// What a new channel starts with — the fields the agent's own example
+  /// config documents.
+  final Map<String, dynamic> values;
+
+  /// Settings the type also reads, offered blank.
+  final Map<String, _FieldKind> more;
+
+  const _Template(this.values, [this.more = const {}]);
+}
+
+/// Per type. An existing channel is rendered from whatever the agent sent,
+/// plus the template's keys it does not have, offered blank; a key that is not
+/// here is still editable once it is in the file.
+const _templates = <String, _Template>{
+  'webhook': _Template({
     'url': '',
     'method': 'POST',
     'headers': {'Content-Type': 'application/json'},
     'body_template': {'message': 'Server {{name}}: {{message}}'},
-  },
-  'serverchan': {
+  }),
+  'serverchan': _Template({
     'sc_key': '',
     'title': 'ServerBox Monitor',
     'desp': '{{message}}',
-  },
-  'bark': {
-    'server': 'https://api.day.app',
-    'key': '',
-    'title': 'ServerBox Monitor',
-    'body': '{{message}}',
-    'level': 'active',
-  },
-  'ios': {
+  }),
+  'bark': _Template(
+    {
+      'server': 'https://api.day.app',
+      'key': '',
+      'title': 'ServerBox Monitor',
+      'body': '{{message}}',
+      'level': 'active',
+    },
+    {
+      'subtitle': _FieldKind.string,
+      'sound': _FieldKind.string,
+      'group': _FieldKind.string,
+      'icon': _FieldKind.string,
+      'image': _FieldKind.string,
+      'url': _FieldKind.string,
+      'copy': _FieldKind.string,
+      'action': _FieldKind.string,
+      'badge': _FieldKind.number,
+      'volume': _FieldKind.number,
+      'ttl': _FieldKind.number,
+      'markdown': _FieldKind.boolean,
+      'call': _FieldKind.boolean,
+      'auto_copy': _FieldKind.boolean,
+      'is_archive': _FieldKind.boolean,
+      'cipher_key': _FieldKind.string,
+    },
+  ),
+  'ios': _Template({
     'token': '',
     'title': 'ServerBox Monitor',
     'content': '{{message}}',
     'body_regex': '.*',
     'code': 200,
-  },
+  }),
+  'smtp': _Template(
+    {
+      'host': '',
+      'security': 'starttls',
+      'username': '',
+      'password': '',
+      'from': '',
+      'to': '',
+      'subject': 'ServerBox Monitor: {{name}}',
+      'body': '{{message}}',
+    },
+    {'port': _FieldKind.number},
+  ),
+  'telegram': _Template(
+    {'bot_token': '', 'chat_id': '', 'text': '{{name}}: {{message}}'},
+    {
+      'parse_mode': _FieldKind.string,
+      'message_thread_id': _FieldKind.number,
+      'disable_notification': _FieldKind.boolean,
+      'disable_link_preview': _FieldKind.boolean,
+      'api_base': _FieldKind.string,
+    },
+  ),
+  'discord': _Template(
+    {'webhook_url': '', 'content': '{{name}}: {{message}}'},
+    {
+      'username': _FieldKind.string,
+      'avatar_url': _FieldKind.string,
+      // A snowflake: the agent takes it as a string too.
+      'thread_id': _FieldKind.string,
+    },
+  ),
+  'ntfy': _Template(
+    {
+      'server': 'https://ntfy.sh',
+      'topic': '',
+      'title': '{{name}}',
+      'message': '{{message}}',
+    },
+    {
+      'priority': _FieldKind.string,
+      'tags': _FieldKind.string,
+      'click': _FieldKind.string,
+      'icon': _FieldKind.string,
+      'attach': _FieldKind.string,
+      'delay': _FieldKind.string,
+      'email': _FieldKind.string,
+      'markdown': _FieldKind.boolean,
+      'token': _FieldKind.string,
+      'username': _FieldKind.string,
+      'password': _FieldKind.string,
+    },
+  ),
+};
+
+_FieldKind? _kindOf(Object? value) => switch (value) {
+  num() => _FieldKind.number,
+  bool() => _FieldKind.boolean,
+  String() => _FieldKind.string,
+  _ => null,
 };
 
 /// A scalar setting, as a string because that is what a text field holds.
@@ -98,11 +189,17 @@ final class _Field {
   /// Arrived as `null`: set on the agent and not disclosed.
   final bool withheld;
 
+  /// Not in the channel's config, offered from its type's template. Left
+  /// blank, or off for a switch, it stays absent and the agent's default
+  /// applies.
+  final bool optional;
+
   _Field({
     required this.key,
     required String value,
     required this.kind,
     required this.withheld,
+    this.optional = false,
   }) : ctrl = TextEditingController(text: value);
 }
 
@@ -146,7 +243,7 @@ final class _MonitorPushEditPageState extends State<MonitorPushEditPage> {
   @override
   void initState() {
     super.initState();
-    _loadConfig(widget.args.entry.config);
+    _loadConfig(widget.args.entry.config, _templates[_type]);
   }
 
   @override
@@ -242,7 +339,12 @@ extension on _MonitorPushEditPageState {
     // A spelling the agent still accepts but no longer offers (the Go agent's
     // `server_chan`) would otherwise vanish from the list and take the
     // channel's type with it.
-    final types = {..._templates.keys, ...widget.args.pushTypes, _type}.toList();
+    // The agent's list when it gave one: offering a type it has no sender for
+    // would only end in a refused save.
+    final offered = widget.args.pushTypes.isEmpty
+        ? _templates.keys
+        : widget.args.pushTypes;
+    final types = {...offered, _type}.toList();
     return ListTile(
       leading: const Icon(MingCute.send_plane_line),
       title: Text(l10n.pushType),
@@ -391,7 +493,8 @@ extension on _MonitorPushEditPageState {
     setState(() {
       _type = type;
       _fromIndex = null;
-      _loadConfig(_templates[type] ?? const {});
+      final template = _templates[type];
+      _loadConfig(template?.values ?? const {}, template);
     });
   }
 
@@ -457,7 +560,7 @@ extension on _MonitorPushEditPageState {
   /// Splits a channel's config into the three things this page can render.
   /// Anything that is neither a scalar nor `headers` becomes a JSON box rather
   /// than being dropped — losing a key on load would lose it on the save too.
-  void _loadConfig(Map<String, dynamic> config) {
+  void _loadConfig(Map<String, dynamic> config, _Template? template) {
     _disposeFields();
     final fields = <_Field>[];
     final jsons = <_JsonField>[];
@@ -515,6 +618,25 @@ extension on _MonitorPushEditPageState {
       }
     }
 
+    final offered = <(String, _FieldKind?)>[
+      for (final MapEntry(:key, :value) in template?.values.entries ?? const <MapEntry<String, dynamic>>[])
+        (key, _kindOf(value)),
+      for (final MapEntry(:key, :value) in template?.more.entries ?? const <MapEntry<String, _FieldKind>>[])
+        (key, value),
+    ];
+    for (final (key, kind) in offered) {
+      if (kind == null || config.containsKey(key)) continue;
+      fields.add(
+        _Field(
+          key: key,
+          value: kind == _FieldKind.boolean ? 'false' : '',
+          kind: kind,
+          withheld: false,
+          optional: true,
+        ),
+      );
+    }
+
     _fields = fields;
     _jsons = jsons;
     _headers = headers;
@@ -537,6 +659,9 @@ extension on _MonitorPushEditPageState {
       // default behind them, so absent and blank mean the same thing to the
       // agent — and absent is the one that lets the default apply.
       if (text.isEmpty) continue;
+      if (field.optional && field.kind == _FieldKind.boolean && text == 'false') {
+        continue;
+      }
       config[field.key] = switch (field.kind) {
         _FieldKind.number => num.tryParse(text) ?? text,
         _FieldKind.boolean => text.toLowerCase() == 'true',

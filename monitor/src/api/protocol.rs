@@ -18,6 +18,17 @@ use sbm_parser::protocol;
 
 pub struct Protocol;
 
+/// The protocol the client named, kept on the request for the handlers that
+/// answer an older one in its shape (`api::compat_v1`).
+#[derive(Clone, Copy)]
+struct ClientProtocol(u32);
+
+/// What [req]'s client speaks; [`protocol::UNNAMED`] where nothing said
+/// (exempt routes, a scope without the middleware).
+pub fn client_of(req: &ntex::web::HttpRequest) -> u32 {
+    req.extensions().get::<ClientProtocol>().map_or(protocol::UNNAMED, |c| c.0)
+}
+
 impl<S> Middleware<S, SharedCfg> for Protocol {
     type Service = ProtocolService<S>;
 
@@ -46,7 +57,11 @@ where
         let exempt = req.method() == Method::OPTIONS || req.path().ends_with("/health") || is_ws_upgrade(&req);
         if !exempt {
             let named = req.headers().get(protocol::HEADER).map(|v| v.to_str().unwrap_or(""));
-            let refusal = match protocol::client_protocol(named) {
+            let client = protocol::client_protocol(named);
+            if let Some(p) = client {
+                req.extensions_mut().insert(ClientProtocol(p));
+            }
+            let refusal = match client {
                 None => Some(HttpResponse::BadRequest().json(&serde_json::json!({ "error": "bad_protocol" }))),
                 Some(p) if !protocol::agent_serves(p) => Some(
                     HttpResponse::build(StatusCode::UPGRADE_REQUIRED).json(&serde_json::json!({

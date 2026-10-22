@@ -21,9 +21,9 @@
 //!
 //! # Privilege
 //!
-//! `virt` to see and control (`docs/dev/monitor-permissions.md`); admin to
-//! change the targets or probe an address, since those decide where the agent
-//! sends a password.
+//! The transport rule to see and control (`api::machine::gate`). Changing
+//! the targets or probing an address decides where the agent sends a
+//! password.
 
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
@@ -41,7 +41,6 @@ use super::authz;
 use super::machine;
 use super::server::AppState;
 use super::ws::audit::{Action, Event, Kind, Outcome};
-use crate::core::permissions::Grant;
 
 /// The most targets the set may hold.
 pub const MAX_TARGETS: usize = 64;
@@ -85,8 +84,6 @@ pub struct TargetInput {
 #[derive(Serialize)]
 struct ListResponse {
     targets: Vec<TargetView>,
-    /// Whether this caller may change the set.
-    editable: bool,
 }
 
 #[derive(Deserialize)]
@@ -133,14 +130,7 @@ impl Serialize for Refusal {
     }
 }
 
-fn refusal(status: StatusCode, error: &'static str) -> HttpResponse {
-    HttpResponse::build(status).json(&serde_json::json!({ "error": error }))
-}
 
-fn internal_error(e: &sqlx::Error) -> HttpResponse {
-    tracing::error!("bmc: {e}");
-    refusal(StatusCode::INTERNAL_SERVER_ERROR, "internal")
-}
 
 /// An upstream failure, as the panel reads it. The detail is
 /// `sbm_redfish`'s, which never carries a credential or a response body.
@@ -152,20 +142,27 @@ fn upstream(e: &sbm_redfish::Error) -> HttpResponse {
     }))
 }
 
+/// The targets, as `GET` and `PUT /bmc` answer them.
+fn list_answer(req: &HttpRequest, rows: Vec<Row>) -> HttpResponse {
+    let view = ListResponse { targets: rows.into_iter().map(|row| row.view()).collect() };
+    let mut body = serde_json::to_value(&view).unwrap_or_default();
+    // TODO: remove when MIN_CLIENT_PROTOCOL reaches 2.
+    if super::compat_v1::applies(req) {
+        super::compat_v1::bmc_list(&mut body);
+    }
+    HttpResponse::Ok().json(&body)
+}
+
 pub async fn list(
     req: HttpRequest,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    let gated = match machine::gate(&req, &state, Grant::Virt, "bmc list").await {
-        Ok(gated) => gated,
-        Err(refused) => return Ok(refused),
-    };
+    if let Err(refused) = machine::gate(&req, &state, "bmc list").await {
+        return Ok(refused);
+    }
     match load(&state.db).await {
-        Ok(rows) => Ok(HttpResponse::Ok().json(&ListResponse {
-            targets: rows.into_iter().map(|row| row.view()).collect(),
-            editable: gated.caller.is_admin(),
-        })),
-        Err(e) => Ok(internal_error(&e)),
+        Ok(rows) => Ok(list_answer(&req, rows)),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 
@@ -174,10 +171,9 @@ pub async fn replace(
     body: web::types::Json<ReplaceRequest>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    let caller = match authz::admin_caller(&req, &state).await {
-        Ok(caller) => caller,
-        Err(refused) => return Ok(refused),
-    };
+    if let Err(refused) = authz::acting_caller(&req, &state).await {
+        return Ok(refused);
+    }
     let targets: Vec<TargetInput> = body.into_inner().targets.into_iter().map(normalize).collect();
     if let Err(refusal) = validate(&targets) {
         return Ok(HttpResponse::BadRequest().json(&refusal));
@@ -187,20 +183,16 @@ pub async fn replace(
     let result = store(&state.db, &targets).await;
     let outcome = if result.is_ok() { Outcome::Ok } else { Outcome::Error };
     Event::new(Kind::Machine, Action::Write, outcome)
-        .subject(&caller.username)
         .remote_ip(super::ws::audit::peer_ip(&req))
         .detail(format!("bmc replace: {names}"))
         .record(&state.db)
         .await;
     match result {
         Ok(()) => match load(&state.db).await {
-            Ok(rows) => Ok(HttpResponse::Ok().json(&ListResponse {
-                targets: rows.into_iter().map(|row| row.view()).collect(),
-                editable: true,
-            })),
-            Err(e) => Ok(internal_error(&e)),
+            Ok(rows) => Ok(list_answer(&req, rows)),
+            Err(e) => Ok(super::respond::internal(&e)),
         },
-        Err(e) => Ok(internal_error(&e)),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 
@@ -211,11 +203,11 @@ pub async fn probe(
     body: web::types::Json<ProbeRequest>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    if let Err(refused) = authz::admin_caller(&req, &state).await {
+    if let Err(refused) = authz::acting_caller(&req, &state).await {
         return Ok(refused);
     }
     let Some((host, port)) = host_port(&body.url) else {
-        return Ok(refusal(StatusCode::BAD_REQUEST, "invalidUrl"));
+        return Ok(super::respond::error(StatusCode::BAD_REQUEST, "invalidUrl"));
     };
     match sbm_redfish::cert::fetch_server_cert(&host, port, PROBE_TIMEOUT).await {
         Ok(info) => Ok(HttpResponse::Ok().json(&info)),
@@ -228,7 +220,7 @@ pub async fn status(
     path: web::types::Path<String>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    if let Err(refused) = machine::gate(&req, &state, Grant::Virt, "bmc status").await {
+    if let Err(refused) = machine::gate(&req, &state, "bmc status").await {
         return Ok(refused);
     }
     let client = match connect(&state.db, &path).await {
@@ -266,7 +258,7 @@ pub async fn power(
 ) -> Result<HttpResponse, web::Error> {
     let intent = body.into_inner().intent;
     let what = format!("bmc power {}", intent.as_str());
-    let gated = match machine::gate(&req, &state, Grant::Virt, &what).await {
+    let gated = match machine::gate(&req, &state, &what).await {
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),
     };
@@ -282,7 +274,6 @@ pub async fn power(
 
     let outcome = if result.is_ok() { Outcome::Ok } else { Outcome::Error };
     Event::new(Kind::Machine, Action::Write, outcome)
-        .subject(&gated.caller.username)
         .remote_ip(gated.remote_ip)
         .detail(format!("{what} {}", path.as_str()))
         .record(&state.db)
@@ -303,8 +294,8 @@ async fn connect(db: &SqlitePool, id: &str) -> Result<Client, HttpResponse> {
         .await
     {
         Ok(Some(row)) => row,
-        Ok(None) => return Err(refusal(StatusCode::NOT_FOUND, "noSuchTarget")),
-        Err(e) => return Err(internal_error(&e)),
+        Ok(None) => return Err(super::respond::error(StatusCode::NOT_FOUND, "noSuchTarget")),
+        Err(e) => return Err(super::respond::internal(&e)),
     };
     Client::new(ClientConfig {
         base_url: row.url,

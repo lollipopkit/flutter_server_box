@@ -1,0 +1,96 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# AFFiNE: deployed with Docker Compose from compose.yaml beside this file,
+# shown in a desk window through the agent.
+
+schema = 1
+publisher = "toeverything"
+name = "affine"
+project = "AFFiNE"
+developer = "Toeverything"
+version = "0.27.4"
+homepage = "https://affine.pro"
+source = "https://github.com/toeverything/AFFiNE/tree/v0.27.4"
+glyph = "dashboard_customize"
+tone = "sky"
+categories = ["productivity"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "AFFiNE"
+
+[description]
+en = "Docs, whiteboards and databases in one workspace: write a page, switch it to an edgeless canvas, and collaborate in real time."
+zh = "文档、白板和数据库合一的工作区：写一页文档，可切换为无边界画布，并实时协作。"
+zh-TW = "文件、白板和資料庫合一的工作區：寫一頁文件，可切換為無邊界畫布，並即時協作。"
+
+[license]
+spdx = "LicenseRef-AFFiNE"
+url = "https://github.com/toeverything/AFFiNE/blob/v0.27.4/LICENSE"
+accept = true
+
+[requirements]
+memory_min_mib = 2048
+memory_recommended_mib = 4096
+arch = ["amd64", "arm64"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+jobs = ["affine_migration", "seed-admin"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+AFFINE_VERSION = "0.27.4"
+REDIS_VERSION = "8.8.3-alpine"
+PGVECTOR_VERSION = "0.8.7-pg16"
+AFFINE_ADMIN_EMAIL = "admin@affine.local"
+
+[[secrets]]
+env = "AFFINE_PASSWORD"
+length = 32
+
+[[secrets]]
+env = "POSTGRES_PASSWORD"
+length = 32
+
+[login]
+user = "admin@affine.local"
+password = "AFFINE_PASSWORD"
+note = { en = "Sign-up is off: invite people to a workspace, or turn sign-up on in the admin panel (/admin).", zh = "注册已关闭：可邀请他人加入工作区，或在管理后台（/admin）中开启注册。", zh-TW = "註冊已關閉：可邀請他人加入工作區，或在管理後台（/admin）中開啟註冊。" }
+
+[[settings]]
+key = "data"
+type = "path"
+env = "AFFINE_DATA"
+default = "{stack}/data"
+data = true
+label = { en = "Data", zh = "数据", zh-TW = "資料" }
+help = { en = "The database, uploaded files and the server's config.", zh = "数据库、上传的文件和服务器配置。", zh-TW = "資料庫、上傳的檔案和伺服器設定。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "AFFINE_PORT"
+default = 3011
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "For the desktop and phone apps. Off: only through the desk.", zh = "供桌面端和手机端应用使用。关闭时只能通过桌面访问。", zh-TW = "供桌面版和手機版應用程式使用。關閉時只能透過桌面存取。" }
+on = { AFFINE_BIND = "0.0.0.0" }
+off = { AFFINE_BIND = "127.0.0.1" }
+
+[[settings]]
+key = "url"
+type = "text"
+env = "AFFINE_URL"
+default = "http://localhost:3011"
+pattern = '^https?://[A-Za-z0-9.:\[\]-]+(/[A-Za-z0-9._~/-]*)?$'
+label = { en = "Public address", zh = "公开地址", zh-TW = "公開位址" }
+help = { en = "The address AFFiNE's links and invitations name. Set it when it is reachable from the network.", zh = "AFFiNE 生成的链接和邀请使用的地址。允许从网络访问时请设置。", zh-TW = "AFFiNE 產生的連結和邀請使用的位址。允許從網路存取時請設定。" }

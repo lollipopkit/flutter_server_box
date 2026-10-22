@@ -1,0 +1,16 @@
+/* The design system as an installed app's frame loads it (`desk.css`,
+   `vite.desk-app.config.ts`): `lk.css`, and the page scrolling its body
+   rather than the viewport, whose scrollbar belongs to <html>, outside
+   `.lk` and its tokens, and would be the browser's own. */
+@import './lk.css';
+
+html:has(> body.lk) {
+  height: 100%;
+  overflow: hidden;
+}
+
+body.lk {
+  box-sizing: border-box;
+  height: 100%;
+  overflow: auto;
+}

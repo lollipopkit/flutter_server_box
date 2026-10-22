@@ -26,6 +26,7 @@ import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/bmc/bmc.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/data/provider/server/web_apps.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
@@ -47,6 +48,7 @@ import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/server/metric_row.dart';
 import 'package:server_box/view/page/server/reading_text.dart';
 import 'package:server_box/view/page/server/text_scale.dart';
+import 'package:server_box/view/page/web_apps/status.dart';
 import 'package:server_box/view/widget/built_from.dart';
 import 'package:server_box/view/widget/server_func_btns.dart';
 
@@ -55,6 +57,7 @@ part 'extra_cards.dart';
 part 'notices.dart';
 part 'range.dart';
 part 'readings.dart';
+part 'web_apps.dart';
 
 class ServerDetailPage extends ConsumerStatefulWidget {
   final SpiRequiredArgs args;
@@ -121,7 +124,7 @@ const _kFuncBarInset = kFuncBarInset;
 ({List<ServerFuncEntry> entries, bool any}) serverDetailFuncBtns(
   ServerState si,
 ) {
-  final entries = serverFuncBtnsFor(si.spi, si.remoteAccess);
+  final entries = serverFuncBtnsFor(si.spi, si.agentAccess);
   if (!serverDetailHasContent(si)) {
     return (
       entries: [for (final e in entries) (btn: e.btn, available: false, reason: null)],
@@ -149,6 +152,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
         ServerDetailCards.battery: _buildBatteries,
         ServerDetailCards.pve: _buildPve,
         ServerDetailCards.bmc: _buildBmc,
+        ServerDetailCards.webApps: _buildWebApps,
         ServerDetailCards.custom: _buildCustomCmd,
       };
 
@@ -356,11 +360,8 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     // What this connection can actually serve, asked once and used twice: to
     // decide whether the row is drawn at all, and then as the row's content.
     //
-    // Asked of the entries rather than of one capability. `capabilities
-    // .terminal` was the gate, and it hid the whole row on a monitor server
-    // whose agent grants `[remote_access.fs]` but not `full_access` — that
-    // server has a Files button and nothing else, and it went missing from its
-    // own page while the Files tab went on listing it.
+    // Asked of the entries rather than of one capability, so the row and the
+    // Files tab answer the same question.
     // Whether any of them can be used. An entry this connection cannot serve
     // is still on the row, dimmed and last; a row of nothing but those is not
     // a row, and what belongs in its place is the explanation below.

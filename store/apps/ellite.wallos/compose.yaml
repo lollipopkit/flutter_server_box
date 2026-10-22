@@ -1,0 +1,63 @@
+# Wallos 5.10.0 (GPL-3.0), https://github.com/ellite/Wallos/tree/v5.10.0
+#
+# Adapted from the release's docker-compose.yaml for ServerBox Monitor
+# (2026-10-18):
+# - no `name:` and no `container_name`: the agent names the project;
+# - image pinned to the release (upstream: wallos:latest); bind mounts from
+#   the env file; files written as the shared folder's owner (PUID/PGID,
+#   startup.sh);
+# - seed-admin is a one-shot job that runs first: Wallos's first registration
+#   makes its administrator, open to anyone who reaches the page until then.
+#   Before Wallos answers anyone, it runs Wallos alone in the job's container
+#   (PHP's own server, on loopback) and registers admin with the generated
+#   password, as the registration page would. Registration is then closed
+#   (Wallos's default once there is a user). The password never reaches a
+#   command line.
+
+services:
+  seed-admin:
+    image: bellamy/wallos:${WALLOS_VERSION}
+    environment:
+      ADMIN_PASSWORD: ${WALLOS_PASSWORD}
+    volumes:
+      - ${WALLOS_DB}:/var/www/html/db
+    working_dir: /var/www/html
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        set -eu
+        # As startup.sh does before it serves.
+        php endpoints/cronjobs/createdatabase.php > /dev/null
+        php endpoints/db/migrate.php > /dev/null
+        php -S 127.0.0.1:8999 > /dev/null 2>&1 &
+        trap 'kill $$!' EXIT
+        for i in $$(seq 60); do curl -fsS -o /dev/null http://127.0.0.1:8999/health.php && break; sleep 1; done
+        # Its registration page answers only while there is no user.
+        page=$$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:8999/registration.php)
+        [ "$$page" = 200 ] || exit 0
+        secret=$$(mktemp)
+        trap 'rm -f "$$secret"; kill $$!' EXIT
+        printf '%s' "$$ADMIN_PASSWORD" > "$$secret"
+        to=$$(curl -sS -o /dev/null -w '%{redirect_url}' \
+          --data-urlencode username=admin --data-urlencode firstname=Admin --data-urlencode lastname= \
+          --data-urlencode email=admin@wallos.local --data-urlencode main_currency=USD --data-urlencode language=en \
+          --data-urlencode "password@$$secret" --data-urlencode "confirm_password@$$secret" \
+          http://127.0.0.1:8999/registration.php)
+        case "$$to" in *registered=true*) ;; *) echo "registration refused: $$to"; exit 1 ;; esac
+    restart: "no"
+
+  wallos:
+    image: bellamy/wallos:${WALLOS_VERSION}
+    depends_on:
+      seed-admin:
+        condition: service_completed_successfully
+    environment:
+      TZ: ${SBM_TZ}
+      PUID: ${SBM_UID}
+      PGID: ${SBM_GID}
+    volumes:
+      - ${WALLOS_DB}:/var/www/html/db
+      - ${WALLOS_LOGOS}:/var/www/html/images/uploads/logos
+    ports:
+      - '${WALLOS_BIND}:${WALLOS_PORT}:80'
+    restart: unless-stopped

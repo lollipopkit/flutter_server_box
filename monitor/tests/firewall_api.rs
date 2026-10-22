@@ -15,29 +15,12 @@ use server_box_monitor::monitoring::system_type;
 
 use common::machine::{audit, call, server};
 
-#[ntex::test]
-async fn every_route_needs_the_shell_grant() {
-    let (srv, db) = server().await;
-    let (status, _) = call(&srv, None, Method::POST, "/api/v1/firewall", Some(json!({}))).await;
-    assert_eq!(status, 401);
-    let change = json!({"kind": "firewalld", "change": {"type": "add", "zone": "public", "item": "source", "value": "10.9.8.7"}, "password": "sudo-secret"});
-    for path in ["/api/v1/firewall", "/api/v1/firewall/plan", "/api/v1/firewall/act"] {
-        let (status, body) = call(&srv, Some("viewer"), Method::POST, path, Some(change.clone())).await;
-        assert_eq!((status, body["error"].as_str()), (403, Some("forbidden")), "{path}");
-    }
-    let rows = audit(&db).await;
-    assert_eq!(rows.len(), 3, "{rows:?}");
-    // The verb, never what was typed into the change, nor the password.
-    let details: Vec<&str> = rows.iter().map(|r| r.3.as_deref().unwrap()).collect();
-    assert_eq!(details, ["firewall read: shell not_granted", "firewall plan firewalld Add: shell not_granted", "firewall firewalld Add: shell not_granted"]);
-}
-
 /// A firewall on Linux where there is one, and a reason everywhere else. A read
 /// is not audited.
 #[ntex::test]
 async fn the_read_answers_the_machine_or_says_why_not() {
     let (srv, db) = server().await;
-    let (status, body) = call(&srv, Some("admin"), Method::POST, "/api/v1/firewall", Some(json!({}))).await;
+    let (status, body) = call(&srv, true, Method::POST, "/api/v1/firewall", Some(json!({}))).await;
     assert_eq!(status, 200, "{body}");
     if system_type() != SystemType::Linux {
         assert_eq!(body["available"], false);
@@ -61,7 +44,7 @@ async fn a_change_that_cannot_be_planned_is_refused_and_recorded() {
         "action": "allow", "direction": "incoming", "routed": false, "protocol": null, "port": "", "source_port": "",
         "app": null, "from": "", "to": "", "interface_in": "", "interface_out": "", "log": null, "comment": "", "prepend": false
     }}});
-    let (status, body) = call(&srv, Some("admin"), Method::POST, "/api/v1/firewall/act", Some(bad)).await;
+    let (status, body) = call(&srv, true, Method::POST, "/api/v1/firewall/act", Some(bad)).await;
     // `notInstalled` where the machine has no ufw (and off Linux), otherwise
     // the draft's own issue — or `sudoRequired`, answered without a refusal.
     match body["error"].as_str() {
@@ -77,6 +60,6 @@ async fn a_change_that_cannot_be_planned_is_refused_and_recorded() {
 #[ntex::test]
 async fn a_change_the_panel_did_not_name_properly_is_a_bad_request() {
     let (srv, _) = server().await;
-    let (status, _) = call(&srv, Some("admin"), Method::POST, "/api/v1/firewall/plan", Some(json!({"kind": "ufw", "change": {"type": "format_disk"}}))).await;
+    let (status, _) = call(&srv, true, Method::POST, "/api/v1/firewall/plan", Some(json!({"kind": "ufw", "change": {"type": "format_disk"}}))).await;
     assert_eq!(status, 400);
 }

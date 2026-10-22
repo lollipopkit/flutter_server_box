@@ -6,6 +6,67 @@ description: What changed in each released version
 Every released version, newest first. Downloads and per-release notes are on
 [GitHub Releases](https://github.com/lollipopkit/flutter_server_box/releases).
 
+## Unreleased
+
+### Before you upgrade
+
+- **Usage analytics are removed**, along with the Full diagnostics level. An
+  install set to Full now uses Basic, which uploads only errors and crashes.
+- **The Monitor agent has one account, signed in with its password alone.** It
+  may do what the system account the agent runs as may do: roles, per-feature
+  permissions, file roots and read-only mode are removed. On upgrade the oldest
+  admin is kept and the other accounts' tasks, memory and desk data move to it.
+  This app no longer asks for a user name, and signs in to older agents only
+  after they are updated.
+- **The web panel's terminal no longer logs in over SSH.** It opens a shell as
+  the account the Monitor agent runs under.
+- Most features below that run in the web panel, and the new notification
+  channels, require the next Monitor agent release.
+
+### Added
+
+- **Storage and sharing** in the app and the web panel: disks, partitions,
+  RAID, ZFS pools, LUKS and SMART health; SMB shares (Time Machine, recycle
+  bin) and NFS exports.
+- **Web panel as a desktop:** every feature is an app in its own window, with a
+  menubar, dock, Spotlight search, notification centre, tabs and split panes in
+  Terminal and Files, and per-account wallpapers and themes.
+- **More pages in the web panel:** processes, services, scheduled tasks,
+  containers (images, logs, shell inside a container), system users, snippets,
+  firewall, benchmark, tmux, iperf, file editor, remote desktop (VNC, RDP),
+  virtualization, BMC (Redfish) and backups.
+- **Agent mode in the web panel:** an AI agent runs tasks on the server, with
+  per-task permission modes, command risk checks, plans, sudo prompts,
+  attachments and memory. Windows is supported.
+- **Third-party apps for the web panel:** an admin can install `.fsba`
+  packages, which run sandboxed with the permissions they were approved for.
+- **Monitor tab:** the Monitor agents at a glance: each one's version against
+  the newest release and the alert rules firing now; the web apps they deployed
+  (an update first), opened in the browser through the agent's proxy; their
+  notifications; and per server the audit log and the sessions and devices
+  signed in, which can be ended or forgotten. A server's page lists its own web
+  apps.
+- **A device that signed in before is not locked out** by failed sign-ins from
+  elsewhere: the Monitor agent recognises it by a token it handed out.
+- **New notification channels:** SMTP email, Telegram, Discord and ntfy. Bark
+  gains subtitle, Markdown, critical alert volume, badge, image, copy, archive
+  options and encrypted push (AES-CBC).
+- **GPU processes for servers connected through the Monitor agent**, readable
+  by every account.
+
+### Changed
+
+- Notification channel editors show every setting a channel type supports,
+  including ones not set yet.
+- Percentage charts no longer extend their axis past 100%.
+
+### Fixed
+
+- NVIDIA GPU processes are listed again when the driver does not report their
+  memory (Windows and WSL).
+- Error messages from notification channels no longer include the request URL,
+  which could contain a token.
+
 ## v1.0.1816 — 2026-10-20
 
 ### Added

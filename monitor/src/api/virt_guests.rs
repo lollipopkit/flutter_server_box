@@ -38,7 +38,6 @@ use super::server::AppState;
 use super::virt::{Backend, PowerResponse, backend, guest_of, libvirt_chain, run_libvirt};
 use super::virt_resources::{libvirt_networks, libvirt_storage, password, read_volumes};
 use super::ws::audit::{Action, Event, Kind, Outcome};
-use crate::core::permissions::Grant;
 
 #[derive(Deserialize)]
 pub struct FormRequest {
@@ -101,7 +100,7 @@ pub(crate) struct Audit<'a> {
 
 impl<'a> Audit<'a> {
     pub(crate) async fn start(req: &HttpRequest, state: &'a AppState, what: String) -> Result<Self, HttpResponse> {
-        let gated = machine::gate(req, state, Grant::Virt, &what).await?;
+        let gated = machine::gate(req, state, &what).await?;
         let audit = Audit { state, gated, what };
         audit.event(Action::Open, Outcome::Ok, None).record(&state.db).await;
         Ok(audit)
@@ -109,7 +108,6 @@ impl<'a> Audit<'a> {
 
     fn event(&self, action: Action, outcome: Outcome, why: Option<&str>) -> Event {
         Event::new(Kind::Machine, action, outcome)
-            .subject(&self.gated.caller.username)
             .remote_ip(self.gated.remote_ip.clone())
             .detail(match why {
                 Some(why) => format!("{}: {why}", self.what),
@@ -129,7 +127,7 @@ pub async fn create_form(
     body: web::types::Json<FormRequest>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    if let Err(refused) = machine::gate(&req, &state, Grant::Virt, "virt create form").await {
+    if let Err(refused) = machine::gate(&req, &state, "virt create form").await {
         return Ok(refused);
     }
     let request = body.into_inner();
@@ -207,7 +205,7 @@ pub async fn clone_form(
     body: web::types::Json<GuestBody>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    if let Err(refused) = machine::gate(&req, &state, Grant::Virt, "virt clone form").await {
+    if let Err(refused) = machine::gate(&req, &state, "virt clone form").await {
         return Ok(refused);
     }
     let request = body.into_inner();

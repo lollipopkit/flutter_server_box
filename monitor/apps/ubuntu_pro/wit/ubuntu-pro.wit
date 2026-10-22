@@ -1,0 +1,59 @@
+/// Ubuntu Pro's service (`sbm_parser::ubuntu_pro`): the client, the
+/// subscription, its services and Livepatch.
+package serverbox:ubuntu-pro;
+
+interface api {
+  use sbm:app/types@0.1.0.{error};
+
+  record service {
+    name: string,
+    description: string,
+    available: bool,
+    /// Attached only.
+    entitled: option<bool>,
+    status: option<string>,
+    status-details: option<string>,
+  }
+
+  record livepatch {
+    kernel: option<string>,
+    state: option<string>,
+    version: option<string>,
+    supported: option<string>,
+  }
+
+  record pro {
+    ubuntu: bool,
+    release: option<string>,
+    /// The client's version, when installed.
+    client: option<string>,
+    attached: bool,
+    account: option<string>,
+    contract: option<string>,
+    expires: option<string>,
+    tech-support: option<string>,
+    services: list<service>,
+    livepatch: option<livepatch>,
+  }
+
+  view: func() -> result<pro, error>;
+}
+
+/// Each checked against a fresh read, run as root.
+interface jobs {
+  use sbm:app/types@0.1.0.{error};
+
+  install-client: func() -> result<_, error>;
+  /// [token] goes into a private file the script reads, never into the
+  /// script, a log or the audit.
+  attach: func(token: string, auto-enable: bool) -> result<_, error>;
+  detach: func() -> result<_, error>;
+  enable: func(service: string) -> result<_, error>;
+  disable: func(service: string) -> result<_, error>;
+}
+
+world ubuntu-pro {
+  include sbm:app/imports@0.1.0;
+  export api;
+  export jobs;
+}

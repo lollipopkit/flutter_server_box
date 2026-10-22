@@ -5,11 +5,9 @@ description: Choose, install, and manage themes
 
 Server Box includes the Default and AMOLED themes and lets you install more,
 such as One Dark Pro, from the theme store or
-from a theme file. Some store themes, such as Piggy, are bundled with the app.
-The App installs each bundled theme the first time it runs with that theme
-included. You can update it from the theme store. If you remove it, the App
-will not install it again.
-Theme settings are under **Settings → Appearance**.
+from a theme file.
+Theme settings are under **Settings → Appearance**. The Monitor panel installs
+the same theme packages; see [In the Monitor panel](#in-the-monitor-panel).
 
 ## Choose a theme
 
@@ -86,6 +84,35 @@ use, it stays in use.
 
 Some themes may require a newer app version. They remain visible in the store,
 with an explanation when they cannot be installed.
+
+## In the Monitor panel
+
+The [Monitor agent](/docs/advanced/monitor-agent/)'s web panel uses the same
+`.fsbt` packages as the App. Themes in the panel are kept on the agent for
+your account, so they apply in every browser you sign in from, and they are
+separate from the themes installed in the App.
+
+Open **Settings → Appearance → Themes** in the panel:
+
+- Select **Default** for the desk's own colors, or select an installed theme.
+  A package with variants lists each one, such as `Pride · Trans`.
+- **Install a theme → From file** uploads a `.fsbt` package. The agent reads
+  and checks it with the same code as the App, and refuses a package that
+  fails the checks.
+- **Theme store** lists the themes of the ServerBox catalog. The agent
+  downloads the package over HTTPS and checks its SHA-256 before installing it;
+  the panel cannot make the agent download from any other address. A theme
+  that needs a newer agent is shown but cannot be installed. A newer version
+  of an installed theme shows **Update**.
+- The delete button beside a theme removes it. Removing the theme in use
+  returns the desk to **Default**.
+
+A theme that supports only Dark or only Light sets the panel's appearance mode
+while it is selected; a theme that supports both switches to its preferred
+mode when selected. Selecting a theme with a background image makes that image
+the desk's wallpaper; the wallpaper choices on the same page can replace it.
+Each account can install at most 32 themes, using at most 128 MiB
+in total.
 
 ## Create a theme
 

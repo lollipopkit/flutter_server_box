@@ -28,8 +28,21 @@ pub fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
     diff == 0
 }
 
-/// n-character alphanumeric random password (rejection sampling, no modulo bias)
+/// n-character alphanumeric random password (rejection sampling, no modulo
+/// bias). From 3 characters on it holds an upper-case letter, a lower-case
+/// letter and a digit, which the password rules of the apps it is made for
+/// ask (n8n's): drawn again until it does, so it stays uniform among those.
 pub fn random_password(n: usize) -> Result<String> {
+    loop {
+        let out = random_alphanumeric(n)?;
+        let classes = [u8::is_ascii_uppercase, u8::is_ascii_lowercase, u8::is_ascii_digit];
+        if n < classes.len() || classes.iter().all(|has| out.bytes().any(|b| has(&b))) {
+            return Ok(out);
+        }
+    }
+}
+
+fn random_alphanumeric(n: usize) -> Result<String> {
     const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     const LIMIT: u8 = (u8::MAX / CHARSET.len() as u8) * CHARSET.len() as u8; // 248
     let mut out = String::with_capacity(n);
@@ -67,5 +80,16 @@ mod tests {
         assert_eq!(a.len(), 32);
         assert!(a.chars().all(|c| c.is_ascii_hexdigit()));
         assert_ne!(a, random_hex(16).unwrap());
+    }
+
+    #[test]
+    fn random_password_holds_every_class() {
+        for _ in 0..2000 {
+            let p = random_password(3).unwrap();
+            assert_eq!(p.len(), 3);
+            assert!(p.bytes().any(|b| b.is_ascii_uppercase()) && p.bytes().any(|b| b.is_ascii_lowercase()) && p.bytes().any(|b| b.is_ascii_digit()), "{p}");
+        }
+        assert_eq!(random_password(2).unwrap().len(), 2);
+        assert!(random_password(32).unwrap().bytes().all(|b| b.is_ascii_alphanumeric()));
     }
 }

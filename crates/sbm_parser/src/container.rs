@@ -168,7 +168,7 @@ impl ContainerCmd {
 /// someone has to remember to skip.
 pub fn join_commands(commands: &[String], separator: &str) -> String {
     let joined = commands.join(&format!("\necho {separator}\n"));
-    format!("sh -c '{}'", joined.replace('\'', "'\\''"))
+    format!("sh -c {}", crate::script::shell_quote_unix(&joined))
 }
 
 /// Split a batched answer back into one segment per command.
@@ -829,17 +829,6 @@ pub struct Container {
     pub status: ContainerStatus,
 }
 
-impl Container {
-    /// Whether this container's image reference matches the image's own.
-    ///
-    /// `docker ps` prints the reference the container was created from, which
-    /// is not always a tag — a container started from an id carries the id.
-    /// Only used to confirm usage, never to deny it.
-    pub fn image_reference(&self) -> Option<&str> {
-        self.image.as_deref()
-    }
-}
-
 /// One sample of a running container's resource use.
 ///
 /// Every field is the runtime's own rendering of a quantity, kept as text
@@ -855,6 +844,10 @@ pub struct ContainerStats {
     pub cpu_avg: Option<String>,
     /// `1.2MiB / 7.6GiB`.
     pub mem: Option<String>,
+    /// The two halves of [`Self::mem`]: `1.2MiB` used, `7.6GiB` the limit
+    /// (the host's memory when the container has none of its own).
+    pub mem_used: Option<String>,
+    pub mem_limit: Option<String>,
     pub net_down: Option<String>,
     pub net_up: Option<String>,
     pub disk_read: Option<String>,
@@ -895,6 +888,19 @@ impl ContainerImage {
             || repository == "<none>"
             || tag.is_empty()
             || tag == "<none>"
+    }
+
+    /// What the image is named by, in a list and to the runtime:
+    /// `repository:tag`, and for a dangling image ([`Self::is_dangling`], a
+    /// `nginx:<none>` too) its short id (twelve hex digits, as `docker images`
+    /// prints it), or `<none>` without one. Never the repository alone: the
+    /// runtime reads that as `:latest`, another image.
+    pub fn reference(&self) -> String {
+        if self.is_dangling() {
+            let id = self.id.as_deref().map(|id| id.strip_prefix("sha256:").unwrap_or(id)).unwrap_or("");
+            return if id.is_empty() { "<none>".into() } else { id.chars().take(12).collect() };
+        }
+        format!("{}:{}", self.repository.trim(), self.tag.as_deref().unwrap_or("").trim())
     }
 
     /// Whether this image is known to have nothing referencing it.
@@ -1029,10 +1035,18 @@ fn parse_docker_stats(value: &serde_json::Value) -> ContainerStats {
     };
     let (net_down, net_up) = pair("NetIO");
     let (disk_read, disk_write) = pair("BlockIO");
+    let mem = text("MemUsage");
+    let (mem_used, mem_limit) = match mem.as_deref().map(|m| m.split_once(" / ")) {
+        Some(Some((used, limit))) => (Some(used.to_string()), Some(limit.to_string())),
+        Some(None) => (mem.clone(), None),
+        None => (None, None),
+    };
     ContainerStats {
         cpu: text("CPUPerc"),
         cpu_avg: None,
-        mem: text("MemUsage"),
+        mem,
+        mem_used,
+        mem_limit,
         net_down: Some(net_down),
         net_up: Some(net_up),
         disk_read: Some(disk_read),
@@ -1086,6 +1100,8 @@ fn parse_podman_stats(value: &serde_json::Value, version: Option<&str>) -> Conta
         cpu: Some(format!("{}%", fixed1(number("CPU")))),
         cpu_avg: Some(format!("{}%", fixed1(number("AvgCPU")))),
         mem: Some(format!("{mem_usage} / {mem_limit}")),
+        mem_used: Some(mem_usage),
+        mem_limit: Some(mem_limit),
         net_down: Some(human_bytes(net_in)),
         net_up: Some(human_bytes(net_out)),
         disk_read: Some(human_bytes(bytes("BlockInput"))),
@@ -2702,6 +2718,8 @@ mod tests {
         assert_eq!(stats.cpu.as_deref(), Some("0.15%"));
         assert_eq!(stats.cpu_avg, None);
         assert_eq!(stats.mem.as_deref(), Some("1.2MiB / 7.6GiB"));
+        assert_eq!(stats.mem_used.as_deref(), Some("1.2MiB"));
+        assert_eq!(stats.mem_limit.as_deref(), Some("7.6GiB"));
         assert_eq!(stats.net_down.as_deref(), Some("1.2kB"));
         assert_eq!(stats.net_up.as_deref(), Some("3.4kB"));
         assert_eq!(stats.disk_read.as_deref(), Some("5kB"));
@@ -2720,6 +2738,8 @@ mod tests {
         assert_eq!(stats.cpu.as_deref(), Some("1.0%"));
         assert_eq!(stats.cpu_avg.as_deref(), Some("0.0%"));
         assert_eq!(stats.mem.as_deref(), Some("1 B / 1 GB"));
+        assert_eq!(stats.mem_used.as_deref(), Some("1 B"));
+        assert_eq!(stats.mem_limit.as_deref(), Some("1 GB"));
         assert_eq!(stats.net_down.as_deref(), Some("0 B"));
         assert_eq!(stats.disk_read.as_deref(), Some("0 B"));
     }
@@ -2820,6 +2840,26 @@ mod tests {
             .into_iter()
             .next()
             .expect("one image")
+    }
+
+    #[test]
+    fn an_image_is_named_by_repository_and_tag_or_its_short_id() {
+        let image = |repository: &str, tag: Option<&str>, id: Option<&str>| ContainerImage {
+            repository: repository.into(),
+            tag: tag.map(Into::into),
+            id: id.map(Into::into),
+            digest: None,
+            size: None,
+            containers: None,
+            created_at: None,
+            created: None,
+        };
+        assert_eq!(image("nginx", Some("1.27"), None).reference(), "nginx:1.27");
+        // A tag lost to a newer pull: its id, not `nginx` (which is :latest).
+        assert_eq!(image("nginx", Some("<none>"), Some("sha256:fedcba9876543210")).reference(), "fedcba987654");
+        assert_eq!(image("nginx", None, None).reference(), "<none>");
+        assert_eq!(image("<none>", Some("<none>"), Some("sha256:0123456789abcdef0123")).reference(), "0123456789ab");
+        assert_eq!(image("<none>", None, None).reference(), "<none>");
     }
 
     #[test]

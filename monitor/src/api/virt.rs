@@ -23,10 +23,11 @@
 //!
 //! # Privilege
 //!
-//! `virt` to see and control (`docs/dev/monitor-permissions.md`). Admin to
-//! change how the API is reached or to pin its certificate, since those
-//! decide where the agent sends a password or a token.
+//! The transport rule to see and control (`api::machine::gate`). How the API
+//! is reached and its pinned certificate decide where the agent sends a
+//! password or a token.
 
+use crate::utils::lock::LockExt;
 use std::sync::Arc;
 
 use ntex::http::StatusCode;
@@ -47,7 +48,6 @@ use super::exec::ExecResponse;
 use super::machine;
 use super::server::AppState;
 use super::ws::audit::{Action, Event, Kind, Outcome};
-use crate::core::permissions::Grant;
 
 const MAX_ADDR: usize = 512;
 const MAX_IDENT: usize = 256;
@@ -69,7 +69,6 @@ pub struct VirtState {
 const CONSOLE_TTL: std::time::Duration = std::time::Duration::from_secs(30);
 
 pub(crate) struct PendingConsole {
-    pub(crate) subject: String,
     pub(crate) target: ConsoleTarget,
     /// What the audit row names: the guest and the kind.
     pub(crate) what: String,
@@ -85,13 +84,11 @@ pub(crate) enum ConsoleTarget {
 }
 
 impl VirtState {
-    /// The console `ticket` was minted for, once; `subject` must be who it
-    /// was minted for.
-    pub(crate) fn take_console(&self, ticket: &str, subject: &str) -> Option<PendingConsole> {
-        let mut consoles = self.consoles.lock().unwrap();
+    /// The console `ticket` was minted for, once.
+    pub(crate) fn take_console(&self, ticket: &str) -> Option<PendingConsole> {
+        let mut consoles = self.consoles.locked();
         consoles.retain(|_, c| c.at.elapsed() < CONSOLE_TTL);
-        let pending = consoles.remove(ticket)?;
-        (pending.subject == subject).then_some(pending)
+        consoles.remove(ticket)
     }
 }
 
@@ -175,8 +172,6 @@ struct PveView {
     token_id: Option<String>,
     has_token_secret: bool,
     cert_sha256: Option<String>,
-    /// Whether this caller may change it.
-    editable: bool,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -254,14 +249,7 @@ impl ConsoleAnswer {
     }
 }
 
-fn refusal(status: StatusCode, error: &'static str) -> HttpResponse {
-    HttpResponse::build(status).json(&serde_json::json!({ "error": error }))
-}
 
-fn internal_error(e: &sqlx::Error) -> HttpResponse {
-    tracing::error!("virt: {e}");
-    refusal(StatusCode::INTERNAL_SERVER_ERROR, "internal")
-}
 
 // ---------------------------------------------------------------------------
 // The host
@@ -272,7 +260,7 @@ pub async fn load(
     body: Option<web::types::Json<LoadRequest>>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    if let Err(refused) = machine::gate(&req, &state, Grant::Virt, "virt load").await {
+    if let Err(refused) = machine::gate(&req, &state, "virt load").await {
         return Ok(refused);
     }
     let password = body.and_then(|b| b.into_inner().password).filter(|p| !p.is_empty());
@@ -295,7 +283,7 @@ pub async fn load(
             return Ok(HttpResponse::Ok().json(&answer));
         }
         Ok(None) => {}
-        Err(e) => return Ok(internal_error(&e)),
+        Err(e) => return Ok(super::respond::internal(&e)),
     }
     if !answer.supported {
         return Ok(HttpResponse::Ok().json(&answer));
@@ -315,7 +303,7 @@ pub async fn load(
             let found = probe.libvirt.is_some();
             answer.probe = Some(probe);
             if pve {
-                // Not a host until an admin says how to reach its API.
+                // Not a host until the operator says how to reach its API.
                 answer.host = Some(HostKind::Pve);
                 return Ok(HttpResponse::Ok().json(&answer));
             }
@@ -346,13 +334,12 @@ pub async fn power(
     let request = body.into_inner();
     let action = serde_json::to_value(request.action).ok().and_then(|v| v.as_str().map(str::to_owned));
     let what = format!("virt {} {}", action.as_deref().unwrap_or("?"), request.guest);
-    let gated = match machine::gate(&req, &state, Grant::Virt, &what).await {
+    let gated = match machine::gate(&req, &state, &what).await {
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),
     };
     let record = |action, outcome, why: Option<&str>| {
         Event::new(Kind::Machine, action, outcome)
-            .subject(&gated.caller.username)
             .remote_ip(gated.remote_ip.clone())
             .detail(match why {
                 Some(why) => format!("{what}: {why}"),
@@ -367,7 +354,7 @@ pub async fn power(
         Ok(Some(client)) => pve_power(&client, &request.guest, request.action).await,
         Ok(None) if unix() => libvirt_power(&state, &request.guest, request.action, password).await,
         Ok(None) => Err(VirtError::new(ErrorKind::Unsupported)),
-        Err(e) => return Ok(internal_error(&e)),
+        Err(e) => return Ok(super::respond::internal(&e)),
     };
     if let Err(e) = &result {
         record(Action::Close, Outcome::Error, Some(&format!("{:?}", e.kind))).record(&state.db).await;
@@ -386,7 +373,7 @@ pub(crate) async fn backend(state: &AppState) -> Result<Backend, HttpResponse> {
         Ok(Some(client)) => Ok(Backend::Pve(client)),
         Ok(None) if unix() => Ok(Backend::Libvirt),
         Ok(None) => Err(HttpResponse::Ok().json(&PowerResponse { error: Some(VirtError::new(ErrorKind::Unsupported)) })),
-        Err(e) => Err(internal_error(&e)),
+        Err(e) => Err(super::respond::internal(&e)),
     }
 }
 
@@ -407,7 +394,7 @@ pub async fn detail(
     body: web::types::Json<GuestRequest>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    if let Err(refused) = machine::gate(&req, &state, Grant::Virt, "virt detail").await {
+    if let Err(refused) = machine::gate(&req, &state, "virt detail").await {
         return Ok(refused);
     }
     let request = body.into_inner();
@@ -440,7 +427,7 @@ pub async fn history(
     body: web::types::Json<HistoryRequest>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    if let Err(refused) = machine::gate(&req, &state, Grant::Virt, "virt history").await {
+    if let Err(refused) = machine::gate(&req, &state, "virt history").await {
         return Ok(refused);
     }
     let request = body.into_inner();
@@ -472,7 +459,7 @@ pub async fn console(
     let request = body.into_inner();
     let kind = if request.kind == ConsoleKind::Vnc { "vnc" } else { "text" };
     let what = format!("virt console {kind} {}", request.guest);
-    let gated = match machine::gate(&req, &state, Grant::Virt, &what).await {
+    let _ = match machine::gate(&req, &state, &what).await {
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),
     };
@@ -516,16 +503,16 @@ pub async fn console(
         Ok(r) => r,
         Err(e) => return Ok(HttpResponse::Ok().json(&ConsoleAnswer::failed(e))),
     };
-    let ticket = match state.tickets.issue(super::ws::ticket::Purpose::Virt, &gated.caller.username) {
+    let ticket = match state.tickets.issue(super::ws::ticket::Purpose::Virt) {
         Ok(ticket) => ticket,
-        Err(_) => return Ok(refusal(StatusCode::TOO_MANY_REQUESTS, "too_many_tickets")),
+        Err(_) => return Ok(super::respond::error(StatusCode::TOO_MANY_REQUESTS, "too_many_tickets")),
     };
     {
-        let mut consoles = state.virt.consoles.lock().unwrap();
+        let mut consoles = state.virt.consoles.locked();
         consoles.retain(|_, c| c.at.elapsed() < CONSOLE_TTL);
         consoles.insert(
             ticket.clone(),
-            PendingConsole { subject: gated.caller.username.clone(), target, what, at: std::time::Instant::now() },
+            PendingConsole { target, what, at: std::time::Instant::now() },
         );
     }
     Ok(HttpResponse::Ok().json(&ConsoleAnswer {
@@ -596,7 +583,7 @@ pub async fn snapshots(
     body: web::types::Json<GuestRequest>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    if let Err(refused) = machine::gate(&req, &state, Grant::Virt, "virt snapshots").await {
+    if let Err(refused) = machine::gate(&req, &state, "virt snapshots").await {
         return Ok(refused);
     }
     let request = body.into_inner();
@@ -681,13 +668,12 @@ pub async fn snapshot(
         SnapshotOp::Delete { name } => ("delete", name),
     };
     let what = format!("virt snapshot {verb} {} {name}", request.guest);
-    let gated = match machine::gate(&req, &state, Grant::Virt, &what).await {
+    let gated = match machine::gate(&req, &state, &what).await {
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),
     };
     let record = |action, outcome, why: Option<&str>| {
         Event::new(Kind::Machine, action, outcome)
-            .subject(&gated.caller.username)
             .remote_ip(gated.remote_ip.clone())
             .detail(match why {
                 Some(why) => format!("{what}: {why}"),
@@ -797,7 +783,7 @@ pub async fn snapshot_diff(
     body: web::types::Json<DiffRequest>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    if let Err(refused) = machine::gate(&req, &state, Grant::Virt, "virt snapshot diff").await {
+    if let Err(refused) = machine::gate(&req, &state, "virt snapshot diff").await {
         return Ok(refused);
     }
     let request = body.into_inner();
@@ -1010,17 +996,16 @@ pub async fn pve_get(
     req: HttpRequest,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    let gated = match machine::gate(&req, &state, Grant::Virt, "virt pve").await {
-        Ok(gated) => gated,
-        Err(refused) => return Ok(refused),
-    };
+    if let Err(refused) = machine::gate(&req, &state, "virt pve").await {
+        return Ok(refused);
+    }
     match row(&state.db).await {
-        Ok(row) => Ok(HttpResponse::Ok().json(&view(row, gated.caller.is_admin()))),
-        Err(e) => Ok(internal_error(&e)),
+        Ok(row) => Ok(HttpResponse::Ok().json(&view(row))),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 
-fn view(row: Option<Row>, editable: bool) -> PveView {
+fn view(row: Option<Row>) -> PveView {
     match row {
         None => PveView {
             configured: false,
@@ -1031,7 +1016,6 @@ fn view(row: Option<Row>, editable: bool) -> PveView {
             token_id: None,
             has_token_secret: false,
             cert_sha256: None,
-            editable,
         },
         Some(row) => PveView {
             configured: true,
@@ -1042,7 +1026,6 @@ fn view(row: Option<Row>, editable: bool) -> PveView {
             token_id: row.token_id,
             has_token_secret: row.token_secret.is_some_and(|s| !s.is_empty()),
             cert_sha256: row.cert_sha256,
-            editable,
         },
     }
 }
@@ -1052,28 +1035,26 @@ pub async fn pve_put(
     body: web::types::Json<PveInput>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    let caller = match authz::admin_caller(&req, &state).await {
-        Ok(caller) => caller,
-        Err(refused) => return Ok(refused),
-    };
+    if let Err(refused) = authz::acting_caller(&req, &state).await {
+        return Ok(refused);
+    }
     let input = normalize(body.into_inner());
     if let Err(code) = validate(&input) {
-        return Ok(refusal(StatusCode::BAD_REQUEST, code));
+        return Ok(super::respond::error(StatusCode::BAD_REQUEST, code));
     }
     let result = store(&state.db, &input).await;
     let outcome = if result.is_ok() { Outcome::Ok } else { Outcome::Error };
     Event::new(Kind::Machine, Action::Write, outcome)
-        .subject(&caller.username)
         .remote_ip(super::ws::audit::peer_ip(&req))
         .detail(format!("virt pve set: {} ({})", input.addr, input.auth.as_str()))
         .record(&state.db)
         .await;
     if let Err(e) = result {
-        return Ok(internal_error(&e));
+        return Ok(super::respond::internal(&e));
     }
     match row(&state.db).await {
-        Ok(row) => Ok(HttpResponse::Ok().json(&view(row, true))),
-        Err(e) => Ok(internal_error(&e)),
+        Ok(row) => Ok(HttpResponse::Ok().json(&view(row))),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 
@@ -1081,24 +1062,22 @@ pub async fn pve_delete(
     req: HttpRequest,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    let caller = match authz::admin_caller(&req, &state).await {
-        Ok(caller) => caller,
-        Err(refused) => return Ok(refused),
-    };
+    if let Err(refused) = authz::acting_caller(&req, &state).await {
+        return Ok(refused);
+    }
     let result = sqlx::query("DELETE FROM virt_pve").execute(&state.db).await;
     if let Some(client) = state.virt.pve.lock().await.take() {
         client.close();
     }
     let outcome = if result.is_ok() { Outcome::Ok } else { Outcome::Error };
     Event::new(Kind::Machine, Action::Write, outcome)
-        .subject(&caller.username)
         .remote_ip(super::ws::audit::peer_ip(&req))
         .detail("virt pve remove")
         .record(&state.db)
         .await;
     match result {
-        Ok(_) => Ok(HttpResponse::Ok().json(&view(None, true))),
-        Err(e) => Ok(internal_error(&e)),
+        Ok(_) => Ok(HttpResponse::Ok().json(&view(None))),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 
@@ -1109,14 +1088,13 @@ pub async fn pve_cert(
     body: web::types::Json<CertRequest>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    let caller = match authz::admin_caller(&req, &state).await {
-        Ok(caller) => caller,
-        Err(refused) => return Ok(refused),
-    };
+    if let Err(refused) = authz::acting_caller(&req, &state).await {
+        return Ok(refused);
+    }
     let client = match pve_client(&state).await {
         Ok(Some(client)) => client,
-        Ok(None) => return Ok(refusal(StatusCode::NOT_FOUND, "notConfigured")),
-        Err(e) => return Ok(internal_error(&e)),
+        Ok(None) => return Ok(super::respond::error(StatusCode::NOT_FOUND, "notConfigured")),
+        Err(e) => return Ok(super::respond::internal(&e)),
     };
     let pin = match client.confirm_cert(&body.fingerprint) {
         Ok(pin) => pin,
@@ -1129,14 +1107,13 @@ pub async fn pve_cert(
         .await;
     let outcome = if result.is_ok() { Outcome::Ok } else { Outcome::Error };
     Event::new(Kind::Machine, Action::Write, outcome)
-        .subject(&caller.username)
         .remote_ip(super::ws::audit::peer_ip(&req))
         .detail(format!("virt pve pin: {pin}"))
         .record(&state.db)
         .await;
     match result {
         Ok(_) => Ok(HttpResponse::Ok().json(&PowerResponse { error: None })),
-        Err(e) => Ok(internal_error(&e)),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 
@@ -1148,13 +1125,13 @@ pub async fn pve_tfa(
     body: web::types::Json<TfaRequest>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    if let Err(refused) = machine::gate(&req, &state, Grant::Virt, "virt pve tfa").await {
+    if let Err(refused) = machine::gate(&req, &state, "virt pve tfa").await {
         return Ok(refused);
     }
     let client = match pve_client(&state).await {
         Ok(Some(client)) => client,
-        Ok(None) => return Ok(refusal(StatusCode::NOT_FOUND, "notConfigured")),
-        Err(e) => return Ok(internal_error(&e)),
+        Ok(None) => return Ok(super::respond::error(StatusCode::NOT_FOUND, "notConfigured")),
+        Err(e) => return Ok(super::respond::internal(&e)),
     };
     let error = client.submit_tfa(&body.code).await.err();
     Ok(HttpResponse::Ok().json(&PowerResponse { error }))

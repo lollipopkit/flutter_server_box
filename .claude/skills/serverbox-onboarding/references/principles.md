@@ -141,7 +141,7 @@ project and `libL10n` for the strings `fl_lib` already has. Prefer an existing
 | Where a file belongs in the tree | `docs/src/content/docs/development/structure.md` |
 | Which generator to run and why an adapter is frozen | `docs/src/content/docs/development/codegen.md` |
 | Test strategy, fixtures, integration tests | `docs/src/content/docs/development/testing.md` |
-| The agent's API surface, remote access model, panel | `monitor/CLAUDE.md` |
+| The agent's API surface, remote access model, panel | `docs/dev/monitor-api.md`, `docs/dev/monitor-permissions.md`, `docs/dev/desk.md` |
 | Rules for changing this codebase | `CLAUDE.md` |
 
 The `docs/src/content/docs/` pages above each have a `zh/` counterpart, and

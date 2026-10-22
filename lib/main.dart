@@ -304,9 +304,6 @@ Future<void> _initData() async {
   unawaited(TerminalFont.load(Stores.setting.fontPath.fetch()));
   await ThemePackages.prepareSelectedTheme();
   ThemePackages.reconcileSelection();
-  // Not awaited: a bundled theme is one more choice in the picker, and the
-  // first frame does not wait for it.
-  unawaited(ThemePackages.seedBundled());
   await AppFont.loadStored();
 }
 

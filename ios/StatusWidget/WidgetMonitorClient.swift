@@ -15,7 +15,7 @@ import Foundation
 
 /// `sbm_parser::protocol::PROTOCOL`, named in `X-SBM-Protocol`;
 /// `crates/sbm_parser/tests/protocol_clients.rs` keeps it equal.
-private let sbmProtocol = "1"
+private let sbmProtocol = "2"
 
 enum WidgetError: LocalizedError {
     case notConfigured

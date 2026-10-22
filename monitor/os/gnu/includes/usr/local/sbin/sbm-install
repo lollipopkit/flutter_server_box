@@ -1,0 +1,119 @@
+#!/bin/sh
+# Writes sbOS (GNU) to a disk: the image's root filesystem as it was built
+# (the live session's changes stay behind), GRUB for UEFI (and BIOS on x64).
+# The agent installs itself on the disk's first boot. No network needed.
+#
+#   sbm-install [-y] <disk>     e.g.  sbm-install /dev/sda
+
+set -eu
+
+usage() {
+	echo "usage: sbm-install [-y] <disk>"
+	echo
+	echo "Disks on this machine:"
+	lsblk -dpno NAME,SIZE,MODEL
+	exit "$1"
+}
+
+yes=""
+disk=""
+for arg in "$@"; do
+	case "$arg" in
+		-y | --yes) yes=1 ;;
+		-h | --help) usage 0 ;;
+		-*) usage 1 ;;
+		/dev/*) disk="$arg" ;;
+		*) disk="/dev/$arg" ;;
+	esac
+done
+
+[ "$(id -u)" = 0 ] || { echo "sbm-install needs root."; exit 1; }
+[ -n "$disk" ] || usage 1
+[ -b "$disk" ] || { echo "$disk is not a block device."; usage 1; }
+
+src=/run/live/rootfs/filesystem.squashfs
+medium=/run/live/medium
+[ -d "$src/usr" ] || { echo "This is not a live sbOS session; sbm-install writes one to a disk."; exit 1; }
+
+# The medium this system booted from is not a target.
+medium_dev=$(findmnt -no SOURCE "$medium" 2>/dev/null || true)
+medium_disk=$(lsblk -no pkname "$medium_dev" 2>/dev/null || true)
+if [ "$medium_dev" = "$disk" ] || [ "/dev/$medium_disk" = "$disk" ]; then
+	echo "$disk holds the medium this system booted from."
+	exit 1
+fi
+
+echo "This erases everything on $disk:"
+lsblk -po NAME,SIZE,FSTYPE,LABEL,MOUNTPOINT "$disk"
+if [ -z "$yes" ]; then
+	printf 'Type %s to continue: ' "$disk"
+	read -r answer || answer=""
+	[ "$answer" = "$disk" ] || { echo "Nothing was written."; exit 1; }
+fi
+
+case "$(uname -m)" in
+	x86_64) bios=1 efi_target=x86_64-efi ;;
+	aarch64) bios="" efi_target=arm64-efi ;;
+	*) echo "Unsupported architecture: $(uname -m)"; exit 1 ;;
+esac
+
+# GPT: [BIOS boot,] EFI system, root.
+wipefs -aq "$disk"
+{
+	echo "label: gpt"
+	[ -n "$bios" ] && echo "size=1MiB, type=21686148-6449-6E6F-744E-656564454649"
+	echo "size=512MiB, type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
+	echo "type=0FC63DAF-8483-4772-8E79-3D69D8477DE4"
+} | sfdisk -q "$disk"
+udevadm settle
+parts=$(lsblk -lnpo NAME,TYPE "$disk" | awk '$2 == "part" { print $1 }')
+if [ -n "$bios" ]; then
+	esp=$(echo "$parts" | sed -n 2p)
+	root=$(echo "$parts" | sed -n 3p)
+else
+	esp=$(echo "$parts" | sed -n 1p)
+	root=$(echo "$parts" | sed -n 2p)
+fi
+
+mkfs.vfat -F 32 -n SBOS-EFI "$esp" >/dev/null
+mkfs.ext4 -qF -L sbos "$root"
+
+mnt=$(mktemp -d)
+cleanup() {
+	# Lazily: the bound /run carries mounts of the live session's own.
+	mountpoint -q "$mnt" && umount -Rl "$mnt"
+	rmdir "$mnt"
+}
+trap cleanup EXIT
+
+mount "$root" "$mnt"
+echo "Copying the system to $root..."
+cp -a "$src/." "$mnt/"
+mkdir -p "$mnt/boot/efi"
+mount "$esp" "$mnt/boot/efi"
+
+# The kernel the medium boots, where the installed system looks for it.
+kver=$(uname -r)
+[ -e "$mnt/boot/vmlinuz-$kver" ] || cp "$medium/live/vmlinuz" "$mnt/boot/vmlinuz-$kver"
+
+cat > "$mnt/etc/fstab" <<EOF
+UUID=$(blkid -s UUID -o value "$root")	/	ext4	errors=remount-ro	0	1
+UUID=$(blkid -s UUID -o value "$esp")	/boot/efi	vfat	umask=0077	0	1
+EOF
+# Each installed machine its own identity.
+: > "$mnt/etc/machine-id"
+
+for m in dev proc sys run; do
+	mount --rbind "/$m" "$mnt/$m"
+	mount --make-rslave "$mnt/$m"
+done
+chroot "$mnt" sh -eu <<EOF
+dpkg --purge live-boot live-boot-initramfs-tools >/dev/null
+update-initramfs -c -k "$kver" >/dev/null 2>&1 || update-initramfs -u -k "$kver"
+grub-install --target=$efi_target --efi-directory=/boot/efi --removable --no-nvram
+[ -z "$bios" ] || grub-install --target=i386-pc "$disk"
+update-grub
+EOF
+
+echo
+echo "Done. Remove the medium and reboot; the agent installs itself on the first boot."

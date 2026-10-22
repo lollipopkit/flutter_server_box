@@ -1,17 +1,22 @@
 @import "tailwindcss";
-@import "@serverbox/webui/theme.css";
 
-/* Tailwind must scan the linked UI package for its utility classes */
-@source "../../../packages/webui/src";
+/* Light / dark as one crossfade (`crossfade` in lib/theme.svelte.ts sets the
+   pace from the design system's tokens). */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--appearance-fade, 0ms);
+  animation-timing-function: var(--appearance-ease, ease);
+}
 
 @layer base {
-  html {
-    /* Reserve the scrollbar gutter permanently so content between the home
-       grid and shorter detail pages doesn't cause a width jump when the
-       vertical scrollbar toggles on/off */
-    scrollbar-gutter: stable;
-  }
+  html,
   body {
-    @apply bg-bg text-fg font-body;
+    /* The desk is the whole screen; nothing scrolls under it. */
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+  /* The page is drawn in the design system (`desk/lk`, `.lk` on <body>). */
+  body {
+    background: var(--surface-desktop);
   }
 }

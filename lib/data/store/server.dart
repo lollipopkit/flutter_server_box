@@ -194,7 +194,7 @@ class ServerStore extends EntityStore<Spi> {
           ? null
           : MonitorHttpCredential(
               addr: monitorAddr,
-              user: row['monitor_user'] as String?,
+              legacyUser: row['monitor_user'] as String?,
               pwd: row['monitor_pwd'] as String?,
               ignoreCert: (row['monitor_ignore_cert'] as int? ?? 0) == 1,
               allowInsecure: (row['monitor_allow_insecure'] as int? ?? 0) == 1,
@@ -370,7 +370,7 @@ class ServerStore extends EntityStore<Spi> {
       item.monitorEnabled ? 1 : 0,
       item.local ? 1 : 0,
       monitor?.addr,
-      monitor?.user,
+      monitor?.legacyUser,
       monitor?.pwd,
       monitor == null ? null : (monitor.ignoreCert ? 1 : 0),
       monitor == null ? null : (monitor.allowInsecure ? 1 : 0),

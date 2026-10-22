@@ -18,7 +18,7 @@ use ntex::web::{self, App};
 use ntex::ws::error::WsClientError;
 use ntex::ws::{self, WsClient, WsConnection};
 use rustls::crypto::ring;
-use server_box_monitor::api::authz::revoke_lost;
+use server_box_monitor::api::authz::end_account;
 use server_box_monitor::api::server::AppState;
 use server_box_monitor::api::ws::stream::stream_ws;
 use server_box_monitor::api::ws::ticket::Purpose;
@@ -33,23 +33,18 @@ fn ensure_crypto_provider() {
     });
 }
 
-/// An agent with the terminal on — which is what `full_access_available`
-/// requires — and `full_access` as asked for.
-async fn app_state(full_access: bool) -> Arc<AppState> {
+/// An agent with its account.
+async fn app_state() -> Arc<AppState> {
     ensure_crypto_provider();
-    let mut config = Config {
+    let config = Config {
         jwt_secret: Some("test-secret-that-is-long-enough-32ch".to_string()),
         ..Default::default()
     };
-    let mut remote = config.get_remote_access();
-    remote.terminal.enabled = Some(true);
-    remote.full_access = Some(full_access);
-    config.remote_access = Some(remote);
 
     let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
     sqlx::migrate!("./migrations").run(&db).await.unwrap();
 
-    common::seed_as_upgrade(&db, &config).await;
+    common::add_owner(&db).await;
     AppState::new(Arc::new(config), db)
 }
 
@@ -169,21 +164,12 @@ async fn request(
 }
 
 #[ntex::test]
-async fn without_full_access_the_upgrade_is_refused() {
-    let state = app_state(false).await;
-    let ticket = state.tickets.issue(Purpose::Stream, "admin").unwrap();
-    let srv = test_server(state).await;
-
-    assert!(stream_connection(&srv, &ticket).await.is_err());
-}
-
-#[ntex::test]
 async fn a_terminal_ticket_is_not_a_stream_ticket() {
     // The purpose is what a ticket is for, not a label on it: a client that
     // asks the terminal for a ticket and then opens the relay with it would
     // otherwise be trading one grant for another.
-    let state = app_state(true).await;
-    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let state = app_state().await;
+    let ticket = state.tickets.issue(Purpose::Terminal).unwrap();
     let srv = test_server(state).await;
 
     assert!(stream_connection(&srv, &ticket).await.is_err());
@@ -191,7 +177,7 @@ async fn a_terminal_ticket_is_not_a_stream_ticket() {
 
 #[ntex::test]
 async fn a_missing_or_forged_ticket_is_refused() {
-    let state = app_state(true).await;
+    let state = app_state().await;
     let srv = test_server(state).await;
 
     assert!(srv.ws_at("/api/v1/stream/ws").await.is_err());
@@ -201,8 +187,8 @@ async fn a_missing_or_forged_ticket_is_refused() {
 #[ntex::test]
 async fn bytes_travel_both_ways() {
     let target = echo_server().await;
-    let state = app_state(true).await;
-    let ticket = state.tickets.issue(Purpose::Stream, "admin").unwrap();
+    let state = app_state().await;
+    let ticket = state.tickets.issue(Purpose::Stream).unwrap();
     let srv = test_server(state).await;
     let (io, codec) = open_stream(&srv, &ticket).await;
 
@@ -228,8 +214,8 @@ async fn bytes_travel_both_ways() {
 #[ntex::test]
 async fn a_frame_bigger_than_64_kib_goes_through() {
     let target = echo_server().await;
-    let state = app_state(true).await;
-    let ticket = state.tickets.issue(Purpose::Stream, "admin").unwrap();
+    let state = app_state().await;
+    let ticket = state.tickets.issue(Purpose::Stream).unwrap();
     let srv = test_server(state).await;
     let (io, codec) = open_stream(&srv, &ticket).await;
     assert_eq!(request(&io, &codec, &target).await["type"], "ready");
@@ -259,8 +245,8 @@ async fn a_frame_bigger_than_64_kib_goes_through() {
 #[ntex::test]
 async fn a_target_that_does_not_read_holds_the_client_back() {
     let target = stalled_server().await;
-    let state = app_state(true).await;
-    let ticket = state.tickets.issue(Purpose::Stream, "admin").unwrap();
+    let state = app_state().await;
+    let ticket = state.tickets.issue(Purpose::Stream).unwrap();
     let srv = test_server(state).await;
     let (io, codec) = open_stream(&srv, &ticket).await;
     assert_eq!(request(&io, &codec, &target).await["type"], "ready");
@@ -287,8 +273,8 @@ async fn a_target_that_does_not_read_holds_the_client_back() {
 
 #[ntex::test]
 async fn an_unreachable_target_is_reported_as_a_connect_failure() {
-    let state = app_state(true).await;
-    let ticket = state.tickets.issue(Purpose::Stream, "admin").unwrap();
+    let state = app_state().await;
+    let ticket = state.tickets.issue(Purpose::Stream).unwrap();
     let srv = test_server(state).await;
     let (io, codec) = open_stream(&srv, &ticket).await;
 
@@ -302,8 +288,8 @@ async fn a_second_open_on_one_socket_is_refused() {
     // One socket is one connection: a relay that could be re-pointed mid-stream
     // would let a single ticket reach a second address.
     let target = echo_server().await;
-    let state = app_state(true).await;
-    let ticket = state.tickets.issue(Purpose::Stream, "admin").unwrap();
+    let state = app_state().await;
+    let ticket = state.tickets.issue(Purpose::Stream).unwrap();
     let srv = test_server(state).await;
     let (io, codec) = open_stream(&srv, &ticket).await;
 
@@ -316,8 +302,8 @@ async fn a_second_open_on_one_socket_is_refused() {
 
 #[ntex::test]
 async fn input_before_open_is_refused_rather_than_buffered() {
-    let state = app_state(true).await;
-    let ticket = state.tickets.issue(Purpose::Stream, "admin").unwrap();
+    let state = app_state().await;
+    let ticket = state.tickets.issue(Purpose::Stream).unwrap();
     let srv = test_server(state).await;
     let (io, codec) = open_stream(&srv, &ticket).await;
 
@@ -329,156 +315,72 @@ async fn input_before_open_is_refused_rather_than_buffered() {
 }
 
 #[ntex::test]
-async fn taking_connect_away_ends_a_running_relay() {
-    // The role is only consulted when something is started, so a connection
-    // already carrying bytes would otherwise outlive the grant an admin just
-    // took away — and the app would go on showing a desktop it is no longer
-    // allowed to reach.
+async fn a_password_change_ends_a_running_relay() {
+    // The account is only consulted when something is started, so a
+    // connection already carrying bytes would otherwise outlive the password
+    // it was opened under.
     let target = echo_server().await;
-    let state = app_state(true).await;
-    let ticket = state.tickets.issue(Purpose::Stream, "admin").unwrap();
+    let state = app_state().await;
+    let ticket = state.tickets.issue(Purpose::Stream).unwrap();
     let srv = test_server(state.clone()).await;
     let (io, codec) = open_stream(&srv, &ticket).await;
 
     assert_eq!(request(&io, &codec, &target).await["type"], "ready");
 
-    let mut grants = common::grants_of(&state.db, "admin").await;
-    grants.connect = None;
-    common::set_grants(&state.db, "admin", &grants).await;
-    revoke_lost(&state, "permission_revoked").await;
+    let hash = bcrypt::hash("a-new-password", 4).unwrap();
+    server_box_monitor::db::accounts::set_password_hash(&state.db, &hash).await.unwrap();
+    end_account(&state, "password_changed");
 
     let reply = next_control(&io, &codec).await;
     assert_eq!(reply["type"], "error");
-    assert_eq!(reply["code"], "permission_revoked");
+    assert_eq!(reply["code"], "password_changed");
 }
 
+/// `GET /live` lists a running relay, and ending it from there stops that one
+/// and no other.
 #[ntex::test]
-async fn a_relay_opened_before_revocation_still_starts_after_a_reconnect() {
-    // The other half of the rule: what was refused has to stay refused, so a
-    // client that reports the close and tries again is turned away at the
-    // upgrade rather than getting a second connection.
-    let state = app_state(true).await;
-    common::set_grants(&state.db, "admin", &Default::default()).await;
-    let ticket = state.tickets.issue(Purpose::Stream, "admin").unwrap();
-    let srv = test_server(state).await;
-
-    assert!(stream_connection(&srv, &ticket).await.is_err());
-}
-
-/// The admin role with `connect` limited to [allow], and nothing else.
-async fn connect_only(state: &AppState, allow: &[String]) {
-    let grants = server_box_monitor::core::permissions::Grants {
-        connect: Some(server_box_monitor::core::permissions::ConnectGrant {
-            allow: allow.to_vec(),
-        }),
-        ..Default::default()
-    };
-    common::set_grants(&state.db, "admin", &grants).await;
-}
-
-#[ntex::test]
-async fn an_address_the_roles_allow_list_names_is_relayed() {
+async fn a_running_relay_is_listed_and_can_be_ended_alone() {
     let target = echo_server().await;
-    let state = app_state(true).await;
-    connect_only(&state, std::slice::from_ref(&target)).await;
-    let ticket = state.tickets.issue(Purpose::Stream, "admin").unwrap();
-    let srv = test_server(state).await;
-    let (io, codec) = open_stream(&srv, &ticket).await;
+    let state = app_state().await;
+    let srv = test_server(state.clone()).await;
+    let (first, codec) = open_stream(&srv, &state.tickets.issue(Purpose::Stream).unwrap()).await;
+    assert_eq!(request(&first, &codec, &target).await["type"], "ready");
+    let (second, second_codec) = open_stream(&srv, &state.tickets.issue(Purpose::Stream).unwrap()).await;
+    assert_eq!(request(&second, &second_codec, &target).await["type"], "ready");
 
-    assert_eq!(request(&io, &codec, &target).await["type"], "ready");
+    let listed = state.live.list();
+    assert_eq!(listed.len(), 2);
+    assert_eq!(listed[0].target, target);
+    assert_eq!(listed[0].remote_ip.as_deref(), Some("127.0.0.1"));
+
+    assert!(state.live.end(&listed[0].id));
+    let reply = next_control(&first, &codec).await;
+    assert_eq!((reply["type"].as_str(), reply["code"].as_str()), (Some("error"), Some("ended")));
+
+    // Off the list once its loop let go of it; the other still there.
+    for _ in 0..50 {
+        if state.live.list().len() == 1 {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(20)).await;
+    }
+    let left = state.live.list();
+    assert_eq!(left.len(), 1);
+    assert_eq!(left[0].id, listed[1].id);
 }
 
 #[ntex::test]
-async fn an_address_outside_the_allow_list_is_refused_before_dialling() {
-    let target = echo_server().await;
-    let (_, port) = target.rsplit_once(':').unwrap();
-    let state = app_state(true).await;
-    // The same host, another port: the port is part of what is allowed.
-    connect_only(&state, &["127.0.0.1:1".to_string()]).await;
-    let ticket = state.tickets.issue(Purpose::Stream, "admin").unwrap();
-    let srv = test_server(state).await;
-    let (io, codec) = open_stream(&srv, &ticket).await;
-
-    let reply = request(&io, &codec, &format!("127.0.0.1:{port}")).await;
-    assert_eq!(reply["code"], "forbidden", "{reply}");
-}
-
-#[ntex::test]
-async fn a_host_name_is_allowed_only_if_every_address_it_resolves_to_is() {
+async fn any_address_the_machine_reaches_is_relayed() {
+    // `localhost` is 127.0.0.1, and on most machines ::1 as well: the dial
+    // goes to whichever answers, and the echo server is on the IPv4 one.
     let target = echo_server().await;
     let (_, port) = target.rsplit_once(':').unwrap();
-
-    // `localhost` is 127.0.0.1, and on most machines ::1 as well. Naming both
-    // lets it through — the dial goes to whichever answers, and the echo
-    // server is on the IPv4 one.
-    let state = app_state(true).await;
-    connect_only(
-        &state,
-        &[format!("127.0.0.1:{port}"), format!("[::1]:{port}")],
-    )
-    .await;
-    let ticket = state.tickets.issue(Purpose::Stream, "admin").unwrap();
+    let state = app_state().await;
+    let ticket = state.tickets.issue(Purpose::Stream).unwrap();
     let srv = test_server(state).await;
     let (io, codec) = open_stream(&srv, &ticket).await;
     assert_eq!(
         request(&io, &codec, &format!("localhost:{port}")).await["type"],
         "ready"
     );
-
-    // A name none of whose addresses is allowed is refused, though it is the
-    // same machine an allowed entry for another network would not cover.
-    let state = app_state(true).await;
-    connect_only(&state, &["10.0.0.0/8".to_string()]).await;
-    let ticket = state.tickets.issue(Purpose::Stream, "admin").unwrap();
-    let srv = test_server(state).await;
-    let (io, codec) = open_stream(&srv, &ticket).await;
-    assert_eq!(
-        request(&io, &codec, &format!("localhost:{port}")).await["code"],
-        "forbidden"
-    );
-}
-
-#[ntex::test]
-async fn an_ipv6_entry_matches_an_ipv6_target() {
-    // Skipped where the machine has no IPv6 loopback to listen on.
-    let Ok(listener) = TcpListener::bind("[::1]:0").await else {
-        return;
-    };
-    let port = listener.local_addr().unwrap().port();
-    tokio::spawn(async move {
-        // Held, not answered: a peer that closed at once would race its own
-        // `exit` against the `ready` this test is waiting for.
-        let mut held = Vec::new();
-        while let Ok((socket, _)) = listener.accept().await {
-            held.push(socket);
-        }
-    });
-    let state = app_state(true).await;
-    connect_only(&state, &[format!("[::1]:{port}")]).await;
-    let ticket = state.tickets.issue(Purpose::Stream, "admin").unwrap();
-    let srv = test_server(state).await;
-    let (io, codec) = open_stream(&srv, &ticket).await;
-    let reply = request(&io, &codec, &format!("::1:{port}")).await;
-    assert_eq!(reply["type"], "ready", "{reply}");
-}
-
-#[ntex::test]
-async fn accepting_a_remote_forwards_connection_needs_listen() {
-    // `connect` alone opens the relay, and `accept` is still refused: taking a
-    // connection a listener holds is the other direction.
-    let state = app_state(true).await;
-    connect_only(&state, &[]).await;
-    let ticket = state.tickets.issue(Purpose::Stream, "admin").unwrap();
-    let srv = test_server(state).await;
-    let (io, codec) = open_stream(&srv, &ticket).await;
-    io.send(
-        ws::Message::Text(ByteString::from(format!(
-            r#"{{"type":"accept","id":"{}"}}"#,
-            "00".repeat(16)
-        ))),
-        &codec,
-    )
-    .await
-    .unwrap();
-    assert_eq!(next_control(&io, &codec).await["code"], "forbidden");
 }

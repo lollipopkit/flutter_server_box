@@ -74,7 +74,7 @@ async fn state_with(at: &[DateTime<Utc>]) -> Arc<AppState> {
         insert_sample(&db, *at, i as i64).await;
     }
 
-    common::seed_as_upgrade(&db, &config).await;
+    common::add_owner(&db).await;
     AppState::new(Arc::new(config), db)
 }
 
@@ -138,7 +138,7 @@ async fn test_server(state: Arc<AppState>) -> TestServer {
 }
 
 async fn history(srv: &TestServer, query: &str) -> Vec<serde_json::Value> {
-    let token = generate_token("admin", SECRET).unwrap();
+    let token = generate_token(SECRET).unwrap();
     let resp = srv
         .get(format!("/api/v1/metrics/history?{query}"))
         .header("Authorization", format!("Bearer {token}"))
@@ -250,7 +250,6 @@ async fn a_silly_count_is_clamped() {
     );
 }
 
-
 /// `minutes` is a window, and a row outside it is not in the answer.
 ///
 /// The bound used to be `datetime('now', '-N minutes')`, whose `YYYY-MM-DD
@@ -335,7 +334,7 @@ async fn swap_is_a_percentage_and_absent_where_there_is_none() {
         jwt_secret: Some(SECRET.to_string()),
         ..Default::default()
     };
-    common::seed_as_upgrade(&db, &config).await;
+    common::add_owner(&db).await;
     let srv = test_server(AppState::new(Arc::new(config), db)).await;
 
     let points = history(&srv, "minutes=60").await;
@@ -427,7 +426,7 @@ async fn a_window_longer_than_the_data_comes_back_short() {
 async fn an_inverted_window_is_refused() {
     let srv = test_server(state_with_samples(60).await).await;
     let now = Utc::now();
-    let token = generate_token("admin", SECRET).unwrap();
+    let token = generate_token(SECRET).unwrap();
 
     let resp = srv
         .get(format!(
@@ -482,7 +481,7 @@ async fn to_without_from_ends_the_window_there() {
 #[ntex::test]
 async fn a_malformed_bound_is_refused() {
     let srv = test_server(state_with_samples(60).await).await;
-    let token = generate_token("admin", SECRET).unwrap();
+    let token = generate_token(SECRET).unwrap();
     let now = Utc::now().timestamp();
 
     for query in [

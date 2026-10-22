@@ -1,0 +1,65 @@
+/// Kernels' service: the machine's Linux kernels and which GRUB boots
+/// (`sbm_parser::kernel`), Debian and Ubuntu with GRUB.
+package serverbox:kernel;
+
+interface api {
+  use sbm:app/types@0.1.0.{error};
+
+  record kernel {
+    /// `uname -r`'s form: `6.8.0-45-generic`.
+    release: string,
+    %package: string,
+    version: string,
+    running: bool,
+    /// What GRUB boots by default.
+    default: bool,
+    /// What GRUB boots next, once.
+    next: bool,
+    /// The series metapackage that keeps it.
+    needed-by: option<string>,
+  }
+
+  /// A series the archive offers (a metapackage), installed or not.
+  record series {
+    %package: string,
+    version: string,
+    installed: option<string>,
+  }
+
+  /// Another version of the running flavour.
+  record offered {
+    %package: string,
+    release: string,
+    version: string,
+  }
+
+  record kernels {
+    /// Debian or Ubuntu with GRUB and the tools this needs.
+    supported: bool,
+    running: string,
+    installed: list<kernel>,
+    /// The release GRUB is held to; none is the newest.
+    pinned: option<string>,
+    series: list<series>,
+    versions: list<offered>,
+    reboot-required: bool,
+  }
+
+  view: func() -> result<kernels, error>;
+}
+
+/// Each checked against a fresh read, run as root.
+interface jobs {
+  use sbm:app/types@0.1.0.{error};
+
+  install: func(%package: string) -> result<_, error>;
+  remove: func(release: string) -> result<_, error>;
+  boot: func(release: string, once: bool) -> result<_, error>;
+  boot-newest: func() -> result<_, error>;
+}
+
+world kernel {
+  include sbm:app/imports@0.1.0;
+  export api;
+  export jobs;
+}

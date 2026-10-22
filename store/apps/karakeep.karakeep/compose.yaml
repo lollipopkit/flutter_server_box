@@ -1,0 +1,148 @@
+# Karakeep 0.33.2 (AGPL-3.0), https://github.com/karakeep-app/karakeep/tree/v0.33.2
+#
+# Adapted from the release's docker/docker-compose.yml and .env.sample for
+# ServerBox Monitor (2026-10-18):
+# - no `name:` and no `container_name`: the agent names the project;
+# - images pinned (upstream: karakeep:release, karakeep-chrome:release, the
+#   Chrome build of the release's date); bind mounts from the env file
+#   instead of named volumes; NEXTAUTH_SECRET and MEILI_MASTER_KEY generated
+#   once;
+# - sign-up is off. seed-admin is a one-shot job that runs first: while the
+#   database has no account it runs the web server alone on a port of its
+#   own, inside the container, with sign-up on, signs the administrator up
+#   (the first account is the administrator, packages/trpc/models/users.ts)
+#   with the generated password, and stops it. The service the window reaches
+#   never has sign-up on;
+# - the same job exchanges the administrator's password for an API key
+#   (apiKeys.exchange, as the browser extension does) once, into a folder only
+#   the MCP sidecar mounts: Agent mode's MCP server never holds the password;
+# - mcp: Karakeep's own MCP server (apps/mcp, stdio only), built here with a
+#   small HTTP bridge (karakeep-mcp.Dockerfile), published on loopback alone,
+#   asking for MCP_TOKEN.
+
+services:
+  seed-admin:
+    image: ghcr.io/karakeep-app/karakeep:${KARAKEEP_VERSION}
+    environment:
+      DATA_DIR: /data
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      MEILI_ADDR: http://meilisearch:7700
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
+      ADMIN_EMAIL: ${KARAKEEP_ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${KARAKEEP_ADMIN_PASSWORD}
+    volumes:
+      - ${KARAKEEP_DATA}:/data
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        set -e
+        (cd /db_migrations && node index.js)
+        cd /app && exec node -e '
+        const fs = require("fs"), cp = require("child_process");
+        const dir = "/data/serverbox-mcp";
+        fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+        const users = require("better-sqlite3")("/data/db.db").prepare("select count(*) as n from user").get().n;
+        if (users > 0 && (fs.existsSync(dir + "/key") || fs.existsSync(dir + "/none"))) process.exit(0);
+        const env = { ...process.env, PORT: "3999", HOSTNAME: "127.0.0.1", DISABLE_SIGNUPS: "false" };
+        const server = cp.spawn("node", ["server.js"], { cwd: "/app/apps/web", stdio: "inherit", env });
+        const base = "http://127.0.0.1:3999/api";
+        const trpc = async (proc, json) => {
+          const r = await fetch(base + "/trpc/" + proc, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ json }) });
+          if (!r.ok) throw new Error(proc + ": HTTP " + r.status + " " + (await r.text()));
+          return (await r.json()).result.data.json;
+        };
+        (async () => {
+          for (let i = 0; ; i++) {
+            try { if ((await fetch(base + "/health")).ok) break; } catch {}
+            if (i > 120) throw new Error("the web server did not start");
+            await new Promise((r) => setTimeout(r, 1000));
+          }
+          const email = process.env.ADMIN_EMAIL, password = process.env.ADMIN_PASSWORD;
+          if (users === 0) await trpc("users.create", { name: "Admin", email, password, confirmPassword: password });
+          // The key for Agent mode, once; a password changed since leaves it to the admin.
+          try {
+            const made = await trpc("apiKeys.exchange", { keyName: "Agent mode", email, password });
+            fs.writeFileSync(dir + "/key", made.key, { mode: 0o600 });
+          } catch (e) {
+            console.error("no API key for Agent mode: " + e.message);
+            fs.writeFileSync(dir + "/none", "");
+          }
+        })().then(
+          () => { server.kill(); process.exit(0); },
+          (e) => { console.error(e.message); server.kill(); process.exit(1); },
+        );
+        '
+    depends_on:
+      meilisearch:
+        condition: service_started
+    restart: "no"
+
+  web:
+    image: ghcr.io/karakeep-app/karakeep:${KARAKEEP_VERSION}
+    restart: unless-stopped
+    volumes:
+      - ${KARAKEEP_DATA}:/data
+    ports:
+      - '${KARAKEEP_BIND}:${KARAKEEP_PORT}:3000'
+    environment:
+      TZ: ${SBM_TZ}
+      DATA_DIR: /data
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      NEXTAUTH_URL: ${KARAKEEP_URL}
+      MEILI_ADDR: http://meilisearch:7700
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
+      BROWSER_WEB_URL: http://chrome:9222
+      DISABLE_SIGNUPS: 'true'
+    depends_on:
+      seed-admin:
+        condition: service_completed_successfully
+      meilisearch:
+        condition: service_started
+      chrome:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+
+  chrome:
+    image: ghcr.io/karakeep-app/karakeep-chrome:${KARAKEEP_CHROME_VERSION}
+    restart: unless-stopped
+    init: true
+    command:
+      - --disable-gpu
+      - --disable-dev-shm-usage
+      - --hide-scrollbars
+      - --disable-blink-features=AutomationControlled
+      - --window-size=1440,900
+
+  meilisearch:
+    image: getmeili/meilisearch:${MEILISEARCH_VERSION}
+    restart: unless-stopped
+    environment:
+      MEILI_NO_ANALYTICS: 'true'
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
+    volumes:
+      - ${KARAKEEP_MEILI}:/meili_data
+
+  mcp:
+    image: localhost/karakeep-karakeep-mcp:${KARAKEEP_VERSION}
+    build:
+      context: .
+      dockerfile: karakeep-mcp.Dockerfile
+      args:
+        KARAKEEP_VERSION: ${KARAKEEP_VERSION}
+    environment:
+      KARAKEEP_API_ADDR: http://web:3000
+      KARAKEEP_MCP_API_KEY: ${KARAKEEP_MCP_API_KEY:-}
+      MCP_TOKEN: ${MCP_TOKEN}
+    volumes:
+      - ${KARAKEEP_DATA}/serverbox-mcp:/key:ro
+    ports:
+      - '127.0.0.1:${MCP_PORT}:8080'
+    depends_on:
+      web:
+        condition: service_started
+    restart: unless-stopped

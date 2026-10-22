@@ -1,5 +1,4 @@
-import 'package:server_box/data/model/server/monitor_grants.dart';
-import 'package:server_box/data/model/server/monitor_remote_access.dart';
+import 'package:server_box/data/model/server/monitor_access.dart';
 import 'package:server_box/data/model/server/system.dart';
 
 /// A `monitor` agent's answer to `GET /api/v1/capabilities`.
@@ -9,7 +8,8 @@ import 'package:server_box/data/model/server/system.dart';
 /// `uname` over SSH, which a monitor-backed server has no way to do — and it
 /// decides which script gets installed there.
 class MonitorCapabilities {
-  final MonitorRemoteAccess remoteAccess;
+  /// Whether this connection may do more than read.
+  final MonitorAccess access;
 
   /// What the agent was built for. Null when it names something this app does
   /// not know, so a newer agent is not silently read as Linux.
@@ -29,18 +29,13 @@ class MonitorCapabilities {
   /// policy has a day.
   final DateTime? oldestSample;
 
-  /// The account this app is logged in as, and whether it may administer the
-  /// agent. Null for an agent older than roles.
-  final MonitorMe? me;
-
   /// The machine-management endpoints this agent serves (`power`, `backup`,
   /// ...). Empty for an agent older than the list, which serves none of them.
   final Set<String> features;
 
   const MonitorCapabilities({
-    this.me,
     this.features = const {},
-    this.remoteAccess = MonitorRemoteAccess.none,
+    this.access = MonitorAccess.none,
     this.platform,
     this.version,
     this.retention,
@@ -59,11 +54,7 @@ class MonitorCapabilities {
 
   factory MonitorCapabilities.fromJson(Map<String, dynamic> json) {
     return MonitorCapabilities(
-      remoteAccess: MonitorRemoteAccess.fromJson(
-        json['remote_access'] as Map<String, dynamic>? ?? const {},
-        grants: (json['grants'] as Map?)?.cast<String, dynamic>(),
-      ),
-      me: MonitorMe.fromJson(json['me']),
+      access: MonitorAccess.fromCapabilities(json),
       features: switch (json['features']) {
         final List<dynamic> list => list.whereType<String>().toSet(),
         _ => const {},
@@ -83,6 +74,6 @@ class MonitorCapabilities {
 
   @override
   String toString() =>
-      'MonitorCapabilities(remoteAccess: $remoteAccess, platform: $platform, '
+      'MonitorCapabilities(access: $access, platform: $platform, '
       'version: $version, retention: $retention, oldest: $oldestSample)';
 }

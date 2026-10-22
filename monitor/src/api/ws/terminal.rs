@@ -1,9 +1,7 @@
-//! `GET /api/v1/terminal/ws` — the panel's in-browser terminal.
+//! `GET /api/v1/terminal/ws` — the terminal.
 //!
-//! The agent acts as an SSH client to the local sshd rather than spawning a
-//! shell itself, so a session carries the privileges of the SSH account the
-//! browser authenticated as. The panel password alone grants no shell; see
-//! `crate::ssh::client` for the full argument.
+//! A session is a shell the agent starts itself, as its own user, for an
+//! account that holds `shell`; no sshd is involved.
 //!
 //! # Wire format
 //!
@@ -15,18 +13,19 @@
 //!
 //! # Where the shell runs
 //!
-//! `auth: {"kind":"local"}` starts one as the agent's own user, with no sshd.
-//! An optional `target` narrows it: a shell inside a container
-//! (`sbm_parser::container`), by the id its listing gave it; an iperf client
-//! (`sbm_parser::iperf`), by the host and port a user typed; or a tmux session
-//! (`sbm_parser::tmux`), by its `$` id or by a new session's name, attached
-//! with tmux's own UI since the panel's xterm.js cannot decode control mode the
-//! way the app's client does. All build their command here, and no frame can
-//! carry one. A target with an SSH credential is refused — that shell would run
-//! as the signed-in account, not as the agent's user these targets run as.
-//! Whether an agent understands a target is `container_exec`, `iperf` or `tmux`
-//! in `/capabilities`; an older agent would ignore the field and open a host
-//! shell, so the panel sends one only where it is listed.
+//! `auth: {"kind":"local"}` starts one as the agent's own user. It is the only
+//! kind: the SSH credentials this endpoint once took are refused by parsing,
+//! so a client that sends one is told rather than handed a shell as a
+//! different user than the one it named. An optional `target` narrows it: a
+//! shell inside a container (`sbm_parser::container`), by the id its listing
+//! gave it; an iperf client (`sbm_parser::iperf`), by the host and port a user
+//! typed; or a tmux session (`sbm_parser::tmux`), by its `$` id or by a new
+//! session's name, attached with tmux's own UI since the panel's xterm.js
+//! cannot decode control mode the way the app's client does. All build their
+//! command here, and no frame can carry one. Whether an agent understands a
+//! target is `container_exec`, `iperf` or `tmux` in `/capabilities`; an older
+//! agent would ignore the field and open a host shell, so the panel sends one
+//! only where it is listed.
 //!
 //! # Reconnecting
 //!
@@ -40,11 +39,11 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use ntex::rt::spawn;
 use ntex::service::{fn_factory_with_config, fn_service};
-use ntex::time::{sleep, timeout};
+use ntex::time::sleep;
 use ntex::util::{ByteString, Bytes};
 use ntex::web::ws::{self, CloseCode, Frame, Message};
 
@@ -56,16 +55,12 @@ use tokio::sync::mpsc;
 
 use super::audit::{self, Action, Event, Kind, Outcome};
 use super::session::{
-    AttachmentId, Replay, Session, SessionAuth, SessionInput, SessionOutput, SessionStore,
+    AttachmentId, Replay, Session, SessionInput, SessionOutput, SessionStore,
 };
 use super::ticket::Purpose;
 use crate::api::authz;
 use crate::api::server::AppState;
-use crate::core::permissions::Grant;
-use crate::ssh::client::{
-    AuthStep, Credential, InteractivePrompt, ShellEvent, SshError, SshSession, next_shell_event,
-};
-use crate::ssh::local_pty::LocalShell;
+use crate::pty::{LocalShell, ShellEvent};
 
 /// How many output messages may queue for a slow client before the live copy
 /// is dropped. Nothing is lost: the scrollback still has it, so the client
@@ -81,14 +76,15 @@ const INPUT_QUEUE: usize = 64;
 /// dead link — and it is the client noticing that starts a reconnect.
 const HEARTBEAT: Duration = Duration::from_secs(15);
 const TICKET_PROTOCOL_PREFIX: &str = "sbm-ticket.";
-const AUTH_TIMEOUT: Duration = Duration::from_secs(30);
 
 #[derive(Deserialize)]
 #[serde(tag = "type", rename_all = "lowercase")]
 enum ClientMsg {
     /// Start a new session.
+    ///
+    /// A `user` field, which clients sent while there were SSH logins, is
+    /// ignored like any other unknown field.
     Open {
-        user: String,
         auth: AuthPayload,
         /// Where the shell runs. Absent is the login shell this endpoint has
         /// always started.
@@ -111,10 +107,6 @@ enum ClientMsg {
         cols: u16,
         #[serde(default = "default_rows")]
         rows: u16,
-    },
-    /// Answers to a previous [`ServerMsg::Prompt`].
-    Answer {
-        answers: Vec<String>,
     },
     Resize {
         cols: u16,
@@ -152,35 +144,16 @@ enum TerminalTarget {
     TmuxNew { name: String },
 }
 
+/// How the shell is opened. One kind, kept as a field so that a frame naming
+/// any other (`password`, `key`, `interactive`, from the SSH logins this
+/// endpoint no longer offers) fails to parse and is refused.
 #[derive(Deserialize)]
-#[serde(tag = "kind", rename_all = "lowercase")]
+#[serde(tag = "kind", rename_all = "lowercase", deny_unknown_fields)]
 enum AuthPayload {
-    Password {
-        password: String,
-    },
-    Key {
-        pem: String,
-        passphrase: Option<String>,
-    },
-    /// Let the server drive the exchange — this is the path that supports
-    /// two-factor prompts.
-    Interactive,
-    /// No credentials at all: run a shell as the agent's own user. Only
-    /// honoured when the account holds `shell`; see
-    /// `crate::ssh::local_pty` for what that costs.
-    Local,
-}
-
-impl AuthPayload {
-    /// The SSH credential this represents, or `None` for the local path.
-    fn into_credential(self) -> Option<Credential> {
-        match self {
-            AuthPayload::Password { password } => Some(Credential::Password(password)),
-            AuthPayload::Key { pem, passphrase } => Some(Credential::Key { pem, passphrase }),
-            AuthPayload::Interactive => Some(Credential::KeyboardInteractive),
-            AuthPayload::Local => None,
-        }
-    }
+    /// A shell as the agent's own user. A struct variant so
+    /// that `deny_unknown_fields` applies to it (serde skips it for a unit
+    /// variant of an internally tagged enum).
+    Local {},
 }
 
 fn default_cols() -> u16 {
@@ -200,11 +173,6 @@ enum ServerMsg<'a> {
     Ready {
         session: &'a str,
         since: u64,
-    },
-    /// The server wants answers before it will authenticate.
-    Prompt {
-        instructions: &'a str,
-        prompts: &'a [InteractivePrompt],
     },
     Error {
         code: &'a str,
@@ -263,26 +231,21 @@ pub async fn terminal_ws(
     let Ok(reservation) = app_state.tickets.reserve(raw_ticket, Purpose::Terminal) else {
         return deny("ticket", HttpResponse::Unauthorized().finish()).await;
     };
-    let subject = reservation.subject().to_string();
     let tickets = app_state.tickets.clone();
 
     // Checked here as well as at the ticket, so the answer cannot be stale by
-    // the time the socket opens: the account's role may have changed in
-    // between. Either kind of terminal will do — which one a frame asks for
-    // is checked again when it arrives.
-    let admitted = authz::caller_named(&app_state, &subject).await.filter(|caller| {
-        [Grant::Shell, Grant::SshTerminal]
-            .into_iter()
-            .any(|grant| caller.check(grant, &app_state, secure).is_ok())
-    });
+    // the time the socket opens: the password may have changed in
+    // between. Checked again when a frame asks for a shell.
+    let admitted = authz::caller(&app_state)
+        .await
+        .filter(|caller| caller.check(&app_state, secure).is_ok());
     let Some(admitted) = admitted else {
         tickets.rollback(reservation);
-        return deny("not granted", HttpResponse::Forbidden().finish()).await;
+        return deny("not admitted", HttpResponse::Forbidden().finish()).await;
     };
 
     let ctx = Rc::new(ConnCtx {
         state: app_state,
-        subject,
         remote_ip,
         secure,
         since: admitted.since,
@@ -311,8 +274,7 @@ pub async fn terminal_ws(
 /// Everything about the connection that outlives a single frame.
 struct ConnCtx {
     state: Arc<AppState>,
-    /// Panel account, from the ticket. Sessions are bound to it.
-    subject: String,
+    /// Where the upgrade came from, for the audit log.
     remote_ip: Option<String>,
     /// Whether this connection arrived over a link that can't be read off the
     /// network. Captured at the handshake, where the peer address is known.
@@ -323,47 +285,32 @@ struct ConnCtx {
 }
 
 impl ConnCtx {
-    /// Whether this connection's account may use [grant] now: its role read
-    /// again, not trusted from the handshake — an admin may have changed it
-    /// since.
-    async fn may(&self, grant: Grant) -> Result<(), &'static str> {
-        match authz::caller_named(&self.state, &self.subject)
+    /// Whether a shell may be opened now: the account read again, not
+    /// trusted from the handshake — its password may have changed since.
+    async fn may(&self) -> Result<(), &'static str> {
+        match authz::caller(&self.state)
             .await
             .filter(|caller| caller.since == self.since)
         {
             Some(caller) => caller
-                .check(grant, &self.state, self.secure)
+                .check(&self.state, self.secure)
                 .map_err(|why| why.as_str()),
-            None => Err("not_granted"),
+            None => Err("password_changed"),
         }
     }
 }
 
-/// What a client is told when the frame it sent needs a grant its account
-/// does not have.
-fn not_permitted(grant: Grant, why: &str) -> Message {
-    error_frame(
-        "forbidden",
-        &format!("This account may not use {} here ({why})", grant.as_str()),
-    )
+/// What a client is told when a shell may not be opened.
+fn not_permitted(why: &str) -> Message {
+    error_frame("forbidden", &format!("A shell may not be opened here ({why})"))
 }
 
 /// Where this connection is in the open/authenticate/run sequence.
 enum Phase {
-    /// Nothing has been claimed yet. No TCP connection has been made either:
-    /// an unauthenticated socket must not be able to make the agent dial sshd.
+    /// Nothing has been claimed yet.
     Idle,
-    /// An async open, attach, or authentication answer owns the connection.
+    /// An async open or attach owns the connection.
     Opening,
-    /// Mid keyboard-interactive exchange, waiting on the browser's answers.
-    Authenticating {
-        ssh: Box<SshSession>,
-        user: String,
-        term: String,
-        cols: u16,
-        rows: u16,
-        deadline: Instant,
-    },
     Running {
         session: Arc<Session>,
         attachment: AttachmentId,
@@ -399,36 +346,6 @@ fn set_if_opening(phase: &Rc<RefCell<Phase>>, next: Phase) -> bool {
     }
     *phase = next;
     true
-}
-
-fn arm_auth_timeout(ctx: Rc<ConnCtx>, sink: WsSink, phase: Rc<RefCell<Phase>>, deadline: Instant) {
-    spawn(async move {
-        sleep(AUTH_TIMEOUT).await;
-        let expired = {
-            let mut current = phase.borrow_mut();
-            if !matches!(
-                &*current,
-                Phase::Authenticating {
-                    deadline: active,
-                    ..
-                } if *active == deadline
-            ) {
-                return;
-            }
-            match std::mem::replace(&mut *current, Phase::Idle) {
-                Phase::Authenticating { ssh, user, .. } => Some((ssh, user)),
-                other => {
-                    *current = other;
-                    None
-                }
-            }
-        };
-        if let Some((ssh, user)) = expired {
-            ssh.disconnect().await;
-            let frame = fail(&ctx, &user, &SshError::AuthTimeout).await;
-            let _ = sink.send(frame).await;
-        }
-    });
 }
 
 fn handler(
@@ -525,8 +442,7 @@ async fn on_control(
 
     match msg {
         ClientMsg::Open {
-            user,
-            auth,
+            auth: AuthPayload::Local {},
             target,
             cols,
             rows,
@@ -535,23 +451,7 @@ async fn on_control(
             if !claim_idle(phase) {
                 return Some(error_frame("bad_request", "Session already started"));
             }
-            let credential = auth.into_credential();
-            // A target is a shell as the agent's own user. With an SSH
-            // credential the shell would run as the signed-in account instead,
-            // which is a different thing than the one asked for.
-            if target.is_some() && credential.is_some() {
-                reset_opening(phase);
-                return Some(error_frame(
-                    "bad_request",
-                    "A target runs as the agent's own user, so it cannot be opened with SSH credentials",
-                ));
-            }
-            match credential {
-                Some(credential) => {
-                    open(ctx, sink, phase, user, credential, term, cols, rows).await
-                }
-                None => open_local(ctx, sink, phase, target, term, cols, rows).await,
-            }
+            open_local(ctx, sink, phase, target, term, cols, rows).await
         }
         ClientMsg::Attach {
             session,
@@ -564,7 +464,6 @@ async fn on_control(
             }
             attach(ctx, sink, phase, &session, since, cols, rows).await
         }
-        ClientMsg::Answer { answers } => answer(ctx, sink, phase, answers).await,
         ClientMsg::Resize { cols, rows } => {
             let sender = match &*phase.borrow() {
                 Phase::Running { session, .. } => Some(session.input.clone()),
@@ -596,7 +495,7 @@ async fn on_control(
 
 /// Starts a shell with no authentication step, as the agent's own user.
 ///
-/// Refused unless the account holds `shell`. The check is
+/// Refused unless the transport rule allows it. The check is
 /// here rather than only in the UI because the UI is not a security boundary:
 /// a client can send this frame whether or not a button was rendered for it.
 ///
@@ -614,17 +513,16 @@ async fn open_local(
     cols: u16,
     rows: u16,
 ) -> Option<Message> {
-    // Re-derived here rather than trusted from the handshake: the account's
-    // role may have changed in between, and this is the request that matters.
-    if let Err(why) = ctx.may(Grant::Shell).await {
+    // Re-derived here rather than trusted from the handshake: the password
+    // may have changed in between, and this is the request that matters.
+    if let Err(why) = ctx.may().await {
         Event::new(Kind::Terminal, Action::Denied, Outcome::Denied)
-            .subject(&ctx.subject)
             .remote_ip(ctx.remote_ip.clone())
             .detail(format!("shell: {why}"))
             .record(&ctx.state.db)
             .await;
         reset_opening(phase);
-        return Some(not_permitted(Grant::Shell, why));
+        return Some(not_permitted(why));
     }
 
     // What the audit row calls this session, and what the target contributes
@@ -642,7 +540,6 @@ async fn open_local(
         Some(TerminalTarget::Container { id }) => {
             if let Err(issue) = sbm_parser::container::validate_identifier(&id) {
                 Event::new(Kind::Terminal, Action::Denied, Outcome::Denied)
-                    .subject(&ctx.subject)
                     .remote_ip(ctx.remote_ip.clone())
                     .detail(format!("container: {}", issue.code()))
                     .record(&ctx.state.db)
@@ -659,7 +556,6 @@ async fn open_local(
                 ),
                 None => {
                     Event::new(Kind::Terminal, Action::Open, Outcome::Error)
-                        .subject(&ctx.subject)
                         .remote_ip(ctx.remote_ip.clone())
                         .detail("container: no runtime")
                         .record(&ctx.state.db)
@@ -682,7 +578,6 @@ async fn open_local(
                 Ok(command) => LocalShell::spawn_command(&term, cols, rows, &command),
                 Err(issue) => {
                     Event::new(Kind::Terminal, Action::Denied, Outcome::Denied)
-                        .subject(&ctx.subject)
                         .remote_ip(ctx.remote_ip.clone())
                         .detail(format!("iperf: {}", issue.code()))
                         .record(&ctx.state.db)
@@ -737,7 +632,6 @@ async fn open_local(
         Ok(started) => started,
         Err(e) => {
             Event::new(Kind::Terminal, Action::Open, Outcome::Error)
-                .subject(&ctx.subject)
                 .remote_ip(ctx.remote_ip.clone())
                 .detail(format!("{detail}: spawn failed"))
                 .record(&ctx.state.db)
@@ -750,13 +644,13 @@ async fn open_local(
 
     let user = local_user();
     let (mut session, input_rx) = Session::new(
-        &ctx.subject,
         &user,
-        SessionAuth::Local,
         ctx.state.remote_access.terminal.scrollback_bytes,
         INPUT_QUEUE,
     );
     session.since = ctx.since;
+    session.what = detail.clone();
+    session.remote_ip = ctx.remote_ip.clone();
     let inserted = match ctx.state.sessions.insert(session) {
         Ok(Some(inserted)) => inserted,
         Ok(None) => {
@@ -776,23 +670,20 @@ async fn open_local(
     };
     let (handle, session) = inserted;
 
-    // A role change can race the spawn above on another worker. Once
-    // registered, either this recheck rejects it or the revocation sweep sees
-    // it.
-    if let Err(why) = ctx.may(Grant::Shell).await {
+    // A password change can race the spawn above on another worker. Once
+    // registered, either this recheck rejects it or `authz::end_account`
+    // closes it.
+    if let Err(why) = ctx.may().await {
         ctx.state.sessions.remove(&handle);
         shell.kill();
         reset_opening(phase);
-        return Some(not_permitted(Grant::Shell, why));
+        return Some(not_permitted(why));
     }
     let Some((attachment, rx, _replay, _start)) = session.attach(0, OUTPUT_QUEUE) else {
         ctx.state.sessions.remove(&handle);
         shell.kill();
         reset_opening(phase);
-        return Some(error_frame(
-            "permission_revoked",
-            "This account's permissions changed",
-        ));
+        return Some(error_frame("password_changed", "The password changed"));
     };
     drive_local_shell(
         shell,
@@ -803,7 +694,10 @@ async fn open_local(
         handle.clone(),
     );
 
-    // Before `ready`, for the reason given in `start_shell`
+    // The phase is set before `ready` goes out, not after. ntex processes
+    // frames concurrently, so a client that types the instant it sees `ready`
+    // can have that frame handled while this one is still awaiting the audit
+    // write below — and input arriving before the phase moves is dropped.
     if !set_if_opening(
         phase,
         Phase::Running {
@@ -828,7 +722,6 @@ async fn open_local(
     pump_output(sink.clone(), rx);
 
     Event::new(Kind::Terminal, Action::Open, Outcome::Ok)
-        .subject(&ctx.subject)
         .remote_ip(ctx.remote_ip.clone())
         .ssh_user(&user)
         .detail(&detail)
@@ -857,7 +750,6 @@ async fn tmux_refused(
     issue: sbm_parser::tmux::TmuxError,
 ) -> Option<Message> {
     Event::new(Kind::Terminal, Action::Denied, Outcome::Denied)
-        .subject(&ctx.subject)
         .remote_ip(ctx.remote_ip.clone())
         .detail(format!("{what}: {}", issue.code()))
         .record(&ctx.state.db)
@@ -874,7 +766,6 @@ async fn tmux_refused(
 /// generic failure: the remedy is on the machine, not in the panel.
 async fn no_tmux(ctx: &Rc<ConnCtx>, phase: &Rc<RefCell<Phase>>) -> Option<Message> {
     Event::new(Kind::Terminal, Action::Open, Outcome::Error)
-        .subject(&ctx.subject)
         .remote_ip(ctx.remote_ip.clone())
         .detail("tmux: not installed")
         .record(&ctx.state.db)
@@ -895,8 +786,8 @@ fn local_user() -> String {
 
 /// Moves bytes between the session and a local shell.
 ///
-/// The SSH twin is `drive_shell`; both end by removing the session, so a dead
-/// shell's handle stops working at once rather than at the next reap.
+/// Ends by removing the session, so a dead shell's handle stops working at
+/// once rather than at the next reap.
 fn drive_local_shell(
     shell: LocalShell,
     mut events: mpsc::Receiver<ShellEvent>,
@@ -934,280 +825,6 @@ fn drive_local_shell(
     });
 }
 
-#[allow(clippy::too_many_arguments)]
-async fn open(
-    ctx: &Rc<ConnCtx>,
-    sink: &WsSink,
-    phase: &Rc<RefCell<Phase>>,
-    user: String,
-    credential: Credential,
-    term: String,
-    cols: u16,
-    rows: u16,
-) -> Option<Message> {
-    // Checked before sshd is dialled: an account without the grant must not
-    // be able to make the agent connect anywhere, even to its own sshd.
-    if let Err(why) = ctx.may(Grant::SshTerminal).await {
-        Event::new(Kind::Terminal, Action::Denied, Outcome::Denied)
-            .subject(&ctx.subject)
-            .remote_ip(ctx.remote_ip.clone())
-            .detail(format!("ssh_terminal: {why}"))
-            .record(&ctx.state.db)
-            .await;
-        reset_opening(phase);
-        return Some(not_permitted(Grant::SshTerminal, why));
-    }
-    let addr = &ctx.state.remote_access.ssh_addr;
-    let mut ssh = match timeout(
-        AUTH_TIMEOUT,
-        SshSession::connect(ctx.state.db.clone(), addr),
-    )
-    .await
-    {
-        Ok(Ok(ssh)) => ssh,
-        Ok(Err(e)) => {
-            reset_opening(phase);
-            return Some(fail(ctx, &user, &e).await);
-        }
-        Err(_) => {
-            reset_opening(phase);
-            return Some(fail(ctx, &user, &SshError::AuthTimeout).await);
-        }
-    };
-
-    if !matches!(&*phase.borrow(), Phase::Opening) {
-        ssh.disconnect().await;
-        return None;
-    }
-
-    match timeout(AUTH_TIMEOUT, ssh.authenticate(&user, credential)).await {
-        Ok(Ok(AuthStep::Authenticated)) => {
-            start_shell(ctx, sink, phase, ssh, user, term, cols, rows).await
-        }
-        Ok(Ok(AuthStep::NeedsAnswers {
-            instructions,
-            prompts,
-        })) => {
-            let frame = ServerMsg::Prompt {
-                instructions: &instructions,
-                prompts: &prompts,
-            }
-            .frame();
-            let deadline = Instant::now() + AUTH_TIMEOUT;
-            if !set_if_opening(
-                phase,
-                Phase::Authenticating {
-                    ssh: Box::new(ssh),
-                    user,
-                    term,
-                    cols,
-                    rows,
-                    deadline,
-                },
-            ) {
-                return None;
-            }
-            arm_auth_timeout(ctx.clone(), sink.clone(), phase.clone(), deadline);
-            Some(frame)
-        }
-        Ok(Ok(AuthStep::Failed)) => {
-            reset_opening(phase);
-            Some(fail(ctx, &user, &SshError::AuthFailed).await)
-        }
-        Ok(Err(e)) => {
-            reset_opening(phase);
-            Some(fail(ctx, &user, &e).await)
-        }
-        Err(_) => {
-            ssh.disconnect().await;
-            reset_opening(phase);
-            Some(fail(ctx, &user, &SshError::AuthTimeout).await)
-        }
-    }
-}
-
-async fn answer(
-    ctx: &Rc<ConnCtx>,
-    sink: &WsSink,
-    phase: &Rc<RefCell<Phase>>,
-    answers: Vec<String>,
-) -> Option<Message> {
-    // Taken out in its own statement: a `match` keeps the scrutinee's
-    // temporary alive for the whole expression, so borrowing again inside an
-    // arm to put the phase back would panic.
-    let taken = std::mem::replace(&mut *phase.borrow_mut(), Phase::Opening);
-    let (mut ssh, user, term, cols, rows) = match taken {
-        Phase::Authenticating {
-            ssh,
-            user,
-            term,
-            cols,
-            rows,
-            ..
-        } => (ssh, user, term, cols, rows),
-        other => {
-            *phase.borrow_mut() = other;
-            return Some(error_frame("bad_request", "No prompt is outstanding"));
-        }
-    };
-
-    match timeout(AUTH_TIMEOUT, ssh.answer_prompts(answers)).await {
-        Ok(Ok(AuthStep::Authenticated)) => {
-            start_shell(ctx, sink, phase, *ssh, user, term, cols, rows).await
-        }
-        Ok(Ok(AuthStep::NeedsAnswers {
-            instructions,
-            prompts,
-        })) => {
-            let frame = ServerMsg::Prompt {
-                instructions: &instructions,
-                prompts: &prompts,
-            }
-            .frame();
-            let deadline = Instant::now() + AUTH_TIMEOUT;
-            if !set_if_opening(
-                phase,
-                Phase::Authenticating {
-                    ssh,
-                    user,
-                    term,
-                    cols,
-                    rows,
-                    deadline,
-                },
-            ) {
-                return None;
-            }
-            arm_auth_timeout(ctx.clone(), sink.clone(), phase.clone(), deadline);
-            Some(frame)
-        }
-        Ok(Ok(AuthStep::Failed)) => {
-            reset_opening(phase);
-            Some(fail(ctx, &user, &SshError::AuthFailed).await)
-        }
-        Ok(Err(e)) => {
-            reset_opening(phase);
-            Some(fail(ctx, &user, &e).await)
-        }
-        Err(_) => {
-            ssh.disconnect().await;
-            reset_opening(phase);
-            Some(fail(ctx, &user, &SshError::AuthTimeout).await)
-        }
-    }
-}
-
-#[allow(clippy::too_many_arguments)]
-async fn start_shell(
-    ctx: &Rc<ConnCtx>,
-    sink: &WsSink,
-    phase: &Rc<RefCell<Phase>>,
-    mut ssh: SshSession,
-    user: String,
-    term: String,
-    cols: u16,
-    rows: u16,
-) -> Option<Message> {
-    if !matches!(&*phase.borrow(), Phase::Opening) {
-        ssh.disconnect().await;
-        return None;
-    }
-    let channel = match ssh.open_shell(&term, cols, rows).await {
-        Ok(channel) => channel,
-        Err(e) => {
-            reset_opening(phase);
-            return Some(fail(ctx, &user, &e).await);
-        }
-    };
-
-    if !matches!(&*phase.borrow(), Phase::Opening) {
-        ssh.disconnect().await;
-        return None;
-    }
-
-    let (mut session, input_rx) = Session::new(
-        &ctx.subject,
-        &user,
-        SessionAuth::Ssh,
-        ctx.state.remote_access.terminal.scrollback_bytes,
-        INPUT_QUEUE,
-    );
-    session.since = ctx.since;
-
-    let inserted = match ctx.state.sessions.insert(session) {
-        Ok(Some(inserted)) => inserted,
-        Ok(None) => {
-            ssh.disconnect().await;
-            reset_opening(phase);
-            return Some(error_frame(
-                "at_capacity",
-                "Too many terminal sessions are already open",
-            ));
-        }
-        Err(e) => {
-            ssh.disconnect().await;
-            reset_opening(phase);
-            tracing::error!("Could not register terminal session: {e}");
-            return Some(error_frame("internal", "Could not start the session"));
-        }
-    };
-    let (handle, session) = inserted;
-
-    let Some((attachment, rx, _replay, _start)) = session.attach(0, OUTPUT_QUEUE) else {
-        ctx.state.sessions.remove(&handle);
-        ssh.disconnect().await;
-        reset_opening(phase);
-        return Some(error_frame(
-            "session_gone",
-            "That terminal session is no longer available",
-        ));
-    };
-    drive_shell(
-        ssh,
-        channel,
-        session.clone(),
-        input_rx,
-        ctx.state.sessions.clone(),
-        handle.clone(),
-    );
-
-    // The phase is set before `ready` goes out, not after. ntex processes
-    // frames concurrently, so a client that types the instant it sees `ready`
-    // can have that frame handled while this one is still awaiting the audit
-    // write below — and input arriving before the phase moves is dropped.
-    if !set_if_opening(
-        phase,
-        Phase::Running {
-            session: session.clone(),
-            attachment,
-            handle: handle.clone(),
-        },
-    ) {
-        let _ = session.input.send(SessionInput::Close).await;
-        ctx.state.sessions.remove(&handle);
-        return None;
-    }
-    let _ = sink
-        .send(
-            ServerMsg::Ready {
-                session: &handle,
-                since: 0,
-            }
-            .frame(),
-        )
-        .await;
-    pump_output(sink.clone(), rx);
-
-    Event::new(Kind::Terminal, Action::Open, Outcome::Ok)
-        .subject(&ctx.subject)
-        .remote_ip(ctx.remote_ip.clone())
-        .ssh_user(&user)
-        .record(&ctx.state.db)
-        .await;
-
-    None
-}
-
 async fn attach(
     ctx: &Rc<ConnCtx>,
     sink: &WsSink,
@@ -1217,11 +834,10 @@ async fn attach(
     cols: u16,
     rows: u16,
 ) -> Option<Message> {
-    let session = match ctx.state.sessions.get(handle, &ctx.subject) {
+    let session = match ctx.state.sessions.get(handle) {
         Ok(session) => session,
         Err(reason) => {
             Event::new(Kind::Terminal, Action::Attach, Outcome::Denied)
-                .subject(&ctx.subject)
                 .remote_ip(ctx.remote_ip.clone())
                 .detail(format!("{reason:?}"))
                 .record(&ctx.state.db)
@@ -1235,15 +851,11 @@ async fn attach(
             ));
         }
     };
-    // The session was opened under a grant; rejoining it needs that grant
-    // still, or taking it away would only end the sessions nobody rejoined.
-    let needs = match session.auth {
-        SessionAuth::Local => Grant::Shell,
-        SessionAuth::Ssh => Grant::SshTerminal,
-    };
-    if let Err(why) = ctx.may(needs).await {
+    // Rejoining a session checks the transport rule again: a link that may
+    // not open a shell may not take over one either.
+    if let Err(why) = ctx.may().await {
         reset_opening(phase);
-        return Some(not_permitted(needs, why));
+        return Some(not_permitted(why));
     }
 
     // Installs this connection's sender and reads the replay in one step, so
@@ -1268,7 +880,7 @@ async fn attach(
         Replay::Truncated(data) => (data, start_seq, true),
     };
 
-    // Before `ready`, for the reason given in `start_shell`
+    // Before `ready`, for the reason given in `open_local`
     if !set_if_opening(
         phase,
         Phase::Running {
@@ -1311,63 +923,12 @@ async fn attach(
         .await;
 
     Event::new(Kind::Terminal, Action::Attach, Outcome::Ok)
-        .subject(&ctx.subject)
         .remote_ip(ctx.remote_ip.clone())
-        .ssh_user(&session.ssh_user)
+        .ssh_user(&session.user)
         .record(&ctx.state.db)
         .await;
 
     None
-}
-
-/// Owns the SSH channel and moves bytes both ways.
-///
-/// One task with `select!` rather than two, because the read and write halves
-/// both belong to one channel and splitting the ownership is what `split()` is
-/// for; the loop ends when either side does.
-fn drive_shell(
-    ssh: SshSession,
-    channel: russh::Channel<russh::client::Msg>,
-    session: Arc<Session>,
-    mut input_rx: mpsc::Receiver<SessionInput>,
-    sessions: Arc<SessionStore>,
-    handle: String,
-) {
-    let (mut read, write) = channel.split();
-    spawn(async move {
-        loop {
-            tokio::select! {
-                input = input_rx.recv() => match input {
-                    Some(SessionInput::Data(data)) => {
-                        if write.data_bytes(data).await.is_err() {
-                            break;
-                        }
-                    }
-                    Some(SessionInput::Resize { cols, rows }) => {
-                        let _ = write.window_change(cols as u32, rows as u32, 0, 0).await;
-                    }
-                    Some(SessionInput::Close) => break,
-                    // Every sender gone: the session was reaped
-                    None => break,
-                },
-                event = next_shell_event(&mut read) => match event {
-                    Some(ShellEvent::Data(data)) => {
-                        session.publish(SessionOutput::Data(data));
-                    }
-                    Some(ShellEvent::Exit(status)) => {
-                        session.publish(SessionOutput::Exit(status));
-                        break;
-                    }
-                    None => break,
-                },
-            }
-        }
-        let _ = write.eof().await;
-        ssh.disconnect().await;
-        // Once the shell is gone there is nothing to reattach to, so the
-        // handle must stop working immediately rather than at the next reap
-        sessions.remove(&handle);
-    });
 }
 
 /// Pumps a session's output into this WebSocket until it is taken over, the
@@ -1400,7 +961,7 @@ fn pump_output(sink: WsSink, mut rx: mpsc::Receiver<SessionOutput>) {
                     let _ = sink
                         .send(error_frame(
                             code,
-                            "This account may no longer use this terminal",
+                            "The password changed",
                         ))
                         .await;
                     let _ = sink
@@ -1463,18 +1024,6 @@ fn start_heartbeat(sink: WsSink) {
     });
 }
 
-/// Records a failed attempt and turns it into a frame for the client.
-async fn fail(ctx: &Rc<ConnCtx>, user: &str, error: &SshError) -> Message {
-    Event::new(Kind::Terminal, Action::Open, Outcome::Denied)
-        .subject(&ctx.subject)
-        .remote_ip(ctx.remote_ip.clone())
-        .ssh_user(user)
-        .detail(error.code())
-        .record(&ctx.state.db)
-        .await;
-    error_frame(error.code(), &error.message())
-}
-
 fn error_frame(code: &str, message: &str) -> Message {
     ServerMsg::Error {
         code,
@@ -1522,39 +1071,35 @@ mod tests {
 
     #[test]
     fn open_defaults_the_terminal_geometry() {
+        // `user` is what clients sent while there were SSH logins: ignored.
         let ClientMsg::Open {
-            user,
-            cols,
-            rows,
-            term,
-            ..
-        } = parse(r#"{"type":"open","user":"ops","auth":{"kind":"password","password":"x"}}"#)
+            cols, rows, term, ..
+        } = parse(r#"{"type":"open","user":"","auth":{"kind":"local"}}"#)
         else {
             panic!("expected open");
         };
-        assert_eq!(user, "ops");
         assert_eq!((cols, rows), (80, 24));
         assert_eq!(term, "xterm-256color");
     }
 
     #[test]
-    fn every_auth_kind_maps_to_a_credential() {
-        for (json, expected) in [
-            (r#"{"kind":"password","password":"x"}"#, "password"),
-            (r#"{"kind":"key","pem":"-----","passphrase":null}"#, "key"),
-            (r#"{"kind":"interactive"}"#, "interactive"),
-            // No credential at all — the SSH-less path
-            (r#"{"kind":"local"}"#, "local"),
+    fn an_ssh_credential_is_refused_rather_than_opened_as_the_agent() {
+        // A client asking for a shell as an SSH account must not be handed one
+        // as the agent's user instead.
+        for auth in [
+            r#"{"kind":"password","password":"x"}"#,
+            r#"{"kind":"key","pem":"-----","passphrase":null}"#,
+            r#"{"kind":"interactive"}"#,
+            r#"{"kind":"local","password":"x"}"#,
         ] {
-            let payload: AuthPayload = serde_json::from_str(json).unwrap();
-            let actual = match payload.into_credential() {
-                Some(Credential::Password(_)) => "password",
-                Some(Credential::Key { .. }) => "key",
-                Some(Credential::KeyboardInteractive) => "interactive",
-                None => "local",
-            };
-            assert_eq!(actual, expected);
+            let frame = format!(r#"{{"type":"open","user":"ops","auth":{auth}}}"#);
+            assert!(serde_json::from_str::<ClientMsg>(&frame).is_err(), "{auth}");
         }
+        // As is the answer to a keyboard-interactive prompt.
+        assert!(
+            serde_json::from_str::<ClientMsg>(r#"{"type":"answer","answers":["123456"]}"#)
+                .is_err()
+        );
     }
 
     #[test]
@@ -1580,10 +1125,6 @@ mod tests {
             }
         ));
         assert!(matches!(parse(r#"{"type":"close"}"#), ClientMsg::Close));
-        assert!(matches!(
-            parse(r#"{"type":"answer","answers":["123456"]}"#),
-            ClientMsg::Answer { .. }
-        ));
     }
 
     #[test]
@@ -1605,8 +1146,7 @@ mod tests {
         ));
 
         // An open with no target is the login shell, unchanged.
-        let ClientMsg::Open { target, .. } =
-            parse(r#"{"type":"open","user":"ops","auth":{"kind":"password","password":"x"}}"#)
+        let ClientMsg::Open { target, .. } = parse(r#"{"type":"open","auth":{"kind":"local"}}"#)
         else {
             panic!("expected open");
         };
@@ -1686,14 +1226,14 @@ mod tests {
         assert!(json.contains(r#""since":42"#));
 
         let error = ServerMsg::Error {
-            code: "host_key_mismatch",
-            message: "changed",
+            code: "no_tmux",
+            message: "missing",
             issue: None,
         };
         assert!(
             serde_json::to_string(&error)
                 .unwrap()
-                .contains(r#""code":"host_key_mismatch""#)
+                .contains(r#""code":"no_tmux""#)
         );
 
         assert_eq!(

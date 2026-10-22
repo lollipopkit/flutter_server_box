@@ -1,0 +1,78 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Prowlarr: deployed with Docker Compose from compose.yaml beside this
+# file, shown in a desk window through the agent.
+
+schema = 1
+publisher = "prowlarr"
+name = "prowlarr"
+project = "Prowlarr"
+developer = "Servarr"
+version = "2.6.5.5623"
+homepage = "https://prowlarr.com"
+source = "https://github.com/Prowlarr/Prowlarr/tree/v2.6.5.5623"
+glyph = "manage_search"
+tone = "berry"
+categories = ["media", "network"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Prowlarr"
+
+[description]
+en = "Manage torrent and Usenet indexers in one place and hand them to Sonarr and Radarr."
+zh = "在一处管理种子和 Usenet 索引器，并同步给 Sonarr 和 Radarr。"
+zh-TW = "在一處管理種子和 Usenet 索引器，並同步給 Sonarr 和 Radarr。"
+
+[license]
+spdx = "GPL-3.0"
+url = "https://github.com/Prowlarr/Prowlarr/blob/v2.6.5.5623/LICENSE"
+accept = true
+
+# linuxserver.io builds amd64 and arm64.
+[requirements]
+arch = ["amd64", "arm64"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+jobs = ["seed-login"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+PROWLARR_TAG = "2.6.5.5623-ls162"
+
+[[secrets]]
+env = "PROWLARR_PASSWORD"
+length = 32
+
+[login]
+user = "admin"
+password = "PROWLARR_PASSWORD"
+note = { en = "Other apps reach Prowlarr at host.docker.internal:<its port> once it is reachable from the network; its API key is in Settings → General.", zh = "开启“允许从网络访问”后，其他应用可通过 host.docker.internal:<端口> 连接 Prowlarr；API 密钥在 Settings → General 中。", zh-TW = "開啟「允許從網路存取」後，其他應用可透過 host.docker.internal:<連接埠> 連線 Prowlarr；API 金鑰在 Settings → General 中。" }
+
+[[settings]]
+key = "config"
+type = "path"
+env = "PROWLARR_CONFIG"
+default = "{stack}/config"
+data = true
+label = { en = "Configuration and database", zh = "配置和数据库", zh-TW = "設定和資料庫" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "PROWLARR_PORT"
+default = 9696
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "Also what the other apps need to reach it. Off: only through the desk.", zh = "其他应用连接它也需要开启。关闭时只能通过桌面访问。", zh-TW = "其他應用連線它也需要開啟。關閉時只能透過桌面存取。" }
+on = { PROWLARR_BIND = "0.0.0.0" }
+off = { PROWLARR_BIND = "127.0.0.1" }

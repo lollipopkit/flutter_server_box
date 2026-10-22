@@ -1,0 +1,89 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Miniflux: deployed with Docker Compose from compose.yaml beside this file,
+# shown in a desk window through the agent.
+
+schema = 1
+publisher = "miniflux"
+name = "miniflux"
+project = "Miniflux"
+developer = "Frédéric Guillot"
+version = "2.3.3"
+homepage = "https://miniflux.app"
+source = "https://github.com/miniflux/v2/tree/2.3.3"
+glyph = "rss_feed"
+tone = "ink"
+categories = ["productivity"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Miniflux"
+
+[description]
+en = "A minimalist feed reader: RSS, Atom and JSON feeds, read in a clean list, with full-content fetching, filters and keyboard shortcuts. Fever and Google Reader APIs for mobile apps."
+zh = "极简的订阅阅读器：支持 RSS、Atom 和 JSON Feed，在简洁的列表中阅读，可抓取全文、过滤和使用快捷键。提供 Fever 和 Google Reader API 供手机应用使用。"
+zh-TW = "極簡的訂閱閱讀器：支援 RSS、Atom 和 JSON Feed，在簡潔的清單中閱讀，可擷取全文、篩選和使用快速鍵。提供 Fever 和 Google Reader API 供手機應用程式使用。"
+
+[license]
+spdx = "Apache-2.0"
+url = "https://github.com/miniflux/v2/blob/2.3.3/LICENSE"
+
+[requirements]
+arch = ["amd64", "arm64", "arm"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+MINIFLUX_VERSION = "2.3.3"
+POSTGRES_VERSION = "18.6-alpine"
+
+[[secrets]]
+env = "MINIFLUX_PASSWORD"
+length = 32
+
+[[secrets]]
+env = "POSTGRES_PASSWORD"
+length = 32
+
+[login]
+user = "admin"
+password = "MINIFLUX_PASSWORD"
+note = { en = "The password is set when Miniflux is first set up; change it later in Settings.", zh = "密码在首次部署时设置，之后请在 Settings 中修改。", zh-TW = "密碼在首次部署時設定，之後請在 Settings 中修改。" }
+
+[[settings]]
+key = "db"
+type = "path"
+env = "MINIFLUX_DB"
+default = "{stack}/database"
+data = true
+label = { en = "Database", zh = "数据库", zh-TW = "資料庫" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "MINIFLUX_PORT"
+default = 8087
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "For mobile apps (Fever, Google Reader API). Off: only through the desk.", zh = "供手机应用（Fever、Google Reader API）使用。关闭时只能通过桌面访问。", zh-TW = "供手機應用程式（Fever、Google Reader API）使用。關閉時只能透過桌面存取。" }
+on = { MINIFLUX_BIND = "0.0.0.0" }
+off = { MINIFLUX_BIND = "127.0.0.1" }
+
+[[settings]]
+key = "url"
+type = "text"
+env = "MINIFLUX_URL"
+default = "http://localhost:8087/"
+pattern = '^https?://[A-Za-z0-9.:\[\]-]+(/[A-Za-z0-9._~/-]*)?$'
+label = { en = "Public address", zh = "公开地址", zh-TW = "公開位址" }
+help = { en = "The address Miniflux's links and API endpoints name. Set it when it is reachable from the network.", zh = "Miniflux 生成的链接和 API 地址使用的地址。允许从网络访问时请设置。", zh-TW = "Miniflux 產生的連結和 API 位址使用的位址。允許從網路存取時請設定。" }

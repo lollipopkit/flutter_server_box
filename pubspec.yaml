@@ -12,12 +12,6 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  # Reading an OCI image layout and unpacking a rootfs — see
-  # `lib/core/utils/oci_image.dart`. Direct because this code imports it: as a
-  # transitive one it is whatever some other package happens to want, and a
-  # tar reader deciding what a hard link is has already cost this app a
-  # release.
-  archive: ^4.5.2
   choice: ^2.3.2
   # The time `SessionKeepAlive` measures an idle session against. Read through
   # `clock` rather than `DateTime.now` so a test's fake time moves it too.
@@ -129,9 +123,6 @@ dependency_overrides:
   # fl_pi_llm_ui asks for fl_lib from git; the submodule is the one.
   fl_lib:
     path: packages/fl_lib
-  # For flutter_markdown_plus_latex, in fl_pi_llm_ui: only the root can
-  # override it.
-  flutter_math_fork: ^0.7.4
 
 dev_dependencies:
   integration_test:
@@ -194,9 +185,6 @@ flutter:
     # The theme catalog's floor: whose repositories the store offers when its
     # own address does not answer. The list itself is read over HTTPS.
     - assets/catalog/
-    # Store themes shipped with the app, installed once on first launch as if
-    # from the store — see `ThemePackages.seedBundled`.
-    - assets/store_themes/
     # Yet Another Bench Script, vendored verbatim under WTFPL and pinned by
     # `YabsScript.upstreamCommit`. Shipped rather than piped from the network
     # on the server: `curl | bash` fixes no version and verifies nothing, and

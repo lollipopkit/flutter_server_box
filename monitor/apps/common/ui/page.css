@@ -1,0 +1,91 @@
+/* The page's own layout; everything drawn is the desk's design system
+   (`lk-*`, served by the agent). Narrow first: a phone's window is this
+   page's width. */
+html,
+body {
+  margin: 0;
+}
+
+.page {
+  box-sizing: border-box;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 5px var(--content-pad, 21px) 21px;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+@media (max-width: 480px) {
+  .page {
+    padding-inline: 11px;
+  }
+}
+
+.center {
+  display: grid;
+  place-items: center;
+  padding-block: 55px;
+}
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.trail {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.error {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 13px;
+  color: var(--color-danger);
+  word-break: break-all;
+}
+
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.wrap {
+  flex-wrap: wrap;
+}
+
+.grow {
+  flex: 1;
+  min-width: 200px;
+}
+
+.pad {
+  padding: 11px 13px;
+}
+
+.hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.link {
+  color: var(--color-accent);
+  text-decoration: underline;
+  word-break: break-all;
+}
+
+.danger {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-danger);
+}

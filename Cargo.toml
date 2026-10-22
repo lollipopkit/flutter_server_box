@@ -9,7 +9,7 @@
 [workspace]
 resolver = "2"
 members = ["crates/sbm_parser", "crates/sbm_native", "crates/sbm_redfish", "crates/sbm_virt", "crates/sbm_ffi", "monitor"]
-exclude = ["third_party/ironrdp"]
+exclude = ["third_party/ironrdp", "packages/fl_pi_llm/fl_pi_llm/rust"]
 
 [profile.release]
 # Smaller release binaries for the shipped container / native packages
@@ -79,3 +79,35 @@ strip = false
 inherits = "release"
 lto = "fat"
 codegen-units = 1
+
+# The agent compiles each desk app's `backend.wasm` with Cranelift when it is
+# installed; unoptimised, that takes seconds per backend, which a debug agent
+# and its tests (every shipped app on a Linux runner) wait on.
+[profile.dev.package.cranelift-codegen]
+opt-level = 3
+
+[profile.dev.package.cranelift-frontend]
+opt-level = 3
+
+[profile.dev.package.cranelift-assembler-x64]
+opt-level = 3
+
+[profile.dev.package.regalloc2]
+opt-level = 3
+
+[profile.dev.package.wasmparser]
+opt-level = 3
+
+[profile.dev.package.wasmtime-environ]
+opt-level = 3
+
+[profile.dev.package.wasmtime-internal-cranelift]
+opt-level = 3
+
+# The agent built to deploy to a test machine while developing: the release
+# profile's optimisation without `release-monitor`'s fat LTO, and incremental,
+# so a change to the agent alone relinks in minutes rather than the quarter of
+# an hour the fat link takes there. Never shipped, never measured for size.
+[profile.monitor-test]
+inherits = "release"
+incremental = true

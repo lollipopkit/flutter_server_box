@@ -367,6 +367,52 @@ void main() {
     expect(status.gpus.single.name, 'Instinct MI300X');
   });
 
+  test("a GPU's processes reach the card, and an agent without them parses", () {
+    Map<String, dynamic> body(Map<String, dynamic> gpu) => {
+      'timestamp': '2026-10-10T00:00:00Z',
+      'server_name': 'test-server',
+      'cpu_usage': 0.0,
+      'memory': const {'total': 1, 'used': 0, 'free': 1, 'usage_percent': 0.0},
+      'swap': const {'total': 0, 'used': 0, 'usage_percent': 0.0},
+      'disk': const {'total': 1, 'used': 0, 'free': 1, 'usage_percent': 0.0},
+      'network': const {'rx_bytes': 0, 'tx_bytes': 0},
+      'gpus': [gpu],
+    };
+    const gpu = {
+      'id': 'nvidia:0',
+      'vendor': 'nvidia',
+      'name': 'Tesla T10',
+      'usage_percent': 91.0,
+      'temperature': 86,
+      'power': null,
+      'memory_used': 9493,
+      'memory_total': 16384,
+      'memory_unit': 'MiB',
+    };
+
+    final status = applyMonitorMetrics(
+      InitStatus.status,
+      MonitorMetrics.fromJson(
+        body({
+          ...gpu,
+          'processes': [
+            {'pid': 854129, 'name': '/python3.12', 'memory': 0},
+          ],
+        }),
+      ),
+    );
+    final process = status.gpus.single.memory!.processes.single;
+    expect(process.pid, 854129);
+    expect(process.name, '/python3.12');
+    expect(process.memory, 0);
+
+    final older = applyMonitorMetrics(
+      InitStatus.status,
+      MonitorMetrics.fromJson(body(gpu)),
+    );
+    expect(older.gpus.single.memory!.processes, isEmpty);
+  });
+
   test('an Intel GPU keeps unavailable metrics null', () {
     final status = applyMonitorMetrics(
       InitStatus.status,

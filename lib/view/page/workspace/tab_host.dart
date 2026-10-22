@@ -136,7 +136,7 @@ class WsTabHost extends ConsumerWidget {
     }
     final reason = tab.view.unavailableOn(
       spi,
-      ref.watch(serverProvider(tab.serverId).select((s) => s.remoteAccess)),
+      ref.watch(serverProvider(tab.serverId).select((s) => s.agentAccess)),
     );
     if (reason != null) {
       return Center(

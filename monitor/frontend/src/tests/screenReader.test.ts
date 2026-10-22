@@ -22,6 +22,8 @@ class FakeTerminal {
   open() {}
   onData() {}
   onResize() {}
+  onBell() {}
+  onTitleChange() {}
 }
 vi.mock('@xterm/xterm', () => ({ Terminal: FakeTerminal }))
 vi.mock('@xterm/addon-fit', () => ({ FitAddon: class { fit() {} } }))

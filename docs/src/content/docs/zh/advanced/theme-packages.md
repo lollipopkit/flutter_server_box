@@ -5,9 +5,8 @@ description: 选择、安装和管理主题
 
 Server Box 内置 Default 和 AMOLED 两款主题，也支持从主题商店或主题文件安装更多主题，
 例如 One Dark Pro。主题相关设置位于
-**Settings → Appearance**。
-
-部分商店主题（例如 Piggy）随 App 一同提供。包含该主题的版本首次启动时，App 会自动安装它；之后可从主题商店更新。每个主题只会自动安装一次，删除后不会自动重装。
+**Settings → Appearance**。Monitor 面板使用同样的主题包，见
+[在 Monitor 面板中使用](#在-monitor-面板中使用)。
 
 ## 选择主题
 
@@ -63,6 +62,27 @@ icon，上方的分段按钮用于在 Light 和 Dark 之间、以及主题包的
 
 部分主题可能需要较新版本的应用才能安装。这些主题仍会显示在商店中，并说明无法安装的
 原因。
+
+## 在 Monitor 面板中使用
+
+[Monitor agent](/docs/zh/advanced/monitor-agent/) 的网页面板使用和 App 相同的
+`.fsbt` 主题包。面板中的主题按账号保存在 agent 上，从任何浏览器登录都会生效，
+与 App 中安装的主题互不影响。
+
+在面板中打开 **Settings → Appearance → Themes**：
+
+- 选择 **Default** 使用桌面自身的配色，或选择一个已安装的主题。带变体的主题包会
+  分别列出每个变体，例如 `Pride · Trans`。
+- **Install a theme → From file** 上传一个 `.fsbt` 主题包。agent 使用与 App 相同的
+  代码读取并检查它，检查不通过的主题包会被拒绝。
+- **Theme store** 列出 ServerBox 目录中的主题。agent 通过 HTTPS 下载主题包，校验
+  SHA-256 后再安装；面板无法让 agent 从其他地址下载。需要更新版本 agent 的主题会
+  显示出来，但无法安装。已安装主题有新版本时显示 **Update**。
+- 主题旁的删除按钮用于移除主题。移除正在使用的主题后，桌面恢复为 **Default**。
+
+只支持深色或只支持浅色的主题，在选中期间会锁定面板的外观模式；两种模式都支持的主题，
+选中时会切换到它的首选模式。选中带背景图的主题后，背景图会成为桌面墙纸；同一页面中的
+墙纸选项可以替换它。每个账号最多安装 32 个主题，合计最多 128 MiB。
 
 ## 制作主题
 

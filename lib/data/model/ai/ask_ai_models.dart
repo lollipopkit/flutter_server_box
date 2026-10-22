@@ -1,8 +1,8 @@
 import 'dart:convert';
 
-import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show CommandRisk;
 import 'package:meta/meta.dart';
 import 'package:server_box/core/utils/local_device.dart';
+import 'package:server_box/src/rust/api/command_risk.dart';
 
 /// How much of a command the local check could actually establish.
 ///
@@ -299,10 +299,11 @@ class AskAiCommand {
     'model_destructive': modelDestructive,
   };
 
-  /// fl_pi_llm_ui's verdict on the command's shape, shared with LLMBox.
+  /// The command's shape as `sbm_parser::command_risk` reads it: the same
+  /// reading the monitor agent's Agent mode asks by.
   @visibleForTesting
   static AskAiCommandRisk classifyRisk(String command) =>
-      switch (CommandRisk.classify(command)) {
+      switch (classifyCommand(command: command)) {
         CommandRisk.readOnly => AskAiCommandRisk.readOnly,
         CommandRisk.unknown => AskAiCommandRisk.unknown,
         CommandRisk.caution => AskAiCommandRisk.caution,

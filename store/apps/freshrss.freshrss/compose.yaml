@@ -1,0 +1,44 @@
+# FreshRSS 1.30.1 (AGPL-3.0), https://github.com/FreshRSS/FreshRSS/releases/tag/1.30.1
+#
+# Based on Docker/freshrss/docker-compose.yml of the same release, adjusted for
+# ServerBox Monitor's Feeds app:
+# - image: the official Alpine variant of the release (freshrss/freshrss:1.30.1-alpine)
+#   instead of :latest;
+# - no `name:`, `container_name:`, `hostname:`, and no `build:` block: the agent names the project;
+# - data kept in the stack's directory (bind mount) instead of a named volume;
+# - the published address and port come from the env file the agent writes;
+# - install and the first user come from FRESHRSS_INSTALL / FRESHRSS_USER (upstream's
+#   documented auto-install, see Docker/README.md), its password from [[secrets]];
+# - the extensions volume and TRUSTED_PROXY are left out (no extensions; the agent proxy is loopback).
+
+services:
+  freshrss:
+    image: freshrss/freshrss:${FRESHRSS_VERSION}
+    restart: unless-stopped
+    logging:
+      options:
+        max-size: 10m
+    volumes:
+      - ${DATA_LOCATION}:/var/www/FreshRSS/data
+    ports:
+      - '${FRESHRSS_BIND}:${FRESHRSS_PORT}:80'
+    environment:
+      TZ: ${SBM_TZ}
+      CRON_MIN: '2,32'
+      # Only used on the first run (upstream documents this); the install is skipped
+      # once FreshRSS is installed.
+      FRESHRSS_INSTALL: |-
+        --api-enabled
+        --default-user admin
+        --language en
+      FRESHRSS_USER: |-
+        --language en
+        --password ${FRESHRSS_ADMIN_PASSWORD}
+        --user admin
+    healthcheck:
+      test: ["CMD", "cli/health.php"]
+      timeout: 10s
+      start_period: 60s
+      start_interval: 11s
+      interval: 75s
+      retries: 3

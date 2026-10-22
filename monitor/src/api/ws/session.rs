@@ -18,6 +18,7 @@
 //! [`Scrollback`] for how a short outage is recovered without clearing the
 //! screen.
 
+use crate::utils::lock::LockExt;
 use std::collections::HashMap;
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
@@ -125,17 +126,10 @@ pub enum SessionOutput {
     Data(Vec<u8>),
     Exit(Option<u32>),
     Error(String),
-    /// The account lost the grant this session runs under. The code is what
-    /// the client is told: `permission_revoked`, or `full_access_disabled`
-    /// for the panel's legacy switch.
+    /// The password this session was opened under changed. The code is what
+    /// the client is told: `password_changed`.
     Revoked(&'static str),
     ReplayRequired,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum SessionAuth {
-    Ssh,
-    Local,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -150,16 +144,20 @@ struct AttachmentState {
 }
 
 pub struct Session {
-    /// Panel account that created it. An `attach` from any other account is
-    /// refused, so one user's ticket cannot pick up another's shell.
-    pub subject: String,
     /// The account's password epoch when the session was opened (see
     /// `authz::Caller::since`). A session opened under a password that has
     /// since changed — a CLI reset the running agent was not told about, or a
     /// change that raced the open — is closed at the next sweep.
     pub since: i64,
-    pub ssh_user: String,
-    pub auth: SessionAuth,
+    /// The machine account the shell runs as (the agent's own), for the audit
+    /// log.
+    pub user: String,
+    /// What runs in it, as the audit log says it (`shell`, `container <id>`,
+    /// `tmux <name>`): listed by `GET /live`.
+    pub what: String,
+    /// Where the client that opened it connected from.
+    pub remote_ip: Option<String>,
+    pub opened_at: String,
     secret: String,
     pub scrollback: Mutex<Scrollback>,
     /// Feeds the shell side. Dropping every clone of this ends the session.
@@ -174,18 +172,17 @@ impl Session {
     /// [`SessionStore::insert`], so no caller can accidentally supply a weak
     /// or reused one.
     pub fn new(
-        subject: impl Into<String>,
-        ssh_user: impl Into<String>,
-        auth: SessionAuth,
+        user: impl Into<String>,
         scrollback_bytes: usize,
         input_queue: usize,
     ) -> (Self, mpsc::Receiver<SessionInput>) {
         let (input, input_rx) = mpsc::channel(input_queue);
         let session = Self {
-            subject: subject.into(),
             since: 0,
-            ssh_user: ssh_user.into(),
-            auth,
+            user: user.into(),
+            what: "shell".into(),
+            remote_ip: None,
+            opened_at: chrono::Utc::now().to_rfc3339(),
             secret: String::new(),
             scrollback: Mutex::new(Scrollback::new(scrollback_bytes)),
             input,
@@ -210,11 +207,10 @@ impl Session {
         // sender as one atomic step. Otherwise output produced in between
         // would land in the buffer *after* the replay was computed and go to
         // a sender that is about to be replaced — visible to nobody.
-        let mut attachment = self.attachment.lock().unwrap_or_else(|e| e.into_inner());
+        let mut attachment = self.attachment.locked();
         if let SessionOutput::Data(data) = &output {
             self.scrollback
-                .lock()
-                .unwrap_or_else(|e| e.into_inner())
+                .locked()
                 .push(data);
         }
         if attachment.replay_requested {
@@ -253,12 +249,12 @@ impl Session {
         since: u64,
         queue: usize,
     ) -> Option<(AttachmentId, mpsc::Receiver<SessionOutput>, Replay, u64)> {
-        let mut attachment = self.attachment.lock().unwrap_or_else(|e| e.into_inner());
+        let mut attachment = self.attachment.locked();
         if attachment.closed {
             return None;
         }
         let (replay, start_seq) = {
-            let scrollback = self.scrollback.lock().unwrap_or_else(|e| e.into_inner());
+            let scrollback = self.scrollback.locked();
             (scrollback.replay_from(since), scrollback.start_seq())
         };
         let (tx, rx) = mpsc::channel(queue);
@@ -273,7 +269,7 @@ impl Session {
     }
 
     pub fn detach(&self, id: AttachmentId) -> bool {
-        let mut attachment = self.attachment.lock().unwrap_or_else(|e| e.into_inner());
+        let mut attachment = self.attachment.locked();
         if !matches!(attachment.current.as_ref(), Some((current, _)) if *current == id) {
             return false;
         }
@@ -283,7 +279,7 @@ impl Session {
     }
 
     fn close(&self) -> Option<mpsc::Sender<SessionOutput>> {
-        let mut attachment = self.attachment.lock().unwrap_or_else(|e| e.into_inner());
+        let mut attachment = self.attachment.locked();
         attachment.closed = true;
         attachment.detached_at = Some(Instant::now());
         attachment.current.take().map(|(_, sender)| sender)
@@ -291,6 +287,19 @@ impl Session {
 }
 
 /// Every live terminal session, and the rules for getting at one.
+/// A terminal session as `GET /live` lists it.
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct SessionInfo {
+    pub id: String,
+    pub user: String,
+    pub what: String,
+    pub remote_ip: Option<String>,
+    pub opened_at: String,
+    /// Whether a client is attached now; a detached one ends after
+    /// `detached_timeout_secs`.
+    pub attached: bool,
+}
+
 pub struct SessionStore {
     sessions: Mutex<HashMap<String, Arc<Session>>>,
     max: usize,
@@ -302,7 +311,6 @@ pub struct SessionStore {
 #[derive(Debug, PartialEq, Eq)]
 pub enum AttachError {
     Unknown,
-    WrongSubject,
     BadSecret,
 }
 
@@ -328,7 +336,7 @@ impl SessionStore {
         });
 
         let (expired, inserted) = {
-            let mut sessions = self.sessions.lock().unwrap_or_else(|e| e.into_inner());
+            let mut sessions = self.sessions.locked();
             let expired = Self::take_expired(&mut sessions, Instant::now(), self.detached_timeout);
             let inserted = if sessions.len() >= self.max {
                 None
@@ -342,26 +350,17 @@ impl SessionStore {
         Ok(inserted)
     }
 
-    /// Looks up a session for `subject`, verifying the secret in constant time.
-    pub fn get(
-        &self,
-        handle: &str,
-        subject: &str,
-    ) -> std::result::Result<Arc<Session>, AttachError> {
+    /// Looks up a session, verifying the secret in constant time.
+    pub fn get(&self, handle: &str) -> std::result::Result<Arc<Session>, AttachError> {
         let Some((id, secret)) = handle.split_once('.') else {
             return Err(AttachError::Unknown);
         };
-        let sessions = self.sessions.lock().unwrap_or_else(|e| e.into_inner());
+        let sessions = self.sessions.locked();
         let Some(session) = sessions.get(id) else {
             return Err(AttachError::Unknown);
         };
         if !constant_time_eq(session.secret.as_bytes(), secret.as_bytes()) {
             return Err(AttachError::BadSecret);
-        }
-        // Checked after the secret so a wrong id and a wrong owner are
-        // indistinguishable to anyone who doesn't already hold the handle
-        if session.subject != subject {
-            return Err(AttachError::WrongSubject);
         }
         Ok(session.clone())
     }
@@ -369,47 +368,73 @@ impl SessionStore {
     pub fn remove(&self, handle: &str) {
         let id = handle.split_once('.').map(|(id, _)| id).unwrap_or(handle);
         self.sessions
-            .lock()
-            .unwrap_or_else(|e| e.into_inner())
+            .locked()
             .remove(id);
     }
 
-    /// The accounts that hold a session, each once.
-    pub fn subjects(&self) -> Vec<String> {
-        let sessions = self.sessions.lock().unwrap_or_else(|e| e.into_inner());
-        let mut subjects: Vec<String> = sessions.values().map(|s| s.subject.clone()).collect();
-        subjects.sort();
-        subjects.dedup();
-        subjects
+    /// The sessions open now, oldest first, for `GET /live`. The id is the
+    /// handle's public half: it attaches nothing without the secret.
+    pub fn list(&self) -> Vec<SessionInfo> {
+        let mut open: Vec<SessionInfo> = self
+            .sessions
+            .locked()
+            .iter()
+            .map(|(id, session)| {
+                let attachment = session.attachment.locked();
+                SessionInfo {
+                    id: id.clone(),
+                    user: session.user.clone(),
+                    what: session.what.clone(),
+                    remote_ip: session.remote_ip.clone(),
+                    opened_at: session.opened_at.clone(),
+                    attached: attachment.current.is_some(),
+                }
+            })
+            .collect();
+        open.sort_by(|a, b| a.opened_at.cmp(&b.opened_at));
+        open
     }
 
-    /// Removes and terminates every session [doomed] picks, telling an
-    /// attached client [code]. Returns how many went.
-    pub fn close_where(&self, doomed: impl Fn(&Session) -> bool, code: &'static str) -> usize {
-        let closing = {
-            let mut sessions = self.sessions.lock().unwrap_or_else(|e| e.into_inner());
-            let ids = sessions
-                .iter()
-                .filter(|(_, session)| doomed(session))
-                .map(|(id, _)| id.clone())
-                .collect::<Vec<_>>();
-            ids.into_iter()
-                .filter_map(|id| sessions.remove(&id))
-                .collect::<Vec<_>>()
+    /// Removes and terminates the session [id] (the handle's public half),
+    /// telling an attached client [code]; `false` when there is none.
+    pub fn close(&self, id: &str, code: &'static str) -> bool {
+        let Some(session) = self
+            .sessions
+            .locked()
+            .remove(id)
+        else {
+            return false;
         };
+        Self::end(&session, code);
+        true
+    }
+
+    fn end(session: &Arc<Session>, code: &'static str) {
+        if let Some(output) = session.close() {
+            let _ = output.try_send(SessionOutput::Revoked(code));
+        }
+        if let Err(mpsc::error::TrySendError::Full(close)) =
+            session.input.try_send(SessionInput::Close)
+        {
+            let input = session.input.clone();
+            tokio::spawn(async move {
+                let _ = input.send(close).await;
+            });
+        }
+    }
+
+    /// Removes and terminates every session, telling an
+    /// attached client [code]. Returns how many went.
+    pub fn close_all(&self, code: &'static str) -> usize {
+        let closing = self
+            .sessions
+            .locked()
+            .drain()
+            .map(|(_, session)| session)
+            .collect::<Vec<_>>();
 
         for session in &closing {
-            if let Some(output) = session.close() {
-                let _ = output.try_send(SessionOutput::Revoked(code));
-            }
-            if let Err(mpsc::error::TrySendError::Full(close)) =
-                session.input.try_send(SessionInput::Close)
-            {
-                let input = session.input.clone();
-                tokio::spawn(async move {
-                    let _ = input.send(close).await;
-                });
-            }
+            Self::end(session, code);
         }
         closing.len()
     }
@@ -424,7 +449,7 @@ impl SessionStore {
 
     fn reap_at(&self, now: Instant) -> usize {
         let expired = {
-            let mut sessions = self.sessions.lock().unwrap_or_else(|e| e.into_inner());
+            let mut sessions = self.sessions.locked();
             Self::take_expired(&mut sessions, now, self.detached_timeout)
         };
         let count = expired.len();
@@ -442,8 +467,7 @@ impl SessionStore {
             .filter_map(|(id, session)| {
                 let detached_at = session
                     .attachment
-                    .lock()
-                    .unwrap_or_else(|e| e.into_inner())
+                    .locked()
                     .detached_at;
                 detached_at
                     .filter(|at| now.saturating_duration_since(*at) >= timeout)
@@ -471,8 +495,7 @@ impl SessionStore {
 
     pub fn len(&self) -> usize {
         self.sessions
-            .lock()
-            .unwrap_or_else(|e| e.into_inner())
+            .locked()
             .len()
     }
 
@@ -485,8 +508,8 @@ impl SessionStore {
 mod tests {
     use super::*;
 
-    fn session(subject: &str) -> Session {
-        Session::new(subject, "ops", SessionAuth::Ssh, 1024, 8).0
+    fn session() -> Session {
+        Session::new("ops", 1024, 8).0
     }
 
     #[test]
@@ -555,13 +578,13 @@ mod tests {
     #[test]
     fn output_produced_while_detached_is_still_recoverable() {
         let store = SessionStore::new(4, Duration::from_secs(300));
-        let (_handle, session) = store.insert(session("admin")).unwrap().unwrap();
+        let (_handle, session) = store.insert(session()).unwrap().unwrap();
 
         let (attachment, _, _, _) = session.attach(0, 1).unwrap();
         session.detach(attachment);
         session.publish(SessionOutput::Data(b"while you were away".to_vec()));
 
-        let sb = session.scrollback.lock().unwrap();
+        let sb = session.scrollback.locked();
         assert_eq!(
             sb.replay_from(0),
             Replay::Gap(b"while you were away".to_vec())
@@ -569,58 +592,43 @@ mod tests {
     }
 
     #[test]
-    fn a_handle_only_works_for_the_account_that_made_it() {
-        let store = SessionStore::new(4, Duration::from_secs(300));
-        let (handle, _) = store.insert(session("admin")).unwrap().unwrap();
-
-        assert!(store.get(&handle, "admin").is_ok());
-        assert_eq!(
-            store.get(&handle, "someone-else").err(),
-            Some(AttachError::WrongSubject)
-        );
-    }
-
-    #[test]
     fn a_forged_secret_is_refused() {
         let store = SessionStore::new(4, Duration::from_secs(300));
-        let (handle, _) = store.insert(session("admin")).unwrap().unwrap();
+        let (handle, _) = store.insert(session()).unwrap().unwrap();
         let (id, _) = handle.split_once('.').unwrap();
 
         assert_eq!(
             store
-                .get(&format!("{id}.{}", "0".repeat(ID_BYTES * 2)), "admin")
+                .get(&format!("{id}.{}", "0".repeat(ID_BYTES * 2)))
                 .err(),
             Some(AttachError::BadSecret)
         );
         // Unlike a ticket, a wrong secret must not destroy the session: that
         // would let anyone who learns an id kill a stranger's shell
-        assert!(store.get(&handle, "admin").is_ok());
+        assert!(store.get(&handle).is_ok());
     }
 
     #[test]
     fn unknown_and_malformed_handles_are_refused() {
         let store = SessionStore::new(4, Duration::from_secs(300));
-        assert_eq!(store.get("nope", "admin").err(), Some(AttachError::Unknown));
-        assert_eq!(
-            store.get("dead.beef", "admin").err(),
-            Some(AttachError::Unknown)
-        );
+        assert_eq!(store.get("nope").err(), Some(AttachError::Unknown));
+        assert_eq!(store.get("dead.beef").err(), Some(AttachError::Unknown));
     }
 
     #[test]
     fn the_session_cap_is_enforced() {
         let store = SessionStore::new(2, Duration::from_secs(300));
-        assert!(store.insert(session("admin")).unwrap().is_some());
-        assert!(store.insert(session("admin")).unwrap().is_some());
-        assert!(store.insert(session("admin")).unwrap().is_none());
+        assert!(store.insert(session()).unwrap().is_some());
+        assert!(store.insert(session()).unwrap().is_some());
+        assert!(store.insert(session()).unwrap().is_none());
     }
 
     #[test]
     fn only_detached_sessions_are_reaped_and_only_after_the_timeout() {
         let store = SessionStore::new(4, Duration::from_secs(300));
-        let (_attached_handle, attached) = store.insert(session("admin")).unwrap().unwrap();
+        let (_attached_handle, attached) = store.insert(session()).unwrap().unwrap();
         let (detached_session, mut detached_input) =
-            Session::new("admin", "ops", SessionAuth::Ssh, 1024, 8);
+            Session::new("ops", 1024, 8);
         let (_, detached) = store.insert(detached_session).unwrap().unwrap();
 
         let _attached = attached.attach(0, 1).unwrap();
@@ -639,19 +647,19 @@ mod tests {
     #[test]
     fn insertion_reaps_expired_sessions_before_enforcing_the_cap() {
         let store = SessionStore::new(1, Duration::ZERO);
-        let (old, mut old_input) = Session::new("admin", "ops", SessionAuth::Ssh, 1024, 8);
+        let (old, mut old_input) = Session::new("ops", 1024, 8);
         let (_, old) = store.insert(old).unwrap().unwrap();
         let (attachment, _, _, _) = old.attach(0, 1).unwrap();
         old.detach(attachment);
 
-        assert!(store.insert(session("admin")).unwrap().is_some());
+        assert!(store.insert(session()).unwrap().is_some());
         assert_eq!(store.len(), 1);
         assert!(matches!(old_input.try_recv(), Ok(SessionInput::Close)));
     }
 
     #[tokio::test]
     async fn a_slow_attachment_is_closed_and_recovers_from_scrollback() {
-        let session = session("admin");
+        let session = session();
         let (_, mut output, _, _) = session.attach(0, 1).unwrap();
 
         session.publish(SessionOutput::Data(b"first".to_vec()));
@@ -673,14 +681,14 @@ mod tests {
     #[test]
     fn removing_accepts_the_full_handle_or_the_bare_id() {
         let store = SessionStore::new(4, Duration::from_secs(300));
-        let (handle, _) = store.insert(session("admin")).unwrap().unwrap();
+        let (handle, _) = store.insert(session()).unwrap().unwrap();
         store.remove(&handle);
         assert_eq!(store.len(), 0);
     }
 
     #[test]
     fn a_stale_detach_cannot_clear_the_new_attachment() {
-        let session = session("admin");
+        let session = session();
         let (old, _old_rx, _, _) = session.attach(0, 1).unwrap();
         let (new, mut new_rx, _, _) = session.attach(0, 1).unwrap();
 
@@ -694,33 +702,18 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn closing_local_sessions_leaves_ssh_sessions_running() {
+    async fn closing_all_ends_every_session() {
         let store = SessionStore::new(4, Duration::from_secs(300));
-        let (local, mut local_input) = Session::new("admin", "local", SessionAuth::Local, 1024, 8);
-        let (ssh, mut ssh_input) = Session::new("admin", "ops", SessionAuth::Ssh, 1024, 8);
+        let (local, mut local_input) = Session::new("local", 1024, 8);
         let (local_handle, local) = store.insert(local).unwrap().unwrap();
-        let (ssh_handle, ssh) = store.insert(ssh).unwrap().unwrap();
         let (_, mut local_output, _, _) = local.attach(0, 1).unwrap();
-        let _ssh_attachment = ssh.attach(0, 1).unwrap();
 
-        assert_eq!(
-            store.close_where(|s| s.auth == SessionAuth::Local, "permission_revoked"),
-            1
-        );
-        assert_eq!(store.subjects(), ["admin"]);
-        assert_eq!(
-            store.get(&local_handle, "admin").err(),
-            Some(AttachError::Unknown)
-        );
-        assert!(store.get(&ssh_handle, "admin").is_ok());
-        assert!(matches!(
-            local_input.recv().await,
-            Some(SessionInput::Close)
-        ));
+        assert_eq!(store.close_all("password_changed"), 1);
+        assert_eq!(store.get(&local_handle).err(), Some(AttachError::Unknown));
+        assert!(matches!(local_input.recv().await, Some(SessionInput::Close)));
         assert!(matches!(
             local_output.recv().await,
-            Some(SessionOutput::Revoked("permission_revoked"))
+            Some(SessionOutput::Revoked("password_changed"))
         ));
-        assert!(ssh_input.try_recv().is_err());
     }
 }

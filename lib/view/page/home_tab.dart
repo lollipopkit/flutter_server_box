@@ -8,6 +8,7 @@ import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/agent/agent.dart';
 import 'package:server_box/view/page/benchmark/tab.dart';
+import 'package:server_box/view/page/monitor/tab.dart';
 import 'package:server_box/view/page/remote_desktop/tab.dart';
 import 'package:server_box/view/page/server/tab/tab.dart';
 import 'package:server_box/view/page/snippet/list.dart';
@@ -31,6 +32,7 @@ extension AppTabViewX on AppTab {
       AppTab.remoteDesktop => const RemoteDesktopTabPage(),
       AppTab.virt => const VirtTabPage(),
       AppTab.workspace => const WorkspaceTabPage(),
+      AppTab.monitor => const MonitorTabPage(),
     };
   }
 
@@ -60,6 +62,7 @@ extension AppTabViewX on AppTab {
       AppTab.remoteDesktop => l10n.remoteDesktop,
       AppTab.virt => l10n.virtualization,
       AppTab.workspace => l10n.workspace,
+      AppTab.monitor => l10n.monitorTab,
     };
   }
 
@@ -70,6 +73,7 @@ extension AppTabViewX on AppTab {
     AppTab.benchmark => Feature.benchmark,
     AppTab.virt => Feature.virt,
     AppTab.workspace => Feature.workspace,
+    AppTab.monitor => Feature.monitor,
     _ => null,
   };
 
@@ -163,6 +167,8 @@ class _AppTabIcon extends StatelessWidget {
                   selected ? MingCute.box_3_fill : MingCute.box_3_line,
                 AppTab.workspace =>
                   selected ? MingCute.layout_4_fill : MingCute.layout_4_line,
+                AppTab.monitor =>
+                  selected ? MingCute.heartbeat_fill : MingCute.heartbeat_line,
               }
             : switch (tab) {
                 AppTab.server =>
@@ -185,6 +191,8 @@ class _AppTabIcon extends StatelessWidget {
                   selected
                       ? Icons.space_dashboard
                       : Icons.space_dashboard_outlined,
+                AppTab.monitor =>
+                  selected ? Icons.monitor_heart : Icons.monitor_heart_outlined,
               };
         return ThemeIconAsset(
           keyName: ThemeIcons.tabKey(tab.name, selected: selected),

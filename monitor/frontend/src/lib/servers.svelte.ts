@@ -1,4 +1,4 @@
-/// Multi-server registry with per-server sessions. The panel can be served by
+/// Multi-server registry with a session per server. The panel can be served by
 /// an agent itself (same-origin, url '') or hosted statically (e.g. Cloudflare
 /// Pages) and talk to several agents cross-origin — each agent must list the
 /// panel origin in cors_allowed_origins and be reachable over HTTPS.
@@ -7,8 +7,8 @@ export interface ServerEntry {
   id: string
   /// Base URL of the agent ('' = same origin)
   url: string
+  /// The session on it, this tab's.
   token: string | null
-  username: string | null
 }
 
 import { probe } from './probe'
@@ -16,7 +16,16 @@ import { readPref, removePref, writePref } from './prefs'
 import { isSecureAgentUrl, normalizeAgentUrl } from './agentUrl'
 
 const KEY = 'servers.v1'
-const SESSION_KEY = 'servers.sessions.v1'
+/// TODO: remove the reads of these keys once no tab can still hold them
+/// (several accounts per agent, 2026-10-08 to 2026-10-14; v1 before them).
+const SESSION_KEY_V1 = 'servers.sessions.v1'
+const SESSION_KEY_V2 = 'servers.sessions.v2'
+const ACCOUNTS_KEY = 'servers.accounts.v1'
+/// Per server: its token, for this tab only (`sessionStorage`: a token must
+/// not outlive the tab).
+const SESSION_KEY = 'servers.sessions.v3'
+/// Per server: when it last answered, Unix ms, for "last online".
+const ONLINE_KEY = 'servers.online.v1'
 
 /// The entry assumed before anything has been asked: the origin this panel was
 /// served from. See confirmSameOrigin().
@@ -36,20 +45,10 @@ function newId(): string {
 
 class ServersStore {
   list = $state<ServerEntry[]>([])
-  #currentId = $state('')
-  /// Counts changes of `currentId`, for what must tell one selection of a
-  /// server from a later one of the same server (layout's page transition).
-  selections = $state(0)
-
-  get currentId(): string {
-    return this.#currentId
-  }
-
-  set currentId(id: string) {
-    if (id === this.#currentId) return
-    this.#currentId = id
-    this.selections++
-  }
+  currentId = $state('')
+  /// Why a session ended, per server, said on the sign-in screen until the
+  /// next sign-in (a restored backup changed the password). This tab only.
+  notices = $state<Record<string, string>>({})
 
   /// Whether this panel is the agent's own: whether the origin the page came
   /// from is an agent that serves it.
@@ -68,29 +67,30 @@ class ServersStore {
   /// both production builds, so this cannot be what tells those two apart.
   servedByAgent = $state(!import.meta.env.DEV)
 
+  /// When each server last answered.
+  lastOnline = $state<Record<string, number>>({})
+
   constructor() {
-    let sessions: Record<string, { token: string; username: string | null }> = {}
-    try {
-      sessions = JSON.parse(window.sessionStorage.getItem(SESSION_KEY) ?? '{}') as typeof sessions
-    } catch {
-      // Corrupt session state is equivalent to being logged out.
+    const sessions = readJson<Record<string, string>>(SESSION_KEY, 'sessionStorage') ?? {}
+    this.lastOnline = readJson(ONLINE_KEY) ?? {}
+    // TODO: remove with SESSION_KEY_V1, SESSION_KEY_V2 and ACCOUNTS_KEY.
+    const v1 = readJson<Record<string, { token: string }>>(SESSION_KEY_V1, 'sessionStorage') ?? {}
+    const v2 = readJson<Record<string, { active: string | null; tokens: Record<string, string> }>>(SESSION_KEY_V2, 'sessionStorage') ?? {}
+    for (const [id, { token }] of Object.entries(v1)) sessions[id] ??= token
+    for (const [id, { active, tokens }] of Object.entries(v2)) {
+      const token = active !== null ? tokens[active] : undefined
+      if (token) sessions[id] ??= token
     }
+    removePref(SESSION_KEY_V1, 'sessionStorage')
+    removePref(SESSION_KEY_V2, 'sessionStorage')
+    removePref(ACCOUNTS_KEY)
     const raw = readPref(KEY)
     if (raw) {
       try {
         const parsed = JSON.parse(raw) as { list?: ServerEntry[]; currentId?: string }
         this.list = (parsed.list ?? []).map((entry) => {
-          const migratedToken = entry.token ?? sessions[entry.id]?.token ?? null
-          const migratedUsername = entry.username ?? sessions[entry.id]?.username ?? null
-          if (migratedToken) {
-            sessions[entry.id] = { token: migratedToken, username: migratedUsername }
-          }
-          return {
-            id: entry.id,
-            url: entry.url,
-            token: isSecureAgentUrl(entry.url) ? migratedToken : null,
-            username: migratedUsername,
-          }
+          const token = sessions[entry.id] ?? entry.token ?? null
+          return { id: entry.id, url: entry.url, token: isSecureAgentUrl(entry.url) ? token : null }
         })
         this.currentId = parsed.currentId ?? ''
       } catch {
@@ -104,7 +104,6 @@ class ServersStore {
           id: LOCAL_ID,
           url: '',
           token: readPref('token', 'sessionStorage') ?? readPref('token'),
-          username: readPref('username', 'sessionStorage') ?? readPref('username'),
         },
       ]
       this.currentId = LOCAL_ID
@@ -116,7 +115,6 @@ class ServersStore {
     removePref('token')
     removePref('username')
     this.#persist()
-    this.#persistSessions()
   }
 
   get current(): ServerEntry | undefined {
@@ -176,7 +174,6 @@ class ServersStore {
       id: newId(),
       url: normalizeAgentUrl(url),
       token: null,
-      username: null,
     }
     this.list.push(entry)
     this.currentId = entry.id
@@ -184,25 +181,33 @@ class ServersStore {
   }
 
   /// Edits the URL of an existing entry (edit-server form); re-normalizes it
-  /// the same way add() does. A URL change drops the saved session (the old
-  /// token belongs to whatever agent was at the old URL) so the app falls
-  /// back to login.
+  /// the same way add() does. A URL change drops the session (it belongs to
+  /// whatever agent was at the old URL) so the app falls back to login.
   update(id: string, url: string) {
     const entry = this.list.find((s) => s.id === id)
     if (!entry) return
     const normalized = normalizeAgentUrl(url)
     if (normalized !== entry.url) {
       entry.token = null
-      entry.username = null
+      delete this.lastOnline[id]
     }
     entry.url = normalized
     this.#persist()
   }
 
+  /// Takes a server away, with its session.
   remove(id: string) {
     this.list = this.list.filter((s) => s.id !== id)
     if (this.currentId === id) this.currentId = this.list[0]?.id ?? ''
+    delete this.lastOnline[id]
     this.#persist()
+  }
+
+  /// [id] answered just now.
+  markOnline(id: string) {
+    if (!this.list.some((s) => s.id === id)) return
+    this.lastOnline[id] = Date.now()
+    writePref(ONLINE_KEY, JSON.stringify($state.snapshot(this.lastOnline)))
   }
 
   select(id: string) {
@@ -212,47 +217,45 @@ class ServersStore {
     }
   }
 
-  login(token: string, username: string) {
-    this.setSession(this.currentId, token, username)
+  login(token: string) {
+    this.setSession(this.currentId, token)
   }
 
-  /// Like login(), but for an arbitrary entry — used by the add/edit form to
-  /// save a session for a server that isn't necessarily the selected one.
-  setSession(id: string, token: string, username: string) {
+  /// Like login(), but for an arbitrary entry.
+  setSession(id: string, token: string) {
     const entry = this.list.find((s) => s.id === id)
     if (!entry) return
     entry.token = token
-    entry.username = username
+    delete this.notices[id]
     this.#persist()
   }
 
-  logout(id = this.currentId, expected?: Pick<ServerEntry, 'url' | 'token'>) {
+  /// Ends the session on [id] (only if it is still [expected]), with
+  /// [notice] for the sign-in screen.
+  logout(id = this.currentId, expected?: Pick<ServerEntry, 'url' | 'token'>, notice?: string) {
     const entry = this.list.find((server) => server.id === id)
     if (!entry) return
+    if (notice) this.notices[id] = notice
     if (expected && (entry.url !== expected.url || entry.token !== expected.token)) return
     entry.token = null
-    entry.username = null
     this.#persist()
   }
 
   #persist() {
-    const list = $state.snapshot(this.list).map(({ id, url }) => ({
-      id,
-      url,
-      token: null,
-      username: null,
-    }))
+    const list = $state.snapshot(this.list).map(({ id, url }) => ({ id, url, token: null }))
     writePref(KEY, JSON.stringify({ list, currentId: this.currentId }))
-    this.#persistSessions()
-  }
-
-  #persistSessions() {
-    const sessions = Object.fromEntries(
-      this.list
-        .filter((entry) => entry.token)
-        .map((entry) => [entry.id, { token: entry.token, username: entry.username }]),
-    )
+    const sessions = Object.fromEntries(this.list.filter((e) => e.token).map((e) => [e.id, e.token]))
     writePref(SESSION_KEY, JSON.stringify(sessions), 'sessionStorage')
+  }
+}
+
+function readJson<T>(key: string, area?: 'sessionStorage'): T | null {
+  try {
+    const raw = readPref(key, area)
+    return raw ? (JSON.parse(raw) as T) : null
+  } catch {
+    // Corrupt state is equivalent to none.
+    return null
   }
 }
 

@@ -1,0 +1,40 @@
+# kiwix-serve 3.8.2 (GPL-3.0), https://github.com/kiwix/kiwix-tools/tree/3.8.2
+#
+# Written for ServerBox Monitor (2026-10-18) from kiwix-tools' docker/README:
+# - no `name:` and no `container_name`: the agent names the project;
+# - image pinned to the release; the ZIM folder from the env file; runs as
+#   the shared folder's owner;
+# - instead of the ZIM files named at start (start.sh), every .zim in the
+#   folder is served: the library is made from them at start and again each
+#   minute, and kiwix-serve follows it (--monitorLibrary), so a file put in
+#   the folder shows up without a restart.
+
+services:
+  kiwix:
+    image: ghcr.io/kiwix/kiwix-serve:${KIWIX_VERSION}
+    user: "${SBM_UID}:${SBM_GID}"
+    volumes:
+      - ${KIWIX_ZIMS}:/data:ro
+    ports:
+      - '${KIWIX_BIND}:${KIWIX_PORT}:8080'
+    entrypoint: ["/usr/bin/dumb-init", "--", "sh", "-c"]
+    command:
+      - |
+        library=/tmp/library.xml
+        scan() {
+          next=$$(mktemp)
+          echo '<library version="20110515"></library>' > "$$next"
+          for zim in /data/*.zim; do
+            [ -f "$$zim" ] && kiwix-manage "$$next" add "$$zim" > /dev/null 2>&1
+          done
+          if cmp -s "$$next" "$$library"; then rm -f "$$next"; else mv "$$next" "$$library"; fi
+        }
+        scan
+        (while sleep 60; do scan; done) &
+        exec kiwix-serve --port=8080 --library --monitorLibrary "$$library"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

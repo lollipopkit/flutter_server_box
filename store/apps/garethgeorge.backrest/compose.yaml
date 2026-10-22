@@ -1,0 +1,50 @@
+# Backrest 1.14.1 (GPL-3.0), https://github.com/garethgeorge/backrest/tree/v1.14.1
+#
+# Adapted from the Docker Compose example of Backrest's README for ServerBox
+# Monitor (2026-10-18):
+# - no `name:` and no `container_name`: the agent names the project;
+# - image pinned to the release (upstream: backrest:latest); its data, config
+#   and cache in one folder from the env file; runs as the shared folder's
+#   owner;
+# - Backrest's first config has sign-in off until its setup screen is
+#   answered. Before its first start, the config is written with sign-in on
+#   for admin (the generated password's bcrypt hash, base64 as Backrest keeps
+#   it) and this machine's name for the instance; a config already there is
+#   left as it is.
+
+services:
+  backrest:
+    image: garethgeorge/backrest:${BACKREST_TAG}
+    user: "${SBM_UID}:${SBM_GID}"
+    environment:
+      TZ: ${SBM_TZ}
+      BACKREST_DATA: /var/lib/backrest/data
+      BACKREST_CONFIG: /var/lib/backrest/config/config.json
+      XDG_CACHE_HOME: /var/lib/backrest/cache
+      TMPDIR: /tmp
+      ADMIN_HASH: ${BACKREST_PASSWORD_BCRYPT}
+    volumes:
+      - ${BACKREST_DATA}:/var/lib/backrest
+      - ${BACKREST_SOURCE}:/userdata
+      - ${BACKREST_REPOS}:/repos
+    ports:
+      - '${BACKREST_BIND}:${BACKREST_PORT}:9898'
+    entrypoint: ["/sbin/tini", "--", "sh", "-c"]
+    command:
+      - |
+        set -eu
+        if [ ! -f /var/lib/backrest/config/config.json ]; then
+          umask 077
+          mkdir -p /var/lib/backrest/config
+          printf '{"version":6,"instance":"serverbox","auth":{"disabled":false,"users":[{"name":"admin","passwordBcrypt":"%s"}]}}\n' \
+            "$$(printf '%s' "$$ADMIN_HASH" | base64 | tr -d '\n')" > /var/lib/backrest/config/config.json
+        fi
+        unset ADMIN_HASH
+        exec /docker-entrypoint /backrest
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:9898/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s

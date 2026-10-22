@@ -1083,16 +1083,8 @@ extension _Widgets on _ServerEditPageState {
               hint: addr,
               suggestion: false,
             ),
-            // Prefixed to say which account this is: the agent's panel login,
-            // not a system account on the far host. A server reached this way
-            // has no system account configured here at all.
-            Input(
-              controller: _monitorUserCtrl,
-              type: TextInputType.text,
-              icon: MingCute.user_2_line,
-              label: 'Monitor ${libL10n.user}',
-              suggestion: false,
-            ),
+            // Prefixed to say which password this is: the agent's own login,
+            // not a system account's on the far host.
             Input(
               controller: _monitorPwdCtrl,
               type: TextInputType.visiblePassword,

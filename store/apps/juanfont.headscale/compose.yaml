@@ -1,0 +1,75 @@
+# Headscale 0.29.5 (BSD-3-Clause), https://github.com/juanfont/headscale/tree/v0.29.5
+# with Headplane 0.8.1 (MIT), https://github.com/tale/headplane/tree/v0.8.1,
+# its web interface.
+#
+# Written for ServerBox Monitor (2026-10-18) from Headscale's container guide
+# and Headplane's Docker install guide:
+# - no `name:` and no `container_name`: the agent names the project;
+# - images pinned to the releases; headscale.yaml and headplane.yaml beside
+#   this file are their configurations (read-only), the address devices use
+#   and the cookie secret from the env file;
+# - Headscale's port is published on every interface: devices (Tailscale
+#   clients) connect to it. Headplane's is the window's;
+# - Headplane signs in with a Headscale API key. seed-api-key is a one-shot
+#   job that makes one with Headscale's own CLI (over its unix socket), once,
+#   into headplane-api-key in the data folder, readable by the shared
+#   folder's owner.
+
+services:
+  headscale:
+    image: headscale/headscale:${HEADSCALE_VERSION}
+    command: ["serve"]
+    environment:
+      TZ: ${SBM_TZ}
+      HEADSCALE_SERVER_URL: ${HEADSCALE_URL}
+    volumes:
+      - ./headscale.yaml:/etc/headscale/config.yaml:ro
+      - ${HEADSCALE_DATA}/headscale:/var/lib/headscale
+      - ${HEADSCALE_DATA}/run:/var/run/headscale
+    ports:
+      - '${HEADSCALE_PORT}:8080'
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/ko-app/headscale", "health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  seed-api-key:
+    image: headscale/headscale:${HEADSCALE_VERSION}-debug
+    depends_on:
+      headscale:
+        condition: service_healthy
+    environment:
+      OWNER: "${SBM_UID}:${SBM_GID}"
+    volumes:
+      - ./headscale.yaml:/etc/headscale/config.yaml:ro
+      - ${HEADSCALE_DATA}/run:/var/run/headscale
+      - ${HEADSCALE_DATA}:/data
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        set -eu
+        [ -s /data/headplane-api-key ] && exit 0
+        umask 077
+        headscale apikeys create --expiration 3650d > /data/headplane-api-key.new
+        mv /data/headplane-api-key.new /data/headplane-api-key
+        chown "$$OWNER" /data/headplane-api-key
+        chmod 0400 /data/headplane-api-key
+    restart: "no"
+
+  headplane:
+    image: ghcr.io/tale/headplane:${HEADPLANE_VERSION}
+    depends_on:
+      headscale:
+        condition: service_healthy
+    environment:
+      HEADPLANE_SERVER__COOKIE_SECRET: ${HEADPLANE_COOKIE_SECRET}
+    volumes:
+      - ./headplane.yaml:/etc/headplane/config.yaml:ro
+      - ./headscale.yaml:/etc/headscale/config.yaml:ro
+      - ${HEADSCALE_DATA}/headplane:/var/lib/headplane
+    ports:
+      - '${HEADPLANE_BIND}:${HEADPLANE_PORT}:3000'
+    restart: unless-stopped

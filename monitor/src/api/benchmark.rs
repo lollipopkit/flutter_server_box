@@ -23,10 +23,9 @@
 //!
 //! # Authority
 //!
-//! The `shell` grant for all of it (`api::machine::gate`): a benchmark writes
+//! The transport rule for all of it (`api::machine::gate`): a benchmark writes
 //! gigabytes to a disk and saturates a link, and anyone who can open a shell
-//! can run one anyway. The estimate changes nothing and is answered to any
-//! account that may use the page.
+//! can run one anyway.
 //!
 //! # One run at a time
 //!
@@ -49,7 +48,6 @@ use super::exec::{ExecResponse, Limits, run};
 use super::machine;
 use super::server::AppState;
 use super::ws::audit::{Action, Event, Kind, Outcome};
-use crate::core::permissions::Grant;
 
 /// Bounds for one of this module's short commands: a timeout of its own,
 /// `/exec`'s output cap or [max_output] if larger.
@@ -140,13 +138,7 @@ struct ErrorResponse {
     error: String,
 }
 
-fn bad_request(error: impl Into<String>) -> HttpResponse {
-    HttpResponse::BadRequest().json(&ErrorResponse { error: error.into() })
-}
 
-fn internal_error(error: impl Into<String>) -> HttpResponse {
-    HttpResponse::InternalServerError().json(&ErrorResponse { error: error.into() })
-}
 
 // --- The row ---
 
@@ -306,7 +298,7 @@ pub async fn get(
     query: web::types::Query<GetQuery>,
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    if let Err(refused) = machine::gate(&req, &app_state, Grant::Shell, "benchmark list").await {
+    if let Err(refused) = machine::gate(&req, &app_state, "benchmark list").await {
         return Ok(refused);
     }
     let id = query.run.clone().filter(|id| !id.is_empty());
@@ -333,7 +325,7 @@ async fn list(app_state: &AppState) -> HttpResponse {
         Ok(rows) => rows,
         Err(e) => {
             tracing::warn!("benchmark: could not read the history: {e}");
-            return internal_error("history_unavailable");
+            return super::respond::error(ntex::http::StatusCode::INTERNAL_SERVER_ERROR, "history_unavailable");
         }
     };
 
@@ -362,7 +354,7 @@ async fn detail(app_state: &AppState, id: &str) -> HttpResponse {
         Ok(None) => return HttpResponse::NotFound().json(&ErrorResponse { error: "no_such_run".into() }),
         Err(e) => {
             tracing::warn!("benchmark: could not read run {id}: {e}");
-            return internal_error("history_unavailable");
+            return super::respond::error(ntex::http::StatusCode::INTERNAL_SERVER_ERROR, "history_unavailable");
         }
     };
     HttpResponse::Ok().json(&RunDetail {
@@ -426,7 +418,7 @@ pub async fn act(
         BenchAction::Cancel => "benchmark cancel",
         BenchAction::Estimate { .. } => "benchmark estimate",
     };
-    let gated = match machine::gate(&req, &app_state, Grant::Shell, what).await {
+    let gated = match machine::gate(&req, &app_state, what).await {
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),
     };
@@ -452,24 +444,24 @@ async fn start(
     gated: &machine::Gated,
 ) -> Result<HttpResponse, web::Error> {
     if !supports_benchmark() {
-        return Ok(bad_request("unsupported_platform"));
+        return Ok(super::respond::error(ntex::http::StatusCode::BAD_REQUEST, "unsupported_platform"));
     }
     if options.work_dir.len() > MAX_WORK_DIR {
-        return Ok(bad_request("work_dir_too_long"));
+        return Ok(super::respond::error(ntex::http::StatusCode::BAD_REQUEST, "work_dir_too_long"));
     }
 
     let Some(script_path) = script_path_on_disk() else {
         // No `HOME`. The command layer would send a literal `$HOME` and every
         // command would operate on a directory of that name, which is why this
         // is refused here rather than attempted.
-        return Ok(internal_error("no_home_directory"));
+        return Ok(super::respond::error(ntex::http::StatusCode::INTERNAL_SERVER_ERROR, "no_home_directory"));
     };
     let Some(body) = bench::decode_asset(SCRIPT_ASSET_B64) else {
         // A packaging mistake rather than a runtime one. Reported rather than
         // run: what it would otherwise send is a shell script of replacement
         // characters.
         tracing::error!("benchmark: the embedded yabs asset did not decode");
-        return Ok(internal_error("asset_unreadable"));
+        return Ok(super::respond::error(ntex::http::StatusCode::INTERNAL_SERVER_ERROR, "asset_unreadable"));
     };
 
     let run_id = match crate::utils::secrets::random_hex(8) {
@@ -479,7 +471,7 @@ async fn start(
         ),
         Err(e) => {
             tracing::error!("benchmark: no entropy for a run id: {e}");
-            return Ok(internal_error("no_entropy"));
+            return Ok(super::respond::error(ntex::http::StatusCode::INTERNAL_SERVER_ERROR, "no_entropy"));
         }
     };
     let run_dir = bench::run_dir(&options.work_dir);
@@ -488,7 +480,7 @@ async fn start(
     // directory is a claim that something is going to be in it.
     if let Err(e) = crate::monitoring::ensure_script(&script_path, &body) {
         tracing::error!("benchmark: could not write {}: {e}", script_path.display());
-        return Ok(internal_error("script_not_writable"));
+        return Ok(super::respond::error(ntex::http::StatusCode::INTERNAL_SERVER_ERROR, "script_not_writable"));
     }
 
     let options_json = serde_json::to_string(&options).unwrap_or_else(|_| "{}".into());
@@ -513,7 +505,7 @@ async fn start(
             }));
         }
         tracing::error!("benchmark: could not record a run: {e}");
-        return Ok(internal_error("history_unavailable"));
+        return Ok(super::respond::error(ntex::http::StatusCode::INTERNAL_SERVER_ERROR, "history_unavailable"));
     }
 
     // The launcher arrives on stdin, so nothing about the run — the flags, the
@@ -561,16 +553,14 @@ async fn start(
         .execute(&app_state.db)
         .await;
         Event::new(Kind::Machine, Action::Open, Outcome::Error)
-            .subject(&gated.caller.username)
             .remote_ip(gated.remote_ip.clone())
             .detail(format!("benchmark start {run_id}: launcher did not start: {reason}"))
             .record(&app_state.db)
             .await;
-        return Ok(internal_error("start_failed"));
+        return Ok(super::respond::error(ntex::http::StatusCode::INTERNAL_SERVER_ERROR, "start_failed"));
     }
 
     Event::new(Kind::Machine, Action::Open, Outcome::Ok)
-        .subject(&gated.caller.username)
         .remote_ip(gated.remote_ip.clone())
         .detail(format!("benchmark start {run_id}"))
         .record(&app_state.db)
@@ -584,7 +574,7 @@ async fn start(
         Ok(row) => Ok(HttpResponse::Ok().json(&StartedResponse { run: RunView::from(row) })),
         Err(e) => {
             tracing::warn!("benchmark: started {run_id} but could not read it back: {e}");
-            Ok(internal_error("history_unavailable"))
+            Ok(super::respond::error(ntex::http::StatusCode::INTERNAL_SERVER_ERROR, "history_unavailable"))
         }
     }
 }
@@ -635,7 +625,6 @@ async fn cancel(
         Action::Close,
         if stopped { Outcome::Ok } else { Outcome::Error },
     )
-    .subject(&gated.caller.username)
     .remote_ip(gated.remote_ip.clone())
     .detail(format!(
         "benchmark cancel {}: {}",
@@ -659,7 +648,7 @@ pub async fn remove(
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
     let id = &query.run;
-    let gated = match machine::gate(&req, &app_state, Grant::Shell, &format!("benchmark remove {id}")).await
+    let gated = match machine::gate(&req, &app_state, &format!("benchmark remove {id}")).await
     {
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),
@@ -670,7 +659,7 @@ pub async fn remove(
     if row.status == "running" {
         // Removing the record would lose the only handle on a live process.
         // Cancelling is the way to end it, and it is one request away.
-        return Ok(bad_request("run_in_progress"));
+        return Ok(super::respond::error(ntex::http::StatusCode::BAD_REQUEST, "run_in_progress"));
     }
 
     if let Err(e) = sqlx::query("DELETE FROM benchmark_run WHERE id = ?")
@@ -679,7 +668,7 @@ pub async fn remove(
         .await
     {
         tracing::warn!("benchmark: could not remove run {id}: {e}");
-        return Ok(internal_error("history_unavailable"));
+        return Ok(super::respond::error(ntex::http::StatusCode::INTERNAL_SERVER_ERROR, "history_unavailable"));
     }
     // Best effort, and after the row: the record is what a user asked to be rid
     // of. A directory that survives this is one the run already cleaned up, or
@@ -688,7 +677,6 @@ pub async fn remove(
     cleanup(&row.run_dir, id, &app_state.remote_access.exec).await;
 
     Event::new(Kind::Machine, Action::Close, Outcome::Ok)
-        .subject(&gated.caller.username)
         .remote_ip(gated.remote_ip)
         .detail(format!("benchmark remove {id}"))
         .record(&app_state.db)

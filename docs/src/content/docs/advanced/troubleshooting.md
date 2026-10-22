@@ -72,7 +72,7 @@ Clearing app data or reinstalling removes anything that was not backed up. Use t
 ### Widgets or the Watch App do not update
 
 - Confirm that Monitor agent is running and reachable at the configured URL.
-- Check the Monitor username, password, certificate, and `allowInsecure` setting in the App.
+- Check the Monitor password, certificate, and `allowInsecure` setting in the App.
 - iOS decides when to refresh widgets. Wait for its next refresh, or remove and add the widget again.
 - On Android, tap the widget to refresh it. Open its configuration to confirm the selected server and metric.
 - The Watch App must be paired with an iPhone. After changing a server, open Server Box on the iPhone and wait for it to sync.

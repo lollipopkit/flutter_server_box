@@ -11,30 +11,46 @@
 //!   (the delta helpers in `types::`) — no mutable state is held
 //! - Units follow the data source: memory/disk in KiB (meminfo/df -k), network in bytes
 
+pub mod agents;
 pub mod arm;
 pub mod bench;
 pub mod bsd;
+pub mod cleanup;
 pub mod capabilities;
+pub mod command_risk;
+pub mod command_rules;
 pub mod commands;
 pub mod common;
 pub mod container;
+pub mod container_backup;
 pub mod desktop;
 pub mod files;
 pub mod firewall;
 pub mod cron;
 pub mod gpu;
+pub mod inference;
 pub mod iperf;
+pub mod kernel;
 pub mod linux;
+pub mod monitor_agent;
 pub mod output;
 pub mod proc;
+pub mod proxy;
 pub mod protocol;
 pub mod script;
 pub mod service;
+pub mod shares;
 pub mod smart;
 pub mod snippet;
+pub mod stack;
+pub mod storage;
+pub mod system;
+pub mod tailscale;
 pub mod tmux;
 pub mod types;
+pub mod ubuntu_pro;
 pub mod users;
+pub mod waf;
 pub mod windows;
 
 use std::collections::HashMap;

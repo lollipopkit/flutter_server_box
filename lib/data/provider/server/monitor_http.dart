@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -5,23 +7,68 @@ import 'package:dio/io.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:meta/meta.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/service/monitor_login_devices.dart';
 import 'package:server_box/core/utils/secure_endpoint.dart';
 import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/server/monitor_agent.dart';
 import 'package:server_box/data/model/server/monitor_backup.dart';
 import 'package:server_box/data/model/server/monitor_capabilities.dart';
+import 'package:server_box/data/model/server/monitor_desk_app.dart';
 import 'package:server_box/data/model/server/monitor_exec_output.dart';
-import 'package:server_box/data/model/server/monitor_grants.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/monitor_metrics.dart';
+import 'package:server_box/data/model/server/monitor_overview.dart';
 import 'package:server_box/data/model/server/monitor_push.dart';
 import 'package:server_box/data/model/server/monitor_settings.dart';
+import 'package:server_box/data/model/server/monitor_stack.dart';
 import 'package:server_box/src/rust/api/protocol.dart';
 
-/// Talks to one server's `monitor` HTTP API. One instance is owned per
-/// `ServerNotifier` (see `single.dart`), mirroring how `PveNotifier` owns its
-/// own `Dio` session in `pve.dart` — but simpler, since monitor is meant to
-/// be reached directly over HTTPS rather than tunneled through an SSH
-/// forward like PVE.
+/// A [MonitorHttpClient] shared by every holder of a lease on the same
+/// credential: one sign-in, one connection pool. The status poll, the Monitor
+/// tab, web apps and file browsers each hold one; the client goes with the
+/// last [release].
+final class MonitorClientLease {
+  MonitorClientLease(MonitorHttpCredential monitor) : _shared = _SharedClient.acquire(monitor);
+
+  final _SharedClient _shared;
+  var _released = false;
+
+  MonitorHttpClient get client => _shared.client;
+
+  /// Idempotent.
+  void release() {
+    if (_released) return;
+    _released = true;
+    _shared.release();
+  }
+}
+
+final class _SharedClient {
+  _SharedClient(this.monitor) : client = MonitorHttpClient(monitor);
+
+  static final _clients = <MonitorHttpCredential, _SharedClient>{};
+
+  final MonitorHttpCredential monitor;
+  final MonitorHttpClient client;
+  int _references = 0;
+
+  static _SharedClient acquire(MonitorHttpCredential monitor) {
+    final shared = _clients.putIfAbsent(monitor, () => _SharedClient(monitor));
+    shared._references++;
+    return shared;
+  }
+
+  void release() {
+    if (_references == 0) return;
+    _references--;
+    if (_references != 0) return;
+    if (identical(_clients[monitor], this)) _clients.remove(monitor);
+    client.dispose();
+  }
+}
+
+/// Talks to one server's `monitor` HTTP API. Long-lived users share one
+/// through [MonitorClientLease]; a short task (a dialog, a sync) makes its own.
 ///
 /// Holds the [MonitorHttpCredential] rather than the full
 /// `ServerConnectCredentialMonitorHttp`: nothing here needs the `Spi`, and a
@@ -44,6 +91,10 @@ class MonitorHttpClient {
   bool _protocolChecked = false;
   Future<void>? _loginFuture;
   bool _disposed = false;
+
+  /// Completes on [dispose]: a sign-in of this client others wait for stops
+  /// holding them (`MonitorLoginDevices.signingIn`).
+  final _abandoned = Completer<void>();
 
   String get _addr {
     final addr = monitor.addr.trim();
@@ -104,17 +155,27 @@ class MonitorHttpClient {
     });
   }
 
+  /// What this device is called in the agent's list of signed-in devices.
+  @visibleForTesting
+  static String get deviceName => 'ServerBox on ${Pfs.type.name} (${Platform.localHostname})';
+
   Future<void> _loginImpl() async {
     if (_disposed) return;
-    final user = monitor.user?.trim() ?? '';
     final pwd = monitor.pwd ?? '';
     try {
       await _checkProtocol();
       if (_disposed) return;
-      final resp = await _object(
-        '/api/v1/login',
-        post: {'username': user, 'password': pwd},
-      );
+      final resp = await MonitorLoginDevices.signingIn(abandoned: _abandoned.future, monitor.addr, (device) async {
+        final resp = await _object(
+          '/api/v1/login',
+          // TODO: drop `username` with `MonitorHttpCredential.legacyUser`.
+          post: {'username': ?monitor.legacyUser, 'password': pwd, 'device': ?device, 'name': deviceName},
+        );
+        if (resp['device'] case final String issued when issued.isNotEmpty) {
+          await MonitorLoginDevices.remember(monitor.addr, issued);
+        }
+        return resp;
+      });
       if (_disposed) return;
       final token = resp['token'] as String?;
       if (token == null || token.isEmpty) {
@@ -127,6 +188,13 @@ class MonitorHttpClient {
       _session().options.headers['Authorization'] = 'Bearer $token';
     } on DioException catch (e) {
       if (_disposed) return;
+      // An agent from before it had one account wants a user name, and its
+      // JSON extractor refuses a body without one before anything else.
+      // TODO: remove with `MonitorHttpCredential.legacyUser`.
+      final status = e.response?.statusCode;
+      if ((status == 400 || status == 422) && '${e.response?.data}'.contains('username')) {
+        throw MonitorHttpErr(type: MonitorHttpErrType.agentTooOld, message: l10n.monitorAgentTooOld);
+      }
       throw _toMonitorHttpErr(e);
     }
   }
@@ -310,9 +378,10 @@ class MonitorHttpClient {
   /// with no terminal to type it into. The agent caps output and running time
   /// and reports when it had to; see [MonitorExecOutput].
   ///
-  /// Answers 403 when the agent's `full_access` grant is off, which it
-  /// re-checks per request: what `/capabilities` said earlier decides what the
-  /// app *offers*, not what the agent allows.
+  /// Answers 403 when the agent refuses this connection (plaintext HTTP
+  /// without its `allow_insecure`), which it re-checks per request: what
+  /// `/capabilities` said earlier decides what the app *offers*, not what the
+  /// agent allows.
   Future<MonitorExecOutput> exec(
     String cmd, {
     String? stdin,
@@ -342,8 +411,8 @@ class MonitorHttpClient {
             throw const MonitorHttpErr(
               type: MonitorHttpErrType.notGranted,
               message:
-                  'The monitor agent refuses to run commands — full access is '
-                  'off in its config.',
+                  'The monitor agent refuses to run commands over this '
+                  'connection.',
             );
           case 404:
             throw MonitorHttpErr(
@@ -537,6 +606,101 @@ class MonitorHttpClient {
 
   // -------------------------------------------------------------- backup
   //
+  // `/api/v1/stacks*`: the web apps the agent deployed, any account.
+
+  /// The deployed web apps, in the agent's order.
+  Future<List<MonitorWebApp>> stacks() => _access(
+    () async => MonitorWebApp.deployed(await _object('/api/v1/stacks')),
+  );
+
+  /// A single-use ticket into web app [id] through the agent's proxy, which
+  /// a browser takes within seconds ([MonitorStackEntry.uri]).
+  Future<MonitorStackEntry> stackEnter(String id) => _access(
+    () async => MonitorStackEntry.fromJson(
+      await _object('/api/v1/stacks/${Uri.encodeComponent(id)}/enter', post: const {}),
+    ),
+  );
+
+  /// The agent's address, which a proxy without a host of its own shares.
+  Uri get agentUri => Uri.parse(_addr);
+
+  // ------------------------------------------------------------ desk apps
+  //
+  // `/api/v1/apps`: the apps installed on the agent's desk, any account.
+
+  /// The approved desk apps, in the agent's order.
+  Future<List<MonitorDeskApp>> deskApps() => _access(
+    () async => MonitorDeskApp.approved(await _object('/api/v1/apps')),
+  );
+
+  // ------------------------------------------------------------ overview
+  //
+  // What the Monitor tab reads beside the apps: the rules firing now, the
+  // notifications, the audit log, and what is signed in and open.
+
+  /// The monitoring rules firing at the agent's last check.
+  Future<MonitorAlerts> alerts() => _access(
+    () async => MonitorAlerts.fromJson(await _object('/api/v1/alerts')),
+  );
+
+  /// Whether a newer agent is released, and how this one is updated; with
+  /// [check], the agent reads its releases again first.
+  Future<MonitorUpdate> update({bool check = false}) => _access(
+    () async => MonitorUpdate.fromJson(await _object('/api/v1/update', query: {if (check) 'check': 1})),
+  );
+
+  /// Starts the agent's update (`POST /api/v1/update/run`): it runs apart
+  /// from the agent and outlives its restart; [update] then says how it goes.
+  /// [password] is sudo's, where the agent `needsPassword`.
+  Future<void> startUpdate({String? password}) => _access(() async {
+    await _session().post<dynamic>('/api/v1/update/run', data: {'password': ?password});
+  });
+
+  /// The newest [limit] notifications, and how many are unread.
+  Future<MonitorNotices> notices({int limit = 100}) => _access(
+    () async => MonitorNotices.fromJson(
+      await _object('/api/v1/desk/notifications', query: {'limit': limit}),
+    ),
+  );
+
+  /// Marks [ids] read, or every notification with [all].
+  Future<void> markNoticesRead({List<int> ids = const [], bool all = false}) => _access(() async {
+    await _session().post<dynamic>(
+      '/api/v1/desk/notifications/read',
+      data: {'ids': ids, 'all': all},
+    );
+  });
+
+  /// A page of the audit log, newest first: rows older than [before], of one
+  /// [kind] and [result] when given. Over a link the account may act on only.
+  Future<MonitorAuditPage> audit({int? before, String? kind, String? result, int limit = 100}) => _access(
+    () async => MonitorAuditPage.fromJson(
+      await _object(
+        '/api/v1/audit',
+        query: {'limit': limit, 'before': ?before, 'kind': ?kind, 'result': ?result},
+      ),
+    ),
+  );
+
+  /// Terminal sessions, connections, watch tokens and signed-in devices.
+  Future<MonitorLive> live() => _access(
+    () async => MonitorLive.fromJson(await _object('/api/v1/live')),
+  );
+
+  Future<void> endSession(String id) => _access(() async {
+    await _session().delete<dynamic>('/api/v1/live/sessions/${Uri.encodeComponent(id)}');
+  });
+
+  Future<void> endConnection(String id) => _access(() async {
+    await _session().delete<dynamic>('/api/v1/live/connections/${Uri.encodeComponent(id)}');
+  });
+
+  /// Forgets a signed-in device: its next sign-in is a new device's. It does
+  /// not sign it out; a new password does.
+  Future<void> forgetDevice(int id) => _access(() async {
+    await _session().delete<dynamic>('/api/v1/live/devices/$id');
+  });
+
   // `/api/v1/backup*`: opaque blobs the agent stores for this app's backup
   // sync. What is sent is already encrypted with the backup password, so the
   // agent holds bytes it cannot read. Admin accounts only.
@@ -630,7 +794,7 @@ class MonitorHttpClient {
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       final (type, message) = switch (status) {
-        403 => (MonitorHttpErrType.forbidden, l10n.monitorBackupAdminOnly),
+        403 => (MonitorHttpErrType.forbidden, l10n.funcNeedsAgentHttps(libL10n.backup)),
         404 => (MonitorHttpErrType.notFound, missing),
         409 => (MonitorHttpErrType.conflict, l10n.monitorBackupTooMany),
         413 => (
@@ -676,25 +840,9 @@ class MonitorHttpClient {
     });
   }
 
-  // ------------------------------------------------------------- accounts
+  // ------------------------------------------------------------- account
   //
-  // `/me`, `/users`, `/roles` — `docs/dev/monitor-permissions.md`. Every change
-  // of access carries the calling admin's own password, which the agent checks
-  // again; [currentPassword] is that, never the password being set.
-
-  /// Who this app is logged in as, and that account's role.
-  Future<({String username, MonitorRole role})> fetchMe() {
-    return _access(() async {
-      final resp = await _object('/api/v1/me');
-      final role = resp['role'];
-      return (
-        username: resp['username'] as String? ?? '',
-        role: role is Map<String, dynamic>
-            ? MonitorRole.fromJson(role)
-            : MonitorRole(name: role is String ? role : ''),
-      );
-    });
-  }
+  // One account, signed in with its password — `docs/dev/monitor-permissions.md`.
 
   /// Changes this account's own password. The app keeps logging in with the
   /// one it has stored, so a caller updates that as well.
@@ -713,96 +861,169 @@ class MonitorHttpClient {
     });
   }
 
-  Future<List<MonitorUser>> fetchUsers() {
-    return _access(() async {
-      return [
-        for (final item in await _list('/api/v1/users'))
-          MonitorUser.fromJson(item),
-      ];
-    });
-  }
+  // ---------------------------------------------------------------------------
+  // Agent mode (`/api/v1/agent*`)
 
-  Future<void> createUser({
-    required String username,
-    required String password,
-    required String role,
-    required String currentPassword,
-  }) {
-    return _access(() async {
-      await _session().post<dynamic>(
-        '/api/v1/users',
-        data: {
-          'username': username,
-          'password': password,
-          'role': role,
-          'current_password': currentPassword,
+  /// The account's tasks, newest change first: [limit] of them after the
+  /// cursor [before] (a page's `next`), only those whose title or last line
+  /// has [query]; every one without a [limit]. An agent from before paging
+  /// ignores the three and answers them all, with no `next`.
+  Future<MonitorAgentFlows> agentFlows({int? limit, String? before, String? query}) => _access(
+    () async => MonitorAgentFlows.fromJson(
+      await _object(
+        '/api/v1/agent/flows',
+        query: {'limit': ?limit, 'before': ?before, if (query != null && query.isNotEmpty) 'q': query},
+      ),
+    ),
+  );
+
+  /// Task [id] with its conversation.
+  Future<MonitorAgentDetail> agentFlow(String id) => _access(
+    () async => MonitorAgentDetail.fromJson(
+      await _object('/api/v1/agent/flows/${Uri.encodeComponent(id)}'),
+    ),
+  );
+
+  /// Starts a task; [mode] null is the admin's default, [model] and
+  /// [thinkingLevel] null the machine's. [files] are upload ids
+  /// ([agentUpload]).
+  Future<MonitorAgentFlow> agentStart(
+    String prompt, {
+    String? mode,
+    List<String> files = const [],
+    MonitorAgentModel? model,
+    String? thinkingLevel,
+  }) => _access(
+    () async => MonitorAgentFlow.fromJson(
+      await _object(
+        '/api/v1/agent/flows',
+        post: {
+          'prompt': prompt,
+          'mode': ?mode,
+          if (files.isNotEmpty) 'files': files,
+          'model': ?model?.toJson(),
+          'thinkingLevel': ?thinkingLevel,
         },
-      );
-    });
-  }
+      ),
+    ),
+  );
 
-  /// [role] and [password] only where given: the other is left as it is.
-  Future<void> updateUser(
-    String username, {
-    String? role,
-    String? password,
-    required String currentPassword,
-  }) {
-    return _access(() async {
-      await _session().put<dynamic>(
-        '/api/v1/users/${Uri.encodeComponent(username)}',
-        data: {
-          'role': ?role,
-          'password': ?password,
-          'current_password': currentPassword,
+  /// Says [text] to task [id]: the next turn while it runs, an edit or an
+  /// answer while it waits, a new run once it is done. [files] are upload ids
+  /// ([agentUpload]); [model] and [thinkingLevel] hold from then on.
+  Future<MonitorAgentFlow> agentReply(
+    String id,
+    String text, {
+    List<String> files = const [],
+    MonitorAgentModel? model,
+    String? thinkingLevel,
+  }) => _access(
+    () async => MonitorAgentFlow.fromJson(
+      await _object(
+        '/api/v1/agent/flows/${Uri.encodeComponent(id)}/reply',
+        post: {
+          'text': text,
+          if (files.isNotEmpty) 'files': files,
+          'model': ?model?.toJson(),
+          'thinkingLevel': ?thinkingLevel,
         },
+      ),
+    ),
+  );
+
+  /// What a task may run with: the models and thinking levels there are.
+  Future<MonitorAgentChoices> agentChoices() => _access(
+    () async => MonitorAgentChoices.fromJson(await _object('/api/v1/agent/choices')),
+  );
+
+  /// The most one attachment may be, as the agent takes it.
+  static const agentUploadMax = 20 << 20;
+
+  /// Sends [file] for a task the next message names; answers its id. Read
+  /// as it is sent, not held whole.
+  Future<String> agentUpload(File file, {String? mime}) async {
+    final size = await file.length();
+    if (size > agentUploadMax) {
+      throw const MonitorHttpErr(type: MonitorHttpErrType.badRequest, message: 'tooLarge');
+    }
+    final name = file.uri.pathSegments.lastOrNull ?? 'file';
+    // An image goes to the model as one only under its own type.
+    final type = mime ?? await file.mimeType ?? 'application/octet-stream';
+    return _access(() async {
+      final resp = await _session().post<dynamic>(
+        '/api/v1/agent/files',
+        queryParameters: {'name': name},
+        data: file.openRead(),
+        options: Options(
+          headers: {
+            Headers.contentLengthHeader: size,
+            Headers.contentTypeHeader: type,
+          },
+        ),
       );
+      final id = resp.data is Map ? resp.data['id'] : null;
+      if (id is! String) {
+        throw const MonitorHttpErr(type: MonitorHttpErrType.invalidResponse, message: 'No id in /api/v1/agent/files response');
+      }
+      return id;
     });
   }
 
-  Future<void> deleteUser(String username, {required String currentPassword}) {
-    return _access(() async {
-      await _session().delete<dynamic>(
-        '/api/v1/users/${Uri.encodeComponent(username)}',
-        data: {'current_password': currentPassword},
+  /// Answers what task [id] waits on: [action] with what it needs (`text`,
+  /// `index`, `password` and `remember`, `confirm`).
+  Future<void> agentAnswer(String id, Map<String, Object?> answer) => _access(() async {
+    await _session().post<dynamic>('/api/v1/agent/flows/${Uri.encodeComponent(id)}/answer', data: answer);
+  });
+
+  Future<void> agentStop(String id) => _access(() async {
+    await _session().post<dynamic>('/api/v1/agent/flows/${Uri.encodeComponent(id)}/stop');
+  });
+
+  Future<void> agentDelete(String id) => _access(() async {
+    await _session().delete<dynamic>('/api/v1/agent/flows/${Uri.encodeComponent(id)}');
+  });
+
+  /// The account's Agent mode events (`flow`, `removed`, `pending`, `output`,
+  /// `event`, `resync`), until the agent ends the stream or the
+  /// subscription is cancelled. The agent pings every 25 s, so a stream
+  /// silent for longer than [_eventsSilence] is gone.
+  Stream<Map<String, dynamic>> agentEvents() async* {
+    final body = await _authed(() async {
+      final resp = await _session().get<ResponseBody>(
+        '/api/v1/agent/events',
+        options: Options(responseType: ResponseType.stream, receiveTimeout: _eventsSilence),
       );
+      return resp.data;
     });
+    if (body == null) return;
+    var pending = '';
+    await for (final chunk in body.stream.cast<List<int>>().transform(utf8.decoder)) {
+      pending += chunk.replaceAll('\r\n', '\n');
+      for (var end = pending.indexOf('\n\n'); end >= 0; end = pending.indexOf('\n\n')) {
+        final frame = pending.substring(0, end);
+        pending = pending.substring(end + 2);
+        if (sseData(frame) case final e?) yield e;
+      }
+    }
   }
 
-  Future<List<MonitorRole>> fetchRoles() {
-    return _access(() async {
-      return [
-        for (final item in await _list('/api/v1/roles'))
-          MonitorRole.fromJson(item),
-      ];
-    });
-  }
+  static const _eventsSilence = Duration(seconds: 75);
 
-  Future<void> createRole(MonitorRole role, {required String currentPassword}) {
-    return _access(() async {
-      await _session().post<dynamic>(
-        '/api/v1/roles',
-        data: {'role': role.toJson(), 'current_password': currentPassword},
-      );
-    });
-  }
-
-  Future<void> updateRole(MonitorRole role, {required String currentPassword}) {
-    return _access(() async {
-      await _session().put<dynamic>(
-        '/api/v1/roles/${Uri.encodeComponent(role.name)}',
-        data: {'role': role.toJson(), 'current_password': currentPassword},
-      );
-    });
-  }
-
-  Future<void> deleteRole(String name, {required String currentPassword}) {
-    return _access(() async {
-      await _session().delete<dynamic>(
-        '/api/v1/roles/${Uri.encodeComponent(name)}',
-        data: {'current_password': currentPassword},
-      );
-    });
+  /// The JSON object an event-stream frame carries in its `data:` lines; null
+  /// for a comment (`: ping`) or anything else.
+  @visibleForTesting
+  static Map<String, dynamic>? sseData(String frame) {
+    final data = [
+      for (final line in const LineSplitter().convert(frame))
+        if (line.startsWith('data:')) line.substring(5).trimLeft(),
+    ].join('\n');
+    if (data.isEmpty) return null;
+    try {
+      final v = json.decode(data);
+      return v is Map<String, dynamic> ? v : null;
+    } on FormatException {
+      return null;
+    }
   }
 
   /// [fn] with the agent's refusals typed — see [accessErr]. A 401 still
@@ -819,16 +1040,16 @@ class MonitorHttpClient {
     });
   }
 
-  /// What an account or role request's refusal means, from its status and the
-  /// agent's `{"error": code, "message": ...}` body; null for a 401 and for
-  /// anything that is not one of these.
+  /// What a refusal means, from its status and the agent's
+  /// `{"error": code, "message": ...}` body; null for a 401 and for anything
+  /// that is not one of these.
   @visibleForTesting
   static MonitorHttpErr? accessErr(int? status, Object? body) {
     final code = body is Map ? body['error'] : null;
     final said = body is Map ? body['message'] : null;
     final type = switch ((status, code)) {
       (403, 'reauth') => MonitorHttpErrType.reauth,
-      (409, 'last_admin') => MonitorHttpErrType.lastAdmin,
+      (403, 'sudo_password') => MonitorHttpErrType.sudoRefused,
       (409, _) => MonitorHttpErrType.conflict,
       (403, _) => MonitorHttpErrType.forbidden,
       (404, _) => MonitorHttpErrType.notFound,
@@ -839,16 +1060,6 @@ class MonitorHttpClient {
     return MonitorHttpErr(
       type: type,
       message: said is String && said.isNotEmpty ? said : '$status $code',
-    );
-  }
-
-  /// A JSON array of objects from [path].
-  Future<List<Map<String, dynamic>>> _list(String path) async {
-    final data = (await _session().get<dynamic>(path)).data;
-    if (data is List) return [for (final e in data) if (e is Map<String, dynamic>) e];
-    throw MonitorHttpErr(
-      type: MonitorHttpErrType.invalidResponse,
-      message: '$path answered with ${data.runtimeType}, not a JSON array',
     );
   }
 
@@ -907,27 +1118,20 @@ class MonitorHttpClient {
   /// — the address is the operator's own network and there is no reason to
   /// write it into every access log between here and the agent. See
   /// `MonitorTunnelChannel` for the protocol spoken over it.
-  ///
-  /// `remote_access.full_access` authorises it, the same grant as the terminal:
-  /// whoever can open a shell can `ssh -L` from it, so a separate switch would
-  /// withhold nothing.
   Future<WebSocket> openStream({Duration? timeout}) =>
       _openWs(timeout: timeout, purpose: 'stream', path: '/api/v1/stream/ws');
 
   /// Opens the agent's listener endpoint and returns the raw WebSocket: the
   /// control socket of a remote port forward. See `MonitorRemoteListener` for
   /// the protocol spoken over it.
-  ///
-  /// The same `full_access` grant as [openStream], since a connection the
-  /// listener takes is claimed over the relay.
   Future<WebSocket> openListen({Duration? timeout}) =>
       _openWs(timeout: timeout, purpose: 'listen', path: '/api/v1/listen/ws');
 
   /// What this agent will accept right now, and what it runs on.
   ///
   /// Reports what the agent will *do*, not what its config asks for — the
-  /// transport check is already folded into `terminal`, so a caller can hide
-  /// an entry rather than offer one that answers 403.
+  /// transport check is already folded into `access`, so a caller can hide an
+  /// entry rather than offer one that answers 403.
   Future<MonitorCapabilities> fetchCapabilities() {
     return _authed(() async {
       return MonitorCapabilities.fromJson(
@@ -995,11 +1199,10 @@ class MonitorHttpClient {
       try {
         resp = await _object('/api/v1/ws-ticket', post: {'purpose': purpose});
       } on DioException catch (e) {
-        // The agent mints a ticket only for an endpoint it will serve, so a
-        // 403 here is its grant speaking (`full access not available`,
-        // `terminal not available`) — what a caller that has not read
-        // `/capabilities` yet learns instead, and must be able to tell from a
-        // link that failed.
+        // The agent mints a ticket only over a connection it serves, so a 403
+        // here is its transport check speaking — what a caller that has not
+        // read `/capabilities` yet learns instead, and must be able to tell
+        // from a link that failed.
         if (e.response?.statusCode != 403) rethrow;
         final body = e.response?.data;
         final said = body is Map ? body['error'] : null;
@@ -1044,6 +1247,7 @@ class MonitorHttpClient {
 
   void dispose() {
     _disposed = true;
+    if (!_abandoned.isCompleted) _abandoned.complete();
     _dio?.close(force: true);
     _dio = null;
     _token = null;
@@ -1060,27 +1264,26 @@ class MonitorHttpClient {
         e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.sendTimeout ||
         e.type == DioExceptionType.receiveTimeout) {
+      // The cause, not Dio's paragraph about it.
       return MonitorHttpErr(
         type: MonitorHttpErrType.net,
-        message: e.toString(),
+        message: '${e.error ?? e.message ?? e.type.name}',
       );
     }
-    if (e.response?.statusCode == 401) {
-      return MonitorHttpErr(
-        type: MonitorHttpErrType.auth,
-        message: e.toString(),
-      );
+    final status = e.response?.statusCode;
+    final data = e.response?.data;
+    final said = data is Map ? data['message'] ?? data['error'] : null;
+    final message = [
+      if (status != null) 'HTTP $status',
+      if (said is String && said.isNotEmpty) said else ?e.message,
+    ].join(': ');
+    if (status == 401) {
+      return MonitorHttpErr(type: MonitorHttpErrType.auth, message: message);
     }
-    if (e.response?.statusCode == 426) {
-      return MonitorHttpErr(
-        type: MonitorHttpErrType.clientTooOld,
-        message: e.toString(),
-      );
+    if (status == 426) {
+      return MonitorHttpErr(type: MonitorHttpErrType.clientTooOld, message: message);
     }
-    return MonitorHttpErr(
-      type: MonitorHttpErrType.unknown,
-      message: e.toString(),
-    );
+    return MonitorHttpErr(type: MonitorHttpErrType.unknown, message: message);
   }
 }
 

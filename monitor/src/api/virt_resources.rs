@@ -37,7 +37,6 @@ use super::machine;
 use super::server::AppState;
 use super::virt::{Backend, PowerResponse, backend, run_libvirt};
 use super::ws::audit::{Action, Event, Kind, Outcome};
-use crate::core::permissions::Grant;
 
 #[derive(Deserialize, Default)]
 pub struct HostRequest {
@@ -72,7 +71,7 @@ pub async fn storage(
     body: Option<web::types::Json<HostRequest>>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    if let Err(refused) = machine::gate(&req, &state, Grant::Virt, "virt storage").await {
+    if let Err(refused) = machine::gate(&req, &state, "virt storage").await {
         return Ok(refused);
     }
     let request = body.map(|b| b.into_inner()).unwrap_or_default();
@@ -112,7 +111,7 @@ pub async fn volumes(
     body: web::types::Json<VolumesRequest>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    if let Err(refused) = machine::gate(&req, &state, Grant::Virt, "virt volumes").await {
+    if let Err(refused) = machine::gate(&req, &state, "virt volumes").await {
         return Ok(refused);
     }
     let request = body.into_inner();
@@ -141,7 +140,7 @@ pub async fn networks(
     body: Option<web::types::Json<HostRequest>>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    if let Err(refused) = machine::gate(&req, &state, Grant::Virt, "virt networks").await {
+    if let Err(refused) = machine::gate(&req, &state, "virt networks").await {
         return Ok(refused);
     }
     let request = body.map(|b| b.into_inner()).unwrap_or_default();
@@ -172,13 +171,12 @@ pub async fn manage(
 ) -> Result<HttpResponse, web::Error> {
     let request = body.into_inner();
     let what = format!("virt {}", request.change.describe());
-    let gated = match machine::gate(&req, &state, Grant::Virt, &what).await {
+    let gated = match machine::gate(&req, &state, &what).await {
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),
     };
     let record = |outcome, why: Option<&str>| {
         Event::new(Kind::Machine, if why.is_some() { Action::Close } else { Action::Open }, outcome)
-            .subject(&gated.caller.username)
             .remote_ip(gated.remote_ip.clone())
             .detail(match why {
                 Some(why) => format!("{what}: {why}"),

@@ -48,7 +48,6 @@ void main() {
     client = MonitorHttpClient(
       MonitorHttpCredential(
         addr: 'http://127.0.0.1:${server.port}',
-        user: 'admin',
         pwd: 'pw',
       ),
     );

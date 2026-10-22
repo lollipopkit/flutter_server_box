@@ -56,7 +56,7 @@ void main() {
   Spi monitorServer(String id, String addr) => Spi(
     id: id,
     name: id,
-    monitorHttp: MonitorHttpCredential(addr: addr, user: 'admin', pwd: 'x'),
+    monitorHttp: MonitorHttpCredential(addr: addr, pwd: 'x'),
   );
 
   /// Runs [body] with every `HttpClient` replaced by one that never answers.
@@ -81,7 +81,6 @@ void main() {
       final after = before.copyWith(
         monitorHttp: const MonitorHttpCredential(
           addr: movedAddr,
-          user: 'admin',
           pwd: 'x',
         ),
       );

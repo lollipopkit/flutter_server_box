@@ -64,7 +64,7 @@ Watch App 中服务器页面按名称排序，与 App 中服务器列表的顺�
 ### 小组件或 Watch App 不更新
 
 - 确认 Monitor agent 正在运行，且配置地址可访问。
-- 检查 App 中保存的 Monitor 用户名、密码、证书和 `allowInsecure` 设置。
+- 检查 App 中保存的 Monitor 密码、证书和 `allowInsecure` 设置。
 - iOS 系统决定刷新时间。请等待下次刷新，或删除后重新添加小组件。
 - 点击 Android 小组件可手动刷新；打开其配置页确认服务器和指标选择。
 - Watch 必须与 iPhone 配对。更改服务器设置后，在 iPhone 上打开 Server Box 并等待同步。

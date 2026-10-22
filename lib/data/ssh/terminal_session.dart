@@ -15,7 +15,7 @@ import 'package:server_box/core/utils/monitor_terminal.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/data/model/app/error.dart';
-import 'package:server_box/data/model/server/monitor_remote_access.dart';
+import 'package:server_box/data/model/server/monitor_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/provider/server/monitor_http.dart';
@@ -36,16 +36,16 @@ import 'package:xterm/core.dart';
 /// the terminal onto it.
 ///
 /// A preference the agent will not honour is not honoured into a dead end:
-/// without both the terminal and `full_access` grants this answers false and
+/// with an agent whose access is refused ([MonitorAccess.ok]) this answers false and
 /// SSH carries the session, the same way [Spix.transport] ignores a preference
 /// for a transport that is not configured.
 ///
 /// [granted] is a hint from the status poller. The terminal fetches current
 /// capabilities itself when it opens a new connection.
-bool serverShellUsesAgent(Spi spi, MonitorRemoteAccess? granted) {
+bool serverShellUsesAgent(Spi spi, MonitorAccess? granted) {
   if (spi.monitorOn == null) return false;
   if (spi.transport != ServerTransport.monitorHttp) return false;
-  return granted?.fullAccess == true && granted?.terminal == true;
+  return granted?.ok == true;
 }
 
 /// The monitor answered, but it cannot open a shell for this server.
@@ -191,7 +191,7 @@ class TerminalSession {
   /// A monitor-only server has none — its shell is opened lazily and is the
   /// agent's own PTY — so this is where the two diverge without the caller
   /// having to know which it got.
-  void adopt(SSHClient? client, {MonitorRemoteAccess? granted}) {
+  void adopt(SSHClient? client, {MonitorAccess? granted}) {
     if (_backend != null) return;
     // A console is opened for itself, by [connect]: nobody else holds one.
     if (source is ConsoleSource) return;
@@ -228,7 +228,7 @@ class TerminalSession {
   /// [context] is only for interactive authentication; the navigator's own is
   /// used when there is no page in front of this session.
   Future<ShellBackend> connect({
-    MonitorRemoteAccess? granted,
+    MonitorAccess? granted,
     BuildContext? context,
   }) async {
     final closes = _closes;
@@ -293,12 +293,11 @@ class TerminalSession {
     if (server.transport == ServerTransport.monitorHttp && monitor != null) {
       final client = MonitorHttpClient(monitor);
       try {
-        currentGrant = (await client.fetchCapabilities()).remoteAccess;
+        currentGrant = (await client.fetchCapabilities()).access;
       } on MonitorHttpErr {
         // A known grant can still be attempted: the terminal endpoint checks
         // permission again. SSH remains the fallback when it is enabled.
-        if ((granted?.fullAccess != true || granted?.terminal != true) &&
-            server.sshOn == null) {
+        if (granted?.ok != true && server.sshOn == null) {
           rethrow;
         }
       } finally {
@@ -352,7 +351,7 @@ class TerminalSession {
   }
 
   /// The agent's own shell, when [serverShellUsesAgent] says it is the one.
-  ShellBackend? _grantedBackend(MonitorRemoteAccess? granted) {
+  ShellBackend? _grantedBackend(MonitorAccess? granted) {
     final spi = this.spi;
     if (spi == null || !serverShellUsesAgent(spi, granted)) return null;
     final monitor = spi.monitor;
@@ -362,14 +361,23 @@ class TerminalSession {
 
   // — Shells ————————————————————————————————————————————————————————
 
-  Future<ShellSession?> openShell() => switch (_backend) {
-    final backend? => backend.openShell(
-      width: terminal.viewWidth,
-      height: terminal.viewHeight,
-      environment: environment,
-    ),
-    null => Future.value(),
-  };
+  Future<ShellSession?> openShell() async {
+    final shell = await switch (_backend) {
+      final backend? => backend.openShell(
+        width: terminal.viewWidth,
+        height: terminal.viewHeight,
+        environment: environment,
+      ),
+      null => Future<ShellSession?>.value(),
+    };
+    if (shell != null) {
+      // A new shell: where the last one was says nothing about it.
+      _shellOpenedAt = DateTime.now();
+      _workingDirectory = null;
+      _osc7Host = null;
+    }
+    return shell;
+  }
 
   /// Runs [command] on a channel of its own. Only where [canExec] says so.
   Future<ShellSession?> execute(String command) => switch (_backend) {
@@ -403,7 +411,51 @@ class TerminalSession {
     status.shell.apply(event);
   }
 
+  /// The shell's working directory, as its last OSC 7 said (`file://host/path`,
+  /// what fish, zsh and VTE's bash hook send on each prompt). Null until one
+  /// says, and for a shell that never does.
+  String? get workingDirectory => _workingDirectory;
+  String? _workingDirectory;
+
+  /// The host the shell's first OSC 7 named. A report from another is a
+  /// shell further away (an `ssh` typed into this one), whose paths are not
+  /// this server's.
+  String? _osc7Host;
+
+  /// When [openShell] last opened one (see [shellAge]).
+  DateTime? _shellOpenedAt;
+
+  /// How long ago [openShell] opened the shell on screen: how the system's
+  /// list of the account's shells is matched to it
+  /// (`sbm_parser::files::terminal_shell_cwd`). Null without one, and under
+  /// tmux, whose panes are its server's shells.
+  Duration? get shellAge {
+    final opened = _shellOpenedAt;
+    if (opened == null || _foreground is TmuxControlShellSession) return null;
+    return DateTime.now().difference(opened);
+  }
+
+  /// The host and path of an OSC 7 report, or null for one that is not a
+  /// `file:` URL with an absolute path.
+  @visibleForTesting
+  static ({String host, String path})? osc7Report(List<String> args) {
+    final uri = Uri.tryParse(args.join(';'));
+    if (uri == null || uri.scheme != 'file') return null;
+    if (!uri.path.startsWith('/')) return null;
+    // Decoded: the shells percent-encode what a URL cannot hold (a space).
+    return (host: uri.host, path: Uri.decodeComponent(uri.path));
+  }
+
   void _handlePrivateOSC(String code, List<String> args) {
+    if (code == '7') {
+      final report = osc7Report(args);
+      if (report == null) return;
+      final host = _osc7Host ??= report.host;
+      // Another host: the directory there is not this server's, and where
+      // this shell is stays unknown until it reports again.
+      _workingDirectory = report.host == host ? report.path : null;
+      return;
+    }
     // Selection and payload; base64 has no `;`, so more fields are malformed.
     // xterm bounds the sequence itself (`EscapeParser.maxOscLength`).
     if (code != '52' || args.length != 2) return;

@@ -411,3 +411,85 @@ pub fn atomic_write_command(path: &str) -> String {
         quote(&operand(path))
     )
 }
+
+/// Lists this account's terminal shells (session leaders on a terminal, as
+/// sshd and the agent's PTY start them), each with its start time and working
+/// directory, and the clock to read the start times by. Run on a channel of
+/// its own, never typed into the terminal; its own session is left out.
+/// Linux (`/proc`); elsewhere it lists nothing.
+const TERMINAL_SHELLS_SCRIPT: &str = r#"t=$(getconf CLK_TCK 2>/dev/null || echo 100)
+read -r up _ < /proc/uptime || exit 0
+me=$(cut -d')' -f2 /proc/$$/stat | awk '{print $4}')
+for d in /proc/[0-9]*; do
+  [ -O "$d" ] || continue
+  s=$(cat "$d/stat" 2>/dev/null) || continue
+  p=${d#/proc/}
+  s=${s##*) }
+  set -- $s
+  [ "$4" = "$p" ] && [ "$5" != 0 ] && [ "$p" != "$me" ] || continue
+  c=$(readlink "$d/cwd" 2>/dev/null) || continue
+  printf 'shell %s %s\n' "${20}" "$c"
+done
+printf 'clock %s %s\n' "$up" "$t"
+"#;
+
+/// [`TERMINAL_SHELLS_SCRIPT`] as one command, whatever the login shell is
+/// (an exec channel hands it to the account's shell, which may be fish).
+pub fn terminal_shells_command() -> String {
+    format!("sh -c {}", crate::script::shell_quote_unix(TERMINAL_SHELLS_SCRIPT))
+}
+
+/// The working directory of the shell in [`terminal_shells_command`]'s
+/// output that started `age_secs` ago (the terminal's own, by when it was
+/// opened). `None` without one within a few seconds of it, or with two too
+/// close to tell apart.
+pub fn terminal_shell_cwd(output: &str, age_secs: f64) -> Option<String> {
+    const WITHIN: f64 = 5.0;
+    const APART: f64 = 1.0;
+    let mut clock = None;
+    let mut shells = Vec::new();
+    for line in output.lines().map(|l| l.trim_end_matches('\r')) {
+        if let Some(rest) = line.strip_prefix("clock ") {
+            let (up, tick) = rest.split_once(' ')?;
+            clock = Some((up.parse::<f64>().ok()?, tick.trim().parse::<f64>().ok().filter(|t| *t > 0.0)?));
+        } else if let Some(rest) = line.strip_prefix("shell ") {
+            let Some((start, cwd)) = rest.split_once(' ') else { continue };
+            let Ok(start) = start.parse::<f64>() else { continue };
+            if cwd.starts_with('/') && !cwd.ends_with(" (deleted)") {
+                shells.push((start, cwd));
+            }
+        }
+    }
+    let (up, tick) = clock?;
+    let mut near: Vec<(f64, &str)> = shells
+        .into_iter()
+        .map(|(start, cwd)| (((up - start / tick) - age_secs).abs(), cwd))
+        .filter(|(off, _)| *off <= WITHIN)
+        .collect();
+    near.sort_by(|a, b| a.0.total_cmp(&b.0));
+    match near.as_slice() {
+        [(_, cwd)] => Some((*cwd).to_string()),
+        [(a, cwd), (b, _), ..] if b - a > APART => Some((*cwd).to_string()),
+        _ => None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_terminal_shell_is_the_one_opened_as_long_ago() {
+        // Uptime 1000 s at 100 ticks: started 970 s and 600 s into it.
+        let out = "shell 97000 /srv/app\r\nshell 60000 /home/lk\nshell 97050 /tmp/gone (deleted)\nclock 1000.00 100\n";
+        assert_eq!(terminal_shell_cwd(out, 31.0).as_deref(), Some("/srv/app"));
+        assert_eq!(terminal_shell_cwd(out, 400.0).as_deref(), Some("/home/lk"));
+        // None near enough.
+        assert_eq!(terminal_shell_cwd(out, 120.0), None);
+        // Two opened within a second of each other: not guessed.
+        let twins = "shell 97000 /a\nshell 97050 /b\nclock 1000 100\n";
+        assert_eq!(terminal_shell_cwd(twins, 30.0), None);
+        // A system without /proc answers no clock.
+        assert_eq!(terminal_shell_cwd("", 1.0), None);
+    }
+}

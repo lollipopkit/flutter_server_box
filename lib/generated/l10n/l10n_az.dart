@@ -1358,38 +1358,6 @@ class AppLocalizationsAz extends AppLocalizations {
       'Qalanları üfüqi sürüşdürmə ilə açılan ayrıca səhifədə yerləşir.';
 
   @override
-  String get keyArrowDown => 'Aşağı ox';
-
-  @override
-  String get keyArrowLeft => 'Sol ox';
-
-  @override
-  String get keyArrowRight => 'Sağ ox';
-
-  @override
-  String get keyArrowUp => 'Yuxarı ox';
-
-  @override
-  String get keyControl => 'Control';
-
-  @override
-  String get keyEscape => 'Escape';
-
-  @override
-  String get keyPageDown => 'Səhifə aşağı';
-
-  @override
-  String get keyPageUp => 'Səhifə yuxarı';
-
-  @override
-  String get termTextView => 'Mətn kimi bax';
-
-  @override
-  String termTextLetGo(int count) {
-    return 'Artıq saxlanmayan əvvəlki sətirlər: $count';
-  }
-
-  @override
   String get waitConnection => 'Əlaqə qurulana qədər gözlə.';
 
   @override
@@ -2123,44 +2091,9 @@ class AppLocalizationsAz extends AppLocalizations {
       'Mövcud parolu saxlamaq üçün parolu boş saxlayın.';
 
   @override
-  String get systemGroups => 'Qruplar';
-
-  @override
-  String get userGid => 'GID';
-
-  @override
-  String get userGroupMembers => 'Üzvlər';
-
-  @override
-  String get userPrimaryMembers => 'Əsas üzvlər';
-
-  @override
-  String get userSystemGroup => 'Sistem qrupu';
-
-  @override
-  String get userMembersHint => 'alice,bob';
-
-  @override
-  String get userRegularGroup => 'Regular';
-
-  @override
   String funcUnavailableFmt(String func) {
     return '$func bu serverin bağlantı üsulunda mövcud deyil.';
   }
-
-  @override
-  String funcNeedsAgentGrant(String func, String setting) {
-    return '$func üçün Monitor agent-də $setting aktiv edilməlidir.';
-  }
-
-  @override
-  String funcNeedsAgentUpdate(String func) {
-    return '$func üçün daha yeni Monitor agent lazımdır.';
-  }
-
-  @override
-  String get portForwardRemoteNeedsAgent =>
-      'Monitor agent vasitəsilə uzaq yönləndirmələr daha yeni agent tələb edir: serverdə onu yeniləyin.';
 
   @override
   String get rangeLive => 'Canlı';
@@ -2829,7 +2762,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get monitorNoRemoteAccess =>
-      'Bu agent yalnız monitorinq üçündür. Buradan terminal aça, əmrlər işlədə və fayllara baxa bilməzsiniz. Bu funksiyaları aktivləşdirmək üçün agentin config.toml faylında [remote_access] bölməsini redaktə edin.';
+      'Bu agent şifrələnməmiş HTTP üzərindən monitorinqdən başqa hər şeyi rədd edir. HTTPS ilə qoşulun və ya HTTP-yə həm agent-də ([remote_access] allow_insecure), həm də bu tətbiqdə icazə verin.';
 
   @override
   String get monitorAgentTooOld =>
@@ -5115,35 +5048,12 @@ class AppLocalizationsAz extends AppLocalizations {
   String get copyLink => 'Keçidi kopyala';
 
   @override
-  String funcNeedsAgentPermission(String func) {
-    return 'Bu Monitor agent-dəki hesabınızın $func üçün icazəsi yoxdur. Agent-in adminindən istəyin.';
-  }
-
-  @override
   String funcNeedsAgentHttps(String func) {
     return '$func bu Monitor agent-ə HTTPS və ya həm agent-də, həm də bu tətbiqdə icazə verilmiş HTTP tələb edir.';
   }
 
   @override
-  String funcNeedsAgentSetup(String func) {
-    return '$func bu Monitor agent-də qurulmayıb; onun operatoru konfiqurasiya etməlidir.';
-  }
-
-  @override
-  String get monitorFilesReadOnly =>
-      'Yalnız oxuma: bu hesab agent-dəki faylları gözdən keçirə bilər, amma dəyişə bilməz.';
-
-  @override
   String get monitorAccess => 'Giriş';
-
-  @override
-  String get monitorAccounts => 'Hesablar';
-
-  @override
-  String get monitorRoles => 'Rollar';
-
-  @override
-  String get monitorRole => 'Rol';
 
   @override
   String get monitorChangePassword => 'Şifrəni dəyiş';
@@ -5155,10 +5065,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String get monitorCurrentPassword => 'Hazırkı şifrəniz';
 
   @override
-  String get monitorReauthTip =>
-      'Girişi dəyişmək üçün şifrəniz yenidən tələb olunur.';
-
-  @override
   String get monitorPasswordTooShort => 'Ən azı 8 simvol';
 
   @override
@@ -5166,80 +5072,6 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get monitorErrReauth => 'Şifrəniz yanlış idi.';
-
-  @override
-  String get monitorErrLastAdmin =>
-      'Agent-in ən azı bir admin hesabı olmalıdır.';
-
-  @override
-  String get monitorErrConflict => 'Artıq mövcuddur və ya hələ istifadədədir.';
-
-  @override
-  String get monitorErrForbidden => 'Bunu yalnız admin edə bilər.';
-
-  @override
-  String get monitorRoleNameRule =>
-      'Kiçik hərflər, rəqəmlər, - və _, 32 simvola qədər';
-
-  @override
-  String get monitorGrantShell => 'Shell və əmrlər';
-
-  @override
-  String get monitorGrantShellTip =>
-      'Terminal, proseslər, xidmətlər, konteynerlər, snippet-lər, enerji — agent hesabı ilə';
-
-  @override
-  String get monitorGrantSshTerminal => 'SSH üzərindən panel terminalı';
-
-  @override
-  String get monitorGrantVirt => 'Virtuallaşdırma';
-
-  @override
-  String get monitorGrantVirtTip =>
-      'Agentin veb panelində qoşulduğu Proxmox VE, libvirt və BMC-lər';
-
-  @override
-  String get monitorGrantFiles => 'Fayllar';
-
-  @override
-  String get monitorGrantConnect => 'Çıxan bağlantılar';
-
-  @override
-  String get monitorGrantConnectTip =>
-      'Lokal və dinamik port yönləndirmələri, uzaq masaüstü';
-
-  @override
-  String get monitorGrantConnectAllow =>
-      'İcazə verilən hədəflər (IP və ya CIDR, istəyə görə :port və ya :başlanğıc-son; hər sətirdə bir, boş = hər yer)';
-
-  @override
-  String get monitorGrantListen => 'Serverdə dinlə';
-
-  @override
-  String get monitorGrantListenTip => 'Uzaq port yönləndirmələri';
-
-  @override
-  String get monitorGrantListenPublic => 'Loopback olmayan ünvanlar';
-
-  @override
-  String get monitorGrantPorts => 'Port aralığı (boş = istənilən)';
-
-  @override
-  String get monitorGrantOff => 'Söndürülüb';
-
-  @override
-  String get monitorBuiltin => 'Daxili';
-
-  @override
-  String get monitorAdminRoleTip =>
-      'Hesabları, rolları və agent ayarlarını idarə edir';
-
-  @override
-  String get monitorYou => 'Siz';
-
-  @override
-  String get monitorNoAccessToSettings =>
-      'Bu agent-in ayarlarını yalnız admin dəyişə bilər.';
 
   @override
   String get monitorPasswordNotSaved =>
@@ -5473,10 +5305,6 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get monitorBackupUnsupported =>
       'Bu monitor agenti ehtiyat nüsxə saxlaya bilmir. Agenti yeniləyin.';
-
-  @override
-  String get monitorBackupAdminOnly =>
-      'Monitor agentində yalnız administrator hesabı ehtiyat nüsxə saxlaya bilər.';
 
   @override
   String monitorBackupTooLarge(String max) {
@@ -5951,6 +5779,1260 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get kbServerClose => 'Serverlər: təfərrüatları bağla';
+
+  @override
+  String get storageTitle => 'Storage';
+
+  @override
+  String get storageLinuxOnly =>
+      'Storage management currently supports Linux servers.';
+
+  @override
+  String get storageDisks => 'Disks';
+
+  @override
+  String get storageRaid => 'RAID';
+
+  @override
+  String get storagePools => 'ZFS pools';
+
+  @override
+  String get storageNoFilesystem => 'No filesystem';
+
+  @override
+  String storageUsage(Object total, Object used) {
+    return '$used of $total';
+  }
+
+  @override
+  String storageFree(Object size) {
+    return '$size free';
+  }
+
+  @override
+  String get storageBusyMounted => 'In use';
+
+  @override
+  String get storageBusySwap => 'Swap';
+
+  @override
+  String get storageBusyRaid => 'In an array';
+
+  @override
+  String get storageBusyPool => 'In a pool';
+
+  @override
+  String get storageBusyVolume => 'Holds a volume';
+
+  @override
+  String get storageBusyReadOnly => 'Read only';
+
+  @override
+  String get storageBusySystem => 'System partition';
+
+  @override
+  String get storageSystemMount =>
+      'The system uses this mount; it stays mounted.';
+
+  @override
+  String get storageNotMounted => 'Nothing is mounted there any more.';
+
+  @override
+  String get storageMount => 'Mount';
+
+  @override
+  String get storageUnmount => 'Unmount';
+
+  @override
+  String get storageFormat => 'Format';
+
+  @override
+  String get storageInitialize => 'Initialize';
+
+  @override
+  String get storageSmartTest => 'SMART test';
+
+  @override
+  String get storageFilesystem => 'Filesystem';
+
+  @override
+  String get storageLabel => 'Label';
+
+  @override
+  String get storageMountpoint => 'Mount point';
+
+  @override
+  String get storageMountPersist => 'Mount again at every start (/etc/fstab)';
+
+  @override
+  String get storageMountOwn => 'Let ServerBox write here (for backups)';
+
+  @override
+  String get storageName => 'Name';
+
+  @override
+  String get storageLevel => 'Level';
+
+  @override
+  String get storageLayout => 'Layout';
+
+  @override
+  String storagePickDevices(Object count) {
+    return 'Pick at least $count devices. What they hold is lost.';
+  }
+
+  @override
+  String get storageCreateRaid => 'Create array';
+
+  @override
+  String storageCreateRaidBody(Object devices, Object level, Object name) {
+    return 'Builds /dev/$name (RAID $level) from $devices. Everything on them is lost.';
+  }
+
+  @override
+  String get storageCreatePool => 'Create pool';
+
+  @override
+  String storageCreatePoolBody(Object devices, Object layout, Object name) {
+    return 'Builds pool $name ($layout) from $devices. Everything on them is lost.';
+  }
+
+  @override
+  String storageFormatBody(Object device) {
+    return 'Makes a new filesystem on $device. Everything on it is lost.';
+  }
+
+  @override
+  String storageInitializeBody(Object device) {
+    return 'Wipes $device and gives it one partition for the whole disk. Everything on it is lost.';
+  }
+
+  @override
+  String storageMountBody(Object device, Object mountpoint) {
+    return 'Mounts $device at $mountpoint.';
+  }
+
+  @override
+  String storageUnmountBody(Object mountpoint) {
+    return 'Unmounts $mountpoint and stops mounting it at start.';
+  }
+
+  @override
+  String storageSmartTestBody(Object device) {
+    return 'Starts a short self-test on $device. It takes a few minutes; its progress and result show here.';
+  }
+
+  @override
+  String get storageAddMember => 'Add disk';
+
+  @override
+  String storageAddMemberBody(Object array, Object device) {
+    return 'Adds $device to /dev/$array: it replaces a failed member, or waits as a spare. What it holds is lost.';
+  }
+
+  @override
+  String get storageRemoveMember => 'Remove';
+
+  @override
+  String storageRemoveMemberBody(Object array, Object device) {
+    return 'Marks $device failed and takes it out of /dev/$array. The array runs on without it, degraded if it was a working member.';
+  }
+
+  @override
+  String get storageDeleteRaid => 'Delete array';
+
+  @override
+  String storageDeleteRaidBody(Object array) {
+    return 'Stops /dev/$array and wipes its members\' RAID signatures. Its data is lost.';
+  }
+
+  @override
+  String get storageDestroyPool => 'Destroy pool';
+
+  @override
+  String storageDestroyPoolBody(Object name) {
+    return 'Destroys pool $name and everything in it.';
+  }
+
+  @override
+  String get storageScrub => 'Scrub';
+
+  @override
+  String storageScrubBody(Object name) {
+    return 'Reads all of pool $name and repairs what it can. It runs in the background.';
+  }
+
+  @override
+  String get storageState => 'State';
+
+  @override
+  String get storageHealthy => 'Healthy';
+
+  @override
+  String get storageDegraded => 'Degraded';
+
+  @override
+  String storageSync(Object action) {
+    return 'Sync ($action)';
+  }
+
+  @override
+  String get storageFaulty => 'Failed';
+
+  @override
+  String get storageSpare => 'Spare';
+
+  @override
+  String get storageActive => 'Working';
+
+  @override
+  String get storageScan => 'Last scan';
+
+  @override
+  String storageErrors(Object count) {
+    return '$count errors';
+  }
+
+  @override
+  String get storageNoDisks => 'No disks';
+
+  @override
+  String get storageNoArrays => 'No arrays';
+
+  @override
+  String get storageNoPools => 'No pools';
+
+  @override
+  String get storageNoMdadm =>
+      'mdadm is not installed: arrays cannot be built or changed here.';
+
+  @override
+  String get storageNoZfs => 'ZFS is not installed (zfsutils).';
+
+  @override
+  String storageTypeToConfirm(Object word) {
+    return 'Type $word to confirm';
+  }
+
+  @override
+  String get storageConfirmationMismatch =>
+      'The confirmation text did not match.';
+
+  @override
+  String storageInUse(Object device) {
+    return '$device is in use.';
+  }
+
+  @override
+  String get storageBusy => 'Another change to the disks is running.';
+
+  @override
+  String get storageHealthRead => 'Read disk health';
+
+  @override
+  String get storageHealthWearing => 'Wearing';
+
+  @override
+  String get storageHealthFailing => 'Failing';
+
+  @override
+  String get storageHealthAsleep => 'Asleep';
+
+  @override
+  String get storageHealthUnsupported => 'No SMART';
+
+  @override
+  String storageTemperature(Object value) {
+    return '$value °C';
+  }
+
+  @override
+  String storagePowerOn(Object hours) {
+    return '$hours h powered on';
+  }
+
+  @override
+  String storageBadSectors(Object count) {
+    return '$count bad sectors';
+  }
+
+  @override
+  String storageTesting(Object percent) {
+    return 'Self-test: $percent% left';
+  }
+
+  @override
+  String get storageGrowPartition => 'Grow partition';
+
+  @override
+  String storageGrowPartitionBody(Object device) {
+    return 'Grows $device into the free space after it. Expand its filesystem after.';
+  }
+
+  @override
+  String get storageEncrypt => 'Encrypt (LUKS)';
+
+  @override
+  String get storagePassphrase => 'Passphrase';
+
+  @override
+  String get storagePassphraseAgain => 'The same again';
+
+  @override
+  String get storagePassphraseHint =>
+      'At least 8 characters. Without it the data cannot be read: keep it safe.';
+
+  @override
+  String get storageInvalidPassphrase =>
+      'The passphrase must be 8 to 512 characters, on one line.';
+
+  @override
+  String get storagePassphrasesDiffer => 'The two passphrases differ.';
+
+  @override
+  String get storageEncrypted => 'Encrypted';
+
+  @override
+  String get storageLocked => 'Locked';
+
+  @override
+  String get storageUnlock => 'Unlock';
+
+  @override
+  String storageUnlockBody(Object device) {
+    return 'Opens $device with its passphrase.';
+  }
+
+  @override
+  String get storageLock => 'Lock';
+
+  @override
+  String storageLockBody(Object device) {
+    return 'Closes $device. Its filesystem must be unmounted.';
+  }
+
+  @override
+  String get storageReplace => 'Replace';
+
+  @override
+  String storageReplaceBody(Object name, Object old, Object replacement) {
+    return 'Replaces $old in pool $name with $replacement. The pool copies its data onto it; what $replacement holds is lost.';
+  }
+
+  @override
+  String get storageAttach => 'Mirror';
+
+  @override
+  String storageAttachBody(Object existing, Object replacement) {
+    return 'Mirrors $existing onto $replacement. What $replacement holds is lost.';
+  }
+
+  @override
+  String get storageAddSpare => 'Add spare';
+
+  @override
+  String storageAddSpareBody(Object devices, Object name) {
+    return 'Adds $devices to pool $name as spares. What they hold is lost.';
+  }
+
+  @override
+  String get storageRemoveDevice => 'Remove';
+
+  @override
+  String storageRemoveDeviceBody(Object device, Object name) {
+    return 'Takes $device out of pool $name.';
+  }
+
+  @override
+  String get storageOnline => 'Bring online';
+
+  @override
+  String storageOnlineBody(Object device, Object name) {
+    return 'Brings $device back into pool $name, grown into the whole disk.';
+  }
+
+  @override
+  String get storageDetails => 'Details';
+
+  @override
+  String get storageAttributes => 'Attributes';
+
+  @override
+  String get storageAttrValue => 'Value';
+
+  @override
+  String get storageAttrWorst => 'Worst';
+
+  @override
+  String get storageAttrThresh => 'Threshold';
+
+  @override
+  String get storageSelfTests => 'Self-tests';
+
+  @override
+  String get storageTestShort => 'Short';
+
+  @override
+  String get storageTestLong => 'Long';
+
+  @override
+  String get storageTestPassed => 'Passed';
+
+  @override
+  String get storageTestFailed => 'Failed';
+
+  @override
+  String get storageTestAborted => 'Stopped';
+
+  @override
+  String storageAtHours(Object hours) {
+    return 'at $hours h';
+  }
+
+  @override
+  String get storageNothingToShow => 'Nothing to show';
+
+  @override
+  String get storageLongTest => 'Long test';
+
+  @override
+  String storageSmartLongTestBody(Object device) {
+    return 'Starts a long self-test on $device. It reads the whole disk: hours on a large one.';
+  }
+
+  @override
+  String get storageMountedInside => 'Unmount its filesystem first.';
+
+  @override
+  String get storageNotRemovable =>
+      'Only a spare or cache device can be taken out here.';
+
+  @override
+  String get storageNotGrowable => 'This device cannot be grown here.';
+
+  @override
+  String get storageOverlapping => 'Choose devices that do not overlap.';
+
+  @override
+  String get storageInvalidDevice =>
+      'The device is invalid or no longer available.';
+
+  @override
+  String get storageInvalidMountpoint => 'The mount point is invalid.';
+
+  @override
+  String get storageInvalidName => 'The name is invalid.';
+
+  @override
+  String get storageInvalidFilesystem => 'The filesystem is not supported.';
+
+  @override
+  String get storageInvalidLabel => 'The label is invalid.';
+
+  @override
+  String get storageInvalidLevel => 'The RAID level or pool layout is invalid.';
+
+  @override
+  String get storageTooFewDevices => 'Not enough valid devices were selected.';
+
+  @override
+  String get storageExpand => 'Expand';
+
+  @override
+  String storageExpandBody(Object device) {
+    return 'Grows the filesystem on $device to fill its device. It stays mounted.';
+  }
+
+  @override
+  String get storageGrowRaid => 'Grow';
+
+  @override
+  String storageGrowRaidBody(Object array, Object device) {
+    return 'Adds $device to /dev/$array as one more working member. RAID 1 gains a mirror; RAID 5 and 6 gain room once the reshape ends, which can take hours. Expand its filesystem after. What $device holds is lost.';
+  }
+
+  @override
+  String get storageAddToPool => 'Add disks';
+
+  @override
+  String storageAddToPoolBody(Object devices, Object layout, Object name) {
+    return 'Adds $layout of $devices to pool $name for more room. They cannot be taken out again, and what they hold is lost.';
+  }
+
+  @override
+  String get sharingTitle => 'Sharing';
+
+  @override
+  String get sharingSmb => 'SMB';
+
+  @override
+  String get sharingNfs => 'NFS';
+
+  @override
+  String get sharingService => 'Service';
+
+  @override
+  String get sharingRunning => 'Running';
+
+  @override
+  String get sharingStopped => 'Stopped';
+
+  @override
+  String get sharingNfsServer => 'NFS server';
+
+  @override
+  String get sharingNoSamba =>
+      'Samba is not installed. Windows, macOS and Linux open SMB shares.';
+
+  @override
+  String get sharingNoNfs =>
+      'The NFS server is not installed. Linux and macOS mount NFS exports.';
+
+  @override
+  String get sharingInstallSamba => 'Install Samba';
+
+  @override
+  String get sharingInstallSambaBody =>
+      'Installs Samba with the machine\'s package manager.';
+
+  @override
+  String get sharingInstallNfs => 'Install NFS server';
+
+  @override
+  String get sharingInstallNfsBody =>
+      'Installs the NFS server with the machine\'s package manager.';
+
+  @override
+  String get sharingAddShare => 'Add share';
+
+  @override
+  String get sharingAddExport => 'Add export';
+
+  @override
+  String get sharingEdit => 'Edit';
+
+  @override
+  String get sharingRemove => 'Remove';
+
+  @override
+  String get sharingSave => 'Save';
+
+  @override
+  String sharingSaveSmbBody(Object name, Object path) {
+    return 'Shares $path over SMB as $name, then reloads Samba.';
+  }
+
+  @override
+  String sharingSaveNfsBody(Object path) {
+    return 'Exports $path over NFS, then reloads the exports.';
+  }
+
+  @override
+  String sharingRemoveSmbBody(Object name) {
+    return 'Stops sharing $name. The folder and its files stay.';
+  }
+
+  @override
+  String sharingRemoveNfsBody(Object path) {
+    return 'Stops exporting $path. The folder and its files stay.';
+  }
+
+  @override
+  String get sharingElsewhere => 'Set up outside ServerBox';
+
+  @override
+  String get sharingNoShares => 'No SMB shares';
+
+  @override
+  String get sharingNoExports => 'No NFS exports';
+
+  @override
+  String get sharingReadOnly => 'Read only';
+
+  @override
+  String get sharingReadWrite => 'Read and write';
+
+  @override
+  String get sharingGuest => 'Guests';
+
+  @override
+  String get sharingGuestLabel =>
+      'Let anyone on the network in without an account';
+
+  @override
+  String get sharingUsersHint =>
+      'Accounts allowed in (none ticked: every account with an SMB password):';
+
+  @override
+  String get sharingFolder => 'Folder';
+
+  @override
+  String get sharingFolderHint =>
+      'A folder on the server, e.g. a disk mounted in Storage.';
+
+  @override
+  String get sharingComment => 'Description';
+
+  @override
+  String get sharingPasswords => 'SMB passwords';
+
+  @override
+  String get sharingPasswordsBody =>
+      'Samba keeps its own passwords: set one for each account that connects.';
+
+  @override
+  String get sharingSetPassword => 'Set password';
+
+  @override
+  String get sharingNewPassword => 'New SMB password';
+
+  @override
+  String get sharingNewPasswordAgain => 'The same again';
+
+  @override
+  String get sharingPasswordsDiffer => 'The two passwords differ.';
+
+  @override
+  String get sharingClientsHint =>
+      'Who may mount it: * for anyone, a host, an address or a network such as 192.168.1.0/24.';
+
+  @override
+  String get sharingClient => 'Client';
+
+  @override
+  String get sharingAddClient => 'Add client';
+
+  @override
+  String get sharingSquashRoot => 'Root is nobody';
+
+  @override
+  String get sharingSquashAll => 'Everyone is nobody';
+
+  @override
+  String get sharingSquashNone => 'Root stays root';
+
+  @override
+  String sharingNotAFolder(Object path) {
+    return '$path is not a folder on the server.';
+  }
+
+  @override
+  String sharingRefused(Object detail) {
+    return 'The configuration was refused and the previous one is back: $detail';
+  }
+
+  @override
+  String get sharingDuplicate => 'Another share has this name or folder.';
+
+  @override
+  String get sharingInvalidName =>
+      'A name is letters, digits, _ . - (32 at most).';
+
+  @override
+  String get sharingInvalidPath =>
+      'The folder must be an absolute path without quotes, backslashes or ..';
+
+  @override
+  String get sharingInvalidClient =>
+      'A client is *, a host, an address or a network.';
+
+  @override
+  String get sharingInvalidPassword => 'This password cannot be used.';
+
+  @override
+  String get sharingTimeMachineOption => 'Time Machine backups (Mac)';
+
+  @override
+  String get sharingRecycleOption => 'Keep deleted files in .recycle';
+
+  @override
+  String get sharingTimeMachine => 'Time Machine';
+
+  @override
+  String get sharingRecycle => 'Recycle bin';
+
+  @override
+  String get sharingConnectedNow => 'Connected now';
+
+  @override
+  String get sharingNobodyConnected => 'Nobody is connected';
+
+  @override
+  String get sharingShowConnections => 'Show connections';
+
+  @override
+  String get sharingShowConnectionsBody => 'Reads who is connected, as root.';
+
+  @override
+  String get sharingConnectionsLinuxOnly =>
+      'Sharing management currently supports Linux servers.';
+
+  @override
+  String get agentThisDevice => 'Bu cihaz';
+
+  @override
+  String get agentSource => 'Mənbə';
+
+  @override
+  String agentDeleteRemoteTip(String server) {
+    return 'Tapşırıq $server serverindən silinəcək.';
+  }
+
+  @override
+  String get agentPlan => 'Plan';
+
+  @override
+  String get agentRemoteGone => 'Bu tapşırıq artıq serverdə yoxdur.';
+
+  @override
+  String agentRemoteReplyHint(String server) {
+    return '$server serverindəki tapşırığa cavab verin';
+  }
+
+  @override
+  String agentRemoteStatus(String server, String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'queued': 'Növbədə',
+      'running': 'İcra olunur',
+      'waiting': 'Sizdən cavab gözləyir',
+      'done': 'Tamamlandı',
+      'failed': 'Uğursuz oldu',
+      'cancelled': 'Dayandırıldı',
+      'other': '',
+    });
+    return '$server · $_temp0';
+  }
+
+  @override
+  String agentRemoteAlways(String rule) {
+    return '$rule qaydasına həmişə icazə ver';
+  }
+
+  @override
+  String agentRemoteTypeToRun(String name) {
+    return 'İcra etmək üçün $name yazın';
+  }
+
+  @override
+  String get agentRemoteRunAnyway => 'Yenə də icra et';
+
+  @override
+  String agentRemoteSudoFor(String user) {
+    return '$user istifadəçisinin parolu';
+  }
+
+  @override
+  String get agentRemoteSudoWrong => 'Yanlış parol';
+
+  @override
+  String get agentRemoteSudoRemember => '15 dəqiqə yadda saxla';
+
+  @override
+  String agentNewOn(String place) {
+    return 'Yeni söhbət: $place';
+  }
+
+  @override
+  String agentRemoteNewHint(String server) {
+    return 'Agentə $server serverində sual verin və ya ona tapşırıq verin.';
+  }
+
+  @override
+  String get agentPermissionMode => 'İcazə rejimi';
+
+  @override
+  String get agentModeAuto => 'Avtomatik';
+
+  @override
+  String get agentModeManual => 'Əl ilə';
+
+  @override
+  String get agentModeBypass => 'Hamısına icazə ver';
+
+  @override
+  String get agentModeBypassOff => 'Bu serverdə deaktiv edilib';
+
+  @override
+  String get agentModeBypassWarn =>
+      'Hamısına icazə ver: silmə, yenidən başlatma və konfiqurasiya dəyişiklikləri soruşulmadan icra olunur.';
+
+  @override
+  String get webApps => 'Veb tətbiqlər';
+
+  @override
+  String get webAppUnhealthy => 'Problemli';
+
+  @override
+  String get webAppDown => 'İşləmir';
+
+  @override
+  String get webAppInstalling => 'Quraşdırılır';
+
+  @override
+  String get webAppsEmpty =>
+      'Hələ veb tətbiq yoxdur. Onları Monitor panelinin App Store bölməsindən quraşdırın.';
+
+  @override
+  String get deskAppOpensInPanel => 'Paneldə açılır';
+
+  @override
+  String get webAppVersion => 'Versiya';
+
+  @override
+  String get webAppHomepage => 'Veb sayt';
+
+  @override
+  String webAppUpdate(String version) {
+    return '$version versiyası mövcuddur. Onu Monitor panelində yeniləyin.';
+  }
+
+  @override
+  String noticeStackDown(String app) {
+    return '$app dayanıb';
+  }
+
+  @override
+  String noticeStackDownBody(String services) {
+    return 'İşləmir: $services.';
+  }
+
+  @override
+  String get noticeStackDownBodyEmpty => 'Konteynerlərinin heç biri işləmir.';
+
+  @override
+  String noticeStackUnhealthy(String app) {
+    return '$app sağlam deyil';
+  }
+
+  @override
+  String noticeStackUnhealthyBody(String services) {
+    return 'Sağlamlıq yoxlamasından keçmir: $services.';
+  }
+
+  @override
+  String noticeStackBack(String app) {
+    return '$app yenidən işləyir';
+  }
+
+  @override
+  String get noticeStackBackBody => 'Bütün konteynerlər işləyir.';
+
+  @override
+  String noticeStackUpdate(String app) {
+    return '$app: yeniləmə var';
+  }
+
+  @override
+  String noticeStackUpdateBody(String project, String version, String current) {
+    return '$project $version quraşdırıla bilər (indi $current).';
+  }
+
+  @override
+  String noticeStorageArrayDegraded(String array) {
+    return '/dev/$array zəifləyib';
+  }
+
+  @override
+  String get noticeStorageArrayDegradedBody =>
+      'Bir üzv sıradan çıxıb və ya yoxdur; massiv ehtiyatsız işləyir.';
+
+  @override
+  String noticeStorageArrayBack(String array) {
+    return '/dev/$array yenidən sağlamdır';
+  }
+
+  @override
+  String get noticeStorageArrayBackBody => 'Bütün üzvlər işləyir.';
+
+  @override
+  String noticeStoragePoolUnhealthy(String pool, String health) {
+    return '$pool pulu $health vəziyyətindədir';
+  }
+
+  @override
+  String get noticeStoragePoolUnhealthyBody =>
+      'Hansı cihaz olduğunu görmək üçün Yaddaşı açın.';
+
+  @override
+  String noticeStoragePoolBack(String pool) {
+    return '$pool pulu yenidən onlayndır';
+  }
+
+  @override
+  String get noticeStoragePoolBackBody => 'Bütün cihazlar işləyir.';
+
+  @override
+  String noticeStorageDiskFailing(String device) {
+    return '$device sıradan çıxır';
+  }
+
+  @override
+  String get noticeStorageDiskFailingBody =>
+      'SMART yoxlaması və ya öz-testi uğursuz oldu: içindəkiləri başqa yerə köçürün və diski dəyişin.';
+
+  @override
+  String noticeStorageDiskSectors(String device, int count) {
+    return '$device diskində $count pis sektor var';
+  }
+
+  @override
+  String noticeStorageDiskSectorsBody(int was) {
+    return 'Əvvəl $was idi. Sektor itirən disk çox vaxt tezliklə sıradan çıxır.';
+  }
+
+  @override
+  String noticeStorageMaintenanceFailed(String task) {
+    return 'Yaddaşa texniki xidmət işləmədi: $task';
+  }
+
+  @override
+  String get storageTaskScrub => 'Pulları yoxla və massivləri təftiş et';
+
+  @override
+  String get storageTaskSmartShort => 'Qısa SMART testi';
+
+  @override
+  String get storageTaskSmartLong => 'Uzun SMART testi';
+
+  @override
+  String get storageNeedsSudo =>
+      'sudo parol istədi: agenti root kimi işə salın və ya bu əmrlərə icazə verin (yuxarıda).';
+
+  @override
+  String get monitorTab => 'Monitor';
+
+  @override
+  String get monitorOverview => 'İcmal';
+
+  @override
+  String get monitorNotices => 'Bildirişlər';
+
+  @override
+  String get monitorAudit => 'Audit jurnalı';
+
+  @override
+  String get monitorLive => 'Sessiyalar və cihazlar';
+
+  @override
+  String get monitorNoAgents =>
+      'Hələ Monitor agenti vasitəsilə qoşulan server yoxdur.';
+
+  @override
+  String get monitorNotOffered =>
+      'Agentin bu versiyası bunu təklif etmir. Agenti yeniləyin.';
+
+  @override
+  String get monitorAlertsNotOffered =>
+      'Agentin bu versiyası xəbərdarlıqları bildirmir.';
+
+  @override
+  String get monitorAlertsNone => 'Heç bir qayda işə düşməyib.';
+
+  @override
+  String monitorFiringFor(String duration) {
+    return '$duration davam edir';
+  }
+
+  @override
+  String monitorAgentVersion(String version) {
+    return 'Agent $version';
+  }
+
+  @override
+  String monitorAgentUpdate(String version) {
+    return '$version mövcuddur';
+  }
+
+  @override
+  String monitorUnread(int count) {
+    return '$count oxunmamış';
+  }
+
+  @override
+  String monitorAppsUnwell(int count) {
+    return 'Problemli tətbiqlər: $count';
+  }
+
+  @override
+  String monitorAppsUpdates(int count) {
+    return 'Tətbiq yeniləmələri: $count';
+  }
+
+  @override
+  String get monitorUpdatesOnly => 'Yalnız yeniləmələr';
+
+  @override
+  String get monitorNoUpdates => 'Yeniləməsi olan tətbiq yoxdur.';
+
+  @override
+  String get monitorNoticesEmpty => 'Bildiriş yoxdur.';
+
+  @override
+  String get monitorMarkAllRead => 'Hamısını oxunmuş kimi qeyd et';
+
+  @override
+  String get monitorAuditExec => 'Əmrlər';
+
+  @override
+  String get monitorAuditMachine => 'Maşın idarəetməsi';
+
+  @override
+  String get monitorAuditListen => 'Dinlənilən portlar';
+
+  @override
+  String get monitorAuditTicket => 'Bağlantı biletləri';
+
+  @override
+  String get monitorAuditPush => 'Bildiriş kanalları';
+
+  @override
+  String get monitorAuditAdmin => 'Hesab';
+
+  @override
+  String get monitorAuditDenied => 'Rədd edildi';
+
+  @override
+  String get monitorLoadMore => 'Daha çox yüklə';
+
+  @override
+  String get monitorLiveSessions => 'Terminal sessiyaları';
+
+  @override
+  String get monitorLiveConnections => 'Bağlantılar';
+
+  @override
+  String get monitorLiveWatchTokens => 'Saat və vidcet tokenləri';
+
+  @override
+  String get monitorLiveDevices => 'Daxil olmuş cihazlar';
+
+  @override
+  String get monitorLiveDevicesTip =>
+      'Cihazı unutduqda onun növbəti girişi hesab üzrə uğursuz cəhd limitinə daxil edilir. Bu, cihazı çıxarmır: parolu olan cihaz yenidən daxil olur. Cihazı kənarda saxlamaq üçün parolu dəyişin.';
+
+  @override
+  String get monitorLiveAttached => 'Qoşulub';
+
+  @override
+  String get monitorLiveDetached => 'Ayrılıb';
+
+  @override
+  String get monitorLiveEnd => 'Bitir';
+
+  @override
+  String get monitorLiveRevoke => 'Ləğv et';
+
+  @override
+  String get monitorLiveForget => 'Unut';
+
+  @override
+  String monitorLiveEndSessionConfirm(String name) {
+    return '\"$name\" terminal sessiyası bitirilsin? İçində işləyənlər dayanacaq.';
+  }
+
+  @override
+  String monitorLiveEndConnectionConfirm(String name) {
+    return '$name ünvanına bağlantı bitirilsin?';
+  }
+
+  @override
+  String monitorLiveRevokeConfirm(String name) {
+    return '$name tokeni ləğv edilsin? Yenidən qurulana qədər yenilənməyəcək.';
+  }
+
+  @override
+  String monitorLiveForgetConfirm(String name) {
+    return '$name unudulsun?';
+  }
+
+  @override
+  String monitorLiveExpires(String time) {
+    return 'Bitmə vaxtı: $time';
+  }
+
+  @override
+  String get monitorLiveStream => 'Ötürülən bağlantı';
+
+  @override
+  String get monitorLiveAccepted => 'Yönləndirilən bağlantı';
+
+  @override
+  String get monitorLiveConsole => 'Konsol';
+
+  @override
+  String monitorAgentsCount(int count) {
+    return '$count agent';
+  }
+
+  @override
+  String get monitorStatOnline => 'Onlayn';
+
+  @override
+  String get monitorStatFiring => 'Aktiv xəbərdarlıqlar';
+
+  @override
+  String get monitorStatUnread => 'Oxunmamış';
+
+  @override
+  String get monitorStatUpdates => 'Yeniləmələr';
+
+  @override
+  String get monitorAuditEmpty => 'Uyğun qeyd yoxdur.';
+
+  @override
+  String get monitorLiveNoSessions => 'Açıq terminal sessiyası yoxdur.';
+
+  @override
+  String get monitorLiveNoConnections => 'Yönləndirilən bağlantı yoxdur.';
+
+  @override
+  String get monitorLiveNoTokens => 'Qoşulmuş saat və ya vidcet yoxdur.';
+
+  @override
+  String get monitorLiveNoDevices => 'Daxil olmuş cihaz yoxdur.';
+
+  @override
+  String get monitorUpdateAgent => 'Agenti yenilə';
+
+  @override
+  String get monitorAgentTooOldTip => 'Yeniləmə addımları Monitor tabındadır.';
+
+  @override
+  String get monitorAgentTooOldBody =>
+      'Bu agent tək parol dövründən əvvəlkidir və tətbiq daxil ola bilmir. Yeniləmədən sonra onun parolu ən köhnə admin hesabının parolu olur.';
+
+  @override
+  String monitorAgentOutdatedBody(String latest, String running) {
+    return '$latest çıxıb; bu agent $running işlədir.';
+  }
+
+  @override
+  String get monitorUpdateRunHint =>
+      'Serverdə agentin quraşdırıldığı hesabla işə salın:';
+
+  @override
+  String get monitorUpdateSshHint =>
+      'Terminal onu işlədir. Agent bütün sistem üçün quraşdırılıbsa və terminal SSH ilədirsə, sudo orada parol soruşacaq.';
+
+  @override
+  String get monitorUpdateNoSsh =>
+      'Tətbiq bu serverdə terminal aça bilmir: əmri orada özünüz işlədin.';
+
+  @override
+  String get monitorUpdateDocker =>
+      'Docker-dədir? Yeni imici çəkib konteyneri yenidən yaradın.';
+
+  @override
+  String get monitorUpdateAfter =>
+      'Yenidən başladıqdan sonra Monitor tabını yeniləyin.';
+
+  @override
+  String get monitorUpdateInTerminal => 'Terminalda işə sal';
+
+  @override
+  String get monitorHowToUpdate => 'Necə yeniləmək';
+
+  @override
+  String get monitorUpdateNix =>
+      'NixOS modulu ilə quraşdırılıb: sistem konfiqurasiyanızdan yeniləyin və yenidən qurun.';
+
+  @override
+  String get noticeAgentUpdate => 'Agent üçün yeniləmə var';
+
+  @override
+  String get monitorUpdateLegacyUser => 'Hesab adı';
+
+  @override
+  String get monitorUpdateLegacyHint =>
+      'Bu agent hələ hesab adı və parolla daxil olur: bu tətbiqin əvvəl istifadə etdiyi ad (adətən admin) və saxlanmış parol.';
+
+  @override
+  String get monitorUpdateNow => 'İndi yenilə';
+
+  @override
+  String get monitorUpdating => 'Yenilənir…';
+
+  @override
+  String get monitorUpdateRestarting =>
+      'Agent yenidən başlayır; bağlantı bir neçə saniyəyə qayıdır…';
+
+  @override
+  String monitorUpdateDone(String version) {
+    return 'Yeniləndi: agent $version işlədir.';
+  }
+
+  @override
+  String get monitorUpdateFailed => 'Yeniləmə alınmadı. Çıxışı yuxarıdadır.';
+
+  @override
+  String get monitorUpdateAgentHint =>
+      'Agent quraşdırıcını özündən ayrı işlədir, ona görə yenidən başlaması yeniləməni dayandırmır. Bu vaxt bağlantı bir neçə saniyə kəsilir; bu pəncərə yeniləməni yenidən başlamadan sonra da izləyir.';
+
+  @override
+  String get monitorUpdateSudoPassword => 'sudo parolu';
+
+  @override
+  String get monitorUpdateSudoHint =>
+      'Burada quraşdırıcıya root lazımdır (OpenRC xidməti). Parol bir dəfə istifadə olunur və saxlanmır.';
+
+  @override
+  String get monitorUpdateSudoRefused => 'sudo bu parolu qəbul etmədi.';
+
+  @override
+  String get monitorUpdateNoAnswer => 'Agent qayıtmadı. Serverdə yoxlayın.';
+
+  @override
+  String get keyArrowDown => 'Aşağı ox';
+
+  @override
+  String get keyArrowLeft => 'Sol ox';
+
+  @override
+  String get keyArrowRight => 'Sağ ox';
+
+  @override
+  String get keyArrowUp => 'Yuxarı ox';
+
+  @override
+  String get keyControl => 'Control';
+
+  @override
+  String get keyEscape => 'Escape';
+
+  @override
+  String get keyPageDown => 'Səhifə aşağı';
+
+  @override
+  String get keyPageUp => 'Səhifə yuxarı';
+
+  @override
+  String get termTextView => 'Mətn kimi bax';
+
+  @override
+  String termTextLetGo(int count) {
+    return 'Artıq saxlanmayan əvvəlki sətirlər: $count';
+  }
+
+  @override
+  String get systemGroups => 'Qruplar';
+
+  @override
+  String get userGid => 'GID';
+
+  @override
+  String get userGroupMembers => 'Üzvlər';
+
+  @override
+  String get userPrimaryMembers => 'Əsas üzvlər';
+
+  @override
+  String get userSystemGroup => 'Sistem qrupu';
+
+  @override
+  String get userMembersHint => 'alice,bob';
+
+  @override
+  String get userRegularGroup => 'Regular';
 
   @override
   String get termMetricsBar => 'Terminalın altında server göstəriciləri';

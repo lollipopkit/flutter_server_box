@@ -124,8 +124,7 @@ the App and can be switched off, but not removed.
 
 Agent's file tools require SSH. A server configured only with Monitor HTTP does
 not provide these tools. Its separate **File** tab can use the Monitor agent
-file API when the operator enables `[remote_access.fs]` and the requested path
-is under `roots`.
+file API.
 
 ## Review actions
 

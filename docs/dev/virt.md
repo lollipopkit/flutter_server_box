@@ -7,7 +7,7 @@
 | Tab name | "Virtualization" / "虚拟化". Covers VMs, LXC containers, storage and networks; "VM" excludes LXC and "KVM" names one hypervisor. |
 | Transports | SSH, monitor HTTP and local, for both backends. |
 | PVE access | The PVE HTTP API (`/api2/json`), unchanged. Only the TCP connection to it changes: it is carried over whichever transport the server uses. |
-| libvirt access | Run `virsh` through `ServerExec`. libvirt's HTTP API is disabled by default. |
+| libvirt access | Run `virsh` through `CommandExec`. libvirt's HTTP API is disabled by default. |
 | PVE auth | Password (+ TOTP), as today, **plus API token** (`PVEAPIToken=user@realm!tokenid=secret`). New configurations should use API tokens. |
 | Phase 1 scope | Tab, host switcher, guest list and state, power actions, overview (charts), console, IntroPage, migration of the old PVE entry. |
 | Phase 2 scope | Snapshots (list, create, revert, delete) for both backends; Storage and Network sections, read-only: pools/storages with their volumes, networks/interfaces with the guests on them (managed since phase 6). |
@@ -48,7 +48,7 @@ VirtBackend (interface)  ── models: VirtHost, VirtGuest, VirtGuestState, Vir
         │                            VirtConsole, capabilities
    ┌────┴─────────────┐
 PveBackend         LibvirtBackend
-(HTTP API)         (virsh via ServerExec)
+(HTTP API)         (virsh via CommandExec)
    │                    │
 ServerTcpDialer     ServerNotifier.ensureExec()
 (SSH | monitor relay | direct)   (SshExec | MonitorExec | ProcessExec)
@@ -63,7 +63,7 @@ one shared place (proposed `lib/core/utils/server_tcp.dart`):
 | Credential | How a TCP connection to `host:port` is made | Capability |
 | --- | --- | --- |
 | `ServerConnectCredentialSsh` | `SSHClient.forwardLocal` (`SshLocalTunnel`) | always |
-| `ServerConnectCredentialMonitorHttp` | `MonitorTunnelChannel` over `/api/v1/stream/ws`; the agent dials from its own machine | `caps.tcpRelay` (agent `stream` grant) |
+| `ServerConnectCredentialMonitorHttp` | `MonitorTunnelChannel` over `/api/v1/stream/ws`; the agent dials from its own machine | `caps.tcpRelay` (agent `access.ok`) |
 | `ServerConnectCredentialLocal` | `Socket.connect` directly — this device is the host | always |
 
 - Same fallback rule as `ensureExec()`: a server with both SSH and an agent
@@ -625,7 +625,7 @@ Decisions:
   labels, needs no staging copy or space on the host, and needs no write
   access to the pool for the SSH account — only what the rest of the tab
   uses (libvirt, through sudo when needed). It needs an exec channel that
-  carries bytes (`ServerByteExec`: `SshExec`, the local `ProcessExec`); a
+  carries bytes (`CommandByteExec`: `SshExec`, the local `ProcessExec`); a
   server reached only through a monitor agent (its `/exec` takes stdin
   whole) is not offered uploads (`VirtCapabilities.upload` false).
 - The upload command is `sh -c 'eval "$(echo <base64> | base64 -d)"'`

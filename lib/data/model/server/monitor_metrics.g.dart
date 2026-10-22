@@ -224,6 +224,13 @@ MonitorGpuMetrics _$MonitorGpuMetricsFromJson(Map<String, dynamic> json) =>
       fanSpeed: (json['fan_speed'] as num?)?.toInt(),
       clockSpeed: (json['clock_speed'] as num?)?.toInt(),
       vendor: json['vendor'] as String?,
+      processes:
+          (json['processes'] as List<dynamic>?)
+              ?.map(
+                (e) => MonitorGpuProcess.fromJson(e as Map<String, dynamic>),
+              )
+              .toList() ??
+          [],
     );
 
 Map<String, dynamic> _$MonitorGpuMetricsToJson(MonitorGpuMetrics instance) =>
@@ -239,6 +246,21 @@ Map<String, dynamic> _$MonitorGpuMetricsToJson(MonitorGpuMetrics instance) =>
       'fan_speed': instance.fanSpeed,
       'clock_speed': instance.clockSpeed,
       'vendor': instance.vendor,
+      'processes': instance.processes,
+    };
+
+MonitorGpuProcess _$MonitorGpuProcessFromJson(Map<String, dynamic> json) =>
+    MonitorGpuProcess(
+      pid: (json['pid'] as num).toInt(),
+      name: json['name'] as String,
+      memory: (json['memory'] as num).toInt(),
+    );
+
+Map<String, dynamic> _$MonitorGpuProcessToJson(MonitorGpuProcess instance) =>
+    <String, dynamic>{
+      'pid': instance.pid,
+      'name': instance.name,
+      'memory': instance.memory,
     };
 
 MonitorDiskDetail _$MonitorDiskDetailFromJson(Map<String, dynamic> json) =>

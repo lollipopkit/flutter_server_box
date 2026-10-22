@@ -1,0 +1,139 @@
+/// Local inference's service: what runs a language model on this machine
+/// and the models that fit it (`sbm_parser::inference`, llmfit), MLX on
+/// Apple silicon, Ollama's models. The container engines (Ollama, llama.cpp,
+/// vLLM, SGLang) are the agent's stacks: their state is read here, their
+/// setup is the desk's (`openStack`).
+package serverbox:inference;
+
+interface types {
+  enum engine { ollama, llamacpp, vllm, sglang, mlx }
+}
+
+interface api {
+  use sbm:app/types@0.1.0.{error};
+  use types.{engine};
+
+  record gpu {
+    vendor: string,
+    name: string,
+    memory-mib: option<u64>,
+    /// NVIDIA's compute capability, major × 10 + minor.
+    compute: option<u32>,
+  }
+
+  record hardware {
+    os: string,
+    arch: string,
+    memory-mib: u64,
+    gpus: list<gpu>,
+    docker: bool,
+    nvidia-containers: bool,
+  }
+
+  /// A deployed engine's stack, as the agent keeps it.
+  record deployed {
+    /// `installing`, `installed`, `failed`, …
+    state: string,
+    stopped: bool,
+    /// `healthy`, `starting`, `unhealthy`, `down`, `stopped`.
+    health: option<string>,
+  }
+
+  record engine-fit {
+    engine: engine,
+    /// `cuda`, `rocm`, `vulkan`, `metal`, `cpu`.
+    backend: string,
+    /// Why it cannot run here (`needsDocker`, `gpuTooOld`, …).
+    blocked: option<string>,
+    /// Why it runs without the GPU there is.
+    cpu-because: option<string>,
+    /// The stack that runs it; none for MLX.
+    stack: option<string>,
+    deployed: option<deployed>,
+  }
+
+  record mlx-service {
+    model: option<string>,
+    port: option<u16>,
+    running: bool,
+  }
+
+  record mlx {
+    installed: bool,
+    version: string,
+    service: mlx-service,
+  }
+
+  /// An Ollama answering here: the deployed engine's (`ollama.ollama`) or
+  /// the machine's own (`native`).
+  record ollama {
+    id: string,
+    url: string,
+    version: option<string>,
+  }
+
+  record overview {
+    hardware: hardware,
+    /// Best first.
+    engines: list<engine-fit>,
+    /// On a Mac.
+    mlx: option<mlx>,
+    ollama: list<ollama>,
+    llmfit-version: string,
+  }
+
+  record candidate {
+    engine: engine,
+    name: string,
+    /// What the engine's model setting takes.
+    setting: string,
+    /// `perfect`, `good`, `marginal`.
+    fit: string,
+    score: f64,
+    params-b: option<f64>,
+    memory-gib: option<f64>,
+    tokens-per-second: option<f64>,
+    context-length: option<u64>,
+    license: option<string>,
+  }
+
+  record recommendation {
+    /// The engines that run here, best first.
+    engines: list<engine>,
+    candidates: list<candidate>,
+  }
+
+  record ollama-model {
+    name: string,
+    size: u64,
+    parameter-size: option<string>,
+    quantization: option<string>,
+    loaded: bool,
+  }
+
+  view: func() -> result<overview, error>;
+  /// llmfit's models for this machine by engine; [use-case] one of
+  /// `sbm_parser::inference::USE_CASES`. `unavailable("llmfit\n<why>")`
+  /// when llmfit failed.
+  recommend: func(use-case: option<string>, all-publishers: bool) -> result<recommendation, error>;
+  ollama-models: func(instance: string) -> result<list<ollama-model>, error>;
+  ollama-delete: func(instance: string, model: string) -> result<_, error>;
+  /// MLX serves [model] on [port], replacing what it served.
+  mlx-start: func(model: string, port: u16) -> result<_, error>;
+  mlx-stop: func() -> result<_, error>;
+}
+
+interface jobs {
+  use sbm:app/types@0.1.0.{error};
+
+  /// mlx-lm into the app's own folder.
+  mlx-install: func() -> result<_, error>;
+  /// [model] into an Ollama, its progress in the log.
+  ollama-pull: func(instance: string, model: string) -> result<_, error>;
+}
+
+world inference {
+  include sbm:app/imports@0.1.0;
+  export api;
+  export jobs;
+}
