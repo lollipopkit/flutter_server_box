@@ -27,7 +27,8 @@ import 'package:integration_test/integration_test.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  setUpAll(() => IosRootfs.prepare());
+  // The manifest too: what each system is and where to get it.
+  setUpAll(Rootfs.prepare);
 
   /// The app's resident size, in MB, as the VM reports it.
   double rss() => ProcessInfo.currentRss / 1024 / 1024;

@@ -6,6 +6,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_tty/fl_tty.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:server_box/core/tty.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
@@ -33,6 +34,8 @@ void main() {
     // from the manifest that `Rootfs.prepare` loads alongside proot.
     await openTestDb();
     getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
+    // fl_tty reads its settings and brand from the app.
+    configFlTty();
     await Rootfs.prepare();
     // A real install every run. A rootfs left by a previous run would let a
     // change to how one is unpacked pass untested for as long as the device

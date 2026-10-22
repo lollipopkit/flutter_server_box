@@ -43,7 +43,8 @@ const _unconditionalRows = 31;
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  setUpAll(() => IosRootfs.prepare());
+  // The manifest too: what each system is and where to get it.
+  setUpAll(Rootfs.prepare);
 
   testWidgets('the guest runs the fork\'s benchmark', (_) async {
     if (!IshExec.isSupported) {

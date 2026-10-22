@@ -22,7 +22,8 @@ import 'package:integration_test/integration_test.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  setUpAll(() => IosRootfs.prepare());
+  // The manifest too: what each system is and where to get it.
+  setUpAll(Rootfs.prepare);
 
   testWidgets('the engine is there, or says it is not', (_) async {
     // Not an assertion either way: this test runs on a build that may have
