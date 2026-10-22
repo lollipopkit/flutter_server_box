@@ -120,6 +120,11 @@ import type {
   VirtStats,
   VirtPowerAction,
   DesktopsView,
+  MonitorBackupFile,
+  MonitorBackupRestored,
+  MonitorBackupSettings,
+  MonitorBackupTarget,
+  MonitorBackupView,
 } from '../types'
 import { isSecureAgentUrl } from './agentUrl'
 import { CLIENT_TOO_OLD, protocolHeaders } from './protocol'
@@ -1310,6 +1315,23 @@ export const api = {
   containerBackupJob: (since: number) =>
     request<StackJob>(`/container-backups/job?since=${since}`, {}),
   cancelContainerBackupJob: () => request<void>('/container-backups/job/cancel', { method: 'POST' }),
+  /// Backups of the monitor's settings to WebDAV (`/monitor-backup*`).
+  getMonitorBackup: () => request<MonitorBackupView>('/monitor-backup', {}),
+  saveMonitorBackup: (settings: MonitorBackupSettings, currentPassword: string) =>
+    request<MonitorBackupView>('/monitor-backup', { method: 'PUT', body: JSON.stringify({ ...settings, current_password: currentPassword }) }),
+  removeMonitorBackup: (currentPassword: string) =>
+    request<void>('/monitor-backup', { method: 'DELETE', body: JSON.stringify({ current_password: currentPassword }) }),
+  testMonitorBackup: (target: MonitorBackupTarget) =>
+    request<{ missing: boolean; backups: number }>('/monitor-backup/test', { method: 'POST', body: JSON.stringify(target) }),
+  setMonitorBackupKey: (passphrase: string, currentPassword: string) =>
+    request<MonitorBackupView>('/monitor-backup/key', { method: 'PUT', body: JSON.stringify({ passphrase, current_password: currentPassword }) }),
+  runMonitorBackup: () => request<MonitorBackupView>('/monitor-backup/run', { method: 'POST' }),
+  listMonitorBackups: () => request<{ backups: MonitorBackupFile[] }>('/monitor-backup/list', {}),
+  restoreMonitorBackup: (name: string, passphrase: string, currentPassword: string) =>
+    request<MonitorBackupRestored>('/monitor-backup/restore', {
+      method: 'POST',
+      body: JSON.stringify({ name, passphrase, current_password: currentPassword }),
+    }),
   restoreContainerBackup: (id: string, currentPassword: string) =>
     request<StackJob>(
       `/container-backups/${encodeURIComponent(id)}/restore`,

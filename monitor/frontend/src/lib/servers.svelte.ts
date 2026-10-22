@@ -46,6 +46,9 @@ function newId(): string {
 class ServersStore {
   list = $state<ServerEntry[]>([])
   currentId = $state('')
+  /// Why a session ended, per server, said on the sign-in screen until the
+  /// next sign-in (a restored backup changed the password). This tab only.
+  notices = $state<Record<string, string>>({})
 
   /// Whether this panel is the agent's own: whether the origin the page came
   /// from is an agent that serves it.
@@ -223,13 +226,16 @@ class ServersStore {
     const entry = this.list.find((s) => s.id === id)
     if (!entry) return
     entry.token = token
+    delete this.notices[id]
     this.#persist()
   }
 
-  /// Ends the session on [id] (only if it is still [expected]).
-  logout(id = this.currentId, expected?: Pick<ServerEntry, 'url' | 'token'>) {
+  /// Ends the session on [id] (only if it is still [expected]), with
+  /// [notice] for the sign-in screen.
+  logout(id = this.currentId, expected?: Pick<ServerEntry, 'url' | 'token'>, notice?: string) {
     const entry = this.list.find((server) => server.id === id)
     if (!entry) return
+    if (notice) this.notices[id] = notice
     if (expected && (entry.url !== expected.url || entry.token !== expected.token)) return
     entry.token = null
     this.#persist()

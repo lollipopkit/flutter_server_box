@@ -37,6 +37,8 @@ pub const FEATURES: &[&str] = &[
     "container_exec",
     // Backups of containers' volumes and bound folders (`api::container_backups`).
     "container_backups",
+    // Backups of the monitor's own settings to WebDAV (`api::monitor_backup`).
+    "monitor_backup",
     // Disks, RAID arrays and ZFS pools (`api::storage`). Linux only; the page
     // says so on another platform.
     "storage",

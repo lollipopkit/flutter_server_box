@@ -66,11 +66,47 @@ pub fn build_cli() -> Command {
                 ),
         )
         .subcommand(
+            Command::new("backup")
+                .about("Back up the monitor's settings to WebDAV, list and restore backups")
+                .subcommand_required(true)
+                .subcommand(Command::new("run").about("Back up now, with the settings the panel saved"))
+                .subcommand(backup_target(Command::new("list").about("List the backups in the folder")))
+                .subcommand(
+                    backup_target(Command::new("restore").about("Restore a backup into this monitor (stop it first, or restart it after)"))
+                        .arg(Arg::new("name").long("name").value_name("FILE").help("The backup to restore; the newest by default"))
+                        .arg(
+                            Arg::new("passphrase-env")
+                                .long("passphrase-env")
+                                .value_name("ENV_VAR")
+                                .help("Read the backups' passphrase from this environment variable instead of prompting"),
+                        ),
+                ),
+        )
+        .subcommand(
             Command::new("cleanup")
                 .about("Data cleanup operations")
                 .subcommand(Command::new("run").about("Run data cleanup manually"))
                 .subcommand(Command::new("stats").about("Show database statistics"))
                 .subcommand(Command::new("vacuum").about("Run database VACUUM")),
+        )
+}
+
+/// Where `backup list|restore` read from: the folder the panel saved unless
+/// `--url` names another.
+fn backup_target(cmd: Command) -> Command {
+    cmd.arg(Arg::new("url").long("url").value_name("URL").help("The WebDAV folder; the saved one by default"))
+        .arg(Arg::new("user").long("user").value_name("NAME").default_value("").help("The WebDAV user name, with --url"))
+        .arg(
+            Arg::new("password-env")
+                .long("password-env")
+                .value_name("ENV_VAR")
+                .help("Read the WebDAV password from this environment variable instead of prompting, with --url"),
+        )
+        .arg(
+            Arg::new("allow-insecure")
+                .long("allow-insecure")
+                .action(clap::ArgAction::SetTrue)
+                .help("Allow plain HTTP to another machine, with --url"),
         )
 }
 
@@ -87,6 +123,9 @@ pub async fn handle_matches(matches: clap::ArgMatches) -> anyhow::Result<()> {
         }
         Some(("password", sub_matches)) => {
             handle_password(sub_matches).await?;
+        }
+        Some(("backup", sub_matches)) => {
+            handle_backup(sub_matches).await?;
         }
         _ => {
             // Default to serve if no subcommand is provided;
@@ -151,6 +190,7 @@ async fn handle_serve(matches: &clap::ArgMatches) -> anyhow::Result<()> {
     crate::inference::refresh_providers(&app_state);
     tokio::spawn(crate::container_backups::start(app_state.clone()));
     tokio::spawn(crate::storage_watch::start(app_state.clone()));
+    tokio::spawn(crate::monitor_backup::start(app_state.clone()));
     tokio::spawn(crate::api::update::watch(app_state.clone()));
 
     let monitoring_handle = tokio::spawn({
@@ -214,6 +254,121 @@ async fn handle_password(matches: &clap::ArgMatches) -> anyhow::Result<()> {
                  restart a running agent to end its open terminals and relays."
             );
         }
+    }
+    Ok(())
+}
+
+/// The backup `restore` takes without `--name`: this monitor's newest, or
+/// the newest in a folder only one monitor backs up to. A folder several
+/// monitors share needs the name.
+fn newest(found: Vec<crate::monitor_backup::Listed>, folder: &url::Url) -> anyhow::Result<String> {
+    if let Some(b) = found.iter().find(|b| b.own) {
+        return Ok(b.name.clone());
+    }
+    let monitors: std::collections::BTreeSet<&str> = found.iter().map(|b| b.instance.as_str()).collect();
+    match (found.first(), monitors.len()) {
+        (None, _) => anyhow::bail!("No backups in {folder}"),
+        (Some(b), 1) => Ok(b.name.clone()),
+        _ => anyhow::bail!("{folder} holds backups of {} monitors: pick one with --name (backup list)", monitors.len()),
+    }
+}
+
+/// [env] when named, else asked without echo.
+fn secret(env: Option<&String>, prompt: &str) -> anyhow::Result<String> {
+    match env {
+        Some(var) => std::env::var(var).map_err(|_| anyhow::anyhow!("Environment variable {var} is not set")),
+        None => Ok(rpassword::prompt_password(prompt)?),
+    }
+}
+
+fn refused(r: crate::stacks::Refusal) -> anyhow::Error {
+    anyhow::anyhow!("refused: {}", r.error)
+}
+
+async fn handle_backup(matches: &clap::ArgMatches) -> anyhow::Result<()> {
+    use crate::monitor_backup::{self, webdav};
+
+    let config = Config::load().await?;
+    let url = config.get_database_url();
+    let db = db::database::init(&url).await?;
+    let file = crate::api::server::sqlite_file(&url).ok_or_else(|| anyhow::anyhow!("The database is in memory"))?;
+    let blobs = crate::core::blobs::Blobs::beside(&file);
+    let work = monitor_backup::MonitorBackup::new(Some(&file));
+
+    // The folder named on the command line.
+    struct Named {
+        folder: url::Url,
+        user: String,
+        password: Option<String>,
+        insecure: bool,
+    }
+    let named = |m: &clap::ArgMatches| -> anyhow::Result<Option<Named>> {
+        let Some(url) = m.get_one::<String>("url") else { return Ok(None) };
+        let insecure = m.get_flag("allow-insecure");
+        let folder = webdav::folder_url(url, insecure).map_err(|_| anyhow::anyhow!("{url}: not an HTTPS address (or plain HTTP to this machine, or --allow-insecure)"))?;
+        let password = secret(m.get_one::<String>("password-env"), "WebDAV password (empty for none): ")?;
+        let user = m.get_one::<String>("user").cloned().unwrap_or_default();
+        Ok(Some(Named { folder, user, password: (!password.is_empty()).then_some(password), insecure }))
+    };
+    // The folder named, else the one saved with this monitor's
+    // `(instance, recipient)`.
+    type Own = Option<(String, Option<String>)>;
+    let target = |named: &Option<Named>, stored: Option<monitor_backup::Row>| -> anyhow::Result<(webdav::Dav, Own)> {
+        match (named, stored) {
+            (Some(n), _) => Ok((webdav::Dav::new(n.folder.clone(), &n.user, n.password.as_deref()), None)),
+            (None, Some(row)) => Ok((row.dav().map_err(|e| anyhow::anyhow!("{e}"))?, Some((row.instance, row.recipient)))),
+            (None, None) => anyhow::bail!("No folder: pass --url, or set one in the panel's Settings"),
+        }
+    };
+
+    match matches.subcommand() {
+        Some(("run", _)) => {
+            let host = monitor_backup::Host { db: &db, blobs: &blobs, work: &work, server_name: config.get_server_name() };
+            match monitor_backup::back_up(&host, true).await {
+                Ok(monitor_backup::Outcome::Made(name, None)) => println!("Uploaded {name}"),
+                Ok(monitor_backup::Outcome::Made(name, Some(f))) => println!("Uploaded {name}; removing the oldest failed: {}", f.code),
+                Ok(_) => println!("Nothing to back up to: set a folder and a passphrase in the panel's Settings first"),
+                Err(f) => anyhow::bail!("Backup failed: {} ({})", f.code, f.detail),
+            }
+        }
+        Some(("list", m)) => {
+            let named = named(m)?;
+            let (dav, own) = target(&named, monitor_backup::row(&db).await?)?;
+            let own = own.as_ref().map(|(i, r)| (i.as_str(), r.as_deref()));
+            let found = monitor_backup::list_in(&dav, own).await.map_err(|e| anyhow::anyhow!("{e}"))?;
+            if found.is_empty() {
+                println!("No backups in {}", dav.folder());
+            }
+            for b in found {
+                let whose = if b.own { "this monitor" } else { "monitor " };
+                let instance = if b.own { "" } else { b.instance.as_str() };
+                println!("{}\t{}\t{} bytes\t{whose}{instance}", b.name, b.created_at, b.size);
+            }
+        }
+        Some(("restore", m)) => {
+            let named = named(m)?;
+            let (dav, own) = target(&named, monitor_backup::row(&db).await?)?;
+            let own = own.as_ref().map(|(i, r)| (i.as_str(), r.as_deref()));
+            let name = match m.get_one::<String>("name") {
+                Some(n) => n.clone(),
+                None => newest(monitor_backup::list_in(&dav, own).await.map_err(|e| anyhow::anyhow!("{e}"))?, dav.folder())?,
+            };
+            let passphrase = secret(m.get_one::<String>("passphrase-env"), "Backup passphrase: ")?;
+            let fetched = monitor_backup::fetch(&dav, &work, &name, &passphrase).await.map_err(refused)?;
+            let restored = monitor_backup::apply(&db, &blobs, &tokio::sync::Mutex::new(()), &fetched).await.map_err(refused)?;
+            if let Some(n) = &named {
+                monitor_backup::adopt(&db, &n.folder, &n.user, n.password.as_deref(), n.insecure, &fetched).await?;
+            }
+            println!("Restored {name}");
+            for (table, rows) in restored.tables.iter().filter(|(_, n)| *n > 0) {
+                println!("  {table}: {rows}");
+            }
+            if restored.config {
+                println!("  config.toml: monitoring, push channels, name, allowed origins");
+            }
+            println!("The password is the backup's. Restart a running monitor to apply the settings and end what the old password opened.");
+        }
+        _ => unreachable!("a subcommand is required"),
     }
     Ok(())
 }

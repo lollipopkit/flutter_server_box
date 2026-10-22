@@ -393,6 +393,17 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             .service(web::resource("/container-backups/job/cancel").route(web::post().to(crate::api::container_backups::cancel)))
             .service(web::resource("/container-backups/{id}/restore").route(web::post().to(crate::api::container_backups::restore)))
             .service(web::resource("/container-backups/{id}").route(web::delete().to(crate::api::container_backups::remove)))
+            .service(
+                web::resource("/monitor-backup")
+                    .route(web::get().to(crate::api::monitor_backup::get))
+                    .route(web::put().to(crate::api::monitor_backup::put))
+                    .route(web::delete().to(crate::api::monitor_backup::remove)),
+            )
+            .service(web::resource("/monitor-backup/test").route(web::post().to(crate::api::monitor_backup::test)))
+            .service(web::resource("/monitor-backup/key").route(web::put().to(crate::api::monitor_backup::put_key)))
+            .service(web::resource("/monitor-backup/run").route(web::post().to(crate::api::monitor_backup::run)))
+            .service(web::resource("/monitor-backup/list").route(web::get().to(crate::api::monitor_backup::list)))
+            .service(web::resource("/monitor-backup/restore").route(web::post().to(crate::api::monitor_backup::restore)))
             .service(web::resource("/stacks").route(web::get().to(crate::api::stacks::list)))
             .service(web::resource("/stacks/refresh").route(web::post().to(crate::api::stacks::refresh)))
             .service(

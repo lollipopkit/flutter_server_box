@@ -157,6 +157,8 @@ export type MachineFeature =
   | 'container_exec'
   /// Backups of containers' volumes and folders (`/container-backups`).
   | 'container_backups'
+  /// Backups of the monitor's own settings to WebDAV (`/monitor-backup`).
+  | 'monitor_backup'
   /// Disks, RAID arrays and ZFS pools (`/storage`).
   | 'storage'
   /// SMB and NFS shares (`/shares`).
@@ -3181,4 +3183,60 @@ export interface ContainerBackupSchedule {
   keep: number | null
   last_run: string | null
   last_error: string | null
+}
+
+/// `GET /monitor-backup`: where the monitor's settings are backed up and how
+/// the last backup went. Never the WebDAV password.
+export interface MonitorBackupView {
+  configured: boolean
+  url: string | null
+  username: string | null
+  has_password: boolean
+  allow_insecure: boolean
+  enabled: boolean
+  keep: number
+  /// The key backups are encrypted to now; null until a passphrase is set.
+  key_id: string | null
+  last_backup_at: string | null
+  last_name: string | null
+  /// A code: `webdav.unauthorized`, `keyMissing`, `tooLarge`, …
+  last_error: string | null
+  last_error_at: string | null
+  running: boolean
+  max_bytes: number
+  min_passphrase: number
+}
+
+/// A WebDAV folder. `password` absent keeps the saved one (same server only),
+/// `''` removes it.
+export interface MonitorBackupTarget {
+  url: string
+  username: string
+  password?: string
+  allow_insecure: boolean
+}
+
+export interface MonitorBackupSettings extends MonitorBackupTarget {
+  enabled: boolean
+  keep: number
+}
+
+/// One backup in the folder.
+export interface MonitorBackupFile {
+  name: string
+  size: number
+  created_at: string
+  key_id: string
+  /// The monitor that made it (its files' id in the folder).
+  instance: string
+  /// Made by this monitor.
+  own: boolean
+  /// Made by this monitor with the passphrase backups use now.
+  current_key: boolean
+}
+
+export interface MonitorBackupRestored {
+  restored: { tables: [string, number][]; blobs: number; config: boolean }
+  /// The monitor restarts on its own.
+  restart: boolean
 }

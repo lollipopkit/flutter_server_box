@@ -97,7 +97,7 @@ Download packages only from sources you trust.
   <a href="https://discord.gg/SsVNbRhK7w"><img alt="discord" src="https://img.shields.io/badge/Discord-lpkt-purple"></a>
 </div>
 
-- [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor) is an agent you install on your servers. It is required for features that need to work while the app is closed — **push notifications**, **home-screen widgets**, and the **watch app**. It also offers another way to add a server: the app can connect to it over HTTP instead of SSH, which suits hosts whose SSH port you prefer not to expose, and gives charts historical data from before the app's first connection.  
+- [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor) is an agent you install on your servers. It is required for features that need to work while the app is closed — **push notifications**, **home-screen widgets**, and the **watch app**. It also offers another way to add a server: the app can connect to it over HTTP instead of SSH, which suits hosts whose SSH port you prefer not to expose, and gives charts historical data from before the app's first connection. Monitor also serves its own web panel.
 - **Agent skills:** This repository includes three skills for AI agents. Add them with
 
   ```sh
@@ -123,6 +123,11 @@ Before opening an issue, please:
 Contributors sign the [CLA](CLA.md) once by leaving a comment on their first pull request. It grants the right to ship your work in App Store builds alongside the AGPLv3 source. You retain the copyright to your work.
 
 If I forgot to add your name to the contributors list, please add a comment in the issue or PR you opened to let me know, I will add it as soon as possible.
+
+## My other apps
+
+- [GPT Box](https://github.com/lollipopkit/flutter_gpt_box): a third-party client for the OpenAI API.
+- [MFuse](https://mfuse.lollipopkit.com): mounts SFTP, S3, WebDAV and more in macOS Finder through File Provider.
 
 ## License
 

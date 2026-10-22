@@ -121,6 +121,8 @@ pub struct AppState {
     /// `stacks`.
     pub stacks: Arc<crate::stacks::Stacks>,
     pub container_backups: Arc<crate::container_backups::ContainerBackups>,
+    /// Backups of this agent's settings — see `monitor_backup`.
+    pub monitor_backup: Arc<crate::monitor_backup::MonitorBackup>,
     pub storage: Arc<crate::api::storage::StorageJobs>,
     pub shares: Arc<crate::stacks::job::JobSlot>,
     /// The last process table read, which the next one's read and write
@@ -143,7 +145,7 @@ pub struct AppState {
 }
 
 /// The file a `sqlite:` [url] opens, or `None` for an in-memory database.
-pub(super) fn sqlite_file(url: &str) -> Option<std::path::PathBuf> {
+pub fn sqlite_file(url: &str) -> Option<std::path::PathBuf> {
     use std::str::FromStr;
     let options = sqlx::sqlite::SqliteConnectOptions::from_str(url).ok()?;
     let file = options.get_filename();
@@ -179,6 +181,7 @@ pub(super) fn agent_state(config: &Config) -> crate::core::fs_roots::Protected {
         protected.tree(&crate::agent_mode::AgentMode::dir_beside(&db));
         crate::stacks::Stacks::protect_beside(&db, &mut protected);
         protected.tree(&crate::container_backups::ContainerBackups::dir_beside(&db));
+        protected.tree(&crate::monitor_backup::MonitorBackup::dir_beside(&db));
         protected.tree(&crate::inference::legacy_dir_beside(&db));
         protected.tree(&crate::apps::Apps::dir_beside(&db));
     }
@@ -248,6 +251,7 @@ impl AppState {
             }),
             agent: Arc::new(crate::agent_mode::AgentMode::new(db.clone(), sqlite_file_of(&db).as_deref())),
             container_backups: Arc::new(crate::container_backups::ContainerBackups::new(sqlite_file_of(&db).as_deref())),
+            monitor_backup: Arc::new(crate::monitor_backup::MonitorBackup::new(sqlite_file_of(&db).as_deref())),
             storage: Arc::default(),
             shares: Arc::default(),
             stacks: Arc::new(crate::stacks::Stacks::new(

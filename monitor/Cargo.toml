@@ -63,6 +63,11 @@ bcrypt = "0.19"
 sha2 = "0.11"
 zeroize = "1.9"
 
+# Settings backups (`agent_backup`): age encryption, and WebDAV listings
+# read with the XML parser `sbm_parser` already uses.
+age = { version = "0.11", features = ["armor"] }
+roxmltree = "0.21"
+
 # Desk app packages (`api::apps`): a gzipped tar, read entry by entry with
 # every size bounded while it is read.
 tar = { version = "0.4", default-features = false }

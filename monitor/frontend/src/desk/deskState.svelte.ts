@@ -187,6 +187,11 @@ export class Desk {
       const spec = app('serverbox.settings')
       if (spec) return { appId: spec.id, title: spec.title(get(LL)), glyph: 'system_update', tone: 'sky', appState: { section: 'server' } }
     }
+    if (n.source === 'backup') {
+      // The monitor's settings backups, in Settings' Backup section.
+      const spec = app('serverbox.settings')
+      if (spec) return { appId: spec.id, title: spec.title(get(LL)), glyph: 'backup', tone: 'sky', appState: { section: 'backup' } }
+    }
     const appId = n.source.startsWith('app:') ? n.source.slice(4) : 'serverbox.status'
     const spec = app(appId)
     if (appId !== 'serverbox.status' && spec) return { appId, title: spec.title(get(LL)), glyph: spec.glyph, tone: spec.tone }

@@ -40,6 +40,9 @@ const WAL_AUTOCHECKPOINT_PAGES: u32 = 128;
 /// use and never reaches this.
 const WAL_SIZE_LIMIT_BYTES: u32 = WAL_AUTOCHECKPOINT_PAGES * 4096 * 2;
 
+/// This build's migrations (`migrations/`).
+pub static MIGRATOR: sqlx::migrate::Migrator = sqlx::migrate!("./migrations");
+
 pub async fn init(database_url: &str) -> Result<SqlitePool> {
     let options = connect_options(database_url)?;
     // Only the owner-only modes below read it, and they are Unix's.
@@ -70,8 +73,7 @@ pub async fn init(database_url: &str) -> Result<SqlitePool> {
 
     let pool = SqlitePoolOptions::new().connect_with(options).await?;
 
-    // Run migrations
-    sqlx::migrate!("./migrations").run(&pool).await?;
+    MIGRATOR.run(&pool).await?;
 
     info!("Database initialized");
     Ok(pool)

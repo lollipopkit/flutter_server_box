@@ -5,6 +5,7 @@ import type { TranslationFunctions } from '../i18n/i18n-types'
 import type { LocalizedText } from '../types'
 import type { DeskNotification } from './deskApi'
 import { pick } from '../components/stack/text'
+import { monitorBackupErrorText } from './apps/settings/monitorBackupText'
 
 export function noticeText(
   n: DeskNotification,
@@ -67,6 +68,10 @@ export function noticeText(
       const names: Record<string, string> = { scrub: ll.storageTaskScrub(), smartShort: ll.storageTaskSmartShort(), smartLong: ll.storageTaskSmartLong() }
       return { subject: ll.noticeStorageMaintenanceFailed({ task: names[task] ?? task }), body: error === 'sudoNeedsPassword' ? ll.storageNeedsSudo() : error }
     }
+    case 'backup.failed':
+      return { subject: ll.noticeMonitorBackupFailed(), body: monitorBackupErrorText(stringParam(params, 'error'), ll) }
+    case 'backup.back':
+      return { subject: ll.noticeMonitorBackupBack(), body: ll.noticeMonitorBackupBackBody() }
     default:
       return { subject: n.subject, body: n.body }
   }

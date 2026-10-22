@@ -400,6 +400,14 @@ async fn a_plaintext_link_only_reads() {
         (Method::GET, "/api/v1/agent/mcp", None),
         (Method::GET, "/api/v1/container-backups", None),
         (Method::DELETE, "/api/v1/container-backups/schedules/x", None),
+        (Method::GET, "/api/v1/monitor-backup", None),
+        (Method::POST, "/api/v1/monitor-backup/test", Some(json!({ "url": "https://dav.example.com/" }))),
+        (Method::POST, "/api/v1/monitor-backup/run", None),
+        (Method::GET, "/api/v1/monitor-backup/list", None),
+        (Method::PUT, "/api/v1/monitor-backup", Some(json!({ "url": "https://dav.example.com/", "current_password": common::PASSWORD }))),
+        (Method::DELETE, "/api/v1/monitor-backup", Some(json!({ "current_password": common::PASSWORD }))),
+        (Method::PUT, "/api/v1/monitor-backup/key", Some(json!({ "passphrase": "a long enough passphrase", "current_password": common::PASSWORD }))),
+        (Method::POST, "/api/v1/monitor-backup/restore", Some(json!({ "name": "x", "passphrase": "a long enough passphrase", "current_password": common::PASSWORD }))),
         (Method::PUT, "/api/v1/me/password", Some(json!({ "current_password": common::PASSWORD, "new_password": "a-new-password" }))),
     ];
     for (method, path, body) in cases {

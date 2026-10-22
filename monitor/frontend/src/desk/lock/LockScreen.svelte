@@ -332,6 +332,9 @@
                 </div>
 
                 <div in:rise={{ delay: 100 }}>
+                  {#if inst && servers.notices[inst.id]}
+                    <p class="pb-[11px] text-center text-[13px] text-(--text-secondary)" role="status">{servers.notices[inst.id]}</p>
+                  {/if}
                   {#if isForm}
                     <form class="flex flex-col gap-[9px]" onsubmit={submit}>
                       {#if isNew}

@@ -235,6 +235,8 @@ pub enum Source {
     Storage(String),
     /// The agent itself: a newer release (`api::update`).
     Agent,
+    /// Backups of the monitor's settings (`monitor_backup`).
+    Backup,
 }
 
 impl Source {
@@ -244,6 +246,7 @@ impl Source {
             Source::Stack(id) => format!("stack:{id}"),
             Source::Storage(what) => format!("storage:{what}"),
             Source::Agent => "agent".into(),
+            Source::Backup => "backup".into(),
         }
     }
 }

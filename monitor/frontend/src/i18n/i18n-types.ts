@@ -10243,6 +10243,337 @@ type RootTranslation = {
 	 * T​i​m​e
 	 */
 	chartTime: string
+	/**
+	 * S​e​t​t​i​n​g​s​ ​b​a​c​k​u​p
+	 */
+	monitorBackupTitle: string
+	/**
+	 * T​h​i​s​ ​s​e​r​v​e​r​'​s​ ​s​e​t​t​i​n​g​s​,​ ​b​a​c​k​e​d​ ​u​p​ ​t​o​ ​a​ ​W​e​b​D​A​V​ ​f​o​l​d​e​r​ ​a​n​d​ ​e​n​c​r​y​p​t​e​d​ ​w​i​t​h​ ​y​o​u​r​ ​p​a​s​s​p​h​r​a​s​e​:​ ​a​c​c​o​u​n​t​ ​p​a​s​s​w​o​r​d​,​ ​s​n​i​p​p​e​t​s​,​ ​r​e​m​o​t​e​ ​d​e​s​k​t​o​p​s​,​ ​B​M​C​ ​a​n​d​ ​P​V​E​,​ ​d​e​s​k​ ​p​r​e​f​e​r​e​n​c​e​s​ ​a​n​d​ ​t​h​e​m​e​s​,​ ​A​g​e​n​t​ ​m​o​d​e​ ​s​e​t​t​i​n​g​s​,​ ​p​u​s​h​ ​c​h​a​n​n​e​l​s​ ​a​n​d​ ​r​u​l​e​s​.​ ​H​i​s​t​o​r​y​,​ ​l​o​g​s​ ​a​n​d​ ​s​e​s​s​i​o​n​s​ ​a​r​e​ ​l​e​f​t​ ​o​u​t​.
+	 */
+	monitorBackupDescription: string
+	/**
+	 * W​e​b​D​A​V​ ​f​o​l​d​e​r
+	 */
+	monitorBackupFolder: string
+	/**
+	 * F​o​l​d​e​r​ ​a​d​d​r​e​s​s
+	 */
+	monitorBackupUrl: string
+	/**
+	 * O​n​e​ ​f​o​l​d​e​r​ ​p​e​r​ ​s​e​r​v​e​r​.​ ​I​t​ ​i​s​ ​m​a​d​e​ ​o​n​ ​t​h​e​ ​f​i​r​s​t​ ​b​a​c​k​u​p​.
+	 */
+	monitorBackupUrlHint: string
+	/**
+	 * U​s​e​r​ ​n​a​m​e
+	 */
+	monitorBackupUsername: string
+	/**
+	 * P​a​s​s​w​o​r​d
+	 */
+	monitorBackupPassword: string
+	/**
+	 * S​a​v​e​d
+	 */
+	monitorBackupPasswordSaved: string
+	/**
+	 * A​l​l​o​w​ ​p​l​a​i​n​ ​H​T​T​P
+	 */
+	monitorBackupAllowInsecure: string
+	/**
+	 * T​h​e​ ​p​a​s​s​w​o​r​d​ ​r​e​a​c​h​e​s​ ​t​h​e​ ​s​e​r​v​e​r​ ​u​n​e​n​c​r​y​p​t​e​d​.​ ​B​a​c​k​u​p​s​ ​a​r​e​ ​e​n​c​r​y​p​t​e​d​ ​e​i​t​h​e​r​ ​w​a​y​.
+	 */
+	monitorBackupAllowInsecureHint: string
+	/**
+	 * B​a​c​k​u​p​s​ ​k​e​p​t
+	 */
+	monitorBackupKeep: string
+	/**
+	 * T​h​e​ ​o​l​d​e​s​t​ ​g​o​ ​o​n​c​e​ ​t​h​e​r​e​ ​a​r​e​ ​m​o​r​e​.
+	 */
+	monitorBackupKeepHint: string
+	/**
+	 * B​a​c​k​ ​u​p​ ​a​u​t​o​m​a​t​i​c​a​l​l​y
+	 */
+	monitorBackupEnabled: string
+	/**
+	 * C​h​e​c​k​e​d​ ​e​v​e​r​y​ ​1​0​ ​m​i​n​u​t​e​s​;​ ​a​ ​b​a​c​k​u​p​ ​i​s​ ​m​a​d​e​ ​w​h​e​n​ ​t​h​e​ ​s​e​t​t​i​n​g​s​ ​c​h​a​n​g​e​d​.
+	 */
+	monitorBackupEnabledHint: string
+	/**
+	 * T​e​s​t
+	 */
+	monitorBackupTest: string
+	/**
+	 * C​o​n​n​e​c​t​e​d​.​ ​{​c​o​u​n​t​}​ ​b​a​c​k​u​p​s​ ​i​n​ ​t​h​e​ ​f​o​l​d​e​r​.
+	 * @param {unknown} count
+	 */
+	monitorBackupTestOk: RequiredParams<'count'>
+	/**
+	 * C​o​n​n​e​c​t​e​d​.​ ​T​h​e​ ​f​o​l​d​e​r​ ​w​i​l​l​ ​b​e​ ​m​a​d​e​ ​o​n​ ​t​h​e​ ​f​i​r​s​t​ ​b​a​c​k​u​p​.
+	 */
+	monitorBackupTestMissing: string
+	/**
+	 * S​a​v​e​d​.
+	 */
+	monitorBackupSaved: string
+	/**
+	 * S​a​v​e​ ​w​h​e​r​e​ ​t​h​i​s​ ​s​e​r​v​e​r​'​s​ ​s​e​t​t​i​n​g​s​ ​a​r​e​ ​b​a​c​k​e​d​ ​u​p​.
+	 */
+	monitorBackupSaveReauth: string
+	/**
+	 * P​a​s​s​p​h​r​a​s​e
+	 */
+	monitorBackupKey: string
+	/**
+	 * P​a​s​s​p​h​r​a​s​e​ ​s​e​t
+	 */
+	monitorBackupKeySet: string
+	/**
+	 * B​a​c​k​u​p​s​ ​a​r​e​ ​e​n​c​r​y​p​t​e​d​ ​t​o​ ​k​e​y​ ​{​i​d​}​.
+	 * @param {unknown} id
+	 */
+	monitorBackupKeySetHint: RequiredParams<'id'>
+	/**
+	 * N​o​ ​p​a​s​s​p​h​r​a​s​e
+	 */
+	monitorBackupKeyMissing: string
+	/**
+	 * S​e​t​ ​o​n​e​ ​t​o​ ​s​t​a​r​t​ ​b​a​c​k​i​n​g​ ​u​p​.
+	 */
+	monitorBackupKeyMissingHint: string
+	/**
+	 * C​h​a​n​g​e​ ​p​a​s​s​p​h​r​a​s​e
+	 */
+	monitorBackupKeyChange: string
+	/**
+	 * S​e​t​ ​p​a​s​s​p​h​r​a​s​e
+	 */
+	monitorBackupKeySetAction: string
+	/**
+	 * T​h​e​ ​p​a​s​s​p​h​r​a​s​e​ ​e​n​c​r​y​p​t​s​ ​t​h​e​ ​k​e​y​ ​t​h​a​t​ ​o​p​e​n​s​ ​t​h​e​ ​b​a​c​k​u​p​s​.​ ​T​h​e​ ​k​e​y​ ​i​s​ ​s​t​o​r​e​d​ ​i​n​ ​t​h​e​ ​f​o​l​d​e​r​;​ ​t​h​i​s​ ​s​e​r​v​e​r​ ​k​e​e​p​s​ ​o​n​l​y​ ​t​h​e​ ​h​a​l​f​ ​t​h​a​t​ ​e​n​c​r​y​p​t​s​,​ ​s​o​ ​i​t​ ​b​a​c​k​s​ ​u​p​ ​w​i​t​h​o​u​t​ ​t​h​e​ ​p​a​s​s​p​h​r​a​s​e​.​ ​A​ ​n​e​w​ ​p​a​s​s​p​h​r​a​s​e​ ​a​p​p​l​i​e​s​ ​t​o​ ​b​a​c​k​u​p​s​ ​f​r​o​m​ ​n​o​w​ ​o​n​;​ ​o​l​d​e​r​ ​o​n​e​s​ ​k​e​e​p​ ​t​h​e​ ​p​a​s​s​p​h​r​a​s​e​ ​t​h​e​y​ ​w​e​r​e​ ​m​a​d​e​ ​w​i​t​h​.
+	 */
+	monitorBackupKeyBody: string
+	/**
+	 * I​f​ ​y​o​u​ ​l​o​s​e​ ​t​h​e​ ​p​a​s​s​p​h​r​a​s​e​,​ ​t​h​e​ ​b​a​c​k​u​p​s​ ​c​a​n​n​o​t​ ​b​e​ ​r​e​s​t​o​r​e​d​.​ ​N​o​b​o​d​y​ ​c​a​n​ ​r​e​c​o​v​e​r​ ​i​t​.
+	 */
+	monitorBackupKeyWarning: string
+	/**
+	 * P​a​s​s​p​h​r​a​s​e
+	 */
+	monitorBackupPassphrase: string
+	/**
+	 * R​e​p​e​a​t​ ​p​a​s​s​p​h​r​a​s​e
+	 */
+	monitorBackupPassphraseAgain: string
+	/**
+	 * A​t​ ​l​e​a​s​t​ ​{​m​i​n​}​ ​c​h​a​r​a​c​t​e​r​s​.
+	 * @param {unknown} min
+	 */
+	monitorBackupPassphraseShort: RequiredParams<'min'>
+	/**
+	 * T​h​e​ ​t​w​o​ ​d​o​ ​n​o​t​ ​m​a​t​c​h​.
+	 */
+	monitorBackupPassphraseMismatch: string
+	/**
+	 * S​e​t
+	 */
+	monitorBackupKeySave: string
+	/**
+	 * S​e​t​ ​t​h​e​ ​p​a​s​s​p​h​r​a​s​e​ ​b​a​c​k​u​p​s​ ​a​r​e​ ​e​n​c​r​y​p​t​e​d​ ​w​i​t​h​.
+	 */
+	monitorBackupKeyReauth: string
+	/**
+	 * S​t​a​t​u​s
+	 */
+	monitorBackupStatus: string
+	/**
+	 * B​a​c​k​i​n​g​ ​u​p​…
+	 */
+	monitorBackupRunning: string
+	/**
+	 * L​a​s​t​ ​b​a​c​k​u​p​ ​{​w​h​e​n​}
+	 * @param {unknown} when
+	 */
+	monitorBackupLast: RequiredParams<'when'>
+	/**
+	 * N​o​ ​b​a​c​k​u​p​ ​y​e​t
+	 */
+	monitorBackupNone: string
+	/**
+	 * A​ ​b​a​c​k​u​p​ ​i​s​ ​m​a​d​e​ ​w​h​e​n​ ​t​h​e​ ​s​e​t​t​i​n​g​s​ ​c​h​a​n​g​e​,​ ​a​n​d​ ​o​n​c​e​ ​a​ ​d​a​y​ ​w​h​i​l​e​ ​o​n​l​y​ ​w​h​a​t​ ​c​h​a​n​g​e​s​ ​o​n​ ​i​t​s​ ​o​w​n​ ​d​i​d​.
+	 */
+	monitorBackupSchedule: string
+	/**
+	 * F​a​i​l​e​d
+	 */
+	monitorBackupFailed: string
+	/**
+	 * B​a​c​k​ ​u​p​ ​n​o​w
+	 */
+	monitorBackupRunNow: string
+	/**
+	 * B​a​c​k​u​p​s
+	 */
+	monitorBackupList: string
+	/**
+	 * N​o​ ​b​a​c​k​u​p​s​ ​i​n​ ​t​h​e​ ​f​o​l​d​e​r
+	 */
+	monitorBackupListEmpty: string
+	/**
+	 * O​l​d​e​r​ ​p​a​s​s​p​h​r​a​s​e
+	 */
+	monitorBackupOlderKey: string
+	/**
+	 * R​e​s​t​o​r​e
+	 */
+	monitorBackupRestore: string
+	/**
+	 * R​e​s​t​o​r​e​ ​s​e​t​t​i​n​g​s
+	 */
+	monitorBackupRestoreTitle: string
+	/**
+	 * R​e​s​t​o​r​e​ ​t​h​e​ ​s​e​t​t​i​n​g​s​ ​b​a​c​k​e​d​ ​u​p​ ​{​w​h​e​n​}​.​ ​T​h​i​s​ ​s​e​r​v​e​r​'​s​ ​s​e​t​t​i​n​g​s​ ​a​r​e​ ​r​e​p​l​a​c​e​d​;​ ​i​t​s​ ​h​i​s​t​o​r​y​,​ ​l​o​g​s​ ​a​n​d​ ​w​h​e​r​e​ ​b​a​c​k​u​p​s​ ​g​o​ ​s​t​a​y​.
+	 * @param {unknown} when
+	 */
+	monitorBackupRestoreBody: RequiredParams<'when'>
+	/**
+	 * T​h​e​ ​a​c​c​o​u​n​t​ ​p​a​s​s​w​o​r​d​ ​b​e​c​o​m​e​s​ ​t​h​e​ ​b​a​c​k​u​p​'​s​:​ ​e​v​e​r​y​ ​d​e​v​i​c​e​ ​s​i​g​n​s​ ​i​n​ ​a​g​a​i​n​ ​w​i​t​h​ ​i​t​.​ ​T​h​e​ ​m​o​n​i​t​o​r​ ​r​e​s​t​a​r​t​s​.
+	 */
+	monitorBackupRestoreWarning: string
+	/**
+	 * R​e​s​t​o​r​e​ ​t​h​e​ ​s​e​t​t​i​n​g​s​ ​b​a​c​k​e​d​ ​u​p​ ​{​w​h​e​n​}​.
+	 * @param {unknown} when
+	 */
+	monitorBackupRestoreReauth: RequiredParams<'when'>
+	/**
+	 * T​h​e​ ​m​o​n​i​t​o​r​ ​i​s​ ​r​e​s​t​a​r​t​i​n​g​.
+	 */
+	monitorBackupRestoredRestarting: string
+	/**
+	 * R​e​s​t​a​r​t​ ​t​h​e​ ​m​o​n​i​t​o​r​ ​t​o​ ​a​p​p​l​y​ ​e​v​e​r​y​ ​s​e​t​t​i​n​g​.
+	 */
+	monitorBackupRestoredRestart: string
+	/**
+	 * S​i​g​n​ ​i​n​ ​a​g​a​i​n​ ​w​i​t​h​ ​t​h​e​ ​p​a​s​s​w​o​r​d​ ​f​r​o​m​ ​t​h​e​ ​b​a​c​k​u​p​.
+	 */
+	monitorBackupRestoredSignIn: string
+	/**
+	 * T​h​a​t​ ​a​d​d​r​e​s​s​ ​i​s​ ​n​o​t​ ​o​n​e​ ​t​h​e​ ​p​a​s​s​w​o​r​d​ ​m​a​y​ ​b​e​ ​s​e​n​t​ ​t​o​:​ ​u​s​e​ ​H​T​T​P​S​,​ ​o​r​ ​a​l​l​o​w​ ​p​l​a​i​n​ ​H​T​T​P​.
+	 */
+	monitorBackupErrInvalidUrl: string
+	/**
+	 * T​h​e​ ​u​s​e​r​ ​n​a​m​e​ ​h​a​s​ ​a​ ​c​h​a​r​a​c​t​e​r​ ​i​t​ ​m​a​y​ ​n​o​t​ ​h​a​v​e​.
+	 */
+	monitorBackupErrInvalidUsername: string
+	/**
+	 * T​h​e​ ​p​a​s​s​w​o​r​d​ ​h​a​s​ ​a​ ​c​h​a​r​a​c​t​e​r​ ​i​t​ ​m​a​y​ ​n​o​t​ ​h​a​v​e​.
+	 */
+	monitorBackupErrInvalidPassword: string
+	/**
+	 * T​y​p​e​ ​t​h​e​ ​p​a​s​s​w​o​r​d​:​ ​t​h​e​ ​s​a​v​e​d​ ​o​n​e​ ​i​s​ ​o​n​l​y​ ​s​e​n​t​ ​t​o​ ​t​h​e​ ​s​e​r​v​e​r​ ​i​t​ ​w​a​s​ ​s​a​v​e​d​ ​f​o​r​.
+	 */
+	monitorBackupErrPasswordRequired: string
+	/**
+	 * K​e​e​p​ ​b​e​t​w​e​e​n​ ​1​ ​a​n​d​ ​1​0​0​ ​b​a​c​k​u​p​s​.
+	 */
+	monitorBackupErrInvalidKeep: string
+	/**
+	 * T​h​e​ ​p​a​s​s​p​h​r​a​s​e​ ​i​s​ ​t​o​o​ ​s​h​o​r​t​.
+	 */
+	monitorBackupErrWeakPassphrase: string
+	/**
+	 * S​a​v​e​ ​a​ ​f​o​l​d​e​r​ ​a​n​d​ ​s​e​t​ ​a​ ​p​a​s​s​p​h​r​a​s​e​ ​f​i​r​s​t​.
+	 */
+	monitorBackupErrNotReady: string
+	/**
+	 * T​h​e​ ​p​a​s​s​p​h​r​a​s​e​ ​d​o​e​s​ ​n​o​t​ ​o​p​e​n​ ​t​h​i​s​ ​b​a​c​k​u​p​.
+	 */
+	monitorBackupErrWrongPassphrase: string
+	/**
+	 * T​h​e​ ​k​e​y​ ​f​o​r​ ​t​h​i​s​ ​b​a​c​k​u​p​ ​i​s​ ​n​o​t​ ​i​n​ ​t​h​e​ ​f​o​l​d​e​r​,​ ​s​o​ ​i​t​ ​c​a​n​n​o​t​ ​b​e​ ​o​p​e​n​e​d​.
+	 */
+	monitorBackupErrKeyMissing: string
+	/**
+	 * T​h​e​ ​k​e​y​ ​f​i​l​e​ ​i​n​ ​t​h​e​ ​f​o​l​d​e​r​ ​c​a​n​n​o​t​ ​b​e​ ​r​e​a​d​.
+	 */
+	monitorBackupErrInvalidKeyFile: string
+	/**
+	 * T​h​e​ ​f​i​l​e​ ​i​s​ ​n​o​t​ ​a​ ​b​a​c​k​u​p​ ​t​h​i​s​ ​m​o​n​i​t​o​r​ ​c​a​n​ ​r​e​a​d​.
+	 */
+	monitorBackupErrInvalidBackup: string
+	/**
+	 * T​h​e​ ​b​a​c​k​u​p​ ​i​s​ ​f​r​o​m​ ​a​ ​n​e​w​e​r​ ​m​o​n​i​t​o​r​.​ ​U​p​d​a​t​e​ ​t​h​i​s​ ​o​n​e​ ​f​i​r​s​t​.
+	 */
+	monitorBackupErrNewer: string
+	/**
+	 * T​h​e​ ​b​a​c​k​u​p​ ​i​s​ ​l​a​r​g​e​r​ ​t​h​a​n​ ​t​h​e​ ​1​0​0​ ​M​B​ ​l​i​m​i​t​.
+	 */
+	monitorBackupErrTooLarge: string
+	/**
+	 * T​h​e​ ​b​a​c​k​u​p​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​i​n​ ​t​h​e​ ​f​o​l​d​e​r​.
+	 */
+	monitorBackupErrNotFound: string
+	/**
+	 * T​h​e​ ​W​e​b​D​A​V​ ​s​e​r​v​e​r​ ​r​e​f​u​s​e​d​ ​t​h​e​ ​u​s​e​r​ ​n​a​m​e​ ​o​r​ ​p​a​s​s​w​o​r​d​.
+	 */
+	monitorBackupErrUnauthorized: string
+	/**
+	 * T​h​e​ ​W​e​b​D​A​V​ ​s​e​r​v​e​r​ ​d​o​e​s​ ​n​o​t​ ​a​l​l​o​w​ ​t​h​i​s​.
+	 */
+	monitorBackupErrForbidden: string
+	/**
+	 * T​h​e​ ​f​o​l​d​e​r​ ​i​s​ ​n​o​t​ ​o​n​ ​t​h​e​ ​W​e​b​D​A​V​ ​s​e​r​v​e​r​.
+	 */
+	monitorBackupErrFolderMissing: string
+	/**
+	 * T​h​e​ ​W​e​b​D​A​V​ ​s​e​r​v​e​r​ ​c​a​n​n​o​t​ ​b​e​ ​r​e​a​c​h​e​d​.
+	 */
+	monitorBackupErrUnreachable: string
+	/**
+	 * T​h​e​ ​W​e​b​D​A​V​ ​s​e​r​v​e​r​ ​i​s​ ​o​u​t​ ​o​f​ ​s​p​a​c​e​.
+	 */
+	monitorBackupErrServerFull: string
+	/**
+	 * T​h​e​ ​a​d​d​r​e​s​s​ ​d​o​e​s​ ​n​o​t​ ​a​n​s​w​e​r​ ​a​s​ ​a​ ​W​e​b​D​A​V​ ​f​o​l​d​e​r​.
+	 */
+	monitorBackupErrNotWebdav: string
+	/**
+	 * T​h​e​ ​W​e​b​D​A​V​ ​s​e​r​v​e​r​ ​f​a​i​l​e​d​ ​t​h​e​ ​r​e​q​u​e​s​t​.
+	 */
+	monitorBackupErrServer: string
+	/**
+	 * F​a​i​l​e​d​:​ ​{​c​o​d​e​}
+	 * @param {unknown} code
+	 */
+	monitorBackupErrOther: RequiredParams<'code'>
+	/**
+	 * S​e​t​t​i​n​g​s​ ​b​a​c​k​u​p​ ​f​a​i​l​e​d
+	 */
+	noticeMonitorBackupFailed: string
+	/**
+	 * S​e​t​t​i​n​g​s​ ​b​a​c​k​u​p​s​ ​w​o​r​k​ ​a​g​a​i​n
+	 */
+	noticeMonitorBackupBack: string
+	/**
+	 * T​h​e​ ​l​a​s​t​ ​b​a​c​k​u​p​ ​w​a​s​ ​u​p​l​o​a​d​e​d​.
+	 */
+	noticeMonitorBackupBackBody: string
+	/**
+	 * R​e​m​o​v​e​ ​t​h​e​ ​s​a​v​e​d​ ​p​a​s​s​w​o​r​d
+	 */
+	monitorBackupForgetPassword: string
+	/**
+	 * A​u​t​o​m​a​t​i​c​ ​b​a​c​k​u​p​s​ ​a​r​e​ ​o​f​f​.
+	 */
+	monitorBackupOff: string
+	/**
+	 * A​n​o​t​h​e​r​ ​s​e​r​v​e​r
+	 */
+	monitorBackupOtherServer: string
+	/**
+	 * B​a​c​k​u​p​s​ ​a​r​e​ ​t​u​r​n​e​d​ ​o​f​f​.​ ​T​u​r​n​ ​o​n​ ​B​a​c​k​ ​u​p​ ​a​u​t​o​m​a​t​i​c​a​l​l​y​ ​f​i​r​s​t​.
+	 */
+	monitorBackupErrDisabled: string
 }
 
 export type TranslationFunctions = {
@@ -20094,6 +20425,330 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Time
 	 */
 	chartTime: () => LocalizedString
+	/**
+	 * Settings backup
+	 */
+	monitorBackupTitle: () => LocalizedString
+	/**
+	 * This server's settings, backed up to a WebDAV folder and encrypted with your passphrase: account password, snippets, remote desktops, BMC and PVE, desk preferences and themes, Agent mode settings, push channels and rules. History, logs and sessions are left out.
+	 */
+	monitorBackupDescription: () => LocalizedString
+	/**
+	 * WebDAV folder
+	 */
+	monitorBackupFolder: () => LocalizedString
+	/**
+	 * Folder address
+	 */
+	monitorBackupUrl: () => LocalizedString
+	/**
+	 * One folder per server. It is made on the first backup.
+	 */
+	monitorBackupUrlHint: () => LocalizedString
+	/**
+	 * User name
+	 */
+	monitorBackupUsername: () => LocalizedString
+	/**
+	 * Password
+	 */
+	monitorBackupPassword: () => LocalizedString
+	/**
+	 * Saved
+	 */
+	monitorBackupPasswordSaved: () => LocalizedString
+	/**
+	 * Allow plain HTTP
+	 */
+	monitorBackupAllowInsecure: () => LocalizedString
+	/**
+	 * The password reaches the server unencrypted. Backups are encrypted either way.
+	 */
+	monitorBackupAllowInsecureHint: () => LocalizedString
+	/**
+	 * Backups kept
+	 */
+	monitorBackupKeep: () => LocalizedString
+	/**
+	 * The oldest go once there are more.
+	 */
+	monitorBackupKeepHint: () => LocalizedString
+	/**
+	 * Back up automatically
+	 */
+	monitorBackupEnabled: () => LocalizedString
+	/**
+	 * Checked every 10 minutes; a backup is made when the settings changed.
+	 */
+	monitorBackupEnabledHint: () => LocalizedString
+	/**
+	 * Test
+	 */
+	monitorBackupTest: () => LocalizedString
+	/**
+	 * Connected. {count} backups in the folder.
+	 */
+	monitorBackupTestOk: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * Connected. The folder will be made on the first backup.
+	 */
+	monitorBackupTestMissing: () => LocalizedString
+	/**
+	 * Saved.
+	 */
+	monitorBackupSaved: () => LocalizedString
+	/**
+	 * Save where this server's settings are backed up.
+	 */
+	monitorBackupSaveReauth: () => LocalizedString
+	/**
+	 * Passphrase
+	 */
+	monitorBackupKey: () => LocalizedString
+	/**
+	 * Passphrase set
+	 */
+	monitorBackupKeySet: () => LocalizedString
+	/**
+	 * Backups are encrypted to key {id}.
+	 */
+	monitorBackupKeySetHint: (arg: { id: unknown }) => LocalizedString
+	/**
+	 * No passphrase
+	 */
+	monitorBackupKeyMissing: () => LocalizedString
+	/**
+	 * Set one to start backing up.
+	 */
+	monitorBackupKeyMissingHint: () => LocalizedString
+	/**
+	 * Change passphrase
+	 */
+	monitorBackupKeyChange: () => LocalizedString
+	/**
+	 * Set passphrase
+	 */
+	monitorBackupKeySetAction: () => LocalizedString
+	/**
+	 * The passphrase encrypts the key that opens the backups. The key is stored in the folder; this server keeps only the half that encrypts, so it backs up without the passphrase. A new passphrase applies to backups from now on; older ones keep the passphrase they were made with.
+	 */
+	monitorBackupKeyBody: () => LocalizedString
+	/**
+	 * If you lose the passphrase, the backups cannot be restored. Nobody can recover it.
+	 */
+	monitorBackupKeyWarning: () => LocalizedString
+	/**
+	 * Passphrase
+	 */
+	monitorBackupPassphrase: () => LocalizedString
+	/**
+	 * Repeat passphrase
+	 */
+	monitorBackupPassphraseAgain: () => LocalizedString
+	/**
+	 * At least {min} characters.
+	 */
+	monitorBackupPassphraseShort: (arg: { min: unknown }) => LocalizedString
+	/**
+	 * The two do not match.
+	 */
+	monitorBackupPassphraseMismatch: () => LocalizedString
+	/**
+	 * Set
+	 */
+	monitorBackupKeySave: () => LocalizedString
+	/**
+	 * Set the passphrase backups are encrypted with.
+	 */
+	monitorBackupKeyReauth: () => LocalizedString
+	/**
+	 * Status
+	 */
+	monitorBackupStatus: () => LocalizedString
+	/**
+	 * Backing up…
+	 */
+	monitorBackupRunning: () => LocalizedString
+	/**
+	 * Last backup {when}
+	 */
+	monitorBackupLast: (arg: { when: unknown }) => LocalizedString
+	/**
+	 * No backup yet
+	 */
+	monitorBackupNone: () => LocalizedString
+	/**
+	 * A backup is made when the settings change, and once a day while only what changes on its own did.
+	 */
+	monitorBackupSchedule: () => LocalizedString
+	/**
+	 * Failed
+	 */
+	monitorBackupFailed: () => LocalizedString
+	/**
+	 * Back up now
+	 */
+	monitorBackupRunNow: () => LocalizedString
+	/**
+	 * Backups
+	 */
+	monitorBackupList: () => LocalizedString
+	/**
+	 * No backups in the folder
+	 */
+	monitorBackupListEmpty: () => LocalizedString
+	/**
+	 * Older passphrase
+	 */
+	monitorBackupOlderKey: () => LocalizedString
+	/**
+	 * Restore
+	 */
+	monitorBackupRestore: () => LocalizedString
+	/**
+	 * Restore settings
+	 */
+	monitorBackupRestoreTitle: () => LocalizedString
+	/**
+	 * Restore the settings backed up {when}. This server's settings are replaced; its history, logs and where backups go stay.
+	 */
+	monitorBackupRestoreBody: (arg: { when: unknown }) => LocalizedString
+	/**
+	 * The account password becomes the backup's: every device signs in again with it. The monitor restarts.
+	 */
+	monitorBackupRestoreWarning: () => LocalizedString
+	/**
+	 * Restore the settings backed up {when}.
+	 */
+	monitorBackupRestoreReauth: (arg: { when: unknown }) => LocalizedString
+	/**
+	 * The monitor is restarting.
+	 */
+	monitorBackupRestoredRestarting: () => LocalizedString
+	/**
+	 * Restart the monitor to apply every setting.
+	 */
+	monitorBackupRestoredRestart: () => LocalizedString
+	/**
+	 * Sign in again with the password from the backup.
+	 */
+	monitorBackupRestoredSignIn: () => LocalizedString
+	/**
+	 * That address is not one the password may be sent to: use HTTPS, or allow plain HTTP.
+	 */
+	monitorBackupErrInvalidUrl: () => LocalizedString
+	/**
+	 * The user name has a character it may not have.
+	 */
+	monitorBackupErrInvalidUsername: () => LocalizedString
+	/**
+	 * The password has a character it may not have.
+	 */
+	monitorBackupErrInvalidPassword: () => LocalizedString
+	/**
+	 * Type the password: the saved one is only sent to the server it was saved for.
+	 */
+	monitorBackupErrPasswordRequired: () => LocalizedString
+	/**
+	 * Keep between 1 and 100 backups.
+	 */
+	monitorBackupErrInvalidKeep: () => LocalizedString
+	/**
+	 * The passphrase is too short.
+	 */
+	monitorBackupErrWeakPassphrase: () => LocalizedString
+	/**
+	 * Save a folder and set a passphrase first.
+	 */
+	monitorBackupErrNotReady: () => LocalizedString
+	/**
+	 * The passphrase does not open this backup.
+	 */
+	monitorBackupErrWrongPassphrase: () => LocalizedString
+	/**
+	 * The key for this backup is not in the folder, so it cannot be opened.
+	 */
+	monitorBackupErrKeyMissing: () => LocalizedString
+	/**
+	 * The key file in the folder cannot be read.
+	 */
+	monitorBackupErrInvalidKeyFile: () => LocalizedString
+	/**
+	 * The file is not a backup this monitor can read.
+	 */
+	monitorBackupErrInvalidBackup: () => LocalizedString
+	/**
+	 * The backup is from a newer monitor. Update this one first.
+	 */
+	monitorBackupErrNewer: () => LocalizedString
+	/**
+	 * The backup is larger than the 100 MB limit.
+	 */
+	monitorBackupErrTooLarge: () => LocalizedString
+	/**
+	 * The backup is no longer in the folder.
+	 */
+	monitorBackupErrNotFound: () => LocalizedString
+	/**
+	 * The WebDAV server refused the user name or password.
+	 */
+	monitorBackupErrUnauthorized: () => LocalizedString
+	/**
+	 * The WebDAV server does not allow this.
+	 */
+	monitorBackupErrForbidden: () => LocalizedString
+	/**
+	 * The folder is not on the WebDAV server.
+	 */
+	monitorBackupErrFolderMissing: () => LocalizedString
+	/**
+	 * The WebDAV server cannot be reached.
+	 */
+	monitorBackupErrUnreachable: () => LocalizedString
+	/**
+	 * The WebDAV server is out of space.
+	 */
+	monitorBackupErrServerFull: () => LocalizedString
+	/**
+	 * The address does not answer as a WebDAV folder.
+	 */
+	monitorBackupErrNotWebdav: () => LocalizedString
+	/**
+	 * The WebDAV server failed the request.
+	 */
+	monitorBackupErrServer: () => LocalizedString
+	/**
+	 * Failed: {code}
+	 */
+	monitorBackupErrOther: (arg: { code: unknown }) => LocalizedString
+	/**
+	 * Settings backup failed
+	 */
+	noticeMonitorBackupFailed: () => LocalizedString
+	/**
+	 * Settings backups work again
+	 */
+	noticeMonitorBackupBack: () => LocalizedString
+	/**
+	 * The last backup was uploaded.
+	 */
+	noticeMonitorBackupBackBody: () => LocalizedString
+	/**
+	 * Remove the saved password
+	 */
+	monitorBackupForgetPassword: () => LocalizedString
+	/**
+	 * Automatic backups are off.
+	 */
+	monitorBackupOff: () => LocalizedString
+	/**
+	 * Another server
+	 */
+	monitorBackupOtherServer: () => LocalizedString
+	/**
+	 * Backups are turned off. Turn on Back up automatically first.
+	 */
+	monitorBackupErrDisabled: () => LocalizedString
 }
 
 export type Formatters = {}

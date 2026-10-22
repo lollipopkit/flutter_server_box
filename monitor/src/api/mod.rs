@@ -47,6 +47,7 @@ pub mod app_backend;
 pub mod apps;
 pub mod live;
 pub mod containers;
+pub mod monitor_backup;
 pub mod container_backups;
 pub mod stacks;
 pub mod shares;

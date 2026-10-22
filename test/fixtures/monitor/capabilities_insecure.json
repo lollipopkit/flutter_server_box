@@ -29,6 +29,7 @@
         "containers",
         "container_exec",
         "container_backups",
+        "monitor_backup",
         "storage",
         "shares",
         "iperf",

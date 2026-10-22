@@ -2,6 +2,7 @@
 // the default query depth during layout computation
 #![recursion_limit = "256"]
 
+pub mod monitor_backup;
 pub mod agent_mode;
 pub mod api;
 pub mod apps;
