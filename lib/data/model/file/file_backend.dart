@@ -170,7 +170,7 @@ class FileBackendTraits {
 /// Somewhere files live.
 ///
 /// The third of this app's "where do the bytes come from" seams, beside
-/// `ShellBackend` and `ServerExec`. Everything above it — the browser, the
+/// `ShellBackend` and `CommandExec`. Everything above it — the browser, the
 /// transfer engine — is written against these seven methods, so that a second
 /// kind of storage is a class rather than a branch in every page.
 ///

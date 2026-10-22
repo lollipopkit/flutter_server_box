@@ -140,7 +140,7 @@ class ServicesNotifier extends _$ServicesNotifier {
     );
   }
 
-  Future<bool> _isRoot(ServerExec exec) async {
+  Future<bool> _isRoot(CommandExec exec) async {
     if (_spi.isRoot) return true;
     if (_root case final root?) return root;
     final result = await exec.run('id -u');
@@ -209,7 +209,7 @@ class ServicesNotifier extends _$ServicesNotifier {
   Future<void> getServices() async {
     state = state.copyWith(isBusy: true);
 
-    final ServerExec exec;
+    final CommandExec exec;
     try {
       exec = await ref.read(serverProvider(_spi.id).notifier).ensureExec();
     } catch (e, s) {

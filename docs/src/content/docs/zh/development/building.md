@@ -107,7 +107,7 @@ flutter pub get
 dart run build_runner build
 ```
 
-`flutter clean` 会删除 `build/` 下的构建产物，也包括启用 iOS Linux engine 时所需的 engine libraries。请重新运行对应的 `scripts/build-ish-ios.sh device`、`simulator` 或 `macos` 构建目标，否则链接时会因缺少这些文件而失败。
+iOS Linux engine 的 libraries 位于 `packages/fl_tty/build/ish`，不在 `flutter clean` 删除的范围内；缺失时 fl_tty 的 build hook 会重新获取。
 
 ### 依赖版本不匹配
 

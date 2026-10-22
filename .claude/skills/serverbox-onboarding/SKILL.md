@@ -106,9 +106,6 @@ the symptom rarely names the cause.
   running from their IDE. Two debug builds compete for the same window and you
   end up inspecting an instance nobody is looking at. Hot reload through the
   dart MCP server instead (`CLAUDE.md` has the sequence).
-- **`flutter clean` deletes the out-of-tree iSH engine build** and leaves a
-  checkout that looks fine, so the next iOS build dies in the linker on three
-  missing `.a` files. Only affects a checkout that turned `SBM_ISH` on.
 
 ## Answering "how does X work"
 

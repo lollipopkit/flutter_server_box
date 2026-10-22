@@ -1,108 +1,9 @@
 import 'dart:async';
 
+import 'package:fl_tty/fl_tty.dart';
 import 'package:server_box/src/rust/api/script.dart' as script_ffi;
 
-/// What a command left behind.
-class ExecResult {
-  const ExecResult({
-    required this.exitCode,
-    required this.stdout,
-    required this.stderr,
-    this.outputIncomplete = false,
-    this.streamError,
-    this.streamErrorStackTrace,
-    this.mayStillRun = false,
-  });
-
-  /// Null where the source cannot report one — a shell that was closed rather
-  /// than exited.
-  final int? exitCode;
-  final String stdout;
-  final String stderr;
-
-  /// The command finished but its output did not, and waiting was given up on.
-  ///
-  /// A process that leaves a child holding the channel — `nohup ... &`,
-  /// `setsid` — exits without closing stdout, and a reader that waits for the
-  /// end of that stream waits for a process nobody is tracking. What arrived
-  /// is here; this says there may have been more.
-  final bool outputIncomplete;
-
-  /// An error while reading stdout or stderr, after preserving everything that
-  /// arrived before it.
-  final Object? streamError;
-  final StackTrace? streamErrorStackTrace;
-
-  /// Cancelled, and what the command started could not be confirmed stopped:
-  /// it may still be running on the server. A process that left the command's
-  /// session (`setsid`, a daemon doing the work) is out of every source's
-  /// reach, and some sources cannot stop a command at all.
-  final bool mayStillRun;
-
-  /// Both streams in the order a terminal would have shown them. Most callers
-  /// want this: they are parsing what a command printed, not auditing which
-  /// file descriptor it used.
-  String get combined => stderr.isEmpty ? stdout : '$stdout$stderr';
-
-  bool get succeeded =>
-      streamError == null &&
-      (exitCode == 0 || (exitCode == null && stderr.isEmpty));
-}
-
-typedef OnExecOutput = void Function(String chunk);
-
-/// Running one command on a server and collecting what it printed.
-///
-/// The pages that list processes, units and containers, and the ones that run
-/// a snippet or power the machine down, all want the same thing: a command
-/// goes out, its output comes back. None of them wants an interactive shell —
-/// that is `ShellBackend` — and none of them should have to know that SSH is
-/// what happens to provide it. Reaching for `ServerState.client` made every
-/// one of them know, which is why a server reached over its monitor agent
-/// could only ever show a status page: there was no `SSHClient` to hand them,
-/// and nothing else they could have been given.
-///
-/// The seam is here rather than at `SSHClient` because "run this and tell me
-/// what it said" is a smaller promise than SSH makes, and it is the whole of
-/// what these callers need. Anything that genuinely needs more — a byte
-/// stream for SFTP or a forwarded port — asks for that instead, and gets it
-/// from somewhere that can promise it.
-abstract interface class ServerExec {
-  /// Runs [script] and collects its output.
-  ///
-  /// [script] is handed to the server's own shell as the command to run, so it
-  /// may be a pipeline or several lines. [stdin] is written to it — a real
-  /// input stream, which is how a sudo password gets in without a terminal to
-  /// type it into, and the reason a password never has to be written into the
-  /// command where a log or a process list would see it.
-  ///
-  /// [entry] is for the other shape: something that reads a script on *its*
-  /// stdin rather than running one, which is what installing the status script
-  /// is (`mkdir -p; cat > path; chmod`). Then [entry] is the command and
-  /// [stdin] followed by [script] is what it reads.
-  ///
-  /// "The server's own shell" is the account's login shell, and nothing says
-  /// that is a POSIX one: fish rejects `VAR=value cmd`, `if ...; then` and a
-  /// heredoc, and a syntax error there is not an exception but a diagnostic
-  /// on stderr and none of the output the caller is looking for. So a
-  /// [script] written in POSIX syntax goes through `entry: 'sh'`; only a
-  /// single command with quoted arguments is safe to run as the command.
-  ///
-  /// [cancel] completing means the caller has stopped waiting: the result is
-  /// whatever had arrived by then, and the command is stopped where that is
-  /// possible. Only some sources can actually stop one — see the note on each
-  /// implementation — so a cancelled command is not a command guaranteed not
-  /// to have finished.
-  Future<ExecResult> run(
-    String script, {
-    String? entry,
-    Map<String, String>? env,
-    String? stdin,
-    OnExecOutput? onStdout,
-    OnExecOutput? onStderr,
-    Future<void>? cancel,
-  });
-}
+export 'package:fl_tty/fl_tty.dart' show CommandByteExec, CommandExec, ExecResult, ExecSession, OnExecOutput;
 
 /// The exit code [ServerExecSudo.runWithSudo] reports when sudo would not
 /// take the password it was given, or was not given one at all.
@@ -112,7 +13,7 @@ abstract interface class ServerExec {
 /// does not care about sudo can treat it as any other non-zero exit.
 const kSudoPasswordRejected = 2;
 
-extension ServerExecSudo on ServerExec {
+extension ServerExecSudo on CommandExec {
   /// Runs [script] with [password] on its stdin, reporting a rejected sudo
   /// password as [kSudoPasswordRejected].
   ///
@@ -151,41 +52,4 @@ extension ServerExecSudo on ServerExec {
       stderr: result.stderr,
     );
   }
-}
-
-/// A [ServerExec] whose command can be fed bytes while it runs, rather than a
-/// string written before it starts.
-///
-/// What an upload through a command needs (`virsh vol-upload --file
-/// /dev/stdin`): the file is the command's stdin, sent as it is read, with
-/// the command's own output watched meanwhile. An SSH session and a local
-/// process carry that; a monitor agent's `/exec` takes its stdin whole, in
-/// the request, so it is not one of these.
-abstract interface class ServerByteExec implements ServerExec {
-  /// Starts [command], handed to the server's own shell as the command to run
-  /// — one line with single-quoted arguments only, for the reason
-  /// [ServerExec.run] gives.
-  Future<ExecSession> start(String command);
-}
-
-/// A command started by [ServerByteExec.start].
-abstract interface class ExecSession {
-  /// What it prints, decoded; both end when it has.
-  Stream<String> get stdout;
-  Stream<String> get stderr;
-
-  /// Writes [data] to its stdin, returning once the transport has taken it:
-  /// a caller writing a large file in a loop is held back to the pace the
-  /// command reads at, rather than buffering the file in memory.
-  Future<void> write(List<int> data);
-
-  /// Ends its stdin, which is how it learns the input is complete.
-  Future<void> closeStdin();
-
-  /// Its exit status once it has ended; null where the source cannot say
-  /// (killed).
-  Future<int?> get done;
-
-  /// Stops it, and releases the channel.
-  void kill();
 }

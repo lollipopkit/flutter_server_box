@@ -58,7 +58,7 @@ void main() {
   });
 
   /// A container whose servers hand out [exec], or refuse if it is null.
-  ProviderContainer containerWith(ServerExec? exec) => ProviderContainer(
+  ProviderContainer containerWith(CommandExec? exec) => ProviderContainer(
     overrides: [
       serverProvider(sid).overrideWith(() => _FakeServerNotifier(exec)),
     ],
@@ -107,14 +107,14 @@ void main() {
   });
 }
 
-/// Hands out a prepared [ServerExec], or refuses like an unreachable machine.
+/// Hands out a prepared [CommandExec], or refuses like an unreachable machine.
 class _FakeServerNotifier extends ServerNotifier {
   _FakeServerNotifier(this.exec);
 
-  final ServerExec? exec;
+  final CommandExec? exec;
 
   @override
-  Future<ServerExec> ensureExec({VoidCallback? onSshDial}) async {
+  Future<CommandExec> ensureExec({VoidCallback? onSshDial}) async {
     final exec = this.exec;
     if (exec == null) throw StateError('offline: this test does not connect');
     return exec;
@@ -125,7 +125,7 @@ class _FakeServerNotifier extends ServerNotifier {
 ///
 /// The gate is what puts the dispose *between* the request and its answer,
 /// which is the window the whole file is about.
-class _GatedExec implements ServerExec {
+class _GatedExec implements CommandExec {
   const _GatedExec(this.gate);
 
   final Future<void> gate;

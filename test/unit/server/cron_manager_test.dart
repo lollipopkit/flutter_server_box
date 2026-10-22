@@ -8,7 +8,7 @@ import 'package:server_box/src/rust/api/cron.dart' as ffi;
 
 import '../../helpers/rust_lib_helper.dart';
 
-final class _QueueExec implements ServerExec {
+final class _QueueExec implements CommandExec {
   _QueueExec(List<ExecResult> results) : results = Queue.of(results);
 
   final Queue<ExecResult> results;

@@ -27,6 +27,7 @@ abstract final class LlmHost {
   static Future<void> init(
     ProviderContainer container, {
     @visibleForTesting String? directory,
+    @visibleForTesting Uint8List? key,
     @visibleForTesting LlmCredentials? credentials,
     @visibleForTesting ExternalLibrary? externalLibrary,
     @visibleForTesting Map<String, String> Function()? environment,
@@ -36,6 +37,7 @@ abstract final class LlmHost {
     try {
       await Llm.init(
         directory: directory,
+        key: key,
         credentials: credentials,
         externalLibrary: externalLibrary,
         environment: environment,

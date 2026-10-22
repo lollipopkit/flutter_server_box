@@ -1,8 +1,8 @@
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show CommandPreview;
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
-import 'package:server_box/view/widget/agent_common.dart';
 
 /// A tool call waiting for the user, in the approval card: how much harm it
 /// can do, what the model says it is for, and the call itself.
@@ -47,7 +47,7 @@ class AgentToolPreview extends StatelessWidget {
             color: scheme.surface,
             borderRadius: BorderRadius.circular(9),
           ),
-          child: AgentCommandPreview(
+          child: CommandPreview(
             text: command.displayValue,
             language: command.toolName == 'run_shell_command' ? 'shell' : 'text',
           ),
@@ -59,7 +59,7 @@ class AgentToolPreview extends StatelessWidget {
               color: scheme.surface,
               borderRadius: BorderRadius.circular(9),
             ),
-            child: AgentCommandPreview(text: content, language: 'text'),
+            child: CommandPreview(text: content, language: 'text'),
           ),
       ].joinWith(const SizedBox(height: 7)),
     );
