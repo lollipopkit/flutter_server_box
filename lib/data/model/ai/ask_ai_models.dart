@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:meta/meta.dart';
-import 'package:server_box/core/utils/local_exec.dart';
+import 'package:server_box/core/utils/local_device.dart';
 import 'package:server_box/src/rust/api/command_risk.dart';
 
 /// How much of a command the local check could actually establish.
@@ -284,7 +284,7 @@ class AskAiCommand {
   /// on purpose and that are somewhere else. This one holds the app's own
   /// stores, the user's keys and their files, and a read-only command there is
   /// still a command they did not see.
-  bool get onThisDevice => serverId == LocalExec.deviceId;
+  bool get onThisDevice => serverId == LocalDevice.id;
 
   bool get canAutoRun =>
       modelSafeToRun && risk == AskAiCommandRisk.readOnly && !onThisDevice;

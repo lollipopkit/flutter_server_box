@@ -20,13 +20,13 @@ final class StorageManagerException implements Exception {
 
 /// Runs the Rust storage parser and scripts; policy remains in `sbm_parser`.
 abstract final class StorageManager {
-  static Future<StorageView> view(ServerExec exec) async =>
+  static Future<StorageView> view(CommandExec exec) async =>
       StorageView.fromJson(jsonDecode(await _viewJson(exec)) as Map<String, Object?>);
 
   /// The view as Rust parsed it. [act] checks against this JSON itself, so
   /// the check sees every field `sbm_parser` reads, whatever the Dart model
   /// keeps.
-  static Future<String> _viewJson(ServerExec exec) async {
+  static Future<String> _viewJson(CommandExec exec) async {
     final result = await exec.run(ffi.storageViewScript(), entry: 'sh');
     if (!result.succeeded) {
       throw StorageManagerException(
@@ -42,7 +42,7 @@ abstract final class StorageManager {
   }
 
   static Future<List<DiskHealth>> health(
-    ServerExec exec, {
+    CommandExec exec, {
     required bool isRoot,
     String? password,
   }) async {
@@ -72,7 +72,7 @@ abstract final class StorageManager {
   }
 
   static Future<void> act(
-    ServerExec exec,
+    CommandExec exec,
     StorageAction action, {
     required bool isRoot,
     String? password,

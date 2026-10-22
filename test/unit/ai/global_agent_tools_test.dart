@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/local_exec.dart';
+import 'package:server_box/core/utils/local_device.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/provider/ai/global_agent_tools.dart';
 
@@ -514,7 +514,7 @@ void main() {
     test('the reserved id names this machine, not a server', () {
       final target = AgentSshTarget.fromArguments(
         shell({
-          'server_id': LocalExec.deviceId,
+          'server_id': LocalDevice.id,
           'command': 'uname -a',
           'safe_to_run': true,
         }),
@@ -525,7 +525,7 @@ void main() {
 
     test('nothing auto-runs here, however read-only it looks', () {
       final onDevice = shell({
-        'server_id': LocalExec.deviceId,
+        'server_id': LocalDevice.id,
         'command': 'ls /etc',
         'safe_to_run': true,
       });
@@ -548,11 +548,11 @@ void main() {
     test('the model is not told about it unless it is available', () {
       expect(
         buildGlobalAgentInstructions(servers: const []),
-        isNot(contains(LocalExec.deviceId)),
+        isNot(contains(LocalDevice.id)),
       );
       expect(
         buildGlobalAgentInstructions(servers: const [], localExec: true),
-        contains(LocalExec.deviceId),
+        contains(LocalDevice.id),
       );
     });
   });

@@ -182,6 +182,8 @@ void main() {
     await LlmHost.init(
       ProviderContainer(),
       directory: chats.path,
+      // The chat files' key, which an app reads from the keychain.
+      key: Uint8List(32),
       credentials: credentials,
       externalLibrary: llmNativeLib(),
       // An OpenAI-compatible gateway, as a shell exports it.

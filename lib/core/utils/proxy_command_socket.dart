@@ -5,11 +5,10 @@ import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_tty/fl_tty.dart';
 import 'package:meta/meta.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/utils/android_rootfs.dart';
 import 'package:server_box/core/utils/ish_proxy_socket.dart';
-import 'package:server_box/core/utils/process_tree.dart';
 import 'package:server_box/data/model/app/error.dart';
 
 /// An [SSHSocket] over a ProxyCommand's standard streams.

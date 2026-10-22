@@ -5,13 +5,12 @@ import 'dart:math' as math;
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_tty/fl_tty.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:server_box/core/app_navigator.dart';
 import 'package:server_box/core/diag.dart';
-import 'package:server_box/core/utils/ish_shell.dart';
 import 'package:server_box/core/utils/local_server.dart';
-import 'package:server_box/core/utils/local_shell.dart';
 import 'package:server_box/core/utils/monitor_terminal.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';

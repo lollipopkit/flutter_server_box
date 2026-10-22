@@ -14,7 +14,7 @@ abstract final class PrivilegedExec {
   /// the probe succeeds, `sudo -n` is safe. When a password is supplied it is
   /// written before the script and sudo consumes exactly that first line.
   static Future<ExecResult> run(
-    ServerExec exec,
+    CommandExec exec,
     String script, {
     required bool isRoot,
     String? password,

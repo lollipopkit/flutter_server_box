@@ -644,7 +644,7 @@ extension on _StoragePageState {
     if (test.hours != null) l10n.storageAtHours(test.hours!),
   ].join(' · ');
 
-  Future<ServerExec> _exec() => ref.read(_provider.notifier).ensureExec();
+  Future<CommandExec> _exec() => ref.read(_provider.notifier).ensureExec();
 
   Future<void> _refresh() async {
     if (_busy || !mounted) return;
@@ -675,7 +675,7 @@ extension on _StoragePageState {
     }
   }
 
-  Future<void> _resolveRoot(ServerExec exec) async {
+  Future<void> _resolveRoot(CommandExec exec) async {
     try {
       final currentUser = (await UserManager.list(exec)).currentUser;
       if (mounted && currentUser == 'root' && !_isRoot) {

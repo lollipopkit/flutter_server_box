@@ -163,7 +163,7 @@ make build PLATFORM=<android|ios|macos|linux|windows>   # dart run fl_build -p .
 | `flutter pub get` fails on a missing path under `packages/` | Submodules not initialised | `git submodule update --init --recursive` |
 | App throws in `RustLib.init` at startup | `flutter_rust_bridge` versions differ between `pubspec.yaml` and `crates/sbm_ffi/Cargo.toml` | Make them equal; both are pinned deliberately |
 | `test/frb_parser_test.dart` cannot load the dylib | The FFI crate was never built | `cargo build -p sbm_ffi` |
-| iOS link fails on `build/ish/build-ios-arm64/lib{ish,ish_emu,fakefs}.a` | `flutter clean` removed the out-of-tree engine build; the checkout still looks clean | `scripts/build-ish-ios.sh device` (also `simulator`, `macos`) |
+| iOS build fails in fl_tty's hook on `ensure-ish-libs.sh` | `packages/fl_tty/third_party/ish-arm64` names a revision the fork has not published | Point it at a published one, or `brew install meson ninja llvm lld libarchive` to build it |
 | A Rust target silently builds for the host | That target is missing from `crates/sbm_ffi/rust-toolchain.toml` — not an error, a fallback | Add it to `targets` |
 | `svelte-check` reports `Cannot find module` for `packages/webui/src/*` | vite or svelte-check was run directly, skipping the `prebuild` | `npm run build` in `monitor/frontend` |
 | sqlx macros fail to compile | No `DATABASE_URL` and a stale offline cache | Set it, or `cargo sqlx prepare` |

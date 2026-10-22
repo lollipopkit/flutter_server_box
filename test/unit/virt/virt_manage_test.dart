@@ -379,7 +379,7 @@ ExecResult _ok(String stdout) =>
 
 typedef _Call = ({String script, String? entry, String? stdin});
 
-class _Exec implements ServerExec {
+class _Exec implements CommandExec {
   _Exec(this.answer);
 
   final ExecResult Function(_Call call) answer;
@@ -419,7 +419,7 @@ class _Bytes {
 /// The far side of the byte channel, as the upload command behaves there:
 /// sudo reading its password line (when it asks), the script reading the go
 /// line and saying it is ready, `vol-upload` taking the rest.
-class _Remote implements ServerByteExec {
+class _Remote implements CommandByteExec {
   _Remote({this.sudoAsks = false, this.password, this.refuse});
 
   final bool sudoAsks;

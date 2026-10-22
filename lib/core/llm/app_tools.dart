@@ -24,7 +24,6 @@ import 'package:server_box/data/provider/virt/virt.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/benchmark.dart';
 import 'package:server_box/view/page/benchmark/estimate.dart';
-import 'package:server_box/view/widget/agent_common.dart';
 
 /// Tools over the app's own features, each its own switch: the snippets, the
 /// virtualization hosts it has loaded, the benchmark, remote desktop. See [AgentTools] for the ones
@@ -108,7 +107,7 @@ final class SnippetTool extends ToolFunc {
   Widget? preview(BuildContext context, Map<String, Object?> args, String chatId) {
     final script = _str(args, 'script');
     if (script == null) return null;
-    return AgentCommandPreview(text: script);
+    return CommandPreview(text: script);
   }
 
   static SnippetNotifier get _notifier => AgentScope.container.read(snippetProvider.notifier);

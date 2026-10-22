@@ -19,7 +19,7 @@ final class SharesManagerException implements Exception {
 
 /// Reads, parses and writes the machine's SMB and NFS configuration.
 abstract final class SharesManager {
-  static Future<SharesView> read(ServerExec exec) async {
+  static Future<SharesView> read(CommandExec exec) async {
     final result = await exec.run(ffi.sharesReadScript(), entry: 'sh');
     if (!result.succeeded) {
       throw SharesManagerException(
@@ -37,7 +37,7 @@ abstract final class SharesManager {
 
   /// Writes only ServerBox-managed entries, keeping shares configured elsewhere.
   static Future<SharesView> setSmb(
-    ServerExec exec,
+    CommandExec exec,
     List<SmbShare> shares, {
     required bool isRoot,
     String? password,
@@ -50,7 +50,7 @@ abstract final class SharesManager {
 
   /// Writes only ServerBox-managed exports.
   static Future<SharesView> setNfs(
-    ServerExec exec,
+    CommandExec exec,
     List<NfsExport> exports, {
     required bool isRoot,
     String? password,
@@ -62,7 +62,7 @@ abstract final class SharesManager {
   }
 
   static Future<void> setSmbPassword(
-    ServerExec exec,
+    CommandExec exec,
     String user,
     String password, {
     required bool isRoot,
@@ -73,7 +73,7 @@ abstract final class SharesManager {
   }
 
   static Future<void> install(
-    ServerExec exec, {
+    CommandExec exec, {
     required bool nfs,
     required bool isRoot,
     String? password,
@@ -87,7 +87,7 @@ abstract final class SharesManager {
   }
 
   static Future<ShareConnections> connections(
-    ServerExec exec, {
+    CommandExec exec, {
     required bool isRoot,
     String? password,
   }) async {
@@ -142,7 +142,7 @@ abstract final class SharesManager {
   }
 
   static Future<void> _write(
-    ServerExec exec,
+    CommandExec exec,
     String script, {
     required bool isRoot,
     String? password,

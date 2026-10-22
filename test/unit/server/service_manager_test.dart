@@ -9,7 +9,7 @@ import 'package:server_box/src/rust/api/service.dart' as ffi;
 import '../../helpers/rust_lib_helper.dart';
 
 /// Answers each listing command by its `sbm_parser::service` name.
-final class _ByName implements ServerExec {
+final class _ByName implements CommandExec {
   _ByName(ServiceManagerType type, this.answers)
     : names = {
         for (final c in ffi.serviceListingCommands(managerName: type.name)) c.command!: c.name,

@@ -266,7 +266,7 @@ async fn stdin_reaches_the_command() {
 }
 
 /// A script arrives on stdin rather than as an argument, which is how a
-/// multi-line one survives — `ServerExec.run` sends every script this way.
+/// multi-line one survives — `CommandExec.run` sends every script this way.
 #[ntex::test]
 async fn a_multi_line_script_fed_to_a_shell_runs_whole() {
     let srv = test_server(app_state().await).await;

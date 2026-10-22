@@ -16,7 +16,7 @@ import '../helpers/spi_fixture.dart';
 
 const _sid = 'storage-page';
 
-final class _FakeExec implements ServerExec {
+final class _FakeExec implements CommandExec {
   @override
   Future<ExecResult> run(
     String script, {
@@ -63,7 +63,7 @@ final class _FakeServerNotifier extends ServerNotifier {
       ServerState(spi: spiFixture(id: id, name: 'nas'), status: InitStatus.status);
 
   @override
-  Future<ServerExec> ensureExec({VoidCallback? onSshDial}) async => _FakeExec();
+  Future<CommandExec> ensureExec({VoidCallback? onSshDial}) async => _FakeExec();
 }
 
 void main() {

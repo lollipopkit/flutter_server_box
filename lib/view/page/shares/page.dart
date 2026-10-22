@@ -433,7 +433,7 @@ extension on _SharesPageState {
 }
 
 extension on _SharesPageState {
-  Future<ServerExec> _exec() => ref.read(_provider.notifier).ensureExec();
+  Future<CommandExec> _exec() => ref.read(_provider.notifier).ensureExec();
 
   Future<void> _refresh() async {
     if (_busy || !mounted) return;
@@ -539,7 +539,7 @@ extension on _SharesPageState {
   }
 
   Future<_ShareResult<T>> _withSudo<T>(
-    Future<T> Function(ServerExec exec, String? password) run, {
+    Future<T> Function(CommandExec exec, String? password) run, {
     bool quiet = false,
   }) async {
     try {
@@ -570,7 +570,7 @@ extension on _SharesPageState {
     }
   }
 
-  Future<void> _write<T>(Future<T> Function(ServerExec, String?) action) async {
+  Future<void> _write<T>(Future<T> Function(CommandExec, String?) action) async {
     if (_busy) return;
     _rebuild(() => _busy = true);
     try {

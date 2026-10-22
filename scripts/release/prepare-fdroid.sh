@@ -42,7 +42,10 @@ rustup run "$rust_toolchain" cargo fetch \
   --manifest-path crates/sbm_ffi/Cargo.toml
 scripts/release/patch-jni-build-id.sh
 if [ "$variant" = all ] || [ "$variant" = arm64 ]; then
-  scripts/build-proot-android.sh
+  # Ahead of the build, with the pinned NDK: fl_tty's hook then takes it from
+  # packages/fl_tty/build/proot-android/out rather than building it itself.
+  PROOT_NDK_VERSION="$(tr -d '[:space:]' < android/ndk-version.txt)" \
+    packages/fl_tty/scripts/build-proot-android.sh
 fi
 
 # Refresh Flutter's Android metadata after `pub get`, then remove dev-only

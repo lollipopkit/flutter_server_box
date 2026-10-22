@@ -3,14 +3,15 @@ import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart' hide Provider;
+import 'package:fl_tty/fl_tty.dart';
 import 'package:meta/meta.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/adhoc_ssh_prompt.dart';
-import 'package:server_box/core/utils/local_exec.dart';
-import 'package:server_box/core/utils/rootfs.dart';
+import 'package:server_box/core/utils/local_device.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/core/utils/ssh_exec.dart';
@@ -20,7 +21,6 @@ import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server.dart';
-import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/provider/ai/adhoc_ssh.dart';
@@ -525,7 +525,7 @@ String buildGlobalAgentInstructions({
   if (localExec) {
     prompt.writeln(
       'There is a third machine: the device ServerBox itself is running on. '
-      'Name it with server_id "${LocalExec.deviceId}".',
+      'Name it with server_id "${LocalDevice.id}".',
     );
     // Two different machines under one name, and a model told the wrong one
     // proposes commands against a filesystem that is not there. On a phone it
@@ -706,7 +706,7 @@ class GlobalAgentToolService {
       localeHint: localeHint,
       // Read now rather than once at start-up: the setting can be turned on
       // mid-conversation, and the instructions are rebuilt per request.
-      localExec: LocalExec.isOffered,
+      localExec: LocalDevice.isOffered,
       // Whether that machine is a container, which is the question — not which
       // platform this is. Both answers exist on Android and on iOS.
       localIsRootfs: LocalExec.forThisDevice()?.inRootfs ?? false,
@@ -865,7 +865,7 @@ class GlobalAgentToolService {
     }
 
     final notifier = _ref.read(serverProvider(spi.id).notifier);
-    final ServerExec exec;
+    final CommandExec exec;
     try {
       // Connecting is what raises the host key and keyboard-interactive
       // prompts, and this may be running while the Agent is nowhere on
@@ -941,7 +941,7 @@ class GlobalAgentToolService {
     // The signal the stop button and the timeout both pull. It replaces
     // holding the session and killing it from outside: a command no longer
     // has to be an SSH channel for this to work, which is the whole point of
-    // going through [ServerExec]. A stop asked for before the command started
+    // going through [CommandExec]. A stop asked for before the command started
     // still pulls it: there is nothing to stop until it is sent, and the
     // implementation stops it as soon as it can.
     final cancel = Completer<void>();

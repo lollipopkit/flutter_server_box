@@ -1,4 +1,4 @@
-/// `LibvirtBackend` over a scripted `ServerExec` that answers with the
+/// `LibvirtBackend` over a scripted `CommandExec` that answers with the
 /// `sbm_virt` libvirt fixtures: mapping, rates across two samples, the sudo
 /// retry, a server without virsh, and snapshots, storage, networks and
 /// hardware against the captured script outputs.
@@ -1644,7 +1644,7 @@ ExecResult _fail(String stderr) =>
 typedef _Call = ({String script, String? entry, String? stdin});
 
 /// Streams through [_Exec] for everything but [start].
-class _ByteExec implements ServerByteExec {
+class _ByteExec implements CommandByteExec {
   _ByteExec(this.exec, this.session);
 
   final _Exec exec;
@@ -1709,7 +1709,7 @@ class _ReadySession extends _SilentSession {
   }
 }
 
-class _Exec implements ServerExec {
+class _Exec implements CommandExec {
   _Exec(this.answer);
 
   final ExecResult Function(_Call call) answer;

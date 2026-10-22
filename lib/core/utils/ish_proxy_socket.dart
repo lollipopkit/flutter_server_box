@@ -6,10 +6,9 @@ import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_tty/fl_tty.dart';
 import 'package:meta/meta.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/utils/ios_rootfs.dart';
-import 'package:server_box/core/utils/ish_exec.dart';
 import 'package:server_box/data/model/app/error.dart';
 
 /// A ProxyCommand on iOS: the command in the Linux guest, its terminal turned

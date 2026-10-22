@@ -3,10 +3,10 @@
 library;
 
 import 'package:dartssh2/dartssh2.dart';
+import 'package:fl_tty/fl_tty.dart';
 import 'package:meta/meta.dart';
-import 'package:server_box/core/utils/local_exec.dart';
+import 'package:server_box/core/utils/local_device.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
-import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 
@@ -34,7 +34,7 @@ import 'package:server_box/data/model/server/ssh_credential.dart';
 /// leave the tool finishing against the host it started on and reporting the
 /// result under the new one's name.
 typedef AgentShellHandle = ({
-  ServerExec exec,
+  CommandExec exec,
   SSHClient? client,
   String? serverId,
   SshFileTransport fileTransport,
@@ -69,7 +69,7 @@ sealed class AgentSshTarget {
       );
     }
     if (sessionId != null) return AdHocSessionTarget(sessionId);
-    if (serverId == LocalExec.deviceId) return const LocalTarget();
+    if (serverId == LocalDevice.id) return const LocalTarget();
     if (serverId != null) return ConfiguredServerTarget(serverId);
     // Says what to do about it, because this is read by the model as the
     // tool's output and it is the whole of what it gets to work from. An
@@ -95,7 +95,7 @@ final class ConfiguredServerTarget extends AgentSshTarget {
 /// Named through `server_id` rather than a field of its own, so the tools'
 /// schema is unchanged and the model has one place to say which machine it
 /// means. The reserved id cannot collide with a configured server's — see
-/// [LocalExec.deviceId].
+/// [LocalDevice.id].
 final class LocalTarget extends AgentSshTarget {
   const LocalTarget();
 }

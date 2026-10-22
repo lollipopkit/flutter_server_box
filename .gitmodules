@@ -26,14 +26,6 @@
 	path = packages/watch_connectivity
 	url = https://github.com/lollipopkit/watch_connectivity
 	branch = master
-[submodule "third_party/ish-arm64"]
-	path = third_party/ish-arm64
-	url = https://github.com/lollipopkit/ShellBox
-	branch = main
-[submodule "packages/flutter_pty"]
-	path = packages/flutter_pty
-	url = https://github.com/lollipopkit/flutter_pty
-	branch = main
 [submodule "third_party/ironrdp"]
 	path = third_party/ironrdp
 	url = https://github.com/lollipopkit/IronRDP.git
@@ -42,3 +34,6 @@
 	path = packages/fl_pi_llm
 	url = https://github.com/lollipopkit/fl_pi_llm
 	branch = main
+[submodule "packages/fl_tty"]
+	path = packages/fl_tty
+	url = https://github.com/lollipopkit/fl_tty

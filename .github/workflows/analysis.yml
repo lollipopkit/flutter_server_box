@@ -411,7 +411,7 @@ jobs:
           npm run build
 
   # The engine built from source, which nothing else in CI does: `Build ios` in
-  # build.yml links the libraries `scripts/ensure-ish-libs.sh` fetches from the
+  # build.yml links the libraries fl_tty's `ensure-ish-libs.sh` fetches from the
   # release built for this revision, so a source change that breaks the build
   # would reach a phone before it reached anyone's attention.
   #
@@ -446,25 +446,24 @@ jobs:
         run: flutter pub get
 
       - name: Build the engine
-        run: scripts/build-ish-ios.sh device
+        run: packages/fl_tty/scripts/build-ish-ios.sh device
 
-      # On by default (ios/Flutter/Ish.xcconfig); the libraries built above are
-      # stamped with this revision, so the build phase keeps them rather than
-      # fetching the release.
+      # On by default; the libraries built above are stamped with this
+      # revision, so fl_tty's hook keeps them rather than fetching the release.
       - name: Build the app with the engine linked
         run: flutter build ios --release --no-codesign
 
       - name: The engine is in the binary
-        run: scripts/check-ish-linkage.sh build/ios/iphoneos/Runner.app/Runner on
+        run: packages/fl_tty/scripts/check-ish-linkage.sh build/ios/iphoneos/Runner.app/Frameworks/fl_tty.framework/fl_tty on
 
-      # In the untracked local override, which is where a developer turns it
-      # off too.
+      # fl_tty's `ish` hook user-define, which is where an app turns it off.
       - name: And the switch takes it out again
         shell: bash
         run: |
-          echo 'SBM_ISH = 0' > ios/Flutter/IshLocal.xcconfig
+          perl -0pi -e 's/^    sqlite3:$/    fl_tty:\n      ish: false\n    sqlite3:/m' pubspec.yaml
+          grep -q 'ish: false' pubspec.yaml
           flutter build ios --release --no-codesign
-          scripts/check-ish-linkage.sh build/ios/iphoneos/Runner.app/Runner off
+          packages/fl_tty/scripts/check-ish-linkage.sh build/ios/iphoneos/Runner.app/Frameworks/fl_tty.framework/fl_tty off
 
   # That the unsandboxed macOS product still builds, entitlements and all.
   #

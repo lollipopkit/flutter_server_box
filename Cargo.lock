@@ -1823,12 +1823,14 @@ checksum = "d45db016d36b838f563236e9193d0ee6ce38f3f68b6c94e914b4929c96bbb890"
 name = "fl_pi_llm"
 version = "0.1.0"
 dependencies = [
+ "cc",
  "getrandom 0.4.3",
  "regex",
  "reqwest 0.13.5",
  "rquickjs",
  "rusqlite",
  "serde_json",
+ "sqlite3mc-src",
  "tokio",
  "yaml-rust2",
 ]
@@ -5732,6 +5734,12 @@ dependencies = [
  "rsqlite-vfs",
  "wasm-bindgen",
 ]
+
+[[package]]
+name = "sqlite3mc-src"
+version = "205.1.0+sqlite3mc-2.5.1-sqlite-3.53.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f155b7d3de6d72fb7b7c7affcba3773634c1fb2978b944b425c3d3ed5474448c"
 
 [[package]]
 name = "sqlx"

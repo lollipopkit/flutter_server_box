@@ -40,7 +40,7 @@ mixin _FirewallView<T extends ConsumerStatefulWidget> on ConsumerState<T> {
 
   /// [script] as root, asking for the sudo password where it is needed.
   /// Null when the user declined to give one.
-  Future<ExecResult?> privileged(ServerExec exec, String script) {
+  Future<ExecResult?> privileged(CommandExec exec, String script) {
     return SudoPassword.retry(
       context,
       host.spi.id,

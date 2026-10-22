@@ -2588,7 +2588,7 @@ Future<String> _sha256(Stream<List<int>> data) async =>
 
 /// Everything as [user], from a root login, through `su`: the account
 /// outside the `libvirt` group that the sudo path is for.
-class _AsUser implements ServerByteExec {
+class _AsUser implements CommandByteExec {
   _AsUser(this.inner, this.user);
 
   final SshExec inner;
