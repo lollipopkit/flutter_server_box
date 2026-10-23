@@ -7065,4 +7065,17 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       'Tidak ada sesi tmux untuk dipasang kembali, jadi menyambungkan ulang akan mengakhiri shell ini dan semua yang masih berjalan di dalamnya, serta menghapus keluarannya dari layar.';
+
+  @override
+  String get handedness => 'Tangan dominan';
+
+  @override
+  String get handednessLeft => 'Tangan kiri';
+
+  @override
+  String get handednessRight => 'Tangan kanan';
+
+  @override
+  String get handednessTip =>
+      'Di sisi tangan yang memegang perangkat, tab berada di kolom di samping bilah status, seperti bilah milik sistem.';
 }

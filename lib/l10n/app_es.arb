@@ -1981,5 +1981,9 @@
   "launchFailedBody": "Copia el error de abajo y repórtalo en un issue de GitHub, junto con los archivos de registro.",
   "launchFailedLogs": "Registros: {path}",
   "reconnect": "Reconectar",
-  "reconnectEndsShell": "No hay una sesión de tmux a la que volver, así que reconectar cierra esta shell y todo lo que siga ejecutándose en ella, y borra su salida de la pantalla."
+  "reconnectEndsShell": "No hay una sesión de tmux a la que volver, así que reconectar cierra esta shell y todo lo que siga ejecutándose en ella, y borra su salida de la pantalla.",
+  "handedness": "Mano dominante",
+  "handednessLeft": "Mano izquierda",
+  "handednessRight": "Mano derecha",
+  "handednessTip": "En el lado de la mano con que lo sostienes, las pestañas van en la columna junto a la barra de estado, como las barras del sistema."
 }

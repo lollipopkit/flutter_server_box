@@ -7150,4 +7150,17 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       'Es gibt keine tmux-Sitzung zum erneuten Anhängen. Neu verbinden beendet diese Shell und alles, was darin noch läuft, und löscht ihre Ausgabe vom Bildschirm.';
+
+  @override
+  String get handedness => 'Händigkeit';
+
+  @override
+  String get handednessLeft => 'Linke Hand';
+
+  @override
+  String get handednessRight => 'Rechte Hand';
+
+  @override
+  String get handednessTip =>
+      'Auf der Seite der Hand, mit der du das Gerät hältst, stehen die Tabs in der Spalte neben der Statusleiste, wie die Leisten des Systems.';
 }

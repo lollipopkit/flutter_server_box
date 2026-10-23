@@ -7059,4 +7059,17 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       'Yenidən qoşulmaq üçün tmux sessiyası yoxdur, ona görə yenidən qoşulmaq bu shell-i və içində hələ işləyən hər şeyi bağlayır və ekrandakı çıxışını təmizləyir.';
+
+  @override
+  String get handedness => 'Əsas əl';
+
+  @override
+  String get handednessLeft => 'Sol əl';
+
+  @override
+  String get handednessRight => 'Sağ əl';
+
+  @override
+  String get handednessTip =>
+      'Cihazı tutduğunuz əlin tərəfində tablar sistemin öz panelləri kimi status panelinin yanındakı sütunda yerləşir.';
 }

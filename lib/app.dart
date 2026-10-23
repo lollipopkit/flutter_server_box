@@ -167,11 +167,15 @@ class _MyAppState extends State<MyApp> {
         // that was picked, which the two builders above keep current whether
         // it came from the setting or from the system.
         ChartPalette.resolve(UIs.colorSeed, dark: ctx.isDark);
-        final content = ToastHost(
-          // Under the host, whose toasts it raises, and over every page:
-          // a remote session closes as idle whichever page is showing.
-          child: SessionKeepAliveNotices(
-            child: ResponsivePoints.builder(ctx, child),
+        // Above everything that reads the padding, toasts included — see
+        // [WindowCornerInsets].
+        final content = WindowCornerInsets(
+          child: ToastHost(
+            // Under the host, whose toasts it raises, and over every page:
+            // a remote session closes as idle whichever page is showing.
+            child: SessionKeepAliveNotices(
+              child: ResponsivePoints.builder(ctx, child),
+            ),
           ),
         );
         // The one background the whole app stands on. A page takes a copy of

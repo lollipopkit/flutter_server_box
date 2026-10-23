@@ -7052,4 +7052,17 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       'Yeniden bağlanacak bir tmux oturumu yok; yeniden bağlanmak bu kabuğu ve içinde hâlâ çalışan her şeyi sonlandırır ve ekrandaki çıktısını temizler.';
+
+  @override
+  String get handedness => 'Baskın el';
+
+  @override
+  String get handednessLeft => 'Sol el';
+
+  @override
+  String get handednessRight => 'Sağ el';
+
+  @override
+  String get handednessTip =>
+      'Cihazı tuttuğunuz elin tarafında sekmeler, sistemin kendi çubukları gibi durum çubuğunun yanındaki sütunda durur.';
 }

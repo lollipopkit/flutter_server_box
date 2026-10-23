@@ -7111,4 +7111,17 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       'Немає сеансу tmux для повторного під’єднання, тому перепідключення завершить цю оболонку й усе, що в ній ще виконується, та очистить її вивід на екрані.';
+
+  @override
+  String get handedness => 'Провідна рука';
+
+  @override
+  String get handednessLeft => 'Ліва рука';
+
+  @override
+  String get handednessRight => 'Права рука';
+
+  @override
+  String get handednessTip =>
+      'З боку руки, якою ви тримаєте пристрій, вкладки розміщуються в стовпці поруч із рядком стану, як системні панелі.';
 }

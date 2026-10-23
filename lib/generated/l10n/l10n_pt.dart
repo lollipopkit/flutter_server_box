@@ -7124,4 +7124,17 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       'Não há uma sessão do tmux para reanexar, então reconectar encerra este shell e tudo o que ainda estiver em execução nele, e apaga a saída da tela.';
+
+  @override
+  String get handedness => 'Mão dominante';
+
+  @override
+  String get handednessLeft => 'Mão esquerda';
+
+  @override
+  String get handednessRight => 'Mão direita';
+
+  @override
+  String get handednessTip =>
+      'Do lado da mão com que você o segura, as abas ficam na coluna ao lado da barra de status, como as barras do sistema.';
 }

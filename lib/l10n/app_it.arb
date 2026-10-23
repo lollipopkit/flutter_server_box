@@ -1981,5 +1981,9 @@
   "launchFailedBody": "Copia l'errore qui sotto e segnalalo in una issue su GitHub, insieme ai file di log.",
   "launchFailedLogs": "Log: {path}",
   "reconnect": "Riconnetti",
-  "reconnectEndsShell": "Non c’è una sessione tmux da ricollegare: riconnettere chiude questa shell e tutto ciò che vi è ancora in esecuzione, e ne cancella l’output dallo schermo."
+  "reconnectEndsShell": "Non c’è una sessione tmux da ricollegare: riconnettere chiude questa shell e tutto ciò che vi è ancora in esecuzione, e ne cancella l’output dallo schermo.",
+  "handedness": "Mano dominante",
+  "handednessLeft": "Mano sinistra",
+  "handednessRight": "Mano destra",
+  "handednessTip": "Dal lato della mano con cui lo tieni, le schede stanno nella colonna accanto alla barra di stato, come le barre del sistema."
 }

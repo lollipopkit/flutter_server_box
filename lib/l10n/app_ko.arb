@@ -1981,5 +1981,9 @@
   "launchFailedBody": "아래 오류를 복사해 로그 파일과 함께 GitHub 이슈로 알려 주세요.",
   "launchFailedLogs": "로그: {path}",
   "reconnect": "다시 연결",
-  "reconnectEndsShell": "다시 연결할 tmux 세션이 없으므로, 다시 연결하면 이 셸과 그 안에서 아직 실행 중인 작업이 종료되고 화면의 출력도 지워집니다."
+  "reconnectEndsShell": "다시 연결할 tmux 세션이 없으므로, 다시 연결하면 이 셸과 그 안에서 아직 실행 중인 작업이 종료되고 화면의 출력도 지워집니다.",
+  "handedness": "주로 쓰는 손",
+  "handednessLeft": "왼손",
+  "handednessRight": "오른손",
+  "handednessTip": "기기를 쥔 손 쪽에 시스템 세로 막대가 있으면 탭이 상태 표시줄 아래의 세로 막대에 놓입니다. 시스템 막대와 같은 위치입니다."
 }

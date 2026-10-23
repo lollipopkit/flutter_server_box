@@ -12026,6 +12026,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'There is no tmux session to re-attach, so reconnecting ends this shell and anything still running in it, and clears its output from the screen.'**
   String get reconnectEndsShell;
+
+  /// No description provided for @handedness.
+  ///
+  /// In en, this message translates to:
+  /// **'Handedness'**
+  String get handedness;
+
+  /// No description provided for @handednessLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Left hand'**
+  String get handednessLeft;
+
+  /// No description provided for @handednessRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Right hand'**
+  String get handednessRight;
+
+  /// No description provided for @handednessTip.
+  ///
+  /// In en, this message translates to:
+  /// **'On the side of the hand you hold it in, the tabs stand in the column beside the status bar, as the system\'s own bars do.'**
+  String get handednessTip;
 }
 
 class _AppLocalizationsDelegate

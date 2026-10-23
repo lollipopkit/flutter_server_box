@@ -1981,5 +1981,9 @@
   "launchFailedBody": "下のエラーをコピーし、ログファイルと一緒に GitHub の issue で報告してください。",
   "launchFailedLogs": "ログ: {path}",
   "reconnect": "再接続",
-  "reconnectEndsShell": "再アタッチできる tmux セッションがないため、再接続するとこのシェルと、その中でまだ実行中のものが終了し、画面上の出力も消去されます。"
+  "reconnectEndsShell": "再アタッチできる tmux セッションがないため、再接続するとこのシェルと、その中でまだ実行中のものが終了し、画面上の出力も消去されます。",
+  "handedness": "利き手",
+  "handednessLeft": "左手",
+  "handednessRight": "右手",
+  "handednessTip": "持つ手の側にシステムの縦バーがあるとき、タブはステータスバーの下の縦バーに並びます。システムのバーと同じ配置です。"
 }

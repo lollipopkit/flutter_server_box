@@ -7135,4 +7135,17 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       'Non c’è una sessione tmux da ricollegare: riconnettere chiude questa shell e tutto ciò che vi è ancora in esecuzione, e ne cancella l’output dallo schermo.';
+
+  @override
+  String get handedness => 'Mano dominante';
+
+  @override
+  String get handednessLeft => 'Mano sinistra';
+
+  @override
+  String get handednessRight => 'Mano destra';
+
+  @override
+  String get handednessTip =>
+      'Dal lato della mano con cui lo tieni, le schede stanno nella colonna accanto alla barra di stato, come le barre del sistema.';
 }

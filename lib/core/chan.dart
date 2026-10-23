@@ -1,4 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
@@ -398,31 +399,45 @@ abstract final class MethodChans {
     '${Miscs.pkgName}/window_controls',
   );
 
-  /// Keeps [WindowControls.zones] at what the platform reports — iPadOS only,
-  /// where a windowed app has its window controls drawn over it.
+  /// Keeps [WindowControls.zones] and [WindowControls.verticalBar] at what the
+  /// platform reports — iPadOS, where a windowed app has its window controls
+  /// drawn over it, and iPhone Duo, whose bars stand in a column at the side.
   ///
   /// Read once as well as listened to: the first report can come before this
   /// handler is set.
   static void watchWindowControls() {
     if (!isIOS) return;
-    List<Rect> parse(Object? raw) => [
-      for (final z in (raw as List?) ?? const [])
-        if (z case [final num l, final num t, final num r, final num b])
-          Rect.fromLTRB(l.toDouble(), t.toDouble(), r.toDouble(), b.toDouble()),
-    ];
+    Rect? rect(Object? raw) => switch (raw) {
+      [final num l, final num t, final num r, final num b] =>
+        Rect.fromLTRB(l.toDouble(), t.toDouble(), r.toDouble(), b.toDouble()),
+      _ => null,
+    };
+    void apply(Object? raw) {
+      final state = raw as Map? ?? const {};
+      WindowControls.zones.value = [
+        for (final z in (state['zones'] as List?) ?? const []) ?rect(z),
+      ];
+      WindowControls.verticalBar.value = rect(state['bar']);
+      WindowControls.cornerInsets.value = switch (state['corners']) {
+        [final num l, final num t, final num r, final num b] =>
+          EdgeInsets.fromLTRB(l.toDouble(), t.toDouble(), r.toDouble(), b.toDouble()),
+        _ => EdgeInsets.zero,
+      };
+    }
+
     // The reply to the read below can arrive after a push sent later, and
     // would put back what was there before it.
     var pushed = false;
     _windowControlsChannel.setMethodCallHandler((call) async {
       if (call.method == 'changed') {
         pushed = true;
-        WindowControls.zones.value = parse(call.arguments);
+        apply(call.arguments);
       }
     });
     _windowControlsChannel
-        .invokeMethod<List<Object?>>('zones')
+        .invokeMethod<Object?>('state')
         .then((raw) {
-          if (!pushed) WindowControls.zones.value = parse(raw);
+          if (!pushed) apply(raw);
         })
         .catchError((Object e) {
           Loggers.app.warning('windowControls', e);

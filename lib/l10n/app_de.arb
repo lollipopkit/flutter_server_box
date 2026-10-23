@@ -1981,5 +1981,9 @@
   "launchFailedBody": "Kopiere den Fehler unten und melde ihn mit den Logdateien in einem GitHub-Issue.",
   "launchFailedLogs": "Logs: {path}",
   "reconnect": "Neu verbinden",
-  "reconnectEndsShell": "Es gibt keine tmux-Sitzung zum erneuten Anhängen. Neu verbinden beendet diese Shell und alles, was darin noch läuft, und löscht ihre Ausgabe vom Bildschirm."
+  "reconnectEndsShell": "Es gibt keine tmux-Sitzung zum erneuten Anhängen. Neu verbinden beendet diese Shell und alles, was darin noch läuft, und löscht ihre Ausgabe vom Bildschirm.",
+  "handedness": "Händigkeit",
+  "handednessLeft": "Linke Hand",
+  "handednessRight": "Rechte Hand",
+  "handednessTip": "Auf der Seite der Hand, mit der du das Gerät hältst, stehen die Tabs in der Spalte neben der Statusleiste, wie die Leisten des Systems."
 }

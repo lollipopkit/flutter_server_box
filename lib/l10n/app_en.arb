@@ -9269,5 +9269,9 @@
   "reconnectEndsShell": "There is no tmux session to re-attach, so reconnecting ends this shell and anything still running in it, and clears its output from the screen.",
   "@reconnectEndsShell": {
     "description": "Confirmation before a manual reconnect that cannot re-attach tmux and so replaces the running shell."
-  }
+  },
+  "handedness": "Handedness",
+  "handednessLeft": "Left hand",
+  "handednessRight": "Right hand",
+  "handednessTip": "On the side of the hand you hold it in, the tabs stand in the column beside the status bar, as the system's own bars do."
 }

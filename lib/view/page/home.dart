@@ -398,7 +398,7 @@ class _HomePageState extends ConsumerState<HomePage>
     // the bottom inset off the body whenever the slot is filled, on the
     // grounds that the bar will spend it. An empty one spends nothing, and the
     // globe ran under the home indicator.
-    Widget mainContent(bool narrow) => ListenableBuilder(
+    Widget mainContent(bool narrow, Rect? column, Size area) => ListenableBuilder(
       listenable: _selectIndex,
       builder: (_, _) => Scaffold(
         body: Stack(
@@ -412,7 +412,9 @@ class _HomePageState extends ConsumerState<HomePage>
                 // Its own `SafeArea` rather than none, because the rail has
                 // one too — on a landscape phone wide enough for a rail, the
                 // left inset is width neither of them may spend.
-                if (_hasRail(narrow))
+                // None for a rail in the system's column: it stands in the
+                // side inset, which the tabs already leave.
+                if (_hasRail(narrow, column) && column == null)
                   const SafeArea(
                     top: false,
                     bottom: false,
@@ -433,16 +435,34 @@ class _HomePageState extends ConsumerState<HomePage>
             // tab rather than the tab drawing over it: in a `Row` the rail is
             // the first child and so the first painted, and what it overflows
             // into is painted after.
-            if (_hasRail(narrow))
-              PositionedDirectional(
-                top: 0,
-                bottom: 0,
-                start: 0,
-                child: _buildRailBar(),
-              ),
+            if (_hasRail(narrow, column))
+              if (column == null)
+                PositionedDirectional(
+                  top: 0,
+                  bottom: 0,
+                  start: 0,
+                  child: _buildRailBar(),
+                )
+              else
+                // Centred on the system's bar line, and held by its outer
+                // side so that opening it grows it over the tab rather than
+                // off the window.
+                Positioned(
+                  top: column.top,
+                  bottom: area.height - column.bottom,
+                  left: column.left < area.width / 2
+                      ? column.left - _kRailWidth / 2
+                      : null,
+                  right: column.left < area.width / 2
+                      ? null
+                      : area.width - column.left - _kRailWidth / 2,
+                  child: _buildColumnRail(column),
+                ),
           ],
         ),
-        bottomNavigationBar: narrow && !_wantsWindow ? _buildBottomBar() : null,
+        bottomNavigationBar: narrow && !_wantsWindow && column == null
+            ? _buildBottomBar()
+            : null,
       ),
     );
 
@@ -455,33 +475,46 @@ class _HomePageState extends ConsumerState<HomePage>
     // the window and here, the responsive builder included, is free to hand
     // down less than it got — and keeping a panel inside the window is not the
     // same as keeping it inside the area it is painted in.
-    final withShell = LayoutBuilder(
-      builder: (_, constraints) {
-        // The same width the pages inside decide by, so the rail appears
-        // exactly when a tab can start using the room it costs — see
-        // [AdaptivePanes.kSplitWidth]. `ResponsiveBreakpoints`' MOBILE class,
-        // which this used to ask, ends at 600.
-        //
-        // Measured against what a tab would be left with, not against the
-        // window: the rail is taken off the top before any page sees the
-        // width, so between 800 and 880 a rail appeared beside pages that were
-        // still too narrow to split — the extra column bought nothing but its
-        // own presence.
-        //
-        // And measured from this box for the same reason the panels above are:
-        // everything between the window and here is free to hand down less
-        // than it got, so `MediaQuery.sizeOf` is a different number and it is
-        // not the one a tab is laid out in.
-        final narrow =
-            constraints.maxWidth - _kRailWidth < AdaptivePanes.kSplitWidth;
-        _narrow = narrow;
-        return Stack(
-          children: [
-            mainContent(narrow),
-            FloatingPanels(area: constraints.biggest),
-          ],
-        );
-      },
+    // Rebuilt as iPhone Duo's bar column comes and goes (fold, rotation, a
+    // split) and as the hand it is for changes — see [_railColumn].
+    final withShell = ListenableBuilder(
+      listenable: Listenable.merge([
+        WindowControls.verticalBar,
+        Stores.setting.rightHanded.listenable(),
+      ]),
+      builder: (_, _) => LayoutBuilder(
+        builder: (_, constraints) {
+          // The same width the pages inside decide by, so the rail appears
+          // exactly when a tab can start using the room it costs — see
+          // [AdaptivePanes.kSplitWidth]. `ResponsiveBreakpoints`' MOBILE class,
+          // which this used to ask, ends at 600.
+          //
+          // Measured against what a tab would be left with, not against the
+          // window: the rail is taken off the top before any page sees the
+          // width, so between 800 and 880 a rail appeared beside pages that were
+          // still too narrow to split — the extra column bought nothing but its
+          // own presence.
+          //
+          // And measured from this box for the same reason the panels above are:
+          // everything between the window and here is free to hand down less
+          // than it got, so `MediaQuery.sizeOf` is a different number and it is
+          // not the one a tab is laid out in.
+          //
+          // A rail in the system's column costs the tabs nothing: the column is
+          // the side inset they already leave.
+          final column = _railColumn(constraints.biggest);
+          final narrow =
+              constraints.maxWidth - (column == null ? _kRailWidth : 0) <
+              AdaptivePanes.kSplitWidth;
+          _narrow = narrow;
+          return Stack(
+            children: [
+              mainContent(narrow, column, constraints.biggest),
+              FloatingPanels(area: constraints.biggest),
+            ],
+          );
+        },
+      ),
     );
 
     // Back, while the settings are shown in place of a tab, puts them away.

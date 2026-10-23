@@ -6670,6 +6670,18 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       '没有可以重新接入的 tmux 会话，重新连接会结束当前 shell 及其中仍在运行的程序，并清除屏幕上的输出。';
+
+  @override
+  String get handedness => '惯用手';
+
+  @override
+  String get handednessLeft => '左手';
+
+  @override
+  String get handednessRight => '右手';
+
+  @override
+  String get handednessTip => '选择的手所在一侧有系统竖栏时，标签栏放在状态栏下方的竖栏里，和系统自带的栏一致。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -13342,4 +13354,16 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get reconnectEndsShell =>
       '沒有可以重新接入的 tmux 工作階段，重新連線會結束目前的 shell 及其中仍在執行的程式，並清除畫面上的輸出。';
+
+  @override
+  String get handedness => '慣用手';
+
+  @override
+  String get handednessLeft => '左手';
+
+  @override
+  String get handednessRight => '右手';
+
+  @override
+  String get handednessTip => '選擇的手所在一側有系統直欄時，分頁列放在狀態列下方的直欄裡，與系統內建的列一致。';
 }

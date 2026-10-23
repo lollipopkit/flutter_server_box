@@ -7126,4 +7126,17 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       'Er is geen tmux-sessie om opnieuw aan te koppelen, dus opnieuw verbinden beëindigt deze shell en alles wat er nog in draait, en wist de uitvoer van het scherm.';
+
+  @override
+  String get handedness => 'Voorkeurshand';
+
+  @override
+  String get handednessLeft => 'Linkerhand';
+
+  @override
+  String get handednessRight => 'Rechterhand';
+
+  @override
+  String get handednessTip =>
+      'Aan de kant van de hand waarmee je het toestel vasthoudt, staan de tabs in de kolom naast de statusbalk, zoals de balken van het systeem.';
 }

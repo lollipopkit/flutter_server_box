@@ -7069,4 +7069,17 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       'There is no tmux session to re-attach, so reconnecting ends this shell and anything still running in it, and clears its output from the screen.';
+
+  @override
+  String get handedness => 'Handedness';
+
+  @override
+  String get handednessLeft => 'Left hand';
+
+  @override
+  String get handednessRight => 'Right hand';
+
+  @override
+  String get handednessTip =>
+      'On the side of the hand you hold it in, the tabs stand in the column beside the status bar, as the system\'s own bars do.';
 }

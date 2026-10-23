@@ -7158,4 +7158,17 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       'No hay una sesión de tmux a la que volver, así que reconectar cierra esta shell y todo lo que siga ejecutándose en ella, y borra su salida de la pantalla.';
+
+  @override
+  String get handedness => 'Mano dominante';
+
+  @override
+  String get handednessLeft => 'Mano izquierda';
+
+  @override
+  String get handednessRight => 'Mano derecha';
+
+  @override
+  String get handednessTip =>
+      'En el lado de la mano con que lo sostienes, las pestañas van en la columna junto a la barra de estado, como las barras del sistema.';
 }

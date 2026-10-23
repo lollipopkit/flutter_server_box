@@ -6781,4 +6781,17 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       '再アタッチできる tmux セッションがないため、再接続するとこのシェルと、その中でまだ実行中のものが終了し、画面上の出力も消去されます。';
+
+  @override
+  String get handedness => '利き手';
+
+  @override
+  String get handednessLeft => '左手';
+
+  @override
+  String get handednessRight => '右手';
+
+  @override
+  String get handednessTip =>
+      '持つ手の側にシステムの縦バーがあるとき、タブはステータスバーの下の縦バーに並びます。システムのバーと同じ配置です。';
 }

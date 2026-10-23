@@ -383,6 +383,13 @@ class SettingStore extends SqliteStore with ThemeSettings {
   /// and moving that under them would undo the choice this exists to keep.
   late final paneListWidth = propertyDefault('paneListWidth', 220.0);
 
+  /// Which hand the tab rail is for, where the system keeps a column of its own
+  /// bars at one side — iPhone Duo. The rail stands in that column when it is
+  /// on this hand's side, as the system's own bars do; otherwise it is where
+  /// it is on every other device. Right by default: the column is on the right
+  /// unless the window is the left one of two.
+  late final rightHanded = propertyDefault('rightHanded', true);
+
   /// Whether that column is folded away entirely.
   ///
   /// Shared with [paneListWidth] for the same reason: one answer for every

@@ -90,13 +90,13 @@ import UserNotifications
         // Pushed on change, and readable once: the first layout can report
         // before Dart has set its handler, and a push nobody hears is lost.
         let windowControlsChannel = FlutterMethodChannel(name: "tech.lolli.toolbox/window_controls", binaryMessenger: binaryMessenger)
-        WindowControls.shared.onChange = { zones in
-            windowControlsChannel.invokeMethod("changed", arguments: zones)
+        WindowControls.shared.onChange = { state in
+            windowControlsChannel.invokeMethod("changed", arguments: state)
         }
         windowControlsChannel.setMethodCallHandler({(call: FlutterMethodCall, result: @escaping FlutterResult) -> Void in
             switch call.method {
-            case "zones":
-                result(WindowControls.shared.zones)
+            case "state":
+                result(WindowControls.shared.state)
             default:
                 result(FlutterMethodNotImplemented)
             }
