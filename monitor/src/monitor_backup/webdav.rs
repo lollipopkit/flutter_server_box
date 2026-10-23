@@ -179,11 +179,15 @@ impl Dav {
 
     /// [name] in the folder, as one path segment: a name read from the
     /// server's listing (`?`, `#`, `/`, `%`) is escaped rather than read as
-    /// the URL's query, fragment or another folder.
-    fn file(&self, name: &str) -> Url {
+    /// the URL's query, fragment or another folder. `.`, `..` and none are
+    /// refused: the URL would name the folder, or the one above.
+    fn file(&self, name: &str) -> Result<Url, DavError> {
+        if matches!(name, "" | "." | "..") {
+            return Err(DavError::InvalidUrl);
+        }
         let mut url = self.folder.clone();
         url.path_segments_mut().expect("an http(s) folder").pop_if_empty().push(name);
-        url
+        Ok(url)
     }
 
     fn request(&self, method: Method, url: Url) -> reqwest::RequestBuilder {
@@ -281,7 +285,7 @@ impl Dav {
     async fn put(&self, name: &str, body: reqwest::Body, len: u64) -> Result<(), DavError> {
         let part = format!("{name}.part");
         let req = self
-            .authorized(self.uploads.request(Method::PUT, self.file(&part)))
+            .authorized(self.uploads.request(Method::PUT, self.file(&part)?))
             .timeout(upload_timeout(len))
             .header("Content-Length", len)
             .body(body);
@@ -290,8 +294,8 @@ impl Dav {
             return Err(e);
         }
         let req = self
-            .request(Method::from_bytes(b"MOVE").expect("a method"), self.file(&part))
-            .header("Destination", self.file(name).as_str())
+            .request(Method::from_bytes(b"MOVE").expect("a method"), self.file(&part)?)
+            .header("Destination", self.file(name)?.as_str())
             .header("Overwrite", "T");
         if let Err(e) = self.send(req).await {
             let _ = self.delete(&part).await;
@@ -302,13 +306,13 @@ impl Dav {
 
     /// [name]'s bytes, at most [max].
     pub async fn get_bytes(&self, name: &str, max: usize) -> Result<Vec<u8>, DavError> {
-        let resp = self.send(self.request(Method::GET, self.file(name))).await?;
+        let resp = self.send(self.request(Method::GET, self.file(name)?)).await?;
         read_bounded(resp, max).await
     }
 
     /// [name] into the file at [path], at most [max] bytes.
     pub async fn get_file(&self, name: &str, path: &Path, max: u64) -> Result<(), DavError> {
-        let resp = self.send(self.request(Method::GET, self.file(name))).await?;
+        let resp = self.send(self.request(Method::GET, self.file(name)?)).await?;
         if resp.content_length().is_some_and(|l| l > max) {
             return Err(DavError::TooLarge);
         }
@@ -328,7 +332,7 @@ impl Dav {
 
     /// Removes [name]; one already gone is fine.
     pub async fn delete(&self, name: &str) -> Result<(), DavError> {
-        match self.send(self.request(Method::DELETE, self.file(name))).await {
+        match self.send(self.request(Method::DELETE, self.file(name)?)).await {
             Ok(_) | Err(DavError::NotFound) => Ok(()),
             Err(e) => Err(e),
         }
@@ -425,9 +429,12 @@ mod tests {
     #[test]
     fn a_listed_name_stays_one_file_in_the_folder() {
         let dav = Dav::new(folder_url("https://dav.example.com/my box", false).unwrap(), "", None);
-        assert_eq!(dav.file("a.age").as_str(), "https://dav.example.com/my%20box/a.age");
-        assert_eq!(dav.file("x?y#z.part").as_str(), "https://dav.example.com/my%20box/x%3Fy%23z.part");
-        assert_eq!(dav.file("../up").as_str(), "https://dav.example.com/my%20box/..%2Fup");
+        assert_eq!(dav.file("a.age").unwrap().as_str(), "https://dav.example.com/my%20box/a.age");
+        assert_eq!(dav.file("x?y#z.part").unwrap().as_str(), "https://dav.example.com/my%20box/x%3Fy%23z.part");
+        assert_eq!(dav.file("../up").unwrap().as_str(), "https://dav.example.com/my%20box/..%2Fup");
+        for folder in ["", ".", ".."] {
+            assert!(matches!(dav.file(folder), Err(DavError::InvalidUrl)), "{folder:?}");
+        }
     }
 
     #[test]

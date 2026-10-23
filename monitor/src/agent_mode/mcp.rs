@@ -150,7 +150,7 @@ pub async fn load(db: &SqlitePool, sealer: &Sealer) -> Result<Vec<Server>, sqlx:
     Ok(rows
         .into_iter()
         .map(|(id, name, url, enabled, headers)| {
-            let headers = open_headers(sealer, &id, &headers);
+            let headers = open_headers(sealer, &headers);
             Server { id, name, url, enabled, headers: headers.into_keys().collect() }
         })
         .collect())
@@ -158,14 +158,8 @@ pub async fn load(db: &SqlitePool, sealer: &Sealer) -> Result<Vec<Server>, sqlx:
 
 /// A server's stored headers. Ones the key no longer opens read as none, so
 /// the server can still be listed and given them again.
-fn open_headers(sealer: &Sealer, id: &str, stored: &str) -> BTreeMap<String, String> {
-    match sealer.open(sealed::AGENT_MCP_HEADERS, stored) {
-        Ok(json) => serde_json::from_str(&json).unwrap_or_default(),
-        Err(e) => {
-            tracing::warn!("MCP server {id}: {e}");
-            BTreeMap::new()
-        }
-    }
+fn open_headers(sealer: &Sealer, stored: &str) -> BTreeMap<String, String> {
+    sealer.open_or_none(sealed::AGENT_MCP_HEADERS, Some(stored)).and_then(|json| serde_json::from_str(&json).ok()).unwrap_or_default()
 }
 
 /// The enabled servers as a connection needs them, headers with values.
@@ -178,7 +172,7 @@ async fn configs(db: &SqlitePool, sealer: &Sealer) -> Result<Vec<(Server, McpSer
     Ok(rows
         .into_iter()
         .map(|(id, name, url, headers)| {
-            let headers = open_headers(sealer, &id, &headers);
+            let headers = open_headers(sealer, &headers);
             let server = Server { id, name, url: url.clone(), enabled: true, headers: headers.keys().cloned().collect() };
             (server, McpServerConfig { url, headers: headers.into_iter().collect() })
         })
@@ -189,15 +183,14 @@ async fn configs(db: &SqlitePool, sealer: &Sealer) -> Result<Vec<(Server, McpSer
 pub async fn store(db: &SqlitePool, sealer: &Sealer, w: &ServersWrite) -> Result<(), sqlx::Error> {
     let now = chrono::Utc::now().to_rfc3339();
     let mut tx = db.begin().await?;
-    let old: HashMap<String, (String, String)> = sqlx::query_as::<_, (String, String, String)>("SELECT url, id, headers FROM agent_mcp_server")
+    let old: HashMap<String, String> = sqlx::query_as::<_, (String, String)>("SELECT url, headers FROM agent_mcp_server")
         .fetch_all(&mut *tx)
         .await?
         .into_iter()
-        .map(|(url, id, headers)| (url, (id, headers)))
         .collect();
     sqlx::query("DELETE FROM agent_mcp_server").execute(&mut *tx).await?;
     for (position, s) in w.servers.iter().enumerate() {
-        let mut headers = old.get(&s.url).map(|(id, h)| open_headers(sealer, id, h)).unwrap_or_default();
+        let mut headers = old.get(&s.url).map(|h| open_headers(sealer, h)).unwrap_or_default();
         for (name, value) in &s.headers {
             match value {
                 Some(v) => headers.insert(name.clone(), v.clone()),

@@ -180,10 +180,7 @@ pub async fn mcp_uses(db: &SqlitePool, sealer: &Sealer) -> sqlx::Result<BTreeMap
     Ok(rows
         .into_iter()
         .map(|(stack, idx, enabled, token)| {
-            let token = sealer.open_opt(sealed::STACK_MCP_TOKEN, token.as_deref()).unwrap_or_else(|e| {
-                tracing::warn!("app {stack}'s MCP server {idx}: {e}");
-                None
-            });
+            let token = sealer.open_or_none(sealed::STACK_MCP_TOKEN, token.as_deref());
             ((stack, idx as usize), McpUse { enabled, token })
         })
         .collect())

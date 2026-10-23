@@ -950,12 +950,7 @@ impl Row {
     /// client refuses before sending anything (`NotConfigured`), so the panel
     /// asks for it again.
     fn config(&self, sealer: &Sealer) -> pve::Config {
-        let open = |field, stored: &Option<String>| {
-            sealer.open_opt(field, stored.as_deref()).unwrap_or_else(|e| {
-                tracing::warn!("virt pve: {e}");
-                None
-            })
-        };
+        let open = |field, stored: &Option<String>| sealer.open_or_none(field, stored.as_deref());
         let auth = if self.auth == "token" {
             Auth::Token {
                 id: self.token_id.clone().unwrap_or_default(),
@@ -1010,12 +1005,14 @@ pub async fn pve_get(
         return Ok(refused);
     }
     match row(&state.db).await {
-        Ok(row) => Ok(HttpResponse::Ok().json(&view(row))),
+        Ok(row) => Ok(HttpResponse::Ok().json(&view(row, &state.sealer))),
         Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 
-fn view(row: Option<Row>) -> PveView {
+/// A secret the credentials key no longer opens is not shown as stored.
+fn view(row: Option<Row>, sealer: &Sealer) -> PveView {
+    let stored = |field, value: &Option<String>| sealer.open_or_none(field, value.as_deref()).is_some_and(|v| !v.is_empty());
     match row {
         None => PveView {
             configured: false,
@@ -1032,9 +1029,9 @@ fn view(row: Option<Row>) -> PveView {
             auth: Some(if row.auth == "token" { PveAuthKind::Token } else { PveAuthKind::Password }),
             addr: Some(row.addr),
             username: row.username,
-            has_password: row.password.is_some_and(|p| !p.is_empty()),
+            has_password: stored(sealed::PVE_PASSWORD, &row.password),
             token_id: row.token_id,
-            has_token_secret: row.token_secret.is_some_and(|s| !s.is_empty()),
+            has_token_secret: stored(sealed::PVE_TOKEN_SECRET, &row.token_secret),
             cert_sha256: row.cert_sha256,
         },
     }
@@ -1063,7 +1060,7 @@ pub async fn pve_put(
         return Ok(super::respond::internal(&e));
     }
     match row(&state.db).await {
-        Ok(row) => Ok(HttpResponse::Ok().json(&view(row))),
+        Ok(row) => Ok(HttpResponse::Ok().json(&view(row, &state.sealer))),
         Err(e) => Ok(super::respond::internal(&e)),
     }
 }
@@ -1086,7 +1083,7 @@ pub async fn pve_delete(
         .record(&state.db)
         .await;
     match result {
-        Ok(_) => Ok(HttpResponse::Ok().json(&view(None))),
+        Ok(_) => Ok(HttpResponse::Ok().json(&view(None, &state.sealer))),
         Err(e) => Ok(super::respond::internal(&e)),
     }
 }

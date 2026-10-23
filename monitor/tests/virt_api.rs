@@ -662,4 +662,6 @@ async fn a_secret_the_key_no_longer_opens_is_asked_for_again() {
     assert_eq!(status, 200, "{body}");
     assert_eq!((&body["error"]["kind"], &body["error"]["detail"]["code"]), (&json!("not_configured"), &json!("token_incomplete")), "{body}");
     assert!(pve.seen.lock().unwrap().auth.is_empty(), "nothing sent without it");
+    let (_, body) = call(&srv, true, Method::GET, "/api/v1/virt/pve", None).await;
+    assert_eq!(body["has_token_secret"], false, "not shown as stored");
 }

@@ -226,6 +226,56 @@ fn expand(text: &str, env: impl Fn(&str) -> Option<String>) -> std::result::Resu
     Ok(out)
 }
 
+/// Escapes, once, the credentials an agent from before `${NAME}` was read
+/// stored (migration 040): meant as typed, in `config.toml` and in [config],
+/// which was loaded from it. TODO: remove with `push_literal_pending`.
+pub async fn escape_legacy(db: &sqlx::SqlitePool, config: &mut Config) -> anyhow::Result<()> {
+    let pending: bool = sqlx::query_scalar("SELECT EXISTS (SELECT 1 FROM push_literal_pending)").fetch_one(db).await?;
+    if !pending {
+        return Ok(());
+    }
+    if tokio::fs::try_exists(crate::core::config_file::CONFIG_PATH).await? {
+        let mut file = crate::core::config_file::read_async().await?;
+        if escape_all(file.push.as_deref_mut().unwrap_or_default()) {
+            crate::core::config_file::write_async(&file).await?;
+            info!("Escaped `${{` in the push credentials of config.toml: they were meant as typed");
+        }
+    }
+    escape_all(config.push.as_deref_mut().unwrap_or_default());
+    sqlx::query("DELETE FROM push_literal_pending").execute(db).await?;
+    Ok(())
+}
+
+/// Each credential of [pushes] made [literal]; whether one changed.
+fn escape_all(pushes: &mut [PushConfig]) -> bool {
+    let mut changed = false;
+    let mut escape = |value: &mut TomlValue| {
+        if let TomlValue::String(s) = value
+            && s.contains("${")
+        {
+            *s = literal(s);
+            changed = true;
+        }
+    };
+    for push in pushes {
+        for secret in secrets(&push.push_type) {
+            match secret {
+                Secret::Key(key) => {
+                    if let Some(value) = push.config.get_mut(*key) {
+                        escape(value);
+                    }
+                }
+                Secret::TableValues(table) => {
+                    if let Some(TomlValue::Table(values)) = push.config.get_mut(*table) {
+                        values.iter_mut().for_each(|(_, value)| escape(value));
+                    }
+                }
+            }
+        }
+    }
+    changed
+}
+
 /// [text] as [expand] gives it back unchanged: each `${` escaped.
 pub(crate) fn literal(text: &str) -> String {
     text.replace("${", "$${")
@@ -697,6 +747,20 @@ mod tests {
         }
         assert_eq!(expand("${UNSET}", env), Err("UNSET".to_string()));
         assert_eq!(expand("${EMPTY}", env), Err("EMPTY".to_string()), "empty is unset");
+    }
+
+    #[test]
+    fn an_older_agents_credentials_stay_as_typed() {
+        let config: toml::Table = toml::toml! {
+            key = "a${HOME}b"
+            title = "${HOME}"
+        };
+        let mut pushes = vec![PushConfig { name: "b".into(), push_type: "bark".into(), config }];
+        assert!(escape_all(&mut pushes));
+        assert_eq!(pushes[0].config["key"].as_str(), Some("a$${HOME}b"));
+        assert_eq!(pushes[0].config["title"].as_str(), Some("${HOME}"), "not a credential");
+        assert_eq!(resolve_with(&pushes[0], |_| Some("x".into())).unwrap().config["key"].as_str(), Some("a${HOME}b"));
+        assert!(!escape_all(&mut [PushConfig { name: "c".into(), push_type: "bark".into(), config: toml::toml! { key = "plain" } }]));
     }
 
     #[test]

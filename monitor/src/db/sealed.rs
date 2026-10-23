@@ -133,6 +133,19 @@ impl Sealer {
         self.key().map(drop)
     }
 
+    /// Reads the key the agent made; never makes one. For the CLI, which may
+    /// run as another account (one `sudo` away from a key the agent cannot
+    /// read) or beside an agent of an older build still running.
+    pub fn ready_existing(&self) -> Result<(), Error> {
+        if let Some(path) = &self.file
+            && !path.exists()
+        {
+            let source = std::io::Error::new(std::io::ErrorKind::NotFound, "not made yet: start the agent on this version first");
+            return Err(Error::Key { path: path.clone(), source });
+        }
+        self.ready()
+    }
+
     fn key(&self) -> Result<&LessSafeKey, Error> {
         if let Some(k) = self.key.get() {
             return Ok(k);
@@ -189,17 +202,15 @@ impl Sealer {
         stored.map(|s| self.open(field, s)).transpose()
     }
 
-    /// [stored] opened, or none (logged) when this key no longer opens it:
-    /// `NULL`, or `""` in a [`Field::required`] column. A key that cannot be
-    /// read is still an error.
-    pub fn open_or_none(&self, field: Field, stored: Option<&str>) -> Result<Option<String>, Error> {
-        match self.open_opt(field, stored) {
-            Err(Error::Unreadable(what)) => {
-                tracing::warn!("{what}: cannot be read with this monitor's credentials key; taken as none");
-                Ok(field.required.then(String::new))
-            }
-            other => other,
-        }
+    /// [stored] opened, or none (logged) when it cannot be: `NULL`, or `""`
+    /// in a [`Field::required`] column. The one policy for a credential the
+    /// key no longer opens: asked for again, never sent. (The key itself was
+    /// read at startup, [`Self::ready`].)
+    pub fn open_or_none(&self, field: Field, stored: Option<&str>) -> Option<String> {
+        self.open_opt(field, stored).unwrap_or_else(|e| {
+            tracing::warn!("{e}; taken as none");
+            field.required.then(String::new)
+        })
     }
 
     /// Seals what an older agent stored in clear. At startup, before anything
@@ -222,7 +233,7 @@ impl Sealer {
     /// Opens every sealed value of [`FIELDS`] in [schema]: a backup's copy.
     /// One this key no longer opens goes as none ([`Self::open_or_none`]).
     pub async fn unseal_all(&self, conn: &mut SqliteConnection, schema: &str) -> Result<u64, Error> {
-        self.rewrite(conn, schema, |s| s.starts_with(PREFIX), |f, v| self.open_or_none(f, Some(v))).await
+        self.rewrite(conn, schema, |s| s.starts_with(PREFIX), |f, v| Ok(self.open_or_none(f, Some(v)))).await
     }
 
     async fn rewrite(
@@ -286,9 +297,15 @@ fn load_or_create(path: &Path) -> std::io::Result<Zeroizing<[u8; KEY_LEN]>> {
         // there is none: two processes starting at once both end with the
         // key that won.
         let tmp = path.with_extension(format!("tmp-{}-{}", std::process::id(), crate::utils::secrets::random_hex(4).map_err(std::io::Error::other)?));
-        let written = crate::core::config_file::write_private_new(&tmp, Zeroizing::new(hex::encode(&key[..]) + "\n").as_bytes())
-            .and_then(|()| std::fs::hard_link(&tmp, path));
+        let text = Zeroizing::new(hex::encode(&key[..]) + "\n");
+        let linked = crate::core::config_file::write_private_new(&tmp, text.as_bytes()).and_then(|()| std::fs::hard_link(&tmp, path));
         let _ = std::fs::remove_file(&tmp);
+        let written = match linked {
+            // A filesystem without hard links (FAT, some FUSE and SMB
+            // mounts): created in place, still never over another.
+            Err(e) if e.kind() != std::io::ErrorKind::AlreadyExists => crate::core::config_file::write_private_new(path, text.as_bytes()),
+            other => other,
+        };
         match written {
             Ok(()) => {
                 crate::core::config_file::sync_parent_dir(path).map_err(std::io::Error::other)?;
@@ -337,7 +354,10 @@ mod tests {
     fn the_key_file_is_made_once_and_kept() {
         let dir = tempfile::tempdir().unwrap();
         let db = dir.path().join("monitor.db");
+        assert!(matches!(Sealer::beside(&db).ready_existing(), Err(Error::Key { .. })), "the CLI makes none");
+        assert_eq!(std::fs::read_dir(dir.path()).unwrap().count(), 0);
         let sealed = Sealer::beside(&db).seal(AGENT_CREDENTIAL, "k").unwrap();
+        assert!(Sealer::beside(&db).ready_existing().is_ok());
         let path = Sealer::key_path_beside(&db);
         #[cfg(unix)]
         {

@@ -157,9 +157,10 @@ async fn handle_serve(matches: &clap::ArgMatches) -> anyhow::Result<()> {
         key.map(String::as_str),
     )?;
     config.resolve_jwt_secret()?;
-    let config = Arc::new(config);
 
     let db = db::database::init(&config.get_database_url()).await?;
+    crate::monitoring::push::escape_legacy(&db, &mut config).await?;
+    let config = Arc::new(config);
 
     // On first start, a generated password, written once beside the
     // database.
@@ -296,9 +297,7 @@ async fn handle_backup(matches: &clap::ArgMatches) -> anyhow::Result<()> {
     let file = crate::api::server::sqlite_file(&url).ok_or_else(|| anyhow::anyhow!("The database is in memory"))?;
     let blobs = crate::core::blobs::Blobs::beside(&file);
     let sealer = db::sealed::Sealer::beside(&file);
-    sealer.ready()?;
-    // As `serve` does: this may run before the service started on this build.
-    sealer.seal_legacy(&db).await?;
+    sealer.ready_existing()?;
     let work = monitor_backup::MonitorBackup::new(Some(&file));
 
     // The folder named on the command line.
@@ -362,10 +361,16 @@ async fn handle_backup(matches: &clap::ArgMatches) -> anyhow::Result<()> {
             let passphrase = secret(m.get_one::<String>("passphrase-env"), "Backup passphrase: ")?;
             let fetched = monitor_backup::fetch(&dav, &work, &name, &passphrase).await.map_err(refused)?;
             let restored = monitor_backup::apply(&db, &sealer, &blobs, &tokio::sync::Mutex::new(()), &fetched, false).await.map_err(refused)?;
-            if let Some(n) = &named {
-                monitor_backup::adopt(&db, &sealer, &n.folder, &n.user, n.password.as_deref(), n.insecure, &fetched).await?;
-            }
+            let adopted = match &named {
+                Some(n) => monitor_backup::adopt(&db, &sealer, &n.folder, &n.user, n.password.as_deref(), n.insecure, &fetched).await?,
+                None => false,
+            };
             println!("Restored {name}");
+            if adopted {
+                println!("  backups: to {} from now on, as the monitor that made it", dav.folder());
+            } else if named.is_some() {
+                println!("  backups: this monitor's own settings kept");
+            }
             for (table, rows) in restored.tables.iter().filter(|(_, n)| *n > 0) {
                 println!("  {table}: {rows}");
             }

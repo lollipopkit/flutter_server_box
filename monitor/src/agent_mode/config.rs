@@ -225,7 +225,7 @@ async fn readable(db: &SqlitePool, sealer: &Sealer) -> Result<Vec<(String, Value
         .await?;
     let mut out = Vec::new();
     for (id, stored) in rows {
-        let opened = sealer.open_or_none(sealed::AGENT_CREDENTIAL, Some(&stored))?;
+        let opened = sealer.open_or_none(sealed::AGENT_CREDENTIAL, Some(&stored));
         if let Some(c) = opened.and_then(|c| serde_json::from_str(&c).ok()) {
             out.push((id, c));
         }
@@ -368,7 +368,7 @@ impl Credentials for DbCredentials {
                 .fetch_optional(&self.db)
                 .await
                 .map_err(|e| e.to_string())?;
-            let row = self.sealer.open_or_none(sealed::AGENT_CREDENTIAL, row.as_deref()).map_err(|e| e.to_string())?;
+            let row = self.sealer.open_or_none(sealed::AGENT_CREDENTIAL, row.as_deref());
             Ok(row.and_then(|c| serde_json::from_str(&c).ok()))
         })
     }

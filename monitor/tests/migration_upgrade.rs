@@ -721,6 +721,7 @@ fn shipped_migrations_keep_their_checksums() {
         (37, "e8d79fc4304a960d6d268f7adbf7fe9cf5a40920b9bdf38501b25baf317f5b52f30b407445fed1e1953e595505c51b7e"),
         (38, "0828a286019ed43008da80bb602e4f6a2ceebda295c2f63c9c9197ce6af6bc908cd45cae89ca8389147f15c009a8a992"),
         (39, "a66e199908796cff9841f0d9bb24ae13c52d551ec0b3233b205a9181fa1438f1bb27396131016a981ecb688ca28807d2"),
+        (40, "22430e0cf9119a4b9b457ef05a89132824f81875f0201fff0b07d2dfc9f23cb1af7bfa660eb040b4210074140b2ee57c"),
     ];
     let migrator = sqlx::migrate!("./migrations");
     let mut seen = std::collections::BTreeMap::new();
@@ -757,4 +758,19 @@ fn hex(bytes: &[u8]) -> String {
         let _ = write!(s, "{b:02x}");
         s
     })
+}
+
+#[tokio::test]
+async fn push_credentials_are_escaped_only_where_an_older_agent_stored_them() {
+    let pool = pool().await;
+    sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+    let pending = || async { sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM push_literal_pending").fetch_one(&pool).await.unwrap() };
+    assert_eq!(pending().await, 0, "a new database has none to escape");
+
+    // An agent that has run: 040 applied over its account.
+    sqlx::query("INSERT INTO users (password_hash) VALUES ('hash')").execute(&pool).await.unwrap();
+    sqlx::query("DROP TABLE push_literal_pending").execute(&pool).await.unwrap();
+    sqlx::query("DELETE FROM _sqlx_migrations WHERE version = 40").execute(&pool).await.unwrap();
+    sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+    assert_eq!(pending().await, 1);
 }

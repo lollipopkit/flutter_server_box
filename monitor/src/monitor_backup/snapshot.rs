@@ -99,6 +99,7 @@ pub const LEFT_OUT: &[&str] = &[
     "watch_tokens",
     "login_device",
     "monitor_backup",
+    "push_literal_pending",
 ];
 
 /// The account's columns a backup carries.
@@ -192,7 +193,7 @@ pub async fn digest(db: &SqlitePool, sealer: &Sealer, config: Option<&[u8]>) -> 
                 let mut s_row = Vec::with_capacity(cols.len());
                 for (i, (c, field)) in cols.iter().zip(&sealed).enumerate() {
                     let piece = match field {
-                        Some(field) => match sealer.open_or_none(*field, row.try_get::<Option<String>, _>(i)?.as_deref())? {
+                        Some(field) => match sealer.open_or_none(*field, row.try_get::<Option<String>, _>(i)?.as_deref()) {
                             Some(v) => quote(&v),
                             None => "NULL".to_string(),
                         },

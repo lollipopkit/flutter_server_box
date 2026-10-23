@@ -144,8 +144,8 @@ fn upstream(e: &sbm_redfish::Error) -> HttpResponse {
 }
 
 /// The targets, as `GET` and `PUT /bmc` answer them.
-fn list_answer(req: &HttpRequest, rows: Vec<Row>) -> HttpResponse {
-    let view = ListResponse { targets: rows.into_iter().map(|row| row.view()).collect() };
+fn list_answer(req: &HttpRequest, sealer: &Sealer, rows: Vec<Row>) -> HttpResponse {
+    let view = ListResponse { targets: rows.into_iter().map(|row| row.view(sealer)).collect() };
     let mut body = serde_json::to_value(&view).unwrap_or_default();
     // TODO: remove when MIN_CLIENT_PROTOCOL reaches 2.
     if super::compat_v1::applies(req) {
@@ -162,7 +162,7 @@ pub async fn list(
         return Ok(refused);
     }
     match load(&state.db).await {
-        Ok(rows) => Ok(list_answer(&req, rows)),
+        Ok(rows) => Ok(list_answer(&req, &state.sealer, rows)),
         Err(e) => Ok(super::respond::internal(&e)),
     }
 }
@@ -190,7 +190,7 @@ pub async fn replace(
         .await;
     match result {
         Ok(()) => match load(&state.db).await {
-            Ok(rows) => Ok(list_answer(&req, rows)),
+            Ok(rows) => Ok(list_answer(&req, &state.sealer, rows)),
             Err(e) => Ok(super::respond::internal(&e)),
         },
         Err(e) => Ok(super::respond::internal(&e)),
@@ -400,13 +400,14 @@ struct Row {
 }
 
 impl Row {
-    fn view(self) -> TargetView {
+    /// A password the credentials key no longer opens is not shown as stored.
+    fn view(self, sealer: &Sealer) -> TargetView {
         TargetView {
             id: self.id,
             name: self.name,
             url: self.url,
             username: self.username,
-            has_password: self.password.is_some_and(|p| !p.is_empty()),
+            has_password: sealer.open_or_none(sealed::BMC_PASSWORD, self.password.as_deref()).is_some_and(|p| !p.is_empty()),
             cert_sha256: self.cert_sha256,
         }
     }

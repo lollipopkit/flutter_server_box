@@ -308,4 +308,6 @@ async fn a_password_the_key_no_longer_opens_is_asked_for_again() {
     let (status, body) = call(&srv, true, Method::GET, &format!("{LIST}/t1"), None).await;
     assert_eq!((status, body), (409, json!({"error": "passwordRequired"})));
     assert_eq!(bmc.seen.lock().unwrap().logins, 0, "nothing sent without it");
+    let (_, body) = call(&srv, true, Method::GET, LIST, None).await;
+    assert_eq!(body["targets"][0]["has_password"], false, "not shown as stored");
 }

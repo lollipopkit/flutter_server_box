@@ -206,7 +206,8 @@ pub async fn view(state: &AppState) -> View {
         configured: row.is_some(),
         url: row.as_ref().map(|r| r.url.clone()),
         username: row.as_ref().map(|r| r.username.clone()),
-        has_password: row.as_ref().is_some_and(|r| r.password.is_some()),
+        // One the credentials key no longer opens is asked for again.
+        has_password: row.as_ref().is_some_and(|r| state.sealer.open_or_none(sealed::BACKUP_PASSWORD, r.password.as_deref()).is_some()),
         allow_insecure: row.as_ref().is_some_and(|r| r.allow_insecure),
         enabled: row.as_ref().is_none_or(|r| r.enabled),
         keep: row.as_ref().map_or(10, |r| r.keep),
@@ -329,16 +330,14 @@ pub async fn set_settings(state: &AppState, next: SetSettings) -> Result<View, R
 
 /// Backs up to [folder] with [fetched]'s key from now on: what a restore on a
 /// new machine (the CLI) leaves, so it carries on that monitor's backups as
-/// that monitor. A machine with backup settings of its own keeps its
-/// instance: taking the other's while that one still runs would have each
-/// prune the other's backups.
-pub async fn adopt(db: &SqlitePool, sealer: &Sealer, folder: &url::Url, username: &str, password: Option<&str>, allow_insecure: bool, fetched: &Fetched) -> sqlx::Result<()> {
-    sqlx::query(
+/// that monitor. A machine with backup settings of its own keeps them all:
+/// the other's instance, while that one still runs, would have each prune the
+/// other's backups, and its key alone names a key file under the other's
+/// instance. Answers whether it was adopted.
+pub async fn adopt(db: &SqlitePool, sealer: &Sealer, folder: &url::Url, username: &str, password: Option<&str>, allow_insecure: bool, fetched: &Fetched) -> sqlx::Result<bool> {
+    let done = sqlx::query(
         "INSERT INTO monitor_backup (id, instance, url, username, password, allow_insecure, recipient, updated_at) \
-         VALUES (1, ?7, ?1, ?2, ?3, ?4, ?5, ?6) \
-         ON CONFLICT(id) DO UPDATE SET url = ?1, username = ?2, password = ?3, allow_insecure = ?4, recipient = ?5, \
-         updated_at = ?6, stable_hash = NULL, full_hash = NULL, last_backup_at = NULL, last_name = NULL, last_error = NULL, \
-         last_error_at = NULL",
+         VALUES (1, ?7, ?1, ?2, ?3, ?4, ?5, ?6) ON CONFLICT(id) DO NOTHING",
     )
     .bind(folder.as_str())
     .bind(username)
@@ -349,7 +348,7 @@ pub async fn adopt(db: &SqlitePool, sealer: &Sealer, folder: &url::Url, username
     .bind(&fetched.name.instance)
     .execute(db)
     .await?;
-    Ok(())
+    Ok(done.rows_affected() > 0)
 }
 
 /// Removes the settings; what is in the folder stays.
@@ -478,39 +477,28 @@ async fn put_making_folder(dav: &Dav, name: &str, bytes: Vec<u8>) -> Result<(), 
 
 static SCRATCH: AtomicU64 = AtomicU64::new(0);
 
-/// This run, in its working folders' names (`work-<pid>-<run>-<n>`): a
-/// container's agent is PID 1 on every start, so the PID alone does not tell
-/// this run's folders from those a killed one left.
-fn run_id() -> &'static str {
-    static RUN: std::sync::OnceLock<String> = std::sync::OnceLock::new();
-    RUN.get_or_init(|| crate::utils::secrets::random_hex(4).unwrap_or_else(|_| format!("{:08x}", std::process::id())))
-}
-
-/// Whether the working folder [name] may be someone's still: this run's, or
-/// another running process's.
-fn in_use(name: &str) -> bool {
-    let mut parts = name.strip_prefix("work-").unwrap_or_default().split('-');
-    let Some(pid) = parts.next().and_then(|p| p.parse::<u32>().ok()) else { return true };
-    if pid == std::process::id() {
-        return parts.next() == Some(run_id());
+/// Whether run [run]'s files are still someone's: this value's ([own]), or
+/// a run whose lock file (`run-<run>.lock` in [dir]) a live process holds. A
+/// lock outlives no process, so a killed run is never taken for a live one,
+/// whatever reuses its PID. A run found over has its lock file removed.
+fn run_live(dir: &Path, own: &str, run: &str) -> bool {
+    if run == own {
+        return true;
     }
-    running(pid)
-}
-
-/// Whether process [pid] exists (or cannot be told apart from one that does).
-#[cfg(unix)]
-fn running(pid: u32) -> bool {
-    let Ok(pid) = libc::pid_t::try_from(pid) else { return false };
-    // SAFETY: signal 0 only checks that the process exists.
-    unsafe { libc::kill(pid, 0) == 0 || std::io::Error::last_os_error().raw_os_error() == Some(libc::EPERM) }
-}
-
-#[cfg(windows)]
-fn running(pid: u32) -> bool {
-    let pid = sysinfo::Pid::from_u32(pid);
-    let mut system = sysinfo::System::new();
-    system.refresh_processes(sysinfo::ProcessesToUpdate::Some(&[pid]), true);
-    system.process(pid).is_some()
+    let lock = dir.join(format!("run-{run}.lock"));
+    let file = match std::fs::File::open(&lock) {
+        Ok(f) => f,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return false,
+        Err(_) => return true,
+    };
+    match file.try_lock() {
+        Ok(()) => {
+            drop(file);
+            let _ = std::fs::remove_file(&lock);
+            false
+        }
+        Err(_) => true,
+    }
 }
 
 /// A folder of its own (0700), removed with this value.
@@ -546,6 +534,11 @@ pub struct MonitorBackup {
     /// Whether a restore may restart the monitor (`utils::supervisor`); off in
     /// tests, whose process it would end.
     restart: AtomicBool,
+    /// Names this value's working folders (`work-<run>-<n>`).
+    run: String,
+    /// `run-<run>.lock`, held while this value lives: what tells [`Self::sweep`]
+    /// its folders are not a killed run's.
+    held: tokio::sync::Mutex<Option<std::fs::File>>,
 }
 
 impl MonitorBackup {
@@ -556,7 +549,18 @@ impl MonitorBackup {
             Some(db) => Self::dir_beside(db),
             None => std::env::temp_dir().join(format!("sbm-monitor-backup-{}", std::process::id())),
         };
-        Self { dir, lock: tokio::sync::Mutex::new(()), running: AtomicBool::new(false), forced: AtomicBool::new(false), prune_due: AtomicBool::new(false), wake: Notify::new(), restart: AtomicBool::new(true) }
+        let run = crate::utils::secrets::random_hex(8).unwrap_or_else(|_| format!("{}{}", std::process::id(), SCRATCH.fetch_add(1, Ordering::Relaxed)));
+        Self {
+            dir,
+            lock: tokio::sync::Mutex::new(()),
+            running: AtomicBool::new(false),
+            forced: AtomicBool::new(false),
+            prune_due: AtomicBool::new(false),
+            wake: Notify::new(),
+            restart: AtomicBool::new(true),
+            run,
+            held: tokio::sync::Mutex::new(None),
+        }
     }
 
     pub fn dir_beside(db: &Path) -> PathBuf {
@@ -565,30 +569,50 @@ impl MonitorBackup {
 
     pub async fn scratch(&self) -> std::io::Result<Scratch> {
         let n = SCRATCH.fetch_add(1, Ordering::Relaxed);
-        let path = self.dir.join(format!("work-{}-{}-{n}", std::process::id(), run_id()));
+        let path = self.dir.join(format!("work-{}-{n}", self.run));
+        let mut held = self.held.lock().await;
+        // Locked before its first folder exists, for as long as this lives.
+        let lock = held.is_none().then(|| self.dir.join(format!("run-{}.lock", self.run)));
         let (dir, made) = (self.dir.clone(), path.clone());
-        tokio::task::spawn_blocking(move || {
+        let locked = tokio::task::spawn_blocking(move || -> std::io::Result<Option<std::fs::File>> {
             let mut builder = std::fs::DirBuilder::new();
             #[cfg(unix)]
             std::os::unix::fs::DirBuilderExt::mode(&mut builder, 0o700);
             builder.recursive(true).create(&dir)?;
+            let locked = lock
+                .map(|lock| {
+                    let file = std::fs::OpenOptions::new().create(true).truncate(false).write(true).open(lock)?;
+                    file.lock()?;
+                    Ok::<_, std::io::Error>(file)
+                })
+                .transpose()?;
             // Its own, never one found there.
-            builder.recursive(false).create(&made)
+            builder.recursive(false).create(&made)?;
+            Ok(locked)
         })
         .await
         .map_err(std::io::Error::other)??;
+        if locked.is_some() {
+            *held = locked;
+        }
         Ok(Scratch(path))
     }
 
-    /// Removes the working folders a process no longer running left (killed,
-    /// or exited after a restore before its own removal ran): they hold
+    /// Removes the working folders a run no longer going left (killed, or
+    /// exited after a restore before its own removal ran): they hold
     /// `settings.db` unencrypted. One a running CLI is using stays.
     pub fn sweep(&self) {
         let Ok(entries) = std::fs::read_dir(&self.dir) else { return };
         for entry in entries.flatten() {
             let name = entry.file_name();
-            let Some(name) = name.to_str().filter(|n| n.starts_with("work-")) else { continue };
-            if in_use(name) {
+            let Some(name) = name.to_str() else { continue };
+            // A run's lock alone: removed by `run_live` once no one holds it.
+            if let Some(run) = name.strip_prefix("run-").and_then(|r| r.strip_suffix(".lock")) {
+                run_live(&self.dir, &self.run, run);
+                continue;
+            }
+            let Some(run) = name.strip_prefix("work-").and_then(|r| r.split('-').next()) else { continue };
+            if run_live(&self.dir, &self.run, run) {
                 continue;
             }
             if let Err(e) = std::fs::remove_dir_all(entry.path()) {
@@ -968,7 +992,7 @@ pub async fn apply(db: &SqlitePool, sealer: &Sealer, blobs: &Blobs, config_lock:
                 // unreadable, or missing where a CLI runs (another directory,
                 // maybe), would be replaced by defaults, losing its
                 // addresses, TLS and limits.
-                let missing = !std::path::Path::new(crate::core::config_file::CONFIG_PATH).exists();
+                let missing = !tokio::fs::try_exists(crate::core::config_file::CONFIG_PATH).await.unwrap_or(true);
                 let current = if missing && create_config {
                     Ok(crate::core::config::Config::default())
                 } else {
@@ -1096,19 +1120,64 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn only_this_runs_and_running_processes_folders_stay() {
+    async fn only_a_machine_without_backup_settings_takes_the_backups() {
+        let db = SqlitePool::connect("sqlite::memory:").await.unwrap();
+        crate::db::database::MIGRATOR.run(&db).await.unwrap();
+        let sealer = Sealer::temporary();
         let dir = tempfile::tempdir().unwrap();
-        let work = MonitorBackup::new(Some(&dir.path().join("m.db")));
+        let fetched = Fetched {
+            unpacked: snapshot::Unpacked {
+                manifest: snapshot::Manifest { format: snapshot::FORMAT, monitor_version: "t".into(), migration: 0, host: "b".into(), created_at: "now".into() },
+                config: None,
+                database: dir.path().join("settings.db"),
+                blobs: vec![],
+            },
+            name: BackupName { instance: "bbbbbbbb".into(), at: chrono::Utc::now(), key: "22222222".into() },
+            recipient: "age1other".into(),
+            _scratch: Scratch(dir.path().join("work")),
+        };
+        let folder = url::Url::parse("https://dav.example.com/b/").unwrap();
+        let mine = || async { sqlx::query_as::<_, (String, String, Option<String>)>("SELECT instance, url, recipient FROM monitor_backup").fetch_one(&db).await.unwrap() };
+
+        sqlx::query("INSERT INTO monitor_backup (id, instance, url, recipient, updated_at) VALUES (1, 'aaaaaaaa', 'https://dav.example.com/a/', 'age1mine', 'x')")
+            .execute(&db)
+            .await
+            .unwrap();
+        assert!(!adopt(&db, &sealer, &folder, "me", None, false, &fetched).await.unwrap());
+        assert_eq!(mine().await, ("aaaaaaaa".into(), "https://dav.example.com/a/".into(), Some("age1mine".into())), "its own, all of it");
+
+        sqlx::query("DELETE FROM monitor_backup").execute(&db).await.unwrap();
+        assert!(adopt(&db, &sealer, &folder, "me", None, false, &fetched).await.unwrap());
+        assert_eq!(mine().await, ("bbbbbbbb".into(), folder.to_string(), Some("age1other".into())));
+    }
+
+    #[tokio::test]
+    async fn only_a_live_runs_folders_stay() {
+        let dir = tempfile::tempdir().unwrap();
+        let db = dir.path().join("m.db");
+        let work = MonitorBackup::new(Some(&db));
         let mine = work.scratch().await.unwrap();
+        // Another run going on (a CLI): its lock held.
+        let other = MonitorBackup::new(Some(&db));
+        let theirs = other.scratch().await.unwrap();
+        // A killed run (its lock file left, unheld), the older namings, none
+        // with a lock, whatever process has their PID now.
         let me = std::process::id();
-        // A killed run with this PID (a container's PID 1), the old naming,
-        // and a process that is gone.
-        for stale in [format!("work-{me}-deadbeef-0"), format!("work-{me}-0"), "work-999999999-x-0".to_string()] {
+        std::fs::write(work.dir.join("run-deadbeef.lock"), "").unwrap();
+        for stale in ["work-deadbeef-0".to_string(), format!("work-{me}-0"), format!("work-{me}-cafe0123-0")] {
             std::fs::create_dir_all(work.dir.join(stale)).unwrap();
         }
         work.sweep();
-        let left: Vec<_> = std::fs::read_dir(&work.dir).unwrap().map(|e| e.unwrap().path()).collect();
-        assert_eq!(left, [mine.path().to_path_buf()]);
+        let mut left: Vec<_> = std::fs::read_dir(&work.dir).unwrap().map(|e| e.unwrap().file_name().into_string().unwrap()).filter(|n| n.starts_with("work-")).collect();
+        left.sort();
+        let mut kept = vec![mine.path().file_name().unwrap().to_str().unwrap().to_string(), theirs.path().file_name().unwrap().to_str().unwrap().to_string()];
+        kept.sort();
+        assert_eq!(left, kept);
+        assert!(!work.dir.join("run-deadbeef.lock").exists(), "its lock goes with it");
+        std::fs::write(work.dir.join("run-0badf00d.lock"), "").unwrap();
+        work.sweep();
+        let locks = std::fs::read_dir(&work.dir).unwrap().filter(|e| e.as_ref().unwrap().file_name().to_str().unwrap().starts_with("run-")).count();
+        assert_eq!(locks, 2, "a lock with no folder goes too; the live ones stay");
     }
 
     #[test]
