@@ -1,6 +1,0 @@
-# yaml-language-server: $schema=https://winnowl.lollipopkit.com/winnowl.schema.json
-version: 1
-
-sandbox:
-  # Reviews of this repository run in its own GitHub Actions (.github/workflows/winnowl.yml).
-  runner: actions
