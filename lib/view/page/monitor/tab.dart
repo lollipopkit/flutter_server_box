@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -12,6 +14,7 @@ import 'package:server_box/view/page/monitor/common.dart';
 import 'package:server_box/view/page/monitor/live.dart';
 import 'package:server_box/view/page/monitor/notices.dart';
 import 'package:server_box/view/page/monitor/overview.dart';
+import 'package:server_box/view/page/server/add_menu.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/swap_switcher.dart';
 
@@ -246,10 +249,22 @@ class _MonitorTabPageState extends ConsumerState<MonitorTabPage> {
             ),
           );
     final shown = _section.scoped ? scope.firstOrNull?.id : _serverId;
+    // A row of its own at the top, as every rail has: what acts on all of it
+    // — every agent read again, another server added. It is also what keeps
+    // the first entry off the window's edge where nothing above it is inset,
+    // as on iPhone Duo with its status bar at the side.
     return WindowControlsInset(
       safeArea: true,
-      child: ListView(
-        padding: const EdgeInsets.only(top: 4, bottom: 13),
+      child: SideBarList(
+        actions: [
+          BarAction(
+            icon: Icons.refresh,
+            label: libL10n.refresh,
+            onTap: () => unawaited(_refreshAll(servers)),
+          ),
+          BarAction.menu(icon: Icons.add, label: libL10n.add, menu: () => addServerMenu(context, ref)),
+        ],
+        padding: const EdgeInsets.only(bottom: 13),
         children: [
           for (final section in MonitorSection.values)
             SideBarTile(
@@ -292,6 +307,11 @@ class _MonitorTabPageState extends ConsumerState<MonitorTabPage> {
       ),
     );
   }
+
+  /// Every agent read again: the counts in the rail are theirs.
+  Future<void> _refreshAll(List<Spi> servers) => Future.wait([
+    for (final spi in servers) ref.read(monitorOverviewProvider(spi.id).notifier).refresh(),
+  ]);
 
   Future<void> _pickSection() => showRowsSheet<void>(
     context,

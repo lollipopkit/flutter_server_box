@@ -598,7 +598,13 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
       controller: _scrollCtrl,
       // Match the grid's top inset so the card-to-detail transition does not
       // introduce a vertical jump.
-      padding: EdgeInsets.fromLTRB(13, 4, 13, bottomInset + 13),
+      // And the window's foot, which the page runs under.
+      padding: EdgeInsets.fromLTRB(
+        13,
+        4,
+        13,
+        bottomInset + 13 + MediaQuery.paddingOf(context).bottom,
+      ),
       // Held to a width and centred inside a scroll view that still has the
       // whole page, so the page scrolls from anywhere over it.
       child: Center(

@@ -27,7 +27,12 @@ extension on _ServerDetailPageState {
             // The readings page's inset, so the block a card grows into is
             // in the same box whichever page it finds; the notice's own 26
             // is on the block — see [ServerCardSizes.noticeInset].
-            padding: EdgeInsets.fromLTRB(13, 4, 13, _kFuncBarInset + 26),
+            padding: EdgeInsets.fromLTRB(
+              13,
+              4,
+              13,
+              _kFuncBarInset + 26 + MediaQuery.paddingOf(context).bottom,
+            ),
             children: [
               _handed(
                 ServerCardNotice(

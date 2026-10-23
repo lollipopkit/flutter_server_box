@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
@@ -64,7 +65,12 @@ class ServerFuncBar extends StatelessWidget {
     return LayoutBuilder(
       builder: (_, cons) => Center(
         child: Padding(
-          padding: const EdgeInsets.only(bottom: 13),
+          // Just above the home indicator where the page runs under it: its
+          // inset already has room around the indicator, and 13 more on top
+          // left the row floating a band above the foot of the window.
+          padding: EdgeInsets.only(
+            bottom: math.max(13.0, MediaQuery.paddingOf(context).bottom),
+          ),
           child: ConstrainedBox(
             // The row takes the width it needs up to this; beyond it, it
             // scrolls. Stretched across a desktop window it would stop being a

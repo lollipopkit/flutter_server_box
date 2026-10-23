@@ -24,6 +24,7 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/selection.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/view/page/server/add_menu.dart';
 import 'package:server_box/view/page/server/card/actions.dart';
 import 'package:server_box/view/page/server/card/card.dart';
 import 'package:server_box/view/page/server/card/density.dart';
@@ -43,7 +44,6 @@ import 'package:server_box/view/page/server/text_scale.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/server_globe.dart';
-import 'package:server_box/view/widget/server_share.dart';
 import 'package:server_box/view/widget/server_side_tile.dart';
 import 'package:server_box/view/widget/tag_switcher.dart';
 
@@ -508,11 +508,15 @@ class _ServerPageState extends ConsumerState<ServerPage>
       // under a card's rings — so turning it up left every other word on the
       // page the size it was.
       body: ServerTextScale(
-        // The bar above spends the top inset, as an app bar does; this is
-        // what is left, and what it still has to clear is the home indicator
-        // — especially with [bare] on, since the navigation that used to sit
-        // between the two is gone.
-        child: SafeArea(top: false, child: child),
+        // The bar above spends the top inset, as an app bar does, and these
+        // the sides. Not the bottom: under a rail rather than a bottom bar
+        // the home indicator's inset reaches here, and taken as a margin it
+        // cut both panes short of the window's edge — a column and a page
+        // stopping a band above the screen's foot, a seam ending in the air.
+        // What scrolls runs under it and keeps its last row clear, and what
+        // floats sits above it (the grid, the column, the readings, and
+        // [ServerFuncBar]).
+        child: SafeArea(top: false, bottom: false, child: child),
       ),
     );
   }

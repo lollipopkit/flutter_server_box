@@ -49,9 +49,17 @@ class WebAppsNotifier extends _$WebAppsNotifier {
     // both transports answers those as the union of the two, and this asks
     // the agent.
     final cred = ref.watch(serversProvider.select((s) => s.servers[serverId]?.monitorOn));
-    final features = ref.watch(serverProvider(serverId).select((s) => s.agentCapabilities?.features));
-    final stacks = features?.contains('stacks') ?? false;
-    final desk = features?.contains('desk') ?? false;
+    // The two answers, not the set: the capabilities are read again with
+    // every status poll, a new set each time, and a set is equal only to
+    // itself — so selecting it rebuilt this every few seconds, dropping the
+    // apps (the card gone, the page under a reader's finger shorter) until
+    // the next read brought them back.
+    final (:stacks, :desk) = ref.watch(
+      serverProvider(serverId).select((s) {
+        final features = s.agentCapabilities?.features;
+        return (stacks: features?.contains('stacks') ?? false, desk: features?.contains('desk') ?? false);
+      }),
+    );
     if (cred == null || !(stacks || desk)) return const WebAppsState();
     final poll = _poll = AgentPoll(cred, every: _pollInterval, read: (client, current) => _read(client, current, stacks: stacks, desk: desk));
     ref.onDispose(() {
