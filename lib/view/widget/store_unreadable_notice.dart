@@ -20,7 +20,8 @@ abstract final class StoreUnreadableNotice {
       StoreUnreadableReason.keyLost => l10n.storeUnreadableKeyLost,
       StoreUnreadableReason.keyRejected => l10n.storeUnreadableKeyRejected,
     };
-    await context.showRoundDialog(
+    // Kept on a barrier tap or back: only a button says it was read.
+    final read = await context.showRoundDialog<bool>(
       title: l10n.storeUnreadableTitle,
       child: SingleChildScrollView(
         child: Column(
@@ -40,13 +41,13 @@ abstract final class StoreUnreadableNotice {
         Btn.text(
           text: libL10n.restore,
           onTap: () {
-            context.popDialog();
+            context.popDialog(true);
             BackupPage.route.go(context);
           },
         ),
         Btn.ok(),
       ],
     );
-    await StoreRecovery.acknowledge();
+    if (read == true) await StoreRecovery.acknowledge();
   }
 }
