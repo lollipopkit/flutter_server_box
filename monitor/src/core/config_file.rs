@@ -182,7 +182,7 @@ fn private_options() -> OpenOptions {
     options
 }
 
-fn write_private_new(path: &Path, bytes: &[u8]) -> std::io::Result<()> {
+pub(crate) fn write_private_new(path: &Path, bytes: &[u8]) -> std::io::Result<()> {
     let mut file = private_options().create_new(true).open(path)?;
     file.write_all(bytes)?;
     file.sync_all()

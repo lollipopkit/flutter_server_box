@@ -113,6 +113,8 @@ pub struct AppState {
     pub themes: Arc<crate::api::desk_themes::ThemeStore>,
     /// Files kept beside the database — see `core::blobs`.
     pub blobs: Arc<crate::core::blobs::Blobs>,
+    /// The database's credentials key — see `db::sealed`.
+    pub sealer: Arc<crate::db::sealed::Sealer>,
     /// Agent mode's tasks and the pi runtime they run in — see `agent_mode`.
     pub agent: Arc<crate::agent_mode::AgentMode>,
     /// Desk apps' backends: compiled components, calls, jobs (`apps`).
@@ -156,7 +158,7 @@ pub fn sqlite_file(url: &str) -> Option<std::path::PathBuf> {
 }
 
 /// The file [db] opened, or `None` for an in-memory database.
-pub(super) fn sqlite_file_of(db: &SqlitePool) -> Option<std::path::PathBuf> {
+pub(crate) fn sqlite_file_of(db: &SqlitePool) -> Option<std::path::PathBuf> {
     let file = db.connect_options().get_filename().to_path_buf();
     let memory = file.as_os_str().is_empty() || file.to_string_lossy().starts_with("file:") || file.to_string_lossy() == ":memory:";
     (!memory).then_some(file)
@@ -164,7 +166,7 @@ pub(super) fn sqlite_file_of(db: &SqlitePool) -> Option<std::path::PathBuf> {
 
 /// Where this agent keeps what the file API must never reach — see
 /// [`crate::core::fs_roots::Protected`]: the database (and its journal files)
-/// with `jwt.secret`, the first-start credentials and the blob directory
+/// with `jwt.secret`, `credentials.key`, the first-start credentials and the blob directory
 /// (`core::blobs`) beside it, `config.toml`
 /// and its backups, `.env`, the TLS certificate and key, and the
 /// custom-commands directory.
@@ -177,6 +179,7 @@ pub(super) fn agent_state(config: &Config) -> crate::core::fs_roots::Protected {
     // database was `my db.db`.
     if let Some(db) = sqlite_file(&url) {
         protected.file(&db);
+        protected.file(&crate::db::sealed::Sealer::key_path_beside(&db));
         protected.tree(crate::core::blobs::Blobs::beside(&db).dir());
         protected.tree(&crate::agent_mode::AgentMode::dir_beside(&db));
         crate::stacks::Stacks::protect_beside(&db, &mut protected);
@@ -228,6 +231,7 @@ impl AppState {
             .clone()
             .protecting(agent_state(&config));
         remote_access.log_summary(tls_active);
+        let sealer = Arc::new(crate::db::sealed::Sealer::of(&db));
         let sessions = Arc::new(SessionStore::new(
             remote_access.terminal.max_sessions,
             remote_access.terminal.detached_timeout,
@@ -249,7 +253,8 @@ impl AppState {
                 Some(file) => crate::core::blobs::Blobs::beside(&file),
                 None => crate::core::blobs::Blobs::temporary(),
             }),
-            agent: Arc::new(crate::agent_mode::AgentMode::new(db.clone(), sqlite_file_of(&db).as_deref())),
+            agent: Arc::new(crate::agent_mode::AgentMode::new(db.clone(), sealer.clone(), sqlite_file_of(&db).as_deref())),
+            sealer,
             container_backups: Arc::new(crate::container_backups::ContainerBackups::new(sqlite_file_of(&db).as_deref())),
             monitor_backup: Arc::new(crate::monitor_backup::MonitorBackup::new(sqlite_file_of(&db).as_deref())),
             storage: Arc::default(),

@@ -629,6 +629,7 @@ const zh_TW = {
 	bmcNoSystem: 'BMC 未列出可管理的系統。',
 	bmcNotSupported: '此系統不提供電源操作。',
 	bmcGone: '該 BMC 已不在此 agent 上。',
+	bmcPasswordRequired: '此 agent 已無法讀取儲存的密碼，請重新輸入。',
 	bmcInvalidName: '每個 BMC 都需要唯一的名稱，最多 64 個字元。',
 	bmcInvalidUrl: '位址必須是 https://host 或 https://host:port，且不可包含路徑。',
 	bmcInvalidUsername: '必須填寫使用者名稱。',

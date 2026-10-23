@@ -18,10 +18,11 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 use sha2::{Digest as _, Sha256};
-use sqlx::{Executor, SqliteConnection, SqlitePool};
+use sqlx::{Executor, Row as _, SqliteConnection, SqlitePool};
 
 use crate::core::blobs::Blobs;
 use crate::core::config::Config;
+use crate::db::sealed::{self, Field, Sealer};
 
 /// A table a backup carries, parents before children, with the columns that
 /// change on their own: left out of the stable hash, so they alone never make
@@ -150,8 +151,9 @@ fn quote(text: &str) -> String {
 const OWNER: &str = "id = (SELECT MIN(id) FROM main.users)";
 
 /// The hashes of what a backup taken now would hold, beside [config] (the
-/// file's bytes).
-pub async fn digest(db: &SqlitePool, config: Option<&[u8]>) -> sqlx::Result<Digest> {
+/// file's bytes). Credentials are hashed opened, as a backup carries them:
+/// sealing one again (a nonce of its own) changes nothing a backup holds.
+pub async fn digest(db: &SqlitePool, sealer: &Sealer, config: Option<&[u8]>) -> anyhow::Result<Digest> {
     let mut conn = Guarded::acquire(db).await?;
     let mut stable = Sha256::new();
     let mut full = Sha256::new();
@@ -165,28 +167,45 @@ pub async fn digest(db: &SqlitePool, config: Option<&[u8]>) -> sqlx::Result<Dige
         None => both(b"no config"),
     }
     conn.execute("BEGIN").await?;
-    let result: sqlx::Result<()> = async {
+    let result: anyhow::Result<()> = async {
         for k in KEPT {
             let mut cols = columns(&mut conn, "main", k.table).await?;
             if k.table == "users" {
                 cols.retain(|c| USER_COLUMNS.contains(&c.as_str()) && c != "id");
             }
-            let full_expr = cols.iter().map(|c| format!("quote({})", ident(c))).collect::<Vec<_>>().join(" || char(31) || ");
-            let stable_expr = cols
+            let sealed: Vec<Option<Field>> =
+                cols.iter().map(|c| sealed::FIELDS.iter().copied().find(|f| f.table == k.table && f.column == c)).collect();
+            // A sealed column as stored, to be opened here; the rest quoted
+            // by SQLite.
+            let exprs = cols
                 .iter()
-                .map(|c| if k.volatile.contains(&c.as_str()) { "'-'".to_string() } else { format!("quote({})", ident(c)) })
+                .zip(&sealed)
+                .map(|(c, f)| if f.is_some() { ident(c) } else { format!("quote({})", ident(c)) })
                 .collect::<Vec<_>>()
-                .join(" || char(31) || ");
+                .join(", ");
             let filter = if k.table == "users" { format!(" WHERE {OWNER}") } else { String::new() };
-            let sql = format!("SELECT {full_expr}, {stable_expr} FROM main.{}{filter} ORDER BY rowid", ident(k.table));
-            let rows: Vec<(String, String)> = sqlx::query_as(sqlx::AssertSqlSafe(sql)).fetch_all(&mut *conn).await?;
+            let sql = format!("SELECT {exprs} FROM main.{}{filter} ORDER BY rowid", ident(k.table));
+            let rows = sqlx::query(sqlx::AssertSqlSafe(sql)).fetch_all(&mut *conn).await?;
             let head = format!("\u{1e}{}\u{1e}{}", k.table, cols.join(","));
             stable.update(head.as_bytes());
             full.update(head.as_bytes());
-            for (f, s) in rows {
-                full.update(f.as_bytes());
+            for row in rows {
+                let mut f_row = Vec::with_capacity(cols.len());
+                let mut s_row = Vec::with_capacity(cols.len());
+                for (i, (c, field)) in cols.iter().zip(&sealed).enumerate() {
+                    let piece = match field {
+                        Some(field) => match sealer.open_opt(*field, row.try_get::<Option<String>, _>(i)?.as_deref())? {
+                            Some(v) => quote(&v),
+                            None => "NULL".to_string(),
+                        },
+                        None => row.try_get::<String, _>(i)?,
+                    };
+                    s_row.push(if k.volatile.contains(&c.as_str()) { "-".to_string() } else { piece.clone() });
+                    f_row.push(piece);
+                }
+                full.update(f_row.join("\u{1f}").as_bytes());
                 full.update(b"\x1d");
-                stable.update(s.as_bytes());
+                stable.update(s_row.join("\u{1f}").as_bytes());
                 stable.update(b"\x1d");
             }
         }
@@ -293,15 +312,15 @@ async fn detach<T>(conn: &mut Guarded, result: anyhow::Result<T>) -> anyhow::Res
 
 /// Writes the settings into a new database at [path]; answers the blobs its
 /// rows name.
-pub async fn write_database(db: &SqlitePool, path: &Path) -> anyhow::Result<Vec<String>> {
+pub async fn write_database(db: &SqlitePool, sealer: &Sealer, path: &Path) -> anyhow::Result<Vec<String>> {
     empty_database(path).await?;
     let mut conn = Guarded::acquire(db).await?;
     attach(&mut conn, path).await?;
-    let result = copy_out(&mut conn).await;
+    let result = copy_out(&mut conn, sealer).await;
     detach(&mut conn, result).await
 }
 
-async fn copy_out(conn: &mut SqliteConnection) -> anyhow::Result<Vec<String>> {
+async fn copy_out(conn: &mut SqliteConnection, sealer: &Sealer) -> anyhow::Result<Vec<String>> {
     conn.execute("BEGIN").await?;
     for k in KEPT {
         let mut cols = columns(conn, "main", k.table).await?;
@@ -315,6 +334,9 @@ async fn copy_out(conn: &mut SqliteConnection) -> anyhow::Result<Vec<String>> {
         let t = ident(k.table);
         conn.execute(sqlx::AssertSqlSafe(format!("INSERT INTO other.{t} ({list}) SELECT {list} FROM main.{t}{filter}"))).await?;
     }
+    // In clear inside the backup's own encryption: it restores on a machine
+    // with another credentials key.
+    sealer.unseal_all(conn, "other").await?;
     let blobs: Vec<(String,)> = sqlx::query_as(BLOBS).fetch_all(&mut *conn).await?;
     conn.execute("COMMIT").await?;
     Ok(blobs.into_iter().map(|(b,)| b).collect())
@@ -502,7 +524,7 @@ async fn upgrade(file: &Path) -> Result<(), RestoreError> {
 /// Replaces the [`KEPT`] tables of [db] with the backup's, its files put in
 /// [store] first. The account keeps its row; its password becomes the
 /// backup's, as a password change.
-pub async fn restore_database(db: &SqlitePool, store: &Blobs, unpacked: &Unpacked) -> Result<Restored, RestoreError> {
+pub async fn restore_database(db: &SqlitePool, sealer: &Sealer, store: &Blobs, unpacked: &Unpacked) -> Result<Restored, RestoreError> {
     upgrade(&unpacked.database).await?;
     let _writing = store.writing().await;
     for (sha, path) in &unpacked.blobs {
@@ -514,12 +536,15 @@ pub async fn restore_database(db: &SqlitePool, store: &Blobs, unpacked: &Unpacke
     }
     let mut conn = Guarded::acquire(db).await?;
     attach(&mut conn, &unpacked.database).await?;
-    let result = copy_in(&mut conn, unpacked.blobs.len()).await;
+    let result = copy_in(&mut conn, sealer, unpacked.blobs.len()).await;
     Ok(detach(&mut conn, result).await?)
 }
 
-async fn copy_in(conn: &mut SqliteConnection, blobs: usize) -> anyhow::Result<Restored> {
+async fn copy_in(conn: &mut SqliteConnection, sealer: &Sealer, blobs: usize) -> anyhow::Result<Restored> {
     conn.execute("BEGIN IMMEDIATE").await?;
+    // A backup carries credentials in clear; one sealed with a key this
+    // machine does not have is refused here, not left unreadable.
+    sealer.unseal_all(conn, "other").await?;
     let backup_owner: Option<(i64, String)> = sqlx::query_as("SELECT id, password_hash FROM other.users ORDER BY id LIMIT 1").fetch_optional(&mut *conn).await?;
     let (backup_owner, hash) = backup_owner.ok_or_else(|| anyhow::anyhow!("the backup has no account"))?;
     let now_ms = chrono::Utc::now().timestamp_millis();
@@ -573,6 +598,7 @@ async fn copy_in(conn: &mut SqliteConnection, blobs: usize) -> anyhow::Result<Re
             anyhow::bail!("restored rows of {} name rows that are not there", k.table);
         }
     }
+    sealer.seal_all(conn, "main").await?;
     conn.execute("COMMIT").await?;
     Ok(Restored { tables, blobs, config: false })
 }
@@ -631,18 +657,30 @@ mod tests {
     async fn only_a_change_that_matters_changes_the_stable_hash() {
         let db = database().await;
         crate::db::accounts::insert_owner(&db, "hash").await.unwrap();
-        let before = digest(&db, Some(b"a = 1")).await.unwrap();
-        assert_eq!(before, digest(&db, Some(b"a = 1")).await.unwrap());
-        assert_ne!(before.stable, digest(&db, Some(b"a = 2")).await.unwrap().stable);
+        let sealer = Sealer::temporary();
+        let before = digest(&db, &sealer, Some(b"a = 1")).await.unwrap();
+        assert_eq!(before, digest(&db, &sealer, Some(b"a = 1")).await.unwrap());
+        assert_ne!(before.stable, digest(&db, &sealer, Some(b"a = 2")).await.unwrap().stable);
 
         sqlx::query("UPDATE users SET last_login = CURRENT_TIMESTAMP").execute(&db).await.unwrap();
         sqlx::query("INSERT INTO storage_maintenance (task, every, at, day, updated_at) VALUES ('scrub', 'weekly', '03:00', 1, 'x')").execute(&db).await.unwrap();
-        let added = digest(&db, Some(b"a = 1")).await.unwrap();
+        let added = digest(&db, &sealer, Some(b"a = 1")).await.unwrap();
         assert_ne!(added.stable, before.stable);
         sqlx::query("UPDATE storage_maintenance SET last_run = 'now'").execute(&db).await.unwrap();
-        let ran = digest(&db, Some(b"a = 1")).await.unwrap();
+        let ran = digest(&db, &sealer, Some(b"a = 1")).await.unwrap();
         assert_eq!(ran.stable, added.stable, "a run is not a change");
         assert_ne!(ran.full, added.full);
+
+        let set = |value: String| sqlx::query("UPDATE agent_credential SET credential = ?").bind(value).execute(&db);
+        sqlx::query("INSERT INTO agent_credential (provider_id, credential, updated_at) VALUES ('p', '', 'x')").execute(&db).await.unwrap();
+        set(sealer.seal(sealed::AGENT_CREDENTIAL, "k1").unwrap()).await.unwrap();
+        let sealed_once = digest(&db, &sealer, Some(b"a = 1")).await.unwrap();
+        set(sealer.seal(sealed::AGENT_CREDENTIAL, "k1").unwrap()).await.unwrap();
+        assert_eq!(digest(&db, &sealer, Some(b"a = 1")).await.unwrap(), sealed_once, "sealed again is no change");
+        set("k1".into()).await.unwrap();
+        assert!(digest(&db, &sealer, Some(b"a = 1")).await.is_err(), "a credential in clear is not hashed as one");
+        set(sealer.seal(sealed::AGENT_CREDENTIAL, "k2").unwrap()).await.unwrap();
+        assert_ne!(digest(&db, &sealer, Some(b"a = 1")).await.unwrap().stable, sealed_once.stable);
     }
 
     #[tokio::test]
@@ -656,10 +694,18 @@ mod tests {
         let sha = blobs.put(b"a wallpaper").await.unwrap();
         sqlx::query("INSERT INTO desk_wallpaper (user_id, mime, sha256) VALUES (1, 'image/png', ?)").bind(&sha).execute(&src).await.unwrap();
         sqlx::query("INSERT INTO access_log (timestamp, kind, action, result) VALUES ('x', 'login', 'open', 'ok')").execute(&src).await.unwrap();
+        let src_key = Sealer::temporary();
+        sqlx::query("INSERT INTO bmc_target (id, name, url, username, password, position, updated_at) VALUES ('b', 'B', 'https://b', 'root', ?, 0, 'x')")
+            .bind(src_key.seal(sealed::BMC_PASSWORD, "calvin").unwrap())
+            .execute(&src)
+            .await
+            .unwrap();
 
         let file = dir.path().join("settings.db");
-        let named = write_database(&src, &file).await.unwrap();
+        let named = write_database(&src, &src_key, &file).await.unwrap();
         assert_eq!(named, vec![sha.clone()]);
+        let carried: String = sqlx::query_scalar("SELECT password FROM bmc_target").fetch_one(&single(&file, false).await.unwrap()).await.unwrap();
+        assert_eq!(carried, "calvin", "in clear inside the backup's own encryption");
         let archive = dir.path().join("a.tar.gz");
         let manifest = Manifest { format: FORMAT, monitor_version: "t".into(), migration: 39, host: "h".into(), created_at: "now".into() };
         let wallpaper = std::fs::File::open(blobs.path(&sha).unwrap()).unwrap();
@@ -676,8 +722,11 @@ mod tests {
         sqlx::query("INSERT INTO snippet (id, name, script, position, updated_at) VALUES ('s9', 'Old', 'true', 0, 'x')").execute(&dst).await.unwrap();
         sqlx::query("INSERT INTO access_log (timestamp, kind, action, result) VALUES ('y', 'login', 'open', 'ok')").execute(&dst).await.unwrap();
         let other_blobs = Blobs::beside(&dir.path().join("other").join("db"));
-        let restored = restore_database(&dst, &other_blobs, &unpacked).await.unwrap();
+        let dst_key = Sealer::temporary();
+        let restored = restore_database(&dst, &dst_key, &other_blobs, &unpacked).await.unwrap();
         assert!(restored.tables.contains(&("snippet".to_string(), 1)));
+        let password: String = sqlx::query_scalar("SELECT password FROM bmc_target").fetch_one(&dst).await.unwrap();
+        assert_eq!(dst_key.open(sealed::BMC_PASSWORD, &password).unwrap(), "calvin", "sealed with this machine's key");
 
         let (hash, id): (String, i64) = sqlx::query_as("SELECT password_hash, id FROM users").fetch_one(&dst).await.unwrap();
         assert_eq!((hash.as_str(), id), ("old-hash", 5));

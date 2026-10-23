@@ -317,3 +317,29 @@ async fn a_rate_the_loader_would_ignore_is_refused() {
         "a refused rate must not have taken the channels down with it"
     );
 }
+
+#[ntex::test]
+async fn a_credential_may_name_an_environment_variable() {
+    let _dir = workspace().await;
+    write_config(CONFIG_WITH_SECRETS);
+    let srv = test_server().await;
+    let body = |key: &str| json!({
+        "pushes": [{ "from_index": null, "name": "phone", "push_type": "bark", "config": { "key": key } }],
+    });
+    let put = |key: &str| {
+        let body = body(key);
+        let request = srv.put("/api/v1/push").header("Authorization", format!("Bearer {}", jwt()));
+        async move { request.send_json(&body).await }
+    };
+
+    // Unset: refused on save, naming the variable, not sending without it.
+    let resp = put("${SBM_TEST_UNSET_PUSH_KEY}").await.unwrap();
+    assert_eq!(resp.status().as_u16(), 400);
+    let body: Value = resp.json().await.unwrap();
+    assert!(body.to_string().contains("SBM_TEST_UNSET_PUSH_KEY"), "{body}");
+
+    // Set (`PATH` is, everywhere): the file keeps the reference, never the value.
+    let resp = put("${PATH}").await.unwrap();
+    assert_eq!(resp.status().as_u16(), 200);
+    assert_eq!(read_config().get_push()[0].config["key"].as_str(), Some("${PATH}"));
+}

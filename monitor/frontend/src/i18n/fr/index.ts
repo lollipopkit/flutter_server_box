@@ -629,6 +629,7 @@ const fr = {
 	bmcNoSystem: 'Le BMC ne liste aucun système à gérer.',
 	bmcNotSupported: 'Ce système ne propose aucune action d\'alimentation.',
 	bmcGone: 'Ce BMC n\'est plus sur cet agent.',
+	bmcPasswordRequired: 'Cet agent ne peut plus lire le mot de passe enregistré. Saisissez-le à nouveau.',
 	bmcInvalidName: 'Chaque BMC doit avoir son propre nom, de 64 caractères au plus.',
 	bmcInvalidUrl: 'L\'adresse doit être https://host ou https://host:port, sans chemin.',
 	bmcInvalidUsername: 'Un nom d\'utilisateur est requis.',

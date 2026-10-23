@@ -286,7 +286,9 @@ App 和 Monitor agent 采集数据时都不会等待交互式 `sudo` 输入。�
 
 因此 `install.sh` 默认以普通用户运行 agent。使用 `--system` 时以 root 运行，登录后就是 root shell。若要限制 agent 能访问的范围，请以只能访问这些内容的账户安装它。
 
-无论该账户能访问什么，文件 API 都不会提供 agent 自己的文件，包括数据库、`jwt.secret`、`config.toml` 及其备份、`.env`、TLS 密钥和证书、自定义命令，因为这些文件包含凭据。
+无论该账户能访问什么，文件 API 都不会提供 agent 自己的文件，包括数据库、`jwt.secret`、`credentials.key`、`config.toml` 及其备份、`.env`、TLS 密钥和证书、自定义命令，因为这些文件包含凭据。
+
+agent 保存的凭据（BMC 和 Proxmox VE 密码、Agent mode 的 provider key、MCP token、WebDAV 密码）在数据库中用同目录下的 `credentials.key` 加密。手动迁移 agent 时需要把这两个文件一起复制；缺少这个密钥时，这些凭据需要重新填写。设置备份不需要这个密钥。
 
 ### 从有多个账号的 agent 升级
 
@@ -331,6 +333,7 @@ Monitor HTTP 连接不支持 SFTP：SFTP 运行在 SSH channel 上。文件 API 
 | `discord` | `webhook_url` | `content`、`username`、`avatar_url`、`thread_id` |
 | `ntfy` | `topic` | `server`、`title`、`message`、`priority`、`tags`、`click`、`icon`、`attach`、`delay`、`email`、`markdown`、`token`、`username`、`password` |
 
+- **从环境变量读取凭据**：凭据字段（`sc_key`、Bark 的 `key` 和 `cipher_key`、iOS 的 `token`、webhook 的 header 值、SMTP 和 ntfy 的 `password`、ntfy 的 `token`、`bot_token`、`webhook_url`）可以用 `${NAME}` 引用环境变量，可以单独使用，也可以写在值中间（`Authorization = "Bearer ${HA_TOKEN}"`）。发送通知时从 agent 的环境变量或 `.env` 读取，`config.toml` 中保留引用本身。变量未设置或为空时，保存会被拒绝，发送也会失败，错误中会给出变量名。其他设置不做替换。
 - **Bark**：设置 `cipher_key` 后，通知内容使用 AES-CBC 加密（16、24 或 32 个字符的 key，分别对应 AES-128/192/256）。在 Bark App 的“推送加密”中填写相同的 key 和算法。Bark 服务器只能收到 device key 和密文。
 - **SMTP**：`security` 可选 `starttls`（587 端口，默认）、`tls`（465）或 `none`（25）。使用 `none` 时，只有服务器在本机才接受密码。`to` 可以填写多个地址，用逗号分隔。
 - **Telegram**：设置 `parse_mode` 后，消息内容和服务器名称会按该模式转义，只有你自己写的 `text` 会被当作标记解析。

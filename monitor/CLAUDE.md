@@ -52,8 +52,9 @@ cargo sqlx migrate run / cargo sqlx prepare # migrations; offline query cache in
 - `machine::FEATURES` is every endpoint and `/capabilities` `features`; a client offers a page only when listed.
 - **Tests never perform the real action on the machine running them** (power, cron save, firewall, users, benchmarks). Destructive e2e run on a throwaway PVE VM (`scripts/e2e-vm.sh`, `scripts/storage-e2e.sh`, `scripts/desk-vm-e2e.sh`).
 - Credentials are write-only everywhere (push channels, providers, MCP headers, BMC, PVE): a GET answers `null`, a PUT `null` keeps the stored value.
+- **A credential column is sealed** (`db::sealed`: AES-256-GCM under `credentials.key` beside the database): a new one goes in `sealed::FIELDS` (`every_credential_column_is_sealed`), is written through `Sealer::seal` and read through `Sealer::open`; one kept on a write is carried over as stored. A value the key no longer opens is asked for again (read as none, or `passwordRequired`), never sent. `config.toml`'s push credentials are the operator's to write: in clear, or `${NAME}` from the environment (`push::resolve`).
 - **Files are never stored in the database** (`core::blobs`, named by SHA-256); a new table with a blob column goes into `blobs::NAMED`.
-- `fs_roots::Protected`: the agent's own state (DB, blobs, `jwt.secret`, `config.toml`, `.env` files, the TLS key, Agent mode's directory) is never served by `/fs`.
+- `fs_roots::Protected`: the agent's own state (DB, blobs, `jwt.secret`, `credentials.key`, `config.toml`, `.env` files, the TLS key, Agent mode's directory) is never served by `/fs`.
 - An unmatched `/api/v1/*` path is a JSON 404. An answer given before the request's body was read reads the rest first (`api::unread_body`), or ntex drops the connection.
 
 ## WebSocket traps (locked by tests)

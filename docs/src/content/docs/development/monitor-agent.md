@@ -145,7 +145,7 @@ endpoints answer `forbidden`.
 ### File API
 
 `/api/v1/fs/*` reaches whatever the agent's system account can, except the
-agent's own state: its database and journal files, `jwt.secret`,
+agent's own state: its database and journal files, `jwt.secret`, `credentials.key`,
 `initial-admin-credentials.txt`, `config.toml` and its backups, `.env`, the
 TLS certificate and key, the custom-commands directory, the blob store,
 stacks' `.env` files, and container backups. These paths are matched after

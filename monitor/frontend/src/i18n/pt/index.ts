@@ -629,6 +629,7 @@ const pt = {
 	bmcNoSystem: 'O BMC não lista nenhum sistema para gerenciar.',
 	bmcNotSupported: 'Este sistema não oferece ações de energia.',
 	bmcGone: 'Esse BMC não está mais neste agente.',
+	bmcPasswordRequired: 'Este agent não consegue mais ler a senha salva. Digite-a novamente.',
 	bmcInvalidName: 'Cada BMC precisa de um nome próprio, com até 64 caracteres.',
 	bmcInvalidUrl: 'O endereço deve ser https://host ou https://host:port, sem caminho.',
 	bmcInvalidUsername: 'Um usuário é obrigatório.',

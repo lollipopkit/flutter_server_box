@@ -649,6 +649,7 @@ const en = {
 	bmcNoSystem: 'The BMC lists no system to manage.',
 	bmcNotSupported: 'This system offers no power actions.',
 	bmcGone: 'That BMC is no longer on this agent.',
+	bmcPasswordRequired: 'The saved password can no longer be read on this agent. Enter it again.',
 	bmcInvalidName: 'Each BMC needs its own name, up to 64 characters.',
 	bmcInvalidUrl: 'The address has to be https://host or https://host:port, with no path.',
 	bmcInvalidUsername: 'A user name is required.',

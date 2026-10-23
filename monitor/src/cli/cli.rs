@@ -166,6 +166,13 @@ async fn handle_serve(matches: &clap::ArgMatches) -> anyhow::Result<()> {
     db::bootstrap::ensure_owner(&db, &config.get_database_url()).await?;
 
     let app_state = crate::api::server::AppState::new(config.clone(), db);
+    app_state.sealer.ready()?;
+    // TODO: remove once every agent has started on a build that seals:
+    // credentials an older agent stored in clear.
+    match app_state.sealer.seal_all(&mut *app_state.db.acquire().await?, "main").await? {
+        0 => {}
+        n => tracing::info!("Sealed {n} stored credentials"),
+    }
     // Files kept beside the database: what an older agent kept in it moves
     // out, and what no row names any more (a write cut short) goes.
     crate::core::blobs::move_database_backups(&app_state.db, &app_state.blobs).await?;
@@ -293,6 +300,8 @@ async fn handle_backup(matches: &clap::ArgMatches) -> anyhow::Result<()> {
     let db = db::database::init(&url).await?;
     let file = crate::api::server::sqlite_file(&url).ok_or_else(|| anyhow::anyhow!("The database is in memory"))?;
     let blobs = crate::core::blobs::Blobs::beside(&file);
+    let sealer = db::sealed::Sealer::beside(&file);
+    sealer.ready()?;
     let work = monitor_backup::MonitorBackup::new(Some(&file));
 
     // The folder named on the command line.
@@ -316,14 +325,14 @@ async fn handle_backup(matches: &clap::ArgMatches) -> anyhow::Result<()> {
     let target = |named: &Option<Named>, stored: Option<monitor_backup::Row>| -> anyhow::Result<(webdav::Dav, Own)> {
         match (named, stored) {
             (Some(n), _) => Ok((webdav::Dav::new(n.folder.clone(), &n.user, n.password.as_deref()), None)),
-            (None, Some(row)) => Ok((row.dav().map_err(|e| anyhow::anyhow!("{e}"))?, Some((row.instance, row.recipient)))),
+            (None, Some(row)) => Ok((row.dav(&sealer).map_err(|e| anyhow::anyhow!("{e}"))?, Some((row.instance, row.recipient)))),
             (None, None) => anyhow::bail!("No folder: pass --url, or set one in the panel's Settings"),
         }
     };
 
     match matches.subcommand() {
         Some(("run", _)) => {
-            let host = monitor_backup::Host { db: &db, blobs: &blobs, work: &work, server_name: config.get_server_name() };
+            let host = monitor_backup::Host { db: &db, sealer: &sealer, blobs: &blobs, work: &work, server_name: config.get_server_name() };
             match monitor_backup::back_up(&host, true).await {
                 Ok(monitor_backup::Outcome::Made(name, None)) => println!("Uploaded {name}"),
                 Ok(monitor_backup::Outcome::Made(name, Some(f))) => println!("Uploaded {name}; removing the oldest failed: {}", f.code),
@@ -355,9 +364,9 @@ async fn handle_backup(matches: &clap::ArgMatches) -> anyhow::Result<()> {
             };
             let passphrase = secret(m.get_one::<String>("passphrase-env"), "Backup passphrase: ")?;
             let fetched = monitor_backup::fetch(&dav, &work, &name, &passphrase).await.map_err(refused)?;
-            let restored = monitor_backup::apply(&db, &blobs, &tokio::sync::Mutex::new(()), &fetched).await.map_err(refused)?;
+            let restored = monitor_backup::apply(&db, &sealer, &blobs, &tokio::sync::Mutex::new(()), &fetched).await.map_err(refused)?;
             if let Some(n) = &named {
-                monitor_backup::adopt(&db, &n.folder, &n.user, n.password.as_deref(), n.insecure, &fetched).await?;
+                monitor_backup::adopt(&db, &sealer, &n.folder, &n.user, n.password.as_deref(), n.insecure, &fetched).await?;
             }
             println!("Restored {name}");
             for (table, rows) in restored.tables.iter().filter(|(_, n)| *n > 0) {

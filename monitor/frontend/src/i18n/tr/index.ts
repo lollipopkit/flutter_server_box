@@ -629,6 +629,7 @@ const tr = {
 	bmcNoSystem: 'BMC, yönetilecek bir sistem listelemiyor.',
 	bmcNotSupported: 'Bu sistem güç eylemleri sunmuyor.',
 	bmcGone: 'Bu BMC artık bu agent üzerinde değil.',
+	bmcPasswordRequired: 'Bu agent kayıtlı parolayı artık okuyamıyor. Parolayı yeniden girin.',
 	bmcInvalidName: 'Her BMC\'nin en fazla 64 karakterlik kendine ait bir adı olmalıdır.',
 	bmcInvalidUrl: 'Adres, yol içermeyen https://host veya https://host:port biçiminde olmalıdır.',
 	bmcInvalidUsername: 'Kullanıcı adı gereklidir.',

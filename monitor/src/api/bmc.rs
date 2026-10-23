@@ -38,6 +38,7 @@ use sbm_redfish::client::{Auth, Client, ClientConfig};
 use sbm_redfish::model::{PowerIntent, ResetRequest};
 
 use super::authz;
+use crate::db::sealed::{self, Sealer};
 use super::machine;
 use super::server::AppState;
 use super::ws::audit::{Action, Event, Kind, Outcome};
@@ -180,7 +181,7 @@ pub async fn replace(
     }
 
     let names = targets.iter().map(|t| t.name.as_str()).collect::<Vec<_>>().join(", ");
-    let result = store(&state.db, &targets).await;
+    let result = store(&state.db, &state.sealer, &targets).await;
     let outcome = if result.is_ok() { Outcome::Ok } else { Outcome::Error };
     Event::new(Kind::Machine, Action::Write, outcome)
         .remote_ip(super::ws::audit::peer_ip(&req))
@@ -223,7 +224,7 @@ pub async fn status(
     if let Err(refused) = machine::gate(&req, &state, "bmc status").await {
         return Ok(refused);
     }
-    let client = match connect(&state.db, &path).await {
+    let client = match connect(&state.db, &state.sealer, &path).await {
         Ok(client) => client,
         Err(response) => return Ok(response),
     };
@@ -262,7 +263,7 @@ pub async fn power(
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),
     };
-    let client = match connect(&state.db, &path).await {
+    let client = match connect(&state.db, &state.sealer, &path).await {
         Ok(client) => client,
         Err(response) => return Ok(response),
     };
@@ -285,7 +286,7 @@ pub async fn power(
 }
 
 /// A client for the target `id`, or the answer to give instead.
-async fn connect(db: &SqlitePool, id: &str) -> Result<Client, HttpResponse> {
+async fn connect(db: &SqlitePool, sealer: &Sealer, id: &str) -> Result<Client, HttpResponse> {
     let row = match sqlx::query_as::<_, Row>(
         "SELECT id, name, url, username, password, cert_sha256 FROM bmc_target WHERE id = ?",
     )
@@ -297,10 +298,15 @@ async fn connect(db: &SqlitePool, id: &str) -> Result<Client, HttpResponse> {
         Ok(None) => return Err(super::respond::error(StatusCode::NOT_FOUND, "noSuchTarget")),
         Err(e) => return Err(super::respond::internal(&e)),
     };
+    // One the credentials key no longer opens is asked for again.
+    let password = sealer.open_opt(sealed::BMC_PASSWORD, row.password.as_deref()).map_err(|e| {
+        tracing::warn!("bmc {id}: {e}");
+        super::respond::error(StatusCode::CONFLICT, "passwordRequired")
+    })?;
     Client::new(ClientConfig {
         base_url: row.url,
         user: row.username,
-        password: row.password,
+        password,
         pinned_sha256: row.cert_sha256,
         require_pin: true,
         auth: Auth::default(),
@@ -416,7 +422,7 @@ async fn load(db: &SqlitePool) -> Result<Vec<Row>, sqlx::Error> {
 
 /// Replaces the set in one transaction, carrying each kept password over by
 /// id.
-async fn store(db: &SqlitePool, targets: &[TargetInput]) -> Result<(), sqlx::Error> {
+async fn store(db: &SqlitePool, sealer: &Sealer, targets: &[TargetInput]) -> Result<(), sqlx::Error> {
     let mut tx = db.begin().await?;
     let stored: HashMap<String, Option<String>> =
         sqlx::query_as::<_, (String, Option<String>)>("SELECT id, password FROM bmc_target")
@@ -428,7 +434,7 @@ async fn store(db: &SqlitePool, targets: &[TargetInput]) -> Result<(), sqlx::Err
     let now = chrono::Utc::now().to_rfc3339();
     for (position, t) in targets.iter().enumerate() {
         let password = match &t.password {
-            Some(password) => Some(password.clone()),
+            Some(password) => Some(sealer.seal(sealed::BMC_PASSWORD, password)?),
             None => stored.get(&t.id).cloned().flatten(),
         };
         sqlx::query(

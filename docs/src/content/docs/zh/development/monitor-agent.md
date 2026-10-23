@@ -79,7 +79,7 @@ agent 只有一个账号，只用密码登录；它可以做 agent 运行所用�
 
 ### File API
 
-`/api/v1/fs/*` 可以访问 agent 的系统账户能访问的一切，但不包括 agent 自身的状态：数据库及其 journal 文件、`jwt.secret`、`initial-admin-credentials.txt`、`config.toml` 及其备份、`.env`、TLS 证书和私钥、自定义命令目录、blob 存储、stack 的 `.env` 文件和容器备份。这些路径在解析 symlink 后匹配，访问时返回 `403`，不出现在列表中，其所在目录也不能重命名、删除或 chmod。
+`/api/v1/fs/*` 可以访问 agent 的系统账户能访问的一切，但不包括 agent 自身的状态：数据库及其 journal 文件、`jwt.secret`、`credentials.key`、`initial-admin-credentials.txt`、`config.toml` 及其备份、`.env`、TLS 证书和私钥、自定义命令目录、blob 存储、stack 的 `.env` 文件和容器备份。这些路径在解析 symlink 后匹配，访问时返回 `403`，不出现在列表中，其所在目录也不能重命名、删除或 chmod。
 
 ### Terminal endpoint
 

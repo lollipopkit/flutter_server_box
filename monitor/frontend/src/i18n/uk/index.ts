@@ -629,6 +629,7 @@ const uk = {
 	bmcNoSystem: 'BMC не перелічує жодної системи для керування.',
 	bmcNotSupported: 'Ця система не підтримує дії з живленням.',
 	bmcGone: 'Цього BMC більше немає на цьому агенті.',
+	bmcPasswordRequired: 'Цей agent більше не може прочитати збережений пароль. Введіть його знову.',
 	bmcInvalidName: 'Кожному BMC потрібна власна назва довжиною до 64 символів.',
 	bmcInvalidUrl: 'Адреса має бути https://host або https://host:port, без шляху.',
 	bmcInvalidUsername: 'Потрібно вказати ім\'я користувача.',

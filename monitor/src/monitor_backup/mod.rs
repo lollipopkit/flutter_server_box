@@ -31,6 +31,7 @@ use zeroize::Zeroizing;
 use crate::api::desk::{Level, Source};
 use crate::api::server::AppState;
 use crate::core::blobs::Blobs;
+use crate::db::sealed::{self, Sealer};
 use crate::stacks::Refusal;
 use webdav::{Dav, DavError};
 
@@ -158,9 +159,23 @@ pub async fn row(db: &SqlitePool) -> sqlx::Result<Option<Row>> {
 }
 
 impl Row {
-    pub fn dav(&self) -> Result<Dav, DavError> {
+    /// The folder's client. A password the credentials key no longer opens
+    /// is refused as the server would refuse it, so it is entered again.
+    pub fn dav(&self, sealer: &Sealer) -> Result<Dav, DavError> {
         let folder = webdav::folder_url(&self.url, self.allow_insecure)?;
-        Ok(Dav::new(folder, &self.username, self.password.as_deref()))
+        let password = sealer.open_opt(sealed::BACKUP_PASSWORD, self.password.as_deref()).map_err(|e| {
+            tracing::warn!("monitor backup: {e}");
+            DavError::Unauthorized
+        })?;
+        Ok(Dav::new(folder, &self.username, password.as_deref()))
+    }
+}
+
+/// [Row::dav]'s refusal: the stored address, or the stored password.
+fn stored_refusal(e: DavError) -> Refusal {
+    match e {
+        DavError::InvalidUrl => refusal(400, "invalidUrl"),
+        _ => refusal(400, "passwordRequired"),
     }
 }
 
@@ -238,8 +253,9 @@ fn ten() -> i64 {
 }
 
 /// [target] checked, with the stored password filled in where it may be:
-/// `(folder, username, password)`.
-fn resolve(target: &Target, stored: Option<&Row>) -> Result<(url::Url, String, Option<String>), Refusal> {
+/// `(folder, username, password)`. A stored one the credentials key no
+/// longer opens is asked for again.
+fn resolve(target: &Target, stored: Option<&Row>, sealer: &Sealer) -> Result<(url::Url, String, Option<String>), Refusal> {
     let folder = webdav::folder_url(&target.url, target.allow_insecure).map_err(|_| refusal(400, "invalidUrl"))?;
     let username = target.username.trim().to_string();
     if username.len() > 256 || username.chars().any(char::is_control) || username.contains(':') {
@@ -252,7 +268,9 @@ fn resolve(target: &Target, stored: Option<&Row>) -> Result<(url::Url, String, O
         None => match stored.and_then(|r| r.password.clone().map(|p| (r, p))) {
             // The stored password goes only to the server it was given for.
             Some((r, p)) => match webdav::folder_url(&r.url, r.allow_insecure) {
-                Ok(old) if webdav::same_origin(&old, &folder) => Some(p),
+                Ok(old) if webdav::same_origin(&old, &folder) => {
+                    Some(sealer.open(sealed::BACKUP_PASSWORD, &p).map_err(|_| refusal(400, "passwordRequired"))?)
+                }
                 _ => return Err(refusal(400, "passwordRequired")),
             },
             None => None,
@@ -271,7 +289,11 @@ pub async fn set_settings(state: &AppState, next: SetSettings) -> Result<View, R
         refusal(500, "internal")
     };
     let stored = row(&state.db).await.map_err(db_error)?;
-    let (folder, username, password) = resolve(&next.target, stored.as_ref())?;
+    let (folder, username, password) = resolve(&next.target, stored.as_ref(), &state.sealer)?;
+    let password = state.sealer.seal_opt(sealed::BACKUP_PASSWORD, password.as_deref()).map_err(|e| {
+        tracing::error!("monitor backup: {e}");
+        refusal(500, "internal")
+    })?;
     // The key lives in the folder: another folder needs a passphrase again.
     let same_folder = stored.as_ref().is_some_and(|r| webdav::folder_url(&r.url, r.allow_insecure).is_ok_and(|u| u == folder));
     // Another folder starts over: its own key, and none of the last folder's
@@ -310,7 +332,7 @@ pub async fn set_settings(state: &AppState, next: SetSettings) -> Result<View, R
 /// that monitor. A machine with backup settings of its own keeps its
 /// instance: taking the other's while that one still runs would have each
 /// prune the other's backups.
-pub async fn adopt(db: &SqlitePool, folder: &url::Url, username: &str, password: Option<&str>, allow_insecure: bool, fetched: &Fetched) -> sqlx::Result<()> {
+pub async fn adopt(db: &SqlitePool, sealer: &Sealer, folder: &url::Url, username: &str, password: Option<&str>, allow_insecure: bool, fetched: &Fetched) -> sqlx::Result<()> {
     sqlx::query(
         "INSERT INTO monitor_backup (id, instance, url, username, password, allow_insecure, recipient, updated_at) \
          VALUES (1, ?7, ?1, ?2, ?3, ?4, ?5, ?6) \
@@ -320,7 +342,7 @@ pub async fn adopt(db: &SqlitePool, folder: &url::Url, username: &str, password:
     )
     .bind(folder.as_str())
     .bind(username)
-    .bind(password)
+    .bind(sealer.seal_opt(sealed::BACKUP_PASSWORD, password)?)
     .bind(allow_insecure)
     .bind(&fetched.recipient)
     .bind(chrono::Utc::now().to_rfc3339())
@@ -350,7 +372,7 @@ pub struct Probe {
 
 pub async fn test(state: &AppState, target: &Target) -> Result<Probe, Refusal> {
     let stored = row(&state.db).await.ok().flatten();
-    let (folder, username, password) = resolve(target, stored.as_ref())?;
+    let (folder, username, password) = resolve(target, stored.as_ref(), &state.sealer)?;
     let dav = Dav::new(folder, &username, password.as_deref());
     match dav.list().await {
         Ok(entries) => Ok(Probe { missing: false, backups: entries.iter().filter(|e| parse_backup(&e.name).is_some()).count() }),
@@ -416,7 +438,7 @@ pub async fn set_key(state: &AppState, passphrase: &str) -> Result<View, Refusal
     check_passphrase(passphrase)?;
     let _lock = state.monitor_backup.lock.lock().await;
     let stored = row(&state.db).await.ok().flatten().ok_or_else(|| refusal(409, "notConfigured"))?;
-    let dav = stored.dav().map_err(|_| refusal(400, "invalidUrl"))?;
+    let dav = stored.dav(&state.sealer).map_err(stored_refusal)?;
     let passphrase = Zeroizing::new(passphrase.to_string());
     let (recipient, file) = tokio::task::spawn_blocking(move || new_key(&passphrase))
         .await
@@ -612,6 +634,7 @@ pub enum Outcome {
 /// What backing up needs, apart from the running monitor.
 pub struct Host<'a> {
     pub db: &'a SqlitePool,
+    pub sealer: &'a Sealer,
     pub blobs: &'a Blobs,
     pub work: &'a MonitorBackup,
     pub server_name: String,
@@ -675,7 +698,7 @@ async fn make(host: &Host<'_>, stored: &Row, recipient: &str, force: bool) -> Re
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => None,
         Err(e) => return Err(Failure::new("config", e)),
     };
-    let digest = snapshot::digest(host.db, config.as_deref()).await.map_err(|e| Failure::new("database", e))?;
+    let digest = snapshot::digest(host.db, host.sealer, config.as_deref()).await.map_err(|e| Failure::new("database", e))?;
     let day_old = stored
         .last_backup_at
         .as_deref()
@@ -688,7 +711,7 @@ async fn make(host: &Host<'_>, stored: &Row, recipient: &str, force: bool) -> Re
         return Ok((Outcome::Unchanged, digest));
     }
 
-    let dav = stored.dav().map_err(Failure::dav)?;
+    let dav = stored.dav(host.sealer).map_err(Failure::dav)?;
     let id = key_id(recipient);
     let listed = dav.list().await.map_err(Failure::dav)?;
     // Unchanged after a failure or a lower `keep`: asked again so the
@@ -705,7 +728,7 @@ async fn make(host: &Host<'_>, stored: &Row, recipient: &str, force: bool) -> Re
 
     let scratch = host.work.scratch().await.map_err(|e| Failure::new("io", e))?;
     let db_file = scratch.path().join(snapshot::DATABASE);
-    let blobs = snapshot::write_database(host.db, &db_file).await.map_err(|e| Failure::new("database", format!("{e:#}")))?;
+    let blobs = snapshot::write_database(host.db, host.sealer, &db_file).await.map_err(|e| Failure::new("database", format!("{e:#}")))?;
     let manifest = snapshot::Manifest {
         format: snapshot::FORMAT,
         monitor_version: env!("CARGO_PKG_VERSION").to_string(),
@@ -841,7 +864,7 @@ pub async fn list_in(dav: &Dav, own: Option<(&str, Option<&str>)>) -> Result<Vec
 
 pub async fn list(state: &AppState) -> Result<Vec<Listed>, Refusal> {
     let stored = row(&state.db).await.ok().flatten().ok_or_else(|| refusal(409, "notConfigured"))?;
-    let dav = stored.dav().map_err(|_| refusal(400, "invalidUrl"))?;
+    let dav = stored.dav(&state.sealer).map_err(stored_refusal)?;
     match list_in(&dav, Some((&stored.instance, stored.recipient.as_deref()))).await {
         Ok(found) => Ok(found),
         Err(DavError::NotFound) => Ok(Vec::new()),
@@ -909,8 +932,8 @@ fn decrypt_file(input: &Path, output: &Path, identity: &age::x25519::Identity) -
 }
 
 /// Puts [fetched] back into [db] and `config.toml` (under [config_lock]).
-pub async fn apply(db: &SqlitePool, blobs: &Blobs, config_lock: &tokio::sync::Mutex<()>, fetched: &Fetched) -> Result<snapshot::Restored, Refusal> {
-    let mut restored = snapshot::restore_database(db, blobs, &fetched.unpacked).await.map_err(|e| match e {
+pub async fn apply(db: &SqlitePool, sealer: &Sealer, blobs: &Blobs, config_lock: &tokio::sync::Mutex<()>, fetched: &Fetched) -> Result<snapshot::Restored, Refusal> {
+    let mut restored = snapshot::restore_database(db, sealer, blobs, &fetched.unpacked).await.map_err(|e| match e {
         snapshot::RestoreError::Newer => refusal(409, "backupNewer"),
         snapshot::RestoreError::Invalid(why) => {
             tracing::warn!("monitor backup: {why}");
@@ -947,10 +970,10 @@ pub async fn apply(db: &SqlitePool, blobs: &Blobs, config_lock: &tokio::sync::Mu
 /// monitor restarts where something will start it again.
 pub async fn restore(state: &Arc<AppState>, name: &str, passphrase: &str) -> Result<(snapshot::Restored, bool), Refusal> {
     let stored = row(&state.db).await.ok().flatten().ok_or_else(|| refusal(409, "notConfigured"))?;
-    let dav = stored.dav().map_err(|_| refusal(400, "invalidUrl"))?;
+    let dav = stored.dav(&state.sealer).map_err(stored_refusal)?;
     let _lock = state.monitor_backup.lock.lock().await;
     let fetched = fetch(&dav, &state.monitor_backup, name, passphrase).await?;
-    let restored = apply(&state.db, &state.blobs, &state.config_write, &fetched).await?;
+    let restored = apply(&state.db, &state.sealer, &state.blobs, &state.config_write, &fetched).await?;
     state.blobs.collect_soon(&state.db);
     crate::api::authz::end_account(state, "password_changed");
     let restart = state.monitor_backup.restart.load(Ordering::Relaxed)
@@ -992,7 +1015,7 @@ pub async fn start(state: Arc<AppState>) {
 /// again.
 pub async fn check(state: &AppState, force: bool) {
     let before = row(&state.db).await.ok().flatten().and_then(|r| r.last_error);
-    let host = Host { db: &state.db, blobs: &state.blobs, work: &state.monitor_backup, server_name: state.config.get_server_name() };
+    let host = Host { db: &state.db, sealer: &state.sealer, blobs: &state.blobs, work: &state.monitor_backup, server_name: state.config.get_server_name() };
     match back_up(&host, force).await {
         Ok(Outcome::Made(name, Some(f))) => {
             tracing::warn!("monitor backup: uploaded {name}; pruning: {}: {}", f.code, f.detail);
@@ -1077,11 +1100,12 @@ mod tests {
 
     #[test]
     fn a_stored_password_goes_to_its_own_server_only() {
+        let sealer = Sealer::temporary();
         let stored = Row {
             instance: "5e6f7a8b".into(),
             url: "https://dav.example.com/a/".into(),
             username: "me".into(),
-            password: Some("pw".into()),
+            password: Some(sealer.seal(sealed::BACKUP_PASSWORD, "pw").unwrap()),
             allow_insecure: false,
             enabled: true,
             keep: 10,
@@ -1094,9 +1118,11 @@ mod tests {
             last_error_at: None,
         };
         let target = |url: &str, password: Option<&str>| Target { url: url.into(), username: "me".into(), password: password.map(String::from), allow_insecure: false };
-        assert_eq!(resolve(&target("https://dav.example.com/b", None), Some(&stored)).unwrap().2.as_deref(), Some("pw"));
-        assert_eq!(resolve(&target("https://evil.example.com/a", None), Some(&stored)).err().map(|r| r.error), Some("passwordRequired"));
-        assert_eq!(resolve(&target("https://evil.example.com/a", Some("new")), Some(&stored)).unwrap().2.as_deref(), Some("new"));
-        assert_eq!(resolve(&target("https://dav.example.com/a", Some("")), Some(&stored)).unwrap().2, None);
+        assert_eq!(resolve(&target("https://dav.example.com/b", None), Some(&stored), &sealer).unwrap().2.as_deref(), Some("pw"));
+        assert_eq!(resolve(&target("https://evil.example.com/a", None), Some(&stored), &sealer).err().map(|r| r.error), Some("passwordRequired"));
+        assert_eq!(resolve(&target("https://evil.example.com/a", Some("new")), Some(&stored), &sealer).unwrap().2.as_deref(), Some("new"));
+        assert_eq!(resolve(&target("https://dav.example.com/a", Some("")), Some(&stored), &sealer).unwrap().2, None);
+        let lost = Sealer::temporary();
+        assert_eq!(resolve(&target("https://dav.example.com/b", None), Some(&stored), &lost).err().map(|r| r.error), Some("passwordRequired"));
     }
 }

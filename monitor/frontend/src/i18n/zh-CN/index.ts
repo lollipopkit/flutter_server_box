@@ -648,6 +648,7 @@ const zh_CN = {
 	bmcNoSystem: 'BMC 没有列出可管理的系统。',
 	bmcNotSupported: '此系统不提供电源操作。',
 	bmcGone: '该 BMC 已不在此 agent 上。',
+	bmcPasswordRequired: '此 agent 已无法读取保存的密码，请重新输入。',
 	bmcInvalidName: '每个 BMC 都需要唯一的名称，最多 64 个字符。',
 	bmcInvalidUrl: '地址必须是 https://主机 或 https://主机:端口，不能带路径。',
 	bmcInvalidUsername: '必须填写用户名。',

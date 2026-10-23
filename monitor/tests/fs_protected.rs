@@ -269,13 +269,13 @@ mod over_http {
     async fn the_whole_filesystem_still_cannot_reach_it() {
         let dir = tempfile::tempdir().unwrap();
         let home = std::fs::canonicalize(dir.path()).unwrap();
-        for name in ["serverbox_monitor.db", "jwt.secret", "key.pem", "notes.txt"] {
+        for name in ["serverbox_monitor.db", "jwt.secret", "credentials.key", "key.pem", "notes.txt"] {
             std::fs::write(home.join(name), name).unwrap();
         }
         let srv = server(&home).await;
         let auth = format!("Bearer {}", token());
 
-        for name in ["serverbox_monitor.db", "jwt.secret", "key.pem"] {
+        for name in ["serverbox_monitor.db", "jwt.secret", "credentials.key", "key.pem"] {
             let path = home.join(name).to_string_lossy().into_owned();
             let status = srv
                 .get(format!("/api/v1/fs/read?path={}", encode(&path)))

@@ -323,6 +323,7 @@ type SudoCache = HashMap<i64, (Zeroizing<String>, Instant)>;
 
 pub struct AgentMode {
     db: SqlitePool,
+    sealer: Arc<crate::db::sealed::Sealer>,
     /// Where tasks' chats, files and skills are.
     dir: PathBuf,
     /// Removed with this value: the directory made for an in-memory database.
@@ -403,7 +404,7 @@ static TEMP: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0)
 impl AgentMode {
     /// Sessions in `agent/` beside the database file [db_file], or in a
     /// directory of its own for an in-memory database.
-    pub fn new(db: SqlitePool, db_file: Option<&Path>) -> Self {
+    pub fn new(db: SqlitePool, sealer: Arc<crate::db::sealed::Sealer>, db_file: Option<&Path>) -> Self {
         let (dir, owned) = match db_file {
             Some(f) => (Self::dir_beside(f), false),
             None => {
@@ -423,6 +424,7 @@ impl AgentMode {
             .expect("a valid HTTP client");
         Self {
             db,
+            sealer,
             files: files::Files::new(&dir),
             owned,
             fetch: Arc::new(AgentFetch { inner: ReqwestFetch::new(client), this_machine_only: AtomicBool::new(false) }),
@@ -587,7 +589,7 @@ impl AgentMode {
             // In clear: the agent has no keychain to keep a key apart from the
             // chats, and their directory is owner-only (`files::private_dir`).
             key: None,
-            credentials: Arc::new(config::AppCredentials { db: config::DbCredentials(self.db.clone()), apps: self.apps.clone() }),
+            credentials: Arc::new(config::AppCredentials { db: config::DbCredentials { db: self.db.clone(), sealer: self.sealer.clone() }, apps: self.apps.clone() }),
             fetch: self.fetch.clone(),
             logger: Some(Arc::new(|level, message| match level {
                 "error" => tracing::error!("agent mode: {message}"),
@@ -686,7 +688,7 @@ impl AgentMode {
         config::check_endpoint(api, base_url, allow_insecure).map_err(FlowError::Invalid)?;
         let credential = match (key, stored_for) {
             (Some(k), _) if !k.trim().is_empty() => Some(json!({ "type": "api_key", "key": k.trim() })),
-            (_, Some(id)) => fl_pi_llm::host::Credentials::read(&config::DbCredentials(self.db.clone()), id).await.map_err(|e| anyhow::anyhow!(e))?,
+            (_, Some(id)) => fl_pi_llm::host::Credentials::read(&config::DbCredentials { db: self.db.clone(), sealer: self.sealer.clone() }, id).await.map_err(|e| anyhow::anyhow!(e))?,
             _ => None,
         };
         let rt = self.runtime().await?;
@@ -1360,7 +1362,7 @@ impl AgentMode {
     pub async fn endpoint(&self, provider: &str) -> Result<Option<(config::Provider, Option<String>)>, FlowError> {
         let settings = config::load(&self.db).await?;
         let Some(p) = self.providers(&settings).into_iter().find(|p| p.id == provider) else { return Ok(None) };
-        let creds = config::AppCredentials { db: config::DbCredentials(self.db.clone()), apps: self.apps.clone() };
+        let creds = config::AppCredentials { db: config::DbCredentials { db: self.db.clone(), sealer: self.sealer.clone() }, apps: self.apps.clone() };
         let key = fl_pi_llm::host::Credentials::read(&creds, provider).await.map_err(|e| anyhow::anyhow!(e))?;
         let key = key.and_then(|v| v["key"].as_str().map(String::from));
         Ok(Some((p, key)))
@@ -1723,7 +1725,7 @@ mod tests {
                 .await
                 .unwrap();
         }
-        let agent = AgentMode::new(db.clone(), None);
+        let agent = AgentMode::new(db.clone(), Arc::new(crate::db::sealed::Sealer::temporary()), None);
         let chats = agent.dir.join("chats");
         std::fs::create_dir_all(chats.join("old%20dir")).unwrap();
         std::fs::create_dir_all(agent.dir.join("meta")).unwrap();
@@ -1753,7 +1755,7 @@ mod tests {
     #[tokio::test]
     async fn a_remembered_sudo_password_goes_on_its_own() {
         let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
-        let agent = AgentMode::new(db, None);
+        let agent = AgentMode::new(db, Arc::new(crate::db::sealed::Sealer::temporary()), None);
         // After the pool is up: its connect times out on a paused clock.
         tokio::time::pause();
         agent.remember_sudo(1, Some(Zeroizing::new("pw".into())));

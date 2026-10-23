@@ -2688,6 +2688,10 @@ type RootTranslation = {
 	 */
 	bmcGone: string
 	/**
+	 * T​h​e​ ​s​a​v​e​d​ ​p​a​s​s​w​o​r​d​ ​c​a​n​ ​n​o​ ​l​o​n​g​e​r​ ​b​e​ ​r​e​a​d​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​.​ ​E​n​t​e​r​ ​i​t​ ​a​g​a​i​n​.
+	 */
+	bmcPasswordRequired: string
+	/**
 	 * E​a​c​h​ ​B​M​C​ ​n​e​e​d​s​ ​i​t​s​ ​o​w​n​ ​n​a​m​e​,​ ​u​p​ ​t​o​ ​6​4​ ​c​h​a​r​a​c​t​e​r​s​.
 	 */
 	bmcInvalidName: string
@@ -13165,6 +13169,10 @@ export type TranslationFunctions = {
 	 * That BMC is no longer on this agent.
 	 */
 	bmcGone: () => LocalizedString
+	/**
+	 * The saved password can no longer be read on this agent. Enter it again.
+	 */
+	bmcPasswordRequired: () => LocalizedString
 	/**
 	 * Each BMC needs its own name, up to 64 characters.
 	 */

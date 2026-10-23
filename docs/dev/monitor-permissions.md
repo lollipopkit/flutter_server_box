@@ -55,7 +55,7 @@ There are no `/me`, `/users*`, `/roles*` or `/remote-access/full-access` routes.
 
 ## The agent's own state
 
-The file API reaches the whole filesystem the system account can, except the agent's own state: the database and its `-wal`/`-shm`/`-journal` files, `jwt.secret` and `initial-admin-credentials.txt` beside it, `config.toml` and every `config.toml.*` beside it, `.env` (and `.env.*`) in the working directory and the file `dotenvy` loaded, the TLS certificate and key, the custom-commands directory, the blob store, stacks' `.env` files and container backups. Matched on canonical paths, refused with 403, left out of listings, and their directories cannot be renamed, removed or chmod-ed (`fs_roots::Protected`). `jwt.secret` would mint tokens and the rest holds credentials, so a file write is not a way to them.
+The file API reaches the whole filesystem the system account can, except the agent's own state: the database and its `-wal`/`-shm`/`-journal` files, `jwt.secret`, `credentials.key` and `initial-admin-credentials.txt` beside it, `config.toml` and every `config.toml.*` beside it, `.env` (and `.env.*`) in the working directory and the file `dotenvy` loaded, the TLS certificate and key, the custom-commands directory, the blob store, stacks' `.env` files and container backups. Matched on canonical paths, refused with 403, left out of listings, and their directories cannot be renamed, removed or chmod-ed (`fs_roots::Protected`). `jwt.secret` would mint tokens and the rest holds credentials, so a file write is not a way to them.
 
 ## Migration
 

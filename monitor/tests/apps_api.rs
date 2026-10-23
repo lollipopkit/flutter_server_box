@@ -426,8 +426,8 @@ async fn providers_and_their_keys_need_their_permission() {
         "credentials": { "local": "sk-probe" },
     }))
     .unwrap();
-    config::store(&db, &settings).await.unwrap();
-    let srv = server_on(db).await;
+    let (srv, state) = server_and_state(db).await;
+    config::store(&state.db, &state.sealer, &settings).await.unwrap();
     installed_backend(&srv, &[]).await;
     let r = call_fn(&srv, "providers", json!(null)).await;
     assert_eq!((r.status, r.json.clone()), (403, json!({ "error": "permissionDenied", "message": "providers" })));

@@ -629,6 +629,7 @@ const ko = {
 	bmcNoSystem: 'BMC에 관리할 시스템이 나열되어 있지 않습니다.',
 	bmcNotSupported: '이 시스템은 전원 동작을 제공하지 않습니다.',
 	bmcGone: '해당 BMC는 더 이상 이 agent에 없습니다.',
+	bmcPasswordRequired: '이 agent에서 저장된 비밀번호를 더 이상 읽을 수 없습니다. 다시 입력하세요.',
 	bmcInvalidName: '각 BMC에는 고유한 이름이 필요하며 최대 64자입니다.',
 	bmcInvalidUrl: '주소는 경로 없이 https://host 또는 https://host:port 형식이어야 합니다.',
 	bmcInvalidUsername: '사용자 이름이 필요합니다.',

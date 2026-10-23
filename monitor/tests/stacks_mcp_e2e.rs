@@ -273,7 +273,7 @@ async fn verify(srv: &TestServer, state: &Arc<AppState>, id: &str) {
     let headers: Vec<(String, String)> = match &app.credential {
         Credential::OAuth => {
             let id = fl_pi_llm::host::mcp::server_id(&app.url);
-            let token = server_box_monitor::agent_mode::mcp_oauth::bearer(&state.db, &fetch, &id).await.expect("signed in");
+            let token = server_box_monitor::agent_mode::mcp_oauth::bearer(&state.db, &state.sealer, &fetch, &id).await.expect("signed in");
             vec![("Authorization".into(), token)]
         }
         _ => app.header.clone().into_iter().collect(),

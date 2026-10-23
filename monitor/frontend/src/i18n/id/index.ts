@@ -629,6 +629,7 @@ const id = {
 	bmcNoSystem: 'BMC tidak mencantumkan sistem untuk dikelola.',
 	bmcNotSupported: 'Sistem ini tidak menyediakan aksi daya.',
 	bmcGone: 'BMC itu sudah tidak ada di agent ini.',
+	bmcPasswordRequired: 'Agent ini tidak dapat lagi membaca kata sandi yang tersimpan. Masukkan lagi.',
 	bmcInvalidName: 'Setiap BMC memerlukan nama sendiri, maksimal 64 karakter.',
 	bmcInvalidUrl: 'Alamat harus berupa https://host atau https://host:port, tanpa path.',
 	bmcInvalidUsername: 'Nama pengguna wajib diisi.',

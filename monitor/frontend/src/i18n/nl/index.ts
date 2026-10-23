@@ -629,6 +629,7 @@ const nl = {
 	bmcNoSystem: 'De BMC toont geen systeem om te beheren.',
 	bmcNotSupported: 'Dit systeem biedt geen stroomacties.',
 	bmcGone: 'Die BMC staat niet meer op deze agent.',
+	bmcPasswordRequired: 'Deze agent kan het opgeslagen wachtwoord niet meer lezen. Voer het opnieuw in.',
 	bmcInvalidName: 'Elke BMC heeft een eigen naam nodig, van maximaal 64 tekens.',
 	bmcInvalidUrl: 'Het adres moet https://host of https://host:port zijn, zonder pad.',
 	bmcInvalidUsername: 'Een gebruikersnaam is vereist.',

@@ -20,6 +20,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use sqlx::SqlitePool;
 
+use crate::db::sealed::{self, Sealer};
+
 use super::permissions::{self, Judgment, Mode};
 use super::{Flow, first_line};
 use crate::api::server::AppState;
@@ -129,7 +131,7 @@ pub struct AppServer {
 
 /// The deployed apps' servers, an address an admin added left to theirs.
 pub async fn app_servers(state: &AppState) -> Vec<AppServer> {
-    let own: Vec<String> = load(&state.db).await.unwrap_or_default().into_iter().map(|s| s.id).collect();
+    let own: Vec<String> = load(&state.db, &state.sealer).await.unwrap_or_default().into_iter().map(|s| s.id).collect();
     crate::stacks::mcp::servers(state)
         .await
         .into_iter()
@@ -139,7 +141,7 @@ pub async fn app_servers(state: &AppState) -> Vec<AppServer> {
 }
 
 /// Every server, in order, its headers named.
-pub async fn load(db: &SqlitePool) -> Result<Vec<Server>, sqlx::Error> {
+pub async fn load(db: &SqlitePool, sealer: &Sealer) -> Result<Vec<Server>, sqlx::Error> {
     let rows = sqlx::query_as::<_, (String, String, String, bool, String)>(
         "SELECT id, name, url, enabled, headers FROM agent_mcp_server ORDER BY position",
     )
@@ -148,14 +150,26 @@ pub async fn load(db: &SqlitePool) -> Result<Vec<Server>, sqlx::Error> {
     Ok(rows
         .into_iter()
         .map(|(id, name, url, enabled, headers)| {
-            let headers: BTreeMap<String, String> = serde_json::from_str(&headers).unwrap_or_default();
+            let headers = open_headers(sealer, &id, &headers);
             Server { id, name, url, enabled, headers: headers.into_keys().collect() }
         })
         .collect())
 }
 
+/// A server's stored headers. Ones the key no longer opens read as none, so
+/// the server can still be listed and given them again.
+fn open_headers(sealer: &Sealer, id: &str, stored: &str) -> BTreeMap<String, String> {
+    match sealer.open(sealed::AGENT_MCP_HEADERS, stored) {
+        Ok(json) => serde_json::from_str(&json).unwrap_or_default(),
+        Err(e) => {
+            tracing::warn!("MCP server {id}: {e}");
+            BTreeMap::new()
+        }
+    }
+}
+
 /// The enabled servers as a connection needs them, headers with values.
-async fn configs(db: &SqlitePool) -> Result<Vec<(Server, McpServerConfig)>, sqlx::Error> {
+async fn configs(db: &SqlitePool, sealer: &Sealer) -> Result<Vec<(Server, McpServerConfig)>, sqlx::Error> {
     let rows = sqlx::query_as::<_, (String, String, String, String)>(
         "SELECT id, name, url, headers FROM agent_mcp_server WHERE enabled = 1 ORDER BY position",
     )
@@ -164,7 +178,7 @@ async fn configs(db: &SqlitePool) -> Result<Vec<(Server, McpServerConfig)>, sqlx
     Ok(rows
         .into_iter()
         .map(|(id, name, url, headers)| {
-            let headers: BTreeMap<String, String> = serde_json::from_str(&headers).unwrap_or_default();
+            let headers = open_headers(sealer, &id, &headers);
             let server = Server { id, name, url: url.clone(), enabled: true, headers: headers.keys().cloned().collect() };
             (server, McpServerConfig { url, headers: headers.into_iter().collect() })
         })
@@ -172,18 +186,18 @@ async fn configs(db: &SqlitePool) -> Result<Vec<(Server, McpServerConfig)>, sqlx
 }
 
 /// Replaces every server, keeping the headers a write leaves out.
-pub async fn store(db: &SqlitePool, w: &ServersWrite) -> Result<(), sqlx::Error> {
+pub async fn store(db: &SqlitePool, sealer: &Sealer, w: &ServersWrite) -> Result<(), sqlx::Error> {
     let now = chrono::Utc::now().to_rfc3339();
     let mut tx = db.begin().await?;
-    let old: HashMap<String, String> = sqlx::query_as::<_, (String, String)>("SELECT url, headers FROM agent_mcp_server")
+    let old: HashMap<String, (String, String)> = sqlx::query_as::<_, (String, String, String)>("SELECT url, id, headers FROM agent_mcp_server")
         .fetch_all(&mut *tx)
         .await?
         .into_iter()
+        .map(|(url, id, headers)| (url, (id, headers)))
         .collect();
     sqlx::query("DELETE FROM agent_mcp_server").execute(&mut *tx).await?;
     for (position, s) in w.servers.iter().enumerate() {
-        let mut headers: BTreeMap<String, String> =
-            old.get(&s.url).and_then(|h| serde_json::from_str(h).ok()).unwrap_or_default();
+        let mut headers = old.get(&s.url).map(|(id, h)| open_headers(sealer, id, h)).unwrap_or_default();
         for (name, value) in &s.headers {
             match value {
                 Some(v) => headers.insert(name.clone(), v.clone()),
@@ -198,7 +212,7 @@ pub async fn store(db: &SqlitePool, w: &ServersWrite) -> Result<(), sqlx::Error>
         .bind(s.name.trim())
         .bind(&s.url)
         .bind(s.enabled)
-        .bind(serde_json::to_string(&headers).expect("headers serialise"))
+        .bind(sealer.seal(sealed::AGENT_MCP_HEADERS, &serde_json::to_string(&headers).expect("headers serialise"))?)
         .bind(&now)
         .execute(&mut *tx)
         .await?;
@@ -251,14 +265,14 @@ impl Hub {
     /// other settings), and forgets the rest; answers each one's state.
     pub async fn refresh(&self, state: &AppState) -> Vec<Status> {
         let fetch = state.agent.fetch();
-        let mut configs = configs(&state.db).await.unwrap_or_default();
+        let mut configs = configs(&state.db, &state.sealer).await.unwrap_or_default();
         let signed_in = super::mcp_oauth::signed_in(&state.db).await;
         // A server signed in to with OAuth is sent its token, unless an admin
         // set its `Authorization` by hand.
         for (s, c) in configs.iter_mut() {
             if signed_in.contains(&s.id)
                 && !c.headers.iter().any(|(k, _)| k.eq_ignore_ascii_case("authorization"))
-                && let Some(token) = super::mcp_oauth::bearer(&state.db, &fetch, &s.id).await
+                && let Some(token) = super::mcp_oauth::bearer(&state.db, &state.sealer, &fetch, &s.id).await
             {
                 c.headers.push(("Authorization".into(), token));
             }
@@ -266,7 +280,7 @@ impl Hub {
         let mut apps = app_servers(state).await;
         for s in apps.iter_mut().filter(|s| s.app.enabled && s.app.credential == crate::stacks::mcp::Credential::OAuth) {
             if signed_in.contains(&s.id) {
-                s.app.header = super::mcp_oauth::bearer(&state.db, &fetch, &s.id).await.map(|t| ("Authorization".into(), t));
+                s.app.header = super::mcp_oauth::bearer(&state.db, &state.sealer, &fetch, &s.id).await.map(|t| ("Authorization".into(), t));
             }
         }
         for s in apps.iter().filter(|s| s.app.ready()) {
@@ -579,15 +593,20 @@ mod tests {
         let db = SqlitePool::connect("sqlite::memory:").await.unwrap();
         sqlx::migrate!("./migrations").run(&db).await.unwrap();
         let url = "https://ha.example/api/mcp";
-        store(&db, &write(vec![server(url, &[("Authorization", Some("Bearer one")), ("X-Extra", Some("1"))])])).await.unwrap();
+        let sealer = Sealer::temporary();
+        store(&db, &sealer, &write(vec![server(url, &[("Authorization", Some("Bearer one")), ("X-Extra", Some("1"))])])).await.unwrap();
         // Absent keeps, null removes.
-        store(&db, &write(vec![server(url, &[("X-Extra", None)])])).await.unwrap();
-        let servers = load(&db).await.unwrap();
+        store(&db, &sealer, &write(vec![server(url, &[("X-Extra", None)])])).await.unwrap();
+        let stored: String = sqlx::query_scalar("SELECT headers FROM agent_mcp_server").fetch_one(&db).await.unwrap();
+        assert!(stored.starts_with("sealed:v1:"), "sealed at rest");
+        let servers = load(&db, &sealer).await.unwrap();
         assert_eq!(servers[0].headers, ["Authorization"]);
         assert_eq!(servers[0].id, pi_mcp::server_id(url));
         let shown = serde_json::to_string(&servers).unwrap();
         assert!(!shown.contains("Bearer"), "{shown}");
-        let configs = configs(&db).await.unwrap();
+        let configs = configs(&db, &sealer).await.unwrap();
         assert_eq!(configs[0].1.headers, [("Authorization".to_string(), "Bearer one".to_string())]);
+        let lost = Sealer::temporary();
+        assert_eq!(load(&db, &lost).await.unwrap()[0].headers, Vec::<String>::new(), "listed without what it can no longer open");
     }
 }

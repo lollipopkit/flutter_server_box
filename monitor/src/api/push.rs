@@ -51,7 +51,7 @@ use super::authz;
 use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
 use crate::core::config::{PushConfig, validate_push_rate};
 use crate::core::config_file;
-use crate::monitoring::push::{PushRateLimiter, send_notification, validate};
+use crate::monitoring::push::{PushRateLimiter, Secret, canonical_type, secrets, send_notification, validate};
 
 /// The largest request body accepted: every channel at once, since a write
 /// replaces the whole set. A webhook's `body_template` is a document the user
@@ -76,54 +76,6 @@ const TEST_RATE: (usize, Duration) = (6, Duration::from_secs(60));
 const OFFERED_TYPES: &[&str] = &[
     "webhook", "serverchan", "bark", "ios", "smtp", "telegram", "discord", "ntfy",
 ];
-
-/// Which sender handles `push_type`, or `None` when nothing does.
-///
-/// Classification only — the string is never rewritten to what this returns,
-/// because rewriting `server_chan` to `serverchan` would be this endpoint
-/// editing a field the user did not touch.
-fn canonical_type(push_type: &str) -> Option<&'static str> {
-    match push_type {
-        "webhook" => Some("webhook"),
-        // `send_notification` routes both spellings to the same sender.
-        "serverchan" | "server_chan" => Some("serverchan"),
-        "bark" => Some("bark"),
-        "ios" => Some("ios"),
-        "smtp" => Some("smtp"),
-        "telegram" => Some("telegram"),
-        "discord" => Some("discord"),
-        "ntfy" => Some("ntfy"),
-        _ => None,
-    }
-}
-
-/// Where a channel's credential sits inside its free-form config.
-enum Secret {
-    /// A key whose value is the credential.
-    Key(&'static str),
-    /// Every value of a table, the key names staying visible. `headers` is one
-    /// table with `Content-Type` and `Authorization` in it, and only one of
-    /// those is worth hiding — but hiding the value of each is what keeps the
-    /// rule simple enough to be obviously right.
-    TableValues(&'static str),
-}
-
-fn secrets(push_type: &str) -> &'static [Secret] {
-    match canonical_type(push_type) {
-        Some("webhook") => &[Secret::TableValues("headers")],
-        // Both spellings: `send_serverchan_notification` reads `sc_key` and
-        // falls back to `sckey`, so a file may hold either.
-        Some("serverchan") => &[Secret::Key("sc_key"), Secret::Key("sckey")],
-        Some("bark") => &[Secret::Key("key"), Secret::Key("cipher_key")],
-        Some("ios") => &[Secret::Key("token")],
-        Some("smtp") => &[Secret::Key("password")],
-        Some("telegram") => &[Secret::Key("bot_token")],
-        // The URL is the credential: anyone holding it can post.
-        Some("discord") => &[Secret::Key("webhook_url")],
-        Some("ntfy") => &[Secret::Key("token"), Secret::Key("password")],
-        _ => &[],
-    }
-}
 
 /// The keys that decide *where* a channel's credential is sent, for the types
 /// that have them.

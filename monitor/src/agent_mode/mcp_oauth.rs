@@ -24,6 +24,8 @@ use serde_json::{Value, json};
 use sha2::Digest;
 use sqlx::SqlitePool;
 
+use crate::db::sealed::{self, Sealer};
+
 /// How long a sign-in may take, from its start to the browser coming back.
 const PENDING_TTL: Duration = Duration::from_secs(10 * 60);
 /// Sign-ins waiting at once, at most.
@@ -303,10 +305,11 @@ impl Flows {
 
     /// The browser came back with [code] for [state]: the tokens kept. A
     /// `state` works once, and only within [`PENDING_TTL`].
-    pub async fn finish(&self, db: &SqlitePool, fetch: &dyn Fetch, state: &str, code: &str) -> Result<SignedIn, String> {
+    pub async fn finish(&self, db: &SqlitePool, sealer: &Sealer, fetch: &dyn Fetch, state: &str, code: &str) -> Result<SignedIn, String> {
         let p = self.0.locked().remove(state).filter(|p| p.started.elapsed() < PENDING_TTL).ok_or("this sign-in is unknown or expired")?;
         let t = exchange(fetch, &p.server, &p.client, code, &p.verifier, &p.redirect_uri).await?;
-        store(db, &p.server_id, &p.url, &p.server.token_endpoint, &p.client, &p.server.resource, &t).await.map_err(|e| e.to_string())?;
+        let kept = Kept { server_id: &p.server_id, url: &p.url, token_endpoint: &p.server.token_endpoint, client: &p.client, resource: &p.server.resource };
+        store(db, sealer, &kept, &t).await.map_err(|e| e.to_string())?;
         Ok(SignedIn { server_id: p.server_id, url: p.url })
     }
 
@@ -316,7 +319,17 @@ impl Flows {
     }
 }
 
-async fn store(db: &SqlitePool, server_id: &str, url: &str, token_endpoint: &str, client: &Client, resource: &str, t: &Tokens) -> sqlx::Result<()> {
+/// A sign-in as `mcp_oauth` keeps it, beside its tokens.
+struct Kept<'a> {
+    server_id: &'a str,
+    url: &'a str,
+    token_endpoint: &'a str,
+    client: &'a Client,
+    resource: &'a str,
+}
+
+async fn store(db: &SqlitePool, sealer: &Sealer, k: &Kept<'_>, t: &Tokens) -> sqlx::Result<()> {
+    let Kept { server_id, url, token_endpoint, client, resource } = *k;
     sqlx::query(
         "INSERT OR REPLACE INTO mcp_oauth (server_id, url, token_endpoint, client_id, client_secret, resource, access_token, \
          refresh_token, expires_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -325,10 +338,10 @@ async fn store(db: &SqlitePool, server_id: &str, url: &str, token_endpoint: &str
     .bind(url)
     .bind(token_endpoint)
     .bind(&client.id)
-    .bind(&client.secret)
+    .bind(sealer.seal_opt(sealed::MCP_OAUTH_CLIENT_SECRET, client.secret.as_deref())?)
     .bind(resource)
-    .bind(&t.access)
-    .bind(&t.refresh)
+    .bind(sealer.seal(sealed::MCP_OAUTH_ACCESS_TOKEN, &t.access)?)
+    .bind(sealer.seal_opt(sealed::MCP_OAUTH_REFRESH_TOKEN, t.refresh.as_deref())?)
     .bind(t.expires_at_ms)
     .bind(chrono::Utc::now().to_rfc3339())
     .execute(db)
@@ -349,8 +362,9 @@ type Row = (String, String, String, Option<String>, String, String, Option<Strin
 
 /// `Authorization` for server [server_id] when signed in to it: its access
 /// token, refreshed first when it is about to run out. A refresh refused
-/// forgets the sign-in, so the server asks for one again.
-pub async fn bearer(db: &SqlitePool, fetch: &Arc<dyn Fetch>, server_id: &str) -> Option<String> {
+/// forgets the sign-in, so the server asks for one again, as does one the
+/// credentials key no longer opens.
+pub async fn bearer(db: &SqlitePool, sealer: &Sealer, fetch: &Arc<dyn Fetch>, server_id: &str) -> Option<String> {
     let row: Row = sqlx::query_as(
         "SELECT url, token_endpoint, client_id, client_secret, resource, access_token, refresh_token, expires_at \
          FROM mcp_oauth WHERE server_id = ?",
@@ -360,6 +374,21 @@ pub async fn bearer(db: &SqlitePool, fetch: &Arc<dyn Fetch>, server_id: &str) ->
     .await
     .ok()??;
     let (url, token_endpoint, client_id, client_secret, resource, access, refresh, expires_at) = row;
+    let opened = (|| {
+        Ok::<_, sealed::Error>((
+            sealer.open_opt(sealed::MCP_OAUTH_CLIENT_SECRET, client_secret.as_deref())?,
+            sealer.open(sealed::MCP_OAUTH_ACCESS_TOKEN, &access)?,
+            sealer.open_opt(sealed::MCP_OAUTH_REFRESH_TOKEN, refresh.as_deref())?,
+        ))
+    })();
+    let (client_secret, access, refresh) = match opened {
+        Ok(o) => o,
+        Err(e) => {
+            tracing::warn!("MCP server {server_id}: its sign-in: {e}");
+            let _ = forget(db, server_id).await;
+            return None;
+        }
+    };
     let fresh = expires_at.is_none_or(|at| at - chrono::Utc::now().timestamp_millis() > REFRESH_AHEAD_MS);
     if fresh {
         return Some(format!("Bearer {access}"));
@@ -372,7 +401,8 @@ pub async fn bearer(db: &SqlitePool, fetch: &Arc<dyn Fetch>, server_id: &str) ->
     let pairs = vec![("grant_type", "refresh_token"), ("refresh_token", refresh.as_str()), ("resource", resource.as_str())];
     match token_request(fetch.as_ref(), &token_endpoint, &client, pairs).await.and_then(|v| tokens(&v, Some(&refresh))) {
         Ok(t) => {
-            let _ = store(db, server_id, &url, &token_endpoint, &client, &resource, &t).await;
+            let kept = Kept { server_id, url: &url, token_endpoint: &token_endpoint, client: &client, resource: &resource };
+            let _ = store(db, sealer, &kept, &t).await;
             Some(format!("Bearer {}", t.access))
         }
         Err(e) => {

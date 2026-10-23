@@ -57,7 +57,7 @@ impl AppMcp {
 /// Every MCP server of every app deployed and set up (`installed`).
 pub async fn servers(state: &AppState) -> Vec<AppMcp> {
     let rows = store::all(&state.db).await.unwrap_or_default();
-    let uses = store::mcp_uses(&state.db).await.unwrap_or_default();
+    let uses = store::mcp_uses(&state.db, &state.sealer).await.unwrap_or_default();
     let mut out = Vec::new();
     for row in rows.iter().filter(|r| r.state == "installed") {
         let Some(package) = state.stacks.package(&row.id) else { continue };

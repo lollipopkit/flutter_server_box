@@ -221,7 +221,8 @@ async fn a_password_is_written_never_read_and_kept_when_not_sent() {
         .fetch_one(&db)
         .await
         .unwrap();
-    assert_eq!(stored.as_deref(), Some("secret"));
+    // Sealed at rest (`db::sealed`); the dialling tests open it.
+    assert!(stored.as_deref().is_some_and(|p| p.starts_with("sealed:v1:")), "{stored:?}");
 
     let (status, body) = call(&srv, true, Method::PUT, LIST,
         Some(json!({"targets": [target("http://10.0.0.9", None, None)]}))).await;
@@ -288,4 +289,23 @@ async fn a_wrong_password_is_the_bmcs_refusal_not_the_panels() {
     // Not 401: that would log the panel out of this agent.
     assert_eq!((status, body["failure"].as_str()), (502, Some("unauthorized")), "{body}");
     assert!(!body.to_string().contains("wrong"));
+}
+
+#[ntex::test]
+async fn a_password_the_key_no_longer_opens_is_asked_for_again() {
+    use server_box_monitor::db::sealed::{BMC_PASSWORD, Sealer};
+    let bmc = FakeBmc::start().await;
+    let (srv, db) = server().await;
+    let pin = bmc.pin().await;
+    call(&srv, true, Method::PUT, LIST,
+        Some(json!({"targets": [target(&bmc.url(), Some("right"), Some(&pin))]}))).await;
+    // Sealed under a key this agent does not have: a lost `credentials.key`.
+    sqlx::query("UPDATE bmc_target SET password = ?")
+        .bind(Sealer::temporary().seal(BMC_PASSWORD, "right").unwrap())
+        .execute(&db)
+        .await
+        .unwrap();
+    let (status, body) = call(&srv, true, Method::GET, &format!("{LIST}/t1"), None).await;
+    assert_eq!((status, body), (409, json!({"error": "passwordRequired"})));
+    assert_eq!(bmc.seen.lock().unwrap().logins, 0, "nothing sent without it");
 }

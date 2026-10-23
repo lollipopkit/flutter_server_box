@@ -27,6 +27,7 @@
 //! is reached and its pinned certificate decide where the agent sends a
 //! password or a token.
 
+use crate::db::sealed::{self, Sealer};
 use crate::utils::lock::LockExt;
 use std::sync::Arc;
 
@@ -945,16 +946,25 @@ struct Row {
 }
 
 impl Row {
-    fn config(&self) -> pve::Config {
+    /// A secret the credentials key no longer opens is left empty, which the
+    /// client refuses before sending anything (`NotConfigured`), so the panel
+    /// asks for it again.
+    fn config(&self, sealer: &Sealer) -> pve::Config {
+        let open = |field, stored: &Option<String>| {
+            sealer.open_opt(field, stored.as_deref()).unwrap_or_else(|e| {
+                tracing::warn!("virt pve: {e}");
+                None
+            })
+        };
         let auth = if self.auth == "token" {
             Auth::Token {
                 id: self.token_id.clone().unwrap_or_default(),
-                secret: self.token_secret.clone().unwrap_or_default(),
+                secret: open(sealed::PVE_TOKEN_SECRET, &self.token_secret).unwrap_or_default(),
             }
         } else {
             Auth::Password {
                 user: self.username.clone().unwrap_or_default(),
-                password: self.password.clone().unwrap_or_default(),
+                password: open(sealed::PVE_PASSWORD, &self.password).unwrap_or_default(),
             }
         };
         pve::Config { addr: self.addr.clone(), auth, cert_sha256: self.cert_sha256.clone() }
@@ -975,7 +985,7 @@ async fn pve_client(state: &AppState) -> Result<Option<Arc<Client>>, sqlx::Error
         *state.virt.pve.lock().await = None;
         return Ok(None);
     };
-    let config = row.config();
+    let config = row.config(&state.sealer);
     let mut held = state.virt.pve.lock().await;
     match held.as_ref() {
         Some(client) => {
@@ -1042,7 +1052,7 @@ pub async fn pve_put(
     if let Err(code) = validate(&input) {
         return Ok(super::respond::error(StatusCode::BAD_REQUEST, code));
     }
-    let result = store(&state.db, &input).await;
+    let result = store(&state.db, &state.sealer, &input).await;
     let outcome = if result.is_ok() { Outcome::Ok } else { Outcome::Error };
     Event::new(Kind::Machine, Action::Write, outcome)
         .remote_ip(super::ws::audit::peer_ip(&req))
@@ -1194,15 +1204,15 @@ fn validate(input: &PveInput) -> Result<(), &'static str> {
 /// Writes the one row, carrying a secret sent as `null` over from what is
 /// stored. A secret of the other auth is kept too, so switching back and
 /// forth does not lose it.
-async fn store(db: &SqlitePool, input: &PveInput) -> Result<(), sqlx::Error> {
+async fn store(db: &SqlitePool, sealer: &Sealer, input: &PveInput) -> Result<(), sqlx::Error> {
     let mut tx = db.begin().await?;
     let stored: Option<(Option<String>, Option<String>)> =
         sqlx::query_as("SELECT password, token_secret FROM virt_pve WHERE id = 1")
             .fetch_optional(&mut *tx)
             .await?;
     let (old_password, old_secret) = stored.unwrap_or_default();
-    let password = input.password.clone().or(old_password);
-    let secret = input.token_secret.clone().or(old_secret);
+    let password = sealer.seal_opt(sealed::PVE_PASSWORD, input.password.as_deref())?.or(old_password);
+    let secret = sealer.seal_opt(sealed::PVE_TOKEN_SECRET, input.token_secret.as_deref())?.or(old_secret);
     sqlx::query(
         "INSERT INTO virt_pve (id, addr, auth, username, password, token_id, token_secret, cert_sha256, updated_at) \
          VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?) \

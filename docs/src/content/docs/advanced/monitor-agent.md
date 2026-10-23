@@ -440,9 +440,15 @@ The installer therefore runs the agent as an ordinary user by default. With
 what the agent can reach, install it as an account that can reach only that.
 
 Whatever that account can reach, the file API never serves the agent's own
-files — its database, `jwt.secret`, `config.toml` and its backups, `.env`, the
-TLS key and certificate, and the custom commands — since they hold
-credentials.
+files — its database, `jwt.secret`, `credentials.key`, `config.toml` and its
+backups, `.env`, the TLS key and certificate, and the custom commands — since
+they hold credentials.
+
+The credentials the agent stores (BMC and Proxmox VE passwords, Agent mode
+provider keys, MCP tokens, the WebDAV password) are encrypted in the database
+with `credentials.key`, kept beside it. Copy the two together when moving the
+agent by hand; without the key, those credentials have to be entered again. A
+settings backup does not need the key.
 
 ### Upgrading from an agent with several accounts
 
@@ -512,6 +518,14 @@ fields. Every type is listed in
 | `discord` | `webhook_url` | `content`, `username`, `avatar_url`, `thread_id` |
 | `ntfy` | `topic` | `server`, `title`, `message`, `priority`, `tags`, `click`, `icon`, `attach`, `delay`, `email`, `markdown`, `token`, `username`, `password` |
 
+- **Credentials from the environment**: a credential (`sc_key`, Bark `key`
+  and `cipher_key`, iOS `token`, a webhook header value, SMTP and ntfy
+  `password`, ntfy `token`, `bot_token`, `webhook_url`) may name an
+  environment variable as `${NAME}`, alone or inside the value
+  (`Authorization = "Bearer ${HA_TOKEN}"`). It is read when a notification is
+  sent, from the agent's environment or its `.env`; `config.toml` keeps the
+  reference. A channel whose variable is unset or empty is refused on save
+  and fails to send, naming the variable. Other settings are not expanded.
 - **Bark**: with `cipher_key` set, the notification is encrypted with AES-CBC
   (a 16, 24 or 32 character key for AES-128/192/256). Enter the same key and
   algorithm under Push Encryption in the Bark app. Only the device key and the

@@ -629,6 +629,7 @@ const ja = {
 	bmcNoSystem: 'BMC に管理対象のシステムが一覧されていません。',
 	bmcNotSupported: 'このシステムは電源操作に対応していません。',
 	bmcGone: 'その BMC はもうこの agent にありません。',
+	bmcPasswordRequired: 'この agent では保存されたパスワードを読み取れなくなりました。もう一度入力してください。',
 	bmcInvalidName: '各 BMC には固有の名前が必要です(64 文字以内)。',
 	bmcInvalidUrl: 'アドレスは https://host または https://host:port の形式で、パスは含められません。',
 	bmcInvalidUsername: 'ユーザー名は必須です。',

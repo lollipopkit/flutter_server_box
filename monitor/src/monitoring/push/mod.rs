@@ -112,6 +112,121 @@ mod ntfy;
 mod smtp;
 mod telegram;
 
+/// Which sender handles `push_type`, or `None` when nothing does.
+///
+/// Classification only — the string is never rewritten to what this returns,
+/// because rewriting `server_chan` to `serverchan` would be this endpoint
+/// editing a field the user did not touch.
+pub(crate) fn canonical_type(push_type: &str) -> Option<&'static str> {
+    match push_type {
+        "webhook" => Some("webhook"),
+        // `send_notification` routes both spellings to the same sender.
+        "serverchan" | "server_chan" => Some("serverchan"),
+        "bark" => Some("bark"),
+        "ios" => Some("ios"),
+        "smtp" => Some("smtp"),
+        "telegram" => Some("telegram"),
+        "discord" => Some("discord"),
+        "ntfy" => Some("ntfy"),
+        _ => None,
+    }
+}
+
+/// Where a channel's credential sits inside its free-form config.
+pub(crate) enum Secret {
+    /// A key whose value is the credential.
+    Key(&'static str),
+    /// Every value of a table, the key names staying visible. `headers` is one
+    /// table with `Content-Type` and `Authorization` in it, and only one of
+    /// those is worth hiding — but hiding the value of each is what keeps the
+    /// rule simple enough to be obviously right.
+    TableValues(&'static str),
+}
+
+pub(crate) fn secrets(push_type: &str) -> &'static [Secret] {
+    match canonical_type(push_type) {
+        Some("webhook") => &[Secret::TableValues("headers")],
+        // Both spellings: `send_serverchan_notification` reads `sc_key` and
+        // falls back to `sckey`, so a file may hold either.
+        Some("serverchan") => &[Secret::Key("sc_key"), Secret::Key("sckey")],
+        Some("bark") => &[Secret::Key("key"), Secret::Key("cipher_key")],
+        Some("ios") => &[Secret::Key("token")],
+        Some("smtp") => &[Secret::Key("password")],
+        Some("telegram") => &[Secret::Key("bot_token")],
+        // The URL is the credential: anyone holding it can post.
+        Some("discord") => &[Secret::Key("webhook_url")],
+        Some("ntfy") => &[Secret::Key("token"), Secret::Key("password")],
+        _ => &[],
+    }
+}
+
+/// [push] with every `${NAME}` in its credentials ([`secrets`]) replaced by
+/// the environment variable NAME, so `config.toml` can name a credential
+/// kept elsewhere (the service's environment, `.env`). Done at each send,
+/// never written back: the file keeps the reference. A variable unset or
+/// empty is an error naming it, never a channel sending without its
+/// credential.
+pub fn resolve(push: &PushConfig) -> std::result::Result<PushConfig, String> {
+    resolve_with(push, |name| std::env::var(name).ok())
+}
+
+fn resolve_with(push: &PushConfig, env: impl Fn(&str) -> Option<String>) -> std::result::Result<PushConfig, String> {
+    let mut out = push.clone();
+    let expand = |key: &str, value: &mut TomlValue| -> std::result::Result<(), String> {
+        if let TomlValue::String(s) = value {
+            *s = expand(s, &env).map_err(|name| format!("'{}': {key} names ${{{name}}}, which is not set", push.name))?;
+        }
+        Ok(())
+    };
+    for secret in secrets(&push.push_type) {
+        match secret {
+            Secret::Key(key) => {
+                if let Some(value) = out.config.get_mut(*key) {
+                    expand(key, value)?;
+                }
+            }
+            Secret::TableValues(table) => {
+                if let Some(TomlValue::Table(values)) = out.config.get_mut(*table) {
+                    for (key, value) in values.iter_mut() {
+                        expand(&format!("{table}.{key}"), value)?;
+                    }
+                }
+            }
+        }
+    }
+    Ok(out)
+}
+
+/// [text] with each `${NAME}` (`NAME`: a letter or `_`, then letters,
+/// digits, `_`) replaced from [env]; anything else, a lone `$` included,
+/// stays as written. Errs with the first NAME unset or empty.
+fn expand(text: &str, env: impl Fn(&str) -> Option<String>) -> std::result::Result<String, String> {
+    let mut out = String::with_capacity(text.len());
+    let mut rest = text;
+    while let Some(at) = rest.find("${") {
+        out.push_str(&rest[..at]);
+        let after = &rest[at + 2..];
+        let name = after.split('}').next().filter(|n| after.len() > n.len());
+        match name.filter(|n| is_env_name(n)) {
+            Some(name) => {
+                out.push_str(&env(name).filter(|v| !v.is_empty()).ok_or_else(|| name.to_string())?);
+                rest = &after[name.len() + 1..];
+            }
+            None => {
+                out.push_str("${");
+                rest = after;
+            }
+        }
+    }
+    out.push_str(rest);
+    Ok(out)
+}
+
+fn is_env_name(name: &str) -> bool {
+    let mut chars = name.chars();
+    chars.next().is_some_and(|c| c.is_ascii_alphabetic() || c == '_') && chars.all(|c| c.is_ascii_alphanumeric() || c == '_')
+}
+
 /// Sends [message] through every configured channel, each within its rate
 /// limit (`config.get_push_rate()`).
 pub async fn push_all(config: &Config, message: &str) {
@@ -135,6 +250,7 @@ pub async fn send_notification(config: &Config, push: &PushConfig, message: &str
         .acquire_owned()
         .await
         .map_err(|_| crate::utils::error::MonitorError::Push("Push queue is unavailable".to_string()))?;
+    let push = &resolve(push).map_err(push_error)?;
     match push.push_type.as_str() {
         "webhook" => send_webhook_notification(config, push, message).await,
         "serverchan" => send_serverchan_notification(config, push, message).await,
@@ -158,6 +274,7 @@ pub async fn send_notification(config: &Config, push: &PushConfig, message: &str
 /// a URL that is not http(s), an address that does not parse, a key of the
 /// wrong length, a password that would cross the network in clear.
 pub fn validate(push: &PushConfig) -> std::result::Result<(), String> {
+    let push = &resolve(push)?;
     let urls: &[&str] = match push.push_type.as_str() {
         "webhook" => &["url"],
         "bark" => &["server"],
@@ -552,6 +669,40 @@ mod tests {
     use super::*;
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
     use tokio::net::TcpListener;
+
+    #[test]
+    fn a_reference_is_replaced_and_the_rest_left_as_written() {
+        let env = |name: &str| match name {
+            "TOKEN" => Some("t0k".to_string()),
+            "EMPTY" => Some(String::new()),
+            _ => None,
+        };
+        assert_eq!(expand("${TOKEN}", env).as_deref(), Ok("t0k"));
+        assert_eq!(expand("Bearer ${TOKEN}!", env).as_deref(), Ok("Bearer t0k!"));
+        for literal in ["p$ss", "${", "${1A}", "${a-b}", "${TOKEN", "$TOKEN", "${}"] {
+            assert_eq!(expand(literal, env).as_deref(), Ok(literal));
+        }
+        assert_eq!(expand("${UNSET}", env), Err("UNSET".to_string()));
+        assert_eq!(expand("${EMPTY}", env), Err("EMPTY".to_string()), "empty is unset");
+    }
+
+    #[test]
+    fn only_credentials_are_resolved() {
+        let config: toml::Table = toml::toml! {
+            url = "https://h/${TOKEN}"
+            body_template = "${TOKEN}"
+            [headers]
+            Authorization = "Bearer ${TOKEN}"
+        };
+        let push = PushConfig { name: "w".into(), push_type: "webhook".into(), config };
+        let env = |name: &str| (name == "TOKEN").then(|| "t0k".to_string());
+        let resolved = resolve_with(&push, env).unwrap();
+        assert_eq!(resolved.config["headers"]["Authorization"].as_str(), Some("Bearer t0k"));
+        assert_eq!(resolved.config["url"].as_str(), Some("https://h/${TOKEN}"), "not a credential");
+        assert_eq!(resolved.config["body_template"].as_str(), Some("${TOKEN}"));
+        let err = resolve_with(&push, |_| None).unwrap_err();
+        assert!(err.contains("headers.Authorization") && err.contains("${TOKEN}"), "{err}");
+    }
 
     #[tokio::test]
     async fn a_blank_key_sends_nothing() {

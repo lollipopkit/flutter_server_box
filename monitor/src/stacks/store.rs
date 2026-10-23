@@ -7,6 +7,8 @@ use serde::Serialize;
 use serde_json::Value;
 use sqlx::SqlitePool;
 
+use crate::db::sealed::{self, Sealer};
+
 #[derive(Debug, Clone, Serialize)]
 pub struct StackRow {
     pub id: String,
@@ -171,15 +173,25 @@ pub struct McpUse {
     pub token: Option<String>,
 }
 
-/// Every `stack_mcp` row, by app and place in its `[[mcp]]`.
-pub async fn mcp_uses(db: &SqlitePool) -> sqlx::Result<BTreeMap<(String, usize), McpUse>> {
+/// Every `stack_mcp` row, by app and place in its `[[mcp]]`. A token the
+/// credentials key no longer opens reads as none, so it is asked for again.
+pub async fn mcp_uses(db: &SqlitePool, sealer: &Sealer) -> sqlx::Result<BTreeMap<(String, usize), McpUse>> {
     let rows = sqlx::query_as::<_, (String, i64, bool, Option<String>)>("SELECT stack_id, idx, enabled, token FROM stack_mcp").fetch_all(db).await?;
-    Ok(rows.into_iter().map(|(stack, idx, enabled, token)| ((stack, idx as usize), McpUse { enabled, token })).collect())
+    Ok(rows
+        .into_iter()
+        .map(|(stack, idx, enabled, token)| {
+            let token = sealer.open_opt(sealed::STACK_MCP_TOKEN, token.as_deref()).unwrap_or_else(|e| {
+                tracing::warn!("app {stack}'s MCP server {idx}: {e}");
+                None
+            });
+            ((stack, idx as usize), McpUse { enabled, token })
+        })
+        .collect())
 }
 
 /// Turns app [stack]'s MCP server [idx] on or off and sets (`Some(Some)`),
 /// clears (`Some(None)`) or keeps (`None`) its token.
-pub async fn set_mcp_use(db: &SqlitePool, stack: &str, idx: usize, enabled: Option<bool>, token: Option<Option<&str>>) -> sqlx::Result<()> {
+pub async fn set_mcp_use(db: &SqlitePool, sealer: &Sealer, stack: &str, idx: usize, enabled: Option<bool>, token: Option<Option<&str>>) -> sqlx::Result<()> {
     let now = chrono::Utc::now().to_rfc3339();
     let mut tx = db.begin().await?;
     sqlx::query("INSERT OR IGNORE INTO stack_mcp (stack_id, idx, enabled, token, updated_at) VALUES (?, ?, 1, NULL, ?)")
@@ -199,7 +211,7 @@ pub async fn set_mcp_use(db: &SqlitePool, stack: &str, idx: usize, enabled: Opti
     }
     if let Some(token) = token {
         sqlx::query("UPDATE stack_mcp SET token = ?, updated_at = ? WHERE stack_id = ? AND idx = ?")
-            .bind(token)
+            .bind(sealer.seal_opt(sealed::STACK_MCP_TOKEN, token)?)
             .bind(&now)
             .bind(stack)
             .bind(idx as i64)

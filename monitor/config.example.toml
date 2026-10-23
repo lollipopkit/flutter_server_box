@@ -152,7 +152,9 @@ ssh_addr = "127.0.0.1:22"
 # at all. Leave unset to size it from physical memory (at least 1 MiB).
 # max_request_bytes = 1048576
 
-# Push notification configurations
+# Push notification configurations. A credential (a key, token, password,
+# header value, `webhook_url`) may be `${NAME}`, read from the environment or
+# `.env` at each send, e.g. `Authorization = "Bearer ${HA_TOKEN}"`.
 [[push]]
 name = "webhook"
 push_type = "webhook"

@@ -7,6 +7,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sqlx::SqlitePool;
 
+use crate::db::sealed::{self, Sealer};
+
 /// The APIs an added provider may speak (pi's custom APIs).
 pub const APIS: &[&str] = &["openai-completions", "openai-responses", "anthropic-messages", "google-generative-ai"];
 pub const THINKING_LEVELS: &[&str] = &["off", "minimal", "low", "medium", "high"];
@@ -211,7 +213,7 @@ pub async fn load(db: &SqlitePool) -> Result<Settings, sqlx::Error> {
 }
 
 /// Replaces the configuration, in one transaction.
-pub async fn store(db: &SqlitePool, w: &SettingsWrite) -> Result<(), sqlx::Error> {
+pub async fn store(db: &SqlitePool, sealer: &Sealer, w: &SettingsWrite) -> Result<(), sqlx::Error> {
     let now = chrono::Utc::now().to_rfc3339();
     let mut tx = db.begin().await?;
     match &w.model {
@@ -255,7 +257,7 @@ pub async fn store(db: &SqlitePool, w: &SettingsWrite) -> Result<(), sqlx::Error
     for (id, key) in &w.credentials {
         match key {
             Some(k) => {
-                let credential = serde_json::json!({ "type": "api_key", "key": k }).to_string();
+                let credential = sealer.seal(sealed::AGENT_CREDENTIAL, &serde_json::json!({ "type": "api_key", "key": k }).to_string())?;
                 sqlx::query(
                     "INSERT INTO agent_credential (provider_id, credential, updated_at) VALUES (?, ?, ?) \
                      ON CONFLICT(provider_id) DO UPDATE SET credential = excluded.credential, updated_at = excluded.updated_at",
@@ -277,7 +279,10 @@ pub async fn store(db: &SqlitePool, w: &SettingsWrite) -> Result<(), sqlx::Error
 /// pi-ai's credential store over `agent_credential`. pi only reads here:
 /// a write from the runtime (an OAuth refresh, which no provider here has)
 /// is refused rather than stored behind the operator's back.
-pub struct DbCredentials(pub SqlitePool);
+pub struct DbCredentials {
+    pub db: SqlitePool,
+    pub sealer: std::sync::Arc<Sealer>,
+}
 
 /// A model server on this machine that Agent mode offers on its own: a
 /// deployed app's `[llm]`, or MLX or Ollama found by `inference`. Worked out
@@ -339,16 +344,17 @@ impl Credentials for DbCredentials {
         Box::pin(async move {
             let row = sqlx::query_scalar::<_, String>("SELECT credential FROM agent_credential WHERE provider_id = ?")
                 .bind(id)
-                .fetch_optional(&self.0)
+                .fetch_optional(&self.db)
                 .await
                 .map_err(|e| e.to_string())?;
+            let row = self.sealer.open_opt(sealed::AGENT_CREDENTIAL, row.as_deref()).map_err(|e| e.to_string())?;
             Ok(row.and_then(|c| serde_json::from_str(&c).ok()))
         })
     }
 
     fn list(&self) -> BoxFuture<'_, Result<Vec<String>, String>> {
         Box::pin(async move {
-            sqlx::query_scalar("SELECT provider_id FROM agent_credential").fetch_all(&self.0).await.map_err(|e| e.to_string())
+            sqlx::query_scalar("SELECT provider_id FROM agent_credential").fetch_all(&self.db).await.map_err(|e| e.to_string())
         })
     }
 

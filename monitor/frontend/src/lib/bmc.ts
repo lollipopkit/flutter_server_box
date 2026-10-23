@@ -34,6 +34,8 @@ export function bmcErrorText(e: unknown): string {
       return ll.bmcNotSupported()
     case 'noSuchTarget':
       return ll.bmcGone()
+    case 'passwordRequired':
+      return ll.bmcPasswordRequired()
     case 'invalidName':
     case 'duplicateName':
       return ll.bmcInvalidName()

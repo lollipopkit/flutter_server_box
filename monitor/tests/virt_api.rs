@@ -234,7 +234,10 @@ async fn secrets_are_written_never_read_and_kept_when_not_sent() {
     assert_eq!((&body["auth"], &body["has_password"], &body["has_token_secret"]), (&json!("password"), &json!(true), &json!(true)));
     let stored: (Option<String>, Option<String>) =
         sqlx::query_as("SELECT password, token_secret FROM virt_pve WHERE id = 1").fetch_one(&db).await.unwrap();
-    assert_eq!(stored, (Some("pw".into()), Some("s3cret".into())));
+    // Both kept, sealed at rest (`db::sealed`).
+    for value in [&stored.0, &stored.1] {
+        assert!(value.as_deref().is_some_and(|v| v.starts_with("sealed:v1:")), "{value:?}");
+    }
 
     for (body, code) in [
         (token_config("http://127.0.0.1:8006", None), "invalidAddr"),
@@ -640,4 +643,23 @@ async fn backups_and_jobs_are_listed_checked_first_and_recorded() {
     assert!(details.contains(&"virt backup job edit nightly".to_owned()), "{details:?}");
     assert!(details.contains(&"virt backup job edit nightly: Unsupported".to_owned()), "{details:?}");
 
+}
+
+#[ntex::test]
+async fn a_secret_the_key_no_longer_opens_is_asked_for_again() {
+    use server_box_monitor::db::sealed::{PVE_TOKEN_SECRET, Sealer};
+    let pve = FakePve::start().await;
+    let (srv, db) = server().await;
+    let pin = pinned(&pve).await;
+    call(&srv, true, Method::PUT, "/api/v1/virt/pve", Some(token_config(&pve.url(), Some(&pin)))).await;
+    // Sealed under a key this agent does not have: a lost `credentials.key`.
+    sqlx::query("UPDATE virt_pve SET token_secret = ?")
+        .bind(Sealer::temporary().seal(PVE_TOKEN_SECRET, "s3cret").unwrap())
+        .execute(&db)
+        .await
+        .unwrap();
+    let (status, body) = call(&srv, true, Method::POST, "/api/v1/virt", Some(json!({}))).await;
+    assert_eq!(status, 200, "{body}");
+    assert_eq!((&body["error"]["kind"], &body["error"]["detail"]["code"]), (&json!("not_configured"), &json!("token_incomplete")), "{body}");
+    assert!(pve.seen.lock().unwrap().auth.is_empty(), "nothing sent without it");
 }

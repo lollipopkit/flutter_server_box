@@ -368,7 +368,7 @@ pub async fn choices(req: HttpRequest, state: web::types::State<Arc<AppState>>) 
 }
 
 async fn mcp_answer(state: &AppState) -> HttpResponse {
-    match crate::agent_mode::mcp::load(&state.db).await {
+    match crate::agent_mode::mcp::load(&state.db, &state.sealer).await {
         Ok(servers) => {
             let status = state.agent.mcp.refresh(state).await;
             let apps = crate::agent_mode::mcp::app_servers(state).await;
@@ -394,7 +394,7 @@ pub async fn put_mcp(
     if let Err(why) = w.check() {
         return Ok(HttpResponse::BadRequest().json(&serde_json::json!({ "error": "invalid", "reason": why })));
     }
-    if let Err(e) = crate::agent_mode::mcp::store(&state.db, &w).await {
+    if let Err(e) = crate::agent_mode::mcp::store(&state.db, &state.sealer, &w).await {
         return Ok(refused(e.into()));
     }
     // Where they are, never a header's value.
@@ -442,7 +442,7 @@ pub async fn put_mcp_app(
         return Ok(HttpResponse::BadRequest().json(&serde_json::json!({ "error": "invalid", "reason": "token" })));
     }
     let token = w.token.as_ref().map(|t| t.as_deref().map(str::trim));
-    if let Err(e) = crate::stacks::store::set_mcp_use(&state.db, &stack, index, w.enabled, token).await {
+    if let Err(e) = crate::stacks::store::set_mcp_use(&state.db, &state.sealer, &stack, index, w.enabled, token).await {
         return Ok(refused(e.into()));
     }
     // Which server and what changed, never the token.
@@ -476,7 +476,7 @@ pub struct OAuthStart {
 /// or a deployed app's.
 async fn known_server(state: &AppState, url: &str) -> Option<String> {
     let id = fl_pi_llm::host::mcp::server_id(url);
-    let added = crate::agent_mode::mcp::load(&state.db).await.unwrap_or_default().into_iter().any(|s| s.url == url);
+    let added = crate::agent_mode::mcp::load(&state.db, &state.sealer).await.unwrap_or_default().into_iter().any(|s| s.url == url);
     let app = crate::agent_mode::mcp::app_servers(state).await.into_iter().any(|s| s.app.url == url);
     (added || app).then_some(id)
 }
@@ -546,7 +546,7 @@ pub async fn mcp_oauth_callback(
         return Ok(page(false, "The sign-in was declined. You can close this tab."));
     };
     let fetch = state.agent.fetch();
-    match state.agent.mcp_oauth.finish(&state.db, fetch.as_ref(), &q.state, &code).await {
+    match state.agent.mcp_oauth.finish(&state.db, &state.sealer, fetch.as_ref(), &q.state, &code).await {
         Ok(signed) => {
             state.agent.mcp.forget(&signed.server_id).await;
             Event::new(Kind::Agent, Action::Write, Outcome::Ok)
@@ -682,7 +682,7 @@ pub async fn put_settings(req: HttpRequest, body: web::types::Json<config::Setti
     if let Err(code) = config::check(&w) {
         return Ok(bad(code));
     }
-    if let Err(e) = config::store(&state.db, &w).await {
+    if let Err(e) = config::store(&state.db, &state.sealer, &w).await {
         return Ok(refused(e.into()));
     }
     if let Err(e) = state.agent.reconfigure().await {

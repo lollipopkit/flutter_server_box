@@ -57,6 +57,8 @@ describe('the BMC helpers', () => {
     expect(bmcErrorText(e)).toMatch(/user name or password/)
     const odd = new ApiError('bmc', 502, undefined, { error: 'bmc', failure: 'somethingNew', detail: 'x' })
     expect(bmcErrorText(odd)).toBe('somethingNew: x')
+    const lost = new ApiError('passwordRequired', 409, undefined, { error: 'passwordRequired' })
+    expect(bmcErrorText(lost)).toMatch(/Enter it again/)
   })
 
   it('keeps every stored password on a write and shows a fingerprint as a console does', () => {
