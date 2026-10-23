@@ -7798,5 +7798,26 @@
   "reconnectEndsShell": "There is no tmux session to re-attach, so reconnecting ends this shell and anything still running in it, and clears its output from the screen.",
   "@reconnectEndsShell": {
     "description": "Confirmation before a manual reconnect that cannot re-attach tmux and so replaces the running shell."
+  },
+  "storeUnreadableTitle": "Previous data could not be opened",
+  "@storeUnreadableTitle": {
+    "description": "Title of the dialog shown after launch when the app's encrypted database could not be opened and the app started with no data."
+  },
+  "storeUnreadableKeyLost": "The key that encrypts ServerBox's data is no longer in the system keystore. This happens when the system resets the keystore, when the keyring service is not available, or when the app's data was copied from another device, for example by a phone migration tool. The data cannot be decrypted without that key, so ServerBox started with no data.",
+  "@storeUnreadableKeyLost": {
+    "description": "Why the database could not be opened: the encryption key is missing from the system keystore."
+  },
+  "storeUnreadableKeyRejected": "The key in the system keystore does not open ServerBox's data: the data was encrypted with another key, or the file is damaged. ServerBox started with no data.",
+  "@storeUnreadableKeyRejected": {
+    "description": "Why the database could not be opened: the stored key does not decrypt it, or the file is damaged."
+  },
+  "storeUnreadableKept": "The old file is kept at:\n{path}\nRestore a backup to get your servers back.",
+  "@storeUnreadableKept": {
+    "description": "Where the unreadable database file was moved to, and how to get the data back.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
   }
 }

@@ -1684,5 +1684,9 @@
   "launchFailedBody": "Copia el error de abajo y repórtalo en un issue de GitHub, junto con los archivos de registro.",
   "launchFailedLogs": "Registros: {path}",
   "reconnect": "Reconectar",
-  "reconnectEndsShell": "No hay una sesión de tmux a la que volver, así que reconectar cierra esta shell y todo lo que siga ejecutándose en ella, y borra su salida de la pantalla."
+  "reconnectEndsShell": "No hay una sesión de tmux a la que volver, así que reconectar cierra esta shell y todo lo que siga ejecutándose en ella, y borra su salida de la pantalla.",
+  "storeUnreadableTitle": "No se pudieron abrir los datos anteriores",
+  "storeUnreadableKeyLost": "La clave que cifra los datos de ServerBox ya no está en el almacén de claves del sistema. Ocurre cuando el sistema restablece el almacén de claves, cuando el servicio de llavero no está disponible o cuando los datos de la app se copiaron desde otro dispositivo, por ejemplo con una herramienta de migración. Sin esa clave los datos no se pueden descifrar, así que ServerBox se inició sin datos.",
+  "storeUnreadableKeyRejected": "La clave del almacén de claves del sistema no abre los datos de ServerBox: se cifraron con otra clave o el archivo está dañado. ServerBox se inició sin datos.",
+  "storeUnreadableKept": "El archivo anterior se conserva en:\n{path}\nRestaura una copia de seguridad para recuperar tus servidores."
 }

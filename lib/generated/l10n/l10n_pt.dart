@@ -6035,4 +6035,21 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       'Não há uma sessão do tmux para reanexar, então reconectar encerra este shell e tudo o que ainda estiver em execução nele, e apaga a saída da tela.';
+
+  @override
+  String get storeUnreadableTitle =>
+      'Não foi possível abrir os dados anteriores';
+
+  @override
+  String get storeUnreadableKeyLost =>
+      'A chave que criptografa os dados do ServerBox não está mais no repositório de chaves do sistema. Isso acontece quando o sistema redefine o repositório de chaves, quando o serviço de chaveiro não está disponível ou quando os dados do app foram copiados de outro dispositivo, por exemplo com uma ferramenta de migração. Sem essa chave os dados não podem ser descriptografados, então o ServerBox iniciou sem dados.';
+
+  @override
+  String get storeUnreadableKeyRejected =>
+      'A chave no repositório de chaves do sistema não abre os dados do ServerBox: eles foram criptografados com outra chave, ou o arquivo está danificado. O ServerBox iniciou sem dados.';
+
+  @override
+  String storeUnreadableKept(String path) {
+    return 'O arquivo anterior foi mantido em:\n$path\nRestaure um backup para recuperar seus servidores.';
+  }
 }

@@ -5711,4 +5711,20 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       '다시 연결할 tmux 세션이 없으므로, 다시 연결하면 이 셸과 그 안에서 아직 실행 중인 작업이 종료되고 화면의 출력도 지워집니다.';
+
+  @override
+  String get storeUnreadableTitle => '이전 데이터를 열 수 없습니다';
+
+  @override
+  String get storeUnreadableKeyLost =>
+      'ServerBox 데이터를 암호화한 키가 시스템 키 저장소에 없습니다. 시스템이 키 저장소를 초기화했거나, 키링 서비스를 사용할 수 없거나, 기기 이전 도구 등으로 다른 기기에서 앱 데이터를 복사한 경우 발생합니다. 이 키가 없으면 데이터를 복호화할 수 없으므로 ServerBox가 빈 데이터로 시작되었습니다.';
+
+  @override
+  String get storeUnreadableKeyRejected =>
+      '시스템 키 저장소의 키로 ServerBox 데이터를 열 수 없습니다. 데이터가 다른 키로 암호화되었거나 파일이 손상되었습니다. ServerBox가 빈 데이터로 시작되었습니다.';
+
+  @override
+  String storeUnreadableKept(String path) {
+    return '이전 파일은 다음 위치에 보관되어 있습니다:\n$path\n백업을 복원하면 서버를 되찾을 수 있습니다.';
+  }
 }

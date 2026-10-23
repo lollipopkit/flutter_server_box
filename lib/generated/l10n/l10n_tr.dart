@@ -5967,4 +5967,20 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       'Yeniden bağlanacak bir tmux oturumu yok; yeniden bağlanmak bu kabuğu ve içinde hâlâ çalışan her şeyi sonlandırır ve ekrandaki çıktısını temizler.';
+
+  @override
+  String get storeUnreadableTitle => 'Önceki veriler açılamadı';
+
+  @override
+  String get storeUnreadableKeyLost =>
+      'ServerBox verilerini şifreleyen anahtar artık sistemin anahtar deposunda değil. Sistem anahtar deposunu sıfırladığında, anahtarlık hizmeti kullanılamadığında veya uygulama verileri başka bir cihazdan, örneğin bir taşıma aracıyla kopyalandığında bu olur. Bu anahtar olmadan veriler çözülemez, bu yüzden ServerBox verisiz başlatıldı.';
+
+  @override
+  String get storeUnreadableKeyRejected =>
+      'Sistemin anahtar deposundaki anahtar ServerBox verilerini açmıyor: veriler başka bir anahtarla şifrelenmiş ya da dosya bozuk. ServerBox verisiz başlatıldı.';
+
+  @override
+  String storeUnreadableKept(String path) {
+    return 'Eski dosya şurada tutuldu:\n$path\nSunucularınızı geri almak için bir yedeği geri yükleyin.';
+  }
 }

@@ -5978,4 +5978,20 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       'Tidak ada sesi tmux untuk dipasang kembali, jadi menyambungkan ulang akan mengakhiri shell ini dan semua yang masih berjalan di dalamnya, serta menghapus keluarannya dari layar.';
+
+  @override
+  String get storeUnreadableTitle => 'Data sebelumnya tidak dapat dibuka';
+
+  @override
+  String get storeUnreadableKeyLost =>
+      'Kunci yang mengenkripsi data ServerBox sudah tidak ada di penyimpanan kunci sistem. Ini terjadi ketika sistem mengatur ulang penyimpanan kunci, ketika layanan keyring tidak tersedia, atau ketika data aplikasi disalin dari perangkat lain, misalnya dengan alat migrasi. Tanpa kunci itu data tidak dapat didekripsi, jadi ServerBox dimulai tanpa data.';
+
+  @override
+  String get storeUnreadableKeyRejected =>
+      'Kunci di penyimpanan kunci sistem tidak membuka data ServerBox: data dienkripsi dengan kunci lain, atau berkasnya rusak. ServerBox dimulai tanpa data.';
+
+  @override
+  String storeUnreadableKept(String path) {
+    return 'Berkas lama disimpan di:\n$path\nPulihkan cadangan untuk mendapatkan kembali server Anda.';
+  }
 }

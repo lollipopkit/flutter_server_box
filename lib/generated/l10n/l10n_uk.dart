@@ -6023,4 +6023,20 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       'Немає сеансу tmux для повторного під’єднання, тому перепідключення завершить цю оболонку й усе, що в ній ще виконується, та очистить її вивід на екрані.';
+
+  @override
+  String get storeUnreadableTitle => 'Не вдалося відкрити попередні дані';
+
+  @override
+  String get storeUnreadableKeyLost =>
+      'Ключа, яким зашифровано дані ServerBox, більше немає в системному сховищі ключів. Так буває, коли система скидає сховище ключів, коли служба в\'язки ключів недоступна або коли дані застосунку скопійовано з іншого пристрою, наприклад засобом перенесення. Без цього ключа дані не розшифрувати, тому ServerBox запущено без даних.';
+
+  @override
+  String get storeUnreadableKeyRejected =>
+      'Ключ із системного сховища ключів не відкриває дані ServerBox: їх зашифровано іншим ключем або файл пошкоджено. ServerBox запущено без даних.';
+
+  @override
+  String storeUnreadableKept(String path) {
+    return 'Старий файл збережено тут:\n$path\nВідновіть резервну копію, щоб повернути сервери.';
+  }
 }

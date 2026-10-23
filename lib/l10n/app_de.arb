@@ -1684,5 +1684,9 @@
   "launchFailedBody": "Kopiere den Fehler unten und melde ihn mit den Logdateien in einem GitHub-Issue.",
   "launchFailedLogs": "Logs: {path}",
   "reconnect": "Neu verbinden",
-  "reconnectEndsShell": "Es gibt keine tmux-Sitzung zum erneuten Anhängen. Neu verbinden beendet diese Shell und alles, was darin noch läuft, und löscht ihre Ausgabe vom Bildschirm."
+  "reconnectEndsShell": "Es gibt keine tmux-Sitzung zum erneuten Anhängen. Neu verbinden beendet diese Shell und alles, was darin noch läuft, und löscht ihre Ausgabe vom Bildschirm.",
+  "storeUnreadableTitle": "Bisherige Daten konnten nicht geöffnet werden",
+  "storeUnreadableKeyLost": "Der Schlüssel, mit dem die Daten von ServerBox verschlüsselt sind, ist nicht mehr im Schlüsselspeicher des Systems. Das passiert, wenn das System den Schlüsselspeicher zurücksetzt, der Schlüsselbund-Dienst nicht verfügbar ist oder die App-Daten von einem anderen Gerät kopiert wurden, etwa mit einem Umzugstool. Ohne diesen Schlüssel lassen sich die Daten nicht entschlüsseln, daher wurde ServerBox ohne Daten gestartet.",
+  "storeUnreadableKeyRejected": "Der Schlüssel im Schlüsselspeicher des Systems öffnet die Daten von ServerBox nicht: Sie wurden mit einem anderen Schlüssel verschlüsselt, oder die Datei ist beschädigt. ServerBox wurde ohne Daten gestartet.",
+  "storeUnreadableKept": "Die alte Datei liegt weiterhin unter:\n{path}\nStelle ein Backup wieder her, um deine Server zurückzubekommen."
 }

@@ -26,6 +26,7 @@ import 'package:server_box/core/sync.dart';
 import 'package:server_box/core/tty.dart';
 import 'package:server_box/core/utils/sandbox_import.dart';
 import 'package:server_box/core/utils/ssh_native_crypto.dart';
+import 'package:server_box/core/utils/store_recovery.dart';
 import 'package:server_box/data/model/server/dist_license.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/misc.dart';
@@ -268,22 +269,31 @@ Future<void> _initData() async {
   try {
     await Stores.init();
   } catch (e, s) {
-    if (imported != SandboxImportResult.imported) rethrow;
+    final fromImport = imported == SandboxImportResult.imported;
+    if (!fromImport && e is! StoreUnreadableException) rethrow;
 
-    // The copied data does not open. It was only ever a copy, so drop it and
-    // start empty — an app that opens with nothing in it can still be told
-    // what happened, one that does not open cannot.
-    Loggers.app.warning('Stores.init after sandbox import', e, s);
-    // Closed before the files are deleted. `Stores.init` may have got as far as
-    // opening the database, or several boxes, before the one that threw, and
-    // unlinking a file out from under a live handle is undefined at best: on
-    // Windows the delete fails outright and the copy stays, so the retry below
-    // reopens exactly the data that just failed to open.
+    // Closed before the files are deleted or moved. `Stores.init` may have got
+    // as far as opening the database, or several boxes, before the one that
+    // threw, and unlinking a file out from under a live handle is undefined at
+    // best: on Windows the delete fails outright and the copy stays, so the
+    // retry below reopens exactly the data that just failed to open.
     await closeTables();
     await SqliteDb.close();
     await Hive.close();
     await getIt.reset();
-    await SandboxImport.undo();
+
+    if (fromImport) {
+      // The copied data does not open. It was only ever a copy, so drop it and
+      // start empty — an app that opens with nothing in it can still be told
+      // what happened, one that does not open cannot.
+      Loggers.app.warning('Stores.init after sandbox import', e, s);
+      await SandboxImport.undo();
+    } else {
+      // The vault's key does not open the database (#1780). The same reasoning,
+      // except this file is the only copy: kept aside, not deleted, and the
+      // reason is shown once there is a screen — see [StoreUnreadableNotice].
+      StoreRecovery.setAside(e as StoreUnreadableException, s);
+    }
     await Stores.init();
   }
 

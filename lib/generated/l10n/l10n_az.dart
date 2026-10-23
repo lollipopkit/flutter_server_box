@@ -5977,4 +5977,20 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       'Yenidən qoşulmaq üçün tmux sessiyası yoxdur, ona görə yenidən qoşulmaq bu shell-i və içində hələ işləyən hər şeyi bağlayır və ekrandakı çıxışını təmizləyir.';
+
+  @override
+  String get storeUnreadableTitle => 'Əvvəlki məlumatları açmaq mümkün olmadı';
+
+  @override
+  String get storeUnreadableKeyLost =>
+      'ServerBox məlumatlarını şifrələyən açar artıq sistemin açar anbarında yoxdur. Bu, sistem açar anbarını sıfırladıqda, açarlıq xidməti əlçatan olmadıqda və ya tətbiq məlumatları başqa cihazdan, məsələn köçürmə aləti ilə kopyalandıqda baş verir. Həmin açar olmadan məlumatları deşifrə etmək olmur, ona görə ServerBox məlumatsız başladıldı.';
+
+  @override
+  String get storeUnreadableKeyRejected =>
+      'Sistemin açar anbarındakı açar ServerBox məlumatlarını açmır: məlumatlar başqa açarla şifrələnib və ya fayl zədələnib. ServerBox məlumatsız başladıldı.';
+
+  @override
+  String storeUnreadableKept(String path) {
+    return 'Köhnə fayl burada saxlanılıb:\n$path\nServerlərinizi geri qaytarmaq üçün ehtiyat nüsxəni bərpa edin.';
+  }
 }

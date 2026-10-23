@@ -6077,4 +6077,21 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       'Aucune session tmux à rattacher : reconnecter ferme ce shell et tout ce qui s’y exécute encore, et efface sa sortie de l’écran.';
+
+  @override
+  String get storeUnreadableTitle =>
+      'Impossible d\'ouvrir les données précédentes';
+
+  @override
+  String get storeUnreadableKeyLost =>
+      'La clé qui chiffre les données de ServerBox n\'est plus dans le magasin de clés du système. Cela arrive quand le système réinitialise le magasin de clés, quand le service de trousseau n\'est pas disponible, ou quand les données de l\'app ont été copiées depuis un autre appareil, par exemple avec un outil de migration. Sans cette clé, les données ne peuvent pas être déchiffrées : ServerBox a donc démarré sans données.';
+
+  @override
+  String get storeUnreadableKeyRejected =>
+      'La clé du magasin de clés du système n\'ouvre pas les données de ServerBox : elles ont été chiffrées avec une autre clé, ou le fichier est endommagé. ServerBox a démarré sans données.';
+
+  @override
+  String storeUnreadableKept(String path) {
+    return 'L\'ancien fichier est conservé ici :\n$path\nRestaurez une sauvegarde pour récupérer vos serveurs.';
+  }
 }

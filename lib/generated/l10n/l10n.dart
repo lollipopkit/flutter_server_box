@@ -10244,6 +10244,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'There is no tmux session to re-attach, so reconnecting ends this shell and anything still running in it, and clears its output from the screen.'**
   String get reconnectEndsShell;
+
+  /// Title of the dialog shown after launch when the app's encrypted database could not be opened and the app started with no data.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous data could not be opened'**
+  String get storeUnreadableTitle;
+
+  /// Why the database could not be opened: the encryption key is missing from the system keystore.
+  ///
+  /// In en, this message translates to:
+  /// **'The key that encrypts ServerBox\'s data is no longer in the system keystore. This happens when the system resets the keystore, when the keyring service is not available, or when the app\'s data was copied from another device, for example by a phone migration tool. The data cannot be decrypted without that key, so ServerBox started with no data.'**
+  String get storeUnreadableKeyLost;
+
+  /// Why the database could not be opened: the stored key does not decrypt it, or the file is damaged.
+  ///
+  /// In en, this message translates to:
+  /// **'The key in the system keystore does not open ServerBox\'s data: the data was encrypted with another key, or the file is damaged. ServerBox started with no data.'**
+  String get storeUnreadableKeyRejected;
+
+  /// Where the unreadable database file was moved to, and how to get the data back.
+  ///
+  /// In en, this message translates to:
+  /// **'The old file is kept at:\n{path}\nRestore a backup to get your servers back.'**
+  String storeUnreadableKept(String path);
 }
 
 class _AppLocalizationsDelegate

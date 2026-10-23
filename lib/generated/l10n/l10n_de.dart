@@ -6056,4 +6056,21 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       'Es gibt keine tmux-Sitzung zum erneuten Anhängen. Neu verbinden beendet diese Shell und alles, was darin noch läuft, und löscht ihre Ausgabe vom Bildschirm.';
+
+  @override
+  String get storeUnreadableTitle =>
+      'Bisherige Daten konnten nicht geöffnet werden';
+
+  @override
+  String get storeUnreadableKeyLost =>
+      'Der Schlüssel, mit dem die Daten von ServerBox verschlüsselt sind, ist nicht mehr im Schlüsselspeicher des Systems. Das passiert, wenn das System den Schlüsselspeicher zurücksetzt, der Schlüsselbund-Dienst nicht verfügbar ist oder die App-Daten von einem anderen Gerät kopiert wurden, etwa mit einem Umzugstool. Ohne diesen Schlüssel lassen sich die Daten nicht entschlüsseln, daher wurde ServerBox ohne Daten gestartet.';
+
+  @override
+  String get storeUnreadableKeyRejected =>
+      'Der Schlüssel im Schlüsselspeicher des Systems öffnet die Daten von ServerBox nicht: Sie wurden mit einem anderen Schlüssel verschlüsselt, oder die Datei ist beschädigt. ServerBox wurde ohne Daten gestartet.';
+
+  @override
+  String storeUnreadableKept(String path) {
+    return 'Die alte Datei liegt weiterhin unter:\n$path\nStelle ein Backup wieder her, um deine Server zurückzubekommen.';
+  }
 }

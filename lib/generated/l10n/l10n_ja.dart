@@ -5712,4 +5712,20 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       '再アタッチできる tmux セッションがないため、再接続するとこのシェルと、その中でまだ実行中のものが終了し、画面上の出力も消去されます。';
+
+  @override
+  String get storeUnreadableTitle => '以前のデータを開けませんでした';
+
+  @override
+  String get storeUnreadableKeyLost =>
+      'ServerBox のデータを暗号化した鍵が、システムのキーストアにありません。システムがキーストアをリセットした場合、キーリングサービスが使えない場合、または機種変更ツールなどで別の端末からアプリのデータをコピーした場合に起こります。この鍵がないとデータを復号できないため、ServerBox は空のデータで起動しました。';
+
+  @override
+  String get storeUnreadableKeyRejected =>
+      'システムのキーストアにある鍵では ServerBox のデータを開けません。データが別の鍵で暗号化されているか、ファイルが破損しています。ServerBox は空のデータで起動しました。';
+
+  @override
+  String storeUnreadableKept(String path) {
+    return '以前のファイルは次の場所に残してあります:\n$path\nバックアップを復元するとサーバーを取り戻せます。';
+  }
 }

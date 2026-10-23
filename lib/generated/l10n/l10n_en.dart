@@ -5985,4 +5985,20 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       'There is no tmux session to re-attach, so reconnecting ends this shell and anything still running in it, and clears its output from the screen.';
+
+  @override
+  String get storeUnreadableTitle => 'Previous data could not be opened';
+
+  @override
+  String get storeUnreadableKeyLost =>
+      'The key that encrypts ServerBox\'s data is no longer in the system keystore. This happens when the system resets the keystore, when the keyring service is not available, or when the app\'s data was copied from another device, for example by a phone migration tool. The data cannot be decrypted without that key, so ServerBox started with no data.';
+
+  @override
+  String get storeUnreadableKeyRejected =>
+      'The key in the system keystore does not open ServerBox\'s data: the data was encrypted with another key, or the file is damaged. ServerBox started with no data.';
+
+  @override
+  String storeUnreadableKept(String path) {
+    return 'The old file is kept at:\n$path\nRestore a backup to get your servers back.';
+  }
 }
