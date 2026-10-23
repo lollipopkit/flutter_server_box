@@ -143,10 +143,16 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   void initState() {
     super.initState();
     _selectedId = _buildNodes().firstOrNull?.firstLeaf?.id;
+    // Which appearance rows there are follows what is installed: the icon
+    // pack row is one only once a pack is — see [ThemeAppearance.themeRows].
+    ThemePackages.installedChanged.addListener(_onInstalledChanged);
   }
+
+  void _onInstalledChanged() => setStateSafe(() {});
 
   @override
   void dispose() {
+    ThemePackages.installedChanged.removeListener(_onInstalledChanged);
     _searchCtrl.dispose();
     _searchFocus.dispose();
     super.dispose();
