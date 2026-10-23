@@ -345,7 +345,7 @@ pub async fn events(req: HttpRequest, state: web::types::State<Arc<AppState>>) -
 
 pub async fn get_settings(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     require!(shell(&req, &state).await);
-    match config::load(&state.db).await {
+    match config::load_shown(&state.db, &state.sealer).await {
         Ok(settings) => {
             let mut v = serde_json::to_value(&settings).unwrap_or_default();
             // The model servers on this machine, offered on their own
@@ -698,7 +698,7 @@ pub async fn put_settings(req: HttpRequest, body: web::types::Json<config::Setti
         ))
         .record(&state.db)
         .await;
-    match config::load(&state.db).await {
+    match config::load_shown(&state.db, &state.sealer).await {
         Ok(s) => Ok(HttpResponse::Ok().json(&s)),
         Err(e) => Ok(refused(e.into())),
     }

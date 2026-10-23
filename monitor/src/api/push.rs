@@ -51,7 +51,7 @@ use super::authz;
 use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
 use crate::core::config::{PushConfig, validate_push_rate};
 use crate::core::config_file;
-use crate::monitoring::push::{PushRateLimiter, Secret, canonical_type, secrets, send_notification, validate};
+use crate::monitoring::push::{PushRateLimiter, Secret, canonical_type, literal, secrets, send_notification, validate};
 
 /// The largest request body accepted: every channel at once, since a write
 /// replaces the whole set. A webhook's `body_template` is a document the user
@@ -449,6 +449,7 @@ fn resolve_all(
             ));
         }
 
+        given_literally(&mut entry);
         keep_withheld(&mut entry, existing)?;
         check_required(&entry)?;
         let push = into_push_config(entry)?;
@@ -459,6 +460,32 @@ fn resolve_all(
     }
 
     Ok(resolved)
+}
+
+/// Escapes each credential the request carries ([`push::literal`]): one
+/// typed in an editor is that text. `${NAME}` is the operator's, written in
+/// `config.toml`; a login naming one here would have the agent send its
+/// environment (`.env`, the JWT secret) wherever the channel points.
+fn given_literally(entry: &mut PushEntry) {
+    let escape = |value: &mut JsonValue| {
+        if let JsonValue::String(s) = value {
+            *s = literal(s);
+        }
+    };
+    for secret in secrets(&entry.push_type) {
+        match secret {
+            Secret::Key(key) => {
+                if let Some(value) = entry.config.get_mut(*key) {
+                    escape(value);
+                }
+            }
+            Secret::TableValues(table) => {
+                if let Some(JsonValue::Object(values)) = entry.config.get_mut(*table) {
+                    values.values_mut().for_each(escape);
+                }
+            }
+        }
+    }
 }
 
 /// Replaces each `null` credential with the value the entry was loaded with.

@@ -22,6 +22,7 @@ use sqlx::{Executor, Row as _, SqliteConnection, SqlitePool};
 
 use crate::core::blobs::Blobs;
 use crate::core::config::Config;
+use crate::db::ident;
 use crate::db::sealed::{self, Field, Sealer};
 
 /// A table a backup carries, parents before children, with the columns that
@@ -131,10 +132,6 @@ pub struct Digest {
     pub full: String,
 }
 
-fn ident(name: &str) -> String {
-    format!("\"{}\"", name.replace('"', "\"\""))
-}
-
 async fn columns(conn: &mut SqliteConnection, schema: &str, table: &str) -> sqlx::Result<Vec<String>> {
     let rows: Vec<(String,)> =
         sqlx::query_as(sqlx::AssertSqlSafe(format!("SELECT name FROM pragma_table_info({}, {}) ORDER BY cid", quote(table), quote(schema))))
@@ -151,8 +148,9 @@ fn quote(text: &str) -> String {
 const OWNER: &str = "id = (SELECT MIN(id) FROM main.users)";
 
 /// The hashes of what a backup taken now would hold, beside [config] (the
-/// file's bytes). Credentials are hashed opened, as a backup carries them:
-/// sealing one again (a nonce of its own) changes nothing a backup holds.
+/// file's bytes). Credentials are hashed opened, as a backup carries them
+/// (one the key no longer opens as none): sealing one again (a nonce of its
+/// own) changes nothing a backup holds.
 pub async fn digest(db: &SqlitePool, sealer: &Sealer, config: Option<&[u8]>) -> anyhow::Result<Digest> {
     let mut conn = Guarded::acquire(db).await?;
     let mut stable = Sha256::new();
@@ -194,7 +192,7 @@ pub async fn digest(db: &SqlitePool, sealer: &Sealer, config: Option<&[u8]>) -> 
                 let mut s_row = Vec::with_capacity(cols.len());
                 for (i, (c, field)) in cols.iter().zip(&sealed).enumerate() {
                     let piece = match field {
-                        Some(field) => match sealer.open_opt(*field, row.try_get::<Option<String>, _>(i)?.as_deref())? {
+                        Some(field) => match sealer.open_or_none(*field, row.try_get::<Option<String>, _>(i)?.as_deref())? {
                             Some(v) => quote(&v),
                             None => "NULL".to_string(),
                         },
@@ -348,9 +346,10 @@ const MAX_ENTRIES: usize = 10_000;
 const MAX_INFLATED: u64 = 1 << 30;
 
 /// Writes the archive to [out]: [manifest], [config], the database at [db]
-/// and [blobs] (`(sha256, bytes)`).
-/// [blobs]: each file open, with its length, streamed into the archive.
-pub fn write_archive(out: &Path, manifest: &Manifest, config: Option<&[u8]>, db: &Path, blobs: Vec<(String, std::fs::File, u64)>) -> anyhow::Result<()> {
+/// and [blobs] (`(sha256, path)`), each opened as it is streamed in. A row
+/// naming a file that is gone is backed up without it, as the monitor serves
+/// it now.
+pub fn write_archive(out: &Path, manifest: &Manifest, config: Option<&[u8]>, db: &Path, blobs: &[(String, PathBuf)]) -> anyhow::Result<()> {
     let file = std::fs::File::create(out)?;
     let gz = flate2::write::GzEncoder::new(file, flate2::Compression::default());
     let mut tar = tar::Builder::new(gz);
@@ -370,7 +369,13 @@ pub fn write_archive(out: &Path, manifest: &Manifest, config: Option<&[u8]>, db:
     let mut db = std::fs::File::open(db)?;
     let len = db.metadata()?.len();
     add(DATABASE, len, &mut db)?;
-    for (sha, file, len) in blobs {
+    for (sha, path) in blobs {
+        let file = match std::fs::File::open(path) {
+            Ok(f) => f,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => continue,
+            Err(e) => return Err(e.into()),
+        };
+        let len = file.metadata()?.len();
         // At the length measured: a file that changed since is not this blob.
         add(&format!("blobs/{sha}"), len, &mut file.take(len))?;
     }
@@ -543,7 +548,7 @@ pub async fn restore_database(db: &SqlitePool, sealer: &Sealer, store: &Blobs, u
 async fn copy_in(conn: &mut SqliteConnection, sealer: &Sealer, blobs: usize) -> anyhow::Result<Restored> {
     conn.execute("BEGIN IMMEDIATE").await?;
     // A backup carries credentials in clear; one sealed with a key this
-    // machine does not have is refused here, not left unreadable.
+    // machine does not have goes in as none, to be entered again.
     sealer.unseal_all(conn, "other").await?;
     let backup_owner: Option<(i64, String)> = sqlx::query_as("SELECT id, password_hash FROM other.users ORDER BY id LIMIT 1").fetch_optional(&mut *conn).await?;
     let (backup_owner, hash) = backup_owner.ok_or_else(|| anyhow::anyhow!("the backup has no account"))?;
@@ -677,8 +682,9 @@ mod tests {
         let sealed_once = digest(&db, &sealer, Some(b"a = 1")).await.unwrap();
         set(sealer.seal(sealed::AGENT_CREDENTIAL, "k1").unwrap()).await.unwrap();
         assert_eq!(digest(&db, &sealer, Some(b"a = 1")).await.unwrap(), sealed_once, "sealed again is no change");
-        set("k1".into()).await.unwrap();
-        assert!(digest(&db, &sealer, Some(b"a = 1")).await.is_err(), "a credential in clear is not hashed as one");
+        set(Sealer::temporary().seal(sealed::AGENT_CREDENTIAL, "k1").unwrap()).await.unwrap();
+        let lost = digest(&db, &sealer, Some(b"a = 1")).await.unwrap();
+        assert_ne!(lost.stable, sealed_once.stable, "one the key no longer opens is hashed as none");
         set(sealer.seal(sealed::AGENT_CREDENTIAL, "k2").unwrap()).await.unwrap();
         assert_ne!(digest(&db, &sealer, Some(b"a = 1")).await.unwrap().stable, sealed_once.stable);
     }
@@ -701,15 +707,23 @@ mod tests {
             .await
             .unwrap();
 
+        // One sealed under a key since lost: carried as none, not failing the backup.
+        sqlx::query("INSERT INTO agent_credential (provider_id, credential, updated_at) VALUES ('p', ?, 'x')")
+            .bind(Sealer::temporary().seal(sealed::AGENT_CREDENTIAL, "gone").unwrap())
+            .execute(&src)
+            .await
+            .unwrap();
+
         let file = dir.path().join("settings.db");
         let named = write_database(&src, &src_key, &file).await.unwrap();
+        let lost: String = sqlx::query_scalar("SELECT credential FROM agent_credential").fetch_one(&single(&file, false).await.unwrap()).await.unwrap();
+        assert_eq!(lost, "");
         assert_eq!(named, vec![sha.clone()]);
         let carried: String = sqlx::query_scalar("SELECT password FROM bmc_target").fetch_one(&single(&file, false).await.unwrap()).await.unwrap();
         assert_eq!(carried, "calvin", "in clear inside the backup's own encryption");
         let archive = dir.path().join("a.tar.gz");
         let manifest = Manifest { format: FORMAT, monitor_version: "t".into(), migration: 39, host: "h".into(), created_at: "now".into() };
-        let wallpaper = std::fs::File::open(blobs.path(&sha).unwrap()).unwrap();
-        write_archive(&archive, &manifest, Some(b"x = 1"), &file, vec![(sha.clone(), wallpaper, 11)]).unwrap();
+        write_archive(&archive, &manifest, Some(b"x = 1"), &file, &[(sha.clone(), blobs.path(&sha).unwrap())]).unwrap();
         let out = dir.path().join("out");
         std::fs::create_dir(&out).unwrap();
         let unpacked = unpack(&archive, &out).unwrap();

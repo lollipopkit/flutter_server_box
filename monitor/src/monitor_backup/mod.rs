@@ -478,6 +478,25 @@ async fn put_making_folder(dav: &Dav, name: &str, bytes: Vec<u8>) -> Result<(), 
 
 static SCRATCH: AtomicU64 = AtomicU64::new(0);
 
+/// This run, in its working folders' names (`work-<pid>-<run>-<n>`): a
+/// container's agent is PID 1 on every start, so the PID alone does not tell
+/// this run's folders from those a killed one left.
+fn run_id() -> &'static str {
+    static RUN: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+    RUN.get_or_init(|| crate::utils::secrets::random_hex(4).unwrap_or_else(|_| format!("{:08x}", std::process::id())))
+}
+
+/// Whether the working folder [name] may be someone's still: this run's, or
+/// another running process's.
+fn in_use(name: &str) -> bool {
+    let mut parts = name.strip_prefix("work-").unwrap_or_default().split('-');
+    let Some(pid) = parts.next().and_then(|p| p.parse::<u32>().ok()) else { return true };
+    if pid == std::process::id() {
+        return parts.next() == Some(run_id());
+    }
+    running(pid)
+}
+
 /// Whether process [pid] exists (or cannot be told apart from one that does).
 #[cfg(unix)]
 fn running(pid: u32) -> bool {
@@ -546,14 +565,15 @@ impl MonitorBackup {
 
     pub async fn scratch(&self) -> std::io::Result<Scratch> {
         let n = SCRATCH.fetch_add(1, Ordering::Relaxed);
-        let path = self.dir.join(format!("work-{}-{n}", std::process::id()));
-        let made = path.clone();
+        let path = self.dir.join(format!("work-{}-{}-{n}", std::process::id(), run_id()));
+        let (dir, made) = (self.dir.clone(), path.clone());
         tokio::task::spawn_blocking(move || {
             let mut builder = std::fs::DirBuilder::new();
-            builder.recursive(true);
             #[cfg(unix)]
             std::os::unix::fs::DirBuilderExt::mode(&mut builder, 0o700);
-            builder.create(&made)
+            builder.recursive(true).create(&dir)?;
+            // Its own, never one found there.
+            builder.recursive(false).create(&made)
         })
         .await
         .map_err(std::io::Error::other)??;
@@ -567,10 +587,8 @@ impl MonitorBackup {
         let Ok(entries) = std::fs::read_dir(&self.dir) else { return };
         for entry in entries.flatten() {
             let name = entry.file_name();
-            let Some(pid) = name.to_str().and_then(|n| n.strip_prefix("work-")).and_then(|r| r.split('-').next()).and_then(|p| p.parse::<u32>().ok()) else {
-                continue;
-            };
-            if pid == std::process::id() || running(pid) {
+            let Some(name) = name.to_str().filter(|n| n.starts_with("work-")) else { continue };
+            if in_use(name) {
                 continue;
             }
             if let Err(e) = std::fs::remove_dir_all(entry.path()) {
@@ -736,31 +754,25 @@ async fn make(host: &Host<'_>, stored: &Row, recipient: &str, force: bool) -> Re
         host: host.server_name.clone(),
         created_at: chrono::Utc::now().to_rfc3339(),
     };
-    // A row naming a file that is gone is backed up without it, as the monitor
-    // serves it now.
-    // Opened now and streamed into the archive, never held in memory.
-    let mut files = Vec::new();
-    let mut total = 0u64;
-    for sha in blobs {
-        let Some(path) = host.blobs.path(&sha) else { continue };
-        let file = match std::fs::File::open(&path) {
-            Ok(f) => f,
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => continue,
-            Err(e) => return Err(Failure::new("io", e)),
-        };
-        let len = file.metadata().map_err(|e| Failure::new("io", e))?.len();
-        total += len;
-        if total > MAX_BYTES {
-            return Err(Failure::new("tooLarge", "past the largest backup"));
-        }
-        files.push((sha, file, len));
-    }
+    let files: Vec<(String, PathBuf)> = blobs.into_iter().filter_map(|sha| host.blobs.path(&sha).map(|p| (sha, p))).collect();
     let archive = scratch.path().join("backup.tar.gz");
     let encrypted = scratch.path().join("backup.age");
     let recipient = recipient.to_string();
     let (a, e, d) = (archive.clone(), encrypted.clone(), db_file.clone());
     tokio::task::spawn_blocking(move || -> Result<(), Failure> {
-        snapshot::write_archive(&a, &manifest, config.as_deref(), &d, files).map_err(|e| Failure::new("io", format!("{e:#}")))?;
+        // Measured first, so a set past the limit is never packed.
+        let mut total = 0u64;
+        for (_, path) in &files {
+            match std::fs::metadata(path) {
+                Ok(m) => total += m.len(),
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+                Err(e) => return Err(Failure::new("io", e)),
+            }
+        }
+        if total > MAX_BYTES {
+            return Err(Failure::new("tooLarge", "past the largest backup"));
+        }
+        snapshot::write_archive(&a, &manifest, config.as_deref(), &d, &files).map_err(|e| Failure::new("io", format!("{e:#}")))?;
         if std::fs::metadata(&a).map_err(|e| Failure::new("io", e))?.len() > MAX_BYTES {
             return Err(Failure::new("tooLarge", "past the largest backup"));
         }
@@ -932,7 +944,11 @@ fn decrypt_file(input: &Path, output: &Path, identity: &age::x25519::Identity) -
 }
 
 /// Puts [fetched] back into [db] and `config.toml` (under [config_lock]).
-pub async fn apply(db: &SqlitePool, sealer: &Sealer, blobs: &Blobs, config_lock: &tokio::sync::Mutex<()>, fetched: &Fetched) -> Result<snapshot::Restored, Refusal> {
+/// [create_config]: a `config.toml` missing from the working directory is
+/// made from defaults and the backup's. The agent's own directory, where one
+/// configured by its environment alone has none; never a CLI's, which may be
+/// run anywhere.
+pub async fn apply(db: &SqlitePool, sealer: &Sealer, blobs: &Blobs, config_lock: &tokio::sync::Mutex<()>, fetched: &Fetched, create_config: bool) -> Result<snapshot::Restored, Refusal> {
     let mut restored = snapshot::restore_database(db, sealer, blobs, &fetched.unpacked).await.map_err(|e| match e {
         snapshot::RestoreError::Newer => refusal(409, "backupNewer"),
         snapshot::RestoreError::Invalid(why) => {
@@ -948,10 +964,17 @@ pub async fn apply(db: &SqlitePool, sealer: &Sealer, blobs: &Blobs, config_lock:
         match std::str::from_utf8(bytes).ok().and_then(|t| toml::from_str::<crate::core::config::Config>(t).ok()) {
             Some(backup) => {
                 let _lock = config_lock.lock().await;
-                // Merged into this machine's file only: one that is missing
-                // (a CLI run from another directory) or unreadable would be
-                // replaced by defaults, losing its addresses, TLS and limits.
-                match crate::core::config_file::read_async().await {
+                // Merged into this machine's file only: one that is
+                // unreadable, or missing where a CLI runs (another directory,
+                // maybe), would be replaced by defaults, losing its
+                // addresses, TLS and limits.
+                let missing = !std::path::Path::new(crate::core::config_file::CONFIG_PATH).exists();
+                let current = if missing && create_config {
+                    Ok(crate::core::config::Config::default())
+                } else {
+                    crate::core::config_file::read_async().await
+                };
+                match current {
                     Ok(current) => match crate::core::config_file::write_async(&snapshot::merge_config(current, &backup)).await {
                         Ok(()) => restored.config = true,
                         Err(e) => tracing::error!("monitor backup: writing config.toml: {e}"),
@@ -973,7 +996,7 @@ pub async fn restore(state: &Arc<AppState>, name: &str, passphrase: &str) -> Res
     let dav = stored.dav(&state.sealer).map_err(stored_refusal)?;
     let _lock = state.monitor_backup.lock.lock().await;
     let fetched = fetch(&dav, &state.monitor_backup, name, passphrase).await?;
-    let restored = apply(&state.db, &state.sealer, &state.blobs, &state.config_write, &fetched).await?;
+    let restored = apply(&state.db, &state.sealer, &state.blobs, &state.config_write, &fetched, true).await?;
     state.blobs.collect_soon(&state.db);
     crate::api::authz::end_account(state, "password_changed");
     let restart = state.monitor_backup.restart.load(Ordering::Relaxed)
@@ -1071,6 +1094,22 @@ async fn notify(state: &AppState, level: Level, subject: &str, body: &str, kind:
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn only_this_runs_and_running_processes_folders_stay() {
+        let dir = tempfile::tempdir().unwrap();
+        let work = MonitorBackup::new(Some(&dir.path().join("m.db")));
+        let mine = work.scratch().await.unwrap();
+        let me = std::process::id();
+        // A killed run with this PID (a container's PID 1), the old naming,
+        // and a process that is gone.
+        for stale in [format!("work-{me}-deadbeef-0"), format!("work-{me}-0"), "work-999999999-x-0".to_string()] {
+            std::fs::create_dir_all(work.dir.join(stale)).unwrap();
+        }
+        work.sweep();
+        let left: Vec<_> = std::fs::read_dir(&work.dir).unwrap().map(|e| e.unwrap().path()).collect();
+        assert_eq!(left, [mine.path().to_path_buf()]);
+    }
 
     #[test]
     fn names_carry_the_time_and_the_key() {

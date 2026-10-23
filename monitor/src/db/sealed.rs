@@ -33,20 +33,26 @@ use crate::utils::lock::LockExt;
 pub struct Field {
     pub table: &'static str,
     pub column: &'static str,
+    /// `NOT NULL`: none is `""` there, `NULL` elsewhere.
+    pub required: bool,
 }
 
 const fn field(table: &'static str, column: &'static str) -> Field {
-    Field { table, column }
+    Field { table, column, required: false }
+}
+
+const fn required(table: &'static str, column: &'static str) -> Field {
+    Field { table, column, required: true }
 }
 
 pub const BMC_PASSWORD: Field = field("bmc_target", "password");
 pub const PVE_PASSWORD: Field = field("virt_pve", "password");
 pub const PVE_TOKEN_SECRET: Field = field("virt_pve", "token_secret");
-pub const AGENT_CREDENTIAL: Field = field("agent_credential", "credential");
-pub const AGENT_MCP_HEADERS: Field = field("agent_mcp_server", "headers");
+pub const AGENT_CREDENTIAL: Field = required("agent_credential", "credential");
+pub const AGENT_MCP_HEADERS: Field = required("agent_mcp_server", "headers");
 pub const STACK_MCP_TOKEN: Field = field("stack_mcp", "token");
 pub const MCP_OAUTH_CLIENT_SECRET: Field = field("mcp_oauth", "client_secret");
-pub const MCP_OAUTH_ACCESS_TOKEN: Field = field("mcp_oauth", "access_token");
+pub const MCP_OAUTH_ACCESS_TOKEN: Field = required("mcp_oauth", "access_token");
 pub const MCP_OAUTH_REFRESH_TOKEN: Field = field("mcp_oauth", "refresh_token");
 pub const BACKUP_PASSWORD: Field = field("monitor_backup", "password");
 
@@ -94,7 +100,7 @@ impl From<Error> for sqlx::Error {
 pub struct Sealer {
     /// `None`: an in-memory database's, whose key lives as long as this.
     file: Option<PathBuf>,
-    key: OnceLock<Zeroizing<[u8; KEY_LEN]>>,
+    key: OnceLock<LessSafeKey>,
     loading: Mutex<()>,
 }
 
@@ -127,24 +133,20 @@ impl Sealer {
         self.key().map(drop)
     }
 
-    fn key(&self) -> Result<LessSafeKey, Error> {
-        let bytes = match self.key.get() {
-            Some(k) => k,
-            None => {
-                let _loading = self.loading.locked();
-                match self.key.get() {
-                    Some(k) => k,
-                    None => {
-                        let k = match &self.file {
-                            Some(path) => load_or_create(path).map_err(|source| Error::Key { path: path.clone(), source })?,
-                            None => random_key()?,
-                        };
-                        self.key.get_or_init(|| k)
-                    }
-                }
-            }
+    fn key(&self) -> Result<&LessSafeKey, Error> {
+        if let Some(k) = self.key.get() {
+            return Ok(k);
+        }
+        let _loading = self.loading.locked();
+        if let Some(k) = self.key.get() {
+            return Ok(k);
+        }
+        let bytes = match &self.file {
+            Some(path) => load_or_create(path).map_err(|source| Error::Key { path: path.clone(), source })?,
+            None => random_key()?,
         };
-        Ok(LessSafeKey::new(UnboundKey::new(&AES_256_GCM, &bytes[..]).expect("a 32-byte key")))
+        let key = LessSafeKey::new(UnboundKey::new(&AES_256_GCM, &bytes[..]).expect("a 32-byte key"));
+        Ok(self.key.get_or_init(|| key))
     }
 
     pub fn seal(&self, field: Field, plain: &str) -> Result<String, Error> {
@@ -187,16 +189,40 @@ impl Sealer {
         stored.map(|s| self.open(field, s)).transpose()
     }
 
+    /// [stored] opened, or none (logged) when this key no longer opens it:
+    /// `NULL`, or `""` in a [`Field::required`] column. A key that cannot be
+    /// read is still an error.
+    pub fn open_or_none(&self, field: Field, stored: Option<&str>) -> Result<Option<String>, Error> {
+        match self.open_opt(field, stored) {
+            Err(Error::Unreadable(what)) => {
+                tracing::warn!("{what}: cannot be read with this monitor's credentials key; taken as none");
+                Ok(field.required.then(String::new))
+            }
+            other => other,
+        }
+    }
+
+    /// Seals what an older agent stored in clear. At startup, before anything
+    /// reads one. TODO: remove once every agent has started on a build that
+    /// seals.
+    pub async fn seal_legacy(&self, db: &SqlitePool) -> Result<(), Error> {
+        match self.seal_all(&mut *db.acquire().await?, "main").await? {
+            0 => {}
+            n => tracing::info!("Sealed {n} stored credentials"),
+        }
+        Ok(())
+    }
+
     /// Seals every value of [`FIELDS`] in [schema] still in clear: a
-    /// restored backup's, and (TODO: remove the startup call once every agent
-    /// has started on a build that seals) what an older agent stored.
+    /// restored backup's, and what an older agent stored ([`Self::seal_legacy`]).
     pub async fn seal_all(&self, conn: &mut SqliteConnection, schema: &str) -> Result<u64, Error> {
-        self.rewrite(conn, schema, |s| !s.starts_with(PREFIX), |f, v| self.seal(f, v)).await
+        self.rewrite(conn, schema, |s| !s.starts_with(PREFIX), |f, v| self.seal(f, v).map(Some)).await
     }
 
     /// Opens every sealed value of [`FIELDS`] in [schema]: a backup's copy.
+    /// One this key no longer opens goes as none ([`Self::open_or_none`]).
     pub async fn unseal_all(&self, conn: &mut SqliteConnection, schema: &str) -> Result<u64, Error> {
-        self.rewrite(conn, schema, |s| s.starts_with(PREFIX), |f, v| self.open(f, v)).await
+        self.rewrite(conn, schema, |s| s.starts_with(PREFIX), |f, v| self.open_or_none(f, Some(v))).await
     }
 
     async fn rewrite(
@@ -204,8 +230,9 @@ impl Sealer {
         conn: &mut SqliteConnection,
         schema: &str,
         pick: impl Fn(&str) -> bool,
-        map: impl Fn(Field, &str) -> Result<String, Error>,
+        map: impl Fn(Field, &str) -> Result<Option<String>, Error>,
     ) -> Result<u64, Error> {
+        use super::ident;
         let mut n = 0;
         for &f in FIELDS {
             let (s, t, c) = (ident(schema), ident(f.table), ident(f.column));
@@ -228,10 +255,6 @@ impl Sealer {
 
 fn aad(field: Field) -> Aad<String> {
     Aad::from(format!("{}.{}", field.table, field.column))
-}
-
-fn ident(name: &str) -> String {
-    format!("\"{}\"", name.replace('"', "\"\""))
 }
 
 fn random_key() -> Result<Zeroizing<[u8; KEY_LEN]>, Error> {
@@ -333,8 +356,8 @@ mod tests {
     async fn every_credential_column_is_sealed() {
         let db = sqlx::sqlite::SqlitePoolOptions::new().max_connections(1).connect("sqlite::memory:").await.unwrap();
         crate::db::database::MIGRATOR.run(&db).await.unwrap();
-        let columns: Vec<(String, String)> = sqlx::query_as(
-            "SELECT m.name, p.name FROM sqlite_master m JOIN pragma_table_info(m.name) p WHERE m.type = 'table' \
+        let columns: Vec<(String, String, bool)> = sqlx::query_as(
+            "SELECT m.name, p.name, p.\"notnull\" FROM sqlite_master m JOIN pragma_table_info(m.name) p WHERE m.type = 'table' \
              AND (p.name LIKE '%password%' OR p.name LIKE '%secret%' OR p.name LIKE '%token%' OR p.name LIKE '%credential%' \
              OR p.name = 'headers')",
         )
@@ -343,11 +366,13 @@ mod tests {
         .unwrap();
         // Hashes, and names of where a token comes from.
         let not_secret = ["password_hash", "password_changed_ms", "token_hash", "token_endpoint", "token_id"];
-        for (table, column) in columns.iter().filter(|(_, c)| !not_secret.contains(&c.as_str())) {
+        for (table, column, _) in columns.iter().filter(|(_, c, _)| !not_secret.contains(&c.as_str())) {
             assert!(FIELDS.iter().any(|f| f.table == table && f.column == column), "{table}.{column} is not in FIELDS");
         }
         for f in FIELDS {
-            assert!(columns.iter().any(|(t, c)| t == f.table && c == f.column), "{}.{} is no column", f.table, f.column);
+            assert!(columns.iter().any(|(t, c, _)| t == f.table && c == f.column), "{}.{} is no column", f.table, f.column);
+            let notnull = columns.iter().any(|(t, c, n)| t == f.table && c == f.column && *n);
+            assert_eq!(f.required, notnull, "{}.{}: required is NOT NULL", f.table, f.column);
         }
     }
 

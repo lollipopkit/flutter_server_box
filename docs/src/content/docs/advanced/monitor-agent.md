@@ -518,14 +518,17 @@ fields. Every type is listed in
 | `discord` | `webhook_url` | `content`, `username`, `avatar_url`, `thread_id` |
 | `ntfy` | `topic` | `server`, `title`, `message`, `priority`, `tags`, `click`, `icon`, `attach`, `delay`, `email`, `markdown`, `token`, `username`, `password` |
 
-- **Credentials from the environment**: a credential (`sc_key`, Bark `key`
-  and `cipher_key`, iOS `token`, a webhook header value, SMTP and ntfy
-  `password`, ntfy `token`, `bot_token`, `webhook_url`) may name an
-  environment variable as `${NAME}`, alone or inside the value
-  (`Authorization = "Bearer ${HA_TOKEN}"`). It is read when a notification is
-  sent, from the agent's environment or its `.env`; `config.toml` keeps the
-  reference. A channel whose variable is unset or empty is refused on save
-  and fails to send, naming the variable. Other settings are not expanded.
+- **Credentials from the environment**: in `config.toml`, a credential
+  (`sc_key`, Bark `key` and `cipher_key`, iOS `token`, a webhook header value,
+  SMTP and ntfy `password`, ntfy `token`, `bot_token`, `webhook_url`) may name
+  an environment variable as `${NAME}`, alone or inside the value
+  (`Authorization = "Bearer ${HA_TOKEN}"`); `$${` writes a literal `${`. It is
+  read when a notification is sent, from the agent's environment or its
+  `.env`; `config.toml` keeps the reference. A channel whose variable is unset
+  or empty is refused on save and fails to send, naming the variable. Other
+  settings are not expanded. A credential entered in the App or the web panel
+  is taken as typed, never as a reference: signing in does not give access to
+  the agent's environment.
 - **Bark**: with `cipher_key` set, the notification is encrypted with AES-CBC
   (a 16, 24 or 32 character key for AES-128/192/256). Enter the same key and
   algorithm under Push Encryption in the Bark app. Only the device key and the

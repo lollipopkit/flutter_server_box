@@ -382,6 +382,11 @@ pub async fn bearer(db: &SqlitePool, sealer: &Sealer, fetch: &Arc<dyn Fetch>, se
         ))
     })();
     let (client_secret, access, refresh) = match opened {
+        // Restored from a backup that could not carry it: signed out.
+        Ok((_, access, _)) if access.is_empty() => {
+            let _ = forget(db, server_id).await;
+            return None;
+        }
         Ok(o) => o,
         Err(e) => {
             tracing::warn!("MCP server {server_id}: its sign-in: {e}");

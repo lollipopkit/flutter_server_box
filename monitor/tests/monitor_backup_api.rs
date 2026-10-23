@@ -309,6 +309,14 @@ async fn backups_are_made_kept_and_restored() {
     assert_eq!(row.keep, 2);
     // The password is the backup's now, as a change: tokens from before go.
     assert!(changed().await > before);
+
+    // An agent configured by its environment alone has no config.toml: the
+    // backup's settings make one.
+    std::fs::remove_file("config.toml").unwrap();
+    let (status, body) = call(&srv, true, Method::POST, "/api/v1/monitor-backup/restore", Some(restore(&newest, second_pass))).await;
+    assert_eq!((status, &body["restored"]["config"]), (200, &json!(true)), "{body}");
+    let config: Config = toml::from_str(&std::fs::read_to_string("config.toml").unwrap()).unwrap();
+    assert_eq!(config.get_server().name.as_deref(), Some("box-a"));
 }
 
 /// Another monitor's backups and key in the same folder are never pruned; a

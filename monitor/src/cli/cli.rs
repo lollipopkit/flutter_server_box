@@ -167,12 +167,7 @@ async fn handle_serve(matches: &clap::ArgMatches) -> anyhow::Result<()> {
 
     let app_state = crate::api::server::AppState::new(config.clone(), db);
     app_state.sealer.ready()?;
-    // TODO: remove once every agent has started on a build that seals:
-    // credentials an older agent stored in clear.
-    match app_state.sealer.seal_all(&mut *app_state.db.acquire().await?, "main").await? {
-        0 => {}
-        n => tracing::info!("Sealed {n} stored credentials"),
-    }
+    app_state.sealer.seal_legacy(&app_state.db).await?;
     // Files kept beside the database: what an older agent kept in it moves
     // out, and what no row names any more (a write cut short) goes.
     crate::core::blobs::move_database_backups(&app_state.db, &app_state.blobs).await?;
@@ -302,6 +297,8 @@ async fn handle_backup(matches: &clap::ArgMatches) -> anyhow::Result<()> {
     let blobs = crate::core::blobs::Blobs::beside(&file);
     let sealer = db::sealed::Sealer::beside(&file);
     sealer.ready()?;
+    // As `serve` does: this may run before the service started on this build.
+    sealer.seal_legacy(&db).await?;
     let work = monitor_backup::MonitorBackup::new(Some(&file));
 
     // The folder named on the command line.
@@ -364,7 +361,7 @@ async fn handle_backup(matches: &clap::ArgMatches) -> anyhow::Result<()> {
             };
             let passphrase = secret(m.get_one::<String>("passphrase-env"), "Backup passphrase: ")?;
             let fetched = monitor_backup::fetch(&dav, &work, &name, &passphrase).await.map_err(refused)?;
-            let restored = monitor_backup::apply(&db, &sealer, &blobs, &tokio::sync::Mutex::new(()), &fetched).await.map_err(refused)?;
+            let restored = monitor_backup::apply(&db, &sealer, &blobs, &tokio::sync::Mutex::new(()), &fetched, false).await.map_err(refused)?;
             if let Some(n) = &named {
                 monitor_backup::adopt(&db, &sealer, &n.folder, &n.user, n.password.as_deref(), n.insecure, &fetched).await?;
             }

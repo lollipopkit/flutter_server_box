@@ -154,7 +154,8 @@ ssh_addr = "127.0.0.1:22"
 
 # Push notification configurations. A credential (a key, token, password,
 # header value, `webhook_url`) may be `${NAME}`, read from the environment or
-# `.env` at each send, e.g. `Authorization = "Bearer ${HA_TOKEN}"`.
+# `.env` at each send, e.g. `Authorization = "Bearer ${HA_TOKEN}"`; `$${` is
+# a literal `${`. Only here: one saved from the App or the panel is literal.
 [[push]]
 name = "webhook"
 push_type = "webhook"

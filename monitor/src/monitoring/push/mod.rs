@@ -198,28 +198,37 @@ fn resolve_with(push: &PushConfig, env: impl Fn(&str) -> Option<String>) -> std:
 }
 
 /// [text] with each `${NAME}` (`NAME`: a letter or `_`, then letters,
-/// digits, `_`) replaced from [env]; anything else, a lone `$` included,
-/// stays as written. Errs with the first NAME unset or empty.
+/// digits, `_`) replaced from [env], and `$${` written as `${`; anything
+/// else, a lone `$` included, stays as written. Errs with the first NAME
+/// unset or empty.
 fn expand(text: &str, env: impl Fn(&str) -> Option<String>) -> std::result::Result<String, String> {
     let mut out = String::with_capacity(text.len());
     let mut rest = text;
-    while let Some(at) = rest.find("${") {
+    while let Some(at) = rest.find('$') {
         out.push_str(&rest[..at]);
-        let after = &rest[at + 2..];
-        let name = after.split('}').next().filter(|n| after.len() > n.len());
-        match name.filter(|n| is_env_name(n)) {
-            Some(name) => {
-                out.push_str(&env(name).filter(|v| !v.is_empty()).ok_or_else(|| name.to_string())?);
-                rest = &after[name.len() + 1..];
-            }
-            None => {
-                out.push_str("${");
-                rest = after;
-            }
+        let after = &rest[at + 1..];
+        if let Some(r) = after.strip_prefix("${") {
+            out.push_str("${");
+            rest = r;
+        } else if let Some(r) = after.strip_prefix('{')
+            && let Some(end) = r.find('}')
+            && is_env_name(&r[..end])
+        {
+            let name = &r[..end];
+            out.push_str(&env(name).filter(|v| !v.is_empty()).ok_or_else(|| name.to_string())?);
+            rest = &r[end + 1..];
+        } else {
+            out.push('$');
+            rest = after;
         }
     }
     out.push_str(rest);
     Ok(out)
+}
+
+/// [text] as [expand] gives it back unchanged: each `${` escaped.
+pub(crate) fn literal(text: &str) -> String {
+    text.replace("${", "$${")
 }
 
 fn is_env_name(name: &str) -> bool {
@@ -681,6 +690,10 @@ mod tests {
         assert_eq!(expand("Bearer ${TOKEN}!", env).as_deref(), Ok("Bearer t0k!"));
         for literal in ["p$ss", "${", "${1A}", "${a-b}", "${TOKEN", "$TOKEN", "${}"] {
             assert_eq!(expand(literal, env).as_deref(), Ok(literal));
+        }
+        assert_eq!(expand("$${TOKEN}", env).as_deref(), Ok("${TOKEN}"), "escaped");
+        for text in ["a${TOKEN}b", "a$${b", "$", "$$", "${", "$$${X}", "x$"] {
+            assert_eq!(expand(&literal(text), |_| None).as_deref(), Ok(text), "{text}");
         }
         assert_eq!(expand("${UNSET}", env), Err("UNSET".to_string()));
         assert_eq!(expand("${EMPTY}", env), Err("EMPTY".to_string()), "empty is unset");

@@ -85,7 +85,8 @@ pub struct Settings {
     /// Each task is also a session file `pi` lists (`agent_mode::pi_file`).
     pub pi_sessions: bool,
     pub providers: Vec<Provider>,
-    /// Providers (built-in or above) that have a credential set.
+    /// Providers (built-in or above) that have a credential set: filled by
+    /// [`load_shown`] only, the one read that shows it.
     pub credentials: Vec<String>,
 }
 
@@ -202,14 +203,34 @@ pub async fn load(db: &SqlitePool) -> Result<Settings, sqlx::Error> {
         models: serde_json::from_str(&models).unwrap_or_default(),
     })
     .collect();
-    let credentials = sqlx::query_scalar::<_, String>("SELECT provider_id FROM agent_credential ORDER BY provider_id")
-        .fetch_all(db)
-        .await?;
     let (model, thinking_level, max_running, pi_sessions) = match row {
         Some((model, level, max, pi)) => (serde_json::from_str(&model).ok(), level, max, pi),
         None => (None, off(), DEFAULT_MAX_RUNNING, false),
     };
-    Ok(Settings { model, thinking_level, max_running, pi_sessions, providers, credentials })
+    Ok(Settings { model, thinking_level, max_running, pi_sessions, providers, credentials: Vec::new() })
+}
+
+/// [load] with the providers whose credential is set ([`readable`]).
+pub async fn load_shown(db: &SqlitePool, sealer: &Sealer) -> Result<Settings, sqlx::Error> {
+    let mut settings = load(db).await?;
+    settings.credentials = readable(db, sealer).await?.into_iter().map(|(id, _)| id).collect();
+    Ok(settings)
+}
+
+/// Every provider's credential, by id, but one this agent's key no longer
+/// opens: none, so the settings ask for it again.
+async fn readable(db: &SqlitePool, sealer: &Sealer) -> Result<Vec<(String, Value)>, sqlx::Error> {
+    let rows = sqlx::query_as::<_, (String, String)>("SELECT provider_id, credential FROM agent_credential ORDER BY provider_id")
+        .fetch_all(db)
+        .await?;
+    let mut out = Vec::new();
+    for (id, stored) in rows {
+        let opened = sealer.open_or_none(sealed::AGENT_CREDENTIAL, Some(&stored))?;
+        if let Some(c) = opened.and_then(|c| serde_json::from_str(&c).ok()) {
+            out.push((id, c));
+        }
+    }
+    Ok(out)
 }
 
 /// Replaces the configuration, in one transaction.
@@ -347,14 +368,14 @@ impl Credentials for DbCredentials {
                 .fetch_optional(&self.db)
                 .await
                 .map_err(|e| e.to_string())?;
-            let row = self.sealer.open_opt(sealed::AGENT_CREDENTIAL, row.as_deref()).map_err(|e| e.to_string())?;
+            let row = self.sealer.open_or_none(sealed::AGENT_CREDENTIAL, row.as_deref()).map_err(|e| e.to_string())?;
             Ok(row.and_then(|c| serde_json::from_str(&c).ok()))
         })
     }
 
     fn list(&self) -> BoxFuture<'_, Result<Vec<String>, String>> {
         Box::pin(async move {
-            sqlx::query_scalar("SELECT provider_id FROM agent_credential").fetch_all(&self.db).await.map_err(|e| e.to_string())
+            Ok(readable(&self.db, &self.sealer).await.map_err(|e| e.to_string())?.into_iter().map(|(id, _)| id).collect())
         })
     }
 
@@ -370,6 +391,25 @@ impl Credentials for DbCredentials {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn a_key_the_credentials_key_no_longer_opens_is_asked_for_again() {
+        let db = SqlitePool::connect("sqlite::memory:").await.unwrap();
+        crate::db::database::MIGRATOR.run(&db).await.unwrap();
+        let sealer = std::sync::Arc::new(Sealer::temporary());
+        let mut w = write(vec![]);
+        w.credentials.insert("openai".into(), Some("sk-1".into()));
+        store(&db, &sealer, &w).await.unwrap();
+        assert_eq!(load_shown(&db, &sealer).await.unwrap().credentials, ["openai"]);
+        let creds = DbCredentials { db: db.clone(), sealer: sealer.clone() };
+        assert_eq!(creds.read("openai").await.unwrap(), Some(serde_json::json!({ "type": "api_key", "key": "sk-1" })));
+
+        let lost = std::sync::Arc::new(Sealer::temporary());
+        assert!(load_shown(&db, &lost).await.unwrap().credentials.is_empty());
+        let creds = DbCredentials { db, sealer: lost };
+        assert_eq!(creds.read("openai").await.unwrap(), None);
+        assert!(creds.list().await.unwrap().is_empty());
+    }
 
     fn write(providers: Vec<Provider>) -> SettingsWrite {
         SettingsWrite {
