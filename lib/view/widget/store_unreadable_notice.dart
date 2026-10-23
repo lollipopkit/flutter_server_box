@@ -14,9 +14,9 @@ abstract final class StoreUnreadableNotice {
   static Future<void> showIfNeeded(BuildContext context) async {
     final result = StoreRecovery.result;
     if (result == null) return;
-    final (:err, :aside) = result;
+    final (:reason, :detail, :aside) = result;
 
-    final reason = switch (err.reason) {
+    final text = switch (reason) {
       StoreUnreadableReason.keyLost => l10n.storeUnreadableKeyLost,
       StoreUnreadableReason.keyRejected => l10n.storeUnreadableKeyRejected,
     };
@@ -27,16 +27,16 @@ abstract final class StoreUnreadableNotice {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(reason),
+            Text(text),
             UIs.height13,
             SelectableText(l10n.storeUnreadableKept(aside)),
             UIs.height13,
-            SelectableText('$err', style: UIs.textGrey),
+            SelectableText(detail, style: UIs.textGrey),
           ],
         ),
       ),
       actions: [
-        Btn.text(text: libL10n.copy, onTap: () => Pfs.copy('$err\n$aside')),
+        Btn.text(text: libL10n.copy, onTap: () => Pfs.copy('$detail\n$aside')),
         Btn.text(
           text: libL10n.restore,
           onTap: () {
@@ -47,5 +47,6 @@ abstract final class StoreUnreadableNotice {
         Btn.ok(),
       ],
     );
+    await StoreRecovery.acknowledge();
   }
 }

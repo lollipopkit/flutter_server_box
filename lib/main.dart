@@ -292,7 +292,7 @@ Future<void> _initData() async {
       // The vault's key does not open the database (#1780). The same reasoning,
       // except this file is the only copy: kept aside, not deleted, and the
       // reason is shown once there is a screen — see [StoreUnreadableNotice].
-      StoreRecovery.setAside(e as StoreUnreadableException, s);
+      await StoreRecovery.setAside(e as StoreUnreadableException, s);
     }
     await Stores.init();
   }
