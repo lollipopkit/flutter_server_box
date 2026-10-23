@@ -28,6 +28,11 @@ use server_box_monitor::core::config::{Config, StacksConfig};
 use server_box_monitor::stacks::proxy::{Hosts, Target};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
+/// Held by every test that has the agent probe Immich's default ports: the
+/// probe binds each one for a moment, so two at once each see the other's as
+/// taken.
+static IMMICH_PORTS: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+
 const SECRET: &str = "test-secret-that-is-long-enough-32ch";
 
 /// Answers from memory: the catalog's repositories, for tests.
@@ -135,6 +140,7 @@ async fn the_catalog_is_listed() {
 
 #[ntex::test]
 async fn deploying_asks_the_password_and_the_licence() {
+    let _ports = IMMICH_PORTS.lock().await;
     let (srv, _) = setup().await;
     let (status, _) = call(
         &srv,
@@ -167,6 +173,7 @@ async fn deploying_asks_the_password_and_the_licence() {
 
 #[ntex::test]
 async fn the_check_shows_what_deploying_would_do() {
+    let _ports = IMMICH_PORTS.lock().await;
     let (srv, _) = setup().await;
     let (status, body) = call(&srv, Method::POST, "/api/v1/stacks/futo.immich/check", Some(json!({ "settings": {} }))).await;
     assert_eq!(status, 200);
@@ -181,6 +188,7 @@ async fn the_check_shows_what_deploying_would_do() {
 
 #[ntex::test]
 async fn a_suggested_port_in_use_moves_and_a_chosen_one_is_refused() {
+    let _ports = IMMICH_PORTS.lock().await;
     let (srv, _) = setup().await;
     // Held here, or already in use on this machine: either way not free.
     let _held = std::net::TcpListener::bind(("0.0.0.0", 2283));
@@ -189,7 +197,10 @@ async fn a_suggested_port_in_use_moves_and_a_chosen_one_is_refused() {
     assert_eq!(status, 200, "{body}");
     let to = body["settings"]["port"].as_u64().unwrap();
     assert!((2284..=2383).contains(&to), "{body}");
-    assert_eq!(body["moved"], json!([{ "setting": "port", "from": 2283, "to": to }]));
+    // Only `port` is this test's: another default may be in use on the machine
+    // running it, and moves too.
+    let moved = body["moved"].as_array().unwrap();
+    assert!(moved.contains(&json!({ "setting": "port", "from": 2283, "to": to })), "{body}");
 
     let chosen = std::net::TcpListener::bind(("0.0.0.0", 0)).unwrap();
     let port = chosen.local_addr().unwrap().port();
