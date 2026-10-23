@@ -634,7 +634,7 @@
   "connectionTip": "兩個可以同時開啟。順序就是撥接的順序。",
   "transportNoneOn": "兩個都關閉了 —— 這台伺服器無法連線。",
   "thisDevice": "本機",
-  "localServerTip": "直接在本機執行狀態腳本讀取本機資訊，不使用 SSH 和 Monitor HTTP，兩者的設定會保留。",
+  "localServerTip": "直接在本機執行狀態腳本讀取本機資訊，不使用 SSH 和 Monitor 代理，兩者的設定會保留。",
   "localServerUnsupported": "目前平台無法將本機作為伺服器讀取。Linux、Windows 和 macOS DMG 版本支援。",
   "remoteDesktopIntro": "在應用程式內開啟伺服器的 RDP 或 VNC 桌面。連線經由伺服器的 SSH 連線或其 Monitor agent 轉送，桌面連接埠無需對網路開放。",
   "remoteDesktopIntroProfiles": "在伺服器的「遠端桌面」按鈕或「遠端桌面」分頁中，為每個桌面儲存一個設定檔。",

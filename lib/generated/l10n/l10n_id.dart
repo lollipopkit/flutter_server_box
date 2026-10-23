@@ -2401,7 +2401,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get localServerTip =>
-      'Membaca perangkat ini secara langsung dengan menjalankan skrip status di sini. SSH dan Monitor HTTP tidak digunakan, dan pengaturannya tetap disimpan.';
+      'Membaca perangkat ini secara langsung dengan menjalankan skrip status di sini. SSH dan agen monitor tidak digunakan, dan pengaturannya tetap disimpan.';
 
   @override
   String get localServerUnsupported =>

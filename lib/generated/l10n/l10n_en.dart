@@ -2405,7 +2405,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get localServerTip =>
-      'Reads this device directly, by running the status script here. SSH and Monitor HTTP are not used, and their settings are kept.';
+      'Reads this device directly, by running the status script here. SSH and Monitor Agent are not used, and their settings are kept.';
 
   @override
   String get localServerUnsupported =>
@@ -2435,7 +2435,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Off. The fields below are kept for when you turn it back on.';
 
   @override
-  String get monitorAgent => 'Monitor agent';
+  String get monitorAgent => 'Monitor Agent';
 
   @override
   String get plainHttpEditTip =>

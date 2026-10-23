@@ -2273,7 +2273,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get localServerTip =>
-      '상태 스크립트를 이 기기에서 실행해 직접 읽습니다. SSH와 Monitor HTTP는 사용하지 않으며 해당 설정은 유지됩니다.';
+      '상태 스크립트를 이 기기에서 실행해 직접 읽습니다. SSH와 Monitor 에이전트는 사용하지 않으며 해당 설정은 유지됩니다.';
 
   @override
   String get localServerUnsupported =>

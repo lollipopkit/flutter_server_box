@@ -673,7 +673,7 @@
   "connectionTip": "両方を同時に有効にできます。並び順が接続を試す順序です。",
   "transportNoneOn": "どちらも無効です — このサーバーには接続できません。",
   "thisDevice": "このデバイス",
-  "localServerTip": "ステータススクリプトをこのデバイス上で実行して直接読み取ります。SSH と Monitor HTTP は使用せず、その設定は保持されます。",
+  "localServerTip": "ステータススクリプトをこのデバイス上で実行して直接読み取ります。SSH と Monitor エージェントは使用せず、その設定は保持されます。",
   "localServerUnsupported": "このプラットフォームでは、このデバイスをサーバーとして読み取れません。Linux、Windows、macOS の DMG 版が対応しています。",
   "remoteDesktopIntro": "サーバーの RDP または VNC デスクトップをアプリ内で開きます。接続はサーバーの SSH 接続または Monitor エージェントを経由するため、デスクトップのポートをネットワークに公開する必要はありません。",
   "remoteDesktopIntroProfiles": "サーバーの「リモートデスクトップ」ボタン、または「リモートデスクトップ」タブから、デスクトップごとにプロファイルを保存します。",

@@ -2416,7 +2416,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get localServerTip =>
-      'Считывает данные этого устройства напрямую, запуская здесь скрипт состояния. SSH и Monitor HTTP не используются, их настройки сохраняются.';
+      'Считывает данные этого устройства напрямую, запуская здесь скрипт состояния. SSH и агент monitor не используются, их настройки сохраняются.';
 
   @override
   String get localServerUnsupported =>

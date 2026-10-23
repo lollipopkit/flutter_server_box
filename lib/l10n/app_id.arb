@@ -673,7 +673,7 @@
   "connectionTip": "Keduanya bisa aktif bersamaan. Urutannya adalah urutan pemanggilan.",
   "transportNoneOn": "Keduanya nonaktif — server ini tidak dapat dihubungi.",
   "thisDevice": "Perangkat ini",
-  "localServerTip": "Membaca perangkat ini secara langsung dengan menjalankan skrip status di sini. SSH dan Monitor HTTP tidak digunakan, dan pengaturannya tetap disimpan.",
+  "localServerTip": "Membaca perangkat ini secara langsung dengan menjalankan skrip status di sini. SSH dan agen monitor tidak digunakan, dan pengaturannya tetap disimpan.",
   "localServerUnsupported": "Platform ini tidak dapat membaca perangkat ini sebagai server. Linux, Windows, dan versi DMG macOS mendukungnya.",
   "remoteDesktopIntro": "Buka desktop RDP atau VNC sebuah server di dalam aplikasi. Koneksi melewati koneksi SSH server atau agen Monitor-nya, jadi port desktop tidak perlu dapat dijangkau dari jaringan.",
   "remoteDesktopIntroProfiles": "Simpan satu profil per desktop dari tombol Desktop jarak jauh pada server, atau dari tab Desktop jarak jauh.",

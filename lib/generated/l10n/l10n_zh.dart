@@ -2225,7 +2225,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get localServerTip =>
-      '直接在本机运行状态脚本读取本机信息，不使用 SSH 和 Monitor HTTP，二者的设置会保留。';
+      '直接在本机运行状态脚本读取本机信息，不使用 SSH 和 Monitor 代理，二者的设置会保留。';
 
   @override
   String get localServerUnsupported =>
@@ -8903,7 +8903,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get localServerTip =>
-      '直接在本機執行狀態腳本讀取本機資訊，不使用 SSH 和 Monitor HTTP，兩者的設定會保留。';
+      '直接在本機執行狀態腳本讀取本機資訊，不使用 SSH 和 Monitor 代理，兩者的設定會保留。';
 
   @override
   String get localServerUnsupported =>

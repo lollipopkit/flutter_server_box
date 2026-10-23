@@ -673,7 +673,7 @@
   "connectionTip": "Possono essere attivi entrambi. L'ordine è l'ordine in cui vengono contattati.",
   "transportNoneOn": "Sono entrambi disattivati: questo server non può essere connesso.",
   "thisDevice": "Questo dispositivo",
-  "localServerTip": "Legge direttamente questo dispositivo eseguendo qui lo script di stato. SSH e Monitor HTTP non vengono usati e le loro impostazioni vengono conservate.",
+  "localServerTip": "Legge direttamente questo dispositivo eseguendo qui lo script di stato. SSH e l'agente monitor non vengono usati e le loro impostazioni vengono conservate.",
   "localServerUnsupported": "Questa piattaforma non può leggere questo dispositivo come server. Linux, Windows e la versione DMG di macOS possono farlo.",
   "remoteDesktopIntro": "Apre il desktop RDP o VNC di un server nell’app. La connessione passa per la connessione SSH del server o per il suo agente Monitor, quindi la porta del desktop non deve essere raggiungibile dalla rete.",
   "remoteDesktopIntroProfiles": "Salva un profilo per ogni desktop dal pulsante Desktop remoto di un server o dalla scheda Desktop remoto.",

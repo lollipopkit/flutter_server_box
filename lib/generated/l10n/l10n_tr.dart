@@ -2392,7 +2392,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get localServerTip =>
-      'Durum betiğini burada çalıştırarak bu cihazı doğrudan okur. SSH ve Monitor HTTP kullanılmaz; ayarları korunur.';
+      'Durum betiğini burada çalıştırarak bu cihazı doğrudan okur. SSH ve Monitor aracısı kullanılmaz; ayarları korunur.';
 
   @override
   String get localServerUnsupported =>

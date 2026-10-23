@@ -667,7 +667,7 @@
   "connectionTip": "两个可以同时开启。顺序就是拨号的顺序。",
   "transportNoneOn": "两个都关闭了 —— 这台服务器无法连接。",
   "thisDevice": "本机",
-  "localServerTip": "直接在本机运行状态脚本读取本机信息，不使用 SSH 和 Monitor HTTP，二者的设置会保留。",
+  "localServerTip": "直接在本机运行状态脚本读取本机信息，不使用 SSH 和 Monitor 代理，二者的设置会保留。",
   "localServerUnsupported": "当前平台无法将本机作为服务器读取。Linux、Windows 和 macOS DMG 版本支持。",
   "remoteDesktopIntro": "在应用内打开服务器的 RDP 或 VNC 桌面。连接经由服务器的 SSH 连接或其 Monitor agent 转发，桌面端口无需对网络开放。",
   "remoteDesktopIntroProfiles": "在服务器的「远程桌面」按钮或「远程桌面」标签页中，为每个桌面保存一个配置。",

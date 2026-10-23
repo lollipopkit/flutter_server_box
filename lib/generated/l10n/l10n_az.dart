@@ -2407,7 +2407,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get localServerTip =>
-      'Status skriptini burada işlədərək bu cihazı birbaşa oxuyur. SSH və Monitor HTTP istifadə olunmur, onların ayarları saxlanılır.';
+      'Status skriptini burada işlədərək bu cihazı birbaşa oxuyur. SSH və Monitor agenti istifadə olunmur, onların ayarları saxlanılır.';
 
   @override
   String get localServerUnsupported =>

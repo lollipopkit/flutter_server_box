@@ -2413,7 +2413,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get localServerTip =>
-      'Зчитує цей пристрій напряму, запускаючи тут скрипт стану. SSH і Monitor HTTP не використовуються, їхні налаштування зберігаються.';
+      'Зчитує цей пристрій напряму, запускаючи тут скрипт стану. SSH і агент monitor не використовуються, їхні налаштування зберігаються.';
 
   @override
   String get localServerUnsupported =>

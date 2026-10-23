@@ -673,7 +673,7 @@
   "connectionTip": "Beide kunnen tegelijk aan staan. De volgorde is de volgorde waarin ze worden gebeld.",
   "transportNoneOn": "Beide staan uit — deze server kan niet worden verbonden.",
   "thisDevice": "Dit apparaat",
-  "localServerTip": "Leest dit apparaat rechtstreeks uit door het statusscript hier uit te voeren. SSH en Monitor HTTP worden niet gebruikt; hun instellingen blijven bewaard.",
+  "localServerTip": "Leest dit apparaat rechtstreeks uit door het statusscript hier uit te voeren. SSH en Monitor-agent worden niet gebruikt; hun instellingen blijven bewaard.",
   "localServerUnsupported": "Dit platform kan dit apparaat niet als server uitlezen. Linux, Windows en de macOS-DMG-versie kunnen dat wel.",
   "remoteDesktopIntro": "Opent het RDP- of VNC-bureaublad van een server in de app. De verbinding loopt via de SSH-verbinding van de server of via zijn Monitor-agent, dus de bureaubladpoort hoeft niet bereikbaar te zijn vanaf het netwerk.",
   "remoteDesktopIntroProfiles": "Sla per bureaublad een profiel op via de knop Extern bureaublad van een server of via het tabblad Extern bureaublad.",

@@ -2268,7 +2268,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get localServerTip =>
-      'ステータススクリプトをこのデバイス上で実行して直接読み取ります。SSH と Monitor HTTP は使用せず、その設定は保持されます。';
+      'ステータススクリプトをこのデバイス上で実行して直接読み取ります。SSH と Monitor エージェントは使用せず、その設定は保持されます。';
 
   @override
   String get localServerUnsupported =>

@@ -37,8 +37,28 @@ final class WindowControls {
     /// the sides, down for the top and bottom. All 0 while they are not.
     private(set) var corners: [Double] = [0, 0, 0, 0]
 
-    /// All three, as the channel sends them.
-    var state: [String: Any] { ["zones": zones, "bar": bar as Any? ?? NSNull(), "corners": corners] }
+    /// `[left, top, right, bottom, active]`: iPhone Duo's fold on the inner
+    /// display, a division reserved region — there whether the device is bent
+    /// (active, 1) or flat (0, and no width). Nil on a display without one.
+    private(set) var fold: [Double]?
+
+    /// `[left, top, right, bottom]`: where iPhone Duo puts a bar across the
+    /// top when it stands inside the top inset — beside the status bar and
+    /// camera rather than below them, as on the inner display in portrait.
+    /// The corner and the status bar beside it are reported in [zones]. Nil
+    /// everywhere else, and while [bar] is not.
+    private(set) var topBar: [Double]?
+
+    /// All five, as the channel sends them.
+    var state: [String: Any] {
+        [
+            "zones": zones,
+            "bar": bar as Any? ?? NSNull(),
+            "corners": corners,
+            "fold": fold as Any? ?? NSNull(),
+            "topBar": topBar as Any? ?? NSNull(),
+        ]
+    }
 
     /// Called on the main thread whenever [state] changes.
     var onChange: (([String: Any]) -> Void)?
@@ -61,19 +81,25 @@ final class WindowControls {
         if let probes, probes.superview === view { return }
         probes?.removeFromSuperview()
 
-        let container = ProbeContainer { [weak self] zones, bar, corners in
-            self?.update(zones, bar, corners)
+        let container = ProbeContainer { [weak self] zones, bar, corners, fold, topBar in
+            self?.update(zones, bar, corners, fold, topBar)
         }
         view.addSubview(container)
         container.pin(to: view)
         probes = container
     }
 
-    private func update(_ zones: [[Double]], _ bar: [Double]?, _ corners: [Double]) {
-        guard zones != self.zones || bar != self.bar || corners != self.corners else { return }
+    private func update(
+        _ zones: [[Double]], _ bar: [Double]?, _ corners: [Double], _ fold: [Double]?, _ topBar: [Double]?
+    ) {
+        guard zones != self.zones || bar != self.bar || corners != self.corners || fold != self.fold
+            || topBar != self.topBar
+        else { return }
         self.zones = zones
         self.bar = bar
         self.corners = corners
+        self.fold = fold
+        self.topBar = topBar
         onChange?(state)
     }
 }
@@ -86,11 +112,11 @@ final class WindowControls {
 /// and a resize is a `layoutSubviews` — the one notification UIKit gives.
 @available(iOS 26.0, *)
 private final class ProbeContainer: UIView {
-    private let report: ([[Double]], [Double]?, [Double]) -> Void
+    private let report: ([[Double]], [Double]?, [Double], [Double]?, [Double]?) -> Void
     private let horizontal = Probe()
     private let vertical = Probe()
 
-    init(report: @escaping ([[Double]], [Double]?, [Double]) -> Void) {
+    init(report: @escaping ([[Double]], [Double]?, [Double], [Double]?, [Double]?) -> Void) {
         self.report = report
         super.init(frame: .zero)
         isUserInteractionEnabled = false
@@ -148,7 +174,16 @@ private final class ProbeContainer: UIView {
             let down = view.edgeInsets(for: .safeArea(cornerAdaptation: .vertical))
             corners = [across.left, down.top, across.right, down.bottom].map { Double($0) }
         }
-        report(windowControls(in: view), bar, corners)
+        let top = bar == nil ? topBar(in: view) : nil
+        var zones = windowControls(in: view)
+        if let top {
+            // What the bar steps around on either side: the screen's corner,
+            // and the status bar and camera.
+            if top[0] > 0 { zones.append([0, 0, top[0], top[3]]) }
+            let width = Double(view.bounds.width)
+            if top[2] < width { zones.append([top[2], 0, width, top[3]]) }
+        }
+        report(zones, bar, corners, fold(in: view), top)
     }
 
     private func windowControls(in view: UIView) -> [[Double]] {
@@ -198,10 +233,57 @@ private final class ProbeContainer: UIView {
         return [x, top, x, bottom]
     }
 
+    /// The fold's division region, flat or bent; see [WindowControls.fold].
+    /// Asked with inactive regions included, through the method's own
+    /// signature: its options are an integer, not an object `perform` passes.
+    private func fold(in view: UIView) -> [Double]? {
+        let query = NSSelectorFromString("reservedRegionsOfKind:options:")
+        guard view.responds(to: query),
+              let kinds = NSClassFromString("UIViewReservedRegionKind") as AnyObject?,
+              let kind = kinds.perform(NSSelectorFromString("divisionRegionKind"))?.takeUnretainedValue()
+        else { return nil }
+        typealias Query = @convention(c) (AnyObject, Selector, AnyObject, UInt) -> Unmanaged<NSArray>
+        // `UIViewReservedRegionQueryOptionsIncludeInactive`.
+        let regions = unsafeBitCast(view.method(for: query), to: Query.self)(view, query, kind, 1)
+            .takeUnretainedValue() as? [NSObject] ?? []
+        guard let region = regions.first,
+              let frame = (region.value(forKey: "frame") as? NSValue)?.cgRectValue
+        else { return nil }
+        let active = (region.value(forKey: "active") as? NSNumber)?.boolValue == true
+        return [frame.minX, frame.minY, frame.maxX, frame.maxY, active ? 1 : 0].map { Double($0) }
+    }
+
+    /// Where a bar across the top goes, `[left, top, right, bottom]`, when
+    /// the system puts it inside the top inset: iPhone Duo's inner display in
+    /// portrait, where the status bar and camera keep only the top right
+    /// corner and the rest of that strip holds the bar. Nil where the bar goes
+    /// below the inset, as on every other iPhone.
+    private func topBar(in view: UIView) -> [Double]? {
+        guard let insets = barInsets(in: view, selector: "layoutRegionForBarOnEdge:extent:",
+                                     edge: UIRectEdge.top.rawValue, extent: Self.barExtent)
+        else { return nil }
+        let top = Double(insets.top)
+        let left = Double(insets.left)
+        let right = Double(view.bounds.width - insets.right)
+        guard top > 0, top + Double(Self.barExtent) / 2 < Double(view.safeAreaInsets.top), right > left
+        else { return nil }
+        return [left, top, right, top + Double(Self.barExtent)]
+    }
+
+    /// The height UIKit's own bars take.
+    private static let barExtent: CGFloat = 44
+
     /// `edgeInsetsForLayoutRegion:` of a bar of no width on the leading or
     /// trailing edge.
     private func barInsets(in view: UIView, leading: Bool) -> UIEdgeInsets? {
-        let make = NSSelectorFromString("layoutRegionForBarOnDirectionalEdge:extent:")
+        let edge: NSDirectionalRectEdge = leading ? .leading : .trailing
+        return barInsets(in: view, selector: "layoutRegionForBarOnDirectionalEdge:extent:", edge: edge.rawValue, extent: 0)
+    }
+
+    /// `edgeInsetsForLayoutRegion:` of a bar [extent] deep made by [selector]
+    /// on [edge] (a `UIRectEdge` or an `NSDirectionalRectEdge`).
+    private func barInsets(in view: UIView, selector: String, edge: UInt, extent: CGFloat) -> UIEdgeInsets? {
+        let make = NSSelectorFromString(selector)
         let measure = NSSelectorFromString("edgeInsetsForLayoutRegion:")
         guard let regions = NSClassFromString("UIViewLayoutRegion") as AnyObject?,
               regions.responds(to: make),
@@ -209,8 +291,7 @@ private final class ProbeContainer: UIView {
         else { return nil }
         typealias Make = @convention(c) (AnyObject, Selector, UInt, CGFloat) -> Unmanaged<AnyObject>
         typealias Measure = @convention(c) (AnyObject, Selector, AnyObject) -> UIEdgeInsets
-        let edge: NSDirectionalRectEdge = leading ? .leading : .trailing
-        let region = unsafeBitCast(regions.method(for: make), to: Make.self)(regions, make, edge.rawValue, 0)
+        let region = unsafeBitCast(regions.method(for: make), to: Make.self)(regions, make, edge, extent)
             .takeUnretainedValue()
         return unsafeBitCast(view.method(for: measure), to: Measure.self)(view, measure, region)
     }

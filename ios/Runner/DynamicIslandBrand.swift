@@ -14,7 +14,8 @@ import UIKit
 ///
 /// Portrait Dynamic Island devices only. In landscape the pill moves to the
 /// long edge, and a notch is both narrower and a different shape, so on either
-/// the label would sit in plain view instead of behind something.
+/// the label would sit in plain view instead of behind something. Where the
+/// system reports the pill (iOS 27.1), only where it reports one.
 final class DynamicIslandBrand {
     static let shared = DynamicIslandBrand()
 
@@ -153,23 +154,57 @@ private final class BrandViewController: UIViewController {
     override func viewWillLayoutSubviews() {
         super.viewWillLayoutSubviews()
 
-        let safeTop = view.safeAreaInsets.top
-        let hasIsland = safeTop >= Island.minSafeAreaTop
-        badge.isHidden = !hasIsland
-        guard hasIsland else { return }
+        guard let island = islandFrame() else {
+            badge.isHidden = true
+            return
+        }
+        badge.isHidden = false
 
-        let islandTop = safeTop - Island.bottomMargin - Island.height
         let text = (label.text ?? "") as NSString
         let textWidth = text.size(withAttributes: [.font: label.font as Any]).width
         let width = min(Badge.maxWidth, ceil(textWidth) + 2 * Badge.textPadding)
 
         badge.frame = CGRect(
-            x: ((view.bounds.width - width) / 2).rounded(),
-            y: (islandTop + (Island.height - Badge.height) / 2).rounded(),
+            x: (island.midX - width / 2).rounded(),
+            y: (island.midY - Badge.height / 2).rounded(),
             width: width,
             height: Badge.height
         )
         label.frame = badge.bounds.insetBy(dx: Badge.textPadding, dy: 0)
+    }
+
+    /// Where the pill is, or nil where there is none to hide behind.
+    ///
+    /// Asked of the system where it says (iOS 27.1, occlusion reserved
+    /// regions): the pill is the one centred across the screen. iPhone Duo's
+    /// inner display reserves its status bar and camera in a corner instead,
+    /// and a pill-sized guess from the inset put the label in plain view
+    /// between its tabs. Elsewhere, worked out from the inset as before.
+    private func islandFrame() -> CGRect? {
+        if let regions = occlusionRegions(), !regions.isEmpty {
+            return regions.first { abs($0.midX - view.bounds.midX) < 1 && $0.width < view.bounds.width / 2 }
+        }
+        let safeTop = view.safeAreaInsets.top
+        guard safeTop >= Island.minSafeAreaTop else { return nil }
+        let islandTop = safeTop - Island.bottomMargin - Island.height
+        return CGRect(
+            x: (view.bounds.width - Island.width) / 2,
+            y: islandTop,
+            width: Island.width,
+            height: Island.height
+        )
+    }
+
+    /// Frames of the view's occlusion reserved regions; nil before iOS 27.1.
+    /// Through the runtime, so a build against an older SDK compiles.
+    private func occlusionRegions() -> [CGRect]? {
+        let query = NSSelectorFromString("reservedRegionsOfKind:")
+        guard view.responds(to: query),
+              let kinds = NSClassFromString("UIViewReservedRegionKind") as AnyObject?,
+              let kind = kinds.perform(NSSelectorFromString("occlusionRegionKind"))?.takeUnretainedValue(),
+              let regions = view.perform(query, with: kind)?.takeUnretainedValue() as? [NSObject]
+        else { return nil }
+        return regions.compactMap { ($0.value(forKey: "frame") as? NSValue)?.cgRectValue }
     }
 }
 

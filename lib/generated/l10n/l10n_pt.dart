@@ -2415,7 +2415,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get localServerTip =>
-      'Lê este dispositivo diretamente, executando aqui o script de status. SSH e Monitor HTTP não são usados, e as suas configurações são mantidas.';
+      'Lê este dispositivo diretamente, executando aqui o script de status. SSH e o agente monitor não são usados, e as suas configurações são mantidas.';
 
   @override
   String get localServerUnsupported =>

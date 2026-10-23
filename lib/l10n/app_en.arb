@@ -3116,7 +3116,7 @@
   "@thisDevice": {
     "description": "User-facing label or message for this device."
   },
-  "localServerTip": "Reads this device directly, by running the status script here. SSH and Monitor HTTP are not used, and their settings are kept.",
+  "localServerTip": "Reads this device directly, by running the status script here. SSH and Monitor Agent are not used, and their settings are kept.",
   "@localServerTip": {
     "description": "Help text for the local server setting or action."
   },
@@ -3148,7 +3148,7 @@
   "@transportSectionOff": {
     "description": "User-facing label or message for transport section off."
   },
-  "monitorAgent": "Monitor agent",
+  "monitorAgent": "Monitor Agent",
   "@monitorAgent": {
     "description": "User-facing label or message for monitor agent."
   },

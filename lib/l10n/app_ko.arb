@@ -673,7 +673,7 @@
   "connectionTip": "둘 다 동시에 켤 수 있습니다. 순서가 곧 연결을 시도하는 순서입니다.",
   "transportNoneOn": "둘 다 꺼져 있습니다 — 이 서버에는 연결할 수 없습니다.",
   "thisDevice": "이 기기",
-  "localServerTip": "상태 스크립트를 이 기기에서 실행해 직접 읽습니다. SSH와 Monitor HTTP는 사용하지 않으며 해당 설정은 유지됩니다.",
+  "localServerTip": "상태 스크립트를 이 기기에서 실행해 직접 읽습니다. SSH와 Monitor 에이전트는 사용하지 않으며 해당 설정은 유지됩니다.",
   "localServerUnsupported": "이 플랫폼에서는 이 기기를 서버로 읽을 수 없습니다. Linux, Windows, macOS DMG 버전에서 지원됩니다.",
   "remoteDesktopIntro": "서버의 RDP 또는 VNC 데스크톱을 앱 안에서 엽니다. 연결은 서버의 SSH 연결이나 Monitor 에이전트를 거치므로 데스크톱 포트를 네트워크에 열어 둘 필요가 없습니다.",
   "remoteDesktopIntroProfiles": "서버의 원격 데스크톱 버튼이나 원격 데스크톱 탭에서 데스크톱마다 프로필을 저장합니다.",

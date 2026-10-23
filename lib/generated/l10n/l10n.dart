@@ -4141,7 +4141,7 @@ abstract class AppLocalizations {
   /// Help text for the local server setting or action.
   ///
   /// In en, this message translates to:
-  /// **'Reads this device directly, by running the status script here. SSH and Monitor HTTP are not used, and their settings are kept.'**
+  /// **'Reads this device directly, by running the status script here. SSH and Monitor Agent are not used, and their settings are kept.'**
   String get localServerTip;
 
   /// User-facing label or message for local server unsupported.
@@ -4189,7 +4189,7 @@ abstract class AppLocalizations {
   /// User-facing label or message for monitor agent.
   ///
   /// In en, this message translates to:
-  /// **'Monitor agent'**
+  /// **'Monitor Agent'**
   String get monitorAgent;
 
   /// Help text for the plain HTTP edit setting or action.

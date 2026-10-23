@@ -182,7 +182,9 @@ void main() {
             builder: (context) {
               app_locale.l10n = AppLocalizations.of(context)!;
               context.setLibL10n();
-              return const MonitorTabPage();
+              // A tab sits in the home page's `Scaffold`, whose Material
+              // the rail's buttons draw their ink on.
+              return const Scaffold(body: MonitorTabPage());
             },
           ),
         ),

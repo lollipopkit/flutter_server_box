@@ -2418,7 +2418,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get localServerTip =>
-      'Leest dit apparaat rechtstreeks uit door het statusscript hier uit te voeren. SSH en Monitor HTTP worden niet gebruikt; hun instellingen blijven bewaard.';
+      'Leest dit apparaat rechtstreeks uit door het statusscript hier uit te voeren. SSH en Monitor-agent worden niet gebruikt; hun instellingen blijven bewaard.';
 
   @override
   String get localServerUnsupported =>

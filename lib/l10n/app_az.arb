@@ -673,7 +673,7 @@
   "connectionTip": "Hər ikisi eyni anda açıq ola bilər. Sıra, onların yığılma sırasıdır.",
   "transportNoneOn": "Hər ikisi bağlıdır — bu serverə qoşulmaq mümkün deyil.",
   "thisDevice": "Bu cihaz",
-  "localServerTip": "Status skriptini burada işlədərək bu cihazı birbaşa oxuyur. SSH və Monitor HTTP istifadə olunmur, onların ayarları saxlanılır.",
+  "localServerTip": "Status skriptini burada işlədərək bu cihazı birbaşa oxuyur. SSH və Monitor agenti istifadə olunmur, onların ayarları saxlanılır.",
   "localServerUnsupported": "Bu platforma bu cihazı server kimi oxuya bilmir. Linux, Windows və macOS DMG versiyası dəstəkləyir.",
   "remoteDesktopIntro": "Serverin RDP və ya VNC masaüstünü tətbiqin içində açır. Bağlantı serverin SSH bağlantısı və ya Monitor agenti üzərindən keçir, ona görə masaüstü portunun şəbəkədən əlçatan olması lazım deyil.",
   "remoteDesktopIntroProfiles": "Hər masaüstü üçün profili serverdəki Uzaq masaüstü düyməsindən və ya Uzaq masaüstü tabından saxlayın.",
