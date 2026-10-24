@@ -110,6 +110,11 @@ class BmcNotifier extends _$BmcNotifier {
   /// left the card spinning until the timer fired a minute later.
   int? _refreshingIn;
 
+  /// Whether a power action is running, across rebuilds: a credential change
+  /// rebuilds this from a state without [BmcState.isPowering] while the
+  /// action's request and confirmation may still be going.
+  var _powering = false;
+
   @override
   BmcState build(Spi spi) {
     final cfg = spi.bmc;
@@ -170,7 +175,7 @@ class BmcNotifier extends _$BmcNotifier {
     unawaited(Future.microtask(refresh));
     _timer = Timer.periodic(_pollInterval, (_) => unawaited(refresh()));
 
-    return const BmcState(isBusy: true);
+    return BmcState(isBusy: true, isPowering: _powering);
   }
 
   /// Reads the machine once.
@@ -182,7 +187,7 @@ class BmcNotifier extends _$BmcNotifier {
     final client = _client;
     // `power` does not skip for a read, the other way round: it is what the
     // user asked for, and the reads it races are reads.
-    if (client == null || _refreshingIn == _generation || state.isPowering) {
+    if (client == null || _refreshingIn == _generation || _powering) {
       return;
     }
     final generation = _generation;
@@ -253,10 +258,10 @@ class BmcNotifier extends _$BmcNotifier {
     }
     // One at a time: two resets watched at once contradict each other, and
     // the first to finish would reopen polling under the second.
-    if (state.isPowering) return BmcPowerResult.failed;
+    if (_powering) return BmcPowerResult.failed;
 
     final before = state.powerState;
-    final generation = _generation;
+    _powering = true;
     state = state.copyWith(isPowering: true);
     try {
       // The intent, never the controller's address or its credentials. This is
@@ -291,8 +296,10 @@ class BmcNotifier extends _$BmcNotifier {
       );
       return confirmed ? BmcPowerResult.confirmed : BmcPowerResult.accepted;
     } finally {
-      // A rebuild already started from a state without it
-      if (generation == _generation) state = state.copyWith(isPowering: false);
+      _powering = false;
+      // A rebuild's state too, which started with the action still running;
+      // only a disposed provider has none to clear.
+      if (ref.mounted) state = state.copyWith(isPowering: false);
     }
   }
 

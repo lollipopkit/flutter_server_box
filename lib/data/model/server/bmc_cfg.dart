@@ -68,6 +68,8 @@ final class BmcCfg {
     if (parsed == null || parsed.scheme != 'https' || parsed.host.isEmpty) {
       return null;
     }
+    // `Uri` takes any number as a port
+    if (parsed.port > 65535) return null;
     if (parsed.hasQuery || parsed.hasFragment || parsed.userInfo.isNotEmpty) {
       return null;
     }

@@ -89,7 +89,9 @@ void main() {
     final sub = container.listen(bmcProvider(spi), (_, _) {});
     addTearDown(sub.close);
 
+    final deadline = DateTime.now().add(const Duration(seconds: 10));
     while (held.isEmpty) {
+      if (DateTime.now().isAfter(deadline)) fail('the first read never connected');
       await Future<void>.delayed(const Duration(milliseconds: 10));
     }
     (container.read(bmcCredentialProvider.notifier) as _Creds).rotate('q');

@@ -143,6 +143,7 @@ void main() {
       for (final addr in [
         'https://10.0.0.9',
         'https://bmc.lan:8443/',
+        'https://10.0.0.9:65536',
         'https://[fe80::1]',
         'https://h/prefix',
         'http://10.0.0.9',
