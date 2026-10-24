@@ -1026,8 +1026,13 @@ extension _Init on SSHPageState {
   /// way. The session only while this page holds it: once the page is gone it
   /// was closed, handed on or left to `onLeave`, and what its new holder bound
   /// is not this reconnect's to end.
+  ///
+  /// Cancelled, it does not wait on a ping: the user has stopped waiting, and
+  /// a link that never answers would hold the result for the whole timeout.
   Future<void> _failReconnect({ShellSession? unbound}) async {
-    final alive = mounted && await _answers(_backend);
+    final alive =
+        mounted &&
+        (_reconnectCancelled ? _backend?.isClosed == false : await _answers(_backend));
     if (mounted) {
       _sess.dropBackend(alive: alive, unbound: unbound);
       return;
