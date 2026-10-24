@@ -2,6 +2,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/utils/jump_chain.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_key_unlock.dart';
+import 'package:server_box/data/model/server/host_cert_authority.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
@@ -235,6 +236,13 @@ class SshTransferCreds {
       Loggers.app.warning('Failed to load SSH known host fingerprints', e, s);
       knownHostFingerprints = null;
     }
+    // Read here for the same reason: the isolate has no store to read them.
+    try {
+      hostCertAuthorities = Stores.setting.sshHostCertAuthorities.get();
+    } catch (e, s) {
+      Loggers.app.warning('Failed to load SSH host certificate authorities', e, s);
+      hostCertAuthorities = null;
+    }
   }
 
   /// [resolvePrivateKeys] for a hop, or null if it could not be had.
@@ -259,6 +267,8 @@ class SshTransferCreds {
   Map<String, String>? privateKeysByKeyId;
 
   Map<String, String>? knownHostFingerprints;
+
+  List<HostCertAuthority>? hostCertAuthorities;
 
   /// Opens any key in this bundle that is stored encrypted.
   ///

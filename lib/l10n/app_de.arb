@@ -1690,5 +1690,8 @@
   "storeUnreadableKeyRejected": "Der Schlüssel im Schlüsselspeicher des Systems öffnet die Daten von ServerBox nicht: Sie wurden mit einem anderen Schlüssel verschlüsselt, oder die Datei ist beschädigt. ServerBox wurde ohne Daten gestartet.",
   "storeUnreadableKept": "Die alte Datei liegt weiterhin unter:\n{path}\nStelle ein Backup wieder her, um deine Server zurückzubekommen.",
   "storeKeyLostAsk": "Der Schlüssel, mit dem die Daten von ServerBox verschlüsselt sind, ist nicht im Schlüsselspeicher des Systems. Ist der Schlüsselspeicher oder Schlüsselbund nur gerade nicht verfügbar, etwa noch nicht entsperrt, versuche es erneut. Andernfalls kann ServerBox ohne Daten starten; die alte Datei bleibt erhalten.",
-  "storeKeyLostStartEmpty": "Ohne Daten starten"
+  "storeKeyLostStartEmpty": "Ohne Daten starten",
+  "hostCertAuthorities": "Host-Zertifizierungsstellen",
+  "hostCertAuthoritiesTip": "Ein Host, dessen Zertifikat eine dieser Stellen signiert hat, wird ohne Nachfrage vertraut, wie bei OpenSSHs @cert-authority; andere Hosts werden wie bisher bei der ersten Verbindung abgefragt. Hosts sind kommagetrennte Muster mit * und ?, ! schließt aus; ein anderer Port als 22 wird als [host]:port verglichen.",
+  "hostCertAuthorityInvalid": "Kein unterstützter öffentlicher SSH-Schlüssel (ssh-ed25519, ssh-rsa oder ecdsa-sha2-*)"
 }

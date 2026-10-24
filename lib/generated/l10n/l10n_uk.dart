@@ -6046,4 +6046,15 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get storeKeyLostStartEmpty => 'Запустити без даних';
+
+  @override
+  String get hostCertAuthorities => 'Центри сертифікації хостів';
+
+  @override
+  String get hostCertAuthoritiesTip =>
+      'Хосту, сертифікат якого підписав один із них, довіряють без запитань, як з @cert-authority в OpenSSH; про інші хости, як і раніше, питають під час першого підключення. Хости — шаблони через кому з * і ?, ! виключає; порт, відмінний від 22, порівнюється як [host]:port.';
+
+  @override
+  String get hostCertAuthorityInvalid =>
+      'Непідтримуваний відкритий ключ SSH (ssh-ed25519, ssh-rsa або ecdsa-sha2-*)';
 }

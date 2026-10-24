@@ -15,6 +15,7 @@ import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/core/utils/ssh_config.dart';
 import 'package:server_box/core/utils/ssh_key_unlock.dart';
 import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/server/host_cert_authority.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/res/store.dart';
@@ -394,6 +395,9 @@ Future<SSHClient> genClient(
   /// Handles keyboard-interactive authentication prompts.
   SSHKeyboardInteractiveHandler? onKeyboardInteractive,
   Map<String, String>? knownHostFingerprints,
+
+  /// Preferred in isolate mode; otherwise from [Stores.setting].
+  List<HostCertAuthority>? hostCertAuthorities,
   HostKeyPersistCallback? onHostKeyAccepted,
   Future<bool> Function(HostKeyPromptInfo info)? onHostKeyPrompt,
   Set<String>? visitedServerIds,
@@ -479,8 +483,10 @@ Future<SSHClient> genClient(
   );
   final hostKeyPersist = onHostKeyAccepted ?? persistHostKeyFingerprint;
   final hostKeyPrompt = onHostKeyPrompt ?? showHostKeyPrompt;
+  final authorities = hostCertAuthorities ?? _loadHostCertAuthorities();
 
   String? alterUser;
+  String? alterHost;
 
   final socket =
       await () async {
@@ -525,6 +531,7 @@ Future<SSHClient> genClient(
                 timeout: timeout,
                 onKeyboardInteractive: onKeyboardInteractive,
                 knownHostFingerprints: hostKeyCache,
+                hostCertAuthorities: authorities,
                 onHostKeyAccepted: hostKeyPersist,
                 onHostKeyPrompt: hostKeyPrompt,
                 visitedServerIds: {...chainVisitedServerIds},
@@ -588,6 +595,7 @@ Future<SSHClient> genClient(
           try {
             final res = ssh.parseAlterUrl();
             alterUser = res.$2;
+            alterHost = res.$1;
             return await SSHSocket.connect(res.$1, res.$3, timeout: timeout);
           } catch (e) {
             Loggers.app.warning('genClient alterUrl', e);
@@ -625,6 +633,14 @@ Future<SSHClient> genClient(
         persistCallback: hostKeyPersist,
         prompt: hostKeyPrompt,
       ),
+      // Matched on the host as configured, as `known_hosts` is; the name it
+      // was reached by through `alterUrl` may be what a certificate lists.
+      hostCertificateTrust: HostCertAuthority.trustFor(
+        authorities,
+        host: ssh.ip,
+        port: ssh.port,
+        alsoKnownAs: [?alterHost],
+      ),
     );
     if (Diag.enabled) {
       Diag.crumb(SbDiag.server, 'ssh connect ok', data: {'via': via});
@@ -652,6 +668,7 @@ Future<SSHClient> _authenticatedClient({
   required void Function(GenSSHClientStatus)? onStatus,
   required SSHKeyboardInteractiveHandler? onKeyboardInteractive,
   required HostKeyVerifier hostKeyVerifier,
+  required SSHHostCertificateTrust? hostCertificateTrust,
 }) async {
   SSHClient passwordClient() {
     onStatus?.call(GenSSHClientStatus.pwd);
@@ -663,6 +680,7 @@ Future<SSHClient> _authenticatedClient({
           ? null
           : (request) => onKeyboardInteractive(spi, request),
       onVerifyHostKey: hostKeyVerifier.call,
+      hostCertificateTrust: hostCertificateTrust,
       algorithms: SshAlgorithms.of(ssh),
       handshakeTimeout: timeout,
       authTimeout: timeout,
@@ -754,6 +772,7 @@ Future<SSHClient> _authenticatedClient({
         ? null
         : (request) => onKeyboardInteractive(spi, request),
     onVerifyHostKey: hostKeyVerifier.call,
+    hostCertificateTrust: hostCertificateTrust,
     algorithms: SshAlgorithms.of(ssh),
     handshakeTimeout: timeout,
     authTimeout: timeout,
@@ -956,6 +975,15 @@ class HostKeyVerifier {
       'Updated stored SSH host key for ${spi.name} ($keyType) after user confirmation.',
     );
     return true;
+  }
+}
+
+List<HostCertAuthority> _loadHostCertAuthorities() {
+  try {
+    return Stores.setting.sshHostCertAuthorities.get();
+  } catch (e, stack) {
+    Loggers.app.warning('Load SSH host certificate authorities failed', e, stack);
+    return const [];
   }
 }
 

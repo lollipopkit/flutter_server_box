@@ -6089,4 +6089,15 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get storeKeyLostStartEmpty => 'Iniciar sin datos';
+
+  @override
+  String get hostCertAuthorities => 'Autoridades de certificación de host';
+
+  @override
+  String get hostCertAuthoritiesTip =>
+      'Se confía sin preguntar en un host cuyo certificado haya firmado una de estas, como con @cert-authority de OpenSSH; por los demás hosts se pregunta en la primera conexión, como antes. Los hosts son patrones separados por comas con * y ?, y ! para excluir; un puerto distinto de 22 se compara como [host]:port.';
+
+  @override
+  String get hostCertAuthorityInvalid =>
+      'No es una clave pública SSH compatible (ssh-ed25519, ssh-rsa o ecdsa-sha2-*)';
 }

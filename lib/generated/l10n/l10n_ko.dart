@@ -5734,4 +5734,15 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get storeKeyLostStartEmpty => '데이터 없이 시작';
+
+  @override
+  String get hostCertAuthorities => '호스트 인증서 발급 기관';
+
+  @override
+  String get hostCertAuthoritiesTip =>
+      '이 기관이 서명한 인증서를 가진 호스트는 확인 없이 신뢰됩니다(OpenSSH의 @cert-authority와 동일). 다른 호스트는 이전처럼 첫 연결 시 확인합니다. 호스트는 쉼표로 구분한 패턴이며 * 와 ? 를 쓸 수 있고 ! 로 제외합니다. 22가 아닌 포트는 [host]:port 로 대조합니다.';
+
+  @override
+  String get hostCertAuthorityInvalid =>
+      '지원하지 않는 SSH 공개 키입니다(ssh-ed25519, ssh-rsa 또는 ecdsa-sha2-*)';
 }

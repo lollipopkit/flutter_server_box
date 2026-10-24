@@ -10,6 +10,7 @@ import 'package:server_box/data/model/app/motion.dart';
 import 'package:server_box/data/model/app/server_sort.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/app/tray.dart';
+import 'package:server_box/data/model/server/host_cert_authority.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/res/default.dart';
 import 'package:server_box/data/store/field_prop.dart';
@@ -148,6 +149,20 @@ class SettingStore extends SqliteStore with ThemeSettings {
       }
       return <String, String>{};
     },
+  );
+
+  /// Certificate authorities trusted to sign host keys, as OpenSSH's
+  /// `@cert-authority` lines — see [HostCertAuthority].
+  late final sshHostCertAuthorities = listProperty<HostCertAuthority>(
+    'sshHostCertAuthorities',
+    fromObj: (raw) => raw is List
+        ? [
+            for (final item in raw)
+              if (item is Map)
+                HostCertAuthority.fromJson(Map<String, dynamic>.from(item)),
+          ]
+        : null,
+    toObj: (list) => list?.map((ca) => ca.toJson()).toList(),
   );
 
   /// Which profile a terminal opens in, by `LinuxProfile.id`.

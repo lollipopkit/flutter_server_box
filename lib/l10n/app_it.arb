@@ -1690,5 +1690,8 @@
   "storeUnreadableKeyRejected": "La chiave nell'archivio chiavi del sistema non apre i dati di ServerBox: sono stati cifrati con un'altra chiave, oppure il file è danneggiato. ServerBox è stato avviato senza dati.",
   "storeUnreadableKept": "Il file precedente è conservato in:\n{path}\nRipristina un backup per recuperare i tuoi server.",
   "storeKeyLostAsk": "La chiave che cifra i dati di ServerBox non è nell'archivio chiavi di sistema. Se l'archivio chiavi o il portachiavi è solo temporaneamente non disponibile, ad esempio non ancora sbloccato, riprova. Altrimenti ServerBox può avviarsi senza dati; il vecchio file viene conservato.",
-  "storeKeyLostStartEmpty": "Avvia senza dati"
+  "storeKeyLostStartEmpty": "Avvia senza dati",
+  "hostCertAuthorities": "Autorità di certificazione host",
+  "hostCertAuthoritiesTip": "Un host il cui certificato è firmato da una di queste è considerato attendibile senza chiedere, come con @cert-authority di OpenSSH; per gli altri host si chiede alla prima connessione, come prima. Gli host sono modelli separati da virgole con * e ?, e ! per escludere; una porta diversa da 22 si confronta come [host]:port.",
+  "hostCertAuthorityInvalid": "Non è una chiave pubblica SSH supportata (ssh-ed25519, ssh-rsa o ecdsa-sha2-*)"
 }

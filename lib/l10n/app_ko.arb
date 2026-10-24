@@ -1690,5 +1690,8 @@
   "storeUnreadableKeyRejected": "시스템 키 저장소의 키로 ServerBox 데이터를 열 수 없습니다. 데이터가 다른 키로 암호화되었거나 파일이 손상되었습니다. ServerBox가 빈 데이터로 시작되었습니다.",
   "storeUnreadableKept": "이전 파일은 다음 위치에 보관되어 있습니다:\n{path}\n백업을 복원하면 서버를 되찾을 수 있습니다.",
   "storeKeyLostAsk": "ServerBox 데이터를 암호화하는 키가 시스템 키 저장소에 없습니다. 키 저장소나 키링을 일시적으로 사용할 수 없는 경우(예: 아직 잠금 해제되지 않음) 다시 시도하세요. 그렇지 않으면 데이터 없이 시작할 수 있으며, 이전 파일은 보존됩니다.",
-  "storeKeyLostStartEmpty": "데이터 없이 시작"
+  "storeKeyLostStartEmpty": "데이터 없이 시작",
+  "hostCertAuthorities": "호스트 인증서 발급 기관",
+  "hostCertAuthoritiesTip": "이 기관이 서명한 인증서를 가진 호스트는 확인 없이 신뢰됩니다(OpenSSH의 @cert-authority와 동일). 다른 호스트는 이전처럼 첫 연결 시 확인합니다. 호스트는 쉼표로 구분한 패턴이며 * 와 ? 를 쓸 수 있고 ! 로 제외합니다. 22가 아닌 포트는 [host]:port 로 대조합니다.",
+  "hostCertAuthorityInvalid": "지원하지 않는 SSH 공개 키입니다(ssh-ed25519, ssh-rsa 또는 ecdsa-sha2-*)"
 }

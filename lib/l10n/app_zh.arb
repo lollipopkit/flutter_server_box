@@ -1690,5 +1690,8 @@
   "storeUnreadableKeyRejected": "系统密钥库中的密钥无法打开 ServerBox 的数据：数据由其他密钥加密，或文件已损坏。ServerBox 以空数据启动。",
   "storeUnreadableKept": "旧文件保留在：\n{path}\n恢复备份即可找回服务器。",
   "storeKeyLostAsk": "系统密钥库中没有用于加密 ServerBox 数据的密钥。如果密钥库或密钥环只是暂时不可用（例如尚未解锁），请重试。否则可以以空数据启动，旧文件会保留。",
-  "storeKeyLostStartEmpty": "以空数据启动"
+  "storeKeyLostStartEmpty": "以空数据启动",
+  "hostCertAuthorities": "主机证书颁发机构",
+  "hostCertAuthoritiesTip": "由这些 CA 签发证书的主机将直接被信任，不再询问，等同于 OpenSSH 的 @cert-authority；其他主机仍在首次连接时询问。主机为逗号分隔的匹配规则，支持 * 和 ?，以 ! 排除；非 22 端口按 [host]:port 匹配。",
+  "hostCertAuthorityInvalid": "不是支持的 SSH 公钥（ssh-ed25519、ssh-rsa 或 ecdsa-sha2-*）"
 }

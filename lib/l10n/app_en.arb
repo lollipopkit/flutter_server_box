@@ -7827,5 +7827,17 @@
   "storeKeyLostStartEmpty": "Start with no data",
   "@storeKeyLostStartEmpty": {
     "description": "Button: set the unreadable database aside and start the app with no data."
+  },
+  "hostCertAuthorities": "Host certificate authorities",
+  "@hostCertAuthorities": {
+    "description": "Settings row: the list of SSH certificate authorities trusted to sign host keys."
+  },
+  "hostCertAuthoritiesTip": "A host whose certificate one of these signed is trusted without asking, as OpenSSH's @cert-authority; other hosts are asked about on first connection, as before. Hosts are comma-separated patterns with * and ?, and ! to exclude; a port other than 22 is matched as [host]:port.",
+  "@hostCertAuthoritiesTip": {
+    "description": "Explains what a trusted host certificate authority does and the host pattern syntax."
+  },
+  "hostCertAuthorityInvalid": "Not a supported SSH public key (ssh-ed25519, ssh-rsa or ecdsa-sha2-*)",
+  "@hostCertAuthorityInvalid": {
+    "description": "Error when the pasted text is not a supported SSH public key."
   }
 }

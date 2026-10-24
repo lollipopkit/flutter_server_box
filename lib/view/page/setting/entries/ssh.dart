@@ -17,6 +17,7 @@ extension _SSH on _AppSettingsPageState {
         _buildSSHVirtualKeyAutoOff(),
         _buildProgramStatusAlerts(),
         _buildTermMetricsBar(),
+        _buildHostCertAuthorities(),
       ]),
       SettingsGroup(libL10n.theme, [
         _buildTermTheme(),
@@ -662,6 +663,114 @@ extension _SSH on _AppSettingsPageState {
         ),
         actions: Btn.ok(onTap: onSave).toList,
       );
+    });
+  }
+
+  SettingsRow _buildHostCertAuthorities() {
+    final label = l10n.hostCertAuthorities;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(Icons.verified_user_outlined),
+        title: TipText(label, l10n.hostCertAuthoritiesTip),
+        trailing: _setting.sshHostCertAuthorities.listenable().listenVal(
+          (list) => Text('${list.length}', style: UIs.text15),
+        ),
+        onTap: _showHostCertAuthorities,
+      ),
+      keywords: 'ssh certificate ca cert-authority known_hosts',
+    );
+  }
+
+  Future<void> _showHostCertAuthorities() async {
+    final prop = _setting.sshHostCertAuthorities;
+    await context.showRoundDialog(
+      title: l10n.hostCertAuthorities,
+      child: SizedBox(
+        width: 480,
+        child: prop.listenable().listenVal((list) {
+          if (list.isEmpty) {
+            return Text(libL10n.empty, style: UIs.textGrey);
+          }
+          return ListView(
+            shrinkWrap: true,
+            children: [
+              for (final ca in list)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(_hostCertAuthorityLabel(ca)),
+                  subtitle: Text(ca.hosts, style: UIs.textGrey),
+                  trailing: IconButton(
+                    tooltip: libL10n.delete,
+                    icon: const Icon(Icons.delete_outline),
+                    onPressed: () => prop.put([...list]..remove(ca)),
+                  ),
+                ),
+            ],
+          );
+        }),
+      ),
+      actions: [
+        Btn.text(text: libL10n.add, onTap: _addHostCertAuthority),
+        Btn.ok(),
+      ],
+    );
+  }
+
+  /// The key's type and comment, which is how a person tells two apart.
+  String _hostCertAuthorityLabel(HostCertAuthority ca) {
+    final parts = ca.publicKey.trim().split(RegExp(r'\s+'));
+    return [parts.first, ...parts.skip(2)].join(' ');
+  }
+
+  Future<void> _addHostCertAuthority() async {
+    withTextFieldController((keyCtrl) async {
+      withTextFieldController((hostsCtrl) async {
+        hostsCtrl.text = '*';
+        final error = ValueNotifier<String?>(null);
+        void onSave() {
+          final ca = HostCertAuthority(
+            publicKey: keyCtrl.text.trim(),
+            hosts: hostsCtrl.text.trim().isEmpty ? '*' : hostsCtrl.text.trim(),
+          );
+          if (ca.key == null) {
+            error.value = l10n.hostCertAuthorityInvalid;
+            return;
+          }
+          final prop = _setting.sshHostCertAuthorities;
+          prop.put([...prop.get(), ca]);
+          context.popDialog();
+        }
+
+        await context.showRoundDialog(
+          title: libL10n.add,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              error.listenVal(
+                (text) => Input(
+                  controller: keyCtrl,
+                  autoFocus: true,
+                  label: libL10n.key,
+                  hint: 'ssh-ed25519 AAAA... ca@example.com',
+                  maxLines: 3,
+                  suggestion: false,
+                  errorText: text,
+                ),
+              ),
+              Input(
+                controller: hostsCtrl,
+                label: libL10n.host,
+                hint: '*.example.com,!bastion.example.com',
+                suggestion: false,
+                onSubmitted: (_) => onSave(),
+              ),
+            ],
+          ),
+          actions: Btn.ok(onTap: onSave).toList,
+        );
+        error.dispose();
+      });
     });
   }
 }
