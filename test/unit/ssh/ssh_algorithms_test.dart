@@ -32,12 +32,30 @@ void main() {
 
   test('which no longer contains the retired spellings', () {
     expect(names(modern.hostkey), isNot(contains('ssh-rsa')));
+    expect(names(modern.hostkey), isNot(contains('ssh-rsa-cert-v01@openssh.com')));
     expect(
       names(modern.kex),
       isNot(contains('diffie-hellman-group14-sha1')),
     );
     expect(names(modern.cipher), isNot(contains('aes256-cbc')));
     expect(names(modern.mac), isNot(contains('hmac-sha1')));
+  });
+
+  // #1783: a server whose only host key is a certificate.
+  test('host certificates are offered, before the keys they certify', () {
+    final hostkey = names(modern.hostkey);
+    expect(
+      hostkey,
+      containsAll(const [
+        'ssh-ed25519-cert-v01@openssh.com',
+        'ecdsa-sha2-nistp256-cert-v01@openssh.com',
+        'rsa-sha2-512-cert-v01@openssh.com',
+      ]),
+    );
+    expect(
+      hostkey.indexOf('ssh-ed25519-cert-v01@openssh.com'),
+      lessThan(hostkey.indexOf('ssh-ed25519')),
+    );
   });
 
   test('opting in appends them after the modern ones', () {
@@ -62,6 +80,7 @@ void main() {
     // The host key that motivated this is last, so it is only reached when the
     // server offers nothing newer.
     expect(names(offered.hostkey).last, 'ssh-rsa');
+    expect(names(offered.hostkey), contains('ssh-rsa-cert-v01@openssh.com'));
     expect(
       names(offered.kex),
       containsAll(const [

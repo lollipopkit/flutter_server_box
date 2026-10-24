@@ -51,7 +51,8 @@ SSHAlgorithms _withLegacyAlgorithms() {
       SSHKexType.dh14Sha1,
       SSHKexType.dh1Sha1,
     ],
-    hostkey: [...modern.hostkey, SSHHostkeyType.rsaSha1],
+    // The SHA-1 certificate before the SHA-1 key, as OpenSSH orders them.
+    hostkey: [...modern.hostkey, SSHHostkeyType.rsaSha1Cert, SSHHostkeyType.rsaSha1],
     cipher: [
       ...modern.cipher,
       SSHCipherType.aes256cbc,
