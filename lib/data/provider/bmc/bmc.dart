@@ -169,7 +169,9 @@ class BmcNotifier extends _$BmcNotifier {
     } on BmcError catch (e) {
       return BmcState(failure: e.failure, failureDetail: e.detail);
     }
-    unawaited(refresh());
+    // Once this has returned its state: `refresh` reads `state` before its
+    // first `await`, and reading it inside `build` throws (#1788).
+    unawaited(Future.microtask(refresh));
     _timer = Timer.periodic(_pollInterval, (_) => unawaited(refresh()));
 
     return const BmcState(isBusy: true);
@@ -186,9 +188,8 @@ class BmcNotifier extends _$BmcNotifier {
     final generation = _generation;
     _refreshing = true;
 
-    if (!state.isBusy) state = state.copyWith(isBusy: true);
-
     try {
+      if (!state.isBusy) state = state.copyWith(isBusy: true);
       final snapshot = await client.snapshot(known: state.topology);
       if (generation != _generation) return;
       if (snapshot.sensorsTruncated) {
