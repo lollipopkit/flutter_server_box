@@ -392,7 +392,7 @@ extension _Init on SSHPageState {
         }
 
         try {
-          if (_backend?.isClosed == true) _sess.resetAfterFailedOpen();
+          if (_backend?.isClosed == true) _sess.dropBackend(alive: false);
           if (_backend == null) await _connectBackend();
           if (!mounted) {
             _sess.close();
@@ -407,7 +407,7 @@ extension _Init on SSHPageState {
             return;
           }
           if (session == null) {
-            _sess.resetAfterFailedOpen();
+            _sess.dropBackend(alive: _backend?.isClosed == false);
             _setConnectionStep(TerminalConnectionStep.shellFailed);
             TermSessionManager.updateStatus(
               _sessionId,
@@ -421,7 +421,7 @@ extension _Init on SSHPageState {
           break;
         } catch (error, stackTrace) {
           Loggers.app.warning('Failed to open terminal', error, stackTrace);
-          _sess.resetAfterFailedOpen();
+          _sess.dropBackend(alive: _backend?.isClosed == false);
           final retryable = isRetryableTerminalConnectionError(error);
           if (delay != retryDelays.last && retryable) {
             continue;
@@ -736,7 +736,7 @@ extension _Init on SSHPageState {
       return await _reconnect(tmuxSession: tmuxSession, keepLink: keepLink);
     } catch (e, st) {
       Loggers.app.warning('SSH reconnect threw', e, st);
-      _closeFailedReconnectClient();
+      await _failReconnect();
       return false;
     } finally {
       // Not gated on `mounted`, which is what this used to be. The dialog is
@@ -857,11 +857,7 @@ extension _Init on SSHPageState {
   Future<bool> _reconnect({String? tmuxSession, bool keepLink = false}) async {
     // Tear down the stale SSH session/client first — only the shell, when the
     // link is borrowed and still answers.
-    if (keepLink) {
-      _sess.releaseBackend();
-    } else {
-      _sess.closeBackend();
-    }
+    _sess.dropBackend(alive: keepLink);
 
     TermSessionManager.updateStatus(_sessionId, TermSessionStatus.connecting);
 
@@ -880,7 +876,7 @@ extension _Init on SSHPageState {
             .toInt();
         await Future.delayed(Duration(milliseconds: backoffMs));
         if (!mounted || _reconnectCancelled) {
-          _closeFailedReconnectClient();
+          await _failReconnect();
           return false;
         }
       }
@@ -895,19 +891,19 @@ extension _Init on SSHPageState {
       }
     }
     if (!mounted || _reconnectCancelled) {
-      _closeFailedReconnectClient();
+      await _failReconnect();
       return false;
     }
     if (!connected) {
       Loggers.app.info('SSH reconnect failed after $maxAttempts attempts');
-      _closeFailedReconnectClient();
+      await _failReconnect();
       return false;
     }
 
     if (tmuxSession != null && tmuxSession.isNotEmpty) {
       if (await _reattachTmux(sessionName: tmuxSession)) {
         if (!mounted || _reconnectCancelled) {
-          _closeFailedReconnectClient();
+          await _failReconnect();
           return false;
         }
         _setupDiscontinuityTimer();
@@ -915,7 +911,7 @@ extension _Init on SSHPageState {
         return true;
       }
       if (!mounted || _reconnectCancelled) {
-        _closeFailedReconnectClient();
+        await _failReconnect();
         return false;
       }
 
@@ -930,10 +926,7 @@ extension _Init on SSHPageState {
 
     final shell = await _sess.openShell();
     if (shell == null || !mounted || _reconnectCancelled) {
-      // Not bound yet, so releasing the backend would not end it, and a
-      // borrowed connection is kept with the channel left open on it.
-      shell?.close();
-      _closeFailedReconnectClient();
+      await _failReconnect(unbound: shell);
       return false;
     }
     _bindForegroundSession(shell);
@@ -1026,10 +1019,25 @@ extension _Init on SSHPageState {
     widget.args.onTmuxStateChanged?.call();
   }
 
-  /// After a failed reconnect: the shell goes, and the connection only when
-  /// this terminal opened it — the one adopted from the status poller keeps
-  /// serving it and other tabs (#1782).
-  void _closeFailedReconnectClient() => _sess.releaseBackend();
+  /// After a reconnect that did not restore the terminal — see
+  /// [TerminalSession.dropBackend], asked whether the link still answers.
+  ///
+  /// [unbound] is a shell it opened and did not bind, its own to close either
+  /// way. The session only while this page holds it: once the page is gone it
+  /// was closed, handed on or left to `onLeave`, and what its new holder bound
+  /// is not this reconnect's to end.
+  Future<void> _failReconnect({ShellSession? unbound}) async {
+    final alive = mounted && await _answers(_backend);
+    if (mounted) {
+      _sess.dropBackend(alive: alive, unbound: unbound);
+      return;
+    }
+    try {
+      unbound?.close();
+    } catch (e, st) {
+      Loggers.app.warning('Failed to close shell', e, st);
+    }
+  }
 
   void _writeLn(String p0) => _sess.writeLn(p0);
 
