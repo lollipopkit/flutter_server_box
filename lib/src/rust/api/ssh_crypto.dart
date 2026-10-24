@@ -6,8 +6,40 @@
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
-// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `CipherState`, `MacState`, `Mode`
+// These functions are ignored because they are not marked as `pub`: `gcm_nonce`
+// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `AeadState`, `CipherState`, `MacState`, `Mode`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`
+
+// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<SshAead>>
+abstract class SshAead implements RustOpaqueInterface {
+  /// AES-GCM for [`algorithm`] — `aes128-gcm@openssh.com` or
+  /// `aes256-gcm@openssh.com` — under [`key`].
+  ///
+  /// `Err` for any other name, the caller's signal to use its own
+  /// implementation, and for a key of the wrong length, a caller bug.
+  factory SshAead({required String algorithm, required List<int> key}) =>
+      RustLib.instance.api.crateApiSshCryptoSshAeadNew(
+        algorithm: algorithm,
+        key: key,
+      );
+
+  /// [`sealed`] — ciphertext, then tag — decrypted under [`nonce`]; `None`
+  /// when the tag does not cover it and [`aad`], which is the packet having
+  /// been altered, not a failure of this call.
+  Uint8List? open({
+    required List<int> nonce,
+    required List<int> aad,
+    required List<int> sealed,
+  });
+
+  /// [`plaintext`] encrypted under the 12-byte [`nonce`], with [`aad`]
+  /// authenticated alongside: the ciphertext, then the 16-byte tag.
+  Uint8List seal({
+    required List<int> nonce,
+    required List<int> aad,
+    required List<int> plaintext,
+  });
+}
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<SshBlockCipher>>
 abstract class SshBlockCipher implements RustOpaqueInterface {

@@ -2,7 +2,7 @@
 //!
 //! The same command layer the monitor agent serves to its panel, so the app and
 //! the panel read and change a machine's accounts by one set of rules. Scripts
-//! are POSIX `sh` for `ServerExec.run(script, entry: 'sh')`; the commands that
+//! are POSIX `sh` for `CommandExec.run(script, entry: 'sh')`; the commands that
 //! change an account need root and go through `PrivilegedExec`. Accounts and
 //! drafts cross as `sbm_parser::users`' serde JSON, parsed results the same
 //! way, and a refusal as [`UserFfiError`], whose `code` the app phrases.

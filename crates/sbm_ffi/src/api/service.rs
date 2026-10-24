@@ -44,7 +44,7 @@ pub struct ServiceCommandOutput {
     pub succeeded: bool,
 }
 
-/// POSIX `sh`, for `ServerExec.run(script, entry: 'sh')`.
+/// POSIX `sh`, for `CommandExec.run(script, entry: 'sh')`.
 #[flutter_rust_bridge::frb(sync)]
 pub fn service_detect_script() -> String {
     service::DETECT_SCRIPT.to_owned()

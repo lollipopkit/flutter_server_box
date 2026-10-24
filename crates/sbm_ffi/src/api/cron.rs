@@ -117,7 +117,7 @@ fn document(document: &CronDocument) -> CronDocumentData {
     }
 }
 
-/// POSIX `sh`, for `ServerExec.run(script, entry: 'sh')`.
+/// POSIX `sh`, for `CommandExec.run(script, entry: 'sh')`.
 #[flutter_rust_bridge::frb(sync)]
 pub fn cron_list_script() -> String {
     cron::LIST_SCRIPT.to_owned()
