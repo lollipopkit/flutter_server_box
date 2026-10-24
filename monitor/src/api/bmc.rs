@@ -2,7 +2,8 @@
 //!
 //! - `GET /bmc`: the saved targets, never a password (`has_password`).
 //! - `PUT /bmc`: replaces the set, in order; a `password` of `null` keeps the
-//!   stored one, matched by id.
+//!   stored one, matched by id, and only for the same `url`
+//!   (`passwordRequired` otherwise).
 //! - `POST /bmc/probe`: the certificate an address presents, for the operator
 //!   to review before it is pinned.
 //! - `GET /bmc/{id}`: one target's state — power, the system, sensors.
@@ -115,6 +116,9 @@ pub enum Refusal {
     InvalidUrl { index: usize },
     InvalidUsername { index: usize },
     InvalidCertificate { index: usize },
+    /// A `null` password for a target whose `url` changed: the stored one was
+    /// given for the old address, and this API never discloses it.
+    PasswordRequired { index: usize },
 }
 
 impl Serialize for Refusal {
@@ -128,6 +132,7 @@ impl Serialize for Refusal {
             Refusal::InvalidUrl { index } => ("invalidUrl", Some(index)),
             Refusal::InvalidUsername { index } => ("invalidUsername", Some(index)),
             Refusal::InvalidCertificate { index } => ("invalidCertificate", Some(index)),
+            Refusal::PasswordRequired { index } => ("passwordRequired", Some(index)),
         };
         serde_json::json!({ "error": code, "index": index }).serialize(serializer)
     }
@@ -184,7 +189,11 @@ pub async fn replace(
     }
 
     let names = targets.iter().map(|t| t.name.as_str()).collect::<Vec<_>>().join(", ");
-    let result = store(&state.db, &targets).await;
+    let result = match store(&state.db, &targets).await {
+        Ok(Err(refusal)) => return Ok(HttpResponse::BadRequest().json(&refusal)),
+        Ok(Ok(())) => Ok(()),
+        Err(e) => Err(e),
+    };
     let outcome = if result.is_ok() { Outcome::Ok } else { Outcome::Error };
     Event::new(Kind::Machine, Action::Write, outcome)
         .subject(&caller.username)
@@ -424,21 +433,29 @@ async fn load(db: &SqlitePool) -> Result<Vec<Row>, sqlx::Error> {
 }
 
 /// Replaces the set in one transaction, carrying each kept password over by
-/// id.
-async fn store(db: &SqlitePool, targets: &[TargetInput]) -> Result<(), sqlx::Error> {
+/// id — for the same `url` only, or an admin could point a target at a host of
+/// their own and have the agent hand it a password they cannot read.
+async fn store(db: &SqlitePool, targets: &[TargetInput]) -> Result<Result<(), Refusal>, sqlx::Error> {
     let mut tx = db.begin().await?;
-    let stored: HashMap<String, Option<String>> =
-        sqlx::query_as::<_, (String, Option<String>)>("SELECT id, password FROM bmc_target")
+    let stored: HashMap<String, (String, Option<String>)> =
+        sqlx::query_as::<_, (String, String, Option<String>)>("SELECT id, url, password FROM bmc_target")
             .fetch_all(&mut *tx)
             .await?
             .into_iter()
+            .map(|(id, url, password)| (id, (url, password)))
             .collect();
     sqlx::query("DELETE FROM bmc_target").execute(&mut *tx).await?;
     let now = chrono::Utc::now().to_rfc3339();
     for (position, t) in targets.iter().enumerate() {
-        let password = match &t.password {
-            Some(password) => Some(password.clone()),
-            None => stored.get(&t.id).cloned().flatten(),
+        let password = match (&t.password, stored.get(&t.id)) {
+            (Some(password), _) => Some(password.clone()),
+            (None, Some((url, password))) if password.as_deref().is_some_and(|p| !p.is_empty()) => {
+                if *url != t.url {
+                    return Ok(Err(Refusal::PasswordRequired { index: position }));
+                }
+                password.clone()
+            }
+            (None, _) => None,
         };
         sqlx::query(
             "INSERT INTO bmc_target (id, name, url, username, password, cert_sha256, position, updated_at) \
@@ -455,7 +472,7 @@ async fn store(db: &SqlitePool, targets: &[TargetInput]) -> Result<(), sqlx::Err
         .execute(&mut *tx)
         .await?;
     }
-    tx.commit().await
+    tx.commit().await.map(Ok)
 }
 
 #[cfg(test)]
@@ -496,6 +513,42 @@ mod tests {
         for (second, refusal) in cases {
             assert_eq!(validate(&[target("a", "one"), second.clone()]), Err(refusal), "{second:?}");
         }
+    }
+
+    async fn pool() -> SqlitePool {
+        let pool = sqlx::sqlite::SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+        pool
+    }
+
+    #[tokio::test]
+    async fn a_kept_password_stays_with_its_address() {
+        let db = pool().await;
+        let saved = TargetInput { password: Some("secret".into()), ..target("a", "one") };
+        assert_eq!(store(&db, &[saved]).await.unwrap(), Ok(()));
+        let password = || async { load(&db).await.unwrap().remove(0).password };
+
+        // The same address: kept, whatever else changed.
+        assert_eq!(store(&db, &[target("a", "renamed")]).await.unwrap(), Ok(()));
+        assert_eq!(password().await.as_deref(), Some("secret"));
+
+        // Another address: refused, and nothing written.
+        let moved = TargetInput { url: "https://attacker.example".into(), ..target("a", "one") };
+        assert_eq!(
+            store(&db, &[target("b", "two"), moved.clone()]).await.unwrap(),
+            Err(Refusal::PasswordRequired { index: 1 })
+        );
+        let rows = load(&db).await.unwrap();
+        assert_eq!((rows.len(), rows[0].url.as_str()), (1, "https://10.0.0.9"));
+
+        // Another address with the password given again: taken.
+        let moved = TargetInput { password: Some("other".into()), ..moved };
+        assert_eq!(store(&db, &[moved]).await.unwrap(), Ok(()));
+        assert_eq!(password().await.as_deref(), Some("other"));
     }
 
     #[test]

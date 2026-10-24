@@ -143,6 +143,8 @@ export function virtRequestText(e: unknown): string {
       return ll.pveInvalidTokenId()
     case 'invalidCertificate':
       return ll.bmcInvalidCertificate()
+    case 'passwordRequired':
+      return ll.bmcPasswordAgain()
     default:
       return e.message
   }

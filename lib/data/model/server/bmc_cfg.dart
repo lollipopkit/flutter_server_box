@@ -59,14 +59,24 @@ final class BmcCfg {
   /// [addr] as a URI, or null when it is not usable as one.
   ///
   /// Returned rather than thrown because this runs while the user is typing.
+  /// The rule is `sbm_redfish`'s `parse_base`, which the client is built with:
+  /// https only, as a plain connection has no certificate to pin, and no
+  /// query, fragment or credential. Accepting more here saved an address the
+  /// client then refused (`bmc_ffi_test.dart` holds the two together).
   Uri? get uri {
     final parsed = Uri.tryParse(addr.trim());
-    if (parsed == null || parsed.host.isEmpty) return null;
-    if (parsed.scheme != 'https' && parsed.scheme != 'http') return null;
+    if (parsed == null || parsed.scheme != 'https' || parsed.host.isEmpty) {
+      return null;
+    }
+    if (parsed.hasQuery || parsed.hasFragment || parsed.userInfo.isNotEmpty) {
+      return null;
+    }
+    final path = parsed.path.replaceFirst(RegExp(r'/+$'), '');
+    if (path.contains('..') || path.contains('//')) return null;
     return parsed;
   }
 
-  /// The port to reach, defaulted per scheme the way a browser would.
+  /// The port to reach, 443 unless [addr] names one.
   ///
   /// Null when [addr] is not a usable URI. Returning it rather than throwing
   /// keeps this callable from the editor, where the address is half-typed for
@@ -74,9 +84,7 @@ final class BmcCfg {
   int? get port {
     final parsed = uri;
     if (parsed == null) return null;
-    // `Uri.port` already answers 443 or 80 for a URL that names no port, so
-    // the only case left is a scheme it has no default for — which `uri` has
-    // already refused.
+    // `Uri.port` already answers 443 for an https URL that names no port.
     return parsed.port;
   }
 
