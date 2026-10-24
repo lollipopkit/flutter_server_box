@@ -272,6 +272,10 @@ impl SshMac {
     }
 }
 
+#[expect(
+    clippy::large_enum_variant,
+    reason = "built once per key, and FRB already keeps the opaque SshAead on the heap"
+)]
 enum AeadState {
     Gcm128(aes_gcm::Aes128Gcm),
     Gcm256(aes_gcm::Aes256Gcm),
