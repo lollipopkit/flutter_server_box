@@ -407,7 +407,11 @@ extension _Init on SSHPageState {
             return;
           }
           if (session == null) {
-            _sess.dropBackend(alive: _backend?.isClosed == false);
+            // Asked, as a reconnect asks: a borrowed link that stopped
+            // answering but is not closed yet would be adopted again.
+            final alive = await _answers(_backend);
+            if (!mounted) return;
+            _sess.dropBackend(alive: alive);
             _setConnectionStep(TerminalConnectionStep.shellFailed);
             TermSessionManager.updateStatus(
               _sessionId,
@@ -421,7 +425,9 @@ extension _Init on SSHPageState {
           break;
         } catch (error, stackTrace) {
           Loggers.app.warning('Failed to open terminal', error, stackTrace);
-          _sess.dropBackend(alive: _backend?.isClosed == false);
+          final alive = await _answers(_backend);
+          if (!mounted) return;
+          _sess.dropBackend(alive: alive);
           final retryable = isRetryableTerminalConnectionError(error);
           if (delay != retryDelays.last && retryable) {
             continue;
