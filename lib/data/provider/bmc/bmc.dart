@@ -299,7 +299,12 @@ class BmcNotifier extends _$BmcNotifier {
       _powering = false;
       // A rebuild's state too, which started with the action still running;
       // only a disposed provider has none to clear.
-      if (ref.mounted) state = state.copyWith(isPowering: false);
+      if (ref.mounted) {
+        state = state.copyWith(isPowering: false);
+        // A rebuild meanwhile skipped its first read, which `refresh` does
+        // while powering; a read still going skips this one instead.
+        if (state.isBusy) unawaited(refresh());
+      }
     }
   }
 
