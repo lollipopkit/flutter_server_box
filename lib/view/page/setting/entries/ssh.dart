@@ -738,10 +738,14 @@ extension _SSH on _AppSettingsPageState {
     prop.put([...prop.get()]..remove(ca));
   }
 
-  Future<void> _addHostCertAuthority() async {
+  void _addHostCertAuthority() {
     withTextFieldController((keyCtrl) async {
-      withTextFieldController((hostsCtrl) async {
-        hostsCtrl.text = '*';
+      // Not a second `withTextFieldController`: it returns nothing to await,
+      // so this callback would end at once and [keyCtrl] be disposed under an
+      // open dialog. Kept until the dialog's exit animation is over, as
+      // [keyCtrl] is.
+      final hostsCtrl = TextEditingController(text: '*');
+      try {
         // The dialog's own state, so nothing outlives it: a notifier disposed
         // when this returns would still be listened to through its exit
         // animation.
@@ -792,7 +796,10 @@ extension _SSH on _AppSettingsPageState {
           ),
           actions: Btn.ok(onTap: onSave).toList,
         );
-      });
+        await Future<void>.delayed(const Duration(seconds: 3));
+      } finally {
+        hostsCtrl.dispose();
+      }
     });
   }
 }

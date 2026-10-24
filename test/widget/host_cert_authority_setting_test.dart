@@ -83,6 +83,9 @@ void main() {
   Future<void> add(WidgetTester tester, String key, {String? hosts}) async {
     await tester.tap(find.text(libL10n.add));
     await frames(tester);
+    // Longer than `withTextFieldController` keeps a controller after its
+    // callback returns: a person takes a while to paste a key.
+    await tester.pump(const Duration(seconds: 4));
     final fields = find.byType(TextField);
     await tester.enterText(fields.first, key);
     if (hosts != null) await tester.enterText(fields.last, hosts);

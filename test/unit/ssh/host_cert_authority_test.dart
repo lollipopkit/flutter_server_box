@@ -164,6 +164,8 @@ void main() {
           await connect(authorities: [const HostCertAuthority(publicKey: _ed25519)]);
       final offered = client.algorithms.hostkey;
       final firstKey = offered.indexWhere((t) => !t.isCertificate);
+      // At least one certificate ahead, or the checks below say nothing.
+      expect(firstKey, greaterThan(0));
       expect(offered.take(firstKey).every((t) => t.isCertificate), isTrue);
       expect(offered.skip(firstKey).any((t) => t.isCertificate), isFalse);
     });
