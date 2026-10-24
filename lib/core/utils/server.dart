@@ -479,14 +479,17 @@ Future<SSHClient> genClient(
   onStatus?.call(GenSSHClientStatus.socket);
 
   final hostKeyCache = Map<String, String>.from(
-    knownHostFingerprints ?? _loadKnownHostFingerprints(),
+    knownHostFingerprints ?? loadKnownHostFingerprints(),
   );
   final hostKeyPersist = onHostKeyAccepted ?? persistHostKeyFingerprint;
   final hostKeyPrompt = onHostKeyPrompt ?? showHostKeyPrompt;
-  final authorities = hostCertAuthorities ?? _loadHostCertAuthorities();
+  final authorities = hostCertAuthorities ?? loadHostCertAuthorities();
 
   String? alterUser;
-  String? alterHost;
+  // Where the socket goes: the configured host, or `alterUrl`'s when the
+  // first did not answer. The authorities are scoped to the host dialled.
+  var dialHost = ssh.ip;
+  var dialPort = ssh.port;
 
   final socket =
       await () async {
@@ -595,7 +598,8 @@ Future<SSHClient> genClient(
           try {
             final res = ssh.parseAlterUrl();
             alterUser = res.$2;
-            alterHost = res.$1;
+            dialHost = res.$1;
+            dialPort = res.$3;
             return await SSHSocket.connect(res.$1, res.$3, timeout: timeout);
           } catch (e) {
             Loggers.app.warning('genClient alterUrl', e);
@@ -633,13 +637,10 @@ Future<SSHClient> genClient(
         persistCallback: hostKeyPersist,
         prompt: hostKeyPrompt,
       ),
-      // Matched on the host as configured, as `known_hosts` is; the name it
-      // was reached by through `alterUrl` may be what a certificate lists.
       hostCertificateTrust: HostCertAuthority.trustFor(
         authorities,
-        host: ssh.ip,
-        port: ssh.port,
-        alsoKnownAs: [?alterHost],
+        host: dialHost,
+        port: dialPort,
       ),
     );
     if (Diag.enabled) {
@@ -681,7 +682,10 @@ Future<SSHClient> _authenticatedClient({
           : (request) => onKeyboardInteractive(spi, request),
       onVerifyHostKey: hostKeyVerifier.call,
       hostCertificateTrust: hostCertificateTrust,
-      algorithms: SshAlgorithms.of(ssh),
+      algorithms: SshAlgorithms.of(
+        ssh,
+        preferCertificates: hostCertificateTrust != null,
+      ),
       handshakeTimeout: timeout,
       authTimeout: timeout,
     );
@@ -773,7 +777,10 @@ Future<SSHClient> _authenticatedClient({
         : (request) => onKeyboardInteractive(spi, request),
     onVerifyHostKey: hostKeyVerifier.call,
     hostCertificateTrust: hostCertificateTrust,
-    algorithms: SshAlgorithms.of(ssh),
+    algorithms: SshAlgorithms.of(
+      ssh,
+      preferCertificates: hostCertificateTrust != null,
+    ),
     handshakeTimeout: timeout,
     authTimeout: timeout,
   );
@@ -978,7 +985,8 @@ class HostKeyVerifier {
   }
 }
 
-List<HostCertAuthority> _loadHostCertAuthorities() {
+/// The trusted host certificate authorities, or none when they cannot be read.
+List<HostCertAuthority> loadHostCertAuthorities() {
   try {
     return Stores.setting.sshHostCertAuthorities.get();
   } catch (e, stack) {
@@ -987,7 +995,8 @@ List<HostCertAuthority> _loadHostCertAuthorities() {
   }
 }
 
-Map<String, String> _loadKnownHostFingerprints() {
+/// The remembered host key fingerprints, or none when they cannot be read.
+Map<String, String> loadKnownHostFingerprints() {
   try {
     final prop = Stores.setting.sshKnownHostFingerprints;
     return Map<String, String>.from(prop.get());
@@ -1261,7 +1270,7 @@ Future<void> ensureKnownHostKey(
     );
   }
 
-  final cache = _loadKnownHostFingerprints();
+  final cache = loadKnownHostFingerprints();
 
   for (final jumpSpi in _resolveJumpCandidates(
     spi: spi,
@@ -1276,7 +1285,7 @@ Future<void> ensureKnownHostKey(
         jumpSpisById: jumpSpisById,
         visitedServerIds: {...chainVisitedServerIds},
       );
-      cache.addAll(_loadKnownHostFingerprints());
+      cache.addAll(loadKnownHostFingerprints());
     }
   }
 

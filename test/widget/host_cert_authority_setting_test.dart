@@ -123,6 +123,10 @@ void main() {
 
     await tester.tap(find.byTooltip(libL10n.delete));
     await frames(tester);
+    // Asked first: every host it vouches for goes back to being asked about.
+    expect(Stores.setting.sshHostCertAuthorities.get(), hasLength(1));
+    await tester.tap(find.text(libL10n.ok).last);
+    await frames(tester);
 
     expect(Stores.setting.sshHostCertAuthorities.get(), isEmpty);
     expect(inDialog(find.text(libL10n.empty)), findsOneWidget);

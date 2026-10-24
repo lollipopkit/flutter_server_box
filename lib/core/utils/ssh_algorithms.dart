@@ -28,8 +28,26 @@ import 'package:server_box/data/model/server/ssh_credential.dart';
 /// it is opt-in, per host, and off everywhere else.
 abstract final class SshAlgorithms {
   /// What to propose for [ssh].
-  static SSHAlgorithms of(SshCredential ssh) =>
-      ssh.allowLegacyAlgorithms ? legacy : const SSHAlgorithms();
+  ///
+  /// [preferCertificates] when an authority is trusted to vouch for the host:
+  /// every certificate type ahead of every plain key, as OpenSSH orders them
+  /// then (`order_hostkeyalgs`). The default keeps each certificate beside
+  /// its key, so a host negotiates the key it is pinned on; with an authority
+  /// that pin is not what is relied on, and a certificate for any of the
+  /// host's keys is.
+  static SSHAlgorithms of(SshCredential ssh, {bool preferCertificates = false}) {
+    final base = ssh.allowLegacyAlgorithms ? legacy : const SSHAlgorithms();
+    if (!preferCertificates) return base;
+    return SSHAlgorithms(
+      kex: base.kex,
+      hostkey: [
+        ...base.hostkey.where((t) => t.isCertificate),
+        ...base.hostkey.where((t) => !t.isCertificate),
+      ],
+      cipher: base.cipher,
+      mac: base.mac,
+    );
+  }
 
   /// The defaults with the algorithms SSH has retired appended.
   ///

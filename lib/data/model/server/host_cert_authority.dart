@@ -58,13 +58,15 @@ final class HostCertAuthority {
   }
 
   /// What dartssh2 is told for [host]: the authorities in [all] that vouch
-  /// for it, and the names a certificate must list one of. Null when none
-  /// do, which leaves the host to the first-use prompt.
+  /// for it, and the name a certificate must list. Null when none do, which
+  /// leaves the host to the first-use prompt.
+  ///
+  /// [host] is the one dialled: the authorities are scoped to it, and the
+  /// certificate is checked against it, lower-cased as OpenSSH does.
   static SSHHostCertificateTrust? trustFor(
     Iterable<HostCertAuthority> all, {
     required String host,
     required int port,
-    Iterable<String> alsoKnownAs = const [],
   }) {
     final keys = [
       for (final ca in all)
@@ -73,14 +75,17 @@ final class HostCertAuthority {
     if (keys.isEmpty) return null;
     return SSHHostCertificateTrust(
       authorities: keys,
-      principals: {host, ...alsoKnownAs}.toList(),
+      principals: [host.toLowerCase()],
     );
   }
 
   factory HostCertAuthority.fromJson(Map<String, dynamic> json) =>
       HostCertAuthority(
         publicKey: json['publicKey'] as String,
-        hosts: json['hosts'] as String? ?? '*',
+        hosts: switch (json['hosts']) {
+          final String hosts when hosts.trim().isNotEmpty => hosts,
+          _ => '*',
+        },
       );
 
   Map<String, dynamic> toJson() => {'publicKey': publicKey, 'hosts': hosts};

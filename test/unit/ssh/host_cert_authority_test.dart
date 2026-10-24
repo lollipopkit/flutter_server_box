@@ -89,14 +89,13 @@ void main() {
       expect(trust.principals, ['web.example.com']);
     });
 
-    test('and the name it was reached by too, once', () {
+    test('the host lower-cased, as OpenSSH checks principals', () {
       final trust = HostCertAuthority.trustFor(
         [fleet],
-        host: 'web.example.com',
+        host: 'Web.Example.com',
         port: 22,
-        alsoKnownAs: ['web.example.com', 'web.vpn'],
       );
-      expect(trust!.principals, ['web.example.com', 'web.vpn']);
+      expect(trust!.principals, ['web.example.com']);
     });
 
     test('nothing when none does, leaving the host to the first-use prompt',
@@ -120,13 +119,23 @@ void main() {
     });
 
     /// The client [genClient] builds, against a socket that never answers:
-    /// what it was configured with is all that is looked at.
-    Future<SSHClient> connect({List<HostCertAuthority>? authorities}) async {
+    /// what it was configured with is all that is looked at. With [viaAlter],
+    /// the configured address refuses and `alterUrl` is what is dialled.
+    Future<SSHClient> connect({
+      List<HostCertAuthority>? authorities,
+      bool viaAlter = false,
+    }) async {
       final server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
       final peer = server.first;
       final spi = spiFixture(name: 'web', ip: '127.0.0.1', user: 'u', pwd: 'p');
+      final ssh = viaAlter
+          ? spi.ssh!.copyWith(
+              port: await _closedPort(),
+              alterUrl: 'u@localhost:${server.port}',
+            )
+          : spi.ssh!.copyWith(port: server.port);
       final client = await genClient(
-        spi.copyWith(ssh: spi.ssh!.copyWith(port: server.port)),
+        spi.copyWith(ssh: ssh),
         knownHostFingerprints: const {},
         hostCertAuthorities: authorities,
       );
@@ -147,6 +156,31 @@ void main() {
       final client = await connect(authorities: [ca]);
       expect(client.hostCertificateTrust!.authorities, [ca.key]);
       expect(client.hostCertificateTrust!.principals, ['127.0.0.1']);
+    });
+
+    test('with an authority, certificates are proposed before any key',
+        () async {
+      final client =
+          await connect(authorities: [const HostCertAuthority(publicKey: _ed25519)]);
+      final offered = client.algorithms.hostkey;
+      final firstKey = offered.indexWhere((t) => !t.isCertificate);
+      expect(offered.take(firstKey).every((t) => t.isCertificate), isTrue);
+      expect(offered.skip(firstKey).any((t) => t.isCertificate), isFalse);
+    });
+
+    test('through alterUrl, scoped to and checked against the host dialled',
+        () async {
+      final client = await connect(
+        viaAlter: true,
+        authorities: [
+          // Vouches for the configured address only: not for the one dialled.
+          const HostCertAuthority(publicKey: _ed25519, hosts: '127.0.0.1'),
+          HostCertAuthority(publicKey: _ed25519.replaceAll('ca@', 'b@'),
+              hosts: 'localhost,[localhost]:*'),
+        ],
+      );
+      expect(client.hostCertificateTrust!.principals, ['localhost']);
+      expect(client.hostCertificateTrust!.authorities, hasLength(1));
     });
 
     test('none when no authority vouches for it', () async {
@@ -185,6 +219,21 @@ void main() {
       expect(Stores.setting.sshHostCertAuthorities.get(), list);
     });
 
+    test('a malformed row is dropped, not the list', () {
+      Stores.setting.sshHostCertAuthorities.put(
+        const [HostCertAuthority(publicKey: _ed25519)],
+      );
+      // As a sync might write it: a row without a key beside a good one.
+      final raw = Stores.setting.sshHostCertAuthorities.store
+          .get(Stores.setting.sshHostCertAuthorities.key) as List;
+      Stores.setting.sshHostCertAuthorities.store.set(
+        Stores.setting.sshHostCertAuthorities.key,
+        [{'hosts': '*'}, ...raw],
+      );
+      expect(Stores.setting.sshHostCertAuthorities.get(),
+          [const HostCertAuthority(publicKey: _ed25519)]);
+    });
+
     test('a row with no hosts reads as every host', () {
       expect(
         HostCertAuthority.fromJson(
@@ -194,4 +243,12 @@ void main() {
       );
     });
   });
+}
+
+/// A port nothing listens on: bound, then let go.
+Future<int> _closedPort() async {
+  final socket = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+  final port = socket.port;
+  await socket.close();
+  return port;
 }

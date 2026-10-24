@@ -228,21 +228,9 @@ class SshTransferCreds {
       privateKeysByKeyId = null;
     }
 
-    try {
-      knownHostFingerprints = Map<String, String>.from(
-        Stores.setting.sshKnownHostFingerprints.get(),
-      );
-    } catch (e, s) {
-      Loggers.app.warning('Failed to load SSH known host fingerprints', e, s);
-      knownHostFingerprints = null;
-    }
-    // Read here for the same reason: the isolate has no store to read them.
-    try {
-      hostCertAuthorities = Stores.setting.sshHostCertAuthorities.get();
-    } catch (e, s) {
-      Loggers.app.warning('Failed to load SSH host certificate authorities', e, s);
-      hostCertAuthorities = null;
-    }
+    // Read here, where the stores are: the isolate has none to read them from.
+    knownHostFingerprints = loadKnownHostFingerprints();
+    hostCertAuthorities = loadHostCertAuthorities();
   }
 
   /// [resolvePrivateKeys] for a hop, or null if it could not be had.

@@ -58,6 +58,23 @@ void main() {
     );
   });
 
+  // With an authority trusted for the host, a certificate for any of its keys
+  // is what can be relied on, as OpenSSH reorders for (`order_hostkeyalgs`).
+  test('with an authority, every certificate before every key', () {
+    for (final ssh in [plain, optedIn]) {
+      final base = names(SshAlgorithms.of(ssh).hostkey);
+      final hostkey = names(SshAlgorithms.of(ssh, preferCertificates: true).hostkey);
+      bool cert(String n) => n.endsWith('-cert-v01@openssh.com');
+      expect(hostkey.toSet(), base.toSet());
+      final firstKey = hostkey.indexWhere((n) => !cert(n));
+      expect(hostkey.take(firstKey).every(cert), isTrue);
+      expect(hostkey.skip(firstKey).any(cert), isFalse);
+      // Otherwise unchanged.
+      expect(names(SshAlgorithms.of(ssh, preferCertificates: true).kex),
+          names(SshAlgorithms.of(ssh).kex));
+    }
+  });
+
   test('opting in appends them after the modern ones', () {
     final offered = SshAlgorithms.of(optedIn);
 

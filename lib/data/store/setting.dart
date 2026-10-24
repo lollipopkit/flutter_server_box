@@ -155,10 +155,12 @@ class SettingStore extends SqliteStore with ThemeSettings {
   /// `@cert-authority` lines — see [HostCertAuthority].
   late final sshHostCertAuthorities = listProperty<HostCertAuthority>(
     'sshHostCertAuthorities',
+    // Row by row: one a sync or a restore brought in malformed is dropped,
+    // not every authority with it.
     fromObj: (raw) => raw is List
         ? [
             for (final item in raw)
-              if (item is Map)
+              if (item is Map && item['publicKey'] is String)
                 HostCertAuthority.fromJson(Map<String, dynamic>.from(item)),
           ]
         : null,

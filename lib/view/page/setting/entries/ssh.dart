@@ -703,7 +703,7 @@ extension _SSH on _AppSettingsPageState {
                   trailing: IconButton(
                     tooltip: libL10n.delete,
                     icon: const Icon(Icons.delete_outline),
-                    onPressed: () => prop.put([...list]..remove(ca)),
+                    onPressed: () => _removeHostCertAuthority(ca),
                   ),
                 ),
             ],
@@ -723,18 +723,38 @@ extension _SSH on _AppSettingsPageState {
     return [parts.first, ...parts.skip(2)].join(' ');
   }
 
+  /// Asked first, as forgetting a host key is: every host it vouches for
+  /// goes back to the first-use prompt.
+  Future<void> _removeHostCertAuthority(HostCertAuthority ca) async {
+    final ok = await context.showRoundDialog<bool>(
+      title: libL10n.attention,
+      child: Text(
+        libL10n.askContinue('${libL10n.delete} ${_hostCertAuthorityLabel(ca)}'),
+      ),
+      actions: Btnx.cancelRedOk,
+    );
+    if (ok != true) return;
+    final prop = _setting.sshHostCertAuthorities;
+    prop.put([...prop.get()]..remove(ca));
+  }
+
   Future<void> _addHostCertAuthority() async {
     withTextFieldController((keyCtrl) async {
       withTextFieldController((hostsCtrl) async {
         hostsCtrl.text = '*';
-        final error = ValueNotifier<String?>(null);
+        // The dialog's own state, so nothing outlives it: a notifier disposed
+        // when this returns would still be listened to through its exit
+        // animation.
+        String? error;
+        late StateSetter setError;
         void onSave() {
+          final hosts = hostsCtrl.text.trim();
           final ca = HostCertAuthority(
             publicKey: keyCtrl.text.trim(),
-            hosts: hostsCtrl.text.trim().isEmpty ? '*' : hostsCtrl.text.trim(),
+            hosts: hosts.isEmpty ? '*' : hosts,
           );
           if (ca.key == null) {
-            error.value = l10n.hostCertAuthorityInvalid;
+            setError(() => error = l10n.hostCertAuthorityInvalid);
             return;
           }
           final prop = _setting.sshHostCertAuthorities;
@@ -744,32 +764,34 @@ extension _SSH on _AppSettingsPageState {
 
         await context.showRoundDialog(
           title: libL10n.add,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              error.listenVal(
-                (text) => Input(
-                  controller: keyCtrl,
-                  autoFocus: true,
-                  label: libL10n.key,
-                  hint: 'ssh-ed25519 AAAA... ca@example.com',
-                  maxLines: 3,
-                  suggestion: false,
-                  errorText: text,
-                ),
-              ),
-              Input(
-                controller: hostsCtrl,
-                label: libL10n.host,
-                hint: '*.example.com,!bastion.example.com',
-                suggestion: false,
-                onSubmitted: (_) => onSave(),
-              ),
-            ],
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              setError = setState;
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Input(
+                    controller: keyCtrl,
+                    autoFocus: true,
+                    label: libL10n.key,
+                    hint: 'ssh-ed25519 AAAA... ca@example.com',
+                    maxLines: 3,
+                    suggestion: false,
+                    errorText: error,
+                  ),
+                  Input(
+                    controller: hostsCtrl,
+                    label: libL10n.host,
+                    hint: '*.example.com,!bastion.example.com',
+                    suggestion: false,
+                    onSubmitted: (_) => onSave(),
+                  ),
+                ],
+              );
+            },
           ),
           actions: Btn.ok(onTap: onSave).toList,
         );
-        error.dispose();
       });
     });
   }
