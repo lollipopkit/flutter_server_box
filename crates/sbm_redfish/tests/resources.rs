@@ -33,10 +33,11 @@ fn reads_the_session_endpoint_from_either_place_it_is_put() {
         RedfishRoot::from_json(&vendor("dell_idrac9")["/redfish/v1/"]).sessions.as_deref(),
         Some("/redfish/v1/Sessions")
     );
-    // Supermicro fills in SessionService and no Links.Sessions
+    // Supermicro fills in SessionService and no Links.Sessions: its
+    // collection, not the service resource, is where a login is posted
     assert_eq!(
         RedfishRoot::from_json(&vendor("supermicro_x11")["/redfish/v1/"]).sessions.as_deref(),
-        Some("/redfish/v1/SessionService")
+        Some("/redfish/v1/SessionService/Sessions")
     );
 }
 

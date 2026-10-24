@@ -471,11 +471,13 @@ impl BmcClient {
         })
     }
 
-    /// Re-reads the system `topology` names — what a poll after a power
-    /// action feeds to [`PowerWatch::observe`].
-    pub async fn read_system(&self, topology: RedfishTopology) -> Result<RedfishSystem, BmcError> {
+    /// `topology` with the system it names read again, everything discovery
+    /// worked out kept — what a poll after a power action feeds to
+    /// [`PowerWatch::observe`].
+    pub async fn reread_system(&self, topology: RedfishTopology) -> Result<RedfishTopology, BmcError> {
         let topology = model::Topology::from(topology);
-        Ok(sbm_redfish::read_system(&self.0, &topology).await?.into())
+        let system = sbm_redfish::read_system(&self.0, &topology).await?;
+        Ok(topology.with_system(system).into())
     }
 
     /// Asks the machine to change state. `notSupported` without sending

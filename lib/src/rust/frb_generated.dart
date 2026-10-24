@@ -92,7 +92,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => 632680592;
+  int get rustContentHash => -664394823;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -123,7 +123,7 @@ abstract class RustLibApi extends BaseApi {
     required PowerIntent intent,
   });
 
-  Future<RedfishSystem> crateApiBmcBmcClientReadSystem({
+  Future<RedfishTopology> crateApiBmcBmcClientRereadSystem({
     required BmcClient that,
     required RedfishTopology topology,
   });
@@ -1943,7 +1943,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   );
 
   @override
-  Future<RedfishSystem> crateApiBmcBmcClientReadSystem({
+  Future<RedfishTopology> crateApiBmcBmcClientRereadSystem({
     required BmcClient that,
     required RedfishTopology topology,
   }) {
@@ -1964,19 +1964,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           );
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_redfish_system,
+          decodeSuccessData: sse_decode_redfish_topology,
           decodeErrorData: sse_decode_bmc_error,
         ),
-        constMeta: kCrateApiBmcBmcClientReadSystemConstMeta,
+        constMeta: kCrateApiBmcBmcClientRereadSystemConstMeta,
         argValues: [that, topology],
         apiImpl: this,
       ),
     );
   }
 
-  TaskConstMeta get kCrateApiBmcBmcClientReadSystemConstMeta =>
+  TaskConstMeta get kCrateApiBmcBmcClientRereadSystemConstMeta =>
       const TaskConstMeta(
-        debugName: 'BmcClient_read_system',
+        debugName: 'BmcClient_reread_system',
         argNames: ['that', 'topology'],
       );
 
@@ -23185,10 +23185,11 @@ class BmcClientImpl extends RustOpaque implements BmcClient {
     intent: intent,
   );
 
-  /// Re-reads the system `topology` names — what a poll after a power
-  /// action feeds to [`PowerWatch::observe`].
-  Future<RedfishSystem> readSystem({required RedfishTopology topology}) =>
-      RustLib.instance.api.crateApiBmcBmcClientReadSystem(
+  /// `topology` with the system it names read again, everything discovery
+  /// worked out kept — what a poll after a power action feeds to
+  /// [`PowerWatch::observe`].
+  Future<RedfishTopology> rereadSystem({required RedfishTopology topology}) =>
+      RustLib.instance.api.crateApiBmcBmcClientRereadSystem(
         that: this,
         topology: topology,
       );

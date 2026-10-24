@@ -743,6 +743,7 @@ const zh_CN = {
 	bmcInvalidUrl: '地址必须是 https://主机 或 https://主机:端口，不能带路径。',
 	bmcInvalidUsername: '必须填写用户名。',
 	bmcInvalidCertificate: '证书指纹不是 SHA-256 指纹。',
+	bmcPasswordAgain: '地址已更改，请重新输入密码。',
 	bmcStateOn: '开机',
 	bmcStateOff: '关机',
 	bmcStatePoweringOn: '正在开机',

@@ -3076,6 +3076,10 @@ type RootTranslation = {
 	 */
 	bmcInvalidCertificate: string
 	/**
+	 * T​h​e​ ​a​d​d​r​e​s​s​ ​c​h​a​n​g​e​d​:​ ​e​n​t​e​r​ ​t​h​e​ ​p​a​s​s​w​o​r​d​ ​a​g​a​i​n​.
+	 */
+	bmcPasswordAgain: string
+	/**
 	 * O​n
 	 */
 	bmcStateOn: string
@@ -8917,6 +8921,10 @@ export type TranslationFunctions = {
 	 * The certificate fingerprint is not a SHA-256 fingerprint.
 	 */
 	bmcInvalidCertificate: () => LocalizedString
+	/**
+	 * The address changed: enter the password again.
+	 */
+	bmcPasswordAgain: () => LocalizedString
 	/**
 	 * On
 	 */
