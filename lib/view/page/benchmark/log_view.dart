@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/data/res/terminal.dart';
+import 'package:server_box/data/ssh/terminal_platform.dart';
 import 'package:xterm/xterm.dart';
 
 /// A benchmark's output, rendered by a terminal.
@@ -48,7 +49,12 @@ class _BenchmarkLogViewState extends State<BenchmarkLogView> {
   @override
   void initState() {
     super.initState();
-    _terminal = Terminal(maxLines: 4000);
+    _terminal = Terminal(
+      maxLines: 4000,
+      // The platform it is read on, so the wheel scrolls it the way the wheel
+      // scrolls every other terminal on that machine.
+      platform: hostTerminalPlatform,
+    );
     _append(widget.log);
   }
 
