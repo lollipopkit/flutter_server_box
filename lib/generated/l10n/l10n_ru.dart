@@ -6048,4 +6048,22 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get storeKeyLostStartEmpty => 'Запустить без данных';
+
+  @override
+  String get hostCertAuthorities => 'Центры сертификации хостов';
+
+  @override
+  String get hostCertAuthoritiesTip =>
+      'Хосту, сертификат которого подписан одним из них, доверяют без вопросов, как с @cert-authority в OpenSSH; о других хостах, как и раньше, спрашивают при первом подключении. Хосты — шаблоны через запятую с * и ?, ! исключает; порт, отличный от 22, сравнивается как [host]:port.';
+
+  @override
+  String get hostCertAuthorityInvalid =>
+      'Неподдерживаемый открытый ключ SSH (ssh-ed25519, ssh-rsa или ecdsa-sha2-*)';
+
+  @override
+  String get hostCertAuthorityNoHosts =>
+      'Укажите хосты, за которые он ручается, например *';
+
+  @override
+  String get hostCertAuthorityExists => 'Уже в списке';
 }

@@ -10280,6 +10280,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Start with no data'**
   String get storeKeyLostStartEmpty;
+
+  /// Settings row: the list of SSH certificate authorities trusted to sign host keys.
+  ///
+  /// In en, this message translates to:
+  /// **'Host certificate authorities'**
+  String get hostCertAuthorities;
+
+  /// Explains what a trusted host certificate authority does and the host pattern syntax.
+  ///
+  /// In en, this message translates to:
+  /// **'A host whose certificate one of these signed is trusted without asking, as OpenSSH\'s @cert-authority; other hosts are asked about on first connection, as before. Hosts are comma-separated patterns with * and ?, and ! to exclude; a port other than 22 is matched as [host]:port.'**
+  String get hostCertAuthoritiesTip;
+
+  /// Error when the pasted text is not a supported SSH public key.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a supported SSH public key (ssh-ed25519, ssh-rsa or ecdsa-sha2-*)'**
+  String get hostCertAuthorityInvalid;
+
+  /// Error when the hosts field of a host certificate authority is empty.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the hosts it vouches for, for example *'**
+  String get hostCertAuthorityNoHosts;
+
+  /// Error when the same certificate authority is already in the list for the same hosts.
+  ///
+  /// In en, this message translates to:
+  /// **'Already in the list'**
+  String get hostCertAuthorityExists;
 }
 
 class _AppLocalizationsDelegate

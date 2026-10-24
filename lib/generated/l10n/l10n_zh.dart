@@ -5633,6 +5633,23 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get storeKeyLostStartEmpty => '以空数据启动';
+
+  @override
+  String get hostCertAuthorities => '主机证书颁发机构';
+
+  @override
+  String get hostCertAuthoritiesTip =>
+      '由这些 CA 签发证书的主机将直接被信任，不再询问，等同于 OpenSSH 的 @cert-authority；其他主机仍在首次连接时询问。主机为逗号分隔的匹配规则，支持 * 和 ?，以 ! 排除；非 22 端口按 [host]:port 匹配。';
+
+  @override
+  String get hostCertAuthorityInvalid =>
+      '不是支持的 SSH 公钥（ssh-ed25519、ssh-rsa 或 ecdsa-sha2-*）';
+
+  @override
+  String get hostCertAuthorityNoHosts => '请填写它担保的主机，例如 *';
+
+  @override
+  String get hostCertAuthorityExists => '已在列表中';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -11268,4 +11285,21 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get storeKeyLostStartEmpty => '以空資料啟動';
+
+  @override
+  String get hostCertAuthorities => '主機憑證頒發機構';
+
+  @override
+  String get hostCertAuthoritiesTip =>
+      '由這些 CA 簽發憑證的主機將直接被信任，不再詢問，等同於 OpenSSH 的 @cert-authority；其他主機仍在首次連線時詢問。主機為逗號分隔的比對規則，支援 * 和 ?，以 ! 排除；非 22 連接埠按 [host]:port 比對。';
+
+  @override
+  String get hostCertAuthorityInvalid =>
+      '不是支援的 SSH 公鑰（ssh-ed25519、ssh-rsa 或 ecdsa-sha2-*）';
+
+  @override
+  String get hostCertAuthorityNoHosts => '請填寫它擔保的主機，例如 *';
+
+  @override
+  String get hostCertAuthorityExists => '已在清單中';
 }

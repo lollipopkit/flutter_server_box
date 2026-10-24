@@ -26,6 +26,7 @@ import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/app/geo_manifest.dart';
 import 'package:server_box/data/model/app/keybinding.dart';
 import 'package:server_box/data/model/app/motion.dart';
+import 'package:server_box/data/model/server/host_cert_authority.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/app/keybindings.dart';
 import 'package:server_box/data/provider/server/all.dart';

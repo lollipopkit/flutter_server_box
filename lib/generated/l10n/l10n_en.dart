@@ -6008,4 +6008,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get storeKeyLostStartEmpty => 'Start with no data';
+
+  @override
+  String get hostCertAuthorities => 'Host certificate authorities';
+
+  @override
+  String get hostCertAuthoritiesTip =>
+      'A host whose certificate one of these signed is trusted without asking, as OpenSSH\'s @cert-authority; other hosts are asked about on first connection, as before. Hosts are comma-separated patterns with * and ?, and ! to exclude; a port other than 22 is matched as [host]:port.';
+
+  @override
+  String get hostCertAuthorityInvalid =>
+      'Not a supported SSH public key (ssh-ed25519, ssh-rsa or ecdsa-sha2-*)';
+
+  @override
+  String get hostCertAuthorityNoHosts =>
+      'Enter the hosts it vouches for, for example *';
+
+  @override
+  String get hostCertAuthorityExists => 'Already in the list';
 }

@@ -6000,4 +6000,22 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get storeKeyLostStartEmpty => 'Məlumatsız başlat';
+
+  @override
+  String get hostCertAuthorities => 'Host sertifikat mərkəzləri';
+
+  @override
+  String get hostCertAuthoritiesTip =>
+      'Sertifikatı bunlardan biri tərəfindən imzalanmış hosta soruşmadan etibar edilir, OpenSSH-in @cert-authority kimi; digər hostlar əvvəlki kimi ilk qoşulmada soruşulur. Hostlar * və ? olan, vergüllə ayrılmış şablonlardır, ! istisna edir; 22-dən fərqli port [host]:port kimi müqayisə olunur.';
+
+  @override
+  String get hostCertAuthorityInvalid =>
+      'Dəstəklənən SSH açıq açarı deyil (ssh-ed25519, ssh-rsa və ya ecdsa-sha2-*)';
+
+  @override
+  String get hostCertAuthorityNoHosts =>
+      'Zəmanət verdiyi hostları daxil edin, məsələn *';
+
+  @override
+  String get hostCertAuthorityExists => 'Artıq siyahıdadır';
 }

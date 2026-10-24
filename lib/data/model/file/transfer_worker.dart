@@ -117,6 +117,7 @@ Future<SSHClient> _connectSsh(
     privateKeysByKeyId: creds.privateKeysByKeyId,
     jumpSpisById: creds.jumpSpisById,
     knownHostFingerprints: creds.knownHostFingerprints,
+    hostCertAuthorities: creds.hostCertAuthorities,
     onKeyboardInteractive: (server, request) =>
         _requestKeyboardInteractive(mainSendPort, server, request),
     onHostKeyPrompt: (info) => _requestHostKey(mainSendPort, info),

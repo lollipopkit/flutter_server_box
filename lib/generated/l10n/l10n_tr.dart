@@ -5990,4 +5990,22 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get storeKeyLostStartEmpty => 'Verisiz başlat';
+
+  @override
+  String get hostCertAuthorities => 'Ana makine sertifika yetkilileri';
+
+  @override
+  String get hostCertAuthoritiesTip =>
+      'Sertifikası bunlardan biri tarafından imzalanmış bir ana makineye sormadan güvenilir, OpenSSH\'nin @cert-authority\'si gibi; diğer ana makineler önceden olduğu gibi ilk bağlantıda sorulur. Ana makineler * ve ? içeren, virgülle ayrılmış kalıplardır, ! hariç tutar; 22 dışındaki bir bağlantı noktası [host]:port olarak eşleştirilir.';
+
+  @override
+  String get hostCertAuthorityInvalid =>
+      'Desteklenen bir SSH ortak anahtarı değil (ssh-ed25519, ssh-rsa veya ecdsa-sha2-*)';
+
+  @override
+  String get hostCertAuthorityNoHosts =>
+      'Kefil olduğu ana makineleri girin, örneğin *';
+
+  @override
+  String get hostCertAuthorityExists => 'Zaten listede';
 }

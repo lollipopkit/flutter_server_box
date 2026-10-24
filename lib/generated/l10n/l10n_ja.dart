@@ -5735,4 +5735,21 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get storeKeyLostStartEmpty => 'データなしで起動';
+
+  @override
+  String get hostCertAuthorities => 'ホスト証明書の認証局';
+
+  @override
+  String get hostCertAuthoritiesTip =>
+      'これらの認証局が署名した証明書を持つホストは、確認なしで信頼されます（OpenSSH の @cert-authority と同じ）。その他のホストは従来どおり初回接続時に確認します。ホストはカンマ区切りのパターンで、* と ? が使え、! で除外します。22 以外のポートは [host]:port で照合します。';
+
+  @override
+  String get hostCertAuthorityInvalid =>
+      '対応していない SSH 公開鍵です（ssh-ed25519、ssh-rsa、ecdsa-sha2-*）';
+
+  @override
+  String get hostCertAuthorityNoHosts => '保証するホストを入力してください（例: *）';
+
+  @override
+  String get hostCertAuthorityExists => 'すでに一覧にあります';
 }

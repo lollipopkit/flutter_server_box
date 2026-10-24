@@ -6057,4 +6057,22 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get storeKeyLostStartEmpty => 'Starten zonder gegevens';
+
+  @override
+  String get hostCertAuthorities => 'Hostcertificaatautoriteiten';
+
+  @override
+  String get hostCertAuthoritiesTip =>
+      'Een host waarvan het certificaat door een van deze is ondertekend, wordt zonder vragen vertrouwd, zoals met @cert-authority van OpenSSH; andere hosts worden zoals voorheen bij de eerste verbinding gevraagd. Hosts zijn door komma\'s gescheiden patronen met * en ?, en ! om uit te sluiten; een andere poort dan 22 wordt vergeleken als [host]:port.';
+
+  @override
+  String get hostCertAuthorityInvalid =>
+      'Geen ondersteunde openbare SSH-sleutel (ssh-ed25519, ssh-rsa of ecdsa-sha2-*)';
+
+  @override
+  String get hostCertAuthorityNoHosts =>
+      'Vul de hosts in waarvoor ze instaat, bijvoorbeeld *';
+
+  @override
+  String get hostCertAuthorityExists => 'Staat al in de lijst';
 }

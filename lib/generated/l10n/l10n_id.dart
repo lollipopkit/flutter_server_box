@@ -6001,4 +6001,22 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get storeKeyLostStartEmpty => 'Mulai tanpa data';
+
+  @override
+  String get hostCertAuthorities => 'Otoritas sertifikat host';
+
+  @override
+  String get hostCertAuthoritiesTip =>
+      'Host yang sertifikatnya ditandatangani salah satu otoritas ini dipercaya tanpa ditanya, seperti @cert-authority OpenSSH; host lain ditanyakan saat koneksi pertama seperti sebelumnya. Host adalah pola yang dipisahkan koma dengan * dan ?, serta ! untuk mengecualikan; port selain 22 dicocokkan sebagai [host]:port.';
+
+  @override
+  String get hostCertAuthorityInvalid =>
+      'Bukan kunci publik SSH yang didukung (ssh-ed25519, ssh-rsa, atau ecdsa-sha2-*)';
+
+  @override
+  String get hostCertAuthorityNoHosts =>
+      'Masukkan host yang dijaminnya, misalnya *';
+
+  @override
+  String get hostCertAuthorityExists => 'Sudah ada di daftar';
 }
