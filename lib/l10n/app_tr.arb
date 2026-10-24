@@ -1684,5 +1684,11 @@
   "launchFailedBody": "Aşağıdaki hatayı kopyalayıp günlük dosyalarıyla birlikte bir GitHub issue'sunda bildirin.",
   "launchFailedLogs": "Günlükler: {path}",
   "reconnect": "Yeniden bağlan",
-  "reconnectEndsShell": "Yeniden bağlanacak bir tmux oturumu yok; yeniden bağlanmak bu kabuğu ve içinde hâlâ çalışan her şeyi sonlandırır ve ekrandaki çıktısını temizler."
+  "reconnectEndsShell": "Yeniden bağlanacak bir tmux oturumu yok; yeniden bağlanmak bu kabuğu ve içinde hâlâ çalışan her şeyi sonlandırır ve ekrandaki çıktısını temizler.",
+  "storeUnreadableTitle": "Önceki veriler açılamadı",
+  "storeUnreadableKeyLost": "ServerBox verilerini şifreleyen anahtar artık sistemin anahtar deposunda değil. Sistem anahtar deposunu sıfırladığında, anahtarlık hizmeti kullanılamadığında veya uygulama verileri başka bir cihazdan, örneğin bir taşıma aracıyla kopyalandığında bu olur. Bu anahtar olmadan veriler çözülemez, bu yüzden ServerBox verisiz başlatıldı.",
+  "storeUnreadableKeyRejected": "Sistemin anahtar deposundaki anahtar ServerBox verilerini açmıyor: veriler başka bir anahtarla şifrelenmiş ya da dosya bozuk. ServerBox verisiz başlatıldı.",
+  "storeUnreadableKept": "Eski dosya şurada tutuldu:\n{path}\nSunucularınızı geri almak için bir yedeği geri yükleyin.",
+  "storeKeyLostAsk": "ServerBox verilerini şifreleyen anahtar sistem anahtar deposunda yok. Anahtar deposu veya anahtarlık yalnızca şu anda kullanılamıyorsa, örneğin henüz kilidi açılmadıysa, yeniden deneyin. Aksi halde ServerBox verisiz başlayabilir; eski dosya saklanır.",
+  "storeKeyLostStartEmpty": "Verisiz başlat"
 }

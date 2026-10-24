@@ -6033,4 +6033,28 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       'Er is geen tmux-sessie om opnieuw aan te koppelen, dus opnieuw verbinden beëindigt deze shell en alles wat er nog in draait, en wist de uitvoer van het scherm.';
+
+  @override
+  String get storeUnreadableTitle =>
+      'De vorige gegevens konden niet worden geopend';
+
+  @override
+  String get storeUnreadableKeyLost =>
+      'De sleutel waarmee de gegevens van ServerBox zijn versleuteld, staat niet meer in de sleutelopslag van het systeem. Dat gebeurt als het systeem de sleutelopslag reset, als de sleutelhangerdienst niet beschikbaar is, of als de app-gegevens van een ander apparaat zijn gekopieerd, bijvoorbeeld met een overzettool. Zonder die sleutel kunnen de gegevens niet worden ontsleuteld, dus ServerBox is zonder gegevens gestart.';
+
+  @override
+  String get storeUnreadableKeyRejected =>
+      'De sleutel in de sleutelopslag van het systeem opent de gegevens van ServerBox niet: ze zijn met een andere sleutel versleuteld, of het bestand is beschadigd. ServerBox is zonder gegevens gestart.';
+
+  @override
+  String storeUnreadableKept(String path) {
+    return 'Het oude bestand staat nog op:\n$path\nZet een back-up terug om je servers terug te krijgen.';
+  }
+
+  @override
+  String get storeKeyLostAsk =>
+      'De sleutel waarmee de gegevens van ServerBox zijn versleuteld, staat niet in de sleutelopslag van het systeem. Is de sleutelopslag of sleutelbos alleen nu niet beschikbaar, bijvoorbeeld nog niet ontgrendeld, probeer het dan opnieuw. Anders kan ServerBox zonder gegevens starten; het oude bestand blijft bewaard.';
+
+  @override
+  String get storeKeyLostStartEmpty => 'Starten zonder gegevens';
 }

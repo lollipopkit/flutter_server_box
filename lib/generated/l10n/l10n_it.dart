@@ -6046,4 +6046,27 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       'Non c’è una sessione tmux da ricollegare: riconnettere chiude questa shell e tutto ciò che vi è ancora in esecuzione, e ne cancella l’output dallo schermo.';
+
+  @override
+  String get storeUnreadableTitle => 'Impossibile aprire i dati precedenti';
+
+  @override
+  String get storeUnreadableKeyLost =>
+      'La chiave che cifra i dati di ServerBox non è più nell\'archivio chiavi del sistema. Succede quando il sistema reimposta l\'archivio chiavi, quando il servizio portachiavi non è disponibile o quando i dati dell\'app sono stati copiati da un altro dispositivo, ad esempio con uno strumento di migrazione. Senza quella chiave i dati non si possono decifrare, quindi ServerBox è stato avviato senza dati.';
+
+  @override
+  String get storeUnreadableKeyRejected =>
+      'La chiave nell\'archivio chiavi del sistema non apre i dati di ServerBox: sono stati cifrati con un\'altra chiave, oppure il file è danneggiato. ServerBox è stato avviato senza dati.';
+
+  @override
+  String storeUnreadableKept(String path) {
+    return 'Il file precedente è conservato in:\n$path\nRipristina un backup per recuperare i tuoi server.';
+  }
+
+  @override
+  String get storeKeyLostAsk =>
+      'La chiave che cifra i dati di ServerBox non è nell\'archivio chiavi di sistema. Se l\'archivio chiavi o il portachiavi è solo temporaneamente non disponibile, ad esempio non ancora sbloccato, riprova. Altrimenti ServerBox può avviarsi senza dati; il vecchio file viene conservato.';
+
+  @override
+  String get storeKeyLostStartEmpty => 'Avvia senza dati';
 }

@@ -1684,5 +1684,11 @@
   "launchFailedBody": "请复制下方的错误信息，连同日志文件一起在 GitHub issue 中反馈。",
   "launchFailedLogs": "日志：{path}",
   "reconnect": "重新连接",
-  "reconnectEndsShell": "没有可以重新接入的 tmux 会话，重新连接会结束当前 shell 及其中仍在运行的程序，并清除屏幕上的输出。"
+  "reconnectEndsShell": "没有可以重新接入的 tmux 会话，重新连接会结束当前 shell 及其中仍在运行的程序，并清除屏幕上的输出。",
+  "storeUnreadableTitle": "无法打开之前的数据",
+  "storeUnreadableKeyLost": "系统密钥库中已没有用于加密 ServerBox 数据的密钥。系统重置了密钥库、密钥环服务不可用，或通过换机工具等方式从其他设备复制了应用数据时，会出现这种情况。缺少该密钥就无法解密数据，因此 ServerBox 以空数据启动。",
+  "storeUnreadableKeyRejected": "系统密钥库中的密钥无法打开 ServerBox 的数据：数据由其他密钥加密，或文件已损坏。ServerBox 以空数据启动。",
+  "storeUnreadableKept": "旧文件保留在：\n{path}\n恢复备份即可找回服务器。",
+  "storeKeyLostAsk": "系统密钥库中没有用于加密 ServerBox 数据的密钥。如果密钥库或密钥环只是暂时不可用（例如尚未解锁），请重试。否则可以以空数据启动，旧文件会保留。",
+  "storeKeyLostStartEmpty": "以空数据启动"
 }

@@ -5610,6 +5610,29 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       '没有可以重新接入的 tmux 会话，重新连接会结束当前 shell 及其中仍在运行的程序，并清除屏幕上的输出。';
+
+  @override
+  String get storeUnreadableTitle => '无法打开之前的数据';
+
+  @override
+  String get storeUnreadableKeyLost =>
+      '系统密钥库中已没有用于加密 ServerBox 数据的密钥。系统重置了密钥库、密钥环服务不可用，或通过换机工具等方式从其他设备复制了应用数据时，会出现这种情况。缺少该密钥就无法解密数据，因此 ServerBox 以空数据启动。';
+
+  @override
+  String get storeUnreadableKeyRejected =>
+      '系统密钥库中的密钥无法打开 ServerBox 的数据：数据由其他密钥加密，或文件已损坏。ServerBox 以空数据启动。';
+
+  @override
+  String storeUnreadableKept(String path) {
+    return '旧文件保留在：\n$path\n恢复备份即可找回服务器。';
+  }
+
+  @override
+  String get storeKeyLostAsk =>
+      '系统密钥库中没有用于加密 ServerBox 数据的密钥。如果密钥库或密钥环只是暂时不可用（例如尚未解锁），请重试。否则可以以空数据启动，旧文件会保留。';
+
+  @override
+  String get storeKeyLostStartEmpty => '以空数据启动';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -11222,4 +11245,27 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get reconnectEndsShell =>
       '沒有可以重新接入的 tmux 工作階段，重新連線會結束目前的 shell 及其中仍在執行的程式，並清除畫面上的輸出。';
+
+  @override
+  String get storeUnreadableTitle => '無法開啟先前的資料';
+
+  @override
+  String get storeUnreadableKeyLost =>
+      '系統金鑰庫中已沒有用於加密 ServerBox 資料的金鑰。系統重設了金鑰庫、金鑰圈服務無法使用，或透過換機工具等方式從其他裝置複製了應用程式資料時，就會發生這種情況。缺少該金鑰便無法解密資料，因此 ServerBox 以空白資料啟動。';
+
+  @override
+  String get storeUnreadableKeyRejected =>
+      '系統金鑰庫中的金鑰無法開啟 ServerBox 的資料：資料由其他金鑰加密，或檔案已損毀。ServerBox 以空白資料啟動。';
+
+  @override
+  String storeUnreadableKept(String path) {
+    return '舊檔案保留在：\n$path\n還原備份即可找回伺服器。';
+  }
+
+  @override
+  String get storeKeyLostAsk =>
+      '系統金鑰庫中沒有用於加密 ServerBox 資料的金鑰。如果金鑰庫或金鑰環只是暫時無法使用（例如尚未解鎖），請重試。否則可以以空資料啟動，舊檔案會保留。';
+
+  @override
+  String get storeKeyLostStartEmpty => '以空資料啟動';
 }
