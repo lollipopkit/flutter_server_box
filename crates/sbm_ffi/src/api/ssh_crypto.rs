@@ -14,8 +14,8 @@
 //!
 //! **What it covers.** The algorithms dartssh2 proposes first and therefore
 //! negotiates in practice: AES in CTR and CBC, and HMAC; and AES-GCM, which
-//! pointycastle computes a bit at a time and so at about 2 MiB/s
-//! (lollipopkit/dartssh2#19) — here GHASH is the CPU's carry-less multiply
+//! pointycastle computes a bit at a time and so at 1.9 MiB/s as
+//! lollipopkit/dartssh2#19 measured it — here GHASH is the CPU's carry-less multiply
 //! where there is one, and constant-time either way. ChaCha20-Poly1305 is
 //! left to pointycastle, which is fast enough at it, as is any algorithm named
 //! here that a peer does not pick.

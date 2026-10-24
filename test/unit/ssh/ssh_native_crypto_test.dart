@@ -10,6 +10,7 @@
 // mistake there does not fail loudly — it produces a valid-looking packet the
 // peer cannot authenticate, some way into a session.
 
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
@@ -19,6 +20,8 @@ import 'package:dartssh2/src/hostkey/hostkey_ecdsa.dart';
 import 'package:dartssh2/src/hostkey/hostkey_ed25519.dart';
 import 'package:dartssh2/src/kex/kex_x25519.dart';
 import 'package:dartssh2/src/utils/bcrypt.dart' as builtin_bcrypt;
+import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart'
+    show ExternalLibrary;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pinenacl/tweetnacl.dart';
 import 'package:pointycastle/export.dart';
@@ -209,7 +212,7 @@ void main() {
     });
   });
 
-  // pointycastle's GHASH is a bit at a time, about 2 MiB/s
+  // pointycastle's GHASH is a bit at a time, 1.9 MiB/s
   // (lollipopkit/dartssh2#19). What the native one has to be is the same bytes.
   group('aes-gcm', () {
     Uint8List pointycastle(
@@ -267,6 +270,30 @@ void main() {
       expect(aead.open(nonce(0), aad, flipped), isNull);
       expect(aead.open(nonce(1), aad, sealed), isNull);
       expect(aead.open(nonce(0), _bytes(4, 9), sealed), isNull);
+    });
+
+    // The transfer worker's isolate: no `RustLib.init` there until it does
+    // its own, and a transfer is where GCM's speed is felt.
+    test('another isolate installs it once, and seals through it', () async {
+      final lib = rustLibPathForTest();
+      // `expect` belongs to the test's isolate, so the answers come back.
+      final (once, sealed) = await Isolate.run(() async {
+        final first = installNativeSshCrypto(
+          library: ExternalLibrary.open(lib),
+        );
+        final once = identical(installNativeSshCrypto(), first);
+        await first;
+        final aead = sshCryptoBackend!.createAead(
+          'aes128-gcm@openssh.com',
+          Uint8List(16),
+        );
+        return (
+          once,
+          aead!.seal(Uint8List(12), Uint8List(0), Uint8List(32)).length,
+        );
+      });
+      expect(once, isTrue);
+      expect(sealed, 32 + 16);
     });
 
     test('ChaCha20-Poly1305 is left to pointycastle', () {
