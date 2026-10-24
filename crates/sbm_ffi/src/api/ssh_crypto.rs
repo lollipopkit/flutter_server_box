@@ -13,10 +13,12 @@
 //! isolate it is on and stops being expensive.
 //!
 //! **What it covers.** The algorithms dartssh2 proposes first and therefore
-//! negotiates in practice: AES in CTR and CBC, and HMAC. AES-GCM and
-//! ChaCha20-Poly1305 are implemented inline in the transport rather than behind
-//! the factory these fill, so they are left to pointycastle — as is any
-//! algorithm named here that a peer does not pick.
+//! negotiates in practice: AES in CTR and CBC, and HMAC; and AES-GCM, which
+//! pointycastle computes a bit at a time and so at about 2 MiB/s
+//! (lollipopkit/dartssh2#19) — here GHASH is the CPU's carry-less multiply
+//! where there is one, and constant-time either way. ChaCha20-Poly1305 is
+//! left to pointycastle, which is fast enough at it, as is any algorithm named
+//! here that a peer does not pick.
 //!
 //! **State.** CTR carries a counter and CBC a chaining block, both across
 //! packets, so one [`SshBlockCipher`] belongs to one direction of one
@@ -270,6 +272,83 @@ impl SshMac {
     }
 }
 
+enum AeadState {
+    Gcm128(aes_gcm::Aes128Gcm),
+    Gcm256(aes_gcm::Aes256Gcm),
+}
+
+/// One direction of one connection's AES-GCM (RFC 5647, as OpenSSH names it).
+///
+/// Keyed once; every packet then brings its own nonce, which the transport
+/// counts, so nothing here moves between calls and a packet that is dropped
+/// cannot put this out of step.
+#[flutter_rust_bridge::frb(opaque)]
+pub struct SshAead {
+    state: AeadState,
+}
+
+/// GCM's tag, which SSH carries after the ciphertext.
+const GCM_TAG: usize = 16;
+
+impl SshAead {
+    /// AES-GCM for [`algorithm`] — `aes128-gcm@openssh.com` or
+    /// `aes256-gcm@openssh.com` — under [`key`].
+    ///
+    /// `Err` for any other name, the caller's signal to use its own
+    /// implementation, and for a key of the wrong length, a caller bug.
+    #[flutter_rust_bridge::frb(sync)]
+    pub fn new(algorithm: String, key: Vec<u8>) -> Result<SshAead, String> {
+        use aes_gcm::KeyInit as _;
+        let keyed = |e| format!("{algorithm} rejected a {}-byte key: {e}", key.len());
+        let state = match algorithm.as_str() {
+            "aes128-gcm@openssh.com" => {
+                AeadState::Gcm128(aes_gcm::Aes128Gcm::new_from_slice(&key).map_err(keyed)?)
+            }
+            "aes256-gcm@openssh.com" => {
+                AeadState::Gcm256(aes_gcm::Aes256Gcm::new_from_slice(&key).map_err(keyed)?)
+            }
+            other => return Err(format!("unsupported aead: {other}")),
+        };
+        Ok(SshAead { state })
+    }
+
+    /// [`plaintext`] encrypted under the 12-byte [`nonce`], with [`aad`]
+    /// authenticated alongside: the ciphertext, then the 16-byte tag.
+    #[flutter_rust_bridge::frb(sync)]
+    pub fn seal(&self, nonce: Vec<u8>, aad: Vec<u8>, plaintext: Vec<u8>) -> Result<Vec<u8>, String> {
+        use aes_gcm::aead::{Aead as _, Payload};
+        let nonce = gcm_nonce(&nonce)?;
+        let payload = Payload { msg: &plaintext, aad: &aad };
+        match &self.state {
+            AeadState::Gcm128(c) => c.encrypt(&nonce, payload),
+            AeadState::Gcm256(c) => c.encrypt(&nonce, payload),
+        }
+        .map_err(|e| format!("seal: {e}"))
+    }
+
+    /// [`sealed`] — ciphertext, then tag — decrypted under [`nonce`]; `None`
+    /// when the tag does not cover it and [`aad`], which is the packet having
+    /// been altered, not a failure of this call.
+    #[flutter_rust_bridge::frb(sync)]
+    pub fn open(&self, nonce: Vec<u8>, aad: Vec<u8>, sealed: Vec<u8>) -> Result<Option<Vec<u8>>, String> {
+        use aes_gcm::aead::{Aead as _, Payload};
+        let nonce = gcm_nonce(&nonce)?;
+        if sealed.len() < GCM_TAG {
+            return Ok(None);
+        }
+        let payload = Payload { msg: &sealed, aad: &aad };
+        Ok(match &self.state {
+            AeadState::Gcm128(c) => c.decrypt(&nonce, payload),
+            AeadState::Gcm256(c) => c.decrypt(&nonce, payload),
+        }
+        .ok())
+    }
+}
+
+fn gcm_nonce(nonce: &[u8]) -> Result<aes_gcm::Nonce<aes_gcm::aead::consts::U12>, String> {
+    aes_gcm::Nonce::try_from(nonce).map_err(|_| format!("a GCM nonce is 12 bytes, not {}", nonce.len()))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -373,6 +452,57 @@ mod tests {
         let iv = vec![0u8; 16];
         let mut c = SshBlockCipher::new("aes256-cbc".into(), key, iv, true).unwrap();
         assert!(c.process(vec![0u8; 17]).is_err());
+    }
+
+    // The GCM specification's Test Cases 4 (AES-128) and 16 (AES-256): the
+    // same plaintext, AAD and IV under two keys.
+    const GCM_P: &str = "d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e2449a6b525b16aedf5aa0de657ba637b39";
+    const GCM_A: &str = "feedfacedeadbeeffeedfacedeadbeefabaddad2";
+    const GCM_IV: &str = "cafebabefacedbaddecaf888";
+
+    #[test]
+    fn gcm_matches_the_specification_vectors() {
+        for (algorithm, key, sealed) in [
+            (
+                "aes128-gcm@openssh.com",
+                "feffe9928665731c6d6a8f9467308308",
+                "42831ec2217774244b7221b784d0d49ce3aa212f2c02a4e035c17e2329aca12e21d514b25466931c7d8f6a5aac84aa051ba30b396a0aac973d58e091\
+                 5bc94fbc3221a5db94fae95ae7121a47",
+            ),
+            (
+                "aes256-gcm@openssh.com",
+                "feffe9928665731c6d6a8f9467308308feffe9928665731c6d6a8f9467308308",
+                "522dc1f099567d07f47f37a32a84427d643a8cdcbfe5c0c97598a2bd2555d1aa8cb08e48590dbb3da7b08b1056828838c5f61e6393ba7a0abcc9f662\
+                 76fc6ece0f4e1768cddf8853bb2d551b",
+            ),
+        ] {
+            let aead = SshAead::new(algorithm.into(), hex(key)).unwrap();
+            let sealed = hex(&sealed.split_whitespace().collect::<String>());
+            assert_eq!(aead.seal(hex(GCM_IV), hex(GCM_A), hex(GCM_P)).unwrap(), sealed, "{algorithm}");
+            assert_eq!(aead.open(hex(GCM_IV), hex(GCM_A), sealed).unwrap(), Some(hex(GCM_P)));
+        }
+    }
+
+    #[test]
+    fn gcm_answers_none_for_anything_altered() {
+        let aead = SshAead::new("aes256-gcm@openssh.com".into(), vec![7; 32]).unwrap();
+        let nonce = vec![1u8; 12];
+        let sealed = aead.seal(nonce.clone(), b"len".to_vec(), b"payload".to_vec()).unwrap();
+
+        let mut flipped = sealed.clone();
+        flipped[0] ^= 1;
+        assert_eq!(aead.open(nonce.clone(), b"len".to_vec(), flipped).unwrap(), None);
+        assert_eq!(aead.open(nonce.clone(), b"LEN".to_vec(), sealed.clone()).unwrap(), None);
+        assert_eq!(aead.open(vec![2u8; 12], b"len".to_vec(), sealed).unwrap(), None);
+        assert_eq!(aead.open(nonce, b"len".to_vec(), vec![0; 3]).unwrap(), None);
+    }
+
+    #[test]
+    fn gcm_refuses_what_ssh_never_derives() {
+        assert!(SshAead::new("aes256-gcm@openssh.com".into(), vec![0; 16]).is_err());
+        assert!(SshAead::new("chacha20-poly1305@openssh.com".into(), vec![0; 64]).is_err());
+        let aead = SshAead::new("aes128-gcm@openssh.com".into(), vec![0; 16]).unwrap();
+        assert!(aead.seal(vec![0; 16], vec![], vec![]).is_err());
     }
 
     #[test]

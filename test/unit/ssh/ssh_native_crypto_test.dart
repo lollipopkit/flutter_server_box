@@ -21,7 +21,7 @@ import 'package:dartssh2/src/kex/kex_x25519.dart';
 import 'package:dartssh2/src/utils/bcrypt.dart' as builtin_bcrypt;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pinenacl/tweetnacl.dart';
-import 'package:pointycastle/api.dart';
+import 'package:pointycastle/export.dart';
 import 'package:server_box/core/utils/ssh_native_crypto.dart';
 
 import '../../helpers/rust_lib_helper.dart';
@@ -56,9 +56,9 @@ void main() {
   _asymmetricTests(native);
 
   group('record cipher', () {
-    // Every cipher the backend claims. AEAD is not among them: the transport
-    // computes GCM and ChaCha20-Poly1305 inline rather than through
-    // `createCipher`, so there is nothing here for a backend to answer.
+    // Every block cipher the backend claims. AES-GCM goes through `createAead`
+    // instead — see the group of its own below — and ChaCha20-Poly1305 is not
+    // claimed at all.
     const ciphers = {
       SSHCipherType.aes128ctr: 16,
       SSHCipherType.aes192ctr: 24,
@@ -206,6 +206,74 @@ void main() {
       )!;
       expect(() => cipher.reset(), throwsStateError);
       expect(() => cipher.init(true, null), throwsStateError);
+    });
+  });
+
+  // pointycastle's GHASH is a bit at a time, about 2 MiB/s
+  // (lollipopkit/dartssh2#19). What the native one has to be is the same bytes.
+  group('aes-gcm', () {
+    Uint8List pointycastle(
+      bool encrypt,
+      Uint8List key,
+      Uint8List nonce,
+      Uint8List aad,
+      Uint8List input,
+    ) =>
+        (GCMBlockCipher(AESEngine())
+              ..init(encrypt, AEADParameters(KeyParameter(key), 128, nonce, aad)))
+            .process(input);
+
+    /// The nonce of the [n]th packet, as the transport counts them.
+    Uint8List nonce(int n) => Uint8List.fromList([...List.filled(11, 7), n]);
+
+    for (final (name, keySize) in [
+      ('aes128-gcm@openssh.com', 16),
+      ('aes256-gcm@openssh.com', 32),
+    ]) {
+      test('$name seals what pointycastle seals, packet after packet', () {
+        final key = _bytes(keySize, 3);
+        final aead = native.createAead(name, key)!;
+        for (var n = 0; n < 4; n++) {
+          final aad = _bytes(4, n);
+          final packet = _bytes(32 + 16 * n, n + 5);
+          expect(
+            aead.seal(nonce(n), aad, packet),
+            pointycastle(true, key, nonce(n), aad, packet),
+            reason: 'packet $n',
+          );
+        }
+      });
+
+      test('$name opens what pointycastle sealed, and the reverse', () {
+        final key = _bytes(keySize, 9);
+        final aead = native.createAead(name, key)!;
+        final aad = _bytes(4, 2);
+        final packet = _bytes(64, 4);
+
+        final theirs = pointycastle(true, key, nonce(1), aad, packet);
+        expect(aead.open(nonce(1), aad, theirs), packet);
+
+        final ours = aead.seal(nonce(2), aad, packet);
+        expect(pointycastle(false, key, nonce(2), aad, ours), packet);
+      });
+    }
+
+    test('anything altered is null, not an exception', () {
+      final aead = native.createAead('aes256-gcm@openssh.com', _bytes(32))!;
+      final aad = _bytes(4);
+      final sealed = aead.seal(nonce(0), aad, _bytes(48));
+
+      final flipped = Uint8List.fromList(sealed)..[3] ^= 1;
+      expect(aead.open(nonce(0), aad, flipped), isNull);
+      expect(aead.open(nonce(1), aad, sealed), isNull);
+      expect(aead.open(nonce(0), _bytes(4, 9), sealed), isNull);
+    });
+
+    test('ChaCha20-Poly1305 is left to pointycastle', () {
+      expect(
+        native.createAead('chacha20-poly1305@openssh.com', _bytes(64)),
+        isNull,
+      );
     });
   });
 

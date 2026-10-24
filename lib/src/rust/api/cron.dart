@@ -9,7 +9,7 @@ import 'package:server_box/src/rust/frb_generated.dart';
 // These functions are ignored because they are not marked as `pub`: `document`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `fmt`, `fmt`, `from`, `from`
 
-/// POSIX `sh`, for `CommandExec.run(script, entry: 'sh')`.
+/// POSIX `sh`, for `ServerExec.run(script, entry: 'sh')`.
 String cronListScript() => RustLib.instance.api.crateApiCronCronListScript();
 
 /// Takes the document on stdin. A single command: no entry.

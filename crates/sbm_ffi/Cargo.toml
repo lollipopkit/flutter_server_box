@@ -9,6 +9,7 @@ crate-type = ["cdylib", "staticlib"]
 
 [dependencies]
 aes = "0.9"
+aes-gcm = "0.11"
 bcrypt-pbkdf = "0.11"
 cbc = "0.2"
 ctr = "0.10"

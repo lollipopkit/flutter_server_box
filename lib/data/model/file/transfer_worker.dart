@@ -14,6 +14,7 @@ import 'package:server_box/core/utils/sftp_file_backend.dart';
 import 'package:server_box/core/utils/sftp_timeout.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/core/utils/ssh_file_backend.dart';
+import 'package:server_box/core/utils/ssh_native_crypto.dart';
 import 'package:server_box/data/model/file/copy_tree.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
@@ -21,6 +22,7 @@ import 'package:server_box/data/model/file/prompt_queue.dart';
 import 'package:server_box/data/model/file/transfer.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
+import 'package:server_box/src/rust/frb_generated.dart';
 
 const _sftpChunkSize = 32 * 1024;
 
@@ -281,6 +283,21 @@ class FileTransferWorker {
   }
 }
 
+/// The record cipher in Rust on this isolate as on the main one — see
+/// [NativeSshCrypto]. A transfer is this isolate's whole job, and AES-GCM in
+/// pointycastle runs at about 2 MiB/s (lollipopkit/dartssh2#19). Once, and a
+/// library that will not load leaves pointycastle, as it does there.
+Future<void>? _nativeCrypto;
+
+Future<void> _installNativeCrypto() => _nativeCrypto ??= () async {
+  try {
+    if (!RustLib.instance.initialized) await RustLib.init();
+    sshCryptoBackend = const NativeSshCrypto();
+  } catch (e, s) {
+    Loggers.app.warning('Transfer worker keeps pointycastle', e, s);
+  }
+}();
+
 /// Runs transfer jobs received from the main isolate.
 Future<void> isolateMessageHandler(
   dynamic data,
@@ -289,6 +306,7 @@ Future<void> isolateMessageHandler(
 ) async {
   switch (data) {
     case final FileTransfer job:
+      await _installNativeCrypto();
       // The two pairs that already existed keep their own code: segmented
       // reads, an idle timer and a bounded write window are what make a large
       // file over a slow link finish, and none of that is expressible as
