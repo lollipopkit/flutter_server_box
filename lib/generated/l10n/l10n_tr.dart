@@ -5983,4 +5983,11 @@ class AppLocalizationsTr extends AppLocalizations {
   String storeUnreadableKept(String path) {
     return 'Eski dosya şurada tutuldu:\n$path\nSunucularınızı geri almak için bir yedeği geri yükleyin.';
   }
+
+  @override
+  String get storeKeyLostAsk =>
+      'ServerBox verilerini şifreleyen anahtar sistem anahtar deposunda yok. Anahtar deposu veya anahtarlık yalnızca şu anda kullanılamıyorsa, örneğin henüz kilidi açılmadıysa, yeniden deneyin. Aksi halde ServerBox verisiz başlayabilir; eski dosya saklanır.';
+
+  @override
+  String get storeKeyLostStartEmpty => 'Verisiz başlat';
 }

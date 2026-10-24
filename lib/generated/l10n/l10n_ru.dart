@@ -6041,4 +6041,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String storeUnreadableKept(String path) {
     return 'Старый файл сохранён здесь:\n$path\nВосстановите резервную копию, чтобы вернуть серверы.';
   }
+
+  @override
+  String get storeKeyLostAsk =>
+      'Ключа, которым зашифрованы данные ServerBox, нет в системном хранилище ключей. Если хранилище ключей или связка ключей просто временно недоступны, например ещё не разблокированы, повторите попытку. Иначе ServerBox может запуститься без данных; старый файл сохраняется.';
+
+  @override
+  String get storeKeyLostStartEmpty => 'Запустить без данных';
 }

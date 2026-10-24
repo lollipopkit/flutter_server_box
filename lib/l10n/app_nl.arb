@@ -1688,5 +1688,7 @@
   "storeUnreadableTitle": "De vorige gegevens konden niet worden geopend",
   "storeUnreadableKeyLost": "De sleutel waarmee de gegevens van ServerBox zijn versleuteld, staat niet meer in de sleutelopslag van het systeem. Dat gebeurt als het systeem de sleutelopslag reset, als de sleutelhangerdienst niet beschikbaar is, of als de app-gegevens van een ander apparaat zijn gekopieerd, bijvoorbeeld met een overzettool. Zonder die sleutel kunnen de gegevens niet worden ontsleuteld, dus ServerBox is zonder gegevens gestart.",
   "storeUnreadableKeyRejected": "De sleutel in de sleutelopslag van het systeem opent de gegevens van ServerBox niet: ze zijn met een andere sleutel versleuteld, of het bestand is beschadigd. ServerBox is zonder gegevens gestart.",
-  "storeUnreadableKept": "Het oude bestand staat nog op:\n{path}\nZet een back-up terug om je servers terug te krijgen."
+  "storeUnreadableKept": "Het oude bestand staat nog op:\n{path}\nZet een back-up terug om je servers terug te krijgen.",
+  "storeKeyLostAsk": "De sleutel waarmee de gegevens van ServerBox zijn versleuteld, staat niet in de sleutelopslag van het systeem. Is de sleutelopslag of sleutelbos alleen nu niet beschikbaar, bijvoorbeeld nog niet ontgrendeld, probeer het dan opnieuw. Anders kan ServerBox zonder gegevens starten; het oude bestand blijft bewaard.",
+  "storeKeyLostStartEmpty": "Starten zonder gegevens"
 }

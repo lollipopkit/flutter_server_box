@@ -1688,5 +1688,7 @@
   "storeUnreadableTitle": "Bisherige Daten konnten nicht geöffnet werden",
   "storeUnreadableKeyLost": "Der Schlüssel, mit dem die Daten von ServerBox verschlüsselt sind, ist nicht mehr im Schlüsselspeicher des Systems. Das passiert, wenn das System den Schlüsselspeicher zurücksetzt, der Schlüsselbund-Dienst nicht verfügbar ist oder die App-Daten von einem anderen Gerät kopiert wurden, etwa mit einem Umzugstool. Ohne diesen Schlüssel lassen sich die Daten nicht entschlüsseln, daher wurde ServerBox ohne Daten gestartet.",
   "storeUnreadableKeyRejected": "Der Schlüssel im Schlüsselspeicher des Systems öffnet die Daten von ServerBox nicht: Sie wurden mit einem anderen Schlüssel verschlüsselt, oder die Datei ist beschädigt. ServerBox wurde ohne Daten gestartet.",
-  "storeUnreadableKept": "Die alte Datei liegt weiterhin unter:\n{path}\nStelle ein Backup wieder her, um deine Server zurückzubekommen."
+  "storeUnreadableKept": "Die alte Datei liegt weiterhin unter:\n{path}\nStelle ein Backup wieder her, um deine Server zurückzubekommen.",
+  "storeKeyLostAsk": "Der Schlüssel, mit dem die Daten von ServerBox verschlüsselt sind, ist nicht im Schlüsselspeicher des Systems. Ist der Schlüsselspeicher oder Schlüsselbund nur gerade nicht verfügbar, etwa noch nicht entsperrt, versuche es erneut. Andernfalls kann ServerBox ohne Daten starten; die alte Datei bleibt erhalten.",
+  "storeKeyLostStartEmpty": "Ohne Daten starten"
 }

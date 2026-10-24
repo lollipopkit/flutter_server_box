@@ -43,6 +43,7 @@ import 'package:server_box/src/rust/frb_generated.dart';
 import 'package:server_box/view/page/launch_failed.dart';
 import 'package:server_box/view/page/rescue_app.dart';
 import 'package:server_box/view/page/schema_too_new.dart';
+import 'package:server_box/view/page/store_key_lost.dart';
 
 Future<void> main() async {
   await _runInZone(() async {
@@ -235,6 +236,55 @@ Future<void> _initApp(ProviderContainer container) async {
   await TermSessionManager.init();
 }
 
+/// `Stores.init`, and what to do when the database there does not open.
+Future<void> _openStores({required bool fromImport}) async {
+  try {
+    await Stores.init();
+  } catch (e, s) {
+    if (!fromImport && e is! StoreUnreadableException) rethrow;
+
+    // Closed before the files are deleted or moved. `Stores.init` may have got
+    // as far as opening the database, or several boxes, before the one that
+    // threw, and unlinking a file out from under a live handle is undefined at
+    // best: on Windows the delete fails outright and the copy stays, so the
+    // retry below reopens exactly the data that just failed to open.
+    await closeTables();
+    await SqliteDb.close();
+    await Hive.close();
+    await getIt.reset();
+
+    if (fromImport) {
+      // The copied data does not open. It was only ever a copy, so drop it and
+      // start empty — an app that opens with nothing in it can still be told
+      // what happened, one that does not open cannot.
+      Loggers.app.warning('Stores.init after sandbox import', e, s);
+      await SandboxImport.undo();
+    } else {
+      // The vault has no key for the file: it may be gone, or only unavailable
+      // this once (a keyring not yet unlocked). Starting empty would make a
+      // new key over the old one, so that is the user's call.
+      final err = e as StoreUnreadableException;
+      if (err.reason == StoreUnreadableReason.keyLost && await _askKeyLost(err)) {
+        return _openStores(fromImport: false);
+      }
+      // The vault's key does not open the database (#1780). The same reasoning,
+      // except this file is the only copy: kept aside, not deleted, and the
+      // reason is shown once there is a screen — see [StoreUnreadableNotice].
+      await StoreRecovery.setAside(err, s);
+    }
+    await Stores.init();
+  }
+}
+
+/// Shows [StoreKeyLostPage] and returns true to try again.
+Future<bool> _askKeyLost(StoreUnreadableException e) async {
+  Loggers.app.warning('Store key missing', e);
+  final choice = Completer<bool>();
+  await _showRescueWindow();
+  runApp(RescueApp(page: StoreKeyLostPage(err: e, onChoice: choice.complete)));
+  return choice.future;
+}
+
 Future<void> _initData() async {
   // `extended_image` caches under `getTemporaryDirectory()` and makes its own
   // folder there with a plain `create()`, no `recursive`. On macOS that
@@ -265,37 +315,7 @@ Future<void> _initData() async {
   // After the preferences, because the data it copies may be encrypted with a
   // key that old installs keep there. See [SandboxImport].
   final imported = await SandboxImport.run();
-
-  try {
-    await Stores.init();
-  } catch (e, s) {
-    final fromImport = imported == SandboxImportResult.imported;
-    if (!fromImport && e is! StoreUnreadableException) rethrow;
-
-    // Closed before the files are deleted or moved. `Stores.init` may have got
-    // as far as opening the database, or several boxes, before the one that
-    // threw, and unlinking a file out from under a live handle is undefined at
-    // best: on Windows the delete fails outright and the copy stays, so the
-    // retry below reopens exactly the data that just failed to open.
-    await closeTables();
-    await SqliteDb.close();
-    await Hive.close();
-    await getIt.reset();
-
-    if (fromImport) {
-      // The copied data does not open. It was only ever a copy, so drop it and
-      // start empty — an app that opens with nothing in it can still be told
-      // what happened, one that does not open cannot.
-      Loggers.app.warning('Stores.init after sandbox import', e, s);
-      await SandboxImport.undo();
-    } else {
-      // The vault's key does not open the database (#1780). The same reasoning,
-      // except this file is the only copy: kept aside, not deleted, and the
-      // reason is shown once there is a screen — see [StoreUnreadableNotice].
-      await StoreRecovery.setAside(e as StoreUnreadableException, s);
-    }
-    await Stores.init();
-  }
+  await _openStores(fromImport: imported == SandboxImportResult.imported);
 
   // It may effect the following logic, so await it.
   // DO DB migration before load any provider.

@@ -5993,4 +5993,11 @@ class AppLocalizationsAz extends AppLocalizations {
   String storeUnreadableKept(String path) {
     return 'Köhnə fayl burada saxlanılıb:\n$path\nServerlərinizi geri qaytarmaq üçün ehtiyat nüsxəni bərpa edin.';
   }
+
+  @override
+  String get storeKeyLostAsk =>
+      'ServerBox məlumatlarını şifrələyən açar sistem açar anbarında yoxdur. Açar anbarı və ya açarlıq yalnız hazırda əlçatan deyilsə, məsələn hələ kilidi açılmayıbsa, yenidən cəhd edin. Əks halda ServerBox məlumatsız başlaya bilər; köhnə fayl saxlanılır.';
+
+  @override
+  String get storeKeyLostStartEmpty => 'Məlumatsız başlat';
 }

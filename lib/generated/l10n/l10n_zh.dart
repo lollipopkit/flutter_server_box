@@ -5626,6 +5626,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String storeUnreadableKept(String path) {
     return '旧文件保留在：\n$path\n恢复备份即可找回服务器。';
   }
+
+  @override
+  String get storeKeyLostAsk =>
+      '系统密钥库中没有用于加密 ServerBox 数据的密钥。如果密钥库或密钥环只是暂时不可用（例如尚未解锁），请重试。否则可以以空数据启动，旧文件会保留。';
+
+  @override
+  String get storeKeyLostStartEmpty => '以空数据启动';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -11254,4 +11261,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String storeUnreadableKept(String path) {
     return '舊檔案保留在：\n$path\n還原備份即可找回伺服器。';
   }
+
+  @override
+  String get storeKeyLostAsk =>
+      '系統金鑰庫中沒有用於加密 ServerBox 資料的金鑰。如果金鑰庫或金鑰環只是暫時無法使用（例如尚未解鎖），請重試。否則可以以空資料啟動，舊檔案會保留。';
+
+  @override
+  String get storeKeyLostStartEmpty => '以空資料啟動';
 }

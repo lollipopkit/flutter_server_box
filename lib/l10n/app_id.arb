@@ -1688,5 +1688,7 @@
   "storeUnreadableTitle": "Data sebelumnya tidak dapat dibuka",
   "storeUnreadableKeyLost": "Kunci yang mengenkripsi data ServerBox sudah tidak ada di penyimpanan kunci sistem. Ini terjadi ketika sistem mengatur ulang penyimpanan kunci, ketika layanan keyring tidak tersedia, atau ketika data aplikasi disalin dari perangkat lain, misalnya dengan alat migrasi. Tanpa kunci itu data tidak dapat didekripsi, jadi ServerBox dimulai tanpa data.",
   "storeUnreadableKeyRejected": "Kunci di penyimpanan kunci sistem tidak membuka data ServerBox: data dienkripsi dengan kunci lain, atau berkasnya rusak. ServerBox dimulai tanpa data.",
-  "storeUnreadableKept": "Berkas lama disimpan di:\n{path}\nPulihkan cadangan untuk mendapatkan kembali server Anda."
+  "storeUnreadableKept": "Berkas lama disimpan di:\n{path}\nPulihkan cadangan untuk mendapatkan kembali server Anda.",
+  "storeKeyLostAsk": "Kunci yang mengenkripsi data ServerBox tidak ada di penyimpanan kunci sistem. Jika penyimpanan kunci atau keyring hanya sedang tidak tersedia, misalnya belum dibuka kuncinya, coba lagi. Jika tidak, ServerBox dapat dimulai tanpa data; file lama tetap disimpan.",
+  "storeKeyLostStartEmpty": "Mulai tanpa data"
 }

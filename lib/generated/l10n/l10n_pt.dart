@@ -6052,4 +6052,11 @@ class AppLocalizationsPt extends AppLocalizations {
   String storeUnreadableKept(String path) {
     return 'O arquivo anterior foi mantido em:\n$path\nRestaure um backup para recuperar seus servidores.';
   }
+
+  @override
+  String get storeKeyLostAsk =>
+      'A chave que criptografa os dados do ServerBox não está no armazenamento de chaves do sistema. Se o armazenamento de chaves ou o chaveiro estiver apenas indisponível no momento, por exemplo ainda não desbloqueado, tente novamente. Caso contrário, o ServerBox pode iniciar sem dados; o arquivo antigo é mantido.';
+
+  @override
+  String get storeKeyLostStartEmpty => 'Iniciar sem dados';
 }

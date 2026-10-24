@@ -5994,4 +5994,11 @@ class AppLocalizationsId extends AppLocalizations {
   String storeUnreadableKept(String path) {
     return 'Berkas lama disimpan di:\n$path\nPulihkan cadangan untuk mendapatkan kembali server Anda.';
   }
+
+  @override
+  String get storeKeyLostAsk =>
+      'Kunci yang mengenkripsi data ServerBox tidak ada di penyimpanan kunci sistem. Jika penyimpanan kunci atau keyring hanya sedang tidak tersedia, misalnya belum dibuka kuncinya, coba lagi. Jika tidak, ServerBox dapat dimulai tanpa data; file lama tetap disimpan.';
+
+  @override
+  String get storeKeyLostStartEmpty => 'Mulai tanpa data';
 }

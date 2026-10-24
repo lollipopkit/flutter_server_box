@@ -10268,6 +10268,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The old file is kept at:\n{path}\nRestore a backup to get your servers back.'**
   String storeUnreadableKept(String path);
+
+  /// Shown at launch, before anything is decided, when the database exists but the system keystore holds no key for it.
+  ///
+  /// In en, this message translates to:
+  /// **'The key that encrypts ServerBox\'s data is not in the system keystore. If the keystore or keyring is only unavailable right now, for example not yet unlocked, try again. Otherwise ServerBox can start with no data; the old file is kept.'**
+  String get storeKeyLostAsk;
+
+  /// Button: set the unreadable database aside and start the app with no data.
+  ///
+  /// In en, this message translates to:
+  /// **'Start with no data'**
+  String get storeKeyLostStartEmpty;
 }
 
 class _AppLocalizationsDelegate

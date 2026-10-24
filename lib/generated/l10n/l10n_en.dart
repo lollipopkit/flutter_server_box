@@ -6001,4 +6001,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String storeUnreadableKept(String path) {
     return 'The old file is kept at:\n$path\nRestore a backup to get your servers back.';
   }
+
+  @override
+  String get storeKeyLostAsk =>
+      'The key that encrypts ServerBox\'s data is not in the system keystore. If the keystore or keyring is only unavailable right now, for example not yet unlocked, try again. Otherwise ServerBox can start with no data; the old file is kept.';
+
+  @override
+  String get storeKeyLostStartEmpty => 'Start with no data';
 }

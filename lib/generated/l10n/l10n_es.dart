@@ -6082,4 +6082,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String storeUnreadableKept(String path) {
     return 'El archivo anterior se conserva en:\n$path\nRestaura una copia de seguridad para recuperar tus servidores.';
   }
+
+  @override
+  String get storeKeyLostAsk =>
+      'La clave que cifra los datos de ServerBox no está en el almacén de claves del sistema. Si el almacén o el llavero solo no está disponible ahora mismo, por ejemplo porque aún no se ha desbloqueado, vuelve a intentarlo. Si no, ServerBox puede iniciarse sin datos; el archivo anterior se conserva.';
+
+  @override
+  String get storeKeyLostStartEmpty => 'Iniciar sin datos';
 }

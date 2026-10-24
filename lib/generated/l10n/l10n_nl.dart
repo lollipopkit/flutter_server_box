@@ -6050,4 +6050,11 @@ class AppLocalizationsNl extends AppLocalizations {
   String storeUnreadableKept(String path) {
     return 'Het oude bestand staat nog op:\n$path\nZet een back-up terug om je servers terug te krijgen.';
   }
+
+  @override
+  String get storeKeyLostAsk =>
+      'De sleutel waarmee de gegevens van ServerBox zijn versleuteld, staat niet in de sleutelopslag van het systeem. Is de sleutelopslag of sleutelbos alleen nu niet beschikbaar, bijvoorbeeld nog niet ontgrendeld, probeer het dan opnieuw. Anders kan ServerBox zonder gegevens starten; het oude bestand blijft bewaard.';
+
+  @override
+  String get storeKeyLostStartEmpty => 'Starten zonder gegevens';
 }

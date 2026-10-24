@@ -6094,4 +6094,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String storeUnreadableKept(String path) {
     return 'L\'ancien fichier est conservé ici :\n$path\nRestaurez une sauvegarde pour récupérer vos serveurs.';
   }
+
+  @override
+  String get storeKeyLostAsk =>
+      'La clé qui chiffre les données de ServerBox n\'est pas dans le magasin de clés du système. Si le magasin de clés ou le trousseau est seulement indisponible pour le moment, par exemple pas encore déverrouillé, réessayez. Sinon, ServerBox peut démarrer sans données ; l\'ancien fichier est conservé.';
+
+  @override
+  String get storeKeyLostStartEmpty => 'Démarrer sans données';
 }

@@ -1688,5 +1688,7 @@
   "storeUnreadableTitle": "Impossible d'ouvrir les données précédentes",
   "storeUnreadableKeyLost": "La clé qui chiffre les données de ServerBox n'est plus dans le magasin de clés du système. Cela arrive quand le système réinitialise le magasin de clés, quand le service de trousseau n'est pas disponible, ou quand les données de l'app ont été copiées depuis un autre appareil, par exemple avec un outil de migration. Sans cette clé, les données ne peuvent pas être déchiffrées : ServerBox a donc démarré sans données.",
   "storeUnreadableKeyRejected": "La clé du magasin de clés du système n'ouvre pas les données de ServerBox : elles ont été chiffrées avec une autre clé, ou le fichier est endommagé. ServerBox a démarré sans données.",
-  "storeUnreadableKept": "L'ancien fichier est conservé ici :\n{path}\nRestaurez une sauvegarde pour récupérer vos serveurs."
+  "storeUnreadableKept": "L'ancien fichier est conservé ici :\n{path}\nRestaurez une sauvegarde pour récupérer vos serveurs.",
+  "storeKeyLostAsk": "La clé qui chiffre les données de ServerBox n'est pas dans le magasin de clés du système. Si le magasin de clés ou le trousseau est seulement indisponible pour le moment, par exemple pas encore déverrouillé, réessayez. Sinon, ServerBox peut démarrer sans données ; l'ancien fichier est conservé.",
+  "storeKeyLostStartEmpty": "Démarrer sans données"
 }

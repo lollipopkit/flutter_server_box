@@ -1688,5 +1688,7 @@
   "storeUnreadableTitle": "Əvvəlki məlumatları açmaq mümkün olmadı",
   "storeUnreadableKeyLost": "ServerBox məlumatlarını şifrələyən açar artıq sistemin açar anbarında yoxdur. Bu, sistem açar anbarını sıfırladıqda, açarlıq xidməti əlçatan olmadıqda və ya tətbiq məlumatları başqa cihazdan, məsələn köçürmə aləti ilə kopyalandıqda baş verir. Həmin açar olmadan məlumatları deşifrə etmək olmur, ona görə ServerBox məlumatsız başladıldı.",
   "storeUnreadableKeyRejected": "Sistemin açar anbarındakı açar ServerBox məlumatlarını açmır: məlumatlar başqa açarla şifrələnib və ya fayl zədələnib. ServerBox məlumatsız başladıldı.",
-  "storeUnreadableKept": "Köhnə fayl burada saxlanılıb:\n{path}\nServerlərinizi geri qaytarmaq üçün ehtiyat nüsxəni bərpa edin."
+  "storeUnreadableKept": "Köhnə fayl burada saxlanılıb:\n{path}\nServerlərinizi geri qaytarmaq üçün ehtiyat nüsxəni bərpa edin.",
+  "storeKeyLostAsk": "ServerBox məlumatlarını şifrələyən açar sistem açar anbarında yoxdur. Açar anbarı və ya açarlıq yalnız hazırda əlçatan deyilsə, məsələn hələ kilidi açılmayıbsa, yenidən cəhd edin. Əks halda ServerBox məlumatsız başlaya bilər; köhnə fayl saxlanılır.",
+  "storeKeyLostStartEmpty": "Məlumatsız başlat"
 }

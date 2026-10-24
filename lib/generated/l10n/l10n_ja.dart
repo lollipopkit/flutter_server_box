@@ -5728,4 +5728,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String storeUnreadableKept(String path) {
     return '以前のファイルは次の場所に残してあります:\n$path\nバックアップを復元するとサーバーを取り戻せます。';
   }
+
+  @override
+  String get storeKeyLostAsk =>
+      'ServerBox のデータを暗号化している鍵がシステムのキーストアにありません。キーストアやキーリングが一時的に使えないだけ（未ロック解除など）であれば、再試行してください。それ以外の場合はデータなしで起動できます。古いファイルは保持されます。';
+
+  @override
+  String get storeKeyLostStartEmpty => 'データなしで起動';
 }

@@ -5727,4 +5727,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String storeUnreadableKept(String path) {
     return '이전 파일은 다음 위치에 보관되어 있습니다:\n$path\n백업을 복원하면 서버를 되찾을 수 있습니다.';
   }
+
+  @override
+  String get storeKeyLostAsk =>
+      'ServerBox 데이터를 암호화하는 키가 시스템 키 저장소에 없습니다. 키 저장소나 키링을 일시적으로 사용할 수 없는 경우(예: 아직 잠금 해제되지 않음) 다시 시도하세요. 그렇지 않으면 데이터 없이 시작할 수 있으며, 이전 파일은 보존됩니다.';
+
+  @override
+  String get storeKeyLostStartEmpty => '데이터 없이 시작';
 }

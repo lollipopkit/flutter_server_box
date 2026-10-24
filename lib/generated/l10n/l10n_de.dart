@@ -6073,4 +6073,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String storeUnreadableKept(String path) {
     return 'Die alte Datei liegt weiterhin unter:\n$path\nStelle ein Backup wieder her, um deine Server zurückzubekommen.';
   }
+
+  @override
+  String get storeKeyLostAsk =>
+      'Der Schlüssel, mit dem die Daten von ServerBox verschlüsselt sind, ist nicht im Schlüsselspeicher des Systems. Ist der Schlüsselspeicher oder Schlüsselbund nur gerade nicht verfügbar, etwa noch nicht entsperrt, versuche es erneut. Andernfalls kann ServerBox ohne Daten starten; die alte Datei bleibt erhalten.';
+
+  @override
+  String get storeKeyLostStartEmpty => 'Ohne Daten starten';
 }
