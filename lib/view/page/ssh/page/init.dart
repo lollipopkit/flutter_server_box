@@ -930,6 +930,9 @@ extension _Init on SSHPageState {
 
     final shell = await _sess.openShell();
     if (shell == null || !mounted || _reconnectCancelled) {
+      // Not bound yet, so releasing the backend would not end it, and a
+      // borrowed connection is kept with the channel left open on it.
+      shell?.close();
       _closeFailedReconnectClient();
       return false;
     }
