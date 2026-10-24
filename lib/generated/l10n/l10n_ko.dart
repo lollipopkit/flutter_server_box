@@ -5745,4 +5745,10 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get hostCertAuthorityInvalid =>
       '지원하지 않는 SSH 공개 키입니다(ssh-ed25519, ssh-rsa 또는 ecdsa-sha2-*)';
+
+  @override
+  String get hostCertAuthorityNoHosts => '보증할 호스트를 입력하세요(예: *)';
+
+  @override
+  String get hostCertAuthorityExists => '이미 목록에 있습니다';
 }

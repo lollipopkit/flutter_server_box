@@ -40,22 +40,24 @@ Open **Settings → SSH → General → Host certificate authorities** and selec
 
 - **Key**: the CA's public key line, for example the contents of `ca.pub`:
   `ssh-ed25519 AAAA... ca@example.com`. Ed25519, ECDSA and RSA keys are
-  supported.
+  supported. You can also paste a whole `known_hosts` line,
+  `@cert-authority *.example.com ssh-ed25519 AAAA...`; the hosts are then taken
+  from it.
 - **Host**: which servers the CA vouches for. The default `*` matches every
-  server.
+  server. It cannot be empty.
 
-A server whose certificate is signed by a matching CA connects without a
-prompt. Server Box then checks the certificate and refuses the connection if:
+A server connects without a prompt when its certificate is signed by a matching
+CA and is valid: a host certificate, within its validity period, without
+critical options, not signed with SHA-1 (`ssh-rsa`), and listing the server
+among its principals. Principals are compared with the address Server Box
+connected to and with the address configured for the server; a certificate
+without principals is valid for any host, and a principal may contain `*` and
+`?`.
 
-- the certificate is expired or not yet valid,
-- it is a user certificate rather than a host certificate,
-- its principals do not include the host name or address configured for the
-  server (a certificate without principals is valid for any host),
-- it has critical options, or
-- the CA signed it with SHA-1 (`ssh-rsa`).
-
-A server whose certificate is not signed by a matching CA is asked about on the
-first connection, as before.
+Otherwise, the server is asked about on the first connection as described
+above, using the key inside its certificate. This includes a certificate that
+a matching CA signed but that is expired or names another host, which is what
+OpenSSH does too.
 
 ### Host patterns
 

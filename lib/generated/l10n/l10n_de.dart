@@ -6091,4 +6091,11 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get hostCertAuthorityInvalid =>
       'Kein unterstützter öffentlicher SSH-Schlüssel (ssh-ed25519, ssh-rsa oder ecdsa-sha2-*)';
+
+  @override
+  String get hostCertAuthorityNoHosts =>
+      'Gib die Hosts an, für die sie bürgt, zum Beispiel *';
+
+  @override
+  String get hostCertAuthorityExists => 'Bereits in der Liste';
 }

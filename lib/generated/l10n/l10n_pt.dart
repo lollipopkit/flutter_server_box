@@ -6070,4 +6070,11 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get hostCertAuthorityInvalid =>
       'Não é uma chave pública SSH compatível (ssh-ed25519, ssh-rsa ou ecdsa-sha2-*)';
+
+  @override
+  String get hostCertAuthorityNoHosts =>
+      'Informe os hosts que ela garante, por exemplo *';
+
+  @override
+  String get hostCertAuthorityExists => 'Já está na lista';
 }

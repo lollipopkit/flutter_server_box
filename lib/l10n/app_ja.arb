@@ -1693,5 +1693,7 @@
   "storeKeyLostStartEmpty": "データなしで起動",
   "hostCertAuthorities": "ホスト証明書の認証局",
   "hostCertAuthoritiesTip": "これらの認証局が署名した証明書を持つホストは、確認なしで信頼されます（OpenSSH の @cert-authority と同じ）。その他のホストは従来どおり初回接続時に確認します。ホストはカンマ区切りのパターンで、* と ? が使え、! で除外します。22 以外のポートは [host]:port で照合します。",
-  "hostCertAuthorityInvalid": "対応していない SSH 公開鍵です（ssh-ed25519、ssh-rsa、ecdsa-sha2-*）"
+  "hostCertAuthorityInvalid": "対応していない SSH 公開鍵です（ssh-ed25519、ssh-rsa、ecdsa-sha2-*）",
+  "hostCertAuthorityNoHosts": "保証するホストを入力してください（例: *）",
+  "hostCertAuthorityExists": "すでに一覧にあります"
 }

@@ -5746,4 +5746,10 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get hostCertAuthorityInvalid =>
       '対応していない SSH 公開鍵です（ssh-ed25519、ssh-rsa、ecdsa-sha2-*）';
+
+  @override
+  String get hostCertAuthorityNoHosts => '保証するホストを入力してください（例: *）';
+
+  @override
+  String get hostCertAuthorityExists => 'すでに一覧にあります';
 }

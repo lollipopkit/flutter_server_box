@@ -6080,4 +6080,11 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get hostCertAuthorityInvalid =>
       'Non è una chiave pubblica SSH supportata (ssh-ed25519, ssh-rsa o ecdsa-sha2-*)';
+
+  @override
+  String get hostCertAuthorityNoHosts =>
+      'Indica gli host che garantisce, ad esempio *';
+
+  @override
+  String get hostCertAuthorityExists => 'Già nell\'elenco';
 }

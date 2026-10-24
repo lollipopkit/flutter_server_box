@@ -1693,5 +1693,7 @@
   "storeKeyLostStartEmpty": "Starten zonder gegevens",
   "hostCertAuthorities": "Hostcertificaatautoriteiten",
   "hostCertAuthoritiesTip": "Een host waarvan het certificaat door een van deze is ondertekend, wordt zonder vragen vertrouwd, zoals met @cert-authority van OpenSSH; andere hosts worden zoals voorheen bij de eerste verbinding gevraagd. Hosts zijn door komma's gescheiden patronen met * en ?, en ! om uit te sluiten; een andere poort dan 22 wordt vergeleken als [host]:port.",
-  "hostCertAuthorityInvalid": "Geen ondersteunde openbare SSH-sleutel (ssh-ed25519, ssh-rsa of ecdsa-sha2-*)"
+  "hostCertAuthorityInvalid": "Geen ondersteunde openbare SSH-sleutel (ssh-ed25519, ssh-rsa of ecdsa-sha2-*)",
+  "hostCertAuthorityNoHosts": "Vul de hosts in waarvoor ze instaat, bijvoorbeeld *",
+  "hostCertAuthorityExists": "Staat al in de lijst"
 }

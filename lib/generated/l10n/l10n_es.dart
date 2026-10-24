@@ -6100,4 +6100,11 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get hostCertAuthorityInvalid =>
       'No es una clave pública SSH compatible (ssh-ed25519, ssh-rsa o ecdsa-sha2-*)';
+
+  @override
+  String get hostCertAuthorityNoHosts =>
+      'Indica los hosts que avala, por ejemplo *';
+
+  @override
+  String get hostCertAuthorityExists => 'Ya está en la lista';
 }

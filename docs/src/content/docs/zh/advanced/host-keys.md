@@ -27,18 +27,12 @@ ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub
 
 打开 **设置 → SSH → 通用 → 主机证书颁发机构**，点击 **添加**：
 
-- **密钥**：CA 的公钥行，例如 `ca.pub` 的内容：`ssh-ed25519 AAAA... ca@example.com`。支持 Ed25519、ECDSA 和 RSA 公钥。
-- **主机**：这个 CA 为哪些服务器担保。默认值 `*` 匹配所有服务器。
+- **密钥**：CA 的公钥行，例如 `ca.pub` 的内容：`ssh-ed25519 AAAA... ca@example.com`。支持 Ed25519、ECDSA 和 RSA 公钥。也可以直接粘贴 `known_hosts` 中的整行 `@cert-authority *.example.com ssh-ed25519 AAAA...`，主机会从这一行中读取。
+- **主机**：这个 CA 为哪些服务器担保。默认值 `*` 匹配所有服务器，不能为空。
 
-证书由匹配的 CA 签发的服务器会直接连接，不再询问。Server Box 会检查证书，以下情况会拒绝连接：
+服务器的证书由匹配的 CA 签发且有效时，会直接连接，不再询问。有效指：是主机证书、在有效期内、没有 critical option、不是用 SHA-1（`ssh-rsa`）签名，并且 principals 中包含这台服务器。principals 会与 Server Box 实际连接的地址、以及服务器配置中的地址比较；没有 principals 的证书对任何主机都有效，principal 中可以使用 `*` 和 `?`。
 
-- 证书已过期或尚未生效；
-- 是用户证书，不是主机证书；
-- principals 不包含服务器配置中的主机名或地址（没有 principals 的证书对任何主机都有效）；
-- 带有 critical option；
-- CA 使用 SHA-1（`ssh-rsa`）签名。
-
-证书不是由匹配的 CA 签发的服务器，仍在首次连接时询问。
+其他情况下，服务器仍按上文的方式在首次连接时询问，使用证书中的公钥。这包括由匹配的 CA 签发、但已过期或签给其他主机的证书，OpenSSH 的处理方式相同。
 
 ### 主机匹配规则
 

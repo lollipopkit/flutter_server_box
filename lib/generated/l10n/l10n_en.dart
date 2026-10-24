@@ -6019,4 +6019,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get hostCertAuthorityInvalid =>
       'Not a supported SSH public key (ssh-ed25519, ssh-rsa or ecdsa-sha2-*)';
+
+  @override
+  String get hostCertAuthorityNoHosts =>
+      'Enter the hosts it vouches for, for example *';
+
+  @override
+  String get hostCertAuthorityExists => 'Already in the list';
 }

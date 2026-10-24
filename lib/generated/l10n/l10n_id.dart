@@ -6012,4 +6012,11 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get hostCertAuthorityInvalid =>
       'Bukan kunci publik SSH yang didukung (ssh-ed25519, ssh-rsa, atau ecdsa-sha2-*)';
+
+  @override
+  String get hostCertAuthorityNoHosts =>
+      'Masukkan host yang dijaminnya, misalnya *';
+
+  @override
+  String get hostCertAuthorityExists => 'Sudah ada di daftar';
 }

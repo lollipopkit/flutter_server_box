@@ -6001,4 +6001,11 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get hostCertAuthorityInvalid =>
       'Desteklenen bir SSH ortak anahtarı değil (ssh-ed25519, ssh-rsa veya ecdsa-sha2-*)';
+
+  @override
+  String get hostCertAuthorityNoHosts =>
+      'Kefil olduğu ana makineleri girin, örneğin *';
+
+  @override
+  String get hostCertAuthorityExists => 'Zaten listede';
 }

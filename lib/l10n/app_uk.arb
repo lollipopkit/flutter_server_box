@@ -1693,5 +1693,7 @@
   "storeKeyLostStartEmpty": "Запустити без даних",
   "hostCertAuthorities": "Центри сертифікації хостів",
   "hostCertAuthoritiesTip": "Хосту, сертифікат якого підписав один із них, довіряють без запитань, як з @cert-authority в OpenSSH; про інші хости, як і раніше, питають під час першого підключення. Хости — шаблони через кому з * і ?, ! виключає; порт, відмінний від 22, порівнюється як [host]:port.",
-  "hostCertAuthorityInvalid": "Непідтримуваний відкритий ключ SSH (ssh-ed25519, ssh-rsa або ecdsa-sha2-*)"
+  "hostCertAuthorityInvalid": "Непідтримуваний відкритий ключ SSH (ssh-ed25519, ssh-rsa або ecdsa-sha2-*)",
+  "hostCertAuthorityNoHosts": "Вкажіть хости, за які він ручається, наприклад *",
+  "hostCertAuthorityExists": "Уже в списку"
 }

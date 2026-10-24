@@ -1693,5 +1693,7 @@
   "storeKeyLostStartEmpty": "Mulai tanpa data",
   "hostCertAuthorities": "Otoritas sertifikat host",
   "hostCertAuthoritiesTip": "Host yang sertifikatnya ditandatangani salah satu otoritas ini dipercaya tanpa ditanya, seperti @cert-authority OpenSSH; host lain ditanyakan saat koneksi pertama seperti sebelumnya. Host adalah pola yang dipisahkan koma dengan * dan ?, serta ! untuk mengecualikan; port selain 22 dicocokkan sebagai [host]:port.",
-  "hostCertAuthorityInvalid": "Bukan kunci publik SSH yang didukung (ssh-ed25519, ssh-rsa, atau ecdsa-sha2-*)"
+  "hostCertAuthorityInvalid": "Bukan kunci publik SSH yang didukung (ssh-ed25519, ssh-rsa, atau ecdsa-sha2-*)",
+  "hostCertAuthorityNoHosts": "Masukkan host yang dijaminnya, misalnya *",
+  "hostCertAuthorityExists": "Sudah ada di daftar"
 }

@@ -10298,6 +10298,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Not a supported SSH public key (ssh-ed25519, ssh-rsa or ecdsa-sha2-*)'**
   String get hostCertAuthorityInvalid;
+
+  /// Error when the hosts field of a host certificate authority is empty.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the hosts it vouches for, for example *'**
+  String get hostCertAuthorityNoHosts;
+
+  /// Error when the same certificate authority is already in the list for the same hosts.
+  ///
+  /// In en, this message translates to:
+  /// **'Already in the list'**
+  String get hostCertAuthorityExists;
 }
 
 class _AppLocalizationsDelegate

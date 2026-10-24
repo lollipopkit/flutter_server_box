@@ -6112,4 +6112,11 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get hostCertAuthorityInvalid =>
       'Clé publique SSH non prise en charge (ssh-ed25519, ssh-rsa ou ecdsa-sha2-*)';
+
+  @override
+  String get hostCertAuthorityNoHosts =>
+      'Indiquez les hôtes qu\'elle garantit, par exemple *';
+
+  @override
+  String get hostCertAuthorityExists => 'Déjà dans la liste';
 }

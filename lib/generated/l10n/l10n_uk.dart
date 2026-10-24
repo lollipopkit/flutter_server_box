@@ -6057,4 +6057,11 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get hostCertAuthorityInvalid =>
       'Непідтримуваний відкритий ключ SSH (ssh-ed25519, ssh-rsa або ecdsa-sha2-*)';
+
+  @override
+  String get hostCertAuthorityNoHosts =>
+      'Вкажіть хости, за які він ручається, наприклад *';
+
+  @override
+  String get hostCertAuthorityExists => 'Уже в списку';
 }

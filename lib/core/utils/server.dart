@@ -641,6 +641,7 @@ Future<SSHClient> genClient(
         authorities,
         host: dialHost,
         port: dialPort,
+        alsoKnownAs: [ssh.ip],
       ),
     );
     if (Diag.enabled) {
@@ -685,6 +686,7 @@ Future<SSHClient> _authenticatedClient({
       algorithms: SshAlgorithms.of(
         ssh,
         preferCertificates: hostCertificateTrust != null,
+        pinnedKeyTypes: hostKeyVerifier.pinnedKeyTypes,
       ),
       handshakeTimeout: timeout,
       authTimeout: timeout,
@@ -780,6 +782,7 @@ Future<SSHClient> _authenticatedClient({
     algorithms: SshAlgorithms.of(
       ssh,
       preferCertificates: hostCertificateTrust != null,
+      pinnedKeyTypes: hostKeyVerifier.pinnedKeyTypes,
     ),
     handshakeTimeout: timeout,
     authTimeout: timeout,
@@ -923,6 +926,16 @@ class HostKeyVerifier {
   final Map<String, String> _cache;
   final HostKeyPersistCallback? persistCallback;
   final Future<bool> Function(HostKeyPromptInfo info) prompt;
+
+  /// The key types already trusted for this host, which the algorithm list
+  /// prefers — see [SshAlgorithms.of].
+  Set<String> get pinnedKeyTypes {
+    final prefix = _hostKeyStorageKey(spi, '');
+    return {
+      for (final key in _cache.keys)
+        if (key.startsWith(prefix)) key.substring(prefix.length),
+    };
+  }
 
   Future<bool> call(String keyType, Uint8List fingerprintBytes) async {
     final storageKey = _hostKeyStorageKey(spi, keyType);

@@ -5644,6 +5644,12 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get hostCertAuthorityInvalid =>
       '不是支持的 SSH 公钥（ssh-ed25519、ssh-rsa 或 ecdsa-sha2-*）';
+
+  @override
+  String get hostCertAuthorityNoHosts => '请填写它担保的主机，例如 *';
+
+  @override
+  String get hostCertAuthorityExists => '已在列表中';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -11290,4 +11296,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get hostCertAuthorityInvalid =>
       '不是支援的 SSH 公鑰（ssh-ed25519、ssh-rsa 或 ecdsa-sha2-*）';
+
+  @override
+  String get hostCertAuthorityNoHosts => '請填寫它擔保的主機，例如 *';
+
+  @override
+  String get hostCertAuthorityExists => '已在清單中';
 }

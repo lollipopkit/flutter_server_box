@@ -6059,4 +6059,11 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get hostCertAuthorityInvalid =>
       'Неподдерживаемый открытый ключ SSH (ssh-ed25519, ssh-rsa или ecdsa-sha2-*)';
+
+  @override
+  String get hostCertAuthorityNoHosts =>
+      'Укажите хосты, за которые он ручается, например *';
+
+  @override
+  String get hostCertAuthorityExists => 'Уже в списке';
 }

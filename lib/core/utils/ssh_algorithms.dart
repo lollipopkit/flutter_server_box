@@ -27,23 +27,34 @@ import 'package:server_box/data/model/server/ssh_credential.dart';
 /// KEXINIT is unauthenticated, so enabling this gives up that much. That is why
 /// it is opt-in, per host, and off everywhere else.
 abstract final class SshAlgorithms {
-  /// What to propose for [ssh].
+  /// What to propose for [ssh], its host keys ordered as OpenSSH's
+  /// `order_hostkeyalgs` orders them.
   ///
-  /// [preferCertificates] when an authority is trusted to vouch for the host:
-  /// every certificate type ahead of every plain key, as OpenSSH orders them
-  /// then (`order_hostkeyalgs`). The default keeps each certificate beside
-  /// its key, so a host negotiates the key it is pinned on; with an authority
-  /// that pin is not what is relied on, and a certificate for any of the
-  /// host's keys is.
-  static SSHAlgorithms of(SshCredential ssh, {bool preferCertificates = false}) {
+  /// [pinnedKeyTypes] are the key types already trusted for the host, and
+  /// [preferCertificates] says an authority is trusted to vouch for it. When
+  /// the first choice's key is pinned the list is kept as it is; otherwise
+  /// what can be relied on goes first — every certificate with an authority,
+  /// and the pinned types (their certificates too) — the rest after, each
+  /// half in its own order. So a host is not moved off the key it is pinned
+  /// on, nor asked about one it was never pinned on, only because the list
+  /// preferred another.
+  static SSHAlgorithms of(
+    SshCredential ssh, {
+    bool preferCertificates = false,
+    Set<String> pinnedKeyTypes = const {},
+  }) {
     final base = ssh.allowLegacyAlgorithms ? legacy : const SSHAlgorithms();
-    if (!preferCertificates) return base;
+    final hostkey = base.hostkey;
+    if (hostkey.isEmpty || pinnedKeyTypes.contains(hostkey.first.keyType.name)) {
+      return base;
+    }
+    bool relied(SSHHostkeyType type) =>
+        (preferCertificates && type.isCertificate) ||
+        pinnedKeyTypes.contains(type.keyType.name);
+    if (!hostkey.any(relied)) return base;
     return SSHAlgorithms(
       kex: base.kex,
-      hostkey: [
-        ...base.hostkey.where((t) => t.isCertificate),
-        ...base.hostkey.where((t) => !t.isCertificate),
-      ],
+      hostkey: [...hostkey.where(relied), ...hostkey.where((t) => !relied(t))],
       cipher: base.cipher,
       mac: base.mac,
     );

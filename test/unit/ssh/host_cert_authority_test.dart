@@ -23,10 +23,10 @@ const _ed25519 =
 void main() {
   group('the key', () {
     test('an OpenSSH public key line is read, comment or not', () {
-      final key = const HostCertAuthority(publicKey: _ed25519).key;
+      final key = const HostCertAuthority(publicKey: _ed25519, hosts: '*').key;
       expect(key, isNotNull);
       final bare = _ed25519.split(' ').take(2).join(' ');
-      expect(HostCertAuthority(publicKey: '  $bare\n').key, key);
+      expect(HostCertAuthority(publicKey: '  $bare\n', hosts: '*').key, key);
     });
 
     test('anything else is not a key', () {
@@ -37,15 +37,58 @@ void main() {
         // The type outside the blob disagrees with the one inside it.
         'ssh-rsa ${_ed25519.split(' ')[1]}',
         'ssh-dss ${_ed25519.split(' ')[1]}',
+        // Cut short when pasted: the type is whole, the key is not.
+        'ssh-ed25519 ${_ed25519.split(' ')[1].substring(0, 24)}',
       ]) {
-        expect(HostCertAuthority(publicKey: line).key, isNull, reason: line);
+        expect(HostCertAuthority(publicKey: line, hosts: '*').key, isNull,
+            reason: line);
       }
+    });
+  });
+
+  group('what is pasted', () {
+    test('a whole known_hosts line brings its hosts', () {
+      final ca = HostCertAuthority.parse(
+        '@cert-authority *.example.com,!db.example.com $_ed25519',
+        hosts: '*',
+      );
+      expect(ca.hosts, '*.example.com,!db.example.com');
+      expect(ca.key, isNotNull);
+      expect(ca.type, 'ssh-ed25519');
+      expect(ca.comment, 'ca@example.com');
+    });
+
+    test('a key line alone takes the hosts given', () {
+      final ca = HostCertAuthority.parse('  $_ed25519 ', hosts: ' 10.0.0.* ');
+      expect(ca.publicKey, _ed25519);
+      expect(ca.hosts, '10.0.0.*');
+    });
+
+    test('the same key for the same hosts is the same, whatever the comment',
+        () {
+      const a = HostCertAuthority(publicKey: _ed25519, hosts: '*');
+      final b = HostCertAuthority(
+        publicKey: _ed25519.replaceAll('ca@example.com', 'other'),
+        hosts: '*',
+      );
+      expect(a.sameAs(b), isTrue);
+      expect(a.sameAs(const HostCertAuthority(publicKey: _ed25519, hosts: '10.*')),
+          isFalse);
     });
   });
 
   group('which hosts it vouches for', () {
     bool matches(String hosts, String host, [int port = 22]) =>
         HostCertAuthority(publicKey: _ed25519, hosts: hosts).matches(host, port);
+
+    test('no hosts is none, as a `@cert-authority` line without them is', () {
+      expect(matches('', 'anything'), isFalse);
+      expect(matches(' , ', 'anything'), isFalse);
+      expect(
+        const HostCertAuthority(publicKey: _ed25519, hosts: ' ').hasHosts,
+        isFalse,
+      );
+    });
 
     test('`*` is every host, on any port', () {
       expect(matches('*', 'anything'), isTrue);
@@ -77,7 +120,7 @@ void main() {
 
   group('what dartssh2 is told', () {
     const fleet = HostCertAuthority(publicKey: _ed25519, hosts: '*.example.com');
-    const broken = HostCertAuthority(publicKey: 'ssh-ed25519 nope');
+    const broken = HostCertAuthority(publicKey: 'ssh-ed25519 nope', hosts: '*');
 
     test('the keys of the authorities that vouch for the host', () {
       final trust = HostCertAuthority.trustFor(
@@ -87,6 +130,16 @@ void main() {
       );
       expect(trust!.authorities, [fleet.key]);
       expect(trust.principals, ['web.example.com']);
+    });
+
+    test('and the host as configured, when another was dialled', () {
+      final trust = HostCertAuthority.trustFor(
+        [fleet],
+        host: 'web.example.com',
+        port: 22,
+        alsoKnownAs: ['WEB.example.com', '10.0.0.5'],
+      );
+      expect(trust!.principals, ['web.example.com', '10.0.0.5']);
     });
 
     test('the host lower-cased, as OpenSSH checks principals', () {
@@ -124,10 +177,17 @@ void main() {
     Future<SSHClient> connect({
       List<HostCertAuthority>? authorities,
       bool viaAlter = false,
+      Map<String, String> pins = const {},
     }) async {
       final server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
       final peer = server.first;
-      final spi = spiFixture(name: 'web', ip: '127.0.0.1', user: 'u', pwd: 'p');
+      final spi = spiFixture(
+        name: 'web',
+        id: 'web',
+        ip: '127.0.0.1',
+        user: 'u',
+        pwd: 'p',
+      );
       final ssh = viaAlter
           ? spi.ssh!.copyWith(
               port: await _closedPort(),
@@ -136,7 +196,7 @@ void main() {
           : spi.ssh!.copyWith(port: server.port);
       final client = await genClient(
         spi.copyWith(ssh: ssh),
-        knownHostFingerprints: const {},
+        knownHostFingerprints: pins,
         hostCertAuthorities: authorities,
       );
       final socket = await peer;
@@ -152,7 +212,7 @@ void main() {
 
     test('an authority vouching for the host, with the host as principal',
         () async {
-      const ca = HostCertAuthority(publicKey: _ed25519);
+      const ca = HostCertAuthority(publicKey: _ed25519, hosts: '*');
       final client = await connect(authorities: [ca]);
       expect(client.hostCertificateTrust!.authorities, [ca.key]);
       expect(client.hostCertificateTrust!.principals, ['127.0.0.1']);
@@ -161,13 +221,23 @@ void main() {
     test('with an authority, certificates are proposed before any key',
         () async {
       final client =
-          await connect(authorities: [const HostCertAuthority(publicKey: _ed25519)]);
+          await connect(
+        authorities: [const HostCertAuthority(publicKey: _ed25519, hosts: '*')],
+      );
       final offered = client.algorithms.hostkey;
       final firstKey = offered.indexWhere((t) => !t.isCertificate);
       // At least one certificate ahead, or the checks below say nothing.
       expect(firstKey, greaterThan(0));
       expect(offered.take(firstKey).every((t) => t.isCertificate), isTrue);
       expect(offered.skip(firstKey).any((t) => t.isCertificate), isFalse);
+    });
+
+    test('a key pinned for the host is proposed first', () async {
+      final client = await connect(pins: {'web::rsa-sha2-512': 'SHA256:x'});
+      expect(client.algorithms.hostkey.take(2).map((t) => t.name), [
+        'rsa-sha2-512-cert-v01@openssh.com',
+        'rsa-sha2-512',
+      ]);
     });
 
     test('through alterUrl, scoped to and checked against the host dialled',
@@ -181,7 +251,9 @@ void main() {
               hosts: 'localhost,[localhost]:*'),
         ],
       );
-      expect(client.hostCertificateTrust!.principals, ['localhost']);
+      // The machine is named either way; the authorities are the dialled
+      // host's alone.
+      expect(client.hostCertificateTrust!.principals, ['localhost', '127.0.0.1']);
       expect(client.hostCertificateTrust!.authorities, hasLength(1));
     });
 
@@ -194,7 +266,7 @@ void main() {
 
     test('read from the settings when not handed over', () async {
       Stores.setting.sshHostCertAuthorities.put(
-        [const HostCertAuthority(publicKey: _ed25519)],
+        [const HostCertAuthority(publicKey: _ed25519, hosts: '*')],
       );
       final client = await connect();
       expect(client.hostCertificateTrust, isNotNull);
@@ -215,7 +287,7 @@ void main() {
     test('the list survives a write and a read, in order', () {
       const list = [
         HostCertAuthority(publicKey: _ed25519, hosts: '*.example.com'),
-        HostCertAuthority(publicKey: _ed25519),
+        HostCertAuthority(publicKey: _ed25519, hosts: '*'),
       ];
       Stores.setting.sshHostCertAuthorities.put(list);
       expect(Stores.setting.sshHostCertAuthorities.get(), list);
@@ -223,7 +295,7 @@ void main() {
 
     test('a malformed row is dropped, not the list', () {
       Stores.setting.sshHostCertAuthorities.put(
-        const [HostCertAuthority(publicKey: _ed25519)],
+        const [HostCertAuthority(publicKey: _ed25519, hosts: '*')],
       );
       // As a sync might write it: a row without a key beside a good one.
       final raw = Stores.setting.sshHostCertAuthorities.store
@@ -233,16 +305,15 @@ void main() {
         [{'hosts': '*'}, ...raw],
       );
       expect(Stores.setting.sshHostCertAuthorities.get(),
-          [const HostCertAuthority(publicKey: _ed25519)]);
+          [const HostCertAuthority(publicKey: _ed25519, hosts: '*')]);
     });
 
-    test('a row with no hosts reads as every host', () {
-      expect(
-        HostCertAuthority.fromJson(
-          jsonDecode('{"publicKey": "$_ed25519"}') as Map<String, dynamic>,
-        ).hosts,
-        '*',
+    test('a row with no hosts vouches for none, not for all', () {
+      final ca = HostCertAuthority.fromJson(
+        jsonDecode('{"publicKey": "$_ed25519"}') as Map<String, dynamic>,
       );
+      expect(ca.hasHosts, isFalse);
+      expect(ca.matches('anything', 22), isFalse);
     });
   });
 }

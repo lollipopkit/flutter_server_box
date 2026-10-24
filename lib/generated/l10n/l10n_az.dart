@@ -6011,4 +6011,11 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get hostCertAuthorityInvalid =>
       'Dəstəklənən SSH açıq açarı deyil (ssh-ed25519, ssh-rsa və ya ecdsa-sha2-*)';
+
+  @override
+  String get hostCertAuthorityNoHosts =>
+      'Zəmanət verdiyi hostları daxil edin, məsələn *';
+
+  @override
+  String get hostCertAuthorityExists => 'Artıq siyahıdadır';
 }

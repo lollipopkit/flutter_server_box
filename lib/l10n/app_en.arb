@@ -7839,5 +7839,13 @@
   "hostCertAuthorityInvalid": "Not a supported SSH public key (ssh-ed25519, ssh-rsa or ecdsa-sha2-*)",
   "@hostCertAuthorityInvalid": {
     "description": "Error when the pasted text is not a supported SSH public key."
+  },
+  "hostCertAuthorityNoHosts": "Enter the hosts it vouches for, for example *",
+  "@hostCertAuthorityNoHosts": {
+    "description": "Error when the hosts field of a host certificate authority is empty."
+  },
+  "hostCertAuthorityExists": "Already in the list",
+  "@hostCertAuthorityExists": {
+    "description": "Error when the same certificate authority is already in the list for the same hosts."
   }
 }

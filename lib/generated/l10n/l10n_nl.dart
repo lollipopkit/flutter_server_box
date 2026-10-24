@@ -6068,4 +6068,11 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get hostCertAuthorityInvalid =>
       'Geen ondersteunde openbare SSH-sleutel (ssh-ed25519, ssh-rsa of ecdsa-sha2-*)';
+
+  @override
+  String get hostCertAuthorityNoHosts =>
+      'Vul de hosts in waarvoor ze instaat, bijvoorbeeld *';
+
+  @override
+  String get hostCertAuthorityExists => 'Staat al in de lijst';
 }

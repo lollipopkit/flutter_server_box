@@ -108,6 +108,41 @@ void main() {
     await close(tester);
   });
 
+  testWidgets('a whole known_hosts line is taken, hosts and all',
+      (tester) async {
+    await openEditor(tester);
+
+    await add(tester, '@cert-authority *.corp $_key');
+
+    final ca = Stores.setting.sshHostCertAuthorities.get().single;
+    expect(ca.hosts, '*.corp');
+    expect(ca.key, isNotNull);
+    await close(tester);
+  });
+
+  testWidgets('no hosts is refused, not taken for all of them',
+      (tester) async {
+    await openEditor(tester);
+
+    await add(tester, _key, hosts: ' ');
+
+    expect(find.text(en.hostCertAuthorityNoHosts), findsOneWidget);
+    expect(Stores.setting.sshHostCertAuthorities.get(), isEmpty);
+    await close(tester);
+  });
+
+  testWidgets('the same authority for the same hosts is not added twice',
+      (tester) async {
+    await openEditor(tester);
+    await add(tester, _key);
+
+    await add(tester, _key);
+
+    expect(find.text(en.hostCertAuthorityExists), findsOneWidget);
+    expect(Stores.setting.sshHostCertAuthorities.get(), hasLength(1));
+    await close(tester);
+  });
+
   testWidgets('what is not a key is refused, and the dialog says so',
       (tester) async {
     await openEditor(tester);

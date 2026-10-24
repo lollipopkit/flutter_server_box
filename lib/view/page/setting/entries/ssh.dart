@@ -695,7 +695,7 @@ extension _SSH on _AppSettingsPageState {
           return ListView(
             shrinkWrap: true,
             children: [
-              for (final ca in list)
+              for (final (index, ca) in list.indexed)
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   title: Text(_hostCertAuthorityLabel(ca)),
@@ -703,7 +703,7 @@ extension _SSH on _AppSettingsPageState {
                   trailing: IconButton(
                     tooltip: libL10n.delete,
                     icon: const Icon(Icons.delete_outline),
-                    onPressed: () => _removeHostCertAuthority(ca),
+                    onPressed: () => _removeHostCertAuthority(index, ca),
                   ),
                 ),
             ],
@@ -718,14 +718,12 @@ extension _SSH on _AppSettingsPageState {
   }
 
   /// The key's type and comment, which is how a person tells two apart.
-  String _hostCertAuthorityLabel(HostCertAuthority ca) {
-    final parts = ca.publicKey.trim().split(RegExp(r'\s+'));
-    return [parts.first, ...parts.skip(2)].join(' ');
-  }
+  String _hostCertAuthorityLabel(HostCertAuthority ca) =>
+      [ca.type, if (ca.comment.isNotEmpty) ca.comment].join(' ');
 
   /// Asked first, as forgetting a host key is: every host it vouches for
   /// goes back to the first-use prompt.
-  Future<void> _removeHostCertAuthority(HostCertAuthority ca) async {
+  Future<void> _removeHostCertAuthority(int index, HostCertAuthority ca) async {
     final ok = await context.showRoundDialog<bool>(
       title: libL10n.attention,
       child: Text(
@@ -735,34 +733,44 @@ extension _SSH on _AppSettingsPageState {
     );
     if (ok != true) return;
     final prop = _setting.sshHostCertAuthorities;
-    prop.put([...prop.get()]..remove(ca));
+    final list = [...prop.get()];
+    // By position: the list may have changed while this was asked.
+    if (index < list.length && list[index] == ca) {
+      list.removeAt(index);
+      prop.put(list);
+    }
   }
 
   void _addHostCertAuthority() {
     withTextFieldController((keyCtrl) async {
       // Not a second `withTextFieldController`: it returns nothing to await,
       // so this callback would end at once and [keyCtrl] be disposed under an
-      // open dialog. Kept until the dialog's exit animation is over, as
-      // [keyCtrl] is.
+      // open dialog.
       final hostsCtrl = TextEditingController(text: '*');
       try {
         // The dialog's own state, so nothing outlives it: a notifier disposed
         // when this returns would still be listened to through its exit
         // animation.
-        String? error;
-        late StateSetter setError;
+        String? keyError;
+        String? hostsError;
+        late StateSetter setErrors;
         void onSave() {
-          final hosts = hostsCtrl.text.trim();
-          final ca = HostCertAuthority(
-            publicKey: keyCtrl.text.trim(),
-            hosts: hosts.isEmpty ? '*' : hosts,
+          final ca = HostCertAuthority.parse(
+            keyCtrl.text,
+            hosts: hostsCtrl.text,
           );
-          if (ca.key == null) {
-            setError(() => error = l10n.hostCertAuthorityInvalid);
-            return;
-          }
           final prop = _setting.sshHostCertAuthorities;
-          prop.put([...prop.get(), ca]);
+          final list = prop.get();
+          setErrors(() {
+            keyError = ca.key == null
+                ? l10n.hostCertAuthorityInvalid
+                : list.any(ca.sameAs)
+                ? l10n.hostCertAuthorityExists
+                : null;
+            hostsError = ca.hasHosts ? null : l10n.hostCertAuthorityNoHosts;
+          });
+          if (keyError != null || hostsError != null) return;
+          prop.put([...list, ca]);
           context.popDialog();
         }
 
@@ -770,7 +778,7 @@ extension _SSH on _AppSettingsPageState {
           title: libL10n.add,
           child: StatefulBuilder(
             builder: (context, setState) {
-              setError = setState;
+              setErrors = setState;
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -781,13 +789,14 @@ extension _SSH on _AppSettingsPageState {
                     hint: 'ssh-ed25519 AAAA... ca@example.com',
                     maxLines: 3,
                     suggestion: false,
-                    errorText: error,
+                    errorText: keyError,
                   ),
                   Input(
                     controller: hostsCtrl,
                     label: libL10n.host,
                     hint: '*.example.com,!bastion.example.com',
                     suggestion: false,
+                    errorText: hostsError,
                     onSubmitted: (_) => onSave(),
                   ),
                 ],
@@ -796,9 +805,8 @@ extension _SSH on _AppSettingsPageState {
           ),
           actions: Btn.ok(onTap: onSave).toList,
         );
-        await Future<void>.delayed(const Duration(seconds: 3));
       } finally {
-        hostsCtrl.dispose();
+        _disposeAfterExit(hostsCtrl);
       }
     });
   }
