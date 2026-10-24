@@ -281,7 +281,12 @@ Future<bool> _askKeyLost(StoreUnreadableException e) async {
   Loggers.app.warning('Store key missing', e);
   final choice = Completer<bool>();
   await _showRescueWindow();
-  runApp(RescueApp(page: StoreKeyLostPage(err: e, onChoice: choice.complete)));
+  // The first tap decides; a second one before the page is replaced is ignored.
+  void onChoice(bool retry) {
+    if (!choice.isCompleted) choice.complete(retry);
+  }
+
+  runApp(RescueApp(page: StoreKeyLostPage(err: e, onChoice: onChoice)));
   return choice.future;
 }
 
