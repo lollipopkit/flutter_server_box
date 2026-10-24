@@ -1023,7 +1023,10 @@ extension _Init on SSHPageState {
     widget.args.onTmuxStateChanged?.call();
   }
 
-  void _closeFailedReconnectClient() => _sess.closeBackend();
+  /// After a failed reconnect: the shell goes, and the connection only when
+  /// this terminal opened it — the one adopted from the status poller keeps
+  /// serving it and other tabs (#1782).
+  void _closeFailedReconnectClient() => _sess.releaseBackend();
 
   void _writeLn(String p0) => _sess.writeLn(p0);
 
