@@ -7,7 +7,9 @@ import 'package:dartssh2/dartssh2.dart';
 /// like one whose server has stopped replying.
 class IdleSshSocket implements SSHSocket {
   final _incoming = StreamController<Uint8List>();
-  final _outgoing = StreamController<List<int>>();
+  // Broadcast: nothing listens, so writes are dropped rather than buffered,
+  // and `close` completes rather than waiting for a listener forever.
+  final _outgoing = StreamController<List<int>>.broadcast();
   final _done = Completer<void>();
 
   @override
