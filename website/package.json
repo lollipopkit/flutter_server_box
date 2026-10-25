@@ -14,7 +14,7 @@
   },
   "devDependencies": {
     "@fontsource-variable/figtree": "^5.3.0",
-    "@lucide/svelte": "^1.55.0",
+    "@lucide/svelte": "^1.59.0",
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
     "@tailwindcss/vite": "^4.3.3",
     "clsx": "^2.1.1",
