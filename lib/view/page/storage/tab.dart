@@ -145,9 +145,14 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
   void initState() {
     super.initState();
     _hideFromAgent = AgentScreen.files(
+      // The transfers are the only thing `FilePaneHost.open` shows.
       () => switch (_sessions.current?.data) {
-        final ServerFileSession s => (spi: s.spi, path: s.path),
-        final s? => (spi: null, path: s.path),
+        final ServerFileSession s => (
+          spi: s.spi,
+          path: s.path,
+          transfers: _paneView != null,
+        ),
+        final s? => (spi: null, path: s.path, transfers: _paneView != null),
         null => null,
       },
     );

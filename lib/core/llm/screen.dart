@@ -18,7 +18,7 @@ abstract final class AgentScreen {
   static final _shown = <_AgentSubjectState>[];
 
   static ({Spi? spi})? Function()? _terminal;
-  static ({Spi? spi, String? path})? Function()? _files;
+  static ({Spi? spi, String? path, bool transfers})? Function()? _files;
 
   /// The terminal tab's current session: its server, or null for a terminal
   /// on this device; null while the tab shows its picker. The returned
@@ -31,8 +31,11 @@ abstract final class AgentScreen {
   }
 
   /// The file tab's current session: its server (null for this device's
-  /// files) and the directory it shows; null while the tab shows its picker.
-  static VoidCallback files(({Spi? spi, String? path})? Function() current) {
+  /// files), the directory it shows, and whether the transfer list covers it;
+  /// null while the tab shows its picker.
+  static VoidCallback files(
+    ({Spi? spi, String? path, bool transfers})? Function() current,
+  ) {
     _files = current;
     return () {
       if (identical(_files, current)) _files = null;
@@ -75,8 +78,8 @@ abstract final class AgentScreen {
         }}',
       AppTab.file =>
         'File tab, ${page() ?? switch (_files?.call()) {
-          (:final spi?, :final path) => 'the files of ${_server(spi.id, spi)}${_in(path)}',
-          (spi: null, :final path) => "this device's files${_in(path)}",
+          (:final spi?, :final path, :final transfers) => '${_over(transfers)}the files of ${_server(spi.id, spi)}${_in(path)}',
+          (spi: null, :final path, :final transfers) => "${_over(transfers)}this device's files${_in(path)}",
           null => 'picking a server to open',
         }}',
       _ => '${_tabName(tab)} tab${switch (page()) {
@@ -117,6 +120,9 @@ abstract final class AgentScreen {
 
   static String _server(String id, Spi? spi) =>
       'server "${spi?.name ?? id}" (server_id: $id)';
+
+  static String _over(bool transfers) =>
+      transfers ? 'the transfer list, over ' : '';
 
   static String _in(String? path) =>
       path == null || path.isEmpty ? '' : ' at $path';

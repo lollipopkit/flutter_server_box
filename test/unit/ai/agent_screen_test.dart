@@ -112,11 +112,19 @@ void main() {
     hideLocal();
 
     go(AppTab.file);
-    final hideFiles = AgentScreen.files(() => (spi: web, path: '/var/log'));
+    var transfers = false;
+    final hideFiles = AgentScreen.files(
+      () => (spi: web, path: '/var/log', transfers: transfers),
+    );
     addTearDown(hideFiles);
     expect(
       at(),
       'On screen: File tab, the files of server "web" (server_id: s1) at /var/log.',
+    );
+    transfers = true;
+    expect(
+      at(),
+      'On screen: File tab, the transfer list, over the files of server "web" (server_id: s1) at /var/log.',
     );
 
     go(AppTab.workspace);
