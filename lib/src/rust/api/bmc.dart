@@ -72,9 +72,10 @@ abstract class BmcClient implements RustOpaqueInterface {
     required PowerIntent intent,
   });
 
-  /// Re-reads the system `topology` names — what a poll after a power
-  /// action feeds to [`PowerWatch::observe`].
-  Future<RedfishSystem> readSystem({required RedfishTopology topology});
+  /// `topology` with the system it names read again, everything discovery
+  /// worked out kept — what a poll after a power action feeds to
+  /// [`PowerWatch::observe`].
+  Future<RedfishTopology> rereadSystem({required RedfishTopology topology});
 
   /// Reads the machine once: discovery only when `known` is `None`, the
   /// system every time, sensors best effort.

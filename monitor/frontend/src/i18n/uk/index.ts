@@ -743,6 +743,7 @@ const uk = {
 	bmcInvalidUrl: 'Адреса має бути https://host або https://host:port, без шляху.',
 	bmcInvalidUsername: 'Потрібно вказати ім\'я користувача.',
 	bmcInvalidCertificate: 'Відбиток сертифіката не є відбитком SHA-256.',
+	bmcPasswordAgain: 'Адресу змінено: введіть пароль ще раз.',
 	bmcStateOn: 'Увімкнено',
 	bmcStateOff: 'Вимкнено',
 	bmcStatePoweringOn: 'Вмикається',

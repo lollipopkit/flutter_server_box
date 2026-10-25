@@ -743,6 +743,7 @@ const nl = {
 	bmcInvalidUrl: 'Het adres moet https://host of https://host:port zijn, zonder pad.',
 	bmcInvalidUsername: 'Een gebruikersnaam is vereist.',
 	bmcInvalidCertificate: 'De vingerafdruk van het certificaat is geen SHA-256-vingerafdruk.',
+	bmcPasswordAgain: 'Het adres is gewijzigd: voer het wachtwoord opnieuw in.',
 	bmcStateOn: 'Aan',
 	bmcStateOff: 'Uit',
 	bmcStatePoweringOn: 'Wordt ingeschakeld',

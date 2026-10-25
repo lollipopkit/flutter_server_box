@@ -64,6 +64,10 @@ abstract class BmcState with _$BmcState {
 
     /// Set when the sensor list was cut to `sbm_redfish::MAX_SENSOR_MEMBERS`.
     @Default(false) bool sensorsTruncated,
+
+    /// Set while a power action and the confirmation after it run, which is
+    /// up to two minutes: no other action is offered meanwhile.
+    @Default(false) bool isPowering,
   }) = _BmcState;
 
   const BmcState._();
@@ -90,7 +94,7 @@ class BmcNotifier extends _$BmcNotifier {
   /// tell that its answer is no longer wanted.
   var _generation = 0;
 
-  /// Whether a read is already going.
+  /// The build generation whose read is going, if one is.
   ///
   /// The timer fires on a fixed period; a poll of a slow BMC can take longer
   /// than that period, and `power()` holds the same client for up to two
@@ -100,18 +104,15 @@ class BmcNotifier extends _$BmcNotifier {
   ///
   /// A skip rather than a queue: what a poll produces is the current state,
   /// and the one already running is about to publish it.
-  var _refreshing = false;
+  ///
+  /// A generation rather than a flag: a read still running against the client
+  /// a rebuild closed must not make the new build skip its first one, which
+  /// left the card spinning until the timer fired a minute later.
+  int? _refreshingIn;
 
-  /// Set while a power operation and the confirmation after it hold the client.
-  ///
-  /// Separate from [_refreshing] rather than the same flag: `refresh` clears
-  /// its own in a `finally`, and a refresh that happens to finish during a
-  /// power operation would clear a flag it did not set — reopening the window
-  /// this closes for the rest of a confirmation that runs up to two minutes
-  /// against a timer that fires every one.
-  ///
-  /// `power` does not skip when a refresh is running. It is what the user
-  /// asked for, and the reads it races are reads.
+  /// Whether a power action is running, across rebuilds: a credential change
+  /// rebuilds this from a state without [BmcState.isPowering] while the
+  /// action's request and confirmation may still be going.
   var _powering = false;
 
   @override
@@ -169,10 +170,12 @@ class BmcNotifier extends _$BmcNotifier {
     } on BmcError catch (e) {
       return BmcState(failure: e.failure, failureDetail: e.detail);
     }
-    unawaited(refresh());
+    // Once this has returned its state: `refresh` reads `state` before its
+    // first `await`, and reading it inside `build` throws (#1788).
+    unawaited(Future.microtask(refresh));
     _timer = Timer.periodic(_pollInterval, (_) => unawaited(refresh()));
 
-    return const BmcState(isBusy: true);
+    return BmcState(isBusy: true, isPowering: _powering);
   }
 
   /// Reads the machine once.
@@ -182,13 +185,16 @@ class BmcNotifier extends _$BmcNotifier {
   /// several round trips this device can least afford.
   Future<void> refresh() async {
     final client = _client;
-    if (client == null || _refreshing || _powering) return;
+    // `power` does not skip for a read, the other way round: it is what the
+    // user asked for, and the reads it races are reads.
+    if (client == null || _refreshingIn == _generation || _powering) {
+      return;
+    }
     final generation = _generation;
-    _refreshing = true;
-
-    if (!state.isBusy) state = state.copyWith(isBusy: true);
+    _refreshingIn = generation;
 
     try {
+      if (!state.isBusy) state = state.copyWith(isBusy: true);
       final snapshot = await client.snapshot(known: state.topology);
       if (generation != _generation) return;
       if (snapshot.sensorsTruncated) {
@@ -221,7 +227,7 @@ class BmcNotifier extends _$BmcNotifier {
       // In a `finally` because the three branches above return early on a
       // stale generation, and a flag left set there would stop this notifier
       // ever polling again.
-      _refreshing = false;
+      if (_refreshingIn == generation) _refreshingIn = null;
     }
   }
 
@@ -250,9 +256,13 @@ class BmcNotifier extends _$BmcNotifier {
     if (client == null || topology == null || request == null) {
       return BmcPowerResult.notSupported;
     }
+    // One at a time: two resets watched at once contradict each other, and
+    // the first to finish would reopen polling under the second.
+    if (_powering) return BmcPowerResult.failed;
 
     final before = state.powerState;
     _powering = true;
+    state = state.copyWith(isPowering: true);
     try {
       // The intent, never the controller's address or its credentials. This is
       // the one feature that acts on hardware rather than on an OS, so which
@@ -287,6 +297,14 @@ class BmcNotifier extends _$BmcNotifier {
       return confirmed ? BmcPowerResult.confirmed : BmcPowerResult.accepted;
     } finally {
       _powering = false;
+      // A rebuild's state too, which started with the action still running;
+      // only a disposed provider has none to clear.
+      if (ref.mounted) {
+        state = state.copyWith(isPowering: false);
+        // A rebuild meanwhile skipped its first read, which `refresh` does
+        // while powering; a read still going skips this one instead.
+        if (state.isBusy) unawaited(refresh());
+      }
     }
   }
 
@@ -312,10 +330,11 @@ class BmcNotifier extends _$BmcNotifier {
         if (topology == null) return false;
 
         try {
-          final system = await client.readSystem(topology: topology);
+          final next = await client.rereadSystem(topology: topology);
           if (generation != _generation) return false;
-          state = state.copyWith(topology: topology.withSystem(system));
-          if (watch.observe(now: system.powerState)) return true;
+          state = state.copyWith(topology: next);
+          final now = next.system?.powerState ?? PowerState.unknown;
+          if (watch.observe(now: now)) return true;
         } catch (e) {
           // A machine on its way down stops answering, which is itself not an
           // answer about whether it got there
