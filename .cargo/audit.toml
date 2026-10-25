@@ -19,4 +19,13 @@ ignore = [
   #   app's own SSH signs with pointycastle, not this crate
   #   (`crates/sbm_ffi/CLAUDE.md`).
   "RUSTSEC-2023-0071",
+  # TODO: remove once elliptic-curve moves off crypto-bigint 0.5, which has
+  # no fixed release (the fix is 0.7.6).
+  #
+  # crypto-bigint 0.5: timing variability in operations meant to be constant
+  # time. Only jsonwebtoken (monitor) brings it in, through p256/p384 for
+  # ES256/ES384. Tokens are HS256 both ways (`monitor/src/api/auth.rs`: the
+  # default header, `Validation::new(Algorithm::HS256)` and a secret key), so
+  # the EC code is linked and never run, whatever token arrives.
+  "RUSTSEC-2026-0387",
 ]
