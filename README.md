@@ -23,9 +23,6 @@ Thanks to <a href="https://openai.com">OpenAI</a> for providing six months of Ch
 
 ## Screenshots
 
-<details>
-<summary>12 screenshots</summary>
-<br>
 <table>
   <tr>
     <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/home.jpg" alt="Server list"></td>
@@ -33,6 +30,12 @@ Thanks to <a href="https://openai.com">OpenAI</a> for providing six months of Ch
     <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/terminal.jpg" alt="Terminal"></td>
     <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/files.jpg" alt="Files"></td>
   </tr>
+</table>
+
+<details>
+<summary>8 more screenshots</summary>
+<br>
+<table>
   <tr>
     <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/container.jpg" alt="Containers"></td>
     <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/process.jpg" alt="Processes"></td>

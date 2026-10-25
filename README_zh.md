@@ -25,9 +25,6 @@
 
 ## 截屏
 
-<details>
-<summary><b>iPhone</b> — 12 张</summary>
-<br>
 <table>
   <tr>
     <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/home.jpg" alt="服务器列表"></td>
@@ -35,6 +32,12 @@
     <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/terminal.jpg" alt="终端"></td>
     <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/files.jpg" alt="文件"></td>
   </tr>
+</table>
+
+<details>
+<summary>另外 8 张</summary>
+<br>
+<table>
   <tr>
     <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/container.jpg" alt="容器"></td>
     <td><img width="180px" loading="lazy" src="https://cdn.lollipopkit.com/serverbox/screenshot/iphone/process.jpg" alt="进程"></td>
