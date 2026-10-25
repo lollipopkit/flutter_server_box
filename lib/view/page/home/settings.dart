@@ -34,6 +34,7 @@ extension _HomePageSettings on _HomePageState {
             child: NestedNavigator(
               key: const ValueKey('settings'),
               navigatorKey: _settingsNavKey,
+              observers: [AgentScreen.settingsObserver],
               rootBuilder: (_) => const SafeArea(
                 bottom: false,
                 child: SettingsPage(),
@@ -75,6 +76,7 @@ extension _HomePageSettings on _HomePageState {
   void _closeSettings() {
     if (!_settingsOpen) return;
     setState(() => _settingsOpen = false);
+    AgentScreen.settingsOpen = false;
     _settingsCtrl.reverse();
   }
 
@@ -93,6 +95,7 @@ extension _HomePageSettings on _HomePageState {
       _settingsOpen = true;
       _settingsSeen = true;
     });
+    AgentScreen.settingsOpen = true;
     _settingsCtrl.forward();
   }
 }

@@ -497,6 +497,12 @@ impl Client {
             return Err(Error::with(Failure::Unreachable, format!("HTTP {code} at login")));
         }
         let Some(token) = reply.token.clone() else {
+            // The session may exist all the same, and `Location` names it:
+            // given back, or every poll leaves one behind on a device that
+            // allows about four.
+            if let Some(location) = &reply.location {
+                self.delete_session(location, &Credential::Basic(self.basic())).await;
+            }
             return Err(Error::with(
                 Failure::Unreachable,
                 format!("the service returned no token (HTTP {code})"),
@@ -531,16 +537,15 @@ impl Client {
         let path = session.path.take();
         session.token = None;
         if let Some(path) = path {
-            self.delete_session(&path, token).await;
+            self.delete_session(&path, &Credential::Token(token.to_string())).await;
         }
     }
 
-    async fn delete_session(&self, raw: &str, token: &str) {
+    async fn delete_session(&self, raw: &str, credential: &Credential) {
         // A session path is a link like any other.
         if let Ok(path) = self.resolve(raw) {
-            let credential = Credential::Token(token.to_string());
             let _ = self
-                .send(Method::DELETE, &path, Some(&credential), None, None)
+                .send(Method::DELETE, &path, Some(credential), None, None)
                 .await;
         }
     }
@@ -560,7 +565,7 @@ impl Client {
         let token = session.token.take();
         let path = session.path.take();
         if let (Some(token), Some(path)) = (token, path) {
-            self.delete_session(&path, &token).await;
+            self.delete_session(&path, &Credential::Token(token)).await;
         }
     }
 

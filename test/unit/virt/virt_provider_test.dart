@@ -922,7 +922,7 @@ ExecResult _fail(String stderr) =>
 
 typedef _Call = ({String script, String? entry, String? stdin});
 
-class _Exec implements ServerExec {
+class _Exec implements CommandExec {
   _Exec(this.answer);
 
   final FutureOr<ExecResult> Function(_Call call) answer;
@@ -949,7 +949,7 @@ class _Exec implements ServerExec {
 class _FakeServer extends ServerNotifier {
   _FakeServer(this.exec, {this.conn = ServerConn.connected});
 
-  final ServerExec exec;
+  final CommandExec exec;
   final ServerConn conn;
 
   @override
@@ -957,7 +957,7 @@ class _FakeServer extends ServerNotifier {
       ServerState(spi: _spi(serverId), status: InitStatus.status, conn: conn);
 
   @override
-  Future<ServerExec> ensureExec({VoidCallback? onSshDial}) async => exec;
+  Future<CommandExec> ensureExec({VoidCallback? onSshDial}) async => exec;
 
   /// No network in these tests: a PVE backend dials through this.
   @override

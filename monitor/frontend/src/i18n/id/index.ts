@@ -743,6 +743,7 @@ const id = {
 	bmcInvalidUrl: 'Alamat harus berupa https://host atau https://host:port, tanpa path.',
 	bmcInvalidUsername: 'Nama pengguna wajib diisi.',
 	bmcInvalidCertificate: 'Sidik jari sertifikat bukan sidik jari SHA-256.',
+	bmcPasswordAgain: 'Alamat berubah: masukkan kata sandi lagi.',
 	bmcStateOn: 'Menyala',
 	bmcStateOff: 'Mati',
 	bmcStatePoweringOn: 'Sedang dinyalakan',

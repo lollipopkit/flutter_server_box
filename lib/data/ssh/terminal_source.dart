@@ -1,9 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:server_box/core/utils/android_rootfs.dart';
-import 'package:server_box/core/utils/local_exec.dart';
-import 'package:server_box/core/utils/rootfs.dart';
+import 'package:fl_tty/fl_tty.dart';
+import 'package:server_box/core/utils/local_device.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/ssh/ssh_terminal_environment.dart';
 
 /// Where a terminal's shell comes from.
@@ -95,7 +93,7 @@ final class LocalSource extends TerminalSource {
   /// can claim it, and a saved session that names it is unambiguous. The same
   /// spelling the Agent uses to name this machine.
   @override
-  String get id => rootfs ? '$rootfsId/${profileId ?? ''}' : LocalExec.deviceId;
+  String get id => rootfs ? '$rootfsId/${profileId ?? ''}' : LocalDevice.id;
 
   /// What every system's id starts with, so a restored tab reopens the shell it
   /// was — and so a saved tab set from before profiles existed still reads as
@@ -104,7 +102,7 @@ final class LocalSource extends TerminalSource {
   /// TODO(migration residue; remove once no saved tab set predates profiles):
   /// `alpine` is the word an earlier build used for the whole feature, kept
   /// because it is what is in those saved sets.
-  static const rootfsId = '${LocalExec.deviceId}/alpine';
+  static const rootfsId = '${LocalDevice.id}/alpine';
 
   /// The profile a saved [id] names, or null for "whichever is selected".
   static String? profileIdOf(String id) {

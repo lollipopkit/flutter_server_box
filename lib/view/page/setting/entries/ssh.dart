@@ -17,6 +17,7 @@ extension _SSH on _AppSettingsPageState {
         _buildSSHVirtualKeyAutoOff(),
         _buildProgramStatusAlerts(),
         _buildTermMetricsBar(),
+        _buildHostCertAuthorities(),
       ]),
       SettingsGroup(libL10n.theme, [
         _buildTermTheme(),
@@ -662,6 +663,151 @@ extension _SSH on _AppSettingsPageState {
         ),
         actions: Btn.ok(onTap: onSave).toList,
       );
+    });
+  }
+
+  SettingsRow _buildHostCertAuthorities() {
+    final label = l10n.hostCertAuthorities;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(Icons.verified_user_outlined),
+        title: TipText(label, l10n.hostCertAuthoritiesTip),
+        trailing: _setting.sshHostCertAuthorities.listenable().listenVal(
+          (list) => Text('${list.length}', style: UIs.text15),
+        ),
+        onTap: _showHostCertAuthorities,
+      ),
+      keywords: 'ssh certificate ca cert-authority known_hosts',
+    );
+  }
+
+  Future<void> _showHostCertAuthorities() async {
+    final prop = _setting.sshHostCertAuthorities;
+    await context.showRoundDialog(
+      title: l10n.hostCertAuthorities,
+      child: SizedBox(
+        width: 480,
+        child: prop.listenable().listenVal((list) {
+          if (list.isEmpty) {
+            return Text(libL10n.empty, style: UIs.textGrey);
+          }
+          return ListView(
+            shrinkWrap: true,
+            children: [
+              for (final (index, ca) in list.indexed)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(_hostCertAuthorityLabel(ca)),
+                  subtitle: Text(ca.hosts, style: UIs.textGrey),
+                  trailing: IconButton(
+                    tooltip: libL10n.delete,
+                    icon: const Icon(Icons.delete_outline),
+                    onPressed: () => _removeHostCertAuthority(index, ca),
+                  ),
+                ),
+            ],
+          );
+        }),
+      ),
+      actions: [
+        Btn.text(text: libL10n.add, onTap: _addHostCertAuthority),
+        Btn.ok(),
+      ],
+    );
+  }
+
+  /// The key's type and comment, which is how a person tells two apart.
+  String _hostCertAuthorityLabel(HostCertAuthority ca) =>
+      [ca.type, if (ca.comment.isNotEmpty) ca.comment].join(' ');
+
+  /// Asked first, as forgetting a host key is: every host it vouches for
+  /// goes back to the first-use prompt.
+  Future<void> _removeHostCertAuthority(int index, HostCertAuthority ca) async {
+    final ok = await context.showRoundDialog<bool>(
+      title: libL10n.attention,
+      child: Text(
+        libL10n.askContinue('${libL10n.delete} ${_hostCertAuthorityLabel(ca)}'),
+      ),
+      actions: Btnx.cancelRedOk,
+    );
+    if (ok != true) return;
+    final prop = _setting.sshHostCertAuthorities;
+    final list = [...prop.get()];
+    // By position: the list may have changed while this was asked.
+    if (index < list.length && list[index] == ca) {
+      list.removeAt(index);
+      prop.put(list);
+    }
+  }
+
+  void _addHostCertAuthority() {
+    withTextFieldController((keyCtrl) async {
+      // Not a second `withTextFieldController`: it returns nothing to await,
+      // so this callback would end at once and [keyCtrl] be disposed under an
+      // open dialog.
+      final hostsCtrl = TextEditingController(text: '*');
+      try {
+        // The dialog's own state, so nothing outlives it: a notifier disposed
+        // when this returns would still be listened to through its exit
+        // animation.
+        String? keyError;
+        String? hostsError;
+        late StateSetter setErrors;
+        void onSave() {
+          final ca = HostCertAuthority.parse(
+            keyCtrl.text,
+            hosts: hostsCtrl.text,
+          );
+          final prop = _setting.sshHostCertAuthorities;
+          final list = prop.get();
+          setErrors(() {
+            keyError = ca.key == null
+                ? l10n.hostCertAuthorityInvalid
+                : list.any(ca.sameAs)
+                ? l10n.hostCertAuthorityExists
+                : null;
+            hostsError = ca.hasHosts ? null : l10n.hostCertAuthorityNoHosts;
+          });
+          if (keyError != null || hostsError != null) return;
+          prop.put([...list, ca]);
+          context.popDialog();
+        }
+
+        await context.showRoundDialog(
+          title: libL10n.add,
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              setErrors = setState;
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Input(
+                    controller: keyCtrl,
+                    autoFocus: true,
+                    label: libL10n.key,
+                    hint: 'ssh-ed25519 AAAA... ca@example.com',
+                    maxLines: 3,
+                    suggestion: false,
+                    errorText: keyError,
+                  ),
+                  Input(
+                    controller: hostsCtrl,
+                    label: libL10n.host,
+                    hint: '*.example.com,!bastion.example.com',
+                    suggestion: false,
+                    errorText: hostsError,
+                    onSubmitted: (_) => onSave(),
+                  ),
+                ],
+              );
+            },
+          ),
+          actions: Btn.ok(onTap: onSave).toList,
+        );
+      } finally {
+        _disposeAfterExit(hostsCtrl);
+      }
     });
   }
 }

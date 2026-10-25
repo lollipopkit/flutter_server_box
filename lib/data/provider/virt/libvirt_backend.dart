@@ -45,8 +45,8 @@ import 'package:server_box/src/rust/api/virt.dart' as ffi;
 class LibvirtBackend implements VirtBackend {
   LibvirtBackend({
     required this.serverId,
-    required Future<ServerExec> Function() exec,
-    Future<ServerByteExec> Function()? byteExec,
+    required Future<CommandExec> Function() exec,
+    Future<CommandByteExec> Function()? byteExec,
     bool Function()? canStream,
     DateTime Function()? now,
     Future<String?> Function()? knownSudoPassword,
@@ -95,8 +95,8 @@ class LibvirtBackend implements VirtBackend {
   @override
   VirtHostKind get kind => VirtHostKind.libvirt;
 
-  final Future<ServerExec> Function() _exec;
-  final Future<ServerByteExec> Function()? _byteExec;
+  final Future<CommandExec> Function() _exec;
+  final Future<CommandByteExec> Function()? _byteExec;
   final bool Function()? _canStream;
   final DateTime Function() _now;
   /// Each guest's last counters, which the next load's usage is diffed
@@ -1096,7 +1096,7 @@ class LibvirtBackend implements VirtBackend {
   /// One attempt: the preamble, the go line, and — once the host says it is
   /// ready — the file.
   Future<_Streamed> _stream(
-    ServerByteExec exec,
+    CommandByteExec exec,
     VirtUpload upload,
     ffi.VirtUploadEntryKind entry, {
     void Function(int sent)? onProgress,
@@ -1485,7 +1485,7 @@ class LibvirtBackend implements VirtBackend {
     Future<T> Function({required String raw}) parse, {
     bool action = false,
   }) async {
-    final ServerExec exec;
+    final CommandExec exec;
     try {
       exec = await _exec();
     } catch (e) {

@@ -5,7 +5,7 @@ import 'package:server_box/data/model/server/monitor_exec_output.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/provider/server/monitor_http.dart';
 
-/// [ServerExec] over a `monitor` agent's HTTP API.
+/// [CommandExec] over a `monitor` agent's HTTP API.
 ///
 /// One request per command, on the same authenticated session the status poll
 /// uses. There is no second channel to open because there is no connection to
@@ -22,7 +22,7 @@ import 'package:server_box/data/provider/server/monitor_http.dart';
 /// whole run, so there is no channel to signal down; the agent goes on to its
 /// own timeout and kills it there. A cancelled call therefore returns nothing
 /// rather than a partial result — nothing had arrived yet.
-class MonitorExec implements ServerExec {
+class MonitorExec implements CommandExec {
   const MonitorExec(this.client);
 
   final MonitorHttpClient client;

@@ -294,16 +294,52 @@ async fn a_collection_at_the_cap_is_not_truncated() {
 }
 
 #[tokio::test]
-async fn one_unreadable_member_costs_the_readings_not_the_snapshot() {
+async fn one_unreadable_member_costs_itself() {
     let t = modern_service(3).forbidding("/redfish/v1/Chassis/1/Sensors/t1");
     let snap = snapshot(&t, None).await.unwrap();
-    assert!(snap.sensors.is_empty());
+    let names: Vec<_> = snap.sensors.temperatures.iter().map(|r| r.name.as_str()).collect();
+    assert_eq!(names, ["t0", "t2"]);
     assert!(!snap.sensors_truncated);
     assert_eq!(snap.topology.system.unwrap().power_state, PowerState::On);
 }
 
 #[tokio::test]
-async fn the_legacy_pair_is_read_and_a_refused_half_costs_both() {
+async fn a_device_that_stops_answering_is_not_waited_on_for_every_member() {
+    let mut t = modern_service(10);
+    for i in 2..10 {
+        t = t.forbidding(&format!("/redfish/v1/Chassis/1/Sensors/t{i}"));
+    }
+    let snap = snapshot(&t, None).await.unwrap();
+    assert_eq!(snap.sensors.temperatures.len(), 2);
+    let gets = t.gets.lock().unwrap();
+    assert!(gets.iter().any(|p| p.ends_with("/t4")));
+    assert!(!gets.iter().any(|p| p.ends_with("/t5")));
+}
+
+#[tokio::test]
+async fn the_cap_keeps_the_sensors_shown_over_the_rest() {
+    // bmcweb's order: ids sorted by type, temperatures after the rails.
+    let mut t = modern_service(0);
+    let mut paths: Vec<String> = (0..MAX_SENSOR_MEMBERS).map(|i| format!("/redfish/v1/Chassis/1/Sensors/current_{i}")).collect();
+    paths.push("/redfish/v1/Chassis/1/Sensors/temperature_cpu".into());
+    t.resources.insert(
+        "/redfish/v1/Chassis/1/Sensors".into(),
+        json!({"Members": paths.iter().map(|p| json!({"@odata.id": p})).collect::<Vec<_>>()}),
+    );
+    for path in &paths {
+        let current = path.contains("current_");
+        t.resources.insert(
+            path.clone(),
+            json!({"Name": path, "ReadingType": if current { "Current" } else { "Temperature" }, "Reading": 40}),
+        );
+    }
+    let snap = snapshot(&t, None).await.unwrap();
+    assert!(snap.sensors_truncated);
+    assert_eq!(snap.sensors.temperatures.len(), 1);
+}
+
+#[tokio::test]
+async fn the_legacy_pair_is_read_and_a_refused_half_costs_only_itself() {
     let mut resources = vendor("dell_idrac9");
     resources.insert(
         "/redfish/v1/Chassis/System.Embedded.1/Thermal".into(),
@@ -317,10 +353,10 @@ async fn the_legacy_pair_is_read_and_a_refused_half_costs_both() {
     assert_eq!(snap.sensors.temperatures[0].name, "Inlet");
     assert_eq!(snap.sensors.watts, Some(250.0));
 
-    // As in the app: either GET failing is the whole sweep failing.
     let t = FakeTransport::new(resources).forbidding("/redfish/v1/Chassis/System.Embedded.1/Power");
     let snap = snapshot(&t, None).await.unwrap();
-    assert!(snap.sensors.is_empty());
+    assert_eq!(snap.sensors.temperatures[0].name, "Inlet");
+    assert_eq!(snap.sensors.watts, None);
 }
 
 #[tokio::test]

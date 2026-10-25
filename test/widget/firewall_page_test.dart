@@ -41,7 +41,7 @@ String _probe({String? ufw, String? firewalld}) => [
 
 /// A root account answering the probe and the reads, and keeping every
 /// other script it is handed.
-final class _FakeExec implements ServerExec {
+final class _FakeExec implements CommandExec {
   _FakeExec({required this.probe, this.ufw = '', this.firewalld = ''});
 
   final String probe;
@@ -81,7 +81,7 @@ final class _FakeServerNotifier extends ServerNotifier {
   );
 
   @override
-  Future<ServerExec> ensureExec({VoidCallback? onSshDial}) async => exec;
+  Future<CommandExec> ensureExec({VoidCallback? onSshDial}) async => exec;
 }
 
 void main() {

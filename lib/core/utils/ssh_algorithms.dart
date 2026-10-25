@@ -27,9 +27,38 @@ import 'package:server_box/data/model/server/ssh_credential.dart';
 /// KEXINIT is unauthenticated, so enabling this gives up that much. That is why
 /// it is opt-in, per host, and off everywhere else.
 abstract final class SshAlgorithms {
-  /// What to propose for [ssh].
-  static SSHAlgorithms of(SshCredential ssh) =>
-      ssh.allowLegacyAlgorithms ? legacy : const SSHAlgorithms();
+  /// What to propose for [ssh], its host keys ordered as OpenSSH's
+  /// `order_hostkeyalgs` orders them.
+  ///
+  /// [pinnedKeyTypes] are the key types already trusted for the host, and
+  /// [preferCertificates] says an authority is trusted to vouch for it. When
+  /// the first choice's key is pinned the list is kept as it is; otherwise
+  /// what can be relied on goes first — every certificate with an authority,
+  /// and the pinned types (their certificates too) — the rest after, each
+  /// half in its own order. So a host is not moved off the key it is pinned
+  /// on, nor asked about one it was never pinned on, only because the list
+  /// preferred another.
+  static SSHAlgorithms of(
+    SshCredential ssh, {
+    bool preferCertificates = false,
+    Set<String> pinnedKeyTypes = const {},
+  }) {
+    final base = ssh.allowLegacyAlgorithms ? legacy : const SSHAlgorithms();
+    final hostkey = base.hostkey;
+    if (hostkey.isEmpty || pinnedKeyTypes.contains(hostkey.first.keyType.name)) {
+      return base;
+    }
+    bool relied(SSHHostkeyType type) =>
+        (preferCertificates && type.isCertificate) ||
+        pinnedKeyTypes.contains(type.keyType.name);
+    if (!hostkey.any(relied)) return base;
+    return SSHAlgorithms(
+      kex: base.kex,
+      hostkey: [...hostkey.where(relied), ...hostkey.where((t) => !relied(t))],
+      cipher: base.cipher,
+      mac: base.mac,
+    );
+  }
 
   /// The defaults with the algorithms SSH has retired appended.
   ///
@@ -51,7 +80,8 @@ SSHAlgorithms _withLegacyAlgorithms() {
       SSHKexType.dh14Sha1,
       SSHKexType.dh1Sha1,
     ],
-    hostkey: [...modern.hostkey, SSHHostkeyType.rsaSha1],
+    // The SHA-1 certificate before the SHA-1 key, as OpenSSH orders them.
+    hostkey: [...modern.hostkey, SSHHostkeyType.rsaSha1Cert, SSHHostkeyType.rsaSha1],
     cipher: [
       ...modern.cipher,
       SSHCipherType.aes256cbc,

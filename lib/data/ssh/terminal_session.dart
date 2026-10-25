@@ -5,13 +5,12 @@ import 'dart:math' as math;
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_tty/fl_tty.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:server_box/core/app_navigator.dart';
 import 'package:server_box/core/diag.dart';
-import 'package:server_box/core/utils/ish_shell.dart';
 import 'package:server_box/core/utils/local_server.dart';
-import 'package:server_box/core/utils/local_shell.dart';
 import 'package:server_box/core/utils/monitor_terminal.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
@@ -538,30 +537,27 @@ class TerminalSession {
     }
   }
 
-  /// Ends the shell and lets go of the source behind it, closing that only
-  /// when this session opened it: a borrowed connection that still answers
-  /// keeps serving whoever else holds it — the status poller, other tabs.
-  void releaseBackend() {
-    final shell = _foreground;
-    unbindForeground();
-    try {
-      shell?.close();
-    } catch (e, st) {
-      Loggers.app.warning('Failed to close the foreground shell', e, st);
+  /// Lets go of the shell and the source behind it after a failure: a
+  /// failed open or reconnect, or the start of a reconnect.
+  ///
+  /// The shell always goes, and so does [unbound], one opened for the
+  /// foreground but never bound to it. The source is closed when this session
+  /// opened it, or when it is borrowed and not [alive]: a dead connection
+  /// left open would be adopted again by the next attempt, and closing it is
+  /// what makes the status poller dial a new one. A borrowed connection that
+  /// still answers keeps serving the poller and other tabs (#1782).
+  void dropBackend({required bool alive, ShellSession? unbound}) {
+    for (final shell in [_foreground, unbound]) {
+      try {
+        shell?.close();
+      } catch (e, st) {
+        Loggers.app.warning('Failed to close shell', e, st);
+      }
     }
-    if (_ownsBackend) {
+    unbindForeground();
+    if (_ownsBackend || !alive) {
       closeBackend();
     } else {
-      _backend = null;
-    }
-  }
-
-  /// Drops a backend after a failed initial shell open without closing a
-  /// healthy connection borrowed from the status poller.
-  void resetAfterFailedOpen() {
-    if (_ownsBackend) {
-      closeBackend();
-    } else if (_backend?.isClosed == true) {
       _backend = null;
     }
   }

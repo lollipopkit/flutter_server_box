@@ -5967,4 +5967,45 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       'Yeniden bağlanacak bir tmux oturumu yok; yeniden bağlanmak bu kabuğu ve içinde hâlâ çalışan her şeyi sonlandırır ve ekrandaki çıktısını temizler.';
+
+  @override
+  String get storeUnreadableTitle => 'Önceki veriler açılamadı';
+
+  @override
+  String get storeUnreadableKeyLost =>
+      'ServerBox verilerini şifreleyen anahtar artık sistemin anahtar deposunda değil. Sistem anahtar deposunu sıfırladığında, anahtarlık hizmeti kullanılamadığında veya uygulama verileri başka bir cihazdan, örneğin bir taşıma aracıyla kopyalandığında bu olur. Bu anahtar olmadan veriler çözülemez, bu yüzden ServerBox verisiz başlatıldı.';
+
+  @override
+  String get storeUnreadableKeyRejected =>
+      'Sistemin anahtar deposundaki anahtar ServerBox verilerini açmıyor: veriler başka bir anahtarla şifrelenmiş ya da dosya bozuk. ServerBox verisiz başlatıldı.';
+
+  @override
+  String storeUnreadableKept(String path) {
+    return 'Eski dosya şurada tutuldu:\n$path\nSunucularınızı geri almak için bir yedeği geri yükleyin.';
+  }
+
+  @override
+  String get storeKeyLostAsk =>
+      'ServerBox verilerini şifreleyen anahtar sistem anahtar deposunda yok. Anahtar deposu veya anahtarlık yalnızca şu anda kullanılamıyorsa, örneğin henüz kilidi açılmadıysa, yeniden deneyin. Aksi halde ServerBox verisiz başlayabilir; eski dosya saklanır.';
+
+  @override
+  String get storeKeyLostStartEmpty => 'Verisiz başlat';
+
+  @override
+  String get hostCertAuthorities => 'Ana makine sertifika yetkilileri';
+
+  @override
+  String get hostCertAuthoritiesTip =>
+      'Sertifikası bunlardan biri tarafından imzalanmış bir ana makineye sormadan güvenilir, OpenSSH\'nin @cert-authority\'si gibi; diğer ana makineler önceden olduğu gibi ilk bağlantıda sorulur. Ana makineler * ve ? içeren, virgülle ayrılmış kalıplardır, ! hariç tutar; 22 dışındaki bir bağlantı noktası [host]:port olarak eşleştirilir.';
+
+  @override
+  String get hostCertAuthorityInvalid =>
+      'Desteklenen bir SSH ortak anahtarı değil (ssh-ed25519, ssh-rsa veya ecdsa-sha2-*)';
+
+  @override
+  String get hostCertAuthorityNoHosts =>
+      'Kefil olduğu ana makineleri girin, örneğin *';
+
+  @override
+  String get hostCertAuthorityExists => 'Zaten listede';
 }

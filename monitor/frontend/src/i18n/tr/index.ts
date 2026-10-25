@@ -743,6 +743,7 @@ const tr = {
 	bmcInvalidUrl: 'Adres, yol içermeyen https://host veya https://host:port biçiminde olmalıdır.',
 	bmcInvalidUsername: 'Kullanıcı adı gereklidir.',
 	bmcInvalidCertificate: 'Sertifika parmak izi bir SHA-256 parmak izi değil.',
+	bmcPasswordAgain: 'Adres değişti: parolayı yeniden girin.',
 	bmcStateOn: 'Açık',
 	bmcStateOff: 'Kapalı',
 	bmcStatePoweringOn: 'Açılıyor',

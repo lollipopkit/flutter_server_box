@@ -738,36 +738,20 @@ jobs:
           fetch-depth: 0
       - name: Install Flutter
         uses: ./.github/actions/setup-flutter
-      - name: Turn the Linux engine on
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          # Untracked by design. ios/Flutter/Ish.xcconfig defaults SBM_ISH to
-          # 0 so that a checkout which has not built the engine cannot link
-          # one that is not there; CI opts in the way a development machine
-          # does rather than by moving that default.
-          #
-          # The libraries themselves are fetched by the Runner target, through
-          # scripts/ensure-ish-libs.sh: the release the fork publishes for the
-          # revision the gitlink names. Nothing is built here, and no toolchain
-          # is installed — if that download has no release to find, the gitlink
-          # points at an unpublished revision and the build says so.
-          printf 'SBM_ISH = 1\n' > ios/Flutter/IshLocal.xcconfig
       - name: Build (unsigned)
         shell: bash
         run: |
           flutter build ios --release --no-codesign \
             --build-number="${BUILD_NUMBER}" \
             --build-name="1.0.${BUILD_NUMBER}"
-      # The step above asked for the engine; this is what says it arrived. It
-      # cannot fail at build time — nothing in the app calls those functions, so
-      # a linker that dead-strips them produces an IPA that builds, installs and
-      # runs, with the terminal tab's Linux userland simply absent. Android has
-      # `Check proot shipped` for the same reason.
+      # The engine is on by default: fl_tty's hook fetches the libraries the
+      # fork published for the revision its gitlink names and links them into
+      # fl_tty.framework. This is what says it arrived — a build without it
+      # still installs and runs, with the terminal tab's Linux userland simply
+      # absent. Android has `Check proot shipped` for the same reason.
       - name: Check the Linux engine linked
         shell: bash
-        run: scripts/check-ish-linkage.sh build/ios/iphoneos/Runner.app/Runner on
+        run: packages/fl_tty/scripts/check-ish-linkage.sh build/ios/iphoneos/Runner.app/Frameworks/fl_tty.framework/fl_tty on
       - name: Package ipa
         shell: bash
         run: APP_ASSET_NAME="${APP_NAME}" scripts/release/package-unsigned-ipa.sh

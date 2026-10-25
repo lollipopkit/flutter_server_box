@@ -743,6 +743,7 @@ const ko = {
 	bmcInvalidUrl: '주소는 경로 없이 https://host 또는 https://host:port 형식이어야 합니다.',
 	bmcInvalidUsername: '사용자 이름이 필요합니다.',
 	bmcInvalidCertificate: '인증서 지문이 SHA-256 지문이 아닙니다.',
+	bmcPasswordAgain: '주소가 변경되었습니다. 비밀번호를 다시 입력하세요.',
 	bmcStateOn: '켜짐',
 	bmcStateOff: '꺼짐',
 	bmcStatePoweringOn: '켜는 중',

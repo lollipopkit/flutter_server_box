@@ -104,13 +104,9 @@ android/app/.cxx
 # Widget Preview related
 .widget_preview/
 
-# Built by scripts/build-proot-android.sh — GPL binaries, not sources.
-/android/app/src/main/jniLibs/
+# proot built ahead of the build for F-Droid (packages/fl_tty/scripts/build-proot-android.sh).
 /build/proot-android/
 /.fdroid-cache/
-
-# Local switch for the iOS Linux engine — see ios/Flutter/Ish.xcconfig.
-/ios/Flutter/IshLocal.xcconfig
 
 # The working scratchpad for what is not done yet. Kept on disk, out of the
 # history: it churns every session, and what belongs in the repo is the TODO
