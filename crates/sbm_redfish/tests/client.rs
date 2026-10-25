@@ -55,6 +55,10 @@ struct State {
     sessions_link: Option<String>,
     /// Answer a login's `Location` as an absolute URL of this origin.
     absolute_location: bool,
+    /// The root names `SessionService` and no `Links.Sessions` (Supermicro).
+    session_service_only: bool,
+    /// A login answers 201 and `Location`, without `X-Auth-Token`.
+    omit_token: bool,
     next_session: usize,
     port: u16,
 }
@@ -261,6 +265,9 @@ async fn handle(state: &Arc<Mutex<State>>, req: Request) -> Vec<u8> {
         } else {
             id.clone()
         };
+        if s.omit_token {
+            return json_response(201, &[("location", location)], json!({"@odata.id": id}));
+        }
         return json_response(201, &[("x-auth-token", token), ("location", location)], json!({"@odata.id": id}));
     }
 
@@ -281,7 +288,9 @@ async fn handle(state: &Arc<Mutex<State>>, req: Request) -> Vec<u8> {
             "Systems": {"@odata.id": "/redfish/v1/Systems"},
             "Chassis": {"@odata.id": "/redfish/v1/Chassis"},
         });
-        if !s.sessionless {
+        if s.session_service_only {
+            root["SessionService"] = json!({"@odata.id": "/redfish/v1/SessionService"});
+        } else if !s.sessionless {
             let link = s
                 .sessions_link
                 .clone()
@@ -736,6 +745,29 @@ async fn a_session_link_to_another_host_gets_no_password() {
     let s = bmc.state();
     assert_eq!(s.logins, 0);
     assert_eq!(s.requests, ["GET /redfish/v1/"]);
+}
+
+#[tokio::test]
+async fn a_root_naming_only_the_session_service_logs_in_at_its_collection() {
+    let bmc = FakeBmc::start().await;
+    bmc.state().session_service_only = true;
+    let c = bmc.client().await;
+    assert_eq!(c.get("/redfish/v1/Systems/1").await.unwrap()["Model"], "Fake 1U");
+    c.close().await;
+    let s = bmc.state();
+    assert_eq!((s.logins, s.basic_requests), (1, 0));
+    assert_eq!(s.sessions_deleted, s.sessions_created);
+}
+
+#[tokio::test]
+async fn a_login_without_a_token_gives_its_session_back() {
+    let bmc = FakeBmc::start().await;
+    bmc.state().omit_token = true;
+    let c = bmc.client().await;
+    assert_eq!(failure(c.get("/redfish/v1/Systems/1").await), Failure::Unreachable);
+    let s = bmc.state();
+    assert_eq!(s.sessions_created, ["/redfish/v1/SessionService/Sessions/0"]);
+    assert_eq!(s.sessions_deleted, s.sessions_created);
 }
 
 #[tokio::test]

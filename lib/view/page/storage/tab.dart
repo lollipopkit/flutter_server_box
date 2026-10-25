@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/llm/screen.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
@@ -100,6 +101,8 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
     leadingName: libL10n.open,
   );
 
+  late final VoidCallback _hideFromAgent;
+
   /// The bar's search: what is typed, and whether the bar is a field at all.
   ///
   /// It is for "which server do I open", which is what the picker and the rail
@@ -110,8 +113,13 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
   /// What the right column is showing instead of the browsers, if anything.
   ///
   /// Null is the ordinary state. Set by [FilePaneHost.open] — the transfers,
-  /// a search — and cleared by the way back this page draws for it.
+  /// the one thing it shows — and cleared by the way back this page draws for
+  /// it.
   WidgetBuilder? _paneView;
+
+  /// Whether the last build had a column beside the rail, which is where
+  /// [_paneView] is drawn.
+  var _split = false;
 
   late final _picker = _PickPage(
     search: _search,
@@ -141,6 +149,21 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
   @override
   void initState() {
     super.initState();
+    _hideFromAgent = AgentScreen.files(
+      () {
+        final at = switch (_sessions.current?.data) {
+          final ServerFileSession s =>
+            'the files of ${AgentScreen.server(s.spi)}${_at(s.path)}',
+          final s? => "this device's files${_at(s.path)}",
+          null => null,
+        };
+        // The column is drawn only while split, and left set when it stops.
+        if (!_split || _paneView == null) return at;
+        return at == null
+            ? 'the transfer list'
+            : 'the transfer list, over $at';
+      },
+    );
     if (_hasSavedSessions) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _restore();
@@ -185,6 +208,7 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
     for (final tab in _sessions.tabs) {
       tab.data.dispose();
     }
+    _hideFromAgent();
     _sessions.dispose();
     _search.dispose();
     super.dispose();
@@ -216,6 +240,7 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
   }
 
   Widget _buildBrowsers(bool split) {
+    _split = split;
     // Selected here rather than left where it was: page 0 is the picker's,
     // and once the rail is drawing that list nothing in it can reach page 0
     // again, so a layout that turns split while the picker was current left an
@@ -357,6 +382,9 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
       );
     },
   );
+
+  static String _at(String? path) =>
+      path == null || path.isEmpty ? '' : ' at $path';
 
   /// What a session's row in the sheet says under the name: where that browser
   /// is. Two tabs on one server are told apart by this and by nothing else.

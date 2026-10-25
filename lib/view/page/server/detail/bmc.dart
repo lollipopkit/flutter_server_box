@@ -79,7 +79,7 @@ extension on _ServerDetailPageState {
       rows: rows,
       // Below the readings and never cut off by [kReadoutCardRows]: these are
       // the actions, and a truncated list must not be able to hide them.
-      extra: [if (bmc.hasData) _buildBmcPower(si)],
+      extra: [if (bmc.hasData) _buildBmcPower(si, busy: bmc.isPowering)],
       footer: readoutFooter([
         readoutCountNote(
           rows.length,
@@ -105,7 +105,9 @@ extension on _ServerDetailPageState {
   /// for is not shown: offering a button that fails when pressed is worse than
   /// never having offered it, and `Nmi` and `PowerCycle` are advertised
   /// unimplemented often enough that this is not hypothetical.
-  Widget _buildBmcPower(ServerState si) {
+  ///
+  /// [busy] while an action is being confirmed: one at a time.
+  Widget _buildBmcPower(ServerState si, {required bool busy}) {
     final notifier = ref.read(bmcProvider(si.spi).notifier);
     final available = [
       for (final intent in PowerIntent.values)
@@ -121,7 +123,7 @@ extension on _ServerDetailPageState {
         children: [
           for (final intent in available)
             OutlinedButton(
-              onPressed: () => _onTapBmcPower(si, intent),
+              onPressed: busy ? null : () => _onTapBmcPower(si, intent),
               child: Text(_bmcIntentText(intent)),
             ),
         ],

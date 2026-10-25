@@ -186,7 +186,7 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
     return _scriptCache = decoded;
   }
 
-  Future<void> _ensureScript(ServerExec exec) async {
+  Future<void> _ensureScript(CommandExec exec) async {
     final probe = await exec.run(ffi.benchProbeCommand());
     if (ffi.benchScriptPresent(output: probe.combined)) return;
 

@@ -80,7 +80,7 @@ void main() {
       'YABS completed';
 
   /// Opens the provider, which finds the seeded run and polls it at once.
-  ProviderContainer pollWith(ServerExec exec) {
+  ProviderContainer pollWith(CommandExec exec) {
     final container = ProviderContainer(
       overrides: [
         serverProvider(sid).overrideWith(() => _FakeServerNotifier(exec)),
@@ -151,20 +151,20 @@ void main() {
   });
 }
 
-/// Hands out one prepared [ServerExec].
+/// Hands out one prepared [CommandExec].
 class _FakeServerNotifier extends ServerNotifier {
   _FakeServerNotifier(this.exec);
 
-  final ServerExec exec;
+  final CommandExec exec;
 
   @override
-  Future<ServerExec> ensureExec({VoidCallback? onSshDial}) async => exec;
+  Future<CommandExec> ensureExec({VoidCallback? onSshDial}) async => exec;
 }
 
 /// Answers [output], and only once [gate] has completed.
 ///
 /// The gate is what puts the dispose *between* the poll and its answer.
-class _GatedExec implements ServerExec {
+class _GatedExec implements CommandExec {
   const _GatedExec(this.gate, this.output);
 
   final Future<void> gate;

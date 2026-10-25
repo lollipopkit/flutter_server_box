@@ -6046,4 +6046,45 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       'Non c’è una sessione tmux da ricollegare: riconnettere chiude questa shell e tutto ciò che vi è ancora in esecuzione, e ne cancella l’output dallo schermo.';
+
+  @override
+  String get storeUnreadableTitle => 'Impossibile aprire i dati precedenti';
+
+  @override
+  String get storeUnreadableKeyLost =>
+      'La chiave che cifra i dati di ServerBox non è più nell\'archivio chiavi del sistema. Succede quando il sistema reimposta l\'archivio chiavi, quando il servizio portachiavi non è disponibile o quando i dati dell\'app sono stati copiati da un altro dispositivo, ad esempio con uno strumento di migrazione. Senza quella chiave i dati non si possono decifrare, quindi ServerBox è stato avviato senza dati.';
+
+  @override
+  String get storeUnreadableKeyRejected =>
+      'La chiave nell\'archivio chiavi del sistema non apre i dati di ServerBox: sono stati cifrati con un\'altra chiave, oppure il file è danneggiato. ServerBox è stato avviato senza dati.';
+
+  @override
+  String storeUnreadableKept(String path) {
+    return 'Il file precedente è conservato in:\n$path\nRipristina un backup per recuperare i tuoi server.';
+  }
+
+  @override
+  String get storeKeyLostAsk =>
+      'La chiave che cifra i dati di ServerBox non è nell\'archivio chiavi di sistema. Se l\'archivio chiavi o il portachiavi è solo temporaneamente non disponibile, ad esempio non ancora sbloccato, riprova. Altrimenti ServerBox può avviarsi senza dati; il vecchio file viene conservato.';
+
+  @override
+  String get storeKeyLostStartEmpty => 'Avvia senza dati';
+
+  @override
+  String get hostCertAuthorities => 'Autorità di certificazione host';
+
+  @override
+  String get hostCertAuthoritiesTip =>
+      'Un host il cui certificato è firmato da una di queste è considerato attendibile senza chiedere, come con @cert-authority di OpenSSH; per gli altri host si chiede alla prima connessione, come prima. Gli host sono modelli separati da virgole con * e ?, e ! per escludere; una porta diversa da 22 si confronta come [host]:port.';
+
+  @override
+  String get hostCertAuthorityInvalid =>
+      'Non è una chiave pubblica SSH supportata (ssh-ed25519, ssh-rsa o ecdsa-sha2-*)';
+
+  @override
+  String get hostCertAuthorityNoHosts =>
+      'Indica gli host che garantisce, ad esempio *';
+
+  @override
+  String get hostCertAuthorityExists => 'Già nell\'elenco';
 }

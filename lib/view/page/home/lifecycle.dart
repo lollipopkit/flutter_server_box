@@ -75,6 +75,10 @@ extension _HomePageLifecycle on _HomePageState {
     // see [_goAuth]. Completes immediately when no lock is configured.
     await authed;
     if (!mounted) return;
+    // Says why the app is empty when its database did not open — see
+    // [StoreRecovery].
+    await StoreUnreadableNotice.showIfNeeded(context);
+    if (!mounted) return;
     // Says so when this launch took over the sandboxed build's data, or
     // when it could not — see [SandboxImport].
     await SandboxImportNotice.showIfNeeded(context);

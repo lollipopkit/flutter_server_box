@@ -38,7 +38,7 @@ SHELL=/bin/bash
 /// The account the listing reports, which the toolbar draws as it comes.
 var _listUser = 'lk';
 
-final class _FakeExec implements ServerExec {
+final class _FakeExec implements CommandExec {
   @override
   Future<ExecResult> run(
     String script, {
@@ -69,7 +69,7 @@ final class _FakeServerNotifier extends ServerNotifier {
       ServerState(spi: spiFixture(id: id, name: 'hk'), status: InitStatus.status);
 
   @override
-  Future<ServerExec> ensureExec({VoidCallback? onSshDial}) async => _FakeExec();
+  Future<CommandExec> ensureExec({VoidCallback? onSshDial}) async => _FakeExec();
 }
 
 void main() {

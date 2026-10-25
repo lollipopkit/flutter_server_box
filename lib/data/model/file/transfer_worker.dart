@@ -14,6 +14,7 @@ import 'package:server_box/core/utils/sftp_file_backend.dart';
 import 'package:server_box/core/utils/sftp_timeout.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/core/utils/ssh_file_backend.dart';
+import 'package:server_box/core/utils/ssh_native_crypto.dart';
 import 'package:server_box/data/model/file/copy_tree.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
@@ -117,6 +118,7 @@ Future<SSHClient> _connectSsh(
     privateKeysByKeyId: creds.privateKeysByKeyId,
     jumpSpisById: creds.jumpSpisById,
     knownHostFingerprints: creds.knownHostFingerprints,
+    hostCertAuthorities: creds.hostCertAuthorities,
     onKeyboardInteractive: (server, request) =>
         _requestKeyboardInteractive(mainSendPort, server, request),
     onHostKeyPrompt: (info) => _requestHostKey(mainSendPort, info),
@@ -288,6 +290,9 @@ Future<void> isolateMessageHandler(
 ) async {
   switch (data) {
     case final FileTransfer job:
+      // AES-GCM in pointycastle runs at 1.9 MiB/s (lollipopkit/dartssh2#19),
+      // and a transfer is this isolate's whole job.
+      await installNativeSshCrypto();
       // The two pairs that already existed keep their own code: segmented
       // reads, an idle timer and a bounded write window are what make a large
       // file over a slow link finish, and none of that is expressible as

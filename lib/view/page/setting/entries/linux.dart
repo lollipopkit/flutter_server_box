@@ -445,7 +445,7 @@ extension _Linux on _AppSettingsPageState {
         final typed = ctrl.text.trim();
         context.popDialog();
         // Empty is how the default is asked for, here as in the rows below.
-        final chosen = typed.isEmpty ? Defaults.linuxShell : typed;
+        final chosen = typed.isEmpty ? FlTty.defaultShell : typed;
         if (!isShellPathValid(chosen) || !await shellExistsIn(root, chosen)) {
           if (!mounted) return;
           await context.showRoundDialog(
@@ -500,7 +500,7 @@ extension _Linux on _AppSettingsPageState {
       title: 'DNS',
       initial: _setting.linuxDns.fetch(),
       icon: Icons.dns_outlined,
-      hint: Defaults.linuxDns,
+      hint: FlTty.defaultDns,
       // Addresses only, and every one of them: `resolv.conf` takes nothing
       // else, and a name typed here fails as a timeout rather than as a
       // mistake. Anything dropped by the parser would be silently gone, so a
@@ -510,7 +510,7 @@ extension _Linux on _AppSettingsPageState {
           parseNameservers(value).length ==
               value.split(RegExp(r'[\s,;]+')).where((e) => e.isNotEmpty).length,
       onSave: (value) => _setting.linuxDns.put(
-        value.isEmpty ? Defaults.linuxDns : value,
+        value.isEmpty ? FlTty.defaultDns : value,
       ),
     );
   }

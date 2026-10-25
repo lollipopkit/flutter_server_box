@@ -6077,4 +6077,46 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       'Aucune session tmux à rattacher : reconnecter ferme ce shell et tout ce qui s’y exécute encore, et efface sa sortie de l’écran.';
+
+  @override
+  String get storeUnreadableTitle =>
+      'Impossible d\'ouvrir les données précédentes';
+
+  @override
+  String get storeUnreadableKeyLost =>
+      'La clé qui chiffre les données de ServerBox n\'est plus dans le magasin de clés du système. Cela arrive quand le système réinitialise le magasin de clés, quand le service de trousseau n\'est pas disponible, ou quand les données de l\'app ont été copiées depuis un autre appareil, par exemple avec un outil de migration. Sans cette clé, les données ne peuvent pas être déchiffrées : ServerBox a donc démarré sans données.';
+
+  @override
+  String get storeUnreadableKeyRejected =>
+      'La clé du magasin de clés du système n\'ouvre pas les données de ServerBox : elles ont été chiffrées avec une autre clé, ou le fichier est endommagé. ServerBox a démarré sans données.';
+
+  @override
+  String storeUnreadableKept(String path) {
+    return 'L\'ancien fichier est conservé ici :\n$path\nRestaurez une sauvegarde pour récupérer vos serveurs.';
+  }
+
+  @override
+  String get storeKeyLostAsk =>
+      'La clé qui chiffre les données de ServerBox n\'est pas dans le magasin de clés du système. Si le magasin de clés ou le trousseau est seulement indisponible pour le moment, par exemple pas encore déverrouillé, réessayez. Sinon, ServerBox peut démarrer sans données ; l\'ancien fichier est conservé.';
+
+  @override
+  String get storeKeyLostStartEmpty => 'Démarrer sans données';
+
+  @override
+  String get hostCertAuthorities => 'Autorités de certification d\'hôte';
+
+  @override
+  String get hostCertAuthoritiesTip =>
+      'Un hôte dont le certificat a été signé par l\'une d\'elles est approuvé sans demande, comme avec @cert-authority d\'OpenSSH ; les autres hôtes sont demandés à la première connexion, comme avant. Les hôtes sont des motifs séparés par des virgules avec * et ?, et ! pour exclure ; un port autre que 22 est comparé sous la forme [host]:port.';
+
+  @override
+  String get hostCertAuthorityInvalid =>
+      'Clé publique SSH non prise en charge (ssh-ed25519, ssh-rsa ou ecdsa-sha2-*)';
+
+  @override
+  String get hostCertAuthorityNoHosts =>
+      'Indiquez les hôtes qu\'elle garantit, par exemple *';
+
+  @override
+  String get hostCertAuthorityExists => 'Déjà dans la liste';
 }

@@ -1,6 +1,6 @@
 //! libvirt command layer FFI (sbm_virt::libvirt)
 //!
-//! Scripts are POSIX `sh` for `ServerExec.run(script, entry: 'sh')` (or the
+//! Scripts are POSIX `sh` for `CommandExec.run(script, entry: 'sh')` (or the
 //! sudo entry of `PrivilegedExec`). Parsed results cross as `sbm_virt`'s
 //! serde JSON, like `parse_status_json`, so the monitor can serve the same
 //! shape later; a failure crosses as [`VirtFfiError`], whose `kind` is what

@@ -27,7 +27,8 @@ abstract final class SbDiag {
   /// The local Linux userland: installing one, replacing it, removing it.
   ///
   /// Separate from [terminal], which is where one is *used*: an install that
-  /// fails never reaches a terminal to be counted by.
+  /// fails never reaches a terminal to be counted by. Written by fl_tty's
+  /// `Rootfs`, under this same name.
   static const linux = DiagCategory('linux');
 
   /// A snippet being run.

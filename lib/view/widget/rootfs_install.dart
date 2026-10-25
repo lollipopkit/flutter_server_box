@@ -2,14 +2,10 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_tty/fl_tty.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/utils/android_rootfs.dart';
-import 'package:server_box/core/utils/ios_rootfs.dart';
-import 'package:server_box/core/utils/rootfs.dart';
 import 'package:server_box/data/model/app/feature.dart';
-import 'package:server_box/data/model/app/linux_distro.dart';
-import 'package:server_box/data/model/app/rootfs_manifest.dart';
 import 'package:server_box/data/res/store.dart';
 
 /// Puts a Linux userland on this device, asking first.

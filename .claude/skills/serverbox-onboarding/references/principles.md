@@ -120,12 +120,13 @@ button's own correct navigator resolution.
 Five platforms from one codebase, with two pieces of native machinery worth
 knowing about:
 
-- **`third_party/ish-arm64`** is a fork of iSH, the Linux userland the iOS build
-  can run locally. It is off by default (`SBM_ISH=0`) and built out of tree by
-  `scripts/build-ish-ios.sh`, which is why `flutter clean` breaks it.
-- **CocoaPods is gone from iOS and macOS.** `hook/build.dart` and the
-  `packages/flutter_pty` fork replaced the per-platform build integrations with
-  Dart build hooks, so there is no `Podfile` and nothing to add one back to.
+- **`packages/fl_tty`** is the shell on this device, shared with LLMBox: the
+  pty, proot on Android and ish-arm64 (a fork of iSH, at
+  `packages/fl_tty/third_party/ish-arm64`) on iOS. Its build hook builds all of
+  it; the engine's libraries are fetched for the submodule's revision.
+- **CocoaPods is gone from iOS and macOS.** `hook/build.dart` and fl_tty's hook
+  replaced the per-platform build integrations with Dart build hooks, so there
+  is no `Podfile` and nothing to add one back to.
 
 Localization is ARB files in `lib/l10n/`, reached through `l10n` for this
 project and `libL10n` for the strings `fl_lib` already has. Prefer an existing

@@ -4572,6 +4572,7 @@ name = "sbm_ffi"
 version = "0.1.0"
 dependencies = [
  "aes",
+ "aes-gcm",
  "bcrypt-pbkdf",
  "cbc",
  "ctr",

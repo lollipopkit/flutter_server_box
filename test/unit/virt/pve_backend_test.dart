@@ -1425,7 +1425,7 @@ VirtStoragePool _pool(String name) => VirtStoragePool(
 );
 
 /// What the node's live network probe printed.
-class _Probe implements ServerExec {
+class _Probe implements CommandExec {
   _Probe(this.out);
 
   final String out;

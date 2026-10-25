@@ -743,6 +743,7 @@ const de = {
 	bmcInvalidUrl: 'Die Adresse muss https://host oder https://host:port lauten, ohne Pfad.',
 	bmcInvalidUsername: 'Ein Benutzername ist erforderlich.',
 	bmcInvalidCertificate: 'Der Zertifikat-Fingerabdruck ist kein SHA-256-Fingerabdruck.',
+	bmcPasswordAgain: 'Die Adresse wurde geändert: Passwort erneut eingeben.',
 	bmcStateOn: 'An',
 	bmcStateOff: 'Aus',
 	bmcStatePoweringOn: 'Wird eingeschaltet',

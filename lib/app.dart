@@ -12,6 +12,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/app_navigator.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/llm/screen.dart';
 import 'package:server_box/core/motion.dart';
 import 'package:server_box/core/service/diagnostics_upload.dart';
 import 'package:server_box/core/utils/local_server.dart';
@@ -195,7 +196,7 @@ class _MyAppState extends State<MyApp> {
       localizationsDelegates: appLocalizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       localeListResolutionCallback: LocaleUtil.resolve,
-      navigatorObservers: [AppRouteObserver.instance],
+      navigatorObservers: [AppRouteObserver.instance, AgentScreen.rootObserver],
       title: BuildData.name,
       themeMode: themeMode,
       theme: light,

@@ -14,7 +14,7 @@ final class _Call {
   final String? stdin;
 }
 
-final class _QueueExec implements ServerExec {
+final class _QueueExec implements CommandExec {
   _QueueExec(List<ExecResult> results) : results = Queue.of(results);
 
   final Queue<ExecResult> results;

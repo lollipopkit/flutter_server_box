@@ -5985,4 +5985,45 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       'There is no tmux session to re-attach, so reconnecting ends this shell and anything still running in it, and clears its output from the screen.';
+
+  @override
+  String get storeUnreadableTitle => 'Previous data could not be opened';
+
+  @override
+  String get storeUnreadableKeyLost =>
+      'The key that encrypts ServerBox\'s data is no longer in the system keystore. This happens when the system resets the keystore, when the keyring service is not available, or when the app\'s data was copied from another device, for example by a phone migration tool. The data cannot be decrypted without that key, so ServerBox started with no data.';
+
+  @override
+  String get storeUnreadableKeyRejected =>
+      'The key in the system keystore does not open ServerBox\'s data: the data was encrypted with another key, or the file is damaged. ServerBox started with no data.';
+
+  @override
+  String storeUnreadableKept(String path) {
+    return 'The old file is kept at:\n$path\nRestore a backup to get your servers back.';
+  }
+
+  @override
+  String get storeKeyLostAsk =>
+      'The key that encrypts ServerBox\'s data is not in the system keystore. If the keystore or keyring is only unavailable right now, for example not yet unlocked, try again. Otherwise ServerBox can start with no data; the old file is kept.';
+
+  @override
+  String get storeKeyLostStartEmpty => 'Start with no data';
+
+  @override
+  String get hostCertAuthorities => 'Host certificate authorities';
+
+  @override
+  String get hostCertAuthoritiesTip =>
+      'A host whose certificate one of these signed is trusted without asking, as OpenSSH\'s @cert-authority; other hosts are asked about on first connection, as before. Hosts are comma-separated patterns with * and ?, and ! to exclude; a port other than 22 is matched as [host]:port.';
+
+  @override
+  String get hostCertAuthorityInvalid =>
+      'Not a supported SSH public key (ssh-ed25519, ssh-rsa or ecdsa-sha2-*)';
+
+  @override
+  String get hostCertAuthorityNoHosts =>
+      'Enter the hosts it vouches for, for example *';
+
+  @override
+  String get hostCertAuthorityExists => 'Already in the list';
 }

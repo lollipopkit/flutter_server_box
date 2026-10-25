@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_tty/fl_tty.dart';
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/scheduler.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
-import 'package:server_box/core/utils/local_exec.dart';
 import 'package:server_box/core/utils/local_server.dart';
 import 'package:server_box/core/utils/monitor_exec.dart';
 import 'package:server_box/core/utils/server.dart';
@@ -29,7 +29,6 @@ import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/server.dart';
-import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/status_history.dart';
 import 'package:server_box/data/model/server/system.dart';
@@ -710,7 +709,7 @@ class ServerNotifier extends _$ServerNotifier {
       updateStatus(_copyStatus(state.status, system: system));
     }
 
-    final ServerExec exec;
+    final CommandExec exec;
     try {
       exec = await ensureScriptExec();
     } catch (e) {
@@ -789,7 +788,7 @@ class ServerNotifier extends _$ServerNotifier {
   ///
   /// Stdout alone, as the SSH status read takes it: on Windows, PowerShell
   /// writes progress records to stderr, and the parser reads one stream.
-  Future<String> _runLocal(ServerExec exec, String cmd) async {
+  Future<String> _runLocal(CommandExec exec, String cmd) async {
     final cancel = Completer<void>();
     final timer = Timer(_localCmdTimeout, cancel.complete);
     try {
@@ -911,7 +910,7 @@ class ServerNotifier extends _$ServerNotifier {
   ///
   /// The one place that decides *how* a command reaches a server. Callers —
   /// the process list, services, containers, snippets, power control —
-  /// take a [ServerExec] and never learn which transport answered, which is
+  /// take a [CommandExec] and never learn which transport answered, which is
   /// what keeps a second transport from being a condition inside each of
   /// them.
   ///
@@ -927,7 +926,7 @@ class ServerNotifier extends _$ServerNotifier {
   /// transport *leads* does not answer that, because a server carrying both
   /// falls through to sshd when the agent does not reply. Not called when a
   /// client is already open, since nothing is dialled and nothing prompts.
-  Future<ServerExec> ensureExec({VoidCallback? onSshDial}) async {
+  Future<CommandExec> ensureExec({VoidCallback? onSshDial}) async {
     final spi = state.spi;
     final fallbackExists = spi.fallbackTransport != null;
     try {
@@ -960,7 +959,7 @@ class ServerNotifier extends _$ServerNotifier {
     }
   }
 
-  Future<ServerExec> _execOver(
+  Future<CommandExec> _execOver(
     ServerConnectCredential credential, {
     bool probe = false,
     VoidCallback? onSshDial,
@@ -993,7 +992,7 @@ class ServerNotifier extends _$ServerNotifier {
     }
   }
 
-  bool isExecCurrent(ServerExec exec, Spi spi) {
+  bool isExecCurrent(CommandExec exec, Spi spi) {
     if (state.spi != spi) return false;
     if (exec is SshExec) {
       return identical(state.client, exec.client) && !exec.client.isClosed;
@@ -1038,7 +1037,7 @@ class ServerNotifier extends _$ServerNotifier {
   Future<void> _migrateCustomCmds(
     Spi spi,
     SystemType system,
-    ServerExec exec,
+    CommandExec exec,
   ) async {
     final local = spi.custom?.cmds;
     if (local == null || local.isEmpty) return;
@@ -1094,7 +1093,7 @@ class ServerNotifier extends _$ServerNotifier {
     }
   }
 
-  /// A [ServerExec] with the generated script present on the server.
+  /// A [CommandExec] with the generated script present on the server.
   ///
   /// What the process list wants, rather than plain [ensureExec]: it runs one
   /// of the script's functions, and the script only gets there because
@@ -1109,7 +1108,7 @@ class ServerNotifier extends _$ServerNotifier {
   ///
   /// Throws when the script cannot be written, since the alternative is a page
   /// reporting an empty list on a server that has plenty of processes.
-  Future<ServerExec> ensureScriptExec() async {
+  Future<CommandExec> ensureScriptExec() async {
     final exec = await ensureExec();
     final gen = _operationGeneration;
     final origSpi = state.spi;
@@ -1160,7 +1159,7 @@ class ServerNotifier extends _$ServerNotifier {
       );
     }
     // A monitor-only server reaches this path too, which is the point: what
-    // carries the commands is `ServerExec`, not SSH, so both kinds of server
+    // carries the commands is `CommandExec`, not SSH, so both kinds of server
     // reach the same directory.
     if (gen == _operationGeneration && origSpi == state.spi) {
       await _migrateCustomCmds(spi, system, exec);

@@ -3,7 +3,7 @@
 //! Pure, no I/O. The caller runs a script through whatever reaches the machine
 //! (SSH, a monitor agent's `/exec`, a local process) and hands the combined
 //! output back here. Every script is POSIX `sh` meant to be fed to `sh` on
-//! stdin (the app's `ServerExec.run(script, entry: 'sh')`, or
+//! stdin (the app's `CommandExec.run(script, entry: 'sh')`, or
 //! `sudo -S -p '' sh` for the permission retry), never run as the login
 //! shell's command line — that may be fish.
 //!

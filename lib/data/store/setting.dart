@@ -2,14 +2,15 @@ import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/theme.dart';
+import 'package:fl_tty/fl_tty.dart';
 import 'package:server_box/data/model/app/diagnostics_level.dart';
 import 'package:server_box/data/model/app/float_shell_config.dart';
-import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/motion.dart';
 import 'package:server_box/data/model/app/server_sort.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/app/tray.dart';
+import 'package:server_box/data/model/server/host_cert_authority.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/res/default.dart';
 import 'package:server_box/data/store/field_prop.dart';
@@ -150,6 +151,22 @@ class SettingStore extends SqliteStore with ThemeSettings {
     },
   );
 
+  /// Certificate authorities trusted to sign host keys, as OpenSSH's
+  /// `@cert-authority` lines — see [HostCertAuthority].
+  late final sshHostCertAuthorities = listProperty<HostCertAuthority>(
+    'sshHostCertAuthorities',
+    // Row by row: one a sync or a restore brought in malformed is dropped,
+    // not every authority with it.
+    fromObj: (raw) => raw is List
+        ? [
+            for (final item in raw)
+              if (item is Map && item['publicKey'] is String)
+                HostCertAuthority.fromJson(Map<String, dynamic>.from(item)),
+          ]
+        : null,
+    toObj: (list) => list?.map((ca) => ca.toJson()).toList(),
+  );
+
   /// Which profile a terminal opens in, by `LinuxProfile.id`.
   ///
   /// Empty until something is chosen; the platform layer reads that as "the
@@ -192,7 +209,7 @@ class SettingStore extends SqliteStore with ThemeSettings {
   /// Not per distribution: this is the network the device is on. Read through
   /// `linuxNameservers()`, which is also what decides what counts as an address
   /// in it.
-  late final linuxDns = propertyDefault('linuxDns', Defaults.linuxDns);
+  late final linuxDns = propertyDefault('linuxDns', FlTty.defaultDns);
 
   // Editor theme
   late final editorTheme = propertyDefault('editorTheme', Defaults.editorTheme);
