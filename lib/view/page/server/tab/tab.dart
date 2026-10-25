@@ -10,6 +10,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/server.dart';
+import 'package:server_box/core/llm/screen.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/tag_group.dart';
 import 'package:server_box/data/model/app/keybinding.dart';

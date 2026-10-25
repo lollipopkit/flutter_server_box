@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/llm/screen.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/refresh_interval.dart';
 import 'package:server_box/data/model/app/error.dart';
@@ -35,7 +36,11 @@ class ContainerPage extends ConsumerStatefulWidget {
   @override
   ConsumerState<ContainerPage> createState() => _ContainerPageState();
 
-  static const route = AppRouteArg(page: ContainerPage.new, path: '/container');
+  static const route = AppRouteArg(page: _routed, path: '/container');
+
+  /// Pushed, it is what the Agent is told is on screen.
+  static Widget _routed({Key? key, required SpiRequiredArgs args}) =>
+      AgentSubject(page: 'the containers', spi: args.spi, child: ContainerPage(key: key, args: args));
 }
 
 class _ContainerPageState extends ConsumerState<ContainerPage>

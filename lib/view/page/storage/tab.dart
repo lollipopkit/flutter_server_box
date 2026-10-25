@@ -101,6 +101,8 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
     leadingName: libL10n.open,
   );
 
+  late final VoidCallback _hideFromAgent;
+
   /// The bar's search: what is typed, and whether the bar is a field at all.
   ///
   /// It is for "which server do I open", which is what the picker and the rail
@@ -142,11 +144,13 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
   @override
   void initState() {
     super.initState();
-    AgentScreen.files = () => switch (_sessions.current?.data) {
-      final ServerFileSession s => (spi: s.spi, path: s.path),
-      final s? => (spi: null, path: s.path),
-      null => null,
-    };
+    _hideFromAgent = AgentScreen.files(
+      () => switch (_sessions.current?.data) {
+        final ServerFileSession s => (spi: s.spi, path: s.path),
+        final s? => (spi: null, path: s.path),
+        null => null,
+      },
+    );
     if (_hasSavedSessions) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _restore();
@@ -191,7 +195,7 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
     for (final tab in _sessions.tabs) {
       tab.data.dispose();
     }
-    AgentScreen.files = () => null;
+    _hideFromAgent();
     _sessions.dispose();
     _search.dispose();
     super.dispose();

@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/llm/screen.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/privileged_exec.dart';
 import 'package:server_box/core/utils/refresh_interval.dart';
@@ -53,7 +54,11 @@ class ProcessPage extends ConsumerStatefulWidget {
   @override
   ConsumerState<ProcessPage> createState() => _ProcessPageState();
 
-  static const route = AppRouteArg(page: ProcessPage.new, path: '/process');
+  static const route = AppRouteArg(page: _routed, path: '/process');
+
+  /// Pushed, it is what the Agent is told is on screen.
+  static Widget _routed({Key? key, required SpiRequiredArgs args}) =>
+      AgentSubject(page: 'the processes', spi: args.spi, child: ProcessPage(key: key, args: args));
 }
 
 class _ProcessPageState extends ConsumerState<ProcessPage>

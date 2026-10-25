@@ -10,6 +10,7 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/llm/screen.dart';
 import 'package:server_box/core/service/tray.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/core/utils/desktop_shortcuts.dart';

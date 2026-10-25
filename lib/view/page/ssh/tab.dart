@@ -135,6 +135,8 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
     leadingName: libL10n.add,
   );
 
+  late final VoidCallback _hideFromAgent;
+
   /// Notified when the picker's sort order changes. That order lives in the
   /// settings store rather than a provider, so nothing else would tell the
   /// picker — or the icon on the bar — to rebuild.
@@ -172,10 +174,12 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
   @override
   void initState() {
     super.initState();
-    AgentScreen.terminal = () => switch (_sessions.current) {
-      final tab? => (spi: tab.data.page.args.spi),
-      null => null,
-    };
+    _hideFromAgent = AgentScreen.terminal(
+      () => switch (_sessions.current) {
+        final tab? => (spi: tab.data.page.args.spi),
+        null => null,
+      },
+    );
     // Here and not lazily: [dispose] touches it, and `ref` is gone by then.
     _floating = ValueNotifier(ref.read(terminalShellProvider)?.session);
     Rootfs.removed.addListener(_onRootfsRemoved);
@@ -201,7 +205,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
   @override
   void dispose() {
     Rootfs.removed.removeListener(_onRootfsRemoved);
-    AgentScreen.terminal = () => null;
+    _hideFromAgent();
     _sessions.dispose();
     _sortVersion.dispose();
     _search.dispose();
