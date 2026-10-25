@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/llm/screen.dart';
 import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/dist.dart';
@@ -134,6 +135,8 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
     leadingName: libL10n.add,
   );
 
+  late final VoidCallback _hideFromAgent;
+
   /// Notified when the picker's sort order changes. That order lives in the
   /// settings store rather than a provider, so nothing else would tell the
   /// picker — or the icon on the bar — to rebuild.
@@ -171,6 +174,12 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
   @override
   void initState() {
     super.initState();
+    _hideFromAgent = AgentScreen.terminal(
+      () => switch (_sessions.current) {
+        final tab? => tab.data.page.args.source,
+        null => null,
+      },
+    );
     // Here and not lazily: [dispose] touches it, and `ref` is gone by then.
     _floating = ValueNotifier(ref.read(terminalShellProvider)?.session);
     Rootfs.removed.addListener(_onRootfsRemoved);
@@ -196,6 +205,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
   @override
   void dispose() {
     Rootfs.removed.removeListener(_onRootfsRemoved);
+    _hideFromAgent();
     _sessions.dispose();
     _sortVersion.dispose();
     _search.dispose();
