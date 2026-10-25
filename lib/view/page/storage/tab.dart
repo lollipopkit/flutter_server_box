@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/llm/screen.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
@@ -141,6 +142,11 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
   @override
   void initState() {
     super.initState();
+    AgentScreen.files = () => switch (_sessions.current?.data) {
+      final ServerFileSession s => (spi: s.spi, path: s.path),
+      final s? => (spi: null, path: s.path),
+      null => null,
+    };
     if (_hasSavedSessions) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _restore();
@@ -185,6 +191,7 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
     for (final tab in _sessions.tabs) {
       tab.data.dispose();
     }
+    AgentScreen.files = () => null;
     _sessions.dispose();
     _search.dispose();
     super.dispose();

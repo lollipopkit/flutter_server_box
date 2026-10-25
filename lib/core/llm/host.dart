@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/llm/scope.dart';
+import 'package:server_box/core/llm/screen.dart';
 import 'package:server_box/core/llm/tools.dart';
 import 'package:server_box/data/provider/ai/global_agent_tools.dart';
 import 'package:server_box/data/provider/server/all.dart';
@@ -95,6 +96,7 @@ abstract final class LlmHost {
     LlmUi.appTools = () => AgentTools.all;
     LlmUi.offers = offers;
     LlmUi.appPrompt = prompt;
+    LlmUi.appContext = AgentScreen.describe;
   }
 
   /// A terminal's chats get that terminal and nothing else but the skills:
