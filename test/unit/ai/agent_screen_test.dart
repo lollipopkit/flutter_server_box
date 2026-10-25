@@ -91,6 +91,18 @@ void main() {
     await tester.pumpAndSettle();
     expect(at(), contains('"web"'));
 
+    // A page about no server, pushed over one that is.
+    nav.currentState!.push(
+      MaterialPageRoute(
+        builder: (_) =>
+            const AgentSubject(page: 'the transfer list', child: Text('t')),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(at(), 'On screen: Server tab, the transfer list.');
+    nav.currentState!.pop();
+    await tester.pumpAndSettle();
+
     // A terminal's chat is about its own server and is told nothing.
     expect(
       at(ChatMeta(id: 'x', updatedAt: DateTime(2026), scope: AgentScope.terminal('s1'))),

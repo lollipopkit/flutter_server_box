@@ -139,19 +139,22 @@ class AgentScreenTab extends InheritedWidget {
   bool updateShouldNotify(AgentScreenTab oldWidget) => tab != oldWidget.tab;
 }
 
-/// Marks [child] as showing [page] of [spi] to the Agent ([AgentScreen]),
-/// while its route is the top one of its navigator.
+/// Marks [child] as showing [page] (of [spi], where it is about a server) to
+/// the Agent ([AgentScreen]), while its route is the top one of its navigator.
+///
+/// Also on a page about no server: pushed over one that is, it is what is on
+/// screen, and without it the page underneath would be described instead.
 class AgentSubject extends StatefulWidget {
   const AgentSubject({
     super.key,
     required this.page,
-    required this.spi,
+    this.spi,
     required this.child,
   });
 
-  /// What of the server is shown, as the model reads it: "the status page".
+  /// What is shown, as the model reads it: "the status page".
   final String page;
-  final Spi spi;
+  final Spi? spi;
   final Widget child;
 
   @override
@@ -165,8 +168,10 @@ class _AgentSubjectState extends State<AgentSubject> {
   /// is every time that changes, as the route is a dependency.
   var _current = false;
 
-  String _describe() =>
-      '${widget.page} of ${AgentScreen._server(widget.spi.id, widget.spi)}';
+  String _describe() => switch (widget.spi) {
+    final spi? => '${widget.page} of ${AgentScreen._server(spi.id, spi)}',
+    null => widget.page,
+  };
 
   @override
   void initState() {

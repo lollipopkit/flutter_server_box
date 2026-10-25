@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/llm/screen.dart';
 import 'package:server_box/core/utils/local_file_backend.dart';
 import 'package:server_box/core/utils/refresh_interval.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
@@ -30,8 +31,14 @@ class TransferListPage extends ConsumerStatefulWidget {
   ConsumerState<TransferListPage> createState() => _TransferListPageState();
 
   static const route = AppRouteNoArg(
-    page: TransferListPage.new,
+    page: _routed,
     path: '/files/transfers',
+  );
+
+  /// Pushed over a browser, it is what the Agent is told is on screen.
+  static Widget _routed({Key? key}) => AgentSubject(
+    page: 'the transfer list',
+    child: TransferListPage(key: key),
   );
 }
 
