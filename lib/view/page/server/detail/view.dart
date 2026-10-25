@@ -11,7 +11,6 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/server.dart';
-import 'package:server_box/core/llm/screen.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
@@ -102,13 +101,9 @@ class ServerDetailPage extends ConsumerStatefulWidget {
   ConsumerState<ServerDetailPage> createState() => _ServerDetailPageState();
 
   static const route = AppRouteArg(
-    page: _routed,
+    page: ServerDetailPage.new,
     path: '/servers/detail',
   );
-
-  /// Pushed, it is what the Agent is told is on screen.
-  static Widget _routed({Key? key, required SpiRequiredArgs args}) =>
-      AgentSubject(page: 'the status page', spi: args.spi, child: ServerDetailPage(key: key, args: args));
 }
 
 /// What the grid keeps clear below its last card, so the bar is never over

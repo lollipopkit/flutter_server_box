@@ -113,8 +113,13 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
   /// What the right column is showing instead of the browsers, if anything.
   ///
   /// Null is the ordinary state. Set by [FilePaneHost.open] — the transfers,
-  /// a search — and cleared by the way back this page draws for it.
+  /// the one thing it shows — and cleared by the way back this page draws for
+  /// it.
   WidgetBuilder? _paneView;
+
+  /// Whether the last build had a column beside the rail, which is where
+  /// [_paneView] is drawn.
+  var _split = false;
 
   late final _picker = _PickPage(
     search: _search,
@@ -145,15 +150,18 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
   void initState() {
     super.initState();
     _hideFromAgent = AgentScreen.files(
-      // The transfers are the only thing `FilePaneHost.open` shows.
-      () => switch (_sessions.current?.data) {
-        final ServerFileSession s => (
-          spi: s.spi,
-          path: s.path,
-          transfers: _paneView != null,
-        ),
-        final s? => (spi: null, path: s.path, transfers: _paneView != null),
-        null => null,
+      () {
+        final at = switch (_sessions.current?.data) {
+          final ServerFileSession s =>
+            'the files of ${AgentScreen.server(s.spi)}${_at(s.path)}',
+          final s? => "this device's files${_at(s.path)}",
+          null => null,
+        };
+        // The column is drawn only while split, and left set when it stops.
+        if (!_split || _paneView == null) return at;
+        return at == null
+            ? 'the transfer list'
+            : 'the transfer list, over $at';
       },
     );
     if (_hasSavedSessions) {
@@ -232,6 +240,7 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
   }
 
   Widget _buildBrowsers(bool split) {
+    _split = split;
     // Selected here rather than left where it was: page 0 is the picker's,
     // and once the rail is drawing that list nothing in it can reach page 0
     // again, so a layout that turns split while the picker was current left an
@@ -373,6 +382,9 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
       );
     },
   );
+
+  static String _at(String? path) =>
+      path == null || path.isEmpty ? '' : ' at $path';
 
   /// What a session's row in the sheet says under the name: where that browser
   /// is. Two tabs on one server are told apart by this and by nothing else.

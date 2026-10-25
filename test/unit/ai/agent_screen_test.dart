@@ -1,15 +1,21 @@
-import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart';
+import 'dart:async';
+
+
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/llm/scope.dart';
 import 'package:server_box/core/llm/screen.dart';
+import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/workspace/workspace.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/server/selection.dart';
 import 'package:server_box/data/provider/workspace.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/data/store/history.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
@@ -17,6 +23,21 @@ import 'package:server_box/data/store/setting.dart';
 
 import '../../helpers/spi_fixture.dart';
 import '../../helpers/test_db.dart';
+
+Widget _page({Key? key, required SpiRequiredArgs args}) =>
+    Text(args.spi.name, key: key);
+
+Widget _plain({Key? key}) => Text('plain', key: key);
+
+const _detail = AppRouteArg<void, SpiRequiredArgs>(
+  page: _page,
+  path: '/servers/detail',
+);
+const _firewall = AppRouteArg<void, SpiRequiredArgs>(
+  page: _page,
+  path: '/firewall',
+);
+const _settings = AppRouteNoArg<void>(page: _plain, path: '/settings');
 
 void main() {
   setUp(() async {
@@ -32,7 +53,7 @@ void main() {
     await closeTestDb();
   });
 
-  testWidgets('names the server on screen, by the id its tools take', (
+  testWidgets('names what is on screen, and the server by the id its tools take', (
     tester,
   ) async {
     final web = spiFixture(id: 's1', name: 'web', ip: 'h', user: 'u');
@@ -44,100 +65,104 @@ void main() {
     // Set once per isolate: the one test in this file.
     AgentScope.container = c;
     c.read(serversProvider);
-    String? at([ChatMeta? meta]) => AgentScreen.describe(meta);
+    String? at() => AgentScreen.describe(null);
     void go(AppTab tab) => c.read(currentHomeTabProvider.notifier).update(tab);
 
     expect(at(), isNull, reason: 'before the home page has said where it is');
 
-    // The server tab, with its own navigator, as the home page builds it.
-    final nav = GlobalKey<NavigatorState>();
+    // The root navigator, and the server tab's own inside it, as the app
+    // builds them.
+    final root = GlobalKey<NavigatorState>();
+    final tab = GlobalKey<NavigatorState>();
     await tester.pumpWidget(
       MaterialApp(
-        home: AgentScreenTab(
-          tab: AppTab.server,
-          child: Navigator(
-            key: nav,
-            onGenerateRoute: (_) =>
-                MaterialPageRoute(builder: (_) => const Text('list')),
-          ),
+        navigatorKey: root,
+        navigatorObservers: [AgentScreen.rootObserver],
+        home: Navigator(
+          key: tab,
+          observers: [AgentScreen.tabObserver(AppTab.server)],
+          onGenerateRoute: (_) =>
+              MaterialPageRoute(builder: (_) => const Text('list')),
         ),
       ),
     );
+    Future<void> settle() => tester.pumpAndSettle();
+
     go(AppTab.server);
     expect(at(), 'On screen: Server tab, the list of servers.');
-
-    nav.currentState!.push(
-      MaterialPageRoute(
-        builder: (_) => AgentSubject(
-          page: 'the status page',
-          spi: web,
-          child: const Text('web'),
-        ),
-      ),
+    // In place, in a wide window.
+    c.read(serverSelectionProvider.notifier).select('s2');
+    expect(
+      at(),
+      'On screen: Server tab, the status page of server "db" (server_id: s2).',
     );
-    await tester.pumpAndSettle();
+    c.read(serverSelectionProvider.notifier).select(null);
+
+    // Pushed, on a phone; and any page pushed over it, marked or not.
+    unawaited(_detail.go(tab.currentContext!, SpiRequiredArgs(web)));
+    await settle();
     expect(
       at(),
       'On screen: Server tab, the status page of server "web" (server_id: s1).',
     );
-
-    // Something pushed over it is what is on screen now.
-    nav.currentState!.push(
-      MaterialPageRoute(builder: (_) => const Text('edit')),
+    unawaited(_firewall.go(tab.currentContext!, SpiRequiredArgs(web)));
+    await settle();
+    expect(
+      at(),
+      'On screen: Server tab, the page "/firewall" of server "web" (server_id: s1).',
     );
-    await tester.pumpAndSettle();
-    expect(at(), 'On screen: Server tab, the list of servers.');
-    nav.currentState!.pop();
-    await tester.pumpAndSettle();
-    expect(at(), contains('"web"'));
 
-    // A page about no server, pushed over one that is.
-    nav.currentState!.push(
-      MaterialPageRoute(
-        builder: (_) =>
-            const AgentSubject(page: 'the transfer list', child: Text('t')),
+    // A dialog is over the page, not in place of it.
+    unawaited(
+      showDialog<void>(
+        context: tab.currentContext!,
+        builder: (_) => const Text('dialog'),
       ),
     );
-    await tester.pumpAndSettle();
-    expect(at(), 'On screen: Server tab, the transfer list.');
-    nav.currentState!.pop();
-    await tester.pumpAndSettle();
+    await settle();
+    expect(at(), contains('"/firewall"'));
+    root.currentState!.pop();
+    await settle();
 
-    // A terminal's chat is about its own server and is told nothing.
-    expect(
-      at(ChatMeta(id: 'x', updatedAt: DateTime(2026), scope: AgentScope.terminal('s1'))),
-      isNull,
-    );
+    // The name as it is now, not as it was when the page opened.
+    Stores.server.put(web.copyWith(name: 'web-prod'));
+    await tester.runAsync(c.read(serversProvider.notifier).reload);
+    expect(at(), contains('server "web-prod" (server_id: s1)'));
+
+    // Over every tab.
+    unawaited(_settings.go(root.currentContext!));
+    await settle();
+    expect(at(), 'On screen: the settings.');
+    root.currentState!.pop();
+    tab.currentState!
+      ..pop()
+      ..pop();
+    await settle();
+    expect(at(), 'On screen: Server tab, the list of servers.');
+
+    // In place of the tabs, in a wide window.
+    AgentScreen.settingsOpen = true;
+    expect(at(), 'On screen: Settings.');
+    AgentScreen.settingsOpen = false;
 
     go(AppTab.ssh);
     expect(at(), 'On screen: Terminal tab, picking a server to open.');
-    final hideDb = AgentScreen.terminal(() => (spi: db));
+    final hideDb = AgentScreen.terminal(() => ServerSource(db));
     expect(
       at(),
       'On screen: Terminal tab, a terminal on server "db" (server_id: s2).',
     );
     // A tab built again before the old one is gone: the old one's removal
     // leaves the new one's in place.
-    final hideLocal = AgentScreen.terminal(() => (spi: null));
+    final hideLocal = AgentScreen.terminal(() => const LocalSource());
     hideDb();
     expect(at(), 'On screen: Terminal tab, a terminal on this device.');
     hideLocal();
 
     go(AppTab.file);
-    var transfers = false;
-    final hideFiles = AgentScreen.files(
-      () => (spi: web, path: '/var/log', transfers: transfers),
-    );
+    final hideFiles = AgentScreen.files(() => 'the transfer list');
     addTearDown(hideFiles);
-    expect(
-      at(),
-      'On screen: File tab, the files of server "web" (server_id: s1) at /var/log.',
-    );
-    transfers = true;
-    expect(
-      at(),
-      'On screen: File tab, the transfer list, over the files of server "web" (server_id: s1) at /var/log.',
-    );
+    expect(at(), 'On screen: File tab, the transfer list.');
 
     go(AppTab.workspace);
     final ws = c.read(workspacesProvider).current.name;

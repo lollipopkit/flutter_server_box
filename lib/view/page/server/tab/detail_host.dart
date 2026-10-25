@@ -37,19 +37,14 @@ extension _DetailHost on _ServerPageState {
       child: Material(
         type: MaterialType.canvas,
         color: Theme.of(context).scaffoldBackgroundColor,
-        child: AgentSubject(
-          page: 'the status page',
-          spi: spi,
-          child: ServerDetailPage(
-            args: SpiRequiredArgs(spi),
-            bare: true,
-            // Mounted from the first frame of the movement, so what it has
-            // that the card has not arrives with the chart rather than after
-            // it.
-            entrance: _open,
-            // Until then the card is the one drawing them.
-            readingsShowing: _detailShowing,
-          ),
+        child: ServerDetailPage(
+          args: SpiRequiredArgs(spi),
+          bare: true,
+          // Mounted from the first frame of the movement, so what it has that
+          // the card has not arrives with the chart rather than after it.
+          entrance: _open,
+          // Until then the card is the one drawing them.
+          readingsShowing: _detailShowing,
         ),
       ),
     );

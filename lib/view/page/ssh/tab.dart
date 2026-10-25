@@ -176,7 +176,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
     super.initState();
     _hideFromAgent = AgentScreen.terminal(
       () => switch (_sessions.current) {
-        final tab? => (spi: tab.data.page.args.spi),
+        final tab? => tab.data.page.args.source,
         null => null,
       },
     );
