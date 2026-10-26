@@ -6071,6 +6071,14 @@ class AppLocalizationsIt extends AppLocalizations {
   String get storeKeyLostStartEmpty => 'Avvia senza dati';
 
   @override
+  String get storeVaultFailedAsk =>
+      'L\'archivio chiavi di sistema non è riuscito a decifrare la chiave che cifra i dati di ServerBox. Se l\'errore è occasionale, riprova, se necessario dopo aver riavviato il dispositivo. Se si ripete ogni volta, i dati non possono essere decifrati e ServerBox può avviarsi senza dati; il vecchio file viene conservato. L\'avvio senza dati cancella anche la password di backup, le credenziali WebDAV e GitHub e le password sudo salvate.';
+
+  @override
+  String get storeUnreadableVaultFailed =>
+      'L\'archivio chiavi di sistema non è riuscito a decifrare la chiave che cifra i dati di ServerBox, quindi ServerBox ha reimpostato le sue voci nell\'archivio chiavi e si è avviato senza dati. La password di backup, le credenziali WebDAV e GitHub e le password sudo salvate vanno inserite di nuovo.';
+
+  @override
   String get hostCertAuthorities => 'Autorità di certificazione host';
 
   @override

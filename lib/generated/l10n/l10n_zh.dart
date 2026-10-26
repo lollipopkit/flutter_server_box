@@ -5635,6 +5635,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get storeKeyLostStartEmpty => '以空数据启动';
 
   @override
+  String get storeVaultFailedAsk =>
+      '系统密钥库无法解密用于加密 ServerBox 数据的密钥。如果只是密钥库这一次出错，请重试，必要时先重启设备。如果每次都失败，数据将无法解密，可以以空数据启动，旧文件会保留。以空数据启动也会清除备份密码、WebDAV 和 GitHub 凭据以及已保存的 sudo 密码。';
+
+  @override
+  String get storeUnreadableVaultFailed =>
+      '系统密钥库无法解密用于加密 ServerBox 数据的密钥，因此 ServerBox 重置了密钥库中的条目并以空数据启动。备份密码、WebDAV 和 GitHub 凭据以及已保存的 sudo 密码需要重新输入。';
+
+  @override
   String get hostCertAuthorities => '主机证书颁发机构';
 
   @override
@@ -11285,6 +11293,14 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get storeKeyLostStartEmpty => '以空資料啟動';
+
+  @override
+  String get storeVaultFailedAsk =>
+      '系統金鑰庫無法解密用於加密 ServerBox 資料的金鑰。如果只是金鑰庫這一次出錯，請重試，必要時先重新啟動裝置。如果每次都失敗，資料將無法解密，可以以空資料啟動，舊檔案會保留。以空資料啟動也會清除備份密碼、WebDAV 和 GitHub 憑證以及已儲存的 sudo 密碼。';
+
+  @override
+  String get storeUnreadableVaultFailed =>
+      '系統金鑰庫無法解密用於加密 ServerBox 資料的金鑰，因此 ServerBox 重設了金鑰庫中的項目並以空資料啟動。備份密碼、WebDAV 和 GitHub 憑證以及已儲存的 sudo 密碼需要重新輸入。';
 
   @override
   String get hostCertAuthorities => '主機憑證頒發機構';

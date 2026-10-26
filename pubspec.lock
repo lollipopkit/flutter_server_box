@@ -757,10 +757,11 @@ packages:
   flutter_secure_storage:
     dependency: "direct dev"
     description:
-      name: flutter_secure_storage
-      sha256: fe638107c5f69119156ada2db5a57734385fac3f64430bd7252a00d3ead2ca4b
-      url: "https://pub.dev"
-    source: hosted
+      path: flutter_secure_storage
+      ref: serverbox
+      resolved-ref: "1142e9e65732a66b9e0a9bef46e5fd74e9d19de7"
+      url: "https://github.com/lollipopkit/flutter_secure_storage.git"
+    source: git
     version: "10.3.4"
   flutter_secure_storage_darwin:
     dependency: transitive
@@ -779,7 +780,7 @@ packages:
     source: hosted
     version: "3.0.3"
   flutter_secure_storage_platform_interface:
-    dependency: transitive
+    dependency: "direct dev"
     description:
       name: flutter_secure_storage_platform_interface
       sha256: "64951127f001f546891c86f414972bf49ef2c4c8a4c92c65f5790cc0c9100045"

@@ -3,7 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 
 /// The whole app, when the database exists and the vault has no key for it
-/// (#1780).
+/// (#1780), or cannot read the one it has (#1784).
 ///
 /// Asked rather than decided: a keyring not yet unlocked looks the same as a
 /// key that is gone, and starting empty makes a new key that would replace
@@ -38,7 +38,12 @@ class StoreKeyLostPage extends StatelessWidget {
                     textAlign: TextAlign.center,
                   ),
                   UIs.height13,
-                  Text(l10n.storeKeyLostAsk, textAlign: TextAlign.center),
+                  Text(
+                    err.reason == StoreUnreadableReason.vaultFailed
+                        ? l10n.storeVaultFailedAsk
+                        : l10n.storeKeyLostAsk,
+                    textAlign: TextAlign.center,
+                  ),
                   UIs.height13,
                   SelectableText('$err', style: UIs.textGrey),
                   UIs.height13,

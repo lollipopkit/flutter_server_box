@@ -6103,6 +6103,14 @@ class AppLocalizationsFr extends AppLocalizations {
   String get storeKeyLostStartEmpty => 'Démarrer sans données';
 
   @override
+  String get storeVaultFailedAsk =>
+      'Le magasin de clés du système n\'a pas pu déchiffrer la clé qui chiffre les données de ServerBox. Si l\'erreur est ponctuelle, réessayez, au besoin après avoir redémarré l\'appareil. Si elle se produit à chaque fois, les données ne peuvent pas être déchiffrées et ServerBox peut démarrer sans données ; l\'ancien fichier est conservé. Démarrer sans données efface aussi le mot de passe de sauvegarde, les identifiants WebDAV et GitHub et les mots de passe sudo enregistrés.';
+
+  @override
+  String get storeUnreadableVaultFailed =>
+      'Le magasin de clés du système n\'a pas pu déchiffrer la clé qui chiffre les données de ServerBox. ServerBox a donc réinitialisé ses entrées dans le magasin de clés et démarré sans données. Le mot de passe de sauvegarde, les identifiants WebDAV et GitHub et les mots de passe sudo enregistrés doivent être saisis à nouveau.';
+
+  @override
   String get hostCertAuthorities => 'Autorités de certification d\'hôte';
 
   @override

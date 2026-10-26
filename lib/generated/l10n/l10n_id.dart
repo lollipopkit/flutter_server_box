@@ -6003,6 +6003,14 @@ class AppLocalizationsId extends AppLocalizations {
   String get storeKeyLostStartEmpty => 'Mulai tanpa data';
 
   @override
+  String get storeVaultFailedAsk =>
+      'Penyimpanan kunci sistem tidak dapat mendekripsi kunci yang mengenkripsi data ServerBox. Jika kesalahan ini hanya sekali, coba lagi, bila perlu setelah memulai ulang perangkat. Jika selalu gagal, data tidak dapat didekripsi dan ServerBox dapat dimulai tanpa data; file lama tetap disimpan. Memulai tanpa data juga menghapus kata sandi cadangan, kredensial WebDAV dan GitHub, serta kata sandi sudo yang tersimpan.';
+
+  @override
+  String get storeUnreadableVaultFailed =>
+      'Penyimpanan kunci sistem tidak dapat mendekripsi kunci yang mengenkripsi data ServerBox, sehingga ServerBox mengatur ulang entrinya di penyimpanan kunci dan dimulai tanpa data. Kata sandi cadangan, kredensial WebDAV dan GitHub, serta kata sandi sudo yang tersimpan harus dimasukkan lagi.';
+
+  @override
   String get hostCertAuthorities => 'Otoritas sertifikat host';
 
   @override

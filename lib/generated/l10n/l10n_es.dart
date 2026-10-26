@@ -6091,6 +6091,14 @@ class AppLocalizationsEs extends AppLocalizations {
   String get storeKeyLostStartEmpty => 'Iniciar sin datos';
 
   @override
+  String get storeVaultFailedAsk =>
+      'El almacén de claves del sistema no pudo descifrar la clave que cifra los datos de ServerBox. Si el fallo fue puntual, vuelve a intentarlo, si hace falta tras reiniciar el dispositivo. Si falla siempre, los datos no se pueden descifrar y ServerBox puede iniciarse sin datos; el archivo antiguo se conserva. Iniciar sin datos también borra la contraseña de copia de seguridad, las credenciales de WebDAV y GitHub y las contraseñas de sudo guardadas.';
+
+  @override
+  String get storeUnreadableVaultFailed =>
+      'El almacén de claves del sistema no pudo descifrar la clave que cifra los datos de ServerBox, así que ServerBox restableció sus entradas en el almacén de claves y se inició sin datos. Hay que volver a introducir la contraseña de copia de seguridad, las credenciales de WebDAV y GitHub y las contraseñas de sudo guardadas.';
+
+  @override
   String get hostCertAuthorities => 'Autoridades de certificación de host';
 
   @override

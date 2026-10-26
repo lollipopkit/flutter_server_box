@@ -24,6 +24,17 @@ abstract final class StoreRecovery {
   /// only this record still says where the old one went.
   static StoreSetAside? get result => _result ??= _readPersisted();
 
+  /// Starts with no data in place of [e]'s file: resets a vault that cannot
+  /// read its own key, then [setAside].
+  ///
+  /// Reset first: one that fails leaves everything as it was, and the next
+  /// launch asks again. A file moved before a failed reset would leave a
+  /// launch that cannot make a key even for the empty database.
+  static Future<void> recover(StoreUnreadableException e, StackTrace s) async {
+    if (e.reason == StoreUnreadableReason.vaultFailed) await SecureStore.reset();
+    await setAside(e, s);
+  }
+
   /// Moves [e]'s file aside, so the next `Stores.init` opens an empty one.
   ///
   /// The database must be closed: on Windows an open file cannot be renamed.

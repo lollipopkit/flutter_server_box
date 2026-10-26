@@ -6082,6 +6082,14 @@ class AppLocalizationsDe extends AppLocalizations {
   String get storeKeyLostStartEmpty => 'Ohne Daten starten';
 
   @override
+  String get storeVaultFailedAsk =>
+      'Der Schlüsselspeicher des Systems konnte den Schlüssel, mit dem die Daten von ServerBox verschlüsselt sind, nicht entschlüsseln. Ist der Fehler nur einmalig aufgetreten, versuche es erneut, falls nötig nach einem Neustart des Geräts. Tritt er jedes Mal auf, lassen sich die Daten nicht entschlüsseln, und ServerBox kann ohne Daten starten; die alte Datei bleibt erhalten. Ein Start ohne Daten löscht auch das Backup-Passwort, die WebDAV- und GitHub-Zugangsdaten und die gespeicherten sudo-Passwörter.';
+
+  @override
+  String get storeUnreadableVaultFailed =>
+      'Der Schlüsselspeicher des Systems konnte den Schlüssel, mit dem die Daten von ServerBox verschlüsselt sind, nicht entschlüsseln. ServerBox hat deshalb die Einträge im Schlüsselspeicher zurückgesetzt und ohne Daten gestartet. Das Backup-Passwort, die WebDAV- und GitHub-Zugangsdaten und die gespeicherten sudo-Passwörter müssen erneut eingegeben werden.';
+
+  @override
   String get hostCertAuthorities => 'Host-Zertifizierungsstellen';
 
   @override

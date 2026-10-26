@@ -19,6 +19,7 @@ abstract final class StoreUnreadableNotice {
     final text = switch (reason) {
       StoreUnreadableReason.keyLost => l10n.storeUnreadableKeyLost,
       StoreUnreadableReason.keyRejected => l10n.storeUnreadableKeyRejected,
+      StoreUnreadableReason.vaultFailed => l10n.storeUnreadableVaultFailed,
     };
     // Kept on a barrier tap or back: only a button says it was read.
     final read = await context.showRoundDialog<bool>(
