@@ -260,17 +260,20 @@ Future<void> _openStores({required bool fromImport}) async {
       Loggers.app.warning('Stores.init after sandbox import', e, s);
       await SandboxImport.undo();
     } else {
-      // The vault has no key for the file: it may be gone, or only unavailable
-      // this once (a keyring not yet unlocked). Starting empty would make a
-      // new key over the old one, so that is the user's call.
+      // The vault has no key for the file, or cannot read the one it has
+      // (#1784): it may be gone, or only unavailable this once (a keyring not
+      // yet unlocked). Starting empty would make a new key over the old one,
+      // so that is the user's call.
       final err = e as StoreUnreadableException;
-      if (err.reason == StoreUnreadableReason.keyLost && await _askKeyLost(err)) {
-        return _openStores(fromImport: false);
-      }
+      final ask = switch (err.reason) {
+        StoreUnreadableReason.keyLost || StoreUnreadableReason.vaultFailed => true,
+        StoreUnreadableReason.keyRejected => false,
+      };
+      if (ask && await _askKeyLost(err)) return _openStores(fromImport: false);
       // The vault's key does not open the database (#1780). The same reasoning,
       // except this file is the only copy: kept aside, not deleted, and the
       // reason is shown once there is a screen — see [StoreUnreadableNotice].
-      await StoreRecovery.setAside(err, s);
+      await StoreRecovery.recover(err, s);
     }
     await Stores.init();
   }

@@ -1691,6 +1691,8 @@
   "storeUnreadableKept": "Köhnə fayl burada saxlanılıb:\n{path}\nServerlərinizi geri qaytarmaq üçün ehtiyat nüsxəni bərpa edin.",
   "storeKeyLostAsk": "ServerBox məlumatlarını şifrələyən açar sistem açar anbarında yoxdur. Açar anbarı və ya açarlıq yalnız hazırda əlçatan deyilsə, məsələn hələ kilidi açılmayıbsa, yenidən cəhd edin. Əks halda ServerBox məlumatsız başlaya bilər; köhnə fayl saxlanılır.",
   "storeKeyLostStartEmpty": "Məlumatsız başlat",
+  "storeVaultFailedAsk": "Sistemin açar anbarı ServerBox məlumatlarını şifrələyən açarı deşifrə edə bilmədi. Xəta birdəfəlikdirsə, lazım olarsa cihazı yenidən başlatdıqdan sonra yenidən cəhd edin. Hər dəfə uğursuz olursa, məlumatlar deşifrə edilə bilməz və ServerBox məlumatsız başlaya bilər; köhnə fayl saxlanılır. Məlumatsız başlamaq ehtiyat nüsxə parolunu, WebDAV və GitHub giriş məlumatlarını və saxlanmış sudo parollarını da silir.",
+  "storeUnreadableVaultFailed": "Sistemin açar anbarı ServerBox məlumatlarını şifrələyən açarı deşifrə edə bilmədiyi üçün ServerBox açar anbarındakı qeydlərini sıfırladı və məlumatsız başladı. Ehtiyat nüsxə parolu, WebDAV və GitHub giriş məlumatları və saxlanmış sudo parolları yenidən daxil edilməlidir.",
   "hostCertAuthorities": "Host sertifikat mərkəzləri",
   "hostCertAuthoritiesTip": "Sertifikatı bunlardan biri tərəfindən imzalanmış hosta soruşmadan etibar edilir, OpenSSH-in @cert-authority kimi; digər hostlar əvvəlki kimi ilk qoşulmada soruşulur. Hostlar * və ? olan, vergüllə ayrılmış şablonlardır, ! istisna edir; 22-dən fərqli port [host]:port kimi müqayisə olunur.",
   "hostCertAuthorityInvalid": "Dəstəklənən SSH açıq açarı deyil (ssh-ed25519, ssh-rsa və ya ecdsa-sha2-*)",

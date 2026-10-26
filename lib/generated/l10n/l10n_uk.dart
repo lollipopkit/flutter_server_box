@@ -6048,6 +6048,14 @@ class AppLocalizationsUk extends AppLocalizations {
   String get storeKeyLostStartEmpty => 'Запустити без даних';
 
   @override
+  String get storeVaultFailedAsk =>
+      'Системне сховище ключів не змогло розшифрувати ключ, яким зашифровано дані ServerBox. Якщо збій був разовим, спробуйте ще раз, за потреби після перезавантаження пристрою. Якщо помилка повторюється щоразу, дані розшифрувати неможливо, і ServerBox може запуститися без даних; старий файл зберігається. Запуск без даних також видаляє пароль резервної копії, облікові дані WebDAV і GitHub та збережені паролі sudo.';
+
+  @override
+  String get storeUnreadableVaultFailed =>
+      'Системне сховище ключів не змогло розшифрувати ключ, яким зашифровано дані ServerBox, тому ServerBox скинув свої записи в сховищі ключів і запустився без даних. Пароль резервної копії, облікові дані WebDAV і GitHub та збережені паролі sudo потрібно ввести знову.';
+
+  @override
   String get hostCertAuthorities => 'Центри сертифікації хостів';
 
   @override

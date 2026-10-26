@@ -5992,6 +5992,14 @@ class AppLocalizationsTr extends AppLocalizations {
   String get storeKeyLostStartEmpty => 'Verisiz başlat';
 
   @override
+  String get storeVaultFailedAsk =>
+      'Sistem anahtar deposu, ServerBox verilerini şifreleyen anahtarın şifresini çözemedi. Hata tek seferlikse, gerekirse cihazı yeniden başlattıktan sonra tekrar deneyin. Her seferinde başarısız oluyorsa verilerin şifresi çözülemez ve ServerBox verisiz başlatılabilir; eski dosya saklanır. Verisiz başlatmak yedekleme parolasını, WebDAV ve GitHub kimlik bilgilerini ve kayıtlı sudo parolalarını da siler.';
+
+  @override
+  String get storeUnreadableVaultFailed =>
+      'Sistem anahtar deposu, ServerBox verilerini şifreleyen anahtarın şifresini çözemediği için ServerBox anahtar deposundaki girdilerini sıfırladı ve verisiz başladı. Yedekleme parolası, WebDAV ve GitHub kimlik bilgileri ve kayıtlı sudo parolaları yeniden girilmelidir.';
+
+  @override
   String get hostCertAuthorities => 'Ana makine sertifika yetkilileri';
 
   @override

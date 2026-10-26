@@ -6061,6 +6061,14 @@ class AppLocalizationsPt extends AppLocalizations {
   String get storeKeyLostStartEmpty => 'Iniciar sem dados';
 
   @override
+  String get storeVaultFailedAsk =>
+      'O repositório de chaves do sistema não conseguiu decifrar a chave que cifra os dados do ServerBox. Se a falha foi pontual, tente novamente, se necessário depois de reiniciar o dispositivo. Se falhar sempre, os dados não podem ser decifrados e o ServerBox pode iniciar sem dados; o arquivo antigo é mantido. Iniciar sem dados também apaga a senha de backup, as credenciais do WebDAV e do GitHub e as senhas de sudo salvas.';
+
+  @override
+  String get storeUnreadableVaultFailed =>
+      'O repositório de chaves do sistema não conseguiu decifrar a chave que cifra os dados do ServerBox, então o ServerBox redefiniu suas entradas no repositório de chaves e iniciou sem dados. A senha de backup, as credenciais do WebDAV e do GitHub e as senhas de sudo salvas precisam ser inseridas novamente.';
+
+  @override
   String get hostCertAuthorities => 'Autoridades de certificação de host';
 
   @override

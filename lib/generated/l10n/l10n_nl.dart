@@ -6059,6 +6059,14 @@ class AppLocalizationsNl extends AppLocalizations {
   String get storeKeyLostStartEmpty => 'Starten zonder gegevens';
 
   @override
+  String get storeVaultFailedAsk =>
+      'De sleutelopslag van het systeem kon de sleutel waarmee de gegevens van ServerBox zijn versleuteld niet ontsleutelen. Was dit een eenmalige fout, probeer het dan opnieuw, zo nodig na het herstarten van het apparaat. Gebeurt het elke keer, dan kunnen de gegevens niet worden ontsleuteld en kan ServerBox zonder gegevens starten; het oude bestand blijft bewaard. Starten zonder gegevens wist ook het back-upwachtwoord, de WebDAV- en GitHub-inloggegevens en de opgeslagen sudo-wachtwoorden.';
+
+  @override
+  String get storeUnreadableVaultFailed =>
+      'De sleutelopslag van het systeem kon de sleutel waarmee de gegevens van ServerBox zijn versleuteld niet ontsleutelen. ServerBox heeft daarom zijn items in de sleutelopslag gereset en is zonder gegevens gestart. Het back-upwachtwoord, de WebDAV- en GitHub-inloggegevens en de opgeslagen sudo-wachtwoorden moeten opnieuw worden ingevoerd.';
+
+  @override
   String get hostCertAuthorities => 'Hostcertificaatautoriteiten';
 
   @override

@@ -1691,6 +1691,8 @@
   "storeUnreadableKept": "旧文件保留在：\n{path}\n恢复备份即可找回服务器。",
   "storeKeyLostAsk": "系统密钥库中没有用于加密 ServerBox 数据的密钥。如果密钥库或密钥环只是暂时不可用（例如尚未解锁），请重试。否则可以以空数据启动，旧文件会保留。",
   "storeKeyLostStartEmpty": "以空数据启动",
+  "storeVaultFailedAsk": "系统密钥库无法解密用于加密 ServerBox 数据的密钥。如果只是密钥库这一次出错，请重试，必要时先重启设备。如果每次都失败，数据将无法解密，可以以空数据启动，旧文件会保留。以空数据启动也会清除备份密码、WebDAV 和 GitHub 凭据以及已保存的 sudo 密码。",
+  "storeUnreadableVaultFailed": "系统密钥库无法解密用于加密 ServerBox 数据的密钥，因此 ServerBox 重置了密钥库中的条目并以空数据启动。备份密码、WebDAV 和 GitHub 凭据以及已保存的 sudo 密码需要重新输入。",
   "hostCertAuthorities": "主机证书颁发机构",
   "hostCertAuthoritiesTip": "由这些 CA 签发证书的主机将直接被信任，不再询问，等同于 OpenSSH 的 @cert-authority；其他主机仍在首次连接时询问。主机为逗号分隔的匹配规则，支持 * 和 ?，以 ! 排除；非 22 端口按 [host]:port 匹配。",
   "hostCertAuthorityInvalid": "不是支持的 SSH 公钥（ssh-ed25519、ssh-rsa 或 ecdsa-sha2-*）",
