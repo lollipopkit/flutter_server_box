@@ -5996,6 +5996,10 @@ class AppLocalizationsTr extends AppLocalizations {
       'Sistem anahtar deposu, ServerBox verilerini şifreleyen anahtarın şifresini çözemedi. Hata tek seferlikse, gerekirse cihazı yeniden başlattıktan sonra tekrar deneyin. Her seferinde başarısız oluyorsa verilerin şifresi çözülemez ve ServerBox verisiz başlatılabilir; eski dosya saklanır. Verisiz başlatmak yedekleme parolasını, WebDAV ve GitHub kimlik bilgilerini ve kayıtlı sudo parolalarını da siler.';
 
   @override
+  String get storeVaultFailedRootHint =>
+      'Root\'lu bir cihazda anahtar deposuna müdahale eden bir modül (ör. TrickyStore) bu hataya yol açar. Bu uygulamayı modülün hedef listesinden çıkarın, ardından verisiz başlatın.';
+
+  @override
   String get storeUnreadableVaultFailed =>
       'Sistem anahtar deposu, ServerBox verilerini şifreleyen anahtarın şifresini çözemediği için ServerBox anahtar deposundaki girdilerini sıfırladı ve verisiz başladı. Yedekleme parolası, WebDAV ve GitHub kimlik bilgileri ve kayıtlı sudo parolaları yeniden girilmelidir.';
 

@@ -6006,6 +6006,10 @@ class AppLocalizationsAz extends AppLocalizations {
       'Sistemin açar anbarı ServerBox məlumatlarını şifrələyən açarı deşifrə edə bilmədi. Xəta birdəfəlikdirsə, lazım olarsa cihazı yenidən başlatdıqdan sonra yenidən cəhd edin. Hər dəfə uğursuz olursa, məlumatlar deşifrə edilə bilməz və ServerBox məlumatsız başlaya bilər; köhnə fayl saxlanılır. Məlumatsız başlamaq ehtiyat nüsxə parolunu, WebDAV və GitHub giriş məlumatlarını və saxlanmış sudo parollarını da silir.';
 
   @override
+  String get storeVaultFailedRootHint =>
+      'Root edilmiş cihazda açar anbarını ələ keçirən modul (məsələn, TrickyStore) bu xətaya səbəb olur. Bu tətbiqi modulun hədəf siyahısından çıxarın, sonra məlumatsız başladın.';
+
+  @override
   String get storeUnreadableVaultFailed =>
       'Sistemin açar anbarı ServerBox məlumatlarını şifrələyən açarı deşifrə edə bilmədiyi üçün ServerBox açar anbarındakı qeydlərini sıfırladı və məlumatsız başladı. Ehtiyat nüsxə parolu, WebDAV və GitHub giriş məlumatları və saxlanmış sudo parolları yenidən daxil edilməlidir.';
 

@@ -6075,6 +6075,10 @@ class AppLocalizationsIt extends AppLocalizations {
       'L\'archivio chiavi di sistema non è riuscito a decifrare la chiave che cifra i dati di ServerBox. Se l\'errore è occasionale, riprova, se necessario dopo aver riavviato il dispositivo. Se si ripete ogni volta, i dati non possono essere decifrati e ServerBox può avviarsi senza dati; il vecchio file viene conservato. L\'avvio senza dati cancella anche la password di backup, le credenziali WebDAV e GitHub e le password sudo salvate.';
 
   @override
+  String get storeVaultFailedRootHint =>
+      'Su un dispositivo con root, un modulo che intercetta l\'archivio chiavi (come TrickyStore) causa questo errore. Rimuovi questa app dall\'elenco di destinazione del modulo, poi avvia senza dati.';
+
+  @override
   String get storeUnreadableVaultFailed =>
       'L\'archivio chiavi di sistema non è riuscito a decifrare la chiave che cifra i dati di ServerBox, quindi ServerBox ha reimpostato le sue voci nell\'archivio chiavi e si è avviato senza dati. La password di backup, le credenziali WebDAV e GitHub e le password sudo salvate vanno inserite di nuovo.';
 

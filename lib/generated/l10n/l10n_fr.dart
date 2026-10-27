@@ -6107,6 +6107,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Le magasin de clés du système n\'a pas pu déchiffrer la clé qui chiffre les données de ServerBox. Si l\'erreur est ponctuelle, réessayez, au besoin après avoir redémarré l\'appareil. Si elle se produit à chaque fois, les données ne peuvent pas être déchiffrées et ServerBox peut démarrer sans données ; l\'ancien fichier est conservé. Démarrer sans données efface aussi le mot de passe de sauvegarde, les identifiants WebDAV et GitHub et les mots de passe sudo enregistrés.';
 
   @override
+  String get storeVaultFailedRootHint =>
+      'Sur un appareil rooté, un module qui intercepte le magasin de clés (comme TrickyStore) provoque cette erreur. Retirez cette application de la liste cible du module, puis démarrez sans données.';
+
+  @override
   String get storeUnreadableVaultFailed =>
       'Le magasin de clés du système n\'a pas pu déchiffrer la clé qui chiffre les données de ServerBox. ServerBox a donc réinitialisé ses entrées dans le magasin de clés et démarré sans données. Le mot de passe de sauvegarde, les identifiants WebDAV et GitHub et les mots de passe sudo enregistrés doivent être saisis à nouveau.';
 

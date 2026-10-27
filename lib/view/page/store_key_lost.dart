@@ -44,6 +44,11 @@ class StoreKeyLostPage extends StatelessWidget {
                         : l10n.storeKeyLostAsk,
                     textAlign: TextAlign.center,
                   ),
+                  // #1784: a keystore module (TrickyStore) emulates decrypt for the apps it targets, and gets it wrong.
+                  if (isAndroid && err.reason == StoreUnreadableReason.vaultFailed) ...[
+                    UIs.height13,
+                    Text(l10n.storeVaultFailedRootHint, textAlign: TextAlign.center),
+                  ],
                   UIs.height13,
                   SelectableText('$err', style: UIs.textGrey),
                   UIs.height13,

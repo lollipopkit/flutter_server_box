@@ -6086,6 +6086,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Der Schlüsselspeicher des Systems konnte den Schlüssel, mit dem die Daten von ServerBox verschlüsselt sind, nicht entschlüsseln. Ist der Fehler nur einmalig aufgetreten, versuche es erneut, falls nötig nach einem Neustart des Geräts. Tritt er jedes Mal auf, lassen sich die Daten nicht entschlüsseln, und ServerBox kann ohne Daten starten; die alte Datei bleibt erhalten. Ein Start ohne Daten löscht auch das Backup-Passwort, die WebDAV- und GitHub-Zugangsdaten und die gespeicherten sudo-Passwörter.';
 
   @override
+  String get storeVaultFailedRootHint =>
+      'Auf einem gerooteten Gerät verursacht ein Modul, das den Schlüsselspeicher abfängt (etwa TrickyStore), diesen Fehler. Entferne diese App aus der Zielliste des Moduls und starte dann ohne Daten.';
+
+  @override
   String get storeUnreadableVaultFailed =>
       'Der Schlüsselspeicher des Systems konnte den Schlüssel, mit dem die Daten von ServerBox verschlüsselt sind, nicht entschlüsseln. ServerBox hat deshalb die Einträge im Schlüsselspeicher zurückgesetzt und ohne Daten gestartet. Das Backup-Passwort, die WebDAV- und GitHub-Zugangsdaten und die gespeicherten sudo-Passwörter müssen erneut eingegeben werden.';
 

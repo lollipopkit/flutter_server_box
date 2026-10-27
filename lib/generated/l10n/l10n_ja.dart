@@ -5741,6 +5741,10 @@ class AppLocalizationsJa extends AppLocalizations {
       'システムのキーストアが ServerBox のデータを暗号化している鍵を復号できませんでした。一時的なエラーであれば、必要に応じてデバイスを再起動してから再試行してください。毎回失敗する場合はデータを復号できないため、データなしで起動できます。古いファイルは保持されます。データなしで起動すると、バックアップのパスワード、WebDAV と GitHub の認証情報、保存された sudo パスワードも消去されます。';
 
   @override
+  String get storeVaultFailedRootHint =>
+      'root 化されたデバイスでは、キーストアに介入するモジュール（TrickyStore など）が原因になります。このアプリをモジュールの対象リストから外してから、データなしで起動してください。';
+
+  @override
   String get storeUnreadableVaultFailed =>
       'システムのキーストアが ServerBox のデータを暗号化している鍵を復号できなかったため、ServerBox はキーストアの項目をリセットしてデータなしで起動しました。バックアップのパスワード、WebDAV と GitHub の認証情報、保存された sudo パスワードを再入力する必要があります。';
 
