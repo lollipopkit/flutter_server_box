@@ -6014,6 +6014,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'The system keystore could not decrypt the key that encrypts ServerBox\'s data. If the keystore failed only this once, try again, if needed after restarting the device. If it fails every time, the data cannot be decrypted, and ServerBox can start with no data; the old file is kept. Starting with no data also clears the backup password, the WebDAV and GitHub credentials and the saved sudo passwords.';
 
   @override
+  String get storeVaultFailedRootHint =>
+      'On a rooted device, a module that intercepts the keystore (such as TrickyStore) causes this. Remove this app from the module\'s target list, then start with no data.';
+
+  @override
   String get storeUnreadableVaultFailed =>
       'The system keystore could not decrypt the key that encrypts ServerBox\'s data, so ServerBox reset the keystore entries and started with no data. The backup password, the WebDAV and GitHub credentials and the saved sudo passwords have to be entered again.';
 

@@ -1692,6 +1692,7 @@
   "storeKeyLostAsk": "系統金鑰庫中沒有用於加密 ServerBox 資料的金鑰。如果金鑰庫或金鑰環只是暫時無法使用（例如尚未解鎖），請重試。否則可以以空資料啟動，舊檔案會保留。",
   "storeKeyLostStartEmpty": "以空資料啟動",
   "storeVaultFailedAsk": "系統金鑰庫無法解密用於加密 ServerBox 資料的金鑰。如果只是金鑰庫這一次出錯，請重試，必要時先重新啟動裝置。如果每次都失敗，資料將無法解密，可以以空資料啟動，舊檔案會保留。以空資料啟動也會清除備份密碼、WebDAV 和 GitHub 憑證以及已儲存的 sudo 密碼。",
+  "storeVaultFailedRootHint": "在已 root 的裝置上，攔截系統金鑰庫的模組（例如 TrickyStore）會導致此問題。請將本應用程式移出該模組的目標清單，然後以空資料啟動。",
   "storeUnreadableVaultFailed": "系統金鑰庫無法解密用於加密 ServerBox 資料的金鑰，因此 ServerBox 重設了金鑰庫中的項目並以空資料啟動。備份密碼、WebDAV 和 GitHub 憑證以及已儲存的 sudo 密碼需要重新輸入。",
   "hostCertAuthorities": "主機憑證頒發機構",
   "hostCertAuthoritiesTip": "由這些 CA 簽發憑證的主機將直接被信任，不再詢問，等同於 OpenSSH 的 @cert-authority；其他主機仍在首次連線時詢問。主機為逗號分隔的比對規則，支援 * 和 ?，以 ! 排除；非 22 連接埠按 [host]:port 比對。",

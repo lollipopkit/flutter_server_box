@@ -10287,6 +10287,12 @@ abstract class AppLocalizations {
   /// **'The system keystore could not decrypt the key that encrypts ServerBox\'s data. If the keystore failed only this once, try again, if needed after restarting the device. If it fails every time, the data cannot be decrypted, and ServerBox can start with no data; the old file is kept. Starting with no data also clears the backup password, the WebDAV and GitHub credentials and the saved sudo passwords.'**
   String get storeVaultFailedAsk;
 
+  /// Shown on Android under storeVaultFailedAsk: the usual cause is a root module that emulates the keystore for this app.
+  ///
+  /// In en, this message translates to:
+  /// **'On a rooted device, a module that intercepts the keystore (such as TrickyStore) causes this. Remove this app from the module\'s target list, then start with no data.'**
+  String get storeVaultFailedRootHint;
+
   /// Why the database could not be opened: the system keystore could not decrypt its key, and its entries were reset.
   ///
   /// In en, this message translates to:

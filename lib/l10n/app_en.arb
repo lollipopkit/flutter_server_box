@@ -7832,6 +7832,10 @@
   "@storeVaultFailedAsk": {
     "description": "Asked at launch when the system keystore cannot decrypt the key of the existing database: retry, or start with no data."
   },
+  "storeVaultFailedRootHint": "On a rooted device, a module that intercepts the keystore (such as TrickyStore) causes this. Remove this app from the module's target list, then start with no data.",
+  "@storeVaultFailedRootHint": {
+    "description": "Shown on Android under storeVaultFailedAsk: the usual cause is a root module that emulates the keystore for this app."
+  },
   "storeUnreadableVaultFailed": "The system keystore could not decrypt the key that encrypts ServerBox's data, so ServerBox reset the keystore entries and started with no data. The backup password, the WebDAV and GitHub credentials and the saved sudo passwords have to be entered again.",
   "@storeUnreadableVaultFailed": {
     "description": "Why the database could not be opened: the system keystore could not decrypt its key, and its entries were reset."

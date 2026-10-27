@@ -6095,6 +6095,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'El almacén de claves del sistema no pudo descifrar la clave que cifra los datos de ServerBox. Si el fallo fue puntual, vuelve a intentarlo, si hace falta tras reiniciar el dispositivo. Si falla siempre, los datos no se pueden descifrar y ServerBox puede iniciarse sin datos; el archivo antiguo se conserva. Iniciar sin datos también borra la contraseña de copia de seguridad, las credenciales de WebDAV y GitHub y las contraseñas de sudo guardadas.';
 
   @override
+  String get storeVaultFailedRootHint =>
+      'En un dispositivo rooteado, un módulo que intercepta el almacén de claves (como TrickyStore) provoca este error. Quita esta app de la lista de objetivos del módulo y luego inicia sin datos.';
+
+  @override
   String get storeUnreadableVaultFailed =>
       'El almacén de claves del sistema no pudo descifrar la clave que cifra los datos de ServerBox, así que ServerBox restableció sus entradas en el almacén de claves y se inició sin datos. Hay que volver a introducir la contraseña de copia de seguridad, las credenciales de WebDAV y GitHub y las contraseñas de sudo guardadas.';
 

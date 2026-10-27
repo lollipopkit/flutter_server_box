@@ -5740,6 +5740,10 @@ class AppLocalizationsKo extends AppLocalizations {
       '시스템 키 저장소가 ServerBox 데이터를 암호화하는 키를 복호화하지 못했습니다. 일시적인 오류라면 필요 시 기기를 재시작한 뒤 다시 시도하세요. 매번 실패한다면 데이터를 복호화할 수 없으므로 데이터 없이 시작할 수 있으며, 이전 파일은 보관됩니다. 데이터 없이 시작하면 백업 비밀번호, WebDAV 및 GitHub 자격 증명, 저장된 sudo 비밀번호도 삭제됩니다.';
 
   @override
+  String get storeVaultFailedRootHint =>
+      '루팅된 기기에서는 키 저장소를 가로채는 모듈(예: TrickyStore)이 원인입니다. 이 앱을 모듈의 대상 목록에서 제외한 뒤 데이터 없이 시작하세요.';
+
+  @override
   String get storeUnreadableVaultFailed =>
       '시스템 키 저장소가 ServerBox 데이터를 암호화하는 키를 복호화하지 못해 ServerBox가 키 저장소 항목을 초기화하고 데이터 없이 시작했습니다. 백업 비밀번호, WebDAV 및 GitHub 자격 증명, 저장된 sudo 비밀번호를 다시 입력해야 합니다.';
 
