@@ -17,6 +17,14 @@ final class SettingsNode {
   /// the node is listed.
   final Feature? feature;
 
+  /// Drawn in [icon]'s place, sized to it: the account's avatar.
+  final Widget Function(double size)? leading;
+
+  /// A line under [title] in the narrow list, read again whenever [listenable]
+  /// changes: who is signed in.
+  final String Function()? subtitle;
+  final Listenable? listenable;
+
   /// Whether [feature] is still in beta.
   bool get beta => feature?.beta ?? false;
 
@@ -30,6 +38,9 @@ final class SettingsNode {
     required this.icon,
     required Widget Function() page,
     this.feature,
+    this.leading,
+    this.subtitle,
+    this.listenable,
   }) : builder = page,
        children = const [];
 
@@ -39,7 +50,10 @@ final class SettingsNode {
     required this.icon,
     required this.children,
   }) : builder = null,
-       feature = null;
+       feature = null,
+       leading = null,
+       subtitle = null,
+       listenable = null;
 
   bool get isLeaf => builder != null;
 
@@ -109,16 +123,32 @@ final class _SettingsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CardX(
-      child: ListTile(
-        leading: ThemedIcon(node.icon, size: 20),
-        title: node.titleWidget(
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+    Widget row() {
+      final subtitle = node.subtitle?.call();
+      return CardX(
+        child: ListTile(
+          leading: node.leading?.call(32) ?? ThemedIcon(node.icon, size: 20),
+          title: node.titleWidget(
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          ),
+          subtitle: subtitle == null
+              ? null
+              : Text(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: UIs.text12Grey,
+                ),
+          trailing: trailing,
+          onTap: onTap,
         ),
-        trailing: trailing,
-        onTap: onTap,
-      ),
-    );
+      );
+    }
+
+    return switch (node.listenable) {
+      final Listenable l => ListenableBuilder(listenable: l, builder: (_, _) => row()),
+      null => row(),
+    };
   }
 }
 
@@ -305,13 +335,14 @@ final class _SettingsMenuRow extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(
-                  node.icon,
-                  size: 19,
-                  color: selected
-                      ? bar.selectedIconColor ?? fg
-                      : bar.iconColor ?? scheme.outline,
-                ),
+                node.leading?.call(19) ??
+                    Icon(
+                      node.icon,
+                      size: 19,
+                      color: selected
+                          ? bar.selectedIconColor ?? fg
+                          : bar.iconColor ?? scheme.outline,
+                    ),
                 const SizedBox(width: 9),
                 Expanded(
                   child: node.titleWidget(

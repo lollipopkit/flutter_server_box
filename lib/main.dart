@@ -14,6 +14,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:server_box/app.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/diag.dart';
+import 'package:server_box/core/lkc.dart';
 import 'package:server_box/core/llm/host.dart';
 import 'package:server_box/core/motion.dart';
 import 'package:server_box/core/service/crash_report.dart';
@@ -471,6 +472,9 @@ Future<void> _doPlatformRelated() async {
       })(),
     );
   }
+
+  // Off the launch path: it reads the keychain and asks homebase who is signed in.
+  unawaited(Lkc.init());
 
   // The watch app used to learn about servers only while the user sat on the
   // iOS settings page. Pushing at launch is what makes a freshly installed or
