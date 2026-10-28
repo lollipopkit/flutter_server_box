@@ -60,6 +60,23 @@ import UserNotifications
         return super.application(application, didFinishLaunchingWithOptions: launchOptions)
     }
 
+    /// A remote notification, homebase's, shown while the app is in front.
+    ///
+    /// flutter_local_notifications answers only the ones it posted, and never
+    /// calls the handler for any other: a push arriving in front was dropped,
+    /// neither shown nor kept in Notification Center.
+    override func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        if notification.request.trigger is UNPushNotificationTrigger {
+            completionHandler([.banner, .list, .sound])
+            return
+        }
+        super.userNotificationCenter(center, willPresent: notification, withCompletionHandler: completionHandler)
+    }
+
     func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
         GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
         setupMethodChannels(binaryMessenger: engineBridge.applicationRegistrar.messenger())
