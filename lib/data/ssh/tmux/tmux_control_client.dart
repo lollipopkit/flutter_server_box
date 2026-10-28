@@ -58,6 +58,10 @@ final class TmuxControlClient {
   /// The current session's `history-limit`, refreshed with session identity.
   int _historyLimit = 2000;
 
+  /// The local terminal's rows, from the last resize. A capture can arrive
+  /// before tmux has the pane at this size, and is replayed to fit it.
+  int? _viewHeight;
+
   /// Called for fire-and-forget commands (notably keyboard input) which fail.
   void Function(String command, Object error)? onCommandError;
 
@@ -162,6 +166,7 @@ final class TmuxControlClient {
   /// `latest`. tmux's explicit `<window-id>:WxH` form does, from tmux 3.3;
   /// older servers answer it with "bad size argument".
   void resizeWindow(int width, int height) {
+    _viewHeight = height;
     final windowId = _snapshot?.activeWindowId;
     final target = windowId == null || _tmuxVersion < 303 ? '' : '$windowId:';
     send('refresh-client -C $target${width}x$height');
@@ -382,10 +387,45 @@ final class TmuxControlClient {
   }
 
   Future<void> _refresh({required bool captureActivePane}) async {
-    final current = await runRequired(
-      "display-message -p '#{session_id}\t#{q:session_name}"
-      "\t#{history-limit}'",
-    );
+    // tmux answers a client's commands in order, and one without a target
+    // reads the client's own session, its active window and that window's
+    // active pane. Sent together, the state costs one round trip rather than
+    // one per command, which a resize waits for before its capture.
+    final [
+      current,
+      sessionsResult,
+      windowsResult,
+      panesResult,
+      allPanesResult,
+      modeResult,
+    ] = await Future.wait([
+      runRequired(
+        "display-message -p '#{session_id}\t#{q:session_name}"
+        "\t#{history-limit}'",
+      ),
+      runRequired(
+        "list-sessions -F '#{session_id}\t#{q:session_name}"
+        "\t#{session_windows}\t#{session_attached}'",
+      ),
+      runRequired(
+        "list-windows -F '#{window_id}\t#{window_index}"
+        "\t#{q:window_name}\t#{window_active}'",
+      ),
+      // Panes only of the active window: they exist to make splits
+      // addressable in the UI, and inactive windows stay summaries until
+      // selected.
+      runRequired(
+        "list-panes -F '#{pane_id}\t#{pane_index}"
+        '\t#{pane_active}\t#{q:pane_title}\t#{q:pane_current_command}'
+        "\t#{cursor_x}\t#{cursor_y}\t#{pane_height}'",
+      ),
+      runRequired("list-panes -s -F '#{pane_id}\t#{window_id}'"),
+      // Read before state is published or a capture is replayed. The screen
+      // snapshot is not enough: Vim can be in the alternate screen with
+      // application cursor/keypad modes while local xterm is still reset to
+      // its defaults.
+      runRequired("display-message -p '${TmuxPaneModeSnapshot.queryFormat}'"),
+    ]);
     final currentParts = splitTmuxFields(current.output);
     if (currentParts.length < 2) {
       throw const TmuxControlCommandException(
@@ -394,10 +434,6 @@ final class TmuxControlClient {
       );
     }
 
-    final sessionsResult = await runRequired(
-      "list-sessions -F '#{session_id}\t#{q:session_name}"
-      "\t#{session_windows}\t#{session_attached}'",
-    );
     final sessions = <TmuxControlSessionSummary>[];
     for (final line in sessionsResult.lines) {
       if (line.trim().isEmpty) continue;
@@ -427,10 +463,6 @@ final class TmuxControlClient {
       attached: true,
     );
 
-    final windowsResult = await runRequired(
-      "list-windows -t '$sessionId' -F '#{window_id}\t#{window_index}"
-      "\t#{q:window_name}\t#{window_active}'",
-    );
     final windows = <TmuxControlWindow>[];
     for (final line in windowsResult.lines) {
       if (line.trim().isEmpty) continue;
@@ -446,13 +478,6 @@ final class TmuxControlClient {
       );
     }
 
-    // Panes are queried only for the active window: they exist to make splits
-    // addressable in the UI, and inactive windows stay summaries until selected.
-    final panesResult = await runRequired(
-      "list-panes -t '${activeWindow.id}' -F '#{pane_id}\t#{pane_index}"
-      '\t#{pane_active}\t#{q:pane_title}\t#{q:pane_current_command}'
-      "\t#{cursor_x}\t#{cursor_y}\t#{pane_height}'",
-    );
     final panes = <TmuxControlPane>[];
     for (final line in panesResult.lines) {
       if (line.trim().isEmpty) continue;
@@ -467,9 +492,6 @@ final class TmuxControlClient {
       );
     }
 
-    final allPanesResult = await runRequired(
-      "list-panes -s -t '$sessionId' -F '#{pane_id}\t#{window_id}'",
-    );
     final paneWindows = <TmuxPaneId, TmuxWindowId>{};
     for (final line in allPanesResult.lines) {
       final fields = splitTmuxFields(line);
@@ -491,14 +513,6 @@ final class TmuxControlClient {
         window.id == activeWindow.id ? activeWindowWithPanes : window,
     ];
     final activePaneId = activePane.id;
-    // Query pane modes before state is published or a capture is replayed.
-    // The screen snapshot is not enough: Vim can be in the alternate screen
-    // with application cursor/keypad modes while local xterm is still reset
-    // to its defaults.
-    final modeResult = await runRequired(
-      "display-message -p -t '$activePaneId' "
-      "'${TmuxPaneModeSnapshot.queryFormat}'",
-    );
     final mode = TmuxPaneModeSnapshot.parse(modeResult.output);
 
     _snapshot = TmuxControlSnapshot(
@@ -523,7 +537,6 @@ final class TmuxControlClient {
     // erased when the older captured screen is replayed. tmux before 3.2 has
     // no pause, and takes that race.
     final pause = _tmuxVersion >= 302;
-    if (pause) await runRequired("refresh-client -A '$paneId:pause'");
     final mode = _snapshot?.mode ?? const TmuxPaneModeSnapshot();
     final activePane = _snapshot?.activeWindow?.panes
         .where((pane) => pane.id == paneId)
@@ -538,32 +551,53 @@ final class TmuxControlClient {
         : "capture-pane -p -e -t '$paneId'";
     final TmuxControlCommandResult result;
     try {
-      result = await runRequired(command);
+      // Sent together: tmux pauses the pane before it runs the capture.
+      result = (await Future.wait([
+        if (pause) runRequired("refresh-client -A '$paneId:pause'"),
+        runRequired(command),
+      ])).last;
     } catch (error) {
       if (pause) _resumePaneOutput(paneId);
       rethrow;
     }
 
-    // Replay history in pane-sized chunks. Each chunk is written by absolute
+    // A pane taller than the terminal, which tmux has not resized yet, keeps
+    // the rows around the cursor: the ones above it scroll off as history, the
+    // ones below are dropped, as the terminal's own shrink does.
+    final viewHeight = _viewHeight ?? paneHeight;
+    final historyCount = captureHistory && result.lines.length > paneHeight
+        ? result.lines.length - paneHeight
+        : 0;
+    final screenCount = result.lines.length - historyCount;
+    final cursorX = activePane?.cursorX ?? 0;
+    final cursorY = activePane?.cursorY ?? 0;
+    final shift = math.max(
+      0,
+      math.min(screenCount - viewHeight, cursorY),
+    );
+    final screenStart = historyCount + shift;
+    final screenEnd = math.min(result.lines.length, screenStart + viewHeight);
+    // The alternate screen has no scrollback to keep the shifted rows in.
+    final scrolledOff = mode.alternateScreen ? historyCount : screenStart;
+
+    // Replay history in screen-sized chunks. Each chunk is written by absolute
     // row so escapes in the captured line cannot move later rows, then the
     // cursor is moved to the bottom and the chunk is scrolled off with exactly
     // chunk.length line feeds. This preserves the chunk in scrollback without
     // leaving blank lines between history and the live screen.
     final captured = StringBuffer();
-    final historyCount = captureHistory && result.lines.length > paneHeight
-        ? result.lines.length - paneHeight
-        : 0;
-    for (var at = 0; at < historyCount; at += paneHeight) {
-      var end = at + paneHeight;
-      if (end > historyCount) end = historyCount;
-      final chunk = result.lines.sublist(at, end);
+    for (var at = 0; at < scrolledOff; at += viewHeight) {
+      final chunk = result.lines.sublist(
+        at,
+        math.min(at + viewHeight, scrolledOff),
+      );
       for (var row = 0; row < chunk.length; row++) {
         captured
           ..write('\x1b[${row + 1};1H')
           ..write(chunk[row]);
       }
       captured
-        ..write('\x1b[$paneHeight;1H')
+        ..write('\x1b[$viewHeight;1H')
         ..write('\r\n' * chunk.length);
     }
 
@@ -571,16 +605,13 @@ final class TmuxControlClient {
     // work on an empty terminal, but a viewport resize or an output race can
     // turn trailing blank rows into scrollback and leave the prompt detached
     // from its tmux row.
-    final screenStart = historyCount;
-    for (var row = screenStart; row < result.lines.length; row++) {
+    for (var row = screenStart; row < screenEnd; row++) {
       captured
         ..write('\x1b[${row - screenStart + 1};1H')
         ..write(result.lines[row]);
     }
 
-    final cursorX = activePane?.cursorX ?? 0;
-    final cursorY = activePane?.cursorY ?? 0;
-    final restoreCursor = '\x1b[${cursorY + 1};${cursorX + 1}H';
+    final restoreCursor = '\x1b[${cursorY - shift + 1};${cursorX + 1}H';
     final bytes = utf8.encode(
       '\x1bc${mode.restorePrefix}$captured$restoreCursor',
     );
