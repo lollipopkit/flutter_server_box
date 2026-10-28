@@ -18,7 +18,7 @@ use serde_json::json;
 use server_box_monitor::api::auth::generate_token;
 use server_box_monitor::api::server::AppState;
 use server_box_monitor::core::config::Config;
-use server_box_monitor::core::remote_access::ExecConfig;
+use server_box_monitor::core::remote_access::{DEFAULT_EXEC_TIMEOUT_SECS, ExecConfig};
 
 const SECRET: &str = "test-secret-that-is-long-enough-32ch";
 
@@ -73,14 +73,13 @@ async fn test_server(state: Arc<AppState>) -> TestServer {
     .await
 }
 
-/// Longer than the client's own default, which is a few seconds.
+/// Past the endpoint's own bound, so a request that hangs fails the test
+/// through the endpoint's `timed_out`, never through the client giving up.
 ///
 /// These run real commands, and on a Windows runner starting PowerShell is
-/// several seconds before it has read a byte. The endpoint bounds itself at
-/// [`server_box_monitor::api::exec`]'s own minute, so a request that hangs still
-/// fails the test — just not because a cold interpreter was slower than a
-/// default meant for handlers that answer from memory.
-const REQUEST_TIMEOUT: Millis = Millis(30_000);
+/// several seconds before it has read a byte; with the tests running at once
+/// a request has waited half a minute there before it was even read.
+const REQUEST_TIMEOUT: Millis = Millis((DEFAULT_EXEC_TIMEOUT_SECS as u32 + 30) * 1000);
 
 /// The response body, or the status when the call was refused.
 async fn post(srv: &TestServer, body: serde_json::Value) -> Result<serde_json::Value, u16> {
