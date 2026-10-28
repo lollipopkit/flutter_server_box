@@ -11,8 +11,8 @@ List<SettingsNode> _buildNodes() {
       icon: Icons.account_circle_outlined,
       page: () => LkcAccountPage(args: LkcPageArgs(Lkc.client, embedded: true)),
       leading: (size) => LkcAvatar(client: Lkc.client, size: size),
-      subtitle: () => lkcAccountSummary(Lkc.client),
-      listenable: Listenable.merge([Lkc.client.user, Lkc.client.entitlements]),
+      subtitle: () =>
+          LkcAccountSummary(client: Lkc.client, style: UIs.text12Grey),
     ),
     // Grouped by what a setting belongs to, using the same names the app's
     // own tabs do — so "is SFTP under connections or under files" is not a

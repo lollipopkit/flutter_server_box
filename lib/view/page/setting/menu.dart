@@ -20,10 +20,9 @@ final class SettingsNode {
   /// Drawn in [icon]'s place, sized to it: the account's avatar.
   final Widget Function(double size)? leading;
 
-  /// A line under [title] in the narrow list, read again whenever [listenable]
-  /// changes: who is signed in.
-  final String Function()? subtitle;
-  final Listenable? listenable;
+  /// A line under [title] in the narrow list, keeping itself up to date: who
+  /// is signed in.
+  final Widget Function()? subtitle;
 
   /// Whether [feature] is still in beta.
   bool get beta => feature?.beta ?? false;
@@ -40,7 +39,6 @@ final class SettingsNode {
     this.feature,
     this.leading,
     this.subtitle,
-    this.listenable,
   }) : builder = page,
        children = const [];
 
@@ -52,8 +50,7 @@ final class SettingsNode {
   }) : builder = null,
        feature = null,
        leading = null,
-       subtitle = null,
-       listenable = null;
+       subtitle = null;
 
   bool get isLeaf => builder != null;
 
@@ -123,32 +120,17 @@ final class _SettingsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget row() {
-      final subtitle = node.subtitle?.call();
-      return CardX(
-        child: ListTile(
-          leading: node.leading?.call(32) ?? ThemedIcon(node.icon, size: 20),
-          title: node.titleWidget(
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-          ),
-          subtitle: subtitle == null
-              ? null
-              : Text(
-                  subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: UIs.text12Grey,
-                ),
-          trailing: trailing,
-          onTap: onTap,
+    return CardX(
+      child: ListTile(
+        leading: node.leading?.call(32) ?? ThemedIcon(node.icon, size: 20),
+        title: node.titleWidget(
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
         ),
-      );
-    }
-
-    return switch (node.listenable) {
-      final Listenable l => ListenableBuilder(listenable: l, builder: (_, _) => row()),
-      null => row(),
-    };
+        subtitle: node.subtitle?.call(),
+        trailing: trailing,
+        onTap: onTap,
+      ),
+    );
   }
 }
 

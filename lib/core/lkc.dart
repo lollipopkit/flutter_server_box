@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
-import 'package:server_box/core/utils/misc.dart';
+import 'package:plain_notification_token/plain_notification_token.dart';
+import 'package:server_box/core/chan.dart';
 
 /// This app's LKC Cloud client: the `serverbox` public client at the IdP.
 abstract final class Lkc {
@@ -19,6 +20,7 @@ abstract final class Lkc {
 
   static Future<void> init() async {
     client.user.addListener(_onUser);
+    if (isIOS) ApnsToken().onTokenRefresh.listen(_onApnsToken);
     try {
       await client.init();
     } catch (e, s) {
@@ -26,33 +28,65 @@ abstract final class Lkc {
     }
   }
 
-  /// The user this launch registered push for.
+  /// The user and token this launch registered for push.
   static String? _pushFor;
+  static String? _pushToken;
 
-  /// Signed in, at launch or just now: register for push. Once per user and
-  /// launch, as the APNs token may change between launches.
+  /// The APNs token, once iOS has handed one over.
+  static String? _apnsToken;
+
+  /// Signed in, at launch or just now: register once iOS has the token. The
+  /// permission is asked the first time only, on signing in, as the account
+  /// is what the notifications are for.
   static void _onUser() {
-    final user = client.user.value;
-    if (user == null) {
+    if (!isIOS) return;
+    if (client.user.value == null) {
       _pushFor = null;
       return;
     }
-    if (_pushFor == user.id) return;
-    _pushFor = user.id;
-    unawaited(_registerPush());
+    if (_apnsToken != null) {
+      unawaited(_registerPush());
+      return;
+    }
+    // The plugin registers at launch and keeps the token, which may have
+    // come before this side listened; asking is what brings one otherwise.
+    unawaited(
+      ApnsToken().getToken().then(
+        (token) {
+          if (token != null && token.isNotEmpty) {
+            _onApnsToken(token);
+          } else {
+            ApnsToken().requestPermission();
+          }
+        },
+        onError: (Object e, StackTrace s) =>
+            Loggers.app.warning('APNs token', e, s),
+      ),
+    );
+  }
+
+  /// A token from iOS: the first of this launch, or one that changed.
+  static void _onApnsToken(String token) {
+    _apnsToken = token;
+    if (client.user.value != null) unawaited(_registerPush());
   }
 
   static Future<void> _registerPush() async {
-    if (!isIOS) return;
+    final user = client.user.value;
+    final token = _apnsToken;
+    if (user == null || token == null || token.isEmpty) return;
+    if (_pushFor == user.id && _pushToken == token) return;
     try {
-      final token = await getToken();
-      if (token == null || token.isEmpty) return;
       await client.registerDevice(
         token: token,
         appId: _apnsTopic,
-        // Debug and profile builds are signed for APNs' development environment.
-        sandbox: !kReleaseMode,
+        // From the profile the build was signed with; the build mode guesses.
+        sandbox: await MethodChans.apnsSandbox() ?? !kReleaseMode,
       );
+      // Only once it took: a failed one is tried again on the next sign-in
+      // or token.
+      _pushFor = user.id;
+      _pushToken = token;
     } catch (e, s) {
       Loggers.app.warning('LKC Cloud push registration', e, s);
     }
