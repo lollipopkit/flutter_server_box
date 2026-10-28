@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:plain_notification_token/plain_notification_token.dart';
 import 'package:server_box/core/chan.dart';
 
-/// This app's LKC Cloud client: the `serverbox` public client at the IdP.
+/// This app's LK Cloud client: the `serverbox` public client at the IdP.
 abstract final class Lkc {
   /// Registered with the IdP; AppAuth's Android receiver takes it too
   /// (`appAuthRedirectScheme` in `android/app/build.gradle`).
@@ -24,7 +24,7 @@ abstract final class Lkc {
     try {
       await client.init();
     } catch (e, s) {
-      Loggers.app.warning('LKC Cloud init', e, s);
+      Loggers.app.warning('LK Cloud init', e, s);
     }
   }
 
@@ -88,7 +88,7 @@ abstract final class Lkc {
       _pushFor = user.id;
       _pushToken = token;
     } catch (e, s) {
-      Loggers.app.warning('LKC Cloud push registration', e, s);
+      Loggers.app.warning('LK Cloud push registration', e, s);
     }
   }
 }
