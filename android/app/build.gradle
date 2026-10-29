@@ -143,6 +143,8 @@ android {
         targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
+        // AppAuth's redirect receiver: `Lkc.redirectUrl`, `serverbox://auth/…`.
+        manifestPlaceholders += [appAuthRedirectScheme: 'serverbox']
         
         ndk {
             if(!splits.abi.enable) { // abiFilters cannot be present when splits abi filters are set
