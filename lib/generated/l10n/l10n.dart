@@ -1187,6 +1187,18 @@ abstract class AppLocalizations {
   /// **'Recommended'**
   String get sshKeyRecommended;
 
+  /// Setting: keep SSH key passphrases in the system keychain.
+  ///
+  /// In en, this message translates to:
+  /// **'Remember key passphrases'**
+  String get rememberKeyPassphrase;
+
+  /// Help text for the rememberKeyPassphrase setting.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep the passphrases of encrypted private keys in this device\'s system keychain, so they are not asked for after a restart. The keys stay encrypted in backups. Turning this off removes the saved passphrases.'**
+  String get rememberKeyPassphraseTip;
+
   /// Help text for the SSH key unlock setting or action.
   ///
   /// In en, this message translates to:

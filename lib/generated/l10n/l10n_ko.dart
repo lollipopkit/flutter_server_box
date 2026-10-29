@@ -586,6 +586,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sshKeyRecommended => '권장';
 
   @override
+  String get rememberKeyPassphrase => '키 암호 문구 기억';
+
+  @override
+  String get rememberKeyPassphraseTip =>
+      '암호화된 개인 키의 암호 문구를 이 기기의 시스템 키체인에 저장하여 다시 시작한 후에도 묻지 않습니다. 백업의 키는 암호화된 상태로 유지됩니다. 끄면 저장된 암호 문구가 삭제됩니다.';
+
+  @override
   String sshKeyUnlockTip(String name) {
     return '개인 키 [$name]의 암호를 입력하세요.';
   }

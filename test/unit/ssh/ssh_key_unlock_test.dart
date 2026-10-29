@@ -1,9 +1,13 @@
 import 'dart:async';
 
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/utils/ssh_key_passphrase.dart';
 import 'package:server_box/core/utils/ssh_key_unlock.dart';
 import 'package:server_box/core/utils/ssh_keygen.dart';
 import 'package:server_box/data/model/app/error.dart';
+
+import '../../helpers/rust_lib_helper.dart';
 
 /// Opening a key that is stored encrypted.
 ///
@@ -12,12 +16,15 @@ import 'package:server_box/data/model/app/error.dart';
 /// reachable through a dialog in a test, and all of it decides whether a
 /// connection happens.
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   late String lockedPem;
   late String plainPem;
   late PassphrasePrompt prompt;
   const passphrase = 'let me in';
 
-  setUpAll(() {
+  setUpAll(() async {
+    await initRustLibForTest();
     lockedPem = generateSshKeyPair([
       SshKeyAlgorithm.ed25519.name,
       'test',
@@ -32,6 +39,9 @@ void main() {
 
   setUp(() {
     PrivateKeyUnlock.forgetAll();
+    FlutterSecureStorage.setMockInitialValues({});
+    // Off unless a test is about it: the rest is the policy of one run.
+    KeyPassphrases.enabled = () => false;
     prompt = ({required keyName, required retry}) async =>
         throw StateError('unexpected passphrase prompt for $keyName');
   });
@@ -265,6 +275,62 @@ void main() {
     PrivateKeyUnlock.remember('k', plainPem);
     expect(await open(lockedPem, cacheKey: 'k', keyName: 'k'), plainPem);
     expect(asked, 0, reason: 'the passphrase was typed seconds ago');
+  });
+
+  group('kept passphrases', () {
+    setUp(() => KeyPassphrases.enabled = () => true);
+
+    test('one given is kept, and opens the key after a restart', () async {
+      var asked = 0;
+      prompt = ({required keyName, required retry}) async {
+        asked++;
+        return passphrase;
+      };
+      await open(lockedPem, cacheKey: 'k', keyName: 'k');
+      expect(asked, 1);
+
+      // What a restart leaves: nothing opened in memory.
+      PrivateKeyUnlock.forgetAll();
+      final opened = await open(lockedPem, cacheKey: 'k', keyName: 'k');
+      expect(PrivateKeyUnlock.isLocked(opened), isFalse);
+      expect(asked, 1, reason: 'the vault had it');
+    });
+
+    test('one that does not open the key is dropped and asked for', () async {
+      await KeyPassphrases.write(lockedPem, 'not it');
+      var asked = 0;
+      prompt = ({required keyName, required retry}) async {
+        asked++;
+        return passphrase;
+      };
+      await open(lockedPem, cacheKey: 'k', keyName: 'k');
+      expect(asked, 1);
+      expect(await KeyPassphrases.read(lockedPem), passphrase);
+    });
+
+    test('none is kept while the setting is off', () async {
+      KeyPassphrases.enabled = () => false;
+      var asked = 0;
+      prompt = ({required keyName, required retry}) async {
+        asked++;
+        return passphrase;
+      };
+      await open(lockedPem, cacheKey: 'k', keyName: 'k');
+      PrivateKeyUnlock.forgetAll();
+      await open(lockedPem, cacheKey: 'k', keyName: 'k');
+      expect(asked, 2);
+    });
+
+    test('pruning keeps only the keys still stored', () async {
+      await KeyPassphrases.write(lockedPem, passphrase);
+      await KeyPassphrases.write(plainPem, 'gone');
+      await KeyPassphrases.prune([lockedPem]);
+      expect(await KeyPassphrases.read(lockedPem), passphrase);
+      expect(await KeyPassphrases.read(plainPem), isNull);
+
+      await KeyPassphrases.clear();
+      expect(await KeyPassphrases.read(lockedPem), isNull);
+    });
   });
 
   test('unreadable input is not locked, so it fails where it is parsed', () {

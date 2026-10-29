@@ -615,6 +615,13 @@ class AppLocalizationsUk extends AppLocalizations {
   String get sshKeyRecommended => 'Рекомендовано';
 
   @override
+  String get rememberKeyPassphrase => 'Запам\'ятовувати парольні фрази ключів';
+
+  @override
+  String get rememberKeyPassphraseTip =>
+      'Зберігати парольні фрази зашифрованих приватних ключів у системній в\'язці ключів цього пристрою, щоб не запитувати їх після перезапуску. У резервних копіях ключі залишаються зашифрованими. Вимкнення видаляє збережені фрази.';
+
+  @override
   String sshKeyUnlockTip(String name) {
     return 'Введіть парольну фразу закритого ключа [$name].';
   }

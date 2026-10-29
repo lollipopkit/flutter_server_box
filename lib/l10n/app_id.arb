@@ -125,6 +125,8 @@
   "sshKeyPublicKey": "Kunci publik",
   "sshKeyPublicKeyTip": "Tambahkan baris ini ke ~/.ssh/authorized_keys di server.",
   "sshKeyRecommended": "Disarankan",
+  "rememberKeyPassphrase": "Ingat frasa sandi kunci",
+  "rememberKeyPassphraseTip": "Simpan frasa sandi kunci privat terenkripsi di keychain sistem perangkat ini agar tidak diminta lagi setelah aplikasi dimulai ulang. Kunci tetap terenkripsi di cadangan. Menonaktifkan ini menghapus frasa sandi yang tersimpan.",
   "sshKeyUnlockTip": "Masukkan frasa sandi untuk kunci privat [{name}].",
   "ungrouped": "Tanpa grup",
   "unused": "Tidak terpakai",

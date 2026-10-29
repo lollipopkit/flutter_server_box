@@ -172,6 +172,8 @@
   "sshKeyPublicKey": "公開金鑰",
   "sshKeyPublicKeyTip": "將此行附加到伺服器的 ~/.ssh/authorized_keys。",
   "sshKeyRecommended": "推薦",
+  "rememberKeyPassphrase": "記住私鑰密語",
+  "rememberKeyPassphraseTip": "將加密私鑰的密語保存在本裝置的系統鑰匙圈中，重新啟動後無需再次輸入。備份中的私鑰仍保持加密。關閉後會刪除已保存的密語。",
   "sshKeyUnlockTip": "請輸入私密金鑰 [{name}] 的通行密碼。",
   "ungrouped": "未分組",
   "unused": "未使用",

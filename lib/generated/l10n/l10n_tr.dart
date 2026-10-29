@@ -612,6 +612,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sshKeyRecommended => 'Önerilen';
 
   @override
+  String get rememberKeyPassphrase => 'Anahtar parolalarını hatırla';
+
+  @override
+  String get rememberKeyPassphraseTip =>
+      'Şifreli özel anahtarların parolalarını bu cihazın sistem anahtar zincirinde saklar, böylece yeniden başlatmadan sonra tekrar sorulmaz. Yedeklerde anahtarlar şifreli kalır. Kapatıldığında kayıtlı parolalar silinir.';
+
+  @override
   String sshKeyUnlockTip(String name) {
     return '[$name] özel anahtarının parolasını girin.';
   }

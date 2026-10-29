@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -10,6 +11,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/app_auth.dart';
 import 'package:server_box/core/utils/server.dart';
+import 'package:server_box/core/utils/ssh_key_passphrase.dart';
 import 'package:server_box/core/utils/ssh_key_unlock.dart';
 import 'package:server_box/core/utils/ssh_keygen.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
@@ -409,6 +411,7 @@ extension _Actions on _PrivateKeyEditPageState {
       forgetParsedIdentities();
       if (pwd.isNotEmpty && opened != key) {
         PrivateKeyUnlock.remember(cacheKey, opened);
+        unawaited(KeyPassphrases.write(key, pwd));
       }
       final originPki = this.pki;
       if (originPki != null) {

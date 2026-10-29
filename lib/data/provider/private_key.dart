@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:server_box/core/utils/ssh_key_passphrase.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/provider/entity_helpers.dart';
 import 'package:server_box/data/provider/server/all.dart';
@@ -42,6 +45,7 @@ class PrivateKeyNotifier extends _$PrivateKeyNotifier {
     state = state.copyWith(
       keys: entityDelete(Stores.key, state.keys, info, (e) => e.id),
     );
+    _prunePassphrases();
     // DB cleared ssh_key_id via ON DELETE SET NULL, but in-memory Spis still
     // hold the old keyId until reloaded; without this the editor sees
     // _keyIdx == -1 and rejects a valid save.
@@ -64,5 +68,10 @@ class PrivateKeyNotifier extends _$PrivateKeyNotifier {
         (e) => e.id,
       ),
     );
+    if (old.key != newInfo.key) _prunePassphrases();
   }
+
+  /// A passphrase kept for bytes no key holds any more.
+  void _prunePassphrases() =>
+      unawaited(KeyPassphrases.prune(state.keys.map((e) => e.key)));
 }

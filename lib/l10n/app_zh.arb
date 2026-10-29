@@ -172,6 +172,8 @@
   "sshKeyPublicKey": "公钥",
   "sshKeyPublicKeyTip": "将此行追加到服务器的 ~/.ssh/authorized_keys。",
   "sshKeyRecommended": "推荐",
+  "rememberKeyPassphrase": "记住私钥口令",
+  "rememberKeyPassphraseTip": "将加密私钥的口令保存在本设备的系统钥匙串中，重启后无需再次输入。备份中的私钥仍保持加密。关闭后会删除已保存的口令。",
   "sshKeyUnlockTip": "请输入私钥 [{name}] 的口令。",
   "ungrouped": "未分组",
   "containerReclaimable": "可回收",

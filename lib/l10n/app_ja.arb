@@ -125,6 +125,8 @@
   "sshKeyPublicKey": "公開鍵",
   "sshKeyPublicKeyTip": "この行をサーバーの ~/.ssh/authorized_keys に追記してください。",
   "sshKeyRecommended": "推奨",
+  "rememberKeyPassphrase": "鍵のパスフレーズを記憶",
+  "rememberKeyPassphraseTip": "暗号化された秘密鍵のパスフレーズをこのデバイスのシステムキーチェーンに保存し、再起動後に再入力を求めません。バックアップ内の鍵は暗号化されたままです。オフにすると保存済みのパスフレーズは削除されます。",
   "sshKeyUnlockTip": "秘密鍵 [{name}] のパスフレーズを入力してください。",
   "ungrouped": "未分類",
   "unused": "未使用",

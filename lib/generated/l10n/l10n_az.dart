@@ -616,6 +616,13 @@ class AppLocalizationsAz extends AppLocalizations {
   String get sshKeyRecommended => 'Tövsiyə olunur';
 
   @override
+  String get rememberKeyPassphrase => 'Açar parol ifadələrini yadda saxla';
+
+  @override
+  String get rememberKeyPassphraseTip =>
+      'Şifrələnmiş şəxsi açarların parol ifadələrini bu cihazın sistem açar zəncirində saxlayır ki, yenidən başladıqdan sonra soruşulmasın. Ehtiyat nüsxələrdə açarlar şifrəli qalır. Söndürdükdə saxlanmış ifadələr silinir.';
+
+  @override
   String sshKeyUnlockTip(String name) {
     return '[$name] məxfi açarının parol ifadəsini daxil et.';
   }

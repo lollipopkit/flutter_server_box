@@ -754,6 +754,14 @@
   "@sshKeyRecommended": {
     "description": "User-facing label or message for SSH key recommended."
   },
+  "rememberKeyPassphrase": "Remember key passphrases",
+  "@rememberKeyPassphrase": {
+    "description": "Setting: keep SSH key passphrases in the system keychain."
+  },
+  "rememberKeyPassphraseTip": "Keep the passphrases of encrypted private keys in this device's system keychain, so they are not asked for after a restart. The keys stay encrypted in backups. Turning this off removes the saved passphrases.",
+  "@rememberKeyPassphraseTip": {
+    "description": "Help text for the rememberKeyPassphrase setting."
+  },
   "sshKeyUnlockTip": "Enter the passphrase for the private key [{name}].",
   "@sshKeyUnlockTip": {
     "description": "Help text for the SSH key unlock setting or action.",

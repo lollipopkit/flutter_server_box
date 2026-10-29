@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:logging/logging.dart';
 import 'package:server_box/core/utils/server.dart';
+import 'package:server_box/core/utils/ssh_key_passphrase.dart';
 import 'package:server_box/core/utils/ssh_key_unlock.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
@@ -158,6 +160,7 @@ class Backup implements Mergeable {
 
     // After the commit, since the rows were written without announcing it.
     Stores.pve.invalidate();
+    unawaited(KeyPassphrases.prune(Stores.key.fetch().map((e) => e.key)));
     await Provider.reload();
     await RNodes.app.notify();
 

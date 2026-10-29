@@ -616,6 +616,13 @@ class AppLocalizationsIt extends AppLocalizations {
   String get sshKeyRecommended => 'Consigliato';
 
   @override
+  String get rememberKeyPassphrase => 'Ricorda le passphrase delle chiavi';
+
+  @override
+  String get rememberKeyPassphraseTip =>
+      'Conserva le passphrase delle chiavi private cifrate nel portachiavi di sistema di questo dispositivo, così non vengono richieste dopo un riavvio. Nei backup le chiavi restano cifrate. Disattivando, le passphrase salvate vengono rimosse.';
+
+  @override
   String sshKeyUnlockTip(String name) {
     return 'Inserisci la passphrase della chiave privata [$name].';
   }
