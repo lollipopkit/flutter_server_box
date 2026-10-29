@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
@@ -239,8 +238,10 @@ class _RemoteDesktopTabPageState extends ConsumerState<RemoteDesktopTabPage> {
   /// sessions behind the switcher.
   PreferredSizeWidget _pickerBar(RemoteDesktopSessionsState state) {
     final sessions = state.ordered;
+    // A list to pick from, as the terminal tab's is (#1808).
     return SessionTabBar(
-      names: [libL10n.add, for (final session in sessions) session.profile.name],
+      names: [libL10n.select, for (final session in sessions) session.profile.name],
+      leadingIcon: null,
       index: 0,
       onTap: (index) {
         if (index > 0) _selectSession(sessions[index - 1].id);
@@ -448,10 +449,11 @@ class _RemoteDesktopTabPageState extends ConsumerState<RemoteDesktopTabPage> {
               ),
             const Divider(height: 17, indent: 17, endIndent: 17),
             // Last, as in the terminal's sheet: back to the picker, under the
-            // name and icon its entry in the strip has.
+            // name its entry in the strip has. No icon, as there; the space
+            // keeps the name in line with the sessions above.
             ListTile(
-              leading: const Icon(MingCute.add_circle_fill),
-              title: Text(libL10n.add),
+              leading: const SizedBox.square(dimension: 24),
+              title: Text(libL10n.select),
               onTap: () {
                 Navigator.of(sheetContext).pop();
                 _openPicker();
