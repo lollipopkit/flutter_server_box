@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_tty/fl_tty.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
@@ -325,7 +324,8 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
       builder: () => SessionTabBar(
         names: _sessions.names,
         index: _sessions.index,
-        leadingIcon: MingCute.list_check_fill,
+        // The name alone: an icon beside it read as a button.
+        leadingIcon: null,
         onTap: _sessions.select,
         onClose: _confirmClose,
         detailOf: _sessionAddr,

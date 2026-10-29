@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/llm/screen.dart';
 import 'package:server_box/data/model/app/tab.dart';
@@ -97,8 +96,9 @@ const _kindServer = 'server';
 
 class _FileTabPageState extends ConsumerState<FileTabPage>
     with AutomaticKeepAliveClientMixin {
+  // A list to pick from, as the terminal tab's is (#1808).
   late final _sessions = SessionTabsController<FileSession>(
-    leadingName: libL10n.open,
+    leadingName: libL10n.select,
   );
 
   late final VoidCallback _hideFromAgent;
@@ -346,7 +346,7 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
         builder: () => SessionTabBar(
           names: _sessions.names,
           index: _sessions.index,
-          leadingIcon: MingCute.folder_fill,
+          leadingIcon: null,
           onTap: _sessions.select,
           onClose: _close,
           detailOf: _sessionPath,
