@@ -26,6 +26,7 @@ import 'package:server_box/core/service/widget_sync.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/core/tty.dart';
 import 'package:server_box/core/utils/sandbox_import.dart';
+import 'package:server_box/core/utils/ssh_key_passphrase.dart';
 import 'package:server_box/core/utils/ssh_native_crypto.dart';
 import 'package:server_box/core/utils/store_recovery.dart';
 import 'package:server_box/data/model/server/dist_license.dart';
@@ -475,6 +476,7 @@ Future<void> _doPlatformRelated() async {
 
   // Off the launch path: it reads the keychain and asks homebase who is signed in.
   if (Lkc.enabled) unawaited(Lkc.init());
+  unawaited(KeyPassphrases.init());
 
   // The watch app used to learn about servers only while the user sat on the
   // iOS settings page. Pushing at launch is what makes a freshly installed or

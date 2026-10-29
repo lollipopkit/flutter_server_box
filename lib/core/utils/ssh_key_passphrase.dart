@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/src/rust/api/digest.dart';
 
@@ -14,72 +16,102 @@ import 'package:server_box/src/rust/api/digest.dart';
 /// Named by the BLAKE3 of the key's bytes rather than its id: a passphrase
 /// kept for other bytes never meets these, a key referred to by path is
 /// covered as well, and a restore bringing the same key back finds it.
+///
+/// The names kept are listed in one more entry, so that clearing them never
+/// reads the rest of the vault. Every call is queued behind the one before:
+/// a delete and the write after it land in that order.
 abstract final class KeyPassphrases {
   static const _prefix = 'sshKeyPassphrase.';
+  static const _index = 'sshKeyPassphrases';
 
   @visibleForTesting
   static bool Function() enabled = () =>
       Stores.setting.rememberKeyPassphrase.fetch();
 
+  static FlutterSecureStorage get _vault => SecureStore.storage;
+
+  static Future<void> _tail = Future.value();
+
+  /// How long one call may hold the queue: a vault that never answers must
+  /// not keep every connection after it waiting.
+  static const _timeout = Duration(seconds: 10);
+
+  static Future<T> _queued<T>(String what, T fallback, Future<T> Function() f) {
+    final run = _tail
+        .then((_) => f().timeout(_timeout))
+        .catchError((Object e, StackTrace s) {
+          Loggers.app.warning('$what key passphrase', e, s);
+          return fallback;
+        });
+    _tail = run.then((_) {});
+    return run;
+  }
+
+  /// A queue started in the test's own zone: one finished in another zone
+  /// answers there, which a fake clock never runs.
+  @visibleForTesting
+  static void resetQueue() => _tail = Future.value();
+
   static String _name(String pem) =>
       '$_prefix${blake3Hex(data: utf8.encode(pem))}';
 
+  static Future<Set<String>> _names() async {
+    final raw = await _vault.read(key: _index);
+    if (raw == null) return {};
+    return {for (final n in jsonDecode(raw) as List) n as String};
+  }
+
+  static Future<void> _setNames(Set<String> names) => names.isEmpty
+      ? _vault.delete(key: _index)
+      : _vault.write(key: _index, value: jsonEncode(names.toList()));
+
   /// The passphrase kept for [pem]; null when there is none, or no vault on
   /// this isolate (the transfer isolate has none).
-  static Future<String?> read(String pem) async {
-    try {
-      if (!enabled()) return null;
-      return await SecureStore.storage.read(key: _name(pem));
-    } catch (e, s) {
-      Loggers.app.warning('Read key passphrase', e, s);
-      return null;
-    }
-  }
+  static Future<String?> read(String pem) => _queued('Read', null, () async {
+    if (!enabled()) return null;
+    return _vault.read(key: _name(pem));
+  });
 
   /// Keeps [passphrase] for [pem], if passphrases are to be remembered.
-  static Future<void> write(String pem, String passphrase) async {
-    try {
-      if (!enabled()) return;
-      await SecureStore.storage.write(key: _name(pem), value: passphrase);
-    } catch (e, s) {
-      Loggers.app.warning('Write key passphrase', e, s);
-    }
-  }
+  static Future<void> write(String pem, String passphrase) =>
+      _queued('Write', null, () async {
+        if (!enabled()) return;
+        final name = _name(pem);
+        await _vault.write(key: name, value: passphrase);
+        final names = await _names();
+        if (names.add(name)) await _setNames(names);
+      });
 
-  static Future<void> delete(String pem) async {
-    try {
-      await SecureStore.storage.delete(key: _name(pem));
-    } catch (e, s) {
-      Loggers.app.warning('Delete key passphrase', e, s);
-    }
-  }
+  static Future<void> delete(String pem) => _queued('Delete', null, () async {
+    final name = _name(pem);
+    await _vault.delete(key: name);
+    final names = await _names();
+    if (names.remove(name)) await _setNames(names);
+  });
 
-  /// Drops every passphrase but those of [pems], the keys still stored; all of
-  /// them while passphrases are not to be remembered.
-  static Future<void> prune(Iterable<String> pems) async {
-    try {
-      if (!enabled()) return await clear();
-      await _dropAllBut({for (final pem in pems) _name(pem)});
-    } catch (e, s) {
-      Loggers.app.warning('Prune key passphrases', e, s);
-    }
+  /// Drops the passphrases of [before] that no key of [after] holds: what an
+  /// edit, a delete or a restore left without a key.
+  static Future<void> forgetGone(
+    Iterable<String> before,
+    Iterable<String> after,
+  ) {
+    final still = after.toSet();
+    return Future.wait([
+      for (final pem in before.toSet())
+        if (!still.contains(pem)) delete(pem),
+    ]);
   }
 
   /// Drops every passphrase kept.
-  static Future<void> clear() async {
-    try {
-      await _dropAllBut(const {});
-    } catch (e, s) {
-      Loggers.app.warning('Clear key passphrases', e, s);
+  static Future<void> clear() => _queued('Clear', null, () async {
+    for (final name in await _names()) {
+      await _vault.delete(key: name);
     }
-  }
+    await _vault.delete(key: _index);
+  });
 
-  static Future<void> _dropAllBut(Set<String> keep) async {
-    final all = await SecureStore.storage.readAll();
-    for (final name in all.keys) {
-      if (name.startsWith(_prefix) && !keep.contains(name)) {
-        await SecureStore.storage.delete(key: name);
-      }
-    }
+  /// At launch: what a clear that failed while switching off left behind.
+  static Future<void> init() async {
+    if (!enabled()) await clear();
   }
 }

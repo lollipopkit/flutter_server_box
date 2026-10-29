@@ -136,6 +136,12 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
         _pwdController.text = kept;
         _pwdShown.value = false;
       });
+      // The kept one is for these bytes: another key needs its own.
+      _keyController.addListener(() {
+        if (_pwdShown.value || _keyController.text == pki.key) return;
+        _pwdController.clear();
+        _pwdShown.value = true;
+      });
     } else {
       Clipboard.getData(_format).then((value) {
         if (!mounted) return;
@@ -448,13 +454,16 @@ extension _Actions on _PrivateKeyEditPageState {
       forgetParsedIdentities();
       if (pwd.isNotEmpty && opened != key) {
         PrivateKeyUnlock.remember(cacheKey, opened);
-        unawaited(KeyPassphrases.write(key, pwd));
       }
       final originPki = this.pki;
       if (originPki != null) {
         await _notifier.update(originPki, pki);
       } else {
         await _notifier.add(pki);
+      }
+      // Only for a key that was stored.
+      if (pwd.isNotEmpty && opened != key) {
+        unawaited(KeyPassphrases.write(key, pwd));
       }
     } on DuplicateNameException catch (e) {
       // The name is unique in the schema, so this is where a collision is

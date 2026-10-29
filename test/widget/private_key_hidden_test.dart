@@ -34,6 +34,7 @@ void main() {
 
   setUp(() async {
     FlutterSecureStorage.setMockInitialValues({});
+    KeyPassphrases.resetQueue();
     await openTestDb();
     getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
     asked = 0;
@@ -113,6 +114,7 @@ void main() {
 
   testWidgets('a kept passphrase is filled in, and shows behind the app lock', (tester) async {
     await tester.runAsync(() => KeyPassphrases.write(_pki.key, 'hunter2'));
+    KeyPassphrases.resetQueue();
     Stores.setting.useBioAuth.put(true);
     await pumpEditor(tester, pki: _pki);
     expect(find.widgetWithText(TextField, libL10n.pwd), findsNothing);
@@ -121,6 +123,20 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     expect(asked, 1);
     expect(pwdField(tester).controller!.text, 'hunter2');
+  });
+
+  testWidgets('another key in its place drops the kept passphrase', (tester) async {
+    await tester.runAsync(() => KeyPassphrases.write(_pki.key, 'hunter2'));
+    KeyPassphrases.resetQueue();
+    await pumpEditor(tester, pki: _pki);
+    await tester.tap(showKey());
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.enterText(
+      find.widgetWithText(TextField, app_locale.l10n.privateKey),
+      'another key',
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(pwdField(tester).controller!.text, isEmpty);
   });
 
   testWidgets('a key being added is shown: the user just put it there', (tester) async {

@@ -85,6 +85,7 @@ class Backup implements Mergeable {
       _logger.info('No need to restore, local is newer');
       return;
     }
+    final keysBefore = [for (final k in Stores.key.fetch()) k.key];
 
     // One transaction for the whole merge. Per-key commits would leave a
     // restore that was interrupted — process killed, device out of battery —
@@ -160,7 +161,12 @@ class Backup implements Mergeable {
 
     // After the commit, since the rows were written without announcing it.
     Stores.pve.invalidate();
-    unawaited(KeyPassphrases.prune(Stores.key.fetch().map((e) => e.key)));
+    unawaited(
+      KeyPassphrases.forgetGone(
+        keysBefore,
+        Stores.key.fetch().map((e) => e.key),
+      ),
+    );
     await Provider.reload();
     await RNodes.app.notify();
 

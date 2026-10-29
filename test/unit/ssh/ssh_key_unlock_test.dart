@@ -40,6 +40,7 @@ void main() {
   setUp(() {
     PrivateKeyUnlock.forgetAll();
     FlutterSecureStorage.setMockInitialValues({});
+    KeyPassphrases.resetQueue();
     // Off unless a test is about it: the rest is the policy of one run.
     KeyPassphrases.enabled = () => false;
     prompt = ({required keyName, required retry}) async =>
@@ -321,15 +322,33 @@ void main() {
       expect(asked, 2);
     });
 
-    test('pruning keeps only the keys still stored', () async {
+    test('only the bytes no key holds any more are forgotten', () async {
       await KeyPassphrases.write(lockedPem, passphrase);
       await KeyPassphrases.write(plainPem, 'gone');
-      await KeyPassphrases.prune([lockedPem]);
+      // A key referred to by path is in neither list, and stays.
+      await KeyPassphrases.write('path key', 'stays');
+      await KeyPassphrases.forgetGone([lockedPem, plainPem], [lockedPem]);
       expect(await KeyPassphrases.read(lockedPem), passphrase);
       expect(await KeyPassphrases.read(plainPem), isNull);
+      expect(await KeyPassphrases.read('path key'), 'stays');
+    });
 
+    test('clear drops every one, and nothing else', () async {
+      await KeyPassphrases.write(lockedPem, passphrase);
+      await KeyPassphrases.write(plainPem, 'other');
+      await const FlutterSecureStorage().write(key: 'unrelated', value: 'x');
       await KeyPassphrases.clear();
       expect(await KeyPassphrases.read(lockedPem), isNull);
+      expect(await KeyPassphrases.read(plainPem), isNull);
+      expect(await const FlutterSecureStorage().read(key: 'unrelated'), 'x');
+    });
+
+    test('a write queued behind a delete lands after it', () async {
+      await KeyPassphrases.write(lockedPem, 'stale');
+      final delete = KeyPassphrases.delete(lockedPem);
+      final write = KeyPassphrases.write(lockedPem, passphrase);
+      await Future.wait([delete, write]);
+      expect(await KeyPassphrases.read(lockedPem), passphrase);
     });
   });
 
