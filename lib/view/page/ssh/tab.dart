@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_tty/fl_tty.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
@@ -131,8 +132,10 @@ extension on SessionTabsController<_SshSession> {
 
 class _SSHTabPageState extends ConsumerState<SSHTabPage>
     with AutomaticKeepAliveClientMixin {
+  // Named for what the page is, a list to pick from: "Add" with a plus read
+  // as a button that did nothing (#1808).
   late final _sessions = SessionTabsController<_SshSession>(
-    leadingName: libL10n.add,
+    leadingName: libL10n.select,
   );
 
   late final VoidCallback _hideFromAgent;
@@ -322,6 +325,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
       builder: () => SessionTabBar(
         names: _sessions.names,
         index: _sessions.index,
+        leadingIcon: MingCute.list_check_fill,
         onTap: _sessions.select,
         onClose: _confirmClose,
         detailOf: _sessionAddr,
@@ -892,9 +896,6 @@ extension _Actions on _SSHTabPageState {
       target: NavTarget.root,
     ),
   );
-
-  /// The rail's own way to add a server. On one screen that is the picker's
-  /// floating button; a rail has no room for one.
 
   /// A sheet rather than a dialog, which is what every other list of choices
   /// in the app is now — see `showRowsSheet`. A dialog for this put a box in
