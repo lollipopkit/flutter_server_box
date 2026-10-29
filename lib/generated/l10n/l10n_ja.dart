@@ -585,6 +585,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sshKeyRecommended => '推奨';
 
   @override
+  String get rememberKeyPassphrase => '鍵のパスフレーズを記憶';
+
+  @override
+  String get rememberKeyPassphraseTip =>
+      '暗号化された秘密鍵のパスフレーズをこのデバイスのシステムキーチェーンに保存し、再起動後に再入力を求めません。バックアップ内の鍵は暗号化されたままです。オフにすると保存済みのパスフレーズは削除されます。';
+
+  @override
   String sshKeyUnlockTip(String name) {
     return '秘密鍵 [$name] のパスフレーズを入力してください。';
   }

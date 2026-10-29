@@ -491,6 +491,9 @@ class SettingStore extends SqliteStore with ThemeSettings {
   static const deviceLocalKeys = {
     'agentLocalExec',
     'liveActivity',
+    // Whether this device's vault keeps key passphrases: the vault is not in
+    // the backup, so the answer is not either.
+    'rememberKeyPassphrase',
     // Where this device installed the selected theme, and its background
     // inside that: the backup carries the themes themselves (`themes`), and a
     // restore points these at this device's copy — `ThemeBackup.reselect`.
@@ -638,6 +641,13 @@ class SettingStore extends SqliteStore with ThemeSettings {
 
   /// ssh page
   late final sshWakeLock = propertyDefault('sshWakeLock', true);
+
+  /// Keep the passphrases of encrypted private keys in the system vault, so
+  /// they are not asked for again after a restart. See `KeyPassphrases`.
+  late final rememberKeyPassphrase = propertyDefault(
+    'rememberKeyPassphrase',
+    true,
+  );
 
   /// Notify when a program in a terminal out of sight is waiting for the
   /// user, finishes or fails (OSC 7501, OSC 9;4), or a long command ends

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -10,6 +11,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/app_auth.dart';
 import 'package:server_box/core/utils/server.dart';
+import 'package:server_box/core/utils/ssh_key_passphrase.dart';
 import 'package:server_box/core/utils/ssh_key_unlock.dart';
 import 'package:server_box/core/utils/ssh_keygen.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
@@ -97,6 +99,13 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
   /// is what the user has just pasted or picked.
   late final _keyShown = ValueNotifier(pki == null);
 
+  /// A passphrase read back from the vault opens hidden, and shows behind the
+  /// same [AppAuth.confirm] as the key.
+  final _pwdShown = ValueNotifier(true);
+
+  /// The passphrase read back from the vault, while it is in the field.
+  String? _kept;
+
   @override
   void dispose() {
     super.dispose();
@@ -109,6 +118,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
     _pwdNode.dispose();
     _loading.dispose();
     _keyShown.dispose();
+    _pwdShown.dispose();
   }
 
   @override
@@ -123,6 +133,26 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
       // key's own comment is inside the part that gets encrypted.
       _commentController.text =
           pki.comment ?? describeSshKey(pki.key).comment ?? '';
+      KeyPassphrases.read(pki.key).then((kept) {
+        // Not over what was typed while it was read, nor for a key no longer
+        // the one in the editor.
+        if (kept == null || !mounted) return;
+        if (_pwdController.text.isNotEmpty || _keyController.text != pki.key) {
+          return;
+        }
+        _kept = kept;
+        _pwdController.text = kept;
+        _pwdShown.value = false;
+      });
+      // The kept one is for these bytes: another key needs its own. One the
+      // user has typed over is theirs, and stays.
+      _keyController.addListener(() {
+        final kept = _kept;
+        if (kept == null || _keyController.text == pki.key) return;
+        _kept = null;
+        if (_pwdController.text == kept) _pwdController.clear();
+        _pwdShown.value = true;
+      });
     } else {
       Clipboard.getData(_format).then((value) {
         if (!mounted) return;
@@ -262,6 +292,21 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
     );
   }
 
+  Widget _buildHiddenPwd() {
+    return CardX(
+      child: ListTile(
+        leading: const Icon(Icons.password),
+        title: Text(libL10n.pwd),
+        subtitle: const Text('••••••••', style: UIs.textGrey),
+        trailing: IconButton(
+          tooltip: libL10n.showPwd,
+          onPressed: _onTapShowPwd,
+          icon: const Icon(Icons.visibility),
+        ),
+      ),
+    );
+  }
+
   Widget _buildFAB() {
     return FloatingActionButton(
       tooltip: libL10n.save,
@@ -301,14 +346,19 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
               : _buildHiddenKey(),
         ),
         TextButton(onPressed: _onTapPickFile, child: Text(libL10n.file)),
-        Input(
-          controller: _pwdController,
-          type: TextInputType.text,
-          node: _pwdNode,
-          obscureText: true,
-          label: libL10n.pwd,
-          icon: Icons.password,
-          suggestion: false,
+        ValBuilder(
+          listenable: _pwdShown,
+          builder: (shown) => shown
+              ? Input(
+                  controller: _pwdController,
+                  type: TextInputType.text,
+                  node: _pwdNode,
+                  obscureText: true,
+                  label: libL10n.pwd,
+                  icon: Icons.password,
+                  suggestion: false,
+                )
+              : _buildHiddenPwd(),
         ),
         Input(
           controller: _commentController,
@@ -333,6 +383,12 @@ extension _Actions on _PrivateKeyEditPageState {
     if (!await AppAuth.confirm()) return;
     if (!mounted) return;
     _keyShown.value = true;
+  }
+
+  Future<void> _onTapShowPwd() async {
+    if (!await AppAuth.confirm()) return;
+    if (!mounted) return;
+    _pwdShown.value = true;
   }
 
   void _onTapSave() async {
@@ -415,6 +471,10 @@ extension _Actions on _PrivateKeyEditPageState {
         await _notifier.update(originPki, pki);
       } else {
         await _notifier.add(pki);
+      }
+      // Only for a key that was stored.
+      if (pwd.isNotEmpty && opened != key) {
+        unawaited(KeyPassphrases.write(key, pwd));
       }
     } on DuplicateNameException catch (e) {
       // The name is unique in the schema, so this is where a collision is

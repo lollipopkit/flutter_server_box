@@ -7,6 +7,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/app_navigator.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/server.dart';
+import 'package:server_box/core/utils/ssh_key_passphrase.dart';
 import 'package:server_box/data/model/app/error.dart';
 
 /// Asks for a key's passphrase and answers with it, or null if the person
@@ -21,9 +22,9 @@ typedef PassphrasePrompt =
 /// passphrase, or imported still encrypted, stays that way in the database.
 /// Something has to open it before a connection can use it, and that is here.
 ///
-/// Once per key per run. The opened form is held in memory only — a passphrase
-/// that survived a restart would be protecting nothing — and is dropped when
-/// the key is edited or deleted.
+/// Once per key per run. The opened form is held in memory only, and dropped
+/// when the key is edited or deleted; the passphrase may outlive the run in
+/// the system vault ([KeyPassphrases]), which is tried before asking.
 abstract final class PrivateKeyUnlock {
   /// Opened keys, by the reference that named them.
   static final _opened = <String, String>{};
@@ -157,6 +158,21 @@ abstract final class PrivateKeyUnlock {
     required PassphrasePrompt prompt,
   }) async {
     final generation = _generation[cacheKey] ?? 0;
+    bool current() => (_generation[cacheKey] ?? 0) == generation;
+
+    final kept = await KeyPassphrases.read(pem);
+    if (kept != null) {
+      try {
+        final opened = await compute(decryptPem, [pem, kept]);
+        if (current()) _opened[cacheKey] = opened;
+        return opened;
+      } on SSHKeyDecryptError {
+        // Not for these bytes after all: asked for instead, and replaced by
+        // the answer.
+        unawaited(KeyPassphrases.delete(pem));
+      }
+    }
+
     var guesses = 0;
     var rounds = 0;
     // Two counters: an empty field is not a guess — `open` is only reached for
@@ -186,8 +202,9 @@ abstract final class PrivateKeyUnlock {
         // caller gets it either way — it passed those bytes in — but a later
         // connection reads whatever is stored now, and must not be handed the
         // key that was replaced while this dialog was up.
-        if ((_generation[cacheKey] ?? 0) == generation) {
+        if (current()) {
           _opened[cacheKey] = opened;
+          unawaited(KeyPassphrases.write(pem, passphrase));
         }
         return opened;
       } on SSHKeyDecryptError {

@@ -614,6 +614,13 @@ class AppLocalizationsNl extends AppLocalizations {
   String get sshKeyRecommended => 'Aanbevolen';
 
   @override
+  String get rememberKeyPassphrase => 'Wachtwoordzinnen van sleutels onthouden';
+
+  @override
+  String get rememberKeyPassphraseTip =>
+      'Bewaar de wachtwoordzinnen van versleutelde privésleutels in de systeemsleutelhanger van dit apparaat, zodat ze na een herstart niet opnieuw worden gevraagd. In back-ups blijven de sleutels versleuteld. Uitschakelen verwijdert de opgeslagen wachtwoordzinnen.';
+
+  @override
   String sshKeyUnlockTip(String name) {
     return 'Voer de wachtwoordzin voor de privésleutel [$name] in.';
   }

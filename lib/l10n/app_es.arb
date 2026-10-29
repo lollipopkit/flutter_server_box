@@ -125,6 +125,8 @@
   "sshKeyPublicKey": "Clave pública",
   "sshKeyPublicKeyTip": "Añade esta línea a ~/.ssh/authorized_keys en el servidor.",
   "sshKeyRecommended": "Recomendado",
+  "rememberKeyPassphrase": "Recordar frases de contraseña de claves",
+  "rememberKeyPassphraseTip": "Guarda las frases de contraseña de las claves privadas cifradas en el llavero del sistema de este dispositivo, para no pedirlas tras un reinicio. Las claves siguen cifradas en las copias de seguridad. Al desactivarlo se eliminan las frases guardadas.",
   "sshKeyUnlockTip": "Introduce la frase de contraseña de la clave privada [{name}].",
   "ungrouped": "Sin agrupar",
   "unused": "Sin usar",

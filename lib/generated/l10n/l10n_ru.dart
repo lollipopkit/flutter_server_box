@@ -615,6 +615,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sshKeyRecommended => 'Рекомендуется';
 
   @override
+  String get rememberKeyPassphrase => 'Запоминать парольные фразы ключей';
+
+  @override
+  String get rememberKeyPassphraseTip =>
+      'Хранить парольные фразы зашифрованных закрытых ключей в системной связке ключей этого устройства, чтобы не запрашивать их после перезапуска. В резервных копиях ключи остаются зашифрованными. При отключении сохранённые фразы удаляются.';
+
+  @override
   String sshKeyUnlockTip(String name) {
     return 'Введите парольную фразу закрытого ключа [$name].';
   }

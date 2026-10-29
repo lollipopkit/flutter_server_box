@@ -18,6 +18,7 @@ extension _SSH on _AppSettingsPageState {
         _buildProgramStatusAlerts(),
         _buildTermMetricsBar(),
         _buildHostCertAuthorities(),
+        _buildRememberKeyPassphrase(),
       ]),
       SettingsGroup(libL10n.theme, [
         _buildTermTheme(),
@@ -425,6 +426,27 @@ extension _SSH on _AppSettingsPageState {
         leading: const Icon(MingCute.lock_fill),
         title: Text(label),
         trailing: StoreSwitch(prop: _setting.sshWakeLock),
+      ),
+    );
+  }
+
+  SettingsRow _buildRememberKeyPassphrase() {
+    final label = l10n.rememberKeyPassphrase;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(Icons.key),
+        title: TipText(label, l10n.rememberKeyPassphraseTip),
+        trailing: StoreSwitch(
+          prop: _setting.rememberKeyPassphrase,
+          // Off means none kept, not merely none added from now on. Off
+          // before clearing, so no write queued behind the clear keeps one.
+          callback: (on) async {
+            if (on) return;
+            _setting.rememberKeyPassphrase.put(false);
+            await KeyPassphrases.clear();
+          },
+        ),
       ),
     );
   }

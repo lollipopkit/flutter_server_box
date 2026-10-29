@@ -613,6 +613,13 @@ class AppLocalizationsId extends AppLocalizations {
   String get sshKeyRecommended => 'Disarankan';
 
   @override
+  String get rememberKeyPassphrase => 'Ingat frasa sandi kunci';
+
+  @override
+  String get rememberKeyPassphraseTip =>
+      'Simpan frasa sandi kunci privat terenkripsi di keychain sistem perangkat ini agar tidak diminta lagi setelah aplikasi dimulai ulang. Kunci tetap terenkripsi di cadangan. Menonaktifkan ini menghapus frasa sandi yang tersimpan.';
+
+  @override
   String sshKeyUnlockTip(String name) {
     return 'Masukkan frasa sandi untuk kunci privat [$name].';
   }

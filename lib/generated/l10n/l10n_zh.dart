@@ -573,6 +573,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sshKeyRecommended => '推荐';
 
   @override
+  String get rememberKeyPassphrase => '记住私钥口令';
+
+  @override
+  String get rememberKeyPassphraseTip =>
+      '将加密私钥的口令保存在本设备的系统钥匙串中，重启后无需再次输入。备份中的私钥仍保持加密。关闭后会删除已保存的口令。';
+
+  @override
   String sshKeyUnlockTip(String name) {
     return '请输入私钥 [$name] 的口令。';
   }
@@ -6230,6 +6237,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get sshKeyRecommended => '推薦';
+
+  @override
+  String get rememberKeyPassphrase => '記住私鑰密語';
+
+  @override
+  String get rememberKeyPassphraseTip =>
+      '將加密私鑰的密語保存在本裝置的系統鑰匙圈中，重新啟動後無需再次輸入。備份中的私鑰仍保持加密。關閉後會刪除已保存的密語。';
 
   @override
   String sshKeyUnlockTip(String name) {

@@ -125,6 +125,8 @@
   "sshKeyPublicKey": "Genel anahtar",
   "sshKeyPublicKeyTip": "Bu satırı sunucudaki ~/.ssh/authorized_keys dosyasına ekleyin.",
   "sshKeyRecommended": "Önerilen",
+  "rememberKeyPassphrase": "Anahtar parolalarını hatırla",
+  "rememberKeyPassphraseTip": "Şifreli özel anahtarların parolalarını bu cihazın sistem anahtar zincirinde saklar, böylece yeniden başlatmadan sonra tekrar sorulmaz. Yedeklerde anahtarlar şifreli kalır. Kapatıldığında kayıtlı parolalar silinir.",
   "sshKeyUnlockTip": "[{name}] özel anahtarının parolasını girin.",
   "ungrouped": "Gruplandırılmamış",
   "unused": "Kullanılmıyor",

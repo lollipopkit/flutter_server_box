@@ -125,6 +125,8 @@
   "sshKeyPublicKey": "Chiave pubblica",
   "sshKeyPublicKeyTip": "Aggiungi questa riga a ~/.ssh/authorized_keys sul server.",
   "sshKeyRecommended": "Consigliato",
+  "rememberKeyPassphrase": "Ricorda le passphrase delle chiavi",
+  "rememberKeyPassphraseTip": "Conserva le passphrase delle chiavi private cifrate nel portachiavi di sistema di questo dispositivo, così non vengono richieste dopo un riavvio. Nei backup le chiavi restano cifrate. Disattivando, le passphrase salvate vengono rimosse.",
   "sshKeyUnlockTip": "Inserisci la passphrase della chiave privata [{name}].",
   "ungrouped": "Senza gruppo",
   "unused": "Inutilizzato",

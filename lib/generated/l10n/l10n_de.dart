@@ -614,6 +614,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get sshKeyRecommended => 'Empfohlen';
 
   @override
+  String get rememberKeyPassphrase => 'Schlüssel-Passphrasen merken';
+
+  @override
+  String get rememberKeyPassphraseTip =>
+      'Passphrasen verschlüsselter privater Schlüssel im Systemschlüsselbund dieses Geräts speichern, damit sie nach einem Neustart nicht erneut abgefragt werden. In Backups bleiben die Schlüssel verschlüsselt. Beim Ausschalten werden gespeicherte Passphrasen gelöscht.';
+
+  @override
   String sshKeyUnlockTip(String name) {
     return 'Passphrase für den privaten Schlüssel [$name] eingeben.';
   }

@@ -125,6 +125,8 @@
   "sshKeyPublicKey": "Öffentlicher Schlüssel",
   "sshKeyPublicKeyTip": "Diese Zeile an ~/.ssh/authorized_keys auf dem Server anhängen.",
   "sshKeyRecommended": "Empfohlen",
+  "rememberKeyPassphrase": "Schlüssel-Passphrasen merken",
+  "rememberKeyPassphraseTip": "Passphrasen verschlüsselter privater Schlüssel im Systemschlüsselbund dieses Geräts speichern, damit sie nach einem Neustart nicht erneut abgefragt werden. In Backups bleiben die Schlüssel verschlüsselt. Beim Ausschalten werden gespeicherte Passphrasen gelöscht.",
   "sshKeyUnlockTip": "Passphrase für den privaten Schlüssel [{name}] eingeben.",
   "ungrouped": "Ohne Gruppe",
   "unused": "Ungenutzt",

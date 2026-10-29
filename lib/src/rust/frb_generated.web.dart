@@ -17,6 +17,7 @@ import 'package:server_box/src/rust/api/container.dart';
 import 'package:server_box/src/rust/api/create.dart';
 import 'package:server_box/src/rust/api/cron.dart';
 import 'package:server_box/src/rust/api/desktop.dart';
+import 'package:server_box/src/rust/api/digest.dart';
 import 'package:server_box/src/rust/api/file.dart';
 import 'package:server_box/src/rust/api/files.dart';
 import 'package:server_box/src/rust/api/firewall.dart';

@@ -125,6 +125,8 @@
   "sshKeyPublicKey": "Publieke sleutel",
   "sshKeyPublicKeyTip": "Voeg deze regel toe aan ~/.ssh/authorized_keys op de server.",
   "sshKeyRecommended": "Aanbevolen",
+  "rememberKeyPassphrase": "Wachtwoordzinnen van sleutels onthouden",
+  "rememberKeyPassphraseTip": "Bewaar de wachtwoordzinnen van versleutelde privésleutels in de systeemsleutelhanger van dit apparaat, zodat ze na een herstart niet opnieuw worden gevraagd. In back-ups blijven de sleutels versleuteld. Uitschakelen verwijdert de opgeslagen wachtwoordzinnen.",
   "sshKeyUnlockTip": "Voer de wachtwoordzin voor de privésleutel [{name}] in.",
   "ungrouped": "Zonder groep",
   "unused": "Ongebruikt",
