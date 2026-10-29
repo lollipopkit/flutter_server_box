@@ -5,15 +5,17 @@ part of 'entry.dart';
 /// itself, so that opening a branch and showing a page stay separate.
 List<SettingsNode> _buildNodes() {
   return [
-    SettingsNode.leaf(
-      id: 'lkc',
-      title: libL10n.lkcAccount,
-      icon: Icons.account_circle_outlined,
-      page: () => LkcAccountPage(args: LkcPageArgs(Lkc.client, embedded: true)),
-      leading: (size) => LkcAvatar(client: Lkc.client, size: size),
-      subtitle: () =>
-          LkcAccountSummary(client: Lkc.client, style: UIs.text12Grey),
-    ),
+    if (Lkc.enabled)
+      SettingsNode.leaf(
+        id: 'lkc',
+        title: libL10n.lkcAccount,
+        icon: Icons.account_circle_outlined,
+        page: () =>
+            LkcAccountPage(args: LkcPageArgs(Lkc.client, embedded: true)),
+        leading: (size) => LkcAvatar(client: Lkc.client, size: size),
+        subtitle: () =>
+            LkcAccountSummary(client: Lkc.client, style: UIs.text12Grey),
+      ),
     // Grouped by what a setting belongs to, using the same names the app's
     // own tabs do — so "is SFTP under connections or under files" is not a
     // question anyone has to answer. Two levels throughout: a third made

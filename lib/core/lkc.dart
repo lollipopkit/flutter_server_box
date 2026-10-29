@@ -14,6 +14,10 @@ abstract final class Lkc {
   /// The APNs topic homebase pushes to.
   static const _apnsTopic = 'com.lollipopkit.toolbox';
 
+  /// Whether the account shows in settings and the client runs at launch.
+  // TODO: rm once the LK Cloud account ships in ServerBox.
+  static const enabled = false;
+
   static final client = LkcClient(
     oidc: LkcOidc(clientId: 'serverbox', redirectUrl: redirectUrl),
   );

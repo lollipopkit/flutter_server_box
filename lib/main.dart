@@ -474,7 +474,7 @@ Future<void> _doPlatformRelated() async {
   }
 
   // Off the launch path: it reads the keychain and asks homebase who is signed in.
-  unawaited(Lkc.init());
+  if (Lkc.enabled) unawaited(Lkc.init());
 
   // The watch app used to learn about servers only while the user sat on the
   // iOS settings page. Pushing at launch is what makes a freshly installed or
