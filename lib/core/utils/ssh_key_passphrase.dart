@@ -32,19 +32,18 @@ abstract final class KeyPassphrases {
 
   static Future<void> _tail = Future.value();
 
-  /// How long one call may hold the queue: a vault that never answers must
-  /// not keep every connection after it waiting.
+  /// How long a caller waits for its call: a vault that never answers must
+  /// not keep a connection waiting. The queue itself waits for the call to
+  /// end, so that one running late still lands before the next.
   static const _timeout = Duration(seconds: 10);
 
   static Future<T> _queued<T>(String what, T fallback, Future<T> Function() f) {
-    final run = _tail
-        .then((_) => f().timeout(_timeout))
-        .catchError((Object e, StackTrace s) {
-          Loggers.app.warning('$what key passphrase', e, s);
-          return fallback;
-        });
-    _tail = run.then((_) {});
-    return run;
+    final op = _tail.then((_) => f());
+    _tail = op.then((_) {}, onError: (_) {});
+    return op.timeout(_timeout).catchError((Object e, StackTrace s) {
+      Loggers.app.warning('$what key passphrase', e, s);
+      return fallback;
+    });
   }
 
   /// A queue started in the test's own zone: one finished in another zone
@@ -77,14 +76,17 @@ abstract final class KeyPassphrases {
       _queued('Write', null, () async {
         if (!enabled()) return;
         final name = _name(pem);
-        await _vault.write(key: name, value: passphrase);
+        // Listed first: a name listed without its entry costs a delete that
+        // finds nothing, an entry not listed is one nothing would remove.
         final names = await _names();
         if (names.add(name)) await _setNames(names);
+        await _vault.write(key: name, value: passphrase);
       });
 
   static Future<void> delete(String pem) => _queued('Delete', null, () async {
     final name = _name(pem);
     await _vault.delete(key: name);
+    // Unlisted only once it is gone, for the same reason.
     final names = await _names();
     if (names.remove(name)) await _setNames(names);
   });

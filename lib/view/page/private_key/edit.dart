@@ -103,6 +103,9 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
   /// same [AppAuth.confirm] as the key.
   final _pwdShown = ValueNotifier(true);
 
+  /// The passphrase read back from the vault, while it is in the field.
+  String? _kept;
+
   @override
   void dispose() {
     super.dispose();
@@ -131,15 +134,23 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
       _commentController.text =
           pki.comment ?? describeSshKey(pki.key).comment ?? '';
       KeyPassphrases.read(pki.key).then((kept) {
-        // Not over what was typed while it was read.
-        if (kept == null || !mounted || _pwdController.text.isNotEmpty) return;
+        // Not over what was typed while it was read, nor for a key no longer
+        // the one in the editor.
+        if (kept == null || !mounted) return;
+        if (_pwdController.text.isNotEmpty || _keyController.text != pki.key) {
+          return;
+        }
+        _kept = kept;
         _pwdController.text = kept;
         _pwdShown.value = false;
       });
-      // The kept one is for these bytes: another key needs its own.
+      // The kept one is for these bytes: another key needs its own. One the
+      // user has typed over is theirs, and stays.
       _keyController.addListener(() {
-        if (_pwdShown.value || _keyController.text == pki.key) return;
-        _pwdController.clear();
+        final kept = _kept;
+        if (kept == null || _keyController.text == pki.key) return;
+        _kept = null;
+        if (_pwdController.text == kept) _pwdController.clear();
         _pwdShown.value = true;
       });
     } else {

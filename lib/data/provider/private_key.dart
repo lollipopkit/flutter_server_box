@@ -42,10 +42,12 @@ class PrivateKeyNotifier extends _$PrivateKeyNotifier {
   }
 
   Future<void> delete(PrivateKeyInfo info) async {
+    // The bytes stored under the id, which may have changed since [info] was read.
+    final stored = _storedKey(info.id) ?? info.key;
     state = state.copyWith(
       keys: entityDelete(Stores.key, state.keys, info, (e) => e.id),
     );
-    _forgetPassphrases([info.key]);
+    _forgetPassphrases([stored]);
     // DB cleared ssh_key_id via ON DELETE SET NULL, but in-memory Spis still
     // hold the old keyId until reloaded; without this the editor sees
     // _keyIdx == -1 and rejects a valid save.
@@ -59,6 +61,7 @@ class PrivateKeyNotifier extends _$PrivateKeyNotifier {
   /// deleted the old record existed because the id *was* the name — and with
   /// ids equal it deleted the record it had just written.
   Future<void> update(PrivateKeyInfo old, PrivateKeyInfo newInfo) async {
+    final stored = _storedKey(old.id) ?? old.key;
     state = state.copyWith(
       keys: entityUpdate(
         Stores.key,
@@ -68,8 +71,11 @@ class PrivateKeyNotifier extends _$PrivateKeyNotifier {
         (e) => e.id,
       ),
     );
-    if (old.key != newInfo.key) _forgetPassphrases([old.key]);
+    if (stored != newInfo.key) _forgetPassphrases([stored]);
   }
+
+  String? _storedKey(String id) =>
+      state.keys.where((e) => e.id == id).firstOrNull?.key;
 
   /// A passphrase kept for bytes no key holds any more.
   void _forgetPassphrases(List<String> gone) => unawaited(

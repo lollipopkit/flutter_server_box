@@ -34,6 +34,7 @@ void main() {
 
   setUp(() async {
     FlutterSecureStorage.setMockInitialValues({});
+    // In the real zone, for what a test writes through `runAsync`.
     KeyPassphrases.resetQueue();
     await openTestDb();
     getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
@@ -54,6 +55,8 @@ void main() {
   });
 
   Future<void> pumpEditor(WidgetTester tester, {PrivateKeyInfo? pki}) async {
+    // In the test's zone, where the editor's own read is queued.
+    KeyPassphrases.resetQueue();
     await tester.pumpWidget(
       ProviderScope(
         overrides: [privateKeyProvider.overrideWithValue(const PrivateKeyState())],
@@ -114,7 +117,6 @@ void main() {
 
   testWidgets('a kept passphrase is filled in, and shows behind the app lock', (tester) async {
     await tester.runAsync(() => KeyPassphrases.write(_pki.key, 'hunter2'));
-    KeyPassphrases.resetQueue();
     Stores.setting.useBioAuth.put(true);
     await pumpEditor(tester, pki: _pki);
     expect(find.widgetWithText(TextField, libL10n.pwd), findsNothing);
@@ -127,7 +129,6 @@ void main() {
 
   testWidgets('another key in its place drops the kept passphrase', (tester) async {
     await tester.runAsync(() => KeyPassphrases.write(_pki.key, 'hunter2'));
-    KeyPassphrases.resetQueue();
     await pumpEditor(tester, pki: _pki);
     await tester.tap(showKey());
     await tester.pump(const Duration(milliseconds: 300));
