@@ -40,28 +40,27 @@ abstract final class Lkc {
   static String? _apnsToken;
 
   /// Signed in, at launch or just now: register once iOS has the token. The
-  /// permission is asked the first time only, on signing in, as the account
-  /// is what the notifications are for.
+  /// permission is asked on signing in, as the account is what the
+  /// notifications are for.
   static void _onUser() {
     if (!isIOS) return;
     if (client.user.value == null) {
       _pushFor = null;
       return;
     }
+    // A token says nothing of it: the plugin registers at launch either way.
+    // iOS asks once; later it answers with what the user chose.
+    ApnsToken().requestPermission();
     if (_apnsToken != null) {
       unawaited(_registerPush());
       return;
     }
-    // The plugin registers at launch and keeps the token, which may have
-    // come before this side listened; asking is what brings one otherwise.
+    // The plugin keeps the token, which may have come before this side
+    // listened.
     unawaited(
       ApnsToken().getToken().then(
         (token) {
-          if (token != null && token.isNotEmpty) {
-            _onApnsToken(token);
-          } else {
-            ApnsToken().requestPermission();
-          }
+          if (token != null && token.isNotEmpty) _onApnsToken(token);
         },
         onError: (Object e, StackTrace s) =>
             Loggers.app.warning('APNs token', e, s),
