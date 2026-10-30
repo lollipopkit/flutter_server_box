@@ -49,6 +49,8 @@ fn only_invalid_grant_ends_the_session() {
     assert_eq!(refused("Forbidden"), Failure::Refused);
     assert_eq!(refused("invalid_client"), Failure::Refused);
     assert_eq!(refused("temporarily_unavailable"), Failure::Unreachable);
+    // The IdP failed after reading it: the grant may be spent.
+    assert_eq!(refused("server_error"), Failure::Unknown);
 }
 
 #[test]
@@ -60,11 +62,12 @@ fn only_an_oauth_error_is_a_refusal() {
     assert_eq!(failure(200, r#"{"access_token":"a"}"#), None);
     assert_eq!(failure(200, "<html>"), Some(Failure::InvalidResponse));
     assert_eq!(failure(400, r#"{"error":"invalid_grant"}"#), Some(Failure::Rejected));
-    // A proxy's page, a challenge, a rate limit, an IdP error: try again.
+    // A proxy's page, a challenge, a rate limit: it never reached the IdP.
     assert_eq!(failure(403, "<html>challenge</html>"), Some(Failure::Unreachable));
     assert_eq!(failure(400, r#"{"message":"no code"}"#), Some(Failure::Unreachable));
     assert_eq!(failure(429, r#"{"error":"invalid_grant"}"#), Some(Failure::Unreachable));
-    assert_eq!(failure(502, "<html>bad gateway</html>"), Some(Failure::Unreachable));
+    // A 5xx may have come after it spent the grant.
+    assert_eq!(failure(502, "<html>bad gateway</html>"), Some(Failure::Unknown));
 }
 
 #[test]
@@ -109,6 +112,13 @@ fn tokens_are_due_in_the_last_45_seconds() {
     assert!(Tokens::from_response(&json!({ "access_token": "b" }), 0, None).is_err());
     assert!(Tokens::from_response(&json!({ "access_token": "b", "expires_in": 0 }), 0, None).is_err());
     assert!(Tokens::from_response(&json!({}), 0, None).is_err());
+    // A lifetime past any clock is read as a year, not an overflow.
+    let long = Tokens::from_response(&json!({ "access_token": "b", "expires_in": u64::MAX }), 0, None).unwrap();
+    assert_eq!(long.expires_at_ms, MAX_LIFETIME.as_millis() as i64);
+    let device = json!({ "device_code": "d", "user_code": "u", "verification_uri": "https://x/", "expires_in": u64::MAX });
+    assert_eq!(parse_device(&device, 1).unwrap().expires_at_ms, 1 + MAX_LIFETIME.as_millis() as i64);
+    let negative = json!({ "device_code": "d", "user_code": "u", "verification_uri": "https://x/", "expires_in": -5 });
+    assert_eq!(parse_device(&negative, 0).unwrap().expires_at_ms, 300_000);
 }
 
 #[test]

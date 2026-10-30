@@ -73,9 +73,6 @@ pub struct Lkc {
     /// The monotonic expiry of the access token this process received
     /// (`sbm_lkc::Tokens::deadline`), which storage does not keep.
     deadline: Mutex<Option<(String, Instant)>>,
-    /// A refresh token spent at the IdP whose row could not be dropped: never
-    /// sent again, as a reuse ends every session of the person.
-    spent: Mutex<Option<String>>,
 }
 
 impl Lkc {
@@ -207,7 +204,7 @@ async fn poll(state: Arc<AppState>, mut device: DeviceAuthorization) {
                 }
                 break tokens;
             }
-            Err(e) if e.failure == Failure::Unreachable => tracing::debug!("LK Cloud sign-in: {e}"),
+            Err(e) if e.transient() => tracing::debug!("LK Cloud sign-in: {e}"),
             Err(e) => return finish(&state, &device.device_code, Err(e)).await,
         }
     };
@@ -283,27 +280,28 @@ pub async fn session(state: &AppState) -> Option<Session> {
     let _refreshing = state.lkc.refreshing.lock().await;
     let mut session = load_or_forget(state).await?;
     session.tokens = state.lkc.with_deadline(session.tokens);
-    if !session.tokens.due(sbm_lkc::now_ms()) || session.tokens.refresh.is_none() {
+    if !session.tokens.due(sbm_lkc::now_ms()) {
         return Some(session);
     }
-    if *state.lkc.spent.locked() == session.tokens.refresh {
+    if session.tokens.refresh.is_none() {
+        // As fl_lib: due, with nothing to renew it by, it is over.
+        tracing::warn!("LK Cloud: signed out, the access token ran out and there is no refresh token");
         let _ = forget(&state.db).await;
         return None;
     }
     let client = state.lkc.client().ok()?;
-    // Spent once asked, whatever comes back: a failure below never sends it
-    // again.
-    let spend = || {
-        *state.lkc.spent.locked() = session.tokens.refresh.clone();
-    };
+    // Marked before it is sent, in the row: one whose answer is lost, or
+    // whose renewal cannot be stored, is never sent again, a restart
+    // included. Not sent when the mark cannot be written.
+    if let Err(e) = set_refreshing(&state.db).await {
+        tracing::warn!("LK Cloud: not refreshing, the session cannot be written: {e}");
+        return Some(session);
+    }
     match client.refresh(&session.tokens).await {
         Ok(tokens) => {
-            spend();
-            let fresh = Session { tokens, ..session.clone() };
+            let fresh = Session { tokens, ..session };
+            // Stored with the mark cleared.
             if let Err(e) = store(&state.db, &state.sealer, &fresh).await {
-                // The stored refresh token is spent; using it again reads to
-                // the IdP as a leak and ends every session of the person.
-                // Signed out instead.
                 tracing::error!("LK Cloud: storing a refresh, signing out: {e}");
                 let _ = forget(&state.db).await;
                 return None;
@@ -311,17 +309,18 @@ pub async fn session(state: &AppState) -> Option<Session> {
             state.lkc.remember(&fresh.tokens);
             Some(fresh)
         }
-        // The IdP took the token back, or answered a success this cannot
-        // read, after which the token is spent too.
-        Err(e) if matches!(e.failure, Failure::Rejected | Failure::InvalidResponse) => {
-            spend();
-            tracing::warn!("LK Cloud: signed out, the refresh token is gone: {e}");
+        // Never reached the IdP, or refused without spending it.
+        Err(e) if matches!(e.failure, Failure::Unreachable | Failure::Refused | Failure::TooEarly) => {
+            tracing::debug!("LK Cloud: refresh: {e}");
+            // Left set, the next read signs out instead: safe either way.
+            let _ = clear_refreshing(&state.db).await;
+            Some(session)
+        }
+        // Taken back, or sent with no answer this can use: possibly spent.
+        Err(e) => {
+            tracing::warn!("LK Cloud: signed out, the refresh token is gone or may be spent: {e}");
             let _ = forget(&state.db).await;
             None
-        }
-        Err(e) => {
-            tracing::debug!("LK Cloud: refresh: {e}");
-            Some(session)
         }
     }
 }
@@ -351,7 +350,9 @@ async fn reread(state: &AppState) {
         Ok(_) => {}
         Err(e) if e.failure == Failure::Rejected => {
             tracing::warn!("LK Cloud: signed out, homebase refused the token: {e}");
-            let _ = forget(&state.db).await;
+            if forget(&state.db).await.is_ok() {
+                revoke(state, session.tokens.refresh);
+            }
         }
         Err(e) => tracing::debug!("LK Cloud: reading the account: {e}"),
     }
@@ -416,7 +417,7 @@ pub async fn watch(state: Arc<AppState>) {
     }
 }
 
-type Row = (String, String, Option<String>, i64);
+type Row = (String, String, Option<String>, i64, bool);
 
 /// A stored session that cannot be read back, and its refresh token when it
 /// could be opened.
@@ -440,7 +441,7 @@ async fn load_or_forget(state: &AppState) -> Option<Session> {
 
 async fn load(db: &SqlitePool, sealer: &Sealer) -> Result<Option<Session>, Broken> {
     let row: Row =
-        match sqlx::query_as("SELECT user, access_token, refresh_token, expires_at FROM lkc_session WHERE id = 1")
+        match sqlx::query_as("SELECT user, access_token, refresh_token, expires_at, refreshing FROM lkc_session WHERE id = 1")
             .fetch_optional(db)
             .await
         {
@@ -451,7 +452,12 @@ async fn load(db: &SqlitePool, sealer: &Sealer) -> Result<Option<Session>, Broke
                 return Ok(None);
             }
         };
-    let (user, access, refresh, expires_at_ms) = row;
+    let (user, access, refresh, expires_at_ms, refreshing) = row;
+    if refreshing {
+        // Its refresh token may be spent: neither sent nor revoked again.
+        tracing::warn!("LK Cloud: a refresh did not finish storing");
+        return Err(Broken { refresh: None });
+    }
     let opened = (|| {
         Ok::<_, sealed::Error>((
             sealer.open(sealed::LKC_ACCESS_TOKEN, &access)?,
@@ -479,8 +485,8 @@ async fn load(db: &SqlitePool, sealer: &Sealer) -> Result<Option<Session>, Broke
 
 async fn store(db: &SqlitePool, sealer: &Sealer, session: &Session) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     sqlx::query(
-        "INSERT OR REPLACE INTO lkc_session (id, user, access_token, refresh_token, expires_at, updated_at) \
-         VALUES (1, ?, ?, ?, ?, ?)",
+        "INSERT OR REPLACE INTO lkc_session (id, user, access_token, refresh_token, expires_at, refreshing, updated_at) \
+         VALUES (1, ?, ?, ?, ?, 0, ?)",
     )
     .bind(serde_json::to_string(&session.user)?)
     .bind(sealer.seal(sealed::LKC_ACCESS_TOKEN, &session.tokens.access)?)
@@ -490,6 +496,15 @@ async fn store(db: &SqlitePool, sealer: &Sealer, session: &Session) -> Result<()
     .execute(db)
     .await?;
     Ok(())
+}
+
+async fn set_refreshing(db: &SqlitePool) -> sqlx::Result<()> {
+    let marked = sqlx::query("UPDATE lkc_session SET refreshing = 1 WHERE id = 1").execute(db).await?;
+    if marked.rows_affected() == 1 { Ok(()) } else { Err(sqlx::Error::RowNotFound) }
+}
+
+async fn clear_refreshing(db: &SqlitePool) -> sqlx::Result<()> {
+    sqlx::query("UPDATE lkc_session SET refreshing = 0 WHERE id = 1").execute(db).await.map(drop)
 }
 
 async fn forget(db: &SqlitePool) -> sqlx::Result<()> {
@@ -539,6 +554,24 @@ mod tests {
         let db = db().await;
         store(&db, &Sealer::temporary(), &session(60_000)).await.unwrap();
         assert!(load(&db, &Sealer::temporary()).await.unwrap_err().refresh.is_none());
+    }
+
+    #[tokio::test]
+    async fn a_refresh_not_stored_is_never_sent_again() {
+        let (db, sealer) = (db().await, Sealer::temporary());
+        store(&db, &sealer, &session(60_000)).await.unwrap();
+        set_refreshing(&db).await.unwrap();
+        // As after a restart: the token may be spent, so it is not handed back.
+        assert!(load(&db, &sealer).await.unwrap_err().refresh.is_none());
+        clear_refreshing(&db).await.unwrap();
+        assert!(load(&db, &sealer).await.unwrap().is_some());
+        // A store clears it.
+        set_refreshing(&db).await.unwrap();
+        store(&db, &sealer, &session(60_000)).await.unwrap();
+        assert!(load(&db, &sealer).await.unwrap().is_some());
+        // Nothing to mark: not sent.
+        forget(&db).await.unwrap();
+        assert!(set_refreshing(&db).await.is_err());
     }
 
     #[tokio::test]

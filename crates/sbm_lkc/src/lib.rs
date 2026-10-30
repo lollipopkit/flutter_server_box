@@ -44,6 +44,9 @@ const TIMEOUT: Duration = Duration::from_secs(30);
 const MAX_BODY: usize = 1 << 20;
 /// What a device sign-in waits between polls when the IdP does not say.
 const DEVICE_INTERVAL_SECS: u64 = 5;
+/// The longest lifetime taken from an `expires_in`: past it a token or code
+/// is read as living this long, so no answer overflows a clock.
+const MAX_LIFETIME: Duration = Duration::from_secs(366 * 24 * 3600);
 
 /// The IdP's endpoints, from its discovery document.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -125,7 +128,7 @@ impl Tokens {
         let lifetime = value["expires_in"]
             .as_u64()
             .filter(|&secs| secs > 0)
-            .map(Duration::from_secs)
+            .map(|secs| Duration::from_secs(secs).min(MAX_LIFETIME))
             .ok_or_else(|| Error::new(Failure::InvalidResponse, "no expires_in"))?;
         Ok(Self {
             access: text("access_token").ok_or_else(|| Error::new(Failure::InvalidResponse, "no access_token"))?,
@@ -234,9 +237,10 @@ impl Client {
             // code or a token somewhere it did not name.
             .redirect(reqwest::redirect::Policy::none())
             .https_only(true)
-            // Requests are seconds to hours apart; a pooled connection the
-            // other end has closed in between fails the next one.
-            .pool_max_idle_per_host(0)
+            // A device sign-in polls every few seconds; anything else is hours
+            // apart, when a pooled connection the other end has closed would
+            // fail the next request.
+            .pool_idle_timeout(Duration::from_secs(30))
             .connect_timeout(CONNECT_TIMEOUT)
             .timeout(TIMEOUT)
             .build()
@@ -286,7 +290,13 @@ impl Client {
             .token(&[("grant_type", "urn:ietf:params:oauth:grant-type:device_code"), ("device_code", &device.device_code)])
             .await;
         match response {
-            Ok(value) => Ok(DevicePoll::Done(Tokens::from_response(&value, now_ms(), None)?)),
+            Ok(value) => match Tokens::from_response(&value, now_ms(), None) {
+                Ok(tokens) => Ok(DevicePoll::Done(tokens)),
+                Err(e) => {
+                    self.discard(&value).await;
+                    Err(e)
+                }
+            },
             Err(TokenError::Refused { error, .. }) if error == "authorization_pending" => Ok(DevicePoll::Pending),
             Err(TokenError::Refused { error, .. }) if error == "slow_down" => {
                 Ok(DevicePoll::SlowDown(device.interval_secs + 5))
@@ -297,7 +307,9 @@ impl Client {
 
     /// New tokens for [tokens], once [`Tokens::due`]; before that
     /// [`Failure::TooEarly`] and nothing is sent. [`Failure::Rejected`] means
-    /// the IdP took the refresh token back: the session is over.
+    /// the IdP took the refresh token back: the session is over. After
+    /// [`Failure::Unknown`] or [`Failure::InvalidResponse`] the token may be
+    /// spent, and sending it again ends every session of the person.
     pub async fn refresh(&self, tokens: &Tokens) -> Result<Tokens, Error> {
         let Some(refresh) = tokens.refresh.as_deref() else {
             return Err(Error::new(Failure::Rejected, "no refresh token"));
@@ -309,7 +321,24 @@ impl Client {
             .token(&[("grant_type", "refresh_token"), ("refresh_token", refresh)])
             .await
             .map_err(TokenError::into_error)?;
-        Tokens::from_response(&value, now_ms(), Some(tokens))
+        match Tokens::from_response(&value, now_ms(), Some(tokens)) {
+            Ok(fresh) => Ok(fresh),
+            Err(e) => {
+                // A rotated token is let go of; the one sent is spent.
+                if value["refresh_token"].as_str() != Some(refresh) {
+                    self.discard(&value).await;
+                }
+                Err(e)
+            }
+        }
+    }
+
+    /// A granted answer this cannot use: its refresh token is revoked rather
+    /// than left live with no one holding it.
+    async fn discard(&self, value: &Value) {
+        if let Some(refresh) = value["refresh_token"].as_str().filter(|s| !s.is_empty()) {
+            let _ = self.revoke(refresh).await;
+        }
     }
 
     /// Asks the IdP to forget [refresh_token]. Signing out does not wait on
@@ -318,10 +347,13 @@ impl Client {
         let Some(endpoint) = self.metadata().await?.revocation_endpoint.clone() else {
             return Ok(());
         };
-        self.post_form(&endpoint, &[("token", refresh_token), ("token_type_hint", "refresh_token")])
-            .await
-            .map(drop)
-            .map_err(TokenError::into_error)
+        // RFC 7009 answers 200 with an empty body.
+        let body = self.form(&[("token", refresh_token), ("token_type_hint", "refresh_token")]);
+        let (status, body) = self.send(self.form_request(&endpoint, body), &endpoint).await?;
+        if (200..300).contains(&status) {
+            return Ok(());
+        }
+        answer(&endpoint, status, &body).map(drop).map_err(TokenError::into_error)
     }
 
     /// Who [access] is for: homebase's `GET /auth/user`.
@@ -339,18 +371,24 @@ impl Client {
     }
 
     async fn post_form(&self, url: &str, pairs: &[(&str, &str)]) -> Result<Value, TokenError> {
-        let body = url::form_urlencoded::Serializer::new(String::new())
+        let request = self.form_request(url, self.form(pairs));
+        let (status, body) = self.send(request, url).await.map_err(TokenError::Other)?;
+        answer(url, status, &body)
+    }
+
+    fn form(&self, pairs: &[(&str, &str)]) -> String {
+        url::form_urlencoded::Serializer::new(String::new())
             .append_pair("client_id", &self.client_id)
             .extend_pairs(pairs)
-            .finish();
-        let request = self
-            .http
+            .finish()
+    }
+
+    fn form_request(&self, url: &str, body: String) -> reqwest::RequestBuilder {
+        self.http
             .post(url)
             .header(reqwest::header::CONTENT_TYPE, "application/x-www-form-urlencoded")
             .header(reqwest::header::ACCEPT, "application/json")
-            .body(body);
-        let (status, body) = self.send(request, url).await.map_err(TokenError::Other)?;
-        answer(url, status, &body)
+            .body(body)
     }
 
     async fn send(&self, request: reqwest::RequestBuilder, url: &str) -> Result<(u16, Vec<u8>), Error> {
@@ -368,12 +406,15 @@ impl Client {
 }
 
 /// A token or device endpoint's answer: its JSON on a success, else why not.
-/// Only a 4xx carrying an OAuth `error` is the IdP's refusal; a 5xx, a 429,
-/// or a page some proxy answered with (a challenge, an error page) says
-/// nothing about the grant and is worth trying again.
+/// Only a 4xx carrying an OAuth `error` is the IdP's refusal. A 429 or a page
+/// some proxy answered with (a challenge, an error page) never reached it; a
+/// 5xx may have come after it spent the grant.
 fn answer(url: &str, status: u16, body: &[u8]) -> Result<Value, TokenError> {
     let again = || TokenError::Other(Error::new(Failure::Unreachable, format!("{url}: HTTP {status}")));
-    if status >= 500 || status == 429 {
+    if status >= 500 {
+        return Err(TokenError::Other(Error::new(Failure::Unknown, format!("{url}: HTTP {status}"))));
+    }
+    if status == 429 {
         return Err(again());
     }
     let value: Option<Value> = serde_json::from_slice(body).ok();
@@ -405,7 +446,8 @@ impl TokenError {
                     "invalid_grant" => Failure::Rejected,
                     "access_denied" => Failure::Denied,
                     "expired_token" => Failure::Expired,
-                    "temporarily_unavailable" | "server_error" => Failure::Unreachable,
+                    "temporarily_unavailable" => Failure::Unreachable,
+                    "server_error" => Failure::Unknown,
                     _ => Failure::Refused,
                 };
                 let detail = if description.is_empty() { error } else { format!("{error}: {description}") };
@@ -453,7 +495,11 @@ fn parse_device(value: &Value, now_ms: i64) -> Result<DeviceAuthorization, Error
         user_code: required("user_code")?,
         verification_uri: required("verification_uri")?,
         verification_uri_complete: text("verification_uri_complete"),
-        expires_at_ms: now_ms + value["expires_in"].as_i64().unwrap_or(300) * 1000,
+        expires_at_ms: now_ms.saturating_add(
+            Duration::from_secs(value["expires_in"].as_u64().filter(|&s| s > 0).unwrap_or(300))
+                .min(MAX_LIFETIME)
+                .as_millis() as i64,
+        ),
         interval_secs: value["interval"].as_u64().unwrap_or(DEVICE_INTERVAL_SECS).max(1),
     };
     let pages = [Some(&device.verification_uri), device.verification_uri_complete.as_ref()];
@@ -464,15 +510,17 @@ fn parse_device(value: &Value, now_ms: i64) -> Result<DeviceAuthorization, Error
 }
 
 /// [e] with its causes: reqwest's own text alone says only that sending
-/// failed.
+/// failed. [`Failure::Unreachable`] when no connection was made, else
+/// [`Failure::Unknown`]: the request may have arrived.
 fn unreachable(url: &str, e: reqwest::Error) -> Error {
+    let failure = if e.is_connect() || e.is_builder() { Failure::Unreachable } else { Failure::Unknown };
     let mut detail = format!("{url}: {e}");
     let mut source = std::error::Error::source(&e);
     while let Some(cause) = source {
         detail.push_str(&format!(": {cause}"));
         source = cause.source();
     }
-    Error::new(Failure::Unreachable, detail)
+    Error::new(failure, detail)
 }
 
 pub fn now_ms() -> i64 {

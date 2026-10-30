@@ -9,5 +9,9 @@ CREATE TABLE lkc_session (
     refresh_token TEXT,
     -- Milliseconds since the epoch, on this side's clock.
     expires_at INTEGER NOT NULL,
+    -- 1 from just before the refresh token is sent until its answer is
+    -- stored: a row read back with it set holds a token that may be spent,
+    -- and sending that again ends every session of the person.
+    refreshing INTEGER NOT NULL DEFAULT 0,
     updated_at INTEGER NOT NULL
 );

@@ -16,28 +16,18 @@ use super::respond;
 use super::server::AppState;
 use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
 use crate::lkc::{self, SignInView};
-use sbm_lkc::Failure;
-
-/// The account as a client shows it (`LkcUser`); never a token.
-#[derive(Serialize)]
-struct UserView {
-    id: String,
-    name: String,
-    group: String,
-    avatar: Option<String>,
-}
 
 #[derive(Serialize)]
 struct Answer {
-    user: Option<UserView>,
+    /// `sbm_lkc::User` (`LkcUser`); never a token.
+    user: Option<sbm_lkc::User>,
     sign_in: Option<SignInView>,
 }
 
 /// Over a link that may act only: the answer names a person.
 pub async fn get(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     require!(authz::acting_caller(&req, &state).await);
-    let user = lkc::current(&state).await.map(|u| UserView { id: u.id, name: u.name, group: u.group, avatar: u.avatar });
-    Ok(HttpResponse::Ok().json(&Answer { user, sign_in: state.lkc.sign_in() }))
+    Ok(HttpResponse::Ok().json(&Answer { user: lkc::current(&state).await, sign_in: state.lkc.sign_in() }))
 }
 
 pub async fn start(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
@@ -53,7 +43,7 @@ pub async fn start(req: HttpRequest, state: web::types::State<Arc<AppState>>) ->
         }
         Err(e) => {
             tracing::warn!("LK Cloud sign-in: {e}");
-            let code = if e.failure == Failure::Unreachable { "lkc_unreachable" } else { "lkc_refused" };
+            let code = if e.transient() { "lkc_unreachable" } else { "lkc_refused" };
             Ok(respond::error(StatusCode::BAD_GATEWAY, code))
         }
     }

@@ -1,9 +1,13 @@
 /// Why a sign-in, refresh, revocation or homebase read did not go through.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Failure {
-    /// Nothing answered, or the service failed (5xx, a proxy's page): try
-    /// again later; a session already held stays.
+    /// Nothing reached the service, or something in front of it answered (a
+    /// proxy's page, a 429): try again later; a session already held stays.
     Unreachable,
+    /// Sent, but no answer was read (a timeout, a dropped connection, a 5xx):
+    /// a grant sent may have been spent. Tried again like [`Self::Unreachable`],
+    /// except a refresh token, which is never sent twice.
+    Unknown,
     /// The service answered with something that is not what it should be.
     InvalidResponse,
     /// The person declined.
@@ -30,6 +34,12 @@ pub struct Error {
 impl Error {
     pub fn new(failure: Failure, detail: impl Into<String>) -> Self {
         Self { failure, detail: detail.into() }
+    }
+
+    /// Worth trying again later: [`Failure::Unreachable`] or
+    /// [`Failure::Unknown`].
+    pub fn transient(&self) -> bool {
+        matches!(self.failure, Failure::Unreachable | Failure::Unknown)
     }
 }
 
