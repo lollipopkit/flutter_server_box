@@ -100,6 +100,7 @@ pub const LEFT_OUT: &[&str] = &[
     "login_device",
     "monitor_backup",
     "push_literal_pending",
+    "lkc_session",
 ];
 
 /// The account's columns a backup carries.

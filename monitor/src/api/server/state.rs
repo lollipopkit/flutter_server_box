@@ -144,6 +144,8 @@ pub struct AppState {
     pub config_write: Arc<Mutex<()>>,
     /// The agent's own releases as last read — see `api::update`.
     pub update: Arc<crate::api::update::AgentUpdate>,
+    /// The LK Cloud account signed in to — see `lkc`.
+    pub lkc: Arc<crate::lkc::Lkc>,
 }
 
 /// The file a `sqlite:` [url] opens, or `None` for an in-memory database.
@@ -275,6 +277,7 @@ impl AppState {
             last_viewer_seen: Arc::new(RwLock::new(chrono::Utc::now())),
             config_write: Arc::new(Mutex::new(())),
             update: Arc::default(),
+            lkc: Arc::default(),
         })
     }
 }

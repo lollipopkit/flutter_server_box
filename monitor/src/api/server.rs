@@ -299,6 +299,16 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::get().to(crate::api::agent::get_settings))
                     .route(web::put().to(crate::api::agent::put_settings)),
             )
+            .service(
+                web::resource("/lkc")
+                    .route(web::get().to(crate::api::lkc::get))
+                    .route(web::delete().to(crate::api::lkc::sign_out)),
+            )
+            .service(
+                web::resource("/lkc/sign-in")
+                    .route(web::post().to(crate::api::lkc::start))
+                    .route(web::delete().to(crate::api::lkc::cancel)),
+            )
             .service(web::resource("/agent/choices").route(web::get().to(crate::api::agent::choices)))
             .service(
                 web::resource("/agent/mcp")

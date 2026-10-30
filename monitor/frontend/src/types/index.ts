@@ -116,6 +116,33 @@ export interface Capabilities {
 /// (`sbm_parser::monitor_agent::InstallKind`).
 export type AgentInstall = 'script' | 'container' | 'nix' | 'other'
 
+/// The LK Cloud account the agent is signed in to, as homebase answers it;
+/// never a token.
+export interface LkcUser {
+  id: string
+  name: string
+  /// `user`, `admin`, `bot`, …
+  group: string
+  avatar: string | null
+}
+
+/// A device-code sign-in the agent is waiting on: the person opens
+/// `verification_uri_complete` (or `verification_uri` and types
+/// `user_code`) anywhere and approves it.
+export interface LkcSignIn {
+  user_code: string
+  verification_uri: string
+  verification_uri_complete: string | null
+  expires_at_ms: number
+  failed?: 'denied' | 'expired' | 'rejected' | 'invalid'
+}
+
+/// `GET /lkc`.
+export interface LkcState {
+  user: LkcUser | null
+  sign_in: LkcSignIn | null
+}
+
 /// `GET /update`: whether a newer agent is released, as the agent read it.
 export interface AgentUpdate {
   version: string
@@ -190,6 +217,8 @@ export type MachineFeature =
   | 'waf'
   /// Whether a newer agent is out and how this one is updated (`/update`).
   | 'update'
+  /// The LK Cloud account the agent is signed in to (`/lkc*`).
+  | 'lkc'
 
 export type PowerAction = 'shutdown' | 'reboot' | 'suspend'
 

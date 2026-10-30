@@ -46,8 +46,9 @@ pub enum Kind {
     /// subject is the channel names and types, plus the host a test webhook
     /// went to — never a key, a token or a header value.
     Push,
-    /// A change to the account: its password set or changed. The detail says
-    /// what changed — never a password.
+    /// A change to the account: its password set or changed, or the
+    /// LK Cloud account signed in to or out of (`api::lkc`). The
+    /// detail says what changed — never a password or a token.
     Admin,
     /// The machine-management endpoints (`api::machine`): power, processes,
     /// services and the rest. The subject is the account; the detail starts

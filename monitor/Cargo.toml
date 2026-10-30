@@ -17,6 +17,7 @@ fl_theme = { path = "../packages/fl_lib/rust/theme" }
 fl_pi_llm = { path = "../packages/fl_pi_llm/fl_pi_llm/rust", default-features = false, features = ["reqwest"] }
 sbm_redfish = { path = "../crates/sbm_redfish" }
 sbm_virt = { path = "../crates/sbm_virt" }
+sbm_lkc = { path = "../crates/sbm_lkc" }
 # Native (syscall/procfs) status sampling for monitor's own local collection
 # path (never used by the SSH-based app) — see monitoring.rs::collect_metrics
 sbm_native = { path = "../crates/sbm_native" }

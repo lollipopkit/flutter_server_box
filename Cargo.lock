@@ -5255,6 +5255,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "sbm_lkc"
+version = "0.1.0"
+dependencies = [
+ "reqwest 0.13.5",
+ "rustls",
+ "serde",
+ "serde_json",
+ "tokio",
+ "url",
+ "webpki-roots",
+]
+
+[[package]]
 name = "sbm_native"
 version = "0.1.0"
 dependencies = [
@@ -5565,6 +5578,7 @@ dependencies = [
  "roxmltree",
  "rpassword",
  "rustls",
+ "sbm_lkc",
  "sbm_native",
  "sbm_parser",
  "sbm_redfish",

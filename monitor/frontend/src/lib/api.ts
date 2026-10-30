@@ -2,6 +2,8 @@ import { get } from 'svelte/store'
 import { LL } from '../i18n/i18n-svelte'
 import type {
   AgentUpdate,
+  LkcSignIn,
+  LkcState,
   InstalledApp,
   OfferedApp,
   ContainerBackup,
@@ -494,6 +496,15 @@ export const api = {
   /// `403` with code `sudo_password`.
   startUpdate: (password?: string) =>
     request<void>('/update/run', { method: 'POST', body: JSON.stringify({ password }) }),
+  /// The LK Cloud account the agent is signed in to, and the sign-in it is
+  /// waiting on.
+  getLkc: () => request<LkcState>('/lkc', {}),
+  /// Starts a device-code sign-in; the agent polls the IdP itself.
+  /// `502 lkc_unreachable` when LK Cloud cannot be reached, `502 lkc_refused`
+  /// when it answered otherwise than expected.
+  startLkcSignIn: () => request<{ sign_in: LkcSignIn }>('/lkc/sign-in', { method: 'POST' }),
+  cancelLkcSignIn: () => request<void>('/lkc/sign-in', { method: 'DELETE' }),
+  signOutLkc: () => request<void>('/lkc', { method: 'DELETE' }),
   /// One reading of the machine's process table.
   ///
   /// The order is asked of the agent rather than applied here: which orders a

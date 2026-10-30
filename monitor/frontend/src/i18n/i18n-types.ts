@@ -1848,6 +1848,54 @@ type RootTranslation = {
 	 */
 	passwordTooShort: string
 	/**
+	 * L​K​ ​C​l​o​u​d
+	 */
+	lkc: string
+	/**
+	 * S​i​g​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​i​n​ ​t​o​ ​y​o​u​r​ ​L​K​ ​C​l​o​u​d​ ​a​c​c​o​u​n​t​.
+	 */
+	lkcHint: string
+	/**
+	 * S​i​g​n​ ​i​n
+	 */
+	lkcSignIn: string
+	/**
+	 * S​i​g​n​ ​o​u​t
+	 */
+	lkcSignOut: string
+	/**
+	 * C​o​d​e
+	 */
+	lkcCode: string
+	/**
+	 * C​h​e​c​k​ ​t​h​a​t​ ​t​h​e​ ​s​i​g​n​-​i​n​ ​p​a​g​e​ ​s​h​o​w​s​ ​t​h​i​s​ ​c​o​d​e​.
+	 */
+	lkcCodeHint: string
+	/**
+	 * W​a​i​t​i​n​g​ ​f​o​r​ ​a​p​p​r​o​v​a​l
+	 */
+	lkcWaiting: string
+	/**
+	 * O​p​e​n​ ​s​i​g​n​-​i​n​ ​p​a​g​e
+	 */
+	lkcOpen: string
+	/**
+	 * T​h​e​ ​s​i​g​n​-​i​n​ ​w​a​s​ ​d​e​c​l​i​n​e​d​.
+	 */
+	lkcDenied: string
+	/**
+	 * T​h​e​ ​c​o​d​e​ ​e​x​p​i​r​e​d​.​ ​S​i​g​n​ ​i​n​ ​a​g​a​i​n​.
+	 */
+	lkcExpired: string
+	/**
+	 * T​h​e​ ​s​i​g​n​-​i​n​ ​d​i​d​ ​n​o​t​ ​g​o​ ​t​h​r​o​u​g​h​.​ ​T​r​y​ ​a​g​a​i​n​.
+	 */
+	lkcFailed: string
+	/**
+	 * T​h​e​ ​a​c​c​o​u​n​t​ ​s​e​r​v​i​c​e​ ​c​a​n​n​o​t​ ​b​e​ ​r​e​a​c​h​e​d​.
+	 */
+	lkcUnreachable: string
+	/**
 	 * P​a​s​s​w​o​r​d​ ​c​h​a​n​g​e​d​.
 	 */
 	passwordChanged: string
@@ -12365,6 +12413,54 @@ export type TranslationFunctions = {
 	 * The new password needs at least 8 characters.
 	 */
 	passwordTooShort: () => LocalizedString
+	/**
+	 * LK Cloud
+	 */
+	lkc: () => LocalizedString
+	/**
+	 * Sign this agent in to your LK Cloud account.
+	 */
+	lkcHint: () => LocalizedString
+	/**
+	 * Sign in
+	 */
+	lkcSignIn: () => LocalizedString
+	/**
+	 * Sign out
+	 */
+	lkcSignOut: () => LocalizedString
+	/**
+	 * Code
+	 */
+	lkcCode: () => LocalizedString
+	/**
+	 * Check that the sign-in page shows this code.
+	 */
+	lkcCodeHint: () => LocalizedString
+	/**
+	 * Waiting for approval
+	 */
+	lkcWaiting: () => LocalizedString
+	/**
+	 * Open sign-in page
+	 */
+	lkcOpen: () => LocalizedString
+	/**
+	 * The sign-in was declined.
+	 */
+	lkcDenied: () => LocalizedString
+	/**
+	 * The code expired. Sign in again.
+	 */
+	lkcExpired: () => LocalizedString
+	/**
+	 * The sign-in did not go through. Try again.
+	 */
+	lkcFailed: () => LocalizedString
+	/**
+	 * The account service cannot be reached.
+	 */
+	lkcUnreachable: () => LocalizedString
 	/**
 	 * Password changed.
 	 */

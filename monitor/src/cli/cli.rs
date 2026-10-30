@@ -195,6 +195,7 @@ async fn handle_serve(matches: &clap::ArgMatches) -> anyhow::Result<()> {
     tokio::spawn(crate::storage_watch::start(app_state.clone()));
     tokio::spawn(crate::monitor_backup::start(app_state.clone()));
     tokio::spawn(crate::api::update::watch(app_state.clone()));
+    tokio::spawn(crate::lkc::watch(app_state.clone()));
 
     let monitoring_handle = tokio::spawn({
         let state = app_state.clone();

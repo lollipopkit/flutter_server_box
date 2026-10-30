@@ -48,7 +48,8 @@
         "stacks",
         "alerts",
         "audit",
-        "live"
+        "live",
+        "lkc"
     ],
     "stacks": [
         {

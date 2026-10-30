@@ -79,6 +79,8 @@ pub const FEATURES: &[&str] = &[
     "audit",
     // What is signed in and open, and ending it (`/live*`, `api::live`).
     "live",
+    // The LK Cloud account the agent is signed in to (`/lkc*`, `api::lkc`).
+    "lkc",
 ];
 
 /// [`FEATURES`], as `/capabilities` lists them.

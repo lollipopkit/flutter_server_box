@@ -408,6 +408,10 @@ async fn a_plaintext_link_only_reads() {
         (Method::DELETE, "/api/v1/monitor-backup", Some(json!({ "current_password": common::PASSWORD }))),
         (Method::PUT, "/api/v1/monitor-backup/key", Some(json!({ "passphrase": "a long enough passphrase", "current_password": common::PASSWORD }))),
         (Method::POST, "/api/v1/monitor-backup/restore", Some(json!({ "name": "x", "passphrase": "a long enough passphrase", "current_password": common::PASSWORD }))),
+        (Method::GET, "/api/v1/lkc", None),
+        (Method::DELETE, "/api/v1/lkc", None),
+        (Method::POST, "/api/v1/lkc/sign-in", None),
+        (Method::DELETE, "/api/v1/lkc/sign-in", None),
         (Method::PUT, "/api/v1/me/password", Some(json!({ "current_password": common::PASSWORD, "new_password": "a-new-password" }))),
     ];
     for (method, path, body) in cases {
@@ -515,4 +519,50 @@ async fn a_device_that_signed_in_is_remembered_until_the_password_changes() {
     let (status, body) = login(json!({ "password": "a-new-password", "device": device })).await;
     assert_eq!(status, 200);
     assert!(body["device"].is_string(), "the old device token is forgotten: {body}");
+}
+
+/// A device sign-in started under the old password does not outlive it:
+/// whoever approved it would have the agent signed in to their account.
+#[tokio::test]
+async fn a_password_change_ends_a_device_sign_in_waiting() {
+    let state = state().await;
+    let poll = tokio::spawn(std::future::pending::<()>());
+    let view = server_box_monitor::lkc::SignInView {
+        user_code: "ABCD".into(),
+        verification_uri: "https://auth.example/device".into(),
+        verification_uri_complete: None,
+        expires_at_ms: i64::MAX,
+        failed: None,
+    };
+    state.lkc.begin(view, "device".into(), poll.abort_handle());
+    assert!(state.lkc.sign_in().is_some());
+    server_box_monitor::api::authz::end_account(&state, "password_changed");
+    assert!(state.lkc.sign_in().is_none());
+    assert!(poll.await.unwrap_err().is_cancelled());
+}
+
+/// Whoever held the old password may have approved a sign-in with their own
+/// LK Cloud account: a password change signs the agent out of it.
+#[tokio::test]
+async fn a_password_change_signs_out_of_lk_cloud() {
+    use server_box_monitor::db::sealed;
+    let state = state().await;
+    sqlx::query(
+        "INSERT INTO lkc_session (id, user, access_token, refresh_token, expires_at, updated_at) VALUES (1, ?, ?, NULL, ?, 0)",
+    )
+    .bind(r#"{"id":"u1","name":"Ada","group":"user"}"#)
+    .bind(state.sealer.seal(sealed::LKC_ACCESS_TOKEN, "access").unwrap())
+    .bind(i64::MAX)
+    .execute(&state.db)
+    .await
+    .unwrap();
+    assert!(server_box_monitor::lkc::current(&state).await.is_some());
+    server_box_monitor::api::authz::end_account(&state, "password_changed");
+    for _ in 0..100 {
+        if server_box_monitor::lkc::current(&state).await.is_none() {
+            return;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+    }
+    panic!("still signed in to LK Cloud after the password changed");
 }

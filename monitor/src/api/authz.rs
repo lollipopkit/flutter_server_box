@@ -185,5 +185,8 @@ pub fn end_account(state: &Arc<AppState>, code: &'static str) {
     state.tickets.revoke_all();
     state.agent.end_account();
     state.stacks.proxies.end_account();
+    // Whoever held the old password may have signed the agent in to their
+    // own LK Cloud account, or be about to.
+    crate::lkc::end_account(state);
     let _ = state.password_changed.send(code);
 }

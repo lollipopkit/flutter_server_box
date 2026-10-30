@@ -40,7 +40,7 @@ cargo sqlx migrate run / cargo sqlx prepare # migrations; offline query cache in
 
 - **One account, signed in with its password alone; it may do what the system account the agent runs as may do.** No roles or grants: where it is installed decides the reach. Acting needs TLS or a loopback peer unless `allow_insecure`.
 - `api/authz.rs` is the one place a request becomes a `Caller`. Every route that acts on or configures the machine or the agent takes `authz::acting_caller` (or `machine::gate`); `jwt_caller` alone is for the desk's own state and lists. `tests/permissions_api.rs::a_plaintext_link_only_reads` holds the list.
-- A password change ends everything signed with the old one through `authz::end_account` (sessions, tickets, Agent mode tasks, relays, watch tokens). Logins are throttled per known device and audited.
+- A password change ends everything signed with the old one through `authz::end_account` (sessions, tickets, Agent mode tasks, relays, watch tokens, the LK Cloud account and a sign-in waiting). Logins are throttled per known device and audited.
 - Retired config keys restrict nothing and are named in a startup warning (TODO remove).
 
 ## Rules every endpoint follows

@@ -9,6 +9,7 @@ macro_rules! require {
     }};
 }
 
+pub mod lkc;
 pub mod agent;
 pub mod cron;
 pub mod backup;

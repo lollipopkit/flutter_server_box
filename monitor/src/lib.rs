@@ -11,6 +11,7 @@ pub mod container_backups;
 pub mod core;
 pub mod db;
 pub mod inference;
+pub mod lkc;
 pub mod monitoring;
 pub mod pty;
 pub mod stacks;
