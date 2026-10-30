@@ -15,19 +15,19 @@ use std::time::Duration;
 
 use ironrdp_rdcleanpath::{DetectionResult, RDCleanPath, RDCleanPathPdu};
 use ntex::io::{Io, Sealed};
-use ntex::service::cfg::SharedCfg;
+use ntex::service::map_state_factory;
 use ntex::time::{Seconds, timeout};
 use ntex::util::Bytes;
 use ntex::web::test::{self as web_test, TestServer};
 use ntex::web::{self, App};
 use ntex::ws::error::WsClientError;
-use ntex::ws::{self, WsClient, WsConnection};
+use ntex::ws::{self, WsClient, WsClientConfig, WsConnection};
 use rcgen::{CertifiedKey, generate_simple_self_signed};
 use rustls::crypto::ring;
 use rustls::pki_types::{CertificateDer, PrivateKeyDer, PrivatePkcs8KeyDer};
 use rustls::ServerConfig;
 use server_box_monitor::api::authz::revoke_lost;
-use server_box_monitor::api::server::AppState;
+use server_box_monitor::api::server::{Agent, AppState};
 use server_box_monitor::api::ws::rdcleanpath::rdp_ws;
 use server_box_monitor::api::ws::ticket::Purpose;
 use server_box_monitor::core::config::Config;
@@ -67,15 +67,11 @@ async fn set_connect(state: &AppState, connect: Option<ConnectGrant>) {
 }
 
 async fn test_server(state: Arc<AppState>) -> TestServer {
-    web_test::server(move || {
+    web_test::server(async move |_| {
         let state = state.clone();
-        async move {
-            App::new()
-                .state(state)
-                .service(web::scope("/api/v1").route("/rdp/ws", web::get().to(rdp_ws)))
-        }
+        map_state_factory(Agent(state), App::<Agent>::new()
+            .service(web::scope("/api/v1").route("/rdp/ws", web::get().to(rdp_ws))))
     })
-    .await
 }
 
 // ---------------------------------------------------------------- RDP frames
@@ -236,16 +232,16 @@ fn dead_addr() -> String {
 
 // -------------------------------------------------------------- the ws client
 
-async fn rdp_connection(srv: &TestServer) -> Result<WsConnection<Sealed>, WsClientError> {
-    WsClient::builder(srv.url("/api/v1/rdp/ws"))
-        .address(srv.addr())
-        .timeout(Seconds(60))
-        .build(SharedCfg::default())
-        .await
-        .unwrap()
-        .connect()
-        .await
-        .map(WsConnection::seal)
+async fn rdp_connection(srv: &TestServer) -> Result<WsConnection<Sealed>, ntex::Error<WsClientError>> {
+    WsClient::new(
+        srv.url("/api/v1/rdp/ws"),
+        WsClientConfig::new()
+            .set_address(srv.addr())
+            .set_handshake_timeout(Seconds(60)),
+    )
+    .connect()
+    .await
+    .map(WsConnection::seal)
 }
 
 async fn open_rdp(srv: &TestServer) -> (Io<Sealed>, ws::Codec) {

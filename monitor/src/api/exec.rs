@@ -20,7 +20,7 @@ use std::collections::HashMap;
 use std::process::Stdio;
 use std::sync::Arc;
 
-use ntex::web::{self, HttpRequest, HttpResponse};
+use ntex::web::{HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWriteExt};
 use tokio::process::Command;
@@ -77,11 +77,11 @@ pub(crate) struct ExecResponse {
 
 pub async fn exec(
     req: HttpRequest,
-    body: web::types::Json<ExecRequest>,
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    body: crate::api::json::Json<ExecRequest, crate::api::json::ExecLimit>,
+    app_state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     let Ok(caller) = authz::jwt_caller(&req, &app_state).await else {
-        return Ok(HttpResponse::Unauthorized().finish());
+        return Ok(HttpResponse::Unauthorized().build());
     };
 
     let remote_ip = peer_ip(&req);
@@ -99,12 +99,12 @@ pub async fn exec(
             .detail(why.as_str())
             .record(&app_state.db)
             .await;
-        return Ok(HttpResponse::Forbidden().finish());
+        return Ok(HttpResponse::Forbidden().build());
     }
 
     let cmd = body.cmd.clone();
     if cmd.trim().is_empty() {
-        return Ok(HttpResponse::BadRequest().finish());
+        return Ok(HttpResponse::BadRequest().build());
     }
 
     // Logged before it runs and by what it was asked to do, not by what it
@@ -130,7 +130,7 @@ pub async fn exec(
                 .detail(e.to_string())
                 .record(&app_state.db)
                 .await;
-            Ok(HttpResponse::InternalServerError().finish())
+            Ok(HttpResponse::InternalServerError().build())
         }
     }
 }

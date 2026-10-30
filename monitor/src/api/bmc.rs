@@ -139,7 +139,7 @@ impl Serialize for Refusal {
 }
 
 fn refusal(status: StatusCode, error: &'static str) -> HttpResponse {
-    HttpResponse::build(status).json(&serde_json::json!({ "error": error }))
+    HttpResponse::builder(status).json(&serde_json::json!({ "error": error }))
 }
 
 fn internal_error(e: &sqlx::Error) -> HttpResponse {
@@ -159,8 +159,8 @@ fn upstream(e: &sbm_redfish::Error) -> HttpResponse {
 
 pub async fn list(
     req: HttpRequest,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     let gated = match machine::gate(&req, &state, Grant::Virt, "bmc list").await {
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),
@@ -177,8 +177,8 @@ pub async fn list(
 pub async fn replace(
     req: HttpRequest,
     body: web::types::Json<ReplaceRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     let caller = match authz::admin_caller(&req, &state).await {
         Ok(caller) => caller,
         Err(refused) => return Ok(refused),
@@ -218,8 +218,8 @@ pub async fn replace(
 pub async fn probe(
     req: HttpRequest,
     body: web::types::Json<ProbeRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     if let Err(refused) = authz::admin_caller(&req, &state).await {
         return Ok(refused);
     }
@@ -235,8 +235,8 @@ pub async fn probe(
 pub async fn status(
     req: HttpRequest,
     path: web::types::Path<String>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     if let Err(refused) = machine::gate(&req, &state, Grant::Virt, "bmc status").await {
         return Ok(refused);
     }
@@ -271,8 +271,8 @@ pub async fn power(
     req: HttpRequest,
     path: web::types::Path<String>,
     body: web::types::Json<PowerRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     let intent = body.into_inner().intent;
     let what = format!("bmc power {}", intent.as_str());
     let gated = match machine::gate(&req, &state, Grant::Virt, &what).await {

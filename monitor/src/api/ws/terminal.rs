@@ -43,13 +43,13 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use ntex::rt::spawn;
-use ntex::service::{fn_factory_with_config, fn_service};
+use ntex::service::fn_service;
 use ntex::time::{sleep, timeout};
 use ntex::util::{ByteString, Bytes};
 use ntex::web::ws::{self, CloseCode, Frame, Message};
 
 use super::upgrade::WsSink;
-use ntex::web::{self, HttpRequest, HttpResponse};
+use ntex::web::{HttpRequest, HttpResponse};
 use ntex::ws::Item;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
@@ -234,9 +234,8 @@ impl ServerMsg<'_> {
 
 pub async fn terminal_ws(
     req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
-    let app_state = app_state.get_ref().clone();
+    app_state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     let remote_ip = audit::peer_ip(&req);
 
     let deny = async |reason: &'static str, status: HttpResponse| {
@@ -250,18 +249,18 @@ pub async fn terminal_ws(
 
     let secure = super::is_secure_transport(&req, app_state.tls_active);
     if !super::origin_allowed(&req, &app_state.config.get_server().cors_allowed_origins) {
-        return deny("origin", HttpResponse::Unauthorized().finish()).await;
+        return deny("origin", HttpResponse::Unauthorized().build()).await;
     }
 
     let Some(protocol) = ws::subprotocols(&req)
         .find(|value| value.starts_with(TICKET_PROTOCOL_PREFIX))
         .map(str::to_owned)
     else {
-        return deny("no ticket", HttpResponse::Unauthorized().finish()).await;
+        return deny("no ticket", HttpResponse::Unauthorized().build()).await;
     };
     let raw_ticket = &protocol[TICKET_PROTOCOL_PREFIX.len()..];
     let Ok(reservation) = app_state.tickets.reserve(raw_ticket, Purpose::Terminal) else {
-        return deny("ticket", HttpResponse::Unauthorized().finish()).await;
+        return deny("ticket", HttpResponse::Unauthorized().build()).await;
     };
     let subject = reservation.subject().to_string();
     let tickets = app_state.tickets.clone();
@@ -277,7 +276,7 @@ pub async fn terminal_ws(
     });
     let Some(admitted) = admitted else {
         tickets.rollback(reservation);
-        return deny("not granted", HttpResponse::Forbidden().finish()).await;
+        return deny("not granted", HttpResponse::Forbidden().build()).await;
     };
 
     let ctx = Rc::new(ConnCtx {
@@ -288,16 +287,13 @@ pub async fn terminal_ws(
         since: admitted.since,
     });
 
-    let upgraded = super::upgrade::start::<_, _, web::Error>(
-        req,
+    let upgraded = super::upgrade::start(
+        &req,
         Some(&protocol),
-        fn_factory_with_config(move |sink: WsSink| {
-            let ctx = ctx.clone();
-            async move {
-                start_heartbeat(sink.clone());
-                Ok::<_, web::Error>(handler(ctx, sink))
-            }
-        }),
+        move |sink: WsSink| {
+            start_heartbeat(sink.clone());
+            handler(ctx, sink)
+        },
     )
     .await;
     if upgraded.is_ok() {
@@ -434,7 +430,7 @@ fn arm_auth_timeout(ctx: Rc<ConnCtx>, sink: WsSink, phase: Rc<RefCell<Phase>>, d
 fn handler(
     ctx: Rc<ConnCtx>,
     sink: WsSink,
-) -> impl ntex::service::Service<Frame, Response = Option<Message>, Error = web::Error> {
+) -> impl ntex::service::Service<WsSink, Frame, Res = Option<Message>, Error = crate::api::WebError> {
     let phase = Rc::new(RefCell::new(Phase::Idle));
 
     // Detach rather than destroy when the socket dies: that is the whole

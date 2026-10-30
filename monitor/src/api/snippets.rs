@@ -18,7 +18,7 @@
 use std::collections::HashSet;
 use std::sync::Arc;
 
-use ntex::web::{self, HttpRequest, HttpResponse};
+use ntex::web::{HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 
@@ -97,8 +97,8 @@ struct PlanResponse {
 
 pub async fn list(
     req: HttpRequest,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     if let Err(refused) = machine::gate(&req, &state, Grant::Shell, "snippets list").await {
         return Ok(refused);
     }
@@ -110,9 +110,9 @@ pub async fn list(
 
 pub async fn replace(
     req: HttpRequest,
-    body: web::types::Json<ReplaceRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    body: crate::api::json::Json<ReplaceRequest, crate::api::json::Max<MAX_REQUEST>>,
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     let gated = match machine::gate(&req, &state, Grant::Shell, "snippets replace").await {
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),
@@ -156,9 +156,9 @@ pub async fn replace(
 /// nothing; the steps are `sbm_parser::snippet::Step`'s wire shape.
 pub async fn plan(
     req: HttpRequest,
-    body: web::types::Json<PlanRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    body: crate::api::json::Json<PlanRequest, crate::api::json::Max<MAX_REQUEST>>,
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     if let Err(refused) = machine::gate(&req, &state, Grant::Shell, "snippets plan").await {
         return Ok(refused);
     }

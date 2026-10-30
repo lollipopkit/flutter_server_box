@@ -20,7 +20,8 @@ use crate::{
     utils::error::{MonitorError, Result},
 };
 use ntex::http::header::RETRY_AFTER;
-use ntex::web::{self, App, HttpRequest, HttpResponse, HttpServer, middleware::Logger};
+use ntex::SharedCfg;
+use ntex::web::{self, App, HttpRequest, HttpResponse, middleware::Logger};
 use ntex_files::Files;
 use sbm_parser::{SystemType, capabilities::Capabilities};
 use serde::{Deserialize, Serialize};
@@ -78,6 +79,30 @@ pub(crate) async fn verify_login_password_off_worker(password: String, hash: Opt
     .await
     .map_err(|error| MonitorError::Monitoring(format!("Password verifier failed: {error}")))?
 }
+
+/// The web app's state: one [AppState] shared by every worker. A handler
+/// asks for it as an `Arc<AppState>` argument.
+#[derive(Clone)]
+pub struct Agent(pub Arc<AppState>);
+
+impl web::State for Agent {
+    type Error = web::DefaultError;
+}
+
+impl web::FromRequest<Agent> for Arc<AppState> {
+    type Error = std::convert::Infallible;
+
+    async fn from_request(
+        st: &Agent,
+        _: &HttpRequest,
+        _: &mut ntex::http::Payload,
+    ) -> std::result::Result<Self, Self::Error> {
+        Ok(st.0.clone())
+    }
+}
+
+/// The error of a handler that answers every failure itself.
+pub type WebError = web::WebError<Agent>;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -300,16 +325,7 @@ macro_rules! require_read_access {
 /// liked about a handler and still say nothing about what the shipped binary
 /// exposes — see `tests/watch_token_scope.rs`, whose whole subject is this
 /// table.
-///
-/// [`exec_max_request`] is `remote_access.exec.max_request_bytes` as resolved
-/// at startup. It arrives as an argument rather than being read from
-/// `AppState`: ntex applies a payload limit while extracting the body, before
-/// any handler — and therefore before any state — is reached.
-pub fn configure_api(exec_max_request: usize) -> impl FnOnce(&mut web::ServiceConfig) {
-    move |cfg: &mut web::ServiceConfig| configure_api_inner(cfg, exec_max_request)
-}
-
-fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
+pub fn configure_api(cfg: &mut web::ServiceConfig<Agent>) {
     cfg.service(
         web::scope("/api/v1")
             .middleware(crate::api::protocol::Protocol)
@@ -329,7 +345,7 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             .route("/listen/ws", web::get().to(ws::listen::listen_ws))
             .route("/virt/console/ws", web::get().to(ws::virt_console::virt_console_ws))
             .service(
-                // Its own payload limit: ntex allows 32 KiB by
+                // Its own payload limit (`api::json`): ntex allows 32 KiB by
                 // default, and this endpoint's `stdin` carries the
                 // generated status script — 5 KiB today, but it grows
                 // with every custom command a user adds, and going
@@ -338,7 +354,6 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                 // here is not something this file can know — see
                 // `remote_access::ExecConfig`.
                 web::resource("/exec")
-                    .state(web::types::JsonConfig::default().limit(exec_max_request))
                     .route(web::post().to(crate::api::exec::exec)),
             )
             .service(web::resource("/power").route(web::post().to(crate::api::power::power)))
@@ -379,13 +394,9 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::post().to(crate::api::system_users::act)),
             )
             .service(
-                // Its own payload limit, like `/custom-cmds`: a write is
+                // Its own payload limit (`api::json`), like `/custom-cmds`: a write is
                 // the whole library at once.
                 web::resource("/snippets")
-                    .state(
-                        web::types::JsonConfig::default()
-                            .limit(crate::api::snippets::MAX_REQUEST),
-                    )
                     .route(web::get().to(crate::api::snippets::list))
                     .route(web::put().to(crate::api::snippets::replace)),
             )
@@ -456,10 +467,6 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             )
             .service(
                 web::resource("/snippets/plan")
-                    .state(
-                        web::types::JsonConfig::default()
-                            .limit(crate::api::snippets::MAX_REQUEST),
-                    )
                     .route(web::post().to(crate::api::snippets::plan)),
             )
             .service(
@@ -503,36 +510,24 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::delete().to(crate::api::admin::delete_role)),
             )
             .service(
-                // Its own payload limit, like `/exec`: the body is
+                // Its own payload limit (`api::json`), like `/exec`: the body is
                 // every custom command at once, and a user who pastes
                 // a real script into one would otherwise meet ntex's
                 // 32 KiB default as a 413 with nothing to explain it.
                 web::resource("/custom-cmds")
-                    .state(
-                        web::types::JsonConfig::default()
-                            .limit(crate::api::custom_cmds::MAX_REQUEST),
-                    )
                     .route(web::get().to(crate::api::custom_cmds::list))
                     .route(web::put().to(crate::api::custom_cmds::replace)),
             )
             .service(
-                // Its own payload limit, like `/custom-cmds`: the body is
+                // Its own payload limit (`api::json`), like `/custom-cmds`: the body is
                 // every notification channel at once, and a webhook's
                 // `body_template` is a document the user pastes in.
                 web::resource("/push")
-                    .state(
-                        web::types::JsonConfig::default()
-                            .limit(crate::api::push::MAX_REQUEST),
-                    )
                     .route(web::get().to(crate::api::push::list))
                     .route(web::put().to(crate::api::push::replace)),
             )
             .service(
                 web::resource("/push/test")
-                    .state(
-                        web::types::JsonConfig::default()
-                            .limit(crate::api::push::MAX_REQUEST),
-                    )
                     .route(web::post().to(crate::api::push::test)),
             )
             .route("/settings", web::get().to(get_settings))
@@ -559,46 +554,47 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
         (app_state.remote_access.terminal.detached_timeout / 4).max(Duration::from_secs(10)),
     );
 
-    // Read once here rather than inside the factory: the factory runs per
-    // worker, and every worker must apply the same limit.
-    let exec_max_request = app_state.remote_access.exec.max_request_bytes;
+    let agent = Agent(app_state.clone());
+    let server = web::server_with_config(
+        async move || Ok::<_, std::io::Error>(agent.clone()),
+        async |agent: &Agent| {
+            let cors = Cors::new(agent.0.config.get_server().cors_allowed_origins);
 
-    let server = HttpServer::new(async move || {
-        let cors = Cors::new(app_state.config.get_server().cors_allowed_origins);
-
-        App::new()
-            .state(app_state.clone())
-            .middleware(Logger::default())
-            .middleware(cors)
-            .configure(configure_api(exec_max_request))
-            // TODO: Remove this root-level 410 response after one release.
-            .route("/status", web::get().to(get_status_compat))
-            // Serve legacy `/static` paths and root assets from the bundled
-            // Svelte frontend.
-            .service(
-                Files::new("/static", "frontend/dist")
-                    .use_etag(true)
-                    .use_last_modified(true),
-            )
-            .service(
-                Files::new("/", "frontend/dist")
-                    .use_etag(true)
-                    .use_last_modified(true)
-                    .index_file("index.html"),
-            )
-            // Serve index.html for unmatched client-side routes.
-            .service(serve_index)
-            .default_service(web::to(spa_fallback))
-    });
+            // The first registered is the outermost: a preflight is answered
+            // before it is logged.
+            App::<Agent>::new()
+                .middleware(cors)
+                .middleware(Logger::default())
+                .configure(configure_api)
+                // TODO: Remove this root-level 410 response after one release.
+                .route("/status", web::get().to(get_status_compat))
+                // Serve legacy `/static` paths and root assets from the bundled
+                // Svelte frontend.
+                .service(
+                    Files::new("/static", "frontend/dist")
+                        .use_etag(true)
+                        .use_last_modified(true),
+                )
+                .service(
+                    Files::new("/", "frontend/dist")
+                        .use_etag(true)
+                        .use_last_modified(true)
+                        .index_file("index.html"),
+                )
+        },
+    )
+    // ntex 4 pins each worker to a core by default. The agent shares its
+    // machine with whatever the machine is for, so the scheduler places it.
+    .affinity(ntex::server::Affinity::Disabled);
 
     let server = match &server_config.tls {
         Some(tls) => {
             info!("Starting web server on {} (TLS)", bind_addr);
-            server.bind_rustls(&bind_addr, &load_rustls_config(tls)?)?
+            server.bind_rustls(&bind_addr, &load_rustls_config(tls)?, SharedCfg::default())?
         }
         None => {
             info!("Starting web server on {}", bind_addr);
-            server.bind(&bind_addr)?
+            server.bind(&bind_addr, SharedCfg::default())?
         }
     };
     server.run().await?;
@@ -628,26 +624,10 @@ fn load_rustls_config(tls: &crate::core::config::TlsConfig) -> Result<rustls::Se
     Ok(config)
 }
 
-#[web::get("/")]
-async fn serve_index() -> impl web::Responder {
-    spa_fallback().await
-}
-
-async fn spa_fallback() -> HttpResponse {
-    match tokio::fs::read_to_string("frontend/dist/index.html").await {
-        Ok(content) => HttpResponse::Ok()
-            .content_type("text/html; charset=utf-8")
-            .body(content),
-        Err(_) => HttpResponse::InternalServerError().json(&ErrorResponse {
-            error: "Failed to load index.html".to_string(),
-        }),
-    }
-}
-
 async fn login(
     http_req: HttpRequest,
     req: web::types::Json<LoginRequest>,
-    app_state: web::types::State<Arc<AppState>>,
+    app_state: Arc<AppState>,
 ) -> Result<HttpResponse> {
     let peer_ip = http_req.peer_addr().map(|addr| addr.ip());
 
@@ -740,7 +720,7 @@ fn validate_watch_client_id(client_id: &str) -> Result<&str> {
 
 async fn issue_watch_token(
     req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
+    app_state: Arc<AppState>,
     payload: web::types::Json<WatchTokenRequest>,
 ) -> Result<HttpResponse> {
     let caller = require_jwt!(&req, &app_state);
@@ -770,7 +750,7 @@ async fn issue_watch_token(
 
 async fn revoke_watch_token(
     req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
+    app_state: Arc<AppState>,
     payload: web::types::Json<WatchTokenRequest>,
 ) -> Result<HttpResponse> {
     let caller = require_jwt!(&req, &app_state);
@@ -810,7 +790,7 @@ async fn get_status_compat() -> Result<HttpResponse> {
 
 async fn get_status(
     req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
+    app_state: Arc<AppState>,
 ) -> Result<HttpResponse> {
     require_read_access!(&req, &app_state);
     touch_viewer_heartbeat(&app_state).await;
@@ -852,7 +832,7 @@ async fn get_status(
 
 async fn get_metrics(
     req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
+    app_state: Arc<AppState>,
 ) -> Result<HttpResponse> {
     require_read_access!(&req, &app_state);
     touch_viewer_heartbeat(&app_state).await;
@@ -1010,7 +990,7 @@ struct RemoteAccessView {
     listen: bool,
 }
 
-async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
+async fn get_capabilities(req: HttpRequest, app_state: Arc<AppState>) -> Result<HttpResponse> {
     let reader = require_read_access!(&req, &app_state);
     let caller = match &reader {
         Reader::Account(caller) => Some(caller),
@@ -1075,7 +1055,7 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
 /// the authorisation it did not qualify for.
 async fn issue_ws_ticket(
     req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
+    app_state: Arc<AppState>,
     payload: web::types::Json<TicketRequest>,
 ) -> Result<HttpResponse> {
     let caller = require_jwt!(&req, &app_state);
@@ -1201,7 +1181,7 @@ const SETTINGS_LIVE_FIELDS: &[&str] = &[
     "disk_counts_network",
 ];
 
-async fn get_settings(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
+async fn get_settings(req: HttpRequest, app_state: Arc<AppState>) -> Result<HttpResponse> {
     require_admin!(&req, &app_state);
 
     let file_config = match config_file::read() {
@@ -1242,7 +1222,7 @@ fn validate_threshold_format(threshold: &str) -> std::result::Result<(), String>
 
 async fn update_settings(
     req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
+    app_state: Arc<AppState>,
     payload: web::types::Json<SettingsPayload>,
 ) -> Result<HttpResponse> {
     require_admin!(&req, &app_state);
@@ -1320,7 +1300,7 @@ async fn update_settings(
 /// edits roles itself.
 async fn disable_full_access(
     req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
+    app_state: Arc<AppState>,
 ) -> Result<HttpResponse> {
     let caller = require_admin!(&req, &app_state);
 
@@ -1336,7 +1316,7 @@ async fn disable_full_access(
         .detail("shell, connect and listen removed from every role")
         .record(&app_state.db)
         .await;
-    authz::revoke_lost(app_state.get_ref(), "full_access_disabled").await;
+    authz::revoke_lost(&app_state, "full_access_disabled").await;
     tracing::info!(
         "Access without SSH disabled from the panel by {}: shell, connect and listen removed from every role",
         caller.username,
@@ -1355,7 +1335,7 @@ struct CardOrderPayload {
     card_order: Vec<String>,
 }
 
-async fn get_card_order(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
+async fn get_card_order(req: HttpRequest, app_state: Arc<AppState>) -> Result<HttpResponse> {
     require_read_access!(&req, &app_state);
     let file_config = match config_file::read() {
         Ok(c) => c,
@@ -1369,7 +1349,7 @@ async fn get_card_order(req: HttpRequest, app_state: web::types::State<Arc<AppSt
 
 async fn update_card_order(
     req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
+    app_state: Arc<AppState>,
     payload: web::types::Json<CardOrderPayload>,
 ) -> Result<HttpResponse> {
     require_admin!(&req, &app_state);
@@ -1455,7 +1435,7 @@ struct HistoryPoint {
 /// spikes that dropping every third row loses.
 async fn get_metrics_history(
     req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
+    app_state: Arc<AppState>,
 ) -> Result<HttpResponse> {
     require_read_access!(&req, &app_state);
 
@@ -1603,7 +1583,7 @@ async fn get_metrics_history(
 
 async fn get_velocity(
     req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
+    app_state: Arc<AppState>,
 ) -> Result<HttpResponse> {
     require_read_access!(&req, &app_state);
 
@@ -1651,7 +1631,7 @@ async fn get_velocity(
 
 async fn get_velocity_history(
     req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
+    app_state: Arc<AppState>,
 ) -> Result<HttpResponse> {
     require_read_access!(&req, &app_state);
 

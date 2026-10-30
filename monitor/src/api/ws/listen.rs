@@ -36,10 +36,10 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use ntex::rt::spawn;
-use ntex::service::{Service, ServiceCtx, fn_factory_with_config};
+use ntex::service::{Ctx, Service};
 use ntex::util::ByteString;
 use ntex::web::ws::{self, CloseCode, Frame, Message};
-use ntex::web::{self, HttpRequest, HttpResponse};
+use ntex::web::{HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
 use tokio::net::{TcpListener, TcpStream};
 
@@ -238,9 +238,8 @@ fn error_frame(code: &str, message: &str) -> Message {
 
 pub async fn listen_ws(
     req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
-    let app_state = app_state.get_ref().clone();
+    app_state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     let remote_ip = audit::peer_ip(&req);
 
     let deny = async |reason: &'static str, status: HttpResponse| {
@@ -255,18 +254,18 @@ pub async fn listen_ws(
     // The same admission as `stream`, for the same reasons — see there.
     let secure = super::is_secure_transport(&req, app_state.tls_active);
     if !super::origin_allowed(&req, &app_state.config.get_server().cors_allowed_origins) {
-        return deny("origin", HttpResponse::Unauthorized().finish()).await;
+        return deny("origin", HttpResponse::Unauthorized().build()).await;
     }
 
     let Some(protocol) = ws::subprotocols(&req)
         .find(|value| value.starts_with(TICKET_PROTOCOL_PREFIX))
         .map(str::to_owned)
     else {
-        return deny("no ticket", HttpResponse::Unauthorized().finish()).await;
+        return deny("no ticket", HttpResponse::Unauthorized().build()).await;
     };
     let raw_ticket = &protocol[TICKET_PROTOCOL_PREFIX.len()..];
     let Ok(reservation) = app_state.tickets.reserve(raw_ticket, Purpose::Listen) else {
-        return deny("ticket", HttpResponse::Unauthorized().finish()).await;
+        return deny("ticket", HttpResponse::Unauthorized().build()).await;
     };
     let subject = reservation.subject().to_string();
     let tickets = app_state.tickets.clone();
@@ -276,7 +275,7 @@ pub async fn listen_ws(
         .filter(|caller| caller.check(Grant::Listen, &app_state, secure).is_ok());
     let Some(admitted) = admitted else {
         tickets.rollback(reservation);
-        return deny("not granted", HttpResponse::Forbidden().finish()).await;
+        return deny("not granted", HttpResponse::Forbidden().build()).await;
     };
 
     let ctx = Rc::new(ListenCtx {
@@ -287,19 +286,14 @@ pub async fn listen_ws(
         since: admitted.since,
     });
 
-    let upgraded = super::upgrade::start::<_, _, web::Error>(
-        req,
+    let upgraded = super::upgrade::start(
+        &req,
         Some(&protocol),
-        fn_factory_with_config(move |sink: WsSink| {
-            let ctx = ctx.clone();
-            async move {
-                Ok::<_, web::Error>(Control {
-                    ctx,
-                    sink,
-                    phase: Rc::new(RefCell::new(Phase::Idle)),
-                })
-            }
-        }),
+        move |sink: WsSink| Control {
+            ctx,
+            sink,
+            phase: Rc::new(RefCell::new(Phase::Idle)),
+        },
     )
     .await;
     if upgraded.is_ok() {
@@ -358,11 +352,11 @@ struct Control {
     phase: Rc<RefCell<Phase>>,
 }
 
-impl Service<Frame> for Control {
-    type Response = Option<Message>;
-    type Error = web::Error;
+impl Service<WsSink, Frame> for Control {
+    type Res = Option<Message>;
+    type Error = crate::api::WebError;
 
-    async fn call(&self, frame: Frame, _: ServiceCtx<'_, Self>) -> Result<Self::Response, Self::Error> {
+    async fn call(&self, frame: Frame, _: Ctx<'_, Self, WsSink>) -> Result<Self::Res, Self::Error> {
         match frame {
             Frame::Text(data) => Ok(self.on_control(&data).await),
             // Bytes travel over the stream sockets that claim connections,

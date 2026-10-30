@@ -11,7 +11,7 @@
 
 use std::sync::Arc;
 
-use ntex::web::{self, HttpRequest, HttpResponse};
+use ntex::web::{HttpRequest, HttpResponse};
 use serde_json::json;
 
 use super::exec::{ExecResponse, run};
@@ -29,8 +29,8 @@ use crate::core::permissions::Grant;
 /// list would otherwise read as "this machine has no sessions".
 pub async fn list(
     req: HttpRequest,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     if let Err(refused) = machine::gate(&req, &state, Grant::Shell, "tmux list").await {
         return Ok(refused);
     }

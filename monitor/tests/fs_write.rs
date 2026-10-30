@@ -8,9 +8,11 @@
 mod common;
 
 use ntex::http::Method;
+use ntex::service::map_state_factory;
 use ntex::web::test::{self as web_test, TestServer};
 use ntex::web::{self, App};
 use server_box_monitor::api::auth::generate_token;
+use server_box_monitor::api::server::Agent;
 use server_box_monitor::core::config::Config;
 
 const SECRET: &str = "test-secret-that-is-long-enough-32ch";
@@ -36,20 +38,17 @@ async fn server(root: &str) -> TestServer {
             .allows_write(),
         "the admin role the suite seeds must be able to write"
     );
-    web_test::server(move || {
+    web_test::server(async move |_| {
         let state = state.clone();
-        async move {
-            App::new().state(state).service(
-                web::scope("/api/v1")
-                    .route(
-                        "/fs/write",
-                        web::put().to(server_box_monitor::api::fs::write),
-                    )
-                    .route("/fs/stat", web::get().to(server_box_monitor::api::fs::stat)),
-            )
-        }
+        map_state_factory(Agent(state), App::<Agent>::new().service(
+            web::scope("/api/v1")
+                .route(
+                    "/fs/write",
+                    web::put().to(server_box_monitor::api::fs::write),
+                )
+                .route("/fs/stat", web::get().to(server_box_monitor::api::fs::stat)),
+        ))
     })
-    .await
 }
 
 /// One request with a bearer token, and its status and JSON body.
@@ -110,8 +109,16 @@ async fn version_of(srv: &TestServer, path: &str) -> String {
 
 /// Enough of percent-encoding for a path or a token in a query string: a temp
 /// path carries `/` (legal unencoded) and the token carries `-`.
+/// Every byte but RFC 3986's unreserved ones: a Windows path's `\` is not
+/// allowed in a request target, and ntex 4 refuses it.
 fn urlencode(value: &str) -> String {
-    value.replace(' ', "%20")
+    value
+        .bytes()
+        .map(|b| match b {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'.' | b'_' | b'~' => (b as char).to_string(),
+            _ => format!("%{b:02X}"),
+        })
+        .collect()
 }
 
 #[ntex::test]

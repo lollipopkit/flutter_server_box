@@ -132,8 +132,8 @@ struct FirewalldView {
 pub async fn read(
     req: HttpRequest,
     body: web::types::Json<ReadRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     if let Err(refused) = machine::gate(&req, &state, Grant::Shell, "firewall read").await {
         return Ok(refused);
     }
@@ -261,8 +261,8 @@ fn plan_id(plan: &Plan) -> String {
 pub async fn plan(
     req: HttpRequest,
     body: web::types::Json<PlanRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     let request = body.into_inner();
     let what = format!("firewall plan {}", request.change.verb());
     if let Err(refused) = machine::gate(&req, &state, Grant::Shell, &what).await {
@@ -296,8 +296,8 @@ struct ActResponse {
 pub async fn act(
     req: HttpRequest,
     body: web::types::Json<ActRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     let request = body.into_inner();
     let what = format!("firewall {}", request.change.verb());
     let gated = match machine::gate(&req, &state, Grant::Shell, &what).await {

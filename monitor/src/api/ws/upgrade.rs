@@ -4,33 +4,42 @@
 //! limit on an incoming frame is 64 KiB, and takes no codec or size from the
 //! caller: a bigger frame is a protocol error, and the connection is dropped.
 //! Clients send bigger ones as a matter of course — a relayed SFTP write or
-//! HTTP body, a paste into the terminal — so [`start`] is ntex 3.12.3's
-//! `start` and `start_with` with that one line changed, and [`WsSink`] its
-//! sink (whose constructor ntex keeps to itself).
+//! HTTP body, a paste into the terminal — so [`start`] is ntex 4.4.2's
+//! `start_with` with that one line changed, and [`WsSink`] its sink (whose
+//! constructor ntex keeps to itself).
 //!
-//! TODO: remove once ntex lets the caller set the limit (its unreleased
-//! rewrite of `web::ws` still builds `Codec::new()`), and go back to
+//! It differs in one more way: the connection runs on a task of its own and
+//! [`start`] returns once the handshake is sent, so a caller can commit what
+//! the upgrade consumed (a ticket) without waiting for the socket to close.
+//!
+//! TODO: remove once ntex lets the caller set the limit, and go back to
 //! `ntex::web::ws::start`.
 
-use std::{fmt, future::Future, rc::Rc};
+use std::{fmt, rc::Rc};
 
-use ntex::http::{body::BodySize, h1, header};
-use ntex::io::{DispatchItem, IoConfig, IoRef, OnDisconnect, Reason};
-use ntex::service::cfg::SharedCfg;
-use ntex::service::{
-    IntoServiceFactory, Service, ServiceCtx, ServiceFactory, chain_factory, fn_factory_with_config,
-};
-use ntex::time::Seconds;
-use ntex::util::Ready;
-use ntex::web::ws::{Frame, Message};
+use ntex::codec::{Decoder, Encoder};
+use ntex::http::{StatusCode, body::BodySize, h1, header};
+use ntex::io::{DispatchItem, IoConfig, IoRef, Reason, Waiter};
+use ntex::service::{BindCtx, Ctx, Pipeline, ReadyNotifier, Service};
+use ntex::time::{Millis, Seconds, sleep};
+use ntex::util::{BytePages, BytesMut, select};
+use ntex::web::ws::{Frame, Message, subprotocols};
 use ntex::web::{HttpRequest, HttpResponse};
 use ntex::ws::{self, error::HandshakeError, error::WsError, handshake};
-use ntex::{http::StatusCode, rt};
+use ntex::{SharedCfg, rt};
+
+use tokio::sync::mpsc;
+
+use crate::api::WebError;
 
 /// The largest frame a client may send: well past what any client of the
 /// agent sends at once (the app's relay writes 64 KiB, a terminal paste a
 /// few), and a bound on what one frame can make the agent hold in memory.
 pub const MAX_FRAME: usize = 4 << 20;
+
+/// How long a close we sent waits for the peer's before the connection is
+/// closed: ntex's default.
+const CLOSE_TIMEOUT: Millis = Millis(5_000);
 
 thread_local! {
     // As ntex's own: no keep-alive timer on an upgraded connection.
@@ -39,50 +48,55 @@ thread_local! {
         .into();
 }
 
-/// `ntex::web::ws::start`, with frames up to [`MAX_FRAME`].
-pub async fn start<T, F, Err>(
-    req: HttpRequest,
+/// `ntex::web::ws::start`, with frames up to [`MAX_FRAME`]. [`service`]
+/// makes the connection's frame handler from its sink.
+pub async fn start<S>(
+    req: &HttpRequest,
     subprotocol: Option<&str>,
-    factory: F,
-) -> Result<HttpResponse, Err>
+    service: impl FnOnce(WsSink) -> S,
+) -> Result<HttpResponse, WebError>
 where
-    T: ServiceFactory<Frame, WsSink, Response = Option<Message>> + 'static,
-    T::Error: fmt::Debug,
-    F: IntoServiceFactory<T, Frame, WsSink>,
-    Err: From<T::InitError> + From<HandshakeError>,
+    S: Service<WsSink, Frame, Res = Option<Message>> + 'static,
+    S::Error: fmt::Debug + 'static,
 {
-    let inner = Rc::new(chain_factory(factory).map_err(WsError::Service));
-    let factory = fn_factory_with_config(async move |sink: WsSink| {
-        let srv = inner.create(sink.clone()).await?;
-        Ok::<_, T::InitError>(DispatchService { srv, sink })
-    });
-
-    let mut res = handshake(req.head())?;
+    let mut res = handshake(req.head()).map_err(WebError::from_err)?;
     if let Some(protocol) = subprotocol {
+        // As ntex: only a token the client offered is echoed.
+        if !is_token(protocol) || !subprotocols(req).any(|offered| offered == protocol) {
+            return Err(WebError::from_err(HandshakeError::BadWebsocketProtocol));
+        }
         res.set_header(header::SEC_WEBSOCKET_PROTOCOL, protocol);
     }
-    let res = res.finish().into_parts().0;
+    let res = res.build().into_parts().0;
 
-    let (io, h1_codec) = req.head().take_io().ok_or(HandshakeError::NoWebsocketUpgrade)?;
-    io.encode(h1::Message::Item((res, BodySize::Empty)), &h1_codec)
-        .map_err(|_| HandshakeError::NoWebsocketUpgrade)?;
+    let not_upgraded = || WebError::from_err(HandshakeError::NoWebsocketUpgrade);
+    let (io, h1_codec) = req.head().take_io().ok_or_else(not_upgraded)?;
+    io.encode(h1::Message::Item((res, BodySize::Empty)), &h1_codec).map_err(|_| not_upgraded())?;
 
-    let codec = ws::Codec::new().max_size(MAX_FRAME);
-    let sink = WsSink::new(io.get_ref(), codec.clone());
-    let srv = factory.into_factory().create(sink.clone()).await?;
-    io.set_config(CFG.with(Clone::clone));
+    let sink = WsSink::new(io.get_ref(), ws::Codec::new().max_size(MAX_FRAME));
+    // SAFETY: the HTTP dispatcher has handed `io` over to this upgrade, and
+    // no reference from `io.cfg()` is held.
+    unsafe {
+        io.set_config(CFG.with(Clone::clone));
+    }
     // The h1 dispatcher may have started a headers-read timer on this IO.
     io.stop_timer();
 
-    rt::spawn(async move {
-        let _ = ntex::io::Dispatcher::new(io, codec, srv).await;
+    let srv = Pipeline::new(sink.clone(), DispatchService { srv: service(sink.clone()) });
+    rt::spawn_detached(async move {
+        let _ = ntex::io::Dispatcher::new(io, sink, srv).await;
     });
     Ok(HttpResponse::new(StatusCode::OK))
 }
 
+/// An HTTP token (RFC 9110 5.6.2), what a subprotocol must be.
+fn is_token(value: &str) -> bool {
+    !value.is_empty() && value.bytes().all(|b| b.is_ascii_alphanumeric() || b"!#$%&'*+-.^_`|~".contains(&b))
+}
+
 /// Sends messages to the peer: `ntex::ws::WsSink`, which only ntex can make.
-/// Its codec encodes; decoding is the dispatcher's codec, which is where the
-/// frame limit is.
+/// It is also the connection's codec, so a close sent through any clone is
+/// seen by all of them and by the dispatcher.
 #[derive(Clone, Debug)]
 pub struct WsSink(Rc<(IoRef, ws::Codec)>);
 
@@ -95,22 +109,101 @@ impl WsSink {
         &self.0.0
     }
 
-    /// Encodes and sends [`item`]; a close the codec has already sent once
-    /// closes the connection.
-    pub fn send(&self, item: Message) -> impl Future<Output = Result<(), ws::error::ProtocolError>> {
-        let close = matches!(item, Message::Close(_)) && self.0.1.is_closed();
-        if let Err(e) = self.0.0.encode(item, &self.0.1) {
-            Ready::Err(e)
-        } else {
-            if close {
-                self.0.0.close();
+    fn is_closed(&self) -> bool {
+        self.0.1.is_closed()
+    }
+
+    /// Closes the connection if the peer has not answered a close in time.
+    fn start_close_timeout(&self) {
+        let io = self.0.0.clone();
+        rt::spawn_detached(async move {
+            select(sleep(CLOSE_TIMEOUT), io.on_disconnect()).await;
+            if io.is_active() {
+                io.close();
             }
-            Ready::Ok(())
+        });
+    }
+
+    /// Encodes and sends [`item`]. A data message waits while the write
+    /// buffer is full; a close starts the closing handshake, and a close
+    /// after one was sent ends the connection, as in ntex 3 (the codec
+    /// refuses anything after a close).
+    pub async fn send(&self, item: Message) -> Result<(), ws::error::ProtocolError> {
+        let close = matches!(item, Message::Close(_));
+        if close && self.is_closed() {
+            self.0.0.close();
+            return Ok(());
+        }
+        if matches!(item, Message::Text(_) | Message::Binary(_) | Message::Continuation(_)) {
+            // A closed connection drops the message in `encode`.
+            let _ = self.0.0.write_ready().await;
+        }
+        self.0.0.encode(item, &self.0.1)?;
+        if close {
+            self.start_close_timeout();
+        }
+        Ok(())
+    }
+
+    pub fn on_disconnect(&self) -> Waiter<'static> {
+        self.0.0.on_disconnect()
+    }
+}
+
+impl Encoder for WsSink {
+    type Item = Message;
+    type Error = ws::error::ProtocolError;
+
+    fn encode(&self, item: Message, dst: &mut BytePages) -> Result<(), Self::Error> {
+        self.0.1.encode(item, dst)
+    }
+}
+
+impl Decoder for WsSink {
+    type Item = Frame;
+    type Error = ws::error::ProtocolError;
+
+    fn decode(&self, src: &mut BytesMut) -> Result<Option<Frame>, Self::Error> {
+        self.0.1.decode(src)
+    }
+
+    fn decode_eof(&self, src: &mut BytesMut) -> Result<Option<Frame>, Self::Error> {
+        self.0.1.decode_eof(src)
+    }
+}
+
+/// A frame service's readiness: room in the queue towards its target.
+///
+/// The dispatcher calls the service for every frame without waiting for the
+/// last call to finish, and stops reading the socket only while the service
+/// is not ready. Always ready, a target slower than the client — PVE writing
+/// an uploaded ISO to disk — left a call per frame waiting on the full queue,
+/// each holding its frame, and nothing held the client back. ntex keeps a
+/// ready answer until told otherwise, so a send that fills the queue says so.
+#[derive(Default)]
+pub struct QueueGate(ReadyNotifier);
+
+impl QueueGate {
+    /// For the service's `bind`.
+    pub fn bind(&self, ctx: BindCtx<'_>) {
+        ctx.subscribe(&self.0);
+    }
+
+    /// For the service's `ready`: waits for room in [sender]'s queue. A
+    /// closed queue is the call's to report.
+    pub async fn ready<T>(&self, sender: Option<mpsc::Sender<T>>) {
+        if let Some(sender) = sender {
+            drop(sender.reserve().await);
         }
     }
 
-    pub fn on_disconnect(&self) -> OnDisconnect {
-        self.0.0.on_disconnect()
+    /// Sends [item]; a queue left full has readiness checked again.
+    pub async fn send<T>(&self, sender: &mpsc::Sender<T>, item: T) -> Result<(), mpsc::error::SendError<T>> {
+        sender.send(item).await?;
+        if sender.capacity() == 0 {
+            self.0.notify();
+        }
+        Ok(())
     }
 }
 
@@ -118,40 +211,65 @@ impl WsSink {
 /// and the dispatcher's stop reasons as errors.
 struct DispatchService<S> {
     srv: S,
-    sink: WsSink,
 }
 
-impl<S, E> Service<DispatchItem<ws::Codec>> for DispatchService<S>
+impl<S, E> Service<WsSink, DispatchItem<WsSink>> for DispatchService<S>
 where
-    S: Service<Frame, Response = Option<Message>, Error = WsError<E>>,
+    S: Service<WsSink, Frame, Res = Option<Message>, Error = E>,
     E: fmt::Debug,
 {
-    type Response = Option<Message>;
+    type Res = Option<Message>;
     type Error = WsError<E>;
 
-    ntex::forward_ready!(srv);
-    ntex::forward_poll!(srv);
-    ntex::forward_shutdown!(srv);
+    ntex::forward_bind!(WsSink, srv);
+    ntex::forward_ready!(WsSink, srv, WsError::Service);
+    ntex::forward_shutdown!(WsSink, srv);
 
     async fn call(
         &self,
-        req: DispatchItem<ws::Codec>,
-        ctx: ServiceCtx<'_, Self>,
-    ) -> Result<Self::Response, Self::Error> {
-        match req {
+        req: DispatchItem<WsSink>,
+        ctx: Ctx<'_, Self, WsSink>,
+    ) -> Result<Self::Res, Self::Error> {
+        let peer_closed = matches!(req, DispatchItem::Item(Frame::Close(_)));
+        let result = match req {
             DispatchItem::Item(item) => {
-                let close = matches!(item, Frame::Close(_)).then(|| self.sink.clone());
-                let result = ctx.call(&self.srv, item).await;
+                let close = matches!(item, Frame::Close(_)).then(|| ctx.st().clone());
+                let result = ctx.call(&self.srv, item).await.map_err(WsError::Service);
                 if let Some(s) = close {
-                    rt::spawn(async move { s.io().close() });
+                    rt::spawn_detached(async move { s.io().close() });
                 }
                 result
             }
-            DispatchItem::Control(_) => Ok(None),
-            DispatchItem::Stop(Reason::KeepAliveTimeout) => Err(WsError::KeepAlive),
+            // A clean disconnect is not an error.
+            DispatchItem::Control(_) | DispatchItem::Stop(Reason::Io(None)) => Ok(None),
+            DispatchItem::Stop(Reason::Service) => Ok(Some(Message::Close(Some(ws::CloseCode::Away.into())))),
+            DispatchItem::Stop(Reason::KeepAlive) => Err(WsError::KeepAlive),
             DispatchItem::Stop(Reason::ReadTimeout) => Err(WsError::ReadTimeout),
-            DispatchItem::Stop(Reason::Decoder(e) | Reason::Encoder(e)) => Err(WsError::Protocol(e)),
+            DispatchItem::Stop(Reason::WriteTimeout) => Err(WsError::WriteTimeout),
+            DispatchItem::Stop(Reason::Decoder(e)) => {
+                let sink = ctx.st();
+                if !sink.is_closed() {
+                    let _ = sink.send(Message::Close(Some(ws::CloseCode::Protocol.into()))).await;
+                }
+                Err(WsError::Protocol(e))
+            }
+            DispatchItem::Stop(Reason::Encoder(e)) => Err(WsError::Protocol(e)),
             DispatchItem::Stop(Reason::Io(e)) => Err(WsError::Disconnected(e)),
+        };
+        match result {
+            // The codec refuses a second close: the one already sent stands,
+            // and the connection ends.
+            Ok(Some(Message::Close(_))) if ctx.st().is_closed() => {
+                ctx.st().io().close();
+                Ok(None)
+            }
+            // A close the peer started is closed above; one we start waits
+            // for the peer's answer.
+            Ok(Some(Message::Close(_))) if !peer_closed => {
+                ctx.st().start_close_timeout();
+                result
+            }
+            _ => result,
         }
     }
 }

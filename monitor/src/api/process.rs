@@ -155,8 +155,8 @@ enum ProcessReason {
 pub async fn list(
     req: HttpRequest,
     query: web::types::Query<ProcessQuery>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     if let Err(refused) = machine::gate(&req, &state, Grant::Shell, "process list").await {
         return Ok(refused);
     }
@@ -348,8 +348,8 @@ struct KillResponse {
 pub async fn kill(
     req: HttpRequest,
     body: web::types::Json<KillRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     let request = body.into_inner();
     let what = format!("process stop {} {}", request.signal.name(), request.pid);
     let gated = match machine::gate(&req, &state, Grant::Shell, &what).await {
@@ -376,7 +376,7 @@ pub async fn kill(
         record(Action::Denied, Outcome::Denied, Some("no way to stop this process safely"))
             .record(&state.db)
             .await;
-        return Ok(HttpResponse::BadRequest().finish());
+        return Ok(HttpResponse::BadRequest().build());
     };
 
     // Recorded before it runs, as power is: what was asked of the machine is

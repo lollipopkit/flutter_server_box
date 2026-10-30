@@ -19,11 +19,12 @@ mod common;
 use std::sync::{Arc, Once};
 
 use chrono::{DateTime, Duration, Utc};
+use ntex::service::map_state_factory;
 use ntex::web::App;
 use ntex::web::test::{self as web_test, TestServer};
 use rustls::crypto::ring;
 use server_box_monitor::api::auth::generate_token;
-use server_box_monitor::api::server::{AppState, configure_api};
+use server_box_monitor::api::server::{Agent, AppState, configure_api};
 use server_box_monitor::core::config::Config;
 
 const SECRET: &str = "test-secret-that-is-long-enough-32ch";
@@ -127,14 +128,10 @@ async fn insert_sample(db: &sqlx::SqlitePool, at: DateTime<Utc>, i: i64) {
 }
 
 async fn test_server(state: Arc<AppState>) -> TestServer {
-    web_test::server(move || {
+    web_test::server(async move |_| {
         let state = state.clone();
-        async move {
-            let limit = state.remote_access.exec.max_request_bytes;
-            App::new().state(state).configure(configure_api(limit))
-        }
+        map_state_factory(Agent(state), App::<Agent>::new().configure(configure_api))
     })
-    .await
 }
 
 async fn history(srv: &TestServer, query: &str) -> Vec<serde_json::Value> {

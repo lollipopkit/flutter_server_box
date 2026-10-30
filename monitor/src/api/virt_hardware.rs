@@ -73,7 +73,7 @@ pub struct CloudInitBody {
     password: Option<String>,
 }
 
-fn answer(value: serde_json::Value) -> Result<HttpResponse, web::Error> {
+fn answer(value: serde_json::Value) -> Result<HttpResponse, crate::api::WebError> {
     Ok(HttpResponse::Ok().json(&value))
 }
 
@@ -89,8 +89,8 @@ async fn read_guest(req: &HttpRequest, state: &AppState, what: &str, guest: &str
 pub async fn hardware(
     req: HttpRequest,
     body: web::types::Json<GuestBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     let request = body.into_inner();
     let pw = password(&request.password);
     let (backend, guest) = match read_guest(&req, &state, "virt hardware", &request.guest, pw).await {
@@ -113,8 +113,8 @@ pub async fn hardware(
 pub async fn change(
     req: HttpRequest,
     body: web::types::Json<ChangeBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     let request = body.into_inner();
     let what = format!("virt hardware {} {}", request.guest, request.change.describe());
     let audit = match Audit::start(&req, &state, what).await {
@@ -143,8 +143,8 @@ pub async fn change(
 pub async fn revert(
     req: HttpRequest,
     body: web::types::Json<RevertBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     let request = body.into_inner();
     let audit = match Audit::start(&req, &state, format!("virt hardware {} revert pending", request.guest)).await {
         Ok(a) => a,
@@ -174,8 +174,8 @@ pub async fn revert(
 pub async fn cloud_init(
     req: HttpRequest,
     body: web::types::Json<GuestBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     let request = body.into_inner();
     let pw = password(&request.password);
     let (backend, guest) = match read_guest(&req, &state, "virt cloud-init", &request.guest, pw).await {
@@ -198,8 +198,8 @@ pub async fn cloud_init(
 pub async fn set_cloud_init(
     req: HttpRequest,
     body: web::types::Json<CloudInitBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     let request = body.into_inner();
     // The password, if one was typed, goes to the host only.
     let audit = match Audit::start(&req, &state, format!("virt cloud-init {}", request.guest)).await {
@@ -225,8 +225,8 @@ pub async fn set_cloud_init(
 pub async fn host_devices(
     req: HttpRequest,
     body: web::types::Json<GuestBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     let request = body.into_inner();
     let pw = password(&request.password);
     let (backend, guest) = match read_guest(&req, &state, "virt host devices", &request.guest, pw).await {
