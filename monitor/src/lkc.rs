@@ -10,8 +10,8 @@
 //!
 //! The access token is refreshed only once due (`sbm_lkc::Tokens::due`), and
 //! [`watch`] does so at start and often enough after that the refresh token
-//! never lapses. The IdP's `invalid_grant`, or homebase refusing a token not
-//! yet due, signs out; anything else keeps the session. A password change
+//! never lapses. The IdP's `invalid_grant` signs out; anything else keeps the
+//! session. A password change
 //! signs out too ([`end_account`]): whoever held the old one may have
 //! approved the sign-in with their own account.
 
@@ -22,7 +22,6 @@ use std::time::{Duration, Instant};
 use sbm_lkc::{DeviceAuthorization, DevicePoll, Failure, Tokens, User};
 use serde::Serialize;
 use sqlx::SqlitePool;
-use tokio::task::AbortHandle;
 
 use crate::api::server::AppState;
 use crate::api::ws::audit::{Action, Event, Kind, Outcome};
@@ -32,6 +31,8 @@ use crate::utils::lock::LockExt;
 /// How often [`watch`] renews the session and reads the account again: well
 /// inside the refresh token's lifetime.
 const WATCH_EVERY: Duration = Duration::from_secs(6 * 3600);
+/// How long after start [`watch`] first looks.
+const FIRST_WATCH: Duration = Duration::from_secs(10 * 60);
 
 /// A device sign-in as the panel shows it.
 #[derive(Debug, Clone, Serialize)]
@@ -57,7 +58,9 @@ pub struct Session {
 struct SignIn {
     view: SignInView,
     device_code: String,
-    task: Option<AbortHandle>,
+    /// The IdP granted it and its tokens are being stored: a cancel no
+    /// longer ends it (a password change signs out after, `end_account`).
+    finishing: bool,
 }
 
 #[derive(Default)]
@@ -95,44 +98,66 @@ impl Lkc {
         self.epoch.load(Ordering::SeqCst)
     }
 
-    /// Puts [view] in place as the sign-in waiting, polled by [task], ending
-    /// the one before — unless a password change came since [epoch], which
-    /// ends [task] instead.
-    pub fn begin(&self, view: SignInView, device_code: String, task: AbortHandle, epoch: u64) -> bool {
+    /// Puts [view] in place as the sign-in waiting, ending the one before —
+    /// unless a password change came since [epoch].
+    pub fn begin(&self, view: SignInView, device_code: String, epoch: u64) -> bool {
         let mut sign_in = self.sign_in.locked();
-        if self.epoch() != epoch {
-            task.abort();
+        if self.epoch() != epoch || sign_in.as_ref().is_some_and(|s| s.finishing) {
             return false;
         }
-        let previous = sign_in.replace(SignIn { view, device_code, task: Some(task) });
-        drop(sign_in);
-        if let Some(task) = previous.and_then(|s| s.task) {
-            task.abort();
-        }
+        *sign_in = Some(SignIn { view, device_code, finishing: false });
         true
+    }
+
+    /// Ends the sign-in waiting, if any; its poll stops at its next turn. One
+    /// [finishing](SignIn::finishing) is let finish.
+    pub fn cancel(&self) {
+        let mut sign_in = self.sign_in.locked();
+        if !sign_in.as_ref().is_some_and(|s| s.finishing) {
+            *sign_in = None;
+        }
     }
 
     /// For a password change: ends the sign-in waiting, and one being asked
     /// for.
     fn end_epoch(&self) {
-        let sign_in = self.sign_in.locked().take();
+        let mut sign_in = self.sign_in.locked();
         self.epoch.fetch_add(1, Ordering::SeqCst);
-        if let Some(task) = sign_in.and_then(|s| s.task) {
-            task.abort();
+        if !sign_in.as_ref().is_some_and(|s| s.finishing) {
+            *sign_in = None;
         }
     }
 
-    /// Once the IdP granted [device_code]'s tokens: nothing aborts its task
-    /// any more, so they are stored or revoked. False when it is no longer
-    /// the sign-in waiting.
+    /// Whether [device_code] is still the sign-in waiting.
+    fn waiting(&self, device_code: &str) -> bool {
+        self.sign_in.locked().as_ref().is_some_and(|s| s.device_code == device_code && s.view.failed.is_none())
+    }
+
+    /// Once the IdP granted [device_code]'s tokens: from here they are stored
+    /// or revoked, whatever is cancelled. False when it is no longer the
+    /// sign-in waiting.
     fn claim(&self, device_code: &str) -> bool {
         let mut sign_in = self.sign_in.locked();
         match sign_in.as_mut().filter(|s| s.device_code == device_code && s.view.failed.is_none()) {
             Some(s) => {
-                s.task = None;
+                s.finishing = true;
                 true
             }
             None => false,
+        }
+    }
+
+    /// Ends sign-in [device_code] once its outcome is stored: gone when it
+    /// signed in, kept with [failed] for the panel to say why otherwise.
+    fn settle(&self, device_code: &str, failed: Option<&'static str>) {
+        let mut sign_in = self.sign_in.locked();
+        let Some(s) = sign_in.as_mut().filter(|s| s.device_code == device_code) else { return };
+        match failed {
+            None => *sign_in = None,
+            Some(code) => {
+                s.view.failed = Some(code);
+                s.finishing = false;
+            }
         }
     }
 
@@ -149,30 +174,22 @@ impl Lkc {
     fn remember(&self, tokens: &Tokens) {
         *self.deadline.locked() = tokens.deadline.map(|d| (tokens.access.clone(), d));
     }
+}
 
-    /// Ends the sign-in waiting, if any.
-    pub fn cancel(&self) {
-        if let Some(task) = self.sign_in.locked().take().and_then(|s| s.task) {
-            task.abort();
-        }
-    }
-
-    /// The sign-in [device_code], taken out, while it is still the one
-    /// waiting.
-    fn take_if(&self, device_code: &str) -> Option<SignIn> {
-        let mut sign_in = self.sign_in.locked();
-        if sign_in.as_ref().is_some_and(|s| s.device_code == device_code && s.view.failed.is_none()) {
-            sign_in.take()
-        } else {
-            None
-        }
-    }
+/// Why a sign-in did not start.
+#[derive(Debug)]
+pub enum StartError {
+    /// The password changed while the IdP was asked: whoever asked held the
+    /// old one.
+    PasswordChanged,
+    Lkc(sbm_lkc::Error),
 }
 
 /// Starts a device sign-in, ending one already waiting.
-pub async fn start(state: &Arc<AppState>) -> Result<SignInView, sbm_lkc::Error> {
+pub async fn start(state: &Arc<AppState>) -> Result<SignInView, StartError> {
     let epoch = state.lkc.epoch();
-    let device = state.lkc.client()?.start_device().await?;
+    let client = state.lkc.client().map_err(StartError::Lkc)?;
+    let device = client.start_device().await.map_err(StartError::Lkc)?;
     let view = SignInView {
         user_code: device.user_code.clone(),
         verification_uri: device.verification_uri.clone(),
@@ -180,72 +197,81 @@ pub async fn start(state: &Arc<AppState>) -> Result<SignInView, sbm_lkc::Error> 
         expires_at_ms: device.expires_at_ms,
         failed: None,
     };
-    let device_code = device.device_code.clone();
-    let task = tokio::spawn(poll(state.clone(), device)).abort_handle();
-    if !state.lkc.begin(view.clone(), device_code, task, epoch) {
-        return Err(sbm_lkc::Error::new(Failure::Refused, "the password changed meanwhile"));
+    if !state.lkc.begin(view.clone(), device.device_code.clone(), epoch) {
+        return Err(StartError::PasswordChanged);
     }
+    tokio::spawn(poll(state.clone(), device));
     Ok(view)
 }
 
+/// Polls [device] while it is the sign-in waiting. Never aborted: a token
+/// answer on its way when the sign-in is cancelled is revoked, not dropped.
 async fn poll(state: Arc<AppState>, mut device: DeviceAuthorization) {
+    let code = device.device_code.clone();
     let client = match state.lkc.client() {
         Ok(client) => client,
-        Err(e) => return finish(&state, &device.device_code, Err(e)).await,
+        Err(e) => return finish(&state, &code, Err(e)).await,
     };
     let tokens = loop {
         tokio::time::sleep(Duration::from_secs(device.interval_secs)).await;
+        if !state.lkc.waiting(&code) {
+            return;
+        }
         match client.poll_device(&device).await {
             Ok(DevicePoll::Pending) => {}
             Ok(DevicePoll::SlowDown(secs)) => device.interval_secs = secs,
             Ok(DevicePoll::Done(tokens)) => {
-                if !state.lkc.claim(&device.device_code) {
+                if !state.lkc.claim(&code) {
                     return revoke(&state, tokens.refresh);
                 }
                 break tokens;
             }
             Err(e) if e.transient() => tracing::debug!("LK Cloud sign-in: {e}"),
-            Err(e) => return finish(&state, &device.device_code, Err(e)).await,
+            Err(e) => return finish(&state, &code, Err(e)).await,
         }
     };
-    // As fl_lib's `signIn`: no account read, no sign-in. The grant is spent,
-    // so the tokens are handed back rather than left to expire.
-    let outcome = match client.user(&tokens.access).await {
+    // As fl_lib's `signIn`: no account read, no sign-in. Homebase is asked a
+    // few times over while it is only unreachable; the grant is spent, so
+    // the tokens are handed back rather than left live if it never answers.
+    let mut user = client.user(&tokens.access).await;
+    for wait in [2, 5, 10, 20] {
+        match &user {
+            Err(e) if e.transient() => {
+                tokio::time::sleep(Duration::from_secs(wait)).await;
+                user = client.user(&tokens.access).await;
+            }
+            _ => break,
+        }
+    }
+    let outcome = match user {
         Ok(user) => Ok(Session { user, tokens }),
         Err(e) => {
-            if let Some(refresh) = tokens.refresh {
-                let _ = client.revoke(&refresh).await;
-            }
+            revoke(&state, tokens.refresh);
             Err(e)
         }
     };
-    finish(&state, &device.device_code, outcome).await;
+    finish(&state, &code, outcome).await;
 }
 
-/// Ends sign-in [device_code], if it is still the one waiting.
+/// Ends sign-in [device_code] with [outcome].
 async fn finish(state: &AppState, device_code: &str, outcome: Result<Session, sbm_lkc::Error>) {
     let event = |outcome: Outcome, detail: String| Event::new(Kind::Admin, Action::Write, outcome).detail(detail);
     match outcome {
         Ok(session) => {
-            let _refreshing = state.lkc.refreshing.lock().await;
-            // Taken out first, its abort handle with it: one cancelled, or
-            // ended by a password change, before this point is not stored,
-            // and nothing aborts the store below halfway.
-            let Some(mut sign_in) = state.lkc.take_if(device_code) else {
-                drop(_refreshing);
-                return revoke(state, session.tokens.refresh);
-            };
+            let refreshing = state.lkc.refreshing.lock().await;
             let previous = load(&state.db, &state.sealer).await.ok().flatten();
-            if let Err(e) = store(&state.db, &state.sealer, &session).await {
+            let stored = store(&state.db, &state.sealer, &session).await;
+            if stored.is_ok() {
+                state.lkc.remember(&session.tokens);
+            }
+            // Settled once stored, the lock still held: a read in between
+            // sees the sign-in waiting or the account, never neither.
+            state.lkc.settle(device_code, stored.as_ref().err().map(|_| "invalid"));
+            drop(refreshing);
+            if let Err(e) = stored {
                 tracing::error!("LK Cloud sign-in: storing it: {e}");
-                drop(_refreshing);
-                sign_in.view.failed = Some("invalid");
-                sign_in.task = None;
-                state.lkc.sign_in.locked().get_or_insert(sign_in);
                 return revoke(state, session.tokens.refresh);
             }
-            state.lkc.remember(&session.tokens);
-            drop(_refreshing);
             // The account it replaces is let go of at the IdP too.
             if let Some(previous) = previous.filter(|p| p.tokens.refresh != session.tokens.refresh) {
                 revoke(state, previous.tokens.refresh);
@@ -260,16 +286,9 @@ async fn finish(state: &AppState, device_code: &str, outcome: Result<Session, sb
                 Failure::Rejected | Failure::Refused => "rejected",
                 _ => "invalid",
             };
-            set_failed(state, device_code, code);
+            state.lkc.settle(device_code, Some(code));
             event(Outcome::Denied, format!("LK Cloud sign-in: {code}")).record(&state.db).await;
         }
-    }
-}
-
-fn set_failed(state: &AppState, device_code: &str, code: &'static str) {
-    if let Some(s) = state.lkc.sign_in.locked().as_mut().filter(|s| s.device_code == device_code) {
-        s.view.failed = Some(code);
-        s.task = None;
     }
 }
 
@@ -304,13 +323,23 @@ pub async fn session(state: &AppState) -> Option<Session> {
             if let Err(e) = store(&state.db, &state.sealer, &fresh).await {
                 tracing::error!("LK Cloud: storing a refresh, signing out: {e}");
                 let _ = forget(&state.db).await;
+                // Rotated, so the new one is live with nothing holding it.
+                if fresh.tokens.refresh != session_refresh(&state.db).await {
+                    revoke(state, fresh.tokens.refresh);
+                }
                 return None;
             }
             state.lkc.remember(&fresh.tokens);
             Some(fresh)
         }
-        // Never reached the IdP, or refused without spending it.
-        Err(e) if matches!(e.failure, Failure::Unreachable | Failure::Refused | Failure::TooEarly) => {
+        // Never reached the IdP, or refused without spending it: only
+        // `invalid_grant` takes it back.
+        Err(e)
+            if matches!(
+                e.failure,
+                Failure::Unreachable | Failure::Refused | Failure::Denied | Failure::Expired | Failure::TooEarly
+            ) =>
+        {
             tracing::debug!("LK Cloud: refresh: {e}");
             // Left set, the next read signs out instead: safe either way.
             let _ = clear_refreshing(&state.db).await;
@@ -325,12 +354,28 @@ pub async fn session(state: &AppState) -> Option<Session> {
     }
 }
 
+/// The refresh token a row still holds, after [forget] may have failed.
+async fn session_refresh(db: &SqlitePool) -> Option<String> {
+    sqlx::query_scalar::<_, Option<String>>("SELECT refresh_token FROM lkc_session WHERE id = 1")
+        .fetch_optional(db)
+        .await
+        .ok()
+        .flatten()
+        .flatten()
+}
+
 /// Reads the account from homebase again (`LkcClient.refresh`): a name or
-/// avatar changed since, or the token no longer taken, which signs out.
+/// avatar changed since.
+///
+/// Homebase refusing the token does not sign out here, as fl_lib's does: the
+/// agent's clock is not to be trusted with an access token's expiry (a board
+/// without an RTC, a suspend the monotonic clock did not count), and a token
+/// it only thinks is live reads as refused. The next refresh tells: the IdP's
+/// `invalid_grant` signs out.
 async fn reread(state: &AppState) {
     let Some(session) = session(state).await else { return };
     // The refresh did not go through: homebase would refuse the expired
-    // token, which is no word on the session.
+    // token.
     if session.tokens.due(sbm_lkc::now_ms()) {
         return;
     }
@@ -348,26 +393,22 @@ async fn reread(state: &AppState) {
             }
         }
         Ok(_) => {}
-        Err(e) if e.failure == Failure::Rejected => {
-            tracing::warn!("LK Cloud: signed out, homebase refused the token: {e}");
-            if forget(&state.db).await.is_ok() {
-                revoke(state, session.tokens.refresh);
-            }
-        }
         Err(e) => tracing::debug!("LK Cloud: reading the account: {e}"),
     }
 }
 
 /// Signs out: the row is gone at once, the IdP is asked to forget the refresh
-/// token after.
+/// token after. True when there was a session, readable or not.
 pub async fn sign_out(state: &AppState) -> sqlx::Result<bool> {
     state.lkc.cancel();
     let _refreshing = state.lkc.refreshing.lock().await;
-    let Some(session) = load_or_forget(state).await else {
-        return Ok(false);
+    let refresh = match load(&state.db, &state.sealer).await {
+        Ok(None) => return Ok(false),
+        Ok(Some(session)) => session.tokens.refresh,
+        Err(broken) => broken.refresh,
     };
     forget(&state.db).await?;
-    revoke(state, session.tokens.refresh);
+    revoke(state, refresh);
     Ok(true)
 }
 
@@ -409,8 +450,11 @@ fn revoke(state: &AppState, refresh: Option<String>) {
 
 /// Keeps the refresh token from lapsing and the account as homebase has it.
 pub async fn watch(state: Arc<AppState>) {
-    // At start too: an agent restarted more often than [`WATCH_EVERY`]
-    // would otherwise never get there.
+    // Soon after start too, an agent restarted more often than
+    // [`WATCH_EVERY`] would otherwise never get there; not at once, as the
+    // wall clock a stored expiry is read by may not be set yet (NTP on a
+    // board without an RTC), and one running fast would refresh early.
+    tokio::time::sleep(FIRST_WATCH).await;
     loop {
         reread(&state).await;
         tokio::time::sleep(WATCH_EVERY).await;
@@ -584,8 +628,6 @@ mod tests {
 
     #[test]
     fn a_sign_in_asked_for_before_a_password_change_is_not_begun() {
-        let rt = tokio::runtime::Builder::new_current_thread().build().unwrap();
-        let _guard = rt.enter();
         let lkc = Lkc::default();
         let view = || SignInView {
             user_code: "ABCD".into(),
@@ -596,16 +638,21 @@ mod tests {
         };
         let epoch = lkc.epoch();
         lkc.end_epoch();
-        let task = rt.spawn(std::future::pending::<()>());
-        assert!(!lkc.begin(view(), "d1".into(), task.abort_handle(), epoch));
+        assert!(!lkc.begin(view(), "d1".into(), epoch));
         assert!(lkc.sign_in().is_none());
-        assert!(rt.block_on(task).unwrap_err().is_cancelled());
-        // Once granted, it is claimed: nothing aborts it after.
-        let task = rt.spawn(std::future::pending::<()>());
-        assert!(lkc.begin(view(), "d2".into(), task.abort_handle(), lkc.epoch()));
+        // Once granted, it is claimed: a cancel lets it finish.
+        assert!(lkc.begin(view(), "d2".into(), lkc.epoch()));
         assert!(lkc.claim("d2") && !lkc.claim("d1"));
         lkc.cancel();
-        assert!(!task.is_finished());
-        task.abort();
+        lkc.end_epoch();
+        assert!(lkc.waiting("d2"));
+        // Nor does another take its place meanwhile.
+        assert!(!lkc.begin(view(), "d3".into(), lkc.epoch()));
+        lkc.settle("d2", None);
+        assert!(lkc.sign_in().is_none());
+        // One not claimed stops at its next turn.
+        assert!(lkc.begin(view(), "d4".into(), lkc.epoch()));
+        lkc.cancel();
+        assert!(!lkc.waiting("d4"));
     }
 }

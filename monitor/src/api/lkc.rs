@@ -41,7 +41,9 @@ pub async fn start(req: HttpRequest, state: web::types::State<Arc<AppState>>) ->
                 .await;
             Ok(HttpResponse::Ok().json(&serde_json::json!({ "sign_in": sign_in })))
         }
-        Err(e) => {
+        // The caller's token is no longer good either.
+        Err(lkc::StartError::PasswordChanged) => Ok(respond::error(StatusCode::UNAUTHORIZED, "password_changed")),
+        Err(lkc::StartError::Lkc(e)) => {
             tracing::warn!("LK Cloud sign-in: {e}");
             let code = if e.transient() { "lkc_unreachable" } else { "lkc_refused" };
             Ok(respond::error(StatusCode::BAD_GATEWAY, code))

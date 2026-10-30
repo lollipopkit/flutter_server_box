@@ -526,7 +526,6 @@ async fn a_device_that_signed_in_is_remembered_until_the_password_changes() {
 #[tokio::test]
 async fn a_password_change_ends_a_device_sign_in_waiting() {
     let state = state().await;
-    let poll = tokio::spawn(std::future::pending::<()>());
     let view = server_box_monitor::lkc::SignInView {
         user_code: "ABCD".into(),
         verification_uri: "https://auth.example/device".into(),
@@ -534,11 +533,13 @@ async fn a_password_change_ends_a_device_sign_in_waiting() {
         expires_at_ms: i64::MAX,
         failed: None,
     };
-    assert!(state.lkc.begin(view, "device".into(), poll.abort_handle(), state.lkc.epoch()));
+    let epoch = state.lkc.epoch();
+    assert!(state.lkc.begin(view.clone(), "device".into(), epoch));
     assert!(state.lkc.sign_in().is_some());
     server_box_monitor::api::authz::end_account(&state, "password_changed");
     assert!(state.lkc.sign_in().is_none());
-    assert!(poll.await.unwrap_err().is_cancelled());
+    // One asked for before the change is not begun after it.
+    assert!(!state.lkc.begin(view, "device".into(), epoch));
 }
 
 /// Whoever held the old password may have approved a sign-in with their own
@@ -565,4 +566,23 @@ async fn a_password_change_signs_out_of_lk_cloud() {
         tokio::time::sleep(std::time::Duration::from_millis(20)).await;
     }
     panic!("still signed in to LK Cloud after the password changed");
+}
+
+/// A reset from the CLI, which reaches no running agent, signs out of LK
+/// Cloud as well.
+#[tokio::test]
+async fn a_cli_password_reset_signs_out_of_lk_cloud() {
+    use server_box_monitor::db::sealed;
+    let state = state().await;
+    sqlx::query(
+        "INSERT INTO lkc_session (id, user, access_token, refresh_token, expires_at, updated_at) VALUES (1, ?, ?, NULL, ?, 0)",
+    )
+    .bind(r#"{"id":"u1","name":"Ada","group":"user"}"#)
+    .bind(state.sealer.seal(sealed::LKC_ACCESS_TOKEN, "access").unwrap())
+    .bind(i64::MAX)
+    .execute(&state.db)
+    .await
+    .unwrap();
+    server_box_monitor::db::accounts::set_password_hash(&state.db, "hash").await.unwrap();
+    assert!(server_box_monitor::lkc::current(&state).await.is_none());
 }

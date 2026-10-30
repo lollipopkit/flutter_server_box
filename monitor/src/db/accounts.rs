@@ -51,9 +51,11 @@ pub async fn record_login(pool: &SqlitePool, id: i64) -> Result<()> {
 }
 
 /// Sets a new password, and ends what the old one had paid for: panel
-/// tokens issued before now stop counting (`password_changed_ms`), and every
-/// paired watch token is deleted — a password is reset because somebody else
-/// may have it, and they may have paired a token too.
+/// tokens issued before now stop counting (`password_changed_ms`), every
+/// paired watch token is deleted, and the LK Cloud session too — a password
+/// is reset because somebody else may have it, and they may have paired a
+/// token or signed the agent in to their own account. Its refresh token is
+/// left to expire: the CLI does not reach the IdP.
 ///
 /// The connections already running are the caller's to end — see
 /// `api::authz::end_account`; a process that is not the running agent (the
@@ -75,6 +77,9 @@ pub async fn set_password_hash(pool: &SqlitePool, hash: &str) -> Result<()> {
         .execute(&mut *tx)
         .await?;
     sqlx::query("DELETE FROM login_device")
+        .execute(&mut *tx)
+        .await?;
+    sqlx::query("DELETE FROM lkc_session")
         .execute(&mut *tx)
         .await?;
     tx.commit().await?;

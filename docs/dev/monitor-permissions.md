@@ -51,7 +51,7 @@ There are no `/me`, `/users*`, `/roles*` or `/remote-access/full-access` routes.
 
 ## Password change
 
-`users.password_changed_ms` moves strictly forward. Panel tokens with `iat` before it (to the second — a token from the same second still counts, so signing in again right after works) are 401 everywhere; watch tokens are deleted; and in a running agent terminal sessions, outstanding tickets, running Agent mode tasks with their sudo passwords and uploads, web app windows, relays and listeners end with `{"type":"error","code":"password_changed"}` then close. A CLI reset cannot reach a running agent's live connections; they end when the agent restarts.
+`users.password_changed_ms` moves strictly forward. Panel tokens with `iat` before it (to the second — a token from the same second still counts, so signing in again right after works) are 401 everywhere; watch tokens and the LK Cloud session are deleted (`lkc_session`; the API also revokes its refresh token and ends a sign-in waiting or being asked for, `lkc::end_account`); and in a running agent terminal sessions, outstanding tickets, running Agent mode tasks with their sudo passwords and uploads, web app windows, relays and listeners end with `{"type":"error","code":"password_changed"}` then close. A CLI reset cannot reach a running agent's live connections; they end when the agent restarts.
 
 ## The agent's own state
 
