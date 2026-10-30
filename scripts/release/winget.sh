@@ -37,13 +37,23 @@ render() {
 }
 
 check() {
-  local dir=$1 f type version
+  local dir=$1 f type name version
   local schemas="https://raw.githubusercontent.com/microsoft/winget-cli/$SCHEMA_REF/schemas/JSON/manifests/v$MANIFEST_VERSION"
   version="$(field PackageVersion "$dir/$PACKAGE_ID.yaml")"
+  for type in installer defaultLocale; do
+    if [[ "$(grep -l "^ManifestType: $type$" "$dir"/*.yaml | wc -l)" -ne 1 ]]; then
+      echo "::error::not exactly one $type manifest in $dir"
+      return 1
+    fi
+  done
   for f in "$dir"/*.yaml; do
     # shellcheck disable=SC2016 # a literal `${`
     if grep -n '\${' "$f"; then
       echo "::error file=$f::left unrendered"
+      return 1
+    fi
+    if [[ "$(field PackageIdentifier "$f")" != "$PACKAGE_ID" ]]; then
+      echo "::error file=$f::PackageIdentifier is not $PACKAGE_ID"
       return 1
     fi
     if [[ "$(field ManifestVersion "$f")" != "$MANIFEST_VERSION" ]]; then
@@ -55,46 +65,63 @@ check() {
       return 1
     fi
     type="$(field ManifestType "$f")"
+    # The names winget-pkgs expects.
+    case "$type" in
+      version) name="$PACKAGE_ID.yaml" ;;
+      installer) name="$PACKAGE_ID.installer.yaml" ;;
+      defaultLocale | locale) name="$PACKAGE_ID.locale.$(field PackageLocale "$f").yaml" ;;
+      *) name='' ;;
+    esac
+    if [[ "$(basename "$f")" != "$name" ]]; then
+      echo "::error file=$f::a $type manifest is named ${name:-nothing}"
+      return 1
+    fi
     "${CHECK_JSONSCHEMA[@]}" --schemafile "$schemas/manifest.$type.$MANIFEST_VERSION.json" "$f"
   done
 }
 
 submit() {
-  local dir=$1 version path existing owner fork base base_tree tree commit branch
+  local dir=$1 version path out owner fork branch base base_tree tree commit existing
   version="$(field PackageVersion "$dir/$PACKAGE_ID.yaml")"
   path="manifests/${PACKAGE_ID:0:1}/${PACKAGE_ID//.//}/$version"
 
-  if gh api "repos/$UPSTREAM/contents/$path" --silent 2>/dev/null; then
+  if out="$(gh api "repos/$UPSTREAM/contents/$path" --silent 2>&1)"; then
     echo "::notice::$PACKAGE_ID $version is already in $UPSTREAM"
     return
+  elif [[ "$out" != *"HTTP 404"* ]]; then
+    echo "$out" >&2
+    return 1
   fi
-  existing="$(gh api -X GET search/issues \
-    -f q="repo:$UPSTREAM is:pr is:open in:title \"$PACKAGE_ID\" \"$version\"" \
-    --jq '.items[0].html_url // empty')"
+
+  owner="$(gh api user --jq .login)"
+  fork="$owner/winget-pkgs"
+  # One per version: a rerun finds the branch, and the pull request, of the
+  # run before it.
+  branch="$PACKAGE_ID-$version"
+  existing="$(gh api -X GET "repos/$UPSTREAM/pulls" -f head="$owner:$branch" -f state=open \
+    --jq '.[0].html_url // empty')"
   if [[ -n "$existing" ]]; then
     echo "::notice::$PACKAGE_ID $version is already proposed: $existing"
     return
   fi
 
-  owner="$(gh api user --jq .login)"
-  fork="$owner/winget-pkgs"
-  gh api -X POST "repos/$fork/merge-upstream" -f branch=master --silent
-  base="$(gh api "repos/$fork/git/ref/heads/master" --jq .object.sha)"
-  base_tree="$(gh api "repos/$fork/git/commits/$base" --jq .tree.sha)"
-
-  # One commit through the Git data API: no clone of winget-pkgs.
-  tree="$(for f in "$dir"/*.yaml; do
-      jq -n --arg path "$path/$(basename "$f")" --rawfile content "$f" \
-        '{path: $path, mode: "100644", type: "blob", content: $content}'
-    done | jq -s --arg base "$base_tree" '{base_tree: $base, tree: .}' |
-    gh api "repos/$fork/git/trees" --input - --jq .sha)"
-  commit="$(jq -n --arg message "New version: $PACKAGE_ID version $version" \
-      --arg tree "$tree" --arg parent "$base" \
-      '{message: $message, tree: $tree, parents: [$parent]}' |
-    gh api "repos/$fork/git/commits" --input - --jq .sha)"
-  # Unique, so a rerun after a failed pull request does not find it taken.
-  branch="$PACKAGE_ID-$version-$(date +%s)"
-  gh api "repos/$fork/git/refs" -f ref="refs/heads/$branch" -f sha="$commit" --silent
+  if ! gh api "repos/$fork/git/ref/heads/$branch" --silent 2>/dev/null; then
+    # On upstream's master, which the fork shares objects with; the fork's own
+    # master is never read or synced.
+    base="$(gh api "repos/$UPSTREAM/git/ref/heads/master" --jq .object.sha)"
+    base_tree="$(gh api "repos/$UPSTREAM/git/commits/$base" --jq .tree.sha)"
+    # One commit through the Git data API: no clone of winget-pkgs.
+    tree="$(for f in "$dir"/*.yaml; do
+        jq -n --arg path "$path/$(basename "$f")" --rawfile content "$f" \
+          '{path: $path, mode: "100644", type: "blob", content: $content}'
+      done | jq -s --arg base "$base_tree" '{base_tree: $base, tree: .}' |
+      gh api "repos/$fork/git/trees" --input - --jq .sha)"
+    commit="$(jq -n --arg message "New version: $PACKAGE_ID version $version" \
+        --arg tree "$tree" --arg parent "$base" \
+        '{message: $message, tree: $tree, parents: [$parent]}' |
+      gh api "repos/$fork/git/commits" --input - --jq .sha)"
+    gh api "repos/$fork/git/refs" -f ref="refs/heads/$branch" -f sha="$commit" --silent
+  fi
 
   gh api "repos/$UPSTREAM/pulls" \
     -f title="New version: $PACKAGE_ID version $version" \

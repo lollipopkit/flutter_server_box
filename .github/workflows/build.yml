@@ -1043,26 +1043,20 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release edit "$TAG" --draft=false --repo "$GITHUB_REPOSITORY"
 
-  # Opens the pull request that adds this release to winget-pkgs
-  # (`winget install lollipopkit.serverbox`, #1572), from the manifests in
-  # .github/winget/ (scripts/release/winget.sh).
+  # Renders and checks the manifests that add this release to winget-pkgs
+  # (`winget install lollipopkit.serverbox`, #1572), from .github/winget/
+  # (scripts/release/winget.sh) at the release's ref: a tag older than those
+  # has no installer to point at either.
   #
   # Not komac: it writes the ManifestVersion of its own winget-types, which
-  # winget-pkgs refuses once deprecated (1.12.0, in its 2.17.1). Only the
-  # submit step sees the token.
-  #
-  # The token is a classic one with `public_repo` — a fine-grained one cannot
-  # open a pull request on winget-pkgs — for the account holding the
-  # winget-pkgs fork. Without the secret the manifests are still checked, and
-  # it runs after the release is public, so a failure here never holds one
-  # back.
-  publishWinget:
-    name: Publish to winget
+  # winget-pkgs refuses once deprecated (1.12.0, in its 2.17.1).
+  wingetManifests:
+    name: winget manifests
     needs:
       - reproducibilityCheck
       - publishRelease
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     permissions:
       contents: read
     env:
@@ -1076,18 +1070,51 @@ jobs:
             .github/winget
             scripts/release/winget.sh
       - name: Render
-        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/v${VERSION}/${APP_NAME}_v${VERSION}_windows_amd64.exe"
           curl -fsSL -o "$RUNNER_TEMP/installer.exe" "$URL"
           SHA256="$(sha256sum "$RUNNER_TEMP/installer.exe" | cut -d' ' -f1)"
-          RELEASE_DATE="$(date -u +%F)"
+          RELEASE_DATE="$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/v${VERSION}" --jq '.published_at[:10]')"
           RELEASE_NOTES_URL="https://github.com/${GITHUB_REPOSITORY}/releases/tag/v${VERSION}"
           export URL SHA256 RELEASE_DATE RELEASE_NOTES_URL
           scripts/release/winget.sh render "$RUNNER_TEMP/winget"
       - name: Check
         run: scripts/release/winget.sh check "$RUNNER_TEMP/winget"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: winget-manifests
+          path: ${{ runner.temp }}/winget
+          if-no-files-found: error
+          retention-days: 14
+
+  # Opens the pull request on winget-pkgs. A job of its own: the check above
+  # runs check-jsonschema's unpinned dependencies, which must not share a
+  # runner with this token. What it takes from there is data, not code.
+  #
+  # The token is a classic one with `public_repo` — a fine-grained one cannot
+  # open a pull request on winget-pkgs — for the account holding the
+  # winget-pkgs fork. Without the secret this says so and does nothing, and
+  # it runs after the release is public, so a failure here never holds one
+  # back.
+  publishWinget:
+    name: Publish to winget
+    needs: wingetManifests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          sparse-checkout: scripts/release/winget.sh
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: winget-manifests
+          path: ${{ runner.temp }}/winget
       - name: Submit
         env:
           GH_TOKEN: ${{ secrets.WINGET_TOKEN }}
