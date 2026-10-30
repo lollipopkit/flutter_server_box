@@ -145,7 +145,7 @@ async fn the_configured_timeout_is_what_kills_a_command() {
     let cmd = platform_command("sleep 20", "timeout /t 20 /nobreak");
     let body = post(&srv, json!({ "cmd": cmd })).await.unwrap();
 
-    assert_eq!(body["timed_out"], true);
+    assert_eq!(body["timed_out"], true, "{body}");
     // Killed rather than exited, and nothing it had buffered is reported as
     // though the command had finished saying it.
     assert!(body["exit_code"].is_null());

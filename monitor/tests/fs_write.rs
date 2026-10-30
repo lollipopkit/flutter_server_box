@@ -109,8 +109,16 @@ async fn version_of(srv: &TestServer, path: &str) -> String {
 
 /// Enough of percent-encoding for a path or a token in a query string: a temp
 /// path carries `/` (legal unencoded) and the token carries `-`.
+/// Every byte but RFC 3986's unreserved ones: a Windows path's `\` is not
+/// allowed in a request target, and ntex 4 refuses it.
 fn urlencode(value: &str) -> String {
-    value.replace(' ', "%20")
+    value
+        .bytes()
+        .map(|b| match b {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'.' | b'_' | b'~' => (b as char).to_string(),
+            _ => format!("%{b:02X}"),
+        })
+        .collect()
 }
 
 #[ntex::test]
