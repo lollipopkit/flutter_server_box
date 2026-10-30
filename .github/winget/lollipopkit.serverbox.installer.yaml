@@ -1,0 +1,27 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.28.0.schema.json
+
+PackageIdentifier: lollipopkit.serverbox
+PackageVersion: ${VERSION}
+InstallerType: inno
+UpgradeBehavior: install
+# `AppId` in windows/installer.iss.
+ProductCode: '{9BB7C81E-6D14-4336-923D-A058909B6B71}_is1'
+ReleaseDate: ${RELEASE_DATE}
+# The script installs per user (`PrivilegesRequired=lowest`) and allows
+# `/ALLUSERS` from the command line.
+Installers:
+- Architecture: x64
+  Scope: user
+  InstallerUrl: ${URL}
+  InstallerSha256: ${SHA256}
+  InstallerSwitches:
+    Custom: /CURRENTUSER
+- Architecture: x64
+  Scope: machine
+  InstallerUrl: ${URL}
+  InstallerSha256: ${SHA256}
+  InstallerSwitches:
+    Custom: /ALLUSERS
+  ElevationRequirement: elevatesSelf
+ManifestType: installer
+ManifestVersion: 1.28.0
