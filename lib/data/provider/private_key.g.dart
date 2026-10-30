@@ -42,7 +42,7 @@ final class PrivateKeyNotifierProvider
 }
 
 String _$privateKeyNotifierHash() =>
-    r'0acbf73a8ee4a6676e6b15c76e56e936c7822046';
+    r'bc5d9f2b96299fac3969c50020779b50afa8247c';
 
 abstract class _$PrivateKeyNotifier extends $Notifier<PrivateKeyState> {
   PrivateKeyState build();

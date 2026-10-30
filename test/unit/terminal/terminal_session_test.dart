@@ -15,6 +15,8 @@ import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/ssh/terminal_session.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
 
+import '../../helpers/fake_shell.dart';
+import '../../helpers/idle_ssh_socket.dart';
 import '../../helpers/rust_lib_helper.dart';
 
 /// A shell whose bytes the test writes itself.
@@ -532,6 +534,52 @@ void main() {
 
       expect(shell.closed, isTrue);
       expect(session.foreground, isNull);
+    });
+  });
+
+  group('after a failure', () {
+    // The status poller's connection, adopted: open, and borrowed.
+    (TerminalSession, SSHClient) adopted() {
+      final client = SSHClient(IdleSshSocket(), username: 'test');
+      final session = TerminalSession(source: ServerSource(ssh))..adopt(client);
+      return (session, client);
+    }
+
+    test('a borrowed connection that answers is kept; every shell goes', () {
+      final (session, client) = adopted();
+      final shell = _FakeShell();
+      final unbound = _FakeShell();
+      session.bindForeground(shell);
+
+      session.dropBackend(alive: true, unbound: unbound);
+
+      expect(client.isClosed, isFalse);
+      expect(session.backend, isNull);
+      expect(shell.closed, isTrue);
+      expect(unbound.closed, isTrue);
+      client.close();
+    });
+
+    test('a borrowed connection that does not answer is closed', () {
+      final (session, client) = adopted();
+
+      session.dropBackend(alive: false);
+
+      expect(client.isClosed, isTrue);
+      expect(session.backend, isNull);
+    });
+
+    test('a connection this session opened is closed, answering or not', () async {
+      final owned = FakeShellBackend();
+      final session = TerminalSession(
+        source: ConsoleSource(id: 'c', label: 'web-01', connect: () async => owned),
+      );
+      await session.connect();
+
+      session.dropBackend(alive: true);
+
+      expect(owned.isClosed, isTrue);
+      expect(session.backend, isNull);
     });
   });
 

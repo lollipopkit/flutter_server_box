@@ -10,6 +10,7 @@ import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/cert_fingerprint.dart';
+import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
 
 import '../../helpers/rust_lib_helper.dart';
@@ -134,6 +135,37 @@ void main() {
           ),
         ),
       );
+    });
+
+    test('accepts exactly the addresses the editor saves', () {
+      // The editor checks `BmcCfg.uri`; the client is built with
+      // `parse_base`. A disagreement saves an address that never connects.
+      for (final addr in [
+        'https://10.0.0.9',
+        'https://bmc.lan:8443/',
+        'https://10.0.0.9:65536',
+        'https://[fe80::1]',
+        'https://h/prefix',
+        'http://10.0.0.9',
+        'ftp://10.0.0.9',
+        'https://',
+        'https://10.0.0.9/?q=1',
+        'https://10.0.0.9/#x',
+        'https://u:p@10.0.0.9',
+        'https://h/a/../b',
+        'https://h/a//b',
+        'not a url',
+        '',
+      ]) {
+        bool clientAccepts;
+        try {
+          BmcClient(baseUrl: addr, user: 'root').dispose();
+          clientAccepts = true;
+        } on BmcError {
+          clientAccepts = false;
+        }
+        expect(BmcCfg(addr: addr).uri != null, clientAccepts, reason: addr);
+      }
     });
 
     test('an unpinned certificate is refused at the handshake', () async {

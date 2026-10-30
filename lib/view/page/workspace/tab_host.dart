@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/llm/scope.dart';
+import 'package:server_box/core/llm/screen.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/server.dart';
@@ -150,6 +151,7 @@ class WsTabHost extends ConsumerWidget {
       runtime: runtime,
       child: NestedNavigator(
         rootId: tab.id,
+        observers: [AgentScreen.workspaceObserver(tab.id)],
         rootBuilder: (_) => _page(ref, spi),
       ),
     );

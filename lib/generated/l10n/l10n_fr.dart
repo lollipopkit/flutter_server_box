@@ -619,6 +619,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get sshKeyRecommended => 'Recommandé';
 
   @override
+  String get rememberKeyPassphrase => 'Mémoriser les phrases de passe des clés';
+
+  @override
+  String get rememberKeyPassphraseTip =>
+      'Conserve les phrases de passe des clés privées chiffrées dans le trousseau système de cet appareil, pour ne pas les redemander après un redémarrage. Les clés restent chiffrées dans les sauvegardes. Désactiver supprime les phrases enregistrées.';
+
+  @override
   String sshKeyUnlockTip(String name) {
     return 'Saisissez la phrase secrète de la clé privée [$name].';
   }
@@ -7185,4 +7192,58 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get handednessTip =>
       'Du côté de la main qui tient l\'appareil, les onglets se placent dans la colonne à côté de la barre d\'état, comme les barres du système.';
+
+  @override
+  String get storeUnreadableTitle =>
+      'Impossible d\'ouvrir les données précédentes';
+
+  @override
+  String get storeUnreadableKeyLost =>
+      'La clé qui chiffre les données de ServerBox n\'est plus dans le magasin de clés du système. Cela arrive quand le système réinitialise le magasin de clés, quand le service de trousseau n\'est pas disponible, ou quand les données de l\'app ont été copiées depuis un autre appareil, par exemple avec un outil de migration. Sans cette clé, les données ne peuvent pas être déchiffrées : ServerBox a donc démarré sans données.';
+
+  @override
+  String get storeUnreadableKeyRejected =>
+      'La clé du magasin de clés du système n\'ouvre pas les données de ServerBox : elles ont été chiffrées avec une autre clé, ou le fichier est endommagé. ServerBox a démarré sans données.';
+
+  @override
+  String storeUnreadableKept(String path) {
+    return 'L\'ancien fichier est conservé ici :\n$path\nRestaurez une sauvegarde pour récupérer vos serveurs.';
+  }
+
+  @override
+  String get storeKeyLostAsk =>
+      'La clé qui chiffre les données de ServerBox n\'est pas dans le magasin de clés du système. Si le magasin de clés ou le trousseau est seulement indisponible pour le moment, par exemple pas encore déverrouillé, réessayez. Sinon, ServerBox peut démarrer sans données ; l\'ancien fichier est conservé.';
+
+  @override
+  String get storeKeyLostStartEmpty => 'Démarrer sans données';
+
+  @override
+  String get storeVaultFailedAsk =>
+      'Le magasin de clés du système n\'a pas pu déchiffrer la clé qui chiffre les données de ServerBox. Si l\'erreur est ponctuelle, réessayez, au besoin après avoir redémarré l\'appareil. Si elle se produit à chaque fois, les données ne peuvent pas être déchiffrées et ServerBox peut démarrer sans données ; l\'ancien fichier est conservé. Démarrer sans données efface aussi le mot de passe de sauvegarde, les identifiants WebDAV et GitHub et les mots de passe sudo enregistrés.';
+
+  @override
+  String get storeVaultFailedRootHint =>
+      'Sur un appareil rooté, un module qui intercepte le magasin de clés (comme TrickyStore) provoque cette erreur. Retirez cette application de la liste cible du module, puis démarrez sans données.';
+
+  @override
+  String get storeUnreadableVaultFailed =>
+      'Le magasin de clés du système n\'a pas pu déchiffrer la clé qui chiffre les données de ServerBox. ServerBox a donc réinitialisé ses entrées dans le magasin de clés et démarré sans données. Le mot de passe de sauvegarde, les identifiants WebDAV et GitHub et les mots de passe sudo enregistrés doivent être saisis à nouveau.';
+
+  @override
+  String get hostCertAuthorities => 'Autorités de certification d\'hôte';
+
+  @override
+  String get hostCertAuthoritiesTip =>
+      'Un hôte dont le certificat a été signé par l\'une d\'elles est approuvé sans demande, comme avec @cert-authority d\'OpenSSH ; les autres hôtes sont demandés à la première connexion, comme avant. Les hôtes sont des motifs séparés par des virgules avec * et ?, et ! pour exclure ; un port autre que 22 est comparé sous la forme [host]:port.';
+
+  @override
+  String get hostCertAuthorityInvalid =>
+      'Clé publique SSH non prise en charge (ssh-ed25519, ssh-rsa ou ecdsa-sha2-*)';
+
+  @override
+  String get hostCertAuthorityNoHosts =>
+      'Indiquez les hôtes qu\'elle garantit, par exemple *';
+
+  @override
+  String get hostCertAuthorityExists => 'Déjà dans la liste';
 }

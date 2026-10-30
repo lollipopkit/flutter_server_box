@@ -145,9 +145,14 @@ void Update(FlValue* payload) {
         g_file_read_link("/proc/self/exe", nullptr) ?: g_strdup("."));
     g_autofree gchar* icon_dir =
         g_build_filename(dir, "data", "flutter_assets", "assets", nullptr);
+    // Deprecated in newer libayatana-appindicator, which builds with
+    // -Werror; the call is what Ubuntu 22.04's has, which the legacy build
+    // links against, so it stays and the warning is silenced here.
+    G_GNUC_BEGIN_IGNORE_DEPRECATIONS
     g_indicator = app_indicator_new_with_path(
         "serverbox", "app_icon", APP_INDICATOR_CATEGORY_APPLICATION_STATUS,
         icon_dir);
+    G_GNUC_END_IGNORE_DEPRECATIONS
     app_indicator_set_status(g_indicator, APP_INDICATOR_STATUS_ACTIVE);
     app_indicator_set_title(g_indicator, "ServerBox");
   }

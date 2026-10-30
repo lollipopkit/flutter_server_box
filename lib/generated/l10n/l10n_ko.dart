@@ -586,6 +586,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sshKeyRecommended => '권장';
 
   @override
+  String get rememberKeyPassphrase => '키 암호 문구 기억';
+
+  @override
+  String get rememberKeyPassphraseTip =>
+      '암호화된 개인 키의 암호 문구를 이 기기의 시스템 키체인에 저장하여 다시 시작한 후에도 묻지 않습니다. 백업의 키는 암호화된 상태로 유지됩니다. 끄면 저장된 암호 문구가 삭제됩니다.';
+
+  @override
   String sshKeyUnlockTip(String name) {
     return '개인 키 [$name]의 암호를 입력하세요.';
   }
@@ -6791,4 +6798,56 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get handednessTip =>
       '기기를 쥔 손 쪽에 시스템 세로 막대가 있으면 탭이 상태 표시줄 아래의 세로 막대에 놓입니다. 시스템 막대와 같은 위치입니다.';
+
+  @override
+  String get storeUnreadableTitle => '이전 데이터를 열 수 없습니다';
+
+  @override
+  String get storeUnreadableKeyLost =>
+      'ServerBox 데이터를 암호화한 키가 시스템 키 저장소에 없습니다. 시스템이 키 저장소를 초기화했거나, 키링 서비스를 사용할 수 없거나, 기기 이전 도구 등으로 다른 기기에서 앱 데이터를 복사한 경우 발생합니다. 이 키가 없으면 데이터를 복호화할 수 없으므로 ServerBox가 빈 데이터로 시작되었습니다.';
+
+  @override
+  String get storeUnreadableKeyRejected =>
+      '시스템 키 저장소의 키로 ServerBox 데이터를 열 수 없습니다. 데이터가 다른 키로 암호화되었거나 파일이 손상되었습니다. ServerBox가 빈 데이터로 시작되었습니다.';
+
+  @override
+  String storeUnreadableKept(String path) {
+    return '이전 파일은 다음 위치에 보관되어 있습니다:\n$path\n백업을 복원하면 서버를 되찾을 수 있습니다.';
+  }
+
+  @override
+  String get storeKeyLostAsk =>
+      'ServerBox 데이터를 암호화하는 키가 시스템 키 저장소에 없습니다. 키 저장소나 키링을 일시적으로 사용할 수 없는 경우(예: 아직 잠금 해제되지 않음) 다시 시도하세요. 그렇지 않으면 데이터 없이 시작할 수 있으며, 이전 파일은 보존됩니다.';
+
+  @override
+  String get storeKeyLostStartEmpty => '데이터 없이 시작';
+
+  @override
+  String get storeVaultFailedAsk =>
+      '시스템 키 저장소가 ServerBox 데이터를 암호화하는 키를 복호화하지 못했습니다. 일시적인 오류라면 필요 시 기기를 재시작한 뒤 다시 시도하세요. 매번 실패한다면 데이터를 복호화할 수 없으므로 데이터 없이 시작할 수 있으며, 이전 파일은 보관됩니다. 데이터 없이 시작하면 백업 비밀번호, WebDAV 및 GitHub 자격 증명, 저장된 sudo 비밀번호도 삭제됩니다.';
+
+  @override
+  String get storeVaultFailedRootHint =>
+      '루팅된 기기에서는 키 저장소를 가로채는 모듈(예: TrickyStore)이 원인입니다. 이 앱을 모듈의 대상 목록에서 제외한 뒤 데이터 없이 시작하세요.';
+
+  @override
+  String get storeUnreadableVaultFailed =>
+      '시스템 키 저장소가 ServerBox 데이터를 암호화하는 키를 복호화하지 못해 ServerBox가 키 저장소 항목을 초기화하고 데이터 없이 시작했습니다. 백업 비밀번호, WebDAV 및 GitHub 자격 증명, 저장된 sudo 비밀번호를 다시 입력해야 합니다.';
+
+  @override
+  String get hostCertAuthorities => '호스트 인증서 발급 기관';
+
+  @override
+  String get hostCertAuthoritiesTip =>
+      '이 기관이 서명한 인증서를 가진 호스트는 확인 없이 신뢰됩니다(OpenSSH의 @cert-authority와 동일). 다른 호스트는 이전처럼 첫 연결 시 확인합니다. 호스트는 쉼표로 구분한 패턴이며 * 와 ? 를 쓸 수 있고 ! 로 제외합니다. 22가 아닌 포트는 [host]:port 로 대조합니다.';
+
+  @override
+  String get hostCertAuthorityInvalid =>
+      '지원하지 않는 SSH 공개 키입니다(ssh-ed25519, ssh-rsa 또는 ecdsa-sha2-*)';
+
+  @override
+  String get hostCertAuthorityNoHosts => '보증할 호스트를 입력하세요(예: *)';
+
+  @override
+  String get hostCertAuthorityExists => '이미 목록에 있습니다';
 }

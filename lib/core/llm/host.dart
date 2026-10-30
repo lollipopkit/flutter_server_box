@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/llm/scope.dart';
+import 'package:server_box/core/llm/screen.dart';
 import 'package:server_box/core/llm/tools.dart';
 import 'package:server_box/data/provider/ai/global_agent_tools.dart';
 import 'package:server_box/data/provider/server/all.dart';
@@ -97,6 +98,7 @@ abstract final class LlmHost {
     LlmUi.offers = offers;
     LlmUi.appPrompt = prompt;
     LlmUi.describeTool = describeServerTool;
+    LlmUi.appContext = AgentScreen.describe;
   }
 
   /// The tools a monitor agent's task calls, as a task opened here shows

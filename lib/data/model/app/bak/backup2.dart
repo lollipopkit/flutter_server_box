@@ -9,6 +9,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:logging/logging.dart';
 import 'package:server_box/core/utils/local_file_backend.dart';
 import 'package:server_box/core/utils/server.dart';
+import 'package:server_box/core/utils/ssh_key_passphrase.dart';
 import 'package:server_box/core/utils/ssh_key_unlock.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/bmc_credential.dart';
@@ -138,6 +139,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     // commit the whole restore as one unit so a later failure cannot leave the
     // earlier stores visible without it.
     final restored = _restoredServerGraph();
+    final keysBefore = [for (final k in Stores.key.fetch()) k.key];
     SqliteStore.transact(() {
       keysChanged = Stores.key.merge(keys, force: force, notify: false);
       credsChanged = Stores.bmcCredential.merge(
@@ -250,6 +252,12 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       Stores.key.invalidate();
       PrivateKeyUnlock.forgetAll();
       forgetParsedIdentities();
+      unawaited(
+        KeyPassphrases.forgetGone(
+          keysBefore,
+          Stores.key.fetch().map((e) => e.key),
+        ),
+      );
     }
     if (credsChanged) Stores.bmcCredential.invalidate();
     if (serversChanged) {

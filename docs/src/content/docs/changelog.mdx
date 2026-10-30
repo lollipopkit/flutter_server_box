@@ -67,6 +67,43 @@ Every released version, newest first. Downloads and per-release notes are on
 - Error messages from notification channels no longer include the request URL,
   which could contain a token.
 
+## v1.0.1844 — 2026-10-30
+
+### Added
+
+- **SSH host certificates:** connect to servers that present only a host
+  certificate, and trust host certificate authorities in Settings → SSH, as
+  OpenSSH's `@cert-authority` does, matched by host pattern.
+- **Encrypted key passphrases are remembered** in this device's system
+  keychain, so they are not asked for after a restart. The key itself stays
+  encrypted, including in backups. The key editor shows the saved passphrase
+  after app-lock authentication. Turn it off in Settings → SSH.
+- Agent: a conversation can include what is on screen, such as the selected
+  server's status, containers, processes, services, terminal or file view.
+
+### Changed
+
+- SSH connections using AES-GCM are faster, including file transfers.
+- The first tab of Terminal, Files and Remote desktop, the list to pick from,
+  is named "Select" and no longer looks like a button.
+- BMC: power controls show an action in progress and prevent overlapping
+  ones; BMC and virtualization settings ask for the password again when the
+  address changes.
+
+### Fixed
+
+- Text selection in full-screen terminal programs follows whether the
+  program uses the mouse.
+- The terminal's long-press menu appears again after it had stopped showing.
+- A failed reconnect no longer closes the connection the server status uses.
+- BMC: the first status read after opening works, and refreshes keep the
+  system details already found.
+- When the app cannot read its data because the stored key is lost or
+  rejected by the system keystore, it says why and offers to retry or start
+  without data, instead of failing to start; the page also mentions keystore
+  modules on rooted Android devices.
+- Monitor: russh 0.64.1 for a security advisory (not reachable in the agent).
+
 ## v1.0.1816 — 2026-10-20
 
 ### Added

@@ -7,20 +7,24 @@ import 'package:server_box/data/model/server/bmc_cfg.dart';
 /// anything.
 void main() {
   group('BmcCfg', () {
-    test('parses an address and defaults the port per scheme', () {
+    test('parses an address and defaults the port', () {
       const https = BmcCfg(addr: 'https://10.0.0.9');
       expect(https.uri?.host, '10.0.0.9');
       expect(https.port, 443);
 
       const withPort = BmcCfg(addr: 'https://10.0.0.9:8443');
       expect(withPort.port, 8443);
-
-      const plain = BmcCfg(addr: 'http://10.0.0.9');
-      expect(plain.port, 80);
     });
 
     test('rejects what is not a usable address', () {
-      for (final addr in ['', '10.0.0.9', 'ftp://10.0.0.9', 'not a url']) {
+      for (final addr in [
+        '',
+        '10.0.0.9',
+        'ftp://10.0.0.9',
+        'not a url',
+        // No certificate to pin over a plain connection: the client refuses it
+        'http://10.0.0.9',
+      ]) {
         expect(
           BmcCfg(addr: addr).uri,
           isNull,

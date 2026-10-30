@@ -195,43 +195,62 @@ pub async fn power<T: Transport>(client: &T, topology: &Topology, intent: PowerI
     client.post(&request.target, request.body()).await
 }
 
+/// How many sensor members in a row may fail before the sweep stops with what
+/// it has: one that vanished is skipped, a device that stopped answering is
+/// not waited on for every member left.
+const MAX_SENSOR_FAILURES_IN_A_ROW: usize = 3;
+
 /// Sensors, by whichever model this chassis presents, and whether the list was
 /// cut to [`MAX_SENSOR_MEMBERS`].
 ///
-/// Never fatal, as in the app: any member that cannot be read costs all the
-/// readings, and the power state is already in hand. One request at a time —
-/// a BMC serves these from one small web server.
+/// Never fatal, and nothing costs more than itself: a legacy half that cannot
+/// be read leaves the other, and a member that cannot be read (OpenBMC drops a
+/// host rail's sensors with host power, between the listing and the read) is
+/// skipped. One request at a time — a BMC serves these from one small web
+/// server.
 pub async fn read_sensors<T: Transport>(client: &T, chassis: Option<&RedfishChassis>) -> (BmcSensors, bool) {
     let Some(chassis) = chassis else {
         return (BmcSensors::default(), false);
     };
-    let read = async {
-        match chassis.model() {
-            SensorModel::Legacy => {
-                let thermal = match &chassis.thermal {
-                    Some(path) => Some(client.get(path).await?),
-                    None => None,
-                };
-                let power = match &chassis.power {
-                    Some(path) => Some(client.get(path).await?),
-                    None => None,
-                };
-                Ok::<_, Error>((BmcSensors::from_legacy(thermal.as_ref(), power.as_ref()), false))
-            }
-            SensorModel::Modern => {
-                let Some(collection) = &chassis.sensors else {
-                    return Ok((BmcSensors::default(), false));
-                };
-                let members = collection_members(&client.get(collection).await?);
-                let truncated = members.len() > MAX_SENSOR_MEMBERS;
-                let mut fetched = Vec::with_capacity(members.len().min(MAX_SENSOR_MEMBERS));
-                for path in members.iter().take(MAX_SENSOR_MEMBERS) {
-                    fetched.push(client.get(path).await?);
-                }
-                Ok((BmcSensors::from_sensors(&fetched), truncated))
-            }
-            SensorModel::None => Ok((BmcSensors::default(), false)),
+    match chassis.model() {
+        SensorModel::Legacy => {
+            let thermal = match &chassis.thermal {
+                Some(path) => client.get(path).await.ok(),
+                None => None,
+            };
+            let power = match &chassis.power {
+                Some(path) => client.get(path).await.ok(),
+                None => None,
+            };
+            (BmcSensors::from_legacy(thermal.as_ref(), power.as_ref()), false)
         }
-    };
-    read.await.unwrap_or_default()
+        SensorModel::Modern => {
+            let Some(collection) = &chassis.sensors else {
+                return (BmcSensors::default(), false);
+            };
+            let Ok(listing) = client.get(collection).await else {
+                return (BmcSensors::default(), false);
+            };
+            let members = model::shown_sensors_first(collection_members(&listing));
+            let truncated = members.len() > MAX_SENSOR_MEMBERS;
+            let mut fetched = Vec::with_capacity(members.len().min(MAX_SENSOR_MEMBERS));
+            let mut failed = 0;
+            for path in members.iter().take(MAX_SENSOR_MEMBERS) {
+                match client.get(path).await {
+                    Ok(sensor) => {
+                        fetched.push(sensor);
+                        failed = 0;
+                    }
+                    Err(_) => {
+                        failed += 1;
+                        if failed == MAX_SENSOR_FAILURES_IN_A_ROW {
+                            break;
+                        }
+                    }
+                }
+            }
+            (BmcSensors::from_sensors(&fetched), truncated)
+        }
+        SensorModel::None => (BmcSensors::default(), false),
+    }
 }

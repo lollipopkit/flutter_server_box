@@ -60,6 +60,55 @@ import UserNotifications
         return super.application(application, didFinishLaunchingWithOptions: launchOptions)
     }
 
+    /// The `aps-environment` of the embedded provisioning profile.
+    private static func apsEnvironment() -> String {
+        guard let url = Bundle.main.url(forResource: "embedded", withExtension: "mobileprovision"),
+              let data = try? Data(contentsOf: url),
+              // A CMS envelope around a plist: the plist is the readable part.
+              let text = String(data: data, encoding: .isoLatin1),
+              let start = text.range(of: "<plist"),
+              let end = text.range(of: "</plist>", range: start.upperBound..<text.endIndex),
+              let plist = try? PropertyListSerialization.propertyList(
+                  from: Data(text[start.lowerBound..<end.upperBound].utf8), format: nil
+              ) as? [String: Any],
+              let entitlements = plist["Entitlements"] as? [String: Any],
+              let env = entitlements["aps-environment"] as? String
+        else { return "production" }
+        return env
+    }
+
+    /// A tap on a remote notification: answered, as nothing on the Dart side
+    /// takes it yet. The plugin returns without calling the handler for any
+    /// notification it did not post, as it does in `willPresent`.
+    override func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
+        if response.notification.request.trigger is UNPushNotificationTrigger {
+            completionHandler()
+            return
+        }
+        super.userNotificationCenter(center, didReceive: response, withCompletionHandler: completionHandler)
+    }
+
+    /// A remote notification, homebase's, shown while the app is in front.
+    ///
+    /// flutter_local_notifications answers only the ones it posted, and never
+    /// calls the handler for any other: a push arriving in front was dropped,
+    /// neither shown nor kept in Notification Center.
+    override func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        if notification.request.trigger is UNPushNotificationTrigger {
+            completionHandler([.banner, .list, .sound])
+            return
+        }
+        super.userNotificationCenter(center, willPresent: notification, withCompletionHandler: completionHandler)
+    }
+
     func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
         GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
         setupMethodChannels(binaryMessenger: engineBridge.applicationRegistrar.messenger())
@@ -140,6 +189,11 @@ import UserNotifications
             // app or device-wide in Settings, in which case `Activity.request`
             // fails and there is nothing in the failure to show a user. Cheap
             // and synchronous, unlike the two below.
+            // Which APNs environment this build's tokens are for, from how it
+            // was signed: a development profile says development; an App
+            // Store or TestFlight build has no profile and is production.
+            case "apsEnvironment":
+                result(Self.apsEnvironment())
             case "liveActivityAvailable":
                 if #available(iOS 16.2, *) {
                     result(ActivityAuthorizationInfo().areActivitiesEnabled)

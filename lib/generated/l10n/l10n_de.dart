@@ -614,6 +614,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get sshKeyRecommended => 'Empfohlen';
 
   @override
+  String get rememberKeyPassphrase => 'Schlüssel-Passphrasen merken';
+
+  @override
+  String get rememberKeyPassphraseTip =>
+      'Passphrasen verschlüsselter privater Schlüssel im Systemschlüsselbund dieses Geräts speichern, damit sie nach einem Neustart nicht erneut abgefragt werden. In Backups bleiben die Schlüssel verschlüsselt. Beim Ausschalten werden gespeicherte Passphrasen gelöscht.';
+
+  @override
   String sshKeyUnlockTip(String name) {
     return 'Passphrase für den privaten Schlüssel [$name] eingeben.';
   }
@@ -7163,4 +7170,58 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get handednessTip =>
       'Auf der Seite der Hand, mit der du das Gerät hältst, stehen die Tabs in der Spalte neben der Statusleiste, wie die Leisten des Systems.';
+
+  @override
+  String get storeUnreadableTitle =>
+      'Bisherige Daten konnten nicht geöffnet werden';
+
+  @override
+  String get storeUnreadableKeyLost =>
+      'Der Schlüssel, mit dem die Daten von ServerBox verschlüsselt sind, ist nicht mehr im Schlüsselspeicher des Systems. Das passiert, wenn das System den Schlüsselspeicher zurücksetzt, der Schlüsselbund-Dienst nicht verfügbar ist oder die App-Daten von einem anderen Gerät kopiert wurden, etwa mit einem Umzugstool. Ohne diesen Schlüssel lassen sich die Daten nicht entschlüsseln, daher wurde ServerBox ohne Daten gestartet.';
+
+  @override
+  String get storeUnreadableKeyRejected =>
+      'Der Schlüssel im Schlüsselspeicher des Systems öffnet die Daten von ServerBox nicht: Sie wurden mit einem anderen Schlüssel verschlüsselt, oder die Datei ist beschädigt. ServerBox wurde ohne Daten gestartet.';
+
+  @override
+  String storeUnreadableKept(String path) {
+    return 'Die alte Datei liegt weiterhin unter:\n$path\nStelle ein Backup wieder her, um deine Server zurückzubekommen.';
+  }
+
+  @override
+  String get storeKeyLostAsk =>
+      'Der Schlüssel, mit dem die Daten von ServerBox verschlüsselt sind, ist nicht im Schlüsselspeicher des Systems. Ist der Schlüsselspeicher oder Schlüsselbund nur gerade nicht verfügbar, etwa noch nicht entsperrt, versuche es erneut. Andernfalls kann ServerBox ohne Daten starten; die alte Datei bleibt erhalten.';
+
+  @override
+  String get storeKeyLostStartEmpty => 'Ohne Daten starten';
+
+  @override
+  String get storeVaultFailedAsk =>
+      'Der Schlüsselspeicher des Systems konnte den Schlüssel, mit dem die Daten von ServerBox verschlüsselt sind, nicht entschlüsseln. Ist der Fehler nur einmalig aufgetreten, versuche es erneut, falls nötig nach einem Neustart des Geräts. Tritt er jedes Mal auf, lassen sich die Daten nicht entschlüsseln, und ServerBox kann ohne Daten starten; die alte Datei bleibt erhalten. Ein Start ohne Daten löscht auch das Backup-Passwort, die WebDAV- und GitHub-Zugangsdaten und die gespeicherten sudo-Passwörter.';
+
+  @override
+  String get storeVaultFailedRootHint =>
+      'Auf einem gerooteten Gerät verursacht ein Modul, das den Schlüsselspeicher abfängt (etwa TrickyStore), diesen Fehler. Entferne diese App aus der Zielliste des Moduls und starte dann ohne Daten.';
+
+  @override
+  String get storeUnreadableVaultFailed =>
+      'Der Schlüsselspeicher des Systems konnte den Schlüssel, mit dem die Daten von ServerBox verschlüsselt sind, nicht entschlüsseln. ServerBox hat deshalb die Einträge im Schlüsselspeicher zurückgesetzt und ohne Daten gestartet. Das Backup-Passwort, die WebDAV- und GitHub-Zugangsdaten und die gespeicherten sudo-Passwörter müssen erneut eingegeben werden.';
+
+  @override
+  String get hostCertAuthorities => 'Host-Zertifizierungsstellen';
+
+  @override
+  String get hostCertAuthoritiesTip =>
+      'Ein Host, dessen Zertifikat eine dieser Stellen signiert hat, wird ohne Nachfrage vertraut, wie bei OpenSSHs @cert-authority; andere Hosts werden wie bisher bei der ersten Verbindung abgefragt. Hosts sind kommagetrennte Muster mit * und ?, ! schließt aus; ein anderer Port als 22 wird als [host]:port verglichen.';
+
+  @override
+  String get hostCertAuthorityInvalid =>
+      'Kein unterstützter öffentlicher SSH-Schlüssel (ssh-ed25519, ssh-rsa oder ecdsa-sha2-*)';
+
+  @override
+  String get hostCertAuthorityNoHosts =>
+      'Gib die Hosts an, für die sie bürgt, zum Beispiel *';
+
+  @override
+  String get hostCertAuthorityExists => 'Bereits in der Liste';
 }

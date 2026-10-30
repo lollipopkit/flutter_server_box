@@ -16,7 +16,9 @@ mixin _$BmcState {
 
 /// Null until the first successful discovery.
  RedfishTopology? get topology; BmcSensors get sensors; RedfishFailure? get failure; String? get failureDetail; bool get isBusy;/// Set when the sensor list was cut to `sbm_redfish::MAX_SENSOR_MEMBERS`.
- bool get sensorsTruncated;
+ bool get sensorsTruncated;/// Set while a power action and the confirmation after it run, which is
+/// up to two minutes: no other action is offered meanwhile.
+ bool get isPowering;
 /// Create a copy of BmcState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -27,16 +29,16 @@ $BmcStateCopyWith<BmcState> get copyWith => _$BmcStateCopyWithImpl<BmcState>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BmcState&&(identical(other.topology, topology) || other.topology == topology)&&(identical(other.sensors, sensors) || other.sensors == sensors)&&(identical(other.failure, failure) || other.failure == failure)&&(identical(other.failureDetail, failureDetail) || other.failureDetail == failureDetail)&&(identical(other.isBusy, isBusy) || other.isBusy == isBusy)&&(identical(other.sensorsTruncated, sensorsTruncated) || other.sensorsTruncated == sensorsTruncated));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is BmcState&&(identical(other.topology, topology) || other.topology == topology)&&(identical(other.sensors, sensors) || other.sensors == sensors)&&(identical(other.failure, failure) || other.failure == failure)&&(identical(other.failureDetail, failureDetail) || other.failureDetail == failureDetail)&&(identical(other.isBusy, isBusy) || other.isBusy == isBusy)&&(identical(other.sensorsTruncated, sensorsTruncated) || other.sensorsTruncated == sensorsTruncated)&&(identical(other.isPowering, isPowering) || other.isPowering == isPowering));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,topology,sensors,failure,failureDetail,isBusy,sensorsTruncated);
+int get hashCode => Object.hash(runtimeType,topology,sensors,failure,failureDetail,isBusy,sensorsTruncated,isPowering);
 
 @override
 String toString() {
-  return 'BmcState(topology: $topology, sensors: $sensors, failure: $failure, failureDetail: $failureDetail, isBusy: $isBusy, sensorsTruncated: $sensorsTruncated)';
+  return 'BmcState(topology: $topology, sensors: $sensors, failure: $failure, failureDetail: $failureDetail, isBusy: $isBusy, sensorsTruncated: $sensorsTruncated, isPowering: $isPowering)';
 }
 
 
@@ -47,7 +49,7 @@ abstract mixin class $BmcStateCopyWith<$Res>  {
   factory $BmcStateCopyWith(BmcState value, $Res Function(BmcState) _then) = _$BmcStateCopyWithImpl;
 @useResult
 $Res call({
- RedfishTopology? topology, BmcSensors sensors, RedfishFailure? failure, String? failureDetail, bool isBusy, bool sensorsTruncated
+ RedfishTopology? topology, BmcSensors sensors, RedfishFailure? failure, String? failureDetail, bool isBusy, bool sensorsTruncated, bool isPowering
 });
 
 
@@ -64,7 +66,7 @@ class _$BmcStateCopyWithImpl<$Res>
 
 /// Create a copy of BmcState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? topology = freezed,Object? sensors = null,Object? failure = freezed,Object? failureDetail = freezed,Object? isBusy = null,Object? sensorsTruncated = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? topology = freezed,Object? sensors = null,Object? failure = freezed,Object? failureDetail = freezed,Object? isBusy = null,Object? sensorsTruncated = null,Object? isPowering = null,}) {
   return _then(_self.copyWith(
 topology: freezed == topology ? _self.topology : topology // ignore: cast_nullable_to_non_nullable
 as RedfishTopology?,sensors: null == sensors ? _self.sensors : sensors // ignore: cast_nullable_to_non_nullable
@@ -72,6 +74,7 @@ as BmcSensors,failure: freezed == failure ? _self.failure : failure // ignore: c
 as RedfishFailure?,failureDetail: freezed == failureDetail ? _self.failureDetail : failureDetail // ignore: cast_nullable_to_non_nullable
 as String?,isBusy: null == isBusy ? _self.isBusy : isBusy // ignore: cast_nullable_to_non_nullable
 as bool,sensorsTruncated: null == sensorsTruncated ? _self.sensorsTruncated : sensorsTruncated // ignore: cast_nullable_to_non_nullable
+as bool,isPowering: null == isPowering ? _self.isPowering : isPowering // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
@@ -157,10 +160,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( RedfishTopology? topology,  BmcSensors sensors,  RedfishFailure? failure,  String? failureDetail,  bool isBusy,  bool sensorsTruncated)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( RedfishTopology? topology,  BmcSensors sensors,  RedfishFailure? failure,  String? failureDetail,  bool isBusy,  bool sensorsTruncated,  bool isPowering)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _BmcState() when $default != null:
-return $default(_that.topology,_that.sensors,_that.failure,_that.failureDetail,_that.isBusy,_that.sensorsTruncated);case _:
+return $default(_that.topology,_that.sensors,_that.failure,_that.failureDetail,_that.isBusy,_that.sensorsTruncated,_that.isPowering);case _:
   return orElse();
 
 }
@@ -178,10 +181,10 @@ return $default(_that.topology,_that.sensors,_that.failure,_that.failureDetail,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( RedfishTopology? topology,  BmcSensors sensors,  RedfishFailure? failure,  String? failureDetail,  bool isBusy,  bool sensorsTruncated)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( RedfishTopology? topology,  BmcSensors sensors,  RedfishFailure? failure,  String? failureDetail,  bool isBusy,  bool sensorsTruncated,  bool isPowering)  $default,) {final _that = this;
 switch (_that) {
 case _BmcState():
-return $default(_that.topology,_that.sensors,_that.failure,_that.failureDetail,_that.isBusy,_that.sensorsTruncated);case _:
+return $default(_that.topology,_that.sensors,_that.failure,_that.failureDetail,_that.isBusy,_that.sensorsTruncated,_that.isPowering);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -198,10 +201,10 @@ return $default(_that.topology,_that.sensors,_that.failure,_that.failureDetail,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( RedfishTopology? topology,  BmcSensors sensors,  RedfishFailure? failure,  String? failureDetail,  bool isBusy,  bool sensorsTruncated)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( RedfishTopology? topology,  BmcSensors sensors,  RedfishFailure? failure,  String? failureDetail,  bool isBusy,  bool sensorsTruncated,  bool isPowering)?  $default,) {final _that = this;
 switch (_that) {
 case _BmcState() when $default != null:
-return $default(_that.topology,_that.sensors,_that.failure,_that.failureDetail,_that.isBusy,_that.sensorsTruncated);case _:
+return $default(_that.topology,_that.sensors,_that.failure,_that.failureDetail,_that.isBusy,_that.sensorsTruncated,_that.isPowering);case _:
   return null;
 
 }
@@ -213,7 +216,7 @@ return $default(_that.topology,_that.sensors,_that.failure,_that.failureDetail,_
 
 
 class _BmcState extends BmcState {
-  const _BmcState({this.topology, this.sensors = const BmcSensors(temperatures: [], fans: []), this.failure, this.failureDetail, this.isBusy = false, this.sensorsTruncated = false}): super._();
+  const _BmcState({this.topology, this.sensors = const BmcSensors(temperatures: [], fans: []), this.failure, this.failureDetail, this.isBusy = false, this.sensorsTruncated = false, this.isPowering = false}): super._();
   
 
 /// Null until the first successful discovery.
@@ -224,6 +227,9 @@ class _BmcState extends BmcState {
 @override@JsonKey() final  bool isBusy;
 /// Set when the sensor list was cut to `sbm_redfish::MAX_SENSOR_MEMBERS`.
 @override@JsonKey() final  bool sensorsTruncated;
+/// Set while a power action and the confirmation after it run, which is
+/// up to two minutes: no other action is offered meanwhile.
+@override@JsonKey() final  bool isPowering;
 
 /// Create a copy of BmcState
 /// with the given fields replaced by the non-null parameter values.
@@ -235,16 +241,16 @@ _$BmcStateCopyWith<_BmcState> get copyWith => __$BmcStateCopyWithImpl<_BmcState>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BmcState&&(identical(other.topology, topology) || other.topology == topology)&&(identical(other.sensors, sensors) || other.sensors == sensors)&&(identical(other.failure, failure) || other.failure == failure)&&(identical(other.failureDetail, failureDetail) || other.failureDetail == failureDetail)&&(identical(other.isBusy, isBusy) || other.isBusy == isBusy)&&(identical(other.sensorsTruncated, sensorsTruncated) || other.sensorsTruncated == sensorsTruncated));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BmcState&&(identical(other.topology, topology) || other.topology == topology)&&(identical(other.sensors, sensors) || other.sensors == sensors)&&(identical(other.failure, failure) || other.failure == failure)&&(identical(other.failureDetail, failureDetail) || other.failureDetail == failureDetail)&&(identical(other.isBusy, isBusy) || other.isBusy == isBusy)&&(identical(other.sensorsTruncated, sensorsTruncated) || other.sensorsTruncated == sensorsTruncated)&&(identical(other.isPowering, isPowering) || other.isPowering == isPowering));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,topology,sensors,failure,failureDetail,isBusy,sensorsTruncated);
+int get hashCode => Object.hash(runtimeType,topology,sensors,failure,failureDetail,isBusy,sensorsTruncated,isPowering);
 
 @override
 String toString() {
-  return 'BmcState(topology: $topology, sensors: $sensors, failure: $failure, failureDetail: $failureDetail, isBusy: $isBusy, sensorsTruncated: $sensorsTruncated)';
+  return 'BmcState(topology: $topology, sensors: $sensors, failure: $failure, failureDetail: $failureDetail, isBusy: $isBusy, sensorsTruncated: $sensorsTruncated, isPowering: $isPowering)';
 }
 
 
@@ -255,7 +261,7 @@ abstract mixin class _$BmcStateCopyWith<$Res> implements $BmcStateCopyWith<$Res>
   factory _$BmcStateCopyWith(_BmcState value, $Res Function(_BmcState) _then) = __$BmcStateCopyWithImpl;
 @override @useResult
 $Res call({
- RedfishTopology? topology, BmcSensors sensors, RedfishFailure? failure, String? failureDetail, bool isBusy, bool sensorsTruncated
+ RedfishTopology? topology, BmcSensors sensors, RedfishFailure? failure, String? failureDetail, bool isBusy, bool sensorsTruncated, bool isPowering
 });
 
 
@@ -272,7 +278,7 @@ class __$BmcStateCopyWithImpl<$Res>
 
 /// Create a copy of BmcState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? topology = freezed,Object? sensors = null,Object? failure = freezed,Object? failureDetail = freezed,Object? isBusy = null,Object? sensorsTruncated = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? topology = freezed,Object? sensors = null,Object? failure = freezed,Object? failureDetail = freezed,Object? isBusy = null,Object? sensorsTruncated = null,Object? isPowering = null,}) {
   return _then(_BmcState(
 topology: freezed == topology ? _self.topology : topology // ignore: cast_nullable_to_non_nullable
 as RedfishTopology?,sensors: null == sensors ? _self.sensors : sensors // ignore: cast_nullable_to_non_nullable
@@ -280,6 +286,7 @@ as BmcSensors,failure: freezed == failure ? _self.failure : failure // ignore: c
 as RedfishFailure?,failureDetail: freezed == failureDetail ? _self.failureDetail : failureDetail // ignore: cast_nullable_to_non_nullable
 as String?,isBusy: null == isBusy ? _self.isBusy : isBusy // ignore: cast_nullable_to_non_nullable
 as bool,sensorsTruncated: null == sensorsTruncated ? _self.sensorsTruncated : sensorsTruncated // ignore: cast_nullable_to_non_nullable
+as bool,isPowering: null == isPowering ? _self.isPowering : isPowering // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }

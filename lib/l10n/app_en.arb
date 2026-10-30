@@ -754,6 +754,14 @@
   "@sshKeyRecommended": {
     "description": "User-facing label or message for SSH key recommended."
   },
+  "rememberKeyPassphrase": "Remember key passphrases",
+  "@rememberKeyPassphrase": {
+    "description": "Setting: keep SSH key passphrases in the system keychain."
+  },
+  "rememberKeyPassphraseTip": "Keep the passphrases of encrypted private keys in this device's system keychain, so they are not asked for after a restart. The keys stay encrypted in backups. Turning this off removes the saved passphrases.",
+  "@rememberKeyPassphraseTip": {
+    "description": "Help text for the rememberKeyPassphrase setting."
+  },
   "sshKeyUnlockTip": "Enter the passphrase for the private key [{name}].",
   "@sshKeyUnlockTip": {
     "description": "Help text for the SSH key unlock setting or action.",
@@ -9273,5 +9281,66 @@
   "handedness": "Handedness",
   "handednessLeft": "Left hand",
   "handednessRight": "Right hand",
-  "handednessTip": "On the side of the hand you hold it in, the tabs stand in the column beside the status bar, as the system's own bars do."
+  "handednessTip": "On the side of the hand you hold it in, the tabs stand in the column beside the status bar, as the system's own bars do.",
+  "storeUnreadableTitle": "Previous data could not be opened",
+  "@storeUnreadableTitle": {
+    "description": "Title of the dialog shown after launch when the app's encrypted database could not be opened and the app started with no data."
+  },
+  "storeUnreadableKeyLost": "The key that encrypts ServerBox's data is no longer in the system keystore. This happens when the system resets the keystore, when the keyring service is not available, or when the app's data was copied from another device, for example by a phone migration tool. The data cannot be decrypted without that key, so ServerBox started with no data.",
+  "@storeUnreadableKeyLost": {
+    "description": "Why the database could not be opened: the encryption key is missing from the system keystore."
+  },
+  "storeUnreadableKeyRejected": "The key in the system keystore does not open ServerBox's data: the data was encrypted with another key, or the file is damaged. ServerBox started with no data.",
+  "@storeUnreadableKeyRejected": {
+    "description": "Why the database could not be opened: the stored key does not decrypt it, or the file is damaged."
+  },
+  "storeUnreadableKept": "The old file is kept at:\n{path}\nRestore a backup to get your servers back.",
+  "@storeUnreadableKept": {
+    "description": "Where the unreadable database file was moved to, and how to get the data back.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "storeKeyLostAsk": "The key that encrypts ServerBox's data is not in the system keystore. If the keystore or keyring is only unavailable right now, for example not yet unlocked, try again. Otherwise ServerBox can start with no data; the old file is kept.",
+  "@storeKeyLostAsk": {
+    "description": "Shown at launch, before anything is decided, when the database exists but the system keystore holds no key for it."
+  },
+  "storeKeyLostStartEmpty": "Start with no data",
+  "@storeKeyLostStartEmpty": {
+    "description": "Button: set the unreadable database aside and start the app with no data."
+  },
+  "storeVaultFailedAsk": "The system keystore could not decrypt the key that encrypts ServerBox's data. If the keystore failed only this once, try again, if needed after restarting the device. If it fails every time, the data cannot be decrypted, and ServerBox can start with no data; the old file is kept. Starting with no data also clears the backup password, the WebDAV and GitHub credentials and the saved sudo passwords.",
+  "@storeVaultFailedAsk": {
+    "description": "Asked at launch when the system keystore cannot decrypt the key of the existing database: retry, or start with no data."
+  },
+  "storeVaultFailedRootHint": "On a rooted device, a module that intercepts the keystore (such as TrickyStore) causes this. Remove this app from the module's target list, then start with no data.",
+  "@storeVaultFailedRootHint": {
+    "description": "Shown on Android under storeVaultFailedAsk: the usual cause is a root module that emulates the keystore for this app."
+  },
+  "storeUnreadableVaultFailed": "The system keystore could not decrypt the key that encrypts ServerBox's data, so ServerBox reset the keystore entries and started with no data. The backup password, the WebDAV and GitHub credentials and the saved sudo passwords have to be entered again.",
+  "@storeUnreadableVaultFailed": {
+    "description": "Why the database could not be opened: the system keystore could not decrypt its key, and its entries were reset."
+  },
+  "hostCertAuthorities": "Host certificate authorities",
+  "@hostCertAuthorities": {
+    "description": "Settings row: the list of SSH certificate authorities trusted to sign host keys."
+  },
+  "hostCertAuthoritiesTip": "A host whose certificate one of these signed is trusted without asking, as OpenSSH's @cert-authority; other hosts are asked about on first connection, as before. Hosts are comma-separated patterns with * and ?, and ! to exclude; a port other than 22 is matched as [host]:port.",
+  "@hostCertAuthoritiesTip": {
+    "description": "Explains what a trusted host certificate authority does and the host pattern syntax."
+  },
+  "hostCertAuthorityInvalid": "Not a supported SSH public key (ssh-ed25519, ssh-rsa or ecdsa-sha2-*)",
+  "@hostCertAuthorityInvalid": {
+    "description": "Error when the pasted text is not a supported SSH public key."
+  },
+  "hostCertAuthorityNoHosts": "Enter the hosts it vouches for, for example *",
+  "@hostCertAuthorityNoHosts": {
+    "description": "Error when the hosts field of a host certificate authority is empty."
+  },
+  "hostCertAuthorityExists": "Already in the list",
+  "@hostCertAuthorityExists": {
+    "description": "Error when the same certificate authority is already in the list for the same hosts."
+  }
 }

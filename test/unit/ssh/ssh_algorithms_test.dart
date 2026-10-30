@@ -32,12 +32,79 @@ void main() {
 
   test('which no longer contains the retired spellings', () {
     expect(names(modern.hostkey), isNot(contains('ssh-rsa')));
+    expect(names(modern.hostkey), isNot(contains('ssh-rsa-cert-v01@openssh.com')));
     expect(
       names(modern.kex),
       isNot(contains('diffie-hellman-group14-sha1')),
     );
     expect(names(modern.cipher), isNot(contains('aes256-cbc')));
     expect(names(modern.mac), isNot(contains('hmac-sha1')));
+  });
+
+  // #1783: a server whose only host key is a certificate.
+  test('host certificates are offered, before the keys they certify', () {
+    final hostkey = names(modern.hostkey);
+    expect(
+      hostkey,
+      containsAll(const [
+        'ssh-ed25519-cert-v01@openssh.com',
+        'ecdsa-sha2-nistp256-cert-v01@openssh.com',
+        'rsa-sha2-512-cert-v01@openssh.com',
+      ]),
+    );
+    expect(
+      hostkey.indexOf('ssh-ed25519-cert-v01@openssh.com'),
+      lessThan(hostkey.indexOf('ssh-ed25519')),
+    );
+  });
+
+  // OpenSSH's `order_hostkeyalgs`: what can be relied on goes first, unless
+  // the first choice's key is already the one pinned.
+  group('ordered by what is trusted for the host', () {
+    bool cert(String n) => n.endsWith('-cert-v01@openssh.com');
+    List<String> hostkey({bool ca = false, Set<String> pinned = const {}}) =>
+        names(SshAlgorithms.of(
+          plain,
+          preferCertificates: ca,
+          pinnedKeyTypes: pinned,
+        ).hostkey);
+    final base = names(modern.hostkey);
+
+    test('nothing trusted: as it is', () {
+      expect(hostkey(), base);
+    });
+
+    test('the first choice pinned: as it is, authority or not', () {
+      expect(hostkey(pinned: {'ssh-ed25519'}), base);
+      expect(hostkey(ca: true, pinned: {'ssh-ed25519'}), base);
+    });
+
+    test('another key pinned: it, and its certificate, first', () {
+      final ordered = hostkey(pinned: {'rsa-sha2-512'});
+      expect(ordered.take(2), [
+        'rsa-sha2-512-cert-v01@openssh.com',
+        'rsa-sha2-512',
+      ]);
+      expect(ordered.skip(2), [
+        for (final n in base)
+          if (n != 'rsa-sha2-512' && n != 'rsa-sha2-512-cert-v01@openssh.com') n,
+      ]);
+    });
+
+    test('an authority: every certificate first, each half in its order', () {
+      final ordered = hostkey(ca: true);
+      final firstKey = ordered.indexWhere((n) => !cert(n));
+      expect(firstKey, greaterThan(0));
+      expect(ordered.take(firstKey), base.where(cert));
+      expect(ordered.skip(firstKey), base.where((n) => !cert(n)));
+    });
+
+    test('only the host keys move', () {
+      final ordered = SshAlgorithms.of(plain, preferCertificates: true);
+      expect(names(ordered.kex), names(modern.kex));
+      expect(names(ordered.cipher), names(modern.cipher));
+      expect(names(ordered.mac), names(modern.mac));
+    });
   });
 
   test('opting in appends them after the modern ones', () {
@@ -62,6 +129,7 @@ void main() {
     // The host key that motivated this is last, so it is only reached when the
     // server offers nothing newer.
     expect(names(offered.hostkey).last, 'ssh-rsa');
+    expect(names(offered.hostkey), contains('ssh-rsa-cert-v01@openssh.com'));
     expect(
       names(offered.kex),
       containsAll(const [

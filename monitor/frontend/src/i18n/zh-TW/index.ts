@@ -634,6 +634,7 @@ const zh_TW = {
 	bmcInvalidUrl: '位址必須是 https://host 或 https://host:port，且不可包含路徑。',
 	bmcInvalidUsername: '必須填寫使用者名稱。',
 	bmcInvalidCertificate: '憑證指紋不是 SHA-256 指紋。',
+	bmcPasswordAgain: '位址已變更，請重新輸入密碼。',
 	bmcStateOn: '開啟',
 	bmcStateOff: '關閉',
 	bmcStatePoweringOn: '開機中',

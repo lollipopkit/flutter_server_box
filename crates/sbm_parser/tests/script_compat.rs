@@ -1212,6 +1212,8 @@ fn windows_custom_command_launch_failure_is_its_output() {
 fn windows_custom_commands_have_time_and_output_bounds() {
     use std::io::Read;
     use std::process::{Command, Stdio};
+    use std::sync::{Arc, Mutex};
+    use std::thread::JoinHandle;
     use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
     let nonce = SystemTime::now()
@@ -1279,18 +1281,21 @@ fn windows_custom_commands_have_time_and_output_bounds() {
         .stderr(Stdio::piped())
         .spawn()
         .unwrap();
-    let mut stdout = child.stdout.take().unwrap();
-    let mut stderr = child.stderr.take().unwrap();
-    let stdout_reader = std::thread::spawn(move || {
-        let mut bytes = Vec::new();
-        stdout.read_to_end(&mut bytes).unwrap();
-        bytes
-    });
-    let stderr_reader = std::thread::spawn(move || {
-        let mut bytes = Vec::new();
-        stderr.read_to_end(&mut bytes).unwrap();
-        bytes
-    });
+    // Read into buffers shared as they fill: a run that hangs can still show
+    // how far it got, without waiting on pipes a surviving child may hold.
+    fn drain(mut pipe: impl Read + Send + 'static) -> (Arc<Mutex<Vec<u8>>>, JoinHandle<()>) {
+        let bytes = Arc::new(Mutex::new(Vec::new()));
+        let sink = bytes.clone();
+        let reader = std::thread::spawn(move || {
+            let mut chunk = [0u8; 8192];
+            while let Ok(n @ 1..) = pipe.read(&mut chunk) {
+                sink.lock().unwrap().extend_from_slice(&chunk[..n]);
+            }
+        });
+        (bytes, reader)
+    }
+    let (stdout, stdout_reader) = drain(child.stdout.take().unwrap());
+    let (stderr, stderr_reader) = drain(child.stderr.take().unwrap());
 
     // Hosted Windows runners vary widely in nested PowerShell startup and
     // taskkill time. The generated deadline and the missing `late` output
@@ -1303,12 +1308,28 @@ fn windows_custom_commands_have_time_and_output_bounds() {
         }
         if started.elapsed() > HARD_TIMEOUT {
             child.kill().ok();
-            panic!("generated PowerShell custom-command runner did not stop");
+            // The runner prints a command's marker before starting it and its
+            // output once done, so the last line names where it stopped.
+            let lines = |bytes: &Mutex<Vec<u8>>| {
+                String::from_utf8_lossy(&bytes.lock().unwrap())
+                    .lines()
+                    .map(|l| l.chars().take(120).collect::<String>())
+                    .collect::<Vec<_>>()
+                    .join("\n")
+            };
+            panic!(
+                "generated PowerShell custom-command runner did not stop\n\
+                 --- stdout\n{}\n--- stderr\n{}",
+                lines(&stdout),
+                lines(&stderr)
+            );
         }
         std::thread::sleep(Duration::from_millis(50));
     };
-    let stdout = stdout_reader.join().unwrap();
-    let stderr = stderr_reader.join().unwrap();
+    stdout_reader.join().unwrap();
+    stderr_reader.join().unwrap();
+    let stdout = std::mem::take(&mut *stdout.lock().unwrap());
+    let stderr = std::mem::take(&mut *stderr.lock().unwrap());
     let large_finished = home.join("large.done").exists();
     std::fs::remove_dir_all(&home).ok();
 

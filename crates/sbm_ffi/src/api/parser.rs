@@ -104,7 +104,11 @@ pub fn command_specs(system: String) -> Result<Vec<CommandSpec>, String> {
         .collect())
 }
 
+/// Once per process, however many isolates load the library: each
+/// `RustLib.init` calls this — the transfer worker's, once per transfer — and
+/// every setup wraps the panic hook in another layer that captures a backtrace.
 #[flutter_rust_bridge::frb(init)]
 pub fn init_app() {
-    flutter_rust_bridge::setup_default_user_utils();
+    static ONCE: std::sync::Once = std::sync::Once::new();
+    ONCE.call_once(flutter_rust_bridge::setup_default_user_utils);
 }

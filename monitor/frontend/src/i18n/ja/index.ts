@@ -634,6 +634,7 @@ const ja = {
 	bmcInvalidUrl: 'アドレスは https://host または https://host:port の形式で、パスは含められません。',
 	bmcInvalidUsername: 'ユーザー名は必須です。',
 	bmcInvalidCertificate: '証明書のフィンガープリントが SHA-256 ではありません。',
+	bmcPasswordAgain: 'アドレスが変更されました。パスワードを再入力してください。',
 	bmcStateOn: 'オン',
 	bmcStateOff: 'オフ',
 	bmcStatePoweringOn: '電源投入中',

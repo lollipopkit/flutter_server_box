@@ -45,6 +45,8 @@ export function bmcErrorText(e: unknown): string {
       return ll.bmcInvalidUsername()
     case 'invalidCertificate':
       return ll.bmcInvalidCertificate()
+    case 'passwordRequired':
+      return ll.bmcPasswordAgain()
     default:
       return failure ? `${failure}${typeof e.body?.detail === 'string' ? `: ${e.body.detail}` : ''}` : e.message
   }

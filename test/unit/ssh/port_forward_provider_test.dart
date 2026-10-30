@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io';
 
 import 'package:dartssh2/dartssh2.dart';
@@ -17,6 +16,7 @@ import 'package:server_box/data/res/status.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/port_forward.dart';
 
+import '../../helpers/idle_ssh_socket.dart';
 import '../../helpers/spi_fixture.dart';
 import '../../helpers/test_db.dart';
 
@@ -42,7 +42,7 @@ void main() {
     );
     store.put(config);
 
-    final socket = _IdleSshSocket();
+    final socket = IdleSshSocket();
     final client = SSHClient(socket, username: 'test');
     final serverState = ServerState(
       spi: spiFixture(name: 'server', id: serverId, ip: '127.0.0.1'),
@@ -117,7 +117,7 @@ void main() {
       );
       store.put(config);
 
-      final socket = _IdleSshSocket();
+      final socket = IdleSshSocket();
       final client = SSHClient(socket, username: 'test');
       final server = _FixedServerNotifier(
         ServerState(
@@ -270,36 +270,6 @@ Future<int> _freeLoopbackPort() async {
   final port = socket.port;
   await socket.close();
   return port;
-}
-
-class _IdleSshSocket implements SSHSocket {
-  final _incoming = StreamController<Uint8List>();
-  final _outgoing = StreamController<List<int>>();
-  final _done = Completer<void>();
-
-  @override
-  Stream<Uint8List> get stream => _incoming.stream;
-
-  @override
-  StreamSink<List<int>> get sink => _outgoing.sink;
-
-  @override
-  Future<void> get done => _done.future;
-
-  @override
-  Future<void> close() async {
-    if (!_done.isCompleted) _done.complete();
-    await _incoming.close();
-    await _outgoing.close();
-  }
-
-  @override
-  void destroy() {
-    unawaited(close());
-  }
-
-  @override
-  Future<void> flush() => Future.value();
 }
 
 class _FixedServerNotifier extends ServerNotifier {

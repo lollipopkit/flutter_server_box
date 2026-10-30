@@ -275,6 +275,20 @@ abstract final class MethodChans {
     }
   }
 
+  /// Whether this build's APNs tokens are for the development environment,
+  /// read from the provisioning profile it was signed with. Null off iOS, or
+  /// when the native side cannot say.
+  static Future<bool?> apnsSandbox() async {
+    if (!isIOS) return null;
+    try {
+      final env = await _channel.invokeMethod<String>('apsEnvironment');
+      return env == null ? null : env == 'development';
+    } catch (e, s) {
+      Loggers.app.warning('Failed to read the APNs environment', e, s);
+      return null;
+    }
+  }
+
   // iOS Live Activities controls
 
   /// Whether iOS would let this app show a Live Activity right now.

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/llm/screen.dart';
 import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/dist.dart';
@@ -130,9 +131,13 @@ extension on SessionTabsController<_SshSession> {
 
 class _SSHTabPageState extends ConsumerState<SSHTabPage>
     with AutomaticKeepAliveClientMixin {
+  // Named for what the page is, a list to pick from: "Add" with a plus read
+  // as a button that did nothing (#1808).
   late final _sessions = SessionTabsController<_SshSession>(
-    leadingName: libL10n.add,
+    leadingName: libL10n.select,
   );
+
+  late final VoidCallback _hideFromAgent;
 
   /// Notified when the picker's sort order changes. That order lives in the
   /// settings store rather than a provider, so nothing else would tell the
@@ -171,6 +176,12 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
   @override
   void initState() {
     super.initState();
+    _hideFromAgent = AgentScreen.terminal(
+      () => switch (_sessions.current) {
+        final tab? => tab.data.page.args.source,
+        null => null,
+      },
+    );
     // Here and not lazily: [dispose] touches it, and `ref` is gone by then.
     _floating = ValueNotifier(ref.read(terminalShellProvider)?.session);
     Rootfs.removed.addListener(_onRootfsRemoved);
@@ -196,6 +207,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
   @override
   void dispose() {
     Rootfs.removed.removeListener(_onRootfsRemoved);
+    _hideFromAgent();
     _sessions.dispose();
     _sortVersion.dispose();
     _search.dispose();
@@ -312,6 +324,8 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
       builder: () => SessionTabBar(
         names: _sessions.names,
         index: _sessions.index,
+        // The name alone: an icon beside it read as a button.
+        leadingIcon: null,
         onTap: _sessions.select,
         onClose: _confirmClose,
         detailOf: _sessionAddr,
@@ -885,9 +899,6 @@ extension _Actions on _SSHTabPageState {
       target: NavTarget.root,
     ),
   );
-
-  /// The rail's own way to add a server. On one screen that is the picker's
-  /// floating button; a rail has no room for one.
 
   /// A sheet rather than a dialog, which is what every other list of choices
   /// in the app is now — see `showRowsSheet`. A dialog for this put a box in

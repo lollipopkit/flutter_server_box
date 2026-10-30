@@ -10,6 +10,7 @@ import 'package:server_box/data/model/app/motion.dart';
 import 'package:server_box/data/model/app/server_sort.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/app/tray.dart';
+import 'package:server_box/data/model/server/host_cert_authority.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/res/default.dart';
 import 'package:server_box/data/store/field_prop.dart';
@@ -148,6 +149,22 @@ class SettingStore extends SqliteStore with ThemeSettings {
       }
       return <String, String>{};
     },
+  );
+
+  /// Certificate authorities trusted to sign host keys, as OpenSSH's
+  /// `@cert-authority` lines — see [HostCertAuthority].
+  late final sshHostCertAuthorities = listProperty<HostCertAuthority>(
+    'sshHostCertAuthorities',
+    // Row by row: one a sync or a restore brought in malformed is dropped,
+    // not every authority with it.
+    fromObj: (raw) => raw is List
+        ? [
+            for (final item in raw)
+              if (item is Map && item['publicKey'] is String)
+                HostCertAuthority.fromJson(Map<String, dynamic>.from(item)),
+          ]
+        : null,
+    toObj: (list) => list?.map((ca) => ca.toJson()).toList(),
   );
 
   /// Which profile a terminal opens in, by `LinuxProfile.id`.
@@ -481,6 +498,9 @@ class SettingStore extends SqliteStore with ThemeSettings {
   static const deviceLocalKeys = {
     'agentLocalExec',
     'liveActivity',
+    // Whether this device's vault keeps key passphrases: the vault is not in
+    // the backup, so the answer is not either.
+    'rememberKeyPassphrase',
     // Where this device installed the selected theme, and its background
     // inside that: the backup carries the themes themselves (`themes`), and a
     // restore points these at this device's copy — `ThemeBackup.reselect`.
@@ -630,6 +650,13 @@ class SettingStore extends SqliteStore with ThemeSettings {
 
   /// ssh page
   late final sshWakeLock = propertyDefault('sshWakeLock', true);
+
+  /// Keep the passphrases of encrypted private keys in the system vault, so
+  /// they are not asked for again after a restart. See `KeyPassphrases`.
+  late final rememberKeyPassphrase = propertyDefault(
+    'rememberKeyPassphrase',
+    true,
+  );
 
   /// Notify when a program in a terminal out of sight is waiting for the
   /// user, finishes or fails (OSC 7501, OSC 9;4), or a long command ends

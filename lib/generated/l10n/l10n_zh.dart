@@ -573,6 +573,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sshKeyRecommended => '推荐';
 
   @override
+  String get rememberKeyPassphrase => '记住私钥口令';
+
+  @override
+  String get rememberKeyPassphraseTip =>
+      '将加密私钥的口令保存在本设备的系统钥匙串中，重启后无需再次输入。备份中的私钥仍保持加密。关闭后会删除已保存的口令。';
+
+  @override
   String sshKeyUnlockTip(String name) {
     return '请输入私钥 [$name] 的口令。';
   }
@@ -6682,6 +6689,58 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get handednessTip => '选择的手所在一侧有系统竖栏时，标签栏放在状态栏下方的竖栏里，和系统自带的栏一致。';
+
+  @override
+  String get storeUnreadableTitle => '无法打开之前的数据';
+
+  @override
+  String get storeUnreadableKeyLost =>
+      '系统密钥库中已没有用于加密 ServerBox 数据的密钥。系统重置了密钥库、密钥环服务不可用，或通过换机工具等方式从其他设备复制了应用数据时，会出现这种情况。缺少该密钥就无法解密数据，因此 ServerBox 以空数据启动。';
+
+  @override
+  String get storeUnreadableKeyRejected =>
+      '系统密钥库中的密钥无法打开 ServerBox 的数据：数据由其他密钥加密，或文件已损坏。ServerBox 以空数据启动。';
+
+  @override
+  String storeUnreadableKept(String path) {
+    return '旧文件保留在：\n$path\n恢复备份即可找回服务器。';
+  }
+
+  @override
+  String get storeKeyLostAsk =>
+      '系统密钥库中没有用于加密 ServerBox 数据的密钥。如果密钥库或密钥环只是暂时不可用（例如尚未解锁），请重试。否则可以以空数据启动，旧文件会保留。';
+
+  @override
+  String get storeKeyLostStartEmpty => '以空数据启动';
+
+  @override
+  String get storeVaultFailedAsk =>
+      '系统密钥库无法解密用于加密 ServerBox 数据的密钥。如果只是密钥库这一次出错，请重试，必要时先重启设备。如果每次都失败，数据将无法解密，可以以空数据启动，旧文件会保留。以空数据启动也会清除备份密码、WebDAV 和 GitHub 凭据以及已保存的 sudo 密码。';
+
+  @override
+  String get storeVaultFailedRootHint =>
+      '在已 root 的设备上，拦截系统密钥库的模块（例如 TrickyStore）会导致此问题。请把本应用移出该模块的目标列表，然后以空数据启动。';
+
+  @override
+  String get storeUnreadableVaultFailed =>
+      '系统密钥库无法解密用于加密 ServerBox 数据的密钥，因此 ServerBox 重置了密钥库中的条目并以空数据启动。备份密码、WebDAV 和 GitHub 凭据以及已保存的 sudo 密码需要重新输入。';
+
+  @override
+  String get hostCertAuthorities => '主机证书颁发机构';
+
+  @override
+  String get hostCertAuthoritiesTip =>
+      '由这些 CA 签发证书的主机将直接被信任，不再询问，等同于 OpenSSH 的 @cert-authority；其他主机仍在首次连接时询问。主机为逗号分隔的匹配规则，支持 * 和 ?，以 ! 排除；非 22 端口按 [host]:port 匹配。';
+
+  @override
+  String get hostCertAuthorityInvalid =>
+      '不是支持的 SSH 公钥（ssh-ed25519、ssh-rsa 或 ecdsa-sha2-*）';
+
+  @override
+  String get hostCertAuthorityNoHosts => '请填写它担保的主机，例如 *';
+
+  @override
+  String get hostCertAuthorityExists => '已在列表中';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -7250,6 +7309,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get sshKeyRecommended => '推薦';
+
+  @override
+  String get rememberKeyPassphrase => '記住私鑰密語';
+
+  @override
+  String get rememberKeyPassphraseTip =>
+      '將加密私鑰的密語保存在本裝置的系統鑰匙圈中，重新啟動後無需再次輸入。備份中的私鑰仍保持加密。關閉後會刪除已保存的密語。';
 
   @override
   String sshKeyUnlockTip(String name) {
@@ -13366,4 +13432,56 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get handednessTip => '選擇的手所在一側有系統直欄時，分頁列放在狀態列下方的直欄裡，與系統內建的列一致。';
+
+  @override
+  String get storeUnreadableTitle => '無法開啟先前的資料';
+
+  @override
+  String get storeUnreadableKeyLost =>
+      '系統金鑰庫中已沒有用於加密 ServerBox 資料的金鑰。系統重設了金鑰庫、金鑰圈服務無法使用，或透過換機工具等方式從其他裝置複製了應用程式資料時，就會發生這種情況。缺少該金鑰便無法解密資料，因此 ServerBox 以空白資料啟動。';
+
+  @override
+  String get storeUnreadableKeyRejected =>
+      '系統金鑰庫中的金鑰無法開啟 ServerBox 的資料：資料由其他金鑰加密，或檔案已損毀。ServerBox 以空白資料啟動。';
+
+  @override
+  String storeUnreadableKept(String path) {
+    return '舊檔案保留在：\n$path\n還原備份即可找回伺服器。';
+  }
+
+  @override
+  String get storeKeyLostAsk =>
+      '系統金鑰庫中沒有用於加密 ServerBox 資料的金鑰。如果金鑰庫或金鑰環只是暫時無法使用（例如尚未解鎖），請重試。否則可以以空資料啟動，舊檔案會保留。';
+
+  @override
+  String get storeKeyLostStartEmpty => '以空資料啟動';
+
+  @override
+  String get storeVaultFailedAsk =>
+      '系統金鑰庫無法解密用於加密 ServerBox 資料的金鑰。如果只是金鑰庫這一次出錯，請重試，必要時先重新啟動裝置。如果每次都失敗，資料將無法解密，可以以空資料啟動，舊檔案會保留。以空資料啟動也會清除備份密碼、WebDAV 和 GitHub 憑證以及已儲存的 sudo 密碼。';
+
+  @override
+  String get storeVaultFailedRootHint =>
+      '在已 root 的裝置上，攔截系統金鑰庫的模組（例如 TrickyStore）會導致此問題。請將本應用程式移出該模組的目標清單，然後以空資料啟動。';
+
+  @override
+  String get storeUnreadableVaultFailed =>
+      '系統金鑰庫無法解密用於加密 ServerBox 資料的金鑰，因此 ServerBox 重設了金鑰庫中的項目並以空資料啟動。備份密碼、WebDAV 和 GitHub 憑證以及已儲存的 sudo 密碼需要重新輸入。';
+
+  @override
+  String get hostCertAuthorities => '主機憑證頒發機構';
+
+  @override
+  String get hostCertAuthoritiesTip =>
+      '由這些 CA 簽發憑證的主機將直接被信任，不再詢問，等同於 OpenSSH 的 @cert-authority；其他主機仍在首次連線時詢問。主機為逗號分隔的比對規則，支援 * 和 ?，以 ! 排除；非 22 連接埠按 [host]:port 比對。';
+
+  @override
+  String get hostCertAuthorityInvalid =>
+      '不是支援的 SSH 公鑰（ssh-ed25519、ssh-rsa 或 ecdsa-sha2-*）';
+
+  @override
+  String get hostCertAuthorityNoHosts => '請填寫它擔保的主機，例如 *';
+
+  @override
+  String get hostCertAuthorityExists => '已在清單中';
 }

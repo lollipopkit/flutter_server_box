@@ -45,7 +45,7 @@ void main() {
       expect(
         shell.writes,
         contains(
-          r"list-windows -t '$0' -F '#{window_id}	#{window_index}	#{q:window_name}	#{window_active}'",
+          r"list-windows -F '#{window_id}	#{window_index}	#{q:window_name}	#{window_active}'",
         ),
       );
       expect(shell.writes, contains("capture-pane -p -e -S -1000 -t '%0'"));
@@ -162,6 +162,80 @@ void main() {
       expect(terminal.buffer.cursorY, 2);
 
       await subscription.cancel();
+      await client.dispose();
+      shell.close();
+    });
+
+    test('replays a pane taller than the terminal to fit it', () async {
+      final shell = _FakeTmuxShell();
+      shell.paneHeight = 10;
+      shell.historyLimit = 7;
+      shell.captureOutput = [
+        for (var i = 0; i < 7; i++) 'history $i',
+        for (var i = 0; i < 10; i++) 'screen $i',
+      ].join('\n');
+      final client = TmuxControlClient(shell, maxScrollbackLines: 100);
+      final initialized = client.initialize(captureActivePane: false);
+      shell.emit('\x1bP1000p%begin 1 100 1\n%end 1 100 1\n');
+      await initialized;
+      await _pumpEventQueue();
+      final output = <List<int>>[];
+      final subscription = client.paneOutput.listen(
+        (event) => output.add(event.data),
+      );
+
+      // The terminal shrank; tmux still reports the old pane height.
+      client.resizeWindow(80, 4);
+      await client.refreshState(captureActivePane: true);
+      await _pumpEventQueue();
+
+      final terminal = Terminal(maxLines: 100)..resize(80, 4);
+      terminal.write(utf8.decode(output.last));
+
+      // The cursor's row (2) and the three below it are the screen; the rows
+      // above it are history, in order, and nothing is written over another.
+      expect(terminal.buffer.height, 13);
+      expect(terminal.buffer.lines[0].getText(), '%0 history 0');
+      for (var i = 1; i < 7; i++) {
+        expect(terminal.buffer.lines[i].getText(), 'history $i');
+      }
+      for (var i = 0; i < 6; i++) {
+        expect(terminal.buffer.lines[7 + i].getText(), 'screen $i');
+      }
+      expect(terminal.buffer.cursorY, 0);
+      expect(terminal.buffer.cursorX, 5);
+
+      await subscription.cancel();
+      await client.dispose();
+      shell.close();
+    });
+
+    test('a refresh sends its commands without waiting on each', () async {
+      final shell = _FakeTmuxShell();
+      final client = TmuxControlClient(shell);
+      final initialized = client.initialize(captureActivePane: false);
+      shell.emit('\x1bP1000p%begin 1 100 1\n%end 1 100 1\n');
+      await initialized;
+      await _pumpEventQueue();
+
+      shell.holdAnswers = true;
+      final writesBefore = shell.writes.length;
+      final refreshed = client.refreshState(captureActivePane: true);
+      await _pumpEventQueue();
+      // The state is asked for at once; the capture waits for its answers.
+      expect(shell.writes.skip(writesBefore), hasLength(6));
+
+      shell.releaseAnswers();
+      await _pumpEventQueue();
+      final capture = shell.writes.skip(writesBefore + 6).toList();
+      expect(capture, [
+        "refresh-client -A '%0:pause'",
+        "capture-pane -p -e -S -1000 -t '%0'",
+      ]);
+
+      shell.holdAnswers = false;
+      shell.releaseAnswers();
+      await refreshed;
       await client.dispose();
       shell.close();
     });
@@ -433,7 +507,7 @@ void main() {
       expect(
         shell.writes,
         contains(
-          'list-panes -t \'@0\' -F \'#{pane_id}\t#{pane_index}\t#{pane_active}'
+          'list-panes -F \'#{pane_id}\t#{pane_index}\t#{pane_active}'
           '\t#{q:pane_title}\t#{q:pane_current_command}'
           '\t#{cursor_x}\t#{cursor_y}\t#{pane_height}\'',
         ),
@@ -788,6 +862,10 @@ final class _FakeTmuxShell implements ShellSession {
   bool exitBeforeNextCommandResult = false;
   bool dropBeforeNextCommandResult = false;
   bool onlyOneWindow = false;
+
+  /// Leaves commands unanswered, as a slow link does, until [releaseAnswers].
+  bool holdAnswers = false;
+  final _held = <String>[];
   String captureOutput = 'main prompt';
   int paneHeight = 24;
   String paneModeOutput =
@@ -827,7 +905,18 @@ final class _FakeTmuxShell implements ShellSession {
       emit('%exit\n');
       return;
     }
+    if (holdAnswers) {
+      _held.add(command);
+      return;
+    }
     _answer(command);
+  }
+
+  /// Answers the commands held back by [holdAnswers], in order.
+  void releaseAnswers() {
+    final held = [..._held];
+    _held.clear();
+    held.forEach(_answer);
   }
 
   @override

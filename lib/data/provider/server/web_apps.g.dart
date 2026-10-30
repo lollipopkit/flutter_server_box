@@ -67,7 +67,7 @@ final class WebAppsNotifierProvider
   }
 }
 
-String _$webAppsNotifierHash() => r'c93b3d6dd42ee797607b512f7013ffd62dd100c0';
+String _$webAppsNotifierHash() => r'd62a9d20a29f29eaf20d0b9d7ccb51b239ca8844';
 
 /// The web apps a server's `monitor` agent deployed (its `stacks` feature)
 /// and the apps installed on its desk (`desk`), read while something shows

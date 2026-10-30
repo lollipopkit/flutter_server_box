@@ -616,6 +616,13 @@ class AppLocalizationsIt extends AppLocalizations {
   String get sshKeyRecommended => 'Consigliato';
 
   @override
+  String get rememberKeyPassphrase => 'Ricorda le passphrase delle chiavi';
+
+  @override
+  String get rememberKeyPassphraseTip =>
+      'Conserva le passphrase delle chiavi private cifrate nel portachiavi di sistema di questo dispositivo, così non vengono richieste dopo un riavvio. Nei backup le chiavi restano cifrate. Disattivando, le passphrase salvate vengono rimosse.';
+
+  @override
   String sshKeyUnlockTip(String name) {
     return 'Inserisci la passphrase della chiave privata [$name].';
   }
@@ -7148,4 +7155,57 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get handednessTip =>
       'Dal lato della mano con cui lo tieni, le schede stanno nella colonna accanto alla barra di stato, come le barre del sistema.';
+
+  @override
+  String get storeUnreadableTitle => 'Impossibile aprire i dati precedenti';
+
+  @override
+  String get storeUnreadableKeyLost =>
+      'La chiave che cifra i dati di ServerBox non è più nell\'archivio chiavi del sistema. Succede quando il sistema reimposta l\'archivio chiavi, quando il servizio portachiavi non è disponibile o quando i dati dell\'app sono stati copiati da un altro dispositivo, ad esempio con uno strumento di migrazione. Senza quella chiave i dati non si possono decifrare, quindi ServerBox è stato avviato senza dati.';
+
+  @override
+  String get storeUnreadableKeyRejected =>
+      'La chiave nell\'archivio chiavi del sistema non apre i dati di ServerBox: sono stati cifrati con un\'altra chiave, oppure il file è danneggiato. ServerBox è stato avviato senza dati.';
+
+  @override
+  String storeUnreadableKept(String path) {
+    return 'Il file precedente è conservato in:\n$path\nRipristina un backup per recuperare i tuoi server.';
+  }
+
+  @override
+  String get storeKeyLostAsk =>
+      'La chiave che cifra i dati di ServerBox non è nell\'archivio chiavi di sistema. Se l\'archivio chiavi o il portachiavi è solo temporaneamente non disponibile, ad esempio non ancora sbloccato, riprova. Altrimenti ServerBox può avviarsi senza dati; il vecchio file viene conservato.';
+
+  @override
+  String get storeKeyLostStartEmpty => 'Avvia senza dati';
+
+  @override
+  String get storeVaultFailedAsk =>
+      'L\'archivio chiavi di sistema non è riuscito a decifrare la chiave che cifra i dati di ServerBox. Se l\'errore è occasionale, riprova, se necessario dopo aver riavviato il dispositivo. Se si ripete ogni volta, i dati non possono essere decifrati e ServerBox può avviarsi senza dati; il vecchio file viene conservato. L\'avvio senza dati cancella anche la password di backup, le credenziali WebDAV e GitHub e le password sudo salvate.';
+
+  @override
+  String get storeVaultFailedRootHint =>
+      'Su un dispositivo con root, un modulo che intercetta l\'archivio chiavi (come TrickyStore) causa questo errore. Rimuovi questa app dall\'elenco di destinazione del modulo, poi avvia senza dati.';
+
+  @override
+  String get storeUnreadableVaultFailed =>
+      'L\'archivio chiavi di sistema non è riuscito a decifrare la chiave che cifra i dati di ServerBox, quindi ServerBox ha reimpostato le sue voci nell\'archivio chiavi e si è avviato senza dati. La password di backup, le credenziali WebDAV e GitHub e le password sudo salvate vanno inserite di nuovo.';
+
+  @override
+  String get hostCertAuthorities => 'Autorità di certificazione host';
+
+  @override
+  String get hostCertAuthoritiesTip =>
+      'Un host il cui certificato è firmato da una di queste è considerato attendibile senza chiedere, come con @cert-authority di OpenSSH; per gli altri host si chiede alla prima connessione, come prima. Gli host sono modelli separati da virgole con * e ?, e ! per escludere; una porta diversa da 22 si confronta come [host]:port.';
+
+  @override
+  String get hostCertAuthorityInvalid =>
+      'Non è una chiave pubblica SSH supportata (ssh-ed25519, ssh-rsa o ecdsa-sha2-*)';
+
+  @override
+  String get hostCertAuthorityNoHosts =>
+      'Indica gli host che garantisce, ad esempio *';
+
+  @override
+  String get hostCertAuthorityExists => 'Già nell\'elenco';
 }

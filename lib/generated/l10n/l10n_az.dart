@@ -616,6 +616,13 @@ class AppLocalizationsAz extends AppLocalizations {
   String get sshKeyRecommended => 'Tövsiyə olunur';
 
   @override
+  String get rememberKeyPassphrase => 'Açar parol ifadələrini yadda saxla';
+
+  @override
+  String get rememberKeyPassphraseTip =>
+      'Şifrələnmiş şəxsi açarların parol ifadələrini bu cihazın sistem açar zəncirində saxlayır ki, yenidən başladıqdan sonra soruşulmasın. Ehtiyat nüsxələrdə açarlar şifrəli qalır. Söndürdükdə saxlanmış ifadələr silinir.';
+
+  @override
   String sshKeyUnlockTip(String name) {
     return '[$name] məxfi açarının parol ifadəsini daxil et.';
   }
@@ -7072,4 +7079,57 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get handednessTip =>
       'Cihazı tutduğunuz əlin tərəfində tablar sistemin öz panelləri kimi status panelinin yanındakı sütunda yerləşir.';
+
+  @override
+  String get storeUnreadableTitle => 'Əvvəlki məlumatları açmaq mümkün olmadı';
+
+  @override
+  String get storeUnreadableKeyLost =>
+      'ServerBox məlumatlarını şifrələyən açar artıq sistemin açar anbarında yoxdur. Bu, sistem açar anbarını sıfırladıqda, açarlıq xidməti əlçatan olmadıqda və ya tətbiq məlumatları başqa cihazdan, məsələn köçürmə aləti ilə kopyalandıqda baş verir. Həmin açar olmadan məlumatları deşifrə etmək olmur, ona görə ServerBox məlumatsız başladıldı.';
+
+  @override
+  String get storeUnreadableKeyRejected =>
+      'Sistemin açar anbarındakı açar ServerBox məlumatlarını açmır: məlumatlar başqa açarla şifrələnib və ya fayl zədələnib. ServerBox məlumatsız başladıldı.';
+
+  @override
+  String storeUnreadableKept(String path) {
+    return 'Köhnə fayl burada saxlanılıb:\n$path\nServerlərinizi geri qaytarmaq üçün ehtiyat nüsxəni bərpa edin.';
+  }
+
+  @override
+  String get storeKeyLostAsk =>
+      'ServerBox məlumatlarını şifrələyən açar sistem açar anbarında yoxdur. Açar anbarı və ya açarlıq yalnız hazırda əlçatan deyilsə, məsələn hələ kilidi açılmayıbsa, yenidən cəhd edin. Əks halda ServerBox məlumatsız başlaya bilər; köhnə fayl saxlanılır.';
+
+  @override
+  String get storeKeyLostStartEmpty => 'Məlumatsız başlat';
+
+  @override
+  String get storeVaultFailedAsk =>
+      'Sistemin açar anbarı ServerBox məlumatlarını şifrələyən açarı deşifrə edə bilmədi. Xəta birdəfəlikdirsə, lazım olarsa cihazı yenidən başlatdıqdan sonra yenidən cəhd edin. Hər dəfə uğursuz olursa, məlumatlar deşifrə edilə bilməz və ServerBox məlumatsız başlaya bilər; köhnə fayl saxlanılır. Məlumatsız başlamaq ehtiyat nüsxə parolunu, WebDAV və GitHub giriş məlumatlarını və saxlanmış sudo parollarını da silir.';
+
+  @override
+  String get storeVaultFailedRootHint =>
+      'Root edilmiş cihazda açar anbarını ələ keçirən modul (məsələn, TrickyStore) bu xətaya səbəb olur. Bu tətbiqi modulun hədəf siyahısından çıxarın, sonra məlumatsız başladın.';
+
+  @override
+  String get storeUnreadableVaultFailed =>
+      'Sistemin açar anbarı ServerBox məlumatlarını şifrələyən açarı deşifrə edə bilmədiyi üçün ServerBox açar anbarındakı qeydlərini sıfırladı və məlumatsız başladı. Ehtiyat nüsxə parolu, WebDAV və GitHub giriş məlumatları və saxlanmış sudo parolları yenidən daxil edilməlidir.';
+
+  @override
+  String get hostCertAuthorities => 'Host sertifikat mərkəzləri';
+
+  @override
+  String get hostCertAuthoritiesTip =>
+      'Sertifikatı bunlardan biri tərəfindən imzalanmış hosta soruşmadan etibar edilir, OpenSSH-in @cert-authority kimi; digər hostlar əvvəlki kimi ilk qoşulmada soruşulur. Hostlar * və ? olan, vergüllə ayrılmış şablonlardır, ! istisna edir; 22-dən fərqli port [host]:port kimi müqayisə olunur.';
+
+  @override
+  String get hostCertAuthorityInvalid =>
+      'Dəstəklənən SSH açıq açarı deyil (ssh-ed25519, ssh-rsa və ya ecdsa-sha2-*)';
+
+  @override
+  String get hostCertAuthorityNoHosts =>
+      'Zəmanət verdiyi hostları daxil edin, məsələn *';
+
+  @override
+  String get hostCertAuthorityExists => 'Artıq siyahıdadır';
 }

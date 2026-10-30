@@ -614,6 +614,13 @@ class AppLocalizationsNl extends AppLocalizations {
   String get sshKeyRecommended => 'Aanbevolen';
 
   @override
+  String get rememberKeyPassphrase => 'Wachtwoordzinnen van sleutels onthouden';
+
+  @override
+  String get rememberKeyPassphraseTip =>
+      'Bewaar de wachtwoordzinnen van versleutelde privésleutels in de systeemsleutelhanger van dit apparaat, zodat ze na een herstart niet opnieuw worden gevraagd. In back-ups blijven de sleutels versleuteld. Uitschakelen verwijdert de opgeslagen wachtwoordzinnen.';
+
+  @override
   String sshKeyUnlockTip(String name) {
     return 'Voer de wachtwoordzin voor de privésleutel [$name] in.';
   }
@@ -7139,4 +7146,58 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get handednessTip =>
       'Aan de kant van de hand waarmee je het toestel vasthoudt, staan de tabs in de kolom naast de statusbalk, zoals de balken van het systeem.';
+
+  @override
+  String get storeUnreadableTitle =>
+      'De vorige gegevens konden niet worden geopend';
+
+  @override
+  String get storeUnreadableKeyLost =>
+      'De sleutel waarmee de gegevens van ServerBox zijn versleuteld, staat niet meer in de sleutelopslag van het systeem. Dat gebeurt als het systeem de sleutelopslag reset, als de sleutelhangerdienst niet beschikbaar is, of als de app-gegevens van een ander apparaat zijn gekopieerd, bijvoorbeeld met een overzettool. Zonder die sleutel kunnen de gegevens niet worden ontsleuteld, dus ServerBox is zonder gegevens gestart.';
+
+  @override
+  String get storeUnreadableKeyRejected =>
+      'De sleutel in de sleutelopslag van het systeem opent de gegevens van ServerBox niet: ze zijn met een andere sleutel versleuteld, of het bestand is beschadigd. ServerBox is zonder gegevens gestart.';
+
+  @override
+  String storeUnreadableKept(String path) {
+    return 'Het oude bestand staat nog op:\n$path\nZet een back-up terug om je servers terug te krijgen.';
+  }
+
+  @override
+  String get storeKeyLostAsk =>
+      'De sleutel waarmee de gegevens van ServerBox zijn versleuteld, staat niet in de sleutelopslag van het systeem. Is de sleutelopslag of sleutelbos alleen nu niet beschikbaar, bijvoorbeeld nog niet ontgrendeld, probeer het dan opnieuw. Anders kan ServerBox zonder gegevens starten; het oude bestand blijft bewaard.';
+
+  @override
+  String get storeKeyLostStartEmpty => 'Starten zonder gegevens';
+
+  @override
+  String get storeVaultFailedAsk =>
+      'De sleutelopslag van het systeem kon de sleutel waarmee de gegevens van ServerBox zijn versleuteld niet ontsleutelen. Was dit een eenmalige fout, probeer het dan opnieuw, zo nodig na het herstarten van het apparaat. Gebeurt het elke keer, dan kunnen de gegevens niet worden ontsleuteld en kan ServerBox zonder gegevens starten; het oude bestand blijft bewaard. Starten zonder gegevens wist ook het back-upwachtwoord, de WebDAV- en GitHub-inloggegevens en de opgeslagen sudo-wachtwoorden.';
+
+  @override
+  String get storeVaultFailedRootHint =>
+      'Op een geroot apparaat veroorzaakt een module die de sleutelopslag onderschept (zoals TrickyStore) deze fout. Verwijder deze app uit de doellijst van de module en start daarna zonder gegevens.';
+
+  @override
+  String get storeUnreadableVaultFailed =>
+      'De sleutelopslag van het systeem kon de sleutel waarmee de gegevens van ServerBox zijn versleuteld niet ontsleutelen. ServerBox heeft daarom zijn items in de sleutelopslag gereset en is zonder gegevens gestart. Het back-upwachtwoord, de WebDAV- en GitHub-inloggegevens en de opgeslagen sudo-wachtwoorden moeten opnieuw worden ingevoerd.';
+
+  @override
+  String get hostCertAuthorities => 'Hostcertificaatautoriteiten';
+
+  @override
+  String get hostCertAuthoritiesTip =>
+      'Een host waarvan het certificaat door een van deze is ondertekend, wordt zonder vragen vertrouwd, zoals met @cert-authority van OpenSSH; andere hosts worden zoals voorheen bij de eerste verbinding gevraagd. Hosts zijn door komma\'s gescheiden patronen met * en ?, en ! om uit te sluiten; een andere poort dan 22 wordt vergeleken als [host]:port.';
+
+  @override
+  String get hostCertAuthorityInvalid =>
+      'Geen ondersteunde openbare SSH-sleutel (ssh-ed25519, ssh-rsa of ecdsa-sha2-*)';
+
+  @override
+  String get hostCertAuthorityNoHosts =>
+      'Vul de hosts in waarvoor ze instaat, bijvoorbeeld *';
+
+  @override
+  String get hostCertAuthorityExists => 'Staat al in de lijst';
 }

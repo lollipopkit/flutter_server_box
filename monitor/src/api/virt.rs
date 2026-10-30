@@ -7,7 +7,8 @@
 //! - `POST /virt/power`: a power action on one guest.
 //! - `GET /virt/pve`, `PUT /virt/pve`, `DELETE /virt/pve`: how this agent
 //!   reaches the PVE API — never a secret (`has_password`,
-//!   `has_token_secret`); a secret of `null` keeps the stored one.
+//!   `has_token_secret`); a secret of `null` keeps the stored one, for the
+//!   same `addr` only (`passwordRequired` otherwise).
 //! - `POST /virt/pve/cert`: pins the certificate the API presented.
 //! - `POST /virt/pve/tfa`: the TOTP code a password login is waiting for.
 //!
@@ -1049,7 +1050,11 @@ pub async fn pve_put(
     if let Err(code) = validate(&input) {
         return Ok(super::respond::error(StatusCode::BAD_REQUEST, code));
     }
-    let result = store(&state.db, &state.sealer, &input).await;
+    let result = match store(&state.db, &state.sealer, &input).await {
+        Ok(Err(code)) => return Ok(super::respond::error(StatusCode::BAD_REQUEST, code)),
+        Ok(Ok(())) => Ok(()),
+        Err(e) => Err(e),
+    };
     let outcome = if result.is_ok() { Outcome::Ok } else { Outcome::Error };
     Event::new(Kind::Machine, Action::Write, outcome)
         .remote_ip(super::ws::audit::peer_ip(&req))
@@ -1200,14 +1205,33 @@ fn validate(input: &PveInput) -> Result<(), &'static str> {
 
 /// Writes the one row, carrying a secret sent as `null` over from what is
 /// stored. A secret of the other auth is kept too, so switching back and
-/// forth does not lose it.
-async fn store(db: &SqlitePool, sealer: &Sealer, input: &PveInput) -> Result<(), sqlx::Error> {
+/// forth does not lose it — for the same `addr` only: a secret given for one
+/// host is not sent to another this API never disclosed it to
+/// (`passwordRequired` when the auth in use would be left without one).
+async fn store(
+    db: &SqlitePool,
+    sealer: &Sealer,
+    input: &PveInput,
+) -> Result<Result<(), &'static str>, sqlx::Error> {
     let mut tx = db.begin().await?;
-    let stored: Option<(Option<String>, Option<String>)> =
-        sqlx::query_as("SELECT password, token_secret FROM virt_pve WHERE id = 1")
+    let stored: Option<(String, Option<String>, Option<String>)> =
+        sqlx::query_as("SELECT addr, password, token_secret FROM virt_pve WHERE id = 1")
             .fetch_optional(&mut *tx)
             .await?;
-    let (old_password, old_secret) = stored.unwrap_or_default();
+    let (old_password, old_secret) = match stored {
+        Some((addr, password, secret)) if addr == input.addr => (password, secret),
+        Some((_, password, secret)) => {
+            let dropped = match input.auth {
+                PveAuthKind::Password => input.password.is_none() && password.is_some_and(|p| !p.is_empty()),
+                PveAuthKind::Token => input.token_secret.is_none() && secret.is_some_and(|s| !s.is_empty()),
+            };
+            if dropped {
+                return Ok(Err("passwordRequired"));
+            }
+            (None, None)
+        }
+        None => (None, None),
+    };
     let password = sealer.seal_opt(sealed::PVE_PASSWORD, input.password.as_deref())?.or(old_password);
     let secret = sealer.seal_opt(sealed::PVE_TOKEN_SECRET, input.token_secret.as_deref())?.or(old_secret);
     sqlx::query(
@@ -1227,12 +1251,57 @@ async fn store(db: &SqlitePool, sealer: &Sealer, input: &PveInput) -> Result<(),
     .bind(chrono::Utc::now().to_rfc3339())
     .execute(&mut *tx)
     .await?;
-    tx.commit().await
+    tx.commit().await.map(Ok)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn a_kept_secret_stays_with_its_address() {
+        let db = sqlx::sqlite::SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        sqlx::migrate!("./migrations").run(&db).await.unwrap();
+        let sealer = Sealer::temporary();
+        let secrets = || async {
+            let (addr, password, secret) = sqlx::query_as::<_, (String, Option<String>, Option<String>)>(
+                "SELECT addr, password, token_secret FROM virt_pve WHERE id = 1",
+            )
+            .fetch_one(&db)
+            .await
+            .unwrap();
+            (
+                addr,
+                sealer.open_opt(sealed::PVE_PASSWORD, password.as_deref()).unwrap(),
+                sealer.open_opt(sealed::PVE_TOKEN_SECRET, secret.as_deref()).unwrap(),
+            )
+        };
+        let first = PveInput {
+            password: Some("pw".into()),
+            token_secret: Some("ts".into()),
+            ..input("https://10.0.0.2:8006", PveAuthKind::Token)
+        };
+        assert_eq!(store(&db, &sealer, &first).await.unwrap(), Ok(()));
+
+        // The same address: both kept.
+        assert_eq!(store(&db, &sealer, &input("https://10.0.0.2:8006", PveAuthKind::Password)).await.unwrap(), Ok(()));
+        assert_eq!(secrets().await.1.as_deref(), Some("pw"));
+        assert_eq!(secrets().await.2.as_deref(), Some("ts"));
+
+        // Another address, with the secret in use not given again: refused.
+        let moved = input("https://attacker.example:8006", PveAuthKind::Password);
+        assert_eq!(store(&db, &sealer, &moved).await.unwrap(), Err("passwordRequired"));
+        assert_eq!(secrets().await.0, "https://10.0.0.2:8006");
+
+        // Given again: taken, and the other auth's secret left behind.
+        let moved = PveInput { password: Some("new".into()), ..moved };
+        assert_eq!(store(&db, &sealer, &moved).await.unwrap(), Ok(()));
+        assert_eq!(secrets().await, ("https://attacker.example:8006".into(), Some("new".into()), None));
+    }
 
     fn input(addr: &str, auth: PveAuthKind) -> PveInput {
         PveInput {

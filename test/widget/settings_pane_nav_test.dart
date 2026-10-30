@@ -173,8 +173,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.text('pushed editor'), findsOneWidget);
 
-    // Any other section in the left menu.
-    final target = find.text(libL10n.ai);
+    // Any other section in the left menu: one at its top level, as the
+    // account opens first and leaves the groups folded.
+    final target = find.text(libL10n.about);
     expect(target, findsWidgets, reason: 'the menu has to be on screen');
     await tester.tap(target.first);
     await tester.pump(const Duration(milliseconds: 500));
@@ -203,7 +204,7 @@ void main() {
     );
     await tester.pump(const Duration(milliseconds: 500));
 
-    await tester.tap(find.text(libL10n.ai).first);
+    await tester.tap(find.text(libL10n.about).first);
     await tester.pump(const Duration(milliseconds: 500));
 
     // `popUntil` stops at the first route whose settings is a `Page`. Popping

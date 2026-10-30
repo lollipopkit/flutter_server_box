@@ -27,6 +27,9 @@
   let tokenSecret = $state('')
   let pin = $state(initial.cert_sha256)
 
+  /// Stored secrets stay with the address they were given for.
+  const keepsSecrets = $derived(addr.trim() === (current?.addr ?? ''))
+
   /// A pin belongs to the address it was confirmed for.
   function changeAddr(next: string) {
     addr = next
@@ -77,7 +80,7 @@
         type="password"
         autocomplete="new-password"
         bind:value={tokenSecret}
-        placeholder={current?.has_token_secret ? $LL.bmcPasswordKept() : ''}
+        placeholder={keepsSecrets && current?.has_token_secret ? $LL.bmcPasswordKept() : ''}
       />
     </div>
     <p class="text-[12px] text-(--text-tertiary) whitespace-pre-wrap">{$LL.pveTokenHint()}</p>
@@ -90,7 +93,7 @@
         type="password"
         autocomplete="new-password"
         bind:value={password}
-        placeholder={current?.has_password ? $LL.bmcPasswordKept() : ''}
+        placeholder={keepsSecrets && current?.has_password ? $LL.bmcPasswordKept() : ''}
       />
     </div>
     <p class="text-[12px] text-(--text-tertiary)">{$LL.pvePasswordHint()}</p>

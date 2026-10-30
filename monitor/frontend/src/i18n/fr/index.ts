@@ -634,6 +634,7 @@ const fr = {
 	bmcInvalidUrl: 'L\'adresse doit être https://host ou https://host:port, sans chemin.',
 	bmcInvalidUsername: 'Un nom d\'utilisateur est requis.',
 	bmcInvalidCertificate: 'L\'empreinte du certificat n\'est pas une empreinte SHA-256.',
+	bmcPasswordAgain: 'L\'adresse a changé : saisissez à nouveau le mot de passe.',
 	bmcStateOn: 'Allumé',
 	bmcStateOff: 'Éteint',
 	bmcStatePoweringOn: 'Allumage',
