@@ -1700,5 +1700,7 @@
   "hostCertAuthoritiesTip": "Sertifikatı bunlardan biri tərəfindən imzalanmış hosta soruşmadan etibar edilir, OpenSSH-in @cert-authority kimi; digər hostlar əvvəlki kimi ilk qoşulmada soruşulur. Hostlar * və ? olan, vergüllə ayrılmış şablonlardır, ! istisna edir; 22-dən fərqli port [host]:port kimi müqayisə olunur.",
   "hostCertAuthorityInvalid": "Dəstəklənən SSH açıq açarı deyil (ssh-ed25519, ssh-rsa və ya ecdsa-sha2-*)",
   "hostCertAuthorityNoHosts": "Zəmanət verdiyi hostları daxil edin, məsələn *",
-  "hostCertAuthorityExists": "Artıq siyahıdadır"
+  "hostCertAuthorityExists": "Artıq siyahıdadır",
+  "addToHomeScreen": "Əsas ekrana əlavə et",
+  "transfersActive": "{count} ötürmə"
 }

@@ -57,4 +57,17 @@
 
     <string name="widget_small_label">Server readings</string>
     <string name="widget_medium_label">Server charts</string>
+
+    <!-- Quick Settings tile, the transfer notification's channel, the text
+         selection entry, and what a share that could not be read says. Native,
+         since the tile and the channel exist without the Flutter engine. -->
+    <string name="process_text_label">Save as snippet</string>
+    <string name="tile_no_sessions">No active sessions</string>
+    <plurals name="tile_sessions">
+        <item quantity="one">%d session</item>
+        <item quantity="other">%d sessions</item>
+    </plurals>
+    <string name="channel_transfers">File transfers</string>
+    <string name="incoming_failed">Could not take in the shared files</string>
+    <string name="shortcut_server_gone">Server removed</string>
 </resources>

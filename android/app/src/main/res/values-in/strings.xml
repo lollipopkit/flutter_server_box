@@ -32,4 +32,13 @@
     <string name="widget_refresh_desc">Segarkan</string>
     <string name="widget_small_label">Nilai server</string>
     <string name="widget_medium_label">Grafik server</string>
+
+    <string name="process_text_label">Simpan sebagai snippet</string>
+    <string name="tile_no_sessions">Tidak ada sesi aktif</string>
+    <plurals name="tile_sessions">
+        <item quantity="other">%d sesi</item>
+    </plurals>
+    <string name="channel_transfers">Transfer file</string>
+    <string name="incoming_failed">Tidak dapat menerima file yang dibagikan</string>
+    <string name="shortcut_server_gone">Server dihapus</string>
 </resources>

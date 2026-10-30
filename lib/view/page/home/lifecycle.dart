@@ -32,6 +32,7 @@ extension _HomePageLifecycle on _HomePageState {
         }
         unawaited(_restartServerRefreshCycle());
         unawaited(MethodChans.updateHomeWidget());
+        unawaited(_androidSystem.onResumed());
         _syncFullscreenSystemUi();
         break;
       case AppLifecycleState.paused:
@@ -109,7 +110,7 @@ extension _HomePageLifecycle on _HomePageState {
   }
 
   /// Takes in what the platform handed this app, if anything is waiting: a
-  /// `.sbxsrv`, then a `serverbox://` link.
+  /// `.sbxsrv`, then a `serverbox://` link, then what another app shared.
   ///
   /// One method for both because they share every constraint below — the
   /// lock screen, the launch ordering, the re-entry guard — and two copies
@@ -128,8 +129,9 @@ extension _HomePageLifecycle on _HomePageState {
     try {
       final text = await MethodChans.takeOpenedShare();
       final link = await MethodChans.takeOpenedLink();
+      final incoming = await MethodChans.takeIncoming();
       final hasText = text != null && text.isNotEmpty;
-      if ((!hasText && link == null) || !mounted) return;
+      if ((!hasText && link == null && incoming == null) || !mounted) return;
       // Behind the lock screen for the same reason the launch notices are: it
       // is a root-navigator dialog, and the lock page is on that navigator.
       //
@@ -144,6 +146,9 @@ extension _HomePageLifecycle on _HomePageState {
         await ServerShareUi.consume(context, ref, text, digitsOnly: false);
       }
       if (link != null && mounted) await AppLinkUi.open(context, ref, link);
+      if (incoming != null && mounted) {
+        await IncomingUi.open(context, ref, incoming);
+      }
     } catch (e, s) {
       Loggers.app.warning('Consume what was opened', e, s);
     } finally {

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -99,6 +101,39 @@ bool _isInside(FileRef inner, FileRef outer) {
   if (child == parent) return true;
   // The separator matters: `/data2` is not inside `/data`.
   return child.startsWith(parent == '/' ? '/' : '$parent/');
+}
+
+/// Ask once where every one of [sources] (files, not directories) should go,
+/// and queue them all.
+///
+/// Answers each transfer's end — whether it finished — or null when nothing
+/// was queued because the user backed out of a question.
+Future<List<Future<bool>>?> sendFilesTo(
+  BuildContext context,
+  WidgetRef ref, {
+  required List<FileRef> sources,
+}) async {
+  if (sources.isEmpty) return const [];
+  final place = await _pickPlace(context, ref);
+  if (place == null || !context.mounted) return null;
+  final dir = await _pickDir(context, place);
+  if (dir == null || !context.mounted) return null;
+
+  final queue = ref.read(fileTransferProvider.notifier);
+  final ids = <int>[];
+  final ends = <Future<bool>>[];
+  for (final source in sources) {
+    final destination = switch (place) {
+      _Device() => LocalFileRef(dir).child(source.name),
+      _Server(:final spi) => serverFileRef(ref, spi, dir).child(source.name),
+    };
+    if (destination == source) continue;
+    final end = Completer<bool>();
+    ids.add(queue.add(FileTransfer(from: source, to: destination), completer: end));
+    ends.add(end.future);
+  }
+  if (context.mounted) await announceQueued(context, ref, ids);
+  return ends;
 }
 
 /// Where the last send went, so a batch asks once rather than once per file.

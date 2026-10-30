@@ -6138,4 +6138,18 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get hostCertAuthorityExists => 'Déjà dans la liste';
+
+  @override
+  String get addToHomeScreen => 'Ajouter à l\'écran d\'accueil';
+
+  @override
+  String transfersActive(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count transferts',
+      one: '1 transfert',
+    );
+    return '$_temp0';
+  }
 }

@@ -17,7 +17,15 @@ import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
-import android.appwidget.AppWidgetManager
+import android.net.Uri
+import android.view.KeyboardShortcutGroup
+import android.view.Menu
+import android.view.View
+import android.widget.Toast
+import org.json.JSONArray
+import org.json.JSONObject
+import tech.lolli.toolbox.incoming.DropListener
+import tech.lolli.toolbox.incoming.IncomingFiles
 import tech.lolli.toolbox.linux.LinuxDocumentsProvider
 import tech.lolli.toolbox.widget.HomeWidget
 import tech.lolli.toolbox.widget.WidgetStore
@@ -94,6 +102,18 @@ class MainActivity: FlutterFragmentActivity() {
     private var linkChannel: MethodChannel? = null
 
     /**
+     * What another app shared or sent for processing, as JSON, until Dart
+     * takes it: `{"kind":"text","text"}` or `{"kind":"files","paths"}`.
+     * Held and pulled like [pendingLink], for the same reason.
+     */
+    private var pendingIncoming: String? = null
+
+    /** The app's keys for the system's shortcut list; see [KeyboardShortcuts]. */
+    private var keyboardShortcuts: List<KeyboardShortcuts.Group> = emptyList()
+
+    private var dropListener: DropListener? = null
+
+    /**
      * Whether the intent this activity was created with was already answered.
      *
      * The system keeps an activity's launch intent with its record, outside
@@ -153,6 +173,18 @@ class MainActivity: FlutterFragmentActivity() {
         super.onResume()
         isForeground = true
         if (!privacyLocked) applyPrivacyCover(false)
+        // Here rather than once: `desktop_drop` sets its own listener when it
+        // attaches to the activity, and this one has to be the one in place.
+        dropListener?.let { findViewById<View>(android.R.id.content)?.setOnDragListener(it) }
+    }
+
+    override fun onProvideKeyboardShortcuts(
+        data: MutableList<KeyboardShortcutGroup>,
+        menu: Menu?,
+        deviceId: Int,
+    ) {
+        super.onProvideKeyboardShortcuts(data, menu, deviceId)
+        data.addAll(KeyboardShortcuts.toSystem(keyboardShortcuts))
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -165,6 +197,55 @@ class MainActivity: FlutterFragmentActivity() {
                     "takeOpenedLink" -> {
                         result.success(pendingLink)
                         pendingLink = null
+                    }
+                    "takeIncoming" -> {
+                        result.success(pendingIncoming)
+                        pendingIncoming = null
+                    }
+                    "setShortcuts" -> {
+                        try {
+                            AppShortcuts.publish(applicationContext, method.arguments as String)
+                            result.success(null)
+                        } catch (e: Exception) {
+                            result.error("SHORTCUTS", e.message, null)
+                        }
+                    }
+                    "pinShortcut" -> {
+                        val entry = AppShortcuts.entry(
+                            method.argument<String>("id"),
+                            method.argument<String>("label"),
+                            method.argument<String>("uri"),
+                        )
+                        result.success(entry != null && AppShortcuts.requestPin(this, entry))
+                    }
+                    // The per-app language of Android 13+, which the app's
+                    // own language setting is kept in step with.
+                    "appLocale" -> {
+                        result.success(
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                getSystemService(android.app.LocaleManager::class.java)
+                                    ?.applicationLocales?.toLanguageTags()
+                            } else null,
+                        )
+                    }
+                    "setAppLocale" -> {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            getSystemService(android.app.LocaleManager::class.java)?.applicationLocales =
+                                android.os.LocaleList.forLanguageTags(method.arguments as? String ?: "")
+                        }
+                        result.success(null)
+                    }
+                    "updateTransfers" -> {
+                        try {
+                            TransferNotification.update(applicationContext, method.arguments as? String)
+                            result.success(null)
+                        } catch (e: Exception) {
+                            result.error("TRANSFERS", e.message, null)
+                        }
+                    }
+                    "setKeyboardShortcuts" -> {
+                        keyboardShortcuts = KeyboardShortcuts.parse(method.arguments as String)
+                        result.success(null)
                     }
                     "sendToBackground" -> {
                         moveTaskToBack(true)
@@ -297,9 +378,18 @@ class MainActivity: FlutterFragmentActivity() {
         // the Dart side and it is already taken.
         linkChannel = MethodChannel(binaryMessenger, "tech.lolli.toolbox/incoming_share")
 
+        dropListener = DropListener(this, binaryMessenger) { incomingFailed() }
+
         // Handle intent if launched via notification action
         handleActionIntent(intent)
-        if (!launchIntentIsStale) acceptLink(intent)
+        if (!launchIntentIsStale) {
+            acceptLink(intent)
+            acceptIncoming(intent)
+        }
+        Thread {
+            IncomingFiles.purgeStale(applicationContext)
+            HomeWidget.publishPreviews(applicationContext)
+        }.start()
 
         // Register broadcast receiver for stop all connections
         setupStopAllReceiver()
@@ -534,6 +624,69 @@ class MainActivity: FlutterFragmentActivity() {
         super.onNewIntent(intent)
         handleActionIntent(intent)
         acceptLink(intent)
+        acceptIncoming(intent)
+    }
+
+    /**
+     * Text or files another app sent: a share (`SEND`, `SEND_MULTIPLE`) or
+     * text selected elsewhere (`PROCESS_TEXT`). Files are copied in off the
+     * main thread while this activity still holds the grant to read them.
+     */
+    private fun acceptIncoming(intent: Intent?) {
+        intent ?: return
+        val text = when (intent.action) {
+            Intent.ACTION_PROCESS_TEXT -> intent.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)
+            Intent.ACTION_SEND -> intent.getCharSequenceExtra(Intent.EXTRA_TEXT)
+                .takeIf { streamsOf(intent).isEmpty() }
+            else -> null
+        }
+        if (text != null) {
+            if (text.isNotBlank()) offerIncoming(JSONObject().put("kind", "text").put("text", text.toString()))
+            return
+        }
+        if (intent.action != Intent.ACTION_SEND && intent.action != Intent.ACTION_SEND_MULTIPLE) return
+        val uris = streamsOf(intent)
+        if (uris.isEmpty()) return
+        Thread {
+            val batch = runCatching { IncomingFiles.copy(this, uris) }
+            runOnUiThread {
+                batch.fold(
+                    onSuccess = { offerIncoming(JSONObject().put("kind", "files").put("paths", JSONArray(it.paths))) },
+                    onFailure = {
+                        android.util.Log.w("MainActivity", "incoming copy failed", it)
+                        incomingFailed()
+                    },
+                )
+            }
+        }.start()
+    }
+
+    private fun streamsOf(intent: Intent): List<Uri> {
+        val uris = mutableListOf<Uri>()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)?.let { uris.add(it) }
+            intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM, Uri::class.java)?.let { uris.addAll(it) }
+        } else {
+            @Suppress("DEPRECATION")
+            when (val extra = intent.extras?.get(Intent.EXTRA_STREAM)) {
+                is Uri -> uris.add(extra)
+                is ArrayList<*> -> extra.filterIsInstanceTo(uris)
+            }
+        }
+        // ClipData is how a sender grants the read; it carries the same URIs.
+        intent.clipData?.let { clip ->
+            for (i in 0 until clip.itemCount) clip.getItemAt(i).uri?.let { if (it !in uris) uris.add(it) }
+        }
+        return uris
+    }
+
+    private fun offerIncoming(payload: JSONObject) {
+        pendingIncoming = payload.toString()
+        linkChannel?.invokeMethod("opened", null)
+    }
+
+    private fun incomingFailed() {
+        Toast.makeText(this, R.string.incoming_failed, Toast.LENGTH_LONG).show()
     }
 
     /** A new intent only: see [launchIntentIsStale] for the one that is not. */

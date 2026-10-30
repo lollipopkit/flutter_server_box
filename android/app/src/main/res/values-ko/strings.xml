@@ -32,4 +32,13 @@
     <string name="widget_refresh_desc">새로 고침</string>
     <string name="widget_small_label">서버 값</string>
     <string name="widget_medium_label">서버 그래프</string>
+
+    <string name="process_text_label">스니펫으로 저장</string>
+    <string name="tile_no_sessions">활성 세션 없음</string>
+    <plurals name="tile_sessions">
+        <item quantity="other">세션 %d개</item>
+    </plurals>
+    <string name="channel_transfers">파일 전송</string>
+    <string name="incoming_failed">공유된 파일을 받을 수 없습니다</string>
+    <string name="shortcut_server_gone">서버가 삭제됨</string>
 </resources>

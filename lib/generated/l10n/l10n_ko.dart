@@ -5770,4 +5770,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get hostCertAuthorityExists => '이미 목록에 있습니다';
+
+  @override
+  String get addToHomeScreen => '홈 화면에 추가';
+
+  @override
+  String transfersActive(int count) {
+    return '전송 $count개';
+  }
 }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:cross_file/cross_file.dart';
@@ -20,6 +21,7 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/storage/send_to.dart';
 import 'package:server_box/view/page/storage/transfer_announce.dart';
 import 'package:server_box/view/widget/delayed_loading.dart';
+import 'package:server_box/view/widget/incoming.dart';
 import 'package:server_box/view/widget/unix_perm.dart';
 
 /// What an injected action is allowed to do to the browser it sits in.
@@ -1535,10 +1537,13 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
 
     final queue = ref.read(fileTransferProvider.notifier);
     final queued = <int>[];
+    final ends = <Future<bool>>[];
     for (final file in files) {
       final source = LocalFileRef(file.path.replaceAll(r'\', '/'));
       final destination = refOf(BrowsePath.join(_path.path, source.name));
       if (destination == source) continue;
+      final end = Completer<bool>();
+      ends.add(end.future);
       queued.add(
         queue.add(
           FileTransfer(
@@ -1546,8 +1551,14 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
             to: destination,
             isDir: await FileSystemEntity.isDirectory(file.path),
           ),
+          completer: end,
         ),
       );
+    }
+    // On Android a drop arrives as copies the app made (`DropListener`),
+    // which are its to remove.
+    if (isAndroid) {
+      unawaited(discardIncomingAfter([for (final f in files) f.path], ends));
     }
     if (!mounted) return;
     await announceQueued(context, ref, queued);

@@ -32,4 +32,13 @@
     <string name="widget_refresh_desc">Yenile</string>
     <string name="widget_small_label">Sunucu değerleri</string>
     <string name="widget_medium_label">Sunucu grafikleri</string>
+
+    <string name="process_text_label">Kod parçası olarak kaydet</string>
+    <string name="tile_no_sessions">Etkin oturum yok</string>
+    <plurals name="tile_sessions">
+        <item quantity="other">%d oturum</item>
+    </plurals>
+    <string name="channel_transfers">Dosya aktarımları</string>
+    <string name="incoming_failed">Paylaşılan dosyalar alınamadı</string>
+    <string name="shortcut_server_gone">Sunucu kaldırıldı</string>
 </resources>

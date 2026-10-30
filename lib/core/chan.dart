@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/services.dart';
 import 'package:server_box/data/res/misc.dart';
@@ -376,6 +378,94 @@ abstract final class MethodChans {
     } catch (e, s) {
       Loggers.app.warning('Failed to read the opened link', e, s);
       return null;
+    }
+  }
+
+  /// What another app shared, or sent from its text selection, as the JSON
+  /// `{"kind":"text","text"}` or `{"kind":"files","paths"}`. Android only;
+  /// held natively and pulled like [takeOpenedLink]. Cleared by the read.
+  static Future<Map<String, Object?>?> takeIncoming() async {
+    if (!isAndroid) return null;
+    try {
+      final raw = await _channel.invokeMethod<String>('takeIncoming');
+      if (raw == null) return null;
+      return (jsonDecode(raw) as Map).cast<String, Object?>();
+    } catch (e, s) {
+      Loggers.app.warning('Failed to read incoming content', e, s);
+      return null;
+    }
+  }
+
+  /// The launcher's long-press list: `[{"id","label","uri"}]`, in order.
+  static Future<void> setShortcuts(String payload) async {
+    if (!isAndroid) return;
+    try {
+      await _channel.invokeMethod('setShortcuts', payload);
+    } catch (e, s) {
+      Loggers.app.warning('Failed to set launcher shortcuts', e, s);
+    }
+  }
+
+  /// Asks the launcher to pin a shortcut; false when it cannot.
+  static Future<bool> pinShortcut({
+    required String id,
+    required String label,
+    required String uri,
+  }) async {
+    if (!isAndroid) return false;
+    try {
+      return await _channel.invokeMethod<bool>('pinShortcut', {
+            'id': id,
+            'label': label,
+            'uri': uri,
+          }) ??
+          false;
+    } catch (e, s) {
+      Loggers.app.warning('Failed to pin a shortcut', e, s);
+      return false;
+    }
+  }
+
+  /// The transfer notification: `{"title","text","progress","chip"}`, or null
+  /// to take it down.
+  static Future<void> updateTransfers(String? payload) async {
+    if (!isAndroid) return;
+    try {
+      await _channel.invokeMethod('updateTransfers', payload);
+    } catch (e, s) {
+      Loggers.app.warning('Failed to update the transfer notification', e, s);
+    }
+  }
+
+  /// The keys listed by the system's shortcut list (Meta+/):
+  /// `[{"label","items":[{"label","chord"}]}]`.
+  static Future<void> setKeyboardShortcuts(String payload) async {
+    if (!isAndroid) return;
+    try {
+      await _channel.invokeMethod('setKeyboardShortcuts', payload);
+    } catch (e, s) {
+      Loggers.app.warning('Failed to set keyboard shortcuts', e, s);
+    }
+  }
+
+  /// The per-app language chosen in system settings, as a BCP 47 tag; empty
+  /// for the system's. Null below Android 13, where there is no such setting.
+  static Future<String?> appLocale() async {
+    if (!isAndroid) return null;
+    try {
+      return await _channel.invokeMethod<String>('appLocale');
+    } catch (e, s) {
+      Loggers.app.warning('Failed to read the app locale', e, s);
+      return null;
+    }
+  }
+
+  static Future<void> setAppLocale(String tag) async {
+    if (!isAndroid) return;
+    try {
+      await _channel.invokeMethod('setAppLocale', tag);
+    } catch (e, s) {
+      Loggers.app.warning('Failed to set the app locale', e, s);
     }
   }
 

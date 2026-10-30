@@ -273,9 +273,22 @@ abstract final class TermSessionManager {
   /// was left running to reconnect with. Keeping it means a notification while
   /// backgrounded even with nothing connected, which is the cost of being able
   /// to come back.
+  ///
+  /// A file transfer in progress is a third: it runs on this process, and a
+  /// frozen one leaves it, and its notification, standing still.
   static bool get _serviceWanted =>
       _entries.isNotEmpty ||
+      _transferring ||
       (_backgrounded && !_stoodDown && Stores.setting.bgRun.fetch());
+
+  static var _transferring = false;
+
+  /// Whether any file transfer is running, as `AndroidSystemSync` sees them.
+  static void setTransferring(bool value) {
+    if (_transferring == value) return;
+    _transferring = value;
+    _sync();
+  }
 
   static Future<void> _syncLatest() async {
     // Android: update foreground service notifications

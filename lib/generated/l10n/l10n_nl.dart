@@ -6094,4 +6094,18 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get hostCertAuthorityExists => 'Staat al in de lijst';
+
+  @override
+  String get addToHomeScreen => 'Toevoegen aan startscherm';
+
+  @override
+  String transfersActive(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count overdrachten',
+      one: '1 overdracht',
+    );
+    return '$_temp0';
+  }
 }
