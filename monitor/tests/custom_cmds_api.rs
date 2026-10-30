@@ -89,17 +89,16 @@ async fn writing_needs_a_token() {
     assert_eq!(resp.status().as_u16(), 401);
 }
 
-/// A body past ntex's 32 KiB default reaches the handler (the 401 is the
-/// handler's answer); one past the endpoint's own limit does not.
+/// A body past ntex's 32 KiB default reaches the handler: the 401 is the
+/// handler's answer. One past the endpoint's limit is `api::json`'s unit
+/// tests': answered before the body is read, it reaches a client on Windows
+/// as a reset (ntex closes without lingering).
 #[ntex::test]
-async fn the_body_limit_is_the_endpoints_own() {
+async fn a_body_past_ntex_default_reaches_the_handler() {
     let srv = test_server(app_state(true).await).await;
-    let put = async |len: usize| {
-        let body = json!({"commands": [{"name": "x", "cmd": "x".repeat(len)}]});
-        srv.put("/api/v1/custom-cmds").send_json(&body).await.unwrap().status().as_u16()
-    };
-    assert_eq!(put(64 * 1024).await, 401);
-    assert_eq!(put(server_box_monitor::api::custom_cmds::MAX_REQUEST + 1).await, 413);
+    let body = json!({"commands": [{"name": "x", "cmd": "x".repeat(64 * 1024)}]});
+    let resp = srv.put("/api/v1/custom-cmds").send_json(&body).await.unwrap();
+    assert_eq!(resp.status().as_u16(), 401);
 }
 
 /// The panel login alone is not enough to write one. Anyone who can add a
