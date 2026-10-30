@@ -11,7 +11,7 @@
 mod error;
 
 use std::sync::Arc;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -83,8 +83,9 @@ impl Metadata {
     }
 }
 
-/// The IdP's tokens (`LkcTokens`); homebase is sent [access].
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+/// The IdP's tokens (`LkcTokens`); homebase is sent [access]. `Debug` leaves
+/// the tokens out.
+#[derive(Clone)]
 pub struct Tokens {
     pub access: String,
     /// `None` when the IdP gave none; a refresh that gives none keeps the
@@ -92,24 +93,64 @@ pub struct Tokens {
     pub refresh: Option<String>,
     /// Unix milliseconds: this side's clock on receipt plus `expires_in`.
     pub expires_at_ms: i64,
+    /// The same expiry on this process's monotonic clock, while it is the
+    /// process that received the tokens: a wall clock stepped forward (NTP
+    /// on a board without an RTC) would otherwise make them due early, and
+    /// an early refresh ends every session of the person.
+    pub deadline: Option<Instant>,
 }
 
 impl Tokens {
+    /// Tokens as stored, without a [deadline](Self::deadline).
+    pub fn stored(access: String, refresh: Option<String>, expires_at_ms: i64) -> Self {
+        Self { access, refresh, expires_at_ms, deadline: None }
+    }
+
     /// Whether [`Client::refresh`] may be asked at [now_ms]: within
-    /// [`REFRESH_WINDOW`] of the expiry.
+    /// [`REFRESH_WINDOW`] of the expiry, by [deadline](Self::deadline) when
+    /// known.
     pub fn due(&self, now_ms: i64) -> bool {
-        self.expires_at_ms - now_ms < REFRESH_WINDOW.as_millis() as i64
+        match self.deadline {
+            Some(deadline) => Instant::now() + REFRESH_WINDOW >= deadline,
+            None => self.expires_at_ms - now_ms < REFRESH_WINDOW.as_millis() as i64,
+        }
     }
 
     /// A token answer received at [now_ms]; [previous] keeps a refresh token
-    /// not rotated.
+    /// not rotated. One without `expires_in` is refused: no expiry would make
+    /// it due at once, and a refresh that early ends every session of the
+    /// person.
     fn from_response(value: &Value, now_ms: i64, previous: Option<&Tokens>) -> Result<Self, Error> {
         let text = |name: &str| value[name].as_str().filter(|s| !s.is_empty()).map(str::to_string);
+        let lifetime = value["expires_in"]
+            .as_u64()
+            .filter(|&secs| secs > 0)
+            .map(Duration::from_secs)
+            .ok_or_else(|| Error::new(Failure::InvalidResponse, "no expires_in"))?;
         Ok(Self {
             access: text("access_token").ok_or_else(|| Error::new(Failure::InvalidResponse, "no access_token"))?,
             refresh: text("refresh_token").or_else(|| previous.and_then(|p| p.refresh.clone())),
-            expires_at_ms: now_ms + value["expires_in"].as_i64().unwrap_or(0) * 1000,
+            expires_at_ms: now_ms + lifetime.as_millis() as i64,
+            deadline: Some(Instant::now() + lifetime),
         })
+    }
+}
+
+/// The same tokens, wherever their [deadline](Tokens::deadline) was read.
+impl PartialEq for Tokens {
+    fn eq(&self, other: &Self) -> bool {
+        (&self.access, &self.refresh, self.expires_at_ms) == (&other.access, &other.refresh, other.expires_at_ms)
+    }
+}
+
+impl Eq for Tokens {}
+
+impl std::fmt::Debug for Tokens {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Tokens")
+            .field("refresh", &self.refresh.as_ref().map(|_| "…"))
+            .field("expires_at_ms", &self.expires_at_ms)
+            .finish_non_exhaustive()
     }
 }
 
@@ -130,7 +171,8 @@ pub struct User {
 
 /// A device sign-in: the person opens [verification_uri_complete] (or
 /// [verification_uri] and types [user_code]) anywhere; the caller polls.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+/// `Debug` leaves [device_code] out: it redeems the grant.
+#[derive(Clone, PartialEq, Eq)]
 pub struct DeviceAuthorization {
     pub device_code: String,
     pub user_code: String,
@@ -140,6 +182,16 @@ pub struct DeviceAuthorization {
     pub expires_at_ms: i64,
     /// Seconds between polls; raised by a `slow_down`.
     pub interval_secs: u64,
+}
+
+impl std::fmt::Debug for DeviceAuthorization {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("DeviceAuthorization")
+            .field("user_code", &self.user_code)
+            .field("verification_uri", &self.verification_uri)
+            .field("expires_at_ms", &self.expires_at_ms)
+            .finish_non_exhaustive()
+    }
 }
 
 /// One poll of a device sign-in.
@@ -366,14 +418,23 @@ impl TokenError {
 
 /// The `data` of a homebase reply (`LkcClient.unwrap`), or its refusal: `code`
 /// is `LkcCode`'s index, left out when `ok`; `perm` (2) is a token homebase
-/// no longer takes. Anything not the API's own JSON, such as a proxy's page,
-/// is worth trying again.
+/// no longer takes. Anything not the API's own answer, such as a proxy's
+/// page (JSON or not), a 5xx or a 429, is worth trying again.
 fn unwrap(url: &str, status: u16, body: &[u8]) -> Result<Value, Error> {
     let again = || Error::new(Failure::Unreachable, format!("{url}: HTTP {status}"));
+    if status >= 500 || status == 429 {
+        return Err(again());
+    }
     let Ok(Value::Object(json)) = serde_json::from_slice::<Value>(body) else {
         return Err(again());
     };
-    let code = json.get("code").map_or(Some(0), Value::as_u64);
+    // Only a success may leave the code out; an error without one is not
+    // homebase's.
+    let code = match json.get("code") {
+        None if (200..300).contains(&status) => Some(0),
+        None => return Err(again()),
+        Some(code) => code.as_u64(),
+    };
     let text = |name: &str| json.get(name).and_then(Value::as_str).unwrap_or_default().to_string();
     match code {
         Some(0) => Ok(json.get("data").cloned().unwrap_or(Value::Null)),

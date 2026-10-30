@@ -74,6 +74,9 @@ fn a_homebase_reply_unwraps_to_its_data() {
     assert_eq!(failure(200, r#"{"code":0,"data":1}"#), Ok(json!(1)));
     assert_eq!(failure(401, r#"{"code":2,"reason":"token"}"#), Err(Failure::Rejected));
     assert_eq!(failure(500, r#"{"code":1}"#), Err(Failure::Unreachable));
+    // A gateway's JSON is no answer of homebase's.
+    assert_eq!(failure(502, r#"{"message":"bad gateway"}"#), Err(Failure::Unreachable));
+    assert_eq!(failure(403, r#"{"message":"blocked"}"#), Err(Failure::Unreachable));
     assert_eq!(failure(404, r#"{"code":3}"#), Err(Failure::Refused));
     assert_eq!(failure(403, "<html>challenge</html>"), Err(Failure::Unreachable));
 }
@@ -93,17 +96,36 @@ fn a_user_reads_as_homebase_answers_it() {
 fn tokens_are_due_in_the_last_45_seconds() {
     let tokens = Tokens::from_response(&json!({ "access_token": "a", "refresh_token": "r", "expires_in": 300 }), 0, None).unwrap();
     assert_eq!(tokens.expires_at_ms, 300_000);
-    assert!(!tokens.due(300_000 - 45_000));
-    assert!(tokens.due(300_000 - 44_999));
-    // A refresh that rotates none keeps the one it had; one with no expiry is due at once.
-    let renewed = Tokens::from_response(&json!({ "access_token": "b" }), 1_000, Some(&tokens)).unwrap();
-    assert_eq!((renewed.refresh.as_deref(), renewed.due(1_000)), (Some("r"), true));
+    // By the wall clock, as tokens read back from storage are.
+    let stored = Tokens::stored(tokens.access.clone(), tokens.refresh.clone(), tokens.expires_at_ms);
+    assert!(!stored.due(300_000 - 45_000));
+    assert!(stored.due(300_000 - 44_999));
+    // By the process's clock, 300 s ahead.
+    assert!(!tokens.due(i64::MAX));
+    // A refresh that rotates none keeps the one it had.
+    let renewed = Tokens::from_response(&json!({ "access_token": "b", "expires_in": 60 }), 1_000, Some(&tokens)).unwrap();
+    assert_eq!(renewed.refresh.as_deref(), Some("r"));
+    // No expiry would make it due at once: refused.
+    assert!(Tokens::from_response(&json!({ "access_token": "b" }), 0, None).is_err());
+    assert!(Tokens::from_response(&json!({ "access_token": "b", "expires_in": 0 }), 0, None).is_err());
     assert!(Tokens::from_response(&json!({}), 0, None).is_err());
+}
+
+#[test]
+fn a_wall_clock_stepped_forward_does_not_make_tokens_due() {
+    let answer = json!({ "access_token": "secret-access", "refresh_token": "secret-refresh", "expires_in": 300 });
+    let tokens = Tokens::from_response(&answer, now_ms(), None).unwrap();
+    // An hour later by the wall clock, a moment later by the process's.
+    assert!(!tokens.due(now_ms() + 3_600_000));
+    let stored = Tokens::stored(tokens.access.clone(), tokens.refresh.clone(), tokens.expires_at_ms);
+    assert!(stored.due(now_ms() + 3_600_000));
+    assert_eq!(stored, tokens);
+    assert!(!format!("{tokens:?}").contains("secret"));
 }
 
 #[tokio::test]
 async fn a_refresh_waits_until_due() {
-    let tokens = Tokens { access: "a".into(), refresh: Some("r".into()), expires_at_ms: now_ms() + 120_000 };
+    let tokens = Tokens::stored("a".into(), Some("r".into()), now_ms() + 120_000);
     // Refused here, before anything is sent (this issuer does not exist).
     let client = Client::with("https://auth.invalid/", CLIENT_ID, "https://api.invalid").unwrap();
     assert_eq!(client.refresh(&tokens).await.unwrap_err().failure, Failure::TooEarly);

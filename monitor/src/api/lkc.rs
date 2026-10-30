@@ -36,12 +36,7 @@ struct Answer {
 /// Over a link that may act only: the answer names a person.
 pub async fn get(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     require!(authz::acting_caller(&req, &state).await);
-    let user = lkc::current(&state).await.map(|s| UserView {
-        id: s.user.id,
-        name: s.user.name,
-        group: s.user.group,
-        avatar: s.user.avatar,
-    });
+    let user = lkc::current(&state).await.map(|u| UserView { id: u.id, name: u.name, group: u.group, avatar: u.avatar });
     Ok(HttpResponse::Ok().json(&Answer { user, sign_in: state.lkc.sign_in() }))
 }
 

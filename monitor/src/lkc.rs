@@ -15,8 +15,9 @@
 //! signs out too ([`end_account`]): whoever held the old one may have
 //! approved the sign-in with their own account.
 
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use sbm_lkc::{DeviceAuthorization, DevicePoll, Failure, Tokens, User};
 use serde::Serialize;
@@ -63,9 +64,18 @@ struct SignIn {
 pub struct Lkc {
     client: OnceLock<Arc<sbm_lkc::Client>>,
     sign_in: Mutex<Option<SignIn>>,
+    /// Raised by a password change: a sign-in started before it is not
+    /// begun after it.
+    epoch: AtomicU64,
     /// Held through a refresh: the IdP takes a refresh token once, so two at
     /// once would sign the second out.
     refreshing: tokio::sync::Mutex<()>,
+    /// The monotonic expiry of the access token this process received
+    /// (`sbm_lkc::Tokens::deadline`), which storage does not keep.
+    deadline: Mutex<Option<(String, Instant)>>,
+    /// A refresh token spent at the IdP whose row could not be dropped: never
+    /// sent again, as a reuse ends every session of the person.
+    spent: Mutex<Option<String>>,
 }
 
 impl Lkc {
@@ -82,13 +92,65 @@ impl Lkc {
         self.sign_in.locked().as_ref().map(|s| s.view.clone())
     }
 
+    /// What [`Self::begin`] is to be given, read before a sign-in is asked
+    /// for.
+    pub fn epoch(&self) -> u64 {
+        self.epoch.load(Ordering::SeqCst)
+    }
+
     /// Puts [view] in place as the sign-in waiting, polled by [task], ending
-    /// the one before.
-    pub fn begin(&self, view: SignInView, device_code: String, task: AbortHandle) {
-        let previous = self.sign_in.locked().replace(SignIn { view, device_code, task: Some(task) });
+    /// the one before — unless a password change came since [epoch], which
+    /// ends [task] instead.
+    pub fn begin(&self, view: SignInView, device_code: String, task: AbortHandle, epoch: u64) -> bool {
+        let mut sign_in = self.sign_in.locked();
+        if self.epoch() != epoch {
+            task.abort();
+            return false;
+        }
+        let previous = sign_in.replace(SignIn { view, device_code, task: Some(task) });
+        drop(sign_in);
         if let Some(task) = previous.and_then(|s| s.task) {
             task.abort();
         }
+        true
+    }
+
+    /// For a password change: ends the sign-in waiting, and one being asked
+    /// for.
+    fn end_epoch(&self) {
+        let sign_in = self.sign_in.locked().take();
+        self.epoch.fetch_add(1, Ordering::SeqCst);
+        if let Some(task) = sign_in.and_then(|s| s.task) {
+            task.abort();
+        }
+    }
+
+    /// Once the IdP granted [device_code]'s tokens: nothing aborts its task
+    /// any more, so they are stored or revoked. False when it is no longer
+    /// the sign-in waiting.
+    fn claim(&self, device_code: &str) -> bool {
+        let mut sign_in = self.sign_in.locked();
+        match sign_in.as_mut().filter(|s| s.device_code == device_code && s.view.failed.is_none()) {
+            Some(s) => {
+                s.task = None;
+                true
+            }
+            None => false,
+        }
+    }
+
+    /// [tokens] with the monotonic expiry this process knows for them.
+    fn with_deadline(&self, mut tokens: Tokens) -> Tokens {
+        if let Some((access, deadline)) = self.deadline.locked().as_ref()
+            && *access == tokens.access
+        {
+            tokens.deadline = Some(*deadline);
+        }
+        tokens
+    }
+
+    fn remember(&self, tokens: &Tokens) {
+        *self.deadline.locked() = tokens.deadline.map(|d| (tokens.access.clone(), d));
     }
 
     /// Ends the sign-in waiting, if any.
@@ -112,6 +174,7 @@ impl Lkc {
 
 /// Starts a device sign-in, ending one already waiting.
 pub async fn start(state: &Arc<AppState>) -> Result<SignInView, sbm_lkc::Error> {
+    let epoch = state.lkc.epoch();
     let device = state.lkc.client()?.start_device().await?;
     let view = SignInView {
         user_code: device.user_code.clone(),
@@ -122,7 +185,9 @@ pub async fn start(state: &Arc<AppState>) -> Result<SignInView, sbm_lkc::Error> 
     };
     let device_code = device.device_code.clone();
     let task = tokio::spawn(poll(state.clone(), device)).abort_handle();
-    state.lkc.begin(view.clone(), device_code, task);
+    if !state.lkc.begin(view.clone(), device_code, task, epoch) {
+        return Err(sbm_lkc::Error::new(Failure::Refused, "the password changed meanwhile"));
+    }
     Ok(view)
 }
 
@@ -136,7 +201,12 @@ async fn poll(state: Arc<AppState>, mut device: DeviceAuthorization) {
         match client.poll_device(&device).await {
             Ok(DevicePoll::Pending) => {}
             Ok(DevicePoll::SlowDown(secs)) => device.interval_secs = secs,
-            Ok(DevicePoll::Done(tokens)) => break tokens,
+            Ok(DevicePoll::Done(tokens)) => {
+                if !state.lkc.claim(&device.device_code) {
+                    return revoke(&state, tokens.refresh);
+                }
+                break tokens;
+            }
             Err(e) if e.failure == Failure::Unreachable => tracing::debug!("LK Cloud sign-in: {e}"),
             Err(e) => return finish(&state, &device.device_code, Err(e)).await,
         }
@@ -168,7 +238,7 @@ async fn finish(state: &AppState, device_code: &str, outcome: Result<Session, sb
                 drop(_refreshing);
                 return revoke(state, session.tokens.refresh);
             };
-            let previous = load(&state.db, &state.sealer).await;
+            let previous = load(&state.db, &state.sealer).await.ok().flatten();
             if let Err(e) = store(&state.db, &state.sealer, &session).await {
                 tracing::error!("LK Cloud sign-in: storing it: {e}");
                 drop(_refreshing);
@@ -177,6 +247,7 @@ async fn finish(state: &AppState, device_code: &str, outcome: Result<Session, sb
                 state.lkc.sign_in.locked().get_or_insert(sign_in);
                 return revoke(state, session.tokens.refresh);
             }
+            state.lkc.remember(&session.tokens);
             drop(_refreshing);
             // The account it replaces is let go of at the IdP too.
             if let Some(previous) = previous.filter(|p| p.tokens.refresh != session.tokens.refresh) {
@@ -210,14 +281,25 @@ fn set_failed(state: &AppState, device_code: &str, code: &'static str) {
 /// the credentials key no longer opens the tokens.
 pub async fn session(state: &AppState) -> Option<Session> {
     let _refreshing = state.lkc.refreshing.lock().await;
-    let session = load(&state.db, &state.sealer).await?;
+    let mut session = load_or_forget(state).await?;
+    session.tokens = state.lkc.with_deadline(session.tokens);
     if !session.tokens.due(sbm_lkc::now_ms()) || session.tokens.refresh.is_none() {
         return Some(session);
     }
+    if *state.lkc.spent.locked() == session.tokens.refresh {
+        let _ = forget(&state.db).await;
+        return None;
+    }
     let client = state.lkc.client().ok()?;
+    // Spent once asked, whatever comes back: a failure below never sends it
+    // again.
+    let spend = || {
+        *state.lkc.spent.locked() = session.tokens.refresh.clone();
+    };
     match client.refresh(&session.tokens).await {
         Ok(tokens) => {
-            let fresh = Session { tokens, ..session };
+            spend();
+            let fresh = Session { tokens, ..session.clone() };
             if let Err(e) = store(&state.db, &state.sealer, &fresh).await {
                 // The stored refresh token is spent; using it again reads to
                 // the IdP as a leak and ends every session of the person.
@@ -226,9 +308,13 @@ pub async fn session(state: &AppState) -> Option<Session> {
                 let _ = forget(&state.db).await;
                 return None;
             }
+            state.lkc.remember(&fresh.tokens);
             Some(fresh)
         }
-        Err(e) if e.failure == Failure::Rejected => {
+        // The IdP took the token back, or answered a success this cannot
+        // read, after which the token is spent too.
+        Err(e) if matches!(e.failure, Failure::Rejected | Failure::InvalidResponse) => {
+            spend();
             tracing::warn!("LK Cloud: signed out, the refresh token is gone: {e}");
             let _ = forget(&state.db).await;
             None
@@ -253,7 +339,7 @@ async fn reread(state: &AppState) {
     let user = client.user(&session.tokens.access).await;
     let _refreshing = state.lkc.refreshing.lock().await;
     // Signed out, or signed in again, while homebase answered.
-    if load(&state.db, &state.sealer).await.as_ref() != Some(&session) {
+    if load(&state.db, &state.sealer).await.ok().flatten().as_ref() != Some(&session) {
         return;
     }
     match user {
@@ -276,7 +362,7 @@ async fn reread(state: &AppState) {
 pub async fn sign_out(state: &AppState) -> sqlx::Result<bool> {
     state.lkc.cancel();
     let _refreshing = state.lkc.refreshing.lock().await;
-    let Some(session) = load(&state.db, &state.sealer).await else {
+    let Some(session) = load_or_forget(state).await else {
         return Ok(false);
     };
     forget(&state.db).await?;
@@ -287,7 +373,7 @@ pub async fn sign_out(state: &AppState) -> sqlx::Result<bool> {
 /// For a password change: the sign-in waiting ends, and the account signed
 /// in to is signed out of.
 pub fn end_account(state: &Arc<AppState>) {
-    state.lkc.cancel();
+    state.lkc.end_epoch();
     let state = state.clone();
     tokio::spawn(async move {
         match sign_out(&state).await {
@@ -298,9 +384,16 @@ pub fn end_account(state: &Arc<AppState>) {
     });
 }
 
-/// The account as last stored, without renewing anything: what a read shows.
-pub async fn current(state: &AppState) -> Option<Session> {
-    load(&state.db, &state.sealer).await
+/// The account as last stored, without renewing or opening anything: what a
+/// read shows.
+pub async fn current(state: &AppState) -> Option<User> {
+    let user: Option<String> = sqlx::query_scalar("SELECT user FROM lkc_session WHERE id = 1")
+        .fetch_optional(&state.db)
+        .await
+        .inspect_err(|e| tracing::warn!("LK Cloud: reading it: {e}"))
+        .ok()
+        .flatten();
+    serde_json::from_str(&user?).ok()
 }
 
 /// Asks the IdP to forget [refresh], in the background.
@@ -325,16 +418,37 @@ pub async fn watch(state: Arc<AppState>) {
 
 type Row = (String, String, Option<String>, i64);
 
-async fn load(db: &SqlitePool, sealer: &Sealer) -> Option<Session> {
+/// A stored session that cannot be read back, and its refresh token when it
+/// could be opened.
+#[derive(Debug)]
+struct Broken {
+    refresh: Option<String>,
+}
+
+/// [load], dropping a session that cannot be read back: its refresh token
+/// revoked when it could be opened. Under `refreshing`.
+async fn load_or_forget(state: &AppState) -> Option<Session> {
+    match load(&state.db, &state.sealer).await {
+        Ok(session) => session,
+        Err(broken) => {
+            let _ = forget(&state.db).await;
+            revoke(state, broken.refresh);
+            None
+        }
+    }
+}
+
+async fn load(db: &SqlitePool, sealer: &Sealer) -> Result<Option<Session>, Broken> {
     let row: Row =
         match sqlx::query_as("SELECT user, access_token, refresh_token, expires_at FROM lkc_session WHERE id = 1")
             .fetch_optional(db)
             .await
         {
-            Ok(row) => row?,
+            Ok(Some(row)) => row,
+            Ok(None) => return Ok(None),
             Err(e) => {
                 tracing::warn!("LK Cloud: reading it: {e}");
-                return None;
+                return Ok(None);
             }
         };
     let (user, access, refresh, expires_at_ms) = row;
@@ -347,22 +461,18 @@ async fn load(db: &SqlitePool, sealer: &Sealer) -> Option<Session> {
     let user = serde_json::from_str::<User>(&user);
     match (opened, user) {
         (Ok((access, refresh)), Ok(user)) if !access.is_empty() => {
-            Some(Session { user, tokens: Tokens { access, refresh, expires_at_ms } })
+            Ok(Some(Session { user, tokens: Tokens::stored(access, refresh, expires_at_ms) }))
         }
-        (opened, user) => {
-            match (opened, user) {
-                (Err(e), _) => tracing::warn!("LK Cloud: its tokens: {e}"),
-                (Ok((_, refresh)), Err(e)) => {
-                    tracing::warn!("LK Cloud: its account: {e}");
-                    // Opened, so let go of at the IdP rather than left live.
-                    if let (Some(refresh), Ok(client)) = (refresh, sbm_lkc::Client::new()) {
-                        tokio::spawn(async move { client.revoke(&refresh).await });
-                    }
-                }
-                (Ok(_), Ok(_)) => tracing::warn!("LK Cloud: an empty access token"),
+        (Err(e), _) => {
+            tracing::warn!("LK Cloud: its tokens: {e}");
+            Err(Broken { refresh: None })
+        }
+        (Ok((_, refresh)), user) => {
+            match user {
+                Err(e) => tracing::warn!("LK Cloud: its account: {e}"),
+                Ok(_) => tracing::warn!("LK Cloud: an empty access token"),
             }
-            let _ = forget(db).await;
-            None
+            Err(Broken { refresh })
         }
     }
 }
@@ -398,11 +508,7 @@ mod tests {
                 group: "user".into(),
                 avatar: None,
             },
-            tokens: Tokens {
-                access: "access".into(),
-                refresh: Some("refresh".into()),
-                expires_at_ms: sbm_lkc::now_ms() + expires_in_ms,
-            },
+            tokens: Tokens::stored("access".into(), Some("refresh".into()), sbm_lkc::now_ms() + expires_in_ms),
         }
     }
 
@@ -415,10 +521,10 @@ mod tests {
     #[tokio::test]
     async fn a_session_is_kept_sealed_and_read_back() {
         let (db, sealer) = (db().await, Sealer::temporary());
-        assert!(load(&db, &sealer).await.is_none());
+        assert!(load(&db, &sealer).await.unwrap().is_none());
         let kept = session(60_000);
         store(&db, &sealer, &kept).await.unwrap();
-        assert_eq!(load(&db, &sealer).await, Some(kept.clone()));
+        assert_eq!(load(&db, &sealer).await.unwrap(), Some(kept.clone()));
         let (access, refresh): (String, String) =
             sqlx::query_as("SELECT access_token, refresh_token FROM lkc_session").fetch_one(&db).await.unwrap();
         assert!(!access.contains("access") && !refresh.contains("refresh"));
@@ -429,11 +535,44 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn tokens_another_key_sealed_sign_out() {
+    async fn tokens_another_key_sealed_cannot_be_read() {
         let db = db().await;
         store(&db, &Sealer::temporary(), &session(60_000)).await.unwrap();
-        assert!(load(&db, &Sealer::temporary()).await.is_none());
-        let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM lkc_session").fetch_one(&db).await.unwrap();
-        assert_eq!(count, 0);
+        assert!(load(&db, &Sealer::temporary()).await.unwrap_err().refresh.is_none());
+    }
+
+    #[tokio::test]
+    async fn an_unreadable_account_hands_back_its_refresh_token() {
+        let (db, sealer) = (db().await, Sealer::temporary());
+        store(&db, &sealer, &session(60_000)).await.unwrap();
+        sqlx::query("UPDATE lkc_session SET user = '{}'").execute(&db).await.unwrap();
+        assert_eq!(load(&db, &sealer).await.unwrap_err().refresh.as_deref(), Some("refresh"));
+    }
+
+    #[test]
+    fn a_sign_in_asked_for_before_a_password_change_is_not_begun() {
+        let rt = tokio::runtime::Builder::new_current_thread().build().unwrap();
+        let _guard = rt.enter();
+        let lkc = Lkc::default();
+        let view = || SignInView {
+            user_code: "ABCD".into(),
+            verification_uri: "https://auth.example/device".into(),
+            verification_uri_complete: None,
+            expires_at_ms: i64::MAX,
+            failed: None,
+        };
+        let epoch = lkc.epoch();
+        lkc.end_epoch();
+        let task = rt.spawn(std::future::pending::<()>());
+        assert!(!lkc.begin(view(), "d1".into(), task.abort_handle(), epoch));
+        assert!(lkc.sign_in().is_none());
+        assert!(rt.block_on(task).unwrap_err().is_cancelled());
+        // Once granted, it is claimed: nothing aborts it after.
+        let task = rt.spawn(std::future::pending::<()>());
+        assert!(lkc.begin(view(), "d2".into(), task.abort_handle(), lkc.epoch()));
+        assert!(lkc.claim("d2") && !lkc.claim("d1"));
+        lkc.cancel();
+        assert!(!task.is_finished());
+        task.abort();
     }
 }

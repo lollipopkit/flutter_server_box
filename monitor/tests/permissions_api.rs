@@ -534,7 +534,7 @@ async fn a_password_change_ends_a_device_sign_in_waiting() {
         expires_at_ms: i64::MAX,
         failed: None,
     };
-    state.lkc.begin(view, "device".into(), poll.abort_handle());
+    assert!(state.lkc.begin(view, "device".into(), poll.abort_handle(), state.lkc.epoch()));
     assert!(state.lkc.sign_in().is_some());
     server_box_monitor::api::authz::end_account(&state, "password_changed");
     assert!(state.lkc.sign_in().is_none());
