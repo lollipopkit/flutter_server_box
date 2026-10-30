@@ -1,11 +1,10 @@
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_tty/fl_tty.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:server_box/core/utils/android_rootfs.dart';
-import 'package:server_box/core/utils/rootfs.dart';
-import 'package:server_box/data/model/app/linux_distro.dart';
+import 'package:server_box/core/tty.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
@@ -30,6 +29,8 @@ void main() {
     // The install reads its mirror from the settings.
     await openTestDb();
     getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
+    // fl_tty reads its settings and brand from the app.
+    configFlTty();
     // The manifest as well as proot: what each system is and where to get it.
     await Rootfs.prepare();
     for (final profile in AndroidRootfs.profiles.toList()) {

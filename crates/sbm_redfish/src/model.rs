@@ -99,14 +99,20 @@ impl RedfishRoot {
 
 /// Where sessions are created, from the service root.
 ///
-/// `Links.Sessions` is where the specification puts it; `SessionService` at the
-/// top level is where it can also be found, and some services fill in only one.
+/// `Links.Sessions` is where the specification puts it. A root that names only
+/// `SessionService` (Supermicro) means its `Sessions` collection, which
+/// DSP0266 fixes at `<SessionService>/Sessions`: the service resource itself
+/// is not where a login is posted, and bmcweb answers a POST there with 401 —
+/// reported as a wrong password.
 pub(crate) fn session_link(root: &Value) -> Option<String> {
-    root.get("Links")
-        .and_then(|links| links.get("Sessions"))
-        .and_then(odata_id)
-        .or_else(|| root.get("SessionService").and_then(odata_id))
-        .map(str::to_string)
+    let links = root.get("Links").and_then(|links| links.get("Sessions")).and_then(odata_id);
+    match links {
+        Some(path) => Some(path.to_string()),
+        None => root
+            .get("SessionService")
+            .and_then(odata_id)
+            .map(|service| format!("{}/Sessions", service.trim_end_matches('/'))),
+    }
 }
 
 // --- Power ---
@@ -595,6 +601,23 @@ impl BmcSensors {
 
         out
     }
+}
+
+/// `members` with the sensors [`BmcSensors::from_sensors`] keeps — temperature,
+/// fan, power — ahead of the rest, otherwise in order.
+///
+/// A collection is read only up to [`crate::MAX_SENSOR_MEMBERS`], and bmcweb
+/// lists its ids sorted by type (`current_*`, `fan_*`, `power_*`, …,
+/// `temperature_*`, `voltage_*`), so on a large OpenBMC system the cap took
+/// every temperature first. Ranked by id because a member's type is only known
+/// once it has been read, which is the request the cap exists to save.
+pub fn shown_sensors_first(mut members: Vec<String>) -> Vec<String> {
+    let shown = |path: &str| {
+        let id = path.trim_end_matches('/').rsplit('/').next().unwrap_or_default().to_ascii_lowercase();
+        ["temp", "fan", "power", "pwr", "watt"].iter().any(|kind| id.contains(kind))
+    };
+    members.sort_by_key(|path| !shown(path));
+    members
 }
 
 fn push_fan(fans: &mut Vec<BmcReading>, name: String, raw: Option<&Value>, unit: Option<String>) {

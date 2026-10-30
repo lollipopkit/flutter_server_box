@@ -45,10 +45,10 @@ packages:
     dependency: "direct main"
     description:
       name: archive
-      sha256: "6c5bcd986e06b94e3c40244af471750840a3d2341d1f9763a1100a14add517b4"
+      sha256: "0d58d1fa1fddf6588251ccf2819f3fb3b6d0452c1b2813ac7413a05592bfbefe"
       url: "https://pub.dev"
     source: hosted
-    version: "4.3.0"
+    version: "4.5.2"
   args:
     dependency: transitive
     description:
@@ -596,11 +596,34 @@ packages:
       relative: true
     source: path
     version: "0.1.0"
+  fl_tty:
+    dependency: "direct main"
+    description:
+      path: "packages/fl_tty"
+      relative: true
+    source: path
+    version: "0.1.0"
   flutter:
     dependency: "direct main"
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_appauth:
+    dependency: transitive
+    description:
+      name: flutter_appauth
+      sha256: "9bacc200937c61c7ed4e64ecee3fc0d4042133405a00b56de8fbe401aa16d228"
+      url: "https://pub.dev"
+    source: hosted
+    version: "12.1.0"
+  flutter_appauth_platform_interface:
+    dependency: transitive
+    description:
+      name: flutter_appauth_platform_interface
+      sha256: c88f8edf43bf3b2c8fed73a04ba78309f00c549306a27f5ef818d767701a6eb6
+      url: "https://pub.dev"
+    source: hosted
+    version: "12.1.0"
   flutter_displaymode:
     dependency: "direct main"
     description:
@@ -723,13 +746,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.35"
-  flutter_pty:
-    dependency: "direct main"
-    description:
-      path: "packages/flutter_pty"
-      relative: true
-    source: path
-    version: "0.4.2"
   flutter_riverpod:
     dependency: "direct main"
     description:
@@ -757,10 +773,11 @@ packages:
   flutter_secure_storage:
     dependency: "direct dev"
     description:
-      name: flutter_secure_storage
-      sha256: fe638107c5f69119156ada2db5a57734385fac3f64430bd7252a00d3ead2ca4b
-      url: "https://pub.dev"
-    source: hosted
+      path: flutter_secure_storage
+      ref: serverbox
+      resolved-ref: "1142e9e65732a66b9e0a9bef46e5fd74e9d19de7"
+      url: "https://github.com/lollipopkit/flutter_secure_storage.git"
+    source: git
     version: "10.3.4"
   flutter_secure_storage_darwin:
     dependency: transitive
@@ -779,7 +796,7 @@ packages:
     source: hosted
     version: "3.0.3"
   flutter_secure_storage_platform_interface:
-    dependency: transitive
+    dependency: "direct dev"
     description:
       name: flutter_secure_storage_platform_interface
       sha256: "64951127f001f546891c86f414972bf49ef2c4c8a4c92c65f5790cc0c9100045"

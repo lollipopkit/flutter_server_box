@@ -744,6 +744,7 @@ const en = {
 	bmcInvalidUrl: 'The address has to be https://host or https://host:port, with no path.',
 	bmcInvalidUsername: 'A user name is required.',
 	bmcInvalidCertificate: 'The certificate fingerprint is not a SHA-256 fingerprint.',
+	bmcPasswordAgain: 'The address changed: enter the password again.',
 	bmcStateOn: 'On',
 	bmcStateOff: 'Off',
 	bmcStatePoweringOn: 'Powering on',

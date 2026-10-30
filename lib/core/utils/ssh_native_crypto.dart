@@ -2,24 +2,27 @@ import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart'
+    show ExternalLibrary;
 import 'package:pointycastle/api.dart';
 import 'package:server_box/src/rust/api/ssh_asym.dart' as asym;
 import 'package:server_box/src/rust/api/ssh_crypto.dart' as rust;
+import 'package:server_box/src/rust/frb_generated.dart';
 
 /// dartssh2's record cipher and MAC, computed by `sbm_ffi` instead of
 /// pointycastle.
 ///
 /// Installed once, at launch, right after `RustLib.init`. It changes nothing
 /// about the protocol: the same algorithms are proposed, the same one is
-/// negotiated, and an algorithm this does not implement — AES-GCM and
-/// ChaCha20-Poly1305, which the transport computes inline rather than through
-/// these factories — still goes through pointycastle. What changes is that
-/// AES and SHA-2 stop being Dart running on the isolate that draws frames.
+/// negotiated, and an algorithm this does not implement — ChaCha20-Poly1305 —
+/// still goes through pointycastle. What changes is that AES and SHA-2 stop
+/// being Dart running on the isolate that draws frames, and that AES-GCM stops
+/// being 1.9 MiB/s: pointycastle's GHASH is a bit at a time, where Rust's is
+/// the CPU's carry-less multiply (lollipopkit/dartssh2#19).
 ///
-/// Only the main isolate installs it. The file-transfer worker is an isolate of
-/// its own and would need its own `RustLib.init`, but it is also not the
-/// isolate anyone is looking at, so pointycastle there costs nothing worth the
-/// wiring.
+/// The file-transfer worker installs it too, with a `RustLib.init` of its own
+/// — see [installNativeSshCrypto]: it draws nothing, but a transfer over
+/// AES-GCM is where pointycastle's speed is felt.
 ///
 /// Every failure here answers `null`, which dartssh2 reads as "use
 /// pointycastle". That is the honest answer for an algorithm this does not
@@ -54,6 +57,16 @@ final class NativeSshCrypto extends SSHCryptoBackend {
           forEncryption: forEncryption,
         ),
       );
+    } catch (e) {
+      _reportOnce(algorithm, e);
+      return null;
+    }
+  }
+
+  @override
+  SSHAeadCipher? createAead(String algorithm, Uint8List key) {
+    try {
+      return _NativeAead(rust.SshAead(algorithm: algorithm, key: key));
     } catch (e) {
       _reportOnce(algorithm, e);
       return null;
@@ -346,3 +359,46 @@ final class _NativeMac implements Mac {
   @override
   void reset() => _input.clear();
 }
+
+/// [rust.SshAead], one call per packet each way.
+final class _NativeAead implements SSHAeadCipher {
+  _NativeAead(this._aead);
+
+  final rust.SshAead _aead;
+
+  /// Left to throw: a packet that could not be sealed must not be sent.
+  @override
+  Uint8List seal(Uint8List nonce, Uint8List aad, Uint8List plaintext) =>
+      _aead.seal(nonce: nonce, aad: aad, plaintext: plaintext);
+
+  /// A packet that could not be opened is one that does not authenticate,
+  /// whatever the reason: dartssh2 ends the connection on that, as it does
+  /// for a tag that does not match, rather than on an error it has no name for.
+  @override
+  Uint8List? open(Uint8List nonce, Uint8List aad, Uint8List sealed) {
+    try {
+      return _aead.open(nonce: nonce, aad: aad, sealed: sealed);
+    } catch (e) {
+      NativeSshCrypto._reportOnce('aead open', e);
+      return null;
+    }
+  }
+}
+
+/// [NativeSshCrypto] on an isolate other than the main one, which has no
+/// `RustLib.init` of its own; once, however many times it is called. A
+/// library that will not load leaves pointycastle, as it does on the main
+/// isolate, and says so.
+Future<void>? _installed;
+
+Future<void> installNativeSshCrypto({ExternalLibrary? library}) =>
+    _installed ??= () async {
+      try {
+        if (!RustLib.instance.initialized) {
+          await RustLib.init(externalLibrary: library);
+        }
+        sshCryptoBackend = const NativeSshCrypto();
+      } catch (e, s) {
+        Loggers.app.warning('No native SSH crypto on this isolate', e, s);
+      }
+    }();

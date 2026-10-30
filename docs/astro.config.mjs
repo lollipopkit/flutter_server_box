@@ -56,6 +56,7 @@ export default defineConfig({
 						{ label: 'Bulk Import Servers', translations: { 'zh-CN': '批量导入服务器' }, slug: 'advanced/bulk-import' },
 						{ label: 'Widget Setup', translations: { 'zh-CN': '小组件设置' }, slug: 'advanced/widgets' },
 						{ label: 'Globe View', translations: { 'zh-CN': '地球仪视图' }, slug: 'advanced/globe' },
+						{ label: 'Host Keys and Certificates', translations: { 'zh-CN': '主机密钥与证书' }, slug: 'advanced/host-keys' },
 						{ label: 'Custom Commands', translations: { 'zh-CN': '自定义命令' }, slug: 'advanced/custom-commands' },
 						{ label: 'Custom Logo', translations: { 'zh-CN': '自定义 Logo' }, slug: 'advanced/custom-logo' },
 						{ label: 'Links (serverbox://)', translations: { 'zh-CN': '链接(serverbox://)' }, slug: 'advanced/url-scheme' },

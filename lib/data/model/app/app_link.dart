@@ -14,6 +14,8 @@ import 'package:server_box/data/model/app/tab.dart';
 sealed class AppLink {
   const AppLink();
 
+  /// A host added here is to be added to MainActivity's VIEW filter in the
+  /// Android manifest too, which lists them: `serverbox://auth/…` is AppAuth's.
   static const scheme = 'serverbox';
 
   static AppLink? parse(String raw) {

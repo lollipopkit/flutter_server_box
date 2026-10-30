@@ -5,6 +5,7 @@ pub mod container;
 pub mod create;
 pub mod cron;
 pub mod desktop;
+pub mod digest;
 pub mod file;
 pub mod files;
 pub mod firewall;

@@ -1,7 +1,7 @@
 name: server_box
 description: server status & toolbox app.
 publish_to: "none"
-version: 1.0.1787+1787
+version: 1.0.1844+1844
 
 environment:
   sdk: ">=3.11.0"
@@ -17,7 +17,7 @@ dependencies:
   # transitive one it is whatever some other package happens to want, and a
   # tar reader deciding what a hard link is has already cost this app a
   # release.
-  archive: ^4.3.0
+  archive: ^4.5.2
   choice: ^2.3.2
   # The time `SessionKeepAlive` measures an idle session against. Read through
   # `clock` rather than `DateTime.now` so a test's fake time moves it too.
@@ -91,10 +91,10 @@ dependencies:
     path: packages/plain_notification_token
   fl_lib:
     path: packages/fl_lib
-  # Forked to swap five per-platform build integrations for one build hook,
-  # which is what takes the last pod out of the iOS and macOS builds.
-  flutter_pty:
-    path: packages/flutter_pty
+  # The shell on this device: pty, proot on Android, ish-arm64 on iOS. Shared
+  # with LLMBox; its native code is built by its own hook.
+  fl_tty:
+    path: packages/fl_tty
   flutter_rust_bridge: 2.13.0
   # Drives the build hook below. `sbm_ffi` is no longer a Flutter plugin — the
   # hook compiles the crate directly, so there is nothing to depend on.
@@ -170,7 +170,14 @@ dev_dependencies:
   # Imported by tests directly, for the same reason as the block above.
   shared_preferences: ^2.5.5
   vector_graphics_compiler: ^1.3.0
-  flutter_secure_storage: ^10.3.1
+  # The same fork fl_lib takes (flutter_secure_storage#1298).
+  # TODO: back to pub.dev once upstream fixes it.
+  flutter_secure_storage:
+    git:
+      url: https://github.com/lollipopkit/flutter_secure_storage.git
+      ref: serverbox
+      path: flutter_secure_storage
+  flutter_secure_storage_platform_interface: ^2.0.1
 
 # Which SQLite gets compiled into the app. Only the root package can set this —
 # a dependency cannot supply its own defaults — so it lives here even though
@@ -191,7 +198,6 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/app_icon.png
-    - assets/rootfs_manifest.json
     # The theme catalog's floor: whose repositories the store offers when its
     # own address does not answer. The list itself is read over HTTPS.
     - assets/catalog/

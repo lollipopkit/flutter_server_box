@@ -13,7 +13,7 @@ import '../../helpers/rust_lib_helper.dart';
 /// detail, the commands and what is refused — are asserted in Rust, by
 /// `crates/sbm_parser/tests/user_compat.rs`, which holds this file's former
 /// cases.
-final class _QueueExec implements ServerExec {
+final class _QueueExec implements CommandExec {
   _QueueExec(List<ExecResult> results) : results = Queue.of(results);
 
   final Queue<ExecResult> results;

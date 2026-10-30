@@ -65,7 +65,7 @@ class PveBackend implements VirtBackend {
     this.sshKeyId,
     this.sshPassword,
     this.securityContext,
-    Future<ServerExec> Function()? exec,
+    Future<CommandExec> Function()? exec,
     void Function(String fingerprint)? onCertConfirmed,
     void Function()? onClose,
     this.taskPoll = const Duration(seconds: 1),
@@ -559,7 +559,7 @@ class PveBackend implements VirtBackend {
 
   /// Runs a command on the server this backend reaches PVE through, for
   /// what the API does not say ([_liveNet]); null in tests.
-  final Future<ServerExec> Function()? _exec;
+  final Future<CommandExec> Function()? _exec;
 
   /// What the server says of the interfaces it is using
   /// (`sbm_virt::pve::net::LIVE_NET_SCRIPT`), as it printed it; null when it

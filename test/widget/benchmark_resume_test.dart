@@ -762,6 +762,6 @@ void main() {
 /// See the note on `pump`: this exists so a poll cannot reach the network.
 class _OfflineServerNotifier extends ServerNotifier {
   @override
-  Future<ServerExec> ensureExec({VoidCallback? onSshDial}) async =>
+  Future<CommandExec> ensureExec({VoidCallback? onSshDial}) async =>
       throw StateError('offline: this test does not connect');
 }

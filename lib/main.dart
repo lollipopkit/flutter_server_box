@@ -4,6 +4,7 @@ import 'package:computer/computer.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/theme.dart';
+import 'package:fl_tty/fl_tty.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
@@ -13,6 +14,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:server_box/app.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/diag.dart';
+import 'package:server_box/core/lkc.dart';
 import 'package:server_box/core/llm/host.dart';
 import 'package:server_box/core/motion.dart';
 import 'package:server_box/core/service/crash_report.dart';
@@ -22,10 +24,11 @@ import 'package:server_box/core/service/theme_host.dart';
 import 'package:server_box/core/service/watch_sync.dart';
 import 'package:server_box/core/service/widget_sync.dart';
 import 'package:server_box/core/sync.dart';
-import 'package:server_box/core/utils/rootfs.dart';
-import 'package:server_box/core/utils/rootfs_manifest_source.dart';
+import 'package:server_box/core/tty.dart';
 import 'package:server_box/core/utils/sandbox_import.dart';
+import 'package:server_box/core/utils/ssh_key_passphrase.dart';
 import 'package:server_box/core/utils/ssh_native_crypto.dart';
+import 'package:server_box/core/utils/store_recovery.dart';
 import 'package:server_box/data/model/server/dist_license.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/misc.dart';
@@ -42,6 +45,7 @@ import 'package:server_box/src/rust/frb_generated.dart';
 import 'package:server_box/view/page/launch_failed.dart';
 import 'package:server_box/view/page/rescue_app.dart';
 import 'package:server_box/view/page/schema_too_new.dart';
+import 'package:server_box/view/page/store_key_lost.dart';
 
 Future<void> main() async {
   await _runInZone(() async {
@@ -234,6 +238,63 @@ Future<void> _initApp(ProviderContainer container) async {
   await TermSessionManager.init();
 }
 
+/// `Stores.init`, and what to do when the database there does not open.
+Future<void> _openStores({required bool fromImport}) async {
+  try {
+    await Stores.init();
+  } catch (e, s) {
+    if (!fromImport && e is! StoreUnreadableException) rethrow;
+
+    // Closed before the files are deleted or moved. `Stores.init` may have got
+    // as far as opening the database, or several boxes, before the one that
+    // threw, and unlinking a file out from under a live handle is undefined at
+    // best: on Windows the delete fails outright and the copy stays, so the
+    // retry below reopens exactly the data that just failed to open.
+    await closeTables();
+    await SqliteDb.close();
+    await Hive.close();
+    await getIt.reset();
+
+    if (fromImport) {
+      // The copied data does not open. It was only ever a copy, so drop it and
+      // start empty — an app that opens with nothing in it can still be told
+      // what happened, one that does not open cannot.
+      Loggers.app.warning('Stores.init after sandbox import', e, s);
+      await SandboxImport.undo();
+    } else {
+      // The vault has no key for the file, or cannot read the one it has
+      // (#1784): it may be gone, or only unavailable this once (a keyring not
+      // yet unlocked). Starting empty would make a new key over the old one,
+      // so that is the user's call.
+      final err = e as StoreUnreadableException;
+      final ask = switch (err.reason) {
+        StoreUnreadableReason.keyLost || StoreUnreadableReason.vaultFailed => true,
+        StoreUnreadableReason.keyRejected => false,
+      };
+      if (ask && await _askKeyLost(err)) return _openStores(fromImport: false);
+      // The vault's key does not open the database (#1780). The same reasoning,
+      // except this file is the only copy: kept aside, not deleted, and the
+      // reason is shown once there is a screen — see [StoreUnreadableNotice].
+      await StoreRecovery.recover(err, s);
+    }
+    await Stores.init();
+  }
+}
+
+/// Shows [StoreKeyLostPage] and returns true to try again.
+Future<bool> _askKeyLost(StoreUnreadableException e) async {
+  Loggers.app.warning('Store key missing', e);
+  final choice = Completer<bool>();
+  await _showRescueWindow();
+  // The first tap decides; a second one before the page is replaced is ignored.
+  void onChoice(bool retry) {
+    if (!choice.isCompleted) choice.complete(retry);
+  }
+
+  runApp(RescueApp(page: StoreKeyLostPage(err: e, onChoice: onChoice)));
+  return choice.future;
+}
+
 Future<void> _initData() async {
   // `extended_image` caches under `getTemporaryDirectory()` and makes its own
   // folder there with a plain `create()`, no `recursive`. On macOS that
@@ -264,28 +325,7 @@ Future<void> _initData() async {
   // After the preferences, because the data it copies may be encrypted with a
   // key that old installs keep there. See [SandboxImport].
   final imported = await SandboxImport.run();
-
-  try {
-    await Stores.init();
-  } catch (e, s) {
-    if (imported != SandboxImportResult.imported) rethrow;
-
-    // The copied data does not open. It was only ever a copy, so drop it and
-    // start empty — an app that opens with nothing in it can still be told
-    // what happened, one that does not open cannot.
-    Loggers.app.warning('Stores.init after sandbox import', e, s);
-    // Closed before the files are deleted. `Stores.init` may have got as far as
-    // opening the database, or several boxes, before the one that threw, and
-    // unlinking a file out from under a live handle is undefined at best: on
-    // Windows the delete fails outright and the copy stays, so the retry below
-    // reopens exactly the data that just failed to open.
-    await closeTables();
-    await SqliteDb.close();
-    await Hive.close();
-    await getIt.reset();
-    await SandboxImport.undo();
-    await Stores.init();
-  }
+  await _openStores(fromImport: imported == SandboxImportResult.imported);
 
   // It may effect the following logic, so await it.
   // DO DB migration before load any provider.
@@ -403,6 +443,7 @@ Future<void> _doPlatformRelated() async {
   // Where the Linux userland is, and whether there is one — proot and an
   // unpacked rootfs on Android, the engine and its filesystem on iOS. A few
   // file checks, and the terminal tab reads the answer while building.
+  configFlTty();
   try {
     await Rootfs.prepare();
   } catch (e, s) {
@@ -432,6 +473,10 @@ Future<void> _doPlatformRelated() async {
       })(),
     );
   }
+
+  // Off the launch path: it reads the keychain and asks homebase who is signed in.
+  if (Lkc.enabled) unawaited(Lkc.init());
+  unawaited(KeyPassphrases.init());
 
   // The watch app used to learn about servers only while the user sat on the
   // iOS settings page. Pushing at launch is what makes a freshly installed or

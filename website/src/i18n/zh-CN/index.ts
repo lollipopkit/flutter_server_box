@@ -31,39 +31,68 @@ const zhCN: Translation = {
     three: 'ServerBox 终端截图',
     four: 'ServerBox 文件浏览器截图',
   },
-  gallery: {
-    title: '每个界面，每种设备。',
-    subtitle:
-      'iPhone、iPad 与 macOS 共 31 张截图，默认折叠，展开后才加载。',
-    count: '{count} 张截图',
-  },
   features: {
     title: '一个紧凑工作区，覆盖日常服务器维护。',
     subtitle: '能力密度高，没有装饰性填充；每个模块都对应真实维护工作流。',
+    list: {
+      title: '服务器列表',
+      description:
+        '一览每台服务器的连接状态、CPU、内存、磁盘和网络数据。可按标签筛选，也可在地球视图中查看。',
+    },
     charts: {
       title: '状态图表',
       description:
-        '通过高密度移动端图表跟踪 CPU、内存、传感器、GPU、网络、磁盘和主机健康状态。',
-    },
-    workspace: {
-      title: '跨平台工作区',
-      description:
-        '在 iOS、Android、macOS、Linux 和 Windows 上使用同一个熟悉的 Flutter 界面。',
+        '实时查看 CPU、内存、交换分区、磁盘、磁盘 I/O 和网络图表，以及传感器、GPU 和电池数据。可切换到历史数据，或点开指标查看详情。',
     },
     terminal: {
-      title: 'SSH 终端与 SFTP',
+      title: 'SSH 终端',
       description:
-        '从服务器卡片直接打开命令行和文件会话，底层基于 dartssh2 与 xterm.dart。',
+        '功能完整的终端，手机上提供虚拟按键，可运行 htop、vim 等程序。支持直连、通过跳板机连接和使用 ProxyCommand。',
     },
-    native: {
-      title: '设备原生能力',
+    files: {
+      title: 'SFTP 文件',
       description:
-        '生物认证、消息推送、桌面小组件和 watchOS 支持，让服务器上下文保持贴近。',
+        '浏览、上传、下载文件，也可直接编辑。Markdown 文件会以排版后的预览形式打开。',
     },
-    platforms: {
-      title: 'Docker、进程、systemd',
+    containers: {
+      title: 'Docker 与 Podman',
       description:
-        '无需离开监控流程，就能检查容器、进程和服务状态。',
+        '按 Compose 项目分组显示容器及其 CPU、内存和网络用量。可启动、停止、重启或删除容器、查看日志，也可进入容器 shell；镜像和设置分别位于独立标签页。',
+    },
+    processes: {
+      title: '进程',
+      description:
+        '所有进程及其 CPU 和内存，可按需排序，按名称、用户或 PID 搜索，并直接结束进程。',
+    },
+    services: {
+      title: 'Systemd 服务',
+      description:
+        '失败的单元排在最前，其余在后。一键重启或查看日志。',
+    },
+    users: {
+      title: '用户与用户组',
+      description:
+        '查看系统账户，并标出登录 shell 和 sudo 权限。可添加或删除用户，也可添加、编辑或删除用户组。',
+    },
+    agent: {
+      title: 'AI 助手',
+      description:
+        '了解你所管理服务器的 App 内助手，可搭配你选择的模型提供商、MCP server 和 skills 使用。',
+    },
+    bench: {
+      title: '基准测试',
+      description:
+        '运行 Yet Another Bench Script 测试服务器的磁盘、网络和 CPU，并保存结果。“更多”菜单还可打开代码片段、远程桌面和虚拟化功能。',
+    },
+    virt: {
+      title: '虚拟化',
+      description:
+        '管理 libvirt 和 Proxmox VE 上的虚拟机与容器：启动、停止，调整 vCPU、内存和磁盘，打开控制台。',
+    },
+    themes: {
+      title: '主题商店',
+      description:
+        '在 App 内安装官方主题，每款主题都有自己的配色、背景和启动画面；也可以自行制作主题。',
     },
   },
   capabilities: {
@@ -127,7 +156,7 @@ const zhCN: Translation = {
   download: {
     title: '所有平台，所有来源。',
     subtitle:
-      '请为你的设备选择可信的下载来源。iOS 版本可从 App Store 获取。macOS App Store 版本仅支持 Apple silicon；Intel Mac 用户可通过 GitHub Releases 或 Homebrew 安装。Android、Linux 和 Windows 也可直接下载安装包。',
+      '请为你的设备选择可信的下载来源。iOS 版本可从 App Store 获取，也可从 GitHub Releases 下载未签名的 .ipa 自行签名。macOS 版本支持 Apple silicon 和 Intel，可通过 GitHub Releases 或 Homebrew 安装。Android、Linux 和 Windows 可直接下载安装包。',
     copied: '已复制安装命令',
     copyPrompt: '复制此安装命令：',
     note:

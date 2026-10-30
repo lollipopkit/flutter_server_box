@@ -32,6 +32,7 @@ extension _HomePageTabs on _HomePageState {
               builder: (_, selected, child) =>
                   ExcludeFocus(excluding: selected != index, child: child!),
               child: NestedNavigator(
+                observers: [AgentScreen.tabObserver(_tabs[index])],
                 // The top inset lands on the tab's own content and not on the
                 // navigator around it, which is the whole point: a page pushed
                 // here is a sibling route, outside this `SafeArea`, so it reaches

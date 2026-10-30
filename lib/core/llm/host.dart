@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/llm/scope.dart';
+import 'package:server_box/core/llm/screen.dart';
 import 'package:server_box/core/llm/tools.dart';
 import 'package:server_box/data/provider/ai/global_agent_tools.dart';
 import 'package:server_box/data/provider/server/all.dart';
@@ -27,6 +28,7 @@ abstract final class LlmHost {
   static Future<void> init(
     ProviderContainer container, {
     @visibleForTesting String? directory,
+    @visibleForTesting Uint8List? key,
     @visibleForTesting LlmCredentials? credentials,
     @visibleForTesting ExternalLibrary? externalLibrary,
     @visibleForTesting Map<String, String> Function()? environment,
@@ -36,6 +38,7 @@ abstract final class LlmHost {
     try {
       await Llm.init(
         directory: directory,
+        key: key,
         credentials: credentials,
         externalLibrary: externalLibrary,
         environment: environment,
@@ -93,6 +96,7 @@ abstract final class LlmHost {
     LlmUi.appTools = () => AgentTools.all;
     LlmUi.offers = offers;
     LlmUi.appPrompt = prompt;
+    LlmUi.appContext = AgentScreen.describe;
   }
 
   /// A terminal's chats get that terminal and nothing else but the skills:

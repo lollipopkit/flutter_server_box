@@ -93,7 +93,7 @@ android {
     namespace "tech.lolli.toolbox"
     compileSdk pinnedCompileSdkVersion
     buildToolsVersion pinnedBuildToolsVersion
-    // One version for Gradle native assets and scripts/build-proot-android.sh.
+    // One version for Gradle native assets and fl_tty's proot build.
     // A runner's "latest" NDK is not a reproducible build input.
     ndkVersion pinnedNdkVersion
 
@@ -103,7 +103,7 @@ android {
             // only be executed as a file, and with minSdk >= 23 nothing is
             // extracted by default — `nativeLibraryDir` does not exist and
             // there is nowhere for one to be. This is what proot needs; see
-            // scripts/build-proot-android.sh.
+            // packages/fl_tty/scripts/build-proot-android.sh.
             //
             // The cost is a larger install: the libraries are stored twice,
             // once in the APK and once unpacked. The download is smaller
@@ -143,6 +143,8 @@ android {
         targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
+        // AppAuth's redirect receiver: `Lkc.redirectUrl`, `serverbox://auth/…`.
+        manifestPlaceholders += [appAuthRedirectScheme: 'serverbox']
         
         ndk {
             if(!splits.abi.enable) { // abiFilters cannot be present when splits abi filters are set

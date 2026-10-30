@@ -31,6 +31,9 @@
   let probing = $state(false)
   let probeError = $state('')
 
+  /// The stored password stays with the address it was given for.
+  const keepsPassword = $derived(!!initial?.has_password && url.trim() === initial.url)
+
   /// A pin belongs to the address it was read from.
   function changeUrl(next: string) {
     url = next
@@ -62,7 +65,7 @@
       name: name.trim(),
       url: url.trim(),
       username: username.trim(),
-      password: password === '' && initial?.has_password ? null : password,
+      password: password === '' && keepsPassword ? null : password,
       cert_sha256: pin,
     })
   }
@@ -95,7 +98,7 @@
         type="password"
         autocomplete="new-password"
         bind:value={password}
-        placeholder={initial?.has_password ? $LL.bmcPasswordKept() : ''}
+        placeholder={keepsPassword ? $LL.bmcPasswordKept() : ''}
       />
     </div>
   </div>

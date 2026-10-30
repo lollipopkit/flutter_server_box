@@ -3,10 +3,9 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_tty/fl_tty.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:server_box/core/utils/local_shell.dart';
-import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/misc.dart';
 

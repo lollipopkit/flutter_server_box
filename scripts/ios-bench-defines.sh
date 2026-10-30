@@ -2,7 +2,7 @@
 # Builds the --dart-define-from-file input for integration_test/ios_bench_test.dart.
 #
 # The benchmark script and the prebuilt aarch64 binary belong to the ish-arm64
-# fork, under third_party/ish-arm64/benchmark/assets/ — they come with the
+# fork, under packages/fl_tty/third_party/ish-arm64/benchmark/assets/ — they come with the
 # submodule. They are passed in rather than copied:
 # they are the inputs being measured, and another copy would need to be kept in
 # sync. This also keeps them out of the shipped app, since a
@@ -13,10 +13,10 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-assets="$root/third_party/ish-arm64/benchmark/assets"
+assets="$root/packages/fl_tty/third_party/ish-arm64/benchmark/assets"
 
 if [ ! -f "$assets/shellbench.sh" ]; then
-    echo "no $assets/shellbench.sh — run scripts/build-ish-ios.sh first" >&2
+    echo "no $assets/shellbench.sh — run packages/fl_tty/scripts/build-ish-ios.sh first" >&2
     exit 1
 fi
 

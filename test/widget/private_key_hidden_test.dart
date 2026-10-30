@@ -4,9 +4,11 @@ library;
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
+import 'package:server_box/core/utils/ssh_key_passphrase.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/res/store.dart';
@@ -14,6 +16,7 @@ import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/private_key/edit.dart';
 
+import '../helpers/rust_lib_helper.dart';
 import '../helpers/test_db.dart';
 
 const _secret = 'b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQ';
@@ -27,7 +30,12 @@ void main() {
   var auth = AuthResult.success;
   var asked = 0;
 
+  setUpAll(initRustLibForTest);
+
   setUp(() async {
+    FlutterSecureStorage.setMockInitialValues({});
+    // In the real zone, for what a test writes through `runAsync`.
+    KeyPassphrases.resetQueue();
     await openTestDb();
     getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
     asked = 0;
@@ -47,6 +55,8 @@ void main() {
   });
 
   Future<void> pumpEditor(WidgetTester tester, {PrivateKeyInfo? pki}) async {
+    // In the test's zone, where the editor's own read is queued.
+    KeyPassphrases.resetQueue();
     await tester.pumpWidget(
       ProviderScope(
         overrides: [privateKeyProvider.overrideWithValue(const PrivateKeyState())],
@@ -100,6 +110,34 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     expect(asked, 0);
     expect(secret(), findsOneWidget);
+  });
+
+  TextField pwdField(WidgetTester tester) =>
+      tester.widget<TextField>(find.widgetWithText(TextField, libL10n.pwd));
+
+  testWidgets('a kept passphrase is filled in, and shows behind the app lock', (tester) async {
+    await tester.runAsync(() => KeyPassphrases.write(_pki.key, 'hunter2'));
+    Stores.setting.useBioAuth.put(true);
+    await pumpEditor(tester, pki: _pki);
+    expect(find.widgetWithText(TextField, libL10n.pwd), findsNothing);
+
+    await tester.tap(find.byTooltip(libL10n.showPwd));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(asked, 1);
+    expect(pwdField(tester).controller!.text, 'hunter2');
+  });
+
+  testWidgets('another key in its place drops the kept passphrase', (tester) async {
+    await tester.runAsync(() => KeyPassphrases.write(_pki.key, 'hunter2'));
+    await pumpEditor(tester, pki: _pki);
+    await tester.tap(showKey());
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.enterText(
+      find.widgetWithText(TextField, app_locale.l10n.privateKey),
+      'another key',
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(pwdField(tester).controller!.text, isEmpty);
   });
 
   testWidgets('a key being added is shown: the user just put it there', (tester) async {

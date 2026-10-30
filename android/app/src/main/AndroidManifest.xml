@@ -87,12 +87,18 @@
             </intent-filter>
             <!-- `serverbox://` links: see `AppLink` in
                  lib/data/model/app/app_link.dart. MainActivity holds the link
-                 until the Dart side asks for it. -->
+                 until the Dart side asks for it. By host, the hosts `AppLink`
+                 knows: `serverbox://auth/callback` is AppAuth's sign-in
+                 redirect, and a link two activities take asks which one. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="serverbox" />
+                <data android:host="server" />
+                <data android:host="add-server" />
+                <data android:host="tab" />
+                <data android:host="snippet" />
             </intent-filter>
             <!-- Off, or Flutter pushes every link it sees as a route name onto
                  a navigator that has no generator for one. Links are taken in
@@ -194,6 +200,23 @@
             </intent-filter>
         </provider>
 
+        <!-- AppAuth's own filter takes every `serverbox://` link; this one,
+             only the sign-in redirect (`Lkc.redirectUrl`). -->
+        <activity
+            android:name="net.openid.appauth.RedirectUriReceiverActivity"
+            android:exported="true"
+            android:theme="@style/Theme.AppCompat.Translucent.NoTitleBar"
+            tools:node="replace">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="serverbox"
+                    android:host="auth"
+                    android:path="/callback" />
+            </intent-filter>
+        </activity>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility?hl=en and

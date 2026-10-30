@@ -743,6 +743,7 @@ const es = {
 	bmcInvalidUrl: 'La dirección debe ser https://host o https://host:port, sin ruta.',
 	bmcInvalidUsername: 'Se requiere un usuario.',
 	bmcInvalidCertificate: 'La huella del certificado no es una huella SHA-256.',
+	bmcPasswordAgain: 'La dirección cambió: vuelva a introducir la contraseña.',
 	bmcStateOn: 'Encendido',
 	bmcStateOff: 'Apagado',
 	bmcStatePoweringOn: 'Encendiendo',

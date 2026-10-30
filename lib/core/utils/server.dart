@@ -15,6 +15,7 @@ import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/core/utils/ssh_config.dart';
 import 'package:server_box/core/utils/ssh_key_unlock.dart';
 import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/server/host_cert_authority.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/res/store.dart';
@@ -394,6 +395,9 @@ Future<SSHClient> genClient(
   /// Handles keyboard-interactive authentication prompts.
   SSHKeyboardInteractiveHandler? onKeyboardInteractive,
   Map<String, String>? knownHostFingerprints,
+
+  /// Preferred in isolate mode; otherwise from [Stores.setting].
+  List<HostCertAuthority>? hostCertAuthorities,
   HostKeyPersistCallback? onHostKeyAccepted,
   Future<bool> Function(HostKeyPromptInfo info)? onHostKeyPrompt,
   Set<String>? visitedServerIds,
@@ -475,12 +479,17 @@ Future<SSHClient> genClient(
   onStatus?.call(GenSSHClientStatus.socket);
 
   final hostKeyCache = Map<String, String>.from(
-    knownHostFingerprints ?? _loadKnownHostFingerprints(),
+    knownHostFingerprints ?? loadKnownHostFingerprints(),
   );
   final hostKeyPersist = onHostKeyAccepted ?? persistHostKeyFingerprint;
   final hostKeyPrompt = onHostKeyPrompt ?? showHostKeyPrompt;
+  final authorities = hostCertAuthorities ?? loadHostCertAuthorities();
 
   String? alterUser;
+  // Where the socket goes: the configured host, or `alterUrl`'s when the
+  // first did not answer. The authorities are scoped to the host dialled.
+  var dialHost = ssh.ip;
+  var dialPort = ssh.port;
 
   final socket =
       await () async {
@@ -525,6 +534,7 @@ Future<SSHClient> genClient(
                 timeout: timeout,
                 onKeyboardInteractive: onKeyboardInteractive,
                 knownHostFingerprints: hostKeyCache,
+                hostCertAuthorities: authorities,
                 onHostKeyAccepted: hostKeyPersist,
                 onHostKeyPrompt: hostKeyPrompt,
                 visitedServerIds: {...chainVisitedServerIds},
@@ -588,6 +598,8 @@ Future<SSHClient> genClient(
           try {
             final res = ssh.parseAlterUrl();
             alterUser = res.$2;
+            dialHost = res.$1;
+            dialPort = res.$3;
             return await SSHSocket.connect(res.$1, res.$3, timeout: timeout);
           } catch (e) {
             Loggers.app.warning('genClient alterUrl', e);
@@ -625,6 +637,12 @@ Future<SSHClient> genClient(
         persistCallback: hostKeyPersist,
         prompt: hostKeyPrompt,
       ),
+      hostCertificateTrust: HostCertAuthority.trustFor(
+        authorities,
+        host: dialHost,
+        port: dialPort,
+        alsoKnownAs: [ssh.ip],
+      ),
     );
     if (Diag.enabled) {
       Diag.crumb(SbDiag.server, 'ssh connect ok', data: {'via': via});
@@ -652,6 +670,7 @@ Future<SSHClient> _authenticatedClient({
   required void Function(GenSSHClientStatus)? onStatus,
   required SSHKeyboardInteractiveHandler? onKeyboardInteractive,
   required HostKeyVerifier hostKeyVerifier,
+  required SSHHostCertificateTrust? hostCertificateTrust,
 }) async {
   SSHClient passwordClient() {
     onStatus?.call(GenSSHClientStatus.pwd);
@@ -663,7 +682,12 @@ Future<SSHClient> _authenticatedClient({
           ? null
           : (request) => onKeyboardInteractive(spi, request),
       onVerifyHostKey: hostKeyVerifier.call,
-      algorithms: SshAlgorithms.of(ssh),
+      hostCertificateTrust: hostCertificateTrust,
+      algorithms: SshAlgorithms.of(
+        ssh,
+        preferCertificates: hostCertificateTrust != null,
+        pinnedKeyTypes: hostKeyVerifier.pinnedKeyTypes,
+      ),
       handshakeTimeout: timeout,
       authTimeout: timeout,
     );
@@ -754,7 +778,12 @@ Future<SSHClient> _authenticatedClient({
         ? null
         : (request) => onKeyboardInteractive(spi, request),
     onVerifyHostKey: hostKeyVerifier.call,
-    algorithms: SshAlgorithms.of(ssh),
+    hostCertificateTrust: hostCertificateTrust,
+    algorithms: SshAlgorithms.of(
+      ssh,
+      preferCertificates: hostCertificateTrust != null,
+      pinnedKeyTypes: hostKeyVerifier.pinnedKeyTypes,
+    ),
     handshakeTimeout: timeout,
     authTimeout: timeout,
   );
@@ -898,6 +927,16 @@ class HostKeyVerifier {
   final HostKeyPersistCallback? persistCallback;
   final Future<bool> Function(HostKeyPromptInfo info) prompt;
 
+  /// The key types already trusted for this host, which the algorithm list
+  /// prefers — see [SshAlgorithms.of].
+  Set<String> get pinnedKeyTypes {
+    final prefix = _hostKeyStorageKey(spi, '');
+    return {
+      for (final key in _cache.keys)
+        if (key.startsWith(prefix)) key.substring(prefix.length),
+    };
+  }
+
   Future<bool> call(String keyType, Uint8List fingerprintBytes) async {
     final storageKey = _hostKeyStorageKey(spi, keyType);
     final fingerprint = fingerprintToOpenSsh(fingerprintBytes);
@@ -959,7 +998,18 @@ class HostKeyVerifier {
   }
 }
 
-Map<String, String> _loadKnownHostFingerprints() {
+/// The trusted host certificate authorities, or none when they cannot be read.
+List<HostCertAuthority> loadHostCertAuthorities() {
+  try {
+    return Stores.setting.sshHostCertAuthorities.get();
+  } catch (e, stack) {
+    Loggers.app.warning('Load SSH host certificate authorities failed', e, stack);
+    return const [];
+  }
+}
+
+/// The remembered host key fingerprints, or none when they cannot be read.
+Map<String, String> loadKnownHostFingerprints() {
   try {
     final prop = Stores.setting.sshKnownHostFingerprints;
     return Map<String, String>.from(prop.get());
@@ -1233,7 +1283,7 @@ Future<void> ensureKnownHostKey(
     );
   }
 
-  final cache = _loadKnownHostFingerprints();
+  final cache = loadKnownHostFingerprints();
 
   for (final jumpSpi in _resolveJumpCandidates(
     spi: spi,
@@ -1248,7 +1298,7 @@ Future<void> ensureKnownHostKey(
         jumpSpisById: jumpSpisById,
         visitedServerIds: {...chainVisitedServerIds},
       );
-      cache.addAll(_loadKnownHostFingerprints());
+      cache.addAll(loadKnownHostFingerprints());
     }
   }
 

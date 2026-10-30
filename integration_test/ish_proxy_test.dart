@@ -3,12 +3,11 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:fl_tty/fl_tty.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:server_box/core/utils/ios_rootfs.dart';
+import 'package:server_box/core/tty.dart';
 import 'package:server_box/core/utils/ish_proxy_socket.dart';
-import 'package:server_box/data/model/app/linux_distro.dart';
-import 'package:server_box/data/model/app/linux_distros.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
 
@@ -33,6 +32,8 @@ void main() {
     final settings = SettingStore('setting_test');
     await settings.init();
     getIt.registerSingleton<SettingStore>(settings);
+    // fl_tty reads its settings and brand from the app.
+    configFlTty();
     // Which releases there are, from the manifest the app ships with.
     await LinuxDistros.loadBundled();
     await IosRootfs.prepare();
@@ -40,7 +41,7 @@ void main() {
 
   testWidgets('a ProxyCommand carries every byte both ways', (_) async {
     if (!IosRootfs.isAvailable) {
-      markTestSkipped('this build carries no engine (SBM_ISH = 0)');
+      markTestSkipped('this build carries no engine (fl_tty `ish: false`)');
       return;
     }
     if (IosRootfs.selected == null) {

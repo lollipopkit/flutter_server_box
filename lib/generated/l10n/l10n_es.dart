@@ -616,6 +616,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get sshKeyRecommended => 'Recomendado';
 
   @override
+  String get rememberKeyPassphrase => 'Recordar frases de contraseña de claves';
+
+  @override
+  String get rememberKeyPassphraseTip =>
+      'Guarda las frases de contraseña de las claves privadas cifradas en el llavero del sistema de este dispositivo, para no pedirlas tras un reinicio. Las claves siguen cifradas en las copias de seguridad. Al desactivarlo se eliminan las frases guardadas.';
+
+  @override
   String sshKeyUnlockTip(String name) {
     return 'Introduce la frase de contraseña de la clave privada [$name].';
   }
@@ -6065,4 +6072,58 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       'No hay una sesión de tmux a la que volver, así que reconectar cierra esta shell y todo lo que siga ejecutándose en ella, y borra su salida de la pantalla.';
+
+  @override
+  String get storeUnreadableTitle =>
+      'No se pudieron abrir los datos anteriores';
+
+  @override
+  String get storeUnreadableKeyLost =>
+      'La clave que cifra los datos de ServerBox ya no está en el almacén de claves del sistema. Ocurre cuando el sistema restablece el almacén de claves, cuando el servicio de llavero no está disponible o cuando los datos de la app se copiaron desde otro dispositivo, por ejemplo con una herramienta de migración. Sin esa clave los datos no se pueden descifrar, así que ServerBox se inició sin datos.';
+
+  @override
+  String get storeUnreadableKeyRejected =>
+      'La clave del almacén de claves del sistema no abre los datos de ServerBox: se cifraron con otra clave o el archivo está dañado. ServerBox se inició sin datos.';
+
+  @override
+  String storeUnreadableKept(String path) {
+    return 'El archivo anterior se conserva en:\n$path\nRestaura una copia de seguridad para recuperar tus servidores.';
+  }
+
+  @override
+  String get storeKeyLostAsk =>
+      'La clave que cifra los datos de ServerBox no está en el almacén de claves del sistema. Si el almacén o el llavero solo no está disponible ahora mismo, por ejemplo porque aún no se ha desbloqueado, vuelve a intentarlo. Si no, ServerBox puede iniciarse sin datos; el archivo anterior se conserva.';
+
+  @override
+  String get storeKeyLostStartEmpty => 'Iniciar sin datos';
+
+  @override
+  String get storeVaultFailedAsk =>
+      'El almacén de claves del sistema no pudo descifrar la clave que cifra los datos de ServerBox. Si el fallo fue puntual, vuelve a intentarlo, si hace falta tras reiniciar el dispositivo. Si falla siempre, los datos no se pueden descifrar y ServerBox puede iniciarse sin datos; el archivo antiguo se conserva. Iniciar sin datos también borra la contraseña de copia de seguridad, las credenciales de WebDAV y GitHub y las contraseñas de sudo guardadas.';
+
+  @override
+  String get storeVaultFailedRootHint =>
+      'En un dispositivo rooteado, un módulo que intercepta el almacén de claves (como TrickyStore) provoca este error. Quita esta app de la lista de objetivos del módulo y luego inicia sin datos.';
+
+  @override
+  String get storeUnreadableVaultFailed =>
+      'El almacén de claves del sistema no pudo descifrar la clave que cifra los datos de ServerBox, así que ServerBox restableció sus entradas en el almacén de claves y se inició sin datos. Hay que volver a introducir la contraseña de copia de seguridad, las credenciales de WebDAV y GitHub y las contraseñas de sudo guardadas.';
+
+  @override
+  String get hostCertAuthorities => 'Autoridades de certificación de host';
+
+  @override
+  String get hostCertAuthoritiesTip =>
+      'Se confía sin preguntar en un host cuyo certificado haya firmado una de estas, como con @cert-authority de OpenSSH; por los demás hosts se pregunta en la primera conexión, como antes. Los hosts son patrones separados por comas con * y ?, y ! para excluir; un puerto distinto de 22 se compara como [host]:port.';
+
+  @override
+  String get hostCertAuthorityInvalid =>
+      'No es una clave pública SSH compatible (ssh-ed25519, ssh-rsa o ecdsa-sha2-*)';
+
+  @override
+  String get hostCertAuthorityNoHosts =>
+      'Indica los hosts que avala, por ejemplo *';
+
+  @override
+  String get hostCertAuthorityExists => 'Ya está en la lista';
 }

@@ -743,6 +743,7 @@ const it = {
 	bmcInvalidUrl: 'L\'indirizzo deve essere https://host o https://host:port, senza percorso.',
 	bmcInvalidUsername: 'Il nome utente è obbligatorio.',
 	bmcInvalidCertificate: 'L\'impronta del certificato non è un\'impronta SHA-256.',
+	bmcPasswordAgain: 'L\'indirizzo è cambiato: inserisci di nuovo la password.',
 	bmcStateOn: 'Acceso',
 	bmcStateOff: 'Spento',
 	bmcStatePoweringOn: 'Accensione',

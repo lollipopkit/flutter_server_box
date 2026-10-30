@@ -613,6 +613,13 @@ class AppLocalizationsId extends AppLocalizations {
   String get sshKeyRecommended => 'Disarankan';
 
   @override
+  String get rememberKeyPassphrase => 'Ingat frasa sandi kunci';
+
+  @override
+  String get rememberKeyPassphraseTip =>
+      'Simpan frasa sandi kunci privat terenkripsi di keychain sistem perangkat ini agar tidak diminta lagi setelah aplikasi dimulai ulang. Kunci tetap terenkripsi di cadangan. Menonaktifkan ini menghapus frasa sandi yang tersimpan.';
+
+  @override
   String sshKeyUnlockTip(String name) {
     return 'Masukkan frasa sandi untuk kunci privat [$name].';
   }
@@ -5978,4 +5985,57 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       'Tidak ada sesi tmux untuk dipasang kembali, jadi menyambungkan ulang akan mengakhiri shell ini dan semua yang masih berjalan di dalamnya, serta menghapus keluarannya dari layar.';
+
+  @override
+  String get storeUnreadableTitle => 'Data sebelumnya tidak dapat dibuka';
+
+  @override
+  String get storeUnreadableKeyLost =>
+      'Kunci yang mengenkripsi data ServerBox sudah tidak ada di penyimpanan kunci sistem. Ini terjadi ketika sistem mengatur ulang penyimpanan kunci, ketika layanan keyring tidak tersedia, atau ketika data aplikasi disalin dari perangkat lain, misalnya dengan alat migrasi. Tanpa kunci itu data tidak dapat didekripsi, jadi ServerBox dimulai tanpa data.';
+
+  @override
+  String get storeUnreadableKeyRejected =>
+      'Kunci di penyimpanan kunci sistem tidak membuka data ServerBox: data dienkripsi dengan kunci lain, atau berkasnya rusak. ServerBox dimulai tanpa data.';
+
+  @override
+  String storeUnreadableKept(String path) {
+    return 'Berkas lama disimpan di:\n$path\nPulihkan cadangan untuk mendapatkan kembali server Anda.';
+  }
+
+  @override
+  String get storeKeyLostAsk =>
+      'Kunci yang mengenkripsi data ServerBox tidak ada di penyimpanan kunci sistem. Jika penyimpanan kunci atau keyring hanya sedang tidak tersedia, misalnya belum dibuka kuncinya, coba lagi. Jika tidak, ServerBox dapat dimulai tanpa data; file lama tetap disimpan.';
+
+  @override
+  String get storeKeyLostStartEmpty => 'Mulai tanpa data';
+
+  @override
+  String get storeVaultFailedAsk =>
+      'Penyimpanan kunci sistem tidak dapat mendekripsi kunci yang mengenkripsi data ServerBox. Jika kesalahan ini hanya sekali, coba lagi, bila perlu setelah memulai ulang perangkat. Jika selalu gagal, data tidak dapat didekripsi dan ServerBox dapat dimulai tanpa data; file lama tetap disimpan. Memulai tanpa data juga menghapus kata sandi cadangan, kredensial WebDAV dan GitHub, serta kata sandi sudo yang tersimpan.';
+
+  @override
+  String get storeVaultFailedRootHint =>
+      'Pada perangkat yang di-root, modul yang mencegat penyimpanan kunci (seperti TrickyStore) menyebabkan kesalahan ini. Hapus aplikasi ini dari daftar target modul, lalu mulai tanpa data.';
+
+  @override
+  String get storeUnreadableVaultFailed =>
+      'Penyimpanan kunci sistem tidak dapat mendekripsi kunci yang mengenkripsi data ServerBox, sehingga ServerBox mengatur ulang entrinya di penyimpanan kunci dan dimulai tanpa data. Kata sandi cadangan, kredensial WebDAV dan GitHub, serta kata sandi sudo yang tersimpan harus dimasukkan lagi.';
+
+  @override
+  String get hostCertAuthorities => 'Otoritas sertifikat host';
+
+  @override
+  String get hostCertAuthoritiesTip =>
+      'Host yang sertifikatnya ditandatangani salah satu otoritas ini dipercaya tanpa ditanya, seperti @cert-authority OpenSSH; host lain ditanyakan saat koneksi pertama seperti sebelumnya. Host adalah pola yang dipisahkan koma dengan * dan ?, serta ! untuk mengecualikan; port selain 22 dicocokkan sebagai [host]:port.';
+
+  @override
+  String get hostCertAuthorityInvalid =>
+      'Bukan kunci publik SSH yang didukung (ssh-ed25519, ssh-rsa, atau ecdsa-sha2-*)';
+
+  @override
+  String get hostCertAuthorityNoHosts =>
+      'Masukkan host yang dijaminnya, misalnya *';
+
+  @override
+  String get hostCertAuthorityExists => 'Sudah ada di daftar';
 }

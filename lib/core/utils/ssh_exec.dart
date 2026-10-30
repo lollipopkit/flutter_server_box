@@ -201,7 +201,7 @@ abstract final class SshSessionId {
   static const gone = 'sbm-session-gone';
 }
 
-/// [ServerExec] over an SSH connection.
+/// [CommandExec] over an SSH connection.
 ///
 /// One command, one channel — which is what SSH multiplexing is for, and why
 /// running a command has never needed the interactive shell the terminal page
@@ -211,7 +211,7 @@ abstract final class SshSessionId {
 /// and what the signal missed is killed by its session id from a channel of
 /// its own — see [SshSessionId]. What is left of the output is what had
 /// already arrived.
-class SshExec implements ServerByteExec {
+class SshExec implements CommandByteExec {
   const SshExec(this.client, {this.sudoPassword});
 
   final SSHClient client;

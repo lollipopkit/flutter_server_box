@@ -2,14 +2,15 @@ import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/theme.dart';
+import 'package:fl_tty/fl_tty.dart';
 import 'package:server_box/data/model/app/diagnostics_level.dart';
 import 'package:server_box/data/model/app/float_shell_config.dart';
-import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/motion.dart';
 import 'package:server_box/data/model/app/server_sort.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/app/tray.dart';
+import 'package:server_box/data/model/server/host_cert_authority.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/res/default.dart';
 import 'package:server_box/data/store/field_prop.dart';
@@ -150,6 +151,22 @@ class SettingStore extends SqliteStore with ThemeSettings {
     },
   );
 
+  /// Certificate authorities trusted to sign host keys, as OpenSSH's
+  /// `@cert-authority` lines — see [HostCertAuthority].
+  late final sshHostCertAuthorities = listProperty<HostCertAuthority>(
+    'sshHostCertAuthorities',
+    // Row by row: one a sync or a restore brought in malformed is dropped,
+    // not every authority with it.
+    fromObj: (raw) => raw is List
+        ? [
+            for (final item in raw)
+              if (item is Map && item['publicKey'] is String)
+                HostCertAuthority.fromJson(Map<String, dynamic>.from(item)),
+          ]
+        : null,
+    toObj: (list) => list?.map((ca) => ca.toJson()).toList(),
+  );
+
   /// Which profile a terminal opens in, by `LinuxProfile.id`.
   ///
   /// Empty until something is chosen; the platform layer reads that as "the
@@ -192,7 +209,7 @@ class SettingStore extends SqliteStore with ThemeSettings {
   /// Not per distribution: this is the network the device is on. Read through
   /// `linuxNameservers()`, which is also what decides what counts as an address
   /// in it.
-  late final linuxDns = propertyDefault('linuxDns', Defaults.linuxDns);
+  late final linuxDns = propertyDefault('linuxDns', FlTty.defaultDns);
 
   // Editor theme
   late final editorTheme = propertyDefault('editorTheme', Defaults.editorTheme);
@@ -474,6 +491,9 @@ class SettingStore extends SqliteStore with ThemeSettings {
   static const deviceLocalKeys = {
     'agentLocalExec',
     'liveActivity',
+    // Whether this device's vault keeps key passphrases: the vault is not in
+    // the backup, so the answer is not either.
+    'rememberKeyPassphrase',
     // Where this device installed the selected theme, and its background
     // inside that: the backup carries the themes themselves (`themes`), and a
     // restore points these at this device's copy — `ThemeBackup.reselect`.
@@ -621,6 +641,13 @@ class SettingStore extends SqliteStore with ThemeSettings {
 
   /// ssh page
   late final sshWakeLock = propertyDefault('sshWakeLock', true);
+
+  /// Keep the passphrases of encrypted private keys in the system vault, so
+  /// they are not asked for again after a restart. See `KeyPassphrases`.
+  late final rememberKeyPassphrase = propertyDefault(
+    'rememberKeyPassphrase',
+    true,
+  );
 
   /// Notify when a program in a terminal out of sight is waiting for the
   /// user, finishes or fails (OSC 7501, OSC 9;4), or a long command ends

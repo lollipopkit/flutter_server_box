@@ -153,9 +153,14 @@ pub mod machine {
         path: &str,
         body: Option<Value>,
     ) -> (u16, Value) {
-        let mut req = srv
-            .request(method, srv.url(path))
-            .timeout(std::time::Duration::from_secs(30));
+        // Past the endpoints' own bound on the commands they run, which a
+        // Windows runner starting PowerShell for several tests at once can
+        // take half a minute just to begin.
+        let mut req = srv.request(method, srv.url(path)).timeout(
+            std::time::Duration::from_secs(
+                server_box_monitor::core::remote_access::DEFAULT_EXEC_TIMEOUT_SECS + 30,
+            ),
+        );
         if let Some(user) = user {
             req = req.header(
                 "Authorization",

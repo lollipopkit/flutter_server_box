@@ -615,6 +615,13 @@ class AppLocalizationsUk extends AppLocalizations {
   String get sshKeyRecommended => 'Рекомендовано';
 
   @override
+  String get rememberKeyPassphrase => 'Запам\'ятовувати парольні фрази ключів';
+
+  @override
+  String get rememberKeyPassphraseTip =>
+      'Зберігати парольні фрази зашифрованих приватних ключів у системній в\'язці ключів цього пристрою, щоб не запитувати їх після перезапуску. У резервних копіях ключі залишаються зашифрованими. Вимкнення видаляє збережені фрази.';
+
+  @override
   String sshKeyUnlockTip(String name) {
     return 'Введіть парольну фразу закритого ключа [$name].';
   }
@@ -6023,4 +6030,57 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       'Немає сеансу tmux для повторного під’єднання, тому перепідключення завершить цю оболонку й усе, що в ній ще виконується, та очистить її вивід на екрані.';
+
+  @override
+  String get storeUnreadableTitle => 'Не вдалося відкрити попередні дані';
+
+  @override
+  String get storeUnreadableKeyLost =>
+      'Ключа, яким зашифровано дані ServerBox, більше немає в системному сховищі ключів. Так буває, коли система скидає сховище ключів, коли служба в\'язки ключів недоступна або коли дані застосунку скопійовано з іншого пристрою, наприклад засобом перенесення. Без цього ключа дані не розшифрувати, тому ServerBox запущено без даних.';
+
+  @override
+  String get storeUnreadableKeyRejected =>
+      'Ключ із системного сховища ключів не відкриває дані ServerBox: їх зашифровано іншим ключем або файл пошкоджено. ServerBox запущено без даних.';
+
+  @override
+  String storeUnreadableKept(String path) {
+    return 'Старий файл збережено тут:\n$path\nВідновіть резервну копію, щоб повернути сервери.';
+  }
+
+  @override
+  String get storeKeyLostAsk =>
+      'Ключа, яким зашифровано дані ServerBox, немає в системному сховищі ключів. Якщо сховище ключів або в\'язка ключів лише тимчасово недоступні, наприклад ще не розблоковані, спробуйте ще раз. Інакше ServerBox може запуститися без даних; старий файл зберігається.';
+
+  @override
+  String get storeKeyLostStartEmpty => 'Запустити без даних';
+
+  @override
+  String get storeVaultFailedAsk =>
+      'Системне сховище ключів не змогло розшифрувати ключ, яким зашифровано дані ServerBox. Якщо збій був разовим, спробуйте ще раз, за потреби після перезавантаження пристрою. Якщо помилка повторюється щоразу, дані розшифрувати неможливо, і ServerBox може запуститися без даних; старий файл зберігається. Запуск без даних також видаляє пароль резервної копії, облікові дані WebDAV і GitHub та збережені паролі sudo.';
+
+  @override
+  String get storeVaultFailedRootHint =>
+      'На пристрої з root цю помилку спричиняє модуль, що перехоплює сховище ключів (наприклад, TrickyStore). Приберіть цей застосунок зі списку цілей модуля, потім запустіть без даних.';
+
+  @override
+  String get storeUnreadableVaultFailed =>
+      'Системне сховище ключів не змогло розшифрувати ключ, яким зашифровано дані ServerBox, тому ServerBox скинув свої записи в сховищі ключів і запустився без даних. Пароль резервної копії, облікові дані WebDAV і GitHub та збережені паролі sudo потрібно ввести знову.';
+
+  @override
+  String get hostCertAuthorities => 'Центри сертифікації хостів';
+
+  @override
+  String get hostCertAuthoritiesTip =>
+      'Хосту, сертифікат якого підписав один із них, довіряють без запитань, як з @cert-authority в OpenSSH; про інші хости, як і раніше, питають під час першого підключення. Хости — шаблони через кому з * і ?, ! виключає; порт, відмінний від 22, порівнюється як [host]:port.';
+
+  @override
+  String get hostCertAuthorityInvalid =>
+      'Непідтримуваний відкритий ключ SSH (ssh-ed25519, ssh-rsa або ecdsa-sha2-*)';
+
+  @override
+  String get hostCertAuthorityNoHosts =>
+      'Вкажіть хости, за які він ручається, наприклад *';
+
+  @override
+  String get hostCertAuthorityExists => 'Уже в списку';
 }

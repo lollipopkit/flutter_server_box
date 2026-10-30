@@ -1,11 +1,18 @@
 import 'dart:async';
 
+import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
+import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/data/res/status.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/terminal_session.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
@@ -50,13 +57,18 @@ void main() {
     }
   }
 
-  Future<void> show(WidgetTester tester, SshPageArgs args) async {
+  Future<void> show(
+    WidgetTester tester,
+    SshPageArgs args, {
+    List<Override> overrides = const [],
+  }) async {
     // Wide enough for every app bar action to be on screen.
     tester.view.physicalSize = const Size(1600, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
       ProviderScope(
+        overrides: overrides,
         child: MaterialApp(
           localizationsDelegates: appLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
@@ -183,6 +195,62 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await frames(tester);
   });
+
+  /// A server page whose shell is on the status poller's [client], adopted,
+  /// with the poller still holding it for a reconnect to adopt again.
+  Future<TerminalSession> onPoller(WidgetTester tester, _PollerClient client) async {
+    final spi = spiFixture(id: 'srv', name: 'web-01', ip: '10.0.0.1', user: 'u');
+    final session = TerminalSession(source: ServerSource(spi))
+      ..adopt(client)
+      ..bindForeground(FakeShellSession());
+    await show(
+      tester,
+      SshPageArgs(source: session.source, session: session),
+      overrides: [
+        serversProvider.overrideWith(() => _Servers(spi)),
+        serverProvider(spi.id).overrideWith(() => _Poller(spi, client)),
+      ],
+    );
+    return session;
+  }
+
+  // #1782: the reconnect adopts the poller's connection again, and opening the
+  // shell on it fails. The connection still answers, so it stays open.
+  testWidgets('a failed reconnect keeps the poller\'s connection that answers', (
+    tester,
+  ) async {
+    final client = _PollerClient(answers: true);
+    final session = await onPoller(tester, client);
+
+    await tester.tap(reconnect);
+    await frames(tester, 6);
+    await tester.tap(find.text(libL10n.ok));
+    await frames(tester, 40);
+
+    expect(client.shellsAsked, 1);
+    expect(client.isClosed, isFalse);
+    expect(session.backend, isNull);
+    await leave(tester, session);
+  });
+
+  // One that does not answer is closed, or the next attempt would adopt the
+  // same dead connection and the poller would never dial a new one.
+  testWidgets('a failed reconnect closes the poller\'s connection that does not', (
+    tester,
+  ) async {
+    // Answers when asked whether to keep it, and goes with the shell.
+    final client = _PollerClient(answers: true, diesWithShell: true);
+    final session = await onPoller(tester, client);
+
+    await tester.tap(reconnect);
+    await frames(tester, 6);
+    await tester.tap(find.text(libL10n.ok));
+    await frames(tester, 40);
+
+    expect(client.shellsAsked, 1);
+    expect(client.isClosed, isTrue);
+    await leave(tester, session);
+  });
 }
 
 class _RecordingBackend extends FakeShellBackend {
@@ -200,4 +268,66 @@ class _RecordingBackend extends FakeShellBackend {
     opened.add(shell);
     return shell;
   }
+}
+
+/// The status poller's connection: answers a ping while [answers], and turns
+/// down every shell asked of it.
+class _PollerClient implements SSHClient {
+  _PollerClient({required this.answers, this.diesWithShell = false});
+
+  bool answers;
+
+  /// Stops answering when a shell is turned down.
+  final bool diesWithShell;
+  int shellsAsked = 0;
+  bool _closed = false;
+
+  @override
+  bool get isClosed => _closed;
+
+  @override
+  void close() => _closed = true;
+
+  @override
+  Future<void> ping() async {
+    if (!answers) throw StateError('no reply');
+  }
+
+  @override
+  Future<SSHSession> shell({
+    SSHPtyConfig? pty = const SSHPtyConfig(),
+    SSHX11Config? x11,
+    Map<String, String>? environment,
+  }) async {
+    shellsAsked++;
+    if (diesWithShell) answers = false;
+    throw StateError('channel refused');
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _Servers extends ServersNotifier {
+  _Servers(this.spi);
+
+  final Spi spi;
+
+  @override
+  ServersState build() => ServersState(servers: {spi.id: spi}, serverOrder: [spi.id]);
+}
+
+class _Poller extends ServerNotifier {
+  _Poller(this.spi, this.client);
+
+  final Spi spi;
+  final SSHClient client;
+
+  @override
+  ServerState build(String serverId) => ServerState(
+    spi: spi,
+    status: InitStatus.status,
+    client: client,
+    conn: ServerConn.finished,
+  );
 }

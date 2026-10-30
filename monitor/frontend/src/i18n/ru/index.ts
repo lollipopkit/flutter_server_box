@@ -743,6 +743,7 @@ const ru = {
 	bmcInvalidUrl: 'Адрес должен быть https://host или https://host:port, без пути.',
 	bmcInvalidUsername: 'Необходимо указать имя пользователя.',
 	bmcInvalidCertificate: 'Отпечаток сертификата не является отпечатком SHA-256.',
+	bmcPasswordAgain: 'Адрес изменён: введите пароль ещё раз.',
 	bmcStateOn: 'Включено',
 	bmcStateOff: 'Выключено',
 	bmcStatePoweringOn: 'Включается',

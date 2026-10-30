@@ -17,6 +17,13 @@ final class SettingsNode {
   /// the node is listed.
   final Feature? feature;
 
+  /// Drawn in [icon]'s place, sized to it: the account's avatar.
+  final Widget Function(double size)? leading;
+
+  /// A line under [title] in the narrow list, keeping itself up to date: who
+  /// is signed in.
+  final Widget Function()? subtitle;
+
   /// Whether [feature] is still in beta.
   bool get beta => feature?.beta ?? false;
 
@@ -30,6 +37,8 @@ final class SettingsNode {
     required this.icon,
     required Widget Function() page,
     this.feature,
+    this.leading,
+    this.subtitle,
   }) : builder = page,
        children = const [];
 
@@ -39,7 +48,9 @@ final class SettingsNode {
     required this.icon,
     required this.children,
   }) : builder = null,
-       feature = null;
+       feature = null,
+       leading = null,
+       subtitle = null;
 
   bool get isLeaf => builder != null;
 
@@ -111,10 +122,11 @@ final class _SettingsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return CardX(
       child: ListTile(
-        leading: ThemedIcon(node.icon, size: 20),
+        leading: node.leading?.call(32) ?? ThemedIcon(node.icon, size: 20),
         title: node.titleWidget(
           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
         ),
+        subtitle: node.subtitle?.call(),
         trailing: trailing,
         onTap: onTap,
       ),
@@ -305,13 +317,14 @@ final class _SettingsMenuRow extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(
-                  node.icon,
-                  size: 19,
-                  color: selected
-                      ? bar.selectedIconColor ?? fg
-                      : bar.iconColor ?? scheme.outline,
-                ),
+                node.leading?.call(19) ??
+                    Icon(
+                      node.icon,
+                      size: 19,
+                      color: selected
+                          ? bar.selectedIconColor ?? fg
+                          : bar.iconColor ?? scheme.outline,
+                    ),
                 const SizedBox(width: 9),
                 Expanded(
                   child: node.titleWidget(

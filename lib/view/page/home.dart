@@ -10,6 +10,7 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/llm/screen.dart';
 import 'package:server_box/core/service/tray.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/core/utils/desktop_shortcuts.dart';
@@ -34,6 +35,7 @@ import 'package:server_box/view/widget/legacy_status_notice.dart';
 import 'package:server_box/view/widget/nav_bar.dart';
 import 'package:server_box/view/widget/nav_rail.dart';
 import 'package:server_box/view/widget/server_share.dart';
+import 'package:server_box/view/widget/store_unreadable_notice.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 part 'home/lifecycle.dart';

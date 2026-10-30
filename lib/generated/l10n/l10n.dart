@@ -1187,6 +1187,18 @@ abstract class AppLocalizations {
   /// **'Recommended'**
   String get sshKeyRecommended;
 
+  /// Setting: keep SSH key passphrases in the system keychain.
+  ///
+  /// In en, this message translates to:
+  /// **'Remember key passphrases'**
+  String get rememberKeyPassphrase;
+
+  /// Help text for the rememberKeyPassphrase setting.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep the passphrases of encrypted private keys in this device\'s system keychain, so they are not asked for after a restart. The keys stay encrypted in backups. Turning this off removes the saved passphrases.'**
+  String get rememberKeyPassphraseTip;
+
   /// Help text for the SSH key unlock setting or action.
   ///
   /// In en, this message translates to:
@@ -10244,6 +10256,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'There is no tmux session to re-attach, so reconnecting ends this shell and anything still running in it, and clears its output from the screen.'**
   String get reconnectEndsShell;
+
+  /// Title of the dialog shown after launch when the app's encrypted database could not be opened and the app started with no data.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous data could not be opened'**
+  String get storeUnreadableTitle;
+
+  /// Why the database could not be opened: the encryption key is missing from the system keystore.
+  ///
+  /// In en, this message translates to:
+  /// **'The key that encrypts ServerBox\'s data is no longer in the system keystore. This happens when the system resets the keystore, when the keyring service is not available, or when the app\'s data was copied from another device, for example by a phone migration tool. The data cannot be decrypted without that key, so ServerBox started with no data.'**
+  String get storeUnreadableKeyLost;
+
+  /// Why the database could not be opened: the stored key does not decrypt it, or the file is damaged.
+  ///
+  /// In en, this message translates to:
+  /// **'The key in the system keystore does not open ServerBox\'s data: the data was encrypted with another key, or the file is damaged. ServerBox started with no data.'**
+  String get storeUnreadableKeyRejected;
+
+  /// Where the unreadable database file was moved to, and how to get the data back.
+  ///
+  /// In en, this message translates to:
+  /// **'The old file is kept at:\n{path}\nRestore a backup to get your servers back.'**
+  String storeUnreadableKept(String path);
+
+  /// Shown at launch, before anything is decided, when the database exists but the system keystore holds no key for it.
+  ///
+  /// In en, this message translates to:
+  /// **'The key that encrypts ServerBox\'s data is not in the system keystore. If the keystore or keyring is only unavailable right now, for example not yet unlocked, try again. Otherwise ServerBox can start with no data; the old file is kept.'**
+  String get storeKeyLostAsk;
+
+  /// Button: set the unreadable database aside and start the app with no data.
+  ///
+  /// In en, this message translates to:
+  /// **'Start with no data'**
+  String get storeKeyLostStartEmpty;
+
+  /// Asked at launch when the system keystore cannot decrypt the key of the existing database: retry, or start with no data.
+  ///
+  /// In en, this message translates to:
+  /// **'The system keystore could not decrypt the key that encrypts ServerBox\'s data. If the keystore failed only this once, try again, if needed after restarting the device. If it fails every time, the data cannot be decrypted, and ServerBox can start with no data; the old file is kept. Starting with no data also clears the backup password, the WebDAV and GitHub credentials and the saved sudo passwords.'**
+  String get storeVaultFailedAsk;
+
+  /// Shown on Android under storeVaultFailedAsk: the usual cause is a root module that emulates the keystore for this app.
+  ///
+  /// In en, this message translates to:
+  /// **'On a rooted device, a module that intercepts the keystore (such as TrickyStore) causes this. Remove this app from the module\'s target list, then start with no data.'**
+  String get storeVaultFailedRootHint;
+
+  /// Why the database could not be opened: the system keystore could not decrypt its key, and its entries were reset.
+  ///
+  /// In en, this message translates to:
+  /// **'The system keystore could not decrypt the key that encrypts ServerBox\'s data, so ServerBox reset the keystore entries and started with no data. The backup password, the WebDAV and GitHub credentials and the saved sudo passwords have to be entered again.'**
+  String get storeUnreadableVaultFailed;
+
+  /// Settings row: the list of SSH certificate authorities trusted to sign host keys.
+  ///
+  /// In en, this message translates to:
+  /// **'Host certificate authorities'**
+  String get hostCertAuthorities;
+
+  /// Explains what a trusted host certificate authority does and the host pattern syntax.
+  ///
+  /// In en, this message translates to:
+  /// **'A host whose certificate one of these signed is trusted without asking, as OpenSSH\'s @cert-authority; other hosts are asked about on first connection, as before. Hosts are comma-separated patterns with * and ?, and ! to exclude; a port other than 22 is matched as [host]:port.'**
+  String get hostCertAuthoritiesTip;
+
+  /// Error when the pasted text is not a supported SSH public key.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a supported SSH public key (ssh-ed25519, ssh-rsa or ecdsa-sha2-*)'**
+  String get hostCertAuthorityInvalid;
+
+  /// Error when the hosts field of a host certificate authority is empty.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the hosts it vouches for, for example *'**
+  String get hostCertAuthorityNoHosts;
+
+  /// Error when the same certificate authority is already in the list for the same hosts.
+  ///
+  /// In en, this message translates to:
+  /// **'Already in the list'**
+  String get hostCertAuthorityExists;
 }
 
 class _AppLocalizationsDelegate

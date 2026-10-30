@@ -585,6 +585,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sshKeyRecommended => '推奨';
 
   @override
+  String get rememberKeyPassphrase => '鍵のパスフレーズを記憶';
+
+  @override
+  String get rememberKeyPassphraseTip =>
+      '暗号化された秘密鍵のパスフレーズをこのデバイスのシステムキーチェーンに保存し、再起動後に再入力を求めません。バックアップ内の鍵は暗号化されたままです。オフにすると保存済みのパスフレーズは削除されます。';
+
+  @override
   String sshKeyUnlockTip(String name) {
     return '秘密鍵 [$name] のパスフレーズを入力してください。';
   }
@@ -5712,4 +5719,56 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       '再アタッチできる tmux セッションがないため、再接続するとこのシェルと、その中でまだ実行中のものが終了し、画面上の出力も消去されます。';
+
+  @override
+  String get storeUnreadableTitle => '以前のデータを開けませんでした';
+
+  @override
+  String get storeUnreadableKeyLost =>
+      'ServerBox のデータを暗号化した鍵が、システムのキーストアにありません。システムがキーストアをリセットした場合、キーリングサービスが使えない場合、または機種変更ツールなどで別の端末からアプリのデータをコピーした場合に起こります。この鍵がないとデータを復号できないため、ServerBox は空のデータで起動しました。';
+
+  @override
+  String get storeUnreadableKeyRejected =>
+      'システムのキーストアにある鍵では ServerBox のデータを開けません。データが別の鍵で暗号化されているか、ファイルが破損しています。ServerBox は空のデータで起動しました。';
+
+  @override
+  String storeUnreadableKept(String path) {
+    return '以前のファイルは次の場所に残してあります:\n$path\nバックアップを復元するとサーバーを取り戻せます。';
+  }
+
+  @override
+  String get storeKeyLostAsk =>
+      'ServerBox のデータを暗号化している鍵がシステムのキーストアにありません。キーストアやキーリングが一時的に使えないだけ（未ロック解除など）であれば、再試行してください。それ以外の場合はデータなしで起動できます。古いファイルは保持されます。';
+
+  @override
+  String get storeKeyLostStartEmpty => 'データなしで起動';
+
+  @override
+  String get storeVaultFailedAsk =>
+      'システムのキーストアが ServerBox のデータを暗号化している鍵を復号できませんでした。一時的なエラーであれば、必要に応じてデバイスを再起動してから再試行してください。毎回失敗する場合はデータを復号できないため、データなしで起動できます。古いファイルは保持されます。データなしで起動すると、バックアップのパスワード、WebDAV と GitHub の認証情報、保存された sudo パスワードも消去されます。';
+
+  @override
+  String get storeVaultFailedRootHint =>
+      'root 化されたデバイスでは、キーストアに介入するモジュール（TrickyStore など）が原因になります。このアプリをモジュールの対象リストから外してから、データなしで起動してください。';
+
+  @override
+  String get storeUnreadableVaultFailed =>
+      'システムのキーストアが ServerBox のデータを暗号化している鍵を復号できなかったため、ServerBox はキーストアの項目をリセットしてデータなしで起動しました。バックアップのパスワード、WebDAV と GitHub の認証情報、保存された sudo パスワードを再入力する必要があります。';
+
+  @override
+  String get hostCertAuthorities => 'ホスト証明書の認証局';
+
+  @override
+  String get hostCertAuthoritiesTip =>
+      'これらの認証局が署名した証明書を持つホストは、確認なしで信頼されます（OpenSSH の @cert-authority と同じ）。その他のホストは従来どおり初回接続時に確認します。ホストはカンマ区切りのパターンで、* と ? が使え、! で除外します。22 以外のポートは [host]:port で照合します。';
+
+  @override
+  String get hostCertAuthorityInvalid =>
+      '対応していない SSH 公開鍵です（ssh-ed25519、ssh-rsa、ecdsa-sha2-*）';
+
+  @override
+  String get hostCertAuthorityNoHosts => '保証するホストを入力してください（例: *）';
+
+  @override
+  String get hostCertAuthorityExists => 'すでに一覧にあります';
 }
