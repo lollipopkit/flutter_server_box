@@ -142,7 +142,9 @@ async fn the_configured_timeout_is_what_kills_a_command() {
         .await,
     )
     .await;
-    let cmd = platform_command("sleep 20", "timeout /t 20 /nobreak");
+    // Not `timeout /t`: it refuses a redirected stdin and exits at once, so
+    // it only passed when starting it took longer than the limit.
+    let cmd = platform_command("sleep 20", "ping -n 21 127.0.0.1 >NUL");
     let body = post(&srv, json!({ "cmd": cmd })).await.unwrap();
 
     assert_eq!(body["timed_out"], true, "{body}");
