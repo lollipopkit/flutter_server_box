@@ -61,7 +61,7 @@ cargo sqlx migrate run / cargo sqlx prepare # migrations; offline query cache in
 
 ### `POST /api/v1/exec`
 
-One command → `{exit_code, stdout, stderr, truncated, timed_out}`; in: `{cmd, stdin?, env?}` (`stdin` carries a sudo password, `env` avoids quoting). Not a terminal frame: a PTY is shared with the user's typing (`terminal.rs` rejects an `exec` frame, tested). **Timeout, output cap and request-body limit are `[remote_access.exec]`**: the operator's trade, never raised per request or per action; the body limit is passed to `configure_api` because ntex applies it before handlers. Work that must outlive it starts detached and is polled. `tests/exec_api.rs`.
+One command → `{exit_code, stdout, stderr, truncated, timed_out}`; in: `{cmd, stdin?, env?}` (`stdin` carries a sudo password, `env` avoids quoting). Not a terminal frame: a PTY is shared with the user's typing (`terminal.rs` rejects an `exec` frame, tested). **Timeout, output cap and request-body limit are `[remote_access.exec]`**: the operator's trade, never raised per request or per action; the body limit is `api::json::Json<_, ExecLimit>` (ntex's `JsonConfig` is one per app; `Json<_, Max<N>>` gives the other big-body endpoints theirs). Work that must outlive it starts detached and is polled. `tests/exec_api.rs`.
 
 ### Machine endpoints (`api/machine.rs`, issue #1623)
 
@@ -114,7 +114,7 @@ Files in `~/.config/server_box/custom_cmds` (`sbm_parser::script`), the same set
 
 ### WebSocket traps (locked by tests)
 
-- **Upgrades go through `api/ws/upgrade.rs`, not `ntex::web::ws::start`**: ntex caps incoming frames at 64 KiB with no setting; the copy takes 4 MiB (`MAX_FRAME`) with its own `WsSink`. TODO: back to ntex when configurable.
+- **Upgrades go through `api/ws/upgrade.rs`, not `ntex::web::ws::start`**: ntex caps incoming frames at 64 KiB with no setting; the copy takes 4 MiB (`MAX_FRAME`) with its own `WsSink`, and returns once the handshake is sent. A relay whose readiness is room in a queue uses `QueueGate`: ntex-service 5 keeps a ready answer until notified. TODO: back to ntex when configurable.
 - **Upgrade auth is a single-use ticket** (`api/ws/ticket.rs`): purpose-bound, ~30 s, burned even on a wrong secret (no headers on a browser handshake; no token in URLs).
 - **`is_secure_transport` treats loopback as secure** (same-host proxy / `cloudflared`); it never reads `X-Forwarded-Proto`.
 - **Terminal sessions outlive the socket** (`api/ws/session.rs`): the handle is a 256-bit bearer capability bound to the panel account, constant-time compared, memory-only; an `attach` takes over; detached sessions end after `detached_timeout_secs` (300). Capacity (`max_sessions`) is derived from memory.

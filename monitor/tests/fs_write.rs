@@ -8,9 +8,11 @@
 mod common;
 
 use ntex::http::Method;
+use ntex::service::map_state_factory;
 use ntex::web::test::{self as web_test, TestServer};
 use ntex::web::{self, App};
 use server_box_monitor::api::auth::generate_token;
+use server_box_monitor::api::server::Agent;
 use server_box_monitor::core::config::Config;
 
 const SECRET: &str = "test-secret-that-is-long-enough-32ch";
@@ -36,20 +38,17 @@ async fn server(root: &str) -> TestServer {
             .allows_write(),
         "the admin role the suite seeds must be able to write"
     );
-    web_test::server(move || {
+    web_test::server(async move |_| {
         let state = state.clone();
-        async move {
-            App::new().state(state).service(
-                web::scope("/api/v1")
-                    .route(
-                        "/fs/write",
-                        web::put().to(server_box_monitor::api::fs::write),
-                    )
-                    .route("/fs/stat", web::get().to(server_box_monitor::api::fs::stat)),
-            )
-        }
+        map_state_factory(Agent(state), App::<Agent>::new().service(
+            web::scope("/api/v1")
+                .route(
+                    "/fs/write",
+                    web::put().to(server_box_monitor::api::fs::write),
+                )
+                .route("/fs/stat", web::get().to(server_box_monitor::api::fs::stat)),
+        ))
     })
-    .await
 }
 
 /// One request with a bearer token, and its status and JSON body.

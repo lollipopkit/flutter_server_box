@@ -63,15 +63,15 @@ pub(crate) fn password(p: &Option<String>) -> Option<&str> {
     p.as_deref().filter(|p| !p.is_empty())
 }
 
-fn answer(value: serde_json::Value) -> Result<HttpResponse, web::Error> {
+fn answer(value: serde_json::Value) -> Result<HttpResponse, crate::api::WebError> {
     Ok(HttpResponse::Ok().json(&value))
 }
 
 pub async fn storage(
     req: HttpRequest,
     body: Option<web::types::Json<HostRequest>>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     if let Err(refused) = machine::gate(&req, &state, Grant::Virt, "virt storage").await {
         return Ok(refused);
     }
@@ -110,8 +110,8 @@ pub async fn storage(
 pub async fn volumes(
     req: HttpRequest,
     body: web::types::Json<VolumesRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     if let Err(refused) = machine::gate(&req, &state, Grant::Virt, "virt volumes").await {
         return Ok(refused);
     }
@@ -139,8 +139,8 @@ pub async fn volumes(
 pub async fn networks(
     req: HttpRequest,
     body: Option<web::types::Json<HostRequest>>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     if let Err(refused) = machine::gate(&req, &state, Grant::Virt, "virt networks").await {
         return Ok(refused);
     }
@@ -168,8 +168,8 @@ pub async fn networks(
 pub async fn manage(
     req: HttpRequest,
     body: web::types::Json<ManageRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     let request = body.into_inner();
     let what = format!("virt {}", request.change.describe());
     let gated = match machine::gate(&req, &state, Grant::Virt, &what).await {

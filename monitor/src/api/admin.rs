@@ -167,7 +167,7 @@ async fn hash(password: &str) -> std::result::Result<String, HttpResponse> {
 
 // ---- /me ----
 
-pub async fn me(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
+pub async fn me(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse> {
     let caller = require!(authz::jwt_caller(&req, &state).await);
     Ok(HttpResponse::Ok().json(&serde_json::json!({
         "username": caller.username,
@@ -184,7 +184,7 @@ pub struct PasswordChange {
 /// Any account may change its own password, and nothing else about itself.
 pub async fn change_own_password(
     req: HttpRequest,
-    state: web::types::State<Arc<AppState>>,
+    state: Arc<AppState>,
     body: web::types::Json<serde_json::Value>,
 ) -> Result<HttpResponse> {
     let caller = require!(authz::jwt_caller(&req, &state).await);
@@ -196,12 +196,12 @@ pub async fn change_own_password(
     // because someone else may have it.
     authz::end_account(&state, &caller.username, "permission_revoked");
     audit(&req, &state, &caller, Action::Close, "changed own password".into()).await;
-    Ok(HttpResponse::NoContent().finish())
+    Ok(HttpResponse::NoContent().build())
 }
 
 // ---- /users ----
 
-pub async fn list_users(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
+pub async fn list_users(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse> {
     require!(authz::admin_caller(&req, &state).await);
     Ok(HttpResponse::Ok().json(&accounts::accounts(&state.db).await?))
 }
@@ -216,7 +216,7 @@ pub struct NewUser {
 
 pub async fn create_user(
     req: HttpRequest,
-    state: web::types::State<Arc<AppState>>,
+    state: Arc<AppState>,
     body: web::types::Json<serde_json::Value>,
 ) -> Result<HttpResponse> {
     let caller = require!(authz::admin_caller(&req, &state).await);
@@ -256,7 +256,7 @@ pub struct UserChange {
 
 pub async fn update_user(
     req: HttpRequest,
-    state: web::types::State<Arc<AppState>>,
+    state: Arc<AppState>,
     path: web::types::Path<String>,
     body: web::types::Json<serde_json::Value>,
 ) -> Result<HttpResponse> {
@@ -308,7 +308,7 @@ pub async fn update_user(
             format!("moved {username} from role {} to {role}", current.name),
         )
         .await;
-        authz::revoke_lost(state.get_ref(), REVOKED).await;
+        authz::revoke_lost(&state, REVOKED).await;
     }
     let view = accounts::account_view_of(&state.db, &username).await?;
     Ok(HttpResponse::Ok().json(&view))
@@ -327,7 +327,7 @@ fn reauth_body(body: Option<web::types::Json<Reauth>>) -> Reauth {
 
 pub async fn delete_user(
     req: HttpRequest,
-    state: web::types::State<Arc<AppState>>,
+    state: Arc<AppState>,
     path: web::types::Path<String>,
     body: Option<web::types::Json<Reauth>>,
 ) -> Result<HttpResponse> {
@@ -341,13 +341,13 @@ pub async fn delete_user(
         Guarded::LastAdmin => return Ok(last_admin()),
     }
     audit(&req, &state, &caller, Action::Close, format!("deleted account {username}")).await;
-    authz::revoke_lost(state.get_ref(), REVOKED).await;
-    Ok(HttpResponse::NoContent().finish())
+    authz::revoke_lost(&state, REVOKED).await;
+    Ok(HttpResponse::NoContent().build())
 }
 
 // ---- /roles ----
 
-pub async fn list_roles(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
+pub async fn list_roles(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse> {
     require!(authz::admin_caller(&req, &state).await);
     Ok(HttpResponse::Ok().json(&accounts::roles(&state.db).await?))
 }
@@ -360,7 +360,7 @@ pub struct RoleBody {
 
 pub async fn create_role(
     req: HttpRequest,
-    state: web::types::State<Arc<AppState>>,
+    state: Arc<AppState>,
     body: web::types::Json<serde_json::Value>,
 ) -> Result<HttpResponse> {
     let caller = require!(authz::admin_caller(&req, &state).await);
@@ -396,7 +396,7 @@ pub async fn create_role(
 
 pub async fn update_role(
     req: HttpRequest,
-    state: web::types::State<Arc<AppState>>,
+    state: Arc<AppState>,
     path: web::types::Path<String>,
     body: web::types::Json<serde_json::Value>,
 ) -> Result<HttpResponse> {
@@ -438,14 +438,14 @@ pub async fn update_role(
         format!("set role {name} to {}", serde_json::to_string(&role.grants)?),
     )
     .await;
-    authz::revoke_lost(state.get_ref(), REVOKED).await;
+    authz::revoke_lost(&state, REVOKED).await;
     let updated = accounts::role(&state.db, &name).await?;
     Ok(HttpResponse::Ok().json(&updated))
 }
 
 pub async fn delete_role(
     req: HttpRequest,
-    state: web::types::State<Arc<AppState>>,
+    state: Arc<AppState>,
     path: web::types::Path<String>,
     body: Option<web::types::Json<Reauth>>,
 ) -> Result<HttpResponse> {
@@ -468,7 +468,7 @@ pub async fn delete_role(
     }
     accounts::delete_role(&state.db, &name).await?;
     audit(&req, &state, &caller, Action::Close, format!("deleted role {name}")).await;
-    Ok(HttpResponse::NoContent().finish())
+    Ok(HttpResponse::NoContent().build())
 }
 
 #[cfg(test)]

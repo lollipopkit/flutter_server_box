@@ -117,7 +117,7 @@ pub async fn caller_named(state: &AppState, username: &str) -> Option<Caller> {
 /// `{"error": code, "message": message}` — the shape every endpoint added
 /// with roles answers errors in.
 pub fn error(status: StatusCode, code: &str, message: &str) -> HttpResponse {
-    HttpResponse::build(status).json(&serde_json::json!({
+    HttpResponse::builder(status).json(&serde_json::json!({
         "error": code,
         "message": message,
     }))

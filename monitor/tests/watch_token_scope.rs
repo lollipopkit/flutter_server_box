@@ -27,12 +27,13 @@ mod common;
 use std::sync::{Arc, Once};
 
 use ntex::http::Method;
+use ntex::service::map_state_factory;
 use ntex::web::test::{self as web_test, TestServer};
 use ntex::web::App;
 use rustls::crypto::ring;
 use serde_json::json;
 use server_box_monitor::api::auth::generate_token;
-use server_box_monitor::api::server::{AppState, configure_api};
+use server_box_monitor::api::server::{Agent, AppState, configure_api};
 use server_box_monitor::core::config::Config;
 
 const SECRET: &str = "test-secret-that-is-long-enough-32ch";
@@ -97,14 +98,10 @@ async fn permissive_state() -> Arc<AppState> {
 }
 
 async fn test_server(state: Arc<AppState>) -> TestServer {
-    web_test::server(move || {
+    web_test::server(async move |_| {
         let state = state.clone();
-        async move {
-            let limit = state.remote_access.exec.max_request_bytes;
-            App::new().state(state).configure(configure_api(limit))
-        }
+        map_state_factory(Agent(state), App::<Agent>::new().configure(configure_api))
     })
-    .await
 }
 
 fn jwt() -> String {

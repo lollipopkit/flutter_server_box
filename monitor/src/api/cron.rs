@@ -144,8 +144,8 @@ struct ErrorResponse {
 /// Reads the crontab and reports it.
 pub async fn list(
     req: HttpRequest,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     if let Err(refused) = machine::gate(&req, &state, Grant::Shell, "cron list").await {
         return Ok(refused);
     }
@@ -156,8 +156,8 @@ pub async fn list(
 pub async fn edit(
     req: HttpRequest,
     body: web::types::Json<CronEdit>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     let edit = body.into_inner();
     let what = format!("cron {}", edit.subject());
     let gated = match machine::gate(&req, &state, Grant::Shell, &what).await {

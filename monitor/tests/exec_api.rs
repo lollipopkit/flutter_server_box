@@ -10,13 +10,14 @@ mod common;
 use std::sync::{Arc, Once};
 
 use ntex::time::Millis;
+use ntex::service::map_state_factory;
 use ntex::web::test::{self as web_test, TestServer};
 use ntex::web::{self, App};
 use rustls::crypto::ring;
 use sbm_parser::script;
 use serde_json::json;
 use server_box_monitor::api::auth::generate_token;
-use server_box_monitor::api::server::AppState;
+use server_box_monitor::api::server::{Agent, AppState};
 use server_box_monitor::core::config::Config;
 use server_box_monitor::core::remote_access::{DEFAULT_EXEC_TIMEOUT_SECS, ExecConfig};
 
@@ -57,20 +58,14 @@ async fn app_state_with(full_access: bool, exec: ExecConfig) -> Arc<AppState> {
 }
 
 async fn test_server(state: Arc<AppState>) -> TestServer {
-    web_test::server(move || {
+    web_test::server(async move |_| {
         let state = state.clone();
-        async move {
-            let limit = state.remote_access.exec.max_request_bytes;
-            App::new().state(state).service(
-                web::scope("/api/v1").service(
-                    web::resource("/exec")
-                        .state(web::types::JsonConfig::default().limit(limit))
-                        .route(web::post().to(server_box_monitor::api::exec::exec)),
-                ),
-            )
-        }
+        map_state_factory(Agent(state), App::<Agent>::new().service(
+            web::scope("/api/v1").service(
+                web::resource("/exec").route(web::post().to(server_box_monitor::api::exec::exec)),
+            ),
+        ))
     })
-    .await
 }
 
 /// Past the endpoint's own bound, so a request that hangs fails the test
