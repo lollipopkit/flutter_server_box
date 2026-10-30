@@ -53,6 +53,7 @@ jobs:
       docs: ${{ steps.filter.outputs.docs }}
       website: ${{ steps.filter.outputs.website }}
       android: ${{ steps.filter.outputs.android }}
+      winget: ${{ steps.filter.outputs.winget }}
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -63,7 +64,7 @@ jobs:
 
           # Which filters are answered from the diff: all of them on a pull
           # request, none otherwise.
-          strict=' rust dart frontend docs website android '
+          strict=' rust dart frontend docs website android winget '
 
           if [[ "${{ github.event_name }}" == 'pull_request' ]]; then
             files="$(gh api --paginate \
@@ -145,6 +146,8 @@ jobs:
           # tarball (scripts/store-tarball.sh).
           emit website "$shared|^website/|^packages/webui/|^store/|^scripts/store-tarball\.sh$"
           emit android "$shared|^android/"
+          # Rendered and checked here: `build.yml` uses them only on a release.
+          emit winget '^\.github/(workflows/(analysis|build)\.yml$|winget/)|^scripts/release/winget\.sh$'
 
   reproducibilityCheck:
     # These are deterministic-input guards, not a reproducibility proof. The
@@ -343,6 +346,32 @@ jobs:
             packages/fl_lib/assets/themes/*/manifest.toml \
             store/themes/*/manifest.toml
 
+  # The manifests `publishWinget` in build.yml submits on a release, rendered
+  # with placeholder values.
+  winget:
+    name: winget manifests
+    needs: changes
+    if: needs.changes.outputs.winget == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            .github/winget
+            scripts/release/winget.sh
+      - name: Render and check
+        env:
+          VERSION: 1.0.0
+          URL: https://github.com/${{ github.repository }}/releases/download/v1.0.0/ServerBox_v1.0.0_windows_amd64.exe
+          SHA256: '0000000000000000000000000000000000000000000000000000000000000000'
+          RELEASE_DATE: 2026-01-01
+          RELEASE_NOTES_URL: https://github.com/${{ github.repository }}/releases/tag/v1.0.0
+        run: |
+          scripts/release/winget.sh render "$RUNNER_TEMP/winget"
+          scripts/release/winget.sh check "$RUNNER_TEMP/winget"
+
   website:
     name: Project website
     needs: changes
@@ -529,6 +558,25 @@ jobs:
 
       - name: Build the Windows app
         run: flutter build windows --debug --no-pub
+
+      # `windows/CMakeLists.txt` installs these app-local.
+      - name: Check the VC++ runtime is bundled
+        shell: bash
+        run: |
+          set -euo pipefail
+          dir='build/windows/x64/runner/Debug'
+          for dll in msvcp140.dll vcruntime140.dll vcruntime140_1.dll; do
+            [ -f "$dir/$dll" ] || { echo "::error::$dll is not next to the exe"; exit 1; }
+          done
+
+      # The same script a release compiles (`fl_build`), against this build.
+      - name: Compile the installer
+        shell: pwsh
+        run: |
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" /Q /DAppName=ServerBox /DAppVersion=1.0.0 `
+            "/DSourceDir=$PWD\build\windows\x64\runner\Debug" "/DOutputDir=$PWD" `
+            /DOutputBaseFilename=installer_check windows\installer.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - uses: ./.github/actions/build-hook-cache
         with:
