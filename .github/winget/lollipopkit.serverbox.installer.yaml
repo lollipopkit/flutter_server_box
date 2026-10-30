@@ -13,13 +13,13 @@ Installers:
 - Architecture: x64
   Scope: user
   InstallerUrl: ${URL}
-  InstallerSha256: ${SHA256}
+  InstallerSha256: '${SHA256}'
   InstallerSwitches:
     Custom: /CURRENTUSER
 - Architecture: x64
   Scope: machine
   InstallerUrl: ${URL}
-  InstallerSha256: ${SHA256}
+  InstallerSha256: '${SHA256}'
   InstallerSwitches:
     Custom: /ALLUSERS
   ElevationRequirement: elevatesSelf
