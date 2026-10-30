@@ -143,6 +143,7 @@ pub async fn change_own_password(
     let body: PasswordChange = require!(parse(body));
     require!(reauth(&req, &state, body.current_password.as_deref()).await);
     let hash = require!(hash(&body.new_password).await);
+    crate::lkc::end_before_password_change(&state).await;
     accounts::set_password_hash(&state.db, &hash).await?;
     // Including the caller's own other sessions: a password is changed
     // because someone else may have it.

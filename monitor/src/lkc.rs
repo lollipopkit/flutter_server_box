@@ -59,8 +59,11 @@ struct SignIn {
     view: SignInView,
     device_code: String,
     /// The IdP granted it and its tokens are being stored: a cancel no
-    /// longer ends it (a password change signs out after, `end_account`).
+    /// longer ends it.
     finishing: bool,
+    /// [`Lkc::epoch`] when it was asked for: one a password change came
+    /// after is revoked, not stored, even once finishing.
+    epoch: u64,
 }
 
 #[derive(Default)]
@@ -100,22 +103,27 @@ impl Lkc {
 
     /// Puts [view] in place as the sign-in waiting, ending the one before —
     /// unless a password change came since [epoch].
-    pub fn begin(&self, view: SignInView, device_code: String, epoch: u64) -> bool {
+    pub fn begin(&self, view: SignInView, device_code: String, epoch: u64) -> Result<(), StartError> {
         let mut sign_in = self.sign_in.locked();
-        if self.epoch() != epoch || sign_in.as_ref().is_some_and(|s| s.finishing) {
-            return false;
+        if self.epoch() != epoch {
+            return Err(StartError::PasswordChanged);
         }
-        *sign_in = Some(SignIn { view, device_code, finishing: false });
-        true
+        if sign_in.as_ref().is_some_and(|s| s.finishing) {
+            return Err(StartError::Finishing);
+        }
+        *sign_in = Some(SignIn { view, device_code, finishing: false, epoch });
+        Ok(())
     }
 
     /// Ends the sign-in waiting, if any; its poll stops at its next turn. One
-    /// [finishing](SignIn::finishing) is let finish.
-    pub fn cancel(&self) {
+    /// [finishing](SignIn::finishing) is let finish. True when one ended.
+    pub fn cancel(&self) -> bool {
         let mut sign_in = self.sign_in.locked();
+        let ends = sign_in.as_ref().is_some_and(|s| !s.finishing && s.view.failed.is_none());
         if !sign_in.as_ref().is_some_and(|s| s.finishing) {
             *sign_in = None;
         }
+        ends
     }
 
     /// For a password change: ends the sign-in waiting, and one being asked
@@ -126,6 +134,11 @@ impl Lkc {
         if !sign_in.as_ref().is_some_and(|s| s.finishing) {
             *sign_in = None;
         }
+    }
+
+    /// Whether a password change came after [device_code] was asked for.
+    fn stale(&self, device_code: &str) -> bool {
+        self.sign_in.locked().as_ref().filter(|s| s.device_code == device_code).is_none_or(|s| s.epoch != self.epoch())
     }
 
     /// Whether [device_code] is still the sign-in waiting.
@@ -182,6 +195,8 @@ pub enum StartError {
     /// The password changed while the IdP was asked: whoever asked held the
     /// old one.
     PasswordChanged,
+    /// Another was granted and is being stored.
+    Finishing,
     Lkc(sbm_lkc::Error),
 }
 
@@ -197,9 +212,7 @@ pub async fn start(state: &Arc<AppState>) -> Result<SignInView, StartError> {
         expires_at_ms: device.expires_at_ms,
         failed: None,
     };
-    if !state.lkc.begin(view.clone(), device.device_code.clone(), epoch) {
-        return Err(StartError::PasswordChanged);
-    }
+    state.lkc.begin(view.clone(), device.device_code.clone(), epoch)?;
     tokio::spawn(poll(state.clone(), device));
     Ok(view)
 }
@@ -259,7 +272,19 @@ async fn finish(state: &AppState, device_code: &str, outcome: Result<Session, sb
     match outcome {
         Ok(session) => {
             let refreshing = state.lkc.refreshing.lock().await;
-            let previous = load(&state.db, &state.sealer).await.ok().flatten();
+            // Asked for under a password since changed: whoever approved it
+            // may not be the person who holds the new one.
+            if state.lkc.stale(device_code) {
+                state.lkc.settle(device_code, Some("rejected"));
+                drop(refreshing);
+                tracing::warn!("LK Cloud sign-in: the password changed meanwhile, revoked");
+                return revoke(state, session.tokens.refresh);
+            }
+            let previous = match load(&state.db, &state.sealer).await {
+                Ok(previous) => previous.map(|p| p.tokens.refresh),
+                Err(broken) => Some(broken.refresh),
+            }
+            .flatten();
             let stored = store(&state.db, &state.sealer, &session).await;
             if stored.is_ok() {
                 state.lkc.remember(&session.tokens);
@@ -273,8 +298,8 @@ async fn finish(state: &AppState, device_code: &str, outcome: Result<Session, sb
                 return revoke(state, session.tokens.refresh);
             }
             // The account it replaces is let go of at the IdP too.
-            if let Some(previous) = previous.filter(|p| p.tokens.refresh != session.tokens.refresh) {
-                revoke(state, previous.tokens.refresh);
+            if previous.is_some() && previous != session.tokens.refresh {
+                revoke(state, previous);
             }
             event(Outcome::Ok, "LK Cloud sign-in".into()).record(&state.db).await;
         }
@@ -319,18 +344,23 @@ pub async fn session(state: &AppState) -> Option<Session> {
     match client.refresh(&session.tokens).await {
         Ok(tokens) => {
             let fresh = Session { tokens, ..session };
-            // Stored with the mark cleared.
-            if let Err(e) = store(&state.db, &state.sealer, &fresh).await {
-                tracing::error!("LK Cloud: storing a refresh, signing out: {e}");
-                let _ = forget(&state.db).await;
-                // Rotated, so the new one is live with nothing holding it.
-                if fresh.tokens.refresh != session_refresh(&state.db).await {
-                    revoke(state, fresh.tokens.refresh);
+            // Into the marked row only, the mark cleared: one dropped
+            // meanwhile (a password reset from the CLI) stays dropped.
+            match store_refresh(&state.db, &state.sealer, &fresh.tokens).await {
+                Ok(true) => {
+                    state.lkc.remember(&fresh.tokens);
+                    Some(fresh)
                 }
-                return None;
+                stored => {
+                    if let Err(e) = stored {
+                        tracing::error!("LK Cloud: storing a refresh, signing out: {e}");
+                    }
+                    let _ = forget(&state.db).await;
+                    // Nothing holds the renewed token now.
+                    revoke(state, fresh.tokens.refresh);
+                    None
+                }
             }
-            state.lkc.remember(&fresh.tokens);
-            Some(fresh)
         }
         // Never reached the IdP, or refused without spending it: only
         // `invalid_grant` takes it back.
@@ -352,16 +382,6 @@ pub async fn session(state: &AppState) -> Option<Session> {
             None
         }
     }
-}
-
-/// The refresh token a row still holds, after [forget] may have failed.
-async fn session_refresh(db: &SqlitePool) -> Option<String> {
-    sqlx::query_scalar::<_, Option<String>>("SELECT refresh_token FROM lkc_session WHERE id = 1")
-        .fetch_optional(db)
-        .await
-        .ok()
-        .flatten()
-        .flatten()
 }
 
 /// Reads the account from homebase again (`LkcClient.refresh`): a name or
@@ -400,7 +420,7 @@ async fn reread(state: &AppState) {
 /// Signs out: the row is gone at once, the IdP is asked to forget the refresh
 /// token after. True when there was a session, readable or not.
 pub async fn sign_out(state: &AppState) -> sqlx::Result<bool> {
-    state.lkc.cancel();
+    let _ = state.lkc.cancel();
     let _refreshing = state.lkc.refreshing.lock().await;
     let refresh = match load(&state.db, &state.sealer).await {
         Ok(None) => return Ok(false),
@@ -410,6 +430,17 @@ pub async fn sign_out(state: &AppState) -> sqlx::Result<bool> {
     forget(&state.db).await?;
     revoke(state, refresh);
     Ok(true)
+}
+
+/// Before a password changes through the API: signed out while the row is
+/// still there, so its refresh token is revoked (the change itself deletes
+/// the row, `accounts::set_password_hash`, for the CLI's sake), and no sign-in
+/// asked for so far is begun or stored.
+pub async fn end_before_password_change(state: &AppState) {
+    state.lkc.end_epoch();
+    if let Err(e) = sign_out(state).await {
+        tracing::error!("LK Cloud: signing out before a password change: {e}");
+    }
 }
 
 /// For a password change: the sign-in waiting ends, and the account signed
@@ -429,13 +460,16 @@ pub fn end_account(state: &Arc<AppState>) {
 /// The account as last stored, without renewing or opening anything: what a
 /// read shows.
 pub async fn current(state: &AppState) -> Option<User> {
-    let user: Option<String> = sqlx::query_scalar("SELECT user FROM lkc_session WHERE id = 1")
+    let row: Option<(String, bool)> = sqlx::query_as("SELECT user, refreshing FROM lkc_session WHERE id = 1")
         .fetch_optional(&state.db)
         .await
         .inspect_err(|e| tracing::warn!("LK Cloud: reading it: {e}"))
         .ok()
         .flatten();
-    serde_json::from_str(&user?).ok()
+    // A refresh that did not finish storing: the session is over, its row
+    // dropped at the next renewal.
+    let (user, false) = row? else { return None };
+    serde_json::from_str(&user).ok()
 }
 
 /// Asks the IdP to forget [refresh], in the background.
@@ -542,6 +576,22 @@ async fn store(db: &SqlitePool, sealer: &Sealer, session: &Session) -> Result<()
     Ok(())
 }
 
+/// [tokens] into the row marked `refreshing`, clearing the mark. False when
+/// there is no such row any more.
+async fn store_refresh(db: &SqlitePool, sealer: &Sealer, tokens: &Tokens) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
+    let done = sqlx::query(
+        "UPDATE lkc_session SET access_token = ?, refresh_token = ?, expires_at = ?, refreshing = 0, updated_at = ? \
+         WHERE id = 1 AND refreshing = 1",
+    )
+    .bind(sealer.seal(sealed::LKC_ACCESS_TOKEN, &tokens.access)?)
+    .bind(sealer.seal_opt(sealed::LKC_REFRESH_TOKEN, tokens.refresh.as_deref())?)
+    .bind(tokens.expires_at_ms)
+    .bind(sbm_lkc::now_ms())
+    .execute(db)
+    .await?;
+    Ok(done.rows_affected() == 1)
+}
+
 async fn set_refreshing(db: &SqlitePool) -> sqlx::Result<()> {
     let marked = sqlx::query("UPDATE lkc_session SET refreshing = 1 WHERE id = 1").execute(db).await?;
     if marked.rows_affected() == 1 { Ok(()) } else { Err(sqlx::Error::RowNotFound) }
@@ -613,6 +663,15 @@ mod tests {
         set_refreshing(&db).await.unwrap();
         store(&db, &sealer, &session(60_000)).await.unwrap();
         assert!(load(&db, &sealer).await.unwrap().is_some());
+        // A refresh lands in the marked row only.
+        let renewed = session(120_000).tokens;
+        assert!(!store_refresh(&db, &sealer, &renewed).await.unwrap());
+        set_refreshing(&db).await.unwrap();
+        assert!(store_refresh(&db, &sealer, &renewed).await.unwrap());
+        assert_eq!(load(&db, &sealer).await.unwrap().unwrap().tokens, renewed);
+        set_refreshing(&db).await.unwrap();
+        forget(&db).await.unwrap();
+        assert!(!store_refresh(&db, &sealer, &renewed).await.unwrap());
         // Nothing to mark: not sent.
         forget(&db).await.unwrap();
         assert!(set_refreshing(&db).await.is_err());
@@ -638,21 +697,23 @@ mod tests {
         };
         let epoch = lkc.epoch();
         lkc.end_epoch();
-        assert!(!lkc.begin(view(), "d1".into(), epoch));
+        assert!(matches!(lkc.begin(view(), "d1".into(), epoch), Err(StartError::PasswordChanged)));
         assert!(lkc.sign_in().is_none());
         // Once granted, it is claimed: a cancel lets it finish.
-        assert!(lkc.begin(view(), "d2".into(), lkc.epoch()));
+        lkc.begin(view(), "d2".into(), lkc.epoch()).unwrap();
         assert!(lkc.claim("d2") && !lkc.claim("d1"));
-        lkc.cancel();
-        lkc.end_epoch();
-        assert!(lkc.waiting("d2"));
+        assert!(!lkc.cancel());
+        assert!(lkc.waiting("d2") && !lkc.stale("d2"));
         // Nor does another take its place meanwhile.
-        assert!(!lkc.begin(view(), "d3".into(), lkc.epoch()));
+        assert!(matches!(lkc.begin(view(), "d3".into(), lkc.epoch()), Err(StartError::Finishing)));
+        // A password change lets it finish only to be revoked.
+        lkc.end_epoch();
+        assert!(lkc.waiting("d2") && lkc.stale("d2"));
         lkc.settle("d2", None);
         assert!(lkc.sign_in().is_none());
         // One not claimed stops at its next turn.
-        assert!(lkc.begin(view(), "d4".into(), lkc.epoch()));
-        lkc.cancel();
+        lkc.begin(view(), "d4".into(), lkc.epoch()).unwrap();
+        assert!(lkc.cancel());
         assert!(!lkc.waiting("d4"));
     }
 }

@@ -60,6 +60,8 @@
   function message(e: unknown): string {
     if (e instanceof ApiError && e.code === 'lkc_unreachable') return $LL.lkcUnreachable()
     if (e instanceof ApiError && e.code === 'lkc_refused') return $LL.lkcFailed()
+    // Another sign-in was approved and is being stored.
+    if (e instanceof ApiError && e.code === 'lkc_finishing') return $LL.lkcWaiting()
     return accessMessage(e, $LL)
   }
 

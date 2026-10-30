@@ -294,9 +294,16 @@ async fn backups_are_made_kept_and_restored() {
     std::fs::write("config.toml", "[server]\nhost = \"127.0.0.1\"\nport = 9999\nname = \"box-b\"\n").unwrap();
     let changed = || async { sqlx::query_scalar::<_, i64>("SELECT password_changed_ms FROM users").fetch_one(&state.db).await.unwrap() };
     let before = changed().await;
+    // A restore is a password change: it signs out of LK Cloud.
+    sqlx::query("INSERT INTO lkc_session (id, user, access_token, expires_at, updated_at) VALUES (1, '{\"id\":\"u1\"}', 'x', 0, 0)")
+        .execute(&state.db)
+        .await
+        .unwrap();
     let (status, body) = call(&srv, true, Method::POST, "/api/v1/monitor-backup/restore", Some(restore(&newest, second_pass))).await;
     assert_eq!(status, 200, "{body}");
     assert_eq!(body["restart"], false);
+    let lkc: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM lkc_session").fetch_one(&state.db).await.unwrap();
+    assert_eq!(lkc, 0, "signed out of LK Cloud");
     assert_eq!(body["restored"]["config"], true);
     let snippets: Vec<String> = sqlx::query_scalar("SELECT id FROM snippet ORDER BY id").fetch_all(&state.db).await.unwrap();
     assert_eq!(snippets, ["s1", "s2", "s3"]);

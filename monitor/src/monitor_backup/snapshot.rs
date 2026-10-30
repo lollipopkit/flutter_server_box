@@ -568,6 +568,7 @@ async fn copy_in(conn: &mut SqliteConnection, sealer: &Sealer, blobs: usize) -> 
                 .await?;
             conn.execute("DELETE FROM main.watch_tokens").await?;
             conn.execute("DELETE FROM main.login_device").await?;
+            conn.execute("DELETE FROM main.lkc_session").await?;
             id
         }
         None => {

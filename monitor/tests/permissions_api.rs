@@ -534,12 +534,12 @@ async fn a_password_change_ends_a_device_sign_in_waiting() {
         failed: None,
     };
     let epoch = state.lkc.epoch();
-    assert!(state.lkc.begin(view.clone(), "device".into(), epoch));
+    state.lkc.begin(view.clone(), "device".into(), epoch).unwrap();
     assert!(state.lkc.sign_in().is_some());
     server_box_monitor::api::authz::end_account(&state, "password_changed");
     assert!(state.lkc.sign_in().is_none());
     // One asked for before the change is not begun after it.
-    assert!(!state.lkc.begin(view, "device".into(), epoch));
+    assert!(state.lkc.begin(view, "device".into(), epoch).is_err());
 }
 
 /// Whoever held the old password may have approved a sign-in with their own

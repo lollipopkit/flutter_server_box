@@ -501,7 +501,8 @@ export const api = {
   getLkc: () => request<LkcState>('/lkc', {}),
   /// Starts a device-code sign-in; the agent polls the IdP itself.
   /// `502 lkc_unreachable` when LK Cloud cannot be reached, `502 lkc_refused`
-  /// when it answered otherwise than expected.
+  /// when it answered otherwise than expected, `409 lkc_finishing` while
+  /// another sign-in was approved and is being stored.
   startLkcSignIn: () => request<{ sign_in: LkcSignIn }>('/lkc/sign-in', { method: 'POST' }),
   cancelLkcSignIn: () => request<void>('/lkc/sign-in', { method: 'DELETE' }),
   signOutLkc: () => request<void>('/lkc', { method: 'DELETE' }),

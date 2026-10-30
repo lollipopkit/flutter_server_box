@@ -1020,6 +1020,8 @@ pub async fn restore(state: &Arc<AppState>, name: &str, passphrase: &str) -> Res
     let dav = stored.dav(&state.sealer).map_err(stored_refusal)?;
     let _lock = state.monitor_backup.lock.lock().await;
     let fetched = fetch(&dav, &state.monitor_backup, name, passphrase).await?;
+    // The restore sets the backup's password.
+    crate::lkc::end_before_password_change(state).await;
     let restored = apply(&state.db, &state.sealer, &state.blobs, &state.config_write, &fetched, true).await?;
     state.blobs.collect_soon(&state.db);
     crate::api::authz::end_account(state, "password_changed");

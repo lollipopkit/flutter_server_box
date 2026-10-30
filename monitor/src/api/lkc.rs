@@ -43,6 +43,7 @@ pub async fn start(req: HttpRequest, state: web::types::State<Arc<AppState>>) ->
         }
         // The caller's token is no longer good either.
         Err(lkc::StartError::PasswordChanged) => Ok(respond::error(StatusCode::UNAUTHORIZED, "password_changed")),
+        Err(lkc::StartError::Finishing) => Ok(respond::error(StatusCode::CONFLICT, "lkc_finishing")),
         Err(lkc::StartError::Lkc(e)) => {
             tracing::warn!("LK Cloud sign-in: {e}");
             let code = if e.transient() { "lkc_unreachable" } else { "lkc_refused" };
@@ -53,8 +54,7 @@ pub async fn start(req: HttpRequest, state: web::types::State<Arc<AppState>>) ->
 
 pub async fn cancel(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     require!(authz::acting_caller(&req, &state).await);
-    if state.lkc.sign_in().is_some() {
-        state.lkc.cancel();
+    if state.lkc.cancel() {
         Event::new(Kind::Admin, Action::Write, Outcome::Ok)
             .remote_ip(peer_ip(&req))
             .detail("LK Cloud sign-in cancelled")
