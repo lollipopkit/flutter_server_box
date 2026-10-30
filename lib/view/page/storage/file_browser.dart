@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/utils/drop_zones.dart';
 import 'package:server_box/data/model/app/theme_style.dart';
 import 'package:server_box/data/model/file/browse_path.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
@@ -266,6 +267,7 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     _pathFocus.dispose();
     _pathCtrl.dispose();
     _busy.dispose();
+    DropZones.leave(this);
     _dropping.dispose();
     _listFocus.dispose();
     super.dispose();
@@ -1513,8 +1515,14 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     if (widget.args.refOf == null || _isPicking || _readOnly) return child;
     return DropTarget(
       onDragDone: (details) => _onDropped(details.files),
-      onDragEntered: (_) => _dropping.value = true,
-      onDragExited: (_) => _dropping.value = false,
+      onDragEntered: (_) {
+        _dropping.value = true;
+        DropZones.enter(this);
+      },
+      onDragExited: (_) {
+        _dropping.value = false;
+        DropZones.leave(this);
+      },
       child: _dropping.listenVal(
         (active) => !active
             ? child

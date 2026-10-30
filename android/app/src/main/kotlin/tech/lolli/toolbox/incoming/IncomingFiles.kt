@@ -132,6 +132,7 @@ object IncomingFiles {
 
     /** At most [max] bytes, cut before the extension so the type survives. */
     private fun truncateUtf8(name: String, max: Int): String {
+        if (max <= 0) return ""
         if (name.toByteArray().size <= max) return name
         val dot = name.lastIndexOf('.')
         val ext = if (dot > 0 && name.length - dot <= 16) name.substring(dot) else ""
@@ -149,10 +150,19 @@ object IncomingFiles {
         val (stem, ext) = if (dot > 0) name.substring(0, dot) to name.substring(dot) else name to ""
         var n = 2
         while (true) {
-            val candidate = truncateUtf8("$stem ($n)$ext", 255)
+            // The suffix is kept and the stem cut to make room: cutting the
+            // whole candidate could cut the suffix off, back to a taken name.
+            val tail = " ($n)$ext"
+            val candidate = truncateUtf8(stem, 255 - tail.toByteArray().size).trimEnd() + tail
             if (taken.add(candidate)) return candidate
             n++
         }
+    }
+
+    /** Removes [dir] if it is one of this app's batches, and nothing else. */
+    fun discardBatch(context: Context, dir: File) {
+        val root = File(context.cacheDir, DIR).canonicalFile
+        if (dir.canonicalFile.parentFile == root) deleteTree(dir)
     }
 
     /** Batches older than a day: their transfers ended in a process now gone. */

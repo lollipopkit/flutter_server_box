@@ -92,6 +92,10 @@ class _HomePageState extends ConsumerState<HomePage>
   /// platforms where opening a file also resumes the app.
   var _consumingPending = false;
 
+  /// Something was handed over while [_consumingPending] held the guard — an
+  /// incoming share finishes copying whenever it does — so take it after.
+  var _consumeAgain = false;
+
   /// The lock screen currently up, if any. See where it is assigned.
   Future<void>? _authed;
 

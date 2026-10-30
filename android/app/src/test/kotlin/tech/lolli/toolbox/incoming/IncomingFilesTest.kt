@@ -33,4 +33,16 @@ class IncomingFilesTest {
         assertEquals("Makefile", IncomingFiles.unique("Makefile", taken))
         assertEquals("Makefile (2)", IncomingFiles.unique("Makefile", taken))
     }
+
+    @Test
+    fun uniqueStaysUnderTheLimitAndTerminates() {
+        val full = "a".repeat(251) + ".txt"
+        val taken = mutableSetOf<String>()
+        assertEquals(full, IncomingFiles.unique(full, taken))
+        val second = IncomingFiles.unique(full, taken)
+        assertTrue(second.endsWith(" (2).txt"))
+        assertTrue(second.toByteArray().size <= 255)
+        val third = IncomingFiles.unique(full, taken)
+        assertTrue(third.endsWith(" (3).txt"))
+    }
 }

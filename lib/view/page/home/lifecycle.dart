@@ -116,7 +116,10 @@ extension _HomePageLifecycle on _HomePageState {
   /// lock screen, the launch ordering, the re-entry guard — and two copies
   /// would be two places for those to drift.
   Future<void> _consumePending() async {
-    if (_consumingPending) return;
+    if (_consumingPending) {
+      _consumeAgain = true;
+      return;
+    }
     // Before the launch path has decided whether there is a lock, [_authed] is
     // null and awaiting it waits for nothing — so a `resumed` edge arriving
     // first (a cold launch on macOS, where opening the file is what activates
@@ -153,6 +156,10 @@ extension _HomePageLifecycle on _HomePageState {
       Loggers.app.warning('Consume what was opened', e, s);
     } finally {
       _consumingPending = false;
+      if (_consumeAgain && mounted) {
+        _consumeAgain = false;
+        unawaited(_consumePending());
+      }
     }
   }
 

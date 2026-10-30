@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/services.dart';
+import 'package:server_box/core/utils/drop_zones.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 
@@ -448,18 +449,23 @@ abstract final class MethodChans {
     }
   }
 
-  /// The per-app language chosen in system settings, as a BCP 47 tag; empty
-  /// for the system's. Null below Android 13, where there is no such setting.
-  static Future<String?> appLocale() async {
+  /// The per-app language of Android 13+: `current`, the system's tags
+  /// (empty for the system language), and `agreed`, what it held right after
+  /// the app last set it (null before the first time). Null below 13.
+  static Future<({String current, String? agreed})?> appLocale() async {
     if (!isAndroid) return null;
     try {
-      return await _channel.invokeMethod<String>('appLocale');
+      final r = await _channel.invokeMapMethod<String, Object?>('appLocale');
+      if (r == null) return null;
+      return (current: r['current'] as String? ?? '', agreed: r['agreed'] as String?);
     } catch (e, s) {
       Loggers.app.warning('Failed to read the app locale', e, s);
       return null;
     }
   }
 
+  /// Sets the per-app language, and records what the system then holds as
+  /// `agreed`.
   static Future<void> setAppLocale(String tag) async {
     if (!isAndroid) return;
     try {
@@ -551,10 +557,13 @@ abstract final class MethodChans {
           if (id != null && id.isNotEmpty) {
             await onDisconnect(id);
           }
-          return;
+          return null;
         case 'stopAllConnections':
           onStopAll?.call();
-          return;
+          return null;
+        // Asked before a drop from another app is copied in: see [DropZones].
+        case 'acceptsDrop':
+          return DropZones.accepting;
         // Android asks for the permission asynchronously, so the call that
         // triggered the prompt has already been refused by the time the user
         // answers it. This is the only edge that says the answer was yes, and
@@ -562,9 +571,9 @@ abstract final class MethodChans {
         // something else happens to sync — see [updateSessions].
         case 'notificationPermissionGranted':
           onNotificationPermissionGranted?.call();
-          return;
+          return null;
         default:
-          return;
+          return null;
       }
     });
   }

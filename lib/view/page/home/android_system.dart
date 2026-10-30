@@ -29,12 +29,11 @@ final class AndroidSystemSync {
   final WidgetRef _ref;
   final _subs = <ProviderSubscription<Object?>>[];
   String? _lastShortcuts;
-  String? _lastTransfers;
-  Timer? _transferTimer;
 
-  /// The language last agreed with the system, as a [Locale.code]; see
-  /// [_adoptSystemLocale].
-  String? _agreedLocale;
+  /// Not null at first, so the first publish takes down a notification a
+  /// previous process left up.
+  String? _lastTransfers = '';
+  Timer? _transferTimer;
 
   /// Launcher shortcuts: the first servers in the user's order. The launcher
   /// shows four or five; more would only be cut.
@@ -44,8 +43,9 @@ final class AndroidSystemSync {
     if (!isAndroid) return;
     _subs
       ..add(
+        // The records only: not the refresh timer or the disconnect set.
         _ref.listenManual(
-          serversProvider,
+          serversProvider.select((s) => (s.servers, s.serverOrder)),
           (_, _) => _publishShortcuts(),
           fireImmediately: true,
         ),
@@ -65,7 +65,7 @@ final class AndroidSystemSync {
         ),
       );
     Stores.setting.locale.listenable().addListener(_pushAppLocale);
-    unawaited(_initAppLocale());
+    unawaited(_syncAppLocale());
   }
 
   void dispose() {
@@ -76,6 +76,8 @@ final class AndroidSystemSync {
     _transferTimer?.cancel();
     if (isAndroid) {
       Stores.setting.locale.listenable().removeListener(_pushAppLocale);
+      TermSessionManager.setTransferring(false);
+      unawaited(MethodChans.updateTransfers(null));
     }
   }
 
@@ -83,17 +85,23 @@ final class AndroidSystemSync {
   /// and the shortcut labels follow the language.
   Future<void> onResumed() async {
     if (!isAndroid) return;
-    await _adoptSystemLocale();
+    await _syncAppLocale();
     publishKeyboardShortcuts();
   }
 
   void _publishShortcuts() {
     final state = _ref.read(serversProvider);
-    final payload = jsonEncode([
-      for (final id in state.serverOrder.take(maxShortcuts))
+    final all = [
+      for (final id in state.serverOrder)
         if (state.servers[id] case final spi?)
           {'id': spi.id, 'label': spi.name, 'uri': ServerLink(spi.id).toString()},
-    ]);
+    ];
+    // `all` too: a server pinned to the home screen stays live wherever it
+    // is in the order.
+    final payload = jsonEncode({
+      'listed': all.take(maxShortcuts).toList(),
+      'all': all,
+    });
     if (payload == _lastShortcuts) return;
     _lastShortcuts = payload;
     unawaited(MethodChans.setShortcuts(payload));
@@ -176,36 +184,35 @@ final class AndroidSystemSync {
     unawaited(MethodChans.setKeyboardShortcuts(jsonEncode(groups)));
   }
 
-  /// At launch the app's own setting wins, so a restored backup's language
-  /// is what the system is told.
-  Future<void> _initAppLocale() async {
-    final system = await MethodChans.appLocale();
-    if (system == null) return;
+  /// Keeps the app's language setting and the system's per-app language one
+  /// choice. Which side moved is told by what the system held when the app
+  /// last set it (`agreed`, kept natively): a system value that differs from
+  /// that was chosen in system settings, even while the app was not running;
+  /// otherwise the app's setting is the newer one — a restored backup, say.
+  Future<void> _syncAppLocale() async {
+    final r = await MethodChans.appLocale();
+    if (r == null) return;
     final stored = Stores.setting.locale.fetch();
-    if (localeTagToCode(system) != stored) {
+    if (r.agreed != null && r.current != r.agreed) {
+      final code = localeTagToCode(r.current);
+      if (code == stored) {
+        await MethodChans.setAppLocale(localeCodeToTag(code));
+      } else {
+        // The listener pushes it back, normalized, which records it.
+        Stores.setting.locale.put(code);
+        unawaited(RNodes.app.notify());
+      }
+      return;
+    }
+    if (r.agreed == null || localeTagToCode(r.current) != stored) {
       await MethodChans.setAppLocale(localeCodeToTag(stored));
     }
-    _agreedLocale = stored;
-  }
-
-  /// A change made in system settings since: adopted as the app's own.
-  Future<void> _adoptSystemLocale() async {
-    final agreed = _agreedLocale;
-    if (agreed == null) return;
-    final system = await MethodChans.appLocale();
-    if (system == null) return;
-    final code = localeTagToCode(system);
-    if (code == agreed) return;
-    _agreedLocale = code;
-    Stores.setting.locale.put(code);
-    unawaited(RNodes.app.notify());
   }
 
   void _pushAppLocale() {
-    final code = Stores.setting.locale.fetch();
-    if (_agreedLocale == null || code == _agreedLocale) return;
-    _agreedLocale = code;
-    unawaited(MethodChans.setAppLocale(localeCodeToTag(code)));
+    unawaited(
+      MethodChans.setAppLocale(localeCodeToTag(Stores.setting.locale.fetch())),
+    );
   }
 }
 

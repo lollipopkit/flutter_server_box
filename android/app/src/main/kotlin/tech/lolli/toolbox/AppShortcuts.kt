@@ -7,6 +7,7 @@ import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import org.json.JSONArray
+import org.json.JSONObject
 
 /**
  * Launcher shortcuts to servers: the long-press list (dynamic) and the ones
@@ -21,28 +22,34 @@ object AppShortcuts {
     class Entry(val id: String, val label: String, val uri: String)
 
     /**
-     * [json] is `[{"id","label","uri"}]` in the order to list them. Replaces
-     * the dynamic list; a pinned shortcut whose server is gone is disabled
-     * rather than left to open nothing.
+     * [json] is `{"listed":[…],"all":[…]}`, each `[{"id","label","uri"}]`:
+     * the long-press list in order, and every server. A pinned shortcut is
+     * kept, renamed, while its server exists anywhere in [json]'s `all`, and
+     * disabled rather than left to open nothing once it does not.
      */
     fun publish(context: Context, json: String) {
-        val entries = parse(json)
+        val o = JSONObject(json)
+        val listed = parse(o.optJSONArray("listed") ?: JSONArray())
+        val all = parse(o.optJSONArray("all") ?: JSONArray()).associateBy { PREFIX + it.id }
         val max = ShortcutManagerCompat.getMaxShortcutCountPerActivity(context)
+        val dynamic = listed.take(max)
         ShortcutManagerCompat.setDynamicShortcuts(
             context,
-            entries.take(max).mapIndexed { rank, e -> build(context, e, rank) },
+            dynamic.mapIndexed { rank, e -> build(context, e, rank) },
         )
-        val live = entries.associateBy { PREFIX + it.id }
         val pinned = ShortcutManagerCompat.getShortcuts(context, ShortcutManagerCompat.FLAG_MATCH_PINNED)
-        val gone = pinned.map { it.id }.filter { it.startsWith(PREFIX) && it !in live }
+            .map { it.id }
+            .filter { it.startsWith(PREFIX) }
+        val gone = pinned.filter { it !in all }
         if (gone.isNotEmpty()) {
             ShortcutManagerCompat.disableShortcuts(context, gone, context.getString(R.string.shortcut_server_gone))
         }
-        // A server back from a restore gets its pinned shortcut back, renamed
-        // if it was.
-        val back = pinned.mapNotNull { live[it.id] }
-        if (back.isNotEmpty()) {
-            val infos = back.map { build(context, it, 0) }
+        // The ones `setDynamicShortcuts` did not already refresh: a server
+        // back from a restore is enabled again, a renamed one relabelled.
+        val dynamicIds = dynamic.map { PREFIX + it.id }.toSet()
+        val rest = pinned.filter { it !in dynamicIds }.mapNotNull { all[it] }
+        if (rest.isNotEmpty()) {
+            val infos = rest.map { build(context, it, 0) }
             ShortcutManagerCompat.enableShortcuts(context, infos)
             ShortcutManagerCompat.updateShortcuts(context, infos)
         }
@@ -54,8 +61,7 @@ object AppShortcuts {
         return ShortcutManagerCompat.requestPinShortcut(context, build(context, entry, 0), null)
     }
 
-    fun parse(json: String): List<Entry> {
-        val arr = JSONArray(json)
+    private fun parse(arr: JSONArray): List<Entry> {
         return (0 until arr.length()).mapNotNull { i ->
             val o = arr.optJSONObject(i) ?: return@mapNotNull null
             entry(o.optString("id"), o.optString("label"), o.optString("uri"))

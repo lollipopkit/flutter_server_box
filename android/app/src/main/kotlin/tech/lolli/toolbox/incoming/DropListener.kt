@@ -21,6 +21,8 @@ import io.flutter.plugin.common.MethodChannel
 class DropListener(
     private val activity: Activity,
     messenger: BinaryMessenger,
+    /** Asks Dart whether a drop target is under the drop (`DropZones`). */
+    private val accepts: (answer: (Boolean) -> Unit) -> Unit,
     private val onFailed: (Throwable) -> Unit,
 ) : View.OnDragListener {
     /** `desktop_drop`'s channel: `entered`/`updated` [x, y] in px, `exited`, `performOperation` [paths]. */
@@ -44,7 +46,21 @@ class DropListener(
             channel.invokeMethod("exited", null)
             return false
         }
+        // Taken now: the grant can only be asked for while the event is live.
         val grant = activity.requestDragAndDropPermissions(event)
+        // Nothing is copied for a drop that lands where no target takes it.
+        accepts { yes ->
+            if (yes) {
+                copy(uris, grant)
+            } else {
+                grant?.release()
+                channel.invokeMethod("exited", null)
+            }
+        }
+        return true
+    }
+
+    private fun copy(uris: List<android.net.Uri>, grant: android.view.DragAndDropPermissions?) {
         Thread {
             val result = runCatching { IncomingFiles.copy(activity, uris) }
             activity.runOnUiThread {
@@ -59,6 +75,5 @@ class DropListener(
                 )
             }
         }.start()
-        return true
     }
 }
