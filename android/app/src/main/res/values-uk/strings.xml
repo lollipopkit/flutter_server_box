@@ -23,13 +23,22 @@
     <string name="widget_err_insecure">Потрібен HTTPS</string>
     <string name="widget_err_network">Помилка мережі</string>
     <string name="widget_err_timeout">Час очікування вичерпано</string>
-    <string name="widget_no_history">Немає історії</string>
     <string name="widget_chart_desc">Графіки стану</string>
-    <string name="widget_cpu_desc">Використання ЦП</string>
-    <string name="widget_mem_desc">Використання пам\'яті</string>
-    <string name="widget_disk_desc">Використання диска</string>
-    <string name="widget_net_desc">Використання мережі</string>
     <string name="widget_refresh_desc">Оновити</string>
     <string name="widget_small_label">Значення сервера</string>
     <string name="widget_medium_label">Графіки сервера</string>
+    <string name="widget_label">Стан сервера</string>
+    <string name="widget_description">Процесор, пам’ять, диск і мережа з першого погляду. Збільште, щоб побачити більше.</string>
+
+    <string name="process_text_label">Зберегти як сніпет</string>
+    <string name="tile_no_sessions">Немає активних сеансів</string>
+    <plurals name="tile_sessions">
+        <item quantity="one">%d сеанс</item>
+        <item quantity="few">%d сеанси</item>
+        <item quantity="many">%d сеансів</item>
+        <item quantity="other">%d сеансу</item>
+    </plurals>
+    <string name="channel_transfers">Передавання файлів</string>
+    <string name="incoming_failed">Не вдалося прийняти файли</string>
+    <string name="shortcut_server_gone">Сервер видалено</string>
 </resources>

@@ -29,10 +29,10 @@ use std::rc::Rc;
 use std::sync::Arc;
 
 use ntex::rt::spawn;
-use ntex::service::{Service, ServiceCtx, fn_factory_with_config};
+use ntex::service::{BindCtx, Ctx, Service};
 use ntex::util::{ByteString, Bytes};
 use ntex::web::ws::{self, CloseCode, Frame, Message};
-use ntex::web::{self, HttpRequest, HttpResponse};
+use ntex::web::{HttpRequest, HttpResponse};
 use ntex::ws::Item;
 use serde::{Deserialize, Serialize};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -41,7 +41,7 @@ use tokio::sync::{broadcast, mpsc};
 use super::audit::{self, Action, Event, Kind, Outcome};
 use super::stream::next_change;
 use super::ticket::Purpose;
-use super::upgrade::WsSink;
+use super::upgrade::{QueueGate, WsSink};
 use crate::api::authz;
 use crate::api::server::AppState;
 use crate::api::virt::ConsoleTarget;
@@ -116,9 +116,8 @@ impl ConnCtx {
 
 pub async fn virt_console_ws(
     req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
-    let app_state = app_state.get_ref().clone();
+    app_state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     let remote_ip = audit::peer_ip(&req);
     let deny = async |reason: &'static str, status: HttpResponse| {
         Event::new(Kind::Machine, Action::Denied, Outcome::Denied)
@@ -130,16 +129,16 @@ pub async fn virt_console_ws(
     };
     let secure = super::is_secure_transport(&req, app_state.tls_active);
     if !super::origin_allowed(&req, &app_state.config.get_server().cors_allowed_origins) {
-        return deny("origin", HttpResponse::Unauthorized().finish()).await;
+        return deny("origin", HttpResponse::Unauthorized().build()).await;
     }
     let Some(protocol) =
         ws::subprotocols(&req).find(|v| v.starts_with(TICKET_PROTOCOL_PREFIX)).map(str::to_owned)
     else {
-        return deny("no ticket", HttpResponse::Unauthorized().finish()).await;
+        return deny("no ticket", HttpResponse::Unauthorized().build()).await;
     };
     let raw_ticket = protocol[TICKET_PROTOCOL_PREFIX.len()..].to_owned();
     let Ok(reservation) = app_state.tickets.reserve(&raw_ticket, Purpose::Virt) else {
-        return deny("ticket", HttpResponse::Unauthorized().finish()).await;
+        return deny("ticket", HttpResponse::Unauthorized().build()).await;
     };
     let subject = reservation.subject().to_owned();
     let tickets = app_state.tickets.clone();
@@ -148,11 +147,11 @@ pub async fn virt_console_ws(
         .filter(|caller| caller.check(Grant::Virt, &app_state, secure).is_ok());
     let Some(admitted) = admitted else {
         tickets.rollback(reservation);
-        return deny("not granted", HttpResponse::Forbidden().finish()).await;
+        return deny("not granted", HttpResponse::Forbidden().build()).await;
     };
     let Some(pending) = app_state.virt.take_console(&raw_ticket, &subject) else {
         tickets.rollback(reservation);
-        return deny("no console", HttpResponse::Unauthorized().finish()).await;
+        return deny("no console", HttpResponse::Unauthorized().build()).await;
     };
     let ctx = Rc::new(ConnCtx {
         state: app_state,
@@ -162,14 +161,10 @@ pub async fn virt_console_ws(
         since: admitted.since,
         what: pending.what,
     });
-    let target = Rc::new(RefCell::new(Some(pending.target)));
-    let upgraded = super::upgrade::start::<_, _, web::Error>(
-        req,
+    let upgraded = super::upgrade::start(
+        &req,
         Some(&protocol),
-        fn_factory_with_config(move |sink: WsSink| {
-            let (ctx, target) = (ctx.clone(), target.clone());
-            async move { Ok::<_, web::Error>(handler(ctx, sink, target.borrow_mut().take())) }
-        }),
+        move |sink: WsSink| handler(ctx, sink, pending.target),
     )
     .await;
     if upgraded.is_ok() {
@@ -180,7 +175,7 @@ pub async fn virt_console_ws(
     upgraded
 }
 
-fn handler(ctx: Rc<ConnCtx>, sink: WsSink, target: Option<ConsoleTarget>) -> Relay {
+fn handler(ctx: Rc<ConnCtx>, sink: WsSink, target: ConsoleTarget) -> Relay {
     let phase = Rc::new(RefCell::new(Phase::Opening));
     {
         let phase = phase.clone();
@@ -190,12 +185,12 @@ fn handler(ctx: Rc<ConnCtx>, sink: WsSink, target: Option<ConsoleTarget>) -> Rel
             *phase.borrow_mut() = Phase::Done;
         });
     }
-    let text = matches!(&target, Some(ConsoleTarget::Pve(_, c)) if c.kind == ConsoleKind::Text);
-    if let Some(target) = target {
-        let (ctx, sink, phase) = (ctx.clone(), sink.clone(), phase.clone());
+    let text = matches!(&target, ConsoleTarget::Pve(_, c) if c.kind == ConsoleKind::Text);
+    {
+        let (sink, phase) = (sink.clone(), phase.clone());
         spawn(async move { connect(ctx, sink, phase, target).await });
     }
-    Relay { phase, text }
+    Relay { phase, text, gate: QueueGate::default() }
 }
 
 /// Connects to the console and starts carrying it, or says why not.
@@ -394,17 +389,22 @@ async fn end(sink: &WsSink) {
 struct Relay {
     phase: Rc<RefCell<Phase>>,
     text: bool,
+    gate: QueueGate,
 }
 
 impl Relay {
-    async fn input(&self, input: Input) -> Option<Message> {
-        let sender = match &*self.phase.borrow() {
+    /// The queue towards the console, while one is open.
+    fn running(&self) -> Option<mpsc::Sender<Input>> {
+        match &*self.phase.borrow() {
             Phase::Running(sender) => Some(sender.clone()),
             _ => None,
-        };
-        match sender {
+        }
+    }
+
+    async fn input(&self, input: Input) -> Option<Message> {
+        match self.running() {
             Some(sender) => {
-                if sender.send(input).await.is_err() {
+                if self.gate.send(&sender, input).await.is_err() {
                     return Some(error_frame("closed", "The console ended"));
                 }
                 None
@@ -414,24 +414,22 @@ impl Relay {
     }
 }
 
-impl Service<Frame> for Relay {
-    type Response = Option<Message>;
-    type Error = web::Error;
+impl Service<WsSink, Frame> for Relay {
+    type Res = Option<Message>;
+    type Error = crate::api::WebError;
+
+    fn bind(&self, ctx: BindCtx<'_>) {
+        self.gate.bind(ctx);
+    }
 
     /// Not ready while the queue towards the console is full, which is what
     /// holds a fast client back.
-    async fn ready(&self, _: ServiceCtx<'_, Self>) -> Result<(), Self::Error> {
-        let sender = match &*self.phase.borrow() {
-            Phase::Running(sender) => Some(sender.clone()),
-            _ => None,
-        };
-        if let Some(sender) = sender {
-            drop(sender.reserve().await);
-        }
+    async fn ready(&self, _: Ctx<'_, Self, WsSink>) -> Result<(), Self::Error> {
+        self.gate.ready(self.running()).await;
         Ok(())
     }
 
-    async fn call(&self, frame: Frame, _: ServiceCtx<'_, Self>) -> Result<Self::Response, Self::Error> {
+    async fn call(&self, frame: Frame, _: Ctx<'_, Self, WsSink>) -> Result<Self::Res, Self::Error> {
         match frame {
             Frame::Binary(data)
             | Frame::Continuation(Item::FirstBinary(data) | Item::Continue(data) | Item::Last(data)) => {

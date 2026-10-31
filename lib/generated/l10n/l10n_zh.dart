@@ -5669,6 +5669,14 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get hostCertAuthorityExists => '已在列表中';
+
+  @override
+  String get addToHomeScreen => '添加到主屏幕';
+
+  @override
+  String transfersActive(int count) {
+    return '$count 个传输';
+  }
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -11340,4 +11348,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get hostCertAuthorityExists => '已在清單中';
+
+  @override
+  String get addToHomeScreen => '加入主畫面';
+
+  @override
+  String transfersActive(int count) {
+    return '$count 個傳輸';
+  }
 }

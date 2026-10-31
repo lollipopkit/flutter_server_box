@@ -42,7 +42,7 @@ use std::collections::HashSet;
 use std::sync::{Arc, OnceLock};
 use std::time::Duration;
 
-use ntex::web::{self, HttpRequest, HttpResponse};
+use ntex::web::{HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map as JsonMap, Value as JsonValue};
 
@@ -227,8 +227,8 @@ fn internal_error(error: impl Into<String>) -> HttpResponse {
 
 pub async fn list(
     req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    app_state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     // The channels are the agent's configuration, and a webhook is a place
     // to send what the agent knows: an admin's to change, and to read.
     if let Err(response) = authz::admin_caller(&req, &app_state).await {
@@ -252,9 +252,9 @@ pub async fn list(
 
 pub async fn replace(
     req: HttpRequest,
-    body: web::types::Json<ReplaceRequest>,
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    body: crate::api::json::Json<ReplaceRequest, crate::api::json::Max<MAX_REQUEST>>,
+    app_state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     // The channels are the agent's configuration, and a webhook is a place
     // to send what the agent knows: an admin's to change, and to read.
     if let Err(response) = authz::admin_caller(&req, &app_state).await {
@@ -334,9 +334,9 @@ pub async fn replace(
 
 pub async fn test(
     req: HttpRequest,
-    body: web::types::Json<TestRequest>,
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    body: crate::api::json::Json<TestRequest, crate::api::json::Max<MAX_REQUEST>>,
+    app_state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     // The channels are the agent's configuration, and a webhook is a place
     // to send what the agent knows: an admin's to change, and to read.
     if let Err(response) = authz::admin_caller(&req, &app_state).await {

@@ -217,8 +217,8 @@ struct ImageRow {
 pub async fn list(
     req: HttpRequest,
     query: web::types::Query<ContainerQuery>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     if let Err(refused) = machine::gate(&req, &state, Grant::Shell, "containers list").await {
         return Ok(refused);
     }
@@ -229,7 +229,7 @@ pub async fn list(
     // that cannot be answered, not one to guess a default for. Refused before
     // the runtime is run, so a malformed request costs nothing on the machine.
     if part.needs_id() && id.is_none_or(str::is_empty) {
-        return Ok(HttpResponse::BadRequest().finish());
+        return Ok(HttpResponse::BadRequest().build());
     }
     Ok(HttpResponse::Ok().json(&read(part, id, exec).await))
 }
@@ -246,8 +246,8 @@ pub struct ContainerQuery {
 pub async fn act(
     req: HttpRequest,
     body: web::types::Json<ContainerAction>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     let action = body.into_inner();
     let what = format!("containers {}", action_subject(&action));
     let gated = match machine::gate(&req, &state, Grant::Shell, &what).await {

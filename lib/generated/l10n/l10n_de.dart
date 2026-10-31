@@ -6117,4 +6117,18 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get hostCertAuthorityExists => 'Bereits in der Liste';
+
+  @override
+  String get addToHomeScreen => 'Zum Startbildschirm hinzufügen';
+
+  @override
+  String transfersActive(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Übertragungen',
+      one: '1 Übertragung',
+    );
+    return '$_temp0';
+  }
 }

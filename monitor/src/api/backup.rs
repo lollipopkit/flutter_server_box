@@ -72,7 +72,7 @@ pub struct NameQuery {
 }
 
 fn refusal(status: ntex::http::StatusCode, error: &'static str) -> HttpResponse {
-    HttpResponse::build(status).json(&serde_json::json!({ "error": error }))
+    HttpResponse::builder(status).json(&serde_json::json!({ "error": error }))
 }
 
 fn internal_error(e: &sqlx::Error) -> HttpResponse {
@@ -91,8 +91,8 @@ async fn record(state: &AppState, req: &HttpRequest, caller: &authz::Caller, out
 
 pub async fn list(
     req: HttpRequest,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     if let Err(refused) = authz::admin_caller(&req, &state).await {
         return Ok(refused);
     }
@@ -106,8 +106,8 @@ pub async fn list(
 pub async fn download(
     req: HttpRequest,
     query: web::types::Query<NameQuery>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     if let Err(refused) = authz::admin_caller(&req, &state).await {
         return Ok(refused);
     }
@@ -137,8 +137,8 @@ pub async fn upload(
     req: HttpRequest,
     query: web::types::Query<NameQuery>,
     mut body: web::types::Payload,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     let caller = match authz::admin_caller(&req, &state).await {
         Ok(caller) => caller,
         Err(refused) => {
@@ -157,7 +157,7 @@ pub async fn upload(
         // Nothing to [`discard`] here: ntex fails the payload only as the
         // connection ends (peer gone, broken framing, a read timeout).
         let Ok(chunk) = chunk else {
-            return Ok(HttpResponse::BadRequest().finish());
+            return Ok(HttpResponse::BadRequest().build());
         };
         if (data.len() + chunk.len()) as u64 > MAX_BYTES {
             drop(data);
@@ -194,8 +194,8 @@ async fn discard(body: &mut web::types::Payload) {
 pub async fn remove(
     req: HttpRequest,
     query: web::types::Query<NameQuery>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     let caller = match authz::admin_caller(&req, &state).await {
         Ok(caller) => caller,
         Err(refused) => return Ok(refused),
@@ -213,7 +213,7 @@ pub async fn remove(
         }
         Ok(_) => {
             record(&state, &req, &caller, Outcome::Ok, format!("backup remove {}", query.name)).await;
-            Ok(HttpResponse::NoContent().finish())
+            Ok(HttpResponse::NoContent().build())
         }
         Err(e) => Ok(internal_error(&e)),
     }

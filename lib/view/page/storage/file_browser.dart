@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:cross_file/cross_file.dart';
@@ -9,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/utils/drop_zones.dart';
 import 'package:server_box/data/model/app/theme_style.dart';
 import 'package:server_box/data/model/file/browse_path.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
@@ -20,6 +22,7 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/storage/send_to.dart';
 import 'package:server_box/view/page/storage/transfer_announce.dart';
 import 'package:server_box/view/widget/delayed_loading.dart';
+import 'package:server_box/view/widget/incoming.dart';
 import 'package:server_box/view/widget/unix_perm.dart';
 
 /// What an injected action is allowed to do to the browser it sits in.
@@ -264,6 +267,7 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     _pathFocus.dispose();
     _pathCtrl.dispose();
     _busy.dispose();
+    DropZones.leave(this);
     _dropping.dispose();
     _listFocus.dispose();
     super.dispose();
@@ -1507,12 +1511,23 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   ///
   /// Only where the browser can say what a path here is called: without
   /// [FileBrowserArgs.refOf] there is no destination to name.
+  ///
+  /// The target stays in the tree even while nothing can be dropped (the
+  /// backend may turn read-only mid-drag): taken out, it would never hear the
+  /// drag leave, and [DropZones] would go on accepting for it.
   Widget _wrapDropTarget(Widget child) {
-    if (widget.args.refOf == null || _isPicking || _readOnly) return child;
+    if (widget.args.refOf == null || _isPicking) return child;
     return DropTarget(
       onDragDone: (details) => _onDropped(details.files),
-      onDragEntered: (_) => _dropping.value = true,
-      onDragExited: (_) => _dropping.value = false,
+      onDragEntered: (_) {
+        if (_readOnly) return;
+        _dropping.value = true;
+        DropZones.enter(this);
+      },
+      onDragExited: (_) {
+        _dropping.value = false;
+        DropZones.leave(this);
+      },
       child: _dropping.listenVal(
         (active) => !active
             ? child
@@ -1530,15 +1545,25 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
 
   Future<void> _onDropped(List<XFile> files) async {
     _dropping.value = false;
+    DropZones.leave(this);
     final refOf = widget.args.refOf;
     if (refOf == null || files.isEmpty) return;
+    // On Android a drop arrives as copies the app made (`DropListener`),
+    // which are its to remove — at once when refused.
+    if (_readOnly) {
+      if (isAndroid) unawaited(discardIncomingAfter([for (final f in files) f.path], null));
+      return;
+    }
 
     final queue = ref.read(fileTransferProvider.notifier);
     final queued = <int>[];
+    final ends = <Future<bool>>[];
     for (final file in files) {
       final source = LocalFileRef(file.path.replaceAll(r'\', '/'));
       final destination = refOf(BrowsePath.join(_path.path, source.name));
       if (destination == source) continue;
+      final end = Completer<bool>();
+      ends.add(end.future);
       queued.add(
         queue.add(
           FileTransfer(
@@ -1546,8 +1571,12 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
             to: destination,
             isDir: await FileSystemEntity.isDirectory(file.path),
           ),
+          completer: end,
         ),
       );
+    }
+    if (isAndroid) {
+      unawaited(discardIncomingAfter([for (final f in files) f.path], ends));
     }
     if (!mounted) return;
     await announceQueued(context, ref, queued);

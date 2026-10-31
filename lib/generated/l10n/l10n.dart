@@ -10342,6 +10342,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Already in the list'**
   String get hostCertAuthorityExists;
+
+  /// Server menu entry that pins a launcher shortcut to the server (Android).
+  ///
+  /// In en, this message translates to:
+  /// **'Add to home screen'**
+  String get addToHomeScreen;
+
+  /// Title of the transfer notification while several file transfers run.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 transfer} other{{count} transfers}}'**
+  String transfersActive(int count);
 }
 
 class _AppLocalizationsDelegate

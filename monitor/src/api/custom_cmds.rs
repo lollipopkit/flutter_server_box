@@ -17,7 +17,7 @@
 
 use std::sync::Arc;
 
-use ntex::web::{self, HttpRequest, HttpResponse};
+use ntex::web::{HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
 
 use super::authz::{self, Caller};
@@ -54,10 +54,10 @@ struct ErrorResponse {
 
 pub async fn list(
     req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    app_state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     let Ok(caller) = authz::jwt_caller(&req, &app_state).await else {
-        return Ok(HttpResponse::Unauthorized().finish());
+        return Ok(HttpResponse::Unauthorized().build());
     };
     let editable = may_edit(&caller, &req, &app_state);
 
@@ -69,11 +69,11 @@ pub async fn list(
 
 pub async fn replace(
     req: HttpRequest,
-    body: web::types::Json<ReplaceRequest>,
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    body: crate::api::json::Json<ReplaceRequest, crate::api::json::Max<MAX_REQUEST>>,
+    app_state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     let Ok(caller) = authz::jwt_caller(&req, &app_state).await else {
-        return Ok(HttpResponse::Unauthorized().finish());
+        return Ok(HttpResponse::Unauthorized().build());
     };
 
     let remote_ip = peer_ip(&req);
@@ -83,7 +83,7 @@ pub async fn replace(
             .detail(format!("{} may not edit custom commands", caller.username))
             .record(&app_state.db)
             .await;
-        return Ok(HttpResponse::Forbidden().finish());
+        return Ok(HttpResponse::Forbidden().build());
     }
 
     let commands = body.into_inner().commands;

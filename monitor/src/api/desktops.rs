@@ -105,8 +105,8 @@ impl Serialize for Refusal {
 
 pub async fn list(
     req: HttpRequest,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     if let Err(refused) = machine::gate(&req, &state, Grant::Connect, "desktops list").await {
         return Ok(refused);
     }
@@ -119,8 +119,8 @@ pub async fn list(
 pub async fn replace(
     req: HttpRequest,
     body: web::types::Json<ReplaceRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     let gated = match machine::gate(&req, &state, Grant::Connect, "desktops replace").await {
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),

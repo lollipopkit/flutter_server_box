@@ -304,8 +304,8 @@ pub struct GetQuery {
 pub async fn get(
     req: HttpRequest,
     query: web::types::Query<GetQuery>,
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    app_state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     if let Err(refused) = machine::gate(&req, &app_state, Grant::Shell, "benchmark list").await {
         return Ok(refused);
     }
@@ -418,8 +418,8 @@ struct CancelResponse {
 pub async fn act(
     req: HttpRequest,
     body: web::types::Json<BenchAction>,
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    app_state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     let action = body.into_inner();
     let what = match &action {
         BenchAction::Start { .. } => "benchmark start",
@@ -450,7 +450,7 @@ async fn start(
     app_state: &AppState,
     options: BenchOptions,
     gated: &machine::Gated,
-) -> Result<HttpResponse, web::Error> {
+) -> Result<HttpResponse, crate::api::WebError> {
     if !supports_benchmark() {
         return Ok(bad_request("unsupported_platform"));
     }
@@ -592,7 +592,7 @@ async fn start(
 async fn cancel(
     app_state: &AppState,
     gated: &machine::Gated,
-) -> Result<HttpResponse, web::Error> {
+) -> Result<HttpResponse, crate::api::WebError> {
     let Some(row) = running_row(&app_state.db).await else {
         return Ok(HttpResponse::Ok().json(&CancelResponse { cancelled: false }));
     };
@@ -656,8 +656,8 @@ pub struct RemoveQuery {
 pub async fn remove(
     req: HttpRequest,
     query: web::types::Query<RemoveQuery>,
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    app_state: Arc<AppState>,
+) -> Result<HttpResponse, crate::api::WebError> {
     let id = &query.run;
     let gated = match machine::gate(&req, &app_state, Grant::Shell, &format!("benchmark remove {id}")).await
     {
@@ -694,7 +694,7 @@ pub async fn remove(
         .record(&app_state.db)
         .await;
 
-    Ok(HttpResponse::Ok().finish())
+    Ok(HttpResponse::Ok().build())
 }
 
 // --- Watching ---

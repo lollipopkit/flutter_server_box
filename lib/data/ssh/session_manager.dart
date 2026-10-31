@@ -84,15 +84,16 @@ abstract final class TermSessionManager {
         (id) async {
           _entries[id]?.disconnect?.call();
         },
-        () {
-          // Stop all connections when notification "Stop All" is pressed
-          stopAllConnections();
-        },
+        // Stop all connections when notification "Stop All" is pressed
+        onStopAll: stopAllConnections,
         // The first attempt to start the service raised the permission prompt
         // and was refused by the same call, because asking is asynchronous.
         // This is the answer arriving, and syncing is what asks again.
-        _sync,
+        onNotificationPermissionGranted: _sync,
+        onBackgrounded: setBackgrounded,
       );
+      _pushKeepAlive();
+      Stores.setting.bgRun.listenable().addListener(_pushKeepAlive);
     }
     if (isIOS) {
       // A Live Activity can outlive a killed process. Clear any orphan left
@@ -127,7 +128,9 @@ abstract final class TermSessionManager {
     // straight back: pressing Stop All in the background would otherwise clear
     // every session and then start the service again for [_backgrounded], so
     // the one control the notification offers would appear not to work.
-    _stoodDown = true;
+    // In the foreground (the tile over the app) there is no keep-alive to give
+    // up, and the flag would outlive this visit.
+    _stoodDown = _backgrounded;
     _sync();
   }
 
@@ -241,12 +244,12 @@ abstract final class TermSessionManager {
     }
   }
 
-  /// Whether the app is out of the foreground, as `home.dart` reports it.
+  /// Whether the activity is paused, from its native `onPause`/`onResume`.
   ///
-  /// Set on `inactive` rather than on `paused`, which is the whole reason this
-  /// exists: `inactive` is delivered while the activity is still visible, and
-  /// that is the last moment Android 12+ allows an app to *start* a foreground
-  /// service. By `paused` the app is background and the call is refused.
+  /// `onPause` is the last moment Android 12+ lets an app *start* a foreground
+  /// service; Flutter's `paused` comes later, from `onStop`. Flutter's
+  /// `inactive` and `resumed` are not used: they also follow window focus, so
+  /// a pulled-down notification shade would read as leaving.
   static var _backgrounded = false;
 
   static void setBackgrounded(bool value) {
@@ -262,8 +265,9 @@ abstract final class TermSessionManager {
   ///
   /// Two reasons, either of which is enough. Something is connected, which is
   /// what the notification is *for*. Or the app is in the background with
-  /// [SettingStore.bgRun] on, which is what that switch has always said it
-  /// means — "the program will try to run in the background" — and never did:
+  /// [SettingStore.bgRun] on and a server to keep, which is what that switch
+  /// has always said it means — "the program will try to run in the
+  /// background" — and never did:
   /// it only kept the poll timer scheduled, and a frozen process runs no
   /// timers.
   ///
@@ -273,24 +277,63 @@ abstract final class TermSessionManager {
   /// was left running to reconnect with. Keeping it means a notification while
   /// backgrounded even with nothing connected, which is the cost of being able
   /// to come back.
+  ///
+  /// A file transfer in progress is a third: it runs on this process, and a
+  /// frozen one leaves it, and its notification, standing still. Stop All
+  /// does not end it, and the native side keeps the service up for it.
   static bool get _serviceWanted =>
       _entries.isNotEmpty ||
-      (_backgrounded && !_stoodDown && Stores.setting.bgRun.fetch());
+      _transferring ||
+      (_backgrounded && !_stoodDown && _keepAliveWanted);
+
+  static var _transferring = false;
+
+  /// Whether any file transfer is running, as `AndroidSystemSync` sees them.
+  static void setTransferring(bool value) {
+    if (_transferring == value) return;
+    _transferring = value;
+    _sync();
+  }
+
+  static var _hasServers = false;
+
+  /// Whether any server is configured, as `AndroidSystemSync` sees them.
+  static void setHasServers(bool value) {
+    if (_hasServers == value) return;
+    _hasServers = value;
+    _pushKeepAlive();
+    _sync();
+  }
+
+  /// Keeping the process alive in the background is for the servers: their
+  /// status and their reconnects. With none there is nothing to keep.
+  static bool get _keepAliveWanted =>
+      _hasServers && Stores.setting.bgRun.fetch();
+
+  /// The native side starts the keep-alive on `onPause` from this: the
+  /// `activityPaused` round trip can land after the app is background.
+  static void _pushKeepAlive() {
+    if (!isAndroid) return;
+    unawaited(MethodChans.setKeepAliveInBackground(_keepAliveWanted));
+  }
 
   static Future<void> _syncLatest() async {
     // Android: update foreground service notifications
     if (isAndroid) {
       final wanted = _serviceWanted;
       // No query is needed for an update, and no stop is allowed while the app
-      // is backgrounded. Apart from saving a platform round trip, that keeps an
-      // empty state from starting a foreground service just to stop it again.
-      final running = !wanted && !_backgrounded
+      // is backgrounded, unless stood down. Apart from saving a platform round
+      // trip, that keeps an empty state from starting a foreground service just
+      // to stop it again.
+      final mayStop = !_backgrounded || _stoodDown;
+      final running = !wanted && mayStop
           ? await MethodChans.isServiceRunning()
           : false;
       switch (decideAndroidSessionServiceAction(
         wanted: wanted,
         running: running,
         backgrounded: _backgrounded,
+        stoodDown: _stoodDown,
       )) {
         case AndroidSessionServiceAction.update:
           await MethodChans.updateSessions(

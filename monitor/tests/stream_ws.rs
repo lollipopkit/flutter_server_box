@@ -10,16 +10,16 @@ use std::sync::{Arc, Once};
 use std::time::Duration;
 
 use ntex::io::{Io, Sealed};
-use ntex::service::cfg::SharedCfg;
 use ntex::time::{Seconds, timeout};
 use ntex::util::{ByteString, Bytes};
+use ntex::service::map_state_factory;
 use ntex::web::test::{self as web_test, TestServer};
 use ntex::web::{self, App};
 use ntex::ws::error::WsClientError;
-use ntex::ws::{self, WsClient, WsConnection};
+use ntex::ws::{self, WsClient, WsClientConfig, WsConnection};
 use rustls::crypto::ring;
 use server_box_monitor::api::authz::revoke_lost;
-use server_box_monitor::api::server::AppState;
+use server_box_monitor::api::server::{Agent, AppState};
 use server_box_monitor::api::ws::stream::stream_ws;
 use server_box_monitor::api::ws::ticket::Purpose;
 use server_box_monitor::core::config::Config;
@@ -54,15 +54,11 @@ async fn app_state(full_access: bool) -> Arc<AppState> {
 }
 
 async fn test_server(state: Arc<AppState>) -> TestServer {
-    web_test::server(move || {
+    web_test::server(async move |_| {
         let state = state.clone();
-        async move {
-            App::new()
-                .state(state)
-                .service(web::scope("/api/v1").route("/stream/ws", web::get().to(stream_ws)))
-        }
+        map_state_factory(Agent(state), App::<Agent>::new()
+            .service(web::scope("/api/v1").route("/stream/ws", web::get().to(stream_ws))))
     })
-    .await
 }
 
 /// A listener that echoes everything it receives.
@@ -115,17 +111,18 @@ fn dead_addr() -> String {
 async fn stream_connection(
     srv: &TestServer,
     ticket: &str,
-) -> Result<WsConnection<Sealed>, WsClientError> {
-    WsClient::builder(srv.url("/api/v1/stream/ws"))
-        .address(srv.addr())
-        .timeout(Seconds(60))
-        .protocols([format!("sbm-ticket.{ticket}")])
-        .build(SharedCfg::default())
-        .await
-        .unwrap()
-        .connect()
-        .await
-        .map(WsConnection::seal)
+) -> Result<WsConnection<Sealed>, ntex::Error<WsClientError>> {
+    WsClient::new(
+        srv.url("/api/v1/stream/ws"),
+        WsClientConfig::new()
+            .set_address(srv.addr())
+            .set_handshake_timeout(Seconds(60))
+            .set_protocols([format!("sbm-ticket.{ticket}")])
+            .unwrap(),
+    )
+    .connect()
+    .await
+    .map(WsConnection::seal)
 }
 
 async fn open_stream(srv: &TestServer, ticket: &str) -> (Io<Sealed>, ws::Codec) {

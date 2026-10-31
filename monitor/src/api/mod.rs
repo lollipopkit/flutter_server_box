@@ -20,6 +20,7 @@ pub mod system_users;
 pub mod tmux;
 pub mod push;
 pub mod cors;
+pub mod json;
 pub mod protocol;
 pub mod admin;
 pub mod containers;
@@ -29,3 +30,5 @@ pub mod authz;
 pub mod ratelimit;
 pub mod ws;
 pub mod server;
+
+pub use server::{Agent, WebError};

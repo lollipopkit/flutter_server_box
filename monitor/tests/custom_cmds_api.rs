@@ -15,12 +15,13 @@ mod common;
 
 use std::sync::{Arc, Once};
 
+use ntex::service::map_state_factory;
 use ntex::web::test::{self as web_test, TestServer};
 use ntex::web::{self, App};
 use rustls::crypto::ring;
 use serde_json::json;
 use server_box_monitor::api::auth::generate_token;
-use server_box_monitor::api::server::AppState;
+use server_box_monitor::api::server::{Agent, AppState};
 use server_box_monitor::core::config::Config;
 
 const SECRET: &str = "test-secret-that-is-long-enough-32ch";
@@ -50,23 +51,20 @@ async fn app_state(full_access: bool) -> Arc<AppState> {
 }
 
 async fn test_server(state: Arc<AppState>) -> TestServer {
-    web_test::server(move || {
+    web_test::server(async move |_| {
         let state = state.clone();
-        async move {
-            App::new().state(state).service(
-                web::scope("/api/v1")
-                    .route(
-                        "/custom-cmds",
-                        web::get().to(server_box_monitor::api::custom_cmds::list),
-                    )
-                    .route(
-                        "/custom-cmds",
-                        web::put().to(server_box_monitor::api::custom_cmds::replace),
-                    ),
-            )
-        }
+        map_state_factory(Agent(state), App::<Agent>::new().service(
+            web::scope("/api/v1")
+                .route(
+                    "/custom-cmds",
+                    web::get().to(server_box_monitor::api::custom_cmds::list),
+                )
+                .route(
+                    "/custom-cmds",
+                    web::put().to(server_box_monitor::api::custom_cmds::replace),
+                ),
+        ))
     })
-    .await
 }
 
 fn token() -> String {
@@ -88,6 +86,18 @@ async fn writing_needs_a_token() {
         .send_json(&json!({"commands": [{"name": "x", "cmd": "echo x"}]}))
         .await
         .unwrap();
+    assert_eq!(resp.status().as_u16(), 401);
+}
+
+/// A body past ntex's 32 KiB default reaches the handler: the 401 is the
+/// handler's answer. One past the endpoint's limit is `api::json`'s unit
+/// tests': answered before the body is read, it reaches a client on Windows
+/// as a reset (ntex closes without lingering).
+#[ntex::test]
+async fn a_body_past_ntex_default_reaches_the_handler() {
+    let srv = test_server(app_state(true).await).await;
+    let body = json!({"commands": [{"name": "x", "cmd": "x".repeat(64 * 1024)}]});
+    let resp = srv.put("/api/v1/custom-cmds").send_json(&body).await.unwrap();
     assert_eq!(resp.status().as_u16(), 401);
 }
 
