@@ -114,19 +114,21 @@ final class BakSyncer extends SyncIface {
   @override
   Future<Mergeable> fromFile(String path) async {
     _remoteTooNew = null;
-    final content = await File(path).readAsString();
+    final content = await File(path).readAsBytes();
     final pwd = await SecureStoreProps.bakPwd.read();
     final includeSettings = PrefProps.syncAppSettings.get();
     try {
-      // Only decrypting and decoding leave this isolate: they read nothing but
-      // their arguments. Prefs, secure storage and [_remoteTooNew] belong to
-      // this one — in a worker the pref answered its default and dropped every
-      // synced setting, with no error anywhere (#1562).
+      // Only decrypting (in rage's isolate) and decoding leave this isolate:
+      // they read nothing but their arguments. Prefs, secure storage and
+      // [_remoteTooNew] belong to this one — in a worker the pref answered
+      // its default and dropped every synced setting, with no error anywhere
+      // (#1562).
       //
       // A plaintext backup, uploaded before remote encryption became
       // mandatory, is still accepted: the password is only used on an
       // encrypted payload.
-      final mergeable = await compute(_parse, (content, pwd));
+      final plain = await BackupV2.unlock(content, pwd);
+      final mergeable = await compute(_parse, plain);
       return _normalizeSyncPayload(mergeable, includeSettings: includeSettings);
     } on SchemaTooNewException catch (e) {
       // Recorded so `backup` refuses to upload over data this build cannot
@@ -136,8 +138,8 @@ final class BakSyncer extends SyncIface {
     }
   }
 
-  static Mergeable _parse((String, String?) args) =>
-      MergeableUtils.fromJsonString(args.$1, args.$2).$1;
+  static Mergeable _parse(Uint8List plain) =>
+      MergeableUtils.fromBytes(plain).$1;
 
   Mergeable _normalizeSyncPayload(
     Mergeable mergeable, {
@@ -205,14 +207,14 @@ final class BakSyncer extends SyncIface {
   /// it.
   Future<void>? _inheriting;
 
-  /// Reads the pre-v3 remote file once, so upgrading doesn't look like a
-  /// fresh start.
+  /// Reads the newest remote file an older build synced to, once, so
+  /// upgrading doesn't look like a fresh start.
   ///
-  /// The versioned name means this build ignores `srvbox_bak.json` from then
-  /// on; a device still on an older build keeps updating it, and the two
-  /// histories diverge from here. That divergence is the cost of not letting
-  /// those builds overwrite data they cannot read — see the note at
-  /// `Paths.init`.
+  /// The versioned name means this build ignores the older names from then
+  /// on; a device still on an older build keeps updating its own, and the
+  /// two histories diverge until it is updated and merges this build's file
+  /// with what it has. That divergence is the cost of not letting those
+  /// builds overwrite data they cannot read — see the note at `Paths.init`.
   ///
   /// A no-op once the versioned file exists remotely, so it runs at most once
   /// per remote. An attempt is memoized for the same reason within a launch: a
@@ -224,7 +226,7 @@ final class BakSyncer extends SyncIface {
   /// next call may well have somewhere to look — and memoizing it would turn
   /// "not yet" into "never" for the rest of the launch.
   ///
-  /// TODO: remove with the rest of the v2 compatibility shims.
+  /// TODO: remove with the rest of the v2/v3 compatibility shims.
   Future<void> inheritLegacyRemote() {
     final rs = remoteStorage;
     if (rs == null) return Future.value();
@@ -234,18 +236,15 @@ final class BakSyncer extends SyncIface {
   Future<void> _inheritLegacyRemote(RemoteStorage rs) async {
     try {
       if (await rs.exists(Paths.bakName)) return;
-      if (!await rs.exists(Miscs.legacyBakFileName)) return;
-
-      final localPath = Paths.doc.joinPath(Miscs.legacyBakFileName);
-      await rs.download(
-        relativePath: Miscs.legacyBakFileName,
-        localPath: localPath,
-      );
-      final mergeable = await fromFile(localPath);
-      await mergeable.merge();
-      Loggers.app.info(
-        'Inherited sync history from ${Miscs.legacyBakFileName}',
-      );
+      for (final name in Miscs.legacyBakFileNames) {
+        if (!await rs.exists(name)) continue;
+        final localPath = Paths.doc.joinPath(name);
+        await rs.download(relativePath: name, localPath: localPath);
+        final mergeable = await fromFile(localPath);
+        await mergeable.merge();
+        Loggers.app.info('Inherited sync history from $name');
+        return;
+      }
     } catch (e, s) {
       // Best-effort: failing to inherit leaves the user with an empty remote
       // they can populate by syncing, which is recoverable. Failing loudly

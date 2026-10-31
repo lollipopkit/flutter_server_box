@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
@@ -50,12 +51,14 @@ void main() {
       SecureStoreProps.bakPwd.key: 'remote-password',
     });
 
-    final path = await bakSync.writeEncryptedBackup(name: 'encrypted.json');
+    final path = await bakSync.writeEncryptedBackup(name: 'encrypted.age');
     final content = await File(path).readAsString();
 
-    expect(Cryptor.isEncrypted(content), isTrue);
+    // Armored age, as `age -p -a` writes it.
+    expect(content, startsWith(AgeCryptor.armorHeader));
+    expect(AgeCryptor.isEncrypted(utf8.encode(content)), isTrue);
     expect(
-      BackupV2.fromJsonString(content, 'remote-password').version,
+      (await BackupV2.open(utf8.encode(content), 'remote-password')).version,
       BackupV2.formatVer,
     );
   });
@@ -88,15 +91,12 @@ void main() {
     await legacyBackup.merge(force: true);
 
     final replacementPath = await bakSync.writeEncryptedBackup(
-      name: 'replacement.json',
+      name: 'replacement.age',
     );
-    final replacement = await File(replacementPath).readAsString();
-    expect(Cryptor.isEncrypted(replacement), isTrue);
+    final replacement = await File(replacementPath).readAsBytes();
+    expect(AgeCryptor.isEncrypted(replacement), isTrue);
     expect(
-      BackupV2.fromJsonString(
-        replacement,
-        'remote-password',
-      ).settings['timeOut'],
+      (await BackupV2.open(replacement, 'remote-password')).settings['timeOut'],
       17,
       reason: 'the encrypted replacement must retain the restored data',
     );

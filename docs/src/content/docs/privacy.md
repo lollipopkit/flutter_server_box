@@ -40,7 +40,9 @@ settings. AI provider settings and API keys, Agent conversations and
 device-local state are not included.
 
 A local backup may be unencrypted when no backup password is set. When you set a
-backup password, the backup is encrypted before it is written or uploaded.
+backup password, the backup is encrypted before it is written or uploaded, as an
+[age](https://age-encryption.org) file in passphrase mode: `age -d` and the
+backup password open it without ServerBox.
 Automatic remote backup requires a non-empty backup password. After a backup is
 sent to iCloud, WebDAV, GitHub Gist or one of your monitor agents, that provider's storage, access and
 retention rules also apply.

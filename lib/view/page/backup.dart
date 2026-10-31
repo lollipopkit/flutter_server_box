@@ -797,7 +797,7 @@ extension on _BackupPageState {
   Future<bool> _routeImport(BuildContext context, String text) async {
     // An encrypted envelope is not JSON, so it is recognised before anything
     // tries to parse it.
-    if (Cryptor.isEncrypted(text)) {
+    if (AgeCryptor.isEncryptedText(text)) {
       await BackupService.restoreFromText(context, text);
       return false;
     }
@@ -853,8 +853,8 @@ extension on _BackupPageState {
       if (fileName == null) return;
 
       await Webdav.shared.download(relativePath: fileName);
-      final dlFile = await File('${Paths.doc}/$fileName').readAsString();
-      await BackupService.restoreFromText(context, dlFile);
+      final dlFile = await File('${Paths.doc}/$fileName').readAsBytes();
+      await BackupService.restoreData(context, dlFile);
     } catch (e, s) {
       context.showErrDialog(e, s, libL10n.restore);
       Loggers.app.warning('Download webdav backup failed', e, s);
@@ -894,8 +894,8 @@ extension on _BackupPageState {
       if (fileName == null) return;
 
       await GistRs.shared.download(relativePath: fileName);
-      final dlFile = await File('${Paths.doc}/$fileName').readAsString();
-      await BackupService.restoreFromText(context, dlFile);
+      final dlFile = await File('${Paths.doc}/$fileName').readAsBytes();
+      await BackupService.restoreData(context, dlFile);
     } catch (e, s) {
       context.showErrDialog(e, s, libL10n.restore);
       Loggers.app.warning('Download gist backup failed', e, s);
@@ -937,8 +937,8 @@ extension on _BackupPageState {
       if (fileName == null) return;
 
       await storage.download(relativePath: fileName);
-      final dlFile = await File('${Paths.doc}/$fileName').readAsString();
-      await BackupService.restoreFromText(context, dlFile);
+      final dlFile = await File('${Paths.doc}/$fileName').readAsBytes();
+      await BackupService.restoreData(context, dlFile);
     } catch (e, s) {
       context.showErrDialog(e, s, libL10n.restore);
       Loggers.app.warning('Download monitor backup failed', e, s);

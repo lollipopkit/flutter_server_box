@@ -24,6 +24,7 @@ crates/sbm_virt/tests/fixtures/**/*.iso -text
 test/fixtures/** text eol=lf
 test/fixtures/**/*.hive -text
 test/fixtures/**/*.bin -text
+test/fixtures/**/*.age -text
 
 # sqlx hashes each migration file's bytes and records the checksum in the
 # agent's `_sqlx_migrations` table. `migrate!` embeds those bytes at compile

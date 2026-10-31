@@ -349,14 +349,13 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     final bak = await BackupV2.loadFromStore(includeSettings: includeSettings);
     var result = bak.toJsonString();
 
-    if (password != null && password.isNotEmpty) {
+    final encrypted = password != null && password.isNotEmpty;
+    if (encrypted) {
       // Compressed *inside* the envelope, so what goes over the wire is
       // roughly an eighth of what it was: this JSON is one shape repeated a
       // few hundred times, and every key name is spelled out in every record.
-      // Base64 then expands it once, rather than once per layer — which is
-      // why this goes through `encryptBytes` instead of encoding to text
-      // first.
-      result = Cryptor.encryptBytes(
+      // The armor then expands it once, rather than once per layer.
+      result = await AgeCryptor.encrypt(
         compressBackups
             ? gzip.encode(utf8.encode(result))
             : utf8.encode(result),
@@ -364,7 +363,9 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       );
     }
 
-    final path = Paths.doc.joinPath(name ?? Miscs.bakFileName);
+    final path = Paths.doc.joinPath(
+      name ?? (encrypted ? Miscs.bakFileName : Miscs.plainBakFileName),
+    );
     final bytes = utf8.encode(result);
     await const LocalFileBackend().write(
       path,
@@ -376,20 +377,10 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
 
   /// Whether a new backup is compressed before it is encrypted.
   ///
-  /// **Turning this on is a one-way format change for the sync file.** The
-  /// envelope is unchanged — the default cost still writes V01, so an older
-  /// build recognises the file and decrypts it correctly. What it then has is
-  /// gzip, and its `Cryptor.decrypt` ends in `utf8.decode`, so it throws (as
-  /// "invalid Base64 format", which is the wrong message and the reason to
-  /// expect this in a bug report). `SyncIface._sync` catches that and returns
-  /// **before** it uploads. So such a device stops syncing until it is
-  /// updated; it does not overwrite anything, which is why this is a release
-  /// note rather than a migration.
-  ///
-  /// Deliberately not a filename bump, which is how v2 -> v3 was handled. A
-  /// second name would let an old build keep writing the old one, and the two
-  /// histories would diverge silently in both directions. Stopping is the
-  /// recoverable failure; diverging is not.
+  /// It was a one-way format change for the v3 sync file: an older build
+  /// decrypted the envelope, found gzip where it expected text, and stopped
+  /// syncing before it uploaded. The age envelope goes further, under the v4
+  /// name (`Miscs.bakFileName`): a build before it never sees the file.
   ///
   /// TODO: remove this constant once no supported build predates it, and
   /// compress unconditionally.
@@ -409,17 +400,32 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
   /// unbounded allocation, and refusing is cheaper than finding out.
   static const _maxPlainBytes = 256 * 1024 * 1024;
 
-  factory BackupV2.fromJsonString(String jsonString, [String? password]) {
-    if (Cryptor.isEncrypted(jsonString)) {
-      if (password == null || password.isEmpty) {
-        throw Exception('Backup is encrypted but no password provided');
-      }
-      final bytes = Cryptor.decryptBytes(jsonString, password);
-      jsonString = _looksGzipped(bytes)
-          ? utf8.decode(gunzipCapped(bytes))
-          : utf8.decode(bytes);
-    }
+  /// [data] as [backup] wrote it: an encrypted backup opened with [password]
+  /// (`AgeCryptor`: age, or the `LKFL_ENC` envelope of every build before),
+  /// or a plain export. Decrypts in rage's isolate and parses in the
+  /// caller's; the app's readers split the two ([unlock], then
+  /// [BackupV2.fromPlainBytes] in a worker).
+  static Future<BackupV2> open(List<int> data, [String? password]) async =>
+      BackupV2.fromPlainBytes(await unlock(data, password));
 
+  /// [data] decrypted when it is encrypted ([password] required then), and
+  /// as it is otherwise: gzip or JSON, what [BackupV2.fromPlainBytes] reads.
+  static Future<Uint8List> unlock(List<int> data, String? password) async {
+    if (!AgeCryptor.isEncrypted(data)) {
+      return data is Uint8List ? data : Uint8List.fromList(data);
+    }
+    if (password == null || password.isEmpty) {
+      throw Exception('Backup is encrypted but no password provided');
+    }
+    return AgeCryptor.decrypt(data, password);
+  }
+
+  /// What the envelope holds, or a plain export: gzip, or the JSON itself.
+  factory BackupV2.fromPlainBytes(List<int> bytes) => BackupV2.fromJsonString(
+    utf8.decode(_looksGzipped(bytes) ? gunzipCapped(bytes) : bytes),
+  );
+
+  factory BackupV2.fromJsonString(String jsonString) {
     final map = json.decode(jsonString) as Map<String, dynamic>;
 
     // Checked before decoding. `version` was written from the beginning but

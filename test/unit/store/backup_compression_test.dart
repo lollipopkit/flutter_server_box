@@ -72,22 +72,23 @@ void main() {
         );
       }
 
-      final path = await bakSync.writeEncryptedBackup(name: 'gz.json');
-      final content = await File(path).readAsString();
+      final path = await bakSync.writeEncryptedBackup(name: 'gz.age');
+      final content = await File(path).readAsBytes();
 
-      expect(Cryptor.isEncrypted(content), isTrue);
-      final back = BackupV2.fromJsonString(content, 'remote-password');
+      expect(AgeCryptor.isEncrypted(content), isTrue);
+      final back = await BackupV2.open(content, 'remote-password');
       expect(back.spis.keys, contains('srv7'));
     });
 
-    /// Every release before this one wrote the plaintext JSON straight into
-    /// the envelope. Those files are what a user upgrading already has on
-    /// their remote, and the first thing this build does is read one.
-    test('an uncompressed encrypted backup still reads', () {
+    /// Every release before compression wrote the plaintext JSON straight
+    /// into the `LKFL_ENC` envelope. Those files are what a user upgrading
+    /// already has on their remote, and the first thing this build does is
+    /// read one.
+    test('an uncompressed encrypted backup still reads', () async {
       final plain = _emptyBackup().toJsonString();
       final legacy = Cryptor.encrypt(plain, 'remote-password');
 
-      final back = BackupV2.fromJsonString(legacy, 'remote-password');
+      final back = await BackupV2.open(utf8.encode(legacy), 'remote-password');
       expect(back.version, BackupV2.formatVer);
       expect(back.date, 123);
     });
@@ -119,13 +120,14 @@ void main() {
       }
 
       final plainLen = (await BackupV2.loadFromStore()).toJsonString().length;
-      final path = await bakSync.writeEncryptedBackup(name: 'size.json');
+      final path = await bakSync.writeEncryptedBackup(name: 'size.age');
       final wireLen = (await File(path).readAsString()).length;
 
-      // Before this change the wire form was base64 of the raw JSON, which is
-      // 4/3 of it and always larger. Asserting against that number rather than
-      // a fixed ratio is what makes this a regression test: if compression
-      // stops happening, the payload goes back above the plaintext length.
+      // Before compression the wire form was base64 of the raw JSON, which is
+      // 4/3 of it and always larger; the armor is base64 too. Asserting
+      // against that number rather than a fixed ratio is what makes this a
+      // regression test: if compression stops happening, the payload goes
+      // back above the plaintext length.
       expect(
         wireLen,
         lessThan(plainLen),

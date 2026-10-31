@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:computer/computer.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
@@ -51,8 +53,8 @@ class BackupService {
 
   /// Reads and restores a backup from [source].
   static Future<void> restore(BuildContext context, BackupSource source) async {
-    final text = await source.getContent();
-    if (text == null) {
+    final data = await source.getContent();
+    if (data == null) {
       if (source is ClipboardBackupSource) {
         Toast.show(libL10n.empty);
       }
@@ -60,19 +62,23 @@ class BackupService {
     }
 
     if (context.mounted) {
-      await restoreFromText(context, text);
+      await restoreData(context, data);
     }
   }
 
-  /// Decodes [text], prompting for a password when it is encrypted.
-  static Future<void> restoreFromText(BuildContext context, String text) async {
-    final isEncrypted = Cryptor.isEncrypted(text);
+  /// [restoreData] for text: a paste, or the import dialog.
+  static Future<void> restoreFromText(BuildContext context, String text) =>
+      restoreData(context, utf8.encode(text));
+
+  /// Decodes [data], prompting for a password when it is encrypted.
+  static Future<void> restoreData(BuildContext context, List<int> data) async {
+    final isEncrypted = AgeCryptor.isEncrypted(data);
     String? password;
 
     if (!isEncrypted) {
       try {
         final (backup, err) = await context.showLoadingDialog(
-          fn: () => _decodeOnIsolate(text, null),
+          fn: () => _decode(data, null),
         );
         // [err] has been reported by `showLoadingDialog` already; a dialog
         // here was a second one for the same failure.
@@ -103,7 +109,7 @@ class BackupService {
     if (savedPassword != null && savedPassword.isNotEmpty) {
       try {
         final (backup, err) = await context.showLoadingDialog(
-          fn: () => _decodeOnIsolate(text, savedPassword),
+          fn: () => _decode(data, savedPassword),
         );
         if (err == null && backup != null) {
           if (!context.mounted) return;
@@ -132,13 +138,11 @@ class BackupService {
 
       try {
         final (backup, err) = await context.showLoadingDialog(
-          fn: () => _decodeOnIsolate(text, password),
+          fn: () => _decode(data, password),
         );
         if (!context.mounted) return;
         if (err != null) {
-          final msg = err.toString().toLowerCase();
-          if (msg.contains('incorrect password') ||
-              msg.contains('failed to decrypt')) {
+          if (err is WrongPasswordException) {
             final retry = await context.showRoundDialog<bool>(
               title: l10n.backupPasswordWrong,
               child: Text(l10n.backupPasswordWrong),
@@ -174,8 +178,7 @@ class BackupService {
         return;
       } catch (e) {
         if (!context.mounted) return;
-        if (e.toString().contains('incorrect password') ||
-            e.toString().contains('Failed to decrypt')) {
+        if (e is WrongPasswordException) {
           final retry = await context.showRoundDialog<bool>(
             title: l10n.backupPasswordWrong,
             child: Text(l10n.backupPasswordWrong),
@@ -250,17 +253,13 @@ class BackupService {
     );
   }
 
-  static Future<(dynamic, String)?> _decodeOnIsolate(
-    String text,
+  /// Decrypted in rage's isolate, decoded in a worker: neither on this one.
+  static Future<(dynamic, String)?> _decode(
+    List<int> data,
     String? password,
-  ) {
-    if (password == null) {
-      return Computer.shared.start(MergeableUtils.fromJsonString, text);
-    }
-    return Computer.shared.start(
-      (args) => MergeableUtils.fromJsonString(args.$1, args.$2),
-      (text, password),
-    );
+  ) async {
+    final plain = await BackupV2.unlock(data, password);
+    return Computer.shared.start(MergeableUtils.fromBytes, plain);
   }
 
   /// Prompts for the backup password.

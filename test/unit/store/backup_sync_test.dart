@@ -68,8 +68,8 @@ void main() {
 
     expect(Stores.setting.timeout.fetch(), 17);
     expect(rs.uploads, 1);
-    final uploaded = BackupV2.fromJsonString(
-      await remote.readAsString(),
+    final uploaded = await BackupV2.open(
+      await remote.readAsBytes(),
       'remote-password',
     );
     expect(

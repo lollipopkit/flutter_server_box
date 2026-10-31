@@ -1,3 +1,19 @@
+# Backups as the builds that wrote them wrote them (`backup/`)
+
+Input for `test/unit/store/backup_age_test.dart`: one backup (`backup_v4.json`,
+a server, a snippet and a setting) in every envelope a user may hold, all with
+the password `fixture-password`, each of which must restore to it.
+
+| File | Written by |
+| --- | --- |
+| `lkfl_enc_v01.txt` | fl_lib `Cryptor` at its default cost, gzip inside: what every release before age synced and exported |
+| `lkfl_enc_v02.txt` | `Cryptor` with a cost written into the envelope (150000 rounds) |
+| `age_armored.txt` | `age -p -a` (age 1.3.2) over `backup_v4.json` |
+| `age_binary.age` | `age -p` over the gzip of `backup_v4.json`, as the app writes inside its envelope |
+
+Never regenerated: a fixture made by today's code only proves today's code
+is self-consistent.
+
 # Hive boxes as the released builds wrote them
 
 Input for `test/migration/hive_release_migration_test.dart`, which runs the whole upgrade

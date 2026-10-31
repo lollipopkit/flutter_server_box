@@ -194,13 +194,15 @@ Future<void> _initApp(ProviderContainer container) async {
   // only leave empty directories beside the boxes.
   //
   // `bakName` is versioned on purpose. Sync is a single shared file on
-  // iCloud/WebDAV/Gist, and `SyncIface._sync` uploads unconditionally after a
-  // failed merge — so a build that cannot read the remote copy overwrites it.
-  // Builds already released have no version check and cannot be given one, and
-  // the only thing that stops them is not seeing the file at all.
+  // iCloud/WebDAV/Gist/a monitor agent, and a build that cannot read the
+  // remote copy must never overwrite it. `SyncIface._sync` returns before
+  // uploading when the merge fails, but a release that predates a format has
+  // no version check and cannot be given one: the only thing certain to stop
+  // it is not seeing the file at all. Each format is a name: v3 the nested
+  // `Spi`, v4 the age envelope.
   //
-  // TODO: drop the legacy name (and `BakSyncer.inheritLegacyRemote`) once no
-  // install can still be writing `srvbox_bak.json`.
+  // TODO: drop the legacy names (and `BakSyncer.inheritLegacyRemote`) once no
+  // install can still be writing them.
   await Paths.init(
     BuildData.name,
     bakName: Miscs.bakFileName,
