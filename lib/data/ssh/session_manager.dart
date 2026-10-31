@@ -92,6 +92,7 @@ abstract final class TermSessionManager {
         // and was refused by the same call, because asking is asynchronous.
         // This is the answer arriving, and syncing is what asks again.
         _sync,
+        () => setBackgrounded(true),
       );
     }
     if (isIOS) {
@@ -127,7 +128,11 @@ abstract final class TermSessionManager {
     // straight back: pressing Stop All in the background would otherwise clear
     // every session and then start the service again for [_backgrounded], so
     // the one control the notification offers would appear not to work.
-    _stoodDown = true;
+    //
+    // Only from the background: pressed in the foreground (the Quick Settings
+    // tile over the app) there is no keep-alive to give up, and nothing would
+    // clear the flag before the next trip out, which would then go unguarded.
+    _stoodDown = _backgrounded;
     _sync();
   }
 
@@ -241,12 +246,18 @@ abstract final class TermSessionManager {
     }
   }
 
-  /// Whether the app is out of the foreground, as `home.dart` reports it.
+  /// Whether the app is out of the foreground: set by the activity's
+  /// `onPause` (`activityPaused`), cleared on `resumed` by `home.dart`.
   ///
-  /// Set on `inactive` rather than on `paused`, which is the whole reason this
-  /// exists: `inactive` is delivered while the activity is still visible, and
-  /// that is the last moment Android 12+ allows an app to *start* a foreground
+  /// Not on Flutter's `paused`, which is the whole reason this exists:
+  /// `onPause` is delivered while the activity is still visible, and that is
+  /// the last moment Android 12+ allows an app to *start* a foreground
   /// service. By `paused` the app is background and the call is refused.
+  ///
+  /// Not on Flutter's `inactive` either, though it comes from `onPause` too:
+  /// it is also sent when the window only loses focus, so pulling down the
+  /// notification shade used to start the service and post the keep-alive
+  /// notification, and closing it took them down again.
   static var _backgrounded = false;
 
   static void setBackgrounded(bool value) {

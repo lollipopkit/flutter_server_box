@@ -49,20 +49,9 @@ extension _HomePageLifecycle on _HomePageState {
           _stopServerRefreshCycle();
         }
         break;
-      case AppLifecycleState.inactive:
-        // Not in `paused`, which is too late. Android refuses to *start* a
-        // foreground service for an app that is already in the background, and
-        // `paused` is delivered from `onStop` — by then the activity is gone.
-        // `inactive` comes from `onPause`, while it is still visible, which is
-        // the last moment the request is allowed.
-        //
-        // The cost is that pulling down the notification shade also reads as
-        // leaving, so a device with nothing connected can show the keep-alive
-        // notification for as long as the shade is open. That is the same
-        // notification `bgRun` asks for anyway, and the alternative is a
-        // request the system turns down.
-        TermSessionManager.setBackgrounded(true);
-        break;
+      // Leaving is not reported from here: Android's native `onPause` does
+      // it, since `inactive` also arrives when the notification shade is
+      // pulled down — see [TermSessionManager.setBackgrounded].
       default:
         break;
     }

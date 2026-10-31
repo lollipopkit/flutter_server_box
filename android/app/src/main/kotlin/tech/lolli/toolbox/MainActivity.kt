@@ -159,6 +159,10 @@ class MainActivity: FlutterFragmentActivity() {
         super.onPause()
         isForeground = false
         if (privacyCoverEnabled) applyPrivacyCover(true)
+        // The last moment the app may start a foreground service, and unlike
+        // Flutter's `inactive` not also sent when the window only loses focus
+        // to the notification shade — see `TermSessionManager.setBackgrounded`.
+        if (::channel.isInitialized) channel.invokeMethod("activityPaused", null)
     }
 
     override fun onResume() {

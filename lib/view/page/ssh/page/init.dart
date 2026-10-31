@@ -59,8 +59,11 @@ extension _Init on SSHPageState {
     // how to re-attach one. It no longer does: a raw shell reconnects to a
     // fresh shell, which is the ordinary case for a link that dropped while
     // the app was in someone's pocket.
+    //
+    // Not when the user ended it: Stop All also closes the status poller's
+    // client, which this tab may share, so the transport is closed then too.
     final transportClosed = _backend != null && _backend!.isClosed;
-    if (mounted && transportClosed) {
+    if (mounted && transportClosed && !identical(session, _endRequested)) {
       unawaited(_onConnectionLossSuspected());
       return;
     }
@@ -618,6 +621,7 @@ extension _Init on SSHPageState {
 
   Future<void> _onConnectionLossSuspected() async {
     if (!mounted || _disconnectDialogOpen) return;
+    if (_session != null && identical(_session, _endRequested)) return;
 
     _disconnectDialogOpen = true;
     _reportedDisconnected = true;
@@ -1352,6 +1356,11 @@ extension _Init on SSHPageState {
 
 extension on SSHPageState {
   void _disconnectFromNotification() {
+    // Before anything closes: Stop All runs every session's disconnect in one
+    // synchronous pass, and the status poller's may close a client this shell
+    // shares before this one runs. The shell's `done` arrives after the pass,
+    // and must find it ended on purpose rather than lost.
+    _endRequested = _session;
     // Update observers before closing the channel so the UI and notification
     // respond immediately.
     TermSessionManager.updateStatus(_sessionId, TermSessionStatus.disconnected);

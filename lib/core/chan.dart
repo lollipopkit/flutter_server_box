@@ -544,10 +544,12 @@ abstract final class MethodChans {
   /// - `disconnectSession` with argument map {id: string}
   /// - `stopAllConnections` with no arguments
   /// - `notificationPermissionGranted` with no arguments
+  /// - `activityPaused` with no arguments
   static void registerHandler(
     Future<void> Function(String id) onDisconnect, [
     VoidCallback? onStopAll,
     VoidCallback? onNotificationPermissionGranted,
+    VoidCallback? onActivityPaused,
   ]) {
     _channel.setMethodCallHandler((call) async {
       switch (call.method) {
@@ -571,6 +573,9 @@ abstract final class MethodChans {
         // something else happens to sync — see [updateSessions].
         case 'notificationPermissionGranted':
           onNotificationPermissionGranted?.call();
+          return null;
+        case 'activityPaused':
+          onActivityPaused?.call();
           return null;
         default:
           return null;
