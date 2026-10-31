@@ -1511,11 +1511,16 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   ///
   /// Only where the browser can say what a path here is called: without
   /// [FileBrowserArgs.refOf] there is no destination to name.
+  ///
+  /// The target stays in the tree even while nothing can be dropped (the
+  /// backend may turn read-only mid-drag): taken out, it would never hear the
+  /// drag leave, and [DropZones] would go on accepting for it.
   Widget _wrapDropTarget(Widget child) {
-    if (widget.args.refOf == null || _isPicking || _readOnly) return child;
+    if (widget.args.refOf == null || _isPicking) return child;
     return DropTarget(
       onDragDone: (details) => _onDropped(details.files),
       onDragEntered: (_) {
+        if (_readOnly) return;
         _dropping.value = true;
         DropZones.enter(this);
       },
@@ -1540,8 +1545,15 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
 
   Future<void> _onDropped(List<XFile> files) async {
     _dropping.value = false;
+    DropZones.leave(this);
     final refOf = widget.args.refOf;
     if (refOf == null || files.isEmpty) return;
+    // On Android a drop arrives as copies the app made (`DropListener`),
+    // which are its to remove — at once when refused.
+    if (_readOnly) {
+      if (isAndroid) unawaited(discardIncomingAfter([for (final f in files) f.path], null));
+      return;
+    }
 
     final queue = ref.read(fileTransferProvider.notifier);
     final queued = <int>[];
@@ -1563,8 +1575,6 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
         ),
       );
     }
-    // On Android a drop arrives as copies the app made (`DropListener`),
-    // which are its to remove.
     if (isAndroid) {
       unawaited(discardIncomingAfter([for (final f in files) f.path], ends));
     }

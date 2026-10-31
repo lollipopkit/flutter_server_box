@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:ui' show Locale;
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/widgets.dart' show WidgetsBinding;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/locale.dart';
@@ -34,6 +35,12 @@ final class AndroidSystemSync {
   /// previous process left up.
   String? _lastTransfers = '';
   Timer? _transferTimer;
+
+  /// Reposts the transfer notification, which times out natively
+  /// (`TransferNotification.TIMEOUT_MS`) so that a dead process cannot leave it
+  /// up. A stalled transfer has no progress to repost on its own.
+  static const transferHeartbeat = Duration(seconds: 10);
+  Timer? _transferHeartbeat;
 
   /// Launcher shortcuts: the first servers in the user's order. The launcher
   /// shows four or five; more would only be cut.
@@ -74,6 +81,7 @@ final class AndroidSystemSync {
     }
     _subs.clear();
     _transferTimer?.cancel();
+    _transferHeartbeat?.cancel();
     if (isAndroid) {
       Stores.setting.locale.listenable().removeListener(_pushAppLocale);
       TermSessionManager.setTransferring(false);
@@ -123,6 +131,15 @@ final class AndroidSystemSync {
     ];
     TermSessionManager.setTransferring(active.isNotEmpty);
     final payload = active.isEmpty ? null : jsonEncode(transferPayload(active));
+    if (payload == null) {
+      _transferHeartbeat?.cancel();
+      _transferHeartbeat = null;
+    } else {
+      _transferHeartbeat ??= Timer.periodic(transferHeartbeat, (_) {
+        _lastTransfers = '';
+        _publishTransfers();
+      });
+    }
     if (payload == _lastTransfers) return;
     _lastTransfers = payload;
     unawaited(MethodChans.updateTransfers(payload));
@@ -212,6 +229,11 @@ final class AndroidSystemSync {
   void _pushAppLocale() {
     unawaited(
       MethodChans.setAppLocale(localeCodeToTag(Stores.setting.locale.fetch())),
+    );
+    // The shortcut list is labelled in the app's language, which the rebuild
+    // this change starts has switched by the end of the frame.
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => publishKeyboardShortcuts(),
     );
   }
 }

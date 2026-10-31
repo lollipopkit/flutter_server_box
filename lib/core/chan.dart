@@ -409,6 +409,17 @@ abstract final class MethodChans {
     }
   }
 
+  /// Deletes the batches holding [paths], which `IncomingFiles` copied in.
+  /// The native side decides what is a batch; anything else is left alone.
+  static Future<void> discardIncoming(List<String> paths) async {
+    if (!isAndroid || paths.isEmpty) return;
+    try {
+      await _channel.invokeMethod('discardIncoming', paths);
+    } catch (e, s) {
+      Loggers.app.warning('Failed to discard incoming files', e, s);
+    }
+  }
+
   /// The launcher's long-press list: `[{"id","label","uri"}]`, in order.
   static Future<void> setShortcuts(String payload) async {
     if (!isAndroid) return;

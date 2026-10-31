@@ -61,12 +61,14 @@ class IncomingActivity : Activity() {
 
     private fun deliver(payload: JSONObject) {
         IncomingInbox.offer(this, payload.toString())
+        // Reordered rather than cleared to: what is above `MainActivity` in
+        // its task (a sign-in in progress, a picker awaiting its result) stays.
         startActivity(
             Intent(this, MainActivity::class.java)
                 .setAction(ACTION_DELIVER)
                 .addFlags(
                     Intent.FLAG_ACTIVITY_NEW_TASK or
-                        Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                        Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or
                         Intent.FLAG_ACTIVITY_SINGLE_TOP,
                 ),
         )

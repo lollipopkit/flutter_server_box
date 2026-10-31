@@ -64,11 +64,15 @@ List<ContextMenuAction> serverActions(
       ContextMenuAction(
         icon: Icons.add_to_home_screen,
         text: l10n.addToHomeScreen,
-        onTap: () => MethodChans.pinShortcut(
-          id: spi.id,
-          label: spi.name,
-          uri: ServerLink(spi.id).toString(),
-        ),
+        onTap: () async {
+          final ok = await MethodChans.pinShortcut(
+            id: spi.id,
+            label: spi.name,
+            uri: ServerLink(spi.id).toString(),
+          );
+          // False is a launcher that cannot pin, or refused: say so.
+          if (!ok) Toast.error('${l10n.addToHomeScreen}: ${libL10n.fail}');
+        },
       ),
     ContextMenuAction(
       icon: Icons.ios_share,

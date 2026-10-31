@@ -114,10 +114,13 @@ extension _HomePageLifecycle on _HomePageState {
     // have made that call a no-op instead.
     if (_authed == null) return;
     _consumingPending = true;
+    // Taken from the native inbox, so lost unless opened: its copies are
+    // discarded on any way out that did not get that far.
+    Map<String, Object?>? incoming;
     try {
       final text = await MethodChans.takeOpenedShare();
       final link = await MethodChans.takeOpenedLink();
-      final incoming = await MethodChans.takeIncoming();
+      incoming = await MethodChans.takeIncoming();
       final hasText = text != null && text.isNotEmpty;
       if ((!hasText && link == null && incoming == null) || !mounted) return;
       // Behind the lock screen for the same reason the launch notices are: it
@@ -135,11 +138,14 @@ extension _HomePageLifecycle on _HomePageState {
       }
       if (link != null && mounted) await AppLinkUi.open(context, ref, link);
       if (incoming != null && mounted) {
-        await IncomingUi.open(context, ref, incoming);
+        final taken = incoming;
+        incoming = null;
+        await IncomingUi.open(context, ref, taken);
       }
     } catch (e, s) {
       Loggers.app.warning('Consume what was opened', e, s);
     } finally {
+      if (incoming != null) IncomingUi.discard(incoming);
       _consumingPending = false;
       if (_consumeAgain && mounted) {
         _consumeAgain = false;

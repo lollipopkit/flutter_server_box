@@ -24,6 +24,9 @@ object TransferNotification {
     private const val CHANNEL = "transfers"
     private const val ID = 1100
 
+    /** See `AndroidSystemSync.transferHeartbeat`, which must stay well below this. */
+    private const val TIMEOUT_MS = 30_000L
+
     /**
      * `Notification.EXTRA_REQUEST_PROMOTED_ONGOING`, which compileSdk 36 does
      * not declare yet; the key is the platform's own.
@@ -69,6 +72,9 @@ object TransferNotification {
             .setShowWhen(false)
             .setCategory(Notification.CATEGORY_PROGRESS)
             .setContentIntent(open)
+        // Ongoing and owned by no service: if the process dies, nothing else
+        // takes it down. Dart reposts well inside this while a transfer runs.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) b.setTimeoutAfter(TIMEOUT_MS)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
             b.setStyle(
                 Notification.ProgressStyle()

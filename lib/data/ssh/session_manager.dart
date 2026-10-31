@@ -283,11 +283,13 @@ abstract final class TermSessionManager {
   /// to come back.
   ///
   /// A file transfer in progress is a third: it runs on this process, and a
-  /// frozen one leaves it, and its notification, standing still.
+  /// frozen one leaves it, and its notification, standing still. Stop All
+  /// stands it down too: the service has just been stopped from the
+  /// background, where restarting it would be refused.
   static bool get _serviceWanted =>
       _entries.isNotEmpty ||
-      _transferring ||
-      (_backgrounded && !_stoodDown && Stores.setting.bgRun.fetch());
+      (!_stoodDown &&
+          (_transferring || (_backgrounded && Stores.setting.bgRun.fetch())));
 
   static var _transferring = false;
 

@@ -31,48 +31,54 @@ Future<void> sendTo(
   required bool isDir,
   bool reuseDestination = false,
 }) async {
-  final _Destination? chosen;
-  if (reuseDestination && _last != null) {
-    chosen = _last;
-  } else {
-    final place = await _pickPlace(context, ref);
-    if (place == null || !context.mounted) return;
-
-    final dir = await _pickDir(context, place);
-    if (dir == null || !context.mounted) return;
-    chosen = _Destination(place, dir);
-    _last = chosen;
-  }
-  final place = chosen!.place;
-  final dir = chosen.dir;
-
-  final destination = switch (place) {
-    _Device() => LocalFileRef(dir).child(source.name),
-    // The same order `ServerFilePage` browses in, so what a file is sent over
-    // is what the browser showed it over.
-    _Server(:final spi) => serverFileRef(ref, spi, dir).child(source.name),
-  };
-
-  // Copying a file onto itself truncates it to nothing: the write opens the
-  // destination before the read has finished with it.
-  if (destination == source) {
-    Toast.error(libL10n.fail);
-    return;
-  }
-
-  // And a directory into its own descendant copies the tree inside itself.
-  // `planCopy` walks before it copies, so this does not run away — it just
-  // leaves a nested duplicate of everything under a folder the user was
-  // putting something *into*, which nobody means to ask for.
-  if (isDir && _isInside(destination, source)) {
-    Toast.error(libL10n.fail);
-    return;
-  }
+  final chosen = await _askDestination(context, ref, reuse: reuseDestination);
+  if (chosen == null || !context.mounted) return;
+  final destination = _destinationOf(ref, chosen, source);
+  if (!_canSend(source, destination, isDir: isDir)) return;
 
   final id = ref
       .read(fileTransferProvider.notifier)
       .add(FileTransfer(from: source, to: destination, isDir: isDir));
   await announceQueued(context, ref, [id]);
+}
+
+/// [_last] when [reuse] and there is one; otherwise asked, and remembered.
+Future<_Destination?> _askDestination(
+  BuildContext context,
+  WidgetRef ref, {
+  bool reuse = false,
+}) async {
+  if (reuse && _last != null) return _last;
+  final place = await _pickPlace(context, ref);
+  if (place == null || !context.mounted) return null;
+  final dir = await _pickDir(context, place);
+  if (dir == null || !context.mounted) return null;
+  return _last = _Destination(place, dir);
+}
+
+FileRef _destinationOf(WidgetRef ref, _Destination chosen, FileRef source) =>
+    switch (chosen.place) {
+      _Device() => LocalFileRef(chosen.dir).child(source.name),
+      // The same order `ServerFilePage` browses in, so what a file is sent over
+      // is what the browser showed it over.
+      _Server(:final spi) =>
+        serverFileRef(ref, spi, chosen.dir).child(source.name),
+    };
+
+/// Refuses, with a toast, what would destroy or nest [source].
+bool _canSend(FileRef source, FileRef destination, {required bool isDir}) {
+  // Copying a file onto itself truncates it to nothing: the write opens the
+  // destination before the read has finished with it.
+  //
+  // And a directory into its own descendant copies the tree inside itself.
+  // `planCopy` walks before it copies, so this does not run away — it just
+  // leaves a nested duplicate of everything under a folder the user was
+  // putting something *into*, which nobody means to ask for.
+  if (destination == source || (isDir && _isInside(destination, source))) {
+    Toast.error(libL10n.fail);
+    return false;
+  }
+  return true;
 }
 
 /// Whether [inner] names somewhere at or under [outer], on the same filesystem.
@@ -114,20 +120,15 @@ Future<List<Future<bool>>?> sendFilesTo(
   required List<FileRef> sources,
 }) async {
   if (sources.isEmpty) return const [];
-  final place = await _pickPlace(context, ref);
-  if (place == null || !context.mounted) return null;
-  final dir = await _pickDir(context, place);
-  if (dir == null || !context.mounted) return null;
+  final chosen = await _askDestination(context, ref);
+  if (chosen == null || !context.mounted) return null;
 
   final queue = ref.read(fileTransferProvider.notifier);
   final ids = <int>[];
   final ends = <Future<bool>>[];
   for (final source in sources) {
-    final destination = switch (place) {
-      _Device() => LocalFileRef(dir).child(source.name),
-      _Server(:final spi) => serverFileRef(ref, spi, dir).child(source.name),
-    };
-    if (destination == source) continue;
+    final destination = _destinationOf(ref, chosen, source);
+    if (!_canSend(source, destination, isDir: false)) continue;
     final end = Completer<bool>();
     ids.add(queue.add(FileTransfer(from: source, to: destination), completer: end));
     ends.add(end.future);

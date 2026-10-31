@@ -21,6 +21,7 @@ import android.view.KeyboardShortcutGroup
 import android.view.Menu
 import android.view.View
 import android.widget.Toast
+import java.io.File
 import tech.lolli.toolbox.incoming.DropListener
 import tech.lolli.toolbox.incoming.IncomingActivity
 import tech.lolli.toolbox.incoming.IncomingFiles
@@ -216,6 +217,14 @@ class MainActivity: FlutterFragmentActivity() {
                     }
                     // What `IncomingActivity` took in from another app.
                     "takeIncoming" -> result.success(IncomingInbox.take())
+                    "discardIncoming" -> {
+                        val dirs = (method.arguments as? List<*>).orEmpty()
+                            .filterIsInstance<String>()
+                            .mapNotNull { File(it).parentFile }
+                            .toSet()
+                        Thread { dirs.forEach { IncomingFiles.discardBatch(applicationContext, it) } }.start()
+                        result.success(null)
+                    }
                     "setShortcuts" -> {
                         try {
                             AppShortcuts.publish(applicationContext, method.arguments as String)
@@ -230,7 +239,13 @@ class MainActivity: FlutterFragmentActivity() {
                             method.argument<String>("label"),
                             method.argument<String>("uri"),
                         )
-                        result.success(entry != null && AppShortcuts.requestPin(this, entry))
+                        val pinned = entry != null && try {
+                            AppShortcuts.requestPin(this, entry)
+                        } catch (e: IllegalArgumentException) {
+                            // A disabled shortcut of the same id, say.
+                            false
+                        }
+                        result.success(pinned)
                     }
                     // The per-app language of Android 13+, which the app's
                     // own language setting is kept in step with.
