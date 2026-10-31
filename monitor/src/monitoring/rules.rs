@@ -2,17 +2,38 @@ use crate::{core::config::{Config, MonitoringRule}, monitoring::SystemMetrics, u
 use crate::monitoring::threshold::{Threshold, ThresholdType};
 use tracing::{info, warn};
 
+/// A rule over its threshold at a check: the rule as configured and the
+/// reading that crossed it. `/alerts` answers these (`api::desk::DeskHub`);
+/// `message` is the line every push channel got.
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+pub struct Firing {
+    pub rule: String,
+    /// The rule's `monitor_type` as configured (`cpu`, `mem`, …).
+    pub monitor_type: String,
+    pub matcher: String,
+    pub threshold: String,
+    /// The reading, formatted as the rule compares it (`93.20%`).
+    pub value: String,
+    #[serde(skip)]
+    pub message: String,
+}
+
+/// Checks every rule, pushes what fires, and answers the rules firing now —
+/// for the desk's notifications and `/alerts` (`api::desk`).
 pub async fn check_rules_with_velocity(
-    metrics: &SystemMetrics, 
-    config: &Config, 
+    metrics: &SystemMetrics,
+    config: &Config,
     velocity_manager: &VelocityManager
-) -> Result<()> {
+) -> Result<Vec<Firing>> {
+    let mut firing = Vec::new();
     for rule in &config.get_monitoring().rules {
-        if let Err(e) = check_enhanced_rule(rule, metrics, config, velocity_manager).await {
-            warn!("Failed to check enhanced rule '{}': {}", rule.name, e);
+        match check_enhanced_rule(rule, metrics, config, velocity_manager).await {
+            Ok(Some(fired)) => firing.push(fired),
+            Ok(None) => {}
+            Err(e) => warn!("Failed to check enhanced rule '{}': {}", rule.name, e),
         }
     }
-    Ok(())
+    Ok(firing)
 }
 
 /// What a rule's `monitor_type` names.
@@ -60,10 +81,10 @@ async fn check_enhanced_rule(
     metrics: &SystemMetrics, 
     config: &Config, 
     velocity_manager: &VelocityManager
-) -> Result<()> {
+) -> Result<Option<Firing>> {
     let Some(kind) = RuleKind::parse(&rule.monitor_type) else {
         warn!("Unknown monitor type: {}", rule.monitor_type);
-        return Ok(());
+        return Ok(None);
     };
 
     let (should_alert, _current_value, formatted_value) = match kind {
@@ -86,21 +107,18 @@ async fn check_enhanced_rule(
         
         info!("Triggering enhanced alert: {}", message);
         
-        let (rate_times, rate_window) = config.get_push_rate();
-        let limiter = crate::monitoring::push::PushRateLimiter::global();
-        for push_config in &config.get_push() {
-            if !limiter.check(&push_config.name, rate_times, rate_window) {
-                warn!("Push '{}' rate limit reached, skipping", push_config.name);
-                continue;
-            }
-            match crate::monitoring::push::send_notification(config, push_config, &message).await {
-                Ok(()) => limiter.acquire(&push_config.name),
-                Err(e) => warn!("Failed to send push notification via '{}': {}", push_config.name, e),
-            }
-        }
+        crate::monitoring::push::push_all(config, &message).await;
+        return Ok(Some(Firing {
+            rule: rule.name.clone(),
+            monitor_type: rule.monitor_type.clone(),
+            matcher: rule.matcher.clone(),
+            threshold: rule.threshold.clone(),
+            value: formatted_value,
+            message,
+        }));
     }
-    
-    Ok(())
+
+    Ok(None)
 }
 
 

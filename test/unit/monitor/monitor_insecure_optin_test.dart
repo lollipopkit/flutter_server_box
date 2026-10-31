@@ -34,7 +34,6 @@ void main() {
     test('allowingInsecure changes that and nothing else', () {
       const before = MonitorHttpCredential(
         addr: 'http://10.0.0.1:3770',
-        user: 'admin',
         pwd: 'secret',
         ignoreCert: true,
       );
@@ -43,7 +42,6 @@ void main() {
       expect(after.allowInsecure, isTrue);
       expect(after.needsInsecureOptIn, isFalse);
       expect(after.addr, before.addr);
-      expect(after.user, before.user);
       expect(after.pwd, before.pwd);
       expect(after.ignoreCert, before.ignoreCert);
       // A changed credential is what makes `Spi.shouldReconnect` fire, which

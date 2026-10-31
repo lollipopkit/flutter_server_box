@@ -271,10 +271,10 @@ class _RemoteDesktopTabPageState extends ConsumerState<RemoteDesktopTabPage> {
     RemoteDesktopSessionsState state,
     ServersState servers,
     List<TagGroup<String>> groups,
-  ) => ListView(
-    padding: const EdgeInsets.only(top: 4, bottom: 77),
+  ) => SideBarList(
+    actions: [_sortAction],
+    padding: const EdgeInsets.only(bottom: 77),
     children: [
-      SideBarActions(actions: [_sortAction]),
       if (state.ordered.isNotEmpty) SideBarSection(libL10n.running),
       for (final session in state.ordered)
         _sessionTile(state, session),

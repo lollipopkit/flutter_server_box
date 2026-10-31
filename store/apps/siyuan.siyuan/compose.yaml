@@ -1,0 +1,30 @@
+# SiYuan 3.8.7 (AGPL-3.0), https://github.com/siyuan-note/siyuan/tree/v3.8.7
+#
+# Written for ServerBox Monitor (2026-10-18) from SiYuan's README ("Docker
+# Hosting", the docker compose example):
+# - no `name:` and no `container_name`: the agent names the project;
+# - image pinned to the release; the workspace from the env file; runs as
+#   the shared folder's owner (PUID/PGID, entrypoint.sh);
+# - the access authorization code is the generated password
+#   (SIYUAN_ACCESS_AUTH_CODE): the page asks for it from the first start on.
+
+services:
+  siyuan:
+    image: b3log/siyuan:${SIYUAN_VERSION}
+    environment:
+      TZ: ${SBM_TZ}
+      PUID: ${SBM_UID}
+      PGID: ${SBM_GID}
+      SIYUAN_ACCESS_AUTH_CODE: ${SIYUAN_AUTH_CODE}
+    volumes:
+      - ${SIYUAN_WORKSPACE}:/siyuan/workspace
+    ports:
+      - '${SIYUAN_BIND}:${SIYUAN_PORT}:6806'
+    restart: unless-stopped
+    # Its sign-in page answers once the kernel has started.
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:6806/check-auth"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s

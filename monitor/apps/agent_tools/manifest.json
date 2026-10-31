@@ -1,0 +1,67 @@
+{
+  "publisher": "serverbox",
+  "name": "agent_tools",
+  "version": "1.2.0",
+  "api": 2,
+  "kind": "wasm",
+  "title": {
+    "en": "AI agents",
+    "de": "KI-Agenten",
+    "es": "Agentes de IA",
+    "fr": "Agents IA",
+    "id": "Agen AI",
+    "it": "Agenti IA",
+    "ja": "AI エージェント",
+    "ko": "AI 에이전트",
+    "nl": "AI-agents",
+    "pt": "Agentes de IA",
+    "ru": "ИИ-агенты",
+    "tr": "Yapay zekâ ajanları",
+    "uk": "ШІ-агенти",
+    "zh-CN": "AI 智能体",
+    "zh-TW": "AI 智慧體"
+  },
+  "description": {
+    "en": "Codex, Claude Code, pi, opencode, Hermes and OpenClaw for the agent's account: installed, kept up to date, removed, and pointed at Agent mode's model providers.",
+    "de": "Codex, Claude Code, pi, opencode, Hermes und OpenClaw für das Konto des Agenten: installieren, aktuell halten, entfernen und mit den Modellanbietern des Agent-Modus verbinden.",
+    "es": "Codex, Claude Code, pi, opencode, Hermes y OpenClaw para la cuenta del agente: se instalan, se mantienen al día, se eliminan y se conectan a los proveedores de modelos del modo Agente.",
+    "fr": "Codex, Claude Code, pi, opencode, Hermes et OpenClaw pour le compte de l’agent : installés, tenus à jour, supprimés et reliés aux fournisseurs de modèles du mode Agent.",
+    "id": "Codex, Claude Code, pi, opencode, Hermes, dan OpenClaw untuk akun agen: dipasang, diperbarui, dihapus, dan diarahkan ke penyedia model mode Agen.",
+    "it": "Codex, Claude Code, pi, opencode, Hermes e OpenClaw per l’account dell’agente: installati, aggiornati, rimossi e collegati ai fornitori di modelli della modalità Agente.",
+    "ja": "エージェントのアカウント用の Codex、Claude Code、pi、opencode、Hermes、OpenClaw：インストール、更新、削除と、Agent モードのモデルプロバイダーへの接続。",
+    "ko": "에이전트 계정용 Codex, Claude Code, pi, opencode, Hermes, OpenClaw: 설치, 최신 상태 유지, 제거, 그리고 Agent 모드의 모델 제공자 연결.",
+    "nl": "Codex, Claude Code, pi, opencode, Hermes en OpenClaw voor het account van de agent: installeren, bijwerken, verwijderen en koppelen aan de modelaanbieders van de Agent-modus.",
+    "pt": "Codex, Claude Code, pi, opencode, Hermes e OpenClaw para a conta do agente: instalados, mantidos atualizados, removidos e ligados aos provedores de modelos do modo Agente.",
+    "ru": "Codex, Claude Code, pi, opencode, Hermes и OpenClaw для учётной записи агента: установка, обновление, удаление и подключение к поставщикам моделей режима агента.",
+    "tr": "Ajan hesabı için Codex, Claude Code, pi, opencode, Hermes ve OpenClaw: kurulur, güncel tutulur, kaldırılır ve Ajan modunun model sağlayıcılarına bağlanır.",
+    "uk": "Codex, Claude Code, pi, opencode, Hermes і OpenClaw для облікового запису агента: встановлення, оновлення, видалення та під’єднання до постачальників моделей режиму агента.",
+    "zh-CN": "为 agent 账户安装 Codex、Claude Code、pi、opencode、Hermes 和 OpenClaw，保持更新、卸载，并接入 Agent 模式的模型提供商。",
+    "zh-TW": "為 agent 帳號安裝 Codex、Claude Code、pi、opencode、Hermes 和 OpenClaw，保持更新、移除，並接入 Agent 模式的模型供應商。"
+  },
+  "keywords": [
+    "ai",
+    "agents",
+    "coding",
+    "cli",
+    "codex",
+    "claude code",
+    "pi",
+    "opencode",
+    "hermes",
+    "openclaw"
+  ],
+  "glyph": "smart_toy",
+  "tone": "teal",
+  "permissions": [
+    "process",
+    "providers"
+  ],
+  "size": {
+    "width": 980,
+    "height": 700
+  },
+  "min_size": {
+    "width": 360,
+    "height": 400
+  }
+}

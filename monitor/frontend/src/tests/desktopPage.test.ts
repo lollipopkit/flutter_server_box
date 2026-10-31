@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
-import Desktop from '../pages/Desktop.svelte'
+import Desktop from '../desk/apps/remote_desktop/RemoteDesktopApp.svelte'
 import { api, ApiError } from '../lib/api'
 import type { Desktop as Route } from '../types'
 
@@ -32,7 +32,7 @@ describe('Desktop page', () => {
   })
 
   it('asks for the password only when a session is opened', async () => {
-    render(Desktop, { onback: () => {} })
+    render(Desktop)
     await fireEvent.click(await screen.findByRole('button', { name: /office/ }))
     await fireEvent.click(screen.getByRole('button', { name: /open session/i }))
     expect(screen.getByLabelText(/password/i)).toHaveAttribute('type', 'password')
@@ -40,7 +40,7 @@ describe('Desktop page', () => {
 
   it('removes a route by sending the set without it', async () => {
     updateDesktops.mockResolvedValue({ desktops: [], protocols })
-    render(Desktop, { onback: () => {} })
+    render(Desktop)
     await fireEvent.click(await screen.findByRole('button', { name: /office/ }))
     await fireEvent.click(screen.getByRole('button', { name: /delete desktop/i }))
     const confirm = screen.getAllByRole('button', { name: /delete desktop/i })
@@ -52,7 +52,7 @@ describe('Desktop page', () => {
     updateDesktops.mockRejectedValue(
       new ApiError('invalidHost', 400, undefined, { error: 'invalidHost', index: 0 }),
     )
-    render(Desktop, { onback: () => {} })
+    render(Desktop)
     await fireEvent.click(await screen.findByRole('button', { name: /office/ }))
     await fireEvent.click(screen.getByRole('button', { name: /delete desktop/i }))
     const confirm = screen.getAllByRole('button', { name: /delete desktop/i })

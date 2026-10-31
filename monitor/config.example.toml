@@ -86,20 +86,18 @@ monitor_type = "disk"
 threshold = ">=90%"
 matcher = "disk"
 
-# The machine side of reaching this machine through the agent, beyond reading
-# its metrics: where sshd is, what the file API may reach, how big a terminal
-# or a command may get, and whether plaintext is tolerated.
+# Reaching this machine through the agent, beyond reading its metrics: where
+# sshd is, how big a terminal or a command may get, and whether plaintext is
+# tolerated.
 #
-# *Who* may use any of it is not here. Each account has a role, and a role
-# holds grants — shell, ssh_terminal, files (read or write), connect (with an
-# allow list), listen (with public and a port range). Admins edit accounts and
-# roles from the app or the panel. A fresh install's admin starts with every
-# grant, or none with `install.sh --permissions read`
-# (SBM_INIT_PERMISSIONS=read, or `serve --init-permissions read`).
+# The agent has one account, signed in with its password alone. It may do
+# whatever the system account the agent runs as may do: terminals, commands,
+# files, relays. Install it as the account whose reach you want it to have
+# (`install.sh` uses the invoking account; `--system` runs it as root).
 #
 # This section is never required.
 [remote_access]
-# The SSH server the panel terminal connects to.
+# This machine's SSH server: the firewall page keeps a way in to it open.
 ssh_addr = "127.0.0.1:22"
 
 # Serve everything beyond reading the numbers — terminals, commands, files,
@@ -110,18 +108,7 @@ ssh_addr = "127.0.0.1:22"
 # Monitor connection; both opt-ins are required.
 # allow_insecure = false
 
-# Legacy, no longer read (TODO remove): full_access, listen_public,
-# [remote_access.terminal] enabled and [remote_access.fs] enabled moved to the
-# roles. An agent upgrading from a release before roles reads them once, to
-# give its admin role exactly what they granted, and logs that they can go.
-# terminal.allow_insecure and fs.allow_insecure still count, each for what it
-# used to cover only: the terminal's for shell, ssh_terminal, connect and
-# listen; the file API's for files.
-
-# The panel's in-browser terminal (the ssh_terminal grant) and the app's
-# terminal (the shell grant): capacities, which apply to both. The panel's
-# acts as an SSH client to ssh_addr, so a session there has exactly the
-# privileges of the SSH account the browser authenticates as.
+# The terminal (the app's and the panel's): capacities.
 [remote_access.terminal]
 # How long a session survives the browser disconnecting, so a laptop that
 # sleeps or a phone that changes network reattaches to the same shell.
@@ -130,32 +117,23 @@ ssh_addr = "127.0.0.1:22"
 # max_sessions = 8
 # scrollback_bytes = 2097152
 
-# The file API (the files grant): GET /fs/list, /fs/stat, /fs/read; PUT
-# /fs/write; POST /fs/mkdir, /fs/rename, /fs/chmod; DELETE /fs/remove.
+# The file API: GET /fs/list, /fs/stat, /fs/read; PUT /fs/write; POST
+# /fs/mkdir, /fs/rename, /fs/chmod; DELETE /fs/remove.
 #
 # This is how the app browses files on a server it reaches through this agent.
 # Such a server carries no SSH credentials at all, so SFTP is not available to
 # it and this endpoint is the only way. A server added to the app over SSH
 # browses over SFTP end to end and needs nothing here.
 #
-# roots is what the file API may reach, and it is not optional: with none,
-# nothing is served whatever a role grants. Every request is resolved to a real
-# path — symlinks followed, `..` refused — and anything landing outside these
-# roots is denied, so a link inside a root pointing at /etc is not a way out.
-#
-# roots = ["/"] is how you say "the whole machine", and it makes `files` with
-# mode = "write" worth a shell: anyone who can write ~/.ssh/authorized_keys has
-# one. The agent warns about it at startup. Prefer naming what actually needs
-# to be reachable.
+# It reaches what the agent's system account may, except the agent's own state
+# (its database, secrets, configuration and keys), which is never served.
 [remote_access.fs]
-roots = []
 # Largest single file a write will accept. Leave unset to size it from
 # physical memory. The body is streamed to disk and never buffered whole, so
 # this bounds the disk rather than memory.
 # max_write_bytes = 1073741824
 
-# Bounds on one `POST /api/v1/exec` command. Whether one may run at all is the
-# shell grant; these only decide how much a permitted command may take.
+# Bounds on one `POST /api/v1/exec` command: how much one may take.
 #
 # The defaults suit the pages this endpoint was built for — listing processes,
 # units and containers — and suit nothing that takes minutes or prints more
@@ -174,7 +152,10 @@ roots = []
 # at all. Leave unset to size it from physical memory (at least 1 MiB).
 # max_request_bytes = 1048576
 
-# Push notification configurations
+# Push notification configurations. A credential (a key, token, password,
+# header value, `webhook_url`) may be `${NAME}`, read from the environment or
+# `.env` at each send, e.g. `Authorization = "Bearer ${HA_TOKEN}"`; `$${` is
+# a literal `${`. Only here: one saved from the App or the panel is literal.
 [[push]]
 name = "webhook"
 push_type = "webhook"
@@ -202,6 +183,10 @@ key = ""
 title = "ServerBox Monitor"
 body = "{{message}}"
 level = "active"
+# Optional: subtitle, sound, group, icon, image, url (opened on tap), copy,
+# badge, volume (0-10, critical level), ttl, action, call / auto_copy /
+# is_archive / markdown (true or false), and cipher_key (16, 24 or 32
+# characters) to encrypt like the app's Push Encryption, AES-CBC.
 
 [[push]]
 name = "ios"
@@ -211,3 +196,55 @@ title = "ServerBox Monitor"
 content = "{{message}}"
 body_regex = ".*"
 code = 200
+
+# [[push]]
+# name = "email"
+# push_type = "smtp"
+# host = "smtp.example.com"
+# security = "starttls"        # starttls (587), tls (465) or none (25)
+# username = "alerts@example.com"
+# password = ""
+# from = "ServerBox <alerts@example.com>"
+# to = "me@example.com"        # several: comma-separated, or an array
+# subject = "ServerBox Monitor: {{name}}"
+# body = "{{message}}"
+
+# [[push]]
+# name = "telegram"
+# push_type = "telegram"
+# bot_token = ""
+# chat_id = ""                 # a number, or @channel
+# text = "{{name}}: {{message}}"
+# parse_mode = "HTML"          # optional: HTML, MarkdownV2, Markdown
+# message_thread_id = 0        # optional: a topic in a forum group
+
+# [[push]]
+# name = "discord"
+# push_type = "discord"
+# webhook_url = ""
+# content = "{{name}}: {{message}}"
+# username = "ServerBox"
+
+# [[push]]
+# name = "ntfy"
+# push_type = "ntfy"
+# server = "https://ntfy.sh"
+# topic = ""
+# title = "{{name}}"
+# message = "{{message}}"
+# priority = "high"            # 1-5 or min, low, default, high, max
+# tags = "warning"
+# token = ""                   # or username + password
+
+# Web apps (App Store). Besides the catalog, a folder of app folders, each
+# <publisher>.<name>/ with a manifest.toml and its compose files (the
+# serverbox-webapp skill writes them). Read at start.
+# [stacks]
+# local_apps = "/srv/sbm-apps"
+# shared_dir = "/srv/media"
+# Behind a reverse proxy or a tunnel the apps' own ports (3780-3799) are not
+# reachable: send a wildcard host to one more listener instead, and each app
+# is <publisher>-<name>.<that domain> (futo-immich.apps.example.com). TLS may
+# end at the proxy; the scheme here is what the browser sees.
+# apps_url = "https://*.apps.example.com"
+# apps_port = 3779

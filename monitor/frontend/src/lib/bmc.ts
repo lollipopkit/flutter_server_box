@@ -1,6 +1,7 @@
 /// The panel's half of `/api/v1/bmc` that is not drawing: the agent's and
 /// the BMC's refusals in the viewer's language, and the form's draft.
 import { get } from 'svelte/store'
+import { errorText } from './errorText'
 import { LL } from '../i18n/i18n-svelte'
 import { ApiError } from './api'
 import type { BmcIntent, BmcPowerState, BmcTarget, BmcTargetInput } from '../types'
@@ -10,7 +11,7 @@ import type { BmcIntent, BmcPowerState, BmcTarget, BmcTargetInput } from '../typ
 /// refusal of a set (`api::bmc::Refusal`). A code this build does not know is
 /// shown as sent.
 export function bmcErrorText(e: unknown): string {
-  if (!(e instanceof ApiError)) return e instanceof Error ? e.message : String(e)
+  if (!(e instanceof ApiError)) return errorText(e)
   const ll = get(LL)
   const failure = typeof e.body?.failure === 'string' ? e.body.failure : null
   switch (failure ?? e.message) {
@@ -33,6 +34,10 @@ export function bmcErrorText(e: unknown): string {
       return ll.bmcNotSupported()
     case 'noSuchTarget':
       return ll.bmcGone()
+    case 'passwordRequired':
+      // A set's refusal names the target (its address changed); a target's
+      // own read has no index (the stored password no longer opens).
+      return typeof e.body?.index === 'number' ? ll.bmcPasswordAgain() : ll.bmcPasswordRequired()
     case 'invalidName':
     case 'duplicateName':
       return ll.bmcInvalidName()
@@ -42,8 +47,6 @@ export function bmcErrorText(e: unknown): string {
       return ll.bmcInvalidUsername()
     case 'invalidCertificate':
       return ll.bmcInvalidCertificate()
-    case 'passwordRequired':
-      return ll.bmcPasswordAgain()
     default:
       return failure ? `${failure}${typeof e.body?.detail === 'string' ? `: ${e.body.detail}` : ''}` : e.message
   }

@@ -1,0 +1,67 @@
+{
+  "publisher": "serverbox",
+  "name": "proxy",
+  "version": "1.3.0",
+  "api": 2,
+  "kind": "wasm",
+  "title": {
+    "en": "Reverse proxy",
+    "de": "Reverse-Proxy",
+    "es": "Proxy inverso",
+    "fr": "Proxy inverse",
+    "id": "Proxy terbalik",
+    "it": "Proxy inverso",
+    "ja": "リバースプロキシ",
+    "ko": "리버스 프록시",
+    "nl": "Reverse proxy",
+    "pt": "Proxy reverso",
+    "ru": "Обратный прокси-сервер",
+    "tr": "Ters proxy",
+    "uk": "Зворотний проксі-сервер",
+    "zh-CN": "反向代理",
+    "zh-TW": "反向代理"
+  },
+  "description": {
+    "en": "Sites on nginx, Caddy or Traefik in front of your web apps, with HTTPS, and the OWASP Core Rule Set as a web application firewall.",
+    "de": "Websites mit nginx, Caddy oder Traefik vor Ihren Web-Apps, mit HTTPS, und das OWASP Core Rule Set als Web Application Firewall.",
+    "es": "Sitios en nginx, Caddy o Traefik delante de tus aplicaciones web, con HTTPS, y el OWASP Core Rule Set como cortafuegos de aplicaciones web.",
+    "fr": "Des sites nginx, Caddy ou Traefik devant vos applications web, en HTTPS, avec l’OWASP Core Rule Set comme pare-feu applicatif.",
+    "id": "Situs di nginx, Caddy, atau Traefik di depan aplikasi web Anda, dengan HTTPS, dan OWASP Core Rule Set sebagai firewall aplikasi web.",
+    "it": "Siti su nginx, Caddy o Traefik davanti alle tue app web, con HTTPS, e l’OWASP Core Rule Set come web application firewall.",
+    "ja": "Web アプリの前段に置く nginx・Caddy・Traefik のサイトと HTTPS、そして Web アプリケーションファイアウォールとしての OWASP Core Rule Set。",
+    "ko": "웹 앱 앞단의 nginx, Caddy, Traefik 사이트와 HTTPS, 그리고 웹 애플리케이션 방화벽인 OWASP Core Rule Set.",
+    "nl": "Sites op nginx, Caddy of Traefik voor uw web-apps, met HTTPS, en de OWASP Core Rule Set als webapplicatiefirewall.",
+    "pt": "Sites em nginx, Caddy ou Traefik à frente dos seus apps web, com HTTPS, e o OWASP Core Rule Set como firewall de aplicações web.",
+    "ru": "Сайты на nginx, Caddy или Traefik перед вашими веб-приложениями, с HTTPS, и OWASP Core Rule Set в качестве межсетевого экрана веб-приложений.",
+    "tr": "Web uygulamalarınızın önünde nginx, Caddy veya Traefik siteleri, HTTPS ve web uygulama güvenlik duvarı olarak OWASP Core Rule Set.",
+    "uk": "Сайти на nginx, Caddy або Traefik перед вашими вебзастосунками, з HTTPS, і OWASP Core Rule Set як брандмауер вебзастосунків.",
+    "zh-CN": "在网页应用前用 nginx、Caddy 或 Traefik 配置站点和 HTTPS，并以 OWASP Core Rule Set 作为 Web 应用防火墙。",
+    "zh-TW": "在網頁應用程式前用 nginx、Caddy 或 Traefik 設定網站和 HTTPS，並以 OWASP Core Rule Set 作為 Web 應用程式防火牆。"
+  },
+  "keywords": [
+    "proxy",
+    "nginx",
+    "caddy",
+    "traefik",
+    "waf",
+    "firewall",
+    "https"
+  ],
+  "glyph": "alt_route",
+  "tone": "sky",
+  "permissions": [
+    "process",
+    "root"
+  ],
+  "size": {
+    "width": 980,
+    "height": 700
+  },
+  "min_size": {
+    "width": 360,
+    "height": 400
+  },
+  "os": [
+    "linux"
+  ]
+}

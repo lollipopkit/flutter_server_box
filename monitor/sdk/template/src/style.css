@@ -1,0 +1,23 @@
+/* Layout only: colours, type and controls are the desk's (`lk-*` classes and
+   tokens, put on the page by `connect()`), so the app follows its theme. */
+body {
+  margin: 0;
+  background: var(--surface-window);
+}
+main {
+  box-sizing: border-box;
+  max-width: var(--content-max-form);
+  margin-inline: auto;
+  padding: var(--content-pad);
+}
+h1 {
+  margin: 0 0 var(--space-13);
+  font: var(--weight-bold) var(--text-21) / var(--leading-snug) var(--font-display);
+  letter-spacing: var(--tracking-display);
+}
+main .lk-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-9);
+}

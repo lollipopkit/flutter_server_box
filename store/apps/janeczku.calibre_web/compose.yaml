@@ -1,0 +1,32 @@
+# Calibre-Web 0.6.27 (GPL-3.0-or-later), https://github.com/janeczku/calibre-web/releases/tag/0.6.27
+# Image: lscr.io/linuxserver/calibre-web (LinuxServer.io). The upstream README lists
+# no image of its own; the LinuxServer image is the one it points to. Pinned to
+# 0.6.27-ls405 (amd64, arm64).
+#
+# Written for ServerBox Monitor's Books app from linuxserver's documented
+# docker-compose example (README of linuxserver/docker-calibre-web):
+# - no `name:` and no `container_name`: the agent names the project;
+# - PUID/PGID/TZ come from the env file the agent writes (SBM_UID, SBM_GID, SBM_TZ);
+# - the library is the shared books folder, mounted read-write at /books
+#   (Calibre-Web edits metadata.db and writes uploaded books there);
+# - the optional DOCKER_MODS (ebook conversion layer) is left out: a lightweight image.
+
+services:
+  calibre-web:
+    image: lscr.io/linuxserver/calibre-web:${CALIBRE_WEB_VERSION}
+    restart: unless-stopped
+    environment:
+      PUID: ${SBM_UID}
+      PGID: ${SBM_GID}
+      TZ: ${SBM_TZ}
+    volumes:
+      - ${CONFIG_LOCATION}:/config
+      - ${BOOKS_LOCATION}:/books
+    ports:
+      - '${CALIBRE_WEB_BIND}:${CALIBRE_WEB_PORT}:8083'
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8083/', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3

@@ -10,7 +10,8 @@ async fn test_config_load_default() {
     assert_eq!(config.get_server().port, 3770);
     assert_eq!(config.get_monitoring().interval_seconds, 7);
     assert!(!config.get_monitoring().rules.is_empty());
-    assert!(!config.get_push().is_empty());
+    // No placeholder channel: one would send alerts out with an empty key.
+    assert!(config.get_push().is_empty());
 }
 
 #[tokio::test] 
@@ -45,10 +46,8 @@ async fn test_database_init() {
 #[tokio::test]
 async fn test_jwt_auth() {
     let secret = "test-secret";
-    let user_id = "testuser";
-    
     // Test token generation
-    let token = auth::generate_token(user_id, secret);
+    let token = auth::generate_token(secret);
     assert!(token.is_ok());
     
     let token = token.unwrap();
@@ -59,7 +58,7 @@ async fn test_jwt_auth() {
     assert!(claims.is_ok());
     
     let claims = claims.unwrap();
-    assert_eq!(claims.sub, user_id);
+    assert_eq!(claims.sub, auth::SUBJECT);
     
     // Test invalid token
     let invalid_claims = auth::verify_token("invalid.token", secret);

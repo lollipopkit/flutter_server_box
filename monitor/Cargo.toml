@@ -10,8 +10,14 @@ path = "src/lib.rs"
 [dependencies]
 # Shared status parser (monorepo-wide)
 sbm_parser = { path = "../crates/sbm_parser" }
+# Theme packages and the theme store, the same reader the app runs through
+# fl_lib (its own Cargo workspace, in the fl_lib submodule).
+fl_theme = { path = "../packages/fl_lib/rust/theme" }
+# Agent mode's agent loop: pi on QuickJS, hosted from Rust (`agent_mode`).
+fl_pi_llm = { path = "../packages/fl_pi_llm/fl_pi_llm/rust", default-features = false, features = ["reqwest"] }
 sbm_redfish = { path = "../crates/sbm_redfish" }
 sbm_virt = { path = "../crates/sbm_virt" }
+fl_lkc = { path = "../packages/fl_lib/rust/lkc" }
 # Native (syscall/procfs) status sampling for monitor's own local collection
 # path (never used by the SSH-based app) — see monitoring.rs::collect_metrics
 sbm_native = { path = "../crates/sbm_native" }
@@ -28,6 +34,11 @@ rustls = { version = "0.23", default-features = false, features = ["ring", "logg
 # to the protocol version `@devolutions/iron-remote-desktop-rdp` 0.7 speaks.
 ironrdp-rdcleanpath = "=0.2.2"
 tokio-rustls = { version = "0.26", default-features = false, features = ["ring", "logging", "tls12"] }
+# The web apps' proxy (`stacks::proxy`): its own listeners, HTTP/1.1 with
+# upgrades both ways; ntex's client cannot hand an upgraded connection over.
+hyper = { version = "1", features = ["server", "client", "http1"] }
+hyper-util = { version = "0.1", features = ["tokio", "server", "client-legacy", "http1"] }
+http-body-util = "0.1"
 
 # Async runtime
 tokio = { version = "1.53", features = ["full"] }
@@ -48,11 +59,31 @@ sqlx = { version = "0.9", features = [
 
 # Authentication
 # rust_crypto instead of aws_lc_rs: pure Rust, no cmake/assembly dependency for static musl builds
-jsonwebtoken = { version = "11.0", default-features = false, features = ["rust_crypto"] }
 bcrypt = "0.19"
 # sha2 0.11 returns a `hybrid_array::Array`, which has no `LowerHex` — hence hex
 sha2 = "0.11"
+zeroize = "1.9"
+
+# Settings backups (`agent_backup`): age encryption, and WebDAV listings
+# read with the XML parser `sbm_parser` already uses.
+age = { version = "0.11", features = ["armor"] }
+roxmltree = "0.21"
+# Agent mode's chat key, derived from the credentials key (`sealed::Sealer::derive_key`).
+blake3 = "1"
+
+# Desk app packages (`api::apps`): a gzipped tar, read entry by entry with
+# every size bounded while it is read.
+tar = { version = "0.4", default-features = false }
+flate2 = "1"
+# Launch tickets for their UI (HMAC); the crypto already in the tree.
+ring = "0.17"
+# Desk app backends as components (`apps::runtime`): Cranelift, async with
+# epoch interruption, so a call yields and a loop is cut off.
+wasmtime = { version = "49", default-features = false, features = ["runtime", "cranelift", "component-model", "async", "std", "pooling-allocator", "call-hook"] }
+wasmtime-wasi = { version = "49", default-features = false, features = ["p2"] }
+base64 = "0.22"
 hex = "0.4"
+semver = "1.0"
 
 # Configuration
 dotenvy = "0.15"
@@ -73,22 +104,7 @@ rpassword = "7"
 # `monitoring::push`'s webhook tests hold.
 reqwest = { version = "0.13", default-features = false, features = ["json", "rustls-no-provider", "charset", "http2", "stream"] }
 
-# SSH client for the browser terminal. `ring` rather than the default
-# aws-lc-rs, matching the backend rustls and jsonwebtoken are configured with,
-# so this adds no second crypto implementation of its own.
-#
-# `ring` is now the only one in the tree — `cargo tree -i aws-lc-sys` finds
-# nothing. It was reqwest that brought the other, and that is fixed above; the
-# "no cmake for musl" intent these features are chosen for is achieved rather
-# than merely stated. Anything added here that wants TLS has to be configured
-# the same way, or it comes back.
-russh = { version = "0.64", default-features = false, features = ["ring", "flate2", "rsa"] }
-# Wipes SSH credentials from memory once they have been used
-zeroize = "1"
-
-# Local PTY for the passwordless terminal (ConPTY on Windows, forkpty
-# elsewhere). Only used when remote_access.passwordless_terminal is on; the
-# SSH path needs none of this.
+# Local PTY for the terminal (ConPTY on Windows, forkpty elsewhere).
 portable-pty = "0.9"
 
 # Time handling
@@ -107,6 +123,10 @@ regex = "1.13"
 
 # URL encoding
 percent-encoding = "2.3"
+# Bark's encrypted push (AES-CBC); the versions already in the lockfile.
+aes = "0.9"
+cbc = { version = "0.2", features = ["alloc"] }
+lettre = { version = "0.11", default-features = false, features = ["builder", "hostname", "smtp-transport", "tokio1", "tokio1-rustls", "ring", "rustls-platform-verifier"] }
 
 # CLI argument parsing
 clap = { version = "4.6", features = ["derive", "env"] }
@@ -114,6 +134,7 @@ clap = { version = "4.6", features = ["derive", "env"] }
 hostname = "0.4.2"
 async-stream = "0.3.6"
 futures = "0.3.34"
+url = "2"
 # Advisory process-wide lock for custom-command directory replacements.
 fs2 = "0.4"
 
@@ -123,19 +144,25 @@ fs2 = "0.4"
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"
 
-# Job objects, so a timed-out command is ended with everything it started
-# (`monitoring::process_tree`).
+# Agent mode tells the model which Windows it is on (`prompt::os_name`).
 [target.'cfg(windows)'.dependencies]
-windows-sys = { version = "0.61", features = [
-    "Win32_Foundation",
-    "Win32_Security",
-    "Win32_System_Diagnostics_ToolHelp",
-    "Win32_System_JobObjects",
-    "Win32_System_Threading",
-] }
+sysinfo = { version = "0.39", default-features = false, features = ["system"] }
+# A command's process tree as a job object (`utils::job`).
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Security", "Win32_System_Diagnostics_ToolHelp", "Win32_System_JobObjects", "Win32_System_Threading"] }
 
 [dev-dependencies]
+# ntex's test server otherwise turns on every crate's trace log, which
+# makes Cranelift compiling a component take tens of seconds.
+ntex = { version = "4", features = ["no-test-logging"] }
+# Repository trees for `tests/theme_store.rs` (`fl_theme::repo::Index`).
+indexmap = "2"
+# Building theme packages in `tests/desk_themes.rs`.
+zip = { version = "8", default-features = false, features = ["deflate-flate2"] }
+# Test modules for the app runtime, written as text.
+wat = "1"
 tempfile = "3.27.0"
 # Self-signed certificates for the fake RDP server in `tests/rdp_ws.rs`.
 # `ring`, so the tree keeps one crypto implementation.
 rcgen = { version = "0.14", default-features = false, features = ["ring", "pem"] }
+# Paused time, for what waits minutes (the sudo password's 15).
+tokio = { version = "1.53", features = ["full", "test-util"] }

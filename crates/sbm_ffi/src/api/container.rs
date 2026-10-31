@@ -100,6 +100,12 @@ fn item(container: Container, stats: Option<ContainerStats>) -> ContainerItem {
     }
 }
 
+/// What [image] is named by (`sbm_parser::container::ContainerImage::reference`).
+#[flutter_rust_bridge::frb(sync)]
+pub fn container_image_reference(image: ContainerImageItem) -> String {
+    image_back(image).reference()
+}
+
 fn image_item(image: ContainerImage) -> ContainerImageItem {
     ContainerImageItem {
         dangling: image.is_dangling(),

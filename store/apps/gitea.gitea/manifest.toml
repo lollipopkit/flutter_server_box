@@ -1,0 +1,87 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Gitea, a Git server: deployed with Docker Compose from compose.yaml beside
+# this file, shown in a desk window through the agent.
+
+schema = 1
+publisher = "gitea"
+name = "gitea"
+project = "Gitea"
+developer = "The Gitea Authors"
+version = "28.0.0"
+homepage = "https://about.gitea.com"
+source = "https://github.com/go-gitea/gitea/tree/v28.0.0"
+glyph = "commit"
+tone = "leaf"
+categories = ["development"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Gitea"
+
+[description]
+en = "Host Git repositories with issues, pull requests, a package registry and CI (Gitea Actions), cloned over HTTP or SSH."
+zh = "托管 Git 仓库，提供 issue、pull request、软件包仓库和 CI（Gitea Actions），可通过 HTTP 或 SSH 克隆。"
+zh-TW = "託管 Git 儲存庫，提供 issue、pull request、套件倉庫和 CI（Gitea Actions），可透過 HTTP 或 SSH 複製。"
+
+[license]
+spdx = "MIT"
+url = "https://github.com/go-gitea/gitea/blob/v28.0.0/LICENSE"
+
+[requirements]
+arch = ["amd64", "arm64", "arm"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+GITEA_VERSION = "28.0.0"
+
+[login]
+note = { en = "The first visit shows Gitea's installation page, the database already chosen (SQLite). Create the administrator under \"Administrator account settings\" there: sign-up is off.", zh = "第一次打开会显示 Gitea 的安装页面，数据库已选好（SQLite）。请在该页面的“管理员账号设置”中创建管理员：注册已关闭。", zh-TW = "第一次開啟會顯示 Gitea 的安裝頁面，資料庫已選好（SQLite）。請在該頁面的「管理員帳號設定」中建立管理員：註冊已關閉。" }
+
+[[settings]]
+key = "data"
+type = "path"
+env = "GITEA_DATA"
+default = "{stack}/data"
+data = true
+label = { en = "Repositories and data", zh = "仓库和数据", zh-TW = "儲存庫和資料" }
+help = { en = "The repositories, the SQLite database, LFS objects and attachments.", zh = "仓库、SQLite 数据库、LFS 对象和附件。", zh-TW = "儲存庫、SQLite 資料庫、LFS 物件和附件。" }
+
+[[settings]]
+key = "config"
+type = "path"
+env = "GITEA_CONFIG"
+default = "{stack}/config"
+data = true
+label = { en = "Configuration", zh = "配置", zh-TW = "設定" }
+help = { en = "app.ini, written by the installation page.", zh = "app.ini，由安装页面写入。", zh-TW = "app.ini，由安裝頁面寫入。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "GITEA_PORT"
+default = 3001
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "ssh"
+type = "port"
+env = "GITEA_SSH_PORT"
+default = 2222
+label = { en = "SSH port", zh = "SSH 端口", zh-TW = "SSH 連接埠" }
+help = { en = "Git over SSH, at the same address as the web page.", zh = "通过 SSH 访问 Git，地址与网页相同。", zh-TW = "透過 SSH 存取 Git，位址與網頁相同。" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "For cloning and pushing from other machines, over HTTP and SSH. Off: only this machine and the desk.", zh = "供其他机器通过 HTTP 和 SSH 克隆与推送。关闭时只有本机和桌面可以访问。", zh-TW = "供其他機器透過 HTTP 和 SSH 複製與推送。關閉時只有本機和桌面可以存取。" }
+on = { GITEA_BIND = "0.0.0.0" }
+off = { GITEA_BIND = "127.0.0.1" }

@@ -19,11 +19,14 @@ pub struct Config {
     pub jwt_secret: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub push: Option<Vec<PushConfig>>,
-    /// WebSocket access to the local sshd — off unless present and enabled.
+    /// The machine side of remote access: sshd, the transport rule, limits.
     /// Absent in every config written before the feature existed, hence
     /// `Option`; see `core::remote_access`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub remote_access: Option<RemoteAccessConfig>,
+    /// The web apps it deploys (`stacks`).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stacks: Option<StacksConfig>,
 
     /// The flat top-level keys the Go agent's `config.json` used.
     ///
@@ -39,6 +42,32 @@ pub struct Config {
     // agent is left to migrate from.
     #[serde(flatten)]
     pub legacy: LegacyGoConfig,
+}
+
+/// `[stacks]`: where web apps come from besides the catalog, and how their
+/// windows are reached.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct StacksConfig {
+    /// A folder of app folders (`<publisher>.<name>/manifest.toml` and its
+    /// compose files) offered beside the catalog's: an app being written, or
+    /// one of the operator's own. Read at start.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub local_apps: Option<String>,
+    /// The folder every app shares (`{shared}` in a manifest): downloads,
+    /// media, books, so a downloader's files are a media server's library.
+    /// `shared/` beside the database when absent. Apps run as its owner
+    /// (`SBM_UID`/`SBM_GID`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub shared_dir: Option<String>,
+    /// Apps' windows by host rather than by port: `https://*.apps.example.com`
+    /// (`stacks::proxy::Hosts`), for an agent behind a reverse proxy or a
+    /// tunnel that sends that wildcard to [Self::apps_port].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub apps_url: Option<String>,
+    /// The listener [Self::apps_url] is served on; 3779 when absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub apps_port: Option<u16>,
 }
 
 /// The Go agent's flat `config.json` keys — see [`Config::legacy`].
@@ -533,6 +562,10 @@ impl Config {
         self.server.clone().unwrap_or_default()
     }
 
+    pub fn get_stacks(&self) -> StacksConfig {
+        self.stacks.clone().unwrap_or_default()
+    }
+
     pub fn get_monitoring(&self) -> MonitoringConfig {
         self.monitoring.clone().unwrap_or_default()
     }
@@ -629,14 +662,19 @@ impl Config {
                 .with_context(|| format!("Failed to read {}", path.display()))?
                 .trim()
                 .to_string();
-            if secret.len() < MIN_LEN {
-                anyhow::bail!(
-                    "Persisted JWT secret at {} is invalid; delete it to regenerate",
-                    path.display()
-                );
+            // Empty: a first start cut off before the write reached the disk.
+            // Nothing was ever signed with it that outlived that start, so it
+            // is made again below.
+            if !secret.is_empty() {
+                if secret.len() < MIN_LEN {
+                    anyhow::bail!(
+                        "Persisted JWT secret at {} is invalid; delete it to regenerate",
+                        path.display()
+                    );
+                }
+                self.jwt_secret = Some(secret);
+                return Ok(());
             }
-            self.jwt_secret = Some(secret);
-            return Ok(());
         }
 
         let secret = crate::utils::secrets::random_hex(48)
@@ -645,14 +683,9 @@ impl Config {
             fs::create_dir_all(dir)
                 .with_context(|| format!("Failed to create {}", dir.display()))?;
         }
-        fs::write(&path, &secret)
-            .with_context(|| format!("Failed to write {}", path.display()))?;
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            fs::set_permissions(&path, fs::Permissions::from_mode(0o600))
-                .with_context(|| format!("Failed to chmod {}", path.display()))?;
-        }
+        // 0600 from the start, on the disk before the agent signs anything.
+        crate::core::config_file::write_atomic(&path, secret.as_bytes())
+            .map_err(|e| anyhow::anyhow!("Failed to write {}: {e}", path.display()))?;
         tracing::info!("Generated new JWT secret at {}", path.display());
         self.jwt_secret = Some(secret);
         Ok(())
@@ -914,64 +947,10 @@ impl Default for Config {
             // Written out so a generated config.toml shows the section and
             // its switches; every switch in it defaults to off
             remote_access: Some(RemoteAccessConfig::default()),
-            push: Some(vec![
-                PushConfig {
-                    name: "webhook".to_string(),
-                    push_type: "webhook".to_string(),
-                    config: {
-                        let mut table = toml::Table::new();
-                        table.insert("url".to_string(), toml::Value::String("http://localhost:5700".to_string()));
-                        table.insert("method".to_string(), toml::Value::String("POST".to_string()));
-                        
-                        let mut headers = toml::Table::new();
-                        headers.insert("Content-Type".to_string(), toml::Value::String("application/json".to_string()));
-                        table.insert("headers".to_string(), toml::Value::Table(headers));
-                        
-                        let mut body_template = toml::Table::new();
-                        body_template.insert("message".to_string(), toml::Value::String("Server {{name}}: {{message}}".to_string()));
-                        table.insert("body_template".to_string(), toml::Value::Table(body_template));
-                        
-                        table
-                    },
-                },
-                PushConfig {
-                    name: "serverchan".to_string(),
-                    push_type: "serverchan".to_string(),
-                    config: {
-                        let mut table = toml::Table::new();
-                        table.insert("sc_key".to_string(), toml::Value::String("".to_string()));
-                        table.insert("title".to_string(), toml::Value::String("ServerBox Monitor".to_string()));
-                        table.insert("desp".to_string(), toml::Value::String("{{message}}".to_string()));
-                        table
-                    },
-                },
-                PushConfig {
-                    name: "bark".to_string(),
-                    push_type: "bark".to_string(),
-                    config: {
-                        let mut table = toml::Table::new();
-                        table.insert("server".to_string(), toml::Value::String("https://api.day.app".to_string()));
-                        table.insert("key".to_string(), toml::Value::String("".to_string()));
-                        table.insert("title".to_string(), toml::Value::String("ServerBox Monitor".to_string()));
-                        table.insert("body".to_string(), toml::Value::String("{{message}}".to_string()));
-                        table.insert("level".to_string(), toml::Value::String("active".to_string()));
-                        table
-                    },
-                },
-                PushConfig {
-                    name: "ios".to_string(),
-                    push_type: "ios".to_string(),
-                    config: {
-                        let mut table = toml::Table::new();
-                        table.insert("token".to_string(), toml::Value::String("".to_string()));
-                        table.insert("title".to_string(), toml::Value::String("ServerBox Monitor".to_string()));
-                        table.insert("content".to_string(), toml::Value::String("{{message}}".to_string()));
-                        table.insert("body_regex".to_string(), toml::Value::String(".*".to_string()));
-                        table.insert("code".to_string(), toml::Value::Integer(200));
-                        table
-                    },
-                },
-            ]),
+            stacks: None,
+            // No channel until the operator adds one: a placeholder would
+            // send each alert to a third party with an empty key.
+            push: Some(Vec::new()),
             legacy: LegacyGoConfig::default(),
         }
     }
@@ -1076,5 +1055,34 @@ mod tests {
 
         let mode = fs::metadata(secret_path).unwrap().permissions().mode();
         assert_eq!(mode & 0o777, 0o600);
+    }
+
+    /// A first start cut off by a power loss leaves the file empty: the next
+    /// one makes a secret again instead of refusing to start. One too short
+    /// but not empty was edited by someone, and is still refused.
+    #[cfg(unix)]
+    #[test]
+    fn an_empty_jwt_secret_file_is_made_again_privately() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let dir = tempfile::tempdir().unwrap();
+        let secret_path = dir.path().join("jwt.secret");
+        let config_for = || Config {
+            database_url: Some(format!("sqlite:{}", dir.path().join("monitor.db").display())),
+            jwt_secret: None,
+            ..Default::default()
+        };
+        fs::write(&secret_path, "").unwrap();
+
+        let mut config = config_for();
+        config.resolve_jwt_secret().unwrap();
+        let written = fs::read_to_string(&secret_path).unwrap();
+        assert_eq!(config.jwt_secret.as_deref(), Some(written.as_str()));
+        assert!(written.len() >= 32);
+        let mode = fs::metadata(&secret_path).unwrap().permissions().mode();
+        assert_eq!(mode & 0o777, 0o600);
+
+        fs::write(&secret_path, "short").unwrap();
+        assert!(config_for().resolve_jwt_secret().is_err());
     }
 }

@@ -12,28 +12,9 @@ use common::machine::{audit, call, server};
 const PATH: &str = "/api/v1/desktops";
 
 #[ntex::test]
-async fn both_halves_need_the_connect_grant() {
-    let (srv, db) = server().await;
-    let (status, _) = call(&srv, None, Method::GET, PATH, None).await;
-    assert_eq!(status, 401);
-
-    let (status, body) = call(&srv, Some("viewer"), Method::GET, PATH, None).await;
-    assert_eq!((status, body["error"].as_str()), (403, Some("forbidden")));
-    let (status, _) =
-        call(&srv, Some("viewer"), Method::PUT, PATH, Some(json!({"desktops": []}))).await;
-    assert_eq!(status, 403);
-
-    let details: Vec<_> = audit(&db).await.into_iter().map(|row| row.3.unwrap()).collect();
-    assert_eq!(
-        details,
-        ["desktops list: connect not_granted", "desktops replace: connect not_granted"]
-    );
-}
-
-#[ntex::test]
 async fn a_set_is_read_back_as_it_was_written() {
     let (srv, db) = server().await;
-    let (status, body) = call(&srv, Some("admin"), Method::GET, PATH, None).await;
+    let (status, body) = call(&srv, true, Method::GET, PATH, None).await;
     assert_eq!(status, 200, "{body}");
     assert_eq!(body["desktops"], json!([]));
     assert_eq!(
@@ -48,9 +29,9 @@ async fn a_set_is_read_back_as_it_was_written() {
          "username": "lk", "domain": null, "view_only": false, "shared": true},
     ]);
     let (status, body) =
-        call(&srv, Some("admin"), Method::PUT, PATH, Some(json!({"desktops": set}))).await;
+        call(&srv, true, Method::PUT, PATH, Some(json!({"desktops": set}))).await;
     assert_eq!(status, 200, "{body}");
-    let (_, body) = call(&srv, Some("admin"), Method::GET, PATH, None).await;
+    let (_, body) = call(&srv, true, Method::GET, PATH, None).await;
     assert_eq!(body["desktops"], set);
 
     let rows = audit(&db).await;
@@ -63,11 +44,11 @@ async fn a_refused_set_leaves_the_stored_one() {
     let (srv, _) = server().await;
     let stored = json!([{"id": "a", "name": "one", "protocol": "vnc", "host": "127.0.0.1",
         "port": 5900, "username": null, "domain": null, "view_only": false, "shared": true}]);
-    call(&srv, Some("admin"), Method::PUT, PATH, Some(json!({"desktops": stored}))).await;
+    call(&srv, true, Method::PUT, PATH, Some(json!({"desktops": stored}))).await;
 
     let (status, body) = call(
         &srv,
-        Some("admin"),
+        true,
         Method::PUT,
         PATH,
         Some(json!({"desktops": [
@@ -77,6 +58,6 @@ async fn a_refused_set_leaves_the_stored_one() {
     )
     .await;
     assert_eq!((status, body), (400, json!({"error": "invalidHost", "index": 1})));
-    let (_, body) = call(&srv, Some("admin"), Method::GET, PATH, None).await;
+    let (_, body) = call(&srv, true, Method::GET, PATH, None).await;
     assert_eq!(body["desktops"], stored);
 }

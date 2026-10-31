@@ -1303,38 +1303,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get virtKeyRowsTip => '나머지는 별도의 페이지에 놓이며 옆으로 밀어 넘깁니다.';
 
   @override
-  String get keyArrowDown => '아래쪽 화살표';
-
-  @override
-  String get keyArrowLeft => '왼쪽 화살표';
-
-  @override
-  String get keyArrowRight => '오른쪽 화살표';
-
-  @override
-  String get keyArrowUp => '위쪽 화살표';
-
-  @override
-  String get keyControl => 'Ctrl 키';
-
-  @override
-  String get keyEscape => 'Esc 키';
-
-  @override
-  String get keyPageDown => '페이지 다운';
-
-  @override
-  String get keyPageUp => '페이지 업';
-
-  @override
-  String get termTextView => '텍스트로 보기';
-
-  @override
-  String termTextLetGo(int count) {
-    return '더 이상 보관되지 않는 이전 줄: $count';
-  }
-
-  @override
   String get waitConnection => '연결이 설정될 때까지 기다려 주세요.';
 
   @override
@@ -2014,44 +1982,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get userPasswordEditTip => '기존 비밀번호를 유지하려면 비워 두세요.';
 
   @override
-  String get systemGroups => '그룹';
-
-  @override
-  String get userGid => 'GID';
-
-  @override
-  String get userGroupMembers => '구성원';
-
-  @override
-  String get userPrimaryMembers => '기본 구성원';
-
-  @override
-  String get userSystemGroup => '시스템 그룹';
-
-  @override
-  String get userMembersHint => 'alice,bob';
-
-  @override
-  String get userRegularGroup => 'Regular';
-
-  @override
   String funcUnavailableFmt(String func) {
     return '$func은(는) 이 서버의 연결 방식에서 사용할 수 없습니다.';
   }
-
-  @override
-  String funcNeedsAgentGrant(String func, String setting) {
-    return '$func을(를) 사용하려면 Monitor agent의 $setting을(를) 켜야 합니다.';
-  }
-
-  @override
-  String funcNeedsAgentUpdate(String func) {
-    return '$func을(를) 사용하려면 Monitor agent를 업데이트해야 합니다.';
-  }
-
-  @override
-  String get portForwardRemoteNeedsAgent =>
-      'Monitor agent를 통한 원격 전달에는 더 최신 agent가 필요합니다. 서버에서 업데이트하세요.';
 
   @override
   String get rangeLive => '실시간';
@@ -2355,7 +2288,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get localServerTip =>
-      '상태 스크립트를 이 기기에서 실행해 직접 읽습니다. SSH와 Monitor HTTP는 사용하지 않으며 해당 설정은 유지됩니다.';
+      '상태 스크립트를 이 기기에서 실행해 직접 읽습니다. SSH와 Monitor 에이전트는 사용하지 않으며 해당 설정은 유지됩니다.';
 
   @override
   String get localServerUnsupported =>
@@ -2699,7 +2632,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get monitorNoRemoteAccess =>
-      '이 agent는 모니터링 전용으로 설정되어 있습니다. 여기서 터미널을 열거나 명령을 실행하거나 파일을 탐색할 수 없습니다. 이 기능을 사용하려면 agent의 config.toml에서 [remote_access]를 수정하세요.';
+      '이 agent는 암호화되지 않은 HTTP에서는 모니터링 외의 작업을 거부합니다. HTTPS로 연결하거나 agent([remote_access] allow_insecure)와 이 앱 모두에서 HTTP를 허용하세요.';
 
   @override
   String get monitorAgentTooOld =>
@@ -4895,35 +4828,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get copyLink => '링크 복사';
 
   @override
-  String funcNeedsAgentPermission(String func) {
-    return '이 Monitor agent의 계정에는 $func 권한이 없습니다. agent 관리자에게 요청하세요.';
-  }
-
-  @override
   String funcNeedsAgentHttps(String func) {
     return '$func에는 이 Monitor agent로의 HTTPS 연결 또는 agent와 이 앱 모두에서 HTTP 허용이 필요합니다.';
   }
 
   @override
-  String funcNeedsAgentSetup(String func) {
-    return '이 Monitor agent에는 $func이(가) 설정되어 있지 않습니다. 운영자가 설정해야 합니다.';
-  }
-
-  @override
-  String get monitorFilesReadOnly =>
-      '읽기 전용: 이 계정은 agent의 파일을 볼 수 있지만 변경할 수는 없습니다.';
-
-  @override
   String get monitorAccess => '접근';
-
-  @override
-  String get monitorAccounts => '계정';
-
-  @override
-  String get monitorRoles => '역할';
-
-  @override
-  String get monitorRole => '역할';
 
   @override
   String get monitorChangePassword => '비밀번호 변경';
@@ -4935,9 +4845,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get monitorCurrentPassword => '현재 비밀번호';
 
   @override
-  String get monitorReauthTip => '접근 권한을 변경하려면 비밀번호를 다시 입력해야 합니다.';
-
-  @override
   String get monitorPasswordTooShort => '8자 이상';
 
   @override
@@ -4945,74 +4852,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get monitorErrReauth => '비밀번호가 틀렸습니다.';
-
-  @override
-  String get monitorErrLastAdmin => 'agent에는 관리자 계정이 하나 이상 있어야 합니다.';
-
-  @override
-  String get monitorErrConflict => '이미 존재하거나 아직 사용 중입니다.';
-
-  @override
-  String get monitorErrForbidden => '관리자만 할 수 있습니다.';
-
-  @override
-  String get monitorRoleNameRule => '소문자, 숫자, - 및 _, 최대 32자';
-
-  @override
-  String get monitorGrantShell => '셸과 명령';
-
-  @override
-  String get monitorGrantShellTip =>
-      '터미널, 프로세스, 서비스, 컨테이너, 스니펫, 전원 — agent 계정으로 실행';
-
-  @override
-  String get monitorGrantSshTerminal => 'SSH를 통한 패널 터미널';
-
-  @override
-  String get monitorGrantVirt => '가상화';
-
-  @override
-  String get monitorGrantVirtTip => '에이전트 웹 패널에서 연결하는 Proxmox VE, libvirt, BMC';
-
-  @override
-  String get monitorGrantFiles => '파일';
-
-  @override
-  String get monitorGrantConnect => '외부 연결';
-
-  @override
-  String get monitorGrantConnectTip => '로컬 및 동적 포트 전달, 원격 데스크톱';
-
-  @override
-  String get monitorGrantConnectAllow =>
-      '허용된 대상 (IP 또는 CIDR, 선택적으로 :포트 또는 :시작-끝; 한 줄에 하나, 비우면 제한 없음)';
-
-  @override
-  String get monitorGrantListen => '서버에서 수신 대기';
-
-  @override
-  String get monitorGrantListenTip => '원격 포트 전달';
-
-  @override
-  String get monitorGrantListenPublic => 'loopback이 아닌 주소';
-
-  @override
-  String get monitorGrantPorts => '포트 범위 (비우면 제한 없음)';
-
-  @override
-  String get monitorGrantOff => '끔';
-
-  @override
-  String get monitorBuiltin => '기본 제공';
-
-  @override
-  String get monitorAdminRoleTip => '계정, 역할 및 agent 설정을 관리합니다';
-
-  @override
-  String get monitorYou => '나';
-
-  @override
-  String get monitorNoAccessToSettings => '관리자만 이 agent의 설정을 변경할 수 있습니다.';
 
   @override
   String get monitorPasswordNotSaved =>
@@ -5239,9 +5078,6 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get monitorBackupUnsupported =>
       '이 Monitor 에이전트는 백업을 저장할 수 없습니다. 에이전트를 업데이트하세요.';
-
-  @override
-  String get monitorBackupAdminOnly => 'Monitor 에이전트의 관리자 계정만 백업을 저장할 수 있습니다.';
 
   @override
   String monitorBackupTooLarge(String max) {
@@ -5703,6 +5539,1237 @@ class AppLocalizationsKo extends AppLocalizations {
   String get kbServerClose => '서버: 상세 정보 닫기';
 
   @override
+  String get storageTitle => '저장소';
+
+  @override
+  String get storageLinuxOnly =>
+      'Storage management currently supports Linux servers.';
+
+  @override
+  String get storageDisks => '디스크';
+
+  @override
+  String get storageRaid => 'RAID 어레이';
+
+  @override
+  String get storagePools => 'ZFS 풀';
+
+  @override
+  String get storageNoFilesystem => '파일 시스템 없음';
+
+  @override
+  String storageUsage(Object total, Object used) {
+    return '$total 중 $used';
+  }
+
+  @override
+  String storageFree(Object size) {
+    return '$size free';
+  }
+
+  @override
+  String get storageBusyMounted => '사용 중';
+
+  @override
+  String get storageBusySwap => '스왑';
+
+  @override
+  String get storageBusyRaid => 'RAID 어레이에 포함';
+
+  @override
+  String get storageBusyPool => '풀에 포함';
+
+  @override
+  String get storageBusyVolume => '볼륨을 포함';
+
+  @override
+  String get storageBusyReadOnly => '읽기 전용';
+
+  @override
+  String get storageBusySystem => '시스템 파티션';
+
+  @override
+  String get storageSystemMount => '시스템에서 사용하는 마운트 지점이며 마운트된 상태로 유지됩니다.';
+
+  @override
+  String get storageNotMounted => '더 이상 마운트된 항목이 없습니다.';
+
+  @override
+  String get storageMount => '마운트';
+
+  @override
+  String get storageUnmount => '마운트 해제';
+
+  @override
+  String get storageFormat => '포맷';
+
+  @override
+  String get storageInitialize => '초기화';
+
+  @override
+  String get storageSmartTest => 'SMART 테스트';
+
+  @override
+  String get storageFilesystem => '파일 시스템';
+
+  @override
+  String get storageLabel => '레이블';
+
+  @override
+  String get storageMountpoint => '마운트 지점';
+
+  @override
+  String get storageMountPersist => '시작할 때마다 다시 마운트 (/etc/fstab)';
+
+  @override
+  String get storageMountOwn => 'ServerBox가 여기에 쓸 수 있도록 허용 (백업용)';
+
+  @override
+  String get storageName => '이름';
+
+  @override
+  String get storageLevel => '레벨';
+
+  @override
+  String get storageLayout => '레이아웃';
+
+  @override
+  String storagePickDevices(Object count) {
+    return '장치를 $count개 이상 선택하세요. 저장된 데이터가 모두 사라집니다.';
+  }
+
+  @override
+  String get storageCreateRaid => 'RAID 어레이 만들기';
+
+  @override
+  String storageCreateRaidBody(Object devices, Object level, Object name) {
+    return '$devices로 /dev/$name (RAID $level)을 만듭니다. 장치의 모든 데이터가 사라집니다.';
+  }
+
+  @override
+  String get storageCreatePool => '풀 만들기';
+
+  @override
+  String storageCreatePoolBody(Object devices, Object layout, Object name) {
+    return '$devices로 풀 $name ($layout)을 만듭니다. 장치의 모든 데이터가 사라집니다.';
+  }
+
+  @override
+  String storageFormatBody(Object device) {
+    return '$device에 새 파일 시스템을 만듭니다. 모든 데이터가 사라집니다.';
+  }
+
+  @override
+  String storageInitializeBody(Object device) {
+    return '$device를 지우고 디스크 전체를 사용하는 파티션 하나를 만듭니다. 모든 데이터가 사라집니다.';
+  }
+
+  @override
+  String storageMountBody(Object device, Object mountpoint) {
+    return '$device를 $mountpoint에 마운트합니다.';
+  }
+
+  @override
+  String storageUnmountBody(Object mountpoint) {
+    return '$mountpoint를 마운트 해제하고 시작할 때 자동 마운트를 중지합니다.';
+  }
+
+  @override
+  String storageSmartTestBody(Object device) {
+    return '$device에서 짧은 자체 테스트를 시작합니다. 몇 분 정도 걸리며 진행 상황과 결과가 여기에 표시됩니다.';
+  }
+
+  @override
+  String get storageAddMember => '디스크 추가';
+
+  @override
+  String storageAddMemberBody(Object array, Object device) {
+    return '$device를 /dev/$array에 추가합니다. 고장 난 멤버를 교체하거나 예비 장치로 대기합니다. 저장된 데이터가 사라집니다.';
+  }
+
+  @override
+  String get storageRemoveMember => '제거';
+
+  @override
+  String storageRemoveMemberBody(Object array, Object device) {
+    return '$device를 고장으로 표시하고 /dev/$array에서 제거합니다. 어레이는 계속 작동하며, 활성 멤버였다면 성능 저하 상태가 됩니다.';
+  }
+
+  @override
+  String get storageDeleteRaid => 'RAID 어레이 삭제';
+
+  @override
+  String storageDeleteRaidBody(Object array) {
+    return '/dev/$array를 중지하고 멤버의 RAID 서명을 지웁니다. 데이터가 사라집니다.';
+  }
+
+  @override
+  String get storageDestroyPool => '풀 제거';
+
+  @override
+  String storageDestroyPoolBody(Object name) {
+    return '풀 $name과 그 안의 모든 데이터를 제거합니다.';
+  }
+
+  @override
+  String get storageScrub => '스크럽';
+
+  @override
+  String storageScrubBody(Object name) {
+    return '풀 $name 전체를 읽고 가능한 항목을 복구합니다. 백그라운드에서 실행됩니다.';
+  }
+
+  @override
+  String get storageState => '상태';
+
+  @override
+  String get storageHealthy => '정상';
+
+  @override
+  String get storageDegraded => '성능 저하';
+
+  @override
+  String storageSync(Object action) {
+    return '동기화 ($action)';
+  }
+
+  @override
+  String get storageFaulty => '고장';
+
+  @override
+  String get storageSpare => '예비';
+
+  @override
+  String get storageActive => '작동 중';
+
+  @override
+  String get storageScan => '마지막 검사';
+
+  @override
+  String storageErrors(Object count) {
+    return '오류 $count개';
+  }
+
+  @override
+  String get storageNoDisks => '디스크 없음';
+
+  @override
+  String get storageNoArrays => '어레이 없음';
+
+  @override
+  String get storageNoPools => '풀 없음';
+
+  @override
+  String get storageNoMdadm => 'mdadm이 설치되지 않아 여기서 어레이를 만들거나 변경할 수 없습니다.';
+
+  @override
+  String get storageNoZfs => 'ZFS (zfsutils)가 설치되지 않았습니다.';
+
+  @override
+  String storageTypeToConfirm(Object word) {
+    return '확인하려면 $word 입력';
+  }
+
+  @override
+  String get storageConfirmationMismatch =>
+      'The confirmation text did not match.';
+
+  @override
+  String storageInUse(Object device) {
+    return '$device 사용 중입니다.';
+  }
+
+  @override
+  String get storageBusy => '다른 디스크 변경 작업이 진행 중입니다.';
+
+  @override
+  String get storageHealthRead => '디스크 상태 읽기';
+
+  @override
+  String get storageHealthWearing => '마모 중';
+
+  @override
+  String get storageHealthFailing => '고장 임박';
+
+  @override
+  String get storageHealthAsleep => '절전 중';
+
+  @override
+  String get storageHealthUnsupported => 'SMART 없음';
+
+  @override
+  String storageTemperature(Object value) {
+    return '$value °C';
+  }
+
+  @override
+  String storagePowerOn(Object hours) {
+    return '전원 켜짐 $hours시간';
+  }
+
+  @override
+  String storageBadSectors(Object count) {
+    return '$count개 불량 섹터';
+  }
+
+  @override
+  String storageTesting(Object percent) {
+    return '자체 테스트: $percent% 남음';
+  }
+
+  @override
+  String get storageGrowPartition => '파티션 확장';
+
+  @override
+  String storageGrowPartitionBody(Object device) {
+    return '$device를 뒤쪽의 빈 공간까지 확장합니다. 이후 파일 시스템도 확장하세요.';
+  }
+
+  @override
+  String get storageEncrypt => '암호화 (LUKS)';
+
+  @override
+  String get storagePassphrase => '암호 구문';
+
+  @override
+  String get storagePassphraseAgain => '다시 입력';
+
+  @override
+  String get storagePassphraseHint =>
+      '8자 이상이어야 합니다. 없으면 데이터를 읽을 수 없으니 안전하게 보관하세요.';
+
+  @override
+  String get storageInvalidPassphrase => '암호 구문은 한 줄로 8~512자여야 합니다.';
+
+  @override
+  String get storagePassphrasesDiffer => '암호 구문이 일치하지 않습니다.';
+
+  @override
+  String get storageEncrypted => '암호화됨';
+
+  @override
+  String get storageLocked => '잠김';
+
+  @override
+  String get storageUnlock => '잠금 해제';
+
+  @override
+  String storageUnlockBody(Object device) {
+    return '암호 구문으로 $device를 엽니다.';
+  }
+
+  @override
+  String get storageLock => '잠금';
+
+  @override
+  String storageLockBody(Object device) {
+    return '$device를 닫습니다. 파일 시스템을 먼저 마운트 해제해야 합니다.';
+  }
+
+  @override
+  String get storageReplace => '교체';
+
+  @override
+  String storageReplaceBody(Object name, Object old, Object replacement) {
+    return '풀 $name의 $old를 $replacement(으)로 교체합니다. 풀이 데이터를 복사하며 $replacement의 내용은 손실됩니다.';
+  }
+
+  @override
+  String get storageAttach => '미러링';
+
+  @override
+  String storageAttachBody(Object existing, Object replacement) {
+    return '$existing을 $replacement(으)로 미러링합니다. $replacement의 내용은 손실됩니다.';
+  }
+
+  @override
+  String get storageAddSpare => '예비 장치 추가';
+
+  @override
+  String storageAddSpareBody(Object devices, Object name) {
+    return '$devices을(를) 풀 $name에 예비 장치로 추가합니다. 내용이 손실됩니다.';
+  }
+
+  @override
+  String get storageRemoveDevice => '제거';
+
+  @override
+  String storageRemoveDeviceBody(Object device, Object name) {
+    return '풀 $name에서 $device를 제거합니다.';
+  }
+
+  @override
+  String get storageOnline => '온라인으로 전환';
+
+  @override
+  String storageOnlineBody(Object device, Object name) {
+    return '$device를 풀 $name에 다시 추가하고 디스크 전체로 확장합니다.';
+  }
+
+  @override
+  String get storageDetails => '세부 정보';
+
+  @override
+  String get storageAttributes => '속성';
+
+  @override
+  String get storageAttrValue => '값';
+
+  @override
+  String get storageAttrWorst => '최저값';
+
+  @override
+  String get storageAttrThresh => '임계값';
+
+  @override
+  String get storageSelfTests => '자가 테스트';
+
+  @override
+  String get storageTestShort => '짧게';
+
+  @override
+  String get storageTestLong => '길게';
+
+  @override
+  String get storageTestPassed => '통과';
+
+  @override
+  String get storageTestFailed => '실패';
+
+  @override
+  String get storageTestAborted => '중지됨';
+
+  @override
+  String storageAtHours(Object hours) {
+    return '$hours시간에';
+  }
+
+  @override
+  String get storageNothingToShow => '표시할 내용 없음';
+
+  @override
+  String get storageLongTest => '장시간 테스트';
+
+  @override
+  String storageSmartLongTestBody(Object device) {
+    return '$device에서 장시간 자가 테스트를 시작합니다. 디스크 전체를 읽으므로 대용량 디스크는 몇 시간 걸립니다.';
+  }
+
+  @override
+  String get storageMountedInside => '먼저 파일 시스템을 마운트 해제하세요.';
+
+  @override
+  String get storageNotRemovable => '여기서는 예비 또는 캐시 장치만 제거할 수 있습니다.';
+
+  @override
+  String get storageNotGrowable => 'This device cannot be grown here.';
+
+  @override
+  String get storageOverlapping => 'Choose devices that do not overlap.';
+
+  @override
+  String get storageInvalidDevice =>
+      'The device is invalid or no longer available.';
+
+  @override
+  String get storageInvalidMountpoint => 'The mount point is invalid.';
+
+  @override
+  String get storageInvalidName => 'The name is invalid.';
+
+  @override
+  String get storageInvalidFilesystem => 'The filesystem is not supported.';
+
+  @override
+  String get storageInvalidLabel => 'The label is invalid.';
+
+  @override
+  String get storageInvalidLevel => 'The RAID level or pool layout is invalid.';
+
+  @override
+  String get storageTooFewDevices => 'Not enough valid devices were selected.';
+
+  @override
+  String get storageExpand => '확장';
+
+  @override
+  String storageExpandBody(Object device) {
+    return '$device의 파일 시스템을 장치 전체 크기로 확장합니다. 마운트된 상태로 유지됩니다.';
+  }
+
+  @override
+  String get storageGrowRaid => '확장';
+
+  @override
+  String storageGrowRaidBody(Object array, Object device) {
+    return '$device를 /dev/$array의 추가 작동 멤버로 추가합니다. RAID 1은 미러가 하나 더 생기고, RAID 5와 6은 재구성이 끝나면 공간이 늘어납니다. 재구성에는 몇 시간이 걸릴 수 있습니다. 이후 파일 시스템을 확장하세요. $device에 저장된 데이터는 사라집니다.';
+  }
+
+  @override
+  String get storageAddToPool => '디스크 추가';
+
+  @override
+  String storageAddToPoolBody(Object devices, Object layout, Object name) {
+    return '공간을 늘리기 위해 $devices를 $layout 레이아웃으로 풀 $name에 추가합니다. 추가 후에는 제거할 수 없으며 저장된 데이터가 사라집니다.';
+  }
+
+  @override
+  String get sharingTitle => '공유';
+
+  @override
+  String get sharingSmb => 'SMB';
+
+  @override
+  String get sharingNfs => 'NFS';
+
+  @override
+  String get sharingService => '서비스';
+
+  @override
+  String get sharingRunning => '실행 중';
+
+  @override
+  String get sharingStopped => '중지됨';
+
+  @override
+  String get sharingNfsServer => 'NFS 서버';
+
+  @override
+  String get sharingNoSamba =>
+      'Samba가 설치되지 않았습니다. Windows, macOS, Linux에서 SMB 공유를 열 수 있습니다.';
+
+  @override
+  String get sharingNoNfs =>
+      'NFS 서버가 설치되지 않았습니다. Linux와 macOS에서 NFS 내보내기를 마운트할 수 있습니다.';
+
+  @override
+  String get sharingInstallSamba => 'Samba 설치';
+
+  @override
+  String get sharingInstallSambaBody => '시스템 패키지 관리자로 Samba를 설치합니다.';
+
+  @override
+  String get sharingInstallNfs => 'NFS 서버 설치';
+
+  @override
+  String get sharingInstallNfsBody => '시스템 패키지 관리자로 NFS 서버를 설치합니다.';
+
+  @override
+  String get sharingAddShare => '공유 추가';
+
+  @override
+  String get sharingAddExport => '내보내기 추가';
+
+  @override
+  String get sharingEdit => '편집';
+
+  @override
+  String get sharingRemove => '제거';
+
+  @override
+  String get sharingSave => '저장';
+
+  @override
+  String sharingSaveSmbBody(Object name, Object path) {
+    return '$path를 SMB에서 $name(으)로 공유한 후 Samba를 다시 불러옵니다.';
+  }
+
+  @override
+  String sharingSaveNfsBody(Object path) {
+    return '$path를 NFS로 내보낸 후 내보내기 목록을 다시 불러옵니다.';
+  }
+
+  @override
+  String sharingRemoveSmbBody(Object name) {
+    return '$name 공유를 중지합니다. 폴더와 파일은 그대로 유지됩니다.';
+  }
+
+  @override
+  String sharingRemoveNfsBody(Object path) {
+    return '$path 내보내기를 중지합니다. 폴더와 파일은 그대로 유지됩니다.';
+  }
+
+  @override
+  String get sharingElsewhere => 'ServerBox 외부에서 설정';
+
+  @override
+  String get sharingNoShares => 'SMB 공유가 없습니다';
+
+  @override
+  String get sharingNoExports => 'NFS 내보내기가 없습니다';
+
+  @override
+  String get sharingReadOnly => '읽기 전용';
+
+  @override
+  String get sharingReadWrite => '읽기 및 쓰기';
+
+  @override
+  String get sharingGuest => '게스트';
+
+  @override
+  String get sharingGuestLabel => '네트워크의 누구나 계정 없이 접근하도록 허용';
+
+  @override
+  String get sharingUsersHint => '접근을 허용할 계정 (선택하지 않으면 SMB 비밀번호가 있는 모든 계정):';
+
+  @override
+  String get sharingFolder => '폴더';
+
+  @override
+  String get sharingFolderHint => '서버의 폴더입니다. 예: 저장소에서 마운트한 디스크.';
+
+  @override
+  String get sharingComment => '설명';
+
+  @override
+  String get sharingPasswords => 'SMB 비밀번호';
+
+  @override
+  String get sharingPasswordsBody =>
+      'Samba는 별도의 비밀번호를 사용합니다. 연결할 계정마다 비밀번호를 설정하세요.';
+
+  @override
+  String get sharingSetPassword => '비밀번호 설정';
+
+  @override
+  String get sharingNewPassword => '새 SMB 비밀번호';
+
+  @override
+  String get sharingNewPasswordAgain => '비밀번호 다시 입력';
+
+  @override
+  String get sharingPasswordsDiffer => '두 비밀번호가 일치하지 않습니다.';
+
+  @override
+  String get sharingClientsHint =>
+      '마운트할 수 있는 대상: *는 모두, 호스트, 주소 또는 192.168.1.0/24와 같은 네트워크입니다.';
+
+  @override
+  String get sharingClient => '클라이언트';
+
+  @override
+  String get sharingAddClient => '클라이언트 추가';
+
+  @override
+  String get sharingSquashRoot => 'root를 nobody로 매핑';
+
+  @override
+  String get sharingSquashAll => '모두를 nobody로 매핑';
+
+  @override
+  String get sharingSquashNone => 'root를 root로 유지';
+
+  @override
+  String sharingNotAFolder(Object path) {
+    return '$path은(는) 서버의 폴더가 아닙니다.';
+  }
+
+  @override
+  String sharingRefused(Object detail) {
+    return '설정이 거부되어 이전 설정으로 복원되었습니다: $detail';
+  }
+
+  @override
+  String get sharingDuplicate => '다른 공유에서 이미 이 이름 또는 폴더를 사용 중입니다.';
+
+  @override
+  String get sharingInvalidName => '이름에는 문자, 숫자, _ . -만 사용할 수 있습니다 (최대 32자).';
+
+  @override
+  String get sharingInvalidPath => '폴더는 따옴표, 백슬래시, ..가 없는 절대 경로여야 합니다.';
+
+  @override
+  String get sharingInvalidClient => '클라이언트는 *, 호스트, 주소 또는 네트워크일 수 있습니다.';
+
+  @override
+  String get sharingInvalidPassword => '이 비밀번호는 사용할 수 없습니다.';
+
+  @override
+  String get sharingTimeMachineOption => 'Time Machine 백업 (Mac)';
+
+  @override
+  String get sharingRecycleOption => '삭제한 파일을 .recycle에 보관';
+
+  @override
+  String get sharingTimeMachine => 'Time Machine';
+
+  @override
+  String get sharingRecycle => '휴지통';
+
+  @override
+  String get sharingConnectedNow => '현재 연결';
+
+  @override
+  String get sharingNobodyConnected => '연결된 사용자가 없습니다';
+
+  @override
+  String get sharingShowConnections => '연결 표시';
+
+  @override
+  String get sharingShowConnectionsBody => 'root 권한으로 연결 정보를 읽습니다.';
+
+  @override
+  String get sharingConnectionsLinuxOnly =>
+      'Sharing management currently supports Linux servers.';
+
+  @override
+  String get agentThisDevice => '이 기기';
+
+  @override
+  String get agentSource => '출처';
+
+  @override
+  String agentDeleteRemoteTip(String server) {
+    return '$server에서 작업을 삭제합니다.';
+  }
+
+  @override
+  String get agentPlan => '계획';
+
+  @override
+  String get agentRemoteGone => '이 작업은 더 이상 서버에 없습니다.';
+
+  @override
+  String agentRemoteReplyHint(String server) {
+    return '$server의 작업에 답장';
+  }
+
+  @override
+  String agentRemoteStatus(String server, String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'queued': '대기 중',
+      'running': '실행 중',
+      'waiting': '응답 대기 중',
+      'done': '완료',
+      'failed': '실패',
+      'cancelled': '중지됨',
+      'other': '',
+    });
+    return '$server · $_temp0';
+  }
+
+  @override
+  String agentRemoteAlways(String rule) {
+    return '$rule 항상 허용';
+  }
+
+  @override
+  String agentRemoteTypeToRun(String name) {
+    return '실행하려면 $name 입력';
+  }
+
+  @override
+  String get agentRemoteRunAnyway => '그래도 실행';
+
+  @override
+  String agentRemoteSudoFor(String user) {
+    return '$user의 비밀번호';
+  }
+
+  @override
+  String get agentRemoteSudoWrong => '비밀번호가 틀렸습니다';
+
+  @override
+  String get agentRemoteSudoRemember => '15분 동안 기억';
+
+  @override
+  String agentNewOn(String place) {
+    return '$place에서 새 대화 시작';
+  }
+
+  @override
+  String agentRemoteNewHint(String server) {
+    return '$server의 agent에게 질문하거나 작업을 맡기세요.';
+  }
+
+  @override
+  String get agentPermissionMode => '권한 모드';
+
+  @override
+  String get agentModeAuto => '자동';
+
+  @override
+  String get agentModeManual => '수동';
+
+  @override
+  String get agentModeBypass => '모두 허용';
+
+  @override
+  String get agentModeBypassOff => '이 서버에서 사용 중지됨';
+
+  @override
+  String get agentModeBypassWarn => '모두 허용: 삭제, 재시작, 설정 변경이 확인 없이 실행됩니다.';
+
+  @override
+  String get webApps => '웹 앱';
+
+  @override
+  String get webAppUnhealthy => '비정상';
+
+  @override
+  String get webAppDown => '다운';
+
+  @override
+  String get webAppInstalling => '설치 중';
+
+  @override
+  String get webAppsEmpty => '아직 웹 앱이 없습니다. Monitor 패널의 App Store에서 배포하세요.';
+
+  @override
+  String get deskAppOpensInPanel => '패널에서 열립니다';
+
+  @override
+  String get webAppVersion => '버전';
+
+  @override
+  String get webAppHomepage => '홈페이지';
+
+  @override
+  String webAppUpdate(String version) {
+    return '$version 버전을 사용할 수 있습니다. Monitor 패널에서 업데이트하세요.';
+  }
+
+  @override
+  String noticeStackDown(String app) {
+    return '$app이(가) 중지됨';
+  }
+
+  @override
+  String noticeStackDownBody(String services) {
+    return '실행 중이 아님: $services.';
+  }
+
+  @override
+  String get noticeStackDownBodyEmpty => '실행 중인 컨테이너가 없습니다.';
+
+  @override
+  String noticeStackUnhealthy(String app) {
+    return '$app 상태가 비정상임';
+  }
+
+  @override
+  String noticeStackUnhealthyBody(String services) {
+    return '상태 확인 실패: $services.';
+  }
+
+  @override
+  String noticeStackBack(String app) {
+    return '$app이(가) 다시 실행 중임';
+  }
+
+  @override
+  String get noticeStackBackBody => '모든 컨테이너가 실행 중입니다.';
+
+  @override
+  String noticeStackUpdate(String app) {
+    return '$app 업데이트 사용 가능';
+  }
+
+  @override
+  String noticeStackUpdateBody(String project, String version, String current) {
+    return '$project $version을(를) 설치할 수 있습니다 (현재: $current).';
+  }
+
+  @override
+  String noticeStorageArrayDegraded(String array) {
+    return '/dev/$array 성능 저하';
+  }
+
+  @override
+  String get noticeStorageArrayDegradedBody =>
+      '멤버가 고장 났거나 누락되어 어레이가 중복성 없이 작동합니다.';
+
+  @override
+  String noticeStorageArrayBack(String array) {
+    return '/dev/$array 정상 복구';
+  }
+
+  @override
+  String get noticeStorageArrayBackBody => '모든 멤버가 작동합니다.';
+
+  @override
+  String noticeStoragePoolUnhealthy(String pool, String health) {
+    return '풀 $pool 상태: $health';
+  }
+
+  @override
+  String get noticeStoragePoolUnhealthyBody => '저장소를 열어 어떤 장치인지 확인하세요.';
+
+  @override
+  String noticeStoragePoolBack(String pool) {
+    return '풀 $pool 온라인 복구';
+  }
+
+  @override
+  String get noticeStoragePoolBackBody => '모든 장치가 작동합니다.';
+
+  @override
+  String noticeStorageDiskFailing(String device) {
+    return '$device 고장 임박';
+  }
+
+  @override
+  String get noticeStorageDiskFailingBody =>
+      'SMART 확인 또는 자체 테스트에 실패했습니다. 저장된 데이터를 다른 곳에 복사하고 디스크를 교체하세요.';
+
+  @override
+  String noticeStorageDiskSectors(String device, int count) {
+    return '$device에 불량 섹터 $count개 있음';
+  }
+
+  @override
+  String noticeStorageDiskSectorsBody(int was) {
+    return '이전에는 $was개였습니다. 섹터가 손실되는 디스크는 곧 고장 날 수 있습니다.';
+  }
+
+  @override
+  String noticeStorageMaintenanceFailed(String task) {
+    return '저장소 유지 관리가 실행되지 않음: $task';
+  }
+
+  @override
+  String get storageTaskScrub => '풀 스크럽 및 어레이 확인';
+
+  @override
+  String get storageTaskSmartShort => '짧은 SMART 테스트';
+
+  @override
+  String get storageTaskSmartLong => '긴 SMART 테스트';
+
+  @override
+  String get storageNeedsSudo =>
+      'sudo에서 비밀번호를 요청했습니다. agent를 root로 실행하거나 위 명령을 허용하세요.';
+
+  @override
+  String get monitorTab => 'Monitor';
+
+  @override
+  String get monitorOverview => '개요';
+
+  @override
+  String get monitorNotices => '알림';
+
+  @override
+  String get monitorAudit => '감사 로그';
+
+  @override
+  String get monitorLive => '세션 및 기기';
+
+  @override
+  String get monitorNoAgents => '아직 Monitor 에이전트로 연결된 서버가 없습니다.';
+
+  @override
+  String get monitorNotOffered => '이 에이전트 버전은 이 기능을 제공하지 않습니다. 에이전트를 업데이트하세요.';
+
+  @override
+  String get monitorAlertsNotOffered => '이 에이전트 버전은 알림을 보고하지 않습니다.';
+
+  @override
+  String get monitorAlertsNone => '발생 중인 규칙이 없습니다.';
+
+  @override
+  String monitorFiringFor(String duration) {
+    return '$duration 동안 지속';
+  }
+
+  @override
+  String monitorAgentVersion(String version) {
+    return '에이전트 $version';
+  }
+
+  @override
+  String monitorAgentUpdate(String version) {
+    return '$version 사용 가능';
+  }
+
+  @override
+  String monitorUnread(int count) {
+    return '읽지 않음 $count개';
+  }
+
+  @override
+  String monitorAppsUnwell(int count) {
+    return '문제가 있는 앱: $count';
+  }
+
+  @override
+  String monitorAppsUpdates(int count) {
+    return '앱 업데이트: $count';
+  }
+
+  @override
+  String get monitorUpdatesOnly => '업데이트만';
+
+  @override
+  String get monitorNoUpdates => '업데이트가 있는 앱이 없습니다.';
+
+  @override
+  String get monitorNoticesEmpty => '알림이 없습니다.';
+
+  @override
+  String get monitorMarkAllRead => '모두 읽음으로 표시';
+
+  @override
+  String get monitorAuditExec => '명령';
+
+  @override
+  String get monitorAuditMachine => '머신 관리';
+
+  @override
+  String get monitorAuditListen => '수신 대기 포트';
+
+  @override
+  String get monitorAuditTicket => '연결 티켓';
+
+  @override
+  String get monitorAuditPush => '알림 채널';
+
+  @override
+  String get monitorAuditAdmin => '계정';
+
+  @override
+  String get monitorAuditDenied => '거부됨';
+
+  @override
+  String get monitorLoadMore => '더 불러오기';
+
+  @override
+  String get monitorLiveSessions => '터미널 세션';
+
+  @override
+  String get monitorLiveConnections => '연결';
+
+  @override
+  String get monitorLiveWatchTokens => '워치 및 위젯 토큰';
+
+  @override
+  String get monitorLiveDevices => '로그인한 기기';
+
+  @override
+  String get monitorLiveDevicesTip =>
+      '기기를 잊으면 다음 로그인부터 계정 전체의 실패 시도 제한이 적용됩니다. 기기가 로그아웃되지는 않습니다. 비밀번호를 가진 기기는 다시 로그인합니다. 기기를 차단하려면 비밀번호를 변경하세요.';
+
+  @override
+  String get monitorLiveAttached => '연결됨';
+
+  @override
+  String get monitorLiveDetached => '분리됨';
+
+  @override
+  String get monitorLiveEnd => '종료';
+
+  @override
+  String get monitorLiveRevoke => '취소';
+
+  @override
+  String get monitorLiveForget => '삭제';
+
+  @override
+  String monitorLiveEndSessionConfirm(String name) {
+    return '터미널 세션 \"$name\"을(를) 종료할까요? 그 안에서 실행 중인 것은 중지됩니다.';
+  }
+
+  @override
+  String monitorLiveEndConnectionConfirm(String name) {
+    return '$name 연결을 종료할까요?';
+  }
+
+  @override
+  String monitorLiveRevokeConfirm(String name) {
+    return '$name의 토큰을 취소할까요? 다시 설정할 때까지 업데이트가 멈춥니다.';
+  }
+
+  @override
+  String monitorLiveForgetConfirm(String name) {
+    return '$name을(를) 삭제할까요?';
+  }
+
+  @override
+  String monitorLiveExpires(String time) {
+    return '$time에 만료';
+  }
+
+  @override
+  String get monitorLiveStream => '중계 연결';
+
+  @override
+  String get monitorLiveAccepted => '포워딩된 연결';
+
+  @override
+  String get monitorLiveConsole => '콘솔';
+
+  @override
+  String monitorAgentsCount(int count) {
+    return '에이전트 $count개';
+  }
+
+  @override
+  String get monitorStatOnline => '온라인';
+
+  @override
+  String get monitorStatFiring => '발생 중인 알림';
+
+  @override
+  String get monitorStatUnread => '읽지 않음';
+
+  @override
+  String get monitorStatUpdates => '앱 업데이트';
+
+  @override
+  String get monitorAuditEmpty => '일치하는 기록이 없습니다.';
+
+  @override
+  String get monitorLiveNoSessions => '열려 있는 터미널 세션이 없습니다.';
+
+  @override
+  String get monitorLiveNoConnections => '전달 또는 중계 중인 연결이 없습니다.';
+
+  @override
+  String get monitorLiveNoTokens => '페어링된 워치나 위젯이 없습니다.';
+
+  @override
+  String get monitorLiveNoDevices => '로그인한 기기가 없습니다.';
+
+  @override
+  String get monitorUpdateAgent => '에이전트 업데이트';
+
+  @override
+  String get monitorAgentTooOldTip => '업데이트 방법은 Monitor 탭에 있습니다.';
+
+  @override
+  String get monitorAgentTooOldBody =>
+      '이 에이전트는 단일 비밀번호 이전 버전이라 앱에서 로그인할 수 없습니다. 업데이트 후 비밀번호는 가장 오래된 관리자 계정의 비밀번호가 됩니다.';
+
+  @override
+  String monitorAgentOutdatedBody(String latest, String running) {
+    return '$latest이(가) 나왔습니다. 이 에이전트는 $running입니다.';
+  }
+
+  @override
+  String get monitorUpdateRunHint => '서버에서, 에이전트를 설치한 계정으로 실행하세요:';
+
+  @override
+  String get monitorUpdateSshHint =>
+      '터미널에서 실행합니다. 시스템 전체에 설치된 에이전트를 SSH 터미널에서 업데이트하면 sudo가 그곳에서 비밀번호를 요구합니다.';
+
+  @override
+  String get monitorUpdateNoSsh => '앱이 이 서버에서 터미널을 열 수 없습니다. 서버에서 직접 실행하세요.';
+
+  @override
+  String get monitorUpdateDocker => 'Docker인가요? 새 이미지를 받아 컨테이너를 다시 만드세요.';
+
+  @override
+  String get monitorUpdateAfter => '다시 시작되면 Monitor 탭을 새로 고치세요.';
+
+  @override
+  String get monitorUpdateInTerminal => '터미널에서 실행';
+
+  @override
+  String get monitorHowToUpdate => '업데이트 방법';
+
+  @override
+  String get monitorUpdateNix =>
+      'NixOS 모듈로 설치됨: 시스템 구성에서 업데이트하고 다시 rebuild하세요.';
+
+  @override
+  String get noticeAgentUpdate => '에이전트 업데이트가 있습니다';
+
+  @override
+  String get monitorUpdateLegacyUser => '계정 이름';
+
+  @override
+  String get monitorUpdateLegacyHint =>
+      '이 에이전트는 아직 계정 이름과 비밀번호로 로그인합니다. 앱이 전에 쓰던 이름(보통 admin)과 저장된 비밀번호를 사용합니다.';
+
+  @override
+  String get monitorUpdateNow => '지금 업데이트';
+
+  @override
+  String get monitorUpdating => '업데이트 중…';
+
+  @override
+  String get monitorUpdateRestarting => '에이전트가 재시작 중입니다. 몇 초 후 연결이 돌아옵니다…';
+
+  @override
+  String monitorUpdateDone(String version) {
+    return '업데이트됨: 에이전트가 $version으로 실행 중입니다.';
+  }
+
+  @override
+  String get monitorUpdateFailed => '업데이트에 실패했습니다. 출력은 위에 있습니다.';
+
+  @override
+  String get monitorUpdateAgentHint =>
+      '에이전트는 설치 스크립트를 자신과 분리해 실행하므로 재시작해도 업데이트가 멈추지 않습니다. 그동안 에이전트 연결이 몇 초 끊기며, 이 창은 재시작 이후에도 진행을 따라갑니다.';
+
+  @override
+  String get monitorUpdateSudoPassword => 'sudo 비밀번호';
+
+  @override
+  String get monitorUpdateSudoHint =>
+      '여기서는 설치 스크립트에 root가 필요합니다(OpenRC 서비스). 비밀번호는 한 번만 쓰고 저장하지 않습니다.';
+
+  @override
+  String get monitorUpdateSudoRefused => 'sudo가 이 비밀번호를 받아들이지 않았습니다.';
+
+  @override
+  String get monitorUpdateNoAnswer => '에이전트가 돌아오지 않았습니다. 서버에서 확인하세요.';
+
+  @override
+  String get keyArrowDown => '아래쪽 화살표';
+
+  @override
+  String get keyArrowLeft => '왼쪽 화살표';
+
+  @override
+  String get keyArrowRight => '오른쪽 화살표';
+
+  @override
+  String get keyArrowUp => '위쪽 화살표';
+
+  @override
+  String get keyControl => 'Ctrl 키';
+
+  @override
+  String get keyEscape => 'Esc 키';
+
+  @override
+  String get keyPageDown => '페이지 다운';
+
+  @override
+  String get keyPageUp => '페이지 업';
+
+  @override
+  String get termTextView => '텍스트로 보기';
+
+  @override
+  String termTextLetGo(int count) {
+    return '더 이상 보관되지 않는 이전 줄: $count';
+  }
+
+  @override
+  String get systemGroups => '그룹';
+
+  @override
+  String get userGid => 'GID';
+
+  @override
+  String get userGroupMembers => '구성원';
+
+  @override
+  String get userPrimaryMembers => '기본 구성원';
+
+  @override
+  String get userSystemGroup => '시스템 그룹';
+
+  @override
+  String get userMembersHint => 'alice,bob';
+
+  @override
+  String get userRegularGroup => 'Regular';
+
+  @override
   String get termMetricsBar => '터미널 아래에 서버 상태 표시';
 
   @override
@@ -5726,6 +6793,19 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get reconnectEndsShell =>
       '다시 연결할 tmux 세션이 없으므로, 다시 연결하면 이 셸과 그 안에서 아직 실행 중인 작업이 종료되고 화면의 출력도 지워집니다.';
+
+  @override
+  String get handedness => '주로 쓰는 손';
+
+  @override
+  String get handednessLeft => '왼손';
+
+  @override
+  String get handednessRight => '오른손';
+
+  @override
+  String get handednessTip =>
+      '기기를 쥔 손 쪽에 시스템 세로 막대가 있으면 탭이 상태 표시줄 아래의 세로 막대에 놓입니다. 시스템 막대와 같은 위치입니다.';
 
   @override
   String get storeUnreadableTitle => '이전 데이터를 열 수 없습니다';

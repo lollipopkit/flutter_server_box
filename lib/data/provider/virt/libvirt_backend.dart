@@ -31,7 +31,7 @@ import 'package:server_box/src/rust/api/script.dart' as script_ffi;
 import 'package:server_box/src/rust/api/virt.dart' as ffi;
 
 /// libvirt through `virsh`, run by `ServerNotifier.ensureExec()` — so over
-/// SSH, over a monitor agent with the `full_access` grant, or on this device.
+/// SSH, over a monitor agent that grants access, or on this device.
 ///
 /// Scripts and parsers are `sbm_virt::libvirt`'s (FFI). Every script is POSIX
 /// `sh`, fed to `sh` on stdin, never run as the login shell's command line.

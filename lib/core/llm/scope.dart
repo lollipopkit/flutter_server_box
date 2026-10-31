@@ -2,14 +2,26 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:server_box/core/llm/tools.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
+import 'package:server_box/data/provider/ai/remote_agent.dart';
 
 /// Where an Agent chat belongs: the app-wide Agent's list, or one server's
 /// terminal. Kept as [ChatMeta.scope], so each place lists only its own.
 abstract final class AgentScope {
   /// The app's providers, for the tools: they run outside any widget. Set
   /// once, before the first frame — see `main`.
-  static late final ProviderContainer container;
+  static ProviderContainer get container => _container!;
+  static set container(ProviderContainer c) {
+    assert(_container == null, 'set once');
+    _container = c;
+  }
+
+  static ProviderContainer? _container;
+
+  /// [container], or null where the app's providers are not up — a widget
+  /// test that pumps one page.
+  static ProviderContainer? get maybeContainer => _container;
 
   static const _terminalPrefix = 'terminal:';
 
@@ -113,6 +125,8 @@ abstract final class AgentChats {
   static final engaged = ValueNotifier(false);
 
   static void select(String? scope, String? id) {
+    // A chat of this device takes the pane from a server's task.
+    if (scope == null) RemoteAgentTasks.select(null);
     of(scope).value = id;
     if (scope == null && id != null) engaged.value = true;
     // What `Chats` keeps open while something else borrows a chat.
@@ -139,6 +153,7 @@ abstract final class AgentChats {
     for (final trashed in const [false, true]) {
       for (final meta in LlmStores.chat.all(scope: scope, trashed: trashed)) {
         await Chats.deleteForever(meta.id);
+        AgentTools.forget(meta.id);
       }
     }
     select(scope, null);
@@ -147,6 +162,7 @@ abstract final class AgentChats {
   /// Deletes chat [id] of [scope], and shows the next one if it was showing.
   static Future<void> delete(String? scope, String id) async {
     await Chats.deleteForever(id);
+    AgentTools.forget(id);
     if (of(scope).value == id) {
       select(scope, LlmStores.chat.all(scope: scope).firstOrNull?.id);
     }

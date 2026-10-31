@@ -1,0 +1,81 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Calibre-Web, as the Monitor's Books app: deployed with Docker Compose from the
+# file beside this one, shown in a desk window through the agent.
+
+schema = 1
+publisher = "janeczku"
+name = "calibre_web"
+project = "Calibre-Web"
+developer = "Calibre-Web (janeczku)"
+version = "0.6.27"
+homepage = "https://github.com/janeczku/calibre-web"
+source = "https://github.com/janeczku/calibre-web/tree/0.6.27"
+glyph = "menu_book"
+tone = "violet"
+categories = ["media", "documents"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Calibre-Web"
+
+[description]
+en = "Browse, read and manage an ebook library (Calibre database) in the browser, with OPDS feeds for e-reader apps."
+zh = "在浏览器中浏览、阅读和管理 Calibre 电子书库，并提供供电子阅读器应用使用的 OPDS 订阅源。"
+zh-TW = "在瀏覽器中瀏覽、閱讀和管理 Calibre 電子書庫，並提供供電子閱讀器應用程式使用的 OPDS 來源。"
+
+[license]
+spdx = "GPL-3.0-or-later"
+url = "https://github.com/janeczku/calibre-web/blob/0.6.27/LICENSE"
+accept = true
+
+[requirements]
+arch = ["amd64", "arm64"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+CALIBRE_WEB_VERSION = "0.6.27-ls405"
+
+[login]
+user = "admin"
+note = { en = "The first sign-in uses the upstream default account admin / admin123. Change the password at once (admin page, user settings). On the initial setup screen, enter /books as the Calibre library location.", zh = "首次登录使用上游默认账户 admin / admin123，请立即修改密码（管理页面的用户设置）。在初始设置界面中，将 Calibre 库位置填为 /books。", zh-TW = "首次登入使用上游預設帳戶 admin / admin123，請立即修改密碼（管理頁面的使用者設定）。在初始設定畫面中，將 Calibre 資料庫位置填為 /books。" }
+
+[[settings]]
+key = "config"
+type = "path"
+env = "CONFIG_LOCATION"
+default = "{stack}/config"
+data = true
+label = { en = "Configuration", zh = "配置", zh-TW = "設定" }
+help = { en = "Accounts, settings and the app database (app.db).", zh = "账户、设置和应用数据库（app.db）。", zh-TW = "帳戶、設定和應用程式資料庫（app.db）。" }
+
+[[settings]]
+key = "books"
+type = "path"
+env = "BOOKS_LOCATION"
+default = "{shared}/books"
+data = false
+label = { en = "Books", zh = "图书", zh-TW = "圖書" }
+help = { en = "The Calibre library folder (the one with metadata.db). Calibre-Web also writes here when you edit or upload books.", zh = "Calibre 库文件夹（包含 metadata.db 的那个）。编辑或上传图书时，Calibre-Web 也会写入此处。", zh-TW = "Calibre 資料庫資料夾（包含 metadata.db 的那個）。編輯或上傳書籍時，Calibre-Web 也會寫入此處。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "CALIBRE_WEB_PORT"
+default = 8083
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "For e-reader apps and OPDS clients. Off: only through the desk.", zh = "供电子阅读器应用和 OPDS 客户端连接。关闭时只能通过桌面访问。", zh-TW = "供電子閱讀器應用程式和 OPDS 用戶端連線。關閉時只能透過桌面存取。" }
+on = { CALIBRE_WEB_BIND = "0.0.0.0" }
+off = { CALIBRE_WEB_BIND = "127.0.0.1" }

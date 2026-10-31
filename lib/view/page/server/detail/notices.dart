@@ -27,7 +27,12 @@ extension on _ServerDetailPageState {
             // The readings page's inset, so the block a card grows into is
             // in the same box whichever page it finds; the notice's own 26
             // is on the block — see [ServerCardSizes.noticeInset].
-            padding: EdgeInsets.fromLTRB(13, 4, 13, _kFuncBarInset + 26),
+            padding: EdgeInsets.fromLTRB(
+              13,
+              4,
+              13,
+              _kFuncBarInset + 26 + MediaQuery.paddingOf(context).bottom,
+            ),
             children: [
               _handed(
                 ServerCardNotice(
@@ -186,32 +191,25 @@ ${err.message ?? 'null'}
     return ServerCardStale(at: at, spi: si.spi, openness: 1);
   }
 
-  /// Why there is no row of things to do, for a server whose agent grants
-  /// nothing.
+  /// Why there is no row of things to do, for a server whose agent refuses
+  /// this connection — plaintext HTTP without its `allow_insecure`.
   ///
-  /// Only when the agent has answered: `remoteAccess` is null before the first
-  /// poll and for an agent too old to have `/capabilities`, and "we have not
-  /// asked yet" must not be drawn as "you are not allowed".
+  /// Only when the agent has answered: `agentAccess` is null before the first
+  /// poll, and "we have not asked yet" must not be drawn as "refused".
   ///
   /// Only for a server reached *only* through an agent. One that also has SSH
   /// has the row anyway, so there is nothing to explain — and a server with no
   /// agent at all is not what this is about.
-  ///
-  /// Informational, not a warning. Every switch under `[remote_access]` is off
-  /// by default and the docs recommend leaving them that way, so most agents
-  /// are in this state on purpose and a red card would be nagging the people
-  /// who got it right. What was missing was not a warning but an answer to
-  /// "why is there nothing here".
   Widget? _buildNoRemoteAccessCard(ServerState si) {
     if (si.spi.monitorHttp == null || si.spi.ssh != null) return null;
-    if (si.remoteAccess == null) return null;
+    if (si.agentAccess == null) return null;
 
     return CardX(
       child: ListTile(
         leading: const Icon(MingCute.lock_line, size: 20),
         title: Text(l10n.monitorNoRemoteAccess, style: UIs.text12Grey),
         trailing: const Icon(Icons.open_in_new, size: 17),
-        onTap: Urls.monitorPermissionsDoc.launchUrl,
+        onTap: Urls.monitorAccessDoc.launchUrl,
       ),
     );
   }

@@ -18,15 +18,13 @@
 //! 1. Read the request PDU. Its `proxy_auth` carries the ticket
 //!    ([`Purpose::Rdp`]): the client opens its socket with no subprotocols, so
 //!    the `sbm-ticket.` convention of the other endpoints is not available.
-//! 2. Check `connect` and its `allow` list as `/stream/ws` does: the
-//!    destination is resolved once, every address must be allowed, and those
-//!    addresses are what is dialled.
+//! 2. Check the transport rule as `/stream/ws` does, then resolve the
+//!    destination and dial its addresses.
 //! 3. Forward the client's X.224 Connection Request, read the Confirm.
 //! 4. Do the TLS handshake with the RDP server. The certificate chain observed
 //!    goes back in the response, the only way the browser ever sees it.
 //! 5. Answer, then relay between the socket and the TLS session until either
-//!    end goes or the account loses `connect` to that address
-//!    (`AppState.grants_changed`).
+//!    end goes or the password changes (`AppState.password_changed`).
 //!
 //! # TLS
 //!
@@ -42,6 +40,8 @@
 //! remote desktop over SSH verifies the certificate, and is the choice for a
 //! path that is not trusted.
 
+use crate::api::WebError;
+use crate::utils::lock::LockExt;
 use std::cell::RefCell;
 use std::io;
 use std::net::SocketAddr;
@@ -61,17 +61,16 @@ use rustls::pki_types::{CertificateDer, ServerName, UnixTime};
 use rustls::{ClientConfig, DigitallySignedStruct, Error as TlsError, SignatureScheme};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
-use tokio::sync::{broadcast, mpsc};
+use tokio::sync::mpsc;
 use tokio_rustls::TlsConnector;
 use tokio_rustls::client::TlsStream;
 
 use super::audit::{self, Action, Event, Kind, Outcome};
 use super::upgrade::WsSink;
-use super::stream::next_change;
+use super::live::{Ending, LiveKind};
 use super::ticket::Purpose;
 use crate::api::authz;
 use crate::api::server::AppState;
-use crate::core::permissions::Grant;
 
 /// How much of the server's output may queue for a slow client before the
 /// session is torn down: a hole in an RDP stream is a broken screen, not a
@@ -111,7 +110,7 @@ const PROTOCOL_RDP: u32 = 0;
 pub async fn rdp_ws(
     req: HttpRequest,
     app_state: Arc<AppState>,
-) -> Result<HttpResponse, crate::api::WebError> {
+) -> Result<HttpResponse, WebError> {
     let remote_ip = audit::peer_ip(&req);
     if !super::origin_allowed(&req, &app_state.config.get_server().cors_allowed_origins) {
         Event::new(Kind::Stream, Action::Denied, Outcome::Denied)
@@ -140,43 +139,35 @@ struct ConnCtx {
     state: Arc<AppState>,
     remote_ip: Option<String>,
     secure: bool,
-    /// The panel account and its password epoch (`Caller::since`), once the
-    /// ticket in the request has been taken.
-    account: RefCell<Option<(String, i64)>>,
+    /// The password epoch (`Caller::since`) the ticket in the request was
+    /// taken under.
+    account: RefCell<Option<i64>>,
 }
 
 impl ConnCtx {
-    fn subject(&self) -> Option<String> {
-        self.account.borrow().as_ref().map(|(name, _)| name.clone())
-    }
-
-    /// The account, its role read again — none once its password changed.
+    /// The account, read again — none once its password changed.
     async fn caller(&self) -> Option<authz::Caller> {
-        let (name, since) = self.account.borrow().clone()?;
-        authz::caller_named(&self.state, &name)
+        let since = (*self.account.borrow())?;
+        authz::caller(&self.state)
             .await
             .filter(|caller| caller.since == since)
     }
 
-    /// Whether the account may still reach [peer].
-    async fn still(&self, peer: SocketAddr) -> bool {
+    /// Whether the relay may go on: the password unchanged, the link still
+    /// one the machine may be acted on over.
+    async fn still(&self) -> bool {
         match self.caller().await {
-            Some(caller) => {
-                caller.check(Grant::Connect, &self.state, self.secure).is_ok()
-                    && caller.may_connect_to(peer)
-            }
+            Some(caller) => caller.check(&self.state, self.secure).is_ok(),
             None => false,
         }
     }
 
     async fn audit(&self, outcome: Outcome, detail: &str) {
-        let mut event = Event::new(Kind::Stream, Action::Connect, outcome)
+        Event::new(Kind::Stream, Action::Connect, outcome)
             .remote_ip(self.remote_ip.clone())
-            .detail(format!("rdp {detail}"));
-        if let Some(subject) = self.subject() {
-            event = event.subject(&subject);
-        }
-        event.record(&self.state.db).await;
+            .detail(format!("rdp {detail}"))
+            .record(&self.state.db)
+            .await;
     }
 }
 
@@ -193,7 +184,7 @@ enum Phase {
 fn handler(
     ctx: Rc<ConnCtx>,
     sink: WsSink,
-) -> impl ntex::service::Service<WsSink, Frame, Res = Option<Message>, Error = crate::api::WebError> {
+) -> impl ntex::service::Service<WsSink, Frame, Res = Option<Message>, Error = WebError> {
     let phase = Rc::new(RefCell::new(Phase::Request(Vec::new())));
 
     // The socket going away ends the relay, by dropping the sender it holds.
@@ -326,12 +317,12 @@ async fn handshake(
         ctx.audit(Outcome::Denied, "ticket").await;
         return refuse(sink, &RDCleanPathPdu::new_http_error(401));
     };
-    let subject = ctx.state.tickets.commit(reservation);
-    let Some(caller) = authz::caller_named(&ctx.state, &subject).await else {
+    ctx.state.tickets.commit(reservation);
+    let Some(caller) = authz::caller(&ctx.state).await else {
         ctx.audit(Outcome::Denied, "no such account").await;
         return refuse(sink, &RDCleanPathPdu::new_http_error(403));
     };
-    *ctx.account.borrow_mut() = Some((subject, caller.since));
+    *ctx.account.borrow_mut() = Some(caller.since);
 
     // A preconnection blob routes the session to another source on the
     // server by a convention the client's author picked. Nothing this panel
@@ -341,19 +332,19 @@ async fn handshake(
         return refuse(sink, &RDCleanPathPdu::new_general_error());
     }
 
-    // Subscribed before the checks, so a role change racing them is
+    // Subscribed before the checks, so a password change racing them is
     // delivered to the relay rather than missed.
-    let changes = ctx.state.grants_changed.subscribe();
+    let changes = ctx.state.password_changed.subscribe();
 
-    if caller.check(Grant::Connect, &ctx.state, ctx.secure).is_err() {
-        ctx.audit(Outcome::Denied, &format!("{destination}: not granted")).await;
+    if caller.check(&ctx.state, ctx.secure).is_err() {
+        ctx.audit(Outcome::Denied, &format!("{destination}: insecure transport")).await;
         return refuse(sink, &RDCleanPathPdu::new_http_error(403));
     }
     let Ok((host, port)) = parse_destination(&destination) else {
         return refuse(sink, &RDCleanPathPdu::new_http_error(400));
     };
     let deadline = tokio::time::Instant::now() + SETUP_TIMEOUT;
-    // Resolved once: every address must be allowed, and these are dialled.
+    // Resolved once, and these addresses are dialled.
     let addrs: Vec<SocketAddr> = match within(deadline, tokio::net::lookup_host((host.as_str(), port))).await {
         Ok(addrs) => addrs.collect(),
         Err(error) => {
@@ -362,9 +353,9 @@ async fn handshake(
             return refuse(sink, &RDCleanPathPdu::new_http_error(502));
         }
     };
-    if addrs.is_empty() || !addrs.iter().all(|addr| caller.may_connect_to(*addr)) {
-        ctx.audit(Outcome::Denied, &format!("{destination}: not allowed")).await;
-        return refuse(sink, &RDCleanPathPdu::new_http_error(403));
+    if addrs.is_empty() {
+        ctx.audit(Outcome::Error, &destination).await;
+        return refuse(sink, &RDCleanPathPdu::new_http_error(502));
     }
 
     let mut stream = match within(deadline, TcpStream::connect(&addrs[..])).await {
@@ -436,7 +427,8 @@ async fn handshake(
     };
 
     ctx.audit(Outcome::Ok, &destination).await;
-    relay(ctx, sink, phase, tls, pending, changes, peer, der);
+    let ending = ctx.state.live.register(changes, LiveKind::Rdp, destination, ctx.remote_ip.clone());
+    relay(ctx, sink, phase, tls, pending, ending, der);
     None
 }
 
@@ -450,8 +442,7 @@ fn relay(
     phase: &Rc<RefCell<Phase>>,
     tls: TlsStream<TcpStream>,
     pending: Vec<u8>,
-    mut changes: broadcast::Receiver<&'static str>,
-    peer: SocketAddr,
+    mut ending: Ending,
     response: Vec<u8>,
 ) {
     let (mut reader, mut writer) = tokio::io::split(tls);
@@ -500,13 +491,13 @@ fn relay(
             tokio::select! {
                 _ = &mut writing => break,
                 _ = &mut reading => break,
-                _ = next_change(&mut changes) => {
-                    if ctx.still(peer).await {
+                signal = ending.next() => {
+                    if signal.rechecks() && ctx.still().await {
                         continue;
                     }
                     // The session carries credentials: closed, not left to
                     // finish what it was doing.
-                    tracing::info!("RDP session for {:?} ended: connect was taken away", ctx.subject());
+                    tracing::info!("RDP session ended: {}", signal.message());
                     let _ = sink
                         .send(Message::Close(Some(CloseCode::Policy.into())))
                         .await;
@@ -669,7 +660,7 @@ struct CapturingVerifier {
 
 impl CapturingVerifier {
     fn take_chain(&self) -> Vec<Vec<u8>> {
-        std::mem::take(&mut *self.chain.lock().unwrap_or_else(|e| e.into_inner()))
+        std::mem::take(&mut *self.chain.locked())
     }
 }
 
@@ -682,7 +673,7 @@ impl ServerCertVerifier for CapturingVerifier {
         _ocsp_response: &[u8],
         _now: UnixTime,
     ) -> Result<ServerCertVerified, TlsError> {
-        *self.chain.lock().unwrap_or_else(|e| e.into_inner()) = std::iter::once(end_entity)
+        *self.chain.locked() = std::iter::once(end_entity)
             .chain(intermediates.iter())
             .map(|cert| cert.as_ref().to_vec())
             .collect();

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { DesktopSession, MAX_EARLY_BYTES, RelayChannel, parseControl, relayOpenMessage } from '../lib/desktop.svelte'
 import { agentWsUrl, wsTicketProtocol } from '../lib/agentUrl'
-import { desktopDraftOf, desktopFormState } from '../components/DesktopForm.svelte'
+import { desktopDraftOf, desktopFormState } from '../desk/apps/remote_desktop/DesktopForm.svelte'
 import { servers } from '../lib/servers.svelte'
 import type { Desktop } from '../types'
 
@@ -104,9 +104,10 @@ describe('RelayChannel', () => {
     socket.onmessage?.({ data: bytes })
     expect(seen).toEqual([bytes])
 
-    socket.control({ type: 'error', code: 'permission_revoked', message: 'grant taken away' })
+    socket.control({ type: 'error', code: 'password_changed', message: 'password changed' })
     expect(seen).toEqual([bytes])
-    expect(channel.reason).toBe('grant taken away')
+    expect(channel.reason).toBe('password changed')
+    expect(channel.code).toBe('password_changed')
     expect(closed).toBe(true)
   })
 
@@ -147,7 +148,7 @@ describe('DesktopSession', () => {
     FakeSocket.instances = []
     ticketMock.mockClear()
     vi.stubGlobal('WebSocket', FakeSocket)
-    servers.list = [{ id: 'local', url: '', token: 't', username: 'admin' }]
+    servers.list = [{ id: 'local', url: '', token: 't' }]
     servers.currentId = 'local'
   })
 

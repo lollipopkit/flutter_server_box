@@ -73,7 +73,7 @@ async fn test_server() -> TestServer {
     };
     let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
     sqlx::migrate!("./migrations").run(&db).await.unwrap();
-    common::seed_as_upgrade(&db, &config).await;
+    common::add_owner(&db).await;
     let state = AppState::new(Arc::new(config), db);
 
     web_test::server(async move |_| {
@@ -83,7 +83,7 @@ async fn test_server() -> TestServer {
 }
 
 fn jwt() -> String {
-    generate_token("admin", SECRET).unwrap()
+    generate_token(SECRET).unwrap()
 }
 
 /// Two channels, each holding something that must never come back out.
@@ -115,6 +115,31 @@ method = "POST"
 Authorization = "Bearer hook-token-not-to-be-disclosed"
 Content-Type = "application/json"
 "#;
+
+/// A file that does not parse is not quoted back: the parser's message
+/// names the offending line, and that line may be a credential.
+#[ntex::test]
+async fn an_unreadable_config_is_not_quoted_back() {
+    let _dir = workspace().await;
+    write_config(&CONFIG_WITH_SECRETS.replace(
+        "key = \"bark-key-not-to-be-disclosed\"",
+        "key = \"bark-key-not-to-be-disclosed",
+    ));
+    let srv = test_server().await;
+
+    for path in ["/api/v1/push", "/api/v1/settings"] {
+        let resp = srv
+            .get(path)
+            .header("Authorization", format!("Bearer {}", jwt()))
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(resp.status().as_u16(), 500, "{path}");
+        let raw = String::from_utf8(resp.body().await.unwrap().to_vec()).unwrap();
+        assert!(!raw.contains(BARK_KEY), "{path} quoted the file: {raw}");
+        assert_eq!(serde_json::from_str::<Value>(&raw).unwrap(), json!({ "error": "config_unreadable" }));
+    }
+}
 
 #[ntex::test]
 async fn a_credential_is_withheld_and_survives_an_edit_that_never_saw_it() {
@@ -288,4 +313,37 @@ async fn a_rate_the_loader_would_ignore_is_refused() {
         Some("2/1m"),
         "a refused rate must not have taken the channels down with it"
     );
+}
+
+#[ntex::test]
+async fn only_the_file_names_an_environment_variable() {
+    let _dir = workspace().await;
+    let srv = test_server().await;
+    let put = |from_index: Option<usize>, key: Value| {
+        let body = json!({
+            "pushes": [{ "from_index": from_index, "name": "phone", "push_type": "bark",
+                         "config": { "server": "https://api.day.app", "key": key } }],
+        });
+        let request = srv.put("/api/v1/push").header("Authorization", format!("Bearer {}", jwt()));
+        async move { request.send_json(&body).await }
+    };
+
+    // Typed in an editor: that text, escaped, never the agent's environment.
+    write_config(CONFIG_WITH_SECRETS);
+    let resp = put(None, json!("${PATH}")).await.unwrap();
+    assert_eq!(resp.status().as_u16(), 200);
+    assert_eq!(read_config().get_push()[0].config["key"].as_str(), Some("$${PATH}"));
+
+    // Written in config.toml: kept as the reference (`PATH` is set everywhere)...
+    write_config(&CONFIG_WITH_SECRETS.replace("bark-key-not-to-be-disclosed", "${PATH}"));
+    let resp = put(Some(0), Value::Null).await.unwrap();
+    assert_eq!(resp.status().as_u16(), 200);
+    assert_eq!(read_config().get_push()[0].config["key"].as_str(), Some("${PATH}"));
+
+    // ...and one unset refused on save, naming it, not sent without it.
+    write_config(&CONFIG_WITH_SECRETS.replace("bark-key-not-to-be-disclosed", "${SBM_TEST_UNSET_PUSH_KEY}"));
+    let resp = put(Some(0), Value::Null).await.unwrap();
+    assert_eq!(resp.status().as_u16(), 400);
+    let body: Value = resp.json().await.unwrap();
+    assert!(body.to_string().contains("SBM_TEST_UNSET_PUSH_KEY"), "{body}");
 }

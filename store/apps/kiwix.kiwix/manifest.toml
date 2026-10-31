@@ -1,0 +1,67 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Kiwix (kiwix-serve): deployed with Docker Compose from compose.yaml beside
+# this file, shown in a desk window through the agent.
+
+schema = 1
+publisher = "kiwix"
+name = "kiwix"
+project = "Kiwix"
+developer = "Kiwix"
+version = "3.8.2"
+homepage = "https://kiwix.org"
+source = "https://github.com/kiwix/kiwix-tools/tree/3.8.2"
+glyph = "travel_explore"
+tone = "mist"
+categories = ["documents", "tools"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Kiwix"
+
+[description]
+en = "Wikipedia, Stack Exchange, Project Gutenberg and other sites offline: put their ZIM files (library.kiwix.org) in its folder and read and search them here, with no internet. Anyone who reaches the page can read: there is no account."
+zh = "离线阅读维基百科、Stack Exchange、古登堡计划等网站：把它们的 ZIM 文件（library.kiwix.org）放进文件夹，即可在这里无网络阅读和搜索。能打开页面的人都能阅读：它没有账号。"
+zh-TW = "離線閱讀維基百科、Stack Exchange、古騰堡計畫等網站：把它們的 ZIM 檔案（library.kiwix.org）放進資料夾，即可在這裡無網路閱讀和搜尋。能開啟頁面的人都能閱讀：它沒有帳號。"
+
+[license]
+spdx = "GPL-3.0"
+url = "https://github.com/kiwix/kiwix-tools/blob/3.8.2/COPYING"
+accept = true
+
+[requirements]
+arch = ["amd64", "arm64", "arm"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+KIWIX_VERSION = "3.8.2"
+
+[[settings]]
+key = "zims"
+type = "path"
+env = "KIWIX_ZIMS"
+default = "{shared}/kiwix"
+label = { en = "ZIM files", zh = "ZIM 文件", zh-TW = "ZIM 檔案" }
+help = { en = "Every .zim file here is served, one shown within a minute of being added. Download them from library.kiwix.org.", zh = "此处的每个 .zim 文件都会提供阅读，新加入的文件一分钟内出现。可从 library.kiwix.org 下载。", zh-TW = "此處的每個 .zim 檔案都會提供閱讀，新加入的檔案一分鐘內出現。可從 library.kiwix.org 下載。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "KIWIX_PORT"
+default = 8089
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "Off: only through the desk.", zh = "关闭时只能通过桌面访问。", zh-TW = "關閉時只能透過桌面存取。" }
+on = { KIWIX_BIND = "0.0.0.0" }
+off = { KIWIX_BIND = "127.0.0.1" }

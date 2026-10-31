@@ -170,6 +170,7 @@ abstract final class AgentScreen {
     AppTab.remoteDesktop => 'Remote desktop',
     AppTab.virt => 'Virtualization',
     AppTab.workspace => 'Workspace',
+    AppTab.monitor => 'Monitor',
   };
 
   /// [spi] as the model reads it.

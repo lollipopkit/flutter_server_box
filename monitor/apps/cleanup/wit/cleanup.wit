@@ -1,0 +1,57 @@
+/// Cleanup's service: what can go to free space (`sbm_parser::cleanup`).
+package serverbox:cleanup;
+
+interface api {
+  use sbm:app/types@0.1.0.{error};
+
+  enum group {
+    system,
+    /// The agent's account: trash, application caches, package managers'.
+    account,
+    /// Folders removed web apps left.
+    apps,
+    /// What Docker could reclaim; pruned in Containers.
+    containers,
+  }
+
+  record item {
+    /// `apt-cache`, `cache:<folder>`, `dev:npm`, `leftover:<app>`, `docker:Images`…
+    id: string,
+    group: group,
+    /// What removing it frees, as measured.
+    bytes: u64,
+    /// Files, packages or revisions, where that is what it holds.
+    count: option<u64>,
+    /// Packages, a path: what it is.
+    detail: option<string>,
+    /// Removed by `clean`; Docker's are pruned elsewhere, and what holds the
+    /// agent's own state never.
+    cleanable: bool,
+  }
+
+  record report {
+    /// Unix milliseconds.
+    at: s64,
+    items: list<item>,
+  }
+
+  /// The last scan, if any.
+  view: func() -> result<option<report>, error>;
+}
+
+interface jobs {
+  use sbm:app/types@0.1.0.{error};
+  use api.{report};
+
+  /// A scan as root.
+  scan: func() -> result<report, error>;
+
+  /// Scans again, removes [ids] the new scan still finds, scans once more.
+  clean: func(ids: list<string>) -> result<report, error>;
+}
+
+world cleanup {
+  include sbm:app/imports@0.1.0;
+  export api;
+  export jobs;
+}

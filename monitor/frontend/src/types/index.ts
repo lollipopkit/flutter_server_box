@@ -61,9 +61,9 @@ export interface CustomCmd {
 
 export interface CustomCmdsView {
   commands: CustomCmd[];
-  /// Whether this panel may change them — writing one arranges for code to
-  /// run as the agent's user, so it needs the same grant as the shell. A hint
-  /// for the UI; the agent re-checks it on the write.
+  /// Whether this panel may change them (`access.ok`) — writing one arranges
+  /// for code to run as the agent's user. A hint for the UI; the agent
+  /// re-checks it on the write.
   editable: boolean;
 }
 
@@ -99,17 +99,75 @@ export interface Capabilities {
   // Mechanically derived from the same system_type() capabilities() is
   // computed from — 'bsd' covers macOS, the only Bsd target this ships on
   platform: Platform
-  // Absent on agents predating the feature; treat as all-off
-  remote_access?: RemoteAccess
-  /// Who the caller is on this agent. Absent on agents predating roles, and
-  /// for a watch token.
-  me?: Me
-  /// What the caller may do, per grant. Absent on agents predating roles:
-  /// `remote_access` is then the whole answer — see `lib/access.ts`.
-  grants?: CallerGrants
+  /// Whether the account may act over this link. `ok` false (a plaintext,
+  /// non-loopback link, or a watch token) leaves only reading; the agent
+  /// refuses the rest with 403.
+  access?: { ok: boolean; why?: AccessWhy }
   /// The machine-management endpoints the agent serves. Absent on agents
   /// predating them, which serve none — see `machineAccess`.
   features?: MachineFeature[]
+  /// The web apps the agent deployed (`/stacks*`); absent on older agents.
+  stacks?: { id: string; state: 'installing' | 'installed' | 'failed' }[]
+  /// The agent's own version.
+  version?: string
+}
+
+/// How the agent was put on its machine, which decides how it is updated
+/// (`sbm_parser::monitor_agent::InstallKind`).
+export type AgentInstall = 'script' | 'container' | 'nix' | 'other'
+
+/// The LK Cloud account the agent is signed in to, as homebase answers it;
+/// never a token.
+export interface LkcUser {
+  id: string
+  name: string
+  /// `user`, `admin`, `bot`, …
+  group: string
+  avatar: string | null
+}
+
+/// A device-code sign-in the agent is waiting on: the person opens
+/// `verification_uri_complete` (or `verification_uri` and types
+/// `user_code`) anywhere and approves it.
+export interface LkcSignIn {
+  user_code: string
+  verification_uri: string
+  verification_uri_complete: string | null
+  expires_at_ms: number
+  failed?: 'denied' | 'expired' | 'rejected' | 'invalid'
+}
+
+/// `GET /lkc`.
+export interface LkcState {
+  user: LkcUser | null
+  sign_in: LkcSignIn | null
+}
+
+/// `GET /update`: whether a newer agent is released, as the agent read it.
+export interface AgentUpdate {
+  version: string
+  /// Absent when the releases could not be read.
+  latest?: string | null
+  /// Absent before the agent's first read.
+  checked_at?: string | null
+  /// Why they could not, in English.
+  error?: string
+  outdated: boolean
+  install: AgentInstall
+  /// What updates it, run on the machine: for `script`.
+  command?: string
+  /// Whether `POST /update/run` needs the sudo password (OpenRC, not root).
+  needs_password?: boolean
+  /// The last update the agent started, as its log tells it.
+  run?: AgentUpdateRun
+}
+
+export interface AgentUpdateRun {
+  /// `interrupted`: no end recorded, and too long ago to be running still.
+  state: 'running' | 'done' | 'failed' | 'interrupted'
+  started_at?: string
+  exit?: number | null
+  lines: string[]
 }
 
 /// A machine-management page the agent may serve (`api::machine::FEATURES`).
@@ -124,6 +182,14 @@ export type MachineFeature =
   | 'cron'
   | 'containers'
   | 'container_exec'
+  /// Backups of containers' volumes and folders (`/container-backups`).
+  | 'container_backups'
+  /// Backups of the monitor's own settings to WebDAV (`/monitor-backup`).
+  | 'monitor_backup'
+  /// Disks, RAID arrays and ZFS pools (`/storage`).
+  | 'storage'
+  /// SMB and NFS shares (`/shares`).
+  | 'shares'
   | 'iperf'
   | 'tmux'
   | 'benchmark'
@@ -134,6 +200,25 @@ export type MachineFeature =
   | 'backup'
   | 'bmc'
   | 'virt'
+  /// The agent keeps the panel's desk (`/desk*`).
+  | 'desk'
+  /// Agent mode: tasks an AI agent runs on the machine (`/agent*`).
+  | 'agent_mode'
+  /// Web apps deployed with Docker Compose behind the agent's proxy
+  /// (`/stacks*`).
+  | 'stacks'
+  | 'inference'
+  | 'agent_tools'
+  | 'proxy'
+  | 'kernel'
+  | 'ubuntu_pro'
+  | 'cleanup'
+  | 'tailscale'
+  | 'waf'
+  /// Whether a newer agent is out and how this one is updated (`/update`).
+  | 'update'
+  /// The LK Cloud account the agent is signed in to (`/lkc*`).
+  | 'lkc'
 
 export type PowerAction = 'shutdown' | 'reboot' | 'suspend'
 
@@ -149,96 +234,9 @@ export interface PowerResult {
   timed_out: boolean
 }
 
-/// The grants a role can hold. `read` is held by every account and is not
-/// one of them.
-export type GrantName = 'shell' | 'ssh_terminal' | 'files' | 'connect' | 'listen' | 'virt'
-
-/// Why a grant is not usable: the role lacks it, the request did not arrive
-/// over TLS or loopback, or the machine side is not set up (files with no
-/// roots).
-export type GrantWhy = 'not_granted' | 'insecure_transport' | 'not_configured'
-
-export interface GrantStatus {
-  ok: boolean
-  /// Only when `ok` is false.
-  why?: GrantWhy
-}
-
-export type FilesMode = 'read' | 'write'
-
-export interface CallerGrants {
-  shell: GrantStatus
-  ssh_terminal: GrantStatus
-  files: GrantStatus & { mode?: FilesMode }
-  connect: GrantStatus & { allow?: string[] }
-  listen: GrantStatus & { public?: boolean; ports?: [number, number] | null }
-  /// Absent from an agent older than the grant.
-  virt?: GrantStatus
-}
-
-export interface Me {
-  username: string
-  role: string
-  /// May manage accounts, roles and the agent's configuration.
-  admin: boolean
-}
-
-/// A role's grants as stored: `null` is not granted, an object is granted
-/// with those options.
-export interface RoleGrants {
-  shell: boolean
-  ssh_terminal: boolean
-  files: { mode: FilesMode } | null
-  /// `allow` empty means anywhere.
-  connect: { allow: string[] } | null
-  /// `ports` null means any port.
-  listen: { public: boolean; ports: [number, number] | null } | null
-  /// Absent from an agent older than the grant, which refuses a role that
-  /// carries it — so it is sent only to an agent that sent it.
-  virt?: boolean
-}
-
-export interface Role {
-  name: string
-  /// Only the built-in `admin` role has it, and it cannot be set.
-  admin: boolean
-  builtin: boolean
-  grants: RoleGrants
-}
-
-export interface AgentUser {
-  username: string
-  /// The role's name.
-  role: string
-  created_at: string | null
-  last_login: string | null
-}
-
-/// The error body of the account and role endpoints: a stable code, and a
-/// message for a human.
-export type AccessErrorCode =
-  | 'bad_request'
-  | 'unauthorized'
-  | 'forbidden'
-  | 'reauth'
-  | 'not_found'
-  | 'conflict'
-  | 'last_admin'
-
-/// Which remote-access paths this agent will actually accept, already
-/// accounting for the transport check.
-export interface RemoteAccess {
-  terminal: boolean
-  /// Whether a shell can be opened straight from this panel session, with no
-  /// SSH credentials. Absent on agents predating the feature.
-  full_access?: boolean
-  /// Whether the agent's confined file API is available. Absent on agents
-  /// predating remote file access.
-  files?: boolean
-  /// Whether the agent relays a TCP connection, and listens for one.
-  stream?: boolean
-  listen?: boolean
-}
+/// Why the account may not act over this link: it is plaintext and not
+/// loopback.
+export type AccessWhy = 'insecure_transport'
 
 export type WsTicketPurpose = 'terminal' | 'stream' | 'rdp'
 
@@ -302,6 +300,9 @@ export interface GpuMetrics {
   memory_unit: string | null;
   fan_speed?: number | null;
   clock_speed?: number | null;
+  /// What holds the card's memory (MiB, 0 where the driver does not say).
+  /// Absent on older agents.
+  processes?: { pid: number; name: string; memory: number }[];
 }
 
 export interface DiskDetail {
@@ -372,17 +373,13 @@ export interface HistoryPoint {
 }
 
 export interface LoginRequest {
-  username: string;
   password: string;
 }
 
 export interface LoginResponse {
   token: string;
-}
-
-export interface User {
-  username: string;
-  token: string;
+  /// A device token, when the request carried none the agent knows.
+  device?: string;
 }
 
 export interface ApiError {
@@ -877,6 +874,9 @@ export interface ContainerStats {
   /// Podman's average over the sample window. Docker reports none.
   cpu_avg: string | null
   mem: string | null
+  /// The halves of `mem`; absent from an agent before they were split.
+  mem_used?: string | null
+  mem_limit?: string | null
   net_down: string | null
   net_up: string | null
   disk_read: string | null
@@ -934,6 +934,9 @@ export interface ContainerImage {
   /// by the agent rather than derived here: the panel decides nothing about a
   /// runtime.
   dangling: boolean
+  /// `ContainerImage::reference`: `repository:tag`, or the short id of a
+  /// dangling image.
+  reference: string
 }
 
 export interface ContainerDiskUsage {
@@ -1715,7 +1718,7 @@ export interface BmcTargetInput {
 
 export interface BmcList {
   targets: BmcTarget[]
-  /// Whether this caller may change the set (admin).
+  /// Whether this caller may change the set (`access.ok`).
   editable: boolean
 }
 
@@ -1893,6 +1896,9 @@ export interface VirtError {
   detail: VirtErrorDetail | null
   cert: BmcCertInfo | null
   previous_fingerprint: string | null
+  /// Waits for the operator (`VirtError::needs_input`): refreshing would
+  /// repeat it. Absent from older agents.
+  needs_input?: boolean
 }
 
 /// `POST /virt`.
@@ -2695,3 +2701,571 @@ export type VirtBackupIssue =
   | 'not_stopped'
   | 'not_found'
   | 'unsupported'
+
+/// Desk apps installed on the agent (`api::apps`).
+/// A package's manifest as the agent checked it (`api::apps::Manifest`).
+export interface PackageManifest {
+  /// The app's id is `<publisher>.<name>` (`InstalledApp.id`).
+  publisher: string
+  name: string
+  version: string
+  api: number
+  kind: 'web' | 'wasm'
+  title: string | Record<string, string>
+  /// What it does, shown on its App Store page.
+  description?: string | Record<string, string>
+  glyph: string
+  tone: string
+  permissions: string[]
+  instances?: number
+  size?: { width: number; height: number }
+  min_size?: { width: number; height: number }
+  opens?: { dirs?: boolean; ext?: string[] }
+  keywords?: string[]
+  /// The systems it is for (`/etc/os-release` `ID`); any when absent.
+  os?: string[]
+}
+
+export interface InstalledApp {
+  id: string
+  version: string
+  /// Of the package; an approval names it, so it approves exactly this code.
+  sha256: string
+  manifest: PackageManifest
+  /// Null while waiting for approval.
+  approved_permissions: string[] | null
+  installed_at: string
+  approved_at: string | null
+  /// The first-party key that signed the package; null for an unknown
+  /// publisher.
+  signed_by?: string | null
+}
+
+/// A desk app package the agent offers (`GET /apps/catalog`).
+export interface OfferedApp {
+  id: string
+  version: string
+  sha256: string
+  size: number
+  manifest: PackageManifest
+  signedBy: string | null
+  source: 'bundled' | 'store'
+  repo: string | null
+}
+
+/// Text in several languages, keyed by locale (`en` always there).
+export type LocalizedText = Record<string, string>
+
+/// A setting a web app's deploy dialog asks (`stacks::manifest::Setting`).
+export type StackSetting =
+  | { type: 'path'; key: string; label: LocalizedText; help?: LocalizedText | null; env: string; default: string; data: boolean }
+  | {
+      type: 'port'
+      key: string
+      label: LocalizedText
+      help?: LocalizedText | null
+      env: string
+      default: number
+      /// Absent from an older agent: TCP.
+      protocol?: 'tcp' | 'udp' | 'both'
+    }
+  | { type: 'bool'; key: string; label: LocalizedText; help?: LocalizedText | null; default: boolean }
+  | {
+      type: 'choice'
+      key: string
+      label: LocalizedText
+      help?: LocalizedText | null
+      default: string
+      options: { value: string; label: LocalizedText }[]
+    }
+  | { type: 'text'; key: string; label: LocalizedText; help?: LocalizedText | null; env: string; default?: string | null; optional: boolean; pattern: string }
+
+export type StackNotice =
+  | 'pullsImages'
+  | 'buildsImages'
+  | 'bindsPaths'
+  | 'mountsHostFiles'
+  | 'gpuDevices'
+  | 'publishesPort'
+  | 'privileged'
+  | 'hostNetwork'
+  | 'dockerSocket'
+
+/// A web app of the agent's catalog (`store/apps/<id>/manifest.toml`).
+export interface StackManifest {
+  /// `<publisher>.<name>` (`futo.immich`), made by the agent.
+  id: string
+  publisher: string
+  name: string
+  /// The upstream project's name (`Immich`).
+  project: string
+  /// Who makes the service, when the manifest says.
+  developer?: string | null
+  version: string
+  homepage: string
+  source: string
+  glyph: string
+  tone: string
+  categories: string[]
+  /// Offered by the desk's first-run guide. Absent on older agents.
+  recommended?: boolean
+  notices: StackNotice[]
+  title: LocalizedText
+  description: LocalizedText
+  license: { spdx: string; url: string; accept: boolean }
+  requirements: {
+    memory_min_mib?: number | null
+    memory_recommended_mib?: number | null
+    cores_min?: number | null
+    arch: string[]
+    os: string[]
+  }
+  /// The page a window shows; absent for a model server, which serves `llm`.
+  web?: { port: string; path: string } | null
+  /// Its OpenAI-compatible API (`[llm]`), offered to Agent mode once deployed.
+  llm?: StackLlm | null
+  settings: StackSetting[]
+  login?: StackLogin | null
+  /// Its MCP servers, which Agent mode connects to once it is deployed.
+  /// Absent on older agents.
+  mcp?: StackMcp[]
+}
+
+/// A model server's OpenAI-compatible API (`[llm]`), at
+/// `http://127.0.0.1:<port setting><path>` on the machine.
+export interface StackLlm {
+  port: string
+  path: string
+  /// The text setting naming the model it serves.
+  model?: string
+  /// The `[[secrets]]` entry it asks for as a bearer token.
+  key?: string
+}
+
+/// An app's MCP server (`[[mcp]]`): the service's own, or a sidecar.
+export interface StackMcp {
+  port: string
+  path: string
+  publisher: 'builtin' | 'official' | 'community'
+  service?: string
+  source?: string
+}
+
+/// How the admin signs in to a deployed app the first time (`[login]`):
+/// `password` names the secret, which `POST /stacks/{id}/login` reads.
+export interface StackLogin {
+  user?: string | null
+  password?: string | null
+  note?: LocalizedText | null
+}
+
+export type StackValue = string | number | boolean
+
+/// A deployment (`stacks::store::StackRow`).
+export interface StackRow {
+  state: 'installing' | 'installed' | 'failed'
+  version: string
+  id?: string
+  settings?: Record<string, StackValue>
+  proxy_port?: number
+  license?: string
+  license_accepted_at?: string
+  installed_at?: string
+  updated_at?: string
+  last_error?: string | null
+}
+
+export type StackJobKind = 'install' | 'update' | 'reconfigure' | 'start' | 'stop' | 'restart' | 'remove' | 'backup' | 'restore' | 'storage' | 'shares' | 'kernel' | 'ubuntuPro' | 'scan' | 'cleanup' | 'tailscale'
+
+/// A deploy, update, start, stop or removal (`stacks::job::JobView`).
+export interface StackJob {
+  id: number
+  kind: StackJobKind
+  state: 'running' | 'succeeded' | 'failed' | 'cancelled'
+  error: string | null
+  lines: { seq: number; text: string }[]
+  /// The next line's sequence number: what to ask from next time.
+  next: number
+}
+
+export interface StackApp {
+  manifest: StackManifest
+  /// Where the agent has it: shipped, a repository of the store (`repo`),
+  /// or the operator's own folder (`[stacks] local_apps`); `part` is one of
+  /// Local inference's engines, shown in its window, not the App Store.
+  source?: 'bundled' | 'store' | 'local' | 'part'
+  repo?: string | null
+  stack: StackRow | null
+  /// The latest job.
+  job: StackJob | null
+  /// Whether the agent's proxy is in front of it now.
+  proxy: boolean
+  /// The agent's last look at its containers, once installed.
+  health?: StackHealth | null
+}
+
+/// `stacks::health::Health`: checked every minute.
+export interface StackHealth {
+  state: 'healthy' | 'starting' | 'unhealthy' | 'down' | 'stopped'
+  /// The services that are not well.
+  failing: string[]
+  checked_at: string
+}
+
+/// What a deploy dialog starts from (`GET /stacks/{id}/prepare`).
+export interface StackPrepare {
+  defaults: Record<string, StackValue>
+  runtime: { available: true; runtime: 'docker' | 'podman'; compose: string } | { available: false; error: 'noRuntime' | 'noCompose' }
+  memory_mib: number | null
+  cores: number | null
+  /// GPU vendors containers can be given (CUDA needs the NVIDIA Container
+  /// Toolkit).
+  gpus: string[]
+  /// Every GPU vendor the agent sees.
+  gpus_seen: string[]
+  wsl: boolean
+  /// The agent runs in a container or under WSL: ports other programs use
+  /// may not all be seen.
+  ports_partial: boolean
+}
+
+/// A ticket for a web app's proxy (`POST /stacks/{id}/enter`).
+export interface StackEntry {
+  ticket: string
+  port: number
+  tls: boolean
+  path: string
+  enter: string
+  /// The window's address when the agent takes apps by host
+  /// (`[stacks] apps_url`).
+  url?: string | null
+}
+
+export interface StackService {
+  service: string
+  name: string
+  image: string
+  state: string
+  health: string | null
+  exit_code: number | null
+  status: string
+}
+
+/// What deploying chosen settings would do (`POST /stacks/{id}/check`).
+export interface StackPreview {
+  settings: Record<string, StackValue>
+  images: string[]
+  /// Images built on the machine from the package's Dockerfiles.
+  built: string[]
+  data_paths: string[]
+  port: number | null
+  /// Ports suggested that are in use now, and where they will move.
+  moved: { setting: string; from: number; to: number }[]
+}
+
+/// A volume or a folder bound into a container (`sbm_parser::container_backup::Mount`).
+export type ContainerMount =
+  | { kind: 'volume'; name: string; destination: string }
+  | { kind: 'bind'; source: string; destination: string }
+
+/// A backup of containers' volumes and folders (`container_backups::Meta`).
+export interface ContainerBackup {
+  id: string
+  /// The compose project's name, or the container's.
+  label: string
+  created_at: string
+  /// The containers were stopped while archived.
+  stopped: boolean
+  containers: { name: string; image: string; project: string | null }[]
+  archives: { file: string; container: string; mount: ContainerMount; bytes: number }[]
+  /// Left out: a system folder of the host, or a bound file.
+  skipped: { container: string; mount: ContainerMount; why: 'system' | 'notFolder' | 'shared' }[]
+}
+
+/// A block device (`sbm_parser::storage::BlockDevice`), sizes in bytes.
+export interface BlockDevice {
+  name: string
+  path: string
+  /// `disk`, `part`, `raid1`…, `lvm`, `crypt`, `loop`, `rom`.
+  kind: string
+  size: number
+  model: string | null
+  serial: string | null
+  rotational: boolean
+  transport: string | null
+  removable: boolean
+  read_only: boolean
+  part_type?: string | null
+  fstype: string | null
+  label: string | null
+  uuid: string | null
+  /// `[SWAP]` for swap.
+  mountpoints: string[]
+  /// The filesystem's size, mounted only; absent from older agents.
+  fs_size?: number | null
+  available: number | null
+  used: number | null
+  children: BlockDevice[]
+}
+
+export interface MdArray {
+  name: string
+  state: string
+  level: string | null
+  members: { name: string; faulty: boolean; spare: boolean }[]
+  raid_disks: number | null
+  working_disks: number | null
+  sync: { action: string; permille: number; finish: string | null } | null
+}
+
+export interface ZPool {
+  name: string
+  size: number
+  allocated: number
+  free: number
+  health: string
+  scan: string | null
+  /// A scrub or resilver is running now; absent from older agents.
+  scanning?: boolean
+  /// `section`: outside the data vdevs (`spares`, `logs`, `cache`…); absent
+  /// from older agents.
+  vdevs: { name: string; state: string; depth: number; errors: number; section?: string | null }[]
+}
+
+/// Why a device may not be partitioned, formatted or built on.
+export type DeviceBusy = 'mounted' | 'swap' | 'raidMember' | 'poolMember' | 'lvmMember' | 'holdsVolume' | 'readOnly' | 'systemPartition' | 'notFound'
+
+/// `GET /storage`.
+export interface StorageView {
+  disks: BlockDevice[]
+  busy: Record<string, DeviceBusy>
+  /// Devices mounted where the system lives: never unmounted. Absent from
+  /// older agents.
+  system?: string[]
+  arrays: MdArray[]
+  pools: ZPool[]
+  /// mdadm, zpool, smartctl, mkfs.ext4, mkfs.xfs, mkfs.btrfs, sfdisk, wipefs.
+  tools: string[]
+  job: StackJob | null
+  /// The last SMART reading (`POST /storage/health`); null until one is
+  /// made, absent from older agents.
+  health?: HealthReading | null
+  /// The maintenance schedule, one per task that is on; absent from older
+  /// agents.
+  maintenance?: MaintenanceTask[]
+  /// The agent's account, which a sudoers rule for the schedule names.
+  account?: string | null
+}
+
+export type MaintenanceKind = 'scrub' | 'smartShort' | 'smartLong'
+
+/// `storage_watch::Task`.
+export interface MaintenanceTask {
+  task: MaintenanceKind
+  every: 'weekly' | 'monthly'
+  /// `HH:MM`, the machine's time.
+  at: string
+  /// Weekly: 0 Monday … 6 Sunday. Monthly: 1 … 28.
+  day: number
+  last_run: string | null
+  /// `sudoNeedsPassword`, or what failed.
+  last_error: string | null
+}
+
+/// `api::storage::HealthReading`.
+export interface HealthReading {
+  /// Unix seconds.
+  at: number
+  disks: DiskHealth[]
+}
+
+/// `sbm_parser::storage::DiskHealth`.
+export interface DiskHealth {
+  device: string
+  /// The disk answers SMART; false for a virtual disk or a USB bridge.
+  supported: boolean
+  asleep: boolean
+  passed: boolean | null
+  temperature: number | null
+  power_on_hours: number | null
+  /// Remapped, pending or unreadable sectors (NVMe: media errors).
+  bad_sectors: number | null
+  /// Percent left of a self-test running now.
+  testing: number | null
+  last_test: SelfTestResult | null
+  /// Every attribute the disk reports (ATA) or its NVMe health log fields;
+  /// absent from older agents.
+  attributes?: SmartAttribute[]
+  /// Self-tests that ended, newest first.
+  tests?: SelfTestResult[]
+}
+
+export interface SelfTestResult {
+  long: boolean
+  outcome: 'passed' | 'failed' | 'aborted'
+  hours: number | null
+}
+
+/// `sbm_parser::storage::SmartAttribute`.
+export interface SmartAttribute {
+  id: number | null
+  name: string
+  value: number | null
+  worst: number | null
+  thresh: number | null
+  raw: string
+  failing: boolean
+}
+
+/// `sbm_parser::storage::StorageAction`.
+export type StorageAction =
+  | { action: 'partition'; device: string }
+  | { action: 'format'; device: string; fstype: 'ext4' | 'xfs' | 'btrfs'; label?: string | null; encrypt?: boolean }
+  | { action: 'mount'; device: string; mountpoint: string; persist: boolean; own: boolean }
+  | { action: 'unmount'; mountpoint: string }
+  | { action: 'createRaid'; name: string; level: number; devices: string[] }
+  | { action: 'addToRaid'; array: string; device: string }
+  | { action: 'removeFromRaid'; array: string; device: string }
+  | { action: 'deleteRaid'; array: string }
+  | { action: 'createPool'; name: string; layout: 'stripe' | 'mirror' | 'raidz1' | 'raidz2' | 'raidz3'; devices: string[] }
+  | { action: 'scrubPool'; name: string }
+  | { action: 'destroyPool'; name: string }
+  | { action: 'smartTest'; device: string; long: boolean }
+  | { action: 'growRaid'; array: string; device: string }
+  | { action: 'expandFilesystem'; device: string }
+  | { action: 'addToPool'; name: string; layout: 'stripe' | 'mirror' | 'raidz1' | 'raidz2' | 'raidz3'; devices: string[] }
+  | { action: 'replaceInPool'; name: string; old: string; new: string }
+  | { action: 'attachToPool'; name: string; existing: string; new: string }
+  | { action: 'addSpare'; name: string; devices: string[] }
+  | { action: 'removeFromPool'; name: string; device: string }
+  | { action: 'onlineInPool'; name: string; device: string }
+  | { action: 'growPartition'; device: string }
+  | { action: 'unlock'; device: string }
+  | { action: 'lock'; device: string }
+
+/// `sbm_parser::shares::SmbShare`.
+export interface SmbShare {
+  name: string
+  path: string
+  comment: string | null
+  read_only: boolean
+  /// Anyone on the network, without an account.
+  guest: boolean
+  /// Accounts allowed in; none is every account with an SMB password.
+  users: string[]
+  /// A Mac backs up here with Time Machine (`fruit` module).
+  time_machine: boolean
+  /// Deleted files go to `.recycle` in the share first (`recycle` module).
+  recycle: boolean
+  /// ServerBox's (in its own file); the others are shown, not changed.
+  managed: boolean
+}
+
+/// `sbm_parser::shares::NfsClient`.
+export interface NfsClient {
+  /// `*`, a host, an address or a network.
+  host: string
+  read_only: boolean
+  squash: 'root' | 'all' | 'none'
+  options: string[]
+}
+
+/// `sbm_parser::shares::NfsExport`.
+export interface NfsExport {
+  path: string
+  clients: NfsClient[]
+  managed: boolean
+}
+
+/// `POST /shares/connections`.
+export interface ShareConnections {
+  smb: { share: string; user: string | null; machine: string; since: string | null }[]
+  nfs: string[]
+}
+
+/// `GET /shares`.
+export interface SharesView {
+  /// smbd, testparm, smbpasswd, exportfs.
+  tools: string[]
+  smb_active: boolean
+  nfs_active: boolean
+  smb: SmbShare[]
+  nfs: NfsExport[]
+  job: StackJob | null
+}
+
+/// Where container backups go, and how many are kept (`container_backups::Settings`).
+export interface ContainerBackupSettings {
+  destination: string | null
+  keep: number
+}
+
+export interface ContainerBackupSchedule {
+  id: string
+  label: string
+  containers: string[]
+  project: boolean
+  stop: boolean
+  every: 'daily' | 'weekly'
+  at: string
+  weekday: number | null
+  keep: number | null
+  last_run: string | null
+  last_error: string | null
+}
+
+/// `GET /monitor-backup`: where the monitor's settings are backed up and how
+/// the last backup went. Never the WebDAV password.
+export interface MonitorBackupView {
+  configured: boolean
+  url: string | null
+  username: string | null
+  has_password: boolean
+  allow_insecure: boolean
+  enabled: boolean
+  keep: number
+  /// The key backups are encrypted to now; null until a passphrase is set.
+  key_id: string | null
+  last_backup_at: string | null
+  last_name: string | null
+  /// A code: `webdav.unauthorized`, `keyMissing`, `tooLarge`, …
+  last_error: string | null
+  last_error_at: string | null
+  running: boolean
+  max_bytes: number
+  min_passphrase: number
+}
+
+/// A WebDAV folder. `password` absent keeps the saved one (same server only),
+/// `''` removes it.
+export interface MonitorBackupTarget {
+  url: string
+  username: string
+  password?: string
+  allow_insecure: boolean
+}
+
+export interface MonitorBackupSettings extends MonitorBackupTarget {
+  enabled: boolean
+  keep: number
+}
+
+/// One backup in the folder.
+export interface MonitorBackupFile {
+  name: string
+  size: number
+  created_at: string
+  key_id: string
+  /// The monitor that made it (its files' id in the folder).
+  instance: string
+  /// Made by this monitor.
+  own: boolean
+  /// Made by this monitor with the passphrase backups use now.
+  current_key: boolean
+}
+
+export interface MonitorBackupRestored {
+  restored: { tables: [string, number][]; blobs: number; config: boolean }
+  /// The monitor restarts on its own.
+  restart: boolean
+}

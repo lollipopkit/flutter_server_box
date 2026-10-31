@@ -1,0 +1,67 @@
+# Prowlarr 2.6.5.5623 (GPL-3.0), https://github.com/Prowlarr/Prowlarr/tree/v2.6.5.5623
+# Image: linuxserver.io's build, https://github.com/linuxserver/docker-prowlarr
+# (tag 2.6.5.5623-ls162). Upstream publishes no image.
+#
+# Written for ServerBox Monitor (2026-10-18) from linuxserver.io's compose
+# example:
+# - no `name:` and no `container_name`: the agent names the project;
+# - PUID/PGID/TZ come from the agent (SBM_UID, SBM_GID, SBM_TZ);
+# - host.docker.internal is this machine, so the other apps (Prowlarr,
+#   Sonarr, Radarr, a download client) are reached at their published ports
+#   when they are reachable from the network;
+# - seed-login is a one-shot job: while Prowlarr has no sign-in, it sets
+#   forms sign-in for admin with the generated password through its own API
+#   (config/host, the key read from config.xml), as its first-run dialog
+#   would. The key and the password never reach a command line.
+
+services:
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:${PROWLARR_TAG}
+    environment:
+      PUID: ${SBM_UID}
+      PGID: ${SBM_GID}
+      TZ: ${SBM_TZ}
+      # The agent's proxy reaches it from the Docker bridge; its forwarded
+      # scheme and host are trusted from there only, so its redirects keep
+      # the desk's https:// address.
+      PROWLARR__SERVER__TRUSTEDNETWORKS: 172.16.0.0/12
+    volumes:
+      - ${PROWLARR_CONFIG}:/config
+    ports:
+      - '${PROWLARR_BIND}:${PROWLARR_PORT}:9696'
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    restart: unless-stopped
+    # /ping answers without signing in.
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:9696/ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  seed-login:
+    image: lscr.io/linuxserver/prowlarr:${PROWLARR_TAG}
+    user: "${SBM_UID}:${SBM_GID}"
+    depends_on:
+      prowlarr:
+        condition: service_healthy
+    environment:
+      ADMIN_PASSWORD: ${PROWLARR_PASSWORD}
+    volumes:
+      - ${PROWLARR_CONFIG}:/config:ro
+    entrypoint: ["bash", "-c"]
+    command:
+      - |
+        set -euo pipefail
+        api=http://prowlarr:9696/api/v1
+        header=$$(mktemp -p /tmp)
+        trap 'rm -f "$$header"' EXIT
+        printf 'X-Api-Key: %s\n' "$$(xmlstarlet sel -t -v /Config/ApiKey /config/config.xml)" > "$$header"
+        host=$$(curl -fsS -H @"$$header" "$$api/config/host")
+        [ -n "$$(jq -r '.username // ""' <<< "$$host")" ] && exit 0
+        jq '.authenticationMethod = "forms" | .authenticationRequired = "enabled" | .username = "admin"
+            | .password = env.ADMIN_PASSWORD | .passwordConfirmation = env.ADMIN_PASSWORD' <<< "$$host" \
+          | curl -fsS -o /dev/null -X PUT -H @"$$header" -H 'content-type: application/json' --data-binary @- \
+              "$$api/config/host/$$(jq -r .id <<< "$$host")"
+    restart: "no"

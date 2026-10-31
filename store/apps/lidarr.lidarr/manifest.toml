@@ -1,0 +1,94 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Lidarr: deployed with Docker Compose from compose.yaml beside this
+# file, shown in a desk window through the agent.
+
+schema = 1
+publisher = "lidarr"
+name = "lidarr"
+project = "Lidarr"
+developer = "Servarr"
+version = "3.1.0.4875"
+homepage = "https://lidarr.audio"
+source = "https://github.com/Lidarr/Lidarr/tree/v3.1.0.4875"
+glyph = "library_music"
+tone = "leaf"
+categories = ["media", "files"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Lidarr"
+
+[description]
+en = "Follow artists: new albums are searched for through your indexers (Prowlarr), sent to a download client and filed into the music library Navidrome plays."
+zh = "关注艺人：通过索引器（Prowlarr）搜索新专辑，交给下载客户端下载，并整理进 Navidrome 播放的音乐库。"
+zh-TW = "關注藝人：透過索引器（Prowlarr）搜尋新專輯，交給下載用戶端下載，並整理進 Navidrome 播放的音樂庫。"
+
+[license]
+spdx = "GPL-3.0"
+url = "https://github.com/Lidarr/Lidarr/blob/v3.1.0.4875/LICENSE.md"
+accept = true
+
+# linuxserver.io builds amd64 and arm64.
+[requirements]
+arch = ["amd64", "arm64"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+jobs = ["seed-login"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+LIDARR_TAG = "3.1.0.4875-ls43"
+
+[[secrets]]
+env = "LIDARR_PASSWORD"
+length = 32
+
+[login]
+user = "admin"
+password = "LIDARR_PASSWORD"
+note = { en = "Other apps reach Lidarr at host.docker.internal:<its port> once it is reachable from the network; its API key is in Settings → General.", zh = "开启“允许从网络访问”后，其他应用可通过 host.docker.internal:<端口> 连接 Lidarr；API 密钥在 Settings → General 中。", zh-TW = "開啟「允許從網路存取」後，其他應用可透過 host.docker.internal:<連接埠> 連線 Lidarr；API 金鑰在 Settings → General 中。" }
+
+[[settings]]
+key = "config"
+type = "path"
+env = "LIDARR_CONFIG"
+default = "{stack}/config"
+data = true
+label = { en = "Configuration and database", zh = "配置和数据库", zh-TW = "設定和資料庫" }
+
+[[settings]]
+key = "music"
+type = "path"
+env = "LIDARR_LIBRARY"
+default = "{shared}/music"
+label = { en = "Music library", zh = "音乐库", zh-TW = "音樂庫" }
+help = { en = "Navidrome's default music folder, at /music.", zh = "Navidrome 的默认音乐文件夹，位于 /music。", zh-TW = "Navidrome 的預設音樂資料夾，位於 /music。" }
+
+[[settings]]
+key = "downloads"
+type = "path"
+env = "DOWNLOADS_LOCATION"
+default = "{shared}/downloads"
+label = { en = "Downloads", zh = "下载", zh-TW = "下載" }
+help = { en = "Where the download clients put their files (qBittorrent's and Transmission's default), at /downloads.", zh = "下载客户端保存文件的位置（qBittorrent 和 Transmission 的默认位置），位于 /downloads。", zh-TW = "下載用戶端儲存檔案的位置（qBittorrent 和 Transmission 的預設位置），位於 /downloads。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "LIDARR_PORT"
+default = 8686
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "Also what the other apps need to reach it. Off: only through the desk.", zh = "其他应用连接它也需要开启。关闭时只能通过桌面访问。", zh-TW = "其他應用連線它也需要開啟。關閉時只能透過桌面存取。" }
+on = { LIDARR_BIND = "0.0.0.0" }
+off = { LIDARR_BIND = "127.0.0.1" }

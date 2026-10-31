@@ -1,0 +1,29 @@
+# Gotify server 3.1.1 (MIT), https://github.com/gotify/server/tree/v3.1.1
+#
+# Written for ServerBox Monitor (2026-10-18) from Gotify's install guide
+# (`docker run gotify/server`):
+# - no `name:` and no `container_name`: the agent names the project;
+# - image pinned to the release; the data folder from the env file; runs as
+#   the shared folder's owner, so it listens on 8080 instead of 80;
+# - the first user (admin) is made with the generated password
+#   (GOTIFY_DEFAULTUSER_*); registration stays off (Gotify's default).
+
+services:
+  gotify:
+    image: gotify/server:${GOTIFY_VERSION}
+    user: "${SBM_UID}:${SBM_GID}"
+    environment:
+      TZ: ${SBM_TZ}
+      GOTIFY_SERVER_PORT: '8080'
+      GOTIFY_DEFAULTUSER_NAME: admin
+      GOTIFY_DEFAULTUSER_PASS: ${GOTIFY_PASSWORD}
+    volumes:
+      - ${GOTIFY_DATA}:/app/data
+    ports:
+      - '${GOTIFY_BIND}:${GOTIFY_PORT}:8080'
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

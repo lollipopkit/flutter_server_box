@@ -57,8 +57,7 @@ reaches every server. More: <https://serverbox.lollipopkit.com/docs/advanced/age
   exempt the app from battery optimisation): **Settings → App → General**.
 - **Backups**: the Backup page — a file, WebDAV, iCloud, a GitHub Gist, or one
   of your servers' monitor agents (the agent must be recent enough to list
-  `backup` in its features, and the app must log in to it with an admin
-  account). A backup has the servers, snippets, keys and settings; the Agent's providers,
+  `backup` in its features). A backup has the servers, snippets, keys and settings; the Agent's providers,
   chats, skills and MCP secrets are not in it.
 - **Terminal keys** (Esc, Tab, Ctrl, arrows): the bar above the keyboard in a
   terminal; **IME** shows or hides the system keyboard. A third-party keyboard

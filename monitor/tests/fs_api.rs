@@ -1,9 +1,6 @@
-//! `GET /api/v1/fs/roots` — the only fs endpoint that answers about the
-//! confinement itself rather than about a path inside it.
-//!
-//! Worth its own coverage because it is the one place the roots are handed out
-//! deliberately. Everything that keeps a *request* inside them is `FsRoots`'
-//! job and is tested directly in `fs_roots.rs`.
+//! `GET /api/v1/fs/roots` — where a file browser starts: the account's home,
+//! then the filesystem's roots. What keeps a *request* away from the agent's
+//! own state is `FsRoots`' job and is tested directly in `fs_roots.rs`.
 
 mod common;
 
@@ -29,22 +26,15 @@ fn ensure_crypto_provider() {
     });
 }
 
-/// [`roots`] empty is how "the file API is off" is configured: `fs_available`
-/// is `enabled && !roots.is_empty()`.
-async fn app_state(enabled: bool, roots: &[&str]) -> Arc<AppState> {
+async fn app_state() -> Arc<AppState> {
     ensure_crypto_provider();
-    let mut config = Config {
+    let config = Config {
         jwt_secret: Some(SECRET.to_string()),
         ..Default::default()
     };
-    let mut remote = config.get_remote_access();
-    remote.fs.enabled = Some(enabled);
-    remote.fs.roots = roots.iter().map(|r| r.to_string()).collect();
-    config.remote_access = Some(remote);
-
     let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
     sqlx::migrate!("./migrations").run(&db).await.unwrap();
-    common::seed_as_upgrade(&db, &config).await;
+    common::add_owner(&db).await;
     AppState::new(Arc::new(config), db)
 }
 
@@ -72,65 +62,30 @@ async fn get_roots(srv: &TestServer, token: Option<&str>) -> Result<serde_json::
 }
 
 fn token() -> String {
-    generate_token("admin", SECRET).unwrap()
-}
-
-fn existing_root() -> String {
-    fs::canonicalize(std::env::current_dir().unwrap())
-        .unwrap()
-        .to_string_lossy()
-        .into_owned()
-}
-
-fn canonical(path: &str) -> std::path::PathBuf {
-    fs::canonicalize(Path::new(path)).unwrap()
+    generate_token(SECRET).unwrap()
 }
 
 #[ntex::test]
-async fn the_configured_roots_come_back() {
-    let dir = tempfile::tempdir().unwrap();
-    let first = dir.path().join("first");
-    let second = dir.path().join("second");
-    fs::create_dir(&first).unwrap();
-    fs::create_dir(&second).unwrap();
-    let first = first.to_string_lossy().into_owned();
-    let second = second.to_string_lossy().into_owned();
-    let srv = test_server(app_state(true, &[&first, &second]).await).await;
+async fn home_then_the_filesystem_roots_come_back() {
+    let srv = test_server(app_state().await).await;
     let body = get_roots(&srv, Some(&token())).await.unwrap();
-
-    let roots = body["roots"].as_array().expect("roots is an array");
-    let got: Vec<&str> = roots.iter().map(|r| r.as_str().unwrap()).collect();
-    assert!(got.iter().all(|root| !root.contains('\\')), "got {got:?}");
-    let mut got: Vec<_> = got.iter().map(|root| canonical(root)).collect();
-    got.sort_unstable();
-    let mut expected = vec![canonical(&first), canonical(&second)];
-    expected.sort_unstable();
-    assert_eq!(got.len(), 2, "got {got:?}");
-    assert_eq!(got, expected);
+    let roots: Vec<String> = body["roots"]
+        .as_array()
+        .expect("roots is an array")
+        .iter()
+        .map(|r| r.as_str().unwrap().to_string())
+        .collect();
+    let home = std::env::var_os("HOME").or_else(|| std::env::var_os("USERPROFILE")).unwrap();
+    let home = fs::canonicalize(Path::new(&home)).unwrap();
+    assert_eq!(fs::canonicalize(&roots[0]).unwrap(), home, "{roots:?}");
+    #[cfg(not(windows))]
+    assert_eq!(roots[1..], ["/".to_string()]);
+    #[cfg(windows)]
+    assert!(roots.len() > 1, "{roots:?}");
 }
 
-/// The same 401 every other fs handler gives: this one says where the agent
-/// will let a caller go, which is not something an unauthenticated one may ask.
 #[ntex::test]
-async fn an_unauthenticated_caller_is_refused() {
-    let root = existing_root();
-    let srv = test_server(app_state(true, &[&root]).await).await;
+async fn the_roots_need_a_token() {
+    let srv = test_server(app_state().await).await;
     assert_eq!(get_roots(&srv, None).await.unwrap_err(), 401);
-}
-
-/// Switched off is switched off: it must not answer with an empty list, which
-/// a client would read as "no limit" rather than as "not serving files".
-#[ntex::test]
-async fn a_disabled_file_api_refuses_rather_than_answering_empty() {
-    let root = existing_root();
-    let srv = test_server(app_state(false, &[&root]).await).await;
-    assert_eq!(get_roots(&srv, Some(&token())).await.unwrap_err(), 403);
-}
-
-/// Enabled with nothing named is the same as off — `fs_available()` is what
-/// both mean, and the agent warns about this combination at startup.
-#[ntex::test]
-async fn enabled_with_no_roots_is_refused_too() {
-    let srv = test_server(app_state(true, &[]).await).await;
-    assert_eq!(get_roots(&srv, Some(&token())).await.unwrap_err(), 403);
 }

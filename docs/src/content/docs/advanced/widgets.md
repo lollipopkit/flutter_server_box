@@ -76,7 +76,7 @@ a server there; it has no separate setting in Server Box.
 ### Widgets or the Watch app do not update
 
 - Make sure Monitor agent is running and reachable at the configured address.
-- Check the Monitor username, password, certificate, and `allowInsecure` setting in the App.
+- Check the Monitor password, certificate, and `allowInsecure` setting in the App.
 - iOS controls the refresh schedule. Wait for another refresh, or remove and add the widget again.
 - Tap an Android widget to refresh it. Open its configuration to confirm the selected server and metric.
 - Pair the Watch with an iPhone. After changing server settings, open Server Box on the iPhone and wait for sync.

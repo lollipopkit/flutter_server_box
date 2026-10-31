@@ -1,0 +1,60 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# PairDrop: deployed with Docker Compose from compose.yaml beside this file,
+# shown in a desk window through the agent.
+
+schema = 1
+publisher = "schlagmichdoch"
+name = "pairdrop"
+project = "PairDrop"
+developer = "schlagmichdoch"
+version = "1.11.2"
+homepage = "https://pairdrop.net"
+source = "https://github.com/schlagmichdoch/PairDrop/tree/v1.11.2"
+glyph = "devices"
+tone = "teal"
+categories = ["files", "network"]
+notices = ["pullsImages", "publishesPort"]
+
+[title]
+en = "PairDrop"
+
+[description]
+en = "Send files and text between devices from the browser, like AirDrop: devices on the same network see each other, others pair once with a code. Files go from browser to browser; the server keeps nothing."
+zh = "像 AirDrop 一样在浏览器中跨设备发送文件和文字：同一网络中的设备互相可见，其他设备用配对码配对一次即可。文件在浏览器之间直接传输，服务器不保存任何内容。"
+zh-TW = "像 AirDrop 一樣在瀏覽器中跨裝置傳送檔案和文字：同一網路中的裝置互相可見，其他裝置用配對碼配對一次即可。檔案在瀏覽器之間直接傳輸，伺服器不保存任何內容。"
+
+[license]
+spdx = "GPL-3.0"
+url = "https://github.com/schlagmichdoch/PairDrop/blob/v1.11.2/LICENSE"
+accept = true
+
+# linuxserver.io builds amd64 and arm64.
+[requirements]
+arch = ["amd64", "arm64"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+PAIRDROP_TAG = "v1.11.2-ls147"
+
+[[settings]]
+key = "port"
+type = "port"
+env = "PAIRDROP_PORT"
+default = 3006
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "For phones and other computers to open it. Off: only through the desk.", zh = "供手机和其他电脑打开它。关闭时只能通过桌面访问。", zh-TW = "供手機和其他電腦開啟它。關閉時只能透過桌面存取。" }
+on = { PAIRDROP_BIND = "0.0.0.0" }
+off = { PAIRDROP_BIND = "127.0.0.1" }

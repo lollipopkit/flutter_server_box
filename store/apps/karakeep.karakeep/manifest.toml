@@ -1,0 +1,144 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Karakeep, a bookmark and read-it-later app: built and deployed with Docker
+# Compose from compose.yaml and karakeep-mcp.Dockerfile beside this file,
+# shown in a desk window through the agent.
+
+schema = 1
+publisher = "karakeep"
+name = "karakeep"
+project = "Karakeep"
+developer = "Karakeep"
+version = "0.33.2"
+homepage = "https://karakeep.app"
+source = "https://github.com/karakeep-app/karakeep/tree/v0.33.2"
+glyph = "collections_bookmark"
+tone = "violet"
+categories = ["productivity", "ai"]
+notices = ["pullsImages", "buildsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Karakeep"
+
+[description]
+en = "Save links, notes and images, with each page archived, searchable in full and tagged by AI when a model is set in its settings. Agent mode can search and organise them."
+zh = "保存链接、笔记和图片：每个网页都会存档并可全文搜索；在设置中配置模型后还会用 AI 自动打标签。Agent 模式可以搜索和整理它们。"
+zh-TW = "儲存連結、筆記和圖片：每個網頁都會封存並可全文搜尋；在設定中設定模型後還會用 AI 自動加標籤。Agent 模式可以搜尋和整理它們。"
+
+[license]
+spdx = "AGPL-3.0"
+url = "https://github.com/karakeep-app/karakeep/blob/v0.33.2/LICENSE"
+accept = true
+
+# The web server, its workers, a headless Chrome for archiving and Meilisearch.
+[requirements]
+memory_min_mib = 1024
+memory_recommended_mib = 2048
+arch = ["amd64", "arm64"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+jobs = ["seed-admin"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+KARAKEEP_VERSION = "0.33.2"
+# The Chrome build of the release's date (karakeep-chrome:release then).
+KARAKEEP_CHROME_VERSION = "151.0.7922.47-r1"
+MEILISEARCH_VERSION = "v1.41.0"
+KARAKEEP_ADMIN_EMAIL = "admin@karakeep.local"
+
+[[secrets]]
+env = "KARAKEEP_ADMIN_PASSWORD"
+length = 32
+
+[[secrets]]
+env = "NEXTAUTH_SECRET"
+length = 48
+
+[[secrets]]
+env = "MEILI_MASTER_KEY"
+length = 48
+
+[[secrets]]
+env = "MCP_TOKEN"
+length = 48
+
+[login]
+user = "admin@karakeep.local"
+password = "KARAKEEP_ADMIN_PASSWORD"
+note = { en = "Sign-up is off: add accounts in Admin Settings → Users.", zh = "注册已关闭：在 Admin Settings → Users 中添加账号。", zh-TW = "註冊已關閉：在 Admin Settings → Users 中新增帳號。" }
+
+[[settings]]
+key = "data"
+type = "path"
+env = "KARAKEEP_DATA"
+default = "{stack}/data"
+data = true
+label = { en = "Data", zh = "数据", zh-TW = "資料" }
+help = { en = "The database and the archived pages, screenshots and images.", zh = "数据库，以及存档的网页、截图和图片。", zh-TW = "資料庫，以及封存的網頁、截圖和圖片。" }
+
+[[settings]]
+key = "search"
+type = "path"
+env = "KARAKEEP_MEILI"
+default = "{stack}/meilisearch"
+data = true
+label = { en = "Search index", zh = "搜索索引", zh-TW = "搜尋索引" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "KARAKEEP_PORT"
+default = 3010
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "For the browser extensions and phone apps. Off: only through the desk.", zh = "供浏览器扩展和手机应用连接。关闭时只能通过桌面访问。", zh-TW = "供瀏覽器擴充功能和手機應用程式連線。關閉時只能透過桌面存取。" }
+on = { KARAKEEP_BIND = "0.0.0.0" }
+off = { KARAKEEP_BIND = "127.0.0.1" }
+
+[[settings]]
+key = "url"
+type = "text"
+env = "KARAKEEP_URL"
+default = "http://localhost:3000"
+pattern = '^https?://[A-Za-z0-9.:\[\]-]+(/[A-Za-z0-9._~/-]*)?$'
+label = { en = "Public address", zh = "公开地址", zh-TW = "公開位址" }
+help = { en = "The address Karakeep's links name (shared lists, RSS feeds). Set it when it is reachable from the network.", zh = "Karakeep 生成的链接（共享列表、RSS）使用的地址。允许从网络访问时请设置。", zh-TW = "Karakeep 產生的連結（共享清單、RSS）使用的位址。允許從網路存取時請設定。" }
+
+[[settings]]
+key = "mcp_port"
+type = "port"
+env = "MCP_PORT"
+default = 8095
+label = { en = "MCP server port", zh = "MCP 服务端口", zh-TW = "MCP 服務連接埠" }
+help = { en = "Agent mode's connection to Karakeep, on this machine only.", zh = "Agent 模式连接 Karakeep 用，仅限本机。", zh-TW = "Agent 模式連線 Karakeep 用，僅限本機。" }
+
+[[settings]]
+key = "mcp_api_key"
+type = "text"
+env = "KARAKEEP_MCP_API_KEY"
+optional = true
+pattern = '[A-Za-z0-9_-]{16,256}'
+label = { en = "API key for Agent mode", zh = "供 Agent 模式使用的 API 密钥", zh-TW = "供 Agent 模式使用的 API 金鑰" }
+help = { en = "Optional: Agent mode is given a key of the administrator's when Karakeep is set up. To act as another account, create a key in Settings → API Keys and set it here.", zh = "可选：部署时会自动为 Agent 模式创建管理员的密钥。若要以其他账号操作，请在 Settings → API Keys 中创建密钥并填在这里。", zh-TW = "選填：部署時會自動為 Agent 模式建立管理員的金鑰。若要以其他帳號操作，請在 Settings → API Keys 中建立金鑰並填在這裡。" }
+
+# Karakeep's own MCP server (apps/mcp), behind a bridge to HTTP that asks for
+# MCP_TOKEN.
+[[mcp]]
+port = "mcp_port"
+path = "/mcp"
+publisher = "official"
+service = "mcp"
+source = "https://github.com/karakeep-app/karakeep/tree/v0.33.2/apps/mcp"
+[mcp.auth]
+scheme = "Bearer"
+secret = "MCP_TOKEN"

@@ -22,6 +22,7 @@
 //! `virt` to see and change, as for power. A host's failure is answered 200
 //! with `error`, as in `api::virt`.
 
+use crate::api::WebError;
 use std::sync::Arc;
 
 use ntex::web::{self, HttpRequest, HttpResponse};
@@ -37,7 +38,6 @@ use super::machine;
 use super::server::AppState;
 use super::virt::{Backend, PowerResponse, backend, run_libvirt};
 use super::ws::audit::{Action, Event, Kind, Outcome};
-use crate::core::permissions::Grant;
 
 #[derive(Deserialize, Default)]
 pub struct HostRequest {
@@ -63,7 +63,7 @@ pub(crate) fn password(p: &Option<String>) -> Option<&str> {
     p.as_deref().filter(|p| !p.is_empty())
 }
 
-fn answer(value: serde_json::Value) -> Result<HttpResponse, crate::api::WebError> {
+fn answer(value: serde_json::Value) -> Result<HttpResponse, WebError> {
     Ok(HttpResponse::Ok().json(&value))
 }
 
@@ -71,8 +71,8 @@ pub async fn storage(
     req: HttpRequest,
     body: Option<web::types::Json<HostRequest>>,
     state: Arc<AppState>,
-) -> Result<HttpResponse, crate::api::WebError> {
-    if let Err(refused) = machine::gate(&req, &state, Grant::Virt, "virt storage").await {
+) -> Result<HttpResponse, WebError> {
+    if let Err(refused) = machine::gate(&req, &state, "virt storage").await {
         return Ok(refused);
     }
     let request = body.map(|b| b.into_inner()).unwrap_or_default();
@@ -111,8 +111,8 @@ pub async fn volumes(
     req: HttpRequest,
     body: web::types::Json<VolumesRequest>,
     state: Arc<AppState>,
-) -> Result<HttpResponse, crate::api::WebError> {
-    if let Err(refused) = machine::gate(&req, &state, Grant::Virt, "virt volumes").await {
+) -> Result<HttpResponse, WebError> {
+    if let Err(refused) = machine::gate(&req, &state, "virt volumes").await {
         return Ok(refused);
     }
     let request = body.into_inner();
@@ -140,8 +140,8 @@ pub async fn networks(
     req: HttpRequest,
     body: Option<web::types::Json<HostRequest>>,
     state: Arc<AppState>,
-) -> Result<HttpResponse, crate::api::WebError> {
-    if let Err(refused) = machine::gate(&req, &state, Grant::Virt, "virt networks").await {
+) -> Result<HttpResponse, WebError> {
+    if let Err(refused) = machine::gate(&req, &state, "virt networks").await {
         return Ok(refused);
     }
     let request = body.map(|b| b.into_inner()).unwrap_or_default();
@@ -169,16 +169,15 @@ pub async fn manage(
     req: HttpRequest,
     body: web::types::Json<ManageRequest>,
     state: Arc<AppState>,
-) -> Result<HttpResponse, crate::api::WebError> {
+) -> Result<HttpResponse, WebError> {
     let request = body.into_inner();
     let what = format!("virt {}", request.change.describe());
-    let gated = match machine::gate(&req, &state, Grant::Virt, &what).await {
+    let gated = match machine::gate(&req, &state, &what).await {
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),
     };
     let record = |outcome, why: Option<&str>| {
         Event::new(Kind::Machine, if why.is_some() { Action::Close } else { Action::Open }, outcome)
-            .subject(&gated.caller.username)
             .remote_ip(gated.remote_ip.clone())
             .detail(match why {
                 Some(why) => format!("{what}: {why}"),

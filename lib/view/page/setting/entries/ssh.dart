@@ -369,15 +369,23 @@ extension _SSH on _AppSettingsPageState {
     final file = File(path);
     final extIndex = path.lastIndexOf('.');
     final ext = extIndex != -1 ? path.substring(extIndex) : '';
-    final newPath = Paths.img.joinPath('ssh_bg$ext');
-    final destFile = File(newPath);
-    if (await destFile.exists()) {
-      await destFile.delete();
-    }
+    // A new name for each picture: one path for every picture leaves the
+    // terminal page and Flutter's image cache drawing the one before.
+    final newPath = Paths.img.joinPath('ssh_bg_${DateTime.now().millisecondsSinceEpoch}$ext');
     await file.copy(newPath);
+    final old = _setting.sshBgImage.fetch();
     _setting.sshBgImage.put(newPath);
+    await _deleteBgImage(old);
 
     _refreshApp(closeDialog: true);
+  }
+
+  /// The copy [_pickBgImage] made at [path]; never a file of the user's own.
+  Future<void> _deleteBgImage(String path) async {
+    if (path.isEmpty || !path.startsWith(Paths.img)) return;
+    try {
+      await File(path).delete();
+    } catch (_) {}
   }
 
   SettingsRow _buildTermTheme() {
@@ -510,8 +518,10 @@ extension _SSH on _AppSettingsPageState {
                 child: Text(libL10n.file),
               ),
               TextButton(
-                onPressed: () {
+                onPressed: () async {
+                  final old = _setting.sshBgImage.fetch();
                   _setting.sshBgImage.delete();
+                  await _deleteBgImage(old);
                   _refreshApp(closeDialog: true);
                 },
                 child: Text(libL10n.clear),

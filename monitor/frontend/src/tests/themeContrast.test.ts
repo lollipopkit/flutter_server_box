@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import css from '@serverbox/webui/theme.css?raw'
+import css from '../../../../packages/webui/src/theme.css?raw'
 /// The `--sb-*` values of one block of theme.css.
 function tokens(block: string): Record<string, string> {
   return Object.fromEntries([...block.matchAll(/--sb-([\w-]+):\s*(#[0-9a-f]{6})/gi)].map((m) => [m[1], m[2]]))

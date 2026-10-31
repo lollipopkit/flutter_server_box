@@ -8,8 +8,11 @@ pub enum MonitorError {
     #[error("Database error: {0}")]
     Database(#[from] sqlx::Error),
     
+    /// Without its URL: a push URL can carry the credential (a Telegram bot
+    /// token, a Discord webhook, a Bark key in the path), and this message
+    /// reaches logs and the push test's answer. See the `From` below.
     #[error("HTTP error: {0}")]
-    Http(#[from] reqwest::Error),
+    Http(reqwest::Error),
     
     #[error("JSON error: {0}")]
     Json(#[from] serde_json::Error),
@@ -37,6 +40,12 @@ pub enum MonitorError {
     
     #[error("Push notification error: {0}")]
     Push(String),
+}
+
+impl From<reqwest::Error> for MonitorError {
+    fn from(error: reqwest::Error) -> Self {
+        Self::Http(error.without_url())
+    }
 }
 
 impl From<std::num::ParseFloatError> for MonitorError {

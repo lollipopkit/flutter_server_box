@@ -22,7 +22,7 @@
   title={label}
   aria-label={label}
   class={cn(
-    'inline-flex items-center gap-1 p-2 rounded-lg text-muted-fg cursor-pointer transition-colors hover:text-fg hover:bg-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
+    'inline-flex items-center gap-1 p-2 rounded-lg inset-ring inset-ring-(--sb-icon-button-border) text-muted-fg cursor-pointer transition-colors hover:text-fg hover:bg-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
     className,
   )}
   {...rest}

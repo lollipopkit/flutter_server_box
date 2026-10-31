@@ -11,6 +11,7 @@ import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/temp.dart';
 import 'package:server_box/data/provider/server/single.dart';
 
+import '../../helpers/rust_lib_helper.dart';
 import '../../helpers/spi_fixture.dart';
 
 /// How the list is ordered, for the three fields that ask the machines.
@@ -20,13 +21,15 @@ import '../../helpers/spi_fixture.dart';
 /// the interesting part is: what a server that has not answered sorts as, and
 /// that two with the same reading keep the order they were in.
 void main() {
+  // Uptime is read back by Rust.
+  setUpAll(initRustLibForTest);
   ServerState state(
     String id, {
     double? cpu,
     double memPercentOver = 0,
     int? sampledAtMs,
     /// What `uptime(1)`'s output was formatted to, as the parsers keep it —
-    /// see [ServerSortField.uptimeSeconds]. Null leaves the field unset,
+    /// read back by Rust (`common::uptime_seconds`). Null leaves the field unset,
     /// which is what a machine that has not answered, or one whose `uptime`
     /// could not be read, looks like from here.
     String? uptime,
@@ -188,49 +191,6 @@ void main() {
       sort(ServerSortField.uptime, ['earlier', 'later'], states),
       ['later', 'earlier'],
     );
-  });
-
-  test('the shapes uptime(1) prints are each read', () {
-    // `common::parse_uptime` in Rust keeps one of these and drops everything
-    // else in the line. The samples are its own test cases
-    // (`uptime_parse_formats` in dart_compat.rs), so the two sides cannot
-    // drift about what reaches this side.
-    const day = 86400, hour = 3600, minute = 60;
-    expect(
-      ServerSortOrder.uptimeSeconds('61 days, 18:16'),
-      61 * day + 18 * hour + 16 * minute,
-    );
-    expect(ServerSortOrder.uptimeSeconds('1 day, 2:34'), day + 2 * hour + 34 * minute);
-    expect(ServerSortOrder.uptimeSeconds('5 days'), 5 * day);
-    expect(ServerSortOrder.uptimeSeconds('2:34'), 2 * hour + 34 * minute);
-    expect(ServerSortOrder.uptimeSeconds('34 min'), 34 * minute);
-    // A zero hour or minute prints a unit instead of H:MM — procps and
-    // busybox `min`, BSD and macOS `hr[s]`, `min[s]` and `sec[s]`.
-    expect(ServerSortOrder.uptimeSeconds('5 days, 10 min'), 5 * day + 10 * minute);
-    expect(ServerSortOrder.uptimeSeconds('2 days, 3 hrs'), 2 * day + 3 * hour);
-    expect(ServerSortOrder.uptimeSeconds('1 day, 1 hr'), day + hour);
-    expect(ServerSortOrder.uptimeSeconds('3 days, 14 mins'), 3 * day + 14 * minute);
-    expect(ServerSortOrder.uptimeSeconds('14 mins'), 14 * minute);
-    expect(ServerSortOrder.uptimeSeconds('30 secs'), 30);
-    expect(ServerSortOrder.uptimeSeconds('1 sec'), 1);
-    // The monitor agent's `format_uptime`, which pluralises every count.
-    expect(ServerSortOrder.uptimeSeconds('1 days, 1:00'), day + hour);
-  });
-
-  test('what the parser refuses is refused here too', () {
-    // The same two inputs `parse_uptime` answers None for, plus the shapes a
-    // clock time can take that this must not mistake for hours and minutes.
-    expect(ServerSortOrder.uptimeSeconds('invalid uptime format'), isNull);
-    expect(ServerSortOrder.uptimeSeconds(''), isNull);
-    expect(ServerSortOrder.uptimeSeconds('   '), isNull);
-    // `18:16:30` is `uptime -p`-ish and has seconds; the shapes kept are
-    // H:MM only, and guessing here would put a machine in the wrong half of
-    // the list rather than at the end of it.
-    expect(ServerSortOrder.uptimeSeconds('18:16:30'), isNull);
-    // A day count followed by something unreadable is not that many days:
-    // answering the prefix would put it among machines it may not belong with.
-    expect(ServerSortOrder.uptimeSeconds('5 days, garbled'), isNull);
-    expect(ServerSortOrder.uptimeSeconds('5 days, 3 weeks'), isNull);
   });
 
   test('only the arrangement may be dragged into another one', () {

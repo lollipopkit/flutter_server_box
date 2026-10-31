@@ -11,6 +11,9 @@ abstract final class Lkc {
   /// (`appAuthRedirectScheme` in `android/app/build.gradle`).
   static const redirectUrl = 'serverbox://auth/callback';
 
+  /// Homebase's name of this app, its sync files under it.
+  static const app = 'serverbox';
+
   /// The APNs topic homebase pushes to.
   static const _apnsTopic = 'com.lollipopkit.toolbox';
 

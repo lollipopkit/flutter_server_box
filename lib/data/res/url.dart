@@ -48,13 +48,16 @@ abstract final class Urls {
   /// — not a thing a switch can convey on its own.
   static const monitorAgentDoc = '$docs/advanced/monitor-agent/';
 
-  /// The agent's accounts, roles and grants, and who can change them.
+  /// Why an agent refuses a plaintext connection, and how to allow it.
   ///
-  /// Linked from the server page of an agent that grants nothing — the one
-  /// place the absence of the whole function bar needs explaining, and where
-  /// the reader may not be the person who can grant more.
-  static const monitorPermissionsDoc =
-      '$monitorAgentDoc#accounts-and-permissions';
+  /// Linked from the server page of an agent that refuses — the one place the
+  /// absence of the whole function bar needs explaining.
+  static const monitorAccessDoc = '$monitorAgentDoc#plaintext-http';
+
+  /// How an agent installed by `install.sh` is upgraded, and what the
+  /// upgrade of one from before it had a single account carries over.
+  static const monitorInstallDoc = '$monitorAgentDoc#upgrade';
+  static const monitorUpgradeDoc = '$monitorAgentDoc#upgrading-from-an-agent-with-several-accounts';
 
   /// How an alert rule is written: what a metric, a matcher and a threshold
   /// are, which combinations the agent actually evaluates, and when a rule

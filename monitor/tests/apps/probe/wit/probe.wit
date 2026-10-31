@@ -1,0 +1,52 @@
+package test:probe;
+
+interface api {
+  use sbm:app/types@0.1.0.{error};
+
+  enum shade { light, very-dark }
+
+  variant shape { circle(u32), none-at-all }
+
+  record echoed {
+    text: string,
+    count: u32,
+    tags: list<string>,
+    maybe-note: option<string>,
+    shade: shade,
+    shape: shape,
+  }
+
+  echo: func(text: string, count: u32, tags: list<string>, maybe-note: option<string>, shade: shade, shape: shape) -> result<echoed, error>;
+  refuse: func() -> result<_, error>;
+  spin: func() -> result<_, error>;
+  grow: func() -> result<u32, error>;
+  run: func(script: string) -> result<string, error>;
+  as-root: func(script: string) -> result<string, error>;
+  put: func(key: string, value: string) -> result<_, error>;
+  get: func(key: string) -> result<option<string>, error>;
+  /// Not a job: `job.line` does nothing here, `run-root` refuses.
+  line-outside: func() -> result<_, error>;
+  /// Agent mode's providers' ids, and the first one's key.
+  providers: func() -> result<tuple<list<string>, option<string>>, error>;
+  /// [url]'s status and body; its body's lines counted; saved as [name].
+  fetch-text: func(url: string) -> result<tuple<u16, string>, error>;
+  count-lines: func(url: string) -> result<u32, error>;
+  save: func(url: string, sha256: string, name: string) -> result<string, error>;
+  own-dir: func() -> result<string, error>;
+}
+
+interface jobs {
+  use sbm:app/types@0.1.0.{error};
+
+  count: func(lines: u32) -> result<u32, error>;
+  /// Never ends on its own: lines until cancelled.
+  forever: func() -> result<_, error>;
+  /// [script] as the account, its lines in the log.
+  shell: func(script: string) -> result<s32, error>;
+}
+
+world probe {
+  include sbm:app/imports@0.1.0;
+  export api;
+  export jobs;
+}

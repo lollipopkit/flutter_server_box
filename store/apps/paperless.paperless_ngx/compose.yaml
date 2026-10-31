@@ -1,0 +1,78 @@
+# Paperless-ngx 3.2.1 (GPL-3.0), https://github.com/paperless-ngx/paperless-ngx/tree/v3.2.1
+#
+# Adapted from the release's docker/compose/docker-compose.postgres.yml and
+# docker-compose.env for ServerBox Monitor (2026-10-17):
+# - no `name:` and no `container_name`: the agent names the project;
+# - images pinned (upstream: paperless-ngx:latest, postgres:18, valkey:9-alpine);
+# - bind mounts from the env file the agent writes instead of named volumes,
+#   and the database password, secret key and administrator generated once;
+# - the administrator is made at the first start from PAPERLESS_ADMIN_*
+#   (s6 init-superuser);
+# - PAPERLESS_PROXY_SSL_HEADER: the agent's proxy says the browser's scheme
+#   in X-Forwarded-Proto. Without it a desk on HTTPS fails Django's CSRF
+#   origin check on every form;
+# - files written as the shared folder's owner (USERMAP_UID/GID).
+
+services:
+  broker:
+    image: valkey/valkey:${VALKEY_VERSION}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  db:
+    image: postgres:${POSTGRES_VERSION}
+    restart: unless-stopped
+    volumes:
+      - ${PAPERLESS_DB_DATA}:/var/lib/postgresql
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  webserver:
+    image: ghcr.io/paperless-ngx/paperless-ngx:${PAPERLESS_VERSION}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      broker:
+        condition: service_healthy
+    ports:
+      - '${PAPERLESS_BIND}:${PAPERLESS_PORT}:8000'
+    volumes:
+      - ${PAPERLESS_DATA}:/usr/src/paperless/data
+      - ${PAPERLESS_MEDIA}:/usr/src/paperless/media
+      - ${PAPERLESS_EXPORT}:/usr/src/paperless/export
+      - ${PAPERLESS_CONSUME}:/usr/src/paperless/consume
+    environment:
+      PAPERLESS_REDIS: redis://broker:6379
+      PAPERLESS_DBHOST: db
+      PAPERLESS_DBENGINE: postgresql
+      PAPERLESS_DBNAME: ${POSTGRES_DB}
+      PAPERLESS_DBUSER: ${POSTGRES_USER}
+      PAPERLESS_DBPASS: ${POSTGRES_PASSWORD}
+      PAPERLESS_SECRET_KEY: ${PAPERLESS_SECRET_KEY}
+      PAPERLESS_ADMIN_USER: ${PAPERLESS_ADMIN_USER}
+      PAPERLESS_ADMIN_PASSWORD: ${PAPERLESS_ADMIN_PASSWORD}
+      PAPERLESS_OCR_LANGUAGE: ${PAPERLESS_OCR_LANGUAGE}
+      PAPERLESS_TIME_ZONE: ${SBM_TZ}
+      PAPERLESS_PROXY_SSL_HEADER: '["HTTP_X_FORWARDED_PROTO", "https"]'
+      USERMAP_UID: ${SBM_UID}
+      USERMAP_GID: ${SBM_GID}
+    # The image's own HEALTHCHECK, written out: the web server answers once
+    # migrations are done.
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "-o", "/dev/null", "http://localhost:8000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 300s

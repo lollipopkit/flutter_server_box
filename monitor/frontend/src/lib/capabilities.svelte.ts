@@ -1,7 +1,7 @@
 /// Per-server capabilities cache — platform-only, doesn't change between
 /// samples, so this fetches once per authenticated server (not polled) and
-/// is shared between the sidebar (every entry's OS icon) and the dashboard
-/// header/card-visibility gating for the current entry.
+/// is shared between the lock screen (every entry's OS icon), the desk's app
+/// availability and the Status app's card gating.
 
 import { getCapabilitiesFor } from './api'
 import { servers } from './servers.svelte'
@@ -20,6 +20,18 @@ class CapabilitiesStore {
       this.byServer[id] = await getCapabilitiesFor(entry)
     } catch {
       // Left undefined: caller sees "unknown" and can retry later
+    }
+  }
+
+  /// Reads them again, keeping the cached answer until the new one arrives —
+  /// what is drawn from them (the dock, an app's actions) does not blink.
+  async refresh(id: string) {
+    const entry = servers.list.find((s) => s.id === id)
+    if (!entry?.token) return
+    try {
+      this.byServer[id] = await getCapabilitiesFor(entry)
+    } catch {
+      // The cached answer stands.
     }
   }
 

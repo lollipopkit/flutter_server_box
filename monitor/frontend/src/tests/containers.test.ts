@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
-import Containers from '../pages/Containers.svelte'
+import Containers from '../desk/apps/containers/ContainersApp.svelte'
 import { ApiError, api } from '../lib/api'
 import { capabilitiesStore } from '../lib/capabilities.svelte'
 import { servers } from '../lib/servers.svelte'
@@ -38,6 +38,7 @@ const IMAGE: ContainerImage = {
   created_at: null,
   created: null,
   dangling: false,
+  reference: 'alpine:latest',
 }
 
 /// A running container, which is the only state a shell is offered in.
@@ -62,7 +63,7 @@ describe('Containers page', () => {
   })
 
   it('asks before pruning volumes, and prunes only on the answer', async () => {
-    render(Containers, { onback: () => {} })
+    render(Containers)
     await fireEvent.click(await screen.findByRole('button', { name: /remove unused volumes/i }))
     expect(actContainer).not.toHaveBeenCalled()
     expect(await screen.findByText(/cannot be recovered/i)).toBeInTheDocument()
@@ -78,7 +79,7 @@ describe('Containers page', () => {
 
   /// Confirms a volume prune, the simplest action to drive from the page.
   async function pruneVolumes() {
-    render(Containers, { onback: () => {} })
+    render(Containers)
     await fireEvent.click(await screen.findByRole('button', { name: /remove unused volumes/i }))
     const buttons = await screen.findAllByRole('button', { name: /remove unused volumes/i })
     await fireEvent.click(buttons.at(-1)!)
@@ -120,7 +121,7 @@ describe('Containers page on the images tab', () => {
   })
 
   it('reads the images again when a change answers the other listing', async () => {
-    render(Containers, { onback: () => {} })
+    render(Containers)
     await fireEvent.click(await screen.findByRole('button', { name: /^images$/i }))
     expect(await screen.findByText(/alpine/)).toBeInTheDocument()
 
@@ -142,9 +143,10 @@ describe('Containers page on the images tab', () => {
   })
 
   it('asks before removing an image, and sends the tag on the row', async () => {
-    render(Containers, { onback: () => {} })
+    render(Containers)
     await fireEvent.click(await screen.findByRole('button', { name: /^images$/i }))
-    await screen.findByText(/alpine/)
+    // Select the image; its actions sit over the status bar.
+    await fireEvent.click(await screen.findByText(/alpine/))
 
     await fireEvent.click(screen.getByRole('button', { name: /^remove$/i }))
     expect(actContainer).not.toHaveBeenCalled()
@@ -163,13 +165,13 @@ describe('Containers page on the images tab', () => {
         ? ({
             ...view(),
             part: 'images',
-            images: [{ ...IMAGE, repository: '<none>', tag: '<none>', dangling: true }],
+            images: [{ ...IMAGE, repository: '<none>', tag: '<none>', dangling: true, reference: 'abc' }],
           } as unknown as ContainerView)
         : view(),
     )
-    render(Containers, { onback: () => {} })
+    render(Containers)
     await fireEvent.click(await screen.findByRole('button', { name: /^images$/i }))
-    await screen.findAllByText(/<none>/)
+    await fireEvent.click((await screen.findAllByText(/<none>/))[0])
     await fireEvent.click(screen.getByRole('button', { name: /^remove$/i }))
     const buttons = await screen.findAllByRole('button', { name: /^remove$/i })
     await fireEvent.click(buttons.at(-1)!)
@@ -179,7 +181,7 @@ describe('Containers page on the images tab', () => {
   })
 
   it('sends the prune scope from the checkbox', async () => {
-    render(Containers, { onback: () => {} })
+    render(Containers)
     await fireEvent.click(await screen.findByRole('button', { name: /^images$/i }))
     await screen.findByText(/alpine/)
 
@@ -200,9 +202,9 @@ describe('Containers page on the images tab', () => {
         issue: 'invalid_reference',
       }),
     )
-    render(Containers, { onback: () => {} })
+    render(Containers)
     await fireEvent.click(await screen.findByRole('button', { name: /^images$/i }))
-    await screen.findByText(/alpine/)
+    await fireEvent.click(await screen.findByText(/alpine/))
 
     await fireEvent.click(screen.getByRole('button', { name: /^remove$/i }))
     const buttons = await screen.findAllByRole('button', { name: /^remove$/i })
@@ -212,12 +214,12 @@ describe('Containers page on the images tab', () => {
   })
 
   it('drops an answer that arrives after the server changed', async () => {
-    servers.list = [{ id: 'local', url: '', token: 't', username: 'admin' }]
+    servers.list = [{ id: 'local', url: '', token: 't' }]
     servers.currentId = 'local'
     let answer: (v: Awaited<ReturnType<typeof api.actContainer>>) => void = () => {}
     actContainer.mockReturnValueOnce(new Promise((resolve) => (answer = resolve)))
 
-    render(Containers, { onback: () => {} })
+    render(Containers)
     await fireEvent.click(await screen.findByRole('button', { name: /^images$/i }))
     await screen.findByText(/alpine/)
     await fireEvent.click(screen.getByRole('button', { name: /prune images/i }))
@@ -243,7 +245,7 @@ describe('Containers page on the images tab', () => {
 describe('Containers page shell action', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    servers.list = [{ id: 'local', url: '', token: 't', username: 'admin' }]
+    servers.list = [{ id: 'local', url: '', token: 't' }]
     servers.currentId = 'local'
     getContainers.mockResolvedValue({ ...view(), containers: [RUNNING] } as unknown as ContainerView)
     actContainer.mockResolvedValue({ ...view(), containers: [RUNNING], exit_code: 0, output: '' } as never)
@@ -252,20 +254,21 @@ describe('Containers page shell action', () => {
   it('is hidden when the agent does not list container_exec', async () => {
     capabilitiesStore.byServer['local'] = {
       features: ['containers'],
-      grants: { shell: { ok: true } },
+      access: { ok: true },
     } as unknown as Capabilities
-    render(Containers, { onback: () => {} })
-    await screen.findByText('web')
+    render(Containers)
+    await fireEvent.click(await screen.findByText('web'))
     expect(screen.queryByRole('button', { name: /open shell/i })).toBeNull()
   })
 
   it('is offered for a running container when the agent and the account allow it', async () => {
     capabilitiesStore.byServer['local'] = {
       features: ['containers', 'container_exec'],
-      grants: { shell: { ok: true } },
+      access: { ok: true },
     } as unknown as Capabilities
-    render(Containers, { onback: () => {} })
-    await screen.findByText('web')
+    render(Containers)
+    // A container's actions are the selected one's.
+    await fireEvent.click(await screen.findByText('web'))
     expect(await screen.findByRole('button', { name: /open shell/i })).toBeInTheDocument()
   })
 })

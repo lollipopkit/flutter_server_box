@@ -70,8 +70,7 @@ tail -20 /var/log/syslog
 Commands run with the account used for the connection: the SSH user for SSH
 connections, or the Monitor agent process user for Monitor connections.
 
-For Monitor connections, the account's role must include the `shell`
-permission. The request must use secure transport or explicitly permit
+For Monitor connections, the request must use secure transport or explicitly permit
 `allow_insecure`. Each file in this directory is executable code: it runs as
 the agent user on every status refresh.
 

@@ -56,7 +56,7 @@ async fn test_server() -> TestServer {
     };
     let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
     sqlx::migrate!("./migrations").run(&db).await.unwrap();
-    common::seed_as_upgrade(&db, &config).await;
+    common::add_owner(&db).await;
     let state = AppState::new(Arc::new(config), db);
 
     web_test::server(async move |_| {
@@ -66,7 +66,7 @@ async fn test_server() -> TestServer {
 }
 
 fn bearer() -> String {
-    format!("Bearer {}", generate_token("admin", SECRET).unwrap())
+    format!("Bearer {}", generate_token(SECRET).unwrap())
 }
 
 async fn get(srv: &TestServer) -> Value {

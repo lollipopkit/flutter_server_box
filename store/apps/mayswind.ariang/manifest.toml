@@ -1,0 +1,101 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# AriaNg with aria2, as the Monitor's Downloads app: an image built on the
+# machine from ariang.Dockerfile, deployed with Docker Compose from the file
+# beside this one, shown in a desk window through the agent.
+
+schema = 1
+publisher = "mayswind"
+name = "ariang"
+project = "AriaNg with aria2"
+developer = "MaysWind (AriaNg), aria2 project"
+version = "1.3.15"
+homepage = "https://ariang.mayswind.net"
+source = "https://github.com/mayswind/AriaNg/tree/1.3.15"
+glyph = "cloud_download"
+tone = "amber"
+categories = ["files", "network"]
+notices = ["pullsImages", "buildsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "AriaNg"
+
+[description]
+en = "Download files with aria2 and its AriaNg web interface. Finished files are kept in the shared downloads folder, where media apps can use them."
+zh = "使用 aria2 下载文件，并通过 AriaNg 网页界面管理。下载完成的文件保存在共享的下载文件夹中，媒体应用可以直接使用。"
+zh-TW = "使用 aria2 下載檔案，並透過 AriaNg 網頁介面管理。下載完成的檔案保存在共用的下載資料夾中，媒體應用程式可以直接使用。"
+
+# AriaNg is MIT. aria2 (inside the image) is GPLv2 or later, COPYING at aria2's
+# release-1.37.0 tag; the admin accepts it as the app's licence.
+[license]
+spdx = "GPL-2.0-or-later"
+url = "https://github.com/aria2/aria2/blob/release-1.37.0/COPYING"
+accept = true
+
+# Built from Alpine's aria2 and caddy packages, published for these and more.
+[requirements]
+arch = ["amd64", "arm64", "arm"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "web"
+path = "/"
+
+[env]
+ARIANG_VERSION = "1.3.15"
+
+[[secrets]]
+env = "RPC_SECRET"
+length = 32
+
+[login]
+password = "RPC_SECRET"
+note = { en = "AriaNg asks for this RPC secret token the first time it connects to aria2: enter it under AriaNg Settings > RPC > Aria2 RPC Secret Token. There is no user name.", zh = "AriaNg 首次连接 aria2 时需要此 RPC 密钥：在 AriaNg 的「AriaNg 设置 > RPC > Aria2 RPC 密钥」中填写。没有用户名。", zh-TW = "AriaNg 首次連線 aria2 時需要此 RPC 密鑰：在 AriaNg 的「AriaNg 設定 > RPC > Aria2 RPC 密鑰」中填寫。沒有使用者名稱。" }
+
+[[settings]]
+key = "config"
+type = "path"
+env = "ARIA2_CONFIG"
+default = "{stack}/config"
+data = true
+label = { en = "Settings", zh = "设置", zh-TW = "設定" }
+help = { en = "aria2.conf and the session file of unfinished downloads.", zh = "aria2.conf 和未完成下载的会话文件。", zh-TW = "aria2.conf 與未完成下載的工作階段檔案。" }
+
+[[settings]]
+key = "downloads"
+type = "path"
+env = "DOWNLOADS_LOCATION"
+default = "{shared}/downloads"
+data = false
+label = { en = "Downloads folder", zh = "下载文件夹", zh-TW = "下載資料夾" }
+help = { en = "Shared with the media apps. aria2 writes its files here.", zh = "与媒体应用共享。aria2 将文件写入此处。", zh-TW = "與媒體應用程式共用。aria2 將檔案寫入此處。" }
+
+[[settings]]
+key = "web"
+type = "port"
+env = "ARIANG_PORT"
+default = 6880
+label = { en = "Web UI port", zh = "网页端口", zh-TW = "網頁連接埠" }
+help = { en = "AriaNg and aria2's RPC (/jsonrpc) share this port.", zh = "AriaNg 与 aria2 的 RPC（/jsonrpc）共用此端口。", zh-TW = "AriaNg 與 aria2 的 RPC（/jsonrpc）共用此連接埠。" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Web UI reachable from the network", zh = "网页端口允许从网络访问", zh-TW = "網頁連接埠允許從網路存取" }
+help = { en = "Off: only through the desk.", zh = "关闭时只能通过桌面访问。", zh-TW = "關閉時只能透過桌面存取。" }
+on = { ARIANG_BIND = "0.0.0.0" }
+off = { ARIANG_BIND = "127.0.0.1" }
+
+# BitTorrent and DHT: aria2 listens on the same number it publishes
+# (listen-port, dht-listen-port), so the announced port is reachable.
+[[settings]]
+key = "peer"
+type = "port"
+env = "ARIA2_PEER_PORT"
+default = 6888
+protocol = "both"
+label = { en = "Peer port (TCP and UDP)", zh = "对等端口（TCP 和 UDP）", zh-TW = "對等連接埠（TCP 與 UDP）" }
+help = { en = "BitTorrent peers and the DHT reach aria2 here. Forward it on your router for faster downloads.", zh = "BitTorrent 对等端点和 DHT 通过此端口连接 aria2。在路由器上转发此端口可提高下载速度。", zh-TW = "BitTorrent 對等端點與 DHT 透過此連接埠連線 aria2。在路由器上轉送此連接埠可提高下載速度。" }

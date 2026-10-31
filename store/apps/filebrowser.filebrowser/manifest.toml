@@ -1,0 +1,84 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# File Browser: deployed with Docker Compose from compose.yaml beside this
+# file, shown in a desk window through the agent.
+
+schema = 1
+publisher = "filebrowser"
+name = "filebrowser"
+project = "File Browser"
+developer = "File Browser"
+version = "2.63.23"
+homepage = "https://filebrowser.org"
+source = "https://github.com/filebrowser/filebrowser/tree/v2.63.23"
+glyph = "folder_shared"
+tone = "amber"
+categories = ["files"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "File Browser"
+
+[description]
+en = "Manage the files in a folder from the browser: upload, download, edit, share by link, and give other people accounts limited to their own folders."
+zh = "在浏览器中管理文件夹里的文件：上传、下载、编辑、通过链接分享，并为其他人创建仅能访问各自文件夹的账号。"
+zh-TW = "在瀏覽器中管理資料夾裡的檔案：上傳、下載、編輯、透過連結分享，並為其他人建立僅能存取各自資料夾的帳號。"
+
+[license]
+spdx = "Apache-2.0"
+url = "https://github.com/filebrowser/filebrowser/blob/v2.63.23/LICENSE"
+
+[requirements]
+arch = ["amd64", "arm64", "arm"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+FILEBROWSER_VERSION = "v2.63.23"
+
+[[secrets]]
+env = "FILEBROWSER_PASSWORD"
+length = 32
+bcrypt = "FILEBROWSER_PASSWORD_BCRYPT"
+
+[login]
+user = "admin"
+password = "FILEBROWSER_PASSWORD"
+note = { en = "The password is set when File Browser is first set up; change it later in Settings → Profile.", zh = "密码在首次部署时设置，之后请在 Settings → Profile 中修改。", zh-TW = "密碼在首次部署時設定，之後請在 Settings → Profile 中修改。" }
+
+[[settings]]
+key = "root"
+type = "path"
+env = "FILEBROWSER_ROOT"
+default = "{shared}"
+label = { en = "Folder it manages", zh = "管理的文件夹", zh-TW = "管理的資料夾" }
+help = { en = "Everything File Browser shows and changes. The shared folder holds the other apps' downloads and media.", zh = "File Browser 显示和修改的全部内容。共享文件夹中存放着其他应用的下载和媒体文件。", zh-TW = "File Browser 顯示和修改的全部內容。共用資料夾中存放著其他應用的下載和媒體檔案。" }
+
+[[settings]]
+key = "data"
+type = "path"
+env = "FILEBROWSER_DATA"
+default = "{stack}/data"
+data = true
+label = { en = "Accounts and settings", zh = "账号和设置", zh-TW = "帳號和設定" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "FILEBROWSER_PORT"
+default = 8088
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "Also what share links need. Off: only through the desk.", zh = "分享链接也需要开启。关闭时只能通过桌面访问。", zh-TW = "分享連結也需要開啟。關閉時只能透過桌面存取。" }
+on = { FILEBROWSER_BIND = "0.0.0.0" }
+off = { FILEBROWSER_BIND = "127.0.0.1" }

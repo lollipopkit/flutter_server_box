@@ -10,12 +10,12 @@ use sbm_parser::protocol::{HEADER, MIN_CLIENT_PROTOCOL, PROTOCOL};
 use serde_json::Value;
 use server_box_monitor::api::auth::generate_token;
 
-/// [path] as `admin`, naming [protocol] when given, with [upgrade] asking
+/// [path] signed in, naming [protocol] when given, with [upgrade] asking
 /// for a WebSocket.
 async fn call(srv: &TestServer, method: Method, path: &str, protocol: Option<&str>, upgrade: bool) -> (u16, Value) {
     let mut req = srv
         .request(method, srv.url(path))
-        .header("Authorization", format!("Bearer {}", generate_token("admin", SECRET).unwrap()));
+        .header("Authorization", format!("Bearer {}", generate_token(SECRET).unwrap()));
     if let Some(p) = protocol {
         req = req.header(HEADER, p);
     }
@@ -84,4 +84,64 @@ async fn a_protocol_that_is_not_a_number_is_refused() {
     let (status, body) = call(&srv, Method::GET, "/api/v1/capabilities", Some("two"), false).await;
     assert_eq!(status, 400);
     assert_eq!(body["error"], "bad_protocol");
+}
+
+// TODO: remove when MIN_CLIENT_PROTOCOL reaches 2, with `api::compat_v1`.
+/// A client at protocol 1 (or naming none) still reads `remote_access` and
+/// `grants`, each what `access` says; one at 2 reads `access` alone.
+#[ntex::test]
+async fn capabilities_answer_a_first_protocol_client_in_its_shape() {
+    let (srv, _) = server().await;
+    for protocol in [None, Some("1")] {
+        let (status, body) = call(&srv, Method::GET, "/api/v1/capabilities", protocol, false).await;
+        assert_eq!(status, 200, "{protocol:?}");
+        // The test server is loopback: acting is allowed.
+        assert_eq!(body["access"]["ok"], true, "{body}");
+        for grant in ["shell", "files", "connect", "listen", "virt"] {
+            assert_eq!(body["grants"][grant]["ok"], true, "{grant}: {body}");
+        }
+        assert_eq!(body["grants"]["files"]["mode"], "write");
+        assert_eq!(body["grants"]["ssh_terminal"], serde_json::json!({ "ok": false, "why": "not_granted" }));
+        for flag in ["terminal", "full_access", "files", "stream", "listen"] {
+            assert_eq!(body["remote_access"][flag], true, "{flag}: {body}");
+        }
+        assert!(body.get("me").is_none(), "no accounts to manage: {body}");
+    }
+    let (status, body) = call(&srv, Method::GET, "/api/v1/capabilities", Some(&PROTOCOL.to_string()), false).await;
+    assert_eq!(status, 200);
+    assert_eq!(body["access"]["ok"], true);
+    for gone in ["grants", "remote_access", "me"] {
+        assert!(body.get(gone).is_none(), "{gone}: {body}");
+    }
+}
+
+/// Over a link that may not act, the first protocol's grants say why.
+#[test]
+fn a_refused_link_is_refused_grant_by_grant() {
+    let mut body = serde_json::json!({ "access": { "ok": false, "why": "insecure_transport" } });
+    server_box_monitor::api::compat_v1::capabilities(&mut body);
+    assert_eq!(body["grants"]["shell"], serde_json::json!({ "ok": false, "why": "insecure_transport" }));
+    assert_eq!(body["grants"]["files"], serde_json::json!({ "ok": false, "why": "insecure_transport", "mode": "write" }));
+    assert_eq!(body["remote_access"]["full_access"], false);
+    // A watch token's `access` names no reason.
+    let mut body = serde_json::json!({ "access": { "ok": false } });
+    server_box_monitor::api::compat_v1::capabilities(&mut body);
+    assert_eq!(body["grants"]["virt"]["why"], "not_granted");
+}
+
+// TODO: remove when MIN_CLIENT_PROTOCOL reaches 2, with `api::compat_v1`.
+/// `/bmc` says `editable` to a first-protocol client only.
+#[ntex::test]
+async fn bmc_answers_a_first_protocol_client_in_its_shape() {
+    let (srv, _) = server().await;
+    for protocol in [None, Some("1")] {
+        let (status, body) = call(&srv, Method::GET, "/api/v1/bmc", protocol, false).await;
+        assert_eq!(status, 200, "{protocol:?}: {body}");
+        assert_eq!(body["editable"], true, "{body}");
+        assert!(body["targets"].is_array());
+    }
+    let (status, body) = call(&srv, Method::GET, "/api/v1/bmc", Some(&PROTOCOL.to_string()), false).await;
+    assert_eq!(status, 200);
+    assert!(body.get("editable").is_none(), "{body}");
+    assert!(body["targets"].is_array());
 }

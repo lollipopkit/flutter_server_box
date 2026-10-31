@@ -46,6 +46,20 @@ String _fixture(String name) =>
 void main() {
   setUpAll(initRustLibForTest);
 
+  test('a unit from an agent that predates needs_attention is judged by its state', () {
+    ServiceUnit unit(String state, [bool? flag]) => ServiceUnit.fromJson({
+      'name': 'nginx',
+      'type': 'service',
+      'scope': 'system',
+      'state': state,
+      'needs_attention': ?flag,
+    });
+    expect(unit('failed').needsAttention, isTrue);
+    expect(unit('running').needsAttention, isFalse);
+    // The agent's answer, when it gives one.
+    expect(unit('running', true).needsAttention, isTrue);
+  });
+
   test('the manager the machine runs', () async {
     final exec = _ByName(ServiceManagerType.systemd, {
       ffi.serviceDetectScript(): _ok('openrc\tAlpine Linux'),

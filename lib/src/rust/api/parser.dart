@@ -6,7 +6,7 @@
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `parse_system_or_err`, `parse_system`
+// These functions are ignored because they are not marked as `pub`: `parse_system_or_err`, `parse_system`, `system_name`
 
 /// Parse all output of one collection round, returning `ServerStatus` JSON.
 /// `system`: "linux" | "bsd" | "windows"; see `ParseOptions` for `temp_divisor`.
@@ -26,6 +26,26 @@ Future<String> parseStatusJson({
   tempDivisor: tempDivisor,
   countNetwork: countNetwork,
 );
+
+/// The probe that tells a Unix server's system (`sbm_parser::system`).
+String systemProbeUname() =>
+    RustLib.instance.api.crateApiParserSystemProbeUname();
+
+/// The probe that tells Windows, run when `uname` said nothing it knows.
+String systemProbeVer() => RustLib.instance.api.crateApiParserSystemProbeVer();
+
+/// What `uname -a` said, as `linux` / `bsd`; `None` when it says neither.
+String? systemFromUname({required String output}) =>
+    RustLib.instance.api.crateApiParserSystemFromUname(output: output);
+
+/// `windows` when `ver` answered as Windows does.
+String? systemFromVer({required String output}) =>
+    RustLib.instance.api.crateApiParserSystemFromVer(output: output);
+
+/// The seconds a status's `uptime` string says (`sbm_parser::common::uptime_seconds`);
+/// `None` when it cannot be read.
+BigInt? uptimeSeconds({required String formatted}) =>
+    RustLib.instance.api.crateApiParserUptimeSeconds(formatted: formatted);
 
 /// Per-platform collection command manifest (the app's script generation derives from it, versioned with the parsers)
 List<CommandSpec> commandSpecs({required String system}) =>

@@ -15,6 +15,7 @@
 //! `Detail::BackupRefused`. `virt` to see and change, as for power; a host's
 //! failure is answered 200 with `error`, as in `api::virt`.
 
+use crate::api::WebError;
 use std::sync::Arc;
 
 use ntex::web::{self, HttpRequest, HttpResponse};
@@ -28,7 +29,6 @@ use super::machine;
 use super::server::AppState;
 use super::virt::{Backend, PowerResponse, backend, guest_of};
 use super::virt_guests::Audit;
-use crate::core::permissions::Grant;
 
 #[derive(Deserialize)]
 pub struct GuestBody {
@@ -81,7 +81,7 @@ pub struct ScheduleBody {
     schedule: String,
 }
 
-fn answer(value: serde_json::Value) -> Result<HttpResponse, crate::api::WebError> {
+fn answer(value: serde_json::Value) -> Result<HttpResponse, WebError> {
     Ok(HttpResponse::Ok().json(&value))
 }
 
@@ -102,8 +102,8 @@ pub async fn backups(
     req: HttpRequest,
     body: web::types::Json<GuestBody>,
     state: Arc<AppState>,
-) -> Result<HttpResponse, crate::api::WebError> {
-    if let Err(refused) = machine::gate(&req, &state, Grant::Virt, "virt backups").await {
+) -> Result<HttpResponse, WebError> {
+    if let Err(refused) = machine::gate(&req, &state, "virt backups").await {
         return Ok(refused);
     }
     let request = body.into_inner();
@@ -128,7 +128,7 @@ async fn audited(
     state: &AppState,
     what: String,
     run: impl AsyncFnOnce(&Arc<Client>, &Backend) -> Result<(), VirtError>,
-) -> Result<HttpResponse, crate::api::WebError> {
+) -> Result<HttpResponse, WebError> {
     let audit = match Audit::start(req, state, what).await {
         Ok(a) => a,
         Err(refused) => return Ok(refused),
@@ -149,7 +149,7 @@ pub async fn backup(
     req: HttpRequest,
     body: web::types::Json<BackupBody>,
     state: Arc<AppState>,
-) -> Result<HttpResponse, crate::api::WebError> {
+) -> Result<HttpResponse, WebError> {
     let r = body.into_inner();
     let what = format!("virt backup {} to {}", r.guest, r.request.storage);
     audited(&req, &state, what, async |client, backend| {
@@ -163,7 +163,7 @@ pub async fn restore(
     req: HttpRequest,
     body: web::types::Json<RestoreBody>,
     state: Arc<AppState>,
-) -> Result<HttpResponse, crate::api::WebError> {
+) -> Result<HttpResponse, WebError> {
     let r = body.into_inner();
     let to = r.vmid.map_or_else(|| "over it".to_owned(), |v| format!("as {v}"));
     let what = format!("virt backup restore {} {} {to}", r.guest, r.backup);
@@ -178,7 +178,7 @@ pub async fn edit(
     req: HttpRequest,
     body: web::types::Json<EditBody>,
     state: Arc<AppState>,
-) -> Result<HttpResponse, crate::api::WebError> {
+) -> Result<HttpResponse, WebError> {
     let r = body.into_inner();
     let what = format!("virt backup edit {}", r.backup);
     audited(&req, &state, what, async |client, backend| {
@@ -193,7 +193,7 @@ pub async fn delete(
     req: HttpRequest,
     body: web::types::Json<DeleteBody>,
     state: Arc<AppState>,
-) -> Result<HttpResponse, crate::api::WebError> {
+) -> Result<HttpResponse, WebError> {
     let r = body.into_inner();
     let what = format!("virt backup delete {}", r.backup);
     audited(&req, &state, what, async |client, backend| {
@@ -211,8 +211,8 @@ pub async fn jobs(
     req: HttpRequest,
     _body: Option<web::types::Json<serde_json::Value>>,
     state: Arc<AppState>,
-) -> Result<HttpResponse, crate::api::WebError> {
-    if let Err(refused) = machine::gate(&req, &state, Grant::Virt, "virt backup jobs").await {
+) -> Result<HttpResponse, WebError> {
+    if let Err(refused) = machine::gate(&req, &state, "virt backup jobs").await {
         return Ok(refused);
     }
     let backend = match backend(&state).await {
@@ -232,7 +232,7 @@ pub async fn edit_job(
     req: HttpRequest,
     body: web::types::Json<JobEditBody>,
     state: Arc<AppState>,
-) -> Result<HttpResponse, crate::api::WebError> {
+) -> Result<HttpResponse, WebError> {
     let r = body.into_inner();
     let verb = if r.remove {
         "remove"
@@ -249,7 +249,7 @@ pub async fn run_job(
     req: HttpRequest,
     body: web::types::Json<JobRunBody>,
     state: Arc<AppState>,
-) -> Result<HttpResponse, crate::api::WebError> {
+) -> Result<HttpResponse, WebError> {
     let r = body.into_inner();
     let what = format!("virt backup job run {}", r.id);
     audited(&req, &state, what, async |client, _| client.run_backup_job(&r.id).await).await
@@ -259,8 +259,8 @@ pub async fn schedule(
     req: HttpRequest,
     body: web::types::Json<ScheduleBody>,
     state: Arc<AppState>,
-) -> Result<HttpResponse, crate::api::WebError> {
-    if let Err(refused) = machine::gate(&req, &state, Grant::Virt, "virt backup schedule").await {
+) -> Result<HttpResponse, WebError> {
+    if let Err(refused) = machine::gate(&req, &state, "virt backup schedule").await {
         return Ok(refused);
     }
     let r = body.into_inner();

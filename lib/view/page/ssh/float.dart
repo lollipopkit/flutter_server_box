@@ -154,7 +154,7 @@ extension _Utils on _FloatTerminalState {
         spi != null &&
         serverShellUsesAgent(
           spi,
-          ref.readPresentServer(spi.id)?.remoteAccess,
+          ref.readPresentServer(spi.id)?.agentAccess,
         );
     return VirtKeyX.loadFromStore(persistRepairs: false)
         .where((key) => !disabled.contains(key.name))

@@ -30,12 +30,13 @@
 //!
 //! # Privilege
 //!
-//! Both halves are the `shell` grant (`api::machine::gate`). Signalling, for
+//! Both halves need the transport rule (`api::machine::gate`). Signalling, for
 //! the reason the shell is: anyone with one can run `kill`. Reading too: a
 //! process's command line is where a token or a password passed as an
 //! argument shows up, which `read` (status and charts) was never meant to
 //! hand out.
 
+use crate::api::WebError;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -46,7 +47,6 @@ use super::exec::{ExecResponse, run};
 use super::machine;
 use super::server::AppState;
 use super::ws::audit::{Action, Event, Kind, Outcome};
-use crate::core::permissions::Grant;
 use crate::monitoring::system_type;
 use sbm_parser::SystemType;
 use sbm_parser::proc::{
@@ -156,8 +156,8 @@ pub async fn list(
     req: HttpRequest,
     query: web::types::Query<ProcessQuery>,
     state: Arc<AppState>,
-) -> Result<HttpResponse, crate::api::WebError> {
-    if let Err(refused) = machine::gate(&req, &state, Grant::Shell, "process list").await {
+) -> Result<HttpResponse, WebError> {
+    if let Err(refused) = machine::gate(&req, &state, "process list").await {
         return Ok(refused);
     }
     let system = system_type();
@@ -349,17 +349,16 @@ pub async fn kill(
     req: HttpRequest,
     body: web::types::Json<KillRequest>,
     state: Arc<AppState>,
-) -> Result<HttpResponse, crate::api::WebError> {
+) -> Result<HttpResponse, WebError> {
     let request = body.into_inner();
     let what = format!("process stop {} {}", request.signal.name(), request.pid);
-    let gated = match machine::gate(&req, &state, Grant::Shell, &what).await {
+    let gated = match machine::gate(&req, &state, &what).await {
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),
     };
     let system = system_type();
     let record = |action, outcome, detail: Option<&str>| {
         let mut event = Event::new(Kind::Machine, action, outcome)
-            .subject(&gated.caller.username)
             .remote_ip(gated.remote_ip.clone());
         event = event.detail(match detail {
             Some(detail) => format!("{what}: {detail}"),

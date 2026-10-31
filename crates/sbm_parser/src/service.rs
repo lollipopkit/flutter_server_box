@@ -292,6 +292,10 @@ pub struct ServiceUnit {
     /// never passed in, so a unit cannot be built with a set that disagrees
     /// with them.
     pub actions: Vec<ServiceAction>,
+    /// [`ServiceState::needs_attention`], derived from `state` the same way:
+    /// what both clients list first.
+    #[serde(default)]
+    pub needs_attention: bool,
 }
 
 impl ServiceUnit {
@@ -318,6 +322,7 @@ impl ServiceUnit {
             since_millis: None,
             next_elapse_millis: None,
             actions: service_actions(state, None),
+            needs_attention: state.needs_attention(),
         }
     }
 
@@ -1030,7 +1035,7 @@ pub fn parse_journal(stdout: &str, stderr: &str) -> ServiceLog {
         Regex::new(r"^\d{4}-\d{2}-\d{2}T(\d{2}:\d{2}:\d{2})\S* \S+ (.*)$")
             .expect("journal regex")
     });
-    let normalized = stdout.replace("\r\n", "\n").replace('\r', "\n");
+    let normalized = crate::common::normalize_newlines(stdout);
     let lines = normalized
         .split('\n')
         .filter(|line| !line.trim().is_empty() && !line.starts_with("-- "))
@@ -1196,7 +1201,7 @@ pub fn parse_logread(output: &str) -> Vec<ServiceLogLine> {
         Regex::new(r"^\w{3} \w{3} +\d+ (\d{2}:\d{2}:\d{2}) \d{4} \S+ (.*)$")
             .expect("logread regex")
     });
-    let normalized = output.replace("\r\n", "\n").replace('\r', "\n");
+    let normalized = crate::common::normalize_newlines(output);
     normalized
         .split('\n')
         .filter(|line| !line.trim().is_empty())
@@ -1317,7 +1322,7 @@ pub fn parse_openrc_status(output: &str) -> HashMap<String, ServiceState> {
     static STATUS_LINE: LazyLock<Regex> = LazyLock::new(|| {
         Regex::new(r"^\s*(\S+)\s+\[\s*([^\]]+)\]\s*$").expect("rc-status regex")
     });
-    let normalized = output.replace("\r\n", "\n").replace('\r', "\n");
+    let normalized = crate::common::normalize_newlines(output);
     let mut states = HashMap::new();
     for line in normalized.split('\n') {
         let Some(captures) = STATUS_LINE.captures(line) else {
@@ -1341,7 +1346,7 @@ pub fn parse_openrc_enabled(output: &str) -> BTreeSet<String> {
     static STARTUP_LINE: LazyLock<Regex> = LazyLock::new(|| {
         Regex::new(r"^\s*([^\s|]+)\s*\|\s*(.+)$").expect("rc-update regex")
     });
-    let normalized = output.replace("\r\n", "\n").replace('\r', "\n");
+    let normalized = crate::common::normalize_newlines(output);
     let mut services = BTreeSet::new();
     for line in normalized.split('\n') {
         let Some(captures) = STARTUP_LINE.captures(line) else {
@@ -1450,6 +1455,15 @@ mod tests {
 
     fn unit(name: &str, state: ServiceState) -> ServiceUnit {
         ServiceUnit::new(name, ServiceUnitType::Service, ServiceScope::System, state)
+    }
+
+    #[test]
+    fn a_unit_says_whether_it_needs_attention() {
+        let json = |state| serde_json::to_value(unit("x", state)).unwrap()["needs_attention"].clone();
+        assert_eq!(json(ServiceState::Failed), true);
+        assert_eq!(json(ServiceState::Starting), true);
+        assert_eq!(json(ServiceState::Running), false);
+        assert_eq!(json(ServiceState::Unknown), false);
     }
 
     #[test]

@@ -5,15 +5,15 @@ description: Connect to graphical desktops through SSH or Monitor agent
 
 Server Box includes RDP and VNC clients for Android, iOS, Linux, macOS, and
 Windows. It reaches desktops through an existing server connection: SSH or a
-Monitor agent account whose role includes the `connect` permission. The
-desktop port does not need to be exposed to the network running Server Box.
+Monitor agent. The desktop port does not need to be exposed to the network
+running Server Box.
 
 ## Set up a connection
 
-1. Set up the server connection in Server Box with SSH or a Monitor agent
-   account whose role includes `connect`. If both are available, the server's
-   **Try first** preference determines which connection is tried first; Server
-   Box falls back to the other if it fails.
+1. Set up the server connection in Server Box with SSH or a Monitor agent.
+   If both are available, the server's **Try first** preference determines
+   which connection is tried first; Server Box falls back to the other if it
+   fails.
 2. Open the **Remote desktop** tab and choose the server, or open the feature
    from that server's detail page.
 3. Add a profile for the desktop. Profile names must be unique on that server.
@@ -33,8 +33,7 @@ These defaults work when the desktop service runs on the server itself. You can
 also enter an internal address reachable from that server. SSH connections use
 the same authentication and jump-server settings as terminal and port
 forwarding connections. With Monitor agent, the agent connects from its own
-machine as the account it runs under. The account's role must allow the target
-address in its `connect` permission. A plaintext HTTP connection to a Monitor
+machine as the account it runs under. A plaintext HTTP connection to a Monitor
 agent is used only when that connection is to a loopback address.
 
 Passwords are not saved unless **Save password** is enabled. A password entered

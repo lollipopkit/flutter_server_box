@@ -1,0 +1,70 @@
+# Mealie 3.28.0 (AGPL-3.0), https://github.com/mealie-recipes/mealie/tree/v3.28.0
+#
+# Written for ServerBox Monitor (2026-10-17) from the release's
+# docker/docker-compose.yml (which builds from source) and the image's
+# docker/Dockerfile:
+# - the release image instead of `build:`; SQLite, as upstream's default;
+# - no `name:` and no `container_name`: the agent names the project;
+# - PUID/PGID/TZ from the agent; the image's entry script drops to them;
+# - seed-password is a one-shot job. Mealie makes its first account with a
+#   fixed password (mealie/core/settings/settings.py, _DEFAULT_PASSWORD), so
+#   the job signs in with it once and sets the generated one
+#   (PUT /api/users/password), then leaves a mark in the data folder: no
+#   later deploy signs in with the old password again (failed sign-ins lock
+#   the account).
+
+services:
+  mealie:
+    image: ghcr.io/mealie-recipes/mealie:${MEALIE_VERSION}
+    ports:
+      - '${MEALIE_BIND}:${MEALIE_PORT}:9000'
+    volumes:
+      - ${MEALIE_DATA}:/app/data
+    environment:
+      PUID: ${SBM_UID}
+      PGID: ${SBM_GID}
+      TZ: ${SBM_TZ}
+      ALLOW_SIGNUP: 'false'
+    restart: unless-stopped
+    # The image's own HEALTHCHECK (docker/healthcheck.sh), written out.
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "-o", "/dev/null", "http://127.0.0.1:9000/api/app/about"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+
+  seed-password:
+    image: ghcr.io/mealie-recipes/mealie:${MEALIE_VERSION}
+    user: "${SBM_UID}:${SBM_GID}"
+    depends_on:
+      mealie:
+        condition: service_healthy
+    volumes:
+      - ${MEALIE_DATA}:/app/data
+    environment:
+      NEW_PASSWORD: ${MEALIE_ADMIN_PASSWORD}
+    entrypoint: ["python3", "-c"]
+    command:
+      - |
+        import json, os, sys, urllib.parse, urllib.request
+
+        mark = "/app/data/.serverbox-password-set"
+        if os.path.exists(mark):
+            sys.exit(0)
+        base = "http://mealie:9000"
+        form = urllib.parse.urlencode({"username": "changeme@example.com", "password": "MyPassword"}).encode()
+        try:
+            with urllib.request.urlopen(urllib.request.Request(base + "/api/auth/token", data=form)) as r:
+                token = json.load(r)["access_token"]
+        except urllib.error.HTTPError as e:
+            # The first account's password was already changed in Mealie.
+            print("the first account no longer takes the default password:", e.code)
+            open(mark, "w").close()
+            sys.exit(0)
+        body = json.dumps({"currentPassword": "MyPassword", "newPassword": os.environ["NEW_PASSWORD"]}).encode()
+        req = urllib.request.Request(base + "/api/users/password", data=body, method="PUT",
+                                     headers={"Authorization": "Bearer " + token, "Content-Type": "application/json"})
+        urllib.request.urlopen(req).close()
+        open(mark, "w").close()
+    restart: "no"

@@ -566,20 +566,7 @@ jobs:
       - name: Fix the Android build epoch
         shell: bash
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)" >> "$GITHUB_ENV"
-      - name: Install the pinned Android SDK and NDK
-        shell: bash
-        run: |
-          set -euo pipefail
-          compile_sdk="$(tr -d '[:space:]' < android/compile-sdk-version.txt)"
-          build_tools="$(tr -d '[:space:]' < android/build-tools-version.txt)"
-          ndk_version="$(tr -d '[:space:]' < android/ndk-version.txt)"
-          sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
-          "$sdkmanager" \
-            "platforms;android-$compile_sdk" \
-            "build-tools;$build_tools" \
-            "ndk;$ndk_version"
-          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$ndk_version" >> "$GITHUB_ENV"
-          echo "APKSIGNER=$ANDROID_HOME/build-tools/$build_tools/apksigner" >> "$GITHUB_ENV"
+      - uses: ./.github/actions/setup-android-sdk
       - name: Fetch dependencies
         run: flutter pub get --enforce-lockfile
       # The script F-Droid runs, so what it rebuilds from this commit is this

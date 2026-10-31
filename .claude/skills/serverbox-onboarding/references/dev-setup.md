@@ -135,8 +135,9 @@ cd monitor/frontend && npm run dev
   under its `src/`. Run the npm script rather than calling vite directly.
 - sqlx verifies queries at compile time: set `DATABASE_URL`, or refresh the
   offline cache with `cargo sqlx prepare`.
-- `monitor/CLAUDE.md` is the detailed map of that side, including the remote
-  access model and what its tests lock down.
+- `monitor/CLAUDE.md` holds that side's rules; `docs/dev/monitor-api.md` is
+  the detailed map of each endpoint and `docs/dev/monitor-permissions.md` the
+  access model.
 
 ## Building releases
 

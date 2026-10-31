@@ -134,67 +134,12 @@ extension _VirtKey on SSHPageState {
         // session, polling for three seconds and giving up in silence.
         final fileSpi = widget.args.spi;
         if (fileSpi == null) return;
-        // Delimit `$PWD` so unrelated terminal output cannot be mistaken for
-        // the response.
-        const marker = 'ServerBoxOutput';
-        const markerEnd = 'ServerBoxEnd';
-        const pwdCommand = 'echo "$marker:\$PWD:$markerEnd"';
-        _terminal.textInput(pwdCommand);
-        _terminal.keyInput(TerminalKey.enter);
-
-        String? initPath;
-        await Future.delayed(const Duration(milliseconds: 700));
-        final startTime = DateTime.now();
-        final timeout = const Duration(seconds: 3);
-
-        while (initPath == null) {
-          if (DateTime.now().difference(startTime) > timeout) {
-            final ctx = contextSafe;
-            if (ctx != null) {
-              unawaited(
-                ctx.showRoundDialog(
-                  title: libL10n.error,
-                  child: Text(libL10n.empty),
-                ),
-              );
-            }
-            return;
-          }
-
-          // Search newest output first because the marker may exist in history.
-          final cmds = _terminal.buffer.lines.toList();
-          for (final line in cmds.reversed) {
-            final lineStr = line.toString();
-            if (lineStr.contains(marker) && lineStr.contains(markerEnd)) {
-              final start =
-                  lineStr.indexOf(marker) + marker.length + 1; // +1 for ':'
-              final end = lineStr.indexOf(markerEnd) - 1; // -1 for ':'
-              if (start < end) {
-                initPath = lineStr.substring(start, end);
-                if (initPath.isEmpty || initPath == '\$PWD') {
-                  initPath = null;
-                } else {
-                  break;
-                }
-              }
-            }
-          }
-
-          // Short wait before checking again
-          await Future.delayed(const Duration(milliseconds: 100));
-        }
-
+        // Where the shell is (OSC 7, else the system's own record of it), or
+        // the file page's own start. Nothing is typed into the shell to find
+        // out: a probe lands in its history, and a program in front can
+        // swallow it.
+        final initPath = _sess.workingDirectory ?? await _shellDirectory(fileSpi.id);
         if (!mounted) return;
-        if (!initPath.startsWith('/')) {
-          unawaited(
-            context.showRoundDialog(
-              title: libL10n.error,
-              child: Text('${l10n.remotePath}: $initPath'),
-            ),
-          );
-          return;
-        }
-
         final args = SftpPageArgs(spi: fileSpi, initPath: initPath);
         // `ServerFilePage`, not `SftpPage`: it is the one place that decides
         // how a server's files are reached, so this key now works on a server
@@ -231,7 +176,7 @@ extension _VirtKey on SSHPageState {
         spi != null &&
         serverShellUsesAgent(
           spi,
-          ref.readPresentServer(spi.id)?.remoteAccess,
+          ref.readPresentServer(spi.id)?.agentAccess,
         );
     final virtKeys = VirtKeyX.loadFromStore()
         .where((key) => !disabled.contains(key.name))
@@ -250,4 +195,23 @@ extension _VirtKey on SSHPageState {
       );
     }
   }
+
+  /// The directory of this terminal's shell as the system records it, for a
+  /// shell that sends no OSC 7: the account's terminal shells listed through
+  /// [ServerNotifier.ensureExec] (no PTY, so no login record) and matched by
+  /// when this one was opened. Null when that cannot tell (not Linux, two
+  /// opened together, another account on the transport that answers).
+  Future<String?> _shellDirectory(String serverId) async {
+    final age = _sess.shellAge;
+    if (age == null) return null;
+    try {
+      final exec = await ref.read(serverProvider(serverId).notifier).ensureExec();
+      final res = await exec.run(filesTerminalShellsCommand()).timeout(const Duration(seconds: 5));
+      return filesTerminalShellCwd(output: res.stdout, ageSecs: age.inMilliseconds / 1000);
+    } catch (e) {
+      Loggers.app.warning('Reading the terminal shell\'s directory failed', e);
+      return null;
+    }
+  }
+
 }

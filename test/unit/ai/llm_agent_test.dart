@@ -23,6 +23,8 @@ import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/data/store/snippet.dart';
 
+import '../../helpers/llm_lib_helper.dart';
+import '../../helpers/rust_lib_helper.dart';
 import '../../helpers/spi_fixture.dart';
 import '../../helpers/test_db.dart';
 
@@ -137,13 +139,6 @@ Future<(HttpServer, List<Map<String, Object?>>)> _mockServer() async {
   return (server, seen);
 }
 
-ExternalLibrary _nativeLib() => ExternalLibrary.open(switch (Platform
-    .operatingSystem) {
-  'macos' => 'build/native_assets/macos/libfl_pi_llm.dylib',
-  'windows' => 'build/native_assets/windows/fl_pi_llm.dll',
-  _ => 'build/native_assets/linux/libfl_pi_llm.so',
-});
-
 /// The `Authorization` of each chat request, beside [_mockServer]'s bodies.
 final _keys = <String>[];
 
@@ -161,6 +156,8 @@ void main() {
   final chats = Directory.systemTemp.createTempSync('llm_agent_test');
 
   setUpAll(() async {
+    // Whether a command runs by itself is `sbm_parser::command_risk`, over FFI.
+    await initRustLibForTest();
     (server, seen) = await _mockServer();
     await openTestDb();
     getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
@@ -188,7 +185,7 @@ void main() {
       // The chat files' key, which an app reads from the keychain.
       key: Uint8List(32),
       credentials: credentials,
-      externalLibrary: _nativeLib(),
+      externalLibrary: llmNativeLib(),
       // An OpenAI-compatible gateway, as a shell exports it.
       environment: () => {
         'OPENAI_BASE_URL': 'http://127.0.0.1:${server.port}/v1',

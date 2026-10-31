@@ -9,7 +9,8 @@
 use std::{marker::PhantomData, ops::Deref};
 
 use ntex::http::{HttpMessage, Payload, header};
-use ntex::util::BytesMut;
+use ntex::http::error::PayloadError;
+use ntex::util::{Bytes, BytesMut};
 use ntex::web::error::JsonPayloadError;
 use ntex::web::{FromRequest, HttpRequest};
 use serde::de::DeserializeOwned;
@@ -65,6 +66,59 @@ impl<St, T: DeserializeOwned, L: Limit<St>> FromRequest<St> for Json<T, L> {
     }
 }
 
+/// A body of at most `L` bytes, as it came: what ntex's `Bytes` is with a
+/// `PayloadConfig`, which ntex 4 also sets for the whole app only.
+pub struct Body<L>(Bytes, PhantomData<L>);
+
+impl<L> Body<L> {
+    pub fn into_inner(self) -> Bytes {
+        self.0
+    }
+}
+
+impl<L> Deref for Body<L> {
+    type Target = Bytes;
+
+    fn deref(&self) -> &Bytes {
+        &self.0
+    }
+}
+
+impl<St, L: Limit<St>> FromRequest<St> for Body<L> {
+    type Error = ntex::web::error::PayloadError;
+
+    async fn from_request(st: &St, req: &HttpRequest, payload: &mut Payload) -> Result<Self, Self::Error> {
+        Ok(Self(collect(req, payload, L::bytes(st)).await?.freeze(), PhantomData))
+    }
+}
+
+/// The body, refused as `Overflow` past [limit]: by its declared length
+/// before reading, or as it arrives.
+async fn collect(req: &HttpRequest, payload: &mut Payload, limit: usize) -> Result<BytesMut, PayloadError> {
+    let length = match req.headers().get(header::CONTENT_LENGTH) {
+        None => None,
+        Some(value) => Some(
+            value
+                .to_str()
+                .ok()
+                .and_then(|s| s.parse::<usize>().ok())
+                .ok_or(PayloadError::UnknownLength)?,
+        ),
+    };
+    if length.is_some_and(|len| len > limit) {
+        return Err(PayloadError::Overflow);
+    }
+    let mut body = BytesMut::with_capacity(length.unwrap_or(0));
+    while let Some(chunk) = payload.recv().await {
+        let chunk = chunk?;
+        if body.len() + chunk.len() > limit {
+            return Err(PayloadError::Overflow);
+        }
+        body.extend_from_slice(&chunk);
+    }
+    Ok(body)
+}
+
 /// What ntex's `Json` does, with [limit].
 async fn read<T: DeserializeOwned>(req: &HttpRequest, payload: &mut Payload, limit: usize) -> Result<T, JsonPayloadError> {
     let json = req
@@ -75,27 +129,10 @@ async fn read<T: DeserializeOwned>(req: &HttpRequest, payload: &mut Payload, lim
     if !json {
         return Err(JsonPayloadError::ContentType);
     }
-    let length = match req.headers().get(header::CONTENT_LENGTH) {
-        None => None,
-        Some(value) => Some(
-            value
-                .to_str()
-                .ok()
-                .and_then(|s| s.parse::<usize>().ok())
-                .ok_or(ntex::http::error::PayloadError::UnknownLength)?,
-        ),
-    };
-    if length.is_some_and(|len| len > limit) {
-        return Err(JsonPayloadError::Overflow);
-    }
-    let mut body = BytesMut::with_capacity(length.unwrap_or(0));
-    while let Some(chunk) = payload.recv().await {
-        let chunk = chunk?;
-        if body.len() + chunk.len() > limit {
-            return Err(JsonPayloadError::Overflow);
-        }
-        body.extend_from_slice(&chunk);
-    }
+    let body = collect(req, payload, limit).await.map_err(|e| match e {
+        PayloadError::Overflow => JsonPayloadError::Overflow,
+        e => e.into(),
+    })?;
     Ok(serde_json::from_slice(&body)?)
 }
 
@@ -105,7 +142,7 @@ mod tests {
     use ntex::web::error::JsonPayloadError;
     use ntex::web::test::{TestRequest, from_request};
 
-    use super::{Json, Max};
+    use super::{Body, Json, Max};
 
     async fn read(req: TestRequest) -> Result<Vec<u8>, JsonPayloadError> {
         let (req, mut payload, ()) = req.to_http_parts();
@@ -130,6 +167,16 @@ mod tests {
     async fn a_declared_length_past_the_limit_is_refused_before_reading() {
         let req = json("[1]").header(header::CONTENT_LENGTH, "9");
         assert!(matches!(read(req).await, Err(JsonPayloadError::Overflow)));
+    }
+
+    #[ntex::test]
+    async fn a_raw_body_past_the_limit_is_refused() {
+        let read = async |body: &'static str| {
+            let (req, mut payload, ()) = TestRequest::post().payload(body).to_http_parts();
+            from_request::<(), Body<Max<4>>>(&(), &req, &mut payload).await.map(Body::into_inner)
+        };
+        assert_eq!(&read("abcd").await.unwrap()[..], b"abcd");
+        assert!(read("abcde").await.is_err());
     }
 
     #[ntex::test]

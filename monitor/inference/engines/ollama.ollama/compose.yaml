@@ -1,0 +1,32 @@
+# Ollama 0.35.1 (MIT), https://github.com/ollama/ollama/releases/tag/v0.35.1
+#
+# Written for ServerBox Monitor from Ollama's Docker page
+# (docs.ollama.com/docker), not copied from a release file:
+# - no `name:` and no `container_name`: the agent names the project;
+# - the image is pinned to the release, its -rocm build for AMD;
+# - models are kept in the stack's folder; the GPU backend is one service of
+#   gpu.yml, merged in by `extends`;
+# - the API is published on loopback unless the admin opens it. Ollama asks
+#   for no key: anyone who reaches the port may use and pull models.
+
+services:
+  ollama:
+    image: ollama/ollama:${OLLAMA_IMAGE_TAG}
+    extends:
+      file: gpu.yml
+      service: ${OLLAMA_ACCEL}
+    environment:
+      TZ: ${SBM_TZ}
+      OLLAMA_HOST: 0.0.0.0:11434
+      OLLAMA_KEEP_ALIVE: 30m
+    volumes:
+      - ${OLLAMA_DATA_LOCATION}:/root/.ollama
+    ports:
+      - '${OLLAMA_BIND}:${OLLAMA_PORT}:11434'
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped

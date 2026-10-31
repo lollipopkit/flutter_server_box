@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/src/rust/api/service.dart' show serviceNeedsAttention;
 
 enum ServiceAction {
   start,
@@ -88,12 +89,6 @@ enum ServiceState {
   stopping,
   unknown;
 
-  /// Failed, or on its way somewhere. What a list shows first.
-  bool get needsAttention => switch (this) {
-    failed || starting || stopping => true,
-    running || stopped || unknown => false,
-  };
-
   Color? get color => switch (this) {
     failed => Colors.red,
     starting || stopping => Colors.orange,
@@ -117,6 +112,7 @@ final class ServiceUnit {
     required this.scope,
     required this.state,
     required this.actions,
+    this.needsAttention = false,
     this.description,
     this.enabled,
     this.unitFileState,
@@ -165,6 +161,10 @@ final class ServiceUnit {
 
   final List<ServiceAction> actions;
 
+  /// Failed, or on its way somewhere: what a list shows first. Rust's
+  /// (`ServiceState::needs_attention`), sent with the unit.
+  final bool needsAttention;
+
   String get fullName => '$name.${type.name}';
 
   /// `sbm_parser::service::ServiceUnit`, which reads and acts on it.
@@ -181,6 +181,8 @@ final class ServiceUnit {
       actions: [
         for (final a in j['actions'] as List? ?? const []) ServiceAction.values.byName(a as String),
       ],
+      // TODO: remove the fallback once no agent predates `needs_attention`.
+      needsAttention: j['needs_attention'] as bool? ?? serviceNeedsAttention(state: j['state'] as String),
       description: j['description'] as String?,
       enabled: j['enabled'] as bool?,
       unitFileState: j['unit_file_state'] as String?,
@@ -199,6 +201,7 @@ final class ServiceUnit {
     scope: scope,
     state: state,
     actions: actions,
+    needsAttention: needsAttention,
     description: description,
     enabled: enabled,
     unitFileState: unitFileState,

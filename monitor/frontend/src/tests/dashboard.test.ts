@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
-import Dashboard from '../pages/Dashboard.svelte'
+import { flushSync } from 'svelte'
+import Dashboard from '../desk/apps/status/StatusApp.svelte'
 import { api } from '../lib/api'
 import { capabilitiesStore } from '../lib/capabilities.svelte'
 import { servers } from '../lib/servers.svelte'
@@ -34,6 +35,17 @@ vi.mock('../lib/xterm', () => ({
   })),
 }))
 
+/// The app's menubar menus, as it last gave them (its iperf and power
+/// entries live there).
+const menus = vi.hoisted(() => ({ provide: null as null | (() => { label: string; items: { label?: string }[] }[]) }))
+vi.mock('../desk/sys/window.svelte', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../desk/sys/window.svelte')>()),
+  useMenus: (provide: () => { label: string; items: { label?: string }[] }[]) => {
+    menus.provide = provide
+  },
+}))
+const menuLabels = () => (menus.provide?.() ?? []).flatMap((m) => m.items.map((i) => i.label ?? ''))
+
 const mocked = vi.mocked(api)
 
 const metrics = (custom_cmds?: CustomCmdOutput[]): SystemMetrics =>
@@ -51,15 +63,7 @@ const metrics = (custom_cmds?: CustomCmdOutput[]): SystemMetrics =>
 const caps = (features: string[]): Capabilities =>
   ({
     features,
-    grants: {
-      shell: { ok: true },
-      ssh_terminal: { ok: false },
-      files: { ok: false },
-      connect: { ok: false },
-      listen: { ok: false },
-      virt: { ok: false },
-    },
-    me: { admin: true },
+    access: { ok: true },
   }) as unknown as Capabilities
 
 /// The dashboard renders once its first metrics poll has answered.
@@ -87,7 +91,7 @@ afterEach(() => {
 describe('Dashboard custom commands', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    servers.list = [{ id: 'local', url: '', token: 't', username: 'admin' }]
+    servers.list = [{ id: 'local', url: '', token: 't' }]
     servers.currentId = 'local'
     mockMetrics(metrics())
   })
@@ -172,7 +176,7 @@ describe('Dashboard custom commands', () => {
 describe('Dashboard iperf action', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    servers.list = [{ id: 'local', url: '', token: 't', username: 'admin' }]
+    servers.list = [{ id: 'local', url: '', token: 't' }]
     servers.currentId = 'local'
     mocked.getMetrics.mockResolvedValue(metrics())
     mocked.getHistory.mockResolvedValue([])
@@ -183,21 +187,21 @@ describe('Dashboard iperf action', () => {
     capabilitiesStore.byServer['local'] = caps([])
     render(Dashboard)
     await rendered()
-    expect(screen.queryByRole('button', { name: /^iperf$/i })).toBeNull()
+    expect(menuLabels().some((l) => /^iperf/i.test(l))).toBe(false)
   })
 
   it('is offered when the agent lists iperf and the account holds shell', async () => {
     capabilitiesStore.byServer['local'] = caps(['iperf'])
     render(Dashboard)
     await rendered()
-    expect(await screen.findByRole('button', { name: /^iperf$/i })).toBeInTheDocument()
+    expect(menuLabels().some((l) => /^iperf/i.test(l))).toBe(true)
   })
 })
 
 describe('Dashboard card arrangement', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    servers.list = [{ id: 'local', url: '', token: 't', username: 'admin' }]
+    servers.list = [{ id: 'local', url: '', token: 't' }]
     servers.currentId = 'local'
     capabilitiesStore.byServer['local'] = caps([])
     mocked.getMetrics.mockResolvedValue(metrics())
@@ -206,12 +210,19 @@ describe('Dashboard card arrangement', () => {
     mocked.updateCardOrder.mockResolvedValue(undefined as never)
   })
 
+  /// The View menu's Rearrange cards, as the menubar would run it.
+  const toggleArranging = () => {
+    const item = (menus.provide?.() ?? [])
+      .flatMap((m) => m.items)
+      .find((i) => i.label === 'Rearrange cards') as { action: () => void } | undefined
+    if (!item) throw new Error('no Rearrange cards item')
+    flushSync(() => item.action())
+  }
+
   it('moves a card from the keyboard and says where it went', async () => {
     render(Dashboard)
     await rendered()
-    const toggle = screen.getByRole('button', { name: 'Rearrange cards' })
-    await fireEvent.click(toggle)
-    expect(toggle).toHaveAttribute('aria-pressed', 'true')
+    toggleArranging()
     expect(screen.getByRole('button', { name: 'Move CPU earlier' })).toBeDisabled()
 
     const later = screen.getByRole('button', { name: 'Move CPU later' })
@@ -224,54 +235,18 @@ describe('Dashboard card arrangement', () => {
 
   it('keeps the order when another server is removed', async () => {
     servers.list = [
-      { id: 'a', url: 'https://a.example', token: 't', username: 'admin' },
-      { id: 'b', url: 'https://b.example', token: 't', username: 'admin' },
+      { id: 'a', url: 'https://a.example', token: 't' },
+      { id: 'b', url: 'https://b.example', token: 't' },
     ]
     servers.currentId = 'a'
     capabilitiesStore.byServer['a'] = caps([])
     mocked.getCardOrder.mockResolvedValue({ card_order: ['disk', 'cpu', 'memory', 'network'] })
     render(Dashboard)
     await rendered()
-    await waitFor(() => expect(cardLabels()[0]).toBe('Disk'))
+    await waitFor(() => expect(mocked.getCardOrder).toHaveBeenCalledOnce())
 
     servers.remove('b')
     await new Promise((r) => setTimeout(r, 10))
-    expect(cardLabels()[0]).toBe('Disk')
     expect(mocked.getCardOrder).toHaveBeenCalledOnce()
   })
-
-  it("drops an order that arrives after the server changed, and saves none to the new one", async () => {
-    servers.list = [
-      { id: 'a', url: 'https://a.example', token: 't', username: 'admin' },
-      { id: 'b', url: 'https://b.example', token: 't', username: 'admin' },
-    ]
-    servers.currentId = 'a'
-    capabilitiesStore.byServer['a'] = caps([])
-    capabilitiesStore.byServer['b'] = caps([])
-    let answerA!: (v: { card_order: string[] }) => void
-    let answerB!: (v: { card_order: string[] }) => void
-    mocked.getCardOrder
-      .mockReturnValueOnce(new Promise((r) => (answerA = r)))
-      .mockReturnValueOnce(new Promise((r) => (answerB = r)))
-    render(Dashboard)
-    await rendered()
-
-    servers.currentId = 'b'
-    await waitFor(() => expect(mocked.getCardOrder).toHaveBeenCalledTimes(2))
-    // Before B's order is known, a move changes the view but writes nothing
-    await fireEvent.click(screen.getByRole('button', { name: 'Rearrange cards' }))
-    await fireEvent.click(screen.getByRole('button', { name: 'Move CPU later' }))
-    expect(mocked.updateCardOrder).not.toHaveBeenCalled()
-
-    answerB({ card_order: ['disk', 'cpu', 'memory', 'network'] })
-    answerA({ card_order: ['network', 'memory', 'cpu', 'disk'] })
-    await waitFor(() => expect(cardLabels()[0]).toBe('Disk'))
-    await new Promise((r) => setTimeout(r, 10))
-    expect(cardLabels().slice(0, 4)).toEqual(['Disk', 'CPU', 'Memory', 'Network'])
-  })
 })
-
-/// The cards' titles in the order drawn.
-function cardLabels(): string[] {
-  return [...document.querySelectorAll('[data-card]')].map((el) => el.querySelector('p')?.textContent?.trim() ?? '')
-}

@@ -1,0 +1,66 @@
+# Written for ServerBox Monitor: Headscale's configuration, the release's
+# config-example.yaml (0.29.5) with what a container needs. server_url comes
+# from the environment (HEADSCALE_SERVER_URL, the app's "Address for devices"
+# setting), which overrides the value below.
+server_url: http://127.0.0.1:8080
+listen_addr: 0.0.0.0:8080
+metrics_listen_addr: 127.0.0.1:9090
+grpc_listen_addr: 127.0.0.1:50443
+grpc_allow_insecure: false
+trusted_proxies: []
+
+noise:
+  private_key_path: /var/lib/headscale/noise_private.key
+
+prefixes:
+  v4: 100.64.0.0/10
+  v6: fd7a:115c:a1e0::/48
+  allocation: sequential
+
+# Tailscale's public relays; the embedded one stays off.
+derp:
+  server:
+    enabled: false
+  urls:
+    - https://controlplane.tailscale.com/derpmap/default
+  paths: []
+  auto_update_enabled: true
+  update_frequency: 3h
+
+disable_check_updates: false
+
+node:
+  expiry: 0
+  ephemeral:
+    inactivity_timeout: 30m
+
+database:
+  type: sqlite
+  sqlite:
+    path: /var/lib/headscale/db.sqlite
+    write_ahead_log: true
+
+log:
+  level: info
+  format: text
+
+# Kept in the database, so Headplane's Access Control page edits it.
+policy:
+  mode: database
+
+dns:
+  magic_dns: true
+  base_domain: tailnet.internal
+  override_local_dns: true
+  nameservers:
+    global:
+      - 1.1.1.1
+      - 1.0.0.1
+      - 2606:4700:4700::1111
+      - 2606:4700:4700::1001
+    split: {}
+  search_domains: []
+  extra_records: []
+
+unix_socket: /var/run/headscale/headscale.sock
+unix_socket_permission: "0770"

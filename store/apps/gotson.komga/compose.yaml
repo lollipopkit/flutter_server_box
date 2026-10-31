@@ -1,0 +1,31 @@
+# Komga 1.29.0 (MIT), https://github.com/gotson/komga/releases/tag/1.29.0
+#
+# Written for ServerBox Monitor's Comics app from the Docker example of the
+# documentation (https://komga.org/docs/installation/docker) and the release's
+# Dockerfile (komga/docker/Dockerfile.tpl):
+# - image: the official gotson/komga image pinned to the release (it publishes no alpine variant);
+# - no `name:` and no `container_name`: the agent names the project;
+# - user and group are the shared folders' owner (SBM_UID, SBM_GID), as the docs' `user:` example shows;
+# - /config holds the database, sessions and logs (KOMGA_CONFIGDIR=/config in the image);
+# - /data/comics and /data/books are the shared folders read-write (Komga deletes and imports files);
+# - healthcheck: /actuator/health is open without sign-in (SecurityConfiguration.kt); curl is in the image.
+
+services:
+  komga:
+    image: gotson/komga:${KOMGA_VERSION}
+    restart: unless-stopped
+    user: "${SBM_UID}:${SBM_GID}"
+    environment:
+      TZ: ${SBM_TZ}
+    volumes:
+      - ${CONFIG_LOCATION}:/config
+      - ${COMICS_LOCATION}:/data/comics
+      - ${BOOKS_LOCATION}:/data/books
+    ports:
+      - '${KOMGA_BIND}:${KOMGA_PORT}:25600'
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:25600/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3

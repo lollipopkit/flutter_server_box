@@ -54,6 +54,7 @@ ServiceUnit _unit(
       for (final a in ffi.serviceActions(state: state.name, enabled: unitFileState == 'enabled'))
         ServiceAction.values.byName(a),
     ],
+    needsAttention: ffi.serviceNeedsAttention(state: state.name),
   );
 }
 

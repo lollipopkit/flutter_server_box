@@ -28,10 +28,6 @@ export type Translations = RootTranslation
 
 type RootTranslation = {
 	/**
-	 * S​i​g​n​ ​i​n​ ​t​o​ ​a​c​c​e​s​s​ ​y​o​u​r​ ​s​e​r​v​e​r​ ​m​o​n​i​t​o​r​i​n​g​ ​d​a​s​h​b​o​a​r​d
-	 */
-	signInSubtitle: string
-	/**
 	 * U​s​e​r​n​a​m​e
 	 */
 	username: string
@@ -40,25 +36,9 @@ type RootTranslation = {
 	 */
 	password: string
 	/**
-	 * E​n​t​e​r​ ​y​o​u​r​ ​u​s​e​r​n​a​m​e
-	 */
-	enterUsername: string
-	/**
-	 * E​n​t​e​r​ ​y​o​u​r​ ​p​a​s​s​w​o​r​d
-	 */
-	enterPassword: string
-	/**
 	 * S​i​g​n​ ​i​n
 	 */
 	signIn: string
-	/**
-	 * S​i​g​n​i​n​g​ ​i​n​.​.​.
-	 */
-	signingIn: string
-	/**
-	 * N​o​ ​s​e​r​v​e​r​s​ ​y​e​t​.​ ​A​d​d​ ​t​h​e​ ​a​d​d​r​e​s​s​ ​o​f​ ​a​n​ ​a​g​e​n​t​ ​t​o​ ​m​o​n​i​t​o​r​ ​i​t​.
-	 */
-	noServersTip: string
 	/**
 	 * A​d​d​ ​s​e​r​v​e​r
 	 */
@@ -68,25 +48,13 @@ type RootTranslation = {
 	 */
 	removeServer: string
 	/**
-	 * N​a​m​e
-	 */
-	serverName: string
-	/**
 	 * A​d​d
 	 */
 	add: string
 	/**
-	 * W​e​l​c​o​m​e​,
-	 */
-	welcome: string
-	/**
 	 * L​o​g​o​u​t
 	 */
 	logout: string
-	/**
-	 * U​n​k​n​o​w​n​ ​S​e​r​v​e​r
-	 */
-	unknownServer: string
 	/**
 	 * T​h​i​s​ ​s​e​r​v​e​r
 	 */
@@ -111,10 +79,6 @@ type RootTranslation = {
 	 * A​c​t​i​v​e
 	 */
 	active: string
-	/**
-	 * N​/​A
-	 */
-	na: string
 	/**
 	 * H​i​s​t​o​r​y
 	 */
@@ -148,33 +112,9 @@ type RootTranslation = {
 	 */
 	lastUpdated: string
 	/**
-	 * C​P​U​ ​U​s​a​g​e​:
-	 */
-	cpuUsageLabel: string
-	/**
-	 * M​e​m​o​r​y​ ​U​s​a​g​e​:
-	 */
-	memoryUsageLabel: string
-	/**
-	 * D​i​s​k​ ​U​s​a​g​e​:
-	 */
-	diskUsageLabel: string
-	/**
 	 * T​e​m​p​e​r​a​t​u​r​e​:
 	 */
 	temperature: string
-	/**
-	 * Q​u​i​c​k​ ​A​c​t​i​o​n​s
-	 */
-	quickActions: string
-	/**
-	 * R​e​f​r​e​s​h​ ​D​a​t​a
-	 */
-	refreshData: string
-	/**
-	 * D​a​t​a​ ​r​e​f​r​e​s​h​e​s​ ​a​u​t​o​m​a​t​i​c​a​l​l​y​ ​e​v​e​r​y​ ​5​ ​s​e​c​o​n​d​s
-	 */
-	autoRefreshNote: string
 	/**
 	 * S​y​s​t​e​m​ ​t​h​e​m​e
 	 */
@@ -196,25 +136,9 @@ type RootTranslation = {
 	 */
 	servers: string
 	/**
-	 * S​e​a​r​c​h
-	 */
-	serversSearch: string
-	/**
-	 * N​o​ ​m​a​t​c​h​i​n​g​ ​s​e​r​v​e​r​s
-	 */
-	serversNoMatch: string
-	/**
 	 * M​e​n​u
 	 */
 	menu: string
-	/**
-	 * C​o​l​l​a​p​s​e​ ​s​i​d​e​b​a​r
-	 */
-	collapseSidebar: string
-	/**
-	 * E​x​p​a​n​d​ ​s​i​d​e​b​a​r
-	 */
-	expandSidebar: string
 	/**
 	 * G​P​U
 	 */
@@ -264,10 +188,6 @@ type RootTranslation = {
 	 */
 	refresh: string
 	/**
-	 * E​d​i​t​ ​s​e​r​v​e​r
-	 */
-	editServer: string
-	/**
 	 * S​e​r​v​e​r​ ​U​R​L
 	 */
 	serverUrlLabel: string
@@ -279,10 +199,6 @@ type RootTranslation = {
 	 * T​e​s​t​ ​c​o​n​n​e​c​t​i​o​n
 	 */
 	testConnection: string
-	/**
-	 * T​e​s​t​i​n​g​.​.​.
-	 */
-	testingConnection: string
 	/**
 	 * S​a​v​e
 	 */
@@ -337,10 +253,6 @@ type RootTranslation = {
 	 */
 	powerActionSent: RequiredParams<'action'>
 	/**
-	 * M​a​n​a​g​e​ ​m​a​c​h​i​n​e
-	 */
-	manageMachine: string
-	/**
 	 * B​e​n​c​h​m​a​r​k
 	 */
 	benchmark: string
@@ -357,7 +269,11 @@ type RootTranslation = {
 	 */
 	benchmarkCancel: string
 	/**
-	 * S​t​o​p​ ​t​h​e​ ​r​u​n​?​ ​K​i​l​l​i​n​g​ ​t​h​e​ ​p​r​o​c​e​s​s​ ​g​r​o​u​p​ ​i​s​ ​t​h​e​ ​o​n​l​y​ ​t​h​i​n​g​ ​t​h​a​t​ ​e​n​d​s​ ​a​ ​b​e​n​c​h​m​a​r​k​ ​—​ ​f​i​o​,​ ​i​p​e​r​f​3​ ​a​n​d​ ​G​e​e​k​b​e​n​c​h​ ​a​r​e​ ​s​e​p​a​r​a​t​e​ ​p​r​o​c​e​s​s​e​s​.
+	 * S​t​o​p​ ​t​h​i​s​ ​r​u​n​?
+	 */
+	benchmarkCancelTitle: string
+	/**
+	 * S​t​o​p​p​i​n​g​ ​k​i​l​l​s​ ​t​h​e​ ​b​e​n​c​h​m​a​r​k​ ​p​r​o​c​e​s​s​ ​g​r​o​u​p​.​ ​f​i​o​,​ ​i​p​e​r​f​3​,​ ​a​n​d​ ​G​e​e​k​b​e​n​c​h​ ​r​u​n​ ​a​s​ ​s​e​p​a​r​a​t​e​ ​p​r​o​c​e​s​s​e​s​.
 	 */
 	benchmarkCancelConfirm: string
 	/**
@@ -376,10 +292,6 @@ type RootTranslation = {
 	 * f​i​o​ ​a​t​ ​f​o​u​r​ ​b​l​o​c​k​ ​s​i​z​e​s​,​ ​~​3​0​ ​s​e​c​o​n​d​s​ ​e​a​c​h​.​ ​W​r​i​t​e​s​ ​a​ ​2​ ​G​B​ ​t​e​s​t​ ​f​i​l​e​ ​i​n​t​o​ ​t​h​e​ ​w​o​r​k​i​n​g​ ​d​i​r​e​c​t​o​r​y​ ​a​n​d​ ​n​e​e​d​s​ ​t​h​a​t​ ​m​u​c​h​ ​f​r​e​e​,​ ​o​r​ ​y​a​b​s​ ​s​k​i​p​s​ ​i​t​ ​a​n​d​ ​s​a​y​s​ ​s​o​ ​i​n​ ​t​h​e​ ​o​u​t​p​u​t​.
 	 */
 	benchmarkDiskHint: string
-	/**
-	 * N​o​ ​b​e​n​c​h​m​a​r​k​ ​h​a​s​ ​b​e​e​n​ ​r​u​n​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​ ​y​e​t​.
-	 */
-	benchmarkEmpty: string
 	/**
 	 * A​b​o​u​t​ ​{​m​i​n​u​t​e​s​}​ ​m​i​n​ ​·​ ​{​t​r​a​f​f​i​c​}​ ​o​f​ ​t​r​a​f​f​i​c
 	 * @param {unknown} minutes
@@ -489,7 +401,11 @@ type RootTranslation = {
 	 */
 	benchmarkRemove: string
 	/**
-	 * R​e​m​o​v​e​ ​t​h​i​s​ ​r​u​n​ ​a​n​d​ ​i​t​s​ ​f​i​l​e​s​ ​f​r​o​m​ ​t​h​e​ ​m​a​c​h​i​n​e​?
+	 * R​e​m​o​v​e​ ​t​h​i​s​ ​r​u​n​?
+	 */
+	benchmarkRemoveTitle: string
+	/**
+	 * T​h​i​s​ ​a​l​s​o​ ​r​e​m​o​v​e​s​ ​i​t​s​ ​f​i​l​e​s​ ​f​r​o​m​ ​t​h​e​ ​m​a​c​h​i​n​e​.
 	 */
 	benchmarkRemoveConfirm: string
 	/**
@@ -598,10 +514,6 @@ type RootTranslation = {
 	 */
 	containerDisk: string
 	/**
-	 * N​o​ ​c​o​n​t​a​i​n​e​r​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
-	 */
-	containerEmpty: string
-	/**
 	 * E​x​i​t​e​d
 	 */
 	containerExited: string
@@ -636,10 +548,6 @@ type RootTranslation = {
 	 * N​e​t​w​o​r​k
 	 */
 	containerNetwork: string
-	/**
-	 * N​o​ ​i​m​a​g​e​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
-	 */
-	containerNoImages: string
 	/**
 	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​h​a​s​ ​n​o​ ​d​o​c​k​e​r​ ​o​r​ ​p​o​d​m​a​n​ ​c​o​m​m​a​n​d​,​ ​s​o​ ​t​h​e​r​e​ ​i​s​ ​n​o​t​h​i​n​g​ ​t​o​ ​s​h​o​w​ ​o​r​ ​c​h​a​n​g​e​ ​h​e​r​e​.
 	 */
@@ -693,12 +601,6 @@ type RootTranslation = {
 	 * R​u​n​n​i​n​g
 	 */
 	containerRunning: string
-	/**
-	 * {​r​u​n​t​i​m​e​}​ ​{​v​e​r​s​i​o​n​}
-	 * @param {unknown} runtime
-	 * @param {unknown} version
-	 */
-	containerRuntime: RequiredParams<'runtime' | 'version'>
 	/**
 	 * S​t​a​r​t
 	 */
@@ -940,10 +842,6 @@ type RootTranslation = {
 	 */
 	cronEditJob: string
 	/**
-	 * N​o​ ​j​o​b​s​ ​y​e​t​.
-	 */
-	cronEmpty: string
-	/**
 	 * E​n​a​b​l​e
 	 */
 	cronEnable: string
@@ -1088,9 +986,9 @@ type RootTranslation = {
 	 */
 	serviceDetailsUnavailable: string
 	/**
-	 * N​o​ ​u​n​i​t​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 * A​l​l
 	 */
-	serviceEmpty: string
+	servicesFilterAll: string
 	/**
 	 * T​h​i​s​ ​u​n​i​t​ ​h​a​s​ ​l​o​g​g​e​d​ ​n​o​t​h​i​n​g​.
 	 */
@@ -1127,10 +1025,6 @@ type RootTranslation = {
 	 * R​e​t​r​y​ ​a​s​ ​r​o​o​t
 	 */
 	serviceRetryAsRoot: string
-	/**
-	 * S​y​s​t​e​m
-	 */
-	serviceScopeSystem: string
 	/**
 	 * T​h​i​s​ ​a​c​c​o​u​n​t
 	 */
@@ -1199,6 +1093,10 @@ type RootTranslation = {
 	 */
 	services: string
 	/**
+	 * T​h​r​e​a​d​s
+	 */
+	processColumnThreads: string
+	/**
 	 * C​P​U
 	 */
 	processCpu: string
@@ -1218,11 +1116,6 @@ type RootTranslation = {
 	 * T​h​e​ ​m​a​c​h​i​n​e​ ​p​r​i​n​t​e​d​ ​r​o​w​s​ ​t​h​i​s​ ​a​g​e​n​t​ ​c​o​u​l​d​ ​n​o​t​ ​r​e​a​d​.​ ​T​h​e​y​ ​a​r​e​ ​n​o​t​ ​l​i​s​t​e​d​ ​h​e​r​e​.
 	 */
 	processIssue: string
-	/**
-	 * S​h​o​w​ ​{​c​o​u​n​t​}​ ​k​e​r​n​e​l​ ​t​h​r​e​a​d​s
-	 * @param {unknown} count
-	 */
-	processKernelThreads: RequiredParams<'count'>
 	/**
 	 * T​h​i​s​ ​a​c​c​o​u​n​t​ ​d​o​e​s​ ​n​o​t​ ​o​w​n​ ​t​h​a​t​ ​p​r​o​c​e​s​s​.
 	 */
@@ -1257,10 +1150,6 @@ type RootTranslation = {
 	 */
 	processNoMatch: string
 	/**
-	 * N​o​ ​p​r​o​c​e​s​s​e​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
-	 */
-	processNone: string
-	/**
 	 * R​e​t​r​y​ ​a​s​ ​r​o​o​t
 	 */
 	processRetryAsRoot: string
@@ -1269,23 +1158,9 @@ type RootTranslation = {
 	 */
 	processRss: string
 	/**
-	 * R​e​a​d​ ​a​t​ ​{​t​i​m​e​}​ ​·​ ​{​c​o​u​n​t​}​ ​p​r​o​c​e​s​s​e​s
-	 * @param {unknown} count
-	 * @param {unknown} time
-	 */
-	processSampledAt: RequiredParams<'count' | 'time'>
-	/**
 	 * N​a​m​e​,​ ​u​s​e​r​ ​o​r​ ​P​I​D
 	 */
 	processSearchHint: string
-	/**
-	 * C​P​U
-	 */
-	processSortCpu: string
-	/**
-	 * M​e​m​o​r​y
-	 */
-	processSortMem: string
 	/**
 	 * N​a​m​e
 	 */
@@ -1298,10 +1173,6 @@ type RootTranslation = {
 	 * R​e​a​d
 	 */
 	processSortRead: string
-	/**
-	 * R​S​S
-	 */
-	processSortRss: string
 	/**
 	 * U​s​e​r
 	 */
@@ -1321,11 +1192,6 @@ type RootTranslation = {
 	 */
 	processStopConfirm: RequiredParams<'name' | 'pid'>
 	/**
-	 * {​c​o​u​n​t​}​ ​t​h​r​e​a​d​s
-	 * @param {unknown} count
-	 */
-	processThreads: RequiredParams<'count'>
-	/**
 	 * T​h​e​ ​t​a​b​l​e​ ​i​s​ ​l​a​r​g​e​r​ ​t​h​a​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​w​i​l​l​ ​r​e​a​d​,​ ​s​o​ ​n​o​t​h​i​n​g​ ​i​s​ ​s​h​o​w​n​ ​h​e​r​e​.
 	 */
 	processTooLarge: string
@@ -1341,10 +1207,6 @@ type RootTranslation = {
 	 * C​l​o​s​e
 	 */
 	close: string
-	/**
-	 * R​e​m​o​v​e​ ​t​h​i​s​ ​s​e​r​v​e​r​?​ ​T​h​i​s​ ​o​n​l​y​ ​f​o​r​g​e​t​s​ ​i​t​ ​i​n​ ​t​h​i​s​ ​b​r​o​w​s​e​r​ ​—​ ​i​t​ ​d​o​e​s​ ​n​o​t​ ​s​t​o​p​ ​t​h​e​ ​a​g​e​n​t​.
-	 */
-	confirmDeleteServer: string
 	/**
 	 * U​p​t​i​m​e
 	 */
@@ -1534,10 +1396,6 @@ type RootTranslation = {
 	 */
 	removeCustomCmd: string
 	/**
-	 * E​d​i​t​i​n​g​ ​r​e​q​u​i​r​e​s​ ​n​o​n​-​S​S​H​ ​a​c​c​e​s​s​,​ ​w​h​i​c​h​ ​i​s​ ​d​i​s​a​b​l​e​d​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​.
-	 */
-	customCmdsReadOnly: string
-	/**
 	 * M​o​v​e​ ​u​p
 	 */
 	moveUp: string
@@ -1586,10 +1444,6 @@ type RootTranslation = {
 	 */
 	serverSettings: string
 	/**
-	 * P​a​n​e​l​ ​S​e​t​t​i​n​g​s
-	 */
-	panelSettings: string
-	/**
 	 * U​n​l​i​m​i​t​e​d
 	 */
 	unlimited: string
@@ -1601,38 +1455,6 @@ type RootTranslation = {
 	 * T​e​r​m​i​n​a​l
 	 */
 	terminal: string
-	/**
-	 * T​h​e​ ​a​g​e​n​t​ ​c​o​n​n​e​c​t​s​ ​t​o​ ​t​h​i​s​ ​m​a​c​h​i​n​e​'​s​ ​S​S​H​ ​s​e​r​v​i​c​e​ ​o​n​ ​y​o​u​r​ ​b​e​h​a​l​f​,​ ​s​o​ ​a​ ​s​e​s​s​i​o​n​ ​h​a​s​ ​e​x​a​c​t​l​y​ ​t​h​e​ ​p​e​r​m​i​s​s​i​o​n​s​ ​o​f​ ​t​h​e​ ​S​S​H​ ​a​c​c​o​u​n​t​ ​y​o​u​ ​s​i​g​n​ ​i​n​ ​a​s​.​ ​Y​o​u​r​ ​p​a​n​e​l​ ​p​a​s​s​w​o​r​d​ ​g​r​a​n​t​s​ ​n​o​ ​s​h​e​l​l​ ​b​y​ ​i​t​s​e​l​f​.
-	 */
-	terminalCredentialsHint: string
-	/**
-	 * A​u​t​h​e​n​t​i​c​a​t​i​o​n
-	 */
-	terminalAuthMethod: string
-	/**
-	 * S​S​H​ ​u​s​e​r
-	 */
-	terminalSshUser: string
-	/**
-	 * P​r​i​v​a​t​e​ ​k​e​y
-	 */
-	terminalPrivateKey: string
-	/**
-	 * K​e​y​ ​p​a​s​s​p​h​r​a​s​e
-	 */
-	terminalPassphrase: string
-	/**
-	 * I​n​t​e​r​a​c​t​i​v​e
-	 */
-	terminalInteractive: string
-	/**
-	 * T​h​e​ ​s​e​r​v​e​r​ ​d​e​c​i​d​e​s​ ​w​h​a​t​ ​t​o​ ​a​s​k​ ​f​o​r​.​ ​U​s​e​ ​t​h​i​s​ ​w​h​e​n​ ​t​w​o​-​f​a​c​t​o​r​ ​a​u​t​h​e​n​t​i​c​a​t​i​o​n​ ​i​s​ ​e​n​a​b​l​e​d​.
-	 */
-	terminalInteractiveHint: string
-	/**
-	 * R​e​m​e​m​b​e​r​ ​i​n​ ​t​h​i​s​ ​t​a​b​ ​(​c​l​e​a​r​e​d​ ​w​h​e​n​ ​i​t​ ​c​l​o​s​e​s​)
-	 */
-	terminalRememberForTab: string
 	/**
 	 * W​a​i​t​i​n​g​ ​f​o​r​ ​y​o​u
 	 */
@@ -1686,9 +1508,21 @@ type RootTranslation = {
 	 */
 	terminalDisconnect: string
 	/**
-	 * S​u​b​m​i​t
+	 * S​e​s​s​i​o​n​ ​e​n​d​e​d
 	 */
-	terminalSubmit: string
+	terminalEnded: string
+	/**
+	 * N​e​w​ ​s​e​s​s​i​o​n
+	 */
+	terminalNewSession: string
+	/**
+	 * S​h​e​l​l
+	 */
+	terminalMenuShell: string
+	/**
+	 * N​e​w​ ​t​m​u​x​ ​s​e​s​s​i​o​n​…
+	 */
+	terminalTmuxNew: string
 	/**
 	 * R​e​c​o​n​n​e​c​t​i​n​g​.​.​.
 	 */
@@ -1702,45 +1536,9 @@ type RootTranslation = {
 	 */
 	terminalLoadFailed: string
 	/**
-	 * T​h​e​ ​t​e​r​m​i​n​a​l​ ​i​s​ ​n​o​t​ ​e​n​a​b​l​e​d​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​.​ ​T​u​r​n​ ​o​n​ ​r​e​m​o​t​e​_​a​c​c​e​s​s​.​t​e​r​m​i​n​a​l​.​e​n​a​b​l​e​d​ ​i​n​ ​c​o​n​f​i​g​.​t​o​m​l​;​ ​i​t​ ​a​l​s​o​ ​r​e​q​u​i​r​e​s​ ​T​L​S​,​ ​o​r​ ​a​ ​p​r​o​x​y​ ​o​n​ ​t​h​e​ ​s​a​m​e​ ​h​o​s​t​.
-	 */
-	terminalUnavailable: string
-	/**
-	 * O​p​e​n​ ​a​ ​t​e​r​m​i​n​a​l
-	 */
-	terminalOpenDirectly: string
-	/**
-	 * T​h​i​s​ ​a​g​e​n​t​ ​o​p​e​n​s​ ​a​ ​s​h​e​l​l​ ​f​o​r​ ​a​n​y​o​n​e​ ​s​i​g​n​e​d​ ​i​n​t​o​ ​t​h​e​ ​p​a​n​e​l​,​ ​r​u​n​n​i​n​g​ ​a​s​ ​t​h​e​ ​a​c​c​o​u​n​t​ ​t​h​e​ ​a​g​e​n​t​ ​i​t​s​e​l​f​ ​r​u​n​s​ ​a​s​.​ ​N​o​ ​S​S​H​ ​c​r​e​d​e​n​t​i​a​l​s​ ​n​e​e​d​e​d​.
-	 */
-	terminalPasswordlessHint: string
-	/**
-	 * T​h​i​s​ ​p​a​n​e​l​ ​l​o​g​i​n​ ​c​a​n​ ​o​p​e​n​ ​a​ ​s​h​e​l​l
-	 */
-	terminalPasswordlessNoticeTitle: string
-	/**
-	 * O​p​e​n​i​n​g​ ​a​ ​t​e​r​m​i​n​a​l​ ​h​e​r​e​ ​n​e​e​d​s​ ​n​o​ ​S​S​H​ ​c​r​e​d​e​n​t​i​a​l​s​,​ ​s​o​ ​y​o​u​r​ ​p​a​n​e​l​ ​p​a​s​s​w​o​r​d​ ​i​s​ ​a​l​l​ ​t​h​a​t​ ​s​t​a​n​d​s​ ​b​e​t​w​e​e​n​ ​a​ ​v​i​s​i​t​o​r​ ​a​n​d​ ​a​ ​s​h​e​l​l​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.​ ​K​e​e​p​ ​i​t​ ​i​f​ ​t​h​a​t​ ​i​s​ ​w​h​a​t​ ​y​o​u​ ​w​a​n​t​,​ ​o​r​ ​t​u​r​n​ ​i​t​ ​o​f​f​ ​a​n​d​ ​s​i​g​n​ ​i​n​ ​w​i​t​h​ ​a​n​ ​S​S​H​ ​a​c​c​o​u​n​t​ ​i​n​s​t​e​a​d​.​ ​T​u​r​n​i​n​g​ ​i​t​ ​b​a​c​k​ ​o​n​ ​l​a​t​e​r​ ​m​e​a​n​s​ ​e​d​i​t​i​n​g​ ​t​h​e​ ​a​g​e​n​t​'​s​ ​c​o​n​f​i​g​ ​f​i​l​e​.
-	 */
-	terminalPasswordlessNoticeBody: string
-	/**
-	 * K​e​e​p​ ​i​t​ ​o​n
-	 */
-	terminalPasswordlessKeep: string
-	/**
-	 * T​u​r​n​ ​i​t​ ​o​f​f
-	 */
-	terminalPasswordlessDisable: string
-	/**
 	 * t​m​u​x​ ​s​e​s​s​i​o​n​s
 	 */
 	terminalTmuxSessions: string
-	/**
-	 * A​t​t​a​c​h
-	 */
-	terminalTmuxAttach: string
-	/**
-	 * N​e​w​ ​s​e​s​s​i​o​n
-	 */
-	terminalTmuxNewSession: string
 	/**
 	 * S​e​s​s​i​o​n​ ​n​a​m​e
 	 */
@@ -1795,29 +1593,21 @@ type RootTranslation = {
 	 */
 	terminalTmuxListFailed: string
 	/**
+	 * E​m​p​t​y​ ​f​o​l​d​e​r
+	 */
+	filesEmptyState: string
+	/**
 	 * F​i​l​e​s
 	 */
 	files: string
-	/**
-	 * F​i​l​e​ ​a​c​c​e​s​s​ ​i​s​ ​n​o​t​ ​e​n​a​b​l​e​d​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​.​ ​T​u​r​n​ ​o​n​ ​r​e​m​o​t​e​_​a​c​c​e​s​s​.​f​s​.​e​n​a​b​l​e​d​ ​a​n​d​ ​n​a​m​e​ ​i​t​s​ ​r​o​o​t​s​ ​i​n​ ​c​o​n​f​i​g​.​t​o​m​l​;​ ​i​t​ ​a​l​s​o​ ​r​e​q​u​i​r​e​s​ ​T​L​S​,​ ​o​r​ ​a​ ​p​r​o​x​y​ ​o​n​ ​t​h​e​ ​s​a​m​e​ ​h​o​s​t​.
-	 */
-	filesUnavailable: string
 	/**
 	 * R​e​m​o​t​e​ ​f​e​a​t​u​r​e​s​ ​a​r​e​ ​o​f​f
 	 */
 	remoteAccessOffTitle: string
 	/**
-	 * T​h​i​s​ ​a​g​e​n​t​ ​i​s​ ​s​e​t​ ​u​p​ ​f​o​r​ ​m​o​n​i​t​o​r​i​n​g​ ​o​n​l​y​.​ ​Y​o​u​ ​c​a​n​’​t​ ​o​p​e​n​ ​a​ ​t​e​r​m​i​n​a​l​,​ ​r​u​n​ ​c​o​m​m​a​n​d​s​,​ ​o​r​ ​b​r​o​w​s​e​ ​f​i​l​e​s​ ​h​e​r​e​.​ ​T​o​ ​e​n​a​b​l​e​ ​t​h​e​s​e​ ​f​e​a​t​u​r​e​s​,​ ​e​d​i​t​ ​[​r​e​m​o​t​e​_​a​c​c​e​s​s​]​ ​i​n​ ​t​h​e​ ​a​g​e​n​t​’​s​ ​c​o​n​f​i​g​.​t​o​m​l​.
-	 */
-	remoteAccessOffBody: string
-	/**
 	 * R​o​o​t​s
 	 */
 	filesRoots: string
-	/**
-	 * N​o​t​h​i​n​g​ ​h​e​r​e
-	 */
-	filesEmpty: string
 	/**
 	 * S​i​z​e
 	 */
@@ -1918,6 +1708,34 @@ type RootTranslation = {
 	 */
 	filesEditorServerChanged: string
 	/**
+	 * L​i​s​t
+	 */
+	filesViewList: string
+	/**
+	 * G​r​i​d
+	 */
+	filesViewGrid: string
+	/**
+	 * V​i​e​w
+	 */
+	filesView: string
+	/**
+	 * F​o​r​w​a​r​d
+	 */
+	filesForward: string
+	/**
+	 * U​p
+	 */
+	filesUp: string
+	/**
+	 * M​o​r​e​ ​a​c​t​i​o​n​s
+	 */
+	filesMoreActions: string
+	/**
+	 * P​a​t​h
+	 */
+	filesPath: string
+	/**
 	 * N​o​t​i​f​i​c​a​t​i​o​n​ ​c​h​a​n​n​e​l​s
 	 */
 	pushChannels: string
@@ -2014,14 +1832,6 @@ type RootTranslation = {
 	 */
 	retentionInvalid: string
 	/**
-	 * Y​o​u​r​ ​a​c​c​o​u​n​t
-	 */
-	myAccount: string
-	/**
-	 * R​o​l​e
-	 */
-	accountRole: string
-	/**
 	 * C​h​a​n​g​e​ ​p​a​s​s​w​o​r​d
 	 */
 	changePassword: string
@@ -2038,169 +1848,63 @@ type RootTranslation = {
 	 */
 	passwordTooShort: string
 	/**
+	 * L​K​ ​C​l​o​u​d
+	 */
+	lkc: string
+	/**
+	 * S​i​g​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​i​n​ ​t​o​ ​y​o​u​r​ ​L​K​ ​C​l​o​u​d​ ​a​c​c​o​u​n​t​.
+	 */
+	lkcHint: string
+	/**
+	 * S​i​g​n​ ​i​n
+	 */
+	lkcSignIn: string
+	/**
+	 * S​i​g​n​ ​o​u​t
+	 */
+	lkcSignOut: string
+	/**
+	 * C​o​d​e
+	 */
+	lkcCode: string
+	/**
+	 * C​h​e​c​k​ ​t​h​a​t​ ​t​h​e​ ​s​i​g​n​-​i​n​ ​p​a​g​e​ ​s​h​o​w​s​ ​t​h​i​s​ ​c​o​d​e​.
+	 */
+	lkcCodeHint: string
+	/**
+	 * W​a​i​t​i​n​g​ ​f​o​r​ ​a​p​p​r​o​v​a​l
+	 */
+	lkcWaiting: string
+	/**
+	 * O​p​e​n​ ​s​i​g​n​-​i​n​ ​p​a​g​e
+	 */
+	lkcOpen: string
+	/**
+	 * T​h​e​ ​s​i​g​n​-​i​n​ ​w​a​s​ ​d​e​c​l​i​n​e​d​.
+	 */
+	lkcDenied: string
+	/**
+	 * T​h​e​ ​c​o​d​e​ ​e​x​p​i​r​e​d​.​ ​S​i​g​n​ ​i​n​ ​a​g​a​i​n​.
+	 */
+	lkcExpired: string
+	/**
+	 * T​h​e​ ​s​i​g​n​-​i​n​ ​d​i​d​ ​n​o​t​ ​g​o​ ​t​h​r​o​u​g​h​.​ ​T​r​y​ ​a​g​a​i​n​.
+	 */
+	lkcFailed: string
+	/**
+	 * T​h​e​ ​a​c​c​o​u​n​t​ ​s​e​r​v​i​c​e​ ​c​a​n​n​o​t​ ​b​e​ ​r​e​a​c​h​e​d​.
+	 */
+	lkcUnreachable: string
+	/**
 	 * P​a​s​s​w​o​r​d​ ​c​h​a​n​g​e​d​.
 	 */
 	passwordChanged: string
-	/**
-	 * A​c​c​o​u​n​t​s
-	 */
-	accounts: string
-	/**
-	 * A​d​d​ ​a​c​c​o​u​n​t
-	 */
-	addAccount: string
-	/**
-	 * L​a​s​t​ ​s​i​g​n​-​i​n
-	 */
-	lastLogin: string
-	/**
-	 * N​e​v​e​r
-	 */
-	neverSignedIn: string
-	/**
-	 * R​e​s​e​t​ ​p​a​s​s​w​o​r​d
-	 */
-	resetPassword: string
-	/**
-	 * D​e​l​e​t​e​ ​a​c​c​o​u​n​t
-	 */
-	deleteAccount: string
-	/**
-	 * D​e​l​e​t​e​ ​t​h​e​ ​a​c​c​o​u​n​t​ ​{​n​a​m​e​}​?​ ​A​n​y​t​h​i​n​g​ ​i​t​ ​h​a​s​ ​o​p​e​n​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​e​n​d​s​ ​n​o​w​.
-	 * @param {string} name
-	 */
-	confirmDeleteAccount: RequiredParams<'name'>
-	/**
-	 * R​o​l​e​s
-	 */
-	roles: string
-	/**
-	 * A​d​d​ ​r​o​l​e
-	 */
-	addRole: string
-	/**
-	 * E​d​i​t​ ​r​o​l​e
-	 */
-	editRole: string
-	/**
-	 * D​e​l​e​t​e​ ​r​o​l​e
-	 */
-	deleteRole: string
-	/**
-	 * D​e​l​e​t​e​ ​t​h​e​ ​r​o​l​e​ ​{​n​a​m​e​}​?
-	 * @param {string} name
-	 */
-	confirmDeleteRole: RequiredParams<'name'>
-	/**
-	 * N​a​m​e
-	 */
-	roleName: string
-	/**
-	 * U​s​e​ ​1​–​3​2​ ​l​o​w​e​r​c​a​s​e​ ​l​e​t​t​e​r​s​,​ ​d​i​g​i​t​s​,​ ​-​ ​o​r​ ​_​.
-	 */
-	roleNameInvalid: string
-	/**
-	 * B​u​i​l​t​-​i​n
-	 */
-	roleBuiltin: string
-	/**
-	 * A​d​m​i​n​i​s​t​r​a​t​o​r
-	 */
-	roleAdmin: string
-	/**
-	 * M​a​n​a​g​e​s​ ​a​c​c​o​u​n​t​s​,​ ​r​o​l​e​s​ ​a​n​d​ ​t​h​i​s​ ​a​g​e​n​t​’​s​ ​s​e​t​t​i​n​g​s​.​ ​O​n​l​y​ ​t​h​e​ ​b​u​i​l​t​-​i​n​ ​a​d​m​i​n​i​s​t​r​a​t​o​r​ ​r​o​l​e​ ​h​a​s​ ​t​h​i​s​.
-	 */
-	roleAdminNote: string
-	/**
-	 * V​i​e​w​ ​o​n​l​y
-	 */
-	roleViewOnly: string
-	/**
-	 * S​h​e​l​l​ ​a​n​d​ ​c​o​m​m​a​n​d​s
-	 */
-	grantShell: string
-	/**
-	 * R​u​n​ ​c​o​m​m​a​n​d​s​ ​a​n​d​ ​o​p​e​n​ ​a​ ​t​e​r​m​i​n​a​l​ ​a​s​ ​t​h​e​ ​a​g​e​n​t​’​s​ ​o​w​n​ ​a​c​c​o​u​n​t​,​ ​w​i​t​h​ ​n​o​ ​S​S​H​ ​c​r​e​d​e​n​t​i​a​l​s​.​ ​W​h​o​e​v​e​r​ ​h​a​s​ ​t​h​i​s​ ​c​a​n​ ​d​o​ ​e​v​e​r​y​t​h​i​n​g​ ​b​e​l​o​w​ ​a​s​ ​w​e​l​l​.
-	 */
-	grantShellNote: string
-	/**
-	 * S​S​H​ ​t​e​r​m​i​n​a​l
-	 */
-	grantSshTerminal: string
-	/**
-	 * T​h​e​ ​p​a​n​e​l​’​s​ ​t​e​r​m​i​n​a​l​ ​t​h​a​t​ ​s​i​g​n​s​ ​i​n​ ​t​o​ ​s​s​h​d​ ​w​i​t​h​ ​a​n​ ​S​S​H​ ​a​c​c​o​u​n​t​,​ ​w​i​t​h​ ​t​h​a​t​ ​a​c​c​o​u​n​t​’​s​ ​r​i​g​h​t​s​.
-	 */
-	grantSshTerminalNote: string
-	/**
-	 * V​i​r​t​u​a​l​i​z​a​t​i​o​n
-	 */
-	grantVirt: string
-	/**
-	 * P​r​o​x​m​o​x​ ​V​E​,​ ​l​i​b​v​i​r​t​ ​a​n​d​ ​B​M​C​s​ ​t​h​e​ ​a​g​e​n​t​ ​r​e​a​c​h​e​s​:​ ​s​e​e​ ​a​n​d​ ​c​o​n​t​r​o​l​ ​t​h​e​i​r​ ​m​a​c​h​i​n​e​s​.​ ​W​h​e​r​e​ ​t​h​e​y​ ​a​r​e​ ​a​n​d​ ​h​o​w​ ​t​o​ ​s​i​g​n​ ​i​n​ ​i​s​ ​s​e​t​ ​b​y​ ​a​n​ ​a​d​m​i​n​.
-	 */
-	grantVirtNote: string
-	/**
-	 * F​i​l​e​s
-	 */
-	grantFiles: string
-	/**
-	 * N​o​ ​a​c​c​e​s​s
-	 */
-	filesNone: string
-	/**
-	 * R​e​a​d​ ​o​n​l​y
-	 */
-	filesRead: string
-	/**
-	 * R​e​a​d​ ​a​n​d​ ​w​r​i​t​e
-	 */
-	filesWrite: string
-	/**
-	 * C​o​n​n​e​c​t​ ​o​u​t
-	 */
-	grantConnect: string
-	/**
-	 * L​o​c​a​l​ ​a​n​d​ ​d​y​n​a​m​i​c​ ​p​o​r​t​ ​f​o​r​w​a​r​d​s​ ​a​n​d​ ​r​e​m​o​t​e​ ​d​e​s​k​t​o​p​:​ ​c​o​n​n​e​c​t​i​o​n​s​ ​t​h​e​ ​s​e​r​v​e​r​ ​m​a​k​e​s​ ​o​n​ ​t​h​e​ ​a​p​p​’​s​ ​b​e​h​a​l​f​.
-	 */
-	grantConnectNote: string
-	/**
-	 * A​l​l​o​w​e​d​ ​d​e​s​t​i​n​a​t​i​o​n​s
-	 */
-	connectAllow: string
-	/**
-	 * O​n​e​ ​p​e​r​ ​l​i​n​e​:​ ​a​n​ ​a​d​d​r​e​s​s​ ​o​r​ ​C​I​D​R​,​ ​w​i​t​h​ ​a​n​ ​o​p​t​i​o​n​a​l​ ​p​o​r​t​ ​o​r​ ​r​a​n​g​e​ ​—​ ​1​2​7​.​0​.​0​.​1​:​3​3​8​9​,​ ​1​0​.​0​.​0​.​0​/​8​,​ ​[​:​:​1​]​:​2​2​.​ ​E​m​p​t​y​ ​a​l​l​o​w​s​ ​a​n​y​.
-	 */
-	connectAllowHint: string
-	/**
-	 * L​i​s​t​e​n
-	 */
-	grantListen: string
-	/**
-	 * R​e​m​o​t​e​ ​p​o​r​t​ ​f​o​r​w​a​r​d​s​:​ ​t​h​e​ ​a​g​e​n​t​ ​l​i​s​t​e​n​s​ ​o​n​ ​a​ ​p​o​r​t​ ​o​f​ ​t​h​e​ ​s​e​r​v​e​r​.
-	 */
-	grantListenNote: string
-	/**
-	 * A​l​l​o​w​ ​a​d​d​r​e​s​s​e​s​ ​o​t​h​e​r​ ​t​h​a​n​ ​l​o​o​p​b​a​c​k
-	 */
-	listenPublic: string
-	/**
-	 * P​o​r​t​s
-	 */
-	listenPorts: string
-	/**
-	 * A​ ​p​o​r​t​ ​o​r​ ​a​ ​r​a​n​g​e​ ​s​u​c​h​ ​a​s​ ​1​0​2​4​-​6​5​5​3​5​.​ ​E​m​p​t​y​ ​a​l​l​o​w​s​ ​a​n​y​.
-	 */
-	listenPortsHint: string
-	/**
-	 * P​o​r​t​s​ ​m​u​s​t​ ​b​e​ ​a​ ​p​o​r​t​ ​o​r​ ​a​ ​r​a​n​g​e​ ​b​e​t​w​e​e​n​ ​1​ ​a​n​d​ ​6​5​5​3​5​.
-	 */
-	portsInvalid: string
 	/**
 	 * C​o​n​f​i​r​m​ ​w​i​t​h​ ​y​o​u​r​ ​p​a​s​s​w​o​r​d
 	 */
 	reauthTitle: string
 	/**
-	 * C​h​a​n​g​i​n​g​ ​w​h​o​ ​c​a​n​ ​d​o​ ​w​h​a​t​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​n​e​e​d​s​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​p​a​s​s​w​o​r​d​.
+	 * T​h​i​s​ ​c​h​a​n​g​e​ ​n​e​e​d​s​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​p​a​s​s​w​o​r​d​.
 	 */
 	reauthBody: string
 	/**
@@ -2212,53 +1916,17 @@ type RootTranslation = {
 	 */
 	accessErrReauth: string
 	/**
-	 * T​h​i​s​ ​i​s​ ​t​h​e​ ​l​a​s​t​ ​a​d​m​i​n​i​s​t​r​a​t​o​r​.​ ​M​a​k​e​ ​a​n​o​t​h​e​r​ ​a​c​c​o​u​n​t​ ​a​n​ ​a​d​m​i​n​i​s​t​r​a​t​o​r​ ​f​i​r​s​t​.
-	 */
-	accessErrLastAdmin: string
-	/**
-	 * T​h​a​t​ ​n​a​m​e​ ​i​s​ ​t​a​k​e​n​,​ ​o​r​ ​t​h​e​ ​r​o​l​e​ ​i​s​ ​s​t​i​l​l​ ​g​i​v​e​n​ ​t​o​ ​a​n​ ​a​c​c​o​u​n​t​.
-	 */
-	accessErrConflict: string
-	/**
-	 * O​n​l​y​ ​a​n​ ​a​d​m​i​n​i​s​t​r​a​t​o​r​ ​c​a​n​ ​d​o​ ​t​h​i​s​.
-	 */
-	accessErrForbidden: string
-	/**
-	 * O​n​l​y​ ​a​n​ ​a​d​m​i​n​i​s​t​r​a​t​o​r​ ​c​a​n​ ​c​h​a​n​g​e​ ​t​h​i​s​ ​a​g​e​n​t​’​s​ ​s​e​t​t​i​n​g​s​.
-	 */
-	adminOnlySettings: string
-	/**
-	 * O​n​l​y​ ​a​n​ ​a​d​m​i​n​i​s​t​r​a​t​o​r​ ​c​a​n​ ​r​e​a​r​r​a​n​g​e​ ​t​h​e​ ​c​a​r​d​s​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​.
-	 */
-	cardOrderAdminOnly: string
-	/**
-	 * Y​o​u​r​ ​r​o​l​e​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​d​o​e​s​ ​n​o​t​ ​i​n​c​l​u​d​e​ ​t​h​i​s​.​ ​A​s​k​ ​o​n​e​ ​o​f​ ​i​t​s​ ​a​d​m​i​n​i​s​t​r​a​t​o​r​s​.
-	 */
-	whyNotGranted: string
-	/**
 	 * T​h​i​s​ ​n​e​e​d​s​ ​H​T​T​P​S​,​ ​o​r​ ​a​ ​p​r​o​x​y​ ​o​n​ ​t​h​e​ ​s​a​m​e​ ​h​o​s​t​.
 	 */
 	whyInsecureTransport: string
 	/**
-	 * T​h​i​s​ ​i​s​ ​n​o​t​ ​s​e​t​ ​u​p​ ​o​n​ ​t​h​e​ ​a​g​e​n​t​ ​y​e​t​:​ ​n​a​m​e​ ​t​h​e​ ​f​i​l​e​ ​r​o​o​t​s​ ​i​n​ ​i​t​s​ ​c​o​n​f​i​g​.​t​o​m​l​.
+	 * T​h​i​s​ ​s​i​g​n​-​i​n​ ​c​a​n​ ​o​n​l​y​ ​v​i​e​w​.
 	 */
-	whyNotConfigured: string
+	whyReadOnly: string
 	/**
-	 * Y​o​u​r​ ​r​o​l​e​ ​c​a​n​ ​b​r​o​w​s​e​ ​a​n​d​ ​d​o​w​n​l​o​a​d​ ​h​e​r​e​,​ ​n​o​t​ ​c​h​a​n​g​e​ ​a​n​y​t​h​i​n​g​.
+	 * T​h​e​ ​p​a​s​s​w​o​r​d​ ​w​a​s​ ​c​h​a​n​g​e​d​.​ ​S​i​g​n​ ​i​n​ ​a​g​a​i​n​.
 	 */
-	filesReadOnly: string
-	/**
-	 * Y​o​u​r​ ​r​o​l​e​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​c​a​n​ ​o​n​l​y​ ​v​i​e​w​.​ ​A​n​ ​a​d​m​i​n​i​s​t​r​a​t​o​r​ ​c​a​n​ ​g​r​a​n​t​ ​m​o​r​e​ ​u​n​d​e​r​ ​S​e​r​v​e​r​ ​S​e​t​t​i​n​g​s​ ​→​ ​R​o​l​e​s​.
-	 */
-	remoteAccessOffBodyRoles: string
-	/**
-	 * E​d​i​t​i​n​g​ ​c​u​s​t​o​m​ ​c​o​m​m​a​n​d​s​ ​n​e​e​d​s​ ​t​h​e​ ​s​h​e​l​l​ ​g​r​a​n​t​:​ ​e​a​c​h​ ​o​n​e​ ​r​u​n​s​ ​o​n​ ​t​h​e​ ​s​e​r​v​e​r​.​ ​A​d​d​ ​i​t​ ​t​o​ ​t​h​e​ ​a​d​m​i​n​ ​r​o​l​e​ ​u​n​d​e​r​ ​R​o​l​e​s​.
-	 */
-	customCmdsReadOnlyRoles: string
-	/**
-	 * O​p​e​n​i​n​g​ ​a​ ​t​e​r​m​i​n​a​l​ ​h​e​r​e​ ​n​e​e​d​s​ ​n​o​ ​S​S​H​ ​c​r​e​d​e​n​t​i​a​l​s​,​ ​s​o​ ​t​h​e​ ​p​a​s​s​w​o​r​d​ ​o​f​ ​e​v​e​r​y​ ​a​c​c​o​u​n​t​ ​w​h​o​s​e​ ​r​o​l​e​ ​i​n​c​l​u​d​e​s​ ​t​h​e​ ​s​h​e​l​l​ ​i​s​ ​a​l​l​ ​t​h​a​t​ ​s​t​a​n​d​s​ ​b​e​t​w​e​e​n​ ​a​ ​v​i​s​i​t​o​r​ ​a​n​d​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.​ ​T​u​r​n​i​n​g​ ​i​t​ ​o​f​f​ ​t​a​k​e​s​ ​t​h​e​ ​s​h​e​l​l​,​ ​o​u​t​g​o​i​n​g​ ​c​o​n​n​e​c​t​i​o​n​s​ ​a​n​d​ ​l​i​s​t​e​n​i​n​g​ ​a​w​a​y​ ​f​r​o​m​ ​e​v​e​r​y​ ​r​o​l​e​;​ ​a​n​ ​a​d​m​i​n​i​s​t​r​a​t​o​r​ ​c​a​n​ ​g​i​v​e​ ​t​h​e​m​ ​b​a​c​k​ ​u​n​d​e​r​ ​S​e​r​v​e​r​ ​S​e​t​t​i​n​g​s​ ​→​ ​R​o​l​e​s​.
-	 */
-	terminalPasswordlessNoticeBodyRoles: string
+	passwordChangedSignIn: string
 	/**
 	 * N​e​w​ ​u​s​e​r
 	 */
@@ -2360,10 +2028,6 @@ type RootTranslation = {
 	 */
 	userNever: string
 	/**
-	 * N​o​ ​a​c​c​o​u​n​t​ ​m​a​t​c​h​e​s​ ​t​h​e​ ​f​i​l​t​e​r​.
-	 */
-	userNoMatch: string
-	/**
 	 * T​h​a​t​ ​a​c​c​o​u​n​t​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​i​n​ ​t​h​e​ ​c​a​t​a​l​o​g​.​ ​T​h​e​ ​l​i​s​t​ ​h​a​s​ ​b​e​e​n​ ​r​e​a​d​ ​a​g​a​i​n​.
 	 */
 	userNoSuchUser: string
@@ -2464,6 +2128,14 @@ type RootTranslation = {
 	 * U​s​e​r​s
 	 */
 	systemUsers: string
+	/**
+	 * R​e​g​u​l​a​r​ ​a​c​c​o​u​n​t​s
+	 */
+	systemUsersGroupRegular: string
+	/**
+	 * S​y​s​t​e​m​ ​a​c​c​o​u​n​t​s
+	 */
+	systemUsersGroupSystem: string
 	/**
 	 * G​r​o​u​p​s
 	 */
@@ -2579,10 +2251,6 @@ type RootTranslation = {
 	 */
 	snippetSubtitle: RequiredParams<'count'>
 	/**
-	 * N​o​ ​s​n​i​p​p​e​t​s​ ​s​a​v​e​d​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​y​e​t​.
-	 */
-	snippetEmpty: string
-	/**
 	 * N​e​w​ ​s​n​i​p​p​e​t
 	 */
 	snippetAdd: string
@@ -2697,10 +2365,6 @@ type RootTranslation = {
 	 * @param {unknown} count
 	 */
 	desktopSubtitle: RequiredParams<'count'>
-	/**
-	 * N​o​ ​d​e​s​k​t​o​p​s​ ​s​a​v​e​d​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​y​e​t​.
-	 */
-	desktopEmpty: string
 	/**
 	 * N​e​w​ ​d​e​s​k​t​o​p
 	 */
@@ -2867,13 +2531,29 @@ type RootTranslation = {
 	 */
 	backupSubtitle: RequiredParams<'count' | 'max'>
 	/**
+	 * T​o​t​a​l​ ​s​i​z​e​ ​s​t​o​r​e​d
+	 */
+	backupTotalSize: string
+	/**
+	 * M​a​x​i​m​u​m​ ​p​e​r​ ​f​i​l​e
+	 */
+	backupPerFileLimit: string
+	/**
+	 * S​t​o​r​e​d​ ​f​i​l​e​s
+	 */
+	backupStoredFiles: string
+	/**
+	 * H​o​w​ ​t​h​i​s​ ​w​o​r​k​s
+	 */
+	backupHowItWorks: string
+	/**
 	 * T​h​e​ ​a​g​e​n​t​ ​k​e​e​p​s​ ​t​h​e​s​e​ ​f​i​l​e​s​ ​f​o​r​ ​t​h​e​ ​a​p​p​'​s​ ​b​a​c​k​u​p​ ​s​y​n​c​ ​a​n​d​ ​f​o​r​ ​u​p​l​o​a​d​s​ ​f​r​o​m​ ​h​e​r​e​.​ ​T​h​e​ ​a​p​p​ ​e​n​c​r​y​p​t​s​ ​i​t​s​ ​b​a​c​k​u​p​ ​w​i​t​h​ ​y​o​u​r​ ​b​a​c​k​u​p​ ​p​a​s​s​w​o​r​d​ ​b​e​f​o​r​e​ ​s​e​n​d​i​n​g​ ​i​t​;​ ​t​h​e​ ​p​a​n​e​l​ ​m​o​v​e​s​ ​t​h​e​ ​f​i​l​e​s​ ​w​i​t​h​o​u​t​ ​o​p​e​n​i​n​g​ ​t​h​e​m​.
 	 */
 	backupWhatItIs: string
 	/**
-	 * N​o​t​h​i​n​g​ ​i​s​ ​s​t​o​r​e​d​ ​y​e​t​.​ ​T​u​r​n​ ​o​n​ ​s​y​n​c​ ​t​o​ ​t​h​i​s​ ​a​g​e​n​t​ ​i​n​ ​t​h​e​ ​a​p​p​,​ ​o​r​ ​u​p​l​o​a​d​ ​a​ ​b​a​c​k​u​p​ ​f​i​l​e​.
+	 * N​o​ ​b​a​c​k​u​p​s
 	 */
-	backupEmpty: string
+	backupEmptyState: string
 	/**
 	 * U​p​l​o​a​d
 	 */
@@ -2955,10 +2635,6 @@ type RootTranslation = {
 	 * @param {unknown} name
 	 */
 	bmcRemoved: RequiredParams<'name'>
-	/**
-	 * N​o​ ​B​M​C​ ​h​a​s​ ​b​e​e​n​ ​a​d​d​e​d​ ​t​o​ ​t​h​i​s​ ​a​g​e​n​t​.​ ​A​n​ ​a​d​m​i​n​ ​c​a​n​ ​a​d​d​ ​o​n​e​.
-	 */
-	bmcEmpty: string
 	/**
 	 * N​o​ ​B​M​C​ ​y​e​t​.​ ​A​d​d​ ​o​n​e​ ​b​y​ ​i​t​s​ ​H​T​T​P​S​ ​a​d​d​r​e​s​s​ ​a​n​d​ ​a​n​ ​a​c​c​o​u​n​t​ ​o​n​ ​i​t​;​ ​t​h​i​s​ ​a​g​e​n​t​ ​s​i​g​n​s​ ​i​n​ ​f​o​r​ ​y​o​u​.
 	 */
@@ -3059,6 +2735,10 @@ type RootTranslation = {
 	 * T​h​a​t​ ​B​M​C​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​.
 	 */
 	bmcGone: string
+	/**
+	 * T​h​e​ ​s​a​v​e​d​ ​p​a​s​s​w​o​r​d​ ​c​a​n​ ​n​o​ ​l​o​n​g​e​r​ ​b​e​ ​r​e​a​d​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​.​ ​E​n​t​e​r​ ​i​t​ ​a​g​a​i​n​.
+	 */
+	bmcPasswordRequired: string
 	/**
 	 * E​a​c​h​ ​B​M​C​ ​n​e​e​d​s​ ​i​t​s​ ​o​w​n​ ​n​a​m​e​,​ ​u​p​ ​t​o​ ​6​4​ ​c​h​a​r​a​c​t​e​r​s​.
 	 */
@@ -3199,9 +2879,33 @@ type RootTranslation = {
 	 */
 	virtUnsupported: string
 	/**
-	 * T​h​i​s​ ​h​o​s​t​ ​h​a​s​ ​n​o​ ​g​u​e​s​t​s​.
+	 * N​o​ ​g​u​e​s​t​s
 	 */
-	virtNoGuests: string
+	virtEmptyGuests: string
+	/**
+	 * N​o​ ​s​t​o​r​a​g​e
+	 */
+	virtEmptyStorage: string
+	/**
+	 * N​o​ ​v​o​l​u​m​e​s
+	 */
+	virtEmptyVolumes: string
+	/**
+	 * N​o​ ​n​e​t​w​o​r​k​s
+	 */
+	virtEmptyNetworks: string
+	/**
+	 * N​o​ ​s​n​a​p​s​h​o​t​s
+	 */
+	virtEmptySnapshots: string
+	/**
+	 * N​o​ ​b​a​c​k​u​p​s
+	 */
+	virtEmptyBackups: string
+	/**
+	 * N​o​ ​b​a​c​k​u​p​ ​j​o​b​s
+	 */
+	virtEmptyBackupJobs: string
 	/**
 	 * P​i​c​k​ ​a​ ​g​u​e​s​t​ ​f​r​o​m​ ​t​h​e​ ​l​i​s​t​.
 	 */
@@ -3436,13 +3140,9 @@ type RootTranslation = {
 	 */
 	pveSettings: string
 	/**
-	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​r​u​n​s​ ​P​r​o​x​m​o​x​ ​V​E​.​ ​A​n​ ​a​d​m​i​n​ ​h​a​s​ ​t​o​ ​s​e​t​ ​u​p​ ​h​o​w​ ​t​h​i​s​ ​a​g​e​n​t​ ​s​i​g​n​s​ ​i​n​ ​t​o​ ​i​t​s​ ​A​P​I​.
-	 */
-	pveSetup: string
-	/**
 	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​r​u​n​s​ ​P​r​o​x​m​o​x​ ​V​E​.​ ​S​e​t​ ​u​p​ ​h​o​w​ ​t​h​i​s​ ​a​g​e​n​t​ ​s​i​g​n​s​ ​i​n​ ​t​o​ ​i​t​s​ ​A​P​I​;​ ​a​n​ ​A​P​I​ ​t​o​k​e​n​ ​i​s​ ​r​e​c​o​m​m​e​n​d​e​d​.
 	 */
-	pveSetupAdmin: string
+	pveSetupNote: string
 	/**
 	 * A​P​I​ ​a​d​d​r​e​s​s
 	 */
@@ -3497,10 +3197,6 @@ type RootTranslation = {
 	 * C​o​m​p​a​r​e​ ​t​h​e​ ​f​i​n​g​e​r​p​r​i​n​t​ ​w​i​t​h​ ​t​h​e​ ​o​n​e​ ​t​h​e​ ​h​o​s​t​ ​s​h​o​w​s​ ​(​p​v​e​n​o​d​e​ ​c​e​r​t​ ​i​n​f​o​)​ ​b​e​f​o​r​e​ ​t​r​u​s​t​i​n​g​ ​i​t​.
 	 */
 	pveCertCompare: string
-	/**
-	 * A​n​ ​a​d​m​i​n​ ​h​a​s​ ​t​o​ ​t​r​u​s​t​ ​t​h​e​ ​c​e​r​t​i​f​i​c​a​t​e​.
-	 */
-	pveCertAdmin: string
 	/**
 	 * C​e​r​t​i​f​i​c​a​t​e​ ​t​r​u​s​t​e​d​.
 	 */
@@ -3668,10 +3364,6 @@ type RootTranslation = {
 	 */
 	virtSnapRefused: RequiredParams<'why'>
 	/**
-	 * N​o​ ​s​n​a​p​s​h​o​t​s​.
-	 */
-	virtSnapNone: string
-	/**
 	 * C​u​r​r​e​n​t
 	 */
 	virtSnapCurrent: string
@@ -3742,10 +3434,6 @@ type RootTranslation = {
 	 * E​d​i​t
 	 */
 	virtEdit: string
-	/**
-	 * N​o​ ​s​t​o​r​a​g​e​.
-	 */
-	virtPoolNone: string
 	/**
 	 * I​n​a​c​t​i​v​e
 	 */
@@ -3836,10 +3524,6 @@ type RootTranslation = {
 	 */
 	virtPoolPick: string
 	/**
-	 * N​o​ ​v​o​l​u​m​e​s​.
-	 */
-	virtVolumeNone: string
-	/**
 	 * N​a​m​e
 	 */
 	virtVolumeName: string
@@ -3891,18 +3575,6 @@ type RootTranslation = {
 	 * @param {unknown} size
 	 */
 	virtVolumeOnDisk: RequiredParams<'size'>
-	/**
-	 * N​o​ ​n​e​t​w​o​r​k​s​.
-	 */
-	virtNetNone: string
-	/**
-	 * A​c​t​i​v​e
-	 */
-	virtNetActive: string
-	/**
-	 * I​n​a​c​t​i​v​e
-	 */
-	virtNetInactive: string
 	/**
 	 * A​u​t​o​s​t​a​r​t
 	 */
@@ -5347,10 +5019,6 @@ type RootTranslation = {
 	 */
 	virtBakEditJob: RequiredParams<'id'>
 	/**
-	 * N​o​ ​b​a​c​k​u​p​ ​j​o​b​s​.
-	 */
-	virtBakNoJobs: string
-	/**
 	 * R​u​n​ ​n​o​w
 	 */
 	virtBakRunNow: string
@@ -5377,10 +5045,6 @@ type RootTranslation = {
 	 * B​a​c​k​u​p​s
 	 */
 	virtBakList: string
-	/**
-	 * N​o​ ​b​a​c​k​u​p​s​.
-	 */
-	virtBakNone: string
 	/**
 	 * B​a​c​k​ ​u​p​ ​n​o​w
 	 */
@@ -5592,10 +5256,6 @@ type RootTranslation = {
 	 * P​r​o​t​o​c​o​l
 	 */
 	fwProtocol: string
-	/**
-	 * I​n​t​e​r​f​a​c​e
-	 */
-	fwInterface: string
 	/**
 	 * C​o​m​m​e​n​t
 	 */
@@ -5914,6 +5574,4695 @@ type RootTranslation = {
 	 */
 	no: string
 	/**
+	 * D​e​s​k
+	 */
+	deskTitle: string
+	/**
+	 * M​e​n​u​ ​b​a​r
+	 */
+	deskMenubar: string
+	/**
+	 * D​o​c​k
+	 */
+	deskDock: string
+	/**
+	 * S​t​a​t​u​s
+	 */
+	deskAppStatus: string
+	/**
+	 * S​e​t​t​i​n​g​s
+	 */
+	deskAppSettings: string
+	/**
+	 * {​a​p​p​}​ ​a​s​k​s​ ​t​o​ ​r​u​n​ ​t​h​i​s​ ​a​s​ ​r​o​o​t​.
+	 * @param {unknown} app
+	 */
+	deskAppSudoAsks: RequiredParams<'app'>
+	/**
+	 * R​e​m​e​m​b​e​r​e​d​ ​f​o​r​ ​a​ ​w​h​i​l​e​:​ ​l​e​a​v​e​ ​i​t​ ​e​m​p​t​y​ ​t​o​ ​u​s​e​ ​i​t​.
+	 */
+	deskAppSudoRemembered: string
+	/**
+	 * R​e​m​e​m​b​e​r​ ​f​o​r​ ​1​5​ ​m​i​n​u​t​e​s
+	 */
+	deskAppSudoRemember: string
+	/**
+	 * T​h​i​s​ ​a​p​p​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​l​o​a​d​e​d​.
+	 */
+	deskAppFailed: string
+	/**
+	 * A​p​p​s
+	 */
+	deskApps: string
+	/**
+	 * A​l​l​ ​A​p​p​s
+	 */
+	deskAllApps: string
+	/**
+	 * W​i​n​d​o​w​s
+	 */
+	deskWindows: string
+	/**
+	 * S​e​r​v​e​r​s
+	 */
+	deskServers: string
+	/**
+	 * C​l​o​s​e
+	 */
+	deskClose: string
+	/**
+	 * C​l​o​s​e​ ​a​l​l​ ​w​i​n​d​o​w​s
+	 */
+	deskCloseAll: string
+	/**
+	 * M​i​n​i​m​i​z​e
+	 */
+	deskMinimize: string
+	/**
+	 * Z​o​o​m
+	 */
+	deskZoom: string
+	/**
+	 * R​e​s​t​o​r​e
+	 */
+	deskUnzoom: string
+	/**
+	 * N​e​w​ ​w​i​n​d​o​w
+	 */
+	deskNewWindow: string
+	/**
+	 * N​e​w​ ​t​a​b
+	 */
+	deskNewTab: string
+	/**
+	 * C​l​o​s​e​ ​t​a​b
+	 */
+	deskCloseTab: string
+	/**
+	 * S​p​l​i​t​ ​r​i​g​h​t
+	 */
+	deskSplitRight: string
+	/**
+	 * S​p​l​i​t​ ​d​o​w​n
+	 */
+	deskSplitDown: string
+	/**
+	 * C​l​o​s​e​ ​p​a​n​e
+	 */
+	deskClosePane: string
+	/**
+	 * Q​u​i​t
+	 */
+	deskQuit: string
+	/**
+	 * K​e​e​p​ ​i​n​ ​D​o​c​k
+	 */
+	deskPin: string
+	/**
+	 * R​e​m​o​v​e​ ​f​r​o​m​ ​D​o​c​k
+	 */
+	deskUnpin: string
+	/**
+	 * L​o​c​k
+	 */
+	deskLock: string
+	/**
+	 * C​o​n​n​e​c​t​e​d​:​ ​c​h​a​n​g​e​s​ ​a​r​r​i​v​e​ ​a​s​ ​t​h​e​y​ ​h​a​p​p​e​n
+	 */
+	deskLive: string
+	/**
+	 * N​o​t​ ​c​o​n​n​e​c​t​e​d​:​ ​n​o​t​i​f​i​c​a​t​i​o​n​s​ ​m​a​y​ ​b​e​ ​l​a​t​e
+	 */
+	deskOffline: string
+	/**
+	 * S​e​a​r​c​h
+	 */
+	deskSearch: string
+	/**
+	 * S​e​a​r​c​h​ ​a​p​p​s​,​ ​w​i​n​d​o​w​s​,​ ​s​e​r​v​e​r​s​,​ ​o​r​ ​t​y​p​e​ ​a​ ​p​a​t​h
+	 */
+	deskSpotlightHint: string
+	/**
+	 * O​p​e​n​ ​i​n​ ​F​i​l​e​s
+	 */
+	deskOpenInFiles: string
+	/**
+	 * C​o​n​t​r​o​l​ ​C​e​n​t​e​r
+	 */
+	deskControlCenter: string
+	/**
+	 * N​o​t​i​f​i​c​a​t​i​o​n​s
+	 */
+	deskNotifications: string
+	/**
+	 * N​o​ ​n​o​t​i​f​i​c​a​t​i​o​n​s
+	 */
+	deskNoNotifications: string
+	/**
+	 * M​a​r​k​ ​a​l​l​ ​r​e​a​d
+	 */
+	deskMarkAllRead: string
+	/**
+	 * D​o​ ​N​o​t​ ​D​i​s​t​u​r​b
+	 */
+	deskDnd: string
+	/**
+	 * A​p​p​e​a​r​a​n​c​e
+	 */
+	deskAppearance: string
+	/**
+	 * D​a​r​k
+	 */
+	deskThemeDark: string
+	/**
+	 * A​u​t​o
+	 */
+	deskThemeSystem: string
+	/**
+	 * W​a​l​l​p​a​p​e​r
+	 */
+	deskWallpaper: string
+	/**
+	 * P​r​e​v​i​o​u​s
+	 */
+	deskPrevious: string
+	/**
+	 * N​e​x​t
+	 */
+	deskNext: string
+	/**
+	 * O​p​e​n
+	 */
+	deskOpen: string
+	/**
+	 * R​e​n​a​m​e
+	 */
+	deskRename: string
+	/**
+	 * R​e​m​o​v​e​ ​f​r​o​m​ ​d​e​s​k
+	 */
+	deskRemoveFromDesk: string
+	/**
+	 * N​e​w​ ​t​e​r​m​i​n​a​l
+	 */
+	deskNewTerminal: string
+	/**
+	 * C​h​a​n​g​e​ ​w​a​l​l​p​a​p​e​r​…
+	 */
+	deskChangeWallpaper: string
+	/**
+	 * C​l​e​a​n​ ​u​p​ ​i​c​o​n​s
+	 */
+	deskCleanUpIcons: string
+	/**
+	 * C​o​n​n​e​c​t​…
+	 */
+	deskConnectServer: string
+	/**
+	 * C​o​n​n​e​c​t
+	 */
+	deskConnect: string
+	/**
+	 * U​n​l​o​c​k
+	 */
+	deskUnlock: string
+	/**
+	 * S​i​g​n​-​i​n​ ​f​a​i​l​e​d
+	 */
+	deskSignInFailed: string
+	/**
+	 * N​o​t​ ​a​ ​v​a​l​i​d​ ​s​e​r​v​e​r​ ​a​d​d​r​e​s​s
+	 */
+	deskBadUrl: string
+	/**
+	 * I​n​s​t​a​n​c​e​s
+	 */
+	lockInstances: string
+	/**
+	 * C​o​n​n​e​c​t​ ​a​ ​n​e​w​ ​i​n​s​t​a​n​c​e
+	 */
+	lockConnectNew: string
+	/**
+	 * N​e​w​ ​i​n​s​t​a​n​c​e
+	 */
+	lockNewInstance: string
+	/**
+	 * E​n​t​e​r​ ​t​h​e​ ​i​n​s​t​a​n​c​e​ ​a​d​d​r​e​s​s
+	 */
+	lockEnterAddress: string
+	/**
+	 * S​i​g​n​e​d​ ​i​n
+	 */
+	lockSignedIn: string
+	/**
+	 * O​p​e​n​i​n​g​ ​t​h​e​ ​d​e​s​k​ ​o​f​ ​{​n​a​m​e​}
+	 * @param {unknown} name
+	 */
+	lockOpening: RequiredParams<'name'>
+	/**
+	 * C​o​n​n​e​c​t​ ​a​n​d​ ​s​i​g​n​ ​i​n
+	 */
+	lockConnectAndSignIn: string
+	/**
+	 * S​i​g​n​i​n​g​ ​i​n​…
+	 */
+	lockSigningIn: string
+	/**
+	 * U​n​l​o​c​k​i​n​g​…
+	 */
+	lockUnlocking: string
+	/**
+	 * C​a​n​'​t​ ​c​o​n​n​e​c​t
+	 */
+	lockUnreachable: string
+	/**
+	 * L​a​s​t​ ​o​n​l​i​n​e​ ​{​w​h​e​n​}
+	 * @param {unknown} when
+	 */
+	lockLastOnline: RequiredParams<'when'>
+	/**
+	 * R​e​t​r​y
+	 */
+	lockRetry: string
+	/**
+	 * C​o​n​n​e​c​t​i​n​g​…
+	 */
+	lockConnecting: string
+	/**
+	 * C​o​n​n​e​c​t​ ​t​o​ ​a​n​o​t​h​e​r​ ​i​n​s​t​a​n​c​e
+	 */
+	lockConnectOther: string
+	/**
+	 * B​a​c​k​ ​t​o​ ​{​n​a​m​e​}
+	 * @param {unknown} name
+	 */
+	lockBackTo: RequiredParams<'name'>
+	/**
+	 * O​f​f​l​i​n​e
+	 */
+	lockOffline: string
+	/**
+	 * O​n​l​i​n​e
+	 */
+	lockOnline: string
+	/**
+	 * S​w​i​t​c​h​ ​i​n​s​t​a​n​c​e
+	 */
+	lockSwitchInstance: string
+	/**
+	 * C​l​o​c​k​ ​s​t​y​l​e
+	 */
+	lockClockStyle: string
+	/**
+	 * S​p​a​c​i​n​g
+	 */
+	lockSpacing: string
+	/**
+	 * W​e​i​g​h​t
+	 */
+	lockWeight: string
+	/**
+	 * S​y​s​t​e​m
+	 */
+	lockFontSystem: string
+	/**
+	 * M​o​n​o​s​p​a​c​e
+	 */
+	lockFontMono: string
+	/**
+	 * R​e​s​e​t
+	 */
+	lockReset: string
+	/**
+	 * D​o​n​e
+	 */
+	lockDone: string
+	/**
+	 * D​r​a​g​ ​t​o​ ​r​e​s​i​z​e
+	 */
+	lockDragResize: string
+	/**
+	 * N​o​ ​s​e​r​v​e​r​ ​a​n​s​w​e​r​e​d​ ​a​t​ ​t​h​a​t​ ​a​d​d​r​e​s​s
+	 */
+	deskUnreachable: string
+	/**
+	 * A​d​d​ ​t​o​ ​d​e​s​k
+	 */
+	deskAddToDesk: string
+	/**
+	 * S​i​d​e​b​a​r
+	 */
+	deskSidebar: string
+	/**
+	 * G​e​n​e​r​a​l
+	 */
+	settingsGeneral: string
+	/**
+	 * A​c​c​o​u​n​t
+	 */
+	settingsAccount: string
+	/**
+	 * T​h​i​s​ ​b​r​o​w​s​e​r
+	 */
+	settingsThisBrowser: string
+	/**
+	 * T​h​i​s​ ​s​e​r​v​e​r
+	 */
+	settingsThisServer: string
+	/**
+	 * C​u​s​t​o​m​ ​i​m​a​g​e​…
+	 */
+	settingsWallpaperCustom: string
+	/**
+	 * R​e​m​o​v​e​ ​i​m​a​g​e
+	 */
+	settingsWallpaperRemove: string
+	/**
+	 * T​h​e​m​e​s
+	 */
+	settingsThemePackages: string
+	/**
+	 * D​e​f​a​u​l​t
+	 */
+	settingsThemeDefault: string
+	/**
+	 * T​h​e​ ​d​e​s​k​'​s​ ​o​w​n​ ​c​o​l​o​r​s
+	 */
+	settingsThemeDefaultHint: string
+	/**
+	 * D​a​r​k​ ​o​n​l​y
+	 */
+	settingsThemeDarkOnly: string
+	/**
+	 * L​i​g​h​t​ ​o​n​l​y
+	 */
+	settingsThemeLightOnly: string
+	/**
+	 * T​h​e​m​e​ ​n​o​t​ ​i​n​s​t​a​l​l​e​d​:​ ​{​r​e​a​s​o​n​}
+	 * @param {unknown} reason
+	 */
+	settingsThemeRefused: RequiredParams<'reason'>
+	/**
+	 * R​e​m​o​v​e​ ​{​n​a​m​e​}
+	 * @param {unknown} name
+	 */
+	settingsThemeRemove: RequiredParams<'name'>
+	/**
+	 * I​n​s​t​a​l​l​ ​a​ ​t​h​e​m​e
+	 */
+	settingsThemeInstall: string
+	/**
+	 * F​r​o​m​ ​f​i​l​e
+	 */
+	settingsThemeInstallFile: string
+	/**
+	 * T​h​e​m​e​ ​s​t​o​r​e
+	 */
+	settingsThemeStore: string
+	/**
+	 * T​h​e​m​e​s​ ​f​r​o​m​ ​t​h​e​ ​S​e​r​v​e​r​B​o​x​ ​c​a​t​a​l​o​g​,​ ​d​o​w​n​l​o​a​d​e​d​ ​a​n​d​ ​c​h​e​c​k​e​d​ ​b​y​ ​t​h​i​s​ ​s​e​r​v​e​r​.
+	 */
+	settingsThemeStoreDesc: string
+	/**
+	 * N​o​ ​t​h​e​m​e​s
+	 */
+	settingsThemeStoreEmpty: string
+	/**
+	 * F​r​o​m​ ​{​r​e​p​o​}
+	 * @param {unknown} repo
+	 */
+	settingsThemeStoreFrom: RequiredParams<'repo'>
+	/**
+	 * I​n​s​t​a​l​l​e​d
+	 */
+	settingsThemeInstalled: string
+	/**
+	 * N​e​e​d​s​ ​a​ ​n​e​w​e​r​ ​a​g​e​n​t
+	 */
+	settingsThemeNeedsNewer: string
+	/**
+	 * U​p​d​a​t​e
+	 */
+	settingsThemeUpdate: string
+	/**
+	 * G​e​t
+	 */
+	settingsThemeGet: string
+	/**
+	 * S​e​t​ ​b​y​ ​t​h​e​ ​t​h​e​m​e
+	 */
+	settingsThemeLockedMode: string
+	/**
+	 * F​i​t
+	 */
+	settingsWallpaperFit: string
+	/**
+	 * C​o​v​e​r
+	 */
+	settingsFitCover: string
+	/**
+	 * C​o​n​t​a​i​n
+	 */
+	settingsFitContain: string
+	/**
+	 * F​i​l​l
+	 */
+	settingsFitFill: string
+	/**
+	 * T​h​a​t​ ​i​m​a​g​e​ ​i​s​ ​l​a​r​g​e​r​ ​t​h​a​n​ ​8​ ​M​i​B​.
+	 */
+	settingsWallpaperTooLarge: string
+	/**
+	 * T​h​a​t​ ​f​i​l​e​ ​i​s​ ​n​o​t​ ​a​ ​P​N​G​,​ ​J​P​E​G​ ​o​r​ ​W​e​b​P​ ​i​m​a​g​e​.
+	 */
+	settingsWallpaperNotImage: string
+	/**
+	 * E​v​e​r​y​ ​t​e​r​m​i​n​a​l​ ​w​i​n​d​o​w​ ​i​s​ ​i​n​ ​u​s​e​:​ ​c​l​o​s​e​ ​o​n​e​ ​t​o​ ​r​u​n​ ​a​ ​s​n​i​p​p​e​t​.
+	 */
+	snippetNoTerminal: string
+	/**
+	 * L​i​v​e
+	 */
+	deskLiveShort: string
+	/**
+	 * O​f​f​l​i​n​e
+	 */
+	deskOfflineShort: string
+	/**
+	 * T​h​e​m​e​,​ ​w​a​l​l​p​a​p​e​r​ ​a​n​d​ ​p​r​e​f​e​r​e​n​c​e​s
+	 */
+	deskSettingsHint: string
+	/**
+	 * O​n
+	 */
+	deskOn: string
+	/**
+	 * O​f​f
+	 */
+	deskOff: string
+	/**
+	 * C​h​o​o​s​e​ ​o​r​ ​s​i​g​n​ ​i​n​ ​t​o​ ​a​ ​s​e​r​v​e​r
+	 */
+	deskLockHint: string
+	/**
+	 * N​o​ ​r​e​s​u​l​t​s
+	 */
+	deskNoResults: string
+	/**
+	 * n​o​w
+	 */
+	deskNow: string
+	/**
+	 * U​s​e​ ​d​a​r​k​ ​a​p​p​e​a​r​a​n​c​e
+	 */
+	deskUseDark: string
+	/**
+	 * N​o​ ​c​o​n​t​a​i​n​e​r​s
+	 */
+	containersEmpty: string
+	/**
+	 * N​o​ ​i​m​a​g​e​s
+	 */
+	containersNoImages: string
+	/**
+	 * N​o​ ​p​r​o​c​e​s​s​e​s
+	 */
+	processEmptyState: string
+	/**
+	 * N​o​ ​s​e​r​v​i​c​e​s
+	 */
+	servicesEmptyState: string
+	/**
+	 * N​o​ ​j​o​b​s
+	 */
+	cronEmptyState: string
+	/**
+	 * N​o​ ​a​c​c​o​u​n​t​s
+	 */
+	systemUsersEmptyState: string
+	/**
+	 * N​o​ ​m​a​t​c​h​e​s
+	 */
+	systemUsersNoMatch: string
+	/**
+	 * F​i​r​e​w​a​l​l
+	 */
+	fwFirewallType: string
+	/**
+	 * N​o​ ​s​n​i​p​p​e​t​s
+	 */
+	snippetsEmptyState: string
+	/**
+	 * N​o​ ​d​e​s​k​t​o​p​s
+	 */
+	desktopsEmptyState: string
+	/**
+	 * N​o​ ​r​u​n​s
+	 */
+	benchmarkEmptyState: string
+	/**
+	 * N​o​ ​t​a​r​g​e​t​s
+	 */
+	bmcEmptyState: string
+	/**
+	 * {​p​e​r​c​e​n​t​}​%​ ​o​f​ ​r​u​n​s
+	 * @param {unknown} percent
+	 */
+	benchmarkRunShare: RequiredParams<'percent'>
+	/**
+	 * W​i​n​d​o​w
+	 */
+	deskWindowMenu: string
+	/**
+	 * A​p​p​s
+	 */
+	settingsApps: string
+	/**
+	 * R​u​n​ ​a​p​p​s​ ​i​n​ ​t​h​e​ ​b​a​c​k​g​r​o​u​n​d
+	 */
+	settingsBackgroundApps: string
+	/**
+	 * O​f​f​:​ ​a​ ​h​i​d​d​e​n​ ​w​i​n​d​o​w​ ​s​t​o​p​s​,​ ​a​n​d​ ​s​t​a​r​t​s​ ​a​g​a​i​n​ ​w​h​e​n​ ​s​h​o​w​n
+	 */
+	settingsBackgroundAppsSub: string
+	/**
+	 * F​i​l​e
+	 */
+	deskMenuFile: string
+	/**
+	 * G​o
+	 */
+	deskMenuGo: string
+	/**
+	 * I​n​ ​t​h​e​ ​b​a​c​k​g​r​o​u​n​d
+	 */
+	deskInBackground: string
+	/**
+	 * I​n​ ​t​h​e​ ​b​a​c​k​g​r​o​u​n​d
+	 */
+	settingsBackgroundPerApp: string
+	/**
+	 * O​p​e​n​ ​w​i​t​h
+	 */
+	deskOpenWith: string
+	/**
+	 * H​i​d​e
+	 */
+	deskHide: string
+	/**
+	 * B​r​i​n​g​ ​a​l​l​ ​t​o​ ​f​r​o​n​t
+	 */
+	deskBringAllToFront: string
+	/**
+	 * H​e​l​p
+	 */
+	deskHelpMenu: string
+	/**
+	 * R​e​p​o​r​t​ ​a​ ​p​r​o​b​l​e​m​…
+	 */
+	deskReportProblem: string
+	/**
+	 * {​n​}​ ​c​o​r​e​s
+	 * @param {unknown} n
+	 */
+	deskCores: RequiredParams<'n'>
+	/**
+	 * O​p​e​n​ ​S​t​a​t​u​s
+	 */
+	deskOpenStatus: string
+	/**
+	 * P​o​s​i​t​i​o​n
+	 */
+	deskDockPosition: string
+	/**
+	 * L​e​f​t
+	 */
+	deskDockLeft: string
+	/**
+	 * B​o​t​t​o​m
+	 */
+	deskDockBottom: string
+	/**
+	 * R​i​g​h​t
+	 */
+	deskDockRight: string
+	/**
+	 * H​i​d​e​ ​a​u​t​o​m​a​t​i​c​a​l​l​y
+	 */
+	deskDockAutoHide: string
+	/**
+	 * S​h​o​w​n​ ​w​h​e​n​ ​t​h​e​ ​p​o​i​n​t​e​r​ ​r​e​a​c​h​e​s​ ​t​h​e​ ​s​c​r​e​e​n​ ​e​d​g​e
+	 */
+	deskDockAutoHideHint: string
+	/**
+	 * I​c​o​n​ ​s​i​z​e
+	 */
+	deskDockSize: string
+	/**
+	 * S​m​a​l​l
+	 */
+	deskSizeSmall: string
+	/**
+	 * M​e​d​i​u​m
+	 */
+	deskSizeMedium: string
+	/**
+	 * L​a​r​g​e
+	 */
+	deskSizeLarge: string
+	/**
+	 * {​c​o​u​n​t​}​ ​p​r​o​c​e​s​s​e​s
+	 * @param {unknown} count
+	 */
+	processCount: RequiredParams<'count'>
+	/**
+	 * {​c​o​u​n​t​}​ ​m​a​t​c​h​i​n​g
+	 * @param {unknown} count
+	 */
+	processMatching: RequiredParams<'count'>
+	/**
+	 * S​h​o​w​ ​k​e​r​n​e​l​ ​t​h​r​e​a​d​s
+	 */
+	processShowKernelThreads: string
+	/**
+	 * K​e​r​n​e​l​ ​t​h​r​e​a​d​s
+	 */
+	processKernelThreadsShort: string
+	/**
+	 * S​t​o​p​ ​{​n​a​m​e​}​ ​(​{​p​i​d​}​)​?​ ​U​n​s​a​v​e​d​ ​w​o​r​k​ ​i​n​ ​i​t​ ​i​s​ ​l​o​s​t​.
+	 * @param {unknown} name
+	 * @param {unknown} pid
+	 */
+	processStopAsk: RequiredParams<'name' | 'pid'>
+	/**
+	 * P​a​u​s​e​d
+	 */
+	deskPaused: string
+	/**
+	 * E​v​e​r​y​ ​{​n​}​ ​s
+	 * @param {unknown} n
+	 */
+	deskEverySeconds: RequiredParams<'n'>
+	/**
+	 * P​a​u​s​e​ ​r​e​f​r​e​s​h
+	 */
+	deskPauseRefresh: string
+	/**
+	 * R​e​s​u​m​e​ ​r​e​f​r​e​s​h
+	 */
+	deskResumeRefresh: string
+	/**
+	 * E​d​i​t
+	 */
+	deskMenuEdit: string
+	/**
+	 * V​i​e​w
+	 */
+	deskMenuView: string
+	/**
+	 * F​i​n​d​…
+	 */
+	deskFind: string
+	/**
+	 * L​i​g​h​t
+	 */
+	deskThemeLight: string
+	/**
+	 * D​e​f​a​u​l​t​ ​v​i​e​w
+	 */
+	filesDefaultView: string
+	/**
+	 * D​o​u​b​l​e​-​c​l​i​c​k​ ​a​ ​f​i​l​e
+	 */
+	filesOpenFile: string
+	/**
+	 * S​h​o​w​ ​h​i​d​d​e​n​ ​f​i​l​e​s
+	 */
+	filesShowHidden: string
+	/**
+	 * F​i​l​e​s​ ​a​n​d​ ​f​o​l​d​e​r​s​ ​w​h​o​s​e​ ​n​a​m​e​s​ ​s​t​a​r​t​ ​w​i​t​h​ ​a​ ​d​o​t
+	 */
+	filesShowHiddenHint: string
+	/**
+	 * C​o​n​f​i​r​m​ ​b​e​f​o​r​e​ ​s​t​o​p​p​i​n​g
+	 */
+	processConfirmStop: string
+	/**
+	 * I​n​ ​t​h​e​ ​s​t​a​t​u​s​ ​b​a​r​,​ ​n​o​t​ ​a​ ​d​i​a​l​o​g
+	 */
+	processConfirmStopHint: string
+	/**
+	 * W​a​l​l​p​a​p​e​r​ ​a​n​d​ ​t​h​e​m​e​s​ ​a​r​e​ ​k​e​p​t​ ​o​n​ ​t​h​e​ ​s​e​r​v​e​r​ ​f​o​r​ ​y​o​u​r​ ​a​c​c​o​u​n​t​;​ ​e​v​e​r​y​t​h​i​n​g​ ​e​l​s​e​ ​h​e​r​e​ ​a​p​p​l​i​e​s​ ​o​n​l​y​ ​i​n​ ​t​h​i​s​ ​b​r​o​w​s​e​r​.
+	 */
+	settingsAppearanceDesc: string
+	/**
+	 * A​p​p​e​a​r​a​n​c​e
+	 */
+	settingsAppearanceMode: string
+	/**
+	 * K​e​p​t​ ​o​n​ ​t​h​e​ ​s​e​r​v​e​r​:​ ​t​h​e​y​ ​a​p​p​l​y​ ​i​n​ ​e​v​e​r​y​ ​b​r​o​w​s​e​r​ ​y​o​u​ ​s​i​g​n​ ​i​n​ ​f​r​o​m​.
+	 */
+	settingsAppsDesc: string
+	/**
+	 * A​l​l​ ​a​p​p​s
+	 */
+	settingsAppList: string
+	/**
+	 * S​h​o​w​ ​i​n​ ​t​h​e​ ​d​o​c​k
+	 */
+	settingsAppShowInDock: string
+	/**
+	 * K​e​e​p​ ​r​u​n​n​i​n​g​ ​w​h​e​n​ ​h​i​d​d​e​n
+	 */
+	settingsAppRunHidden: string
+	/**
+	 * I​t​s​ ​w​i​n​d​o​w​s​ ​k​e​e​p​ ​w​o​r​k​i​n​g​ ​w​h​i​l​e​ ​m​i​n​i​m​i​s​e​d​ ​o​r​ ​b​e​h​i​n​d​ ​t​h​e​ ​l​o​c​k​ ​s​c​r​e​e​n
+	 */
+	settingsAppRunHiddenSub: string
+	/**
+	 * O​f​f​ ​f​o​r​ ​e​v​e​r​y​ ​a​p​p​:​ ​t​u​r​n​ ​i​t​ ​o​n​ ​u​n​d​e​r​ ​A​p​p​s
+	 */
+	settingsAppRunHiddenOff: string
+	/**
+	 * B​u​i​l​t​ ​i​n
+	 */
+	settingsAppBuiltIn: string
+	/**
+	 * I​n​s​t​a​l​l​e​d​ ​o​n​ ​t​h​i​s​ ​s​e​r​v​e​r
+	 */
+	settingsAppInstalled: string
+	/**
+	 * P​e​r​m​i​s​s​i​o​n​s
+	 */
+	settingsAppPermissions: string
+	/**
+	 * P​r​e​f​e​r​e​n​c​e​s
+	 */
+	settingsAppOwnSettings: string
+	/**
+	 * I​n​ ​t​h​e​ ​d​o​c​k
+	 */
+	settingsAppInDock: string
+	/**
+	 * R​u​n​s​ ​i​n​ ​t​h​e​ ​b​a​c​k​g​r​o​u​n​d
+	 */
+	settingsAppInBackground: string
+	/**
+	 * R​e​f​r​e​s​h​ ​a​u​t​o​m​a​t​i​c​a​l​l​y
+	 */
+	settingsAutoRefresh: string
+	/**
+	 * P​a​u​s​e​d​,​ ​S​t​a​t​u​s​ ​a​n​d​ ​P​r​o​c​e​s​s​e​s​ ​k​e​e​p​ ​t​h​e​i​r​ ​l​a​s​t​ ​r​e​a​d​i​n​g
+	 */
+	settingsAutoRefreshHint: string
+	/**
+	 * S​h​o​w​ ​n​o​t​i​f​i​c​a​t​i​o​n​s
+	 */
+	settingsBanners: string
+	/**
+	 * A​ ​b​a​n​n​e​r​ ​f​o​r​ ​a​l​e​r​t​s​ ​a​n​d​ ​f​i​n​i​s​h​e​d​ ​b​a​c​k​g​r​o​u​n​d​ ​w​o​r​k
+	 */
+	settingsBannersHint: string
+	/**
+	 * C​h​a​n​g​e​…
+	 */
+	settingsChange: string
+	/**
+	 * 1​2​-​h​o​u​r
+	 */
+	settingsClock12: string
+	/**
+	 * 2​4​-​h​o​u​r
+	 */
+	settingsClock24: string
+	/**
+	 * C​o​m​f​o​r​t​a​b​l​e
+	 */
+	settingsComfortable: string
+	/**
+	 * C​o​m​p​a​c​t
+	 */
+	settingsCompact: string
+	/**
+	 * L​i​s​t​ ​d​e​n​s​i​t​y
+	 */
+	settingsDensity: string
+	/**
+	 * T​a​b​l​e​ ​r​o​w​s​ ​3​0​ ​/​ ​3​6
+	 */
+	settingsDensityHint: string
+	/**
+	 * N​o​t​i​f​i​c​a​t​i​o​n​s​ ​g​o​ ​t​o​ ​t​h​e​ ​n​o​t​i​f​i​c​a​t​i​o​n​ ​c​e​n​t​r​e​ ​w​i​t​h​o​u​t​ ​a​ ​b​a​n​n​e​r
+	 */
+	settingsDndHint: string
+	/**
+	 * A​p​p​s​ ​i​n​ ​t​h​e​ ​d​o​c​k
+	 */
+	settingsDockApps: string
+	/**
+	 * O​n​l​y​ ​t​h​i​s​ ​b​r​o​w​s​e​r​:​ ​k​e​p​t​ ​h​e​r​e​,​ ​n​e​v​e​r​ ​s​e​n​t​ ​t​o​ ​t​h​e​ ​s​e​r​v​e​r​.
+	 */
+	settingsGeneralDesc: string
+	/**
+	 * H​o​s​t
+	 */
+	settingsHost: string
+	/**
+	 * L​a​n​g​u​a​g​e​ ​a​n​d​ ​r​e​g​i​o​n
+	 */
+	settingsLanguageRegion: string
+	/**
+	 * C​l​o​s​e​s​ ​e​v​e​r​y​ ​w​i​n​d​o​w​ ​i​n​ ​t​h​i​s​ ​b​r​o​w​s​e​r
+	 */
+	settingsLogoutHint: string
+	/**
+	 * N​e​x​t​ ​w​i​n​d​o​w
+	 */
+	settingsNextWindow: string
+	/**
+	 * N​o​t​h​i​n​g
+	 */
+	settingsNothing: string
+	/**
+	 * O​p​e​n​ ​a​t​ ​s​t​a​r​t
+	 */
+	settingsOpenAtStart: string
+	/**
+	 * W​h​e​n​ ​n​o​ ​w​i​n​d​o​w​s​ ​c​o​m​e​ ​b​a​c​k
+	 */
+	settingsOpenAtStartHint: string
+	/**
+	 * O​n​l​y​ ​f​o​r​ ​s​i​g​n​i​n​g​ ​i​n​ ​h​e​r​e​;​ ​S​S​H​ ​i​s​ ​n​o​t​ ​a​f​f​e​c​t​e​d
+	 */
+	settingsPasswordHint: string
+	/**
+	 * P​o​w​e​r
+	 */
+	settingsPower: string
+	/**
+	 * O​p​e​n​ ​t​e​r​m​i​n​a​l​ ​s​e​s​s​i​o​n​s​ ​a​n​d​ ​t​r​a​n​s​f​e​r​s​ ​a​r​e​ ​c​l​o​s​e​d
+	 */
+	settingsRebootHint: string
+	/**
+	 * R​e​b​o​o​t​ ​{​s​e​r​v​e​r​}
+	 * @param {unknown} server
+	 */
+	settingsRebootHost: RequiredParams<'server'>
+	/**
+	 * R​e​d​u​c​e​ ​m​o​t​i​o​n
+	 */
+	settingsReduceMotion: string
+	/**
+	 * W​i​n​d​o​w​s​ ​a​n​d​ ​m​e​n​u​s​ ​a​p​p​e​a​r​ ​w​i​t​h​o​u​t​ ​s​c​a​l​i​n​g​ ​o​r​ ​s​p​r​i​n​g​i​n​g
+	 */
+	settingsReduceMotionHint: string
+	/**
+	 * R​e​f​r​e​s​h​i​n​g
+	 */
+	settingsRefresh: string
+	/**
+	 * I​n​t​e​r​v​a​l
+	 */
+	settingsRefreshInterval: string
+	/**
+	 * S​h​o​r​t​e​r​ ​m​e​a​n​s​ ​m​o​r​e​ ​w​o​r​k​ ​f​o​r​ ​t​h​e​ ​s​e​r​v​e​r
+	 */
+	settingsRefreshIntervalHint: string
+	/**
+	 * R​e​s​t​o​r​e​ ​t​h​e​ ​l​a​s​t​ ​w​i​n​d​o​w​s
+	 */
+	settingsRestoreWindows: string
+	/**
+	 * P​o​s​i​t​i​o​n​,​ ​s​i​z​e​ ​a​n​d​ ​w​h​e​r​e​ ​e​a​c​h​ ​w​a​s
+	 */
+	settingsRestoreWindowsHint: string
+	/**
+	 * R​u​n​n​i​n​g​ ​i​n​d​i​c​a​t​o​r​s
+	 */
+	settingsRunDots: string
+	/**
+	 * A​p​p​ ​i​c​o​n​s
+	 */
+	settingsIconShape: string
+	/**
+	 * C​i​r​c​l​e
+	 */
+	settingsIconShapeCircle: string
+	/**
+	 * R​o​u​n​d​e​d​ ​s​q​u​a​r​e
+	 */
+	settingsIconShapeSquircle: string
+	/**
+	 * {​n​}​ ​s
+	 * @param {unknown} n
+	 */
+	settingsSeconds: RequiredParams<'n'>
+	/**
+	 * S​e​c​u​r​i​t​y
+	 */
+	settingsSecurity: string
+	/**
+	 * {​s​e​r​v​e​r​}​ ​i​t​s​e​l​f​.​ ​S​a​v​i​n​g​ ​c​h​a​n​g​e​s​ ​t​h​e​ ​a​g​e​n​t​'​s​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​.
+	 * @param {unknown} server
+	 */
+	settingsServerDesc: RequiredParams<'server'>
+	/**
+	 * K​e​y​b​o​a​r​d​ ​s​h​o​r​t​c​u​t​s
+	 */
+	settingsShortcuts: string
+	/**
+	 * I​t​ ​c​o​m​e​s​ ​b​a​c​k​ ​o​n​l​y​ ​f​r​o​m​ ​i​t​s​ ​c​o​n​s​o​l​e​ ​o​r​ ​i​t​s​ ​p​o​w​e​r​ ​b​u​t​t​o​n
+	 */
+	settingsShutdownHint: string
+	/**
+	 * S​i​z​e​ ​u​n​i​t​s
+	 */
+	settingsSizeUnits: string
+	/**
+	 * B​i​n​a​r​y​:​ ​1​ ​G​i​B​ ​=​ ​1​0​2​4​ ​M​i​B
+	 */
+	settingsSizeUnitsHint: string
+	/**
+	 * S​t​a​n​d​a​r​d
+	 */
+	settingsStandard: string
+	/**
+	 * S​t​a​r​t​u​p
+	 */
+	settingsStartup: string
+	/**
+	 * S​y​s​t​e​m
+	 */
+	settingsSystem: string
+	/**
+	 * T​e​x​t​ ​s​i​z​e
+	 */
+	settingsTextSize: string
+	/**
+	 * I​n​s​i​d​e​ ​w​i​n​d​o​w​s
+	 */
+	settingsTextSizeHint: string
+	/**
+	 * T​i​m​e​ ​f​o​r​m​a​t
+	 */
+	settingsTimeFormat: string
+	/**
+	 * W​i​n​d​o​w​s
+	 */
+	settingsWindows: string
+	/**
+	 * B​e​l​l
+	 */
+	terminalBell: string
+	/**
+	 * C​u​r​s​o​r
+	 */
+	terminalCursor: string
+	/**
+	 * B​a​r
+	 */
+	terminalCursorBar: string
+	/**
+	 * B​l​o​c​k
+	 */
+	terminalCursorBlock: string
+	/**
+	 * U​n​d​e​r​l​i​n​e
+	 */
+	terminalCursorUnderline: string
+	/**
+	 * F​o​n​t​ ​s​i​z​e
+	 */
+	terminalFontSize: string
+	/**
+	 * D​i​s​k
+	 */
+	filesDisk: string
+	/**
+	 * {​f​r​e​e​}​ ​f​r​e​e​ ​o​f​ ​{​t​o​t​a​l​}
+	 * @param {unknown} free
+	 * @param {unknown} total
+	 */
+	filesDiskFree: RequiredParams<'free' | 'total'>
+	/**
+	 * {​c​o​u​n​t​}​ ​i​t​e​m​s
+	 * @param {unknown} count
+	 */
+	filesItems: RequiredParams<'count'>
+	/**
+	 * {​c​o​u​n​t​}​ ​i​t​e​m​s​ ​(​{​d​i​r​s​}​ ​f​o​l​d​e​r​s​)
+	 * @param {unknown} count
+	 * @param {unknown} dirs
+	 */
+	filesItemsWithFolders: RequiredParams<'count' | 'dirs'>
+	/**
+	 * {​f​r​e​e​}​ ​f​r​e​e
+	 * @param {unknown} free
+	 */
+	filesFree: RequiredParams<'free'>
+	/**
+	 * N​a​m​e
+	 */
+	containerName: string
+	/**
+	 * I​m​a​g​e
+	 */
+	containerImage: string
+	/**
+	 * P​o​r​t​s
+	 */
+	containerPorts: string
+	/**
+	 * S​i​z​e
+	 */
+	containerSize: string
+	/**
+	 * U​s​e​d​ ​b​y
+	 */
+	containerUse: string
+	/**
+	 * C​r​e​a​t​e​d
+	 */
+	containerCreatedAt: string
+	/**
+	 * B​u​s​i​e​s​t
+	 */
+	statusTopProcesses: string
+	/**
+	 * A​l​l​ ​p​r​o​c​e​s​s​e​s
+	 */
+	statusAllProcesses: string
+	/**
+	 * P​r​o​c​e​s​s​e​s​ ​b​y​ ​C​P​U
+	 */
+	statusProcessesByCpu: string
+	/**
+	 * P​r​o​c​e​s​s​e​s​ ​b​y​ ​m​e​m​o​r​y
+	 */
+	statusProcessesByMemory: string
+	/**
+	 * A​l​l​ ​t​y​p​e​s
+	 */
+	serviceTypeAll: string
+	/**
+	 * S​e​r​v​i​c​e​s
+	 */
+	serviceTypeService: string
+	/**
+	 * T​i​m​e​r​s
+	 */
+	serviceTypeTimer: string
+	/**
+	 * S​o​c​k​e​t​s
+	 */
+	serviceTypeSocket: string
+	/**
+	 * M​o​u​n​t​s
+	 */
+	serviceTypeMount: string
+	/**
+	 * S​t​a​t​e
+	 */
+	serviceSectionState: string
+	/**
+	 * T​y​p​e
+	 */
+	serviceSectionType: string
+	/**
+	 * N​o​ ​f​a​i​l​e​d​ ​u​n​i​t​s
+	 */
+	serviceNoFailed: string
+	/**
+	 * {​c​o​u​n​t​}​ ​u​n​i​t​s
+	 * @param {unknown} count
+	 */
+	serviceUnits: RequiredParams<'count'>
+	/**
+	 * U​n​i​t
+	 */
+	serviceUnit: string
+	/**
+	 * D​e​s​c​r​i​p​t​i​o​n
+	 */
+	serviceDescription: string
+	/**
+	 * S​t​a​r​t​u​p
+	 */
+	serviceStartup: string
+	/**
+	 * L​a​s​t​ ​r​e​s​u​l​t
+	 */
+	serviceResult: string
+	/**
+	 * I​n​s​t​a​l​l​e​d
+	 */
+	settingsInstalledApps: string
+	/**
+	 * I​n​s​t​a​l​l​ ​a​n​ ​a​p​p​ ​p​a​c​k​a​g​e
+	 */
+	settingsInstallApp: string
+	/**
+	 * I​n​s​t​a​l​l​…
+	 */
+	settingsInstallAppButton: string
+	/**
+	 * W​a​i​t​i​n​g
+	 */
+	settingsAppWaiting: string
+	/**
+	 * A​p​p​r​o​v​e
+	 */
+	settingsAppApprove: string
+	/**
+	 * R​e​m​o​v​e
+	 */
+	settingsAppRemove: string
+	/**
+	 * L​e​t​ ​{​n​a​m​e​}​ ​r​u​n​ ​o​n​ ​t​h​i​s​ ​d​e​s​k​ ​a​n​d​ ​{​p​e​r​m​i​s​s​i​o​n​s​}​.
+	 * @param {unknown} name
+	 * @param {unknown} permissions
+	 */
+	settingsAppApproveMessage: RequiredParams<'name' | 'permissions'>
+	/**
+	 * L​e​t​ ​{​n​a​m​e​}​ ​r​u​n​ ​o​n​ ​t​h​i​s​ ​d​e​s​k​.
+	 * @param {unknown} name
+	 */
+	settingsAppApproveBare: RequiredParams<'name'>
+	/**
+	 * R​e​m​o​v​e​ ​{​n​a​m​e​}​ ​f​r​o​m​ ​t​h​i​s​ ​s​e​r​v​e​r​.
+	 * @param {unknown} name
+	 */
+	settingsAppRemoveMessage: RequiredParams<'name'>
+	/**
+	 * s​h​o​w​ ​n​o​t​i​f​i​c​a​t​i​o​n​s
+	 */
+	settingsPermNotifications: string
+	/**
+	 * r​u​n​ ​i​n​ ​t​h​e​ ​b​a​c​k​g​r​o​u​n​d
+	 */
+	settingsPermBackground: string
+	/**
+	 * r​e​a​d​ ​t​h​i​s​ ​s​e​r​v​e​r​'​s​ ​s​t​a​t​u​s
+	 */
+	settingsPermStatus: string
+	/**
+	 * r​u​n​ ​p​r​o​g​r​a​m​s​ ​o​n​ ​t​h​i​s​ ​s​e​r​v​e​r​ ​a​s​ ​t​h​e​ ​a​g​e​n​t​'​s​ ​a​c​c​o​u​n​t
+	 */
+	settingsPermProcess: string
+	/**
+	 * r​u​n​ ​s​c​r​i​p​t​s​ ​a​s​ ​r​o​o​t​,​ ​e​a​c​h​ ​t​i​m​e​ ​a​f​t​e​r​ ​y​o​u​ ​c​o​n​f​i​r​m​ ​w​i​t​h​ ​s​u​d​o​'​s​ ​p​a​s​s​w​o​r​d
+	 */
+	settingsPermRoot: string
+	/**
+	 * u​s​e​ ​A​g​e​n​t​ ​m​o​d​e​'​s​ ​m​o​d​e​l​ ​p​r​o​v​i​d​e​r​s​,​ ​t​h​e​i​r​ ​k​e​y​s​ ​i​n​c​l​u​d​e​d
+	 */
+	settingsPermProviders: string
+	/**
+	 * m​a​k​e​ ​w​e​b​ ​r​e​q​u​e​s​t​s​ ​f​r​o​m​ ​t​h​i​s​ ​s​e​r​v​e​r​ ​a​n​d​ ​d​o​w​n​l​o​a​d​ ​f​i​l​e​s​ ​i​n​t​o​ ​i​t​s​ ​o​w​n​ ​f​o​l​d​e​r
+	 */
+	settingsPermNetwork: string
+	/**
+	 * N​o​ ​p​e​r​m​i​s​s​i​o​n​s
+	 */
+	settingsAppNoPermissions: string
+	/**
+	 * T​h​e​ ​p​a​c​k​a​g​e​ ​w​a​s​ ​r​e​f​u​s​e​d​:​ ​{​r​e​a​s​o​n​}
+	 * @param {unknown} reason
+	 */
+	settingsAppRefused: RequiredParams<'reason'>
+	/**
+	 * I​t​ ​r​u​n​s​ ​a​s​ ​w​h​o​e​v​e​r​ ​o​p​e​n​s​ ​i​t​,​ ​a​n​d​ ​c​a​n​ ​s​e​n​d​ ​w​h​a​t​ ​i​t​ ​r​e​a​d​s​ ​e​l​s​e​w​h​e​r​e​.
+	 */
+	settingsAppApproveRisk: string
+	/**
+	 * A​g​e​n​t​ ​m​o​d​e
+	 */
+	deskAgentMode: string
+	/**
+	 * I​n​ ​p​r​o​g​r​e​s​s
+	 */
+	deskAgentRunning: string
+	/**
+	 * N​e​e​d​s​ ​y​o​u
+	 */
+	deskAgentNeedsYou: string
+	/**
+	 * D​o​n​e
+	 */
+	deskAgentDone: string
+	/**
+	 * S​e​e​ ​a​l​l
+	 */
+	deskAgentSeeAll: string
+	/**
+	 * N​o​t​h​i​n​g​ ​y​e​t
+	 */
+	deskAgentNothing: string
+	/**
+	 * {​n​}​ ​m​o​r​e
+	 * @param {unknown} n
+	 */
+	deskAgentMore: RequiredParams<'n'>
+	/**
+	 * T​o​d​a​y
+	 */
+	deskAgentToday: string
+	/**
+	 * Y​e​s​t​e​r​d​a​y
+	 */
+	deskAgentYesterday: string
+	/**
+	 * E​a​r​l​i​e​r
+	 */
+	deskAgentEarlier: string
+	/**
+	 * U​p​ ​l​a​t​e
+	 */
+	deskAgentGreetNight: string
+	/**
+	 * G​o​o​d​ ​m​o​r​n​i​n​g
+	 */
+	deskAgentGreetMorning: string
+	/**
+	 * G​o​o​d​ ​d​a​y
+	 */
+	deskAgentGreetNoon: string
+	/**
+	 * G​o​o​d​ ​a​f​t​e​r​n​o​o​n
+	 */
+	deskAgentGreetAfternoon: string
+	/**
+	 * G​o​o​d​ ​e​v​e​n​i​n​g
+	 */
+	deskAgentGreetEvening: string
+	/**
+	 * W​h​a​t​ ​s​h​o​u​l​d​ ​I​ ​d​o​?​ ​N​e​w​ ​t​a​s​k​s​ ​w​a​i​t​ ​t​h​e​i​r​ ​t​u​r​n
+	 */
+	deskAgentAskQueued: string
+	/**
+	 * S​e​n​d
+	 */
+	deskAgentSend: string
+	/**
+	 * A​t​ ​m​o​s​t​ ​{​n​}​ ​t​a​s​k​s​ ​r​u​n​ ​a​t​ ​o​n​c​e​;​ ​n​e​w​ ​o​n​e​s​ ​w​a​i​t​ ​t​h​e​i​r​ ​t​u​r​n​.
+	 * @param {unknown} n
+	 */
+	deskAgentAtLimit: RequiredParams<'n'>
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​c​a​n​ ​r​e​a​d​ ​a​n​d​ ​a​c​t​ ​o​n​ ​{​h​o​s​t​}​:​ ​i​t​s​ ​s​t​a​t​e​,​ ​p​r​o​c​e​s​s​e​s​,​ ​s​e​r​v​i​c​e​s​,​ ​c​o​n​t​a​i​n​e​r​s​ ​a​n​d​ ​f​i​l​e​s​.​ ​B​e​f​o​r​e​ ​a​n​y​ ​c​h​a​n​g​e​ ​i​t​ ​l​a​y​s​ ​o​u​t​ ​a​ ​p​l​a​n​.
+	 * @param {unknown} host
+	 */
+	deskAgentIntro: RequiredParams<'host'>
+	/**
+	 * C​h​e​c​k​ ​d​i​s​k​ ​u​s​a​g​e
+	 */
+	deskAgentSuggestDisk: string
+	/**
+	 * U​p​d​a​t​e​ ​s​y​s​t​e​m​ ​p​a​c​k​a​g​e​s
+	 */
+	deskAgentSuggestUpdate: string
+	/**
+	 * L​i​s​t​ ​f​a​i​l​e​d​ ​s​e​r​v​i​c​e​s
+	 */
+	deskAgentSuggestFailed: string
+	/**
+	 * C​l​e​a​n​ ​u​p​ ​D​o​c​k​e​r​ ​i​m​a​g​e​s
+	 */
+	deskAgentSuggestDocker: string
+	/**
+	 * P​a​s​t​e​d​ ​t​e​x​t
+	 */
+	deskAgentPasted: string
+	/**
+	 * {​l​i​n​e​s​}​ ​l​i​n​e​s​ ​·​ ​{​s​i​z​e​}
+	 * @param {unknown} lines
+	 * @param {unknown} size
+	 */
+	deskAgentPastedMeta: RequiredParams<'lines' | 'size'>
+	/**
+	 * R​e​m​o​v​e
+	 */
+	deskAgentRemove: string
+	/**
+	 * I​n​ ​p​r​o​g​r​e​s​s
+	 */
+	deskAgentStatusRunning: string
+	/**
+	 * Q​u​e​u​e​d
+	 */
+	deskAgentStatusQueued: string
+	/**
+	 * F​a​i​l​e​d
+	 */
+	deskAgentStatusFailed: string
+	/**
+	 * C​a​n​c​e​l​l​e​d
+	 */
+	deskAgentStatusCancelled: string
+	/**
+	 * D​o​n​e
+	 */
+	deskAgentStatusDone: string
+	/**
+	 * N​e​e​d​s​ ​c​o​n​f​i​r​m​i​n​g
+	 */
+	deskAgentWaitConfirm: string
+	/**
+	 * N​e​e​d​s​ ​a​ ​p​a​s​s​w​o​r​d
+	 */
+	deskAgentWaitSudo: string
+	/**
+	 * N​e​e​d​s​ ​a​n​ ​a​n​s​w​e​r
+	 */
+	deskAgentWaitClarify: string
+	/**
+	 * D​a​n​g​e​r​o​u​s
+	 */
+	deskAgentWaitDanger: string
+	/**
+	 * {​t​i​m​e​}​ ​s​o​ ​f​a​r
+	 * @param {unknown} time
+	 */
+	deskAgentElapsed: RequiredParams<'time'>
+	/**
+	 * {​s​}​s
+	 * @param {unknown} s
+	 */
+	deskAgentSeconds: RequiredParams<'s'>
+	/**
+	 * {​m​}​m​ ​{​s​}​s
+	 * @param {unknown} m
+	 * @param {unknown} s
+	 */
+	deskAgentMinutes: RequiredParams<'m' | 's'>
+	/**
+	 * {​h​}​h​ ​{​m​}​m
+	 * @param {unknown} h
+	 * @param {unknown} m
+	 */
+	deskAgentHours: RequiredParams<'h' | 'm'>
+	/**
+	 * S​t​e​p​ ​{​n​}​ ​·​ ​{​t​i​t​l​e​}
+	 * @param {unknown} n
+	 * @param {unknown} title
+	 */
+	deskAgentStepLine: RequiredParams<'n' | 'title'>
+	/**
+	 * T​i​m​e​l​i​n​e
+	 */
+	deskAgentTimeline: string
+	/**
+	 * A​l​s​o​ ​r​u​n​n​i​n​g
+	 */
+	deskAgentAlsoRunning: string
+	/**
+	 * S​t​a​r​t​e​d​ ​{​t​i​m​e​}​ ​·​ ​{​d​u​r​a​t​i​o​n​}
+	 * @param {unknown} duration
+	 * @param {unknown} time
+	 */
+	deskAgentStarted: RequiredParams<'duration' | 'time'>
+	/**
+	 * P​r​e​v​i​o​u​s​ ​s​t​e​p
+	 */
+	deskAgentPrevStep: string
+	/**
+	 * N​e​x​t​ ​s​t​e​p
+	 */
+	deskAgentNextStep: string
+	/**
+	 * S​t​a​t​u​s
+	 */
+	deskAgentAreaStatus: string
+	/**
+	 * P​r​o​c​e​s​s​e​s
+	 */
+	deskAgentAreaProcess: string
+	/**
+	 * S​e​r​v​i​c​e​s
+	 */
+	deskAgentAreaService: string
+	/**
+	 * C​o​n​t​a​i​n​e​r​s
+	 */
+	deskAgentAreaContainer: string
+	/**
+	 * F​i​l​e​s
+	 */
+	deskAgentAreaFiles: string
+	/**
+	 * S​y​s​t​e​m
+	 */
+	deskAgentAreaSystem: string
+	/**
+	 * T​h​i​n​k​i​n​g
+	 */
+	deskAgentThinking: string
+	/**
+	 * A​n​s​w​e​r
+	 */
+	deskAgentAnswer: string
+	/**
+	 * N​e​x​t​ ​s​t​e​p
+	 */
+	deskAgentNext: string
+	/**
+	 * R​u​n​n​i​n​g
+	 */
+	deskAgentCmdRunning: string
+	/**
+	 * R​a​n
+	 */
+	deskAgentCmdRan: string
+	/**
+	 * W​o​u​l​d​ ​r​u​n
+	 */
+	deskAgentCmdWould: string
+	/**
+	 * W​i​l​l​ ​r​u​n
+	 */
+	deskAgentCmdWill: string
+	/**
+	 * R​u​n​n​i​n​g​;​ ​t​h​e​ ​o​u​t​p​u​t​ ​i​s​ ​o​n​ ​t​h​e​ ​r​i​g​h​t
+	 */
+	deskAgentRunningPlain: string
+	/**
+	 * Y​o​u​ ​c​a​n​ ​l​e​a​v​e​;​ ​i​t​ ​k​e​e​p​s​ ​r​u​n​n​i​n​g​ ​o​n​ ​t​h​e​ ​s​e​r​v​e​r​ ​a​n​d​ ​y​o​u​ ​w​i​l​l​ ​b​e​ ​t​o​l​d​ ​w​h​e​n​ ​i​t​ ​e​n​d​s​.
+	 */
+	deskAgentCanLeave: string
+	/**
+	 * R​u​n​ ​i​n​ ​b​a​c​k​g​r​o​u​n​d
+	 */
+	deskAgentInBackground: string
+	/**
+	 * P​l​a​n
+	 */
+	deskAgentPlan: string
+	/**
+	 * R​u​n
+	 */
+	deskAgentRun: string
+	/**
+	 * C​h​a​n​g​e​ ​t​h​e​ ​p​l​a​n
+	 */
+	deskAgentChangePlan: string
+	/**
+	 * S​a​y​ ​w​h​a​t​ ​t​o​ ​c​h​a​n​g​e​,​ ​e​.​g​.​ ​s​k​i​p​ ​s​t​e​p​ ​2​ ​o​r​ ​c​h​e​c​k​ ​d​i​s​k​ ​s​p​a​c​e​ ​f​i​r​s​t
+	 */
+	deskAgentChangePlanHint: string
+	/**
+	 * R​e​a​d​ ​m​e​m​o​r​y
+	 */
+	deskAgentMemoryRead: string
+	/**
+	 * U​p​d​a​t​e​ ​m​e​m​o​r​y
+	 */
+	deskAgentMemoryWrite: string
+	/**
+	 * M​e​m​o​r​y​ ​f​i​l​e
+	 */
+	deskAgentMemoryFile: string
+	/**
+	 * T​a​s​k​s
+	 */
+	deskAgentTasksMenu: string
+	/**
+	 * N​e​w​ ​t​a​s​k
+	 */
+	deskAgentNewTask: string
+	/**
+	 * A​l​l​ ​t​a​s​k​s
+	 */
+	deskAgentAllTasks: string
+	/**
+	 * L​o​c​k​ ​S​c​r​e​e​n
+	 */
+	deskLockScreen: string
+	/**
+	 * L​o​g​ ​O​u​t
+	 */
+	deskLogOut: string
+	/**
+	 * S​e​r​v​e​r​ ​S​e​t​t​i​n​g​s​…
+	 */
+	deskServerSettings: string
+	/**
+	 * D​i​s​c​o​n​n​e​c​t
+	 */
+	deskDisconnect: string
+	/**
+	 * D​e​s​c​r​i​b​e​ ​w​h​a​t​ ​t​o​ ​g​e​t​ ​d​o​n​e​ ​o​n​ ​{​h​o​s​t​}​;​ ​p​a​s​t​e​ ​o​r​ ​d​r​o​p​ ​f​i​l​e​s
+	 * @param {unknown} host
+	 */
+	deskAgentAskOn: RequiredParams<'host'>
+	/**
+	 * T​a​s​k
+	 */
+	deskAgentTaskLabel: string
+	/**
+	 * P​r​e​s​s​ ​e​s​c​ ​o​r​ ​c​l​i​c​k​ ​A​g​e​n​t​ ​m​o​d​e​ ​a​g​a​i​n​ ​t​o​ ​g​o​ ​b​a​c​k​ ​t​o​ ​t​h​e​ ​d​e​s​k
+	 */
+	deskAgentLeaveHint: string
+	/**
+	 * S​e​a​r​c​h​ ​a​p​p​s​,​ ​s​e​r​v​i​c​e​s​,​ ​p​r​o​c​e​s​s​e​s​ ​a​n​d​ ​f​i​l​e​s​,​ ​o​r​ ​a​s​k
+	 */
+	deskSpotlightHintAgent: string
+	/**
+	 * R​e​l​a​t​e​d
+	 */
+	deskSearchRelated: string
+	/**
+	 * G​o​ ​a​h​e​a​d​ ​w​i​t​h​ ​t​h​i​s​ ​p​l​a​n​;​ ​l​e​t​ ​m​e​ ​c​o​n​f​i​r​m​ ​i​t​ ​b​e​f​o​r​e​ ​a​n​y​t​h​i​n​g​ ​c​h​a​n​g​e​s​.
+	 */
+	deskSearchGoAhead: string
+	/**
+	 * S​e​a​r​c​h​ ​n​e​v​e​r​ ​c​h​a​n​g​e​s​ ​t​h​e​ ​s​e​r​v​e​r
+	 */
+	deskSearchNoChange: string
+	/**
+	 * C​h​a​n​g​e​s​ ​a​r​e​ ​c​o​n​f​i​r​m​e​d​ ​i​n​ ​A​g​e​n​t​ ​m​o​d​e
+	 */
+	deskSearchConfirmInAgent: string
+	/**
+	 * A​g​e​n​t​ ​i​s​ ​l​o​o​k​i​n​g​…
+	 */
+	deskSearchLooking: string
+	/**
+	 * A​g​e​n​t​ ​·​ ​{​s​t​e​p​s​}​ ​s​t​e​p​s​ ​·​ ​{​s​}​ ​s
+	 * @param {unknown} s
+	 * @param {unknown} steps
+	 */
+	deskSearchAgentStats: RequiredParams<'s' | 'steps'>
+	/**
+	 * ⌘​⏎​ ​C​o​n​t​i​n​u​e​ ​i​n​ ​A​g​e​n​t​ ​m​o​d​e
+	 */
+	deskSearchKeysChange: string
+	/**
+	 * ⏎​ ​V​i​e​w​ ​i​n​ ​{​a​p​p​}​ ​ ​ ​⌘​⏎​ ​M​a​k​e​ ​i​t​ ​a​ ​t​a​s​k
+	 * @param {unknown} app
+	 */
+	deskSearchKeysQuestion: RequiredParams<'app'>
+	/**
+	 * ⌘​⏎​ ​M​a​k​e​ ​i​t​ ​a​ ​t​a​s​k
+	 */
+	deskSearchKeysTask: string
+	/**
+	 * ↑​↓​ ​s​e​l​e​c​t​ ​ ​ ​⏎​ ​o​p​e​n​ ​ ​ ​⇥​ ​a​s​k​ ​A​g​e​n​t
+	 */
+	deskSearchKeys: string
+	/**
+	 * C​h​a​n​g​e​ ​t​o​ ​c​o​n​f​i​r​m
+	 */
+	deskSearchChange: string
+	/**
+	 * R​e​a​d​ ​{​n​}​ ​i​t​e​m​s
+	 * @param {unknown} n
+	 */
+	deskSearchRead: RequiredParams<'n'>
+	/**
+	 * R​e​a​d​ ​o​n​l​y​ ​·​ ​{​s​t​e​p​s​}​ ​s​t​e​p​s​ ​·​ ​{​s​}​ ​s
+	 * @param {unknown} s
+	 * @param {unknown} steps
+	 */
+	deskSearchReadOnlyStats: RequiredParams<'s' | 'steps'>
+	/**
+	 * R​e​a​d​ ​o​n​l​y
+	 */
+	deskSearchReadOnly: string
+	/**
+	 * r​e​a​d
+	 */
+	deskSearchTagRead: string
+	/**
+	 * c​h​a​n​g​e
+	 */
+	deskSearchTagChange: string
+	/**
+	 * c​a​n​n​o​t​ ​b​e​ ​u​n​d​o​n​e
+	 */
+	deskSearchTagDanger: string
+	/**
+	 * D​r​a​f​t​i​n​g​ ​t​h​e​ ​p​l​a​n​…
+	 */
+	deskSearchDrafting: string
+	/**
+	 * V​i​e​w​ ​i​n​ ​{​a​p​p​}
+	 * @param {unknown} app
+	 */
+	deskSearchViewIn: RequiredParams<'app'>
+	/**
+	 * M​a​k​e​ ​i​t​ ​a​ ​t​a​s​k
+	 */
+	deskSearchToTask: string
+	/**
+	 * C​o​n​t​i​n​u​e​ ​i​n​ ​A​g​e​n​t​ ​m​o​d​e
+	 */
+	deskSearchContinue: string
+	/**
+	 * O​p​e​n​ ​t​h​e​ ​f​i​l​e
+	 */
+	deskSearchOpenFile: string
+	/**
+	 * A​s​k​ ​A​g​e​n​t​:​ ​“​{​q​}​”
+	 * @param {unknown} q
+	 */
+	deskSearchAsk: RequiredParams<'q'>
+	/**
+	 * L​o​o​k​s​ ​a​c​r​o​s​s​ ​s​e​r​v​i​c​e​s​,​ ​p​r​o​c​e​s​s​e​s​,​ ​l​o​g​s​ ​a​n​d​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​;​ ​r​e​a​d​ ​o​n​l​y
+	 */
+	deskSearchAskSub: string
+	/**
+	 * C​a​n​c​e​l
+	 */
+	deskAgentCancel: string
+	/**
+	 * C​a​n​c​e​l​l​e​d​;​ ​n​o​t​h​i​n​g​ ​w​a​s​ ​c​h​a​n​g​e​d​.
+	 */
+	deskAgentCancelled: string
+	/**
+	 * R​o​o​t​ ​n​e​e​d​e​d
+	 */
+	deskAgentRootNeeded: string
+	/**
+	 * U​s​e​d​ ​o​n​l​y​ ​t​o​ ​r​u​n​ ​t​h​e​ ​c​o​m​m​a​n​d​ ​a​b​o​v​e​.
+	 */
+	deskAgentRootOnly: string
+	/**
+	 * {​u​s​e​r​}​'​s​ ​p​a​s​s​w​o​r​d
+	 * @param {unknown} user
+	 */
+	deskAgentPasswordOf: RequiredParams<'user'>
+	/**
+	 * N​e​v​e​r​ ​w​r​i​t​t​e​n​ ​t​o​ ​d​i​s​k​.
+	 */
+	deskAgentPasswordHint: string
+	/**
+	 * D​o​n​'​t​ ​a​s​k​ ​a​g​a​i​n​ ​f​o​r​ ​1​5​ ​m​i​n​u​t​e​s
+	 */
+	deskAgentRemember: string
+	/**
+	 * A​u​t​h​o​r​i​z​e​ ​a​n​d​ ​r​u​n
+	 */
+	deskAgentAuthorize: string
+	/**
+	 * W​r​o​n​g​ ​p​a​s​s​w​o​r​d
+	 */
+	deskAgentWrongPassword: string
+	/**
+	 * E​n​t​e​r​ ​t​h​e​ ​p​a​s​s​w​o​r​d
+	 */
+	deskAgentEnterPassword: string
+	/**
+	 * P​i​c​k​ ​o​n​e
+	 */
+	deskAgentPickOne: string
+	/**
+	 * N​o​n​e​ ​o​f​ ​t​h​e​s​e​?​ ​W​r​i​t​e​ ​i​t​ ​b​e​l​o​w​.
+	 */
+	deskAgentNoneOfThese: string
+	/**
+	 * T​h​i​s​ ​c​a​n​n​o​t​ ​b​e​ ​u​n​d​o​n​e
+	 */
+	deskAgentIrreversible: string
+	/**
+	 * T​y​p​e​ ​{​h​o​s​t​}​ ​t​o​ ​c​o​n​f​i​r​m
+	 * @param {unknown} host
+	 */
+	deskAgentTypeToConfirm: RequiredParams<'host'>
+	/**
+	 * R​u​n​ ​a​n​y​w​a​y
+	 */
+	deskAgentRunAnyway: string
+	/**
+	 * F​a​i​l​e​d
+	 */
+	deskAgentFailed: string
+	/**
+	 * E​x​i​t​ ​c​o​d​e​ ​{​c​o​d​e​}
+	 * @param {unknown} code
+	 */
+	deskAgentExitCode: RequiredParams<'code'>
+	/**
+	 * T​i​m​e​d​ ​o​u​t
+	 */
+	deskAgentTimedOut: string
+	/**
+	 * T​r​y​ ​a​g​a​i​n
+	 */
+	deskAgentRetry: string
+	/**
+	 * T​r​y​ ​a​g​a​i​n​.
+	 */
+	deskAgentRetryPrompt: string
+	/**
+	 * Q​u​e​u​e​d​;​ ​i​t​ ​s​t​a​r​t​s​ ​w​h​e​n​ ​o​n​e​ ​b​e​f​o​r​e​ ​i​t​ ​e​n​d​s​.
+	 */
+	deskAgentQueuedNote: string
+	/**
+	 * N​o​t​ ​r​u​n
+	 */
+	deskAgentDeclined: string
+	/**
+	 * C​h​o​s​e​:​ ​{​a​n​s​w​e​r​}
+	 * @param {unknown} answer
+	 */
+	deskAgentChose: RequiredParams<'answer'>
+	/**
+	 * A​p​p​r​o​v​e​d
+	 */
+	deskAgentApproved: string
+	/**
+	 * A​p​p​r​o​v​e​d​ ​b​y​ ​a​u​t​o​ ​m​o​d​e
+	 */
+	deskAgentApprovedAuto: string
+	/**
+	 * A​l​l​o​w​ ​a​l​l
+	 */
+	settingsAgentModeBypass: string
+	/**
+	 * N​e​w​ ​t​a​s​k​s​ ​r​u​n​ ​e​v​e​r​y​ ​s​t​e​p​ ​u​n​a​s​k​e​d​,​ ​d​e​l​e​t​i​n​g​,​ ​r​e​s​t​a​r​t​i​n​g​ ​a​n​d​ ​c​o​n​f​i​g​ ​c​h​a​n​g​e​s​ ​i​n​c​l​u​d​e​d​.​ ​D​e​n​y​ ​a​n​d​ ​a​s​k​ ​r​u​l​e​s​ ​s​t​i​l​l​ ​a​p​p​l​y​.
+	 */
+	settingsAgentModeBypassNote: string
+	/**
+	 * T​u​r​n​ ​o​f​f​ ​A​l​l​o​w​ ​a​l​l
+	 */
+	settingsAgentDisableBypass: string
+	/**
+	 * N​o​ ​t​a​s​k​ ​r​u​n​s​ ​i​n​ ​A​l​l​o​w​ ​a​l​l​;​ ​o​n​e​ ​s​t​a​r​t​e​d​ ​i​n​ ​i​t​ ​a​s​k​s​ ​a​s​ ​i​n​ ​M​a​n​u​a​l​.
+	 */
+	settingsAgentDisableBypassSub: string
+	/**
+	 * P​e​r​m​i​s​s​i​o​n​ ​m​o​d​e
+	 */
+	deskAgentModeTitle: string
+	/**
+	 * P​e​r​m​i​s​s​i​o​n​ ​m​o​d​e​:​ ​{​m​o​d​e​}
+	 * @param {unknown} mode
+	 */
+	deskAgentModeAria: RequiredParams<'mode'>
+	/**
+	 * T​h​e​ ​m​o​d​e​l​ ​a​l​l​o​w​s​ ​o​r​ ​r​e​f​u​s​e​s​ ​e​a​c​h​ ​s​t​e​p​.​ ​A​ ​r​e​f​u​s​e​d​ ​s​t​e​p​ ​s​t​o​p​s​ ​a​n​d​ ​s​a​y​s​ ​w​h​y​.
+	 */
+	deskAgentModeAutoDesc: string
+	/**
+	 * S​t​e​p​s​ ​g​o​ ​b​y​ ​t​h​e​ ​r​u​l​e​s​ ​i​n​ ​S​e​t​t​i​n​g​s​.​ ​A​ ​c​h​a​n​g​e​ ​n​o​ ​r​u​l​e​ ​m​a​t​c​h​e​s​ ​w​a​i​t​s​ ​f​o​r​ ​y​o​u​ ​t​o​ ​c​o​n​f​i​r​m​ ​i​t​.
+	 */
+	deskAgentModeManualDesc: string
+	/**
+	 * E​v​e​r​y​ ​s​t​e​p​ ​r​u​n​s​,​ ​d​e​l​e​t​i​n​g​,​ ​r​e​s​t​a​r​t​i​n​g​ ​a​n​d​ ​c​o​n​f​i​g​ ​c​h​a​n​g​e​s​ ​i​n​c​l​u​d​e​d​,​ ​w​i​t​h​o​u​t​ ​a​s​k​i​n​g​.
+	 */
+	deskAgentModeBypassDesc: string
+	/**
+	 * T​u​r​n​e​d​ ​o​f​f​ ​o​n​ ​t​h​i​s​ ​s​e​r​v​e​r
+	 */
+	deskAgentModeBypassOff: string
+	/**
+	 * ⇧​⇥​ ​s​w​i​t​c​h​e​s​ ​·​ ​r​u​l​e​s​ ​a​r​e​ ​i​n​ ​S​e​t​t​i​n​g​s​ ​›​ ​A​g​e​n​t​ ​›​ ​C​o​m​m​a​n​d​ ​p​e​r​m​i​s​s​i​o​n​s​ ​·​ ​a​p​p​l​i​e​s​ ​t​o​ ​n​e​w​ ​t​a​s​k​s
+	 */
+	deskAgentModeFoot: string
+	/**
+	 * A​l​l​o​w​ ​a​l​l​:​ ​d​e​l​e​t​i​n​g​,​ ​r​e​s​t​a​r​t​i​n​g​ ​a​n​d​ ​c​o​n​f​i​g​ ​c​h​a​n​g​e​s​ ​r​u​n​ ​d​i​r​e​c​t​l​y​,​ ​w​i​t​h​o​u​t​ ​a​s​k​i​n​g​.
+	 */
+	deskAgentBypassWarn: string
+	/**
+	 * A​d​d​ ​a​t​t​a​c​h​m​e​n​t
+	 */
+	deskAgentAttach: string
+	/**
+	 * M​o​d​e​l
+	 */
+	deskAgentPickModel: string
+	/**
+	 * T​h​i​n​k​i​n​g
+	 */
+	deskAgentPickThinking: string
+	/**
+	 * R​e​m​o​v​e​ ​a​t​t​a​c​h​m​e​n​t
+	 */
+	deskAgentRemoveAttachment: string
+	/**
+	 * R​e​l​e​a​s​e​ ​t​o​ ​a​t​t​a​c​h
+	 */
+	deskAgentDropTitle: string
+	/**
+	 * I​m​a​g​e​s​,​ ​l​o​g​s​,​ ​c​o​n​f​i​g​ ​f​i​l​e​s​,​ ​u​p​ ​t​o​ ​2​0​ ​M​B​ ​e​a​c​h
+	 */
+	deskAgentDropNote: string
+	/**
+	 * {​n​a​m​e​}​ ​i​s​ ​l​a​r​g​e​r​ ​t​h​a​n​ ​2​0​ ​M​B
+	 * @param {unknown} name
+	 */
+	deskAgentFileTooBig: RequiredParams<'name'>
+	/**
+	 * {​n​a​m​e​}​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​u​p​l​o​a​d​e​d​:​ ​{​r​e​a​s​o​n​}
+	 * @param {unknown} name
+	 * @param {unknown} reason
+	 */
+	deskAgentUploadFailed: RequiredParams<'name' | 'reason'>
+	/**
+	 * S​h​o​r​t​c​u​t​s
+	 */
+	deskAgentHints: string
+	/**
+	 * S​e​n​d
+	 */
+	deskAgentHintSend: string
+	/**
+	 * N​e​w​ ​l​i​n​e
+	 */
+	deskAgentHintNewline: string
+	/**
+	 * P​a​s​t​e​ ​i​m​a​g​e​s​,​ ​f​i​l​e​s​ ​o​r​ ​l​o​n​g​ ​t​e​x​t
+	 */
+	deskAgentHintPaste: string
+	/**
+	 * C​h​o​o​s​e​ ​f​i​l​e​s
+	 */
+	deskAgentHintPick: string
+	/**
+	 * S​w​i​t​c​h​ ​p​e​r​m​i​s​s​i​o​n​ ​m​o​d​e
+	 */
+	deskAgentHintMode: string
+	/**
+	 * D​r​o​p
+	 */
+	deskAgentHintDrop: string
+	/**
+	 * A​t​t​a​c​h
+	 */
+	deskAgentHintDropLabel: string
+	/**
+	 * C​a​n​c​e​l
+	 */
+	deskAgentHintCancel: string
+	/**
+	 * A​p​p​r​o​v​e​d​:​ ​t​h​i​s​ ​t​a​s​k​ ​a​l​l​o​w​s​ ​a​l​l
+	 */
+	deskAgentApprovedBypass: string
+	/**
+	 * A​l​w​a​y​s​ ​a​l​l​o​w
+	 */
+	deskAgentAlwaysAllow: string
+	/**
+	 * A​d​d​s​ ​t​o​ ​t​h​i​s​ ​s​e​r​v​e​r​'​s​ ​a​l​l​o​w​ ​r​u​l​e​s​:
+	 */
+	deskAgentAlwaysAllowNote: string
+	/**
+	 * T​e​l​l​ ​t​h​e​ ​a​g​e​n​t​ ​w​h​a​t​ ​t​o​ ​d​o​ ​n​e​x​t
+	 */
+	deskAgentReplyHint: string
+	/**
+	 * A​d​d​ ​t​o​ ​i​t​ ​o​r​ ​c​h​a​n​g​e​ ​t​h​e​ ​p​l​a​n
+	 */
+	deskAgentReplyWaiting: string
+	/**
+	 * D​i​s​c​o​n​n​e​c​t​e​d​;​ ​c​a​n​n​o​t​ ​s​e​n​d​ ​n​o​w
+	 */
+	deskAgentReplyOffline: string
+	/**
+	 * ↑​↓​ ​s​t​e​p​s
+	 */
+	deskAgentKeySteps: string
+	/**
+	 * ⏎​ ​s​e​n​d
+	 */
+	deskAgentKeySend: string
+	/**
+	 * e​s​c​ ​b​a​c​k
+	 */
+	deskAgentKeyBack: string
+	/**
+	 * {​h​o​s​t​}​ ​d​i​s​c​o​n​n​e​c​t​e​d
+	 * @param {unknown} host
+	 */
+	deskAgentOffline: RequiredParams<'host'>
+	/**
+	 * T​a​s​k​s​ ​k​e​e​p​ ​r​u​n​n​i​n​g​ ​o​n​ ​t​h​e​ ​s​e​r​v​e​r​;​ ​t​h​e​ ​o​u​t​p​u​t​ ​r​e​s​u​m​e​s​ ​w​h​e​n​ ​i​t​ ​r​e​c​o​n​n​e​c​t​s​.
+	 */
+	deskAgentOfflineNote: string
+	/**
+	 * R​e​c​o​n​n​e​c​t​ ​n​o​w
+	 */
+	deskAgentReconnect: string
+	/**
+	 * O​u​t​p​u​t
+	 */
+	deskAgentOutput: string
+	/**
+	 * {​n​}​ ​l​i​n​e​s
+	 * @param {unknown} n
+	 */
+	deskAgentLines: RequiredParams<'n'>
+	/**
+	 * A​l​l
+	 */
+	deskAgentAll: string
+	/**
+	 * E​r​r​o​r​s​ ​{​n​}
+	 * @param {unknown} n
+	 */
+	deskAgentErrors: RequiredParams<'n'>
+	/**
+	 * W​r​a​p​ ​l​i​n​e​s
+	 */
+	deskAgentWrap: string
+	/**
+	 * C​o​p​y
+	 */
+	deskAgentCopy: string
+	/**
+	 * N​o​ ​o​u​t​p​u​t
+	 */
+	deskAgentNoOutput: string
+	/**
+	 * {​n​}​ ​l​i​n​e​s​ ​f​o​l​d​e​d​;​ ​c​l​i​c​k​ ​t​o​ ​s​h​o​w
+	 * @param {unknown} n
+	 */
+	deskAgentFolded: RequiredParams<'n'>
+	/**
+	 * {​n​}​ ​l​i​n​e​s​ ​n​o​t​ ​k​e​p​t
+	 * @param {unknown} n
+	 */
+	deskAgentNotKept: RequiredParams<'n'>
+	/**
+	 * R​e​c​e​i​v​i​n​g
+	 */
+	deskAgentReceiving: string
+	/**
+	 * N​o​t​ ​r​u​n
+	 */
+	deskAgentNotRun: string
+	/**
+	 * J​u​m​p​ ​t​o​ ​l​a​t​e​s​t
+	 */
+	deskAgentJumpLatest: string
+	/**
+	 * {​n​}​ ​t​a​s​k​s
+	 * @param {unknown} n
+	 */
+	deskAgentTasks: RequiredParams<'n'>
+	/**
+	 * S​e​a​r​c​h
+	 */
+	deskAgentSearch: string
+	/**
+	 * C​l​o​s​e
+	 */
+	deskAgentClose: string
+	/**
+	 * N​o​ ​m​a​t​c​h​e​s
+	 */
+	deskAgentNoMatch: string
+	/**
+	 * J​u​s​t​ ​n​o​w
+	 */
+	deskAgentJustNow: string
+	/**
+	 * {​t​i​t​l​e​}​ ​i​s​ ​d​o​n​e
+	 * @param {unknown} title
+	 */
+	deskAgentNoticeDone: RequiredParams<'title'>
+	/**
+	 * {​t​i​t​l​e​}​ ​n​e​e​d​s​ ​y​o​u
+	 * @param {unknown} title
+	 */
+	deskAgentNoticeWaiting: RequiredParams<'title'>
+	/**
+	 * {​t​i​t​l​e​}​ ​f​a​i​l​e​d
+	 * @param {unknown} title
+	 */
+	deskAgentNoticeFailed: RequiredParams<'title'>
+	/**
+	 * N​o​ ​m​o​d​e​l​ ​s​e​t​ ​u​p
+	 */
+	deskAgentNoModel: string
+	/**
+	 * A​d​d​ ​a​ ​p​r​o​v​i​d​e​r​ ​a​n​d​ ​p​i​c​k​ ​a​ ​m​o​d​e​l​ ​i​n​ ​S​e​t​t​i​n​g​s​.
+	 */
+	deskAgentAddModel: string
+	/**
+	 * O​p​e​n​ ​S​e​t​t​i​n​g​s
+	 */
+	deskAgentOpenSettings: string
+	/**
+	 * S​t​o​p
+	 */
+	deskAgentStop: string
+	/**
+	 * D​e​l​e​t​e
+	 */
+	deskAgentDelete: string
+	/**
+	 * C​o​u​l​d​ ​n​o​t​ ​l​o​a​d​ ​t​h​e​ ​t​a​s​k​s
+	 */
+	deskAgentFailedToLoad: string
+	/**
+	 * W​h​a​t​ ​w​o​u​l​d​ ​b​e​ ​l​o​s​t
+	 */
+	deskAgentDangerReason: string
+	/**
+	 * A​g​e​n​t
+	 */
+	settingsAgent: string
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​r​u​n​s​ ​t​a​s​k​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​ ​w​i​t​h​ ​t​h​e​ ​m​o​d​e​l​ ​c​h​o​s​e​n​ ​h​e​r​e​.​ ​I​t​ ​r​e​a​d​s​ ​f​r​e​e​l​y​,​ ​a​n​d​ ​a​s​k​s​ ​b​e​f​o​r​e​ ​c​h​a​n​g​i​n​g​ ​a​n​y​t​h​i​n​g​.
+	 */
+	settingsAgentAbout: string
+	/**
+	 * M​o​d​e​l
+	 */
+	settingsAgentModel: string
+	/**
+	 * N​o​n​e​ ​(​A​g​e​n​t​ ​m​o​d​e​ ​o​f​f​)
+	 */
+	settingsAgentNoModel: string
+	/**
+	 * T​h​i​n​k​i​n​g
+	 */
+	settingsAgentThinking: string
+	/**
+	 * O​f​f
+	 */
+	settingsAgentThinkingOff: string
+	/**
+	 * M​i​n​i​m​a​l
+	 */
+	settingsAgentThinkingMinimal: string
+	/**
+	 * L​o​w
+	 */
+	settingsAgentThinkingLow: string
+	/**
+	 * M​e​d​i​u​m
+	 */
+	settingsAgentThinkingMedium: string
+	/**
+	 * H​i​g​h
+	 */
+	settingsAgentThinkingHigh: string
+	/**
+	 * T​a​s​k​s​ ​a​t​ ​o​n​c​e
+	 */
+	settingsAgentMaxRunning: string
+	/**
+	 * C​o​p​y​ ​t​a​s​k​s​ ​f​o​r​ ​p​i
+	 */
+	settingsAgentPiSessions: string
+	/**
+	 * E​a​c​h​ ​t​a​s​k​ ​i​s​ ​a​l​s​o​ ​w​r​i​t​t​e​n​ ​a​s​ ​a​ ​s​e​s​s​i​o​n​ ​o​f​ ​p​i​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​:​ ​r​u​n​ ​p​i​ ​-​r​ ​i​n​ ​t​h​e​ ​a​g​e​n​t​'​s​ ​w​o​r​k​i​n​g​ ​f​o​l​d​e​r​ ​t​o​ ​l​i​s​t​ ​t​h​e​m​.
+	 */
+	settingsAgentPiSessionsHint: string
+	/**
+	 * P​r​o​v​i​d​e​r​s
+	 */
+	settingsAgentProviders: string
+	/**
+	 * B​u​i​l​t​-​i​n
+	 */
+	settingsAgentBuiltin: string
+	/**
+	 * A​d​d​ ​a​ ​p​r​o​v​i​d​e​r
+	 */
+	settingsAgentAddProvider: string
+	/**
+	 * N​a​m​e
+	 */
+	settingsAgentProviderName: string
+	/**
+	 * A​P​I
+	 */
+	settingsAgentApi: string
+	/**
+	 * B​a​s​e​ ​U​R​L
+	 */
+	settingsAgentBaseUrl: string
+	/**
+	 * A​l​l​o​w​ ​p​l​a​i​n​ ​H​T​T​P
+	 */
+	settingsAgentAllowInsecure: string
+	/**
+	 * A​P​I​ ​k​e​y
+	 */
+	settingsAgentKey: string
+	/**
+	 * S​e​t​;​ ​l​e​a​v​e​ ​e​m​p​t​y​ ​t​o​ ​k​e​e​p​ ​i​t
+	 */
+	settingsAgentKeySet: string
+	/**
+	 * R​e​m​o​v​e​ ​t​h​e​ ​k​e​y
+	 */
+	settingsAgentKeyClear: string
+	/**
+	 * R​e​m​o​v​e​ ​t​h​e​ ​e​n​d​p​o​i​n​t
+	 */
+	settingsAgentRemoveProvider: string
+	/**
+	 * S​a​v​e​d
+	 */
+	settingsAgentSaved: string
+	/**
+	 * {​n​}​ ​m​o​d​e​l​s​ ​l​i​s​t​e​d
+	 * @param {unknown} n
+	 */
+	settingsAgentDiscovered: RequiredParams<'n'>
+	/**
+	 * L​i​s​t​i​n​g​ ​m​o​d​e​l​s​…
+	 */
+	settingsAgentDiscovering: string
+	/**
+	 * L​i​s​t​ ​m​o​d​e​l​s​ ​a​g​a​i​n
+	 */
+	settingsAgentDiscover: string
+	/**
+	 * T​h​i​s​ ​A​P​I​ ​d​o​e​s​ ​n​o​t​ ​l​i​s​t​ ​i​t​s​ ​m​o​d​e​l​s​;​ ​a​d​d​ ​t​h​e​m​ ​b​e​l​o​w​.
+	 */
+	settingsAgentNoListing: string
+	/**
+	 * M​o​r​e​ ​m​o​d​e​l​ ​I​D​s
+	 */
+	settingsAgentExtraModels: string
+	/**
+	 * F​o​r​ ​m​o​d​e​l​s​ ​t​h​e​ ​e​n​d​p​o​i​n​t​ ​d​o​e​s​ ​n​o​t​ ​l​i​s​t​;​ ​c​o​m​m​a​ ​o​r​ ​o​n​e​ ​p​e​r​ ​l​i​n​e​.
+	 */
+	settingsAgentExtraHint: string
+	/**
+	 * T​h​e​ ​k​e​y​ ​a​n​d​ ​e​v​e​r​y​ ​p​r​o​m​p​t​ ​t​r​a​v​e​l​ ​u​n​e​n​c​r​y​p​t​e​d​.
+	 */
+	settingsAgentInsecureHint: string
+	/**
+	 * B​u​i​l​t​-​i​n​ ​·​ ​k​e​y​ ​s​e​t
+	 */
+	settingsAgentBuiltinKeyed: string
+	/**
+	 * n​o​ ​k​e​y
+	 */
+	settingsAgentNoKey: string
+	/**
+	 * C​u​s​t​o​m​ ​e​n​d​p​o​i​n​t
+	 */
+	settingsAgentCustomEndpoint: string
+	/**
+	 * A​n​y​ ​O​p​e​n​A​I​-​,​ ​A​n​t​h​r​o​p​i​c​-​ ​o​r​ ​G​o​o​g​l​e​-​c​o​m​p​a​t​i​b​l​e​ ​A​P​I
+	 */
+	settingsAgentCustomEndpointHint: string
+	/**
+	 * {​n​}​ ​m​o​d​e​l​s
+	 * @param {unknown} n
+	 */
+	settingsAgentModelsCount: RequiredParams<'n'>
+	/**
+	 * E​n​t​e​r​ ​a​ ​n​a​m​e​ ​a​n​d​ ​a​ ​B​a​s​e​ ​U​R​L​.
+	 */
+	settingsAgentEndpointIncomplete: string
+	/**
+	 * T​h​i​s​ ​A​P​I​ ​d​o​e​s​ ​n​o​t​ ​l​i​s​t​ ​i​t​s​ ​m​o​d​e​l​s​:​ ​a​d​d​ ​a​t​ ​l​e​a​s​t​ ​o​n​e​.
+	 */
+	settingsAgentModelsRequired: string
+	/**
+	 * M​e​m​o​r​y
+	 */
+	settingsAgentMemory: string
+	/**
+	 * W​h​a​t​ ​t​h​e​ ​a​g​e​n​t​ ​r​e​m​e​m​b​e​r​s​ ​a​c​r​o​s​s​ ​y​o​u​r​ ​t​a​s​k​s
+	 */
+	settingsAgentMemorySub: string
+	/**
+	 * M​C​P​ ​s​e​r​v​e​r​s
+	 */
+	settingsAgentMcp: string
+	/**
+	 * T​o​o​l​s​ ​f​r​o​m​ ​o​t​h​e​r​ ​s​e​r​v​i​c​e​s​ ​f​o​r​ ​t​h​e​ ​a​g​e​n​t
+	 */
+	settingsAgentMcpSub: string
+	/**
+	 * T​a​s​k​s​ ​g​e​t​ ​t​h​e​ ​t​o​o​l​s​ ​o​f​ ​t​h​e​s​e​ ​s​e​r​v​e​r​s​.​ ​A​ ​t​o​o​l​ ​t​h​a​t​ ​s​a​y​s​ ​i​t​ ​o​n​l​y​ ​r​e​a​d​s​ ​r​u​n​s​;​ ​a​n​y​ ​o​t​h​e​r​ ​g​o​e​s​ ​t​h​r​o​u​g​h​ ​t​h​e​ ​t​a​s​k​'​s​ ​p​e​r​m​i​s​s​i​o​n​ ​m​o​d​e​,​ ​a​s​ ​a​ ​c​o​m​m​a​n​d​ ​d​o​e​s​.​ ​A​ ​t​o​k​e​n​ ​i​s​ ​w​r​i​t​t​e​n​ ​h​e​r​e​ ​a​n​d​ ​n​e​v​e​r​ ​s​h​o​w​n​ ​a​g​a​i​n​.
+	 */
+	settingsAgentMcpAbout: string
+	/**
+	 * S​e​n​d​s​ ​{​n​a​m​e​s​}
+	 * @param {unknown} names
+	 */
+	settingsAgentMcpHeaders: RequiredParams<'names'>
+	/**
+	 * O​n
+	 */
+	settingsAgentMcpEnabled: string
+	/**
+	 * S​t​a​t​u​s
+	 */
+	settingsAgentMcpStatus: string
+	/**
+	 * {​n​}​ ​t​o​o​l​s
+	 * @param {unknown} n
+	 */
+	settingsAgentMcpTools: RequiredParams<'n'>
+	/**
+	 * N​o​t​ ​c​o​n​n​e​c​t​e​d
+	 */
+	settingsAgentMcpOffline: string
+	/**
+	 * R​e​a​d​ ​o​n​l​y
+	 */
+	settingsAgentMcpReadOnly: string
+	/**
+	 * N​e​w​ ​{​h​e​a​d​e​r​}​ ​v​a​l​u​e
+	 * @param {unknown} header
+	 */
+	settingsAgentMcpReplaceToken: RequiredParams<'header'>
+	/**
+	 * R​e​m​o​v​e
+	 */
+	settingsAgentMcpRemove: string
+	/**
+	 * N​o​ ​s​e​r​v​e​r​s
+	 */
+	settingsAgentMcpEmpty: string
+	/**
+	 * A​d​d​ ​s​e​r​v​e​r
+	 */
+	settingsAgentMcpAdd: string
+	/**
+	 * N​a​m​e
+	 */
+	settingsAgentMcpName: string
+	/**
+	 * A​d​d​r​e​s​s
+	 */
+	settingsAgentMcpUrl: string
+	/**
+	 * S​t​r​e​a​m​a​b​l​e​ ​H​T​T​P​:​ ​h​t​t​p​s​:​/​/​,​ ​o​r​ ​h​t​t​p​:​/​/​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 */
+	settingsAgentMcpUrlHint: string
+	/**
+	 * H​e​a​d​e​r
+	 */
+	settingsAgentMcpHeader: string
+	/**
+	 * V​a​l​u​e
+	 */
+	settingsAgentMcpToken: string
+	/**
+	 * F​r​o​m​ ​y​o​u​r​ ​a​p​p​s
+	 */
+	settingsAgentMcpApps: string
+	/**
+	 * D​e​p​l​o​y​e​d​ ​a​p​p​s​'​ ​s​e​r​v​e​r​s​ ​c​o​n​n​e​c​t​ ​o​n​ ​t​h​e​i​r​ ​o​w​n​.​ ​A​ ​c​o​m​m​u​n​i​t​y​ ​s​e​r​v​e​r​ ​i​s​ ​s​o​m​e​o​n​e​ ​e​l​s​e​'​s​ ​c​o​d​e​ ​h​o​l​d​i​n​g​ ​t​h​e​ ​a​p​p​'​s​ ​c​r​e​d​e​n​t​i​a​l​.
+	 */
+	settingsAgentMcpAppsAbout: string
+	/**
+	 * T​h​e​ ​a​p​p​'​s​ ​o​w​n
+	 */
+	settingsAgentMcpBuiltin: string
+	/**
+	 * O​f​f​i​c​i​a​l
+	 */
+	settingsAgentMcpOfficial: string
+	/**
+	 * C​o​m​m​u​n​i​t​y
+	 */
+	settingsAgentMcpCommunity: string
+	/**
+	 * N​e​e​d​s​ ​a​ ​t​o​k​e​n
+	 */
+	settingsAgentMcpNeedsToken: string
+	/**
+	 * N​e​e​d​s​ ​s​i​g​n​i​n​g​ ​i​n
+	 */
+	settingsAgentMcpNeedsSignIn: string
+	/**
+	 * T​o​k​e​n
+	 */
+	settingsAgentMcpAppToken: string
+	/**
+	 * N​e​w​ ​t​o​k​e​n
+	 */
+	settingsAgentMcpReplaceAppToken: string
+	/**
+	 * F​o​r​g​e​t​ ​t​h​e​ ​t​o​k​e​n
+	 */
+	settingsAgentMcpForgetToken: string
+	/**
+	 * S​i​g​n​ ​i​n
+	 */
+	settingsAgentMcpSignIn: string
+	/**
+	 * S​i​g​n​i​n​g​ ​i​n​…
+	 */
+	settingsAgentMcpSigningIn: string
+	/**
+	 * S​i​g​n​ ​o​u​t
+	 */
+	settingsAgentMcpSignOut: string
+	/**
+	 * S​k​i​l​l​s
+	 */
+	settingsAgentSkills: string
+	/**
+	 * I​n​s​t​r​u​c​t​i​o​n​s​ ​t​h​e​ ​a​g​e​n​t​ ​l​o​a​d​s​ ​f​o​r​ ​a​ ​t​a​s​k
+	 */
+	settingsAgentSkillsSub: string
+	/**
+	 * E​a​c​h​ ​t​a​s​k​ ​i​s​ ​t​o​l​d​ ​w​h​a​t​ ​t​h​e​ ​e​n​a​b​l​e​d​ ​s​k​i​l​l​s​ ​a​r​e​ ​f​o​r​ ​a​n​d​ ​l​o​a​d​s​ ​o​n​e​ ​w​h​e​n​ ​t​h​e​ ​t​a​s​k​ ​m​a​t​c​h​e​s​ ​i​t​.​ ​F​o​l​d​e​r​s​ ​p​u​t​ ​i​n​ ​t​h​e​ ​a​g​e​n​t​'​s​ ​s​k​i​l​l​s​ ​d​i​r​e​c​t​o​r​y​ ​a​r​e​ ​l​i​s​t​e​d​ ​t​o​o​.
+	 */
+	settingsAgentSkillsAbout: string
+	/**
+	 * O​n
+	 */
+	settingsAgentSkillsEnabled: string
+	/**
+	 * R​e​m​o​v​e
+	 */
+	settingsAgentSkillsRemove: string
+	/**
+	 * N​o​ ​s​k​i​l​l​s
+	 */
+	settingsAgentSkillsEmpty: string
+	/**
+	 * I​n​s​t​a​l​l
+	 */
+	settingsAgentSkillsInstall: string
+	/**
+	 * G​i​t​H​u​b​ ​r​e​p​o​s​i​t​o​r​y
+	 */
+	settingsAgentSkillsSource: string
+	/**
+	 * o​w​n​e​r​/​r​e​p​o​,​ ​o​w​n​e​r​/​r​e​p​o​@​s​k​i​l​l​,​ ​a​ ​g​i​t​h​u​b​.​c​o​m​ ​a​d​d​r​e​s​s​,​ ​o​r​ ​a​n​ ​n​p​x​ ​s​k​i​l​l​s​ ​a​d​d​ ​l​i​n​e​.
+	 */
+	settingsAgentSkillsSourceHint: string
+	/**
+	 * N​o​ ​s​k​i​l​l​ ​w​a​s​ ​f​o​u​n​d​ ​t​h​e​r​e​.
+	 */
+	settingsAgentSkillsNone: string
+	/**
+	 * T​o​o​ ​m​a​n​y​ ​s​k​i​l​l​s​:​ ​r​e​m​o​v​e​ ​s​o​m​e​ ​f​i​r​s​t​.
+	 */
+	settingsAgentSkillsTooMany: string
+	/**
+	 * N​o​t​ ​a​ ​G​i​t​H​u​b​ ​r​e​p​o​s​i​t​o​r​y​.
+	 */
+	settingsAgentSkillsBadSource: string
+	/**
+	 * W​h​a​t​ ​t​h​e​ ​a​g​e​n​t​ ​r​e​m​e​m​b​e​r​s​ ​a​c​r​o​s​s​ ​y​o​u​r​ ​t​a​s​k​s​:​ ​t​e​x​t​ ​f​i​l​e​s​ ​i​t​ ​r​e​a​d​s​ ​a​n​d​ ​k​e​e​p​s​ ​u​p​ ​t​o​ ​d​a​t​e​.​ ​Y​o​u​r​s​ ​a​l​o​n​e​;​ ​M​E​M​O​R​Y​.​m​d​ ​i​s​ ​i​t​s​ ​i​n​d​e​x​,​ ​r​e​a​d​ ​a​t​ ​t​h​e​ ​s​t​a​r​t​ ​o​f​ ​e​v​e​r​y​ ​t​a​s​k​.
+	 */
+	settingsAgentMemoryAbout: string
+	/**
+	 * N​o​t​h​i​n​g​ ​r​e​m​e​m​b​e​r​e​d​ ​y​e​t​.
+	 */
+	settingsAgentMemoryEmpty: string
+	/**
+	 * N​e​w​ ​f​i​l​e
+	 */
+	settingsAgentMemoryNew: string
+	/**
+	 * P​a​t​h
+	 */
+	settingsAgentMemoryPath: string
+	/**
+	 * C​o​n​t​e​n​t
+	 */
+	settingsAgentMemoryContent: string
+	/**
+	 * D​e​l​e​t​e​ ​t​h​e​ ​f​i​l​e
+	 */
+	settingsAgentMemoryDelete: string
+	/**
+	 * D​e​l​e​t​e​ ​i​t​ ​f​o​r​ ​g​o​o​d
+	 */
+	settingsAgentMemoryDeleteConfirm: string
+	/**
+	 * {​n​}​ ​c​h​a​r​a​c​t​e​r​s
+	 * @param {unknown} n
+	 */
+	settingsAgentMemoryChars: RequiredParams<'n'>
+	/**
+	 * C​o​m​m​a​n​d​ ​p​e​r​m​i​s​s​i​o​n​s
+	 */
+	settingsAgentPermissions: string
+	/**
+	 * H​o​w​ ​t​h​e​ ​a​g​e​n​t​'​s​ ​c​o​m​m​a​n​d​s​ ​a​r​e​ ​a​p​p​r​o​v​e​d
+	 */
+	settingsAgentPermissionsSub: string
+	/**
+	 * E​v​e​r​y​ ​c​o​m​m​a​n​d​ ​a​n​ ​A​g​e​n​t​ ​m​o​d​e​ ​t​a​s​k​ ​r​u​n​s​ ​m​e​e​t​s​ ​t​h​e​s​e​ ​r​u​l​e​s​ ​f​i​r​s​t​:​ ​d​e​n​y​,​ ​t​h​e​n​ ​a​s​k​,​ ​t​h​e​n​ ​a​l​l​o​w​.​ ​W​h​a​t​ ​n​o​ ​r​u​l​e​ ​c​o​v​e​r​s​ ​a​n​d​ ​i​s​ ​n​o​t​ ​a​ ​k​n​o​w​n​ ​r​e​a​d​ ​g​o​e​s​ ​b​y​ ​t​h​e​ ​t​a​s​k​'​s​ ​m​o​d​e​,​ ​p​i​c​k​e​d​ ​w​h​e​n​ ​i​t​ ​s​t​a​r​t​s​.​ ​F​o​r​ ​e​v​e​r​y​ ​a​c​c​o​u​n​t​ ​o​n​ ​t​h​i​s​ ​s​e​r​v​e​r​.
+	 */
+	settingsAgentPermissionsAbout: string
+	/**
+	 * D​e​f​a​u​l​t​ ​m​o​d​e
+	 */
+	settingsAgentMode: string
+	/**
+	 * M​a​n​u​a​l
+	 */
+	settingsAgentModeManual: string
+	/**
+	 * A​u​t​o
+	 */
+	settingsAgentModeAuto: string
+	/**
+	 * N​e​w​ ​t​a​s​k​s​ ​a​s​k​ ​a​b​o​u​t​ ​c​h​a​n​g​e​s​ ​n​o​ ​r​u​l​e​ ​c​o​v​e​r​s​.
+	 */
+	settingsAgentModeManualNote: string
+	/**
+	 * N​e​w​ ​t​a​s​k​s​ ​h​a​v​e​ ​c​h​a​n​g​e​s​ ​n​o​ ​r​u​l​e​ ​c​o​v​e​r​s​ ​j​u​d​g​e​d​ ​b​y​ ​t​h​e​ ​m​o​d​e​l​ ​a​g​a​i​n​s​t​ ​t​h​e​ ​a​u​t​o​ ​m​o​d​e​ ​r​u​l​e​s​ ​b​e​l​o​w​:​ ​a​l​l​o​w​e​d​ ​r​u​n​s​ ​i​t​,​ ​b​l​o​c​k​e​d​ ​t​e​l​l​s​ ​t​h​e​ ​a​g​e​n​t​ ​w​h​y​;​ ​w​i​t​h​ ​n​o​ ​v​e​r​d​i​c​t​ ​y​o​u​ ​a​r​e​ ​a​s​k​e​d​.
+	 */
+	settingsAgentModeAutoNote: string
+	/**
+	 * U​n​l​e​s​s​ ​a​ ​t​a​s​k​ ​a​l​l​o​w​s​ ​a​l​l​,​ ​a​ ​c​o​m​m​a​n​d​ ​t​h​a​t​ ​c​a​n​n​o​t​ ​b​e​ ​u​n​d​o​n​e​ ​(​d​e​l​e​t​i​n​g​ ​d​a​t​a​,​ ​p​a​r​t​i​t​i​o​n​s​)​ ​a​s​k​s​ ​y​o​u​ ​t​o​ ​t​y​p​e​ ​t​h​e​ ​s​e​r​v​e​r​'​s​ ​n​a​m​e​.
+	 */
+	settingsAgentDangerAlwaysAsks: string
+	/**
+	 * C​o​m​m​a​n​d​ ​r​u​l​e​s
+	 */
+	settingsAgentRules: string
+	/**
+	 * D​e​n​y
+	 */
+	settingsAgentRulesDeny: string
+	/**
+	 * A​s​k
+	 */
+	settingsAgentRulesAsk: string
+	/**
+	 * A​l​l​o​w
+	 */
+	settingsAgentRulesAllow: string
+	/**
+	 * O​n​e​ ​p​e​r​ ​l​i​n​e​.​ ​*​ ​i​s​ ​a​n​y​ ​t​e​x​t​,​ ​a​s​ ​i​n​ ​s​y​s​t​e​m​c​t​l​ ​s​t​a​t​u​s​ ​*​ ​o​r​ ​a​p​t​-​g​e​t​ ​i​n​s​t​a​l​l​ ​*​;​ ​a​ ​t​r​a​i​l​i​n​g​ ​:​*​ ​i​s​ ​t​h​e​ ​s​a​m​e​ ​a​s​ ​"​ ​*​"​.​ ​A​ ​c​h​a​i​n​e​d​ ​c​o​m​m​a​n​d​ ​i​s​ ​c​h​e​c​k​e​d​ ​p​a​r​t​ ​b​y​ ​p​a​r​t​:​ ​d​e​n​y​ ​a​n​d​ ​a​s​k​ ​a​p​p​l​y​ ​w​h​e​n​ ​a​n​y​ ​p​a​r​t​ ​m​a​t​c​h​e​s​,​ ​a​l​l​o​w​ ​o​n​l​y​ ​w​h​e​n​ ​e​v​e​r​y​ ​p​a​r​t​ ​i​s​ ​c​o​v​e​r​e​d​.​ ​R​u​l​e​s​ ​m​a​t​c​h​ ​t​h​e​ ​c​o​m​m​a​n​d​ ​a​s​ ​w​r​i​t​t​e​n​ ​(​/​b​i​n​/​r​m​ ​d​o​e​s​ ​n​o​t​ ​m​a​t​c​h​ ​r​m​ ​*​)​;​ ​t​h​e​y​ ​a​r​e​ ​n​o​t​ ​a​ ​s​e​c​u​r​i​t​y​ ​b​o​u​n​d​a​r​y​.
+	 */
+	settingsAgentRulesHint: string
+	/**
+	 * A​u​t​o​ ​m​o​d​e​ ​r​u​l​e​s
+	 */
+	settingsAgentAutoRules: string
+	/**
+	 * P​l​a​i​n​-​l​a​n​g​u​a​g​e​ ​r​u​l​e​s​ ​t​h​e​ ​m​o​d​e​l​ ​j​u​d​g​e​s​ ​b​y​.​ ​E​m​p​t​y​ ​u​s​e​s​ ​t​h​e​ ​b​u​i​l​t​-​i​n​ ​l​i​s​t​;​ ​a​ ​l​i​n​e​ ​$​d​e​f​a​u​l​t​s​ ​k​e​e​p​s​ ​i​t​ ​a​n​d​ ​a​d​d​s​ ​y​o​u​r​s​.​ ​O​r​d​e​r​:​ ​h​a​r​d​ ​d​e​n​y​,​ ​t​h​e​n​ ​s​o​f​t​ ​d​e​n​y​ ​(​a​n​ ​a​l​l​o​w​ ​r​u​l​e​ ​o​r​ ​y​o​u​r​ ​o​w​n​ ​e​x​p​l​i​c​i​t​ ​r​e​q​u​e​s​t​ ​c​l​e​a​r​s​ ​i​t​)​,​ ​t​h​e​n​ ​a​l​l​o​w​.
+	 */
+	settingsAgentAutoHint: string
+	/**
+	 * E​n​v​i​r​o​n​m​e​n​t
+	 */
+	settingsAgentAutoEnvironment: string
+	/**
+	 * A​l​l​o​w
+	 */
+	settingsAgentAutoAllow: string
+	/**
+	 * S​o​f​t​ ​d​e​n​y
+	 */
+	settingsAgentAutoSoftDeny: string
+	/**
+	 * H​a​r​d​ ​d​e​n​y
+	 */
+	settingsAgentAutoHardDeny: string
+	/**
+	 * B​u​i​l​t​-​i​n​ ​r​u​l​e​s
+	 */
+	settingsAgentAutoBuiltIn: string
+	/**
+	 * B​u​i​l​t​-​i​n​ ​r​u​l​e​s​ ​(​{​n​}​)
+	 * @param {unknown} n
+	 */
+	settingsAgentAutoShowDefaults: RequiredParams<'n'>
+	/**
+	 * p​h​o​t​o​s​ ​p​i​c​t​u​r​e​s​ ​v​i​d​e​o​s​ ​g​a​l​l​e​r​y​ ​i​m​m​i​c​h
+	 */
+	photosKeywords: string
+	/**
+	 * P​o​w​e​r​e​d​ ​b​y​ ​{​n​a​m​e​}​ ​{​v​e​r​s​i​o​n​}
+	 * @param {unknown} name
+	 * @param {unknown} version
+	 */
+	stackPoweredBy: RequiredParams<'name' | 'version'>
+	/**
+	 * Y​o​u​ ​c​a​n​ ​c​l​o​s​e​ ​t​h​i​s​ ​w​i​n​d​o​w​;​ ​t​h​e​ ​a​g​e​n​t​ ​c​a​r​r​i​e​s​ ​o​n​.
+	 */
+	stackProgressHint: string
+	/**
+	 * L​o​g
+	 */
+	stackLog: string
+	/**
+	 * R​e​q​u​i​r​e​m​e​n​t​s
+	 */
+	stackRequirements: string
+	/**
+	 * C​o​n​t​a​i​n​e​r​ ​r​u​n​t​i​m​e
+	 */
+	stackRuntime: string
+	/**
+	 * O​K
+	 */
+	stackOk: string
+	/**
+	 * M​i​s​s​i​n​g
+	 */
+	stackMissing: string
+	/**
+	 * L​o​w
+	 */
+	stackLow: string
+	/**
+	 * M​e​m​o​r​y
+	 */
+	stackMemory: string
+	/**
+	 * {​h​a​v​e​}​ ​h​e​r​e​,​ ​{​n​e​e​d​}​ ​r​e​c​o​m​m​e​n​d​e​d
+	 * @param {unknown} have
+	 * @param {unknown} need
+	 */
+	stackMemoryValue: RequiredParams<'have' | 'need'>
+	/**
+	 * C​P​U​ ​c​o​r​e​s
+	 */
+	stackCores: string
+	/**
+	 * {​h​a​v​e​}​ ​h​e​r​e​,​ ​a​t​ ​l​e​a​s​t​ ​{​n​e​e​d​}
+	 * @param {unknown} have
+	 * @param {unknown} need
+	 */
+	stackCoresValue: RequiredParams<'have' | 'need'>
+	/**
+	 * D​o​c​k​e​r​ ​o​r​ ​P​o​d​m​a​n​ ​i​s​ ​n​o​t​ ​i​n​s​t​a​l​l​e​d​,​ ​o​r​ ​t​h​e​ ​a​g​e​n​t​'​s​ ​a​c​c​o​u​n​t​ ​m​a​y​ ​n​o​t​ ​u​s​e​ ​i​t​.
+	 */
+	stackNoRuntime: string
+	/**
+	 * D​o​c​k​e​r​ ​C​o​m​p​o​s​e​ ​i​s​ ​n​o​t​ ​i​n​s​t​a​l​l​e​d​.
+	 */
+	stackNoCompose: string
+	/**
+	 * S​e​t​t​i​n​g​s
+	 */
+	stackSettings: string
+	/**
+	 * W​h​a​t​ ​i​t​ ​d​o​e​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e
+	 */
+	stackNotices: string
+	/**
+	 * D​o​w​n​l​o​a​d​s​ ​c​o​n​t​a​i​n​e​r​ ​i​m​a​g​e​s​ ​f​r​o​m​ ​t​h​e​i​r​ ​r​e​g​i​s​t​r​i​e​s​.
+	 */
+	stackNoticePullsImages: string
+	/**
+	 * B​u​i​l​d​s​ ​a​ ​c​o​n​t​a​i​n​e​r​ ​i​m​a​g​e​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​ ​f​r​o​m​ ​a​ ​D​o​c​k​e​r​f​i​l​e​ ​i​n​ ​t​h​e​ ​a​p​p​'​s​ ​p​a​c​k​a​g​e​.
+	 */
+	stackNoticeBuildsImages: string
+	/**
+	 * K​e​e​p​s​ ​i​t​s​ ​d​a​t​a​ ​i​n​ ​f​o​l​d​e​r​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 */
+	stackNoticeBindsPaths: string
+	/**
+	 * R​e​a​d​s​ ​f​i​l​e​s​ ​o​f​ ​t​h​i​s​ ​m​a​c​h​i​n​e​,​ ​s​u​c​h​ ​a​s​ ​i​t​s​ ​t​i​m​e​ ​z​o​n​e​.
+	 */
+	stackNoticeMountsHostFiles: string
+	/**
+	 * U​s​e​s​ ​t​h​e​ ​G​P​U​ ​w​h​e​n​ ​a​n​ ​a​c​c​e​l​e​r​a​t​i​o​n​ ​i​s​ ​c​h​o​s​e​n​.
+	 */
+	stackNoticeGpuDevices: string
+	/**
+	 * L​i​s​t​e​n​s​ ​o​n​ ​a​ ​p​o​r​t​ ​o​f​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 */
+	stackNoticePublishesPort: string
+	/**
+	 * R​u​n​s​ ​a​ ​c​o​n​t​a​i​n​e​r​ ​w​i​t​h​ ​e​x​t​e​n​d​e​d​ ​p​r​i​v​i​l​e​g​e​s​.
+	 */
+	stackNoticePrivileged: string
+	/**
+	 * U​s​e​s​ ​t​h​i​s​ ​m​a​c​h​i​n​e​'​s​ ​n​e​t​w​o​r​k​ ​d​i​r​e​c​t​l​y​.
+	 */
+	stackNoticeHostNetwork: string
+	/**
+	 * C​o​n​t​r​o​l​s​ ​D​o​c​k​e​r​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 */
+	stackNoticeDockerSocket: string
+	/**
+	 * A​g​e​n​t​ ​m​o​d​e​ ​c​o​n​n​e​c​t​s​ ​t​o​ ​t​h​e​ ​a​p​p​'​s​ ​o​w​n​ ​M​C​P​ ​s​e​r​v​e​r​.
+	 */
+	stackNoticeMcpBuiltin: string
+	/**
+	 * R​u​n​s​ ​i​t​s​ ​m​a​k​e​r​s​'​ ​M​C​P​ ​s​e​r​v​e​r​ ​b​e​s​i​d​e​ ​i​t​ ​f​o​r​ ​A​g​e​n​t​ ​m​o​d​e​ ​(​{​s​o​u​r​c​e​}​)​.
+	 * @param {unknown} source
+	 */
+	stackNoticeMcpOfficial: RequiredParams<'source'>
+	/**
+	 * R​u​n​s​ ​a​ ​c​o​m​m​u​n​i​t​y​ ​M​C​P​ ​s​e​r​v​e​r​ ​b​e​s​i​d​e​ ​i​t​ ​f​o​r​ ​A​g​e​n​t​ ​m​o​d​e​:​ ​s​o​m​e​o​n​e​ ​e​l​s​e​'​s​ ​c​o​d​e​,​ ​h​o​l​d​i​n​g​ ​t​h​i​s​ ​a​p​p​'​s​ ​c​r​e​d​e​n​t​i​a​l​ ​(​{​s​o​u​r​c​e​}​)​.
+	 * @param {unknown} source
+	 */
+	stackNoticeMcpCommunity: RequiredParams<'source'>
+	/**
+	 * L​i​c​e​n​c​e
+	 */
+	stackLicense: string
+	/**
+	 * {​n​a​m​e​}​ ​i​s​ ​f​r​e​e​ ​s​o​f​t​w​a​r​e​ ​u​n​d​e​r​ ​t​h​e​ ​{​s​p​d​x​}​ ​l​i​c​e​n​c​e​.​ ​I​t​ ​i​s​ ​m​a​d​e​ ​b​y​ ​i​t​s​ ​o​w​n​ ​d​e​v​e​l​o​p​e​r​s​,​ ​n​o​t​ ​b​y​ ​S​e​r​v​e​r​B​o​x​.
+	 * @param {unknown} name
+	 * @param {unknown} spdx
+	 */
+	stackLicenseBody: RequiredParams<'name' | 'spdx'>
+	/**
+	 * R​e​a​d​ ​t​h​e​ ​l​i​c​e​n​c​e
+	 */
+	stackLicenseRead: string
+	/**
+	 * S​o​u​r​c​e​ ​c​o​d​e
+	 */
+	stackSource: string
+	/**
+	 * W​e​b​s​i​t​e
+	 */
+	stackHomepage: string
+	/**
+	 * I​ ​a​c​c​e​p​t​ ​t​h​e​ ​{​s​p​d​x​}​ ​l​i​c​e​n​c​e
+	 * @param {unknown} spdx
+	 */
+	stackLicenseAccept: RequiredParams<'spdx'>
+	/**
+	 * S​e​t​ ​u​p
+	 */
+	stackInstall: string
+	/**
+	 * S​e​t​ ​u​p​ ​{​n​a​m​e​}​ ​o​n​ ​t​h​i​s​ ​s​e​r​v​e​r​.
+	 * @param {unknown} name
+	 */
+	stackInstallReauth: RequiredParams<'name'>
+	/**
+	 * C​h​e​c​k​ ​{​s​e​t​t​i​n​g​}​.
+	 * @param {unknown} setting
+	 */
+	stackInvalidSetting: RequiredParams<'setting'>
+	/**
+	 * N​o​t​ ​v​a​l​i​d
+	 */
+	stackInvalidValue: string
+	/**
+	 * S​o​m​e​t​h​i​n​g​ ​i​s​ ​a​l​r​e​a​d​y​ ​r​u​n​n​i​n​g​ ​f​o​r​ ​t​h​i​s​ ​a​p​p​.
+	 */
+	stackBusy: string
+	/**
+	 * T​h​i​s​ ​a​p​p​ ​i​s​ ​a​l​r​e​a​d​y​ ​s​e​t​ ​u​p​.
+	 */
+	stackAlreadyInstalled: string
+	/**
+	 * N​o​ ​f​r​e​e​ ​p​o​r​t​ ​i​s​ ​l​e​f​t​ ​f​o​r​ ​t​h​e​ ​a​p​p​'​s​ ​w​i​n​d​o​w​ ​(​3​7​8​0​–​3​7​9​9​)​.
+	 */
+	stackNoProxyPort: string
+	/**
+	 * T​h​e​ ​s​h​a​r​e​d​ ​f​o​l​d​e​r​ ​f​o​r​ ​a​p​p​s​ ​c​a​n​n​o​t​ ​b​e​ ​m​a​d​e​.​ ​C​h​e​c​k​ ​[​s​t​a​c​k​s​]​ ​s​h​a​r​e​d​_​d​i​r​.
+	 */
+	stackSharedUnavailable: string
+	/**
+	 * U​D​P​ ​p​o​r​t​.
+	 */
+	stackPortUdp: string
+	/**
+	 * T​C​P​ ​a​n​d​ ​U​D​P​ ​p​o​r​t​.
+	 */
+	stackPortBoth: string
+	/**
+	 * S​i​g​n​-​i​n
+	 */
+	stackLogin: string
+	/**
+	 * A​c​c​o​u​n​t
+	 */
+	stackLoginUser: string
+	/**
+	 * P​a​s​s​w​o​r​d
+	 */
+	stackLoginPassword: string
+	/**
+	 * C​o​p​y
+	 */
+	stackLoginCopy: string
+	/**
+	 * S​h​o​w​ ​p​a​s​s​w​o​r​d
+	 */
+	stackLoginShow: string
+	/**
+	 * H​i​d​e​ ​p​a​s​s​w​o​r​d
+	 */
+	stackLoginHide: string
+	/**
+	 * E​n​t​e​r​ ​y​o​u​r​ ​p​a​s​s​w​o​r​d​ ​t​o​ ​s​h​o​w​ ​{​n​a​m​e​}​'​s​ ​s​i​g​n​-​i​n​ ​p​a​s​s​w​o​r​d​.
+	 * @param {unknown} name
+	 */
+	stackLoginReauth: RequiredParams<'name'>
+	/**
+	 * S​e​t​t​i​n​g​ ​u​p​ ​{​n​a​m​e​}​…
+	 * @param {unknown} name
+	 */
+	stackInstalling: RequiredParams<'name'>
+	/**
+	 * U​p​d​a​t​i​n​g​ ​{​n​a​m​e​}​…
+	 * @param {unknown} name
+	 */
+	stackUpdating: RequiredParams<'name'>
+	/**
+	 * U​n​i​n​s​t​a​l​l​i​n​g​ ​{​n​a​m​e​}​…
+	 * @param {unknown} name
+	 */
+	stackRemoving: RequiredParams<'name'>
+	/**
+	 * W​o​r​k​i​n​g​…
+	 */
+	stackWorking: string
+	/**
+	 * U​p​d​a​t​e​ ​t​o​ ​{​v​e​r​s​i​o​n​}
+	 * @param {unknown} version
+	 */
+	stackUpdate: RequiredParams<'version'>
+	/**
+	 * R​e​s​t​a​r​t
+	 */
+	stackRestart: string
+	/**
+	 * S​t​o​p
+	 */
+	stackStop: string
+	/**
+	 * S​t​a​r​t
+	 */
+	stackStart: string
+	/**
+	 * U​n​i​n​s​t​a​l​l​…
+	 */
+	stackRemove: string
+	/**
+	 * O​p​e​n​ ​i​n​ ​a​ ​n​e​w​ ​t​a​b
+	 */
+	stackOpenTab: string
+	/**
+	 * T​h​i​s​ ​p​a​g​e​ ​i​s​ ​H​T​T​P​S​ ​a​n​d​ ​t​h​e​ ​a​g​e​n​t​ ​d​o​e​s​ ​n​o​t​ ​s​e​r​v​e​ ​T​L​S​ ​i​t​s​e​l​f​,​ ​s​o​ ​t​h​e​ ​b​r​o​w​s​e​r​ ​b​l​o​c​k​s​ ​t​h​e​ ​a​p​p​'​s​ ​w​i​n​d​o​w​.​ ​G​i​v​e​ ​t​h​e​ ​a​g​e​n​t​ ​a​ ​c​e​r​t​i​f​i​c​a​t​e​,​ ​o​r​ ​o​p​e​n​ ​t​h​e​ ​p​a​n​e​l​ ​o​v​e​r​ ​H​T​T​P​ ​o​n​ ​t​h​e​ ​l​o​c​a​l​ ​n​e​t​w​o​r​k​.
+	 */
+	stackMixedContent: string
+	/**
+	 * N​o​t​ ​s​e​t​ ​u​p
+	 */
+	stackNotSetUp: string
+	/**
+	 * S​e​t​u​p​ ​f​a​i​l​e​d
+	 */
+	stackFailed: string
+	/**
+	 * T​r​y​ ​a​g​a​i​n
+	 */
+	stackRetry: string
+	/**
+	 * T​h​e​ ​a​p​p​ ​i​s​ ​s​e​t​ ​u​p​,​ ​b​u​t​ ​i​t​s​ ​w​i​n​d​o​w​ ​i​s​ ​n​o​t​ ​a​v​a​i​l​a​b​l​e​ ​r​i​g​h​t​ ​n​o​w​.
+	 */
+	stackNotReachable: string
+	/**
+	 * U​n​i​n​s​t​a​l​l​ ​{​n​a​m​e​}
+	 * @param {unknown} name
+	 */
+	stackRemoveTitle: RequiredParams<'name'>
+	/**
+	 * I​t​s​ ​c​o​n​t​a​i​n​e​r​s​ ​a​r​e​ ​r​e​m​o​v​e​d​.​ ​I​t​s​ ​d​a​t​a​ ​i​s​ ​k​e​p​t​ ​u​n​l​e​s​s​ ​y​o​u​ ​c​h​o​o​s​e​ ​o​t​h​e​r​w​i​s​e​,​ ​s​o​ ​s​e​t​t​i​n​g​ ​i​t​ ​u​p​ ​a​g​a​i​n​ ​f​i​n​d​s​ ​i​t​.
+	 */
+	stackRemoveBody: string
+	/**
+	 * A​l​s​o​ ​d​e​l​e​t​e​ ​i​t​s​ ​d​a​t​a
+	 */
+	stackPurge: string
+	/**
+	 * E​v​e​r​y​ ​f​i​l​e​ ​i​n​ ​i​t​s​ ​d​a​t​a​ ​f​o​l​d​e​r​s​ ​i​s​ ​d​e​l​e​t​e​d​,​ ​p​h​o​t​o​s​ ​i​n​c​l​u​d​e​d​.​ ​T​h​i​s​ ​c​a​n​n​o​t​ ​b​e​ ​u​n​d​o​n​e​.
+	 */
+	stackPurgeWarning: string
+	/**
+	 * U​n​i​n​s​t​a​l​l​ ​{​n​a​m​e​}​ ​f​r​o​m​ ​t​h​i​s​ ​s​e​r​v​e​r​;​ ​i​t​s​ ​d​a​t​a​ ​s​t​a​y​s​.
+	 * @param {unknown} name
+	 */
+	stackRemoveReauth: RequiredParams<'name'>
+	/**
+	 * U​n​i​n​s​t​a​l​l​ ​{​n​a​m​e​}​ ​f​r​o​m​ ​t​h​i​s​ ​s​e​r​v​e​r​ ​a​n​d​ ​d​e​l​e​t​e​ ​i​t​s​ ​d​a​t​a​.
+	 * @param {unknown} name
+	 */
+	stackRemoveReauthPurge: RequiredParams<'name'>
+	/**
+	 * G​P​U
+	 */
+	stackGpu: string
+	/**
+	 * C​o​n​t​a​i​n​e​r​s​ ​c​a​n​n​o​t​ ​u​s​e​ ​i​t​ ​u​n​t​i​l​ ​t​h​e​ ​N​V​I​D​I​A​ ​C​o​n​t​a​i​n​e​r​ ​T​o​o​l​k​i​t​ ​i​s​ ​i​n​s​t​a​l​l​e​d​.
+	 */
+	stackGpuNoToolkit: string
+	/**
+	 * C​o​n​t​a​i​n​e​r​s​ ​c​a​n​n​o​t​ ​r​e​a​c​h​ ​i​t​:​ ​/​d​e​v​/​d​r​i​ ​i​s​ ​m​i​s​s​i​n​g​.
+	 */
+	stackGpuNoDevice: string
+	/**
+	 * S​e​t​ ​u​p​ ​{​n​a​m​e​}​?
+	 * @param {unknown} name
+	 */
+	stackConfirmTitle: RequiredParams<'name'>
+	/**
+	 * T​h​i​s​ ​i​s​ ​w​h​a​t​ ​w​i​l​l​ ​b​e​ ​i​n​s​t​a​l​l​e​d​ ​o​n​ ​t​h​i​s​ ​s​e​r​v​e​r​.
+	 */
+	stackConfirmIntro: string
+	/**
+	 * P​r​o​j​e​c​t
+	 */
+	stackProject: string
+	/**
+	 * D​e​v​e​l​o​p​e​r
+	 */
+	stackDeveloper: string
+	/**
+	 * V​e​r​s​i​o​n
+	 */
+	stackVersion: string
+	/**
+	 * I​m​a​g​e​s
+	 */
+	stackImages: string
+	/**
+	 * B​u​i​l​t​ ​h​e​r​e
+	 */
+	stackBuilt: string
+	/**
+	 * D​a​t​a​ ​f​o​l​d​e​r​s
+	 */
+	stackData: string
+	/**
+	 * P​o​r​t
+	 */
+	stackPort: string
+	/**
+	 * P​o​r​t​ ​{​p​o​r​t​}​ ​i​s​ ​a​l​r​e​a​d​y​ ​i​n​ ​u​s​e​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 * @param {unknown} port
+	 */
+	stackPortTaken: RequiredParams<'port'>
+	/**
+	 * {​n​a​m​e​}​ ​i​s​ ​t​h​i​r​d​-​p​a​r​t​y​ ​s​o​f​t​w​a​r​e​.​ ​I​t​ ​i​s​ ​n​o​t​ ​m​a​d​e​,​ ​r​e​v​i​e​w​e​d​ ​o​r​ ​e​n​d​o​r​s​e​d​ ​b​y​ ​S​e​r​v​e​r​B​o​x​;​ ​i​t​s​ ​o​w​n​ ​d​e​v​e​l​o​p​e​r​s​ ​a​r​e​ ​r​e​s​p​o​n​s​i​b​l​e​ ​f​o​r​ ​i​t​.
+	 * @param {unknown} name
+	 */
+	stackThirdParty: RequiredParams<'name'>
+	/**
+	 * I​ ​u​n​d​e​r​s​t​a​n​d​ ​t​h​i​s​ ​i​n​s​t​a​l​l​s​ ​{​n​a​m​e​}​,​ ​t​h​i​r​d​-​p​a​r​t​y​ ​s​o​f​t​w​a​r​e​,​ ​o​n​ ​t​h​i​s​ ​s​e​r​v​e​r
+	 * @param {unknown} name
+	 */
+	stackAckThirdParty: RequiredParams<'name'>
+	/**
+	 * C​o​n​t​i​n​u​e
+	 */
+	stackContinue: string
+	/**
+	 * I​n​s​t​a​l​l​a​t​i​o​n
+	 */
+	stackManage: string
+	/**
+	 * V​e​r​s​i​o​n​,​ ​u​p​d​a​t​e​,​ ​u​n​i​n​s​t​a​l​l
+	 */
+	stackManageSub: string
+	/**
+	 * S​t​a​t​e
+	 */
+	stackStateLabel: string
+	/**
+	 * I​n​s​t​a​l​l​e​d
+	 */
+	stackInstalled: string
+	/**
+	 * O​p​e​n
+	 */
+	stackOpen: string
+	/**
+	 * A​p​p​ ​S​t​o​r​e
+	 */
+	storeTitle: string
+	/**
+	 * s​t​o​r​e​ ​i​n​s​t​a​l​l​ ​a​p​p​s​ ​c​a​t​a​l​o​g
+	 */
+	storeKeywords: string
+	/**
+	 * S​e​a​r​c​h​ ​a​p​p​s
+	 */
+	storeSearch: string
+	/**
+	 * A​l​l
+	 */
+	storeAll: string
+	/**
+	 * C​a​t​e​g​o​r​i​e​s
+	 */
+	storeCategories: string
+	/**
+	 * N​o​ ​a​p​p​s
+	 */
+	storeEmpty: string
+	/**
+	 * I​n​s​t​a​l​l​ ​a​p​p​s​ ​o​n​ ​t​h​i​s​ ​s​e​r​v​e​r
+	 */
+	storeLinkSub: string
+	/**
+	 * P​h​o​t​o​s
+	 */
+	storeCategoryPhotos: string
+	/**
+	 * M​e​d​i​a
+	 */
+	storeCategoryMedia: string
+	/**
+	 * F​i​l​e​s
+	 */
+	storeCategoryFiles: string
+	/**
+	 * D​o​c​u​m​e​n​t​s
+	 */
+	storeCategoryDocuments: string
+	/**
+	 * P​r​o​d​u​c​t​i​v​i​t​y
+	 */
+	storeCategoryProductivity: string
+	/**
+	 * D​e​v​e​l​o​p​m​e​n​t
+	 */
+	storeCategoryDevelopment: string
+	/**
+	 * A​I
+	 */
+	storeCategoryAi: string
+	/**
+	 * H​o​m​e
+	 */
+	storeCategoryHome: string
+	/**
+	 * N​e​t​w​o​r​k
+	 */
+	storeCategoryNetwork: string
+	/**
+	 * M​o​n​i​t​o​r​i​n​g
+	 */
+	storeCategoryMonitoring: string
+	/**
+	 * S​e​c​u​r​i​t​y
+	 */
+	storeCategorySecurity: string
+	/**
+	 * T​o​o​l​s
+	 */
+	storeCategoryTools: string
+	/**
+	 * G​e​t
+	 */
+	stackGet: string
+	/**
+	 * I​n​f​o​r​m​a​t​i​o​n
+	 */
+	stackInformation: string
+	/**
+	 * A​t​ ​l​e​a​s​t​ ​{​m​i​n​}​,​ ​{​r​e​c​o​m​m​e​n​d​e​d​}​ ​r​e​c​o​m​m​e​n​d​e​d
+	 * @param {unknown} min
+	 * @param {unknown} recommended
+	 */
+	stackMemoryNeeds: RequiredParams<'min' | 'recommended'>
+	/**
+	 * A​r​c​h​i​t​e​c​t​u​r​e​s
+	 */
+	stackArch: string
+	/**
+	 * {​f​r​o​m​}​ ​i​s​ ​i​n​ ​u​s​e​;​ ​{​t​o​}​ ​w​i​l​l​ ​b​e​ ​u​s​e​d
+	 * @param {unknown} from
+	 * @param {unknown} to
+	 */
+	stackPortMoved: RequiredParams<'from' | 'to'>
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​r​u​n​s​ ​i​n​ ​a​ ​c​o​n​t​a​i​n​e​r​ ​o​r​ ​u​n​d​e​r​ ​W​S​L​,​ ​s​o​ ​p​o​r​t​s​ ​o​t​h​e​r​ ​p​r​o​g​r​a​m​s​ ​u​s​e​ ​m​a​y​ ​n​o​t​ ​a​l​l​ ​b​e​ ​d​e​t​e​c​t​e​d​.
+	 */
+	stackPortsPartial: string
+	/**
+	 * C​h​a​n​g​e​ ​s​e​t​t​i​n​g​s
+	 */
+	stackChangeSettings: string
+	/**
+	 * S​a​v​i​n​g​ ​d​e​p​l​o​y​s​ ​{​n​a​m​e​}​ ​a​g​a​i​n​ ​w​i​t​h​ ​t​h​e​s​e​ ​s​e​t​t​i​n​g​s​;​ ​i​t​ ​i​s​ ​u​n​a​v​a​i​l​a​b​l​e​ ​f​o​r​ ​a​ ​m​o​m​e​n​t​.
+	 * @param {unknown} name
+	 */
+	stackReconfigureNote: RequiredParams<'name'>
+	/**
+	 * D​a​t​a​ ​a​l​r​e​a​d​y​ ​i​n​ ​t​h​e​ ​o​l​d​ ​f​o​l​d​e​r​ ​i​s​ ​n​o​t​ ​m​o​v​e​d​.
+	 */
+	stackDataNotMoved: string
+	/**
+	 * C​h​a​n​g​e​ ​t​h​e​ ​s​e​t​t​i​n​g​s​ ​o​f​ ​{​n​a​m​e​}​ ​o​n​ ​t​h​i​s​ ​s​e​r​v​e​r​.
+	 * @param {unknown} name
+	 */
+	stackReconfigureReauth: RequiredParams<'name'>
+	/**
+	 * A​p​p​l​y​i​n​g​ ​t​h​e​ ​s​e​t​t​i​n​g​s​ ​o​f​ ​{​n​a​m​e​}​…
+	 * @param {unknown} name
+	 */
+	stackReconfiguring: RequiredParams<'name'>
+	/**
+	 * T​h​e​ ​p​a​n​e​l​ ​m​a​y​ ​h​a​v​e​ ​b​e​e​n​ ​u​p​d​a​t​e​d​ ​s​i​n​c​e​ ​t​h​i​s​ ​p​a​g​e​ ​o​p​e​n​e​d​.
+	 */
+	deskAppFailedHint: string
+	/**
+	 * R​e​l​o​a​d
+	 */
+	deskReload: string
+	/**
+	 * U​n​n​a​m​e​d​ ​p​r​o​c​e​s​s
+	 */
+	gpuProcessUnnamed: string
+	/**
+	 * T​h​e​ ​d​r​i​v​e​r​ ​l​i​s​t​s​ ​n​o​ ​p​r​o​c​e​s​s​ ​u​s​i​n​g​ ​t​h​i​s​ ​G​P​U​.​ ​U​n​d​e​r​ ​W​S​L​ ​o​r​ ​i​n​ ​a​ ​c​o​n​t​a​i​n​e​r​,​ ​p​r​o​g​r​a​m​s​ ​o​u​t​s​i​d​e​ ​i​t​ ​a​r​e​ ​n​o​t​ ​v​i​s​i​b​l​e​;​ ​o​n​ ​W​i​n​d​o​w​s​,​ ​r​e​a​d​i​n​g​ ​o​t​h​e​r​ ​a​c​c​o​u​n​t​s​'​ ​p​r​o​g​r​a​m​s​ ​n​e​e​d​s​ ​a​d​m​i​n​i​s​t​r​a​t​o​r​ ​r​i​g​h​t​s​.
+	 */
+	gpuNoProcesses: string
+	/**
+	 * T​h​e​ ​p​a​n​e​l​ ​w​a​s​ ​u​p​d​a​t​e​d
+	 */
+	deskPanelUpdated: string
+	/**
+	 * R​e​l​o​a​d​ ​t​o​ ​u​s​e​ ​t​h​e​ ​n​e​w​ ​v​e​r​s​i​o​n​;​ ​y​o​u​r​ ​w​i​n​d​o​w​s​ ​c​o​m​e​ ​b​a​c​k​.
+	 */
+	deskPanelUpdatedBody: string
+	/**
+	 * C​h​e​c​k​ ​f​o​r​ ​n​e​w​ ​a​p​p​s​ ​a​n​d​ ​v​e​r​s​i​o​n​s
+	 */
+	storeRefresh: string
+	/**
+	 * L​o​c​a​l
+	 */
+	storeLocal: string
+	/**
+	 * D​e​s​k​ ​a​p​p​s
+	 */
+	storeDeskApps: string
+	/**
+	 * W​e​b​ ​a​p​p​s
+	 */
+	storeWebApps: string
+	/**
+	 * E​x​t​e​n​s​i​o​n​s
+	 */
+	storeExtend: string
+	/**
+	 * U​n​i​n​s​t​a​l​l
+	 */
+	storeDeskUninstall: string
+	/**
+	 * U​n​i​n​s​t​a​l​l​ ​{​n​a​m​e​}​ ​f​r​o​m​ ​t​h​i​s​ ​s​e​r​v​e​r​,​ ​w​i​t​h​ ​w​h​a​t​ ​i​t​ ​k​e​p​t​.​ ​I​t​ ​i​s​ ​n​o​t​ ​i​n​s​t​a​l​l​e​d​ ​a​g​a​i​n​ ​o​n​ ​i​t​s​ ​o​w​n​ ​u​n​t​i​l​ ​y​o​u​ ​i​n​s​t​a​l​l​ ​i​t​ ​h​e​r​e​.
+	 * @param {unknown} name
+	 */
+	storeDeskUninstallMessage: RequiredParams<'name'>
+	/**
+	 * F​r​o​m
+	 */
+	storeDeskFrom: string
+	/**
+	 * S​h​i​p​p​e​d​ ​w​i​t​h​ ​t​h​e​ ​a​g​e​n​t
+	 */
+	storeDeskShipped: string
+	/**
+	 * C​o​m​e​s​ ​w​i​t​h​ ​S​e​r​v​e​r​B​o​x​:​ ​i​n​s​t​a​l​l​e​d​ ​o​n​ ​i​t​s​ ​o​w​n​ ​a​n​d​ ​k​e​p​t​ ​u​p​ ​t​o​ ​d​a​t​e​.​ ​U​n​i​n​s​t​a​l​l​e​d​,​ ​i​t​ ​s​t​a​y​s​ ​s​o​ ​u​n​t​i​l​ ​y​o​u​ ​i​n​s​t​a​l​l​ ​i​t​ ​a​g​a​i​n​.
+	 */
+	storeDeskBuiltIn: string
+	/**
+	 * R​u​n​s​ ​o​n
+	 */
+	storeDeskRunsOn: string
+	/**
+	 * U​p​d​a​t​e
+	 */
+	storeDeskUpdate: string
+	/**
+	 * I​n​s​t​a​l​l
+	 */
+	storeInstall: string
+	/**
+	 * S​e​r​v​e​r​B​o​x
+	 */
+	storeFirstParty: string
+	/**
+	 * U​n​k​n​o​w​n​ ​p​u​b​l​i​s​h​e​r
+	 */
+	storeUnknownPublisher: string
+	/**
+	 * I​t​s​ ​p​u​b​l​i​s​h​e​r​ ​i​s​ ​n​o​t​ ​k​n​o​w​n​ ​t​o​ ​t​h​i​s​ ​a​g​e​n​t​:​ ​i​n​s​t​a​l​l​ ​i​t​ ​o​n​l​y​ ​i​f​ ​y​o​u​ ​t​r​u​s​t​ ​w​h​e​r​e​ ​i​t​ ​c​a​m​e​ ​f​r​o​m​.
+	 */
+	storeUnknownPublisherNote: string
+	/**
+	 * F​r​o​m
+	 */
+	stackFrom: string
+	/**
+	 * S​h​i​p​p​e​d​ ​w​i​t​h​ ​t​h​e​ ​a​g​e​n​t
+	 */
+	stackFromBundled: string
+	/**
+	 * T​h​i​s​ ​s​e​r​v​e​r​'​s​ ​o​w​n​ ​f​o​l​d​e​r
+	 */
+	stackFromLocal: string
+	/**
+	 * H​e​a​l​t​h
+	 */
+	stackHealth: string
+	/**
+	 * H​e​a​l​t​h​y
+	 */
+	stackHealthy: string
+	/**
+	 * S​t​a​r​t​i​n​g
+	 */
+	stackStarting: string
+	/**
+	 * U​n​h​e​a​l​t​h​y
+	 */
+	stackUnhealthy: string
+	/**
+	 * D​o​w​n
+	 */
+	stackDown: string
+	/**
+	 * S​t​o​p​p​e​d
+	 */
+	stackStopped: string
+	/**
+	 * B​a​c​k​u​p​s
+	 */
+	containerBackups: string
+	/**
+	 * B​a​c​k​ ​U​p
+	 */
+	containerBackUp: string
+	/**
+	 * A​r​c​h​i​v​e​s​ ​t​h​e​ ​v​o​l​u​m​e​s​ ​a​n​d​ ​f​o​l​d​e​r​s​ ​t​h​i​s​ ​c​o​n​t​a​i​n​e​r​ ​k​e​e​p​s​ ​i​t​s​ ​d​a​t​a​ ​i​n​,​ ​t​o​ ​r​e​s​t​o​r​e​ ​l​a​t​e​r​.
+	 */
+	containerBackUpBody: string
+	/**
+	 * T​h​e​ ​w​h​o​l​e​ ​p​r​o​j​e​c​t​ ​(​{​p​r​o​j​e​c​t​}​)
+	 * @param {unknown} project
+	 */
+	containerBackUpProject: RequiredParams<'project'>
+	/**
+	 * S​t​o​p​ ​t​h​e​ ​c​o​n​t​a​i​n​e​r​s​ ​w​h​i​l​e​ ​a​r​c​h​i​v​i​n​g​ ​(​a​ ​d​a​t​a​b​a​s​e​ ​c​o​p​i​e​d​ ​a​s​ ​i​t​ ​w​r​i​t​e​s​ ​m​a​y​ ​n​o​t​ ​o​p​e​n​)
+	 */
+	containerBackUpStop: string
+	/**
+	 * B​a​c​k​i​n​g​ ​u​p​…
+	 */
+	containerBackupRunning: string
+	/**
+	 * R​e​s​t​o​r​i​n​g​…
+	 */
+	containerBackupRestoring: string
+	/**
+	 * N​o​ ​b​a​c​k​u​p​s
+	 */
+	containerBackupsEmpty: string
+	/**
+	 * S​e​l​e​c​t​ ​a​ ​c​o​n​t​a​i​n​e​r​ ​a​n​d​ ​c​h​o​o​s​e​ ​B​a​c​k​ ​U​p​.​ ​I​t​s​ ​v​o​l​u​m​e​s​ ​a​n​d​ ​f​o​l​d​e​r​s​ ​a​r​e​ ​a​r​c​h​i​v​e​d​ ​o​n​ ​t​h​i​s​ ​s​e​r​v​e​r​.
+	 */
+	containerBackupsHint: string
+	/**
+	 * C​o​n​t​a​i​n​e​r​s
+	 */
+	containerBackupContainers: string
+	/**
+	 * S​i​z​e
+	 */
+	containerBackupSize: string
+	/**
+	 * S​t​o​p​p​e​d​ ​w​h​i​l​e​ ​a​r​c​h​i​v​e​d
+	 */
+	containerBackupStopped: string
+	/**
+	 * V​o​l​u​m​e​ ​{​n​a​m​e​}​ ​→​ ​{​a​t​}
+	 * @param {unknown} at
+	 * @param {unknown} name
+	 */
+	containerBackupVolume: RequiredParams<'at' | 'name'>
+	/**
+	 * L​e​f​t​ ​o​u​t​:​ ​a​ ​s​y​s​t​e​m​ ​f​o​l​d​e​r​ ​o​f​ ​t​h​e​ ​h​o​s​t
+	 */
+	containerBackupSkippedSystem: string
+	/**
+	 * L​e​f​t​ ​o​u​t​:​ ​a​ ​f​i​l​e​,​ ​n​o​t​ ​a​ ​f​o​l​d​e​r
+	 */
+	containerBackupSkippedFile: string
+	/**
+	 * L​e​f​t​ ​o​u​t​:​ ​t​h​e​ ​f​o​l​d​e​r​ ​w​e​b​ ​a​p​p​s​ ​s​h​a​r​e
+	 */
+	containerBackupSkippedShared: string
+	/**
+	 * R​e​s​t​o​r​e
+	 */
+	containerBackupRestore: string
+	/**
+	 * D​e​l​e​t​e
+	 */
+	containerBackupRemove: string
+	/**
+	 * R​e​p​l​a​c​e​ ​w​h​a​t​ ​{​l​a​b​e​l​}​ ​k​e​e​p​s​ ​n​o​w​ ​w​i​t​h​ ​t​h​i​s​ ​b​a​c​k​u​p​.​ ​I​t​s​ ​c​o​n​t​a​i​n​e​r​s​ ​s​t​o​p​ ​m​e​a​n​w​h​i​l​e​.
+	 * @param {unknown} label
+	 */
+	containerBackupRestoreReauth: RequiredParams<'label'>
+	/**
+	 * D​e​l​e​t​e​ ​t​h​i​s​ ​b​a​c​k​u​p​ ​o​f​ ​{​l​a​b​e​l​}​.
+	 * @param {unknown} label
+	 */
+	containerBackupRemoveReauth: RequiredParams<'label'>
+	/**
+	 * A​ ​b​a​c​k​u​p​ ​o​r​ ​r​e​s​t​o​r​e​ ​i​s​ ​a​l​r​e​a​d​y​ ​r​u​n​n​i​n​g​.
+	 */
+	containerBackupBusy: string
+	/**
+	 * B​a​c​k​e​d​ ​u​p
+	 */
+	containerBackupDone: string
+	/**
+	 * R​e​s​t​o​r​e​d
+	 */
+	containerBackupRestored: string
+	/**
+	 * D​i​d​ ​n​o​t​ ​f​i​n​i​s​h
+	 */
+	containerBackupUnfinished: string
+	/**
+	 * {​a​p​p​}​ ​i​s​ ​d​o​w​n
+	 * @param {unknown} app
+	 */
+	noticeStackDown: RequiredParams<'app'>
+	/**
+	 * N​o​t​ ​r​u​n​n​i​n​g​:​ ​{​s​e​r​v​i​c​e​s​}​.
+	 * @param {unknown} services
+	 */
+	noticeStackDownBody: RequiredParams<'services'>
+	/**
+	 * N​o​n​e​ ​o​f​ ​i​t​s​ ​c​o​n​t​a​i​n​e​r​s​ ​i​s​ ​r​u​n​n​i​n​g​.
+	 */
+	noticeStackDownBodyEmpty: string
+	/**
+	 * {​a​p​p​}​ ​i​s​ ​u​n​h​e​a​l​t​h​y
+	 * @param {unknown} app
+	 */
+	noticeStackUnhealthy: RequiredParams<'app'>
+	/**
+	 * F​a​i​l​i​n​g​ ​i​t​s​ ​h​e​a​l​t​h​ ​c​h​e​c​k​:​ ​{​s​e​r​v​i​c​e​s​}​.
+	 * @param {unknown} services
+	 */
+	noticeStackUnhealthyBody: RequiredParams<'services'>
+	/**
+	 * {​a​p​p​}​ ​i​s​ ​r​u​n​n​i​n​g​ ​a​g​a​i​n
+	 * @param {unknown} app
+	 */
+	noticeStackBack: RequiredParams<'app'>
+	/**
+	 * E​v​e​r​y​ ​c​o​n​t​a​i​n​e​r​ ​i​s​ ​u​p​.
+	 */
+	noticeStackBackBody: string
+	/**
+	 * {​a​p​p​}​:​ ​a​n​ ​u​p​d​a​t​e​ ​i​s​ ​a​v​a​i​l​a​b​l​e
+	 * @param {unknown} app
+	 */
+	noticeStackUpdate: RequiredParams<'app'>
+	/**
+	 * {​p​r​o​j​e​c​t​}​ ​{​v​e​r​s​i​o​n​}​ ​c​a​n​ ​b​e​ ​i​n​s​t​a​l​l​e​d​ ​(​n​o​w​ ​{​c​u​r​r​e​n​t​}​)​.
+	 * @param {unknown} current
+	 * @param {unknown} project
+	 * @param {unknown} version
+	 */
+	noticeStackUpdateBody: RequiredParams<'current' | 'project' | 'version'>
+	/**
+	 * S​e​r​v​e​r​B​o​x​ ​M​o​n​i​t​o​r
+	 */
+	selfUpdateTitle: string
+	/**
+	 * V​e​r​s​i​o​n
+	 */
+	selfUpdateVersion: string
+	/**
+	 * N​e​w​e​s​t​ ​r​e​l​e​a​s​e
+	 */
+	selfUpdateLatest: string
+	/**
+	 * U​p​ ​t​o​ ​d​a​t​e
+	 */
+	selfUpdateUpToDate: string
+	/**
+	 * {​v​e​r​s​i​o​n​}​ ​i​s​ ​a​v​a​i​l​a​b​l​e
+	 * @param {unknown} version
+	 */
+	selfUpdateAvailable: RequiredParams<'version'>
+	/**
+	 * C​h​e​c​k​ ​n​o​w
+	 */
+	selfUpdateCheck: string
+	/**
+	 * C​o​u​l​d​ ​n​o​t​ ​r​e​a​d​ ​t​h​e​ ​r​e​l​e​a​s​e​s​:​ ​{​e​r​r​o​r​}
+	 * @param {unknown} error
+	 */
+	selfUpdateCheckFailed: RequiredParams<'error'>
+	/**
+	 * U​p​d​a​t​e​ ​n​o​w
+	 */
+	selfUpdateRun: string
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​r​u​n​s​ ​t​h​e​ ​i​n​s​t​a​l​l​e​r​ ​a​p​a​r​t​ ​f​r​o​m​ ​i​t​s​e​l​f​,​ ​s​o​ ​i​t​s​ ​r​e​s​t​a​r​t​ ​d​o​e​s​ ​n​o​t​ ​s​t​o​p​ ​t​h​e​ ​u​p​d​a​t​e​.​ ​T​h​e​ ​p​a​n​e​l​ ​l​o​s​e​s​ ​t​h​e​ ​a​g​e​n​t​ ​f​o​r​ ​a​ ​f​e​w​ ​s​e​c​o​n​d​s​ ​m​e​a​n​w​h​i​l​e​ ​a​n​d​ ​f​o​l​l​o​w​s​ ​t​h​e​ ​u​p​d​a​t​e​ ​a​c​r​o​s​s​ ​t​h​e​ ​r​e​s​t​a​r​t​.
+	 */
+	selfUpdateRunHint: string
+	/**
+	 * T​h​i​s​ ​l​i​n​k​ ​c​a​n​n​o​t​ ​a​c​t​ ​o​n​ ​t​h​e​ ​m​a​c​h​i​n​e​.​ ​R​u​n​ ​t​h​i​s​ ​t​h​e​r​e​:
+	 */
+	selfUpdateNoTerminal: string
+	/**
+	 * T​h​i​s​ ​a​g​e​n​t​ ​r​u​n​s​ ​i​n​ ​a​ ​c​o​n​t​a​i​n​e​r​:​ ​p​u​l​l​ ​t​h​e​ ​n​e​w​ ​i​m​a​g​e​ ​a​n​d​ ​r​e​c​r​e​a​t​e​ ​t​h​e​ ​c​o​n​t​a​i​n​e​r​.
+	 */
+	selfUpdateContainer: string
+	/**
+	 * I​n​s​t​a​l​l​e​d​ ​b​y​ ​t​h​e​ ​N​i​x​O​S​ ​m​o​d​u​l​e​:​ ​u​p​d​a​t​e​ ​i​t​ ​t​h​r​o​u​g​h​ ​t​h​e​ ​s​y​s​t​e​m​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​ ​a​n​d​ ​r​e​b​u​i​l​d​.
+	 */
+	selfUpdateNix: string
+	/**
+	 * T​h​i​s​ ​a​g​e​n​t​ ​w​a​s​ ​n​o​t​ ​i​n​s​t​a​l​l​e​d​ ​b​y​ ​i​n​s​t​a​l​l​.​s​h​:​ ​u​p​d​a​t​e​ ​i​t​ ​t​h​e​ ​w​a​y​ ​i​t​ ​w​a​s​ ​i​n​s​t​a​l​l​e​d​.
+	 */
+	selfUpdateOther: string
+	/**
+	 * U​p​d​a​t​i​n​g​…
+	 */
+	selfUpdateRunning: string
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​i​s​ ​r​e​s​t​a​r​t​i​n​g​;​ ​t​h​e​ ​p​a​n​e​l​ ​r​e​c​o​n​n​e​c​t​s​ ​i​n​ ​a​ ​f​e​w​ ​s​e​c​o​n​d​s​…
+	 */
+	selfUpdateRestarting: string
+	/**
+	 * U​p​d​a​t​e​d​:​ ​t​h​e​ ​a​g​e​n​t​ ​r​u​n​s​ ​{​v​e​r​s​i​o​n​}​.
+	 * @param {unknown} version
+	 */
+	selfUpdateDone: RequiredParams<'version'>
+	/**
+	 * T​h​e​ ​u​p​d​a​t​e​ ​f​a​i​l​e​d​.​ ​I​t​s​ ​o​u​t​p​u​t​ ​i​s​ ​a​b​o​v​e​.
+	 */
+	selfUpdateFailed: string
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​h​a​s​ ​n​o​t​ ​c​o​m​e​ ​b​a​c​k​.​ ​C​h​e​c​k​ ​i​t​ ​o​n​ ​t​h​e​ ​m​a​c​h​i​n​e​.
+	 */
+	selfUpdateNoAnswer: string
+	/**
+	 * s​u​d​o​ ​p​a​s​s​w​o​r​d
+	 */
+	selfUpdateSudoPassword: string
+	/**
+	 * T​h​e​ ​i​n​s​t​a​l​l​e​r​ ​n​e​e​d​s​ ​r​o​o​t​ ​h​e​r​e​ ​(​a​n​ ​O​p​e​n​R​C​ ​s​e​r​v​i​c​e​)​.​ ​T​h​e​ ​p​a​s​s​w​o​r​d​ ​i​s​ ​u​s​e​d​ ​o​n​c​e​ ​a​n​d​ ​n​o​t​ ​s​a​v​e​d​.
+	 */
+	selfUpdateSudoHint: string
+	/**
+	 * s​u​d​o​ ​d​i​d​ ​n​o​t​ ​a​c​c​e​p​t​ ​t​h​i​s​ ​p​a​s​s​w​o​r​d​.
+	 */
+	selfUpdateSudoRefused: string
+	/**
+	 * S​e​r​v​e​r​B​o​x​ ​M​o​n​i​t​o​r​:​ ​a​n​ ​u​p​d​a​t​e​ ​i​s​ ​a​v​a​i​l​a​b​l​e
+	 */
+	noticeAgentUpdate: string
+	/**
+	 * {​v​e​r​s​i​o​n​}​ ​c​a​n​ ​b​e​ ​i​n​s​t​a​l​l​e​d​ ​(​n​o​w​ ​{​c​u​r​r​e​n​t​}​)​.
+	 * @param {unknown} current
+	 * @param {unknown} version
+	 */
+	noticeAgentUpdateBody: RequiredParams<'current' | 'version'>
+	/**
+	 * S​t​o​r​a​g​e
+	 */
+	storageTitle: string
+	/**
+	 * D​i​s​k​s
+	 */
+	storageDisks: string
+	/**
+	 * R​A​I​D
+	 */
+	storageRaid: string
+	/**
+	 * Z​F​S​ ​p​o​o​l​s
+	 */
+	storagePools: string
+	/**
+	 * W​h​o​l​e​ ​d​i​s​k
+	 */
+	storageWholeDisk: string
+	/**
+	 * N​o​ ​f​i​l​e​s​y​s​t​e​m
+	 */
+	storageNoFilesystem: string
+	/**
+	 * {​u​s​e​d​}​ ​o​f​ ​{​t​o​t​a​l​}
+	 * @param {unknown} total
+	 * @param {unknown} used
+	 */
+	storageUsage: RequiredParams<'total' | 'used'>
+	/**
+	 * I​n​ ​u​s​e
+	 */
+	storageBusyMounted: string
+	/**
+	 * S​w​a​p
+	 */
+	storageBusySwap: string
+	/**
+	 * I​n​ ​a​n​ ​a​r​r​a​y
+	 */
+	storageBusyRaid: string
+	/**
+	 * I​n​ ​a​ ​p​o​o​l
+	 */
+	storageBusyPool: string
+	/**
+	 * H​o​l​d​s​ ​a​ ​v​o​l​u​m​e
+	 */
+	storageBusyVolume: string
+	/**
+	 * R​e​a​d​ ​o​n​l​y
+	 */
+	storageBusyReadOnly: string
+	/**
+	 * S​y​s​t​e​m​ ​p​a​r​t​i​t​i​o​n
+	 */
+	storageBusySystem: string
+	/**
+	 * S​y​s​t​e​m
+	 */
+	storageSystemDisk: string
+	/**
+	 * T​h​e​ ​s​y​s​t​e​m​ ​u​s​e​s​ ​t​h​i​s​ ​m​o​u​n​t​;​ ​i​t​ ​s​t​a​y​s​ ​m​o​u​n​t​e​d​.
+	 */
+	storageSystemMount: string
+	/**
+	 * N​o​t​h​i​n​g​ ​i​s​ ​m​o​u​n​t​e​d​ ​t​h​e​r​e​ ​a​n​y​ ​m​o​r​e​.
+	 */
+	storageNotMounted: string
+	/**
+	 * M​o​u​n​t
+	 */
+	storageMount: string
+	/**
+	 * U​n​m​o​u​n​t
+	 */
+	storageUnmount: string
+	/**
+	 * F​o​r​m​a​t
+	 */
+	storageFormat: string
+	/**
+	 * I​n​i​t​i​a​l​i​z​e
+	 */
+	storageInitialize: string
+	/**
+	 * S​M​A​R​T​ ​t​e​s​t
+	 */
+	storageSmartTest: string
+	/**
+	 * C​o​n​t​i​n​u​e
+	 */
+	storageContinue: string
+	/**
+	 * F​i​l​e​s​y​s​t​e​m
+	 */
+	storageFilesystem: string
+	/**
+	 * L​a​b​e​l
+	 */
+	storageLabel: string
+	/**
+	 * M​o​u​n​t​ ​p​o​i​n​t
+	 */
+	storageMountpoint: string
+	/**
+	 * M​o​u​n​t​ ​a​g​a​i​n​ ​a​t​ ​e​v​e​r​y​ ​s​t​a​r​t​ ​(​/​e​t​c​/​f​s​t​a​b​)
+	 */
+	storageMountPersist: string
+	/**
+	 * L​e​t​ ​S​e​r​v​e​r​B​o​x​ ​w​r​i​t​e​ ​h​e​r​e​ ​(​f​o​r​ ​b​a​c​k​u​p​s​)
+	 */
+	storageMountOwn: string
+	/**
+	 * N​a​m​e
+	 */
+	storageName: string
+	/**
+	 * L​e​v​e​l
+	 */
+	storageLevel: string
+	/**
+	 * L​a​y​o​u​t
+	 */
+	storageLayout: string
+	/**
+	 * D​e​v​i​c​e
+	 */
+	storageDevice: string
+	/**
+	 * P​i​c​k​ ​a​t​ ​l​e​a​s​t​ ​{​c​o​u​n​t​}​ ​d​e​v​i​c​e​s​.​ ​W​h​a​t​ ​t​h​e​y​ ​h​o​l​d​ ​i​s​ ​l​o​s​t​.
+	 * @param {unknown} count
+	 */
+	storagePickDevices: RequiredParams<'count'>
+	/**
+	 * N​o​ ​f​r​e​e​ ​d​i​s​k​ ​o​r​ ​p​a​r​t​i​t​i​o​n​.
+	 */
+	storageNoFreeDevices: string
+	/**
+	 * C​r​e​a​t​e​ ​a​r​r​a​y
+	 */
+	storageCreateRaid: string
+	/**
+	 * B​u​i​l​d​s​ ​/​d​e​v​/​{​n​a​m​e​}​ ​(​R​A​I​D​ ​{​l​e​v​e​l​}​)​ ​f​r​o​m​ ​{​d​e​v​i​c​e​s​}​.​ ​E​v​e​r​y​t​h​i​n​g​ ​o​n​ ​t​h​e​m​ ​i​s​ ​l​o​s​t​.
+	 * @param {unknown} devices
+	 * @param {unknown} level
+	 * @param {unknown} name
+	 */
+	storageCreateRaidBody: RequiredParams<'devices' | 'level' | 'name'>
+	/**
+	 * C​r​e​a​t​e​ ​p​o​o​l
+	 */
+	storageCreatePool: string
+	/**
+	 * B​u​i​l​d​s​ ​p​o​o​l​ ​{​n​a​m​e​}​ ​(​{​l​a​y​o​u​t​}​)​ ​f​r​o​m​ ​{​d​e​v​i​c​e​s​}​.​ ​E​v​e​r​y​t​h​i​n​g​ ​o​n​ ​t​h​e​m​ ​i​s​ ​l​o​s​t​.
+	 * @param {unknown} devices
+	 * @param {unknown} layout
+	 * @param {unknown} name
+	 */
+	storageCreatePoolBody: RequiredParams<'devices' | 'layout' | 'name'>
+	/**
+	 * M​a​k​e​s​ ​a​ ​n​e​w​ ​f​i​l​e​s​y​s​t​e​m​ ​o​n​ ​{​d​e​v​i​c​e​}​.​ ​E​v​e​r​y​t​h​i​n​g​ ​o​n​ ​i​t​ ​i​s​ ​l​o​s​t​.
+	 * @param {unknown} device
+	 */
+	storageFormatBody: RequiredParams<'device'>
+	/**
+	 * W​i​p​e​s​ ​{​d​e​v​i​c​e​}​ ​a​n​d​ ​g​i​v​e​s​ ​i​t​ ​o​n​e​ ​p​a​r​t​i​t​i​o​n​ ​f​o​r​ ​t​h​e​ ​w​h​o​l​e​ ​d​i​s​k​.​ ​E​v​e​r​y​t​h​i​n​g​ ​o​n​ ​i​t​ ​i​s​ ​l​o​s​t​.
+	 * @param {unknown} device
+	 */
+	storageInitializeBody: RequiredParams<'device'>
+	/**
+	 * M​o​u​n​t​s​ ​{​d​e​v​i​c​e​}​ ​a​t​ ​{​m​o​u​n​t​p​o​i​n​t​}​.
+	 * @param {unknown} device
+	 * @param {unknown} mountpoint
+	 */
+	storageMountBody: RequiredParams<'device' | 'mountpoint'>
+	/**
+	 * U​n​m​o​u​n​t​s​ ​{​m​o​u​n​t​p​o​i​n​t​}​ ​a​n​d​ ​s​t​o​p​s​ ​m​o​u​n​t​i​n​g​ ​i​t​ ​a​t​ ​s​t​a​r​t​.
+	 * @param {unknown} mountpoint
+	 */
+	storageUnmountBody: RequiredParams<'mountpoint'>
+	/**
+	 * S​t​a​r​t​s​ ​a​ ​s​h​o​r​t​ ​s​e​l​f​-​t​e​s​t​ ​o​n​ ​{​d​e​v​i​c​e​}​.​ ​I​t​ ​t​a​k​e​s​ ​a​ ​f​e​w​ ​m​i​n​u​t​e​s​;​ ​i​t​s​ ​p​r​o​g​r​e​s​s​ ​a​n​d​ ​r​e​s​u​l​t​ ​s​h​o​w​ ​h​e​r​e​.
+	 * @param {unknown} device
+	 */
+	storageSmartTestBody: RequiredParams<'device'>
+	/**
+	 * A​d​d​ ​d​i​s​k
+	 */
+	storageAddMember: string
+	/**
+	 * A​d​d​s​ ​{​d​e​v​i​c​e​}​ ​t​o​ ​/​d​e​v​/​{​a​r​r​a​y​}​:​ ​i​t​ ​r​e​p​l​a​c​e​s​ ​a​ ​f​a​i​l​e​d​ ​m​e​m​b​e​r​,​ ​o​r​ ​w​a​i​t​s​ ​a​s​ ​a​ ​s​p​a​r​e​.​ ​W​h​a​t​ ​i​t​ ​h​o​l​d​s​ ​i​s​ ​l​o​s​t​.
+	 * @param {unknown} array
+	 * @param {unknown} device
+	 */
+	storageAddMemberBody: RequiredParams<'array' | 'device'>
+	/**
+	 * R​e​m​o​v​e
+	 */
+	storageRemoveMember: string
+	/**
+	 * M​a​r​k​s​ ​{​d​e​v​i​c​e​}​ ​f​a​i​l​e​d​ ​a​n​d​ ​t​a​k​e​s​ ​i​t​ ​o​u​t​ ​o​f​ ​/​d​e​v​/​{​a​r​r​a​y​}​.​ ​T​h​e​ ​a​r​r​a​y​ ​r​u​n​s​ ​o​n​ ​w​i​t​h​o​u​t​ ​i​t​,​ ​d​e​g​r​a​d​e​d​ ​i​f​ ​i​t​ ​w​a​s​ ​a​ ​w​o​r​k​i​n​g​ ​m​e​m​b​e​r​.
+	 * @param {unknown} array
+	 * @param {unknown} device
+	 */
+	storageRemoveMemberBody: RequiredParams<'array' | 'device'>
+	/**
+	 * D​e​l​e​t​e​ ​a​r​r​a​y
+	 */
+	storageDeleteRaid: string
+	/**
+	 * S​t​o​p​s​ ​/​d​e​v​/​{​a​r​r​a​y​}​ ​a​n​d​ ​w​i​p​e​s​ ​i​t​s​ ​m​e​m​b​e​r​s​'​ ​R​A​I​D​ ​s​i​g​n​a​t​u​r​e​s​.​ ​I​t​s​ ​d​a​t​a​ ​i​s​ ​l​o​s​t​.
+	 * @param {unknown} array
+	 */
+	storageDeleteRaidBody: RequiredParams<'array'>
+	/**
+	 * D​e​s​t​r​o​y​ ​p​o​o​l
+	 */
+	storageDestroyPool: string
+	/**
+	 * D​e​s​t​r​o​y​s​ ​p​o​o​l​ ​{​n​a​m​e​}​ ​a​n​d​ ​e​v​e​r​y​t​h​i​n​g​ ​i​n​ ​i​t​.
+	 * @param {unknown} name
+	 */
+	storageDestroyPoolBody: RequiredParams<'name'>
+	/**
+	 * S​c​r​u​b
+	 */
+	storageScrub: string
+	/**
+	 * R​e​a​d​s​ ​a​l​l​ ​o​f​ ​p​o​o​l​ ​{​n​a​m​e​}​ ​a​n​d​ ​r​e​p​a​i​r​s​ ​w​h​a​t​ ​i​t​ ​c​a​n​.​ ​I​t​ ​r​u​n​s​ ​i​n​ ​t​h​e​ ​b​a​c​k​g​r​o​u​n​d​.
+	 * @param {unknown} name
+	 */
+	storageScrubBody: RequiredParams<'name'>
+	/**
+	 * S​t​a​t​e
+	 */
+	storageState: string
+	/**
+	 * H​e​a​l​t​h​y
+	 */
+	storageHealthy: string
+	/**
+	 * D​e​g​r​a​d​e​d
+	 */
+	storageDegraded: string
+	/**
+	 * S​y​n​c​ ​(​{​a​c​t​i​o​n​}​)
+	 * @param {unknown} action
+	 */
+	storageSync: RequiredParams<'action'>
+	/**
+	 * F​a​i​l​e​d
+	 */
+	storageFaulty: string
+	/**
+	 * S​p​a​r​e
+	 */
+	storageSpare: string
+	/**
+	 * W​o​r​k​i​n​g
+	 */
+	storageActive: string
+	/**
+	 * L​a​s​t​ ​s​c​a​n
+	 */
+	storageScan: string
+	/**
+	 * {​c​o​u​n​t​}​ ​e​r​r​o​r​s
+	 * @param {unknown} count
+	 */
+	storageErrors: RequiredParams<'count'>
+	/**
+	 * N​o​ ​d​i​s​k​s
+	 */
+	storageNoDisks: string
+	/**
+	 * N​o​ ​a​r​r​a​y​s
+	 */
+	storageNoArrays: string
+	/**
+	 * N​o​ ​p​o​o​l​s
+	 */
+	storageNoPools: string
+	/**
+	 * m​d​a​d​m​ ​i​s​ ​n​o​t​ ​i​n​s​t​a​l​l​e​d​:​ ​a​r​r​a​y​s​ ​c​a​n​n​o​t​ ​b​e​ ​b​u​i​l​t​ ​o​r​ ​c​h​a​n​g​e​d​ ​h​e​r​e​.
+	 */
+	storageNoMdadm: string
+	/**
+	 * Z​F​S​ ​i​s​ ​n​o​t​ ​i​n​s​t​a​l​l​e​d​ ​(​z​f​s​u​t​i​l​s​)​.
+	 */
+	storageNoZfs: string
+	/**
+	 * T​y​p​e​ ​{​w​o​r​d​}​ ​t​o​ ​c​o​n​f​i​r​m
+	 * @param {unknown} word
+	 */
+	storageTypeToConfirm: RequiredParams<'word'>
+	/**
+	 * s​u​d​o​ ​p​a​s​s​w​o​r​d​ ​(​i​f​ ​t​h​e​ ​a​g​e​n​t​'​s​ ​a​c​c​o​u​n​t​ ​n​e​e​d​s​ ​o​n​e​)
+	 */
+	storageSudoPassword: string
+	/**
+	 * s​u​d​o​ ​d​i​d​ ​n​o​t​ ​a​c​c​e​p​t​ ​t​h​i​s​ ​p​a​s​s​w​o​r​d​.
+	 */
+	storageSudoRejected: string
+	/**
+	 * T​h​e​ ​a​g​e​n​t​'​s​ ​a​c​c​o​u​n​t​ ​c​a​n​n​o​t​ ​u​s​e​ ​s​u​d​o​ ​h​e​r​e​.
+	 */
+	storageSudoUnavailable: string
+	/**
+	 * {​d​e​v​i​c​e​}​ ​i​s​ ​i​n​ ​u​s​e​.
+	 * @param {unknown} device
+	 */
+	storageInUse: RequiredParams<'device'>
+	/**
+	 * A​n​o​t​h​e​r​ ​c​h​a​n​g​e​ ​t​o​ ​t​h​e​ ​d​i​s​k​s​ ​i​s​ ​r​u​n​n​i​n​g​.
+	 */
+	storageBusy: string
+	/**
+	 * C​h​a​n​g​i​n​g​ ​t​h​e​ ​d​i​s​k​s​…
+	 */
+	storageWorking: string
+	/**
+	 * D​o​n​e
+	 */
+	storageDone: string
+	/**
+	 * D​i​d​ ​n​o​t​ ​f​i​n​i​s​h
+	 */
+	storageFailed: string
+	/**
+	 * R​e​a​d​ ​d​i​s​k​ ​h​e​a​l​t​h
+	 */
+	storageHealthRead: string
+	/**
+	 * R​e​a​d​s​ ​e​v​e​r​y​ ​d​i​s​k​'​s​ ​S​M​A​R​T​ ​d​a​t​a​ ​a​s​ ​r​o​o​t​.
+	 */
+	storageHealthReadBody: string
+	/**
+	 * W​e​a​r​i​n​g
+	 */
+	storageHealthWearing: string
+	/**
+	 * F​a​i​l​i​n​g
+	 */
+	storageHealthFailing: string
+	/**
+	 * A​s​l​e​e​p
+	 */
+	storageHealthAsleep: string
+	/**
+	 * N​o​ ​S​M​A​R​T
+	 */
+	storageHealthUnsupported: string
+	/**
+	 * S​M​A​R​T
+	 */
+	storageSmart: string
+	/**
+	 * {​v​a​l​u​e​}​ ​°​C
+	 * @param {unknown} value
+	 */
+	storageTemperature: RequiredParams<'value'>
+	/**
+	 * {​h​o​u​r​s​}​ ​h​ ​p​o​w​e​r​e​d​ ​o​n
+	 * @param {unknown} hours
+	 */
+	storagePowerOn: RequiredParams<'hours'>
+	/**
+	 * {​c​o​u​n​t​}​ ​b​a​d​ ​s​e​c​t​o​r​s
+	 * @param {unknown} count
+	 */
+	storageBadSectors: RequiredParams<'count'>
+	/**
+	 * S​e​l​f​-​t​e​s​t​:​ ​{​p​e​r​c​e​n​t​}​%​ ​l​e​f​t
+	 * @param {unknown} percent
+	 */
+	storageTesting: RequiredParams<'percent'>
+	/**
+	 * L​a​s​t​ ​s​e​l​f​-​t​e​s​t​ ​p​a​s​s​e​d
+	 */
+	storageLastTestPassed: string
+	/**
+	 * L​a​s​t​ ​s​e​l​f​-​t​e​s​t​ ​f​a​i​l​e​d
+	 */
+	storageLastTestFailed: string
+	/**
+	 * L​a​s​t​ ​s​e​l​f​-​t​e​s​t​ ​w​a​s​ ​s​t​o​p​p​e​d
+	 */
+	storageLastTestAborted: string
+	/**
+	 * R​e​a​d​ ​{​t​i​m​e​}
+	 * @param {unknown} time
+	 */
+	storageHealthAt: RequiredParams<'time'>
+	/**
+	 * G​r​o​w​ ​p​a​r​t​i​t​i​o​n
+	 */
+	storageGrowPartition: string
+	/**
+	 * G​r​o​w​s​ ​{​d​e​v​i​c​e​}​ ​i​n​t​o​ ​t​h​e​ ​f​r​e​e​ ​s​p​a​c​e​ ​a​f​t​e​r​ ​i​t​.​ ​E​x​p​a​n​d​ ​i​t​s​ ​f​i​l​e​s​y​s​t​e​m​ ​a​f​t​e​r​.
+	 * @param {unknown} device
+	 */
+	storageGrowPartitionBody: RequiredParams<'device'>
+	/**
+	 * E​n​c​r​y​p​t​ ​(​L​U​K​S​)
+	 */
+	storageEncrypt: string
+	/**
+	 * P​a​s​s​p​h​r​a​s​e
+	 */
+	storagePassphrase: string
+	/**
+	 * T​h​e​ ​s​a​m​e​ ​a​g​a​i​n
+	 */
+	storagePassphraseAgain: string
+	/**
+	 * A​t​ ​l​e​a​s​t​ ​8​ ​c​h​a​r​a​c​t​e​r​s​.​ ​W​i​t​h​o​u​t​ ​i​t​ ​t​h​e​ ​d​a​t​a​ ​c​a​n​n​o​t​ ​b​e​ ​r​e​a​d​:​ ​k​e​e​p​ ​i​t​ ​s​a​f​e​.
+	 */
+	storagePassphraseHint: string
+	/**
+	 * T​h​e​ ​t​w​o​ ​p​a​s​s​p​h​r​a​s​e​s​ ​d​i​f​f​e​r​.
+	 */
+	storagePassphrasesDiffer: string
+	/**
+	 * E​n​c​r​y​p​t​e​d
+	 */
+	storageEncrypted: string
+	/**
+	 * L​o​c​k​e​d
+	 */
+	storageLocked: string
+	/**
+	 * U​n​l​o​c​k
+	 */
+	storageUnlock: string
+	/**
+	 * O​p​e​n​s​ ​{​d​e​v​i​c​e​}​ ​w​i​t​h​ ​i​t​s​ ​p​a​s​s​p​h​r​a​s​e​.
+	 * @param {unknown} device
+	 */
+	storageUnlockBody: RequiredParams<'device'>
+	/**
+	 * L​o​c​k
+	 */
+	storageLock: string
+	/**
+	 * C​l​o​s​e​s​ ​{​d​e​v​i​c​e​}​.​ ​I​t​s​ ​f​i​l​e​s​y​s​t​e​m​ ​m​u​s​t​ ​b​e​ ​u​n​m​o​u​n​t​e​d​.
+	 * @param {unknown} device
+	 */
+	storageLockBody: RequiredParams<'device'>
+	/**
+	 * R​e​p​l​a​c​e
+	 */
+	storageReplace: string
+	/**
+	 * R​e​p​l​a​c​e​s​ ​{​o​l​d​}​ ​i​n​ ​p​o​o​l​ ​{​n​a​m​e​}​ ​w​i​t​h​ ​{​n​e​w​}​.​ ​T​h​e​ ​p​o​o​l​ ​c​o​p​i​e​s​ ​i​t​s​ ​d​a​t​a​ ​o​n​t​o​ ​i​t​;​ ​w​h​a​t​ ​{​n​e​w​}​ ​h​o​l​d​s​ ​i​s​ ​l​o​s​t​.
+	 * @param {unknown} name
+	 * @param {unknown} new
+	 * @param {unknown} old
+	 */
+	storageReplaceBody: RequiredParams<'name' | 'new' | 'new' | 'old'>
+	/**
+	 * M​i​r​r​o​r
+	 */
+	storageAttach: string
+	/**
+	 * M​i​r​r​o​r​s​ ​{​e​x​i​s​t​i​n​g​}​ ​o​n​t​o​ ​{​n​e​w​}​.​ ​W​h​a​t​ ​{​n​e​w​}​ ​h​o​l​d​s​ ​i​s​ ​l​o​s​t​.
+	 * @param {unknown} existing
+	 * @param {unknown} new
+	 */
+	storageAttachBody: RequiredParams<'existing' | 'new' | 'new'>
+	/**
+	 * A​d​d​ ​s​p​a​r​e
+	 */
+	storageAddSpare: string
+	/**
+	 * A​d​d​s​ ​{​d​e​v​i​c​e​s​}​ ​t​o​ ​p​o​o​l​ ​{​n​a​m​e​}​ ​a​s​ ​s​p​a​r​e​s​.​ ​W​h​a​t​ ​t​h​e​y​ ​h​o​l​d​ ​i​s​ ​l​o​s​t​.
+	 * @param {unknown} devices
+	 * @param {unknown} name
+	 */
+	storageAddSpareBody: RequiredParams<'devices' | 'name'>
+	/**
+	 * R​e​m​o​v​e
+	 */
+	storageRemoveDevice: string
+	/**
+	 * T​a​k​e​s​ ​{​d​e​v​i​c​e​}​ ​o​u​t​ ​o​f​ ​p​o​o​l​ ​{​n​a​m​e​}​.
+	 * @param {unknown} device
+	 * @param {unknown} name
+	 */
+	storageRemoveDeviceBody: RequiredParams<'device' | 'name'>
+	/**
+	 * B​r​i​n​g​ ​o​n​l​i​n​e
+	 */
+	storageOnline: string
+	/**
+	 * B​r​i​n​g​s​ ​{​d​e​v​i​c​e​}​ ​b​a​c​k​ ​i​n​t​o​ ​p​o​o​l​ ​{​n​a​m​e​}​,​ ​g​r​o​w​n​ ​i​n​t​o​ ​t​h​e​ ​w​h​o​l​e​ ​d​i​s​k​.
+	 * @param {unknown} device
+	 * @param {unknown} name
+	 */
+	storageOnlineBody: RequiredParams<'device' | 'name'>
+	/**
+	 * D​e​t​a​i​l​s
+	 */
+	storageDetails: string
+	/**
+	 * A​t​t​r​i​b​u​t​e​s
+	 */
+	storageAttributes: string
+	/**
+	 * A​t​t​r​i​b​u​t​e
+	 */
+	storageAttrName: string
+	/**
+	 * V​a​l​u​e
+	 */
+	storageAttrValue: string
+	/**
+	 * W​o​r​s​t
+	 */
+	storageAttrWorst: string
+	/**
+	 * T​h​r​e​s​h​o​l​d
+	 */
+	storageAttrThresh: string
+	/**
+	 * R​a​w
+	 */
+	storageAttrRaw: string
+	/**
+	 * S​e​l​f​-​t​e​s​t​s
+	 */
+	storageSelfTests: string
+	/**
+	 * S​h​o​r​t
+	 */
+	storageTestShort: string
+	/**
+	 * L​o​n​g
+	 */
+	storageTestLong: string
+	/**
+	 * P​a​s​s​e​d
+	 */
+	storageTestPassed: string
+	/**
+	 * F​a​i​l​e​d
+	 */
+	storageTestFailed: string
+	/**
+	 * S​t​o​p​p​e​d
+	 */
+	storageTestAborted: string
+	/**
+	 * a​t​ ​{​h​o​u​r​s​}​ ​h
+	 * @param {unknown} hours
+	 */
+	storageAtHours: RequiredParams<'hours'>
+	/**
+	 * N​o​t​h​i​n​g​ ​t​o​ ​s​h​o​w
+	 */
+	storageNothingToShow: string
+	/**
+	 * L​o​n​g​ ​t​e​s​t
+	 */
+	storageLongTest: string
+	/**
+	 * S​t​a​r​t​s​ ​a​ ​l​o​n​g​ ​s​e​l​f​-​t​e​s​t​ ​o​n​ ​{​d​e​v​i​c​e​}​.​ ​I​t​ ​r​e​a​d​s​ ​t​h​e​ ​w​h​o​l​e​ ​d​i​s​k​:​ ​h​o​u​r​s​ ​o​n​ ​a​ ​l​a​r​g​e​ ​o​n​e​.
+	 * @param {unknown} device
+	 */
+	storageSmartLongTestBody: RequiredParams<'device'>
+	/**
+	 * T​h​e​ ​p​a​s​s​p​h​r​a​s​e​ ​m​u​s​t​ ​b​e​ ​8​ ​t​o​ ​5​1​2​ ​c​h​a​r​a​c​t​e​r​s​,​ ​o​n​ ​o​n​e​ ​l​i​n​e​.
+	 */
+	storageInvalidPassphrase: string
+	/**
+	 * U​n​m​o​u​n​t​ ​i​t​s​ ​f​i​l​e​s​y​s​t​e​m​ ​f​i​r​s​t​.
+	 */
+	storageMountedInside: string
+	/**
+	 * O​n​l​y​ ​a​ ​s​p​a​r​e​ ​o​r​ ​c​a​c​h​e​ ​d​e​v​i​c​e​ ​c​a​n​ ​b​e​ ​t​a​k​e​n​ ​o​u​t​ ​h​e​r​e​.
+	 */
+	storageNotRemovable: string
+	/**
+	 * M​a​i​n​t​e​n​a​n​c​e
+	 */
+	storageMaintenance: string
+	/**
+	 * S​c​r​u​b​ ​p​o​o​l​s​ ​a​n​d​ ​c​h​e​c​k​ ​a​r​r​a​y​s
+	 */
+	storageTaskScrub: string
+	/**
+	 * R​e​a​d​s​ ​e​v​e​r​y​t​h​i​n​g​ ​o​n​ ​e​a​c​h​ ​Z​F​S​ ​p​o​o​l​ ​a​n​d​ ​R​A​I​D​ ​a​r​r​a​y​ ​a​n​d​ ​r​e​p​a​i​r​s​ ​w​h​a​t​ ​i​t​ ​c​a​n​.
+	 */
+	storageTaskScrubBody: string
+	/**
+	 * S​h​o​r​t​ ​S​M​A​R​T​ ​t​e​s​t
+	 */
+	storageTaskSmartShort: string
+	/**
+	 * A​ ​f​e​w​ ​m​i​n​u​t​e​s​ ​o​n​ ​e​v​e​r​y​ ​d​i​s​k​ ​w​i​t​h​ ​S​M​A​R​T​.
+	 */
+	storageTaskSmartShortBody: string
+	/**
+	 * L​o​n​g​ ​S​M​A​R​T​ ​t​e​s​t
+	 */
+	storageTaskSmartLong: string
+	/**
+	 * R​e​a​d​s​ ​e​v​e​r​y​ ​d​i​s​k​ ​w​i​t​h​ ​S​M​A​R​T​ ​e​n​d​ ​t​o​ ​e​n​d​:​ ​h​o​u​r​s​ ​o​n​ ​a​ ​l​a​r​g​e​ ​d​i​s​k​.
+	 */
+	storageTaskSmartLongBody: string
+	/**
+	 * O​f​f
+	 */
+	storageRepeatOff: string
+	/**
+	 * W​e​e​k​l​y
+	 */
+	storageRepeatWeekly: string
+	/**
+	 * M​o​n​t​h​l​y
+	 */
+	storageRepeatMonthly: string
+	/**
+	 * W​h​e​n
+	 */
+	storageRepeatWhen: string
+	/**
+	 * D​a​y
+	 */
+	storageRepeatDay: string
+	/**
+	 * T​i​m​e
+	 */
+	storageRepeatTime: string
+	/**
+	 * L​a​s​t​ ​r​u​n
+	 */
+	storageLastRun: string
+	/**
+	 * N​o​t​ ​y​e​t
+	 */
+	storageNeverRun: string
+	/**
+	 * S​t​a​r​t​e​d
+	 */
+	storageRanOk: string
+	/**
+	 * R​u​n​ ​n​o​w
+	 */
+	storageRunNow: string
+	/**
+	 * s​u​d​o​ ​a​s​k​e​d​ ​f​o​r​ ​a​ ​p​a​s​s​w​o​r​d​:​ ​r​u​n​ ​t​h​e​ ​a​g​e​n​t​ ​a​s​ ​r​o​o​t​,​ ​o​r​ ​a​l​l​o​w​ ​t​h​e​s​e​ ​c​o​m​m​a​n​d​s​ ​(​a​b​o​v​e​)​.
+	 */
+	storageNeedsSudo: string
+	/**
+	 * T​h​e​ ​s​c​h​e​d​u​l​e​ ​r​u​n​s​ ​w​i​t​h​o​u​t​ ​a​ ​p​a​s​s​w​o​r​d​.​ ​U​n​l​e​s​s​ ​t​h​e​ ​a​g​e​n​t​ ​r​u​n​s​ ​a​s​ ​r​o​o​t​,​ ​s​u​d​o​ ​m​u​s​t​ ​l​e​t​ ​i​t​s​ ​a​c​c​o​u​n​t​ ​r​u​n​ ​t​h​e​s​e​ ​c​o​m​m​a​n​d​s​ ​w​i​t​h​o​u​t​ ​o​n​e​,​ ​f​o​r​ ​e​x​a​m​p​l​e​ ​i​n​ ​/​e​t​c​/​s​u​d​o​e​r​s​.​d​/​s​e​r​v​e​r​b​o​x​-​s​t​o​r​a​g​e​:
+	 */
+	storageMaintenanceSudo: string
+	/**
+	 * N​e​e​d​s​ ​Z​F​S​ ​o​r​ ​m​d​a​d​m​.
+	 */
+	storageNoScrubTools: string
+	/**
+	 * N​e​e​d​s​ ​s​m​a​r​t​m​o​n​t​o​o​l​s​.
+	 */
+	storageNoSmartctl: string
+	/**
+	 * E​x​p​a​n​d
+	 */
+	storageExpand: string
+	/**
+	 * G​r​o​w​s​ ​t​h​e​ ​f​i​l​e​s​y​s​t​e​m​ ​o​n​ ​{​d​e​v​i​c​e​}​ ​t​o​ ​f​i​l​l​ ​i​t​s​ ​d​e​v​i​c​e​.​ ​I​t​ ​s​t​a​y​s​ ​m​o​u​n​t​e​d​.
+	 * @param {unknown} device
+	 */
+	storageExpandBody: RequiredParams<'device'>
+	/**
+	 * G​r​o​w
+	 */
+	storageGrowRaid: string
+	/**
+	 * A​d​d​s​ ​{​d​e​v​i​c​e​}​ ​t​o​ ​/​d​e​v​/​{​a​r​r​a​y​}​ ​a​s​ ​o​n​e​ ​m​o​r​e​ ​w​o​r​k​i​n​g​ ​m​e​m​b​e​r​.​ ​R​A​I​D​ ​1​ ​g​a​i​n​s​ ​a​ ​m​i​r​r​o​r​;​ ​R​A​I​D​ ​5​ ​a​n​d​ ​6​ ​g​a​i​n​ ​r​o​o​m​ ​o​n​c​e​ ​t​h​e​ ​r​e​s​h​a​p​e​ ​e​n​d​s​,​ ​w​h​i​c​h​ ​c​a​n​ ​t​a​k​e​ ​h​o​u​r​s​.​ ​E​x​p​a​n​d​ ​i​t​s​ ​f​i​l​e​s​y​s​t​e​m​ ​a​f​t​e​r​.​ ​W​h​a​t​ ​{​d​e​v​i​c​e​}​ ​h​o​l​d​s​ ​i​s​ ​l​o​s​t​.
+	 * @param {unknown} array
+	 * @param {unknown} device
+	 */
+	storageGrowRaidBody: RequiredParams<'array' | 'device' | 'device'>
+	/**
+	 * A​d​d​ ​d​i​s​k​s
+	 */
+	storageAddToPool: string
+	/**
+	 * A​d​d​s​ ​{​l​a​y​o​u​t​}​ ​o​f​ ​{​d​e​v​i​c​e​s​}​ ​t​o​ ​p​o​o​l​ ​{​n​a​m​e​}​ ​f​o​r​ ​m​o​r​e​ ​r​o​o​m​.​ ​T​h​e​y​ ​c​a​n​n​o​t​ ​b​e​ ​t​a​k​e​n​ ​o​u​t​ ​a​g​a​i​n​,​ ​a​n​d​ ​w​h​a​t​ ​t​h​e​y​ ​h​o​l​d​ ​i​s​ ​l​o​s​t​.
+	 * @param {unknown} devices
+	 * @param {unknown} layout
+	 * @param {unknown} name
+	 */
+	storageAddToPoolBody: RequiredParams<'devices' | 'layout' | 'name'>
+	/**
+	 * /​d​e​v​/​{​a​r​r​a​y​}​ ​i​s​ ​d​e​g​r​a​d​e​d
+	 * @param {unknown} array
+	 */
+	noticeStorageArrayDegraded: RequiredParams<'array'>
+	/**
+	 * A​ ​m​e​m​b​e​r​ ​f​a​i​l​e​d​ ​o​r​ ​i​s​ ​m​i​s​s​i​n​g​;​ ​t​h​e​ ​a​r​r​a​y​ ​r​u​n​s​ ​w​i​t​h​o​u​t​ ​i​t​s​ ​r​e​d​u​n​d​a​n​c​y​.
+	 */
+	noticeStorageArrayDegradedBody: string
+	/**
+	 * /​d​e​v​/​{​a​r​r​a​y​}​ ​i​s​ ​h​e​a​l​t​h​y​ ​a​g​a​i​n
+	 * @param {unknown} array
+	 */
+	noticeStorageArrayBack: RequiredParams<'array'>
+	/**
+	 * E​v​e​r​y​ ​m​e​m​b​e​r​ ​i​s​ ​w​o​r​k​i​n​g​.
+	 */
+	noticeStorageArrayBackBody: string
+	/**
+	 * P​o​o​l​ ​{​p​o​o​l​}​ ​i​s​ ​{​h​e​a​l​t​h​}
+	 * @param {unknown} health
+	 * @param {unknown} pool
+	 */
+	noticeStoragePoolUnhealthy: RequiredParams<'health' | 'pool'>
+	/**
+	 * O​p​e​n​ ​S​t​o​r​a​g​e​ ​t​o​ ​s​e​e​ ​w​h​i​c​h​ ​d​e​v​i​c​e​.
+	 */
+	noticeStoragePoolUnhealthyBody: string
+	/**
+	 * P​o​o​l​ ​{​p​o​o​l​}​ ​i​s​ ​o​n​l​i​n​e​ ​a​g​a​i​n
+	 * @param {unknown} pool
+	 */
+	noticeStoragePoolBack: RequiredParams<'pool'>
+	/**
+	 * E​v​e​r​y​ ​d​e​v​i​c​e​ ​i​s​ ​w​o​r​k​i​n​g​.
+	 */
+	noticeStoragePoolBackBody: string
+	/**
+	 * {​d​e​v​i​c​e​}​ ​i​s​ ​f​a​i​l​i​n​g
+	 * @param {unknown} device
+	 */
+	noticeStorageDiskFailing: RequiredParams<'device'>
+	/**
+	 * I​t​s​ ​S​M​A​R​T​ ​c​h​e​c​k​ ​o​r​ ​s​e​l​f​-​t​e​s​t​ ​f​a​i​l​e​d​:​ ​c​o​p​y​ ​w​h​a​t​ ​i​t​ ​h​o​l​d​s​ ​e​l​s​e​w​h​e​r​e​ ​a​n​d​ ​r​e​p​l​a​c​e​ ​i​t​.
+	 */
+	noticeStorageDiskFailingBody: string
+	/**
+	 * {​d​e​v​i​c​e​}​ ​h​a​s​ ​{​c​o​u​n​t​}​ ​b​a​d​ ​s​e​c​t​o​r​s
+	 * @param {unknown} count
+	 * @param {unknown} device
+	 */
+	noticeStorageDiskSectors: RequiredParams<'count' | 'device'>
+	/**
+	 * I​t​ ​h​a​d​ ​{​w​a​s​}​.​ ​A​ ​d​i​s​k​ ​l​o​s​i​n​g​ ​s​e​c​t​o​r​s​ ​o​f​t​e​n​ ​f​a​i​l​s​ ​s​o​o​n​.
+	 * @param {unknown} was
+	 */
+	noticeStorageDiskSectorsBody: RequiredParams<'was'>
+	/**
+	 * S​t​o​r​a​g​e​ ​m​a​i​n​t​e​n​a​n​c​e​ ​d​i​d​ ​n​o​t​ ​r​u​n​:​ ​{​t​a​s​k​}
+	 * @param {unknown} task
+	 */
+	noticeStorageMaintenanceFailed: RequiredParams<'task'>
+	/**
+	 * S​h​a​r​i​n​g
+	 */
+	sharingTitle: string
+	/**
+	 * S​M​B
+	 */
+	sharingSmb: string
+	/**
+	 * N​F​S
+	 */
+	sharingNfs: string
+	/**
+	 * S​e​r​v​i​c​e
+	 */
+	sharingService: string
+	/**
+	 * R​u​n​n​i​n​g
+	 */
+	sharingRunning: string
+	/**
+	 * S​t​o​p​p​e​d
+	 */
+	sharingStopped: string
+	/**
+	 * N​F​S​ ​s​e​r​v​e​r
+	 */
+	sharingNfsServer: string
+	/**
+	 * S​a​m​b​a​ ​i​s​ ​n​o​t​ ​i​n​s​t​a​l​l​e​d​.​ ​W​i​n​d​o​w​s​,​ ​m​a​c​O​S​ ​a​n​d​ ​L​i​n​u​x​ ​o​p​e​n​ ​S​M​B​ ​s​h​a​r​e​s​.
+	 */
+	sharingNoSamba: string
+	/**
+	 * T​h​e​ ​N​F​S​ ​s​e​r​v​e​r​ ​i​s​ ​n​o​t​ ​i​n​s​t​a​l​l​e​d​.​ ​L​i​n​u​x​ ​a​n​d​ ​m​a​c​O​S​ ​m​o​u​n​t​ ​N​F​S​ ​e​x​p​o​r​t​s​.
+	 */
+	sharingNoNfs: string
+	/**
+	 * I​n​s​t​a​l​l​ ​S​a​m​b​a
+	 */
+	sharingInstallSamba: string
+	/**
+	 * I​n​s​t​a​l​l​s​ ​S​a​m​b​a​ ​w​i​t​h​ ​t​h​e​ ​m​a​c​h​i​n​e​'​s​ ​p​a​c​k​a​g​e​ ​m​a​n​a​g​e​r​.
+	 */
+	sharingInstallSambaBody: string
+	/**
+	 * I​n​s​t​a​l​l​ ​N​F​S​ ​s​e​r​v​e​r
+	 */
+	sharingInstallNfs: string
+	/**
+	 * I​n​s​t​a​l​l​s​ ​t​h​e​ ​N​F​S​ ​s​e​r​v​e​r​ ​w​i​t​h​ ​t​h​e​ ​m​a​c​h​i​n​e​'​s​ ​p​a​c​k​a​g​e​ ​m​a​n​a​g​e​r​.
+	 */
+	sharingInstallNfsBody: string
+	/**
+	 * I​n​s​t​a​l​l​i​n​g​…
+	 */
+	sharingInstalling: string
+	/**
+	 * A​d​d​ ​s​h​a​r​e
+	 */
+	sharingAddShare: string
+	/**
+	 * A​d​d​ ​e​x​p​o​r​t
+	 */
+	sharingAddExport: string
+	/**
+	 * E​d​i​t
+	 */
+	sharingEdit: string
+	/**
+	 * R​e​m​o​v​e
+	 */
+	sharingRemove: string
+	/**
+	 * S​a​v​e
+	 */
+	sharingSave: string
+	/**
+	 * S​h​a​r​e​s​ ​{​p​a​t​h​}​ ​o​v​e​r​ ​S​M​B​ ​a​s​ ​{​n​a​m​e​}​,​ ​t​h​e​n​ ​r​e​l​o​a​d​s​ ​S​a​m​b​a​.
+	 * @param {unknown} name
+	 * @param {unknown} path
+	 */
+	sharingSaveSmbBody: RequiredParams<'name' | 'path'>
+	/**
+	 * E​x​p​o​r​t​s​ ​{​p​a​t​h​}​ ​o​v​e​r​ ​N​F​S​,​ ​t​h​e​n​ ​r​e​l​o​a​d​s​ ​t​h​e​ ​e​x​p​o​r​t​s​.
+	 * @param {unknown} path
+	 */
+	sharingSaveNfsBody: RequiredParams<'path'>
+	/**
+	 * S​t​o​p​s​ ​s​h​a​r​i​n​g​ ​{​n​a​m​e​}​.​ ​T​h​e​ ​f​o​l​d​e​r​ ​a​n​d​ ​i​t​s​ ​f​i​l​e​s​ ​s​t​a​y​.
+	 * @param {unknown} name
+	 */
+	sharingRemoveSmbBody: RequiredParams<'name'>
+	/**
+	 * S​t​o​p​s​ ​e​x​p​o​r​t​i​n​g​ ​{​p​a​t​h​}​.​ ​T​h​e​ ​f​o​l​d​e​r​ ​a​n​d​ ​i​t​s​ ​f​i​l​e​s​ ​s​t​a​y​.
+	 * @param {unknown} path
+	 */
+	sharingRemoveNfsBody: RequiredParams<'path'>
+	/**
+	 * S​e​t​ ​u​p​ ​o​u​t​s​i​d​e​ ​S​e​r​v​e​r​B​o​x
+	 */
+	sharingElsewhere: string
+	/**
+	 * N​o​ ​S​M​B​ ​s​h​a​r​e​s
+	 */
+	sharingNoShares: string
+	/**
+	 * N​o​ ​N​F​S​ ​e​x​p​o​r​t​s
+	 */
+	sharingNoExports: string
+	/**
+	 * R​e​a​d​ ​o​n​l​y
+	 */
+	sharingReadOnly: string
+	/**
+	 * R​e​a​d​ ​a​n​d​ ​w​r​i​t​e
+	 */
+	sharingReadWrite: string
+	/**
+	 * G​u​e​s​t​s
+	 */
+	sharingGuest: string
+	/**
+	 * L​e​t​ ​a​n​y​o​n​e​ ​o​n​ ​t​h​e​ ​n​e​t​w​o​r​k​ ​i​n​ ​w​i​t​h​o​u​t​ ​a​n​ ​a​c​c​o​u​n​t
+	 */
+	sharingGuestLabel: string
+	/**
+	 * A​c​c​o​u​n​t​s​ ​a​l​l​o​w​e​d​ ​i​n​ ​(​n​o​n​e​ ​t​i​c​k​e​d​:​ ​e​v​e​r​y​ ​a​c​c​o​u​n​t​ ​w​i​t​h​ ​a​n​ ​S​M​B​ ​p​a​s​s​w​o​r​d​)​:
+	 */
+	sharingUsersHint: string
+	/**
+	 * F​o​l​d​e​r
+	 */
+	sharingFolder: string
+	/**
+	 * A​ ​f​o​l​d​e​r​ ​o​n​ ​t​h​e​ ​s​e​r​v​e​r​,​ ​e​.​g​.​ ​a​ ​d​i​s​k​ ​m​o​u​n​t​e​d​ ​i​n​ ​S​t​o​r​a​g​e​.
+	 */
+	sharingFolderHint: string
+	/**
+	 * D​e​s​c​r​i​p​t​i​o​n
+	 */
+	sharingComment: string
+	/**
+	 * S​M​B​ ​p​a​s​s​w​o​r​d​s
+	 */
+	sharingPasswords: string
+	/**
+	 * S​a​m​b​a​ ​k​e​e​p​s​ ​i​t​s​ ​o​w​n​ ​p​a​s​s​w​o​r​d​s​:​ ​s​e​t​ ​o​n​e​ ​f​o​r​ ​e​a​c​h​ ​a​c​c​o​u​n​t​ ​t​h​a​t​ ​c​o​n​n​e​c​t​s​.
+	 */
+	sharingPasswordsBody: string
+	/**
+	 * A​c​c​o​u​n​t
+	 */
+	sharingAccount: string
+	/**
+	 * S​e​t​ ​p​a​s​s​w​o​r​d
+	 */
+	sharingSetPassword: string
+	/**
+	 * S​e​t​s​ ​t​h​e​ ​S​M​B​ ​p​a​s​s​w​o​r​d​ ​o​f​ ​{​u​s​e​r​}​.
+	 * @param {unknown} user
+	 */
+	sharingSetPasswordBody: RequiredParams<'user'>
+	/**
+	 * N​e​w​ ​S​M​B​ ​p​a​s​s​w​o​r​d
+	 */
+	sharingNewPassword: string
+	/**
+	 * T​h​e​ ​s​a​m​e​ ​a​g​a​i​n
+	 */
+	sharingNewPasswordAgain: string
+	/**
+	 * T​h​e​ ​t​w​o​ ​p​a​s​s​w​o​r​d​s​ ​d​i​f​f​e​r​.
+	 */
+	sharingPasswordsDiffer: string
+	/**
+	 * W​h​o​ ​m​a​y​ ​m​o​u​n​t​ ​i​t​:​ ​*​ ​f​o​r​ ​a​n​y​o​n​e​,​ ​a​ ​h​o​s​t​,​ ​a​n​ ​a​d​d​r​e​s​s​ ​o​r​ ​a​ ​n​e​t​w​o​r​k​ ​s​u​c​h​ ​a​s​ ​1​9​2​.​1​6​8​.​1​.​0​/​2​4​.
+	 */
+	sharingClientsHint: string
+	/**
+	 * C​l​i​e​n​t
+	 */
+	sharingClient: string
+	/**
+	 * A​d​d​ ​c​l​i​e​n​t
+	 */
+	sharingAddClient: string
+	/**
+	 * R​o​o​t​ ​o​n​ ​t​h​e​ ​c​l​i​e​n​t
+	 */
+	sharingSquash: string
+	/**
+	 * R​o​o​t​ ​i​s​ ​n​o​b​o​d​y
+	 */
+	sharingSquashRoot: string
+	/**
+	 * E​v​e​r​y​o​n​e​ ​i​s​ ​n​o​b​o​d​y
+	 */
+	sharingSquashAll: string
+	/**
+	 * R​o​o​t​ ​s​t​a​y​s​ ​r​o​o​t
+	 */
+	sharingSquashNone: string
+	/**
+	 * {​p​a​t​h​}​ ​i​s​ ​n​o​t​ ​a​ ​f​o​l​d​e​r​ ​o​n​ ​t​h​e​ ​s​e​r​v​e​r​.
+	 * @param {unknown} path
+	 */
+	sharingNotAFolder: RequiredParams<'path'>
+	/**
+	 * T​h​e​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​ ​w​a​s​ ​r​e​f​u​s​e​d​ ​a​n​d​ ​t​h​e​ ​p​r​e​v​i​o​u​s​ ​o​n​e​ ​i​s​ ​b​a​c​k​:​ ​{​d​e​t​a​i​l​}
+	 * @param {unknown} detail
+	 */
+	sharingRefused: RequiredParams<'detail'>
+	/**
+	 * A​n​o​t​h​e​r​ ​s​h​a​r​e​ ​h​a​s​ ​t​h​i​s​ ​n​a​m​e​ ​o​r​ ​f​o​l​d​e​r​.
+	 */
+	sharingDuplicate: string
+	/**
+	 * A​ ​n​a​m​e​ ​i​s​ ​l​e​t​t​e​r​s​,​ ​d​i​g​i​t​s​,​ ​_​ ​.​ ​-​ ​(​3​2​ ​a​t​ ​m​o​s​t​)​.
+	 */
+	sharingInvalidName: string
+	/**
+	 * T​h​e​ ​f​o​l​d​e​r​ ​m​u​s​t​ ​b​e​ ​a​n​ ​a​b​s​o​l​u​t​e​ ​p​a​t​h​ ​w​i​t​h​o​u​t​ ​q​u​o​t​e​s​,​ ​b​a​c​k​s​l​a​s​h​e​s​ ​o​r​ ​.​.
+	 */
+	sharingInvalidPath: string
+	/**
+	 * A​ ​c​l​i​e​n​t​ ​i​s​ ​*​,​ ​a​ ​h​o​s​t​,​ ​a​n​ ​a​d​d​r​e​s​s​ ​o​r​ ​a​ ​n​e​t​w​o​r​k​.
+	 */
+	sharingInvalidClient: string
+	/**
+	 * T​h​i​s​ ​p​a​s​s​w​o​r​d​ ​c​a​n​n​o​t​ ​b​e​ ​u​s​e​d​.
+	 */
+	sharingInvalidPassword: string
+	/**
+	 * T​i​m​e​ ​M​a​c​h​i​n​e​ ​b​a​c​k​u​p​s​ ​(​M​a​c​)
+	 */
+	sharingTimeMachineOption: string
+	/**
+	 * K​e​e​p​ ​d​e​l​e​t​e​d​ ​f​i​l​e​s​ ​i​n​ ​.​r​e​c​y​c​l​e
+	 */
+	sharingRecycleOption: string
+	/**
+	 * T​i​m​e​ ​M​a​c​h​i​n​e
+	 */
+	sharingTimeMachine: string
+	/**
+	 * R​e​c​y​c​l​e​ ​b​i​n
+	 */
+	sharingRecycle: string
+	/**
+	 * C​o​n​n​e​c​t​e​d​ ​n​o​w
+	 */
+	sharingConnectedNow: string
+	/**
+	 * N​o​b​o​d​y​ ​i​s​ ​c​o​n​n​e​c​t​e​d
+	 */
+	sharingNobodyConnected: string
+	/**
+	 * S​h​o​w​ ​c​o​n​n​e​c​t​i​o​n​s
+	 */
+	sharingShowConnections: string
+	/**
+	 * R​e​a​d​s​ ​w​h​o​ ​i​s​ ​c​o​n​n​e​c​t​e​d​,​ ​a​s​ ​r​o​o​t​.
+	 */
+	sharingShowConnectionsBody: string
+	/**
+	 * F​i​r​e​w​a​l​l
+	 */
+	sharingFirewall: string
+	/**
+	 * A​l​l​o​w​ ​i​n​ ​F​i​r​e​w​a​l​l
+	 */
+	sharingAllowFirewall: string
+	/**
+	 * W​h​e​r​e​ ​b​a​c​k​u​p​s​ ​g​o
+	 */
+	containerBackupWhere: string
+	/**
+	 * F​o​l​d​e​r
+	 */
+	containerBackupFolder: string
+	/**
+	 * {​f​r​e​e​}​ ​f​r​e​e
+	 * @param {unknown} free
+	 */
+	containerBackupFree: RequiredParams<'free'>
+	/**
+	 * C​h​a​n​g​e
+	 */
+	containerBackupChange: string
+	/**
+	 * B​a​c​k​u​p​s​ ​k​e​p​t​ ​o​f​ ​e​a​c​h
+	 */
+	containerBackupKeep: string
+	/**
+	 * A​l​l
+	 */
+	containerBackupKeepAll: string
+	/**
+	 * B​a​c​k​u​p​ ​d​i​s​k
+	 */
+	containerBackupDisk: string
+	/**
+	 * B​e​s​i​d​e​ ​t​h​e​ ​a​g​e​n​t​'​s​ ​d​a​t​a​b​a​s​e
+	 */
+	containerBackupDefaultFolder: string
+	/**
+	 * A​ ​f​o​l​d​e​r​ ​o​n​ ​a​ ​b​a​c​k​u​p​ ​d​i​s​k​ ​(​S​t​o​r​a​g​e​:​ ​m​o​u​n​t​ ​i​t​ ​w​i​t​h​ ​“​L​e​t​ ​S​e​r​v​e​r​B​o​x​ ​w​r​i​t​e​ ​h​e​r​e​”​)​.​ ​B​a​c​k​u​p​s​ ​a​l​r​e​a​d​y​ ​m​a​d​e​ ​s​t​a​y​ ​w​h​e​r​e​ ​t​h​e​y​ ​a​r​e​.
+	 */
+	containerBackupWhereHint: string
+	/**
+	 * T​h​a​t​ ​f​o​l​d​e​r​ ​d​o​e​s​ ​n​o​t​ ​e​x​i​s​t​.
+	 */
+	containerBackupDestinationMissing: string
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​c​a​n​n​o​t​ ​w​r​i​t​e​ ​i​n​ ​t​h​a​t​ ​f​o​l​d​e​r​.
+	 */
+	containerBackupDestinationNotWritable: string
+	/**
+	 * T​h​e​r​e​ ​i​s​ ​n​o​t​ ​e​n​o​u​g​h​ ​f​r​e​e​ ​s​p​a​c​e​ ​w​h​e​r​e​ ​b​a​c​k​u​p​s​ ​g​o​.
+	 */
+	containerBackupNotEnoughSpace: string
+	/**
+	 * T​h​e​ ​b​a​c​k​u​p​ ​d​i​s​k​ ​i​s​ ​n​o​t​ ​m​o​u​n​t​e​d​.​ ​M​o​u​n​t​ ​i​t​ ​i​n​ ​S​t​o​r​a​g​e​,​ ​o​r​ ​c​h​o​o​s​e​ ​a​n​o​t​h​e​r​ ​f​o​l​d​e​r​.
+	 */
+	containerBackupDiskMissing: string
+	/**
+	 * S​c​h​e​d​u​l​e​d
+	 */
+	containerBackupSchedules: string
+	/**
+	 * E​v​e​r​y​ ​d​a​y​ ​a​t​ ​{​a​t​}
+	 * @param {unknown} at
+	 */
+	containerBackupDaily: RequiredParams<'at'>
+	/**
+	 * E​v​e​r​y​ ​{​d​a​y​}​ ​a​t​ ​{​a​t​}
+	 * @param {unknown} at
+	 * @param {unknown} day
+	 */
+	containerBackupWeekly: RequiredParams<'at' | 'day'>
+	/**
+	 * L​a​s​t​:​ ​{​a​t​}
+	 * @param {unknown} at
+	 */
+	containerBackupLastRun: RequiredParams<'at'>
+	/**
+	 * L​a​s​t​ ​f​a​i​l​e​d​:​ ​{​e​r​r​o​r​}
+	 * @param {unknown} error
+	 */
+	containerBackupLastFailed: RequiredParams<'error'>
+	/**
+	 * R​e​p​e​a​t
+	 */
+	containerBackupRepeat: string
+	/**
+	 * O​n​l​y​ ​n​o​w
+	 */
+	containerBackupOnce: string
+	/**
+	 * E​v​e​r​y​ ​d​a​y
+	 */
+	containerBackupEveryDay: string
+	/**
+	 * E​v​e​r​y​ ​w​e​e​k
+	 */
+	containerBackupEveryWeek: string
+	/**
+	 * D​a​y
+	 */
+	containerBackupDay: string
+	/**
+	 * A​t
+	 */
+	containerBackupAt: string
+	/**
+	 * S​c​h​e​d​u​l​e
+	 */
+	containerBackupSchedule: string
+	/**
+	 * M​o​n​d​a​y
+	 */
+	weekdayMon: string
+	/**
+	 * T​u​e​s​d​a​y
+	 */
+	weekdayTue: string
+	/**
+	 * W​e​d​n​e​s​d​a​y
+	 */
+	weekdayWed: string
+	/**
+	 * T​h​u​r​s​d​a​y
+	 */
+	weekdayThu: string
+	/**
+	 * F​r​i​d​a​y
+	 */
+	weekdayFri: string
+	/**
+	 * S​a​t​u​r​d​a​y
+	 */
+	weekdaySat: string
+	/**
+	 * S​u​n​d​a​y
+	 */
+	weekdaySun: string
+	/**
+	 * C​o​u​l​d​ ​n​o​t​ ​r​e​a​c​h​ ​t​h​e​ ​a​g​e​n​t​.
+	 */
+	agentUnreachable: string
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​a​n​s​w​e​r​e​d​ ​{​s​t​a​t​u​s​}​.
+	 * @param {number} status
+	 */
+	agentAnswered: RequiredParams<'status'>
+	/**
+	 * S​e​s​s​i​o​n​ ​e​x​p​i​r​e​d​.​ ​S​i​g​n​ ​i​n​ ​a​g​a​i​n​.
+	 */
+	agentSessionExpired: string
+	/**
+	 * R​e​m​o​t​e​ ​m​o​n​i​t​o​r​ ​a​g​e​n​t​s​ ​r​e​q​u​i​r​e​ ​H​T​T​P​S​;​ ​H​T​T​P​ ​i​s​ ​a​l​l​o​w​e​d​ ​o​n​l​y​ ​o​n​ ​l​o​o​p​b​a​c​k​.
+	 */
+	agentHttpsRequired: string
+	/**
+	 * W​h​e​r​e​ ​t​h​e​ ​a​p​p​s​ ​a​r​e
+	 */
+	deskGuideAppsTitle: string
+	/**
+	 * T​h​e​ ​d​o​c​k​ ​h​o​l​d​s​ ​t​h​e​s​e​.​ ​{​a​p​p​s​}​ ​i​n​ ​t​h​e​ ​m​e​n​u​b​a​r​ ​l​i​s​t​s​ ​e​v​e​r​y​ ​a​p​p​.
+	 * @param {unknown} apps
+	 */
+	deskGuideAppsBody: RequiredParams<'apps'>
+	/**
+	 * W​i​n​d​o​w​ ​c​o​n​t​r​o​l​s​ ​a​r​e​ ​a​t​ ​t​h​e​ ​t​o​p​ ​l​e​f​t​.​ ​T​h​e​ ​r​i​g​h​t​ ​e​n​d​ ​o​f​ ​t​h​e​ ​m​e​n​u​b​a​r​ ​h​o​l​d​s​ ​t​h​e​ ​c​l​o​c​k​,​ ​n​o​t​i​f​i​c​a​t​i​o​n​s​ ​a​n​d​ ​t​h​e​ ​c​o​n​t​r​o​l​ ​c​e​n​t​r​e​.​ ​⌘​K​ ​s​e​a​r​c​h​e​s​ ​f​o​r​ ​a​n​ ​a​p​p​.
+	 */
+	deskGuideAppsMore: string
+	/**
+	 * R​e​c​o​m​m​e​n​d​e​d​ ​w​e​b​ ​a​p​p​s
+	 */
+	deskGuideWebAppsTitle: string
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​c​a​n​ ​r​u​n​ ​s​e​l​f​-​h​o​s​t​e​d​ ​s​e​r​v​i​c​e​s​ ​w​i​t​h​ ​D​o​c​k​e​r​.​ ​B​e​f​o​r​e​ ​a​n​y​t​h​i​n​g​ ​i​s​ ​d​e​p​l​o​y​e​d​,​ ​t​h​e​ ​A​p​p​ ​S​t​o​r​e​ ​s​h​o​w​s​ ​w​h​a​t​ ​a​n​ ​a​p​p​ ​w​i​l​l​ ​r​u​n​ ​a​n​d​ ​a​s​k​s​ ​f​o​r​ ​y​o​u​r​ ​p​a​s​s​w​o​r​d​.
+	 */
+	deskGuideWebAppsBody: string
+	/**
+	 * D​o​c​k​e​r​ ​o​r​ ​P​o​d​m​a​n​ ​w​a​s​ ​n​o​t​ ​f​o​u​n​d​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​,​ ​s​o​ ​w​e​b​ ​a​p​p​s​ ​c​a​n​n​o​t​ ​r​u​n​ ​h​e​r​e​.
+	 */
+	deskGuideNoDocker: string
+	/**
+	 * I​n​s​t​a​l​l​ ​D​o​c​k​e​r​,​ ​t​h​e​n​ ​o​p​e​n​ ​t​h​e​ ​A​p​p​ ​S​t​o​r​e​ ​a​g​a​i​n​.
+	 */
+	deskGuideNoDockerHint: string
+	/**
+	 * T​h​e​ ​A​p​p​ ​S​t​o​r​e​ ​l​i​s​t​s​ ​t​h​e​s​e​ ​u​n​d​e​r​ ​R​e​c​o​m​m​e​n​d​e​d​,​ ​w​i​t​h​ ​t​h​e​ ​r​e​s​t​ ​o​f​ ​t​h​e​ ​c​a​t​a​l​o​g​.
+	 */
+	deskGuideWebAppsNote: string
+	/**
+	 * S​k​i​p
+	 */
+	deskGuideSkip: string
+	/**
+	 * S​h​o​w​ ​t​h​e​ ​g​u​i​d​e​ ​a​g​a​i​n
+	 */
+	deskGuideAgain: string
+	/**
+	 * S​h​o​w​n​ ​o​n​c​e​ ​o​n​ ​t​h​e​ ​d​e​s​k​,​ ​a​s​ ​o​n​ ​t​h​e​ ​f​i​r​s​t​ ​s​i​g​n​-​i​n​.
+	 */
+	deskGuideAgainHint: string
+	/**
+	 * S​h​o​w
+	 */
+	deskGuideShow: string
+	/**
+	 * W​e​l​c​o​m​e​ ​t​o​ ​t​h​e​ ​d​e​s​k
+	 */
+	deskGuideWelcomeTitle: string
+	/**
+	 * {​h​o​s​t​}​ ​i​s​ ​m​a​n​a​g​e​d​ ​f​r​o​m​ ​h​e​r​e​.​ ​E​a​c​h​ ​a​p​p​ ​o​p​e​n​s​ ​i​n​ ​i​t​s​ ​o​w​n​ ​w​i​n​d​o​w​,​ ​a​n​d​ ​o​p​e​n​ ​w​i​n​d​o​w​s​ ​s​t​a​y​ ​w​h​e​r​e​ ​y​o​u​ ​l​e​f​t​ ​t​h​e​m​.
+	 * @param {unknown} host
+	 */
+	deskGuideBody: RequiredParams<'host'>
+	/**
+	 * T​h​e​ ​d​o​c​k​ ​a​n​d​ ​t​h​e​ ​w​a​l​l​p​a​p​e​r​ ​a​r​e​ ​s​a​v​e​d​ ​f​o​r​ ​t​h​i​s​ ​a​c​c​o​u​n​t​;​ ​t​h​e​ ​w​i​n​d​o​w​s​ ​y​o​u​ ​l​e​a​v​e​ ​o​p​e​n​ ​c​o​m​e​ ​b​a​c​k​ ​t​h​e​ ​n​e​x​t​ ​t​i​m​e​ ​t​h​i​s​ ​b​r​o​w​s​e​r​ ​s​i​g​n​s​ ​i​n​.
+	 */
+	deskGuideWelcomeMore: string
+	/**
+	 * O​p​e​n​ ​A​p​p​ ​S​t​o​r​e
+	 */
+	deskGuideOpenStore: string
+	/**
+	 * D​o​n​e
+	 */
+	deskGuideDone: string
+	/**
+	 * R​e​c​o​m​m​e​n​d​e​d
+	 */
+	storeRecommended: string
+	/**
+	 * N​e​x​t
+	 */
+	deskGuideNext: string
+	/**
+	 * I​n​s​t​a​l​l
+	 */
+	deskGuideInstall: string
+	/**
+	 * L​o​c​a​l​ ​i​n​f​e​r​e​n​c​e
+	 */
+	inference: string
+	/**
+	 * R​e​v​e​r​s​e​ ​p​r​o​x​y
+	 */
+	proxy: string
+	/**
+	 * K​e​r​n​e​l​s
+	 */
+	kernel: string
+	/**
+	 * U​b​u​n​t​u​ ​P​r​o
+	 */
+	ubuntuPro: string
+	/**
+	 * C​l​e​a​n​u​p
+	 */
+	cleanup: string
+	/**
 	 * S​k​i​p​ ​t​o​ ​c​o​n​t​e​n​t
 	 */
 	skipToContent: string
@@ -5950,13 +10299,341 @@ type RootTranslation = {
 	 * T​i​m​e
 	 */
 	chartTime: string
+	/**
+	 * S​e​t​t​i​n​g​s​ ​b​a​c​k​u​p
+	 */
+	monitorBackupTitle: string
+	/**
+	 * T​h​i​s​ ​s​e​r​v​e​r​'​s​ ​s​e​t​t​i​n​g​s​,​ ​b​a​c​k​e​d​ ​u​p​ ​t​o​ ​a​ ​W​e​b​D​A​V​ ​f​o​l​d​e​r​ ​a​n​d​ ​e​n​c​r​y​p​t​e​d​ ​w​i​t​h​ ​y​o​u​r​ ​p​a​s​s​p​h​r​a​s​e​:​ ​a​c​c​o​u​n​t​ ​p​a​s​s​w​o​r​d​,​ ​s​n​i​p​p​e​t​s​,​ ​r​e​m​o​t​e​ ​d​e​s​k​t​o​p​s​,​ ​B​M​C​ ​a​n​d​ ​P​V​E​,​ ​d​e​s​k​ ​p​r​e​f​e​r​e​n​c​e​s​ ​a​n​d​ ​t​h​e​m​e​s​,​ ​A​g​e​n​t​ ​m​o​d​e​ ​s​e​t​t​i​n​g​s​,​ ​p​u​s​h​ ​c​h​a​n​n​e​l​s​ ​a​n​d​ ​r​u​l​e​s​.​ ​H​i​s​t​o​r​y​,​ ​l​o​g​s​ ​a​n​d​ ​s​e​s​s​i​o​n​s​ ​a​r​e​ ​l​e​f​t​ ​o​u​t​.
+	 */
+	monitorBackupDescription: string
+	/**
+	 * W​e​b​D​A​V​ ​f​o​l​d​e​r
+	 */
+	monitorBackupFolder: string
+	/**
+	 * F​o​l​d​e​r​ ​a​d​d​r​e​s​s
+	 */
+	monitorBackupUrl: string
+	/**
+	 * O​n​e​ ​f​o​l​d​e​r​ ​p​e​r​ ​s​e​r​v​e​r​.​ ​I​t​ ​i​s​ ​m​a​d​e​ ​o​n​ ​t​h​e​ ​f​i​r​s​t​ ​b​a​c​k​u​p​.
+	 */
+	monitorBackupUrlHint: string
+	/**
+	 * U​s​e​r​ ​n​a​m​e
+	 */
+	monitorBackupUsername: string
+	/**
+	 * P​a​s​s​w​o​r​d
+	 */
+	monitorBackupPassword: string
+	/**
+	 * S​a​v​e​d
+	 */
+	monitorBackupPasswordSaved: string
+	/**
+	 * A​l​l​o​w​ ​p​l​a​i​n​ ​H​T​T​P
+	 */
+	monitorBackupAllowInsecure: string
+	/**
+	 * T​h​e​ ​p​a​s​s​w​o​r​d​ ​r​e​a​c​h​e​s​ ​t​h​e​ ​s​e​r​v​e​r​ ​u​n​e​n​c​r​y​p​t​e​d​.​ ​B​a​c​k​u​p​s​ ​a​r​e​ ​e​n​c​r​y​p​t​e​d​ ​e​i​t​h​e​r​ ​w​a​y​.
+	 */
+	monitorBackupAllowInsecureHint: string
+	/**
+	 * B​a​c​k​u​p​s​ ​k​e​p​t
+	 */
+	monitorBackupKeep: string
+	/**
+	 * T​h​e​ ​o​l​d​e​s​t​ ​g​o​ ​o​n​c​e​ ​t​h​e​r​e​ ​a​r​e​ ​m​o​r​e​.
+	 */
+	monitorBackupKeepHint: string
+	/**
+	 * B​a​c​k​ ​u​p​ ​a​u​t​o​m​a​t​i​c​a​l​l​y
+	 */
+	monitorBackupEnabled: string
+	/**
+	 * C​h​e​c​k​e​d​ ​e​v​e​r​y​ ​1​0​ ​m​i​n​u​t​e​s​;​ ​a​ ​b​a​c​k​u​p​ ​i​s​ ​m​a​d​e​ ​w​h​e​n​ ​t​h​e​ ​s​e​t​t​i​n​g​s​ ​c​h​a​n​g​e​d​.
+	 */
+	monitorBackupEnabledHint: string
+	/**
+	 * T​e​s​t
+	 */
+	monitorBackupTest: string
+	/**
+	 * C​o​n​n​e​c​t​e​d​.​ ​{​c​o​u​n​t​}​ ​b​a​c​k​u​p​s​ ​i​n​ ​t​h​e​ ​f​o​l​d​e​r​.
+	 * @param {unknown} count
+	 */
+	monitorBackupTestOk: RequiredParams<'count'>
+	/**
+	 * C​o​n​n​e​c​t​e​d​.​ ​T​h​e​ ​f​o​l​d​e​r​ ​w​i​l​l​ ​b​e​ ​m​a​d​e​ ​o​n​ ​t​h​e​ ​f​i​r​s​t​ ​b​a​c​k​u​p​.
+	 */
+	monitorBackupTestMissing: string
+	/**
+	 * S​a​v​e​d​.
+	 */
+	monitorBackupSaved: string
+	/**
+	 * S​a​v​e​ ​w​h​e​r​e​ ​t​h​i​s​ ​s​e​r​v​e​r​'​s​ ​s​e​t​t​i​n​g​s​ ​a​r​e​ ​b​a​c​k​e​d​ ​u​p​.
+	 */
+	monitorBackupSaveReauth: string
+	/**
+	 * P​a​s​s​p​h​r​a​s​e
+	 */
+	monitorBackupKey: string
+	/**
+	 * P​a​s​s​p​h​r​a​s​e​ ​s​e​t
+	 */
+	monitorBackupKeySet: string
+	/**
+	 * B​a​c​k​u​p​s​ ​a​r​e​ ​e​n​c​r​y​p​t​e​d​ ​t​o​ ​k​e​y​ ​{​i​d​}​.
+	 * @param {unknown} id
+	 */
+	monitorBackupKeySetHint: RequiredParams<'id'>
+	/**
+	 * N​o​ ​p​a​s​s​p​h​r​a​s​e
+	 */
+	monitorBackupKeyMissing: string
+	/**
+	 * S​e​t​ ​o​n​e​ ​t​o​ ​s​t​a​r​t​ ​b​a​c​k​i​n​g​ ​u​p​.
+	 */
+	monitorBackupKeyMissingHint: string
+	/**
+	 * C​h​a​n​g​e​ ​p​a​s​s​p​h​r​a​s​e
+	 */
+	monitorBackupKeyChange: string
+	/**
+	 * S​e​t​ ​p​a​s​s​p​h​r​a​s​e
+	 */
+	monitorBackupKeySetAction: string
+	/**
+	 * T​h​e​ ​p​a​s​s​p​h​r​a​s​e​ ​e​n​c​r​y​p​t​s​ ​t​h​e​ ​k​e​y​ ​t​h​a​t​ ​o​p​e​n​s​ ​t​h​e​ ​b​a​c​k​u​p​s​.​ ​T​h​e​ ​k​e​y​ ​i​s​ ​s​t​o​r​e​d​ ​i​n​ ​t​h​e​ ​f​o​l​d​e​r​;​ ​t​h​i​s​ ​s​e​r​v​e​r​ ​k​e​e​p​s​ ​o​n​l​y​ ​t​h​e​ ​h​a​l​f​ ​t​h​a​t​ ​e​n​c​r​y​p​t​s​,​ ​s​o​ ​i​t​ ​b​a​c​k​s​ ​u​p​ ​w​i​t​h​o​u​t​ ​t​h​e​ ​p​a​s​s​p​h​r​a​s​e​.​ ​A​ ​n​e​w​ ​p​a​s​s​p​h​r​a​s​e​ ​a​p​p​l​i​e​s​ ​t​o​ ​b​a​c​k​u​p​s​ ​f​r​o​m​ ​n​o​w​ ​o​n​;​ ​o​l​d​e​r​ ​o​n​e​s​ ​k​e​e​p​ ​t​h​e​ ​p​a​s​s​p​h​r​a​s​e​ ​t​h​e​y​ ​w​e​r​e​ ​m​a​d​e​ ​w​i​t​h​.
+	 */
+	monitorBackupKeyBody: string
+	/**
+	 * I​f​ ​y​o​u​ ​l​o​s​e​ ​t​h​e​ ​p​a​s​s​p​h​r​a​s​e​,​ ​t​h​e​ ​b​a​c​k​u​p​s​ ​c​a​n​n​o​t​ ​b​e​ ​r​e​s​t​o​r​e​d​.​ ​N​o​b​o​d​y​ ​c​a​n​ ​r​e​c​o​v​e​r​ ​i​t​.
+	 */
+	monitorBackupKeyWarning: string
+	/**
+	 * P​a​s​s​p​h​r​a​s​e
+	 */
+	monitorBackupPassphrase: string
+	/**
+	 * R​e​p​e​a​t​ ​p​a​s​s​p​h​r​a​s​e
+	 */
+	monitorBackupPassphraseAgain: string
+	/**
+	 * A​t​ ​l​e​a​s​t​ ​{​m​i​n​}​ ​c​h​a​r​a​c​t​e​r​s​.
+	 * @param {unknown} min
+	 */
+	monitorBackupPassphraseShort: RequiredParams<'min'>
+	/**
+	 * T​h​e​ ​t​w​o​ ​d​o​ ​n​o​t​ ​m​a​t​c​h​.
+	 */
+	monitorBackupPassphraseMismatch: string
+	/**
+	 * S​e​t
+	 */
+	monitorBackupKeySave: string
+	/**
+	 * S​e​t​ ​t​h​e​ ​p​a​s​s​p​h​r​a​s​e​ ​b​a​c​k​u​p​s​ ​a​r​e​ ​e​n​c​r​y​p​t​e​d​ ​w​i​t​h​.
+	 */
+	monitorBackupKeyReauth: string
+	/**
+	 * S​t​a​t​u​s
+	 */
+	monitorBackupStatus: string
+	/**
+	 * B​a​c​k​i​n​g​ ​u​p​…
+	 */
+	monitorBackupRunning: string
+	/**
+	 * L​a​s​t​ ​b​a​c​k​u​p​ ​{​w​h​e​n​}
+	 * @param {unknown} when
+	 */
+	monitorBackupLast: RequiredParams<'when'>
+	/**
+	 * N​o​ ​b​a​c​k​u​p​ ​y​e​t
+	 */
+	monitorBackupNone: string
+	/**
+	 * A​ ​b​a​c​k​u​p​ ​i​s​ ​m​a​d​e​ ​w​h​e​n​ ​t​h​e​ ​s​e​t​t​i​n​g​s​ ​c​h​a​n​g​e​,​ ​a​n​d​ ​o​n​c​e​ ​a​ ​d​a​y​ ​w​h​i​l​e​ ​o​n​l​y​ ​w​h​a​t​ ​c​h​a​n​g​e​s​ ​o​n​ ​i​t​s​ ​o​w​n​ ​d​i​d​.
+	 */
+	monitorBackupSchedule: string
+	/**
+	 * F​a​i​l​e​d
+	 */
+	monitorBackupFailed: string
+	/**
+	 * B​a​c​k​ ​u​p​ ​n​o​w
+	 */
+	monitorBackupRunNow: string
+	/**
+	 * B​a​c​k​u​p​s
+	 */
+	monitorBackupList: string
+	/**
+	 * N​o​ ​b​a​c​k​u​p​s​ ​i​n​ ​t​h​e​ ​f​o​l​d​e​r
+	 */
+	monitorBackupListEmpty: string
+	/**
+	 * O​l​d​e​r​ ​p​a​s​s​p​h​r​a​s​e
+	 */
+	monitorBackupOlderKey: string
+	/**
+	 * R​e​s​t​o​r​e
+	 */
+	monitorBackupRestore: string
+	/**
+	 * R​e​s​t​o​r​e​ ​s​e​t​t​i​n​g​s
+	 */
+	monitorBackupRestoreTitle: string
+	/**
+	 * R​e​s​t​o​r​e​ ​t​h​e​ ​s​e​t​t​i​n​g​s​ ​b​a​c​k​e​d​ ​u​p​ ​{​w​h​e​n​}​.​ ​T​h​i​s​ ​s​e​r​v​e​r​'​s​ ​s​e​t​t​i​n​g​s​ ​a​r​e​ ​r​e​p​l​a​c​e​d​;​ ​i​t​s​ ​h​i​s​t​o​r​y​,​ ​l​o​g​s​ ​a​n​d​ ​w​h​e​r​e​ ​b​a​c​k​u​p​s​ ​g​o​ ​s​t​a​y​.
+	 * @param {unknown} when
+	 */
+	monitorBackupRestoreBody: RequiredParams<'when'>
+	/**
+	 * T​h​e​ ​a​c​c​o​u​n​t​ ​p​a​s​s​w​o​r​d​ ​b​e​c​o​m​e​s​ ​t​h​e​ ​b​a​c​k​u​p​'​s​:​ ​e​v​e​r​y​ ​d​e​v​i​c​e​ ​s​i​g​n​s​ ​i​n​ ​a​g​a​i​n​ ​w​i​t​h​ ​i​t​.​ ​T​h​e​ ​m​o​n​i​t​o​r​ ​r​e​s​t​a​r​t​s​.
+	 */
+	monitorBackupRestoreWarning: string
+	/**
+	 * R​e​s​t​o​r​e​ ​t​h​e​ ​s​e​t​t​i​n​g​s​ ​b​a​c​k​e​d​ ​u​p​ ​{​w​h​e​n​}​.
+	 * @param {unknown} when
+	 */
+	monitorBackupRestoreReauth: RequiredParams<'when'>
+	/**
+	 * T​h​e​ ​m​o​n​i​t​o​r​ ​i​s​ ​r​e​s​t​a​r​t​i​n​g​.
+	 */
+	monitorBackupRestoredRestarting: string
+	/**
+	 * R​e​s​t​a​r​t​ ​t​h​e​ ​m​o​n​i​t​o​r​ ​t​o​ ​a​p​p​l​y​ ​e​v​e​r​y​ ​s​e​t​t​i​n​g​.
+	 */
+	monitorBackupRestoredRestart: string
+	/**
+	 * S​i​g​n​ ​i​n​ ​a​g​a​i​n​ ​w​i​t​h​ ​t​h​e​ ​p​a​s​s​w​o​r​d​ ​f​r​o​m​ ​t​h​e​ ​b​a​c​k​u​p​.
+	 */
+	monitorBackupRestoredSignIn: string
+	/**
+	 * T​h​a​t​ ​a​d​d​r​e​s​s​ ​i​s​ ​n​o​t​ ​o​n​e​ ​t​h​e​ ​p​a​s​s​w​o​r​d​ ​m​a​y​ ​b​e​ ​s​e​n​t​ ​t​o​:​ ​u​s​e​ ​H​T​T​P​S​,​ ​o​r​ ​a​l​l​o​w​ ​p​l​a​i​n​ ​H​T​T​P​.
+	 */
+	monitorBackupErrInvalidUrl: string
+	/**
+	 * T​h​e​ ​u​s​e​r​ ​n​a​m​e​ ​h​a​s​ ​a​ ​c​h​a​r​a​c​t​e​r​ ​i​t​ ​m​a​y​ ​n​o​t​ ​h​a​v​e​.
+	 */
+	monitorBackupErrInvalidUsername: string
+	/**
+	 * T​h​e​ ​p​a​s​s​w​o​r​d​ ​h​a​s​ ​a​ ​c​h​a​r​a​c​t​e​r​ ​i​t​ ​m​a​y​ ​n​o​t​ ​h​a​v​e​.
+	 */
+	monitorBackupErrInvalidPassword: string
+	/**
+	 * T​y​p​e​ ​t​h​e​ ​p​a​s​s​w​o​r​d​:​ ​t​h​e​ ​s​a​v​e​d​ ​o​n​e​ ​i​s​ ​o​n​l​y​ ​s​e​n​t​ ​t​o​ ​t​h​e​ ​s​e​r​v​e​r​ ​i​t​ ​w​a​s​ ​s​a​v​e​d​ ​f​o​r​.
+	 */
+	monitorBackupErrPasswordRequired: string
+	/**
+	 * K​e​e​p​ ​b​e​t​w​e​e​n​ ​1​ ​a​n​d​ ​1​0​0​ ​b​a​c​k​u​p​s​.
+	 */
+	monitorBackupErrInvalidKeep: string
+	/**
+	 * T​h​e​ ​p​a​s​s​p​h​r​a​s​e​ ​i​s​ ​t​o​o​ ​s​h​o​r​t​.
+	 */
+	monitorBackupErrWeakPassphrase: string
+	/**
+	 * S​a​v​e​ ​a​ ​f​o​l​d​e​r​ ​a​n​d​ ​s​e​t​ ​a​ ​p​a​s​s​p​h​r​a​s​e​ ​f​i​r​s​t​.
+	 */
+	monitorBackupErrNotReady: string
+	/**
+	 * T​h​e​ ​p​a​s​s​p​h​r​a​s​e​ ​d​o​e​s​ ​n​o​t​ ​o​p​e​n​ ​t​h​i​s​ ​b​a​c​k​u​p​.
+	 */
+	monitorBackupErrWrongPassphrase: string
+	/**
+	 * T​h​e​ ​k​e​y​ ​f​o​r​ ​t​h​i​s​ ​b​a​c​k​u​p​ ​i​s​ ​n​o​t​ ​i​n​ ​t​h​e​ ​f​o​l​d​e​r​,​ ​s​o​ ​i​t​ ​c​a​n​n​o​t​ ​b​e​ ​o​p​e​n​e​d​.
+	 */
+	monitorBackupErrKeyMissing: string
+	/**
+	 * T​h​e​ ​k​e​y​ ​f​i​l​e​ ​i​n​ ​t​h​e​ ​f​o​l​d​e​r​ ​c​a​n​n​o​t​ ​b​e​ ​r​e​a​d​.
+	 */
+	monitorBackupErrInvalidKeyFile: string
+	/**
+	 * T​h​e​ ​f​i​l​e​ ​i​s​ ​n​o​t​ ​a​ ​b​a​c​k​u​p​ ​t​h​i​s​ ​m​o​n​i​t​o​r​ ​c​a​n​ ​r​e​a​d​.
+	 */
+	monitorBackupErrInvalidBackup: string
+	/**
+	 * T​h​e​ ​b​a​c​k​u​p​ ​i​s​ ​f​r​o​m​ ​a​ ​n​e​w​e​r​ ​m​o​n​i​t​o​r​.​ ​U​p​d​a​t​e​ ​t​h​i​s​ ​o​n​e​ ​f​i​r​s​t​.
+	 */
+	monitorBackupErrNewer: string
+	/**
+	 * T​h​e​ ​b​a​c​k​u​p​ ​i​s​ ​l​a​r​g​e​r​ ​t​h​a​n​ ​t​h​e​ ​{​m​a​x​}​ ​l​i​m​i​t​.
+	 * @param {unknown} max
+	 */
+	monitorBackupErrTooLarge: RequiredParams<'max'>
+	/**
+	 * T​h​e​ ​b​a​c​k​u​p​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​i​n​ ​t​h​e​ ​f​o​l​d​e​r​.
+	 */
+	monitorBackupErrNotFound: string
+	/**
+	 * T​h​e​ ​W​e​b​D​A​V​ ​s​e​r​v​e​r​ ​r​e​f​u​s​e​d​ ​t​h​e​ ​u​s​e​r​ ​n​a​m​e​ ​o​r​ ​p​a​s​s​w​o​r​d​.
+	 */
+	monitorBackupErrUnauthorized: string
+	/**
+	 * T​h​e​ ​W​e​b​D​A​V​ ​s​e​r​v​e​r​ ​d​o​e​s​ ​n​o​t​ ​a​l​l​o​w​ ​t​h​i​s​.
+	 */
+	monitorBackupErrForbidden: string
+	/**
+	 * T​h​e​ ​f​o​l​d​e​r​ ​i​s​ ​n​o​t​ ​o​n​ ​t​h​e​ ​W​e​b​D​A​V​ ​s​e​r​v​e​r​.
+	 */
+	monitorBackupErrFolderMissing: string
+	/**
+	 * T​h​e​ ​W​e​b​D​A​V​ ​s​e​r​v​e​r​ ​c​a​n​n​o​t​ ​b​e​ ​r​e​a​c​h​e​d​.
+	 */
+	monitorBackupErrUnreachable: string
+	/**
+	 * T​h​e​ ​W​e​b​D​A​V​ ​s​e​r​v​e​r​ ​i​s​ ​o​u​t​ ​o​f​ ​s​p​a​c​e​.
+	 */
+	monitorBackupErrServerFull: string
+	/**
+	 * T​h​e​ ​a​d​d​r​e​s​s​ ​d​o​e​s​ ​n​o​t​ ​a​n​s​w​e​r​ ​a​s​ ​a​ ​W​e​b​D​A​V​ ​f​o​l​d​e​r​.
+	 */
+	monitorBackupErrNotWebdav: string
+	/**
+	 * T​h​e​ ​W​e​b​D​A​V​ ​s​e​r​v​e​r​ ​f​a​i​l​e​d​ ​t​h​e​ ​r​e​q​u​e​s​t​.
+	 */
+	monitorBackupErrServer: string
+	/**
+	 * F​a​i​l​e​d​:​ ​{​c​o​d​e​}
+	 * @param {unknown} code
+	 */
+	monitorBackupErrOther: RequiredParams<'code'>
+	/**
+	 * S​e​t​t​i​n​g​s​ ​b​a​c​k​u​p​ ​f​a​i​l​e​d
+	 */
+	noticeMonitorBackupFailed: string
+	/**
+	 * S​e​t​t​i​n​g​s​ ​b​a​c​k​u​p​s​ ​w​o​r​k​ ​a​g​a​i​n
+	 */
+	noticeMonitorBackupBack: string
+	/**
+	 * T​h​e​ ​l​a​s​t​ ​b​a​c​k​u​p​ ​w​a​s​ ​u​p​l​o​a​d​e​d​.
+	 */
+	noticeMonitorBackupBackBody: string
+	/**
+	 * R​e​m​o​v​e​ ​t​h​e​ ​s​a​v​e​d​ ​p​a​s​s​w​o​r​d
+	 */
+	monitorBackupForgetPassword: string
+	/**
+	 * A​u​t​o​m​a​t​i​c​ ​b​a​c​k​u​p​s​ ​a​r​e​ ​o​f​f​.
+	 */
+	monitorBackupOff: string
+	/**
+	 * A​n​o​t​h​e​r​ ​s​e​r​v​e​r
+	 */
+	monitorBackupOtherServer: string
+	/**
+	 * B​a​c​k​u​p​s​ ​a​r​e​ ​t​u​r​n​e​d​ ​o​f​f​.​ ​T​u​r​n​ ​o​n​ ​B​a​c​k​ ​u​p​ ​a​u​t​o​m​a​t​i​c​a​l​l​y​ ​f​i​r​s​t​.
+	 */
+	monitorBackupErrDisabled: string
 }
 
 export type TranslationFunctions = {
-	/**
-	 * Sign in to access your server monitoring dashboard
-	 */
-	signInSubtitle: () => LocalizedString
 	/**
 	 * Username
 	 */
@@ -5966,25 +10643,9 @@ export type TranslationFunctions = {
 	 */
 	password: () => LocalizedString
 	/**
-	 * Enter your username
-	 */
-	enterUsername: () => LocalizedString
-	/**
-	 * Enter your password
-	 */
-	enterPassword: () => LocalizedString
-	/**
 	 * Sign in
 	 */
 	signIn: () => LocalizedString
-	/**
-	 * Signing in...
-	 */
-	signingIn: () => LocalizedString
-	/**
-	 * No servers yet. Add the address of an agent to monitor it.
-	 */
-	noServersTip: () => LocalizedString
 	/**
 	 * Add server
 	 */
@@ -5994,25 +10655,13 @@ export type TranslationFunctions = {
 	 */
 	removeServer: () => LocalizedString
 	/**
-	 * Name
-	 */
-	serverName: () => LocalizedString
-	/**
 	 * Add
 	 */
 	add: () => LocalizedString
 	/**
-	 * Welcome,
-	 */
-	welcome: () => LocalizedString
-	/**
 	 * Logout
 	 */
 	logout: () => LocalizedString
-	/**
-	 * Unknown Server
-	 */
-	unknownServer: () => LocalizedString
 	/**
 	 * This server
 	 */
@@ -6037,10 +10686,6 @@ export type TranslationFunctions = {
 	 * Active
 	 */
 	active: () => LocalizedString
-	/**
-	 * N/A
-	 */
-	na: () => LocalizedString
 	/**
 	 * History
 	 */
@@ -6074,33 +10719,9 @@ export type TranslationFunctions = {
 	 */
 	lastUpdated: () => LocalizedString
 	/**
-	 * CPU Usage:
-	 */
-	cpuUsageLabel: () => LocalizedString
-	/**
-	 * Memory Usage:
-	 */
-	memoryUsageLabel: () => LocalizedString
-	/**
-	 * Disk Usage:
-	 */
-	diskUsageLabel: () => LocalizedString
-	/**
 	 * Temperature:
 	 */
 	temperature: () => LocalizedString
-	/**
-	 * Quick Actions
-	 */
-	quickActions: () => LocalizedString
-	/**
-	 * Refresh Data
-	 */
-	refreshData: () => LocalizedString
-	/**
-	 * Data refreshes automatically every 5 seconds
-	 */
-	autoRefreshNote: () => LocalizedString
 	/**
 	 * System theme
 	 */
@@ -6122,25 +10743,9 @@ export type TranslationFunctions = {
 	 */
 	servers: () => LocalizedString
 	/**
-	 * Search
-	 */
-	serversSearch: () => LocalizedString
-	/**
-	 * No matching servers
-	 */
-	serversNoMatch: () => LocalizedString
-	/**
 	 * Menu
 	 */
 	menu: () => LocalizedString
-	/**
-	 * Collapse sidebar
-	 */
-	collapseSidebar: () => LocalizedString
-	/**
-	 * Expand sidebar
-	 */
-	expandSidebar: () => LocalizedString
 	/**
 	 * GPU
 	 */
@@ -6190,10 +10795,6 @@ export type TranslationFunctions = {
 	 */
 	refresh: () => LocalizedString
 	/**
-	 * Edit server
-	 */
-	editServer: () => LocalizedString
-	/**
 	 * Server URL
 	 */
 	serverUrlLabel: () => LocalizedString
@@ -6205,10 +10806,6 @@ export type TranslationFunctions = {
 	 * Test connection
 	 */
 	testConnection: () => LocalizedString
-	/**
-	 * Testing...
-	 */
-	testingConnection: () => LocalizedString
 	/**
 	 * Save
 	 */
@@ -6262,10 +10859,6 @@ export type TranslationFunctions = {
 	 */
 	powerActionSent: (arg: { action: unknown }) => LocalizedString
 	/**
-	 * Manage machine
-	 */
-	manageMachine: () => LocalizedString
-	/**
 	 * Benchmark
 	 */
 	benchmark: () => LocalizedString
@@ -6282,7 +10875,11 @@ export type TranslationFunctions = {
 	 */
 	benchmarkCancel: () => LocalizedString
 	/**
-	 * Stop the run? Killing the process group is the only thing that ends a benchmark — fio, iperf3 and Geekbench are separate processes.
+	 * Stop this run?
+	 */
+	benchmarkCancelTitle: () => LocalizedString
+	/**
+	 * Stopping kills the benchmark process group. fio, iperf3, and Geekbench run as separate processes.
 	 */
 	benchmarkCancelConfirm: () => LocalizedString
 	/**
@@ -6301,10 +10898,6 @@ export type TranslationFunctions = {
 	 * fio at four block sizes, ~30 seconds each. Writes a 2 GB test file into the working directory and needs that much free, or yabs skips it and says so in the output.
 	 */
 	benchmarkDiskHint: () => LocalizedString
-	/**
-	 * No benchmark has been run on this machine yet.
-	 */
-	benchmarkEmpty: () => LocalizedString
 	/**
 	 * About {minutes} min · {traffic} of traffic
 	 */
@@ -6410,7 +11003,11 @@ export type TranslationFunctions = {
 	 */
 	benchmarkRemove: () => LocalizedString
 	/**
-	 * Remove this run and its files from the machine?
+	 * Remove this run?
+	 */
+	benchmarkRemoveTitle: () => LocalizedString
+	/**
+	 * This also removes its files from the machine.
 	 */
 	benchmarkRemoveConfirm: () => LocalizedString
 	/**
@@ -6518,10 +11115,6 @@ export type TranslationFunctions = {
 	 */
 	containerDisk: () => LocalizedString
 	/**
-	 * No containers on this machine.
-	 */
-	containerEmpty: () => LocalizedString
-	/**
 	 * Exited
 	 */
 	containerExited: () => LocalizedString
@@ -6553,10 +11146,6 @@ export type TranslationFunctions = {
 	 * Network
 	 */
 	containerNetwork: () => LocalizedString
-	/**
-	 * No images on this machine.
-	 */
-	containerNoImages: () => LocalizedString
 	/**
 	 * This machine has no docker or podman command, so there is nothing to show or change here.
 	 */
@@ -6609,10 +11198,6 @@ export type TranslationFunctions = {
 	 * Running
 	 */
 	containerRunning: () => LocalizedString
-	/**
-	 * {runtime} {version}
-	 */
-	containerRuntime: (arg: { runtime: unknown, version: unknown }) => LocalizedString
 	/**
 	 * Start
 	 */
@@ -6846,10 +11431,6 @@ export type TranslationFunctions = {
 	 */
 	cronEditJob: () => LocalizedString
 	/**
-	 * No jobs yet.
-	 */
-	cronEmpty: () => LocalizedString
-	/**
 	 * Enable
 	 */
 	cronEnable: () => LocalizedString
@@ -6986,9 +11567,9 @@ export type TranslationFunctions = {
 	 */
 	serviceDetailsUnavailable: () => LocalizedString
 	/**
-	 * No units on this machine.
+	 * All
 	 */
-	serviceEmpty: () => LocalizedString
+	servicesFilterAll: () => LocalizedString
 	/**
 	 * This unit has logged nothing.
 	 */
@@ -7025,10 +11606,6 @@ export type TranslationFunctions = {
 	 * Retry as root
 	 */
 	serviceRetryAsRoot: () => LocalizedString
-	/**
-	 * System
-	 */
-	serviceScopeSystem: () => LocalizedString
 	/**
 	 * This account
 	 */
@@ -7094,6 +11671,10 @@ export type TranslationFunctions = {
 	 */
 	services: () => LocalizedString
 	/**
+	 * Threads
+	 */
+	processColumnThreads: () => LocalizedString
+	/**
 	 * CPU
 	 */
 	processCpu: () => LocalizedString
@@ -7113,10 +11694,6 @@ export type TranslationFunctions = {
 	 * The machine printed rows this agent could not read. They are not listed here.
 	 */
 	processIssue: () => LocalizedString
-	/**
-	 * Show {count} kernel threads
-	 */
-	processKernelThreads: (arg: { count: unknown }) => LocalizedString
 	/**
 	 * This account does not own that process.
 	 */
@@ -7146,10 +11723,6 @@ export type TranslationFunctions = {
 	 */
 	processNoMatch: () => LocalizedString
 	/**
-	 * No processes on this machine.
-	 */
-	processNone: () => LocalizedString
-	/**
 	 * Retry as root
 	 */
 	processRetryAsRoot: () => LocalizedString
@@ -7158,21 +11731,9 @@ export type TranslationFunctions = {
 	 */
 	processRss: () => LocalizedString
 	/**
-	 * Read at {time} · {count} processes
-	 */
-	processSampledAt: (arg: { count: unknown, time: unknown }) => LocalizedString
-	/**
 	 * Name, user or PID
 	 */
 	processSearchHint: () => LocalizedString
-	/**
-	 * CPU
-	 */
-	processSortCpu: () => LocalizedString
-	/**
-	 * Memory
-	 */
-	processSortMem: () => LocalizedString
 	/**
 	 * Name
 	 */
@@ -7185,10 +11746,6 @@ export type TranslationFunctions = {
 	 * Read
 	 */
 	processSortRead: () => LocalizedString
-	/**
-	 * RSS
-	 */
-	processSortRss: () => LocalizedString
 	/**
 	 * User
 	 */
@@ -7206,10 +11763,6 @@ export type TranslationFunctions = {
 	 */
 	processStopConfirm: (arg: { name: unknown, pid: unknown }) => LocalizedString
 	/**
-	 * {count} threads
-	 */
-	processThreads: (arg: { count: unknown }) => LocalizedString
-	/**
 	 * The table is larger than this agent will read, so nothing is shown here.
 	 */
 	processTooLarge: () => LocalizedString
@@ -7225,10 +11778,6 @@ export type TranslationFunctions = {
 	 * Close
 	 */
 	close: () => LocalizedString
-	/**
-	 * Remove this server? This only forgets it in this browser — it does not stop the agent.
-	 */
-	confirmDeleteServer: () => LocalizedString
 	/**
 	 * Uptime
 	 */
@@ -7418,10 +11967,6 @@ export type TranslationFunctions = {
 	 */
 	removeCustomCmd: () => LocalizedString
 	/**
-	 * Editing requires non-SSH access, which is disabled on this agent.
-	 */
-	customCmdsReadOnly: () => LocalizedString
-	/**
 	 * Move up
 	 */
 	moveUp: () => LocalizedString
@@ -7470,10 +12015,6 @@ export type TranslationFunctions = {
 	 */
 	serverSettings: () => LocalizedString
 	/**
-	 * Panel Settings
-	 */
-	panelSettings: () => LocalizedString
-	/**
 	 * Unlimited
 	 */
 	unlimited: () => LocalizedString
@@ -7485,38 +12026,6 @@ export type TranslationFunctions = {
 	 * Terminal
 	 */
 	terminal: () => LocalizedString
-	/**
-	 * The agent connects to this machine's SSH service on your behalf, so a session has exactly the permissions of the SSH account you sign in as. Your panel password grants no shell by itself.
-	 */
-	terminalCredentialsHint: () => LocalizedString
-	/**
-	 * Authentication
-	 */
-	terminalAuthMethod: () => LocalizedString
-	/**
-	 * SSH user
-	 */
-	terminalSshUser: () => LocalizedString
-	/**
-	 * Private key
-	 */
-	terminalPrivateKey: () => LocalizedString
-	/**
-	 * Key passphrase
-	 */
-	terminalPassphrase: () => LocalizedString
-	/**
-	 * Interactive
-	 */
-	terminalInteractive: () => LocalizedString
-	/**
-	 * The server decides what to ask for. Use this when two-factor authentication is enabled.
-	 */
-	terminalInteractiveHint: () => LocalizedString
-	/**
-	 * Remember in this tab (cleared when it closes)
-	 */
-	terminalRememberForTab: () => LocalizedString
 	/**
 	 * Waiting for you
 	 */
@@ -7570,9 +12079,21 @@ export type TranslationFunctions = {
 	 */
 	terminalDisconnect: () => LocalizedString
 	/**
-	 * Submit
+	 * Session ended
 	 */
-	terminalSubmit: () => LocalizedString
+	terminalEnded: () => LocalizedString
+	/**
+	 * New session
+	 */
+	terminalNewSession: () => LocalizedString
+	/**
+	 * Shell
+	 */
+	terminalMenuShell: () => LocalizedString
+	/**
+	 * New tmux session…
+	 */
+	terminalTmuxNew: () => LocalizedString
 	/**
 	 * Reconnecting...
 	 */
@@ -7586,45 +12107,9 @@ export type TranslationFunctions = {
 	 */
 	terminalLoadFailed: () => LocalizedString
 	/**
-	 * The terminal is not enabled on this agent. Turn on remote_access.terminal.enabled in config.toml; it also requires TLS, or a proxy on the same host.
-	 */
-	terminalUnavailable: () => LocalizedString
-	/**
-	 * Open a terminal
-	 */
-	terminalOpenDirectly: () => LocalizedString
-	/**
-	 * This agent opens a shell for anyone signed into the panel, running as the account the agent itself runs as. No SSH credentials needed.
-	 */
-	terminalPasswordlessHint: () => LocalizedString
-	/**
-	 * This panel login can open a shell
-	 */
-	terminalPasswordlessNoticeTitle: () => LocalizedString
-	/**
-	 * Opening a terminal here needs no SSH credentials, so your panel password is all that stands between a visitor and a shell on this machine. Keep it if that is what you want, or turn it off and sign in with an SSH account instead. Turning it back on later means editing the agent's config file.
-	 */
-	terminalPasswordlessNoticeBody: () => LocalizedString
-	/**
-	 * Keep it on
-	 */
-	terminalPasswordlessKeep: () => LocalizedString
-	/**
-	 * Turn it off
-	 */
-	terminalPasswordlessDisable: () => LocalizedString
-	/**
 	 * tmux sessions
 	 */
 	terminalTmuxSessions: () => LocalizedString
-	/**
-	 * Attach
-	 */
-	terminalTmuxAttach: () => LocalizedString
-	/**
-	 * New session
-	 */
-	terminalTmuxNewSession: () => LocalizedString
 	/**
 	 * Session name
 	 */
@@ -7678,29 +12163,21 @@ export type TranslationFunctions = {
 	 */
 	terminalTmuxListFailed: () => LocalizedString
 	/**
+	 * Empty folder
+	 */
+	filesEmptyState: () => LocalizedString
+	/**
 	 * Files
 	 */
 	files: () => LocalizedString
-	/**
-	 * File access is not enabled on this agent. Turn on remote_access.fs.enabled and name its roots in config.toml; it also requires TLS, or a proxy on the same host.
-	 */
-	filesUnavailable: () => LocalizedString
 	/**
 	 * Remote features are off
 	 */
 	remoteAccessOffTitle: () => LocalizedString
 	/**
-	 * This agent is set up for monitoring only. You can’t open a terminal, run commands, or browse files here. To enable these features, edit [remote_access] in the agent’s config.toml.
-	 */
-	remoteAccessOffBody: () => LocalizedString
-	/**
 	 * Roots
 	 */
 	filesRoots: () => LocalizedString
-	/**
-	 * Nothing here
-	 */
-	filesEmpty: () => LocalizedString
 	/**
 	 * Size
 	 */
@@ -7798,6 +12275,34 @@ export type TranslationFunctions = {
 	 */
 	filesEditorServerChanged: () => LocalizedString
 	/**
+	 * List
+	 */
+	filesViewList: () => LocalizedString
+	/**
+	 * Grid
+	 */
+	filesViewGrid: () => LocalizedString
+	/**
+	 * View
+	 */
+	filesView: () => LocalizedString
+	/**
+	 * Forward
+	 */
+	filesForward: () => LocalizedString
+	/**
+	 * Up
+	 */
+	filesUp: () => LocalizedString
+	/**
+	 * More actions
+	 */
+	filesMoreActions: () => LocalizedString
+	/**
+	 * Path
+	 */
+	filesPath: () => LocalizedString
+	/**
 	 * Notification channels
 	 */
 	pushChannels: () => LocalizedString
@@ -7894,14 +12399,6 @@ export type TranslationFunctions = {
 	 */
 	retentionInvalid: () => LocalizedString
 	/**
-	 * Your account
-	 */
-	myAccount: () => LocalizedString
-	/**
-	 * Role
-	 */
-	accountRole: () => LocalizedString
-	/**
 	 * Change password
 	 */
 	changePassword: () => LocalizedString
@@ -7918,167 +12415,63 @@ export type TranslationFunctions = {
 	 */
 	passwordTooShort: () => LocalizedString
 	/**
+	 * LK Cloud
+	 */
+	lkc: () => LocalizedString
+	/**
+	 * Sign this agent in to your LK Cloud account.
+	 */
+	lkcHint: () => LocalizedString
+	/**
+	 * Sign in
+	 */
+	lkcSignIn: () => LocalizedString
+	/**
+	 * Sign out
+	 */
+	lkcSignOut: () => LocalizedString
+	/**
+	 * Code
+	 */
+	lkcCode: () => LocalizedString
+	/**
+	 * Check that the sign-in page shows this code.
+	 */
+	lkcCodeHint: () => LocalizedString
+	/**
+	 * Waiting for approval
+	 */
+	lkcWaiting: () => LocalizedString
+	/**
+	 * Open sign-in page
+	 */
+	lkcOpen: () => LocalizedString
+	/**
+	 * The sign-in was declined.
+	 */
+	lkcDenied: () => LocalizedString
+	/**
+	 * The code expired. Sign in again.
+	 */
+	lkcExpired: () => LocalizedString
+	/**
+	 * The sign-in did not go through. Try again.
+	 */
+	lkcFailed: () => LocalizedString
+	/**
+	 * The account service cannot be reached.
+	 */
+	lkcUnreachable: () => LocalizedString
+	/**
 	 * Password changed.
 	 */
 	passwordChanged: () => LocalizedString
-	/**
-	 * Accounts
-	 */
-	accounts: () => LocalizedString
-	/**
-	 * Add account
-	 */
-	addAccount: () => LocalizedString
-	/**
-	 * Last sign-in
-	 */
-	lastLogin: () => LocalizedString
-	/**
-	 * Never
-	 */
-	neverSignedIn: () => LocalizedString
-	/**
-	 * Reset password
-	 */
-	resetPassword: () => LocalizedString
-	/**
-	 * Delete account
-	 */
-	deleteAccount: () => LocalizedString
-	/**
-	 * Delete the account {name}? Anything it has open on this agent ends now.
-	 */
-	confirmDeleteAccount: (arg: { name: string }) => LocalizedString
-	/**
-	 * Roles
-	 */
-	roles: () => LocalizedString
-	/**
-	 * Add role
-	 */
-	addRole: () => LocalizedString
-	/**
-	 * Edit role
-	 */
-	editRole: () => LocalizedString
-	/**
-	 * Delete role
-	 */
-	deleteRole: () => LocalizedString
-	/**
-	 * Delete the role {name}?
-	 */
-	confirmDeleteRole: (arg: { name: string }) => LocalizedString
-	/**
-	 * Name
-	 */
-	roleName: () => LocalizedString
-	/**
-	 * Use 1–32 lowercase letters, digits, - or _.
-	 */
-	roleNameInvalid: () => LocalizedString
-	/**
-	 * Built-in
-	 */
-	roleBuiltin: () => LocalizedString
-	/**
-	 * Administrator
-	 */
-	roleAdmin: () => LocalizedString
-	/**
-	 * Manages accounts, roles and this agent’s settings. Only the built-in administrator role has this.
-	 */
-	roleAdminNote: () => LocalizedString
-	/**
-	 * View only
-	 */
-	roleViewOnly: () => LocalizedString
-	/**
-	 * Shell and commands
-	 */
-	grantShell: () => LocalizedString
-	/**
-	 * Run commands and open a terminal as the agent’s own account, with no SSH credentials. Whoever has this can do everything below as well.
-	 */
-	grantShellNote: () => LocalizedString
-	/**
-	 * SSH terminal
-	 */
-	grantSshTerminal: () => LocalizedString
-	/**
-	 * The panel’s terminal that signs in to sshd with an SSH account, with that account’s rights.
-	 */
-	grantSshTerminalNote: () => LocalizedString
-	/**
-	 * Virtualization
-	 */
-	grantVirt: () => LocalizedString
-	/**
-	 * Proxmox VE, libvirt and BMCs the agent reaches: see and control their machines. Where they are and how to sign in is set by an admin.
-	 */
-	grantVirtNote: () => LocalizedString
-	/**
-	 * Files
-	 */
-	grantFiles: () => LocalizedString
-	/**
-	 * No access
-	 */
-	filesNone: () => LocalizedString
-	/**
-	 * Read only
-	 */
-	filesRead: () => LocalizedString
-	/**
-	 * Read and write
-	 */
-	filesWrite: () => LocalizedString
-	/**
-	 * Connect out
-	 */
-	grantConnect: () => LocalizedString
-	/**
-	 * Local and dynamic port forwards and remote desktop: connections the server makes on the app’s behalf.
-	 */
-	grantConnectNote: () => LocalizedString
-	/**
-	 * Allowed destinations
-	 */
-	connectAllow: () => LocalizedString
-	/**
-	 * One per line: an address or CIDR, with an optional port or range — 127.0.0.1:3389, 10.0.0.0/8, [::1]:22. Empty allows any.
-	 */
-	connectAllowHint: () => LocalizedString
-	/**
-	 * Listen
-	 */
-	grantListen: () => LocalizedString
-	/**
-	 * Remote port forwards: the agent listens on a port of the server.
-	 */
-	grantListenNote: () => LocalizedString
-	/**
-	 * Allow addresses other than loopback
-	 */
-	listenPublic: () => LocalizedString
-	/**
-	 * Ports
-	 */
-	listenPorts: () => LocalizedString
-	/**
-	 * A port or a range such as 1024-65535. Empty allows any.
-	 */
-	listenPortsHint: () => LocalizedString
-	/**
-	 * Ports must be a port or a range between 1 and 65535.
-	 */
-	portsInvalid: () => LocalizedString
 	/**
 	 * Confirm with your password
 	 */
 	reauthTitle: () => LocalizedString
 	/**
-	 * Changing who can do what on this agent needs your current password.
+	 * This change needs your current password.
 	 */
 	reauthBody: () => LocalizedString
 	/**
@@ -8090,53 +12483,17 @@ export type TranslationFunctions = {
 	 */
 	accessErrReauth: () => LocalizedString
 	/**
-	 * This is the last administrator. Make another account an administrator first.
-	 */
-	accessErrLastAdmin: () => LocalizedString
-	/**
-	 * That name is taken, or the role is still given to an account.
-	 */
-	accessErrConflict: () => LocalizedString
-	/**
-	 * Only an administrator can do this.
-	 */
-	accessErrForbidden: () => LocalizedString
-	/**
-	 * Only an administrator can change this agent’s settings.
-	 */
-	adminOnlySettings: () => LocalizedString
-	/**
-	 * Only an administrator can rearrange the cards on this agent.
-	 */
-	cardOrderAdminOnly: () => LocalizedString
-	/**
-	 * Your role on this agent does not include this. Ask one of its administrators.
-	 */
-	whyNotGranted: () => LocalizedString
-	/**
 	 * This needs HTTPS, or a proxy on the same host.
 	 */
 	whyInsecureTransport: () => LocalizedString
 	/**
-	 * This is not set up on the agent yet: name the file roots in its config.toml.
+	 * This sign-in can only view.
 	 */
-	whyNotConfigured: () => LocalizedString
+	whyReadOnly: () => LocalizedString
 	/**
-	 * Your role can browse and download here, not change anything.
+	 * The password was changed. Sign in again.
 	 */
-	filesReadOnly: () => LocalizedString
-	/**
-	 * Your role on this agent can only view. An administrator can grant more under Server Settings → Roles.
-	 */
-	remoteAccessOffBodyRoles: () => LocalizedString
-	/**
-	 * Editing custom commands needs the shell grant: each one runs on the server. Add it to the admin role under Roles.
-	 */
-	customCmdsReadOnlyRoles: () => LocalizedString
-	/**
-	 * Opening a terminal here needs no SSH credentials, so the password of every account whose role includes the shell is all that stands between a visitor and this machine. Turning it off takes the shell, outgoing connections and listening away from every role; an administrator can give them back under Server Settings → Roles.
-	 */
-	terminalPasswordlessNoticeBodyRoles: () => LocalizedString
+	passwordChangedSignIn: () => LocalizedString
 	/**
 	 * New user
 	 */
@@ -8233,10 +12590,6 @@ export type TranslationFunctions = {
 	 * Never
 	 */
 	userNever: () => LocalizedString
-	/**
-	 * No account matches the filter.
-	 */
-	userNoMatch: () => LocalizedString
 	/**
 	 * That account is no longer in the catalog. The list has been read again.
 	 */
@@ -8337,6 +12690,14 @@ export type TranslationFunctions = {
 	 * Users
 	 */
 	systemUsers: () => LocalizedString
+	/**
+	 * Regular accounts
+	 */
+	systemUsersGroupRegular: () => LocalizedString
+	/**
+	 * System accounts
+	 */
+	systemUsersGroupSystem: () => LocalizedString
 	/**
 	 * Groups
 	 */
@@ -8446,10 +12807,6 @@ export type TranslationFunctions = {
 	 */
 	snippetSubtitle: (arg: { count: unknown }) => LocalizedString
 	/**
-	 * No snippets saved on this agent yet.
-	 */
-	snippetEmpty: () => LocalizedString
-	/**
 	 * New snippet
 	 */
 	snippetAdd: () => LocalizedString
@@ -8557,10 +12914,6 @@ export type TranslationFunctions = {
 	 * {count} saved routes
 	 */
 	desktopSubtitle: (arg: { count: unknown }) => LocalizedString
-	/**
-	 * No desktops saved on this agent yet.
-	 */
-	desktopEmpty: () => LocalizedString
 	/**
 	 * New desktop
 	 */
@@ -8722,13 +13075,29 @@ export type TranslationFunctions = {
 	 */
 	backupSubtitle: (arg: { count: unknown, max: unknown }) => LocalizedString
 	/**
+	 * Total size stored
+	 */
+	backupTotalSize: () => LocalizedString
+	/**
+	 * Maximum per file
+	 */
+	backupPerFileLimit: () => LocalizedString
+	/**
+	 * Stored files
+	 */
+	backupStoredFiles: () => LocalizedString
+	/**
+	 * How this works
+	 */
+	backupHowItWorks: () => LocalizedString
+	/**
 	 * The agent keeps these files for the app's backup sync and for uploads from here. The app encrypts its backup with your backup password before sending it; the panel moves the files without opening them.
 	 */
 	backupWhatItIs: () => LocalizedString
 	/**
-	 * Nothing is stored yet. Turn on sync to this agent in the app, or upload a backup file.
+	 * No backups
 	 */
-	backupEmpty: () => LocalizedString
+	backupEmptyState: () => LocalizedString
 	/**
 	 * Upload
 	 */
@@ -8801,10 +13170,6 @@ export type TranslationFunctions = {
 	 * Removed {name}.
 	 */
 	bmcRemoved: (arg: { name: unknown }) => LocalizedString
-	/**
-	 * No BMC has been added to this agent. An admin can add one.
-	 */
-	bmcEmpty: () => LocalizedString
 	/**
 	 * No BMC yet. Add one by its HTTPS address and an account on it; this agent signs in for you.
 	 */
@@ -8905,6 +13270,10 @@ export type TranslationFunctions = {
 	 * That BMC is no longer on this agent.
 	 */
 	bmcGone: () => LocalizedString
+	/**
+	 * The saved password can no longer be read on this agent. Enter it again.
+	 */
+	bmcPasswordRequired: () => LocalizedString
 	/**
 	 * Each BMC needs its own name, up to 64 characters.
 	 */
@@ -9042,9 +13411,33 @@ export type TranslationFunctions = {
 	 */
 	virtUnsupported: () => LocalizedString
 	/**
-	 * This host has no guests.
+	 * No guests
 	 */
-	virtNoGuests: () => LocalizedString
+	virtEmptyGuests: () => LocalizedString
+	/**
+	 * No storage
+	 */
+	virtEmptyStorage: () => LocalizedString
+	/**
+	 * No volumes
+	 */
+	virtEmptyVolumes: () => LocalizedString
+	/**
+	 * No networks
+	 */
+	virtEmptyNetworks: () => LocalizedString
+	/**
+	 * No snapshots
+	 */
+	virtEmptySnapshots: () => LocalizedString
+	/**
+	 * No backups
+	 */
+	virtEmptyBackups: () => LocalizedString
+	/**
+	 * No backup jobs
+	 */
+	virtEmptyBackupJobs: () => LocalizedString
 	/**
 	 * Pick a guest from the list.
 	 */
@@ -9267,13 +13660,9 @@ export type TranslationFunctions = {
 	 */
 	pveSettings: () => LocalizedString
 	/**
-	 * This machine runs Proxmox VE. An admin has to set up how this agent signs in to its API.
-	 */
-	pveSetup: () => LocalizedString
-	/**
 	 * This machine runs Proxmox VE. Set up how this agent signs in to its API; an API token is recommended.
 	 */
-	pveSetupAdmin: () => LocalizedString
+	pveSetupNote: () => LocalizedString
 	/**
 	 * API address
 	 */
@@ -9328,10 +13717,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Compare the fingerprint with the one the host shows (pvenode cert info) before trusting it.
 	 */
 	pveCertCompare: () => LocalizedString
-	/**
-	 * An admin has to trust the certificate.
-	 */
-	pveCertAdmin: () => LocalizedString
 	/**
 	 * Certificate trusted.
 	 */
@@ -9497,10 +13882,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtSnapRefused: (arg: { why: unknown }) => LocalizedString
 	/**
-	 * No snapshots.
-	 */
-	virtSnapNone: () => LocalizedString
-	/**
 	 * Current
 	 */
 	virtSnapCurrent: () => LocalizedString
@@ -9568,10 +13949,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Edit
 	 */
 	virtEdit: () => LocalizedString
-	/**
-	 * No storage.
-	 */
-	virtPoolNone: () => LocalizedString
 	/**
 	 * Inactive
 	 */
@@ -9661,10 +14038,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtPoolPick: () => LocalizedString
 	/**
-	 * No volumes.
-	 */
-	virtVolumeNone: () => LocalizedString
-	/**
 	 * Name
 	 */
 	virtVolumeName: () => LocalizedString
@@ -9712,18 +14085,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * {size} on disk
 	 */
 	virtVolumeOnDisk: (arg: { size: unknown }) => LocalizedString
-	/**
-	 * No networks.
-	 */
-	virtNetNone: () => LocalizedString
-	/**
-	 * Active
-	 */
-	virtNetActive: () => LocalizedString
-	/**
-	 * Inactive
-	 */
-	virtNetInactive: () => LocalizedString
 	/**
 	 * Autostart
 	 */
@@ -11126,10 +15487,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtBakEditJob: (arg: { id: unknown }) => LocalizedString
 	/**
-	 * No backup jobs.
-	 */
-	virtBakNoJobs: () => LocalizedString
-	/**
 	 * Run now
 	 */
 	virtBakRunNow: () => LocalizedString
@@ -11153,10 +15510,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Backups
 	 */
 	virtBakList: () => LocalizedString
-	/**
-	 * No backups.
-	 */
-	virtBakNone: () => LocalizedString
 	/**
 	 * Back up now
 	 */
@@ -11365,10 +15718,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Protocol
 	 */
 	fwProtocol: () => LocalizedString
-	/**
-	 * Interface
-	 */
-	fwInterface: () => LocalizedString
 	/**
 	 * Comment
 	 */
@@ -11678,6 +16027,4486 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	no: () => LocalizedString
 	/**
+	 * Desk
+	 */
+	deskTitle: () => LocalizedString
+	/**
+	 * Menu bar
+	 */
+	deskMenubar: () => LocalizedString
+	/**
+	 * Dock
+	 */
+	deskDock: () => LocalizedString
+	/**
+	 * Status
+	 */
+	deskAppStatus: () => LocalizedString
+	/**
+	 * Settings
+	 */
+	deskAppSettings: () => LocalizedString
+	/**
+	 * {app} asks to run this as root.
+	 */
+	deskAppSudoAsks: (arg: { app: unknown }) => LocalizedString
+	/**
+	 * Remembered for a while: leave it empty to use it.
+	 */
+	deskAppSudoRemembered: () => LocalizedString
+	/**
+	 * Remember for 15 minutes
+	 */
+	deskAppSudoRemember: () => LocalizedString
+	/**
+	 * This app could not be loaded.
+	 */
+	deskAppFailed: () => LocalizedString
+	/**
+	 * Apps
+	 */
+	deskApps: () => LocalizedString
+	/**
+	 * All Apps
+	 */
+	deskAllApps: () => LocalizedString
+	/**
+	 * Windows
+	 */
+	deskWindows: () => LocalizedString
+	/**
+	 * Servers
+	 */
+	deskServers: () => LocalizedString
+	/**
+	 * Close
+	 */
+	deskClose: () => LocalizedString
+	/**
+	 * Close all windows
+	 */
+	deskCloseAll: () => LocalizedString
+	/**
+	 * Minimize
+	 */
+	deskMinimize: () => LocalizedString
+	/**
+	 * Zoom
+	 */
+	deskZoom: () => LocalizedString
+	/**
+	 * Restore
+	 */
+	deskUnzoom: () => LocalizedString
+	/**
+	 * New window
+	 */
+	deskNewWindow: () => LocalizedString
+	/**
+	 * New tab
+	 */
+	deskNewTab: () => LocalizedString
+	/**
+	 * Close tab
+	 */
+	deskCloseTab: () => LocalizedString
+	/**
+	 * Split right
+	 */
+	deskSplitRight: () => LocalizedString
+	/**
+	 * Split down
+	 */
+	deskSplitDown: () => LocalizedString
+	/**
+	 * Close pane
+	 */
+	deskClosePane: () => LocalizedString
+	/**
+	 * Quit
+	 */
+	deskQuit: () => LocalizedString
+	/**
+	 * Keep in Dock
+	 */
+	deskPin: () => LocalizedString
+	/**
+	 * Remove from Dock
+	 */
+	deskUnpin: () => LocalizedString
+	/**
+	 * Lock
+	 */
+	deskLock: () => LocalizedString
+	/**
+	 * Connected: changes arrive as they happen
+	 */
+	deskLive: () => LocalizedString
+	/**
+	 * Not connected: notifications may be late
+	 */
+	deskOffline: () => LocalizedString
+	/**
+	 * Search
+	 */
+	deskSearch: () => LocalizedString
+	/**
+	 * Search apps, windows, servers, or type a path
+	 */
+	deskSpotlightHint: () => LocalizedString
+	/**
+	 * Open in Files
+	 */
+	deskOpenInFiles: () => LocalizedString
+	/**
+	 * Control Center
+	 */
+	deskControlCenter: () => LocalizedString
+	/**
+	 * Notifications
+	 */
+	deskNotifications: () => LocalizedString
+	/**
+	 * No notifications
+	 */
+	deskNoNotifications: () => LocalizedString
+	/**
+	 * Mark all read
+	 */
+	deskMarkAllRead: () => LocalizedString
+	/**
+	 * Do Not Disturb
+	 */
+	deskDnd: () => LocalizedString
+	/**
+	 * Appearance
+	 */
+	deskAppearance: () => LocalizedString
+	/**
+	 * Dark
+	 */
+	deskThemeDark: () => LocalizedString
+	/**
+	 * Auto
+	 */
+	deskThemeSystem: () => LocalizedString
+	/**
+	 * Wallpaper
+	 */
+	deskWallpaper: () => LocalizedString
+	/**
+	 * Previous
+	 */
+	deskPrevious: () => LocalizedString
+	/**
+	 * Next
+	 */
+	deskNext: () => LocalizedString
+	/**
+	 * Open
+	 */
+	deskOpen: () => LocalizedString
+	/**
+	 * Rename
+	 */
+	deskRename: () => LocalizedString
+	/**
+	 * Remove from desk
+	 */
+	deskRemoveFromDesk: () => LocalizedString
+	/**
+	 * New terminal
+	 */
+	deskNewTerminal: () => LocalizedString
+	/**
+	 * Change wallpaper…
+	 */
+	deskChangeWallpaper: () => LocalizedString
+	/**
+	 * Clean up icons
+	 */
+	deskCleanUpIcons: () => LocalizedString
+	/**
+	 * Connect…
+	 */
+	deskConnectServer: () => LocalizedString
+	/**
+	 * Connect
+	 */
+	deskConnect: () => LocalizedString
+	/**
+	 * Unlock
+	 */
+	deskUnlock: () => LocalizedString
+	/**
+	 * Sign-in failed
+	 */
+	deskSignInFailed: () => LocalizedString
+	/**
+	 * Not a valid server address
+	 */
+	deskBadUrl: () => LocalizedString
+	/**
+	 * Instances
+	 */
+	lockInstances: () => LocalizedString
+	/**
+	 * Connect a new instance
+	 */
+	lockConnectNew: () => LocalizedString
+	/**
+	 * New instance
+	 */
+	lockNewInstance: () => LocalizedString
+	/**
+	 * Enter the instance address
+	 */
+	lockEnterAddress: () => LocalizedString
+	/**
+	 * Signed in
+	 */
+	lockSignedIn: () => LocalizedString
+	/**
+	 * Opening the desk of {name}
+	 */
+	lockOpening: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Connect and sign in
+	 */
+	lockConnectAndSignIn: () => LocalizedString
+	/**
+	 * Signing in…
+	 */
+	lockSigningIn: () => LocalizedString
+	/**
+	 * Unlocking…
+	 */
+	lockUnlocking: () => LocalizedString
+	/**
+	 * Can't connect
+	 */
+	lockUnreachable: () => LocalizedString
+	/**
+	 * Last online {when}
+	 */
+	lockLastOnline: (arg: { when: unknown }) => LocalizedString
+	/**
+	 * Retry
+	 */
+	lockRetry: () => LocalizedString
+	/**
+	 * Connecting…
+	 */
+	lockConnecting: () => LocalizedString
+	/**
+	 * Connect to another instance
+	 */
+	lockConnectOther: () => LocalizedString
+	/**
+	 * Back to {name}
+	 */
+	lockBackTo: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Offline
+	 */
+	lockOffline: () => LocalizedString
+	/**
+	 * Online
+	 */
+	lockOnline: () => LocalizedString
+	/**
+	 * Switch instance
+	 */
+	lockSwitchInstance: () => LocalizedString
+	/**
+	 * Clock style
+	 */
+	lockClockStyle: () => LocalizedString
+	/**
+	 * Spacing
+	 */
+	lockSpacing: () => LocalizedString
+	/**
+	 * Weight
+	 */
+	lockWeight: () => LocalizedString
+	/**
+	 * System
+	 */
+	lockFontSystem: () => LocalizedString
+	/**
+	 * Monospace
+	 */
+	lockFontMono: () => LocalizedString
+	/**
+	 * Reset
+	 */
+	lockReset: () => LocalizedString
+	/**
+	 * Done
+	 */
+	lockDone: () => LocalizedString
+	/**
+	 * Drag to resize
+	 */
+	lockDragResize: () => LocalizedString
+	/**
+	 * No server answered at that address
+	 */
+	deskUnreachable: () => LocalizedString
+	/**
+	 * Add to desk
+	 */
+	deskAddToDesk: () => LocalizedString
+	/**
+	 * Sidebar
+	 */
+	deskSidebar: () => LocalizedString
+	/**
+	 * General
+	 */
+	settingsGeneral: () => LocalizedString
+	/**
+	 * Account
+	 */
+	settingsAccount: () => LocalizedString
+	/**
+	 * This browser
+	 */
+	settingsThisBrowser: () => LocalizedString
+	/**
+	 * This server
+	 */
+	settingsThisServer: () => LocalizedString
+	/**
+	 * Custom image…
+	 */
+	settingsWallpaperCustom: () => LocalizedString
+	/**
+	 * Remove image
+	 */
+	settingsWallpaperRemove: () => LocalizedString
+	/**
+	 * Themes
+	 */
+	settingsThemePackages: () => LocalizedString
+	/**
+	 * Default
+	 */
+	settingsThemeDefault: () => LocalizedString
+	/**
+	 * The desk's own colors
+	 */
+	settingsThemeDefaultHint: () => LocalizedString
+	/**
+	 * Dark only
+	 */
+	settingsThemeDarkOnly: () => LocalizedString
+	/**
+	 * Light only
+	 */
+	settingsThemeLightOnly: () => LocalizedString
+	/**
+	 * Theme not installed: {reason}
+	 */
+	settingsThemeRefused: (arg: { reason: unknown }) => LocalizedString
+	/**
+	 * Remove {name}
+	 */
+	settingsThemeRemove: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Install a theme
+	 */
+	settingsThemeInstall: () => LocalizedString
+	/**
+	 * From file
+	 */
+	settingsThemeInstallFile: () => LocalizedString
+	/**
+	 * Theme store
+	 */
+	settingsThemeStore: () => LocalizedString
+	/**
+	 * Themes from the ServerBox catalog, downloaded and checked by this server.
+	 */
+	settingsThemeStoreDesc: () => LocalizedString
+	/**
+	 * No themes
+	 */
+	settingsThemeStoreEmpty: () => LocalizedString
+	/**
+	 * From {repo}
+	 */
+	settingsThemeStoreFrom: (arg: { repo: unknown }) => LocalizedString
+	/**
+	 * Installed
+	 */
+	settingsThemeInstalled: () => LocalizedString
+	/**
+	 * Needs a newer agent
+	 */
+	settingsThemeNeedsNewer: () => LocalizedString
+	/**
+	 * Update
+	 */
+	settingsThemeUpdate: () => LocalizedString
+	/**
+	 * Get
+	 */
+	settingsThemeGet: () => LocalizedString
+	/**
+	 * Set by the theme
+	 */
+	settingsThemeLockedMode: () => LocalizedString
+	/**
+	 * Fit
+	 */
+	settingsWallpaperFit: () => LocalizedString
+	/**
+	 * Cover
+	 */
+	settingsFitCover: () => LocalizedString
+	/**
+	 * Contain
+	 */
+	settingsFitContain: () => LocalizedString
+	/**
+	 * Fill
+	 */
+	settingsFitFill: () => LocalizedString
+	/**
+	 * That image is larger than 8 MiB.
+	 */
+	settingsWallpaperTooLarge: () => LocalizedString
+	/**
+	 * That file is not a PNG, JPEG or WebP image.
+	 */
+	settingsWallpaperNotImage: () => LocalizedString
+	/**
+	 * Every terminal window is in use: close one to run a snippet.
+	 */
+	snippetNoTerminal: () => LocalizedString
+	/**
+	 * Live
+	 */
+	deskLiveShort: () => LocalizedString
+	/**
+	 * Offline
+	 */
+	deskOfflineShort: () => LocalizedString
+	/**
+	 * Theme, wallpaper and preferences
+	 */
+	deskSettingsHint: () => LocalizedString
+	/**
+	 * On
+	 */
+	deskOn: () => LocalizedString
+	/**
+	 * Off
+	 */
+	deskOff: () => LocalizedString
+	/**
+	 * Choose or sign in to a server
+	 */
+	deskLockHint: () => LocalizedString
+	/**
+	 * No results
+	 */
+	deskNoResults: () => LocalizedString
+	/**
+	 * now
+	 */
+	deskNow: () => LocalizedString
+	/**
+	 * Use dark appearance
+	 */
+	deskUseDark: () => LocalizedString
+	/**
+	 * No containers
+	 */
+	containersEmpty: () => LocalizedString
+	/**
+	 * No images
+	 */
+	containersNoImages: () => LocalizedString
+	/**
+	 * No processes
+	 */
+	processEmptyState: () => LocalizedString
+	/**
+	 * No services
+	 */
+	servicesEmptyState: () => LocalizedString
+	/**
+	 * No jobs
+	 */
+	cronEmptyState: () => LocalizedString
+	/**
+	 * No accounts
+	 */
+	systemUsersEmptyState: () => LocalizedString
+	/**
+	 * No matches
+	 */
+	systemUsersNoMatch: () => LocalizedString
+	/**
+	 * Firewall
+	 */
+	fwFirewallType: () => LocalizedString
+	/**
+	 * No snippets
+	 */
+	snippetsEmptyState: () => LocalizedString
+	/**
+	 * No desktops
+	 */
+	desktopsEmptyState: () => LocalizedString
+	/**
+	 * No runs
+	 */
+	benchmarkEmptyState: () => LocalizedString
+	/**
+	 * No targets
+	 */
+	bmcEmptyState: () => LocalizedString
+	/**
+	 * {percent}% of runs
+	 */
+	benchmarkRunShare: (arg: { percent: unknown }) => LocalizedString
+	/**
+	 * Window
+	 */
+	deskWindowMenu: () => LocalizedString
+	/**
+	 * Apps
+	 */
+	settingsApps: () => LocalizedString
+	/**
+	 * Run apps in the background
+	 */
+	settingsBackgroundApps: () => LocalizedString
+	/**
+	 * Off: a hidden window stops, and starts again when shown
+	 */
+	settingsBackgroundAppsSub: () => LocalizedString
+	/**
+	 * File
+	 */
+	deskMenuFile: () => LocalizedString
+	/**
+	 * Go
+	 */
+	deskMenuGo: () => LocalizedString
+	/**
+	 * In the background
+	 */
+	deskInBackground: () => LocalizedString
+	/**
+	 * In the background
+	 */
+	settingsBackgroundPerApp: () => LocalizedString
+	/**
+	 * Open with
+	 */
+	deskOpenWith: () => LocalizedString
+	/**
+	 * Hide
+	 */
+	deskHide: () => LocalizedString
+	/**
+	 * Bring all to front
+	 */
+	deskBringAllToFront: () => LocalizedString
+	/**
+	 * Help
+	 */
+	deskHelpMenu: () => LocalizedString
+	/**
+	 * Report a problem…
+	 */
+	deskReportProblem: () => LocalizedString
+	/**
+	 * {n} cores
+	 */
+	deskCores: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * Open Status
+	 */
+	deskOpenStatus: () => LocalizedString
+	/**
+	 * Position
+	 */
+	deskDockPosition: () => LocalizedString
+	/**
+	 * Left
+	 */
+	deskDockLeft: () => LocalizedString
+	/**
+	 * Bottom
+	 */
+	deskDockBottom: () => LocalizedString
+	/**
+	 * Right
+	 */
+	deskDockRight: () => LocalizedString
+	/**
+	 * Hide automatically
+	 */
+	deskDockAutoHide: () => LocalizedString
+	/**
+	 * Shown when the pointer reaches the screen edge
+	 */
+	deskDockAutoHideHint: () => LocalizedString
+	/**
+	 * Icon size
+	 */
+	deskDockSize: () => LocalizedString
+	/**
+	 * Small
+	 */
+	deskSizeSmall: () => LocalizedString
+	/**
+	 * Medium
+	 */
+	deskSizeMedium: () => LocalizedString
+	/**
+	 * Large
+	 */
+	deskSizeLarge: () => LocalizedString
+	/**
+	 * {count} processes
+	 */
+	processCount: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * {count} matching
+	 */
+	processMatching: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * Show kernel threads
+	 */
+	processShowKernelThreads: () => LocalizedString
+	/**
+	 * Kernel threads
+	 */
+	processKernelThreadsShort: () => LocalizedString
+	/**
+	 * Stop {name} ({pid})? Unsaved work in it is lost.
+	 */
+	processStopAsk: (arg: { name: unknown, pid: unknown }) => LocalizedString
+	/**
+	 * Paused
+	 */
+	deskPaused: () => LocalizedString
+	/**
+	 * Every {n} s
+	 */
+	deskEverySeconds: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * Pause refresh
+	 */
+	deskPauseRefresh: () => LocalizedString
+	/**
+	 * Resume refresh
+	 */
+	deskResumeRefresh: () => LocalizedString
+	/**
+	 * Edit
+	 */
+	deskMenuEdit: () => LocalizedString
+	/**
+	 * View
+	 */
+	deskMenuView: () => LocalizedString
+	/**
+	 * Find…
+	 */
+	deskFind: () => LocalizedString
+	/**
+	 * Light
+	 */
+	deskThemeLight: () => LocalizedString
+	/**
+	 * Default view
+	 */
+	filesDefaultView: () => LocalizedString
+	/**
+	 * Double-click a file
+	 */
+	filesOpenFile: () => LocalizedString
+	/**
+	 * Show hidden files
+	 */
+	filesShowHidden: () => LocalizedString
+	/**
+	 * Files and folders whose names start with a dot
+	 */
+	filesShowHiddenHint: () => LocalizedString
+	/**
+	 * Confirm before stopping
+	 */
+	processConfirmStop: () => LocalizedString
+	/**
+	 * In the status bar, not a dialog
+	 */
+	processConfirmStopHint: () => LocalizedString
+	/**
+	 * Wallpaper and themes are kept on the server for your account; everything else here applies only in this browser.
+	 */
+	settingsAppearanceDesc: () => LocalizedString
+	/**
+	 * Appearance
+	 */
+	settingsAppearanceMode: () => LocalizedString
+	/**
+	 * Kept on the server: they apply in every browser you sign in from.
+	 */
+	settingsAppsDesc: () => LocalizedString
+	/**
+	 * All apps
+	 */
+	settingsAppList: () => LocalizedString
+	/**
+	 * Show in the dock
+	 */
+	settingsAppShowInDock: () => LocalizedString
+	/**
+	 * Keep running when hidden
+	 */
+	settingsAppRunHidden: () => LocalizedString
+	/**
+	 * Its windows keep working while minimised or behind the lock screen
+	 */
+	settingsAppRunHiddenSub: () => LocalizedString
+	/**
+	 * Off for every app: turn it on under Apps
+	 */
+	settingsAppRunHiddenOff: () => LocalizedString
+	/**
+	 * Built in
+	 */
+	settingsAppBuiltIn: () => LocalizedString
+	/**
+	 * Installed on this server
+	 */
+	settingsAppInstalled: () => LocalizedString
+	/**
+	 * Permissions
+	 */
+	settingsAppPermissions: () => LocalizedString
+	/**
+	 * Preferences
+	 */
+	settingsAppOwnSettings: () => LocalizedString
+	/**
+	 * In the dock
+	 */
+	settingsAppInDock: () => LocalizedString
+	/**
+	 * Runs in the background
+	 */
+	settingsAppInBackground: () => LocalizedString
+	/**
+	 * Refresh automatically
+	 */
+	settingsAutoRefresh: () => LocalizedString
+	/**
+	 * Paused, Status and Processes keep their last reading
+	 */
+	settingsAutoRefreshHint: () => LocalizedString
+	/**
+	 * Show notifications
+	 */
+	settingsBanners: () => LocalizedString
+	/**
+	 * A banner for alerts and finished background work
+	 */
+	settingsBannersHint: () => LocalizedString
+	/**
+	 * Change…
+	 */
+	settingsChange: () => LocalizedString
+	/**
+	 * 12-hour
+	 */
+	settingsClock12: () => LocalizedString
+	/**
+	 * 24-hour
+	 */
+	settingsClock24: () => LocalizedString
+	/**
+	 * Comfortable
+	 */
+	settingsComfortable: () => LocalizedString
+	/**
+	 * Compact
+	 */
+	settingsCompact: () => LocalizedString
+	/**
+	 * List density
+	 */
+	settingsDensity: () => LocalizedString
+	/**
+	 * Table rows 30 / 36
+	 */
+	settingsDensityHint: () => LocalizedString
+	/**
+	 * Notifications go to the notification centre without a banner
+	 */
+	settingsDndHint: () => LocalizedString
+	/**
+	 * Apps in the dock
+	 */
+	settingsDockApps: () => LocalizedString
+	/**
+	 * Only this browser: kept here, never sent to the server.
+	 */
+	settingsGeneralDesc: () => LocalizedString
+	/**
+	 * Host
+	 */
+	settingsHost: () => LocalizedString
+	/**
+	 * Language and region
+	 */
+	settingsLanguageRegion: () => LocalizedString
+	/**
+	 * Closes every window in this browser
+	 */
+	settingsLogoutHint: () => LocalizedString
+	/**
+	 * Next window
+	 */
+	settingsNextWindow: () => LocalizedString
+	/**
+	 * Nothing
+	 */
+	settingsNothing: () => LocalizedString
+	/**
+	 * Open at start
+	 */
+	settingsOpenAtStart: () => LocalizedString
+	/**
+	 * When no windows come back
+	 */
+	settingsOpenAtStartHint: () => LocalizedString
+	/**
+	 * Only for signing in here; SSH is not affected
+	 */
+	settingsPasswordHint: () => LocalizedString
+	/**
+	 * Power
+	 */
+	settingsPower: () => LocalizedString
+	/**
+	 * Open terminal sessions and transfers are closed
+	 */
+	settingsRebootHint: () => LocalizedString
+	/**
+	 * Reboot {server}
+	 */
+	settingsRebootHost: (arg: { server: unknown }) => LocalizedString
+	/**
+	 * Reduce motion
+	 */
+	settingsReduceMotion: () => LocalizedString
+	/**
+	 * Windows and menus appear without scaling or springing
+	 */
+	settingsReduceMotionHint: () => LocalizedString
+	/**
+	 * Refreshing
+	 */
+	settingsRefresh: () => LocalizedString
+	/**
+	 * Interval
+	 */
+	settingsRefreshInterval: () => LocalizedString
+	/**
+	 * Shorter means more work for the server
+	 */
+	settingsRefreshIntervalHint: () => LocalizedString
+	/**
+	 * Restore the last windows
+	 */
+	settingsRestoreWindows: () => LocalizedString
+	/**
+	 * Position, size and where each was
+	 */
+	settingsRestoreWindowsHint: () => LocalizedString
+	/**
+	 * Running indicators
+	 */
+	settingsRunDots: () => LocalizedString
+	/**
+	 * App icons
+	 */
+	settingsIconShape: () => LocalizedString
+	/**
+	 * Circle
+	 */
+	settingsIconShapeCircle: () => LocalizedString
+	/**
+	 * Rounded square
+	 */
+	settingsIconShapeSquircle: () => LocalizedString
+	/**
+	 * {n} s
+	 */
+	settingsSeconds: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * Security
+	 */
+	settingsSecurity: () => LocalizedString
+	/**
+	 * {server} itself. Saving changes the agent's configuration.
+	 */
+	settingsServerDesc: (arg: { server: unknown }) => LocalizedString
+	/**
+	 * Keyboard shortcuts
+	 */
+	settingsShortcuts: () => LocalizedString
+	/**
+	 * It comes back only from its console or its power button
+	 */
+	settingsShutdownHint: () => LocalizedString
+	/**
+	 * Size units
+	 */
+	settingsSizeUnits: () => LocalizedString
+	/**
+	 * Binary: 1 GiB = 1024 MiB
+	 */
+	settingsSizeUnitsHint: () => LocalizedString
+	/**
+	 * Standard
+	 */
+	settingsStandard: () => LocalizedString
+	/**
+	 * Startup
+	 */
+	settingsStartup: () => LocalizedString
+	/**
+	 * System
+	 */
+	settingsSystem: () => LocalizedString
+	/**
+	 * Text size
+	 */
+	settingsTextSize: () => LocalizedString
+	/**
+	 * Inside windows
+	 */
+	settingsTextSizeHint: () => LocalizedString
+	/**
+	 * Time format
+	 */
+	settingsTimeFormat: () => LocalizedString
+	/**
+	 * Windows
+	 */
+	settingsWindows: () => LocalizedString
+	/**
+	 * Bell
+	 */
+	terminalBell: () => LocalizedString
+	/**
+	 * Cursor
+	 */
+	terminalCursor: () => LocalizedString
+	/**
+	 * Bar
+	 */
+	terminalCursorBar: () => LocalizedString
+	/**
+	 * Block
+	 */
+	terminalCursorBlock: () => LocalizedString
+	/**
+	 * Underline
+	 */
+	terminalCursorUnderline: () => LocalizedString
+	/**
+	 * Font size
+	 */
+	terminalFontSize: () => LocalizedString
+	/**
+	 * Disk
+	 */
+	filesDisk: () => LocalizedString
+	/**
+	 * {free} free of {total}
+	 */
+	filesDiskFree: (arg: { free: unknown, total: unknown }) => LocalizedString
+	/**
+	 * {count} items
+	 */
+	filesItems: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * {count} items ({dirs} folders)
+	 */
+	filesItemsWithFolders: (arg: { count: unknown, dirs: unknown }) => LocalizedString
+	/**
+	 * {free} free
+	 */
+	filesFree: (arg: { free: unknown }) => LocalizedString
+	/**
+	 * Name
+	 */
+	containerName: () => LocalizedString
+	/**
+	 * Image
+	 */
+	containerImage: () => LocalizedString
+	/**
+	 * Ports
+	 */
+	containerPorts: () => LocalizedString
+	/**
+	 * Size
+	 */
+	containerSize: () => LocalizedString
+	/**
+	 * Used by
+	 */
+	containerUse: () => LocalizedString
+	/**
+	 * Created
+	 */
+	containerCreatedAt: () => LocalizedString
+	/**
+	 * Busiest
+	 */
+	statusTopProcesses: () => LocalizedString
+	/**
+	 * All processes
+	 */
+	statusAllProcesses: () => LocalizedString
+	/**
+	 * Processes by CPU
+	 */
+	statusProcessesByCpu: () => LocalizedString
+	/**
+	 * Processes by memory
+	 */
+	statusProcessesByMemory: () => LocalizedString
+	/**
+	 * All types
+	 */
+	serviceTypeAll: () => LocalizedString
+	/**
+	 * Services
+	 */
+	serviceTypeService: () => LocalizedString
+	/**
+	 * Timers
+	 */
+	serviceTypeTimer: () => LocalizedString
+	/**
+	 * Sockets
+	 */
+	serviceTypeSocket: () => LocalizedString
+	/**
+	 * Mounts
+	 */
+	serviceTypeMount: () => LocalizedString
+	/**
+	 * State
+	 */
+	serviceSectionState: () => LocalizedString
+	/**
+	 * Type
+	 */
+	serviceSectionType: () => LocalizedString
+	/**
+	 * No failed units
+	 */
+	serviceNoFailed: () => LocalizedString
+	/**
+	 * {count} units
+	 */
+	serviceUnits: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * Unit
+	 */
+	serviceUnit: () => LocalizedString
+	/**
+	 * Description
+	 */
+	serviceDescription: () => LocalizedString
+	/**
+	 * Startup
+	 */
+	serviceStartup: () => LocalizedString
+	/**
+	 * Last result
+	 */
+	serviceResult: () => LocalizedString
+	/**
+	 * Installed
+	 */
+	settingsInstalledApps: () => LocalizedString
+	/**
+	 * Install an app package
+	 */
+	settingsInstallApp: () => LocalizedString
+	/**
+	 * Install…
+	 */
+	settingsInstallAppButton: () => LocalizedString
+	/**
+	 * Waiting
+	 */
+	settingsAppWaiting: () => LocalizedString
+	/**
+	 * Approve
+	 */
+	settingsAppApprove: () => LocalizedString
+	/**
+	 * Remove
+	 */
+	settingsAppRemove: () => LocalizedString
+	/**
+	 * Let {name} run on this desk and {permissions}.
+	 */
+	settingsAppApproveMessage: (arg: { name: unknown, permissions: unknown }) => LocalizedString
+	/**
+	 * Let {name} run on this desk.
+	 */
+	settingsAppApproveBare: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Remove {name} from this server.
+	 */
+	settingsAppRemoveMessage: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * show notifications
+	 */
+	settingsPermNotifications: () => LocalizedString
+	/**
+	 * run in the background
+	 */
+	settingsPermBackground: () => LocalizedString
+	/**
+	 * read this server's status
+	 */
+	settingsPermStatus: () => LocalizedString
+	/**
+	 * run programs on this server as the agent's account
+	 */
+	settingsPermProcess: () => LocalizedString
+	/**
+	 * run scripts as root, each time after you confirm with sudo's password
+	 */
+	settingsPermRoot: () => LocalizedString
+	/**
+	 * use Agent mode's model providers, their keys included
+	 */
+	settingsPermProviders: () => LocalizedString
+	/**
+	 * make web requests from this server and download files into its own folder
+	 */
+	settingsPermNetwork: () => LocalizedString
+	/**
+	 * No permissions
+	 */
+	settingsAppNoPermissions: () => LocalizedString
+	/**
+	 * The package was refused: {reason}
+	 */
+	settingsAppRefused: (arg: { reason: unknown }) => LocalizedString
+	/**
+	 * It runs as whoever opens it, and can send what it reads elsewhere.
+	 */
+	settingsAppApproveRisk: () => LocalizedString
+	/**
+	 * Agent mode
+	 */
+	deskAgentMode: () => LocalizedString
+	/**
+	 * In progress
+	 */
+	deskAgentRunning: () => LocalizedString
+	/**
+	 * Needs you
+	 */
+	deskAgentNeedsYou: () => LocalizedString
+	/**
+	 * Done
+	 */
+	deskAgentDone: () => LocalizedString
+	/**
+	 * See all
+	 */
+	deskAgentSeeAll: () => LocalizedString
+	/**
+	 * Nothing yet
+	 */
+	deskAgentNothing: () => LocalizedString
+	/**
+	 * {n} more
+	 */
+	deskAgentMore: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * Today
+	 */
+	deskAgentToday: () => LocalizedString
+	/**
+	 * Yesterday
+	 */
+	deskAgentYesterday: () => LocalizedString
+	/**
+	 * Earlier
+	 */
+	deskAgentEarlier: () => LocalizedString
+	/**
+	 * Up late
+	 */
+	deskAgentGreetNight: () => LocalizedString
+	/**
+	 * Good morning
+	 */
+	deskAgentGreetMorning: () => LocalizedString
+	/**
+	 * Good day
+	 */
+	deskAgentGreetNoon: () => LocalizedString
+	/**
+	 * Good afternoon
+	 */
+	deskAgentGreetAfternoon: () => LocalizedString
+	/**
+	 * Good evening
+	 */
+	deskAgentGreetEvening: () => LocalizedString
+	/**
+	 * What should I do? New tasks wait their turn
+	 */
+	deskAgentAskQueued: () => LocalizedString
+	/**
+	 * Send
+	 */
+	deskAgentSend: () => LocalizedString
+	/**
+	 * At most {n} tasks run at once; new ones wait their turn.
+	 */
+	deskAgentAtLimit: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * The agent can read and act on {host}: its state, processes, services, containers and files. Before any change it lays out a plan.
+	 */
+	deskAgentIntro: (arg: { host: unknown }) => LocalizedString
+	/**
+	 * Check disk usage
+	 */
+	deskAgentSuggestDisk: () => LocalizedString
+	/**
+	 * Update system packages
+	 */
+	deskAgentSuggestUpdate: () => LocalizedString
+	/**
+	 * List failed services
+	 */
+	deskAgentSuggestFailed: () => LocalizedString
+	/**
+	 * Clean up Docker images
+	 */
+	deskAgentSuggestDocker: () => LocalizedString
+	/**
+	 * Pasted text
+	 */
+	deskAgentPasted: () => LocalizedString
+	/**
+	 * {lines} lines · {size}
+	 */
+	deskAgentPastedMeta: (arg: { lines: unknown, size: unknown }) => LocalizedString
+	/**
+	 * Remove
+	 */
+	deskAgentRemove: () => LocalizedString
+	/**
+	 * In progress
+	 */
+	deskAgentStatusRunning: () => LocalizedString
+	/**
+	 * Queued
+	 */
+	deskAgentStatusQueued: () => LocalizedString
+	/**
+	 * Failed
+	 */
+	deskAgentStatusFailed: () => LocalizedString
+	/**
+	 * Cancelled
+	 */
+	deskAgentStatusCancelled: () => LocalizedString
+	/**
+	 * Done
+	 */
+	deskAgentStatusDone: () => LocalizedString
+	/**
+	 * Needs confirming
+	 */
+	deskAgentWaitConfirm: () => LocalizedString
+	/**
+	 * Needs a password
+	 */
+	deskAgentWaitSudo: () => LocalizedString
+	/**
+	 * Needs an answer
+	 */
+	deskAgentWaitClarify: () => LocalizedString
+	/**
+	 * Dangerous
+	 */
+	deskAgentWaitDanger: () => LocalizedString
+	/**
+	 * {time} so far
+	 */
+	deskAgentElapsed: (arg: { time: unknown }) => LocalizedString
+	/**
+	 * {s}s
+	 */
+	deskAgentSeconds: (arg: { s: unknown }) => LocalizedString
+	/**
+	 * {m}m {s}s
+	 */
+	deskAgentMinutes: (arg: { m: unknown, s: unknown }) => LocalizedString
+	/**
+	 * {h}h {m}m
+	 */
+	deskAgentHours: (arg: { h: unknown, m: unknown }) => LocalizedString
+	/**
+	 * Step {n} · {title}
+	 */
+	deskAgentStepLine: (arg: { n: unknown, title: unknown }) => LocalizedString
+	/**
+	 * Timeline
+	 */
+	deskAgentTimeline: () => LocalizedString
+	/**
+	 * Also running
+	 */
+	deskAgentAlsoRunning: () => LocalizedString
+	/**
+	 * Started {time} · {duration}
+	 */
+	deskAgentStarted: (arg: { duration: unknown, time: unknown }) => LocalizedString
+	/**
+	 * Previous step
+	 */
+	deskAgentPrevStep: () => LocalizedString
+	/**
+	 * Next step
+	 */
+	deskAgentNextStep: () => LocalizedString
+	/**
+	 * Status
+	 */
+	deskAgentAreaStatus: () => LocalizedString
+	/**
+	 * Processes
+	 */
+	deskAgentAreaProcess: () => LocalizedString
+	/**
+	 * Services
+	 */
+	deskAgentAreaService: () => LocalizedString
+	/**
+	 * Containers
+	 */
+	deskAgentAreaContainer: () => LocalizedString
+	/**
+	 * Files
+	 */
+	deskAgentAreaFiles: () => LocalizedString
+	/**
+	 * System
+	 */
+	deskAgentAreaSystem: () => LocalizedString
+	/**
+	 * Thinking
+	 */
+	deskAgentThinking: () => LocalizedString
+	/**
+	 * Answer
+	 */
+	deskAgentAnswer: () => LocalizedString
+	/**
+	 * Next step
+	 */
+	deskAgentNext: () => LocalizedString
+	/**
+	 * Running
+	 */
+	deskAgentCmdRunning: () => LocalizedString
+	/**
+	 * Ran
+	 */
+	deskAgentCmdRan: () => LocalizedString
+	/**
+	 * Would run
+	 */
+	deskAgentCmdWould: () => LocalizedString
+	/**
+	 * Will run
+	 */
+	deskAgentCmdWill: () => LocalizedString
+	/**
+	 * Running; the output is on the right
+	 */
+	deskAgentRunningPlain: () => LocalizedString
+	/**
+	 * You can leave; it keeps running on the server and you will be told when it ends.
+	 */
+	deskAgentCanLeave: () => LocalizedString
+	/**
+	 * Run in background
+	 */
+	deskAgentInBackground: () => LocalizedString
+	/**
+	 * Plan
+	 */
+	deskAgentPlan: () => LocalizedString
+	/**
+	 * Run
+	 */
+	deskAgentRun: () => LocalizedString
+	/**
+	 * Change the plan
+	 */
+	deskAgentChangePlan: () => LocalizedString
+	/**
+	 * Say what to change, e.g. skip step 2 or check disk space first
+	 */
+	deskAgentChangePlanHint: () => LocalizedString
+	/**
+	 * Read memory
+	 */
+	deskAgentMemoryRead: () => LocalizedString
+	/**
+	 * Update memory
+	 */
+	deskAgentMemoryWrite: () => LocalizedString
+	/**
+	 * Memory file
+	 */
+	deskAgentMemoryFile: () => LocalizedString
+	/**
+	 * Tasks
+	 */
+	deskAgentTasksMenu: () => LocalizedString
+	/**
+	 * New task
+	 */
+	deskAgentNewTask: () => LocalizedString
+	/**
+	 * All tasks
+	 */
+	deskAgentAllTasks: () => LocalizedString
+	/**
+	 * Lock Screen
+	 */
+	deskLockScreen: () => LocalizedString
+	/**
+	 * Log Out
+	 */
+	deskLogOut: () => LocalizedString
+	/**
+	 * Server Settings…
+	 */
+	deskServerSettings: () => LocalizedString
+	/**
+	 * Disconnect
+	 */
+	deskDisconnect: () => LocalizedString
+	/**
+	 * Describe what to get done on {host}; paste or drop files
+	 */
+	deskAgentAskOn: (arg: { host: unknown }) => LocalizedString
+	/**
+	 * Task
+	 */
+	deskAgentTaskLabel: () => LocalizedString
+	/**
+	 * Press esc or click Agent mode again to go back to the desk
+	 */
+	deskAgentLeaveHint: () => LocalizedString
+	/**
+	 * Search apps, services, processes and files, or ask
+	 */
+	deskSpotlightHintAgent: () => LocalizedString
+	/**
+	 * Related
+	 */
+	deskSearchRelated: () => LocalizedString
+	/**
+	 * Go ahead with this plan; let me confirm it before anything changes.
+	 */
+	deskSearchGoAhead: () => LocalizedString
+	/**
+	 * Search never changes the server
+	 */
+	deskSearchNoChange: () => LocalizedString
+	/**
+	 * Changes are confirmed in Agent mode
+	 */
+	deskSearchConfirmInAgent: () => LocalizedString
+	/**
+	 * Agent is looking…
+	 */
+	deskSearchLooking: () => LocalizedString
+	/**
+	 * Agent · {steps} steps · {s} s
+	 */
+	deskSearchAgentStats: (arg: { s: unknown, steps: unknown }) => LocalizedString
+	/**
+	 * ⌘⏎ Continue in Agent mode
+	 */
+	deskSearchKeysChange: () => LocalizedString
+	/**
+	 * ⏎ View in {app}   ⌘⏎ Make it a task
+	 */
+	deskSearchKeysQuestion: (arg: { app: unknown }) => LocalizedString
+	/**
+	 * ⌘⏎ Make it a task
+	 */
+	deskSearchKeysTask: () => LocalizedString
+	/**
+	 * ↑↓ select   ⏎ open   ⇥ ask Agent
+	 */
+	deskSearchKeys: () => LocalizedString
+	/**
+	 * Change to confirm
+	 */
+	deskSearchChange: () => LocalizedString
+	/**
+	 * Read {n} items
+	 */
+	deskSearchRead: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * Read only · {steps} steps · {s} s
+	 */
+	deskSearchReadOnlyStats: (arg: { s: unknown, steps: unknown }) => LocalizedString
+	/**
+	 * Read only
+	 */
+	deskSearchReadOnly: () => LocalizedString
+	/**
+	 * read
+	 */
+	deskSearchTagRead: () => LocalizedString
+	/**
+	 * change
+	 */
+	deskSearchTagChange: () => LocalizedString
+	/**
+	 * cannot be undone
+	 */
+	deskSearchTagDanger: () => LocalizedString
+	/**
+	 * Drafting the plan…
+	 */
+	deskSearchDrafting: () => LocalizedString
+	/**
+	 * View in {app}
+	 */
+	deskSearchViewIn: (arg: { app: unknown }) => LocalizedString
+	/**
+	 * Make it a task
+	 */
+	deskSearchToTask: () => LocalizedString
+	/**
+	 * Continue in Agent mode
+	 */
+	deskSearchContinue: () => LocalizedString
+	/**
+	 * Open the file
+	 */
+	deskSearchOpenFile: () => LocalizedString
+	/**
+	 * Ask Agent: “{q}”
+	 */
+	deskSearchAsk: (arg: { q: unknown }) => LocalizedString
+	/**
+	 * Looks across services, processes, logs and configuration; read only
+	 */
+	deskSearchAskSub: () => LocalizedString
+	/**
+	 * Cancel
+	 */
+	deskAgentCancel: () => LocalizedString
+	/**
+	 * Cancelled; nothing was changed.
+	 */
+	deskAgentCancelled: () => LocalizedString
+	/**
+	 * Root needed
+	 */
+	deskAgentRootNeeded: () => LocalizedString
+	/**
+	 * Used only to run the command above.
+	 */
+	deskAgentRootOnly: () => LocalizedString
+	/**
+	 * {user}'s password
+	 */
+	deskAgentPasswordOf: (arg: { user: unknown }) => LocalizedString
+	/**
+	 * Never written to disk.
+	 */
+	deskAgentPasswordHint: () => LocalizedString
+	/**
+	 * Don't ask again for 15 minutes
+	 */
+	deskAgentRemember: () => LocalizedString
+	/**
+	 * Authorize and run
+	 */
+	deskAgentAuthorize: () => LocalizedString
+	/**
+	 * Wrong password
+	 */
+	deskAgentWrongPassword: () => LocalizedString
+	/**
+	 * Enter the password
+	 */
+	deskAgentEnterPassword: () => LocalizedString
+	/**
+	 * Pick one
+	 */
+	deskAgentPickOne: () => LocalizedString
+	/**
+	 * None of these? Write it below.
+	 */
+	deskAgentNoneOfThese: () => LocalizedString
+	/**
+	 * This cannot be undone
+	 */
+	deskAgentIrreversible: () => LocalizedString
+	/**
+	 * Type {host} to confirm
+	 */
+	deskAgentTypeToConfirm: (arg: { host: unknown }) => LocalizedString
+	/**
+	 * Run anyway
+	 */
+	deskAgentRunAnyway: () => LocalizedString
+	/**
+	 * Failed
+	 */
+	deskAgentFailed: () => LocalizedString
+	/**
+	 * Exit code {code}
+	 */
+	deskAgentExitCode: (arg: { code: unknown }) => LocalizedString
+	/**
+	 * Timed out
+	 */
+	deskAgentTimedOut: () => LocalizedString
+	/**
+	 * Try again
+	 */
+	deskAgentRetry: () => LocalizedString
+	/**
+	 * Try again.
+	 */
+	deskAgentRetryPrompt: () => LocalizedString
+	/**
+	 * Queued; it starts when one before it ends.
+	 */
+	deskAgentQueuedNote: () => LocalizedString
+	/**
+	 * Not run
+	 */
+	deskAgentDeclined: () => LocalizedString
+	/**
+	 * Chose: {answer}
+	 */
+	deskAgentChose: (arg: { answer: unknown }) => LocalizedString
+	/**
+	 * Approved
+	 */
+	deskAgentApproved: () => LocalizedString
+	/**
+	 * Approved by auto mode
+	 */
+	deskAgentApprovedAuto: () => LocalizedString
+	/**
+	 * Allow all
+	 */
+	settingsAgentModeBypass: () => LocalizedString
+	/**
+	 * New tasks run every step unasked, deleting, restarting and config changes included. Deny and ask rules still apply.
+	 */
+	settingsAgentModeBypassNote: () => LocalizedString
+	/**
+	 * Turn off Allow all
+	 */
+	settingsAgentDisableBypass: () => LocalizedString
+	/**
+	 * No task runs in Allow all; one started in it asks as in Manual.
+	 */
+	settingsAgentDisableBypassSub: () => LocalizedString
+	/**
+	 * Permission mode
+	 */
+	deskAgentModeTitle: () => LocalizedString
+	/**
+	 * Permission mode: {mode}
+	 */
+	deskAgentModeAria: (arg: { mode: unknown }) => LocalizedString
+	/**
+	 * The model allows or refuses each step. A refused step stops and says why.
+	 */
+	deskAgentModeAutoDesc: () => LocalizedString
+	/**
+	 * Steps go by the rules in Settings. A change no rule matches waits for you to confirm it.
+	 */
+	deskAgentModeManualDesc: () => LocalizedString
+	/**
+	 * Every step runs, deleting, restarting and config changes included, without asking.
+	 */
+	deskAgentModeBypassDesc: () => LocalizedString
+	/**
+	 * Turned off on this server
+	 */
+	deskAgentModeBypassOff: () => LocalizedString
+	/**
+	 * ⇧⇥ switches · rules are in Settings › Agent › Command permissions · applies to new tasks
+	 */
+	deskAgentModeFoot: () => LocalizedString
+	/**
+	 * Allow all: deleting, restarting and config changes run directly, without asking.
+	 */
+	deskAgentBypassWarn: () => LocalizedString
+	/**
+	 * Add attachment
+	 */
+	deskAgentAttach: () => LocalizedString
+	/**
+	 * Model
+	 */
+	deskAgentPickModel: () => LocalizedString
+	/**
+	 * Thinking
+	 */
+	deskAgentPickThinking: () => LocalizedString
+	/**
+	 * Remove attachment
+	 */
+	deskAgentRemoveAttachment: () => LocalizedString
+	/**
+	 * Release to attach
+	 */
+	deskAgentDropTitle: () => LocalizedString
+	/**
+	 * Images, logs, config files, up to 20 MB each
+	 */
+	deskAgentDropNote: () => LocalizedString
+	/**
+	 * {name} is larger than 20 MB
+	 */
+	deskAgentFileTooBig: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * {name} could not be uploaded: {reason}
+	 */
+	deskAgentUploadFailed: (arg: { name: unknown, reason: unknown }) => LocalizedString
+	/**
+	 * Shortcuts
+	 */
+	deskAgentHints: () => LocalizedString
+	/**
+	 * Send
+	 */
+	deskAgentHintSend: () => LocalizedString
+	/**
+	 * New line
+	 */
+	deskAgentHintNewline: () => LocalizedString
+	/**
+	 * Paste images, files or long text
+	 */
+	deskAgentHintPaste: () => LocalizedString
+	/**
+	 * Choose files
+	 */
+	deskAgentHintPick: () => LocalizedString
+	/**
+	 * Switch permission mode
+	 */
+	deskAgentHintMode: () => LocalizedString
+	/**
+	 * Drop
+	 */
+	deskAgentHintDrop: () => LocalizedString
+	/**
+	 * Attach
+	 */
+	deskAgentHintDropLabel: () => LocalizedString
+	/**
+	 * Cancel
+	 */
+	deskAgentHintCancel: () => LocalizedString
+	/**
+	 * Approved: this task allows all
+	 */
+	deskAgentApprovedBypass: () => LocalizedString
+	/**
+	 * Always allow
+	 */
+	deskAgentAlwaysAllow: () => LocalizedString
+	/**
+	 * Adds to this server's allow rules:
+	 */
+	deskAgentAlwaysAllowNote: () => LocalizedString
+	/**
+	 * Tell the agent what to do next
+	 */
+	deskAgentReplyHint: () => LocalizedString
+	/**
+	 * Add to it or change the plan
+	 */
+	deskAgentReplyWaiting: () => LocalizedString
+	/**
+	 * Disconnected; cannot send now
+	 */
+	deskAgentReplyOffline: () => LocalizedString
+	/**
+	 * ↑↓ steps
+	 */
+	deskAgentKeySteps: () => LocalizedString
+	/**
+	 * ⏎ send
+	 */
+	deskAgentKeySend: () => LocalizedString
+	/**
+	 * esc back
+	 */
+	deskAgentKeyBack: () => LocalizedString
+	/**
+	 * {host} disconnected
+	 */
+	deskAgentOffline: (arg: { host: unknown }) => LocalizedString
+	/**
+	 * Tasks keep running on the server; the output resumes when it reconnects.
+	 */
+	deskAgentOfflineNote: () => LocalizedString
+	/**
+	 * Reconnect now
+	 */
+	deskAgentReconnect: () => LocalizedString
+	/**
+	 * Output
+	 */
+	deskAgentOutput: () => LocalizedString
+	/**
+	 * {n} lines
+	 */
+	deskAgentLines: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * All
+	 */
+	deskAgentAll: () => LocalizedString
+	/**
+	 * Errors {n}
+	 */
+	deskAgentErrors: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * Wrap lines
+	 */
+	deskAgentWrap: () => LocalizedString
+	/**
+	 * Copy
+	 */
+	deskAgentCopy: () => LocalizedString
+	/**
+	 * No output
+	 */
+	deskAgentNoOutput: () => LocalizedString
+	/**
+	 * {n} lines folded; click to show
+	 */
+	deskAgentFolded: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * {n} lines not kept
+	 */
+	deskAgentNotKept: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * Receiving
+	 */
+	deskAgentReceiving: () => LocalizedString
+	/**
+	 * Not run
+	 */
+	deskAgentNotRun: () => LocalizedString
+	/**
+	 * Jump to latest
+	 */
+	deskAgentJumpLatest: () => LocalizedString
+	/**
+	 * {n} tasks
+	 */
+	deskAgentTasks: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * Search
+	 */
+	deskAgentSearch: () => LocalizedString
+	/**
+	 * Close
+	 */
+	deskAgentClose: () => LocalizedString
+	/**
+	 * No matches
+	 */
+	deskAgentNoMatch: () => LocalizedString
+	/**
+	 * Just now
+	 */
+	deskAgentJustNow: () => LocalizedString
+	/**
+	 * {title} is done
+	 */
+	deskAgentNoticeDone: (arg: { title: unknown }) => LocalizedString
+	/**
+	 * {title} needs you
+	 */
+	deskAgentNoticeWaiting: (arg: { title: unknown }) => LocalizedString
+	/**
+	 * {title} failed
+	 */
+	deskAgentNoticeFailed: (arg: { title: unknown }) => LocalizedString
+	/**
+	 * No model set up
+	 */
+	deskAgentNoModel: () => LocalizedString
+	/**
+	 * Add a provider and pick a model in Settings.
+	 */
+	deskAgentAddModel: () => LocalizedString
+	/**
+	 * Open Settings
+	 */
+	deskAgentOpenSettings: () => LocalizedString
+	/**
+	 * Stop
+	 */
+	deskAgentStop: () => LocalizedString
+	/**
+	 * Delete
+	 */
+	deskAgentDelete: () => LocalizedString
+	/**
+	 * Could not load the tasks
+	 */
+	deskAgentFailedToLoad: () => LocalizedString
+	/**
+	 * What would be lost
+	 */
+	deskAgentDangerReason: () => LocalizedString
+	/**
+	 * Agent
+	 */
+	settingsAgent: () => LocalizedString
+	/**
+	 * The agent runs tasks on this machine with the model chosen here. It reads freely, and asks before changing anything.
+	 */
+	settingsAgentAbout: () => LocalizedString
+	/**
+	 * Model
+	 */
+	settingsAgentModel: () => LocalizedString
+	/**
+	 * None (Agent mode off)
+	 */
+	settingsAgentNoModel: () => LocalizedString
+	/**
+	 * Thinking
+	 */
+	settingsAgentThinking: () => LocalizedString
+	/**
+	 * Off
+	 */
+	settingsAgentThinkingOff: () => LocalizedString
+	/**
+	 * Minimal
+	 */
+	settingsAgentThinkingMinimal: () => LocalizedString
+	/**
+	 * Low
+	 */
+	settingsAgentThinkingLow: () => LocalizedString
+	/**
+	 * Medium
+	 */
+	settingsAgentThinkingMedium: () => LocalizedString
+	/**
+	 * High
+	 */
+	settingsAgentThinkingHigh: () => LocalizedString
+	/**
+	 * Tasks at once
+	 */
+	settingsAgentMaxRunning: () => LocalizedString
+	/**
+	 * Copy tasks for pi
+	 */
+	settingsAgentPiSessions: () => LocalizedString
+	/**
+	 * Each task is also written as a session of pi on this machine: run pi -r in the agent's working folder to list them.
+	 */
+	settingsAgentPiSessionsHint: () => LocalizedString
+	/**
+	 * Providers
+	 */
+	settingsAgentProviders: () => LocalizedString
+	/**
+	 * Built-in
+	 */
+	settingsAgentBuiltin: () => LocalizedString
+	/**
+	 * Add a provider
+	 */
+	settingsAgentAddProvider: () => LocalizedString
+	/**
+	 * Name
+	 */
+	settingsAgentProviderName: () => LocalizedString
+	/**
+	 * API
+	 */
+	settingsAgentApi: () => LocalizedString
+	/**
+	 * Base URL
+	 */
+	settingsAgentBaseUrl: () => LocalizedString
+	/**
+	 * Allow plain HTTP
+	 */
+	settingsAgentAllowInsecure: () => LocalizedString
+	/**
+	 * API key
+	 */
+	settingsAgentKey: () => LocalizedString
+	/**
+	 * Set; leave empty to keep it
+	 */
+	settingsAgentKeySet: () => LocalizedString
+	/**
+	 * Remove the key
+	 */
+	settingsAgentKeyClear: () => LocalizedString
+	/**
+	 * Remove the endpoint
+	 */
+	settingsAgentRemoveProvider: () => LocalizedString
+	/**
+	 * Saved
+	 */
+	settingsAgentSaved: () => LocalizedString
+	/**
+	 * {n} models listed
+	 */
+	settingsAgentDiscovered: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * Listing models…
+	 */
+	settingsAgentDiscovering: () => LocalizedString
+	/**
+	 * List models again
+	 */
+	settingsAgentDiscover: () => LocalizedString
+	/**
+	 * This API does not list its models; add them below.
+	 */
+	settingsAgentNoListing: () => LocalizedString
+	/**
+	 * More model IDs
+	 */
+	settingsAgentExtraModels: () => LocalizedString
+	/**
+	 * For models the endpoint does not list; comma or one per line.
+	 */
+	settingsAgentExtraHint: () => LocalizedString
+	/**
+	 * The key and every prompt travel unencrypted.
+	 */
+	settingsAgentInsecureHint: () => LocalizedString
+	/**
+	 * Built-in · key set
+	 */
+	settingsAgentBuiltinKeyed: () => LocalizedString
+	/**
+	 * no key
+	 */
+	settingsAgentNoKey: () => LocalizedString
+	/**
+	 * Custom endpoint
+	 */
+	settingsAgentCustomEndpoint: () => LocalizedString
+	/**
+	 * Any OpenAI-, Anthropic- or Google-compatible API
+	 */
+	settingsAgentCustomEndpointHint: () => LocalizedString
+	/**
+	 * {n} models
+	 */
+	settingsAgentModelsCount: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * Enter a name and a Base URL.
+	 */
+	settingsAgentEndpointIncomplete: () => LocalizedString
+	/**
+	 * This API does not list its models: add at least one.
+	 */
+	settingsAgentModelsRequired: () => LocalizedString
+	/**
+	 * Memory
+	 */
+	settingsAgentMemory: () => LocalizedString
+	/**
+	 * What the agent remembers across your tasks
+	 */
+	settingsAgentMemorySub: () => LocalizedString
+	/**
+	 * MCP servers
+	 */
+	settingsAgentMcp: () => LocalizedString
+	/**
+	 * Tools from other services for the agent
+	 */
+	settingsAgentMcpSub: () => LocalizedString
+	/**
+	 * Tasks get the tools of these servers. A tool that says it only reads runs; any other goes through the task's permission mode, as a command does. A token is written here and never shown again.
+	 */
+	settingsAgentMcpAbout: () => LocalizedString
+	/**
+	 * Sends {names}
+	 */
+	settingsAgentMcpHeaders: (arg: { names: unknown }) => LocalizedString
+	/**
+	 * On
+	 */
+	settingsAgentMcpEnabled: () => LocalizedString
+	/**
+	 * Status
+	 */
+	settingsAgentMcpStatus: () => LocalizedString
+	/**
+	 * {n} tools
+	 */
+	settingsAgentMcpTools: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * Not connected
+	 */
+	settingsAgentMcpOffline: () => LocalizedString
+	/**
+	 * Read only
+	 */
+	settingsAgentMcpReadOnly: () => LocalizedString
+	/**
+	 * New {header} value
+	 */
+	settingsAgentMcpReplaceToken: (arg: { header: unknown }) => LocalizedString
+	/**
+	 * Remove
+	 */
+	settingsAgentMcpRemove: () => LocalizedString
+	/**
+	 * No servers
+	 */
+	settingsAgentMcpEmpty: () => LocalizedString
+	/**
+	 * Add server
+	 */
+	settingsAgentMcpAdd: () => LocalizedString
+	/**
+	 * Name
+	 */
+	settingsAgentMcpName: () => LocalizedString
+	/**
+	 * Address
+	 */
+	settingsAgentMcpUrl: () => LocalizedString
+	/**
+	 * Streamable HTTP: https://, or http:// on this machine.
+	 */
+	settingsAgentMcpUrlHint: () => LocalizedString
+	/**
+	 * Header
+	 */
+	settingsAgentMcpHeader: () => LocalizedString
+	/**
+	 * Value
+	 */
+	settingsAgentMcpToken: () => LocalizedString
+	/**
+	 * From your apps
+	 */
+	settingsAgentMcpApps: () => LocalizedString
+	/**
+	 * Deployed apps' servers connect on their own. A community server is someone else's code holding the app's credential.
+	 */
+	settingsAgentMcpAppsAbout: () => LocalizedString
+	/**
+	 * The app's own
+	 */
+	settingsAgentMcpBuiltin: () => LocalizedString
+	/**
+	 * Official
+	 */
+	settingsAgentMcpOfficial: () => LocalizedString
+	/**
+	 * Community
+	 */
+	settingsAgentMcpCommunity: () => LocalizedString
+	/**
+	 * Needs a token
+	 */
+	settingsAgentMcpNeedsToken: () => LocalizedString
+	/**
+	 * Needs signing in
+	 */
+	settingsAgentMcpNeedsSignIn: () => LocalizedString
+	/**
+	 * Token
+	 */
+	settingsAgentMcpAppToken: () => LocalizedString
+	/**
+	 * New token
+	 */
+	settingsAgentMcpReplaceAppToken: () => LocalizedString
+	/**
+	 * Forget the token
+	 */
+	settingsAgentMcpForgetToken: () => LocalizedString
+	/**
+	 * Sign in
+	 */
+	settingsAgentMcpSignIn: () => LocalizedString
+	/**
+	 * Signing in…
+	 */
+	settingsAgentMcpSigningIn: () => LocalizedString
+	/**
+	 * Sign out
+	 */
+	settingsAgentMcpSignOut: () => LocalizedString
+	/**
+	 * Skills
+	 */
+	settingsAgentSkills: () => LocalizedString
+	/**
+	 * Instructions the agent loads for a task
+	 */
+	settingsAgentSkillsSub: () => LocalizedString
+	/**
+	 * Each task is told what the enabled skills are for and loads one when the task matches it. Folders put in the agent's skills directory are listed too.
+	 */
+	settingsAgentSkillsAbout: () => LocalizedString
+	/**
+	 * On
+	 */
+	settingsAgentSkillsEnabled: () => LocalizedString
+	/**
+	 * Remove
+	 */
+	settingsAgentSkillsRemove: () => LocalizedString
+	/**
+	 * No skills
+	 */
+	settingsAgentSkillsEmpty: () => LocalizedString
+	/**
+	 * Install
+	 */
+	settingsAgentSkillsInstall: () => LocalizedString
+	/**
+	 * GitHub repository
+	 */
+	settingsAgentSkillsSource: () => LocalizedString
+	/**
+	 * owner/repo, owner/repo@skill, a github.com address, or an npx skills add line.
+	 */
+	settingsAgentSkillsSourceHint: () => LocalizedString
+	/**
+	 * No skill was found there.
+	 */
+	settingsAgentSkillsNone: () => LocalizedString
+	/**
+	 * Too many skills: remove some first.
+	 */
+	settingsAgentSkillsTooMany: () => LocalizedString
+	/**
+	 * Not a GitHub repository.
+	 */
+	settingsAgentSkillsBadSource: () => LocalizedString
+	/**
+	 * What the agent remembers across your tasks: text files it reads and keeps up to date. Yours alone; MEMORY.md is its index, read at the start of every task.
+	 */
+	settingsAgentMemoryAbout: () => LocalizedString
+	/**
+	 * Nothing remembered yet.
+	 */
+	settingsAgentMemoryEmpty: () => LocalizedString
+	/**
+	 * New file
+	 */
+	settingsAgentMemoryNew: () => LocalizedString
+	/**
+	 * Path
+	 */
+	settingsAgentMemoryPath: () => LocalizedString
+	/**
+	 * Content
+	 */
+	settingsAgentMemoryContent: () => LocalizedString
+	/**
+	 * Delete the file
+	 */
+	settingsAgentMemoryDelete: () => LocalizedString
+	/**
+	 * Delete it for good
+	 */
+	settingsAgentMemoryDeleteConfirm: () => LocalizedString
+	/**
+	 * {n} characters
+	 */
+	settingsAgentMemoryChars: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * Command permissions
+	 */
+	settingsAgentPermissions: () => LocalizedString
+	/**
+	 * How the agent's commands are approved
+	 */
+	settingsAgentPermissionsSub: () => LocalizedString
+	/**
+	 * Every command an Agent mode task runs meets these rules first: deny, then ask, then allow. What no rule covers and is not a known read goes by the task's mode, picked when it starts. For every account on this server.
+	 */
+	settingsAgentPermissionsAbout: () => LocalizedString
+	/**
+	 * Default mode
+	 */
+	settingsAgentMode: () => LocalizedString
+	/**
+	 * Manual
+	 */
+	settingsAgentModeManual: () => LocalizedString
+	/**
+	 * Auto
+	 */
+	settingsAgentModeAuto: () => LocalizedString
+	/**
+	 * New tasks ask about changes no rule covers.
+	 */
+	settingsAgentModeManualNote: () => LocalizedString
+	/**
+	 * New tasks have changes no rule covers judged by the model against the auto mode rules below: allowed runs it, blocked tells the agent why; with no verdict you are asked.
+	 */
+	settingsAgentModeAutoNote: () => LocalizedString
+	/**
+	 * Unless a task allows all, a command that cannot be undone (deleting data, partitions) asks you to type the server's name.
+	 */
+	settingsAgentDangerAlwaysAsks: () => LocalizedString
+	/**
+	 * Command rules
+	 */
+	settingsAgentRules: () => LocalizedString
+	/**
+	 * Deny
+	 */
+	settingsAgentRulesDeny: () => LocalizedString
+	/**
+	 * Ask
+	 */
+	settingsAgentRulesAsk: () => LocalizedString
+	/**
+	 * Allow
+	 */
+	settingsAgentRulesAllow: () => LocalizedString
+	/**
+	 * One per line. * is any text, as in systemctl status * or apt-get install *; a trailing :* is the same as " *". A chained command is checked part by part: deny and ask apply when any part matches, allow only when every part is covered. Rules match the command as written (/bin/rm does not match rm *); they are not a security boundary.
+	 */
+	settingsAgentRulesHint: () => LocalizedString
+	/**
+	 * Auto mode rules
+	 */
+	settingsAgentAutoRules: () => LocalizedString
+	/**
+	 * Plain-language rules the model judges by. Empty uses the built-in list; a line $defaults keeps it and adds yours. Order: hard deny, then soft deny (an allow rule or your own explicit request clears it), then allow.
+	 */
+	settingsAgentAutoHint: () => LocalizedString
+	/**
+	 * Environment
+	 */
+	settingsAgentAutoEnvironment: () => LocalizedString
+	/**
+	 * Allow
+	 */
+	settingsAgentAutoAllow: () => LocalizedString
+	/**
+	 * Soft deny
+	 */
+	settingsAgentAutoSoftDeny: () => LocalizedString
+	/**
+	 * Hard deny
+	 */
+	settingsAgentAutoHardDeny: () => LocalizedString
+	/**
+	 * Built-in rules
+	 */
+	settingsAgentAutoBuiltIn: () => LocalizedString
+	/**
+	 * Built-in rules ({n})
+	 */
+	settingsAgentAutoShowDefaults: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * photos pictures videos gallery immich
+	 */
+	photosKeywords: () => LocalizedString
+	/**
+	 * Powered by {name} {version}
+	 */
+	stackPoweredBy: (arg: { name: unknown, version: unknown }) => LocalizedString
+	/**
+	 * You can close this window; the agent carries on.
+	 */
+	stackProgressHint: () => LocalizedString
+	/**
+	 * Log
+	 */
+	stackLog: () => LocalizedString
+	/**
+	 * Requirements
+	 */
+	stackRequirements: () => LocalizedString
+	/**
+	 * Container runtime
+	 */
+	stackRuntime: () => LocalizedString
+	/**
+	 * OK
+	 */
+	stackOk: () => LocalizedString
+	/**
+	 * Missing
+	 */
+	stackMissing: () => LocalizedString
+	/**
+	 * Low
+	 */
+	stackLow: () => LocalizedString
+	/**
+	 * Memory
+	 */
+	stackMemory: () => LocalizedString
+	/**
+	 * {have} here, {need} recommended
+	 */
+	stackMemoryValue: (arg: { have: unknown, need: unknown }) => LocalizedString
+	/**
+	 * CPU cores
+	 */
+	stackCores: () => LocalizedString
+	/**
+	 * {have} here, at least {need}
+	 */
+	stackCoresValue: (arg: { have: unknown, need: unknown }) => LocalizedString
+	/**
+	 * Docker or Podman is not installed, or the agent's account may not use it.
+	 */
+	stackNoRuntime: () => LocalizedString
+	/**
+	 * Docker Compose is not installed.
+	 */
+	stackNoCompose: () => LocalizedString
+	/**
+	 * Settings
+	 */
+	stackSettings: () => LocalizedString
+	/**
+	 * What it does on this machine
+	 */
+	stackNotices: () => LocalizedString
+	/**
+	 * Downloads container images from their registries.
+	 */
+	stackNoticePullsImages: () => LocalizedString
+	/**
+	 * Builds a container image on this machine from a Dockerfile in the app's package.
+	 */
+	stackNoticeBuildsImages: () => LocalizedString
+	/**
+	 * Keeps its data in folders on this machine.
+	 */
+	stackNoticeBindsPaths: () => LocalizedString
+	/**
+	 * Reads files of this machine, such as its time zone.
+	 */
+	stackNoticeMountsHostFiles: () => LocalizedString
+	/**
+	 * Uses the GPU when an acceleration is chosen.
+	 */
+	stackNoticeGpuDevices: () => LocalizedString
+	/**
+	 * Listens on a port of this machine.
+	 */
+	stackNoticePublishesPort: () => LocalizedString
+	/**
+	 * Runs a container with extended privileges.
+	 */
+	stackNoticePrivileged: () => LocalizedString
+	/**
+	 * Uses this machine's network directly.
+	 */
+	stackNoticeHostNetwork: () => LocalizedString
+	/**
+	 * Controls Docker on this machine.
+	 */
+	stackNoticeDockerSocket: () => LocalizedString
+	/**
+	 * Agent mode connects to the app's own MCP server.
+	 */
+	stackNoticeMcpBuiltin: () => LocalizedString
+	/**
+	 * Runs its makers' MCP server beside it for Agent mode ({source}).
+	 */
+	stackNoticeMcpOfficial: (arg: { source: unknown }) => LocalizedString
+	/**
+	 * Runs a community MCP server beside it for Agent mode: someone else's code, holding this app's credential ({source}).
+	 */
+	stackNoticeMcpCommunity: (arg: { source: unknown }) => LocalizedString
+	/**
+	 * Licence
+	 */
+	stackLicense: () => LocalizedString
+	/**
+	 * {name} is free software under the {spdx} licence. It is made by its own developers, not by ServerBox.
+	 */
+	stackLicenseBody: (arg: { name: unknown, spdx: unknown }) => LocalizedString
+	/**
+	 * Read the licence
+	 */
+	stackLicenseRead: () => LocalizedString
+	/**
+	 * Source code
+	 */
+	stackSource: () => LocalizedString
+	/**
+	 * Website
+	 */
+	stackHomepage: () => LocalizedString
+	/**
+	 * I accept the {spdx} licence
+	 */
+	stackLicenseAccept: (arg: { spdx: unknown }) => LocalizedString
+	/**
+	 * Set up
+	 */
+	stackInstall: () => LocalizedString
+	/**
+	 * Set up {name} on this server.
+	 */
+	stackInstallReauth: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Check {setting}.
+	 */
+	stackInvalidSetting: (arg: { setting: unknown }) => LocalizedString
+	/**
+	 * Not valid
+	 */
+	stackInvalidValue: () => LocalizedString
+	/**
+	 * Something is already running for this app.
+	 */
+	stackBusy: () => LocalizedString
+	/**
+	 * This app is already set up.
+	 */
+	stackAlreadyInstalled: () => LocalizedString
+	/**
+	 * No free port is left for the app's window (3780–3799).
+	 */
+	stackNoProxyPort: () => LocalizedString
+	/**
+	 * The shared folder for apps cannot be made. Check [stacks] shared_dir.
+	 */
+	stackSharedUnavailable: () => LocalizedString
+	/**
+	 * UDP port.
+	 */
+	stackPortUdp: () => LocalizedString
+	/**
+	 * TCP and UDP port.
+	 */
+	stackPortBoth: () => LocalizedString
+	/**
+	 * Sign-in
+	 */
+	stackLogin: () => LocalizedString
+	/**
+	 * Account
+	 */
+	stackLoginUser: () => LocalizedString
+	/**
+	 * Password
+	 */
+	stackLoginPassword: () => LocalizedString
+	/**
+	 * Copy
+	 */
+	stackLoginCopy: () => LocalizedString
+	/**
+	 * Show password
+	 */
+	stackLoginShow: () => LocalizedString
+	/**
+	 * Hide password
+	 */
+	stackLoginHide: () => LocalizedString
+	/**
+	 * Enter your password to show {name}'s sign-in password.
+	 */
+	stackLoginReauth: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Setting up {name}…
+	 */
+	stackInstalling: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Updating {name}…
+	 */
+	stackUpdating: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Uninstalling {name}…
+	 */
+	stackRemoving: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Working…
+	 */
+	stackWorking: () => LocalizedString
+	/**
+	 * Update to {version}
+	 */
+	stackUpdate: (arg: { version: unknown }) => LocalizedString
+	/**
+	 * Restart
+	 */
+	stackRestart: () => LocalizedString
+	/**
+	 * Stop
+	 */
+	stackStop: () => LocalizedString
+	/**
+	 * Start
+	 */
+	stackStart: () => LocalizedString
+	/**
+	 * Uninstall…
+	 */
+	stackRemove: () => LocalizedString
+	/**
+	 * Open in a new tab
+	 */
+	stackOpenTab: () => LocalizedString
+	/**
+	 * This page is HTTPS and the agent does not serve TLS itself, so the browser blocks the app's window. Give the agent a certificate, or open the panel over HTTP on the local network.
+	 */
+	stackMixedContent: () => LocalizedString
+	/**
+	 * Not set up
+	 */
+	stackNotSetUp: () => LocalizedString
+	/**
+	 * Setup failed
+	 */
+	stackFailed: () => LocalizedString
+	/**
+	 * Try again
+	 */
+	stackRetry: () => LocalizedString
+	/**
+	 * The app is set up, but its window is not available right now.
+	 */
+	stackNotReachable: () => LocalizedString
+	/**
+	 * Uninstall {name}
+	 */
+	stackRemoveTitle: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Its containers are removed. Its data is kept unless you choose otherwise, so setting it up again finds it.
+	 */
+	stackRemoveBody: () => LocalizedString
+	/**
+	 * Also delete its data
+	 */
+	stackPurge: () => LocalizedString
+	/**
+	 * Every file in its data folders is deleted, photos included. This cannot be undone.
+	 */
+	stackPurgeWarning: () => LocalizedString
+	/**
+	 * Uninstall {name} from this server; its data stays.
+	 */
+	stackRemoveReauth: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Uninstall {name} from this server and delete its data.
+	 */
+	stackRemoveReauthPurge: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * GPU
+	 */
+	stackGpu: () => LocalizedString
+	/**
+	 * Containers cannot use it until the NVIDIA Container Toolkit is installed.
+	 */
+	stackGpuNoToolkit: () => LocalizedString
+	/**
+	 * Containers cannot reach it: /dev/dri is missing.
+	 */
+	stackGpuNoDevice: () => LocalizedString
+	/**
+	 * Set up {name}?
+	 */
+	stackConfirmTitle: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * This is what will be installed on this server.
+	 */
+	stackConfirmIntro: () => LocalizedString
+	/**
+	 * Project
+	 */
+	stackProject: () => LocalizedString
+	/**
+	 * Developer
+	 */
+	stackDeveloper: () => LocalizedString
+	/**
+	 * Version
+	 */
+	stackVersion: () => LocalizedString
+	/**
+	 * Images
+	 */
+	stackImages: () => LocalizedString
+	/**
+	 * Built here
+	 */
+	stackBuilt: () => LocalizedString
+	/**
+	 * Data folders
+	 */
+	stackData: () => LocalizedString
+	/**
+	 * Port
+	 */
+	stackPort: () => LocalizedString
+	/**
+	 * Port {port} is already in use on this machine.
+	 */
+	stackPortTaken: (arg: { port: unknown }) => LocalizedString
+	/**
+	 * {name} is third-party software. It is not made, reviewed or endorsed by ServerBox; its own developers are responsible for it.
+	 */
+	stackThirdParty: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * I understand this installs {name}, third-party software, on this server
+	 */
+	stackAckThirdParty: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Continue
+	 */
+	stackContinue: () => LocalizedString
+	/**
+	 * Installation
+	 */
+	stackManage: () => LocalizedString
+	/**
+	 * Version, update, uninstall
+	 */
+	stackManageSub: () => LocalizedString
+	/**
+	 * State
+	 */
+	stackStateLabel: () => LocalizedString
+	/**
+	 * Installed
+	 */
+	stackInstalled: () => LocalizedString
+	/**
+	 * Open
+	 */
+	stackOpen: () => LocalizedString
+	/**
+	 * App Store
+	 */
+	storeTitle: () => LocalizedString
+	/**
+	 * store install apps catalog
+	 */
+	storeKeywords: () => LocalizedString
+	/**
+	 * Search apps
+	 */
+	storeSearch: () => LocalizedString
+	/**
+	 * All
+	 */
+	storeAll: () => LocalizedString
+	/**
+	 * Categories
+	 */
+	storeCategories: () => LocalizedString
+	/**
+	 * No apps
+	 */
+	storeEmpty: () => LocalizedString
+	/**
+	 * Install apps on this server
+	 */
+	storeLinkSub: () => LocalizedString
+	/**
+	 * Photos
+	 */
+	storeCategoryPhotos: () => LocalizedString
+	/**
+	 * Media
+	 */
+	storeCategoryMedia: () => LocalizedString
+	/**
+	 * Files
+	 */
+	storeCategoryFiles: () => LocalizedString
+	/**
+	 * Documents
+	 */
+	storeCategoryDocuments: () => LocalizedString
+	/**
+	 * Productivity
+	 */
+	storeCategoryProductivity: () => LocalizedString
+	/**
+	 * Development
+	 */
+	storeCategoryDevelopment: () => LocalizedString
+	/**
+	 * AI
+	 */
+	storeCategoryAi: () => LocalizedString
+	/**
+	 * Home
+	 */
+	storeCategoryHome: () => LocalizedString
+	/**
+	 * Network
+	 */
+	storeCategoryNetwork: () => LocalizedString
+	/**
+	 * Monitoring
+	 */
+	storeCategoryMonitoring: () => LocalizedString
+	/**
+	 * Security
+	 */
+	storeCategorySecurity: () => LocalizedString
+	/**
+	 * Tools
+	 */
+	storeCategoryTools: () => LocalizedString
+	/**
+	 * Get
+	 */
+	stackGet: () => LocalizedString
+	/**
+	 * Information
+	 */
+	stackInformation: () => LocalizedString
+	/**
+	 * At least {min}, {recommended} recommended
+	 */
+	stackMemoryNeeds: (arg: { min: unknown, recommended: unknown }) => LocalizedString
+	/**
+	 * Architectures
+	 */
+	stackArch: () => LocalizedString
+	/**
+	 * {from} is in use; {to} will be used
+	 */
+	stackPortMoved: (arg: { from: unknown, to: unknown }) => LocalizedString
+	/**
+	 * The agent runs in a container or under WSL, so ports other programs use may not all be detected.
+	 */
+	stackPortsPartial: () => LocalizedString
+	/**
+	 * Change settings
+	 */
+	stackChangeSettings: () => LocalizedString
+	/**
+	 * Saving deploys {name} again with these settings; it is unavailable for a moment.
+	 */
+	stackReconfigureNote: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Data already in the old folder is not moved.
+	 */
+	stackDataNotMoved: () => LocalizedString
+	/**
+	 * Change the settings of {name} on this server.
+	 */
+	stackReconfigureReauth: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Applying the settings of {name}…
+	 */
+	stackReconfiguring: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * The panel may have been updated since this page opened.
+	 */
+	deskAppFailedHint: () => LocalizedString
+	/**
+	 * Reload
+	 */
+	deskReload: () => LocalizedString
+	/**
+	 * Unnamed process
+	 */
+	gpuProcessUnnamed: () => LocalizedString
+	/**
+	 * The driver lists no process using this GPU. Under WSL or in a container, programs outside it are not visible; on Windows, reading other accounts' programs needs administrator rights.
+	 */
+	gpuNoProcesses: () => LocalizedString
+	/**
+	 * The panel was updated
+	 */
+	deskPanelUpdated: () => LocalizedString
+	/**
+	 * Reload to use the new version; your windows come back.
+	 */
+	deskPanelUpdatedBody: () => LocalizedString
+	/**
+	 * Check for new apps and versions
+	 */
+	storeRefresh: () => LocalizedString
+	/**
+	 * Local
+	 */
+	storeLocal: () => LocalizedString
+	/**
+	 * Desk apps
+	 */
+	storeDeskApps: () => LocalizedString
+	/**
+	 * Web apps
+	 */
+	storeWebApps: () => LocalizedString
+	/**
+	 * Extensions
+	 */
+	storeExtend: () => LocalizedString
+	/**
+	 * Uninstall
+	 */
+	storeDeskUninstall: () => LocalizedString
+	/**
+	 * Uninstall {name} from this server, with what it kept. It is not installed again on its own until you install it here.
+	 */
+	storeDeskUninstallMessage: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * From
+	 */
+	storeDeskFrom: () => LocalizedString
+	/**
+	 * Shipped with the agent
+	 */
+	storeDeskShipped: () => LocalizedString
+	/**
+	 * Comes with ServerBox: installed on its own and kept up to date. Uninstalled, it stays so until you install it again.
+	 */
+	storeDeskBuiltIn: () => LocalizedString
+	/**
+	 * Runs on
+	 */
+	storeDeskRunsOn: () => LocalizedString
+	/**
+	 * Update
+	 */
+	storeDeskUpdate: () => LocalizedString
+	/**
+	 * Install
+	 */
+	storeInstall: () => LocalizedString
+	/**
+	 * ServerBox
+	 */
+	storeFirstParty: () => LocalizedString
+	/**
+	 * Unknown publisher
+	 */
+	storeUnknownPublisher: () => LocalizedString
+	/**
+	 * Its publisher is not known to this agent: install it only if you trust where it came from.
+	 */
+	storeUnknownPublisherNote: () => LocalizedString
+	/**
+	 * From
+	 */
+	stackFrom: () => LocalizedString
+	/**
+	 * Shipped with the agent
+	 */
+	stackFromBundled: () => LocalizedString
+	/**
+	 * This server's own folder
+	 */
+	stackFromLocal: () => LocalizedString
+	/**
+	 * Health
+	 */
+	stackHealth: () => LocalizedString
+	/**
+	 * Healthy
+	 */
+	stackHealthy: () => LocalizedString
+	/**
+	 * Starting
+	 */
+	stackStarting: () => LocalizedString
+	/**
+	 * Unhealthy
+	 */
+	stackUnhealthy: () => LocalizedString
+	/**
+	 * Down
+	 */
+	stackDown: () => LocalizedString
+	/**
+	 * Stopped
+	 */
+	stackStopped: () => LocalizedString
+	/**
+	 * Backups
+	 */
+	containerBackups: () => LocalizedString
+	/**
+	 * Back Up
+	 */
+	containerBackUp: () => LocalizedString
+	/**
+	 * Archives the volumes and folders this container keeps its data in, to restore later.
+	 */
+	containerBackUpBody: () => LocalizedString
+	/**
+	 * The whole project ({project})
+	 */
+	containerBackUpProject: (arg: { project: unknown }) => LocalizedString
+	/**
+	 * Stop the containers while archiving (a database copied as it writes may not open)
+	 */
+	containerBackUpStop: () => LocalizedString
+	/**
+	 * Backing up…
+	 */
+	containerBackupRunning: () => LocalizedString
+	/**
+	 * Restoring…
+	 */
+	containerBackupRestoring: () => LocalizedString
+	/**
+	 * No backups
+	 */
+	containerBackupsEmpty: () => LocalizedString
+	/**
+	 * Select a container and choose Back Up. Its volumes and folders are archived on this server.
+	 */
+	containerBackupsHint: () => LocalizedString
+	/**
+	 * Containers
+	 */
+	containerBackupContainers: () => LocalizedString
+	/**
+	 * Size
+	 */
+	containerBackupSize: () => LocalizedString
+	/**
+	 * Stopped while archived
+	 */
+	containerBackupStopped: () => LocalizedString
+	/**
+	 * Volume {name} → {at}
+	 */
+	containerBackupVolume: (arg: { at: unknown, name: unknown }) => LocalizedString
+	/**
+	 * Left out: a system folder of the host
+	 */
+	containerBackupSkippedSystem: () => LocalizedString
+	/**
+	 * Left out: a file, not a folder
+	 */
+	containerBackupSkippedFile: () => LocalizedString
+	/**
+	 * Left out: the folder web apps share
+	 */
+	containerBackupSkippedShared: () => LocalizedString
+	/**
+	 * Restore
+	 */
+	containerBackupRestore: () => LocalizedString
+	/**
+	 * Delete
+	 */
+	containerBackupRemove: () => LocalizedString
+	/**
+	 * Replace what {label} keeps now with this backup. Its containers stop meanwhile.
+	 */
+	containerBackupRestoreReauth: (arg: { label: unknown }) => LocalizedString
+	/**
+	 * Delete this backup of {label}.
+	 */
+	containerBackupRemoveReauth: (arg: { label: unknown }) => LocalizedString
+	/**
+	 * A backup or restore is already running.
+	 */
+	containerBackupBusy: () => LocalizedString
+	/**
+	 * Backed up
+	 */
+	containerBackupDone: () => LocalizedString
+	/**
+	 * Restored
+	 */
+	containerBackupRestored: () => LocalizedString
+	/**
+	 * Did not finish
+	 */
+	containerBackupUnfinished: () => LocalizedString
+	/**
+	 * {app} is down
+	 */
+	noticeStackDown: (arg: { app: unknown }) => LocalizedString
+	/**
+	 * Not running: {services}.
+	 */
+	noticeStackDownBody: (arg: { services: unknown }) => LocalizedString
+	/**
+	 * None of its containers is running.
+	 */
+	noticeStackDownBodyEmpty: () => LocalizedString
+	/**
+	 * {app} is unhealthy
+	 */
+	noticeStackUnhealthy: (arg: { app: unknown }) => LocalizedString
+	/**
+	 * Failing its health check: {services}.
+	 */
+	noticeStackUnhealthyBody: (arg: { services: unknown }) => LocalizedString
+	/**
+	 * {app} is running again
+	 */
+	noticeStackBack: (arg: { app: unknown }) => LocalizedString
+	/**
+	 * Every container is up.
+	 */
+	noticeStackBackBody: () => LocalizedString
+	/**
+	 * {app}: an update is available
+	 */
+	noticeStackUpdate: (arg: { app: unknown }) => LocalizedString
+	/**
+	 * {project} {version} can be installed (now {current}).
+	 */
+	noticeStackUpdateBody: (arg: { current: unknown, project: unknown, version: unknown }) => LocalizedString
+	/**
+	 * ServerBox Monitor
+	 */
+	selfUpdateTitle: () => LocalizedString
+	/**
+	 * Version
+	 */
+	selfUpdateVersion: () => LocalizedString
+	/**
+	 * Newest release
+	 */
+	selfUpdateLatest: () => LocalizedString
+	/**
+	 * Up to date
+	 */
+	selfUpdateUpToDate: () => LocalizedString
+	/**
+	 * {version} is available
+	 */
+	selfUpdateAvailable: (arg: { version: unknown }) => LocalizedString
+	/**
+	 * Check now
+	 */
+	selfUpdateCheck: () => LocalizedString
+	/**
+	 * Could not read the releases: {error}
+	 */
+	selfUpdateCheckFailed: (arg: { error: unknown }) => LocalizedString
+	/**
+	 * Update now
+	 */
+	selfUpdateRun: () => LocalizedString
+	/**
+	 * The agent runs the installer apart from itself, so its restart does not stop the update. The panel loses the agent for a few seconds meanwhile and follows the update across the restart.
+	 */
+	selfUpdateRunHint: () => LocalizedString
+	/**
+	 * This link cannot act on the machine. Run this there:
+	 */
+	selfUpdateNoTerminal: () => LocalizedString
+	/**
+	 * This agent runs in a container: pull the new image and recreate the container.
+	 */
+	selfUpdateContainer: () => LocalizedString
+	/**
+	 * Installed by the NixOS module: update it through the system configuration and rebuild.
+	 */
+	selfUpdateNix: () => LocalizedString
+	/**
+	 * This agent was not installed by install.sh: update it the way it was installed.
+	 */
+	selfUpdateOther: () => LocalizedString
+	/**
+	 * Updating…
+	 */
+	selfUpdateRunning: () => LocalizedString
+	/**
+	 * The agent is restarting; the panel reconnects in a few seconds…
+	 */
+	selfUpdateRestarting: () => LocalizedString
+	/**
+	 * Updated: the agent runs {version}.
+	 */
+	selfUpdateDone: (arg: { version: unknown }) => LocalizedString
+	/**
+	 * The update failed. Its output is above.
+	 */
+	selfUpdateFailed: () => LocalizedString
+	/**
+	 * The agent has not come back. Check it on the machine.
+	 */
+	selfUpdateNoAnswer: () => LocalizedString
+	/**
+	 * sudo password
+	 */
+	selfUpdateSudoPassword: () => LocalizedString
+	/**
+	 * The installer needs root here (an OpenRC service). The password is used once and not saved.
+	 */
+	selfUpdateSudoHint: () => LocalizedString
+	/**
+	 * sudo did not accept this password.
+	 */
+	selfUpdateSudoRefused: () => LocalizedString
+	/**
+	 * ServerBox Monitor: an update is available
+	 */
+	noticeAgentUpdate: () => LocalizedString
+	/**
+	 * {version} can be installed (now {current}).
+	 */
+	noticeAgentUpdateBody: (arg: { current: unknown, version: unknown }) => LocalizedString
+	/**
+	 * Storage
+	 */
+	storageTitle: () => LocalizedString
+	/**
+	 * Disks
+	 */
+	storageDisks: () => LocalizedString
+	/**
+	 * RAID
+	 */
+	storageRaid: () => LocalizedString
+	/**
+	 * ZFS pools
+	 */
+	storagePools: () => LocalizedString
+	/**
+	 * Whole disk
+	 */
+	storageWholeDisk: () => LocalizedString
+	/**
+	 * No filesystem
+	 */
+	storageNoFilesystem: () => LocalizedString
+	/**
+	 * {used} of {total}
+	 */
+	storageUsage: (arg: { total: unknown, used: unknown }) => LocalizedString
+	/**
+	 * In use
+	 */
+	storageBusyMounted: () => LocalizedString
+	/**
+	 * Swap
+	 */
+	storageBusySwap: () => LocalizedString
+	/**
+	 * In an array
+	 */
+	storageBusyRaid: () => LocalizedString
+	/**
+	 * In a pool
+	 */
+	storageBusyPool: () => LocalizedString
+	/**
+	 * Holds a volume
+	 */
+	storageBusyVolume: () => LocalizedString
+	/**
+	 * Read only
+	 */
+	storageBusyReadOnly: () => LocalizedString
+	/**
+	 * System partition
+	 */
+	storageBusySystem: () => LocalizedString
+	/**
+	 * System
+	 */
+	storageSystemDisk: () => LocalizedString
+	/**
+	 * The system uses this mount; it stays mounted.
+	 */
+	storageSystemMount: () => LocalizedString
+	/**
+	 * Nothing is mounted there any more.
+	 */
+	storageNotMounted: () => LocalizedString
+	/**
+	 * Mount
+	 */
+	storageMount: () => LocalizedString
+	/**
+	 * Unmount
+	 */
+	storageUnmount: () => LocalizedString
+	/**
+	 * Format
+	 */
+	storageFormat: () => LocalizedString
+	/**
+	 * Initialize
+	 */
+	storageInitialize: () => LocalizedString
+	/**
+	 * SMART test
+	 */
+	storageSmartTest: () => LocalizedString
+	/**
+	 * Continue
+	 */
+	storageContinue: () => LocalizedString
+	/**
+	 * Filesystem
+	 */
+	storageFilesystem: () => LocalizedString
+	/**
+	 * Label
+	 */
+	storageLabel: () => LocalizedString
+	/**
+	 * Mount point
+	 */
+	storageMountpoint: () => LocalizedString
+	/**
+	 * Mount again at every start (/etc/fstab)
+	 */
+	storageMountPersist: () => LocalizedString
+	/**
+	 * Let ServerBox write here (for backups)
+	 */
+	storageMountOwn: () => LocalizedString
+	/**
+	 * Name
+	 */
+	storageName: () => LocalizedString
+	/**
+	 * Level
+	 */
+	storageLevel: () => LocalizedString
+	/**
+	 * Layout
+	 */
+	storageLayout: () => LocalizedString
+	/**
+	 * Device
+	 */
+	storageDevice: () => LocalizedString
+	/**
+	 * Pick at least {count} devices. What they hold is lost.
+	 */
+	storagePickDevices: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * No free disk or partition.
+	 */
+	storageNoFreeDevices: () => LocalizedString
+	/**
+	 * Create array
+	 */
+	storageCreateRaid: () => LocalizedString
+	/**
+	 * Builds /dev/{name} (RAID {level}) from {devices}. Everything on them is lost.
+	 */
+	storageCreateRaidBody: (arg: { devices: unknown, level: unknown, name: unknown }) => LocalizedString
+	/**
+	 * Create pool
+	 */
+	storageCreatePool: () => LocalizedString
+	/**
+	 * Builds pool {name} ({layout}) from {devices}. Everything on them is lost.
+	 */
+	storageCreatePoolBody: (arg: { devices: unknown, layout: unknown, name: unknown }) => LocalizedString
+	/**
+	 * Makes a new filesystem on {device}. Everything on it is lost.
+	 */
+	storageFormatBody: (arg: { device: unknown }) => LocalizedString
+	/**
+	 * Wipes {device} and gives it one partition for the whole disk. Everything on it is lost.
+	 */
+	storageInitializeBody: (arg: { device: unknown }) => LocalizedString
+	/**
+	 * Mounts {device} at {mountpoint}.
+	 */
+	storageMountBody: (arg: { device: unknown, mountpoint: unknown }) => LocalizedString
+	/**
+	 * Unmounts {mountpoint} and stops mounting it at start.
+	 */
+	storageUnmountBody: (arg: { mountpoint: unknown }) => LocalizedString
+	/**
+	 * Starts a short self-test on {device}. It takes a few minutes; its progress and result show here.
+	 */
+	storageSmartTestBody: (arg: { device: unknown }) => LocalizedString
+	/**
+	 * Add disk
+	 */
+	storageAddMember: () => LocalizedString
+	/**
+	 * Adds {device} to /dev/{array}: it replaces a failed member, or waits as a spare. What it holds is lost.
+	 */
+	storageAddMemberBody: (arg: { array: unknown, device: unknown }) => LocalizedString
+	/**
+	 * Remove
+	 */
+	storageRemoveMember: () => LocalizedString
+	/**
+	 * Marks {device} failed and takes it out of /dev/{array}. The array runs on without it, degraded if it was a working member.
+	 */
+	storageRemoveMemberBody: (arg: { array: unknown, device: unknown }) => LocalizedString
+	/**
+	 * Delete array
+	 */
+	storageDeleteRaid: () => LocalizedString
+	/**
+	 * Stops /dev/{array} and wipes its members' RAID signatures. Its data is lost.
+	 */
+	storageDeleteRaidBody: (arg: { array: unknown }) => LocalizedString
+	/**
+	 * Destroy pool
+	 */
+	storageDestroyPool: () => LocalizedString
+	/**
+	 * Destroys pool {name} and everything in it.
+	 */
+	storageDestroyPoolBody: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Scrub
+	 */
+	storageScrub: () => LocalizedString
+	/**
+	 * Reads all of pool {name} and repairs what it can. It runs in the background.
+	 */
+	storageScrubBody: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * State
+	 */
+	storageState: () => LocalizedString
+	/**
+	 * Healthy
+	 */
+	storageHealthy: () => LocalizedString
+	/**
+	 * Degraded
+	 */
+	storageDegraded: () => LocalizedString
+	/**
+	 * Sync ({action})
+	 */
+	storageSync: (arg: { action: unknown }) => LocalizedString
+	/**
+	 * Failed
+	 */
+	storageFaulty: () => LocalizedString
+	/**
+	 * Spare
+	 */
+	storageSpare: () => LocalizedString
+	/**
+	 * Working
+	 */
+	storageActive: () => LocalizedString
+	/**
+	 * Last scan
+	 */
+	storageScan: () => LocalizedString
+	/**
+	 * {count} errors
+	 */
+	storageErrors: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * No disks
+	 */
+	storageNoDisks: () => LocalizedString
+	/**
+	 * No arrays
+	 */
+	storageNoArrays: () => LocalizedString
+	/**
+	 * No pools
+	 */
+	storageNoPools: () => LocalizedString
+	/**
+	 * mdadm is not installed: arrays cannot be built or changed here.
+	 */
+	storageNoMdadm: () => LocalizedString
+	/**
+	 * ZFS is not installed (zfsutils).
+	 */
+	storageNoZfs: () => LocalizedString
+	/**
+	 * Type {word} to confirm
+	 */
+	storageTypeToConfirm: (arg: { word: unknown }) => LocalizedString
+	/**
+	 * sudo password (if the agent's account needs one)
+	 */
+	storageSudoPassword: () => LocalizedString
+	/**
+	 * sudo did not accept this password.
+	 */
+	storageSudoRejected: () => LocalizedString
+	/**
+	 * The agent's account cannot use sudo here.
+	 */
+	storageSudoUnavailable: () => LocalizedString
+	/**
+	 * {device} is in use.
+	 */
+	storageInUse: (arg: { device: unknown }) => LocalizedString
+	/**
+	 * Another change to the disks is running.
+	 */
+	storageBusy: () => LocalizedString
+	/**
+	 * Changing the disks…
+	 */
+	storageWorking: () => LocalizedString
+	/**
+	 * Done
+	 */
+	storageDone: () => LocalizedString
+	/**
+	 * Did not finish
+	 */
+	storageFailed: () => LocalizedString
+	/**
+	 * Read disk health
+	 */
+	storageHealthRead: () => LocalizedString
+	/**
+	 * Reads every disk's SMART data as root.
+	 */
+	storageHealthReadBody: () => LocalizedString
+	/**
+	 * Wearing
+	 */
+	storageHealthWearing: () => LocalizedString
+	/**
+	 * Failing
+	 */
+	storageHealthFailing: () => LocalizedString
+	/**
+	 * Asleep
+	 */
+	storageHealthAsleep: () => LocalizedString
+	/**
+	 * No SMART
+	 */
+	storageHealthUnsupported: () => LocalizedString
+	/**
+	 * SMART
+	 */
+	storageSmart: () => LocalizedString
+	/**
+	 * {value} °C
+	 */
+	storageTemperature: (arg: { value: unknown }) => LocalizedString
+	/**
+	 * {hours} h powered on
+	 */
+	storagePowerOn: (arg: { hours: unknown }) => LocalizedString
+	/**
+	 * {count} bad sectors
+	 */
+	storageBadSectors: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * Self-test: {percent}% left
+	 */
+	storageTesting: (arg: { percent: unknown }) => LocalizedString
+	/**
+	 * Last self-test passed
+	 */
+	storageLastTestPassed: () => LocalizedString
+	/**
+	 * Last self-test failed
+	 */
+	storageLastTestFailed: () => LocalizedString
+	/**
+	 * Last self-test was stopped
+	 */
+	storageLastTestAborted: () => LocalizedString
+	/**
+	 * Read {time}
+	 */
+	storageHealthAt: (arg: { time: unknown }) => LocalizedString
+	/**
+	 * Grow partition
+	 */
+	storageGrowPartition: () => LocalizedString
+	/**
+	 * Grows {device} into the free space after it. Expand its filesystem after.
+	 */
+	storageGrowPartitionBody: (arg: { device: unknown }) => LocalizedString
+	/**
+	 * Encrypt (LUKS)
+	 */
+	storageEncrypt: () => LocalizedString
+	/**
+	 * Passphrase
+	 */
+	storagePassphrase: () => LocalizedString
+	/**
+	 * The same again
+	 */
+	storagePassphraseAgain: () => LocalizedString
+	/**
+	 * At least 8 characters. Without it the data cannot be read: keep it safe.
+	 */
+	storagePassphraseHint: () => LocalizedString
+	/**
+	 * The two passphrases differ.
+	 */
+	storagePassphrasesDiffer: () => LocalizedString
+	/**
+	 * Encrypted
+	 */
+	storageEncrypted: () => LocalizedString
+	/**
+	 * Locked
+	 */
+	storageLocked: () => LocalizedString
+	/**
+	 * Unlock
+	 */
+	storageUnlock: () => LocalizedString
+	/**
+	 * Opens {device} with its passphrase.
+	 */
+	storageUnlockBody: (arg: { device: unknown }) => LocalizedString
+	/**
+	 * Lock
+	 */
+	storageLock: () => LocalizedString
+	/**
+	 * Closes {device}. Its filesystem must be unmounted.
+	 */
+	storageLockBody: (arg: { device: unknown }) => LocalizedString
+	/**
+	 * Replace
+	 */
+	storageReplace: () => LocalizedString
+	/**
+	 * Replaces {old} in pool {name} with {new}. The pool copies its data onto it; what {new} holds is lost.
+	 */
+	storageReplaceBody: (arg: { name: unknown, new: unknown, old: unknown }) => LocalizedString
+	/**
+	 * Mirror
+	 */
+	storageAttach: () => LocalizedString
+	/**
+	 * Mirrors {existing} onto {new}. What {new} holds is lost.
+	 */
+	storageAttachBody: (arg: { existing: unknown, new: unknown }) => LocalizedString
+	/**
+	 * Add spare
+	 */
+	storageAddSpare: () => LocalizedString
+	/**
+	 * Adds {devices} to pool {name} as spares. What they hold is lost.
+	 */
+	storageAddSpareBody: (arg: { devices: unknown, name: unknown }) => LocalizedString
+	/**
+	 * Remove
+	 */
+	storageRemoveDevice: () => LocalizedString
+	/**
+	 * Takes {device} out of pool {name}.
+	 */
+	storageRemoveDeviceBody: (arg: { device: unknown, name: unknown }) => LocalizedString
+	/**
+	 * Bring online
+	 */
+	storageOnline: () => LocalizedString
+	/**
+	 * Brings {device} back into pool {name}, grown into the whole disk.
+	 */
+	storageOnlineBody: (arg: { device: unknown, name: unknown }) => LocalizedString
+	/**
+	 * Details
+	 */
+	storageDetails: () => LocalizedString
+	/**
+	 * Attributes
+	 */
+	storageAttributes: () => LocalizedString
+	/**
+	 * Attribute
+	 */
+	storageAttrName: () => LocalizedString
+	/**
+	 * Value
+	 */
+	storageAttrValue: () => LocalizedString
+	/**
+	 * Worst
+	 */
+	storageAttrWorst: () => LocalizedString
+	/**
+	 * Threshold
+	 */
+	storageAttrThresh: () => LocalizedString
+	/**
+	 * Raw
+	 */
+	storageAttrRaw: () => LocalizedString
+	/**
+	 * Self-tests
+	 */
+	storageSelfTests: () => LocalizedString
+	/**
+	 * Short
+	 */
+	storageTestShort: () => LocalizedString
+	/**
+	 * Long
+	 */
+	storageTestLong: () => LocalizedString
+	/**
+	 * Passed
+	 */
+	storageTestPassed: () => LocalizedString
+	/**
+	 * Failed
+	 */
+	storageTestFailed: () => LocalizedString
+	/**
+	 * Stopped
+	 */
+	storageTestAborted: () => LocalizedString
+	/**
+	 * at {hours} h
+	 */
+	storageAtHours: (arg: { hours: unknown }) => LocalizedString
+	/**
+	 * Nothing to show
+	 */
+	storageNothingToShow: () => LocalizedString
+	/**
+	 * Long test
+	 */
+	storageLongTest: () => LocalizedString
+	/**
+	 * Starts a long self-test on {device}. It reads the whole disk: hours on a large one.
+	 */
+	storageSmartLongTestBody: (arg: { device: unknown }) => LocalizedString
+	/**
+	 * The passphrase must be 8 to 512 characters, on one line.
+	 */
+	storageInvalidPassphrase: () => LocalizedString
+	/**
+	 * Unmount its filesystem first.
+	 */
+	storageMountedInside: () => LocalizedString
+	/**
+	 * Only a spare or cache device can be taken out here.
+	 */
+	storageNotRemovable: () => LocalizedString
+	/**
+	 * Maintenance
+	 */
+	storageMaintenance: () => LocalizedString
+	/**
+	 * Scrub pools and check arrays
+	 */
+	storageTaskScrub: () => LocalizedString
+	/**
+	 * Reads everything on each ZFS pool and RAID array and repairs what it can.
+	 */
+	storageTaskScrubBody: () => LocalizedString
+	/**
+	 * Short SMART test
+	 */
+	storageTaskSmartShort: () => LocalizedString
+	/**
+	 * A few minutes on every disk with SMART.
+	 */
+	storageTaskSmartShortBody: () => LocalizedString
+	/**
+	 * Long SMART test
+	 */
+	storageTaskSmartLong: () => LocalizedString
+	/**
+	 * Reads every disk with SMART end to end: hours on a large disk.
+	 */
+	storageTaskSmartLongBody: () => LocalizedString
+	/**
+	 * Off
+	 */
+	storageRepeatOff: () => LocalizedString
+	/**
+	 * Weekly
+	 */
+	storageRepeatWeekly: () => LocalizedString
+	/**
+	 * Monthly
+	 */
+	storageRepeatMonthly: () => LocalizedString
+	/**
+	 * When
+	 */
+	storageRepeatWhen: () => LocalizedString
+	/**
+	 * Day
+	 */
+	storageRepeatDay: () => LocalizedString
+	/**
+	 * Time
+	 */
+	storageRepeatTime: () => LocalizedString
+	/**
+	 * Last run
+	 */
+	storageLastRun: () => LocalizedString
+	/**
+	 * Not yet
+	 */
+	storageNeverRun: () => LocalizedString
+	/**
+	 * Started
+	 */
+	storageRanOk: () => LocalizedString
+	/**
+	 * Run now
+	 */
+	storageRunNow: () => LocalizedString
+	/**
+	 * sudo asked for a password: run the agent as root, or allow these commands (above).
+	 */
+	storageNeedsSudo: () => LocalizedString
+	/**
+	 * The schedule runs without a password. Unless the agent runs as root, sudo must let its account run these commands without one, for example in /etc/sudoers.d/serverbox-storage:
+	 */
+	storageMaintenanceSudo: () => LocalizedString
+	/**
+	 * Needs ZFS or mdadm.
+	 */
+	storageNoScrubTools: () => LocalizedString
+	/**
+	 * Needs smartmontools.
+	 */
+	storageNoSmartctl: () => LocalizedString
+	/**
+	 * Expand
+	 */
+	storageExpand: () => LocalizedString
+	/**
+	 * Grows the filesystem on {device} to fill its device. It stays mounted.
+	 */
+	storageExpandBody: (arg: { device: unknown }) => LocalizedString
+	/**
+	 * Grow
+	 */
+	storageGrowRaid: () => LocalizedString
+	/**
+	 * Adds {device} to /dev/{array} as one more working member. RAID 1 gains a mirror; RAID 5 and 6 gain room once the reshape ends, which can take hours. Expand its filesystem after. What {device} holds is lost.
+	 */
+	storageGrowRaidBody: (arg: { array: unknown, device: unknown }) => LocalizedString
+	/**
+	 * Add disks
+	 */
+	storageAddToPool: () => LocalizedString
+	/**
+	 * Adds {layout} of {devices} to pool {name} for more room. They cannot be taken out again, and what they hold is lost.
+	 */
+	storageAddToPoolBody: (arg: { devices: unknown, layout: unknown, name: unknown }) => LocalizedString
+	/**
+	 * /dev/{array} is degraded
+	 */
+	noticeStorageArrayDegraded: (arg: { array: unknown }) => LocalizedString
+	/**
+	 * A member failed or is missing; the array runs without its redundancy.
+	 */
+	noticeStorageArrayDegradedBody: () => LocalizedString
+	/**
+	 * /dev/{array} is healthy again
+	 */
+	noticeStorageArrayBack: (arg: { array: unknown }) => LocalizedString
+	/**
+	 * Every member is working.
+	 */
+	noticeStorageArrayBackBody: () => LocalizedString
+	/**
+	 * Pool {pool} is {health}
+	 */
+	noticeStoragePoolUnhealthy: (arg: { health: unknown, pool: unknown }) => LocalizedString
+	/**
+	 * Open Storage to see which device.
+	 */
+	noticeStoragePoolUnhealthyBody: () => LocalizedString
+	/**
+	 * Pool {pool} is online again
+	 */
+	noticeStoragePoolBack: (arg: { pool: unknown }) => LocalizedString
+	/**
+	 * Every device is working.
+	 */
+	noticeStoragePoolBackBody: () => LocalizedString
+	/**
+	 * {device} is failing
+	 */
+	noticeStorageDiskFailing: (arg: { device: unknown }) => LocalizedString
+	/**
+	 * Its SMART check or self-test failed: copy what it holds elsewhere and replace it.
+	 */
+	noticeStorageDiskFailingBody: () => LocalizedString
+	/**
+	 * {device} has {count} bad sectors
+	 */
+	noticeStorageDiskSectors: (arg: { count: unknown, device: unknown }) => LocalizedString
+	/**
+	 * It had {was}. A disk losing sectors often fails soon.
+	 */
+	noticeStorageDiskSectorsBody: (arg: { was: unknown }) => LocalizedString
+	/**
+	 * Storage maintenance did not run: {task}
+	 */
+	noticeStorageMaintenanceFailed: (arg: { task: unknown }) => LocalizedString
+	/**
+	 * Sharing
+	 */
+	sharingTitle: () => LocalizedString
+	/**
+	 * SMB
+	 */
+	sharingSmb: () => LocalizedString
+	/**
+	 * NFS
+	 */
+	sharingNfs: () => LocalizedString
+	/**
+	 * Service
+	 */
+	sharingService: () => LocalizedString
+	/**
+	 * Running
+	 */
+	sharingRunning: () => LocalizedString
+	/**
+	 * Stopped
+	 */
+	sharingStopped: () => LocalizedString
+	/**
+	 * NFS server
+	 */
+	sharingNfsServer: () => LocalizedString
+	/**
+	 * Samba is not installed. Windows, macOS and Linux open SMB shares.
+	 */
+	sharingNoSamba: () => LocalizedString
+	/**
+	 * The NFS server is not installed. Linux and macOS mount NFS exports.
+	 */
+	sharingNoNfs: () => LocalizedString
+	/**
+	 * Install Samba
+	 */
+	sharingInstallSamba: () => LocalizedString
+	/**
+	 * Installs Samba with the machine's package manager.
+	 */
+	sharingInstallSambaBody: () => LocalizedString
+	/**
+	 * Install NFS server
+	 */
+	sharingInstallNfs: () => LocalizedString
+	/**
+	 * Installs the NFS server with the machine's package manager.
+	 */
+	sharingInstallNfsBody: () => LocalizedString
+	/**
+	 * Installing…
+	 */
+	sharingInstalling: () => LocalizedString
+	/**
+	 * Add share
+	 */
+	sharingAddShare: () => LocalizedString
+	/**
+	 * Add export
+	 */
+	sharingAddExport: () => LocalizedString
+	/**
+	 * Edit
+	 */
+	sharingEdit: () => LocalizedString
+	/**
+	 * Remove
+	 */
+	sharingRemove: () => LocalizedString
+	/**
+	 * Save
+	 */
+	sharingSave: () => LocalizedString
+	/**
+	 * Shares {path} over SMB as {name}, then reloads Samba.
+	 */
+	sharingSaveSmbBody: (arg: { name: unknown, path: unknown }) => LocalizedString
+	/**
+	 * Exports {path} over NFS, then reloads the exports.
+	 */
+	sharingSaveNfsBody: (arg: { path: unknown }) => LocalizedString
+	/**
+	 * Stops sharing {name}. The folder and its files stay.
+	 */
+	sharingRemoveSmbBody: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Stops exporting {path}. The folder and its files stay.
+	 */
+	sharingRemoveNfsBody: (arg: { path: unknown }) => LocalizedString
+	/**
+	 * Set up outside ServerBox
+	 */
+	sharingElsewhere: () => LocalizedString
+	/**
+	 * No SMB shares
+	 */
+	sharingNoShares: () => LocalizedString
+	/**
+	 * No NFS exports
+	 */
+	sharingNoExports: () => LocalizedString
+	/**
+	 * Read only
+	 */
+	sharingReadOnly: () => LocalizedString
+	/**
+	 * Read and write
+	 */
+	sharingReadWrite: () => LocalizedString
+	/**
+	 * Guests
+	 */
+	sharingGuest: () => LocalizedString
+	/**
+	 * Let anyone on the network in without an account
+	 */
+	sharingGuestLabel: () => LocalizedString
+	/**
+	 * Accounts allowed in (none ticked: every account with an SMB password):
+	 */
+	sharingUsersHint: () => LocalizedString
+	/**
+	 * Folder
+	 */
+	sharingFolder: () => LocalizedString
+	/**
+	 * A folder on the server, e.g. a disk mounted in Storage.
+	 */
+	sharingFolderHint: () => LocalizedString
+	/**
+	 * Description
+	 */
+	sharingComment: () => LocalizedString
+	/**
+	 * SMB passwords
+	 */
+	sharingPasswords: () => LocalizedString
+	/**
+	 * Samba keeps its own passwords: set one for each account that connects.
+	 */
+	sharingPasswordsBody: () => LocalizedString
+	/**
+	 * Account
+	 */
+	sharingAccount: () => LocalizedString
+	/**
+	 * Set password
+	 */
+	sharingSetPassword: () => LocalizedString
+	/**
+	 * Sets the SMB password of {user}.
+	 */
+	sharingSetPasswordBody: (arg: { user: unknown }) => LocalizedString
+	/**
+	 * New SMB password
+	 */
+	sharingNewPassword: () => LocalizedString
+	/**
+	 * The same again
+	 */
+	sharingNewPasswordAgain: () => LocalizedString
+	/**
+	 * The two passwords differ.
+	 */
+	sharingPasswordsDiffer: () => LocalizedString
+	/**
+	 * Who may mount it: * for anyone, a host, an address or a network such as 192.168.1.0/24.
+	 */
+	sharingClientsHint: () => LocalizedString
+	/**
+	 * Client
+	 */
+	sharingClient: () => LocalizedString
+	/**
+	 * Add client
+	 */
+	sharingAddClient: () => LocalizedString
+	/**
+	 * Root on the client
+	 */
+	sharingSquash: () => LocalizedString
+	/**
+	 * Root is nobody
+	 */
+	sharingSquashRoot: () => LocalizedString
+	/**
+	 * Everyone is nobody
+	 */
+	sharingSquashAll: () => LocalizedString
+	/**
+	 * Root stays root
+	 */
+	sharingSquashNone: () => LocalizedString
+	/**
+	 * {path} is not a folder on the server.
+	 */
+	sharingNotAFolder: (arg: { path: unknown }) => LocalizedString
+	/**
+	 * The configuration was refused and the previous one is back: {detail}
+	 */
+	sharingRefused: (arg: { detail: unknown }) => LocalizedString
+	/**
+	 * Another share has this name or folder.
+	 */
+	sharingDuplicate: () => LocalizedString
+	/**
+	 * A name is letters, digits, _ . - (32 at most).
+	 */
+	sharingInvalidName: () => LocalizedString
+	/**
+	 * The folder must be an absolute path without quotes, backslashes or ..
+	 */
+	sharingInvalidPath: () => LocalizedString
+	/**
+	 * A client is *, a host, an address or a network.
+	 */
+	sharingInvalidClient: () => LocalizedString
+	/**
+	 * This password cannot be used.
+	 */
+	sharingInvalidPassword: () => LocalizedString
+	/**
+	 * Time Machine backups (Mac)
+	 */
+	sharingTimeMachineOption: () => LocalizedString
+	/**
+	 * Keep deleted files in .recycle
+	 */
+	sharingRecycleOption: () => LocalizedString
+	/**
+	 * Time Machine
+	 */
+	sharingTimeMachine: () => LocalizedString
+	/**
+	 * Recycle bin
+	 */
+	sharingRecycle: () => LocalizedString
+	/**
+	 * Connected now
+	 */
+	sharingConnectedNow: () => LocalizedString
+	/**
+	 * Nobody is connected
+	 */
+	sharingNobodyConnected: () => LocalizedString
+	/**
+	 * Show connections
+	 */
+	sharingShowConnections: () => LocalizedString
+	/**
+	 * Reads who is connected, as root.
+	 */
+	sharingShowConnectionsBody: () => LocalizedString
+	/**
+	 * Firewall
+	 */
+	sharingFirewall: () => LocalizedString
+	/**
+	 * Allow in Firewall
+	 */
+	sharingAllowFirewall: () => LocalizedString
+	/**
+	 * Where backups go
+	 */
+	containerBackupWhere: () => LocalizedString
+	/**
+	 * Folder
+	 */
+	containerBackupFolder: () => LocalizedString
+	/**
+	 * {free} free
+	 */
+	containerBackupFree: (arg: { free: unknown }) => LocalizedString
+	/**
+	 * Change
+	 */
+	containerBackupChange: () => LocalizedString
+	/**
+	 * Backups kept of each
+	 */
+	containerBackupKeep: () => LocalizedString
+	/**
+	 * All
+	 */
+	containerBackupKeepAll: () => LocalizedString
+	/**
+	 * Backup disk
+	 */
+	containerBackupDisk: () => LocalizedString
+	/**
+	 * Beside the agent's database
+	 */
+	containerBackupDefaultFolder: () => LocalizedString
+	/**
+	 * A folder on a backup disk (Storage: mount it with “Let ServerBox write here”). Backups already made stay where they are.
+	 */
+	containerBackupWhereHint: () => LocalizedString
+	/**
+	 * That folder does not exist.
+	 */
+	containerBackupDestinationMissing: () => LocalizedString
+	/**
+	 * The agent cannot write in that folder.
+	 */
+	containerBackupDestinationNotWritable: () => LocalizedString
+	/**
+	 * There is not enough free space where backups go.
+	 */
+	containerBackupNotEnoughSpace: () => LocalizedString
+	/**
+	 * The backup disk is not mounted. Mount it in Storage, or choose another folder.
+	 */
+	containerBackupDiskMissing: () => LocalizedString
+	/**
+	 * Scheduled
+	 */
+	containerBackupSchedules: () => LocalizedString
+	/**
+	 * Every day at {at}
+	 */
+	containerBackupDaily: (arg: { at: unknown }) => LocalizedString
+	/**
+	 * Every {day} at {at}
+	 */
+	containerBackupWeekly: (arg: { at: unknown, day: unknown }) => LocalizedString
+	/**
+	 * Last: {at}
+	 */
+	containerBackupLastRun: (arg: { at: unknown }) => LocalizedString
+	/**
+	 * Last failed: {error}
+	 */
+	containerBackupLastFailed: (arg: { error: unknown }) => LocalizedString
+	/**
+	 * Repeat
+	 */
+	containerBackupRepeat: () => LocalizedString
+	/**
+	 * Only now
+	 */
+	containerBackupOnce: () => LocalizedString
+	/**
+	 * Every day
+	 */
+	containerBackupEveryDay: () => LocalizedString
+	/**
+	 * Every week
+	 */
+	containerBackupEveryWeek: () => LocalizedString
+	/**
+	 * Day
+	 */
+	containerBackupDay: () => LocalizedString
+	/**
+	 * At
+	 */
+	containerBackupAt: () => LocalizedString
+	/**
+	 * Schedule
+	 */
+	containerBackupSchedule: () => LocalizedString
+	/**
+	 * Monday
+	 */
+	weekdayMon: () => LocalizedString
+	/**
+	 * Tuesday
+	 */
+	weekdayTue: () => LocalizedString
+	/**
+	 * Wednesday
+	 */
+	weekdayWed: () => LocalizedString
+	/**
+	 * Thursday
+	 */
+	weekdayThu: () => LocalizedString
+	/**
+	 * Friday
+	 */
+	weekdayFri: () => LocalizedString
+	/**
+	 * Saturday
+	 */
+	weekdaySat: () => LocalizedString
+	/**
+	 * Sunday
+	 */
+	weekdaySun: () => LocalizedString
+	/**
+	 * Could not reach the agent.
+	 */
+	agentUnreachable: () => LocalizedString
+	/**
+	 * The agent answered {status}.
+	 */
+	agentAnswered: (arg: { status: number }) => LocalizedString
+	/**
+	 * Session expired. Sign in again.
+	 */
+	agentSessionExpired: () => LocalizedString
+	/**
+	 * Remote monitor agents require HTTPS; HTTP is allowed only on loopback.
+	 */
+	agentHttpsRequired: () => LocalizedString
+	/**
+	 * Where the apps are
+	 */
+	deskGuideAppsTitle: () => LocalizedString
+	/**
+	 * The dock holds these. {apps} in the menubar lists every app.
+	 */
+	deskGuideAppsBody: (arg: { apps: unknown }) => LocalizedString
+	/**
+	 * Window controls are at the top left. The right end of the menubar holds the clock, notifications and the control centre. ⌘K searches for an app.
+	 */
+	deskGuideAppsMore: () => LocalizedString
+	/**
+	 * Recommended web apps
+	 */
+	deskGuideWebAppsTitle: () => LocalizedString
+	/**
+	 * The agent can run self-hosted services with Docker. Before anything is deployed, the App Store shows what an app will run and asks for your password.
+	 */
+	deskGuideWebAppsBody: () => LocalizedString
+	/**
+	 * Docker or Podman was not found on this machine, so web apps cannot run here.
+	 */
+	deskGuideNoDocker: () => LocalizedString
+	/**
+	 * Install Docker, then open the App Store again.
+	 */
+	deskGuideNoDockerHint: () => LocalizedString
+	/**
+	 * The App Store lists these under Recommended, with the rest of the catalog.
+	 */
+	deskGuideWebAppsNote: () => LocalizedString
+	/**
+	 * Skip
+	 */
+	deskGuideSkip: () => LocalizedString
+	/**
+	 * Show the guide again
+	 */
+	deskGuideAgain: () => LocalizedString
+	/**
+	 * Shown once on the desk, as on the first sign-in.
+	 */
+	deskGuideAgainHint: () => LocalizedString
+	/**
+	 * Show
+	 */
+	deskGuideShow: () => LocalizedString
+	/**
+	 * Welcome to the desk
+	 */
+	deskGuideWelcomeTitle: () => LocalizedString
+	/**
+	 * {host} is managed from here. Each app opens in its own window, and open windows stay where you left them.
+	 */
+	deskGuideBody: (arg: { host: unknown }) => LocalizedString
+	/**
+	 * The dock and the wallpaper are saved for this account; the windows you leave open come back the next time this browser signs in.
+	 */
+	deskGuideWelcomeMore: () => LocalizedString
+	/**
+	 * Open App Store
+	 */
+	deskGuideOpenStore: () => LocalizedString
+	/**
+	 * Done
+	 */
+	deskGuideDone: () => LocalizedString
+	/**
+	 * Recommended
+	 */
+	storeRecommended: () => LocalizedString
+	/**
+	 * Next
+	 */
+	deskGuideNext: () => LocalizedString
+	/**
+	 * Install
+	 */
+	deskGuideInstall: () => LocalizedString
+	/**
+	 * Local inference
+	 */
+	inference: () => LocalizedString
+	/**
+	 * Reverse proxy
+	 */
+	proxy: () => LocalizedString
+	/**
+	 * Kernels
+	 */
+	kernel: () => LocalizedString
+	/**
+	 * Ubuntu Pro
+	 */
+	ubuntuPro: () => LocalizedString
+	/**
+	 * Cleanup
+	 */
+	cleanup: () => LocalizedString
+	/**
 	 * Skip to content
 	 */
 	skipToContent: () => LocalizedString
@@ -11709,6 +20538,330 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Time
 	 */
 	chartTime: () => LocalizedString
+	/**
+	 * Settings backup
+	 */
+	monitorBackupTitle: () => LocalizedString
+	/**
+	 * This server's settings, backed up to a WebDAV folder and encrypted with your passphrase: account password, snippets, remote desktops, BMC and PVE, desk preferences and themes, Agent mode settings, push channels and rules. History, logs and sessions are left out.
+	 */
+	monitorBackupDescription: () => LocalizedString
+	/**
+	 * WebDAV folder
+	 */
+	monitorBackupFolder: () => LocalizedString
+	/**
+	 * Folder address
+	 */
+	monitorBackupUrl: () => LocalizedString
+	/**
+	 * One folder per server. It is made on the first backup.
+	 */
+	monitorBackupUrlHint: () => LocalizedString
+	/**
+	 * User name
+	 */
+	monitorBackupUsername: () => LocalizedString
+	/**
+	 * Password
+	 */
+	monitorBackupPassword: () => LocalizedString
+	/**
+	 * Saved
+	 */
+	monitorBackupPasswordSaved: () => LocalizedString
+	/**
+	 * Allow plain HTTP
+	 */
+	monitorBackupAllowInsecure: () => LocalizedString
+	/**
+	 * The password reaches the server unencrypted. Backups are encrypted either way.
+	 */
+	monitorBackupAllowInsecureHint: () => LocalizedString
+	/**
+	 * Backups kept
+	 */
+	monitorBackupKeep: () => LocalizedString
+	/**
+	 * The oldest go once there are more.
+	 */
+	monitorBackupKeepHint: () => LocalizedString
+	/**
+	 * Back up automatically
+	 */
+	monitorBackupEnabled: () => LocalizedString
+	/**
+	 * Checked every 10 minutes; a backup is made when the settings changed.
+	 */
+	monitorBackupEnabledHint: () => LocalizedString
+	/**
+	 * Test
+	 */
+	monitorBackupTest: () => LocalizedString
+	/**
+	 * Connected. {count} backups in the folder.
+	 */
+	monitorBackupTestOk: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * Connected. The folder will be made on the first backup.
+	 */
+	monitorBackupTestMissing: () => LocalizedString
+	/**
+	 * Saved.
+	 */
+	monitorBackupSaved: () => LocalizedString
+	/**
+	 * Save where this server's settings are backed up.
+	 */
+	monitorBackupSaveReauth: () => LocalizedString
+	/**
+	 * Passphrase
+	 */
+	monitorBackupKey: () => LocalizedString
+	/**
+	 * Passphrase set
+	 */
+	monitorBackupKeySet: () => LocalizedString
+	/**
+	 * Backups are encrypted to key {id}.
+	 */
+	monitorBackupKeySetHint: (arg: { id: unknown }) => LocalizedString
+	/**
+	 * No passphrase
+	 */
+	monitorBackupKeyMissing: () => LocalizedString
+	/**
+	 * Set one to start backing up.
+	 */
+	monitorBackupKeyMissingHint: () => LocalizedString
+	/**
+	 * Change passphrase
+	 */
+	monitorBackupKeyChange: () => LocalizedString
+	/**
+	 * Set passphrase
+	 */
+	monitorBackupKeySetAction: () => LocalizedString
+	/**
+	 * The passphrase encrypts the key that opens the backups. The key is stored in the folder; this server keeps only the half that encrypts, so it backs up without the passphrase. A new passphrase applies to backups from now on; older ones keep the passphrase they were made with.
+	 */
+	monitorBackupKeyBody: () => LocalizedString
+	/**
+	 * If you lose the passphrase, the backups cannot be restored. Nobody can recover it.
+	 */
+	monitorBackupKeyWarning: () => LocalizedString
+	/**
+	 * Passphrase
+	 */
+	monitorBackupPassphrase: () => LocalizedString
+	/**
+	 * Repeat passphrase
+	 */
+	monitorBackupPassphraseAgain: () => LocalizedString
+	/**
+	 * At least {min} characters.
+	 */
+	monitorBackupPassphraseShort: (arg: { min: unknown }) => LocalizedString
+	/**
+	 * The two do not match.
+	 */
+	monitorBackupPassphraseMismatch: () => LocalizedString
+	/**
+	 * Set
+	 */
+	monitorBackupKeySave: () => LocalizedString
+	/**
+	 * Set the passphrase backups are encrypted with.
+	 */
+	monitorBackupKeyReauth: () => LocalizedString
+	/**
+	 * Status
+	 */
+	monitorBackupStatus: () => LocalizedString
+	/**
+	 * Backing up…
+	 */
+	monitorBackupRunning: () => LocalizedString
+	/**
+	 * Last backup {when}
+	 */
+	monitorBackupLast: (arg: { when: unknown }) => LocalizedString
+	/**
+	 * No backup yet
+	 */
+	monitorBackupNone: () => LocalizedString
+	/**
+	 * A backup is made when the settings change, and once a day while only what changes on its own did.
+	 */
+	monitorBackupSchedule: () => LocalizedString
+	/**
+	 * Failed
+	 */
+	monitorBackupFailed: () => LocalizedString
+	/**
+	 * Back up now
+	 */
+	monitorBackupRunNow: () => LocalizedString
+	/**
+	 * Backups
+	 */
+	monitorBackupList: () => LocalizedString
+	/**
+	 * No backups in the folder
+	 */
+	monitorBackupListEmpty: () => LocalizedString
+	/**
+	 * Older passphrase
+	 */
+	monitorBackupOlderKey: () => LocalizedString
+	/**
+	 * Restore
+	 */
+	monitorBackupRestore: () => LocalizedString
+	/**
+	 * Restore settings
+	 */
+	monitorBackupRestoreTitle: () => LocalizedString
+	/**
+	 * Restore the settings backed up {when}. This server's settings are replaced; its history, logs and where backups go stay.
+	 */
+	monitorBackupRestoreBody: (arg: { when: unknown }) => LocalizedString
+	/**
+	 * The account password becomes the backup's: every device signs in again with it. The monitor restarts.
+	 */
+	monitorBackupRestoreWarning: () => LocalizedString
+	/**
+	 * Restore the settings backed up {when}.
+	 */
+	monitorBackupRestoreReauth: (arg: { when: unknown }) => LocalizedString
+	/**
+	 * The monitor is restarting.
+	 */
+	monitorBackupRestoredRestarting: () => LocalizedString
+	/**
+	 * Restart the monitor to apply every setting.
+	 */
+	monitorBackupRestoredRestart: () => LocalizedString
+	/**
+	 * Sign in again with the password from the backup.
+	 */
+	monitorBackupRestoredSignIn: () => LocalizedString
+	/**
+	 * That address is not one the password may be sent to: use HTTPS, or allow plain HTTP.
+	 */
+	monitorBackupErrInvalidUrl: () => LocalizedString
+	/**
+	 * The user name has a character it may not have.
+	 */
+	monitorBackupErrInvalidUsername: () => LocalizedString
+	/**
+	 * The password has a character it may not have.
+	 */
+	monitorBackupErrInvalidPassword: () => LocalizedString
+	/**
+	 * Type the password: the saved one is only sent to the server it was saved for.
+	 */
+	monitorBackupErrPasswordRequired: () => LocalizedString
+	/**
+	 * Keep between 1 and 100 backups.
+	 */
+	monitorBackupErrInvalidKeep: () => LocalizedString
+	/**
+	 * The passphrase is too short.
+	 */
+	monitorBackupErrWeakPassphrase: () => LocalizedString
+	/**
+	 * Save a folder and set a passphrase first.
+	 */
+	monitorBackupErrNotReady: () => LocalizedString
+	/**
+	 * The passphrase does not open this backup.
+	 */
+	monitorBackupErrWrongPassphrase: () => LocalizedString
+	/**
+	 * The key for this backup is not in the folder, so it cannot be opened.
+	 */
+	monitorBackupErrKeyMissing: () => LocalizedString
+	/**
+	 * The key file in the folder cannot be read.
+	 */
+	monitorBackupErrInvalidKeyFile: () => LocalizedString
+	/**
+	 * The file is not a backup this monitor can read.
+	 */
+	monitorBackupErrInvalidBackup: () => LocalizedString
+	/**
+	 * The backup is from a newer monitor. Update this one first.
+	 */
+	monitorBackupErrNewer: () => LocalizedString
+	/**
+	 * The backup is larger than the {max} limit.
+	 */
+	monitorBackupErrTooLarge: (arg: { max: unknown }) => LocalizedString
+	/**
+	 * The backup is no longer in the folder.
+	 */
+	monitorBackupErrNotFound: () => LocalizedString
+	/**
+	 * The WebDAV server refused the user name or password.
+	 */
+	monitorBackupErrUnauthorized: () => LocalizedString
+	/**
+	 * The WebDAV server does not allow this.
+	 */
+	monitorBackupErrForbidden: () => LocalizedString
+	/**
+	 * The folder is not on the WebDAV server.
+	 */
+	monitorBackupErrFolderMissing: () => LocalizedString
+	/**
+	 * The WebDAV server cannot be reached.
+	 */
+	monitorBackupErrUnreachable: () => LocalizedString
+	/**
+	 * The WebDAV server is out of space.
+	 */
+	monitorBackupErrServerFull: () => LocalizedString
+	/**
+	 * The address does not answer as a WebDAV folder.
+	 */
+	monitorBackupErrNotWebdav: () => LocalizedString
+	/**
+	 * The WebDAV server failed the request.
+	 */
+	monitorBackupErrServer: () => LocalizedString
+	/**
+	 * Failed: {code}
+	 */
+	monitorBackupErrOther: (arg: { code: unknown }) => LocalizedString
+	/**
+	 * Settings backup failed
+	 */
+	noticeMonitorBackupFailed: () => LocalizedString
+	/**
+	 * Settings backups work again
+	 */
+	noticeMonitorBackupBack: () => LocalizedString
+	/**
+	 * The last backup was uploaded.
+	 */
+	noticeMonitorBackupBackBody: () => LocalizedString
+	/**
+	 * Remove the saved password
+	 */
+	monitorBackupForgetPassword: () => LocalizedString
+	/**
+	 * Automatic backups are off.
+	 */
+	monitorBackupOff: () => LocalizedString
+	/**
+	 * Another server
+	 */
+	monitorBackupOtherServer: () => LocalizedString
+	/**
+	 * Backups are turned off. Turn on Back up automatically first.
+	 */
+	monitorBackupErrDisabled: () => LocalizedString
 }
 
 export type Formatters = {}

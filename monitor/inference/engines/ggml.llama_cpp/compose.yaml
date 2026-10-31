@@ -1,0 +1,50 @@
+# llama.cpp b11347 (MIT), https://github.com/ggml-org/llama.cpp/releases/tag/b11347
+#
+# Written for ServerBox Monitor from llama.cpp's Docker page
+# (docs/docker.md) and llama-server's README, not copied from a release file:
+# - no `name:` and no `container_name`: the agent names the project;
+# - the image is the server build for the chosen backend, pinned to the
+#   release; the backend's devices are one service of gpu.yml;
+# - the model is a GGUF repository on Hugging Face (`-hf repo:QUANT`),
+#   downloaded on first start into the shared models folder;
+# - the API asks for a generated key and is published on loopback unless the
+#   admin opens it.
+
+services:
+  llama:
+    image: ghcr.io/ggml-org/llama.cpp:${LLAMA_IMAGE_TAG}
+    extends:
+      file: gpu.yml
+      service: ${LLAMA_ACCEL}
+    environment:
+      TZ: ${SBM_TZ}
+      LLAMA_CACHE: /models
+    command:
+      - -hf
+      - ${MODEL}
+      - --alias
+      - ${MODEL}
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8080"
+      - --api-key
+      - ${API_KEY}
+      - --ctx-size
+      - ${CONTEXT}
+      - --n-gpu-layers
+      - "999"
+      - --jinja
+      - --no-webui
+    volumes:
+      - ${MODELS_LOCATION}:/models
+    ports:
+      - '${LLAMA_BIND}:${LLAMA_PORT}:8080'
+    # /health answers 503 while the model loads, 200 once it serves.
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30m
+    restart: unless-stopped

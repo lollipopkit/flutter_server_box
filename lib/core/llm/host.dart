@@ -5,6 +5,7 @@ import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/llm/scope.dart';
 import 'package:server_box/core/llm/screen.dart';
 import 'package:server_box/core/llm/tools.dart';
@@ -96,8 +97,18 @@ abstract final class LlmHost {
     LlmUi.appTools = () => AgentTools.all;
     LlmUi.offers = offers;
     LlmUi.appPrompt = prompt;
+    LlmUi.describeTool = describeServerTool;
     LlmUi.appContext = AgentScreen.describe;
   }
+
+  /// The tools a monitor agent's task calls, as a task opened here shows
+  /// them: they ran on that server, not here.
+  @visibleForTesting
+  static ({String label, String summary})? describeServerTool(String name, Map<String, Object?> args) => switch (name) {
+    'run_command' => (label: l10n.agentToolShell, summary: '${args['command'] ?? ''}'),
+    'propose_plan' => (label: l10n.agentPlan, summary: '${args['title'] ?? args['summary'] ?? ''}'),
+    _ => null,
+  };
 
   /// A terminal's chats get that terminal and nothing else but the skills:
   /// they are about the shell on screen, and a tool reaching another machine

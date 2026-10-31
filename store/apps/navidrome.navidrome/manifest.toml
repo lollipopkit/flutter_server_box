@@ -1,0 +1,80 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Navidrome, as the Monitor's Music app: deployed with Docker Compose from
+# compose.yaml beside this file, shown in a desk window through the agent.
+
+schema = 1
+publisher = "navidrome"
+name = "navidrome"
+project = "Navidrome"
+developer = "Navidrome"
+version = "0.64.2"
+homepage = "https://www.navidrome.org"
+source = "https://github.com/navidrome/navidrome/tree/v0.64.2"
+glyph = "library_music"
+tone = "violet"
+categories = ["media"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Navidrome"
+
+[description]
+en = "Play your music library in the browser or in any Subsonic-compatible app. The library is read-only."
+zh = "在浏览器或任何兼容 Subsonic 的 app 中播放你的音乐库。音乐库只读。"
+zh-TW = "在瀏覽器或任何相容 Subsonic 的 app 中播放你的音樂庫。音樂庫唯讀。"
+
+[license]
+spdx = "GPL-3.0"
+url = "https://github.com/navidrome/navidrome/blob/v0.64.2/LICENSE"
+accept = true
+
+[requirements]
+arch = ["amd64", "arm64", "arm"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+NAVIDROME_VERSION = "0.64.2"
+
+[login]
+note = { en = "No account is seeded. The first visit asks for an administrator username and password; create them in the app.", zh = "不会预设账号。第一次打开时会要求设置管理员用户名和密码，请在应用中创建。", zh-TW = "不會預設帳號。第一次開啟時會要求設定管理員使用者名稱和密碼，請在應用中建立。" }
+
+[[settings]]
+key = "data"
+type = "path"
+env = "NAVIDROME_DATA_LOCATION"
+default = "{stack}/data"
+data = true
+label = { en = "Data", zh = "数据", zh-TW = "資料" }
+help = { en = "The database, the navidrome.toml file and cached images.", zh = "数据库、navidrome.toml 文件和缓存的图片。", zh-TW = "資料庫、navidrome.toml 檔案和快取的圖片。" }
+
+[[settings]]
+key = "music"
+type = "path"
+env = "NAVIDROME_MUSIC_LOCATION"
+default = "{shared}/music"
+data = false
+label = { en = "Music library", zh = "音乐库", zh-TW = "音樂庫" }
+help = { en = "Mounted read-only. Navidrome only reads it.", zh = "以只读方式挂载，Navidrome 只读取它。", zh-TW = "以唯讀方式掛載，Navidrome 只讀取它。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "NAVIDROME_WEB_PORT"
+default = 4533
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "For Subsonic apps on phones. Off: only through the desk.", zh = "供手机上的 Subsonic 客户端连接。关闭时只能通过桌面访问。", zh-TW = "供手機上的 Subsonic 用戶端連線。關閉時只能透過桌面存取。" }
+on = { NAVIDROME_WEB_BIND = "0.0.0.0" }
+off = { NAVIDROME_WEB_BIND = "127.0.0.1" }

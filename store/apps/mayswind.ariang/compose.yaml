@@ -1,0 +1,39 @@
+# AriaNg 1.3.15 (MIT) with aria2 1.37 (GPL-2.0-or-later), built on the machine
+# from ariang.Dockerfile beside this file. Upstream publishes neither an image
+# nor a compose file for the pair.
+#
+# Written for ServerBox Monitor's Downloads app:
+# - no `name:` and no `container_name:`: the agent names the project;
+# - runs as the shared folder's owner (SBM_UID/SBM_GID), TZ from the agent;
+# - RPC_SECRET is aria2's rpc-secret, which AriaNg asks for once;
+# - PEER_PORT is where BitTorrent and DHT listen, published on the same number
+#   (TCP and UDP) so the announced port is reachable;
+# - the health check asks aria2 for its methods through Caddy, which needs no
+#   secret (system.listMethods): an answer says both are up.
+
+services:
+  ariang:
+    image: localhost/mayswind-ariang:${ARIANG_VERSION}
+    build:
+      context: .
+      dockerfile: ariang.Dockerfile
+      args:
+        ARIANG_VERSION: ${ARIANG_VERSION}
+    user: "${SBM_UID}:${SBM_GID}"
+    environment:
+      TZ: ${SBM_TZ}
+      RPC_SECRET: ${RPC_SECRET}
+      PEER_PORT: ${ARIA2_PEER_PORT}
+    volumes:
+      - ${ARIA2_CONFIG}:/conf
+      - ${DOWNLOADS_LOCATION}:/downloads
+    ports:
+      - '${ARIANG_BIND}:${ARIANG_PORT}:8080'
+      - '${ARIA2_PEER_PORT}:${ARIA2_PEER_PORT}'
+      - '${ARIA2_PEER_PORT}:${ARIA2_PEER_PORT}/udp'
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- --header 'Content-Type: application/json' --post-data '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"system.listMethods\"}' http://127.0.0.1:8080/jsonrpc | grep -q aria2.addUri"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
