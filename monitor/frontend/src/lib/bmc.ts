@@ -35,7 +35,9 @@ export function bmcErrorText(e: unknown): string {
     case 'noSuchTarget':
       return ll.bmcGone()
     case 'passwordRequired':
-      return ll.bmcPasswordRequired()
+      // A set's refusal names the target (its address changed); a target's
+      // own read has no index (the stored password no longer opens).
+      return typeof e.body?.index === 'number' ? ll.bmcPasswordAgain() : ll.bmcPasswordRequired()
     case 'invalidName':
     case 'duplicateName':
       return ll.bmcInvalidName()
@@ -45,8 +47,6 @@ export function bmcErrorText(e: unknown): string {
       return ll.bmcInvalidUsername()
     case 'invalidCertificate':
       return ll.bmcInvalidCertificate()
-    case 'passwordRequired':
-      return ll.bmcPasswordAgain()
     default:
       return failure ? `${failure}${typeof e.body?.detail === 'string' ? `: ${e.body.detail}` : ''}` : e.message
   }
