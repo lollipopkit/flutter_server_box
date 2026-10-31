@@ -2,8 +2,11 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_lib/theme.dart' show ThemeBlobStore;
 import 'package:flutter/foundation.dart';
 import 'package:server_box/core/diag.dart';
+import 'package:server_box/core/lkc.dart';
+import 'package:server_box/core/lkc_sync.dart';
 import 'package:server_box/core/service/report_filter.dart';
 import 'package:server_box/core/utils/monitor_backup_storage.dart';
 import 'package:server_box/data/model/app/bak/backup.dart';
@@ -40,10 +43,15 @@ final class BakSyncer extends SyncIface {
   /// than this build understands.
   static SchemaTooNewException? get remoteTooNew => _remoteTooNew;
 
+  /// Set by [backup] while it writes for LK Cloud, where theme packages are
+  /// kept apart.
+  LkcThemeBlobs? _themeBlobs;
+
   @override
   Future<void> saveToFile() async {
     await writeEncryptedBackup(
       includeSettings: PrefProps.syncAppSettings.get(),
+      blobs: _themeBlobs,
     );
   }
 
@@ -55,10 +63,11 @@ final class BakSyncer extends SyncIface {
   Future<String> writeEncryptedBackup({
     String? name,
     bool includeSettings = true,
+    ThemeBlobStore? blobs,
   }) async {
     final pwd = await SecureStoreProps.bakPwd.read();
     if (pwd == null || pwd.isEmpty) throw const RemoteBackupPasswordMissing();
-    return BackupV2.backup(name, pwd, includeSettings);
+    return BackupV2.backup(name, pwd, includeSettings, blobs);
   }
 
   /// The sync an edit starts, which nobody waits for.
@@ -208,7 +217,16 @@ final class BakSyncer extends SyncIface {
       return;
     }
     Diag.crumb(SbDiag.sync, 'upload');
-    return super.backup(rs);
+    final target = rs ?? remoteStorage;
+    if (target is! LkcRemoteStorage) return super.backup(target);
+    final blobs = _themeBlobs = LkcThemeBlobs.shared..begin();
+    try {
+      await super.backup(target);
+    } finally {
+      _themeBlobs = null;
+    }
+    // Only once the backup naming them is written.
+    await blobs.sweep();
   }
 
   /// The inherit in flight, awaited by [backup] so an upload cannot overtake
@@ -331,8 +349,20 @@ final class BakSyncer extends SyncIface {
 
     if (monitorSync.get()) return monitorStorage;
 
+    if (Lkc.enabled && lkcSync.get() && Lkc.client.signedIn) return lkcStorage;
+
     return null;
   }
+
+  /// Whether the backup syncs to LK Cloud, as the signed-in account. Beside
+  /// [monitorSync] for the same reasons. Key is permanent.
+  static const lkcSync = PrefPropDefault(
+    'lkc_sync',
+    false,
+    updateLastUpdateTsOnSetProp: false,
+  );
+
+  static final lkcStorage = LkcRemoteStorage(Lkc.client, Lkc.app);
 
   /// Whether the backup syncs to one of this app's own monitor agents, and to
   /// which server's. Device-local prefs like the other three switches, and

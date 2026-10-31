@@ -8,6 +8,8 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/lkc.dart';
+import 'package:server_box/core/lkc_sync.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/core/utils/monitor_backup_storage.dart';
 import 'package:server_box/data/model/app/bak/backup_service.dart';
@@ -51,6 +53,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
   final webdavLoading = false.vn;
   final gistLoading = false.vn;
   final monitorLoading = false.vn;
+  final lkcLoading = false.vn;
   late Future<_ICloudBackupStatus?> _icloudStatusFuture;
 
   @override
@@ -67,6 +70,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     webdavLoading.dispose();
     gistLoading.dispose();
     monitorLoading.dispose();
+    lkcLoading.dispose();
     super.dispose();
   }
 
@@ -96,6 +100,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     _buildWebdav,
     _buildGist,
     _buildMonitor,
+    if (Lkc.enabled) _buildLkc,
     _buildFile,
     _buildClipboard,
   ];
@@ -153,6 +158,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
                       await SecureStoreProps.bakPwd.write(null);
                       // Same reason as setting one — see `_onTapSetBakPwd`.
                       await BakSyncer.forgetCheckpoint();
+                      await LkcThemeBlobs.forgetNames();
                       Toast.show(l10n.backupPasswordRemoved);
                       setState(() {});
                     },
@@ -178,6 +184,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
       PrefProps.webdavSync,
       PrefProps.gistSync,
       BakSyncer.monitorSync,
+      if (Lkc.enabled) BakSyncer.lkcSync,
     ];
     return props.any((prop) => prop != but && prop.get());
   }
@@ -266,6 +273,8 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     // change, the merge fails to decrypt it and `_sync` returns before the
     // upload. Nothing reaches the remote again, and nothing says so.
     await BakSyncer.forgetCheckpoint();
+    // LK Cloud's theme packages are sealed with it as well.
+    await LkcThemeBlobs.forgetNames();
     Toast.show(l10n.backupPasswordSet);
     setState(() {});
     return true;
@@ -570,6 +579,94 @@ final class _BackupPageState extends ConsumerState<BackupPage>
           ),
         ],
       ),
+    );
+  }
+
+  /// The signed-in account's LK Cloud: synced in real time, the last few
+  /// versions kept, theme packages beside the backup.
+  Widget get _buildLkc {
+    return CardX(
+      child: ExpandTile(
+        leading: const Icon(Icons.cloud),
+        title: const Text('LK Cloud'),
+        initiallyExpanded: false,
+        children: [
+          _buildSyncSettingsTile(),
+          ListTile(
+            title: Text(libL10n.lkcAccount),
+            subtitle: Lkc.client.user.listenVal(
+              (user) => Text(
+                user?.name ?? libL10n.lkcNotSignedIn,
+                style: UIs.textGrey,
+              ),
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () =>
+                LkcAccountPage.route.go(context, LkcPageArgs(Lkc.client)),
+          ),
+          ListTile(
+            title: Text(libL10n.auto),
+            trailing: StoreSwitch(
+              prop: BakSyncer.lkcSync,
+              validator: (p0) async {
+                if (!p0) return true;
+                if (_remoteSyncOn(but: BakSyncer.lkcSync)) {
+                  Toast.show(l10n.autoBackupConflict);
+                  return false;
+                }
+                if (!Lkc.client.signedIn) {
+                  Toast.show(libL10n.lkcNotSignedIn);
+                  return false;
+                }
+                final ok = await _ensureBakPwd(context);
+                if (!ok) return false;
+
+                lkcLoading.value = true;
+                try {
+                  final storage = BakSyncer.lkcStorage;
+                  // A checkpoint left from an earlier time on would skip the
+                  // write this needs to see.
+                  await BakSyncer.forgetCheckpoint();
+                  final before = storage.writtenTag(Miscs.bakFileName);
+                  await bakSync.sync(rs: storage, throttleMilli: 0);
+                  // A cycle that could not read the remote returns without
+                  // writing, and says so only in the log.
+                  final after = storage.writtenTag(Miscs.bakFileName);
+                  if (after == null || after == before) {
+                    Toast.show(libL10n.fail);
+                    return false;
+                  }
+                  return true;
+                } catch (e, s) {
+                  if (mounted) _showLkcErr(e, s, libL10n.sync);
+                  return false;
+                } finally {
+                  lkcLoading.value = false;
+                }
+              },
+            ),
+          ),
+          ListTile(
+            title: Text(libL10n.manual),
+            trailing: lkcLoading.listenVal((loading) {
+              if (loading) return SizedLoading.small;
+              return TextButton(
+                onPressed: () async => _onTapLkcRestore(context),
+                child: Text(libL10n.restore),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLkcErr(Object e, StackTrace s, String operation) {
+    final err = e is LkcSyncError ? e.exception : e;
+    context.showErrDialog(
+      err is LkcException ? err.text(libL10n) : err,
+      s,
+      operation,
     );
   }
 
@@ -964,6 +1061,49 @@ extension on _BackupPageState {
       Loggers.app.warning('Upload monitor backup failed', e, s);
     } finally {
       monitorLoading.value = false;
+    }
+  }
+
+  /// The synced backup as it is, or one of the versions LK Cloud kept of it.
+  Future<void> _onTapLkcRestore(BuildContext context) async {
+    if (!Lkc.client.signedIn) return Toast.show(libL10n.lkcNotSignedIn);
+    lkcLoading.value = true;
+    Directory? dir;
+    try {
+      dir = await Directory.systemTemp.createTemp('sb-lkc-restore-');
+      final sync = await Lkc.client.sync(Lkc.app);
+      final name = Miscs.bakFileName;
+      final current = (await sync.list()).where((f) => f.name == name);
+      final versions = await sync.versions(name: name);
+      final items = [
+        for (final f in current) (f.etag, f.updatedAt, true),
+        for (final v in versions) (v.etag, v.writtenAt, false),
+      ];
+      if (items.isEmpty) return Toast.show(l10n.dirEmpty);
+      if (!context.mounted) return;
+
+      String when(String at) =>
+          DateTime.tryParse(at)?.toLocal().ymdhms() ?? at;
+      final picked = await context.showPickSingleDialog(
+        title: libL10n.restore,
+        items: items,
+        display: (e) => e.$3 ? '${when(e.$2)} ✓' : when(e.$2),
+      );
+      if (picked == null) return;
+
+      final path = '${dir.path}/$name';
+      final fetched = picked.$3
+          ? await sync.download(name: name, to: path)
+          : await sync.downloadVersion(name: name, etag: picked.$1, to: path);
+      if (fetched.missing) return Toast.show(l10n.dirEmpty);
+      final bytes = await File(path).readAsBytes();
+      if (context.mounted) await BackupService.restoreData(context, bytes);
+    } catch (e, s) {
+      if (context.mounted) _showLkcErr(e, s, libL10n.restore);
+      Loggers.app.warning('Restore LK Cloud backup failed', e, s);
+    } finally {
+      await dir?.delete(recursive: true);
+      lkcLoading.value = false;
     }
   }
 

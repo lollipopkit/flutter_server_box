@@ -4,9 +4,11 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:fl_lib/theme.dart' show ThemeBackup, ThemeRestoreReport;
+import 'package:fl_lib/theme.dart'
+    show ThemeBackup, ThemeBlobStore, ThemeRestoreReport;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:logging/logging.dart';
+import 'package:server_box/core/lkc_sync.dart';
 import 'package:server_box/core/utils/local_file_backend.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_key_passphrase.dart';
@@ -120,7 +122,9 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     // Before the settings that select one: the network is not something to
     // hold the transaction open for, and a selection is only restored onto a
     // theme that is there.
-    final themeReport = themes.isEmpty ? null : await ThemeBackup.restore(themes);
+    final themeReport = themes.isEmpty
+        ? null
+        : await ThemeBackup.restore(themes, blobs: LkcThemeBlobs.available);
     if (themeReport != null && themeReport.failed.isNotEmpty) {
       _loggerV2.warning('Themes not restored: ${themeReport.failed}');
     }
@@ -309,7 +313,12 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
   /// would drift.
   static const formatVer = SchemaVersion.current;
 
-  static Future<BackupV2> loadFromStore({bool includeSettings = true}) async {
+  /// [blobs]: where theme packages are kept apart, when the backup goes
+  /// where they can be (LK Cloud).
+  static Future<BackupV2> loadFromStore({
+    bool includeSettings = true,
+    ThemeBlobStore? blobs,
+  }) async {
     return BackupV2(
       version: formatVer,
       date: DateTimeX.timestamp,
@@ -328,12 +337,12 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
               deviceLocal: SettingStore.deviceLocalKeys,
             )
           : const {},
-      themes: includeSettings ? await _themes() : const {},
+      themes: includeSettings ? await _themes(blobs) : const {},
     );
   }
 
-  static Future<Map<String, Object?>> _themes() async {
-    final export = await ThemeBackup.export();
+  static Future<Map<String, Object?>> _themes(ThemeBlobStore? blobs) async {
+    final export = await ThemeBackup.export(blobs: blobs);
     if (export.skipped.isNotEmpty) {
       // Listed with nothing to install them from; the restore names them.
       _loggerV2.warning('Themes without a package to carry: ${export.skipped}');
@@ -345,8 +354,12 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     String? name,
     String? password,
     bool includeSettings = true,
+    ThemeBlobStore? blobs,
   ]) async {
-    final bak = await BackupV2.loadFromStore(includeSettings: includeSettings);
+    final bak = await BackupV2.loadFromStore(
+      includeSettings: includeSettings,
+      blobs: blobs,
+    );
     var result = bak.toJsonString();
 
     final encrypted = password != null && password.isNotEmpty;
@@ -1024,7 +1037,7 @@ void _writeKv(SqliteStore store, String key, Object value) {
     'INSERT INTO kv (store, key, value, updated_at) VALUES (?, ?, ?, ?) '
     'ON CONFLICT (store, key) DO UPDATE SET '
     'value = excluded.value, updated_at = excluded.updated_at;',
-    [store.name, key, encoded, DateTimeX.timestamp],
+    [store.name, key, encoded, SyncClock.now()],
   );
 }
 

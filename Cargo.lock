@@ -1842,6 +1842,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d45db016d36b838f563236e9193d0ee6ce38f3f68b6c94e914b4929c96bbb890"
 
 [[package]]
+name = "fl_lkc"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "futures-util",
+ "reqwest 0.13.5",
+ "rustls",
+ "serde",
+ "serde_json",
+ "tokio",
+ "url",
+ "webpki-roots",
+]
+
+[[package]]
 name = "fl_pi_llm"
 version = "0.1.0"
 dependencies = [
@@ -5256,19 +5271,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sbm_lkc"
-version = "0.1.0"
-dependencies = [
- "reqwest 0.13.5",
- "rustls",
- "serde",
- "serde_json",
- "tokio",
- "url",
- "webpki-roots",
-]
-
-[[package]]
 name = "sbm_native"
 version = "0.1.0"
 dependencies = [
@@ -5554,6 +5556,7 @@ dependencies = [
  "chrono",
  "clap",
  "dotenvy",
+ "fl_lkc",
  "fl_pi_llm",
  "fl_theme",
  "flate2",
@@ -5580,7 +5583,6 @@ dependencies = [
  "roxmltree",
  "rpassword",
  "rustls",
- "sbm_lkc",
  "sbm_native",
  "sbm_parser",
  "sbm_redfish",

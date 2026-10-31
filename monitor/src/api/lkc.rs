@@ -20,8 +20,8 @@ use crate::lkc::{self, SignInView};
 
 #[derive(Serialize)]
 struct Answer {
-    /// `sbm_lkc::User` (`LkcUser`); never a token.
-    user: Option<sbm_lkc::User>,
+    /// `fl_lkc::User` (`LkcUser`); never a token.
+    user: Option<fl_lkc::User>,
     sign_in: Option<SignInView>,
 }
 

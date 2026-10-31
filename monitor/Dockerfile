@@ -33,6 +33,8 @@ COPY crates/ ./crates/
 # fl_lib's theme reader (`fl_theme`), from the submodule: the build context
 # needs it checked out.
 COPY packages/fl_lib/rust/theme/ ./fl_theme/
+# And its LK Cloud client (`fl_lkc`).
+COPY packages/fl_lib/rust/lkc/ ./fl_lkc/
 # fl_pi_llm's runtime (Agent mode's pi), from its submodule likewise.
 COPY packages/fl_pi_llm/fl_pi_llm/rust/ ./fl_pi_llm/
 COPY monitor/migrations/ ./migrations/
@@ -70,6 +72,7 @@ COPY monitor/inference/ ./inference/
 # have to be written into a manifest the workspace also reads, where cargo
 # ignores a non-root package's profiles with a warning.
 RUN sed -i -e 's|path = "../crates/|path = "crates/|' \
+           -e 's|path = "../packages/fl_lib/rust/lkc"|path = "fl_lkc"|' \
            -e 's|path = "../packages/fl_lib/rust/theme"|path = "fl_theme"|' \
            -e 's|path = "../packages/fl_pi_llm/fl_pi_llm/rust"|path = "fl_pi_llm"|' Cargo.toml \
     && CARGO_PROFILE_RELEASE_STRIP=true \

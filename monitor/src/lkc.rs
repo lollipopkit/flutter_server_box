@@ -1,4 +1,4 @@
-//! The LK Cloud account this agent is signed in to (`sbm_lkc`), as the app's
+//! The LK Cloud account this agent is signed in to (`fl_lkc`), as the app's
 //! fl_lib `LkcClient` is. Separate from the agent's own account
 //! (`db::accounts`), which signs in to the panel.
 //!
@@ -8,11 +8,11 @@
 //! answers for the access token. The session is one row (`lkc_session`,
 //! migration 041), its tokens sealed, never read back out over the API.
 //!
-//! The access token is refreshed only once due (`sbm_lkc::Tokens::due`), and
+//! The access token is refreshed only once due (`fl_lkc::Tokens::due`), and
 //! [`watch`] does so at start and often enough after that the refresh token
 //! never lapses. A refresh the IdP refuses because the token is gone
 //! (`invalid_grant`, `expired_token`, or one of Rauthy's own words in
-//! `sbm_lkc::GONE`) signs out; anything else keeps the session. A password change
+//! `fl_lkc::GONE`) signs out; anything else keeps the session. A password change
 //! signs out too ([`end_account`]): whoever held the old one may have
 //! approved the sign-in with their own account.
 
@@ -20,7 +20,7 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
-use sbm_lkc::{DeviceAuthorization, DevicePoll, Failure, Tokens, User};
+use fl_lkc::{Client, DeviceAuthorization, DevicePoll, Failure, Tokens, User, now_ms};
 use serde::Serialize;
 use sqlx::SqlitePool;
 
@@ -28,6 +28,9 @@ use crate::api::server::AppState;
 use crate::api::ws::audit::{Action, Event, Kind, Outcome};
 use crate::db::sealed::{self, Sealer};
 use crate::utils::lock::LockExt;
+
+/// ServerBox's public client at the IdP: the one allowed device codes.
+const CLIENT_ID: &str = "serverbox";
 
 /// How often [`watch`] renews the session and reads the account again: well
 /// inside the refresh token's lifetime.
@@ -69,7 +72,7 @@ struct SignIn {
 
 #[derive(Default)]
 pub struct Lkc {
-    client: OnceLock<Arc<sbm_lkc::Client>>,
+    client: OnceLock<Arc<Client>>,
     sign_in: Mutex<Option<SignIn>>,
     /// Raised by a password change: a sign-in started before it is not
     /// begun after it.
@@ -83,16 +86,16 @@ pub struct Lkc {
     /// left over by one that never finished.
     sending: AtomicBool,
     /// The monotonic expiry of the access token this process received
-    /// (`sbm_lkc::Tokens::deadline`), which storage does not keep.
+    /// (`fl_lkc::Tokens::deadline`), which storage does not keep.
     deadline: Mutex<Option<(String, Instant)>>,
 }
 
 impl Lkc {
-    fn client(&self) -> Result<Arc<sbm_lkc::Client>, sbm_lkc::Error> {
+    fn client(&self) -> Result<Arc<Client>, fl_lkc::Error> {
         if let Some(client) = self.client.get() {
             return Ok(client.clone());
         }
-        let client = Arc::new(sbm_lkc::Client::new()?);
+        let client = Arc::new(Client::new(CLIENT_ID)?);
         Ok(self.client.get_or_init(|| client).clone())
     }
 
@@ -214,7 +217,7 @@ pub enum StartError {
     PasswordChanged,
     /// Another was granted and is being stored.
     Finishing,
-    Lkc(sbm_lkc::Error),
+    Lkc(fl_lkc::Error),
 }
 
 /// Starts a device sign-in, ending one already waiting.
@@ -284,7 +287,7 @@ async fn poll(state: Arc<AppState>, mut device: DeviceAuthorization) {
 }
 
 /// Ends sign-in [device_code] with [outcome].
-async fn finish(state: &AppState, device_code: &str, outcome: Result<Session, sbm_lkc::Error>) {
+async fn finish(state: &AppState, device_code: &str, outcome: Result<Session, fl_lkc::Error>) {
     let event = |outcome: Outcome, detail: String| Event::new(Kind::Admin, Action::Write, outcome).detail(detail);
     match outcome {
         Ok(session) => {
@@ -341,7 +344,7 @@ pub async fn session(state: &AppState) -> Option<Session> {
     let _refreshing = state.lkc.refreshing.lock().await;
     let mut session = load_or_forget(state).await?;
     session.tokens = state.lkc.with_deadline(session.tokens);
-    if !session.tokens.due(sbm_lkc::now_ms()) {
+    if !session.tokens.due(now_ms()) {
         return Some(session);
     }
     if session.tokens.refresh.is_none() {
@@ -412,7 +415,7 @@ async fn reread(state: &AppState) {
     let Some(session) = session(state).await else { return };
     // The refresh did not go through: homebase would refuse the expired
     // token.
-    if session.tokens.due(sbm_lkc::now_ms()) {
+    if session.tokens.due(now_ms()) {
         return;
     }
     let Ok(client) = state.lkc.client() else { return };
@@ -599,7 +602,7 @@ async fn store(db: &SqlitePool, sealer: &Sealer, session: &Session) -> Result<()
     .bind(sealer.seal(sealed::LKC_ACCESS_TOKEN, &session.tokens.access)?)
     .bind(sealer.seal_opt(sealed::LKC_REFRESH_TOKEN, session.tokens.refresh.as_deref())?)
     .bind(session.tokens.expires_at_ms)
-    .bind(sbm_lkc::now_ms())
+    .bind(now_ms())
     .execute(db)
     .await?;
     Ok(())
@@ -615,7 +618,7 @@ async fn store_refresh(db: &SqlitePool, sealer: &Sealer, tokens: &Tokens) -> Res
     .bind(sealer.seal(sealed::LKC_ACCESS_TOKEN, &tokens.access)?)
     .bind(sealer.seal_opt(sealed::LKC_REFRESH_TOKEN, tokens.refresh.as_deref())?)
     .bind(tokens.expires_at_ms)
-    .bind(sbm_lkc::now_ms())
+    .bind(now_ms())
     .execute(db)
     .await?;
     Ok(done.rows_affected() == 1)
@@ -646,7 +649,7 @@ mod tests {
                 group: "user".into(),
                 avatar: None,
             },
-            tokens: Tokens::stored("access".into(), Some("refresh".into()), sbm_lkc::now_ms() + expires_in_ms),
+            tokens: Tokens::stored("access".into(), Some("refresh".into()), now_ms() + expires_in_ms),
         }
     }
 

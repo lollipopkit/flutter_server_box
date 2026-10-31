@@ -71,7 +71,7 @@ class SyncedTable {
   void stamp(String id, {int? at}) {
     db.execute(
       'UPDATE $table SET updated_at = ?, rev = rev + 1 WHERE $idColumn = ?;',
-      [at ?? DateTimeX.timestamp, id],
+      [at ?? SyncClock.now(), id],
     );
     db.execute('DELETE FROM tombstone WHERE tbl = ? AND row_id = ?;', [
       table,
@@ -87,7 +87,7 @@ class SyncedTable {
     db.execute(
       'INSERT OR REPLACE INTO tombstone (tbl, row_id, deleted_at) '
       'VALUES (?, ?, ?);',
-      [table, id, at ?? DateTimeX.timestamp],
+      [table, id, at ?? SyncClock.now()],
     );
   }
 
@@ -350,7 +350,7 @@ abstract class EntityStore<T extends Object> {
         // And a record with no timestamp is stamped as now. Stamping 0 would
         // leave it looking older than anything, and the next sync would take
         // it straight back out.
-        final at = bakTs ?? DateTimeX.timestamp;
+        final at = bakTs ?? SyncClock.now();
 
         if (!records.contains(id)) {
           // Only a record the backup knew about and no longer holds is a

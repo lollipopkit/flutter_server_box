@@ -494,7 +494,7 @@ class ServerStore extends EntityStore<Spi> {
     );
     final hadPve = _hasPve(id);
     SqliteStore.transact(() {
-      final at = DateTimeX.timestamp;
+      final at = SyncClock.now();
       for (final pfId in pfIds) {
         db.execute(
           'INSERT OR REPLACE INTO tombstone (tbl, row_id, deleted_at) VALUES (?, ?, ?);',
@@ -561,7 +561,7 @@ class ServerStore extends EntityStore<Spi> {
 
     try {
       SqliteStore.transact(() {
-        final at = DateTimeX.timestamp;
+        final at = SyncClock.now();
         // Free a same-name replacement without deleting the old parent first.
         db.execute('UPDATE server SET name = ? WHERE id = ?;', [
           '__server_rename_${ShortId.generate()}',
