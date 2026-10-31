@@ -294,11 +294,15 @@ async fn handle_backup(matches: &clap::ArgMatches) -> anyhow::Result<()> {
 
     let config = Config::load().await?;
     let url = config.get_database_url();
-    let db = db::database::init(&url).await?;
     let file = crate::api::server::sqlite_file(&url).ok_or_else(|| anyhow::anyhow!("The database is in memory"))?;
+    // No agent has run here yet (a restore onto a new machine): this makes the
+    // key, as the agent's first start would. Beside an existing database only
+    // the agent's own key is used.
+    let fresh = !file.exists();
+    let db = db::database::init(&url).await?;
     let blobs = crate::core::blobs::Blobs::beside(&file);
     let sealer = db::sealed::Sealer::beside(&file);
-    sealer.ready_existing()?;
+    if fresh { sealer.ready()? } else { sealer.ready_existing()? }
     let work = monitor_backup::MonitorBackup::new(Some(&file));
 
     // The folder named on the command line.
