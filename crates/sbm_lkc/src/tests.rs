@@ -151,7 +151,7 @@ async fn the_idp_answers() {
     let client = Client::new().unwrap();
     assert_eq!(client.metadata().await.unwrap().issuer, ISSUER);
     let device = client.start_device().await.unwrap();
-    assert!(device.verification_uri.starts_with("https://auth.lollipopkit.com/"));
+    assert!(device.verification_uri.starts_with("https://auth.lolli.tech/"));
     tokio::time::sleep(Duration::from_secs(device.interval_secs)).await;
     assert_eq!(client.poll_device(&device).await.unwrap(), DevicePoll::Pending);
     // Homebase refuses a token it did not see the IdP hand out.

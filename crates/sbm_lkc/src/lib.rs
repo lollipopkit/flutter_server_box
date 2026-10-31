@@ -1,5 +1,5 @@
-//! LK Cloud for the monitor agent: signing in at the IdP (auth.lollipopkit.com,
-//! OpenID Connect) and reading the account from homebase (api.lollipopkit.com).
+//! LK Cloud for the monitor agent: signing in at the IdP (auth.lolli.tech,
+//! OpenID Connect) and reading the account from homebase (api.lolli.tech).
 //! The app's client is fl_lib's `LkcClient`; this follows it, so both see the
 //! IdP and homebase alike.
 //!
@@ -20,11 +20,11 @@ use tokio::sync::OnceCell;
 pub use error::{Error, Failure};
 
 /// The IdP every LK Cloud client signs in at (`LkcOidc.defaultIssuer`).
-pub const ISSUER: &str = "https://auth.lollipopkit.com/auth/v1/";
+pub const ISSUER: &str = "https://auth.lolli.tech/auth/v1/";
 /// ServerBox's public client there.
 pub const CLIENT_ID: &str = "serverbox";
 /// Homebase (`LkcClient.defaultBaseUrl`).
-pub const API: &str = "https://api.lollipopkit.com";
+pub const API: &str = "https://api.lolli.tech";
 /// What a sign-in asks for (`LkcOidc.scopes`).
 pub const SCOPE: &str = "openid profile";
 
@@ -307,9 +307,10 @@ impl Client {
 
     /// New tokens for [tokens], once [`Tokens::due`]; before that
     /// [`Failure::TooEarly`] and nothing is sent. [`Failure::Rejected`] means
-    /// the IdP took the refresh token back: the session is over. After
-    /// [`Failure::Unknown`] or [`Failure::InvalidResponse`] the token may be
-    /// spent, and sending it again ends every session of the person.
+    /// the IdP took the refresh token back and [`Failure::Expired`] that it
+    /// ran out: the session is over either way. After [`Failure::Unknown`]
+    /// or [`Failure::InvalidResponse`] the token may be spent, and sending
+    /// it again ends every session of the person.
     pub async fn refresh(&self, tokens: &Tokens) -> Result<Tokens, Error> {
         let Some(refresh) = tokens.refresh.as_deref() else {
             return Err(Error::new(Failure::Rejected, "no refresh token"));
@@ -436,9 +437,9 @@ enum TokenError {
 }
 
 impl TokenError {
-    /// Only `invalid_grant` says the grant itself is gone, as fl_lib reads it:
-    /// a refresh refused that way signs out, any other refusal keeps the
-    /// session.
+    /// Only `invalid_grant` says the grant itself is gone, as fl_lib reads
+    /// it, and `expired_token` that it ran out: a refresh refused either way
+    /// signs out, any other refusal keeps the session.
     fn into_error(self) -> Error {
         match self {
             TokenError::Refused { error, description } => {

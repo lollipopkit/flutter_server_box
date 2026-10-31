@@ -2,7 +2,7 @@
 name = "sbm_lkc"
 version = "0.1.0"
 edition = "2024"
-description = "LK Cloud for the monitor agent: device-code sign-in at auth.lollipopkit.com and the homebase account; the app's client is fl_lib's LkcClient"
+description = "LK Cloud for the monitor agent: device-code sign-in at auth.lolli.tech and the homebase account; the app's client is fl_lib's LkcClient"
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
