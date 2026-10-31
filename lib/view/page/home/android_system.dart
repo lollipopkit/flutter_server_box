@@ -225,23 +225,20 @@ String localeCodeToTag(String code) => switch (code) {
 
 /// The first of the system's tags as the app's language it is closest to;
 /// empty for none, which follows the system.
+///
+/// Matched as the app matches the system's languages at launch
+/// ([LocaleUtil.resolve]), so the two cannot disagree on a tag.
 String localeTagToCode(String tags) {
   final first = tags.split(',').first.trim();
   if (first.isEmpty) return '';
   final parts = first.split('-');
-  final lang = parts.first.toLowerCase();
-  final script = parts.skip(1).firstWhereOrNull((p) => p.length == 4);
-  final region = parts
-      .skip(1)
-      .firstWhereOrNull((p) => p.length == 2)
-      ?.toUpperCase();
-  if (lang == 'zh' &&
-      (script == 'Hant' || const {'TW', 'HK', 'MO'}.contains(region))) {
-    return 'zh_TW';
-  }
-  final supported = AppLocalizations.supportedLocales;
-  if (region != null && supported.contains(Locale(lang, region))) {
-    return '${lang}_$region';
-  }
-  return supported.contains(Locale(lang)) ? lang : '';
+  final locale = Locale.fromSubtags(
+    languageCode: parts.first,
+    scriptCode: parts.skip(1).firstWhereOrNull((p) => p.length == 4),
+    countryCode: parts.skip(1).firstWhereOrNull((p) => p.length == 2),
+  );
+  final match = LocaleUtil.match(locale, AppLocalizations.supportedLocales);
+  if (match == null) return '';
+  final region = match.countryCode;
+  return region == null ? match.languageCode : '${match.languageCode}_$region';
 }
