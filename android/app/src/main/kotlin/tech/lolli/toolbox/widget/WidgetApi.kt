@@ -56,7 +56,6 @@ object WidgetApi {
         val disk: Double?,
         val memText: String,
         val diskText: String,
-        val netText: String,
     )
 
     /** One bucket of the agent's stored history, oldest first. */
@@ -177,7 +176,6 @@ object WidgetApi {
         val o = JSONObject(body)
         val mem = o.optJSONObject("memory") ?: JSONObject()
         val disk = o.optJSONObject("disk") ?: JSONObject()
-        val net = o.optJSONObject("network") ?: JSONObject()
         return Reading(
             name = o.optString("server_name").ifEmpty { server.name },
             cpu = o.optDoubleOrNull("cpu_usage"),
@@ -185,7 +183,6 @@ object WidgetApi {
             disk = disk.optDoubleOrNull("usage_percent"),
             memText = "${formatBytes(mem.optDouble("used", 0.0))} / ${formatBytes(mem.optDouble("total", 0.0))}",
             diskText = "${formatBytes(disk.optDouble("used", 0.0))} / ${formatBytes(disk.optDouble("total", 0.0))}",
-            netText = "${formatBytes(net.optDouble("rx_bytes", 0.0))} / ${formatBytes(net.optDouble("tx_bytes", 0.0))}",
         )
     }
 

@@ -26,6 +26,7 @@
 //!
 //! Every change is audited (`Kind::Machine`), never the password.
 
+use crate::api::WebError;
 use crate::utils::lock::LockExt;
 use std::sync::{Arc, Mutex};
 
@@ -127,7 +128,7 @@ pub(crate) async fn arrays_and_pools(state: &AppState) -> (Vec<st::MdArray>, Vec
     (arrays, pools)
 }
 
-pub async fn view(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn view(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     if !cfg!(target_os = "linux") {
         return Ok(super::respond::error_u16(409, "notLinux"));
@@ -177,8 +178,8 @@ pub struct MaintenancePath {
 pub async fn set_maintenance(
     req: HttpRequest,
     body: web::types::Json<crate::storage_watch::SetTask>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     let next = body.into_inner();
     let what = format!("storage maintenance {} {}", next.task, next.every.as_deref().unwrap_or("off"));
@@ -196,8 +197,8 @@ pub async fn set_maintenance(
 pub async fn run_maintenance(
     req: HttpRequest,
     path: web::types::Path<MaintenancePath>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     if !cfg!(target_os = "linux") {
         return Ok(super::respond::error_u16(409, "notLinux"));
@@ -211,11 +212,11 @@ pub async fn run_maintenance(
         .detail(format!("storage maintenance {} run", task.name()))
         .record(&state.db)
         .await;
-    let _ = crate::storage_watch::run_task(state.get_ref(), task).await;
+    let _ = crate::storage_watch::run_task(&state, task).await;
     Ok(HttpResponse::Ok().json(&json!({ "maintenance": crate::storage_watch::tasks(&state.db).await })))
 }
 
-pub async fn health(req: HttpRequest, body: web::types::Json<HealthBody>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn health(req: HttpRequest, body: web::types::Json<HealthBody>, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     if !cfg!(target_os = "linux") {
         return Ok(super::respond::error_u16(409, "notLinux"));
@@ -238,7 +239,7 @@ pub struct ActBody {
     passphrase: Option<String>,
 }
 
-pub async fn act(req: HttpRequest, body: web::types::Json<ActBody>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn act(req: HttpRequest, body: web::types::Json<ActBody>, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     if !cfg!(target_os = "linux") {
         return Ok(super::respond::error_u16(409, "notLinux"));
@@ -281,7 +282,7 @@ pub async fn act(req: HttpRequest, body: web::types::Json<ActBody>, state: web::
             (Some(device), Some(why)) => json!({ "error": r.error, "device": device, "why": why }),
             _ => json!({ "error": r.error }),
         };
-        return Ok(HttpResponse::build(status).json(&body));
+        return Ok(HttpResponse::builder(status).json(&body));
     }
     let password = sudo_password.unwrap_or_default();
     let tried = super::machine::as_root("true", Some(&password).filter(|p| !p.is_empty()).map(String::as_str), &state.remote_access.exec).await;
@@ -298,7 +299,7 @@ pub async fn act(req: HttpRequest, body: web::types::Json<ActBody>, state: web::
         .detail(format!("storage {what}"))
         .record(&state.db)
         .await;
-    let (state2, job2) = (state.get_ref().clone(), job.clone());
+    let (state2, job2) = (state.clone(), job.clone());
     tokio::spawn(async move {
         let result = job2.run_root(&script, &password).await;
         #[cfg(unix)]
@@ -329,7 +330,7 @@ pub struct JobQuery {
     since: u64,
 }
 
-pub async fn job(req: HttpRequest, query: web::types::Query<JobQuery>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn job(req: HttpRequest, query: web::types::Query<JobQuery>, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     match state.storage.job() {
         Some(job) => Ok(HttpResponse::Ok().json(&job.view(query.since))),

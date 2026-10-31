@@ -23,13 +23,20 @@
     <string name="widget_err_insecure">HTTPS necessário</string>
     <string name="widget_err_network">Erro de rede</string>
     <string name="widget_err_timeout">Tempo esgotado</string>
-    <string name="widget_no_history">Sem histórico</string>
     <string name="widget_chart_desc">Gráficos de estado</string>
-    <string name="widget_cpu_desc">Utilização da CPU</string>
-    <string name="widget_mem_desc">Utilização da memória</string>
-    <string name="widget_disk_desc">Utilização do disco</string>
-    <string name="widget_net_desc">Utilização da rede</string>
     <string name="widget_refresh_desc">Atualizar</string>
     <string name="widget_small_label">Valores do servidor</string>
     <string name="widget_medium_label">Gráficos do servidor</string>
+    <string name="widget_label">Estado do servidor</string>
+    <string name="widget_description">CPU, memória, disco e rede num relance. Amplie para ver mais.</string>
+
+    <string name="process_text_label">Salvar como snippet</string>
+    <string name="tile_no_sessions">Nenhuma sessão ativa</string>
+    <plurals name="tile_sessions">
+        <item quantity="one">%d sessão</item>
+        <item quantity="other">%d sessões</item>
+    </plurals>
+    <string name="channel_transfers">Transferências de arquivos</string>
+    <string name="incoming_failed">Não foi possível receber os arquivos compartilhados</string>
+    <string name="shortcut_server_gone">Servidor removido</string>
 </resources>

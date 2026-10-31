@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:cross_file/cross_file.dart';
@@ -9,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/utils/drop_zones.dart';
 import 'package:server_box/data/model/app/theme_style.dart';
 import 'package:server_box/data/model/file/browse_path.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
@@ -20,6 +22,7 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/storage/send_to.dart';
 import 'package:server_box/view/page/storage/transfer_announce.dart';
 import 'package:server_box/view/widget/delayed_loading.dart';
+import 'package:server_box/view/widget/incoming.dart';
 import 'package:server_box/view/widget/unix_perm.dart';
 
 part 'file_browser_actions.dart';
@@ -268,6 +271,7 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     _pathFocus.dispose();
     _pathCtrl.dispose();
     _busy.dispose();
+    DropZones.leave(this);
     _dropping.dispose();
     _listFocus.dispose();
     super.dispose();

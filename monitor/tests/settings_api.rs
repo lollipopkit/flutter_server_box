@@ -14,12 +14,13 @@ mod common;
 use std::path::PathBuf;
 use std::sync::{Arc, Once, OnceLock};
 
+use ntex::service::map_state_factory;
 use ntex::web::App;
 use ntex::web::test::{self as web_test, TestServer};
 use rustls::crypto::ring;
 use serde_json::{Value, json};
 use server_box_monitor::api::auth::generate_token;
-use server_box_monitor::api::server::{AppState, configure_api};
+use server_box_monitor::api::server::{Agent, AppState, configure_api};
 use server_box_monitor::core::config::Config;
 use tokio::sync::{Mutex, MutexGuard};
 
@@ -58,14 +59,10 @@ async fn test_server() -> TestServer {
     common::add_owner(&db).await;
     let state = AppState::new(Arc::new(config), db);
 
-    web_test::server(move || {
+    web_test::server(async move |_| {
         let state = state.clone();
-        async move {
-            let limit = state.remote_access.exec.max_request_bytes;
-            App::new().state(state).configure(configure_api(limit))
-        }
+        map_state_factory(Agent(state), App::<Agent>::new().configure(configure_api))
     })
-    .await
 }
 
 fn bearer() -> String {

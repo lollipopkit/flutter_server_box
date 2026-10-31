@@ -18,10 +18,16 @@ class ForegroundService : Service() {
         var isRunning: Boolean = false
 
         const val ACTION_STOP_SERVICE = "tech.lolli.toolbox.ACTION_STOP_SERVICE"
+        /** Disconnects everything: the notification's "Stop All", the tile's tap. */
+        const val ACTION_STOP_FOREGROUND = "ACTION_STOP_FOREGROUND"
+
+        /** What the Quick Settings tile shows; 0 while stopped. */
+        @Volatile
+        var sessionCount: Int = 0
+            private set
     }
     private val chanId = "ForegroundServiceChannel"
     private val NOTIFICATION_ID = 1000
-    private val ACTION_STOP_FOREGROUND = "ACTION_STOP_FOREGROUND"
     private val ACTION_UPDATE_SESSIONS = "tech.lolli.toolbox.ACTION_UPDATE_SESSIONS"
     private val ACTION_DISCONNECT_SESSION = "tech.lolli.toolbox.ACTION_DISCONNECT_SESSION"
 
@@ -67,6 +73,9 @@ class ForegroundService : Service() {
                 val stopAllIntent = Intent("tech.lolli.toolbox.STOP_ALL_CONNECTIONS")
                     .setPackage(packageName)
                 sendBroadcast(stopAllIntent, "tech.lolli.toolbox.permission.INTERNAL_BROADCAST")
+                // A transfer is not a session to end, and it needs the process
+                // kept out of the freezer; Dart stops the service once it is done.
+                if (TransferNotification.active) return START_STICKY
                 stopForegroundService()
                 return START_NOT_STICKY
             }
@@ -260,7 +269,9 @@ class ForegroundService : Service() {
             .setContentText(contentText)
             .setSmallIcon(R.drawable.ic_notification)
             .setWhen(earliestStartTime)
-            .setUsesChronometer(true)
+            // Nothing to time with nothing connected.
+            .setShowWhen(count > 0)
+            .setUsesChronometer(count > 0)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setContentIntent(pendingIntent)
@@ -321,6 +332,7 @@ class ForegroundService : Service() {
         // placeholder so the app is still running when something can be
         // connected again.
         if (sessions.isEmpty()) {
+            setSessionCount(0)
             if (!keepAlive) {
                 stopForegroundService()
                 return
@@ -328,6 +340,8 @@ class ForegroundService : Service() {
             ensureForeground(createMergedNotification(0, emptyList(), emptyList()))
             return
         }
+
+        setSessionCount(sessions.size)
 
         // Cancel any existing individual notifications (we only show merged notification now)
         val toCancel = postedIds.toSet()
@@ -380,13 +394,21 @@ class ForegroundService : Service() {
         }
         postedIds.clear()
         notificationIdMap.clear()
+        setSessionCount(0)
         stopSelf()
         Log.d("ForegroundService", "ForegroundService stopped")
+    }
+
+    private fun setSessionCount(count: Int) {
+        if (sessionCount == count) return
+        sessionCount = count
+        SessionsTileService.refresh(this)
     }
 
     override fun onDestroy() {
         super.onDestroy()
         Log.d("ForegroundService", "Service onDestroy")
         isRunning = false
+        setSessionCount(0)
     }
 }

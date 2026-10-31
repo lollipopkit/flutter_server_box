@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The widget's palette from the wallpaper (Material You), light. -->
+<resources>
+    <color name="widgetSurface">@android:color/system_accent2_50</color>
+    <color name="widgetOnSurface">@android:color/system_neutral1_900</color>
+    <color name="widgetOnSurfaceVariant">@android:color/system_accent2_700</color>
+    <color name="widgetAccent">@android:color/system_accent1_600</color>
+    <color name="widgetAccentSecondary">@android:color/system_accent3_500</color>
+    <color name="widgetTrack">@android:color/system_accent1_100</color>
+    <color name="widgetWarn">#B3261E</color>
+</resources>

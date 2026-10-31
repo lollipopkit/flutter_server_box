@@ -350,6 +350,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get clearAllStatsTitle => '清空所有统计';
 
   @override
+  String get clearAllSettings => '清除所有设置';
+
+  @override
   String clearServerStatsContent(String serverName) {
     return '确定要清空服务器 \"$serverName\" 的连接统计数据吗？此操作无法撤销。';
   }
@@ -6741,6 +6744,14 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get hostCertAuthorityExists => '已在列表中';
+
+  @override
+  String get addToHomeScreen => '添加到主屏幕';
+
+  @override
+  String transfersActive(int count) {
+    return '$count 个传输';
+  }
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -7086,6 +7097,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get clearAllStatsTitle => '清空所有統計';
+
+  @override
+  String get clearAllSettings => '清除所有設定';
 
   @override
   String clearServerStatsContent(String serverName) {
@@ -13484,4 +13498,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get hostCertAuthorityExists => '已在清單中';
+
+  @override
+  String get addToHomeScreen => '加入主畫面';
+
+  @override
+  String transfersActive(int count) {
+    return '$count 個傳輸';
+  }
 }

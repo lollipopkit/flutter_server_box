@@ -372,6 +372,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clearAllStatsTitle => 'Clear All Statistics';
 
   @override
+  String get clearAllSettings => 'Clear all settings';
+
+  @override
   String clearServerStatsContent(String serverName) {
     return 'Are you sure you want to clear connection statistics for server \"$serverName\"? This action cannot be undone.';
   }
@@ -7142,4 +7145,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get hostCertAuthorityExists => 'Already in the list';
+
+  @override
+  String get addToHomeScreen => 'Add to home screen';
+
+  @override
+  String transfersActive(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count transfers',
+      one: '1 transfer',
+    );
+    return '$_temp0';
+  }
 }

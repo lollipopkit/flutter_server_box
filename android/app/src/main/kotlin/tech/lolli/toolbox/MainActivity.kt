@@ -17,7 +17,15 @@ import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
-import android.appwidget.AppWidgetManager
+import android.view.KeyboardShortcutGroup
+import android.view.Menu
+import android.view.View
+import android.widget.Toast
+import java.io.File
+import tech.lolli.toolbox.incoming.DropListener
+import tech.lolli.toolbox.incoming.IncomingActivity
+import tech.lolli.toolbox.incoming.IncomingFiles
+import tech.lolli.toolbox.incoming.IncomingInbox
 import tech.lolli.toolbox.linux.LinuxDocumentsProvider
 import tech.lolli.toolbox.widget.HomeWidget
 import tech.lolli.toolbox.widget.WidgetStore
@@ -93,6 +101,11 @@ class MainActivity: FlutterFragmentActivity() {
     private var pendingLink: String? = null
     private var linkChannel: MethodChannel? = null
 
+    /** The app's keys for the system's shortcut list; see [KeyboardShortcuts]. */
+    private var keyboardShortcuts: List<KeyboardShortcuts.Group> = emptyList()
+
+    private var dropListener: DropListener? = null
+
     /**
      * Whether the intent this activity was created with was already answered.
      *
@@ -127,6 +140,10 @@ class MainActivity: FlutterFragmentActivity() {
     /// the foreground does not clear the flag before the lock screen is up.
     private var privacyLocked = false
     private var isForeground = false
+    private val shortcutExecutor = java.util.concurrent.Executors.newSingleThreadExecutor()
+
+    /** `bgRun`, as Dart last said: whether `onPause` starts the keep-alive. */
+    private var keepAliveInBackground = false
 
     private var privacyCoverEnabled: Boolean
         get() = privacyPrefs.getBoolean(KEY_PRIVACY_COVER, false)
@@ -147,12 +164,46 @@ class MainActivity: FlutterFragmentActivity() {
         super.onPause()
         isForeground = false
         if (privacyCoverEnabled) applyPrivacyCover(true)
+        startKeepAlive()
+        // Not Flutter's `inactive`, which a pulled-down shade also sends.
+        if (::channel.isInitialized) channel.invokeMethod("activityPaused", null)
+    }
+
+    /**
+     * Enters the foreground here, while the activity is still visible: the
+     * request Dart makes on `activityPaused` can arrive after `onStop`, when
+     * Android 12+ refuses it. Dart replaces the placeholder right after.
+     */
+    private fun startKeepAlive() {
+        if (!keepAliveInBackground || ForegroundService.isRunning || !notificationsAllowed()) return
+        try {
+            val intent = Intent(this, ForegroundService::class.java)
+                .setAction(ACTION_UPDATE_SESSIONS)
+                .putExtra("payload", """{"sessions":[],"keepAlive":true}""")
+            ContextCompat.startForegroundService(this, intent)
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Failed to start keep-alive: ${e.message}")
+        }
     }
 
     override fun onResume() {
         super.onResume()
         isForeground = true
+        // Paired with `activityPaused`; Flutter's `resumed` also waits for focus.
+        if (::channel.isInitialized) channel.invokeMethod("activityResumed", null)
         if (!privacyLocked) applyPrivacyCover(false)
+        // Here rather than once: `desktop_drop` sets its own listener when it
+        // attaches to the activity, and this one has to be the one in place.
+        dropListener?.let { findViewById<View>(android.R.id.content)?.setOnDragListener(it) }
+    }
+
+    override fun onProvideKeyboardShortcuts(
+        data: MutableList<KeyboardShortcutGroup>,
+        menu: Menu?,
+        deviceId: Int,
+    ) {
+        super.onProvideKeyboardShortcuts(data, menu, deviceId)
+        data.addAll(KeyboardShortcuts.toSystem(keyboardShortcuts))
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -165,6 +216,66 @@ class MainActivity: FlutterFragmentActivity() {
                     "takeOpenedLink" -> {
                         result.success(pendingLink)
                         pendingLink = null
+                    }
+                    // What `IncomingActivity` took in from another app.
+                    "takeIncoming" -> result.success(IncomingInbox.take())
+                    "discardIncoming" -> {
+                        val dirs = (method.arguments as? List<*>).orEmpty()
+                            .filterIsInstance<String>()
+                            .mapNotNull { File(it).parentFile }
+                            .toSet()
+                        Thread { dirs.forEach { IncomingFiles.discardBatch(applicationContext, it) } }.start()
+                        result.success(null)
+                    }
+                    "setShortcuts" -> {
+                        // Binder calls to the shortcut service, off the UI
+                        // thread; one at a time, so the last list wins.
+                        val json = method.arguments as String
+                        shortcutExecutor.execute {
+                            val error = try {
+                                AppShortcuts.publish(applicationContext, json)
+                                null
+                            } catch (e: Exception) {
+                                e.message ?: e.toString()
+                            }
+                            runOnUiThread {
+                                if (error == null) result.success(null)
+                                else result.error("SHORTCUTS", error, null)
+                            }
+                        }
+                    }
+                    "pinShortcut" -> {
+                        val entry = AppShortcuts.entry(
+                            method.argument<String>("id"),
+                            method.argument<String>("label"),
+                            method.argument<String>("uri"),
+                        )
+                        val pinned = entry != null && try {
+                            AppShortcuts.requestPin(this, entry)
+                        } catch (e: IllegalArgumentException) {
+                            // A disabled shortcut of the same id, say.
+                            false
+                        }
+                        result.success(pinned)
+                    }
+                    // The per-app language of Android 13+, which the app's
+                    // own language setting is kept in step with.
+                    "appLocale" -> result.success(AppLocale.read(this))
+                    "setAppLocale" -> {
+                        AppLocale.set(this, method.arguments as? String ?: "")
+                        result.success(null)
+                    }
+                    "updateTransfers" -> {
+                        try {
+                            TransferNotification.update(applicationContext, method.arguments as? String)
+                            result.success(null)
+                        } catch (e: Exception) {
+                            result.error("TRANSFERS", e.message, null)
+                        }
+                    }
+                    "setKeyboardShortcuts" -> {
+                        keyboardShortcuts = KeyboardShortcuts.parse(method.arguments as String)
+                        result.success(null)
                     }
                     "sendToBackground" -> {
                         moveTaskToBack(true)
@@ -265,6 +376,10 @@ class MainActivity: FlutterFragmentActivity() {
                     "widgetTokenState" -> {
                         result.success(WidgetStore.tokenState(applicationContext))
                     }
+                    "setKeepAliveInBackground" -> {
+                        keepAliveInBackground = method.arguments as? Boolean ?: false
+                        result.success(null)
+                    }
                     "updateSessions" -> {
                         try {
                             requestNotificationPermissionOnce()
@@ -297,9 +412,29 @@ class MainActivity: FlutterFragmentActivity() {
         // the Dart side and it is already taken.
         linkChannel = MethodChannel(binaryMessenger, "tech.lolli.toolbox/incoming_share")
 
+        dropListener = DropListener(
+            this,
+            binaryMessenger,
+            accepts = { answer ->
+                channel.invokeMethod("acceptsDrop", null, object : MethodChannel.Result {
+                    override fun success(result: Any?) = answer(result == true)
+                    override fun error(code: String, message: String?, details: Any?) = answer(false)
+                    override fun notImplemented() = answer(false)
+                })
+            },
+            onFailed = { incomingFailed() },
+        )
+
         // Handle intent if launched via notification action
         handleActionIntent(intent)
-        if (!launchIntentIsStale) acceptLink(intent)
+        if (!launchIntentIsStale) {
+            acceptLink(intent)
+            acceptIncoming(intent)
+        }
+        Thread {
+            IncomingFiles.purgeStale(applicationContext)
+            HomeWidget.publishPreviews(applicationContext)
+        }.start()
 
         // Register broadcast receiver for stop all connections
         setupStopAllReceiver()
@@ -534,6 +669,16 @@ class MainActivity: FlutterFragmentActivity() {
         super.onNewIntent(intent)
         handleActionIntent(intent)
         acceptLink(intent)
+        acceptIncoming(intent)
+    }
+
+    /** [IncomingActivity] left something in the inbox; Dart pulls it. */
+    private fun acceptIncoming(intent: Intent?) {
+        if (intent?.action == IncomingActivity.ACTION_DELIVER) linkChannel?.invokeMethod("opened", null)
+    }
+
+    private fun incomingFailed() {
+        Toast.makeText(this, R.string.incoming_failed, Toast.LENGTH_LONG).show()
     }
 
     /** A new intent only: see [launchIntentIsStale] for the one that is not. */
@@ -638,6 +783,7 @@ class MainActivity: FlutterFragmentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        shortcutExecutor.shutdown()
         stopAllReceiver?.let {
             try {
                 unregisterReceiver(it)

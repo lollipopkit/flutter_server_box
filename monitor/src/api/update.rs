@@ -10,6 +10,7 @@
 //! Its output goes to `update.log` in the agent's directory, and `GET /update`
 //! answers it as `run` — from the agent that comes back, too.
 
+use crate::api::WebError;
 use crate::utils::lock::RwLockExt;
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, Instant};
@@ -236,8 +237,8 @@ pub struct UpdateQuery {
 pub async fn get(
     req: HttpRequest,
     query: web::types::Query<UpdateQuery>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(response) = account(&req, &state).await {
         return Ok(response);
     }
@@ -277,13 +278,13 @@ pub struct RunBody {
 pub async fn start(
     req: HttpRequest,
     body: web::types::Json<RunBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(response) = authz::acting_caller(&req, &state).await {
         return Ok(response);
     }
     let refused = |status: ntex::http::StatusCode, error: &str| {
-        HttpResponse::build(status).json(&serde_json::json!({ "error": error }))
+        HttpResponse::builder(status).json(&serde_json::json!({ "error": error }))
     };
     if state.update.install() != InstallKind::Script {
         return Ok(refused(ntex::http::StatusCode::CONFLICT, "not_script"));

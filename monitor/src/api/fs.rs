@@ -11,6 +11,7 @@
 //! hands it to `tokio::fs` without going through [`FsRoots`], that is the bug.
 //! What the account may not read or write, the operating system refuses.
 
+use crate::api::WebError;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -155,8 +156,8 @@ fn failed(e: std::io::Error) -> HttpResponse {
 /// filesystem's roots (`/`, or each drive on Windows).
 pub async fn roots(
     req: HttpRequest,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(res) = admit(&req, &state, "roots", "").await {
         return Ok(res);
     }
@@ -175,8 +176,8 @@ pub async fn roots(
 pub async fn list(
     req: HttpRequest,
     query: web::types::Query<PathQuery>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(res) = admit(&req, &state, "list", &query.path).await {
         return Ok(res);
     }
@@ -210,8 +211,8 @@ pub async fn list(
 pub async fn stat(
     req: HttpRequest,
     query: web::types::Query<PathQuery>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(res) = admit(&req, &state, "stat", &query.path).await {
         return Ok(res);
     }
@@ -230,8 +231,8 @@ pub async fn stat(
 pub async fn read(
     req: HttpRequest,
     query: web::types::Query<PathQuery>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(res) = admit(&req, &state, "read", &query.path).await {
         return Ok(res);
     }
@@ -284,8 +285,8 @@ pub async fn write(
     req: HttpRequest,
     query: web::types::Query<WriteQuery>,
     mut body: web::types::Payload,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(res) = admit(&req, &state, "write", &query.path).await {
         return Ok(res);
     }
@@ -320,7 +321,7 @@ pub async fn write(
         let chunk = match chunk {
             Ok(chunk) => chunk,
             Err(_) => {
-                failure = Some(HttpResponse::BadRequest().finish());
+                failure = Some(HttpResponse::BadRequest().build());
                 break;
             }
         };
@@ -394,8 +395,8 @@ pub async fn write(
 pub async fn mkdir(
     req: HttpRequest,
     body: web::types::Json<PathBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(res) = admit(&req, &state, "mkdir", &body.path).await {
         return Ok(res);
     }
@@ -404,7 +405,7 @@ pub async fn mkdir(
         Err(e) => return Ok(denied(e)),
     };
     match tokio::fs::create_dir_all(&path).await {
-        Ok(()) => Ok(HttpResponse::Ok().finish()),
+        Ok(()) => Ok(HttpResponse::Ok().build()),
         Err(e) => Ok(failed(e)),
     }
 }
@@ -412,8 +413,8 @@ pub async fn mkdir(
 pub async fn remove(
     req: HttpRequest,
     body: web::types::Json<RemoveBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(res) = admit(&req, &state, "remove", &body.path).await {
         return Ok(res);
     }
@@ -460,7 +461,7 @@ pub async fn remove(
         tokio::fs::remove_file(&path).await
     };
     match result {
-        Ok(()) => Ok(HttpResponse::Ok().finish()),
+        Ok(()) => Ok(HttpResponse::Ok().build()),
         Err(e) => Ok(failed(e)),
     }
 }
@@ -468,8 +469,8 @@ pub async fn remove(
 pub async fn rename(
     req: HttpRequest,
     body: web::types::Json<RenameBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(res) = admit(&req, &state, "rename", &body.from).await {
         return Ok(res);
     }
@@ -500,7 +501,7 @@ pub async fn rename(
     // Under the writers' lock, like a write's own rename.
     let _replacing = REPLACE.lock().await;
     match tokio::fs::rename(&from, &to).await {
-        Ok(()) => Ok(HttpResponse::Ok().finish()),
+        Ok(()) => Ok(HttpResponse::Ok().build()),
         Err(e) => Ok(failed(e)),
     }
 }
@@ -508,8 +509,8 @@ pub async fn rename(
 pub async fn chmod(
     req: HttpRequest,
     body: web::types::Json<ChmodBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(res) = admit(&req, &state, "chmod", &body.path).await {
         return Ok(res);
     }
@@ -526,19 +527,19 @@ pub async fn chmod(
 }
 
 #[cfg(unix)]
-async fn set_mode(path: &Path, mode: u32) -> Result<HttpResponse, web::Error> {
+async fn set_mode(path: &Path, mode: u32) -> Result<HttpResponse, WebError> {
     use std::os::unix::fs::PermissionsExt;
     // Permission bits only. The type bits live in the same number on some
     // platforms and setting them is not what `chmod` means.
     let perms = std::fs::Permissions::from_mode(mode & 0o7777);
     match tokio::fs::set_permissions(path, perms).await {
-        Ok(()) => Ok(HttpResponse::Ok().finish()),
+        Ok(()) => Ok(HttpResponse::Ok().build()),
         Err(e) => Ok(failed(e)),
     }
 }
 
 #[cfg(not(unix))]
-async fn set_mode(_path: &Path, _mode: u32) -> Result<HttpResponse, web::Error> {
+async fn set_mode(_path: &Path, _mode: u32) -> Result<HttpResponse, WebError> {
     // Windows has no POSIX mode to set, and the app asks first: its
     // `FileBackendTraits.permissions` is what decides whether the menu entry
     // is drawn at all.

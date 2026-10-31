@@ -103,6 +103,7 @@
   "bgRunNeedsNotification": "后台运行需要显示常驻通知，但 App 尚未获得通知权限。点击授权。",
   "clearAllStatsContent": "确定要清空所有服务器的连接统计数据吗？此操作无法撤销。",
   "clearAllStatsTitle": "清空所有统计",
+  "clearAllSettings": "清除所有设置",
   "clearServerStatsContent": "确定要清空服务器 \"{serverName}\" 的连接统计数据吗？此操作无法撤销。",
   "clearServerStatsTitle": "清空 {serverName} 统计",
   "clearThisServerStats": "清空此服务器统计",
@@ -2001,5 +2002,7 @@
   "hostCertAuthoritiesTip": "由这些 CA 签发证书的主机将直接被信任，不再询问，等同于 OpenSSH 的 @cert-authority；其他主机仍在首次连接时询问。主机为逗号分隔的匹配规则，支持 * 和 ?，以 ! 排除；非 22 端口按 [host]:port 匹配。",
   "hostCertAuthorityInvalid": "不是支持的 SSH 公钥（ssh-ed25519、ssh-rsa 或 ecdsa-sha2-*）",
   "hostCertAuthorityNoHosts": "请填写它担保的主机，例如 *",
-  "hostCertAuthorityExists": "已在列表中"
+  "hostCertAuthorityExists": "已在列表中",
+  "addToHomeScreen": "添加到主屏幕",
+  "transfersActive": "{count} 个传输"
 }

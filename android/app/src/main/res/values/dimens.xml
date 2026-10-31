@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The widget's corners; `values-v31` takes the launcher's own. -->
+    <dimen name="widgetRadius">24dp</dimen>
+    <dimen name="widgetInnerRadius">12dp</dimen>
+</resources>

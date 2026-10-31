@@ -444,6 +444,7 @@
     "description": "Action label for clear all stats content."
   },
   "clearAllStatsTitle": "Clear All Statistics",
+  "clearAllSettings": "Clear all settings",
   "@clearAllStatsTitle": {
     "description": "Title shown for the clear all stats dialog or section."
   },
@@ -9342,5 +9343,18 @@
   "hostCertAuthorityExists": "Already in the list",
   "@hostCertAuthorityExists": {
     "description": "Error when the same certificate authority is already in the list for the same hosts."
+  },
+  "addToHomeScreen": "Add to home screen",
+  "@addToHomeScreen": {
+    "description": "Server menu entry that pins a launcher shortcut to the server (Android)."
+  },
+  "transfersActive": "{count, plural, =1{1 transfer} other{{count} transfers}}",
+  "@transfersActive": {
+    "description": "Title of the transfer notification while several file transfers run.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }

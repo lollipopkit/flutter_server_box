@@ -43,11 +43,11 @@ fn parent(path: &str) -> String {
     format!("{}/", &trimmed[..trimmed.rfind('/').unwrap_or(0)])
 }
 
-async fn dav(req: HttpRequest, body: Bytes, store: web::types::State<Shared>) -> HttpResponse {
+async fn dav(req: HttpRequest, body: Bytes, store: Shared) -> HttpResponse {
     use base64::Engine;
     let expected = format!("Basic {}", base64::engine::general_purpose::STANDARD.encode(format!("{USER}:{PASSWORD}")));
     if req.headers().get("authorization").and_then(|v| v.to_str().ok()) != Some(expected.as_str()) {
-        return HttpResponse::Unauthorized().finish();
+        return HttpResponse::Unauthorized().build();
     }
     let path = percent_encoding::percent_decode_str(req.path()).decode_utf8_lossy().into_owned();
     let mut d = store.lock().unwrap();
@@ -55,7 +55,7 @@ async fn dav(req: HttpRequest, body: Bytes, store: web::types::State<Shared>) ->
         "PROPFIND" => {
             let folder = if path.ends_with('/') { path.clone() } else { format!("{path}/") };
             if !d.folders.contains(&folder) {
-                return HttpResponse::NotFound().finish();
+                return HttpResponse::NotFound().build();
             }
             let mut xml = String::from(r#"<?xml version="1.0"?><D:multistatus xmlns:D="DAV:">"#);
             let entry = |href: &str, prop: &str| format!("<D:response><D:href>{href}</D:href><D:propstat><D:prop>{prop}</D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response>");
@@ -67,62 +67,61 @@ async fn dav(req: HttpRequest, body: Bytes, store: web::types::State<Shared>) ->
                 xml += &entry(f, &format!("<D:resourcetype/><D:getcontentlength>{}</D:getcontentlength>", bytes.len()));
             }
             xml += "</D:multistatus>";
-            HttpResponse::build(StatusCode::MULTI_STATUS).content_type("application/xml").body(xml)
+            HttpResponse::builder(StatusCode::MULTI_STATUS).content_type("application/xml").body(xml)
         }
         "MKCOL" => {
             let folder = if path.ends_with('/') { path.clone() } else { format!("{path}/") };
             if d.folders.contains(&folder) {
-                return HttpResponse::MethodNotAllowed().finish();
+                return HttpResponse::MethodNotAllowed().build();
             }
             if !d.folders.contains(&parent(&folder)) {
-                return HttpResponse::Conflict().finish();
+                return HttpResponse::Conflict().build();
             }
             d.folders.insert(folder);
-            HttpResponse::Created().finish()
+            HttpResponse::Created().build()
         }
         "PUT" => {
             if let Some(status) = d.refuse_put {
-                return HttpResponse::build(StatusCode::from_u16(status).unwrap()).finish();
+                return HttpResponse::builder(StatusCode::from_u16(status).unwrap()).build();
             }
             if !d.folders.contains(&parent(&path)) {
-                return HttpResponse::Conflict().finish();
+                return HttpResponse::Conflict().build();
             }
             d.files.insert(path, body.to_vec());
-            HttpResponse::Created().finish()
+            HttpResponse::Created().build()
         }
         "MOVE" => {
             let to = req.headers().get("destination").and_then(|v| v.to_str().ok()).and_then(|v| url::Url::parse(v).ok());
-            let Some(to) = to else { return HttpResponse::BadRequest().finish() };
+            let Some(to) = to else { return HttpResponse::BadRequest().build() };
             let to = percent_encoding::percent_decode_str(to.path()).decode_utf8_lossy().into_owned();
             match d.files.remove(&path) {
                 Some(bytes) => {
                     d.files.insert(to, bytes);
-                    HttpResponse::Created().finish()
+                    HttpResponse::Created().build()
                 }
-                None => HttpResponse::NotFound().finish(),
+                None => HttpResponse::NotFound().build(),
             }
         }
         "GET" => match d.files.get(&path) {
             Some(bytes) => HttpResponse::Ok().body(bytes.clone()),
-            None => HttpResponse::NotFound().finish(),
+            None => HttpResponse::NotFound().build(),
         },
-        "DELETE" if d.refuse_delete.is_some() => HttpResponse::build(StatusCode::from_u16(d.refuse_delete.unwrap()).unwrap()).finish(),
+        "DELETE" if d.refuse_delete.is_some() => HttpResponse::builder(StatusCode::from_u16(d.refuse_delete.unwrap()).unwrap()).build(),
         "DELETE" => match d.files.remove(&path) {
-            Some(_) => HttpResponse::NoContent().finish(),
-            None => HttpResponse::NotFound().finish(),
+            Some(_) => HttpResponse::NoContent().build(),
+            None => HttpResponse::NotFound().build(),
         },
-        _ => HttpResponse::MethodNotAllowed().finish(),
+        _ => HttpResponse::MethodNotAllowed().build(),
     }
 }
 
 async fn dav_server() -> (TestServer, Shared) {
     let store: Shared = Arc::new(Mutex::new(Dav { folders: ["/".to_string()].into(), ..Default::default() }));
     let shared = store.clone();
-    let srv = web_test::server(move || {
+    let srv = web_test::server(async move |_| {
         let store = shared.clone();
-        async move { App::new().state(store).default_service(web::to(dav)) }
-    })
-    .await;
+        App::new().default_service(web::to(move |req: HttpRequest, body: Bytes| dav(req, body, store.clone())))
+    });
     (srv, store)
 }
 

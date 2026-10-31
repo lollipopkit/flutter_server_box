@@ -20,7 +20,7 @@ const DESK_APP_DIR: &str = "frontend/dist/desk-app";
 /// Hashed names change with their content.
 const CACHE: &str = "public, max-age=31536000, immutable";
 
-#[web::get("/assets/{name}")]
+/// `GET /assets/{name}`.
 pub async fn asset(req: HttpRequest, name: web::types::Path<String>) -> HttpResponse {
     match read(Path::new(DIR), &name, offered(&req)).await {
         Some(file) => {
@@ -33,14 +33,14 @@ pub async fn asset(req: HttpRequest, name: web::types::Path<String>) -> HttpResp
             }
             res.body(file.bytes)
         }
-        None => HttpResponse::NotFound().finish(),
+        None => HttpResponse::NotFound().build(),
     }
 }
 
-#[web::get("/desk-app/{name}")]
+/// `GET /desk-app/{name}`.
 pub async fn desk_app(req: HttpRequest, name: web::types::Path<String>) -> HttpResponse {
     let Some(file) = read(Path::new(DESK_APP_DIR), &name, offered(&req)).await else {
-        return HttpResponse::NotFound().finish();
+        return HttpResponse::NotFound().build();
     };
     let mut res = HttpResponse::Ok();
     res.content_type(file.content_type)

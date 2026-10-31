@@ -9,12 +9,13 @@ use std::pin::Pin;
 use std::sync::{Arc, Mutex};
 
 use ntex::http::Method;
+use ntex::service::map_state_factory;
 use ntex::web::test::{self as web_test, TestServer};
 use ntex::web::{self, App};
 use sbm_parser::monitor_agent::{InstallKind, UPDATE_LOG, releases_url};
 use server_box_monitor::api::auth::generate_token;
 use server_box_monitor::api::desk_themes::Fetch;
-use server_box_monitor::api::server::AppState;
+use server_box_monitor::api::server::{Agent, AppState};
 use server_box_monitor::api::update;
 use server_box_monitor::core::config::Config;
 
@@ -43,18 +44,18 @@ async fn setup(pages: HashMap<String, String>) -> (Arc<AppState>, Arc<Memory>, T
     state.update.set_fetch(memory.clone());
     let srv = web_test::server({
         let state = state.clone();
-        move || {
+        async move |_| {
             let state = state.clone();
-            async move {
-                App::new().state(state).service(
+            map_state_factory(
+                Agent(state),
+                App::<Agent>::new().service(
                     web::scope("/api/v1")
                         .route("/update", web::get().to(update::get))
                         .route("/update/run", web::post().to(update::start)),
-                )
-            }
+                ),
+            )
         }
-    })
-    .await;
+    });
     (state, memory, srv)
 }
 

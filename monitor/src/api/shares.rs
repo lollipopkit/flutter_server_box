@@ -20,6 +20,7 @@
 //!
 //! Every change is audited (`Kind::Machine`), never a password.
 
+use crate::api::WebError;
 use std::sync::Arc;
 
 use ntex::web::{self, HttpRequest, HttpResponse};
@@ -52,7 +53,7 @@ fn answer(shares: sh::Shares, job: Option<serde_json::Value>) -> HttpResponse {
     HttpResponse::Ok().json(&body)
 }
 
-pub async fn view(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn view(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     if !cfg!(target_os = "linux") {
         return Ok(super::respond::error_u16(409, "notLinux"));
@@ -99,7 +100,7 @@ pub struct SmbBody {
     sudo_password: Option<String>,
 }
 
-pub async fn set_smb(req: HttpRequest, body: web::types::Json<SmbBody>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn set_smb(req: HttpRequest, body: web::types::Json<SmbBody>, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     if !cfg!(target_os = "linux") {
         return Ok(super::respond::error_u16(409, "notLinux"));
@@ -123,7 +124,7 @@ pub struct NfsBody {
     sudo_password: Option<String>,
 }
 
-pub async fn set_nfs(req: HttpRequest, body: web::types::Json<NfsBody>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn set_nfs(req: HttpRequest, body: web::types::Json<NfsBody>, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     if !cfg!(target_os = "linux") {
         return Ok(super::respond::error_u16(409, "notLinux"));
@@ -148,7 +149,7 @@ pub struct PasswordBody {
     sudo_password: Option<String>,
 }
 
-pub async fn smb_password(req: HttpRequest, body: web::types::Json<PasswordBody>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn smb_password(req: HttpRequest, body: web::types::Json<PasswordBody>, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     if !cfg!(target_os = "linux") {
         return Ok(super::respond::error_u16(409, "notLinux"));
@@ -160,7 +161,7 @@ pub async fn smb_password(req: HttpRequest, body: web::types::Json<PasswordBody>
     };
     require!(as_root(&state, &script, sudo_password.as_deref().filter(|p| !p.is_empty()), true).await);
     record(&req, &state, format!("shares smb password {user}")).await;
-    Ok(HttpResponse::NoContent().finish())
+    Ok(HttpResponse::NoContent().build())
 }
 
 #[derive(Deserialize)]
@@ -169,7 +170,7 @@ pub struct ConnectionsBody {
     sudo_password: Option<String>,
 }
 
-pub async fn connections(req: HttpRequest, body: web::types::Json<ConnectionsBody>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn connections(req: HttpRequest, body: web::types::Json<ConnectionsBody>, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     if !cfg!(target_os = "linux") {
         return Ok(super::respond::error_u16(409, "notLinux"));
@@ -191,7 +192,7 @@ pub struct InstallBody {
     sudo_password: Option<String>,
 }
 
-pub async fn install(req: HttpRequest, body: web::types::Json<InstallBody>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn install(req: HttpRequest, body: web::types::Json<InstallBody>, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     if !cfg!(target_os = "linux") {
         return Ok(super::respond::error_u16(409, "notLinux"));
@@ -223,7 +224,7 @@ pub struct JobQuery {
     since: u64,
 }
 
-pub async fn job(req: HttpRequest, query: web::types::Query<JobQuery>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn job(req: HttpRequest, query: web::types::Query<JobQuery>, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     match state.shares.current() {
         Some(job) => Ok(HttpResponse::Ok().json(&job.view(query.since))),

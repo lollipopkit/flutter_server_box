@@ -44,11 +44,12 @@ pub mod machine {
     use std::sync::{Arc, Once};
 
     use ntex::http::Method;
+    use ntex::service::map_state_factory;
     use ntex::web::App;
     use ntex::web::test::{self as web_test, TestServer};
     use serde_json::Value;
     use server_box_monitor::api::auth::generate_token;
-    use server_box_monitor::api::server::{AppState, configure_api};
+    use server_box_monitor::api::server::{Agent, AppState, configure_api};
     use server_box_monitor::core::config::Config;
 
     pub const SECRET: &str = "test-secret-that-is-long-enough-32ch";
@@ -84,14 +85,10 @@ pub mod machine {
         // The models and servers the tests run are on loopback.
         state.agent.reach_this_machine_only();
         let shared = state.clone();
-        let srv = web_test::server(move || {
+        let srv = web_test::server(async move |_| {
             let state = shared.clone();
-            async move {
-                let limit = state.remote_access.exec.max_request_bytes;
-                App::new().state(state).configure(configure_api(limit))
-            }
-        })
-        .await;
+            map_state_factory(Agent(state), App::<Agent>::new().configure(configure_api))
+        });
         (srv, state)
     }
 

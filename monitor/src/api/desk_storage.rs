@@ -11,6 +11,8 @@
 //! agent, decides which app is asking, so this is storage for convenience,
 //! never for something one app must hide from another.
 
+use crate::api::WebError;
+use crate::api::json::{Json, Max};
 use std::sync::Arc;
 
 use ntex::web::{self, HttpRequest, HttpResponse};
@@ -84,8 +86,8 @@ pub(crate) fn key_ok(key: &str) -> bool {
 pub async fn list(
     req: HttpRequest,
     app: web::types::Path<String>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let (_, user) = require!(account(&req, &state).await);
     require!(checked_app(&app));
     match items(&state.db, user, &app).await {
@@ -98,15 +100,15 @@ pub async fn put(
     req: HttpRequest,
     app: web::types::Path<String>,
     query: web::types::Query<KeyQuery>,
-    body: web::types::Json<serde_json::Value>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    body: Json<serde_json::Value, Max<MAX_BODY>>,
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let (_, user) = require!(account(&req, &state).await);
     require!(checked_app(&app));
     require!(checked_key(&query.key));
     let value = body.into_inner().to_string();
     match store(&state.db, user, &app, &query.key, &value).await {
-        Ok(true) => Ok(HttpResponse::NoContent().finish()),
+        Ok(true) => Ok(HttpResponse::NoContent().build()),
         Ok(false) => Ok(HttpResponse::PayloadTooLarge().json(&refused("tooLarge", None))),
         Err(e) => Ok(super::respond::internal(&e)),
     }
@@ -116,13 +118,13 @@ pub async fn remove(
     req: HttpRequest,
     app: web::types::Path<String>,
     query: web::types::Query<KeyQuery>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let (_, user) = require!(account(&req, &state).await);
     require!(checked_app(&app));
     require!(checked_key(&query.key));
     match remove_key(&state.db, user, &app, &query.key).await {
-        Ok(_) => Ok(HttpResponse::NoContent().finish()),
+        Ok(_) => Ok(HttpResponse::NoContent().build()),
         Err(e) => Ok(super::respond::internal(&e)),
     }
 }

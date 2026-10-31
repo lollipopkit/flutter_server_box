@@ -224,8 +224,14 @@ extension _Widgets on _FileBrowserPageState {
     if (widget.args.refOf == null || _isPicking) return child;
     return DropTarget(
       onDragDone: (details) => _onDropped(details.files),
-      onDragEntered: (_) => _dropping.value = true,
-      onDragExited: (_) => _dropping.value = false,
+      onDragEntered: (_) {
+        _dropping.value = true;
+        DropZones.enter(this);
+      },
+      onDragExited: (_) {
+        _dropping.value = false;
+        DropZones.leave(this);
+      },
       child: _dropping.listenVal(
         (active) => !active
             ? child

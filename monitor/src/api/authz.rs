@@ -79,7 +79,7 @@ pub async fn caller(state: &AppState) -> Option<Caller> {
 
 /// `{"error": code, "message": message}`.
 pub fn error(status: StatusCode, code: &str, message: &str) -> HttpResponse {
-    HttpResponse::build(status).json(&serde_json::json!({
+    HttpResponse::builder(status).json(&serde_json::json!({
         "error": code,
         "message": message,
     }))

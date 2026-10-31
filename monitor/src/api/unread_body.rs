@@ -21,7 +21,7 @@ use std::time::Duration;
 use futures::Stream;
 use ntex::http::error::PayloadError;
 use ntex::http::{ConnectionType, Payload, header};
-use ntex::service::{Middleware, Service, ServiceCtx, cfg::SharedCfg};
+use ntex::service::{Ctx, Middleware, Service};
 use ntex::util::Bytes;
 use ntex::web::{WebRequest, WebResponse};
 
@@ -32,10 +32,10 @@ const DRAIN_TIME: Duration = Duration::from_secs(5);
 
 pub struct CloseUnreadBody;
 
-impl<S> Middleware<S, SharedCfg> for CloseUnreadBody {
+impl<S, St> Middleware<S, St> for CloseUnreadBody {
     type Service = CloseUnreadBodyService<S>;
 
-    fn create(&self, service: S, _: SharedCfg) -> Self::Service {
+    fn create(&self, _: &St, service: S) -> Self::Service {
         CloseUnreadBodyService { service }
     }
 }
@@ -44,18 +44,18 @@ pub struct CloseUnreadBodyService<S> {
     service: S,
 }
 
-impl<S, E> Service<WebRequest<E>> for CloseUnreadBodyService<S>
+impl<S, St, In> Service<St, WebRequest<In>> for CloseUnreadBodyService<S>
 where
-    S: Service<WebRequest<E>, Response = WebResponse>,
+    S: Service<St, WebRequest<In>, Res = WebResponse>,
 {
-    type Response = WebResponse;
+    type Res = WebResponse;
     type Error = S::Error;
 
-    ntex::forward_poll!(service);
-    ntex::forward_ready!(service);
-    ntex::forward_shutdown!(service);
+    ntex::forward_bind!(St, service);
+    ntex::forward_ready!(St, service);
+    ntex::forward_shutdown!(St, service);
 
-    async fn call(&self, mut req: WebRequest<E>, ctx: ServiceCtx<'_, Self>) -> Result<Self::Response, Self::Error> {
+    async fn call(&self, mut req: WebRequest<In>, ctx: Ctx<'_, Self, St>) -> Result<WebResponse, Self::Error> {
         if !has_body(&req) {
             return ctx.call(&self.service, req).await;
         }
@@ -69,7 +69,7 @@ where
     }
 }
 
-fn has_body<E>(req: &WebRequest<E>) -> bool {
+fn has_body<In>(req: &WebRequest<In>) -> bool {
     let headers = req.headers();
     let length = headers.get(header::CONTENT_LENGTH).and_then(|v| v.to_str().ok()).and_then(|v| v.trim().parse::<u64>().ok());
     length.is_some_and(|n| n > 0) || headers.contains_key(header::TRANSFER_ENCODING)
@@ -134,14 +134,13 @@ mod tests {
     /// keep-alive, every time.
     #[ntex::test]
     async fn an_unread_body_is_read_before_the_answer_or_the_connection_ends() {
-        let srv = test::server(|| async {
+        let srv = test::server(async |_| {
             App::new().service(
                 web::scope("/api")
                     .middleware(CloseUnreadBody)
-                    .route("/read", web::post().to(|_: ntex::util::Bytes| async { HttpResponse::NoContent().finish() })),
+                    .route("/read", web::post().to(|_: ntex::util::Bytes| async { HttpResponse::NoContent().build() })),
             )
-        })
-        .await;
+        });
         let send = |path: &'static str, body: Vec<u8>| srv.request(ntex::http::Method::POST, srv.url(path)).send_body(body);
         let connection = |res: &ntex::client::ClientResponse| res.headers().get("connection").map(|v| v.to_str().unwrap().to_string());
 
@@ -154,7 +153,7 @@ mod tests {
         // Ended either way: the answer says so, or, when the close comes
         // while the client is still sending, the unread rest makes it a
         // reset (ntex does not linger), which discards the answer.
-        match send("/api/nope", vec![0u8; MAX_DRAIN + (64 << 10)]).await {
+        match send("/api/nope", vec![0u8; MAX_DRAIN + (64 << 10)]).await.map_err(ntex::Error::into_error) {
             Ok(large) => assert_eq!((large.status().as_u16(), connection(&large).as_deref()), (404, Some("close"))),
             Err(ntex::client::error::ClientError::Send(e)) => {
                 assert!(matches!(e.kind(), std::io::ErrorKind::ConnectionReset | std::io::ErrorKind::ConnectionAborted), "{e}")

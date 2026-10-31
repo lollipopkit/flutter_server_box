@@ -17,6 +17,8 @@
 //! without (root, `NOPASSWD`). What reaches the machine also needs the app's
 //! approved permission and the transport rule, checked at the moment of use.
 
+use crate::api::WebError;
+use crate::api::json::{Json, Max};
 use std::sync::Arc;
 
 use ntex::web::{self, HttpRequest, HttpResponse};
@@ -59,7 +61,7 @@ fn refusal(status: u16, error: &str, message: impl Into<String>) -> HttpResponse
     if !message.is_empty() {
         body["message"] = Value::String(message);
     }
-    HttpResponse::build(ntex::http::StatusCode::from_u16(status).unwrap_or(ntex::http::StatusCode::BAD_REQUEST)).json(&body)
+    HttpResponse::builder(ntex::http::StatusCode::from_u16(status).unwrap_or(ntex::http::StatusCode::BAD_REQUEST)).json(&body)
 }
 
 fn failure(f: Failure) -> (u16, Refusal) {
@@ -143,9 +145,9 @@ async fn prepare(req: &HttpRequest, state: &Arc<AppState>, id: &str, body: &mut 
 pub async fn call(
     req: HttpRequest,
     id: web::types::Path<String>,
-    body: web::types::Json<CallBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    body: Json<CallBody, Max<MAX_REQUEST>>,
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let mut body = body.into_inner();
     let Ok(_slot) = state.apps.calls.clone().try_acquire_owned() else {
         return Ok(refusal(429, "unavailable", "busy"));
@@ -171,9 +173,9 @@ pub async fn call(
 pub async fn start_job(
     req: HttpRequest,
     id: web::types::Path<String>,
-    body: web::types::Json<CallBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    body: Json<CallBody, Max<MAX_REQUEST>>,
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let mut body = body.into_inner();
     let sudo = body.sudo.is_some();
     let (backend, ctx) = match prepare(&req, &state, &id, &mut body).await {
@@ -219,8 +221,8 @@ pub async fn job(
     req: HttpRequest,
     id: web::types::Path<String>,
     query: web::types::Query<JobQuery>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::jwt_caller(&req, &state).await);
     match state.apps.job(&id) {
         Some(j) => Ok(HttpResponse::Ok().json(&j.view(query.since))),
@@ -228,7 +230,7 @@ pub async fn job(
     }
 }
 
-pub async fn cancel_job(req: HttpRequest, id: web::types::Path<String>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn cancel_job(req: HttpRequest, id: web::types::Path<String>, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     // Ending a job (one running as root, mid-way) acts on the machine.
     require!(authz::acting_caller(&req, &state).await);
     match state.apps.job(&id) {
@@ -240,7 +242,7 @@ pub async fn cancel_job(req: HttpRequest, id: web::types::Path<String>, state: w
     }
 }
 
-pub async fn sudo(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn sudo(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     let caller = match authz::jwt_caller(&req, &state).await {
         Ok(c) => c,
         Err(r) => return Ok(r),

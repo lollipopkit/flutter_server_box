@@ -24,11 +24,12 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use ntex::http::Method;
+use ntex::service::map_state_factory;
 use ntex::web::test::{self as web_test, TestServer};
 use ntex::web::{self, App};
 use serde_json::{Value, json};
 use server_box_monitor::api::auth::generate_token;
-use server_box_monitor::api::server::AppState;
+use server_box_monitor::api::server::{Agent, AppState};
 use server_box_monitor::api::storage;
 use server_box_monitor::core::config::Config;
 use server_box_monitor::storage_watch;
@@ -70,10 +71,9 @@ async fn setup(hook: &Hook) -> (TestServer, Arc<AppState>) {
     common::add_owner(&db).await;
     let state: Arc<AppState> = AppState::new(Arc::new(config), db);
     let served = state.clone();
-    let srv = web_test::server(move || {
+    let srv = web_test::server(async move |_| {
         let state = state.clone();
-        async move {
-            App::new().state(state).service(
+        map_state_factory(Agent(state), App::<Agent>::new().service(
                 web::scope("/api/v1")
                     .service(web::resource("/storage").route(web::get().to(storage::view)))
                     .service(web::resource("/storage/health").route(web::post().to(storage::health)))
@@ -81,10 +81,8 @@ async fn setup(hook: &Hook) -> (TestServer, Arc<AppState>) {
                     .service(web::resource("/storage/maintenance/{task}/run").route(web::post().to(storage::run_maintenance)))
                     .service(web::resource("/storage/act").route(web::post().to(storage::act)))
                     .service(web::resource("/storage/job").route(web::get().to(storage::job))),
-            )
-        }
-    })
-    .await;
+            ))
+    });
     (srv, served)
 }
 

@@ -62,6 +62,7 @@
   "bgRunNeedsNotification": "Робота у фоні потребує постійного сповіщення, а застосунок не має дозволу на сповіщення. Натисніть, щоб дозволити.",
   "clearAllStatsContent": "Ви впевнені, що хочете очистити всю статистику з'єднань сервера? Цю дію не можна скасувати.",
   "clearAllStatsTitle": "Очистити всю статистику",
+  "clearAllSettings": "Скинути всі налаштування",
   "clearServerStatsContent": "Ви впевнені, що хочете очистити статистику з'єднань для сервера \"{serverName}\"? Цю дію не можна скасувати.",
   "clearServerStatsTitle": "Очистити статистику {serverName}",
   "clearThisServerStats": "Очистити статистику цього сервера",
@@ -2001,5 +2002,7 @@
   "hostCertAuthoritiesTip": "Хосту, сертифікат якого підписав один із них, довіряють без запитань, як з @cert-authority в OpenSSH; про інші хости, як і раніше, питають під час першого підключення. Хости — шаблони через кому з * і ?, ! виключає; порт, відмінний від 22, порівнюється як [host]:port.",
   "hostCertAuthorityInvalid": "Непідтримуваний відкритий ключ SSH (ssh-ed25519, ssh-rsa або ecdsa-sha2-*)",
   "hostCertAuthorityNoHosts": "Вкажіть хости, за які він ручається, наприклад *",
-  "hostCertAuthorityExists": "Уже в списку"
+  "hostCertAuthorityExists": "Уже в списку",
+  "addToHomeScreen": "Додати на головний екран",
+  "transfersActive": "{count, plural, =1{{count} передача} few{{count} передачі} many{{count} передач} other{{count} передачі}}"
 }

@@ -69,6 +69,7 @@ A server is reached over SSH, a monitor agent, both, or is this device (`Spi.loc
 ## Rules
 
 - **Never run code formatters.**
+- Names come in through `use`, never as long paths inline: `use crate::api::json::{Json, Max};` then `Json<T, Max<N>>`, not `crate::api::json::Json<T, crate::api::json::Max<N>>`.
 - Git LFS holds images, fonts, `.fsbt` and PDFs under `monitor/`, `docs/`, `website/`, `store/` only: F-Droid clones without LFS, so nothing the app's build or `fastlane/` reads goes there (`.gitattributes`). `scripts/check-lfs.sh` fails a build that finds a pointer.
 - Never hand-edit `*.g.dart` / `*.freezed.dart`. `flutter gen-l10n` after ARB edits; check `libL10n` (fl_lib) first.
 - GetIt for stores and services. `fl_lib` widgets (`CustomAppBar`, `context.showRoundDialog`, `Input`, `Btnx.cancelOk`; context7 `lppcg fl_lib KEYWORD`). Split UI into build / actions / utils with `extension on`.

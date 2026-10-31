@@ -136,7 +136,7 @@ pub struct PasswordChange {
 
 pub async fn change_own_password(
     req: HttpRequest,
-    state: web::types::State<Arc<AppState>>,
+    state: Arc<AppState>,
     body: web::types::Json<serde_json::Value>,
 ) -> Result<HttpResponse> {
     require!(authz::acting_caller(&req, &state).await);
@@ -149,5 +149,5 @@ pub async fn change_own_password(
     // because someone else may have it.
     authz::end_account(&state, REVOKED);
     audit(&req, &state, Action::Close, "changed the password".into()).await;
-    Ok(HttpResponse::NoContent().finish())
+    Ok(HttpResponse::NoContent().build())
 }

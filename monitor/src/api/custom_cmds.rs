@@ -12,9 +12,11 @@
 //! to run as the agent's user. Reading needs only the account: it discloses
 //! the commands, not the machine.
 
+use crate::api::WebError;
+use crate::api::json::{Json, Max};
 use std::sync::Arc;
 
-use ntex::web::{self, HttpRequest, HttpResponse};
+use ntex::web::{HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
 
 use super::authz::{self, Caller};
@@ -51,10 +53,10 @@ struct ErrorResponse {
 
 pub async fn list(
     req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    app_state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let Ok(caller) = authz::jwt_caller(&req, &app_state).await else {
-        return Ok(HttpResponse::Unauthorized().finish());
+        return Ok(HttpResponse::Unauthorized().build());
     };
     let editable = may_edit(&caller, &req, &app_state);
 
@@ -66,9 +68,9 @@ pub async fn list(
 
 pub async fn replace(
     req: HttpRequest,
-    body: web::types::Json<ReplaceRequest>,
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    body: Json<ReplaceRequest, Max<MAX_REQUEST>>,
+    app_state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let remote_ip = require!(super::machine::gate_as(Kind::CustomCmd, &req, &app_state, "custom commands").await).remote_ip;
 
     let commands = body.into_inner().commands;

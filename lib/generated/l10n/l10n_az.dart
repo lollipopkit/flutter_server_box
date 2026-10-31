@@ -377,6 +377,9 @@ class AppLocalizationsAz extends AppLocalizations {
   String get clearAllStatsTitle => 'Bütün statistikanı təmizlə';
 
   @override
+  String get clearAllSettings => 'Bütün parametrləri sil';
+
+  @override
   String clearServerStatsContent(String serverName) {
     return '\"$serverName\" serverinin əlaqə statistikasını təmizləmək istədiyinə əminsən? Bu əməliyyatı geri qaytarmaq mümkün deyil.';
   }
@@ -7132,4 +7135,12 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get hostCertAuthorityExists => 'Artıq siyahıdadır';
+
+  @override
+  String get addToHomeScreen => 'Əsas ekrana əlavə et';
+
+  @override
+  String transfersActive(int count) {
+    return '$count ötürmə';
+  }
 }

@@ -7,13 +7,14 @@ use std::io::Read;
 use std::sync::Arc;
 
 use ntex::http::Method;
+use ntex::service::map_state_factory;
 use ntex::web::test::{self as web_test, TestServer};
 use ntex::web::{self, App};
 use serde_json::json;
 use server_box_monitor::api::{app_backend, apps};
 use server_box_monitor::api::auth::generate_token;
 use server_box_monitor::agent_mode::config;
-use server_box_monitor::api::server::AppState;
+use server_box_monitor::api::server::{Agent, AppState};
 use server_box_monitor::core::config::Config;
 
 const PLAIN: &str = "line one\nline two\nline three";
@@ -33,21 +34,19 @@ async fn server_and_state(db: sqlx::SqlitePool) -> (TestServer, Arc<AppState>) {
     common::add_owner(&db).await;
     let state: Arc<AppState> = AppState::new(Arc::new(config), db);
     let kept = state.clone();
-    let srv = web_test::server(move || {
+    let srv = web_test::server(async move |_| {
         let state = state.clone();
-        async move {
-            App::new().state(state).service(
+        map_state_factory(Agent(state), App::<Agent>::new().service(
                 web::scope("/api/v1")
                     .service(
                         web::resource("/apps")
-                            .state(web::types::PayloadConfig::new(apps::MAX_PACKAGE_BYTES))
                             .route(web::get().to(apps::list))
                             .route(web::post().to(apps::install)),
                     )
                     .service(web::resource("/apps/catalog").route(web::get().to(apps::catalog)))
                     // What a backend's HTTP reaches in `http` tests.
                     .service(web::resource("/plain").route(web::get().to(|| async { web::HttpResponse::Ok().body(PLAIN) })))
-                    .service(web::resource("/moved").route(web::get().to(|| async { web::HttpResponse::Found().header("location", "/api/v1/plain").finish() })))
+                    .service(web::resource("/moved").route(web::get().to(|| async { web::HttpResponse::Found().header("location", "/api/v1/plain").build() })))
                     .service(web::resource("/apps/catalog/{id}/install").route(web::post().to(apps::install_offered)))
                     .service(web::resource("/apps/{id}").route(web::delete().to(apps::remove)))
                     .service(web::resource("/apps/{id}/approval").route(web::put().to(apps::approve)))
@@ -58,10 +57,8 @@ async fn server_and_state(db: sqlx::SqlitePool) -> (TestServer, Arc<AppState>) {
                     )
                     .service(web::resource("/apps/{id}/jobs/cancel").route(web::post().to(app_backend::cancel_job)))
                     .service(web::resource("/apps/{id}/ui/{ticket}/{path}*").route(web::get().to(apps::ui))),
-            )
-        }
-    })
-    .await;
+            ))
+    });
     (srv, kept)
 }
 
@@ -467,7 +464,7 @@ async fn a_backend_reaches_http_with_the_permission_and_keeps_files_in_its_folde
     let r = call_fn(&srv, "save", json!({ "url": url, "sha256": digest, "name": "../x.json" })).await;
     assert_eq!(r.json["error"], "invalidArgument");
     let r = call_fn(&srv, "save", json!({ "url": srv.url("/api/v1/moved"), "sha256": digest, "name": "x.json" })).await;
-    let path = r.json["value"].as_str().expect("a path").to_string();
+    let path = r.json["value"].as_str().unwrap_or_else(|| panic!("a path: {}", r.json)).to_string();
     assert_eq!(std::fs::read_to_string(&path).unwrap(), PLAIN);
     let dir = call_fn(&srv, "ownDir", json!(null)).await.json["value"].as_str().unwrap().to_string();
     assert!(path.starts_with(&dir) && dir.ends_with("acme.notes"), "{path} in {dir}");

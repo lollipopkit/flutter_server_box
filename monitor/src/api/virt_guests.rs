@@ -22,6 +22,7 @@
 //! `virt` to see and change, as for power. A host's failure is answered 200
 //! with `error`, as in `api::virt`.
 
+use crate::api::WebError;
 use std::sync::Arc;
 
 use ntex::web::{self, HttpRequest, HttpResponse};
@@ -86,7 +87,7 @@ pub struct GuestBody {
     password: Option<String>,
 }
 
-fn answer(value: serde_json::Value) -> Result<HttpResponse, web::Error> {
+fn answer(value: serde_json::Value) -> Result<HttpResponse, WebError> {
     Ok(HttpResponse::Ok().json(&value))
 }
 
@@ -125,8 +126,8 @@ impl<'a> Audit<'a> {
 pub async fn create_form(
     req: HttpRequest,
     body: web::types::Json<FormRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = machine::gate(&req, &state, "virt create form").await {
         return Ok(refused);
     }
@@ -151,8 +152,8 @@ pub async fn create_form(
 pub async fn create(
     req: HttpRequest,
     body: web::types::Json<CreateRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let request = body.into_inner();
     let audit = match Audit::start(&req, &state, format!("virt {}", request.spec.describe())).await {
         Ok(a) => a,
@@ -176,8 +177,8 @@ pub async fn create(
 pub async fn delete(
     req: HttpRequest,
     body: web::types::Json<DeleteRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let request = body.into_inner();
     let keep = if request.remove_disks { "" } else { " (disks kept)" };
     let audit = match Audit::start(&req, &state, format!("virt delete {}{keep}", request.guest)).await {
@@ -203,8 +204,8 @@ pub async fn delete(
 pub async fn clone_form(
     req: HttpRequest,
     body: web::types::Json<GuestBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = machine::gate(&req, &state, "virt clone form").await {
         return Ok(refused);
     }
@@ -233,8 +234,8 @@ pub async fn clone_form(
 pub async fn clone(
     req: HttpRequest,
     body: web::types::Json<CloneBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let request = body.into_inner();
     let audit = match Audit::start(&req, &state, format!("virt clone {} as {}", request.guest, request.request.name)).await {
         Ok(a) => a,
@@ -262,8 +263,8 @@ pub async fn clone(
 pub async fn template(
     req: HttpRequest,
     body: web::types::Json<GuestBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let request = body.into_inner();
     let audit = match Audit::start(&req, &state, format!("virt template {}", request.guest)).await {
         Ok(a) => a,

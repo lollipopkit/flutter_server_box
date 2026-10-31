@@ -10,13 +10,14 @@ mod common;
 use std::sync::{Arc, Once};
 
 use ntex::time::Millis;
+use ntex::service::map_state_factory;
 use ntex::web::test::{self as web_test, TestServer};
 use ntex::web::{self, App};
 use rustls::crypto::ring;
 use sbm_parser::script;
 use serde_json::json;
 use server_box_monitor::api::auth::generate_token;
-use server_box_monitor::api::server::AppState;
+use server_box_monitor::api::server::{Agent, AppState};
 use server_box_monitor::core::config::Config;
 use server_box_monitor::core::remote_access::{DEFAULT_EXEC_TIMEOUT_SECS, ExecConfig};
 
@@ -54,20 +55,14 @@ async fn app_state_with(exec: ExecConfig) -> Arc<AppState> {
 }
 
 async fn test_server(state: Arc<AppState>) -> TestServer {
-    web_test::server(move || {
+    web_test::server(async move |_| {
         let state = state.clone();
-        async move {
-            let limit = state.remote_access.exec.max_request_bytes;
-            App::new().state(state).service(
-                web::scope("/api/v1").service(
-                    web::resource("/exec")
-                        .state(web::types::JsonConfig::default().limit(limit))
-                        .route(web::post().to(server_box_monitor::api::exec::exec)),
-                ),
-            )
-        }
+        map_state_factory(Agent(state), App::<Agent>::new().service(
+            web::scope("/api/v1").service(
+                web::resource("/exec").route(web::post().to(server_box_monitor::api::exec::exec)),
+            ),
+        ))
     })
-    .await
 }
 
 /// Past the endpoint's own bound, so a request that hangs fails the test
@@ -142,11 +137,12 @@ async fn the_configured_timeout_is_what_kills_a_command() {
         .await,
     )
     .await;
-    // Not `timeout /t`: without a console it exits at once.
-    let cmd = platform_command("sleep 20", "ping -n 21 127.0.0.1");
+    // Not `timeout /t`: it refuses a redirected stdin and exits at once, so
+    // it only passed when starting it took longer than the limit.
+    let cmd = platform_command("sleep 20", "ping -n 21 127.0.0.1 >NUL");
     let body = post(&srv, json!({ "cmd": cmd })).await.unwrap();
 
-    assert_eq!(body["timed_out"], true);
+    assert_eq!(body["timed_out"], true, "{body}");
     // Killed rather than exited, and nothing it had buffered is reported as
     // though the command had finished saying it.
     assert!(body["exit_code"].is_null());

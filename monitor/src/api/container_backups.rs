@@ -18,6 +18,7 @@
 //! The list answers the settings, the free space where backups go, the
 //! schedules and the job too.
 
+use crate::api::WebError;
 use std::sync::Arc;
 
 use ntex::web::{self, HttpRequest, HttpResponse};
@@ -33,10 +34,10 @@ use crate::stacks::Refusal;
 
 fn refused(r: Refusal) -> HttpResponse {
     let status = ntex::http::StatusCode::from_u16(r.status).unwrap_or(ntex::http::StatusCode::BAD_REQUEST);
-    HttpResponse::build(status).json(&r)
+    HttpResponse::builder(status).json(&r)
 }
 
-pub async fn list(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn list(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     let job = state.container_backups.job().map(|j| j.view(u64::MAX));
     Ok(HttpResponse::Ok().json(&json!({
@@ -66,8 +67,8 @@ fn yes() -> bool {
 pub async fn create(
     req: HttpRequest,
     body: web::types::Json<CreateBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     if body.containers.is_empty() || body.containers.len() > 64 {
         return Ok(HttpResponse::BadRequest().json(&json!({ "error": "invalidContainer" })));
@@ -87,8 +88,8 @@ pub struct JobQuery {
 pub async fn job(
     req: HttpRequest,
     query: web::types::Query<JobQuery>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     match state.container_backups.job() {
         Some(job) => Ok(HttpResponse::Ok().json(&job.view(query.since))),
@@ -96,12 +97,12 @@ pub async fn job(
     }
 }
 
-pub async fn cancel(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn cancel(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     if let Some(job) = state.container_backups.job() {
         job.cancel();
     }
-    Ok(HttpResponse::NoContent().finish())
+    Ok(HttpResponse::NoContent().build())
 }
 
 #[derive(Deserialize, Default)]
@@ -113,8 +114,8 @@ pub async fn restore(
     req: HttpRequest,
     id: web::types::Path<String>,
     body: Option<web::types::Json<PasswordBody>>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     let body = body.map(|b| b.into_inner()).unwrap_or_default();
     require!(reauth(&req, &state, body.current_password.as_deref()).await);
@@ -127,7 +128,7 @@ pub async fn restore(
 /// `GET /container-backups/destinations`: the mounted filesystems backups
 /// may go to (`sbm_parser::storage::backup_destinations`), with what is free
 /// on each. Empty where the disks cannot be read (not Linux, no lsblk).
-pub async fn destinations(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn destinations(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     let found = super::storage::read_view(&state)
         .await
@@ -140,8 +141,8 @@ pub async fn remove(
     req: HttpRequest,
     id: web::types::Path<String>,
     body: Option<web::types::Json<PasswordBody>>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     let body = body.map(|b| b.into_inner()).unwrap_or_default();
     require!(reauth(&req, &state, body.current_password.as_deref()).await);
@@ -151,7 +152,7 @@ pub async fn remove(
                 .detail(format!("container backup {id} removed"))
                 .record(&state.db)
                 .await;
-            Ok(HttpResponse::NoContent().finish())
+            Ok(HttpResponse::NoContent().build())
         }
         Err(r) => Ok(refused(r)),
     }
@@ -160,8 +161,8 @@ pub async fn remove(
 pub async fn put_settings(
     req: HttpRequest,
     body: web::types::Json<container_backups::Settings>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     match container_backups::set_settings(&state, body.into_inner()).await {
         Ok(settings) => {
@@ -178,8 +179,8 @@ pub async fn put_settings(
 pub async fn add_schedule(
     req: HttpRequest,
     body: web::types::Json<container_backups::NewSchedule>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     match container_backups::add_schedule(&state, body.into_inner()).await {
         Ok(schedule) => Ok(HttpResponse::Created().json(&schedule)),
@@ -190,11 +191,11 @@ pub async fn add_schedule(
 pub async fn remove_schedule(
     req: HttpRequest,
     id: web::types::Path<String>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     match container_backups::remove_schedule(&state, &id).await {
-        Ok(()) => Ok(HttpResponse::NoContent().finish()),
+        Ok(()) => Ok(HttpResponse::NoContent().build()),
         Err(r) => Ok(refused(r)),
     }
 }

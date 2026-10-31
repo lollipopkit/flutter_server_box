@@ -31,6 +31,7 @@
 //! (`sudo_rejected`) rather than as a failed request, since the caller's next
 //! move is to ask for a different one.
 
+use crate::api::WebError;
 use std::sync::Arc;
 
 use ntex::web::{self, HttpRequest, HttpResponse};
@@ -188,8 +189,8 @@ impl ServiceRow {
 pub async fn list(
     req: HttpRequest,
     query: web::types::Query<ServiceQuery>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = machine::gate(&req, &state, "service list").await {
         return Ok(refused);
     }
@@ -200,7 +201,7 @@ pub async fn list(
     // cannot be answered, not one to guess a default for. Refused before
     // anything runs, so a malformed request costs nothing on the machine.
     if part.needs_key() && key.is_none_or(str::is_empty) {
-        return Ok(HttpResponse::BadRequest().finish());
+        return Ok(HttpResponse::BadRequest().build());
     }
 
     // Windows has no shell for these commands and no manager behind them —
@@ -276,8 +277,8 @@ pub async fn list(
 pub async fn act(
     req: HttpRequest,
     body: web::types::Json<ServiceActRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let request = body.into_inner();
     let what = format!("service {} {}", request.action.as_str(), request.key);
     let gated = match machine::gate(&req, &state, &what).await {
@@ -296,12 +297,12 @@ pub async fn act(
 
     if system_type() == SystemType::Windows {
         record(Action::Denied, Outcome::Denied, Some("unsupported platform")).record(&state.db).await;
-        return Ok(HttpResponse::BadRequest().finish());
+        return Ok(HttpResponse::BadRequest().build());
     }
     let (probe, _) = probe(exec).await;
     let Some(manager) = probe.manager_type else {
         record(Action::Denied, Outcome::Denied, Some("unsupported manager")).record(&state.db).await;
-        return Ok(HttpResponse::BadRequest().finish());
+        return Ok(HttpResponse::BadRequest().build());
     };
 
     // Resolved against a listing read now, so a unit the machine no longer
@@ -315,7 +316,7 @@ pub async fn act(
         Some(unit) => unit,
         None => {
             record(Action::Denied, Outcome::Denied, Some("no such unit")).record(&state.db).await;
-            return Ok(HttpResponse::NotFound().finish());
+            return Ok(HttpResponse::NotFound().build());
         }
     };
 

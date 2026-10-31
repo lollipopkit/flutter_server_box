@@ -12,8 +12,8 @@
 //! before each one is checked instead.
 
 use ntex::http::{Method, StatusCode, header};
-use ntex::service::{Middleware, Service, ServiceCtx, cfg::SharedCfg};
-use ntex::web::{ErrorRenderer, HttpResponse, WebRequest, WebResponse};
+use ntex::service::{Ctx, Middleware, Service};
+use ntex::web::{HttpResponse, WebRequest, WebResponse};
 use sbm_parser::protocol;
 
 pub struct Protocol;
@@ -29,10 +29,10 @@ pub fn client_of(req: &ntex::web::HttpRequest) -> u32 {
     req.extensions().get::<ClientProtocol>().map_or(protocol::UNNAMED, |c| c.0)
 }
 
-impl<S> Middleware<S, SharedCfg> for Protocol {
+impl<S, St> Middleware<S, St> for Protocol {
     type Service = ProtocolService<S>;
 
-    fn create(&self, service: S, _: SharedCfg) -> Self::Service {
+    fn create(&self, _: &St, service: S) -> Self::Service {
         ProtocolService { service }
     }
 }
@@ -41,19 +41,18 @@ pub struct ProtocolService<S> {
     service: S,
 }
 
-impl<S, E> Service<WebRequest<E>> for ProtocolService<S>
+impl<S, St, In> Service<St, WebRequest<In>> for ProtocolService<S>
 where
-    S: Service<WebRequest<E>, Response = WebResponse>,
-    E: ErrorRenderer,
+    S: Service<St, WebRequest<In>, Res = WebResponse>,
 {
-    type Response = WebResponse;
+    type Res = WebResponse;
     type Error = S::Error;
 
-    ntex::forward_poll!(service);
-    ntex::forward_ready!(service);
-    ntex::forward_shutdown!(service);
+    ntex::forward_bind!(St, service);
+    ntex::forward_ready!(St, service);
+    ntex::forward_shutdown!(St, service);
 
-    async fn call(&self, req: WebRequest<E>, ctx: ServiceCtx<'_, Self>) -> Result<WebResponse, Self::Error> {
+    async fn call(&self, req: WebRequest<In>, ctx: Ctx<'_, Self, St>) -> Result<WebResponse, Self::Error> {
         let exempt = req.method() == Method::OPTIONS || req.path().ends_with("/health") || is_ws_upgrade(&req);
         if !exempt {
             let named = req.headers().get(protocol::HEADER).map(|v| v.to_str().unwrap_or(""));
@@ -64,7 +63,7 @@ where
             let refusal = match client {
                 None => Some(HttpResponse::BadRequest().json(&serde_json::json!({ "error": "bad_protocol" }))),
                 Some(p) if !protocol::agent_serves(p) => Some(
-                    HttpResponse::build(StatusCode::UPGRADE_REQUIRED).json(&serde_json::json!({
+                    HttpResponse::builder(StatusCode::UPGRADE_REQUIRED).json(&serde_json::json!({
                         "error": "client_too_old",
                         "protocol": protocol::PROTOCOL,
                         "min_client_protocol": protocol::MIN_CLIENT_PROTOCOL,
@@ -82,7 +81,7 @@ where
 
 /// A WebSocket upgrade to one of the `/…/ws` routes. An `Upgrade` header on
 /// any other request exempts nothing.
-fn is_ws_upgrade<E>(req: &WebRequest<E>) -> bool {
+fn is_ws_upgrade<In>(req: &WebRequest<In>) -> bool {
     req.path().ends_with("/ws")
         && req
             .headers()

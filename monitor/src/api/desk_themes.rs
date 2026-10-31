@@ -23,6 +23,7 @@
 //! never names what is fetched: only the catalog's address (compiled in), the
 //! repositories it lists, and the versions those list, all HTTPS, are read.
 
+use crate::api::WebError;
 use crate::utils::lock::RwLockExt;
 use std::collections::HashMap;
 use std::future::Future;
@@ -304,7 +305,7 @@ async fn install_rows(
 // Handlers
 // -----------------------------------------------------------------------------
 
-pub async fn list(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn list(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     let (_, user) = require!(account(&req, &state).await);
     let rows = sqlx::query_as::<_, (String, String, String, String, String)>(
         "SELECT installation_id, theme_id, name, summary, installed_at FROM desk_theme WHERE user_id = ? ORDER BY name",
@@ -333,13 +334,13 @@ pub async fn list(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> 
 pub async fn upload(
     req: HttpRequest,
     mut body: web::types::Payload,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let (_, user) = require!(account(&req, &state).await);
     let mut data = Vec::new();
     while let Some(chunk) = body.next().await {
         let Ok(chunk) = chunk else {
-            return Ok(HttpResponse::BadRequest().finish());
+            return Ok(HttpResponse::BadRequest().build());
         };
         if data.len() + chunk.len() > fl_theme::package::MAX_PACKAGE_BYTES {
             return Ok(HttpResponse::PayloadTooLarge().json(&refused("tooLarge", None)));
@@ -358,8 +359,8 @@ pub async fn upload(
 pub async fn remove(
     req: HttpRequest,
     path: web::types::Path<String>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let (_, user) = require!(account(&req, &state).await);
     let installation = path.into_inner();
     let done = async {
@@ -392,7 +393,7 @@ pub async fn remove(
         Ok(_) => {
             state.blobs.collect_soon(&state.db);
             state.desk.send(DeskEvent::Preferences { user });
-            Ok(HttpResponse::NoContent().finish())
+            Ok(HttpResponse::NoContent().build())
         }
         Err(e) => Ok(super::respond::internal(&e)),
     }
@@ -408,8 +409,8 @@ pub async fn background(
     req: HttpRequest,
     path: web::types::Path<String>,
     query: web::types::Query<VariantQuery>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let (_, user) = require!(account(&req, &state).await);
     let installation = path.into_inner();
     let variant = query.into_inner().variant.unwrap_or_default();
@@ -709,8 +710,8 @@ pub struct StoreQuery {
 pub async fn store(
     req: HttpRequest,
     query: web::types::Query<StoreQuery>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(account(&req, &state).await);
     let refresh = query.refresh.as_deref().is_some_and(|r| r == "1" || r == "true");
     Ok(HttpResponse::Ok().json(&state.themes.view(refresh).await))
@@ -727,8 +728,8 @@ pub struct StoreInstall {
 pub async fn store_install(
     req: HttpRequest,
     body: web::types::Json<StoreInstall>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let (_, user) = require!(account(&req, &state).await);
     let body = body.into_inner();
     let bytes = match state.themes.package(&body.repo, &body.id, &body.version).await {

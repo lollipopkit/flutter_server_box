@@ -15,6 +15,7 @@
 //! caller's next step is to ask for another, and the exit code alone cannot
 //! tell that apart from the machine refusing to power off.
 
+use crate::api::WebError;
 use std::sync::Arc;
 
 use ntex::web::{self, HttpRequest, HttpResponse};
@@ -77,8 +78,8 @@ struct PowerResponse {
 pub async fn power(
     req: HttpRequest,
     body: web::types::Json<PowerRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let action = body.action;
     let what = format!("power {}", action.as_str());
     let gated = match machine::gate(&req, &state, &what).await {
@@ -90,7 +91,7 @@ pub async fn power(
         Ok(cmd) => cmd,
         Err(e) => {
             tracing::warn!("power: could not write the status script: {e}");
-            return Ok(HttpResponse::InternalServerError().finish());
+            return Ok(HttpResponse::InternalServerError().build());
         }
     };
 
@@ -113,7 +114,7 @@ pub async fn power(
                 .detail(format!("{what}: {e}"))
                 .record(&state.db)
                 .await;
-            return Ok(HttpResponse::InternalServerError().finish());
+            return Ok(HttpResponse::InternalServerError().build());
         }
     };
 

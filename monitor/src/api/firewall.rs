@@ -30,6 +30,7 @@
 //!
 //! ufw and firewalld exist nowhere else.
 
+use crate::api::WebError;
 use std::sync::Arc;
 
 use ntex::web::{self, HttpRequest, HttpResponse};
@@ -131,8 +132,8 @@ struct FirewalldView {
 pub async fn read(
     req: HttpRequest,
     body: web::types::Json<ReadRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = machine::gate(&req, &state, "firewall read").await {
         return Ok(refused);
     }
@@ -260,8 +261,8 @@ fn plan_id(plan: &Plan) -> String {
 pub async fn plan(
     req: HttpRequest,
     body: web::types::Json<PlanRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let request = body.into_inner();
     let what = format!("firewall plan {}", request.change.verb());
     if let Err(refused) = machine::gate(&req, &state, &what).await {
@@ -295,8 +296,8 @@ struct ActResponse {
 pub async fn act(
     req: HttpRequest,
     body: web::types::Json<ActRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let request = body.into_inner();
     let what = format!("firewall {}", request.change.verb());
     let gated = match machine::gate(&req, &state, &what).await {

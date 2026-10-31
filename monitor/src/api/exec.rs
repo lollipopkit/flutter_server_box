@@ -16,11 +16,13 @@
 //! same reason: anyone who can open a shell can run anything in it, so
 //! there is one decision here, not two.
 
+use crate::api::WebError;
+use crate::api::json::{ExecLimit, Json};
 use std::collections::HashMap;
 use std::process::Stdio;
 use std::sync::Arc;
 
-use ntex::web::{self, HttpRequest, HttpResponse};
+use ntex::web::{HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWriteExt};
 use tokio::process::Command;
@@ -76,14 +78,14 @@ pub(crate) struct ExecResponse {
 
 pub async fn exec(
     req: HttpRequest,
-    body: web::types::Json<ExecRequest>,
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    body: Json<ExecRequest, ExecLimit>,
+    app_state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let remote_ip = require!(super::machine::gate_as(Kind::Exec, &req, &app_state, "exec").await).remote_ip;
 
     let cmd = body.cmd.clone();
     if cmd.trim().is_empty() {
-        return Ok(HttpResponse::BadRequest().finish());
+        return Ok(HttpResponse::BadRequest().build());
     }
 
     // Logged before it runs and by what it was asked to do, not by what it
@@ -109,7 +111,7 @@ pub async fn exec(
                 .detail(e.to_string())
                 .record(&app_state.db)
                 .await;
-            Ok(HttpResponse::InternalServerError().finish())
+            Ok(HttpResponse::InternalServerError().build())
         }
     }
 }

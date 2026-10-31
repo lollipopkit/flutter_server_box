@@ -103,6 +103,7 @@
   "bgRunNeedsNotification": "Arxa planda işləmək üçün daimi bildiriş lazımdır, lakin tətbiqin bildiriş icazəsi yoxdur. Bildirişlərə icazə vermək üçün toxun.",
   "clearAllStatsContent": "Bütün server əlaqə statistikasını təmizləmək istədiyinə əminsən? Bu əməliyyatı geri qaytarmaq mümkün deyil.",
   "clearAllStatsTitle": "Bütün statistikanı təmizlə",
+  "clearAllSettings": "Bütün parametrləri sil",
   "clearServerStatsContent": "\"{serverName}\" serverinin əlaqə statistikasını təmizləmək istədiyinə əminsən? Bu əməliyyatı geri qaytarmaq mümkün deyil.",
   "clearServerStatsTitle": "{serverName} statistikasını təmizlə",
   "clearThisServerStats": "Bu serverin statistikasını təmizlə",
@@ -2001,5 +2002,7 @@
   "hostCertAuthoritiesTip": "Sertifikatı bunlardan biri tərəfindən imzalanmış hosta soruşmadan etibar edilir, OpenSSH-in @cert-authority kimi; digər hostlar əvvəlki kimi ilk qoşulmada soruşulur. Hostlar * və ? olan, vergüllə ayrılmış şablonlardır, ! istisna edir; 22-dən fərqli port [host]:port kimi müqayisə olunur.",
   "hostCertAuthorityInvalid": "Dəstəklənən SSH açıq açarı deyil (ssh-ed25519, ssh-rsa və ya ecdsa-sha2-*)",
   "hostCertAuthorityNoHosts": "Zəmanət verdiyi hostları daxil edin, məsələn *",
-  "hostCertAuthorityExists": "Artıq siyahıdadır"
+  "hostCertAuthorityExists": "Artıq siyahıdadır",
+  "addToHomeScreen": "Əsas ekrana əlavə et",
+  "transfersActive": "{count} ötürmə"
 }

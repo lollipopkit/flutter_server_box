@@ -6,12 +6,13 @@ mod common;
 use std::sync::Arc;
 
 use ntex::http::Method;
+use ntex::service::map_state_factory;
 use ntex::web::test::{self as web_test, TestServer};
 use ntex::web::{self, App};
 use server_box_monitor::api::auth::generate_token;
 use server_box_monitor::api::desk::{self, DeskEvent, Level, Source};
 use server_box_monitor::api::desk_storage;
-use server_box_monitor::api::server::AppState;
+use server_box_monitor::api::server::{Agent, AppState};
 use server_box_monitor::core::config::Config;
 use server_box_monitor::monitoring::rules::Firing;
 
@@ -32,10 +33,9 @@ async fn state_over(db: sqlx::SqlitePool) -> Arc<AppState> {
 }
 
 async fn server(state: Arc<AppState>) -> TestServer {
-    web_test::server(move || {
+    web_test::server(async move |_| {
         let state = state.clone();
-        async move {
-            App::new().state(state).service(
+        map_state_factory(Agent(state), App::<Agent>::new().service(
                 web::scope("/api/v1")
                     .middleware(server_box_monitor::api::unread_body::CloseUnreadBody)
                     .route("/desk", web::get().to(desk::get))
@@ -62,15 +62,12 @@ async fn server(state: Arc<AppState>) -> TestServer {
                     .route("/desk/events", web::get().to(desk::events))
                     .service(
                         web::resource("/desk/apps/{app}/storage")
-                            .state(web::types::JsonConfig::default().limit(desk_storage::MAX_BODY))
                             .route(web::get().to(desk_storage::list))
                             .route(web::put().to(desk_storage::put))
                             .route(web::delete().to(desk_storage::remove)),
                     ),
-            )
-        }
+            ))
     })
-    .await
 }
 
 /// One request as [user], and its status and body (JSON, or the raw bytes as

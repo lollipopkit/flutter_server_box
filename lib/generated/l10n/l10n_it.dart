@@ -378,6 +378,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get clearAllStatsTitle => 'Cancella tutte le statistiche';
 
   @override
+  String get clearAllSettings => 'Cancella tutte le impostazioni';
+
+  @override
   String clearServerStatsContent(String serverName) {
     return 'Sei sicuro di voler cancellare le statistiche di connessione per il server \"$serverName\"? Questa azione non può essere annullata.';
   }
@@ -7208,4 +7211,18 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get hostCertAuthorityExists => 'Già nell\'elenco';
+
+  @override
+  String get addToHomeScreen => 'Aggiungi alla schermata Home';
+
+  @override
+  String transfersActive(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count trasferimenti',
+      one: '1 trasferimento',
+    );
+    return '$_temp0';
+  }
 }

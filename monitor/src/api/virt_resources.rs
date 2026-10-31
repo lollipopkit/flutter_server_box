@@ -22,6 +22,7 @@
 //! `virt` to see and change, as for power. A host's failure is answered 200
 //! with `error`, as in `api::virt`.
 
+use crate::api::WebError;
 use std::sync::Arc;
 
 use ntex::web::{self, HttpRequest, HttpResponse};
@@ -62,15 +63,15 @@ pub(crate) fn password(p: &Option<String>) -> Option<&str> {
     p.as_deref().filter(|p| !p.is_empty())
 }
 
-fn answer(value: serde_json::Value) -> Result<HttpResponse, web::Error> {
+fn answer(value: serde_json::Value) -> Result<HttpResponse, WebError> {
     Ok(HttpResponse::Ok().json(&value))
 }
 
 pub async fn storage(
     req: HttpRequest,
     body: Option<web::types::Json<HostRequest>>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = machine::gate(&req, &state, "virt storage").await {
         return Ok(refused);
     }
@@ -109,8 +110,8 @@ pub async fn storage(
 pub async fn volumes(
     req: HttpRequest,
     body: web::types::Json<VolumesRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = machine::gate(&req, &state, "virt volumes").await {
         return Ok(refused);
     }
@@ -138,8 +139,8 @@ pub async fn volumes(
 pub async fn networks(
     req: HttpRequest,
     body: Option<web::types::Json<HostRequest>>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = machine::gate(&req, &state, "virt networks").await {
         return Ok(refused);
     }
@@ -167,8 +168,8 @@ pub async fn networks(
 pub async fn manage(
     req: HttpRequest,
     body: web::types::Json<ManageRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let request = body.into_inner();
     let what = format!("virt {}", request.change.describe());
     let gated = match machine::gate(&req, &state, &what).await {

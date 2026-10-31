@@ -35,10 +35,7 @@ extension _AI on _AppSettingsPageState {
         title: Text(label),
         subtitle: Text(l10n.agentProvidersTip, style: UIs.textGrey),
         trailing: const Icon(Icons.keyboard_arrow_right),
-        onTap: () => AgentProvidersPage.route.go(
-          context,
-          target: _SettingsWidth.pageTarget(context),
-        ),
+        onTap: () => AgentProvidersPage.route.go(context),
       ),
       keywords: '${l10n.agentProvidersTip} ${libL10n.apiKey} API model',
     );
@@ -53,10 +50,7 @@ extension _AI on _AppSettingsPageState {
         title: Text(label),
         subtitle: Text(l10n.agentToolsTip, style: UIs.textGrey),
         trailing: const Icon(Icons.keyboard_arrow_right),
-        onTap: () => AgentToolsPage.route.go(
-          context,
-          target: _SettingsWidth.pageTarget(context),
-        ),
+        onTap: () => AgentToolsPage.route.go(context),
       ),
       keywords: '${l10n.agentToolsTip} MCP',
     );
@@ -71,10 +65,7 @@ extension _AI on _AppSettingsPageState {
         title: Text(label),
         subtitle: Text(l10n.agentSkillsTip, style: UIs.textGrey),
         trailing: const Icon(Icons.keyboard_arrow_right),
-        onTap: () => AgentSkillsPage.route.go(
-          context,
-          target: _SettingsWidth.pageTarget(context),
-        ),
+        onTap: () => AgentSkillsPage.route.go(context),
       ),
       keywords: '${l10n.agentSkillsTip} SKILL.md',
     );

@@ -13,13 +13,14 @@ use std::pin::Pin;
 use std::sync::{Arc, Mutex};
 
 use ntex::http::Method;
+use ntex::service::map_state_factory;
 use ntex::web::test::{self as web_test, TestServer};
 use ntex::web::{self, App};
 use serde_json::{Value, json};
 use server_box_monitor::api::auth::generate_token;
 use server_box_monitor::api::desk::{self};
 use server_box_monitor::api::desk_themes::{self, Fetch};
-use server_box_monitor::api::server::AppState;
+use server_box_monitor::api::server::{Agent, AppState};
 use server_box_monitor::core::config::Config;
 
 const SECRET: &str = "test-secret-that-is-long-enough-32ch";
@@ -71,10 +72,9 @@ async fn state() -> Arc<AppState> {
 }
 
 async fn server(state: Arc<AppState>) -> TestServer {
-    web_test::server(move || {
+    web_test::server(async move |_| {
         let state = state.clone();
-        async move {
-            App::new().state(state).service(
+        map_state_factory(Agent(state), App::<Agent>::new().service(
                 web::scope("/api/v1")
                     .route("/desk", web::get().to(desk::get))
                     .route("/desk/preferences", web::put().to(desk::put_preferences))
@@ -87,10 +87,8 @@ async fn server(state: Arc<AppState>) -> TestServer {
                     .route("/desk/themes/store/install", web::post().to(desk_themes::store_install))
                     .route("/desk/themes/{installation}", web::delete().to(desk_themes::remove))
                     .route("/desk/themes/{installation}/background", web::get().to(desk_themes::background)),
-            )
-        }
+            ))
     })
-    .await
 }
 
 async fn call(srv: &TestServer, method: Method, path: &str, body: Option<Vec<u8>>) -> (u16, Value, Vec<u8>) {

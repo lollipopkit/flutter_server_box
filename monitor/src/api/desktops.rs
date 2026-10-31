@@ -19,6 +19,7 @@
 //! route is only worth anything through the relay, which checks the same
 //! rule again when the socket opens.
 
+use crate::api::WebError;
 use std::collections::HashSet;
 use std::sync::Arc;
 
@@ -103,8 +104,8 @@ impl Serialize for Refusal {
 
 pub async fn list(
     req: HttpRequest,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = machine::gate(&req, &state, "desktops list").await {
         return Ok(refused);
     }
@@ -117,8 +118,8 @@ pub async fn list(
 pub async fn replace(
     req: HttpRequest,
     body: web::types::Json<ReplaceRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let gated = match machine::gate(&req, &state, "desktops replace").await {
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),

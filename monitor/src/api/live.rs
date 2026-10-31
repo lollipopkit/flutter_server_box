@@ -15,6 +15,7 @@
 //! Acting rule (`authz::acting_caller`): the list names addresses, and
 //! ending something is acting. Every ending is audited (`Kind::Admin`).
 
+use crate::api::WebError;
 use std::sync::Arc;
 
 use ntex::http::StatusCode;
@@ -45,7 +46,7 @@ pub struct Live {
     devices: Vec<LoginDevice>,
 }
 
-pub async fn list(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn list(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     if let Err(refused) = authz::acting_caller(&req, &state).await {
         return Ok(refused);
     }
@@ -74,8 +75,8 @@ pub async fn list(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> 
 pub async fn end_session(
     req: HttpRequest,
     path: web::types::Path<String>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = authz::acting_caller(&req, &state).await {
         return Ok(refused);
     }
@@ -86,8 +87,8 @@ pub async fn end_session(
 pub async fn end_connection(
     req: HttpRequest,
     path: web::types::Path<String>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = authz::acting_caller(&req, &state).await {
         return Ok(refused);
     }
@@ -98,8 +99,8 @@ pub async fn end_connection(
 pub async fn forget_device(
     req: HttpRequest,
     path: web::types::Path<i64>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = authz::acting_caller(&req, &state).await {
         return Ok(refused);
     }
@@ -116,5 +117,5 @@ async fn answer(req: &HttpRequest, state: &AppState, done: bool, what: &str) -> 
         return authz::error(StatusCode::NOT_FOUND, "not_found", "Nothing open by that id");
     }
     super::admin::audit(req, state, Action::Close, what.to_string()).await;
-    HttpResponse::NoContent().finish()
+    HttpResponse::NoContent().build()
 }

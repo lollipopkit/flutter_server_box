@@ -377,6 +377,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get clearAllStatsTitle => 'Очистити всю статистику';
 
   @override
+  String get clearAllSettings => 'Скинути всі налаштування';
+
+  @override
   String clearServerStatsContent(String serverName) {
     return 'Ви впевнені, що хочете очистити статистику з\'єднань для сервера \"$serverName\"? Цю дію не можна скасувати.';
   }
@@ -7184,4 +7187,20 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get hostCertAuthorityExists => 'Уже в списку';
+
+  @override
+  String get addToHomeScreen => 'Додати на головний екран';
+
+  @override
+  String transfersActive(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count передачі',
+      many: '$count передач',
+      few: '$count передачі',
+      one: '$count передача',
+    );
+    return '$_temp0';
+  }
 }

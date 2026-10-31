@@ -28,6 +28,7 @@
 //! is reached and its pinned certificate decide where the agent sends a
 //! password or a token.
 
+use crate::api::WebError;
 use crate::db::sealed::{self, Sealer};
 use crate::utils::lock::LockExt;
 use std::sync::Arc;
@@ -260,8 +261,8 @@ impl ConsoleAnswer {
 pub async fn load(
     req: HttpRequest,
     body: Option<web::types::Json<LoadRequest>>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = machine::gate(&req, &state, "virt load").await {
         return Ok(refused);
     }
@@ -331,8 +332,8 @@ pub async fn load(
 pub async fn power(
     req: HttpRequest,
     body: web::types::Json<PowerRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let request = body.into_inner();
     let action = serde_json::to_value(request.action).ok().and_then(|v| v.as_str().map(str::to_owned));
     let what = format!("virt {} {}", action.as_deref().unwrap_or("?"), request.guest);
@@ -394,8 +395,8 @@ pub(crate) async fn guest_of(state: &AppState, backend: &Backend, id: &str, pass
 pub async fn detail(
     req: HttpRequest,
     body: web::types::Json<GuestRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = machine::gate(&req, &state, "virt detail").await {
         return Ok(refused);
     }
@@ -427,8 +428,8 @@ pub async fn detail(
 pub async fn history(
     req: HttpRequest,
     body: web::types::Json<HistoryRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = machine::gate(&req, &state, "virt history").await {
         return Ok(refused);
     }
@@ -456,8 +457,8 @@ pub async fn history(
 pub async fn console(
     req: HttpRequest,
     body: web::types::Json<ConsoleRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let request = body.into_inner();
     let kind = if request.kind == ConsoleKind::Vnc { "vnc" } else { "text" };
     let what = format!("virt console {kind} {}", request.guest);
@@ -583,8 +584,8 @@ pub struct DiffRequest {
 pub async fn snapshots(
     req: HttpRequest,
     body: web::types::Json<GuestRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = machine::gate(&req, &state, "virt snapshots").await {
         return Ok(refused);
     }
@@ -661,8 +662,8 @@ pub(crate) async fn libvirt_chain(
 pub async fn snapshot(
     req: HttpRequest,
     body: web::types::Json<SnapshotRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let request = body.into_inner();
     let (verb, name) = match &request.op {
         SnapshotOp::Create { name, .. } => ("create", name),
@@ -783,8 +784,8 @@ async fn libvirt_snapshot(state: &AppState, guest: &Guest, op: &SnapshotOp, pass
 pub async fn snapshot_diff(
     req: HttpRequest,
     body: web::types::Json<DiffRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = machine::gate(&req, &state, "virt snapshot diff").await {
         return Ok(refused);
     }
@@ -1000,8 +1001,8 @@ async fn pve_client(state: &AppState) -> Result<Option<Arc<Client>>, sqlx::Error
 
 pub async fn pve_get(
     req: HttpRequest,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = machine::gate(&req, &state, "virt pve").await {
         return Ok(refused);
     }
@@ -1041,8 +1042,8 @@ fn view(row: Option<Row>, sealer: &Sealer) -> PveView {
 pub async fn pve_put(
     req: HttpRequest,
     body: web::types::Json<PveInput>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = authz::acting_caller(&req, &state).await {
         return Ok(refused);
     }
@@ -1072,8 +1073,8 @@ pub async fn pve_put(
 
 pub async fn pve_delete(
     req: HttpRequest,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = authz::acting_caller(&req, &state).await {
         return Ok(refused);
     }
@@ -1098,8 +1099,8 @@ pub async fn pve_delete(
 pub async fn pve_cert(
     req: HttpRequest,
     body: web::types::Json<CertRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = authz::acting_caller(&req, &state).await {
         return Ok(refused);
     }
@@ -1135,8 +1136,8 @@ pub async fn pve_cert(
 pub async fn pve_tfa(
     req: HttpRequest,
     body: web::types::Json<TfaRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = machine::gate(&req, &state, "virt pve tfa").await {
         return Ok(refused);
     }

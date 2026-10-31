@@ -62,6 +62,7 @@
   "bgRunNeedsNotification": "Correr em segundo plano precisa de uma notificação permanente, e esta app não tem permissão de notificações. Toca para a conceder.",
   "clearAllStatsContent": "Tem certeza de que deseja limpar todas as estatísticas de conexão do servidor? Esta ação não pode ser desfeita.",
   "clearAllStatsTitle": "Limpar todas as estatísticas",
+  "clearAllSettings": "Limpar todas as configurações",
   "clearServerStatsContent": "Tem certeza de que deseja limpar as estatísticas de conexão para o servidor \"{serverName}\"? Esta ação não pode ser desfeita.",
   "clearServerStatsTitle": "Limpar estatísticas de {serverName}",
   "clearThisServerStats": "Limpar estatísticas deste servidor",
@@ -2001,5 +2002,7 @@
   "hostCertAuthoritiesTip": "Um host cujo certificado foi assinado por uma destas é confiável sem perguntar, como no @cert-authority do OpenSSH; os demais hosts são perguntados na primeira conexão, como antes. Hosts são padrões separados por vírgula com * e ?, e ! para excluir; uma porta diferente de 22 é comparada como [host]:port.",
   "hostCertAuthorityInvalid": "Não é uma chave pública SSH compatível (ssh-ed25519, ssh-rsa ou ecdsa-sha2-*)",
   "hostCertAuthorityNoHosts": "Informe os hosts que ela garante, por exemplo *",
-  "hostCertAuthorityExists": "Já está na lista"
+  "hostCertAuthorityExists": "Já está na lista",
+  "addToHomeScreen": "Adicionar à tela inicial",
+  "transfersActive": "{count, plural, =1{1 transferência} other{{count} transferências}}"
 }

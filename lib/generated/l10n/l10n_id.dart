@@ -376,6 +376,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get clearAllStatsTitle => 'Hapus Semua Statistik';
 
   @override
+  String get clearAllSettings => 'Hapus semua pengaturan';
+
+  @override
   String clearServerStatsContent(String serverName) {
     return 'Apakah Anda yakin ingin menghapus statistik koneksi untuk server \"$serverName\"? Tindakan ini tidak dapat dibatalkan.';
   }
@@ -7138,4 +7141,12 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get hostCertAuthorityExists => 'Sudah ada di daftar';
+
+  @override
+  String get addToHomeScreen => 'Tambahkan ke layar utama';
+
+  @override
+  String transfersActive(int count) {
+    return '$count transfer';
+  }
 }

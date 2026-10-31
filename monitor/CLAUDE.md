@@ -46,7 +46,7 @@ cargo sqlx migrate run / cargo sqlx prepare # migrations; offline query cache in
 ## Rules every endpoint follows
 
 - **A breaking API change raises `sbm_parser::protocol::PROTOCOL`** and keeps answering a client at `PROTOCOL - 1` in its shape (TODO-marked shims in `api::compat_v1`); additions go in `features`. The panel and the native widgets write the number themselves: `crates/sbm_parser/tests/protocol_clients.rs` keeps them equal.
-- Machine endpoints: the command is built in Rust and run through `api::exec::run`, so `[remote_access.exec]` (timeout, output cap, body limit) bounds it; those limits are the operator's, never raised per request. Work that must outlive them starts detached and is polled.
+- Machine endpoints: the command is built in Rust and run through `api::exec::run`, so `[remote_access.exec]` (timeout, output cap, body limit) bounds it; those limits are the operator's, never raised per request. A body limit is `api::json::Json<_, ExecLimit>` (ntex's `JsonConfig` is one per app; `Json<_, Max<N>>` gives the other big-body endpoints theirs). Work that must outlive them starts detached and is polled.
 - `machine::gate` is the one place the transport rule is asked and a refusal audited; refusals are `403 {"error":"forbidden"}`. Audit rows never hold a password, value or output.
 - Root: `machine::as_root` (`sudo -S` with only the password on stdin, the script in `$SBM_ROOT_SCRIPT`); a script carrying a secret uses `machine::as_root_private` (0600 file). A rejected password is `sudo_rejected`.
 - `machine::FEATURES` is every endpoint and `/capabilities` `features`; a client offers a page only when listed.
@@ -60,7 +60,7 @@ cargo sqlx migrate run / cargo sqlx prepare # migrations; offline query cache in
 
 ## WebSocket traps (locked by tests)
 
-- **Upgrades go through `api/ws/upgrade.rs`, not `ntex::web::ws::start`**: ntex caps frames at 64 KiB with no setting (TODO back when configurable).
+- **Upgrades go through `api/ws/upgrade.rs`, not `ntex::web::ws::start`**: ntex caps frames at 64 KiB with no setting (TODO back when configurable). A relay whose readiness is room in a queue uses `QueueGate`: ntex-service 5 keeps a ready answer until notified.
 - **Upgrade auth is a single-use ticket** (`api/ws/ticket.rs`): purpose-bound, ~30 s, burned even on a wrong secret.
 - **`is_secure_transport` treats loopback as secure** and never reads `X-Forwarded-Proto`.
 - **Terminal sessions outlive the socket**: the handle is a 256-bit bearer capability, memory-only; replay is incremental (`ready.since`). Terminal tests answer fish's DA and ConPTY's `ESC[6n` queries.

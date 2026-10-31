@@ -62,6 +62,7 @@
   "bgRunNeedsNotification": "Op de achtergrond draaien vereist een permanente melding, en deze app heeft geen meldingsrechten. Tik om ze toe te staan.",
   "clearAllStatsContent": "Weet u zeker dat u alle serververbindingsstatistieken wilt wissen? Deze actie kan niet ongedaan worden gemaakt.",
   "clearAllStatsTitle": "Alle statistieken wissen",
+  "clearAllSettings": "Alle instellingen wissen",
   "clearServerStatsContent": "Weet u zeker dat u de verbindingsstatistieken voor server \"{serverName}\" wilt wissen? Deze actie kan niet ongedaan worden gemaakt.",
   "clearServerStatsTitle": "Statistieken van {serverName} wissen",
   "clearThisServerStats": "Statistieken van deze server wissen",
@@ -2001,5 +2002,7 @@
   "hostCertAuthoritiesTip": "Een host waarvan het certificaat door een van deze is ondertekend, wordt zonder vragen vertrouwd, zoals met @cert-authority van OpenSSH; andere hosts worden zoals voorheen bij de eerste verbinding gevraagd. Hosts zijn door komma's gescheiden patronen met * en ?, en ! om uit te sluiten; een andere poort dan 22 wordt vergeleken als [host]:port.",
   "hostCertAuthorityInvalid": "Geen ondersteunde openbare SSH-sleutel (ssh-ed25519, ssh-rsa of ecdsa-sha2-*)",
   "hostCertAuthorityNoHosts": "Vul de hosts in waarvoor ze instaat, bijvoorbeeld *",
-  "hostCertAuthorityExists": "Staat al in de lijst"
+  "hostCertAuthorityExists": "Staat al in de lijst",
+  "addToHomeScreen": "Toevoegen aan startscherm",
+  "transfersActive": "{count, plural, =1{1 overdracht} other{{count} overdrachten}}"
 }

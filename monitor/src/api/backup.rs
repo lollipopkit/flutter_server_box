@@ -16,6 +16,7 @@
 //! operator's servers and keys, encrypted or not, and replacing it is
 //! replacing what every synced device merges next.
 
+use crate::api::WebError;
 use std::sync::Arc;
 
 use futures::StreamExt;
@@ -88,8 +89,8 @@ async fn record(state: &AppState, req: &HttpRequest, outcome: Outcome, detail: S
 
 pub async fn list(
     req: HttpRequest,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = authz::acting_caller(&req, &state).await {
         return Ok(refused);
     }
@@ -103,8 +104,8 @@ pub async fn list(
 pub async fn download(
     req: HttpRequest,
     query: web::types::Query<NameQuery>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = authz::acting_caller(&req, &state).await {
         return Ok(refused);
     }
@@ -139,8 +140,8 @@ pub async fn upload(
     req: HttpRequest,
     query: web::types::Query<NameQuery>,
     mut body: web::types::Payload,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = authz::acting_caller(&req, &state).await {
         discard(&mut body).await;
         return Ok(refused);
@@ -156,7 +157,7 @@ pub async fn upload(
         // Nothing to [`discard`] here: ntex fails the payload only as the
         // connection ends (peer gone, broken framing, a read timeout).
         let Ok(chunk) = chunk else {
-            return Ok(HttpResponse::BadRequest().finish());
+            return Ok(HttpResponse::BadRequest().build());
         };
         if (data.len() + chunk.len()) as u64 > MAX_BYTES {
             drop(data);
@@ -205,8 +206,8 @@ async fn discard(body: &mut web::types::Payload) {
 pub async fn remove(
     req: HttpRequest,
     query: web::types::Query<NameQuery>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = authz::acting_caller(&req, &state).await {
         return Ok(refused);
     }
@@ -224,7 +225,7 @@ pub async fn remove(
         Ok(_) => {
             state.blobs.collect_soon(&state.db);
             record(&state, &req, Outcome::Ok, format!("backup remove {}", query.name)).await;
-            Ok(HttpResponse::NoContent().finish())
+            Ok(HttpResponse::NoContent().build())
         }
         Err(e) => Ok(super::respond::internal(&e)),
     }

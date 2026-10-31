@@ -196,10 +196,11 @@ mod over_http {
 
     use std::sync::{Arc, Once};
 
+    use ntex::service::map_state_factory;
     use ntex::web::test::{self as web_test, TestServer};
     use ntex::web::App;
     use server_box_monitor::api::auth::generate_token;
-    use server_box_monitor::api::server::{AppState, configure_api};
+    use server_box_monitor::api::server::{Agent, AppState, configure_api};
     use server_box_monitor::core::config::{Config, ServerConfig, TlsConfig};
 
     use super::common;
@@ -239,14 +240,10 @@ mod over_http {
         remote.allow_insecure = true;
         config.remote_access = Some(remote);
         let state: Arc<AppState> = common::owned_state(config).await;
-        web_test::server(move || {
+        web_test::server(async move |_| {
             let state = state.clone();
-            async move {
-                let limit = state.remote_access.exec.max_request_bytes;
-                App::new().state(state).configure(configure_api(limit))
-            }
+            map_state_factory(Agent(state), App::<Agent>::new().configure(configure_api))
         })
-        .await
     }
 
     fn token() -> String {

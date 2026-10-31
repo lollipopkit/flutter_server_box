@@ -16,11 +16,12 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use ntex::http::Method;
+use ntex::service::map_state_factory;
 use ntex::web::test::{self as web_test, TestServer};
 use ntex::web::{self, App};
 use serde_json::{Value, json};
 use server_box_monitor::api::auth::generate_token;
-use server_box_monitor::api::server::AppState;
+use server_box_monitor::api::server::{Agent, AppState};
 use server_box_monitor::api::shares;
 use server_box_monitor::core::config::Config;
 
@@ -32,20 +33,17 @@ async fn setup() -> TestServer {
     let config = Config { jwt_secret: Some(SECRET.to_string()), ..Default::default() };
     common::add_owner(&db).await;
     let state: Arc<AppState> = AppState::new(Arc::new(config), db);
-    web_test::server(move || {
+    web_test::server(async move |_| {
         let state = state.clone();
-        async move {
-            App::new().state(state).service(
+        map_state_factory(Agent(state), App::<Agent>::new().service(
                 web::scope("/api/v1")
                     .service(web::resource("/shares").route(web::get().to(shares::view)))
                     .service(web::resource("/shares/smb").route(web::put().to(shares::set_smb)))
                     .service(web::resource("/shares/nfs").route(web::put().to(shares::set_nfs)))
                     .service(web::resource("/shares/smb/password").route(web::post().to(shares::smb_password)))
                     .service(web::resource("/shares/connections").route(web::post().to(shares::connections))),
-            )
-        }
+            ))
     })
-    .await
 }
 
 async fn call(srv: &TestServer, method: Method, path: &str, body: Option<Value>) -> (u16, Value) {

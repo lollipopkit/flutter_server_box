@@ -103,6 +103,7 @@
   "bgRunNeedsNotification": "背景執行需要顯示常駐通知，但 App 尚未取得通知權限。點一下即可授權。",
   "clearAllStatsContent": "確定要清空所有伺服器的連線統計資料嗎？此操作無法撤銷。",
   "clearAllStatsTitle": "清空所有統計",
+  "clearAllSettings": "清除所有設定",
   "clearServerStatsContent": "確定要清空伺服器 \"{serverName}\" 的連線統計資料嗎？此操作無法撤銷。",
   "clearServerStatsTitle": "清空 {serverName} 統計",
   "clearThisServerStats": "清空此伺服器統計",
@@ -2001,5 +2002,7 @@
   "hostCertAuthoritiesTip": "由這些 CA 簽發憑證的主機將直接被信任，不再詢問，等同於 OpenSSH 的 @cert-authority；其他主機仍在首次連線時詢問。主機為逗號分隔的比對規則，支援 * 和 ?，以 ! 排除；非 22 連接埠按 [host]:port 比對。",
   "hostCertAuthorityInvalid": "不是支援的 SSH 公鑰（ssh-ed25519、ssh-rsa 或 ecdsa-sha2-*）",
   "hostCertAuthorityNoHosts": "請填寫它擔保的主機，例如 *",
-  "hostCertAuthorityExists": "已在清單中"
+  "hostCertAuthorityExists": "已在清單中",
+  "addToHomeScreen": "加入主畫面",
+  "transfersActive": "{count} 個傳輸"
 }

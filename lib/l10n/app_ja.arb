@@ -62,6 +62,7 @@
   "bgRunNeedsNotification": "バックグラウンド実行には常駐通知が必要ですが、このアプリには通知の許可がありません。タップして通知を許可してください。",
   "clearAllStatsContent": "すべてのサーバー接続統計を削除してもよろしいですか？この操作は元に戻せません。",
   "clearAllStatsTitle": "すべての統計をクリア",
+  "clearAllSettings": "すべての設定を消去",
   "clearServerStatsContent": "サーバー\"{serverName}\"の接続統計を削除してもよろしいですか？この操作は元に戻せません。",
   "clearServerStatsTitle": "{serverName}の統計をクリア",
   "clearThisServerStats": "このサーバーの統計をクリア",
@@ -2001,5 +2002,7 @@
   "hostCertAuthoritiesTip": "これらの認証局が署名した証明書を持つホストは、確認なしで信頼されます（OpenSSH の @cert-authority と同じ）。その他のホストは従来どおり初回接続時に確認します。ホストはカンマ区切りのパターンで、* と ? が使え、! で除外します。22 以外のポートは [host]:port で照合します。",
   "hostCertAuthorityInvalid": "対応していない SSH 公開鍵です（ssh-ed25519、ssh-rsa、ecdsa-sha2-*）",
   "hostCertAuthorityNoHosts": "保証するホストを入力してください（例: *）",
-  "hostCertAuthorityExists": "すでに一覧にあります"
+  "hostCertAuthorityExists": "すでに一覧にあります",
+  "addToHomeScreen": "ホーム画面に追加",
+  "transfersActive": "{count} 件の転送"
 }

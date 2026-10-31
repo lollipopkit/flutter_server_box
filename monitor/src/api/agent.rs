@@ -36,6 +36,8 @@
 //! The transport rule, checked here per request and by the tools before every
 //! command (`agent_mode`).
 
+use crate::api::WebError;
+use crate::api::json::{Body, Json, Max};
 use std::sync::Arc;
 
 use futures::StreamExt as _;
@@ -48,7 +50,7 @@ use tokio::sync::broadcast;
 use super::authz::{self, Caller};
 use super::server::AppState;
 use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
-use crate::agent_mode::files::FileError;
+use crate::agent_mode::files::{self, FileError};
 use crate::agent_mode::{Answer, FlowError, MAX_PROMPT, NewTask, SearchKind, config, first_line, permissions};
 use fl_pi_llm::host::memory::{self, MemoryError};
 
@@ -79,7 +81,7 @@ fn refused(e: FlowError) -> HttpResponse {
             StatusCode::INTERNAL_SERVER_ERROR
         }
     };
-    HttpResponse::build(status).json(&serde_json::json!({ "error": e.code() }))
+    HttpResponse::builder(status).json(&serde_json::json!({ "error": e.code() }))
 }
 
 fn valid_text(text: &str) -> bool {
@@ -93,8 +95,8 @@ fn bad(code: &str) -> HttpResponse {
 pub async fn list(
     req: HttpRequest,
     query: web::types::Query<crate::agent_mode::ListQuery>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let (_, user, _) = require!(shell(&req, &state).await);
     let settings = match config::load(&state.db).await {
         Ok(s) => s,
@@ -136,7 +138,7 @@ pub struct Start {
     thinking_level: Option<String>,
 }
 
-pub async fn start(req: HttpRequest, body: web::types::Json<Start>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn start(req: HttpRequest, body: Json<Start, Max<MAX_REQUEST>>, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     let (_, user, secure) = require!(shell(&req, &state).await);
     let Start { prompt, mode, files, model, thinking_level } = body.into_inner();
     let choice = crate::agent_mode::TaskChoice { model, thinking_level };
@@ -147,7 +149,6 @@ pub async fn start(req: HttpRequest, body: web::types::Json<Start>, state: web::
     if files.len() > crate::agent_mode::files::MAX_PER_TASK {
         return Ok(bad("tooManyFiles"));
     }
-    let state = state.get_ref().clone();
     match state.agent.start(&state, user, secure, NewTask { prompt, mode, files, choice }).await {
         Ok(view) => {
             Event::new(Kind::Agent, Action::Open, Outcome::Ok)
@@ -171,9 +172,9 @@ pub struct Upload {
 pub async fn upload(
     req: HttpRequest,
     query: web::types::Query<Upload>,
-    body: ntex::util::Bytes,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    body: Body<Max<{ files::MAX_BYTES }>>,
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let (_, user, _) = require!(shell(&req, &state).await);
     let mime = req.headers().get("content-type").and_then(|v| v.to_str().ok()).unwrap_or("");
     match state.agent.files.put(user, &query.name, mime, &body).await {
@@ -186,18 +187,17 @@ pub async fn upload(
     }
 }
 
-pub async fn discard(req: HttpRequest, id: web::types::Path<String>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn discard(req: HttpRequest, id: web::types::Path<String>, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     let (_, user, _) = require!(shell(&req, &state).await);
     if state.agent.files.discard(user, &id).await {
-        Ok(HttpResponse::NoContent().finish())
+        Ok(HttpResponse::NoContent().build())
     } else {
         Ok(refused(FlowError::NotFound))
     }
 }
 
-pub async fn detail(req: HttpRequest, id: web::types::Path<String>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn detail(req: HttpRequest, id: web::types::Path<String>, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     let (_, user, _) = require!(shell(&req, &state).await);
-    let state = state.get_ref().clone();
     match state.agent.detail(&state, user, &id).await {
         Ok(Some(v)) => Ok(HttpResponse::Ok().json(&v)),
         Ok(None) => Ok(refused(FlowError::NotFound)),
@@ -219,7 +219,7 @@ pub struct Reply {
     thinking_level: Option<String>,
 }
 
-pub async fn reply(req: HttpRequest, id: web::types::Path<String>, body: web::types::Json<Reply>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn reply(req: HttpRequest, id: web::types::Path<String>, body: Json<Reply, Max<MAX_REQUEST>>, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     let (_, user, secure) = require!(shell(&req, &state).await);
     let Reply { text, files, model, thinking_level } = body.into_inner();
     let choice = crate::agent_mode::TaskChoice { model, thinking_level };
@@ -229,14 +229,13 @@ pub async fn reply(req: HttpRequest, id: web::types::Path<String>, body: web::ty
     if files.len() > crate::agent_mode::files::MAX_PER_TASK {
         return Ok(bad("tooManyFiles"));
     }
-    let state = state.get_ref().clone();
     match state.agent.reply(&state, user, secure, &id, text, files, choice).await {
         Ok(view) => Ok(HttpResponse::Ok().json(&view)),
         Err(e) => Ok(refused(e)),
     }
 }
 
-pub async fn answer(req: HttpRequest, id: web::types::Path<String>, body: web::types::Json<Answer>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn answer(req: HttpRequest, id: web::types::Path<String>, body: web::types::Json<Answer>, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     let (_, user, secure) = require!(shell(&req, &state).await);
     let mut answer = body.into_inner();
     let action = answer.action.clone();
@@ -274,36 +273,34 @@ pub async fn answer(req: HttpRequest, id: web::types::Path<String>, body: web::t
                 .detail(format!("task {} answer {}", id.as_str(), if action.len() <= 16 { action.as_str() } else { "?" }))
                 .record(&state.db)
                 .await;
-            Ok(HttpResponse::NoContent().finish())
+            Ok(HttpResponse::NoContent().build())
         }
         Err(e) => Ok(refused(e)),
     }
 }
 
-pub async fn stop(req: HttpRequest, id: web::types::Path<String>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn stop(req: HttpRequest, id: web::types::Path<String>, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     let (_, user, _) = require!(shell(&req, &state).await);
-    let state = state.get_ref().clone();
     match state.agent.stop(&state, user, &id).await {
-        Ok(()) => Ok(HttpResponse::NoContent().finish()),
+        Ok(()) => Ok(HttpResponse::NoContent().build()),
         Err(e) => Ok(refused(e)),
     }
 }
 
-pub async fn remove(req: HttpRequest, id: web::types::Path<String>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn remove(req: HttpRequest, id: web::types::Path<String>, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     let (_, user, _) = require!(shell(&req, &state).await);
     match state.agent.remove(user, &id).await {
-        Ok(()) => Ok(HttpResponse::NoContent().finish()),
+        Ok(()) => Ok(HttpResponse::NoContent().build()),
         Err(e) => Ok(refused(e)),
     }
 }
 
 /// `text/event-stream`, one `data:` line of JSON per event. Ends when the
 /// account's password changes, it is gone, or the link may no longer act.
-pub async fn events(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn events(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     let (caller, user, secure) = require!(shell(&req, &state).await);
     let mut rx = state.agent.subscribe();
     let mut changes = state.password_changed.subscribe();
-    let state = state.get_ref().clone();
     let stream = async_stream::stream! {
         yield Ok::<_, std::io::Error>(Bytes::from_static(b": ok\n\n"));
         let mut beat = tokio::time::interval(HEARTBEAT);
@@ -343,7 +340,7 @@ pub async fn events(req: HttpRequest, state: web::types::State<Arc<AppState>>) -
         .streaming(Box::pin(stream.boxed())))
 }
 
-pub async fn get_settings(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn get_settings(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(shell(&req, &state).await);
     match config::load_shown(&state.db, &state.sealer).await {
         Ok(settings) => {
@@ -359,7 +356,7 @@ pub async fn get_settings(req: HttpRequest, state: web::types::State<Arc<AppStat
 
 /// What a task may be started or replied to with (`AgentMode::choices`):
 /// whenever one may be run.
-pub async fn choices(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn choices(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(shell(&req, &state).await);
     match state.agent.choices().await {
         Ok(v) => Ok(HttpResponse::Ok().json(&v)),
@@ -379,7 +376,7 @@ async fn mcp_answer(state: &AppState) -> HttpResponse {
     }
 }
 
-pub async fn get_mcp(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn get_mcp(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     Ok(mcp_answer(&state).await)
 }
@@ -387,8 +384,8 @@ pub async fn get_mcp(req: HttpRequest, state: web::types::State<Arc<AppState>>) 
 pub async fn put_mcp(
     req: HttpRequest,
     body: web::types::Json<crate::agent_mode::mcp::ServersWrite>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     let w = body.into_inner();
     if let Err(why) = w.check() {
@@ -427,8 +424,8 @@ pub async fn put_mcp_app(
     req: HttpRequest,
     path: web::types::Path<(String, usize)>,
     body: web::types::Json<AppServerWrite>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     let (stack, index) = path.into_inner();
     let w = body.into_inner();
@@ -492,8 +489,8 @@ fn origin_ok(origin: &str) -> bool {
 pub async fn mcp_oauth_start(
     req: HttpRequest,
     body: web::types::Json<OAuthStart>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     let OAuthStart { url, origin } = body.into_inner();
     if !origin_ok(&origin) {
@@ -526,8 +523,8 @@ pub struct OAuthCallback {
 pub async fn mcp_oauth_callback(
     req: HttpRequest,
     query: web::types::Query<OAuthCallback>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let q = query.into_inner();
     let page = |ok: bool, text: &str| {
         let title = if ok { "Signed in" } else { "Not signed in" };
@@ -535,7 +532,7 @@ pub async fn mcp_oauth_callback(
             "<!doctype html><meta charset=utf-8><title>{title}</title><body style=\"font:15px system-ui;margin:3em\"><h1 style=\"font-size:20px\">{title}</h1><p>{}</p>",
             html_escape(text)
         );
-        HttpResponse::build(if ok { ntex::http::StatusCode::OK } else { ntex::http::StatusCode::BAD_REQUEST })
+        HttpResponse::builder(if ok { ntex::http::StatusCode::OK } else { ntex::http::StatusCode::BAD_REQUEST })
             .content_type("text/html; charset=utf-8")
             .header("cache-control", "no-store")
             .header("content-security-policy", "default-src 'none'; style-src 'unsafe-inline'")
@@ -577,8 +574,8 @@ pub struct OAuthForget {
 pub async fn mcp_oauth_forget(
     req: HttpRequest,
     query: web::types::Query<OAuthForget>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     let id = fl_pi_llm::host::mcp::server_id(&query.url);
     if let Err(e) = crate::agent_mode::mcp_oauth::forget(&state.db, &id).await {
@@ -596,7 +593,7 @@ async fn skills_answer(state: &AppState) -> HttpResponse {
     }
 }
 
-pub async fn get_skills(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn get_skills(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     Ok(skills_answer(&state).await)
 }
@@ -609,8 +606,8 @@ pub struct InstallSkill {
 pub async fn install_skill(
     req: HttpRequest,
     body: web::types::Json<InstallSkill>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     use crate::agent_mode::skills::InstallError;
     require!(authz::acting_caller(&req, &state).await);
     let source = body.into_inner().source;
@@ -647,8 +644,8 @@ pub async fn put_skill(
     req: HttpRequest,
     dir: web::types::Path<String>,
     body: web::types::Json<SkillSwitch>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     match crate::agent_mode::skills::set_enabled(&state.db, &state.agent.skills_root, &dir, body.enabled).await {
         Ok(true) => Ok(skills_answer(&state).await),
@@ -657,7 +654,7 @@ pub async fn put_skill(
     }
 }
 
-pub async fn delete_skill(req: HttpRequest, dir: web::types::Path<String>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn delete_skill(req: HttpRequest, dir: web::types::Path<String>, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     match crate::agent_mode::skills::remove(&state.db, &state.agent.skills_root, &dir).await {
         Ok(true) => {
@@ -676,7 +673,7 @@ pub async fn delete_skill(req: HttpRequest, dir: web::types::Path<String>, state
     }
 }
 
-pub async fn put_settings(req: HttpRequest, body: web::types::Json<config::SettingsWrite>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn put_settings(req: HttpRequest, body: web::types::Json<config::SettingsWrite>, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     let w = body.into_inner();
     if let Err(code) = config::check(&w) {
@@ -704,7 +701,7 @@ pub async fn put_settings(req: HttpRequest, body: web::types::Json<config::Setti
     }
 }
 
-pub async fn models(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn models(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     match state.agent.models().await {
         Ok(v) => Ok(HttpResponse::Ok().json(&v)),
@@ -728,7 +725,7 @@ pub struct Probe {
 
 /// `POST /agent/models/probe`: what an endpoint being set up lists.
 /// `502 {error: "upstream", reason}` when it answers with a failure.
-pub async fn probe(req: HttpRequest, body: web::types::Json<Probe>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn probe(req: HttpRequest, body: web::types::Json<Probe>, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     let p = body.into_inner();
     match state.agent.probe(&p.api, p.base_url.trim(), p.allow_insecure, p.api_key, p.provider_id.as_deref()).await {
@@ -756,7 +753,7 @@ fn memory_key(path: &str) -> Result<String, HttpResponse> {
     }
 }
 
-pub async fn memory_list(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn memory_list(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     let (_, user, _) = require!(shell(&req, &state).await);
     match state.agent.memory(user).files().await {
         Ok(files) => Ok(HttpResponse::Ok().json(&serde_json::json!({
@@ -778,7 +775,7 @@ pub struct MemoryPath {
     path: String,
 }
 
-pub async fn memory_get(req: HttpRequest, q: web::types::Query<MemoryPath>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn memory_get(req: HttpRequest, q: web::types::Query<MemoryPath>, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     let (_, user, _) = require!(shell(&req, &state).await);
     let key = require!(memory_key(&q.path));
     match state.agent.memory(user).read(&key).await {
@@ -795,7 +792,7 @@ pub struct MemoryWrite {
     content: String,
 }
 
-pub async fn memory_put(req: HttpRequest, body: web::types::Json<MemoryWrite>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn memory_put(req: HttpRequest, body: Json<MemoryWrite, Max<MAX_MEMORY_REQUEST>>, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     let (_, user, _) = require!(shell(&req, &state).await);
     let w = body.into_inner();
     let key = require!(memory_key(&w.path));
@@ -807,10 +804,10 @@ pub async fn memory_put(req: HttpRequest, body: web::types::Json<MemoryWrite>, s
         .detail(format!("memory: wrote {}", memory::path_of(&key)))
         .record(&state.db)
         .await;
-    Ok(HttpResponse::NoContent().finish())
+    Ok(HttpResponse::NoContent().build())
 }
 
-pub async fn memory_delete(req: HttpRequest, q: web::types::Query<MemoryPath>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn memory_delete(req: HttpRequest, q: web::types::Query<MemoryPath>, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     let (_, user, _) = require!(shell(&req, &state).await);
     let key = require!(memory_key(&q.path));
     match state.agent.memory(user).delete(&key).await {
@@ -821,7 +818,7 @@ pub async fn memory_delete(req: HttpRequest, q: web::types::Query<MemoryPath>, s
                 .detail(format!("memory: deleted {} ({n} files)", memory::path_of(&key)))
                 .record(&state.db)
                 .await;
-            Ok(HttpResponse::NoContent().finish())
+            Ok(HttpResponse::NoContent().build())
         }
         Err(e) => Ok(memory_refused(e)),
     }
@@ -843,7 +840,7 @@ impl Drop for StopOnDrop {
     }
 }
 
-pub async fn search(req: HttpRequest, body: web::types::Json<Search>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn search(req: HttpRequest, body: web::types::Json<Search>, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     let (_, user, secure) = require!(shell(&req, &state).await);
     let Search { query, kind } = body.into_inner();
     let query = query.trim().to_string();
@@ -863,7 +860,6 @@ pub async fn search(req: HttpRequest, body: web::types::Json<Search>, state: web
     let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<serde_json::Value>();
     let cancel = fl_pi_llm::host::Cancel::new();
     let guard = StopOnDrop(cancel.clone());
-    let state = state.get_ref().clone();
     {
         let state = state.clone();
         tokio::spawn(async move {
@@ -901,7 +897,7 @@ pub struct Adopt {
     text: Option<String>,
 }
 
-pub async fn adopt_search(req: HttpRequest, id: web::types::Path<String>, body: web::types::Json<Adopt>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn adopt_search(req: HttpRequest, id: web::types::Path<String>, body: web::types::Json<Adopt>, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     let (_, user, secure) = require!(shell(&req, &state).await);
     let text = body.into_inner().text;
     if let Some(t) = &text
@@ -909,14 +905,13 @@ pub async fn adopt_search(req: HttpRequest, id: web::types::Path<String>, body: 
     {
         return Ok(bad("invalidPrompt"));
     }
-    let state = state.get_ref().clone();
     match state.agent.adopt(&state, user, secure, &id, text).await {
         Ok(view) => Ok(HttpResponse::Created().json(&view)),
         Err(e) => Ok(refused(e)),
     }
 }
 
-pub async fn get_permissions(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn get_permissions(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     let _ = require!(shell(&req, &state).await);
     match crate::agent_mode::permissions::load(&state.db).await {
         Ok(p) => Ok(HttpResponse::Ok().json(&serde_json::json!({
@@ -930,8 +925,8 @@ pub async fn get_permissions(req: HttpRequest, state: web::types::State<Arc<AppS
 pub async fn put_permissions(
     req: HttpRequest,
     body: web::types::Json<crate::agent_mode::permissions::Permissions>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     let p = body.into_inner();
     if let Err(reason) = p.check() {

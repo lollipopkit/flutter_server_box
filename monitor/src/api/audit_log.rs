@@ -5,6 +5,7 @@
 //! name commands, paths and addresses, which a plaintext link should not
 //! carry. Nothing here writes; reading the log is not itself recorded.
 
+use crate::api::WebError;
 use std::sync::Arc;
 
 use ntex::http::StatusCode;
@@ -57,8 +58,8 @@ pub struct Page {
 pub async fn list(
     req: HttpRequest,
     query: web::types::Query<AuditQuery>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = authz::acting_caller(&req, &state).await {
         return Ok(refused);
     }

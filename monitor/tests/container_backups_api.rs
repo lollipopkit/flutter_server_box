@@ -7,12 +7,13 @@ mod common;
 use std::sync::Arc;
 
 use ntex::http::Method;
+use ntex::service::map_state_factory;
 use ntex::web::test::{self as web_test, TestServer};
 use ntex::web::{self, App};
 use serde_json::json;
 use server_box_monitor::api::auth::generate_token;
 use server_box_monitor::api::container_backups;
-use server_box_monitor::api::server::AppState;
+use server_box_monitor::api::server::{Agent, AppState};
 use server_box_monitor::core::config::Config;
 
 const SECRET: &str = "test-secret-that-is-long-enough-32ch";
@@ -22,10 +23,9 @@ async fn setup() -> TestServer {
     let config = Config { jwt_secret: Some(SECRET.to_string()), ..Default::default() };
     common::add_owner(&db).await;
     let state: Arc<AppState> = AppState::new(Arc::new(config), db);
-    web_test::server(move || {
+    web_test::server(async move |_| {
         let state = state.clone();
-        async move {
-            App::new().state(state).service(
+        map_state_factory(Agent(state), App::<Agent>::new().service(
                 web::scope("/api/v1")
                     .service(
                         web::resource("/container-backups")
@@ -40,10 +40,8 @@ async fn setup() -> TestServer {
                     .service(web::resource("/container-backups/job/cancel").route(web::post().to(container_backups::cancel)))
                     .service(web::resource("/container-backups/{id}/restore").route(web::post().to(container_backups::restore)))
                     .service(web::resource("/container-backups/{id}").route(web::delete().to(container_backups::remove))),
-            )
-        }
+            ))
     })
-    .await
 }
 
 async fn call(srv: &TestServer, method: Method, path: &str, body: Option<serde_json::Value>) -> (u16, serde_json::Value) {

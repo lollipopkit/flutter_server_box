@@ -30,6 +30,7 @@
 //! arranging for code to run on a timer as the agent's account; reading it is
 //! reading commands, which is where an argument-borne token sits.
 
+use crate::api::WebError;
 use std::sync::Arc;
 
 use ntex::web::{self, HttpRequest, HttpResponse};
@@ -143,8 +144,8 @@ struct ErrorResponse {
 /// Reads the crontab and reports it.
 pub async fn list(
     req: HttpRequest,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = machine::gate(&req, &state, "cron list").await {
         return Ok(refused);
     }
@@ -155,8 +156,8 @@ pub async fn list(
 pub async fn edit(
     req: HttpRequest,
     body: web::types::Json<CronEdit>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let edit = body.into_inner();
     let what = format!("cron {}", edit.subject());
     let gated = match machine::gate(&req, &state, &what).await {

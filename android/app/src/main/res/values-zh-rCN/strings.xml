@@ -23,13 +23,19 @@
     <string name="widget_err_insecure">需要 HTTPS</string>
     <string name="widget_err_network">网络错误</string>
     <string name="widget_err_timeout">请求超时</string>
-    <string name="widget_no_history">暂无历史</string>
     <string name="widget_chart_desc">状态曲线</string>
-    <string name="widget_cpu_desc">CPU 使用率</string>
-    <string name="widget_mem_desc">内存使用率</string>
-    <string name="widget_disk_desc">磁盘使用率</string>
-    <string name="widget_net_desc">网络使用量</string>
     <string name="widget_refresh_desc">刷新</string>
     <string name="widget_small_label">服务器数值</string>
     <string name="widget_medium_label">服务器曲线</string>
+    <string name="widget_label">服务器状态</string>
+    <string name="widget_description">一眼查看 CPU、内存、磁盘和网络。放大可显示更多。</string>
+
+    <string name="process_text_label">存为代码片段</string>
+    <string name="tile_no_sessions">没有活动会话</string>
+    <plurals name="tile_sessions">
+        <item quantity="other">%d 个会话</item>
+    </plurals>
+    <string name="channel_transfers">文件传输</string>
+    <string name="incoming_failed">无法接收分享的文件</string>
+    <string name="shortcut_server_gone">服务器已删除</string>
 </resources>

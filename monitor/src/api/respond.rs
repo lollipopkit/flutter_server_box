@@ -10,7 +10,7 @@ use ntex::web::HttpResponse;
 
 /// `{"error": code}` with [status].
 pub fn error(status: StatusCode, code: &str) -> HttpResponse {
-    HttpResponse::build(status).json(&serde_json::json!({ "error": code }))
+    HttpResponse::builder(status).json(&serde_json::json!({ "error": code }))
 }
 
 /// [error] by a numeric status, as `stacks::Refusal` and the managers carry

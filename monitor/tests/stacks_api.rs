@@ -17,12 +17,13 @@ use hyper::header::HeaderValue;
 use hyper::{Request, Response};
 use hyper_util::rt::TokioIo;
 use ntex::http::Method;
+use ntex::service::map_state_factory;
 use ntex::web::test::{self as web_test, TestServer};
 use ntex::web::{self, App};
 use serde_json::json;
 use server_box_monitor::api::auth::generate_token;
 use server_box_monitor::api::desk_themes::Fetch;
-use server_box_monitor::api::server::AppState;
+use server_box_monitor::api::server::{Agent, AppState};
 use server_box_monitor::api::stacks;
 use server_box_monitor::core::config::{Config, StacksConfig};
 use server_box_monitor::stacks::proxy::{Hosts, Target};
@@ -83,10 +84,9 @@ async fn setup_with(local_apps: Option<&str>, repos: HashMap<String, Vec<u8>>) -
     let state: Arc<AppState> = AppState::new(Arc::new(config), db);
     state.stacks.catalog.set_source(CATALOG, Arc::new(Memory(repos)));
     let shared = state.clone();
-    let srv = web_test::server(move || {
+    let srv = web_test::server(async move |_| {
         let state = shared.clone();
-        async move {
-            App::new().state(state).service(
+        map_state_factory(Agent(state), App::<Agent>::new().service(
                 web::scope("/api/v1")
                     .service(web::resource("/stacks").route(web::get().to(stacks::list)))
                     .service(web::resource("/stacks/refresh").route(web::post().to(stacks::refresh)))
@@ -104,10 +104,8 @@ async fn setup_with(local_apps: Option<&str>, repos: HashMap<String, Vec<u8>>) -
                     .service(web::resource("/stacks/{id}/services").route(web::get().to(stacks::services)))
                     .service(web::resource("/stacks/{id}/login").route(web::post().to(stacks::login)))
                     .service(web::resource("/stacks/{id}/enter").route(web::post().to(stacks::enter))),
-            )
-        }
-    })
-    .await;
+            ))
+    });
     (srv, state)
 }
 

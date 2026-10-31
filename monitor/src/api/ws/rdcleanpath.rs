@@ -40,6 +40,7 @@
 //! remote desktop over SSH verifies the certificate, and is the choice for a
 //! path that is not trusted.
 
+use crate::api::WebError;
 use crate::utils::lock::LockExt;
 use std::cell::RefCell;
 use std::io;
@@ -50,10 +51,10 @@ use std::time::Duration;
 
 use ironrdp_rdcleanpath::{DetectionResult, RDCleanPath, RDCleanPathPdu};
 use ntex::rt::spawn;
-use ntex::service::{fn_factory_with_config, fn_service};
+use ntex::service::fn_service;
 use ntex::util::Bytes;
 use ntex::web::ws::{CloseCode, Frame, Message};
-use ntex::web::{self, HttpRequest, HttpResponse};
+use ntex::web::{HttpRequest, HttpResponse};
 use ntex::ws::Item;
 use rustls::client::danger::{HandshakeSignatureValid, ServerCertVerified, ServerCertVerifier};
 use rustls::pki_types::{CertificateDer, ServerName, UnixTime};
@@ -108,9 +109,8 @@ const PROTOCOL_RDP: u32 = 0;
 
 pub async fn rdp_ws(
     req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
-    let app_state = app_state.get_ref().clone();
+    app_state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let remote_ip = audit::peer_ip(&req);
     if !super::origin_allowed(&req, &app_state.config.get_server().cors_allowed_origins) {
         Event::new(Kind::Stream, Action::Denied, Outcome::Denied)
@@ -118,7 +118,7 @@ pub async fn rdp_ws(
             .detail("rdp: origin")
             .record(&app_state.db)
             .await;
-        return Ok(HttpResponse::Unauthorized().finish());
+        return Ok(HttpResponse::Unauthorized().build());
     }
     let ctx = Rc::new(ConnCtx {
         secure: super::is_secure_transport(&req, app_state.tls_active),
@@ -127,13 +127,10 @@ pub async fn rdp_ws(
         account: RefCell::new(None),
     });
     // No subprotocol: the client offers none.
-    super::upgrade::start::<_, _, web::Error>(
-        req,
+    super::upgrade::start(
+        &req,
         None,
-        fn_factory_with_config(move |sink: WsSink| {
-            let ctx = ctx.clone();
-            async move { Ok::<_, web::Error>(handler(ctx, sink)) }
-        }),
+        move |sink: WsSink| handler(ctx, sink),
     )
     .await
 }
@@ -187,7 +184,7 @@ enum Phase {
 fn handler(
     ctx: Rc<ConnCtx>,
     sink: WsSink,
-) -> impl ntex::service::Service<Frame, Response = Option<Message>, Error = web::Error> {
+) -> impl ntex::service::Service<WsSink, Frame, Res = Option<Message>, Error = WebError> {
     let phase = Rc::new(RefCell::new(Phase::Request(Vec::new())));
 
     // The socket going away ends the relay, by dropping the sender it holds.

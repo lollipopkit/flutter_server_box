@@ -29,6 +29,7 @@
 //!   (`url` when apps are taken by host, `[stacks] apps_url`)
 //!   (`stacks::proxy`), and its port.
 
+use crate::api::WebError;
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
@@ -45,7 +46,7 @@ use crate::stacks::{self, Refusal, StackAction, store};
 
 fn refused(r: Refusal) -> HttpResponse {
     let status = ntex::http::StatusCode::from_u16(r.status).unwrap_or(ntex::http::StatusCode::BAD_REQUEST);
-    HttpResponse::build(status).json(&r)
+    HttpResponse::builder(status).json(&r)
 }
 
 
@@ -53,11 +54,11 @@ fn not_found() -> HttpResponse {
     HttpResponse::NotFound().json(&json!({ "error": "notFound" }))
 }
 
-pub async fn list(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn list(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(authz::jwt_caller(&req, &state).await);
     // Read again in the background when an hour old; this answer is what is
     // known now.
-    let st = state.get_ref().clone();
+    let st = state.clone();
     tokio::spawn(async move {
         // The agent's own apps follow a catalog actually read again, not
         // every listing.
@@ -69,14 +70,14 @@ pub async fn list(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> 
 }
 
 /// Reads the catalog's repositories now, and answers as [`list`].
-pub async fn refresh(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn refresh(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     state.stacks.catalog.refresh(true).await;
     super::apps::keep_first_party(&state).await;
     answer_list(&state).await
 }
 
-async fn answer_list(state: &AppState) -> Result<HttpResponse, web::Error> {
+async fn answer_list(state: &AppState) -> Result<HttpResponse, WebError> {
     let rows = match store::all(&state.db).await {
         Ok(rows) => rows,
         Err(e) => return Ok(super::respond::internal(&e)),
@@ -108,8 +109,8 @@ async fn answer_list(state: &AppState) -> Result<HttpResponse, web::Error> {
 pub async fn prepare(
     req: HttpRequest,
     id: web::types::Path<String>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     let Some(package) = state.stacks.package(&id) else { return Ok(not_found()) };
     let machine = stacks::machine(&state, &id).await;
@@ -145,8 +146,8 @@ pub async fn check(
     req: HttpRequest,
     id: web::types::Path<String>,
     body: web::types::Json<CheckBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     match stacks::preview(&state, &id, &body.settings).await {
         Ok(preview) => Ok(HttpResponse::Ok().json(&preview)),
@@ -170,8 +171,8 @@ pub async fn install(
     req: HttpRequest,
     id: web::types::Path<String>,
     body: web::types::Json<InstallBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     let body = body.into_inner();
     require!(reauth(&req, &state, body.current_password.as_deref()).await);
@@ -194,8 +195,8 @@ pub async fn reconfigure(
     req: HttpRequest,
     id: web::types::Path<String>,
     body: web::types::Json<SettingsBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     let body = body.into_inner();
     require!(reauth(&req, &state, body.current_password.as_deref()).await);
@@ -214,8 +215,8 @@ pub async fn act(
     req: HttpRequest,
     id: web::types::Path<String>,
     body: web::types::Json<ActionBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     match stacks::act(&state, &id, body.action).await {
         Ok(job) => Ok(HttpResponse::Accepted().json(&job.view(0))),
@@ -234,8 +235,8 @@ pub async fn remove(
     req: HttpRequest,
     id: web::types::Path<String>,
     body: Option<web::types::Json<RemoveBody>>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     let body = body.map(|b| b.into_inner()).unwrap_or_default();
     require!(reauth(&req, &state, body.current_password.as_deref()).await);
@@ -255,8 +256,8 @@ pub async fn job(
     req: HttpRequest,
     id: web::types::Path<String>,
     query: web::types::Query<JobQuery>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     match state.stacks.job(&id) {
         Some(job) => Ok(HttpResponse::Ok().json(&job.view(query.since))),
@@ -267,13 +268,13 @@ pub async fn job(
 pub async fn cancel(
     req: HttpRequest,
     id: web::types::Path<String>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     match state.stacks.job(&id) {
         Some(job) => {
             job.cancel();
-            Ok(HttpResponse::NoContent().finish())
+            Ok(HttpResponse::NoContent().build())
         }
         None => Ok(not_found()),
     }
@@ -289,8 +290,8 @@ pub async fn login(
     req: HttpRequest,
     id: web::types::Path<String>,
     body: Option<web::types::Json<LoginBody>>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     let body = body.map(|b| b.into_inner()).unwrap_or_default();
     require!(reauth(&req, &state, body.current_password.as_deref()).await);
@@ -303,8 +304,8 @@ pub async fn login(
 pub async fn services(
     req: HttpRequest,
     id: web::types::Path<String>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     match stacks::services(&state, &id).await {
         Ok(services) => Ok(HttpResponse::Ok().json(&json!({ "services": services }))),
@@ -315,8 +316,8 @@ pub async fn services(
 pub async fn enter(
     req: HttpRequest,
     id: web::types::Path<String>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     let Some(package) = state.stacks.package(&id) else { return Ok(not_found()) };
     let Some(web) = package.manifest.web.as_ref() else {

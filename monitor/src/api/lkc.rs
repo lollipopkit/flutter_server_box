@@ -5,10 +5,11 @@
 //! - `DELETE /lkc/sign-in`: ends the one waiting.
 //! - `DELETE /lkc`: signs out.
 
+use crate::api::WebError;
 use std::sync::Arc;
 
 use ntex::http::StatusCode;
-use ntex::web::{self, HttpRequest, HttpResponse};
+use ntex::web::{HttpRequest, HttpResponse};
 use serde::Serialize;
 
 use super::authz;
@@ -25,12 +26,12 @@ struct Answer {
 }
 
 /// Over a link that may act only: the answer names a person.
-pub async fn get(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn get(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     Ok(HttpResponse::Ok().json(&Answer { user: lkc::current(&state).await, sign_in: state.lkc.sign_in() }))
 }
 
-pub async fn start(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn start(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     match lkc::start(&state).await {
         Ok(sign_in) => {
@@ -52,7 +53,7 @@ pub async fn start(req: HttpRequest, state: web::types::State<Arc<AppState>>) ->
     }
 }
 
-pub async fn cancel(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn cancel(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     if state.lkc.cancel() {
         Event::new(Kind::Admin, Action::Write, Outcome::Ok)
@@ -61,10 +62,10 @@ pub async fn cancel(req: HttpRequest, state: web::types::State<Arc<AppState>>) -
             .record(&state.db)
             .await;
     }
-    Ok(HttpResponse::NoContent().finish())
+    Ok(HttpResponse::NoContent().build())
 }
 
-pub async fn sign_out(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn sign_out(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     match lkc::sign_out(&state).await {
         Ok(signed_out) => {
@@ -75,7 +76,7 @@ pub async fn sign_out(req: HttpRequest, state: web::types::State<Arc<AppState>>)
                     .record(&state.db)
                     .await;
             }
-            Ok(HttpResponse::NoContent().finish())
+            Ok(HttpResponse::NoContent().build())
         }
         Err(e) => Ok(respond::internal(&e)),
     }

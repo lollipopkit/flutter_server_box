@@ -207,15 +207,19 @@ extension _Actions on _FileBrowserPageState {
 
   Future<void> _onDropped(List<XFile> files) async {
     _dropping.value = false;
+    DropZones.leave(this);
     final refOf = widget.args.refOf;
     if (refOf == null || files.isEmpty) return;
 
     final queue = ref.read(fileTransferProvider.notifier);
     final queued = <int>[];
+    final ends = <Future<bool>>[];
     for (final file in files) {
       final source = LocalFileRef(file.path.replaceAll(r'\', '/'));
       final destination = refOf(BrowsePath.join(_path.path, source.name));
       if (destination == source) continue;
+      final end = Completer<bool>();
+      ends.add(end.future);
       queued.add(
         queue.add(
           FileTransfer(
@@ -223,8 +227,14 @@ extension _Actions on _FileBrowserPageState {
             to: destination,
             isDir: await FileSystemEntity.isDirectory(file.path),
           ),
+          completer: end,
         ),
       );
+    }
+    // On Android a drop arrives as copies the app made (`DropListener`),
+    // which are its to remove once sent.
+    if (isAndroid) {
+      unawaited(discardIncomingAfter([for (final f in files) f.path], ends));
     }
     if (!mounted) return;
     await announceQueued(context, ref, queued);

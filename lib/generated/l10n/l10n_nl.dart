@@ -376,6 +376,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get clearAllStatsTitle => 'Alle statistieken wissen';
 
   @override
+  String get clearAllSettings => 'Alle instellingen wissen';
+
+  @override
   String clearServerStatsContent(String serverName) {
     return 'Weet u zeker dat u de verbindingsstatistieken voor server \"$serverName\" wilt wissen? Deze actie kan niet ongedaan worden gemaakt.';
   }
@@ -7200,4 +7203,18 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get hostCertAuthorityExists => 'Staat al in de lijst';
+
+  @override
+  String get addToHomeScreen => 'Toevoegen aan startscherm';
+
+  @override
+  String transfersActive(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count overdrachten',
+      one: '1 overdracht',
+    );
+    return '$_temp0';
+  }
 }

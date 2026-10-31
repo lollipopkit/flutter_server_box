@@ -28,11 +28,12 @@
 //! that reaches (`status`, `process`, `root`), each still bounded by the
 //! transport rule.
 
+use crate::api::WebError;
+use crate::api::json::{Body, Max};
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::io::Read;
 use std::sync::Arc;
 
-use ntex::util::Bytes;
 use ntex::web::{self, HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -560,7 +561,7 @@ fn not_found() -> HttpResponse {
 
 use super::admin::audit;
 
-pub async fn list(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn list(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(authz::jwt_caller(&req, &state).await);
     let rows = sqlx::query_as::<_, Row>(select!("ORDER BY app_id")).fetch_all(&state.db).await;
     match rows {
@@ -577,16 +578,17 @@ pub async fn list(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> 
 
 pub async fn install(
     req: HttpRequest,
-    body: Bytes,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    body: Body<Max<MAX_PACKAGE_BYTES>>,
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
+    let body = body.into_inner();
     // Inflating and checking takes a while: off the worker.
     let package = match tokio::task::spawn_blocking(move || read_package(&body)).await {
         Ok(Ok(p)) => p,
         Ok(Err(refusal)) => {
             let status = if refusal.error == "tooLarge" { 413 } else { 400 };
-            return Ok(HttpResponse::build(ntex::http::StatusCode::from_u16(status).unwrap()).json(&refusal));
+            return Ok(HttpResponse::builder(ntex::http::StatusCode::from_u16(status).unwrap()).json(&refusal));
         }
         Err(_) => return Ok(HttpResponse::InternalServerError().json(&refused("internal"))),
     };
@@ -648,7 +650,7 @@ async fn put(state: &AppState, package: &Package, how: Install) -> Result<Option
 
 /// Stores [package] as the admin's [how] (an upload waits for approval);
 /// an app the admin had uninstalled is no longer declined.
-async fn install_package(req: &HttpRequest, state: &AppState, package: Package, how: Install) -> Result<HttpResponse, web::Error> {
+async fn install_package(req: &HttpRequest, state: &AppState, package: Package, how: Install) -> Result<HttpResponse, WebError> {
     match put(state, &package, how).await {
         Ok(Some(app)) => {
             let verb = if how == Install::Approved { "install approved" } else { "install" };
@@ -760,7 +762,7 @@ struct OfferedView<'a> {
 /// `GET /apps/catalog`: the desk app packages this agent offers, from what
 /// it ships and the store's repositories; `POST /stacks/refresh` reads the
 /// repositories again.
-pub async fn catalog(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn catalog(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(authz::jwt_caller(&req, &state).await);
     let offered = state.stacks.catalog.desk.all();
     let os = super::machine::systems();
@@ -798,8 +800,8 @@ pub async fn install_offered(
     req: HttpRequest,
     id: web::types::Path<String>,
     body: Option<web::types::Json<OfferedInstall>>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     let Some(offered) = state.stacks.catalog.desk.get(&id) else { return Ok(not_found()) };
     if !offered.package.manifest.for_os(super::machine::systems()) {
@@ -822,8 +824,8 @@ pub async fn approve(
     req: HttpRequest,
     id: web::types::Path<String>,
     body: web::types::Json<Approval>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     let body = body.into_inner();
     require!(reauth(&req, &state, body.current_password.as_deref()).await);
@@ -859,8 +861,8 @@ pub async fn remove(
     req: HttpRequest,
     id: web::types::Path<String>,
     body: Option<web::types::Json<Reauth>>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     let password = body.and_then(|b| b.into_inner().current_password);
     require!(reauth(&req, &state, password.as_deref()).await);
@@ -913,7 +915,7 @@ pub async fn remove(
             let _ = tokio::task::spawn_blocking(move || apps.forget_data(&app)).await;
             audit(&req, &state, Action::Write, format!("app remove {}", id.as_str())).await;
             state.desk.send(DeskEvent::Apps);
-            Ok(HttpResponse::NoContent().finish())
+            Ok(HttpResponse::NoContent().build())
         }
         (Err(e), _) | (_, Err(e)) => Ok(super::respond::internal(&e)),
     }
@@ -922,8 +924,8 @@ pub async fn remove(
 pub async fn launch(
     req: HttpRequest,
     id: web::types::Path<String>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::jwt_caller(&req, &state).await);
     let app = match load(&state.db, &id).await {
         Ok(Some(app)) if app.approved_permissions.is_some() => app,
@@ -942,8 +944,8 @@ pub async fn launch(
 
 pub async fn ui(
     path: web::types::Path<(String, String, String)>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let (id, ticket, file) = path.into_inner();
 
     let package: Option<(String, Option<String>)> =

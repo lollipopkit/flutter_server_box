@@ -24,7 +24,7 @@ pub(super) struct StatusResponse {
 
 pub(super) async fn get_status(
     req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
+    app_state: Arc<AppState>,
 ) -> Result<HttpResponse> {
     require_read_access!(&req, &app_state);
     touch_viewer_heartbeat(&app_state).await;
@@ -66,7 +66,7 @@ pub(super) async fn get_status(
 
 pub(super) async fn get_metrics(
     req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
+    app_state: Arc<AppState>,
 ) -> Result<HttpResponse> {
     require_read_access!(&req, &app_state);
     touch_viewer_heartbeat(&app_state).await;
@@ -206,7 +206,7 @@ pub(super) struct HistoryPoint {
 /// spikes that dropping every third row loses.
 pub(super) async fn get_metrics_history(
     req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
+    app_state: Arc<AppState>,
 ) -> Result<HttpResponse> {
     require_read_access!(&req, &app_state);
 
@@ -354,7 +354,7 @@ pub(super) async fn get_metrics_history(
 
 pub(super) async fn get_velocity(
     req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
+    app_state: Arc<AppState>,
 ) -> Result<HttpResponse> {
     require_read_access!(&req, &app_state);
 
@@ -402,7 +402,7 @@ pub(super) async fn get_velocity(
 
 pub(super) async fn get_velocity_history(
     req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
+    app_state: Arc<AppState>,
 ) -> Result<HttpResponse> {
     require_read_access!(&req, &app_state);
 

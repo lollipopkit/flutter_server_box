@@ -11,7 +11,8 @@ use crate::{
     utils::error::{MonitorError, Result},
 };
 use ntex::http::header::RETRY_AFTER;
-use ntex::web::{self, App, HttpRequest, HttpResponse, HttpServer, middleware::Logger};
+use ntex::SharedCfg;
+use ntex::web::{self, App, HttpRequest, HttpResponse, middleware::Logger};
 use ntex_files::Files;
 use sbm_parser::{SystemType, capabilities::Capabilities};
 use serde::Serialize;
@@ -66,16 +67,7 @@ macro_rules! require_read_access {
 /// liked about a handler and still say nothing about what the shipped binary
 /// exposes — see `tests/watch_token_scope.rs`, whose whole subject is this
 /// table.
-///
-/// [`exec_max_request`] is `remote_access.exec.max_request_bytes` as resolved
-/// at startup. It arrives as an argument rather than being read from
-/// `AppState`: ntex applies a payload limit while extracting the body, before
-/// any handler — and therefore before any state — is reached.
-pub fn configure_api(exec_max_request: usize) -> impl FnOnce(&mut web::ServiceConfig) {
-    move |cfg: &mut web::ServiceConfig| configure_api_inner(cfg, exec_max_request)
-}
-
-fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
+pub fn configure_api(cfg: &mut web::ServiceConfig<Agent>) {
     cfg.service(
         web::scope("/api/v1")
             .middleware(crate::api::protocol::Protocol)
@@ -107,7 +99,6 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                 // here is not something this file can know — see
                 // `remote_access::ExecConfig`.
                 web::resource("/exec")
-                    .state(web::types::JsonConfig::default().limit(exec_max_request))
                     .route(web::post().to(crate::api::exec::exec)),
             )
             .service(web::resource("/power").route(web::post().to(crate::api::power::power)))
@@ -147,13 +138,9 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::post().to(crate::api::system_users::act)),
             )
             .service(
-                // Its own payload limit, like `/custom-cmds`: a write is
+                // Its own payload limit (`api::json`), like `/custom-cmds`: a write is
                 // the whole library at once.
                 web::resource("/snippets")
-                    .state(
-                        web::types::JsonConfig::default()
-                            .limit(crate::api::snippets::MAX_REQUEST),
-                    )
                     .route(web::get().to(crate::api::snippets::list))
                     .route(web::put().to(crate::api::snippets::replace)),
             )
@@ -225,7 +212,6 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             .service(web::resource("/desk").route(web::get().to(crate::api::desk::get)))
             .service(
                 web::resource("/desk/preferences")
-                    .state(web::types::JsonConfig::default().limit(crate::api::desk::MAX_REQUEST))
                     .route(web::put().to(crate::api::desk::put_preferences)),
             )
             .service(
@@ -242,7 +228,6 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             )
             .service(
                 web::resource("/desk/session")
-                    .state(web::types::JsonConfig::default().limit(crate::api::desk::MAX_REQUEST))
                     .route(web::get().to(crate::api::desk::get_session))
                     .route(web::put().to(crate::api::desk::put_session)),
             )
@@ -277,7 +262,6 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             .service(web::resource("/desk/events").route(web::get().to(crate::api::desk::events)))
             .service(
                 web::resource("/agent/flows")
-                    .state(web::types::JsonConfig::default().limit(crate::api::agent::MAX_REQUEST))
                     .route(web::get().to(crate::api::agent::list))
                     .route(web::post().to(crate::api::agent::start)),
             )
@@ -288,7 +272,6 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             )
             .service(
                 web::resource("/agent/flows/{id}/reply")
-                    .state(web::types::JsonConfig::default().limit(crate::api::agent::MAX_REQUEST))
                     .route(web::post().to(crate::api::agent::reply)),
             )
             .service(web::resource("/agent/flows/{id}/answer").route(web::post().to(crate::api::agent::answer)))
@@ -340,21 +323,18 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             .service(web::resource("/agent/search/{id}/task").route(web::post().to(crate::api::agent::adopt_search)))
             .service(
                 web::resource("/agent/files")
-                    .state(web::types::PayloadConfig::new(crate::agent_mode::files::MAX_BYTES))
                     .route(web::post().to(crate::api::agent::upload)),
             )
             .service(web::resource("/agent/files/{id}").route(web::delete().to(crate::api::agent::discard)))
             .service(web::resource("/agent/memory").route(web::get().to(crate::api::agent::memory_list)))
             .service(
                 web::resource("/agent/memory/file")
-                    .state(web::types::JsonConfig::default().limit(crate::api::agent::MAX_MEMORY_REQUEST))
                     .route(web::get().to(crate::api::agent::memory_get))
                     .route(web::put().to(crate::api::agent::memory_put))
                     .route(web::delete().to(crate::api::agent::memory_delete)),
             )
             .service(
                 web::resource("/apps")
-                    .state(web::types::PayloadConfig::new(crate::api::apps::MAX_PACKAGE_BYTES))
                     .route(web::get().to(crate::api::apps::list))
                     .route(web::post().to(crate::api::apps::install)),
             )
@@ -366,12 +346,10 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             .service(web::resource("/apps/{id}/launch").route(web::get().to(crate::api::apps::launch)))
             .service(
                 web::resource("/apps/{id}/call")
-                    .state(web::types::JsonConfig::default().limit(crate::api::app_backend::MAX_REQUEST))
                     .route(web::post().to(crate::api::app_backend::call)),
             )
             .service(
                 web::resource("/apps/{id}/jobs")
-                    .state(web::types::JsonConfig::default().limit(crate::api::app_backend::MAX_REQUEST))
                     .route(web::get().to(crate::api::app_backend::job))
                     .route(web::post().to(crate::api::app_backend::start_job)),
             )
@@ -432,17 +410,12 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             .service(web::resource("/stacks/{id}/enter").route(web::post().to(crate::api::stacks::enter)))
             .service(
                 web::resource("/desk/apps/{app}/storage")
-                    .state(web::types::JsonConfig::default().limit(crate::api::desk_storage::MAX_BODY))
                     .route(web::get().to(crate::api::desk_storage::list))
                     .route(web::put().to(crate::api::desk_storage::put))
                     .route(web::delete().to(crate::api::desk_storage::remove)),
             )
             .service(
                 web::resource("/snippets/plan")
-                    .state(
-                        web::types::JsonConfig::default()
-                            .limit(crate::api::snippets::MAX_REQUEST),
-                    )
                     .route(web::post().to(crate::api::snippets::plan)),
             )
             .service(
@@ -461,36 +434,24 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             .route("/fs/remove", web::delete().to(crate::api::fs::remove))
             .route("/me/password", web::put().to(crate::api::admin::change_own_password))
             .service(
-                // Its own payload limit, like `/exec`: the body is
+                // Its own payload limit (`api::json`), like `/exec`: the body is
                 // every custom command at once, and a user who pastes
                 // a real script into one would otherwise meet ntex's
                 // 32 KiB default as a 413 with nothing to explain it.
                 web::resource("/custom-cmds")
-                    .state(
-                        web::types::JsonConfig::default()
-                            .limit(crate::api::custom_cmds::MAX_REQUEST),
-                    )
                     .route(web::get().to(crate::api::custom_cmds::list))
                     .route(web::put().to(crate::api::custom_cmds::replace)),
             )
             .service(
-                // Its own payload limit, like `/custom-cmds`: the body is
+                // Its own payload limit (`api::json`), like `/custom-cmds`: the body is
                 // every notification channel at once, and a webhook's
                 // `body_template` is a document the user pastes in.
                 web::resource("/push")
-                    .state(
-                        web::types::JsonConfig::default()
-                            .limit(crate::api::push::MAX_REQUEST),
-                    )
                     .route(web::get().to(crate::api::push::list))
                     .route(web::put().to(crate::api::push::replace)),
             )
             .service(
                 web::resource("/push/test")
-                    .state(
-                        web::types::JsonConfig::default()
-                            .limit(crate::api::push::MAX_REQUEST),
-                    )
                     .route(web::post().to(crate::api::push::test)),
             )
             .route("/settings", web::get().to(get_settings))
@@ -523,48 +484,49 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
         (app_state.remote_access.terminal.detached_timeout / 4).max(Duration::from_secs(10)),
     );
 
-    // Read once here rather than inside the factory: the factory runs per
-    // worker, and every worker must apply the same limit.
-    let exec_max_request = app_state.remote_access.exec.max_request_bytes;
+    let agent = Agent(app_state.clone());
+    let server = web::server_with_config(
+        async move || Ok::<_, std::io::Error>(agent.clone()),
+        async |agent: &Agent| {
+            let cors = Cors::new(agent.0.config.get_server().cors_allowed_origins);
 
-    let server = HttpServer::new(async move || {
-        let cors = Cors::new(app_state.config.get_server().cors_allowed_origins);
-
-        App::new()
-            .state(app_state.clone())
-            .middleware(Logger::default())
-            .middleware(cors)
-            .configure(configure_api(exec_max_request))
-            // Built assets: hashed, precompressed, cached for good.
-            .service(crate::api::assets::asset)
-            .service(crate::api::assets::desk_app)
-            // Serve legacy `/static` paths and root assets from the bundled
-            // Svelte frontend. TODO: drop `/static` once no bookmark or old
-            // panel build can still ask for it (the build serves `/assets`).
-            .service(
-                Files::new("/static", "frontend/dist")
-                    .use_etag(true)
-                    .use_last_modified(true),
-            )
-            .service(
-                Files::new("/", "frontend/dist")
-                    .use_etag(true)
-                    .use_last_modified(true)
-                    .index_file("index.html"),
-            )
-            // Serve index.html for unmatched client-side routes.
-            .service(serve_index)
-            .default_service(web::to(spa_fallback))
-    });
+            // The first registered is the outermost: a preflight is answered
+            // before it is logged.
+            App::<Agent>::new()
+                .middleware(cors)
+                .middleware(Logger::default())
+                .configure(configure_api)
+                // Built assets: hashed, precompressed, cached for good.
+                .service(web::resource("/assets/{name}").route(web::get().to(crate::api::assets::asset)))
+                .service(web::resource("/desk-app/{name}").route(web::get().to(crate::api::assets::desk_app)))
+                // Serve legacy `/static` paths and root assets from the bundled
+                // Svelte frontend. TODO: drop `/static` once no bookmark or old
+                // panel build can still ask for it (the build serves `/assets`).
+                .service(
+                    Files::new("/static", "frontend/dist")
+                        .use_etag(true)
+                        .use_last_modified(true),
+                )
+                .service(
+                    Files::new("/", "frontend/dist")
+                        .use_etag(true)
+                        .use_last_modified(true)
+                        .index_file("index.html"),
+                )
+        },
+    )
+    // ntex 4 pins each worker to a core by default. The agent shares its
+    // machine with whatever the machine is for, so the scheduler places it.
+    .affinity(ntex::server::Affinity::Disabled);
 
     let server = match &server_config.tls {
         Some(tls) => {
             info!("Starting web server on {} (TLS)", bind_addr);
-            server.bind_rustls(&bind_addr, &load_rustls_config(tls)?)?
+            server.bind_rustls(&bind_addr, &load_rustls_config(tls)?, SharedCfg::default())?
         }
         None => {
             info!("Starting web server on {}", bind_addr);
-            server.bind(&bind_addr)?
+            server.bind(&bind_addr, SharedCfg::default())?
         }
     };
     server.run().await?;
@@ -592,22 +554,6 @@ pub(crate) fn load_rustls_config(tls: &crate::core::config::TlsConfig) -> Result
     .with_single_cert(certs, key)
     .map_err(|e| anyhow::anyhow!("Invalid TLS cert/key: {e}"))?;
     Ok(config)
-}
-
-#[web::get("/")]
-async fn serve_index() -> impl web::Responder {
-    spa_fallback().await
-}
-
-async fn spa_fallback() -> HttpResponse {
-    match tokio::fs::read_to_string("frontend/dist/index.html").await {
-        Ok(content) => HttpResponse::Ok()
-            .content_type("text/html; charset=utf-8")
-            .body(content),
-        Err(_) => HttpResponse::InternalServerError().json(&ErrorResponse {
-            error: "Failed to load index.html".to_string(),
-        }),
-    }
 }
 
 /// Which `ServerStatus` fields this platform can collect at all — depends
@@ -662,7 +608,7 @@ struct StackBrief {
     state: String,
 }
 
-async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
+async fn get_capabilities(req: HttpRequest, app_state: Arc<AppState>) -> Result<HttpResponse> {
     let reader = require_read_access!(&req, &app_state);
     let caller = match &reader {
         Reader::Account(caller) => Some(caller),
@@ -725,7 +671,7 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
 /// the authorisation it did not qualify for.
 async fn issue_ws_ticket(
     req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
+    app_state: Arc<AppState>,
     payload: web::types::Json<TicketRequest>,
 ) -> Result<HttpResponse> {
     let caller = require_jwt!(&req, &app_state);

@@ -9,6 +9,7 @@ import 'l10n_az.dart';
 import 'l10n_de.dart';
 import 'l10n_en.dart';
 import 'l10n_es.dart';
+import 'l10n_fa.dart';
 import 'l10n_fr.dart';
 import 'l10n_id.dart';
 import 'l10n_it.dart';
@@ -111,6 +112,7 @@ abstract class AppLocalizations {
     Locale('de'),
     Locale('en'),
     Locale('es'),
+    Locale('fa'),
     Locale('fr'),
     Locale('id'),
     Locale('it'),
@@ -772,6 +774,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clear All Statistics'**
   String get clearAllStatsTitle;
+
+  /// No description provided for @clearAllSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear all settings'**
+  String get clearAllSettings;
 
   /// Action label for clear server stats content.
   ///
@@ -12146,6 +12154,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Already in the list'**
   String get hostCertAuthorityExists;
+
+  /// Server menu entry that pins a launcher shortcut to the server (Android).
+  ///
+  /// In en, this message translates to:
+  /// **'Add to home screen'**
+  String get addToHomeScreen;
+
+  /// Title of the transfer notification while several file transfers run.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 transfer} other{{count} transfers}}'**
+  String transfersActive(int count);
 }
 
 class _AppLocalizationsDelegate
@@ -12163,6 +12183,7 @@ class _AppLocalizationsDelegate
     'de',
     'en',
     'es',
+    'fa',
     'fr',
     'id',
     'it',
@@ -12203,6 +12224,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
       return AppLocalizationsEn();
     case 'es':
       return AppLocalizationsEs();
+    case 'fa':
+      return AppLocalizationsFa();
     case 'fr':
       return AppLocalizationsFr();
     case 'id':

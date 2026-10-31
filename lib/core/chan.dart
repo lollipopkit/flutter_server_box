@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
+import 'package:server_box/core/utils/drop_zones.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 
@@ -26,6 +29,18 @@ abstract final class MethodChans {
       await _channel.invokeMethod('stopService');
     } catch (e, s) {
       Loggers.app.warning('Failed to stop Android terminal service', e, s);
+    }
+  }
+
+  /// Whether leaving the app should start the keep-alive service. Started by
+  /// the activity's own `onPause`, since a request from here can arrive after
+  /// the app is background and be refused.
+  static Future<void> setKeepAliveInBackground(bool value) async {
+    if (!isAndroid) return;
+    try {
+      await _channel.invokeMethod('setKeepAliveInBackground', value);
+    } catch (e, s) {
+      Loggers.app.warning('Failed to set keep-alive', e, s);
     }
   }
 
@@ -380,6 +395,110 @@ abstract final class MethodChans {
     }
   }
 
+  /// What another app shared, or sent from its text selection, as the JSON
+  /// `{"kind":"text","text"}` or `{"kind":"files","paths"}`. Android only;
+  /// held natively and pulled like [takeOpenedLink]. Cleared by the read.
+  static Future<Map<String, Object?>?> takeIncoming() async {
+    if (!isAndroid) return null;
+    try {
+      final raw = await _channel.invokeMethod<String>('takeIncoming');
+      if (raw == null) return null;
+      return (jsonDecode(raw) as Map).cast<String, Object?>();
+    } catch (e, s) {
+      Loggers.app.warning('Failed to read incoming content', e, s);
+      return null;
+    }
+  }
+
+  /// Deletes the batches holding [paths], which `IncomingFiles` copied in.
+  /// The native side decides what is a batch; anything else is left alone.
+  static Future<void> discardIncoming(List<String> paths) async {
+    if (!isAndroid || paths.isEmpty) return;
+    try {
+      await _channel.invokeMethod('discardIncoming', paths);
+    } catch (e, s) {
+      Loggers.app.warning('Failed to discard incoming files', e, s);
+    }
+  }
+
+  /// The launcher's long-press list: `[{"id","label","uri"}]`, in order.
+  static Future<void> setShortcuts(String payload) async {
+    if (!isAndroid) return;
+    try {
+      await _channel.invokeMethod('setShortcuts', payload);
+    } catch (e, s) {
+      Loggers.app.warning('Failed to set launcher shortcuts', e, s);
+    }
+  }
+
+  /// Asks the launcher to pin a shortcut; false when it cannot.
+  static Future<bool> pinShortcut({
+    required String id,
+    required String label,
+    required String uri,
+  }) async {
+    if (!isAndroid) return false;
+    try {
+      return await _channel.invokeMethod<bool>('pinShortcut', {
+            'id': id,
+            'label': label,
+            'uri': uri,
+          }) ??
+          false;
+    } catch (e, s) {
+      Loggers.app.warning('Failed to pin a shortcut', e, s);
+      return false;
+    }
+  }
+
+  /// The transfer notification: `{"title","text","progress","chip"}`, or null
+  /// to take it down.
+  static Future<void> updateTransfers(String? payload) async {
+    if (!isAndroid) return;
+    try {
+      await _channel.invokeMethod('updateTransfers', payload);
+    } catch (e, s) {
+      Loggers.app.warning('Failed to update the transfer notification', e, s);
+    }
+  }
+
+  /// The keys listed by the system's shortcut list (Meta+/):
+  /// `[{"label","items":[{"label","chord"}]}]`.
+  static Future<void> setKeyboardShortcuts(String payload) async {
+    if (!isAndroid) return;
+    try {
+      await _channel.invokeMethod('setKeyboardShortcuts', payload);
+    } catch (e, s) {
+      Loggers.app.warning('Failed to set keyboard shortcuts', e, s);
+    }
+  }
+
+  /// The per-app language of Android 13+: `current`, the system's tags
+  /// (empty for the system language), and `agreed`, what it held right after
+  /// the app last set it (null before the first time). Null below 13.
+  static Future<({String current, String? agreed})?> appLocale() async {
+    if (!isAndroid) return null;
+    try {
+      final r = await _channel.invokeMapMethod<String, Object?>('appLocale');
+      if (r == null) return null;
+      return (current: r['current'] as String? ?? '', agreed: r['agreed'] as String?);
+    } catch (e, s) {
+      Loggers.app.warning('Failed to read the app locale', e, s);
+      return null;
+    }
+  }
+
+  /// Sets the per-app language, and records what the system then holds as
+  /// `agreed`.
+  static Future<void> setAppLocale(String tag) async {
+    if (!isAndroid) return;
+    try {
+      await _channel.invokeMethod('setAppLocale', tag);
+    } catch (e, s) {
+      Loggers.app.warning('Failed to set the app locale', e, s);
+    }
+  }
+
   /// Its own channel, deliberately.
   ///
   /// A channel has exactly one handler and [registerHandler] already owns the
@@ -471,11 +590,13 @@ abstract final class MethodChans {
   /// - `disconnectSession` with argument map {id: string}
   /// - `stopAllConnections` with no arguments
   /// - `notificationPermissionGranted` with no arguments
+  /// - `activityPaused` / `activityResumed` with no arguments
   static void registerHandler(
-    Future<void> Function(String id) onDisconnect, [
+    Future<void> Function(String id) onDisconnect, {
     VoidCallback? onStopAll,
     VoidCallback? onNotificationPermissionGranted,
-  ]) {
+    void Function(bool backgrounded)? onBackgrounded,
+  }) {
     _channel.setMethodCallHandler((call) async {
       switch (call.method) {
         case 'disconnectSession':
@@ -484,10 +605,13 @@ abstract final class MethodChans {
           if (id != null && id.isNotEmpty) {
             await onDisconnect(id);
           }
-          return;
+          return null;
         case 'stopAllConnections':
           onStopAll?.call();
-          return;
+          return null;
+        // Asked before a drop from another app is copied in: see [DropZones].
+        case 'acceptsDrop':
+          return DropZones.accepting;
         // Android asks for the permission asynchronously, so the call that
         // triggered the prompt has already been refused by the time the user
         // answers it. This is the only edge that says the answer was yes, and
@@ -495,9 +619,15 @@ abstract final class MethodChans {
         // something else happens to sync — see [updateSessions].
         case 'notificationPermissionGranted':
           onNotificationPermissionGranted?.call();
-          return;
+          return null;
+        case 'activityPaused':
+          onBackgrounded?.call(true);
+          return null;
+        case 'activityResumed':
+          onBackgrounded?.call(false);
+          return null;
         default:
-          return;
+          return null;
       }
     });
   }

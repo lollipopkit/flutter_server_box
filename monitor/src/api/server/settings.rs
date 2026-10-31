@@ -58,7 +58,7 @@ pub(super) const SETTINGS_LIVE_FIELDS: &[&str] = &[
     "disk_counts_network",
 ];
 
-pub(super) async fn get_settings(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
+pub(super) async fn get_settings(req: HttpRequest, app_state: Arc<AppState>) -> Result<HttpResponse> {
     require_acting!(&req, &app_state);
 
     let file_config = match config_file::read_async().await {
@@ -96,7 +96,7 @@ pub(super) fn validate_threshold_format(threshold: &str) -> std::result::Result<
 
 pub(super) async fn update_settings(
     req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
+    app_state: Arc<AppState>,
     payload: web::types::Json<SettingsPayload>,
 ) -> Result<HttpResponse> {
     require_acting!(&req, &app_state);
@@ -171,7 +171,7 @@ pub(super) struct CardOrderPayload {
     card_order: Vec<String>,
 }
 
-pub(super) async fn get_card_order(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
+pub(super) async fn get_card_order(req: HttpRequest, app_state: Arc<AppState>) -> Result<HttpResponse> {
     require_read_access!(&req, &app_state);
     let file_config = match config_file::read_async().await {
         Ok(c) => c,
@@ -182,7 +182,7 @@ pub(super) async fn get_card_order(req: HttpRequest, app_state: web::types::Stat
 
 pub(super) async fn update_card_order(
     req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
+    app_state: Arc<AppState>,
     payload: web::types::Json<CardOrderPayload>,
 ) -> Result<HttpResponse> {
     require_acting!(&req, &app_state);

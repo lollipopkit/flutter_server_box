@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Below API 26 a shortcut icon is drawn as is, so it carries its own disc.
+     From 26 the adaptive one in drawable-v26 replaces it. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <path
+        android:fillColor="@color/shortcutBackground"
+        android:pathData="M24,0a24,24 0,1 1,0 48a24,24 0,1 1,0 -48z" />
+    <group
+        android:scaleX="1.1667"
+        android:scaleY="1.1667"
+        android:translateX="10"
+        android:translateY="10">
+        <path
+            android:fillColor="@color/shortcutForeground"
+            android:pathData="@string/path_dns" />
+    </group>
+</vector>

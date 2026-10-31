@@ -26,6 +26,7 @@
 //! the targets or probing an address decides where the agent sends a
 //! password.
 
+use crate::api::WebError;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::Duration;
@@ -161,8 +162,8 @@ fn list_answer(req: &HttpRequest, sealer: &Sealer, rows: Vec<Row>) -> HttpRespon
 
 pub async fn list(
     req: HttpRequest,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = machine::gate(&req, &state, "bmc list").await {
         return Ok(refused);
     }
@@ -175,8 +176,8 @@ pub async fn list(
 pub async fn replace(
     req: HttpRequest,
     body: web::types::Json<ReplaceRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = authz::acting_caller(&req, &state).await {
         return Ok(refused);
     }
@@ -211,8 +212,8 @@ pub async fn replace(
 pub async fn probe(
     req: HttpRequest,
     body: web::types::Json<ProbeRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = authz::acting_caller(&req, &state).await {
         return Ok(refused);
     }
@@ -228,8 +229,8 @@ pub async fn probe(
 pub async fn status(
     req: HttpRequest,
     path: web::types::Path<String>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = machine::gate(&req, &state, "bmc status").await {
         return Ok(refused);
     }
@@ -264,8 +265,8 @@ pub async fn power(
     req: HttpRequest,
     path: web::types::Path<String>,
     body: web::types::Json<PowerRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let intent = body.into_inner().intent;
     let what = format!("bmc power {}", intent.as_str());
     let gated = match machine::gate(&req, &state, &what).await {

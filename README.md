@@ -90,7 +90,7 @@ Download packages only from sources you trust.
 
 - Install [themes and icon packs](https://serverbox.lollipopkit.com/docs/advanced/theme-packages/) from the built-in store, or make your own.
 - Biometric app lock, and backups to iCloud, WebDAV, GitHub Gist or a Monitor agent, encrypted with a password you choose.
-- iOS, Android, macOS, Linux and Windows, in 16 languages.
+- iOS, Android, macOS, Linux and Windows, in 17 languages.
 
 ## Help
 

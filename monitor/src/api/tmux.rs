@@ -10,9 +10,10 @@
 //! endpoint: a session is a shell, so whoever may attach to one may already
 //! open one.
 
+use crate::api::WebError;
 use std::sync::Arc;
 
-use ntex::web::{self, HttpRequest, HttpResponse};
+use ntex::web::{HttpRequest, HttpResponse};
 use serde_json::json;
 
 use super::exec::{ExecResponse, run};
@@ -29,8 +30,8 @@ use super::server::AppState;
 /// list would otherwise read as "this machine has no sessions".
 pub async fn list(
     req: HttpRequest,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = machine::gate(&req, &state, "tmux list").await {
         return Ok(refused);
     }

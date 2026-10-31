@@ -161,20 +161,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     super.dispose();
   }
 
-  Future<void> _clearAllSettings() async {
-    try {
-      if (!await Stores.setting.clear()) {
-        Toast.error(libL10n.fail);
-        return;
-      }
-      unawaited(RNodes.app.notify());
-      Toast.success(libL10n.success);
-    } catch (e, s) {
-      Loggers.app.warning('Failed to clear settings', e, s);
-      Toast.error(libL10n.fail);
-    }
-  }
-
   void _onSelect(SettingsNode node) {
     _dropPushedPages();
     setState(() => _selectedId = node.id);
@@ -329,15 +315,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         // The width `AdaptivePanes` splits at, so that a window wide enough for
         // two columns gets two columns here as well.
         final wide = constraints.maxWidth >= AdaptivePanes.kSplitWidth;
-        return _SettingsWidth(
+        return _buildScaffold(
           wide: wide,
-          child: _buildScaffold(
-            wide: wide,
-            menu: menu,
-            nodes: nodes,
-            selected: selected,
-            hits: hits,
-          ),
+          menu: menu,
+          nodes: nodes,
+          selected: selected,
+          hits: hits,
         );
       },
     );

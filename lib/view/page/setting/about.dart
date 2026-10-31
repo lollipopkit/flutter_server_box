@@ -48,7 +48,12 @@ final class _AppAboutPageState extends State<_AppAboutPage>
                 Btn.elevated(
                   icon: const Icon(MingCute.question_fill),
                   text: libL10n.license,
-                  onTap: () => showLicensePage(context: context),
+                  onTap: () => showLicensePage(
+                    context: context,
+                    // Not an `AppRoute`, so [NavTargetScope] is read by hand.
+                    useRootNavigator:
+                        NavTargetScope.maybeOf(context) == NavTarget.root,
+                  ),
                 ),
                 Btn.elevated(
                   icon: const Icon(MingCute.heart_fill),

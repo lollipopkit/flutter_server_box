@@ -25,11 +25,12 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 use ntex::time::timeout;
+use ntex::service::map_state_factory;
 use ntex::web::App;
 use ntex::web::test::{self as web_test, TestServer};
 use rustls::crypto::ring;
 use server_box_monitor::api::auth::generate_token;
-use server_box_monitor::api::server::{AppState, configure_api};
+use server_box_monitor::api::server::{Agent, AppState, configure_api};
 use server_box_monitor::core::config::Config;
 use std::sync::Once;
 
@@ -72,14 +73,10 @@ async fn state() -> Arc<AppState> {
 }
 
 async fn test_server(state: Arc<AppState>) -> TestServer {
-    web_test::server(move || {
+    web_test::server(async move |_| {
         let state = state.clone();
-        async move {
-            let limit = state.remote_access.exec.max_request_bytes;
-            App::new().state(state).configure(configure_api(limit))
-        }
+        map_state_factory(Agent(state), App::<Agent>::new().configure(configure_api))
     })
-    .await
 }
 
 #[ntex::test]

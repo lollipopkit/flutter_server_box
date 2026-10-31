@@ -28,17 +28,18 @@
 //! The endpoint dials and relays; it understands neither protocol. That is what
 //! makes it one endpoint for both, and for anything else that needs a socket.
 
+use crate::api::WebError;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::Arc;
 
 use ntex::rt::spawn;
-use ntex::service::{Service, ServiceCtx, fn_factory_with_config};
+use ntex::service::{BindCtx, Ctx, Service};
 use ntex::util::{ByteString, Bytes};
 use ntex::web::ws::{self, CloseCode, Frame, Message};
 
-use super::upgrade::WsSink;
-use ntex::web::{self, HttpRequest, HttpResponse};
+use super::upgrade::{QueueGate, WsSink};
+use ntex::web::{HttpRequest, HttpResponse};
 use ntex::ws::Item;
 use serde::{Deserialize, Serialize};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -100,9 +101,8 @@ impl ServerMsg<'_> {
 
 pub async fn stream_ws(
     req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
-    let app_state = app_state.get_ref().clone();
+    app_state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let remote_ip = audit::peer_ip(&req);
 
     let deny = async |reason: &'static str, status: HttpResponse| {
@@ -116,18 +116,18 @@ pub async fn stream_ws(
 
     let secure = super::is_secure_transport(&req, app_state.tls_active);
     if !super::origin_allowed(&req, &app_state.config.get_server().cors_allowed_origins) {
-        return deny("origin", HttpResponse::Unauthorized().finish()).await;
+        return deny("origin", HttpResponse::Unauthorized().build()).await;
     }
 
     let Some(protocol) = ws::subprotocols(&req)
         .find(|value| value.starts_with(TICKET_PROTOCOL_PREFIX))
         .map(str::to_owned)
     else {
-        return deny("no ticket", HttpResponse::Unauthorized().finish()).await;
+        return deny("no ticket", HttpResponse::Unauthorized().build()).await;
     };
     let raw_ticket = &protocol[TICKET_PROTOCOL_PREFIX.len()..];
     let Ok(reservation) = app_state.tickets.reserve(raw_ticket, Purpose::Stream) else {
-        return deny("ticket", HttpResponse::Unauthorized().finish()).await;
+        return deny("ticket", HttpResponse::Unauthorized().build()).await;
     };
     let tickets = app_state.tickets.clone();
 
@@ -138,7 +138,7 @@ pub async fn stream_ws(
         .filter(|caller| caller.check(&app_state, secure).is_ok());
     let Some(admitted) = admitted else {
         tickets.rollback(reservation);
-        return deny("not admitted", HttpResponse::Forbidden().finish()).await;
+        return deny("not admitted", HttpResponse::Forbidden().build()).await;
     };
 
     let ctx = Rc::new(ConnCtx {
@@ -148,13 +148,10 @@ pub async fn stream_ws(
         since: admitted.since,
     });
 
-    let upgraded = super::upgrade::start::<_, _, web::Error>(
-        req,
+    let upgraded = super::upgrade::start(
+        &req,
         Some(&protocol),
-        fn_factory_with_config(move |sink: WsSink| {
-            let ctx = ctx.clone();
-            async move { Ok::<_, web::Error>(handler(ctx, sink)) }
-        }),
+        move |sink: WsSink| handler(ctx, sink),
     )
     .await;
     if upgraded.is_ok() {
@@ -219,7 +216,7 @@ fn handler(ctx: Rc<ConnCtx>, sink: WsSink) -> Relay {
         });
     }
 
-    Relay { ctx, sink, phase }
+    Relay { ctx, sink, phase, gate: QueueGate::default() }
 }
 
 /// One socket's frames: control, and bytes for the target.
@@ -227,45 +224,35 @@ struct Relay {
     ctx: Rc<ConnCtx>,
     sink: WsSink,
     phase: Rc<RefCell<Phase>>,
+    gate: QueueGate,
 }
 
-impl Service<Frame> for Relay {
-    type Response = Option<Message>;
-    type Error = web::Error;
+impl Service<WsSink, Frame> for Relay {
+    type Res = Option<Message>;
+    type Error = WebError;
+
+    fn bind(&self, ctx: BindCtx<'_>) {
+        self.gate.bind(ctx);
+    }
 
     /// Not ready while the queue towards the target is full.
-    ///
-    /// The dispatcher calls this service for every frame without waiting for
-    /// the last call to finish, and stops reading the socket only while this
-    /// says no. Always ready, a target slower than the client — PVE writing an
-    /// uploaded ISO to disk — left a call per frame waiting on the full queue,
-    /// each holding its frame: the upload was read into this process as fast
-    /// as the client could send it, and nothing held the client back.
-    async fn ready(&self, _: ServiceCtx<'_, Self>) -> Result<(), Self::Error> {
-        let sender = match &*self.phase.borrow() {
-            Phase::Running(sender) => Some(sender.clone()),
-            _ => None,
-        };
-        if let Some(sender) = sender {
-            // A permit taken and given back: room for one more. A closed
-            // queue is the call's to report.
-            drop(sender.reserve().await);
-        }
+    async fn ready(&self, _: Ctx<'_, Self, WsSink>) -> Result<(), Self::Error> {
+        self.gate.ready(running(&self.phase)).await;
         Ok(())
     }
 
     async fn call(
         &self,
         frame: Frame,
-        _: ServiceCtx<'_, Self>,
-    ) -> Result<Self::Response, Self::Error> {
+        _: Ctx<'_, Self, WsSink>,
+    ) -> Result<Self::Res, Self::Error> {
         let phase = &self.phase;
         match frame {
             Frame::Text(data) => Ok(on_control(&self.ctx, &self.sink, phase, &data).await),
-            Frame::Binary(data) => Ok(on_input(phase, data.to_vec()).await),
+            Frame::Binary(data) => Ok(on_input(&self.gate, phase, data.to_vec()).await),
             Frame::Continuation(
                 Item::FirstBinary(data) | Item::Continue(data) | Item::Last(data),
-            ) => Ok(on_input(phase, data.to_vec()).await),
+            ) => Ok(on_input(&self.gate, phase, data.to_vec()).await),
             Frame::Ping(payload) => Ok(Some(Message::Pong(payload))),
             Frame::Pong(_) => Ok(None),
             Frame::Close(_) => {
@@ -279,18 +266,22 @@ impl Service<Frame> for Relay {
     }
 }
 
-async fn on_input(phase: &Rc<RefCell<Phase>>, data: Vec<u8>) -> Option<Message> {
+/// The queue towards the target, while one is open.
+fn running(phase: &RefCell<Phase>) -> Option<mpsc::Sender<Vec<u8>>> {
+    match &*phase.borrow() {
+        Phase::Running(sender) => Some(sender.clone()),
+        _ => None,
+    }
+}
+
+async fn on_input(gate: &QueueGate, phase: &Rc<RefCell<Phase>>, data: Vec<u8>) -> Option<Message> {
     if data.is_empty() {
         return None;
     }
-    let sender = match &*phase.borrow() {
-        Phase::Running(sender) => Some(sender.clone()),
-        _ => None,
-    };
-    match sender {
+    match running(phase) {
         Some(sender) => {
             // Room is what `ready` waited for; a failure is the target gone.
-            if sender.send(data).await.is_err() {
+            if gate.send(&sender, data).await.is_err() {
                 return Some(ServerMsg::Error {
                     code: "closed",
                     message: "The connection ended",

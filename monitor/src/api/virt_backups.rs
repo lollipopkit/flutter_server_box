@@ -15,6 +15,7 @@
 //! `Detail::BackupRefused`. `virt` to see and change, as for power; a host's
 //! failure is answered 200 with `error`, as in `api::virt`.
 
+use crate::api::WebError;
 use std::sync::Arc;
 
 use ntex::web::{self, HttpRequest, HttpResponse};
@@ -80,7 +81,7 @@ pub struct ScheduleBody {
     schedule: String,
 }
 
-fn answer(value: serde_json::Value) -> Result<HttpResponse, web::Error> {
+fn answer(value: serde_json::Value) -> Result<HttpResponse, WebError> {
     Ok(HttpResponse::Ok().json(&value))
 }
 
@@ -100,8 +101,8 @@ async fn backup_of(client: &Client, guest: &sbm_virt::model::Guest, id: &str) ->
 pub async fn backups(
     req: HttpRequest,
     body: web::types::Json<GuestBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = machine::gate(&req, &state, "virt backups").await {
         return Ok(refused);
     }
@@ -127,7 +128,7 @@ async fn audited(
     state: &AppState,
     what: String,
     run: impl AsyncFnOnce(&Arc<Client>, &Backend) -> Result<(), VirtError>,
-) -> Result<HttpResponse, web::Error> {
+) -> Result<HttpResponse, WebError> {
     let audit = match Audit::start(req, state, what).await {
         Ok(a) => a,
         Err(refused) => return Ok(refused),
@@ -147,8 +148,8 @@ async fn audited(
 pub async fn backup(
     req: HttpRequest,
     body: web::types::Json<BackupBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let r = body.into_inner();
     let what = format!("virt backup {} to {}", r.guest, r.request.storage);
     audited(&req, &state, what, async |client, backend| {
@@ -161,8 +162,8 @@ pub async fn backup(
 pub async fn restore(
     req: HttpRequest,
     body: web::types::Json<RestoreBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let r = body.into_inner();
     let to = r.vmid.map_or_else(|| "over it".to_owned(), |v| format!("as {v}"));
     let what = format!("virt backup restore {} {} {to}", r.guest, r.backup);
@@ -176,8 +177,8 @@ pub async fn restore(
 pub async fn edit(
     req: HttpRequest,
     body: web::types::Json<EditBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let r = body.into_inner();
     let what = format!("virt backup edit {}", r.backup);
     audited(&req, &state, what, async |client, backend| {
@@ -191,8 +192,8 @@ pub async fn edit(
 pub async fn delete(
     req: HttpRequest,
     body: web::types::Json<DeleteBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let r = body.into_inner();
     let what = format!("virt backup delete {}", r.backup);
     audited(&req, &state, what, async |client, backend| {
@@ -209,8 +210,8 @@ pub async fn delete(
 pub async fn jobs(
     req: HttpRequest,
     _body: Option<web::types::Json<serde_json::Value>>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = machine::gate(&req, &state, "virt backup jobs").await {
         return Ok(refused);
     }
@@ -230,8 +231,8 @@ pub async fn jobs(
 pub async fn edit_job(
     req: HttpRequest,
     body: web::types::Json<JobEditBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let r = body.into_inner();
     let verb = if r.remove {
         "remove"
@@ -247,8 +248,8 @@ pub async fn edit_job(
 pub async fn run_job(
     req: HttpRequest,
     body: web::types::Json<JobRunBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let r = body.into_inner();
     let what = format!("virt backup job run {}", r.id);
     audited(&req, &state, what, async |client, _| client.run_backup_job(&r.id).await).await
@@ -257,8 +258,8 @@ pub async fn run_job(
 pub async fn schedule(
     req: HttpRequest,
     body: web::types::Json<ScheduleBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = machine::gate(&req, &state, "virt backup schedule").await {
         return Ok(refused);
     }

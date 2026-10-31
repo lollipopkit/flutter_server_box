@@ -7,11 +7,12 @@ mod common;
 use std::sync::{Arc, Once};
 use std::{fs, path::Path};
 
+use ntex::service::map_state_factory;
 use ntex::web::test::{self as web_test, TestServer};
 use ntex::web::{self, App};
 use rustls::crypto::ring;
 use server_box_monitor::api::auth::generate_token;
-use server_box_monitor::api::server::AppState;
+use server_box_monitor::api::server::{Agent, AppState};
 use server_box_monitor::core::config::Config;
 
 const SECRET: &str = "test-secret-that-is-long-enough-32ch";
@@ -38,16 +39,13 @@ async fn app_state() -> Arc<AppState> {
 }
 
 async fn test_server(state: Arc<AppState>) -> TestServer {
-    web_test::server(move || {
+    web_test::server(async move |_| {
         let state = state.clone();
-        async move {
-            App::new().state(state).service(
-                web::scope("/api/v1")
-                    .route("/fs/roots", web::get().to(server_box_monitor::api::fs::roots)),
-            )
-        }
+        map_state_factory(Agent(state), App::<Agent>::new().service(
+            web::scope("/api/v1")
+                .route("/fs/roots", web::get().to(server_box_monitor::api::fs::roots)),
+        ))
     })
-    .await
 }
 
 /// The body, or the status when the call was refused.

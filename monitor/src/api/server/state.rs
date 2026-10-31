@@ -64,6 +64,30 @@ pub(crate) async fn verify_login_password_off_worker(password: String, hash: Opt
     .map_err(|error| MonitorError::Monitoring(format!("Password verifier failed: {error}")))?
 }
 
+/// The web app's state: one [AppState] shared by every worker. A handler
+/// asks for it as an `Arc<AppState>` argument.
+#[derive(Clone)]
+pub struct Agent(pub Arc<AppState>);
+
+impl ntex::web::State for Agent {
+    type Error = ntex::web::DefaultError;
+}
+
+impl ntex::web::FromRequest<Agent> for Arc<AppState> {
+    type Error = std::convert::Infallible;
+
+    async fn from_request(
+        st: &Agent,
+        _: &ntex::web::HttpRequest,
+        _: &mut ntex::http::Payload,
+    ) -> std::result::Result<Self, Self::Error> {
+        Ok(st.0.clone())
+    }
+}
+
+/// The error of a handler that answers every failure itself.
+pub type WebError = ntex::web::WebError<Agent>;
+
 #[derive(Clone)]
 pub struct AppState {
     pub config: Arc<Config>,

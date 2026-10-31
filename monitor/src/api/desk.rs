@@ -26,6 +26,8 @@
 //! machine. Every check of shape is here, so a stored row is one the panel
 //! can draw; the panel's own checks are for its forms only.
 
+use crate::api::WebError;
+use crate::api::json::{Json, Max};
 use crate::utils::lock::LockExt;
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
@@ -598,7 +600,7 @@ pub(crate) async fn account(req: &HttpRequest, state: &AppState) -> Result<(Call
 }
 
 
-pub async fn get(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn get(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     let (_, user) = require!(account(&req, &state).await);
     let preferences = match load_preferences(&state.db, user).await {
         Ok(p) => p,
@@ -630,7 +632,7 @@ pub async fn get(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> R
 
 /// `PUT /desk/onboarding`: the first-run guide is done with (walked through or
 /// skipped). The time is the agent's; a second call keeps the first.
-pub async fn put_onboarding(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn put_onboarding(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     let (_, user) = require!(account(&req, &state).await);
     let done = sqlx::query("INSERT OR IGNORE INTO desk_onboarding (user_id, done_at) VALUES (?, ?)")
         .bind(user)
@@ -641,18 +643,18 @@ pub async fn put_onboarding(req: HttpRequest, state: web::types::State<Arc<AppSt
 }
 
 /// `DELETE /desk/onboarding`: the guide is offered again (Settings).
-pub async fn delete_onboarding(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn delete_onboarding(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     let (_, user) = require!(account(&req, &state).await);
     let done = sqlx::query("DELETE FROM desk_onboarding WHERE user_id = ?").bind(user).execute(&state.db).await;
     onboarding_changed(&state, user, done)
 }
 
-fn onboarding_changed<T>(state: &AppState, user: i64, done: Result<T, sqlx::Error>) -> Result<HttpResponse, web::Error> {
+fn onboarding_changed<T>(state: &AppState, user: i64, done: Result<T, sqlx::Error>) -> Result<HttpResponse, WebError> {
     match done {
         Ok(_) => {
             // Another tab hides or shows it too.
             state.desk.send(DeskEvent::Preferences { user });
-            Ok(HttpResponse::NoContent().finish())
+            Ok(HttpResponse::NoContent().build())
         }
         Err(e) => Ok(super::respond::internal(&e)),
     }
@@ -660,9 +662,9 @@ fn onboarding_changed<T>(state: &AppState, user: i64, done: Result<T, sqlx::Erro
 
 pub async fn put_preferences(
     req: HttpRequest,
-    body: web::types::Json<Preferences>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    body: Json<Preferences, Max<MAX_REQUEST>>,
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let (_, user) = require!(account(&req, &state).await);
     let preferences = match check_preferences(body.into_inner()) {
         Ok(p) => p,
@@ -682,7 +684,7 @@ pub async fn put_preferences(
     Ok(HttpResponse::Ok().json(&preferences))
 }
 
-pub async fn get_wallpaper(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn get_wallpaper(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     let (_, user) = require!(account(&req, &state).await);
     let row = sqlx::query_as::<_, (String, String)>("SELECT mime, sha256 FROM desk_wallpaper WHERE user_id = ?")
         .bind(user)
@@ -704,7 +706,7 @@ pub async fn get_wallpaper(req: HttpRequest, state: web::types::State<Arc<AppSta
         .header("cache-control", "private, no-cache")
         .header("x-content-type-options", "nosniff");
     if matches {
-        return Ok(res.finish());
+        return Ok(res.build());
     }
     match state.blobs.read(&sha).await {
         Ok(Some(bytes)) => Ok(res.content_type(mime).body(bytes)),
@@ -717,13 +719,13 @@ pub async fn get_wallpaper(req: HttpRequest, state: web::types::State<Arc<AppSta
 pub async fn put_wallpaper(
     req: HttpRequest,
     mut body: web::types::Payload,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let (_, user) = require!(account(&req, &state).await);
     let mut data = Vec::new();
     while let Some(chunk) = body.next().await {
         let Ok(chunk) = chunk else {
-            return Ok(HttpResponse::BadRequest().finish());
+            return Ok(HttpResponse::BadRequest().build());
         };
         if data.len() + chunk.len() > MAX_WALLPAPER_BYTES {
             return Ok(HttpResponse::PayloadTooLarge().json(&refused("tooLarge", None)));
@@ -760,7 +762,7 @@ pub async fn put_wallpaper(
 }
 
 /// Removes the custom image; a desk that showed it falls back to the default.
-pub async fn delete_wallpaper(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn delete_wallpaper(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     let (_, user) = require!(account(&req, &state).await);
     let mut tx = match state.db.begin().await {
         Ok(tx) => tx,
@@ -780,7 +782,7 @@ pub async fn delete_wallpaper(req: HttpRequest, state: web::types::State<Arc<App
         Ok(()) => {
             state.blobs.collect_soon(&state.db);
             state.desk.send(DeskEvent::Preferences { user });
-            Ok(HttpResponse::NoContent().finish())
+            Ok(HttpResponse::NoContent().build())
         }
         Err(e) => Ok(super::respond::internal(&e)),
     }
@@ -789,8 +791,8 @@ pub async fn delete_wallpaper(req: HttpRequest, state: web::types::State<Arc<App
 pub async fn get_session(
     req: HttpRequest,
     query: web::types::Query<DeviceQuery>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let (_, user) = require!(account(&req, &state).await);
     if !valid_id(&query.device) {
         return Ok(HttpResponse::BadRequest().json(&refused("invalidDevice", None)));
@@ -808,9 +810,9 @@ pub async fn get_session(
 
 pub async fn put_session(
     req: HttpRequest,
-    body: web::types::Json<SessionWrite>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    body: Json<SessionWrite, Max<MAX_REQUEST>>,
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let (_, user) = require!(account(&req, &state).await);
     let write = body.into_inner();
     if let Err(refusal) = check_session(&write) {
@@ -834,7 +836,7 @@ pub async fn put_session(
 }
 
 /// `GET /alerts`: the rules firing at the last check, see [`FiringNow`].
-pub async fn alerts(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn alerts(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(account(&req, &state).await);
     Ok(HttpResponse::Ok().json(&state.desk.firing()))
 }
@@ -842,8 +844,8 @@ pub async fn alerts(req: HttpRequest, state: web::types::State<Arc<AppState>>) -
 pub async fn notifications(
     req: HttpRequest,
     query: web::types::Query<NotificationQuery>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let (_, user) = require!(account(&req, &state).await);
     let limit = query.limit.unwrap_or(50).clamp(1, 200);
     let rows = sqlx::query_as::<_, (i64, String, String, String, String, String, Option<String>, Option<String>, bool)>(
@@ -891,8 +893,8 @@ pub async fn notifications(
 pub async fn mark_read(
     req: HttpRequest,
     body: web::types::Json<ReadRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let (_, user) = require!(account(&req, &state).await);
     let body = body.into_inner();
     if body.ids.len() > 200 {
@@ -911,7 +913,7 @@ pub async fn mark_read(
         mark_ids(&state.db, user, &body.ids).await
     };
     match done {
-        Ok(()) => Ok(HttpResponse::NoContent().finish()),
+        Ok(()) => Ok(HttpResponse::NoContent().build()),
         Err(e) => Ok(super::respond::internal(&e)),
     }
 }
@@ -937,11 +939,10 @@ async fn mark_ids(db: &SqlitePool, user: i64, ids: &[i64]) -> Result<(), sqlx::E
 /// `{"type":"session","device":…,"revision":…}`, `{"type":"preferences"}`,
 /// `{"type":"apps"}` (the installed desk apps changed), and `{"type":"resync"}` when events were dropped (refetch everything).
 /// Ends when the account's password changes or the account goes.
-pub async fn events(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn events(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     let (caller, user) = require!(account(&req, &state).await);
     let mut rx = state.desk.subscribe();
     let mut changes = state.password_changed.subscribe();
-    let state = state.get_ref().clone();
     let stream = async_stream::stream! {
         yield Ok::<_, std::io::Error>(Bytes::from_static(b": ok\n\n"));
         let mut beat = tokio::time::interval(HEARTBEAT);

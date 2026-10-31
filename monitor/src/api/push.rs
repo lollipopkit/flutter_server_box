@@ -38,11 +38,13 @@
 // TODO: make pushes and rules live, the way `LiveSettings` already does for
 // the collection intervals, and drop `applies_on_restart`.
 
+use crate::api::WebError;
+use crate::api::json::{Json, Max};
 use std::collections::HashSet;
 use std::sync::{Arc, OnceLock};
 use std::time::Duration;
 
-use ntex::web::{self, HttpRequest, HttpResponse};
+use ntex::web::{HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map as JsonMap, Value as JsonValue};
 
@@ -196,8 +198,8 @@ struct ErrorResponse {
 
 pub async fn list(
     req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    app_state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     // The channels are the agent's configuration, and a webhook is a place
     // to send what the agent knows: the account's to change, and to read.
     if let Err(response) = authz::acting_caller(&req, &app_state).await {
@@ -221,9 +223,9 @@ pub async fn list(
 
 pub async fn replace(
     req: HttpRequest,
-    body: web::types::Json<ReplaceRequest>,
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    body: Json<ReplaceRequest, Max<MAX_REQUEST>>,
+    app_state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     // The channels are the agent's configuration, and a webhook is a place
     // to send what the agent knows: the account's to change, and to read.
     if let Err(response) = authz::acting_caller(&req, &app_state).await {
@@ -303,9 +305,9 @@ pub async fn replace(
 
 pub async fn test(
     req: HttpRequest,
-    body: web::types::Json<TestRequest>,
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    body: Json<TestRequest, Max<MAX_REQUEST>>,
+    app_state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     // The channels are the agent's configuration, and a webhook is a place
     // to send what the agent knows: the account's to change, and to read.
     if let Err(response) = authz::acting_caller(&req, &app_state).await {

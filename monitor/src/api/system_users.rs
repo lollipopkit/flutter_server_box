@@ -36,6 +36,7 @@
 //! written to sudo's stdin, and the account's own inside the script, which
 //! then goes through `machine::as_root_private` rather than a command line.
 
+use crate::api::WebError;
 use std::sync::Arc;
 
 use ntex::web::{self, HttpRequest, HttpResponse};
@@ -182,8 +183,8 @@ pub struct UserQuery {
 pub async fn list(
     req: HttpRequest,
     query: web::types::Query<UserQuery>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = machine::gate(&req, &state, "system-users list").await {
         return Ok(refused);
     }
@@ -192,7 +193,7 @@ pub async fn list(
     // A part about one account that was not told which is a request that
     // cannot be answered, refused before anything runs on the machine.
     if part == UserPart::Detail && name.is_none() {
-        return Ok(HttpResponse::BadRequest().finish());
+        return Ok(HttpResponse::BadRequest().build());
     }
     let exec = &state.remote_access.exec;
 
@@ -255,8 +256,8 @@ pub async fn list(
 pub async fn act(
     req: HttpRequest,
     body: web::types::Json<UserActRequest>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let request = body.into_inner();
     // The action and the account, never a field's value or a password.
     let what = format!("system-users {}", request.subject());

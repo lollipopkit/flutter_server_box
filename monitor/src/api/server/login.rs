@@ -76,7 +76,7 @@ pub(super) struct WatchTokenResponse {
 pub(super) async fn login(
     http_req: HttpRequest,
     req: web::types::Json<LoginRequest>,
-    app_state: web::types::State<Arc<AppState>>,
+    app_state: Arc<AppState>,
 ) -> Result<HttpResponse> {
     let peer_ip = http_req.peer_addr().map(|addr| addr.ip());
 
@@ -192,7 +192,7 @@ pub(super) fn validate_watch_client_id(client_id: &str) -> Result<&str> {
 
 pub(super) async fn issue_watch_token(
     req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
+    app_state: Arc<AppState>,
     payload: web::types::Json<WatchTokenRequest>,
 ) -> Result<HttpResponse> {
     require_jwt!(&req, &app_state);
@@ -224,7 +224,7 @@ pub(super) async fn issue_watch_token(
 
 pub(super) async fn revoke_watch_token(
     req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
+    app_state: Arc<AppState>,
     payload: web::types::Json<WatchTokenRequest>,
 ) -> Result<HttpResponse> {
     require_jwt!(&req, &app_state);

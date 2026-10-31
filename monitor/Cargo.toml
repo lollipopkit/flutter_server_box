@@ -23,8 +23,8 @@ sbm_lkc = { path = "../crates/sbm_lkc" }
 sbm_native = { path = "../crates/sbm_native" }
 
 # Web framework
-ntex = { version = "3", features = ["tokio", "rustls"] }
-ntex-files = "3.2"
+ntex = { version = "4", features = ["tokio", "rustls"] }
+ntex-files = "4.2"
 
 # TLS (ring instead of aws-lc: no cmake/assembly dependency for static musl builds)
 rustls = { version = "0.23", default-features = false, features = ["ring", "logging", "std", "tls12"] }
@@ -153,7 +153,7 @@ windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Securit
 [dev-dependencies]
 # ntex's test server otherwise turns on every crate's trace log, which
 # makes Cranelift compiling a component take tens of seconds.
-ntex = { version = "3", features = ["no-test-logging"] }
+ntex = { version = "4", features = ["no-test-logging"] }
 # Repository trees for `tests/theme_store.rs` (`fl_theme::repo::Index`).
 indexmap = "2"
 # Building theme packages in `tests/desk_themes.rs`.

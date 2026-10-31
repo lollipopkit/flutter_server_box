@@ -125,21 +125,36 @@ async fn a_refused_upload_is_answered_whatever_its_size() {
 /// in cannot keep the agent reading. Past the bound the connection is closed.
 #[ntex::test]
 async fn a_refused_upload_is_read_no_further_than_one_upload() {
-    use futures::stream;
+    use std::io::{ErrorKind, Write};
+
     let (srv, _) = server().await;
-    // Endless, chunked: no length to stop at.
-    let endless = stream::repeat_with(|| Ok::<_, std::io::Error>(ntex::util::Bytes::from(vec![0u8; 64 * 1024])));
-    let sent = tokio::time::timeout(
-        std::time::Duration::from_secs(30),
-        srv.request(Method::PUT, srv.url(&blob("x"))).send_stream(endless),
-    )
-    .await;
-    // Answered once the bound was read, or cut off there; an agent that kept
-    // reading would never answer.
-    let Ok(sent) = sent else { panic!("the agent kept reading") };
-    if let Ok(resp) = sent {
-        assert_eq!(resp.status().as_u16(), 401);
-    }
+    let (addr, path) = (srv.addr(), blob("x"));
+    // A plain socket: the agent closing is a failed write here, which ntex's
+    // client does not always report while it is still sending a body.
+    let (sent, error) = tokio::task::spawn_blocking(move || {
+        let mut socket = std::net::TcpStream::connect(addr).unwrap();
+        // Past the agent's own bound on a discard (64 MiB or 60 s).
+        socket.set_write_timeout(Some(std::time::Duration::from_secs(90))).unwrap();
+        write!(socket, "PUT {path} HTTP/1.1\r\nHost: {addr}\r\nTransfer-Encoding: chunked\r\n\r\n").unwrap();
+        // Endless, chunked: no length to stop at.
+        let chunk = [b"10000\r\n".as_slice(), &[0u8; 0x10000], b"\r\n"].concat();
+        let mut sent = 0u64;
+        loop {
+            match socket.write_all(&chunk) {
+                Ok(()) => sent += 0x10000,
+                Err(e) => return (sent, e.kind()),
+            }
+        }
+    })
+    .await
+    .unwrap();
+    // Closed by the agent, not waited out; what the socket buffers held is
+    // the little past the bound.
+    assert!(
+        matches!(error, ErrorKind::BrokenPipe | ErrorKind::ConnectionReset | ErrorKind::ConnectionAborted),
+        "the agent kept the connection: {error:?} after {sent} bytes"
+    );
+    assert!(sent <= MAX_BYTES + (16 << 20), "the agent read {sent} bytes");
 }
 
 #[ntex::test]

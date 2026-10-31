@@ -60,8 +60,7 @@ impl From<std::num::ParseIntError> for MonitorError {
     }
 }
 
-// Web response error implementation for ntex
-impl ntex::web::WebResponseError for MonitorError {
+impl MonitorError {
     fn status_code(&self) -> ntex::http::StatusCode {
         match *self {
             MonitorError::Auth(_) => ntex::http::StatusCode::UNAUTHORIZED,
@@ -71,9 +70,12 @@ impl ntex::web::WebResponseError for MonitorError {
             _ => ntex::http::StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
+}
 
-    fn error_response(&self, _req: &ntex::web::HttpRequest) -> ntex::web::HttpResponse {
-        let mut response = ntex::web::HttpResponse::build(self.status_code());
+// Web response error implementation for ntex
+impl<St> ntex::web::WebResponseError<St, ntex::web::DefaultError> for MonitorError {
+    fn error_response(&self, _: &St) -> ntex::web::HttpResponse {
+        let mut response = ntex::web::HttpResponse::builder(self.status_code());
         if let MonitorError::Quota { retry_after_secs, .. } = self {
             response.header(
                 ntex::http::header::RETRY_AFTER,

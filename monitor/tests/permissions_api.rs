@@ -8,12 +8,13 @@ mod common;
 use std::sync::{Arc, Once};
 
 use ntex::http::Method;
+use ntex::service::map_state_factory;
 use ntex::web::App;
 use ntex::web::test::{self as web_test, TestServer};
 use rustls::crypto::ring;
 use serde_json::{Value, json};
 use server_box_monitor::api::auth::generate_token;
-use server_box_monitor::api::server::{AppState, configure_api};
+use server_box_monitor::api::server::{Agent, AppState, configure_api};
 use server_box_monitor::core::config::Config;
 
 const SECRET: &str = "test-secret-that-is-long-enough-32ch";
@@ -49,14 +50,10 @@ async fn state() -> Arc<AppState> {
 }
 
 async fn server(state: Arc<AppState>) -> TestServer {
-    web_test::server(move || {
+    web_test::server(async move |_| {
         let state = state.clone();
-        async move {
-            let limit = state.remote_access.exec.max_request_bytes;
-            App::new().state(state).configure(configure_api(limit))
-        }
+        map_state_factory(Agent(state), App::<Agent>::new().configure(configure_api))
     })
-    .await
 }
 
 fn jwt() -> String {
@@ -363,8 +360,7 @@ async fn a_plaintext_link_only_reads() {
     use ntex::web::test::{TestRequest, call_service, init_service};
 
     let state = state().await;
-    let limit = state.remote_access.exec.max_request_bytes;
-    let app = init_service(App::new().state(state).configure(configure_api(limit))).await;
+    let app = init_service(map_state_factory(Agent(state), App::<Agent>::new().configure(configure_api))).await;
     let token = jwt();
     let remote: std::net::SocketAddr = "203.0.113.7:40000".parse().unwrap();
     let request = |method: Method, path: &str, body: Option<Value>| {
@@ -373,7 +369,7 @@ async fn a_plaintext_link_only_reads() {
             .peer_addr(remote)
             .header("Authorization", format!("Bearer {token}"));
         match body {
-            Some(body) => req.set_json(&body).to_request(),
+            Some(body) => req.json(&body).to_request(),
             None => req.to_request(),
         }
     };
@@ -431,8 +427,7 @@ async fn the_clients_capabilities_fixture_is_what_a_plaintext_link_gets() {
     use server_box_monitor::api::machine::FEATURES;
 
     let state = state().await;
-    let limit = state.remote_access.exec.max_request_bytes;
-    let app = init_service(App::new().state(state).configure(configure_api(limit))).await;
+    let app = init_service(map_state_factory(Agent(state), App::<Agent>::new().configure(configure_api))).await;
     let req = TestRequest::with_uri("/api/v1/capabilities")
         .peer_addr("203.0.113.7:40000".parse().unwrap())
         .header("Authorization", format!("Bearer {}", jwt()))

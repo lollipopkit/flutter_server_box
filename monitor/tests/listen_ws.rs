@@ -11,14 +11,14 @@ use std::sync::{Arc, Once};
 use std::time::Duration;
 
 use ntex::io::{Io, Sealed};
-use ntex::service::cfg::SharedCfg;
+use ntex::service::map_state_factory;
 use ntex::time::{Seconds, timeout};
 use ntex::util::{ByteString, Bytes};
 use ntex::web::test::{self as web_test, TestServer};
 use ntex::web::{self, App};
-use ntex::ws::{self, WsClient, WsConnection};
+use ntex::ws::{self, WsClient, WsClientConfig, WsConnection};
 use rustls::crypto::ring;
-use server_box_monitor::api::server::AppState;
+use server_box_monitor::api::server::{Agent, AppState};
 use server_box_monitor::api::ws::listen::listen_ws;
 use server_box_monitor::api::ws::stream::stream_ws;
 use server_box_monitor::api::ws::ticket::Purpose;
@@ -48,31 +48,29 @@ async fn app_state() -> Arc<AppState> {
 }
 
 async fn test_server(state: Arc<AppState>) -> TestServer {
-    web_test::server(move || {
+    web_test::server(async move |_| {
         let state = state.clone();
-        async move {
-            App::new().state(state).service(
-                web::scope("/api/v1")
-                    .route("/stream/ws", web::get().to(stream_ws))
-                    .route("/listen/ws", web::get().to(listen_ws)),
-            )
-        }
+        map_state_factory(Agent(state), App::<Agent>::new().service(
+            web::scope("/api/v1")
+                .route("/stream/ws", web::get().to(stream_ws))
+                .route("/listen/ws", web::get().to(listen_ws)),
+        ))
     })
-    .await
 }
 
 async fn connect(srv: &TestServer, path: &str, ticket: &str) -> (Io<Sealed>, ws::Codec) {
-    let conn = WsClient::builder(srv.url(path))
-        .address(srv.addr())
-        .timeout(Seconds(60))
-        .protocols([format!("sbm-ticket.{ticket}")])
-        .build(SharedCfg::default())
-        .await
-        .unwrap()
-        .connect()
-        .await
-        .map(WsConnection::seal)
-        .expect("upgrade should succeed");
+    let conn = WsClient::new(
+        srv.url(path),
+        WsClientConfig::new()
+            .set_address(srv.addr())
+            .set_handshake_timeout(Seconds(60))
+            .set_protocols([format!("sbm-ticket.{ticket}")])
+            .unwrap(),
+    )
+    .connect()
+    .await
+    .map(WsConnection::seal)
+    .expect("upgrade should succeed");
     let (io, codec, _) = conn.into_inner();
     (io, codec)
 }
@@ -222,14 +220,15 @@ async fn a_stream_ticket_is_not_a_listen_ticket() {
     let state = app_state().await;
     let ticket = state.tickets.issue(Purpose::Stream).unwrap();
     let srv = test_server(state).await;
-    let result = WsClient::builder(srv.url("/api/v1/listen/ws"))
-        .address(srv.addr())
-        .protocols([format!("sbm-ticket.{ticket}")])
-        .build(SharedCfg::default())
-        .await
-        .unwrap()
-        .connect()
-        .await;
+    let result = WsClient::new(
+        srv.url("/api/v1/listen/ws"),
+        WsClientConfig::new()
+            .set_address(srv.addr())
+            .set_protocols([format!("sbm-ticket.{ticket}")])
+            .unwrap(),
+    )
+    .connect()
+    .await;
     assert!(result.is_err());
 }
 

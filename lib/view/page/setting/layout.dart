@@ -220,7 +220,8 @@ extension _SettingsLayout on _SettingsPageState {
     );
   }
 
-  /// What acts on the settings as a whole: the log, and clearing everything.
+  /// The log, which belongs to no one page. Nothing destructive goes here:
+  /// the bar stays over every page (#1819).
   List<Widget> _buildActions() {
     return [
       Btn.text(
@@ -239,27 +240,6 @@ extension _SettingsLayout on _SettingsPageState {
         // and `CrashDebugMenu` — with everything it reaches — is tree shaken
         // out rather than shipped behind a gesture nobody is told about.
         onLongTap: kDebugMode ? () => CrashDebugMenu.show(context) : null,
-      ),
-      Btn.icon(
-        text: libL10n.delete,
-        icon: const Icon(Icons.delete),
-        onTap: () => context.showRoundDialog(
-          title: libL10n.attention,
-          child: SimpleMarkdown(
-            data: libL10n.askContinue(
-              '${libL10n.delete} **${libL10n.all}** ${libL10n.setting}',
-            ),
-          ),
-          actions: [
-            CountDownBtn(
-              onTap: () {
-                context.popDialog();
-                _clearAllSettings();
-              },
-              afterColor: Colors.red,
-            ),
-          ],
-        ),
       ),
     ];
   }
@@ -378,7 +358,14 @@ extension _SettingsLayout on _SettingsPageState {
     // skipping whichever level or manually pushed page is currently on top.
     return NavigatorPopHandler(
       onPopWithResult: (_) => _contentNav.currentState?.pop(),
-      child: navigator,
+      // One column keeps the settings' bar over this navigator, so a page with
+      // a bar of its own pushed here showed two, and the settings' actions sat
+      // over the page's own (#1819). It goes over the whole window instead.
+      // Beside the menu there is no settings bar, and the page takes the
+      // content column.
+      child: wide
+          ? navigator
+          : NavTargetScope(target: NavTarget.root, child: navigator),
     );
   }
 
@@ -464,27 +451,4 @@ extension _SettingsLayout on _SettingsPageState {
       ],
     );
   }
-}
-
-/// Whether the settings are in two columns, for a row that opens a page of its
-/// own.
-///
-/// One column keeps the settings' bar over the navigator the rows are in, so
-/// a page with a bar of its own pushed there showed two. It goes over the
-/// whole window instead. Beside the menu there is no settings bar, and the
-/// page takes the content column.
-final class _SettingsWidth extends InheritedWidget {
-  const _SettingsWidth({required this.wide, required super.child});
-
-  final bool wide;
-
-  /// Where a page opened from a row belongs. Outside the settings page — a
-  /// section pushed on its own, with its own bar — the nearest navigator.
-  static NavTarget pageTarget(BuildContext context) =>
-      context.getInheritedWidgetOfExactType<_SettingsWidth>()?.wide == false
-      ? NavTarget.root
-      : NavTarget.nearest;
-
-  @override
-  bool updateShouldNotify(_SettingsWidth oldWidget) => wide != oldWidget.wide;
 }

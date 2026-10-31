@@ -62,6 +62,7 @@
   "bgRunNeedsNotification": "Berjalan di latar belakang butuh notifikasi permanen, dan aplikasi ini tidak punya izin notifikasi. Ketuk untuk memberikannya.",
   "clearAllStatsContent": "Apakah Anda yakin ingin menghapus semua statistik koneksi server? Tindakan ini tidak dapat dibatalkan.",
   "clearAllStatsTitle": "Hapus Semua Statistik",
+  "clearAllSettings": "Hapus semua pengaturan",
   "clearServerStatsContent": "Apakah Anda yakin ingin menghapus statistik koneksi untuk server \"{serverName}\"? Tindakan ini tidak dapat dibatalkan.",
   "clearServerStatsTitle": "Hapus Statistik {serverName}",
   "clearThisServerStats": "Hapus Statistik Server Ini",
@@ -2001,5 +2002,7 @@
   "hostCertAuthoritiesTip": "Host yang sertifikatnya ditandatangani salah satu otoritas ini dipercaya tanpa ditanya, seperti @cert-authority OpenSSH; host lain ditanyakan saat koneksi pertama seperti sebelumnya. Host adalah pola yang dipisahkan koma dengan * dan ?, serta ! untuk mengecualikan; port selain 22 dicocokkan sebagai [host]:port.",
   "hostCertAuthorityInvalid": "Bukan kunci publik SSH yang didukung (ssh-ed25519, ssh-rsa, atau ecdsa-sha2-*)",
   "hostCertAuthorityNoHosts": "Masukkan host yang dijaminnya, misalnya *",
-  "hostCertAuthorityExists": "Sudah ada di daftar"
+  "hostCertAuthorityExists": "Sudah ada di daftar",
+  "addToHomeScreen": "Tambahkan ke layar utama",
+  "transfersActive": "{count} transfer"
 }

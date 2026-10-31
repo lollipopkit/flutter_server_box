@@ -355,6 +355,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get clearAllStatsTitle => 'すべての統計をクリア';
 
   @override
+  String get clearAllSettings => 'すべての設定を消去';
+
+  @override
   String clearServerStatsContent(String serverName) {
     return 'サーバー\"$serverName\"の接続統計を削除してもよろしいですか？この操作は元に戻せません。';
   }
@@ -6853,4 +6856,12 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get hostCertAuthorityExists => 'すでに一覧にあります';
+
+  @override
+  String get addToHomeScreen => 'ホーム画面に追加';
+
+  @override
+  String transfersActive(int count) {
+    return '$count 件の転送';
+  }
 }

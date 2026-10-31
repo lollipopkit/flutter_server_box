@@ -407,6 +407,9 @@ class SSHPageState extends ConsumerState<SSHPage>
   NavigatorState? _reconnectDialogNav;
   bool _disconnectDialogOpen = false;
   bool _reportedDisconnected = false;
+
+  /// Ended from outside the page (Stop All): not to come back as a reconnect.
+  bool _endRequested = false;
   VoidCallback? _visibilityListener;
   bool _isPickingSnippet = false;
   TerminalConnectionStep _connectionStep = TerminalConnectionStep.connecting;

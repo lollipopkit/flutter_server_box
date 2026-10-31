@@ -35,6 +35,7 @@
 //! working directory, so a second run there would overwrite the first's pid,
 //! exit code and output.
 
+use crate::api::WebError;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -296,8 +297,8 @@ pub struct GetQuery {
 pub async fn get(
     req: HttpRequest,
     query: web::types::Query<GetQuery>,
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    app_state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     if let Err(refused) = machine::gate(&req, &app_state, "benchmark list").await {
         return Ok(refused);
     }
@@ -410,8 +411,8 @@ struct CancelResponse {
 pub async fn act(
     req: HttpRequest,
     body: web::types::Json<BenchAction>,
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    app_state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let action = body.into_inner();
     let what = match &action {
         BenchAction::Start { .. } => "benchmark start",
@@ -442,7 +443,7 @@ async fn start(
     app_state: &AppState,
     options: BenchOptions,
     gated: &machine::Gated,
-) -> Result<HttpResponse, web::Error> {
+) -> Result<HttpResponse, WebError> {
     if !supports_benchmark() {
         return Ok(super::respond::error(ntex::http::StatusCode::BAD_REQUEST, "unsupported_platform"));
     }
@@ -582,7 +583,7 @@ async fn start(
 async fn cancel(
     app_state: &AppState,
     gated: &machine::Gated,
-) -> Result<HttpResponse, web::Error> {
+) -> Result<HttpResponse, WebError> {
     let Some(row) = running_row(&app_state.db).await else {
         return Ok(HttpResponse::Ok().json(&CancelResponse { cancelled: false }));
     };
@@ -645,8 +646,8 @@ pub struct RemoveQuery {
 pub async fn remove(
     req: HttpRequest,
     query: web::types::Query<RemoveQuery>,
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    app_state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     let id = &query.run;
     let gated = match machine::gate(&req, &app_state, &format!("benchmark remove {id}")).await
     {
@@ -682,7 +683,7 @@ pub async fn remove(
         .record(&app_state.db)
         .await;
 
-    Ok(HttpResponse::Ok().finish())
+    Ok(HttpResponse::Ok().build())
 }
 
 // --- Watching ---

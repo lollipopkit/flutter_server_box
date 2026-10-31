@@ -13,6 +13,7 @@
 //! - `GET /monitor-backup/list`: the backups in the folder, newest first.
 //! - `POST /monitor-backup/restore`: `{name, passphrase, current_password}`.
 
+use crate::api::WebError;
 use std::sync::Arc;
 
 use ntex::web::{self, HttpRequest, HttpResponse};
@@ -30,7 +31,7 @@ fn refused(r: Refusal) -> HttpResponse {
     super::respond::error_u16(r.status, r.error)
 }
 
-pub async fn get(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn get(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     Ok(HttpResponse::Ok().json(&monitor_backup::view(&state).await))
 }
@@ -45,8 +46,8 @@ pub struct SettingsBody {
 pub async fn put(
     req: HttpRequest,
     body: web::types::Json<SettingsBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     let body = body.into_inner();
     require!(reauth(&req, &state, body.current_password.as_deref()).await);
@@ -68,15 +69,15 @@ pub struct PasswordBody {
 pub async fn remove(
     req: HttpRequest,
     body: Option<web::types::Json<PasswordBody>>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     let body = body.map(|b| b.into_inner()).unwrap_or_default();
     require!(reauth(&req, &state, body.current_password.as_deref()).await);
     match monitor_backup::remove_settings(&state).await {
         Ok(()) => {
             audit(&req, &state, Action::Write, "monitor backup off".into()).await;
-            Ok(HttpResponse::NoContent().finish())
+            Ok(HttpResponse::NoContent().build())
         }
         Err(r) => Ok(refused(r)),
     }
@@ -85,8 +86,8 @@ pub async fn remove(
 pub async fn test(
     req: HttpRequest,
     body: web::types::Json<Target>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     match monitor_backup::test(&state, &body).await {
         Ok(probe) => Ok(HttpResponse::Ok().json(&probe)),
@@ -103,8 +104,8 @@ pub struct KeyBody {
 pub async fn put_key(
     req: HttpRequest,
     body: web::types::Json<KeyBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     let body = body.into_inner();
     require!(reauth(&req, &state, body.current_password.as_deref()).await);
@@ -117,7 +118,7 @@ pub async fn put_key(
     }
 }
 
-pub async fn run(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn run(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     let view = monitor_backup::view(&state).await;
     if !view.configured || view.key_id.is_none() {
@@ -131,7 +132,7 @@ pub async fn run(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> R
     Ok(HttpResponse::Accepted().json(&view))
 }
 
-pub async fn list(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn list(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     match monitor_backup::list(&state).await {
         Ok(backups) => Ok(HttpResponse::Ok().json(&json!({ "backups": backups }))),
@@ -149,8 +150,8 @@ pub struct RestoreBody {
 pub async fn restore(
     req: HttpRequest,
     body: web::types::Json<RestoreBody>,
-    state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse, web::Error> {
+    state: Arc<AppState>,
+) -> Result<HttpResponse, WebError> {
     require!(authz::acting_caller(&req, &state).await);
     let body = body.into_inner();
     require!(reauth(&req, &state, body.current_password.as_deref()).await);
