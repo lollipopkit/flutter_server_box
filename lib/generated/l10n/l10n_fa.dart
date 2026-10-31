@@ -377,6 +377,9 @@ class AppLocalizationsFa extends AppLocalizations {
   String get clearAllStatsTitle => 'پاک کردن همه آمارها';
 
   @override
+  String get clearAllSettings => 'پاک کردن همه تنظیمات';
+
+  @override
   String clearServerStatsContent(String serverName) {
     return 'آیا مطمئن هستید که می‌خواهید آمارهای اتصال را برای سرور «$serverName» پاک کنید؟ این عمل غیرقابل‌بازگشت است.';
   }

@@ -444,6 +444,7 @@
     "description": "Action label for clear all stats content."
   },
   "clearAllStatsTitle": "Clear All Statistics",
+  "clearAllSettings": "Clear all settings",
   "@clearAllStatsTitle": {
     "description": "Title shown for the clear all stats dialog or section."
   },

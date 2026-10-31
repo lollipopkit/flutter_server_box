@@ -358,6 +358,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get clearAllStatsTitle => '모든 통계 삭제';
 
   @override
+  String get clearAllSettings => '모든 설정 지우기';
+
+  @override
   String clearServerStatsContent(String serverName) {
     return '서버 \"$serverName\"의 연결 통계를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.';
   }

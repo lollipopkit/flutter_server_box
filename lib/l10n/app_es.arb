@@ -62,6 +62,7 @@
   "bgRunNeedsNotification": "Para ejecutarse en segundo plano hace falta una notificación permanente, y esta app no tiene permiso de notificaciones. Toca para concederlo.",
   "clearAllStatsContent": "¿Estás seguro de que quieres limpiar todas las estadísticas de conexión del servidor? Esta acción no se puede deshacer.",
   "clearAllStatsTitle": "Limpiar todas las estadísticas",
+  "clearAllSettings": "Borrar todos los ajustes",
   "clearServerStatsContent": "¿Estás seguro de que quieres limpiar las estadísticas de conexión del servidor \"{serverName}\"? Esta acción no se puede deshacer.",
   "clearServerStatsTitle": "Limpiar estadísticas de {serverName}",
   "clearThisServerStats": "Limpiar estadísticas de este servidor",

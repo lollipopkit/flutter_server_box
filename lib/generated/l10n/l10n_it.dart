@@ -378,6 +378,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get clearAllStatsTitle => 'Cancella tutte le statistiche';
 
   @override
+  String get clearAllSettings => 'Cancella tutte le impostazioni';
+
+  @override
   String clearServerStatsContent(String serverName) {
     return 'Sei sicuro di voler cancellare le statistiche di connessione per il server \"$serverName\"? Questa azione non può essere annullata.';
   }

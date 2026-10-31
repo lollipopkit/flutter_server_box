@@ -355,6 +355,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get clearAllStatsTitle => 'すべての統計をクリア';
 
   @override
+  String get clearAllSettings => 'すべての設定を消去';
+
+  @override
   String clearServerStatsContent(String serverName) {
     return 'サーバー\"$serverName\"の接続統計を削除してもよろしいですか？この操作は元に戻せません。';
   }

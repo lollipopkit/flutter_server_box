@@ -103,6 +103,7 @@
   "bgRunNeedsNotification": "后台运行需要显示常驻通知，但 App 尚未获得通知权限。点击授权。",
   "clearAllStatsContent": "确定要清空所有服务器的连接统计数据吗？此操作无法撤销。",
   "clearAllStatsTitle": "清空所有统计",
+  "clearAllSettings": "清除所有设置",
   "clearServerStatsContent": "确定要清空服务器 \"{serverName}\" 的连接统计数据吗？此操作无法撤销。",
   "clearServerStatsTitle": "清空 {serverName} 统计",
   "clearThisServerStats": "清空此服务器统计",

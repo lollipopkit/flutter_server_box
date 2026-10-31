@@ -62,6 +62,7 @@
   "bgRunNeedsNotification": "Berjalan di latar belakang butuh notifikasi permanen, dan aplikasi ini tidak punya izin notifikasi. Ketuk untuk memberikannya.",
   "clearAllStatsContent": "Apakah Anda yakin ingin menghapus semua statistik koneksi server? Tindakan ini tidak dapat dibatalkan.",
   "clearAllStatsTitle": "Hapus Semua Statistik",
+  "clearAllSettings": "Hapus semua pengaturan",
   "clearServerStatsContent": "Apakah Anda yakin ingin menghapus statistik koneksi untuk server \"{serverName}\"? Tindakan ini tidak dapat dibatalkan.",
   "clearServerStatsTitle": "Hapus Statistik {serverName}",
   "clearThisServerStats": "Hapus Statistik Server Ini",

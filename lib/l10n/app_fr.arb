@@ -62,6 +62,7 @@
   "bgRunNeedsNotification": "Fonctionner en arrière-plan demande une notification permanente, et cette app n'a pas la permission de notification. Touchez pour l'accorder.",
   "clearAllStatsContent": "Êtes-vous sûr de vouloir effacer toutes les statistiques de connexion des serveurs ? Cette action ne peut pas être annulée.",
   "clearAllStatsTitle": "Effacer toutes les statistiques",
+  "clearAllSettings": "Effacer tous les paramètres",
   "clearServerStatsContent": "Êtes-vous sûr de vouloir effacer les statistiques de connexion du serveur \"{serverName}\" ? Cette action ne peut pas être annulée.",
   "clearServerStatsTitle": "Effacer les statistiques de {serverName}",
   "clearThisServerStats": "Effacer les statistiques de ce serveur",
