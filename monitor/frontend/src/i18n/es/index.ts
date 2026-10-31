@@ -2541,7 +2541,7 @@ const es = {
 	monitorBackupErrInvalidKeyFile: 'No se puede leer el archivo de clave de la carpeta.',
 	monitorBackupErrInvalidBackup: 'El archivo no es una copia que este Monitor pueda leer.',
 	monitorBackupErrNewer: 'La copia es de un Monitor más reciente. Actualiza este primero.',
-	monitorBackupErrTooLarge: 'La copia supera el límite de 100 MB.',
+	monitorBackupErrTooLarge: 'La copia supera el límite de {max}.',
 	monitorBackupErrNotFound: 'La copia ya no está en la carpeta.',
 	monitorBackupErrUnauthorized: 'El servidor WebDAV rechazó el usuario o la contraseña.',
 	monitorBackupErrForbidden: 'El servidor WebDAV no lo permite.',

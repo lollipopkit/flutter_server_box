@@ -2541,7 +2541,7 @@ const it = {
 	monitorBackupErrInvalidKeyFile: 'Il file della chiave nella cartella non è leggibile.',
 	monitorBackupErrInvalidBackup: 'Il file non è un backup che questo Monitor può leggere.',
 	monitorBackupErrNewer: 'Il backup proviene da un Monitor più recente. Aggiorna prima questo.',
-	monitorBackupErrTooLarge: 'Il backup supera il limite di 100 MB.',
+	monitorBackupErrTooLarge: 'Il backup supera il limite di {max}.',
 	monitorBackupErrNotFound: 'Il backup non è più nella cartella.',
 	monitorBackupErrUnauthorized: 'Il server WebDAV ha rifiutato nome utente o password.',
 	monitorBackupErrForbidden: 'Il server WebDAV non lo consente.',

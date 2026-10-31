@@ -2541,7 +2541,7 @@ const id = {
 	monitorBackupErrInvalidKeyFile: 'Berkas kunci di folder tidak dapat dibaca.',
 	monitorBackupErrInvalidBackup: 'Berkas ini bukan cadangan yang dapat dibaca Monitor ini.',
 	monitorBackupErrNewer: 'Cadangan berasal dari Monitor yang lebih baru. Perbarui yang ini dulu.',
-	monitorBackupErrTooLarge: 'Cadangan melebihi batas 100 MB.',
+	monitorBackupErrTooLarge: 'Cadangan melebihi batas {max}.',
 	monitorBackupErrNotFound: 'Cadangan sudah tidak ada di folder.',
 	monitorBackupErrUnauthorized: 'Server WebDAV menolak nama pengguna atau kata sandi.',
 	monitorBackupErrForbidden: 'Server WebDAV tidak mengizinkannya.',

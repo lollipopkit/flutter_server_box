@@ -19,6 +19,7 @@
   const { stale } = useScope()
 
   let view = $state<MonitorBackupView | null>(null)
+  const errText = (e: unknown) => monitorBackupErrorText(e, $LL, view?.max_bytes)
   let loadError = $state<string | null>(null)
 
   // The folder form.
@@ -81,7 +82,7 @@
       if (v.running) follow()
       if (v.configured) void list()
     } catch (e) {
-      if (!stale(serverId)) loadError = monitorBackupErrorText(e, $LL)
+      if (!stale(serverId)) loadError = errText(e)
     }
   }
 
@@ -107,7 +108,7 @@
           await change(own)
         } catch (e) {
           if (e instanceof ApiError && e.status !== 401 && e.status !== 403 && e.status !== 429) {
-            formError = monitorBackupErrorText(e, $LL)
+            formError = errText(e)
             return
           }
           throw e
@@ -124,7 +125,7 @@
       const probe = await api.testMonitorBackup(target())
       tested = probe.missing ? $LL.monitorBackupTestMissing() : $LL.monitorBackupTestOk({ count: probe.backups })
     } catch (e) {
-      formError = monitorBackupErrorText(e, $LL)
+      formError = errText(e)
     } finally {
       testing = false
     }
@@ -157,7 +158,7 @@
       view = await api.runMonitorBackup()
       follow()
     } catch (e) {
-      formError = monitorBackupErrorText(e, $LL)
+      formError = errText(e)
     }
   }
 
@@ -190,7 +191,7 @@
       const found = (await api.listMonitorBackups()).backups
       if (!stale(serverId)) backups = found
     } catch (e) {
-      if (!stale(serverId)) listError = monitorBackupErrorText(e, $LL)
+      if (!stale(serverId)) listError = errText(e)
     } finally {
       listing = false
     }
@@ -215,7 +216,7 @@
           // A wrong passphrase is the passphrase's to retype, not the password's.
           if (e instanceof ApiError && e.status !== 401 && e.status !== 403 && e.status !== 429) {
             restoring = file
-            restoreError = monitorBackupErrorText(e, $LL)
+            restoreError = errText(e)
             return
           }
           throw e
@@ -292,7 +293,7 @@
       <Group title={$LL.monitorBackupStatus()}>
         <Row
           label={view.running ? $LL.monitorBackupRunning() : view.last_backup_at ? $LL.monitorBackupLast({ when: when(view.last_backup_at) }) : $LL.monitorBackupNone()}
-          sub={!view.enabled ? $LL.monitorBackupOff() : view.last_error ? monitorBackupErrorText(view.last_error, $LL) : $LL.monitorBackupSchedule()}
+          sub={!view.enabled ? $LL.monitorBackupOff() : view.last_error ? errText(view.last_error) : $LL.monitorBackupSchedule()}
         >
           <div class="flex items-center gap-[7px]">
             {#if view.last_error && view.enabled}<Badge tone="danger">{$LL.monitorBackupFailed()}</Badge>{/if}

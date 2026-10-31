@@ -68,6 +68,8 @@ zeroize = "1.9"
 # read with the XML parser `sbm_parser` already uses.
 age = { version = "0.11", features = ["armor"] }
 roxmltree = "0.21"
+# Agent mode's chat key, derived from the credentials key (`sealed::Sealer::derive_key`).
+blake3 = "1"
 
 # Desk app packages (`api::apps`): a gzipped tar, read entry by entry with
 # every size bounded while it is read.

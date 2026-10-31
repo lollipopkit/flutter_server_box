@@ -542,6 +542,27 @@ async fn a_password_change_ends_a_device_sign_in_waiting() {
     assert!(state.lkc.begin(view, "device".into(), epoch).is_err());
 }
 
+/// `GET /lkc` keeps showing the account while its refresh is being sent; a
+/// mark left by a refresh that did not finish storing reads as signed out.
+#[tokio::test]
+async fn a_refresh_in_flight_still_shows_the_account() {
+    use server_box_monitor::db::sealed;
+    let state = state().await;
+    sqlx::query(
+        "INSERT INTO lkc_session (id, user, access_token, refresh_token, expires_at, refreshing, updated_at) VALUES (1, ?, ?, NULL, ?, 1, 0)",
+    )
+    .bind(r#"{"id":"u1","name":"Ada","group":"user"}"#)
+    .bind(state.sealer.seal(sealed::LKC_ACCESS_TOKEN, "access").unwrap())
+    .bind(i64::MAX)
+    .execute(&state.db)
+    .await
+    .unwrap();
+    let sending = state.lkc.sending();
+    assert!(server_box_monitor::lkc::current(&state).await.is_some());
+    drop(sending);
+    assert!(server_box_monitor::lkc::current(&state).await.is_none());
+}
+
 /// Whoever held the old password may have approved a sign-in with their own
 /// LK Cloud account: a password change signs the agent out of it.
 #[tokio::test]

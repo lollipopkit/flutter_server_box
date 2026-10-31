@@ -2541,7 +2541,7 @@ const pt = {
 	monitorBackupErrInvalidKeyFile: 'Não é possível ler o arquivo de chave da pasta.',
 	monitorBackupErrInvalidBackup: 'O arquivo não é uma cópia que este Monitor consiga ler.',
 	monitorBackupErrNewer: 'A cópia é de um Monitor mais novo. Atualize este primeiro.',
-	monitorBackupErrTooLarge: 'A cópia passa do limite de 100 MB.',
+	monitorBackupErrTooLarge: 'A cópia passa do limite de {max}.',
 	monitorBackupErrNotFound: 'A cópia não está mais na pasta.',
 	monitorBackupErrUnauthorized: 'O servidor WebDAV recusou o usuário ou a senha.',
 	monitorBackupErrForbidden: 'O servidor WebDAV não permite isso.',

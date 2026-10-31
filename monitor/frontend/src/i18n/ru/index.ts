@@ -2541,7 +2541,7 @@ const ru = {
 	monitorBackupErrInvalidKeyFile: 'Не удаётся прочитать файл ключа в папке.',
 	monitorBackupErrInvalidBackup: 'Файл не является копией, которую может прочитать этот Monitor.',
 	monitorBackupErrNewer: 'Копия создана более новым Monitor. Сначала обновите этот.',
-	monitorBackupErrTooLarge: 'Копия превышает предел в 100 МБ.',
+	monitorBackupErrTooLarge: 'Копия превышает предел в {max}.',
 	monitorBackupErrNotFound: 'Копии больше нет в папке.',
 	monitorBackupErrUnauthorized: 'Сервер WebDAV отклонил имя пользователя или пароль.',
 	monitorBackupErrForbidden: 'Сервер WebDAV этого не разрешает.',

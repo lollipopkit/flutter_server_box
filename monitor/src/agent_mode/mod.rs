@@ -81,6 +81,9 @@ const TAIL_LINES: usize = 6;
 pub const MAX_FLOWS: i64 = 500;
 /// The most tasks one page of the list holds.
 pub const MAX_PAGE: i64 = 200;
+/// `Sealer::derive_key`'s context for the chats' key: fixed, or no chat
+/// opens again.
+const CHAT_KEY_CONTEXT: &str = "serverbox-monitor 2026-10-30 agent chat key";
 
 /// What `GET /agent/flows` is asked for: a page of `limit` after the cursor
 /// `before` (`<updatedAt>|<id>`, as the last page answered), and only tasks
@@ -577,6 +580,11 @@ impl AgentMode {
         Ok(())
     }
 
+    /// Where the chats are (`fl_pi_llm::db::file_name`), for tests.
+    pub fn chats_dir(&self) -> PathBuf {
+        self.dir.join("chats")
+    }
+
     /// The runtime, started on first use with the current configuration.
     async fn runtime(&self) -> anyhow::Result<Runtime> {
         let mut rt = self.runtime.lock().await;
@@ -584,11 +592,14 @@ impl AgentMode {
             return Ok(r.clone());
         }
         files::private_dir(&self.dir).await?;
+        // Derived from the credentials key, which is what stands apart from
+        // the chats here (no keychain): copied without it, as the database
+        // is, they are unreadable; lost with it, as the credentials are.
+        let chat_key = self.sealer.derive_key(CHAT_KEY_CONTEXT)?;
+        let chat_key = fl_pi_llm::db::Key::new(&chat_key[..]).map_err(|e| anyhow::anyhow!(e))?;
         let r = Runtime::start(PiConfig {
             dir: self.dir.clone(),
-            // In clear: the agent has no keychain to keep a key apart from the
-            // chats, and their directory is owner-only (`files::private_dir`).
-            key: None,
+            key: Some(chat_key),
             credentials: Arc::new(config::AppCredentials { db: config::DbCredentials { db: self.db.clone(), sealer: self.sealer.clone() }, apps: self.apps.clone() }),
             fetch: self.fetch.clone(),
             logger: Some(Arc::new(|level, message| match level {
@@ -1749,6 +1760,18 @@ mod tests {
             use std::os::unix::fs::PermissionsExt;
             assert_eq!(std::fs::metadata(&agent.dir).unwrap().permissions().mode() & 0o777, 0o700);
         }
+    }
+
+    /// The chats' key from a credentials key, as it has always been derived:
+    /// a changed `CHAT_KEY_CONTEXT` or derivation opens no existing chat.
+    #[test]
+    fn the_chat_key_is_derived_as_it_always_was() {
+        let dir = tempfile::tempdir().unwrap();
+        let db = dir.path().join("monitor.db");
+        let credentials = "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f";
+        std::fs::write(crate::db::sealed::Sealer::key_path_beside(&db), format!("{credentials}\n")).unwrap();
+        let key = crate::db::sealed::Sealer::beside(&db).derive_key(CHAT_KEY_CONTEXT).unwrap();
+        assert_eq!(hex::encode(&key[..]), "3f132ad3fa5dbbd439de30d8f0b78388a4f9adeb8e3c8f2b91133bb1e935ce31");
     }
 
     /// The sudo password goes when its time is up, without being asked for.

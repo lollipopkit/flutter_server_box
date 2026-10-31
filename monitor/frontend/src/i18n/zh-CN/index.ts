@@ -2540,7 +2540,7 @@ const zh_CN = {
 	monitorBackupErrInvalidKeyFile: '无法读取文件夹中的密钥文件。',
 	monitorBackupErrInvalidBackup: '这个文件不是本 Monitor 能读取的备份。',
 	monitorBackupErrNewer: '这份备份来自更新版本的 Monitor，请先更新本机。',
-	monitorBackupErrTooLarge: '备份超过 100 MB 上限。',
+	monitorBackupErrTooLarge: '备份超过 {max} 上限。',
 	monitorBackupErrNotFound: '这份备份已不在文件夹中。',
 	monitorBackupErrUnauthorized: 'WebDAV 服务器拒绝了用户名或密码。',
 	monitorBackupErrForbidden: 'WebDAV 服务器不允许此操作。',

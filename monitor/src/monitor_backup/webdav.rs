@@ -157,7 +157,7 @@ fn builder() -> reqwest::ClientBuilder {
 }
 
 /// How long a PUT of [len] bytes may take: two minutes, and the body at
-/// 32 KiB/s (a 100 MB backup gets about 55 minutes).
+/// 32 KiB/s (a 95 MiB backup, the largest, gets about 53 minutes).
 fn upload_timeout(len: u64) -> Duration {
     Duration::from_secs(120 + len / (32 * 1024))
 }

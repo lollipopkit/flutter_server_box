@@ -4,8 +4,12 @@
 import type { TranslationFunctions } from '../../../i18n/i18n-types'
 import { ApiError } from '../../../lib/api'
 import { errorText } from '../../../lib/errorText'
+import { fmtBytes } from '../../../lib/format'
 
-export function monitorBackupCodeText(code: string, ll: TranslationFunctions): string | null {
+/// [maxBytes] is the agent's limit on a backup (`max_bytes`), which
+/// `tooLarge` is worded with; without it, `tooLarge` is left to the caller's
+/// generic wording rather than given a number that is not the agent's.
+export function monitorBackupCodeText(code: string, ll: TranslationFunctions, maxBytes: number | undefined): string | null {
   switch (code) {
     case 'invalidUrl':
     case 'webdav.invalidUrl':
@@ -40,7 +44,7 @@ export function monitorBackupCodeText(code: string, ll: TranslationFunctions): s
       return ll.monitorBackupErrNewer()
     case 'tooLarge':
     case 'webdav.tooLarge':
-      return ll.monitorBackupErrTooLarge()
+      return maxBytes === undefined ? null : ll.monitorBackupErrTooLarge({ max: fmtBytes(maxBytes) })
     case 'notFound':
       return ll.monitorBackupErrNotFound()
     case 'webdav.unauthorized':
@@ -65,9 +69,9 @@ export function monitorBackupCodeText(code: string, ll: TranslationFunctions): s
 }
 
 /// [e] (a thrown request or a stored code) as words.
-export function monitorBackupErrorText(e: unknown, ll: TranslationFunctions): string {
+export function monitorBackupErrorText(e: unknown, ll: TranslationFunctions, maxBytes: number | undefined): string {
   // These endpoints answer `{"error": <code>}` with no `message`, which
   // `errorFromBody` keeps as the message: the code either way.
   const code = typeof e === 'string' ? e : e instanceof ApiError ? (e.code ?? e.message) : undefined
-  return (code && monitorBackupCodeText(code, ll)) ?? (typeof e === 'string' ? ll.monitorBackupErrOther({ code: e }) : errorText(e))
+  return (code && monitorBackupCodeText(code, ll, maxBytes)) ?? (typeof e === 'string' ? ll.monitorBackupErrOther({ code: e }) : errorText(e))
 }

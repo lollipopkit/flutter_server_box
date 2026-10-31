@@ -2541,7 +2541,7 @@ const ko = {
 	monitorBackupErrInvalidKeyFile: '폴더의 키 파일을 읽을 수 없습니다.',
 	monitorBackupErrInvalidBackup: '이 Monitor가 읽을 수 있는 백업이 아닙니다.',
 	monitorBackupErrNewer: '더 새로운 Monitor의 백업입니다. 먼저 이 Monitor를 업데이트하세요.',
-	monitorBackupErrTooLarge: '백업이 100 MB 한도를 넘습니다.',
+	monitorBackupErrTooLarge: '백업이 {max} 한도를 넘습니다.',
 	monitorBackupErrNotFound: '이 백업은 더 이상 폴더에 없습니다.',
 	monitorBackupErrUnauthorized: 'WebDAV 서버가 사용자 이름 또는 비밀번호를 거부했습니다.',
 	monitorBackupErrForbidden: 'WebDAV 서버가 이 작업을 허용하지 않습니다.',

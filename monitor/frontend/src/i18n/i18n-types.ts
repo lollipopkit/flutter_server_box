@@ -10562,9 +10562,10 @@ type RootTranslation = {
 	 */
 	monitorBackupErrNewer: string
 	/**
-	 * T​h​e​ ​b​a​c​k​u​p​ ​i​s​ ​l​a​r​g​e​r​ ​t​h​a​n​ ​t​h​e​ ​1​0​0​ ​M​B​ ​l​i​m​i​t​.
+	 * T​h​e​ ​b​a​c​k​u​p​ ​i​s​ ​l​a​r​g​e​r​ ​t​h​a​n​ ​t​h​e​ ​{​m​a​x​}​ ​l​i​m​i​t​.
+	 * @param {unknown} max
 	 */
-	monitorBackupErrTooLarge: string
+	monitorBackupErrTooLarge: RequiredParams<'max'>
 	/**
 	 * T​h​e​ ​b​a​c​k​u​p​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​i​n​ ​t​h​e​ ​f​o​l​d​e​r​.
 	 */
@@ -20794,9 +20795,9 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	monitorBackupErrNewer: () => LocalizedString
 	/**
-	 * The backup is larger than the 100 MB limit.
+	 * The backup is larger than the {max} limit.
 	 */
-	monitorBackupErrTooLarge: () => LocalizedString
+	monitorBackupErrTooLarge: (arg: { max: unknown }) => LocalizedString
 	/**
 	 * The backup is no longer in the folder.
 	 */

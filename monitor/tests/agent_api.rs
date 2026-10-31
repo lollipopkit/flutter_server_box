@@ -239,7 +239,7 @@ async fn nothing_runs_until_it_is_configured() {
 
 #[ntex::test]
 async fn a_read_runs_unasked_and_its_output_is_kept() {
-    let (srv, _) = server().await;
+    let (srv, state) = common::machine::server_with(server_box_monitor::core::config::Config::default()).await;
     let url = model(vec![
         Say::Tool("run_command", json!({ "command": sh::LIST_ROOT, "title": "List", "area": "files", "effect": "read" })),
         Say::Text("Listed."),
@@ -254,6 +254,14 @@ async fn a_read_runs_unasked_and_its_output_is_kept() {
     assert!(lines.iter().any(|l| sh::ROOT_HAS.iter().any(|n| l[1] == *n)), "{lines:?}");
     assert_eq!(v["flow"]["areas"], json!(["files"]));
     assert_eq!(v["flow"]["line"], "Listed.");
+
+    // The chat on disk is encrypted under the key derived from the
+    // credentials key: neither a plain SQLite file, nor one that opens
+    // without the key.
+    let chats = state.agent.chats_dir();
+    let bytes = std::fs::read(chats.join(fl_pi_llm::db::file_name(&id))).unwrap();
+    assert!(!bytes.windows(15).any(|w| w == b"SQLite format 3"), "the chat is in clear");
+    assert!(fl_pi_llm::db::open(&chats, &id, None).is_err(), "the chat opens without the key");
 
     // Somebody else's task is not there for them.
 }

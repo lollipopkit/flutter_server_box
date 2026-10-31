@@ -2541,7 +2541,7 @@ const uk = {
 	monitorBackupErrInvalidKeyFile: 'Не вдається прочитати файл ключа в теці.',
 	monitorBackupErrInvalidBackup: 'Файл не є копією, яку може прочитати цей Monitor.',
 	monitorBackupErrNewer: 'Копію створено новішим Monitor. Спершу оновіть цей.',
-	monitorBackupErrTooLarge: 'Копія перевищує межу в 100 МБ.',
+	monitorBackupErrTooLarge: 'Копія перевищує межу в {max}.',
 	monitorBackupErrNotFound: 'Копії вже немає в теці.',
 	monitorBackupErrUnauthorized: 'Сервер WebDAV відхилив ім\'я користувача або пароль.',
 	monitorBackupErrForbidden: 'Сервер WebDAV цього не дозволяє.',

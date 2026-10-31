@@ -2541,7 +2541,7 @@ const tr = {
 	monitorBackupErrInvalidKeyFile: 'Klasördeki anahtar dosyası okunamıyor.',
 	monitorBackupErrInvalidBackup: 'Dosya bu Monitor\'ün okuyabildiği bir yedek değil.',
 	monitorBackupErrNewer: 'Yedek daha yeni bir Monitor\'den. Önce bunu güncelleyin.',
-	monitorBackupErrTooLarge: 'Yedek 100 MB sınırını aşıyor.',
+	monitorBackupErrTooLarge: 'Yedek {max} sınırını aşıyor.',
 	monitorBackupErrNotFound: 'Yedek artık klasörde değil.',
 	monitorBackupErrUnauthorized: 'WebDAV sunucusu kullanıcı adını veya parolayı reddetti.',
 	monitorBackupErrForbidden: 'WebDAV sunucusu buna izin vermiyor.',

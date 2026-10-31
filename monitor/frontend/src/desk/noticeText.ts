@@ -69,7 +69,7 @@ export function noticeText(
       return { subject: ll.noticeStorageMaintenanceFailed({ task: names[task] ?? task }), body: error === 'sudoNeedsPassword' ? ll.storageNeedsSudo() : error }
     }
     case 'backup.failed':
-      return { subject: ll.noticeMonitorBackupFailed(), body: monitorBackupErrorText(stringParam(params, 'error'), ll) }
+      return { subject: ll.noticeMonitorBackupFailed(), body: monitorBackupErrorText(stringParam(params, 'error'), ll, numberParam(params, 'max_bytes')) }
     case 'backup.back':
       return { subject: ll.noticeMonitorBackupBack(), body: ll.noticeMonitorBackupBackBody() }
     default:
@@ -80,6 +80,11 @@ export function noticeText(
 function stringParam(params: Record<string, unknown>, key: string): string {
   const value = params[key]
   return typeof value === 'string' ? value : ''
+}
+
+function numberParam(params: Record<string, unknown>, key: string): number | undefined {
+  const value = params[key]
+  return typeof value === 'number' ? value : undefined
 }
 
 function stringList(value: unknown): string[] {

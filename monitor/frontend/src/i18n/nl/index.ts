@@ -2541,7 +2541,7 @@ const nl = {
 	monitorBackupErrInvalidKeyFile: 'Het sleutelbestand in de map is onleesbaar.',
 	monitorBackupErrInvalidBackup: 'Het bestand is geen back-up die deze Monitor kan lezen.',
 	monitorBackupErrNewer: 'De back-up komt van een nieuwere Monitor. Werk deze eerst bij.',
-	monitorBackupErrTooLarge: 'De back-up is groter dan de limiet van 100 MB.',
+	monitorBackupErrTooLarge: 'De back-up is groter dan de limiet van {max}.',
 	monitorBackupErrNotFound: 'De back-up staat niet meer in de map.',
 	monitorBackupErrUnauthorized: 'De WebDAV-server heeft de gebruikersnaam of het wachtwoord geweigerd.',
 	monitorBackupErrForbidden: 'De WebDAV-server staat dit niet toe.',

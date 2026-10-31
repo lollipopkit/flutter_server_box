@@ -10,12 +10,12 @@
 //!
 //! The access token is refreshed only once due (`sbm_lkc::Tokens::due`), and
 //! [`watch`] does so at start and often enough after that the refresh token
-//! never lapses. The IdP's `invalid_grant` signs out; anything else keeps the
-//! session. A password change
+//! never lapses. The IdP's `invalid_grant` (taken back) and `expired_token`
+//! (ran out) sign out; anything else keeps the session. A password change
 //! signs out too ([`end_account`]): whoever held the old one may have
 //! approved the sign-in with their own account.
 
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
@@ -74,8 +74,13 @@ pub struct Lkc {
     /// begun after it.
     epoch: AtomicU64,
     /// Held through a refresh: the IdP takes a refresh token once, so two at
-    /// once would sign the second out.
+    /// once would sign the second out. Also by what must not race one
+    /// (signing out, finishing a sign-in, rereading the account).
     refreshing: tokio::sync::Mutex<()>,
+    /// Set while a refresh token is being sent and its answer stored
+    /// ([`Sending`]): then a row marked `refreshing` is being renewed, not
+    /// left over by one that never finished.
+    sending: AtomicBool,
     /// The monotonic expiry of the access token this process received
     /// (`sbm_lkc::Tokens::deadline`), which storage does not keep.
     deadline: Mutex<Option<(String, Instant)>>,
@@ -88,6 +93,17 @@ impl Lkc {
         }
         let client = Arc::new(sbm_lkc::Client::new()?);
         Ok(self.client.get_or_init(|| client).clone())
+    }
+
+    /// A refresh token is being sent until the value is dropped
+    /// ([`session`]).
+    pub fn sending(&self) -> Sending<'_> {
+        self.sending.store(true, Ordering::Release);
+        Sending(&self.sending)
+    }
+
+    fn is_sending(&self) -> bool {
+        self.sending.load(Ordering::Acquire)
     }
 
     /// The sign-in waiting or just failed, if any.
@@ -341,6 +357,7 @@ pub async fn session(state: &AppState) -> Option<Session> {
         tracing::warn!("LK Cloud: not refreshing, the session cannot be written: {e}");
         return Some(session);
     }
+    let _sending = state.lkc.sending();
     match client.refresh(&session.tokens).await {
         Ok(tokens) => {
             let fresh = Session { tokens, ..session };
@@ -363,19 +380,17 @@ pub async fn session(state: &AppState) -> Option<Session> {
             }
         }
         // Never reached the IdP, or refused without spending it: only
-        // `invalid_grant` takes it back.
-        Err(e)
-            if matches!(
-                e.failure,
-                Failure::Unreachable | Failure::Refused | Failure::Denied | Failure::Expired | Failure::TooEarly
-            ) =>
-        {
+        // `invalid_grant` takes it back, only `expired_token` says it ran
+        // out. `TooEarly` is not reached (`due` was asked above); listed
+        // with what keeps the session, since nothing was sent.
+        Err(e) if matches!(e.failure, Failure::Unreachable | Failure::Refused | Failure::Denied | Failure::TooEarly) => {
             tracing::debug!("LK Cloud: refresh: {e}");
             // Left set, the next read signs out instead: safe either way.
             let _ = clear_refreshing(&state.db).await;
             Some(session)
         }
-        // Taken back, or sent with no answer this can use: possibly spent.
+        // Taken back or run out, or sent with no answer this can use:
+        // possibly spent.
         Err(e) => {
             tracing::warn!("LK Cloud: signed out, the refresh token is gone or may be spent: {e}");
             let _ = forget(&state.db).await;
@@ -466,10 +481,23 @@ pub async fn current(state: &AppState) -> Option<User> {
         .inspect_err(|e| tracing::warn!("LK Cloud: reading it: {e}"))
         .ok()
         .flatten();
-    // A refresh that did not finish storing: the session is over, its row
-    // dropped at the next renewal.
-    let (user, false) = row? else { return None };
+    let (user, refreshing) = row?;
+    // Marked while a refresh is being sent: still signed in. Marked with
+    // none being sent, the refresh did not finish storing: the session is
+    // over, its row dropped at the next renewal.
+    if refreshing && !state.lkc.is_sending() {
+        return None;
+    }
     serde_json::from_str(&user).ok()
+}
+
+/// A refresh token being sent ([`Lkc::sending`]); over when dropped.
+pub struct Sending<'a>(&'a AtomicBool);
+
+impl Drop for Sending<'_> {
+    fn drop(&mut self) {
+        self.0.store(false, Ordering::Release);
+    }
 }
 
 /// Asks the IdP to forget [refresh], in the background.

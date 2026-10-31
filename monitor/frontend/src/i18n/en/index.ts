@@ -2541,7 +2541,7 @@ const en = {
 	monitorBackupErrInvalidKeyFile: 'The key file in the folder cannot be read.',
 	monitorBackupErrInvalidBackup: 'The file is not a backup this monitor can read.',
 	monitorBackupErrNewer: 'The backup is from a newer monitor. Update this one first.',
-	monitorBackupErrTooLarge: 'The backup is larger than the 100 MB limit.',
+	monitorBackupErrTooLarge: 'The backup is larger than the {max} limit.',
 	monitorBackupErrNotFound: 'The backup is no longer in the folder.',
 	monitorBackupErrUnauthorized: 'The WebDAV server refused the user name or password.',
 	monitorBackupErrForbidden: 'The WebDAV server does not allow this.',

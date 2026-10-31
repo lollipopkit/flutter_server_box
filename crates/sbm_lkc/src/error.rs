@@ -12,7 +12,9 @@ pub enum Failure {
     InvalidResponse,
     /// The person declined.
     Denied,
-    /// A device code ran out before it was approved.
+    /// A device code ran out before it was approved, or a refresh token ran
+    /// out (`expired_token`): then the session is over, as with
+    /// [`Self::Rejected`].
     Expired,
     /// A refresh asked for before [`crate::Tokens::due`]; nothing was sent.
     TooEarly,

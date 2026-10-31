@@ -2541,7 +2541,7 @@ const de = {
 	monitorBackupErrInvalidKeyFile: 'Die Schlüsseldatei im Ordner ist nicht lesbar.',
 	monitorBackupErrInvalidBackup: 'Die Datei ist keine Sicherung, die dieser Monitor lesen kann.',
 	monitorBackupErrNewer: 'Die Sicherung stammt von einem neueren Monitor. Aktualisiere diesen zuerst.',
-	monitorBackupErrTooLarge: 'Die Sicherung ist größer als das Limit von 100 MB.',
+	monitorBackupErrTooLarge: 'Die Sicherung ist größer als das Limit von {max}.',
 	monitorBackupErrNotFound: 'Die Sicherung ist nicht mehr im Ordner.',
 	monitorBackupErrUnauthorized: 'Der WebDAV-Server hat Benutzername oder Passwort abgelehnt.',
 	monitorBackupErrForbidden: 'Der WebDAV-Server erlaubt das nicht.',

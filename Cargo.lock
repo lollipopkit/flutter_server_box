@@ -5548,6 +5548,7 @@ dependencies = [
  "async-stream",
  "base64 0.22.1",
  "bcrypt",
+ "blake3",
  "cbc",
  "chrono",
  "clap",

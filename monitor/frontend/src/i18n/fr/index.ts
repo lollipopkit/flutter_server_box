@@ -2541,7 +2541,7 @@ const fr = {
 	monitorBackupErrInvalidKeyFile: 'Le fichier de clé du dossier est illisible.',
 	monitorBackupErrInvalidBackup: 'Ce fichier n\'est pas une sauvegarde que ce Monitor peut lire.',
 	monitorBackupErrNewer: 'La sauvegarde provient d\'un Monitor plus récent. Mettez d\'abord celui-ci à jour.',
-	monitorBackupErrTooLarge: 'La sauvegarde dépasse la limite de 100 Mo.',
+	monitorBackupErrTooLarge: 'La sauvegarde dépasse la limite de {max}.',
 	monitorBackupErrNotFound: 'La sauvegarde n\'est plus dans le dossier.',
 	monitorBackupErrUnauthorized: 'Le serveur WebDAV a refusé le nom d\'utilisateur ou le mot de passe.',
 	monitorBackupErrForbidden: 'Le serveur WebDAV ne l\'autorise pas.',

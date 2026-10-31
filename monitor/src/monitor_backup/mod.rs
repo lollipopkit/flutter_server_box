@@ -35,8 +35,9 @@ use crate::db::sealed::{self, Sealer};
 use crate::stacks::Refusal;
 use webdav::{Dav, DavError};
 
-/// The largest backup made or read.
-pub const MAX_BYTES: u64 = 100 << 20;
+/// The largest backup made or read: what passes LK Cloud's WebDAV
+/// (`https://api.lolli.tech/dav/`, a 100 MB request body cap in front of it).
+pub const MAX_BYTES: u64 = 95 << 20;
 /// The shortest passphrase taken: it is what stands between whoever can read
 /// the folder and every backup, offline.
 pub const MIN_PASSPHRASE: usize = 12;
@@ -1102,7 +1103,8 @@ async fn failed(state: &AppState, before: Option<&str>, f: &Failure) {
         "Settings backup failed",
         &format!("The monitor's settings were not backed up: {}.", f.code),
         "backup.failed",
-        serde_json::json!({ "error": f.code }),
+        // `max_bytes`: what `tooLarge` is worded with.
+        serde_json::json!({ "error": f.code, "max_bytes": MAX_BYTES }),
         true,
     )
     .await;

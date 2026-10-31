@@ -2541,7 +2541,7 @@ const zh_TW = {
 	monitorBackupErrInvalidKeyFile: '無法讀取資料夾中的金鑰檔。',
 	monitorBackupErrInvalidBackup: '這個檔案不是本 Monitor 能讀取的備份。',
 	monitorBackupErrNewer: '這份備份來自較新版本的 Monitor，請先更新本機。',
-	monitorBackupErrTooLarge: '備份超過 100 MB 上限。',
+	monitorBackupErrTooLarge: '備份超過 {max} 上限。',
 	monitorBackupErrNotFound: '這份備份已不在資料夾中。',
 	monitorBackupErrUnauthorized: 'WebDAV 伺服器拒絕了使用者名稱或密碼。',
 	monitorBackupErrForbidden: 'WebDAV 伺服器不允許此操作。',

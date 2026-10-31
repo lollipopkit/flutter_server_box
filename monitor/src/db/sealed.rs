@@ -15,7 +15,9 @@
 //! restores on a machine with another key ([`Sealer::seal_all`]).
 //!
 //! A lost key loses the credentials, not the rest: each one reads as
-//! [`Error::Unreadable`] until it is entered again.
+//! [`Error::Unreadable`] until it is entered again. Agent mode's chats are
+//! encrypted under a key derived from this one ([`Sealer::derive_key`]):
+//! the same reach, and lost with it.
 
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, OnceLock};
@@ -104,19 +106,25 @@ impl From<Error> for sqlx::Error {
 pub struct Sealer {
     /// `None`: an in-memory database's, whose key lives as long as this.
     file: Option<PathBuf>,
-    key: OnceLock<LessSafeKey>,
+    keys: OnceLock<Keys>,
     loading: Mutex<()>,
+}
+
+/// The key as read, and as ring takes it.
+struct Keys {
+    raw: Zeroizing<[u8; KEY_LEN]>,
+    aead: LessSafeKey,
 }
 
 impl Sealer {
     /// The key of the database file [db_file].
     pub fn beside(db_file: &Path) -> Self {
-        Self { file: Some(Self::key_path_beside(db_file)), key: OnceLock::new(), loading: Mutex::new(()) }
+        Self { file: Some(Self::key_path_beside(db_file)), keys: OnceLock::new(), loading: Mutex::new(()) }
     }
 
     /// A key of its own, in memory only.
     pub fn temporary() -> Self {
-        Self { file: None, key: OnceLock::new(), loading: Mutex::new(()) }
+        Self { file: None, keys: OnceLock::new(), loading: Mutex::new(()) }
     }
 
     /// The key of the database [db] opened.
@@ -150,20 +158,32 @@ impl Sealer {
         self.ready()
     }
 
-    fn key(&self) -> Result<&LessSafeKey, Error> {
-        if let Some(k) = self.key.get() {
+    fn keys(&self) -> Result<&Keys, Error> {
+        if let Some(k) = self.keys.get() {
             return Ok(k);
         }
         let _loading = self.loading.locked();
-        if let Some(k) = self.key.get() {
+        if let Some(k) = self.keys.get() {
             return Ok(k);
         }
-        let bytes = match &self.file {
+        let raw = match &self.file {
             Some(path) => load_or_create(path).map_err(|source| Error::Key { path: path.clone(), source })?,
             None => random_key()?,
         };
-        let key = LessSafeKey::new(UnboundKey::new(&AES_256_GCM, &bytes[..]).expect("a 32-byte key"));
-        Ok(self.key.get_or_init(|| key))
+        let aead = LessSafeKey::new(UnboundKey::new(&AES_256_GCM, &raw[..]).expect("a 32-byte key"));
+        Ok(self.keys.get_or_init(|| Keys { raw, aead }))
+    }
+
+    fn key(&self) -> Result<&LessSafeKey, Error> {
+        Ok(&self.keys()?.aead)
+    }
+
+    /// A key of [context]'s own from this database's, for what is kept
+    /// encrypted beside the database under this one key file (Agent mode's
+    /// chats): unreadable without it, as the sealed columns are, and lost
+    /// with it. [context] stays fixed for the life of what it encrypts.
+    pub fn derive_key(&self, context: &str) -> Result<Zeroizing<[u8; KEY_LEN]>, Error> {
+        Ok(Zeroizing::new(blake3::derive_key(context, &self.keys()?.raw[..])))
     }
 
     pub fn seal(&self, field: Field, plain: &str) -> Result<String, Error> {
@@ -374,6 +394,18 @@ mod tests {
         std::fs::write(&path, "").unwrap();
         assert!(matches!(Sealer::beside(&db).ready(), Err(Error::Key { .. })), "a damaged key is not replaced");
         assert_eq!(std::fs::read_to_string(&path).unwrap(), "");
+    }
+
+    #[test]
+    fn a_derived_key_follows_the_key_file() {
+        let dir = tempfile::tempdir().unwrap();
+        let db = dir.path().join("monitor.db");
+        let chats = Sealer::beside(&db).derive_key("chats").unwrap();
+        assert_eq!(*Sealer::beside(&db).derive_key("chats").unwrap(), *chats, "the same file, the same key");
+        assert_ne!(*Sealer::beside(&db).derive_key("other").unwrap(), *chats, "a context of its own");
+        let file = std::fs::read_to_string(Sealer::key_path_beside(&db)).unwrap();
+        assert_ne!(file.trim(), hex::encode(&chats[..]), "never the key file itself");
+        assert_ne!(*Sealer::temporary().derive_key("chats").unwrap(), *chats);
     }
 
     #[tokio::test]

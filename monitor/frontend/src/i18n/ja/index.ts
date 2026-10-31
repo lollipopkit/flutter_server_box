@@ -2541,7 +2541,7 @@ const ja = {
 	monitorBackupErrInvalidKeyFile: 'フォルダー内の鍵ファイルを読み取れません。',
 	monitorBackupErrInvalidBackup: 'この Monitor が読めるバックアップではありません。',
 	monitorBackupErrNewer: '新しい Monitor のバックアップです。先にこちらを更新してください。',
-	monitorBackupErrTooLarge: 'バックアップが上限の 100 MB を超えています。',
+	monitorBackupErrTooLarge: 'バックアップが上限の {max} を超えています。',
 	monitorBackupErrNotFound: 'このバックアップはもうフォルダーにありません。',
 	monitorBackupErrUnauthorized: 'WebDAV サーバーがユーザー名またはパスワードを拒否しました。',
 	monitorBackupErrForbidden: 'WebDAV サーバーがこの操作を許可していません。',
