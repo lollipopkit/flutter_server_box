@@ -1700,5 +1700,18 @@
   "hostCertAuthoritiesTip": "میزبانی که گواهی آن توسط یکی از این مراجع امضا شده باشد، بدون پرسش قابل اعتماد دانسته می‌شود (مانند دستور @cert-authority در OpenSSH)؛ درباره سایر میزبان‌ها مانند گذشته در اولین اتصال سؤال خواهد شد. میزبان‌ها الگوهایی جداشده با کاما شامل * و ? هستند و با ! استثنا می‌شوند؛ پورت‌های غیر از 22 با ساختار [host]:port تطبیق داده می‌شوند.",
   "hostCertAuthorityInvalid": "کلید عمومی پشتیبانی‌شده SSH نیست (ssh-ed25519،‏ ssh-rsa یا ecdsa-sha2-*)",
   "hostCertAuthorityNoHosts": "میزبان‌هایی را که این مرجع تأیید می‌کند وارد کنید، مثلاً *",
-  "hostCertAuthorityExists": "از قبل در فهرست موجود است"
+  "hostCertAuthorityExists": "از قبل در فهرست موجود است",
+  "addToHomeScreen": "افزودن به صفحه اصلی",
+  "@addToHomeScreen": {
+    "description": "Server menu entry that pins a launcher shortcut to the server (Android)."
+  },
+  "transfersActive": "{count, plural, =1{1 انتقال} other{{count} انتقال}}",
+  "@transfersActive": {
+    "description": "Title of the transfer notification while several file transfers run.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

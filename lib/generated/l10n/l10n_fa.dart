@@ -6086,4 +6086,18 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get hostCertAuthorityExists => 'از قبل در فهرست موجود است';
+
+  @override
+  String get addToHomeScreen => 'افزودن به صفحه اصلی';
+
+  @override
+  String transfersActive(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count انتقال',
+      one: '1 انتقال',
+    );
+    return '$_temp0';
+  }
 }
