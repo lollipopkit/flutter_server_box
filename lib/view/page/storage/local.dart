@@ -3,15 +3,13 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/local_file_backend.dart';
 import 'package:server_box/core/utils/local_files.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/provider/server/all.dart';
-import 'package:server_box/data/res/misc.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/storage/file_browser.dart';
+import 'package:server_box/view/page/storage/file_edit.dart';
 import 'package:server_box/view/page/storage/show_transfers.dart';
 
 final class LocalFilePageArgs {
@@ -188,43 +186,16 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> {
     String fullPath,
   ) async {
     final size = entry.size ?? (await _backend.stat(fullPath))?.size ?? 0;
-    if (size > Miscs.editorMaxSize) {
-      if (!mounted) return;
-      await context.showRoundDialog(
-        title: libL10n.attention,
-        child: Text(
-          l10n.fileTooLarge(
-            entry.name,
-            size.bytes2Str,
-            Miscs.editorMaxSize.bytes2Str,
-          ),
-        ),
-      );
-      return;
-    }
-    if (!mounted) return;
+    if (!fitsEditor(entry.name, size) || !mounted) return;
 
     await EditorPage.route.go(
       context,
-      args: EditorPageArgs(
+      args: fileEditorArgs(
         path: LocalFileBackend.nativePath(fullPath),
         onSave: (_) {
           Toast.show(libL10n.saved);
           handle.refresh();
         },
-        closeAfterSave: Stores.setting.closeAfterSave.fetch(),
-        softWrap: Stores.setting.editorSoftWrap.fetch(),
-        enableHighlight: Stores.setting.editorHighlight.fetch(),
-        lightTheme: HighlightTheme.fromThemeMapKey(
-          Stores.setting.editorTheme.fetch(),
-        ),
-        darkTheme: HighlightTheme.fromThemeMapKey(
-          Stores.setting.editorDarkTheme.fetch(),
-        ),
-        fontFamily: () {
-          final font = Stores.setting.editorFontFamily.fetch();
-          return font.isEmpty ? null : font;
-        }(),
       ),
     );
   }

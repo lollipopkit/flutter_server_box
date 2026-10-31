@@ -130,7 +130,7 @@ class ProxyCommandSocket implements SSHSocket {
         processFuture
             .then<void>((lateProcess) async {
               final groupId = await ProcessTree.groupId(lateProcess);
-              ProcessTree.terminate(lateProcess, groupId);
+              await ProcessTree.terminate(lateProcess, groupId);
             }, onError: (_, _) {})
             .whenComplete(() => guest?.release()),
       );
@@ -289,7 +289,7 @@ class ProxyCommandSocket implements SSHSocket {
   @override
   Future<void> close() async {
     // Kill first so a child that ignores stdin EOF does not block close().
-    ProcessTree.terminate(_process, _processGroupId);
+    await ProcessTree.terminate(_process, _processGroupId);
     try {
       await _sink.close().timeout(const Duration(seconds: 2));
     } catch (_) {}
@@ -313,8 +313,13 @@ class ProxyCommandSocket implements SSHSocket {
 
   @override
   void destroy() {
-    ProcessTree.terminate(_process, _processGroupId);
-    _releaseOnce();
+    // The guest is freed once the process is gone, as `close` does.
+    unawaited(
+      ProcessTree.terminate(
+        _process,
+        _processGroupId,
+      ).whenComplete(_releaseOnce),
+    );
   }
 
   @override

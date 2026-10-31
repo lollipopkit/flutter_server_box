@@ -139,6 +139,7 @@
   "fallbackSshDest": "Ehtiyat SSH təyinatı",
   "fdroidReleaseTip": "Bu tətbiqi F-Droid vasitəsilə endirmisənsə, bu seçimi söndürmək tövsiyə olunur.",
   "fileTooLarge": "'{file}' faylı çox böyükdür: {size}, maksimum {sizeMax}",
+  "fileChangedOverwrite": "'{file}' açıldıqdan sonra serverdə dəyişdirilib. Üzərinə yazılsın?",
   "fileDirGone": "Bu qovluq artıq burada yoxdur",
   "fileDirGoneTip": "Silinib və ya adı dəyişdirilib",
   "fullScreen": "Tam ekran",

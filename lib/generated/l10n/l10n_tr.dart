@@ -502,6 +502,11 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String fileChangedOverwrite(String file) {
+    return '\'$file\' açıldıktan sonra sunucuda değişti. Üzerine yazılsın mı?';
+  }
+
+  @override
   String get fileDirGone => 'Bu klasör artık burada değil';
 
   @override

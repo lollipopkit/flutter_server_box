@@ -98,6 +98,7 @@
   "fallbackSshDest": "Fallback SSH-bestemming",
   "fdroidReleaseTip": "Als u deze app van F-Droid heeft gedownload, wordt aanbevolen deze optie uit te schakelen.",
   "fileTooLarge": "Bestand '{file}' te groot {size}, max {sizeMax}",
+  "fileChangedOverwrite": "'{file}' is op de server gewijzigd nadat het werd geopend. Overschrijven?",
   "fileDirGone": "Deze map is er niet meer",
   "fileDirGoneTip": "Het is verwijderd of hernoemd",
   "fullScreen": "Volledig scherm",

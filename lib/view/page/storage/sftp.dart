@@ -20,12 +20,12 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/provider/file_transfer.dart';
 import 'package:server_box/data/provider/server/single.dart';
-import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/src/rust/api/files.dart' as files;
 import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/storage/file_browser.dart';
+import 'package:server_box/view/page/storage/file_edit.dart';
 import 'package:server_box/view/page/storage/local.dart';
 import 'package:server_box/view/page/storage/show_transfers.dart';
 import 'package:server_box/view/page/storage/transfer_announce.dart';
@@ -430,15 +430,6 @@ extension _Actions on _SftpPageState {
     String fullPath,
   ) => _edit(handle, entry, fullPath);
 
-  /// Local file dir + server id + remote path.
-  String _localPathFor(String remotePath) {
-    final parts = remotePath.split('/').where((part) => part.isNotEmpty);
-    return parts.fold(
-      Paths.file.joinPath(_spi.id),
-      (path, part) => path.joinPath(_safeLocalPathPart(part)),
-    );
-  }
-
   void _download(FileEntry entry, String fullPath) {
     context.showRoundDialog(
       title: libL10n.attention,
@@ -466,7 +457,7 @@ extension _Actions on _SftpPageState {
                 .add(
                   FileTransfer(
                     from: _refOf(fullPath),
-                    to: LocalFileRef(_localPathFor(fullPath)),
+                    to: LocalFileRef(serverLocalPath(_spi.id, fullPath)),
                   ),
                 );
           },
@@ -668,39 +659,17 @@ extension _Edit on _SftpPageState {
 
     final size = await _sizeFor(entry, remotePath, useSudo: useSudo);
     if (size == null || !mounted) return;
-    if (size > Miscs.editorMaxSize) {
-      Toast.show(
-        l10n.fileTooLarge(
-          entry.name,
-          size.bytes2Str,
-          Miscs.editorMaxSize.bytes2Str,
-        ),
-      );
-      return;
-    }
+    if (!fitsEditor(entry.name, size)) return;
 
-    final localPath = _localPathFor(remotePath);
+    final localPath = serverLocalPath(_spi.id, remotePath);
     if (!await _fetch(remotePath, localPath, useSudo: useSudo)) return;
     if (!mounted) return;
 
     await EditorPage.route.go(
       context,
-      args: EditorPageArgs(
+      args: fileEditorArgs(
         path: localPath,
         onSave: (_) => _saveBack(handle, localPath, remotePath, useSudo),
-        closeAfterSave: Stores.setting.closeAfterSave.fetch(),
-        softWrap: Stores.setting.editorSoftWrap.fetch(),
-        enableHighlight: Stores.setting.editorHighlight.fetch(),
-        lightTheme: HighlightTheme.fromThemeMapKey(
-          Stores.setting.editorTheme.fetch(),
-        ),
-        darkTheme: HighlightTheme.fromThemeMapKey(
-          Stores.setting.editorDarkTheme.fetch(),
-        ),
-        fontFamily: () {
-          final font = Stores.setting.editorFontFamily.fetch();
-          return font.isEmpty ? null : font;
-        }(),
       ),
     );
   }

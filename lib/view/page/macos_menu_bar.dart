@@ -55,10 +55,6 @@ class MacOSMenuBarManager {
             onSelected: () => _openURL(Urls.thisRepo),
           ),
           PlatformMenuItem(
-            label: libL10n.menuWiki,
-            onSelected: () => _openURL(Urls.appWiki),
-          ),
-          PlatformMenuItem(
             label: libL10n.menuHelp,
             onSelected: () => _openURL(Urls.appHelp),
           ),

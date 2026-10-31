@@ -502,6 +502,11 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
+  String fileChangedOverwrite(String file) {
+    return '\'$file\' پس از باز شدن روی سرور تغییر کرده است. بازنویسی شود؟';
+  }
+
+  @override
   String get fileDirGone => 'این پوشه دیگر در اینجا وجود ندارد';
 
   @override

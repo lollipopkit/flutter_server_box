@@ -98,6 +98,7 @@
   "fallbackSshDest": "Резервна SSH адреса",
   "fdroidReleaseTip": "Якщо ви завантажили цей застосунок з F-Droid, рекомендується відключити цю опцію.",
   "fileTooLarge": "Файл '{file}' занадто великий ({size}), макс {sizeMax}",
+  "fileChangedOverwrite": "'{file}' змінено на сервері після відкриття. Перезаписати?",
   "fileDirGone": "Цієї теки більше немає",
   "fileDirGoneTip": "Його видалено або перейменовано",
   "fullScreen": "Повний екран",

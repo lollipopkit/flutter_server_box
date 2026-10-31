@@ -130,6 +130,10 @@ enum MonitorHttpErrType {
   /// The account or role exists already, or a role is still in use.
   conflict,
 
+  /// A file write that named the version it was based on found the file
+  /// changed since: the agent's `409 {"error":"modified"}`.
+  modified,
+
   /// The change would leave the agent with no admin.
   lastAdmin,
 

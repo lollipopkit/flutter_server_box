@@ -503,6 +503,11 @@ class AppLocalizationsAz extends AppLocalizations {
   }
 
   @override
+  String fileChangedOverwrite(String file) {
+    return '\'$file\' açıldıqdan sonra serverdə dəyişdirilib. Üzərinə yazılsın?';
+  }
+
+  @override
   String get fileDirGone => 'Bu qovluq artıq burada yoxdur';
 
   @override

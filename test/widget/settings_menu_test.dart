@@ -1034,4 +1034,21 @@ void main() {
     final list = tester.element(find.byType(PrivateKeysListPage));
     expect(NavTargetScope.maybeOf(list), isNull);
   });
+
+  testWidgets('AI is a subject of its own, not a page of App', (tester) async {
+    await pump(tester, width: 500);
+    expect(menuRow(libL10n.ai), findsOneWidget);
+
+    await tester.tap(menuRow(libL10n.app));
+    await settle(tester, 20);
+    expect(tabRow(libL10n.ai), findsNothing);
+  });
+
+  testWidgets('About links no wiki', (tester) async {
+    await pump(tester, width: 500);
+    await tester.tap(menuRow(libL10n.about));
+    await settle(tester, 20);
+    expect(find.text(libL10n.menuWiki), findsNothing);
+    expect(find.text(libL10n.feedback), findsOneWidget);
+  });
 }
