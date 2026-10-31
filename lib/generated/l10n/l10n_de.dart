@@ -377,6 +377,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get clearAllStatsTitle => 'Alle Statistiken löschen';
 
   @override
+  String get clearAllSettings => 'Alle Einstellungen löschen';
+
+  @override
   String clearServerStatsContent(String serverName) {
     return 'Sind Sie sicher, dass Sie die Verbindungsstatistiken für Server \"$serverName\" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.';
   }

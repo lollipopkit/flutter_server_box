@@ -9,9 +9,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
+import 'package:server_box/view/page/private_key/list.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/widget/edge_fade_scroll.dart';
 
@@ -45,6 +47,7 @@ void main() {
     getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
     // The server order page reads it as soon as it is shown.
     getIt.registerSingleton<ServerStore>(ServerStore());
+    getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore());
   });
 
   tearDownAll(() async {
@@ -943,5 +946,92 @@ void main() {
     await tester.binding.handlePopRoute();
     await settle(tester, 20);
     expect(find.text('open'), findsOneWidget);
+  });
+
+  // #1819: the bar stays over every page, and on a narrow window over the bar
+  // of a page pushed into the settings, so a delete of everything in it sat
+  // right over a page's own delete.
+  Finder deleteIn(Finder bar) => find.descendant(
+    of: bar,
+    matching: find.byWidgetPredicate(
+      (w) =>
+          (w is Icon &&
+              [
+                Icons.delete,
+                Icons.delete_forever,
+                Icons.delete_outline,
+              ].contains(w.icon)) ||
+          (w is Tooltip && w.message == libL10n.delete) ||
+          (w is Text && w.data == l10n.clearAllSettings),
+    ),
+  );
+
+  testWidgets('no bar offers to delete every setting', (tester) async {
+    await pump(tester, width: 500);
+    expect(deleteIn(find.byType(AppBar)), findsNothing);
+
+    await tester.tap(menuRow(l10n.privateKey));
+    await settle(tester, 20);
+    expect(deleteIn(find.byType(AppBar)), findsNothing);
+  });
+
+  testWidgets('nor the header over a wide window', (tester) async {
+    await pump(tester, width: 1400);
+    expect(deleteIn(find.byKey(settingsHeaderKey)), findsNothing);
+  });
+
+  testWidgets('clearing every setting is a row of App, and asks first', (
+    tester,
+  ) async {
+    Stores.setting.locale.put('de');
+    await pump(tester, width: 500);
+    await tester.tap(menuRow(libL10n.app));
+    await settle(tester, 20);
+
+    final row = find.text(l10n.clearAllSettings);
+    await tester.scrollUntilVisible(
+      row,
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(row);
+    await settle(tester);
+    expect(Stores.setting.locale.fetch(), 'de');
+
+    // Counted down before it takes a tap.
+    await tester.pump(const Duration(seconds: 4));
+    await tester.tap(find.byType(CountDownBtn));
+    await settle(tester);
+    expect(Stores.setting.locale.fetch(), '');
+  });
+
+  testWidgets('a page opened from one narrow column covers the settings', (
+    tester,
+  ) async {
+    await pump(tester, width: 500);
+    await tester.tap(menuRow(l10n.privateKey));
+    await settle(tester, 20);
+    final list = tester.element(find.byType(PrivateKeysListPage));
+    expect(NavTargetScope.maybeOf(list), NavTarget.root);
+
+    await tester.tap(backBtn);
+    await settle(tester, 20);
+    await tester.tap(menuRow(libL10n.about));
+    await settle(tester, 20);
+    await tester.tap(find.text(libL10n.license));
+    await settle(tester, 20);
+    final license = tester.element(find.byType(LicensePage));
+    expect(
+      Navigator.of(license),
+      Navigator.of(license, rootNavigator: true),
+    );
+  });
+
+  testWidgets('and takes the content column beside the menu', (tester) async {
+    await pump(tester, width: 1400);
+    await tester.tap(menuRow(l10n.privateKey));
+    await settle(tester, 20);
+    final list = tester.element(find.byType(PrivateKeysListPage));
+    expect(NavTargetScope.maybeOf(list), isNull);
   });
 }

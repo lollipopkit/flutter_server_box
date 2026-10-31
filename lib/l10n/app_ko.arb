@@ -71,6 +71,7 @@
   "bgRunNeedsNotification": "백그라운드 실행에는 상주 알림이 필요하지만, 이 앱에는 알림 권한이 없습니다. 눌러서 알림을 허용하세요.",
   "clearAllStatsContent": "모든 서버 연결 통계를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
   "clearAllStatsTitle": "모든 통계 삭제",
+  "clearAllSettings": "모든 설정 지우기",
   "clearServerStatsContent": "서버 \"{serverName}\"의 연결 통계를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
   "clearServerStatsTitle": "{serverName} 통계 삭제",
   "clearThisServerStats": "이 서버의 통계 삭제",

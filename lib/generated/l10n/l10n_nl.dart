@@ -376,6 +376,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get clearAllStatsTitle => 'Alle statistieken wissen';
 
   @override
+  String get clearAllSettings => 'Alle instellingen wissen';
+
+  @override
   String clearServerStatsContent(String serverName) {
     return 'Weet u zeker dat u de verbindingsstatistieken voor server \"$serverName\" wilt wissen? Deze actie kan niet ongedaan worden gemaakt.';
   }

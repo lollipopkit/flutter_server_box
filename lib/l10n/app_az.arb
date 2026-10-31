@@ -103,6 +103,7 @@
   "bgRunNeedsNotification": "Arxa planda işləmək üçün daimi bildiriş lazımdır, lakin tətbiqin bildiriş icazəsi yoxdur. Bildirişlərə icazə vermək üçün toxun.",
   "clearAllStatsContent": "Bütün server əlaqə statistikasını təmizləmək istədiyinə əminsən? Bu əməliyyatı geri qaytarmaq mümkün deyil.",
   "clearAllStatsTitle": "Bütün statistikanı təmizlə",
+  "clearAllSettings": "Bütün parametrləri sil",
   "clearServerStatsContent": "\"{serverName}\" serverinin əlaqə statistikasını təmizləmək istədiyinə əminsən? Bu əməliyyatı geri qaytarmaq mümkün deyil.",
   "clearServerStatsTitle": "{serverName} statistikasını təmizlə",
   "clearThisServerStats": "Bu serverin statistikasını təmizlə",

@@ -62,6 +62,7 @@
   "bgRunNeedsNotification": "バックグラウンド実行には常駐通知が必要ですが、このアプリには通知の許可がありません。タップして通知を許可してください。",
   "clearAllStatsContent": "すべてのサーバー接続統計を削除してもよろしいですか？この操作は元に戻せません。",
   "clearAllStatsTitle": "すべての統計をクリア",
+  "clearAllSettings": "すべての設定を消去",
   "clearServerStatsContent": "サーバー\"{serverName}\"の接続統計を削除してもよろしいですか？この操作は元に戻せません。",
   "clearServerStatsTitle": "{serverName}の統計をクリア",
   "clearThisServerStats": "このサーバーの統計をクリア",

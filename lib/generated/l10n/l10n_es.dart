@@ -379,6 +379,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get clearAllStatsTitle => 'Limpiar todas las estadísticas';
 
   @override
+  String get clearAllSettings => 'Borrar todos los ajustes';
+
+  @override
   String clearServerStatsContent(String serverName) {
     return '¿Estás seguro de que quieres limpiar las estadísticas de conexión del servidor \"$serverName\"? Esta acción no se puede deshacer.';
   }

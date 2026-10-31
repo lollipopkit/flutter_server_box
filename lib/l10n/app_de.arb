@@ -62,6 +62,7 @@
   "bgRunNeedsNotification": "Das Laufen im Hintergrund braucht eine dauerhafte Benachrichtigung, und diese App hat keine Benachrichtigungsberechtigung. Zum Erlauben antippen.",
   "clearAllStatsContent": "Sind Sie sicher, dass Sie alle Server-Verbindungsstatistiken löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
   "clearAllStatsTitle": "Alle Statistiken löschen",
+  "clearAllSettings": "Alle Einstellungen löschen",
   "clearServerStatsContent": "Sind Sie sicher, dass Sie die Verbindungsstatistiken für Server \"{serverName}\" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
   "clearServerStatsTitle": "{serverName} Statistiken löschen",
   "clearThisServerStats": "Statistiken dieses Servers löschen",

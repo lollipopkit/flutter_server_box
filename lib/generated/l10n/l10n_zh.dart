@@ -350,6 +350,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get clearAllStatsTitle => '清空所有统计';
 
   @override
+  String get clearAllSettings => '清除所有设置';
+
+  @override
   String clearServerStatsContent(String serverName) {
     return '确定要清空服务器 \"$serverName\" 的连接统计数据吗？此操作无法撤销。';
   }
@@ -6022,6 +6025,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get clearAllStatsTitle => '清空所有統計';
+
+  @override
+  String get clearAllSettings => '清除所有設定';
 
   @override
   String clearServerStatsContent(String serverName) {

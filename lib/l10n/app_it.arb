@@ -62,6 +62,7 @@
   "bgRunNeedsNotification": "Restare in esecuzione in background richiede una notifica permanente, e questa app non ha il permesso per le notifiche. Tocca per concederlo.",
   "clearAllStatsContent": "Sei sicuro di voler cancellare tutte le statistiche di connessione del server? Questa azione non può essere annullata.",
   "clearAllStatsTitle": "Cancella tutte le statistiche",
+  "clearAllSettings": "Cancella tutte le impostazioni",
   "clearServerStatsContent": "Sei sicuro di voler cancellare le statistiche di connessione per il server \"{serverName}\"? Questa azione non può essere annullata.",
   "clearServerStatsTitle": "Cancella statistiche {serverName}",
   "clearThisServerStats": "Cancella statistiche di questo server",

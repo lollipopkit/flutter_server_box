@@ -62,6 +62,7 @@
   "bgRunNeedsNotification": "Arka planda çalışmak kalıcı bir bildirim gerektirir ve bu uygulamanın bildirim izni yok. İzin vermek için dokunun.",
   "clearAllStatsContent": "Tüm sunucu bağlantı istatistiklerini temizlemek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
   "clearAllStatsTitle": "Tüm İstatistikleri Temizle",
+  "clearAllSettings": "Tüm ayarları temizle",
   "clearServerStatsContent": "\"{serverName}\" sunucusu için bağlantı istatistiklerini temizlemek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
   "clearServerStatsTitle": "{serverName} İstatistiklerini Temizle",
   "clearThisServerStats": "Bu Sunucu İstatistiklerini Temizle",

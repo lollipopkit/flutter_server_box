@@ -775,6 +775,12 @@ abstract class AppLocalizations {
   /// **'Clear All Statistics'**
   String get clearAllStatsTitle;
 
+  /// No description provided for @clearAllSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear all settings'**
+  String get clearAllSettings;
+
   /// Action label for clear server stats content.
   ///
   /// In en, this message translates to:

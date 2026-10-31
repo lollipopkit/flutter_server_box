@@ -24,6 +24,7 @@ extension _App on _AppSettingsPageState {
         // flat. Naming the group does not put it back in a release build.
         if (kDebugMode) _buildEditRawSettings(),
       ]),
+      SettingsGroup(libL10n.reset, [_buildClearSettings()]),
     ];
   }
 
@@ -37,11 +38,7 @@ extension _App on _AppSettingsPageState {
   List<SettingsGroup> _buildAppearance() {
     // The rows themselves are shared with the other apps on fl_lib; which page
     // they are on, and the groups they are read in, are this app's.
-    final appearance = ThemeAppearance(
-      context,
-      setStateSafe,
-      storeTarget: _SettingsWidth.pageTarget(context),
-    );
+    final appearance = ThemeAppearance(context, setStateSafe);
     SettingsRow row(ThemeSettingRow r) =>
         SettingsRow(r.label, r.build, keywords: r.keywords);
     return [
@@ -440,6 +437,58 @@ extension _App on _AppSettingsPageState {
     );
   }
 
+  SettingsRow _buildClearSettings() {
+    final label = l10n.clearAllSettings;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: Icon(
+          Icons.delete_forever,
+          color: Theme.of(context).colorScheme.error,
+        ),
+        title: Text(label),
+        onTap: _askClearSettings,
+      ),
+      keywords: libL10n.reset,
+    );
+  }
+
+  void _askClearSettings() {
+    context.showRoundDialog(
+      title: libL10n.attention,
+      child: SimpleMarkdown(
+        data: libL10n.askContinue(
+          '${libL10n.delete} **${libL10n.all}** ${libL10n.setting}',
+        ),
+      ),
+      actions: [
+        CountDownBtn(
+          onTap: () {
+            context.popDialog();
+            _clearSettings();
+          },
+          afterColor: Colors.red,
+        ),
+      ],
+    );
+  }
+
+  /// Only the settings table: servers, keys and the rest live in stores of
+  /// their own.
+  Future<void> _clearSettings() async {
+    try {
+      if (!await Stores.setting.clear()) {
+        Toast.error(libL10n.fail);
+        return;
+      }
+      unawaited(RNodes.app.notify());
+      Toast.success(libL10n.success);
+    } catch (e, s) {
+      Loggers.app.warning('Failed to clear settings', e, s);
+      Toast.error(libL10n.fail);
+    }
+  }
+
   SettingsRow _buildEditRawSettings() {
     const label = '(Dev) Edit raw json';
     return SettingsRow(
@@ -605,7 +654,6 @@ extension _App on _AppSettingsPageState {
     final editorFont = _setting.editorFontFamily.fetch();
     await EditorPage.route.go(
       context,
-      target: _SettingsWidth.pageTarget(context),
       args: EditorPageArgs(
         text: text,
         lang: ProgLang.json,

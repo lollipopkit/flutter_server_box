@@ -378,6 +378,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get clearAllStatsTitle => 'Очистить всю статистику';
 
   @override
+  String get clearAllSettings => 'Сбросить все настройки';
+
+  @override
   String clearServerStatsContent(String serverName) {
     return 'Вы уверены, что хотите очистить статистику соединений для сервера \"$serverName\"? Это действие не может быть отменено.';
   }
