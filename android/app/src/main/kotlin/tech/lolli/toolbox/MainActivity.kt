@@ -140,6 +140,8 @@ class MainActivity: FlutterFragmentActivity() {
     /// the foreground does not clear the flag before the lock screen is up.
     private var privacyLocked = false
     private var isForeground = false
+    private val shortcutExecutor = java.util.concurrent.Executors.newSingleThreadExecutor()
+
     /** `bgRun`, as Dart last said: whether `onPause` starts the keep-alive. */
     private var keepAliveInBackground = false
 
@@ -226,11 +228,20 @@ class MainActivity: FlutterFragmentActivity() {
                         result.success(null)
                     }
                     "setShortcuts" -> {
-                        try {
-                            AppShortcuts.publish(applicationContext, method.arguments as String)
-                            result.success(null)
-                        } catch (e: Exception) {
-                            result.error("SHORTCUTS", e.message, null)
+                        // Binder calls to the shortcut service, off the UI
+                        // thread; one at a time, so the last list wins.
+                        val json = method.arguments as String
+                        shortcutExecutor.execute {
+                            val error = try {
+                                AppShortcuts.publish(applicationContext, json)
+                                null
+                            } catch (e: Exception) {
+                                e.message ?: e.toString()
+                            }
+                            runOnUiThread {
+                                if (error == null) result.success(null)
+                                else result.error("SHORTCUTS", error, null)
+                            }
                         }
                     }
                     "pinShortcut" -> {
@@ -772,6 +783,7 @@ class MainActivity: FlutterFragmentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        shortcutExecutor.shutdown()
         stopAllReceiver?.let {
             try {
                 unregisterReceiver(it)

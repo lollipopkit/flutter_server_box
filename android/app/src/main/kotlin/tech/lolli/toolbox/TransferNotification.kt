@@ -34,8 +34,18 @@ object TransferNotification {
      */
     private const val EXTRA_REQUEST_PROMOTED_ONGOING = "android.requestPromotedOngoing"
 
+    /**
+     * Whether Dart says a transfer is running: what keeps `ForegroundService`
+     * up through Stop All, since it could not be started again from the
+     * background once stopped.
+     */
+    @Volatile
+    var active = false
+        private set
+
     /** `{"title","text","progress":0..100 or -1,"chip"}`, or null to take it down. */
     fun update(context: Context, json: String?) {
+        active = json != null
         val nm = context.getSystemService(NotificationManager::class.java) ?: return
         if (json == null) {
             nm.cancel(ID)

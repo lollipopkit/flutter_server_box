@@ -73,6 +73,9 @@ class ForegroundService : Service() {
                 val stopAllIntent = Intent("tech.lolli.toolbox.STOP_ALL_CONNECTIONS")
                     .setPackage(packageName)
                 sendBroadcast(stopAllIntent, "tech.lolli.toolbox.permission.INTERNAL_BROADCAST")
+                // A transfer is not a session to end, and it needs the process
+                // kept out of the freezer; Dart stops the service once it is done.
+                if (TransferNotification.active) return START_STICKY
                 stopForegroundService()
                 return START_NOT_STICKY
             }

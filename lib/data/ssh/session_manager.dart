@@ -280,12 +280,11 @@ abstract final class TermSessionManager {
   ///
   /// A file transfer in progress is a third: it runs on this process, and a
   /// frozen one leaves it, and its notification, standing still. Stop All
-  /// stands it down too: the service has just been stopped from the
-  /// background, where restarting it would be refused.
+  /// does not end it, and the native side keeps the service up for it.
   static bool get _serviceWanted =>
       _entries.isNotEmpty ||
-      (!_stoodDown &&
-          (_transferring || (_backgrounded && _keepAliveWanted)));
+      _transferring ||
+      (_backgrounded && !_stoodDown && _keepAliveWanted);
 
   static var _transferring = false;
 
@@ -323,15 +322,18 @@ abstract final class TermSessionManager {
     if (isAndroid) {
       final wanted = _serviceWanted;
       // No query is needed for an update, and no stop is allowed while the app
-      // is backgrounded. Apart from saving a platform round trip, that keeps an
-      // empty state from starting a foreground service just to stop it again.
-      final running = !wanted && !_backgrounded
+      // is backgrounded, unless stood down. Apart from saving a platform round
+      // trip, that keeps an empty state from starting a foreground service just
+      // to stop it again.
+      final mayStop = !_backgrounded || _stoodDown;
+      final running = !wanted && mayStop
           ? await MethodChans.isServiceRunning()
           : false;
       switch (decideAndroidSessionServiceAction(
         wanted: wanted,
         running: running,
         backgrounded: _backgrounded,
+        stoodDown: _stoodDown,
       )) {
         case AndroidSessionServiceAction.update:
           await MethodChans.updateSessions(
