@@ -32,4 +32,13 @@
     <string name="widget_refresh_desc">更新</string>
     <string name="widget_small_label">サーバーの数値</string>
     <string name="widget_medium_label">サーバーのグラフ</string>
+
+    <string name="process_text_label">スニペットとして保存</string>
+    <string name="tile_no_sessions">アクティブなセッションはありません</string>
+    <plurals name="tile_sessions">
+        <item quantity="other">%d 件のセッション</item>
+    </plurals>
+    <string name="channel_transfers">ファイル転送</string>
+    <string name="incoming_failed">共有されたファイルを受け取れませんでした</string>
+    <string name="shortcut_server_gone">サーバーは削除されました</string>
 </resources>

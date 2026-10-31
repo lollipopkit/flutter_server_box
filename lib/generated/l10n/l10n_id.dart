@@ -6038,4 +6038,12 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get hostCertAuthorityExists => 'Sudah ada di daftar';
+
+  @override
+  String get addToHomeScreen => 'Tambahkan ke layar utama';
+
+  @override
+  String transfersActive(int count) {
+    return '$count transfer';
+  }
 }

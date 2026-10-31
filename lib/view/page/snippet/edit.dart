@@ -17,7 +17,11 @@ import 'package:server_box/view/widget/dist_icon.dart';
 
 final class SnippetEditPageArgs {
   final Snippet? snippet;
-  const SnippetEditPageArgs({this.snippet});
+
+  /// A new snippet's script, filled in: text shared from another app.
+  final String? script;
+
+  const SnippetEditPageArgs({this.snippet, this.script});
 }
 
 class SnippetEditPage extends ConsumerStatefulWidget {
@@ -50,7 +54,10 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> {
   void initState() {
     super.initState();
     final snippet = widget.args?.snippet;
-    if (snippet == null) return;
+    if (snippet == null) {
+      _scriptController.text = widget.args?.script ?? '';
+      return;
+    }
     _nameController.text = snippet.name;
     _scriptController.text = snippet.script;
     if (snippet.note != null) _noteController.text = snippet.note!;

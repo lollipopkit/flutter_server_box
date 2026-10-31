@@ -1700,5 +1700,7 @@
   "hostCertAuthoritiesTip": "由这些 CA 签发证书的主机将直接被信任，不再询问，等同于 OpenSSH 的 @cert-authority；其他主机仍在首次连接时询问。主机为逗号分隔的匹配规则，支持 * 和 ?，以 ! 排除；非 22 端口按 [host]:port 匹配。",
   "hostCertAuthorityInvalid": "不是支持的 SSH 公钥（ssh-ed25519、ssh-rsa 或 ecdsa-sha2-*）",
   "hostCertAuthorityNoHosts": "请填写它担保的主机，例如 *",
-  "hostCertAuthorityExists": "已在列表中"
+  "hostCertAuthorityExists": "已在列表中",
+  "addToHomeScreen": "添加到主屏幕",
+  "transfersActive": "{count} 个传输"
 }

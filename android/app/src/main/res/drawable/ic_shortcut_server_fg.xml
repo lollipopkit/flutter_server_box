@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The 24dp glyph centred at 44dp in the 108dp adaptive canvas, inside its
+     66dp safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:scaleX="1.8333"
+        android:scaleY="1.8333"
+        android:translateX="32"
+        android:translateY="32">
+        <path
+            android:fillColor="@color/shortcutForeground"
+            android:pathData="@string/path_dns" />
+    </group>
+</vector>

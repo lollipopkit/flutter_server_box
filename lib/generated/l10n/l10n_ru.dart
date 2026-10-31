@@ -6085,4 +6085,20 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get hostCertAuthorityExists => 'Уже в списке';
+
+  @override
+  String get addToHomeScreen => 'Добавить на главный экран';
+
+  @override
+  String transfersActive(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count передачи',
+      many: '$count передач',
+      few: '$count передачи',
+      one: '$count передача',
+    );
+    return '$_temp0';
+  }
 }

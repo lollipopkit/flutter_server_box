@@ -6083,4 +6083,20 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get hostCertAuthorityExists => 'Уже в списку';
+
+  @override
+  String get addToHomeScreen => 'Додати на головний екран';
+
+  @override
+  String transfersActive(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count передачі',
+      many: '$count передач',
+      few: '$count передачі',
+      one: '$count передача',
+    );
+    return '$_temp0';
+  }
 }

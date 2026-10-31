@@ -59,8 +59,10 @@ extension _Init on SSHPageState {
     // how to re-attach one. It no longer does: a raw shell reconnects to a
     // fresh shell, which is the ordinary case for a link that dropped while
     // the app was in someone's pocket.
+    //
+    // Not after Stop All, which may close a client shared with the poller.
     final transportClosed = _backend != null && _backend!.isClosed;
-    if (mounted && transportClosed) {
+    if (mounted && transportClosed && !_endRequested) {
       unawaited(_onConnectionLossSuspected());
       return;
     }
@@ -351,6 +353,7 @@ extension _Init on SSHPageState {
 
   Future<void> _initTerminal() async {
     if (_openingTerminal) return;
+    _endRequested = false;
     // A session handed to this page is already connected and already running
     // something — the dialog that started it did all of this. Opening a second
     // shell here would replace what the user asked to carry on watching.
@@ -617,7 +620,7 @@ extension _Init on SSHPageState {
   }
 
   Future<void> _onConnectionLossSuspected() async {
-    if (!mounted || _disconnectDialogOpen) return;
+    if (!mounted || _disconnectDialogOpen || _endRequested) return;
 
     _disconnectDialogOpen = true;
     _reportedDisconnected = true;
@@ -663,6 +666,7 @@ extension _Init on SSHPageState {
   Future<void> reconnect() async {
     if (!mounted || !widget.args.canReconnect) return;
     if (_disconnectDialogOpen || _openingTerminal) return;
+    _endRequested = false;
     // Never connected: there is no shell to end, and the first connection is
     // what the overlay's retry makes.
     if (!_adopted && _connectionStep != TerminalConnectionStep.ready) {
@@ -1352,6 +1356,9 @@ extension _Init on SSHPageState {
 
 extension on SSHPageState {
   void _disconnectFromNotification() {
+    // Stop All runs every disconnect in one synchronous pass; the shell's
+    // `done` arrives after it, whichever closed the shared client first.
+    _endRequested = true;
     // Update observers before closing the channel so the UI and notification
     // respond immediately.
     TermSessionManager.updateStatus(_sessionId, TermSessionStatus.disconnected);

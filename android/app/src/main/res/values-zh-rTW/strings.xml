@@ -32,4 +32,13 @@
     <string name="widget_refresh_desc">重新整理</string>
     <string name="widget_small_label">伺服器數值</string>
     <string name="widget_medium_label">伺服器曲線</string>
+
+    <string name="process_text_label">存為程式碼片段</string>
+    <string name="tile_no_sessions">沒有作用中的工作階段</string>
+    <plurals name="tile_sessions">
+        <item quantity="other">%d 個工作階段</item>
+    </plurals>
+    <string name="channel_transfers">檔案傳輸</string>
+    <string name="incoming_failed">無法接收分享的檔案</string>
+    <string name="shortcut_server_gone">伺服器已刪除</string>
 </resources>

@@ -32,4 +32,14 @@
     <string name="widget_refresh_desc">Vernieuwen</string>
     <string name="widget_small_label">Serverwaarden</string>
     <string name="widget_medium_label">Servergrafieken</string>
+
+    <string name="process_text_label">Opslaan als snippet</string>
+    <string name="tile_no_sessions">Geen actieve sessies</string>
+    <plurals name="tile_sessions">
+        <item quantity="one">%d sessie</item>
+        <item quantity="other">%d sessies</item>
+    </plurals>
+    <string name="channel_transfers">Bestandsoverdrachten</string>
+    <string name="incoming_failed">Gedeelde bestanden konden niet worden ontvangen</string>
+    <string name="shortcut_server_gone">Server verwijderd</string>
 </resources>

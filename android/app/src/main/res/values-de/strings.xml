@@ -32,4 +32,14 @@
     <string name="widget_refresh_desc">Aktualisieren</string>
     <string name="widget_small_label">Server-Messwerte</string>
     <string name="widget_medium_label">Server-Diagramme</string>
+
+    <string name="process_text_label">Als Snippet speichern</string>
+    <string name="tile_no_sessions">Keine aktiven Sitzungen</string>
+    <plurals name="tile_sessions">
+        <item quantity="one">%d Sitzung</item>
+        <item quantity="other">%d Sitzungen</item>
+    </plurals>
+    <string name="channel_transfers">Dateiübertragungen</string>
+    <string name="incoming_failed">Geteilte Dateien konnten nicht übernommen werden</string>
+    <string name="shortcut_server_gone">Server entfernt</string>
 </resources>

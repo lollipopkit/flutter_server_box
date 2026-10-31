@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/server.dart';
 import 'package:server_box/data/model/app/app_link.dart';
@@ -59,6 +60,20 @@ List<ContextMenuAction> serverActions(
       text: l10n.copyLink,
       onTap: () => AppLinkUi.copy(ServerLink(spi.id)),
     ),
+    if (isAndroid)
+      ContextMenuAction(
+        icon: Icons.add_to_home_screen,
+        text: l10n.addToHomeScreen,
+        onTap: () async {
+          final ok = await MethodChans.pinShortcut(
+            id: spi.id,
+            label: spi.name,
+            uri: ServerLink(spi.id).toString(),
+          );
+          // False is a launcher that cannot pin, or refused: say so.
+          if (!ok) Toast.error('${l10n.addToHomeScreen}: ${libL10n.fail}');
+        },
+      ),
     ContextMenuAction(
       icon: Icons.ios_share,
       text: libL10n.share,

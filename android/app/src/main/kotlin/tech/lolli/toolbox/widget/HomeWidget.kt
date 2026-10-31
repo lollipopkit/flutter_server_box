@@ -118,6 +118,86 @@ abstract class HomeWidget(private val kind: WidgetKind) : AppWidgetProvider() {
 
         /** A single line of text takes about this much more than its size. */
         private const val HEADER_LINE_RATIO = 1.45f
+
+        private const val PREVIEW_PREFS = "widget_preview"
+        private const val KEY_PREVIEW_STAMP = "stamp"
+
+        /**
+         * The launcher picker's previews (Android 15+), drawn by the same code
+         * as a placed widget from made-up readings. Once per install and
+         * language: the system limits how often previews may be set, and a
+         * call it refuses is retried on a later launch.
+         */
+        fun publishPreviews(context: Context) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) return
+            val prefs = context.getSharedPreferences(PREVIEW_PREFS, Context.MODE_PRIVATE)
+            // The install, not the version: the system drops generated previews
+            // on every package update, a reinstall of the same version included.
+            val installed = context.packageManager.getPackageInfo(context.packageName, 0).lastUpdateTime
+            val stamp = "$installed/${context.resources.configuration.locales.toLanguageTags()}"
+            val manager = AppWidgetManager.getInstance(context)
+            // Per widget: one the system accepted is not set again, and so does
+            // not spend the rate limit another still needs.
+            for (widget in listOf(StatusWidgetSmall(), StatusWidgetMedium())) {
+                val key = "$KEY_PREVIEW_STAMP/${widget.javaClass.simpleName}"
+                if (prefs.getString(key, null) == stamp) continue
+                val ok = try {
+                    manager.setWidgetPreview(
+                        ComponentName(context, widget.javaClass),
+                        android.appwidget.AppWidgetProviderInfo.WIDGET_CATEGORY_HOME_SCREEN,
+                        widget.preview(context),
+                    )
+                } catch (e: Exception) {
+                    Log.w(TAG, "setWidgetPreview: ${e.message}")
+                    false
+                }
+                if (ok) prefs.edit().putString(key, stamp).apply()
+                else Log.i(TAG, "setWidgetPreview refused for ${widget.javaClass.simpleName}; retried next launch")
+            }
+        }
+
+        private val SAMPLE_READING = WidgetApi.Reading(
+            name = "web-01",
+            cpu = 23.0,
+            mem = 61.0,
+            disk = 48.0,
+            memText = "4.9g / 8.0g",
+            diskText = "48g / 100g",
+            netText = "1.2m / 340k",
+        )
+
+        private val SAMPLE_HISTORY = (0 until 30).map { i ->
+            val t = i / 29.0
+            WidgetApi.HistoryPoint(
+                cpu = 18 + 12 * kotlin.math.sin(t * 7) + 6 * t,
+                memory = 55 + 6 * t,
+                disk = 47 + t,
+                netRx = 600_000 + 500_000 * kotlin.math.sin(t * 5 + 1).coerceAtLeast(0.0),
+                netTx = 200_000 + 150_000 * kotlin.math.sin(t * 4),
+            )
+        }
+    }
+
+    /** This widget with [SAMPLE_READING], at the size the picker shows it. */
+    fun preview(context: Context): RemoteViews {
+        val views = RemoteViews(context.packageName, R.layout.home_widget)
+        val bounds = if (kind.drawsCharts) boundsFor(context, 250, 110) else boundsFor(context, 110, 110)
+        applyBounds(views, bounds)
+        render(context, views, WidgetConfig(serverId = "", metric = WidgetMetric.CPU), SAMPLE_READING, SAMPLE_HISTORY, bounds)
+        views.setTextViewText(R.id.widget_time, "12:00")
+        return views
+    }
+
+    private fun applyBounds(views: RemoteViews, bounds: Bounds) {
+        views.setViewPadding(
+            R.id.widget_container,
+            bounds.paddingPx, bounds.paddingPx, bounds.paddingPx, bounds.paddingPx,
+        )
+        views.setTextViewTextSize(
+            R.id.widget_name,
+            TypedValue.COMPLEX_UNIT_SP,
+            bounds.headerSp,
+        )
     }
 
     override fun onUpdate(context: Context, manager: AppWidgetManager, appWidgetIds: IntArray) {
@@ -169,15 +249,7 @@ abstract class HomeWidget(private val kind: WidgetKind) : AppWidgetProvider() {
         // Before anything is drawn, because the padding and the header size are
         // part of the same arithmetic that decides how much room the chart has.
         val bounds = boundsOf(context, manager, appWidgetId)
-        views.setViewPadding(
-            R.id.widget_container,
-            bounds.paddingPx, bounds.paddingPx, bounds.paddingPx, bounds.paddingPx,
-        )
-        views.setTextViewTextSize(
-            R.id.widget_name,
-            TypedValue.COMPLEX_UNIT_SP,
-            bounds.headerSp,
-        )
+        applyBounds(views, bounds)
 
         showLoading(views, manager, appWidgetId, server.name)
 
@@ -267,6 +339,10 @@ abstract class HomeWidget(private val kind: WidgetKind) : AppWidgetProvider() {
         val heightDp = options.getInt(heightKey, 0).takeIf { it > 0 }
             ?: options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 110)
                 .takeIf { it > 0 } ?: 110
+        return boundsFor(context, widthDp, heightDp)
+    }
+
+    private fun boundsFor(context: Context, widthDp: Int, heightDp: Int): Bounds {
         val density = context.resources.displayMetrics.density
 
         // The launcher's own cell arithmetic, near enough: a cell is roughly
@@ -363,6 +439,18 @@ abstract class HomeWidget(private val kind: WidgetKind) : AppWidgetProvider() {
         history: List<WidgetApi.HistoryPoint>,
         bounds: Bounds,
     ) {
+        render(context, views, config, reading, history, bounds)
+        manager.updateAppWidget(appWidgetId, views)
+    }
+
+    private fun render(
+        context: Context,
+        views: RemoteViews,
+        config: WidgetConfig,
+        reading: WidgetApi.Reading,
+        history: List<WidgetApi.HistoryPoint>,
+        bounds: Bounds,
+    ) {
         views.setTextViewText(R.id.widget_name, reading.name)
         views.setTextViewText(
             R.id.widget_time,
@@ -396,7 +484,6 @@ abstract class HomeWidget(private val kind: WidgetKind) : AppWidgetProvider() {
                 showReadings(views, reading)
             }
         }
-        manager.updateAppWidget(appWidgetId, views)
     }
 
     /**

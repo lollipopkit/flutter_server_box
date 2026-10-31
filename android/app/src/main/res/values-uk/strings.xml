@@ -32,4 +32,16 @@
     <string name="widget_refresh_desc">Оновити</string>
     <string name="widget_small_label">Значення сервера</string>
     <string name="widget_medium_label">Графіки сервера</string>
+
+    <string name="process_text_label">Зберегти як сніпет</string>
+    <string name="tile_no_sessions">Немає активних сеансів</string>
+    <plurals name="tile_sessions">
+        <item quantity="one">%d сеанс</item>
+        <item quantity="few">%d сеанси</item>
+        <item quantity="many">%d сеансів</item>
+        <item quantity="other">%d сеансу</item>
+    </plurals>
+    <string name="channel_transfers">Передавання файлів</string>
+    <string name="incoming_failed">Не вдалося прийняти файли</string>
+    <string name="shortcut_server_gone">Сервер видалено</string>
 </resources>

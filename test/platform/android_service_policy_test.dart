@@ -81,6 +81,28 @@ void main() {
     );
   });
 
+  test('Stop All lets an idle service go even in the background', () {
+    expect(
+      decideAndroidSessionServiceAction(
+        wanted: false,
+        running: true,
+        backgrounded: true,
+        stoodDown: true,
+      ),
+      AndroidSessionServiceAction.stop,
+    );
+    // A transfer still running keeps it, stand-down or not.
+    expect(
+      decideAndroidSessionServiceAction(
+        wanted: true,
+        running: true,
+        backgrounded: true,
+        stoodDown: true,
+      ),
+      AndroidSessionServiceAction.update,
+    );
+  });
+
   test('unsupported platforms do not dispatch Android service calls', () async {
     final calls = <MethodCall>[];
     binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (

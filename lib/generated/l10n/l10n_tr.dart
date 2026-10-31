@@ -6027,4 +6027,12 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get hostCertAuthorityExists => 'Zaten listede';
+
+  @override
+  String get addToHomeScreen => 'Ana ekrana ekle';
+
+  @override
+  String transfersActive(int count) {
+    return '$count aktarım';
+  }
 }

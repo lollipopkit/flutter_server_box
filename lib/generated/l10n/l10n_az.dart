@@ -6037,4 +6037,12 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get hostCertAuthorityExists => 'Artıq siyahıdadır';
+
+  @override
+  String get addToHomeScreen => 'Əsas ekrana əlavə et';
+
+  @override
+  String transfersActive(int count) {
+    return '$count ötürmə';
+  }
 }

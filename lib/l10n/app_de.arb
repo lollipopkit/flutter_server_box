@@ -1700,5 +1700,7 @@
   "hostCertAuthoritiesTip": "Ein Host, dessen Zertifikat eine dieser Stellen signiert hat, wird ohne Nachfrage vertraut, wie bei OpenSSHs @cert-authority; andere Hosts werden wie bisher bei der ersten Verbindung abgefragt. Hosts sind kommagetrennte Muster mit * und ?, ! schließt aus; ein anderer Port als 22 wird als [host]:port verglichen.",
   "hostCertAuthorityInvalid": "Kein unterstützter öffentlicher SSH-Schlüssel (ssh-ed25519, ssh-rsa oder ecdsa-sha2-*)",
   "hostCertAuthorityNoHosts": "Gib die Hosts an, für die sie bürgt, zum Beispiel *",
-  "hostCertAuthorityExists": "Bereits in der Liste"
+  "hostCertAuthorityExists": "Bereits in der Liste",
+  "addToHomeScreen": "Zum Startbildschirm hinzufügen",
+  "transfersActive": "{count, plural, =1{1 Übertragung} other{{count} Übertragungen}}"
 }

@@ -23,14 +23,15 @@ import 'package:server_box/data/provider/virt/virt.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
-import 'package:server_box/data/ssh/session_manager.dart';
 import 'package:server_box/view/page/floating_panels.dart';
+import 'package:server_box/view/page/home/android_system.dart';
 import 'package:server_box/view/page/home_tab.dart';
 import 'package:server_box/view/page/macos_menu_bar.dart';
 import 'package:server_box/view/page/setting/entries/home_tabs.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/widget/app_link.dart';
 import 'package:server_box/view/widget/dmg_notice.dart';
+import 'package:server_box/view/widget/incoming.dart';
 import 'package:server_box/view/widget/legacy_status_notice.dart';
 import 'package:server_box/view/widget/nav_bar.dart';
 import 'package:server_box/view/widget/nav_rail.dart';
@@ -90,10 +91,15 @@ class _HomePageState extends ConsumerState<HomePage>
   /// platforms where opening a file also resumes the app.
   var _consumingPending = false;
 
+  /// Something was handed over while [_consumingPending] held the guard — an
+  /// incoming share finishes copying whenever it does — so take it after.
+  var _consumeAgain = false;
+
   /// The lock screen currently up, if any. See where it is assigned.
   Future<void>? _authed;
 
   late final _notifier = ref.read(serversProvider.notifier);
+  late final _androidSystem = AndroidSystemSync(ref);
 
   /// What the user arranged: the bar, and the rail.
   late List<AppTab> _barTabs = Stores.setting.homeTabs.fetch();
@@ -180,6 +186,7 @@ class _HomePageState extends ConsumerState<HomePage>
 
   @override
   void dispose() {
+    _androidSystem.dispose();
     _stopServerRefreshCycle();
     if (isMobile) {
       SystemUIs.switchStatusBar(hide: false);
@@ -213,6 +220,7 @@ class _HomePageState extends ConsumerState<HomePage>
     // The one way in the lifecycle cannot report: a file or link opened into
     // an app that never left the foreground. See [MethodChans.onOpened].
     MethodChans.onOpened(() => unawaited(_consumePending()));
+    _androidSystem.attach();
     // avoid index out of range
     if (_selectIndex.value >= _tabs.length || _selectIndex.value < 0) {
       _selectIndex.value = 0;
@@ -510,7 +518,8 @@ class _HomePageState extends ConsumerState<HomePage>
     // which is where a shortcut is *discovered* — but the menu bar is a macOS
     // API, and until now it was also the only thing that bound the keys, so
     // Linux and Windows had no way to switch tabs from the keyboard at all.
-    final withKeys = !isDesktop
+    // And on Android, for a hardware keyboard and the desktop mode.
+    final withKeys = !isDesktop && !isAndroid
         ? withBack
         : CallbackShortcuts(
             bindings: desktopShortcuts(
