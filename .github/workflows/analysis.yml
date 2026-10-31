@@ -636,20 +636,9 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      # The `cargo build` below, not the build hook. One shard saves; all
-      # six build the same thing.
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-        with:
-          shared-key: flutter-tests-ffi
-          save-if: ${{ github.ref == 'refs/heads/main' && matrix.shard == 0 }}
-
-      # FFI-dependent suites (frb_parser/windows/server_status_update_req...)
-      # load the dylib from target/debug via test/helpers/rust_lib_helper.dart
-      - name: Build native FFI library
-        run: cargo build -p sbm_ffi
-
-      # `flutter test` builds sbm_ffi again through the build hook, for a
-      # library no unit test loads (they take the one built above).
+      # `flutter test` builds sbm_ffi through the build hook, and the
+      # FFI-dependent suites load that build (`test/helpers/rust_lib_helper.dart`)
+      # — no `cargo build` of a second copy here.
       - uses: ./.github/actions/build-hook-cache
         with:
           step: restore
