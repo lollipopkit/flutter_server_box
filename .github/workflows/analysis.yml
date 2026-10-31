@@ -586,7 +586,10 @@ jobs:
           submodules: recursive
           persist-credentials: false
       
+      # Restored only: `tests` saves the same SDK and pub cache.
       - uses: ./.github/actions/setup-flutter
+        with:
+          cache: true
 
       - name: Install dependencies
         run: flutter pub get
@@ -608,12 +611,11 @@ jobs:
   # compiles all of them. Tried first; every shard took as long as the whole
   # run had.
   #
-  # Six: at three, compiling ~130 files took ~7 of a shard's ~10 minutes,
-  # against ~3 minutes of setup every shard pays anyway. Not one entrypoint
-  # importing every file either — tried: the suites share one isolate, run
-  # one after another, and two dozen of them depend on a fresh process.
+  # Not one entrypoint importing every file either — tried: the suites share
+  # one isolate, run one after another, and two dozen of them depend on a
+  # fresh process.
   tests:
-    name: tests (${{ matrix.shard }}/6)
+    name: tests (${{ matrix.shard }}/3)
     needs: changes
     if: needs.changes.outputs.dart == 'true'
     runs-on: ubuntu-latest
@@ -621,7 +623,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2, 3, 4, 5]
+        shard: [0, 1, 2]
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -632,6 +634,8 @@ jobs:
           persist-credentials: false
 
       - uses: ./.github/actions/setup-flutter
+        with:
+          cache: true
 
       - name: Install dependencies
         run: flutter pub get
@@ -643,7 +647,7 @@ jobs:
         with:
           step: restore
 
-      # Every sixth file, from a sorted list, so the split is stable and a new
+      # Every third file, from a sorted list, so the split is stable and a new
       # test file lands in exactly one shard. `git ls-files` rather than a
       # directory walk: only what is checked in, the same set `flutter test`
       # finds on its own, and a pathspec `*` crosses directories.
@@ -656,12 +660,18 @@ jobs:
           set -euo pipefail
           mapfile -t files < <(git ls-files -- 'test/*_test.dart' \
             ':!test/e2e/*' ':!test/*_e2e_test.dart' | sort \
-            | awk -v n=6 -v i=${{ matrix.shard }} '(NR - 1) % n == i')
+            | awk -v n=3 -v i=${{ matrix.shard }} '(NR - 1) % n == i')
           echo "${#files[@]} test files in this shard"
           flutter test "${files[@]}"
 
-      # From one shard: all six build the same thing.
+      # From one shard: all three build the same thing.
       - if: matrix.shard == 0
         uses: ./.github/actions/build-hook-cache
         with:
+          step: save
+
+      - if: matrix.shard == 0
+        uses: ./.github/actions/setup-flutter
+        with:
+          cache: true
           step: save
