@@ -1589,10 +1589,10 @@ packages:
     description:
       path: "."
       ref: main
-      resolved-ref: d5d70020da74082d182301a49e2bb87d30f0ab66
+      resolved-ref: ebe1ec61f2279b786fc0fa2e7893a50a506678c4
       url: "https://github.com/lollipopkit/re-editor"
     source: git
-    version: "0.8.0"
+    version: "0.10.0"
   re_highlight:
     dependency: transitive
     description:

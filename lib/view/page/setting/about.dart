@@ -36,11 +36,6 @@ final class _AppAboutPageState extends State<_AppAboutPage>
               scrollDirection: Axis.horizontal,
               children: <Widget>[
                 Btn.elevated(
-                  icon: const Icon(Icons.edit_document),
-                  text: libL10n.menuWiki,
-                  onTap: Urls.appWiki.launchUrl,
-                ),
-                Btn.elevated(
                   icon: const Icon(Icons.feedback),
                   text: libL10n.feedback,
                   onTap: Urls.appHelp.launchUrl,
