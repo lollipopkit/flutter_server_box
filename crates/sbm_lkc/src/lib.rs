@@ -307,8 +307,8 @@ impl Client {
 
     /// New tokens for [tokens], once [`Tokens::due`]; before that
     /// [`Failure::TooEarly`] and nothing is sent. [`Failure::Rejected`] means
-    /// the IdP took the refresh token back and [`Failure::Expired`] that it
-    /// ran out: the session is over either way. After [`Failure::Unknown`]
+    /// the IdP refused the refresh token and [`Failure::Expired`] that it ran
+    /// out: the session is over either way. After [`Failure::Unknown`]
     /// or [`Failure::InvalidResponse`] the token may be spent, and sending
     /// it again ends every session of the person.
     pub async fn refresh(&self, tokens: &Tokens) -> Result<Tokens, Error> {
@@ -321,7 +321,7 @@ impl Client {
         let value = self
             .token(&[("grant_type", "refresh_token"), ("refresh_token", refresh)])
             .await
-            .map_err(TokenError::into_error)?;
+            .map_err(TokenError::into_refresh_error)?;
         match Tokens::from_response(&value, now_ms(), Some(tokens)) {
             Ok(fresh) => Ok(fresh),
             Err(e) => {
@@ -426,7 +426,9 @@ fn answer(url: &str, status: u16, body: &[u8]) -> Result<Value, TokenError> {
         return Err(again());
     };
     let text = |name: &str| value[name].as_str().unwrap_or_default().to_string();
-    Err(TokenError::Refused { error: text("error"), description: text("error_description") })
+    // Rauthy words its own errors in `message`.
+    let description = Some(text("error_description")).filter(|d| !d.is_empty()).unwrap_or_else(|| text("message"));
+    Err(TokenError::Refused { error: text("error"), description })
 }
 
 /// A token or device endpoint's answer other than a success.
@@ -437,9 +439,8 @@ enum TokenError {
 }
 
 impl TokenError {
-    /// Only `invalid_grant` says the grant itself is gone, as fl_lib reads
-    /// it, and `expired_token` that it ran out: a refresh refused either way
-    /// signs out, any other refusal keeps the session.
+    /// The OAuth codes a device sign-in is answered with; a refresh reads
+    /// them through [`Self::into_refresh_error`].
     fn into_error(self) -> Error {
         match self {
             TokenError::Refused { error, description } => {
@@ -455,6 +456,18 @@ impl TokenError {
                 Error::new(failure, detail.chars().take(200).collect::<String>())
             }
             TokenError::Other(e) => e,
+        }
+    }
+
+    /// A refresh refused by the IdP itself ends the session, whatever its
+    /// words: Rauthy refuses a refresh token it no longer takes (an old
+    /// issuer, spent, ran out) as `JwtToken`, `NotFound` or `Forbidden`,
+    /// never `invalid_grant`.
+    fn into_refresh_error(self) -> Error {
+        let e = self.into_error();
+        match e.failure {
+            Failure::Refused | Failure::Denied => Error::new(Failure::Rejected, e.detail),
+            _ => e,
         }
     }
 }

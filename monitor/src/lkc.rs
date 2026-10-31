@@ -10,8 +10,9 @@
 //!
 //! The access token is refreshed only once due (`sbm_lkc::Tokens::due`), and
 //! [`watch`] does so at start and often enough after that the refresh token
-//! never lapses. The IdP's `invalid_grant` (taken back) and `expired_token`
-//! (ran out) sign out; anything else keeps the session. A password change
+//! never lapses. A refresh the IdP refuses itself (any 4xx with its own
+//! `error` but a 429: Rauthy says `JwtToken`, `NotFound`, `Forbidden`, never
+//! `invalid_grant`) signs out; anything else keeps the session. A password change
 //! signs out too ([`end_account`]): whoever held the old one may have
 //! approved the sign-in with their own account.
 
@@ -379,10 +380,10 @@ pub async fn session(state: &AppState) -> Option<Session> {
                 }
             }
         }
-        // Never reached the IdP, or refused without spending it: only
-        // `invalid_grant` takes it back, only `expired_token` says it ran
-        // out. `TooEarly` is not reached (`due` was asked above); listed
-        // with what keeps the session, since nothing was sent.
+        // Never reached the IdP (`sbm_lkc` reads any refusal of its own as
+        // `Rejected` or `Expired`). `TooEarly` is not reached (`due` was
+        // asked above); listed with what keeps the session, since nothing
+        // was sent.
         Err(e) if matches!(e.failure, Failure::Unreachable | Failure::Refused | Failure::Denied | Failure::TooEarly) => {
             tracing::debug!("LK Cloud: refresh: {e}");
             // Left set, the next read signs out instead: safe either way.
@@ -405,8 +406,8 @@ pub async fn session(state: &AppState) -> Option<Session> {
 /// Homebase refusing the token does not sign out here, as fl_lib's does: the
 /// agent's clock is not to be trusted with an access token's expiry (a board
 /// without an RTC, a suspend the monotonic clock did not count), and a token
-/// it only thinks is live reads as refused. The next refresh tells: the IdP's
-/// `invalid_grant` signs out.
+/// it only thinks is live reads as refused. The next refresh tells: the IdP
+/// refusing it signs out.
 async fn reread(state: &AppState) {
     let Some(session) = session(state).await else { return };
     // The refresh did not go through: homebase would refuse the expired

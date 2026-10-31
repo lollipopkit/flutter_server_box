@@ -41,7 +41,26 @@ fn a_device_answer_reads_with_its_deadline() {
 }
 
 #[test]
-fn only_invalid_grant_ends_the_session() {
+fn any_refusal_of_a_refresh_ends_the_session() {
+    let refused = |status: u16, body: &str| match answer("u", status, body.as_bytes()) {
+        Ok(_) => None,
+        Err(e) => Some(e.into_refresh_error().failure),
+    };
+    // Rauthy's own words for a refresh token it no longer takes, and OAuth's.
+    assert_eq!(refused(401, r#"{"error":"JwtToken","message":"Invalid `iss`"}"#), Some(Failure::Rejected));
+    assert_eq!(refused(404, r#"{"error":"NotFound","message":"Refresh Token not found"}"#), Some(Failure::Rejected));
+    assert_eq!(refused(403, r#"{"error":"Forbidden"}"#), Some(Failure::Rejected));
+    assert_eq!(refused(400, r#"{"error":"invalid_grant"}"#), Some(Failure::Rejected));
+    assert_eq!(refused(400, r#"{"error":"expired_token"}"#), Some(Failure::Expired));
+    // Not the IdP's word on the grant.
+    assert_eq!(refused(429, r#"{"error":"TooManyRequests"}"#), Some(Failure::Unreachable));
+    assert_eq!(refused(403, "<html>challenge</html>"), Some(Failure::Unreachable));
+    assert_eq!(refused(503, r#"{"error":"Internal"}"#), Some(Failure::Unknown));
+    assert_eq!(refused(400, r#"{"error":"temporarily_unavailable"}"#), Some(Failure::Unreachable));
+}
+
+#[test]
+fn a_device_sign_in_reads_the_oauth_codes() {
     let refused = |error: &str| TokenError::Refused { error: error.into(), description: String::new() }.into_error().failure;
     assert_eq!(refused("invalid_grant"), Failure::Rejected);
     assert_eq!(refused("access_denied"), Failure::Denied);

@@ -18,11 +18,13 @@ pub enum Failure {
     Expired,
     /// A refresh asked for before [`crate::Tokens::due`]; nothing was sent.
     TooEarly,
-    /// The session is over: the IdP's `invalid_grant` for a refresh token, or
-    /// homebase refusing the access token (`perm`).
+    /// The session is over: the IdP refused the refresh token (any 4xx with
+    /// its own `error` but a 429), or homebase refused the access token
+    /// (`perm`).
     Rejected,
-    /// Refused for another reason (an OAuth error other than the above, a
-    /// homebase code other than `perm`): it ends a sign-in, a session stays.
+    /// Refused for another reason (a device sign-in's OAuth error other than
+    /// the above, a homebase code other than `perm`): it ends a sign-in, a
+    /// session stays.
     Refused,
 }
 
