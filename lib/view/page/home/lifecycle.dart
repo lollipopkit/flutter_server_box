@@ -9,9 +9,6 @@ extension _HomePageLifecycle on _HomePageState {
   void _handleMobileLifecycle(AppLifecycleState state) {
     switch (state) {
       case AppLifecycleState.resumed:
-        // Before anything else, so the foreground service can be let go while
-        // the app is allowed to ask for it again.
-        TermSessionManager.setBackgrounded(false);
         _lastFullscreenMode = null;
         if (_shouldAuth) {
           final delay = Stores.setting.delayBioAuthLock.fetch();
@@ -49,9 +46,8 @@ extension _HomePageLifecycle on _HomePageState {
           _stopServerRefreshCycle();
         }
         break;
-      // Leaving is not reported from here: Android's native `onPause` does
-      // it, since `inactive` also arrives when the notification shade is
-      // pulled down — see [TermSessionManager.setBackgrounded].
+      // Leaving and coming back are reported natively on Android: see
+      // `TermSessionManager.setBackgrounded`.
       default:
         break;
     }

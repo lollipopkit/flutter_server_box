@@ -31,6 +31,18 @@ abstract final class MethodChans {
     }
   }
 
+  /// Whether leaving the app should start the keep-alive service. Started by
+  /// the activity's own `onPause`, since a request from here can arrive after
+  /// the app is background and be refused.
+  static Future<void> setKeepAliveInBackground(bool value) async {
+    if (!isAndroid) return;
+    try {
+      await _channel.invokeMethod('setKeepAliveInBackground', value);
+    } catch (e, s) {
+      Loggers.app.warning('Failed to set keep-alive', e, s);
+    }
+  }
+
   static Future<void> updateHomeWidget() async {
     if (!isIOS && !isAndroid) return;
     if (!Stores.setting.autoUpdateHomeWidget.fetch()) return;
@@ -544,13 +556,13 @@ abstract final class MethodChans {
   /// - `disconnectSession` with argument map {id: string}
   /// - `stopAllConnections` with no arguments
   /// - `notificationPermissionGranted` with no arguments
-  /// - `activityPaused` with no arguments
+  /// - `activityPaused` / `activityResumed` with no arguments
   static void registerHandler(
-    Future<void> Function(String id) onDisconnect, [
+    Future<void> Function(String id) onDisconnect, {
     VoidCallback? onStopAll,
     VoidCallback? onNotificationPermissionGranted,
-    VoidCallback? onActivityPaused,
-  ]) {
+    void Function(bool backgrounded)? onBackgrounded,
+  }) {
     _channel.setMethodCallHandler((call) async {
       switch (call.method) {
         case 'disconnectSession':
@@ -575,7 +587,10 @@ abstract final class MethodChans {
           onNotificationPermissionGranted?.call();
           return null;
         case 'activityPaused':
-          onActivityPaused?.call();
+          onBackgrounded?.call(true);
+          return null;
+        case 'activityResumed':
+          onBackgrounded?.call(false);
           return null;
         default:
           return null;

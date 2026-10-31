@@ -139,6 +139,8 @@ class MainActivity: FlutterFragmentActivity() {
     /// the foreground does not clear the flag before the lock screen is up.
     private var privacyLocked = false
     private var isForeground = false
+    /** `bgRun`, as Dart last said: whether `onPause` starts the keep-alive. */
+    private var keepAliveInBackground = false
 
     private var privacyCoverEnabled: Boolean
         get() = privacyPrefs.getBoolean(KEY_PRIVACY_COVER, false)
@@ -159,15 +161,33 @@ class MainActivity: FlutterFragmentActivity() {
         super.onPause()
         isForeground = false
         if (privacyCoverEnabled) applyPrivacyCover(true)
-        // The last moment the app may start a foreground service, and unlike
-        // Flutter's `inactive` not also sent when the window only loses focus
-        // to the notification shade — see `TermSessionManager.setBackgrounded`.
+        startKeepAlive()
+        // Not Flutter's `inactive`, which a pulled-down shade also sends.
         if (::channel.isInitialized) channel.invokeMethod("activityPaused", null)
+    }
+
+    /**
+     * Enters the foreground here, while the activity is still visible: the
+     * request Dart makes on `activityPaused` can arrive after `onStop`, when
+     * Android 12+ refuses it. Dart replaces the placeholder right after.
+     */
+    private fun startKeepAlive() {
+        if (!keepAliveInBackground || ForegroundService.isRunning || !notificationsAllowed()) return
+        try {
+            val intent = Intent(this, ForegroundService::class.java)
+                .setAction(ACTION_UPDATE_SESSIONS)
+                .putExtra("payload", """{"sessions":[],"keepAlive":true}""")
+            ContextCompat.startForegroundService(this, intent)
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Failed to start keep-alive: ${e.message}")
+        }
     }
 
     override fun onResume() {
         super.onResume()
         isForeground = true
+        // Paired with `activityPaused`; Flutter's `resumed` also waits for focus.
+        if (::channel.isInitialized) channel.invokeMethod("activityResumed", null)
         if (!privacyLocked) applyPrivacyCover(false)
         // Here rather than once: `desktop_drop` sets its own listener when it
         // attaches to the activity, and this one has to be the one in place.
@@ -329,6 +349,10 @@ class MainActivity: FlutterFragmentActivity() {
                     }
                     "widgetTokenState" -> {
                         result.success(WidgetStore.tokenState(applicationContext))
+                    }
+                    "setKeepAliveInBackground" -> {
+                        keepAliveInBackground = method.arguments as? Boolean ?: false
+                        result.success(null)
                     }
                     "updateSessions" -> {
                         try {

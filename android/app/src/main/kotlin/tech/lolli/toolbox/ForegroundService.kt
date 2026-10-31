@@ -266,10 +266,9 @@ class ForegroundService : Service() {
             .setContentText(contentText)
             .setSmallIcon(R.drawable.ic_notification)
             .setWhen(earliestStartTime)
-            // Nothing to time with nothing connected: the keep-alive's start
-            // is only when the service last came up.
-            .setShowWhen(sessions.isNotEmpty())
-            .setUsesChronometer(sessions.isNotEmpty())
+            // Nothing to time with nothing connected.
+            .setShowWhen(count > 0)
+            .setUsesChronometer(count > 0)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setContentIntent(pendingIntent)

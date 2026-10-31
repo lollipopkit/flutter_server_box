@@ -223,22 +223,21 @@ String localeCodeToTag(String code) => switch (code) {
   _ => code.replaceAll('_', '-'),
 };
 
-/// The first of the system's tags as the app's language it is closest to;
+/// The app's language closest to the first of the system's tags it has one for;
 /// empty for none, which follows the system.
 ///
-/// Matched as the app matches the system's languages at launch
-/// ([LocaleUtil.resolve]), so the two cannot disagree on a tag.
+/// Matched by [LocaleUtil.match], as the app matches the system's languages.
 String localeTagToCode(String tags) {
-  final first = tags.split(',').first.trim();
-  if (first.isEmpty) return '';
-  final parts = first.split('-');
-  final locale = Locale.fromSubtags(
-    languageCode: parts.first,
-    scriptCode: parts.skip(1).firstWhereOrNull((p) => p.length == 4),
-    countryCode: parts.skip(1).firstWhereOrNull((p) => p.length == 2),
-  );
-  final match = LocaleUtil.match(locale, AppLocalizations.supportedLocales);
-  if (match == null) return '';
-  final region = match.countryCode;
-  return region == null ? match.languageCode : '${match.languageCode}_$region';
+  for (final tag in tags.split(',')) {
+    final parts = tag.trim().split('-');
+    if (parts.first.isEmpty) continue;
+    final locale = Locale.fromSubtags(
+      languageCode: parts.first,
+      scriptCode: parts.skip(1).firstWhereOrNull((p) => p.length == 4),
+      countryCode: parts.skip(1).firstWhereOrNull((p) => p.length == 2),
+    );
+    final match = LocaleUtil.match(locale, AppLocalizations.supportedLocales);
+    if (match != null) return match.code;
+  }
+  return '';
 }

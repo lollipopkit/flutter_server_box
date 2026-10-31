@@ -135,11 +135,13 @@ abstract class HomeWidget(private val kind: WidgetKind) : AppWidgetProvider() {
             // on every package update, a reinstall of the same version included.
             val installed = context.packageManager.getPackageInfo(context.packageName, 0).lastUpdateTime
             val stamp = "$installed/${context.resources.configuration.locales.toLanguageTags()}"
-            if (prefs.getString(KEY_PREVIEW_STAMP, null) == stamp) return
             val manager = AppWidgetManager.getInstance(context)
-            val widgets = listOf(StatusWidgetSmall(), StatusWidgetMedium())
-            val all = widgets.all { widget ->
-                try {
+            // Per widget: one the system accepted is not set again, and so does
+            // not spend the rate limit another still needs.
+            for (widget in listOf(StatusWidgetSmall(), StatusWidgetMedium())) {
+                val key = "$KEY_PREVIEW_STAMP/${widget.javaClass.simpleName}"
+                if (prefs.getString(key, null) == stamp) continue
+                val ok = try {
                     manager.setWidgetPreview(
                         ComponentName(context, widget.javaClass),
                         android.appwidget.AppWidgetProviderInfo.WIDGET_CATEGORY_HOME_SCREEN,
@@ -149,8 +151,9 @@ abstract class HomeWidget(private val kind: WidgetKind) : AppWidgetProvider() {
                     Log.w(TAG, "setWidgetPreview: ${e.message}")
                     false
                 }
+                if (ok) prefs.edit().putString(key, stamp).apply()
+                else Log.i(TAG, "setWidgetPreview refused for ${widget.javaClass.simpleName}; retried next launch")
             }
-            if (all) prefs.edit().putString(KEY_PREVIEW_STAMP, stamp).apply()
         }
 
         private val SAMPLE_READING = WidgetApi.Reading(

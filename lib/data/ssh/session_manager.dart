@@ -84,16 +84,21 @@ abstract final class TermSessionManager {
         (id) async {
           _entries[id]?.disconnect?.call();
         },
-        () {
-          // Stop all connections when notification "Stop All" is pressed
-          stopAllConnections();
-        },
+        // Stop all connections when notification "Stop All" is pressed
+        onStopAll: stopAllConnections,
         // The first attempt to start the service raised the permission prompt
         // and was refused by the same call, because asking is asynchronous.
         // This is the answer arriving, and syncing is what asks again.
-        _sync,
-        () => setBackgrounded(true),
+        onNotificationPermissionGranted: _sync,
+        onBackgrounded: setBackgrounded,
       );
+      // The native side starts the keep-alive on `onPause` from this: the
+      // `activityPaused` round trip can land after the app is background.
+      final bgRun = Stores.setting.bgRun;
+      void pushBgRun() =>
+          unawaited(MethodChans.setKeepAliveInBackground(bgRun.fetch()));
+      pushBgRun();
+      bgRun.listenable().addListener(pushBgRun);
     }
     if (isIOS) {
       // A Live Activity can outlive a killed process. Clear any orphan left
@@ -128,10 +133,8 @@ abstract final class TermSessionManager {
     // straight back: pressing Stop All in the background would otherwise clear
     // every session and then start the service again for [_backgrounded], so
     // the one control the notification offers would appear not to work.
-    //
-    // Only from the background: pressed in the foreground (the Quick Settings
-    // tile over the app) there is no keep-alive to give up, and nothing would
-    // clear the flag before the next trip out, which would then go unguarded.
+    // In the foreground (the tile over the app) there is no keep-alive to give
+    // up, and the flag would outlive this visit.
     _stoodDown = _backgrounded;
     _sync();
   }
@@ -246,18 +249,12 @@ abstract final class TermSessionManager {
     }
   }
 
-  /// Whether the app is out of the foreground: set by the activity's
-  /// `onPause` (`activityPaused`), cleared on `resumed` by `home.dart`.
+  /// Whether the activity is paused, from its native `onPause`/`onResume`.
   ///
-  /// Not on Flutter's `paused`, which is the whole reason this exists:
-  /// `onPause` is delivered while the activity is still visible, and that is
-  /// the last moment Android 12+ allows an app to *start* a foreground
-  /// service. By `paused` the app is background and the call is refused.
-  ///
-  /// Not on Flutter's `inactive` either, though it comes from `onPause` too:
-  /// it is also sent when the window only loses focus, so pulling down the
-  /// notification shade used to start the service and post the keep-alive
-  /// notification, and closing it took them down again.
+  /// `onPause` is the last moment Android 12+ lets an app *start* a foreground
+  /// service; Flutter's `paused` comes later, from `onStop`. Flutter's
+  /// `inactive` and `resumed` are not used: they also follow window focus, so
+  /// a pulled-down notification shade would read as leaving.
   static var _backgrounded = false;
 
   static void setBackgrounded(bool value) {

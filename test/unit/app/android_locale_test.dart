@@ -27,6 +27,7 @@ void main() {
 
     test('the first of several, and an unsupported one follows the system', () {
       expect(localeTagToCode('ja,en-US'), 'ja');
+      expect(localeTagToCode('sv-SE,de-AT'), 'de');
       expect(localeTagToCode('sv-SE'), '');
     });
   });

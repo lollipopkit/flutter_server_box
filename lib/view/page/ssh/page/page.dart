@@ -406,10 +406,8 @@ class SSHPageState extends ConsumerState<SSHPage>
   bool _disconnectDialogOpen = false;
   bool _reportedDisconnected = false;
 
-  /// The shell the user asked to end from outside the page (the
-  /// notification's or the Quick Settings tile's Stop All), which must not
-  /// come back as a reconnect — see `_disconnectFromNotification`.
-  ShellSession? _endRequested;
+  /// Ended from outside the page (Stop All): not to come back as a reconnect.
+  bool _endRequested = false;
   VoidCallback? _visibilityListener;
   bool _isPickingSnippet = false;
   TerminalConnectionStep _connectionStep = TerminalConnectionStep.connecting;
