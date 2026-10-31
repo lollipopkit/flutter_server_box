@@ -316,6 +316,8 @@ export interface BlockDevice {
   tran?: string | null;
   fs_type?: string | null;
   mount?: string | null;
+  // Mounted, carrying other devices, or an LVM/RAID/LUKS member
+  in_use: boolean;
   children: BlockDevice[];
 }
 

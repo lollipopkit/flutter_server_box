@@ -83,9 +83,9 @@ pub fn capabilities(system: SystemType) -> Capabilities {
             SystemType::Bsd | SystemType::Windows => FieldSupport::NotImplemented,
         },
         disks: from_commands(system, &[commands::DISK]),
-        // `lsblk`, which only the Linux disk command runs.
+        // `lsblk`, which only the Linux disk command runs and busybox lacks.
         block_devices: match system {
-            SystemType::Linux => FieldSupport::Supported,
+            SystemType::Linux => FieldSupport::HardwareDependent,
             SystemType::Bsd | SystemType::Windows => FieldSupport::NotImplemented,
         },
         net: from_commands(system, &[commands::NET]),

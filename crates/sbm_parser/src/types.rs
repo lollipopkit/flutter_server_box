@@ -136,6 +136,11 @@ pub struct BlockDevice {
     pub fs_type: Option<String>,
     /// `[SWAP]` for an active swap area.
     pub mount: Option<String>,
+    /// Mounted, or something is built on it (partitions, an LVM volume, an
+    /// array) or it is a member of one (an LVM physical volume, a RAID or LUKS
+    /// member). `false` is a device nothing uses: blank, or a filesystem
+    /// nothing mounts.
+    pub in_use: bool,
     pub children: Vec<BlockDevice>,
 }
 

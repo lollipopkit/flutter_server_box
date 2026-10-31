@@ -26,6 +26,11 @@ class BlockDevice {
 
   /// `[SWAP]` for an active swap area.
   final String? mount;
+
+  /// Mounted, carrying other devices, or a member of one (an LVM physical
+  /// volume, a RAID or LUKS member). `false` is blank or a filesystem nothing
+  /// mounts.
+  final bool inUse;
   final List<BlockDevice> children;
 
   const BlockDevice({
@@ -37,6 +42,7 @@ class BlockDevice {
     this.tran,
     this.fsType,
     this.mount,
+    this.inUse = false,
     this.children = const [],
   });
 

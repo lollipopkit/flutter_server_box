@@ -133,36 +133,31 @@ fn lsblk_json(raw: &str) -> Option<serde_json::Value> {
 /// them; here only under the first, so every device appears once.
 pub fn parse_block_devices(raw: &str) -> Vec<BlockDevice> {
     fn device(d: &serde_json::Value, top: bool, seen: &mut HashSet<String>) -> Option<BlockDevice> {
-        let text = |key: &str| {
-            d[key]
-                .as_str()
-                .map(str::trim)
-                .filter(|s| !s.is_empty())
-                .map(str::to_string)
-        };
-        let kind = text("type")?;
+        let kind = lsblk_text(d, "type")?;
         if matches!(kind.as_str(), "loop" | "ram") {
             return None;
         }
-        let name = text("name")?;
-        let path = text("path").unwrap_or_default();
+        let name = lsblk_text(d, "name")?;
+        let path = lsblk_text(d, "path").unwrap_or_default();
         if !seen.insert(if path.is_empty() { name.clone() } else { path.clone() }) {
             return None;
         }
-        let size = &d["size"];
+        // `lsblk`'s own children, a repeat dropped below included.
+        let held = d["children"].as_array().is_some_and(|c| !c.is_empty());
+        let fs_type = lsblk_text(d, "fstype");
+        let mount = lsblk_text(d, "mountpoint");
+        let in_use = held || mount.is_some() || fs_type.as_deref().is_some_and(is_member_fs);
         Some(BlockDevice {
             name,
             path,
             kind,
-            model: text("model"),
-            size: size
-                .as_u64()
-                .or_else(|| size.as_str().and_then(|s| s.parse().ok()))
-                .unwrap_or(0),
+            model: lsblk_text(d, "model"),
+            size: lsblk_u64(d, "size"),
             // Newer `lsblk` repeats the disk's on each partition.
-            tran: text("tran").filter(|_| top),
-            fs_type: text("fstype"),
-            mount: text("mountpoint"),
+            tran: lsblk_text(d, "tran").filter(|_| top),
+            fs_type,
+            mount,
+            in_use,
             children: list(&d["children"], false, seen),
         })
     }
@@ -175,6 +170,35 @@ pub fn parse_block_devices(raw: &str) -> Vec<BlockDevice> {
     lsblk_json(raw).map_or_else(Vec::new, |json| {
         list(&json["blockdevices"], true, &mut HashSet::new())
     })
+}
+
+/// A filesystem signature that makes a device part of something else — an
+/// LVM volume group, an md array, a LUKS container, a ZFS pool, a Ceph OSD —
+/// whether or not `lsblk` lists what is built on it. Never mounted itself, and
+/// not free.
+fn is_member_fs(fs_type: &str) -> bool {
+    matches!(
+        fs_type,
+        "LVM2_member" | "linux_raid_member" | "crypto_LUKS" | "zfs_member" | "ceph_bluestore" | "bcache" | "drbd"
+    )
+}
+
+/// A string column, `None` when `lsblk` printed null or blanks (older versions
+/// pad MODEL with spaces).
+fn lsblk_text(device: &serde_json::Value, key: &str) -> Option<String> {
+    device[key]
+        .as_str()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(str::to_string)
+}
+
+/// A byte column: a number from newer `lsblk`, a string from older ones.
+fn lsblk_u64(device: &serde_json::Value, key: &str) -> u64 {
+    let v = &device[key];
+    v.as_u64()
+        .or_else(|| v.as_str().and_then(|s| s.trim().parse().ok()))
+        .unwrap_or(0)
 }
 
 /// One list of `lsblk`'s devices and `df`'s mounted filesystems.
@@ -314,13 +338,7 @@ fn lsblk_build(device: &serde_json::Value, children: Vec<Disk>) -> Disk {
 
 /// lsblk filesystem fields: --bytes output is bytes → KiB (Dart `_parseFilesystemFields`)
 fn lsblk_fs_fields(device: &serde_json::Value) -> (u64, u64, u64, u32) {
-    let size = |key: &str| -> u64 {
-        let v = &device[key];
-        v.as_u64()
-            .or_else(|| v.as_str().and_then(|s| s.parse().ok()))
-            .unwrap_or(0)
-            / 1024
-    };
+    let size = |key: &str| lsblk_u64(device, key) / 1024;
     let percent = device["fsuse%"]
         .as_str()
         .and_then(|s| s.trim_end_matches('%').parse().ok())

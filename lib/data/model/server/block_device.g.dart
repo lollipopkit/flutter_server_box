@@ -15,6 +15,7 @@ BlockDevice _$BlockDeviceFromJson(Map<String, dynamic> json) => BlockDevice(
   tran: json['tran'] as String?,
   fsType: json['fs_type'] as String?,
   mount: json['mount'] as String?,
+  inUse: json['in_use'] as bool? ?? false,
   children:
       (json['children'] as List<dynamic>?)
           ?.map((e) => BlockDevice.fromJson(e as Map<String, dynamic>))
@@ -32,5 +33,6 @@ Map<String, dynamic> _$BlockDeviceToJson(BlockDevice instance) =>
       'tran': instance.tran,
       'fs_type': instance.fsType,
       'mount': instance.mount,
+      'in_use': instance.inUse,
       'children': instance.children,
     };

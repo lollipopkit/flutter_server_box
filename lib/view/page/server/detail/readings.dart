@@ -453,9 +453,7 @@ extension on _ServerDetailPageState {
         ),
       );
       return ServerDetailDeviceButton(
-        label: l10n.devicesFmt(
-          blocks.isEmpty ? disks.length : blocks.length,
-        ),
+        label: l10n.devicesFmt(disks.length),
         onTap: () => _showClosableDetailDialog(
           title: libL10n.device,
           child: SizedBox(

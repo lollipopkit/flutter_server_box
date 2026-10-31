@@ -350,6 +350,7 @@ fn block_devices_list_what_is_not_mounted() {
     assert_eq!(sda.tran.as_deref(), Some("sata"));
     assert_eq!(sda.size, 4_000_787_030_016);
     assert_eq!(sda.mount, None);
+    assert!(!sda.in_use, "a blank disk");
     assert!(sda.children.is_empty());
 
     let parts = &devices[1].children;
@@ -358,6 +359,9 @@ fn block_devices_list_what_is_not_mounted() {
     assert_eq!(parts[0].size, 536_870_912, "a size lsblk printed as a string");
     assert_eq!(parts[2].fs_type.as_deref(), Some("ntfs"));
     assert_eq!(parts[2].mount, None);
+    assert!(!parts[2].in_use, "a filesystem nothing mounts");
+    assert!(parts[1].in_use);
+    assert!(devices[1].in_use, "in use through its partitions");
     assert_eq!(parts[2].model, None);
 
     assert_eq!(devices[2].mount.as_deref(), Some("[SWAP]"));
@@ -428,4 +432,18 @@ fn block_devices_list_a_shared_device_once() {
     let tdata = &disk.children[0].children[1];
     assert_eq!(tmeta.children.len(), 1);
     assert!(tdata.children.is_empty());
+    assert!(tdata.in_use, "the pool it carries is listed under tmeta");
+}
+
+/// A physical volume with no logical volumes yet, and a RAID member, are part
+/// of something whether or not `lsblk` lists it: in use, not free.
+#[test]
+fn block_devices_members_are_in_use() {
+    let raw = r#"{"blockdevices":[
+        {"path":"/dev/sdb","name":"sdb","type":"disk","fstype":"LVM2_member","size":1},
+        {"path":"/dev/sdc","name":"sdc","type":"disk","fstype":"linux_raid_member","size":1},
+        {"path":"/dev/sdd","name":"sdd","type":"disk","fstype":"swap","size":1}
+    ]}"#;
+    let in_use: Vec<bool> = linux::parse_block_devices(raw).iter().map(|d| d.in_use).collect();
+    assert_eq!(in_use, [true, true, false], "an inactive swap area is unused");
 }

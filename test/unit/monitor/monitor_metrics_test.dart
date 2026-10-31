@@ -69,6 +69,7 @@ void main() {
                 'tran': 'sata',
                 'fs_type': null,
                 'mount': null,
+                'in_use': true,
                 'children': [
                   {
                     'name': 'sda1',
@@ -79,6 +80,7 @@ void main() {
                     'tran': null,
                     'fs_type': 'ext4',
                     'mount': null,
+                    'in_use': false,
                     'children': [],
                   },
                 ],
@@ -92,7 +94,9 @@ void main() {
       expect(sda.model, 'WDC WD40EFRX');
       expect(sda.size, 4000787030016);
       expect(sda.children.single.fsType, 'ext4');
+      expect(sda.inUse, isTrue);
       expect(sda.children.single.mount, isNull);
+      expect(sda.children.single.inUse, isFalse);
     });
 
     test('and an agent predating them sends none', () {

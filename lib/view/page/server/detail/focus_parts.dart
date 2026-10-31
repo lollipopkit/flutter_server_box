@@ -608,9 +608,9 @@ class ServerDetailDiskItem extends StatelessWidget {
 /// A block device and, indented under it, what it is split into.
 ///
 /// What a disk is and whether it is in use: the model and transport of a whole
-/// disk, the filesystem and mount point of a part, and the parts nothing is
-/// mounted from (#1829). A device split into others is in use through them, so
-/// only a leaf says whether it is mounted.
+/// disk, the filesystem and mount point of a part, and what nothing uses
+/// (#1829). Whether a device is in use is the parser's answer, which also
+/// counts what is built on it and LVM, RAID and LUKS members.
 class ServerDetailBlockDeviceItem extends StatelessWidget {
   const ServerDetailBlockDeviceItem({
     super.key,
@@ -635,7 +635,7 @@ class ServerDetailBlockDeviceItem extends StatelessWidget {
   Widget _row() {
     final d = device;
     final facts = [d.size.bytes2Str, d.kind, ?d.tran, ?d.fsType].join(' · ');
-    final mount = d.children.isEmpty ? d.mount ?? l10n.notMounted : null;
+    final mount = d.mount ?? (d.inUse ? null : l10n.notMounted);
     return Padding(
       padding: EdgeInsets.only(
         left: 17.0 + (depth * 15.0),

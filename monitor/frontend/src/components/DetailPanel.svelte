@@ -50,8 +50,8 @@
     }),
   )
 
-  // Depth-first, so each part sits under its disk. Only a leaf says whether
-  // it is mounted: a device split into others is in use through them.
+  // Depth-first, so each part sits under its disk. `in_use` is the agent's
+  // answer: it also counts what is built on a device and LVM/RAID members.
   const blockRows = $derived.by(() => {
     const rows: { d: BlockDevice; depth: number }[] = []
     const walk = (list: BlockDevice[], depth: number) => {
@@ -357,7 +357,7 @@
                     {d.name}{d.model ? ` · ${d.model}` : ''}
                   </span>
                   <span class="block text-xs text-faint-fg truncate">
-                    {[d.kind, d.tran, d.fs_type].filter(Boolean).join(' · ')}{d.children.length ? '' : ` · ${d.mount ?? $LL.notMounted()}`}
+                    {[d.kind, d.tran, d.fs_type].filter(Boolean).join(' · ')}{d.mount ? ` · ${d.mount}` : d.in_use ? '' : ` · ${$LL.notMounted()}`}
                   </span>
                 </td>
                 <td class="py-2 text-right whitespace-nowrap text-muted-fg">{fmtBytes(d.size)}</td>

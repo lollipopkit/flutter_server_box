@@ -130,6 +130,8 @@ Filesystem     Type 1K-blocks    Used Available Use% Mounted on
       expect(sdb.model, 'ST4000VN008');
       expect(sdb.children, isEmpty);
       expect(sdb.mount, isNull);
+      expect(sdb.inUse, isFalse);
+      expect(result.blockDevices.last.inUse, isTrue);
       expect(result.blockDevices.last.children.single.mount, '/');
       // The blank disk is hardware, not a filesystem to count.
       expect(result.disk.map((d) => d.mount), isNot(contains('')));
