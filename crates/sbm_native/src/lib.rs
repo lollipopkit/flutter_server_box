@@ -59,7 +59,12 @@ pub fn sample(#[allow(unused_variables)] state: &mut NativeState, system: System
         SystemType::Linux => linux::sample(&state.block_devices),
         #[cfg(any(target_os = "macos", target_os = "windows"))]
         SystemType::Bsd | SystemType::Windows => {
-            sysinfo_backend::sample(state.sysinfo.get_or_insert_with(Default::default))
+            match &mut state.sysinfo {
+                Some(s) => sysinfo_backend::sample(s),
+                slot => sysinfo_backend::State::new()
+                    .map(|s| sysinfo_backend::sample(slot.insert(s)))
+                    .unwrap_or_default(),
+            }
         }
         #[allow(unreachable_patterns)]
         _ => ServerStatus::default(),
