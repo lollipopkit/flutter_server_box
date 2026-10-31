@@ -242,6 +242,10 @@ abstract final class LkcSyncWatch {
   }
 
   static void _onEvent(LkcSyncEvent event) {
+    if (event.lost case final why?) {
+      Loggers.app.info('LK Cloud sync events: $why');
+      return;
+    }
     if (event.connected || event.name == Miscs.bakFileName) {
       bakSync.syncSoon(milliDelay: 0);
     }
