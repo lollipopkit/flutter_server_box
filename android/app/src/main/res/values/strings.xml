@@ -13,10 +13,6 @@
         configuration screen actually shows.
     -->
     <string name="widget_chart_desc">Status charts</string>
-    <string name="widget_cpu_desc">CPU usage</string>
-    <string name="widget_mem_desc">Memory usage</string>
-    <string name="widget_disk_desc">Disk usage</string>
-    <string name="widget_net_desc">Network usage</string>
     <string name="widget_refresh_desc">Refresh</string>
 
     <string name="widget_configure_title">Widget</string>
@@ -42,13 +38,6 @@
     <string name="widget_err_insecure">HTTPS required</string>
     <string name="widget_err_network">Network error</string>
     <string name="widget_err_timeout">Timed out</string>
-
-    <!--
-        Row labels, matching the abbreviations the iOS widget draws. Not
-        translated on either platform: they are read as symbols beside an icon,
-        and a translated one would be the only thing on the row wide enough to
-        push the value off it.
-    -->
 
     <string name="widget_small_label">Server readings</string>
     <string name="widget_medium_label">Server charts</string>

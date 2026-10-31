@@ -1,6 +1,7 @@
 package tech.lolli.toolbox.widget
 
 import android.content.Context
+import tech.lolli.toolbox.R
 
 /**
  * What one placed widget was configured to show.
@@ -63,7 +64,19 @@ enum class WidgetMetric {
         val rotation = listOf(CPU, MEMORY, DISK, NETWORK)
     }
 
-    /** [count] metrics beginning at this one, wrapping around. */
+    /** Its name, as the widget and its settings screen both say it. */
+    val labelRes: Int
+        get() = when (this) {
+            CPU -> R.string.widget_metric_cpu
+            MEMORY -> R.string.widget_metric_memory
+            DISK -> R.string.widget_metric_disk
+            NETWORK -> R.string.widget_metric_network
+        }
+
+    /** Whether it is a share of something, drawn as a meter and on 0..100. */
+    val isPercent: Boolean get() = this != NETWORK
+
+        /** [count] metrics beginning at this one, wrapping around. */
     fun following(count: Int): List<WidgetMetric> {
         val start = rotation.indexOf(this).coerceAtLeast(0)
         return (0 until minOf(count, rotation.size)).map {

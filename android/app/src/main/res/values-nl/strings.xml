@@ -24,10 +24,6 @@
     <string name="widget_err_network">Netwerkfout</string>
     <string name="widget_err_timeout">Time-out</string>
     <string name="widget_chart_desc">Statusgrafieken</string>
-    <string name="widget_cpu_desc">CPU-gebruik</string>
-    <string name="widget_mem_desc">Geheugengebruik</string>
-    <string name="widget_disk_desc">Schijfgebruik</string>
-    <string name="widget_net_desc">Netwerkgebruik</string>
     <string name="widget_refresh_desc">Vernieuwen</string>
     <string name="widget_small_label">Serverwaarden</string>
     <string name="widget_medium_label">Servergrafieken</string>

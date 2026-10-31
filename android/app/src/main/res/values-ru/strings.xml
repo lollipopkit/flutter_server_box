@@ -24,10 +24,6 @@
     <string name="widget_err_network">Ошибка сети</string>
     <string name="widget_err_timeout">Время ожидания истекло</string>
     <string name="widget_chart_desc">Графики состояния</string>
-    <string name="widget_cpu_desc">Загрузка ЦП</string>
-    <string name="widget_mem_desc">Использование памяти</string>
-    <string name="widget_disk_desc">Использование диска</string>
-    <string name="widget_net_desc">Сетевой трафик</string>
     <string name="widget_refresh_desc">Обновить</string>
     <string name="widget_small_label">Значения сервера</string>
     <string name="widget_medium_label">Графики сервера</string>

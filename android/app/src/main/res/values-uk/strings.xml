@@ -24,10 +24,6 @@
     <string name="widget_err_network">Помилка мережі</string>
     <string name="widget_err_timeout">Час очікування вичерпано</string>
     <string name="widget_chart_desc">Графіки стану</string>
-    <string name="widget_cpu_desc">Використання ЦП</string>
-    <string name="widget_mem_desc">Використання пам\'яті</string>
-    <string name="widget_disk_desc">Використання диска</string>
-    <string name="widget_net_desc">Використання мережі</string>
     <string name="widget_refresh_desc">Оновити</string>
     <string name="widget_small_label">Значення сервера</string>
     <string name="widget_medium_label">Графіки сервера</string>

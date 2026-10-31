@@ -24,10 +24,6 @@
     <string name="widget_err_network">網路錯誤</string>
     <string name="widget_err_timeout">要求逾時</string>
     <string name="widget_chart_desc">狀態曲線</string>
-    <string name="widget_cpu_desc">CPU 使用率</string>
-    <string name="widget_mem_desc">記憶體使用率</string>
-    <string name="widget_disk_desc">磁碟使用率</string>
-    <string name="widget_net_desc">網路使用量</string>
     <string name="widget_refresh_desc">重新整理</string>
     <string name="widget_small_label">伺服器數值</string>
     <string name="widget_medium_label">伺服器曲線</string>

@@ -30,6 +30,14 @@ import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.roundToInt
 
+/** One fetch, kept to draw again at a new size or under a refresh. */
+private class Data(
+    val reading: WidgetApi.Reading,
+    val history: List<WidgetApi.HistoryPoint>,
+    val config: WidgetConfig,
+    val time: String,
+)
+
 /**
  * The home-screen widget.
  *
@@ -39,8 +47,9 @@ import kotlin.math.roundToInt
  * readable without a channel hop.
  *
  * One design at every size: what it shows follows the space the launcher gives
- * it ([WidgetForms]), and on Android 12+ each size the launcher may show it at
- * (portrait and landscape) gets its own rendering, drawn for that size.
+ * it and the text it is about to show ([WidgetForms]), and on Android 12+ each
+ * size the launcher may show it at (portrait and landscape) gets its own
+ * rendering, drawn for that size.
  */
 abstract class HomeWidget : AppWidgetProvider() {
     companion object {
@@ -78,8 +87,22 @@ abstract class HomeWidget : AppWidgetProvider() {
 
         private val activeUpdates = ConcurrentHashMap<Int, Boolean>()
 
+        /**
+         * The last fetch per widget, while the process lives: a resize is
+         * drawn again from it without a round trip — which on a slow or
+         * unreachable server would have replaced readings with an error — and
+         * a refresh shows it, marked as refreshing, until the new one lands.
+         */
+        private val lastData = ConcurrentHashMap<Int, Data>()
+
+        /** Trends per rendering: `widget_large` has two. */
+        private const val MAX_CHARTS = 2
+
         /** A meter turns to the warning colour from here, in percent. */
         private const val WARN_PERCENT = 90.0
+
+        /** The refresh button while one is in flight: dimmed. */
+        private const val REFRESHING_ALPHA = 90
 
         private const val PREVIEW_PREFS = "widget_preview"
         private const val KEY_PREVIEW_STAMP = "stamp"
@@ -123,7 +146,6 @@ abstract class HomeWidget : AppWidgetProvider() {
             disk = 48.0,
             memText = "4.9g / 8.0g",
             diskText = "48g / 100g",
-            netText = "",
         )
 
         private val SAMPLE_HISTORY = (0 until 40).map { i ->
@@ -147,26 +169,42 @@ abstract class HomeWidget : AppWidgetProvider() {
         }
 
     /** This widget with [SAMPLE_READING], at the size the picker shows it. */
-    fun preview(context: Context): RemoteViews =
-        build(context, PREVIEW_SIZE, Data(SAMPLE_READING, SAMPLE_HISTORY, WidgetConfig("", WidgetMetric.CPU), "12:00"), null)
+    fun preview(context: Context): RemoteViews {
+        val data = Data(SAMPLE_READING, SAMPLE_HISTORY, WidgetConfig("", WidgetMetric.CPU), "12:00")
+        return build(context, PREVIEW_SIZE, data, tap = null, refreshing = false, WidgetChart.BUDGET_PIXELS / MAX_CHARTS)
+    }
 
     override fun onUpdate(context: Context, manager: AppWidgetManager, appWidgetIds: IntArray) {
         for (id in appWidgetIds) update(context, manager, id)
     }
 
-    /** Resized, or a launcher with a different grid: drawn again for the new size. */
+    /**
+     * Resized, or a launcher with a different grid: drawn again for the new
+     * size, from the last fetch when there is one.
+     */
     override fun onAppWidgetOptionsChanged(
         context: Context,
         manager: AppWidgetManager,
         appWidgetId: Int,
         newOptions: Bundle,
     ) {
-        update(context, manager, appWidgetId)
+        val data = lastData[appWidgetId]
+        if (data == null) {
+            update(context, manager, appWidgetId)
+            return
+        }
+        CoroutineScope(Dispatchers.Default).launch {
+            val views = render(context, manager, appWidgetId, data, refreshing = false)
+            withContext(Dispatchers.Main) { manager.updateAppWidget(appWidgetId, views) }
+        }
     }
 
     /** A widget dragged off the home screen must not leave its choices behind. */
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
-        for (id in appWidgetIds) WidgetConfig.forget(context, id)
+        for (id in appWidgetIds) {
+            WidgetConfig.forget(context, id)
+            lastData.remove(id)
+        }
     }
 
     private fun update(context: Context, manager: AppWidgetManager, appWidgetId: Int) {
@@ -184,20 +222,11 @@ abstract class HomeWidget : AppWidgetProvider() {
             // Either nothing has been picked, or the server was deleted in the
             // app after this widget was pointed at it. Both are fixed in the
             // same place, which is where tapping the widget goes.
+            lastData.remove(appWidgetId)
             showMessage(context, manager, appWidgetId, null, context.getString(R.string.widget_err_not_configured))
             activeUpdates.remove(appWidgetId)
             return
         }
-
-        // The only acknowledgement a refresh gets: a `RemoteViews` cannot
-        // animate, and a tap that changes nothing reads as one that missed.
-        // Partial, so the readings stay up while the new ones are fetched.
-        manager.partiallyUpdateAppWidget(
-            appWidgetId,
-            RemoteViews(context.packageName, R.layout.widget_medium).apply {
-                setTextViewText(R.id.widget_time, "…")
-            },
-        )
 
         CoroutineScope(Dispatchers.IO).launch {
             // The guard is released here and nowhere else: anything thrown past
@@ -205,13 +234,23 @@ abstract class HomeWidget : AppWidgetProvider() {
             // leave it held for the life of the process, and every later
             // update of this widget would be skipped.
             try {
+                // The only acknowledgement a refresh gets — a `RemoteViews`
+                // cannot animate, and a tap that changes nothing reads as one
+                // that missed: the readings stay, marked as refreshing. A full
+                // update, since a partial one does not reach the per-size
+                // renderings of Android 12+.
+                lastData[appWidgetId]?.takeIf { it.config == config }?.let { previous ->
+                    val views = render(context, manager, appWidgetId, previous, refreshing = true)
+                    withContext(Dispatchers.Main) { manager.updateAppWidget(appWidgetId, views) }
+                }
                 withTimeoutOrNull(COROUTINE_TIMEOUT) {
                     try {
                         val (reading, history) = WidgetApi.load(context, server)
                         val time = android.text.format.DateFormat.getTimeFormat(context)
                             .format(java.util.Date())
                         val data = Data(reading, history, config, time)
-                        val views = render(context, manager, appWidgetId, data, server.id)
+                        val views = render(context, manager, appWidgetId, data, refreshing = false)
+                        lastData[appWidgetId] = data
                         withContext(Dispatchers.Main) { manager.updateAppWidget(appWidgetId, views) }
                     } catch (e: CancellationException) {
                         // Belongs to `withTimeoutOrNull`, which is watching for it.
@@ -259,7 +298,7 @@ abstract class HomeWidget : AppWidgetProvider() {
             val sizes = BundleCompat.getParcelableArrayList(
                 options, AppWidgetManager.OPTION_APPWIDGET_SIZES, SizeF::class.java,
             )
-            if (!sizes.isNullOrEmpty()) return sizes
+            if (!sizes.isNullOrEmpty()) return sizes.distinct()
         }
         val portrait = context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
         fun read(key: String, fallback: String) =
@@ -277,120 +316,151 @@ abstract class HomeWidget : AppWidgetProvider() {
 
     // MARK: - Rendering
 
-    private class Data(
-        val reading: WidgetApi.Reading,
-        val history: List<WidgetApi.HistoryPoint>,
-        val config: WidgetConfig,
-        val time: String,
-    )
-
     private fun render(
         context: Context,
         manager: AppWidgetManager,
         appWidgetId: Int,
         data: Data,
-        serverId: String,
+        refreshing: Boolean,
     ): RemoteViews {
         val sizes = sizesOf(context, manager, appWidgetId)
-        val tap = openIntent(context, appWidgetId, serverId)
+        val tap = openIntent(context, appWidgetId, data.config.serverId)
         val refresh = refreshIntent(context, appWidgetId)
-        fun one(size: SizeF) = build(context, size, data, tap).also {
+        // One transaction carries every rendering, so the bitmap budget is
+        // shared between all of their trends.
+        val perChart = WidgetChart.BUDGET_PIXELS / (sizes.size * MAX_CHARTS)
+        fun one(size: SizeF) = build(context, size, data, tap, refreshing, perChart).also {
             it.setOnClickPendingIntent(R.id.widget_refresh, refresh)
         }
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && sizes.size > 1) {
-            RemoteViews(sizes.distinct().associateWith { one(it) })
+            RemoteViews(sizes.associateWith { one(it) })
         } else {
             one(sizes.first())
         }
     }
 
-    private fun build(context: Context, size: SizeF, data: Data, tap: PendingIntent?): RemoteViews {
+    private fun build(
+        context: Context,
+        size: SizeF,
+        data: Data,
+        tap: PendingIntent?,
+        refreshing: Boolean,
+        chartPixels: Int,
+    ): RemoteViews {
         val fontScale = context.resources.configuration.fontScale
-        val form = WidgetForms.formFor(size.width, size.height, fontScale)
+        val hero = data.config.metric
+        val others = hero.following(WidgetMetric.entries.size).drop(1)
+        // Meters for the two that have one (`widget_small`), so a network lead
+        // does not leave a row without a bar.
+        val metered = others.filter { it.isPercent }.take(2)
+        val content = WidgetContent(
+            hero = heroValue(hero, data),
+            label = context.getString(hero.labelRes),
+            caption = heroCaption(context, hero, data),
+            meterLabels = others.map { context.getString(it.labelRes) },
+            meterValues = others.map { valueText(it, data, long = false) },
+            side = others.take(2).map { inline(context, it, data) },
+        )
+        val form = WidgetForms.formFor(size.width, size.height, fontScale, content)
         val views = RemoteViews(context.packageName, form.layout)
         val density = context.resources.displayMetrics.density
         tap?.let { views.setOnClickPendingIntent(R.id.widget_root, it) }
 
         views.setTextViewText(R.id.widget_name, data.reading.name)
-        views.setTextViewText(R.id.widget_time, data.time)
-
-        val hero = data.config.metric
-        val others = hero.following(WidgetMetric.entries.size).drop(1)
-        views.setTextViewText(R.id.hero_value, heroValue(hero, data))
-        // A narrow single row has room for what the number is, not its detail.
-        views.setTextViewText(
-            R.id.hero_caption,
-            if (form == WidgetForm.TINY && !WidgetForms.tinyFitsDetail(size.width, fontScale)) {
-                label(context, hero)
-            } else {
-                heroCaption(context, hero, data)
-            },
-        )
+        views.setTextViewText(R.id.widget_time, if (refreshing) "…" else data.time)
+        if (refreshing) views.setInt(R.id.widget_refresh, "setImageAlpha", REFRESHING_ALPHA)
+        views.setTextViewText(R.id.hero_value, content.hero)
+        views.setTextViewText(R.id.hero_caption, content.caption)
 
         when (form) {
             WidgetForm.TINY -> {
-                views.setTextViewText(R.id.s1_value, inline(context, others[0], data))
-                views.setTextViewText(R.id.s2_value, inline(context, others[1], data))
-                views.setViewVisibility(
-                    R.id.tiny_side,
-                    if (WidgetForms.tinyFitsSide(size.width, fontScale)) View.VISIBLE else View.GONE,
-                )
+                val fit = WidgetForms.tiny(size.width, fontScale, content)
+                when (fit.caption) {
+                    WidgetForms.TinyCaption.NONE -> views.setViewVisibility(R.id.hero_caption, View.GONE)
+                    WidgetForms.TinyCaption.LABEL -> views.setTextViewText(R.id.hero_caption, content.label)
+                    WidgetForms.TinyCaption.FULL -> Unit
+                }
+                views.setTextViewText(R.id.s1_value, content.side[0])
+                views.setTextViewText(R.id.s2_value, content.side[1])
+                views.setViewVisibility(R.id.tiny_side, if (fit.side) View.VISIBLE else View.GONE)
             }
             WidgetForm.SMALL -> {
-                // Meters for the next two that have one, so a network lead does
-                // not leave a row without a bar.
-                val metered = others.filter { it.isPercent }
                 bindStat(context, views, 1, metered[0], data)
                 bindStat(context, views, 2, metered[1], data)
             }
             WidgetForm.MEDIUM, WidgetForm.LARGE -> {
-                others.forEachIndexed { i, m -> bindStat(context, views, i + 1, m, data) }
-                val box = heroChartBox(form, size)
-                setChart(views, R.id.hero_chart, hero, data, box, density)
+                val stacked = WidgetForms.metersStacked(size.width, fontScale, content)
+                others.forEachIndexed { i, m -> bindStat(context, views, i + 1, m, data, stacked) }
+                val (w, h) = WidgetForms.heroChartBox(form, size.width, size.height, fontScale, content)
+                setChart(views, R.id.hero_chart, hero, data, w, h, density, chartPixels)
                 if (form == WidgetForm.LARGE) {
                     // The most telling of the rest: network moves, disk does not.
                     val second = if (hero == WidgetMetric.NETWORK) WidgetMetric.CPU else WidgetMetric.NETWORK
-                    views.setTextViewText(R.id.second_label, label(context, second))
+                    views.setTextViewText(R.id.second_label, context.getString(second.labelRes))
                     views.setTextViewText(R.id.second_value, valueText(second, data, long = true))
-                    setChart(views, R.id.second_chart, second, data, secondChartBox(size), density)
+                    val (sw, sh) = WidgetForms.secondChartBox(size.width, size.height, fontScale, content)
+                    setChart(views, R.id.second_chart, second, data, sw, sh, density, chartPixels)
                 }
             }
         }
         return views
     }
 
-    private fun bindStat(context: Context, views: RemoteViews, index: Int, metric: WidgetMetric, data: Data) {
+    /** A meter; a two-part value on two lines when [stacked] ([WidgetForms.metersStacked]). */
+    private fun bindStat(
+        context: Context,
+        views: RemoteViews,
+        index: Int,
+        metric: WidgetMetric,
+        data: Data,
+        stacked: Boolean = false,
+    ) {
         val (label, value, bar, warn) = when (index) {
             1 -> StatIds(R.id.s1_label, R.id.s1_value, R.id.s1_bar, R.id.s1_bar_warn)
             2 -> StatIds(R.id.s2_label, R.id.s2_value, R.id.s2_bar, R.id.s2_bar_warn)
             else -> StatIds(R.id.s3_label, R.id.s3_value, R.id.s3_bar, R.id.s3_bar_warn)
         }
-        views.setTextViewText(label, label(context, metric))
-        views.setTextViewText(value, valueText(metric, data, long = false))
-        val percent = percentOf(metric, data)
+        views.setTextViewText(label, context.getString(metric.labelRes))
+        val text = valueText(metric, data, long = false)
+        views.setTextViewText(value, if (stacked) text.replace(' ', '\n') else text)
         if (!metric.isPercent) {
             views.setViewVisibility(bar, View.GONE)
             views.setViewVisibility(warn, View.GONE)
             return
         }
-        val high = (percent ?: 0.0) >= WARN_PERCENT
-        val shown = if (high) warn else bar
+        val percent = percentOf(metric, data) ?: 0.0
+        val high = percent >= WARN_PERCENT
         views.setViewVisibility(bar, if (high) View.GONE else View.VISIBLE)
         views.setViewVisibility(warn, if (high) View.VISIBLE else View.GONE)
-        views.setProgressBar(shown, 100, (percent ?: 0.0).roundToInt().coerceIn(0, 100), false)
+        views.setProgressBar(if (high) warn else bar, 100, percent.roundToInt().coerceIn(0, 100), false)
     }
 
     private data class StatIds(val label: Int, val value: Int, val bar: Int, val warn: Int)
 
-    private fun setChart(views: RemoteViews, id: Int, metric: WidgetMetric, data: Data, box: SizeF, density: Float) {
+    /**
+     * [metric]'s trend into [id], drawn for a [widthDp] x [heightDp] box: an
+     * estimate — a `RemoteViews` cannot be measured — that the `ImageView`
+     * scales to fit, so being out only bends the line a little.
+     */
+    private fun setChart(
+        views: RemoteViews,
+        id: Int,
+        metric: WidgetMetric,
+        data: Data,
+        widthDp: Float,
+        heightDp: Float,
+        density: Float,
+        maxPixels: Int,
+    ) {
         val history = data.history
         val bitmap = WidgetChart.render(
             values = history.map { metric.of(it) },
             secondary = if (metric == WidgetMetric.NETWORK) history.map { it.netTx } else emptyList(),
             isPercent = metric.isPercent,
-            widthPx = (box.width * density).roundToInt(),
-            heightPx = (box.height * density).roundToInt(),
+            widthPx = (widthDp * density).roundToInt(),
+            heightPx = (heightDp * density).roundToInt(),
             density = density,
+            maxPixels = maxPixels,
         )
         if (bitmap == null) {
             views.setViewVisibility(id, View.INVISIBLE)
@@ -399,27 +469,6 @@ abstract class HomeWidget : AppWidgetProvider() {
             views.setViewVisibility(id, View.VISIBLE)
         }
     }
-
-    /**
-     * The hero trend's box in dp, from `widget_medium`/`widget_large`'s fixed
-     * parts. An estimate — a `RemoteViews` cannot be measured — and the
-     * `ImageView` scales to fit, so being out only bends the line a little;
-     * there is no text in the image to stretch.
-     */
-    private fun heroChartBox(form: WidgetForm, size: SizeF): SizeF {
-        val w = size.width - 32f - 110f - 14f
-        val body = size.height - 28f - 24f - 4f - STATS_DP
-        val h = if (form == WidgetForm.LARGE) (body - 12f) / 2f - 12f else body - 12f
-        return SizeF(w.coerceAtLeast(24f), h.coerceAtLeast(16f))
-    }
-
-    private fun secondChartBox(size: SizeF): SizeF {
-        val body = size.height - 28f - 24f - 4f - STATS_DP - 12f
-        return SizeF((size.width - 32f).coerceAtLeast(24f), (body / 2f - 22f).coerceAtLeast(16f))
-    }
-
-    /** The row of meters at the bottom: label, value, bar. */
-    private val STATS_DP = 46f
 
     // MARK: - States
 
@@ -490,15 +539,6 @@ abstract class HomeWidget : AppWidgetProvider() {
 
     // MARK: - Reading a metric
 
-    private fun label(context: Context, metric: WidgetMetric): String = context.getString(
-        when (metric) {
-            WidgetMetric.CPU -> R.string.widget_metric_cpu
-            WidgetMetric.MEMORY -> R.string.widget_metric_memory
-            WidgetMetric.DISK -> R.string.widget_metric_disk
-            WidgetMetric.NETWORK -> R.string.widget_metric_network
-        },
-    )
-
     private fun percentOf(metric: WidgetMetric, data: Data): Double? = when (metric) {
         WidgetMetric.CPU -> data.reading.cpu
         WidgetMetric.MEMORY -> data.reading.mem
@@ -510,18 +550,37 @@ abstract class HomeWidget : AppWidgetProvider() {
         value?.let { String.format(Locale.US, "%.0f%%", it) } ?: "--"
 
     /**
+     * A byte count in as few glyphs as reads well: "340k", "1.2m". One
+     * decimal only below ten, where it is a tenth of the number rather than
+     * a hundredth.
+     */
+    private fun compact(bytes: Double): String {
+        val units = listOf("b", "k", "m", "g", "t")
+        var value = bytes.coerceAtLeast(0.0)
+        var unit = 0
+        while (value >= 1000 && unit < units.size - 1) {
+            value /= 1024
+            unit++
+        }
+        val number = if (unit == 0 || value >= 10) String.format(Locale.US, "%.0f", value)
+        else String.format(Locale.US, "%.1f", value)
+        return number + units[unit]
+    }
+
+    /**
      * Network as a rate, from the newest history point: the reading's own
      * byte counts are totals since boot, which say nothing about now.
      */
     private fun rate(bytesPerSecond: Double?): String =
-        bytesPerSecond?.let { "${WidgetApi.formatBytes(it)}/s" } ?: "--"
+        bytesPerSecond?.let { "${compact(it)}/s" } ?: "--"
 
     private fun valueText(metric: WidgetMetric, data: Data, long: Boolean): String {
         if (metric.isPercent) return percentText(percentOf(metric, data))
         val last = data.history.lastOrNull()
-        val down = last?.netRx?.let { WidgetApi.formatBytes(it) } ?: "--"
-        val up = last?.netTx?.let { WidgetApi.formatBytes(it) } ?: "--"
-        return if (long) "↓ ${rate(last?.netRx)}  ↑ ${rate(last?.netTx)}" else "↓$down ↑$up"
+        if (long) return "↓ ${rate(last?.netRx)}  ↑ ${rate(last?.netTx)}"
+        val down = last?.netRx?.let { compact(it) } ?: "--"
+        val up = last?.netTx?.let { compact(it) } ?: "--"
+        return "↓$down ↑$up"
     }
 
     private fun heroValue(metric: WidgetMetric, data: Data): String =
@@ -529,7 +588,7 @@ abstract class HomeWidget : AppWidgetProvider() {
 
     /** What the big number is, and the detail that fits under it. */
     private fun heroCaption(context: Context, metric: WidgetMetric, data: Data): String {
-        val name = label(context, metric)
+        val name = context.getString(metric.labelRes)
         val detail = when (metric) {
             WidgetMetric.MEMORY -> data.reading.memText
             WidgetMetric.DISK -> data.reading.diskText
@@ -541,10 +600,8 @@ abstract class HomeWidget : AppWidgetProvider() {
 
     /** "Memory 61%", for the one-row widget. */
     private fun inline(context: Context, metric: WidgetMetric, data: Data): String =
-        "${label(context, metric)} ${valueText(metric, data, long = false)}"
+        "${context.getString(metric.labelRes)} ${valueText(metric, data, long = false)}"
 }
-
-private val WidgetMetric.isPercent: Boolean get() = this != WidgetMetric.NETWORK
 
 private fun WidgetMetric.of(point: WidgetApi.HistoryPoint): Double = when (this) {
     WidgetMetric.CPU -> point.cpu

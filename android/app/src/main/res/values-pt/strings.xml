@@ -24,10 +24,6 @@
     <string name="widget_err_network">Erro de rede</string>
     <string name="widget_err_timeout">Tempo esgotado</string>
     <string name="widget_chart_desc">Gráficos de estado</string>
-    <string name="widget_cpu_desc">Utilização da CPU</string>
-    <string name="widget_mem_desc">Utilização da memória</string>
-    <string name="widget_disk_desc">Utilização do disco</string>
-    <string name="widget_net_desc">Utilização da rede</string>
     <string name="widget_refresh_desc">Atualizar</string>
     <string name="widget_small_label">Valores do servidor</string>
     <string name="widget_medium_label">Gráficos do servidor</string>

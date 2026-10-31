@@ -22,15 +22,17 @@ import kotlin.math.sqrt
  */
 object WidgetChart {
     /**
-     * The most bitmap one trend may take, in bytes (one per pixel).
+     * The most bitmap one update may carry, in bytes (one per pixel), across
+     * every trend at every size it is rendered at.
      *
      * The whole `RemoteViews` transaction has a hard limit of about a
-     * megabyte, shared with the layout and with every size the widget is
-     * rendered at; exceeding it throws `TransactionTooLargeException` and the
-     * update never reaches the launcher. A larger trend is drawn smaller and
-     * scaled up by the `ImageView`, which costs a little softness.
+     * megabyte, shared with the layouts; exceeding it throws
+     * `TransactionTooLargeException` and the update never reaches the
+     * launcher. The caller divides this between its trends ([render]'s
+     * `maxPixels`); one drawn smaller is scaled up by the `ImageView`, which
+     * costs a little softness.
      */
-    private const val MAX_PIXELS = 160 * 1024
+    const val BUDGET_PIXELS = 512 * 1024
 
     private const val STROKE_DP = 2.2f
     private const val SECONDARY_STROKE_DP = 1.4f
@@ -58,9 +60,10 @@ object WidgetChart {
         widthPx: Int,
         heightPx: Int,
         density: Float,
+        maxPixels: Int,
     ): Bitmap? {
         if (values.size < 2 || widthPx < 2 || heightPx < 2) return null
-        val shrink = within(widthPx, heightPx)
+        val shrink = within(widthPx, heightPx, maxPixels)
         val w = (widthPx * shrink).toInt().coerceAtLeast(2)
         val h = (heightPx * shrink).toInt().coerceAtLeast(2)
         val px = density * shrink
@@ -141,9 +144,9 @@ object WidgetChart {
         color = Color.argb(alpha, 0, 0, 0)
     }
 
-    /** The factor that brings [w] x [h] within [MAX_PIXELS], keeping its shape. */
-    private fun within(w: Int, h: Int): Float {
+    /** The factor that brings [w] x [h] within [maxPixels], keeping its shape. */
+    private fun within(w: Int, h: Int, maxPixels: Int): Float {
         val pixels = w.toLong() * h.toLong()
-        return if (pixels <= MAX_PIXELS) 1f else sqrt(MAX_PIXELS.toDouble() / pixels).toFloat()
+        return if (pixels <= maxPixels) 1f else sqrt(maxPixels.toDouble() / pixels).toFloat()
     }
 }

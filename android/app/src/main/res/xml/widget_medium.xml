@@ -2,7 +2,8 @@
 <!--
     TODO: remove once placed widgets of this provider are gone; `widget_status`
     replaced it. Kept so a widget already on a home screen keeps working, drawn
-    the same way at any size, and hidden from the picker (API 31+).
+    the same way at any size, and hidden from the picker (API 28+; some OEM
+    launchers ignore the flag and still list it).
 -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:minWidth="250dp"

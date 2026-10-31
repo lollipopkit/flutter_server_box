@@ -88,6 +88,7 @@
                 android:id="@+id/hero_caption"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:ellipsize="end"
                 android:layout_marginTop="2dp"
                 android:fontFamily="google-sans-text"
                 android:singleLine="true"
@@ -182,8 +183,9 @@
                 android:id="@+id/s1_value"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:ellipsize="end"
                 android:fontFamily="google-sans-medium"
-                android:singleLine="true"
+                android:maxLines="2"
                 android:textColor="@color/widgetOnSurface"
                 android:textSize="14sp" />
 
@@ -228,8 +230,9 @@
                 android:id="@+id/s2_value"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:ellipsize="end"
                 android:fontFamily="google-sans-medium"
-                android:singleLine="true"
+                android:maxLines="2"
                 android:textColor="@color/widgetOnSurface"
                 android:textSize="14sp" />
 
@@ -276,7 +279,7 @@
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
                 android:fontFamily="google-sans-medium"
-                android:singleLine="true"
+                android:maxLines="2"
                 android:textColor="@color/widgetOnSurface"
                 android:textSize="14sp" />
 
