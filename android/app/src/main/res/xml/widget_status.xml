@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     The widget, at any size: what it shows follows the space it is given
-    (`HomeWidget.formFor`), from one row up. 4x2 when first placed.
+    (`WidgetForms`), from one row up. 4x2 when first placed.
 
     `reconfigurable` puts "Customise" on the long-press menu (API 31+), so a
     tap can open the server rather than the settings.

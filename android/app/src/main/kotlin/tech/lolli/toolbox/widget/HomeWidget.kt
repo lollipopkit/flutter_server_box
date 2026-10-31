@@ -39,7 +39,7 @@ import kotlin.math.roundToInt
  * readable without a channel hop.
  *
  * One design at every size: what it shows follows the space the launcher gives
- * it ([formFor]), and on Android 12+ each size the launcher may show it at
+ * it ([WidgetForms]), and on Android 12+ each size the launcher may show it at
  * (portrait and landscape) gets its own rendering, drawn for that size.
  */
 abstract class HomeWidget : AppWidgetProvider() {
@@ -138,32 +138,13 @@ abstract class HomeWidget : AppWidgetProvider() {
         }
     }
 
-    /** Which layout a size gets. */
-    internal enum class Form(val layout: Int) {
-        /** One row: 2x1, 4x1. */
-        TINY(R.layout.widget_tiny),
-
-        /** Narrow: 2x2. */
-        SMALL(R.layout.widget_small),
-
-        /** Wide: 3x2, 4x2. */
-        MEDIUM(R.layout.widget_medium),
-
-        /** Wide and tall: 3x3 and up. */
-        LARGE(R.layout.widget_large),
-    }
-
-    /**
-     * The form for a widget [size] in dp. Cells differ a lot between
-     * launchers and screens — a 4x2 is about 300x150 on some phones and
-     * 370x210 on a Pixel — so these are rows and columns by size, not by count.
-     */
-    internal fun formFor(size: SizeF): Form = when {
-        size.height < 110f -> Form.TINY
-        size.width < 230f -> Form.SMALL
-        size.height < 300f -> Form.MEDIUM
-        else -> Form.LARGE
-    }
+    private val WidgetForm.layout: Int
+        get() = when (this) {
+            WidgetForm.TINY -> R.layout.widget_tiny
+            WidgetForm.SMALL -> R.layout.widget_small
+            WidgetForm.MEDIUM -> R.layout.widget_medium
+            WidgetForm.LARGE -> R.layout.widget_large
+        }
 
     /** This widget with [SAMPLE_READING], at the size the picker shows it. */
     fun preview(context: Context): RemoteViews =
@@ -324,7 +305,8 @@ abstract class HomeWidget : AppWidgetProvider() {
     }
 
     private fun build(context: Context, size: SizeF, data: Data, tap: PendingIntent?): RemoteViews {
-        val form = formFor(size)
+        val fontScale = context.resources.configuration.fontScale
+        val form = WidgetForms.formFor(size.width, size.height, fontScale)
         val views = RemoteViews(context.packageName, form.layout)
         val density = context.resources.displayMetrics.density
         tap?.let { views.setOnClickPendingIntent(R.id.widget_root, it) }
@@ -335,26 +317,37 @@ abstract class HomeWidget : AppWidgetProvider() {
         val hero = data.config.metric
         val others = hero.following(WidgetMetric.entries.size).drop(1)
         views.setTextViewText(R.id.hero_value, heroValue(hero, data))
-        views.setTextViewText(R.id.hero_caption, heroCaption(context, hero, data))
+        // A narrow single row has room for what the number is, not its detail.
+        views.setTextViewText(
+            R.id.hero_caption,
+            if (form == WidgetForm.TINY && !WidgetForms.tinyFitsDetail(size.width, fontScale)) {
+                label(context, hero)
+            } else {
+                heroCaption(context, hero, data)
+            },
+        )
 
         when (form) {
-            Form.TINY -> {
+            WidgetForm.TINY -> {
                 views.setTextViewText(R.id.s1_value, inline(context, others[0], data))
                 views.setTextViewText(R.id.s2_value, inline(context, others[1], data))
-                views.setViewVisibility(R.id.tiny_side, if (size.width >= 230f) View.VISIBLE else View.GONE)
+                views.setViewVisibility(
+                    R.id.tiny_side,
+                    if (WidgetForms.tinyFitsSide(size.width, fontScale)) View.VISIBLE else View.GONE,
+                )
             }
-            Form.SMALL -> {
+            WidgetForm.SMALL -> {
                 // Meters for the next two that have one, so a network lead does
                 // not leave a row without a bar.
                 val metered = others.filter { it.isPercent }
                 bindStat(context, views, 1, metered[0], data)
                 bindStat(context, views, 2, metered[1], data)
             }
-            Form.MEDIUM, Form.LARGE -> {
+            WidgetForm.MEDIUM, WidgetForm.LARGE -> {
                 others.forEachIndexed { i, m -> bindStat(context, views, i + 1, m, data) }
                 val box = heroChartBox(form, size)
                 setChart(views, R.id.hero_chart, hero, data, box, density)
-                if (form == Form.LARGE) {
+                if (form == WidgetForm.LARGE) {
                     // The most telling of the rest: network moves, disk does not.
                     val second = if (hero == WidgetMetric.NETWORK) WidgetMetric.CPU else WidgetMetric.NETWORK
                     views.setTextViewText(R.id.second_label, label(context, second))
@@ -413,10 +406,10 @@ abstract class HomeWidget : AppWidgetProvider() {
      * `ImageView` scales to fit, so being out only bends the line a little;
      * there is no text in the image to stretch.
      */
-    private fun heroChartBox(form: Form, size: SizeF): SizeF {
-        val w = size.width - 32f - 96f - 14f
+    private fun heroChartBox(form: WidgetForm, size: SizeF): SizeF {
+        val w = size.width - 32f - 110f - 14f
         val body = size.height - 28f - 24f - 4f - STATS_DP
-        val h = if (form == Form.LARGE) (body - 12f) / 2f - 12f else body - 12f
+        val h = if (form == WidgetForm.LARGE) (body - 12f) / 2f - 12f else body - 12f
         return SizeF(w.coerceAtLeast(24f), h.coerceAtLeast(16f))
     }
 

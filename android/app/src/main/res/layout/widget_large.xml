@@ -82,7 +82,7 @@
                 android:includeFontPadding="false"
                 android:singleLine="true"
                 android:textColor="@color/widgetOnSurface"
-                android:textSize="44sp" />
+                android:textSize="52sp" />
 
             <TextView
                 android:id="@+id/hero_caption"
