@@ -103,10 +103,11 @@ void main() {
     // The assertions stay outside: a failure inside the guarded zone goes to
     // its handler, and the zone's future then never completes.
     await runZonedGuarded(() async {
-      bakSync.syncSoon(rs: rs);
-      // Its one-second delay and the base's five-second throttle, then however
-      // long a slow runner takes to write the backup — polled rather than one
-      // fixed wait, which a CI runner overran.
+      // No delay or throttle: what is asked is where the failure goes, not
+      // when it comes.
+      bakSync.syncSoon(rs: rs, milliDelay: 0, throttleMilli: 0);
+      // However long a slow runner takes to write the backup — polled rather
+      // than one fixed wait, which a CI runner overran.
       final deadline = DateTime.now().add(const Duration(seconds: 15));
       while (rs.uploads == 0 && DateTime.now().isBefore(deadline)) {
         await Future<void>.delayed(const Duration(milliseconds: 100));

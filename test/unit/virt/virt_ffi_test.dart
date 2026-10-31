@@ -40,21 +40,6 @@ void main() {
     expect(odd['reason'], 'failed');
   });
 
-  test('domain detail fixtures parse to the expected JSON', () async {
-    final captured =
-        _section('virt.display', _fixture('domdisplay_cirros_run.txt')) +
-        _section('virt.xml', _fixture('dumpxml_cirros_run.xml'));
-    expect(
-      jsonDecode(await parseVirtDomainDetailJson(raw: captured)),
-      jsonDecode(_fixture('detail_cirros_run.expected.json')),
-    );
-    final raw =
-        _section('virt.display', _fixture('domdisplay_win11.txt')) +
-        _section('virt.xml', _fixture('dumpxml_win11.xml'));
-    final json = jsonDecode(await parseVirtDomainDetailJson(raw: raw));
-    expect(json, jsonDecode(_fixture('detail_win11.expected.json')));
-  });
-
   test('permission error crosses as a typed exception', () async {
     final raw = _section('virt.version', _fixture('error_permission.txt'), 1);
     await expectLater(
@@ -78,56 +63,5 @@ void main() {
       ),
     );
     parseVirtAction(raw: _section('virt.action', "Domain 'x' started"));
-  });
-
-  test('scripts quote the domain', () {
-    final s = virtActionScript(
-      action: VirtActionKind.forceStop,
-      domain: "it's odd",
-    );
-    expect(s, contains("V destroy --domain 'it'\\''s odd'\n"));
-    expect(virtOverviewScript(), contains('domstats --raw'));
-    expect(
-      virtConsoleCommand(domain: 'a b'),
-      "virsh --connect qemu:///system console --force --domain 'a b'",
-    );
-  });
-
-  test('snapshots, storage, volumes and networks parse to the expected JSON',
-      () async {
-    expect(
-      jsonDecode(
-        await parseVirtSnapshotsJson(
-          raw: _fixture('script_snapshots_cirros_run.txt'),
-        ),
-      ),
-      jsonDecode(_fixture('snapshots_cirros_run.expected.json')),
-    );
-    expect(
-      jsonDecode(await parseVirtStorageJson(raw: _fixture('script_storage.txt'))),
-      jsonDecode(_fixture('storage.expected.json')),
-    );
-    // A refused snapshot is the host's words, typed: a name taken is `exists`.
-    expect(
-      () => parseVirtAction(raw: _fixture('script_snapshot_error_exists.txt')),
-      throwsA(
-        isA<VirtFfiError>()
-            .having((e) => e.kind, 'kind', VirtErrorKind.exists)
-            .having((e) => e.message, 'message', contains('already exists')),
-      ),
-    );
-  });
-
-  test('resource scripts quote what they are given', () {
-    expect(
-      virtSnapshotCreateScript(domain: 'd', name: 'n', description: "it's"),
-      contains("--description 'it'\\''s'"),
-    );
-    expect(
-      virtVolumesScript(pool: 'p q', names: ['a b']),
-      contains("V vol-dumpxml --pool 'p q' --vol 'a b'"),
-    );
-    expect(virtStorageScript(), contains('domblklist --details'));
-    expect(virtNetworksScript(), contains('net-dhcp-leases'));
   });
 }

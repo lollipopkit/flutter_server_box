@@ -67,9 +67,17 @@ final class BakSyncer extends SyncIface {
   /// answer, iCloud signed out — and with no caller they reached the zone as
   /// uncaught errors (SERVERBOX-8B). Handled here instead: logged, and
   /// reported only when [ReportFilter] says it is a defect of this app.
-  void syncSoon({RemoteStorage? rs}) {
+  void syncSoon({
+    RemoteStorage? rs,
+    int milliDelay = 1000,
+    int throttleMilli = 5000,
+  }) {
     unawaited(
-      sync(milliDelay: 1000, rs: rs).catchError((Object e, StackTrace s) {
+      sync(
+        milliDelay: milliDelay,
+        throttleMilli: throttleMilli,
+        rs: rs,
+      ).catchError((Object e, StackTrace s) {
         if (ReportFilter.isDefect(e)) {
           Diag.error(e, s, 'Background sync');
         } else {
