@@ -150,11 +150,24 @@
         </activity>
 
         <!--
-            Two providers, so the launcher's picker offers two widgets. The size
-            and what it shows are one decision: 2x2 holds readings, 4x2 holds
-            charts, and neither resizes. One resizable provider meant a layout
-            could be chosen and then silently overruled by the size.
+            One widget, at any size: the size decides what it shows, so there
+            is no layout to choose and nothing for the size to overrule.
         -->
+        <receiver
+            android:name=".widget.StatusWidget"
+            android:exported="false"
+            android:label="@string/widget_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="tech.lolli.toolbox.UPDATE_WIDGET" />
+                <action android:name="miui.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_status" />
+        </receiver>
+
+        <!-- TODO: remove with `widget_small`/`widget_medium`; see there. -->
         <receiver
             android:name=".widget.StatusWidgetSmall"
             android:exported="false"

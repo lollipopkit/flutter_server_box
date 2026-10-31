@@ -23,15 +23,12 @@
     <string name="widget_err_insecure">Se requiere HTTPS</string>
     <string name="widget_err_network">Error de red</string>
     <string name="widget_err_timeout">Tiempo agotado</string>
-    <string name="widget_no_history">Sin historial</string>
     <string name="widget_chart_desc">Gráficos de estado</string>
-    <string name="widget_cpu_desc">Uso de CPU</string>
-    <string name="widget_mem_desc">Uso de memoria</string>
-    <string name="widget_disk_desc">Uso de disco</string>
-    <string name="widget_net_desc">Uso de red</string>
     <string name="widget_refresh_desc">Actualizar</string>
     <string name="widget_small_label">Valores del servidor</string>
     <string name="widget_medium_label">Gráficos del servidor</string>
+    <string name="widget_label">Estado del servidor</string>
+    <string name="widget_description">CPU, memoria, disco y red de un vistazo. Amplíalo para ver más.</string>
 
     <string name="process_text_label">Guardar como fragmento</string>
     <string name="tile_no_sessions">Sin sesiones activas</string>

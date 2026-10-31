@@ -23,15 +23,12 @@
     <string name="widget_err_insecure">HTTPS が必要です</string>
     <string name="widget_err_network">ネットワークエラー</string>
     <string name="widget_err_timeout">タイムアウトしました</string>
-    <string name="widget_no_history">履歴なし</string>
     <string name="widget_chart_desc">ステータスのグラフ</string>
-    <string name="widget_cpu_desc">CPU 使用率</string>
-    <string name="widget_mem_desc">メモリ使用率</string>
-    <string name="widget_disk_desc">ディスク使用率</string>
-    <string name="widget_net_desc">ネットワーク使用量</string>
     <string name="widget_refresh_desc">更新</string>
     <string name="widget_small_label">サーバーの数値</string>
     <string name="widget_medium_label">サーバーのグラフ</string>
+    <string name="widget_label">サーバーの状態</string>
+    <string name="widget_description">CPU・メモリ・ディスク・ネットワークをひと目で。広げるとさらに表示されます。</string>
 
     <string name="process_text_label">スニペットとして保存</string>
     <string name="tile_no_sessions">アクティブなセッションはありません</string>

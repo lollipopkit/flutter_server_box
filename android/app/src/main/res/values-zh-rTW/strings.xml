@@ -23,15 +23,12 @@
     <string name="widget_err_insecure">需要 HTTPS</string>
     <string name="widget_err_network">網路錯誤</string>
     <string name="widget_err_timeout">要求逾時</string>
-    <string name="widget_no_history">尚無歷史</string>
     <string name="widget_chart_desc">狀態曲線</string>
-    <string name="widget_cpu_desc">CPU 使用率</string>
-    <string name="widget_mem_desc">記憶體使用率</string>
-    <string name="widget_disk_desc">磁碟使用率</string>
-    <string name="widget_net_desc">網路使用量</string>
     <string name="widget_refresh_desc">重新整理</string>
     <string name="widget_small_label">伺服器數值</string>
     <string name="widget_medium_label">伺服器曲線</string>
+    <string name="widget_label">伺服器狀態</string>
+    <string name="widget_description">一眼查看 CPU、記憶體、磁碟和網路。放大可顯示更多。</string>
 
     <string name="process_text_label">存為程式碼片段</string>
     <string name="tile_no_sessions">沒有作用中的工作階段</string>

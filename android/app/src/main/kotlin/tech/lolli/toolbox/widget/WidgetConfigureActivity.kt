@@ -131,16 +131,7 @@ class WidgetConfigureActivity : Activity() {
     // the right positions — which is silent, and stored by name, so it would
     // only show up as widgets drawing something nobody asked for.
     private fun buildMetricSpinner(existing: WidgetConfig): Spinner {
-        val labels = WidgetMetric.entries.map {
-            getString(
-                when (it) {
-                    WidgetMetric.CPU -> R.string.widget_metric_cpu
-                    WidgetMetric.MEMORY -> R.string.widget_metric_memory
-                    WidgetMetric.DISK -> R.string.widget_metric_disk
-                    WidgetMetric.NETWORK -> R.string.widget_metric_network
-                }
-            )
-        }
+        val labels = WidgetMetric.entries.map { getString(it.labelRes) }
         return findViewById<Spinner>(R.id.metric_spinner).apply {
             adapter = ArrayAdapter(
                 this@WidgetConfigureActivity,

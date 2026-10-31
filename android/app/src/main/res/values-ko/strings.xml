@@ -23,15 +23,12 @@
     <string name="widget_err_insecure">HTTPS 필요</string>
     <string name="widget_err_network">네트워크 오류</string>
     <string name="widget_err_timeout">시간 초과</string>
-    <string name="widget_no_history">기록 없음</string>
     <string name="widget_chart_desc">상태 그래프</string>
-    <string name="widget_cpu_desc">CPU 사용률</string>
-    <string name="widget_mem_desc">메모리 사용률</string>
-    <string name="widget_disk_desc">디스크 사용률</string>
-    <string name="widget_net_desc">네트워크 사용량</string>
     <string name="widget_refresh_desc">새로 고침</string>
     <string name="widget_small_label">서버 값</string>
     <string name="widget_medium_label">서버 그래프</string>
+    <string name="widget_label">서버 상태</string>
+    <string name="widget_description">CPU, 메모리, 디스크, 네트워크를 한눈에. 크게 하면 더 많이 표시됩니다.</string>
 
     <string name="process_text_label">스니펫으로 저장</string>
     <string name="tile_no_sessions">활성 세션 없음</string>

@@ -23,15 +23,12 @@
     <string name="widget_err_insecure">HTTPS gerekli</string>
     <string name="widget_err_network">Ağ hatası</string>
     <string name="widget_err_timeout">Zaman aşımı</string>
-    <string name="widget_no_history">Geçmiş yok</string>
     <string name="widget_chart_desc">Durum grafikleri</string>
-    <string name="widget_cpu_desc">CPU kullanımı</string>
-    <string name="widget_mem_desc">Bellek kullanımı</string>
-    <string name="widget_disk_desc">Disk kullanımı</string>
-    <string name="widget_net_desc">Ağ kullanımı</string>
     <string name="widget_refresh_desc">Yenile</string>
     <string name="widget_small_label">Sunucu değerleri</string>
     <string name="widget_medium_label">Sunucu grafikleri</string>
+    <string name="widget_label">Sunucu durumu</string>
+    <string name="widget_description">CPU, bellek, disk ve ağ tek bakışta. Daha fazlası için büyütün.</string>
 
     <string name="process_text_label">Kod parçası olarak kaydet</string>
     <string name="tile_no_sessions">Etkin oturum yok</string>
