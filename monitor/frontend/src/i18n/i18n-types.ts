@@ -232,6 +232,14 @@ type RootTranslation = {
 	 */
 	disks: string
 	/**
+	 * B​l​o​c​k​ ​d​e​v​i​c​e​s
+	 */
+	blockDevices: string
+	/**
+	 * N​o​t​ ​m​o​u​n​t​e​d
+	 */
+	notMounted: string
+	/**
 	 * I​n​t​e​r​f​a​c​e​s
 	 */
 	interfaces: string
@@ -6157,6 +6165,14 @@ export type TranslationFunctions = {
 	 * Disks
 	 */
 	disks: () => LocalizedString
+	/**
+	 * Block devices
+	 */
+	blockDevices: () => LocalizedString
+	/**
+	 * Not mounted
+	 */
+	notMounted: () => LocalizedString
 	/**
 	 * Interfaces
 	 */

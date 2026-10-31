@@ -2238,6 +2238,15 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get filesystems => 'ファイルシステム';
+
+  @override
+  String get blockDevices => 'ブロックデバイス';
+
+  @override
+  String get notMounted => '未マウント';
+
+  @override
   String get unitDevices => 'デバイス';
 
   @override

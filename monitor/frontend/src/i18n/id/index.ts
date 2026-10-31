@@ -52,6 +52,8 @@ const id = {
 	back: 'Kembali',
 	swap: 'Swap',
 	disks: 'Disk',
+	blockDevices: 'Perangkat blok',
+	notMounted: 'Tidak di-mount',
 	interfaces: 'Antarmuka',
 	connected: 'Terhubung',
 	disconnected: 'Terputus',

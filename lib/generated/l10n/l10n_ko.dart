@@ -2243,6 +2243,15 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get filesystems => '파일 시스템';
+
+  @override
+  String get blockDevices => '블록 장치';
+
+  @override
+  String get notMounted => '마운트되지 않음';
+
+  @override
   String get unitDevices => '장치';
 
   @override

@@ -52,6 +52,8 @@ const fr = {
 	back: 'Retour',
 	swap: 'Swap',
 	disks: 'Disques',
+	blockDevices: 'Périphériques bloc',
+	notMounted: 'Non monté',
 	interfaces: 'Interfaces',
 	connected: 'Connecté',
 	disconnected: 'Déconnecté',

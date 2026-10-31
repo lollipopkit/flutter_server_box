@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/server/block_device.dart';
 import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/res/chart_palette.dart';
@@ -599,6 +600,64 @@ class ServerDetailDiskItem extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// A block device and, indented under it, what it is split into.
+///
+/// What a disk is and whether it is in use: the model and transport of a whole
+/// disk, the filesystem and mount point of a part, and the parts nothing is
+/// mounted from (#1829). A device split into others is in use through them, so
+/// only a leaf says whether it is mounted.
+class ServerDetailBlockDeviceItem extends StatelessWidget {
+  const ServerDetailBlockDeviceItem({
+    super.key,
+    required this.device,
+    this.depth = 0,
+  });
+
+  final BlockDevice device;
+  final int depth;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _row(),
+        for (final child in device.children)
+          ServerDetailBlockDeviceItem(device: child, depth: depth + 1),
+      ],
+    );
+  }
+
+  Widget _row() {
+    final d = device;
+    final facts = [d.size.bytes2Str, d.kind, ?d.tran, ?d.fsType].join(' · ');
+    final mount = d.children.isEmpty ? d.mount ?? l10n.notMounted : null;
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 17.0 + (depth * 15.0),
+        right: 17.0,
+        top: 5.0,
+        bottom: 5.0,
+      ),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              d.model == null ? d.name : '${d.name} (${d.model})',
+              style: UIs.text12,
+            ),
+            Text(
+              mount == null ? facts : '$facts\n$mount',
+              style: UIs.text12Grey,
+            ),
+          ],
+        ),
       ),
     );
   }

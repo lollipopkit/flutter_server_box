@@ -104,6 +104,37 @@ Filesystem  1024-blocks   Used Available Capacity Mounted on
       expect(result.diskUsage!.used, greaterThan(BigInt.zero));
     });
 
+    test('linux lsblk lists a disk nothing is mounted from (#1829)', () async {
+      final result = await getStatus(
+        ServerStatusUpdateReq(
+          system: SystemType.linux,
+          ss: InitStatus.status,
+          parsedOutput: {
+            StatusCmdType.disk.name: '''
+{"blockdevices": [
+  {"fstype":null, "path":"/dev/loop0", "name":"loop0", "mountpoint":"/snap/core22/1380", "type":"loop", "model":null, "size":77365248, "tran":null},
+  {"fstype":null, "path":"/dev/sdb", "name":"sdb", "mountpoint":null, "type":"disk", "model":"ST4000VN008", "size":4000787030016, "tran":"sata"},
+  {"fstype":null, "path":"/dev/sda", "name":"sda", "mountpoint":null, "type":"disk", "model":"QEMU HARDDISK", "size":21474836480, "tran":null,
+   "children": [{"fstype":"ext4", "path":"/dev/sda1", "name":"sda1", "mountpoint":"/", "fssize":"21000000000", "fsused":"7000000000", "fsavail":"14000000000", "fsuse%":"33%", "type":"part", "model":null, "size":"21473787904", "tran":null}]}
+]}
+__SBM_DF__
+Filesystem     Type 1K-blocks    Used Available Use% Mounted on
+/dev/sda1      ext4  20507812 6835937  13671875  33% /
+''',
+          },
+        ),
+      );
+
+      expect(result.blockDevices.map((d) => d.name), ['sdb', 'sda']);
+      final sdb = result.blockDevices.first;
+      expect(sdb.model, 'ST4000VN008');
+      expect(sdb.children, isEmpty);
+      expect(sdb.mount, isNull);
+      expect(result.blockDevices.last.children.single.mount, '/');
+      // The blank disk is hardware, not a filesystem to count.
+      expect(result.disk.map((d) => d.mount), isNot(contains('')));
+    });
+
     test('generic GPU readings map optional fields without zero filling', () async {
       final result = await getStatus(
         ServerStatusUpdateReq(

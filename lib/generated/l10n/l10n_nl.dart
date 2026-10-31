@@ -2380,6 +2380,15 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String get filesystems => 'Bestandssystemen';
+
+  @override
+  String get blockDevices => 'Blokapparaten';
+
+  @override
+  String get notMounted => 'Niet aangekoppeld';
+
+  @override
   String get unitDevices => 'apparaten';
 
   @override

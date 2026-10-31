@@ -2369,6 +2369,15 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String get filesystems => 'Sistem berkas';
+
+  @override
+  String get blockDevices => 'Perangkat blok';
+
+  @override
+  String get notMounted => 'Tidak di-mount';
+
+  @override
   String get unitDevices => 'perangkat';
 
   @override

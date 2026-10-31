@@ -2376,6 +2376,15 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
+  String get filesystems => 'سیستم‌های فایل';
+
+  @override
+  String get blockDevices => 'دستگاه‌های بلوکی';
+
+  @override
+  String get notMounted => 'سوار نشده';
+
+  @override
   String get unitDevices => 'دستگاه';
 
   @override

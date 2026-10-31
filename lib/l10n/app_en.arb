@@ -3056,6 +3056,18 @@
       }
     }
   },
+  "filesystems": "Filesystems",
+  "@filesystems": {
+    "description": "Section title for the mounted filesystems in the disk device list."
+  },
+  "blockDevices": "Block devices",
+  "@blockDevices": {
+    "description": "Section title for every block device (disks, partitions) whether mounted or not."
+  },
+  "notMounted": "Not mounted",
+  "@notMounted": {
+    "description": "Shown for a block device or partition that nothing is mounted from."
+  },
   "unitDevices": "devices",
   "@unitDevices": {
     "description": "User-facing label or message for unit devices."

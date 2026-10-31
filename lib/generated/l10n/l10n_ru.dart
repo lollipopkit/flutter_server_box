@@ -2384,6 +2384,15 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get filesystems => 'Файловые системы';
+
+  @override
+  String get blockDevices => 'Блочные устройства';
+
+  @override
+  String get notMounted => 'Не смонтировано';
+
+  @override
   String get unitDevices => 'устройства';
 
   @override

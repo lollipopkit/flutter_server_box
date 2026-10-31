@@ -373,6 +373,7 @@ pub fn sample(block_devices: &str) -> ServerStatus {
         mem: linux::parse_mem(&mem_raw),
         swap: linux::parse_swap(&mem_raw),
         disks,
+        block_devices: linux::parse_block_devices(block_devices),
         net: linux::parse_net(&read("/proc/net/dev")),
         temps: linux::parse_temps(&temp_types, &temp_values, 1000.0),
         conn: linux::parse_conn(&read("/proc/net/snmp")),

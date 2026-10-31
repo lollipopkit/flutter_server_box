@@ -1,5 +1,7 @@
 //! Linux parsing (Dart reference: cpu.dart / memory.dart / disk.dart / net_speed.dart / temp.dart)
 
+use std::collections::HashSet;
+
 use crate::types::*;
 
 /// cpu lines of /proc/stat (Dart `SingleCpuCore.parse`):
@@ -80,7 +82,7 @@ pub const LSBLK_ARGS: [&str; 4] = [
     "--bytes",
     "--json",
     "--output",
-    "FSTYPE,PATH,NAME,KNAME,MOUNTPOINT,FSSIZE,FSUSED,FSAVAIL,FSUSE%,UUID",
+    "FSTYPE,PATH,NAME,KNAME,MOUNTPOINT,FSSIZE,FSUSED,FSAVAIL,FSUSE%,UUID,TYPE,MODEL,SIZE,TRAN",
 ];
 
 /// Disk output: `lsblk` JSON, then [DISK_DF_MARKER], then the `df` table —
@@ -88,34 +90,91 @@ pub const LSBLK_ARGS: [&str; 4] = [
 /// be missing: `lsblk` is not on busybox, and the monitor agent's sampler
 /// reads `df` alone. The older output, one or the other, is read as before.
 pub fn parse_disk(raw: &str) -> Vec<Disk> {
-    if let Some((lsblk, df)) = raw.split_once(DISK_DF_MARKER) {
-        let lsblk = lsblk.trim();
-        let lsblk = if lsblk.starts_with('{') {
-            serde_json::from_str::<serde_json::Value>(lsblk)
-                .map(|json| parse_lsblk(&json))
-                .unwrap_or_default()
-        } else {
-            Vec::new()
-        };
+    if let Some((_, df)) = raw.split_once(DISK_DF_MARKER) {
+        let lsblk = lsblk_json(raw).map(|json| parse_lsblk(&json)).unwrap_or_default();
         return merge_disks(lsblk, parse_df(df));
     }
     let raw = raw.trim();
     if raw.is_empty() {
         return Vec::new();
     }
-    if raw.starts_with('{') {
-        let json_part = match raw.find("\nLSBLK_SUCCESS") {
-            Some(end) => &raw[..end],
-            None => raw,
-        };
-        if let Ok(json) = serde_json::from_str::<serde_json::Value>(json_part) {
-            let disks = parse_lsblk(&json);
-            if !disks.is_empty() {
-                return disks;
-            }
+    if let Some(json) = lsblk_json(raw) {
+        let disks = parse_lsblk(&json);
+        if !disks.is_empty() {
+            return disks;
         }
     }
     parse_df(raw)
+}
+
+/// The `lsblk` JSON of [`parse_disk`]'s input, in either of its shapes.
+fn lsblk_json(raw: &str) -> Option<serde_json::Value> {
+    let lsblk = match raw.split_once(DISK_DF_MARKER) {
+        Some((lsblk, _)) => lsblk.trim(),
+        None => {
+            let raw = raw.trim();
+            raw.find("\nLSBLK_SUCCESS").map_or(raw, |end| &raw[..end])
+        }
+    };
+    if !lsblk.starts_with('{') {
+        return None;
+    }
+    serde_json::from_str(lsblk).ok()
+}
+
+/// Every block device in [`parse_disk`]'s input, as `lsblk` nests them —
+/// those nothing is mounted from and those with no filesystem included (#1829).
+///
+/// Loop and RAM devices are left out: a snap or an image file each make a
+/// loop device, and a host has dozens of them that are not disks.
+///
+/// A device built on several others (an LVM thin pool on its `_tmeta` and
+/// `_tdata`, an md array on each member) is listed by `lsblk` under each of
+/// them; here only under the first, so every device appears once.
+pub fn parse_block_devices(raw: &str) -> Vec<BlockDevice> {
+    fn device(d: &serde_json::Value, top: bool, seen: &mut HashSet<String>) -> Option<BlockDevice> {
+        let text = |key: &str| {
+            d[key]
+                .as_str()
+                .map(str::trim)
+                .filter(|s| !s.is_empty())
+                .map(str::to_string)
+        };
+        let kind = text("type")?;
+        if matches!(kind.as_str(), "loop" | "ram") {
+            return None;
+        }
+        let name = text("name")?;
+        let path = text("path").unwrap_or_default();
+        if !seen.insert(if path.is_empty() { name.clone() } else { path.clone() }) {
+            return None;
+        }
+        let size = &d["size"];
+        Some(BlockDevice {
+            name,
+            path,
+            kind,
+            model: text("model"),
+            size: size
+                .as_u64()
+                .or_else(|| size.as_str().and_then(|s| s.parse().ok()))
+                .unwrap_or(0),
+            // Newer `lsblk` repeats the disk's on each partition.
+            tran: text("tran").filter(|_| top),
+            fs_type: text("fstype"),
+            mount: text("mountpoint"),
+            children: list(&d["children"], false, seen),
+        })
+    }
+    fn list(devices: &serde_json::Value, top: bool, seen: &mut HashSet<String>) -> Vec<BlockDevice> {
+        devices
+            .as_array()
+            .map(|a| a.iter().filter_map(|d| device(d, top, seen)).collect())
+            .unwrap_or_default()
+    }
+    lsblk_json(raw).map_or_else(Vec::new, |json| {
+        list(&json["blockdevices"], true, &mut HashSet::new())
+    })
 }
 
 /// One list of `lsblk`'s devices and `df`'s mounted filesystems.

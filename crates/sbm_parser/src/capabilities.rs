@@ -33,6 +33,7 @@ pub struct Capabilities {
     pub mem: FieldSupport,
     pub swap: FieldSupport,
     pub disks: FieldSupport,
+    pub block_devices: FieldSupport,
     pub net: FieldSupport,
     pub temps: FieldSupport,
     pub conn: FieldSupport,
@@ -82,6 +83,11 @@ pub fn capabilities(system: SystemType) -> Capabilities {
             SystemType::Bsd | SystemType::Windows => FieldSupport::NotImplemented,
         },
         disks: from_commands(system, &[commands::DISK]),
+        // `lsblk`, which only the Linux disk command runs.
+        block_devices: match system {
+            SystemType::Linux => FieldSupport::Supported,
+            SystemType::Bsd | SystemType::Windows => FieldSupport::NotImplemented,
+        },
         net: from_commands(system, &[commands::NET]),
         temps: hw_from_commands(system, &[commands::TEMP_TYPE, commands::TEMP_VAL, commands::TEMP]),
         conn: from_commands(system, &[commands::CONN]),

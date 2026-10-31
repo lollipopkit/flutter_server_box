@@ -2396,6 +2396,15 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get filesystems => 'Systèmes de fichiers';
+
+  @override
+  String get blockDevices => 'Périphériques bloc';
+
+  @override
+  String get notMounted => 'Non monté';
+
+  @override
   String get unitDevices => 'périphériques';
 
   @override

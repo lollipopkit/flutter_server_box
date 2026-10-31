@@ -439,11 +439,23 @@ extension on _ServerDetailPageState {
       );
     }
     if (m.kind == ServerMetricKind.disk) {
-      if (ss.disk.length < 2) return null;
+      final blocks = ss.blockDevices;
+      if (ss.disk.length < 2 && blocks.isEmpty) return null;
       final disks = [...ss.disk]
         ..sort((a, b) => b.usedPercent.compareTo(a.usedPercent));
+      // Where `lsblk` answered, the devices are the hardware it lists, the
+      // unmounted included (#1829); the filesystems are what is on them.
+      Widget header(String text) => Padding(
+        padding: const EdgeInsets.fromLTRB(17, 11, 17, 3),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Text(text, style: UIs.text13Bold),
+        ),
+      );
       return ServerDetailDeviceButton(
-        label: l10n.devicesFmt(disks.length),
+        label: l10n.devicesFmt(
+          blocks.isEmpty ? disks.length : blocks.length,
+        ),
         onTap: () => _showClosableDetailDialog(
           title: libL10n.device,
           child: SizedBox(
@@ -452,8 +464,14 @@ extension on _ServerDetailPageState {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  if (blocks.isNotEmpty) header(l10n.filesystems),
                   for (final disk in disks)
                     ServerDetailDiskItem(disk: disk, status: ss),
+                  if (blocks.isNotEmpty) ...[
+                    header(l10n.blockDevices),
+                    for (final device in blocks)
+                      ServerDetailBlockDeviceItem(device: device),
+                  ],
                 ],
               ),
             ),

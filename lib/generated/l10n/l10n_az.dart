@@ -2375,6 +2375,15 @@ class AppLocalizationsAz extends AppLocalizations {
   }
 
   @override
+  String get filesystems => 'Fayl sistemləri';
+
+  @override
+  String get blockDevices => 'Blok cihazları';
+
+  @override
+  String get notMounted => 'Qoşulmayıb';
+
+  @override
   String get unitDevices => 'cihaz';
 
   @override

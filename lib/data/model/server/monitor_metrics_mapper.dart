@@ -167,6 +167,7 @@ void _applySwap(ServerStatus ss, MonitorMetrics m) {
 /// that is what the aggregate is a total of, and nothing downstream reads a
 /// mount as a path to anything.
 void _applyDisks(ServerStatus ss, MonitorMetrics m) {
+  ss.blockDevices = m.blockDevices;
   // The agent's own total, not one summed again here: it is what its history
   // and alert rules use, under its own setting for network filesystems.
   ss.diskUsage = m.disk.total <= 0

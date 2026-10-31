@@ -2361,6 +2361,15 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get filesystems => 'Dosya sistemleri';
+
+  @override
+  String get blockDevices => 'Blok aygıtları';
+
+  @override
+  String get notMounted => 'Bağlı değil';
+
+  @override
   String get unitDevices => 'aygıt';
 
   @override

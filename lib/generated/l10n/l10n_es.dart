@@ -2395,6 +2395,15 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get filesystems => 'Sistemas de archivos';
+
+  @override
+  String get blockDevices => 'Dispositivos de bloque';
+
+  @override
+  String get notMounted => 'Sin montar';
+
+  @override
   String get unitDevices => 'dispositivos';
 
   @override

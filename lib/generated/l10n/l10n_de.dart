@@ -2388,6 +2388,15 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get filesystems => 'Dateisysteme';
+
+  @override
+  String get blockDevices => 'Blockgeräte';
+
+  @override
+  String get notMounted => 'Nicht eingehängt';
+
+  @override
   String get unitDevices => 'Geräten';
 
   @override

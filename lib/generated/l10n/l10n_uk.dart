@@ -2381,6 +2381,15 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String get filesystems => 'Файлові системи';
+
+  @override
+  String get blockDevices => 'Блокові пристрої';
+
+  @override
+  String get notMounted => 'Не змонтовано';
+
+  @override
   String get unitDevices => 'пристрої';
 
   @override

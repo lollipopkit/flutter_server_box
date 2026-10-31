@@ -114,6 +114,31 @@ impl Swap {
     }
 }
 
+/// One block device as `lsblk` lists it, whether or not anything is mounted
+/// from it: what a disk is, how it is split, and which parts are in use.
+///
+/// The filesystems the disk totals are made of are [`Disk`]; this is the
+/// hardware under them, so a disk with no filesystem yet is here and not
+/// there.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BlockDevice {
+    /// `lsblk` NAME, e.g. `sda1`, `nvme0n1`, `pve-root`
+    pub name: String,
+    pub path: String,
+    /// `lsblk` TYPE: `disk`, `part`, `lvm`, `crypt`, `raid1`, `rom`, ...
+    pub kind: String,
+    /// Set on whole disks only.
+    pub model: Option<String>,
+    /// Bytes
+    pub size: u64,
+    /// Transport: `sata`, `nvme`, `usb`, ...; top-level devices only.
+    pub tran: Option<String>,
+    pub fs_type: Option<String>,
+    /// `[SWAP]` for an active swap area.
+    pub mount: Option<String>,
+    pub children: Vec<BlockDevice>,
+}
+
 /// One filesystem, sizes in KiB (Dart `Disk`, from df -k / lsblk / WMI)
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Disk {

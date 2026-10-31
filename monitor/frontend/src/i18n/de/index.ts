@@ -52,6 +52,8 @@ const de = {
 	back: 'Zurück',
 	swap: 'Swap',
 	disks: 'Festplatten',
+	blockDevices: 'Blockgeräte',
+	notMounted: 'Nicht eingehängt',
 	interfaces: 'Schnittstellen',
 	connected: 'Verbunden',
 	disconnected: 'Getrennt',

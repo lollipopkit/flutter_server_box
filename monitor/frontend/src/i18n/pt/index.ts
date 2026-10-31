@@ -52,6 +52,8 @@ const pt = {
 	back: 'Voltar',
 	swap: 'Swap',
 	disks: 'Discos',
+	blockDevices: 'Dispositivos de bloco',
+	notMounted: 'Não montado',
 	interfaces: 'Interfaces',
 	connected: 'Conectado',
 	disconnected: 'Desconectado',

@@ -52,6 +52,8 @@ const ru = {
 	back: 'Назад',
 	swap: 'Подкачка',
 	disks: 'Диски',
+	blockDevices: 'Блочные устройства',
+	notMounted: 'Не смонтировано',
 	interfaces: 'Интерфейсы',
 	connected: 'Подключено',
 	disconnected: 'Отключено',

@@ -2377,6 +2377,15 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get filesystems => 'Sistemas de arquivos';
+
+  @override
+  String get blockDevices => 'Dispositivos de bloco';
+
+  @override
+  String get notMounted => 'Não montado';
+
+  @override
   String get unitDevices => 'dispositivos';
 
   @override

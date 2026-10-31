@@ -33,6 +33,7 @@ fn sample_metrics() -> SystemMetrics {
         cpu_brand: None,
         gpus: vec![],
         disk_details: vec![],
+        block_devices: vec![],
         ifaces: vec![],
         uptime: None,
         conn: None,

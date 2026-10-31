@@ -2195,6 +2195,15 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get filesystems => '文件系统';
+
+  @override
+  String get blockDevices => '块设备';
+
+  @override
+  String get notMounted => '未挂载';
+
+  @override
   String get unitDevices => '设备';
 
   @override
@@ -7874,6 +7883,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String countOfFmt(int count, String what) {
     return '$count 個$what';
   }
+
+  @override
+  String get filesystems => '檔案系統';
+
+  @override
+  String get blockDevices => '區塊裝置';
+
+  @override
+  String get notMounted => '未掛載';
 
   @override
   String get unitDevices => '裝置';

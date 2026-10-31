@@ -52,6 +52,8 @@ const uk = {
 	back: 'Назад',
 	swap: 'Своп',
 	disks: 'Диски',
+	blockDevices: 'Блокові пристрої',
+	notMounted: 'Не змонтовано',
 	interfaces: 'Інтерфейси',
 	connected: 'Підключено',
 	disconnected: 'Відключено',
