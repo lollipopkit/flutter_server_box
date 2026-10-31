@@ -1597,10 +1597,10 @@ packages:
     description:
       path: "."
       ref: main
-      resolved-ref: d5d70020da74082d182301a49e2bb87d30f0ab66
+      resolved-ref: ebe1ec61f2279b786fc0fa2e7893a50a506678c4
       url: "https://github.com/lollipopkit/re-editor"
     source: git
-    version: "0.8.0"
+    version: "0.10.0"
   re_highlight:
     dependency: transitive
     description:
@@ -2193,10 +2193,10 @@ packages:
     dependency: "direct main"
     description:
       name: webdav_client_plus
-      sha256: "1ac25cf8cc5810f77201e176fcdf53312386711be62eb6f49cf975490a172ced"
+      sha256: e72c60bdca6588214bda80c4f356aeabee507d8cc7c3a2712e5d3898ff1506a4
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.0"
+    version: "3.0.0"
   webdriver:
     dependency: transitive
     description:

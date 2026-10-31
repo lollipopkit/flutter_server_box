@@ -130,6 +130,10 @@ enum MonitorHttpErrType {
   /// The change conflicts with the agent's state.
   conflict,
 
+  /// A file write that named the version it was based on found the file
+  /// changed since: the agent's `409 {"error":"modified"}`.
+  modified,
+
   /// No such thing on the agent.
   notFound,
 

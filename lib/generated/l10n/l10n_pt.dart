@@ -502,6 +502,11 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String fileChangedOverwrite(String file) {
+    return '\'$file\' foi alterado no servidor depois de ser aberto. Substituir?';
+  }
+
+  @override
   String get fileDirGone => 'Esta pasta já não está aqui';
 
   @override

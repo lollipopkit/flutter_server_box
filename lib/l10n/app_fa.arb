@@ -144,6 +144,7 @@
   "fallbackSshDest": "مقصد جایگزین SSH",
   "fdroidReleaseTip": "اگر این برنامه را از F-Droid دانلود کرده‌اید، توصیه می‌شود این گزینه را غیرفعال کنید.",
   "fileTooLarge": "فایل «{file}» بیش از حد بزرگ است ({size})، حداکثر اندازه {sizeMax}",
+  "fileChangedOverwrite": "'{file}' پس از باز شدن روی سرور تغییر کرده است. بازنویسی شود؟",
   "fileDirGone": "این پوشه دیگر در اینجا وجود ندارد",
   "fileDirGoneTip": "این پوشه حذف شده یا تغییر نام یافته است",
   "fullScreen": "تمام‌صفحه",

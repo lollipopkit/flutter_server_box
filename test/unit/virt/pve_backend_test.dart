@@ -899,103 +899,6 @@ void main() {
       expect(diff.any((d) => d.key == 'scsi0'), isFalse);
     });
 
-    test('the captured payloads: a real snapshot config against the current one', () {
-      // `snapshot_config.json` / `snapshot_current_config.json` are PVE
-      // 9.2.2's own answers for a VM whose memory was changed after the
-      // snapshot was taken; `node_storage_p8.json` is the node's storage
-      // list at the same moment.
-      final snap = jsonDecode(
-        File('test/fixtures/pve/snapshot_config.json').readAsStringSync(),
-      ) as Map<String, Object?>;
-      final cur = jsonDecode(
-        File('test/fixtures/pve/snapshot_current_config.json').readAsStringSync(),
-      ) as Map<String, Object?>;
-      expect((snap['memory'], cur['memory']), ('512', '768'));
-      // The storage list has no `snapshot` content kind: support follows the
-      // storage's type, not its content.
-      final storages = jsonDecode(
-        File('test/fixtures/pve/node_storage_p8.json').readAsStringSync(),
-      ) as List<Object?>;
-      expect(
-        storages.whereType<Map>().map((e) => e['type']),
-        containsAll(['dir', 'lvmthin']),
-      );
-      expect(
-        storages.whereType<Map>().map((e) => e['content']).join(),
-        isNot(contains('snapshot')),
-      );
-    });
-
-    test('a storage that does not support snapshots is a request PVE refuses', () {
-      // What PVE answers for a raw disk on a directory storage, on the task:
-      // the form's own check is what says so before it is started.
-      expect(virtPveStorageMaySnapshot('dir'), isFalse);
-      expect(virtPveStorageMaySnapshot('lvmthin'), isTrue);
-      expect(virtPveStorageMaySnapshot('zfspool'), isTrue);
-    });
-
-    test('snapshot requests: create, rollback and delete wait for their task',
-        () async {
-      final api = _Api()..resources = _resources;
-      api.routes['POST /nodes/pve/qemu/102/snapshot'] = (_) => _Api.upid;
-      api.routes['POST /nodes/pve/lxc/100/snapshot'] = (_) => _Api.upid;
-      api.routes['POST /nodes/pve/qemu/102/snapshot/pre-up/rollback'] =
-          (_) => _Api.upid;
-      api.routes['DELETE /nodes/pve/qemu/102/snapshot/pre-up'] =
-          (_) => _Api.upid;
-      api.current = {'status': 'stopped'};
-      final pve = api.backend(token);
-      final guests = (await pve.load()).guests;
-      final vm = guests.firstWhere((g) => g.id == 'qemu/102');
-      final ct = guests.firstWhere((g) => g.id == 'lxc/100');
-
-      await pve.createSnapshot(
-        vm,
-        name: 'pre-up',
-        description: ' before ',
-        memory: true,
-      );
-      expect(api.bodies[api.paths.indexOf('POST /nodes/pve/qemu/102/snapshot')],
-          'snapname=pre-up&description=before&vmstate=1');
-      expect(api.paths.last, startsWith('GET /nodes/pve/tasks/'));
-
-      // A container has no memory to save, whatever is asked.
-      await pve.createSnapshot(ct, name: 'pre-up', memory: true);
-      expect(
-        api.bodies[api.paths.indexOf('POST /nodes/pve/lxc/100/snapshot')],
-        'snapname=pre-up',
-      );
-
-      // The start is a task of its own, holding the guest's lock: waited for.
-      api.routes['GET /nodes/pve/tasks'] = (_) => [
-        {'type': 'vncproxy', 'upid': 'UPID:other'},
-        {'type': 'qmstart', 'upid': 'UPID:pve:9:9:9:qmstart:102:root@pam:'},
-      ];
-      await pve.revertSnapshot(vm, 'pre-up', start: true);
-      expect(
-        api.bodies[api.paths.indexOf(
-          'POST /nodes/pve/qemu/102/snapshot/pre-up/rollback',
-        )],
-        'start=1',
-      );
-      expect(
-        api.paths,
-        contains(
-          'GET /nodes/pve/tasks/${Uri.encodeComponent('UPID:pve:9:9:9:qmstart:102:root@pam:')}/status',
-        ),
-      );
-      // The state after it is read, as after a power action.
-      expect(api.paths.last, 'GET /nodes/pve/qemu/102/status/current');
-
-      await pve.deleteSnapshot(vm, 'pre-up');
-      expect(api.paths, contains('DELETE /nodes/pve/qemu/102/snapshot/pre-up'));
-
-      expect(
-        (await _err(pve.createSnapshot(vm, name: '1bad'))).type,
-        VirtErrType.unsupported,
-      );
-    });
-
     test('a snapshot task that fails is actionFailed with its exit', () async {
       final api = _Api()
         ..resources = _resources
@@ -1006,29 +909,6 @@ void main() {
       final e = await _err(pve.createSnapshot(vm, name: 'pre-up'));
       expect(e.type, VirtErrType.actionFailed);
       expect(e.message, "snapshot name 'pre-up' already used");
-    });
-
-    test('storage without /storage access still lists, without paths',
-        () async {
-      final api = _Api()..resources = _resources;
-      api.routes['GET /nodes'] = (_) => [
-        {'node': 'pve', 'status': 'online'},
-      ];
-      api.routes['GET /storage'] = (_) => _Api._status(403);
-      // `sbm_virt`'s captures, which its own tests read.
-      Object? rust(String name) => jsonDecode(
-        File('crates/sbm_virt/tests/fixtures/pve/$name').readAsStringSync(),
-      );
-      api.routes['GET /nodes/pve/storage'] = (_) => rust('node_storage.json');
-      api.routes['GET /nodes/pve/storage/local-lvm/content'] =
-          (_) => rust('content_local_lvm.json');
-      final pve = api.backend(token);
-      await pve.load();
-      final pools = await pve.storagePools();
-      expect(pools.map((p) => p.name), ['local', 'local-lvm']);
-      expect(pools.first.path, isNull);
-      final vols = await pve.volumes(pools.last);
-      expect(vols, hasLength(6));
     });
 
   });

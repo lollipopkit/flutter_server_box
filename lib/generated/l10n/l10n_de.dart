@@ -503,6 +503,11 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String fileChangedOverwrite(String file) {
+    return '\'$file\' wurde nach dem Öffnen auf dem Server geändert. Überschreiben?';
+  }
+
+  @override
   String get fileDirGone => 'Dieser Ordner ist nicht mehr da';
 
   @override

@@ -47,12 +47,6 @@ List<SettingsNode> _buildNodes() {
           icon: Icons.privacy_tip_outlined,
           page: () => const AppSettingsPage(section: SettingsSection.privacy),
         ),
-        SettingsNode.leaf(
-          id: 'app.ai',
-          title: libL10n.ai,
-          icon: Icons.auto_awesome_outlined,
-          page: () => const AppSettingsPage(section: SettingsSection.ai),
-        ),
         // A tab of its own rather than a row leading out of the general
         // page: pushed from there it drew a second title bar under the one
         // this page already has, naming the same thing twice.
@@ -96,6 +90,12 @@ List<SettingsNode> _buildNodes() {
                 const AppSettingsPage(section: SettingsSection.fullScreen),
           ),
       ],
+    ),
+    SettingsNode.leaf(
+      id: 'ai',
+      title: libL10n.ai,
+      icon: Icons.auto_awesome_outlined,
+      page: () => const AppSettingsPage(section: SettingsSection.ai),
     ),
     SettingsNode.branch(
       id: 'server',

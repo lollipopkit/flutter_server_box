@@ -504,6 +504,11 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String fileChangedOverwrite(String file) {
+    return '\'$file\' cambió en el servidor después de abrirse. ¿Sobrescribirlo?';
+  }
+
+  @override
   String get fileDirGone => 'Esta carpeta ya no está aquí';
 
   @override

@@ -59,7 +59,7 @@ dependencies:
   drift: ^2.34.4
   wakelock_plus: ^1.8.0
   wake_on_lan: ^4.1.1+3
-  webdav_client_plus: ^2.0.0
+  webdav_client_plus: ^3.0.0
   # Already here through fl_lib, which does the syncing; named directly only
   # so the crash-report filter can recognise its "not signed in to iCloud"
   # exception by type.

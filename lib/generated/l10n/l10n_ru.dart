@@ -503,6 +503,11 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String fileChangedOverwrite(String file) {
+    return '\'$file\' изменён на сервере после открытия. Перезаписать?';
+  }
+
+  @override
   String get fileDirGone => 'Этой папки больше нет';
 
   @override

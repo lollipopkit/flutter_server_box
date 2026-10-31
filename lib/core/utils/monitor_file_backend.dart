@@ -102,7 +102,35 @@ class MonitorFileBackend implements FileBackend {
       // Atomic on the agent's side: it stages beside the destination and
       // renames, which is the same contract the other two backends keep and
       // the reason this one does not have to stage anything itself.
-      _client.fsWrite(path, data, size: size, replayData: replayData);
+      _client
+          .fsWrite(path, data, size: size, replayData: replayData)
+          .then((_) {});
+
+  /// The agent's `version` of [path], which [writeIfUnchanged] compares
+  /// against. Null where it reports none: a link, or an agent older than it.
+  Future<String?> versionOf(String path) async =>
+      (await _client.fsStat(path))?['version'] as String?;
+
+  /// [bytes] to [path], unless the file has changed from [version]: then it
+  /// throws [MonitorHttpErrType.modified]. A null [version] always writes.
+  ///
+  /// Answers the version the write left, for the next one to name. From the
+  /// write itself where the agent says, which is the only answer no other
+  /// writer can slip in front of; asked afterwards from one that does not.
+  Future<String?> writeIfUnchanged(
+    String path,
+    List<int> bytes,
+    String? version,
+  ) async {
+    final left = await _client.fsWrite(
+      path,
+      Stream.value(bytes),
+      size: bytes.length,
+      replayData: () => Stream.value(bytes),
+      ifVersion: version,
+    );
+    return left ?? await versionOf(path);
+  }
 
   /// Closes the HTTP session, and with it the connection pool behind it.
   ///

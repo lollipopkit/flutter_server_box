@@ -991,6 +991,12 @@ abstract class AppLocalizations {
   /// **'File \'{file}\' too large {size}, max {sizeMax}'**
   String fileTooLarge(String file, String size, String sizeMax);
 
+  /// Asked when saving a file that changed on the server since it was opened.
+  ///
+  /// In en, this message translates to:
+  /// **'\'{file}\' changed on the server after it was opened. Overwrite it?'**
+  String fileChangedOverwrite(String file);
+
   /// User-facing label or message for file dir gone.
   ///
   /// In en, this message translates to:

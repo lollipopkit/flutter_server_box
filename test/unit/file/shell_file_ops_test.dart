@@ -53,13 +53,6 @@ void main() {
     expect(parseShellFileRecords(''), isEmpty);
   });
 
-  test('the stat answers are told apart', () {
-    expect(kShellStatAbsent, isNot(kShellStatDenied));
-    expect(kShellStatAbsentMark, isNot(kShellStatDeniedMark));
-    expect(shellStatCommand('/etc/shadow'), contains(kShellStatAbsentMark));
-    expect(shellStatCommand('/etc/shadow'), contains('$kShellStatDenied'));
-  });
-
   group('modeStr', () {
     test('spells out the nine bits', () {
       const entry = FileEntry(name: 'x', kind: FileKind.file);

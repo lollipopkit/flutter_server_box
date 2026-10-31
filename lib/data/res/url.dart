@@ -19,7 +19,6 @@ abstract final class Urls {
   static const githubReleasesApi = '$githubApi/flutter_server_box/releases';
   static const appStore = 'https://apps.apple.com/app/id1586449703';
   static const appHelp = '$thisRepo#-help';
-  static const appWiki = '$thisRepo/wiki';
 
   /// Where a crash report goes.
   ///

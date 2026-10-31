@@ -56,7 +56,7 @@ enum SettingsSection {
     SettingsSection.app => '${libL10n.app} › ${libL10n.general}',
     SettingsSection.appearance => '${libL10n.app} › ${libL10n.appearanceSettings}',
     SettingsSection.privacy => '${libL10n.app} › ${l10n.privacy}',
-    SettingsSection.ai => '${libL10n.app} › ${libL10n.ai}',
+    SettingsSection.ai => libL10n.ai,
     SettingsSection.fullScreen => '${libL10n.app} › ${l10n.fullScreen}',
     SettingsSection.server => '${libL10n.server} › ${libL10n.general}',
     SettingsSection.ssh => '${libL10n.terminal} › ${libL10n.general}',

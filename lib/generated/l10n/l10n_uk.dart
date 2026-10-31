@@ -503,6 +503,11 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String fileChangedOverwrite(String file) {
+    return '\'$file\' змінено на сервері після відкриття. Перезаписати?';
+  }
+
+  @override
   String get fileDirGone => 'Цієї теки більше немає';
 
   @override

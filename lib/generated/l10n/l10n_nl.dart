@@ -502,6 +502,11 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String fileChangedOverwrite(String file) {
+    return '\'$file\' is op de server gewijzigd nadat het werd geopend. Overschrijven?';
+  }
+
+  @override
   String get fileDirGone => 'Deze map is er niet meer';
 
   @override

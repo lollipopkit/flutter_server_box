@@ -550,17 +550,6 @@ String? virtSnapshotSupportIssue({
   return '${guest.name}$where';
 }
 
-/// Whether a disk on a storage of [content] kinds can be snapshotted on PVE.
-///
-/// PVE has no `snapshot` content kind: `content` lists what may be *stored*
-/// (`images`, `rootdir`, `iso`, ...), and snapshot support follows the
-/// storage's type and the disk's format instead — a `dir` storage holds raw
-/// files, an `lvmthin` or `zfspool` one makes a snapshot per volume. So this
-/// is a hint for the form, never a refusal: the host's own answer
-/// (`snapshotSupported`) is what decides.
-bool virtPveStorageMaySnapshot(String type) =>
-    type == 'lvmthin' || type == 'zfspool' || type == 'rbd' || type == 'btrfs';
-
 /// What one difference between a snapshot's configuration and the guest's
 /// current one is about, as the view groups it.
 enum VirtSnapDiffGroup {

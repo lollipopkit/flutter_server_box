@@ -479,6 +479,11 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String fileChangedOverwrite(String file) {
+    return '\'$file\'이(가) 연 이후 서버에서 변경되었습니다. 덮어쓸까요?';
+  }
+
+  @override
   String get fileDirGone => '이 폴더는 더 이상 없습니다';
 
   @override

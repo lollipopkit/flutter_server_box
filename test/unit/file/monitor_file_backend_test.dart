@@ -187,6 +187,67 @@ void main() {
       }
     },
   );
+
+  test('a write based on a stale version is refused as modified', () async {
+    var current = 'v1';
+    final written = <String?>[];
+    final server = await _serve((request) async {
+      switch (request.uri.path) {
+        case '/api/v1/login':
+          return _json(request.response, {'token': 'token'});
+        case '/api/v1/fs/roots':
+          return _json(request.response, {
+            'roots': ['/srv'],
+          });
+        case '/api/v1/fs/stat':
+          return _json(request.response, {
+            'name': 'file',
+            'kind': 'file',
+            'version': current,
+          });
+        case '/api/v1/fs/write':
+          await request.drain<void>();
+          final expected = request.uri.queryParameters['if_version'];
+          written.add(expected);
+          if (expected != null && expected != current) {
+            request.response.statusCode = HttpStatus.conflict;
+            return _json(request.response, {'error': 'modified'});
+          }
+          current = 'v${written.length + 1}';
+          return _json(request.response, {'bytes': 4, 'version': current});
+      }
+      request.response.statusCode = HttpStatus.notFound;
+      await request.response.close();
+    });
+    final backend = MonitorFileBackend(_credential(server));
+    try {
+      final opened = await backend.versionOf('/srv/file');
+      expect(opened, 'v1');
+      // Changed on the server after it was opened.
+      current = 'v9';
+
+      await expectLater(
+        backend.writeIfUnchanged('/srv/file', utf8.encode('edit'), opened),
+        throwsA(
+          isA<MonitorHttpErr>().having(
+            (e) => e.type,
+            'type',
+            MonitorHttpErrType.modified,
+          ),
+        ),
+      );
+      // Overwriting on purpose names no version, and the write says what it
+      // left for the next save to name.
+      expect(
+        await backend.writeIfUnchanged('/srv/file', utf8.encode('edit'), null),
+        'v3',
+      );
+      expect(written, ['v1', null]);
+    } finally {
+      await backend.close();
+      await server.close(force: true);
+    }
+  });
 }
 
 Future<HttpServer> _serve(

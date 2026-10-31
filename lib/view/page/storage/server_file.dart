@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_tty/fl_tty.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,6 +7,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/local_file_backend.dart';
 import 'package:server_box/core/utils/monitor_file_backend.dart';
+import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/file/file_backend.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/model/server/monitor_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -12,6 +16,7 @@ import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/storage/file_browser.dart';
+import 'package:server_box/view/page/storage/file_edit.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
 import 'package:server_box/view/page/storage/show_transfers.dart';
 
@@ -139,6 +144,37 @@ class _LocalServerFilePage extends StatelessWidget {
         // This device's files are this device's, whichever page lists them:
         // a transfer from here needs no server to reach them.
         refOf: LocalFileRef.new,
+        onOpenFile: (handle, entry, path) => _edit(context, handle, entry, path),
+        entryActions: (handle, entry, path) => [
+          if (!entry.isDir)
+            ContextMenuAction(
+              icon: Icons.edit,
+              text: libL10n.edit,
+              onTap: () => _edit(context, handle, entry, path),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// In place: the file is already on this device.
+  static Future<void> _edit(
+    BuildContext context,
+    FileBrowserHandle handle,
+    FileEntry entry,
+    String path,
+  ) async {
+    final size =
+        entry.size ?? (await const LocalFileBackend().stat(path))?.size ?? 0;
+    if (!fitsEditor(entry.name, size) || !context.mounted) return;
+    await EditorPage.route.go(
+      context,
+      args: fileEditorArgs(
+        path: LocalFileBackend.nativePath(path),
+        onSave: (_) {
+          Toast.show(libL10n.saved);
+          handle.refresh();
+        },
       ),
     );
   }
@@ -244,7 +280,136 @@ class _MonitorFilePageState extends ConsumerState<_MonitorFilePage> {
           ),
         ],
         refOf: (path) => MonitorFileRef.forServer(_spi, path),
+        onOpenFile: _edit,
+        entryActions: (handle, entry, path) => [
+          if (!entry.isDir)
+            ContextMenuAction(
+              icon: Icons.edit,
+              text: libL10n.edit,
+              onTap: () => _edit(handle, entry, path),
+            ),
+        ],
       ),
     );
   }
+
+  /// A copy on this device, edited there and written back only if the file
+  /// on the server is still the one that was opened.
+  Future<void> _edit(
+    FileBrowserHandle handle,
+    FileEntry entry,
+    String path,
+  ) async {
+    final localPath = serverLocalPath(_spi.id, path);
+    final (opened, err) = await context.showLoadingDialog(
+      // A download, which takes as long as the link makes it.
+      timeout: null,
+      fn: () async {
+        // A link lists without a size: what it points at decides.
+        final size = entry.size ?? (await _backend.stat(path))?.size ?? 0;
+        if (!fitsEditor(entry.name, size)) return null;
+        // Before the bytes: a change in between then reads as a change at
+        // save, never as one silently overwritten.
+        final version = await _backend.versionOf(path);
+        final file = File(localPath);
+        await file.parent.create(recursive: true);
+        final sink = file.openWrite();
+        try {
+          await sink.addStream(_backend.read(path));
+        } finally {
+          await sink.close();
+        }
+        return (version: version,);
+      },
+    );
+    if (err != null || opened == null || !mounted) return;
+    var version = opened.version;
+    // The editor does not wait for a save, so two in a row would both name
+    // the version the first one replaces: each waits for the one before.
+    var saving = Future<void>.value();
+    await EditorPage.route.go(
+      context,
+      args: fileEditorArgs(
+        path: localPath,
+        // Caught inside, so one failed save does not leave the chain failed
+        // and skip every save after it.
+        onSave: (_) => saving = saving.then((_) async {
+          try {
+            final saved = await _saveBack(entry.name, path, localPath, version);
+            if (saved == null) return;
+            version = saved.version;
+            await handle.refresh();
+          } catch (e, s) {
+            Loggers.app.warning('Failed to save $path', e, s);
+            Toast.error(libL10n.fail, body: '$e');
+          }
+        }),
+      ),
+    );
+  }
+
+  /// Writes [localPath] back to [path]; null when it was not written, which
+  /// has already been said.
+  Future<({String? version})?> _saveBack(
+    String name,
+    String path,
+    String localPath,
+    String? version,
+  ) async {
+    if (!mounted) return null;
+    // A failure is the loading dialog's to show.
+    Future<_SaveResult> write(String? expected) async {
+      final (saved, err) = await context.showLoadingDialog(
+        fn: () async {
+          final bytes = await File(localPath).readAsBytes();
+          try {
+            final left = await _backend.writeIfUnchanged(path, bytes, expected);
+            return _SaveResult.written(left);
+          } on MonitorHttpErr catch (e) {
+            if (e.type == MonitorHttpErrType.modified) {
+              return const _SaveResult.modified();
+            }
+            rethrow;
+          }
+        },
+      );
+      return err != null || saved == null ? const _SaveResult.failed() : saved;
+    }
+
+    var result = await write(version);
+    if (result.modified) {
+      if (!mounted) return null;
+      final overwrite = await context.showRoundDialog<bool>(
+        title: libL10n.attention,
+        child: Text(l10n.fileChangedOverwrite(name)),
+        actions: Btnx.cancelRedOk,
+      );
+      if (overwrite != true || !mounted) return null;
+      result = await write(null);
+    }
+    if (!result.written) return null;
+    Toast.show(libL10n.saved);
+    return (version: result.version);
+  }
+}
+
+/// How a save back to the agent went.
+final class _SaveResult {
+  const _SaveResult.written(this.version) : written = true, modified = false;
+  const _SaveResult.modified()
+    : version = null,
+      written = false,
+      modified = true;
+  const _SaveResult.failed()
+    : version = null,
+      written = false,
+      modified = false;
+
+  final bool written;
+
+  /// The file had changed on the server since it was opened.
+  final bool modified;
+
+  /// What the write left, for the next save to name.
+  final String? version;
 }

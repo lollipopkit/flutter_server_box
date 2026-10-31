@@ -507,6 +507,11 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String fileChangedOverwrite(String file) {
+    return '\'$file\' a été modifié sur le serveur après son ouverture. L\'écraser ?';
+  }
+
+  @override
   String get fileDirGone => 'Ce dossier n\'est plus là';
 
   @override
