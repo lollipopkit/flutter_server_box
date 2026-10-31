@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_chart_desc">نمودارهای وضعیت</string>
+    <string name="widget_refresh_desc">به‌روزرسانی</string>
+
+    <string name="widget_configure_title">ویجت</string>
+    <string name="widget_configure_server">سرور</string>
+    <string name="widget_configure_metric">معیار اصلی</string>
+    <string name="widget_configure_save">ذخیره</string>
+    <string name="widget_configure_empty">هنوز سروری با عامل Monitor وجود ندارد.\nیکی را در ServerBox اضافه کنید و سپس برگردید.</string>
+
+    <string name="widget_metric_cpu">CPU</string>
+    <string name="widget_metric_memory">حافظه</string>
+    <string name="widget_metric_disk">دیسک</string>
+    <string name="widget_metric_network">شبکه</string>
+
+    <string name="widget_err_not_configured">برای انتخاب سرور ضربه بزنید</string>
+    <string name="widget_err_no_token">اعتبارنامه‌ای نیست — ServerBox را باز کنید</string>
+    <string name="widget_err_insecure">HTTPS لازم است</string>
+    <string name="widget_err_network">خطای شبکه</string>
+    <string name="widget_err_timeout">مهلت تمام شد</string>
+
+    <string name="widget_small_label">مقادیر سرور</string>
+    <string name="widget_medium_label">نمودارهای سرور</string>
+    <string name="widget_label">وضعیت سرور</string>
+    <string name="widget_description">CPU، حافظه، دیسک و شبکه در یک نگاه. برای دیدن جزئیات بیشتر بزرگ‌ترش کنید.</string>
+
+    <string name="process_text_label">ذخیره به‌عنوان قطعه‌کد</string>
+    <string name="tile_no_sessions">نشست فعالی نیست</string>
+    <plurals name="tile_sessions">
+        <item quantity="one">%d نشست</item>
+        <item quantity="other">%d نشست</item>
+    </plurals>
+    <string name="channel_transfers">انتقال فایل‌ها</string>
+    <string name="incoming_failed">فایل‌های اشتراک‌گذاشته‌شده دریافت نشد</string>
+    <string name="shortcut_server_gone">سرور حذف شده است</string>
+</resources>

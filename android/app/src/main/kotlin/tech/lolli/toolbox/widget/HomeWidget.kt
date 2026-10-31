@@ -365,6 +365,7 @@ abstract class HomeWidget : AppWidgetProvider() {
         val views = RemoteViews(context.packageName, form.layout)
         val density = context.resources.displayMetrics.density
         tap?.let { views.setOnClickPendingIntent(R.id.widget_root, it) }
+        setDirection(context, views)
 
         views.setTextViewText(R.id.widget_name, data.reading.name)
         views.setTextViewText(R.id.widget_time, if (refreshing) "…" else data.time)
@@ -480,6 +481,7 @@ abstract class HomeWidget : AppWidgetProvider() {
         message: String,
     ) {
         val views = RemoteViews(context.packageName, R.layout.widget_message)
+        setDirection(context, views)
         views.setTextViewText(R.id.widget_name, server?.name ?: context.getString(R.string.app_name))
         views.setTextViewText(R.id.widget_message, message)
         // Unconfigured, a tap is how it gets configured; otherwise it opens
@@ -537,6 +539,15 @@ abstract class HomeWidget : AppWidgetProvider() {
         return PendingIntent.getBroadcast(context, appWidgetId, refresh, immutable)
     }
 
+    /**
+     * The direction of the language the widget's text is in. The launcher lays
+     * it out in its own — the system's — so an app language set apart from
+     * the system's (Android 13+) put Persian text in a left-to-right widget.
+     */
+    private fun setDirection(context: Context, views: RemoteViews) {
+        views.setInt(R.id.widget_root, "setLayoutDirection", context.resources.configuration.layoutDirection)
+    }
+
     // MARK: - Reading a metric
 
     private fun percentOf(metric: WidgetMetric, data: Data): Double? = when (metric) {
@@ -546,8 +557,15 @@ abstract class HomeWidget : AppWidgetProvider() {
         WidgetMetric.NETWORK -> null
     }
 
+    /**
+     * [text] as one left-to-right run (an isolate): a reading set in a
+     * right-to-left sentence otherwise has its arrows and "%" placed by the
+     * surrounding text ("%76", "1.2k ↑9.8k↓"). Invisible in a left-to-right one.
+     */
+    private fun ltr(text: String) = "\u2066$text\u2069"
+
     private fun percentText(value: Double?): String =
-        value?.let { String.format(Locale.US, "%.0f%%", it) } ?: "--"
+        ltr(value?.let { String.format(Locale.US, "%.0f%%", it) } ?: "--")
 
     /**
      * A byte count in as few glyphs as reads well: "340k", "1.2m". One
@@ -574,25 +592,26 @@ abstract class HomeWidget : AppWidgetProvider() {
     private fun rate(bytesPerSecond: Double?): String =
         bytesPerSecond?.let { "${compact(it)}/s" } ?: "--"
 
+    /** Each direction its own run, so a stacked meter can split them at the space. */
     private fun valueText(metric: WidgetMetric, data: Data, long: Boolean): String {
         if (metric.isPercent) return percentText(percentOf(metric, data))
         val last = data.history.lastOrNull()
-        if (long) return "↓ ${rate(last?.netRx)}  ↑ ${rate(last?.netTx)}"
+        if (long) return "${ltr("↓ ${rate(last?.netRx)}")}  ${ltr("↑ ${rate(last?.netTx)}")}"
         val down = last?.netRx?.let { compact(it) } ?: "--"
         val up = last?.netTx?.let { compact(it) } ?: "--"
-        return "↓$down ↑$up"
+        return "${ltr("↓$down")} ${ltr("↑$up")}"
     }
 
     private fun heroValue(metric: WidgetMetric, data: Data): String =
-        if (metric.isPercent) percentText(percentOf(metric, data)) else rate(data.history.lastOrNull()?.netRx)
+        if (metric.isPercent) percentText(percentOf(metric, data)) else ltr(rate(data.history.lastOrNull()?.netRx))
 
     /** What the big number is, and the detail that fits under it. */
     private fun heroCaption(context: Context, metric: WidgetMetric, data: Data): String {
         val name = context.getString(metric.labelRes)
         val detail = when (metric) {
-            WidgetMetric.MEMORY -> data.reading.memText
-            WidgetMetric.DISK -> data.reading.diskText
-            WidgetMetric.NETWORK -> "↑ ${rate(data.history.lastOrNull()?.netTx)}"
+            WidgetMetric.MEMORY -> ltr(data.reading.memText)
+            WidgetMetric.DISK -> ltr(data.reading.diskText)
+            WidgetMetric.NETWORK -> ltr("↑ ${rate(data.history.lastOrNull()?.netTx)}")
             WidgetMetric.CPU -> null
         }
         return if (detail.isNullOrEmpty()) name else "$name · $detail"

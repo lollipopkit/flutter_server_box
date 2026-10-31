@@ -9,6 +9,7 @@ import 'l10n_az.dart';
 import 'l10n_de.dart';
 import 'l10n_en.dart';
 import 'l10n_es.dart';
+import 'l10n_fa.dart';
 import 'l10n_fr.dart';
 import 'l10n_id.dart';
 import 'l10n_it.dart';
@@ -111,6 +112,7 @@ abstract class AppLocalizations {
     Locale('de'),
     Locale('en'),
     Locale('es'),
+    Locale('fa'),
     Locale('fr'),
     Locale('id'),
     Locale('it'),
@@ -10369,6 +10371,7 @@ class _AppLocalizationsDelegate
     'de',
     'en',
     'es',
+    'fa',
     'fr',
     'id',
     'it',
@@ -10409,6 +10412,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
       return AppLocalizationsEn();
     case 'es':
       return AppLocalizationsEs();
+    case 'fa':
+      return AppLocalizationsFa();
     case 'fr':
       return AppLocalizationsFr();
     case 'id':

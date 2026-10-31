@@ -59,6 +59,7 @@
         credential on the wire for a server whose owner never agreed to it.
     -->
     <application
+        android:supportsRtl="true"
         android:label="@string/app_name"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
