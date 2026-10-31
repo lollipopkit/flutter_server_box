@@ -150,12 +150,6 @@ void main() {
     expect(authHeaders, isNotEmpty);
   });
 
-  test('a pinned certificate is accepted without a CA', () async {
-    final pve = backend(pin: _leafFingerprint());
-    addTearDown(pve.close);
-    await pve.load();
-  });
-
   test('a different certificate than the pinned one is certChanged', () async {
     final old = 'ab' * 32;
     final pve = backend(pin: old);

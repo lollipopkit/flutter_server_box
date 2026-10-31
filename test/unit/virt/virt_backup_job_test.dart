@@ -14,22 +14,6 @@ const _pool = VirtStoragePool(
   type: 'dir',
   content: ['backup', 'iso', 'images'],
 );
-const _shared = VirtStoragePool(
-  id: 'pve/nfs',
-  name: 'nfs-backup',
-  node: 'pve',
-  type: 'nfs',
-  content: ['backup', 'images'],
-  shared: true,
-);
-const _backupOnly = VirtStoragePool(
-  id: 'pve/local2',
-  name: 'local',
-  node: 'pve',
-  type: 'dir',
-  content: ['backup', 'iso'],
-);
-
 void main() {
   setUpAll(initRustLibForTest);
 
@@ -76,8 +60,6 @@ void main() {
   });
 
   group('a clone target', () {
-    const empty = <VirtStoragePool>[];
-
     test('a linked clone cannot name a storage or a node', () {
       expect(
         virtCloneStorageIssue(
@@ -99,76 +81,10 @@ void main() {
       );
     });
 
-    test('a storage that is not there, or holds no images', () {
-      expect(
-        virtCloneStorageIssue(
-          storages: const [_pool],
-          storage: 'gone',
-          full: true,
-        ),
-        VirtCreateIssue.cloneStorage,
-      );
-      expect(
-        virtCloneStorageIssue(
-          storages: const [_backupOnly],
-          storage: 'local',
-          full: true,
-        ),
-        VirtCreateIssue.cloneStorageContent,
-      );
-      expect(
-        virtCloneStorageIssue(
-          storages: empty,
-          storage: null,
-          full: true,
-        ),
-        isNull,
-        reason: 'no target picked is the source\'s own storage',
-      );
-    });
-
-    test('another node needs a shared storage', () {
-      expect(
-        virtCloneStorageIssue(
-          storages: const [_pool],
-          storage: 'local',
-          full: true,
-          targetNode: 'pve2',
-        ),
-        VirtCreateIssue.cloneStorageShared,
-      );
-      expect(
-        virtCloneStorageIssue(
-          storages: const [_shared],
-          storage: 'nfs-backup',
-          full: true,
-          targetNode: 'pve2',
-        ),
-        isNull,
-      );
-      // The same storage on the source's own node is fine either way.
-      expect(
-        virtCloneStorageIssue(
-          storages: const [_pool],
-          storage: 'local',
-          full: true,
-          targetNode: 'pve',
-        ),
-        VirtCreateIssue.cloneStorageShared,
-        reason: 'the check is about the target node, not the source one',
-      );
-    });
-
     test('a node the host does not have', () {
+      // The rest of the node checks are `sbm_virt`'s (tests/create.rs); this
+      // is the answer crossing into a [VirtCreateIssue].
       const nodes = [VirtNode(name: 'pve'), VirtNode(name: 'pve2')];
-      expect(
-        virtCloneNodeIssue(
-          nodes: nodes,
-          targetNode: 'pve2',
-          sourceNode: 'pve',
-        ),
-        isNull,
-      );
       expect(
         virtCloneNodeIssue(
           nodes: nodes,
@@ -176,16 +92,6 @@ void main() {
           sourceNode: 'pve',
         ),
         VirtCreateIssue.cloneNodeUnknown,
-      );
-      // The source's own node is never a target.
-      expect(
-        virtCloneNodeIssue(nodes: nodes, targetNode: 'pve', sourceNode: 'pve'),
-        isNull,
-      );
-      // Nothing known about the nodes: the host answers.
-      expect(
-        virtCloneNodeIssue(nodes: const [], targetNode: 'x', sourceNode: 'pve'),
-        isNull,
       );
     });
   });

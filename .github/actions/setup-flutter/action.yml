@@ -15,10 +15,76 @@ description: The Flutter this project is built with, in the one place that says 
 #
 # Requires the repository to be checked out first, which every job that sets
 # Flutter up already does.
+#
+# `cache: true` keeps the SDK and the pub cache between runs, restored at the
+# start and saved by a second call with `step: save` once `pub get` has run.
+# Not the setup action's own `cache`: its save cannot be turned off, and a
+# pull request would add its own to the repository's 10 GB; here, as for the
+# build hook cache, only main saves.
+inputs:
+  cache:
+    description: "Restore the SDK and pub cache, and save them with `step: save`"
+    required: false
+    default: "false"
+  step:
+    description: "`restore` to set Flutter up, `save` to save the caches after it"
+    required: false
+    default: restore
+
 runs:
   using: composite
   steps:
-    - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+    # The one place the version is said.
+    - name: Pick the Flutter version
+      shell: bash
+      run: |
+        echo "SBM_FLUTTER_CHANNEL=stable" >> "$GITHUB_ENV"
+        echo "SBM_FLUTTER_VERSION=3.47.8" >> "$GITHUB_ENV"
+
+    # Where the SDK and pub cache go, and their keys, without installing.
+    - id: where
+      if: inputs.cache == 'true'
+      uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
       with:
-        channel: stable
-        flutter-version: 3.47.8
+        channel: ${{ env.SBM_FLUTTER_CHANNEL }}
+        flutter-version: ${{ env.SBM_FLUTTER_VERSION }}
+        dry-run: true
+
+    - name: Restore the Flutter SDK
+      if: inputs.cache == 'true' && inputs.step == 'restore'
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ steps.where.outputs.CACHE-PATH }}
+        key: ${{ steps.where.outputs.CACHE-KEY }}
+
+    - name: Restore the pub cache
+      if: inputs.cache == 'true' && inputs.step == 'restore'
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ steps.where.outputs.PUB-CACHE-PATH }}
+        key: ${{ steps.where.outputs.PUB-CACHE-KEY }}-${{ hashFiles('**/pubspec.lock') }}
+        restore-keys: ${{ steps.where.outputs.PUB-CACHE-KEY }}-
+
+    # Skips the download when the SDK was restored above.
+    - if: inputs.step == 'restore'
+      uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+      with:
+        channel: ${{ env.SBM_FLUTTER_CHANNEL }}
+        flutter-version: ${{ env.SBM_FLUTTER_VERSION }}
+
+    # After the job has used it, so what `flutter` downloads on first use
+    # (engine artifacts, the Dart SDK) is in it too. A key that already exists
+    # is a warning, not a failure.
+    - name: Save the Flutter SDK
+      if: inputs.cache == 'true' && inputs.step == 'save' && github.ref == 'refs/heads/main'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ steps.where.outputs.CACHE-PATH }}
+        key: ${{ steps.where.outputs.CACHE-KEY }}
+
+    - name: Save the pub cache
+      if: inputs.cache == 'true' && inputs.step == 'save' && github.ref == 'refs/heads/main'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ steps.where.outputs.PUB-CACHE-PATH }}
+        key: ${{ steps.where.outputs.PUB-CACHE-KEY }}-${{ hashFiles('**/pubspec.lock') }}

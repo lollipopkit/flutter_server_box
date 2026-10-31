@@ -476,6 +476,9 @@ fn a_clone_target_linked_storage_and_node() {
     // Another node needs a shared storage.
     assert_eq!(st(&[&local], Some("local"), true, GuestKind::Qemu, Some("pve2")), Some(Issue::CloneStorageShared));
     assert_eq!(st(&[&shared], Some("nfs-backup"), true, GuestKind::Qemu, Some("pve2")), None);
+    // The same storage on the source's own node is held to it too: the check
+    // is about the target node, not the source one.
+    assert_eq!(st(&[&local], Some("local"), true, GuestKind::Qemu, Some("pve")), Some(Issue::CloneStorageShared));
     // A container's disks are `rootdir`.
     let ct = pve_pool("pve/ct", "dir", &["rootdir"]);
     assert_eq!(st(&[&ct], Some("ct"), true, GuestKind::Lxc, None), None);

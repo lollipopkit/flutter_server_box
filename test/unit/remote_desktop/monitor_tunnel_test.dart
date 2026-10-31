@@ -51,6 +51,18 @@ class _FakeAgent {
   /// moving, which fills the socket's buffers until the writer is held back.
   bool stalled = false;
 
+  /// The connections [stalled] stopped reading.
+  final _paused = <StreamSubscription<dynamic>>[];
+
+  /// Reads again what [stalled] stopped, so what is queued drains.
+  void unstall() {
+    stalled = false;
+    for (final sub in _paused) {
+      sub.resume();
+    }
+    _paused.clear();
+  }
+
   static Future<_FakeAgent> start({String? target}) async {
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     final agent = _FakeAgent._(server, target);
@@ -109,7 +121,10 @@ class _FakeAgent {
             return;
           }
           socket.add(jsonEncode({'type': 'ready'}));
-          if (stalled) sub.pause();
+          if (stalled) {
+            sub.pause();
+            _paused.add(sub);
+          }
           return;
         }
         // Bytes going the other way are echoed back with a marker, so a test
@@ -311,10 +326,15 @@ void main() {
       await Future<void>.delayed(const Duration(seconds: 2));
       expect(read, lessThan(64 << 20), reason: 'no more than the buffers hold');
 
-      await channel.close();
+      // Not awaited yet: on a stalled link `close` waits out its grace period
+      // for the socket, and what this checks is that reading stops at once.
+      final closing = channel.close();
       final atClose = read;
       await Future<void>.delayed(const Duration(milliseconds: 500));
       expect(read, lessThanOrEqualTo(atClose + (1 << 20)));
+      // The link moving again is what lets the socket finish closing.
+      agent.unstall();
+      await closing;
     });
   });
 

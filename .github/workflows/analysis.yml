@@ -586,7 +586,10 @@ jobs:
           submodules: recursive
           persist-credentials: false
       
+      # Restored only: `tests` saves the same SDK and pub cache.
       - uses: ./.github/actions/setup-flutter
+        with:
+          cache: true
 
       - name: Install dependencies
         run: flutter pub get
@@ -607,6 +610,10 @@ jobs:
   # every suite (test_core's `_shardSuite`), so each shard still loads and
   # compiles all of them. Tried first; every shard took as long as the whole
   # run had.
+  #
+  # Not one entrypoint importing every file either — tried: the suites share
+  # one isolate, run one after another, and two dozen of them depend on a
+  # fresh process.
   tests:
     name: tests (${{ matrix.shard }}/3)
     needs: changes
@@ -627,24 +634,15 @@ jobs:
           persist-credentials: false
 
       - uses: ./.github/actions/setup-flutter
+        with:
+          cache: true
 
       - name: Install dependencies
         run: flutter pub get
 
-      # The `cargo build` below, not the build hook. One shard saves; all
-      # three build the same thing.
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-        with:
-          shared-key: flutter-tests-ffi
-          save-if: ${{ github.ref == 'refs/heads/main' && matrix.shard == 0 }}
-
-      # FFI-dependent suites (frb_parser/windows/server_status_update_req...)
-      # load the dylib from target/debug via test/helpers/rust_lib_helper.dart
-      - name: Build native FFI library
-        run: cargo build -p sbm_ffi
-
-      # `flutter test` builds sbm_ffi again through the build hook, for a
-      # library no unit test loads (they take the one built above).
+      # `flutter test` builds sbm_ffi through the build hook, and the
+      # FFI-dependent suites load that build (`test/helpers/rust_lib_helper.dart`)
+      # — no `cargo build` of a second copy here.
       - uses: ./.github/actions/build-hook-cache
         with:
           step: restore
@@ -653,11 +651,15 @@ jobs:
       # test file lands in exactly one shard. `git ls-files` rather than a
       # directory walk: only what is checked in, the same set `flutter test`
       # finds on its own, and a pathspec `*` crosses directories.
+      #
+      # Not the end-to-end suites: they skip without a host to reach, and
+      # compiling one costs as much as any other file.
       - name: Run tests
         shell: bash
         run: |
           set -euo pipefail
-          mapfile -t files < <(git ls-files -- 'test/*_test.dart' | sort \
+          mapfile -t files < <(git ls-files -- 'test/*_test.dart' \
+            ':!test/e2e/*' ':!test/*_e2e_test.dart' | sort \
             | awk -v n=3 -v i=${{ matrix.shard }} '(NR - 1) % n == i')
           echo "${#files[@]} test files in this shard"
           flutter test "${files[@]}"
@@ -666,4 +668,10 @@ jobs:
       - if: matrix.shard == 0
         uses: ./.github/actions/build-hook-cache
         with:
+          step: save
+
+      - if: matrix.shard == 0
+        uses: ./.github/actions/setup-flutter
+        with:
+          cache: true
           step: save
