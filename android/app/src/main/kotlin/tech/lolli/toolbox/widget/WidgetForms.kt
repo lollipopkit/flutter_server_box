@@ -116,7 +116,13 @@ object WidgetForms {
      * and letters, a whole one for CJK.
      */
     fun width(text: String, sp: Float, fontScale: Float): Float =
-        text.sumOf { (if (it.code >= 0x2E80) 1.0 else 0.56) }.toFloat() * sp * fontScale
+        text.sumOf {
+            when {
+                it.code in 0x2066..0x2069 -> 0.0 // bidi isolates, invisible
+                it.code >= 0x2E80 -> 1.0
+                else -> 0.56
+            }
+        }.toFloat() * sp * fontScale
 
     /**
      * Sizes in dp, from the layouts' sp at [fontScale] and [content]; with the
