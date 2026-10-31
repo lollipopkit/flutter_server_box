@@ -16,10 +16,7 @@ node_modules/
 *.iws
 .idea/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
+.vscode/
 
 # Flutter/Dart/Pub related
 **/doc/api/
@@ -76,7 +73,6 @@ untranslated.json
 # that checkout.
 more_build_data.json
 
-.vscode/settings.json
 trans.txt
 android/app/.cxx
 .env.release

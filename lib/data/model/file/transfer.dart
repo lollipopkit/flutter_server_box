@@ -57,10 +57,10 @@ class FileTransfer {
 
   /// Whether this needs an isolate of its own.
   ///
-  /// Only SSH does. Its symmetric crypto is pure Dart and would peg the UI
-  /// thread for the length of the transfer — that is the whole reason the
-  /// isolate exists (see `benchmark/README.md`). A copy within this device has
-  /// no crypto at all, and a monitor agent is reached over HTTPS, whose crypto
+  /// Only SSH does. dartssh2 frames every packet in Dart, and ChaCha20-Poly1305
+  /// is still pointycastle's (`crates/sbm_ffi/CLAUDE.md`), so a transfer would
+  /// load the UI thread for its whole length. A copy within this device has no
+  /// crypto at all, and a monitor agent is reached over HTTPS, whose crypto
   /// is native. Starting an isolate for either would cost more than it saved.
   bool get needsIsolate => from is SshFileRef || to is SshFileRef;
 
