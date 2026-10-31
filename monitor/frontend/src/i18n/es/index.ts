@@ -52,6 +52,8 @@ const es = {
 	back: 'Atrás',
 	swap: 'Swap',
 	disks: 'Discos',
+	blockDevices: 'Dispositivos de bloque',
+	notMounted: 'Sin montar',
 	interfaces: 'Interfaces',
 	connected: 'Conectado',
 	disconnected: 'Desconectado',

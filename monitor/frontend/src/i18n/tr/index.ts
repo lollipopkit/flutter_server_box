@@ -52,6 +52,8 @@ const tr = {
 	back: 'Geri',
 	swap: 'Takas',
 	disks: 'Diskler',
+	blockDevices: 'Blok aygıtları',
+	notMounted: 'Bağlı değil',
 	interfaces: 'Arayüzler',
 	connected: 'Bağlı',
 	disconnected: 'Bağlantı kesildi',

@@ -52,6 +52,8 @@ const zh_CN = {
 	back: '返回',
 	swap: '交换分区',
 	disks: '磁盘',
+	blockDevices: '块设备',
+	notMounted: '未挂载',
 	interfaces: '网卡',
 	connected: '已连接',
 	disconnected: '连接断开',

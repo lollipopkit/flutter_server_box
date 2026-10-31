@@ -52,6 +52,8 @@ const en = {
 	back: 'Back',
 	swap: 'Swap',
 	disks: 'Disks',
+	blockDevices: 'Block devices',
+	notMounted: 'Not mounted',
 	interfaces: 'Interfaces',
 	connected: 'Connected',
 	disconnected: 'Disconnected',

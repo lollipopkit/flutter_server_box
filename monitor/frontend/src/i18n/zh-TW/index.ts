@@ -52,6 +52,8 @@ const zh_TW = {
 	back: '返回',
 	swap: '交換分割區',
 	disks: '磁碟',
+	blockDevices: '區塊裝置',
+	notMounted: '未掛載',
 	interfaces: '網卡',
 	connected: '已連接',
 	disconnected: '連線中斷',

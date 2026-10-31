@@ -52,6 +52,8 @@ const ko = {
 	back: '뒤로',
 	swap: '스왑',
 	disks: '디스크',
+	blockDevices: '블록 장치',
+	notMounted: '마운트되지 않음',
 	interfaces: '인터페이스',
 	connected: '연결됨',
 	disconnected: '연결 끊김',

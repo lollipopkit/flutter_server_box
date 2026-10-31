@@ -5,6 +5,7 @@ import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/app/scripts/script_consts.dart';
 import 'package:server_box/data/model/server/amd.dart';
 import 'package:server_box/data/model/server/battery.dart';
+import 'package:server_box/data/model/server/block_device.dart';
 import 'package:server_box/data/model/server/conn.dart';
 import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
@@ -374,6 +375,9 @@ Disk _diskFromJson(Map<String, dynamic> d) {
 }
 
 void _applyDisks(ServerStatus ss, Map<String, dynamic> status) {
+  ss.blockDevices = ((status['block_devices'] as List?) ?? const [])
+      .map((d) => BlockDevice.fromJson(d as Map<String, dynamic>))
+      .toList();
   ss.disk = (status['disks'] as List)
       .map((d) => _diskFromJson(d as Map<String, dynamic>))
       .toList();

@@ -62,6 +62,9 @@ pub struct ServerStatus {
     pub mem: Option<Memory>,
     pub swap: Option<Swap>,
     pub disks: Vec<Disk>,
+    /// Every block device, mounted or not (Linux `lsblk`). Sizes in bytes,
+    /// unlike [`disks`](ServerStatus::disks).
+    pub block_devices: Vec<BlockDevice>,
     pub net: Vec<NetIface>,
     pub temps: Temperatures,
     pub conn: Option<Conn>,
@@ -168,6 +171,7 @@ pub fn parse_status_opts(
             status.mem = linux::parse_mem(get(commands::MEM));
             status.swap = linux::parse_swap(get(commands::MEM));
             status.disks = linux::parse_disk(get(commands::DISK));
+            status.block_devices = linux::parse_block_devices(get(commands::DISK));
             status.net = linux::parse_net(get(commands::NET));
             status.temps = linux::parse_temps(
                 get(commands::TEMP_TYPE),

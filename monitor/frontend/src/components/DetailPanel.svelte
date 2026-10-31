@@ -4,7 +4,7 @@
   import LineChart from './LineChart.svelte'
   import { LL } from '../i18n/i18n-svelte'
   import { fmtBytes, fmtBytesPerSec, fmtGpuPower, fmtPercent } from '../lib/format'
-  import type { DiskDetail, DiskIoMetrics, HistoryPoint, IfaceMetrics, SystemMetrics } from '../types'
+  import type { BlockDevice, DiskDetail, DiskIoMetrics, HistoryPoint, IfaceMetrics, SystemMetrics } from '../types'
 
   export type DetailKind = 'cpu' | 'memory' | 'disk' | 'network' | 'gpu' | 'battery' | 'sensors' | 'smart'
 
@@ -49,6 +49,20 @@
       }
     }),
   )
+
+  // Depth-first, so each part sits under its disk. `in_use` is the agent's
+  // answer: it also counts what is built on a device and LVM/RAID members.
+  const blockRows = $derived.by(() => {
+    const rows: { d: BlockDevice; depth: number }[] = []
+    const walk = (list: BlockDevice[], depth: number) => {
+      for (const d of list) {
+        rows.push({ d, depth })
+        walk(d.children, depth + 1)
+      }
+    }
+    walk(m?.block_devices ?? [], 0)
+    return rows
+  })
 
   type DiskIoSortKey = 'name' | 'read' | 'write'
   let diskioSort = $state<Sort<DiskIoSortKey>>({ key: 'name', dir: 1 })
@@ -320,6 +334,33 @@
                 <td class="py-2 pl-4 text-right whitespace-nowrap text-muted-fg">
                   {rate ? fmtBytesPerSec(rate.write_bytes_per_sec) : '--'}
                 </td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </Card>
+    {/if}
+    {#if blockRows.length}
+      <Card>
+        <table class="w-full text-sm table-fixed">
+          <thead>
+            <tr class="border-b border-line">
+              <th class="py-2 pr-4 text-left font-medium text-muted-fg">{$LL.blockDevices()}</th>
+              <th class="py-2 text-right font-medium text-muted-fg w-24 sm:w-28"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-line">
+            {#each blockRows as { d, depth } (d.path || d.name)}
+              <tr>
+                <td class="py-2 pr-4" style:padding-left={`${depth * 1.25}rem`}>
+                  <span class="block text-fg truncate" title={d.path}>
+                    {d.name}{d.model ? ` · ${d.model}` : ''}
+                  </span>
+                  <span class="block text-xs text-faint-fg truncate">
+                    {[d.kind, d.tran, d.fs_type].filter(Boolean).join(' · ')}{d.mount ? ` · ${d.mount}` : d.in_use ? '' : ` · ${$LL.notMounted()}`}
+                  </span>
+                </td>
+                <td class="py-2 text-right whitespace-nowrap text-muted-fg">{fmtBytes(d.size)}</td>
               </tr>
             {/each}
           </tbody>

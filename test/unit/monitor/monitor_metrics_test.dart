@@ -42,6 +42,72 @@ void main() {
     expect(metrics.diskio.single.dev, 'sda');
   });
 
+  group('the block devices (#1829)', () {
+    Map<String, Object?> body(Map<String, Object?> extra) => {
+      'timestamp': '2026-08-22T00:00:00Z',
+      'server_name': 'test-server',
+      'cpu_usage': 0.0,
+      'memory': const {'total': 1, 'used': 0, 'free': 1, 'usage_percent': 0.0},
+      'swap': const {'total': 0, 'used': 0, 'usage_percent': 0.0},
+      'disk': const {'total': 1, 'used': 0, 'free': 1, 'usage_percent': 0.0},
+      'network': const {'rx_bytes': 0, 'tx_bytes': 0},
+      ...extra,
+    };
+
+    test('arrive as the agent serialises them, unmounted included', () {
+      final status = applyMonitorMetrics(
+        InitStatus.status,
+        MonitorMetrics.fromJson(
+          body({
+            'block_devices': const [
+              {
+                'name': 'sda',
+                'path': '/dev/sda',
+                'kind': 'disk',
+                'model': 'WDC WD40EFRX',
+                'size': 4000787030016,
+                'tran': 'sata',
+                'fs_type': null,
+                'mount': null,
+                'in_use': true,
+                'children': [
+                  {
+                    'name': 'sda1',
+                    'path': '/dev/sda1',
+                    'kind': 'part',
+                    'model': null,
+                    'size': 4000785104896,
+                    'tran': null,
+                    'fs_type': 'ext4',
+                    'mount': null,
+                    'in_use': false,
+                    'children': [],
+                  },
+                ],
+              },
+            ],
+          }),
+        ),
+      );
+
+      final sda = status.blockDevices.single;
+      expect(sda.model, 'WDC WD40EFRX');
+      expect(sda.size, 4000787030016);
+      expect(sda.children.single.fsType, 'ext4');
+      expect(sda.inUse, isTrue);
+      expect(sda.children.single.mount, isNull);
+      expect(sda.children.single.inUse, isFalse);
+    });
+
+    test('and an agent predating them sends none', () {
+      final status = applyMonitorMetrics(
+        InitStatus.status,
+        MonitorMetrics.fromJson(body(const {})),
+      );
+      expect(status.blockDevices, isEmpty);
+    });
+  });
+
   group('the os-release identifiers', () {
     /// The smallest body the agent can send, so a case here says what it adds
     /// and nothing else.

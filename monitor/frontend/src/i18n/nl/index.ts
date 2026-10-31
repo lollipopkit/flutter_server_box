@@ -52,6 +52,8 @@ const nl = {
 	back: 'Terug',
 	swap: 'Swap',
 	disks: 'Schijven',
+	blockDevices: 'Blokapparaten',
+	notMounted: 'Niet aangekoppeld',
 	interfaces: 'Interfaces',
 	connected: 'Verbonden',
 	disconnected: 'Verbroken',

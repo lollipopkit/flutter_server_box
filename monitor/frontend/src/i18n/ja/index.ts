@@ -52,6 +52,8 @@ const ja = {
 	back: '戻る',
 	swap: 'スワップ',
 	disks: 'ディスク',
+	blockDevices: 'ブロックデバイス',
+	notMounted: '未マウント',
 	interfaces: 'インターフェース',
 	connected: '接続中',
 	disconnected: '切断',

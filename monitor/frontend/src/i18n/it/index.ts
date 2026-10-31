@@ -52,6 +52,8 @@ const it = {
 	back: 'Indietro',
 	swap: 'Swap',
 	disks: 'Dischi',
+	blockDevices: 'Dispositivi a blocchi',
+	notMounted: 'Non montato',
 	interfaces: 'Interfacce',
 	connected: 'Connesso',
 	disconnected: 'Disconnesso',
