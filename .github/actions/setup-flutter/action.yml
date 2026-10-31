@@ -34,19 +34,25 @@ inputs:
 runs:
   using: composite
   steps:
-    # The one place the version is said.
-    - name: Pick the Flutter version
+    # Read from the install step below, which is the one place the version is
+    # said: `scripts/release/android-build-env.sh` (the release and F-Droid
+    # builds) reads that same line, and a second copy of it would be two
+    # answers to that read.
+    - name: Read the Flutter version
       shell: bash
       run: |
-        echo "SBM_FLUTTER_CHANNEL=stable" >> "$GITHUB_ENV"
-        echo "SBM_FLUTTER_VERSION=3.47.8" >> "$GITHUB_ENV"
+        version="$(sed -n -E \
+          's/^[[:space:]]*flutter-version:[[:space:]]*([^[:space:]]+)[[:space:]]*$/\1/p' \
+          "$GITHUB_ACTION_PATH/action.yml" | tr -d "\"'")"
+        [ -n "$version" ] || { echo "no flutter-version in $GITHUB_ACTION_PATH/action.yml" >&2; exit 1; }
+        echo "SBM_FLUTTER_VERSION=$version" >> "$GITHUB_ENV"
 
     # Where the SDK and pub cache go, and their keys, without installing.
     - id: where
       if: inputs.cache == 'true'
       uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
       with:
-        channel: ${{ env.SBM_FLUTTER_CHANNEL }}
+        channel: stable
         flutter-version: ${{ env.SBM_FLUTTER_VERSION }}
         dry-run: true
 
@@ -69,8 +75,8 @@ runs:
     - if: inputs.step == 'restore'
       uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
       with:
-        channel: ${{ env.SBM_FLUTTER_CHANNEL }}
-        flutter-version: ${{ env.SBM_FLUTTER_VERSION }}
+        channel: stable
+        flutter-version: 3.47.8
 
     # After the job has used it, so what `flutter` downloads on first use
     # (engine artifacts, the Dart SDK) is in it too. A key that already exists
