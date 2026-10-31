@@ -326,11 +326,18 @@ class _MonitorFilePageState extends ConsumerState<_MonitorFilePage> {
       context,
       args: fileEditorArgs(
         path: localPath,
+        // Caught inside, so one failed save does not leave the chain failed
+        // and skip every save after it.
         onSave: (_) => saving = saving.then((_) async {
-          final saved = await _saveBack(entry.name, path, localPath, version);
-          if (saved == null) return;
-          version = saved.version;
-          await handle.refresh();
+          try {
+            final saved = await _saveBack(entry.name, path, localPath, version);
+            if (saved == null) return;
+            version = saved.version;
+            await handle.refresh();
+          } catch (e, s) {
+            Loggers.app.warning('Failed to save $path', e, s);
+            Toast.error(libL10n.fail, body: '$e');
+          }
         }),
       ),
     );
