@@ -58,6 +58,13 @@ final class AndroidSystemSync {
         ),
       )
       ..add(
+        _ref.listenManual<bool>(
+          serversProvider.select((s) => s.servers.isNotEmpty),
+          (_, has) => TermSessionManager.setHasServers(has),
+          fireImmediately: true,
+        ),
+      )
+      ..add(
         _ref.listenManual(
           fileTransferProvider,
           (_, _) => _scheduleTransfers(),

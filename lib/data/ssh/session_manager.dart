@@ -92,13 +92,8 @@ abstract final class TermSessionManager {
         onNotificationPermissionGranted: _sync,
         onBackgrounded: setBackgrounded,
       );
-      // The native side starts the keep-alive on `onPause` from this: the
-      // `activityPaused` round trip can land after the app is background.
-      final bgRun = Stores.setting.bgRun;
-      void pushBgRun() =>
-          unawaited(MethodChans.setKeepAliveInBackground(bgRun.fetch()));
-      pushBgRun();
-      bgRun.listenable().addListener(pushBgRun);
+      _pushKeepAlive();
+      Stores.setting.bgRun.listenable().addListener(_pushKeepAlive);
     }
     if (isIOS) {
       // A Live Activity can outlive a killed process. Clear any orphan left
@@ -270,8 +265,9 @@ abstract final class TermSessionManager {
   ///
   /// Two reasons, either of which is enough. Something is connected, which is
   /// what the notification is *for*. Or the app is in the background with
-  /// [SettingStore.bgRun] on, which is what that switch has always said it
-  /// means — "the program will try to run in the background" — and never did:
+  /// [SettingStore.bgRun] on and a server to keep, which is what that switch
+  /// has always said it means — "the program will try to run in the
+  /// background" — and never did:
   /// it only kept the poll timer scheduled, and a frozen process runs no
   /// timers.
   ///
@@ -289,7 +285,7 @@ abstract final class TermSessionManager {
   static bool get _serviceWanted =>
       _entries.isNotEmpty ||
       (!_stoodDown &&
-          (_transferring || (_backgrounded && Stores.setting.bgRun.fetch())));
+          (_transferring || (_backgrounded && _keepAliveWanted)));
 
   static var _transferring = false;
 
@@ -298,6 +294,28 @@ abstract final class TermSessionManager {
     if (_transferring == value) return;
     _transferring = value;
     _sync();
+  }
+
+  static var _hasServers = false;
+
+  /// Whether any server is configured, as `AndroidSystemSync` sees them.
+  static void setHasServers(bool value) {
+    if (_hasServers == value) return;
+    _hasServers = value;
+    _pushKeepAlive();
+    _sync();
+  }
+
+  /// Keeping the process alive in the background is for the servers: their
+  /// status and their reconnects. With none there is nothing to keep.
+  static bool get _keepAliveWanted =>
+      _hasServers && Stores.setting.bgRun.fetch();
+
+  /// The native side starts the keep-alive on `onPause` from this: the
+  /// `activityPaused` round trip can land after the app is background.
+  static void _pushKeepAlive() {
+    if (!isAndroid) return;
+    unawaited(MethodChans.setKeepAliveInBackground(_keepAliveWanted));
   }
 
   static Future<void> _syncLatest() async {
