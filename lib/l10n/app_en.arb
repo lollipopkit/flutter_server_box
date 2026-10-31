@@ -600,6 +600,15 @@
     "description": "Help text for the F-Droid release setting or action."
   },
   "fileTooLarge": "File '{file}' too large {size}, max {sizeMax}",
+  "fileChangedOverwrite": "'{file}' changed on the server after it was opened. Overwrite it?",
+  "@fileChangedOverwrite": {
+    "description": "Asked when saving a file that changed on the server since it was opened.",
+    "placeholders": {
+      "file": {
+        "type": "String"
+      }
+    }
+  },
   "@fileTooLarge": {
     "description": "User-facing label or message for file too large.",
     "placeholders": {

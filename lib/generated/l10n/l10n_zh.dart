@@ -468,6 +468,11 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String fileChangedOverwrite(String file) {
+    return '\'$file\' 在打开后已被服务器上的其他操作修改。要覆盖吗？';
+  }
+
+  @override
   String get fileDirGone => '此文件夹已不存在';
 
   @override
@@ -6142,6 +6147,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String fileTooLarge(String file, String size, String sizeMax) {
     return '檔案 \'$file\' 過大 \'$size\'，超過了 $sizeMax';
+  }
+
+  @override
+  String fileChangedOverwrite(String file) {
+    return '\'$file\' 在開啟後已在伺服器上被修改。要覆寫嗎？';
   }
 
   @override

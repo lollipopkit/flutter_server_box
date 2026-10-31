@@ -137,6 +137,25 @@ async fn a_matching_version_writes() {
 }
 
 #[ntex::test]
+async fn a_write_answers_with_the_version_it_left() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("note.txt");
+    std::fs::write(&path, "before").unwrap();
+    let root = std::fs::canonicalize(dir.path()).unwrap();
+    let srv = server(&root.to_string_lossy()).await;
+    let first = version_of(&srv, path.to_str().unwrap()).await;
+
+    let (status, body) = write(&srv, path.to_str().unwrap(), Some(&first), "after, longer").await;
+    assert_eq!(status, 200, "{body}");
+    let next = body["version"].as_str().expect("a version").to_owned();
+
+    // What the editor saves with next time, and the file as it now is.
+    assert_eq!(next, version_of(&srv, path.to_str().unwrap()).await);
+    let (status, _) = write(&srv, path.to_str().unwrap(), Some(&next), "again").await;
+    assert_eq!(status, 200);
+}
+
+#[ntex::test]
 async fn a_mismatched_version_is_refused_and_leaves_the_file_alone() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("note.txt");

@@ -459,21 +459,28 @@ class MonitorHttpClient {
 
   /// Sends [data] to [path]. The agent stages it and renames, so a write that
   /// dies halfway leaves no half-file under the destination's name.
-  Future<void> fsWrite(
+  ///
+  /// With [ifVersion], the `version` the caller last saw: a file changed
+  /// since is left alone and this throws [MonitorHttpErrType.modified].
+  ///
+  /// Answers the `version` the write left, or null from an agent that does
+  /// not report one.
+  Future<String?> fsWrite(
     String path,
     Stream<List<int>> data, {
     int? size,
     Stream<List<int>> Function()? replayData,
+    String? ifVersion,
   }) async {
     // Validate or refresh the token with a replayable request before touching
     // this one-shot body. `_authed` cannot safely retry the PUT itself: a
     // `File.openRead()` stream has already been consumed by the first attempt.
     await fsRoots();
 
-    Future<void> put(Stream<List<int>> body) async {
-      await _session().put<dynamic>(
+    Future<String?> put(Stream<List<int>> body) async {
+      final resp = await _session().put<dynamic>(
         '/api/v1/fs/write',
-        queryParameters: {'path': path},
+        queryParameters: {'path': path, 'if_version': ?ifVersion},
         data: body,
         options: Options(
           // Dio will not set one for a stream, and the agent needs to know
@@ -485,17 +492,18 @@ class MonitorHttpClient {
           },
         ),
       );
+      final answer = resp.data;
+      return answer is Map ? answer['version'] as String? : null;
     }
 
     try {
-      await put(data);
+      return await put(data);
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 && replayData != null) {
         _token = null;
         await _login();
         try {
-          await put(replayData());
-          return;
+          return await put(replayData());
         } on DioException catch (retryError) {
           throw _toMonitorHttpErr(retryError);
         }
@@ -1074,6 +1082,15 @@ class MonitorHttpClient {
     if (e.response?.statusCode == 426) {
       return MonitorHttpErr(
         type: MonitorHttpErrType.clientTooOld,
+        message: e.toString(),
+      );
+    }
+    final body = e.response?.data;
+    if (e.response?.statusCode == 409 &&
+        body is Map &&
+        body['error'] == 'modified') {
+      return MonitorHttpErr(
+        type: MonitorHttpErrType.modified,
         message: e.toString(),
       );
     }

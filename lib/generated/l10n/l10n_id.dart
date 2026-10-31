@@ -502,6 +502,11 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String fileChangedOverwrite(String file) {
+    return '\'$file\' berubah di server setelah dibuka. Timpa?';
+  }
+
+  @override
   String get fileDirGone => 'Folder ini sudah tidak ada';
 
   @override

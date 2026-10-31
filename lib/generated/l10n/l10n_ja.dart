@@ -477,6 +477,11 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String fileChangedOverwrite(String file) {
+    return '\'$file\' は開いた後にサーバー上で変更されました。上書きしますか？';
+  }
+
+  @override
   String get fileDirGone => 'このフォルダはもうありません';
 
   @override

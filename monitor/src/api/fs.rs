@@ -432,7 +432,11 @@ pub async fn write(
         return Ok(failed(e));
     }
     staged.keep();
-    Ok(HttpResponse::Ok().json(&serde_json::json!({ "bytes": written })))
+    // Read while the lock is still held, so it is this write's version and
+    // not that of another of this agent's writers: the editor sends it back
+    // as the next save's `if_version`.
+    let version = version_at(&path).await;
+    Ok(HttpResponse::Ok().json(&serde_json::json!({ "bytes": written, "version": version })))
 }
 
 pub async fn mkdir(
