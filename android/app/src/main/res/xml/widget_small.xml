@@ -1,15 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    The small widget: readings as text, at a fixed 2x2.
-
-    `resizeMode="none"` on purpose. Two fixed sizes, each bound to what it can
-    show, is what replaced one resizable widget whose layout choice the size
-    could silently overrule — a setting that appears to do nothing is worse
-    than a size that cannot be changed.
-
-    `targetCellWidth`/`targetCellHeight` are the API 31+ way of asking for a
-    size in grid cells and are ignored below it, so `minWidth`/`minHeight` say
-    the same thing in dp.
+    TODO: remove once placed widgets of this provider are gone; `widget_status`
+    replaced it. Kept so a widget already on a home screen keeps working, drawn
+    the same way at any size, and hidden from the picker (API 31+).
 -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:minWidth="110dp"
@@ -17,8 +10,11 @@
     android:targetCellWidth="2"
     android:targetCellHeight="2"
     android:updatePeriodMillis="1800000"
-    android:initialLayout="@layout/home_widget"
+    android:initialLayout="@layout/widget_message"
     android:configure="tech.lolli.toolbox.widget.WidgetConfigureActivity"
-    android:resizeMode="none"
+    android:resizeMode="horizontal|vertical"
+    android:minResizeWidth="110dp"
+    android:minResizeHeight="40dp"
+    android:widgetFeatures="reconfigurable|hide_from_picker"
     android:widgetCategory="home_screen">
 </appwidget-provider>

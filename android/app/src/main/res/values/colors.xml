@@ -1,7 +1,17 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <resources>
     <color name="colorLaunch">#EEEEEE</color>
-    <color name="widgetBackground">#FFFFFF</color>
-    <color name="widgetText">#000000</color>
-    <color name="widgetSummaryText">#333333</color>
+
+    <!--
+        The widget's palette, Material 3 roles. These are the fixed fallback
+        for Android 11 and below; `values-v31` maps the same names onto the
+        wallpaper's dynamic colours, light and dark.
+    -->
+    <color name="widgetSurface">#F3EDF7</color>
+    <color name="widgetOnSurface">#1D1B20</color>
+    <color name="widgetOnSurfaceVariant">#49454F</color>
+    <color name="widgetAccent">#6750A4</color>
+    <color name="widgetAccentSecondary">#7D5260</color>
+    <color name="widgetTrack">#E8DEF8</color>
+    <color name="widgetWarn">#B3261E</color>
 </resources>

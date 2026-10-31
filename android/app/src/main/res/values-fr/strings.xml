@@ -23,7 +23,6 @@
     <string name="widget_err_insecure">HTTPS requis</string>
     <string name="widget_err_network">Erreur réseau</string>
     <string name="widget_err_timeout">Délai dépassé</string>
-    <string name="widget_no_history">Aucun historique</string>
     <string name="widget_chart_desc">Graphiques d\'état</string>
     <string name="widget_cpu_desc">Utilisation du processeur</string>
     <string name="widget_mem_desc">Utilisation de la mémoire</string>
@@ -32,6 +31,8 @@
     <string name="widget_refresh_desc">Actualiser</string>
     <string name="widget_small_label">Valeurs du serveur</string>
     <string name="widget_medium_label">Graphiques du serveur</string>
+    <string name="widget_label">État du serveur</string>
+    <string name="widget_description">Processeur, mémoire, disque et réseau en un coup d’œil. Agrandissez-le pour en voir plus.</string>
 
     <string name="process_text_label">Enregistrer comme extrait</string>
     <string name="tile_no_sessions">Aucune session active</string>

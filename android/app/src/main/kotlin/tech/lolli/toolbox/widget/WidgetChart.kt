@@ -1,309 +1,149 @@
 package tech.lolli.toolbox.widget
 
-import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Path
-import android.graphics.Typeface
-import tech.lolli.toolbox.R
+import android.graphics.Shader
 import kotlin.math.max
-import kotlin.math.min
+import kotlin.math.sqrt
 
 /**
- * Draws every chart panel into one bitmap.
+ * Draws one trend as an alpha mask.
  *
- * A `RemoteViews` cannot hold a custom view, so a trend line has to arrive as
- * an image. One image rather than one per panel: each bitmap crosses the
- * binder as part of the update, and the transaction has a hard size limit that
- * a widget cannot recover from — it simply stops updating, with a
- * `TransactionTooLargeException` in the log and nothing on screen to say so.
- *
- * The bitmap is sized from the space the launcher actually gave the widget
- * ([Bounds]), capped, and drawn at `ARGB_8888` because a gradient fill bands
- * visibly at anything less.
+ * A `RemoteViews` cannot hold a custom view, so a trend has to arrive as an
+ * image. It is drawn in alpha only (`ALPHA_8`) and coloured by the
+ * `ImageView`'s `android:tint`, which the launcher resolves: the colour then
+ * follows the wallpaper and the light or dark theme without a redraw, and the
+ * bitmap is a quarter of an `ARGB_8888` one. No text is drawn here — labels and
+ * readings are `TextView`s, so nothing is stretched with the image.
  */
 object WidgetChart {
     /**
-     * The most bitmap one update may carry, in bytes.
+     * The most bitmap one trend may take, in bytes (one per pixel).
      *
-     * The binding constraint is not a side length, it is the size of the whole
-     * `RemoteViews` transaction — around a megabyte, shared with the layout
-     * and with whatever else is in flight, and exceeding it throws
-     * `TransactionTooLargeException` and stops the update reaching the
-     * launcher at all. A per-side cap does not bound that: 900x900 at
-     * `ARGB_8888` is 3.2 MiB, and even a 4x4 widget at 3x density
-     * (about 750x465 after the header) is 1.4 MiB.
-     *
-     * So the budget is on area, and an image over it is drawn smaller and
-     * stretched by the `ImageView` (`scaleType="fitXY"`). These are
-     * antialiased line charts; a modest upscale costs a little softness, and a
-     * widget that silently stops updating costs everything.
+     * The whole `RemoteViews` transaction has a hard limit of about a
+     * megabyte, shared with the layout and with every size the widget is
+     * rendered at; exceeding it throws `TransactionTooLargeException` and the
+     * update never reaches the launcher. A larger trend is drawn smaller and
+     * scaled up by the `ImageView`, which costs a little softness.
      */
-    private const val MAX_BITMAP_BYTES = 640 * 1024
+    private const val MAX_PIXELS = 160 * 1024
 
-    /** `ARGB_8888`, chosen because a translucent fill bands visibly below it. */
-    private const val BYTES_PER_PIXEL = 4
+    private const val STROKE_DP = 2.2f
+    private const val SECONDARY_STROKE_DP = 1.4f
 
-    private const val MAX_PIXELS = MAX_BITMAP_BYTES / BYTES_PER_PIXEL
-
-    data class Series(
-        val label: String,
-        val values: List<Double>,
-        /** Drawn beside [values] with no fill — the outbound half of network. */
-        val secondary: List<Double>,
-        /** Whether the vertical scale is a fixed 0..100. */
-        val isPercent: Boolean,
-        val valueText: String,
-        /**
-         * A shorter spelling of [valueText] for a panel too narrow for it.
-         *
-         * Only network has one worth having: its reading is two byte counts,
-         * and on a one-column widget even the label-less full form is wider
-         * than the panel. Everything else passes its own text through.
-         */
-        val valueShort: String,
-        val color: Int,
-    )
+    /** Opacity of the fill under the line, at its top; it fades to nothing. */
+    private const val FILL_ALPHA = 96
+    private const val SECONDARY_ALPHA = 150
 
     /**
-     * [widthPx] x [heightPx] of panels laid out to match [count].
-     *
-     * Returns null when there is nothing to draw, so the caller hides the
-     * image rather than showing an empty box.
+     * Ceilings for a percentage, the smallest that holds the data with room
+     * to spare. A fixed 0..100 drew a 2% CPU as a flat line on the floor;
+     * scaling to the data alone made noise look like load. The reading beside
+     * the trend is what says how much.
      */
-    /** Between panels, in dp. Wide enough that a right-aligned value and the
-     *  next panel's label cannot run together, which at 3% of the smaller side
-     *  they did. */
-    private const val GAP_DP = 10f
+    private val PERCENT_CEILINGS = listOf(5.0, 10.0, 25.0, 50.0, 100.0)
 
-    /** Label and value type sizes, in dp. */
-    private const val LABEL_DP = 11f
-    private const val VALUE_DP = 15f
-
-    /** Kept clear between a panel's label and its value. */
-    private const val LABEL_GAP_DP = 10f
-
-    /** How small the value may get, relative to the label, before the label is
-     *  dropped instead. A panel has room for one of them at that point, and the
-     *  number is the one worth reading — the colour already says which metric
-     *  it is. */
-    private const val MIN_VALUE_RATIO = 1.0f
-
+    /**
+     * [values] (and [secondary], thinner and unfilled, on the same scale) in
+     * [widthPx] x [heightPx], or null when there are not two points to join.
+     */
     fun render(
-        context: Context,
-        series: List<Series>,
+        values: List<Double>,
+        secondary: List<Double>,
+        isPercent: Boolean,
         widthPx: Int,
         heightPx: Int,
         density: Float,
     ): Bitmap? {
-        if (series.isEmpty()) return null
-        // The scale comes back too, because everything drawn is sized in dp:
-        // shrinking the bitmap for the transaction budget has to shrink the
-        // type with it, or the text would be over-large once the `ImageView`
-        // scales the image back up.
-        val (w, h, scale) = withinBudget(
-            widthPx.coerceAtLeast(1),
-            heightPx.coerceAtLeast(1),
-        )
-        val px = density * scale
+        if (values.size < 2 || widthPx < 2 || heightPx < 2) return null
+        val shrink = within(widthPx, heightPx)
+        val w = (widthPx * shrink).toInt().coerceAtLeast(2)
+        val h = (heightPx * shrink).toInt().coerceAtLeast(2)
+        val px = density * shrink
 
-        val columns = if (series.size >= 4) 2 else if (series.size == 2) 2 else 1
-        val rows = if (series.size >= 4) 2 else 1
+        val peak = (values + secondary).maxOrNull() ?: 0.0
+        val ceiling = if (isPercent) {
+            PERCENT_CEILINGS.firstOrNull { peak * 1.2 <= it } ?: 100.0
+        } else {
+            max(peak * 1.15, 1.0)
+        }
 
-        val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ALPHA_8)
         val canvas = Canvas(bitmap)
-        val gap = GAP_DP * px
-        val cellW = (w - gap * (columns - 1)) / columns
-        val cellH = (h - gap * (rows - 1)) / rows
+        val stroke = STROKE_DP * px
+        // Inset by half a stroke, so the line is not clipped at the edges.
+        val inset = stroke
+        val plot = Plot(inset, inset, w - inset * 2, h - inset * 2, ceiling)
 
-        series.take(columns * rows).forEachIndexed { index, s ->
-            val col = index % columns
-            val row = index / columns
-            drawPanel(
-                context = context,
-                canvas = canvas,
-                series = s,
-                left = col * (cellW + gap),
-                top = row * (cellH + gap),
-                width = cellW,
-                height = cellH,
-                px = px,
+        val line = smooth(plot, values)
+        val area = Path(line).apply {
+            lineTo(plot.left + plot.width, plot.top + plot.height + inset)
+            lineTo(plot.left, plot.top + plot.height + inset)
+            close()
+        }
+        canvas.drawPath(area, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.FILL
+            shader = LinearGradient(
+                0f, plot.top, 0f, h.toFloat(),
+                Color.argb(FILL_ALPHA, 0, 0, 0), Color.argb(0, 0, 0, 0),
+                Shader.TileMode.CLAMP,
             )
+        })
+        canvas.drawPath(line, strokePaint(stroke, 255))
+
+        if (secondary.size >= 2) {
+            canvas.drawPath(smooth(plot, secondary), strokePaint(SECONDARY_STROKE_DP * px, SECONDARY_ALPHA))
         }
         return bitmap
     }
 
+    private class Plot(
+        val left: Float,
+        val top: Float,
+        val width: Float,
+        val height: Float,
+        val ceiling: Double,
+    ) {
+        fun x(i: Int, count: Int) = left + width * i / (count - 1)
+        fun y(v: Double) = top + height - (v.coerceIn(0.0, ceiling) / ceiling * height).toFloat()
+    }
+
     /**
-     * [width] x [height] shrunk to fit [MAX_PIXELS], keeping its shape.
-     *
-     * Proportional rather than clamped per side: the aspect ratio is what the
-     * `ImageView` will stretch back to, and squashing one side alone would
-     * make every chart lean.
+     * Through every point, with each corner rounded by a quadratic through the
+     * midpoints: no overshoot past a reading, which a spline would add.
      */
-    private data class Sized(val width: Int, val height: Int, val scale: Float)
-
-    private fun withinBudget(width: Int, height: Int): Sized {
-        val pixels = width.toLong() * height.toLong()
-        if (pixels <= MAX_PIXELS) return Sized(width, height, 1f)
-        val scale = kotlin.math.sqrt(MAX_PIXELS.toDouble() / pixels.toDouble())
-        return Sized(
-            (width * scale).toInt().coerceAtLeast(1),
-            (height * scale).toInt().coerceAtLeast(1),
-            scale.toFloat(),
-        )
+    private fun smooth(plot: Plot, values: List<Double>): Path {
+        val n = values.size
+        val path = Path()
+        var px = plot.x(0, n)
+        var py = plot.y(values[0])
+        path.moveTo(px, py)
+        for (i in 1 until n) {
+            val x = plot.x(i, n)
+            val y = plot.y(values[i])
+            path.quadTo(px, py, (px + x) / 2, (py + y) / 2)
+            px = x
+            py = y
+        }
+        path.lineTo(px, py)
+        return path
     }
 
-    private fun drawPanel(
-        context: Context,
-        canvas: Canvas,
-        series: Series,
-        left: Float,
-        top: Float,
-        width: Float,
-        height: Float,
-        px: Float,
-    ) {
-        // Sized in dp, not as a fraction of the panel. A fraction made the type
-        // depend on the widget's shape — a tall 2x2 got huge letters, a wide
-        // one got tiny ones — and on how far the bitmap had been scaled.
-        // Capped by the panel so a very short one does not overflow its own
-        // label row.
-        val labelSize = (LABEL_DP * px).coerceAtMost(height * 0.22f)
-        val text = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            typeface = Typeface.MONOSPACE
-            textSize = labelSize
-            color = context.getColor(R.color.widgetSummaryText)
-        }
-
-        val value = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
-            textSize = (VALUE_DP * px).coerceAtMost(height * 0.28f)
-            color = context.getColor(R.color.widgetText)
-            textAlign = Paint.Align.RIGHT
-        }
-
-        // Shrunk to what is left after the label, rather than drawn at a fixed
-        // size and allowed to run into it. Network is the case that forces
-        // this: its reading is two byte counts ("92.9m / 71.2m"), which in a
-        // four-panel grid is wider than the panel itself — and a right-aligned
-        // string that does not fit grows leftwards, straight through the label.
-        val full = value.textSize
-        val floor = labelSize * MIN_VALUE_RATIO
-        val beside = width - text.measureText(series.label) - LABEL_GAP_DP * px
-
-        // The size at which [str] exactly fills [avail], unclamped — so what
-        // follows is decided by measuring rather than by guessing how wide a
-        // string will be. Guessing is what the first attempt at this did, and
-        // it kept the label on a panel that had no room for it.
-        fun sizeFor(str: String, avail: Float): Float {
-            value.textSize = full
-            val needed = value.measureText(str)
-            return if (needed <= avail || needed <= 0f) full else full * (avail / needed)
-        }
-
-        // In order of what is worth keeping: the label and the full reading,
-        // then the label with a shorter one, then the reading alone. A
-        // right-aligned string that does not fit grows leftwards — through the
-        // label, and then out of the panel — so something has to give, and it
-        // should be the least informative thing first.
-        val options = listOf(
-            Triple(true, series.valueText, beside),
-            Triple(true, series.valueShort, beside),
-            Triple(false, series.valueText, width),
-            Triple(false, series.valueShort, width),
-        )
-        var showLabel = false
-        var shown = series.valueShort
-        var size = sizeFor(series.valueShort, width)
-        for ((withLabel, str, avail) in options) {
-            val fitted = sizeFor(str, avail)
-            if (fitted >= floor) {
-                showLabel = withLabel
-                shown = str
-                size = fitted
-                break
-            }
-        }
-        // Never clamped back up: a value that overflows its panel and runs into
-        // the one beside it is worse than a small one.
-        value.textSize = size
-
-        val valueSize = value.textSize
-        // Right-aligned to the panel, not to the bitmap: with four panels the
-        // value of the left one and the label of the right one share a line,
-        // and the gap between the cells is what keeps them apart.
-        val baseline = top + maxOf(labelSize, valueSize)
-        if (showLabel) canvas.drawText(series.label, left, baseline, text)
-        canvas.drawText(shown, left + width, baseline, value)
-
-        val plotTop = baseline + valueSize * 0.4f
-        val plotHeight = height - (plotTop - top)
-        if (plotHeight <= 2f) return
-
-        if (series.values.isEmpty() && series.secondary.isEmpty()) {
-            val hint = Paint(text).apply {
-                textAlign = Paint.Align.CENTER
-                alpha = 140
-            }
-            canvas.drawText(
-                context.getString(R.string.widget_no_history),
-                left + width / 2,
-                plotTop + plotHeight / 2 + labelSize / 3,
-                hint,
-            )
-            return
-        }
-
-        // Both series share one scale so the two lines are comparable. Reading
-        // them against separate maxima would make a quiet upload look like a
-        // busy one.
-        val all = series.values + series.secondary
-        val maxValue = if (series.isPercent) 100.0 else max(all.maxOrNull() ?: 1.0, 1.0)
-
-        drawLine(canvas, series.values, left, plotTop, width, plotHeight, maxValue, series.color, fill = true)
-        drawLine(canvas, series.secondary, left, plotTop, width, plotHeight, maxValue, series.color, fill = false)
+    private fun strokePaint(width: Float, alpha: Int) = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = width
+        strokeCap = Paint.Cap.ROUND
+        strokeJoin = Paint.Join.ROUND
+        color = Color.argb(alpha, 0, 0, 0)
     }
 
-    private fun drawLine(
-        canvas: Canvas,
-        values: List<Double>,
-        left: Float,
-        top: Float,
-        width: Float,
-        height: Float,
-        maxValue: Double,
-        color: Int,
-        fill: Boolean,
-    ) {
-        if (values.size < 2) return
-        val stepX = width / (values.size - 1)
-        fun y(v: Double) = top + height - (v.coerceIn(0.0, maxValue) / maxValue * height).toFloat()
-
-        val path = Path().apply {
-            moveTo(left, y(values[0]))
-            values.forEachIndexed { i, v -> if (i > 0) lineTo(left + stepX * i, y(v)) }
-        }
-
-        if (fill) {
-            val area = Path(path).apply {
-                lineTo(left + width, top + height)
-                lineTo(left, top + height)
-                close()
-            }
-            canvas.drawPath(area, Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                style = Paint.Style.FILL
-                this.color = Color.argb(56, Color.red(color), Color.green(color), Color.blue(color))
-            })
-        }
-
-        canvas.drawPath(path, Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            style = Paint.Style.STROKE
-            strokeWidth = (height * 0.035f).coerceIn(1.5f, 4f)
-            strokeCap = Paint.Cap.ROUND
-            strokeJoin = Paint.Join.ROUND
-            this.color = if (fill) color else Color.argb(150, Color.red(color), Color.green(color), Color.blue(color))
-        })
+    /** The factor that brings [w] x [h] within [MAX_PIXELS], keeping its shape. */
+    private fun within(w: Int, h: Int): Float {
+        val pixels = w.toLong() * h.toLong()
+        return if (pixels <= MAX_PIXELS) 1f else sqrt(MAX_PIXELS.toDouble() / pixels).toFloat()
     }
 }

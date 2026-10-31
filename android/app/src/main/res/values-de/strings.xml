@@ -23,7 +23,6 @@
     <string name="widget_err_insecure">HTTPS erforderlich</string>
     <string name="widget_err_network">Netzwerkfehler</string>
     <string name="widget_err_timeout">Zeitüberschreitung</string>
-    <string name="widget_no_history">Kein Verlauf</string>
     <string name="widget_chart_desc">Statusdiagramme</string>
     <string name="widget_cpu_desc">CPU-Auslastung</string>
     <string name="widget_mem_desc">Speicherauslastung</string>
@@ -32,6 +31,8 @@
     <string name="widget_refresh_desc">Aktualisieren</string>
     <string name="widget_small_label">Server-Messwerte</string>
     <string name="widget_medium_label">Server-Diagramme</string>
+    <string name="widget_label">Serverstatus</string>
+    <string name="widget_description">CPU, Speicher, Festplatte und Netzwerk auf einen Blick. Vergrößern zeigt mehr.</string>
 
     <string name="process_text_label">Als Snippet speichern</string>
     <string name="tile_no_sessions">Keine aktiven Sitzungen</string>

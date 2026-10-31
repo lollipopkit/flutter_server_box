@@ -71,34 +71,3 @@ enum class WidgetMetric {
         }
     }
 }
-
-/**
- * Which of the two widgets this is.
- *
- * Two fixed providers rather than one that resizes. The size and what it can
- * show are the same decision — a 2x2 holds readings and a 4x2 holds charts —
- * so binding them removes the case where a layout was chosen and the size
- * quietly overruled it. It is also what puts both in the launcher's picker as
- * separate entries, which is where someone chooses a widget.
- */
-enum class WidgetKind {
-    /** 2x2, readings as text. Nothing to configure beyond the server. */
-    SMALL,
-
-    /** 4x2, one chart per metric. */
-    MEDIUM;
-
-    val drawsCharts: Boolean get() = this == MEDIUM
-
-    companion object {
-        /**
-         * Every metric, always.
-         *
-         * Not a choice. A medium widget has room for the four panels and no
-         * reason to draw fewer — asking how many charts someone wants is a
-         * question with one sensible answer, and a setting whose only effect
-         * is to show less.
-         */
-        const val CHART_COUNT = 4
-    }
-}

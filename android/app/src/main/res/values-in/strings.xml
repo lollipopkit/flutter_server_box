@@ -23,7 +23,6 @@
     <string name="widget_err_insecure">Perlu HTTPS</string>
     <string name="widget_err_network">Kesalahan jaringan</string>
     <string name="widget_err_timeout">Waktu habis</string>
-    <string name="widget_no_history">Belum ada riwayat</string>
     <string name="widget_chart_desc">Grafik status</string>
     <string name="widget_cpu_desc">Penggunaan CPU</string>
     <string name="widget_mem_desc">Penggunaan memori</string>
@@ -32,6 +31,8 @@
     <string name="widget_refresh_desc">Segarkan</string>
     <string name="widget_small_label">Nilai server</string>
     <string name="widget_medium_label">Grafik server</string>
+    <string name="widget_label">Status server</string>
+    <string name="widget_description">CPU, memori, disk, dan jaringan sekilas. Perbesar untuk melihat lebih banyak.</string>
 
     <string name="process_text_label">Simpan sebagai snippet</string>
     <string name="tile_no_sessions">Tidak ada sesi aktif</string>

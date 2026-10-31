@@ -42,7 +42,6 @@
     <string name="widget_err_insecure">HTTPS required</string>
     <string name="widget_err_network">Network error</string>
     <string name="widget_err_timeout">Timed out</string>
-    <string name="widget_no_history">No history</string>
 
     <!--
         Row labels, matching the abbreviations the iOS widget draws. Not
@@ -50,13 +49,11 @@
         and a translated one would be the only thing on the row wide enough to
         push the value off it.
     -->
-    <string name="widget_row_cpu" translatable="false">CPU</string>
-    <string name="widget_row_mem" translatable="false">Mem</string>
-    <string name="widget_row_disk" translatable="false">Disk</string>
-    <string name="widget_row_net" translatable="false">Net</string>
 
     <string name="widget_small_label">Server readings</string>
     <string name="widget_medium_label">Server charts</string>
+    <string name="widget_label">Server status</string>
+    <string name="widget_description">CPU, memory, disk and network at a glance. Resize it to see more.</string>
 
     <!-- Quick Settings tile, the transfer notification's channel, the text
          selection entry, and what a share that could not be read says. Native,
