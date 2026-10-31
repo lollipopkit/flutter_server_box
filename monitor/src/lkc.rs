@@ -10,9 +10,9 @@
 //!
 //! The access token is refreshed only once due (`sbm_lkc::Tokens::due`), and
 //! [`watch`] does so at start and often enough after that the refresh token
-//! never lapses. A refresh the IdP refuses itself (any 4xx with its own
-//! `error` but a 429: Rauthy says `JwtToken`, `NotFound`, `Forbidden`, never
-//! `invalid_grant`) signs out; anything else keeps the session. A password change
+//! never lapses. A refresh the IdP refuses because the token is gone
+//! (`invalid_grant`, `expired_token`, or one of Rauthy's own words in
+//! `sbm_lkc::GONE`) signs out; anything else keeps the session. A password change
 //! signs out too ([`end_account`]): whoever held the old one may have
 //! approved the sign-in with their own account.
 
@@ -380,10 +380,10 @@ pub async fn session(state: &AppState) -> Option<Session> {
                 }
             }
         }
-        // Never reached the IdP (`sbm_lkc` reads any refusal of its own as
-        // `Rejected` or `Expired`). `TooEarly` is not reached (`due` was
-        // asked above); listed with what keeps the session, since nothing
-        // was sent.
+        // Never reached the IdP, or refused without saying the token is gone
+        // (a clock off, a user disabled for now). `TooEarly` is not reached
+        // (`due` was asked above); listed with what keeps the session, since
+        // nothing was sent.
         Err(e) if matches!(e.failure, Failure::Unreachable | Failure::Refused | Failure::Denied | Failure::TooEarly) => {
             tracing::debug!("LK Cloud: refresh: {e}");
             // Left set, the next read signs out instead: safe either way.

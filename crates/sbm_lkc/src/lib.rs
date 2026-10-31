@@ -426,15 +426,41 @@ fn answer(url: &str, status: u16, body: &[u8]) -> Result<Value, TokenError> {
         return Err(again());
     };
     let text = |name: &str| value[name].as_str().unwrap_or_default().to_string();
-    // Rauthy words its own errors in `message`.
-    let description = Some(text("error_description")).filter(|d| !d.is_empty()).unwrap_or_else(|| text("message"));
-    Err(TokenError::Refused { error: text("error"), description })
+    Err(TokenError::Refused { error: text("error"), description: text("error_description"), message: text("message") })
 }
+
+/// Rauthy's refusals (`error`, `message`) of a refresh token that can never
+/// be used again: run out, revoked or spent, another issuer's, or not a
+/// refresh token at all. It answers these in its own words, never
+/// `invalid_grant`. A clock off, a user disabled for now or the client's
+/// setup keep the session. fl_lib's `LkcIdp._gone` is the same list.
+const GONE: &[(&str, &str)] = &[
+    ("JwtToken", "Token has expired"),
+    ("JwtToken", "Invalid `iss`"),
+    ("JwtToken", "Invalid `typ`"),
+    ("Unauthorized", "Invalid JWT Token signature"),
+    ("Unauthorized", "Invalid refresh token"),
+    ("BadRequest", "Invalid refresh token"),
+    ("BadRequest", "Malformed token"),
+    ("BadRequest", "Invalid JWT token format"),
+    ("BadRequest", "Cannot deserialize JWT Token header"),
+    ("BadRequest", "Cannot deserialize JWT Token claims"),
+    ("BadRequest", "Cannot deserialize JWT Token signature"),
+    ("BadRequest", "Invalid JWT Header `typ`"),
+    ("NotFound", "Refresh Token not found"),
+    ("NotFound", "Device Refresh Token not found"),
+    ("Forbidden", "Refresh Token has expired"),
+    ("Forbidden", "Device Refresh Token has expired"),
+    ("Forbidden", "Mismatch in client.id"),
+    ("Forbidden", "'user_id' does not match"),
+    ("Forbidden", "'client_id' does not match"),
+    ("Forbidden", "'device_id' does not match"),
+];
 
 /// A token or device endpoint's answer other than a success.
 enum TokenError {
-    /// A 4xx with the IdP's `error` code.
-    Refused { error: String, description: String },
+    /// A 4xx with the IdP's `error` code; Rauthy words its own in `message`.
+    Refused { error: String, description: String, message: String },
     Other(Error),
 }
 
@@ -443,7 +469,7 @@ impl TokenError {
     /// them through [`Self::into_refresh_error`].
     fn into_error(self) -> Error {
         match self {
-            TokenError::Refused { error, description } => {
+            TokenError::Refused { error, description, message } => {
                 let failure = match error.as_str() {
                     "invalid_grant" => Failure::Rejected,
                     "access_denied" => Failure::Denied,
@@ -452,23 +478,21 @@ impl TokenError {
                     "server_error" => Failure::Unknown,
                     _ => Failure::Refused,
                 };
-                let detail = if description.is_empty() { error } else { format!("{error}: {description}") };
+                let words = if description.is_empty() { message } else { description };
+                let detail = if words.is_empty() { error } else { format!("{error}: {words}") };
                 Error::new(failure, detail.chars().take(200).collect::<String>())
             }
             TokenError::Other(e) => e,
         }
     }
 
-    /// A refresh refused by the IdP itself ends the session, whatever its
-    /// words: Rauthy refuses a refresh token it no longer takes (an old
-    /// issuer, spent, ran out) as `JwtToken`, `NotFound` or `Forbidden`,
-    /// never `invalid_grant`.
+    /// A refresh's refusal: one of [`GONE`] takes the token back as
+    /// `invalid_grant` does; the rest read as [`Self::into_error`].
     fn into_refresh_error(self) -> Error {
+        let gone = matches!(&self, TokenError::Refused { error, message, .. }
+            if GONE.contains(&(error.as_str(), message.as_str())));
         let e = self.into_error();
-        match e.failure {
-            Failure::Refused | Failure::Denied => Error::new(Failure::Rejected, e.detail),
-            _ => e,
-        }
+        if gone { Error::new(Failure::Rejected, e.detail) } else { e }
     }
 }
 
