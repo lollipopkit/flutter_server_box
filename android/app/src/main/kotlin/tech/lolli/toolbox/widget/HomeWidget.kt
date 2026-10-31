@@ -124,15 +124,17 @@ abstract class HomeWidget(private val kind: WidgetKind) : AppWidgetProvider() {
 
         /**
          * The launcher picker's previews (Android 15+), drawn by the same code
-         * as a placed widget from made-up readings. Once per build and
+         * as a placed widget from made-up readings. Once per install and
          * language: the system limits how often previews may be set, and a
          * call it refuses is retried on a later launch.
          */
         fun publishPreviews(context: Context) {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) return
             val prefs = context.getSharedPreferences(PREVIEW_PREFS, Context.MODE_PRIVATE)
-            val version = context.packageManager.getPackageInfo(context.packageName, 0).longVersionCode
-            val stamp = "$version/${context.resources.configuration.locales.toLanguageTags()}"
+            // The install, not the version: the system drops generated previews
+            // on every package update, a reinstall of the same version included.
+            val installed = context.packageManager.getPackageInfo(context.packageName, 0).lastUpdateTime
+            val stamp = "$installed/${context.resources.configuration.locales.toLanguageTags()}"
             if (prefs.getString(KEY_PREVIEW_STAMP, null) == stamp) return
             val manager = AppWidgetManager.getInstance(context)
             val widgets = listOf(StatusWidgetSmall(), StatusWidgetMedium())
