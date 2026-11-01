@@ -45,6 +45,13 @@ pub struct BlockDevice {
     pub uuid: Option<String>,
     /// `[SWAP]` for swap.
     pub mountpoints: Vec<String>,
+    /// A filesystem on it is mounted (swap is not).
+    #[serde(default)]
+    pub mounted: bool,
+    /// It holds a filesystem one can mount and nothing mounts it: not swap,
+    /// not a member of an array, pool or volume group ([`is_member_fs`]).
+    #[serde(default)]
+    pub mountable: bool,
     /// The filesystem's size, mounted only: below the device's after the
     /// device grew, until the filesystem is expanded.
     #[serde(default)]
@@ -83,10 +90,13 @@ fn flag(v: &Value) -> bool {
 fn device(v: &Value) -> Option<BlockDevice> {
     let name = text(&v["name"])?;
     // Older lsblk prints one `mountpoint`.
-    let mountpoints = match &v["mountpoints"] {
+    let mountpoints: Vec<String> = match &v["mountpoints"] {
         Value::Array(items) => items.iter().filter_map(text).collect(),
         _ => text(&v["mountpoint"]).into_iter().collect(),
     };
+    let fstype = text(&v["fstype"]);
+    let mounted = mountpoints.iter().any(|m| m.starts_with('/'));
+    let mountable = !mounted && fstype.as_deref().is_some_and(|f| f != "swap" && !is_member_fs(f));
     Some(BlockDevice {
         path: text(&v["path"]).unwrap_or_else(|| format!("/dev/{name}")),
         name,
@@ -99,10 +109,12 @@ fn device(v: &Value) -> Option<BlockDevice> {
         removable: flag(&v["rm"]),
         read_only: flag(&v["ro"]),
         part_type: text(&v["parttype"]).map(|t| t.to_ascii_lowercase()),
-        fstype: text(&v["fstype"]),
+        fstype,
         label: text(&v["label"]),
         uuid: text(&v["uuid"]),
         mountpoints,
+        mounted,
+        mountable,
         fs_size: number(&v["fssize"]),
         available: number(&v["fsavail"]),
         used: number(&v["fsused"]),
@@ -112,10 +124,24 @@ fn device(v: &Value) -> Option<BlockDevice> {
 
 /// Reads [`LSBLK_COMMAND`]'s JSON; nothing when it is not that.
 pub fn parse_lsblk(stdout: &str) -> Vec<BlockDevice> {
-    serde_json::from_str::<Value>(stdout)
-        .ok()
-        .and_then(|v| v["blockdevices"].as_array().map(|d| d.iter().filter_map(device).collect()))
-        .unwrap_or_default()
+    serde_json::from_str::<Value>(stdout).map_or_else(|_| Vec::new(), |v| block_devices(&v))
+}
+
+/// The devices of any `lsblk -J` output, whichever columns it asked for: a
+/// missing one reads as absent (the status command's, `commands::DISK`, has
+/// no SERIAL, ROTA, RM, RO, PARTTYPE or LABEL).
+pub fn block_devices(lsblk: &Value) -> Vec<BlockDevice> {
+    lsblk["blockdevices"].as_array().map(|d| d.iter().filter_map(device).collect()).unwrap_or_default()
+}
+
+/// A filesystem signature that makes a device part of something else — an
+/// LVM volume group, an md array, a LUKS container, a ZFS pool, a Ceph OSD —
+/// whether or not `lsblk` lists what is built on it. Never mounted itself.
+pub fn is_member_fs(fs_type: &str) -> bool {
+    matches!(
+        fs_type,
+        "LVM2_member" | "linux_raid_member" | "crypto_LUKS" | "zfs_member" | "ceph_bluestore" | "bcache" | "drbd"
+    )
 }
 
 impl BlockDevice {
@@ -1366,6 +1392,19 @@ mod tests {
         assert_eq!(d[0].children[1].available, Some(400_000_000_000));
         assert_eq!(find(&d, "/dev/md0").unwrap().kind, "raid1");
         assert!(parse_lsblk("not json").is_empty());
+    }
+
+    #[test]
+    fn only_a_free_filesystem_is_mountable() {
+        let d = parse_lsblk(LSBLK);
+        let dev = |path| find(&d, path).unwrap();
+        assert!(dev("/dev/sda2").mounted && !dev("/dev/sda2").mountable);
+        // A member, swap, no filesystem at all.
+        for path in ["/dev/sdb1", "/dev/sdd", "/dev/sdc"] {
+            assert!(!dev(path).mounted && !dev(path).mountable, "{path}");
+        }
+        let free = parse_lsblk(r#"{"blockdevices":[{"name":"sde1","type":"part","size":1,"fstype":"xfs","mountpoints":[null]}]}"#);
+        assert!(free[0].mountable);
     }
 
     #[test]

@@ -45,22 +45,8 @@ List<BlockDevice> storageVolumes(BlockDevice disk) {
   return partitions.isEmpty ? [disk] : partitions;
 }
 
-bool storageMounted(BlockDevice device) =>
-    device.mountpoints.any((path) => path.startsWith('/'));
-
-bool storageMountable(BlockDevice device) =>
-    device.fstype != null &&
-    !const {
-      'swap',
-      'linux_raid_member',
-      'zfs_member',
-      'LVM2_member',
-      'crypto_LUKS',
-    }.contains(device.fstype) &&
-    !storageMounted(device);
-
 bool storageExpandable(BlockDevice device) {
-  if (!storageMounted(device) ||
+  if (!device.mounted ||
       !const {'ext2', 'ext3', 'ext4', 'xfs', 'btrfs'}.contains(device.fstype) ||
       device.fsSize == null) {
     return false;

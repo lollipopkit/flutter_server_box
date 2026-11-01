@@ -16,7 +16,7 @@
   import type { BlockDevice, DiskHealth, HealthReading, MdArray, StackJob, StorageAction, StorageView, ZPool } from '../../../types'
   import StorageConfirm from './StorageConfirm.svelte'
   import StorageMaintenance from './StorageMaintenance.svelte'
-  import { arrayDevice, disksOf, expandable, freeDevices, growableArray, growablePartition, healthOf, isLuks, isMounted, minimum, mountable, nextMd, opened, overlaps, poolDeviceActions, shortName, verdict, volumesOf, type HealthVerdict } from './model'
+  import { arrayDevice, disksOf, expandable, freeDevices, growableArray, growablePartition, healthOf, isLuks, minimum, nextMd, opened, overlaps, poolDeviceActions, shortName, verdict, volumesOf, type HealthVerdict } from './model'
   import { untrack } from 'svelte'
 
   type Tab = 'disks' | 'raid' | 'pools' | 'maintenance'
@@ -342,7 +342,7 @@
     {label}
     value={isLuks(v)
       ? [$LL.storageEncrypted(), inside ? undefined : $LL.storageLocked()].filter(Boolean).join(' · ')
-      : [v.fstype, v.label, isMounted(v) ? v.mountpoints.join(', ') : undefined].filter(Boolean).join(' · ') || $LL.storageNoFilesystem()}
+      : [v.fstype, v.label, v.mounted ? v.mountpoints.join(', ') : undefined].filter(Boolean).join(' · ') || $LL.storageNoFilesystem()}
     sub={usage(v) ?? fmtBytes(v.size)}
   >
     <div class="flex shrink-0 gap-[5px]">
@@ -358,11 +358,11 @@
       {/if}
       {#if view?.busy[v.path] === 'systemPartition'}
         <Badge tone="neutral">{$LL.storageBusySystem()}</Badge>
-      {:else if isMounted(v) && view?.system?.includes(v.path)}
+      {:else if v.mounted && view?.system?.includes(v.path)}
         <Badge tone="neutral">{$LL.storageSystemDisk()}</Badge>
-      {:else if isMounted(v)}
+      {:else if v.mounted}
         <Button size="sm" variant="secondary" disabled={job?.state === 'running'} onclick={() => ask({ action: 'unmount', mountpoint: v.mountpoints[0] }, $LL.storageUnmount(), $LL.storageUnmountBody({ mountpoint: v.mountpoints[0] }))}>{$LL.storageUnmount()}</Button>
-      {:else if mountable(v)}
+      {:else if v.mountable}
         <Button size="sm" variant="secondary" disabled={job?.state === 'running'} onclick={() => openMount(v)}>{$LL.storageMount()}</Button>
       {/if}
       {#if expandable(v)}

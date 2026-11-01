@@ -278,7 +278,7 @@ extension on _StoragePageState {
     final opened = volume.fstype == 'crypto_LUKS'
         ? volume.children.firstWhereOrNull((d) => d.kind == 'crypt')
         : null;
-    final mounted = storageMounted(volume);
+    final mounted = volume.mounted;
     final busy = view.busy[volume.path];
     final facts = volume.fstype == 'crypto_LUKS'
         ? [l10n.storageEncrypted, if (opened == null) l10n.storageLocked]
@@ -343,7 +343,7 @@ extension on _StoragePageState {
                       l10n.storageUnmountBody(volume.mountpoints.first),
                     ),
             )
-          else if (busy == null && storageMountable(volume))
+          else if (busy == null && volume.mountable)
             IconButton(
               tooltip: l10n.storageMount,
               icon: const Icon(Icons.folder_open),

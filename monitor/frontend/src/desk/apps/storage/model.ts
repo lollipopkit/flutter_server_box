@@ -41,15 +41,6 @@ export function volumesOf(disk: BlockDevice): BlockDevice[] {
   return parts.length ? parts : [disk]
 }
 
-export function isMounted(d: BlockDevice): boolean {
-  return d.mountpoints.length > 0 && !d.mountpoints.includes('[SWAP]')
-}
-
-/// A filesystem one can mount: not a member of an array or pool, not swap.
-export function mountable(d: BlockDevice): boolean {
-  return !!d.fstype && !['swap', 'linux_raid_member', 'zfs_member', 'LVM2_member', 'crypto_LUKS'].includes(d.fstype) && !isMounted(d)
-}
-
 /// The next free `md` name.
 export function nextMd(view: StorageView): string {
   const taken = new Set(view.arrays.map((a) => a.name))
@@ -122,7 +113,7 @@ export function growableArray(level: string | null): boolean {
 /// at least 256 MiB, past what the filesystem keeps for itself): the device
 /// grew under it.
 export function expandable(d: BlockDevice): boolean {
-  if (!d.mountpoints.some((m) => m.startsWith('/')) || !['ext2', 'ext3', 'ext4', 'xfs', 'btrfs'].includes(d.fstype ?? '') || d.fs_size == null) return false
+  if (!d.mounted || !['ext2', 'ext3', 'ext4', 'xfs', 'btrfs'].includes(d.fstype ?? '') || d.fs_size == null) return false
   return d.size - d.fs_size > Math.max(d.size * 0.1, 256 * 2 ** 20)
 }
 

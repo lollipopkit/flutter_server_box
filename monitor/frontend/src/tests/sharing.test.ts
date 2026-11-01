@@ -84,6 +84,8 @@ describe('the sharing model', () => {
       label: null,
       uuid: null,
       mountpoints,
+      mounted: mountpoints.some((m) => m.startsWith('/')),
+      mountable: false,
       available: null,
       used: null,
       children,

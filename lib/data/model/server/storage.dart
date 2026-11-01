@@ -16,6 +16,8 @@ final class BlockDevice {
     required this.label,
     required this.uuid,
     required this.mountpoints,
+    required this.mounted,
+    required this.mountable,
     required this.fsSize,
     required this.available,
     required this.used,
@@ -38,6 +40,8 @@ final class BlockDevice {
     label: json['label'] as String?,
     uuid: json['uuid'] as String?,
     mountpoints: (json['mountpoints'] as List).cast<String>(),
+    mounted: json['mounted'] as bool,
+    mountable: json['mountable'] as bool,
     fsSize: json['fs_size'] as int?,
     available: json['available'] as int?,
     used: json['used'] as int?,
@@ -62,6 +66,13 @@ final class BlockDevice {
   final String? label;
   final String? uuid;
   final List<String> mountpoints;
+
+  /// A filesystem on it is mounted (swap is not).
+  final bool mounted;
+
+  /// A filesystem nothing mounts, and not a member of an array, pool or
+  /// volume group.
+  final bool mountable;
   final int? fsSize;
   final int? available;
   final int? used;
@@ -74,7 +85,6 @@ final class BlockDevice {
     }
   }
 
-  bool get mounted => mountpoints.any((point) => point.startsWith('/'));
   bool get swap => mountpoints.contains('[SWAP]');
 }
 

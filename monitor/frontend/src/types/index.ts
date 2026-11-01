@@ -3020,6 +3020,10 @@ export interface BlockDevice {
   uuid: string | null
   /// `[SWAP]` for swap.
   mountpoints: string[]
+  /// A filesystem on it is mounted (swap is not).
+  mounted: boolean
+  /// A filesystem nothing mounts, and not a member of an array, pool or volume group.
+  mountable: boolean
   /// The filesystem's size, mounted only; absent from older agents.
   fs_size?: number | null
   available: number | null

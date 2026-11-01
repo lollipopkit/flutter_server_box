@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import StorageApp from '../desk/apps/storage/StorageApp.svelte'
-import { arrayDevice, disksOf, expandable, freeDevices, growableArray, growablePartition, isLuks, minimum, mountable, nextMd, opened, overlaps, poolDeviceActions, verdict, volumesOf } from '../desk/apps/storage/model'
+import { arrayDevice, disksOf, expandable, freeDevices, growableArray, growablePartition, isLuks, minimum, nextMd, opened, overlaps, poolDeviceActions, verdict, volumesOf } from '../desk/apps/storage/model'
 import { LL } from '../i18n/i18n-svelte'
 import { api, ApiError } from '../lib/api'
 import { servers } from '../lib/servers.svelte'
@@ -32,6 +32,8 @@ const dev = (path: string, kind: string, extra: Partial<BlockDevice> = {}): Bloc
   label: null,
   uuid: null,
   mountpoints: [],
+  mounted: false,
+  mountable: false,
   available: null,
   used: null,
   children: [],
@@ -40,10 +42,10 @@ const dev = (path: string, kind: string, extra: Partial<BlockDevice> = {}): Bloc
 
 const view: StorageView = {
   disks: [
-    dev('/dev/sda', 'disk', { model: 'Samsung SSD', rotational: false, children: [dev('/dev/sda1', 'part', { fstype: 'ext4', mountpoints: ['/'], used: 10, available: 90 })] }),
+    dev('/dev/sda', 'disk', { model: 'Samsung SSD', rotational: false, children: [dev('/dev/sda1', 'part', { fstype: 'ext4', mountpoints: ['/'], mounted: true, used: 10, available: 90 })] }),
     dev('/dev/sdb', 'disk', { model: 'WDC', children: [dev('/dev/sdb1', 'part', { fstype: 'linux_raid_member' })] }),
     dev('/dev/sdc', 'disk', { model: 'Seagate' }),
-    dev('/dev/sdd', 'disk', { fstype: 'ext4', label: 'backup' }),
+    dev('/dev/sdd', 'disk', { fstype: 'ext4', label: 'backup', mountable: true }),
     dev('/dev/sr0', 'rom'),
   ],
   busy: { '/dev/sda': 'mounted', '/dev/sda1': 'mounted', '/dev/sdb': 'raidMember', '/dev/sdb1': 'raidMember' },
@@ -84,22 +86,20 @@ describe('the storage model', () => {
     expect(disksOf(view).map((d) => d.path)).toEqual(['/dev/sda', '/dev/sdb', '/dev/sdc', '/dev/sdd'])
     expect(freeDevices(view).map((d) => d.path)).toEqual(['/dev/sdc', '/dev/sdd'])
     expect(volumesOf(view.disks[3]).map((d) => d.path)).toEqual(['/dev/sdd'])
-    expect(mountable(view.disks[3])).toBe(true)
-    expect(mountable(view.disks[1].children[0])).toBe(false)
     expect(nextMd(view)).toBe('md1')
     expect([minimum(1), minimum(5), minimum(10), minimum('raidz2'), minimum('stripe')]).toEqual([2, 3, 4, 4, 1])
     expect([overlaps(view, '/dev/sdb', '/dev/sdb1'), overlaps(view, '/dev/sdb1', '/dev/sdb'), overlaps(view, '/dev/sdc', '/dev/sdd')]).toEqual([true, true, false])
   })
 
   it('finds an array\'s filesystem and what can grow', () => {
-    const md = dev('/dev/md0', 'raid1', { fstype: 'ext4', mountpoints: ['/srv/data'], size: 8 * 2 ** 30, fs_size: 4 * 2 ** 30 })
+    const md = dev('/dev/md0', 'raid1', { fstype: 'ext4', mountpoints: ['/srv/data'], mounted: true, size: 8 * 2 ** 30, fs_size: 4 * 2 ** 30 })
     const v = { ...structuredClone(view), disks: [dev('/dev/sdb', 'disk', { children: [dev('/dev/sdb1', 'part', { children: [md] })] })] }
     expect(arrayDevice(v, 'md0')?.path).toBe('/dev/md0')
     expect(arrayDevice(v, 'md9')).toBeUndefined()
     expect(expandable(md)).toBe(true)
     // What ext4 keeps for itself is not room to grow into.
     expect(expandable({ ...md, fs_size: 7.8 * 2 ** 30 })).toBe(false)
-    expect(expandable({ ...md, mountpoints: [] })).toBe(false)
+    expect(expandable({ ...md, mountpoints: [], mounted: false })).toBe(false)
     expect(expandable({ ...md, fstype: 'vfat' })).toBe(false)
     expect(['raid0', 'raid1', 'raid5', 'raid6', 'raid10', null].map(growableArray)).toEqual([false, true, true, true, false, false])
   })
@@ -150,9 +150,9 @@ describe('the storage model', () => {
       disks: [
         dev('/dev/sda', 'disk', {
           children: [
-            dev('/dev/sda1', 'part', { fstype: 'ext4', mountpoints: ['/'] }),
+            dev('/dev/sda1', 'part', { fstype: 'ext4', mountpoints: ['/'], mounted: true }),
             dev('/dev/sda14', 'part', { part_type: '21686148-6449-6e6f-744e-656564454649' }),
-            dev('/dev/sda2', 'part', { fstype: 'ext4', mountpoints: ['/srv/data'] }),
+            dev('/dev/sda2', 'part', { fstype: 'ext4', mountpoints: ['/srv/data'], mounted: true }),
           ],
         }),
       ],
