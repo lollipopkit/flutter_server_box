@@ -6,6 +6,44 @@ description: What changed in each released version
 Every released version, newest first. Downloads and per-release notes are on
 [GitHub Releases](https://github.com/lollipopkit/flutter_server_box/releases).
 
+## v1.0.1856 — 2026-11-01
+
+### Added
+
+- **Every block device in the server details:** the disk dialog lists all
+  disks and partitions, including unmounted and blank disks, with model, size,
+  type, connection and file system. Also in the Monitor panel. Linux only.
+- **Android:** a redesigned home-screen widget that can be resized and shows
+  more as it grows; Home-screen shortcuts to a server; a Quick Settings tile
+  for sessions; share text and files from other apps into a snippet or a
+  server; keyboard shortcuts; the app's language in system settings; and
+  widget previews in the launcher.
+- **Editing files on Monitor-only servers and this device,** as on SSH
+  servers. A file that changed on the server since it was opened is not
+  overwritten without asking.
+- Persian (فارسی), the first right-to-left language.
+
+### Changed
+
+- AI settings are a top-level item in Settings.
+- The Wiki link is removed from About and the macOS menu.
+- Translations revised in all languages, including the Android widget, the
+  store listing, the Monitor panel and the website.
+- Monitor: ntex 4.
+
+### Fixed
+
+- The editor: select-all with an input method, and moving the cursor across
+  lines.
+- The "clear all settings" button no longer appears on every settings
+  sub-page, where it could reset the language and the first-run setup.
+- WebDAV restore no longer fails when a file name contains a `%`.
+- Android: stopping a session on purpose is no longer treated as a lost
+  connection.
+- Monitor on Windows: the agent no longer crashes about 20 seconds after
+  starting as a service or over SSH; a command that times out is ended with
+  all its child processes.
+
 ## v1.0.1844 — 2026-10-30
 
 ### Added
