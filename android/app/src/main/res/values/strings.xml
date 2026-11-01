@@ -20,12 +20,12 @@
     <string name="widget_configure_metric">Leading metric</string>
     <string name="widget_configure_save">Save</string>
     <!--
-        Shown when the app has published no server with a monitor agent. The
+        Shown when the app has not published any server with ServerBox Monitor enabled. The
         widget reads a list this app writes, so there is nothing to pick from
-        until one exists — and it has to be added in the app, since reaching an
-        agent needs a login the widget has nowhere to keep.
+        until one exists. Add servers in the app because accessing a Monitor
+        requires login credentials that the widget cannot store.
     -->
-    <string name="widget_configure_empty">No server with a monitor agent yet.\nAdd one in ServerBox, then come back.</string>
+    <string name="widget_configure_empty">No server with ServerBox Monitor enabled yet.\nAdd a server in ServerBox, then come back here.</string>
 
 
     <string name="widget_metric_cpu">CPU</string>
@@ -34,7 +34,7 @@
     <string name="widget_metric_network">Network</string>
 
     <string name="widget_err_not_configured">Tap to pick a server</string>
-    <string name="widget_err_no_token">No credential — open ServerBox</string>
+    <string name="widget_err_no_token">Missing access credentials. Open ServerBox.</string>
     <string name="widget_err_insecure">HTTPS required</string>
     <string name="widget_err_network">Network error</string>
     <string name="widget_err_timeout">Timed out</string>
@@ -42,13 +42,13 @@
     <string name="widget_small_label">Server readings</string>
     <string name="widget_medium_label">Server charts</string>
     <string name="widget_label">Server status</string>
-    <string name="widget_description">CPU, memory, disk and network at a glance. Resize it to see more.</string>
+    <string name="widget_description">Quickly view CPU, memory, disk, and network status. Resize the widget to see more.</string>
 
     <!-- Quick Settings tile, the transfer notification's channel, the text
          selection entry, and what a share that could not be read says. Native,
          since the tile and the channel exist without the Flutter engine. -->
     <string name="process_text_label">Save as snippet</string>
-    <string name="tile_no_sessions">No active sessions</string>
+    <string name="tile_no_sessions">No running sessions</string>
     <plurals name="tile_sessions">
         <item quantity="one">%d session</item>
         <item quantity="other">%d sessions</item>

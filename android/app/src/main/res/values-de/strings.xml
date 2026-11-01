@@ -13,13 +13,13 @@
     <string name="widget_configure_server">Server</string>
     <string name="widget_configure_metric">Führender Messwert</string>
     <string name="widget_configure_save">Sichern</string>
-    <string name="widget_configure_empty">Noch kein Server mit monitor-Agent.\nRichte einen in ServerBox ein und komm zurück.</string>
+    <string name="widget_configure_empty">Noch kein Server mit Monitor eingerichtet. Füge in ServerBox einen Server hinzu und kehre dann hierher zurück.</string>
     <string name="widget_metric_cpu">CPU</string>
     <string name="widget_metric_memory">Speicher</string>
     <string name="widget_metric_disk">Datenträger</string>
     <string name="widget_metric_network">Netzwerk</string>
     <string name="widget_err_not_configured">Tippen, um einen Server zu wählen</string>
-    <string name="widget_err_no_token">Keine Zugangsdaten – ServerBox öffnen</string>
+    <string name="widget_err_no_token">Anmeldedaten fehlen – ServerBox öffnen</string>
     <string name="widget_err_insecure">HTTPS erforderlich</string>
     <string name="widget_err_network">Netzwerkfehler</string>
     <string name="widget_err_timeout">Zeitüberschreitung</string>
@@ -28,10 +28,10 @@
     <string name="widget_small_label">Server-Messwerte</string>
     <string name="widget_medium_label">Server-Diagramme</string>
     <string name="widget_label">Serverstatus</string>
-    <string name="widget_description">CPU, Speicher, Festplatte und Netzwerk auf einen Blick. Vergrößern zeigt mehr.</string>
+    <string name="widget_description">CPU, Arbeitsspeicher, Datenträger und Netzwerk auf einen Blick. Vergrößere das Widget, um mehr Details zu sehen.</string>
 
-    <string name="process_text_label">Als Snippet speichern</string>
-    <string name="tile_no_sessions">Keine aktiven Sitzungen</string>
+    <string name="process_text_label">Als Code-Snippet speichern</string>
+    <string name="tile_no_sessions">Keine laufenden Sitzungen</string>
     <plurals name="tile_sessions">
         <item quantity="one">%d Sitzung</item>
         <item quantity="other">%d Sitzungen</item>

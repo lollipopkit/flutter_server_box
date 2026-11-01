@@ -13,13 +13,13 @@
     <string name="widget_configure_server">Сервер</string>
     <string name="widget_configure_metric">Основной показатель</string>
     <string name="widget_configure_save">Сохранить</string>
-    <string name="widget_configure_empty">Пока нет сервера с агентом monitor.\nДобавьте его в ServerBox и вернитесь сюда.</string>
+    <string name="widget_configure_empty">Пока нет сервера с ServerBox Monitor.\nДобавьте сервер в ServerBox и вернитесь сюда.</string>
     <string name="widget_metric_cpu">ЦП</string>
     <string name="widget_metric_memory">Память</string>
     <string name="widget_metric_disk">Диск</string>
     <string name="widget_metric_network">Сеть</string>
     <string name="widget_err_not_configured">Нажмите, чтобы выбрать сервер</string>
-    <string name="widget_err_no_token">Нет учётных данных — откройте ServerBox</string>
+    <string name="widget_err_no_token">Нет данных для доступа. Откройте ServerBox</string>
     <string name="widget_err_insecure">Требуется HTTPS</string>
     <string name="widget_err_network">Ошибка сети</string>
     <string name="widget_err_timeout">Время ожидания истекло</string>
@@ -28,10 +28,10 @@
     <string name="widget_small_label">Значения сервера</string>
     <string name="widget_medium_label">Графики сервера</string>
     <string name="widget_label">Состояние сервера</string>
-    <string name="widget_description">Процессор, память, диск и сеть с первого взгляда. Увеличьте, чтобы увидеть больше.</string>
+    <string name="widget_description">Быстрый просмотр загрузки процессора, памяти, диска и сети. Увеличьте виджет, чтобы увидеть больше.</string>
 
-    <string name="process_text_label">Сохранить как сниппет</string>
-    <string name="tile_no_sessions">Нет активных сеансов</string>
+    <string name="process_text_label">Сохранить как фрагмент кода</string>
+    <string name="tile_no_sessions">Нет запущенных сеансов</string>
     <plurals name="tile_sessions">
         <item quantity="one">%d сеанс</item>
         <item quantity="few">%d сеанса</item>

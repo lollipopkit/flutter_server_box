@@ -13,13 +13,13 @@
     <string name="widget_configure_server">Server</string>
     <string name="widget_configure_metric">Belangrijkste meting</string>
     <string name="widget_configure_save">Bewaren</string>
-    <string name="widget_configure_empty">Nog geen server met monitor-agent.\nVoeg er een toe in ServerBox en kom terug.</string>
+    <string name="widget_configure_empty">Je hebt ServerBox Monitor nog niet ingesteld op een server.\nVoeg een server toe in ServerBox en kom daarna terug.</string>
     <string name="widget_metric_cpu">CPU</string>
     <string name="widget_metric_memory">Geheugen</string>
     <string name="widget_metric_disk">Schijf</string>
     <string name="widget_metric_network">Netwerk</string>
     <string name="widget_err_not_configured">Tik om een server te kiezen</string>
-    <string name="widget_err_no_token">Geen inloggegevens — open ServerBox</string>
+    <string name="widget_err_no_token">Aanmeldgegevens ontbreken — open ServerBox</string>
     <string name="widget_err_insecure">HTTPS vereist</string>
     <string name="widget_err_network">Netwerkfout</string>
     <string name="widget_err_timeout">Time-out</string>
@@ -28,10 +28,10 @@
     <string name="widget_small_label">Serverwaarden</string>
     <string name="widget_medium_label">Servergrafieken</string>
     <string name="widget_label">Serverstatus</string>
-    <string name="widget_description">CPU, geheugen, schijf en netwerk in één oogopslag. Vergroot voor meer.</string>
+    <string name="widget_description">Bekijk CPU, geheugen, schijf en netwerk in één oogopslag. Vergroot de widget voor meer details.</string>
 
-    <string name="process_text_label">Opslaan als snippet</string>
-    <string name="tile_no_sessions">Geen actieve sessies</string>
+    <string name="process_text_label">Als codefragment opslaan</string>
+    <string name="tile_no_sessions">Er zijn geen actieve sessies</string>
     <plurals name="tile_sessions">
         <item quantity="one">%d sessie</item>
         <item quantity="other">%d sessies</item>

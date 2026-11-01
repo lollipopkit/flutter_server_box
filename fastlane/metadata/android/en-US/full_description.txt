@@ -1,15 +1,10 @@
-Monitor and manage Linux, BSD and Windows servers from one app.
+ServerBox is a Linux server monitoring and management tool.
 
-A server is reached over SSH, over the ServerBox Monitor agent's HTTP API, or both.
+Key features:
+• View status charts for CPU, sensors, GPU, and more
+• Manage servers with an SSH terminal and SFTP
+• Manage Docker containers, packages, and processes
+• Use biometric authentication, push notifications, home widgets, and the watchOS app
+• Follow system colors and use the app in multiple languages
 
-* Status charts: CPU, memory, disk, network, temperature, GPU, S.M.A.R.T, battery
-* SSH terminal with a virtual keyboard, a floating window over the rest of the app, and a shell on the device itself
-* Files over SFTP, or over SCP where the host has no SFTP subsystem
-* Docker containers, processes, systemd services, snippets and custom commands
-* Benchmark disk, network and CPU, with the results stored and comparable
-* Your servers drawn on a globe, placed on the device without an address leaving it
-* Port forwarding, jump hosts and ProxyCommand
-* Biometric auth, push notifications, home widgets and a watchOS app
-* 15 languages
-
-Especially thanks to dartssh2 & xterm.dart.
+Special thanks to dartssh2 and xterm.dart.

@@ -3,9 +3,9 @@ import type { Translation } from '../i18n-types.js'
 const ja: Translation = {
   meta: {
     lang: 'ja',
-    title: 'ServerBox — サーバー状態、SSH、運用を 1 つの Flutter アプリで',
+    title: 'ServerBox — サーバー監視、SSH、管理ツールを 1 つのアプリに',
     description:
-      'ServerBox は、状態チャート、SSH ターミナル、SFTP、Docker、プロセス、systemd、S.M.A.R.T、通知、ウィジェット、watchOS で Linux、Unix、Windows サーバーを監視します。',
+      'ServerBox は、状態グラフ、SSH ターミナル、SFTP、Docker、プロセスと systemd の管理、S.M.A.R.T. 監視、プッシュ通知、ウィジェット、watchOS に対応し、Linux、Unix、Windows サーバーを管理できます。',
   },
   nav: {
     features: '機能',
@@ -20,9 +20,9 @@ const ja: Translation = {
     titlePrefix: 'サーバー状態を、',
     titleSuffix: 'ポケットの中に。',
     subtitle:
-      'ServerBox はチャート、SSH ターミナル、SFTP、Docker、プロセス制御、systemd、S.M.A.R.T、通知、ウィジェット、watchOS を 1 つの Flutter アプリにまとめます。',
+      'ServerBox は、状態グラフ、SSH ターミナル、SFTP、Docker、プロセス管理、systemd、S.M.A.R.T. 監視、プッシュ通知、ウィジェット、watchOS を 1 つのアプリにまとめます。',
     primaryAction: 'ServerBox をダウンロード',
-    secondaryAction: '機能を見る',
+    secondaryAction: '機能を確認',
   },
   screenshots: {
     label: 'ServerBox のインタラクティブなスクリーンショット',
@@ -32,23 +32,23 @@ const ja: Translation = {
     four: 'ServerBox ファイルブラウザのスクリーンショット',
   },
   features: {
-    title: '日常のサーバーメンテナンスに使える小さな作業場。',
+    title: '日常のサーバー管理に必要なツールを 1 か所に。',
     subtitle:
-      '装飾を抑え、実際のメンテナンス作業に対応する機能だけを集めています。',
+      '実用的な機能をコンパクトにまとめ、それぞれが実際のサーバー管理に役立ちます。',
     list: {
       title: 'サーバー一覧',
       description:
-        '各サーバーの接続状態や CPU・メモリ・ディスク・ネットワークの使用状況を一覧できます。タグで絞り込んだり、地球儀上で確認したりできます。',
+        '各サーバーの接続状態、CPU・メモリ・ディスク・ネットワークの使用状況を確認できます。タグで絞り込んだり、地球儀上で確認したりできます。',
     },
     charts: {
       title: 'ステータスチャート',
       description:
-        'CPU・メモリ・スワップ・ディスク・ディスク I/O・ネットワークのリアルタイムチャートに加え、センサー・GPU・バッテリーも。履歴に切り替えたり、各項目の詳細を開いたりできます。',
+        'CPU、メモリ、スワップ、ディスク、ディスク I/O、ネットワークのリアルタイムグラフに加え、センサー、GPU、バッテリーの情報も確認できます。履歴を表示したり、指標を選択して詳細を確認したりできます。',
     },
     terminal: {
       title: 'SSH ターミナル',
       description:
-        'スマートフォンでは仮想キーを使える本格的なターミナル。htop や vim などを実行できます。直接接続、踏み台ホスト経由、ProxyCommand に対応しています。',
+        'スマートフォンでは仮想キーを使って操作でき、htop や vim なども実行できる本格的なターミナルです。直接接続、踏み台ホスト経由、ProxyCommand に対応しています。',
     },
     files: {
       title: 'SFTP でファイル操作',
@@ -63,32 +63,32 @@ const ja: Translation = {
     processes: {
       title: 'プロセス',
       description:
-        'すべてのプロセスの CPU とメモリ。並べ替えや名前・ユーザー・PID での検索ができ、一覧から停止できます。',
+        'すべてのプロセスと CPU・メモリ使用量を表示します。並べ替えや名前・ユーザー・PID での検索ができ、一覧から直接終了できます。',
     },
     services: {
       title: 'Systemd サービス',
       description:
-        '失敗したユニットを先頭に表示。ワンタップで再起動やログ確認ができます。',
+        '失敗した systemd ユニットを一覧の上部に表示します。ワンタップで再起動したりログを確認したりできます。',
     },
     users: {
       title: 'ユーザーとグループ',
       description:
-        'システムアカウントの一覧で、ログインシェルと sudo を表示。ユーザーの追加・削除、グループの追加・編集・削除ができます。',
+        'システムアカウントとログインシェル、sudo 権限を確認できます。ユーザーの追加・削除や、グループの追加・編集・削除ができます。',
     },
     agent: {
       title: 'AI エージェント',
       description:
-        'サーバーのことを知っているアプリ内アシスタント。モデルプロバイダー、MCP サーバー、スキルは自分で選べます。',
+        'アプリ内のアシスタントでサーバーを管理できます。利用するモデルプロバイダー、MCP サーバー、スキルを選べます。',
     },
     bench: {
       title: 'ベンチマーク',
       description:
-        'Yet Another Bench Script でサーバーのディスク・ネットワーク・CPU を計測し、結果を保存できます。「その他」メニューからスニペット、リモートデスクトップ、仮想化も開けます。',
+        'Yet Another Bench Script でサーバーのディスク、ネットワーク、CPU を測定し、結果を保存できます。「その他」メニューからスニペット、リモートデスクトップ、仮想化にもアクセスできます。',
     },
     virt: {
       title: '仮想化',
       description:
-        'libvirt と Proxmox VE の仮想マシンとコンテナを起動・停止し、vCPU・メモリ・ディスクを変更し、コンソールを開けます。',
+        'libvirt と Proxmox VE の VM とコンテナを管理できます。起動・停止、vCPU・メモリ・ディスクの変更、コンソールの表示が可能です。',
     },
     themes: {
       title: 'テーマストア',
@@ -99,17 +99,17 @@ const ja: Translation = {
   capabilities: {
     title: '必要なツールを 1 つのアプリに。',
     subtitle:
-      'ServerBox はターミナル、ファイル転送、サービス確認、ハードウェア状態、デバイス通知を同じ流れにまとめます。',
+      'ServerBox はターミナル接続、ファイル転送、サービス状態の確認、ハードウェア監視、デバイスへの通知を 1 つのワークフローにまとめます。',
     installIosPrompt: '# iOS',
     installReleasePrompt: '# Android、Linux、Windows',
   },
   themes: {
     title: '自分好みの見た目に。',
     subtitle:
-      'ServerBox の公式テーマです。アプリのテーマストアと同じものを掲載しています。アプリの 設定 → 外観 → テーマストア からインストールするか、パッケージをダウンロードして テーマをインストール → ファイル を選んでください。',
+      'ここに掲載している ServerBox 公式テーマは、アプリ内のテーマストアでも利用できます。「設定 → 外観 → テーマストア」からインストールするか、パッケージをダウンロードして「テーマをインストール → ファイル」を選択してください。',
     empty:
-      '公式テーマはまだありません。テーマは manifest.toml を含むフォルダーで、ライトとダークの配色、コンポーネントのスタイル、アイコン、背景、スプラッシュを指定できます。作り方とストアへの公開方法はガイドを参照してください。',
-    note: 'アプリはストアのパッケージをインストールする前に SHA-256 を検証します。',
+      '公式テーマはまだありません。各テーマは manifest.toml を含むフォルダーで、ライト・ダークの配色、コンポーネントのスタイル、アイコン、背景、起動画面が含まれます。テーマの作成方法やストアへの申請方法はガイドをご覧ください。',
+    note: 'アプリはストアからテーマをインストールする前に、各パッケージの SHA-256 を検証します。',
     authoring: 'テーマを作る',
     download: '.fsbt をダウンロード',
     source: 'ソース',
@@ -124,7 +124,7 @@ const ja: Translation = {
     noMatch: '一致するテーマがありません。別の名前やモードを試してください。',
     storeTitle: 'テーマストア',
     storeSubtitle:
-      'ServerBox の公式テーマを、アプリが描くとおりに表示します。配色、コンポーネント、アイコン、スプラッシュを確認できます。アプリのテーマストアからインストールするか、パッケージをダウンロードしてください。',
+      'ServerBox の公式テーマをすべて、アプリと同じ配色、コンポーネント、アイコン、起動画面で紹介します。アプリ内のテーマストアからインストールするか、パッケージをダウンロードできます。',
     browse: 'テーマストアを開く',
     back: 'すべてのテーマ',
     details: '詳細',
@@ -136,7 +136,7 @@ const ja: Translation = {
     splash: 'スプラッシュ',
     install: 'インストール',
     installSteps:
-      'アプリで 設定 → 外観 → テーマストア を開き、{name} を選びます。パッケージをダウンロードして テーマをインストール → ファイル を選ぶこともできます。',
+      'アプリで「設定 → 外観 → テーマストア」を開き、{name} を選択してください。またはパッケージをダウンロードし、「テーマをインストール → ファイル」を選択してください。',
     base: '通常',
     hovered: 'ホバー',
     pressed: '押下',
@@ -144,30 +144,30 @@ const ja: Translation = {
     loadFailed: 'このテーマのプレビューを読み込めませんでした。',
     retry: '再試行',
     previewNote:
-      'プレビューで正確なのはテーマのアイコンと配色のみです。そのほかの画面は参考用です。',
+      'プレビューではテーマのアイコンと配色を確認できます。その他の画面はイメージです。',
     iconPacks: 'アイコンパック',
     iconPacksSubtitle:
-      'テーマとは別に選び、使用中のテーマの上に表示するアイコンです。アプリの 設定 → 外観 → テーマストア → アイコンパック からインストールできます。',
+      'アイコンパックはテーマとは別に選択でき、現在のテーマと組み合わせて使えます。「設定 → 外観 → テーマストア → アイコンパック」からインストールできます。',
   },
   plugins: {
-    title: 'プラグイン。',
-    subtitle: 'ServerBox の公式プラグイン。アプリのプラグインストアからインストールします。',
+    title: 'ServerBox を拡張',
+    subtitle: 'ServerBox の公式プラグインをインストールして、アプリの機能を拡張できます。',
     empty: '公式プラグインはまだありません。',
     download: 'ダウンロード',
   },
   download: {
-    title: 'すべてのプラットフォーム、すべての配布元。',
+    title: '複数のプラットフォームとダウンロード方法に対応。',
     subtitle:
       'デバイスに合った信頼できる配布元を選んでください。iOS 版は App Store から、または GitHub Releases の未署名 .ipa を自分で署名して入手できます。macOS 版は Apple シリコンと Intel に対応し、GitHub Releases と Homebrew で配布しています。Android、Linux、Windows は直接ダウンロードできます。',
     copied: 'インストールコマンドをコピーしました',
     copyPrompt: 'このインストールコマンドをコピーしてください:',
     note:
-      '信頼できる配布元からのみダウンロードしてください。サーバー側の通知、ウィジェット、companion 監視には、サーバーに ServerBoxMonitor を別途インストールしてください。',
+      '信頼できる配布元からのみダウンロードしてください。サーバー側の通知、ウィジェットのデータ、独立した監視を利用するには、サーバーに ServerBox Monitor を別途インストールしてください。',
   },
   cta: {
     title: 'ServerBox は AGPLv3 の無料オープンソースです。',
     subtitle:
-      'App Store、GitHub Releases、F-Droid、または OpenAPK からインストールできます。',
+      'App Store、GitHub Releases、F-Droid、OpenAPK からダウンロードできます。',
     appStoreAction: 'App Store を開く',
     githubAction: 'GitHub Releases からダウンロード',
   },

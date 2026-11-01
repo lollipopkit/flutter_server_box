@@ -13,13 +13,13 @@
     <string name="widget_configure_server">Servidor</string>
     <string name="widget_configure_metric">Métrica principal</string>
     <string name="widget_configure_save">Guardar</string>
-    <string name="widget_configure_empty">Ainda não há servidor com agente monitor.\nAdicione um no ServerBox e volte aqui.</string>
+    <string name="widget_configure_empty">O ServerBox Monitor ainda não está configurado em nenhum servidor.\nAdicione um servidor no ServerBox e volte aqui.</string>
     <string name="widget_metric_cpu">CPU</string>
     <string name="widget_metric_memory">Memória</string>
     <string name="widget_metric_disk">Disco</string>
     <string name="widget_metric_network">Rede</string>
     <string name="widget_err_not_configured">Toque para escolher um servidor</string>
-    <string name="widget_err_no_token">Sem credencial — abra o ServerBox</string>
+    <string name="widget_err_no_token">Credenciais de acesso ausentes — abra o ServerBox</string>
     <string name="widget_err_insecure">HTTPS necessário</string>
     <string name="widget_err_network">Erro de rede</string>
     <string name="widget_err_timeout">Tempo esgotado</string>
@@ -28,9 +28,9 @@
     <string name="widget_small_label">Valores do servidor</string>
     <string name="widget_medium_label">Gráficos do servidor</string>
     <string name="widget_label">Estado do servidor</string>
-    <string name="widget_description">CPU, memória, disco e rede num relance. Amplie para ver mais.</string>
+    <string name="widget_description">Confira rapidamente o uso da CPU, da memória, do disco e da rede. Amplie o widget para ver mais detalhes.</string>
 
-    <string name="process_text_label">Salvar como snippet</string>
+    <string name="process_text_label">Salvar como snippet de código</string>
     <string name="tile_no_sessions">Nenhuma sessão ativa</string>
     <plurals name="tile_sessions">
         <item quantity="one">%d sessão</item>
