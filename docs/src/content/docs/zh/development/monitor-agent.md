@@ -1,31 +1,31 @@
 ---
-title: Monitor Agent API 与访问模型
+title: Monitor API 与访问模型
 description: Capability 上报、指标历史和 remote access 行为
 ---
 
-本页说明 App 连接 Monitor agent 时依赖的 API 行为。安装和配置见
-[Monitor Agent](/docs/zh/advanced/monitor-agent/)。
+本页说明 App 连接 Monitor 时依赖的 API 行为。安装和配置见
+[Monitor](/docs/zh/advanced/monitor-agent/)。
 
 ## 协议版本
 
-App 和 agent 使用同一个协议版本号（`sbm_parser::protocol`）。只有 API 发生破坏性变化时才会递增，例如删除或重命名字段、改变字段含义或删除 route。新增功能不改变协议版本，而是列在 `features` 中。
+App 和 Monitor 使用同一个协议版本号（`sbm_parser::protocol`）。只有 API 发生破坏性变化时才会递增，例如删除或重命名字段、改变字段含义或删除 route。新增功能不改变协议版本，而是列在 `features` 中。
 
-- `GET /api/v1/health` 不需要登录，返回 `protocol` 和 `min_client_protocol`，不返回发布版本（发布版本在 `/capabilities` 中）。没有这两个字段的 agent 视为协议 1。
-- 每个请求都带有 `X-SBM-Protocol: <n>`，没有这个 header 的请求视为协议 1。客户端低于 `min_client_protocol` 时，agent 返回 `426` 和 `{"error": "client_too_old", "protocol", "min_client_protocol"}`。`/health`、preflight 和 WebSocket upgrade 不检查；upgrade 之前的 `/ws-ticket` 请求会检查。
-- App 登录前先读取 `/health`。agent 的协议版本过旧时，App 会提示更新 agent；如果 agent 要求更高版本的协议，则会提示更新 App。
-- 双方都至少支持上一个协议版本：agent 按旧版客户端的格式回应它，App 仍能读取旧版 agent。
+- `GET /api/v1/health` 不需要登录，返回 `protocol` 和 `min_client_protocol`，不返回发布版本（发布版本在 `/capabilities` 中）。没有这两个字段的 Monitor 视为协议 1。
+- 每个请求都带有 `X-SBM-Protocol: <n>`，没有这个 header 的请求视为协议 1。客户端低于 `min_client_protocol` 时，Monitor 返回 `426` 和 `{"error": "client_too_old", "protocol", "min_client_protocol"}`。`/health`、preflight 和 WebSocket upgrade 不检查；upgrade 之前的 `/ws-ticket` 请求会检查。
+- App 登录前先读取 `/health`。Monitor 的协议版本过旧时，App 会提示更新 Monitor；如果 Monitor 要求更高版本的协议，则会提示更新 App。
+- 双方都至少支持上一个协议版本：Monitor 按旧版客户端的格式回应它，App 仍能读取旧版 Monitor。
 
 ## Capability discovery
 
-App 通过 `GET /api/v1/capabilities` 查询 agent 支持的功能，以及当前登录账号可以使用的功能。返回内容针对调用者：
+App 通过 `GET /api/v1/capabilities` 查询 Monitor 支持的功能，以及当前登录账号可以使用的功能。返回内容针对调用者：
 
 - `me`：`username`、`role` 和 `admin`。watch token 没有 `me`。
 - `grants`：`shell`、`ssh_terminal`、`files`、`connect` 和 `listen` 各一项，带有 `ok`，不可用时还带有 `why`：`not_granted`（角色没有这项权限）、`insecure_transport`（需要 TLS、loopback 调用方或 `[remote_access] allow_insecure`）、`not_configured`（`files` 没有配置 `roots`）。每项权限还带有它的选项：`files.mode`、`connect.allow`、`listen.public` 和 `listen.ports`。watch token 的每项权限都是 `not_granted`。
-- `remote_access`：角色功能之前的 agent 上报的布尔值，由 `grants` 推导出来，供旧版 App 使用（`terminal` 对应 `ssh_terminal` 或 `shell`，`full_access` 对应 `shell`，`stream` 对应 `connect`）。存在 `grants` 时，App 读取 `grants`。
+- `remote_access`：角色功能之前的 Monitor 上报的布尔值，由 `grants` 推导出来，供旧版 App 使用（`terminal` 对应 `ssh_terminal` 或 `shell`，`full_access` 对应 `shell`，`stream` 对应 `connect`）。存在 `grants` 时，App 读取 `grants`。
 
 TODO：最低支持版本的 App 改为读取 `grants` 后，删除旧版 `remote_access` response。
 
-不要仅根据 agent 版本或默认配置推断功能是否可用；应读取运行中 agent
+不要仅根据 Monitor 版本或默认配置推断功能是否可用；应读取运行中 Monitor
 返回的 capabilities。
 
 ## 指标历史 API
@@ -35,7 +35,7 @@ Capabilities response 会报告：
 - `retention_days`：`[monitoring.data_retention] metrics_days` 中配置的数据保留上限。
 - `oldest_sample`：当前实际保存的最早一条指标样本的时间。
 
-App 只提供符合数据保留限制和最早样本时间的图表 preset，并在时间范围选择器中显示这两个值。较旧且不报告 retention 的 agent 仍使用固定图表范围。
+App 只提供符合数据保留限制和最早样本时间的图表 preset，并在时间范围选择器中显示这两个值。较旧且不报告 retention 的 Monitor 仍使用固定图表范围。
 
 App 可通过以下 endpoint 请求精确时间段：
 
@@ -43,7 +43,7 @@ App 可通过以下 endpoint 请求精确时间段：
 GET /api/v1/metrics/history?from=<epoch-seconds>&to=<epoch-seconds>
 ```
 
-如果 `from` 早于最早保留样本，agent 会返回现存记录，不会平移请求的开始时间，也不会报错。图表会将缺少数据的时间显示为空档。没有 `from` 时，`?minutes=` 指定窗口长度（默认 60 分钟，最少 5 分钟，最多 7 天），结束时间为 `to` 或当前时间。App 每次请求都会携带 `minutes`，因此不支持 `from` 和 `to` 的旧版 agent 仍能处理请求。
+如果 `from` 早于最早保留样本，Monitor 会返回现存记录，不会平移请求的开始时间，也不会报错。图表会将缺少数据的时间显示为空档。没有 `from` 时，`?minutes=` 指定窗口长度（默认 60 分钟，最少 5 分钟，最多 7 天），结束时间为 `to` 或当前时间。App 每次请求都会携带 `minutes`，因此不支持 `from` 和 `to` 的旧版 Monitor 仍能处理请求。
 
 ## 访问模型
 
@@ -76,7 +76,7 @@ GET /api/v1/metrics/history?from=<epoch-seconds>&to=<epoch-seconds>
 | `PUT /api/v1/roles/{name}` | `role`、`current_password` |
 | `DELETE /api/v1/roles/{name}` | `current_password` |
 
-`current_password` 是调用者（admin）自己的密码。它与登录共用限流，连续输错会返回 `429 throttled` 和 `Retry-After`。agent 设置（`/settings`、`/push`、`/push/test`、`PUT /card-order`）同样只允许 admin；`PUT /custom-cmds` 还需要可用的 `shell`，因为自定义命令由 agent 执行。
+`current_password` 是调用者（admin）自己的密码。它与登录共用限流，连续输错会返回 `429 throttled` 和 `Retry-After`。Monitor 设置（`/settings`、`/push`、`/push/test`、`PUT /card-order`）同样只允许 admin；`PUT /custom-cmds` 还需要可用的 `shell`，因为自定义命令由 Monitor 执行。
 
 错误格式为 `{"error": "<code>", "message": "..."}`：
 
@@ -96,18 +96,18 @@ GET /api/v1/metrics/history?from=<epoch-seconds>&to=<epoch-seconds>
 
 ### 传输安全
 
-所有权限都需要 TLS 或 loopback 调用方（包括同机反向代理），除非设置了 `[remote_access] allow_insecure = true`。TODO：配置不再需要兼容后，删除旧版 `allow_insecure` key。目前 `[remote_access.terminal] allow_insecure` 只覆盖 `shell`、`ssh_terminal`、`connect` 和 `listen`；`[remote_access.fs] allow_insecure` 只覆盖 `files`。App 通过明文连接时，还需要为该服务器开启**允许不安全 HTTP**。条件不满足时，agent 会以 `why: insecure_transport` 上报该权限不可用。
+所有权限都需要 TLS 或 loopback 调用方（包括同机反向代理），除非设置了 `[remote_access] allow_insecure = true`。TODO：配置不再需要兼容后，删除旧版 `allow_insecure` key。目前 `[remote_access.terminal] allow_insecure` 只覆盖 `shell`、`ssh_terminal`、`connect` 和 `listen`；`[remote_access.fs] allow_insecure` 只覆盖 `files`。App 通过明文连接时，还需要为该服务器开启**允许不安全 HTTP**。条件不满足时，Monitor 会以 `why: insecure_transport` 上报该权限不可用。
 
 ### 连接和监听
 
-`connect.allow` 的每一项是 IP 地址或 CIDR 网段，后面可以跟端口或端口范围；IPv6 写作 `[addr]:port`。连接使用主机名时，agent 会解析主机名，要求解析得到的每个地址都在允许范围内，并连接这些地址。`localhost` 通常同时解析为 `127.0.0.1` 和 `::1`，因此客户端应直接发送目标地址。
+`connect.allow` 的每一项是 IP 地址或 CIDR 网段，后面可以跟端口或端口范围；IPv6 写作 `[addr]:port`。连接使用主机名时，Monitor 会解析主机名，要求解析得到的每个地址都在允许范围内，并连接这些地址。`localhost` 通常同时解析为 `127.0.0.1` 和 `::1`，因此客户端应直接发送目标地址。
 
 除非开启 `public`，`listen` 只绑定 loopback 地址；设置了 `ports` 时，只能绑定范围内的端口。
 
 ### File API
 
-`files` 权限只能访问 `[remote_access.fs] roots` 中列出的目录。agent 会解析请求路径、跟随 symlink、拒绝 `..`，并确认解析后的路径仍在已配置的 root 下，因此 symlink 不能用来越过 roots。设置 `roots = ["/"]` 会开放整个文件系统，agent 启动时会发出警告。
+`files` 权限只能访问 `[remote_access.fs] roots` 中列出的目录。Monitor 会解析请求路径、跟随 symlink、拒绝 `..`，并确认解析后的路径仍在已配置的 root 下，因此 symlink 不能用来越过 roots。设置 `roots = ["/"]` 会开放整个文件系统，Monitor 启动时会发出警告。
 
 ### Terminal endpoint
 
-网页面板终端作为 SSH 客户端连接 `ssh_addr`，使用该 SSH 账户的权限，需要 `ssh_terminal`。App 终端使用 agent 进程用户的本地 shell，需要 `shell`。该 endpoint 的第一条消息可能包含 SSH 密码，所以它遵循上面的传输安全规则。
+网页面板终端作为 SSH 客户端连接 `ssh_addr`，使用该 SSH 账户的权限，需要 `ssh_terminal`。App 终端使用 Monitor 进程用户的本地 shell，需要 `shell`。该 endpoint 的第一条消息可能包含 SSH 密码，所以它遵循上面的传输安全规则。

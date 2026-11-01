@@ -164,7 +164,7 @@ class AppLocalizationsAz extends AppLocalizations {
       'Bu hostun məlumatları və daxil etdiyin parol bu cihazda saxlanılacaq.';
 
   @override
-  String get agentMonitorOptional => 'Monitorinq agenti (istəyə bağlı)';
+  String get agentMonitorOptional => 'Monitor (istəyə bağlı)';
 
   @override
   String get authFailTip => 'Autentifikasiya uğursuz oldu. Məlumatları yoxla';
@@ -268,7 +268,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get monitorHttpsRequired =>
-      'HTTP istifadəsinə icazə verilməyibsə, uzaq monitorinq agenti üçün HTTPS tələb olunur.';
+      'HTTP istifadəsinə icazə verilməyibsə, uzaq Monitor üçün HTTPS tələb olunur.';
 
   @override
   String get monitorAllowInsecureHttp => 'HTTP istifadəsinə icazə ver';
@@ -292,7 +292,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String monitorHttpTip(String url) {
-    return 'SSH vasitəsilə əmrlər icra etmək əvəzinə bu serverin vəziyyətini **Monitor**-un HTTP interfeysi ilə oxu.\n\nƏvvəlcə serverdə monitor quraşdırılmalıdır; qrafiklər, Watch tətbiqi və ana ekran vidcetləri ondan istifadə edir.\n\n[Monitor-un quraşdırılması]($url)';
+    return 'SSH vasitəsilə əmrlər icra etmək əvəzinə bu serverin vəziyyətini **Monitor**-un HTTP API-si ilə oxu.\n\nƏvvəlcə serverdə Monitor quraşdırılmalıdır; qrafikləri, Watch tətbiqini və ana ekran vidcetlərini mümkün edən odur.\n\n[Monitor-un quraşdırılması]($url)';
   }
 
   @override
@@ -1181,7 +1181,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get diskCountsNetworkAgentTip =>
-      'NFS, SMB və digər şəbəkə qoşmaları siyahıda həmişə göstərilir. Onların tutumu başqa maşına aid olduğundan, standart olaraq ümumi disk tutumuna daxil edilmir. Monitor tarixçə yazarkən və disk xəbərdarlıqlarını hesablayarkən də bu ümumi tutumdan istifadə edir.';
+      'NFS, SMB və digər şəbəkə qoşmaları siyahıda həmişə göstərilir. Onların tutumu başqa maşına aid olduğundan, standart olaraq ümumi disk tutumuna daxil edilmir — Monitor-un tarixçədə saxladığı və disk xəbərdarlıqlarını yoxladığı göstərici budur.';
 
   @override
   String spentTime(String time) {
@@ -1592,7 +1592,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get watchServersTip =>
-      'Saat məlumatları monitor agentindən özü alır, buna görə yalnız bu agenti olan serverləri seçmək mümkündür.';
+      'Saat məlumatları Monitor-dan özü alır, buna görə yalnız Monitor-u olan serverləri seçmək mümkündür.';
 
   @override
   String get watchNoMonitorServer =>
@@ -1603,7 +1603,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get legacyStatusGoneBody =>
-      'Saat tətbiqi və ana ekran vidcetləri əvvəllər əl ilə daxil edilmiş `/status` ünvanını oxuyurdu. Bu son nöqtə artıq mövcud deyil: yalnız cari dəyərləri mətn kimi qaytara bildiyinə görə qrafik göstərmək mümkün olmurdu.\n\nİndi onlar monitor agentinin autentifikasiya tələb edən API interfeysindən məlumat alır, dəyişmə qrafikləri çəkir və tətbiqlə avtomatik sinxronlaşır. Serveri tətbiqdə bir dəfə konfiqurasiya et, bütün saatlar və vidcetlər onu avtomatik tanıyacaq.';
+      'Saat tətbiqi və ana ekran vidcetləri əvvəllər əl ilə daxil edilmiş `/status` ünvanını oxuyurdu. Bu son nöqtə artıq mövcud deyil: yalnız cari dəyərləri mətn kimi qaytara bildiyinə görə qrafik göstərmək mümkün olmurdu.\n\nİndi onlar Monitor-un autentifikasiya tələb edən API interfeysindən məlumat alır, dəyişmə qrafikləri çəkir və tətbiqlə avtomatik sinxronlaşır. Serveri tətbiqdə bir dəfə konfiqurasiya et, bütün saatlar və vidcetlər onu avtomatik tanıyacaq.';
 
   @override
   String get services => 'Servislər';
@@ -2166,7 +2166,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String funcNeedsAgentGrant(String func, String setting) {
-    return '$func üçün Monitor-da $setting aktivləşdirilməlidir.';
+    return '$func üçün Monitor-un $setting ayarı aktiv olmalıdır.';
   }
 
   @override
@@ -2176,7 +2176,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get portForwardRemoteNeedsAgent =>
-      'Monitor vasitəsilə uzaq port yönləndirməsi üçün agentin yeni versiyası lazımdır. Serverdə agenti yenilə.';
+      'Monitor vasitəsilə uzaq port yönləndirməsi üçün Monitor-un yeni versiyası lazımdır. Serverdə Monitor-u yenilə.';
 
   @override
   String get rangeLive => 'Canlı';
@@ -2195,7 +2195,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get historyNoStored =>
-      'Tarixçə məlumatlarını yalnız Monitor saxlayır. SSH ilə qoşulduqda tətbiq yalnız bağlantı qurulduqdan sonra topladığı məlumatları göstərə bilər.';
+      'Tarixçəni yalnız Monitor saxlayır. Bu bağlantı yalnız tətbiqin qoşulduqdan sonra gördüklərini saxlayır.';
 
   @override
   String get noHistoryYet => 'Hələ ölçülməyib';
@@ -2211,7 +2211,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get beyondRetention =>
-      'Monitor-un saxladığı məlumat aralığından kənardadır';
+      'Bu Monitor-un saxladığı məlumat aralığından kənardadır';
 
   @override
   String agentRetentionFmt(String kept) {
@@ -2507,7 +2507,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get remoteDesktopIntro =>
-      'Serverin RDP və ya VNC masaüstünü tətbiqin içində açır. Bağlantı serverin SSH bağlantısı və ya Monitor agenti üzərindən keçir, ona görə masaüstü portunun şəbəkədən əlçatan olması lazım deyil.';
+      'Serverin RDP və ya VNC masaüstünü tətbiqin içində açır. Bağlantı serverin SSH bağlantısı və ya Monitor-u üzərindən keçir, ona görə masaüstü portunun şəbəkədən əlçatan olması lazım deyil.';
 
   @override
   String get remoteDesktopIntroProfiles =>
@@ -2515,7 +2515,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get localServerIntro =>
-      'ServerBox işləyən cihazı server kimi əlavə edir. Status, proseslər, xidmətlər, konteynerlər, terminal və fayllar SSH və ya Monitor agenti olmadan işləyir.';
+      'ServerBox işləyən cihazı server kimi əlavə edir. Status, proseslər, xidmətlər, konteynerlər, terminal və fayllar SSH və ya Monitor olmadan işləyir.';
 
   @override
   String get localServerAdd => 'Bu cihazı əlavə et';
@@ -2529,11 +2529,11 @@ class AppLocalizationsAz extends AppLocalizations {
       'Bağlıdır. Aşağıdakı sahələr yenidən açanda lazım olsun deyə saxlanılır.';
 
   @override
-  String get monitorAgent => 'Monitor agenti';
+  String get monitorAgent => 'Monitor';
 
   @override
   String get plainHttpEditTip =>
-      'Giriş məlumatları və göstəricilər şəbəkədən şifrələnmədən keçir. Bunu LAN və ya Tailscale ünvanı ilə məhdudlaşdırın, ya da agenti TLS arxasına qoyun.';
+      'Giriş məlumatları və göstəricilər şəbəkədən şifrələnmədən keçir. Bunu LAN və ya Tailscale ünvanı ilə məhdudlaşdırın, ya da Monitor-u TLS arxasına qoyun.';
 
   @override
   String get behaviour => 'Davranış';
@@ -2744,14 +2744,14 @@ class AppLocalizationsAz extends AppLocalizations {
   }
 
   @override
-  String get monitorSettings => 'Monitor settings';
+  String get monitorSettings => 'Monitor ayarları';
 
   @override
-  String get monitorAgentDefault => 'Agent default';
+  String get monitorAgentDefault => 'Monitor-un standart dəyəri';
 
   @override
   String get monitorNeedsRestart =>
-      'Agent yenidən başladıldıqdan sonra qüvvəyə minir';
+      'Monitor yenidən başladıldıqdan sonra qüvvəyə minir';
 
   @override
   String get monitorCollection => 'Collection';
@@ -2821,7 +2821,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get pushUnknownType =>
-      'Bu Monitor göndərmə növünü dəstəkləmir, ona görə ayarları göstərilmir. Buradan silə və ya Monitor-un config.toml faylında redaktə edə bilərsən.';
+      'Bu Monitor-da bu kanal növü üçün göndərici yoxdur, ona görə ayarları göstərilmir. Buradan silə və ya Monitor-un config.toml faylında redaktə edə bilərsən.';
 
   @override
   String get pushJsonInvalid => 'düzgün JSON deyil';
@@ -2831,7 +2831,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get dataRetentionTip =>
-      'Söndürüldükdə Monitor məlumatları silmir və verilənlər bazası böyüməyə davam edir.';
+      'Söndürüldükdə Monitor heç nəyi silmir və verilənlər bazası limitsiz böyüyür.';
 
   @override
   String get retentionMetrics => 'Keep metrics';
@@ -2850,19 +2850,19 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get corsOriginsTip =>
-      'Browser panel-in bu agent-ə müraciət edə biləcəyi origin-lər. Boş olduqda yalnız same-origin icazəlidir.';
+      'Browser panel-in bu Monitor-a müraciət edə biləcəyi origin-lər. Boş olduqda yalnız same-origin icazəlidir.';
 
   @override
   String get monitorNoRemoteAccess =>
-      'Bu agent yalnız monitorinq üçündür. Buradan terminal aça, əmrlər işlədə və fayllara baxa bilməzsiniz. Bu funksiyaları aktivləşdirmək üçün agentin config.toml faylında [remote_access] bölməsini redaktə edin.';
+      'Bu Monitor yalnız monitorinq üçündür. Buradan terminal aça, əmrlər işlədə və fayllara baxa bilməzsiniz. Bu funksiyaları aktivləşdirmək üçün Monitor-un config.toml faylında [remote_access] bölməsini redaktə edin.';
 
   @override
   String get monitorAgentTooOld =>
-      'Bu Monitor agenti ServerBox-un bu versiyasının dəstəklədiyindən köhnədir. Serverdə agenti yeniləyin.';
+      'Bu Monitor ServerBox-un bu versiyasının dəstəklədiyindən köhnədir. Serverdə Monitor-u yeniləyin.';
 
   @override
   String get monitorClientTooOld =>
-      'Bu Monitor agenti artıq ServerBox-un bu versiyasını dəstəkləmir. Tətbiqi yeniləyin.';
+      'Bu Monitor artıq ServerBox-un bu versiyasını dəstəkləmir. Tətbiqi yeniləyin.';
 
   @override
   String get alerts => 'Xəbərdarlıqlar';
@@ -3016,7 +3016,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get remoteDesktopTargetTip =>
-      'Hədəf SSH serveri və ya Monitor agenti tərəfindən tapılır. localhost həmin maşına işarə edir.';
+      'Hədəf SSH serveri və ya Monitor tərəfindən tapılır. localhost həmin maşına işarə edir.';
 
   @override
   String get remoteDesktopDomain => 'Domen (istəyə bağlı)';
@@ -3081,8 +3081,103 @@ class AppLocalizationsAz extends AppLocalizations {
   String get remoteDesktopWaiting => 'Masaüstü gözlənilir…';
 
   @override
-  String get remoteDesktopUnsupportedSecurity =>
+  String get remoteDesktopFailStandardRdpSecurityOnly =>
       'Server yalnız Standard RDP Security (RC4) təklif edir, bu dəstəklənmir. xrdp.ini faylında security_layer=tls (və ya negotiate) təyin edin və xrdp-nin TLS sertifikatını oxuya bildiyinə əmin olun.';
+
+  @override
+  String get remoteDesktopFailServerCertificateMissing =>
+      'Serverin TLS sertifikatı yoxdur. Serverdə sertifikat quraşdırın; xrdp üçün xrdp.ini faylında certificate və key_file təyin edin.';
+
+  @override
+  String get remoteDesktopFailClientCertificateRequired =>
+      'Server müştəri sertifikatı (smart kartla giriş) tələb edir, bu dəstəklənmir.';
+
+  @override
+  String get remoteDesktopFailWrongCredentials =>
+      'İstifadəçi adı və ya parol yanlışdır.';
+
+  @override
+  String get remoteDesktopFailAccountLockedOut =>
+      'Hesab bloklanıb. Sonra yenidən cəhd edin və ya administratordan bloku açmasını xahiş edin.';
+
+  @override
+  String get remoteDesktopFailAccountDisabled => 'Hesab deaktiv edilib.';
+
+  @override
+  String get remoteDesktopFailAccountExpired => 'Hesabın müddəti bitib.';
+
+  @override
+  String get remoteDesktopFailPasswordExpired =>
+      'Parolun müddəti bitib və ya dəyişdirilməlidir. Əvvəlcə onu serverdə dəyişin.';
+
+  @override
+  String get remoteDesktopFailLogonRestricted =>
+      'Hesab bu vaxtda və ya bu cihazdan daxil ola bilməz, ya da onun boş parolu ilə uzaqdan girişə icazə verilmir.';
+
+  @override
+  String get remoteDesktopFailRemoteLogonDenied =>
+      'Hesabın Uzaq Masaüstü ilə daxil olmasına icazə verilmir. Serverdə onu Remote Desktop Users qrupuna əlavə edin.';
+
+  @override
+  String get remoteDesktopFailFreshCredentialsRequired =>
+      'Server saxlanmış giriş məlumatlarını qəbul etmir. Parolu yenidən daxil edin.';
+
+  @override
+  String get remoteDesktopFailIdleTimeout =>
+      'Sessiya serverin boş qalma limitindən sonra kəsildi.';
+
+  @override
+  String get remoteDesktopFailSessionTimeLimit =>
+      'Sessiya serverin vaxt limitinə çatdı.';
+
+  @override
+  String get remoteDesktopFailReplacedByOtherConnection =>
+      'Başqa bağlantı bu sessiyanı ələ keçirdi.';
+
+  @override
+  String get remoteDesktopFailDisconnectedOnServer =>
+      'Sessiya serverdə kəsildi.';
+
+  @override
+  String get remoteDesktopFailLoggedOffByAdministrator =>
+      'Administrator sessiyadan çıxış etdi.';
+
+  @override
+  String get remoteDesktopFailLoggedOff => 'Sessiyadan çıxış edildi.';
+
+  @override
+  String get remoteDesktopFailServerShutdown => 'Server söndürülür.';
+
+  @override
+  String get remoteDesktopFailServerReboot => 'Server yenidən başladılır.';
+
+  @override
+  String get remoteDesktopFailServerDeniedConnection =>
+      'Server bağlantını rədd etdi.';
+
+  @override
+  String get remoteDesktopFailLicensingFailed =>
+      'Serverdə Uzaq Masaüstü lisenziyalaşdırması uğursuz oldu. Lisenziya serverini və Müştəri Giriş Lisenziyalarını (CAL) yoxlayın.';
+
+  @override
+  String get remoteDesktopFailVncSecurityUnsupported =>
+      'VNC serveri dəstəklənən təhlükəsizlik növü təklif etmir; yalnız VNC parolu və ya təhlükəsizliksiz bağlantı dəstəklənir. TigerVNC üçün SecurityTypes=VncAuth təyin edin.';
+
+  @override
+  String get remoteDesktopFailPasswordRequired =>
+      'VNC serveri parol tələb edir.';
+
+  @override
+  String get tcpTargetUnreachable =>
+      'Server bu ünvana qoşula bilmədi. Xidmətin işlədiyini və həmin portu dinlədiyini yoxlayın.';
+
+  @override
+  String get sshTcpForwardingProhibited =>
+      'SSH serveri bu bağlantını yönləndirməkdən imtina etdi. Onun sshd_config faylında AllowTcpForwarding və PermitOpen ayarlarını, authorized_keys-də açar üçün no-port-forwarding və ya permitopen seçimini yoxlayın.';
+
+  @override
+  String get monitorRelayForbidden =>
+      'Bu Monitor hesabının bu ünvana qoşulmasına icazə verilmir. Rolunun connect icazəsi buna icazə verməlidir.';
 
   @override
   String get remoteDesktopCertificateChanged =>
@@ -3198,7 +3293,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get virtIntroTransports =>
-      'Hər ikisi SSH ilə, Monitor agenti vasitəsilə və ya bu cihazda işləyir.';
+      'Hər ikisi SSH ilə, Monitor vasitəsilə və ya bu cihazda işləyir.';
 
   @override
   String get virtIntroTokens =>
@@ -3350,10 +3445,11 @@ class AppLocalizationsAz extends AppLocalizations {
   String get virtErrCertChanged => 'Hostun sertifikatı dəyişib';
 
   @override
-  String get virtErrRelayNotGranted => 'Monitor agenti bağlantıları ötürmür';
+  String get virtErrRelayNotGranted =>
+      'Monitor bu hesab üçün serverdən TCP bağlantısı açmır (connect icazəsi)';
 
   @override
-  String get virtErrExecNotGranted => 'Monitor agenti əmrləri icra etmir';
+  String get virtErrExecNotGranted => 'Monitor əmrləri icra etmir';
 
   @override
   String get virtErrNotInstalled => 'Bu serverdə virsh quraşdırılmayıb';
@@ -5146,7 +5242,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String funcNeedsAgentPermission(String func) {
-    return 'Bu Monitor-dakı hesabının $func icazəsi yoxdur. Monitor administratoru ilə əlaqə saxla.';
+    return 'Bu Monitor-dakı hesabının $func icazəsi yoxdur. Monitor-un administratoru ilə əlaqə saxla.';
   }
 
   @override
@@ -5156,7 +5252,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String funcNeedsAgentSetup(String func) {
-    return 'Bu Monitor-da $func konfiqurasiya edilməyib. Monitor administratoru bunu konfiqurasiya etməlidir.';
+    return 'Bu Monitor-da $func konfiqurasiya edilməyib; onun operatoru bunu konfiqurasiya etməlidir.';
   }
 
   @override
@@ -5199,7 +5295,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get monitorErrLastAdmin =>
-      'Ən azı bir administrator hesabı olmalıdır.';
+      'Monitor-da ən azı bir administrator hesabı olmalıdır.';
 
   @override
   String get monitorErrConflict => 'Artıq mövcuddur və ya hələ istifadədədir.';
@@ -5216,7 +5312,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get monitorGrantShellTip =>
-      'Terminal, proseslər, xidmətlər, konteynerlər, snippet-lər, enerji — agent hesabı ilə';
+      'Terminal, proseslər, xidmətlər, konteynerlər, snippet-lər, enerji — Monitor-un hesabı ilə';
 
   @override
   String get monitorGrantSshTerminal => 'SSH üzərindən panel terminalı';
@@ -5226,7 +5322,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get monitorGrantVirtTip =>
-      'Agentin veb panelində qoşulduğu Proxmox VE, libvirt və BMC-lər';
+      'Monitor-un veb panelində qoşulduğu Proxmox VE, libvirt və BMC-lər';
 
   @override
   String get monitorGrantFiles => 'Fayllar';
@@ -5262,18 +5358,18 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get monitorAdminRoleTip =>
-      'Hesabları, rolları və agent ayarlarını idarə edir';
+      'Hesabları, rolları və Monitor-un ayarlarını idarə edir';
 
   @override
   String get monitorYou => 'Siz';
 
   @override
   String get monitorNoAccessToSettings =>
-      'Bu agent-in ayarlarını yalnız admin dəyişə bilər.';
+      'Bu Monitor-un ayarlarını yalnız admin dəyişə bilər.';
 
   @override
   String get monitorPasswordNotSaved =>
-      'Parol agent-də dəyişdirildi, lakin tətbiq onu saxlaya bilmədi. Bu serverin ayarlarında Monitor parolunu yeniləyin.';
+      'Parol Monitor-da dəyişdirildi, lakin tətbiq onu saxlaya bilmədi. Bu serverin ayarlarında Monitor parolunu yeniləyin.';
 
   @override
   String get firewall => 'Firewall';
@@ -5498,24 +5594,24 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get monitorSyncNeedsServer =>
-      'Ehtiyat nüsxəni saxlayan monitor agentinin serverini seçin.';
+      'Ehtiyat nüsxəni saxlayacaq Monitor-un serverini seçin.';
 
   @override
   String get monitorBackupUnsupported =>
-      'Bu monitor agenti ehtiyat nüsxə saxlaya bilmir. Agenti yeniləyin.';
+      'Bu Monitor ehtiyat nüsxə saxlaya bilmir. Monitor-u yeniləyin.';
 
   @override
   String get monitorBackupAdminOnly =>
-      'Monitor agentində yalnız administrator hesabı ehtiyat nüsxə saxlaya bilər.';
+      'Monitor-da yalnız onun administrator hesabı ehtiyat nüsxə saxlaya bilər.';
 
   @override
   String monitorBackupTooLarge(String max) {
-    return 'Ehtiyat nüsxə monitor agentinin qəbul etdiyi ölçüdən ($max) böyükdür.';
+    return 'Ehtiyat nüsxə Monitor-un qəbul etdiyi ölçüdən ($max) böyükdür.';
   }
 
   @override
   String get monitorBackupTooMany =>
-      'Monitor agenti icazə verdiyi qədər ehtiyat nüsxə saxlayır. Əvvəlcə birini silin.';
+      'Monitor icazə verdiyi qədər ehtiyat nüsxə saxlayır. Əvvəlcə birini silin.';
 
   @override
   String get virtCreateVmidInvalid => '100 ilə 999999999 arasında VMID.';

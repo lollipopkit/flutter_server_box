@@ -13,7 +13,7 @@ The commands live on each server, in
 editor loads the files from the server and writes changes back when you save.
 
 You must be connected to the server to save edits. If it is unreachable, you
-can open the editor but not save. The App and Monitor agent use the same files,
+can open the editor but not save. The App and Monitor use the same files,
 so edits in either one are immediately visible in the other.
 
 ## Editing
@@ -68,12 +68,12 @@ tail -20 /var/log/syslog
 ## Security
 
 Commands run with the account used for the connection: the SSH user for SSH
-connections, or the Monitor agent process user for Monitor connections.
+connections, or the Monitor process user for Monitor connections.
 
 For Monitor connections, the account's role must include the `shell`
 permission. The request must use secure transport or explicitly permit
 `allow_insecure`. Each file in this directory is executable code: it runs as
-the agent user on every status refresh.
+the Monitor user on every status refresh.
 
 Use read-only commands where possible. A command can affect the server with
 the permissions of its execution account. Never include passwords, tokens, or

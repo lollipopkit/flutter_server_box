@@ -416,7 +416,7 @@ const globalAgentToolDefinitions = <AskAiToolDefinition>[
         'monitor_addr': {
           'type': 'string',
           'description':
-              'For add_server: the monitor agent\'s base URL if one was '
+              'For add_server: the Monitor\'s base URL if one was '
               'installed, e.g. http://127.0.0.1:3770. Never its credentials — '
               'the app asks the user for those. Use an empty string otherwise.',
         },
@@ -498,7 +498,7 @@ String buildGlobalAgentInstructions({
       'Close an ad-hoc connection with ssh_disconnect once it is no longer needed.',
     )
     ..writeln(
-      'To keep an ad-hoc host, use the serverbox add_server action with its session_id. It closes the connection and the app takes over. Never read a monitor agent\'s credentials off the machine to pass them here; the app asks the user for them.',
+      'To keep an ad-hoc host, use the serverbox add_server action with its session_id. It closes the connection and the app takes over. Never read the Monitor\'s credentials off the machine to pass them here; the app asks the user for them.',
     )
     ..writeln(
       'One tool call per turn. Every call is reviewed by the user, one at a time, so a turn carrying several asks them to decide all of it before you have seen a single result.',
@@ -760,7 +760,7 @@ final class AdHocSessionTarget extends AgentSshTarget {
 /// the job instead of reporting the server unusable.
 final _noSftp = StateError(
   'Reading and writing files here needs a byte stream, which travels over '
-  'SSH. This server is reached only through its monitor agent, which carries '
+  'SSH. This server is reached only through its Monitor, which carries '
   'none. Use run_shell_command instead — `cat path` to read, and a heredoc '
   'into `tee path` to write.',
 );

@@ -163,7 +163,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'This host and the password you enter are saved on this device';
 
   @override
-  String get agentMonitorOptional => 'Monitor agent (optional)';
+  String get agentMonitorOptional => 'Monitor (optional)';
 
   @override
   String get authFailTip => 'Authentication failed. Check the details';
@@ -266,13 +266,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get monitorHttpsRequired =>
-      'A remote monitor agent needs HTTPS, unless HTTP is allowed for it.';
+      'A remote Monitor needs HTTPS, unless HTTP is allowed for it.';
 
   @override
   String get monitorAllowInsecureHttp => 'Allow HTTP';
 
   @override
-  String get plainHttpTitle => 'This agent is served over plain HTTP';
+  String get plainHttpTitle => 'This Monitor is served over plain HTTP';
 
   @override
   String get plainHttpTip =>
@@ -290,7 +290,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String monitorHttpTip(String url) {
-    return 'Read this server\'s status from a **monitor** agent\'s HTTP API instead of running commands over SSH.\n\nThe agent has to be installed on the server first, and it is what makes trends, the watch app and the home-screen widgets possible.\n\n[Setting up a monitor agent]($url)';
+    return 'Read this server\'s status from the **Monitor**\'s HTTP API instead of running commands over SSH.\n\nThe Monitor has to be installed on the server first, and it is what makes trends, the watch app and the home-screen widgets possible.\n\n[Setting up the Monitor]($url)';
   }
 
   @override
@@ -702,7 +702,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Jump server and ProxyCommand cannot be used together.';
 
   @override
-  String get noConnectionMethod => 'Configure SSH, a monitor agent, or both';
+  String get noConnectionMethod => 'Configure SSH, the Monitor, or both';
 
   @override
   String get keepForeground => 'Keep app foreground!';
@@ -1007,7 +1007,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get serverFilesUnavailableTip =>
-      'Needs SSH to this server, or server_box_monitor installed with its file API on.';
+      'Needs SSH to this server, or the Monitor installed with its file API on.';
 
   @override
   String get back => 'Back';
@@ -1164,11 +1164,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get diskCountsNetworkTip =>
-      'NFS, SMB and similar mounts are always listed. Their capacity belongs to another machine, so by default they are left out of the disk total. Applies when status is collected over SSH; over the monitor agent, the agent\'s own setting decides.';
+      'NFS, SMB and similar mounts are always listed. Their capacity belongs to another machine, so by default they are left out of the disk total. Applies when status is collected over SSH; over the Monitor, the Monitor\'s own setting decides.';
 
   @override
   String get diskCountsNetworkAgentTip =>
-      'NFS, SMB and similar mounts are always listed. Their capacity belongs to another machine, so by default they are left out of the disk total — the figure the agent stores in its history and checks disk alerts against.';
+      'NFS, SMB and similar mounts are always listed. Their capacity belongs to another machine, so by default they are left out of the disk total — the figure the Monitor stores in its history and checks disk alerts against.';
 
   @override
   String spentTime(String time) {
@@ -1581,17 +1581,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get watchServersTip =>
-      'The watch fetches from the monitor on its own, so only servers with one can be picked.';
+      'The watch fetches from the Monitor on its own, so only servers with the Monitor can be picked.';
 
   @override
-  String get watchNoMonitorServer => 'No server has a monitor agent configured';
+  String get watchNoMonitorServer => 'No server has the Monitor configured';
 
   @override
   String get legacyStatusGoneTitle => 'Status URLs no longer work';
 
   @override
   String get legacyStatusGoneBody =>
-      'The watch app and home widgets used to read a `/status` address typed by hand. That endpoint is gone: it could only report current values as text, which is why they could never show a chart.\n\nThey now read the monitor agent\'s authenticated API, so they draw trends and stay in step with the app on their own. Configure the server in the app once, and every watch and widget picks it up.';
+      'The watch app and home widgets used to read a `/status` address typed by hand. That endpoint is gone: it could only report current values as text, which is why they could never show a chart.\n\nThey now read the Monitor\'s authenticated API, so they draw trends and stay in step with the app on their own. Configure the server in the app once, and every watch and widget picks it up.';
 
   @override
   String get services => 'Services';
@@ -2152,17 +2152,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String funcNeedsAgentGrant(String func, String setting) {
-    return '$func needs the Monitor agent\'s $setting to be turned on.';
+    return '$func needs the Monitor\'s $setting to be turned on.';
   }
 
   @override
   String funcNeedsAgentUpdate(String func) {
-    return '$func needs a newer Monitor agent.';
+    return '$func needs a newer Monitor.';
   }
 
   @override
   String get portForwardRemoteNeedsAgent =>
-      'Remote forwards through the Monitor agent need a newer agent: update it on the server.';
+      'Remote forwards through the Monitor need a newer Monitor: update it on the server.';
 
   @override
   String get rangeLive => 'Live';
@@ -2181,7 +2181,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get historyNoStored =>
-      'Only a monitor agent stores history. This connection keeps what this app has seen since it connected.';
+      'Only the Monitor stores history. This connection keeps what this app has seen since it connected.';
 
   @override
   String get noHistoryYet => 'Nothing measured yet';
@@ -2196,11 +2196,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get to => 'To';
 
   @override
-  String get beyondRetention => 'beyond what this agent kept';
+  String get beyondRetention => 'beyond what this Monitor kept';
 
   @override
   String agentRetentionFmt(String kept) {
-    return 'Agent keeps $kept';
+    return 'Monitor keeps $kept';
   }
 
   @override
@@ -2504,7 +2504,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get remoteDesktopIntro =>
-      'Open a server\'s RDP or VNC desktop inside the app. The connection goes through the server\'s SSH connection or its Monitor agent, so the desktop port does not have to be reachable from the network.';
+      'Open a server\'s RDP or VNC desktop inside the app. The connection goes through the server\'s SSH connection or its Monitor, so the desktop port does not have to be reachable from the network.';
 
   @override
   String get remoteDesktopIntroProfiles =>
@@ -2512,7 +2512,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get localServerIntro =>
-      'Add the device running ServerBox as a server. Status, processes, services, containers, the terminal and files all work without SSH or a Monitor agent.';
+      'Add the device running ServerBox as a server. Status, processes, services, containers, the terminal and files all work without SSH or the Monitor.';
 
   @override
   String get localServerAdd => 'Add this device';
@@ -2526,11 +2526,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Off. The fields below are kept for when you turn it back on.';
 
   @override
-  String get monitorAgent => 'Monitor agent';
+  String get monitorAgent => 'Monitor';
 
   @override
   String get plainHttpEditTip =>
-      'Credentials and metrics cross the network unencrypted. Keep it to a LAN or a Tailscale address, or put the agent behind TLS.';
+      'Credentials and metrics cross the network unencrypted. Keep it to a LAN or a Tailscale address, or put the Monitor behind TLS.';
 
   @override
   String get behaviour => 'Behaviour';
@@ -2743,10 +2743,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get monitorSettings => 'Monitor settings';
 
   @override
-  String get monitorAgentDefault => 'Agent default';
+  String get monitorAgentDefault => 'Monitor default';
 
   @override
-  String get monitorNeedsRestart => 'Takes effect after the agent restarts';
+  String get monitorNeedsRestart => 'Takes effect after the Monitor restarts';
 
   @override
   String get monitorCollection => 'Collection';
@@ -2796,7 +2796,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pushHeaders => 'Headers';
 
   @override
-  String get pushSecretSet => 'Set on the agent, not shown';
+  String get pushSecretSet => 'Set on the Monitor, not shown';
 
   @override
   String get pushSecretKeep => 'Leave blank to keep';
@@ -2816,7 +2816,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pushUnknownType =>
-      'This agent has no sender for this channel type, so its settings are not shown. It can be removed here, or edited in the agent\'s config.toml.';
+      'This Monitor has no sender for this channel type, so its settings are not shown. It can be removed here, or edited in the Monitor\'s config.toml.';
 
   @override
   String get pushJsonInvalid => 'is not valid JSON';
@@ -2826,7 +2826,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dataRetentionTip =>
-      'Off means the agent never deletes anything and its database grows without limit.';
+      'Off means the Monitor never deletes anything and its database grows without limit.';
 
   @override
   String get retentionMetrics => 'Keep metrics';
@@ -2845,19 +2845,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get corsOriginsTip =>
-      'Origins a browser panel may call this agent from. Empty means same-origin only.';
+      'Origins a browser panel may call this Monitor from. Empty means same-origin only.';
 
   @override
   String get monitorNoRemoteAccess =>
-      'This agent is set up for monitoring only. You can\'t open a terminal, run commands, or browse files here. To enable these features, edit [remote_access] in the agent\'s config.toml.';
+      'This Monitor is set up for monitoring only. You can\'t open a terminal, run commands, or browse files here. To enable these features, edit [remote_access] in the Monitor\'s config.toml.';
 
   @override
   String get monitorAgentTooOld =>
-      'This Monitor agent is older than this version of ServerBox supports. Update the agent on the server.';
+      'This Monitor is older than this version of ServerBox supports. Update the Monitor on the server.';
 
   @override
   String get monitorClientTooOld =>
-      'This Monitor agent no longer supports this version of ServerBox. Update the app.';
+      'This Monitor no longer supports this version of ServerBox. Update the app.';
 
   @override
   String get alerts => 'Alerts';
@@ -3007,7 +3007,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get remoteDesktopTargetTip =>
-      'The target is resolved from the SSH server or monitor agent. Localhost refers to that machine.';
+      'The target is resolved from the SSH server or the Monitor. Localhost refers to that machine.';
 
   @override
   String get remoteDesktopDomain => 'Domain (optional)';
@@ -3072,8 +3072,102 @@ class AppLocalizationsEn extends AppLocalizations {
   String get remoteDesktopWaiting => 'Waiting for desktop…';
 
   @override
-  String get remoteDesktopUnsupportedSecurity =>
+  String get remoteDesktopFailStandardRdpSecurityOnly =>
       'The server only offers Standard RDP Security (RC4), which is not supported. In xrdp.ini set security_layer=tls (or negotiate) and make sure xrdp can read its TLS certificate.';
+
+  @override
+  String get remoteDesktopFailServerCertificateMissing =>
+      'The server has no TLS certificate. Install one on the server; for xrdp, set certificate and key_file in xrdp.ini.';
+
+  @override
+  String get remoteDesktopFailClientCertificateRequired =>
+      'The server requires a client certificate (smart card logon), which is not supported.';
+
+  @override
+  String get remoteDesktopFailWrongCredentials => 'Wrong username or password.';
+
+  @override
+  String get remoteDesktopFailAccountLockedOut =>
+      'The account is locked out. Try again later, or ask an administrator to unlock it.';
+
+  @override
+  String get remoteDesktopFailAccountDisabled => 'The account is disabled.';
+
+  @override
+  String get remoteDesktopFailAccountExpired => 'The account has expired.';
+
+  @override
+  String get remoteDesktopFailPasswordExpired =>
+      'The password has expired or must be changed. Change it on the server first.';
+
+  @override
+  String get remoteDesktopFailLogonRestricted =>
+      'The account may not log on at this time or from this device, or its blank password is not allowed for remote logon.';
+
+  @override
+  String get remoteDesktopFailRemoteLogonDenied =>
+      'The account is not allowed to log on through Remote Desktop. Add it to the Remote Desktop Users group on the server.';
+
+  @override
+  String get remoteDesktopFailFreshCredentialsRequired =>
+      'The server does not accept saved credentials. Enter the password again.';
+
+  @override
+  String get remoteDesktopFailIdleTimeout =>
+      'The session was disconnected after the server\'s idle time limit.';
+
+  @override
+  String get remoteDesktopFailSessionTimeLimit =>
+      'The session reached the server\'s time limit.';
+
+  @override
+  String get remoteDesktopFailReplacedByOtherConnection =>
+      'Another connection took over this session.';
+
+  @override
+  String get remoteDesktopFailDisconnectedOnServer =>
+      'The session was disconnected on the server.';
+
+  @override
+  String get remoteDesktopFailLoggedOffByAdministrator =>
+      'An administrator logged off the session.';
+
+  @override
+  String get remoteDesktopFailLoggedOff => 'The session was logged off.';
+
+  @override
+  String get remoteDesktopFailServerShutdown => 'The server is shutting down.';
+
+  @override
+  String get remoteDesktopFailServerReboot => 'The server is restarting.';
+
+  @override
+  String get remoteDesktopFailServerDeniedConnection =>
+      'The server denied the connection.';
+
+  @override
+  String get remoteDesktopFailLicensingFailed =>
+      'Remote Desktop licensing failed on the server. Check its license server and Client Access Licenses.';
+
+  @override
+  String get remoteDesktopFailVncSecurityUnsupported =>
+      'The VNC server offers no supported security type; only a VNC password or none is supported. For TigerVNC, set SecurityTypes=VncAuth.';
+
+  @override
+  String get remoteDesktopFailPasswordRequired =>
+      'The VNC server requires a password.';
+
+  @override
+  String get tcpTargetUnreachable =>
+      'The server could not connect to this address. Check that the service is running and listening on that port.';
+
+  @override
+  String get sshTcpForwardingProhibited =>
+      'The SSH server refused to forward this connection. Check AllowTcpForwarding and PermitOpen in its sshd_config, and any no-port-forwarding or permitopen option on the key in authorized_keys.';
+
+  @override
+  String get monitorRelayForbidden =>
+      'This Monitor account may not connect to this address. Its role\'s connect permission must allow it.';
 
   @override
   String get remoteDesktopCertificateChanged =>
@@ -3189,7 +3283,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get virtIntroTransports =>
-      'Both work over SSH, through a Monitor agent, or on this device.';
+      'Both work over SSH, through the Monitor, or on this device.';
 
   @override
   String get virtIntroTokens =>
@@ -3349,10 +3443,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get virtErrRelayNotGranted =>
-      'The Monitor agent does not relay connections';
+      'The Monitor does not open TCP connections from the server for this account (connect permission)';
 
   @override
-  String get virtErrExecNotGranted => 'The Monitor agent does not run commands';
+  String get virtErrExecNotGranted => 'The Monitor does not run commands';
 
   @override
   String get virtErrNotInstalled => 'virsh is not installed on this server';
@@ -5155,22 +5249,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String funcNeedsAgentPermission(String func) {
-    return 'Your account on this Monitor agent has no permission for $func. Ask the agent\'s admin.';
+    return 'Your account on this Monitor has no permission for $func. Ask the Monitor\'s admin.';
   }
 
   @override
   String funcNeedsAgentHttps(String func) {
-    return '$func needs HTTPS to this Monitor agent, or plain HTTP allowed on both the agent and this app.';
+    return '$func needs HTTPS to this Monitor, or plain HTTP allowed on both the Monitor and this app.';
   }
 
   @override
   String funcNeedsAgentSetup(String func) {
-    return '$func is not set up on this Monitor agent; its operator has to configure it.';
+    return '$func is not set up on this Monitor; its operator has to configure it.';
   }
 
   @override
   String get monitorFilesReadOnly =>
-      'Read-only: this account can browse files on the agent but not change them.';
+      'Read-only: this account can browse files on the Monitor but not change them.';
 
   @override
   String get monitorAccess => 'Access';
@@ -5208,7 +5302,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get monitorErrLastAdmin =>
-      'The agent needs at least one admin account.';
+      'The Monitor needs at least one admin account.';
 
   @override
   String get monitorErrConflict => 'It already exists, or it is still in use.';
@@ -5225,7 +5319,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get monitorGrantShellTip =>
-      'Terminal, processes, services, containers, snippets, power — as the agent\'s account';
+      'Terminal, processes, services, containers, snippets, power — as the Monitor\'s account';
 
   @override
   String get monitorGrantSshTerminal => 'Panel terminal over SSH';
@@ -5235,7 +5329,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get monitorGrantVirtTip =>
-      'Proxmox VE, libvirt and BMCs the agent reaches, in its web panel';
+      'Proxmox VE, libvirt and BMCs the Monitor reaches, in its web panel';
 
   @override
   String get monitorGrantFiles => 'Files';
@@ -5271,18 +5365,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get monitorAdminRoleTip =>
-      'Manages accounts, roles and the agent\'s settings';
+      'Manages accounts, roles and the Monitor\'s settings';
 
   @override
   String get monitorYou => 'You';
 
   @override
   String get monitorNoAccessToSettings =>
-      'Only an admin can change this agent\'s settings.';
+      'Only an admin can change this Monitor\'s settings.';
 
   @override
   String get monitorPasswordNotSaved =>
-      'The password was changed on the agent, but the app could not save it. Update this server\'s Monitor password in its settings.';
+      'The password was changed on the Monitor, but the app could not save it. Update this server\'s Monitor password in its settings.';
 
   @override
   String get firewall => 'Firewall';
@@ -5508,24 +5602,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get monitorSyncNeedsServer =>
-      'Pick the server whose monitor agent stores the backup.';
+      'Pick the server whose Monitor stores the backup.';
 
   @override
   String get monitorBackupUnsupported =>
-      'This monitor agent cannot store backups. Update the agent.';
+      'This Monitor cannot store backups. Update the Monitor.';
 
   @override
   String get monitorBackupAdminOnly =>
-      'Only an admin account of the monitor agent can store backups on it.';
+      'Only an admin account of the Monitor can store backups on it.';
 
   @override
   String monitorBackupTooLarge(String max) {
-    return 'The backup is larger than the monitor agent accepts ($max).';
+    return 'The backup is larger than the Monitor accepts ($max).';
   }
 
   @override
   String get monitorBackupTooMany =>
-      'The monitor agent already holds as many backups as it allows. Delete one first.';
+      'The Monitor already holds as many backups as it allows. Delete one first.';
 
   @override
   String get virtCreateVmidInvalid => 'A VMID from 100 to 999999999.';

@@ -18,10 +18,15 @@ use ironrdp::cliprdr::pdu::{
     FileContentsRequest, FileContentsResponse, FormatDataRequest,
     FormatDataResponse, LockDataId, OwnedFormatDataResponse,
 };
+use ironrdp::connector::sspi::{self, credssp::NStatusCode};
+use ironrdp::connector::{ConnectorError, ConnectorErrorKind};
 use ironrdp::core::impl_as_any;
 use ironrdp::input::{Database as RdpInputDatabase, MouseButton, MousePosition, Operation, Scancode, WheelRotations};
 use ironrdp::pdu::input::fast_path::{FastPathInputEvent, KeyboardFlags};
+use ironrdp::pdu::nego::FailureCode;
 use ironrdp::pdu::rdp::capability_sets::MajorPlatformType;
+use ironrdp::pdu::rdp::server_error_info::{ErrorInfo, ProtocolIndependentCode, ProtocolIndependentLicensingCode};
+use ironrdp::session::GracefulDisconnectReason;
 use jpeg_decoder::PixelFormat as JpegPixelFormat;
 use sha2::{Digest as _, Sha256};
 use smallvec::SmallVec;
@@ -88,11 +93,46 @@ pub enum RemoteDesktopEndReason {
     AuthenticationFailed,
     CertificateRejected,
     ConfigurationError,
-    /// The server offers only Standard RDP Security (RC4, no server
-    /// authentication), which is not supported.
-    UnsupportedSecurity,
     TransportError,
     ServerDisconnected,
+}
+
+/// Why a session failed or ended, where the protocol says so in a code the
+/// app can put in its own words. None is retried on its own: an immediate
+/// retry gets the same answer, and a session another connection took over
+/// would take it back. A server restarting outlasts the retry delays.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum RemoteDesktopFailure {
+    /// Standard RDP Security only (RC4, no server authentication): xrdp with
+    /// `security_layer=rdp`, or `negotiate` without a readable certificate.
+    StandardRdpSecurityOnly,
+    ServerCertificateMissing,
+    ClientCertificateRequired,
+    WrongCredentials,
+    AccountLockedOut,
+    AccountDisabled,
+    AccountExpired,
+    PasswordExpired,
+    /// Logon hours, workstation, or an account restriction such as a blank
+    /// password.
+    LogonRestricted,
+    /// Not allowed to log on through Remote Desktop.
+    RemoteLogonDenied,
+    FreshCredentialsRequired,
+    IdleTimeout,
+    SessionTimeLimit,
+    ReplacedByOtherConnection,
+    DisconnectedOnServer,
+    LoggedOffByAdministrator,
+    LoggedOff,
+    ServerShutdown,
+    ServerReboot,
+    ServerDeniedConnection,
+    LicensingFailed,
+    /// A VNC server offering none of the security types supported (VNC
+    /// password or none), such as only VeNCrypt or RA2.
+    VncSecurityUnsupported,
+    PasswordRequired,
 }
 
 #[derive(Clone, Debug)]
@@ -141,6 +181,7 @@ pub enum RemoteDesktopEvent {
     },
     Ended {
         reason: RemoteDesktopEndReason,
+        failure: Option<RemoteDesktopFailure>,
         message: Option<String>,
     },
 }
@@ -711,6 +752,7 @@ async fn run_rdp(
                     retryable: false,
                 });
                 events.event(RemoteDesktopEvent::Ended {
+                    failure: None,
                     reason: RemoteDesktopEndReason::ConfigurationError,
                     message: Some(message),
                 });
@@ -747,6 +789,7 @@ async fn run_rdp(
                 retryable: false,
             });
             events.event(RemoteDesktopEvent::Ended {
+                failure: None,
                 reason: RemoteDesktopEndReason::ConfigurationError,
                 message: Some(message),
             });
@@ -785,6 +828,7 @@ async fn run_rdp(
                                 retryable: false,
                             });
                             events.event(RemoteDesktopEvent::Ended {
+                                failure: None,
                                 reason: RemoteDesktopEndReason::ConfigurationError,
                                 message: Some(message),
                             });
@@ -800,6 +844,7 @@ async fn run_rdp(
                                 retryable: false,
                             });
                             events.event(RemoteDesktopEvent::Ended {
+                                failure: None,
                                 reason: RemoteDesktopEndReason::ConfigurationError,
                                 message: Some(message),
                             });
@@ -846,28 +891,52 @@ async fn run_rdp(
                             }
                         }
                         let message = error.report().to_string();
-                        let reason = classify_rdp_failure(&message);
+                        let failure = rdp_connect_failure(&error);
+                        let reason = match failure {
+                            Some(failure) => failure_end_reason(failure),
+                            // Another protocol than asked for: the server answers the same way
+                            // every time.
+                            None if matches!(error.kind(), ConnectorErrorKind::SecurityProtocolMismatch { .. }) => {
+                                RemoteDesktopEndReason::ConfigurationError
+                            }
+                            None => classify_rdp_failure(&message),
+                        };
                         events.event(RemoteDesktopEvent::Error {
                             message: message.clone(),
-                            retryable: reason == RemoteDesktopEndReason::TransportError,
+                            retryable: failure.is_none() && reason == RemoteDesktopEndReason::TransportError,
                         });
-                        events.event(RemoteDesktopEvent::Ended { reason, message: Some(message) });
+                        events.event(RemoteDesktopEvent::Ended { reason, failure, message: Some(message) });
                         break;
                     }
-                    Some(RdpOutputEvent::Terminated(result)) => {
-                        let message = result.err().map(|error| error.to_string());
+                    Some(RdpOutputEvent::Terminated(Err(error))) => {
                         events.event(RemoteDesktopEvent::Ended {
-                            reason: if message.is_some() {
-                                RemoteDesktopEndReason::TransportError
-                            } else {
-                                RemoteDesktopEndReason::ServerDisconnected
-                            },
+                            reason: RemoteDesktopEndReason::TransportError,
+                            failure: None,
+                            message: Some(error.to_string()),
+                        });
+                        break;
+                    }
+                    Some(RdpOutputEvent::Terminated(Ok(graceful))) => {
+                        let failure = match &graceful {
+                            GracefulDisconnectReason::ErrorInfo(info) => rdp_session_end_failure(*info),
+                            _ => None,
+                        };
+                        let message = match graceful {
+                            GracefulDisconnectReason::ErrorInfo(_) | GracefulDisconnectReason::Other(_) => {
+                                Some(graceful.description())
+                            }
+                            GracefulDisconnectReason::UserInitiated | GracefulDisconnectReason::ServerInitiated => None,
+                        };
+                        events.event(RemoteDesktopEvent::Ended {
+                            reason: failure.map_or(RemoteDesktopEndReason::ServerDisconnected, failure_end_reason),
+                            failure,
                             message,
                         });
                         break;
                     }
                     None => {
                         events.event(RemoteDesktopEvent::Ended {
+                            failure: None,
                             reason: RemoteDesktopEndReason::ServerDisconnected,
                             message: None,
                         });
@@ -883,6 +952,7 @@ async fn run_rdp(
                     Some(SessionCommand::Close) | None => {
                         rdp_input.request_close();
                         events.event(RemoteDesktopEvent::Ended {
+                            failure: None,
                             reason: RemoteDesktopEndReason::ClosedByUser,
                             message: None,
                         });
@@ -1025,11 +1095,121 @@ fn send_rdp_fast_path(
     }
 }
 
+/// What a connection failure is, where IronRDP carries it as a code.
+fn rdp_connect_failure(error: &ConnectorError) -> Option<RemoteDesktopFailure> {
+    use RemoteDesktopFailure as F;
+    match error.kind() {
+        ConnectorErrorKind::Negotiation(failure) => match failure.code() {
+            FailureCode::SSL_NOT_ALLOWED_BY_SERVER => Some(F::StandardRdpSecurityOnly),
+            FailureCode::SSL_CERT_NOT_ON_SERVER => Some(F::ServerCertificateMissing),
+            FailureCode::SSL_WITH_USER_AUTH_REQUIRED_BY_SERVER => Some(F::ClientCertificateRequired),
+            _ => None,
+        },
+        // The server answered the TLS and CredSSP the client asked for with
+        // PROTOCOL_RDP.
+        ConnectorErrorKind::SecurityProtocolMismatch { selected, .. } if selected.is_standard_rdp_security() => {
+            Some(F::StandardRdpSecurityOnly)
+        }
+        ConnectorErrorKind::Credssp(error) => match error.nstatus {
+            Some(status) => credssp_failure(status),
+            None if error.error_type == sspi::ErrorKind::LogonDenied => Some(F::WrongCredentials),
+            None => None,
+        },
+        // The Early User Authorization Result: the credentials are good, the
+        // account may not log on remotely.
+        ConnectorErrorKind::AccessDenied => Some(F::RemoteLogonDenied),
+        _ => None,
+    }
+}
+
+/// The NTSTATUS a server puts in its CredSSP error.
+fn credssp_failure(status: NStatusCode) -> Option<RemoteDesktopFailure> {
+    use RemoteDesktopFailure as F;
+    // Not among sspi's constants.
+    const ACCOUNT_EXPIRED: NStatusCode = NStatusCode(0xc000_0193);
+    match status {
+        NStatusCode::LOGON_FAILURE | NStatusCode::WRONG_PASSWORD | NStatusCode::NO_SUCH_USER => {
+            Some(F::WrongCredentials)
+        }
+        NStatusCode::ACCOUNT_LOCKED_OUT => Some(F::AccountLockedOut),
+        NStatusCode::ACCOUNT_DISABLED => Some(F::AccountDisabled),
+        ACCOUNT_EXPIRED => Some(F::AccountExpired),
+        NStatusCode::PASSWORD_EXPIRED | NStatusCode::PASSWORD_MUST_CHANGE => Some(F::PasswordExpired),
+        NStatusCode::ACCOUNT_RESTRICTION | NStatusCode::INVALID_LOGON_HOURS | NStatusCode::INVALID_WORKSTATION => {
+            Some(F::LogonRestricted)
+        }
+        NStatusCode::LOGON_TYPE_NOT_GRANTED | NStatusCode::LOGON_NOT_GRANTED => Some(F::RemoteLogonDenied),
+        NStatusCode::SMARTCARD_LOGON_REQUIRED => Some(F::ClientCertificateRequired),
+        _ => None,
+    }
+}
+
+/// The server's Set Error Info code a session ended with.
+fn rdp_session_end_failure(info: ErrorInfo) -> Option<RemoteDesktopFailure> {
+    use ProtocolIndependentCode as C;
+    use ProtocolIndependentLicensingCode as L;
+    use RemoteDesktopFailure as F;
+    match info {
+        ErrorInfo::ProtocolIndependentCode(code) => match code {
+            C::IdleTimeout => Some(F::IdleTimeout),
+            C::LogonTimeout => Some(F::SessionTimeLimit),
+            C::DisconnectedByOtherconnection => Some(F::ReplacedByOtherConnection),
+            C::RpcInitiatedDisconnect | C::RpcInitiatedDisconnectByuser => Some(F::DisconnectedOnServer),
+            C::RpcInitiatedLogoff => Some(F::LoggedOffByAdministrator),
+            C::LogoffByUser => Some(F::LoggedOff),
+            C::ServerShutdown => Some(F::ServerShutdown),
+            C::ServerReboot => Some(F::ServerReboot),
+            C::ServerDeniedConnection => Some(F::ServerDeniedConnection),
+            C::ServerInsufficientPrivileges => Some(F::RemoteLogonDenied),
+            C::ServerFreshCredentialsRequired => Some(F::FreshCredentialsRequired),
+            _ => None,
+        },
+        // What the server's licences are, not a fault in the exchange itself
+        // (`Internal`, `BadClientMsg`, `CantFinishProtocol`, ...).
+        ErrorInfo::ProtocolIndependentLicensingCode(
+            L::NoLicenseServer
+            | L::NoLicense
+            | L::BadClientLicense
+            | L::HwidDoesntMatchLicense
+            | L::CantUpgradeLicense
+            | L::NoRemoteConnections,
+        ) => Some(F::LicensingFailed),
+        _ => None,
+    }
+}
+
+fn failure_end_reason(failure: RemoteDesktopFailure) -> RemoteDesktopEndReason {
+    use RemoteDesktopFailure as F;
+    match failure {
+        F::WrongCredentials
+        | F::AccountLockedOut
+        | F::AccountDisabled
+        | F::AccountExpired
+        | F::PasswordExpired
+        | F::LogonRestricted
+        | F::RemoteLogonDenied
+        | F::FreshCredentialsRequired
+        | F::PasswordRequired => RemoteDesktopEndReason::AuthenticationFailed,
+        F::StandardRdpSecurityOnly
+        | F::ServerCertificateMissing
+        | F::ClientCertificateRequired
+        | F::LicensingFailed
+        | F::VncSecurityUnsupported => RemoteDesktopEndReason::ConfigurationError,
+        F::IdleTimeout
+        | F::SessionTimeLimit
+        | F::ReplacedByOtherConnection
+        | F::DisconnectedOnServer
+        | F::LoggedOffByAdministrator
+        | F::LoggedOff
+        | F::ServerShutdown
+        | F::ServerReboot
+        | F::ServerDeniedConnection => RemoteDesktopEndReason::ServerDisconnected,
+    }
+}
+
 fn classify_rdp_failure(message: &str) -> RemoteDesktopEndReason {
     let lower = message.to_ascii_lowercase();
-    if lower.contains("server selected standard_rdp_security") {
-        RemoteDesktopEndReason::UnsupportedSecurity
-    } else if lower.contains("credential") || lower.contains("logon") || lower.contains("authentication") {
+    if lower.contains("credential") || lower.contains("logon") || lower.contains("authentication") {
         RemoteDesktopEndReason::AuthenticationFailed
     } else if lower.contains("certificate") {
         RemoteDesktopEndReason::CertificateRejected
@@ -1208,18 +1388,19 @@ async fn run_vnc(
                 match result {
                     Ok(stream) => break stream,
                     Err(error) => {
-                        finish_vnc_error(&events, error.to_string(), true);
+                        finish_vnc_error(&events, error.to_string(), true, None);
                         return;
                     }
                 }
             }
             _ = &mut connect_timeout => {
-                finish_vnc_error(&events, "VNC TCP connection timed out".to_owned(), true);
+                finish_vnc_error(&events, "VNC TCP connection timed out".to_owned(), true, None);
                 return;
             }
             command = commands.recv() => match command {
                 Some(SessionCommand::Close) | None => {
                     events.event(RemoteDesktopEvent::Ended {
+                        failure: None,
                         reason: RemoteDesktopEndReason::ClosedByUser,
                         message: None,
                     });
@@ -1233,7 +1414,7 @@ async fn run_vnc(
     if let Some(token) = params.access_token.as_deref() {
         use tokio::io::AsyncWriteExt;
         if let Err(error) = stream.write_all(token).await {
-            finish_vnc_error(&events, error.to_string(), true);
+            finish_vnc_error(&events, error.to_string(), true, None);
             return;
         }
     }
@@ -1258,12 +1439,12 @@ async fn run_vnc(
             .allow_shared(shared)
             .set_pixel_format(PixelFormat::bgra())
             .build()
-            .map_err(|error| (error.to_string(), false))?;
+            .map_err(|error| (error.to_string(), false, None))?;
         let state = state.try_start().await.map_err(|error| {
-            let retryable = !matches!(error, vnc::VncError::WrongPassword | vnc::VncError::NoPassword);
-            (error.to_string(), retryable)
+            let failure = vnc_failure(&error);
+            (error.to_string(), failure.is_none(), failure)
         })?;
-        state.finish().map_err(|error| (error.to_string(), false))
+        state.finish().map_err(|error| (error.to_string(), false, None))
     };
     tokio::pin!(handshake);
     let handshake_timeout = tokio::time::sleep(HANDSHAKE_TIMEOUT);
@@ -1272,14 +1453,15 @@ async fn run_vnc(
         tokio::select! {
             result = &mut handshake => match result {
                 Ok(client) => break client,
-                Err((message, retryable)) => {
-                    finish_vnc_error(&events, message, retryable);
+                Err((message, retryable, failure)) => {
+                    finish_vnc_error(&events, message, retryable, failure);
                     return;
                 }
             },
             command = commands.recv() => match command {
                 Some(SessionCommand::Close) | None => {
                     events.event(RemoteDesktopEvent::Ended {
+                        failure: None,
                         reason: RemoteDesktopEndReason::ClosedByUser,
                         message: None,
                     });
@@ -1288,7 +1470,7 @@ async fn run_vnc(
                 Some(command) => pending_commands.push_back(command),
             },
             _ = &mut handshake_timeout => {
-                finish_vnc_error(&events, "VNC handshake timed out".to_owned(), true);
+                finish_vnc_error(&events, "VNC handshake timed out".to_owned(), true, None);
                 return;
             }
         }
@@ -1311,6 +1493,7 @@ async fn run_vnc(
             SessionCommand::Close => {
                 let _ = client.close().await;
                 events.event(RemoteDesktopEvent::Ended {
+                    failure: None,
                     reason: RemoteDesktopEndReason::ClosedByUser,
                     message: None,
                 });
@@ -1327,6 +1510,7 @@ async fn run_vnc(
                 SessionCommand::Close => {
                     let _ = client.close().await;
                     events.event(RemoteDesktopEvent::Ended {
+                        failure: None,
                         reason: RemoteDesktopEndReason::ClosedByUser,
                         message: None,
                     });
@@ -1358,7 +1542,7 @@ async fn run_vnc(
                 },
                 Ok(None) => break,
                 Err(error) => {
-                    finish_vnc_error(&events, error.to_string(), true);
+                    finish_vnc_error(&events, error.to_string(), true, None);
                     break 'session;
                 }
             }
@@ -1465,9 +1649,30 @@ async fn send_vnc_wheel(client: &vnc::VncClient, x: u16, y: u16, delta_x: i16, d
     }
 }
 
-fn finish_vnc_error(events: &EventSender, message: String, retryable: bool) {
+/// What a VNC handshake failure is, where vnc-rs says so.
+fn vnc_failure(error: &vnc::VncError) -> Option<RemoteDesktopFailure> {
+    match error {
+        vnc::VncError::WrongPassword => Some(RemoteDesktopFailure::WrongCredentials),
+        vnc::VncError::NoPassword => Some(RemoteDesktopFailure::PasswordRequired),
+        // Types vnc-rs knows but cannot do (VeNCrypt, RA2, TLS), which it
+        // reports as text. One it does not know, such as Apple Remote
+        // Desktop's 30, it drops; a server offering only those ends as a
+        // `ConnectError` that says nothing more.
+        vnc::VncError::General(message) if message == VNC_SECURITY_UNIMPLEMENTED => {
+            Some(RemoteDesktopFailure::VncSecurityUnsupported)
+        }
+        _ => None,
+    }
+}
+
+/// vnc-rs 0.6's message for a server offering no type but VNC password or none.
+const VNC_SECURITY_UNIMPLEMENTED: &str = "Security type apart from Vnc Auth has not been implemented";
+
+fn finish_vnc_error(events: &EventSender, message: String, retryable: bool, failure: Option<RemoteDesktopFailure>) {
     let lower = message.to_ascii_lowercase();
-    let reason = if lower.contains("password") || lower.contains("auth") {
+    let reason = if let Some(failure) = failure {
+        failure_end_reason(failure)
+    } else if lower.contains("password") || lower.contains("auth") {
         RemoteDesktopEndReason::AuthenticationFailed
     } else if retryable {
         RemoteDesktopEndReason::TransportError
@@ -1480,6 +1685,7 @@ fn finish_vnc_error(events: &EventSender, message: String, retryable: bool) {
     });
     events.event(RemoteDesktopEvent::Ended {
         reason,
+        failure,
         message: Some(message),
     });
 }
@@ -1669,6 +1875,7 @@ fn bgra_to_rgba(data: &[u8]) -> Vec<u8> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use ironrdp::pdu::nego::SecurityProtocol;
 
     fn rect(x: u16, y: u16, width: u16, height: u16) -> Rect {
         Rect { x, y, width, height }
@@ -1718,14 +1925,96 @@ mod tests {
         assert_eq!(rejected.lock().unwrap().as_deref(), Some(der));
     }
 
+    fn connector_error(kind: ConnectorErrorKind) -> ConnectorError {
+        ConnectorError::new("test", kind)
+    }
+
     // #1835: xrdp with `security_layer=rdp`, or `negotiate` without a usable
-    // certificate. Retrying cannot change what the server offers.
+    // certificate.
     #[test]
-    fn a_server_offering_only_standard_rdp_security_is_not_a_transport_error() {
-        let message = "[Initiation] reason: client advertised SSL | HYBRID | HYBRID_EX, \
-                       but server selected STANDARD_RDP_SECURITY";
-        assert_eq!(classify_rdp_failure(message), RemoteDesktopEndReason::UnsupportedSecurity);
-        assert_eq!(classify_rdp_failure("connection reset"), RemoteDesktopEndReason::TransportError);
+    fn a_server_offering_only_standard_rdp_security_is_named() {
+        let selected = connector_error(ConnectorErrorKind::SecurityProtocolMismatch {
+            requested: SecurityProtocol::SSL | SecurityProtocol::HYBRID | SecurityProtocol::HYBRID_EX,
+            selected: SecurityProtocol::empty(),
+        });
+        assert_eq!(rdp_connect_failure(&selected), Some(RemoteDesktopFailure::StandardRdpSecurityOnly));
+        let refused = connector_error(ConnectorErrorKind::Negotiation(FailureCode::SSL_NOT_ALLOWED_BY_SERVER.into()));
+        assert_eq!(rdp_connect_failure(&refused), Some(RemoteDesktopFailure::StandardRdpSecurityOnly));
+        assert_eq!(failure_end_reason(RemoteDesktopFailure::StandardRdpSecurityOnly), RemoteDesktopEndReason::ConfigurationError);
+        assert_eq!(rdp_connect_failure(&connector_error(ConnectorErrorKind::Reason("other".to_owned()))), None);
+    }
+
+    #[test]
+    fn a_credssp_status_is_named_and_asks_for_credentials() {
+        let credssp = |status| {
+            connector_error(ConnectorErrorKind::Credssp(sspi::Error::new_with_nstatus(
+                sspi::ErrorKind::InternalError,
+                "test",
+                NStatusCode(status),
+            )))
+        };
+        for (status, failure) in [
+            (0xc000_006d, RemoteDesktopFailure::WrongCredentials),
+            (0xc000_0234, RemoteDesktopFailure::AccountLockedOut),
+            (0xc000_0072, RemoteDesktopFailure::AccountDisabled),
+            (0xc000_0193, RemoteDesktopFailure::AccountExpired),
+            (0xc000_0224, RemoteDesktopFailure::PasswordExpired),
+            (0xc000_006e, RemoteDesktopFailure::LogonRestricted),
+            (0xc000_015b, RemoteDesktopFailure::RemoteLogonDenied),
+            (0xc000_0155, RemoteDesktopFailure::RemoteLogonDenied),
+        ] {
+            assert_eq!(rdp_connect_failure(&credssp(status)), Some(failure), "{status:#x}");
+            assert_eq!(failure_end_reason(failure), RemoteDesktopEndReason::AuthenticationFailed);
+        }
+        // Not the password: a smart card, which is not supported.
+        assert_eq!(
+            rdp_connect_failure(&credssp(0xc000_02fa)),
+            Some(RemoteDesktopFailure::ClientCertificateRequired),
+        );
+        assert_eq!(rdp_connect_failure(&credssp(0xc000_00b5)), None);
+        assert_eq!(
+            rdp_connect_failure(&connector_error(ConnectorErrorKind::AccessDenied)),
+            Some(RemoteDesktopFailure::RemoteLogonDenied),
+        );
+    }
+
+    // Each of these used to end as a plain disconnect and be retried: a
+    // session taken over by another connection took it back.
+    #[test]
+    fn a_session_ended_by_the_server_says_why() {
+        use ProtocolIndependentCode as C;
+        for (code, failure) in [
+            (C::IdleTimeout, RemoteDesktopFailure::IdleTimeout),
+            (C::DisconnectedByOtherconnection, RemoteDesktopFailure::ReplacedByOtherConnection),
+            (C::LogoffByUser, RemoteDesktopFailure::LoggedOff),
+            (C::ServerReboot, RemoteDesktopFailure::ServerReboot),
+        ] {
+            assert_eq!(rdp_session_end_failure(ErrorInfo::ProtocolIndependentCode(code)), Some(failure));
+        }
+        assert_eq!(rdp_session_end_failure(ErrorInfo::ProtocolIndependentCode(C::OutOfMemory)), None);
+        assert_eq!(
+            rdp_session_end_failure(ErrorInfo::ProtocolIndependentLicensingCode(
+                ProtocolIndependentLicensingCode::NoLicense,
+            )),
+            Some(RemoteDesktopFailure::LicensingFailed),
+        );
+        // A fault in the licensing exchange says nothing about the licences.
+        assert_eq!(
+            rdp_session_end_failure(ErrorInfo::ProtocolIndependentLicensingCode(
+                ProtocolIndependentLicensingCode::Internal,
+            )),
+            None,
+        );
+    }
+
+    #[test]
+    fn a_vnc_server_without_a_supported_security_type_is_named() {
+        assert_eq!(
+            vnc_failure(&vnc::VncError::General(VNC_SECURITY_UNIMPLEMENTED.to_owned())),
+            Some(RemoteDesktopFailure::VncSecurityUnsupported),
+        );
+        assert_eq!(vnc_failure(&vnc::VncError::NoPassword), Some(RemoteDesktopFailure::PasswordRequired));
+        assert_eq!(vnc_failure(&vnc::VncError::General("Authentication failure".to_owned())), None);
     }
 
     #[test]
@@ -2028,7 +2317,7 @@ mod tests {
         }
         queue.send(RemoteDesktopEvent::CursorHidden);
         queue.send(RemoteDesktopEvent::Error { message: "lost".to_owned(), retryable: false });
-        queue.send(RemoteDesktopEvent::Ended { reason: RemoteDesktopEndReason::TransportError, message: None });
+        queue.send(RemoteDesktopEvent::Ended { reason: RemoteDesktopEndReason::TransportError, failure: None, message: None });
         queue.close();
 
         let mut events = Vec::new();
@@ -2047,7 +2336,7 @@ mod tests {
         for i in 0..CHANNEL_CAPACITY * 4 {
             queue.send(RemoteDesktopEvent::Error { message: format!("bad rect {i}"), retryable: false });
         }
-        queue.send(RemoteDesktopEvent::Ended { reason: RemoteDesktopEndReason::TransportError, message: None });
+        queue.send(RemoteDesktopEvent::Ended { reason: RemoteDesktopEndReason::TransportError, failure: None, message: None });
         queue.close();
 
         let mut events = Vec::new();
@@ -2135,7 +2424,7 @@ mod tests {
             let pin = loop {
                 match first.next_event().await.expect("ended before a certificate request") {
                     RemoteDesktopEvent::CertificateRequest { sha256, .. } => break sha256,
-                    RemoteDesktopEvent::Ended { reason, message } => panic!("ended: {reason:?} {message:?}"),
+                    RemoteDesktopEvent::Ended { reason, message, .. } => panic!("ended: {reason:?} {message:?}"),
                     _ => {}
                 }
             };
@@ -2151,7 +2440,7 @@ mod tests {
                                 return (bgra, width, height);
                             }
                         }
-                        RemoteDesktopEvent::Ended { reason, message } => panic!("ended: {reason:?} {message:?}"),
+                        RemoteDesktopEvent::Ended { reason, message, .. } => panic!("ended: {reason:?} {message:?}"),
                         _ => {}
                     }
                 }

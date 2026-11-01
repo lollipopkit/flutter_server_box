@@ -235,7 +235,9 @@ class ServerTcpDialer {
       // same, so what the user is told does not depend on whether the status
       // poll had answered yet.
       final refused =
-          e is MonitorHttpErr && e.type == MonitorHttpErrType.notGranted;
+          e is MonitorHttpErr &&
+          (e.type == MonitorHttpErrType.notGranted ||
+              e.type == MonitorHttpErrType.relayForbidden);
       Error.throwWithStackTrace(
         ServerTcpErr(
           type: refused
@@ -281,7 +283,7 @@ class ServerTcpDialer {
           return ServerTcpErr(
             type: ServerTcpErrType.relayNotGranted,
             transport: transport,
-            message: 'The monitor agent does not relay TCP connections',
+            message: 'The Monitor does not relay TCP connections',
           );
         }
         return null;

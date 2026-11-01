@@ -164,7 +164,7 @@ class AppLocalizationsFa extends AppLocalizations {
       'اطلاعات این میزبان و گذرواژه‌ای که وارد می‌کنید در این دستگاه ذخیره می‌شود.';
 
   @override
-  String get agentMonitorOptional => 'ایجنت Monitor (اختیاری)';
+  String get agentMonitorOptional => 'Monitor (اختیاری)';
 
   @override
   String get authFailTip => 'احراز هویت ناموفق بود. مشخصات را بررسی کنید';
@@ -267,7 +267,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get monitorHttpsRequired =>
-      'یک ایجنت Monitor از راه دور به HTTPS نیاز دارد، مگر اینکه HTTP برای آن مجاز شده باشد.';
+      'یک Monitor از راه دور به HTTPS نیاز دارد، مگر اینکه HTTP برای آن مجاز شده باشد.';
 
   @override
   String get monitorAllowInsecureHttp => 'مجاز کردن HTTP';
@@ -1590,7 +1590,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get watchServersTip =>
-      'ساعت اطلاعات را به‌طور مستقل از مانیتور دریافت می‌کند، بنابراین تنها سرورهایی که مانیتور دارند قابل انتخاب هستند.';
+      'ساعت اطلاعات را به‌طور مستقل از Monitor دریافت می‌کند، بنابراین تنها سرورهایی که Monitor دارند قابل انتخاب هستند.';
 
   @override
   String get watchNoMonitorServer =>
@@ -1601,7 +1601,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get legacyStatusGoneBody =>
-      'برنامه ساعت و ویجت‌های صفحه اصلی قبلاً آدرس `/status` را که به‌صورت دستی وارد می‌شد می‌خواندند. آن نقطه پایانی حذف شده است: آن آدرس فقط می‌توانست مقادیر فعلی را به‌صورت متنی گزارش کند، به همین دلیل هرگز نمی‌توانستند نموداری را نشان دهند.\n\nآن‌ها اکنون API احراز هویت‌شده عامل مانیتور را می‌خوانند، بنابراین روندها را ترسیم می‌کنند و خودبه‌خود با برنامه هماهنگ می‌مانند. کافی است سرور را یک‌بار در برنامه پیکربندی کنید تا همه ساعت‌ها و ویجت‌ها آن را دریافت کنند.';
+      'برنامه ساعت و ویجت‌های صفحه اصلی قبلاً آدرس `/status` را که به‌صورت دستی وارد می‌شد می‌خواندند. آن نقطه پایانی حذف شده است: آن آدرس فقط می‌توانست مقادیر فعلی را به‌صورت متنی گزارش کند، به همین دلیل هرگز نمی‌توانستند نموداری را نشان دهند.\n\nآن‌ها اکنون API احراز هویت‌شده Monitor را می‌خوانند، بنابراین روندها را ترسیم می‌کنند و خودبه‌خود با برنامه هماهنگ می‌مانند. کافی است سرور را یک‌بار در برنامه پیکربندی کنید تا همه ساعت‌ها و ویجت‌ها آن را دریافت کنند.';
 
   @override
   String get services => 'سرویس‌ها';
@@ -2173,7 +2173,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get portForwardRemoteNeedsAgent =>
-      'هدایت پورت راه دور از طریق Monitor به نسخه جدیدتری از agent نیاز دارد. آن را روی سرور به‌روزرسانی کنید.';
+      'هدایت پورت راه دور از طریق Monitor به نسخه جدیدتری از Monitor نیاز دارد. آن را روی سرور به‌روزرسانی کنید.';
 
   @override
   String get rangeLive => 'زنده';
@@ -2192,7 +2192,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get historyNoStored =>
-      'فقط Monitor داده‌های تاریخچه را ذخیره می‌کند. هنگام اتصال از طریق SSH، برنامه فقط داده‌های جمع‌آوری‌شده پس از اتصال را نشان می‌دهد.';
+      'فقط Monitor تاریخچه را ذخیره می‌کند. این اتصال فقط آنچه را این برنامه از زمان اتصال دیده است نگه می‌دارد.';
 
   @override
   String get noHistoryYet => 'هنوز چیزی اندازه‌گیری نشده است';
@@ -2207,7 +2207,8 @@ class AppLocalizationsFa extends AppLocalizations {
   String get to => 'تا';
 
   @override
-  String get beyondRetention => 'بیرون از بازه داده‌های ذخیره‌شده Monitor';
+  String get beyondRetention =>
+      'بیرون از بازه داده‌های نگه‌داشته‌شده این Monitor';
 
   @override
   String agentRetentionFmt(String kept) {
@@ -2514,7 +2515,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get remoteDesktopIntro =>
-      'دسکتاپ RDP یا VNC یک سرور را درون برنامه باز کنید. اتصال از طریق اتصال SSH سرور یا Monitor agent آن انجام می‌شود، بنابراین نیازی به در دسترس بودن پورت دسکتاپ از طریق شبکه نیست.';
+      'دسکتاپ RDP یا VNC یک سرور را درون برنامه باز کنید. اتصال از طریق اتصال SSH سرور یا Monitor آن انجام می‌شود، بنابراین نیازی به در دسترس بودن پورت دسکتاپ از طریق شبکه نیست.';
 
   @override
   String get remoteDesktopIntroProfiles =>
@@ -2522,7 +2523,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get localServerIntro =>
-      'دستگاهی را که ServerBox را اجرا می‌کند به‌عنوان سرور اضافه کنید. وضعیت، فرایندها، سرویس‌ها، کانتینرها، ترمینال و فایل‌ها همگی بدون SSH یا Monitor agent کار می‌کنند.';
+      'دستگاهی را که ServerBox را اجرا می‌کند به‌عنوان سرور اضافه کنید. وضعیت، فرایندها، سرویس‌ها، کانتینرها، ترمینال و فایل‌ها همگی بدون SSH یا Monitor کار می‌کنند.';
 
   @override
   String get localServerAdd => 'افزودن این دستگاه';
@@ -2536,11 +2537,11 @@ class AppLocalizationsFa extends AppLocalizations {
       'خاموش. فیلدهای زیر برای زمانی که آن را دوباره روشن کنید حفظ می‌شوند.';
 
   @override
-  String get monitorAgent => 'عامل Monitor';
+  String get monitorAgent => 'Monitor';
 
   @override
   String get plainHttpEditTip =>
-      'اطلاعات ورود و آمارها بدون رمزگذاری در شبکه منتقل می‌شوند. آن را به یک آدرس LAN یا Tailscale محدود کنید، یا عامل را پشت TLS قرار دهید.';
+      'اطلاعات ورود و آمارها بدون رمزگذاری در شبکه منتقل می‌شوند. آن را به یک آدرس LAN یا Tailscale محدود کنید، یا Monitor را پشت TLS قرار دهید.';
 
   @override
   String get behaviour => 'رفتار';
@@ -2754,10 +2755,11 @@ class AppLocalizationsFa extends AppLocalizations {
   String get monitorSettings => 'تنظیمات Monitor';
 
   @override
-  String get monitorAgentDefault => 'پیش‌فرض Agent';
+  String get monitorAgentDefault => 'پیش‌فرض Monitor';
 
   @override
-  String get monitorNeedsRestart => 'پس از راه‌اندازی مجدد Agent اعمال می‌شود';
+  String get monitorNeedsRestart =>
+      'پس از راه‌اندازی مجدد Monitor اعمال می‌شود';
 
   @override
   String get monitorCollection => 'جمع‌آوری داده';
@@ -2827,7 +2829,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get pushUnknownType =>
-      'Monitor برای این نوع کانال فرستنده‌ای ندارد، بنابراین تنظیمات آن نمایش داده نمی‌شود. می‌توانید آن را از اینجا حذف کنید یا در فایل config.toml مربوط به Monitor ویرایش کنید.';
+      'این Monitor برای این نوع کانال فرستنده‌ای ندارد، بنابراین تنظیمات آن نمایش داده نمی‌شود. می‌توانید آن را از اینجا حذف کنید یا در فایل config.toml مربوط به Monitor ویرایش کنید.';
 
   @override
   String get pushJsonInvalid => 'یک JSON معتبر نیست';
@@ -2856,19 +2858,19 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get corsOriginsTip =>
-      'مبداهایی که یک پنل مرورگر مجاز است از آن‌ها این Agent را فراخوانی کند. خالی بودن به معنای فقط همان مبدا است.';
+      'مبداهایی که یک پنل مرورگر مجاز است از آن‌ها این Monitor را فراخوانی کند. خالی بودن به معنای فقط همان مبدا است.';
 
   @override
   String get monitorNoRemoteAccess =>
-      'این Agent فقط برای پایش تنظیم شده است. شما نمی‌توانید در اینجا ترمینال باز کنید، دستورات را اجرا نمایید یا فایل‌ها را مرور کنید. برای فعال کردن این قابلیت‌ها، بخش [remote_access] را در config.toml مربوط به Agent ویرایش کنید.';
+      'این Monitor فقط برای پایش تنظیم شده است. شما نمی‌توانید در اینجا ترمینال باز کنید، دستورات را اجرا نمایید یا فایل‌ها را مرور کنید. برای فعال کردن این قابلیت‌ها، بخش [remote_access] را در config.toml مربوط به Monitor ویرایش کنید.';
 
   @override
   String get monitorAgentTooOld =>
-      'این ایجنت Monitor قدیمی‌تر از آن است که این نسخه از ServerBox پشتیبانی کند. Agent را روی سرور به‌روزرسانی کنید.';
+      'این Monitor قدیمی‌تر از آن است که این نسخه از ServerBox پشتیبانی کند. Monitor را روی سرور به‌روزرسانی کنید.';
 
   @override
   String get monitorClientTooOld =>
-      'این ایجنت Monitor دیگر از این نسخه از ServerBox پشتیبانی نمی‌کند. برنامه را به‌روزرسانی کنید.';
+      'این Monitor دیگر از این نسخه از ServerBox پشتیبانی نمی‌کند. برنامه را به‌روزرسانی کنید.';
 
   @override
   String get alerts => 'هشدارها';
@@ -3019,7 +3021,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get remoteDesktopTargetTip =>
-      'مقصد از طریق سرور SSH یا ایجنت Monitor شناسایی می‌شود. کلمه Localhost به همان دستگاه اشاره دارد.';
+      'مقصد از طریق سرور SSH یا Monitor شناسایی می‌شود. کلمه Localhost به همان دستگاه اشاره دارد.';
 
   @override
   String get remoteDesktopDomain => 'دامنه (اختیاری)';
@@ -3083,8 +3085,101 @@ class AppLocalizationsFa extends AppLocalizations {
   String get remoteDesktopWaiting => 'در انتظار دسکتاپ…';
 
   @override
-  String get remoteDesktopUnsupportedSecurity =>
+  String get remoteDesktopFailStandardRdpSecurityOnly =>
       'سرور فقط Standard RDP Security (RC4) را ارائه می‌دهد که پشتیبانی نمی‌شود. در xrdp.ini مقدار security_layer=tls (یا negotiate) را تنظیم کنید و مطمئن شوید xrdp می‌تواند گواهی TLS خود را بخواند.';
+
+  @override
+  String get remoteDesktopFailServerCertificateMissing =>
+      'سرور گواهی TLS ندارد. یک گواهی روی سرور نصب کنید؛ برای xrdp مقادیر certificate و key_file را در xrdp.ini تنظیم کنید.';
+
+  @override
+  String get remoteDesktopFailClientCertificateRequired =>
+      'سرور گواهی کلاینت (ورود با کارت هوشمند) می‌خواهد که پشتیبانی نمی‌شود.';
+
+  @override
+  String get remoteDesktopFailWrongCredentials =>
+      'نام کاربری یا رمز عبور اشتباه است.';
+
+  @override
+  String get remoteDesktopFailAccountLockedOut =>
+      'حساب قفل شده است. بعداً دوباره تلاش کنید یا از مدیر بخواهید قفل آن را باز کند.';
+
+  @override
+  String get remoteDesktopFailAccountDisabled => 'حساب غیرفعال است.';
+
+  @override
+  String get remoteDesktopFailAccountExpired => 'حساب منقضی شده است.';
+
+  @override
+  String get remoteDesktopFailPasswordExpired =>
+      'رمز عبور منقضی شده است یا باید تغییر کند. ابتدا آن را روی سرور تغییر دهید.';
+
+  @override
+  String get remoteDesktopFailLogonRestricted =>
+      'این حساب در این زمان یا از این دستگاه اجازه ورود ندارد، یا رمز عبور خالی آن برای ورود از راه دور مجاز نیست.';
+
+  @override
+  String get remoteDesktopFailRemoteLogonDenied =>
+      'این حساب اجازه ورود از طریق Remote Desktop را ندارد. آن را روی سرور به گروه Remote Desktop Users اضافه کنید.';
+
+  @override
+  String get remoteDesktopFailFreshCredentialsRequired =>
+      'سرور اعتبارنامه‌های ذخیره‌شده را نمی‌پذیرد. رمز عبور را دوباره وارد کنید.';
+
+  @override
+  String get remoteDesktopFailIdleTimeout =>
+      'نشست پس از محدودیت زمان بیکاری سرور قطع شد.';
+
+  @override
+  String get remoteDesktopFailSessionTimeLimit =>
+      'نشست به محدودیت زمانی سرور رسید.';
+
+  @override
+  String get remoteDesktopFailReplacedByOtherConnection =>
+      'اتصال دیگری این نشست را در اختیار گرفت.';
+
+  @override
+  String get remoteDesktopFailDisconnectedOnServer => 'نشست روی سرور قطع شد.';
+
+  @override
+  String get remoteDesktopFailLoggedOffByAdministrator =>
+      'مدیر از این نشست خارج کرد.';
+
+  @override
+  String get remoteDesktopFailLoggedOff => 'از نشست خارج شد.';
+
+  @override
+  String get remoteDesktopFailServerShutdown => 'سرور در حال خاموش شدن است.';
+
+  @override
+  String get remoteDesktopFailServerReboot =>
+      'سرور در حال راه‌اندازی مجدد است.';
+
+  @override
+  String get remoteDesktopFailServerDeniedConnection => 'سرور اتصال را رد کرد.';
+
+  @override
+  String get remoteDesktopFailLicensingFailed =>
+      'صدور مجوز Remote Desktop روی سرور ناموفق بود. سرور مجوز و مجوزهای دسترسی کلاینت (CAL) را بررسی کنید.';
+
+  @override
+  String get remoteDesktopFailVncSecurityUnsupported =>
+      'سرور VNC هیچ نوع امنیتی پشتیبانی‌شده‌ای ارائه نمی‌دهد؛ فقط رمز عبور VNC یا بدون امنیت پشتیبانی می‌شود. برای TigerVNC مقدار SecurityTypes=VncAuth را تنظیم کنید.';
+
+  @override
+  String get remoteDesktopFailPasswordRequired => 'سرور VNC رمز عبور می‌خواهد.';
+
+  @override
+  String get tcpTargetUnreachable =>
+      'سرور نتوانست به این نشانی متصل شود. بررسی کنید سرویس در حال اجرا باشد و روی آن پورت گوش دهد.';
+
+  @override
+  String get sshTcpForwardingProhibited =>
+      'سرور SSH از ارسال این اتصال خودداری کرد. AllowTcpForwarding و PermitOpen را در sshd_config آن، و هر گزینه no-port-forwarding یا permitopen روی کلید در authorized_keys را بررسی کنید.';
+
+  @override
+  String get monitorRelayForbidden =>
+      'این حساب Monitor اجازه اتصال به این نشانی را ندارد. مجوز connect نقش آن باید این نشانی را مجاز کند.';
 
   @override
   String get remoteDesktopCertificateChanged =>
@@ -3200,7 +3295,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get virtIntroTransports =>
-      'هر دو از طریق SSH، با یک ایجنت Monitor، یا روی همین دستگاه کار می‌کنند.';
+      'هر دو از طریق SSH، از طریق Monitor، یا روی همین دستگاه کار می‌کنند.';
 
   @override
   String get virtIntroTokens =>
@@ -3358,10 +3453,11 @@ class AppLocalizationsFa extends AppLocalizations {
   String get virtErrCertChanged => 'گواهی میزبان تغییر کرده است';
 
   @override
-  String get virtErrRelayNotGranted => 'ایجنت Monitor اتصالات را رله نمی‌کند';
+  String get virtErrRelayNotGranted =>
+      'Monitor برای این حساب از سرور اتصال TCP باز نمی‌کند (مجوز connect)';
 
   @override
-  String get virtErrExecNotGranted => 'ایجنت Monitor دستورات را اجرا نمی‌کند';
+  String get virtErrExecNotGranted => 'Monitor دستورات را اجرا نمی‌کند';
 
   @override
   String get virtErrNotInstalled => 'ابزار virsh روی این سرور نصب نشده است';
@@ -5189,7 +5285,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String funcNeedsAgentPermission(String func) {
-    return 'حساب شما در این Monitor مجوز $func را ندارد. با مدیر تماس بگیرید.';
+    return 'حساب شما در این Monitor مجوز $func را ندارد. با مدیر Monitor تماس بگیرید.';
   }
 
   @override
@@ -5241,7 +5337,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get monitorErrReauth => 'گذرواژه شما اشتباه بود.';
 
   @override
-  String get monitorErrLastAdmin => 'وجود دست‌کم یک حساب مدیر الزامی است.';
+  String get monitorErrLastAdmin => 'Monitor به دست‌کم یک حساب مدیر نیاز دارد.';
 
   @override
   String get monitorErrConflict =>
@@ -5259,7 +5355,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get monitorGrantShellTip =>
-      'ترمینال، فرایندها، سرویس‌ها، کانتینرها، قطعه‌کدها، خاموش/روشن — با حساب کاربری عامل';
+      'ترمینال، فرایندها، سرویس‌ها، کانتینرها، قطعه‌کدها، خاموش/روشن — با حساب کاربری Monitor';
 
   @override
   String get monitorGrantSshTerminal => 'ترمینال پنل از طریق SSH';
@@ -5269,7 +5365,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get monitorGrantVirtTip =>
-      'دسترسی به Proxmox VE،‏ libvirt و BMCهایی که عامل در پنل وب به آن‌ها متصل می‌شود';
+      'Proxmox VE،‏ libvirt و BMCهایی که Monitor به آن‌ها دسترسی دارد، در پنل وب آن';
 
   @override
   String get monitorGrantFiles => 'فایل‌ها';
@@ -5304,18 +5400,18 @@ class AppLocalizationsFa extends AppLocalizations {
   String get monitorBuiltin => 'توکار';
 
   @override
-  String get monitorAdminRoleTip => 'مدیریت حساب‌ها، نقش‌ها و تنظیمات عامل';
+  String get monitorAdminRoleTip => 'مدیریت حساب‌ها، نقش‌ها و تنظیمات Monitor';
 
   @override
   String get monitorYou => 'شما';
 
   @override
   String get monitorNoAccessToSettings =>
-      'تنها مدیر می‌تواند تنظیمات این عامل را تغییر دهد.';
+      'تنها مدیر می‌تواند تنظیمات این Monitor را تغییر دهد.';
 
   @override
   String get monitorPasswordNotSaved =>
-      'گذرواژه در عامل تغییر کرد، اما برنامه نتوانست آن را ذخیره کند. گذرواژه Monitor این سرور را در تنظیمات آن به‌روزرسانی کنید.';
+      'گذرواژه در Monitor تغییر کرد، اما برنامه نتوانست آن را ذخیره کند. گذرواژه Monitor این سرور را در تنظیمات آن به‌روزرسانی کنید.';
 
   @override
   String get firewall => 'فایروال';
@@ -5544,24 +5640,24 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get monitorSyncNeedsServer =>
-      'سروری را انتخاب کنید که عامل مانیتور آن نسخه پشتیبان را ذخیره می‌کند.';
+      'سروری را انتخاب کنید که Monitor آن نسخه پشتیبان را ذخیره می‌کند.';
 
   @override
   String get monitorBackupUnsupported =>
-      'این عامل مانیتور نمی‌تواند نسخه‌های پشتیبان را ذخیره کند. عامل را به‌روزرسانی کنید.';
+      'این Monitor نمی‌تواند نسخه‌های پشتیبان را ذخیره کند. Monitor را به‌روزرسانی کنید.';
 
   @override
   String get monitorBackupAdminOnly =>
-      'تنها یک حساب مدیر در عامل مانیتور می‌تواند نسخه‌های پشتیبان را روی آن ذخیره کند.';
+      'تنها یک حساب مدیر Monitor می‌تواند نسخه‌های پشتیبان را روی آن ذخیره کند.';
 
   @override
   String monitorBackupTooLarge(String max) {
-    return 'حجم نسخه پشتیبان بیشتر از حدی است که عامل مانیتور می‌پذیرد ($max).';
+    return 'حجم نسخه پشتیبان بیشتر از حدی است که Monitor می‌پذیرد ($max).';
   }
 
   @override
   String get monitorBackupTooMany =>
-      'عامل مانیتور در حال حاضر حداکثر تعداد مجاز نسخه پشتیبان را نگهداری می‌کند. ابتدا یکی را حذف کنید.';
+      'Monitor در حال حاضر حداکثر تعداد مجاز نسخه پشتیبان را نگهداری می‌کند. ابتدا یکی را حذف کنید.';
 
   @override
   String get virtCreateVmidInvalid => 'شناسه VMID بین ۱۰۰ تا ۹۹۹۹۹۹۹۹۹.';

@@ -44,7 +44,7 @@ TODO：迁移期结束后删除对扁平格式的支持。目前导入仍接受 
 |-------|----------|-------------|
 | `name` | 是 | 在 App 中显示的服务器名称 |
 | `ssh` | 否 | SSH 配置，见下表；纯 Monitor 服务器可以省略 |
-| `monitorHttp` | 否 | Monitor agent 配置：`addr`、`user`、`pwd`、`ignoreCert`、`allowInsecure` |
+| `monitorHttp` | 否 | Monitor 配置：`addr`、`user`、`pwd`、`ignoreCert`、`allowInsecure` |
 | `preferredTransport` | 否 | 同时配置 SSH 和 Monitor HTTP 时优先使用哪一个：`ssh` 或 `monitorHttp`。省略时优先 SSH |
 | `tags` | 否 | 用于分组服务器的标签 |
 | `autoConnect` | 否 | App 启动时自动连接 |
@@ -90,7 +90,7 @@ TODO：迁移期结束后删除这些旧版 PVE 字段。旧导出文件可能�
 连接主机。
 
 `allowInsecure` 默认为 `false`。只有确实要让该 Monitor 连接使用明文 HTTP 时才设为 `true`，
-包括连接非 loopback 的私有 IP 地址。Monitor agent 还会根据自身的 `allow_insecure` 设置，
+包括连接非 loopback 的私有 IP 地址。Monitor 还会根据自身的 `allow_insecure` 设置，
 单独检查敏感 endpoint 是否允许不安全连接。
 
 ## 导入步骤

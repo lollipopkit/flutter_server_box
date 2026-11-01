@@ -203,7 +203,7 @@ class _MonitorFilePageState extends ConsumerState<_MonitorFilePage> {
     // what keeps that true whatever that branch grows into.
     final monitor = _spi.monitor;
     if (monitor == null) {
-      throw StateError('${_spi.name} has no monitor agent to browse');
+      throw StateError('${_spi.name} has no Monitor to browse');
     }
     final server = ref.read(serverProvider(_spi.id));
     _backend = MonitorFileBackend(

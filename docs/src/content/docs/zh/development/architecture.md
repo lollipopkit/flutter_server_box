@@ -72,4 +72,4 @@ service 和 store 使用以下三种方式获取依赖：
 
 Flutter 为 App 提供跨平台 UI。平台集成负责通知、后台服务、文件系统等操作系统能力。Rust API 通过 `crates/sbm_ffi` 和 flutter_rust_bridge 暴露给 Dart；生成的 bindings 位于 `lib/src/rust/`。
 
-`crates/sbm_parser` 存放多个项目共用的解析逻辑。`crates/sbm_native` 为 Monitor agent 采集运行所在主机的指标；App 不会在远程服务器上调用 `sbm_native`。
+`crates/sbm_parser` 存放多个项目共用的解析逻辑。`crates/sbm_native` 为 Monitor 采集运行所在主机的指标；App 不会在远程服务器上调用 `sbm_native`。

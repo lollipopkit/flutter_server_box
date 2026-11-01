@@ -412,7 +412,7 @@ abstract class AppLocalizations {
   /// User-facing label or message for agent monitor optional.
   ///
   /// In en, this message translates to:
-  /// **'Monitor agent (optional)'**
+  /// **'Monitor (optional)'**
   String get agentMonitorOptional;
 
   /// Help text for the auth fail setting or action.
@@ -592,7 +592,7 @@ abstract class AppLocalizations {
   /// User-facing label or message for monitor HTTPS required.
   ///
   /// In en, this message translates to:
-  /// **'A remote monitor agent needs HTTPS, unless HTTP is allowed for it.'**
+  /// **'A remote Monitor needs HTTPS, unless HTTP is allowed for it.'**
   String get monitorHttpsRequired;
 
   /// User-facing label or message for monitor allow insecure HTTP.
@@ -604,7 +604,7 @@ abstract class AppLocalizations {
   /// Title shown for the plain HTTP dialog or section.
   ///
   /// In en, this message translates to:
-  /// **'This agent is served over plain HTTP'**
+  /// **'This Monitor is served over plain HTTP'**
   String get plainHttpTitle;
 
   /// Help text for the plain HTTP setting or action.
@@ -634,7 +634,7 @@ abstract class AppLocalizations {
   /// Help text for the monitor HTTP setting or action.
   ///
   /// In en, this message translates to:
-  /// **'Read this server\'s status from a **monitor** agent\'s HTTP API instead of running commands over SSH.\n\nThe agent has to be installed on the server first, and it is what makes trends, the watch app and the home-screen widgets possible.\n\n[Setting up a monitor agent]({url})'**
+  /// **'Read this server\'s status from the **Monitor**\'s HTTP API instead of running commands over SSH.\n\nThe Monitor has to be installed on the server first, and it is what makes trends, the watch app and the home-screen widgets possible.\n\n[Setting up the Monitor]({url})'**
   String monitorHttpTip(String url);
 
   /// Toast after a restore: the backup was restored, but the themes named below it could not be installed — not in the theme store or not carried by the backup (installed from a folder, or imported with an older version of the app).
@@ -1354,7 +1354,7 @@ abstract class AppLocalizations {
   /// User-facing label or message for no connection method.
   ///
   /// In en, this message translates to:
-  /// **'Configure SSH, a monitor agent, or both'**
+  /// **'Configure SSH, the Monitor, or both'**
   String get noConnectionMethod;
 
   /// User-facing label or message for keep foreground.
@@ -1869,7 +1869,7 @@ abstract class AppLocalizations {
   /// Help text for the server files unavailable setting or action.
   ///
   /// In en, this message translates to:
-  /// **'Needs SSH to this server, or server_box_monitor installed with its file API on.'**
+  /// **'Needs SSH to this server, or the Monitor installed with its file API on.'**
   String get serverFilesUnavailableTip;
 
   /// User-facing label or message for back.
@@ -2139,13 +2139,13 @@ abstract class AppLocalizations {
   /// No description provided for @diskCountsNetworkTip.
   ///
   /// In en, this message translates to:
-  /// **'NFS, SMB and similar mounts are always listed. Their capacity belongs to another machine, so by default they are left out of the disk total. Applies when status is collected over SSH; over the monitor agent, the agent\'s own setting decides.'**
+  /// **'NFS, SMB and similar mounts are always listed. Their capacity belongs to another machine, so by default they are left out of the disk total. Applies when status is collected over SSH; over the Monitor, the Monitor\'s own setting decides.'**
   String get diskCountsNetworkTip;
 
   /// No description provided for @diskCountsNetworkAgentTip.
   ///
   /// In en, this message translates to:
-  /// **'NFS, SMB and similar mounts are always listed. Their capacity belongs to another machine, so by default they are left out of the disk total — the figure the agent stores in its history and checks disk alerts against.'**
+  /// **'NFS, SMB and similar mounts are always listed. Their capacity belongs to another machine, so by default they are left out of the disk total — the figure the Monitor stores in its history and checks disk alerts against.'**
   String get diskCountsNetworkAgentTip;
 
   /// User-facing label or message for spent time.
@@ -2805,13 +2805,13 @@ abstract class AppLocalizations {
   /// Help text for the watch servers setting or action.
   ///
   /// In en, this message translates to:
-  /// **'The watch fetches from the monitor on its own, so only servers with one can be picked.'**
+  /// **'The watch fetches from the Monitor on its own, so only servers with the Monitor can be picked.'**
   String get watchServersTip;
 
   /// User-facing label or message for watch no monitor server.
   ///
   /// In en, this message translates to:
-  /// **'No server has a monitor agent configured'**
+  /// **'No server has the Monitor configured'**
   String get watchNoMonitorServer;
 
   /// Title shown for the legacy status gone dialog or section.
@@ -2823,7 +2823,7 @@ abstract class AppLocalizations {
   /// Explanatory message shown in the legacy status gone dialog or notice.
   ///
   /// In en, this message translates to:
-  /// **'The watch app and home widgets used to read a `/status` address typed by hand. That endpoint is gone: it could only report current values as text, which is why they could never show a chart.\n\nThey now read the monitor agent\'s authenticated API, so they draw trends and stay in step with the app on their own. Configure the server in the app once, and every watch and widget picks it up.'**
+  /// **'The watch app and home widgets used to read a `/status` address typed by hand. That endpoint is gone: it could only report current values as text, which is why they could never show a chart.\n\nThey now read the Monitor\'s authenticated API, so they draw trends and stay in step with the app on their own. Configure the server in the app once, and every watch and widget picks it up.'**
   String get legacyStatusGoneBody;
 
   /// User-facing label or message for services.
@@ -3765,19 +3765,19 @@ abstract class AppLocalizations {
   /// No description provided for @funcNeedsAgentGrant.
   ///
   /// In en, this message translates to:
-  /// **'{func} needs the Monitor agent\'s {setting} to be turned on.'**
+  /// **'{func} needs the Monitor\'s {setting} to be turned on.'**
   String funcNeedsAgentGrant(String func, String setting);
 
   /// No description provided for @funcNeedsAgentUpdate.
   ///
   /// In en, this message translates to:
-  /// **'{func} needs a newer Monitor agent.'**
+  /// **'{func} needs a newer Monitor.'**
   String funcNeedsAgentUpdate(String func);
 
   /// No description provided for @portForwardRemoteNeedsAgent.
   ///
   /// In en, this message translates to:
-  /// **'Remote forwards through the Monitor agent need a newer agent: update it on the server.'**
+  /// **'Remote forwards through the Monitor need a newer Monitor: update it on the server.'**
   String get portForwardRemoteNeedsAgent;
 
   /// User-facing label or message for range live.
@@ -3813,7 +3813,7 @@ abstract class AppLocalizations {
   /// User-facing label or message for history no stored.
   ///
   /// In en, this message translates to:
-  /// **'Only a monitor agent stores history. This connection keeps what this app has seen since it connected.'**
+  /// **'Only the Monitor stores history. This connection keeps what this app has seen since it connected.'**
   String get historyNoStored;
 
   /// User-facing label or message for no history yet.
@@ -3843,13 +3843,13 @@ abstract class AppLocalizations {
   /// User-facing label or message for beyond retention.
   ///
   /// In en, this message translates to:
-  /// **'beyond what this agent kept'**
+  /// **'beyond what this Monitor kept'**
   String get beyondRetention;
 
   /// Formatted user-facing message for agent retention; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
-  /// **'Agent keeps {kept}'**
+  /// **'Monitor keeps {kept}'**
   String agentRetentionFmt(String kept);
 
   /// Agent: agentServerTools.
@@ -4317,7 +4317,7 @@ abstract class AppLocalizations {
   /// Introductory text for the remote desktop screen or section.
   ///
   /// In en, this message translates to:
-  /// **'Open a server\'s RDP or VNC desktop inside the app. The connection goes through the server\'s SSH connection or its Monitor agent, so the desktop port does not have to be reachable from the network.'**
+  /// **'Open a server\'s RDP or VNC desktop inside the app. The connection goes through the server\'s SSH connection or its Monitor, so the desktop port does not have to be reachable from the network.'**
   String get remoteDesktopIntro;
 
   /// User-facing label or message for remote desktop intro profiles.
@@ -4329,7 +4329,7 @@ abstract class AppLocalizations {
   /// Introductory text for the local server screen or section.
   ///
   /// In en, this message translates to:
-  /// **'Add the device running ServerBox as a server. Status, processes, services, containers, the terminal and files all work without SSH or a Monitor agent.'**
+  /// **'Add the device running ServerBox as a server. Status, processes, services, containers, the terminal and files all work without SSH or the Monitor.'**
   String get localServerIntro;
 
   /// User-facing label or message for local server add.
@@ -4353,13 +4353,13 @@ abstract class AppLocalizations {
   /// User-facing label or message for monitor agent.
   ///
   /// In en, this message translates to:
-  /// **'Monitor agent'**
+  /// **'Monitor'**
   String get monitorAgent;
 
   /// Help text for the plain HTTP edit setting or action.
   ///
   /// In en, this message translates to:
-  /// **'Credentials and metrics cross the network unencrypted. Keep it to a LAN or a Tailscale address, or put the agent behind TLS.'**
+  /// **'Credentials and metrics cross the network unencrypted. Keep it to a LAN or a Tailscale address, or put the Monitor behind TLS.'**
   String get plainHttpEditTip;
 
   /// User-facing label or message for behaviour.
@@ -4713,13 +4713,13 @@ abstract class AppLocalizations {
   /// User-facing label or message for monitor agent default.
   ///
   /// In en, this message translates to:
-  /// **'Agent default'**
+  /// **'Monitor default'**
   String get monitorAgentDefault;
 
   /// User-facing label or message for monitor needs restart.
   ///
   /// In en, this message translates to:
-  /// **'Takes effect after the agent restarts'**
+  /// **'Takes effect after the Monitor restarts'**
   String get monitorNeedsRestart;
 
   /// User-facing label or message for monitor collection.
@@ -4815,7 +4815,7 @@ abstract class AppLocalizations {
   /// User-facing label or message for push secret set.
   ///
   /// In en, this message translates to:
-  /// **'Set on the agent, not shown'**
+  /// **'Set on the Monitor, not shown'**
   String get pushSecretSet;
 
   /// User-facing label or message for push secret keep.
@@ -4851,7 +4851,7 @@ abstract class AppLocalizations {
   /// User-facing label or message for push unknown type.
   ///
   /// In en, this message translates to:
-  /// **'This agent has no sender for this channel type, so its settings are not shown. It can be removed here, or edited in the agent\'s config.toml.'**
+  /// **'This Monitor has no sender for this channel type, so its settings are not shown. It can be removed here, or edited in the Monitor\'s config.toml.'**
   String get pushUnknownType;
 
   /// User-facing label or message for push json invalid.
@@ -4869,7 +4869,7 @@ abstract class AppLocalizations {
   /// Help text for the data retention setting or action.
   ///
   /// In en, this message translates to:
-  /// **'Off means the agent never deletes anything and its database grows without limit.'**
+  /// **'Off means the Monitor never deletes anything and its database grows without limit.'**
   String get dataRetentionTip;
 
   /// User-facing label or message for retention metrics.
@@ -4905,25 +4905,25 @@ abstract class AppLocalizations {
   /// Help text for the cors origins setting or action.
   ///
   /// In en, this message translates to:
-  /// **'Origins a browser panel may call this agent from. Empty means same-origin only.'**
+  /// **'Origins a browser panel may call this Monitor from. Empty means same-origin only.'**
   String get corsOriginsTip;
 
   /// User-facing label or message for monitor no remote access.
   ///
   /// In en, this message translates to:
-  /// **'This agent is set up for monitoring only. You can\'t open a terminal, run commands, or browse files here. To enable these features, edit [remote_access] in the agent\'s config.toml.'**
+  /// **'This Monitor is set up for monitoring only. You can\'t open a terminal, run commands, or browse files here. To enable these features, edit [remote_access] in the Monitor\'s config.toml.'**
   String get monitorNoRemoteAccess;
 
   /// Shown when the Monitor agent speaks an older protocol than this app reads.
   ///
   /// In en, this message translates to:
-  /// **'This Monitor agent is older than this version of ServerBox supports. Update the agent on the server.'**
+  /// **'This Monitor is older than this version of ServerBox supports. Update the Monitor on the server.'**
   String get monitorAgentTooOld;
 
   /// Shown when the Monitor agent no longer answers this app's protocol (HTTP 426).
   ///
   /// In en, this message translates to:
-  /// **'This Monitor agent no longer supports this version of ServerBox. Update the app.'**
+  /// **'This Monitor no longer supports this version of ServerBox. Update the app.'**
   String get monitorClientTooOld;
 
   /// User-facing label or message for alerts.
@@ -5205,7 +5205,7 @@ abstract class AppLocalizations {
   /// No description provided for @remoteDesktopTargetTip.
   ///
   /// In en, this message translates to:
-  /// **'The target is resolved from the SSH server or monitor agent. Localhost refers to that machine.'**
+  /// **'The target is resolved from the SSH server or the Monitor. Localhost refers to that machine.'**
   String get remoteDesktopTargetTip;
 
   /// No description provided for @remoteDesktopDomain.
@@ -5316,11 +5316,161 @@ abstract class AppLocalizations {
   /// **'Waiting for desktop…'**
   String get remoteDesktopWaiting;
 
-  /// No description provided for @remoteDesktopUnsupportedSecurity.
+  /// No description provided for @remoteDesktopFailStandardRdpSecurityOnly.
   ///
   /// In en, this message translates to:
   /// **'The server only offers Standard RDP Security (RC4), which is not supported. In xrdp.ini set security_layer=tls (or negotiate) and make sure xrdp can read its TLS certificate.'**
-  String get remoteDesktopUnsupportedSecurity;
+  String get remoteDesktopFailStandardRdpSecurityOnly;
+
+  /// No description provided for @remoteDesktopFailServerCertificateMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'The server has no TLS certificate. Install one on the server; for xrdp, set certificate and key_file in xrdp.ini.'**
+  String get remoteDesktopFailServerCertificateMissing;
+
+  /// No description provided for @remoteDesktopFailClientCertificateRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'The server requires a client certificate (smart card logon), which is not supported.'**
+  String get remoteDesktopFailClientCertificateRequired;
+
+  /// No description provided for @remoteDesktopFailWrongCredentials.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong username or password.'**
+  String get remoteDesktopFailWrongCredentials;
+
+  /// No description provided for @remoteDesktopFailAccountLockedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'The account is locked out. Try again later, or ask an administrator to unlock it.'**
+  String get remoteDesktopFailAccountLockedOut;
+
+  /// No description provided for @remoteDesktopFailAccountDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'The account is disabled.'**
+  String get remoteDesktopFailAccountDisabled;
+
+  /// No description provided for @remoteDesktopFailAccountExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'The account has expired.'**
+  String get remoteDesktopFailAccountExpired;
+
+  /// No description provided for @remoteDesktopFailPasswordExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'The password has expired or must be changed. Change it on the server first.'**
+  String get remoteDesktopFailPasswordExpired;
+
+  /// No description provided for @remoteDesktopFailLogonRestricted.
+  ///
+  /// In en, this message translates to:
+  /// **'The account may not log on at this time or from this device, or its blank password is not allowed for remote logon.'**
+  String get remoteDesktopFailLogonRestricted;
+
+  /// No description provided for @remoteDesktopFailRemoteLogonDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'The account is not allowed to log on through Remote Desktop. Add it to the Remote Desktop Users group on the server.'**
+  String get remoteDesktopFailRemoteLogonDenied;
+
+  /// No description provided for @remoteDesktopFailFreshCredentialsRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'The server does not accept saved credentials. Enter the password again.'**
+  String get remoteDesktopFailFreshCredentialsRequired;
+
+  /// No description provided for @remoteDesktopFailIdleTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'The session was disconnected after the server\'s idle time limit.'**
+  String get remoteDesktopFailIdleTimeout;
+
+  /// No description provided for @remoteDesktopFailSessionTimeLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'The session reached the server\'s time limit.'**
+  String get remoteDesktopFailSessionTimeLimit;
+
+  /// No description provided for @remoteDesktopFailReplacedByOtherConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Another connection took over this session.'**
+  String get remoteDesktopFailReplacedByOtherConnection;
+
+  /// No description provided for @remoteDesktopFailDisconnectedOnServer.
+  ///
+  /// In en, this message translates to:
+  /// **'The session was disconnected on the server.'**
+  String get remoteDesktopFailDisconnectedOnServer;
+
+  /// No description provided for @remoteDesktopFailLoggedOffByAdministrator.
+  ///
+  /// In en, this message translates to:
+  /// **'An administrator logged off the session.'**
+  String get remoteDesktopFailLoggedOffByAdministrator;
+
+  /// No description provided for @remoteDesktopFailLoggedOff.
+  ///
+  /// In en, this message translates to:
+  /// **'The session was logged off.'**
+  String get remoteDesktopFailLoggedOff;
+
+  /// No description provided for @remoteDesktopFailServerShutdown.
+  ///
+  /// In en, this message translates to:
+  /// **'The server is shutting down.'**
+  String get remoteDesktopFailServerShutdown;
+
+  /// No description provided for @remoteDesktopFailServerReboot.
+  ///
+  /// In en, this message translates to:
+  /// **'The server is restarting.'**
+  String get remoteDesktopFailServerReboot;
+
+  /// No description provided for @remoteDesktopFailServerDeniedConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'The server denied the connection.'**
+  String get remoteDesktopFailServerDeniedConnection;
+
+  /// No description provided for @remoteDesktopFailLicensingFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote Desktop licensing failed on the server. Check its license server and Client Access Licenses.'**
+  String get remoteDesktopFailLicensingFailed;
+
+  /// No description provided for @remoteDesktopFailVncSecurityUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'The VNC server offers no supported security type; only a VNC password or none is supported. For TigerVNC, set SecurityTypes=VncAuth.'**
+  String get remoteDesktopFailVncSecurityUnsupported;
+
+  /// No description provided for @remoteDesktopFailPasswordRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'The VNC server requires a password.'**
+  String get remoteDesktopFailPasswordRequired;
+
+  /// No description provided for @tcpTargetUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'The server could not connect to this address. Check that the service is running and listening on that port.'**
+  String get tcpTargetUnreachable;
+
+  /// No description provided for @sshTcpForwardingProhibited.
+  ///
+  /// In en, this message translates to:
+  /// **'The SSH server refused to forward this connection. Check AllowTcpForwarding and PermitOpen in its sshd_config, and any no-port-forwarding or permitopen option on the key in authorized_keys.'**
+  String get sshTcpForwardingProhibited;
+
+  /// No description provided for @monitorRelayForbidden.
+  ///
+  /// In en, this message translates to:
+  /// **'This Monitor account may not connect to this address. Its role\'s connect permission must allow it.'**
+  String get monitorRelayForbidden;
 
   /// No description provided for @remoteDesktopCertificateChanged.
   ///
@@ -5493,7 +5643,7 @@ abstract class AppLocalizations {
   /// Intro page text about the transports the Virtualization tab works over.
   ///
   /// In en, this message translates to:
-  /// **'Both work over SSH, through a Monitor agent, or on this device.'**
+  /// **'Both work over SSH, through the Monitor, or on this device.'**
   String get virtIntroTransports;
 
   /// Intro page text about Proxmox VE API token support.
@@ -5763,13 +5913,13 @@ abstract class AppLocalizations {
   /// Error: the Monitor agent does not relay TCP connections to PVE.
   ///
   /// In en, this message translates to:
-  /// **'The Monitor agent does not relay connections'**
+  /// **'The Monitor does not open TCP connections from the server for this account (connect permission)'**
   String get virtErrRelayNotGranted;
 
   /// Error: the Monitor agent does not run commands (its full access is off), so libvirt cannot be reached through it.
   ///
   /// In en, this message translates to:
-  /// **'The Monitor agent does not run commands'**
+  /// **'The Monitor does not run commands'**
   String get virtErrExecNotGranted;
 
   /// Error: virsh is not installed on the server.
@@ -8810,25 +8960,25 @@ abstract class AppLocalizations {
   /// No description provided for @funcNeedsAgentPermission.
   ///
   /// In en, this message translates to:
-  /// **'Your account on this Monitor agent has no permission for {func}. Ask the agent\'s admin.'**
+  /// **'Your account on this Monitor has no permission for {func}. Ask the Monitor\'s admin.'**
   String funcNeedsAgentPermission(String func);
 
   /// No description provided for @funcNeedsAgentHttps.
   ///
   /// In en, this message translates to:
-  /// **'{func} needs HTTPS to this Monitor agent, or plain HTTP allowed on both the agent and this app.'**
+  /// **'{func} needs HTTPS to this Monitor, or plain HTTP allowed on both the Monitor and this app.'**
   String funcNeedsAgentHttps(String func);
 
   /// No description provided for @funcNeedsAgentSetup.
   ///
   /// In en, this message translates to:
-  /// **'{func} is not set up on this Monitor agent; its operator has to configure it.'**
+  /// **'{func} is not set up on this Monitor; its operator has to configure it.'**
   String funcNeedsAgentSetup(String func);
 
   /// No description provided for @monitorFilesReadOnly.
   ///
   /// In en, this message translates to:
-  /// **'Read-only: this account can browse files on the agent but not change them.'**
+  /// **'Read-only: this account can browse files on the Monitor but not change them.'**
   String get monitorFilesReadOnly;
 
   /// No description provided for @monitorAccess.
@@ -8900,7 +9050,7 @@ abstract class AppLocalizations {
   /// No description provided for @monitorErrLastAdmin.
   ///
   /// In en, this message translates to:
-  /// **'The agent needs at least one admin account.'**
+  /// **'The Monitor needs at least one admin account.'**
   String get monitorErrLastAdmin;
 
   /// No description provided for @monitorErrConflict.
@@ -8930,7 +9080,7 @@ abstract class AppLocalizations {
   /// No description provided for @monitorGrantShellTip.
   ///
   /// In en, this message translates to:
-  /// **'Terminal, processes, services, containers, snippets, power — as the agent\'s account'**
+  /// **'Terminal, processes, services, containers, snippets, power — as the Monitor\'s account'**
   String get monitorGrantShellTip;
 
   /// No description provided for @monitorGrantSshTerminal.
@@ -8948,7 +9098,7 @@ abstract class AppLocalizations {
   /// No description provided for @monitorGrantVirtTip.
   ///
   /// In en, this message translates to:
-  /// **'Proxmox VE, libvirt and BMCs the agent reaches, in its web panel'**
+  /// **'Proxmox VE, libvirt and BMCs the Monitor reaches, in its web panel'**
   String get monitorGrantVirtTip;
 
   /// No description provided for @monitorGrantFiles.
@@ -9014,7 +9164,7 @@ abstract class AppLocalizations {
   /// No description provided for @monitorAdminRoleTip.
   ///
   /// In en, this message translates to:
-  /// **'Manages accounts, roles and the agent\'s settings'**
+  /// **'Manages accounts, roles and the Monitor\'s settings'**
   String get monitorAdminRoleTip;
 
   /// No description provided for @monitorYou.
@@ -9026,13 +9176,13 @@ abstract class AppLocalizations {
   /// No description provided for @monitorNoAccessToSettings.
   ///
   /// In en, this message translates to:
-  /// **'Only an admin can change this agent\'s settings.'**
+  /// **'Only an admin can change this Monitor\'s settings.'**
   String get monitorNoAccessToSettings;
 
   /// Shown when the agent accepted a new password but the app failed to update the credential it stores for the server.
   ///
   /// In en, this message translates to:
-  /// **'The password was changed on the agent, but the app could not save it. Update this server\'s Monitor password in its settings.'**
+  /// **'The password was changed on the Monitor, but the app could not save it. Update this server\'s Monitor password in its settings.'**
   String get monitorPasswordNotSaved;
 
   /// Server function that manages the server's firewall (ufw).
@@ -9428,31 +9578,31 @@ abstract class AppLocalizations {
   /// Backup sync to a monitor agent: no server is chosen yet.
   ///
   /// In en, this message translates to:
-  /// **'Pick the server whose monitor agent stores the backup.'**
+  /// **'Pick the server whose Monitor stores the backup.'**
   String get monitorSyncNeedsServer;
 
   /// Backup sync to a monitor agent: the agent is too old to store backups.
   ///
   /// In en, this message translates to:
-  /// **'This monitor agent cannot store backups. Update the agent.'**
+  /// **'This Monitor cannot store backups. Update the Monitor.'**
   String get monitorBackupUnsupported;
 
   /// Backup sync to a monitor agent: the account the app logs in with is not an admin.
   ///
   /// In en, this message translates to:
-  /// **'Only an admin account of the monitor agent can store backups on it.'**
+  /// **'Only an admin account of the Monitor can store backups on it.'**
   String get monitorBackupAdminOnly;
 
   /// Backup sync to a monitor agent: the file exceeds the agent's size limit, given as max.
   ///
   /// In en, this message translates to:
-  /// **'The backup is larger than the monitor agent accepts ({max}).'**
+  /// **'The backup is larger than the Monitor accepts ({max}).'**
   String monitorBackupTooLarge(String max);
 
   /// Backup sync to a monitor agent: the agent's blob count limit is reached.
   ///
   /// In en, this message translates to:
-  /// **'The monitor agent already holds as many backups as it allows. Delete one first.'**
+  /// **'The Monitor already holds as many backups as it allows. Delete one first.'**
   String get monitorBackupTooMany;
 
   /// Create form: the VMID is outside the range PVE accepts.

@@ -71,7 +71,7 @@ Clearing app data or reinstalling removes anything that was not backed up. Use t
 
 ### Widgets or the Watch App do not update
 
-- Confirm that Monitor agent is running and reachable at the configured URL.
+- Confirm that the Monitor is running and reachable at the configured URL.
 - Check the Monitor username, password, certificate, and `allowInsecure` setting in the App.
 - iOS decides when to refresh widgets. Wait for its next refresh, or remove and add the widget again.
 - On Android, tap the widget to refresh it. Open its configuration to confirm the selected server and metric.
@@ -79,8 +79,8 @@ Clearing app data or reinstalling removes anything that was not backed up. Use t
 
 ### A widget shows an error or no servers
 
-- Add at least one Monitor agent server in the App.
-- Verify that the agent's HTTPS address is reachable and its credentials are correct.
+- Add at least one Monitor server in the App.
+- Verify that the Monitor's HTTPS address is reachable and its credentials are correct.
 - Widgets use the server list from the App; they no longer read manually entered `/status` URLs. If an older version left a URL behind, follow the one-time in-app prompt to configure the server again.
 
 ## Performance issues
@@ -104,4 +104,4 @@ If these steps do not resolve the issue:
 
 1. Search [GitHub Issues](https://github.com/lollipopkit/flutter_server_box/issues).
 2. Open an Issue with the App version, platform, relevant logs, and steps to reproduce the problem.
-3. For Monitor agent problems, include its version and relevant configuration. Remove passwords, tokens, and other secrets first.
+3. For Monitor problems, include its version and relevant configuration. Remove passwords, tokens, and other secrets first.

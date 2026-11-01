@@ -160,12 +160,12 @@ class MonitorHttpClient {
       case ProtocolCompat.agentTooOld:
         throw MonitorHttpErr(
           type: MonitorHttpErrType.agentTooOld,
-          message: 'The monitor agent speaks protocol $agent, older than this app reads',
+          message: 'The Monitor speaks protocol $agent, older than this app reads',
         );
       case ProtocolCompat.clientTooOld:
         throw MonitorHttpErr(
           type: MonitorHttpErrType.clientTooOld,
-          message: 'The monitor agent answers protocol $minClient and later; this app speaks ${MonitorProtocol.current}',
+          message: 'The Monitor answers protocol $minClient and later; this app speaks ${MonitorProtocol.current}',
         );
     }
   }
@@ -342,15 +342,15 @@ class MonitorHttpClient {
             throw const MonitorHttpErr(
               type: MonitorHttpErrType.notGranted,
               message:
-                  'The monitor agent refuses to run commands — full access is '
+                  'The Monitor refuses to run commands — full access is '
                   'off in its config.',
             );
           case 404:
             throw MonitorHttpErr(
               type: MonitorHttpErrType.unknown,
               message:
-                  'This monitor agent has no command endpoint. It is older '
-                  'than this app expects; update the agent.\n$e',
+                  'This Monitor has no command endpoint. It is older '
+                  'than this app expects; update the Monitor.\n$e',
             );
           default:
             rethrow;
@@ -1014,8 +1014,8 @@ class MonitorHttpClient {
         throw MonitorHttpErr(
           type: MonitorHttpErrType.notGranted,
           message: said is String && said.isNotEmpty
-              ? 'The monitor agent refused: $said'
-              : 'The monitor agent refused the $purpose endpoint',
+              ? 'The Monitor refused: $said'
+              : 'The Monitor refused the $purpose endpoint',
         );
       }
       final ticket = resp['ticket'] as String?;

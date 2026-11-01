@@ -154,7 +154,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get agentSaveServerTip => 'このホストの情報と入力したパスワードは、この端末に保存されます。';
 
   @override
-  String get agentMonitorOptional => 'monitor エージェント（任意）';
+  String get agentMonitorOptional => 'Monitor（任意）';
 
   @override
   String get authFailTip => '認証に失敗しました。情報を確認してください';
@@ -252,13 +252,13 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get monitorHttpsRequired =>
-      'リモートの monitor エージェントには HTTPS が必要です（HTTP を許可した場合を除く）。';
+      'リモートの Monitor には HTTPS が必要です（HTTP を許可した場合を除く）。';
 
   @override
   String get monitorAllowInsecureHttp => 'HTTP を許可';
 
   @override
-  String get plainHttpTitle => 'この Monitor は暗号化されていない HTTP を使用しています';
+  String get plainHttpTitle => 'この Monitor は暗号化されていない HTTP で提供されています';
 
   @override
   String get plainHttpTip =>
@@ -276,7 +276,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String monitorHttpTip(String url) {
-    return 'SSH でコマンドを実行する代わりに、**Monitor** の HTTP インターフェースからこのサーバーの状態を取得します。\n\nまずサーバーに Monitor をインストールしてください。推移グラフ、Watch アプリ、ホーム画面のウィジェットは Monitor を利用します。\n\n[Monitor の導入方法]($url)';
+    return 'SSH でコマンドを実行する代わりに、**Monitor** の HTTP API からこのサーバーの状態を取得します。\n\nまずサーバーに Monitor をインストールしてください。推移グラフ、Watch アプリ、ホーム画面のウィジェットは Monitor によって使えるようになります。\n\n[Monitor の導入方法]($url)';
   }
 
   @override
@@ -1495,7 +1495,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get watchServersTip =>
-      '時計は自分で monitor から取得するため、monitor のあるサーバーだけ選べます。';
+      '時計は自分で Monitor から取得するため、Monitor が設定されたサーバーだけを選べます。';
 
   @override
   String get watchNoMonitorServer => 'Monitor が設定されたサーバーはありません。';
@@ -1505,7 +1505,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get legacyStatusGoneBody =>
-      'ウォッチ App とホーム画面ウィジェットは、手入力した `/status` アドレスを読み取っていました。このエンドポイントは削除されました。現在値をテキストで返すことしかできず、グラフを表示できなかったのはそのためです。\n\n現在は monitor の認証付き API を読み取るため、推移を描画でき、App と自動的に同期します。App でサーバーを一度設定すれば、すべてのウォッチとウィジェットが受け取ります。';
+      'ウォッチ App とホーム画面ウィジェットは、手入力した `/status` アドレスを読み取っていました。このエンドポイントは削除されました。現在値をテキストで返すことしかできず、グラフを表示できなかったのはそのためです。\n\n現在は Monitor の認証付き API を読み取るため、推移を描画でき、App と自動的に同期します。App でサーバーを一度設定すれば、すべてのウォッチとウィジェットが受け取ります。';
 
   @override
   String get services => 'サービス';
@@ -2037,17 +2037,17 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String funcNeedsAgentGrant(String func, String setting) {
-    return '$func を使うには、Monitor で $setting を有効にしてください。';
+    return '$func を使うには、Monitor の $setting を有効にしてください。';
   }
 
   @override
   String funcNeedsAgentUpdate(String func) {
-    return '$func を使うには、Monitor を新しいバージョンに更新してください。';
+    return '$func を使うには、新しいバージョンの Monitor が必要です。';
   }
 
   @override
   String get portForwardRemoteNeedsAgent =>
-      'Monitor 経由のリモート転送には新しいバージョンの agent が必要です。サーバー上で更新してください。';
+      'Monitor 経由のリモート転送には新しいバージョンの Monitor が必要です。サーバー上で更新してください。';
 
   @override
   String get rangeLive => 'リアルタイム';
@@ -2066,7 +2066,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get historyNoStored =>
-      '履歴を保存するのは Monitor だけです。SSH 接続では、アプリの接続後に収集したデータのみ表示できます。';
+      '履歴を保存するのは Monitor だけです。この接続では、アプリが接続してから取得したデータのみ保持されます。';
 
   @override
   String get noHistoryYet => 'まだ計測データがありません';
@@ -2081,7 +2081,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get to => '終了';
 
   @override
-  String get beyondRetention => 'Monitor の保存データ範囲外';
+  String get beyondRetention => 'この Monitor の保存データ範囲外';
 
   @override
   String agentRetentionFmt(String kept) {
@@ -2140,10 +2140,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get agentPermissions => '権限';
 
   @override
-  String get agentEmptyHint => 'サーバー上で操作を実行します。';
+  String get agentEmptyHint => 'サーバーについて質問するか、Agent にサーバー上で操作を実行させます。';
 
   @override
-  String get agentTerminalEmptyHint => '現在のターミナルの内容を読み取り、その中でコマンドを実行します。';
+  String get agentTerminalEmptyHint =>
+      'このサーバーについて質問します。Agent はこのターミナルを読み取り、ここでコマンドを実行できます。';
 
   @override
   String oldestSampleFmt(String time) {
@@ -2367,7 +2368,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get remoteDesktopIntro =>
-      'サーバーの RDP または VNC デスクトップをアプリ内で開きます。接続はサーバーの SSH 接続または Monitor エージェントを経由するため、デスクトップのポートをネットワークに公開する必要はありません。';
+      'サーバーの RDP または VNC デスクトップをアプリ内で開きます。接続はサーバーの SSH 接続または Monitor を経由するため、デスクトップのポートをネットワークに公開する必要はありません。';
 
   @override
   String get remoteDesktopIntroProfiles =>
@@ -2375,7 +2376,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get localServerIntro =>
-      'ServerBox を実行しているデバイスをサーバーとして追加します。ステータス、プロセス、サービス、コンテナ、ターミナル、ファイルは SSH や Monitor エージェントなしで使えます。';
+      'ServerBox を実行しているデバイスをサーバーとして追加します。ステータス、プロセス、サービス、コンテナ、ターミナル、ファイルは SSH や Monitor なしで使えます。';
 
   @override
   String get localServerAdd => 'このデバイスを追加';
@@ -2387,11 +2388,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get transportSectionOff => '無効です。再び有効にするときのために、以下の項目はそのまま保持されます。';
 
   @override
-  String get monitorAgent => 'Monitor エージェント';
+  String get monitorAgent => 'Monitor';
 
   @override
   String get plainHttpEditTip =>
-      '認証情報と計測値が暗号化されずにネットワークを通ります。LAN か Tailscale のアドレスに限定するか、エージェントを TLS の背後に置いてください。';
+      '認証情報と計測値が暗号化されずにネットワークを通ります。LAN か Tailscale のアドレスに限定するか、Monitor を TLS の背後に置いてください。';
 
   @override
   String get behaviour => '動作';
@@ -2600,10 +2601,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get monitorSettings => 'Monitor 設定';
 
   @override
-  String get monitorAgentDefault => 'agent の初期値';
+  String get monitorAgentDefault => 'Monitor の初期値';
 
   @override
-  String get monitorNeedsRestart => 'agent の再起動後に反映';
+  String get monitorNeedsRestart => 'Monitor の再起動後に反映';
 
   @override
   String get monitorCollection => '収集';
@@ -2681,7 +2682,8 @@ class AppLocalizationsJa extends AppLocalizations {
   String get dataRetention => 'データ保持';
 
   @override
-  String get dataRetentionTip => '無効にすると、Monitor はデータを削除せず、データベースは無制限に増え続けます。';
+  String get dataRetentionTip =>
+      '無効にすると、Monitor はデータを一切削除せず、データベースは無制限に増え続けます。';
 
   @override
   String get retentionMetrics => '指標を保持';
@@ -2700,19 +2702,19 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get corsOriginsTip =>
-      'ブラウザパネルからこの agent を呼び出せるオリジンです。空の場合は同一オリジンのみ許可します。';
+      'ブラウザパネルからこの Monitor を呼び出せるオリジンです。空の場合は同一オリジンのみ許可します。';
 
   @override
   String get monitorNoRemoteAccess =>
-      'この agent は監視専用に設定されています。ここからターミナルを開いたり、コマンドを実行したり、ファイルを閲覧したりすることはできません。これらの機能を有効にするには、agent の config.toml にある [remote_access] を編集してください。';
+      'この Monitor は監視専用に設定されています。ここからターミナルを開いたり、コマンドを実行したり、ファイルを閲覧したりすることはできません。これらの機能を有効にするには、Monitor の config.toml にある [remote_access] を編集してください。';
 
   @override
   String get monitorAgentTooOld =>
-      'この Monitor agent は、このバージョンの ServerBox がサポートするより古いバージョンです。サーバー上の agent を更新してください。';
+      'この Monitor は、このバージョンの ServerBox がサポートするより古いバージョンです。サーバー上の Monitor を更新してください。';
 
   @override
   String get monitorClientTooOld =>
-      'この Monitor agent は、このバージョンの ServerBox をサポートしていません。アプリを更新してください。';
+      'この Monitor は、このバージョンの ServerBox をサポートしていません。アプリを更新してください。';
 
   @override
   String get alerts => 'アラート';
@@ -2859,7 +2861,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get remoteDesktopTargetTip =>
-      '接続先は SSH サーバーまたは Monitor エージェントから解決されます。localhost はそのマシンを指します。';
+      '接続先は SSH サーバーまたは Monitor から解決されます。localhost はそのマシンを指します。';
 
   @override
   String get remoteDesktopDomain => 'ドメイン（任意）';
@@ -2919,8 +2921,96 @@ class AppLocalizationsJa extends AppLocalizations {
   String get remoteDesktopWaiting => 'デスクトップを待機しています…';
 
   @override
-  String get remoteDesktopUnsupportedSecurity =>
+  String get remoteDesktopFailStandardRdpSecurityOnly =>
       'サーバーは Standard RDP Security（RC4）のみを提供しており、これはサポートされていません。xrdp.ini で security_layer=tls（または negotiate）を設定し、xrdp が TLS 証明書を読み取れることを確認してください。';
+
+  @override
+  String get remoteDesktopFailServerCertificateMissing =>
+      'サーバーに TLS 証明書がありません。サーバーに証明書をインストールしてください。xrdp の場合は xrdp.ini で certificate と key_file を設定してください。';
+
+  @override
+  String get remoteDesktopFailClientCertificateRequired =>
+      'サーバーはクライアント証明書（スマートカードログオン）を要求していますが、これはサポートされていません。';
+
+  @override
+  String get remoteDesktopFailWrongCredentials => 'ユーザー名またはパスワードが正しくありません。';
+
+  @override
+  String get remoteDesktopFailAccountLockedOut =>
+      'アカウントがロックされています。しばらくしてから再試行するか、管理者にロック解除を依頼してください。';
+
+  @override
+  String get remoteDesktopFailAccountDisabled => 'アカウントは無効になっています。';
+
+  @override
+  String get remoteDesktopFailAccountExpired => 'アカウントの有効期限が切れています。';
+
+  @override
+  String get remoteDesktopFailPasswordExpired =>
+      'パスワードの有効期限が切れているか、変更が必要です。先にサーバーでパスワードを変更してください。';
+
+  @override
+  String get remoteDesktopFailLogonRestricted =>
+      'このアカウントは現在の時間帯またはこのデバイスからはログオンできないか、空のパスワードではリモートログオンできません。';
+
+  @override
+  String get remoteDesktopFailRemoteLogonDenied =>
+      'このアカウントはリモートデスクトップ経由でのログオンを許可されていません。サーバーで Remote Desktop Users グループに追加してください。';
+
+  @override
+  String get remoteDesktopFailFreshCredentialsRequired =>
+      'サーバーは保存された資格情報を受け付けません。パスワードを再入力してください。';
+
+  @override
+  String get remoteDesktopFailIdleTimeout => 'サーバーのアイドル時間制限によりセッションが切断されました。';
+
+  @override
+  String get remoteDesktopFailSessionTimeLimit => 'セッションがサーバーの時間制限に達しました。';
+
+  @override
+  String get remoteDesktopFailReplacedByOtherConnection =>
+      '別の接続がこのセッションを引き継ぎました。';
+
+  @override
+  String get remoteDesktopFailDisconnectedOnServer => 'セッションはサーバー側で切断されました。';
+
+  @override
+  String get remoteDesktopFailLoggedOffByAdministrator => '管理者がセッションをログオフしました。';
+
+  @override
+  String get remoteDesktopFailLoggedOff => 'セッションはログオフされました。';
+
+  @override
+  String get remoteDesktopFailServerShutdown => 'サーバーはシャットダウン中です。';
+
+  @override
+  String get remoteDesktopFailServerReboot => 'サーバーは再起動中です。';
+
+  @override
+  String get remoteDesktopFailServerDeniedConnection => 'サーバーが接続を拒否しました。';
+
+  @override
+  String get remoteDesktopFailLicensingFailed =>
+      'サーバーのリモートデスクトップライセンスに失敗しました。ライセンスサーバーとクライアントアクセスライセンス（CAL）を確認してください。';
+
+  @override
+  String get remoteDesktopFailVncSecurityUnsupported =>
+      'VNC サーバーはサポートされているセキュリティタイプを提供していません。VNC パスワードまたは認証なしのみサポートされています。TigerVNC では SecurityTypes=VncAuth を設定してください。';
+
+  @override
+  String get remoteDesktopFailPasswordRequired => 'VNC サーバーにはパスワードが必要です。';
+
+  @override
+  String get tcpTargetUnreachable =>
+      'サーバーはこのアドレスに接続できませんでした。サービスが実行中で、そのポートで待ち受けているか確認してください。';
+
+  @override
+  String get sshTcpForwardingProhibited =>
+      'SSH サーバーはこの接続の転送を拒否しました。sshd_config の AllowTcpForwarding と PermitOpen、および authorized_keys の鍵に付いた no-port-forwarding や permitopen オプションを確認してください。';
+
+  @override
+  String get monitorRelayForbidden =>
+      'この Monitor アカウントはこのアドレスに接続できません。ロールの connect 権限でこのアドレスを許可する必要があります。';
 
   @override
   String get remoteDesktopCertificateChanged => 'リモートデスクトップの証明書が変更されました';
@@ -3031,8 +3121,7 @@ class AppLocalizationsJa extends AppLocalizations {
       'libvirt の virsh がインストールされたサーバーは、QEMU/KVM 仮想マシンとともにホストとして表示されます。';
 
   @override
-  String get virtIntroTransports =>
-      'どちらも SSH、Monitor エージェント経由、またはこのデバイス上で動作します。';
+  String get virtIntroTransports => 'どちらも SSH、Monitor 経由、またはこのデバイス上で動作します。';
 
   @override
   String get virtIntroTokens =>
@@ -3182,10 +3271,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get virtErrCertChanged => 'ホストの証明書が変更されました';
 
   @override
-  String get virtErrRelayNotGranted => 'Monitor エージェントは接続を中継しません';
+  String get virtErrRelayNotGranted =>
+      'Monitor はこのアカウントに、サーバーからの TCP 接続を許可していません（connect 権限）';
 
   @override
-  String get virtErrExecNotGranted => 'Monitor エージェントはコマンドを実行しません';
+  String get virtErrExecNotGranted => 'Monitor はコマンドを実行しません';
 
   @override
   String get virtErrNotInstalled => 'このサーバーには virsh がインストールされていません';
@@ -4903,7 +4993,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String funcNeedsAgentPermission(String func) {
-    return 'この Monitor のアカウントには $func の権限がありません。管理者に問い合わせてください。';
+    return 'この Monitor のアカウントには $func の権限がありません。Monitor の管理者に問い合わせてください。';
   }
 
   @override
@@ -4954,7 +5044,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get monitorErrReauth => 'パスワードが正しくありません。';
 
   @override
-  String get monitorErrLastAdmin => '管理者アカウントが少なくとも 1 つ必要です。';
+  String get monitorErrLastAdmin => 'Monitor には管理者アカウントが少なくとも 1 つ必要です。';
 
   @override
   String get monitorErrConflict => '既に存在するか、まだ使用中です。';
@@ -4970,7 +5060,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get monitorGrantShellTip =>
-      'ターミナル、プロセス、サービス、コンテナ、スニペット、電源 —— agent のアカウントで実行';
+      'ターミナル、プロセス、サービス、コンテナ、スニペット、電源 —— Monitor のアカウントで実行';
 
   @override
   String get monitorGrantSshTerminal => 'SSH 経由のパネルターミナル';
@@ -4980,7 +5070,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get monitorGrantVirtTip =>
-      'エージェントの Web パネルで接続する Proxmox VE、libvirt、BMC';
+      'Monitor が接続する Proxmox VE、libvirt、BMC（Web パネル内）';
 
   @override
   String get monitorGrantFiles => 'ファイル';
@@ -5014,17 +5104,17 @@ class AppLocalizationsJa extends AppLocalizations {
   String get monitorBuiltin => '組み込み';
 
   @override
-  String get monitorAdminRoleTip => 'アカウント、ロール、agent の設定を管理します';
+  String get monitorAdminRoleTip => 'アカウント、ロール、Monitor の設定を管理します';
 
   @override
   String get monitorYou => 'あなた';
 
   @override
-  String get monitorNoAccessToSettings => 'この agent の設定を変更できるのは管理者のみです。';
+  String get monitorNoAccessToSettings => 'この Monitor の設定を変更できるのは管理者のみです。';
 
   @override
   String get monitorPasswordNotSaved =>
-      'agent 上のパスワードは変更されましたが、App に保存できませんでした。このサーバーの設定で Monitor のパスワードを更新してください。';
+      'Monitor 上のパスワードは変更されましたが、App に保存できませんでした。このサーバーの設定で Monitor のパスワードを更新してください。';
 
   @override
   String get firewall => 'ファイアウォール';
@@ -5243,25 +5333,24 @@ class AppLocalizationsJa extends AppLocalizations {
       'port=80:proto=tcp:toport=8080 の形式で、toport、toaddr、またはその両方を指定してください。';
 
   @override
-  String get monitorSyncNeedsServer =>
-      'バックアップを保存する Monitor エージェントのサーバーを選択してください。';
+  String get monitorSyncNeedsServer => 'バックアップを保存する Monitor のサーバーを選択してください。';
 
   @override
   String get monitorBackupUnsupported =>
-      'この Monitor エージェントはバックアップを保存できません。エージェントを更新してください。';
+      'この Monitor はバックアップを保存できません。Monitor を更新してください。';
 
   @override
   String get monitorBackupAdminOnly =>
-      'Monitor エージェントにバックアップを保存できるのは管理者アカウントのみです。';
+      'Monitor にバックアップを保存できるのは、その Monitor の管理者アカウントのみです。';
 
   @override
   String monitorBackupTooLarge(String max) {
-    return 'バックアップが Monitor エージェントの上限サイズ（$max）を超えています。';
+    return 'バックアップが Monitor の上限サイズ（$max）を超えています。';
   }
 
   @override
   String get monitorBackupTooMany =>
-      'Monitor エージェントのバックアップ数が上限に達しています。先に 1 つ削除してください。';
+      'Monitor のバックアップ数が上限に達しています。先に 1 つ削除してください。';
 
   @override
   String get virtCreateVmidInvalid => 'VMID は 100 から 999999999 までです。';

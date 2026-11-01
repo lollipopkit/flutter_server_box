@@ -1,37 +1,37 @@
 ---
-title: Monitor Agent API and Access Model
+title: Monitor API and Access Model
 description: Capability reporting, metrics history, and remote access behavior
 ---
 
-The App uses the API behavior described here when it connects to Monitor agent.
+The App uses the API behavior described here when it connects to the Monitor.
 For installation and configuration, see
-[Monitor Agent](/docs/advanced/monitor-agent/).
+[Monitor](/docs/advanced/monitor-agent/).
 
 ## Protocol version
 
-The App and agent use a single protocol version number
+The App and the Monitor use a single protocol version number
 (`sbm_parser::protocol`). It changes only for breaking API changes, such as
 removing or renaming a field, changing a field's meaning, or removing a route.
 New features do not change the protocol version; they are listed in `features`.
 
 - `GET /api/v1/health` needs no sign-in and reports `protocol` and
   `min_client_protocol`. It does not report the release version, which is in
-  `/capabilities`. An agent without these fields speaks protocol 1.
+  `/capabilities`. A Monitor without these fields speaks protocol 1.
 - Every request carries `X-SBM-Protocol: <n>`. A request without it is
-  protocol 1. An agent answers a client below `min_client_protocol` with
+  protocol 1. A Monitor answers a client below `min_client_protocol` with
   `426` and `{"error": "client_too_old", "protocol", "min_client_protocol"}`.
   `/health`, preflights and WebSocket upgrades are not checked; the
   `/ws-ticket` request before an upgrade is.
 - Before signing in, the App reads `/health`. It prompts you to update the
-  agent when its protocol is too old, or to update the App when the agent
+  Monitor when its protocol is too old, or to update the App when the Monitor
   requires a newer protocol.
-- Each side supports the previous protocol at least: the agent answers an
+- Each side supports the previous protocol at least: the Monitor answers an
   older client in that client's format, and the App still reads an older
-  agent.
+  Monitor.
 
 ## Capability discovery
 
-The App calls `GET /api/v1/capabilities` to learn which features an agent
+The App calls `GET /api/v1/capabilities` to learn which features a Monitor
 supports and what the signed-in account may use. The response answers for the
 caller:
 
@@ -43,16 +43,16 @@ caller:
   `not_configured` (`files` with no `roots`). A grant also carries its
   options: `files.mode`, `connect.allow`, `listen.public`, and
   `listen.ports`. For a watch token every grant is `not_granted`.
-- `remote_access`: the booleans agents reported before roles, derived from
-  `grants` for older Apps (`terminal` is `ssh_terminal` or `shell`,
+- `remote_access`: the booleans that Monitor versions before roles
+  reported, derived from `grants` for older Apps (`terminal` is `ssh_terminal` or `shell`,
   `full_access` is `shell`, `stream` is `connect`). The App reads `grants`
   when it is present.
 
 TODO: Remove the legacy `remote_access` response when the minimum supported
 App version reads `grants`.
 
-Do not infer feature availability from the agent version or configuration
-defaults. Use the capabilities response from the running agent.
+Do not infer feature availability from the Monitor version or configuration
+defaults. Use the capabilities response from the running Monitor.
 
 ## Metrics history contract
 
@@ -65,7 +65,7 @@ The capabilities response reports:
 
 The App offers preset chart ranges that fit within the later boundary implied
 by retention and the oldest sample. It displays both values in the range
-picker. Older agents that do not report retention use the fixed chart ranges.
+picker. Older Monitor versions that do not report retention use the fixed chart ranges.
 
 The App can request an exact interval with:
 
@@ -73,11 +73,11 @@ The App can request an exact interval with:
 GET /api/v1/metrics/history?from=<epoch-seconds>&to=<epoch-seconds>
 ```
 
-If `from` precedes the oldest retained sample, the agent returns the available
+If `from` precedes the oldest retained sample, the Monitor returns the available
 rows. It does not shift the requested start time or return an error. The chart
 represents the missing interval as a gap. Without `from`, `?minutes=` sets the
 window's length (default 60, at least 5, at most 7 days), ending at `to` or
-now. The App includes `minutes` in each request, so agents that predate
+now. The App includes `minutes` in each request, so Monitor versions that predate
 `from` and `to` can still handle it.
 
 ## Access model
@@ -117,9 +117,9 @@ routes, which any account may call:
 
 `current_password` is the calling admin's own password. It goes through the
 login throttle, so a run of wrong ones answers `429 throttled` with
-`Retry-After`. The agent's settings (`/settings`, `/push`, `/push/test`,
+`Retry-After`. The Monitor's settings (`/settings`, `/push`, `/push/test`,
 `PUT /card-order`) are admin-only as well, and `PUT /custom-cmds` also needs a
-usable `shell`, because the agent runs custom commands.
+usable `shell`, because the Monitor runs custom commands.
 
 Errors are `{"error": "<code>", "message": "..."}`:
 
@@ -160,7 +160,7 @@ with `why: insecure_transport`.
 
 `connect.allow` entries are an IP address or CIDR range with an optional port
 or port range, with IPv6 written as `[addr]:port`. When a connection names a
-host, the agent resolves it, requires every resulting address to be allowed,
+host, the Monitor resolves it, requires every resulting address to be allowed,
 and dials those addresses. `localhost` often resolves to both `127.0.0.1` and
 `::1`, so a client should send the address it means.
 
@@ -170,7 +170,7 @@ inside `ports` when that is set.
 ### File API
 
 The `files` grant reaches only the directories listed in
-`[remote_access.fs] roots`. The agent resolves requested paths, follows
+`[remote_access.fs] roots`. The Monitor resolves requested paths, follows
 symlinks, rejects `..`, and verifies that the resolved path remains under a
 configured root. A symlink cannot be used to escape those roots. Setting
 `roots = ["/"]` exposes the complete filesystem and triggers a startup
@@ -180,6 +180,6 @@ warning.
 
 The web-panel terminal connects to `ssh_addr` as an SSH client and uses the
 SSH account's permissions; it needs `ssh_terminal`. The App terminal uses the
-agent process user's local shell and needs `shell`. The endpoint's first
+Monitor process user's local shell and needs `shell`. The endpoint's first
 message may contain an SSH password, which is why it follows the transport
 rule above.

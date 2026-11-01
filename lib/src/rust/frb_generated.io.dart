@@ -369,6 +369,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   RemoteDesktopEvent dco_decode_box_autoadd_remote_desktop_event(dynamic raw);
 
   @protected
+  RemoteDesktopFailure dco_decode_box_autoadd_remote_desktop_failure(
+    dynamic raw,
+  );
+
+  @protected
   ResetRequest dco_decode_box_autoadd_reset_request(dynamic raw);
 
   @protected
@@ -691,6 +696,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  RemoteDesktopFailure? dco_decode_opt_box_autoadd_remote_desktop_failure(
+    dynamic raw,
+  );
+
+  @protected
   ResetRequest? dco_decode_opt_box_autoadd_reset_request(dynamic raw);
 
   @protected
@@ -812,6 +822,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   RemoteDesktopEvent dco_decode_remote_desktop_event(dynamic raw);
+
+  @protected
+  RemoteDesktopFailure dco_decode_remote_desktop_failure(dynamic raw);
 
   @protected
   ResetRequest dco_decode_reset_request(dynamic raw);
@@ -1272,6 +1285,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  RemoteDesktopFailure sse_decode_box_autoadd_remote_desktop_failure(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   ResetRequest sse_decode_box_autoadd_reset_request(
     SseDeserializer deserializer,
   );
@@ -1666,6 +1684,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  RemoteDesktopFailure? sse_decode_opt_box_autoadd_remote_desktop_failure(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   ResetRequest? sse_decode_opt_box_autoadd_reset_request(
     SseDeserializer deserializer,
   );
@@ -1803,6 +1826,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   RemoteDesktopEvent sse_decode_remote_desktop_event(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  RemoteDesktopFailure sse_decode_remote_desktop_failure(
     SseDeserializer deserializer,
   );
 
@@ -2342,6 +2370,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_box_autoadd_remote_desktop_failure(
+    RemoteDesktopFailure self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_reset_request(
     ResetRequest self,
     SseSerializer serializer,
@@ -2852,6 +2886,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_opt_box_autoadd_remote_desktop_failure(
+    RemoteDesktopFailure? self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_opt_box_autoadd_reset_request(
     ResetRequest? self,
     SseSerializer serializer,
@@ -3034,6 +3074,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_remote_desktop_event(
     RemoteDesktopEvent self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_remote_desktop_failure(
+    RemoteDesktopFailure self,
     SseSerializer serializer,
   );
 

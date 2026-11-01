@@ -1,16 +1,16 @@
 ---
 title: Remote Desktop (RDP and VNC)
-description: Connect to graphical desktops through SSH or Monitor agent
+description: Connect to graphical desktops through SSH or Monitor
 ---
 
 Server Box includes RDP and VNC clients for Android, iOS, Linux, macOS, and
 Windows. It reaches desktops through an existing server connection: SSH or a
-Monitor agent account whose role includes the `connect` permission. The
+Monitor account whose role includes the `connect` permission. The
 desktop port does not need to be exposed to the network running Server Box.
 
 ## Set up a connection
 
-1. Set up the server connection in Server Box with SSH or a Monitor agent
+1. Set up the server connection in Server Box with SSH or a Monitor
    account whose role includes `connect`. If both are available, the server's
    **Try first** preference determines which connection is tried first; Server
    Box falls back to the other if it fails.
@@ -32,10 +32,10 @@ or computer running Server Box. The default targets are:
 These defaults work when the desktop service runs on the server itself. You can
 also enter an internal address reachable from that server. SSH connections use
 the same authentication and jump-server settings as terminal and port
-forwarding connections. With Monitor agent, the agent connects from its own
+forwarding connections. With the Monitor, it connects from its own
 machine as the account it runs under. The account's role must allow the target
 address in its `connect` permission. A plaintext HTTP connection to a Monitor
-agent is used only when that connection is to a loopback address.
+is used only when that connection is to a loopback address.
 
 Passwords are not saved unless **Save password** is enabled. A password entered
 for a session stays in memory for that session and its reconnect attempts.
@@ -92,6 +92,27 @@ attempt checks the connection again and creates a new temporary tunnel that
 listens only on a local loopback address. Authentication failures, rejected
 certificates, and invalid profile settings are not retried automatically.
 
+When the server names the reason a connection failed or a session ended, Server
+Box shows that reason and does not reconnect on its own: a wrong password, a
+locked or expired account, an idle or session time limit, a log-off, another
+connection taking over the session, or a server shutting down. Retrying would
+get the same answer, and taking a session back from another connection would
+disconnect that one. Select **Reconnect** once the cause is resolved.
+
+## Troubleshoot xrdp
+
+If the server offers only Standard RDP Security, the connection fails. That
+mode uses RC4 and does not authenticate the server, so Server Box requires TLS
+or CredSSP/NLA instead. Clients that accept the legacy mode, such as the
+Windows client, can still connect. On the server:
+
+1. In `/etc/xrdp/xrdp.ini`, set `security_layer=negotiate` or `tls`, not `rdp`.
+2. Make sure xrdp can read the files named by `certificate` and `key_file`. On
+   Debian and Ubuntu, the default key is in `/etc/ssl/private` and readable
+   only by the `ssl-cert` group: `sudo adduser xrdp ssl-cert`.
+3. Restart xrdp: `sudo systemctl restart xrdp`. In `/var/log/xrdp.log`, a line
+   such as `Cannot read private key file` means step 2 is still needed.
+
 Desktop platforms and Android use the app's existing background behavior when
 the operating system allows it. iOS may suspend network activity in the
 background; Server Box checks the session and reconnects if needed when you
@@ -102,6 +123,7 @@ return to the app.
 - **RDP:** TCP, TLS, CredSSP/NLA, graphics, keyboard and pointer input, dynamic
   resolution, and text CLIPRDR are supported. Username/password authentication
   with an optional domain primarily uses NTLM; Kerberos is not guaranteed.
+  Standard RDP Security (RC4) is not supported.
 - **VNC:** RFB 3.3, 3.7, and 3.8 are supported with None or classic VNC
   Authentication. Classic VNC passwords are ASCII; a longer one is accepted
   and, as in TigerVNC, only its first eight characters are used.

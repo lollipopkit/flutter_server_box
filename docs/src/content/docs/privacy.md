@@ -42,7 +42,7 @@ device-local state are not included.
 A local backup may be unencrypted when no backup password is set. When you set a
 backup password, the backup is encrypted before it is written or uploaded.
 Automatic remote backup requires a non-empty backup password. After a backup is
-sent to iCloud, WebDAV, GitHub Gist or one of your monitor agents, that provider's storage, access and
+sent to iCloud, WebDAV, GitHub Gist or one of your Monitors, that provider's storage, access and
 retention rules also apply.
 
 ## Automatic diagnostic data
@@ -223,7 +223,7 @@ automatic diagnostic payload described above.
 | Request | Destination | When and what it carries |
 |---|---|---|
 | AI request | The endpoint configured by you | When you send an Agent message; see [AI requests](#ai-requests) |
-| Backup or sync | iCloud, your WebDAV server, GitHub Gist, or your monitor agent | When you upload, download or sync a backup; the selected backup file, which may be encrypted |
+| Backup or sync | iCloud, your WebDAV server, GitHub Gist, or your Monitor | When you upload, download or sync a backup; the selected backup file, which may be encrypted |
 | Update check | `api.github.com` | On launch when automatic update checks are enabled |
 | Linux userland manifest | `github.com` | When the app checks for a newer local Linux release; it contains release metadata and signatures |
 | Linux userland image | The distribution mirror or source URL selected by the verified manifest | When you install or update a local Linux environment; the image is checked against the manifest's digest |
@@ -232,7 +232,7 @@ automatic diagnostic payload described above.
 | Sponsor link | `cdn.lollipopkit.com` | When you open the sponsor link |
 | Documentation and issue links | `serverbox.lollipopkit.com` or `github.com` | When you open one of those links |
 
-Connections to your own servers, to a BMC you configured and to a Monitor agent
+Connections to your own servers, to a BMC you configured and to a Monitor
 you deployed go directly to those endpoints. They are not routed through the
 developer's infrastructure.
 
@@ -256,7 +256,7 @@ Do not include passwords, keys or other sensitive content in a public issue.
 ## Watch app and home-screen widgets
 
 The watch app, its complication, and the iOS and Android home-screen widgets
-read a Monitor agent you deployed directly. They use a read-only credential that
+read a Monitor you deployed directly. They use a read-only credential that
 Server Box mints for each surface. The credential can reach only the Monitor
 metrics endpoints (`/api/v1/status`, `/api/v1/metrics` and
 `/api/v1/metrics/history`); it cannot open a shell, execute commands or browse
@@ -270,7 +270,7 @@ Servers are included automatically when they have a Monitor configuration. On
 the watch, you can exclude individual servers in **Settings**; widgets publish
 the Monitor-configured servers without a separate exclusion list. Excluding or
 deleting a server revokes the watch or widget credential as soon as the app can
-contact the Monitor agent.
+contact the Monitor.
 
 ## Platform stores
 

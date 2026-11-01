@@ -9,9 +9,9 @@ import 'package:server_box/src/rust/frb_generated.dart';
 
 part 'remote_desktop.freezed.dart';
 
-// These functions are ignored because they are not marked as `pub`: `apply_vnc_event`, `bgra_to_rgba`, `certificate_event`, `classify_rdp_failure`, `close`, `close`, `copy_rect`, `draw_bgra`, `draw_jpeg`, `ensure_rect`, `event`, `finish_vnc_error`, `fold_into`, `format_endpoint`, `format_sha256`, `frame_len`, `frame_shared`, `frame`, `handle_rdp_command`, `handle_vnc_command`, `is_lifecycle`, `is_ready`, `new`, `new`, `parse_sha256_fingerprint`, `pinned_certificate`, `publish_latest_frame`, `rdp_pixels_to_bgra`, `recv`, `recv`, `resize`, `run_rdp`, `run_vnc`, `send_rdp_fast_path`, `send_vnc_wheel`, `send`, `send`, `send`, `spawn`, `try_recv`, `validate_endpoint`, `validate_size`
+// These functions are ignored because they are not marked as `pub`: `apply_vnc_event`, `bgra_to_rgba`, `certificate_event`, `classify_rdp_failure`, `close`, `close`, `copy_rect`, `credssp_failure`, `draw_bgra`, `draw_jpeg`, `ensure_rect`, `event`, `failure_end_reason`, `finish_vnc_error`, `fold_into`, `format_endpoint`, `format_sha256`, `frame_len`, `frame_shared`, `frame`, `handle_rdp_command`, `handle_vnc_command`, `is_lifecycle`, `is_ready`, `new`, `new`, `parse_sha256_fingerprint`, `pinned_certificate`, `publish_latest_frame`, `rdp_connect_failure`, `rdp_pixels_to_bgra`, `rdp_session_end_failure`, `recv`, `recv`, `resize`, `run_rdp`, `run_vnc`, `send_rdp_fast_path`, `send_vnc_wheel`, `send`, `send`, `send`, `spawn`, `try_recv`, `validate_endpoint`, `validate_size`, `vnc_failure`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `CommandQueue`, `EventQueue`, `EventReceiver`, `EventSender`, `Frame`, `Framebuffer`, `RdpClipboardBackend`, `RdpClipboardState`, `SessionCommand`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `as_any_mut`, `as_any`, `assert_fields_are_eq`, `assert_fields_are_eq`, `client_capabilities`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `drop`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `on_file_contents_request`, `on_file_contents_response`, `on_format_data_request`, `on_format_data_response`, `on_lock`, `on_process_negotiated_capabilities`, `on_ready`, `on_remote_copy`, `on_request_format_list`, `on_unlock`, `temporary_directory`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `as_any_mut`, `as_any`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `client_capabilities`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `drop`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `on_file_contents_request`, `on_file_contents_response`, `on_format_data_request`, `on_format_data_response`, `on_lock`, `on_process_negotiated_capabilities`, `on_ready`, `on_remote_copy`, `on_request_format_list`, `on_unlock`, `temporary_directory`
 // These functions are ignored (category: IgnoreBecauseOwnerTyShouldIgnore): `default`, `default`
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RemoteDesktopSessionHandle>>
@@ -142,10 +142,6 @@ enum RemoteDesktopEndReason {
   authenticationFailed,
   certificateRejected,
   configurationError,
-
-  /// The server offers only Standard RDP Security (RC4, no server
-  /// authentication), which is not supported.
-  unsupportedSecurity,
   transportError,
   serverDisconnected,
 }
@@ -199,8 +195,49 @@ sealed class RemoteDesktopEvent with _$RemoteDesktopEvent {
   }) = RemoteDesktopEvent_Error;
   const factory RemoteDesktopEvent.ended({
     required RemoteDesktopEndReason reason,
+    RemoteDesktopFailure? failure,
     String? message,
   }) = RemoteDesktopEvent_Ended;
+}
+
+/// Why a session failed or ended, where the protocol says so in a code the
+/// app can put in its own words. None is retried on its own: an immediate
+/// retry gets the same answer, and a session another connection took over
+/// would take it back. A server restarting outlasts the retry delays.
+enum RemoteDesktopFailure {
+  /// Standard RDP Security only (RC4, no server authentication): xrdp with
+  /// `security_layer=rdp`, or `negotiate` without a readable certificate.
+  standardRdpSecurityOnly,
+  serverCertificateMissing,
+  clientCertificateRequired,
+  wrongCredentials,
+  accountLockedOut,
+  accountDisabled,
+  accountExpired,
+  passwordExpired,
+
+  /// Logon hours, workstation, or an account restriction such as a blank
+  /// password.
+  logonRestricted,
+
+  /// Not allowed to log on through Remote Desktop.
+  remoteLogonDenied,
+  freshCredentialsRequired,
+  idleTimeout,
+  sessionTimeLimit,
+  replacedByOtherConnection,
+  disconnectedOnServer,
+  loggedOffByAdministrator,
+  loggedOff,
+  serverShutdown,
+  serverReboot,
+  serverDeniedConnection,
+  licensingFailed,
+
+  /// A VNC server offering none of the security types supported (VNC
+  /// password or none), such as only VeNCrypt or RA2.
+  vncSecurityUnsupported,
+  passwordRequired,
 }
 
 class VncSessionParams {

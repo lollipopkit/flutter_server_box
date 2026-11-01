@@ -108,8 +108,27 @@ class _UnsupportedSecuritySessions extends _RecordingSessions {
         RemoteDesktopSessionView(
           profile: _profile,
           connectionState: ffi.RemoteDesktopConnectionState.disconnected,
-          endReason: ffi.RemoteDesktopEndReason.unsupportedSecurity,
+          endReason: ffi.RemoteDesktopEndReason.configurationError,
+          failure: ffi.RemoteDesktopFailure.standardRdpSecurityOnly,
           error: message,
+        ),
+      )
+      .select(_profile.id);
+}
+
+/// A tunnel that could not be opened, with what the app knows to do about it.
+class _HintedSessions extends _RecordingSessions {
+  static const error = 'ServerTcpErr<dial> over ssh: SSHChannelOpenError(1)';
+
+  @override
+  RemoteDesktopSessionsState build() => const RemoteDesktopSessionsState()
+      .put(
+        RemoteDesktopSessionView(
+          profile: _profile,
+          connectionState: ffi.RemoteDesktopConnectionState.disconnected,
+          endReason: ffi.RemoteDesktopEndReason.transportError,
+          error: error,
+          hint: AppLocalizationsEn().sshTcpForwardingProhibited,
         ),
       )
       .select(_profile.id);
@@ -165,15 +184,29 @@ void main() {
   });
 
   // #1835
-  testWidgets('a server offering only Standard RDP Security says what to '
-      'change on it', (tester) async {
+  testWidgets('a failure the protocol named is worded by the app, with the '
+      "protocol's text below", (tester) async {
     await _pumpViewer(tester, _UnsupportedSecuritySessions());
     await tester.pump();
     expect(
-      find.text(AppLocalizationsEn().remoteDesktopUnsupportedSecurity),
+      find.text(AppLocalizationsEn().remoteDesktopFailStandardRdpSecurityOnly),
       findsOneWidget,
     );
-    expect(find.text(_UnsupportedSecuritySessions.message), findsNothing);
+    expect(find.text(_UnsupportedSecuritySessions.message), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('an error the app knows what to do about says so first', (
+    tester,
+  ) async {
+    await _pumpViewer(tester, _HintedSessions());
+    await tester.pump();
+    expect(
+      find.text(AppLocalizationsEn().sshTcpForwardingProhibited),
+      findsOneWidget,
+    );
+    expect(find.text(_HintedSessions.error), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });

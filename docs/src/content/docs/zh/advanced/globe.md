@@ -21,7 +21,7 @@ Server Box 会按以下顺序检查位置来源，并使用第一个可用的位
 
 ### 通过内网访问的服务器
 
-通过 VPN 或内网域名访问的 VPS，某个网卡上仍可能配置公网 IP。常规状态轮询已经会通过 SSH 或 [Monitor agent](/docs/zh/advanced/monitor-agent/) 收集网卡地址。Server Box 会选取公网地址并查询本机城市级数据集，不会为此额外执行命令或访问外部 IP 查询服务。
+通过 VPN 或内网域名访问的 VPS，某个网卡上仍可能配置公网 IP。常规状态轮询已经会通过 SSH 或 [Monitor](/docs/zh/advanced/monitor-agent/) 收集网卡地址。Server Box 会选取公网地址并查询本机城市级数据集，不会为此额外执行命令或访问外部 IP 查询服务。
 
 位于 NAT 后方的家用服务器通常只能上报内网地址。这种情况下，只能通过手动填写坐标将它放到地球仪上。
 

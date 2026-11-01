@@ -76,7 +76,12 @@ bool isRetryableTerminalConnectionError(Object error) {
       error is SSHAuthError) {
     return false;
   }
-  if (error is MonitorHttpErr) return error.type == MonitorHttpErrType.net;
+  // A relayed target not listening yet may be starting, as before it had a
+  // type of its own.
+  if (error is MonitorHttpErr) {
+    return error.type == MonitorHttpErrType.net ||
+        error.type == MonitorHttpErrType.targetUnreachable;
+  }
   if (error is TerminalConsoleErr) return error.retryable;
   return error is TimeoutException ||
       error is SocketException ||
