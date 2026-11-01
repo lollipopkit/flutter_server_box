@@ -100,9 +100,18 @@ class _Pane extends ConsumerWidget {
                             key: runtimes[i].key,
                             child: TickerMode(
                               enabled: visible && i == pane.activeIndex,
-                              child: runtimes[i].built
-                                  ? runtimes[i].host(pane.tabs[i], pane.id)
-                                  : const SizedBox.shrink(),
+                              // Each tab has a navigator, and panes side by
+                              // side are all uncovered: back is the focused
+                              // pane's alone.
+                              child: BackScope(
+                                enabled:
+                                    visible &&
+                                    i == pane.activeIndex &&
+                                    _focused,
+                                child: runtimes[i].built
+                                    ? runtimes[i].host(pane.tabs[i], pane.id)
+                                    : const SizedBox.shrink(),
+                              ),
                             ),
                           ),
                       ],

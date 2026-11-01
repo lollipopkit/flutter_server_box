@@ -31,13 +31,17 @@ extension _HomePageSettings on _HomePageState {
           ignoring: !_settingsOpen,
           child: _crossed(
             leaving: false,
-            child: NestedNavigator(
-              key: const ValueKey('settings'),
-              navigatorKey: _settingsNavKey,
-              observers: [AgentScreen.settingsObserver],
-              rootBuilder: (_) => const SafeArea(
-                bottom: false,
-                child: SettingsPage(),
+            // Still painted on the way out; back is the tabs' by then.
+            child: BackScope(
+              enabled: _settingsOpen,
+              child: NestedNavigator(
+                key: const ValueKey('settings'),
+                navigatorKey: _settingsNavKey,
+                observers: [AgentScreen.settingsObserver],
+                rootBuilder: (_) => const SafeArea(
+                  bottom: false,
+                  child: SettingsPage(),
+                ),
               ),
             ),
           ),
