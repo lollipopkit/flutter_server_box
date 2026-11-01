@@ -13,6 +13,7 @@ const es: Translation = {
     download: 'Descargar',
     docs: 'Documentación',
     themes: 'Temas',
+    os: 'ServerBox OS',
     plugins: 'Plugins',
     languageLabel: 'Idioma',
   },
@@ -103,6 +104,84 @@ const es: Translation = {
     installIosPrompt: '# iOS',
     installReleasePrompt: '# Android, Linux y Windows',
   },
+  os: {
+    metaTitle: 'ServerBox OS — el lado servidor de ServerBox',
+    metaDescription:
+      'ServerBox OS es ServerBox Monitor en tu servidor: un escritorio en el navegador con una tienda de apps, almacenamiento, Agent mode, alertas y copias de seguridad. Instálalo en Linux o arráncalo como sistema completo.',
+    heroTitle: 'ServerBox OS',
+    tagline: 'El lado servidor de ServerBox.',
+    subtitle:
+      'ServerBox Monitor se ejecuta en el propio servidor. La app se conecta a él, y su escritorio integrado en el navegador permite administrar la máquina sin la app. Instálalo en un servidor Linux que ya tengas o arráncalo como sistema completo.',
+    installAction: 'Instalar en Linux',
+    images: 'Descargar imágenes',
+    previewAction: 'Ver el recorrido',
+    previewTitle: 'Míralo en marcha',
+    previewSubtitle:
+      'ServerBox OS está en beta. Un recorrido breve en un servidor real: el escritorio en el navegador, sus apps y el modo Agent en acción.',
+    previewPlay: 'Reproducir el recorrido de ServerBox OS',
+    previewYoutube: 'Ver en YouTube',
+    featuresTitle: 'Qué se ejecuta en el servidor',
+    featuresSubtitle: 'Un programa en la máquina, accesible desde el navegador o la app.',
+    desk: {
+      title: 'Un escritorio en el navegador',
+      description:
+        'Abre la dirección del servidor y cada función aparecerá como una app en una ventana: estado, archivos, terminal, contenedores, procesos y servicios.',
+    },
+    apps: {
+      title: 'Tienda de apps',
+      description:
+        'Despliega más de 40 servicios autoalojados con Docker Compose, como Immich, Jellyfin, Gitea y Home Assistant, y añade apps para Tailscale, proxies inversos, kernels y modelos de IA locales.',
+    },
+    storage: {
+      title: 'Almacenamiento y uso compartido',
+      description:
+        'Particiona, formatea y monta discos, crea matrices RAID y pools ZFS, consulta S.M.A.R.T. y comparte carpetas mediante SMB y NFS.',
+    },
+    agent: {
+      title: 'Agent mode',
+      description:
+        'Asigna una tarea a un Agent de IA en la máquina. La planifica, pregunta antes de ejecutar comandos arriesgados, usa sudo solo si lo permites y accede a las apps desplegadas mediante MCP.',
+    },
+    alerts: {
+      title: 'Alertas',
+      description:
+        'Las reglas sobre CPU, memoria, discos y servicios envían notificaciones a la app, Telegram, Discord, ntfy, Bark, ServerChan, correo electrónico o un webhook.',
+    },
+    backups: {
+      title: 'Copias de seguridad',
+      description:
+        'La configuración se guarda en WebDAV, cifrada con age; los datos de los contenedores se guardan según un calendario en el disco que elijas.',
+    },
+    security: {
+      title: 'Una contraseña',
+      description:
+        'Una cuenta inicia sesión con su contraseña. Cualquier acción que no sea de lectura requiere HTTPS, las credenciales se cifran en reposo y se auditan los inicios de sesión y las acciones de root.',
+    },
+    app: {
+      title: 'Con la app',
+      description:
+        'Añade el servidor en ServerBox mediante HTTPS en lugar de SSH, o usa ambos: consulta el estado y el historial, y accede al terminal, los archivos, las tareas de Agent mode y las apps web desde el teléfono.',
+    },
+    installTitle: 'Dos formas de ejecutarlo',
+    installSubtitle: 'En un servidor Linux que ya tengas o como sistema completo en una máquina dedicada.',
+    linuxTitle: 'En un servidor Linux',
+    promptUser: '# systemd: un servicio de usuario que se ejecuta con tu propia cuenta',
+    promptOpenrc: '# OpenRC (Alpine): root escribe el servicio, que sigue ejecutándose con tu cuenta',
+    promptRoot: '# Con cualquiera de los dos sistemas init, como root',
+    linuxNote:
+      'La cuenta con la que se ejecuta determina lo que puede hacer. Sustituye install por upgrade o uninstall para actualizarlo o eliminarlo.',
+    copy: 'Copiar comando de instalación',
+    imageTitle: 'Como sistema completo',
+    stepWrite: 'Descarga una imagen y escríbela en una memoria USB (dd, Etcher, Ventoy), o móntala en una máquina virtual.',
+    stepBoot:
+      'Arráncalo. La consola muestra la dirección que debes abrir, la huella del certificado que debes comparar y dónde encontrar la primera contraseña.',
+    stepInstall: 'sbm-install <disco> borra ese disco e instala el sistema en él.',
+    liveNote:
+      'Hasta que se instale, se ejecuta desde la memoria: la base de datos, las imágenes y los datos de las apps se pierden al reiniciar.',
+    note: 'ServerBox OS es de código abierto bajo AGPLv3, igual que la app.',
+    docs: 'Documentación de Monitor',
+    appAction: 'Obtener la app',
+  },
   themes: {
     title: 'A tu manera.',
     subtitle:
@@ -144,8 +223,6 @@ const es: Translation = {
     disabled: 'Desactivado',
     loadFailed: 'No se pudo cargar la vista previa de este tema.',
     retry: 'Reintentar',
-    previewNote:
-      'La vista previa solo muestra los iconos y colores del tema. El resto de la interfaz es orientativo.',
     iconPacks: 'Paquetes de iconos',
     iconPacksSubtitle:
       'Los paquetes de iconos se eligen por separado y funcionan con cualquier tema. Instálalos desde “Ajustes → Apariencia → Tienda de temas → Paquetes de iconos”.',
@@ -164,7 +241,7 @@ const es: Translation = {
     copied: 'Comando copiado',
     copyPrompt: 'Copia este comando:',
     note:
-      'Descarga paquetes solo de fuentes de confianza. Para usar notificaciones push del servidor, datos para widgets y monitorización independiente, instala ServerBoxMonitor por separado en tus servidores.',
+      'Descarga paquetes solo de fuentes de confianza. Para usar notificaciones push del servidor, datos para widgets y monitorización independiente, instala ServerBox OS en tus servidores.',
   },
   cta: {
     title: 'ServerBox es gratis y open source bajo AGPLv3.',

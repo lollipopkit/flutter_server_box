@@ -13,6 +13,7 @@ const en: BaseTranslation = {
     download: 'Download',
     docs: 'Docs',
     themes: 'Themes',
+    os: 'ServerBox OS',
     plugins: 'Plugins',
     languageLabel: 'Language',
   },
@@ -103,6 +104,84 @@ const en: BaseTranslation = {
     installIosPrompt: '# iOS',
     installReleasePrompt: '# Android, Linux, and Windows',
   },
+  os: {
+    metaTitle: 'ServerBox OS — the server side of ServerBox',
+    metaDescription:
+      'ServerBox OS is ServerBox Monitor on your server: a desktop in the browser with an App Store, storage, Agent mode, alerts and backups. Install it on Linux or boot it as the whole system.',
+    heroTitle: 'ServerBox OS',
+    tagline: 'The server side of ServerBox.',
+    subtitle:
+      'ServerBox Monitor runs on the server itself. The app connects to it, and its own desktop in the browser manages the machine without the app. Install it on a Linux server you already have, or boot it as the whole system.',
+    installAction: 'Install on Linux',
+    images: 'Download images',
+    previewAction: 'Watch the tour',
+    previewTitle: 'See it running',
+    previewSubtitle:
+      'ServerBox OS is in beta. A short tour on a real server: the desktop in the browser, its apps, and Agent mode at work.',
+    previewPlay: 'Play the ServerBox OS tour',
+    previewYoutube: 'Watch on YouTube',
+    featuresTitle: 'What runs on the server',
+    featuresSubtitle: 'One program on the machine, reached from the browser or from the app.',
+    desk: {
+      title: 'A desktop in the browser',
+      description:
+        "Open the server's address and every feature is an app in a window: status, files, terminal, containers, processes and services.",
+    },
+    apps: {
+      title: 'App Store',
+      description:
+        'Deploy more than 40 self-hosted services with Docker Compose, such as Immich, Jellyfin, Gitea and Home Assistant, and add apps for Tailscale, reverse proxies, kernels and local AI models.',
+    },
+    storage: {
+      title: 'Storage and sharing',
+      description:
+        'Partition, format and mount disks, build RAID arrays and ZFS pools, read S.M.A.R.T., and share folders over SMB and NFS.',
+    },
+    agent: {
+      title: 'Agent mode',
+      description:
+        'Give an AI agent a task on the machine. It plans, asks before risky commands, uses sudo only when you allow it, and reaches deployed apps through MCP.',
+    },
+    alerts: {
+      title: 'Alerts',
+      description:
+        'Rules on CPU, memory, disks and services notify the app, Telegram, Discord, ntfy, Bark, ServerChan, email or a webhook.',
+    },
+    backups: {
+      title: 'Backups',
+      description:
+        'Its configuration backs up to WebDAV, encrypted with age; container data backs up on a schedule to a disk you choose.',
+    },
+    security: {
+      title: 'One password',
+      description:
+        'One account signs in with its password. Anything beyond reading needs HTTPS, credentials are encrypted at rest, and sign-ins and root actions are audited.',
+    },
+    app: {
+      title: 'With the app',
+      description:
+        'Add the server in ServerBox over HTTPS instead of SSH, or both: status and history, terminal, files, Agent mode tasks and web apps, from your phone.',
+    },
+    installTitle: 'Two ways to run it',
+    installSubtitle: 'On a Linux server you already have, or as the whole system on a machine of its own.',
+    linuxTitle: 'On a Linux server',
+    promptUser: '# systemd: a user service, running as your own account',
+    promptOpenrc: '# OpenRC (Alpine): root writes the service, which still runs as you',
+    promptRoot: '# Either init system, as root',
+    linuxNote:
+      'The account it runs as is what it may do. Replace install with upgrade or uninstall to update or remove it.',
+    copy: 'Copy install command',
+    imageTitle: 'As the whole system',
+    stepWrite: 'Download an image and write it to a USB stick (dd, Etcher, Ventoy), or attach it to a virtual machine.',
+    stepBoot:
+      'Boot it. The console shows the address to open, the certificate fingerprint to compare, and where the first password is.',
+    stepInstall: 'sbm-install <disk> erases that disk and installs the system on it.',
+    liveNote:
+      'Until it is installed, it runs from memory: the database, images and app data are gone after a reboot.',
+    note: 'ServerBox OS is open source under AGPLv3, like the app.',
+    docs: 'Monitor docs',
+    appAction: 'Get the app',
+  },
   themes: {
     title: 'Make it yours.',
     subtitle:
@@ -144,8 +223,6 @@ const en: BaseTranslation = {
     disabled: 'Disabled',
     loadFailed: 'This theme\'s preview could not be loaded.',
     retry: 'Try again',
-    previewNote:
-      'Previews show only the theme’s icons and colors. The rest of the interface is for reference.',
     iconPacks: 'Icon packs',
     iconPacksSubtitle:
       'Icon packs are selected separately from themes and work with any theme. Install one from “Settings → Appearance → Theme Store → Icon Packs”.',
@@ -164,7 +241,7 @@ const en: BaseTranslation = {
     copied: 'Install command copied',
     copyPrompt: 'Copy this install command:',
     note:
-      'Download packages only from sources you trust. To use server-side push notifications, widget data, and standalone monitoring, install ServerBoxMonitor separately on your servers.',
+      'Download packages only from sources you trust. To use server-side push notifications, widget data, and standalone monitoring, install ServerBox OS on your servers.',
   },
   cta: {
     title: 'ServerBox is free and open source under AGPLv3.',

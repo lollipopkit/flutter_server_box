@@ -72,6 +72,7 @@ A server is reached over SSH, the Monitor (HTTP), both, or is this device (`Spi.
 ## Rules
 
 - **Never run code formatters.**
+- **No copy that narrates the interface** (the app, the panel, the website): nothing saying what a control does once used, where something loads from, or what a preview leaves out ("the video plays from YouTube once you start it"). The interface shows it.
 - Names come in through `use`, never as long paths inline: `use crate::api::json::{Json, Max};` then `Json<T, Max<N>>`, not `crate::api::json::Json<T, crate::api::json::Max<N>>`.
 - Git LFS holds images, fonts, `.fsbt` and PDFs under `monitor/`, `docs/`, `website/`, `store/` only: F-Droid clones without LFS, so nothing the app's build or `fastlane/` reads goes there (`.gitattributes`). `scripts/check-lfs.sh` fails a build that finds a pointer.
 - Never hand-edit `*.g.dart` / `*.freezed.dart`. `flutter gen-l10n` after ARB edits; check `libL10n` (fl_lib) first.

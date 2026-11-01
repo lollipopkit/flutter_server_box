@@ -13,6 +13,7 @@ const zhCN: Translation = {
     download: '下载',
     docs: '文档',
     themes: '主题',
+    os: 'ServerBox OS',
     plugins: '插件',
     languageLabel: '语言',
   },
@@ -102,6 +103,73 @@ const zhCN: Translation = {
     installIosPrompt: '# iOS',
     installReleasePrompt: '# Android、Linux 与 Windows',
   },
+  os: {
+    metaTitle: 'ServerBox OS — ServerBox 的服务器端',
+    metaDescription:
+      'ServerBox OS 就是运行在服务器上的 ServerBox Monitor：浏览器里的桌面，带应用商店、存储、Agent 模式、告警和备份。可以安装到 Linux，也可以直接作为整个系统启动。',
+    heroTitle: 'ServerBox OS',
+    tagline: 'ServerBox 的服务器端。',
+    subtitle:
+      'ServerBox Monitor 运行在服务器上。App 连接它，它自带的浏览器桌面也能在没有 App 的情况下管理这台机器。可以安装到现有的 Linux 服务器上，也可以直接作为整个系统启动。',
+    installAction: '安装到 Linux',
+    images: '下载镜像',
+    previewAction: '观看演示',
+    previewTitle: '实际运行效果',
+    previewSubtitle: 'ServerBox OS 目前处于 Beta 阶段。下面是在一台真实服务器上的简短演示：浏览器里的桌面、其中的应用，以及 Agent 模式的实际使用。',
+    previewPlay: '播放 ServerBox OS 演示',
+    previewYoutube: '在 YouTube 上观看',
+    featuresTitle: '服务器上能做什么',
+    featuresSubtitle: '机器上运行一个程序，从浏览器或 App 访问。',
+    desk: {
+      title: '浏览器里的桌面',
+      description: '打开服务器的地址，每个功能都是窗口里的一个应用：状态、文件、终端、容器、进程和服务。',
+    },
+    apps: {
+      title: '应用商店',
+      description:
+        '用 Docker Compose 部署 40 多个自托管服务，例如 Immich、Jellyfin、Gitea 和 Home Assistant；还可以安装 Tailscale、反向代理、内核管理和本地 AI 模型等应用。',
+    },
+    storage: {
+      title: '存储与共享',
+      description: '对磁盘分区、格式化和挂载，创建 RAID 阵列和 ZFS 存储池，读取 S.M.A.R.T.，并通过 SMB 和 NFS 共享文件夹。',
+    },
+    agent: {
+      title: 'Agent 模式',
+      description: '让 AI Agent 在这台机器上完成任务：先制定计划，执行有风险的命令前先询问，只在你允许时使用 sudo，并通过 MCP 使用已部署的应用。',
+    },
+    alerts: {
+      title: '告警',
+      description: '针对 CPU、内存、磁盘和服务的规则可以通知到 App、Telegram、Discord、ntfy、Bark、Server 酱、邮件或 Webhook。',
+    },
+    backups: {
+      title: '备份',
+      description: '配置备份到 WebDAV，并用 age 加密；容器数据按计划备份到你选择的磁盘。',
+    },
+    security: {
+      title: '一个密码',
+      description: '只有一个账号，用密码登录。读取以外的操作都需要 HTTPS，凭据加密存储，登录和 root 操作都会记入审计。',
+    },
+    app: {
+      title: '配合 App',
+      description: '在 ServerBox 里通过 HTTPS 添加服务器，可以替代 SSH，也可以和 SSH 并用：在手机上查看状态和历史，使用终端、文件、Agent 模式任务和 Web 应用。',
+    },
+    installTitle: '两种运行方式',
+    installSubtitle: '安装到现有的 Linux 服务器上，或者在一台单独的机器上作为整个系统运行。',
+    linuxTitle: '安装到 Linux 服务器',
+    promptUser: '# systemd：用户服务，以你自己的账号运行',
+    promptOpenrc: '# OpenRC（Alpine）：用 root 写入服务，仍以你的账号运行',
+    promptRoot: '# 任意 init 系统，以 root 运行',
+    linuxNote: '它运行所用的账号决定了它能做什么。把 install 换成 upgrade 或 uninstall 即可更新或卸载。',
+    copy: '复制安装命令',
+    imageTitle: '作为整个系统',
+    stepWrite: '下载镜像并写入 U 盘（dd、Etcher、Ventoy），或挂载到虚拟机。',
+    stepBoot: '启动后，控制台会显示要打开的地址、需要核对的证书指纹，以及初始密码的位置。',
+    stepInstall: 'sbm-install <磁盘> 会清空该磁盘，并把系统安装到上面。',
+    liveNote: '安装之前，系统在内存中运行：重启后数据库、镜像和应用数据都会丢失。',
+    note: 'ServerBox OS 与 App 一样，以 AGPLv3 开源。',
+    docs: 'Monitor 文档',
+    appAction: '获取 App',
+  },
   themes: {
     title: '换一身你喜欢的样子。',
     subtitle:
@@ -141,8 +209,6 @@ const zhCN: Translation = {
     disabled: '禁用',
     loadFailed: '无法加载这个主题的预览。',
     retry: '重试',
-    previewNote:
-      '预览只展示主题的图标和配色，其他界面仅供参考。',
     iconPacks: '图标包',
     iconPacksSubtitle:
       '图标包独立于主题选择，可与任何主题搭配使用。打开“设置 → 外观 → 主题商店 → 图标包”即可安装。',
@@ -160,7 +226,7 @@ const zhCN: Translation = {
     copied: '已复制安装命令',
     copyPrompt: '复制此安装命令：',
     note:
-      '请只从信任的来源下载安装包。如需服务器端推送、小组件数据和独立监控，请在服务器上另行安装 ServerBoxMonitor。',
+      '请只从信任的来源下载安装包。如需服务器端推送、小组件数据和独立监控，请在服务器上安装 ServerBox OS。',
   },
   cta: {
     title: 'ServerBox 是基于 AGPLv3 的免费开源软件。',

@@ -13,6 +13,7 @@ const kr: Translation = {
     download: '다운로드',
     docs: '문서',
     themes: '테마',
+    os: 'ServerBox OS',
     plugins: '플러그인',
     languageLabel: '언어',
   },
@@ -103,6 +104,84 @@ const kr: Translation = {
     installIosPrompt: '# iOS',
     installReleasePrompt: '# Android, Linux, Windows',
   },
+  os: {
+    metaTitle: 'ServerBox OS — ServerBox의 서버 측',
+    metaDescription:
+      'ServerBox OS는 서버에서 실행되는 ServerBox Monitor입니다. 앱 스토어, 스토리지, Agent mode, 알림, 백업을 갖춘 브라우저 데스크톱입니다. Linux에 설치하거나 전체 시스템으로 부팅할 수 있습니다.',
+    heroTitle: 'ServerBox OS',
+    tagline: 'ServerBox의 서버 측.',
+    subtitle:
+      'ServerBox Monitor는 서버 자체에서 실행됩니다. 앱이 여기에 연결되며, 브라우저에 내장된 데스크톱으로 앱 없이도 머신을 관리할 수 있습니다. 기존 Linux 서버에 설치하거나 전체 시스템으로 부팅할 수 있습니다.',
+    installAction: 'Linux에 설치',
+    images: '이미지 다운로드',
+    previewAction: '데모 보기',
+    previewTitle: '실제 동작',
+    previewSubtitle:
+      'ServerBox OS는 베타 버전입니다. 실제 서버에서의 짧은 데모: 브라우저 속 데스크톱, 앱, 그리고 Agent 모드의 실제 동작.',
+    previewPlay: 'ServerBox OS 데모 재생',
+    previewYoutube: 'YouTube에서 보기',
+    featuresTitle: '서버에서 실행되는 기능',
+    featuresSubtitle: '머신에서 하나의 프로그램을 실행하고 브라우저나 앱에서 접속합니다.',
+    desk: {
+      title: '브라우저 안의 데스크톱',
+      description:
+        '서버 주소를 열면 상태, 파일, 터미널, 컨테이너, 프로세스, 서비스 등 각 기능이 창 안의 앱으로 표시됩니다.',
+    },
+    apps: {
+      title: '앱 스토어',
+      description:
+        'Docker Compose로 Immich, Jellyfin, Gitea, Home Assistant 등 40개 이상의 자체 호스팅 서비스를 배포하고, Tailscale, 리버스 프록시, 커널, 로컬 AI 모델용 앱을 추가할 수 있습니다.',
+    },
+    storage: {
+      title: '스토리지와 공유',
+      description:
+        '디스크를 파티션·포맷·마운트하고 RAID 배열과 ZFS 풀을 만들며 S.M.A.R.T.를 확인할 수 있습니다. SMB와 NFS로 폴더를 공유할 수도 있습니다.',
+    },
+    agent: {
+      title: 'Agent mode',
+      description:
+        '머신에서 AI Agent가 작업을 수행하도록 요청하세요. 작업을 계획하고 위험한 명령 전에 확인하며, 허용한 경우에만 sudo를 사용하고 MCP를 통해 배포된 앱에 접근합니다.',
+    },
+    alerts: {
+      title: '알림',
+      description:
+        'CPU, 메모리, 디스크, 서비스 규칙에 따라 앱, Telegram, Discord, ntfy, Bark, ServerChan, 이메일 또는 webhook으로 알림을 보냅니다.',
+    },
+    backups: {
+      title: '백업',
+      description:
+        '설정은 age로 암호화해 WebDAV에 백업하고, 컨테이너 데이터는 선택한 디스크에 일정에 따라 백업합니다.',
+    },
+    security: {
+      title: '하나의 비밀번호',
+      description:
+        '계정 하나로 비밀번호를 사용해 로그인합니다. 읽기 이외의 작업에는 HTTPS가 필요하며, 자격 증명은 저장 시 암호화되고 로그인과 root 작업은 감사 기록에 남습니다.',
+    },
+    app: {
+      title: '앱과 함께 사용',
+      description:
+        'ServerBox에서 SSH 대신 HTTPS로 서버를 추가하거나 둘 다 사용할 수 있습니다. 휴대폰에서 상태와 기록을 확인하고 터미널, 파일, Agent mode 작업, 웹 앱을 이용하세요.',
+    },
+    installTitle: '두 가지 실행 방법',
+    installSubtitle: '기존 Linux 서버에서 실행하거나 전용 머신의 전체 시스템으로 부팅할 수 있습니다.',
+    linuxTitle: 'Linux 서버에서 실행',
+    promptUser: '# systemd: 본인 계정으로 실행되는 사용자 서비스',
+    promptOpenrc: '# OpenRC (Alpine): root가 서비스를 작성하지만 서비스는 계속 본인 계정으로 실행',
+    promptRoot: '# 두 init 시스템 모두 root로 실행',
+    linuxNote:
+      '실행에 사용하는 계정에 따라 수행할 수 있는 작업이 달라집니다. 업데이트하거나 제거하려면 install을 upgrade 또는 uninstall로 바꾸세요.',
+    copy: '설치 명령 복사',
+    imageTitle: '전체 시스템으로 실행',
+    stepWrite: '이미지를 다운로드해 USB 드라이브(dd, Etcher, Ventoy)에 기록하거나 가상 머신에 연결하세요.',
+    stepBoot:
+      '부팅하면 콘솔에 접속할 주소, 비교할 인증서 지문, 초기 비밀번호 위치가 표시됩니다.',
+    stepInstall: 'sbm-install <디스크>는 해당 디스크를 지우고 시스템을 설치합니다.',
+    liveNote:
+      '설치 전에는 메모리에서 실행되므로 재부팅하면 데이터베이스, 이미지, 앱 데이터가 사라집니다.',
+    note: 'ServerBox OS는 앱과 마찬가지로 AGPLv3 오픈소스입니다.',
+    docs: 'Monitor 문서',
+    appAction: '앱 받기',
+  },
   themes: {
     title: '원하는 모습으로.',
     subtitle:
@@ -143,8 +222,6 @@ const kr: Translation = {
     disabled: '비활성',
     loadFailed: '이 테마의 미리보기를 불러오지 못했습니다.',
     retry: '다시 시도',
-    previewNote:
-      '미리보기에는 테마의 아이콘과 색상만 표시되며, 나머지 화면은 참고용입니다.',
     iconPacks: '아이콘 팩',
     iconPacksSubtitle:
       '아이콘 팩은 테마와 별도로 선택해 현재 테마와 함께 사용할 수 있습니다. 앱에서 “설정 → 모양 → 테마 스토어 → 아이콘 팩”을 열어 설치하세요.',
@@ -162,7 +239,7 @@ const kr: Translation = {
     copied: '설치 명령을 복사했습니다',
     copyPrompt: '이 설치 명령을 복사하세요:',
     note:
-      '신뢰할 수 있는 출처에서만 패키지를 내려받으세요. 서버 푸시 알림, 위젯 데이터, 독립 모니터링을 사용하려면 서버에 ServerBox Monitor를 별도로 설치하세요.',
+      '신뢰할 수 있는 출처에서만 패키지를 내려받으세요. 서버 푸시 알림, 위젯 데이터, 독립 모니터링을 사용하려면 서버에 ServerBox OS를 설치하세요.',
   },
   cta: {
     title: 'ServerBox는 AGPLv3 기반의 무료 오픈소스입니다.',

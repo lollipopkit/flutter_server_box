@@ -103,6 +103,7 @@
 
   const releases = 'https://github.com/lollipopkit/flutter_server_box/releases'
 
+
   // `file` says what the source gives you; formats and commands stay untranslated.
   const downloadGroups = [
     {
@@ -254,6 +255,7 @@
       <nav>
         <a href="#features" onclick={(event) => scrollToSection(event, 'features')}>{$LL.nav.features()}</a>
         <a href="#capabilities" onclick={(event) => scrollToSection(event, 'capabilities')}>{$LL.nav.capabilities()}</a>
+        <a href={`/os/?lang=${locale}`}>{$LL.nav.os()}</a>
         <a href="#themes" onclick={(event) => scrollToSection(event, 'themes')}>{$LL.nav.themes()}</a>
         {#if showPlugins}
           <a href="#plugins" onclick={(event) => scrollToSection(event, 'plugins')}>{$LL.nav.plugins()}</a>
@@ -389,7 +391,6 @@
       {#if store.themes.length}
         <!-- A glimpse, drawn from the themes themselves; the store page has
              the rest: search, every mode, icons, components. -->
-        <p class="preview-note">{$LL.themes.previewNote()}</p>
         <div class="theme-strip">
           {#each store.themes.slice(0, 4) as theme (theme.id)}
             <a class="theme-strip-item" href={`/themes/?lang=${locale}#${theme.id}`}>
@@ -523,6 +524,7 @@
       <div class="footer-links">
         <a href="#features" onclick={(event) => scrollToSection(event, 'features')}>{$LL.footer.features()}</a>
         <a href="#capabilities" onclick={(event) => scrollToSection(event, 'capabilities')}>{$LL.footer.capabilities()}</a>
+        <a href={`/os/?lang=${locale}`}>{$LL.nav.os()}</a>
         <a href="#themes" onclick={(event) => scrollToSection(event, 'themes')}>{$LL.nav.themes()}</a>
         <a href="https://github.com/lollipopkit/flutter_server_box">GitHub</a>
         <a href="https://github.com/lollipopkit/flutter_server_box/releases">{$LL.footer.releases()}</a>
