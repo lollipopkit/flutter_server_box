@@ -226,7 +226,7 @@ jobs:
       # here, unlike to the build hook (see `build-hook-cache`). After the
       # toolchain step: the key includes the rustc it finds. Saved from main
       # only, so pull requests restore main's and add nothing to the 10 GB.
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
 

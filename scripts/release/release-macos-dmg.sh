@@ -534,6 +534,16 @@ EOF
 /usr/libexec/PlistBuddy -c 'Add :provisioningProfiles dict' "$EXPORT_OPTIONS_PATH"
 /usr/libexec/PlistBuddy -c "Add :provisioningProfiles:$APP_BUNDLE_ID string $APP_PROFILE_NAME" "$EXPORT_OPTIONS_PATH"
 
+# Skia on Intel: Impeller's MetalSDF renders glyphs and transitions as noise on
+# an Intel/AMD Mac (#1798). Apple silicon, and the App Store build, keep Impeller.
+# TODO: remove once Flutter fixes MetalSDF on Intel/AMD GPUs.
+impeller_for() {
+  case "$1" in
+    x86_64) echo NO ;;
+    *) echo YES ;;
+  esac
+}
+
 built_dmgs=()
 last_app_path=''
 
@@ -592,6 +602,7 @@ for arch in $RELEASE_ARCHS; do
     -xcconfig "$OVERRIDE_XCCONFIG_PATH" \
     ARCHS="$arch" \
     ONLY_ACTIVE_ARCH=NO \
+    FLT_ENABLE_IMPELLER="$(impeller_for "$arch")" \
     FLUTTER_BUILD_NAME="$MARKETING_VERSION" \
     FLUTTER_BUILD_NUMBER="$CURRENT_PROJECT_VERSION" \
     archive
