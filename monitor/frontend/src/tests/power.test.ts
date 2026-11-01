@@ -38,20 +38,20 @@ describe('PowerModal', () => {
     mockedPower.mockResolvedValue(result({}))
     await pickAndRun(/reboot/i, 'hunter2')
     await waitFor(() => expect(mockedPower).toHaveBeenCalledWith('reboot', 'hunter2'))
-    expect(await screen.findByText(/Sent: Reboot/)).toBeInTheDocument()
+    expect(await screen.findByText(/Sent Reboot/)).toBeInTheDocument()
   })
 
   it('says a refused password is refused, and stays open for another', async () => {
     mockedPower.mockResolvedValue(result({ exit_code: 1, sudo_rejected: true, stderr: 'Sorry, try again.' }))
     await pickAndRun(/shut down/i)
-    expect(await screen.findByRole('alert')).toHaveTextContent('refused that password')
+    expect(await screen.findByRole('alert')).toHaveTextContent('password is incorrect')
     expect(screen.getByLabelText('Sudo password')).toBeInTheDocument()
   })
 
   it('reads a shutdown the agent did not live to answer as sent', async () => {
     mockedPower.mockRejectedValue(new ApiError('Failed to reach the machine'))
     await pickAndRun(/shut down/i)
-    expect(await screen.findByText(/Sent: Shut down/)).toBeInTheDocument()
+    expect(await screen.findByText(/Sent Shut down/)).toBeInTheDocument()
   })
 
   it('does not read a refusal from the agent that way', async () => {

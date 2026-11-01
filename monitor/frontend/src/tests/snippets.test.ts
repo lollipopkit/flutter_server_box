@@ -67,7 +67,7 @@ describe('Snippets page', () => {
     await fireEvent.click(await screen.findByRole('button', { name: /Login/ }))
     await fireEvent.click(screen.getByRole('button', { name: /^run$/i }))
 
-    expect(await screen.findByText(/uses \$\{user\}, which the panel/)).toBeInTheDocument()
+    expect(await screen.findByText(/uses \$\{user\}, but the panel/)).toBeInTheDocument()
     expect(snippetRun.waiting).toBeNull()
   })
 
@@ -94,6 +94,6 @@ describe('Snippets page', () => {
     const confirm = screen.getAllByRole('button', { name: /delete snippet/i })
     await fireEvent.click(confirm[confirm.length - 1])
 
-    expect(await screen.findByText('Two snippets have the same name.')).toBeInTheDocument()
+    expect(await screen.findByText('Two snippets have duplicate names.')).toBeInTheDocument()
   })
 })

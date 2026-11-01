@@ -62,7 +62,7 @@ describe('Process page', () => {
     const signalButtons = screen.getAllByRole('button').filter((b) => /term|stop/i.test(b.textContent ?? ''))
     await fireEvent.click(signalButtons.at(-1)!)
     const password = await screen.findByLabelText('Sudo password')
-    expect(screen.queryByText(/refused that password/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/password is incorrect/)).not.toBeInTheDocument()
     // Nothing to retry with until a password is typed.
     expect(screen.getByRole('button', { name: /retry as root/i })).toBeDisabled()
 

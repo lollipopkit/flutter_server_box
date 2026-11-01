@@ -232,7 +232,7 @@ describe('the virtualization page', () => {
     await fireEvent.click(screen.getByText('db'))
     // In the header and on the stopped card.
     expect(await screen.findAllByRole('button', { name: /^start$/i })).toHaveLength(2)
-    expect(screen.getByText('Usage shows here once it runs.')).toBeInTheDocument()
+    expect(screen.getByText('Usage information appears here while the guest is running.')).toBeInTheDocument()
   })
 
   it('asks before stopping, then sends it and reads the host again', async () => {
@@ -309,7 +309,7 @@ describe('the virtualization page', () => {
   it('tells an admin that PVE runs here and has to be set up', async () => {
     loadVirt.mockResolvedValue({ host: 'pve', supported: true, pve_configured: false, view: null, error: null })
     render(Virt, { onback: () => {} })
-    expect(await screen.findByText(/Set up how this agent signs in/)).toBeInTheDocument()
+    expect(await screen.findByText(/Set up how this Monitor signs in/)).toBeInTheDocument()
   })
 
   it('reads a guest\'s hardware when its view opens', async () => {
@@ -401,7 +401,7 @@ describe('the virtualization page', () => {
       ),
     )
     await fireEvent.click(screen.getAllByRole('button', { name: /^revert$/i })[0])
-    expect(screen.getByText(/disks go back to then/)).toBeInTheDocument()
+    expect(screen.getByText(/disks will return to their state/)).toBeInTheDocument()
     expect(virtSnapshot).toHaveBeenCalledTimes(1)
     // The dialog closes and the revert it asked about is the one sent.
     const reverts = screen.getAllByRole('button', { name: /^revert$/i })
@@ -548,7 +548,7 @@ describe('the virtualization page: storage and networks', () => {
     expect(screen.getByText(/Pending changes on pve/)).toBeInTheDocument()
     await fireEvent.click(screen.getByRole('button', { name: /^apply$/i }))
     expect(virtManage).not.toHaveBeenCalled()
-    expect(screen.getByText(/reloads its networking/)).toBeInTheDocument()
+    expect(screen.getByText(/reload its network configuration/)).toBeInTheDocument()
     const applies = screen.getAllByRole('button', { name: /^apply$/i })
     await fireEvent.click(applies[applies.length - 1])
     await waitFor(() => expect(virtManage).toHaveBeenCalledWith({ op: 'network_apply', node: 'pve' }, undefined))

@@ -157,7 +157,7 @@ describe('hardware and settings: the helpers', () => {
 
   it('says what a change came to', () => {
     expect(outcomeText(null)).toBe('Saved.')
-    expect(outcomeText({ live_error: 'hotplug failed', volume_kept: false })).toMatch(/next start: hotplug failed/)
+    expect(outcomeText({ live_error: 'hotplug failed', volume_kept: false })).toMatch(/the guest starts: hotplug failed/)
     expect(outcomeText({ live_error: null, volume_kept: true })).toMatch(/volume was kept/)
   })
 
@@ -277,7 +277,7 @@ describe('the hardware view', () => {
     expect(save).toBeEnabled()
     await fireEvent.click(save)
     await waitFor(() => expect(virtHardwareChange).toHaveBeenCalledWith('qemu/100', 'd1', { op: 'set_cpu', sockets: 1, cores: 4, online: null, type: null }, undefined))
-    expect(await screen.findByText(/next start: CPU hotplug is off/)).toBeInTheDocument()
+    expect(await screen.findByText(/the guest starts: CPU hotplug is off/)).toBeInTheDocument()
     expect(virtHardware).toHaveBeenCalledTimes(2)
     expect(onchanged).toHaveBeenCalled()
   })
@@ -294,7 +294,7 @@ describe('the hardware view', () => {
     virtHardware.mockResolvedValue({ hardware: hardware({ revision: 'd2' }), error: null })
     await fireEvent.input(screen.getByLabelText('Cores'), { target: { value: '3' } })
     await fireEvent.click(screen.getAllByRole('button', { name: /^save$/i })[0])
-    expect(await screen.findByText(/changed since it was read/)).toBeInTheDocument()
+    expect(await screen.findByText(/changed after it was loaded/)).toBeInTheDocument()
     await waitFor(() => expect(virtHardware).toHaveBeenCalledTimes(2))
   })
 
@@ -315,7 +315,7 @@ describe('the hardware view', () => {
     virtHardwareChange.mockResolvedValue({ outcome: null, error: err({ detail: { code: 'hardware_refused', issue: 'storage_missing' } }) })
     show()
     await fireEvent.click(await screen.findByRole('button', { name: 'UEFI' }))
-    expect(screen.getByText(/unable to boot/)).toBeInTheDocument()
+    expect(screen.getByText(/prevent it from booting/)).toBeInTheDocument()
     expect(virtHardwareChange).not.toHaveBeenCalled()
   })
 

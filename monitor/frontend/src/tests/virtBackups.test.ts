@@ -342,7 +342,7 @@ describe('a guest\'s backups', () => {
     editBackupJob.mockResolvedValue({ error: null })
     const onjobs = vi.fn()
     render(VirtBackups, { view: hostView(), guest: guest(), onchanged: () => {}, onjobs })
-    expect(await screen.findByText('This job also takes other guests. Edit it under Backup jobs.')).toBeInTheDocument()
+    expect(await screen.findByText('This job also includes other guests. Edit it on the Backup jobs page.')).toBeInTheDocument()
     expect(screen.getAllByText('Last 7').length).toBe(2)
     await fireEvent.click(screen.getByRole('button', { name: /datacenter/i }))
     expect(onjobs).toHaveBeenCalled()
@@ -363,7 +363,7 @@ describe('a guest\'s backups', () => {
     virtBackups.mockResolvedValue(listing({ jobs: [] }))
     editBackupJob.mockResolvedValue({ error: null })
     render(VirtBackups, { view: hostView(), guest: guest(), onchanged: () => {} })
-    expect(await screen.findByText('No backup job takes this guest.')).toBeInTheDocument()
+    expect(await screen.findByText('No backup job includes this guest.')).toBeInTheDocument()
     await fireEvent.click(screen.getByRole('button', { name: /^add a schedule$/i }))
     await fireEvent.click(screen.getByRole('button', { name: /^save$/i }))
     await waitFor(() =>

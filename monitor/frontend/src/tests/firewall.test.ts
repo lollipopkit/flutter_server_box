@@ -161,8 +161,8 @@ describe('Firewall page', () => {
     const change = { kind: 'ufw', change: { type: 'delete_rule', tuples: sshRule.tuples } }
     expect(planFirewall).toHaveBeenCalledWith(change, undefined)
 
-    expect(await screen.findByText(/SSH \(port 22\): new connections will be refused/)).toBeInTheDocument()
-    expect(screen.getByRole('checkbox', { name: /keep these ports open first/i })).toBeChecked()
+    expect(await screen.findByText(/SSH \(port 22\): new connection attempts will be refused/)).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: /keep these ports open before continuing/i })).toBeChecked()
     // Nothing runs until the countdown is over and the user confirms.
     const confirm = screen.getByRole('button', { name: /confirm \(3\)/i })
     expect(confirm).toBeDisabled()
@@ -210,7 +210,7 @@ describe('Firewall page', () => {
     const change = { kind: 'ufw', change: { type: 'reload' } }
     await waitFor(() => expect(actFirewall).toHaveBeenCalledWith(change, false, undefined, 'old'))
     // Nothing ran; the plan as it is now is asked about instead.
-    expect(await screen.findByText(/SSH \(port 22\): new connections will be refused/)).toBeInTheDocument()
+    expect(await screen.findByText(/SSH \(port 22\): new connection attempts will be refused/)).toBeInTheDocument()
     await fireEvent.click(screen.getByRole('button', { name: /^confirm$/i }))
     await waitFor(() => expect(actFirewall).toHaveBeenLastCalledWith(change, false, undefined, 'new'))
   })
@@ -249,6 +249,6 @@ describe('Firewall page', () => {
 describe('firewall refusals', () => {
   it('a code this build does not know is shown as sent', () => {
     expect(refusalText('somethingNew')).toBe('somethingNew')
-    expect(refusalText('noSuchRule')).toMatch(/no longer there/)
+    expect(refusalText('noSuchRule')).toMatch(/no longer exists/)
   })
 })
