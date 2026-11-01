@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:server_box/data/model/server/block_device.dart';
 
 part 'monitor_metrics.g.dart';
 
@@ -50,6 +51,9 @@ class MonitorMetrics {
   final String? cpuBrand;
   final List<MonitorGpuMetrics> gpus;
   final List<MonitorDiskDetail> diskDetails;
+
+  /// Empty on agents predating the field, and on Bsd/Windows agents.
+  final List<BlockDevice> blockDevices;
   final List<MonitorIfaceMetrics> ifaces;
   final String? uptime;
   final MonitorConn? conn;
@@ -90,6 +94,7 @@ class MonitorMetrics {
     this.cpuBrand,
     this.gpus = const [],
     this.diskDetails = const [],
+    this.blockDevices = const [],
     this.ifaces = const [],
     this.uptime,
     this.conn,

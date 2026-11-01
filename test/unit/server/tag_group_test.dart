@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/tag_group.dart';
 
 /// Anything with tags. The helper is generic, so a record stands in for the
@@ -31,7 +32,7 @@ void main() {
       (name: 'c', tags: ['prod', 'eu', 'arm']),
     ]);
 
-    expect([for (final g in groups) g.label], ['prod', '2 Tags', '3 Tags']);
+    expect([for (final g in groups) g.label], ['prod', l10n.nTags(2), l10n.nTags(3)]);
     expect(_names(groups[1]), ['b']);
     expect(_names(groups[2]), ['c']);
   });
@@ -43,7 +44,7 @@ void main() {
       (name: 'c', tags: const []),
     ]);
 
-    expect([for (final g in groups) g.label], ['prod', 'Ungrouped']);
+    expect([for (final g in groups) g.label], ['prod', l10n.ungrouped]);
     expect(_names(groups[1]), ['a', 'c']);
   });
 

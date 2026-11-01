@@ -5,6 +5,7 @@
 /// tested in Rust (`monitor/tests/fs_write.rs`); here the question is only
 /// whether the panel sends it and what it does with a 409.
 
+import { get } from 'svelte/store'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, cleanup } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
@@ -61,14 +62,18 @@ vi.mock('../lib/capabilities.svelte', () => ({
   capabilitiesStore: { byServer: {} as Record<string, unknown> },
 }))
 
-import Files from '../pages/Files.svelte'
+import Files, { EDITOR_MAX_BYTES } from '../pages/Files.svelte'
 import FileEditor from '../components/FileEditor.svelte'
+import { LL } from '../i18n/i18n-svelte'
 import { ApiError } from '../lib/api'
 import { capabilitiesStore } from '../lib/capabilities.svelte'
+import { fmtBytes } from '../lib/format'
 import { servers } from '../lib/servers.svelte'
 import type { FsEntry } from '../types'
 
+const ll = get(LL)
 const ROOT = '/srv'
+const EDITOR_MAX = fmtBytes(EDITOR_MAX_BYTES)
 
 function entry(over: Partial<FsEntry> = {}): FsEntry {
   return {
@@ -114,14 +119,18 @@ afterEach(cleanup)
 
 describe('the Files page opening the editor', () => {
   it('refuses a file over the limit without reading it', async () => {
-    mocks.fsList.mockResolvedValue([entry({ name: 'big.txt', size: 2 * 1024 * 1024 })])
+    mocks.fsList.mockResolvedValue([entry({ name: 'big.txt', size: 2 * EDITOR_MAX_BYTES })])
     render(Files)
     await screen.findByText('big.txt')
 
-    await fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.filesEdit() }))
 
     expect(mocks.fsRead).not.toHaveBeenCalled()
-    expect(await screen.findByText(/too large/)).toBeInTheDocument()
+    expect(
+      await screen.findByText(
+        ll.filesEditorTooLarge({ file: 'big.txt', size: fmtBytes(2 * EDITOR_MAX_BYTES), sizeMax: EDITOR_MAX }),
+      ),
+    ).toBeInTheDocument()
     expect(screen.queryByRole('textbox')).toBeNull()
   })
 
@@ -132,9 +141,9 @@ describe('the Files page opening the editor', () => {
     render(Files)
     await screen.findByText('note.txt')
 
-    await fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.filesEdit() }))
 
-    expect(await screen.findByText(/not UTF-8 text/)).toBeInTheDocument()
+    expect(await screen.findByText(ll.filesEditorNotText())).toBeInTheDocument()
     expect(screen.queryByRole('textbox')).toBeNull()
   })
 
@@ -142,13 +151,17 @@ describe('the Files page opening the editor', () => {
     // `size` is null where the platform did not say, so the listing cannot
     // decide; the bytes that were actually read do.
     mocks.fsList.mockResolvedValue([entry({ size: null })])
-    mocks.fsRead.mockResolvedValue(new Blob([new Uint8Array(2 * 1024 * 1024)]))
+    mocks.fsRead.mockResolvedValue(new Blob([new Uint8Array(2 * EDITOR_MAX_BYTES)]))
     render(Files)
     await screen.findByText('note.txt')
 
-    await fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.filesEdit() }))
 
-    expect(await screen.findByText(/too large/)).toBeInTheDocument()
+    expect(
+      await screen.findByText(
+        ll.filesEditorTooLarge({ file: 'note.txt', size: fmtBytes(2 * EDITOR_MAX_BYTES), sizeMax: EDITOR_MAX }),
+      ),
+    ).toBeInTheDocument()
     expect(screen.queryByRole('textbox')).toBeNull()
   })
 
@@ -158,7 +171,7 @@ describe('the Files page opening the editor', () => {
     render(Files)
     await screen.findByText('note.txt')
 
-    await fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.filesEdit() }))
 
     expect(await screen.findByRole('textbox')).toHaveValue('one')
   })
@@ -172,7 +185,7 @@ describe('FileEditor saving', () => {
     render(FileEditor, { props: { ...props, text: 'one', onsaved, onclose: () => {} } })
 
     await fireEvent.input(textbox(), { target: { value: 'one!' } })
-    await fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.save() }))
 
     await vi.waitFor(() => expect(mocks.fsWrite).toHaveBeenCalledTimes(1))
     const [path, body, , ifVersion] = mocks.fsWrite.mock.calls[0]
@@ -190,11 +203,11 @@ describe('FileEditor saving', () => {
     render(FileEditor, { props: { ...props, text: 'one', onsaved: () => {}, onclose: () => {} } })
 
     await fireEvent.input(textbox(), { target: { value: 'first' } })
-    await fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.save() }))
     await vi.waitFor(() => expect(mocks.fsWrite).toHaveBeenCalledTimes(1))
 
     await fireEvent.input(textbox(), { target: { value: 'second' } })
-    await fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.save() }))
 
     await vi.waitFor(() => expect(mocks.fsWrite).toHaveBeenCalledTimes(2))
     expect(mocks.fsWrite.mock.calls[1][3]).toBe('111-3')
@@ -208,7 +221,7 @@ describe('FileEditor saving', () => {
     render(FileEditor, { props: { ...props, text: 'one', onsaved: () => {}, onclose: () => {} } })
 
     await fireEvent.input(textbox(), { target: { value: 'sent' } })
-    await fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.save() }))
     await vi.waitFor(() => expect(mocks.fsWrite).toHaveBeenCalledTimes(1))
 
     // Typed while the request is in flight: not what the agent is storing.
@@ -220,7 +233,7 @@ describe('FileEditor saving', () => {
     expect(textbox()).toHaveValue('typed after')
     // Still a change to save: marking those keystrokes saved would make the
     // dirty marker (and the close confirmation) lie.
-    expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: ll.save() })).toBeEnabled()
   })
 
   it('refuses to save once the panel has switched servers', async () => {
@@ -229,10 +242,10 @@ describe('FileEditor saving', () => {
 
     // The same path means a different file on the other machine.
     ;(servers as unknown as { currentId: string }).currentId = 'other'
-    await fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.save() }))
 
     expect(mocks.fsWrite).not.toHaveBeenCalled()
-    expect(await screen.findByText(/another server/i)).toBeInTheDocument()
+    expect(await screen.findByText(ll.filesEditorServerChanged())).toBeInTheDocument()
     // The editor stays open with what the user typed.
     expect(textbox()).toHaveValue('one!')
   })
@@ -242,10 +255,10 @@ describe('FileEditor saving', () => {
     render(FileEditor, { props: { ...props, text: 'one', onsaved: () => {}, onclose: () => {} } })
 
     await fireEvent.input(textbox(), { target: { value: 'mine' } })
-    await fireEvent.click(screen.getByRole('button', { name: 'Save' }))
-    expect(await screen.findByText('This file changed on the server')).toBeInTheDocument()
+    await fireEvent.click(screen.getByRole('button', { name: ll.save() }))
+    expect(await screen.findByText(ll.filesEditorConflictTitle())).toBeInTheDocument()
 
-    await fireEvent.click(screen.getByRole('button', { name: 'Overwrite' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.filesEditorOverwrite() }))
 
     await vi.waitFor(() => expect(mocks.fsWrite).toHaveBeenCalledTimes(2))
     expect(mocks.fsWrite.mock.calls[1][3]).toBeUndefined()
@@ -261,7 +274,7 @@ describe('FileEditor saving', () => {
     expect(textbox()).toHaveValue('one\ntwo')
 
     await fireEvent.input(textbox(), { target: { value: 'one\ntwo!' } })
-    await fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.save() }))
 
     await vi.waitFor(() => expect(mocks.fsWrite).toHaveBeenCalledTimes(1))
     expect(await (mocks.fsWrite.mock.calls[0][1] as Blob).text()).toBe('one\r\ntwo!')
@@ -272,7 +285,7 @@ describe('FileEditor saving', () => {
       props: { ...props, canWrite: false, text: 'one', onsaved: () => {}, onclose: () => {} },
     })
 
-    expect(screen.queryByRole('button', { name: 'Save' })).toBeNull()
+    expect(screen.queryByRole('button', { name: ll.save() })).toBeNull()
     expect(textbox()).toHaveAttribute('readonly')
   })
 
@@ -281,12 +294,12 @@ describe('FileEditor saving', () => {
     render(FileEditor, { props: { ...props, text: 'one', onsaved: () => {}, onclose } })
 
     await fireEvent.input(textbox(), { target: { value: 'one!' } })
-    await fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.cancel() }))
 
-    expect(screen.getByText('Discard your changes?')).toBeInTheDocument()
+    expect(screen.getByText(ll.filesEditorDiscardTitle())).toBeInTheDocument()
     expect(onclose).not.toHaveBeenCalled()
 
-    await fireEvent.click(screen.getByRole('button', { name: 'Discard' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.filesEditorDiscard() }))
     expect(onclose).toHaveBeenCalled()
   })
 })

@@ -1,4 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_lib/generated/l10n/lib_l10n_zh.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -8,6 +9,7 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/service.dart';
 import 'package:server_box/data/provider/services.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
+import 'package:server_box/generated/l10n/l10n_zh.dart';
 import 'package:server_box/src/rust/api/service.dart' as ffi;
 import 'package:server_box/view/page/service_detail.dart';
 import 'package:server_box/view/page/services.dart';
@@ -131,6 +133,9 @@ void main() {
   }
 
   final page = ServicesPage(args: SpiRequiredArgs(spi));
+  // Pumped in Chinese.
+  final zh = AppLocalizationsZh();
+  final libZh = LibLocalizationsZh();
 
   testWidgets('phone: failed units first, as cards, and nothing overflows', (
     tester,
@@ -138,13 +143,13 @@ void main() {
     await pump(tester, page, size: const Size(393, 852));
 
     expect(tester.takeException(), isNull);
-    expect(find.text('需要处理'), findsOneWidget);
-    expect(find.text('其余 5 个单元'), findsOneWidget);
+    expect(find.text(zh.serviceNeedsAttention), findsOneWidget);
+    expect(find.text(zh.serviceOtherUnits(5)), findsOneWidget);
     // A failed unit's card carries its restart.
-    expect(find.widgetWithText(FilledButton, '重启'), findsOneWidget);
-    expect(find.text('failed · exit-code · 退出状态 1'), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, libZh.restart), findsOneWidget);
+    expect(find.text('failed · exit-code · ${zh.serviceExitStatus(1)}'), findsOneWidget);
     // No column header on a phone.
-    expect(find.text('单元'), findsNothing);
+    expect(find.text(zh.serviceUnit), findsNothing);
   });
 
   testWidgets('desktop: a table, and picking a count narrows it', (
@@ -153,7 +158,7 @@ void main() {
     await pump(tester, page, size: const Size(940, 800));
 
     expect(tester.takeException(), isNull);
-    expect(find.text('开机自启'), findsOneWidget);
+    expect(find.text(zh.serviceStartup), findsOneWidget);
     expect(find.text('1 failed'), findsOneWidget);
 
     await tester.tap(find.text('1 inactive'));
@@ -162,14 +167,14 @@ void main() {
     expect(find.text('dirmngr.service'), findsOneWidget);
     expect(find.text('sshd.service'), findsNothing);
     // The heading would only repeat what the filter says.
-    expect(find.text('需要处理'), findsNothing);
+    expect(find.text(zh.serviceNeedsAttention), findsNothing);
   });
 
   testWidgets('wide: a unit opens beside the list, which gives up its columns', (
     tester,
   ) async {
     await pump(tester, page, size: const Size(1240, 800));
-    expect(find.text('单元'), findsOneWidget);
+    expect(find.text(zh.serviceUnit), findsOneWidget);
 
     await tester.tap(find.text('nginx.service'));
     for (var i = 0; i < 3; i++) {
@@ -180,8 +185,8 @@ void main() {
     expect(find.byType(ServiceDetailView), findsOneWidget);
     // The list is stacked rows now: no column header, whose first column is
     // the one label the pane does not also use.
-    expect(find.text('单元'), findsNothing);
-    expect(find.text('类型'), findsOneWidget);
+    expect(find.text(zh.serviceUnit), findsNothing);
+    expect(find.text(zh.serviceUnitType), findsOneWidget);
 
     await tester.tap(find.byTooltip(libL10n.close));
     await tester.pump();
@@ -198,7 +203,7 @@ void main() {
     );
 
     expect(tester.takeException(), isNull);
-    expect(find.text('开机自启'), findsOneWidget);
+    expect(find.text(zh.serviceStartup), findsOneWidget);
     expect(find.textContaining('failed · exit-code'), findsOneWidget);
   });
 }

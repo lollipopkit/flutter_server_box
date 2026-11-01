@@ -1,13 +1,17 @@
+import { get } from 'svelte/store'
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import ReauthDialog from '../components/ReauthDialog.svelte'
+import { LL } from '../i18n/i18n-svelte'
+
+const ll = get(LL)
 
 describe('ReauthDialog', () => {
-  const field = () => screen.getByLabelText('Current password') as HTMLInputElement
+  const field = () => screen.getByLabelText(ll.currentPassword()) as HTMLInputElement
 
   it.each([
-    ['Cancel', () => fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))],
+    ['Cancel', () => fireEvent.click(screen.getByRole('button', { name: ll.cancel() }))],
     ['Escape', () => fireEvent.keyDown(document.body, { key: 'Escape' })],
   ])('forgets the typed password when dismissed with %s', async (_, dismiss) => {
     const onclose = vi.fn()
@@ -27,11 +31,11 @@ describe('ReauthDialog', () => {
     const onconfirm = vi.fn(() => new Promise<void>((r) => (finish = r)))
     const { rerender } = render(ReauthDialog, { open: true, onconfirm, onclose })
     await fireEvent.input(field(), { target: { value: 'hunter2' } })
-    await fireEvent.click(screen.getByRole('button', { name: 'Confirm' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.confirm() }))
     expect(onconfirm).toHaveBeenCalledOnce()
 
     // Dismissed while the request is in flight, then opened for another change
-    await fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.cancel() }))
     await rerender({ open: false, onconfirm, onclose })
     await rerender({ open: true, onconfirm, onclose })
     await fireEvent.input(field(), { target: { value: 'second' } })
@@ -41,6 +45,6 @@ describe('ReauthDialog', () => {
     await new Promise((r) => setTimeout(r, 0))
     expect(onclose).not.toHaveBeenCalled()
     expect(field().value).toBe('second')
-    expect(screen.getByRole('button', { name: 'Confirm' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: ll.confirm() })).toBeEnabled()
   })
 })

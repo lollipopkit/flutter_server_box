@@ -473,8 +473,7 @@ void main() {
   /// `pump` above only counts out one — so every test here pumps past that on
   /// purpose, and every other test in this file is unaffected by design.
   group('the guide', () {
-    const body =
-        'Tap here to see your servers on a globe, at where their addresses are.';
+    final body = l10n.globeGuide;
 
     /// Past the delay in `_scheduleGlobeGuide`, and then through the card's
     /// own fade.

@@ -1,9 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { get } from 'svelte/store'
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import VirtHardware from '../components/VirtHardware.svelte'
 import VirtManage from '../components/VirtManage.svelte'
 import { api } from '../lib/api'
+import { LL } from '../i18n/i18n-svelte'
 import {
   bootDraft,
   bootOrder,
@@ -49,6 +51,8 @@ const virtCloudInit = vi.mocked(api.virtCloudInit)
 const virtSetCloudInit = vi.mocked(api.virtSetCloudInit)
 const createForm = vi.mocked(api.createForm)
 const cloneForm = vi.mocked(api.cloneForm)
+
+const ll = get(LL)
 
 const HW_ISSUES: VirtHwIssue[] = [
   'cpu_count',
@@ -156,9 +160,9 @@ describe('hardware and settings: the helpers', () => {
   })
 
   it('says what a change came to', () => {
-    expect(outcomeText(null)).toBe('Saved.')
-    expect(outcomeText({ live_error: 'hotplug failed', volume_kept: false })).toMatch(/next start: hotplug failed/)
-    expect(outcomeText({ live_error: null, volume_kept: true })).toMatch(/volume was kept/)
+    expect(outcomeText(null)).toBe(ll.virtHwSaved())
+    expect(outcomeText({ live_error: 'hotplug failed', volume_kept: false })).toBe(ll.virtHwLiveError({ why: 'hotplug failed' }))
+    expect(outcomeText({ live_error: null, volume_kept: true })).toBe(ll.virtHwVolumeKept())
   })
 
   it('reads numbers as typed and sizes in GiB', () => {
@@ -270,14 +274,14 @@ describe('the hardware view', () => {
   it('sends a change with the revision it was read with, then reads again', async () => {
     virtHardwareChange.mockResolvedValue({ outcome: { live_error: 'CPU hotplug is off', volume_kept: false }, error: null })
     const onchanged = show()
-    const cores = await screen.findByLabelText('Cores')
-    const save = screen.getAllByRole('button', { name: /^save$/i })[0]
+    const cores = await screen.findByLabelText(ll.virtCores())
+    const save = screen.getAllByRole('button', { name: ll.save() })[0]
     expect(save).toBeDisabled()
     await fireEvent.input(cores, { target: { value: '4' } })
     expect(save).toBeEnabled()
     await fireEvent.click(save)
     await waitFor(() => expect(virtHardwareChange).toHaveBeenCalledWith('qemu/100', 'd1', { op: 'set_cpu', sockets: 1, cores: 4, online: null, type: null }, undefined))
-    expect(await screen.findByText(/next start: CPU hotplug is off/)).toBeInTheDocument()
+    expect(await screen.findByText(ll.virtHwLiveError({ why: 'CPU hotplug is off' }))).toBeInTheDocument()
     expect(virtHardware).toHaveBeenCalledTimes(2)
     expect(onchanged).toHaveBeenCalled()
   })
@@ -285,16 +289,16 @@ describe('the hardware view', () => {
   it('shows why the host refused, and reads again on a stale read', async () => {
     virtHardwareChange.mockResolvedValueOnce({ outcome: null, error: err({ detail: { code: 'hardware_refused', issue: 'cpu_count' } }) })
     show()
-    await fireEvent.input(await screen.findByLabelText('Cores'), { target: { value: '64' } })
-    await fireEvent.click(screen.getAllByRole('button', { name: /^save$/i })[0])
+    await fireEvent.input(await screen.findByLabelText(ll.virtCores()), { target: { value: '64' } })
+    await fireEvent.click(screen.getAllByRole('button', { name: ll.save() })[0])
     expect(await screen.findByText(hwIssueText('cpu_count'))).toBeInTheDocument()
     expect(virtHardware).toHaveBeenCalledTimes(1)
 
     virtHardwareChange.mockResolvedValueOnce({ outcome: null, error: err({ kind: 'conflict', message: 'Read the hardware again' }) })
     virtHardware.mockResolvedValue({ hardware: hardware({ revision: 'd2' }), error: null })
-    await fireEvent.input(screen.getByLabelText('Cores'), { target: { value: '3' } })
-    await fireEvent.click(screen.getAllByRole('button', { name: /^save$/i })[0])
-    expect(await screen.findByText(/changed since it was read/)).toBeInTheDocument()
+    await fireEvent.input(screen.getByLabelText(ll.virtCores()), { target: { value: '3' } })
+    await fireEvent.click(screen.getAllByRole('button', { name: ll.save() })[0])
+    expect(await screen.findByText(ll.virtHwConflict())).toBeInTheDocument()
     await waitFor(() => expect(virtHardware).toHaveBeenCalledTimes(2))
   })
 
@@ -302,12 +306,12 @@ describe('the hardware view', () => {
     virtHardwareChange.mockResolvedValue({ outcome: { live_error: null, volume_kept: true }, error: null })
     show()
     await fireEvent.click(await screen.findByRole('button', { name: /^scsi0/ }))
-    await fireEvent.click(screen.getAllByRole('button', { name: /^remove$/i })[0])
+    await fireEvent.click(screen.getAllByRole('button', { name: ll.virtHwRemove() })[0])
     expect(virtHardwareChange).not.toHaveBeenCalled()
-    await fireEvent.click(screen.getByLabelText('Also delete its volume'))
-    await fireEvent.click(screen.getByRole('button', { name: /^confirm: remove scsi0$/i }))
+    await fireEvent.click(screen.getByLabelText(ll.virtHwDeleteVolume()))
+    await fireEvent.click(screen.getByRole('button', { name: ll.virtHwConfirmRemove({ name: 'scsi0' }) }))
     await waitFor(() => expect(virtHardwareChange).toHaveBeenCalledWith('qemu/100', 'd1', { op: 'remove_disk', key: 'scsi0', delete_volume: true }, undefined))
-    expect(await screen.findByText(/volume was kept/)).toBeInTheDocument()
+    expect(await screen.findByText(ll.virtHwVolumeKept())).toBeInTheDocument()
   })
 
   it('asks before changing the firmware', async () => {
@@ -315,7 +319,7 @@ describe('the hardware view', () => {
     virtHardwareChange.mockResolvedValue({ outcome: null, error: err({ detail: { code: 'hardware_refused', issue: 'storage_missing' } }) })
     show()
     await fireEvent.click(await screen.findByRole('button', { name: 'UEFI' }))
-    expect(screen.getByText(/unable to boot/)).toBeInTheDocument()
+    expect(screen.getByText(ll.virtHwFirmwareWarn())).toBeInTheDocument()
     expect(virtHardwareChange).not.toHaveBeenCalled()
   })
 
@@ -324,9 +328,9 @@ describe('the hardware view', () => {
     virtHardwareRevert.mockResolvedValue({ error: null })
     show()
     expect(await screen.findByText(/2 → 4/)).toBeInTheDocument()
-    await fireEvent.click(screen.getByRole('button', { name: /^revert all$/i }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.virtHwRevertAll() }))
     expect(virtHardwareRevert).not.toHaveBeenCalled()
-    await fireEvent.click(screen.getByRole('button', { name: /^confirm: revert all$/i }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.virtHwConfirmRevertAll() }))
     await waitFor(() => expect(virtHardwareRevert).toHaveBeenCalledWith('qemu/100', 'd1', undefined))
   })
 
@@ -334,7 +338,7 @@ describe('the hardware view', () => {
     virtHardware.mockResolvedValue({ hardware: hardware({ pending: [{ key: 'cores', current: '2', pending: '4', delete: false }] }), error: null })
     virtHardwareChange.mockResolvedValue({ outcome: null, error: null })
     show()
-    await fireEvent.click(await screen.findByRole('button', { name: /^revert$/i }))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.virtHwRevert() }))
     await waitFor(() => expect(virtHardwareChange).toHaveBeenCalledWith('qemu/100', 'd1', { op: 'revert', keys: ['cores'] }, undefined))
   })
 })
@@ -366,12 +370,12 @@ describe('the settings view: general and cloud-init', () => {
     render(VirtManage, props())
     const name = await screen.findByDisplayValue('web')
     await fireEvent.input(name, { target: { value: 'web2' } })
-    await fireEvent.click(screen.getAllByRole('button', { name: /^save$/i })[0])
+    await fireEvent.click(screen.getAllByRole('button', { name: ll.save() })[0])
     await waitFor(() => expect(virtHardwareChange).toHaveBeenCalledWith('qemu/100', 'd1', { op: 'set_name', name: 'web2' }, undefined))
 
-    expect(await screen.findByText(/only the first is edited/)).toBeInTheDocument()
-    await fireEvent.click(screen.getByLabelText('Remove the password'))
-    const ciSave = screen.getAllByRole('button', { name: /^save$/i }).at(-1)!
+    expect(await screen.findByText(ll.virtCiNics({ n: 2 }))).toBeInTheDocument()
+    await fireEvent.click(screen.getByLabelText(ll.virtCiRemovePassword()))
+    const ciSave = screen.getAllByRole('button', { name: ll.save() }).at(-1)!
     await fireEvent.click(ciSave)
     await waitFor(() =>
       expect(virtSetCloudInit).toHaveBeenCalledWith(
@@ -380,16 +384,16 @@ describe('the settings view: general and cloud-init', () => {
         undefined,
       ),
     )
-    expect(await screen.findByText('cloud-init needs a password or an SSH key for the user.')).toBeInTheDocument()
+    expect(await screen.findByText(ll.virtCrIssueCiCredentials())).toBeInTheDocument()
   })
 
   it('says a PVE VM without a cloud-init drive has none, and toggles autostart', async () => {
     virtHardware.mockResolvedValue({ hardware: hardware(), error: null })
     virtHardwareChange.mockResolvedValue({ outcome: null, error: null })
     render(VirtManage, props())
-    expect(await screen.findByText('This VM has no cloud-init drive.')).toBeInTheDocument()
+    expect(await screen.findByText(ll.virtCiNoDrive())).toBeInTheDocument()
     expect(virtCloudInit).not.toHaveBeenCalled()
-    await fireEvent.click(screen.getByLabelText(/Starts with the host/))
+    await fireEvent.click(screen.getByLabelText(ll.virtAutostart(), { exact: false }))
     await waitFor(() => expect(virtHardwareChange).toHaveBeenCalledWith('qemu/100', 'd1', { op: 'set_autostart', on: true }, undefined))
   })
 
@@ -397,7 +401,7 @@ describe('the settings view: general and cloud-init', () => {
     virtHardware.mockResolvedValue({ hardware: hardware({ protection: null }), error: null })
     virtCloudInit.mockResolvedValue({ cloud_init: null, error: err({ kind: 'unsupported', message: 'web has no cloud-init seed of this app' }) })
     render(VirtManage, props('libvirt'))
-    expect(await screen.findByText('This guest has no cloud-init seed made by this app.')).toBeInTheDocument()
-    expect(screen.queryByText('Protection')).not.toBeInTheDocument()
+    expect(await screen.findByText(ll.virtCiNoSeed())).toBeInTheDocument()
+    expect(screen.queryByText(ll.virtHwProtection())).not.toBeInTheDocument()
   })
 })

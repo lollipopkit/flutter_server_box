@@ -1,7 +1,10 @@
-使用 Flutter 开发的 Linux 服务器工具箱，提供服务器状态图表和管理工具。
-特别感谢 dartssh2 & xterm.dart。
+ServerBox 是一款 Linux 服务器状态监控与管理工具。
 
-特点：
-* 状态图表（CPU、传感器、GPU 等）, SSH 终端, SFTP, Docker & 包 & 进程管理器...
-* 特殊支持：生物认证、推送、桌面小部件、watchOS App、跟随系统颜色...
-* 本地化 (English, 简体中文, Español, Русский язык, Português, 日本語, Deutsch, 繁體中文, Indonesian, Français, Dutch
+主要功能：
+• 查看 CPU、传感器、GPU 等状态图表
+• 使用 SSH 终端和 SFTP 管理服务器
+• 管理 Docker 容器、软件包和进程
+• 使用生物识别、推送通知、桌面小组件和 watchOS App
+• 支持跟随系统配色和多语言界面
+
+特别感谢 dartssh2 和 xterm.dart。

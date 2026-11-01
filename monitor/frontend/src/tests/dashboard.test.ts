@@ -1,6 +1,8 @@
+import { get } from 'svelte/store'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
+import { LL } from '../i18n/i18n-svelte'
 import Dashboard from '../pages/Dashboard.svelte'
 import { api } from '../lib/api'
 import { capabilitiesStore } from '../lib/capabilities.svelte'
@@ -34,6 +36,7 @@ vi.mock('../lib/xterm', () => ({
   })),
 }))
 
+const ll = get(LL)
 const mocked = vi.mocked(api)
 
 const metrics = (custom_cmds?: CustomCmdOutput[]): SystemMetrics =>
@@ -64,7 +67,7 @@ const caps = (features: string[]): Capabilities =>
 
 /// The dashboard renders once its first metrics poll has answered.
 async function rendered() {
-  return screen.findByRole('button', { name: /refresh/i })
+  return screen.findByRole('button', { name: ll.refresh() })
 }
 
 beforeEach(() => {
@@ -101,7 +104,7 @@ describe('Dashboard custom commands', () => {
   it('draws no card when there are no commands', async () => {
     render(Dashboard)
     await rendered()
-    expect(screen.queryByText(/custom commands/i)).toBeNull()
+    expect(screen.queryByText(ll.customCmd())).toBeNull()
   })
 
   it('shows a one-line output as a plain row, with the count', async () => {
@@ -110,7 +113,7 @@ describe('Dashboard custom commands', () => {
     await rendered()
     expect(await screen.findByText('health')).toBeInTheDocument()
     expect(screen.getByText('ok')).toBeInTheDocument()
-    expect(screen.getByText(/1 commands/)).toBeInTheDocument()
+    expect(screen.getByText(ll.customCmdCount({ count: 1 }))).toBeInTheDocument()
     // Nothing to open: the row is not interactive.
     expect(screen.queryByRole('dialog')).toBeNull()
   })
@@ -183,14 +186,14 @@ describe('Dashboard iperf action', () => {
     capabilitiesStore.byServer['local'] = caps([])
     render(Dashboard)
     await rendered()
-    expect(screen.queryByRole('button', { name: /^iperf$/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: ll.iperf() })).toBeNull()
   })
 
   it('is offered when the agent lists iperf and the account holds shell', async () => {
     capabilitiesStore.byServer['local'] = caps(['iperf'])
     render(Dashboard)
     await rendered()
-    expect(await screen.findByRole('button', { name: /^iperf$/i })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: ll.iperf() })).toBeInTheDocument()
   })
 })
 
@@ -209,17 +212,17 @@ describe('Dashboard card arrangement', () => {
   it('moves a card from the keyboard and says where it went', async () => {
     render(Dashboard)
     await rendered()
-    const toggle = screen.getByRole('button', { name: 'Rearrange cards' })
+    const toggle = screen.getByRole('button', { name: ll.arrangeCards() })
     await fireEvent.click(toggle)
     expect(toggle).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByRole('button', { name: 'Move CPU earlier' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: ll.cardMoveEarlier({ name: ll.cpuUsage() }) })).toBeDisabled()
 
-    const later = screen.getByRole('button', { name: 'Move CPU later' })
+    const later = screen.getByRole('button', { name: ll.cardMoveLater({ name: ll.cpuUsage() }) })
     later.focus()
     await fireEvent.click(later)
     expect(mocked.updateCardOrder.mock.calls[0][0].slice(0, 2)).toEqual(['memory', 'cpu'])
-    expect(await screen.findByText(/^CPU moved to position 2 of \d+$/)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Move CPU later' })).toHaveFocus()
+    expect(await screen.findByText(ll.cardMoved({ name: ll.cpuUsage(), position: 2, total: cardLabels().length }))).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: ll.cardMoveLater({ name: ll.cpuUsage() }) })).toHaveFocus()
   })
 
   it('keeps the order when another server is removed', async () => {
@@ -232,11 +235,11 @@ describe('Dashboard card arrangement', () => {
     mocked.getCardOrder.mockResolvedValue({ card_order: ['disk', 'cpu', 'memory', 'network'] })
     render(Dashboard)
     await rendered()
-    await waitFor(() => expect(cardLabels()[0]).toBe('Disk'))
+    await waitFor(() => expect(cardLabels()[0]).toBe(ll.diskUsage()))
 
     servers.remove('b')
     await new Promise((r) => setTimeout(r, 10))
-    expect(cardLabels()[0]).toBe('Disk')
+    expect(cardLabels()[0]).toBe(ll.diskUsage())
     expect(mocked.getCardOrder).toHaveBeenCalledOnce()
   })
 
@@ -259,15 +262,15 @@ describe('Dashboard card arrangement', () => {
     servers.currentId = 'b'
     await waitFor(() => expect(mocked.getCardOrder).toHaveBeenCalledTimes(2))
     // Before B's order is known, a move changes the view but writes nothing
-    await fireEvent.click(screen.getByRole('button', { name: 'Rearrange cards' }))
-    await fireEvent.click(screen.getByRole('button', { name: 'Move CPU later' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.arrangeCards() }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.cardMoveLater({ name: ll.cpuUsage() }) }))
     expect(mocked.updateCardOrder).not.toHaveBeenCalled()
 
     answerB({ card_order: ['disk', 'cpu', 'memory', 'network'] })
     answerA({ card_order: ['network', 'memory', 'cpu', 'disk'] })
-    await waitFor(() => expect(cardLabels()[0]).toBe('Disk'))
+    await waitFor(() => expect(cardLabels()[0]).toBe(ll.diskUsage()))
     await new Promise((r) => setTimeout(r, 10))
-    expect(cardLabels().slice(0, 4)).toEqual(['Disk', 'CPU', 'Memory', 'Network'])
+    expect(cardLabels().slice(0, 4)).toEqual([ll.diskUsage(), ll.cpuUsage(), ll.memory(), ll.network()])
   })
 })
 

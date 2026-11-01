@@ -1,6 +1,8 @@
+import { get } from 'svelte/store'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
+import { LL } from '../i18n/i18n-svelte'
 import Services from '../pages/Services.svelte'
 import { api } from '../lib/api'
 import type { ServiceActResult, ServiceView } from '../types'
@@ -9,6 +11,7 @@ vi.mock('../lib/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../lib/api')>()),
   api: { getServices: vi.fn(), actService: vi.fn() },
 }))
+const ll = get(LL)
 const getServices = vi.mocked(api.getServices)
 const actService = vi.mocked(api.actService)
 
@@ -54,9 +57,9 @@ describe('Services page', () => {
     await fireEvent.click(await screen.findByText('nginx.service'))
 
     actService.mockResolvedValueOnce(result({ sudo_rejected: true, stderr: 'sudo: a password is required' }))
-    await fireEvent.click(await screen.findByRole('button', { name: /start/i }))
-    const password = await screen.findByLabelText('Sudo password')
-    const retry = screen.getByRole('button', { name: /retry as root/i })
+    await fireEvent.click(await screen.findByRole('button', { name: ll.serviceActionStart() }))
+    const password = await screen.findByLabelText(ll.powerPassword())
+    const retry = screen.getByRole('button', { name: ll.serviceRetryAsRoot() })
     expect(retry).toBeDisabled()
 
     actService.mockResolvedValueOnce(result({ succeeded: true, exit_code: 0 }))

@@ -15,6 +15,7 @@ import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
+import 'package:server_box/generated/l10n/l10n_en.dart';
 import 'package:server_box/view/page/storage/file_browser.dart';
 
 import '../helpers/test_db.dart';
@@ -122,6 +123,12 @@ void main() {
 final typedField = find.byWidgetPredicate(
   (w) => w is TextField && w.key != FileBrowserPage.pathFieldKey,
   description: 'a TextField other than the address bar',
+);
+final en = AppLocalizationsEn();
+
+/// The selection bar's count, for any count.
+final anySelected = find.textContaining(
+  RegExp(RegExp.escape(en.selected(0)).replaceFirst('0', r'\d+')),
 );
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -276,7 +283,7 @@ final typedField = find.byWidgetPredicate(
       await pump(tester, backend);
 
       // The heading someone can act on...
-      expect(find.text('This folder is no longer here'), findsOneWidget);
+      expect(find.text(en.fileDirGone), findsOneWidget);
       // ...and the words the OS used, still there for whoever wants them.
       expect(find.textContaining('No such file or directory'), findsOneWidget);
     });
@@ -285,7 +292,7 @@ final typedField = find.byWidgetPredicate(
       tester,
     ) async {
       await pump(tester, _MapBackend(const {}, failWith: 'Permission denied'));
-      expect(find.text('Try using sudo'), findsNothing);
+      expect(find.text(en.trySudo), findsNothing);
 
       await pump(
         tester,
@@ -295,7 +302,7 @@ final typedField = find.byWidgetPredicate(
           sudoFallback: true,
         ),
       );
-      expect(find.text('Try using sudo'), findsOneWidget);
+      expect(find.text(en.trySudo), findsOneWidget);
     });
 
     testWidgets('detaches focused fields before a lifecycle change', (
@@ -328,7 +335,7 @@ final typedField = find.byWidgetPredicate(
       );
 
       await pump(tester, backend);
-      expect(find.text('Permission denied.'), findsOneWidget);
+      expect(find.text(libL10n.permissionDenied), findsOneWidget);
       expect(find.text('/home'), findsOneWidget);
       expect(find.text('/etc'), findsOneWidget);
 
@@ -347,9 +354,9 @@ final typedField = find.byWidgetPredicate(
       // heading with no chips under it would say the opposite.
       await pump(tester, _MapBackend(const {}, failWith: 'Permission denied'));
 
-      expect(find.text('Permission denied.'), findsOneWidget);
+      expect(find.text(libL10n.permissionDenied), findsOneWidget);
       expect(find.byType(ActionChip), findsNothing);
-      expect(find.text('Go to'), findsNothing);
+      expect(find.text(en.goto), findsNothing);
     });
 
     testWidgets('offers no roots for a failure going elsewhere cannot fix', (
@@ -364,7 +371,7 @@ final typedField = find.byWidgetPredicate(
         ),
       );
 
-      expect(find.text('Failure'), findsOneWidget);
+      expect(find.text(libL10n.fail), findsOneWidget);
       expect(find.byType(ActionChip), findsNothing);
     });
 
@@ -374,10 +381,10 @@ final typedField = find.byWidgetPredicate(
       }, failWith: 'Connection closed');
 
       await pump(tester, backend);
-      expect(find.text('Failure'), findsOneWidget);
+      expect(find.text(libL10n.fail), findsOneWidget);
 
       backend.failWith = null;
-      await tester.tap(find.text('Refresh'));
+      await tester.tap(find.text(libL10n.refresh));
       await tester.pumpAndSettle();
 
       expect(find.text('back.txt'), findsOneWidget);
@@ -427,8 +434,8 @@ final typedField = find.byWidgetPredicate(
       await tester.longPress(find.text('notes.txt'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Rename'), findsOneWidget);
-      expect(find.text('Delete'), findsOneWidget);
+      expect(find.text(libL10n.rename), findsOneWidget);
+      expect(find.text(libL10n.delete), findsOneWidget);
       // The dialog names what it is acting on in its title, so the entry's
       // name is on screen twice: in the listing and above the menu.
       expect(find.text('notes.txt'), findsNWidgets(2));
@@ -448,7 +455,7 @@ final typedField = find.byWidgetPredicate(
       await gesture.up();
       await tester.pumpAndSettle();
 
-      expect(find.text('Rename'), findsOneWidget);
+      expect(find.text(libL10n.rename), findsOneWidget);
       // The popup, not the dialog. Told apart by the title rather than by
       // coordinates: where exactly Flutter places a menu that would overflow
       // an edge is Flutter's business, and asserting it would be testing the
@@ -470,7 +477,7 @@ final typedField = find.byWidgetPredicate(
       await pump(tester, backend);
       await tester.longPress(find.text('notes.txt'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Rename'));
+      await tester.tap(find.text(libL10n.rename));
       await tester.pumpAndSettle();
 
       await tester.enterText(typedField, 'renamed.txt');
@@ -493,11 +500,11 @@ final typedField = find.byWidgetPredicate(
       await pump(tester, backend);
       await tester.longPress(find.text('notes.txt'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Rename'));
+      await tester.tap(find.text(libL10n.rename));
       await tester.pumpAndSettle();
 
       // The rename dialog, not the menu.
-      expect(find.text('Delete'), findsNothing);
+      expect(find.text(libL10n.delete), findsNothing);
       expect(find.widgetWithText(TextField, 'notes.txt'), findsOneWidget);
     });
   });
@@ -517,10 +524,10 @@ final typedField = find.byWidgetPredicate(
     await gesture.up();
     await tester.pumpAndSettle();
 
-    expect(find.text('Folder'), findsOneWidget);
-    expect(find.text('File'), findsOneWidget);
+    expect(find.text(libL10n.folder), findsOneWidget);
+    expect(find.text(libL10n.file), findsOneWidget);
     // Not an entry's menu: nothing was clicked on.
-    expect(find.text('Rename'), findsNothing);
+    expect(find.text(libL10n.rename), findsNothing);
   });
 
   testWidgets('a read-only backend offers nothing that writes', (
@@ -538,10 +545,10 @@ final typedField = find.byWidgetPredicate(
 
     await tester.longPress(find.text('notes.txt'));
     await tester.pumpAndSettle();
-    expect(find.text('Rename'), findsNothing);
-    expect(find.text('Delete'), findsNothing);
+    expect(find.text(libL10n.rename), findsNothing);
+    expect(find.text(libL10n.delete), findsNothing);
     // What only reads is still there.
-    expect(find.text('Select'), findsOneWidget);
+    expect(find.text(libL10n.select), findsOneWidget);
   });
 
   testWidgets('the add button drops its menu from itself', (tester) async {
@@ -555,8 +562,8 @@ final typedField = find.byWidgetPredicate(
     await tester.pumpAndSettle();
 
     expect(find.byType(Dialog), findsNothing);
-    expect(find.text('File'), findsOneWidget);
-    expect(tester.getRect(find.text('Folder')).top, greaterThan(button.bottom));
+    expect(find.text(libL10n.file), findsOneWidget);
+    expect(tester.getRect(find.text(libL10n.folder)).top, greaterThan(button.bottom));
   });
 
   group('picking several out', () {
@@ -587,7 +594,7 @@ final typedField = find.byWidgetPredicate(
       await clickWith(tester, 'sub');
 
       expect(find.text('inner.txt'), findsOneWidget);
-      expect(find.textContaining('selected'), findsNothing);
+      expect(anySelected, findsNothing);
     });
 
     testWidgets('a modifier click picks instead of opening', (tester) async {
@@ -595,7 +602,7 @@ final typedField = find.byWidgetPredicate(
 
       await clickWith(tester, 'a.txt', holding: LogicalKeyboardKey.meta);
 
-      expect(find.text('1 selected'), findsOneWidget);
+      expect(find.text(en.selected(1)), findsOneWidget);
     });
 
     testWidgets('once one is picked, a plain click picks too', (tester) async {
@@ -606,7 +613,7 @@ final typedField = find.byWidgetPredicate(
       await clickWith(tester, 'a.txt', holding: LogicalKeyboardKey.meta);
       await clickWith(tester, 'b.txt');
 
-      expect(find.text('2 selected'), findsOneWidget);
+      expect(find.text(en.selected(2)), findsOneWidget);
     });
 
     testWidgets('shift picks everything in between', (tester) async {
@@ -615,7 +622,7 @@ final typedField = find.byWidgetPredicate(
       await clickWith(tester, 'a.txt', holding: LogicalKeyboardKey.meta);
       await clickWith(tester, 'c.txt', holding: LogicalKeyboardKey.shift);
 
-      expect(find.text('3 selected'), findsOneWidget);
+      expect(find.text(en.selected(3)), findsOneWidget);
     });
 
     testWidgets('leaving the directory drops the selection', (tester) async {
@@ -628,20 +635,20 @@ final typedField = find.byWidgetPredicate(
 
       await pump(tester, backend);
       await clickWith(tester, 'a.txt', holding: LogicalKeyboardKey.meta);
-      expect(find.text('1 selected'), findsOneWidget);
+      expect(find.text(en.selected(1)), findsOneWidget);
 
       // Through `..`, not by tapping the folder: while a selection is open a
       // plain tap picks rather than opens, which is what makes the second file
       // reachable without holding a modifier again.
       await tester.tap(find.text('sub'));
       await tester.pumpAndSettle();
-      expect(find.text('2 selected'), findsOneWidget);
+      expect(find.text(en.selected(2)), findsOneWidget);
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.pumpAndSettle();
       await tester.tap(find.text('sub'));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('selected'), findsNothing);
+      expect(anySelected, findsNothing);
     });
 
     testWidgets('escape puts it away', (tester) async {
@@ -651,7 +658,7 @@ final typedField = find.byWidgetPredicate(
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('selected'), findsNothing);
+      expect(anySelected, findsNothing);
     });
   });
 
@@ -716,7 +723,7 @@ final typedField = find.byWidgetPredicate(
       await tester.sendKeyUpEvent(LogicalKeyboardKey.meta);
       await tester.pumpAndSettle();
 
-      expect(find.text('3 selected'), findsOneWidget);
+      expect(find.text(en.selected(3)), findsOneWidget);
     });
 
     testWidgets('F2 renames where the cursor is', (tester) async {
@@ -750,13 +757,13 @@ final typedField = find.byWidgetPredicate(
       await tester.tap(find.text('b.txt'));
       await tester.pumpAndSettle();
       await tester.sendKeyUpEvent(LogicalKeyboardKey.meta);
-      expect(find.text('2 selected'), findsOneWidget);
+      expect(find.text(en.selected(2)), findsOneWidget);
 
       await tester.sendKeyEvent(LogicalKeyboardKey.f2);
       await tester.pumpAndSettle();
 
       expect(typedField, findsNothing);
-      expect(find.text('2 selected'), findsOneWidget);
+      expect(find.text(en.selected(2)), findsOneWidget);
     });
   });
 
@@ -805,7 +812,7 @@ final typedField = find.byWidgetPredicate(
       expect(backend.removed, ['/a.txt', '/b.txt']);
       // And the selection is gone, so the bar does not name files that are not
       // there any more.
-      expect(find.textContaining('selected'), findsNothing);
+      expect(anySelected, findsNothing);
     });
 
     testWidgets('dismissing it removes nothing, and keeps the selection', (
@@ -827,7 +834,7 @@ final typedField = find.byWidgetPredicate(
 
       expect(backend.removed, isEmpty);
       // Still picked, so the intention survives a mis-press.
-      expect(find.text('2 selected'), findsOneWidget);
+      expect(find.text(en.selected(2)), findsOneWidget);
     });
   });
 
@@ -862,15 +869,15 @@ final typedField = find.byWidgetPredicate(
       // A backend that did not say is not the same as a file of no size, so it
       // sorts last rather than as zero — at either end of the order.
       await pump(tester, bySize());
-      await sortBy(tester, 'Size');
+      await sortBy(tester, libL10n.size);
 
       expect(shown(tester), ['b-small.bin', 'a-big.bin', 'c-unknown.bin']);
     });
 
     testWidgets('choosing the same one again reverses it', (tester) async {
       await pump(tester, bySize());
-      await sortBy(tester, 'Size');
-      await sortBy(tester, 'Size');
+      await sortBy(tester, libL10n.size);
+      await sortBy(tester, libL10n.size);
 
       // The unknown moves to the front, because reversing negates the whole
       // comparison and `_nullsLast` is part of it. Consistent with what the

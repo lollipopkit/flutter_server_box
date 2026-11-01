@@ -1,3 +1,10 @@
+<script lang="ts" module>
+  /// 1 MiB, mirroring `Miscs.editorMaxSize` in the app
+  /// (`lib/data/res/misc.dart`). Nothing in Rust holds it: the agent does not
+  /// edit, so the limit is the panel's to keep.
+  export const EDITOR_MAX_BYTES = 1024 * 1024
+</script>
+
 <script lang="ts">
   import {
     ArrowUp,
@@ -35,11 +42,6 @@
   /// Upload, new folder, rename, chmod, delete — absent for a read-only role
   /// rather than offered and refused.
   const write = $derived(access.write)
-
-  /// 1 MiB, mirroring `Miscs.editorMaxSize` in the app
-  /// (`lib/data/res/misc.dart`). Nothing in Rust holds it: the agent does not
-  /// edit, so the limit is the panel's to keep.
-  const EDITOR_MAX_BYTES = 1024 * 1024
 
   let roots = $state<string[]>([])
   /// Null until the roots have been read, which is what decides where the page

@@ -13,13 +13,13 @@
     <string name="widget_configure_server">Сервер</string>
     <string name="widget_configure_metric">Основний показник</string>
     <string name="widget_configure_save">Зберегти</string>
-    <string name="widget_configure_empty">Поки немає сервера з агентом monitor.\nДодайте його в ServerBox і поверніться сюди.</string>
+    <string name="widget_configure_empty">Поки немає сервера, налаштованого для ServerBox Monitor.\nДодайте сервер у ServerBox і поверніться сюди.</string>
     <string name="widget_metric_cpu">ЦП</string>
     <string name="widget_metric_memory">Пам\'ять</string>
     <string name="widget_metric_disk">Диск</string>
     <string name="widget_metric_network">Мережа</string>
     <string name="widget_err_not_configured">Торкніться, щоб вибрати сервер</string>
-    <string name="widget_err_no_token">Немає облікових даних — відкрийте ServerBox</string>
+    <string name="widget_err_no_token">Немає облікових даних для доступу. Відкрийте ServerBox</string>
     <string name="widget_err_insecure">Потрібен HTTPS</string>
     <string name="widget_err_network">Помилка мережі</string>
     <string name="widget_err_timeout">Час очікування вичерпано</string>
@@ -28,10 +28,10 @@
     <string name="widget_small_label">Значення сервера</string>
     <string name="widget_medium_label">Графіки сервера</string>
     <string name="widget_label">Стан сервера</string>
-    <string name="widget_description">Процесор, пам’ять, диск і мережа з першого погляду. Збільште, щоб побачити більше.</string>
+    <string name="widget_description">Швидкий перегляд навантаження CPU, памʼяті, диска й мережі. Збільште віджет, щоб побачити більше.</string>
 
-    <string name="process_text_label">Зберегти як сніпет</string>
-    <string name="tile_no_sessions">Немає активних сеансів</string>
+    <string name="process_text_label">Зберегти як фрагмент коду</string>
+    <string name="tile_no_sessions">Немає запущених сеансів</string>
     <plurals name="tile_sessions">
         <item quantity="one">%d сеанс</item>
         <item quantity="few">%d сеанси</item>

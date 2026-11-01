@@ -2,6 +2,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/server/amd.dart';
 import 'package:server_box/data/model/server/battery.dart';
+import 'package:server_box/data/model/server/block_device.dart';
 import 'package:server_box/data/model/server/conn.dart';
 import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
@@ -21,6 +22,9 @@ class ServerStatus {
   Memory mem;
   Swap swap;
   List<Disk> disk;
+
+  /// Every block device, mounted or not. Linux only.
+  List<BlockDevice> blockDevices = const [];
   Conn tcp;
   NetSpeed netSpeed;
   Temperatures temps;

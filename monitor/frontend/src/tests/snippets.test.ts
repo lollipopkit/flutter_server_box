@@ -1,6 +1,8 @@
+import { get } from 'svelte/store'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
+import { LL } from '../i18n/i18n-svelte'
 import Snippets from '../pages/Snippets.svelte'
 import { api, ApiError } from '../lib/api'
 import { layout } from '../lib/layout.svelte'
@@ -12,6 +14,7 @@ vi.mock('../lib/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../lib/api')>()),
   api: { getSnippets: vi.fn(), updateSnippets: vi.fn(), planSnippet: vi.fn() },
 }))
+const ll = get(LL)
 const getSnippets = vi.mocked(api.getSnippets)
 const updateSnippets = vi.mocked(api.updateSnippets)
 const planSnippet = vi.mocked(api.planSnippet)
@@ -33,7 +36,7 @@ describe('Snippets page', () => {
     render(Snippets, { onback: () => {} })
 
     await fireEvent.click(await screen.findByRole('button', { name: /Disk/ }))
-    await fireEvent.click(screen.getByRole('button', { name: /^run$/i }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.snippetRun() }))
 
     await waitFor(() => expect(navigate).toHaveBeenCalledWith('terminal'))
     expect(planSnippet).toHaveBeenCalledWith('df -h')
@@ -48,11 +51,11 @@ describe('Snippets page', () => {
     render(Snippets, { onback: () => {} })
 
     await fireEvent.click(await screen.findByRole('button', { name: /Disk/ }))
-    await fireEvent.click(screen.getByRole('button', { name: /^run$/i }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.snippetRun() }))
     current.mockReturnValue('b')
     answer({ steps: [] })
 
-    await waitFor(() => expect(screen.getByRole('button', { name: /^run$/i })).toBeEnabled())
+    await waitFor(() => expect(screen.getByRole('button', { name: ll.snippetRun() })).toBeEnabled())
     expect(snippetRun.waiting).toBeNull()
     expect(navigate).not.toHaveBeenCalled()
     current.mockRestore()
@@ -65,9 +68,9 @@ describe('Snippets page', () => {
     render(Snippets, { onback: () => {} })
 
     await fireEvent.click(await screen.findByRole('button', { name: /Login/ }))
-    await fireEvent.click(screen.getByRole('button', { name: /^run$/i }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.snippetRun() }))
 
-    expect(await screen.findByText(/uses \$\{user\}, which the panel/)).toBeInTheDocument()
+    expect(await screen.findByText(ll.snippetUnanswerable({ key: '${user}' }))).toBeInTheDocument()
     expect(snippetRun.waiting).toBeNull()
   })
 
@@ -76,8 +79,8 @@ describe('Snippets page', () => {
     render(Snippets, { onback: () => {} })
 
     await fireEvent.click(await screen.findByRole('button', { name: /Disk/ }))
-    await fireEvent.click(screen.getByRole('button', { name: /delete snippet/i }))
-    const confirm = screen.getAllByRole('button', { name: /delete snippet/i })
+    await fireEvent.click(screen.getByRole('button', { name: ll.snippetDelete() }))
+    const confirm = screen.getAllByRole('button', { name: ll.snippetDelete() })
     await fireEvent.click(confirm[confirm.length - 1])
 
     await waitFor(() => expect(updateSnippets).toHaveBeenCalledWith([login]))
@@ -90,10 +93,10 @@ describe('Snippets page', () => {
     render(Snippets, { onback: () => {} })
 
     await fireEvent.click(await screen.findByRole('button', { name: /Disk/ }))
-    await fireEvent.click(screen.getByRole('button', { name: /delete snippet/i }))
-    const confirm = screen.getAllByRole('button', { name: /delete snippet/i })
+    await fireEvent.click(screen.getByRole('button', { name: ll.snippetDelete() }))
+    const confirm = screen.getAllByRole('button', { name: ll.snippetDelete() })
     await fireEvent.click(confirm[confirm.length - 1])
 
-    expect(await screen.findByText('Two snippets have the same name.')).toBeInTheDocument()
+    expect(await screen.findByText(ll.snippetDuplicateName())).toBeInTheDocument()
   })
 })

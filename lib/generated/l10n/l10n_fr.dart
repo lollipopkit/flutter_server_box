@@ -13,25 +13,25 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get crashCollectIntro =>
-      'ServerBox enregistre ce qui se passe pendant son fonctionnement afin de pouvoir corriger les problèmes. Choisissez la quantité d\'informations envoyée.';
+      'ServerBox enregistre des informations pendant son fonctionnement pour nous aider à diagnostiquer et résoudre les problèmes.';
 
   @override
   String get crashCollectNone => 'Rien';
 
   @override
   String get crashCollectNoneTip =>
-      'Les rapports restent sur cet appareil ; après un plantage, vous pouvez en envoyer un manuellement.';
+      'Le rapport est uniquement enregistré sur cet appareil. Après un plantage, vous pouvez l’envoyer manuellement.';
 
   @override
   String get crashCollectBasic => 'Informations de base';
 
   @override
   String get crashCollectBasicTip =>
-      'Seules les informations sur le plantage sont incluses ; les journaux et données de performance ne le sont pas. **Cela nous aide à améliorer l\'application et à corriger les bugs.**';
+      'Seules les informations sur le plantage sont incluses ; ni journaux ni données de performance. **Ces informations nous aident à améliorer l’application et à corriger les bugs.**';
 
   @override
   String get crashCollectFooter =>
-      'Quel que soit le niveau, les noms de serveurs connus, leurs adresses et noms d\'utilisateur sont remplacés par des espaces réservés dès l\'enregistrement. Vous pouvez modifier le niveau de collecte plus tard dans les réglages.';
+      'Quel que soit le niveau choisi, les noms, adresses et noms d’utilisateur des serveurs connus sont remplacés par des valeurs génériques lors de l’enregistrement. Vous pourrez modifier le niveau de collecte dans les réglages.';
 
   @override
   String get privacy => 'Confidentialité';
@@ -153,7 +153,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get agentSshConnectTip =>
-      'L’Agent veut une connexion SSH. Saisis le mot de passe ici';
+      'L’Agent demande à établir une connexion SSH. Saisis le mot de passe ici.';
 
   @override
   String get agentAdHocSessions => 'Connexions temporaires';
@@ -163,7 +163,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get agentSaveServerTip =>
-      'Cet hôte et le mot de passe saisi sont enregistrés sur cet appareil';
+      'Les informations de cet hôte et le mot de passe saisi seront enregistrés sur cet appareil.';
 
   @override
   String get agentMonitorOptional => 'Agent monitor (facultatif)';
@@ -233,7 +233,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get distNameMapTip =>
-      'Uniquement pour une distribution dont le fichier porte un autre nom là où vous hébergez les marques. La clé est le nom utilisé par cette application ; la valeur est le nom à récupérer. Laissez vide tant qu\'aucune marque ne manque.';
+      'À configurer uniquement si le fichier du symbole d’une distribution porte un nom différent sur le serveur où il est hébergé. La clé est le nom utilisé par l’app et la valeur, le nom réel du fichier. Laisse ce champ vide si aucun symbole ne manque.';
 
   @override
   String get logoUrl => 'URL du logo';
@@ -258,7 +258,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get navTabMenuTip =>
-      'Appuyez longuement sur un onglet — ou faites un clic droit — pour connecter ou déconnecter d\'un coup tout ce qu\'il contient.';
+      'Maintenez un onglet appuyé ou faites un clic droit dessus pour connecter ou déconnecter d’un coup tous les serveurs qu’il contient.';
 
   @override
   String nTags(int count) {
@@ -277,11 +277,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get monitorAllowInsecureHttp => 'Autoriser HTTP';
 
   @override
-  String get plainHttpTitle => 'Cet agent est servi en HTTP non chiffré';
+  String get plainHttpTitle => 'Ce Monitor utilise HTTP sans chiffrement';
 
   @override
   String get plainHttpTip =>
-      'Le mot de passe et tout ce que cette app demande circuleraient en clair. Rien n\'a encore été envoyé.';
+      'Le mot de passe et toutes les données demandées par l’app seront transmis sans chiffrement. Aucune donnée ne sera envoyée avant que vous autorisiez la connexion.';
 
   @override
   String get allowForThisServer => 'Autoriser pour ce serveur';
@@ -295,7 +295,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String monitorHttpTip(String url) {
-    return 'Lire l\'état de ce serveur via l\'API HTTP d\'un agent **monitor**, au lieu d\'exécuter des commandes en SSH.\n\nL\'agent doit d\'abord être installé sur le serveur ; les tendances, l\'app Watch et les widgets en dépendent.\n\n[Installer un agent monitor]($url)';
+    return 'Lisez l’état de ce serveur via l’interface HTTP de **Monitor**, plutôt que d’exécuter des commandes en SSH.\n\nMonitor doit d’abord être installé sur le serveur. Les graphiques, l’app Watch et les widgets de l’écran d’accueil en dépendent.\n\n[Installer Monitor]($url)';
   }
 
   @override
@@ -415,15 +415,15 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get containerTrySudoTip =>
-      'Par exemple : Dans l\'application, l\'utilisateur est défini comme aaa, mais Docker est installé sous l\'utilisateur root. Dans ce cas, vous devez activer cette option.';
+      'Par exemple, si l’utilisateur configuré dans l’app est aaa alors que Docker est installé sous l’utilisateur root, activez cette option.';
 
   @override
   String get containerSudoPasswordRequired =>
-      'Un mot de passe sudo est requis pour accéder à Docker. Veuillez entrer votre mot de passe.';
+      'Un mot de passe sudo est nécessaire pour accéder à Docker. Saisissez-le.';
 
   @override
   String get containerSudoPasswordIncorrect =>
-      'Le mot de passe sudo est incorrect ou non autorisé. Veuillez réessayer.';
+      'Le mot de passe sudo est incorrect ou ce compte n’est pas autorisé à utiliser sudo. Réessayez.';
 
   @override
   String get copyPath => 'Copier le chemin';
@@ -441,7 +441,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get dirEmpty => 'Assurez-vous que le répertoire est vide.';
 
   @override
-  String get discoverSshServers => 'Découvrir les serveurs SSH';
+  String get discoverSshServers => 'Rechercher des serveurs SSH';
 
   @override
   String get discoveryFailed => 'Échec de la découverte';
@@ -503,7 +503,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String fileTooLarge(String file, String size, String sizeMax) {
-    return 'Fichier \'$file\' trop volumineux $size, max $sizeMax';
+    return 'Le fichier « $file » fait $size, ce qui dépasse la limite de $sizeMax.';
   }
 
   @override
@@ -584,7 +584,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get macDmgTip =>
-      'Terminal local et exécution locale des snippets (version DMG)';
+      'La version DMG prend en charge le terminal local et l’exécution locale d’extraits de code.';
 
   @override
   String get macDmgTitle => 'Version DMG';
@@ -715,8 +715,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Le serveur de rebond et ProxyCommand ne peuvent pas être utilisés ensemble.';
 
   @override
-  String get noConnectionMethod =>
-      'Configurez SSH, un agent monitor, ou les deux';
+  String get noConnectionMethod => 'Configurez SSH, Monitor ou les deux.';
 
   @override
   String get keepForeground => 'Garder l\'application en premier plan !';
@@ -750,18 +749,19 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get linuxNetTip =>
-      'Serveurs DNS. Vide restaure les valeurs par défaut';
+      'Serveurs DNS. Laissez ce champ vide pour utiliser les valeurs par défaut.';
 
   @override
   String madeWithLove(String myGithub) {
-    return 'Fabriqué avec ❤️ par $myGithub';
+    return 'Créé avec ❤️ par $myGithub';
   }
 
   @override
   String get maxConcurrency => 'Concurrence maximale';
 
   @override
-  String get maxRetryCount => 'Nombre de reconnexions au serveur';
+  String get maxRetryCount =>
+      'Nombre maximal de tentatives de reconnexion au serveur';
 
   @override
   String get mirror => 'Miroir';
@@ -831,7 +831,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get bmcPowerUnsupported =>
-      'Ce service n\'autorise rien pour cette action';
+      'Ce service ne prend pas en charge ce type d’opération.';
 
   @override
   String get bmcUnauthorized => 'Le BMC a refusé le compte';
@@ -853,7 +853,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get bmcNotAService => 'Aucun service Redfish à cette adresse';
 
   @override
-  String get bmcNoSystem => 'Le service ne signale aucun système';
+  String get bmcNoSystem => 'Le service n’a signalé aucun système.';
 
   @override
   String get bmcSensorsTruncated => 'Seuls les premiers capteurs sont affichés';
@@ -896,7 +896,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get proxyCommandSandboxed =>
-      'Cette version est en bac à sable : la commande reçoit un home vide, pas le tien, donc tout ce qui lit ~/.ssh échoue. La version DMG non.';
+      'Cette version est en sandbox : les commandes utilisent un dossier personnel vide plutôt que le vôtre. Celles qui dépendent de ~/.ssh échoueront donc. La version DMG n’a pas cette restriction.';
 
   @override
   String privateKeyFileUnreadable(String path, String reason) {
@@ -932,7 +932,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get pveIgnoreCertTip =>
-      'Il n\'est pas recommandé de l\'activer, attention aux risques de sécurité ! Si vous utilisez le certificat par défaut de PVE, vous devez activer cette option.';
+      'Si PVE utilise son certificat auto-signé par défaut, activez cette option. Cela présente toutefois un risque pour la sécurité.';
 
   @override
   String get pvePasswordRequired =>
@@ -961,7 +961,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get pveInvalidResponseData =>
-      'La réponse de connexion PVE ne contenait pas de données valides.';
+      'Le champ data de la réponse de connexion PVE est absent ou invalide.';
 
   @override
   String get pveMissingAuthTicket =>
@@ -974,7 +974,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get pvePassword => 'Mot de passe PVE';
 
   @override
-  String get pvePasswordHint => 'Requis avec l\'authentification SSH par clé';
+  String get pvePasswordHint =>
+      'À renseigner également si l’authentification SSH se fait par clé.';
 
   @override
   String get read => 'Lire';
@@ -987,7 +988,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get rememberPwdInMemTip =>
-      'Utilisé pour les conteneurs, la suspension, etc.';
+      'Ce mot de passe est utilisé pour gérer les conteneurs, suspendre le système et effectuer d’autres opérations.';
 
   @override
   String get remotePath => 'Chemin distant';
@@ -999,7 +1000,7 @@ class AppLocalizationsFr extends AppLocalizations {
     String latest,
     String pm,
   ) {
-    return '$distro $installed est installé, $latest est disponible. La mise à jour remplace tout le conteneur : les données $pm sont perdues';
+    return '$distro $installed est installé ; $latest est disponible. La mise à jour retélécharge et remplace tout le conteneur : les données de $pm seront perdues.';
   }
 
   @override
@@ -1016,14 +1017,14 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get sameIdServerExist => 'Un serveur avec le même ID existe déjà';
+  String get sameIdServerExist => 'Un serveur avec le même ID existe déjà.';
 
   @override
   String get second => 's';
 
   @override
   String get serverFilesUnavailableTip =>
-      'Nécessite SSH vers ce serveur, ou server_box_monitor avec son API fichiers activée.';
+      'Une connexion SSH à ce serveur est nécessaire, ou Monitor doit être installé avec son API de fichiers activée.';
 
   @override
   String get back => 'Retour';
@@ -1063,7 +1064,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get serverTabConnBadgeTip =>
-      'Nombre de serveurs connectés, par exemple 2/4';
+      'Nombre de serveurs connectés, par exemple 2/4.';
 
   @override
   String get serverTabRequired => 'L\'onglet serveur ne peut pas être supprimé';
@@ -1136,7 +1137,8 @@ class AppLocalizationsFr extends AppLocalizations {
       'Ce partage a été créé avec une version plus récente de ServerBox. Mettez l’application à jour pour l’ouvrir.';
 
   @override
-  String get shareUnreadable => 'Ce partage ServerBox n’est pas valide.';
+  String get shareUnreadable =>
+      'Ce fichier ne contient pas un partage ServerBox valide.';
 
   @override
   String get shareVia => 'Partager via';
@@ -1146,7 +1148,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get sftpEditorTip =>
-      'Vide utilise l’éditeur intégré. Par exemple `vim` (lire `EDITOR` est conseillé).';
+      'Laissez le champ vide pour utiliser l’éditeur intégré à l’app. Vous pouvez aussi indiquer un éditeur, comme `vim` (il est conseillé de le définir à partir de la variable d’environnement `EDITOR`).';
 
   @override
   String get sftpRmrDirSummary =>
@@ -1175,7 +1177,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get tempIsCelsiusTip =>
-      'Une fois activé, la valeur de température est traitée en degrés Celsius et non en millicelsius. À n\'activer que si la température s\'affiche mal (par exemple 0,1 °C au lieu de 58 °C).';
+      'Une fois activée, cette option interprète la température en degrés Celsius plutôt qu’en millièmes de degré Celsius. Activez-la uniquement si la température s’affiche mal (par exemple 0,1 °C au lieu de 58 °C).';
 
   @override
   String get diskCountsNetwork =>
@@ -1183,11 +1185,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get diskCountsNetworkTip =>
-      'Les montages NFS, SMB et similaires sont toujours listés. Leur capacité appartient à une autre machine : par défaut, ils ne sont pas comptés dans le total du disque. S\'applique quand l\'état est collecté par SSH ; via le monitor agent, c\'est le réglage de l\'agent qui décide.';
+      'Les montages NFS, SMB et similaires apparaissent toujours dans la liste. Leur capacité appartenant à une autre machine, elle n’est pas comptée par défaut dans le total des disques. Ce réglage s’applique uniquement lorsque l’état est recueilli par SSH ; avec Monitor, c’est son propre réglage qui prévaut.';
 
   @override
   String get diskCountsNetworkAgentTip =>
-      'Les montages NFS, SMB et similaires sont toujours listés. Leur capacité appartient à une autre machine : par défaut, ils ne sont pas comptés dans le total du disque, la valeur que l\'agent enregistre dans l\'historique et qu\'il compare aux alertes de disque.';
+      'Les montages NFS, SMB et similaires apparaissent toujours dans la liste. Leur capacité appartenant à une autre machine, elle n’est pas comptée par défaut dans le total des disques. Monitor utilise également ce total pour enregistrer l’historique et évaluer les alertes de disque.';
 
   @override
   String spentTime(String time) {
@@ -1206,7 +1208,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get sshConfigFound =>
-      'Nous avons trouvé une configuration SSH sur votre système.';
+      'Une configuration SSH a été trouvée sur le système.';
 
   @override
   String sshConfigFoundServers(int totalCount) {
@@ -1218,7 +1220,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get sshConfigImportPermission =>
-      'Souhaitez-vous donner la permission de lire ~/.ssh/config et d\'importer automatiquement les paramètres du serveur ?';
+      'Autorisez-vous la lecture de ~/.ssh/config et l’importation automatique des paramètres de serveur qu’il contient ?';
 
   @override
   String get sshConfigImportTip =>
@@ -1226,12 +1228,12 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String sshConfigImported(int count) {
-    return '$count serveurs importés depuis la configuration SSH';
+    return '$count serveurs importés depuis la configuration SSH.';
   }
 
   @override
   String sshHostKeyChangedDesc(String serverName) {
-    return 'La clé d\'hôte SSH de $serverName a changé. Ne continuez que si vous faites confiance à ce serveur.';
+    return 'La clé d’hôte SSH de $serverName a changé. Ne poursuivez que si vous êtes certain de faire confiance à ce serveur.';
   }
 
   @override
@@ -1245,7 +1247,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String sshHostKeyNewDesc(String serverName) {
-    return 'Une nouvelle clé d\'hôte SSH a été reçue de $serverName. Vérifiez l\'empreinte avant de faire confiance.';
+    return 'Une nouvelle clé d’hôte SSH a été reçue de $serverName. Vérifiez son empreinte avant de décider si vous lui faites confiance.';
   }
 
   @override
@@ -1287,7 +1289,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get suspendTip =>
-      'La fonction de suspension nécessite des privilèges root et le support de systemd.';
+      'La fonction suspend nécessite les droits root et la prise en charge de systemd.';
 
   @override
   String switchTo(String val) {
@@ -1324,7 +1326,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Intervalle de mise à jour de l\'état du serveur';
 
   @override
-  String get useNoPwd => 'Aucun mot de passe ne sera utilisé';
+  String get useNoPwd => 'Ne pas utiliser de mot de passe';
 
   @override
   String get usePodmanByDefault => 'Par défaut avec Podman';
@@ -1611,7 +1613,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get watchNoMonitorServer =>
-      'Aucun serveur n\'a d\'agent monitor configuré';
+      'Monitor n’est configuré pour aucun serveur.';
 
   @override
   String get legacyStatusGoneTitle => 'Les URL de statut ne fonctionnent plus';
@@ -1701,17 +1703,17 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String serviceUpFor(String duration) {
-    return 'up $duration';
+    return 'Actif depuis $duration';
   }
 
   @override
   String serviceDownFor(String duration) {
-    return 'down $duration';
+    return 'Arrêté depuis $duration';
   }
 
   @override
   String serviceNextIn(String duration) {
-    return 'next $duration';
+    return 'Prochaine exécution dans $duration';
   }
 
   @override
@@ -2185,17 +2187,17 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String funcNeedsAgentGrant(String func, String setting) {
-    return '$func nécessite d\'activer $setting dans le Monitor agent.';
+    return 'Pour utiliser $func, activez $setting dans Monitor.';
   }
 
   @override
   String funcNeedsAgentUpdate(String func) {
-    return '$func nécessite un Monitor agent plus récent.';
+    return 'Pour utiliser $func, une version plus récente de Monitor est nécessaire.';
   }
 
   @override
   String get portForwardRemoteNeedsAgent =>
-      'Les redirections distantes via le Monitor agent nécessitent une version plus récente : mettez-le à jour sur le serveur.';
+      'Les redirections distantes via Monitor nécessitent une version plus récente de l’agent. Mettez-le à jour sur le serveur.';
 
   @override
   String get rangeLive => 'En direct';
@@ -2214,7 +2216,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get historyNoStored =>
-      'Seul un agent monitor stocke l\'historique. Cette connexion ne garde que ce que l\'app a vu depuis sa connexion.';
+      'Seul Monitor conserve l’historique. En SSH, l’app ne peut afficher que les données recueillies depuis la connexion.';
 
   @override
   String get noHistoryYet => 'Rien de mesuré pour l\'instant';
@@ -2229,11 +2231,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get to => 'Au';
 
   @override
-  String get beyondRetention => 'au-delà de ce que cet agent a conservé';
+  String get beyondRetention => 'En dehors de la période conservée par Monitor';
 
   @override
   String agentRetentionFmt(String kept) {
-    return 'L\'agent conserve $kept';
+    return 'Monitor conserve les données pendant $kept';
   }
 
   @override
@@ -2241,14 +2243,14 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get agentServerToolsTip =>
-      'Exécuter des commandes et lire ou écrire des fichiers sur vos serveurs, se connecter à d\'autres hôtes en SSH et utiliser les actions de ServerBox.';
+      'Exécutez des commandes et lisez ou écrivez des fichiers sur vos serveurs, connectez-vous à d’autres hôtes en SSH et utilisez les fonctions propres à ServerBox.';
 
   @override
   String get agentTerminalTools => 'Terminal';
 
   @override
   String get agentTerminalToolsTip =>
-      'Dans les discussions propres à un terminal : lire ce qu\'il affiche et exécuter des commandes sur son serveur.';
+      'Dans une session de terminal, lisez le contenu affiché et exécutez des commandes sur le serveur correspondant.';
 
   @override
   String get agentToolTerminalScreen => 'Lire l\'écran';
@@ -2269,7 +2271,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get agentSnippetToolsTip =>
-      'Lister, ajouter, modifier et supprimer vos snippets. Les modifications nécessitent votre accord.';
+      'Listez, ajoutez, modifiez et supprimez des snippets.';
 
   @override
   String get agentVirtToolsTip =>
@@ -2294,12 +2296,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get agentPermissions => 'Autorisations';
 
   @override
-  String get agentEmptyHint =>
-      'Posez une question sur vos serveurs, ou demandez à l\'Agent d\'y faire quelque chose.';
+  String get agentEmptyHint => 'Effectuez des actions sur le serveur.';
 
   @override
   String get agentTerminalEmptyHint =>
-      'Posez une question sur ce serveur. L\'Agent peut lire ce terminal et y exécuter des commandes.';
+      'Lisez le contenu du terminal actuel et exécutez-y des commandes.';
 
   @override
   String oldestSampleFmt(String time) {
@@ -2333,7 +2334,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String lastSampleFmt(String ago) {
-    return 'dernier relevé $ago';
+    return 'Dernier relevé : $ago';
   }
 
   @override
@@ -2394,6 +2395,15 @@ class AppLocalizationsFr extends AppLocalizations {
   String countOfFmt(int count, String what) {
     return '$count $what';
   }
+
+  @override
+  String get filesystems => 'Systèmes de fichiers';
+
+  @override
+  String get blockDevices => 'Périphériques bloc';
+
+  @override
+  String get notMounted => 'Non monté';
 
   @override
   String get unitDevices => 'périphériques';
@@ -2744,7 +2754,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String cronHourlyAtFmt(String minute) {
-    return 'Toutes les heures à :$minute';
+    return 'Toutes les heures, à la minute $minute';
   }
 
   @override
@@ -2754,7 +2764,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String cronEveryHoursAtFmt(int hours, String minute) {
-    return 'Toutes les $hours heures à :$minute';
+    return 'Toutes les $hours heures, à la minute $minute';
   }
 
   @override
@@ -2835,7 +2845,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get pushHeaders => 'Headers';
 
   @override
-  String get pushSecretSet => 'Configuré sur l’agent, non affiché';
+  String get pushSecretSet => 'Défini dans Monitor, non affiché';
 
   @override
   String get pushSecretKeep => 'Laisser vide pour conserver';
@@ -2855,7 +2865,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get pushUnknownType =>
-      'Cet agent ne peut pas envoyer de notification par ce type de canal ; ses réglages ne sont donc pas affichés. Vous pouvez le supprimer ici ou le modifier dans le fichier config.toml de l’agent.';
+      'Monitor ne dispose d’aucun expéditeur pour ce type de canal ; ses réglages ne sont donc pas affichés. Vous pouvez le supprimer ici ou le modifier dans le fichier config.toml de Monitor.';
 
   @override
   String get pushJsonInvalid => 'n’est pas un JSON valide';
@@ -2865,7 +2875,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get dataRetentionTip =>
-      'Si cette option est désactivée, l’agent ne supprime rien et sa base de données augmente sans limite.';
+      'Lorsque cette option est désactivée, Monitor ne supprime aucune donnée et sa base de données continue de croître sans limite.';
 
   @override
   String get retentionMetrics => 'Keep metrics';
@@ -3420,7 +3430,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get remoteSessionIdleTimeoutTip =>
-      'Durée pendant laquelle un bureau à distance ou la console d\'un invité reste connecté après l\'avoir quitté. Avant la fermeture, une notification vous laisse 10 secondes pour le garder.';
+      'Durée pendant laquelle un bureau à distance ou la console d’une VM reste connecté après que vous l’avez quitté. Avant la fermeture, un avertissement vous laisse 10 secondes pour garder la connexion ouverte.';
 
   @override
   String get remoteSessionKeepAlive => 'Garder';
@@ -3615,10 +3625,11 @@ class AppLocalizationsFr extends AppLocalizations {
       'Plus de cœurs que cet hôte n\'en permet.';
 
   @override
-  String get virtCreateMemoryInvalid => 'Pas assez de mémoire.';
+  String get virtCreateMemoryInvalid =>
+      'La mémoire disponible est insuffisante.';
 
   @override
-  String get virtCreateStorageMissing => 'Choisissez où va son disque.';
+  String get virtCreateStorageMissing => 'Choisissez où stocker le disque.';
 
   @override
   String get virtCreateDiskInvalid => 'De 1 Gio à 64 Tio.';
@@ -3628,7 +3639,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get virtCreateCredentialsMissing =>
-      'Définissez un mot de passe root ou une clé SSH.';
+      'Définissez un mot de passe root ou une clé publique SSH.';
 
   @override
   String virtCreatePasswordShort(int min) {
@@ -3979,7 +3990,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get virtHwVolumeKept =>
-      'Retiré, mais l\'invité en cours utilise encore le disque, donc son volume a été conservé. Il sera détaché au prochain démarrage.';
+      'La configuration du disque a été supprimée, mais la VM en cours d’exécution l’utilise encore ; le volume est donc conservé pour le moment. Il sera détaché au prochain démarrage de la VM.';
 
   @override
   String get virtHwBus => 'Bus';
@@ -4204,7 +4215,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get virtBackupLiveTip =>
-      'En marche : mode snapshot, sans interruption';
+      'VM en cours d’exécution : sauvegarde en mode snapshot, sans interruption';
 
   @override
   String get virtBackupStoppedTip => 'Arrêté : sauvegardé tel quel';
@@ -4617,15 +4628,15 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get virtCloudImageTip =>
-      'Un disque avec un système déjà installé : copié, agrandi à la taille indiquée sous Stockage et configuré par cloud-init au premier démarrage. L\'image elle-même reste intacte.';
+      'Il s’agit d’une image disque avec un système déjà installé. Lors de la création de la VM, elle est copiée puis agrandie à la taille indiquée dans « Stockage » ; cloud-init la configure au premier démarrage. L’image d’origine reste inchangée.';
 
   @override
   String get virtNoCloudImagesLibvirt =>
-      'Aucune image cloud ici : placez une image qcow2 ou raw dans un pool (téléversez-la dans Stockage), qu\'aucune VM n\'utilise.';
+      'Aucune image cloud disponible. Placez une image qcow2 ou raw dans un pool de stockage (vous pouvez l’envoyer depuis « Stockage ») et vérifiez qu’aucune VM ne l’utilise.';
 
   @override
   String get virtNoCloudImagesPve =>
-      'Aucune image cloud ici : téléversez une image qcow2, raw ou vmdk vers un stockage avec le type de contenu Import (PVE 8.2+).';
+      'Aucune image cloud disponible. Envoyez une image qcow2, raw ou vmdk vers un stockage prenant en charge le type de contenu « Import » (PVE 8.2 ou ultérieur requis).';
 
   @override
   String get virtCreateWindowsTitle => 'Windows 11 exige UEFI et TPM 2.0';
@@ -4648,7 +4659,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get virtCreateIncomplete =>
-      'Complétez d\'abord les parties marquées en orange.';
+      'Complétez d’abord tous les champs marqués en orange.';
 
   @override
   String virtCreateOn(String host) {
@@ -4657,7 +4668,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get virtCiTip =>
-      'Un compte avec sudo, accessible par son mot de passe, une clé SSH ou les deux.';
+      'Créez un compte avec les droits sudo, accessible par mot de passe, clé SSH ou les deux.';
 
   @override
   String get virtCiUserInvalid =>
@@ -4692,7 +4703,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get virtCiSeedNote =>
-      'Écrit dans une petite ISO à côté du disque, attachée comme CD-ROM et supprimée avec la VM. Seul le hachage du mot de passe est conservé.';
+      'Les réglages sont écrits dans un petit fichier ISO à côté du disque, monté comme CD-ROM et supprimé avec la VM. Seul le hachage du mot de passe est conservé.';
 
   @override
   String get virtCiNoToolTitle =>
@@ -4700,7 +4711,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String virtCiNoToolBody(String tools) {
-    return 'Installez l\'un de $tools sur l\'hôte. Sans cloud-init, l\'image démarre sans compte pour se connecter.';
+    return 'Installez l’un des outils suivants sur l’hôte : $tools. Sans cloud-init, l’image démarre sans compte permettant de se connecter.';
   }
 
   @override
@@ -4718,7 +4729,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get virtCiEditTip =>
-      'Ce que cloud-init configure dans cette VM : un compte avec sudo, la façon de s\'y connecter, le nom d\'hôte et l\'adresse.';
+      'Configurez les paramètres cloud-init de cette VM : un compte avec sudo, le mode de connexion, le nom d’hôte et l’adresse.';
 
   @override
   String get virtCiForeignTitle =>
@@ -4726,7 +4737,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get virtCiForeignBody =>
-      'Les réglages faits ailleurs (paquets, commandes, autres comptes) ne sont pas affichés ici. Enregistrer remplace le seed par ce qui est affiché.';
+      'Les réglages écrits par d’autres outils (paquets, commandes, autres comptes) ne sont pas affichés ici. En enregistrant, le seed sera remplacé par les réglages affichés sur cette page.';
 
   @override
   String get virtCiPasswordKept => 'Défini. Laisser vide pour le garder';
@@ -4739,7 +4750,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get virtCiKeysAdded =>
-      'Les clés sont ajoutées au compte. Une clé retirée ici reste dans le système jusqu\'à ce qu\'on l\'y retire, et un nouveau nom d\'utilisateur crée un compte à côté de l\'ancien.';
+      'Les clés sont ajoutées au compte. Une clé retirée ici reste sur le système et doit en être supprimée séparément. Changer le nom d’utilisateur crée un nouveau compte et conserve l’ancien.';
 
   @override
   String get virtCiEffectTitle => 'Prend effet au prochain démarrage';
@@ -4750,7 +4761,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get virtCiEffectPve =>
-      'PVE réécrit tout de suite son lecteur cloud-init, avec un ID d\'instance dérivé de ces réglages : tout changement ici en crée un nouveau.';
+      'PVE réécrit immédiatement son lecteur cloud-init. L’ID d’instance est généré à partir de ces réglages ; toute modification en crée donc un nouveau.';
 
   @override
   String get virtCiNewInstance =>
@@ -4764,7 +4775,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get virtSnapshotExternalTip =>
-      'L\'invité continue de tourner. Chaque disque reçoit une surcouche qcow2 dans le pool choisi ; l\'invité reste sur une chaîne.';
+      'La VM continue de fonctionner. Une surcouche qcow2 est créée pour chaque disque dans le pool choisi, et la VM continue d’utiliser cette chaîne de snapshots.';
 
   @override
   String get virtSnapshotFormInternal => 'Interne (dans l\'image)';
@@ -4802,7 +4813,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get virtSnapshotRevertChain =>
-      'Un retour sur une chaîne fusionne la surcouche en cours dans l\'image et rend inutilisable tout instantané ultérieur. Seul le plus récent peut être restauré.';
+      'Restaurer un snapshot dans une chaîne fusionne la surcouche active avec l’image et rend inutilisables les snapshots suivants. Seul le snapshot le plus récent peut être restauré.';
 
   @override
   String get virtSnapshotRevertHasChildren =>
@@ -5056,12 +5067,12 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String virtNetEditAsk(int count) {
-    return 'Le réseau en cours garde son état jusqu\'à son redémarrage. Redémarrer coupe les VM qui y sont ($count).';
+    return 'Le réseau en cours d’exécution ne change pas avant son redémarrage. Celui-ci coupe la connexion des $count VM qui l’utilisent.';
   }
 
   @override
   String get virtNetEditAskNoGuest =>
-      'Le réseau en cours garde son état jusqu\'à son redémarrage.';
+      'Le réseau en cours d’exécution ne change pas avant son redémarrage.';
 
   @override
   String get virtNetEditRestart => 'Le redémarrer pour appliquer maintenant';
@@ -5104,7 +5115,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get virtNetHostEmpty =>
-      'Aucune MAC n\'a d\'adresse attitrée : chaque VM en reçoit une de la plage DHCP.';
+      'Aucune adresse IP fixe n’est attribuée à une MAC ; toutes les VM en recevront une dans la plage DHCP.';
 
   @override
   String get virtNetHostOthers =>
@@ -5120,7 +5131,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get virtNetManagementTip =>
-      'Elle porte le trafic de gestion de l\'hôte, ou se trouve sous une interface qui le porte : l\'app ne la modifie pas.';
+      'Cette interface transporte le trafic d’administration de l’hôte ou dépend d’une interface qui le transporte ; l’app ne la modifie pas.';
 
   @override
   String get virtNetPhysicalTip =>
@@ -5220,22 +5231,22 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String funcNeedsAgentPermission(String func) {
-    return 'Votre compte sur ce Monitor agent n\'a pas la permission pour $func. Demandez à l\'administrateur de l\'agent.';
+    return 'Votre compte sur ce Monitor n’est pas autorisé à utiliser $func. Contactez l’administrateur.';
   }
 
   @override
   String funcNeedsAgentHttps(String func) {
-    return '$func nécessite HTTPS vers ce Monitor agent, ou HTTP autorisé à la fois sur l\'agent et dans cette app.';
+    return '$func nécessite une connexion HTTPS à ce Monitor, ou que HTTP soit autorisé à la fois dans Monitor et dans l’app.';
   }
 
   @override
   String funcNeedsAgentSetup(String func) {
-    return '$func n\'est pas configuré sur ce Monitor agent ; son opérateur doit le configurer.';
+    return '$func n’est pas configuré dans ce Monitor ; son administrateur doit le faire.';
   }
 
   @override
   String get monitorFilesReadOnly =>
-      'Lecture seule : ce compte peut parcourir les fichiers de l\'agent sans les modifier.';
+      'Lecture seule : ce compte peut parcourir les fichiers de Monitor, mais pas les modifier.';
 
   @override
   String get monitorAccess => 'Accès';
@@ -5274,7 +5285,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get monitorErrLastAdmin =>
-      'L\'agent a besoin d\'au moins un compte administrateur.';
+      'Au moins un compte administrateur est nécessaire.';
 
   @override
   String get monitorErrConflict => 'Existe déjà, ou est encore utilisé.';
@@ -5482,7 +5493,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String firewallMayRefuseFmt(String access) {
-    return '$access : les nouvelles connexions de cette app pourraient être refusées. Cela dépend de l\'adresse ou de l\'interface par laquelle elles arrivent, ce que cette app ne peut pas savoir.';
+    return '$access : les nouvelles connexions à cette app pourraient être refusées selon l’adresse IP source ou l’interface réseau d’entrée ; l’app ne peut pas le déterminer à l’avance.';
   }
 
   @override
@@ -5640,7 +5651,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Le nœud de la tâche n\'est pas en ligne.';
 
   @override
-  String get programWaiting => 'En attente de vous';
+  String get programWaiting => 'En attente de votre action';
 
   @override
   String get programWaitingPermission => 'En attente de votre approbation';
@@ -5729,7 +5740,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String workspaceClosed(String what) {
-    return '$what fermé';
+    return 'Élément fermé : $what';
   }
 
   @override

@@ -1,4 +1,6 @@
+import { get } from 'svelte/store'
 import { describe, it, expect } from 'vitest'
+import { LL } from '../i18n/i18n-svelte'
 import { ApiError } from '../lib/api'
 import { backupRefusalText, validBackupName } from '../lib/backup'
 import { enabledFeatures } from '../lib/features'
@@ -24,8 +26,9 @@ describe('the backup page', () => {
   })
 
   it('phrases the agent refusals and passes anything else on', () => {
-    expect(backupRefusalText(new ApiError('tooMany', 409))).toMatch(/64/)
-    expect(backupRefusalText(new ApiError('invalidName', 400))).toMatch(/letters/)
+    const ll = get(LL)
+    expect(backupRefusalText(new ApiError('tooMany', 409))).toBe(ll.backupTooMany())
+    expect(backupRefusalText(new ApiError('invalidName', 400))).toBe(ll.backupInvalidName())
     expect(backupRefusalText(new ApiError('something else', 500))).toBe('something else')
   })
 })

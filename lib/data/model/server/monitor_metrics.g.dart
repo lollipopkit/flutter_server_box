@@ -51,6 +51,11 @@ MonitorMetrics _$MonitorMetricsFromJson(
           ?.map((e) => MonitorDiskDetail.fromJson(e as Map<String, dynamic>))
           .toList() ??
       const [],
+  blockDevices:
+      (json['block_devices'] as List<dynamic>?)
+          ?.map((e) => BlockDevice.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
   ifaces:
       (json['ifaces'] as List<dynamic>?)
           ?.map((e) => MonitorIfaceMetrics.fromJson(e as Map<String, dynamic>))
@@ -106,6 +111,7 @@ Map<String, dynamic> _$MonitorMetricsToJson(MonitorMetrics instance) =>
       'cpu_brand': instance.cpuBrand,
       'gpus': instance.gpus,
       'disk_details': instance.diskDetails,
+      'block_devices': instance.blockDevices,
       'ifaces': instance.ifaces,
       'uptime': instance.uptime,
       'conn': instance.conn,

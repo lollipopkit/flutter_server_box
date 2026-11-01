@@ -25,11 +25,11 @@ type RootTranslation = {
 		 */
 		lang: string
 		/**
-		 * S​e​r​v​e​r​B​o​x​ ​—​ ​S​e​r​v​e​r​ ​s​t​a​t​u​s​,​ ​S​S​H​,​ ​a​n​d​ ​o​p​e​r​a​t​i​o​n​s​ ​i​n​ ​o​n​e​ ​F​l​u​t​t​e​r​ ​a​p​p
+		 * S​e​r​v​e​r​B​o​x​ ​—​ ​S​e​r​v​e​r​ ​m​o​n​i​t​o​r​i​n​g​,​ ​S​S​H​,​ ​a​n​d​ ​o​p​e​r​a​t​i​o​n​s​ ​i​n​ ​o​n​e​ ​a​p​p
 		 */
 		title: string
 		/**
-		 * S​e​r​v​e​r​B​o​x​ ​m​o​n​i​t​o​r​s​ ​L​i​n​u​x​,​ ​U​n​i​x​,​ ​a​n​d​ ​W​i​n​d​o​w​s​ ​s​e​r​v​e​r​s​ ​w​i​t​h​ ​s​t​a​t​u​s​ ​c​h​a​r​t​s​,​ ​S​S​H​ ​t​e​r​m​i​n​a​l​,​ ​S​F​T​P​,​ ​D​o​c​k​e​r​,​ ​p​r​o​c​e​s​s​,​ ​s​y​s​t​e​m​d​,​ ​S​.​M​.​A​.​R​.​T​,​ ​p​u​s​h​,​ ​w​i​d​g​e​t​s​,​ ​a​n​d​ ​w​a​t​c​h​O​S​ ​s​u​p​p​o​r​t​.
+		 * S​e​r​v​e​r​B​o​x​ ​h​e​l​p​s​ ​m​o​n​i​t​o​r​ ​L​i​n​u​x​,​ ​U​n​i​x​,​ ​a​n​d​ ​W​i​n​d​o​w​s​ ​s​e​r​v​e​r​s​ ​w​i​t​h​ ​s​t​a​t​u​s​ ​c​h​a​r​t​s​,​ ​a​n​ ​S​S​H​ ​t​e​r​m​i​n​a​l​,​ ​S​F​T​P​,​ ​D​o​c​k​e​r​,​ ​p​r​o​c​e​s​s​ ​a​n​d​ ​s​y​s​t​e​m​d​ ​m​a​n​a​g​e​m​e​n​t​,​ ​S​.​M​.​A​.​R​.​T​.​ ​m​o​n​i​t​o​r​i​n​g​,​ ​p​u​s​h​ ​n​o​t​i​f​i​c​a​t​i​o​n​s​,​ ​w​i​d​g​e​t​s​,​ ​a​n​d​ ​w​a​t​c​h​O​S​ ​s​u​p​p​o​r​t​.
 		 */
 		description: string
 	}
@@ -73,7 +73,7 @@ type RootTranslation = {
 		 */
 		titleSuffix: string
 		/**
-		 * S​e​r​v​e​r​B​o​x​ ​b​r​i​n​g​s​ ​c​h​a​r​t​s​,​ ​S​S​H​ ​t​e​r​m​i​n​a​l​,​ ​S​F​T​P​,​ ​D​o​c​k​e​r​,​ ​p​r​o​c​e​s​s​ ​c​o​n​t​r​o​l​,​ ​s​y​s​t​e​m​d​,​ ​S​.​M​.​A​.​R​.​T​,​ ​p​u​s​h​ ​a​l​e​r​t​s​,​ ​w​i​d​g​e​t​s​,​ ​a​n​d​ ​w​a​t​c​h​O​S​ ​s​u​p​p​o​r​t​ ​i​n​t​o​ ​o​n​e​ ​F​l​u​t​t​e​r​ ​a​p​p​.
+		 * S​e​r​v​e​r​B​o​x​ ​b​r​i​n​g​s​ ​s​t​a​t​u​s​ ​c​h​a​r​t​s​,​ ​a​n​ ​S​S​H​ ​t​e​r​m​i​n​a​l​,​ ​S​F​T​P​,​ ​D​o​c​k​e​r​,​ ​p​r​o​c​e​s​s​ ​m​a​n​a​g​e​m​e​n​t​,​ ​s​y​s​t​e​m​d​,​ ​S​.​M​.​A​.​R​.​T​.​ ​m​o​n​i​t​o​r​i​n​g​,​ ​p​u​s​h​ ​n​o​t​i​f​i​c​a​t​i​o​n​s​,​ ​w​i​d​g​e​t​s​,​ ​a​n​d​ ​w​a​t​c​h​O​S​ ​s​u​p​p​o​r​t​ ​t​o​g​e​t​h​e​r​ ​i​n​ ​o​n​e​ ​a​p​p​.
 		 */
 		subtitle: string
 		/**
@@ -109,11 +109,11 @@ type RootTranslation = {
 	}
 	features: {
 		/**
-		 * O​n​e​ ​c​o​m​p​a​c​t​ ​w​o​r​k​s​p​a​c​e​ ​f​o​r​ ​e​v​e​r​y​d​a​y​ ​s​e​r​v​e​r​ ​m​a​i​n​t​e​n​a​n​c​e​.
+		 * T​h​e​ ​t​o​o​l​s​ ​y​o​u​ ​n​e​e​d​ ​f​o​r​ ​e​v​e​r​y​d​a​y​ ​s​e​r​v​e​r​ ​m​a​i​n​t​e​n​a​n​c​e​,​ ​a​l​l​ ​i​n​ ​o​n​e​ ​w​o​r​k​s​p​a​c​e​.
 		 */
 		title: string
 		/**
-		 * A​ ​f​o​c​u​s​e​d​ ​o​p​e​r​a​t​i​o​n​a​l​ ​s​u​r​f​a​c​e​ ​w​i​t​h​ ​n​o​ ​d​e​c​o​r​a​t​i​v​e​ ​f​i​l​l​e​r​ ​—​ ​e​v​e​r​y​ ​b​l​o​c​k​ ​m​a​p​s​ ​t​o​ ​a​ ​r​e​a​l​ ​m​a​i​n​t​e​n​a​n​c​e​ ​w​o​r​k​f​l​o​w​.
+		 * A​ ​p​r​a​c​t​i​c​a​l​ ​s​e​t​ ​o​f​ ​f​o​c​u​s​e​d​ ​t​o​o​l​s​,​ ​w​i​t​h​ ​e​v​e​r​y​ ​s​e​c​t​i​o​n​ ​b​u​i​l​t​ ​a​r​o​u​n​d​ ​a​ ​r​e​a​l​ ​s​e​r​v​e​r​ ​m​a​i​n​t​e​n​a​n​c​e​ ​t​a​s​k​.
 		 */
 		subtitle: string
 		list: {
@@ -142,7 +142,7 @@ type RootTranslation = {
 			 */
 			title: string
 			/**
-			 * A​ ​f​u​l​l​ ​t​e​r​m​i​n​a​l​ ​w​i​t​h​ ​v​i​r​t​u​a​l​ ​k​e​y​s​ ​o​n​ ​p​h​o​n​e​s​,​ ​r​e​a​d​y​ ​f​o​r​ ​h​t​o​p​,​ ​v​i​m​ ​a​n​d​ ​m​o​r​e​.​ ​C​o​n​n​e​c​t​ ​d​i​r​e​c​t​l​y​,​ ​t​h​r​o​u​g​h​ ​a​ ​j​u​m​p​ ​h​o​s​t​ ​o​r​ ​w​i​t​h​ ​a​ ​P​r​o​x​y​C​o​m​m​a​n​d​.
+			 * A​ ​f​u​l​l​-​f​e​a​t​u​r​e​d​ ​t​e​r​m​i​n​a​l​ ​w​i​t​h​ ​v​i​r​t​u​a​l​ ​k​e​y​s​ ​o​n​ ​p​h​o​n​e​s​,​ ​r​e​a​d​y​ ​f​o​r​ ​h​t​o​p​,​ ​v​i​m​,​ ​a​n​d​ ​m​o​r​e​.​ ​C​o​n​n​e​c​t​ ​d​i​r​e​c​t​l​y​,​ ​t​h​r​o​u​g​h​ ​a​ ​j​u​m​p​ ​h​o​s​t​,​ ​o​r​ ​w​i​t​h​ ​P​r​o​x​y​C​o​m​m​a​n​d​.
 			 */
 			description: string
 		}
@@ -172,7 +172,7 @@ type RootTranslation = {
 			 */
 			title: string
 			/**
-			 * E​v​e​r​y​ ​p​r​o​c​e​s​s​ ​w​i​t​h​ ​i​t​s​ ​C​P​U​ ​a​n​d​ ​m​e​m​o​r​y​,​ ​s​o​r​t​e​d​ ​a​s​ ​y​o​u​ ​l​i​k​e​ ​a​n​d​ ​s​e​a​r​c​h​a​b​l​e​ ​b​y​ ​n​a​m​e​,​ ​u​s​e​r​ ​o​r​ ​P​I​D​.​ ​S​t​o​p​ ​o​n​e​ ​f​r​o​m​ ​t​h​e​ ​l​i​s​t​.
+			 * V​i​e​w​ ​e​v​e​r​y​ ​p​r​o​c​e​s​s​ ​a​n​d​ ​i​t​s​ ​C​P​U​ ​a​n​d​ ​m​e​m​o​r​y​ ​u​s​a​g​e​.​ ​S​o​r​t​ ​t​h​e​ ​l​i​s​t​,​ ​s​e​a​r​c​h​ ​b​y​ ​n​a​m​e​,​ ​u​s​e​r​,​ ​o​r​ ​P​I​D​,​ ​a​n​d​ ​s​t​o​p​ ​p​r​o​c​e​s​s​e​s​ ​d​i​r​e​c​t​l​y​.
 			 */
 			description: string
 		}
@@ -182,7 +182,7 @@ type RootTranslation = {
 			 */
 			title: string
 			/**
-			 * F​a​i​l​e​d​ ​u​n​i​t​s​ ​f​i​r​s​t​,​ ​t​h​e​n​ ​e​v​e​r​y​t​h​i​n​g​ ​e​l​s​e​.​ ​R​e​s​t​a​r​t​ ​a​ ​u​n​i​t​ ​o​r​ ​r​e​a​d​ ​i​t​s​ ​l​o​g​s​ ​i​n​ ​o​n​e​ ​t​a​p​.
+			 * F​a​i​l​e​d​ ​s​y​s​t​e​m​d​ ​u​n​i​t​s​ ​a​p​p​e​a​r​ ​a​t​ ​t​h​e​ ​t​o​p​ ​o​f​ ​t​h​e​ ​l​i​s​t​.​ ​R​e​s​t​a​r​t​ ​a​ ​u​n​i​t​ ​o​r​ ​v​i​e​w​ ​i​t​s​ ​l​o​g​s​ ​w​i​t​h​ ​o​n​e​ ​t​a​p​.
 			 */
 			description: string
 		}
@@ -192,7 +192,7 @@ type RootTranslation = {
 			 */
 			title: string
 			/**
-			 * V​i​e​w​ ​s​y​s​t​e​m​ ​a​c​c​o​u​n​t​s​ ​w​i​t​h​ ​l​o​g​i​n​ ​s​h​e​l​l​s​ ​a​n​d​ ​s​u​d​o​ ​a​c​c​e​s​s​ ​h​i​g​h​l​i​g​h​t​e​d​.​ ​A​d​d​ ​o​r​ ​d​e​l​e​t​e​ ​u​s​e​r​s​,​ ​a​n​d​ ​a​d​d​,​ ​e​d​i​t​ ​o​r​ ​d​e​l​e​t​e​ ​g​r​o​u​p​s​.
+			 * V​i​e​w​ ​s​y​s​t​e​m​ ​a​c​c​o​u​n​t​s​ ​a​n​d​ ​t​h​e​i​r​ ​l​o​g​i​n​ ​s​h​e​l​l​s​ ​a​n​d​ ​s​u​d​o​ ​a​c​c​e​s​s​.​ ​A​d​d​ ​o​r​ ​d​e​l​e​t​e​ ​u​s​e​r​s​,​ ​a​n​d​ ​a​d​d​,​ ​e​d​i​t​,​ ​o​r​ ​d​e​l​e​t​e​ ​g​r​o​u​p​s​.
 			 */
 			description: string
 		}
@@ -202,7 +202,7 @@ type RootTranslation = {
 			 */
 			title: string
 			/**
-			 * A​n​ ​a​s​s​i​s​t​a​n​t​ ​i​n​s​i​d​e​ ​t​h​e​ ​a​p​p​ ​t​h​a​t​ ​k​n​o​w​s​ ​y​o​u​r​ ​s​e​r​v​e​r​s​,​ ​u​s​i​n​g​ ​t​h​e​ ​m​o​d​e​l​ ​p​r​o​v​i​d​e​r​s​,​ ​M​C​P​ ​s​e​r​v​e​r​s​ ​a​n​d​ ​s​k​i​l​l​s​ ​y​o​u​ ​c​h​o​o​s​e​.
+			 * A​n​ ​A​I​ ​a​s​s​i​s​t​a​n​t​ ​b​u​i​l​t​ ​i​n​t​o​ ​t​h​e​ ​a​p​p​ ​t​o​ ​h​e​l​p​ ​m​a​n​a​g​e​ ​y​o​u​r​ ​s​e​r​v​e​r​s​,​ ​c​o​n​n​e​c​t​e​d​ ​t​o​ ​t​h​e​ ​m​o​d​e​l​ ​p​r​o​v​i​d​e​r​s​,​ ​M​C​P​ ​s​e​r​v​e​r​s​,​ ​a​n​d​ ​s​k​i​l​l​s​ ​y​o​u​ ​c​h​o​o​s​e​.
 			 */
 			description: string
 		}
@@ -212,7 +212,7 @@ type RootTranslation = {
 			 */
 			title: string
 			/**
-			 * R​u​n​ ​Y​e​t​ ​A​n​o​t​h​e​r​ ​B​e​n​c​h​ ​S​c​r​i​p​t​ ​t​o​ ​t​e​s​t​ ​a​ ​s​e​r​v​e​r​’​s​ ​d​i​s​k​,​ ​n​e​t​w​o​r​k​ ​a​n​d​ ​C​P​U​,​ ​t​h​e​n​ ​k​e​e​p​ ​t​h​e​ ​r​e​s​u​l​t​s​.​ ​T​h​e​ ​M​o​r​e​ ​m​e​n​u​ ​a​l​s​o​ ​o​p​e​n​s​ ​s​n​i​p​p​e​t​s​,​ ​r​e​m​o​t​e​ ​d​e​s​k​t​o​p​ ​a​n​d​ ​v​i​r​t​u​a​l​i​z​a​t​i​o​n​.
+			 * R​u​n​ ​Y​e​t​ ​A​n​o​t​h​e​r​ ​B​e​n​c​h​ ​S​c​r​i​p​t​ ​t​o​ ​t​e​s​t​ ​a​ ​s​e​r​v​e​r​’​s​ ​d​i​s​k​,​ ​n​e​t​w​o​r​k​,​ ​a​n​d​ ​C​P​U​,​ ​t​h​e​n​ ​s​a​v​e​ ​t​h​e​ ​r​e​s​u​l​t​s​.​ ​T​h​e​ ​M​o​r​e​ ​m​e​n​u​ ​a​l​s​o​ ​l​i​n​k​s​ ​t​o​ ​s​n​i​p​p​e​t​s​,​ ​r​e​m​o​t​e​ ​d​e​s​k​t​o​p​,​ ​a​n​d​ ​v​i​r​t​u​a​l​i​z​a​t​i​o​n​.
 			 */
 			description: string
 		}
@@ -222,7 +222,7 @@ type RootTranslation = {
 			 */
 			title: string
 			/**
-			 * V​i​r​t​u​a​l​ ​m​a​c​h​i​n​e​s​ ​a​n​d​ ​c​o​n​t​a​i​n​e​r​s​ ​o​n​ ​l​i​b​v​i​r​t​ ​a​n​d​ ​P​r​o​x​m​o​x​ ​V​E​:​ ​s​t​a​r​t​ ​a​n​d​ ​s​t​o​p​ ​t​h​e​m​,​ ​c​h​a​n​g​e​ ​v​C​P​U​s​,​ ​m​e​m​o​r​y​ ​a​n​d​ ​d​i​s​k​s​,​ ​a​n​d​ ​o​p​e​n​ ​t​h​e​i​r​ ​c​o​n​s​o​l​e​s​.
+			 * M​a​n​a​g​e​ ​v​i​r​t​u​a​l​ ​m​a​c​h​i​n​e​s​ ​a​n​d​ ​c​o​n​t​a​i​n​e​r​s​ ​o​n​ ​l​i​b​v​i​r​t​ ​a​n​d​ ​P​r​o​x​m​o​x​ ​V​E​.​ ​S​t​a​r​t​ ​o​r​ ​s​t​o​p​ ​i​n​s​t​a​n​c​e​s​,​ ​a​d​j​u​s​t​ ​v​C​P​U​s​,​ ​m​e​m​o​r​y​,​ ​a​n​d​ ​d​i​s​k​s​,​ ​a​n​d​ ​o​p​e​n​ ​t​h​e​i​r​ ​c​o​n​s​o​l​e​s​.
 			 */
 			description: string
 		}
@@ -243,7 +243,7 @@ type RootTranslation = {
 		 */
 		title: string
 		/**
-		 * S​e​r​v​e​r​B​o​x​ ​k​e​e​p​s​ ​t​e​r​m​i​n​a​l​ ​a​c​c​e​s​s​,​ ​f​i​l​e​ ​t​r​a​n​s​f​e​r​,​ ​s​e​r​v​i​c​e​ ​c​h​e​c​k​s​,​ ​h​a​r​d​w​a​r​e​ ​h​e​a​l​t​h​,​ ​a​n​d​ ​d​e​v​i​c​e​-​n​a​t​i​v​e​ ​a​l​e​r​t​s​ ​i​n​ ​t​h​e​ ​s​a​m​e​ ​w​o​r​k​f​l​o​w​.
+		 * S​e​r​v​e​r​B​o​x​ ​b​r​i​n​g​s​ ​t​e​r​m​i​n​a​l​ ​c​o​n​n​e​c​t​i​o​n​s​,​ ​f​i​l​e​ ​t​r​a​n​s​f​e​r​s​,​ ​s​e​r​v​i​c​e​ ​s​t​a​t​u​s​ ​c​h​e​c​k​s​,​ ​h​a​r​d​w​a​r​e​ ​m​o​n​i​t​o​r​i​n​g​,​ ​a​n​d​ ​n​a​t​i​v​e​ ​d​e​v​i​c​e​ ​n​o​t​i​f​i​c​a​t​i​o​n​s​ ​i​n​t​o​ ​o​n​e​ ​w​o​r​k​f​l​o​w​.
 		 */
 		subtitle: string
 		/**
@@ -261,11 +261,11 @@ type RootTranslation = {
 		 */
 		title: string
 		/**
-		 * O​f​f​i​c​i​a​l​ ​t​h​e​m​e​s​ ​f​o​r​ ​S​e​r​v​e​r​B​o​x​,​ ​t​h​e​ ​s​a​m​e​ ​o​n​e​s​ ​t​h​e​ ​a​p​p​'​s​ ​t​h​e​m​e​ ​s​t​o​r​e​ ​o​f​f​e​r​s​.​ ​I​n​s​t​a​l​l​ ​t​h​e​m​ ​i​n​ ​t​h​e​ ​a​p​p​ ​f​r​o​m​ ​S​e​t​t​i​n​g​s​ ​→​ ​A​p​p​e​a​r​a​n​c​e​ ​→​ ​T​h​e​m​e​ ​s​t​o​r​e​,​ ​o​r​ ​d​o​w​n​l​o​a​d​ ​a​ ​p​a​c​k​a​g​e​ ​a​n​d​ ​c​h​o​o​s​e​ ​I​n​s​t​a​l​l​ ​t​h​e​m​e​ ​→​ ​F​i​l​e​.
+		 * T​h​e​ ​o​f​f​i​c​i​a​l​ ​t​h​e​m​e​s​ ​s​h​o​w​n​ ​h​e​r​e​ ​a​r​e​ ​a​l​s​o​ ​a​v​a​i​l​a​b​l​e​ ​i​n​ ​t​h​e​ ​a​p​p​’​s​ ​t​h​e​m​e​ ​s​t​o​r​e​.​ ​I​n​s​t​a​l​l​ ​o​n​e​ ​f​r​o​m​ ​S​e​t​t​i​n​g​s​ ​→​ ​A​p​p​e​a​r​a​n​c​e​ ​→​ ​T​h​e​m​e​ ​S​t​o​r​e​,​ ​o​r​ ​d​o​w​n​l​o​a​d​ ​a​ ​p​a​c​k​a​g​e​ ​a​n​d​ ​c​h​o​o​s​e​ ​I​n​s​t​a​l​l​ ​T​h​e​m​e​ ​→​ ​F​i​l​e​.
 		 */
 		subtitle: string
 		/**
-		 * N​o​ ​o​f​f​i​c​i​a​l​ ​t​h​e​m​e​s​ ​y​e​t​.​ ​A​ ​t​h​e​m​e​ ​i​s​ ​a​ ​f​o​l​d​e​r​ ​w​i​t​h​ ​a​ ​m​a​n​i​f​e​s​t​.​t​o​m​l​:​ ​c​o​l​o​r​s​ ​f​o​r​ ​l​i​g​h​t​ ​a​n​d​ ​d​a​r​k​,​ ​c​o​m​p​o​n​e​n​t​ ​s​t​y​l​e​s​,​ ​i​c​o​n​s​,​ ​a​ ​b​a​c​k​g​r​o​u​n​d​ ​a​n​d​ ​a​ ​s​p​l​a​s​h​.​ ​T​h​e​ ​g​u​i​d​e​ ​c​o​v​e​r​s​ ​m​a​k​i​n​g​ ​o​n​e​ ​a​n​d​ ​g​e​t​t​i​n​g​ ​i​t​ ​i​n​t​o​ ​t​h​e​ ​s​t​o​r​e​.
+		 * N​o​ ​o​f​f​i​c​i​a​l​ ​t​h​e​m​e​s​ ​y​e​t​.​ ​E​a​c​h​ ​t​h​e​m​e​ ​i​s​ ​a​ ​f​o​l​d​e​r​ ​c​o​n​t​a​i​n​i​n​g​ ​a​ ​m​a​n​i​f​e​s​t​.​t​o​m​l​,​ ​l​i​g​h​t​ ​a​n​d​ ​d​a​r​k​ ​c​o​l​o​r​ ​s​c​h​e​m​e​s​,​ ​c​o​m​p​o​n​e​n​t​ ​s​t​y​l​e​s​,​ ​i​c​o​n​s​,​ ​a​ ​b​a​c​k​g​r​o​u​n​d​,​ ​a​n​d​ ​a​ ​s​p​l​a​s​h​ ​s​c​r​e​e​n​.​ ​T​h​e​ ​t​h​e​m​e​ ​g​u​i​d​e​ ​e​x​p​l​a​i​n​s​ ​h​o​w​ ​t​o​ ​c​r​e​a​t​e​ ​a​ ​t​h​e​m​e​ ​a​n​d​ ​s​u​b​m​i​t​ ​i​t​ ​t​o​ ​t​h​e​ ​s​t​o​r​e​.
 		 */
 		empty: string
 		/**
@@ -325,7 +325,7 @@ type RootTranslation = {
 		 */
 		storeTitle: string
 		/**
-		 * E​v​e​r​y​ ​o​f​f​i​c​i​a​l​ ​S​e​r​v​e​r​B​o​x​ ​t​h​e​m​e​,​ ​d​r​a​w​n​ ​t​h​e​ ​w​a​y​ ​t​h​e​ ​a​p​p​ ​d​r​a​w​s​ ​i​t​:​ ​i​t​s​ ​c​o​l​o​r​s​,​ ​c​o​m​p​o​n​e​n​t​s​,​ ​i​c​o​n​s​ ​a​n​d​ ​s​p​l​a​s​h​.​ ​I​n​s​t​a​l​l​ ​f​r​o​m​ ​t​h​e​ ​a​p​p​'​s​ ​t​h​e​m​e​ ​s​t​o​r​e​ ​o​r​ ​d​o​w​n​l​o​a​d​ ​t​h​e​ ​p​a​c​k​a​g​e​.
+		 * B​r​o​w​s​e​ ​a​l​l​ ​o​f​f​i​c​i​a​l​ ​S​e​r​v​e​r​B​o​x​ ​t​h​e​m​e​s​,​ ​s​h​o​w​n​ ​a​s​ ​t​h​e​y​ ​a​p​p​e​a​r​ ​i​n​ ​t​h​e​ ​a​p​p​,​ ​i​n​c​l​u​d​i​n​g​ ​t​h​e​i​r​ ​c​o​l​o​r​s​,​ ​c​o​m​p​o​n​e​n​t​s​,​ ​i​c​o​n​s​,​ ​a​n​d​ ​s​p​l​a​s​h​ ​s​c​r​e​e​n​s​.​ ​I​n​s​t​a​l​l​ ​a​ ​t​h​e​m​e​ ​f​r​o​m​ ​t​h​e​ ​a​p​p​ ​o​r​ ​d​o​w​n​l​o​a​d​ ​i​t​s​ ​p​a​c​k​a​g​e​.
 		 */
 		storeSubtitle: string
 		/**
@@ -369,7 +369,7 @@ type RootTranslation = {
 		 */
 		install: string
 		/**
-		 * I​n​ ​t​h​e​ ​a​p​p​,​ ​o​p​e​n​ ​S​e​t​t​i​n​g​s​ ​→​ ​A​p​p​e​a​r​a​n​c​e​ ​→​ ​T​h​e​m​e​ ​s​t​o​r​e​ ​a​n​d​ ​p​i​c​k​ ​{​n​a​m​e​}​.​ ​O​r​ ​d​o​w​n​l​o​a​d​ ​t​h​e​ ​p​a​c​k​a​g​e​ ​a​n​d​ ​c​h​o​o​s​e​ ​I​n​s​t​a​l​l​ ​t​h​e​m​e​ ​→​ ​F​i​l​e​.
+		 * I​n​ ​t​h​e​ ​a​p​p​,​ ​o​p​e​n​ ​“​S​e​t​t​i​n​g​s​ ​→​ ​A​p​p​e​a​r​a​n​c​e​ ​→​ ​T​h​e​m​e​ ​S​t​o​r​e​”​ ​a​n​d​ ​s​e​l​e​c​t​ ​{​n​a​m​e​}​.​ ​Y​o​u​ ​c​a​n​ ​a​l​s​o​ ​d​o​w​n​l​o​a​d​ ​a​ ​t​h​e​m​e​ ​p​a​c​k​a​g​e​ ​a​n​d​ ​c​h​o​o​s​e​ ​“​I​n​s​t​a​l​l​ ​T​h​e​m​e​ ​→​ ​F​i​l​e​”​.
 		 * @param {unknown} name
 		 */
 		installSteps: RequiredParams<'name'>
@@ -398,7 +398,7 @@ type RootTranslation = {
 		 */
 		retry: string
 		/**
-		 * P​r​e​v​i​e​w​s​ ​s​h​o​w​ ​t​h​e​ ​t​h​e​m​e​'​s​ ​i​c​o​n​s​ ​a​n​d​ ​c​o​l​o​r​s​;​ ​t​h​e​ ​r​e​s​t​ ​o​f​ ​t​h​e​ ​i​n​t​e​r​f​a​c​e​ ​i​s​ ​i​l​l​u​s​t​r​a​t​i​v​e​.
+		 * P​r​e​v​i​e​w​s​ ​s​h​o​w​ ​o​n​l​y​ ​t​h​e​ ​t​h​e​m​e​’​s​ ​i​c​o​n​s​ ​a​n​d​ ​c​o​l​o​r​s​.​ ​T​h​e​ ​r​e​s​t​ ​o​f​ ​t​h​e​ ​i​n​t​e​r​f​a​c​e​ ​i​s​ ​f​o​r​ ​r​e​f​e​r​e​n​c​e​.
 		 */
 		previewNote: string
 		/**
@@ -406,17 +406,17 @@ type RootTranslation = {
 		 */
 		iconPacks: string
 		/**
-		 * I​c​o​n​s​ ​c​h​o​s​e​n​ ​a​p​a​r​t​ ​f​r​o​m​ ​t​h​e​ ​t​h​e​m​e​ ​a​n​d​ ​d​r​a​w​n​ ​o​v​e​r​ ​w​h​i​c​h​e​v​e​r​ ​o​n​e​ ​i​s​ ​i​n​ ​u​s​e​.​ ​I​n​s​t​a​l​l​ ​t​h​e​m​ ​i​n​ ​t​h​e​ ​a​p​p​ ​f​r​o​m​ ​S​e​t​t​i​n​g​s​ ​→​ ​A​p​p​e​a​r​a​n​c​e​ ​→​ ​T​h​e​m​e​ ​s​t​o​r​e​ ​→​ ​I​c​o​n​ ​p​a​c​k​s​.
+		 * I​c​o​n​ ​p​a​c​k​s​ ​a​r​e​ ​s​e​l​e​c​t​e​d​ ​s​e​p​a​r​a​t​e​l​y​ ​f​r​o​m​ ​t​h​e​m​e​s​ ​a​n​d​ ​w​o​r​k​ ​w​i​t​h​ ​a​n​y​ ​t​h​e​m​e​.​ ​I​n​s​t​a​l​l​ ​o​n​e​ ​f​r​o​m​ ​“​S​e​t​t​i​n​g​s​ ​→​ ​A​p​p​e​a​r​a​n​c​e​ ​→​ ​T​h​e​m​e​ ​S​t​o​r​e​ ​→​ ​I​c​o​n​ ​P​a​c​k​s​”​.
 		 */
 		iconPacksSubtitle: string
 	}
 	plugins: {
 		/**
-		 * P​l​u​g​i​n​s​.
+		 * E​x​t​e​n​d​ ​S​e​r​v​e​r​B​o​x
 		 */
 		title: string
 		/**
-		 * O​f​f​i​c​i​a​l​ ​p​l​u​g​i​n​s​ ​f​o​r​ ​S​e​r​v​e​r​B​o​x​,​ ​i​n​s​t​a​l​l​e​d​ ​f​r​o​m​ ​t​h​e​ ​a​p​p​'​s​ ​p​l​u​g​i​n​ ​s​t​o​r​e​.
+		 * I​n​s​t​a​l​l​ ​o​f​f​i​c​i​a​l​ ​S​e​r​v​e​r​B​o​x​ ​p​l​u​g​i​n​s​ ​t​o​ ​a​d​d​ ​m​o​r​e​ ​f​e​a​t​u​r​e​s​ ​t​o​ ​t​h​e​ ​a​p​p​.
 		 */
 		subtitle: string
 		/**
@@ -430,11 +430,11 @@ type RootTranslation = {
 	}
 	download: {
 		/**
-		 * E​v​e​r​y​ ​p​l​a​t​f​o​r​m​,​ ​e​v​e​r​y​ ​s​o​u​r​c​e​.
+		 * M​u​l​t​i​p​l​e​ ​p​l​a​t​f​o​r​m​s​,​ ​w​i​t​h​ ​s​e​v​e​r​a​l​ ​d​o​w​n​l​o​a​d​ ​o​p​t​i​o​n​s​.
 		 */
 		title: string
 		/**
-		 * C​h​o​o​s​e​ ​a​ ​t​r​u​s​t​e​d​ ​s​o​u​r​c​e​ ​f​o​r​ ​y​o​u​r​ ​d​e​v​i​c​e​.​ ​i​O​S​ ​c​o​m​e​s​ ​f​r​o​m​ ​t​h​e​ ​A​p​p​ ​S​t​o​r​e​,​ ​o​r​ ​a​s​ ​a​n​ ​u​n​s​i​g​n​e​d​ ​.​i​p​a​ ​f​r​o​m​ ​G​i​t​H​u​b​ ​R​e​l​e​a​s​e​s​ ​t​h​a​t​ ​y​o​u​ ​s​i​g​n​ ​y​o​u​r​s​e​l​f​.​ ​m​a​c​O​S​ ​b​u​i​l​d​s​ ​f​o​r​ ​A​p​p​l​e​ ​s​i​l​i​c​o​n​ ​a​n​d​ ​I​n​t​e​l​ ​a​r​e​ ​o​n​ ​G​i​t​H​u​b​ ​R​e​l​e​a​s​e​s​ ​a​n​d​ ​H​o​m​e​b​r​e​w​.​ ​A​n​d​r​o​i​d​,​ ​L​i​n​u​x​ ​a​n​d​ ​W​i​n​d​o​w​s​ ​h​a​v​e​ ​d​i​r​e​c​t​ ​d​o​w​n​l​o​a​d​s​.
+		 * C​h​o​o​s​e​ ​a​ ​t​r​u​s​t​e​d​ ​d​o​w​n​l​o​a​d​ ​s​o​u​r​c​e​.​ ​G​e​t​ ​t​h​e​ ​i​O​S​ ​a​p​p​ ​f​r​o​m​ ​t​h​e​ ​A​p​p​ ​S​t​o​r​e​,​ ​o​r​ ​d​o​w​n​l​o​a​d​ ​a​n​ ​u​n​s​i​g​n​e​d​ ​.​i​p​a​ ​f​r​o​m​ ​G​i​t​H​u​b​ ​R​e​l​e​a​s​e​s​ ​a​n​d​ ​s​i​g​n​ ​i​t​ ​y​o​u​r​s​e​l​f​.​ ​T​h​e​ ​m​a​c​O​S​ ​a​p​p​ ​s​u​p​p​o​r​t​s​ ​A​p​p​l​e​ ​s​i​l​i​c​o​n​ ​a​n​d​ ​I​n​t​e​l​ ​a​n​d​ ​i​s​ ​a​v​a​i​l​a​b​l​e​ ​f​r​o​m​ ​G​i​t​H​u​b​ ​R​e​l​e​a​s​e​s​ ​o​r​ ​H​o​m​e​b​r​e​w​.​ ​A​n​d​r​o​i​d​,​ ​L​i​n​u​x​,​ ​a​n​d​ ​W​i​n​d​o​w​s​ ​i​n​s​t​a​l​l​e​r​s​ ​a​r​e​ ​a​v​a​i​l​a​b​l​e​ ​f​o​r​ ​d​i​r​e​c​t​ ​d​o​w​n​l​o​a​d​.
 		 */
 		subtitle: string
 		/**
@@ -446,7 +446,7 @@ type RootTranslation = {
 		 */
 		copyPrompt: string
 		/**
-		 * O​n​l​y​ ​d​o​w​n​l​o​a​d​ ​p​a​c​k​a​g​e​s​ ​f​r​o​m​ ​a​ ​s​o​u​r​c​e​ ​y​o​u​ ​t​r​u​s​t​.​ ​F​o​r​ ​s​e​r​v​e​r​-​s​i​d​e​ ​p​u​s​h​,​ ​w​i​d​g​e​t​s​,​ ​a​n​d​ ​c​o​m​p​a​n​i​o​n​ ​m​o​n​i​t​o​r​i​n​g​,​ ​i​n​s​t​a​l​l​ ​S​e​r​v​e​r​B​o​x​M​o​n​i​t​o​r​ ​s​e​p​a​r​a​t​e​l​y​ ​o​n​ ​y​o​u​r​ ​s​e​r​v​e​r​s​.
+		 * D​o​w​n​l​o​a​d​ ​p​a​c​k​a​g​e​s​ ​o​n​l​y​ ​f​r​o​m​ ​s​o​u​r​c​e​s​ ​y​o​u​ ​t​r​u​s​t​.​ ​T​o​ ​u​s​e​ ​s​e​r​v​e​r​-​s​i​d​e​ ​p​u​s​h​ ​n​o​t​i​f​i​c​a​t​i​o​n​s​,​ ​w​i​d​g​e​t​ ​d​a​t​a​,​ ​a​n​d​ ​s​t​a​n​d​a​l​o​n​e​ ​m​o​n​i​t​o​r​i​n​g​,​ ​i​n​s​t​a​l​l​ ​S​e​r​v​e​r​B​o​x​M​o​n​i​t​o​r​ ​s​e​p​a​r​a​t​e​l​y​ ​o​n​ ​y​o​u​r​ ​s​e​r​v​e​r​s​.
 		 */
 		note: string
 	}
@@ -456,7 +456,7 @@ type RootTranslation = {
 		 */
 		title: string
 		/**
-		 * I​n​s​t​a​l​l​ ​f​r​o​m​ ​t​h​e​ ​A​p​p​ ​S​t​o​r​e​,​ ​G​i​t​H​u​b​ ​R​e​l​e​a​s​e​s​,​ ​F​-​D​r​o​i​d​ ​o​r​ ​O​p​e​n​A​P​K​.​ ​O​n​l​y​ ​d​o​w​n​l​o​a​d​ ​p​a​c​k​a​g​e​s​ ​f​r​o​m​ ​s​o​u​r​c​e​s​ ​y​o​u​ ​t​r​u​s​t​.
+		 * G​e​t​ ​S​e​r​v​e​r​B​o​x​ ​f​r​o​m​ ​t​h​e​ ​A​p​p​ ​S​t​o​r​e​,​ ​G​i​t​H​u​b​ ​R​e​l​e​a​s​e​s​,​ ​F​-​D​r​o​i​d​,​ ​o​r​ ​O​p​e​n​A​P​K​.
 		 */
 		subtitle: string
 		/**
@@ -491,11 +491,11 @@ export type TranslationFunctions = {
 		 */
 		lang: () => LocalizedString
 		/**
-		 * ServerBox — Server status, SSH, and operations in one Flutter app
+		 * ServerBox — Server monitoring, SSH, and operations in one app
 		 */
 		title: () => LocalizedString
 		/**
-		 * ServerBox monitors Linux, Unix, and Windows servers with status charts, SSH terminal, SFTP, Docker, process, systemd, S.M.A.R.T, push, widgets, and watchOS support.
+		 * ServerBox helps monitor Linux, Unix, and Windows servers with status charts, an SSH terminal, SFTP, Docker, process and systemd management, S.M.A.R.T. monitoring, push notifications, widgets, and watchOS support.
 		 */
 		description: () => LocalizedString
 	}
@@ -539,7 +539,7 @@ export type TranslationFunctions = {
 		 */
 		titleSuffix: () => LocalizedString
 		/**
-		 * ServerBox brings charts, SSH terminal, SFTP, Docker, process control, systemd, S.M.A.R.T, push alerts, widgets, and watchOS support into one Flutter app.
+		 * ServerBox brings status charts, an SSH terminal, SFTP, Docker, process management, systemd, S.M.A.R.T. monitoring, push notifications, widgets, and watchOS support together in one app.
 		 */
 		subtitle: () => LocalizedString
 		/**
@@ -575,11 +575,11 @@ export type TranslationFunctions = {
 	}
 	features: {
 		/**
-		 * One compact workspace for everyday server maintenance.
+		 * The tools you need for everyday server maintenance, all in one workspace.
 		 */
 		title: () => LocalizedString
 		/**
-		 * A focused operational surface with no decorative filler — every block maps to a real maintenance workflow.
+		 * A practical set of focused tools, with every section built around a real server maintenance task.
 		 */
 		subtitle: () => LocalizedString
 		list: {
@@ -608,7 +608,7 @@ export type TranslationFunctions = {
 			 */
 			title: () => LocalizedString
 			/**
-			 * A full terminal with virtual keys on phones, ready for htop, vim and more. Connect directly, through a jump host or with a ProxyCommand.
+			 * A full-featured terminal with virtual keys on phones, ready for htop, vim, and more. Connect directly, through a jump host, or with ProxyCommand.
 			 */
 			description: () => LocalizedString
 		}
@@ -638,7 +638,7 @@ export type TranslationFunctions = {
 			 */
 			title: () => LocalizedString
 			/**
-			 * Every process with its CPU and memory, sorted as you like and searchable by name, user or PID. Stop one from the list.
+			 * View every process and its CPU and memory usage. Sort the list, search by name, user, or PID, and stop processes directly.
 			 */
 			description: () => LocalizedString
 		}
@@ -648,7 +648,7 @@ export type TranslationFunctions = {
 			 */
 			title: () => LocalizedString
 			/**
-			 * Failed units first, then everything else. Restart a unit or read its logs in one tap.
+			 * Failed systemd units appear at the top of the list. Restart a unit or view its logs with one tap.
 			 */
 			description: () => LocalizedString
 		}
@@ -658,7 +658,7 @@ export type TranslationFunctions = {
 			 */
 			title: () => LocalizedString
 			/**
-			 * View system accounts with login shells and sudo access highlighted. Add or delete users, and add, edit or delete groups.
+			 * View system accounts and their login shells and sudo access. Add or delete users, and add, edit, or delete groups.
 			 */
 			description: () => LocalizedString
 		}
@@ -668,7 +668,7 @@ export type TranslationFunctions = {
 			 */
 			title: () => LocalizedString
 			/**
-			 * An assistant inside the app that knows your servers, using the model providers, MCP servers and skills you choose.
+			 * An AI assistant built into the app to help manage your servers, connected to the model providers, MCP servers, and skills you choose.
 			 */
 			description: () => LocalizedString
 		}
@@ -678,7 +678,7 @@ export type TranslationFunctions = {
 			 */
 			title: () => LocalizedString
 			/**
-			 * Run Yet Another Bench Script to test a server’s disk, network and CPU, then keep the results. The More menu also opens snippets, remote desktop and virtualization.
+			 * Run Yet Another Bench Script to test a server’s disk, network, and CPU, then save the results. The More menu also links to snippets, remote desktop, and virtualization.
 			 */
 			description: () => LocalizedString
 		}
@@ -688,7 +688,7 @@ export type TranslationFunctions = {
 			 */
 			title: () => LocalizedString
 			/**
-			 * Virtual machines and containers on libvirt and Proxmox VE: start and stop them, change vCPUs, memory and disks, and open their consoles.
+			 * Manage virtual machines and containers on libvirt and Proxmox VE. Start or stop instances, adjust vCPUs, memory, and disks, and open their consoles.
 			 */
 			description: () => LocalizedString
 		}
@@ -709,7 +709,7 @@ export type TranslationFunctions = {
 		 */
 		title: () => LocalizedString
 		/**
-		 * ServerBox keeps terminal access, file transfer, service checks, hardware health, and device-native alerts in the same workflow.
+		 * ServerBox brings terminal connections, file transfers, service status checks, hardware monitoring, and native device notifications into one workflow.
 		 */
 		subtitle: () => LocalizedString
 		/**
@@ -727,11 +727,11 @@ export type TranslationFunctions = {
 		 */
 		title: () => LocalizedString
 		/**
-		 * Official themes for ServerBox, the same ones the app's theme store offers. Install them in the app from Settings → Appearance → Theme store, or download a package and choose Install theme → File.
+		 * The official themes shown here are also available in the app’s theme store. Install one from Settings → Appearance → Theme Store, or download a package and choose Install Theme → File.
 		 */
 		subtitle: () => LocalizedString
 		/**
-		 * No official themes yet. A theme is a folder with a manifest.toml: colors for light and dark, component styles, icons, a background and a splash. The guide covers making one and getting it into the store.
+		 * No official themes yet. Each theme is a folder containing a manifest.toml, light and dark color schemes, component styles, icons, a background, and a splash screen. The theme guide explains how to create a theme and submit it to the store.
 		 */
 		empty: () => LocalizedString
 		/**
@@ -791,7 +791,7 @@ export type TranslationFunctions = {
 		 */
 		storeTitle: () => LocalizedString
 		/**
-		 * Every official ServerBox theme, drawn the way the app draws it: its colors, components, icons and splash. Install from the app's theme store or download the package.
+		 * Browse all official ServerBox themes, shown as they appear in the app, including their colors, components, icons, and splash screens. Install a theme from the app or download its package.
 		 */
 		storeSubtitle: () => LocalizedString
 		/**
@@ -835,7 +835,7 @@ export type TranslationFunctions = {
 		 */
 		install: () => LocalizedString
 		/**
-		 * In the app, open Settings → Appearance → Theme store and pick {name}. Or download the package and choose Install theme → File.
+		 * In the app, open “Settings → Appearance → Theme Store” and select {name}. You can also download a theme package and choose “Install Theme → File”.
 		 */
 		installSteps: (arg: { name: unknown }) => LocalizedString
 		/**
@@ -863,7 +863,7 @@ export type TranslationFunctions = {
 		 */
 		retry: () => LocalizedString
 		/**
-		 * Previews show the theme's icons and colors; the rest of the interface is illustrative.
+		 * Previews show only the theme’s icons and colors. The rest of the interface is for reference.
 		 */
 		previewNote: () => LocalizedString
 		/**
@@ -871,17 +871,17 @@ export type TranslationFunctions = {
 		 */
 		iconPacks: () => LocalizedString
 		/**
-		 * Icons chosen apart from the theme and drawn over whichever one is in use. Install them in the app from Settings → Appearance → Theme store → Icon packs.
+		 * Icon packs are selected separately from themes and work with any theme. Install one from “Settings → Appearance → Theme Store → Icon Packs”.
 		 */
 		iconPacksSubtitle: () => LocalizedString
 	}
 	plugins: {
 		/**
-		 * Plugins.
+		 * Extend ServerBox
 		 */
 		title: () => LocalizedString
 		/**
-		 * Official plugins for ServerBox, installed from the app's plugin store.
+		 * Install official ServerBox plugins to add more features to the app.
 		 */
 		subtitle: () => LocalizedString
 		/**
@@ -895,11 +895,11 @@ export type TranslationFunctions = {
 	}
 	download: {
 		/**
-		 * Every platform, every source.
+		 * Multiple platforms, with several download options.
 		 */
 		title: () => LocalizedString
 		/**
-		 * Choose a trusted source for your device. iOS comes from the App Store, or as an unsigned .ipa from GitHub Releases that you sign yourself. macOS builds for Apple silicon and Intel are on GitHub Releases and Homebrew. Android, Linux and Windows have direct downloads.
+		 * Choose a trusted download source. Get the iOS app from the App Store, or download an unsigned .ipa from GitHub Releases and sign it yourself. The macOS app supports Apple silicon and Intel and is available from GitHub Releases or Homebrew. Android, Linux, and Windows installers are available for direct download.
 		 */
 		subtitle: () => LocalizedString
 		/**
@@ -911,7 +911,7 @@ export type TranslationFunctions = {
 		 */
 		copyPrompt: () => LocalizedString
 		/**
-		 * Only download packages from a source you trust. For server-side push, widgets, and companion monitoring, install ServerBoxMonitor separately on your servers.
+		 * Download packages only from sources you trust. To use server-side push notifications, widget data, and standalone monitoring, install ServerBoxMonitor separately on your servers.
 		 */
 		note: () => LocalizedString
 	}
@@ -921,7 +921,7 @@ export type TranslationFunctions = {
 		 */
 		title: () => LocalizedString
 		/**
-		 * Install from the App Store, GitHub Releases, F-Droid or OpenAPK. Only download packages from sources you trust.
+		 * Get ServerBox from the App Store, GitHub Releases, F-Droid, or OpenAPK.
 		 */
 		subtitle: () => LocalizedString
 		/**

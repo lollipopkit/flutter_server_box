@@ -4086,6 +4086,24 @@ abstract class AppLocalizations {
   /// **'{count} {what}'**
   String countOfFmt(int count, String what);
 
+  /// Section title for the mounted filesystems in the disk device list.
+  ///
+  /// In en, this message translates to:
+  /// **'Filesystems'**
+  String get filesystems;
+
+  /// Section title for every block device (disks, partitions) whether mounted or not.
+  ///
+  /// In en, this message translates to:
+  /// **'Block devices'**
+  String get blockDevices;
+
+  /// Shown for a block device or partition that nothing is mounted from.
+  ///
+  /// In en, this message translates to:
+  /// **'Not mounted'**
+  String get notMounted;
+
   /// User-facing label or message for unit devices.
   ///
   /// In en, this message translates to:

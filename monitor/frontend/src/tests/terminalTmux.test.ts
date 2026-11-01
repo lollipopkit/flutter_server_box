@@ -1,6 +1,7 @@
 /// The terminal page's tmux block: the sessions `/tmux` answers with, what
 /// Attach and New session send, and how a refusal is phrased.
 
+import { get } from 'svelte/store'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, cleanup } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
@@ -68,9 +69,12 @@ vi.mock('../lib/snippetRun.svelte', () => ({
 vi.mock('../lib/theme.svelte', () => ({ theme: { current: 'light' } }))
 vi.mock('../lib/terminalSurface.svelte', () => ({ terminalSurface: { current: '#ffffff' } }))
 
+import { LL } from '../i18n/i18n-svelte'
 import Terminal from '../pages/Terminal.svelte'
 import { capabilitiesStore } from '../lib/capabilities.svelte'
 import { fmtEpochSeconds } from '../lib/format'
+
+const ll = get(LL)
 
 class FakeSocket {
   static instances: FakeSocket[] = []
@@ -163,7 +167,7 @@ describe('the terminal page tmux block', () => {
     expect(await screen.findByText('work')).toBeInTheDocument()
     // The activity is epoch seconds from the agent, formatted here.
     expect(screen.getByText(fmtEpochSeconds(ACTIVITY))).toBeInTheDocument()
-    await fireEvent.click(screen.getByRole('button', { name: 'Attach' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.terminalTmuxAttach() }))
 
     const socket = await started()
     expect(socket.sent[0]).toMatchObject({
@@ -176,10 +180,10 @@ describe('the terminal page tmux block', () => {
   it('starts a new session with the typed name', async () => {
     render(Terminal)
 
-    await fireEvent.input(await screen.findByPlaceholderText('Session name'), {
+    await fireEvent.input(await screen.findByPlaceholderText(ll.terminalTmuxNewName()), {
       target: { value: 'lab' },
     })
-    await fireEvent.click(screen.getByRole('button', { name: 'Create' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.terminalTmuxCreate() }))
 
     const socket = await started()
     expect(socket.sent[0]).toMatchObject({
@@ -193,28 +197,28 @@ describe('the terminal page tmux block', () => {
     setCapabilities([])
     render(Terminal)
 
-    await screen.findByRole('button', { name: 'Open a terminal' })
+    await screen.findByRole('button', { name: ll.terminalOpenDirectly() })
     expect(mocks.getTmux).not.toHaveBeenCalled()
-    expect(screen.queryByText('tmux sessions')).toBeNull()
-    expect(screen.queryByRole('button', { name: 'Create' })).toBeNull()
+    expect(screen.queryByText(ll.terminalTmuxSessions())).toBeNull()
+    expect(screen.queryByRole('button', { name: ll.terminalTmuxCreate() })).toBeNull()
   })
 
   it('shows nothing extra where tmux is not installed', async () => {
     mocks.getTmux.mockResolvedValue({ available: false, sessions: [], error: null })
     render(Terminal)
 
-    await screen.findByRole('button', { name: 'Open a terminal' })
+    await screen.findByRole('button', { name: ll.terminalOpenDirectly() })
     await vi.waitFor(() => expect(mocks.getTmux).toHaveBeenCalled())
-    expect(screen.queryByText('tmux sessions')).toBeNull()
+    expect(screen.queryByText(ll.terminalTmuxSessions())).toBeNull()
   })
 
   it('phrases a refused name from the issue', async () => {
     render(Terminal)
 
-    await fireEvent.input(await screen.findByPlaceholderText('Session name'), {
+    await fireEvent.input(await screen.findByPlaceholderText(ll.terminalTmuxNewName()), {
       target: { value: 'a:b' },
     })
-    await fireEvent.click(screen.getByRole('button', { name: 'Create' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.terminalTmuxCreate() }))
     const socket = await started()
     socket.control({
       type: 'error',
@@ -223,16 +227,16 @@ describe('the terminal page tmux block', () => {
       message: 'the session name contains \':\' or \'.\'',
     })
 
-    expect(await screen.findByText(/cannot contain/i)).toBeInTheDocument()
+    expect(await screen.findByText(ll.terminalTmuxErrNameSeparator())).toBeInTheDocument()
   })
 
   it('falls back to the agent message for an issue this build does not know', async () => {
     render(Terminal)
 
-    await fireEvent.input(await screen.findByPlaceholderText('Session name'), {
+    await fireEvent.input(await screen.findByPlaceholderText(ll.terminalTmuxNewName()), {
       target: { value: 'lab' },
     })
-    await fireEvent.click(screen.getByRole('button', { name: 'Create' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.terminalTmuxCreate() }))
     const socket = await started()
     // A refusal added since this panel was built: the code means nothing here,
     // the agent's sentence does.
@@ -255,7 +259,7 @@ describe('the terminal page tmux block', () => {
     })
     render(Terminal)
 
-    expect(await screen.findByText('Could not list tmux sessions')).toBeInTheDocument()
+    expect(await screen.findByText(ll.terminalTmuxListFailed())).toBeInTheDocument()
     expect(
       screen.getByText('error connecting to /tmp/tmux-1000/default (Permission denied)'),
     ).toBeInTheDocument()
@@ -264,7 +268,7 @@ describe('the terminal page tmux block', () => {
   it('phrases a machine with no tmux', async () => {
     render(Terminal)
 
-    await fireEvent.click(await screen.findByRole('button', { name: 'Attach' }))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.terminalTmuxAttach() }))
     const socket = await started()
     socket.control({
       type: 'error',
@@ -272,6 +276,6 @@ describe('the terminal page tmux block', () => {
       message: 'This machine has no tmux to attach to',
     })
 
-    expect(await screen.findByText(/tmux is not installed/i)).toBeInTheDocument()
+    expect(await screen.findByText(ll.terminalTmuxNoTmux())).toBeInTheDocument()
   })
 })

@@ -1,6 +1,7 @@
 /// The sidebar's server search: the matching rule on its own, and the field
 /// that uses it.
 
+import { get } from 'svelte/store'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, cleanup } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
@@ -43,10 +44,12 @@ vi.mock('../lib/serverNames.svelte', () => ({
 }))
 
 import Sidebar from '../components/Sidebar.svelte'
+import { LL } from '../i18n/i18n-svelte'
 import { serverNames } from '../lib/serverNames.svelte'
 import { servers } from '../lib/servers.svelte'
 
-const SEARCH = 'Search'
+const ll = get(LL)
+const SEARCH = ll.serversSearch()
 const ALPHA = { id: 'a', url: 'https://alpha.example', token: 't', username: 'admin' }
 const BETA = { id: 'b', url: 'https://beta.example', token: 't', username: 'admin' }
 
@@ -111,7 +114,7 @@ describe('the sidebar search field', () => {
     render(Sidebar)
     await fireEvent.input(search(), { target: { value: 'nothing-like-this' } })
 
-    expect(screen.getByText('No matching servers')).toBeInTheDocument()
+    expect(screen.getByText(ll.serversNoMatch())).toBeInTheDocument()
   })
 
   it('selects the only match on Enter', async () => {

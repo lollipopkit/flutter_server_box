@@ -1,7 +1,9 @@
+import { get } from 'svelte/store'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, cleanup } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import IperfModal from '../components/IperfModal.svelte'
+import { LL } from '../i18n/i18n-svelte'
 import { servers } from '../lib/servers.svelte'
 
 /// The dialog mounts the shared terminal once Start is pressed; xterm is
@@ -21,6 +23,7 @@ vi.mock('../lib/xterm', () => ({
   })),
 }))
 
+const ll = get(LL)
 const ticketMock = vi.fn(async () => ({ ticket: 'id.secret', expires_in: 30 }))
 
 vi.mock('../lib/api', () => {
@@ -78,7 +81,7 @@ async function started(): Promise<FakeSocket> {
   await fireEvent.input(screen.getByPlaceholderText('5201'), {
     target: { value: '5201' },
   })
-  await fireEvent.click(screen.getByRole('button', { name: /^start$/i }))
+  await fireEvent.click(screen.getByRole('button', { name: ll.iperfStart() }))
   await vi.waitFor(() => expect(FakeSocket.instances.length).toBe(1))
   const socket = FakeSocket.instances[0]
   socket.onopen?.()
@@ -116,7 +119,7 @@ describe('IperfModal', () => {
       message: 'the host is not an IPv4/IPv6 address or a domain name',
       issue: 'invalid_host',
     })
-    expect(await screen.findByText(/invalid host format/i)).toBeInTheDocument()
+    expect(await screen.findByText(ll.iperfErrInvalidHost())).toBeInTheDocument()
   })
 
   it('keeps the dialog open and shows the exit status when the session ends', async () => {
@@ -124,7 +127,7 @@ describe('IperfModal', () => {
     socket.control({ type: 'ready', session: 'abc.def', since: 0 })
     socket.control({ type: 'exit', status: 127 })
 
-    expect(await screen.findByText(/127/)).toBeInTheDocument()
+    expect(await screen.findByText(ll.targetExitStatus({ code: 127 }))).toBeInTheDocument()
     // The dialog is still there — the output above it is worth reading.
     expect(screen.getByRole('dialog')).toBeInTheDocument()
   })

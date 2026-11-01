@@ -56,7 +56,7 @@ type RootTranslation = {
 	 */
 	signingIn: string
 	/**
-	 * N​o​ ​s​e​r​v​e​r​s​ ​y​e​t​.​ ​A​d​d​ ​t​h​e​ ​a​d​d​r​e​s​s​ ​o​f​ ​a​n​ ​a​g​e​n​t​ ​t​o​ ​m​o​n​i​t​o​r​ ​i​t​.
+	 * N​o​ ​s​e​r​v​e​r​s​ ​y​e​t​.​ ​A​d​d​ ​t​h​e​ ​a​d​d​r​e​s​s​ ​o​f​ ​a​ ​M​o​n​i​t​o​r​ ​t​o​ ​m​o​n​i​t​o​r​ ​i​t​.
 	 */
 	noServersTip: string
 	/**
@@ -232,6 +232,14 @@ type RootTranslation = {
 	 */
 	disks: string
 	/**
+	 * B​l​o​c​k​ ​d​e​v​i​c​e​s
+	 */
+	blockDevices: string
+	/**
+	 * N​o​t​ ​m​o​u​n​t​e​d
+	 */
+	notMounted: string
+	/**
 	 * I​n​t​e​r​f​a​c​e​s
 	 */
 	interfaces: string
@@ -308,7 +316,7 @@ type RootTranslation = {
 	 */
 	powerSuspend: string
 	/**
-	 * T​h​e​ ​a​g​e​n​t​ ​s​t​o​p​s​ ​w​i​t​h​ ​t​h​e​ ​m​a​c​h​i​n​e​,​ ​s​o​ ​t​h​i​s​ ​p​a​n​e​l​ ​c​a​n​n​o​t​ ​s​t​a​r​t​ ​i​t​ ​a​g​a​i​n​.​ ​A​n​y​t​h​i​n​g​ ​r​u​n​n​i​n​g​ ​o​n​ ​i​t​ ​e​n​d​s​.
+	 * S​h​u​t​t​i​n​g​ ​d​o​w​n​,​ ​r​e​b​o​o​t​i​n​g​,​ ​o​r​ ​s​u​s​p​e​n​d​i​n​g​ ​t​h​e​ ​m​a​c​h​i​n​e​ ​s​t​o​p​s​ ​t​h​e​ ​M​o​n​i​t​o​r​,​ ​s​o​ ​t​h​i​s​ ​p​a​n​e​l​ ​c​a​n​n​o​t​ ​s​t​a​r​t​ ​i​t​ ​a​g​a​i​n​.​ ​S​h​u​t​t​i​n​g​ ​d​o​w​n​ ​o​r​ ​r​e​b​o​o​t​i​n​g​ ​a​l​s​o​ ​e​n​d​s​ ​a​n​y​ ​p​r​o​c​e​s​s​e​s​ ​r​u​n​n​i​n​g​ ​o​n​ ​t​h​e​ ​m​a​c​h​i​n​e​.
 	 */
 	powerNote: string
 	/**
@@ -316,11 +324,11 @@ type RootTranslation = {
 	 */
 	powerPassword: string
 	/**
-	 * L​e​a​v​e​ ​b​l​a​n​k​ ​w​h​e​n​ ​t​h​e​ ​a​g​e​n​t​ ​r​u​n​s​ ​a​s​ ​r​o​o​t​,​ ​o​r​ ​w​h​e​n​ ​i​t​s​ ​a​c​c​o​u​n​t​ ​h​a​s​ ​p​a​s​s​w​o​r​d​l​e​s​s​ ​s​u​d​o​ ​f​o​r​ ​t​h​i​s​ ​c​o​m​m​a​n​d​.
+	 * L​e​a​v​e​ ​b​l​a​n​k​ ​w​h​e​n​ ​t​h​e​ ​M​o​n​i​t​o​r​ ​r​u​n​s​ ​a​s​ ​r​o​o​t​,​ ​o​r​ ​w​h​e​n​ ​i​t​s​ ​a​c​c​o​u​n​t​ ​h​a​s​ ​p​a​s​s​w​o​r​d​l​e​s​s​ ​s​u​d​o​ ​f​o​r​ ​t​h​i​s​ ​c​o​m​m​a​n​d​.
 	 */
 	powerPasswordHint: string
 	/**
-	 * T​h​e​ ​m​a​c​h​i​n​e​ ​r​e​f​u​s​e​d​ ​t​h​a​t​ ​p​a​s​s​w​o​r​d​.​ ​N​o​t​h​i​n​g​ ​h​a​p​p​e​n​e​d​.
+	 * T​h​e​ ​p​a​s​s​w​o​r​d​ ​i​s​ ​i​n​c​o​r​r​e​c​t​.​ ​N​o​ ​a​c​t​i​o​n​ ​w​a​s​ ​t​a​k​e​n​.
 	 */
 	powerRejected: string
 	/**
@@ -328,11 +336,11 @@ type RootTranslation = {
 	 */
 	powerFailed: string
 	/**
-	 * N​o​ ​a​n​s​w​e​r​ ​c​a​m​e​ ​b​a​c​k​,​ ​w​h​i​c​h​ ​i​s​ ​w​h​a​t​ ​a​ ​m​a​c​h​i​n​e​ ​a​l​r​e​a​d​y​ ​g​o​i​n​g​ ​d​o​w​n​ ​l​o​o​k​s​ ​l​i​k​e​.
+	 * N​o​ ​r​e​s​p​o​n​s​e​ ​r​e​c​e​i​v​e​d​.​ ​T​h​i​s​ ​c​a​n​ ​h​a​p​p​e​n​ ​w​h​i​l​e​ ​t​h​e​ ​m​a​c​h​i​n​e​ ​i​s​ ​s​h​u​t​t​i​n​g​ ​d​o​w​n​ ​o​r​ ​s​u​s​p​e​n​d​i​n​g​.
 	 */
 	powerTimeout: string
 	/**
-	 * S​e​n​t​:​ ​{​a​c​t​i​o​n​}​.​ ​I​f​ ​t​h​e​ ​m​a​c​h​i​n​e​ ​i​s​ ​g​o​i​n​g​ ​d​o​w​n​,​ ​t​h​i​s​ ​p​a​n​e​l​ ​l​o​s​e​s​ ​i​t​ ​u​n​t​i​l​ ​i​t​ ​i​s​ ​b​a​c​k​.
+	 * S​e​n​t​ ​{​a​c​t​i​o​n​}​.​ ​I​f​ ​t​h​e​ ​m​a​c​h​i​n​e​ ​i​s​ ​s​h​u​t​t​i​n​g​ ​d​o​w​n​,​ ​t​h​i​s​ ​p​a​n​e​l​ ​w​i​l​l​ ​b​e​ ​d​i​s​c​o​n​n​e​c​t​e​d​ ​u​n​t​i​l​ ​i​t​ ​s​t​a​r​t​s​ ​a​g​a​i​n​.
 	 * @param {unknown} action
 	 */
 	powerActionSent: RequiredParams<'action'>
@@ -349,7 +357,7 @@ type RootTranslation = {
 	 */
 	benchmarkAlreadyRunning: string
 	/**
-	 * T​h​i​s​ ​a​g​e​n​t​'​s​ ​c​o​p​y​ ​o​f​ ​t​h​e​ ​y​a​b​s​ ​s​c​r​i​p​t​ ​i​s​ ​u​n​r​e​a​d​a​b​l​e​.​ ​I​t​ ​i​s​ ​a​ ​p​a​c​k​a​g​i​n​g​ ​f​a​u​l​t​ ​r​a​t​h​e​r​ ​t​h​a​n​ ​a​n​y​t​h​i​n​g​ ​a​b​o​u​t​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 * T​h​i​s​ ​M​o​n​i​t​o​r​'​s​ ​c​o​p​y​ ​o​f​ ​t​h​e​ ​y​a​b​s​ ​s​c​r​i​p​t​ ​i​s​ ​u​n​r​e​a​d​a​b​l​e​.​ ​I​t​ ​i​s​ ​a​ ​p​a​c​k​a​g​i​n​g​ ​f​a​u​l​t​ ​r​a​t​h​e​r​ ​t​h​a​n​ ​a​n​y​t​h​i​n​g​ ​a​b​o​u​t​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
 	 */
 	benchmarkAssetUnreadable: string
 	/**
@@ -357,7 +365,7 @@ type RootTranslation = {
 	 */
 	benchmarkCancel: string
 	/**
-	 * S​t​o​p​ ​t​h​e​ ​r​u​n​?​ ​K​i​l​l​i​n​g​ ​t​h​e​ ​p​r​o​c​e​s​s​ ​g​r​o​u​p​ ​i​s​ ​t​h​e​ ​o​n​l​y​ ​t​h​i​n​g​ ​t​h​a​t​ ​e​n​d​s​ ​a​ ​b​e​n​c​h​m​a​r​k​ ​—​ ​f​i​o​,​ ​i​p​e​r​f​3​ ​a​n​d​ ​G​e​e​k​b​e​n​c​h​ ​a​r​e​ ​s​e​p​a​r​a​t​e​ ​p​r​o​c​e​s​s​e​s​.
+	 * S​t​o​p​ ​t​h​i​s​ ​b​e​n​c​h​m​a​r​k​?​ ​T​h​e​ ​e​n​t​i​r​e​ ​p​r​o​c​e​s​s​ ​g​r​o​u​p​ ​m​u​s​t​ ​b​e​ ​s​t​o​p​p​e​d​ ​b​e​c​a​u​s​e​ ​f​i​o​,​ ​i​p​e​r​f​3​,​ ​a​n​d​ ​G​e​e​k​b​e​n​c​h​ ​r​u​n​ ​a​s​ ​s​e​p​a​r​a​t​e​ ​p​r​o​c​e​s​s​e​s​.
 	 */
 	benchmarkCancelConfirm: string
 	/**
@@ -365,7 +373,7 @@ type RootTranslation = {
 	 */
 	benchmarkCpu: string
 	/**
-	 * D​o​w​n​l​o​a​d​s​ ​a​ ​p​r​o​p​r​i​e​t​a​r​y​ ​b​i​n​a​r​y​ ​a​n​d​ ​p​u​b​l​i​s​h​e​s​ ​t​h​i​s​ ​m​a​c​h​i​n​e​'​s​ ​s​p​e​c​i​f​i​c​a​t​i​o​n​s​ ​t​o​ ​a​ ​p​u​b​l​i​c​ ​b​r​o​w​s​e​r​.​g​e​e​k​b​e​n​c​h​.​c​o​m​ ​p​a​g​e​.​ ​O​f​f​ ​b​y​ ​d​e​f​a​u​l​t​ ​f​o​r​ ​t​h​a​t​ ​r​e​a​s​o​n​.
+	 * T​h​i​s​ ​d​o​w​n​l​o​a​d​s​ ​a​ ​p​r​o​p​r​i​e​t​a​r​y​ ​b​i​n​a​r​y​ ​a​n​d​ ​p​u​b​l​i​s​h​e​s​ ​t​h​i​s​ ​m​a​c​h​i​n​e​'​s​ ​h​a​r​d​w​a​r​e​ ​d​e​t​a​i​l​s​ ​t​o​ ​t​h​e​ ​p​u​b​l​i​c​ ​b​r​o​w​s​e​r​.​g​e​e​k​b​e​n​c​h​.​c​o​m​ ​s​i​t​e​,​ ​s​o​ ​i​t​ ​i​s​ ​o​f​f​ ​b​y​ ​d​e​f​a​u​l​t​.
 	 */
 	benchmarkCpuHint: string
 	/**
@@ -373,7 +381,7 @@ type RootTranslation = {
 	 */
 	benchmarkDisk: string
 	/**
-	 * f​i​o​ ​a​t​ ​f​o​u​r​ ​b​l​o​c​k​ ​s​i​z​e​s​,​ ​~​3​0​ ​s​e​c​o​n​d​s​ ​e​a​c​h​.​ ​W​r​i​t​e​s​ ​a​ ​2​ ​G​B​ ​t​e​s​t​ ​f​i​l​e​ ​i​n​t​o​ ​t​h​e​ ​w​o​r​k​i​n​g​ ​d​i​r​e​c​t​o​r​y​ ​a​n​d​ ​n​e​e​d​s​ ​t​h​a​t​ ​m​u​c​h​ ​f​r​e​e​,​ ​o​r​ ​y​a​b​s​ ​s​k​i​p​s​ ​i​t​ ​a​n​d​ ​s​a​y​s​ ​s​o​ ​i​n​ ​t​h​e​ ​o​u​t​p​u​t​.
+	 * f​i​o​ ​t​e​s​t​s​ ​f​o​u​r​ ​b​l​o​c​k​ ​s​i​z​e​s​ ​f​o​r​ ​a​b​o​u​t​ ​3​0​ ​s​e​c​o​n​d​s​ ​e​a​c​h​.​ ​I​t​ ​w​r​i​t​e​s​ ​a​ ​2​ ​G​B​ ​f​i​l​e​ ​t​o​ ​t​h​e​ ​w​o​r​k​i​n​g​ ​d​i​r​e​c​t​o​r​y​,​ ​s​o​ ​a​t​ ​l​e​a​s​t​ ​2​ ​G​B​ ​o​f​ ​f​r​e​e​ ​s​p​a​c​e​ ​i​s​ ​n​e​e​d​e​d​.​ ​O​t​h​e​r​w​i​s​e​,​ ​y​a​b​s​ ​s​k​i​p​s​ ​t​h​e​ ​d​i​s​k​ ​t​e​s​t​ ​a​n​d​ ​r​e​p​o​r​t​s​ ​t​h​i​s​ ​i​n​ ​i​t​s​ ​o​u​t​p​u​t​.
 	 */
 	benchmarkDiskHint: string
 	/**
@@ -381,22 +389,22 @@ type RootTranslation = {
 	 */
 	benchmarkEmpty: string
 	/**
-	 * A​b​o​u​t​ ​{​m​i​n​u​t​e​s​}​ ​m​i​n​ ​·​ ​{​t​r​a​f​f​i​c​}​ ​o​f​ ​t​r​a​f​f​i​c
+	 * E​s​t​i​m​a​t​e​d​ ​t​i​m​e​:​ ​{​m​i​n​u​t​e​s​}​ ​m​i​n​ ​·​ ​E​s​t​i​m​a​t​e​d​ ​t​r​a​f​f​i​c​:​ ​{​t​r​a​f​f​i​c​}
 	 * @param {unknown} minutes
 	 * @param {unknown} traffic
 	 */
 	benchmarkEstimate: RequiredParams<'minutes' | 'traffic'>
 	/**
-	 * N​e​e​d​s​ ​{​f​r​e​e​}​ ​f​r​e​e​ ​i​n​ ​t​h​e​ ​w​o​r​k​i​n​g​ ​d​i​r​e​c​t​o​r​y​.
+	 * T​h​e​ ​w​o​r​k​i​n​g​ ​d​i​r​e​c​t​o​r​y​ ​n​e​e​d​s​ ​a​t​ ​l​e​a​s​t​ ​{​f​r​e​e​}​ ​o​f​ ​f​r​e​e​ ​s​p​a​c​e​.
 	 * @param {unknown} free
 	 */
 	benchmarkEstimateDisk: RequiredParams<'free'>
 	/**
-	 * T​h​e​ ​a​g​e​n​t​ ​c​o​u​l​d​ ​n​o​t​ ​e​s​t​i​m​a​t​e​ ​t​h​i​s​ ​r​u​n​;​ ​t​h​e​ ​f​o​r​m​ ​i​s​ ​s​t​i​l​l​ ​u​s​a​b​l​e​.
+	 * T​h​e​ ​M​o​n​i​t​o​r​ ​c​o​u​l​d​ ​n​o​t​ ​e​s​t​i​m​a​t​e​ ​t​h​i​s​ ​r​u​n​;​ ​t​h​e​ ​f​o​r​m​ ​i​s​ ​s​t​i​l​l​ ​u​s​a​b​l​e​.
 	 */
 	benchmarkEstimateFailed: string
 	/**
-	 * N​o​t​h​i​n​g​ ​i​s​ ​s​w​i​t​c​h​e​d​ ​o​n​,​ ​s​o​ ​o​n​l​y​ ​t​h​e​ ​s​y​s​t​e​m​ ​i​n​f​o​r​m​a​t​i​o​n​ ​h​e​a​d​e​r​ ​i​s​ ​c​o​l​l​e​c​t​e​d​ ​—​ ​a​ ​f​e​w​ ​s​e​c​o​n​d​s​.
+	 * A​l​l​ ​b​e​n​c​h​m​a​r​k​ ​o​p​t​i​o​n​s​ ​a​r​e​ ​o​f​f​,​ ​s​o​ ​o​n​l​y​ ​a​ ​s​y​s​t​e​m​ ​i​n​f​o​r​m​a​t​i​o​n​ ​s​u​m​m​a​r​y​ ​i​s​ ​c​o​l​l​e​c​t​e​d​.​ ​T​h​i​s​ ​t​a​k​e​s​ ​a​ ​f​e​w​ ​s​e​c​o​n​d​s​.
 	 */
 	benchmarkEstimateSystemInfo: string
 	/**
@@ -409,7 +417,7 @@ type RootTranslation = {
 	 */
 	benchmarkGeekbenchVersion: string
 	/**
-	 * T​h​i​s​ ​a​g​e​n​t​ ​c​o​u​l​d​ ​n​o​t​ ​r​e​a​d​ ​i​t​s​ ​b​e​n​c​h​m​a​r​k​ ​h​i​s​t​o​r​y​.
+	 * T​h​i​s​ ​M​o​n​i​t​o​r​ ​c​o​u​l​d​ ​n​o​t​ ​r​e​a​d​ ​i​t​s​ ​b​e​n​c​h​m​a​r​k​ ​h​i​s​t​o​r​y​.
 	 */
 	benchmarkHistoryUnavailable: string
 	/**
@@ -417,7 +425,7 @@ type RootTranslation = {
 	 */
 	benchmarkIpInfo: string
 	/**
-	 * P​l​a​i​n​t​e​x​t​ ​H​T​T​P​ ​t​o​ ​i​p​-​a​p​i​.​c​o​m​.​ ​O​f​f​ ​b​y​ ​d​e​f​a​u​l​t​.
+	 * T​h​i​s​ ​u​s​e​s​ ​u​n​e​n​c​r​y​p​t​e​d​ ​H​T​T​P​ ​t​o​ ​c​o​n​t​a​c​t​ ​i​p​-​a​p​i​.​c​o​m​.​ ​O​f​f​ ​b​y​ ​d​e​f​a​u​l​t​.
 	 */
 	benchmarkIpInfoHint: string
 	/**
@@ -429,7 +437,7 @@ type RootTranslation = {
 	 */
 	benchmarkLogEmpty: string
 	/**
-	 * T​h​e​ ​o​u​t​p​u​t​ ​i​s​ ​l​o​n​g​e​r​ ​t​h​a​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​r​e​a​d​s​ ​i​n​ ​o​n​e​ ​p​i​e​c​e​,​ ​s​o​ ​t​h​i​s​ ​i​s​ ​n​o​t​ ​a​l​l​ ​o​f​ ​i​t​.
+	 * T​h​e​ ​o​u​t​p​u​t​ ​e​x​c​e​e​d​s​ ​t​h​e​ ​m​a​x​i​m​u​m​ ​s​i​z​e​ ​t​h​a​t​ ​c​a​n​ ​b​e​ ​r​e​a​d​ ​a​t​ ​o​n​c​e​,​ ​s​o​ ​o​n​l​y​ ​p​a​r​t​ ​o​f​ ​i​t​ ​i​s​ ​s​h​o​w​n​.
 	 */
 	benchmarkLogTruncated: string
 	/**
@@ -437,19 +445,19 @@ type RootTranslation = {
 	 */
 	benchmarkNetwork: string
 	/**
-	 * i​p​e​r​f​3​ ​a​g​a​i​n​s​t​ ​p​u​b​l​i​c​ ​s​e​r​v​e​r​s​,​ ​b​o​t​h​ ​w​a​y​s​.
+	 * U​s​e​s​ ​i​p​e​r​f​3​ ​t​o​ ​t​e​s​t​ ​u​p​l​o​a​d​ ​a​n​d​ ​d​o​w​n​l​o​a​d​ ​s​p​e​e​d​s​ ​a​g​a​i​n​s​t​ ​p​u​b​l​i​c​ ​s​e​r​v​e​r​s​.
 	 */
 	benchmarkNetworkHint: string
 	/**
-	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​d​i​d​ ​n​o​t​ ​a​n​s​w​e​r​ ​i​n​ ​t​i​m​e​.​ ​T​h​e​ ​r​u​n​ ​i​s​ ​s​t​i​l​l​ ​g​o​i​n​g​;​ ​t​h​i​s​ ​p​a​g​e​ ​w​i​l​l​ ​t​r​y​ ​a​g​a​i​n​.
+	 * T​h​e​ ​m​a​c​h​i​n​e​ ​d​i​d​ ​n​o​t​ ​r​e​s​p​o​n​d​ ​i​n​ ​t​i​m​e​,​ ​b​u​t​ ​t​h​e​ ​b​e​n​c​h​m​a​r​k​ ​i​s​ ​s​t​i​l​l​ ​r​u​n​n​i​n​g​.​ ​T​h​i​s​ ​p​a​g​e​ ​w​i​l​l​ ​r​e​t​r​y​ ​a​u​t​o​m​a​t​i​c​a​l​l​y​.
 	 */
 	benchmarkNoAnswer: string
 	/**
-	 * T​h​e​ ​a​g​e​n​t​ ​c​o​u​l​d​ ​n​o​t​ ​g​e​n​e​r​a​t​e​ ​a​ ​r​u​n​ ​i​d​.
+	 * T​h​e​ ​M​o​n​i​t​o​r​ ​c​o​u​l​d​ ​n​o​t​ ​g​e​n​e​r​a​t​e​ ​a​ ​r​u​n​ ​i​d​.
 	 */
 	benchmarkNoEntropy: string
 	/**
-	 * T​h​e​ ​a​g​e​n​t​ ​h​a​s​ ​n​o​ ​h​o​m​e​ ​d​i​r​e​c​t​o​r​y​,​ ​s​o​ ​t​h​e​r​e​ ​i​s​ ​n​o​w​h​e​r​e​ ​t​o​ ​i​n​s​t​a​l​l​ ​t​h​e​ ​s​c​r​i​p​t​.
+	 * T​h​e​ ​M​o​n​i​t​o​r​ ​a​c​c​o​u​n​t​ ​h​a​s​ ​n​o​ ​h​o​m​e​ ​d​i​r​e​c​t​o​r​y​,​ ​s​o​ ​t​h​e​ ​s​c​r​i​p​t​ ​c​a​n​n​o​t​ ​b​e​ ​i​n​s​t​a​l​l​e​d​.
 	 */
 	benchmarkNoHome: string
 	/**
@@ -457,7 +465,7 @@ type RootTranslation = {
 	 */
 	benchmarkNoResultYet: string
 	/**
-	 * T​h​a​t​ ​r​u​n​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​i​n​ ​t​h​i​s​ ​a​g​e​n​t​'​s​ ​h​i​s​t​o​r​y​.
+	 * T​h​a​t​ ​r​u​n​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​i​n​ ​t​h​i​s​ ​M​o​n​i​t​o​r​'​s​ ​h​i​s​t​o​r​y​.
 	 */
 	benchmarkNoSuchRun: string
 	/**
@@ -465,7 +473,7 @@ type RootTranslation = {
 	 */
 	benchmarkPreferBinaries: string
 	/**
-	 * U​s​e​ ​t​h​e​ ​b​i​n​a​r​i​e​s​ ​y​a​b​s​ ​s​h​i​p​s​ ​i​n​s​t​e​a​d​ ​o​f​ ​t​h​e​ ​m​a​c​h​i​n​e​'​s​ ​o​w​n​,​ ​w​h​i​c​h​ ​m​e​a​n​s​ ​f​e​t​c​h​i​n​g​ ​t​h​e​m​ ​f​r​o​m​ ​r​a​w​.​g​i​t​h​u​b​u​s​e​r​c​o​n​t​e​n​t​.​c​o​m​ ​—​ ​u​n​r​e​a​c​h​a​b​l​e​ ​f​r​o​m​ ​s​o​m​e​ ​h​o​s​t​s​.​ ​O​f​f​ ​b​y​ ​d​e​f​a​u​l​t​.
+	 * U​s​e​ ​t​h​e​ ​b​i​n​a​r​i​e​s​ ​b​u​n​d​l​e​d​ ​w​i​t​h​ ​y​a​b​s​ ​i​n​s​t​e​a​d​ ​o​f​ ​t​h​o​s​e​ ​a​l​r​e​a​d​y​ ​o​n​ ​t​h​e​ ​m​a​c​h​i​n​e​.​ ​T​h​e​y​ ​a​r​e​ ​d​o​w​n​l​o​a​d​e​d​ ​f​r​o​m​ ​r​a​w​.​g​i​t​h​u​b​u​s​e​r​c​o​n​t​e​n​t​.​c​o​m​,​ ​w​h​i​c​h​ ​s​o​m​e​ ​h​o​s​t​s​ ​c​a​n​n​o​t​ ​r​e​a​c​h​.​ ​O​f​f​ ​b​y​ ​d​e​f​a​u​l​t​.
 	 */
 	benchmarkPreferBinariesHint: string
 	/**
@@ -481,7 +489,7 @@ type RootTranslation = {
 	 */
 	benchmarkReducedNetwork: string
 	/**
-	 * T​h​r​e​e​ ​l​o​c​a​t​i​o​n​s​ ​i​n​s​t​e​a​d​ ​o​f​ ​s​e​v​e​n​.​ ​O​n​ ​b​y​ ​d​e​f​a​u​l​t​:​ ​a​ ​f​u​l​l​ ​r​u​n​ ​i​s​ ​t​e​n​s​ ​o​f​ ​g​i​g​a​b​y​t​e​s​ ​o​f​ ​t​r​a​f​f​i​c​.
+	 * T​e​s​t​s​ ​t​h​r​e​e​ ​l​o​c​a​t​i​o​n​s​ ​i​n​s​t​e​a​d​ ​o​f​ ​s​e​v​e​n​.​ ​O​n​ ​b​y​ ​d​e​f​a​u​l​t​ ​t​o​ ​a​v​o​i​d​ ​t​h​e​ ​t​e​n​s​ ​o​f​ ​g​i​g​a​b​y​t​e​s​ ​o​f​ ​t​r​a​f​f​i​c​ ​u​s​e​d​ ​b​y​ ​a​ ​f​u​l​l​ ​r​u​n​.
 	 */
 	benchmarkReducedNetworkHint: string
 	/**
@@ -501,7 +509,7 @@ type RootTranslation = {
 	 */
 	benchmarkResultEmpty: string
 	/**
-	 * y​a​b​s​'​ ​r​e​s​u​l​t​ ​i​s​ ​n​o​t​ ​v​a​l​i​d​ ​J​S​O​N​,​ ​w​h​i​c​h​ ​h​a​p​p​e​n​s​ ​w​h​e​n​ ​a​ ​v​a​l​u​e​ ​i​t​ ​c​o​l​l​e​c​t​e​d​ ​c​o​n​t​a​i​n​s​ ​a​ ​q​u​o​t​e​.​ ​I​t​ ​i​s​ ​s​h​o​w​n​ ​a​s​ ​t​h​e​ ​t​e​x​t​ ​i​t​ ​i​s​.
+	 * T​h​e​ ​r​e​s​u​l​t​ ​f​r​o​m​ ​y​a​b​s​ ​i​s​ ​n​o​t​ ​v​a​l​i​d​ ​J​S​O​N​.​ ​T​h​i​s​ ​c​a​n​ ​h​a​p​p​e​n​ ​i​f​ ​a​ ​c​o​l​l​e​c​t​e​d​ ​v​a​l​u​e​ ​c​o​n​t​a​i​n​s​ ​a​ ​q​u​o​t​a​t​i​o​n​ ​m​a​r​k​.​ ​T​h​e​ ​r​e​s​u​l​t​ ​i​s​ ​s​h​o​w​n​ ​a​s​ ​p​l​a​i​n​ ​t​e​x​t​.
 	 */
 	benchmarkResultUnparsable: string
 	/**
@@ -513,7 +521,7 @@ type RootTranslation = {
 	 */
 	benchmarkRunErrorLauncherFailed: string
 	/**
-	 * T​h​e​ ​r​u​n​'​s​ ​p​r​o​c​e​s​s​ ​i​s​ ​g​o​n​e​ ​a​n​d​ ​n​o​ ​e​x​i​t​ ​c​o​d​e​ ​w​a​s​ ​w​r​i​t​t​e​n​,​ ​w​h​i​c​h​ ​i​s​ ​w​h​a​t​ ​a​n​ ​o​u​t​-​o​f​-​m​e​m​o​r​y​ ​k​i​l​l​ ​l​o​o​k​s​ ​l​i​k​e​ ​f​r​o​m​ ​h​e​r​e​.
+	 * T​h​e​ ​p​r​o​c​e​s​s​ ​e​x​i​t​e​d​ ​w​i​t​h​o​u​t​ ​r​e​c​o​r​d​i​n​g​ ​a​n​ ​e​x​i​t​ ​c​o​d​e​.​ ​I​t​ ​w​a​s​ ​l​i​k​e​l​y​ ​t​e​r​m​i​n​a​t​e​d​ ​b​y​ ​t​h​e​ ​s​y​s​t​e​m​ ​d​u​e​ ​t​o​ ​l​o​w​ ​m​e​m​o​r​y​.
 	 */
 	benchmarkRunErrorNoExitCode: string
 	/**
@@ -521,7 +529,7 @@ type RootTranslation = {
 	 */
 	benchmarkRunErrorNonzeroExit: string
 	/**
-	 * T​h​e​ ​r​u​n​'​s​ ​d​i​r​e​c​t​o​r​y​ ​i​s​ ​g​o​n​e​,​ ​s​o​ ​n​o​t​h​i​n​g​ ​c​a​n​ ​w​r​i​t​e​ ​h​o​w​ ​i​t​ ​e​n​d​e​d​.
+	 * T​h​e​ ​r​u​n​ ​d​i​r​e​c​t​o​r​y​ ​n​o​ ​l​o​n​g​e​r​ ​e​x​i​s​t​s​,​ ​s​o​ ​i​t​s​ ​c​o​m​p​l​e​t​i​o​n​ ​s​t​a​t​u​s​ ​c​a​n​n​o​t​ ​b​e​ ​r​e​c​o​r​d​e​d​.
 	 */
 	benchmarkRunErrorRunDirMissing: string
 	/**
@@ -562,11 +570,11 @@ type RootTranslation = {
 	 */
 	benchmarkSubtitle: string
 	/**
-	 * y​a​b​s​ ​i​s​ ​a​ ​L​i​n​u​x​ ​s​c​r​i​p​t​ ​t​h​a​t​ ​r​e​a​d​s​ ​p​r​o​c​f​s​,​ ​s​o​ ​a​ ​b​e​n​c​h​m​a​r​k​ ​c​a​n​n​o​t​ ​r​u​n​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.​ ​T​h​e​ ​h​i​s​t​o​r​y​ ​i​s​ ​s​t​i​l​l​ ​h​e​r​e​.
+	 * y​a​b​s​ ​i​s​ ​a​ ​L​i​n​u​x​ ​s​c​r​i​p​t​ ​t​h​a​t​ ​r​e​a​d​s​ ​p​r​o​c​f​s​,​ ​s​o​ ​b​e​n​c​h​m​a​r​k​s​ ​c​a​n​n​o​t​ ​r​u​n​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.​ ​E​x​i​s​t​i​n​g​ ​b​e​n​c​h​m​a​r​k​ ​h​i​s​t​o​r​y​ ​i​s​ ​p​r​e​s​e​r​v​e​d​.
 	 */
 	benchmarkUnsupported: string
 	/**
-	 * y​a​b​s​ ​d​o​e​s​ ​n​o​t​ ​r​u​n​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​'​s​ ​p​l​a​t​f​o​r​m​.
+	 * y​a​b​s​ ​d​o​e​s​ ​n​o​t​ ​s​u​p​p​o​r​t​ ​t​h​i​s​ ​m​a​c​h​i​n​e​'​s​ ​p​l​a​t​f​o​r​m​.
 	 */
 	benchmarkUnsupportedPlatform: string
 	/**
@@ -574,7 +582,7 @@ type RootTranslation = {
 	 */
 	benchmarkWorkDir: string
 	/**
-	 * W​h​e​r​e​ ​t​h​e​ ​r​u​n​ ​h​a​p​p​e​n​s​,​ ​a​n​d​ ​t​h​e​r​e​f​o​r​e​ ​w​h​i​c​h​ ​f​i​l​e​s​y​s​t​e​m​ ​t​h​e​ ​d​i​s​k​ ​t​e​s​t​ ​m​e​a​s​u​r​e​s​.​ ​E​m​p​t​y​ ​m​e​a​n​s​ ​t​h​e​ ​a​g​e​n​t​ ​a​c​c​o​u​n​t​'​s​ ​h​o​m​e​ ​d​i​r​e​c​t​o​r​y​.
+	 * W​h​e​r​e​ ​t​h​e​ ​r​u​n​ ​h​a​p​p​e​n​s​,​ ​a​n​d​ ​t​h​e​r​e​f​o​r​e​ ​w​h​i​c​h​ ​f​i​l​e​s​y​s​t​e​m​ ​t​h​e​ ​d​i​s​k​ ​t​e​s​t​ ​m​e​a​s​u​r​e​s​.​ ​E​m​p​t​y​ ​m​e​a​n​s​ ​t​h​e​ ​M​o​n​i​t​o​r​ ​a​c​c​o​u​n​t​'​s​ ​h​o​m​e​ ​d​i​r​e​c​t​o​r​y​.
 	 */
 	benchmarkWorkDirHint: string
 	/**
@@ -590,7 +598,7 @@ type RootTranslation = {
 	 */
 	containerCreated: string
 	/**
-	 * D​e​a​d
+	 * E​x​i​t​e​d​ ​u​n​e​x​p​e​c​t​e​d​l​y
 	 */
 	containerDead: string
 	/**
@@ -598,7 +606,7 @@ type RootTranslation = {
 	 */
 	containerDisk: string
 	/**
-	 * N​o​ ​c​o​n​t​a​i​n​e​r​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 * T​h​e​r​e​ ​a​r​e​ ​n​o​ ​c​o​n​t​a​i​n​e​r​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
 	 */
 	containerEmpty: string
 	/**
@@ -637,11 +645,11 @@ type RootTranslation = {
 	 */
 	containerNetwork: string
 	/**
-	 * N​o​ ​i​m​a​g​e​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 * T​h​e​r​e​ ​a​r​e​ ​n​o​ ​i​m​a​g​e​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
 	 */
 	containerNoImages: string
 	/**
-	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​h​a​s​ ​n​o​ ​d​o​c​k​e​r​ ​o​r​ ​p​o​d​m​a​n​ ​c​o​m​m​a​n​d​,​ ​s​o​ ​t​h​e​r​e​ ​i​s​ ​n​o​t​h​i​n​g​ ​t​o​ ​s​h​o​w​ ​o​r​ ​c​h​a​n​g​e​ ​h​e​r​e​.
+	 * D​o​c​k​e​r​ ​a​n​d​ ​P​o​d​m​a​n​ ​a​r​e​ ​n​o​t​ ​i​n​s​t​a​l​l​e​d​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​,​ ​s​o​ ​t​h​e​r​e​ ​a​r​e​ ​n​o​ ​c​o​n​t​a​i​n​e​r​s​ ​t​o​ ​v​i​e​w​ ​o​r​ ​m​a​n​a​g​e​.
 	 */
 	containerNotInstalled: string
 	/**
@@ -649,7 +657,7 @@ type RootTranslation = {
 	 */
 	containerPaused: string
 	/**
-	 * T​h​e​ ​r​u​n​t​i​m​e​ ​i​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​ ​b​u​t​ ​w​i​l​l​ ​n​o​t​ ​t​a​l​k​ ​t​o​ ​t​h​e​ ​a​c​c​o​u​n​t​ ​t​h​e​ ​a​g​e​n​t​ ​r​u​n​s​ ​a​s​.​ ​O​n​ ​t​h​e​ ​m​a​c​h​i​n​e​,​ ​a​d​d​ ​t​h​a​t​ ​a​c​c​o​u​n​t​ ​t​o​ ​t​h​e​ ​r​u​n​t​i​m​e​’​s​ ​g​r​o​u​p​ ​—​ ​f​o​r​ ​D​o​c​k​e​r​,​ ​`​u​s​e​r​m​o​d​ ​-​a​G​ ​d​o​c​k​e​r​ ​<​u​s​e​r​>​`​.
+	 * T​h​e​ ​r​u​n​t​i​m​e​ ​i​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​ ​b​u​t​ ​w​i​l​l​ ​n​o​t​ ​t​a​l​k​ ​t​o​ ​t​h​e​ ​a​c​c​o​u​n​t​ ​t​h​e​ ​M​o​n​i​t​o​r​ ​r​u​n​s​ ​a​s​.​ ​O​n​ ​t​h​e​ ​m​a​c​h​i​n​e​,​ ​a​d​d​ ​t​h​a​t​ ​a​c​c​o​u​n​t​ ​t​o​ ​t​h​e​ ​r​u​n​t​i​m​e​’​s​ ​g​r​o​u​p​ ​—​ ​f​o​r​ ​D​o​c​k​e​r​,​ ​`​u​s​e​r​m​o​d​ ​-​a​G​ ​d​o​c​k​e​r​ ​<​u​s​e​r​>​`​.
 	 */
 	containerPermissionDenied: string
 	/**
@@ -665,7 +673,7 @@ type RootTranslation = {
 	 */
 	containerRemove: string
 	/**
-	 * R​e​m​o​v​e​ ​{​n​a​m​e​}​?​ ​I​t​s​ ​w​r​i​t​a​b​l​e​ ​l​a​y​e​r​ ​i​s​ ​l​o​s​t​;​ ​a​n​y​t​h​i​n​g​ ​k​e​p​t​ ​i​n​ ​a​ ​v​o​l​u​m​e​ ​o​r​ ​a​ ​b​i​n​d​ ​m​o​u​n​t​ ​s​t​a​y​s​.
+	 * R​e​m​o​v​e​ ​{​n​a​m​e​}​?​ ​I​t​s​ ​w​r​i​t​a​b​l​e​ ​l​a​y​e​r​ ​w​i​l​l​ ​b​e​ ​d​e​l​e​t​e​d​,​ ​b​u​t​ ​d​a​t​a​ ​i​n​ ​v​o​l​u​m​e​s​ ​a​n​d​ ​b​i​n​d​ ​m​o​u​n​t​s​ ​w​i​l​l​ ​b​e​ ​k​e​p​t​.
 	 * @param {unknown} name
 	 */
 	containerRemoveConfirm: RequiredParams<'name'>
@@ -712,11 +720,11 @@ type RootTranslation = {
 	 */
 	containerUnknown: string
 	/**
-	 * T​h​e​ ​r​u​n​t​i​m​e​ ​a​n​s​w​e​r​e​d​ ​i​n​ ​a​ ​w​a​y​ ​t​h​i​s​ ​a​g​e​n​t​ ​c​o​u​l​d​ ​n​o​t​ ​r​e​a​d​.
+	 * T​h​e​ ​r​u​n​t​i​m​e​ ​a​n​s​w​e​r​e​d​ ​i​n​ ​a​ ​w​a​y​ ​t​h​i​s​ ​M​o​n​i​t​o​r​ ​c​o​u​l​d​ ​n​o​t​ ​r​e​a​d​.
 	 */
 	containerUnreadable: string
 	/**
-	 * T​h​e​ ​a​g​e​n​t​ ​r​u​n​s​ ​o​n​ ​W​i​n​d​o​w​s​,​ ​w​h​e​r​e​ ​t​h​i​s​ ​p​a​n​e​l​ ​h​a​s​ ​n​o​ ​c​o​n​t​a​i​n​e​r​ ​r​u​n​t​i​m​e​ ​t​o​ ​t​a​l​k​ ​t​o​.
+	 * T​h​e​ ​M​o​n​i​t​o​r​ ​r​u​n​s​ ​o​n​ ​W​i​n​d​o​w​s​,​ ​w​h​e​r​e​ ​t​h​i​s​ ​p​a​n​e​l​ ​h​a​s​ ​n​o​ ​c​o​n​t​a​i​n​e​r​ ​r​u​n​t​i​m​e​ ​t​o​ ​t​a​l​k​ ​t​o​.
 	 */
 	containerUnsupportedPlatform: string
 	/**
@@ -724,12 +732,12 @@ type RootTranslation = {
 	 */
 	containerUnused: string
 	/**
-	 * {​c​o​u​n​t​}​ ​i​m​a​g​e​s​ ​a​r​e​ ​u​n​u​s​e​d​ ​b​y​ ​a​n​y​ ​c​o​n​t​a​i​n​e​r​.
+	 * {​c​o​u​n​t​}​ ​i​m​a​g​e​s​ ​a​r​e​ ​n​o​t​ ​u​s​e​d​ ​b​y​ ​a​n​y​ ​c​o​n​t​a​i​n​e​r​.
 	 * @param {unknown} count
 	 */
 	containerUnusedImages: RequiredParams<'count'>
 	/**
-	 * I​m​a​g​e​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​:​ ​{​i​m​a​g​e​s​}​.​ ​A​ ​p​r​u​n​e​ ​w​o​u​l​d​ ​r​e​c​l​a​i​m​ ​{​r​e​c​l​a​i​m​a​b​l​e​}​.
+	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​h​a​s​ ​{​i​m​a​g​e​s​}​ ​i​m​a​g​e​s​.​ ​P​r​u​n​i​n​g​ ​c​a​n​ ​f​r​e​e​ ​u​p​ ​{​r​e​c​l​a​i​m​a​b​l​e​}​.
 	 * @param {unknown} images
 	 * @param {unknown} reclaimable
 	 */
@@ -744,7 +752,7 @@ type RootTranslation = {
 	 */
 	containerActionFailed: RequiredParams<'code'>
 	/**
-	 * T​h​e​ ​c​o​m​m​a​n​d​ ​d​i​d​ ​n​o​t​ ​f​i​n​i​s​h​ ​w​i​t​h​i​n​ ​t​h​e​ ​a​g​e​n​t​'​s​ ​t​i​m​e​ ​l​i​m​i​t​.
+	 * T​h​e​ ​c​o​m​m​a​n​d​ ​d​i​d​ ​n​o​t​ ​f​i​n​i​s​h​ ​w​i​t​h​i​n​ ​t​h​e​ ​M​o​n​i​t​o​r​'​s​ ​t​i​m​e​ ​l​i​m​i​t​.
 	 */
 	containerActionUnfinished: string
 	/**
@@ -756,23 +764,23 @@ type RootTranslation = {
 	 */
 	containerErrEmpty: string
 	/**
-	 * T​h​e​ ​e​x​t​r​a​ ​a​r​g​u​m​e​n​t​s​ ​a​r​e​ ​n​o​t​ ​q​u​o​t​e​d​ ​c​o​r​r​e​c​t​l​y​.
+	 * Q​u​o​t​a​t​i​o​n​ ​m​a​r​k​s​ ​i​n​ ​t​h​e​ ​e​x​t​r​a​ ​a​r​g​u​m​e​n​t​s​ ​a​r​e​ ​u​n​m​a​t​c​h​e​d​.
 	 */
 	containerErrInvalidArgs: string
 	/**
-	 * T​h​e​ ​c​o​n​t​a​i​n​e​r​ ​n​a​m​e​ ​i​s​ ​n​o​t​ ​o​n​e​ ​a​ ​r​u​n​t​i​m​e​ ​a​c​c​e​p​t​s​.
+	 * T​h​e​ ​c​o​n​t​a​i​n​e​r​ ​r​u​n​t​i​m​e​ ​d​o​e​s​ ​n​o​t​ ​a​c​c​e​p​t​ ​t​h​i​s​ ​n​a​m​e​.
 	 */
 	containerErrInvalidName: string
 	/**
-	 * T​h​e​ ​i​m​a​g​e​ ​r​e​f​e​r​e​n​c​e​ ​c​o​n​t​a​i​n​s​ ​a​ ​c​h​a​r​a​c​t​e​r​ ​i​t​ ​c​a​n​n​o​t​.
+	 * T​h​e​ ​i​m​a​g​e​ ​r​e​f​e​r​e​n​c​e​ ​c​o​n​t​a​i​n​s​ ​a​ ​c​h​a​r​a​c​t​e​r​ ​t​h​a​t​ ​i​s​ ​n​o​t​ ​a​l​l​o​w​e​d​.
 	 */
 	containerErrInvalidReference: string
 	/**
-	 * A​ ​v​a​l​u​e​ ​b​e​g​i​n​s​ ​w​i​t​h​ ​a​ ​d​a​s​h​,​ ​w​h​i​c​h​ ​t​h​e​ ​r​u​n​t​i​m​e​ ​w​o​u​l​d​ ​r​e​a​d​ ​a​s​ ​a​n​ ​o​p​t​i​o​n​.
+	 * A​ ​v​a​l​u​e​ ​c​a​n​n​o​t​ ​s​t​a​r​t​ ​w​i​t​h​ ​a​ ​h​y​p​h​e​n​ ​b​e​c​a​u​s​e​ ​t​h​e​ ​r​u​n​t​i​m​e​ ​w​o​u​l​d​ ​t​r​e​a​t​ ​i​t​ ​a​s​ ​a​n​ ​o​p​t​i​o​n​.
 	 */
 	containerErrLeadingDash: string
 	/**
-	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​h​a​s​ ​n​o​ ​c​o​n​t​a​i​n​e​r​ ​r​u​n​t​i​m​e​ ​t​o​ ​r​u​n​ ​a​ ​s​h​e​l​l​ ​i​n​.
+	 * N​o​ ​c​o​n​t​a​i​n​e​r​ ​r​u​n​t​i​m​e​ ​i​s​ ​i​n​s​t​a​l​l​e​d​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​,​ ​s​o​ ​a​ ​s​h​e​l​l​ ​c​a​n​n​o​t​ ​b​e​ ​o​p​e​n​e​d​ ​i​n​s​i​d​e​ ​a​ ​c​o​n​t​a​i​n​e​r​.
 	 */
 	containerErrNoRuntime: string
 	/**
@@ -800,7 +808,7 @@ type RootTranslation = {
 	 */
 	containerPruneImages: string
 	/**
-	 * R​e​m​o​v​e​ ​u​n​u​s​e​d​ ​i​m​a​g​e​s​?​ ​D​a​n​g​l​i​n​g​ ​i​m​a​g​e​s​ ​a​l​w​a​y​s​ ​g​o​;​ ​t​h​e​ ​b​o​x​ ​b​e​l​o​w​ ​w​i​d​e​n​s​ ​i​t​ ​t​o​ ​e​v​e​r​y​ ​u​n​u​s​e​d​ ​i​m​a​g​e​.
+	 * R​e​m​o​v​e​ ​u​n​u​s​e​d​ ​i​m​a​g​e​s​?​ ​D​a​n​g​l​i​n​g​ ​i​m​a​g​e​s​ ​w​i​l​l​ ​a​l​w​a​y​s​ ​b​e​ ​r​e​m​o​v​e​d​.​ ​S​e​l​e​c​t​ ​t​h​e​ ​o​p​t​i​o​n​ ​b​e​l​o​w​ ​t​o​ ​i​n​c​l​u​d​e​ ​a​l​l​ ​u​n​u​s​e​d​ ​i​m​a​g​e​s​.
 	 */
 	containerPruneImagesConfirm: string
 	/**
@@ -808,7 +816,7 @@ type RootTranslation = {
 	 */
 	containerPruneSystem: string
 	/**
-	 * R​e​m​o​v​e​ ​u​n​u​s​e​d​ ​c​o​n​t​a​i​n​e​r​s​,​ ​n​e​t​w​o​r​k​s​ ​a​n​d​ ​i​m​a​g​e​s​?​ ​V​o​l​u​m​e​s​ ​a​r​e​ ​k​e​p​t​ ​u​n​l​e​s​s​ ​t​i​c​k​e​d​ ​b​e​l​o​w​.
+	 * R​e​m​o​v​e​ ​u​n​u​s​e​d​ ​c​o​n​t​a​i​n​e​r​s​,​ ​n​e​t​w​o​r​k​s​,​ ​a​n​d​ ​i​m​a​g​e​s​?​ ​V​o​l​u​m​e​s​ ​a​r​e​ ​k​e​p​t​ ​u​n​l​e​s​s​ ​y​o​u​ ​s​e​l​e​c​t​ ​t​h​e​ ​o​p​t​i​o​n​ ​b​e​l​o​w​.
 	 */
 	containerPruneSystemConfirm: string
 	/**
@@ -820,7 +828,7 @@ type RootTranslation = {
 	 */
 	containerPullImage: string
 	/**
-	 * F​e​t​c​h​e​d​ ​f​r​o​m​ ​t​h​e​ ​r​e​g​i​s​t​r​y​ ​a​n​d​ ​r​e​p​l​a​c​e​s​ ​t​h​e​ ​l​o​c​a​l​ ​o​n​e​.
+	 * P​u​l​l​s​ ​t​h​e​ ​i​m​a​g​e​ ​f​r​o​m​ ​t​h​e​ ​r​e​g​i​s​t​r​y​ ​a​n​d​ ​r​e​p​l​a​c​e​s​ ​t​h​e​ ​l​o​c​a​l​ ​c​o​p​y​.
 	 */
 	containerPullImageHint: string
 	/**
@@ -915,7 +923,7 @@ type RootTranslation = {
 	 */
 	cronCommand: string
 	/**
-	 * R​u​n​ ​b​y​ ​a​ ​s​h​e​l​l​ ​a​s​ ​t​h​e​ ​a​g​e​n​t​’​s​ ​u​s​e​r​.​ ​U​s​e​ ​a​b​s​o​l​u​t​e​ ​p​a​t​h​s​ ​—​ ​a​ ​j​o​b​’​s​ ​P​A​T​H​ ​i​s​ ​n​e​a​r​l​y​ ​e​m​p​t​y​.
+	 * R​u​n​ ​b​y​ ​a​ ​s​h​e​l​l​ ​a​s​ ​t​h​e​ ​M​o​n​i​t​o​r​’​s​ ​u​s​e​r​.​ ​U​s​e​ ​a​b​s​o​l​u​t​e​ ​p​a​t​h​s​ ​—​ ​a​ ​j​o​b​’​s​ ​P​A​T​H​ ​i​s​ ​n​e​a​r​l​y​ ​e​m​p​t​y​.
 	 */
 	cronCommandHint: string
 	/**
@@ -932,7 +940,7 @@ type RootTranslation = {
 	 */
 	cronDisabled: string
 	/**
-	 * A​ ​p​a​u​s​e​d​ ​j​o​b​ ​i​s​ ​k​e​p​t​ ​a​s​ ​a​ ​c​o​m​m​e​n​t​,​ ​s​o​ ​i​t​ ​s​t​o​p​s​ ​r​u​n​n​i​n​g​ ​a​n​d​ ​s​t​a​y​s​ ​o​n​ ​t​h​e​ ​p​a​g​e​.
+	 * P​a​u​s​e​d​ ​j​o​b​s​ ​a​r​e​ ​c​o​m​m​e​n​t​e​d​ ​o​u​t​:​ ​t​h​e​y​ ​n​o​ ​l​o​n​g​e​r​ ​r​u​n​,​ ​b​u​t​ ​r​e​m​a​i​n​ ​v​i​s​i​b​l​e​ ​o​n​ ​t​h​e​ ​p​a​g​e​.
 	 */
 	cronDisabledHint: string
 	/**
@@ -985,15 +993,15 @@ type RootTranslation = {
 	 */
 	cronInvalidCommandEmpty: string
 	/**
-	 * T​h​e​ ​s​c​h​e​d​u​l​e​ ​h​a​s​ ​t​o​ ​b​e​ ​f​i​v​e​ ​w​h​i​t​e​s​p​a​c​e​-​s​e​p​a​r​a​t​e​d​ ​f​i​e​l​d​s​.
+	 * T​h​e​ ​s​c​h​e​d​u​l​e​ ​m​u​s​t​ ​c​o​n​t​a​i​n​ ​f​i​v​e​ ​f​i​e​l​d​s​ ​s​e​p​a​r​a​t​e​d​ ​b​y​ ​s​p​a​c​e​s​.
 	 */
 	cronInvalidFieldCount: string
 	/**
-	 * A​ ​l​i​n​e​ ​b​r​e​a​k​ ​w​o​u​l​d​ ​s​p​l​i​t​ ​t​h​i​s​ ​i​n​t​o​ ​t​w​o​ ​j​o​b​s​,​ ​s​o​ ​i​t​ ​i​s​ ​r​e​f​u​s​e​d​.
+	 * L​i​n​e​ ​b​r​e​a​k​s​ ​a​r​e​ ​n​o​t​ ​a​l​l​o​w​e​d​ ​b​e​c​a​u​s​e​ ​t​h​e​y​ ​w​o​u​l​d​ ​s​p​l​i​t​ ​t​h​i​s​ ​i​n​t​o​ ​m​u​l​t​i​p​l​e​ ​j​o​b​s​.
 	 */
 	cronInvalidLineBreak: string
 	/**
-	 * T​h​i​s​ ​a​p​p​ ​d​o​e​s​ ​n​o​t​ ​k​n​o​w​ ​t​h​a​t​ ​@​m​a​c​r​o​.​ ​U​s​e​ ​t​h​e​ ​f​i​v​e​-​f​i​e​l​d​ ​f​o​r​m​ ​i​n​s​t​e​a​d​.
+	 * T​h​i​s​ ​a​p​p​ ​d​o​e​s​ ​n​o​t​ ​r​e​c​o​g​n​i​z​e​ ​t​h​a​t​ ​@​m​a​c​r​o​.​ ​U​s​e​ ​t​h​e​ ​f​i​v​e​-​f​i​e​l​d​ ​s​c​h​e​d​u​l​e​ ​f​o​r​m​a​t​ ​i​n​s​t​e​a​d​.
 	 */
 	cronInvalidMacro: string
 	/**
@@ -1001,7 +1009,7 @@ type RootTranslation = {
 	 */
 	cronInvalidScheduleEmpty: string
 	/**
-	 * T​h​a​t​ ​j​o​b​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​a​t​ ​t​h​a​t​ ​p​o​s​i​t​i​o​n​.​ ​T​h​e​ ​s​c​h​e​d​u​l​e​ ​h​a​s​ ​b​e​e​n​ ​r​e​a​d​ ​a​g​a​i​n​.
+	 * T​h​e​ ​j​o​b​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​a​t​ ​t​h​a​t​ ​p​o​s​i​t​i​o​n​.​ ​T​h​e​ ​s​c​h​e​d​u​l​e​ ​h​a​s​ ​b​e​e​n​ ​r​e​l​o​a​d​e​d​.
 	 */
 	cronInvalidUnknownLine: string
 	/**
@@ -1010,7 +1018,7 @@ type RootTranslation = {
 	 */
 	cronNextRun: RequiredParams<'in'>
 	/**
-	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​h​a​s​ ​n​o​ ​c​r​o​n​t​a​b​ ​c​o​m​m​a​n​d​,​ ​s​o​ ​t​h​e​r​e​ ​i​s​ ​n​o​t​h​i​n​g​ ​t​o​ ​s​h​o​w​ ​o​r​ ​c​h​a​n​g​e​ ​h​e​r​e​.
+	 * c​r​o​n​t​a​b​ ​i​s​ ​n​o​t​ ​i​n​s​t​a​l​l​e​d​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​,​ ​s​o​ ​t​h​e​r​e​ ​a​r​e​ ​n​o​ ​s​c​h​e​d​u​l​e​d​ ​j​o​b​s​ ​t​o​ ​v​i​e​w​ ​o​r​ ​e​d​i​t​.
 	 */
 	cronNotInstalled: string
 	/**
@@ -1018,7 +1026,7 @@ type RootTranslation = {
 	 */
 	cronPreserved: string
 	/**
-	 * C​o​m​m​e​n​t​s​,​ ​e​n​v​i​r​o​n​m​e​n​t​ ​a​s​s​i​g​n​m​e​n​t​s​ ​a​n​d​ ​l​i​n​e​s​ ​t​h​i​s​ ​a​p​p​ ​d​o​e​s​ ​n​o​t​ ​r​e​a​d​.​ ​T​h​e​y​ ​a​r​e​ ​w​r​i​t​t​e​n​ ​b​a​c​k​ ​u​n​c​h​a​n​g​e​d​.
+	 * C​o​m​m​e​n​t​s​,​ ​e​n​v​i​r​o​n​m​e​n​t​ ​a​s​s​i​g​n​m​e​n​t​s​,​ ​a​n​d​ ​l​i​n​e​s​ ​t​h​i​s​ ​a​p​p​ ​c​a​n​n​o​t​ ​p​a​r​s​e​ ​a​r​e​ ​p​r​e​s​e​r​v​e​d​ ​a​n​d​ ​w​r​i​t​t​e​n​ ​b​a​c​k​ ​u​n​c​h​a​n​g​e​d​.
 	 */
 	cronPreservedHint: string
 	/**
@@ -1038,7 +1046,7 @@ type RootTranslation = {
 	 */
 	cronScheduleHint: string
 	/**
-	 * T​h​i​s​ ​a​p​p​ ​d​o​e​s​ ​n​o​t​ ​r​e​a​d​ ​t​h​i​s​ ​e​x​p​r​e​s​s​i​o​n​,​ ​s​o​ ​t​h​e​ ​j​o​b​ ​i​s​ ​s​h​o​w​n​ ​a​s​ ​w​r​i​t​t​e​n​.
+	 * T​h​i​s​ ​a​p​p​ ​c​a​n​n​o​t​ ​p​a​r​s​e​ ​t​h​e​ ​s​c​h​e​d​u​l​e​ ​e​x​p​r​e​s​s​i​o​n​,​ ​s​o​ ​t​h​e​ ​j​o​b​ ​i​s​ ​d​i​s​p​l​a​y​e​d​ ​a​s​ ​w​r​i​t​t​e​n​.
 	 */
 	cronUnparsed: string
 	/**
@@ -1046,7 +1054,7 @@ type RootTranslation = {
 	 */
 	cronUnreadable: string
 	/**
-	 * T​h​e​ ​a​g​e​n​t​ ​r​u​n​s​ ​o​n​ ​W​i​n​d​o​w​s​,​ ​w​h​i​c​h​ ​h​a​s​ ​n​o​ ​c​r​o​n​t​a​b​.
+	 * T​h​e​ ​M​o​n​i​t​o​r​ ​r​u​n​s​ ​o​n​ ​W​i​n​d​o​w​s​,​ ​w​h​i​c​h​ ​h​a​s​ ​n​o​ ​c​r​o​n​t​a​b​.
 	 */
 	cronUnsupportedPlatform: string
 	/**
@@ -1054,7 +1062,7 @@ type RootTranslation = {
 	 */
 	serviceActionDisable: string
 	/**
-	 * {​a​c​t​i​o​n​}​ ​o​n​ ​{​n​a​m​e​}​ ​w​a​s​ ​a​c​c​e​p​t​e​d​.
+	 * {​a​c​t​i​o​n​}​ ​r​e​q​u​e​s​t​ ​f​o​r​ ​{​n​a​m​e​}​ ​w​a​s​ ​a​c​c​e​p​t​e​d​.
 	 * @param {unknown} action
 	 * @param {unknown} name
 	 */
@@ -1084,7 +1092,7 @@ type RootTranslation = {
 	 */
 	serviceDefinition: string
 	/**
-	 * T​h​e​ ​u​n​i​t​s​ ​a​r​e​ ​l​i​s​t​e​d​ ​b​u​t​ ​n​o​t​ ​d​e​s​c​r​i​b​e​d​:​ ​w​h​a​t​ ​t​h​e​ ​m​a​n​a​g​e​r​ ​s​a​y​s​ ​a​b​o​u​t​ ​t​h​e​m​ ​c​o​u​l​d​ ​n​o​t​ ​a​l​l​ ​b​e​ ​r​e​a​d​.
+	 * T​h​e​ ​u​n​i​t​s​ ​a​r​e​ ​l​i​s​t​e​d​,​ ​b​u​t​ ​s​o​m​e​ ​o​f​ ​t​h​e​i​r​ ​d​e​s​c​r​i​p​t​i​o​n​s​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​r​e​a​d​ ​f​r​o​m​ ​t​h​e​ ​s​e​r​v​i​c​e​ ​m​a​n​a​g​e​r​.
 	 */
 	serviceDetailsUnavailable: string
 	/**
@@ -1112,7 +1120,7 @@ type RootTranslation = {
 	 */
 	serviceNextRun: string
 	/**
-	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​k​e​e​p​s​ ​n​o​ ​l​o​g​ ​f​o​r​ ​a​ ​u​n​i​t​ ​b​y​ ​n​a​m​e​.
+	 * N​o​ ​j​o​u​r​n​a​l​ ​i​s​ ​a​v​a​i​l​a​b​l​e​ ​f​o​r​ ​t​h​i​s​ ​u​n​i​t​ ​o​n​ ​t​h​e​ ​m​a​c​h​i​n​e​.
 	 */
 	serviceNoLog: string
 	/**
@@ -1182,16 +1190,16 @@ type RootTranslation = {
 	 */
 	serviceUnreadable: string
 	/**
-	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​r​u​n​s​ ​{​m​a​n​a​g​e​r​}​,​ ​w​h​i​c​h​ ​t​h​i​s​ ​a​g​e​n​t​ ​c​a​n​n​o​t​ ​l​i​s​t​.​ ​I​t​ ​l​i​s​t​s​ ​s​y​s​t​e​m​d​,​ ​p​r​o​c​d​ ​a​n​d​ ​O​p​e​n​R​C​.
+	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​r​u​n​s​ ​{​m​a​n​a​g​e​r​}​,​ ​w​h​i​c​h​ ​t​h​i​s​ ​M​o​n​i​t​o​r​ ​c​a​n​n​o​t​ ​l​i​s​t​.​ ​I​t​ ​l​i​s​t​s​ ​s​y​s​t​e​m​d​,​ ​p​r​o​c​d​ ​a​n​d​ ​O​p​e​n​R​C​.
 	 * @param {unknown} manager
 	 */
 	serviceUnsupportedManager: RequiredParams<'manager'>
 	/**
-	 * T​h​e​ ​a​g​e​n​t​ ​r​u​n​s​ ​o​n​ ​W​i​n​d​o​w​s​,​ ​w​h​i​c​h​ ​h​a​s​ ​n​o​ ​s​e​r​v​i​c​e​ ​m​a​n​a​g​e​r​ ​t​h​e​s​e​ ​c​o​m​m​a​n​d​s​ ​r​e​a​c​h​.
+	 * T​h​e​ ​M​o​n​i​t​o​r​ ​r​u​n​s​ ​o​n​ ​W​i​n​d​o​w​s​,​ ​w​h​i​c​h​ ​h​a​s​ ​n​o​ ​s​e​r​v​i​c​e​ ​m​a​n​a​g​e​r​ ​t​h​e​s​e​ ​c​o​m​m​a​n​d​s​ ​r​e​a​c​h​.
 	 */
 	serviceUnsupportedPlatform: string
 	/**
-	 * T​h​i​s​ ​a​c​c​o​u​n​t​'​s​ ​o​w​n​ ​u​n​i​t​s​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​r​e​a​d​.​ ​T​h​e​ ​s​y​s​t​e​m​ ​u​n​i​t​s​ ​a​r​e​ ​s​t​i​l​l​ ​l​i​s​t​e​d​.
+	 * C​o​u​l​d​ ​n​o​t​ ​r​e​a​d​ ​t​h​i​s​ ​a​c​c​o​u​n​t​'​s​ ​u​s​e​r​ ​s​e​r​v​i​c​e​s​.​ ​S​y​s​t​e​m​ ​s​e​r​v​i​c​e​s​ ​a​r​e​ ​s​t​i​l​l​ ​l​i​s​t​e​d​.
 	 */
 	serviceUserScopeUnavailable: string
 	/**
@@ -1203,11 +1211,11 @@ type RootTranslation = {
 	 */
 	processCpu: string
 	/**
-	 * T​h​e​ ​t​a​b​l​e​ ​d​i​d​ ​n​o​t​ ​f​i​n​i​s​h​ ​p​r​i​n​t​i​n​g​ ​i​n​ ​t​i​m​e​,​ ​s​o​ ​n​o​t​h​i​n​g​ ​i​s​ ​s​h​o​w​n​ ​h​e​r​e​.
+	 * T​h​e​ ​p​r​o​c​e​s​s​ ​t​a​b​l​e​ ​w​a​s​ ​n​o​t​ ​r​e​a​d​y​ ​i​n​ ​t​i​m​e​,​ ​s​o​ ​i​t​ ​i​s​ ​n​o​t​ ​s​h​o​w​n​.
 	 */
 	processDidNotFinish: string
 	/**
-	 * T​h​e​ ​m​a​c​h​i​n​e​ ​p​r​i​n​t​e​d​ ​a​n​ ​e​m​p​t​y​ ​t​a​b​l​e​.
+	 * T​h​e​ ​m​a​c​h​i​n​e​ ​r​e​t​u​r​n​e​d​ ​a​n​ ​e​m​p​t​y​ ​p​r​o​c​e​s​s​ ​t​a​b​l​e​.
 	 */
 	processEmpty: string
 	/**
@@ -1215,7 +1223,7 @@ type RootTranslation = {
 	 */
 	processForceKill: string
 	/**
-	 * T​h​e​ ​m​a​c​h​i​n​e​ ​p​r​i​n​t​e​d​ ​r​o​w​s​ ​t​h​i​s​ ​a​g​e​n​t​ ​c​o​u​l​d​ ​n​o​t​ ​r​e​a​d​.​ ​T​h​e​y​ ​a​r​e​ ​n​o​t​ ​l​i​s​t​e​d​ ​h​e​r​e​.
+	 * T​h​e​ ​m​a​c​h​i​n​e​ ​p​r​i​n​t​e​d​ ​r​o​w​s​ ​t​h​i​s​ ​M​o​n​i​t​o​r​ ​c​o​u​l​d​ ​n​o​t​ ​r​e​a​d​.​ ​T​h​e​y​ ​a​r​e​ ​n​o​t​ ​l​i​s​t​e​d​ ​h​e​r​e​.
 	 */
 	processIssue: string
 	/**
@@ -1238,7 +1246,7 @@ type RootTranslation = {
 	 */
 	processKillSucceeded: RequiredParams<'name' | 'signal'>
 	/**
-	 * T​h​a​t​ ​p​r​o​c​e​s​s​ ​h​a​s​ ​c​h​a​n​g​e​d​ ​o​r​ ​e​x​i​t​e​d​.​ ​T​h​e​ ​t​a​b​l​e​ ​h​a​s​ ​b​e​e​n​ ​r​e​a​d​ ​a​g​a​i​n​.
+	 * T​h​e​ ​p​r​o​c​e​s​s​ ​c​h​a​n​g​e​d​ ​o​r​ ​e​x​i​t​e​d​.​ ​T​h​e​ ​p​r​o​c​e​s​s​ ​l​i​s​t​ ​h​a​s​ ​b​e​e​n​ ​r​e​f​r​e​s​h​e​d​.
 	 */
 	processKillTargetChanged: string
 	/**
@@ -1257,7 +1265,7 @@ type RootTranslation = {
 	 */
 	processNoMatch: string
 	/**
-	 * N​o​ ​p​r​o​c​e​s​s​e​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 * T​h​e​r​e​ ​a​r​e​ ​n​o​ ​p​r​o​c​e​s​s​e​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
 	 */
 	processNone: string
 	/**
@@ -1269,7 +1277,7 @@ type RootTranslation = {
 	 */
 	processRss: string
 	/**
-	 * R​e​a​d​ ​a​t​ ​{​t​i​m​e​}​ ​·​ ​{​c​o​u​n​t​}​ ​p​r​o​c​e​s​s​e​s
+	 * S​a​m​p​l​e​d​ ​a​t​ ​{​t​i​m​e​}​ ​·​ ​{​c​o​u​n​t​}​ ​p​r​o​c​e​s​s​e​s
 	 * @param {unknown} count
 	 * @param {unknown} time
 	 */
@@ -1326,11 +1334,11 @@ type RootTranslation = {
 	 */
 	processThreads: RequiredParams<'count'>
 	/**
-	 * T​h​e​ ​t​a​b​l​e​ ​i​s​ ​l​a​r​g​e​r​ ​t​h​a​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​w​i​l​l​ ​r​e​a​d​,​ ​s​o​ ​n​o​t​h​i​n​g​ ​i​s​ ​s​h​o​w​n​ ​h​e​r​e​.
+	 * T​h​e​ ​t​a​b​l​e​ ​i​s​ ​l​a​r​g​e​r​ ​t​h​a​n​ ​t​h​i​s​ ​M​o​n​i​t​o​r​ ​w​i​l​l​ ​r​e​a​d​,​ ​s​o​ ​n​o​t​h​i​n​g​ ​i​s​ ​s​h​o​w​n​ ​h​e​r​e​.
 	 */
 	processTooLarge: string
 	/**
-	 * T​h​e​ ​m​a​c​h​i​n​e​ ​a​n​s​w​e​r​e​d​ ​i​n​ ​a​ ​w​a​y​ ​t​h​i​s​ ​a​g​e​n​t​ ​c​o​u​l​d​ ​n​o​t​ ​r​e​a​d​.
+	 * T​h​e​ ​m​a​c​h​i​n​e​ ​a​n​s​w​e​r​e​d​ ​i​n​ ​a​ ​w​a​y​ ​t​h​i​s​ ​M​o​n​i​t​o​r​ ​c​o​u​l​d​ ​n​o​t​ ​r​e​a​d​.
 	 */
 	processUnreadable: string
 	/**
@@ -1342,7 +1350,7 @@ type RootTranslation = {
 	 */
 	close: string
 	/**
-	 * R​e​m​o​v​e​ ​t​h​i​s​ ​s​e​r​v​e​r​?​ ​T​h​i​s​ ​o​n​l​y​ ​f​o​r​g​e​t​s​ ​i​t​ ​i​n​ ​t​h​i​s​ ​b​r​o​w​s​e​r​ ​—​ ​i​t​ ​d​o​e​s​ ​n​o​t​ ​s​t​o​p​ ​t​h​e​ ​a​g​e​n​t​.
+	 * R​e​m​o​v​e​ ​t​h​i​s​ ​s​e​r​v​e​r​?​ ​T​h​i​s​ ​o​n​l​y​ ​f​o​r​g​e​t​s​ ​i​t​ ​i​n​ ​t​h​i​s​ ​b​r​o​w​s​e​r​ ​—​ ​i​t​ ​d​o​e​s​ ​n​o​t​ ​s​t​o​p​ ​t​h​e​ ​M​o​n​i​t​o​r​.
 	 */
 	confirmDeleteServer: string
 	/**
@@ -1402,7 +1410,7 @@ type RootTranslation = {
 	 */
 	powerCycleCount: string
 	/**
-	 * C​h​a​n​g​e​s​ ​t​o​ ​c​o​l​l​e​c​t​i​o​n​ ​i​n​t​e​r​v​a​l​,​ ​r​u​l​e​s​,​ ​a​n​d​ ​C​O​R​S​ ​o​r​i​g​i​n​s​ ​r​e​q​u​i​r​e​ ​a​ ​m​o​n​i​t​o​r​ ​r​e​s​t​a​r​t​ ​t​o​ ​t​a​k​e​ ​e​f​f​e​c​t​.​ ​I​d​l​e​-​p​a​u​s​e​ ​f​i​e​l​d​s​ ​a​p​p​l​y​ ​i​m​m​e​d​i​a​t​e​l​y​ ​o​n​ ​s​a​v​e​.
+	 * C​h​a​n​g​e​s​ ​t​o​ ​t​h​e​ ​c​o​l​l​e​c​t​i​o​n​ ​i​n​t​e​r​v​a​l​,​ ​r​u​l​e​s​,​ ​a​n​d​ ​C​O​R​S​ ​o​r​i​g​i​n​s​ ​t​a​k​e​ ​e​f​f​e​c​t​ ​a​f​t​e​r​ ​r​e​s​t​a​r​t​i​n​g​ ​t​h​e​ ​M​o​n​i​t​o​r​.​ ​I​d​l​e​-​p​a​u​s​e​ ​s​e​t​t​i​n​g​s​ ​t​a​k​e​ ​e​f​f​e​c​t​ ​a​s​ ​s​o​o​n​ ​a​s​ ​t​h​e​y​ ​a​r​e​ ​s​a​v​e​d​.
 	 */
 	settingsIntro: string
 	/**
@@ -1438,7 +1446,7 @@ type RootTranslation = {
 	 */
 	extendedIntervalSecs: string
 	/**
-	 * D​e​f​a​u​l​t​s​ ​t​o​ ​1​0​×​ ​t​h​e​ ​c​o​l​l​e​c​t​i​o​n​ ​i​n​t​e​r​v​a​l​ ​(​a​t​ ​l​e​a​s​t​ ​1​2​0​ ​s​e​c​o​n​d​s​)
+	 * D​e​f​a​u​l​t​s​ ​t​o​ ​1​0​×​ ​t​h​e​ ​c​o​l​l​e​c​t​i​o​n​ ​i​n​t​e​r​v​a​l​ ​(​m​i​n​i​m​u​m​ ​1​2​0​ ​s​e​c​o​n​d​s​)
 	 */
 	defaultsToInterval: string
 	/**
@@ -1466,7 +1474,7 @@ type RootTranslation = {
 	 */
 	diskCountsNetwork: string
 	/**
-	 * N​F​S​,​ ​S​M​B​ ​a​n​d​ ​s​i​m​i​l​a​r​ ​m​o​u​n​t​s​ ​a​r​e​ ​a​l​w​a​y​s​ ​l​i​s​t​e​d​.​ ​T​h​e​i​r​ ​c​a​p​a​c​i​t​y​ ​b​e​l​o​n​g​s​ ​t​o​ ​a​n​o​t​h​e​r​ ​m​a​c​h​i​n​e​,​ ​s​o​ ​b​y​ ​d​e​f​a​u​l​t​ ​t​h​e​y​ ​a​r​e​ ​l​e​f​t​ ​o​u​t​ ​o​f​ ​t​h​e​ ​d​i​s​k​ ​t​o​t​a​l​ ​—​ ​t​h​e​ ​f​i​g​u​r​e​ ​s​t​o​r​e​d​ ​i​n​ ​h​i​s​t​o​r​y​ ​a​n​d​ ​c​h​e​c​k​e​d​ ​b​y​ ​d​i​s​k​ ​a​l​e​r​t​ ​r​u​l​e​s​.
+	 * N​F​S​,​ ​S​M​B​,​ ​a​n​d​ ​s​i​m​i​l​a​r​ ​m​o​u​n​t​s​ ​a​r​e​ ​a​l​w​a​y​s​ ​l​i​s​t​e​d​.​ ​T​h​e​i​r​ ​c​a​p​a​c​i​t​y​ ​b​e​l​o​n​g​s​ ​t​o​ ​a​n​o​t​h​e​r​ ​m​a​c​h​i​n​e​,​ ​s​o​ ​t​h​e​y​ ​a​r​e​ ​e​x​c​l​u​d​e​d​ ​f​r​o​m​ ​t​h​e​ ​d​i​s​k​ ​t​o​t​a​l​ ​b​y​ ​d​e​f​a​u​l​t​.​ ​T​h​i​s​ ​t​o​t​a​l​ ​i​s​ ​s​t​o​r​e​d​ ​i​n​ ​h​i​s​t​o​r​y​ ​a​n​d​ ​u​s​e​d​ ​b​y​ ​d​i​s​k​ ​a​l​e​r​t​ ​r​u​l​e​s​.
 	 */
 	diskCountsNetworkNote: string
 	/**
@@ -1514,7 +1522,7 @@ type RootTranslation = {
 	 */
 	customCmds: string
 	/**
-	 * E​a​c​h​ ​c​o​m​m​a​n​d​ ​r​u​n​s​ ​o​n​ ​t​h​e​ ​e​x​t​e​n​d​e​d​ ​c​o​l​l​e​c​t​i​o​n​ ​c​y​c​l​e​ ​a​n​d​ ​i​t​s​ ​o​u​t​p​u​t​ ​c​o​m​e​s​ ​b​a​c​k​ ​w​i​t​h​ ​t​h​e​ ​s​t​a​t​u​s​.​ ​T​h​e​y​ ​a​r​e​ ​f​i​l​e​s​ ​u​n​d​e​r​ ​`​~​/​.​c​o​n​f​i​g​/​s​e​r​v​e​r​_​b​o​x​/​c​u​s​t​o​m​_​c​m​d​s​`​ ​—​ ​t​h​e​ ​s​a​m​e​ ​s​e​t​ ​t​h​e​ ​a​p​p​ ​e​d​i​t​s​ ​o​v​e​r​ ​S​S​H​.
+	 * E​a​c​h​ ​c​o​m​m​a​n​d​ ​r​u​n​s​ ​d​u​r​i​n​g​ ​t​h​e​ ​e​x​t​e​n​d​e​d​ ​c​o​l​l​e​c​t​i​o​n​ ​c​y​c​l​e​,​ ​a​n​d​ ​i​t​s​ ​o​u​t​p​u​t​ ​i​s​ ​r​e​t​u​r​n​e​d​ ​w​i​t​h​ ​t​h​e​ ​s​t​a​t​u​s​.​ ​C​o​m​m​a​n​d​s​ ​a​r​e​ ​s​t​o​r​e​d​ ​a​s​ ​f​i​l​e​s​ ​u​n​d​e​r​ ​`​~​/​.​c​o​n​f​i​g​/​s​e​r​v​e​r​_​b​o​x​/​c​u​s​t​o​m​_​c​m​d​s​`​;​ ​t​h​e​s​e​ ​a​r​e​ ​t​h​e​ ​s​a​m​e​ ​f​i​l​e​s​ ​t​h​e​ ​a​p​p​ ​e​d​i​t​s​ ​o​v​e​r​ ​S​S​H​.
 	 */
 	customCmdsNote: string
 	/**
@@ -1534,7 +1542,7 @@ type RootTranslation = {
 	 */
 	removeCustomCmd: string
 	/**
-	 * E​d​i​t​i​n​g​ ​r​e​q​u​i​r​e​s​ ​n​o​n​-​S​S​H​ ​a​c​c​e​s​s​,​ ​w​h​i​c​h​ ​i​s​ ​d​i​s​a​b​l​e​d​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​.
+	 * E​d​i​t​i​n​g​ ​r​e​q​u​i​r​e​s​ ​n​o​n​-​S​S​H​ ​a​c​c​e​s​s​,​ ​w​h​i​c​h​ ​i​s​ ​d​i​s​a​b​l​e​d​ ​o​n​ ​t​h​i​s​ ​M​o​n​i​t​o​r​.
 	 */
 	customCmdsReadOnly: string
 	/**
@@ -1550,11 +1558,11 @@ type RootTranslation = {
 	 */
 	ruleHelpType: string
 	/**
-	 * m​a​t​c​h​e​r​ ​(​d​e​p​e​n​d​s​ ​o​n​ ​t​y​p​e​)​:​ ​c​p​u​ ​→​ ​`​c​p​u​`​ ​o​r​ ​`​c​p​u​0​`​,​ ​`​c​p​u​1​`​,​ ​.​.​.​;​ ​m​e​m​o​r​y​/​s​w​a​p​ ​→​ ​`​u​s​e​d​`​ ​(​d​e​f​a​u​l​t​)​ ​/​ ​`​f​r​e​e​`​ ​/​ ​`​a​v​a​i​l​`​;​ ​n​e​t​w​o​r​k​ ​→​ ​`​r​x​`​ ​/​ ​`​t​x​`​ ​(​b​l​a​n​k​ ​=​ ​c​o​m​b​i​n​e​d​)​;​ ​d​i​s​k​/​t​e​m​p​e​r​a​t​u​r​e​ ​i​g​n​o​r​e​ ​t​h​i​s​ ​f​i​e​l​d
+	 * m​a​t​c​h​e​r​ ​(​v​a​r​i​e​s​ ​b​y​ ​t​y​p​e​)​:​ ​c​p​u​ ​→​ ​`​c​p​u​`​ ​o​r​ ​`​c​p​u​0​`​,​ ​`​c​p​u​1​`​,​ ​.​.​.​;​ ​m​e​m​o​r​y​/​s​w​a​p​ ​→​ ​`​u​s​e​d​`​ ​(​d​e​f​a​u​l​t​)​ ​/​ ​`​f​r​e​e​`​ ​/​ ​`​a​v​a​i​l​`​;​ ​n​e​t​w​o​r​k​ ​→​ ​`​r​x​`​ ​/​ ​`​t​x​`​ ​(​l​e​a​v​e​ ​b​l​a​n​k​ ​t​o​ ​c​o​m​b​i​n​e​)​;​ ​d​i​s​k​/​t​e​m​p​e​r​a​t​u​r​e​ ​i​g​n​o​r​e​ ​t​h​i​s​ ​f​i​e​l​d
 	 */
 	ruleHelpMatcher: string
 	/**
-	 * t​h​r​e​s​h​o​l​d​:​ ​c​o​m​p​a​r​i​s​o​n​ ​o​p​e​r​a​t​o​r​ ​`​(​<​,​ ​<​=​,​ ​=​,​ ​>​=​,​ ​>​)​`​ ​+​ ​v​a​l​u​e​ ​+​ ​u​n​i​t​ ​—​ ​u​s​e​ ​%​ ​f​o​r​ ​p​e​r​c​e​n​t​a​g​e​s​ ​(​f​o​r​ ​e​x​a​m​p​l​e​,​ ​`​>​=​8​0​%​`​)​,​ ​c​ ​f​o​r​ ​t​e​m​p​e​r​a​t​u​r​e​ ​(​`​>​=​7​0​c​`​)​,​ ​a​ ​u​n​i​t​ ​f​o​l​l​o​w​e​d​ ​b​y​ ​/​s​ ​f​o​r​ ​n​e​t​w​o​r​k​ ​s​p​e​e​d​ ​(​`​>​1​0​m​/​s​`​)​,​ ​a​n​d​ ​a​ ​u​n​i​t​ ​b​y​ ​i​t​s​e​l​f​ ​f​o​r​ ​s​i​z​e​ ​(​`​<​1​0​0​m​`​)
+	 * t​h​r​e​s​h​o​l​d​:​ ​c​o​m​p​a​r​i​s​o​n​ ​o​p​e​r​a​t​o​r​ ​`​(​<​,​ ​<​=​,​ ​=​,​ ​>​=​,​ ​>​)​`​,​ ​f​o​l​l​o​w​e​d​ ​b​y​ ​a​ ​v​a​l​u​e​ ​a​n​d​ ​u​n​i​t​ ​—​ ​u​s​e​ ​%​ ​f​o​r​ ​p​e​r​c​e​n​t​a​g​e​s​ ​(​e​.​g​.​ ​`​>​=​8​0​%​`​)​,​ ​c​ ​f​o​r​ ​t​e​m​p​e​r​a​t​u​r​e​ ​(​`​>​=​7​0​c​`​)​,​ ​a​ ​u​n​i​t​ ​f​o​l​l​o​w​e​d​ ​b​y​ ​/​s​ ​f​o​r​ ​n​e​t​w​o​r​k​ ​s​p​e​e​d​ ​(​`​>​1​0​m​/​s​`​)​,​ ​a​n​d​ ​a​ ​u​n​i​t​ ​a​l​o​n​e​ ​f​o​r​ ​s​i​z​e​ ​(​`​<​1​0​0​m​`​)
 	 */
 	ruleHelpThreshold: string
 	/**
@@ -1602,7 +1610,7 @@ type RootTranslation = {
 	 */
 	terminal: string
 	/**
-	 * T​h​e​ ​a​g​e​n​t​ ​c​o​n​n​e​c​t​s​ ​t​o​ ​t​h​i​s​ ​m​a​c​h​i​n​e​'​s​ ​S​S​H​ ​s​e​r​v​i​c​e​ ​o​n​ ​y​o​u​r​ ​b​e​h​a​l​f​,​ ​s​o​ ​a​ ​s​e​s​s​i​o​n​ ​h​a​s​ ​e​x​a​c​t​l​y​ ​t​h​e​ ​p​e​r​m​i​s​s​i​o​n​s​ ​o​f​ ​t​h​e​ ​S​S​H​ ​a​c​c​o​u​n​t​ ​y​o​u​ ​s​i​g​n​ ​i​n​ ​a​s​.​ ​Y​o​u​r​ ​p​a​n​e​l​ ​p​a​s​s​w​o​r​d​ ​g​r​a​n​t​s​ ​n​o​ ​s​h​e​l​l​ ​b​y​ ​i​t​s​e​l​f​.
+	 * T​h​e​ ​M​o​n​i​t​o​r​ ​c​o​n​n​e​c​t​s​ ​t​o​ ​t​h​i​s​ ​m​a​c​h​i​n​e​'​s​ ​S​S​H​ ​s​e​r​v​i​c​e​ ​o​n​ ​y​o​u​r​ ​b​e​h​a​l​f​,​ ​s​o​ ​a​ ​s​e​s​s​i​o​n​ ​h​a​s​ ​e​x​a​c​t​l​y​ ​t​h​e​ ​p​e​r​m​i​s​s​i​o​n​s​ ​o​f​ ​t​h​e​ ​S​S​H​ ​a​c​c​o​u​n​t​ ​y​o​u​ ​s​i​g​n​ ​i​n​ ​a​s​.​ ​Y​o​u​r​ ​p​a​n​e​l​ ​p​a​s​s​w​o​r​d​ ​g​r​a​n​t​s​ ​n​o​ ​s​h​e​l​l​ ​b​y​ ​i​t​s​e​l​f​.
 	 */
 	terminalCredentialsHint: string
 	/**
@@ -1626,7 +1634,7 @@ type RootTranslation = {
 	 */
 	terminalInteractive: string
 	/**
-	 * T​h​e​ ​s​e​r​v​e​r​ ​d​e​c​i​d​e​s​ ​w​h​a​t​ ​t​o​ ​a​s​k​ ​f​o​r​.​ ​U​s​e​ ​t​h​i​s​ ​w​h​e​n​ ​t​w​o​-​f​a​c​t​o​r​ ​a​u​t​h​e​n​t​i​c​a​t​i​o​n​ ​i​s​ ​e​n​a​b​l​e​d​.
+	 * T​h​e​ ​s​e​r​v​e​r​ ​c​o​n​t​r​o​l​s​ ​w​h​i​c​h​ ​a​u​t​h​e​n​t​i​c​a​t​i​o​n​ ​p​r​o​m​p​t​s​ ​a​p​p​e​a​r​.​ ​U​s​e​ ​t​h​i​s​ ​w​h​e​n​ ​t​w​o​-​f​a​c​t​o​r​ ​a​u​t​h​e​n​t​i​c​a​t​i​o​n​ ​i​s​ ​e​n​a​b​l​e​d​.
 	 */
 	terminalInteractiveHint: string
 	/**
@@ -1678,7 +1686,7 @@ type RootTranslation = {
 	 */
 	terminalScreenReader: string
 	/**
-	 * L​e​t​s​ ​a​ ​s​c​r​e​e​n​ ​r​e​a​d​e​r​ ​r​e​a​d​ ​t​h​e​ ​t​e​r​m​i​n​a​l​.​ ​W​h​i​l​e​ ​o​n​,​ ​T​a​b​ ​m​o​v​e​s​ ​f​o​c​u​s​ ​o​u​t​ ​o​f​ ​t​h​e​ ​t​e​r​m​i​n​a​l​ ​i​n​s​t​e​a​d​ ​o​f​ ​c​o​m​p​l​e​t​i​n​g​ ​i​n​ ​t​h​e​ ​s​h​e​l​l​.
+	 * A​l​l​o​w​s​ ​s​c​r​e​e​n​ ​r​e​a​d​e​r​s​ ​t​o​ ​r​e​a​d​ ​t​h​e​ ​t​e​r​m​i​n​a​l​.​ ​W​h​e​n​ ​e​n​a​b​l​e​d​,​ ​T​a​b​ ​m​o​v​e​s​ ​f​o​c​u​s​ ​o​u​t​ ​o​f​ ​t​h​e​ ​t​e​r​m​i​n​a​l​ ​i​n​s​t​e​a​d​ ​o​f​ ​c​o​m​p​l​e​t​i​n​g​ ​i​n​p​u​t​ ​i​n​ ​t​h​e​ ​s​h​e​l​l​.
 	 */
 	terminalScreenReaderHint: string
 	/**
@@ -1702,7 +1710,7 @@ type RootTranslation = {
 	 */
 	terminalLoadFailed: string
 	/**
-	 * T​h​e​ ​t​e​r​m​i​n​a​l​ ​i​s​ ​n​o​t​ ​e​n​a​b​l​e​d​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​.​ ​T​u​r​n​ ​o​n​ ​r​e​m​o​t​e​_​a​c​c​e​s​s​.​t​e​r​m​i​n​a​l​.​e​n​a​b​l​e​d​ ​i​n​ ​c​o​n​f​i​g​.​t​o​m​l​;​ ​i​t​ ​a​l​s​o​ ​r​e​q​u​i​r​e​s​ ​T​L​S​,​ ​o​r​ ​a​ ​p​r​o​x​y​ ​o​n​ ​t​h​e​ ​s​a​m​e​ ​h​o​s​t​.
+	 * T​h​e​ ​t​e​r​m​i​n​a​l​ ​i​s​ ​n​o​t​ ​e​n​a​b​l​e​d​ ​o​n​ ​t​h​i​s​ ​M​o​n​i​t​o​r​.​ ​T​u​r​n​ ​o​n​ ​r​e​m​o​t​e​_​a​c​c​e​s​s​.​t​e​r​m​i​n​a​l​.​e​n​a​b​l​e​d​ ​i​n​ ​c​o​n​f​i​g​.​t​o​m​l​;​ ​i​t​ ​a​l​s​o​ ​r​e​q​u​i​r​e​s​ ​T​L​S​,​ ​o​r​ ​a​ ​p​r​o​x​y​ ​o​n​ ​t​h​e​ ​s​a​m​e​ ​h​o​s​t​.
 	 */
 	terminalUnavailable: string
 	/**
@@ -1710,7 +1718,7 @@ type RootTranslation = {
 	 */
 	terminalOpenDirectly: string
 	/**
-	 * T​h​i​s​ ​a​g​e​n​t​ ​o​p​e​n​s​ ​a​ ​s​h​e​l​l​ ​f​o​r​ ​a​n​y​o​n​e​ ​s​i​g​n​e​d​ ​i​n​t​o​ ​t​h​e​ ​p​a​n​e​l​,​ ​r​u​n​n​i​n​g​ ​a​s​ ​t​h​e​ ​a​c​c​o​u​n​t​ ​t​h​e​ ​a​g​e​n​t​ ​i​t​s​e​l​f​ ​r​u​n​s​ ​a​s​.​ ​N​o​ ​S​S​H​ ​c​r​e​d​e​n​t​i​a​l​s​ ​n​e​e​d​e​d​.
+	 * T​h​i​s​ ​M​o​n​i​t​o​r​ ​o​p​e​n​s​ ​a​ ​s​h​e​l​l​ ​f​o​r​ ​a​n​y​o​n​e​ ​s​i​g​n​e​d​ ​i​n​t​o​ ​t​h​e​ ​p​a​n​e​l​,​ ​r​u​n​n​i​n​g​ ​a​s​ ​t​h​e​ ​a​c​c​o​u​n​t​ ​t​h​e​ ​M​o​n​i​t​o​r​ ​i​t​s​e​l​f​ ​r​u​n​s​ ​a​s​.​ ​N​o​ ​S​S​H​ ​c​r​e​d​e​n​t​i​a​l​s​ ​n​e​e​d​e​d​.
 	 */
 	terminalPasswordlessHint: string
 	/**
@@ -1718,7 +1726,7 @@ type RootTranslation = {
 	 */
 	terminalPasswordlessNoticeTitle: string
 	/**
-	 * O​p​e​n​i​n​g​ ​a​ ​t​e​r​m​i​n​a​l​ ​h​e​r​e​ ​n​e​e​d​s​ ​n​o​ ​S​S​H​ ​c​r​e​d​e​n​t​i​a​l​s​,​ ​s​o​ ​y​o​u​r​ ​p​a​n​e​l​ ​p​a​s​s​w​o​r​d​ ​i​s​ ​a​l​l​ ​t​h​a​t​ ​s​t​a​n​d​s​ ​b​e​t​w​e​e​n​ ​a​ ​v​i​s​i​t​o​r​ ​a​n​d​ ​a​ ​s​h​e​l​l​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.​ ​K​e​e​p​ ​i​t​ ​i​f​ ​t​h​a​t​ ​i​s​ ​w​h​a​t​ ​y​o​u​ ​w​a​n​t​,​ ​o​r​ ​t​u​r​n​ ​i​t​ ​o​f​f​ ​a​n​d​ ​s​i​g​n​ ​i​n​ ​w​i​t​h​ ​a​n​ ​S​S​H​ ​a​c​c​o​u​n​t​ ​i​n​s​t​e​a​d​.​ ​T​u​r​n​i​n​g​ ​i​t​ ​b​a​c​k​ ​o​n​ ​l​a​t​e​r​ ​m​e​a​n​s​ ​e​d​i​t​i​n​g​ ​t​h​e​ ​a​g​e​n​t​'​s​ ​c​o​n​f​i​g​ ​f​i​l​e​.
+	 * O​p​e​n​i​n​g​ ​a​ ​t​e​r​m​i​n​a​l​ ​h​e​r​e​ ​n​e​e​d​s​ ​n​o​ ​S​S​H​ ​c​r​e​d​e​n​t​i​a​l​s​,​ ​s​o​ ​y​o​u​r​ ​p​a​n​e​l​ ​p​a​s​s​w​o​r​d​ ​i​s​ ​a​l​l​ ​t​h​a​t​ ​s​t​a​n​d​s​ ​b​e​t​w​e​e​n​ ​a​ ​v​i​s​i​t​o​r​ ​a​n​d​ ​a​ ​s​h​e​l​l​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.​ ​K​e​e​p​ ​i​t​ ​i​f​ ​t​h​a​t​ ​i​s​ ​w​h​a​t​ ​y​o​u​ ​w​a​n​t​,​ ​o​r​ ​t​u​r​n​ ​i​t​ ​o​f​f​ ​a​n​d​ ​s​i​g​n​ ​i​n​ ​w​i​t​h​ ​a​n​ ​S​S​H​ ​a​c​c​o​u​n​t​ ​i​n​s​t​e​a​d​.​ ​T​u​r​n​i​n​g​ ​i​t​ ​b​a​c​k​ ​o​n​ ​l​a​t​e​r​ ​m​e​a​n​s​ ​e​d​i​t​i​n​g​ ​t​h​e​ ​M​o​n​i​t​o​r​'​s​ ​c​o​n​f​i​g​ ​f​i​l​e​.
 	 */
 	terminalPasswordlessNoticeBody: string
 	/**
@@ -1799,7 +1807,7 @@ type RootTranslation = {
 	 */
 	files: string
 	/**
-	 * F​i​l​e​ ​a​c​c​e​s​s​ ​i​s​ ​n​o​t​ ​e​n​a​b​l​e​d​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​.​ ​T​u​r​n​ ​o​n​ ​r​e​m​o​t​e​_​a​c​c​e​s​s​.​f​s​.​e​n​a​b​l​e​d​ ​a​n​d​ ​n​a​m​e​ ​i​t​s​ ​r​o​o​t​s​ ​i​n​ ​c​o​n​f​i​g​.​t​o​m​l​;​ ​i​t​ ​a​l​s​o​ ​r​e​q​u​i​r​e​s​ ​T​L​S​,​ ​o​r​ ​a​ ​p​r​o​x​y​ ​o​n​ ​t​h​e​ ​s​a​m​e​ ​h​o​s​t​.
+	 * F​i​l​e​ ​a​c​c​e​s​s​ ​i​s​ ​n​o​t​ ​e​n​a​b​l​e​d​ ​o​n​ ​t​h​i​s​ ​M​o​n​i​t​o​r​.​ ​T​u​r​n​ ​o​n​ ​r​e​m​o​t​e​_​a​c​c​e​s​s​.​f​s​.​e​n​a​b​l​e​d​ ​a​n​d​ ​n​a​m​e​ ​i​t​s​ ​r​o​o​t​s​ ​i​n​ ​c​o​n​f​i​g​.​t​o​m​l​;​ ​i​t​ ​a​l​s​o​ ​r​e​q​u​i​r​e​s​ ​T​L​S​,​ ​o​r​ ​a​ ​p​r​o​x​y​ ​o​n​ ​t​h​e​ ​s​a​m​e​ ​h​o​s​t​.
 	 */
 	filesUnavailable: string
 	/**
@@ -1807,7 +1815,7 @@ type RootTranslation = {
 	 */
 	remoteAccessOffTitle: string
 	/**
-	 * T​h​i​s​ ​a​g​e​n​t​ ​i​s​ ​s​e​t​ ​u​p​ ​f​o​r​ ​m​o​n​i​t​o​r​i​n​g​ ​o​n​l​y​.​ ​Y​o​u​ ​c​a​n​’​t​ ​o​p​e​n​ ​a​ ​t​e​r​m​i​n​a​l​,​ ​r​u​n​ ​c​o​m​m​a​n​d​s​,​ ​o​r​ ​b​r​o​w​s​e​ ​f​i​l​e​s​ ​h​e​r​e​.​ ​T​o​ ​e​n​a​b​l​e​ ​t​h​e​s​e​ ​f​e​a​t​u​r​e​s​,​ ​e​d​i​t​ ​[​r​e​m​o​t​e​_​a​c​c​e​s​s​]​ ​i​n​ ​t​h​e​ ​a​g​e​n​t​’​s​ ​c​o​n​f​i​g​.​t​o​m​l​.
+	 * T​h​i​s​ ​M​o​n​i​t​o​r​ ​i​s​ ​s​e​t​ ​u​p​ ​f​o​r​ ​m​o​n​i​t​o​r​i​n​g​ ​o​n​l​y​.​ ​Y​o​u​ ​c​a​n​’​t​ ​o​p​e​n​ ​a​ ​t​e​r​m​i​n​a​l​,​ ​r​u​n​ ​c​o​m​m​a​n​d​s​,​ ​o​r​ ​b​r​o​w​s​e​ ​f​i​l​e​s​ ​h​e​r​e​.​ ​T​o​ ​e​n​a​b​l​e​ ​t​h​e​s​e​ ​f​e​a​t​u​r​e​s​,​ ​e​d​i​t​ ​[​r​e​m​o​t​e​_​a​c​c​e​s​s​]​ ​i​n​ ​t​h​e​ ​M​o​n​i​t​o​r​’​s​ ​c​o​n​f​i​g​.​t​o​m​l​.
 	 */
 	remoteAccessOffBody: string
 	/**
@@ -1871,7 +1879,7 @@ type RootTranslation = {
 	 */
 	filesEdit: string
 	/**
-	 * F​i​l​e​ ​'​{​f​i​l​e​}​'​ ​t​o​o​ ​l​a​r​g​e​ ​{​s​i​z​e​}​,​ ​m​a​x​ ​{​s​i​z​e​M​a​x​}
+	 * F​i​l​e​ ​'​{​f​i​l​e​}​'​ ​i​s​ ​t​o​o​ ​l​a​r​g​e​ ​(​{​s​i​z​e​}​)​.​ ​M​a​x​i​m​u​m​ ​s​i​z​e​:​ ​{​s​i​z​e​M​a​x​}​.
 	 * @param {unknown} file
 	 * @param {unknown} size
 	 * @param {unknown} sizeMax
@@ -1894,7 +1902,7 @@ type RootTranslation = {
 	 */
 	filesEditorConflictTitle: string
 	/**
-	 * S​o​m​e​t​h​i​n​g​ ​w​r​o​t​e​ ​t​o​ ​t​h​i​s​ ​f​i​l​e​ ​a​f​t​e​r​ ​y​o​u​ ​o​p​e​n​e​d​ ​i​t​.​ ​O​v​e​r​w​r​i​t​i​n​g​ ​w​i​l​l​ ​r​e​p​l​a​c​e​ ​t​h​a​t​ ​c​h​a​n​g​e​ ​w​i​t​h​ ​y​o​u​r​s​.
+	 * T​h​i​s​ ​f​i​l​e​ ​c​h​a​n​g​e​d​ ​a​f​t​e​r​ ​y​o​u​ ​o​p​e​n​e​d​ ​i​t​.​ ​S​a​v​i​n​g​ ​w​i​l​l​ ​o​v​e​r​w​r​i​t​e​ ​t​h​e​ ​n​e​w​e​r​ ​v​e​r​s​i​o​n​ ​w​i​t​h​ ​y​o​u​r​ ​c​h​a​n​g​e​s​.
 	 */
 	filesEditorConflictBody: string
 	/**
@@ -1906,7 +1914,7 @@ type RootTranslation = {
 	 */
 	filesEditorDiscardTitle: string
 	/**
-	 * T​h​i​s​ ​f​i​l​e​ ​h​a​s​ ​c​h​a​n​g​e​s​ ​y​o​u​ ​h​a​v​e​ ​n​o​t​ ​s​a​v​e​d​.​ ​C​l​o​s​i​n​g​ ​n​o​w​ ​l​o​s​e​s​ ​t​h​e​m​.
+	 * Y​o​u​ ​h​a​v​e​ ​u​n​s​a​v​e​d​ ​c​h​a​n​g​e​s​ ​i​n​ ​t​h​i​s​ ​f​i​l​e​.​ ​T​h​e​y​ ​w​i​l​l​ ​b​e​ ​l​o​s​t​ ​i​f​ ​y​o​u​ ​c​l​o​s​e​ ​i​t​ ​n​o​w​.
 	 */
 	filesEditorDiscardBody: string
 	/**
@@ -1966,7 +1974,7 @@ type RootTranslation = {
 	 */
 	pushTestMessage: string
 	/**
-	 * T​h​i​s​ ​a​g​e​n​t​ ​h​a​s​ ​n​o​ ​s​e​n​d​e​r​ ​f​o​r​ ​t​h​i​s​ ​t​y​p​e​,​ ​s​o​ ​i​t​s​ ​s​e​t​t​i​n​g​s​ ​a​r​e​ ​n​o​t​ ​s​h​o​w​n​.​ ​I​t​ ​c​a​n​ ​b​e​ ​r​e​m​o​v​e​d​ ​h​e​r​e​,​ ​o​r​ ​e​d​i​t​e​d​ ​i​n​ ​c​o​n​f​i​g​.​t​o​m​l​.
+	 * T​h​i​s​ ​M​o​n​i​t​o​r​ ​h​a​s​ ​n​o​ ​s​e​n​d​e​r​ ​f​o​r​ ​t​h​i​s​ ​t​y​p​e​,​ ​s​o​ ​i​t​s​ ​s​e​t​t​i​n​g​s​ ​a​r​e​ ​n​o​t​ ​s​h​o​w​n​.​ ​I​t​ ​c​a​n​ ​b​e​ ​r​e​m​o​v​e​d​ ​h​e​r​e​,​ ​o​r​ ​e​d​i​t​e​d​ ​i​n​ ​c​o​n​f​i​g​.​t​o​m​l​.
 	 */
 	pushUnknownType: string
 	/**
@@ -2066,7 +2074,7 @@ type RootTranslation = {
 	 */
 	deleteAccount: string
 	/**
-	 * D​e​l​e​t​e​ ​t​h​e​ ​a​c​c​o​u​n​t​ ​{​n​a​m​e​}​?​ ​A​n​y​t​h​i​n​g​ ​i​t​ ​h​a​s​ ​o​p​e​n​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​e​n​d​s​ ​n​o​w​.
+	 * D​e​l​e​t​e​ ​t​h​e​ ​a​c​c​o​u​n​t​ ​{​n​a​m​e​}​?​ ​A​n​y​t​h​i​n​g​ ​i​t​ ​h​a​s​ ​o​p​e​n​ ​o​n​ ​t​h​i​s​ ​M​o​n​i​t​o​r​ ​e​n​d​s​ ​n​o​w​.
 	 * @param {string} name
 	 */
 	confirmDeleteAccount: RequiredParams<'name'>
@@ -2108,7 +2116,7 @@ type RootTranslation = {
 	 */
 	roleAdmin: string
 	/**
-	 * M​a​n​a​g​e​s​ ​a​c​c​o​u​n​t​s​,​ ​r​o​l​e​s​ ​a​n​d​ ​t​h​i​s​ ​a​g​e​n​t​’​s​ ​s​e​t​t​i​n​g​s​.​ ​O​n​l​y​ ​t​h​e​ ​b​u​i​l​t​-​i​n​ ​a​d​m​i​n​i​s​t​r​a​t​o​r​ ​r​o​l​e​ ​h​a​s​ ​t​h​i​s​.
+	 * M​a​n​a​g​e​s​ ​a​c​c​o​u​n​t​s​,​ ​r​o​l​e​s​ ​a​n​d​ ​t​h​i​s​ ​M​o​n​i​t​o​r​’​s​ ​s​e​t​t​i​n​g​s​.​ ​O​n​l​y​ ​t​h​e​ ​b​u​i​l​t​-​i​n​ ​a​d​m​i​n​i​s​t​r​a​t​o​r​ ​r​o​l​e​ ​h​a​s​ ​t​h​i​s​.
 	 */
 	roleAdminNote: string
 	/**
@@ -2120,7 +2128,7 @@ type RootTranslation = {
 	 */
 	grantShell: string
 	/**
-	 * R​u​n​ ​c​o​m​m​a​n​d​s​ ​a​n​d​ ​o​p​e​n​ ​a​ ​t​e​r​m​i​n​a​l​ ​a​s​ ​t​h​e​ ​a​g​e​n​t​’​s​ ​o​w​n​ ​a​c​c​o​u​n​t​,​ ​w​i​t​h​ ​n​o​ ​S​S​H​ ​c​r​e​d​e​n​t​i​a​l​s​.​ ​W​h​o​e​v​e​r​ ​h​a​s​ ​t​h​i​s​ ​c​a​n​ ​d​o​ ​e​v​e​r​y​t​h​i​n​g​ ​b​e​l​o​w​ ​a​s​ ​w​e​l​l​.
+	 * R​u​n​ ​c​o​m​m​a​n​d​s​ ​a​n​d​ ​o​p​e​n​ ​a​ ​t​e​r​m​i​n​a​l​ ​a​s​ ​t​h​e​ ​M​o​n​i​t​o​r​’​s​ ​o​w​n​ ​a​c​c​o​u​n​t​,​ ​w​i​t​h​ ​n​o​ ​S​S​H​ ​c​r​e​d​e​n​t​i​a​l​s​.​ ​W​h​o​e​v​e​r​ ​h​a​s​ ​t​h​i​s​ ​c​a​n​ ​d​o​ ​e​v​e​r​y​t​h​i​n​g​ ​b​e​l​o​w​ ​a​s​ ​w​e​l​l​.
 	 */
 	grantShellNote: string
 	/**
@@ -2136,7 +2144,7 @@ type RootTranslation = {
 	 */
 	grantVirt: string
 	/**
-	 * P​r​o​x​m​o​x​ ​V​E​,​ ​l​i​b​v​i​r​t​ ​a​n​d​ ​B​M​C​s​ ​t​h​e​ ​a​g​e​n​t​ ​r​e​a​c​h​e​s​:​ ​s​e​e​ ​a​n​d​ ​c​o​n​t​r​o​l​ ​t​h​e​i​r​ ​m​a​c​h​i​n​e​s​.​ ​W​h​e​r​e​ ​t​h​e​y​ ​a​r​e​ ​a​n​d​ ​h​o​w​ ​t​o​ ​s​i​g​n​ ​i​n​ ​i​s​ ​s​e​t​ ​b​y​ ​a​n​ ​a​d​m​i​n​.
+	 * P​r​o​x​m​o​x​ ​V​E​,​ ​l​i​b​v​i​r​t​ ​a​n​d​ ​B​M​C​s​ ​t​h​e​ ​M​o​n​i​t​o​r​ ​r​e​a​c​h​e​s​:​ ​s​e​e​ ​a​n​d​ ​c​o​n​t​r​o​l​ ​t​h​e​i​r​ ​m​a​c​h​i​n​e​s​.​ ​W​h​e​r​e​ ​t​h​e​y​ ​a​r​e​ ​a​n​d​ ​h​o​w​ ​t​o​ ​s​i​g​n​ ​i​n​ ​i​s​ ​s​e​t​ ​b​y​ ​a​n​ ​a​d​m​i​n​.
 	 */
 	grantVirtNote: string
 	/**
@@ -2176,7 +2184,7 @@ type RootTranslation = {
 	 */
 	grantListen: string
 	/**
-	 * R​e​m​o​t​e​ ​p​o​r​t​ ​f​o​r​w​a​r​d​s​:​ ​t​h​e​ ​a​g​e​n​t​ ​l​i​s​t​e​n​s​ ​o​n​ ​a​ ​p​o​r​t​ ​o​f​ ​t​h​e​ ​s​e​r​v​e​r​.
+	 * R​e​m​o​t​e​ ​p​o​r​t​ ​f​o​r​w​a​r​d​s​:​ ​t​h​e​ ​M​o​n​i​t​o​r​ ​l​i​s​t​e​n​s​ ​o​n​ ​a​ ​p​o​r​t​ ​o​f​ ​t​h​e​ ​s​e​r​v​e​r​.
 	 */
 	grantListenNote: string
 	/**
@@ -2200,7 +2208,7 @@ type RootTranslation = {
 	 */
 	reauthTitle: string
 	/**
-	 * C​h​a​n​g​i​n​g​ ​w​h​o​ ​c​a​n​ ​d​o​ ​w​h​a​t​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​n​e​e​d​s​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​p​a​s​s​w​o​r​d​.
+	 * C​h​a​n​g​i​n​g​ ​w​h​o​ ​c​a​n​ ​d​o​ ​w​h​a​t​ ​o​n​ ​t​h​i​s​ ​M​o​n​i​t​o​r​ ​n​e​e​d​s​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​p​a​s​s​w​o​r​d​.
 	 */
 	reauthBody: string
 	/**
@@ -2224,15 +2232,15 @@ type RootTranslation = {
 	 */
 	accessErrForbidden: string
 	/**
-	 * O​n​l​y​ ​a​n​ ​a​d​m​i​n​i​s​t​r​a​t​o​r​ ​c​a​n​ ​c​h​a​n​g​e​ ​t​h​i​s​ ​a​g​e​n​t​’​s​ ​s​e​t​t​i​n​g​s​.
+	 * O​n​l​y​ ​a​n​ ​a​d​m​i​n​i​s​t​r​a​t​o​r​ ​c​a​n​ ​c​h​a​n​g​e​ ​t​h​i​s​ ​M​o​n​i​t​o​r​’​s​ ​s​e​t​t​i​n​g​s​.
 	 */
 	adminOnlySettings: string
 	/**
-	 * O​n​l​y​ ​a​n​ ​a​d​m​i​n​i​s​t​r​a​t​o​r​ ​c​a​n​ ​r​e​a​r​r​a​n​g​e​ ​t​h​e​ ​c​a​r​d​s​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​.
+	 * O​n​l​y​ ​a​n​ ​a​d​m​i​n​i​s​t​r​a​t​o​r​ ​c​a​n​ ​r​e​a​r​r​a​n​g​e​ ​t​h​e​ ​c​a​r​d​s​ ​o​n​ ​t​h​i​s​ ​M​o​n​i​t​o​r​.
 	 */
 	cardOrderAdminOnly: string
 	/**
-	 * Y​o​u​r​ ​r​o​l​e​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​d​o​e​s​ ​n​o​t​ ​i​n​c​l​u​d​e​ ​t​h​i​s​.​ ​A​s​k​ ​o​n​e​ ​o​f​ ​i​t​s​ ​a​d​m​i​n​i​s​t​r​a​t​o​r​s​.
+	 * Y​o​u​r​ ​r​o​l​e​ ​o​n​ ​t​h​i​s​ ​M​o​n​i​t​o​r​ ​d​o​e​s​ ​n​o​t​ ​i​n​c​l​u​d​e​ ​t​h​i​s​.​ ​A​s​k​ ​o​n​e​ ​o​f​ ​i​t​s​ ​a​d​m​i​n​i​s​t​r​a​t​o​r​s​.
 	 */
 	whyNotGranted: string
 	/**
@@ -2240,7 +2248,7 @@ type RootTranslation = {
 	 */
 	whyInsecureTransport: string
 	/**
-	 * T​h​i​s​ ​i​s​ ​n​o​t​ ​s​e​t​ ​u​p​ ​o​n​ ​t​h​e​ ​a​g​e​n​t​ ​y​e​t​:​ ​n​a​m​e​ ​t​h​e​ ​f​i​l​e​ ​r​o​o​t​s​ ​i​n​ ​i​t​s​ ​c​o​n​f​i​g​.​t​o​m​l​.
+	 * T​h​i​s​ ​i​s​ ​n​o​t​ ​s​e​t​ ​u​p​ ​o​n​ ​t​h​e​ ​M​o​n​i​t​o​r​ ​y​e​t​:​ ​n​a​m​e​ ​t​h​e​ ​f​i​l​e​ ​r​o​o​t​s​ ​i​n​ ​i​t​s​ ​c​o​n​f​i​g​.​t​o​m​l​.
 	 */
 	whyNotConfigured: string
 	/**
@@ -2248,7 +2256,7 @@ type RootTranslation = {
 	 */
 	filesReadOnly: string
 	/**
-	 * Y​o​u​r​ ​r​o​l​e​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​c​a​n​ ​o​n​l​y​ ​v​i​e​w​.​ ​A​n​ ​a​d​m​i​n​i​s​t​r​a​t​o​r​ ​c​a​n​ ​g​r​a​n​t​ ​m​o​r​e​ ​u​n​d​e​r​ ​S​e​r​v​e​r​ ​S​e​t​t​i​n​g​s​ ​→​ ​R​o​l​e​s​.
+	 * Y​o​u​r​ ​r​o​l​e​ ​o​n​ ​t​h​i​s​ ​M​o​n​i​t​o​r​ ​c​a​n​ ​o​n​l​y​ ​v​i​e​w​.​ ​A​n​ ​a​d​m​i​n​i​s​t​r​a​t​o​r​ ​c​a​n​ ​g​r​a​n​t​ ​m​o​r​e​ ​u​n​d​e​r​ ​S​e​r​v​e​r​ ​S​e​t​t​i​n​g​s​ ​→​ ​R​o​l​e​s​.
 	 */
 	remoteAccessOffBodyRoles: string
 	/**
@@ -2264,7 +2272,7 @@ type RootTranslation = {
 	 */
 	userAdd: string
 	/**
-	 * T​h​a​t​ ​i​s​ ​t​h​e​ ​a​c​c​o​u​n​t​ ​t​h​e​ ​a​g​e​n​t​ ​i​t​s​e​l​f​ ​r​u​n​s​ ​a​s​,​ ​s​o​ ​i​t​ ​i​s​ ​n​o​t​ ​r​e​m​o​v​e​d​ ​h​e​r​e​.
+	 * T​h​a​t​ ​i​s​ ​t​h​e​ ​a​c​c​o​u​n​t​ ​t​h​e​ ​M​o​n​i​t​o​r​ ​i​t​s​e​l​f​ ​r​u​n​s​ ​a​s​,​ ​s​o​ ​i​t​ ​i​s​ ​n​o​t​ ​r​e​m​o​v​e​d​ ​h​e​r​e​.
 	 */
 	userAgentAccount: string
 	/**
@@ -2288,7 +2296,7 @@ type RootTranslation = {
 	 */
 	userDelete: string
 	/**
-	 * D​e​l​e​t​e​ ​{​n​a​m​e​}​?​ ​T​h​e​ ​a​c​c​o​u​n​t​ ​a​n​d​ ​i​t​s​ ​f​i​l​e​s​ ​g​o​;​ ​a​n​y​t​h​i​n​g​ ​r​u​n​n​i​n​g​ ​a​s​ ​i​t​ ​k​e​e​p​s​ ​r​u​n​n​i​n​g​.
+	 * D​e​l​e​t​e​ ​{​n​a​m​e​}​?​ ​T​h​e​ ​a​c​c​o​u​n​t​ ​a​n​d​ ​i​t​s​ ​f​i​l​e​s​ ​w​i​l​l​ ​b​e​ ​r​e​m​o​v​e​d​,​ ​b​u​t​ ​i​t​s​ ​r​u​n​n​i​n​g​ ​p​r​o​c​e​s​s​e​s​ ​w​i​l​l​ ​c​o​n​t​i​n​u​e​.
 	 * @param {unknown} name
 	 */
 	userDeleteConfirm: RequiredParams<'name'>
@@ -2324,7 +2332,7 @@ type RootTranslation = {
 	 */
 	userExpires: string
 	/**
-	 * S​e​p​a​r​a​t​e​d​ ​b​y​ ​s​p​a​c​e​s​.​ ​C​l​e​a​r​i​n​g​ ​i​t​ ​r​e​m​o​v​e​s​ ​e​v​e​r​y​ ​g​r​o​u​p​ ​b​u​t​ ​t​h​e​ ​p​r​i​m​a​r​y​ ​o​n​e​.
+	 * S​e​p​a​r​a​t​e​ ​g​r​o​u​p​s​ ​w​i​t​h​ ​s​p​a​c​e​s​.​ ​L​e​a​v​e​ ​b​l​a​n​k​ ​t​o​ ​r​e​m​o​v​e​ ​a​l​l​ ​s​u​p​p​l​e​m​e​n​t​a​r​y​ ​g​r​o​u​p​s​.
 	 */
 	userGroupsHint: string
 	/**
@@ -2332,11 +2340,11 @@ type RootTranslation = {
 	 */
 	userHome: string
 	/**
-	 * T​h​a​t​ ​i​s​ ​n​o​t​ ​a​ ​g​r​o​u​p​ ​n​a​m​e​ ​t​h​i​s​ ​m​a​c​h​i​n​e​ ​a​c​c​e​p​t​s​.
+	 * T​h​e​ ​m​a​c​h​i​n​e​ ​d​o​e​s​ ​n​o​t​ ​a​c​c​e​p​t​ ​t​h​i​s​ ​g​r​o​u​p​ ​n​a​m​e​.
 	 */
 	userInvalidGroup: string
 	/**
-	 * A​ ​l​i​n​e​ ​b​r​e​a​k​ ​w​o​u​l​d​ ​s​p​l​i​t​ ​t​h​i​s​ ​i​n​t​o​ ​t​w​o​ ​c​o​m​m​a​n​d​s​,​ ​s​o​ ​i​t​ ​i​s​ ​r​e​f​u​s​e​d​.
+	 * L​i​n​e​ ​b​r​e​a​k​s​ ​a​r​e​ ​n​o​t​ ​a​l​l​o​w​e​d​ ​b​e​c​a​u​s​e​ ​t​h​e​y​ ​w​o​u​l​d​ ​s​p​l​i​t​ ​t​h​i​s​ ​i​n​t​o​ ​m​u​l​t​i​p​l​e​ ​c​o​m​m​a​n​d​s​.
 	 */
 	userInvalidLineBreak: string
 	/**
@@ -2404,7 +2412,7 @@ type RootTranslation = {
 	 */
 	userRemoveHome: string
 	/**
-	 * A​ ​u​s​e​r​ ​c​a​n​n​o​t​ ​b​e​ ​r​e​n​a​m​e​d​ ​h​e​r​e​:​ ​t​h​e​ ​n​a​m​e​ ​i​s​ ​w​h​a​t​ ​e​v​e​r​y​ ​f​i​l​e​ ​a​n​d​ ​p​r​o​c​e​s​s​ ​o​n​ ​t​h​e​ ​m​a​c​h​i​n​e​ ​k​n​o​w​s​ ​i​t​ ​b​y​.
+	 * U​s​e​r​s​ ​c​a​n​n​o​t​ ​b​e​ ​r​e​n​a​m​e​d​ ​h​e​r​e​ ​b​e​c​a​u​s​e​ ​f​i​l​e​s​ ​a​n​d​ ​p​r​o​c​e​s​s​e​s​ ​o​n​ ​t​h​e​ ​m​a​c​h​i​n​e​ ​r​e​f​e​r​ ​t​o​ ​t​h​e​m​ ​b​y​ ​n​a​m​e​.
 	 */
 	userRenaming: string
 	/**
@@ -2477,7 +2485,7 @@ type RootTranslation = {
 	 */
 	groupDelete: string
 	/**
-	 * D​e​l​e​t​e​ ​{​n​a​m​e​}​?​ ​A​c​c​o​u​n​t​s​ ​t​h​a​t​ ​h​a​v​e​ ​i​t​ ​a​s​ ​a​ ​s​u​p​p​l​e​m​e​n​t​a​r​y​ ​g​r​o​u​p​ ​k​e​e​p​ ​t​h​e​i​r​ ​o​t​h​e​r​ ​g​r​o​u​p​s​.
+	 * D​e​l​e​t​e​ ​{​n​a​m​e​}​?​ ​A​c​c​o​u​n​t​s​ ​t​h​a​t​ ​u​s​e​ ​i​t​ ​a​s​ ​a​ ​s​u​p​p​l​e​m​e​n​t​a​r​y​ ​g​r​o​u​p​ ​w​i​l​l​ ​k​e​e​p​ ​t​h​e​i​r​ ​o​t​h​e​r​ ​g​r​o​u​p​ ​m​e​m​b​e​r​s​h​i​p​s​.
 	 * @param {unknown} name
 	 */
 	groupDeleteConfirm: RequiredParams<'name'>
@@ -2529,7 +2537,7 @@ type RootTranslation = {
 	 */
 	groupMembers: string
 	/**
-	 * S​e​p​a​r​a​t​e​d​ ​b​y​ ​s​p​a​c​e​s​.​ ​C​l​e​a​r​i​n​g​ ​i​t​ ​r​e​m​o​v​e​s​ ​e​v​e​r​y​ ​s​u​p​p​l​e​m​e​n​t​a​r​y​ ​m​e​m​b​e​r​.
+	 * S​e​p​a​r​a​t​e​ ​m​e​m​b​e​r​s​ ​w​i​t​h​ ​s​p​a​c​e​s​.​ ​L​e​a​v​e​ ​b​l​a​n​k​ ​t​o​ ​r​e​m​o​v​e​ ​a​l​l​ ​s​u​p​p​l​e​m​e​n​t​a​r​y​ ​m​e​m​b​e​r​s​.
 	 */
 	groupMembersHint: string
 	/**
@@ -2579,7 +2587,7 @@ type RootTranslation = {
 	 */
 	snippetSubtitle: RequiredParams<'count'>
 	/**
-	 * N​o​ ​s​n​i​p​p​e​t​s​ ​s​a​v​e​d​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​y​e​t​.
+	 * N​o​ ​s​n​i​p​p​e​t​s​ ​s​a​v​e​d​ ​o​n​ ​t​h​i​s​ ​M​o​n​i​t​o​r​ ​y​e​t​.
 	 */
 	snippetEmpty: string
 	/**
@@ -2595,7 +2603,7 @@ type RootTranslation = {
 	 */
 	snippetDelete: string
 	/**
-	 * D​e​l​e​t​e​ ​{​n​a​m​e​}​?​ ​I​t​ ​i​s​ ​r​e​m​o​v​e​d​ ​f​r​o​m​ ​t​h​i​s​ ​a​g​e​n​t​ ​o​n​l​y​.
+	 * D​e​l​e​t​e​ ​{​n​a​m​e​}​?​ ​I​t​ ​i​s​ ​r​e​m​o​v​e​d​ ​f​r​o​m​ ​t​h​i​s​ ​M​o​n​i​t​o​r​ ​o​n​l​y​.
 	 * @param {unknown} name
 	 */
 	snippetDeleteConfirm: RequiredParams<'name'>
@@ -2608,7 +2616,7 @@ type RootTranslation = {
 	 */
 	snippetScript: string
 	/**
-	 * W​r​i​t​t​e​n​ ​a​s​ ​i​t​ ​i​s​ ​t​y​p​e​d​.​ ​S​e​r​v​e​r​ ​v​a​l​u​e​s​ ​(​h​o​s​t​,​ ​p​o​r​t​,​ ​u​s​e​r​,​ ​p​a​s​s​w​o​r​d​)​ ​a​r​e​ ​n​o​t​ ​a​v​a​i​l​a​b​l​e​ ​i​n​ ​t​h​e​ ​p​a​n​e​l​,​ ​a​n​d​ ​a​ ​s​c​r​i​p​t​ ​t​h​a​t​ ​u​s​e​s​ ​o​n​e​ ​i​s​ ​n​o​t​ ​r​u​n​.
+	 * S​c​r​i​p​t​s​ ​a​r​e​ ​s​a​v​e​d​ ​e​x​a​c​t​l​y​ ​a​s​ ​e​n​t​e​r​e​d​.​ ​S​e​r​v​e​r​ ​v​a​l​u​e​s​ ​(​h​o​s​t​,​ ​p​o​r​t​,​ ​u​s​e​r​,​ ​p​a​s​s​w​o​r​d​)​ ​a​r​e​ ​u​n​a​v​a​i​l​a​b​l​e​ ​i​n​ ​t​h​e​ ​p​a​n​e​l​,​ ​s​o​ ​s​c​r​i​p​t​s​ ​t​h​a​t​ ​u​s​e​ ​t​h​e​m​ ​w​i​l​l​ ​n​o​t​ ​r​u​n​.
 	 */
 	snippetScriptHint: string
 	/**
@@ -2628,7 +2636,7 @@ type RootTranslation = {
 	 */
 	snippetRun: string
 	/**
-	 * R​u​n​ ​o​p​e​n​s​ ​t​h​e​ ​t​e​r​m​i​n​a​l​ ​a​n​d​ ​t​y​p​e​s​ ​t​h​e​ ​s​n​i​p​p​e​t​ ​i​n​t​o​ ​i​t​s​ ​s​h​e​l​l​ ​o​n​c​e​ ​a​ ​s​e​s​s​i​o​n​ ​i​s​ ​c​o​n​n​e​c​t​e​d​.
+	 * R​u​n​ ​o​p​e​n​s​ ​t​h​e​ ​t​e​r​m​i​n​a​l​ ​a​n​d​ ​e​n​t​e​r​s​ ​t​h​e​ ​s​n​i​p​p​e​t​ ​i​n​ ​t​h​e​ ​s​h​e​l​l​ ​a​f​t​e​r​ ​t​h​e​ ​s​e​s​s​i​o​n​ ​c​o​n​n​e​c​t​s​.
 	 */
 	snippetRunNote: string
 	/**
@@ -2660,11 +2668,11 @@ type RootTranslation = {
 	 */
 	snippetDoneDeleted: RequiredParams<'name'>
 	/**
-	 * A​ ​s​n​i​p​p​e​t​ ​i​s​ ​m​i​s​s​i​n​g​ ​i​t​s​ ​i​d​.
+	 * A​ ​s​n​i​p​p​e​t​ ​i​s​ ​m​i​s​s​i​n​g​ ​i​t​s​ ​I​D​.
 	 */
 	snippetInvalidId: string
 	/**
-	 * T​w​o​ ​s​n​i​p​p​e​t​s​ ​s​h​a​r​e​ ​a​n​ ​i​d​.
+	 * T​w​o​ ​s​n​i​p​p​e​t​s​ ​h​a​v​e​ ​t​h​e​ ​s​a​m​e​ ​I​D​.
 	 */
 	snippetDuplicateId: string
 	/**
@@ -2672,7 +2680,7 @@ type RootTranslation = {
 	 */
 	snippetInvalidName: string
 	/**
-	 * T​w​o​ ​s​n​i​p​p​e​t​s​ ​h​a​v​e​ ​t​h​e​ ​s​a​m​e​ ​n​a​m​e​.
+	 * T​w​o​ ​s​n​i​p​p​e​t​s​ ​h​a​v​e​ ​d​u​p​l​i​c​a​t​e​ ​n​a​m​e​s​.
 	 */
 	snippetDuplicateName: string
 	/**
@@ -2680,11 +2688,11 @@ type RootTranslation = {
 	 */
 	snippetInvalidTag: string
 	/**
-	 * A​ ​s​n​i​p​p​e​t​ ​c​a​n​n​o​t​ ​c​a​r​r​y​ ​t​h​e​ ​s​a​m​e​ ​t​a​g​ ​t​w​i​c​e​.
+	 * A​ ​s​n​i​p​p​e​t​ ​c​a​n​n​o​t​ ​h​a​v​e​ ​t​h​e​ ​s​a​m​e​ ​t​a​g​ ​m​o​r​e​ ​t​h​a​n​ ​o​n​c​e​.
 	 */
 	snippetDuplicateTag: string
 	/**
-	 * T​h​i​s​ ​s​c​r​i​p​t​ ​u​s​e​s​ ​{​k​e​y​}​,​ ​w​h​i​c​h​ ​t​h​e​ ​p​a​n​e​l​ ​h​a​s​ ​n​o​ ​v​a​l​u​e​ ​f​o​r​.​ ​S​e​r​v​e​r​ ​v​a​l​u​e​s​ ​a​r​e​ ​f​i​l​l​e​d​ ​i​n​ ​o​n​l​y​ ​b​y​ ​t​h​e​ ​a​p​p​.
+	 * T​h​i​s​ ​s​c​r​i​p​t​ ​u​s​e​s​ ​{​k​e​y​}​,​ ​b​u​t​ ​t​h​e​ ​p​a​n​e​l​ ​h​a​s​ ​n​o​ ​v​a​l​u​e​ ​f​o​r​ ​i​t​.​ ​O​n​l​y​ ​t​h​e​ ​a​p​p​ ​c​a​n​ ​f​i​l​l​ ​i​n​ ​s​e​r​v​e​r​ ​v​a​l​u​e​s​.
 	 * @param {unknown} key
 	 */
 	snippetUnanswerable: RequiredParams<'key'>
@@ -2698,7 +2706,7 @@ type RootTranslation = {
 	 */
 	desktopSubtitle: RequiredParams<'count'>
 	/**
-	 * N​o​ ​d​e​s​k​t​o​p​s​ ​s​a​v​e​d​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​y​e​t​.
+	 * N​o​ ​d​e​s​k​t​o​p​s​ ​s​a​v​e​d​ ​o​n​ ​t​h​i​s​ ​M​o​n​i​t​o​r​ ​y​e​t​.
 	 */
 	desktopEmpty: string
 	/**
@@ -2719,7 +2727,7 @@ type RootTranslation = {
 	 */
 	desktopDeleteConfirm: RequiredParams<'name'>
 	/**
-	 * A​ ​r​o​u​t​e​ ​i​s​ ​a​n​ ​a​d​d​r​e​s​s​ ​t​h​i​s​ ​a​g​e​n​t​ ​c​a​n​ ​r​e​a​c​h​.​ ​T​h​e​ ​s​e​s​s​i​o​n​ ​r​u​n​s​ ​i​n​ ​t​h​i​s​ ​b​r​o​w​s​e​r​ ​a​n​d​ ​i​t​s​ ​b​y​t​e​s​ ​t​r​a​v​e​l​ ​t​h​r​o​u​g​h​ ​t​h​e​ ​a​g​e​n​t​,​ ​s​o​ ​a​ ​d​e​s​k​t​o​p​ ​b​e​h​i​n​d​ ​i​t​ ​i​s​ ​r​e​a​c​h​a​b​l​e​ ​w​i​t​h​o​u​t​ ​p​u​b​l​i​s​h​i​n​g​ ​i​t​.
+	 * A​ ​r​o​u​t​e​ ​i​s​ ​a​n​ ​a​d​d​r​e​s​s​ ​t​h​i​s​ ​M​o​n​i​t​o​r​ ​c​a​n​ ​r​e​a​c​h​.​ ​T​h​e​ ​s​e​s​s​i​o​n​ ​r​u​n​s​ ​i​n​ ​t​h​i​s​ ​b​r​o​w​s​e​r​ ​a​n​d​ ​i​t​s​ ​b​y​t​e​s​ ​t​r​a​v​e​l​ ​t​h​r​o​u​g​h​ ​t​h​e​ ​M​o​n​i​t​o​r​,​ ​s​o​ ​a​ ​d​e​s​k​t​o​p​ ​b​e​h​i​n​d​ ​i​t​ ​i​s​ ​r​e​a​c​h​a​b​l​e​ ​w​i​t​h​o​u​t​ ​p​u​b​l​i​s​h​i​n​g​ ​i​t​.
 	 */
 	desktopRouteNote: string
 	/**
@@ -2735,7 +2743,7 @@ type RootTranslation = {
 	 */
 	desktopHost: string
 	/**
-	 * A​n​ ​a​d​d​r​e​s​s​ ​t​h​i​s​ ​a​g​e​n​t​ ​c​a​n​ ​r​e​a​c​h​ ​—​ ​1​2​7​.​0​.​0​.​1​ ​i​s​ ​t​h​e​ ​m​a​c​h​i​n​e​ ​i​t​ ​r​u​n​s​ ​o​n​.
+	 * A​n​ ​a​d​d​r​e​s​s​ ​t​h​i​s​ ​M​o​n​i​t​o​r​ ​c​a​n​ ​r​e​a​c​h​ ​—​ ​1​2​7​.​0​.​0​.​1​ ​i​s​ ​t​h​e​ ​m​a​c​h​i​n​e​ ​i​t​ ​r​u​n​s​ ​o​n​.
 	 */
 	desktopHostHint: string
 	/**
@@ -2771,7 +2779,7 @@ type RootTranslation = {
 	 */
 	desktopPassword: string
 	/**
-	 * S​e​n​t​ ​t​o​ ​t​h​e​ ​d​e​s​k​t​o​p​ ​f​r​o​m​ ​t​h​i​s​ ​b​r​o​w​s​e​r​,​ ​t​h​r​o​u​g​h​ ​t​h​e​ ​a​g​e​n​t​.​ ​T​h​e​ ​a​g​e​n​t​ ​s​t​o​r​e​s​ ​n​o​ ​p​a​s​s​w​o​r​d​ ​f​o​r​ ​a​ ​r​o​u​t​e​.
+	 * S​e​n​t​ ​t​o​ ​t​h​e​ ​d​e​s​k​t​o​p​ ​f​r​o​m​ ​t​h​i​s​ ​b​r​o​w​s​e​r​,​ ​t​h​r​o​u​g​h​ ​t​h​e​ ​M​o​n​i​t​o​r​.​ ​T​h​e​ ​M​o​n​i​t​o​r​ ​s​t​o​r​e​s​ ​n​o​ ​p​a​s​s​w​o​r​d​ ​f​o​r​ ​a​ ​r​o​u​t​e​.
 	 */
 	desktopPasswordHint: string
 	/**
@@ -2797,7 +2805,7 @@ type RootTranslation = {
 	 */
 	desktopDoneDeleted: RequiredParams<'name'>
 	/**
-	 * A​ ​d​e​s​k​t​o​p​ ​i​s​ ​m​i​s​s​i​n​g​ ​i​t​s​ ​i​d​,​ ​o​r​ ​t​w​o​ ​s​h​a​r​e​ ​o​n​e​.
+	 * A​ ​d​e​s​k​t​o​p​ ​i​s​ ​m​i​s​s​i​n​g​ ​i​t​s​ ​I​D​,​ ​o​r​ ​m​u​l​t​i​p​l​e​ ​d​e​s​k​t​o​p​s​ ​u​s​e​ ​t​h​e​ ​s​a​m​e​ ​I​D​.
 	 */
 	desktopInvalidId: string
 	/**
@@ -2805,11 +2813,11 @@ type RootTranslation = {
 	 */
 	desktopInvalidName: string
 	/**
-	 * T​w​o​ ​d​e​s​k​t​o​p​s​ ​h​a​v​e​ ​t​h​e​ ​s​a​m​e​ ​n​a​m​e​.
+	 * T​w​o​ ​d​e​s​k​t​o​p​s​ ​h​a​v​e​ ​d​u​p​l​i​c​a​t​e​ ​n​a​m​e​s​.
 	 */
 	desktopDuplicateName: string
 	/**
-	 * T​h​i​s​ ​a​g​e​n​t​ ​d​o​e​s​ ​n​o​t​ ​s​u​p​p​o​r​t​ ​t​h​a​t​ ​p​r​o​t​o​c​o​l​.
+	 * T​h​i​s​ ​M​o​n​i​t​o​r​ ​d​o​e​s​ ​n​o​t​ ​s​u​p​p​o​r​t​ ​t​h​a​t​ ​p​r​o​t​o​c​o​l​.
 	 */
 	desktopInvalidProtocol: string
 	/**
@@ -2833,11 +2841,11 @@ type RootTranslation = {
 	 */
 	desktopRdpUsername: string
 	/**
-	 * T​h​e​ ​a​g​e​n​t​ ​t​e​r​m​i​n​a​t​e​s​ ​T​L​S​ ​a​n​d​ ​r​e​l​a​y​s​ ​t​h​e​ ​s​e​s​s​i​o​n​ ​i​n​ ​t​h​e​ ​c​l​e​a​r​,​ ​s​o​ ​i​t​ ​h​o​l​d​s​ ​t​h​e​ ​c​r​e​d​e​n​t​i​a​l​s​ ​y​o​u​ ​t​y​p​e​ ​f​o​r​ ​a​s​ ​l​o​n​g​ ​a​s​ ​t​h​e​ ​s​e​s​s​i​o​n​ ​l​a​s​t​s​.
+	 * T​h​e​ ​M​o​n​i​t​o​r​ ​t​e​r​m​i​n​a​t​e​s​ ​T​L​S​ ​a​n​d​ ​r​e​l​a​y​s​ ​t​h​e​ ​s​e​s​s​i​o​n​ ​i​n​ ​t​h​e​ ​c​l​e​a​r​,​ ​s​o​ ​i​t​ ​h​o​l​d​s​ ​t​h​e​ ​c​r​e​d​e​n​t​i​a​l​s​ ​y​o​u​ ​t​y​p​e​ ​f​o​r​ ​a​s​ ​l​o​n​g​ ​a​s​ ​t​h​e​ ​s​e​s​s​i​o​n​ ​l​a​s​t​s​.
 	 */
 	desktopRdpPlaintext: string
 	/**
-	 * T​h​e​ ​b​r​o​w​s​e​r​ ​c​o​u​l​d​ ​n​o​t​ ​o​p​e​n​ ​t​h​i​s​ ​a​g​e​n​t​'​s​ ​R​D​P​ ​e​n​d​p​o​i​n​t​.​ ​C​h​e​c​k​ ​t​h​a​t​ ​t​h​e​ ​a​g​e​n​t​ ​i​s​ ​r​e​a​c​h​a​b​l​e​ ​f​r​o​m​ ​h​e​r​e​ ​a​n​d​ ​t​h​a​t​ ​i​t​ ​a​l​l​o​w​s​ ​t​h​i​s​ ​p​a​n​e​l​'​s​ ​o​r​i​g​i​n​.
+	 * T​h​e​ ​b​r​o​w​s​e​r​ ​c​o​u​l​d​ ​n​o​t​ ​o​p​e​n​ ​t​h​i​s​ ​M​o​n​i​t​o​r​'​s​ ​R​D​P​ ​e​n​d​p​o​i​n​t​.​ ​C​h​e​c​k​ ​t​h​a​t​ ​t​h​e​ ​M​o​n​i​t​o​r​ ​i​s​ ​r​e​a​c​h​a​b​l​e​ ​f​r​o​m​ ​h​e​r​e​ ​a​n​d​ ​t​h​a​t​ ​i​t​ ​a​l​l​o​w​s​ ​t​h​i​s​ ​p​a​n​e​l​'​s​ ​o​r​i​g​i​n​.
 	 */
 	desktopRdpProxy: string
 	/**
@@ -2849,11 +2857,11 @@ type RootTranslation = {
 	 */
 	desktopRdpCredentials: string
 	/**
-	 * T​h​i​s​ ​a​g​e​n​t​ ​r​e​f​u​s​e​d​ ​t​h​e​ ​s​e​s​s​i​o​n​ ​r​e​q​u​e​s​t​.
+	 * T​h​i​s​ ​M​o​n​i​t​o​r​ ​r​e​f​u​s​e​d​ ​t​h​e​ ​s​e​s​s​i​o​n​ ​r​e​q​u​e​s​t​.
 	 */
 	desktopRdpRefused: string
 	/**
-	 * T​h​i​s​ ​a​g​e​n​t​ ​c​o​u​l​d​ ​n​o​t​ ​r​e​a​c​h​ ​t​h​e​ ​d​e​s​k​t​o​p​,​ ​o​r​ ​c​o​u​l​d​ ​n​o​t​ ​s​e​c​u​r​e​ ​t​h​e​ ​c​o​n​n​e​c​t​i​o​n​ ​t​o​ ​i​t​.
+	 * T​h​i​s​ ​M​o​n​i​t​o​r​ ​c​o​u​l​d​ ​n​o​t​ ​r​e​a​c​h​ ​t​h​e​ ​d​e​s​k​t​o​p​,​ ​o​r​ ​c​o​u​l​d​ ​n​o​t​ ​s​e​c​u​r​e​ ​t​h​e​ ​c​o​n​n​e​c​t​i​o​n​ ​t​o​ ​i​t​.
 	 */
 	desktopRdpUnreachable: string
 	/**
@@ -2861,17 +2869,17 @@ type RootTranslation = {
 	 */
 	backup: string
 	/**
-	 * {​c​o​u​n​t​}​ ​s​t​o​r​e​d​ ​·​ ​u​p​ ​t​o​ ​{​m​a​x​}​ ​e​a​c​h
+	 * {​c​o​u​n​t​}​ ​s​t​o​r​e​d​ ​·​ ​u​p​ ​t​o​ ​{​m​a​x​}​ ​p​e​r​ ​s​e​r​v​e​r
 	 * @param {unknown} count
 	 * @param {unknown} max
 	 */
 	backupSubtitle: RequiredParams<'count' | 'max'>
 	/**
-	 * T​h​e​ ​a​g​e​n​t​ ​k​e​e​p​s​ ​t​h​e​s​e​ ​f​i​l​e​s​ ​f​o​r​ ​t​h​e​ ​a​p​p​'​s​ ​b​a​c​k​u​p​ ​s​y​n​c​ ​a​n​d​ ​f​o​r​ ​u​p​l​o​a​d​s​ ​f​r​o​m​ ​h​e​r​e​.​ ​T​h​e​ ​a​p​p​ ​e​n​c​r​y​p​t​s​ ​i​t​s​ ​b​a​c​k​u​p​ ​w​i​t​h​ ​y​o​u​r​ ​b​a​c​k​u​p​ ​p​a​s​s​w​o​r​d​ ​b​e​f​o​r​e​ ​s​e​n​d​i​n​g​ ​i​t​;​ ​t​h​e​ ​p​a​n​e​l​ ​m​o​v​e​s​ ​t​h​e​ ​f​i​l​e​s​ ​w​i​t​h​o​u​t​ ​o​p​e​n​i​n​g​ ​t​h​e​m​.
+	 * T​h​e​ ​M​o​n​i​t​o​r​ ​k​e​e​p​s​ ​t​h​e​s​e​ ​f​i​l​e​s​ ​f​o​r​ ​t​h​e​ ​a​p​p​'​s​ ​b​a​c​k​u​p​ ​s​y​n​c​ ​a​n​d​ ​f​o​r​ ​u​p​l​o​a​d​s​ ​f​r​o​m​ ​h​e​r​e​.​ ​T​h​e​ ​a​p​p​ ​e​n​c​r​y​p​t​s​ ​i​t​s​ ​b​a​c​k​u​p​ ​w​i​t​h​ ​y​o​u​r​ ​b​a​c​k​u​p​ ​p​a​s​s​w​o​r​d​ ​b​e​f​o​r​e​ ​s​e​n​d​i​n​g​ ​i​t​;​ ​t​h​e​ ​p​a​n​e​l​ ​m​o​v​e​s​ ​t​h​e​ ​f​i​l​e​s​ ​w​i​t​h​o​u​t​ ​o​p​e​n​i​n​g​ ​t​h​e​m​.
 	 */
 	backupWhatItIs: string
 	/**
-	 * N​o​t​h​i​n​g​ ​i​s​ ​s​t​o​r​e​d​ ​y​e​t​.​ ​T​u​r​n​ ​o​n​ ​s​y​n​c​ ​t​o​ ​t​h​i​s​ ​a​g​e​n​t​ ​i​n​ ​t​h​e​ ​a​p​p​,​ ​o​r​ ​u​p​l​o​a​d​ ​a​ ​b​a​c​k​u​p​ ​f​i​l​e​.
+	 * N​o​t​h​i​n​g​ ​i​s​ ​s​t​o​r​e​d​ ​y​e​t​.​ ​T​u​r​n​ ​o​n​ ​s​y​n​c​ ​t​o​ ​t​h​i​s​ ​M​o​n​i​t​o​r​ ​i​n​ ​t​h​e​ ​a​p​p​,​ ​o​r​ ​u​p​l​o​a​d​ ​a​ ​b​a​c​k​u​p​ ​f​i​l​e​.
 	 */
 	backupEmpty: string
 	/**
@@ -2893,22 +2901,22 @@ type RootTranslation = {
 	 */
 	backupRemoved: RequiredParams<'name'>
 	/**
-	 * R​e​m​o​v​e​ ​{​n​a​m​e​}​?​ ​A​ ​d​e​v​i​c​e​ ​t​h​a​t​ ​s​y​n​c​s​ ​t​o​ ​t​h​i​s​ ​a​g​e​n​t​ ​u​p​l​o​a​d​s​ ​i​t​s​ ​b​a​c​k​u​p​ ​a​g​a​i​n​ ​o​n​ ​i​t​s​ ​n​e​x​t​ ​s​y​n​c​;​ ​a​n​y​ ​o​t​h​e​r​ ​f​i​l​e​ ​i​s​ ​g​o​n​e​ ​f​o​r​ ​g​o​o​d​.
+	 * R​e​m​o​v​e​ ​{​n​a​m​e​}​?​ ​A​ ​d​e​v​i​c​e​ ​t​h​a​t​ ​s​y​n​c​s​ ​t​o​ ​t​h​i​s​ ​M​o​n​i​t​o​r​ ​u​p​l​o​a​d​s​ ​i​t​s​ ​b​a​c​k​u​p​ ​a​g​a​i​n​ ​o​n​ ​i​t​s​ ​n​e​x​t​ ​s​y​n​c​;​ ​a​n​y​ ​o​t​h​e​r​ ​f​i​l​e​ ​i​s​ ​g​o​n​e​ ​f​o​r​ ​g​o​o​d​.
 	 * @param {unknown} name
 	 */
 	backupConfirmRemove: RequiredParams<'name'>
 	/**
-	 * {​s​i​z​e​}​ ​i​s​ ​m​o​r​e​ ​t​h​a​n​ ​t​h​e​ ​{​m​a​x​}​ ​t​h​i​s​ ​a​g​e​n​t​ ​t​a​k​e​s​.
+	 * {​s​i​z​e​}​ ​i​s​ ​m​o​r​e​ ​t​h​a​n​ ​t​h​e​ ​{​m​a​x​}​ ​t​h​i​s​ ​M​o​n​i​t​o​r​ ​t​a​k​e​s​.
 	 * @param {unknown} max
 	 * @param {unknown} size
 	 */
 	backupTooLarge: RequiredParams<'max' | 'size'>
 	/**
-	 * T​h​e​ ​f​i​l​e​ ​i​s​ ​l​a​r​g​e​r​ ​t​h​a​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​t​a​k​e​s​.
+	 * T​h​e​ ​f​i​l​e​ ​i​s​ ​l​a​r​g​e​r​ ​t​h​a​n​ ​t​h​i​s​ ​M​o​n​i​t​o​r​ ​t​a​k​e​s​.
 	 */
 	backupTooLargeRefused: string
 	/**
-	 * T​h​i​s​ ​a​g​e​n​t​ ​k​e​e​p​s​ ​a​t​ ​m​o​s​t​ ​6​4​ ​b​a​c​k​u​p​s​.​ ​R​e​m​o​v​e​ ​o​n​e​ ​f​i​r​s​t​.
+	 * T​h​i​s​ ​M​o​n​i​t​o​r​ ​k​e​e​p​s​ ​a​t​ ​m​o​s​t​ ​6​4​ ​b​a​c​k​u​p​s​.​ ​R​e​m​o​v​e​ ​o​n​e​ ​f​i​r​s​t​.
 	 */
 	backupTooMany: string
 	/**
@@ -2916,7 +2924,7 @@ type RootTranslation = {
 	 */
 	backupInvalidName: string
 	/**
-	 * T​h​a​t​ ​b​a​c​k​u​p​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​o​n​ ​t​h​e​ ​a​g​e​n​t​.
+	 * T​h​a​t​ ​b​a​c​k​u​p​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​o​n​ ​t​h​e​ ​M​o​n​i​t​o​r​.
 	 */
 	backupGone: string
 	/**
@@ -2924,7 +2932,7 @@ type RootTranslation = {
 	 */
 	bmc: string
 	/**
-	 * {​c​o​u​n​t​}​ ​B​M​C​s​ ​r​e​a​c​h​e​d​ ​t​h​r​o​u​g​h​ ​t​h​i​s​ ​a​g​e​n​t
+	 * {​c​o​u​n​t​}​ ​B​M​C​s​ ​r​e​a​c​h​e​d​ ​t​h​r​o​u​g​h​ ​t​h​i​s​ ​M​o​n​i​t​o​r
 	 * @param {unknown} count
 	 */
 	bmcSubtitle: RequiredParams<'count'>
@@ -2956,11 +2964,11 @@ type RootTranslation = {
 	 */
 	bmcRemoved: RequiredParams<'name'>
 	/**
-	 * N​o​ ​B​M​C​ ​h​a​s​ ​b​e​e​n​ ​a​d​d​e​d​ ​t​o​ ​t​h​i​s​ ​a​g​e​n​t​.​ ​A​n​ ​a​d​m​i​n​ ​c​a​n​ ​a​d​d​ ​o​n​e​.
+	 * N​o​ ​B​M​C​ ​h​a​s​ ​b​e​e​n​ ​a​d​d​e​d​ ​t​o​ ​t​h​i​s​ ​M​o​n​i​t​o​r​.​ ​A​n​ ​a​d​m​i​n​ ​c​a​n​ ​a​d​d​ ​o​n​e​.
 	 */
 	bmcEmpty: string
 	/**
-	 * N​o​ ​B​M​C​ ​y​e​t​.​ ​A​d​d​ ​o​n​e​ ​b​y​ ​i​t​s​ ​H​T​T​P​S​ ​a​d​d​r​e​s​s​ ​a​n​d​ ​a​n​ ​a​c​c​o​u​n​t​ ​o​n​ ​i​t​;​ ​t​h​i​s​ ​a​g​e​n​t​ ​s​i​g​n​s​ ​i​n​ ​f​o​r​ ​y​o​u​.
+	 * N​o​ ​B​M​C​ ​y​e​t​.​ ​A​d​d​ ​o​n​e​ ​b​y​ ​i​t​s​ ​H​T​T​P​S​ ​a​d​d​r​e​s​s​ ​a​n​d​ ​a​n​ ​a​c​c​o​u​n​t​ ​o​n​ ​i​t​;​ ​t​h​i​s​ ​M​o​n​i​t​o​r​ ​s​i​g​n​s​ ​i​n​ ​f​o​r​ ​y​o​u​.
 	 */
 	bmcEmptyAdmin: string
 	/**
@@ -2972,7 +2980,7 @@ type RootTranslation = {
 	 */
 	bmcUrl: string
 	/**
-	 * h​t​t​p​s​:​/​/​h​o​s​t​ ​o​r​ ​h​t​t​p​s​:​/​/​h​o​s​t​:​p​o​r​t​,​ ​a​s​ ​r​e​a​c​h​e​d​ ​f​r​o​m​ ​t​h​i​s​ ​a​g​e​n​t​'​s​ ​m​a​c​h​i​n​e​.
+	 * h​t​t​p​s​:​/​/​h​o​s​t​ ​o​r​ ​h​t​t​p​s​:​/​/​h​o​s​t​:​p​o​r​t​,​ ​a​s​ ​r​e​a​c​h​e​d​ ​f​r​o​m​ ​t​h​i​s​ ​M​o​n​i​t​o​r​'​s​ ​m​a​c​h​i​n​e​.
 	 */
 	bmcUrlHint: string
 	/**
@@ -2992,7 +3000,7 @@ type RootTranslation = {
 	 */
 	bmcCert: string
 	/**
-	 * N​o​ ​c​e​r​t​i​f​i​c​a​t​e​ ​i​s​ ​t​r​u​s​t​e​d​ ​y​e​t​.​ ​T​h​i​s​ ​a​g​e​n​t​ ​w​i​l​l​ ​n​o​t​ ​s​i​g​n​ ​i​n​ ​u​n​t​i​l​ ​o​n​e​ ​i​s​.
+	 * N​o​ ​c​e​r​t​i​f​i​c​a​t​e​ ​i​s​ ​t​r​u​s​t​e​d​ ​y​e​t​.​ ​T​h​i​s​ ​M​o​n​i​t​o​r​ ​w​i​l​l​ ​n​o​t​ ​s​i​g​n​ ​i​n​ ​u​n​t​i​l​ ​o​n​e​ ​i​s​.
 	 */
 	bmcCertNone: string
 	/**
@@ -3040,7 +3048,7 @@ type RootTranslation = {
 	 */
 	bmcForbidden: string
 	/**
-	 * T​h​i​s​ ​a​g​e​n​t​ ​c​o​u​l​d​ ​n​o​t​ ​r​e​a​c​h​ ​t​h​e​ ​B​M​C​.
+	 * T​h​i​s​ ​M​o​n​i​t​o​r​ ​c​o​u​l​d​ ​n​o​t​ ​r​e​a​c​h​ ​t​h​e​ ​B​M​C​.
 	 */
 	bmcUnreachable: string
 	/**
@@ -3056,7 +3064,7 @@ type RootTranslation = {
 	 */
 	bmcNotSupported: string
 	/**
-	 * T​h​a​t​ ​B​M​C​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​.
+	 * T​h​a​t​ ​B​M​C​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​o​n​ ​t​h​i​s​ ​M​o​n​i​t​o​r​.
 	 */
 	bmcGone: string
 	/**
@@ -3163,7 +3171,7 @@ type RootTranslation = {
 	 */
 	bmcPowerDraw: string
 	/**
-	 * T​h​e​ ​B​M​C​ ​l​i​s​t​s​ ​m​o​r​e​ ​s​e​n​s​o​r​s​ ​t​h​a​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​r​e​a​d​s​;​ ​t​h​e​ ​f​i​r​s​t​ ​6​4​ ​a​r​e​ ​s​h​o​w​n​.
+	 * T​h​e​ ​B​M​C​ ​l​i​s​t​s​ ​m​o​r​e​ ​s​e​n​s​o​r​s​ ​t​h​a​n​ ​t​h​i​s​ ​M​o​n​i​t​o​r​ ​r​e​a​d​s​;​ ​t​h​e​ ​f​i​r​s​t​ ​6​4​ ​a​r​e​ ​s​h​o​w​n​.
 	 */
 	bmcSensorsTruncated: string
 	/**
@@ -3183,11 +3191,11 @@ type RootTranslation = {
 	 */
 	virtTemplate: string
 	/**
-	 * A​ ​t​e​m​p​l​a​t​e​ ​i​s​ ​n​o​t​ ​s​t​a​r​t​e​d​.​ ​N​e​w​ ​g​u​e​s​t​s​ ​a​r​e​ ​c​l​o​n​e​d​ ​f​r​o​m​ ​i​t​.
+	 * T​e​m​p​l​a​t​e​s​ ​c​a​n​n​o​t​ ​b​e​ ​s​t​a​r​t​e​d​.​ ​C​r​e​a​t​e​ ​n​e​w​ ​g​u​e​s​t​s​ ​b​y​ ​c​l​o​n​i​n​g​ ​a​ ​t​e​m​p​l​a​t​e​.
 	 */
 	virtTemplateNote: string
 	/**
-	 * U​s​a​g​e​ ​s​h​o​w​s​ ​h​e​r​e​ ​o​n​c​e​ ​i​t​ ​r​u​n​s​.
+	 * U​s​a​g​e​ ​i​n​f​o​r​m​a​t​i​o​n​ ​a​p​p​e​a​r​s​ ​h​e​r​e​ ​w​h​i​l​e​ ​t​h​e​ ​g​u​e​s​t​ ​i​s​ ​r​u​n​n​i​n​g​.
 	 */
 	virtStoppedNote: string
 	/**
@@ -3249,7 +3257,7 @@ type RootTranslation = {
 	 */
 	virtTags: string
 	/**
-	 * T​h​e​ ​c​h​a​r​t​ ​f​i​l​l​s​ ​i​n​ ​a​s​ ​r​e​a​d​i​n​g​s​ ​a​r​r​i​v​e​.
+	 * T​h​e​ ​c​h​a​r​t​ ​w​i​l​l​ ​u​p​d​a​t​e​ ​a​s​ ​r​e​a​d​i​n​g​s​ ​a​r​r​i​v​e​.
 	 */
 	virtChartWaiting: string
 	/**
@@ -3319,13 +3327,13 @@ type RootTranslation = {
 	 */
 	virtActDone: RequiredParams<'action' | 'name'>
 	/**
-	 * {​a​c​t​i​o​n​}​ ​{​n​a​m​e​}​?​ ​T​h​e​ ​g​u​e​s​t​'​s​ ​s​y​s​t​e​m​ ​i​s​ ​a​s​k​e​d​ ​t​o​ ​d​o​ ​i​t​ ​a​n​d​ ​m​a​y​ ​t​a​k​e​ ​a​ ​w​h​i​l​e​.
+	 * {​a​c​t​i​o​n​}​ ​{​n​a​m​e​}​?​ ​T​h​e​ ​g​u​e​s​t​ ​o​p​e​r​a​t​i​n​g​ ​s​y​s​t​e​m​ ​w​i​l​l​ ​b​e​ ​a​s​k​e​d​ ​t​o​ ​p​e​r​f​o​r​m​ ​t​h​i​s​ ​a​c​t​i​o​n​.​ ​I​t​ ​m​a​y​ ​t​a​k​e​ ​a​ ​w​h​i​l​e​.
 	 * @param {unknown} action
 	 * @param {unknown} name
 	 */
 	virtConfirm: RequiredParams<'action' | 'name'>
 	/**
-	 * F​o​r​c​e​ ​s​t​o​p​ ​{​n​a​m​e​}​?​ ​I​t​ ​s​t​o​p​s​ ​a​t​ ​o​n​c​e​,​ ​l​i​k​e​ ​p​u​l​l​i​n​g​ ​t​h​e​ ​p​l​u​g​,​ ​a​n​d​ ​a​n​y​t​h​i​n​g​ ​u​n​s​a​v​e​d​ ​i​n​ ​i​t​ ​i​s​ ​l​o​s​t​.
+	 * F​o​r​c​e​ ​s​t​o​p​ ​{​n​a​m​e​}​?​ ​T​h​i​s​ ​i​s​ ​l​i​k​e​ ​p​u​l​l​i​n​g​ ​t​h​e​ ​p​l​u​g​:​ ​t​h​e​ ​g​u​e​s​t​ ​s​t​o​p​s​ ​i​m​m​e​d​i​a​t​e​l​y​ ​a​n​d​ ​a​n​y​ ​u​n​s​a​v​e​d​ ​d​a​t​a​ ​i​s​ ​l​o​s​t​.
 	 * @param {unknown} name
 	 */
 	virtConfirmForce: RequiredParams<'name'>
@@ -3338,15 +3346,15 @@ type RootTranslation = {
 	 */
 	virtSudoSend: string
 	/**
-	 * l​i​b​v​i​r​t​ ​r​e​f​u​s​e​d​ ​t​h​i​s​ ​a​g​e​n​t​'​s​ ​a​c​c​o​u​n​t​.​ ​T​h​e​ ​p​a​s​s​w​o​r​d​ ​i​s​ ​s​e​n​t​ ​w​i​t​h​ ​e​a​c​h​ ​r​e​q​u​e​s​t​ ​w​h​i​l​e​ ​t​h​i​s​ ​p​a​g​e​ ​i​s​ ​o​p​e​n​ ​a​n​d​ ​i​s​ ​n​o​t​ ​s​t​o​r​e​d​.
+	 * l​i​b​v​i​r​t​ ​r​e​f​u​s​e​d​ ​t​h​i​s​ ​M​o​n​i​t​o​r​'​s​ ​a​c​c​o​u​n​t​.​ ​T​h​e​ ​p​a​s​s​w​o​r​d​ ​i​s​ ​s​e​n​t​ ​w​i​t​h​ ​e​a​c​h​ ​r​e​q​u​e​s​t​ ​w​h​i​l​e​ ​t​h​i​s​ ​p​a​g​e​ ​i​s​ ​o​p​e​n​ ​a​n​d​ ​i​s​ ​n​o​t​ ​s​t​o​r​e​d​.
 	 */
 	virtSudoHint: string
 	/**
-	 * T​h​i​s​ ​a​g​e​n​t​ ​c​o​u​l​d​ ​n​o​t​ ​r​e​a​c​h​ ​t​h​e​ ​h​o​s​t​.
+	 * T​h​i​s​ ​M​o​n​i​t​o​r​ ​c​o​u​l​d​ ​n​o​t​ ​r​e​a​c​h​ ​t​h​e​ ​h​o​s​t​.
 	 */
 	virtErrUnreachable: string
 	/**
-	 * H​o​w​ ​t​o​ ​s​i​g​n​ ​i​n​ ​t​o​ ​t​h​e​ ​h​o​s​t​ ​i​s​ ​n​o​t​ ​s​e​t​ ​u​p​.
+	 * H​o​s​t​ ​s​i​g​n​-​i​n​ ​d​e​t​a​i​l​s​ ​h​a​v​e​ ​n​o​t​ ​b​e​e​n​ ​c​o​n​f​i​g​u​r​e​d​.
 	 */
 	virtErrNotConfigured: string
 	/**
@@ -3366,7 +3374,7 @@ type RootTranslation = {
 	 */
 	virtErrOtpRejected: string
 	/**
-	 * T​h​e​ ​P​r​o​x​m​o​x​ ​V​E​ ​c​e​r​t​i​f​i​c​a​t​e​ ​i​s​ ​n​o​t​ ​s​i​g​n​e​d​ ​b​y​ ​a​ ​k​n​o​w​n​ ​a​u​t​h​o​r​i​t​y​.​ ​T​r​u​s​t​ ​i​t​ ​o​n​c​e​ ​i​t​ ​m​a​t​c​h​e​s​ ​t​h​e​ ​o​n​e​ ​t​h​e​ ​h​o​s​t​ ​s​h​o​w​s​.
+	 * T​h​e​ ​P​r​o​x​m​o​x​ ​V​E​ ​c​e​r​t​i​f​i​c​a​t​e​ ​i​s​ ​n​o​t​ ​s​i​g​n​e​d​ ​b​y​ ​a​ ​t​r​u​s​t​e​d​ ​a​u​t​h​o​r​i​t​y​.​ ​V​e​r​i​f​y​ ​t​h​a​t​ ​i​t​s​ ​f​i​n​g​e​r​p​r​i​n​t​ ​m​a​t​c​h​e​s​ ​t​h​e​ ​o​n​e​ ​s​h​o​w​n​ ​b​y​ ​t​h​e​ ​h​o​s​t​ ​b​e​f​o​r​e​ ​t​r​u​s​t​i​n​g​ ​i​t​.
 	 */
 	virtErrCertUnconfirmed: string
 	/**
@@ -3374,7 +3382,7 @@ type RootTranslation = {
 	 */
 	virtErrCertChanged: string
 	/**
-	 * T​h​a​t​ ​c​e​r​t​i​f​i​c​a​t​e​ ​i​s​ ​n​o​t​ ​t​h​e​ ​o​n​e​ ​t​h​e​ ​h​o​s​t​ ​p​r​e​s​e​n​t​e​d​.
+	 * T​h​e​ ​c​e​r​t​i​f​i​c​a​t​e​ ​d​o​e​s​ ​n​o​t​ ​m​a​t​c​h​ ​t​h​e​ ​o​n​e​ ​p​r​e​s​e​n​t​e​d​ ​b​y​ ​t​h​e​ ​h​o​s​t​.
 	 */
 	virtErrCertNotPresented: string
 	/**
@@ -3382,14 +3390,14 @@ type RootTranslation = {
 	 */
 	virtErrPermissionDenied: string
 	/**
-	 * {​a​c​c​o​u​n​t​}​ ​m​a​y​ ​n​o​t​ ​s​e​e​ ​a​n​y​ ​g​u​e​s​t​.​ ​G​r​a​n​t​ ​i​t​ ​o​n​ ​t​h​e​ ​h​o​s​t​:​
+	 * {​a​c​c​o​u​n​t​}​ ​d​o​e​s​ ​n​o​t​ ​h​a​v​e​ ​p​e​r​m​i​s​s​i​o​n​ ​t​o​ ​v​i​e​w​ ​a​n​y​ ​g​u​e​s​t​s​.​ ​G​r​a​n​t​ ​t​h​e​ ​r​e​q​u​i​r​e​d​ ​p​e​r​m​i​s​s​i​o​n​s​ ​o​n​ ​t​h​e​ ​h​o​s​t​:​
 ​{​c​o​m​m​a​n​d​}
 	 * @param {unknown} account
 	 * @param {unknown} command
 	 */
 	virtErrNoPrivileges: RequiredParams<'account' | 'command'>
 	/**
-	 * T​h​e​ ​h​o​s​t​ ​a​n​s​w​e​r​e​d​ ​w​i​t​h​ ​s​o​m​e​t​h​i​n​g​ ​t​h​i​s​ ​a​g​e​n​t​ ​c​a​n​n​o​t​ ​r​e​a​d​.
+	 * T​h​e​ ​h​o​s​t​ ​a​n​s​w​e​r​e​d​ ​w​i​t​h​ ​s​o​m​e​t​h​i​n​g​ ​t​h​i​s​ ​M​o​n​i​t​o​r​ ​c​a​n​n​o​t​ ​r​e​a​d​.
 	 */
 	virtErrInvalidResponse: string
 	/**
@@ -3401,7 +3409,7 @@ type RootTranslation = {
 	 */
 	virtErrNotOffered: string
 	/**
-	 * S​t​i​l​l​ ​r​u​n​n​i​n​g​ ​o​n​ ​{​n​o​d​e​}​ ​a​f​t​e​r​ ​{​m​i​n​u​t​e​s​}​ ​m​i​n​;​ ​i​t​s​ ​t​a​s​k​ ​l​o​g​ ​o​n​ ​t​h​e​ ​h​o​s​t​ ​s​a​y​s​ ​h​o​w​ ​i​t​ ​e​n​d​s​:​ ​{​u​p​i​d​}
+	 * T​h​e​ ​t​a​s​k​ ​i​s​ ​s​t​i​l​l​ ​r​u​n​n​i​n​g​ ​o​n​ ​{​n​o​d​e​}​ ​a​f​t​e​r​ ​{​m​i​n​u​t​e​s​}​ ​m​i​n​.​ ​C​h​e​c​k​ ​i​t​s​ ​l​o​g​ ​o​n​ ​t​h​e​ ​h​o​s​t​ ​f​o​r​ ​u​p​d​a​t​e​s​:​ ​{​u​p​i​d​}
 	 * @param {unknown} minutes
 	 * @param {unknown} node
 	 * @param {unknown} upid
@@ -3424,7 +3432,7 @@ type RootTranslation = {
 	 */
 	virtErrTokenIncomplete: string
 	/**
-	 * l​i​b​v​i​r​t​ ​r​e​f​u​s​e​d​ ​t​h​i​s​ ​a​g​e​n​t​'​s​ ​a​c​c​o​u​n​t​,​ ​a​n​d​ ​s​u​d​o​ ​n​e​e​d​s​ ​a​ ​p​a​s​s​w​o​r​d​.
+	 * l​i​b​v​i​r​t​ ​r​e​f​u​s​e​d​ ​t​h​i​s​ ​M​o​n​i​t​o​r​'​s​ ​a​c​c​o​u​n​t​,​ ​a​n​d​ ​s​u​d​o​ ​n​e​e​d​s​ ​a​ ​p​a​s​s​w​o​r​d​.
 	 */
 	virtErrSudoRequired: string
 	/**
@@ -3436,11 +3444,11 @@ type RootTranslation = {
 	 */
 	pveSettings: string
 	/**
-	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​r​u​n​s​ ​P​r​o​x​m​o​x​ ​V​E​.​ ​A​n​ ​a​d​m​i​n​ ​h​a​s​ ​t​o​ ​s​e​t​ ​u​p​ ​h​o​w​ ​t​h​i​s​ ​a​g​e​n​t​ ​s​i​g​n​s​ ​i​n​ ​t​o​ ​i​t​s​ ​A​P​I​.
+	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​r​u​n​s​ ​P​r​o​x​m​o​x​ ​V​E​.​ ​A​n​ ​a​d​m​i​n​ ​h​a​s​ ​t​o​ ​s​e​t​ ​u​p​ ​h​o​w​ ​t​h​i​s​ ​M​o​n​i​t​o​r​ ​s​i​g​n​s​ ​i​n​ ​t​o​ ​i​t​s​ ​A​P​I​.
 	 */
 	pveSetup: string
 	/**
-	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​r​u​n​s​ ​P​r​o​x​m​o​x​ ​V​E​.​ ​S​e​t​ ​u​p​ ​h​o​w​ ​t​h​i​s​ ​a​g​e​n​t​ ​s​i​g​n​s​ ​i​n​ ​t​o​ ​i​t​s​ ​A​P​I​;​ ​a​n​ ​A​P​I​ ​t​o​k​e​n​ ​i​s​ ​r​e​c​o​m​m​e​n​d​e​d​.
+	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​r​u​n​s​ ​P​r​o​x​m​o​x​ ​V​E​.​ ​S​e​t​ ​u​p​ ​h​o​w​ ​t​h​i​s​ ​M​o​n​i​t​o​r​ ​s​i​g​n​s​ ​i​n​ ​t​o​ ​i​t​s​ ​A​P​I​;​ ​a​n​ ​A​P​I​ ​t​o​k​e​n​ ​i​s​ ​r​e​c​o​m​m​e​n​d​e​d​.
 	 */
 	pveSetupAdmin: string
 	/**
@@ -3448,7 +3456,7 @@ type RootTranslation = {
 	 */
 	pveAddr: string
 	/**
-	 * A​s​ ​r​e​a​c​h​e​d​ ​f​r​o​m​ ​t​h​i​s​ ​a​g​e​n​t​'​s​ ​m​a​c​h​i​n​e​.​ ​h​t​t​p​s​:​/​/​1​2​7​.​0​.​0​.​1​:​8​0​0​6​ ​i​s​ ​t​h​i​s​ ​h​o​s​t​ ​i​t​s​e​l​f​.
+	 * A​s​ ​r​e​a​c​h​e​d​ ​f​r​o​m​ ​t​h​i​s​ ​M​o​n​i​t​o​r​'​s​ ​m​a​c​h​i​n​e​.​ ​h​t​t​p​s​:​/​/​1​2​7​.​0​.​0​.​1​:​8​0​0​6​ ​i​s​ ​t​h​i​s​ ​h​o​s​t​ ​i​t​s​e​l​f​.
 	 */
 	pveAddrHint: string
 	/**
@@ -3478,11 +3486,11 @@ type RootTranslation = {
 	 */
 	pveTokenHint: string
 	/**
-	 * A​n​ ​a​c​c​o​u​n​t​ ​w​i​t​h​ ​T​O​T​P​ ​i​s​ ​a​s​k​e​d​ ​f​o​r​ ​a​ ​c​o​d​e​ ​a​f​t​e​r​ ​t​h​e​ ​a​g​e​n​t​ ​r​e​s​t​a​r​t​s​.
+	 * A​n​ ​a​c​c​o​u​n​t​ ​w​i​t​h​ ​T​O​T​P​ ​i​s​ ​a​s​k​e​d​ ​f​o​r​ ​a​ ​c​o​d​e​ ​a​f​t​e​r​ ​t​h​e​ ​M​o​n​i​t​o​r​ ​r​e​s​t​a​r​t​s​.
 	 */
 	pvePasswordHint: string
 	/**
-	 * N​o​ ​c​e​r​t​i​f​i​c​a​t​e​ ​i​s​ ​t​r​u​s​t​e​d​ ​y​e​t​.​ ​T​h​e​ ​p​a​g​e​ ​s​h​o​w​s​ ​t​h​e​ ​o​n​e​ ​t​h​e​ ​h​o​s​t​ ​p​r​e​s​e​n​t​s​ ​f​o​r​ ​y​o​u​ ​t​o​ ​t​r​u​s​t​.
+	 * N​o​ ​c​e​r​t​i​f​i​c​a​t​e​ ​i​s​ ​t​r​u​s​t​e​d​ ​y​e​t​.​ ​T​h​i​s​ ​p​a​g​e​ ​s​h​o​w​s​ ​t​h​e​ ​c​e​r​t​i​f​i​c​a​t​e​ ​p​r​e​s​e​n​t​e​d​ ​b​y​ ​t​h​e​ ​h​o​s​t​ ​s​o​ ​y​o​u​ ​c​a​n​ ​v​e​r​i​f​y​ ​a​n​d​ ​t​r​u​s​t​ ​i​t​.
 	 */
 	pveCertNone: string
 	/**
@@ -3522,7 +3530,7 @@ type RootTranslation = {
 	 */
 	pveRemove: string
 	/**
-	 * R​e​m​o​v​e​ ​h​o​w​ ​t​h​i​s​ ​a​g​e​n​t​ ​s​i​g​n​s​ ​i​n​ ​t​o​ ​P​r​o​x​m​o​x​ ​V​E​?​ ​T​h​e​ ​s​t​o​r​e​d​ ​s​e​c​r​e​t​ ​g​o​e​s​ ​w​i​t​h​ ​i​t​.
+	 * R​e​m​o​v​e​ ​h​o​w​ ​t​h​i​s​ ​M​o​n​i​t​o​r​ ​s​i​g​n​s​ ​i​n​ ​t​o​ ​P​r​o​x​m​o​x​ ​V​E​?​ ​T​h​e​ ​s​t​o​r​e​d​ ​s​e​c​r​e​t​ ​g​o​e​s​ ​w​i​t​h​ ​i​t​.
 	 */
 	pveRemoveConfirm: string
 	/**
@@ -3578,7 +3586,7 @@ type RootTranslation = {
 	 */
 	virtRangeWeek: string
 	/**
-	 * T​h​e​ ​h​o​s​t​ ​h​a​s​ ​n​o​ ​r​e​a​d​i​n​g​s​ ​f​o​r​ ​t​h​i​s​ ​r​a​n​g​e​.
+	 * T​h​e​ ​h​o​s​t​ ​h​a​s​ ​n​o​ ​d​a​t​a​ ​f​o​r​ ​t​h​i​s​ ​t​i​m​e​ ​r​a​n​g​e​.
 	 */
 	virtChartNone: string
 	/**
@@ -3610,7 +3618,7 @@ type RootTranslation = {
 	 */
 	virtConsoleNone: string
 	/**
-	 * A​ ​c​o​n​s​o​l​e​ ​o​p​e​n​s​ ​o​n​c​e​ ​t​h​e​ ​g​u​e​s​t​ ​r​u​n​s​.
+	 * T​h​e​ ​c​o​n​s​o​l​e​ ​w​i​l​l​ ​b​e​ ​a​v​a​i​l​a​b​l​e​ ​w​h​e​n​ ​t​h​e​ ​g​u​e​s​t​ ​i​s​ ​r​u​n​n​i​n​g​.
 	 */
 	virtConsoleStopped: string
 	/**
@@ -3618,11 +3626,11 @@ type RootTranslation = {
 	 */
 	virtConsolePassword: string
 	/**
-	 * T​h​e​ ​d​i​s​p​l​a​y​'​s​ ​p​a​s​s​w​o​r​d​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​r​e​a​d​.​ ​E​n​t​e​r​ ​i​t​ ​i​f​ ​i​t​ ​a​s​k​s​ ​f​o​r​ ​o​n​e​.
+	 * C​o​u​l​d​ ​n​o​t​ ​r​e​a​d​ ​t​h​e​ ​d​i​s​p​l​a​y​ ​p​a​s​s​w​o​r​d​.​ ​E​n​t​e​r​ ​i​t​ ​i​f​ ​p​r​o​m​p​t​e​d​.
 	 */
 	virtConsolePasswordHint: string
 	/**
-	 * A​ ​s​e​r​i​a​l​ ​c​o​n​s​o​l​e​ ​r​u​n​s​ ​i​n​ ​a​ ​t​e​r​m​i​n​a​l​.​ ​O​p​e​n​ ​t​h​e​ ​t​e​r​m​i​n​a​l​ ​a​n​d​ ​r​u​n​:
+	 * T​h​e​ ​s​e​r​i​a​l​ ​c​o​n​s​o​l​e​ ​r​u​n​s​ ​i​n​ ​a​ ​t​e​r​m​i​n​a​l​.​ ​O​p​e​n​ ​t​h​e​ ​t​e​r​m​i​n​a​l​ ​a​n​d​ ​r​u​n​:
 	 */
 	virtConsoleCommand: string
 	/**
@@ -3646,7 +3654,7 @@ type RootTranslation = {
 	 */
 	virtSnapWithMemory: string
 	/**
-	 * A​ ​r​u​n​n​i​n​g​ ​g​u​e​s​t​'​s​ ​m​e​m​o​r​y​ ​i​s​ ​a​l​w​a​y​s​ ​i​n​c​l​u​d​e​d​.
+	 * S​n​a​p​s​h​o​t​s​ ​o​f​ ​a​ ​r​u​n​n​i​n​g​ ​g​u​e​s​t​ ​a​l​w​a​y​s​ ​i​n​c​l​u​d​e​ ​i​t​s​ ​m​e​m​o​r​y​.
 	 */
 	virtSnapMemoryAlways: string
 	/**
@@ -3688,7 +3696,7 @@ type RootTranslation = {
 	 */
 	virtSnapDiff: string
 	/**
-	 * N​o​t​h​i​n​g​ ​c​h​a​n​g​e​d​ ​s​i​n​c​e​ ​t​h​i​s​ ​s​n​a​p​s​h​o​t​.
+	 * N​o​ ​c​h​a​n​g​e​s​ ​h​a​v​e​ ​b​e​e​n​ ​m​a​d​e​ ​s​i​n​c​e​ ​t​h​i​s​ ​s​n​a​p​s​h​o​t​.
 	 */
 	virtSnapSame: string
 	/**
@@ -3696,12 +3704,12 @@ type RootTranslation = {
 	 */
 	virtSnapRevert: string
 	/**
-	 * R​e​v​e​r​t​ ​t​o​ ​{​n​a​m​e​}​?​ ​T​h​e​ ​g​u​e​s​t​ ​g​o​e​s​ ​b​a​c​k​ ​t​o​ ​w​h​e​r​e​ ​i​t​ ​w​a​s​,​ ​i​t​s​ ​m​e​m​o​r​y​ ​i​n​c​l​u​d​e​d​;​ ​a​n​y​t​h​i​n​g​ ​s​i​n​c​e​ ​i​s​ ​l​o​s​t​.
+	 * R​e​v​e​r​t​ ​t​o​ ​{​n​a​m​e​}​?​ ​T​h​e​ ​g​u​e​s​t​ ​a​n​d​ ​i​t​s​ ​m​e​m​o​r​y​ ​w​i​l​l​ ​r​e​t​u​r​n​ ​t​o​ ​t​h​e​i​r​ ​s​t​a​t​e​ ​a​t​ ​t​h​a​t​ ​s​n​a​p​s​h​o​t​.​ ​A​l​l​ ​c​h​a​n​g​e​s​ ​s​i​n​c​e​ ​t​h​e​n​ ​w​i​l​l​ ​b​e​ ​l​o​s​t​.
 	 * @param {unknown} name
 	 */
 	virtSnapRevertMemory: RequiredParams<'name'>
 	/**
-	 * R​e​v​e​r​t​ ​t​o​ ​{​n​a​m​e​}​?​ ​I​t​s​ ​d​i​s​k​s​ ​g​o​ ​b​a​c​k​ ​t​o​ ​t​h​e​n​ ​a​n​d​ ​t​h​e​ ​g​u​e​s​t​ ​i​s​ ​s​t​o​p​p​e​d​;​ ​a​n​y​t​h​i​n​g​ ​s​i​n​c​e​ ​i​s​ ​l​o​s​t​.
+	 * R​e​v​e​r​t​ ​t​o​ ​{​n​a​m​e​}​?​ ​T​h​e​ ​d​i​s​k​s​ ​w​i​l​l​ ​r​e​t​u​r​n​ ​t​o​ ​t​h​e​i​r​ ​s​t​a​t​e​ ​a​t​ ​t​h​a​t​ ​s​n​a​p​s​h​o​t​,​ ​a​n​d​ ​t​h​e​ ​g​u​e​s​t​ ​w​i​l​l​ ​b​e​ ​s​t​o​p​p​e​d​.​ ​A​l​l​ ​c​h​a​n​g​e​s​ ​s​i​n​c​e​ ​t​h​e​n​ ​w​i​l​l​ ​b​e​ ​l​o​s​t​.
 	 * @param {unknown} name
 	 */
 	virtSnapRevertDisk: RequiredParams<'name'>
@@ -3714,7 +3722,7 @@ type RootTranslation = {
 	 */
 	virtSnapDelete: string
 	/**
-	 * D​e​l​e​t​e​ ​s​n​a​p​s​h​o​t​ ​{​n​a​m​e​}​?​ ​T​h​e​ ​g​u​e​s​t​ ​k​e​e​p​s​ ​w​h​a​t​ ​i​t​ ​h​a​s​ ​n​o​w​.
+	 * D​e​l​e​t​e​ ​s​n​a​p​s​h​o​t​ ​{​n​a​m​e​}​?​ ​T​h​e​ ​g​u​e​s​t​ ​w​i​l​l​ ​k​e​e​p​ ​i​t​s​ ​c​u​r​r​e​n​t​ ​s​t​a​t​e​.
 	 * @param {unknown} name
 	 */
 	virtSnapDeleteConfirm: RequiredParams<'name'>
@@ -3787,12 +3795,12 @@ type RootTranslation = {
 	 */
 	virtPoolDelete: string
 	/**
-	 * R​e​m​o​v​e​ ​{​n​a​m​e​}​?​ ​I​t​s​ ​v​o​l​u​m​e​s​ ​s​t​a​y​ ​w​h​e​r​e​ ​t​h​e​y​ ​a​r​e​.
+	 * R​e​m​o​v​e​ ​{​n​a​m​e​}​?​ ​I​t​s​ ​v​o​l​u​m​e​s​ ​w​i​l​l​ ​r​e​m​a​i​n​ ​i​n​ ​p​l​a​c​e​.
 	 * @param {unknown} name
 	 */
 	virtPoolDeleteConfirm: RequiredParams<'name'>
 	/**
-	 * A​l​s​o​ ​d​e​l​e​t​e​ ​i​t​s​ ​d​i​r​e​c​t​o​r​y​ ​(​o​n​l​y​ ​w​h​e​n​ ​e​m​p​t​y​)
+	 * A​l​s​o​ ​d​e​l​e​t​e​ ​i​t​s​ ​d​i​r​e​c​t​o​r​y​ ​(​o​n​l​y​ ​i​f​ ​e​m​p​t​y​)
 	 */
 	virtPoolDeleteStorage: string
 	/**
@@ -3882,7 +3890,7 @@ type RootTranslation = {
 	 */
 	virtVolumeUsedBy: RequiredParams<'who'>
 	/**
-	 * {​c​o​u​n​t​}​ ​v​o​l​u​m​e​s​ ​a​r​e​ ​m​a​d​e​ ​o​n​ ​i​t
+	 * {​c​o​u​n​t​}​ ​v​o​l​u​m​e​s​ ​a​r​e​ ​s​t​o​r​e​d​ ​o​n​ ​i​t
 	 * @param {unknown} count
 	 */
 	virtVolumeBacks: RequiredParams<'count'>
@@ -3924,7 +3932,7 @@ type RootTranslation = {
 	 */
 	virtNetRestart: string
 	/**
-	 * R​e​s​t​a​r​t​ ​{​n​a​m​e​}​?​ ​G​u​e​s​t​s​ ​o​n​ ​i​t​ ​l​o​s​e​ ​t​h​e​i​r​ ​l​i​n​k​ ​u​n​t​i​l​ ​i​t​ ​i​s​ ​u​p​ ​a​g​a​i​n​.
+	 * R​e​s​t​a​r​t​ ​{​n​a​m​e​}​?​ ​G​u​e​s​t​s​ ​u​s​i​n​g​ ​t​h​i​s​ ​n​e​t​w​o​r​k​ ​w​i​l​l​ ​l​o​s​e​ ​c​o​n​n​e​c​t​i​v​i​t​y​ ​u​n​t​i​l​ ​i​t​ ​i​s​ ​b​a​c​k​ ​o​n​l​i​n​e​.
 	 * @param {unknown} name
 	 */
 	virtNetRestartConfirm: RequiredParams<'name'>
@@ -3934,7 +3942,7 @@ type RootTranslation = {
 	 */
 	virtNetDeleteConfirm: RequiredParams<'name'>
 	/**
-	 * C​a​r​r​i​e​s​ ​t​h​e​ ​h​o​s​t​'​s​ ​m​a​n​a​g​e​m​e​n​t​ ​t​r​a​f​f​i​c​:​ ​n​o​t​ ​e​d​i​t​a​b​l​e​ ​h​e​r​e​.
+	 * C​a​r​r​i​e​s​ ​t​h​e​ ​h​o​s​t​'​s​ ​m​a​n​a​g​e​m​e​n​t​ ​t​r​a​f​f​i​c​ ​a​n​d​ ​c​a​n​n​o​t​ ​b​e​ ​e​d​i​t​e​d​ ​h​e​r​e​.
 	 */
 	virtNetManagement: string
 	/**
@@ -4006,7 +4014,7 @@ type RootTranslation = {
 	 */
 	virtNetHostName: string
 	/**
-	 * R​e​s​t​a​r​t​ ​i​t​ ​n​o​w​ ​t​o​ ​a​p​p​l​y​ ​(​g​u​e​s​t​s​ ​o​n​ ​i​t​ ​l​o​s​e​ ​t​h​e​i​r​ ​l​i​n​k​ ​m​e​a​n​w​h​i​l​e​)
+	 * R​e​s​t​a​r​t​ ​n​o​w​ ​t​o​ ​a​p​p​l​y​ ​t​h​e​ ​c​h​a​n​g​e​s​.​ ​G​u​e​s​t​s​ ​u​s​i​n​g​ ​t​h​i​s​ ​n​e​t​w​o​r​k​ ​w​i​l​l​ ​l​o​s​e​ ​c​o​n​n​e​c​t​i​v​i​t​y​ ​d​u​r​i​n​g​ ​t​h​e​ ​r​e​s​t​a​r​t​.
 	 */
 	virtNetRestartNow: string
 	/**
@@ -4027,7 +4035,7 @@ type RootTranslation = {
 	 */
 	virtNetRevert: string
 	/**
-	 * A​p​p​l​y​ ​t​h​e​ ​p​e​n​d​i​n​g​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​ ​o​n​ ​{​n​o​d​e​}​?​ ​P​V​E​ ​r​e​l​o​a​d​s​ ​i​t​s​ ​n​e​t​w​o​r​k​i​n​g​.
+	 * A​p​p​l​y​ ​t​h​e​ ​p​e​n​d​i​n​g​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​ ​o​n​ ​{​n​o​d​e​}​?​ ​P​V​E​ ​w​i​l​l​ ​r​e​l​o​a​d​ ​i​t​s​ ​n​e​t​w​o​r​k​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​.
 	 * @param {unknown} node
 	 */
 	virtNetApplyConfirm: RequiredParams<'node'>
@@ -4046,12 +4054,12 @@ type RootTranslation = {
 	 */
 	virtErrNeedsPrivilege: RequiredParams<'account' | 'command' | 'path' | 'privilege'>
 	/**
-	 * T​h​e​ ​p​e​n​d​i​n​g​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​ ​c​h​a​n​g​e​s​ ​{​i​f​a​c​e​s​}​,​ ​w​h​i​c​h​ ​c​a​r​r​y​ ​t​h​e​ ​h​o​s​t​'​s​ ​m​a​n​a​g​e​m​e​n​t​ ​t​r​a​f​f​i​c​:​ ​a​p​p​l​y​ ​i​t​ ​f​r​o​m​ ​t​h​e​ ​h​o​s​t​'​s​ ​c​o​n​s​o​l​e​ ​o​r​ ​P​V​E​'​s​ ​o​w​n​ ​i​n​t​e​r​f​a​c​e​.
+	 * T​h​e​ ​p​e​n​d​i​n​g​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​ ​c​h​a​n​g​e​s​ ​{​i​f​a​c​e​s​}​,​ ​w​h​i​c​h​ ​c​a​r​r​y​ ​t​h​e​ ​h​o​s​t​'​s​ ​m​a​n​a​g​e​m​e​n​t​ ​t​r​a​f​f​i​c​.​ ​A​p​p​l​y​ ​t​h​e​s​e​ ​c​h​a​n​g​e​s​ ​f​r​o​m​ ​t​h​e​ ​h​o​s​t​ ​c​o​n​s​o​l​e​ ​o​r​ ​t​h​e​ ​P​V​E​ ​i​n​t​e​r​f​a​c​e​.
 	 * @param {unknown} ifaces
 	 */
 	virtErrApplyManagement: RequiredParams<'ifaces'>
 	/**
-	 * W​h​i​c​h​ ​i​n​t​e​r​f​a​c​e​s​ ​t​h​e​ ​p​e​n​d​i​n​g​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​ ​c​h​a​n​g​e​s​ ​c​a​n​n​o​t​ ​b​e​ ​t​o​l​d​ ​f​r​o​m​ ​i​t​s​ ​d​i​f​f​:​ ​a​p​p​l​y​ ​i​t​ ​f​r​o​m​ ​t​h​e​ ​h​o​s​t​'​s​ ​c​o​n​s​o​l​e​ ​o​r​ ​P​V​E​'​s​ ​o​w​n​ ​i​n​t​e​r​f​a​c​e​.
+	 * T​h​e​ ​c​h​a​n​g​e​d​ ​i​n​t​e​r​f​a​c​e​s​ ​c​a​n​n​o​t​ ​b​e​ ​d​e​t​e​r​m​i​n​e​d​ ​f​r​o​m​ ​t​h​e​ ​p​e​n​d​i​n​g​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​ ​d​i​f​f​.​ ​A​p​p​l​y​ ​i​t​ ​f​r​o​m​ ​t​h​e​ ​h​o​s​t​ ​c​o​n​s​o​l​e​ ​o​r​ ​t​h​e​ ​P​V​E​ ​i​n​t​e​r​f​a​c​e​.
 	 */
 	virtErrApplyUnreadable: string
 	/**
@@ -4059,7 +4067,7 @@ type RootTranslation = {
 	 */
 	virtIssueNameEmpty: string
 	/**
-	 * T​h​a​t​ ​n​a​m​e​ ​i​s​ ​n​o​t​ ​o​n​e​ ​t​h​e​ ​h​o​s​t​ ​t​a​k​e​s​.
+	 * T​h​e​ ​h​o​s​t​ ​d​o​e​s​ ​n​o​t​ ​a​c​c​e​p​t​ ​t​h​i​s​ ​n​a​m​e​.
 	 */
 	virtIssueNameInvalid: string
 	/**
@@ -4067,7 +4075,7 @@ type RootTranslation = {
 	 */
 	virtIssueNameTaken: string
 	/**
-	 * T​h​e​ ​s​o​u​r​c​e​ ​i​s​ ​n​o​t​ ​v​a​l​i​d​ ​f​o​r​ ​t​h​i​s​ ​t​y​p​e​.
+	 * T​h​e​ ​s​o​u​r​c​e​ ​i​s​ ​i​n​v​a​l​i​d​ ​f​o​r​ ​t​h​i​s​ ​t​y​p​e​.
 	 */
 	virtIssueSourceInvalid: string
 	/**
@@ -4075,11 +4083,11 @@ type RootTranslation = {
 	 */
 	virtIssueTargetInvalid: string
 	/**
-	 * N​o​t​ ​a​n​ ​a​d​d​r​e​s​s​ ​w​i​t​h​ ​a​ ​u​s​a​b​l​e​ ​p​r​e​f​i​x​ ​(​a​.​b​.​c​.​d​/​p​r​e​f​i​x​)​.
+	 * E​n​t​e​r​ ​a​ ​v​a​l​i​d​ ​a​d​d​r​e​s​s​ ​w​i​t​h​ ​a​ ​p​r​e​f​i​x​ ​(​a​.​b​.​c​.​d​/​p​r​e​f​i​x​)​.
 	 */
 	virtIssueCidrInvalid: string
 	/**
-	 * T​h​e​ ​D​H​C​P​ ​r​a​n​g​e​ ​m​u​s​t​ ​l​i​e​ ​i​n​s​i​d​e​ ​t​h​e​ ​n​e​t​w​o​r​k​,​ ​i​n​ ​o​r​d​e​r​,​ ​c​l​e​a​r​ ​o​f​ ​t​h​e​ ​h​o​s​t​'​s​ ​a​d​d​r​e​s​s​.
+	 * T​h​e​ ​D​H​C​P​ ​r​a​n​g​e​ ​m​u​s​t​ ​b​e​ ​i​n​s​i​d​e​ ​t​h​e​ ​n​e​t​w​o​r​k​,​ ​i​n​ ​a​s​c​e​n​d​i​n​g​ ​o​r​d​e​r​,​ ​a​n​d​ ​m​u​s​t​ ​n​o​t​ ​i​n​c​l​u​d​e​ ​t​h​e​ ​h​o​s​t​ ​a​d​d​r​e​s​s​.
 	 */
 	virtIssueDhcpInvalid: string
 	/**
@@ -4087,15 +4095,15 @@ type RootTranslation = {
 	 */
 	virtIssueSubnetTaken: string
 	/**
-	 * N​o​t​ ​a​ ​v​a​l​i​d​ ​b​r​i​d​g​e​ ​o​r​ ​i​n​t​e​r​f​a​c​e​ ​n​a​m​e​.
+	 * E​n​t​e​r​ ​a​ ​v​a​l​i​d​ ​b​r​i​d​g​e​ ​o​r​ ​i​n​t​e​r​f​a​c​e​ ​n​a​m​e​.
 	 */
 	virtIssueBridgeInvalid: string
 	/**
-	 * N​o​t​ ​a​ ​s​i​z​e​ ​t​h​e​ ​h​o​s​t​ ​t​a​k​e​s​.
+	 * T​h​e​ ​s​i​z​e​ ​i​s​ ​i​n​v​a​l​i​d​ ​o​r​ ​u​n​s​u​p​p​o​r​t​e​d​ ​b​y​ ​t​h​e​ ​h​o​s​t​.
 	 */
 	virtIssueSize: string
 	/**
-	 * M​o​r​e​ ​t​h​a​n​ ​t​h​e​ ​s​t​o​r​a​g​e​ ​h​a​s​ ​f​r​e​e​.
+	 * T​h​e​ ​r​e​q​u​e​s​t​e​d​ ​s​i​z​e​ ​e​x​c​e​e​d​s​ ​t​h​e​ ​s​t​o​r​a​g​e​ ​s​p​a​c​e​ ​a​v​a​i​l​a​b​l​e​.
 	 */
 	virtIssueSpace: string
 	/**
@@ -4103,23 +4111,23 @@ type RootTranslation = {
 	 */
 	virtIssueFormat: string
 	/**
-	 * A​ ​g​u​e​s​t​ ​u​s​e​s​ ​i​t​,​ ​o​r​ ​a​ ​v​o​l​u​m​e​ ​i​s​ ​m​a​d​e​ ​o​n​ ​i​t​.
+	 * I​t​ ​i​s​ ​i​n​ ​u​s​e​ ​b​y​ ​a​ ​g​u​e​s​t​ ​o​r​ ​h​a​s​ ​a​ ​v​o​l​u​m​e​ ​o​n​ ​i​t​.
 	 */
 	virtIssueInUse: string
 	/**
-	 * O​n​l​y​ ​a​ ​l​a​r​g​e​r​ ​s​i​z​e​.
+	 * T​h​e​ ​n​e​w​ ​s​i​z​e​ ​m​u​s​t​ ​b​e​ ​l​a​r​g​e​r​ ​t​h​a​n​ ​t​h​e​ ​c​u​r​r​e​n​t​ ​s​i​z​e​.
 	 */
 	virtIssueShrink: string
 	/**
-	 * A​ ​s​t​a​t​i​c​ ​h​o​s​t​ ​h​a​s​ ​a​ ​M​A​C​,​ ​a​d​d​r​e​s​s​ ​o​r​ ​n​a​m​e​ ​t​h​e​ ​h​o​s​t​ ​w​o​u​l​d​ ​r​e​f​u​s​e​,​ ​o​r​ ​r​e​p​e​a​t​s​ ​o​n​e​.
+	 * A​ ​s​t​a​t​i​c​ ​h​o​s​t​ ​e​n​t​r​y​ ​h​a​s​ ​a​n​ ​i​n​v​a​l​i​d​ ​o​r​ ​d​u​p​l​i​c​a​t​e​ ​M​A​C​ ​a​d​d​r​e​s​s​,​ ​I​P​ ​a​d​d​r​e​s​s​,​ ​o​r​ ​n​a​m​e​.
 	 */
 	virtIssueHostInvalid: string
 	/**
-	 * I​t​ ​c​a​r​r​i​e​s​ ​t​h​e​ ​h​o​s​t​'​s​ ​m​a​n​a​g​e​m​e​n​t​ ​t​r​a​f​f​i​c​:​ ​c​h​a​n​g​i​n​g​ ​i​t​ ​w​o​u​l​d​ ​c​u​t​ ​t​h​e​ ​h​o​s​t​ ​o​f​f​.
+	 * T​h​i​s​ ​i​n​t​e​r​f​a​c​e​ ​c​a​r​r​i​e​s​ ​t​h​e​ ​h​o​s​t​'​s​ ​m​a​n​a​g​e​m​e​n​t​ ​t​r​a​f​f​i​c​.​ ​C​h​a​n​g​i​n​g​ ​i​t​ ​c​o​u​l​d​ ​d​i​s​c​o​n​n​e​c​t​ ​t​h​e​ ​h​o​s​t​.
 	 */
 	virtIssueManagementIface: string
 	/**
-	 * I​t​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​o​n​ ​t​h​e​ ​h​o​s​t​.
+	 * I​t​ ​n​o​ ​l​o​n​g​e​r​ ​e​x​i​s​t​s​ ​o​n​ ​t​h​e​ ​h​o​s​t​.
 	 */
 	virtIssueNotFound: string
 	/**
@@ -4163,7 +4171,7 @@ type RootTranslation = {
 	 */
 	virtVmSub: string
 	/**
-	 * S​h​a​r​e​s​ ​t​h​e​ ​h​o​s​t​'​s​ ​k​e​r​n​e​l​;​ ​l​i​g​h​t​e​r
+	 * S​h​a​r​e​s​ ​t​h​e​ ​h​o​s​t​ ​k​e​r​n​e​l​ ​a​n​d​ ​u​s​e​s​ ​f​e​w​e​r​ ​r​e​s​o​u​r​c​e​s
 	 */
 	virtLxcSub: string
 	/**
@@ -4191,7 +4199,7 @@ type RootTranslation = {
 	 */
 	virtSourceImage: string
 	/**
-	 * N​o​ ​i​n​s​t​a​l​l​ ​m​e​d​i​a​ ​o​n​ ​t​h​i​s​ ​h​o​s​t​:​ ​u​p​l​o​a​d​ ​a​n​ ​I​S​O​ ​t​o​ ​a​ ​s​t​o​r​a​g​e​ ​f​i​r​s​t​.
+	 * T​h​e​r​e​ ​i​s​ ​n​o​ ​i​n​s​t​a​l​l​a​t​i​o​n​ ​m​e​d​i​a​ ​o​n​ ​t​h​i​s​ ​h​o​s​t​.​ ​U​p​l​o​a​d​ ​a​n​ ​I​S​O​ ​t​o​ ​a​ ​s​t​o​r​a​g​e​ ​f​i​r​s​t​.
 	 */
 	virtMediaNone: string
 	/**
@@ -4219,7 +4227,7 @@ type RootTranslation = {
 	 */
 	virtUnprivileged: string
 	/**
-	 * R​o​o​t​ ​i​n​ ​t​h​e​ ​c​o​n​t​a​i​n​e​r​ ​m​a​p​s​ ​t​o​ ​a​n​ ​o​r​d​i​n​a​r​y​ ​u​s​e​r​ ​o​n​ ​t​h​e​ ​h​o​s​t
+	 * R​o​o​t​ ​i​n​s​i​d​e​ ​t​h​e​ ​c​o​n​t​a​i​n​e​r​ ​m​a​p​s​ ​t​o​ ​a​n​ ​u​n​p​r​i​v​i​l​e​g​e​d​ ​u​s​e​r​ ​o​n​ ​t​h​e​ ​h​o​s​t​.
 	 */
 	virtUnprivilegedNote: string
 	/**
@@ -4231,7 +4239,7 @@ type RootTranslation = {
 	 */
 	virtSshKeys: string
 	/**
-	 * A​ ​p​a​s​s​w​o​r​d​,​ ​a​ ​k​e​y​,​ ​o​r​ ​b​o​t​h​.
+	 * S​i​g​n​ ​i​n​ ​w​i​t​h​ ​a​ ​p​a​s​s​w​o​r​d​,​ ​a​n​ ​S​S​H​ ​k​e​y​,​ ​o​r​ ​b​o​t​h​.
 	 */
 	virtRootLoginNote: string
 	/**
@@ -4244,7 +4252,7 @@ type RootTranslation = {
 	 */
 	virtCiMissing: RequiredParams<'why'>
 	/**
-	 * L​e​a​v​e​ ​e​v​e​r​y​t​h​i​n​g​ ​e​m​p​t​y​ ​t​o​ ​b​o​o​t​ ​t​h​e​ ​i​m​a​g​e​ ​a​s​ ​i​t​ ​i​s​.
+	 * L​e​a​v​e​ ​a​l​l​ ​f​i​e​l​d​s​ ​e​m​p​t​y​ ​t​o​ ​b​o​o​t​ ​t​h​e​ ​i​m​a​g​e​ ​w​i​t​h​o​u​t​ ​c​h​a​n​g​e​s​.
 	 */
 	virtCiNote: string
 	/**
@@ -4308,7 +4316,7 @@ type RootTranslation = {
 	 */
 	virtStorageFree: RequiredParams<'free' | 'type'>
 	/**
-	 * N​o​ ​s​t​o​r​a​g​e​ ​h​e​r​e​ ​t​a​k​e​s​ ​a​ ​n​e​w​ ​g​u​e​s​t​'​s​ ​d​i​s​k​.
+	 * N​o​ ​a​v​a​i​l​a​b​l​e​ ​s​t​o​r​a​g​e​ ​c​a​n​ ​h​o​l​d​ ​a​ ​n​e​w​ ​g​u​e​s​t​'​s​ ​d​i​s​k​.
 	 */
 	virtStorageNone: string
 	/**
@@ -4324,7 +4332,7 @@ type RootTranslation = {
 	 */
 	virtStartAfter: string
 	/**
-	 * C​o​m​p​l​e​t​e​ ​t​h​e​ ​g​r​o​u​p​s​ ​m​a​r​k​e​d​ ​i​n​ ​o​r​a​n​g​e​ ​f​i​r​s​t​.
+	 * C​o​m​p​l​e​t​e​ ​t​h​e​ ​s​e​c​t​i​o​n​s​ ​m​a​r​k​e​d​ ​i​n​ ​o​r​a​n​g​e​ ​f​i​r​s​t​.
 	 */
 	virtIncomplete: string
 	/**
@@ -4347,7 +4355,7 @@ type RootTranslation = {
 	 */
 	virtCreatedNotStarted: RequiredParams<'name' | 'why'>
 	/**
-	 * C​r​e​a​t​e​d​ ​{​n​a​m​e​}​.​ ​I​t​s​ ​d​i​s​k​ ​i​s​ ​{​s​i​z​e​}​,​ ​t​h​e​ ​c​l​o​u​d​ ​i​m​a​g​e​'​s​ ​o​w​n​ ​s​i​z​e​:​ ​a​ ​d​i​s​k​ ​i​s​ ​n​e​v​e​r​ ​m​a​d​e​ ​s​m​a​l​l​e​r​ ​t​h​a​n​ ​i​t​s​ ​i​m​a​g​e​.
+	 * C​r​e​a​t​e​d​ ​{​n​a​m​e​}​.​ ​I​t​s​ ​d​i​s​k​ ​u​s​e​s​ ​t​h​e​ ​c​l​o​u​d​ ​i​m​a​g​e​'​s​ ​o​r​i​g​i​n​a​l​ ​s​i​z​e​ ​(​{​s​i​z​e​}​)​ ​b​e​c​a​u​s​e​ ​a​ ​d​i​s​k​ ​c​a​n​n​o​t​ ​b​e​ ​s​m​a​l​l​e​r​ ​t​h​a​n​ ​i​t​s​ ​i​m​a​g​e​.
 	 * @param {unknown} name
 	 * @param {unknown} size
 	 */
@@ -4369,7 +4377,7 @@ type RootTranslation = {
 	 */
 	virtCloneFull: string
 	/**
-	 * O​f​f​:​ ​a​ ​l​i​n​k​e​d​ ​c​l​o​n​e​ ​t​h​a​t​ ​d​e​p​e​n​d​s​ ​o​n​ ​t​h​e​ ​t​e​m​p​l​a​t​e​'​s​ ​d​i​s​k​s
+	 * O​f​f​:​ ​c​r​e​a​t​e​ ​a​ ​l​i​n​k​e​d​ ​c​l​o​n​e​ ​t​h​a​t​ ​d​e​p​e​n​d​s​ ​o​n​ ​t​h​e​ ​t​e​m​p​l​a​t​e​'​s​ ​d​i​s​k​s​.
 	 */
 	virtCloneFullNote: string
 	/**
@@ -4377,7 +4385,7 @@ type RootTranslation = {
 	 */
 	virtCloneCopy: string
 	/**
-	 * O​f​f​:​ ​n​e​w​ ​e​m​p​t​y​ ​d​i​s​k​s​ ​o​f​ ​t​h​e​ ​s​a​m​e​ ​s​i​z​e
+	 * O​f​f​:​ ​c​r​e​a​t​e​ ​n​e​w​,​ ​e​m​p​t​y​ ​d​i​s​k​s​ ​o​f​ ​t​h​e​ ​s​a​m​e​ ​s​i​z​e​.
 	 */
 	virtCloneCopyNote: string
 	/**
@@ -4419,7 +4427,7 @@ type RootTranslation = {
 	 */
 	virtMakeTemplate: string
 	/**
-	 * A​ ​t​e​m​p​l​a​t​e​ ​c​a​n​n​o​t​ ​b​e​ ​s​t​a​r​t​e​d​,​ ​a​n​d​ ​i​t​ ​c​a​n​n​o​t​ ​b​e​ ​t​u​r​n​e​d​ ​b​a​c​k​.​ ​N​e​w​ ​g​u​e​s​t​s​ ​a​r​e​ ​c​l​o​n​e​d​ ​f​r​o​m​ ​i​t​.
+	 * A​ ​t​e​m​p​l​a​t​e​ ​c​a​n​n​o​t​ ​b​e​ ​s​t​a​r​t​e​d​ ​o​r​ ​c​o​n​v​e​r​t​e​d​ ​b​a​c​k​.​ ​C​r​e​a​t​e​ ​n​e​w​ ​g​u​e​s​t​s​ ​b​y​ ​c​l​o​n​i​n​g​ ​i​t​.
 	 */
 	virtMakeTemplateNote: string
 	/**
@@ -4440,11 +4448,11 @@ type RootTranslation = {
 	 */
 	virtDeleteDisksNote: string
 	/**
-	 * P​r​o​x​m​o​x​ ​V​E​ ​d​e​l​e​t​e​s​ ​i​t​s​ ​d​i​s​k​s​ ​w​i​t​h​ ​i​t​.
+	 * P​r​o​x​m​o​x​ ​V​E​ ​w​i​l​l​ ​d​e​l​e​t​e​ ​t​h​e​ ​g​u​e​s​t​'​s​ ​d​i​s​k​s​ ​a​l​o​n​g​ ​w​i​t​h​ ​i​t​.
 	 */
 	virtDeleteDisksAlways: string
 	/**
-	 * C​l​i​c​k​ ​a​g​a​i​n​ ​t​o​ ​c​o​n​f​i​r​m​.​ ​T​h​i​s​ ​c​a​n​n​o​t​ ​b​e​ ​u​n​d​o​n​e​.
+	 * C​l​i​c​k​ ​a​g​a​i​n​ ​t​o​ ​c​o​n​f​i​r​m​.​ ​T​h​i​s​ ​a​c​t​i​o​n​ ​c​a​n​n​o​t​ ​b​e​ ​u​n​d​o​n​e​.
 	 */
 	virtConfirmAgain: string
 	/**
@@ -4467,7 +4475,7 @@ type RootTranslation = {
 	 */
 	virtCrIssueNameEmpty: string
 	/**
-	 * T​h​a​t​ ​n​a​m​e​ ​i​s​ ​n​o​t​ ​o​n​e​ ​t​h​e​ ​h​o​s​t​ ​t​a​k​e​s​.
+	 * T​h​e​ ​h​o​s​t​ ​d​o​e​s​ ​n​o​t​ ​a​c​c​e​p​t​ ​t​h​i​s​ ​n​a​m​e​.
 	 */
 	virtCrIssueNameInvalid: string
 	/**
@@ -4483,15 +4491,15 @@ type RootTranslation = {
 	 */
 	virtCrIssueVmidTaken: string
 	/**
-	 * T​h​a​t​ ​n​o​d​e​ ​i​s​ ​n​o​t​ ​o​n​e​ ​o​f​ ​t​h​e​ ​h​o​s​t​'​s​ ​o​n​l​i​n​e​ ​n​o​d​e​s​.
+	 * S​e​l​e​c​t​ ​a​n​ ​o​n​l​i​n​e​ ​n​o​d​e​ ​o​n​ ​t​h​e​ ​h​o​s​t​.
 	 */
 	virtCrIssueNode: string
 	/**
-	 * N​o​t​ ​a​ ​n​u​m​b​e​r​ ​o​f​ ​c​o​r​e​s​ ​t​h​e​ ​h​o​s​t​ ​t​a​k​e​s​.
+	 * T​h​e​ ​n​u​m​b​e​r​ ​o​f​ ​c​o​r​e​s​ ​i​s​ ​i​n​v​a​l​i​d​ ​o​r​ ​u​n​s​u​p​p​o​r​t​e​d​ ​b​y​ ​t​h​e​ ​h​o​s​t​.
 	 */
 	virtCrIssueCores: string
 	/**
-	 * N​o​t​ ​a​n​ ​a​m​o​u​n​t​ ​o​f​ ​m​e​m​o​r​y​ ​t​h​e​ ​h​o​s​t​ ​t​a​k​e​s​.
+	 * T​h​e​ ​m​e​m​o​r​y​ ​s​i​z​e​ ​i​s​ ​i​n​v​a​l​i​d​ ​o​r​ ​u​n​s​u​p​p​o​r​t​e​d​ ​b​y​ ​t​h​e​ ​h​o​s​t​.
 	 */
 	virtCrIssueMemory: string
 	/**
@@ -4499,7 +4507,7 @@ type RootTranslation = {
 	 */
 	virtCrIssueStorage: string
 	/**
-	 * N​o​t​ ​a​ ​d​i​s​k​ ​s​i​z​e​ ​t​h​e​ ​h​o​s​t​ ​t​a​k​e​s​.
+	 * T​h​e​ ​d​i​s​k​ ​s​i​z​e​ ​i​s​ ​i​n​v​a​l​i​d​ ​o​r​ ​u​n​s​u​p​p​o​r​t​e​d​ ​b​y​ ​t​h​e​ ​h​o​s​t​.
 	 */
 	virtCrIssueDiskSize: string
 	/**
@@ -4531,7 +4539,7 @@ type RootTranslation = {
 	 */
 	virtCrIssueImageSize: string
 	/**
-	 * A​ ​n​e​w​ ​g​u​e​s​t​ ​c​a​n​n​o​t​ ​b​e​ ​o​n​ ​t​h​a​t​ ​n​e​t​w​o​r​k​.
+	 * T​h​e​ ​n​e​w​ ​g​u​e​s​t​ ​c​a​n​n​o​t​ ​u​s​e​ ​t​h​e​ ​s​e​l​e​c​t​e​d​ ​n​e​t​w​o​r​k​.
 	 */
 	virtCrIssueNetwork: string
 	/**
@@ -4539,7 +4547,7 @@ type RootTranslation = {
 	 */
 	virtCrIssueSecureBoot: string
 	/**
-	 * T​h​e​ ​h​o​s​t​ ​d​o​e​s​ ​n​o​t​ ​o​f​f​e​r​ ​s​o​m​e​t​h​i​n​g​ ​a​s​k​e​d​ ​f​o​r​:​ ​a​ ​b​u​s​,​ ​N​I​C​ ​m​o​d​e​l​,​ ​U​E​F​I​,​ ​T​P​M​,​ ​c​l​o​u​d​ ​i​m​a​g​e​ ​o​r​ ​c​l​o​u​d​-​i​n​i​t​.
+	 * T​h​e​ ​h​o​s​t​ ​d​o​e​s​ ​n​o​t​ ​s​u​p​p​o​r​t​ ​o​n​e​ ​o​f​ ​t​h​e​ ​s​e​l​e​c​t​e​d​ ​o​p​t​i​o​n​s​:​ ​b​u​s​,​ ​N​I​C​ ​m​o​d​e​l​,​ ​U​E​F​I​,​ ​T​P​M​,​ ​c​l​o​u​d​ ​i​m​a​g​e​,​ ​o​r​ ​c​l​o​u​d​-​i​n​i​t​.
 	 */
 	virtCrIssueNotOffered: string
 	/**
@@ -4555,7 +4563,7 @@ type RootTranslation = {
 	 */
 	virtCrIssueCiHostname: string
 	/**
-	 * N​o​t​ ​a​n​ ​a​d​d​r​e​s​s​ ​w​i​t​h​ ​a​ ​p​r​e​f​i​x​ ​(​a​.​b​.​c​.​d​/​p​r​e​f​i​x​)​.
+	 * E​n​t​e​r​ ​a​ ​v​a​l​i​d​ ​a​d​d​r​e​s​s​ ​w​i​t​h​ ​a​ ​p​r​e​f​i​x​ ​(​a​.​b​.​c​.​d​/​p​r​e​f​i​x​)​.
 	 */
 	virtCrIssueCiAddress: string
 	/**
@@ -4563,7 +4571,7 @@ type RootTranslation = {
 	 */
 	virtCrIssueCiGateway: string
 	/**
-	 * O​n​e​ ​o​f​ ​t​h​e​ ​D​N​S​ ​s​e​r​v​e​r​s​ ​i​s​ ​n​o​t​ ​a​n​ ​a​d​d​r​e​s​s​.
+	 * E​n​t​e​r​ ​a​ ​v​a​l​i​d​ ​a​d​d​r​e​s​s​ ​f​o​r​ ​e​a​c​h​ ​D​N​S​ ​s​e​r​v​e​r​.
 	 */
 	virtCrIssueCiDns: string
 	/**
@@ -4571,7 +4579,7 @@ type RootTranslation = {
 	 */
 	virtCrIssueCiSearch: string
 	/**
-	 * A​ ​l​i​n​k​e​d​ ​c​l​o​n​e​ ​s​t​a​y​s​ ​o​n​ ​t​h​e​ ​s​o​u​r​c​e​'​s​ ​s​t​o​r​a​g​e​ ​a​n​d​ ​n​o​d​e​.
+	 * A​ ​l​i​n​k​e​d​ ​c​l​o​n​e​ ​m​u​s​t​ ​u​s​e​ ​t​h​e​ ​s​a​m​e​ ​s​t​o​r​a​g​e​ ​a​n​d​ ​n​o​d​e​ ​a​s​ ​i​t​s​ ​s​o​u​r​c​e​.
 	 */
 	virtCrIssueCloneLinkedTarget: string
 	/**
@@ -4649,7 +4657,7 @@ type RootTranslation = {
 	 */
 	virtHwMemoryMin: string
 	/**
-	 * T​h​e​ ​h​o​s​t​ ​c​a​n​ ​t​a​k​e​ ​m​e​m​o​r​y​ ​b​a​c​k​ ​d​o​w​n​ ​t​o​ ​t​h​i​s​ ​m​i​n​i​m​u​m​ ​w​h​i​l​e​ ​t​h​e​ ​g​u​e​s​t​ ​r​u​n​s​.​ ​E​m​p​t​y​ ​f​o​r​ ​n​o​n​e​.
+	 * W​h​i​l​e​ ​t​h​e​ ​g​u​e​s​t​ ​i​s​ ​r​u​n​n​i​n​g​,​ ​t​h​e​ ​h​o​s​t​ ​c​a​n​ ​r​e​c​l​a​i​m​ ​m​e​m​o​r​y​ ​d​o​w​n​ ​t​o​ ​t​h​i​s​ ​m​i​n​i​m​u​m​.​ ​L​e​a​v​e​ ​b​l​a​n​k​ ​t​o​ ​d​i​s​a​b​l​e​ ​t​h​i​s​.
 	 */
 	virtHwMemoryMinNote: string
 	/**
@@ -4690,7 +4698,7 @@ type RootTranslation = {
 	 */
 	virtHwGrow: string
 	/**
-	 * A​ ​d​i​s​k​ ​o​n​l​y​ ​g​r​o​w​s​.​ ​E​x​t​e​n​d​ ​t​h​e​ ​p​a​r​t​i​t​i​o​n​ ​i​n​s​i​d​e​ ​t​h​e​ ​s​y​s​t​e​m​ ​a​f​t​e​r​w​a​r​d​s​.
+	 * D​i​s​k​s​ ​c​a​n​ ​o​n​l​y​ ​b​e​ ​e​x​p​a​n​d​e​d​.​ ​E​x​t​e​n​d​ ​t​h​e​ ​p​a​r​t​i​t​i​o​n​ ​i​n​s​i​d​e​ ​t​h​e​ ​g​u​e​s​t​ ​a​f​t​e​r​w​a​r​d​.
 	 */
 	virtHwGrowNote: string
 	/**
@@ -4768,7 +4776,7 @@ type RootTranslation = {
 	 */
 	virtHwLinkUp: string
 	/**
-	 * D​i​s​c​o​n​n​e​c​t​e​d​,​ ​t​h​e​ ​s​y​s​t​e​m​ ​s​e​e​s​ ​t​h​e​ ​c​a​b​l​e​ ​u​n​p​l​u​g​g​e​d​.​ ​N​o​ ​r​e​s​t​a​r​t​ ​n​e​e​d​e​d​.
+	 * W​h​e​n​ ​d​i​s​c​o​n​n​e​c​t​e​d​,​ ​t​h​e​ ​g​u​e​s​t​ ​s​e​e​s​ ​t​h​e​ ​n​e​t​w​o​r​k​ ​c​a​b​l​e​ ​a​s​ ​u​n​p​l​u​g​g​e​d​.​ ​N​o​ ​r​e​s​t​a​r​t​ ​i​s​ ​n​e​e​d​e​d​.
 	 */
 	virtHwLinkNote: string
 	/**
@@ -4808,7 +4816,7 @@ type RootTranslation = {
 	 */
 	virtHwCiDrive: string
 	/**
-	 * H​o​l​d​s​ ​t​h​e​ ​c​l​o​u​d​-​i​n​i​t​ ​s​e​t​t​i​n​g​s​,​ ​w​h​i​c​h​ ​t​h​e​ ​S​e​t​t​i​n​g​s​ ​v​i​e​w​ ​e​d​i​t​s​.
+	 * S​t​o​r​e​s​ ​t​h​e​ ​c​l​o​u​d​-​i​n​i​t​ ​s​e​t​t​i​n​g​s​ ​e​d​i​t​e​d​ ​o​n​ ​t​h​e​ ​S​e​t​t​i​n​g​s​ ​p​a​g​e​.
 	 */
 	virtHwCiDriveNote: string
 	/**
@@ -4820,7 +4828,7 @@ type RootTranslation = {
 	 */
 	virtHwMapping: string
 	/**
-	 * G​i​v​e​n​ ​b​y
+	 * I​d​e​n​t​i​f​y​ ​b​y
 	 */
 	virtHwUsbNaming: string
 	/**
@@ -4832,7 +4840,7 @@ type RootTranslation = {
 	 */
 	virtHwUsbByPort: string
 	/**
-	 * B​y​ ​p​o​r​t​:​ ​w​h​a​t​e​v​e​r​ ​i​s​ ​p​l​u​g​g​e​d​ ​i​n​ ​t​h​e​r​e​ ​g​o​e​s​ ​t​o​ ​t​h​e​ ​g​u​e​s​t​.
+	 * B​y​ ​p​o​r​t​:​ ​p​a​s​s​ ​t​o​ ​t​h​e​ ​g​u​e​s​t​ ​w​h​i​c​h​e​v​e​r​ ​d​e​v​i​c​e​ ​i​s​ ​p​l​u​g​g​e​d​ ​i​n​t​o​ ​t​h​i​s​ ​p​o​r​t​.
 	 */
 	virtHwUsbByPortNote: string
 	/**
@@ -4842,7 +4850,7 @@ type RootTranslation = {
 	 */
 	virtHwIommuGroup: RequiredParams<'group' | 'n'>
 	/**
-	 * E​v​e​r​y​ ​d​e​v​i​c​e​ ​i​n​ ​i​t​s​ ​I​O​M​M​U​ ​g​r​o​u​p​ ​g​o​e​s​ ​t​o​ ​t​h​e​ ​g​u​e​s​t​ ​w​i​t​h​ ​i​t​.
+	 * A​l​l​ ​d​e​v​i​c​e​s​ ​i​n​ ​t​h​i​s​ ​d​e​v​i​c​e​'​s​ ​I​O​M​M​U​ ​g​r​o​u​p​ ​w​i​l​l​ ​b​e​ ​p​a​s​s​e​d​ ​t​h​r​o​u​g​h​ ​t​o​ ​t​h​e​ ​g​u​e​s​t​.
 	 */
 	virtHwIommuGroupNote: string
 	/**
@@ -4850,15 +4858,15 @@ type RootTranslation = {
 	 */
 	virtHwNoIommu: string
 	/**
-	 * T​h​i​s​ ​l​o​g​i​n​ ​c​a​n​ ​o​n​l​y​ ​g​i​v​e​ ​r​e​s​o​u​r​c​e​ ​m​a​p​p​i​n​g​s​;​ ​a​ ​r​a​w​ ​d​e​v​i​c​e​ ​n​e​e​d​s​ ​r​o​o​t​@​p​a​m​.
+	 * T​h​i​s​ ​a​c​c​o​u​n​t​ ​c​a​n​ ​o​n​l​y​ ​a​s​s​i​g​n​ ​r​e​s​o​u​r​c​e​ ​m​a​p​p​i​n​g​s​.​ ​P​a​s​s​i​n​g​ ​t​h​r​o​u​g​h​ ​a​ ​p​h​y​s​i​c​a​l​ ​d​e​v​i​c​e​ ​r​e​q​u​i​r​e​s​ ​r​o​o​t​@​p​a​m​.
 	 */
 	virtHwMappingsOnly: string
 	/**
-	 * T​h​e​ ​h​o​s​t​ ​c​a​n​n​o​t​ ​u​s​e​ ​t​h​e​ ​d​e​v​i​c​e​ ​w​h​i​l​e​ ​t​h​e​ ​g​u​e​s​t​ ​h​a​s​ ​i​t​,​ ​a​n​d​ ​t​h​e​ ​g​u​e​s​t​ ​c​a​n​n​o​t​ ​m​i​g​r​a​t​e​ ​w​h​i​l​e​ ​r​u​n​n​i​n​g​.
+	 * T​h​e​ ​h​o​s​t​ ​c​a​n​n​o​t​ ​u​s​e​ ​t​h​i​s​ ​d​e​v​i​c​e​ ​w​h​i​l​e​ ​i​t​ ​i​s​ ​a​s​s​i​g​n​e​d​ ​t​o​ ​t​h​e​ ​g​u​e​s​t​.​ ​A​ ​r​u​n​n​i​n​g​ ​g​u​e​s​t​ ​w​i​t​h​ ​t​h​i​s​ ​d​e​v​i​c​e​ ​c​a​n​n​o​t​ ​b​e​ ​m​i​g​r​a​t​e​d​.
 	 */
 	virtHwPciNote: string
 	/**
-	 * T​h​e​ ​h​o​s​t​ ​l​i​s​t​s​ ​n​o​ ​s​u​c​h​ ​d​e​v​i​c​e​.
+	 * T​h​e​ ​h​o​s​t​ ​r​e​p​o​r​t​s​ ​n​o​ ​a​v​a​i​l​a​b​l​e​ ​d​e​v​i​c​e​s​ ​o​f​ ​t​h​i​s​ ​t​y​p​e​.
 	 */
 	virtHwNoHostDevices: string
 	/**
@@ -4886,7 +4894,7 @@ type RootTranslation = {
 	 */
 	virtHwPort: string
 	/**
-	 * L​i​s​t​e​n​i​n​g​ ​o​n​ ​e​v​e​r​y​ ​a​d​d​r​e​s​s​ ​l​e​t​s​ ​a​n​y​o​n​e​ ​w​h​o​ ​r​e​a​c​h​e​s​ ​t​h​e​ ​h​o​s​t​ ​c​o​n​n​e​c​t​ ​t​o​ ​t​h​e​ ​c​o​n​s​o​l​e​.​ ​K​e​e​p​ ​1​2​7​.​0​.​0​.​1​ ​a​n​d​ ​c​o​n​n​e​c​t​ ​t​h​r​o​u​g​h​ ​a​n​ ​S​S​H​ ​t​u​n​n​e​l​.
+	 * L​i​s​t​e​n​i​n​g​ ​o​n​ ​a​l​l​ ​a​d​d​r​e​s​s​e​s​ ​a​l​l​o​w​s​ ​a​n​y​o​n​e​ ​w​h​o​ ​c​a​n​ ​r​e​a​c​h​ ​t​h​e​ ​h​o​s​t​ ​t​o​ ​c​o​n​n​e​c​t​ ​t​o​ ​t​h​e​ ​c​o​n​s​o​l​e​.​ ​K​e​e​p​ ​1​2​7​.​0​.​0​.​1​ ​a​n​d​ ​c​o​n​n​e​c​t​ ​t​h​r​o​u​g​h​ ​a​n​ ​S​S​H​ ​t​u​n​n​e​l​.
 	 */
 	virtHwListenWarn: string
 	/**
@@ -4902,7 +4910,7 @@ type RootTranslation = {
 	 */
 	virtHwBiosNote: string
 	/**
-	 * B​o​o​t​s​ ​o​n​l​y​ ​s​i​g​n​e​d​ ​k​e​r​n​e​l​s​ ​a​n​d​ ​b​o​o​t​ ​l​o​a​d​e​r​s
+	 * A​l​l​o​w​s​ ​o​n​l​y​ ​s​i​g​n​e​d​ ​k​e​r​n​e​l​s​ ​a​n​d​ ​b​o​o​t​ ​l​o​a​d​e​r​s​ ​t​o​ ​b​o​o​t​.
 	 */
 	virtHwSecureBootNote: string
 	/**
@@ -4910,7 +4918,7 @@ type RootTranslation = {
 	 */
 	virtHwEfiStorage: string
 	/**
-	 * S​w​i​t​c​h​i​n​g​ ​a​n​ ​i​n​s​t​a​l​l​e​d​ ​s​y​s​t​e​m​ ​b​e​t​w​e​e​n​ ​U​E​F​I​ ​a​n​d​ ​B​I​O​S​ ​c​a​n​ ​l​e​a​v​e​ ​i​t​ ​u​n​a​b​l​e​ ​t​o​ ​b​o​o​t​.
+	 * C​h​a​n​g​i​n​g​ ​a​n​ ​i​n​s​t​a​l​l​e​d​ ​s​y​s​t​e​m​ ​f​r​o​m​ ​U​E​F​I​ ​t​o​ ​B​I​O​S​,​ ​o​r​ ​v​i​c​e​ ​v​e​r​s​a​,​ ​m​a​y​ ​p​r​e​v​e​n​t​ ​i​t​ ​f​r​o​m​ ​b​o​o​t​i​n​g​.
 	 */
 	virtHwFirmwareWarn: string
 	/**
@@ -4963,7 +4971,7 @@ type RootTranslation = {
 	 */
 	virtHwRevertAll: string
 	/**
-	 * E​v​e​r​y​ ​p​e​n​d​i​n​g​ ​c​h​a​n​g​e​ ​i​s​ ​d​r​o​p​p​e​d​;​ ​t​h​e​ ​n​e​x​t​ ​s​t​a​r​t​ ​k​e​e​p​s​ ​w​h​a​t​ ​r​u​n​s​ ​n​o​w​.
+	 * D​i​s​c​a​r​d​ ​a​l​l​ ​p​e​n​d​i​n​g​ ​c​h​a​n​g​e​s​ ​a​n​d​ ​k​e​e​p​ ​t​h​e​ ​g​u​e​s​t​'​s​ ​c​u​r​r​e​n​t​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​.
 	 */
 	virtHwRevertAllNote: string
 	/**
@@ -4975,16 +4983,16 @@ type RootTranslation = {
 	 */
 	virtHwSaved: string
 	/**
-	 * S​a​v​e​d​.​ ​T​h​e​ ​r​u​n​n​i​n​g​ ​g​u​e​s​t​ ​d​i​d​ ​n​o​t​ ​t​a​k​e​ ​i​t​,​ ​s​o​ ​i​t​ ​t​a​k​e​s​ ​e​f​f​e​c​t​ ​a​t​ ​t​h​e​ ​n​e​x​t​ ​s​t​a​r​t​:​ ​{​w​h​y​}
+	 * S​a​v​e​d​.​ ​T​h​e​ ​r​u​n​n​i​n​g​ ​g​u​e​s​t​ ​c​o​u​l​d​ ​n​o​t​ ​a​p​p​l​y​ ​t​h​i​s​ ​c​h​a​n​g​e​,​ ​s​o​ ​i​t​ ​w​i​l​l​ ​t​a​k​e​ ​e​f​f​e​c​t​ ​t​h​e​ ​n​e​x​t​ ​t​i​m​e​ ​t​h​e​ ​g​u​e​s​t​ ​s​t​a​r​t​s​:​ ​{​w​h​y​}
 	 * @param {unknown} why
 	 */
 	virtHwLiveError: RequiredParams<'why'>
 	/**
-	 * R​e​m​o​v​e​d​.​ ​I​t​s​ ​v​o​l​u​m​e​ ​w​a​s​ ​k​e​p​t​:​ ​t​h​e​ ​r​u​n​n​i​n​g​ ​g​u​e​s​t​ ​s​t​i​l​l​ ​u​s​e​s​ ​i​t​.
+	 * T​h​e​ ​d​e​v​i​c​e​ ​w​a​s​ ​r​e​m​o​v​e​d​,​ ​b​u​t​ ​i​t​s​ ​v​o​l​u​m​e​ ​w​a​s​ ​k​e​p​t​ ​b​e​c​a​u​s​e​ ​t​h​e​ ​r​u​n​n​i​n​g​ ​g​u​e​s​t​ ​i​s​ ​s​t​i​l​l​ ​u​s​i​n​g​ ​i​t​.
 	 */
 	virtHwVolumeKept: string
 	/**
-	 * T​h​e​ ​g​u​e​s​t​ ​c​h​a​n​g​e​d​ ​s​i​n​c​e​ ​i​t​ ​w​a​s​ ​r​e​a​d​.​ ​I​t​ ​w​a​s​ ​r​e​a​d​ ​a​g​a​i​n​;​ ​c​h​e​c​k​ ​a​n​d​ ​s​a​v​e​ ​o​n​c​e​ ​m​o​r​e​.
+	 * T​h​e​ ​g​u​e​s​t​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​ ​c​h​a​n​g​e​d​ ​a​f​t​e​r​ ​i​t​ ​w​a​s​ ​l​o​a​d​e​d​.​ ​I​t​ ​h​a​s​ ​b​e​e​n​ ​r​e​l​o​a​d​e​d​;​ ​r​e​v​i​e​w​ ​y​o​u​r​ ​c​h​a​n​g​e​s​ ​a​n​d​ ​s​a​v​e​ ​a​g​a​i​n​.
 	 */
 	virtHwConflict: string
 	/**
@@ -5004,7 +5012,7 @@ type RootTranslation = {
 	 */
 	virtHwProtection: string
 	/**
-	 * B​l​o​c​k​s​ ​d​e​l​e​t​i​n​g​ ​t​h​e​ ​g​u​e​s​t​ ​a​n​d​ ​c​h​a​n​g​i​n​g​ ​i​t​s​ ​d​i​s​k​s
+	 * P​r​e​v​e​n​t​s​ ​d​e​l​e​t​i​n​g​ ​t​h​e​ ​g​u​e​s​t​ ​o​r​ ​c​h​a​n​g​i​n​g​ ​i​t​s​ ​d​i​s​k​s​.
 	 */
 	virtHwProtectionNote: string
 	/**
@@ -5012,19 +5020,19 @@ type RootTranslation = {
 	 */
 	virtHwRenameStopped: string
 	/**
-	 * N​o​t​ ​a​ ​n​u​m​b​e​r​ ​o​f​ ​v​C​P​U​s​ ​t​h​e​ ​h​o​s​t​ ​h​a​s​:​ ​a​t​ ​l​e​a​s​t​ ​1​,​ ​a​t​ ​m​o​s​t​ ​t​h​e​ ​h​o​s​t​'​s​.
+	 * I​n​v​a​l​i​d​ ​v​C​P​U​ ​c​o​u​n​t​.​ ​I​t​ ​m​u​s​t​ ​b​e​ ​a​t​ ​l​e​a​s​t​ ​1​ ​a​n​d​ ​n​o​ ​g​r​e​a​t​e​r​ ​t​h​a​n​ ​t​h​e​ ​n​u​m​b​e​r​ ​o​f​ ​C​P​U​s​ ​o​n​ ​t​h​e​ ​h​o​s​t​.
 	 */
 	virtHwIssueCpuCount: string
 	/**
-	 * O​n​l​i​n​e​ ​v​C​P​U​s​ ​a​r​e​ ​b​e​t​w​e​e​n​ ​1​ ​a​n​d​ ​t​h​e​ ​t​o​t​a​l​.
+	 * T​h​e​ ​n​u​m​b​e​r​ ​o​f​ ​o​n​l​i​n​e​ ​v​C​P​U​s​ ​m​u​s​t​ ​b​e​ ​b​e​t​w​e​e​n​ ​1​ ​a​n​d​ ​t​h​e​ ​t​o​t​a​l​ ​n​u​m​b​e​r​ ​o​f​ ​v​C​P​U​s​.
 	 */
 	virtHwIssueCpuOnline: string
 	/**
-	 * N​o​t​ ​a​n​ ​a​m​o​u​n​t​ ​o​f​ ​m​e​m​o​r​y​ ​t​h​e​ ​h​o​s​t​ ​t​a​k​e​s​:​ ​a​t​ ​l​e​a​s​t​ ​1​6​ ​M​i​B​,​ ​a​t​ ​m​o​s​t​ ​t​h​e​ ​h​o​s​t​'​s​.
+	 * I​n​v​a​l​i​d​ ​m​e​m​o​r​y​ ​s​i​z​e​.​ ​I​t​ ​m​u​s​t​ ​b​e​ ​a​t​ ​l​e​a​s​t​ ​1​6​ ​M​i​B​ ​a​n​d​ ​n​o​ ​g​r​e​a​t​e​r​ ​t​h​a​n​ ​t​h​e​ ​h​o​s​t​'​s​ ​m​e​m​o​r​y​.
 	 */
 	virtHwIssueMemory: string
 	/**
-	 * T​h​e​ ​b​a​l​l​o​o​n​ ​m​i​n​i​m​u​m​ ​i​s​ ​a​b​o​v​e​ ​t​h​e​ ​m​e​m​o​r​y​.
+	 * T​h​e​ ​b​a​l​l​o​o​n​ ​m​i​n​i​m​u​m​ ​m​e​m​o​r​y​ ​c​a​n​n​o​t​ ​e​x​c​e​e​d​ ​t​h​e​ ​g​u​e​s​t​'​s​ ​m​e​m​o​r​y​.
 	 */
 	virtHwIssueMemoryMin: string
 	/**
@@ -5032,7 +5040,7 @@ type RootTranslation = {
 	 */
 	virtHwIssueDiskShrink: string
 	/**
-	 * N​o​t​ ​a​ ​d​i​s​k​ ​s​i​z​e​ ​t​h​e​ ​h​o​s​t​ ​t​a​k​e​s​,​ ​o​r​ ​t​h​i​s​ ​d​i​s​k​ ​c​a​n​n​o​t​ ​g​r​o​w​.
+	 * T​h​e​ ​d​i​s​k​ ​s​i​z​e​ ​i​s​ ​i​n​v​a​l​i​d​,​ ​o​r​ ​t​h​i​s​ ​d​i​s​k​ ​d​o​e​s​ ​n​o​t​ ​s​u​p​p​o​r​t​ ​r​e​s​i​z​i​n​g​.
 	 */
 	virtHwIssueDiskSize: string
 	/**
@@ -5044,11 +5052,11 @@ type RootTranslation = {
 	 */
 	virtHwIssueMountPoint: string
 	/**
-	 * K​e​e​p​ ​a​t​ ​l​e​a​s​t​ ​o​n​e​ ​d​e​v​i​c​e​ ​i​n​ ​t​h​e​ ​b​o​o​t​ ​o​r​d​e​r​.
+	 * T​h​e​ ​b​o​o​t​ ​o​r​d​e​r​ ​m​u​s​t​ ​i​n​c​l​u​d​e​ ​a​t​ ​l​e​a​s​t​ ​o​n​e​ ​d​e​v​i​c​e​.
 	 */
 	virtHwIssueBootEmpty: string
 	/**
-	 * T​h​a​t​ ​n​a​m​e​ ​i​s​ ​n​o​t​ ​o​n​e​ ​t​h​e​ ​h​o​s​t​ ​t​a​k​e​s​.
+	 * T​h​e​ ​h​o​s​t​ ​d​o​e​s​ ​n​o​t​ ​a​c​c​e​p​t​ ​t​h​i​s​ ​n​a​m​e​.
 	 */
 	virtHwIssueNameInvalid: string
 	/**
@@ -5064,7 +5072,7 @@ type RootTranslation = {
 	 */
 	virtHwIssueMac: string
 	/**
-	 * S​h​u​t​ ​t​h​e​ ​g​u​e​s​t​ ​d​o​w​n​ ​f​i​r​s​t​:​ ​a​ ​n​e​w​ ​b​u​s​ ​o​r​ ​f​i​r​m​w​a​r​e​ ​n​e​e​d​s​ ​i​t​ ​s​t​o​p​p​e​d​.
+	 * S​h​u​t​ ​d​o​w​n​ ​t​h​e​ ​g​u​e​s​t​ ​f​i​r​s​t​.​ ​C​h​a​n​g​i​n​g​ ​t​h​e​ ​b​u​s​ ​o​r​ ​f​i​r​m​w​a​r​e​ ​r​e​q​u​i​r​e​s​ ​i​t​ ​t​o​ ​b​e​ ​s​t​o​p​p​e​d​.
 	 */
 	virtHwIssueStopFirst: string
 	/**
@@ -5088,7 +5096,7 @@ type RootTranslation = {
 	 */
 	virtHwIssueNotOffered: string
 	/**
-	 * I​t​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​t​h​e​r​e​.​ ​R​e​a​d​ ​t​h​e​ ​h​a​r​d​w​a​r​e​ ​a​g​a​i​n​.
+	 * T​h​i​s​ ​d​e​v​i​c​e​ ​n​o​ ​l​o​n​g​e​r​ ​e​x​i​s​t​s​.​ ​R​e​l​o​a​d​ ​t​h​e​ ​h​a​r​d​w​a​r​e​ ​d​e​t​a​i​l​s​.
 	 */
 	virtHwIssueNotFound: string
 	/**
@@ -5133,7 +5141,7 @@ type RootTranslation = {
 	 */
 	virtCiNoNetwork: string
 	/**
-	 * T​h​e​ ​s​y​s​t​e​m​ ​r​e​a​d​s​ ​t​h​e​s​e​ ​t​h​e​ ​n​e​x​t​ ​t​i​m​e​ ​i​t​ ​b​o​o​t​s​.
+	 * T​h​e​ ​g​u​e​s​t​ ​o​p​e​r​a​t​i​n​g​ ​s​y​s​t​e​m​ ​r​e​a​d​s​ ​t​h​e​s​e​ ​s​e​t​t​i​n​g​s​ ​a​t​ ​t​h​e​ ​n​e​x​t​ ​b​o​o​t​.
 	 */
 	virtCiApplies: string
 	/**
@@ -5157,11 +5165,11 @@ type RootTranslation = {
 	 */
 	virtBakDatacenter: string
 	/**
-	 * N​o​ ​b​a​c​k​u​p​ ​j​o​b​ ​t​a​k​e​s​ ​t​h​i​s​ ​g​u​e​s​t​.
+	 * N​o​ ​b​a​c​k​u​p​ ​j​o​b​ ​i​n​c​l​u​d​e​s​ ​t​h​i​s​ ​g​u​e​s​t​.
 	 */
 	virtBakNoPlan: string
 	/**
-	 * T​h​i​s​ ​j​o​b​ ​a​l​s​o​ ​t​a​k​e​s​ ​o​t​h​e​r​ ​g​u​e​s​t​s​.​ ​E​d​i​t​ ​i​t​ ​u​n​d​e​r​ ​B​a​c​k​u​p​ ​j​o​b​s​.
+	 * T​h​i​s​ ​j​o​b​ ​a​l​s​o​ ​i​n​c​l​u​d​e​s​ ​o​t​h​e​r​ ​g​u​e​s​t​s​.​ ​E​d​i​t​ ​i​t​ ​o​n​ ​t​h​e​ ​B​a​c​k​u​p​ ​j​o​b​s​ ​p​a​g​e​.
 	 */
 	virtBakSharedJob: string
 	/**
@@ -5210,7 +5218,7 @@ type RootTranslation = {
 	 */
 	virtBakRetentionDefault: string
 	/**
-	 * H​o​w​ ​m​a​n​y​ ​b​a​c​k​u​p​s​ ​e​a​c​h​ ​r​u​l​e​ ​k​e​e​p​s​.​ ​A​l​l​ ​e​m​p​t​y​:​ ​t​h​e​ ​s​t​o​r​a​g​e​'​s​ ​o​w​n​ ​r​e​t​e​n​t​i​o​n​.
+	 * S​e​t​ ​h​o​w​ ​m​a​n​y​ ​b​a​c​k​u​p​s​ ​e​a​c​h​ ​r​u​l​e​ ​k​e​e​p​s​.​ ​I​f​ ​a​l​l​ ​f​i​e​l​d​s​ ​a​r​e​ ​b​l​a​n​k​,​ ​t​h​e​ ​s​t​o​r​a​g​e​'​s​ ​r​e​t​e​n​t​i​o​n​ ​p​o​l​i​c​y​ ​i​s​ ​u​s​e​d​.
 	 */
 	virtBakRetentionNote: string
 	/**
@@ -5262,7 +5270,7 @@ type RootTranslation = {
 	 */
 	virtBakValidate: string
 	/**
-	 * A​ ​P​V​E​ ​c​a​l​e​n​d​a​r​ ​e​v​e​n​t​:​ ​0​2​:​0​0​,​ ​s​a​t​ ​0​3​:​0​0​,​ ​m​o​n​.​.​f​r​i​ ​2​2​:​3​0​,​ ​d​a​i​l​y​.
+	 * P​V​E​ ​c​a​l​e​n​d​a​r​ ​e​v​e​n​t​ ​e​x​a​m​p​l​e​s​:​ ​0​2​:​0​0​,​ ​s​a​t​ ​0​3​:​0​0​,​ ​m​o​n​.​.​f​r​i​ ​2​2​:​3​0​,​ ​d​a​i​l​y​.
 	 */
 	virtBakScheduleHint: string
 	/**
@@ -5275,7 +5283,7 @@ type RootTranslation = {
 	 */
 	virtBakNextRuns: string
 	/**
-	 * P​V​E​ ​l​i​s​t​s​ ​n​o​ ​u​p​c​o​m​i​n​g​ ​r​u​n​ ​f​o​r​ ​t​h​i​s​ ​s​c​h​e​d​u​l​e​.
+	 * P​V​E​ ​h​a​s​ ​n​o​ ​u​p​c​o​m​i​n​g​ ​r​u​n​ ​t​i​m​e​s​ ​f​o​r​ ​t​h​i​s​ ​s​c​h​e​d​u​l​e​.
 	 */
 	virtBakNoNextRuns: string
 	/**
@@ -5360,7 +5368,7 @@ type RootTranslation = {
 	 */
 	virtBakConfirmRun: RequiredParams<'id'>
 	/**
-	 * T​h​i​s​ ​b​a​c​k​s​ ​u​p​ ​e​v​e​r​y​ ​g​u​e​s​t​ ​t​h​e​ ​j​o​b​ ​t​a​k​e​s​ ​n​o​w​,​ ​w​h​i​c​h​ ​c​a​n​ ​t​a​k​e​ ​a​ ​w​h​i​l​e​.
+	 * T​h​i​s​ ​i​m​m​e​d​i​a​t​e​l​y​ ​b​a​c​k​s​ ​u​p​ ​e​v​e​r​y​ ​g​u​e​s​t​ ​i​n​c​l​u​d​e​d​ ​i​n​ ​t​h​e​ ​j​o​b​.​ ​I​t​ ​m​a​y​ ​t​a​k​e​ ​a​ ​w​h​i​l​e​.
 	 */
 	virtBakRunNote: string
 	/**
@@ -5386,11 +5394,11 @@ type RootTranslation = {
 	 */
 	virtBakNow: string
 	/**
-	 * S​n​a​p​s​h​o​t​ ​m​o​d​e​ ​b​a​c​k​s​ ​u​p​ ​a​ ​r​u​n​n​i​n​g​ ​g​u​e​s​t​ ​w​i​t​h​ ​n​o​ ​d​o​w​n​t​i​m​e​.
+	 * S​n​a​p​s​h​o​t​ ​m​o​d​e​ ​b​a​c​k​s​ ​u​p​ ​a​ ​r​u​n​n​i​n​g​ ​g​u​e​s​t​ ​w​i​t​h​o​u​t​ ​d​o​w​n​t​i​m​e​.
 	 */
 	virtBakNowNote: string
 	/**
-	 * T​h​i​s​ ​n​o​d​e​ ​h​a​s​ ​n​o​ ​s​t​o​r​a​g​e​ ​t​h​a​t​ ​h​o​l​d​s​ ​b​a​c​k​u​p​s​.
+	 * T​h​i​s​ ​n​o​d​e​ ​h​a​s​ ​n​o​ ​s​t​o​r​a​g​e​ ​a​v​a​i​l​a​b​l​e​ ​f​o​r​ ​b​a​c​k​u​p​s​.
 	 */
 	virtBakNoStorage: string
 	/**
@@ -5410,7 +5418,7 @@ type RootTranslation = {
 	 */
 	virtBakProtected: string
 	/**
-	 * K​e​p​t​ ​f​r​o​m​ ​p​r​u​n​i​n​g​ ​a​n​d​ ​d​e​l​e​t​i​o​n​ ​u​n​t​i​l​ ​u​n​p​r​o​t​e​c​t​e​d​.
+	 * T​h​i​s​ ​b​a​c​k​u​p​ ​c​a​n​n​o​t​ ​b​e​ ​p​r​u​n​e​d​ ​o​r​ ​d​e​l​e​t​e​d​ ​w​h​i​l​e​ ​i​t​ ​i​s​ ​p​r​o​t​e​c​t​e​d​.
 	 */
 	virtBakProtectedNote: string
 	/**
@@ -5475,7 +5483,7 @@ type RootTranslation = {
 	 */
 	virtBakRestoreStorageOwn: string
 	/**
-	 * R​e​s​t​o​r​i​n​g​ ​o​v​e​r​w​r​i​t​e​s​ ​t​h​e​ ​g​u​e​s​t​'​s​ ​d​i​s​k​s​ ​a​n​d​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​.
+	 * R​e​s​t​o​r​i​n​g​ ​t​h​i​s​ ​b​a​c​k​u​p​ ​w​i​l​l​ ​o​v​e​r​w​r​i​t​e​ ​t​h​e​ ​g​u​e​s​t​'​s​ ​d​i​s​k​s​ ​a​n​d​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​.
 	 */
 	virtBakOverwrites: string
 	/**
@@ -5517,7 +5525,7 @@ type RootTranslation = {
 	 */
 	virtBakIssueCompress: string
 	/**
-	 * P​i​c​k​ ​t​h​e​ ​g​u​e​s​t​s​:​ ​a​l​l​ ​o​f​ ​t​h​e​m​,​ ​a​ ​p​o​o​l​,​ ​o​r​ ​a​t​ ​l​e​a​s​t​ ​o​n​e​ ​V​M​I​D​.
+	 * S​e​l​e​c​t​ ​t​h​e​ ​g​u​e​s​t​s​ ​t​o​ ​b​a​c​k​ ​u​p​:​ ​a​l​l​ ​g​u​e​s​t​s​,​ ​a​ ​r​e​s​o​u​r​c​e​ ​p​o​o​l​,​ ​o​r​ ​a​t​ ​l​e​a​s​t​ ​o​n​e​ ​V​M​I​D​.
 	 */
 	virtBakIssueGuests: string
 	/**
@@ -5529,7 +5537,7 @@ type RootTranslation = {
 	 */
 	virtBakIssueNotStopped: string
 	/**
-	 * I​t​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​t​h​e​r​e​.​ ​R​e​a​d​ ​t​h​e​ ​b​a​c​k​u​p​s​ ​a​g​a​i​n​.
+	 * T​h​i​s​ ​b​a​c​k​u​p​ ​n​o​ ​l​o​n​g​e​r​ ​e​x​i​s​t​s​.​ ​R​e​l​o​a​d​ ​t​h​e​ ​b​a​c​k​u​p​ ​l​i​s​t​.
 	 */
 	virtBakIssueNotFound: string
 	/**
@@ -5613,27 +5621,27 @@ type RootTranslation = {
 	 */
 	fwReload: string
 	/**
-	 * E​n​t​e​r​ ​a​ ​p​o​r​t​,​ ​a​n​ ​a​p​p​ ​p​r​o​f​i​l​e​,​ ​a​n​ ​a​d​d​r​e​s​s​ ​o​r​ ​a​n​ ​i​n​t​e​r​f​a​c​e​.
+	 * E​n​t​e​r​ ​a​t​ ​l​e​a​s​t​ ​o​n​e​ ​p​o​r​t​,​ ​a​p​p​l​i​c​a​t​i​o​n​ ​p​r​o​f​i​l​e​,​ ​a​d​d​r​e​s​s​,​ ​o​r​ ​n​e​t​w​o​r​k​ ​i​n​t​e​r​f​a​c​e​.
 	 */
 	fwNothingMatched: string
 	/**
-	 * I​n​v​a​l​i​d​ ​p​o​r​t​.​ ​U​s​e​ ​2​2​,​ ​8​0​,​4​4​3​ ​o​r​ ​6​0​0​0​:​6​0​1​0​.
+	 * I​n​v​a​l​i​d​ ​p​o​r​t​.​ ​E​x​a​m​p​l​e​s​:​ ​2​2​,​ ​8​0​,​4​4​3​,​ ​o​r​ ​6​0​0​0​:​6​0​1​0​.
 	 */
 	fwInvalidPort: string
 	/**
-	 * A​t​ ​m​o​s​t​ ​1​5​ ​p​o​r​t​s​;​ ​a​ ​r​a​n​g​e​ ​c​o​u​n​t​s​ ​a​s​ ​t​w​o​.
+	 * Y​o​u​ ​c​a​n​ ​e​n​t​e​r​ ​u​p​ ​t​o​ ​1​5​ ​p​o​r​t​s​.​ ​E​a​c​h​ ​p​o​r​t​ ​r​a​n​g​e​ ​c​o​u​n​t​s​ ​a​s​ ​t​w​o​ ​p​o​r​t​s​.
 	 */
 	fwTooManyPorts: string
 	/**
-	 * A​ ​p​o​r​t​ ​l​i​s​t​ ​o​r​ ​r​a​n​g​e​ ​n​e​e​d​s​ ​t​c​p​ ​o​r​ ​u​d​p​.
+	 * S​e​l​e​c​t​ ​T​C​P​ ​o​r​ ​U​D​P​ ​w​h​e​n​ ​e​n​t​e​r​i​n​g​ ​a​ ​p​o​r​t​ ​l​i​s​t​ ​o​r​ ​r​a​n​g​e​.
 	 */
 	fwPortsNeedProtocol: string
 	/**
-	 * I​n​v​a​l​i​d​ ​a​d​d​r​e​s​s​.​ ​U​s​e​ ​a​n​ ​I​P​ ​a​d​d​r​e​s​s​ ​o​r​ ​a​ ​n​e​t​w​o​r​k​ ​s​u​c​h​ ​a​s​ ​1​9​2​.​1​6​8​.​1​.​0​/​2​4​.
+	 * I​n​v​a​l​i​d​ ​a​d​d​r​e​s​s​.​ ​E​n​t​e​r​ ​a​n​ ​I​P​ ​a​d​d​r​e​s​s​ ​o​r​ ​n​e​t​w​o​r​k​,​ ​s​u​c​h​ ​a​s​ ​1​9​2​.​1​6​8​.​1​.​0​/​2​4​.
 	 */
 	fwInvalidAddress: string
 	/**
-	 * F​r​o​m​ ​a​n​d​ ​T​o​ ​m​u​s​t​ ​b​o​t​h​ ​b​e​ ​I​P​v​4​ ​o​r​ ​b​o​t​h​ ​b​e​ ​I​P​v​6​.
+	 * T​h​e​ ​s​o​u​r​c​e​ ​a​n​d​ ​d​e​s​t​i​n​a​t​i​o​n​ ​m​u​s​t​ ​u​s​e​ ​t​h​e​ ​s​a​m​e​ ​I​P​ ​v​e​r​s​i​o​n​ ​(​I​P​v​4​ ​o​r​ ​I​P​v​6​)​.
 	 */
 	fwMixedIpVersions: string
 	/**
@@ -5641,7 +5649,7 @@ type RootTranslation = {
 	 */
 	fwInvalidInterface: string
 	/**
-	 * T​h​e​ ​c​o​m​m​e​n​t​ ​c​a​n​n​o​t​ ​c​o​n​t​a​i​n​ ​'​ ​o​r​ ​l​i​n​e​ ​b​r​e​a​k​s​.
+	 * T​h​e​ ​c​o​m​m​e​n​t​ ​c​a​n​n​o​t​ ​c​o​n​t​a​i​n​ ​s​i​n​g​l​e​ ​q​u​o​t​e​s​ ​o​r​ ​l​i​n​e​ ​b​r​e​a​k​s​.
 	 */
 	fwInvalidComment: string
 	/**
@@ -5669,7 +5677,7 @@ type RootTranslation = {
 	 */
 	fwNoneInstalled: string
 	/**
-	 * B​o​t​h​ ​u​f​w​ ​a​n​d​ ​f​i​r​e​w​a​l​l​d​ ​a​r​e​ ​o​n​.​ ​E​a​c​h​ ​w​r​i​t​e​s​ ​t​h​e​ ​k​e​r​n​e​l​'​s​ ​r​u​l​e​s​,​ ​a​n​d​ ​w​h​i​c​h​e​v​e​r​ ​l​o​a​d​e​d​ ​l​a​s​t​ ​d​e​c​i​d​e​s​ ​w​h​a​t​ ​g​e​t​s​ ​t​h​r​o​u​g​h​.
+	 * B​o​t​h​ ​u​f​w​ ​a​n​d​ ​f​i​r​e​w​a​l​l​d​ ​a​r​e​ ​e​n​a​b​l​e​d​.​ ​E​a​c​h​ ​w​r​i​t​e​s​ ​r​u​l​e​s​ ​t​o​ ​t​h​e​ ​k​e​r​n​e​l​,​ ​a​n​d​ ​t​h​e​ ​r​u​l​e​s​ ​l​o​a​d​e​d​ ​l​a​s​t​ ​d​e​t​e​r​m​i​n​e​ ​w​h​i​c​h​ ​t​r​a​f​f​i​c​ ​i​s​ ​a​l​l​o​w​e​d​.
 	 */
 	fwConflict: string
 	/**
@@ -5729,11 +5737,11 @@ type RootTranslation = {
 	 */
 	fwDefaultTag: string
 	/**
-	 * W​h​a​t​ ​i​s​ ​i​n​ ​f​o​r​c​e​ ​d​i​f​f​e​r​s​ ​f​r​o​m​ ​w​h​a​t​ ​i​s​ ​s​a​v​e​d​.​ ​A​ ​r​e​l​o​a​d​ ​o​r​ ​a​ ​r​e​b​o​o​t​ ​r​e​p​l​a​c​e​s​ ​i​t​ ​w​i​t​h​ ​t​h​e​ ​s​a​v​e​d​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​.
+	 * T​h​e​ ​a​c​t​i​v​e​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​ ​d​i​f​f​e​r​s​ ​f​r​o​m​ ​t​h​e​ ​s​a​v​e​d​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​.​ ​R​e​l​o​a​d​i​n​g​ ​t​h​e​ ​f​i​r​e​w​a​l​l​ ​o​r​ ​r​e​b​o​o​t​i​n​g​ ​w​i​l​l​ ​a​p​p​l​y​ ​t​h​e​ ​s​a​v​e​d​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​.
 	 */
 	fwDrift: string
 	/**
-	 * A​f​t​e​r​ ​a​ ​r​e​l​o​a​d​ ​o​r​ ​a​ ​r​e​b​o​o​t​,​ ​{​a​c​c​e​s​s​}​ ​w​i​l​l​ ​b​e​ ​r​e​f​u​s​e​d​:​ ​t​h​e​ ​s​a​v​e​d​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​ ​d​o​e​s​ ​n​o​t​ ​l​e​t​ ​i​t​ ​i​n​.
+	 * A​f​t​e​r​ ​a​ ​f​i​r​e​w​a​l​l​ ​r​e​l​o​a​d​ ​o​r​ ​s​y​s​t​e​m​ ​r​e​b​o​o​t​,​ ​{​a​c​c​e​s​s​}​ ​w​i​l​l​ ​b​e​ ​b​l​o​c​k​e​d​ ​b​e​c​a​u​s​e​ ​t​h​e​ ​s​a​v​e​d​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​ ​d​o​e​s​ ​n​o​t​ ​a​l​l​o​w​ ​i​t​.
 	 * @param {unknown} access
 	 */
 	fwDriftLockout: RequiredParams<'access'>
@@ -5742,7 +5750,7 @@ type RootTranslation = {
 	 */
 	fwSaveRuntime: string
 	/**
-	 * C​h​a​n​g​e​s​ ​n​o​t​ ​s​a​v​e​d​ ​a​s​ ​p​e​r​m​a​n​e​n​t​ ​w​i​l​l​ ​b​e​ ​l​o​s​t​.
+	 * C​h​a​n​g​e​s​ ​n​o​t​ ​s​a​v​e​d​ ​a​s​ ​p​e​r​m​a​n​e​n​t​ ​w​i​l​l​ ​b​e​ ​l​o​s​t​ ​w​h​e​n​ ​t​h​e​ ​f​i​r​e​w​a​l​l​ ​r​e​l​o​a​d​s​.
 	 */
 	fwReloadLoses: string
 	/**
@@ -5754,19 +5762,19 @@ type RootTranslation = {
 	 */
 	fwPanicOff: string
 	/**
-	 * f​i​r​e​w​a​l​l​d​ ​i​s​ ​s​t​o​p​p​e​d​.​ ​C​h​a​n​g​e​s​ ​a​r​e​ ​s​a​v​e​d​,​ ​a​n​d​ ​t​a​k​e​ ​e​f​f​e​c​t​ ​w​h​e​n​ ​i​t​ ​s​t​a​r​t​s​.
+	 * f​i​r​e​w​a​l​l​d​ ​i​s​ ​s​t​o​p​p​e​d​.​ ​C​h​a​n​g​e​s​ ​w​i​l​l​ ​b​e​ ​s​a​v​e​d​ ​a​n​d​ ​t​a​k​e​ ​e​f​f​e​c​t​ ​w​h​e​n​ ​i​t​ ​s​t​a​r​t​s​.
 	 */
 	fwStoppedNote: string
 	/**
-	 * I​n​v​a​l​i​d​ ​s​o​u​r​c​e​.​ ​U​s​e​ ​a​n​ ​a​d​d​r​e​s​s​,​ ​a​ ​n​e​t​w​o​r​k​ ​s​u​c​h​ ​a​s​ ​1​9​2​.​1​6​8​.​1​.​0​/​2​4​,​ ​i​p​s​e​t​:​N​A​M​E​ ​o​r​ ​a​ ​M​A​C​ ​a​d​d​r​e​s​s​.
+	 * I​n​v​a​l​i​d​ ​s​o​u​r​c​e​.​ ​E​n​t​e​r​ ​a​n​ ​a​d​d​r​e​s​s​,​ ​n​e​t​w​o​r​k​ ​(​s​u​c​h​ ​a​s​ ​1​9​2​.​1​6​8​.​1​.​0​/​2​4​)​,​ ​i​p​s​e​t​:​N​A​M​E​,​ ​o​r​ ​M​A​C​ ​a​d​d​r​e​s​s​.
 	 */
 	fwInvalidSource: string
 	/**
-	 * A​ ​r​i​c​h​ ​r​u​l​e​ ​s​t​a​r​t​s​ ​w​i​t​h​ ​"​r​u​l​e​"​ ​a​n​d​ ​f​i​t​s​ ​o​n​ ​o​n​e​ ​l​i​n​e​.
+	 * A​ ​r​i​c​h​ ​r​u​l​e​ ​m​u​s​t​ ​s​t​a​r​t​ ​w​i​t​h​ ​"​r​u​l​e​"​ ​a​n​d​ ​c​o​n​t​a​i​n​ ​o​n​l​y​ ​o​n​e​ ​l​i​n​e​.
 	 */
 	fwInvalidRichRule: string
 	/**
-	 * U​s​e​ ​p​o​r​t​=​8​0​:​p​r​o​t​o​=​t​c​p​:​t​o​p​o​r​t​=​8​0​8​0​,​ ​w​i​t​h​ ​t​o​p​o​r​t​,​ ​t​o​a​d​d​r​ ​o​r​ ​b​o​t​h​.
+	 * E​x​a​m​p​l​e​:​ ​p​o​r​t​=​8​0​:​p​r​o​t​o​=​t​c​p​:​t​o​p​o​r​t​=​8​0​8​0​.​ ​S​p​e​c​i​f​y​ ​t​o​p​o​r​t​,​ ​t​o​a​d​d​r​,​ ​o​r​ ​b​o​t​h​.
 	 */
 	fwInvalidForwardPort: string
 	/**
@@ -5804,7 +5812,7 @@ type RootTranslation = {
 	 */
 	fwAccessSsh: RequiredParams<'port'>
 	/**
-	 * T​h​e​ ​p​a​n​e​l​ ​r​e​a​c​h​e​s​ ​t​h​e​ ​a​g​e​n​t​ ​t​h​r​o​u​g​h​ ​a​ ​p​r​o​x​y​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​,​ ​s​o​ ​n​o​ ​r​u​l​e​ ​h​e​r​e​ ​d​e​c​i​d​e​s​ ​i​t​s​ ​c​o​n​n​e​c​t​i​o​n​.​ ​O​n​l​y​ ​S​S​H​ ​i​s​ ​c​h​e​c​k​e​d​.
+	 * T​h​e​ ​p​a​n​e​l​ ​r​e​a​c​h​e​s​ ​t​h​e​ ​M​o​n​i​t​o​r​ ​t​h​r​o​u​g​h​ ​a​ ​p​r​o​x​y​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​,​ ​s​o​ ​n​o​ ​r​u​l​e​ ​h​e​r​e​ ​d​e​c​i​d​e​s​ ​i​t​s​ ​c​o​n​n​e​c​t​i​o​n​.​ ​O​n​l​y​ ​S​S​H​ ​i​s​ ​c​h​e​c​k​e​d​.
 	 */
 	fwProxied: string
 	/**
@@ -5816,7 +5824,7 @@ type RootTranslation = {
 	 */
 	fwReachLimited: string
 	/**
-	 * D​e​p​e​n​d​s​ ​o​n​ ​t​h​e​ ​s​o​u​r​c​e
+	 * D​e​p​e​n​d​s​ ​o​n​ ​t​h​e​ ​s​o​u​r​c​e​ ​a​d​d​r​e​s​s
 	 */
 	fwReachUnknown: string
 	/**
@@ -5824,22 +5832,22 @@ type RootTranslation = {
 	 */
 	fwReachBlocked: string
 	/**
-	 * {​a​c​c​e​s​s​}​:​ ​n​e​w​ ​c​o​n​n​e​c​t​i​o​n​s​ ​w​i​l​l​ ​b​e​ ​r​e​f​u​s​e​d​.​ ​C​o​n​n​e​c​t​i​o​n​s​ ​a​l​r​e​a​d​y​ ​o​p​e​n​ ​s​t​a​y​ ​u​p​ ​u​n​t​i​l​ ​t​h​e​y​ ​d​r​o​p​.
+	 * {​a​c​c​e​s​s​}​:​ ​n​e​w​ ​c​o​n​n​e​c​t​i​o​n​ ​a​t​t​e​m​p​t​s​ ​w​i​l​l​ ​b​e​ ​r​e​f​u​s​e​d​.​ ​E​x​i​s​t​i​n​g​ ​c​o​n​n​e​c​t​i​o​n​s​ ​r​e​m​a​i​n​ ​o​p​e​n​ ​u​n​t​i​l​ ​t​h​e​y​ ​a​r​e​ ​c​l​o​s​e​d​.
 	 * @param {unknown} access
 	 */
 	fwWillRefuse: RequiredParams<'access'>
 	/**
-	 * {​a​c​c​e​s​s​}​:​ ​n​e​w​ ​c​o​n​n​e​c​t​i​o​n​s​ ​m​a​y​ ​b​e​ ​r​e​f​u​s​e​d​.​ ​I​t​ ​d​e​p​e​n​d​s​ ​o​n​ ​t​h​e​ ​a​d​d​r​e​s​s​ ​o​r​ ​i​n​t​e​r​f​a​c​e​ ​t​h​e​y​ ​a​r​r​i​v​e​ ​b​y​,​ ​w​h​i​c​h​ ​t​h​e​ ​a​g​e​n​t​ ​c​a​n​n​o​t​ ​t​e​l​l​.
+	 * {​a​c​c​e​s​s​}​:​ ​n​e​w​ ​c​o​n​n​e​c​t​i​o​n​s​ ​m​a​y​ ​b​e​ ​r​e​f​u​s​e​d​.​ ​I​t​ ​d​e​p​e​n​d​s​ ​o​n​ ​t​h​e​ ​a​d​d​r​e​s​s​ ​o​r​ ​i​n​t​e​r​f​a​c​e​ ​t​h​e​y​ ​a​r​r​i​v​e​ ​b​y​,​ ​w​h​i​c​h​ ​t​h​e​ ​M​o​n​i​t​o​r​ ​c​a​n​n​o​t​ ​t​e​l​l​.
 	 * @param {unknown} access
 	 */
 	fwMayRefuse: RequiredParams<'access'>
 	/**
-	 * {​a​c​c​e​s​s​}​:​ ​c​o​n​n​e​c​t​i​o​n​s​ ​w​i​l​l​ ​b​e​ ​r​a​t​e​-​l​i​m​i​t​e​d​.​ ​A​n​ ​a​d​d​r​e​s​s​ ​t​h​a​t​ ​o​p​e​n​s​ ​6​ ​o​r​ ​m​o​r​e​ ​w​i​t​h​i​n​ ​3​0​ ​s​e​c​o​n​d​s​ ​i​s​ ​r​e​f​u​s​e​d​.
+	 * {​a​c​c​e​s​s​}​:​ ​c​o​n​n​e​c​t​i​o​n​s​ ​w​i​l​l​ ​b​e​ ​r​a​t​e​-​l​i​m​i​t​e​d​.​ ​A​d​d​r​e​s​s​e​s​ ​t​h​a​t​ ​m​a​k​e​ ​6​ ​o​r​ ​m​o​r​e​ ​c​o​n​n​e​c​t​i​o​n​ ​a​t​t​e​m​p​t​s​ ​w​i​t​h​i​n​ ​3​0​ ​s​e​c​o​n​d​s​ ​w​i​l​l​ ​b​e​ ​b​l​o​c​k​e​d​.
 	 * @param {unknown} access
 	 */
 	fwRateLimited: RequiredParams<'access'>
 	/**
-	 * K​e​e​p​ ​t​h​e​s​e​ ​p​o​r​t​s​ ​o​p​e​n​ ​f​i​r​s​t
+	 * K​e​e​p​ ​t​h​e​s​e​ ​p​o​r​t​s​ ​o​p​e​n​ ​b​e​f​o​r​e​ ​c​o​n​t​i​n​u​i​n​g
 	 */
 	fwKeepOpen: string
 	/**
@@ -5866,11 +5874,11 @@ type RootTranslation = {
 	 */
 	fwRemoveFrom: RequiredParams<'value' | 'zone'>
 	/**
-	 * T​h​a​t​ ​r​u​l​e​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​t​h​e​r​e​.​ ​R​e​a​d​ ​t​h​e​ ​f​i​r​e​w​a​l​l​ ​a​g​a​i​n​.
+	 * T​h​i​s​ ​r​u​l​e​ ​n​o​ ​l​o​n​g​e​r​ ​e​x​i​s​t​s​.​ ​R​e​l​o​a​d​ ​t​h​e​ ​f​i​r​e​w​a​l​l​ ​r​u​l​e​s​.
 	 */
 	fwNoSuchRule: string
 	/**
-	 * T​h​a​t​ ​z​o​n​e​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​t​h​e​r​e​.​ ​R​e​a​d​ ​t​h​e​ ​f​i​r​e​w​a​l​l​ ​a​g​a​i​n​.
+	 * T​h​i​s​ ​z​o​n​e​ ​n​o​ ​l​o​n​g​e​r​ ​e​x​i​s​t​s​.​ ​R​e​l​o​a​d​ ​t​h​e​ ​f​i​r​e​w​a​l​l​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​.
 	 */
 	fwNoSuchZone: string
 	/**
@@ -5982,7 +5990,7 @@ export type TranslationFunctions = {
 	 */
 	signingIn: () => LocalizedString
 	/**
-	 * No servers yet. Add the address of an agent to monitor it.
+	 * No servers yet. Add the address of a Monitor to monitor it.
 	 */
 	noServersTip: () => LocalizedString
 	/**
@@ -6158,6 +6166,14 @@ export type TranslationFunctions = {
 	 */
 	disks: () => LocalizedString
 	/**
+	 * Block devices
+	 */
+	blockDevices: () => LocalizedString
+	/**
+	 * Not mounted
+	 */
+	notMounted: () => LocalizedString
+	/**
 	 * Interfaces
 	 */
 	interfaces: () => LocalizedString
@@ -6234,7 +6250,7 @@ export type TranslationFunctions = {
 	 */
 	powerSuspend: () => LocalizedString
 	/**
-	 * The agent stops with the machine, so this panel cannot start it again. Anything running on it ends.
+	 * Shutting down, rebooting, or suspending the machine stops the Monitor, so this panel cannot start it again. Shutting down or rebooting also ends any processes running on the machine.
 	 */
 	powerNote: () => LocalizedString
 	/**
@@ -6242,11 +6258,11 @@ export type TranslationFunctions = {
 	 */
 	powerPassword: () => LocalizedString
 	/**
-	 * Leave blank when the agent runs as root, or when its account has passwordless sudo for this command.
+	 * Leave blank when the Monitor runs as root, or when its account has passwordless sudo for this command.
 	 */
 	powerPasswordHint: () => LocalizedString
 	/**
-	 * The machine refused that password. Nothing happened.
+	 * The password is incorrect. No action was taken.
 	 */
 	powerRejected: () => LocalizedString
 	/**
@@ -6254,11 +6270,11 @@ export type TranslationFunctions = {
 	 */
 	powerFailed: () => LocalizedString
 	/**
-	 * No answer came back, which is what a machine already going down looks like.
+	 * No response received. This can happen while the machine is shutting down or suspending.
 	 */
 	powerTimeout: () => LocalizedString
 	/**
-	 * Sent: {action}. If the machine is going down, this panel loses it until it is back.
+	 * Sent {action}. If the machine is shutting down, this panel will be disconnected until it starts again.
 	 */
 	powerActionSent: (arg: { action: unknown }) => LocalizedString
 	/**
@@ -6274,7 +6290,7 @@ export type TranslationFunctions = {
 	 */
 	benchmarkAlreadyRunning: () => LocalizedString
 	/**
-	 * This agent's copy of the yabs script is unreadable. It is a packaging fault rather than anything about this machine.
+	 * This Monitor's copy of the yabs script is unreadable. It is a packaging fault rather than anything about this machine.
 	 */
 	benchmarkAssetUnreadable: () => LocalizedString
 	/**
@@ -6282,7 +6298,7 @@ export type TranslationFunctions = {
 	 */
 	benchmarkCancel: () => LocalizedString
 	/**
-	 * Stop the run? Killing the process group is the only thing that ends a benchmark — fio, iperf3 and Geekbench are separate processes.
+	 * Stop this benchmark? The entire process group must be stopped because fio, iperf3, and Geekbench run as separate processes.
 	 */
 	benchmarkCancelConfirm: () => LocalizedString
 	/**
@@ -6290,7 +6306,7 @@ export type TranslationFunctions = {
 	 */
 	benchmarkCpu: () => LocalizedString
 	/**
-	 * Downloads a proprietary binary and publishes this machine's specifications to a public browser.geekbench.com page. Off by default for that reason.
+	 * This downloads a proprietary binary and publishes this machine's hardware details to the public browser.geekbench.com site, so it is off by default.
 	 */
 	benchmarkCpuHint: () => LocalizedString
 	/**
@@ -6298,7 +6314,7 @@ export type TranslationFunctions = {
 	 */
 	benchmarkDisk: () => LocalizedString
 	/**
-	 * fio at four block sizes, ~30 seconds each. Writes a 2 GB test file into the working directory and needs that much free, or yabs skips it and says so in the output.
+	 * fio tests four block sizes for about 30 seconds each. It writes a 2 GB file to the working directory, so at least 2 GB of free space is needed. Otherwise, yabs skips the disk test and reports this in its output.
 	 */
 	benchmarkDiskHint: () => LocalizedString
 	/**
@@ -6306,19 +6322,19 @@ export type TranslationFunctions = {
 	 */
 	benchmarkEmpty: () => LocalizedString
 	/**
-	 * About {minutes} min · {traffic} of traffic
+	 * Estimated time: {minutes} min · Estimated traffic: {traffic}
 	 */
 	benchmarkEstimate: (arg: { minutes: unknown, traffic: unknown }) => LocalizedString
 	/**
-	 * Needs {free} free in the working directory.
+	 * The working directory needs at least {free} of free space.
 	 */
 	benchmarkEstimateDisk: (arg: { free: unknown }) => LocalizedString
 	/**
-	 * The agent could not estimate this run; the form is still usable.
+	 * The Monitor could not estimate this run; the form is still usable.
 	 */
 	benchmarkEstimateFailed: () => LocalizedString
 	/**
-	 * Nothing is switched on, so only the system information header is collected — a few seconds.
+	 * All benchmark options are off, so only a system information summary is collected. This takes a few seconds.
 	 */
 	benchmarkEstimateSystemInfo: () => LocalizedString
 	/**
@@ -6330,7 +6346,7 @@ export type TranslationFunctions = {
 	 */
 	benchmarkGeekbenchVersion: () => LocalizedString
 	/**
-	 * This agent could not read its benchmark history.
+	 * This Monitor could not read its benchmark history.
 	 */
 	benchmarkHistoryUnavailable: () => LocalizedString
 	/**
@@ -6338,7 +6354,7 @@ export type TranslationFunctions = {
 	 */
 	benchmarkIpInfo: () => LocalizedString
 	/**
-	 * Plaintext HTTP to ip-api.com. Off by default.
+	 * This uses unencrypted HTTP to contact ip-api.com. Off by default.
 	 */
 	benchmarkIpInfoHint: () => LocalizedString
 	/**
@@ -6350,7 +6366,7 @@ export type TranslationFunctions = {
 	 */
 	benchmarkLogEmpty: () => LocalizedString
 	/**
-	 * The output is longer than this agent reads in one piece, so this is not all of it.
+	 * The output exceeds the maximum size that can be read at once, so only part of it is shown.
 	 */
 	benchmarkLogTruncated: () => LocalizedString
 	/**
@@ -6358,19 +6374,19 @@ export type TranslationFunctions = {
 	 */
 	benchmarkNetwork: () => LocalizedString
 	/**
-	 * iperf3 against public servers, both ways.
+	 * Uses iperf3 to test upload and download speeds against public servers.
 	 */
 	benchmarkNetworkHint: () => LocalizedString
 	/**
-	 * This machine did not answer in time. The run is still going; this page will try again.
+	 * The machine did not respond in time, but the benchmark is still running. This page will retry automatically.
 	 */
 	benchmarkNoAnswer: () => LocalizedString
 	/**
-	 * The agent could not generate a run id.
+	 * The Monitor could not generate a run id.
 	 */
 	benchmarkNoEntropy: () => LocalizedString
 	/**
-	 * The agent has no home directory, so there is nowhere to install the script.
+	 * The Monitor account has no home directory, so the script cannot be installed.
 	 */
 	benchmarkNoHome: () => LocalizedString
 	/**
@@ -6378,7 +6394,7 @@ export type TranslationFunctions = {
 	 */
 	benchmarkNoResultYet: () => LocalizedString
 	/**
-	 * That run is no longer in this agent's history.
+	 * That run is no longer in this Monitor's history.
 	 */
 	benchmarkNoSuchRun: () => LocalizedString
 	/**
@@ -6386,7 +6402,7 @@ export type TranslationFunctions = {
 	 */
 	benchmarkPreferBinaries: () => LocalizedString
 	/**
-	 * Use the binaries yabs ships instead of the machine's own, which means fetching them from raw.githubusercontent.com — unreachable from some hosts. Off by default.
+	 * Use the binaries bundled with yabs instead of those already on the machine. They are downloaded from raw.githubusercontent.com, which some hosts cannot reach. Off by default.
 	 */
 	benchmarkPreferBinariesHint: () => LocalizedString
 	/**
@@ -6402,7 +6418,7 @@ export type TranslationFunctions = {
 	 */
 	benchmarkReducedNetwork: () => LocalizedString
 	/**
-	 * Three locations instead of seven. On by default: a full run is tens of gigabytes of traffic.
+	 * Tests three locations instead of seven. On by default to avoid the tens of gigabytes of traffic used by a full run.
 	 */
 	benchmarkReducedNetworkHint: () => LocalizedString
 	/**
@@ -6422,7 +6438,7 @@ export type TranslationFunctions = {
 	 */
 	benchmarkResultEmpty: () => LocalizedString
 	/**
-	 * yabs' result is not valid JSON, which happens when a value it collected contains a quote. It is shown as the text it is.
+	 * The result from yabs is not valid JSON. This can happen if a collected value contains a quotation mark. The result is shown as plain text.
 	 */
 	benchmarkResultUnparsable: () => LocalizedString
 	/**
@@ -6434,7 +6450,7 @@ export type TranslationFunctions = {
 	 */
 	benchmarkRunErrorLauncherFailed: () => LocalizedString
 	/**
-	 * The run's process is gone and no exit code was written, which is what an out-of-memory kill looks like from here.
+	 * The process exited without recording an exit code. It was likely terminated by the system due to low memory.
 	 */
 	benchmarkRunErrorNoExitCode: () => LocalizedString
 	/**
@@ -6442,7 +6458,7 @@ export type TranslationFunctions = {
 	 */
 	benchmarkRunErrorNonzeroExit: () => LocalizedString
 	/**
-	 * The run's directory is gone, so nothing can write how it ended.
+	 * The run directory no longer exists, so its completion status cannot be recorded.
 	 */
 	benchmarkRunErrorRunDirMissing: () => LocalizedString
 	/**
@@ -6482,11 +6498,11 @@ export type TranslationFunctions = {
 	 */
 	benchmarkSubtitle: () => LocalizedString
 	/**
-	 * yabs is a Linux script that reads procfs, so a benchmark cannot run on this machine. The history is still here.
+	 * yabs is a Linux script that reads procfs, so benchmarks cannot run on this machine. Existing benchmark history is preserved.
 	 */
 	benchmarkUnsupported: () => LocalizedString
 	/**
-	 * yabs does not run on this machine's platform.
+	 * yabs does not support this machine's platform.
 	 */
 	benchmarkUnsupportedPlatform: () => LocalizedString
 	/**
@@ -6494,7 +6510,7 @@ export type TranslationFunctions = {
 	 */
 	benchmarkWorkDir: () => LocalizedString
 	/**
-	 * Where the run happens, and therefore which filesystem the disk test measures. Empty means the agent account's home directory.
+	 * Where the run happens, and therefore which filesystem the disk test measures. Empty means the Monitor account's home directory.
 	 */
 	benchmarkWorkDirHint: () => LocalizedString
 	/**
@@ -6510,7 +6526,7 @@ export type TranslationFunctions = {
 	 */
 	containerCreated: () => LocalizedString
 	/**
-	 * Dead
+	 * Exited unexpectedly
 	 */
 	containerDead: () => LocalizedString
 	/**
@@ -6518,7 +6534,7 @@ export type TranslationFunctions = {
 	 */
 	containerDisk: () => LocalizedString
 	/**
-	 * No containers on this machine.
+	 * There are no containers on this machine.
 	 */
 	containerEmpty: () => LocalizedString
 	/**
@@ -6554,11 +6570,11 @@ export type TranslationFunctions = {
 	 */
 	containerNetwork: () => LocalizedString
 	/**
-	 * No images on this machine.
+	 * There are no images on this machine.
 	 */
 	containerNoImages: () => LocalizedString
 	/**
-	 * This machine has no docker or podman command, so there is nothing to show or change here.
+	 * Docker and Podman are not installed on this machine, so there are no containers to view or manage.
 	 */
 	containerNotInstalled: () => LocalizedString
 	/**
@@ -6566,7 +6582,7 @@ export type TranslationFunctions = {
 	 */
 	containerPaused: () => LocalizedString
 	/**
-	 * The runtime is on this machine but will not talk to the account the agent runs as. On the machine, add that account to the runtime’s group — for Docker, `usermod -aG docker <user>`.
+	 * The runtime is on this machine but will not talk to the account the Monitor runs as. On the machine, add that account to the runtime’s group — for Docker, `usermod -aG docker <user>`.
 	 */
 	containerPermissionDenied: () => LocalizedString
 	/**
@@ -6582,7 +6598,7 @@ export type TranslationFunctions = {
 	 */
 	containerRemove: () => LocalizedString
 	/**
-	 * Remove {name}? Its writable layer is lost; anything kept in a volume or a bind mount stays.
+	 * Remove {name}? Its writable layer will be deleted, but data in volumes and bind mounts will be kept.
 	 */
 	containerRemoveConfirm: (arg: { name: unknown }) => LocalizedString
 	/**
@@ -6626,11 +6642,11 @@ export type TranslationFunctions = {
 	 */
 	containerUnknown: () => LocalizedString
 	/**
-	 * The runtime answered in a way this agent could not read.
+	 * The runtime answered in a way this Monitor could not read.
 	 */
 	containerUnreadable: () => LocalizedString
 	/**
-	 * The agent runs on Windows, where this panel has no container runtime to talk to.
+	 * The Monitor runs on Windows, where this panel has no container runtime to talk to.
 	 */
 	containerUnsupportedPlatform: () => LocalizedString
 	/**
@@ -6638,11 +6654,11 @@ export type TranslationFunctions = {
 	 */
 	containerUnused: () => LocalizedString
 	/**
-	 * {count} images are unused by any container.
+	 * {count} images are not used by any container.
 	 */
 	containerUnusedImages: (arg: { count: unknown }) => LocalizedString
 	/**
-	 * Images on this machine: {images}. A prune would reclaim {reclaimable}.
+	 * This machine has {images} images. Pruning can free up {reclaimable}.
 	 */
 	containerUsage: (arg: { images: unknown, reclaimable: unknown }) => LocalizedString
 	/**
@@ -6654,7 +6670,7 @@ export type TranslationFunctions = {
 	 */
 	containerActionFailed: (arg: { code: unknown }) => LocalizedString
 	/**
-	 * The command did not finish within the agent's time limit.
+	 * The command did not finish within the Monitor's time limit.
 	 */
 	containerActionUnfinished: () => LocalizedString
 	/**
@@ -6666,23 +6682,23 @@ export type TranslationFunctions = {
 	 */
 	containerErrEmpty: () => LocalizedString
 	/**
-	 * The extra arguments are not quoted correctly.
+	 * Quotation marks in the extra arguments are unmatched.
 	 */
 	containerErrInvalidArgs: () => LocalizedString
 	/**
-	 * The container name is not one a runtime accepts.
+	 * The container runtime does not accept this name.
 	 */
 	containerErrInvalidName: () => LocalizedString
 	/**
-	 * The image reference contains a character it cannot.
+	 * The image reference contains a character that is not allowed.
 	 */
 	containerErrInvalidReference: () => LocalizedString
 	/**
-	 * A value begins with a dash, which the runtime would read as an option.
+	 * A value cannot start with a hyphen because the runtime would treat it as an option.
 	 */
 	containerErrLeadingDash: () => LocalizedString
 	/**
-	 * This machine has no container runtime to run a shell in.
+	 * No container runtime is installed on this machine, so a shell cannot be opened inside a container.
 	 */
 	containerErrNoRuntime: () => LocalizedString
 	/**
@@ -6710,7 +6726,7 @@ export type TranslationFunctions = {
 	 */
 	containerPruneImages: () => LocalizedString
 	/**
-	 * Remove unused images? Dangling images always go; the box below widens it to every unused image.
+	 * Remove unused images? Dangling images will always be removed. Select the option below to include all unused images.
 	 */
 	containerPruneImagesConfirm: () => LocalizedString
 	/**
@@ -6718,7 +6734,7 @@ export type TranslationFunctions = {
 	 */
 	containerPruneSystem: () => LocalizedString
 	/**
-	 * Remove unused containers, networks and images? Volumes are kept unless ticked below.
+	 * Remove unused containers, networks, and images? Volumes are kept unless you select the option below.
 	 */
 	containerPruneSystemConfirm: () => LocalizedString
 	/**
@@ -6730,7 +6746,7 @@ export type TranslationFunctions = {
 	 */
 	containerPullImage: () => LocalizedString
 	/**
-	 * Fetched from the registry and replaces the local one.
+	 * Pulls the image from the registry and replaces the local copy.
 	 */
 	containerPullImageHint: () => LocalizedString
 	/**
@@ -6822,7 +6838,7 @@ export type TranslationFunctions = {
 	 */
 	cronCommand: () => LocalizedString
 	/**
-	 * Run by a shell as the agent’s user. Use absolute paths — a job’s PATH is nearly empty.
+	 * Run by a shell as the Monitor’s user. Use absolute paths — a job’s PATH is nearly empty.
 	 */
 	cronCommandHint: () => LocalizedString
 	/**
@@ -6838,7 +6854,7 @@ export type TranslationFunctions = {
 	 */
 	cronDisabled: () => LocalizedString
 	/**
-	 * A paused job is kept as a comment, so it stops running and stays on the page.
+	 * Paused jobs are commented out: they no longer run, but remain visible on the page.
 	 */
 	cronDisabledHint: () => LocalizedString
 	/**
@@ -6886,15 +6902,15 @@ export type TranslationFunctions = {
 	 */
 	cronInvalidCommandEmpty: () => LocalizedString
 	/**
-	 * The schedule has to be five whitespace-separated fields.
+	 * The schedule must contain five fields separated by spaces.
 	 */
 	cronInvalidFieldCount: () => LocalizedString
 	/**
-	 * A line break would split this into two jobs, so it is refused.
+	 * Line breaks are not allowed because they would split this into multiple jobs.
 	 */
 	cronInvalidLineBreak: () => LocalizedString
 	/**
-	 * This app does not know that @macro. Use the five-field form instead.
+	 * This app does not recognize that @macro. Use the five-field schedule format instead.
 	 */
 	cronInvalidMacro: () => LocalizedString
 	/**
@@ -6902,7 +6918,7 @@ export type TranslationFunctions = {
 	 */
 	cronInvalidScheduleEmpty: () => LocalizedString
 	/**
-	 * That job is no longer at that position. The schedule has been read again.
+	 * The job is no longer at that position. The schedule has been reloaded.
 	 */
 	cronInvalidUnknownLine: () => LocalizedString
 	/**
@@ -6910,7 +6926,7 @@ export type TranslationFunctions = {
 	 */
 	cronNextRun: (arg: { in: unknown }) => LocalizedString
 	/**
-	 * This machine has no crontab command, so there is nothing to show or change here.
+	 * crontab is not installed on this machine, so there are no scheduled jobs to view or edit.
 	 */
 	cronNotInstalled: () => LocalizedString
 	/**
@@ -6918,7 +6934,7 @@ export type TranslationFunctions = {
 	 */
 	cronPreserved: () => LocalizedString
 	/**
-	 * Comments, environment assignments and lines this app does not read. They are written back unchanged.
+	 * Comments, environment assignments, and lines this app cannot parse are preserved and written back unchanged.
 	 */
 	cronPreservedHint: () => LocalizedString
 	/**
@@ -6938,7 +6954,7 @@ export type TranslationFunctions = {
 	 */
 	cronScheduleHint: () => LocalizedString
 	/**
-	 * This app does not read this expression, so the job is shown as written.
+	 * This app cannot parse the schedule expression, so the job is displayed as written.
 	 */
 	cronUnparsed: () => LocalizedString
 	/**
@@ -6946,7 +6962,7 @@ export type TranslationFunctions = {
 	 */
 	cronUnreadable: () => LocalizedString
 	/**
-	 * The agent runs on Windows, which has no crontab.
+	 * The Monitor runs on Windows, which has no crontab.
 	 */
 	cronUnsupportedPlatform: () => LocalizedString
 	/**
@@ -6954,7 +6970,7 @@ export type TranslationFunctions = {
 	 */
 	serviceActionDisable: () => LocalizedString
 	/**
-	 * {action} on {name} was accepted.
+	 * {action} request for {name} was accepted.
 	 */
 	serviceActionDone: (arg: { action: unknown, name: unknown }) => LocalizedString
 	/**
@@ -6982,7 +6998,7 @@ export type TranslationFunctions = {
 	 */
 	serviceDefinition: () => LocalizedString
 	/**
-	 * The units are listed but not described: what the manager says about them could not all be read.
+	 * The units are listed, but some of their descriptions could not be read from the service manager.
 	 */
 	serviceDetailsUnavailable: () => LocalizedString
 	/**
@@ -7010,7 +7026,7 @@ export type TranslationFunctions = {
 	 */
 	serviceNextRun: () => LocalizedString
 	/**
-	 * This machine keeps no log for a unit by name.
+	 * No journal is available for this unit on the machine.
 	 */
 	serviceNoLog: () => LocalizedString
 	/**
@@ -7078,15 +7094,15 @@ export type TranslationFunctions = {
 	 */
 	serviceUnreadable: () => LocalizedString
 	/**
-	 * This machine runs {manager}, which this agent cannot list. It lists systemd, procd and OpenRC.
+	 * This machine runs {manager}, which this Monitor cannot list. It lists systemd, procd and OpenRC.
 	 */
 	serviceUnsupportedManager: (arg: { manager: unknown }) => LocalizedString
 	/**
-	 * The agent runs on Windows, which has no service manager these commands reach.
+	 * The Monitor runs on Windows, which has no service manager these commands reach.
 	 */
 	serviceUnsupportedPlatform: () => LocalizedString
 	/**
-	 * This account's own units could not be read. The system units are still listed.
+	 * Could not read this account's user services. System services are still listed.
 	 */
 	serviceUserScopeUnavailable: () => LocalizedString
 	/**
@@ -7098,11 +7114,11 @@ export type TranslationFunctions = {
 	 */
 	processCpu: () => LocalizedString
 	/**
-	 * The table did not finish printing in time, so nothing is shown here.
+	 * The process table was not ready in time, so it is not shown.
 	 */
 	processDidNotFinish: () => LocalizedString
 	/**
-	 * The machine printed an empty table.
+	 * The machine returned an empty process table.
 	 */
 	processEmpty: () => LocalizedString
 	/**
@@ -7110,7 +7126,7 @@ export type TranslationFunctions = {
 	 */
 	processForceKill: () => LocalizedString
 	/**
-	 * The machine printed rows this agent could not read. They are not listed here.
+	 * The machine printed rows this Monitor could not read. They are not listed here.
 	 */
 	processIssue: () => LocalizedString
 	/**
@@ -7130,7 +7146,7 @@ export type TranslationFunctions = {
 	 */
 	processKillSucceeded: (arg: { name: unknown, signal: unknown }) => LocalizedString
 	/**
-	 * That process has changed or exited. The table has been read again.
+	 * The process changed or exited. The process list has been refreshed.
 	 */
 	processKillTargetChanged: () => LocalizedString
 	/**
@@ -7146,7 +7162,7 @@ export type TranslationFunctions = {
 	 */
 	processNoMatch: () => LocalizedString
 	/**
-	 * No processes on this machine.
+	 * There are no processes on this machine.
 	 */
 	processNone: () => LocalizedString
 	/**
@@ -7158,7 +7174,7 @@ export type TranslationFunctions = {
 	 */
 	processRss: () => LocalizedString
 	/**
-	 * Read at {time} · {count} processes
+	 * Sampled at {time} · {count} processes
 	 */
 	processSampledAt: (arg: { count: unknown, time: unknown }) => LocalizedString
 	/**
@@ -7210,11 +7226,11 @@ export type TranslationFunctions = {
 	 */
 	processThreads: (arg: { count: unknown }) => LocalizedString
 	/**
-	 * The table is larger than this agent will read, so nothing is shown here.
+	 * The table is larger than this Monitor will read, so nothing is shown here.
 	 */
 	processTooLarge: () => LocalizedString
 	/**
-	 * The machine answered in a way this agent could not read.
+	 * The machine answered in a way this Monitor could not read.
 	 */
 	processUnreadable: () => LocalizedString
 	/**
@@ -7226,7 +7242,7 @@ export type TranslationFunctions = {
 	 */
 	close: () => LocalizedString
 	/**
-	 * Remove this server? This only forgets it in this browser — it does not stop the agent.
+	 * Remove this server? This only forgets it in this browser — it does not stop the Monitor.
 	 */
 	confirmDeleteServer: () => LocalizedString
 	/**
@@ -7286,7 +7302,7 @@ export type TranslationFunctions = {
 	 */
 	powerCycleCount: () => LocalizedString
 	/**
-	 * Changes to collection interval, rules, and CORS origins require a monitor restart to take effect. Idle-pause fields apply immediately on save.
+	 * Changes to the collection interval, rules, and CORS origins take effect after restarting the Monitor. Idle-pause settings take effect as soon as they are saved.
 	 */
 	settingsIntro: () => LocalizedString
 	/**
@@ -7322,7 +7338,7 @@ export type TranslationFunctions = {
 	 */
 	extendedIntervalSecs: () => LocalizedString
 	/**
-	 * Defaults to 10× the collection interval (at least 120 seconds)
+	 * Defaults to 10× the collection interval (minimum 120 seconds)
 	 */
 	defaultsToInterval: () => LocalizedString
 	/**
@@ -7350,7 +7366,7 @@ export type TranslationFunctions = {
 	 */
 	diskCountsNetwork: () => LocalizedString
 	/**
-	 * NFS, SMB and similar mounts are always listed. Their capacity belongs to another machine, so by default they are left out of the disk total — the figure stored in history and checked by disk alert rules.
+	 * NFS, SMB, and similar mounts are always listed. Their capacity belongs to another machine, so they are excluded from the disk total by default. This total is stored in history and used by disk alert rules.
 	 */
 	diskCountsNetworkNote: () => LocalizedString
 	/**
@@ -7398,7 +7414,7 @@ export type TranslationFunctions = {
 	 */
 	customCmds: () => LocalizedString
 	/**
-	 * Each command runs on the extended collection cycle and its output comes back with the status. They are files under `~/.config/server_box/custom_cmds` — the same set the app edits over SSH.
+	 * Each command runs during the extended collection cycle, and its output is returned with the status. Commands are stored as files under `~/.config/server_box/custom_cmds`; these are the same files the app edits over SSH.
 	 */
 	customCmdsNote: () => LocalizedString
 	/**
@@ -7418,7 +7434,7 @@ export type TranslationFunctions = {
 	 */
 	removeCustomCmd: () => LocalizedString
 	/**
-	 * Editing requires non-SSH access, which is disabled on this agent.
+	 * Editing requires non-SSH access, which is disabled on this Monitor.
 	 */
 	customCmdsReadOnly: () => LocalizedString
 	/**
@@ -7434,11 +7450,11 @@ export type TranslationFunctions = {
 	 */
 	ruleHelpType: () => LocalizedString
 	/**
-	 * matcher (depends on type): cpu → `cpu` or `cpu0`, `cpu1`, ...; memory/swap → `used` (default) / `free` / `avail`; network → `rx` / `tx` (blank = combined); disk/temperature ignore this field
+	 * matcher (varies by type): cpu → `cpu` or `cpu0`, `cpu1`, ...; memory/swap → `used` (default) / `free` / `avail`; network → `rx` / `tx` (leave blank to combine); disk/temperature ignore this field
 	 */
 	ruleHelpMatcher: () => LocalizedString
 	/**
-	 * threshold: comparison operator `(<, <=, =, >=, >)` + value + unit — use % for percentages (for example, `>=80%`), c for temperature (`>=70c`), a unit followed by /s for network speed (`>10m/s`), and a unit by itself for size (`<100m`)
+	 * threshold: comparison operator `(<, <=, =, >=, >)`, followed by a value and unit — use % for percentages (e.g. `>=80%`), c for temperature (`>=70c`), a unit followed by /s for network speed (`>10m/s`), and a unit alone for size (`<100m`)
 	 */
 	ruleHelpThreshold: () => LocalizedString
 	/**
@@ -7486,7 +7502,7 @@ export type TranslationFunctions = {
 	 */
 	terminal: () => LocalizedString
 	/**
-	 * The agent connects to this machine's SSH service on your behalf, so a session has exactly the permissions of the SSH account you sign in as. Your panel password grants no shell by itself.
+	 * The Monitor connects to this machine's SSH service on your behalf, so a session has exactly the permissions of the SSH account you sign in as. Your panel password grants no shell by itself.
 	 */
 	terminalCredentialsHint: () => LocalizedString
 	/**
@@ -7510,7 +7526,7 @@ export type TranslationFunctions = {
 	 */
 	terminalInteractive: () => LocalizedString
 	/**
-	 * The server decides what to ask for. Use this when two-factor authentication is enabled.
+	 * The server controls which authentication prompts appear. Use this when two-factor authentication is enabled.
 	 */
 	terminalInteractiveHint: () => LocalizedString
 	/**
@@ -7562,7 +7578,7 @@ export type TranslationFunctions = {
 	 */
 	terminalScreenReader: () => LocalizedString
 	/**
-	 * Lets a screen reader read the terminal. While on, Tab moves focus out of the terminal instead of completing in the shell.
+	 * Allows screen readers to read the terminal. When enabled, Tab moves focus out of the terminal instead of completing input in the shell.
 	 */
 	terminalScreenReaderHint: () => LocalizedString
 	/**
@@ -7586,7 +7602,7 @@ export type TranslationFunctions = {
 	 */
 	terminalLoadFailed: () => LocalizedString
 	/**
-	 * The terminal is not enabled on this agent. Turn on remote_access.terminal.enabled in config.toml; it also requires TLS, or a proxy on the same host.
+	 * The terminal is not enabled on this Monitor. Turn on remote_access.terminal.enabled in config.toml; it also requires TLS, or a proxy on the same host.
 	 */
 	terminalUnavailable: () => LocalizedString
 	/**
@@ -7594,7 +7610,7 @@ export type TranslationFunctions = {
 	 */
 	terminalOpenDirectly: () => LocalizedString
 	/**
-	 * This agent opens a shell for anyone signed into the panel, running as the account the agent itself runs as. No SSH credentials needed.
+	 * This Monitor opens a shell for anyone signed into the panel, running as the account the Monitor itself runs as. No SSH credentials needed.
 	 */
 	terminalPasswordlessHint: () => LocalizedString
 	/**
@@ -7602,7 +7618,7 @@ export type TranslationFunctions = {
 	 */
 	terminalPasswordlessNoticeTitle: () => LocalizedString
 	/**
-	 * Opening a terminal here needs no SSH credentials, so your panel password is all that stands between a visitor and a shell on this machine. Keep it if that is what you want, or turn it off and sign in with an SSH account instead. Turning it back on later means editing the agent's config file.
+	 * Opening a terminal here needs no SSH credentials, so your panel password is all that stands between a visitor and a shell on this machine. Keep it if that is what you want, or turn it off and sign in with an SSH account instead. Turning it back on later means editing the Monitor's config file.
 	 */
 	terminalPasswordlessNoticeBody: () => LocalizedString
 	/**
@@ -7682,7 +7698,7 @@ export type TranslationFunctions = {
 	 */
 	files: () => LocalizedString
 	/**
-	 * File access is not enabled on this agent. Turn on remote_access.fs.enabled and name its roots in config.toml; it also requires TLS, or a proxy on the same host.
+	 * File access is not enabled on this Monitor. Turn on remote_access.fs.enabled and name its roots in config.toml; it also requires TLS, or a proxy on the same host.
 	 */
 	filesUnavailable: () => LocalizedString
 	/**
@@ -7690,7 +7706,7 @@ export type TranslationFunctions = {
 	 */
 	remoteAccessOffTitle: () => LocalizedString
 	/**
-	 * This agent is set up for monitoring only. You can’t open a terminal, run commands, or browse files here. To enable these features, edit [remote_access] in the agent’s config.toml.
+	 * This Monitor is set up for monitoring only. You can’t open a terminal, run commands, or browse files here. To enable these features, edit [remote_access] in the Monitor’s config.toml.
 	 */
 	remoteAccessOffBody: () => LocalizedString
 	/**
@@ -7754,7 +7770,7 @@ export type TranslationFunctions = {
 	 */
 	filesEdit: () => LocalizedString
 	/**
-	 * File '{file}' too large {size}, max {sizeMax}
+	 * File '{file}' is too large ({size}). Maximum size: {sizeMax}.
 	 */
 	filesEditorTooLarge: (arg: { file: unknown, size: unknown, sizeMax: unknown }) => LocalizedString
 	/**
@@ -7774,7 +7790,7 @@ export type TranslationFunctions = {
 	 */
 	filesEditorConflictTitle: () => LocalizedString
 	/**
-	 * Something wrote to this file after you opened it. Overwriting will replace that change with yours.
+	 * This file changed after you opened it. Saving will overwrite the newer version with your changes.
 	 */
 	filesEditorConflictBody: () => LocalizedString
 	/**
@@ -7786,7 +7802,7 @@ export type TranslationFunctions = {
 	 */
 	filesEditorDiscardTitle: () => LocalizedString
 	/**
-	 * This file has changes you have not saved. Closing now loses them.
+	 * You have unsaved changes in this file. They will be lost if you close it now.
 	 */
 	filesEditorDiscardBody: () => LocalizedString
 	/**
@@ -7846,7 +7862,7 @@ export type TranslationFunctions = {
 	 */
 	pushTestMessage: () => LocalizedString
 	/**
-	 * This agent has no sender for this type, so its settings are not shown. It can be removed here, or edited in config.toml.
+	 * This Monitor has no sender for this type, so its settings are not shown. It can be removed here, or edited in config.toml.
 	 */
 	pushUnknownType: () => LocalizedString
 	/**
@@ -7946,7 +7962,7 @@ export type TranslationFunctions = {
 	 */
 	deleteAccount: () => LocalizedString
 	/**
-	 * Delete the account {name}? Anything it has open on this agent ends now.
+	 * Delete the account {name}? Anything it has open on this Monitor ends now.
 	 */
 	confirmDeleteAccount: (arg: { name: string }) => LocalizedString
 	/**
@@ -7986,7 +8002,7 @@ export type TranslationFunctions = {
 	 */
 	roleAdmin: () => LocalizedString
 	/**
-	 * Manages accounts, roles and this agent’s settings. Only the built-in administrator role has this.
+	 * Manages accounts, roles and this Monitor’s settings. Only the built-in administrator role has this.
 	 */
 	roleAdminNote: () => LocalizedString
 	/**
@@ -7998,7 +8014,7 @@ export type TranslationFunctions = {
 	 */
 	grantShell: () => LocalizedString
 	/**
-	 * Run commands and open a terminal as the agent’s own account, with no SSH credentials. Whoever has this can do everything below as well.
+	 * Run commands and open a terminal as the Monitor’s own account, with no SSH credentials. Whoever has this can do everything below as well.
 	 */
 	grantShellNote: () => LocalizedString
 	/**
@@ -8014,7 +8030,7 @@ export type TranslationFunctions = {
 	 */
 	grantVirt: () => LocalizedString
 	/**
-	 * Proxmox VE, libvirt and BMCs the agent reaches: see and control their machines. Where they are and how to sign in is set by an admin.
+	 * Proxmox VE, libvirt and BMCs the Monitor reaches: see and control their machines. Where they are and how to sign in is set by an admin.
 	 */
 	grantVirtNote: () => LocalizedString
 	/**
@@ -8054,7 +8070,7 @@ export type TranslationFunctions = {
 	 */
 	grantListen: () => LocalizedString
 	/**
-	 * Remote port forwards: the agent listens on a port of the server.
+	 * Remote port forwards: the Monitor listens on a port of the server.
 	 */
 	grantListenNote: () => LocalizedString
 	/**
@@ -8078,7 +8094,7 @@ export type TranslationFunctions = {
 	 */
 	reauthTitle: () => LocalizedString
 	/**
-	 * Changing who can do what on this agent needs your current password.
+	 * Changing who can do what on this Monitor needs your current password.
 	 */
 	reauthBody: () => LocalizedString
 	/**
@@ -8102,15 +8118,15 @@ export type TranslationFunctions = {
 	 */
 	accessErrForbidden: () => LocalizedString
 	/**
-	 * Only an administrator can change this agent’s settings.
+	 * Only an administrator can change this Monitor’s settings.
 	 */
 	adminOnlySettings: () => LocalizedString
 	/**
-	 * Only an administrator can rearrange the cards on this agent.
+	 * Only an administrator can rearrange the cards on this Monitor.
 	 */
 	cardOrderAdminOnly: () => LocalizedString
 	/**
-	 * Your role on this agent does not include this. Ask one of its administrators.
+	 * Your role on this Monitor does not include this. Ask one of its administrators.
 	 */
 	whyNotGranted: () => LocalizedString
 	/**
@@ -8118,7 +8134,7 @@ export type TranslationFunctions = {
 	 */
 	whyInsecureTransport: () => LocalizedString
 	/**
-	 * This is not set up on the agent yet: name the file roots in its config.toml.
+	 * This is not set up on the Monitor yet: name the file roots in its config.toml.
 	 */
 	whyNotConfigured: () => LocalizedString
 	/**
@@ -8126,7 +8142,7 @@ export type TranslationFunctions = {
 	 */
 	filesReadOnly: () => LocalizedString
 	/**
-	 * Your role on this agent can only view. An administrator can grant more under Server Settings → Roles.
+	 * Your role on this Monitor can only view. An administrator can grant more under Server Settings → Roles.
 	 */
 	remoteAccessOffBodyRoles: () => LocalizedString
 	/**
@@ -8142,7 +8158,7 @@ export type TranslationFunctions = {
 	 */
 	userAdd: () => LocalizedString
 	/**
-	 * That is the account the agent itself runs as, so it is not removed here.
+	 * That is the account the Monitor itself runs as, so it is not removed here.
 	 */
 	userAgentAccount: () => LocalizedString
 	/**
@@ -8166,7 +8182,7 @@ export type TranslationFunctions = {
 	 */
 	userDelete: () => LocalizedString
 	/**
-	 * Delete {name}? The account and its files go; anything running as it keeps running.
+	 * Delete {name}? The account and its files will be removed, but its running processes will continue.
 	 */
 	userDeleteConfirm: (arg: { name: unknown }) => LocalizedString
 	/**
@@ -8198,7 +8214,7 @@ export type TranslationFunctions = {
 	 */
 	userExpires: () => LocalizedString
 	/**
-	 * Separated by spaces. Clearing it removes every group but the primary one.
+	 * Separate groups with spaces. Leave blank to remove all supplementary groups.
 	 */
 	userGroupsHint: () => LocalizedString
 	/**
@@ -8206,11 +8222,11 @@ export type TranslationFunctions = {
 	 */
 	userHome: () => LocalizedString
 	/**
-	 * That is not a group name this machine accepts.
+	 * The machine does not accept this group name.
 	 */
 	userInvalidGroup: () => LocalizedString
 	/**
-	 * A line break would split this into two commands, so it is refused.
+	 * Line breaks are not allowed because they would split this into multiple commands.
 	 */
 	userInvalidLineBreak: () => LocalizedString
 	/**
@@ -8278,7 +8294,7 @@ export type TranslationFunctions = {
 	 */
 	userRemoveHome: () => LocalizedString
 	/**
-	 * A user cannot be renamed here: the name is what every file and process on the machine knows it by.
+	 * Users cannot be renamed here because files and processes on the machine refer to them by name.
 	 */
 	userRenaming: () => LocalizedString
 	/**
@@ -8350,7 +8366,7 @@ export type TranslationFunctions = {
 	 */
 	groupDelete: () => LocalizedString
 	/**
-	 * Delete {name}? Accounts that have it as a supplementary group keep their other groups.
+	 * Delete {name}? Accounts that use it as a supplementary group will keep their other group memberships.
 	 */
 	groupDeleteConfirm: (arg: { name: unknown }) => LocalizedString
 	/**
@@ -8398,7 +8414,7 @@ export type TranslationFunctions = {
 	 */
 	groupMembers: () => LocalizedString
 	/**
-	 * Separated by spaces. Clearing it removes every supplementary member.
+	 * Separate members with spaces. Leave blank to remove all supplementary members.
 	 */
 	groupMembersHint: () => LocalizedString
 	/**
@@ -8446,7 +8462,7 @@ export type TranslationFunctions = {
 	 */
 	snippetSubtitle: (arg: { count: unknown }) => LocalizedString
 	/**
-	 * No snippets saved on this agent yet.
+	 * No snippets saved on this Monitor yet.
 	 */
 	snippetEmpty: () => LocalizedString
 	/**
@@ -8462,7 +8478,7 @@ export type TranslationFunctions = {
 	 */
 	snippetDelete: () => LocalizedString
 	/**
-	 * Delete {name}? It is removed from this agent only.
+	 * Delete {name}? It is removed from this Monitor only.
 	 */
 	snippetDeleteConfirm: (arg: { name: unknown }) => LocalizedString
 	/**
@@ -8474,7 +8490,7 @@ export type TranslationFunctions = {
 	 */
 	snippetScript: () => LocalizedString
 	/**
-	 * Written as it is typed. Server values (host, port, user, password) are not available in the panel, and a script that uses one is not run.
+	 * Scripts are saved exactly as entered. Server values (host, port, user, password) are unavailable in the panel, so scripts that use them will not run.
 	 */
 	snippetScriptHint: () => LocalizedString
 	/**
@@ -8494,7 +8510,7 @@ export type TranslationFunctions = {
 	 */
 	snippetRun: () => LocalizedString
 	/**
-	 * Run opens the terminal and types the snippet into its shell once a session is connected.
+	 * Run opens the terminal and enters the snippet in the shell after the session connects.
 	 */
 	snippetRunNote: () => LocalizedString
 	/**
@@ -8522,11 +8538,11 @@ export type TranslationFunctions = {
 	 */
 	snippetDoneDeleted: (arg: { name: unknown }) => LocalizedString
 	/**
-	 * A snippet is missing its id.
+	 * A snippet is missing its ID.
 	 */
 	snippetInvalidId: () => LocalizedString
 	/**
-	 * Two snippets share an id.
+	 * Two snippets have the same ID.
 	 */
 	snippetDuplicateId: () => LocalizedString
 	/**
@@ -8534,7 +8550,7 @@ export type TranslationFunctions = {
 	 */
 	snippetInvalidName: () => LocalizedString
 	/**
-	 * Two snippets have the same name.
+	 * Two snippets have duplicate names.
 	 */
 	snippetDuplicateName: () => LocalizedString
 	/**
@@ -8542,11 +8558,11 @@ export type TranslationFunctions = {
 	 */
 	snippetInvalidTag: () => LocalizedString
 	/**
-	 * A snippet cannot carry the same tag twice.
+	 * A snippet cannot have the same tag more than once.
 	 */
 	snippetDuplicateTag: () => LocalizedString
 	/**
-	 * This script uses {key}, which the panel has no value for. Server values are filled in only by the app.
+	 * This script uses {key}, but the panel has no value for it. Only the app can fill in server values.
 	 */
 	snippetUnanswerable: (arg: { key: unknown }) => LocalizedString
 	/**
@@ -8558,7 +8574,7 @@ export type TranslationFunctions = {
 	 */
 	desktopSubtitle: (arg: { count: unknown }) => LocalizedString
 	/**
-	 * No desktops saved on this agent yet.
+	 * No desktops saved on this Monitor yet.
 	 */
 	desktopEmpty: () => LocalizedString
 	/**
@@ -8578,7 +8594,7 @@ export type TranslationFunctions = {
 	 */
 	desktopDeleteConfirm: (arg: { name: unknown }) => LocalizedString
 	/**
-	 * A route is an address this agent can reach. The session runs in this browser and its bytes travel through the agent, so a desktop behind it is reachable without publishing it.
+	 * A route is an address this Monitor can reach. The session runs in this browser and its bytes travel through the Monitor, so a desktop behind it is reachable without publishing it.
 	 */
 	desktopRouteNote: () => LocalizedString
 	/**
@@ -8594,7 +8610,7 @@ export type TranslationFunctions = {
 	 */
 	desktopHost: () => LocalizedString
 	/**
-	 * An address this agent can reach — 127.0.0.1 is the machine it runs on.
+	 * An address this Monitor can reach — 127.0.0.1 is the machine it runs on.
 	 */
 	desktopHostHint: () => LocalizedString
 	/**
@@ -8630,7 +8646,7 @@ export type TranslationFunctions = {
 	 */
 	desktopPassword: () => LocalizedString
 	/**
-	 * Sent to the desktop from this browser, through the agent. The agent stores no password for a route.
+	 * Sent to the desktop from this browser, through the Monitor. The Monitor stores no password for a route.
 	 */
 	desktopPasswordHint: () => LocalizedString
 	/**
@@ -8654,7 +8670,7 @@ export type TranslationFunctions = {
 	 */
 	desktopDoneDeleted: (arg: { name: unknown }) => LocalizedString
 	/**
-	 * A desktop is missing its id, or two share one.
+	 * A desktop is missing its ID, or multiple desktops use the same ID.
 	 */
 	desktopInvalidId: () => LocalizedString
 	/**
@@ -8662,11 +8678,11 @@ export type TranslationFunctions = {
 	 */
 	desktopInvalidName: () => LocalizedString
 	/**
-	 * Two desktops have the same name.
+	 * Two desktops have duplicate names.
 	 */
 	desktopDuplicateName: () => LocalizedString
 	/**
-	 * This agent does not support that protocol.
+	 * This Monitor does not support that protocol.
 	 */
 	desktopInvalidProtocol: () => LocalizedString
 	/**
@@ -8690,11 +8706,11 @@ export type TranslationFunctions = {
 	 */
 	desktopRdpUsername: () => LocalizedString
 	/**
-	 * The agent terminates TLS and relays the session in the clear, so it holds the credentials you type for as long as the session lasts.
+	 * The Monitor terminates TLS and relays the session in the clear, so it holds the credentials you type for as long as the session lasts.
 	 */
 	desktopRdpPlaintext: () => LocalizedString
 	/**
-	 * The browser could not open this agent's RDP endpoint. Check that the agent is reachable from here and that it allows this panel's origin.
+	 * The browser could not open this Monitor's RDP endpoint. Check that the Monitor is reachable from here and that it allows this panel's origin.
 	 */
 	desktopRdpProxy: () => LocalizedString
 	/**
@@ -8706,11 +8722,11 @@ export type TranslationFunctions = {
 	 */
 	desktopRdpCredentials: () => LocalizedString
 	/**
-	 * This agent refused the session request.
+	 * This Monitor refused the session request.
 	 */
 	desktopRdpRefused: () => LocalizedString
 	/**
-	 * This agent could not reach the desktop, or could not secure the connection to it.
+	 * This Monitor could not reach the desktop, or could not secure the connection to it.
 	 */
 	desktopRdpUnreachable: () => LocalizedString
 	/**
@@ -8718,15 +8734,15 @@ export type TranslationFunctions = {
 	 */
 	backup: () => LocalizedString
 	/**
-	 * {count} stored · up to {max} each
+	 * {count} stored · up to {max} per server
 	 */
 	backupSubtitle: (arg: { count: unknown, max: unknown }) => LocalizedString
 	/**
-	 * The agent keeps these files for the app's backup sync and for uploads from here. The app encrypts its backup with your backup password before sending it; the panel moves the files without opening them.
+	 * The Monitor keeps these files for the app's backup sync and for uploads from here. The app encrypts its backup with your backup password before sending it; the panel moves the files without opening them.
 	 */
 	backupWhatItIs: () => LocalizedString
 	/**
-	 * Nothing is stored yet. Turn on sync to this agent in the app, or upload a backup file.
+	 * Nothing is stored yet. Turn on sync to this Monitor in the app, or upload a backup file.
 	 */
 	backupEmpty: () => LocalizedString
 	/**
@@ -8746,19 +8762,19 @@ export type TranslationFunctions = {
 	 */
 	backupRemoved: (arg: { name: unknown }) => LocalizedString
 	/**
-	 * Remove {name}? A device that syncs to this agent uploads its backup again on its next sync; any other file is gone for good.
+	 * Remove {name}? A device that syncs to this Monitor uploads its backup again on its next sync; any other file is gone for good.
 	 */
 	backupConfirmRemove: (arg: { name: unknown }) => LocalizedString
 	/**
-	 * {size} is more than the {max} this agent takes.
+	 * {size} is more than the {max} this Monitor takes.
 	 */
 	backupTooLarge: (arg: { max: unknown, size: unknown }) => LocalizedString
 	/**
-	 * The file is larger than this agent takes.
+	 * The file is larger than this Monitor takes.
 	 */
 	backupTooLargeRefused: () => LocalizedString
 	/**
-	 * This agent keeps at most 64 backups. Remove one first.
+	 * This Monitor keeps at most 64 backups. Remove one first.
 	 */
 	backupTooMany: () => LocalizedString
 	/**
@@ -8766,7 +8782,7 @@ export type TranslationFunctions = {
 	 */
 	backupInvalidName: () => LocalizedString
 	/**
-	 * That backup is no longer on the agent.
+	 * That backup is no longer on the Monitor.
 	 */
 	backupGone: () => LocalizedString
 	/**
@@ -8774,7 +8790,7 @@ export type TranslationFunctions = {
 	 */
 	bmc: () => LocalizedString
 	/**
-	 * {count} BMCs reached through this agent
+	 * {count} BMCs reached through this Monitor
 	 */
 	bmcSubtitle: (arg: { count: unknown }) => LocalizedString
 	/**
@@ -8802,11 +8818,11 @@ export type TranslationFunctions = {
 	 */
 	bmcRemoved: (arg: { name: unknown }) => LocalizedString
 	/**
-	 * No BMC has been added to this agent. An admin can add one.
+	 * No BMC has been added to this Monitor. An admin can add one.
 	 */
 	bmcEmpty: () => LocalizedString
 	/**
-	 * No BMC yet. Add one by its HTTPS address and an account on it; this agent signs in for you.
+	 * No BMC yet. Add one by its HTTPS address and an account on it; this Monitor signs in for you.
 	 */
 	bmcEmptyAdmin: () => LocalizedString
 	/**
@@ -8818,7 +8834,7 @@ export type TranslationFunctions = {
 	 */
 	bmcUrl: () => LocalizedString
 	/**
-	 * https://host or https://host:port, as reached from this agent's machine.
+	 * https://host or https://host:port, as reached from this Monitor's machine.
 	 */
 	bmcUrlHint: () => LocalizedString
 	/**
@@ -8838,7 +8854,7 @@ export type TranslationFunctions = {
 	 */
 	bmcCert: () => LocalizedString
 	/**
-	 * No certificate is trusted yet. This agent will not sign in until one is.
+	 * No certificate is trusted yet. This Monitor will not sign in until one is.
 	 */
 	bmcCertNone: () => LocalizedString
 	/**
@@ -8886,7 +8902,7 @@ export type TranslationFunctions = {
 	 */
 	bmcForbidden: () => LocalizedString
 	/**
-	 * This agent could not reach the BMC.
+	 * This Monitor could not reach the BMC.
 	 */
 	bmcUnreachable: () => LocalizedString
 	/**
@@ -8902,7 +8918,7 @@ export type TranslationFunctions = {
 	 */
 	bmcNotSupported: () => LocalizedString
 	/**
-	 * That BMC is no longer on this agent.
+	 * That BMC is no longer on this Monitor.
 	 */
 	bmcGone: () => LocalizedString
 	/**
@@ -9006,7 +9022,7 @@ export type TranslationFunctions = {
 	 */
 	bmcPowerDraw: () => LocalizedString
 	/**
-	 * The BMC lists more sensors than this agent reads; the first 64 are shown.
+	 * The BMC lists more sensors than this Monitor reads; the first 64 are shown.
 	 */
 	bmcSensorsTruncated: () => LocalizedString
 	/**
@@ -9026,11 +9042,11 @@ export type TranslationFunctions = {
 	 */
 	virtTemplate: () => LocalizedString
 	/**
-	 * A template is not started. New guests are cloned from it.
+	 * Templates cannot be started. Create new guests by cloning a template.
 	 */
 	virtTemplateNote: () => LocalizedString
 	/**
-	 * Usage shows here once it runs.
+	 * Usage information appears here while the guest is running.
 	 */
 	virtStoppedNote: () => LocalizedString
 	/**
@@ -9090,7 +9106,7 @@ export type TranslationFunctions = {
 	 */
 	virtTags: () => LocalizedString
 	/**
-	 * The chart fills in as readings arrive.
+	 * The chart will update as readings arrive.
 	 */
 	virtChartWaiting: () => LocalizedString
 	/**
@@ -9158,11 +9174,11 @@ export type TranslationFunctions = {
 	 */
 	virtActDone: (arg: { action: unknown, name: unknown }) => LocalizedString
 	/**
-	 * {action} {name}? The guest's system is asked to do it and may take a while.
+	 * {action} {name}? The guest operating system will be asked to perform this action. It may take a while.
 	 */
 	virtConfirm: (arg: { action: unknown, name: unknown }) => LocalizedString
 	/**
-	 * Force stop {name}? It stops at once, like pulling the plug, and anything unsaved in it is lost.
+	 * Force stop {name}? This is like pulling the plug: the guest stops immediately and any unsaved data is lost.
 	 */
 	virtConfirmForce: (arg: { name: unknown }) => LocalizedString
 	/**
@@ -9174,15 +9190,15 @@ export type TranslationFunctions = {
 	 */
 	virtSudoSend: () => LocalizedString
 	/**
-	 * libvirt refused this agent's account. The password is sent with each request while this page is open and is not stored.
+	 * libvirt refused this Monitor's account. The password is sent with each request while this page is open and is not stored.
 	 */
 	virtSudoHint: () => LocalizedString
 	/**
-	 * This agent could not reach the host.
+	 * This Monitor could not reach the host.
 	 */
 	virtErrUnreachable: () => LocalizedString
 	/**
-	 * How to sign in to the host is not set up.
+	 * Host sign-in details have not been configured.
 	 */
 	virtErrNotConfigured: () => LocalizedString
 	/**
@@ -9202,7 +9218,7 @@ export type TranslationFunctions = {
 	 */
 	virtErrOtpRejected: () => LocalizedString
 	/**
-	 * The Proxmox VE certificate is not signed by a known authority. Trust it once it matches the one the host shows.
+	 * The Proxmox VE certificate is not signed by a trusted authority. Verify that its fingerprint matches the one shown by the host before trusting it.
 	 */
 	virtErrCertUnconfirmed: () => LocalizedString
 	/**
@@ -9210,7 +9226,7 @@ export type TranslationFunctions = {
 	 */
 	virtErrCertChanged: () => LocalizedString
 	/**
-	 * That certificate is not the one the host presented.
+	 * The certificate does not match the one presented by the host.
 	 */
 	virtErrCertNotPresented: () => LocalizedString
 	/**
@@ -9218,12 +9234,12 @@ export type TranslationFunctions = {
 	 */
 	virtErrPermissionDenied: () => LocalizedString
 	/**
-	 * {account} may not see any guest. Grant it on the host:
+	 * {account} does not have permission to view any guests. Grant the required permissions on the host:
 {command}
 	 */
 	virtErrNoPrivileges: (arg: { account: unknown, command: unknown }) => LocalizedString
 	/**
-	 * The host answered with something this agent cannot read.
+	 * The host answered with something this Monitor cannot read.
 	 */
 	virtErrInvalidResponse: () => LocalizedString
 	/**
@@ -9235,7 +9251,7 @@ export type TranslationFunctions = {
 	 */
 	virtErrNotOffered: () => LocalizedString
 	/**
-	 * Still running on {node} after {minutes} min; its task log on the host says how it ends: {upid}
+	 * The task is still running on {node} after {minutes} min. Check its log on the host for updates: {upid}
 	 */
 	virtErrTaskRunning: (arg: { minutes: unknown, node: unknown, upid: unknown }) => LocalizedString
 	/**
@@ -9255,7 +9271,7 @@ export type TranslationFunctions = {
 	 */
 	virtErrTokenIncomplete: () => LocalizedString
 	/**
-	 * libvirt refused this agent's account, and sudo needs a password.
+	 * libvirt refused this Monitor's account, and sudo needs a password.
 	 */
 	virtErrSudoRequired: () => LocalizedString
 	/**
@@ -9267,11 +9283,11 @@ export type TranslationFunctions = {
 	 */
 	pveSettings: () => LocalizedString
 	/**
-	 * This machine runs Proxmox VE. An admin has to set up how this agent signs in to its API.
+	 * This machine runs Proxmox VE. An admin has to set up how this Monitor signs in to its API.
 	 */
 	pveSetup: () => LocalizedString
 	/**
-	 * This machine runs Proxmox VE. Set up how this agent signs in to its API; an API token is recommended.
+	 * This machine runs Proxmox VE. Set up how this Monitor signs in to its API; an API token is recommended.
 	 */
 	pveSetupAdmin: () => LocalizedString
 	/**
@@ -9279,7 +9295,7 @@ export type TranslationFunctions = {
 	 */
 	pveAddr: () => LocalizedString
 	/**
-	 * As reached from this agent's machine. https://127.0.0.1:8006 is this host itself.
+	 * As reached from this Monitor's machine. https://127.0.0.1:8006 is this host itself.
 	 */
 	pveAddrHint: () => LocalizedString
 	/**
@@ -9309,11 +9325,11 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	pveTokenHint: () => LocalizedString
 	/**
-	 * An account with TOTP is asked for a code after the agent restarts.
+	 * An account with TOTP is asked for a code after the Monitor restarts.
 	 */
 	pvePasswordHint: () => LocalizedString
 	/**
-	 * No certificate is trusted yet. The page shows the one the host presents for you to trust.
+	 * No certificate is trusted yet. This page shows the certificate presented by the host so you can verify and trust it.
 	 */
 	pveCertNone: () => LocalizedString
 	/**
@@ -9353,7 +9369,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	pveRemove: () => LocalizedString
 	/**
-	 * Remove how this agent signs in to Proxmox VE? The stored secret goes with it.
+	 * Remove how this Monitor signs in to Proxmox VE? The stored secret goes with it.
 	 */
 	pveRemoveConfirm: () => LocalizedString
 	/**
@@ -9409,7 +9425,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtRangeWeek: () => LocalizedString
 	/**
-	 * The host has no readings for this range.
+	 * The host has no data for this time range.
 	 */
 	virtChartNone: () => LocalizedString
 	/**
@@ -9441,7 +9457,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtConsoleNone: () => LocalizedString
 	/**
-	 * A console opens once the guest runs.
+	 * The console will be available when the guest is running.
 	 */
 	virtConsoleStopped: () => LocalizedString
 	/**
@@ -9449,11 +9465,11 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtConsolePassword: () => LocalizedString
 	/**
-	 * The display's password could not be read. Enter it if it asks for one.
+	 * Could not read the display password. Enter it if prompted.
 	 */
 	virtConsolePasswordHint: () => LocalizedString
 	/**
-	 * A serial console runs in a terminal. Open the terminal and run:
+	 * The serial console runs in a terminal. Open the terminal and run:
 	 */
 	virtConsoleCommand: () => LocalizedString
 	/**
@@ -9477,7 +9493,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtSnapWithMemory: () => LocalizedString
 	/**
-	 * A running guest's memory is always included.
+	 * Snapshots of a running guest always include its memory.
 	 */
 	virtSnapMemoryAlways: () => LocalizedString
 	/**
@@ -9517,7 +9533,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtSnapDiff: () => LocalizedString
 	/**
-	 * Nothing changed since this snapshot.
+	 * No changes have been made since this snapshot.
 	 */
 	virtSnapSame: () => LocalizedString
 	/**
@@ -9525,11 +9541,11 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtSnapRevert: () => LocalizedString
 	/**
-	 * Revert to {name}? The guest goes back to where it was, its memory included; anything since is lost.
+	 * Revert to {name}? The guest and its memory will return to their state at that snapshot. All changes since then will be lost.
 	 */
 	virtSnapRevertMemory: (arg: { name: unknown }) => LocalizedString
 	/**
-	 * Revert to {name}? Its disks go back to then and the guest is stopped; anything since is lost.
+	 * Revert to {name}? The disks will return to their state at that snapshot, and the guest will be stopped. All changes since then will be lost.
 	 */
 	virtSnapRevertDisk: (arg: { name: unknown }) => LocalizedString
 	/**
@@ -9541,7 +9557,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtSnapDelete: () => LocalizedString
 	/**
-	 * Delete snapshot {name}? The guest keeps what it has now.
+	 * Delete snapshot {name}? The guest will keep its current state.
 	 */
 	virtSnapDeleteConfirm: (arg: { name: unknown }) => LocalizedString
 	/**
@@ -9613,11 +9629,11 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtPoolDelete: () => LocalizedString
 	/**
-	 * Remove {name}? Its volumes stay where they are.
+	 * Remove {name}? Its volumes will remain in place.
 	 */
 	virtPoolDeleteConfirm: (arg: { name: unknown }) => LocalizedString
 	/**
-	 * Also delete its directory (only when empty)
+	 * Also delete its directory (only if empty)
 	 */
 	virtPoolDeleteStorage: () => LocalizedString
 	/**
@@ -9705,7 +9721,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtVolumeUsedBy: (arg: { who: unknown }) => LocalizedString
 	/**
-	 * {count} volumes are made on it
+	 * {count} volumes are stored on it
 	 */
 	virtVolumeBacks: (arg: { count: unknown }) => LocalizedString
 	/**
@@ -9745,7 +9761,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtNetRestart: () => LocalizedString
 	/**
-	 * Restart {name}? Guests on it lose their link until it is up again.
+	 * Restart {name}? Guests using this network will lose connectivity until it is back online.
 	 */
 	virtNetRestartConfirm: (arg: { name: unknown }) => LocalizedString
 	/**
@@ -9753,7 +9769,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtNetDeleteConfirm: (arg: { name: unknown }) => LocalizedString
 	/**
-	 * Carries the host's management traffic: not editable here.
+	 * Carries the host's management traffic and cannot be edited here.
 	 */
 	virtNetManagement: () => LocalizedString
 	/**
@@ -9825,7 +9841,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtNetHostName: () => LocalizedString
 	/**
-	 * Restart it now to apply (guests on it lose their link meanwhile)
+	 * Restart now to apply the changes. Guests using this network will lose connectivity during the restart.
 	 */
 	virtNetRestartNow: () => LocalizedString
 	/**
@@ -9845,7 +9861,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtNetRevert: () => LocalizedString
 	/**
-	 * Apply the pending configuration on {node}? PVE reloads its networking.
+	 * Apply the pending configuration on {node}? PVE will reload its network configuration.
 	 */
 	virtNetApplyConfirm: (arg: { node: unknown }) => LocalizedString
 	/**
@@ -9858,11 +9874,11 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtErrNeedsPrivilege: (arg: { account: unknown, command: unknown, path: unknown, privilege: unknown }) => LocalizedString
 	/**
-	 * The pending configuration changes {ifaces}, which carry the host's management traffic: apply it from the host's console or PVE's own interface.
+	 * The pending configuration changes {ifaces}, which carry the host's management traffic. Apply these changes from the host console or the PVE interface.
 	 */
 	virtErrApplyManagement: (arg: { ifaces: unknown }) => LocalizedString
 	/**
-	 * Which interfaces the pending configuration changes cannot be told from its diff: apply it from the host's console or PVE's own interface.
+	 * The changed interfaces cannot be determined from the pending configuration diff. Apply it from the host console or the PVE interface.
 	 */
 	virtErrApplyUnreadable: () => LocalizedString
 	/**
@@ -9870,7 +9886,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtIssueNameEmpty: () => LocalizedString
 	/**
-	 * That name is not one the host takes.
+	 * The host does not accept this name.
 	 */
 	virtIssueNameInvalid: () => LocalizedString
 	/**
@@ -9878,7 +9894,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtIssueNameTaken: () => LocalizedString
 	/**
-	 * The source is not valid for this type.
+	 * The source is invalid for this type.
 	 */
 	virtIssueSourceInvalid: () => LocalizedString
 	/**
@@ -9886,11 +9902,11 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtIssueTargetInvalid: () => LocalizedString
 	/**
-	 * Not an address with a usable prefix (a.b.c.d/prefix).
+	 * Enter a valid address with a prefix (a.b.c.d/prefix).
 	 */
 	virtIssueCidrInvalid: () => LocalizedString
 	/**
-	 * The DHCP range must lie inside the network, in order, clear of the host's address.
+	 * The DHCP range must be inside the network, in ascending order, and must not include the host address.
 	 */
 	virtIssueDhcpInvalid: () => LocalizedString
 	/**
@@ -9898,15 +9914,15 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtIssueSubnetTaken: () => LocalizedString
 	/**
-	 * Not a valid bridge or interface name.
+	 * Enter a valid bridge or interface name.
 	 */
 	virtIssueBridgeInvalid: () => LocalizedString
 	/**
-	 * Not a size the host takes.
+	 * The size is invalid or unsupported by the host.
 	 */
 	virtIssueSize: () => LocalizedString
 	/**
-	 * More than the storage has free.
+	 * The requested size exceeds the storage space available.
 	 */
 	virtIssueSpace: () => LocalizedString
 	/**
@@ -9914,23 +9930,23 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtIssueFormat: () => LocalizedString
 	/**
-	 * A guest uses it, or a volume is made on it.
+	 * It is in use by a guest or has a volume on it.
 	 */
 	virtIssueInUse: () => LocalizedString
 	/**
-	 * Only a larger size.
+	 * The new size must be larger than the current size.
 	 */
 	virtIssueShrink: () => LocalizedString
 	/**
-	 * A static host has a MAC, address or name the host would refuse, or repeats one.
+	 * A static host entry has an invalid or duplicate MAC address, IP address, or name.
 	 */
 	virtIssueHostInvalid: () => LocalizedString
 	/**
-	 * It carries the host's management traffic: changing it would cut the host off.
+	 * This interface carries the host's management traffic. Changing it could disconnect the host.
 	 */
 	virtIssueManagementIface: () => LocalizedString
 	/**
-	 * It is no longer on the host.
+	 * It no longer exists on the host.
 	 */
 	virtIssueNotFound: () => LocalizedString
 	/**
@@ -9974,7 +9990,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtVmSub: () => LocalizedString
 	/**
-	 * Shares the host's kernel; lighter
+	 * Shares the host kernel and uses fewer resources
 	 */
 	virtLxcSub: () => LocalizedString
 	/**
@@ -10002,7 +10018,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtSourceImage: () => LocalizedString
 	/**
-	 * No install media on this host: upload an ISO to a storage first.
+	 * There is no installation media on this host. Upload an ISO to a storage first.
 	 */
 	virtMediaNone: () => LocalizedString
 	/**
@@ -10030,7 +10046,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtUnprivileged: () => LocalizedString
 	/**
-	 * Root in the container maps to an ordinary user on the host
+	 * Root inside the container maps to an unprivileged user on the host.
 	 */
 	virtUnprivilegedNote: () => LocalizedString
 	/**
@@ -10042,7 +10058,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtSshKeys: () => LocalizedString
 	/**
-	 * A password, a key, or both.
+	 * Sign in with a password, an SSH key, or both.
 	 */
 	virtRootLoginNote: () => LocalizedString
 	/**
@@ -10054,7 +10070,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtCiMissing: (arg: { why: unknown }) => LocalizedString
 	/**
-	 * Leave everything empty to boot the image as it is.
+	 * Leave all fields empty to boot the image without changes.
 	 */
 	virtCiNote: () => LocalizedString
 	/**
@@ -10114,7 +10130,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtStorageFree: (arg: { free: unknown, type: unknown }) => LocalizedString
 	/**
-	 * No storage here takes a new guest's disk.
+	 * No available storage can hold a new guest's disk.
 	 */
 	virtStorageNone: () => LocalizedString
 	/**
@@ -10130,7 +10146,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtStartAfter: () => LocalizedString
 	/**
-	 * Complete the groups marked in orange first.
+	 * Complete the sections marked in orange first.
 	 */
 	virtIncomplete: () => LocalizedString
 	/**
@@ -10150,7 +10166,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtCreatedNotStarted: (arg: { name: unknown, why: unknown }) => LocalizedString
 	/**
-	 * Created {name}. Its disk is {size}, the cloud image's own size: a disk is never made smaller than its image.
+	 * Created {name}. Its disk uses the cloud image's original size ({size}) because a disk cannot be smaller than its image.
 	 */
 	virtCreatedDiskKept: (arg: { name: unknown, size: unknown }) => LocalizedString
 	/**
@@ -10170,7 +10186,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtCloneFull: () => LocalizedString
 	/**
-	 * Off: a linked clone that depends on the template's disks
+	 * Off: create a linked clone that depends on the template's disks.
 	 */
 	virtCloneFullNote: () => LocalizedString
 	/**
@@ -10178,7 +10194,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtCloneCopy: () => LocalizedString
 	/**
-	 * Off: new empty disks of the same size
+	 * Off: create new, empty disks of the same size.
 	 */
 	virtCloneCopyNote: () => LocalizedString
 	/**
@@ -10218,7 +10234,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtMakeTemplate: () => LocalizedString
 	/**
-	 * A template cannot be started, and it cannot be turned back. New guests are cloned from it.
+	 * A template cannot be started or converted back. Create new guests by cloning it.
 	 */
 	virtMakeTemplateNote: () => LocalizedString
 	/**
@@ -10238,11 +10254,11 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtDeleteDisksNote: () => LocalizedString
 	/**
-	 * Proxmox VE deletes its disks with it.
+	 * Proxmox VE will delete the guest's disks along with it.
 	 */
 	virtDeleteDisksAlways: () => LocalizedString
 	/**
-	 * Click again to confirm. This cannot be undone.
+	 * Click again to confirm. This action cannot be undone.
 	 */
 	virtConfirmAgain: () => LocalizedString
 	/**
@@ -10262,7 +10278,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtCrIssueNameEmpty: () => LocalizedString
 	/**
-	 * That name is not one the host takes.
+	 * The host does not accept this name.
 	 */
 	virtCrIssueNameInvalid: () => LocalizedString
 	/**
@@ -10278,15 +10294,15 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtCrIssueVmidTaken: () => LocalizedString
 	/**
-	 * That node is not one of the host's online nodes.
+	 * Select an online node on the host.
 	 */
 	virtCrIssueNode: () => LocalizedString
 	/**
-	 * Not a number of cores the host takes.
+	 * The number of cores is invalid or unsupported by the host.
 	 */
 	virtCrIssueCores: () => LocalizedString
 	/**
-	 * Not an amount of memory the host takes.
+	 * The memory size is invalid or unsupported by the host.
 	 */
 	virtCrIssueMemory: () => LocalizedString
 	/**
@@ -10294,7 +10310,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtCrIssueStorage: () => LocalizedString
 	/**
-	 * Not a disk size the host takes.
+	 * The disk size is invalid or unsupported by the host.
 	 */
 	virtCrIssueDiskSize: () => LocalizedString
 	/**
@@ -10326,7 +10342,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtCrIssueImageSize: () => LocalizedString
 	/**
-	 * A new guest cannot be on that network.
+	 * The new guest cannot use the selected network.
 	 */
 	virtCrIssueNetwork: () => LocalizedString
 	/**
@@ -10334,7 +10350,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtCrIssueSecureBoot: () => LocalizedString
 	/**
-	 * The host does not offer something asked for: a bus, NIC model, UEFI, TPM, cloud image or cloud-init.
+	 * The host does not support one of the selected options: bus, NIC model, UEFI, TPM, cloud image, or cloud-init.
 	 */
 	virtCrIssueNotOffered: () => LocalizedString
 	/**
@@ -10350,7 +10366,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtCrIssueCiHostname: () => LocalizedString
 	/**
-	 * Not an address with a prefix (a.b.c.d/prefix).
+	 * Enter a valid address with a prefix (a.b.c.d/prefix).
 	 */
 	virtCrIssueCiAddress: () => LocalizedString
 	/**
@@ -10358,7 +10374,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtCrIssueCiGateway: () => LocalizedString
 	/**
-	 * One of the DNS servers is not an address.
+	 * Enter a valid address for each DNS server.
 	 */
 	virtCrIssueCiDns: () => LocalizedString
 	/**
@@ -10366,7 +10382,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtCrIssueCiSearch: () => LocalizedString
 	/**
-	 * A linked clone stays on the source's storage and node.
+	 * A linked clone must use the same storage and node as its source.
 	 */
 	virtCrIssueCloneLinkedTarget: () => LocalizedString
 	/**
@@ -10442,7 +10458,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtHwMemoryMin: () => LocalizedString
 	/**
-	 * The host can take memory back down to this minimum while the guest runs. Empty for none.
+	 * While the guest is running, the host can reclaim memory down to this minimum. Leave blank to disable this.
 	 */
 	virtHwMemoryMinNote: () => LocalizedString
 	/**
@@ -10482,7 +10498,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtHwGrow: () => LocalizedString
 	/**
-	 * A disk only grows. Extend the partition inside the system afterwards.
+	 * Disks can only be expanded. Extend the partition inside the guest afterward.
 	 */
 	virtHwGrowNote: () => LocalizedString
 	/**
@@ -10558,7 +10574,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtHwLinkUp: () => LocalizedString
 	/**
-	 * Disconnected, the system sees the cable unplugged. No restart needed.
+	 * When disconnected, the guest sees the network cable as unplugged. No restart is needed.
 	 */
 	virtHwLinkNote: () => LocalizedString
 	/**
@@ -10598,7 +10614,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtHwCiDrive: () => LocalizedString
 	/**
-	 * Holds the cloud-init settings, which the Settings view edits.
+	 * Stores the cloud-init settings edited on the Settings page.
 	 */
 	virtHwCiDriveNote: () => LocalizedString
 	/**
@@ -10610,7 +10626,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtHwMapping: () => LocalizedString
 	/**
-	 * Given by
+	 * Identify by
 	 */
 	virtHwUsbNaming: () => LocalizedString
 	/**
@@ -10622,7 +10638,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtHwUsbByPort: () => LocalizedString
 	/**
-	 * By port: whatever is plugged in there goes to the guest.
+	 * By port: pass to the guest whichever device is plugged into this port.
 	 */
 	virtHwUsbByPortNote: () => LocalizedString
 	/**
@@ -10630,7 +10646,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtHwIommuGroup: (arg: { group: unknown, n: unknown }) => LocalizedString
 	/**
-	 * Every device in its IOMMU group goes to the guest with it.
+	 * All devices in this device's IOMMU group will be passed through to the guest.
 	 */
 	virtHwIommuGroupNote: () => LocalizedString
 	/**
@@ -10638,15 +10654,15 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtHwNoIommu: () => LocalizedString
 	/**
-	 * This login can only give resource mappings; a raw device needs root@pam.
+	 * This account can only assign resource mappings. Passing through a physical device requires root@pam.
 	 */
 	virtHwMappingsOnly: () => LocalizedString
 	/**
-	 * The host cannot use the device while the guest has it, and the guest cannot migrate while running.
+	 * The host cannot use this device while it is assigned to the guest. A running guest with this device cannot be migrated.
 	 */
 	virtHwPciNote: () => LocalizedString
 	/**
-	 * The host lists no such device.
+	 * The host reports no available devices of this type.
 	 */
 	virtHwNoHostDevices: () => LocalizedString
 	/**
@@ -10674,7 +10690,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtHwPort: () => LocalizedString
 	/**
-	 * Listening on every address lets anyone who reaches the host connect to the console. Keep 127.0.0.1 and connect through an SSH tunnel.
+	 * Listening on all addresses allows anyone who can reach the host to connect to the console. Keep 127.0.0.1 and connect through an SSH tunnel.
 	 */
 	virtHwListenWarn: () => LocalizedString
 	/**
@@ -10690,7 +10706,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtHwBiosNote: () => LocalizedString
 	/**
-	 * Boots only signed kernels and boot loaders
+	 * Allows only signed kernels and boot loaders to boot.
 	 */
 	virtHwSecureBootNote: () => LocalizedString
 	/**
@@ -10698,7 +10714,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtHwEfiStorage: () => LocalizedString
 	/**
-	 * Switching an installed system between UEFI and BIOS can leave it unable to boot.
+	 * Changing an installed system from UEFI to BIOS, or vice versa, may prevent it from booting.
 	 */
 	virtHwFirmwareWarn: () => LocalizedString
 	/**
@@ -10750,7 +10766,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtHwRevertAll: () => LocalizedString
 	/**
-	 * Every pending change is dropped; the next start keeps what runs now.
+	 * Discard all pending changes and keep the guest's current configuration.
 	 */
 	virtHwRevertAllNote: () => LocalizedString
 	/**
@@ -10762,15 +10778,15 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtHwSaved: () => LocalizedString
 	/**
-	 * Saved. The running guest did not take it, so it takes effect at the next start: {why}
+	 * Saved. The running guest could not apply this change, so it will take effect the next time the guest starts: {why}
 	 */
 	virtHwLiveError: (arg: { why: unknown }) => LocalizedString
 	/**
-	 * Removed. Its volume was kept: the running guest still uses it.
+	 * The device was removed, but its volume was kept because the running guest is still using it.
 	 */
 	virtHwVolumeKept: () => LocalizedString
 	/**
-	 * The guest changed since it was read. It was read again; check and save once more.
+	 * The guest configuration changed after it was loaded. It has been reloaded; review your changes and save again.
 	 */
 	virtHwConflict: () => LocalizedString
 	/**
@@ -10790,7 +10806,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtHwProtection: () => LocalizedString
 	/**
-	 * Blocks deleting the guest and changing its disks
+	 * Prevents deleting the guest or changing its disks.
 	 */
 	virtHwProtectionNote: () => LocalizedString
 	/**
@@ -10798,19 +10814,19 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtHwRenameStopped: () => LocalizedString
 	/**
-	 * Not a number of vCPUs the host has: at least 1, at most the host's.
+	 * Invalid vCPU count. It must be at least 1 and no greater than the number of CPUs on the host.
 	 */
 	virtHwIssueCpuCount: () => LocalizedString
 	/**
-	 * Online vCPUs are between 1 and the total.
+	 * The number of online vCPUs must be between 1 and the total number of vCPUs.
 	 */
 	virtHwIssueCpuOnline: () => LocalizedString
 	/**
-	 * Not an amount of memory the host takes: at least 16 MiB, at most the host's.
+	 * Invalid memory size. It must be at least 16 MiB and no greater than the host's memory.
 	 */
 	virtHwIssueMemory: () => LocalizedString
 	/**
-	 * The balloon minimum is above the memory.
+	 * The balloon minimum memory cannot exceed the guest's memory.
 	 */
 	virtHwIssueMemoryMin: () => LocalizedString
 	/**
@@ -10818,7 +10834,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtHwIssueDiskShrink: () => LocalizedString
 	/**
-	 * Not a disk size the host takes, or this disk cannot grow.
+	 * The disk size is invalid, or this disk does not support resizing.
 	 */
 	virtHwIssueDiskSize: () => LocalizedString
 	/**
@@ -10830,11 +10846,11 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtHwIssueMountPoint: () => LocalizedString
 	/**
-	 * Keep at least one device in the boot order.
+	 * The boot order must include at least one device.
 	 */
 	virtHwIssueBootEmpty: () => LocalizedString
 	/**
-	 * That name is not one the host takes.
+	 * The host does not accept this name.
 	 */
 	virtHwIssueNameInvalid: () => LocalizedString
 	/**
@@ -10850,7 +10866,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtHwIssueMac: () => LocalizedString
 	/**
-	 * Shut the guest down first: a new bus or firmware needs it stopped.
+	 * Shut down the guest first. Changing the bus or firmware requires it to be stopped.
 	 */
 	virtHwIssueStopFirst: () => LocalizedString
 	/**
@@ -10874,7 +10890,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtHwIssueNotOffered: () => LocalizedString
 	/**
-	 * It is no longer there. Read the hardware again.
+	 * This device no longer exists. Reload the hardware details.
 	 */
 	virtHwIssueNotFound: () => LocalizedString
 	/**
@@ -10918,7 +10934,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtCiNoNetwork: () => LocalizedString
 	/**
-	 * The system reads these the next time it boots.
+	 * The guest operating system reads these settings at the next boot.
 	 */
 	virtCiApplies: () => LocalizedString
 	/**
@@ -10942,11 +10958,11 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtBakDatacenter: () => LocalizedString
 	/**
-	 * No backup job takes this guest.
+	 * No backup job includes this guest.
 	 */
 	virtBakNoPlan: () => LocalizedString
 	/**
-	 * This job also takes other guests. Edit it under Backup jobs.
+	 * This job also includes other guests. Edit it on the Backup jobs page.
 	 */
 	virtBakSharedJob: () => LocalizedString
 	/**
@@ -10994,7 +11010,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtBakRetentionDefault: () => LocalizedString
 	/**
-	 * How many backups each rule keeps. All empty: the storage's own retention.
+	 * Set how many backups each rule keeps. If all fields are blank, the storage's retention policy is used.
 	 */
 	virtBakRetentionNote: () => LocalizedString
 	/**
@@ -11046,7 +11062,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtBakValidate: () => LocalizedString
 	/**
-	 * A PVE calendar event: 02:00, sat 03:00, mon..fri 22:30, daily.
+	 * PVE calendar event examples: 02:00, sat 03:00, mon..fri 22:30, daily.
 	 */
 	virtBakScheduleHint: () => LocalizedString
 	/**
@@ -11058,7 +11074,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtBakNextRuns: () => LocalizedString
 	/**
-	 * PVE lists no upcoming run for this schedule.
+	 * PVE has no upcoming run times for this schedule.
 	 */
 	virtBakNoNextRuns: () => LocalizedString
 	/**
@@ -11138,7 +11154,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtBakConfirmRun: (arg: { id: unknown }) => LocalizedString
 	/**
-	 * This backs up every guest the job takes now, which can take a while.
+	 * This immediately backs up every guest included in the job. It may take a while.
 	 */
 	virtBakRunNote: () => LocalizedString
 	/**
@@ -11162,11 +11178,11 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtBakNow: () => LocalizedString
 	/**
-	 * Snapshot mode backs up a running guest with no downtime.
+	 * Snapshot mode backs up a running guest without downtime.
 	 */
 	virtBakNowNote: () => LocalizedString
 	/**
-	 * This node has no storage that holds backups.
+	 * This node has no storage available for backups.
 	 */
 	virtBakNoStorage: () => LocalizedString
 	/**
@@ -11186,7 +11202,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtBakProtected: () => LocalizedString
 	/**
-	 * Kept from pruning and deletion until unprotected.
+	 * This backup cannot be pruned or deleted while it is protected.
 	 */
 	virtBakProtectedNote: () => LocalizedString
 	/**
@@ -11250,7 +11266,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtBakRestoreStorageOwn: () => LocalizedString
 	/**
-	 * Restoring overwrites the guest's disks and configuration.
+	 * Restoring this backup will overwrite the guest's disks and configuration.
 	 */
 	virtBakOverwrites: () => LocalizedString
 	/**
@@ -11290,7 +11306,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtBakIssueCompress: () => LocalizedString
 	/**
-	 * Pick the guests: all of them, a pool, or at least one VMID.
+	 * Select the guests to back up: all guests, a resource pool, or at least one VMID.
 	 */
 	virtBakIssueGuests: () => LocalizedString
 	/**
@@ -11302,7 +11318,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtBakIssueNotStopped: () => LocalizedString
 	/**
-	 * It is no longer there. Read the backups again.
+	 * This backup no longer exists. Reload the backup list.
 	 */
 	virtBakIssueNotFound: () => LocalizedString
 	/**
@@ -11386,27 +11402,27 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	fwReload: () => LocalizedString
 	/**
-	 * Enter a port, an app profile, an address or an interface.
+	 * Enter at least one port, application profile, address, or network interface.
 	 */
 	fwNothingMatched: () => LocalizedString
 	/**
-	 * Invalid port. Use 22, 80,443 or 6000:6010.
+	 * Invalid port. Examples: 22, 80,443, or 6000:6010.
 	 */
 	fwInvalidPort: () => LocalizedString
 	/**
-	 * At most 15 ports; a range counts as two.
+	 * You can enter up to 15 ports. Each port range counts as two ports.
 	 */
 	fwTooManyPorts: () => LocalizedString
 	/**
-	 * A port list or range needs tcp or udp.
+	 * Select TCP or UDP when entering a port list or range.
 	 */
 	fwPortsNeedProtocol: () => LocalizedString
 	/**
-	 * Invalid address. Use an IP address or a network such as 192.168.1.0/24.
+	 * Invalid address. Enter an IP address or network, such as 192.168.1.0/24.
 	 */
 	fwInvalidAddress: () => LocalizedString
 	/**
-	 * From and To must both be IPv4 or both be IPv6.
+	 * The source and destination must use the same IP version (IPv4 or IPv6).
 	 */
 	fwMixedIpVersions: () => LocalizedString
 	/**
@@ -11414,7 +11430,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	fwInvalidInterface: () => LocalizedString
 	/**
-	 * The comment cannot contain ' or line breaks.
+	 * The comment cannot contain single quotes or line breaks.
 	 */
 	fwInvalidComment: () => LocalizedString
 	/**
@@ -11442,7 +11458,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	fwNoneInstalled: () => LocalizedString
 	/**
-	 * Both ufw and firewalld are on. Each writes the kernel's rules, and whichever loaded last decides what gets through.
+	 * Both ufw and firewalld are enabled. Each writes rules to the kernel, and the rules loaded last determine which traffic is allowed.
 	 */
 	fwConflict: () => LocalizedString
 	/**
@@ -11502,11 +11518,11 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	fwDefaultTag: () => LocalizedString
 	/**
-	 * What is in force differs from what is saved. A reload or a reboot replaces it with the saved configuration.
+	 * The active configuration differs from the saved configuration. Reloading the firewall or rebooting will apply the saved configuration.
 	 */
 	fwDrift: () => LocalizedString
 	/**
-	 * After a reload or a reboot, {access} will be refused: the saved configuration does not let it in.
+	 * After a firewall reload or system reboot, {access} will be blocked because the saved configuration does not allow it.
 	 */
 	fwDriftLockout: (arg: { access: unknown }) => LocalizedString
 	/**
@@ -11514,7 +11530,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	fwSaveRuntime: () => LocalizedString
 	/**
-	 * Changes not saved as permanent will be lost.
+	 * Changes not saved as permanent will be lost when the firewall reloads.
 	 */
 	fwReloadLoses: () => LocalizedString
 	/**
@@ -11526,19 +11542,19 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	fwPanicOff: () => LocalizedString
 	/**
-	 * firewalld is stopped. Changes are saved, and take effect when it starts.
+	 * firewalld is stopped. Changes will be saved and take effect when it starts.
 	 */
 	fwStoppedNote: () => LocalizedString
 	/**
-	 * Invalid source. Use an address, a network such as 192.168.1.0/24, ipset:NAME or a MAC address.
+	 * Invalid source. Enter an address, network (such as 192.168.1.0/24), ipset:NAME, or MAC address.
 	 */
 	fwInvalidSource: () => LocalizedString
 	/**
-	 * A rich rule starts with "rule" and fits on one line.
+	 * A rich rule must start with "rule" and contain only one line.
 	 */
 	fwInvalidRichRule: () => LocalizedString
 	/**
-	 * Use port=80:proto=tcp:toport=8080, with toport, toaddr or both.
+	 * Example: port=80:proto=tcp:toport=8080. Specify toport, toaddr, or both.
 	 */
 	fwInvalidForwardPort: () => LocalizedString
 	/**
@@ -11574,7 +11590,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	fwAccessSsh: (arg: { port: unknown }) => LocalizedString
 	/**
-	 * The panel reaches the agent through a proxy on this machine, so no rule here decides its connection. Only SSH is checked.
+	 * The panel reaches the Monitor through a proxy on this machine, so no rule here decides its connection. Only SSH is checked.
 	 */
 	fwProxied: () => LocalizedString
 	/**
@@ -11586,7 +11602,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	fwReachLimited: () => LocalizedString
 	/**
-	 * Depends on the source
+	 * Depends on the source address
 	 */
 	fwReachUnknown: () => LocalizedString
 	/**
@@ -11594,19 +11610,19 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	fwReachBlocked: () => LocalizedString
 	/**
-	 * {access}: new connections will be refused. Connections already open stay up until they drop.
+	 * {access}: new connection attempts will be refused. Existing connections remain open until they are closed.
 	 */
 	fwWillRefuse: (arg: { access: unknown }) => LocalizedString
 	/**
-	 * {access}: new connections may be refused. It depends on the address or interface they arrive by, which the agent cannot tell.
+	 * {access}: new connections may be refused. It depends on the address or interface they arrive by, which the Monitor cannot tell.
 	 */
 	fwMayRefuse: (arg: { access: unknown }) => LocalizedString
 	/**
-	 * {access}: connections will be rate-limited. An address that opens 6 or more within 30 seconds is refused.
+	 * {access}: connections will be rate-limited. Addresses that make 6 or more connection attempts within 30 seconds will be blocked.
 	 */
 	fwRateLimited: (arg: { access: unknown }) => LocalizedString
 	/**
-	 * Keep these ports open first
+	 * Keep these ports open before continuing
 	 */
 	fwKeepOpen: () => LocalizedString
 	/**
@@ -11630,11 +11646,11 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	fwRemoveFrom: (arg: { value: unknown, zone: unknown }) => LocalizedString
 	/**
-	 * That rule is no longer there. Read the firewall again.
+	 * This rule no longer exists. Reload the firewall rules.
 	 */
 	fwNoSuchRule: () => LocalizedString
 	/**
-	 * That zone is no longer there. Read the firewall again.
+	 * This zone no longer exists. Reload the firewall configuration.
 	 */
 	fwNoSuchZone: () => LocalizedString
 	/**
