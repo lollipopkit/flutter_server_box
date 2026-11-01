@@ -380,6 +380,46 @@ staple_dmg() {
   done
 }
 
+# Retried only when Apple's timestamp server did not answer.
+#
+# Every signature here carries a secure timestamp (`--timestamp`, and Xcode's
+# own for each bundle it signs), fetched from Apple at signing time. On
+# v1.0.1856 the arm64 archive failed on one plugin bundle with "The timestamp
+# service is not available." while the bundle signed just before it had one,
+# and the server answered again a minute later. Any other failure is the
+# build's own and is not retried.
+retry_on_timestamp() {
+  local attempt=1
+  local delay=15
+  local status=1
+  local log
+  log="$(mktemp)"
+
+  while :; do
+    if "$@" 2>&1 | tee "$log"; then
+      status=0
+      break
+    fi
+
+    if ! grep -q 'The timestamp service is not available' "$log"; then
+      break
+    fi
+
+    if (( attempt >= NOTARY_ATTEMPTS )); then
+      echo "Apple's timestamp server did not answer after $attempt attempts." >&2
+      break
+    fi
+
+    echo "No secure timestamp on attempt $attempt; retrying in ${delay}s." >&2
+    sleep "$delay"
+    attempt=$(( attempt + 1 ))
+    delay=$(( delay * 2 ))
+  done
+
+  rm -f "$log"
+  return "$status"
+}
+
 require_var APPLE_TEAM_ID
 require_var APPLE_NOTARY_KEYCHAIN_PROFILE
 
@@ -544,7 +584,7 @@ for arch in $RELEASE_ARCHS; do
   # macos/Runner/Configs/Release.xcconfig and the `-xcconfig` file.
   # ONLY_ACTIVE_ARCH=NO prevents Xcode from silently selecting the host
   # architecture instead of the requested one.
-  xcodebuild \
+  retry_on_timestamp xcodebuild \
     -workspace "$WORKSPACE_PATH" \
     -scheme "$SCHEME" \
     -configuration "$CONFIGURATION" \
@@ -558,7 +598,7 @@ for arch in $RELEASE_ARCHS; do
 
   restore_runner_project
 
-  xcodebuild -exportArchive \
+  retry_on_timestamp xcodebuild -exportArchive \
     -archivePath "$archive_path" \
     -exportPath "$export_path" \
     -exportOptionsPlist "$EXPORT_OPTIONS_PATH"
@@ -584,7 +624,7 @@ for arch in $RELEASE_ARCHS; do
   REQUIRE_SPCTL=0 \
   bash "$SCRIPT_DIR/package-dmg-from-xcarchive.sh"
 
-  codesign --force --sign "$SIGNING_IDENTITY" --timestamp "$dmg_path"
+  retry_on_timestamp codesign --force --sign "$SIGNING_IDENTITY" --timestamp "$dmg_path"
   codesign --verify --verbose=2 "$dmg_path"
 
   notarize_dmg "$dmg_path"

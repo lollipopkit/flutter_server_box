@@ -1,4 +1,4 @@
-# The ServerBox Monitor agent
+# The ServerBox Monitor
 
 A small service installed on a server. The app reaches it over HTTP, as a
 second way into that machine besides SSH, and it is what keeps alerts, widgets
@@ -16,7 +16,7 @@ curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main
 
 - systemd hosts get a `systemctl --user` service running as that account.
 - Alpine (OpenRC) needs `| sudo sh -s -- install` to write `/etc/init.d`; the
-  agent still runs as the account that ran sudo.
+  Monitor still runs as the account that ran sudo.
 - `uninstall` and `upgrade` go in place of `install`.
 - A user service stops at logout unless linger is on:
   `loginctl show-user <user> -p Linger`, and `loginctl enable-linger <user>`
@@ -26,7 +26,7 @@ curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main
   service); `config.toml` and the SQLite database are there, and neither
   should be readable by group or others.
 
-Why not root: whoever signs in to the agent may do what the account it runs as
+Why not root: whoever signs in to the Monitor may do what the account it runs as
 may do. `--system` installs it as root, which makes its password a root shell;
 use it only when the user asks for that.
 
@@ -38,7 +38,7 @@ longer read; do not add them.
 
 [`monitor/docker-compose.yaml`](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/docker-compose.yaml)
 publishes port 3770, keeps `./data` and `./config`, and mounts the host's
-`/etc/hostname` read-only so the agent reports the machine's name rather than
+`/etc/hostname` read-only so the Monitor reports the machine's name rather than
 the container's.
 
 Environment variables override `config.toml`: `SBM_HOST`, `SBM_PORT`,
@@ -48,7 +48,7 @@ Environment variables override `config.toml`: `SBM_HOST`, `SBM_PORT`,
 ### The panel login
 
 The agent has one account, signed in with its password alone — no username,
-and not the SSH account. On first start the agent sets a random password,
+and not the SSH account. On first start the Monitor sets a random password,
 written to `initial-admin-credentials.txt` beside the database (mode 0600).
 Change it and delete the file:
 
@@ -65,7 +65,7 @@ and the panel can change the password too. A change signs out everything else:
 older logins stop working, paired widgets and watches are unpaired, and open
 terminals and forwards close (after a command-line reset, only once the agent
 restarts). Repeated wrong passwords are throttled up to five
-minutes, which can look like an agent that does not answer.
+minutes, which can look like a Monitor that does not answer.
 
 ## Adding it in the app
 
@@ -74,9 +74,9 @@ Password**, and **Monitor Ignore certificate** only for a
 self-signed certificate → save. SSH can be on for the same server as well.
 
 A server with only Monitor HTTP has no SSH credentials: it can do what the
-agent's system account can do, and no SFTP at all. A server whose agent leads — the agent
-alone, or both with the agent preferred — runs every port forward through the
-agent and never falls back to SSH.
+Monitor's system account can do, and no SFTP at all. A server where the Monitor leads — the Monitor
+alone, or both with the Monitor preferred — runs every port forward through the
+Monitor and never falls back to SSH.
 
 The **Monitor** tab (behind **More** until added to the bar) gathers the
 agents: **Overview** (version against the newest release, rules firing now,
@@ -94,10 +94,10 @@ Signing in allows what the system account the agent runs as may do: terminal,
 commands, processes, systemd, containers, snippets, power, scheduled tasks,
 firewall, files, remote desktop and port forwards. The account the agent is
 installed as is the only limit; to narrow it, install the agent as an account
-that can reach only that. The file API never serves the agent's own state (its
+that can reach only that. The file API never serves the Monitor's own state (its
 database, `jwt.secret`, `config.toml`, `.env`, TLS key).
 
-An agent upgraded from one with several accounts keeps the oldest admin's
+A Monitor upgraded from one with several accounts keeps the oldest admin's
 password; roles and grants are gone.
 
 **Plain HTTP is refused** for everything beyond the charts when the request
@@ -133,19 +133,19 @@ account, with none of SSH's authentication in between.
 - **Home-screen widgets**: add the server with Monitor HTTP in the app, then
   pick it in the widget; no URL is typed into the widget.
   <https://serverbox.lollipopkit.com/docs/advanced/widgets/>
-- **Watch app**: shows only servers that have the agent configured.
+- **Watch app**: shows only servers that have the Monitor configured.
 
 ## When something is wrong
 
 | Symptom | Cause |
 |---|---|
 | Only charts, no terminal or controls | The app reaches it over plain HTTP from another machine; use TLS or a same-host proxy |
-| No SFTP | Never through the agent; add SSH to the same server |
-| No remote desktop or port forwarding, with a terminal | The agent predates the TCP relay; update it |
-| Remote forward greyed out, local and dynamic fine | The agent predates the listener; update it |
+| No SFTP | Never through the Monitor; add SSH to the same server |
+| No remote desktop or port forwarding, with a terminal | The Monitor predates the TCP relay; update it |
+| Remote forward greyed out, local and dynamic fine | The Monitor predates the listener; update it |
 | A command, file or port is refused by the system | The agent's system account lacks the right; that account is the limit |
 | Certificate error | Configure TLS or a proxy, or **Monitor Ignore certificate** for a self-signed one |
-| Login refused, or the agent seems slow | Wrong password, throttled (per source address; a device that signed in before is never locked out by failures elsewhere); reset with `server_box_monitor password` |
+| Login refused, or the Monitor seems slow | Wrong password, throttled (per source address; a device that signed in before is never locked out by failures elsewhere); reset with `server_box_monitor password` |
 | Settings turned themselves off after an upgrade | A config from before August 2026 uses old flat keys (`terminal_enabled`...) that are no longer read; rewrite it against [`config.example.toml`](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/config.example.toml) |
 | A web panel on another origin cannot reach it | `cors_allowed_origins` in `config.toml`, or `SBM_CORS_ORIGINS` |
 | Nothing answers | Is the process running and the port reachable? Then the `access_log` table in its database: who asked for what, from where, and the result (never a credential) |

@@ -1,58 +1,58 @@
 ---
-title: Monitor Agent API and Access Model
+title: Monitor API and Access Model
 description: Capability reporting, metrics history, and remote access behavior
 ---
 
-The App uses the API behavior described here when it connects to Monitor agent.
+The App uses the API behavior described here when it connects to the Monitor.
 For installation and configuration, see
-[Monitor Agent](/docs/advanced/monitor-agent/).
+[Monitor](/docs/advanced/monitor-agent/).
 
 ## Protocol version
 
-The App and agent use a single protocol version number
+The App and the Monitor use a single protocol version number
 (`sbm_parser::protocol`). It changes only for breaking API changes, such as
 removing or renaming a field, changing a field's meaning, or removing a route.
 New features do not change the protocol version; they are listed in `features`.
 
 - `GET /api/v1/health` needs no sign-in and reports `protocol` and
   `min_client_protocol`. It does not report the release version, which is in
-  `/capabilities`. An agent without these fields speaks protocol 1.
+  `/capabilities`. A Monitor without these fields speaks protocol 1.
 - Every request carries `X-SBM-Protocol: <n>`. A request without it is
-  protocol 1. An agent answers a client below `min_client_protocol` with
+  protocol 1. A Monitor answers a client below `min_client_protocol` with
   `426` and `{"error": "client_too_old", "protocol", "min_client_protocol"}`.
   `/health`, preflights and WebSocket upgrades are not checked; the
   `/ws-ticket` request before an upgrade is.
 - Before signing in, the App reads `/health`. It prompts you to update the
-  agent when its protocol is too old, or to update the App when the agent
+  Monitor when its protocol is too old, or to update the App when the Monitor
   requires a newer protocol.
-- Each side supports the previous protocol at least: the agent answers an
+- Each side supports the previous protocol at least: the Monitor answers an
   older client in that client's format, and the App still reads an older
-  agent.
+  Monitor.
 
 ## Capability discovery
 
-The App calls `GET /api/v1/capabilities` to learn which features an agent
+The App calls `GET /api/v1/capabilities` to learn which features a Monitor
 supports and whether the signed-in caller may use them. The response includes:
 
 - `access`: `ok`, and when it is false, `why`. `insecure_transport` means
   the request needs TLS, a loopback caller, or
   `[remote_access] allow_insecure`. For a watch token `access` is
   `{"ok": false}`.
-- `features`: the machine-management endpoints the agent serves, such as
+- `features`: the machine-management endpoints the Monitor serves, such as
   `power`. A client offers a page when its name is listed and `access.ok`.
   `container_exec`, `iperf`, and `tmux` are terminal targets rather than
   pages; each is offered only where it is listed. `alerts`, `audit`, and
   `live` are the Monitor tab's sections (`GET /alerts`, `GET /audit`,
   `/live*`), and `desk` its notifications. `update` is `GET /update`: the
-  agent's version, the newest release it read (`?check=1` reads again),
+  Monitor's version, the newest release it read (`?check=1` reads again),
   `outdated`, how it was installed (`install`: `script`, `container`, `nix`,
   `other`) and, for `script`, the `command` that updates it, whether starting
   it needs the sudo password, and the last update's `run` (state and output).
-  `POST /update/run` starts it apart from the agent, which survives the
-  agent's restart.
+  `POST /update/run` starts it apart from the Monitor, which survives the
+  Monitor's restart.
 
-Do not infer feature availability from the agent version or configuration
-defaults. Use the capabilities response from the running agent.
+Do not infer feature availability from the Monitor version or configuration
+defaults. Use the capabilities response from the running Monitor.
 
 ## Metrics history contract
 
@@ -65,7 +65,7 @@ The capabilities response reports:
 
 The App offers preset chart ranges that fit within the later boundary implied
 by retention and the oldest sample. It displays both values in the range
-picker. Older agents that do not report retention use the fixed chart ranges.
+picker. Older Monitor versions that do not report retention use the fixed chart ranges.
 
 The App can request an exact interval with:
 
@@ -73,11 +73,11 @@ The App can request an exact interval with:
 GET /api/v1/metrics/history?from=<epoch-seconds>&to=<epoch-seconds>
 ```
 
-If `from` precedes the oldest retained sample, the agent returns the available
+If `from` precedes the oldest retained sample, the Monitor returns the available
 rows. It does not shift the requested start time or return an error. The chart
 represents the missing interval as a gap. Without `from`, `?minutes=` sets the
 window's length (default 60, at least 5, at most 7 days), ending at `to` or
-now. The App includes `minutes` in each request, so agents that predate
+now. The App includes `minutes` in each request, so Monitor versions that predate
 `from` and `to` can still handle it.
 
 ## Access model
@@ -144,8 +144,8 @@ endpoints answer `forbidden`.
 
 ### File API
 
-`/api/v1/fs/*` reaches whatever the agent's system account can, except the
-agent's own state: its database and journal files, `jwt.secret`, `credentials.key`,
+`/api/v1/fs/*` reaches whatever the Monitor's system account can, except the
+Monitor's own state: its database and journal files, `jwt.secret`, `credentials.key`,
 `initial-admin-credentials.txt`, `config.toml` and its backups, `.env`, the
 TLS certificate and key, the custom-commands directory, the blob store,
 stacks' `.env` files, and container backups. These paths are matched after
@@ -155,5 +155,5 @@ directories cannot be renamed, removed, or chmod-ed.
 ### Terminal endpoint
 
 The terminal of the App and of the web panel is a local shell running as the
-agent process user, on a PTY. The agent does not sign in to sshd: an `open`
+Monitor process user, on a PTY. The agent does not sign in to sshd: an `open`
 carrying SSH credentials is refused.

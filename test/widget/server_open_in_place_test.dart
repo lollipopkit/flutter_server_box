@@ -42,6 +42,7 @@ import 'package:server_box/view/page/server/metric_row.dart';
 import 'package:server_box/view/page/server/tab/tab.dart';
 import 'package:server_box/view/widget/server_func_btns.dart';
 
+import '../helpers/l10n.dart';
 import '../helpers/spi_fixture.dart';
 import '../helpers/test_db.dart';
 
@@ -688,7 +689,7 @@ void main() {
     // The card's line, not the strip's pill, which says the same thing.
     final lastSample = find.descendant(
       of: find.byType(ServerCardStale),
-      matching: find.textContaining(RegExp(r'^last sample')),
+      matching: find.textContaining(startOf(l10n.lastSampleFmt(l10nHole))),
     );
     expect(lastSample, findsOneWidget);
     expect(find.text(libL10n.refresh), findsNothing);
@@ -700,7 +701,9 @@ void main() {
         find.descendant(of: find.byType(AnimatedMasonry), matching: f);
     Finder inPage(Finder f) =>
         find.descendant(of: find.byType(ServerDetailPage), matching: f);
-    final said = find.textContaining(RegExp(r'^Everything below is from'));
+    final said = find.textContaining(
+      startOf(l10n.staleSinceFmt(l10nHole, l10nHole)),
+    );
 
     final grownIcon = tester.getRect(inCard(find.byIcon(Icons.schedule)));
     final grownSaid = tester.getRect(inCard(said));

@@ -1,15 +1,15 @@
 ---
 title: 远程桌面（RDP 和 VNC）
-description: 通过 SSH 或 Monitor agent 连接图形桌面
+description: 通过 SSH 或 Monitor 连接图形桌面
 ---
 
 Server Box 在 Android、iOS、Linux、macOS 和 Windows 上提供 RDP 与 VNC 客户端。客户端
-通过已有的服务器连接访问桌面：使用 SSH，或使用 Monitor agent。这样无需将桌面端口暴露到
+通过已有的服务器连接访问桌面：使用 SSH，或使用 Monitor。 这样无需将桌面端口暴露到
 运行 Server Box 的网络。
 
 ## 配置连接
 
-1. 在 Server Box 中为服务器配置 SSH，或配置 Monitor agent。两种方式都可用时，
+1. 在 Server Box 中为服务器配置 SSH，或配置 Monitor。 两种方式都可用时，
    应用会先尝试服务器设置中的**优先连接方式**，失败后再回退到另一种方式。
 2. 打开**远程桌面**主标签并选择服务器，也可以从该服务器的详情页进入。
 3. 为桌面添加连接配置。同一服务器内的配置名称不能重复。
@@ -25,9 +25,9 @@ Server Box 在 Android、iOS、Linux、macOS 和 Windows 上提供 RDP 与 VNC �
 | VNC | `127.0.0.1:5900` |
 
 如果桌面服务运行在服务器本机，可以使用默认目标；也可以填写该服务器能够访问的内网地址。
-SSH 连接沿用终端和端口转发使用的认证方式及跳板机设置。使用 Monitor agent 时，agent
+SSH 连接沿用终端和端口转发使用的认证方式及跳板机设置。使用 Monitor 时，Monitor
 所在机器会以自身运行账户连接目标。App
-只会在连接目标为本机回环地址时，通过明文 HTTP 连接 Monitor agent。
+只会在连接目标为本机回环地址时，通过明文 HTTP 连接 Monitor。
 
 除非启用**保存密码**，密码不会持久保存。连接时输入的密码只保留在当前会话的内存中，供
 该会话重连使用。保存的密码会写入 Server Box 加密数据库，也会包含在加密备份和同步数据
@@ -70,13 +70,29 @@ Server Box 会拒绝发送，避免字符损坏。RDP 可以根据查看器调�
 传输失败后，Server Box 会分别等待 1、2、5 秒后重试。每次重试都会重新确认连接，并创建
 只监听本机回环地址的临时隧道。认证失败、证书被拒绝或配置无效时不会自动重试。
 
+服务器给出连接失败或会话结束的原因时，Server Box 会显示该原因，不会自动重连：密码错误、
+账户被锁定或过期、空闲或会话时长限制、注销、另一个连接接管了会话、服务器关机等。重试会
+得到相同的结果，从另一个连接接管会话还会把那个连接断开。原因解决后，选择**重新连接**。
+
+## xrdp 排错
+
+服务器只提供 Standard RDP Security 时，连接会失败。这种模式使用 RC4，且不验证服务器
+身份，因此 Server Box 要求 TLS 或 CredSSP/NLA。接受这种旧模式的客户端（例如 Windows
+客户端）仍能连接。在服务器上：
+
+1. 在 `/etc/xrdp/xrdp.ini` 中设置 `security_layer=negotiate` 或 `tls`，不要用 `rdp`。
+2. 确保 xrdp 能读取 `certificate` 和 `key_file` 指向的文件。Debian 和 Ubuntu 的默认私钥
+   位于 `/etc/ssl/private`，只有 `ssl-cert` 组可读：`sudo adduser xrdp ssl-cert`。
+3. 重启 xrdp：`sudo systemctl restart xrdp`。如果 `/var/log/xrdp.log` 中有
+   `Cannot read private key file` 之类的行，说明第 2 步仍未完成。
+
 桌面平台和 Android 会在操作系统允许时使用应用现有的后台行为。iOS 可能暂停后台网络
 活动；返回应用后，Server Box 会检查会话，并在需要时重新连接。
 
 ## 协议支持范围
 
 - **RDP：**支持 TCP、TLS、CredSSP/NLA、图形、键盘与指针输入、动态分辨率和文本 CLIPRDR。
-  用户名/密码和可选域主要使用 NTLM；不保证支持 Kerberos。
+  用户名/密码和可选域主要使用 NTLM；不保证支持 Kerberos。不支持 Standard RDP Security（RC4）。
 - **VNC：**支持 RFB 3.3、3.7、3.8，以及 None 和经典 VNC Authentication。经典 VNC 密码
   只能是 ASCII；可以输入更长的密码，与 TigerVNC 一样只使用前 8 个字符。支持 Raw、CopyRect、ZRLE、Tight、Tight JPEG、光标和桌面尺寸更新。
 - VNC 暂不支持 VeNCrypt、SASL、Apple Remote Desktop 认证和 RealVNC 私有认证。

@@ -13,25 +13,25 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get crashCollectIntro =>
-      'ServerBox записує те, що відбувається під час роботи, щоб можна було виправляти проблеми. Виберіть, скільки даних надсилати.';
+      'ServerBox записує дані про роботу, щоб допомогти знайти й усунути проблеми.';
 
   @override
   String get crashCollectNone => 'Нічого';
 
   @override
   String get crashCollectNoneTip =>
-      'Звіти залишаються на цьому пристрої; після збою ви можете надіслати один вручну.';
+      'Звіт зберігається лише на цьому пристрої. Після збою його можна надіслати вручну.';
 
   @override
   String get crashCollectBasic => 'Основні дані';
 
   @override
   String get crashCollectBasicTip =>
-      'Містить лише відомості про збій; журнали й дані про продуктивність не включаються. **Це допомагає нам покращувати застосунок і виправляти помилки.**';
+      'Містить лише інформацію про збої, без журналів і даних про продуктивність. **Це допомагає покращувати застосунок і виправляти помилки.**';
 
   @override
   String get crashCollectFooter =>
-      'На всіх рівнях відомі імена серверів, адреси та імена користувачів замінюються заповнювачами вже під час запису. Пізніше рівень збору можна змінити в налаштуваннях.';
+      'За будь-якого рівня збору відомі назви серверів, адреси й імена користувачів під час запису замінюються заповнювачами. Рівень збору можна змінити пізніше в налаштуваннях.';
 
   @override
   String get privacy => 'Конфіденційність';
@@ -151,7 +151,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get agentSshConnectTip =>
-      'Агенту потрібне SSH-з’єднання. Введіть пароль тут';
+      'Agent запитує SSH-підключення. Введіть тут пароль.';
 
   @override
   String get agentAdHocSessions => 'Тимчасові підключення';
@@ -161,10 +161,10 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get agentSaveServerTip =>
-      'Цей хост і введений пароль зберігаються на цьому пристрої';
+      'Відомості про цей хост і введений пароль буде збережено на цьому пристрої.';
 
   @override
-  String get agentMonitorOptional => 'Агент monitor (необов\'язково)';
+  String get agentMonitorOptional => 'Monitor (необов\'язково)';
 
   @override
   String get authFailTip => 'Не вдалося автентифікуватися. Перевірте дані';
@@ -234,7 +234,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get distNameMapTip =>
-      'Лише для дистрибутива, у якого файл там, де ви розміщуєте позначки, називається інакше. Ключ — ім\'я, яке вживає цей застосунок, значення — ім\'я, яке слід завантажити. Залиште порожнім, доки жодної позначки не бракує.';
+      'Налаштовуйте лише тоді, коли назва файла значка дистрибутива на хості відрізняється від назви, яку використовує застосунок. Укажіть назву в застосунку як ключ, а справжню назву файла як значення. Якщо значки не пропущені, залиште поле порожнім.';
 
   @override
   String get logoUrl => 'Адреса логотипа';
@@ -259,7 +259,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get navTabMenuTip =>
-      'Натисніть і утримуйте вкладку — або клацніть правою кнопкою — щоб підключити чи відключити все одразу.';
+      'Натисніть і утримуйте вкладку або клацніть її правою кнопкою миші, щоб одночасно підключити чи відключити всі сервери на цій вкладці.';
 
   @override
   String nTags(int count) {
@@ -272,17 +272,17 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get monitorHttpsRequired =>
-      'Віддаленому агенту monitor потрібен HTTPS, якщо для нього не дозволено HTTP.';
+      'Віддаленому Monitor потрібен HTTPS, якщо для нього не дозволено HTTP.';
 
   @override
   String get monitorAllowInsecureHttp => 'Дозволити HTTP';
 
   @override
-  String get plainHttpTitle => 'Цей агент віддається незашифрованим HTTP';
+  String get plainHttpTitle => 'Цей Monitor використовує незашифрований HTTP.';
 
   @override
   String get plainHttpTip =>
-      'Пароль і все, що запитує застосунок, підуть відкритим текстом. Поки нічого не надіслано.';
+      'Паролі й усі дані, які запитує застосунок, передаватимуться без шифрування. До дозволу на підключення дані не надсилаються.';
 
   @override
   String get allowForThisServer => 'Дозволити для цього сервера';
@@ -296,7 +296,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String monitorHttpTip(String url) {
-    return 'Читати стан цього сервера через HTTP API агента **monitor**, а не виконуючи команди по SSH.\n\nАгента спершу треба встановити на сервер; графіки, застосунок для годинника та віджети залежать від нього.\n\n[Як встановити monitor]($url)';
+    return 'Отримуйте стан цього сервера через HTTP-інтерфейс **Monitor**, а не виконуйте команди через SSH.\n\nСпочатку Monitor потрібно встановити на сервері; саме він робить можливими графіки, застосунок для годинника та віджети головного екрана.\n\n[Налаштування Monitor]($url)';
   }
 
   @override
@@ -415,15 +415,15 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get containerTrySudoTip =>
-      'Наприклад: У застосунку користувач це aaa, але Docker встановлений під користувачем root. У цьому випадку вам потрібно активувати цю опцію.';
+      'Наприклад, якщо в застосунку вказано користувача aaa, а Docker установлено від імені root, увімкніть цей параметр.';
 
   @override
   String get containerSudoPasswordRequired =>
-      'Для доступу до Docker потрібен пароль sudo. Будь ласка, введіть ваш пароль.';
+      'Для доступу до Docker потрібен пароль sudo. Введіть пароль.';
 
   @override
   String get containerSudoPasswordIncorrect =>
-      'Пароль sudo неправильний або не дозволений. Будь ласка, спробуйте ще раз.';
+      'Пароль sudo неправильний або цьому обліковому запису не дозволено використовувати sudo. Спробуйте ще раз.';
 
   @override
   String get copyPath => 'Скопіювати шлях';
@@ -441,7 +441,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get dirEmpty => 'Переконайтеся, що директорія пуста.';
 
   @override
-  String get discoverSshServers => 'Виявити SSH сервери';
+  String get discoverSshServers => 'Пошук SSH-серверів';
 
   @override
   String get discoveryFailed => 'Виявлення не вдалось';
@@ -503,7 +503,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String fileTooLarge(String file, String size, String sizeMax) {
-    return 'Файл \'$file\' занадто великий ($size), макс $sizeMax';
+    return 'Розмір файла «$file» — $size, що перевищує обмеження $sizeMax.';
   }
 
   @override
@@ -584,7 +584,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get macDmgTip =>
-      'Локальний термінал і запуск сніпетів локально (версія DMG)';
+      'У версії DMG доступні локальний термінал і локальний запуск фрагментів коду.';
 
   @override
   String get macDmgTitle => 'Збірка DMG';
@@ -714,7 +714,8 @@ class AppLocalizationsUk extends AppLocalizations {
       'Проміжний сервер і ProxyCommand не можна використовувати разом.';
 
   @override
-  String get noConnectionMethod => 'Налаштуйте SSH, агент monitor або обидва';
+  String get noConnectionMethod =>
+      'Налаштуйте SSH, Monitor або обидва способи.';
 
   @override
   String get keepForeground => 'Тримати застосунок на передньому плані!';
@@ -747,11 +748,12 @@ class AppLocalizationsUk extends AppLocalizations {
       'З якої оболонки запускається термінал. Порожньо — повернути /bin/sh.';
 
   @override
-  String get linuxNetTip => 'DNS-сервери. Порожньо — повернути типові значення';
+  String get linuxNetTip =>
+      'DNS-сервер. Залиште поле порожнім, щоб використовувати типове значення.';
 
   @override
   String madeWithLove(String myGithub) {
-    return 'Зроблено з ❤️ від $myGithub';
+    return 'Створено $myGithub з ❤️';
   }
 
   @override
@@ -759,7 +761,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get maxRetryCount =>
-      'Кількість повторних спроб підключення до сервера';
+      'Максимальна кількість спроб повторного підключення до сервера';
 
   @override
   String get mirror => 'Дзеркало';
@@ -827,7 +829,8 @@ class AppLocalizationsUk extends AppLocalizations {
       'Прийнято, але стан живлення не змінився. М’яка операція залежить від ОС';
 
   @override
-  String get bmcPowerUnsupported => 'Ця служба нічого не дозволяє для цієї дії';
+  String get bmcPowerUnsupported =>
+      'Ця служба не підтримує такий тип операції.';
 
   @override
   String get bmcUnauthorized => 'BMC відхилив обліковий запис';
@@ -849,7 +852,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get bmcNotAService => 'За цією адресою немає служби Redfish';
 
   @override
-  String get bmcNoSystem => 'Служба не повідомляє про жодну систему';
+  String get bmcNoSystem => 'Служба не повідомила про жодну систему.';
 
   @override
   String get bmcSensorsTruncated => 'Показано лише перші датчики';
@@ -892,11 +895,11 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get proxyCommandSandboxed =>
-      'Ця збірка працює в пісочниці: команда отримує порожній home, не ваш, тому все, що читає ~/.ssh, падає. Версія DMG — ні.';
+      'Ця версія працює в sandbox. Командам передається порожній домашній каталог замість вашого, тому команди, яким потрібен ~/.ssh, завершаться помилкою. У версії DMG цього обмеження немає.';
 
   @override
   String privateKeyFileUnreadable(String path, String reason) {
-    return 'Не вдалося прочитати файл закритого ключа $path: $reason';
+    return 'Не вдалося прочитати файл приватного ключа $path: $reason';
   }
 
   @override
@@ -928,7 +931,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get pveIgnoreCertTip =>
-      'Не рекомендується включати, будьте обережні з ризиками безпеки! Якщо ви використовуєте стандартний сертифікат від PVE, вам потрібно увімкнути цю опцію.';
+      'Увімкніть цей параметр, якщо PVE використовує типовий самопідписаний сертифікат. Це створює ризик для безпеки.';
 
   @override
   String get pvePasswordRequired =>
@@ -957,7 +960,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get pveInvalidResponseData =>
-      'Відповідь на вхід у PVE не містила коректних даних.';
+      'У відповіді PVE на вхід немає коректного поля data.';
 
   @override
   String get pveMissingAuthTicket =>
@@ -970,10 +973,11 @@ class AppLocalizationsUk extends AppLocalizations {
   String get pvePassword => 'Пароль PVE';
 
   @override
-  String get pvePasswordHint => 'Потрібен під час автентифікації SSH за ключем';
+  String get pvePasswordHint =>
+      'Потрібен також у разі автентифікації за SSH-ключем.';
 
   @override
-  String get read => 'Читати';
+  String get read => 'Читання';
 
   @override
   String get recentConnections => 'Останні з\'єднання';
@@ -983,7 +987,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get rememberPwdInMemTip =>
-      'Використовується для контейнерів, призупинення тощо.';
+      'Цей пароль потрібен для керування контейнерами, призупинення та подібних операцій.';
 
   @override
   String get remotePath => 'Віддалений шлях';
@@ -995,7 +999,7 @@ class AppLocalizationsUk extends AppLocalizations {
     String latest,
     String pm,
   ) {
-    return 'Встановлено $distro $installed, доступний $latest. Оновлення замінить весь контейнер: дані $pm буде втрачено';
+    return 'Установлено $distro $installed; доступне оновлення до $latest. Під час оновлення весь контейнер буде завантажено знову й замінено, тому дані в $pm буде втрачено.';
   }
 
   @override
@@ -1013,14 +1017,14 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get sameIdServerExist => 'Сервер з таким ID вже існує';
+  String get sameIdServerExist => 'Сервер із таким ID уже існує.';
 
   @override
   String get second => 'сек.';
 
   @override
   String get serverFilesUnavailableTip =>
-      'Потрібен SSH до цього сервера або встановлений server_box_monitor з увімкненим файловим API.';
+      'Підключіться до цього сервера через SSH або встановіть Monitor і ввімкніть файловий API.';
 
   @override
   String get back => 'Назад';
@@ -1060,7 +1064,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get serverTabConnBadgeTip =>
-      'Кількість підключених серверів, наприклад 2/4';
+      'Кількість підключених серверів, наприклад 2/4.';
 
   @override
   String get serverTabRequired => 'Вкладку сервера не можна видалити';
@@ -1134,7 +1138,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get shareUnreadable =>
-      'Це неприпустимі дані спільного доступу ServerBox.';
+      'Це некоректні дані ServerBox для спільного доступу.';
 
   @override
   String get shareVia => 'Спосіб надсилання';
@@ -1144,7 +1148,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get sftpEditorTip =>
-      'Порожньо — вбудований редактор. Наприклад `vim` (краще брати з `EDITOR`).';
+      'Залиште поле порожнім, щоб використовувати вбудований редактор застосунку. Також можна вказати редактор, наприклад `vim` (рекомендовано задавати його через змінну середовища `EDITOR`).';
 
   @override
   String get sftpRmrDirSummary =>
@@ -1173,7 +1177,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get tempIsCelsiusTip =>
-      'Якщо увімкнено, значення температури вважається градусами Цельсія, а не мілліцельсія. Вмикайте, лише якщо температура показується неправильно (наприклад, 0,1 °C замість 58 °C).';
+      'Якщо ввімкнено, температуру зчитують у градусах Цельсія, а не в тисячних частках градуса. Вмикайте лише за неправильного відображення (наприклад, 0,1 °C замість 58 °C).';
 
   @override
   String get diskCountsNetwork =>
@@ -1181,11 +1185,11 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get diskCountsNetworkTip =>
-      'Монтування NFS, SMB та подібні завжди показуються в списку. Їхній обсяг належить іншій машині, тому за замовчуванням вони не входять до загального обсягу диска. Діє, коли стан збирається через SSH; через monitor agent вирішує налаштування самого агента.';
+      'Мережеві монтування, як-от NFS і SMB, завжди показуються у списку. Їхній обсяг належить іншому комп’ютеру й типово не входить до загального обсягу дисків. Параметр діє лише під час збору стану через SSH; під час роботи через Monitor діє власне налаштування Monitor.';
 
   @override
   String get diskCountsNetworkAgentTip =>
-      'Монтування NFS, SMB та подібні завжди показуються в списку. Їхній обсяг належить іншій машині, тому за замовчуванням вони не входять до загального обсягу диска — значення, яке агент зберігає в історії та за яким перевіряє сповіщення про диск.';
+      'Мережеві монтування, як-от NFS і SMB, завжди показуються у списку. Їхній обсяг належить іншому комп’ютеру й типово не входить до загального обсягу дисків — саме цю суму Monitor зберігає в історії та за нею перевіряє сповіщення про диск.';
 
   @override
   String spentTime(String time) {
@@ -1203,7 +1207,7 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get sshConfigFound => 'Ми знайшли SSH-конфігурацію у вашій системі';
+  String get sshConfigFound => 'У системі знайдено конфігурацію SSH.';
 
   @override
   String sshConfigFoundServers(int totalCount) {
@@ -1215,7 +1219,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get sshConfigImportPermission =>
-      'Чи хочете ви надати дозвіл на читання ~/.ssh/config та автоматичний імпорт налаштувань сервера?';
+      'Дозволити застосунку читати ~/.ssh/config і автоматично імпортувати звідти налаштування серверів?';
 
   @override
   String get sshConfigImportTip =>
@@ -1223,12 +1227,12 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String sshConfigImported(int count) {
-    return 'Імпортовано $count серверів з SSH-конфігурації';
+    return 'Імпортовано серверів із конфігурації SSH: $count.';
   }
 
   @override
   String sshHostKeyChangedDesc(String serverName) {
-    return 'SSH-ключ хоста для $serverName змінено. Продовжуйте лише якщо довіряєте цьому серверу.';
+    return 'SSH-ключ хоста $serverName змінився. Продовжуйте підключення, лише якщо довіряєте цьому серверу.';
   }
 
   @override
@@ -1242,7 +1246,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String sshHostKeyNewDesc(String serverName) {
-    return 'Отримано новий SSH-ключ хоста від $serverName. Перевірте відбиток перед тим, як довіряти.';
+    return 'Отримано новий SSH-ключ хоста від $serverName. Перевірте fingerprint, перш ніж довіряти йому.';
   }
 
   @override
@@ -1281,8 +1285,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get supportFmtArgs => 'Підтримуються такі параметри форматування:';
 
   @override
-  String get suspendTip =>
-      'Функція призупинення потребує адміністративних прав та підтримки systemd.';
+  String get suspendTip => 'Для suspend потрібні права root і systemd.';
 
   @override
   String switchTo(String val) {
@@ -1317,7 +1320,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get updateServerStatusInterval => 'Інтервал оновлення статусу сервера';
 
   @override
-  String get useNoPwd => 'Пароль не буде використовуватися';
+  String get useNoPwd => 'Не використовувати пароль';
 
   @override
   String get usePodmanByDefault => 'Використовувати Podman за замовчуванням';
@@ -1570,18 +1573,17 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get watchServersTip =>
-      'Годинник сам звертається до monitor, тому доступні лише сервери з ним.';
+      'Годинник сам звертається до Monitor, тому доступні лише сервери з Monitor.';
 
   @override
-  String get watchNoMonitorServer =>
-      'Жоден сервер не має налаштованого агента monitor';
+  String get watchNoMonitorServer => 'Немає серверів із налаштованим Monitor.';
 
   @override
   String get legacyStatusGoneTitle => 'URL-адреси стану більше не працюють';
 
   @override
   String get legacyStatusGoneBody =>
-      'Застосунок для годинника та віджети читали адресу `/status`, введену вручну. Цю кінцеву точку вилучено: вона могла повертати лише поточні значення текстом, тому графіки були неможливі.\n\nТепер вони читають автентифікований API агента monitor, малюють графіки та самі синхронізуються із застосунком. Налаштуйте сервер у застосунку один раз — і кожен годинник та віджет його підхопить.';
+      'Застосунок для годинника та віджети читали адресу `/status`, введену вручну. Цю кінцеву точку вилучено: вона могла повертати лише поточні значення текстом, тому графіки були неможливі.\n\nТепер вони читають автентифікований API Monitor, малюють графіки та самі синхронізуються із застосунком. Налаштуйте сервер у застосунку один раз — і кожен годинник та віджет його підхопить.';
 
   @override
   String get services => 'Служби';
@@ -1662,17 +1664,17 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String serviceUpFor(String duration) {
-    return 'up $duration';
+    return 'Працює протягом $duration';
   }
 
   @override
   String serviceDownFor(String duration) {
-    return 'down $duration';
+    return 'Зупинено протягом $duration';
   }
 
   @override
   String serviceNextIn(String duration) {
-    return 'next $duration';
+    return 'Наступний запуск через $duration';
   }
 
   @override
@@ -2137,7 +2139,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get historyNoStored =>
-      'Історію зберігає лише агент monitor. Це підключення зберігає тільки те, що застосунок побачив після підключення.';
+      'Історію зберігає лише Monitor. Це підключення зберігає те, що застосунок отримав від моменту підключення.';
 
   @override
   String get noHistoryYet => 'Вимірювань ще немає';
@@ -2152,11 +2154,11 @@ class AppLocalizationsUk extends AppLocalizations {
   String get to => 'До';
 
   @override
-  String get beyondRetention => 'далі, ніж зберігає цей агент';
+  String get beyondRetention => 'Поза межами того, що зберігає цей Monitor';
 
   @override
   String agentRetentionFmt(String kept) {
-    return 'Агент зберігає $kept';
+    return 'Monitor зберігає $kept';
   }
 
   @override
@@ -2164,14 +2166,14 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get agentServerToolsTip =>
-      'Виконувати команди й читати або записувати файли на ваших серверах, підключатися до інших хостів через SSH і використовувати дії самого ServerBox.';
+      'Виконуйте команди на сервері, читайте й записуйте файли, підключайтеся до інших хостів через SSH і використовуйте функції ServerBox.';
 
   @override
   String get agentTerminalTools => 'Термінал';
 
   @override
   String get agentTerminalToolsTip =>
-      'У власних чатах термінала: читати те, що він показує, і виконувати команди на його сервері.';
+      'Читайте вміст екрана термінала й виконуйте команди на відповідному сервері.';
 
   @override
   String get agentToolTerminalScreen => 'Прочитати екран';
@@ -2191,7 +2193,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get agentSnippetToolsTip =>
-      'Перегляд, додавання, зміна та видалення snippets. Зміни підтверджуються.';
+      'Переглядайте, додавайте, редагуйте й видаляйте snippets.';
 
   @override
   String get agentVirtToolsTip =>
@@ -2216,12 +2218,11 @@ class AppLocalizationsUk extends AppLocalizations {
   String get agentPermissions => 'Дозволи';
 
   @override
-  String get agentEmptyHint =>
-      'Запитайте про свої сервери або попросіть Agent щось на них зробити.';
+  String get agentEmptyHint => 'Виконуйте дії на сервері.';
 
   @override
   String get agentTerminalEmptyHint =>
-      'Запитайте про цей сервер. Agent може читати цей термінал і виконувати тут команди.';
+      'Читайте поточний термінал і виконуйте в ньому команди.';
 
   @override
   String oldestSampleFmt(String time) {
@@ -2255,7 +2256,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String lastSampleFmt(String ago) {
-    return 'останній замір $ago';
+    return 'Останній вимір: $ago';
   }
 
   @override
@@ -2316,6 +2317,15 @@ class AppLocalizationsUk extends AppLocalizations {
   String countOfFmt(int count, String what) {
     return '$what: $count';
   }
+
+  @override
+  String get filesystems => 'Файлові системи';
+
+  @override
+  String get blockDevices => 'Блокові пристрої';
+
+  @override
+  String get notMounted => 'Не змонтовано';
 
   @override
   String get unitDevices => 'пристрої';
@@ -2440,7 +2450,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get remoteDesktopIntro =>
-      'Відкриває робочий стіл RDP або VNC сервера просто в застосунку. З\'єднання йде через SSH-з\'єднання сервера або його агент Monitor, тому порт робочого столу не потрібно відкривати в мережу.';
+      'Відкриває робочий стіл RDP або VNC сервера просто в застосунку. З\'єднання йде через SSH-з\'єднання сервера або його Monitor, тому порт робочого столу не потрібно відкривати в мережу.';
 
   @override
   String get remoteDesktopIntroProfiles =>
@@ -2448,7 +2458,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get localServerIntro =>
-      'Додає пристрій, на якому працює ServerBox, як сервер. Стан, процеси, служби, контейнери, термінал і файли працюють без SSH і агента Monitor.';
+      'Додає пристрій, на якому працює ServerBox, як сервер. Стан, процеси, служби, контейнери, термінал і файли працюють без SSH і Monitor.';
 
   @override
   String get localServerAdd => 'Додати цей пристрій';
@@ -2462,11 +2472,11 @@ class AppLocalizationsUk extends AppLocalizations {
       'Вимкнено. Поля нижче збережено на той випадок, коли ви ввімкнете його знову.';
 
   @override
-  String get monitorAgent => 'Агент monitor';
+  String get monitorAgent => 'Monitor';
 
   @override
   String get plainHttpEditTip =>
-      'Облікові дані й показники йдуть мережею без шифрування. Обмежтеся локальною мережею чи адресою Tailscale або поставте агента за TLS.';
+      'Облікові дані й показники йдуть мережею без шифрування. Обмежтеся локальною мережею чи адресою Tailscale або поставте Monitor за TLS.';
 
   @override
   String get behaviour => 'Поведінка';
@@ -2525,7 +2535,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String tagOnThisServerFmt(int count) {
-    return '$count на цьому сервері';
+    return 'На цьому сервері: $count';
   }
 
   @override
@@ -2646,7 +2656,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String cronHourlyAtFmt(String minute) {
-    return 'Щогодини о :$minute';
+    return 'Щогодини, на хвилині $minute';
   }
 
   @override
@@ -2656,7 +2666,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String cronEveryHoursAtFmt(int hours, String minute) {
-    return 'Кожні $hours год. о :$minute';
+    return 'Кожні $hours год, на хвилині $minute';
   }
 
   @override
@@ -2680,13 +2690,13 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get monitorSettings => 'Monitor settings';
+  String get monitorSettings => 'Налаштування Monitor';
 
   @override
-  String get monitorAgentDefault => 'Agent default';
+  String get monitorAgentDefault => 'Типове значення Monitor';
 
   @override
-  String get monitorNeedsRestart => 'Набуде чинності після перезапуску Agent';
+  String get monitorNeedsRestart => 'Набуде чинності після перезапуску Monitor';
 
   @override
   String get monitorCollection => 'Collection';
@@ -2736,7 +2746,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get pushHeaders => 'Headers';
 
   @override
-  String get pushSecretSet => 'Задано в Agent, значення приховано';
+  String get pushSecretSet => 'Задано на Monitor; не показується.';
 
   @override
   String get pushSecretKeep => 'Залиште порожнім, щоб зберегти';
@@ -2756,7 +2766,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get pushUnknownType =>
-      'У цьому Agent немає відправника для такого типу каналу, тому його налаштування не показано. Канал можна видалити тут або змінити в config.toml Agent.';
+      'У цього Monitor немає відправника для цього типу каналу, тому налаштування не показуються. Видаліть його тут або змініть у config.toml цього Monitor.';
 
   @override
   String get pushJsonInvalid => 'не є припустимим JSON';
@@ -2766,7 +2776,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get dataRetentionTip =>
-      'Якщо вимкнено, Agent нічого не видаляє, а його база даних зростає без обмежень.';
+      'Якщо вимкнути цей параметр, Monitor ніколи нічого не видаляє, і його база зростає без обмежень.';
 
   @override
   String get retentionMetrics => 'Keep metrics';
@@ -2785,19 +2795,19 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get corsOriginsTip =>
-      'Джерела, з яких вебпанель може звертатися до цього Agent. Порожнє значення дозволяє лише запити з того самого джерела.';
+      'Джерела, з яких вебпанель у браузері може звертатися до цього Monitor. Порожнє значення дозволяє лише запити з того самого джерела.';
 
   @override
   String get monitorNoRemoteAccess =>
-      'Цей агент через незашифрований HTTP відхиляє все, крім моніторингу. Підключіться через HTTPS або дозвольте HTTP і в агенті ([remote_access] allow_insecure), і в цьому застосунку.';
+      'Цей Monitor налаштовано лише для моніторингу. Тут не можна відкрити термінал, виконувати команди чи переглядати файли. Щоб увімкнути ці функції, відредагуйте розділ [remote_access] у config.toml цього Monitor.';
 
   @override
   String get monitorAgentTooOld =>
-      'Цей агент Monitor старіший, ніж підтримує ця версія ServerBox. Оновіть агент на сервері.';
+      'Цей Monitor старіший, ніж підтримує ця версія ServerBox. Оновіть Monitor на сервері.';
 
   @override
   String get monitorClientTooOld =>
-      'Цей агент Monitor більше не підтримує цю версію ServerBox. Оновіть застосунок.';
+      'Цей Monitor більше не підтримує цю версію ServerBox. Оновіть застосунок.';
 
   @override
   String get alerts => 'Сповіщення';
@@ -2951,7 +2961,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get remoteDesktopTargetTip =>
-      'Адресу визначає SSH-сервер або агент Monitor. localhost указує на цю машину.';
+      'Адресу визначає SSH-сервер або Monitor. localhost указує на цю машину.';
 
   @override
   String get remoteDesktopDomain => 'Домен (необов\'язково)';
@@ -3014,6 +3024,105 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get remoteDesktopWaiting => 'Очікування робочого стола…';
+
+  @override
+  String get remoteDesktopFailStandardRdpSecurityOnly =>
+      'Сервер пропонує лише Standard RDP Security (RC4), яка не підтримується. У xrdp.ini встановіть security_layer=tls (або negotiate) і переконайтеся, що xrdp може прочитати свій TLS-сертифікат.';
+
+  @override
+  String get remoteDesktopFailServerCertificateMissing =>
+      'На сервері немає TLS-сертифіката. Установіть його на сервері; для xrdp задайте certificate і key_file у xrdp.ini.';
+
+  @override
+  String get remoteDesktopFailClientCertificateRequired =>
+      'Сервер вимагає клієнтський сертифікат (вхід за смарт-карткою), що не підтримується.';
+
+  @override
+  String get remoteDesktopFailWrongCredentials =>
+      'Неправильне ім\'я користувача або пароль.';
+
+  @override
+  String get remoteDesktopFailAccountLockedOut =>
+      'Обліковий запис заблоковано. Спробуйте пізніше або попросіть адміністратора розблокувати його.';
+
+  @override
+  String get remoteDesktopFailAccountDisabled => 'Обліковий запис вимкнено.';
+
+  @override
+  String get remoteDesktopFailAccountExpired =>
+      'Термін дії облікового запису минув.';
+
+  @override
+  String get remoteDesktopFailPasswordExpired =>
+      'Термін дії пароля минув, або його потрібно змінити. Спочатку змініть його на сервері.';
+
+  @override
+  String get remoteDesktopFailLogonRestricted =>
+      'Обліковому запису заборонено вхід у цей час або з цього пристрою, або його порожній пароль не дозволено для віддаленого входу.';
+
+  @override
+  String get remoteDesktopFailRemoteLogonDenied =>
+      'Обліковому запису не дозволено вхід через віддалений робочий стіл. Додайте його до групи Remote Desktop Users на сервері.';
+
+  @override
+  String get remoteDesktopFailFreshCredentialsRequired =>
+      'Сервер не приймає збережені облікові дані. Введіть пароль ще раз.';
+
+  @override
+  String get remoteDesktopFailIdleTimeout =>
+      'Сеанс від\'єднано після ліміту простою сервера.';
+
+  @override
+  String get remoteDesktopFailSessionTimeLimit =>
+      'Сеанс досяг ліміту часу сервера.';
+
+  @override
+  String get remoteDesktopFailReplacedByOtherConnection =>
+      'Цей сеанс перехопило інше підключення.';
+
+  @override
+  String get remoteDesktopFailDisconnectedOnServer =>
+      'Сеанс від\'єднано на сервері.';
+
+  @override
+  String get remoteDesktopFailLoggedOffByAdministrator =>
+      'Адміністратор завершив сеанс.';
+
+  @override
+  String get remoteDesktopFailLoggedOff => 'Виконано вихід із сеансу.';
+
+  @override
+  String get remoteDesktopFailServerShutdown => 'Сервер вимикається.';
+
+  @override
+  String get remoteDesktopFailServerReboot => 'Сервер перезавантажується.';
+
+  @override
+  String get remoteDesktopFailServerDeniedConnection =>
+      'Сервер відхилив підключення.';
+
+  @override
+  String get remoteDesktopFailLicensingFailed =>
+      'Помилка ліцензування віддалених робочих столів на сервері. Перевірте сервер ліцензування та клієнтські ліцензії (CAL).';
+
+  @override
+  String get remoteDesktopFailVncSecurityUnsupported =>
+      'VNC-сервер не пропонує підтримуваних типів безпеки; підтримуються лише пароль VNC або без захисту. Для TigerVNC задайте SecurityTypes=VncAuth.';
+
+  @override
+  String get remoteDesktopFailPasswordRequired => 'VNC-сервер вимагає пароль.';
+
+  @override
+  String get tcpTargetUnreachable =>
+      'Сервер не зміг підключитися до цієї адреси. Перевірте, що служба запущена й слухає цей порт.';
+
+  @override
+  String get sshTcpForwardingProhibited =>
+      'SSH-сервер відмовився переадресувати це підключення. Перевірте AllowTcpForwarding і PermitOpen у його sshd_config, а також параметри no-port-forwarding або permitopen у ключа в authorized_keys.';
+
+  @override
+  String get monitorRelayForbidden =>
+      'Цьому обліковому запису Monitor заборонено підключатися до цієї адреси. Дозвіл connect його ролі має її дозволяти.';
 
   @override
   String get remoteDesktopCertificateChanged =>
@@ -3129,7 +3238,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get virtIntroTransports =>
-      'Обидва працюють через SSH, через агент Monitor або на цьому пристрої.';
+      'Обидва працюють через SSH, через Monitor або на цьому пристрої.';
 
   @override
   String get virtIntroTokens =>
@@ -3289,10 +3398,11 @@ class AppLocalizationsUk extends AppLocalizations {
   String get virtErrCertChanged => 'Сертифікат хоста змінився';
 
   @override
-  String get virtErrRelayNotGranted => 'Агент Monitor не пересилає з\'єднання';
+  String get virtErrRelayNotGranted =>
+      'Monitor не відкриває TCP-підключення із сервера для цього облікового запису (дозвіл connect)';
 
   @override
-  String get virtErrExecNotGranted => 'Агент Monitor не виконує команди';
+  String get virtErrExecNotGranted => 'Monitor не виконує команди';
 
   @override
   String get virtErrNotInstalled => 'virsh не встановлено на цьому сервері';
@@ -3318,7 +3428,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get remoteSessionIdleTimeoutTip =>
-      'Скільки віддалений робочий стіл або консоль гостя залишаються підключеними після того, як ви їх залишили. Перед закриттям сповіщення дає 10 секунд, щоб зберегти підключення.';
+      'Після виходу з віддаленого робочого столу або консолі VM з’єднання залишається активним певний час. Перед закриттям з’явиться сповіщення; протягом 10 секунд можна залишити його відкритим.';
 
   @override
   String get remoteSessionKeepAlive => 'Не закривати';
@@ -3510,10 +3620,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get virtCreateCoresInvalid => 'Більше ядер, ніж дозволяє цей хост.';
 
   @override
-  String get virtCreateMemoryInvalid => 'Замало пам\'яті.';
+  String get virtCreateMemoryInvalid => 'Недостатньо вільної пам’яті.';
 
   @override
-  String get virtCreateStorageMissing => 'Виберіть, де буде диск.';
+  String get virtCreateStorageMissing => 'Виберіть місце для зберігання диска.';
 
   @override
   String get virtCreateDiskInvalid => 'Від 1 ГіБ до 64 ТіБ.';
@@ -3523,7 +3633,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get virtCreateCredentialsMissing =>
-      'Задайте пароль root або ключ SSH.';
+      'Задайте пароль root або відкритий SSH-ключ.';
 
   @override
   String virtCreatePasswordShort(int min) {
@@ -3875,7 +3985,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get virtHwVolumeKept =>
-      'Вилучено, але запущений гість ще використовує диск, тому том збережено. Диск буде від\'єднано під час наступного запуску.';
+      'Конфігурацію диска видалено, але запущена VM іще використовує його, тому том збережено. Його буде від’єднано під час наступного запуску VM.';
 
   @override
   String get virtHwBus => 'Шина';
@@ -4100,7 +4210,8 @@ class AppLocalizationsUk extends AppLocalizations {
       'На цьому вузлі немає сховища для резервних копій.';
 
   @override
-  String get virtBackupLiveTip => 'Працює: режим snapshot, без зупинки';
+  String get virtBackupLiveTip =>
+      'Резервне копіювання запущеної VM у режимі snapshot без зупинки.';
 
   @override
   String get virtBackupStoppedTip => 'Вимкнений: копіюється як є';
@@ -4508,15 +4619,15 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get virtCloudImageTip =>
-      'Диск із готовою системою: копіюється, збільшується до розміру з розділу «Сховище» й налаштовується cloud-init під час першого завантаження. Сам образ не змінюється.';
+      'Це образ диска з установленою системою. Під час створення VM його буде скопійовано й збільшено до розміру, указаного в сховищі; під час першого запуску його налаштує cloud-init. Оригінальний образ не зміниться.';
 
   @override
   String get virtNoCloudImagesLibvirt =>
-      'Хмарних образів немає: покладіть образ qcow2 або raw у пул (завантажте в «Сховище»), який не використовує жодна ВМ.';
+      'Немає доступних cloud image. Завантажте образ qcow2 або raw до пулу сховища й переконайтеся, що жодна VM його не використовує.';
 
   @override
   String get virtNoCloudImagesPve =>
-      'Хмарних образів немає: завантажте образ qcow2, raw або vmdk до сховища з типом вмісту Import (PVE 8.2+).';
+      'Немає доступних cloud image. Завантажте образ qcow2, raw або vmdk до сховища з типом вмісту Import (потрібен PVE 8.2 або новіший).';
 
   @override
   String get virtCreateWindowsTitle => 'Windows 11 потребує UEFI і TPM 2.0';
@@ -4538,7 +4649,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get virtCreateIncomplete =>
-      'Спершу заповніть частини, позначені помаранчевим.';
+      'Спочатку заповніть усі поля, позначені помаранчевим.';
 
   @override
   String virtCreateOn(String host) {
@@ -4547,7 +4658,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get virtCiTip =>
-      'Обліковий запис із sudo; вхід за паролем, SSH-ключем або обома.';
+      'Створіть обліковий запис із правами sudo. Вхід можливий за паролем, SSH-ключем або обома способами.';
 
   @override
   String get virtCiUserInvalid =>
@@ -4580,7 +4691,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get virtCiSeedNote =>
-      'Записується в невеликий ISO поруч із диском, підключається як CD-ROM і видаляється разом із ВМ. Зберігається лише хеш пароля.';
+      'Налаштування записуються в невеликий ISO-файл і підключаються як CD-ROM. Файл видаляється разом із VM. Зберігається лише хеш пароля.';
 
   @override
   String get virtCiNoToolTitle =>
@@ -4588,7 +4699,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String virtCiNoToolBody(String tools) {
-    return 'Встановіть на хост одне з: $tools. Без cloud-init образ запуститься без облікового запису для входу.';
+    return 'Установіть на хості один із засобів: $tools. Інакше cloud-init не створить конфігурацію, і після запуску образу не буде облікового запису для входу.';
   }
 
   @override
@@ -4606,7 +4717,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get virtCiEditTip =>
-      'Що cloud-init налаштовує в цій ВМ: обліковий запис із sudo, спосіб входу до нього, ім’я хоста й адресу.';
+      'Налаштуйте cloud-init для цієї VM: обліковий запис із правами sudo, спосіб входу, ім’я хоста й адресу.';
 
   @override
   String get virtCiForeignTitle =>
@@ -4614,7 +4725,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get virtCiForeignBody =>
-      'Налаштування, зроблені деінде (пакети, команди, інші облікові записи), тут не показано. Збереження замінює seed тим, що показано тут.';
+      'Налаштування, створені іншими засобами (наприклад, пакети, команди та інші облікові записи), тут не показуються. Після збереження seed буде замінено налаштуваннями з цієї сторінки.';
 
   @override
   String get virtCiPasswordKept => 'Задано. Залиште порожнім, щоб зберегти';
@@ -4627,7 +4738,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get virtCiKeysAdded =>
-      'Ключі додаються до облікового запису. Ключ, прибраний тут, лишається в системі, доки його не видалять там, а нове ім’я користувача створює новий обліковий запис поруч зі старим.';
+      'Ключі додаються до облікового запису. Видалення ключа тут не прибирає його із системи — це потрібно зробити окремо. Зміна імені користувача створює новий обліковий запис і залишає старий.';
 
   @override
   String get virtCiEffectTitle =>
@@ -4639,7 +4750,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get virtCiEffectPve =>
-      'PVE одразу перезаписує свій диск cloud-init; ID екземпляра обчислюється з цих налаштувань, тож будь-яка зміна тут дає новий.';
+      'PVE негайно перезаписує cloud-init-диск. ID екземпляра формується з цих налаштувань, тож кожна зміна створює новий ID.';
 
   @override
   String get virtCiNewInstance =>
@@ -4654,7 +4765,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get virtSnapshotExternalTip =>
-      'Гість продовжує працювати. Кожен диск отримує шар qcow2 у вибраному пулі; гість залишається на ланцюжку.';
+      'VM продовжує працювати. Для кожного диска у вибраному пулі створюється qcow2 overlay, і VM надалі використовує цей ланцюжок snapshot.';
 
   @override
   String get virtSnapshotFormInternal => 'Внутрішній (в образі)';
@@ -4692,7 +4803,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get virtSnapshotRevertChain =>
-      'Відкат на ланцюжку зливає робочий шар в образ і робить усі наступні знімки непридатними. Відкотитися можна лише до найновішого знімка.';
+      'Відновлення snapshot із ланцюжка об’єднує активний overlay з образом і робить новіші snapshot недоступними. Відновити можна лише останній snapshot.';
 
   @override
   String get virtSnapshotRevertHasChildren =>
@@ -4945,12 +5056,12 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String virtNetEditAsk(int count) {
-    return 'Запущена мережа зберігає поточний стан до перезапуску. Перезапуск від\'єднає ВМ у цій мережі ($count).';
+    return 'Поточна мережа не зміниться до перезапуску. Після нього мережеве підключення втратять $count підключених VM.';
   }
 
   @override
   String get virtNetEditAskNoGuest =>
-      'Запущена мережа зберігає поточний стан до перезапуску.';
+      'Поточна мережа не зміниться до перезапуску.';
 
   @override
   String get virtNetEditRestart => 'Перезапустити, щоб застосувати зараз';
@@ -4993,7 +5104,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get virtNetHostEmpty =>
-      'Жодному MAC не призначено власної адреси: кожна ВМ отримує адресу з діапазону DHCP.';
+      'Жодній MAC-адресі не призначено постійний IP; усі VM отримають адресу з діапазону DHCP.';
 
   @override
   String get virtNetHostOthers =>
@@ -5009,7 +5120,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get virtNetManagementTip =>
-      'Він передає керувальний трафік хоста або розташований під інтерфейсом, що його передає: застосунок його не змінює.';
+      'Цей інтерфейс передає керувальний трафік хоста або є нижчим інтерфейсом керувального. Застосунок його не змінює.';
 
   @override
   String get virtNetPhysicalTip =>
@@ -5109,7 +5220,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String funcNeedsAgentHttps(String func) {
-    return 'Для $func потрібен HTTPS до цього Monitor agent або дозволений HTTP і в agent, і в цьому застосунку.';
+    return 'Для $func потрібне підключення до цього Monitor через HTTPS. Або дозвольте HTTP і на Monitor, і в застосунку.';
   }
 
   @override
@@ -5135,7 +5246,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get monitorPasswordNotSaved =>
-      'Пароль на агенті змінено, але застосунку не вдалося його зберегти. Оновіть пароль Monitor у налаштуваннях цього сервера.';
+      'Пароль на Monitor змінено, але застосунку не вдалося його зберегти. Оновіть пароль Monitor у налаштуваннях цього сервера.';
 
   @override
   String get firewall => 'Брандмауер';
@@ -5269,7 +5380,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String firewallMayRefuseFmt(String access) {
-    return '$access: нові підключення цього застосунку можуть відхилятися. Це залежить від адреси чи інтерфейсу, через який вони надходять, а застосунок не може цього визначити.';
+    return '$access: нові підключення до застосунку можуть бути відхилені залежно від IP-адреси джерела або вхідного мережевого інтерфейсу. Застосунок не може визначити це заздалегідь.';
   }
 
   @override
@@ -5363,20 +5474,20 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get monitorSyncNeedsServer =>
-      'Виберіть сервер, агент monitor якого зберігає резервну копію.';
+      'Виберіть сервер, Monitor якого зберігає резервну копію.';
 
   @override
   String get monitorBackupUnsupported =>
-      'Цей агент monitor не може зберігати резервні копії. Оновіть агент.';
+      'Цей Monitor не може зберігати резервні копії. Оновіть Monitor.';
 
   @override
   String monitorBackupTooLarge(String max) {
-    return 'Резервна копія більша, ніж приймає агент monitor ($max).';
+    return 'Резервна копія більша, ніж приймає Monitor ($max).';
   }
 
   @override
   String get monitorBackupTooMany =>
-      'Агент monitor уже зберігає максимально дозволену кількість резервних копій. Спершу видаліть одну.';
+      'Monitor уже зберігає максимально дозволену кількість резервних копій. Спершу видаліть одну.';
 
   @override
   String get virtCreateVmidInvalid => 'VMID від 100 до 999999999.';
@@ -5420,16 +5531,16 @@ class AppLocalizationsUk extends AppLocalizations {
   String get virtBackupIssueNodeOffline => 'Вузол завдання не в мережі.';
 
   @override
-  String get programWaiting => 'Очікує на вас';
+  String get programWaiting => 'Очікування вашої дії';
 
   @override
-  String get programWaitingPermission => 'Очікує на ваше підтвердження';
+  String get programWaitingPermission => 'Очікування вашого дозволу';
 
   @override
-  String get programWaitingQuestion => 'Очікує на вашу відповідь';
+  String get programWaitingQuestion => 'Очікування вашої відповіді';
 
   @override
-  String get programWaitingAuth => 'Очікує на вхід';
+  String get programWaitingAuth => 'Очікування входу';
 
   @override
   String get programStatus => 'Стан програми';

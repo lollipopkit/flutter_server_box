@@ -105,7 +105,7 @@ void main() {
   ) async {
     await pumpEditor(tester, both);
 
-    expect(find.text('Monitor Agent'), findsOneWidget);
+    expect(find.text(app_locale.l10n.monitorAgent), findsOneWidget);
     expect(find.text('SSH'), findsWidgets);
     expect(find.text(app_locale.l10n.connection.toUpperCase()), findsOneWidget);
     // Order and addresses remain visible without redundant role labels: the
@@ -133,7 +133,7 @@ void main() {
 
     // The agent's switch. Both rows carry one, so it is found by its row.
     final agentRow = find.ancestor(
-      of: find.text('Monitor Agent'),
+      of: find.text(app_locale.l10n.monitorAgent),
       matching: find.byType(CardX),
     );
     await tester.tap(
@@ -163,7 +163,7 @@ void main() {
   testWidgets('a server with both switched off is not saved', (tester) async {
     final persisted = await pumpEditor(tester, both);
 
-    for (final label in ['Monitor Agent', 'SSH']) {
+    for (final label in [app_locale.l10n.monitorAgent, 'SSH']) {
       final row = find
           .ancestor(of: find.text(label), matching: find.byType(CardX))
           .first;

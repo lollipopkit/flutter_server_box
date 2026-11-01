@@ -111,7 +111,7 @@ pub const LINUX: &[CommandSpec] = &[
         // header rather than its exit status: GNU df exits 1 when any one mount
         // is unreadable and prints the rest anyway, while busybox may not have
         // `-T` at all.
-        cmd: r#"lsblk --bytes --json --output FSTYPE,PATH,NAME,KNAME,MOUNTPOINT,FSSIZE,FSUSED,FSAVAIL,FSUSE%,UUID 2>/dev/null; echo __SBM_DF__; d=$(df -kT 2>/dev/null); case "$d" in *Type*) printf '%s\n' "$d" ;; *) df -k ;; esac"#,
+        cmd: r#"lsblk --bytes --json --output FSTYPE,PATH,NAME,KNAME,MOUNTPOINT,FSSIZE,FSUSED,FSAVAIL,FSUSE%,UUID,TYPE,MODEL,SIZE,TRAN 2>/dev/null; echo __SBM_DF__; d=$(df -kT 2>/dev/null); case "$d" in *Type*) printf '%s\n' "$d" ;; *) df -k ;; esac"#,
     },
     CommandSpec { key: MEM, cmd: "cat /proc/meminfo | grep -E 'Mem|Swap'" },
     // Quiet on purpose, unlike most of this table. The status function no

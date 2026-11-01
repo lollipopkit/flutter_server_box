@@ -1,28 +1,28 @@
 ---
-title: Monitor Agent API 与访问模型
+title: Monitor API 与访问模型
 description: Capability 上报、指标历史和 remote access 行为
 ---
 
-本页说明 App 连接 Monitor agent 时依赖的 API 行为。安装和配置见
-[Monitor Agent](/docs/zh/advanced/monitor-agent/)。
+本页说明 App 连接 Monitor 时依赖的 API 行为。安装和配置见
+[Monitor](/docs/zh/advanced/monitor-agent/)。
 
 ## 协议版本
 
-App 和 agent 使用同一个协议版本号（`sbm_parser::protocol`）。只有 API 发生破坏性变化时才会递增，例如删除或重命名字段、改变字段含义或删除 route。新增功能不改变协议版本，而是列在 `features` 中。
+App 和 Monitor 使用同一个协议版本号（`sbm_parser::protocol`）。只有 API 发生破坏性变化时才会递增，例如删除或重命名字段、改变字段含义或删除 route。新增功能不改变协议版本，而是列在 `features` 中。
 
-- `GET /api/v1/health` 不需要登录，返回 `protocol` 和 `min_client_protocol`，不返回发布版本（发布版本在 `/capabilities` 中）。没有这两个字段的 agent 视为协议 1。
-- 每个请求都带有 `X-SBM-Protocol: <n>`，没有这个 header 的请求视为协议 1。客户端低于 `min_client_protocol` 时，agent 返回 `426` 和 `{"error": "client_too_old", "protocol", "min_client_protocol"}`。`/health`、preflight 和 WebSocket upgrade 不检查；upgrade 之前的 `/ws-ticket` 请求会检查。
-- App 登录前先读取 `/health`。agent 的协议版本过旧时，App 会提示更新 agent；如果 agent 要求更高版本的协议，则会提示更新 App。
-- 双方都至少支持上一个协议版本：agent 按旧版客户端的格式回应它，App 仍能读取旧版 agent。
+- `GET /api/v1/health` 不需要登录，返回 `protocol` 和 `min_client_protocol`，不返回发布版本（发布版本在 `/capabilities` 中）。没有这两个字段的 Monitor 视为协议 1。
+- 每个请求都带有 `X-SBM-Protocol: <n>`，没有这个 header 的请求视为协议 1。客户端低于 `min_client_protocol` 时，Monitor 返回 `426` 和 `{"error": "client_too_old", "protocol", "min_client_protocol"}`。`/health`、preflight 和 WebSocket upgrade 不检查；upgrade 之前的 `/ws-ticket` 请求会检查。
+- App 登录前先读取 `/health`。Monitor 的协议版本过旧时，App 会提示更新 Monitor；如果 Monitor 要求更高版本的协议，则会提示更新 App。
+- 双方都至少支持上一个协议版本：Monitor 按旧版客户端的格式回应它，App 仍能读取旧版 Monitor。
 
 ## Capability discovery
 
-App 通过 `GET /api/v1/capabilities` 查询 agent 支持的功能，以及当前调用者能否使用它们。返回内容包括：
+App 通过 `GET /api/v1/capabilities` 查询 Monitor 支持的功能，以及当前调用者能否使用它们。返回内容包括：
 
 - `access`：`ok`，为 false 时还带有 `why`。`insecure_transport` 表示请求需要 TLS、loopback 调用方或 `[remote_access] allow_insecure`。watch token 的 `access` 是 `{"ok": false}`。
-- `features`：agent 提供的机器管理 endpoint，例如 `power`。名称在列表中且 `access.ok` 时，客户端才提供对应页面。`container_exec`、`iperf` 和 `tmux` 是终端的 target，不是页面；各自只在列出时提供。`alerts`、`audit` 和 `live` 对应 Monitor 标签页的各部分（`GET /alerts`、`GET /audit`、`/live*`），`desk` 对应其中的通知。`update` 对应 `GET /update`：agent 的版本、读到的最新 release（`?check=1` 重新读取）、`outdated`、安装方式（`install`：`script`、`container`、`nix`、`other`），`script` 时还有用于更新的 `command`、启动更新是否需要 sudo 密码，以及上一次更新的 `run`（状态和输出）。`POST /update/run` 在 agent 之外启动更新，更新不受 agent 重启影响。
+- `features`：Monitor 提供的机器管理 endpoint，例如 `power`。名称在列表中且 `access.ok` 时，客户端才提供对应页面。`container_exec`、`iperf` 和 `tmux` 是终端的 target，不是页面；各自只在列出时提供。`alerts`、`audit` 和 `live` 对应 Monitor 标签页的各部分（`GET /alerts`、`GET /audit`、`/live*`），`desk` 对应其中的通知。`update` 对应 `GET /update`：agent 的版本、读到的最新 release（`?check=1` 重新读取）、`outdated`、安装方式（`install`：`script`、`container`、`nix`、`other`），`script` 时还有用于更新的 `command`、启动更新是否需要 sudo 密码，以及上一次更新的 `run`（状态和输出）。`POST /update/run` 在 agent 之外启动更新，更新不受 agent 重启影响。
 
-不要仅根据 agent 版本或默认配置推断功能是否可用；应读取运行中 agent
+不要仅根据 Monitor 版本或默认配置推断功能是否可用；应读取运行中 Monitor
 返回的 capabilities。
 
 ## 指标历史 API
@@ -32,7 +32,7 @@ Capabilities response 会报告：
 - `retention_days`：`[monitoring.data_retention] metrics_days` 中配置的数据保留上限。
 - `oldest_sample`：当前实际保存的最早一条指标样本的时间。
 
-App 只提供符合数据保留限制和最早样本时间的图表 preset，并在时间范围选择器中显示这两个值。较旧且不报告 retention 的 agent 仍使用固定图表范围。
+App 只提供符合数据保留限制和最早样本时间的图表 preset，并在时间范围选择器中显示这两个值。较旧且不报告 retention 的 Monitor 仍使用固定图表范围。
 
 App 可通过以下 endpoint 请求精确时间段：
 
@@ -40,7 +40,7 @@ App 可通过以下 endpoint 请求精确时间段：
 GET /api/v1/metrics/history?from=<epoch-seconds>&to=<epoch-seconds>
 ```
 
-如果 `from` 早于最早保留样本，agent 会返回现存记录，不会平移请求的开始时间，也不会报错。图表会将缺少数据的时间显示为空档。没有 `from` 时，`?minutes=` 指定窗口长度（默认 60 分钟，最少 5 分钟，最多 7 天），结束时间为 `to` 或当前时间。App 每次请求都会携带 `minutes`，因此不支持 `from` 和 `to` 的旧版 agent 仍能处理请求。
+如果 `from` 早于最早保留样本，Monitor 会返回现存记录，不会平移请求的开始时间，也不会报错。图表会将缺少数据的时间显示为空档。没有 `from` 时，`?minutes=` 指定窗口长度（默认 60 分钟，最少 5 分钟，最多 7 天），结束时间为 `to` 或当前时间。App 每次请求都会携带 `minutes`，因此不支持 `from` 和 `to` 的旧版 Monitor 仍能处理请求。
 
 ## 访问模型
 
@@ -79,8 +79,8 @@ agent 只有一个账号，只用密码登录；它可以做 agent 运行所用�
 
 ### File API
 
-`/api/v1/fs/*` 可以访问 agent 的系统账户能访问的一切，但不包括 agent 自身的状态：数据库及其 journal 文件、`jwt.secret`、`credentials.key`、`initial-admin-credentials.txt`、`config.toml` 及其备份、`.env`、TLS 证书和私钥、自定义命令目录、blob 存储、stack 的 `.env` 文件和容器备份。这些路径在解析 symlink 后匹配，访问时返回 `403`，不出现在列表中，其所在目录也不能重命名、删除或 chmod。
+`/api/v1/fs/*` 可以访问 Monitor 的系统账户能访问的一切，但不包括 Monitor 自身的状态：数据库及其 journal 文件、`jwt.secret`、`credentials.key`、`initial-admin-credentials.txt`、`config.toml` 及其备份、`.env`、TLS 证书和私钥、自定义命令目录、blob 存储、stack 的 `.env` 文件和容器备份。这些路径在解析 symlink 后匹配，访问时返回 `403`，不出现在列表中，其所在目录也不能重命名、删除或 chmod。
 
 ### Terminal endpoint
 
-App 和网页面板的终端都是以 agent 进程用户身份在 PTY 上运行的本地 shell。agent 不登录 sshd：携带 SSH 凭据的 `open` 会被拒绝。
+App 和网页面板的终端都是以 Monitor 进程用户身份在 PTY 上运行的本地 shell。Monitor 不登录 sshd：携带 SSH 凭据的 `open` 会被拒绝。

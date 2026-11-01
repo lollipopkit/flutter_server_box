@@ -27,7 +27,7 @@ Agent 对话、记忆笔记、AI provider 与工具设置不会加入备份，�
 
 备份只在你主动请求时创建。根据选项和格式，备份可能包含服务器设置和凭据、私钥、代码片段、端口映射、容器设置、连接历史及 App 设置。AI provider 设置与 API key、Agent 对话以及设备本地状态不会包含在内。
 
-未设置备份密码时，本地备份可能不加密。设置备份密码后，备份会在写入或上传前加密。自动远程备份要求设置非空的备份密码。备份发送到 iCloud、WebDAV、GitHub Gist 或你的 monitor 代理后，还会受到对应 provider 的存储、访问和保留规则约束。
+未设置备份密码时，本地备份可能不加密。设置备份密码后，备份会在写入或上传前加密。自动远程备份要求设置非空的备份密码。备份发送到 iCloud、WebDAV、GitHub Gist 或你的 Monitor 后，还会受到对应 provider 的存储、访问和保留规则约束。
 
 ## 自动诊断数据
 
@@ -113,7 +113,7 @@ App 只保存服务器最近上报的公网网卡地址结果，包括“未上�
 | 请求 | 目标 | 时机和内容 |
 |---|---|---|
 | AI 请求 | 你配置的 endpoint | 发送 Agent 消息时；详见 [AI 请求](#ai-请求) |
-| 备份或同步 | iCloud、你的 WebDAV server、GitHub Gist 或你的 monitor 代理 | 上传、下载或同步备份时；携带选定的备份文件，文件可能已加密 |
+| 备份或同步 | iCloud、你的 WebDAV server、GitHub Gist 或你的 Monitor | 上传、下载或同步备份时；携带选定的备份文件，文件可能已加密 |
 | 检查更新 | `api.github.com` | 开启自动检查更新后，在启动时发起 |
 | Linux userland manifest | `github.com` | App 检查本机 Linux 环境是否有更新时发起；携带版本元数据和签名 |
 | Linux userland 镜像 | 经验证的 manifest 指定的 distribution mirror 或 source URL | 安装或更新本机 Linux 环境时发起；下载的镜像会按 manifest 中的 digest 校验 |
@@ -122,7 +122,7 @@ App 只保存服务器最近上报的公网网卡地址结果，包括“未上�
 | 赞助链接 | `cdn.lollipopkit.com` | 打开赞助链接时发起 |
 | 文档和 issue 链接 | `serverbox.lollipopkit.com` 或 `github.com` | 打开对应链接时发起 |
 
-连接你自己的服务器、配置的 BMC 以及你部署的 Monitor agent，会直接发往这些 endpoint，不会经过开发者的基础设施。
+连接你自己的服务器、配置的 BMC 以及你部署的 Monitor，会直接发往这些 endpoint，不会经过开发者的基础设施。
 
 ## 诊断数据发往哪里
 
@@ -134,9 +134,9 @@ Sentry 的 destination 写在源码中，因此从未修改源码构建的版本
 
 ## Watch App 和桌面小组件
 
-Watch App、complication 以及 iOS 和 Android 主屏幕小组件会直接读取你部署的 Monitor agent。Server Box 会为每个 surface 签发只读 credential。它只能访问 Monitor metrics 接口（`/api/v1/status`、`/api/v1/metrics` 和 `/api/v1/metrics/history`），不能打开 shell、执行命令或浏览文件。
+Watch App、complication 以及 iOS 和 Android 主屏幕小组件会直接读取你部署的 Monitor。Server Box 会为每个 surface 签发只读 credential。它只能访问 Monitor metrics 接口（`/api/v1/status`、`/api/v1/metrics` 和 `/api/v1/metrics/history`），不能打开 shell、执行命令或浏览文件。
 
-credential 保存在 Watch 自己的钥匙串中；在 iOS 上保存在共享钥匙串组中；在 Android 上使用 AndroidKeyStore 密钥加密保存。小组件的配置列表会包含服务器名称和 Monitor 地址，以便选择服务器；credential 则单独保存在平台安全存储中。配置了 Monitor 的服务器会自动包含在同步范围内。Watch 可以在**设置**中单独排除服务器；小组件会发布所有配置了 Monitor 的服务器，不使用单独的排除列表。只要 App 能联系 Monitor agent，排除或删除服务器就会吊销对应 Watch 或小组件 credential。
+credential 保存在 Watch 自己的钥匙串中；在 iOS 上保存在共享钥匙串组中；在 Android 上使用 AndroidKeyStore 密钥加密保存。小组件的配置列表会包含服务器名称和 Monitor 地址，以便选择服务器；credential 则单独保存在平台安全存储中。配置了 Monitor 的服务器会自动包含在同步范围内。Watch 可以在**设置**中单独排除服务器；小组件会发布所有配置了 Monitor 的服务器，不使用单独的排除列表。只要 App 能联系 Monitor，排除或删除服务器就会吊销对应 Watch 或小组件 credential。
 
 ## 应用商店平台
 

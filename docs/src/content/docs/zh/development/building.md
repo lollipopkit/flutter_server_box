@@ -1,9 +1,9 @@
 ---
 title: 构建指南
-description: 在不同平台构建 Server Box 和 Monitor agent
+description: 在不同平台构建 Server Box 和 Monitor
 ---
 
-Flutter App 使用仓库提供的 `fl_build` 工具构建。Monitor agent 是独立的 Rust 服务，需要单独构建。
+Flutter App 使用仓库提供的 `fl_build` 工具构建。Monitor 是独立的 Rust 服务，需要单独构建。
 
 ## 前置条件
 
@@ -75,9 +75,9 @@ dart run fl_build -p windows
 
 需要安装 Visual Studio，并选择 **Desktop development with C++** workload 和 ATL 支持。
 
-## 构建 Monitor agent
+## 构建 Monitor
 
-Monitor agent 是独立的 server binary，构建步骤与 Flutter App 分开：
+Monitor 是独立的 server binary，构建步骤与 Flutter App 分开：
 
 ```bash
 # 在仓库根目录执行
@@ -89,7 +89,7 @@ npm install
 npm run build
 ```
 
-网页面板构建后，Monitor agent 会在 `frontend/dist` 存在时提供该面板。开发时可在仓库根目录运行 `make monitor-dev`，同时启动 API（`:3770`）和 Vite dev server（`:3000`）。
+网页面板构建后，Monitor 会在 `frontend/dist` 存在时提供该面板。开发时可在仓库根目录运行 `make monitor-dev`，同时启动 API（`:3770`）和 Vite dev server（`:3000`）。
 
 release 产物由 `monitor-release.yml` workflow 构建，目前只能通过 `workflow_dispatch` 运行。Monitor 的 `monitor-v*` tag 与 App release 分开管理。Docker 构建方法见 `monitor/Dockerfile`。
 

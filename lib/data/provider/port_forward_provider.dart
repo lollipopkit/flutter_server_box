@@ -390,7 +390,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
         ),
       );
       Loggers.app.info(
-        'Remote port forward started through the agent: '
+        'Remote port forward started through the Monitor: '
         '${config.remoteHost}:${listener.port}',
       );
       return _AgentRemoteForwardEntry(listener, lease);

@@ -1,7 +1,9 @@
+import { get } from 'svelte/store'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import Process from '../desk/apps/process/ProcessApp.svelte'
+import { LL } from '../i18n/i18n-svelte'
 import { api } from '../lib/api'
 import processApp from '../desk/apps/process/manifest'
 import type { Capabilities, ProcessSignalResult, ProcessView } from '../types'
@@ -10,6 +12,7 @@ vi.mock('../lib/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../lib/api')>()),
   api: { getProcess: vi.fn(), signalProcess: vi.fn() },
 }))
+const ll = get(LL)
 const getProcess = vi.mocked(api.getProcess)
 const signalProcess = vi.mocked(api.signalProcess)
 
@@ -56,21 +59,21 @@ describe('Process page', () => {
     render(Process)
     // Select the row, then stop it from the status bar, which asks first.
     await fireEvent.click(await screen.findByText('nginx'))
-    await fireEvent.click(await screen.findByRole('button', { name: /^stop$/i }))
-    expect(screen.getByText(/Stop nginx \(4242\)\?/)).toBeInTheDocument()
+    await fireEvent.click(await screen.findByRole('button', { name: ll.processStop() }))
+    expect(screen.getByText(ll.processStopAsk({ name: 'nginx', pid: 4242 }))).toBeInTheDocument()
 
     // The agent already tried `sudo -n`; that it wanted a password is a
     // question for the user, not a refused password.
     signalProcess.mockResolvedValueOnce(answer({ outcome: 'failed', sudo_rejected: true }))
     await fireEvent.click(screen.getByRole('button', { name: /SIGTERM/ }))
-    const password = await screen.findByLabelText('Sudo password')
-    expect(screen.queryByText(/refused that password/)).not.toBeInTheDocument()
+    const password = await screen.findByLabelText(ll.powerPassword())
+    expect(screen.queryByText(ll.powerRejected())).not.toBeInTheDocument()
     // Nothing to retry with until a password is typed.
-    expect(screen.getByRole('button', { name: /retry as root/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: ll.processRetryAsRoot() })).toBeDisabled()
 
     signalProcess.mockResolvedValueOnce(answer({ outcome: 'succeeded', exit_code: 0 }))
     await fireEvent.input(password, { target: { value: 'hunter2' } })
-    await fireEvent.click(screen.getByRole('button', { name: /retry as root/i }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.processRetryAsRoot() }))
     await waitFor(() =>
       expect(signalProcess).toHaveBeenLastCalledWith(expect.objectContaining({ pid: 4242, start_id: '777', password: 'hunter2' })),
     )

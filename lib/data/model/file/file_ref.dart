@@ -132,7 +132,7 @@ final class MonitorFileRef extends FileRef {
   factory MonitorFileRef.forServer(Spi spi, String path) {
     final monitor = spi.monitor;
     if (monitor == null) {
-      throw StateError('${spi.name} has no monitor agent to browse');
+      throw StateError('${spi.name} has no Monitor to browse');
     }
     return MonitorFileRef(spi: spi, monitor: monitor, path: path);
   }

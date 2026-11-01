@@ -27,10 +27,10 @@
 
 // Section: imports
 
-use crate::api::pve::*;
-use crate::api::ssh_crypto::*;
-use crate::api::remote_desktop::*;
 use crate::api::virt::*;
+use crate::api::remote_desktop::*;
+use crate::api::ssh_crypto::*;
+use crate::api::pve::*;
 use crate::api::bmc::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};
@@ -5861,6 +5861,15 @@ return crate::api::script::MonitorReleasePage{newest: var_newest, read_on: var_r
             }}
                 }
                 
+                impl SseDecode for Option<crate::api::remote_desktop::RemoteDesktopFailure> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {if (<bool>::sse_decode(deserializer)) {
+                return Some(<crate::api::remote_desktop::RemoteDesktopFailure>::sse_decode(deserializer));
+            } else {
+                return None;
+            }}
+                }
+                
                 impl SseDecode for Option<crate::api::bmc::ResetRequest> {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {if (<bool>::sse_decode(deserializer)) {
@@ -6298,9 +6307,41 @@ return crate::api::remote_desktop::RemoteDesktopEvent::CertificateRequest{sha256
 let mut var_retryable = <bool>::sse_decode(deserializer);
 return crate::api::remote_desktop::RemoteDesktopEvent::Error{message: var_message, retryable: var_retryable}; }
 10 => { let mut var_reason = <crate::api::remote_desktop::RemoteDesktopEndReason>::sse_decode(deserializer);
+let mut var_failure = <Option<crate::api::remote_desktop::RemoteDesktopFailure>>::sse_decode(deserializer);
 let mut var_message = <Option<String>>::sse_decode(deserializer);
-return crate::api::remote_desktop::RemoteDesktopEvent::Ended{reason: var_reason, message: var_message}; }
+return crate::api::remote_desktop::RemoteDesktopEvent::Ended{reason: var_reason, failure: var_failure, message: var_message}; }
  _ => { unimplemented!(""); }}}
+                }
+                
+                impl SseDecode for crate::api::remote_desktop::RemoteDesktopFailure {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::remote_desktop::RemoteDesktopFailure::StandardRdpSecurityOnly,
+1 => crate::api::remote_desktop::RemoteDesktopFailure::ServerCertificateMissing,
+2 => crate::api::remote_desktop::RemoteDesktopFailure::ClientCertificateRequired,
+3 => crate::api::remote_desktop::RemoteDesktopFailure::WrongCredentials,
+4 => crate::api::remote_desktop::RemoteDesktopFailure::AccountLockedOut,
+5 => crate::api::remote_desktop::RemoteDesktopFailure::AccountDisabled,
+6 => crate::api::remote_desktop::RemoteDesktopFailure::AccountExpired,
+7 => crate::api::remote_desktop::RemoteDesktopFailure::PasswordExpired,
+8 => crate::api::remote_desktop::RemoteDesktopFailure::LogonRestricted,
+9 => crate::api::remote_desktop::RemoteDesktopFailure::RemoteLogonDenied,
+10 => crate::api::remote_desktop::RemoteDesktopFailure::FreshCredentialsRequired,
+11 => crate::api::remote_desktop::RemoteDesktopFailure::IdleTimeout,
+12 => crate::api::remote_desktop::RemoteDesktopFailure::SessionTimeLimit,
+13 => crate::api::remote_desktop::RemoteDesktopFailure::ReplacedByOtherConnection,
+14 => crate::api::remote_desktop::RemoteDesktopFailure::DisconnectedOnServer,
+15 => crate::api::remote_desktop::RemoteDesktopFailure::LoggedOffByAdministrator,
+16 => crate::api::remote_desktop::RemoteDesktopFailure::LoggedOff,
+17 => crate::api::remote_desktop::RemoteDesktopFailure::ServerShutdown,
+18 => crate::api::remote_desktop::RemoteDesktopFailure::ServerReboot,
+19 => crate::api::remote_desktop::RemoteDesktopFailure::ServerDeniedConnection,
+20 => crate::api::remote_desktop::RemoteDesktopFailure::LicensingFailed,
+21 => crate::api::remote_desktop::RemoteDesktopFailure::VncSecurityUnsupported,
+22 => crate::api::remote_desktop::RemoteDesktopFailure::PasswordRequired,
+            _ => unreachable!("Invalid variant for RemoteDesktopFailure: {}", inner),
+        };}
                 }
                 
                 impl SseDecode for crate::api::bmc::ResetRequest {
@@ -8576,8 +8617,9 @@ previous_sha256.into_into_dart().into_dart()].into_dart() }
 crate::api::remote_desktop::RemoteDesktopEvent::Error{message,retryable} => { [9.into_dart(),
 message.into_into_dart().into_dart(),
 retryable.into_into_dart().into_dart()].into_dart() }
-crate::api::remote_desktop::RemoteDesktopEvent::Ended{reason,message} => { [10.into_dart(),
+crate::api::remote_desktop::RemoteDesktopEvent::Ended{reason,failure,message} => { [10.into_dart(),
 reason.into_into_dart().into_dart(),
+failure.into_into_dart().into_dart(),
 message.into_into_dart().into_dart()].into_dart() }
  _ => { unimplemented!(""); }}
                 }
@@ -8585,6 +8627,43 @@ message.into_into_dart().into_dart()].into_dart() }
             impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::remote_desktop::RemoteDesktopEvent {}
 impl flutter_rust_bridge::IntoIntoDart<crate::api::remote_desktop::RemoteDesktopEvent> for crate::api::remote_desktop::RemoteDesktopEvent {
             fn into_into_dart(self) -> crate::api::remote_desktop::RemoteDesktopEvent {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::remote_desktop::RemoteDesktopFailure {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    match self {
+                    Self::StandardRdpSecurityOnly => 0.into_dart(),
+Self::ServerCertificateMissing => 1.into_dart(),
+Self::ClientCertificateRequired => 2.into_dart(),
+Self::WrongCredentials => 3.into_dart(),
+Self::AccountLockedOut => 4.into_dart(),
+Self::AccountDisabled => 5.into_dart(),
+Self::AccountExpired => 6.into_dart(),
+Self::PasswordExpired => 7.into_dart(),
+Self::LogonRestricted => 8.into_dart(),
+Self::RemoteLogonDenied => 9.into_dart(),
+Self::FreshCredentialsRequired => 10.into_dart(),
+Self::IdleTimeout => 11.into_dart(),
+Self::SessionTimeLimit => 12.into_dart(),
+Self::ReplacedByOtherConnection => 13.into_dart(),
+Self::DisconnectedOnServer => 14.into_dart(),
+Self::LoggedOffByAdministrator => 15.into_dart(),
+Self::LoggedOff => 16.into_dart(),
+Self::ServerShutdown => 17.into_dart(),
+Self::ServerReboot => 18.into_dart(),
+Self::ServerDeniedConnection => 19.into_dart(),
+Self::LicensingFailed => 20.into_dart(),
+Self::VncSecurityUnsupported => 21.into_dart(),
+Self::PasswordRequired => 22.into_dart(),
+                    _ => unreachable!(),
+                }
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::remote_desktop::RemoteDesktopFailure {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::remote_desktop::RemoteDesktopFailure> for crate::api::remote_desktop::RemoteDesktopFailure {
+            fn into_into_dart(self) -> crate::api::remote_desktop::RemoteDesktopFailure {
                 self
             }
         }
@@ -10211,6 +10290,14 @@ crate::api::firewall::FirewalldTarget::Reject => { 3 }
                 }}
                 }
                 
+                impl SseEncode for Option<crate::api::remote_desktop::RemoteDesktopFailure> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<bool>::sse_encode(self.is_some(), serializer);
+                if let Some(value) = self {
+                    <crate::api::remote_desktop::RemoteDesktopFailure>::sse_encode(value, serializer);
+                }}
+                }
+                
                 impl SseEncode for Option<crate::api::bmc::ResetRequest> {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<bool>::sse_encode(self.is_some(), serializer);
@@ -10590,10 +10677,39 @@ crate::api::remote_desktop::RemoteDesktopEvent::CertificateRequest{sha256,subjec
 crate::api::remote_desktop::RemoteDesktopEvent::Error{message,retryable} => { <i32>::sse_encode(9, serializer); <String>::sse_encode(message, serializer);
 <bool>::sse_encode(retryable, serializer);
  }
-crate::api::remote_desktop::RemoteDesktopEvent::Ended{reason,message} => { <i32>::sse_encode(10, serializer); <crate::api::remote_desktop::RemoteDesktopEndReason>::sse_encode(reason, serializer);
+crate::api::remote_desktop::RemoteDesktopEvent::Ended{reason,failure,message} => { <i32>::sse_encode(10, serializer); <crate::api::remote_desktop::RemoteDesktopEndReason>::sse_encode(reason, serializer);
+<Option<crate::api::remote_desktop::RemoteDesktopFailure>>::sse_encode(failure, serializer);
 <Option<String>>::sse_encode(message, serializer);
  }
  _ => { unimplemented!(""); }}}
+                }
+                
+                impl SseEncode for crate::api::remote_desktop::RemoteDesktopFailure {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<i32>::sse_encode(match self {crate::api::remote_desktop::RemoteDesktopFailure::StandardRdpSecurityOnly => { 0 }
+crate::api::remote_desktop::RemoteDesktopFailure::ServerCertificateMissing => { 1 }
+crate::api::remote_desktop::RemoteDesktopFailure::ClientCertificateRequired => { 2 }
+crate::api::remote_desktop::RemoteDesktopFailure::WrongCredentials => { 3 }
+crate::api::remote_desktop::RemoteDesktopFailure::AccountLockedOut => { 4 }
+crate::api::remote_desktop::RemoteDesktopFailure::AccountDisabled => { 5 }
+crate::api::remote_desktop::RemoteDesktopFailure::AccountExpired => { 6 }
+crate::api::remote_desktop::RemoteDesktopFailure::PasswordExpired => { 7 }
+crate::api::remote_desktop::RemoteDesktopFailure::LogonRestricted => { 8 }
+crate::api::remote_desktop::RemoteDesktopFailure::RemoteLogonDenied => { 9 }
+crate::api::remote_desktop::RemoteDesktopFailure::FreshCredentialsRequired => { 10 }
+crate::api::remote_desktop::RemoteDesktopFailure::IdleTimeout => { 11 }
+crate::api::remote_desktop::RemoteDesktopFailure::SessionTimeLimit => { 12 }
+crate::api::remote_desktop::RemoteDesktopFailure::ReplacedByOtherConnection => { 13 }
+crate::api::remote_desktop::RemoteDesktopFailure::DisconnectedOnServer => { 14 }
+crate::api::remote_desktop::RemoteDesktopFailure::LoggedOffByAdministrator => { 15 }
+crate::api::remote_desktop::RemoteDesktopFailure::LoggedOff => { 16 }
+crate::api::remote_desktop::RemoteDesktopFailure::ServerShutdown => { 17 }
+crate::api::remote_desktop::RemoteDesktopFailure::ServerReboot => { 18 }
+crate::api::remote_desktop::RemoteDesktopFailure::ServerDeniedConnection => { 19 }
+crate::api::remote_desktop::RemoteDesktopFailure::LicensingFailed => { 20 }
+crate::api::remote_desktop::RemoteDesktopFailure::VncSecurityUnsupported => { 21 }
+crate::api::remote_desktop::RemoteDesktopFailure::PasswordRequired => { 22 }
+ _ => { unimplemented!(""); }}, serializer);}
                 }
                 
                 impl SseEncode for crate::api::bmc::ResetRequest {
@@ -11004,10 +11120,10 @@ crate::api::virt::VirtUploadEntryKind::SudoPassword => { 2 }
 
 // Section: imports
 
-use crate::api::pve::*;
-use crate::api::ssh_crypto::*;
-use crate::api::remote_desktop::*;
 use crate::api::virt::*;
+use crate::api::remote_desktop::*;
+use crate::api::ssh_crypto::*;
+use crate::api::pve::*;
 use crate::api::bmc::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};use super::*;
@@ -11139,10 +11255,10 @@ flutter_rust_bridge::frb_generated_boilerplate_io!();
 
 // Section: imports
 
-use crate::api::pve::*;
-use crate::api::ssh_crypto::*;
-use crate::api::remote_desktop::*;
 use crate::api::virt::*;
+use crate::api::remote_desktop::*;
+use crate::api::ssh_crypto::*;
+use crate::api::pve::*;
 use crate::api::bmc::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};use super::*;

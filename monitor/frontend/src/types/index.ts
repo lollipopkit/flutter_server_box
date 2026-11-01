@@ -24,6 +24,8 @@ export interface SystemMetrics {
   // Detail lists are optional for compatibility with older agents.
   gpus?: GpuMetrics[];
   disk_details?: DiskDetail[];
+  // Every block device, mounted or not (Linux `lsblk`); absent on older agents
+  block_devices?: StatusBlockDevice[];
   ifaces?: IfaceMetrics[];
   // Already formatted by the collector, e.g. "up 3 days, 2:14".
   uptime?: string;
@@ -303,6 +305,23 @@ export interface GpuMetrics {
   /// What holds the card's memory (MiB, 0 where the driver does not say).
   /// Absent on older agents.
   processes?: { pid: number; name: string; memory: number }[];
+}
+
+// A block device as the status reads it (`sbm_parser::types::BlockDevice`);
+// the storage app's richer one is `BlockDevice`. Sizes in bytes. `mount` is
+// `[SWAP]` for an active swap area.
+export interface StatusBlockDevice {
+  name: string;
+  path: string;
+  kind: string;
+  model?: string | null;
+  size: number;
+  tran?: string | null;
+  fs_type?: string | null;
+  mount?: string | null;
+  // Mounted, carrying other devices, or an LVM/RAID/LUKS member
+  in_use: boolean;
+  children: StatusBlockDevice[];
 }
 
 export interface DiskDetail {

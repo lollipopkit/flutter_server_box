@@ -1,10 +1,14 @@
+import 'package:fl_lib/generated/l10n/lib_l10n_en.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/data/ssh/tmux/tmux_ids.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
+import 'package:server_box/generated/l10n/l10n_en.dart';
 import 'package:server_box/view/widget/tmux_session_picker_sheet.dart';
 
 void main() {
+  final en = AppLocalizationsEn();
+  final libEn = LibLocalizationsEn();
   final sessions = [
     TmuxPickerSession(
       id: TmuxSessionId(r'$0'),
@@ -39,14 +43,14 @@ void main() {
       greaterThan(tester.getSize(find.byType(Scaffold)).height / 2),
     );
     expect(find.text('main'), findsOneWidget);
-    expect(find.text('2 windows · Attached'), findsOneWidget);
+    expect(find.text('${en.tmuxWindowCount(2)} · ${en.tmuxAttached}'), findsOneWidget);
     expect(find.text('build'), findsOneWidget);
-    expect(find.text('1 window'), findsOneWidget);
+    expect(find.text(en.tmuxWindowCount(1)), findsOneWidget);
     expect(find.byIcon(Icons.check), findsOneWidget);
-    expect(find.text('Skip'), findsNothing);
-    expect(find.text('Disconnect'), findsNothing);
+    expect(find.text(en.tmuxSkip), findsNothing);
+    expect(find.text(en.disconnect), findsNothing);
     expect(
-      tester.getTopLeft(find.text('New session')).dy,
+      tester.getTopLeft(find.text(en.tmuxNewSession)).dy,
       lessThan(tester.getTopLeft(find.text('main')).dy),
     );
     final rows = find.byType(ListTile);
@@ -74,14 +78,14 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    await tester.tap(find.text('New session'));
+    await tester.tap(find.text(en.tmuxNewSession));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.byType(AlertDialog), findsOneWidget);
 
     await tester.enterText(find.byType(TextField), ' work ');
     await tester.pump();
-    await tester.tap(find.text('Okay'));
+    await tester.tap(find.text(libEn.ok));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -103,7 +107,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    await tester.tap(find.text('New session'));
+    await tester.tap(find.text(en.tmuxNewSession));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     // The dialog is above the sheet on the root navigator; the sheet goes
@@ -113,7 +117,7 @@ void main() {
     await tester.pump();
     expect(await future, isNull);
 
-    await tester.tap(find.text('Okay'));
+    await tester.tap(find.text(libEn.ok));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(tester.takeException(), isNull);
@@ -146,13 +150,13 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('server_box-3'), findsOneWidget);
-    await tester.tap(find.text('New session'));
+    await tester.tap(find.text(en.tmuxNewSession));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
     final field = tester.widget<TextField>(find.byType(TextField));
     expect(field.controller?.text, 'server_box-3');
-    await tester.tap(find.text('Okay'));
+    await tester.tap(find.text(libEn.ok));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -172,22 +176,22 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    await tester.tap(find.text('New session'));
+    await tester.tap(find.text(en.tmuxNewSession));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
     await tester.enterText(find.byType(TextField), 'main');
     await tester.pump();
-    expect(find.text('"main" already exists'), findsOneWidget);
+    expect(find.text(en.nameAlreadyExistsFmt('main')), findsOneWidget);
     final okay = tester.widget<TextButton>(
-      find.widgetWithText(TextButton, 'Okay'),
+      find.widgetWithText(TextButton, libEn.ok),
     );
     expect(okay.onPressed, isNull);
 
     await tester.enterText(find.byType(TextField), 'work');
     await tester.pump();
-    expect(find.text('"main" already exists'), findsNothing);
-    await tester.tap(find.text('Okay'));
+    expect(find.text(en.nameAlreadyExistsFmt('main')), findsNothing);
+    await tester.tap(find.text(libEn.ok));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -208,7 +212,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    await tester.tap(find.text('Skip'));
+    await tester.tap(find.text(en.tmuxSkip));
     await tester.pump();
     expect(await future, isA<TmuxPickSkip>());
   });
@@ -225,8 +229,8 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    expect(find.text('Disconnect'), findsOneWidget);
-    await tester.tap(find.text('Disconnect'));
+    expect(find.text(en.disconnect), findsOneWidget);
+    await tester.tap(find.text(en.disconnect));
     await tester.pump();
     expect(await future, isA<TmuxPickDetach>());
   });

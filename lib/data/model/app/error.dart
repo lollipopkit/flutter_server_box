@@ -1,3 +1,4 @@
+import 'package:dartssh2/dartssh2.dart' show SSHChannelOpenError;
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -151,6 +152,15 @@ enum MonitorHttpErrType {
   /// Starting the agent's update needs root, and sudo refused the password
   /// given (or none was).
   sudoRefused,
+
+  /// The Monitor could not connect to the address a relay names: the stream's
+  /// `connect_failed`.
+  targetUnreachable,
+
+  /// The Monitor would not relay to that address for this account: the
+  /// stream's `forbidden`, which covers the role's grant and the addresses
+  /// its `connect` permission allows.
+  relayForbidden,
 }
 
 class MonitorHttpErr extends Err<MonitorHttpErrType> {
@@ -162,6 +172,8 @@ class MonitorHttpErr extends Err<MonitorHttpErrType> {
     MonitorHttpErrType.notGranted => l10n.monitorNoRemoteAccess,
     MonitorHttpErrType.agentTooOld => l10n.monitorAgentTooOldTip,
     MonitorHttpErrType.clientTooOld => l10n.monitorClientTooOld,
+    MonitorHttpErrType.targetUnreachable => l10n.tcpTargetUnreachable,
+    MonitorHttpErrType.relayForbidden => l10n.monitorRelayForbidden,
     _ => null,
   };
 }
@@ -210,9 +222,30 @@ class ServerTcpErr extends Err<ServerTcpErrType> {
 
   @override
   String? get solution => switch (type) {
-    ServerTcpErrType.relayNotGranted => l10n.monitorNoRemoteAccess,
+    // Refused by the Monitor itself, which may have said why.
+    ServerTcpErrType.relayNotGranted =>
+      (cause is Err ? (cause as Err).solution : null) ??
+          l10n.monitorNoRemoteAccess,
     ServerTcpErrType.localUnsupported => l10n.localServerUnsupported,
-    _ => cause is Err ? (cause as Err).solution : null,
+    _ => switch (cause) {
+      final Err err => err.solution,
+      // RFC 4254 §5.1's reason codes.
+      SSHChannelOpenError(code: 1) => l10n.sshTcpForwardingProhibited,
+      SSHChannelOpenError(code: 2) => l10n.tcpTargetUnreachable,
+      _ => null,
+    },
+  };
+
+  /// Whether trying again soon may succeed: not when a server's settings
+  /// refused the connection. A target not listening yet may be starting.
+  bool get retryable => switch (type) {
+    ServerTcpErrType.relayNotGranted ||
+    ServerTcpErrType.notOffered ||
+    ServerTcpErrType.localUnsupported => false,
+    ServerTcpErrType.dial => switch (cause) {
+      SSHChannelOpenError(code: 1) => false,
+      _ => true,
+    },
   };
 
   @override
@@ -333,7 +366,9 @@ class VirtErr extends Err<VirtErrType> {
 
   @override
   String? get solution => switch (type) {
-    VirtErrType.relayNotGranted ||
+    VirtErrType.relayNotGranted =>
+      (cause is Err ? (cause as Err).solution : null) ??
+          l10n.monitorNoRemoteAccess,
     VirtErrType.execNotGranted => l10n.monitorNoRemoteAccess,
     VirtErrType.unreachable => cause is Err ? (cause as Err).solution : null,
     _ => null,

@@ -1,7 +1,9 @@
+import { get } from 'svelte/store'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, cleanup, screen, fireEvent } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import TargetTerminal from '../components/TargetTerminal.svelte'
+import { LL } from '../i18n/i18n-svelte'
 import { servers } from '../lib/servers.svelte'
 import { mountTerminal } from '../lib/xterm'
 
@@ -22,6 +24,7 @@ vi.mock('../lib/xterm', () => ({
   })),
 }))
 
+const ll = get(LL)
 const ticketMock = vi.fn(async () => ({ ticket: 'id.secret', expires_in: 30 }))
 
 vi.mock('../lib/api', () => {
@@ -139,7 +142,7 @@ describe('TargetTerminal', () => {
     socket.close()
 
     expect(await screen.findByText('phrased invalid_host')).toBeInTheDocument()
-    await fireEvent.click(screen.getByRole('button', { name: /back/i }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.back() }))
     expect(onedit).toHaveBeenCalled()
   })
 
@@ -148,7 +151,7 @@ describe('TargetTerminal', () => {
     render(TargetTerminal, {
       props: { target: { kind: 'container', id: 'abc' } },
     })
-    expect(await screen.findByText(/could not be loaded/i)).toBeInTheDocument()
+    expect(await screen.findByText(ll.terminalLoadFailed())).toBeInTheDocument()
     expect(FakeSocket.instances.length).toBe(0)
   })
 
@@ -161,6 +164,6 @@ describe('TargetTerminal', () => {
     socket.onopen?.()
     socket.control({ type: 'ready', session: 'abc.def', since: 0 })
     socket.control({ type: 'error', code: 'gap_truncated', message: 'lost' })
-    expect(await screen.findByText(/output was lost/i)).toBeInTheDocument()
+    expect(await screen.findByText(ll.terminalOutputLost())).toBeInTheDocument()
   })
 })

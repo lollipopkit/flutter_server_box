@@ -580,7 +580,7 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('NVIDIA T4 · 0'), findsWidgets);
     // The readings the row had no room for.
-    expect(find.text('Vendor'), findsOneWidget);
+    expect(find.text(app_locale.l10n.vendor), findsOneWidget);
     expect(find.text('nvidia'), findsOneWidget);
     expect(find.text('2150 / 16384 MiB'), findsWidgets);
   });

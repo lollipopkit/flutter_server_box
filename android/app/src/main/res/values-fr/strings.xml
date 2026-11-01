@@ -13,13 +13,13 @@
     <string name="widget_configure_server">Serveur</string>
     <string name="widget_configure_metric">Mesure principale</string>
     <string name="widget_configure_save">Enregistrer</string>
-    <string name="widget_configure_empty">Aucun serveur avec agent monitor pour l\'instant.\nAjoutez-en un dans ServerBox, puis revenez.</string>
+    <string name="widget_configure_empty">Aucun serveur avec ServerBox Monitor activé pour l’instant.\nAjoutez un serveur dans ServerBox, puis revenez ici.</string>
     <string name="widget_metric_cpu">Processeur</string>
     <string name="widget_metric_memory">Mémoire</string>
     <string name="widget_metric_disk">Disque</string>
     <string name="widget_metric_network">Réseau</string>
     <string name="widget_err_not_configured">Touchez pour choisir un serveur</string>
-    <string name="widget_err_no_token">Aucun identifiant — ouvrez ServerBox</string>
+    <string name="widget_err_no_token">Identifiants d’accès manquants. Ouvrez ServerBox.</string>
     <string name="widget_err_insecure">HTTPS requis</string>
     <string name="widget_err_network">Erreur réseau</string>
     <string name="widget_err_timeout">Délai dépassé</string>
@@ -28,10 +28,10 @@
     <string name="widget_small_label">Valeurs du serveur</string>
     <string name="widget_medium_label">Graphiques du serveur</string>
     <string name="widget_label">État du serveur</string>
-    <string name="widget_description">Processeur, mémoire, disque et réseau en un coup d’œil. Agrandissez-le pour en voir plus.</string>
+    <string name="widget_description">Consultez rapidement l’état du processeur, de la mémoire, du disque et du réseau. Agrandissez le widget pour voir plus d’informations.</string>
 
-    <string name="process_text_label">Enregistrer comme extrait</string>
-    <string name="tile_no_sessions">Aucune session active</string>
+    <string name="process_text_label">Enregistrer comme extrait de code</string>
+    <string name="tile_no_sessions">Aucune session en cours</string>
     <plurals name="tile_sessions">
         <item quantity="one">%d session</item>
         <item quantity="other">%d sessions</item>

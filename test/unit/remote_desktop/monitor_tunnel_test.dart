@@ -196,7 +196,13 @@ void main() {
         // The app's own transport error, not a bare `Exception`: a session
         // reports this one to the page, and `RemoteDesktopSessions` retries on
         // it rather than on the type.
-        throwsA(isA<MonitorHttpErr>()),
+        throwsA(
+          isA<MonitorHttpErr>().having(
+            (e) => e.type,
+            'type',
+            MonitorHttpErrType.targetUnreachable,
+          ),
+        ),
       );
     });
   });

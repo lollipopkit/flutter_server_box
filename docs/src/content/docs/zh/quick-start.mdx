@@ -17,30 +17,30 @@ description: 添加服务器并查看监控数据
    - **密码或密钥（Password or Key）**：选择一种身份验证方式
 4. 点击 **保存（Save）**。
 
-### 使用 Monitor agent 连接
+### 使用 Monitor 连接
 
-如果服务器不方便开放 SSH 端口，也可以使用 Monitor agent：
+如果服务器不方便开放 SSH 端口，也可以使用 Monitor：
 
-1. 在服务器上安装并配置 [Monitor agent](/docs/zh/advanced/monitor-agent/)。
+1. 在服务器上安装并配置 [Monitor](/docs/zh/advanced/monitor-agent/)。
 2. 在添加服务器页面开启 **Monitor HTTP**。
-3. 填写 agent 地址和它的密码；使用自签名证书时，按需开启 **Monitor Ignore certificate**。
+3. 填写 Monitor 地址和它的密码；使用自签名证书时，按需开启 **Monitor Ignore certificate**。
 4. 保存配置。
 
-SSH 和 Monitor HTTP 可以同时启用。两者同时存在时，**优先使用**只决定 App 先尝试哪一种连接，另一种连接仍然可用。仅配置 Monitor HTTP 的服务器不包含 SSH 凭据，其命令、终端和文件功能的范围由运行 agent 的系统账户决定。
+SSH 和 Monitor HTTP 可以同时启用。两者同时存在时，**优先使用**只决定 App 先尝试哪一种连接，另一种连接仍然可用。仅配置 Monitor HTTP 的服务器不包含 SSH 凭据，其命令、终端和文件功能的范围由运行 Monitor 的系统账户决定。
 
 ## 第二步：连接并查看状态
 
 1. 点击服务器卡片。
 2. 连接成功后，你可以查看 CPU、内存、交换分区、磁盘和网络等状态。
 
-使用 Monitor agent 的服务器可以显示 App 连接前已经积累的历史数据。仅使用 SSH 的服务器会在 App 开始采样时建立本地历史记录。
+使用 Monitor 的服务器可以显示 App 连接前已经积累的历史数据。仅使用 SSH 的服务器会在 App 开始采样时建立本地历史记录。
 
 ## 第三步：探索功能
 
 连接后可以：
 
 - **打开终端**：SSH 连接可直接打开终端；Monitor HTTP 连接以 agent 运行所用的账户打开 shell。
-- **浏览文件**：SSH 连接使用 SFTP；Monitor HTTP 连接使用 agent 的文件 API。
+- **浏览文件**：SSH 连接使用 SFTP；Monitor HTTP 连接使用 Monitor 的文件 API。
 - **管理容器**：查看和控制 Docker 或 Podman 容器。
 - **查看进程**：检查正在运行的进程。
 - **运行代码片段**：执行已保存的命令。
@@ -49,5 +49,5 @@ SSH 和 Monitor HTTP 可以同时启用。两者同时存在时，**优先使用
 ## 实用设置
 
 - **生物识别**：在移动端启用 Face ID、Touch ID 或指纹，快速解锁 App。
-- **主屏幕小组件**：安装 Monitor agent 后，将服务器添加到 iOS 或 Android 小组件。
+- **主屏幕小组件**：安装 Monitor 后，将服务器添加到 iOS 或 Android 小组件。
 - **Android 后台运行**：需要持续保持连接时，在 App 设置中开启后台运行，并允许通知和后台活动。

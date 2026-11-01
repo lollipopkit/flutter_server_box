@@ -185,7 +185,7 @@
   "@agentSaveServerTip": {
     "description": "Help text for the agent save server setting or action."
   },
-  "agentMonitorOptional": "Monitor agent (optional)",
+  "agentMonitorOptional": "Monitor (optional)",
   "@agentMonitorOptional": {
     "description": "User-facing label or message for agent monitor optional."
   },
@@ -314,7 +314,7 @@
   "@remoteBackupPasswordRequired": {
     "description": "User-facing label or message for remote backup password required."
   },
-  "monitorHttpsRequired": "A remote monitor agent needs HTTPS, unless HTTP is allowed for it.",
+  "monitorHttpsRequired": "A remote Monitor needs HTTPS, unless HTTP is allowed for it.",
   "@monitorHttpsRequired": {
     "description": "User-facing label or message for monitor HTTPS required."
   },
@@ -322,7 +322,7 @@
   "@monitorAllowInsecureHttp": {
     "description": "User-facing label or message for monitor allow insecure HTTP."
   },
-  "plainHttpTitle": "This agent is served over plain HTTP",
+  "plainHttpTitle": "This Monitor is served over plain HTTP",
   "@plainHttpTitle": {
     "description": "Title shown for the plain HTTP dialog or section."
   },
@@ -342,7 +342,7 @@
   "@monitorAllowInsecureHttpTip": {
     "description": "Help text for the monitor allow insecure HTTP setting or action."
   },
-  "monitorHttpTip": "Read this server's status from a **monitor** agent's HTTP API instead of running commands over SSH.\n\nThe agent has to be installed on the server first, and it is what makes trends, the watch app and the home-screen widgets possible.\n\n[Setting up a monitor agent]({url})",
+  "monitorHttpTip": "Read this server's status from the **Monitor**'s HTTP API instead of running commands over SSH.\n\nThe Monitor has to be installed on the server first, and it is what makes trends, the watch app and the home-screen widgets possible.\n\n[Setting up the Monitor]({url})",
   "@monitorHttpTip": {
     "description": "Help text for the monitor HTTP setting or action.",
     "placeholders": {
@@ -886,7 +886,7 @@
   "@jumpServerAndProxyCommandCannotBeUsedTogether": {
     "description": "User-facing label or message for jump server and proxy command cannot be used together."
   },
-  "noConnectionMethod": "Configure SSH, a monitor agent, or both",
+  "noConnectionMethod": "Configure SSH, the Monitor, or both",
   "@noConnectionMethod": {
     "description": "User-facing label or message for no connection method."
   },
@@ -1292,7 +1292,7 @@
   "@second": {
     "description": "User-facing label or message for second."
   },
-  "serverFilesUnavailableTip": "Needs SSH to this server, or server_box_monitor installed with its file API on.",
+  "serverFilesUnavailableTip": "Needs SSH to this server, or the Monitor installed with its file API on.",
   "@serverFilesUnavailableTip": {
     "description": "Help text for the server files unavailable setting or action."
   },
@@ -1481,8 +1481,8 @@
   },
   "tempIsCelsiusTip": "When enabled, the temperature value will be treated as Celsius instead of millicelsius. Turn on only if the temperature displays incorrectly (e.g., showing 0.1°C instead of 58°C).",
   "diskCountsNetwork": "Count network filesystems in the total",
-  "diskCountsNetworkTip": "NFS, SMB and similar mounts are always listed. Their capacity belongs to another machine, so by default they are left out of the disk total. Applies when status is collected over SSH; over the monitor agent, the agent's own setting decides.",
-  "diskCountsNetworkAgentTip": "NFS, SMB and similar mounts are always listed. Their capacity belongs to another machine, so by default they are left out of the disk total — the figure the agent stores in its history and checks disk alerts against.",
+  "diskCountsNetworkTip": "NFS, SMB and similar mounts are always listed. Their capacity belongs to another machine, so by default they are left out of the disk total. Applies when status is collected over SSH; over the Monitor, the Monitor's own setting decides.",
+  "diskCountsNetworkAgentTip": "NFS, SMB and similar mounts are always listed. Their capacity belongs to another machine, so by default they are left out of the disk total — the figure the Monitor stores in its history and checks disk alerts against.",
   "@tempIsCelsiusTip": {
     "description": "Help text for the temp is celsius setting or action."
   },
@@ -1957,11 +1957,11 @@
   "@watchServers": {
     "description": "User-facing label or message for watch servers."
   },
-  "watchServersTip": "The watch fetches from the monitor on its own, so only servers with one can be picked.",
+  "watchServersTip": "The watch fetches from the Monitor on its own, so only servers with the Monitor can be picked.",
   "@watchServersTip": {
     "description": "Help text for the watch servers setting or action."
   },
-  "watchNoMonitorServer": "No server has a monitor agent configured",
+  "watchNoMonitorServer": "No server has the Monitor configured",
   "@watchNoMonitorServer": {
     "description": "User-facing label or message for watch no monitor server."
   },
@@ -1969,7 +1969,7 @@
   "@legacyStatusGoneTitle": {
     "description": "Title shown for the legacy status gone dialog or section."
   },
-  "legacyStatusGoneBody": "The watch app and home widgets used to read a `/status` address typed by hand. That endpoint is gone: it could only report current values as text, which is why they could never show a chart.\n\nThey now read the monitor agent's authenticated API, so they draw trends and stay in step with the app on their own. Configure the server in the app once, and every watch and widget picks it up.",
+  "legacyStatusGoneBody": "The watch app and home widgets used to read a `/status` address typed by hand. That endpoint is gone: it could only report current values as text, which is why they could never show a chart.\n\nThey now read the Monitor's authenticated API, so they draw trends and stay in step with the app on their own. Configure the server in the app once, and every watch and widget picks it up.",
   "@legacyStatusGoneBody": {
     "description": "Explanatory message shown in the legacy status gone dialog or notice."
   },
@@ -2693,7 +2693,7 @@
   "@cores": {
     "description": "User-facing label or message for cores."
   },
-  "historyNoStored": "Only a monitor agent stores history. This connection keeps what this app has seen since it connected.",
+  "historyNoStored": "Only the Monitor stores history. This connection keeps what this app has seen since it connected.",
   "@historyNoStored": {
     "description": "User-facing label or message for history no stored."
   },
@@ -2713,11 +2713,11 @@
   "@to": {
     "description": "User-facing label or message for to."
   },
-  "beyondRetention": "beyond what this agent kept",
+  "beyondRetention": "beyond what this Monitor kept",
   "@beyondRetention": {
     "description": "User-facing label or message for beyond retention."
   },
-  "agentRetentionFmt": "Agent keeps {kept}",
+  "agentRetentionFmt": "Monitor keeps {kept}",
   "@agentRetentionFmt": {
     "description": "Formatted user-facing message for agent retention; runtime values are supplied by placeholders.",
     "placeholders": {
@@ -2973,6 +2973,18 @@
       }
     }
   },
+  "filesystems": "Filesystems",
+  "@filesystems": {
+    "description": "Section title for the mounted filesystems in the disk device list."
+  },
+  "blockDevices": "Block devices",
+  "@blockDevices": {
+    "description": "Section title for every block device (disks, partitions) whether mounted or not."
+  },
+  "notMounted": "Not mounted",
+  "@notMounted": {
+    "description": "Shown for a block device or partition that nothing is mounted from."
+  },
   "unitDevices": "devices",
   "@unitDevices": {
     "description": "User-facing label or message for unit devices."
@@ -3146,7 +3158,7 @@
   "@localServerUnsupported": {
     "description": "User-facing label or message for local server unsupported."
   },
-  "remoteDesktopIntro": "Open a server's RDP or VNC desktop inside the app. The connection goes through the server's SSH connection or its Monitor agent, so the desktop port does not have to be reachable from the network.",
+  "remoteDesktopIntro": "Open a server's RDP or VNC desktop inside the app. The connection goes through the server's SSH connection or its Monitor, so the desktop port does not have to be reachable from the network.",
   "@remoteDesktopIntro": {
     "description": "Introductory text for the remote desktop screen or section."
   },
@@ -3154,7 +3166,7 @@
   "@remoteDesktopIntroProfiles": {
     "description": "User-facing label or message for remote desktop intro profiles."
   },
-  "localServerIntro": "Add the device running ServerBox as a server. Status, processes, services, containers, the terminal and files all work without SSH or a Monitor agent.",
+  "localServerIntro": "Add the device running ServerBox as a server. Status, processes, services, containers, the terminal and files all work without SSH or the Monitor.",
   "@localServerIntro": {
     "description": "Introductory text for the local server screen or section."
   },
@@ -3170,11 +3182,11 @@
   "@transportSectionOff": {
     "description": "User-facing label or message for transport section off."
   },
-  "monitorAgent": "Monitor Agent",
+  "monitorAgent": "Monitor",
   "@monitorAgent": {
     "description": "User-facing label or message for monitor agent."
   },
-  "plainHttpEditTip": "Credentials and metrics cross the network unencrypted. Keep it to a LAN or a Tailscale address, or put the agent behind TLS.",
+  "plainHttpEditTip": "Credentials and metrics cross the network unencrypted. Keep it to a LAN or a Tailscale address, or put the Monitor behind TLS.",
   "@plainHttpEditTip": {
     "description": "Help text for the plain HTTP edit setting or action."
   },
@@ -3492,11 +3504,11 @@
   "@monitorSettings": {
     "description": "User-facing label or message for monitor settings."
   },
-  "monitorAgentDefault": "Agent default",
+  "monitorAgentDefault": "Monitor default",
   "@monitorAgentDefault": {
     "description": "User-facing label or message for monitor agent default."
   },
-  "monitorNeedsRestart": "Takes effect after the agent restarts",
+  "monitorNeedsRestart": "Takes effect after the Monitor restarts",
   "@monitorNeedsRestart": {
     "description": "User-facing label or message for monitor needs restart."
   },
@@ -3560,7 +3572,7 @@
   "@pushHeaders": {
     "description": "User-facing label or message for push headers."
   },
-  "pushSecretSet": "Set on the agent, not shown",
+  "pushSecretSet": "Set on the Monitor, not shown",
   "@pushSecretSet": {
     "description": "User-facing label or message for push secret set."
   },
@@ -3584,7 +3596,7 @@
   "@pushTestMessage": {
     "description": "User-facing label or message for push test message."
   },
-  "pushUnknownType": "This agent has no sender for this channel type, so its settings are not shown. It can be removed here, or edited in the agent's config.toml.",
+  "pushUnknownType": "This Monitor has no sender for this channel type, so its settings are not shown. It can be removed here, or edited in the Monitor's config.toml.",
   "@pushUnknownType": {
     "description": "User-facing label or message for push unknown type."
   },
@@ -3596,7 +3608,7 @@
   "@dataRetention": {
     "description": "User-facing label or message for data retention."
   },
-  "dataRetentionTip": "Off means the agent never deletes anything and its database grows without limit.",
+  "dataRetentionTip": "Off means the Monitor never deletes anything and its database grows without limit.",
   "@dataRetentionTip": {
     "description": "Help text for the data retention setting or action."
   },
@@ -3620,19 +3632,19 @@
   "@corsOrigins": {
     "description": "User-facing label or message for cors origins."
   },
-  "corsOriginsTip": "Origins a browser panel may call this agent from. Empty means same-origin only.",
+  "corsOriginsTip": "Origins a browser panel may call this Monitor from. Empty means same-origin only.",
   "@corsOriginsTip": {
     "description": "Help text for the cors origins setting or action."
   },
-  "monitorNoRemoteAccess": "This agent refuses everything beyond monitoring over plain HTTP. Connect over HTTPS, or allow plain HTTP on both the agent ([remote_access] allow_insecure) and this app.",
+  "monitorNoRemoteAccess": "This Monitor is set up for monitoring only. You can't open a terminal, run commands, or browse files here. To enable these features, edit [remote_access] in the Monitor's config.toml.",
   "@monitorNoRemoteAccess": {
     "description": "User-facing label or message for monitor no remote access."
   },
-  "monitorAgentTooOld": "This Monitor agent is older than this version of ServerBox supports. Update the agent on the server.",
+  "monitorAgentTooOld": "This Monitor is older than this version of ServerBox supports. Update the Monitor on the server.",
   "@monitorAgentTooOld": {
     "description": "Shown when the Monitor agent speaks an older protocol than this app reads."
   },
-  "monitorClientTooOld": "This Monitor agent no longer supports this version of ServerBox. Update the app.",
+  "monitorClientTooOld": "This Monitor no longer supports this version of ServerBox. Update the app.",
   "@monitorClientTooOld": {
     "description": "Shown when the Monitor agent no longer answers this app's protocol (HTTP 426)."
   },
@@ -3805,7 +3817,7 @@
   "remoteDesktopNoProfiles": "No remote desktop profiles",
   "remoteDesktopAdd": "Add remote desktop",
   "remoteDesktopEdit": "Edit remote desktop",
-  "remoteDesktopTargetTip": "The target is resolved from the SSH server or monitor agent. Localhost refers to that machine.",
+  "remoteDesktopTargetTip": "The target is resolved from the SSH server or the Monitor. Localhost refers to that machine.",
   "remoteDesktopDomain": "Domain (optional)",
   "remoteDesktopPassword": "Password (optional)",
   "remoteDesktopSavePassword": "Save password",
@@ -3827,6 +3839,32 @@
   "remoteDesktopVncPasswordAscii": "Classic VNC passwords must contain ASCII characters only.",
   "remoteDesktopCertificateRequired": "Certificate confirmation required",
   "remoteDesktopWaiting": "Waiting for desktop…",
+  "remoteDesktopFailStandardRdpSecurityOnly": "The server only offers Standard RDP Security (RC4), which is not supported. In xrdp.ini set security_layer=tls (or negotiate) and make sure xrdp can read its TLS certificate.",
+  "remoteDesktopFailServerCertificateMissing": "The server has no TLS certificate. Install one on the server; for xrdp, set certificate and key_file in xrdp.ini.",
+  "remoteDesktopFailClientCertificateRequired": "The server requires a client certificate (smart card logon), which is not supported.",
+  "remoteDesktopFailWrongCredentials": "Wrong username or password.",
+  "remoteDesktopFailAccountLockedOut": "The account is locked out. Try again later, or ask an administrator to unlock it.",
+  "remoteDesktopFailAccountDisabled": "The account is disabled.",
+  "remoteDesktopFailAccountExpired": "The account has expired.",
+  "remoteDesktopFailPasswordExpired": "The password has expired or must be changed. Change it on the server first.",
+  "remoteDesktopFailLogonRestricted": "The account may not log on at this time or from this device, or its blank password is not allowed for remote logon.",
+  "remoteDesktopFailRemoteLogonDenied": "The account is not allowed to log on through Remote Desktop. Add it to the Remote Desktop Users group on the server.",
+  "remoteDesktopFailFreshCredentialsRequired": "The server does not accept saved credentials. Enter the password again.",
+  "remoteDesktopFailIdleTimeout": "The session was disconnected after the server's idle time limit.",
+  "remoteDesktopFailSessionTimeLimit": "The session reached the server's time limit.",
+  "remoteDesktopFailReplacedByOtherConnection": "Another connection took over this session.",
+  "remoteDesktopFailDisconnectedOnServer": "The session was disconnected on the server.",
+  "remoteDesktopFailLoggedOffByAdministrator": "An administrator logged off the session.",
+  "remoteDesktopFailLoggedOff": "The session was logged off.",
+  "remoteDesktopFailServerShutdown": "The server is shutting down.",
+  "remoteDesktopFailServerReboot": "The server is restarting.",
+  "remoteDesktopFailServerDeniedConnection": "The server denied the connection.",
+  "remoteDesktopFailLicensingFailed": "Remote Desktop licensing failed on the server. Check its license server and Client Access Licenses.",
+  "remoteDesktopFailVncSecurityUnsupported": "The VNC server offers no supported security type; only a VNC password or none is supported. For TigerVNC, set SecurityTypes=VncAuth.",
+  "remoteDesktopFailPasswordRequired": "The VNC server requires a password.",
+  "tcpTargetUnreachable": "The server could not connect to this address. Check that the service is running and listening on that port.",
+  "sshTcpForwardingProhibited": "The SSH server refused to forward this connection. Check AllowTcpForwarding and PermitOpen in its sshd_config, and any no-port-forwarding or permitopen option on the key in authorized_keys.",
+  "monitorRelayForbidden": "This Monitor account may not connect to this address. Its role's connect permission must allow it.",
   "remoteDesktopCertificateChanged": "Remote desktop certificate changed",
   "remoteDesktopTrustCertificate": "Trust certificate?",
   "remoteDesktopCertificateChangedTip": "The certificate fingerprint no longer matches the saved value. Verify the new fingerprint before replacing trust.",
@@ -3968,7 +4006,7 @@
   "@virtIntroLibvirt": {
     "description": "Intro page text about libvirt/KVM hosts."
   },
-  "virtIntroTransports": "Both work over SSH, through a Monitor agent, or on this device.",
+  "virtIntroTransports": "Both work over SSH, through the Monitor, or on this device.",
   "@virtIntroTransports": {
     "description": "Intro page text about the transports the Virtualization tab works over."
   },
@@ -4180,11 +4218,11 @@
   "@virtErrCertChanged": {
     "description": "Error: the PVE certificate is not the one confirmed before."
   },
-  "virtErrRelayNotGranted": "The Monitor agent does not relay connections",
+  "virtErrRelayNotGranted": "The Monitor does not open TCP connections from the server for this account (connect permission)",
   "@virtErrRelayNotGranted": {
     "description": "Error: the Monitor agent does not relay TCP connections to PVE."
   },
-  "virtErrExecNotGranted": "The Monitor agent does not run commands",
+  "virtErrExecNotGranted": "The Monitor does not run commands",
   "@virtErrExecNotGranted": {
     "description": "Error: the Monitor agent does not run commands (its full access is off), so libvirt cannot be reached through it."
   },
@@ -6685,7 +6723,7 @@
   },
   "reduceMotion": "Reduce motion",
   "copyLink": "Copy link",
-  "funcNeedsAgentHttps": "{func} needs HTTPS to this Monitor agent, or plain HTTP allowed on both the agent and this app.",
+  "funcNeedsAgentHttps": "{func} needs HTTPS to this Monitor, or plain HTTP allowed on both the Monitor and this app.",
   "@funcNeedsAgentHttps": {
     "placeholders": {
       "func": { "type": "String" }
@@ -6698,7 +6736,7 @@
   "monitorPasswordTooShort": "At least 8 characters",
   "monitorPasswordMismatch": "The passwords do not match",
   "monitorErrReauth": "Your password was wrong.",
-  "monitorPasswordNotSaved": "The password was changed on the agent, but the app could not save it. Update this server's Monitor password in its settings.",
+  "monitorPasswordNotSaved": "The password was changed on the Monitor, but the app could not save it. Update this server's Monitor password in its settings.",
   "@monitorPasswordNotSaved": {
     "description": "Shown when the agent accepted a new password but the app failed to update the credential it stores for the server."
   },
@@ -6987,15 +7025,15 @@
   "@firewallInvalidForwardPort": {
     "description": "Validation error for a firewalld forwarded port."
   },
-  "monitorSyncNeedsServer": "Pick the server whose monitor agent stores the backup.",
+  "monitorSyncNeedsServer": "Pick the server whose Monitor stores the backup.",
   "@monitorSyncNeedsServer": {
     "description": "Backup sync to a monitor agent: no server is chosen yet."
   },
-  "monitorBackupUnsupported": "This monitor agent cannot store backups. Update the agent.",
+  "monitorBackupUnsupported": "This Monitor cannot store backups. Update the Monitor.",
   "@monitorBackupUnsupported": {
     "description": "Backup sync to a monitor agent: the agent is too old to store backups."
   },
-  "monitorBackupTooLarge": "The backup is larger than the monitor agent accepts ({max}).",
+  "monitorBackupTooLarge": "The backup is larger than the Monitor accepts ({max}).",
   "@monitorBackupTooLarge": {
     "description": "Backup sync to a monitor agent: the file exceeds the agent's size limit, given as max.",
     "placeholders": {
@@ -7004,7 +7042,7 @@
       }
     }
   },
-  "monitorBackupTooMany": "The monitor agent already holds as many backups as it allows. Delete one first.",
+  "monitorBackupTooMany": "The Monitor already holds as many backups as it allows. Delete one first.",
   "@monitorBackupTooMany": {
     "description": "Backup sync to a monitor agent: the agent's blob count limit is reached."
   },

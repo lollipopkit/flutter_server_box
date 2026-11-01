@@ -16,6 +16,7 @@ import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/status.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
+import 'package:server_box/generated/l10n/l10n_en.dart';
 import 'package:server_box/src/rust/api/cron.dart' as ffi;
 import 'package:server_box/view/page/scheduled_tasks.dart';
 
@@ -74,6 +75,7 @@ final class _FakeServerNotifier extends ServerNotifier {
 
 void main() {
   setUpAll(initRustLibForTest);
+  final en = AppLocalizationsEn();
 
   final page = ScheduledTasksPage(
     args: SpiRequiredArgs(spiFixture(id: _sid, name: 'hk')),
@@ -127,20 +129,20 @@ void main() {
     await pump(tester, size: const Size(393, 852));
 
     expect(tester.takeException(), isNull);
-    expect(find.text('ENABLED · 3'), findsOneWidget);
-    expect(find.text('DISABLED · 1'), findsOneWidget);
+    expect(find.text('${en.scheduledTaskEnabled.toUpperCase()} · 3'), findsOneWidget);
+    expect(find.text('${libL10n.disabled.toUpperCase()} · 1'), findsOneWidget);
     // A schedule is read out, and the expression stays beside it.
-    expect(find.text('Every 5 minutes'), findsOneWidget);
-    expect(find.text('At boot'), findsOneWidget);
+    expect(find.text(en.cronEveryMinsFmt(5)), findsOneWidget);
+    expect(find.text(en.cronAtBoot), findsOneWidget);
     expect(find.text('*/5 * * * *'), findsOneWidget);
     // A disabled task says why it will not run.
-    expect(find.text('Commented out'), findsOneWidget);
+    expect(find.text(en.scheduledTaskCommentedOut), findsOneWidget);
     // What the page does not manage is kept, and says how much of it there is.
-    expect(find.text('Preserved lines'), findsOneWidget);
-    expect(find.textContaining('2 · '), findsOneWidget);
+    expect(find.text(en.scheduledTaskPreserved), findsOneWidget);
+    expect(find.text('2 · ${en.scheduledTaskPreserveTip}'), findsOneWidget);
     expect(find.byType(FloatingActionButton), findsOneWidget);
     // The filter is a desktop affordance; a phone has the list and no room.
-    expect(find.text('Filter tasks'), findsNothing);
+    expect(find.text(en.scheduledTaskFilterHint), findsNothing);
 
     await close(tester);
   });
@@ -155,10 +157,10 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
     expect(tester.takeException(), isNull);
-    expect(find.text('Enable now'), findsOneWidget);
+    expect(find.text(en.scheduledTaskEnableNow), findsOneWidget);
     // Five fields side by side on a 393pt screen, each still saying which it
     // is — the row that has the least room to be right.
-    expect(find.text('Day of month'), findsOneWidget);
+    expect(find.text(en.scheduledTaskFieldDayOfMonth), findsOneWidget);
 
     // Below the sheet's own height: the form is taller than 60% of it.
     await tester.ensureVisible(find.widgetWithText(TextButton, libL10n.cancel));
@@ -166,9 +168,9 @@ void main() {
     for (var i = 0; i < 5; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
-    expect(find.text('Enable now'), findsNothing);
+    expect(find.text(en.scheduledTaskEnableNow), findsNothing);
 
-    await tester.tap(find.byTooltip('Raw crontab'));
+    await tester.tap(find.byTooltip(en.scheduledTaskRaw));
     for (var i = 0; i < 5; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
@@ -190,12 +192,12 @@ void main() {
     await pump(tester, size: const Size(1100, 800));
 
     expect(tester.takeException(), isNull);
-    expect(find.text('Filter tasks'), findsOneWidget);
-    expect(find.widgetWithText(FilledButton, 'Add task'), findsOneWidget);
+    expect(find.text(en.scheduledTaskFilterHint), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, en.scheduledTaskAdd), findsOneWidget);
     expect(find.byType(FloatingActionButton), findsNothing);
-    expect(find.text('4 tasks · 3 enabled'), findsOneWidget);
+    expect(find.text(en.scheduledTaskSummaryFmt(3, 4)), findsOneWidget);
     // The next run is the one thing a crontab does not say for itself.
-    expect(find.text('Next run'), findsOneWidget);
+    expect(find.text(en.scheduledTaskNextRun), findsOneWidget);
 
     await close(tester);
   });
@@ -228,13 +230,13 @@ void main() {
     await tester.pump();
 
     expect(tester.takeException(), isNull);
-    expect(find.text('Every day at 02:00'), findsOneWidget);
-    expect(find.text('Every 5 minutes'), findsNothing);
+    expect(find.text(en.cronDailyAtFmt('02:00')), findsOneWidget);
+    expect(find.text(en.cronEveryMinsFmt(5)), findsNothing);
     // A filter narrows the page to tasks: the banner would name one the
     // filter has just taken off the page, and the preserved lines answer a
     // question nobody asked.
-    expect(find.text('Next run'), findsNothing);
-    expect(find.text('Preserved lines'), findsNothing);
+    expect(find.text(en.scheduledTaskNextRun), findsNothing);
+    expect(find.text(en.scheduledTaskPreserved), findsNothing);
 
     await tester.enterText(find.byType(TextField).first, 'nothing matches');
     await tester.pump();
@@ -248,22 +250,22 @@ void main() {
   ) async {
     await pump(tester, size: const Size(1100, 800));
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Add task'));
+    await tester.tap(find.widgetWithText(FilledButton, en.scheduledTaskAdd));
     for (var i = 0; i < 4; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
 
     expect(tester.takeException(), isNull);
-    expect(find.text('Enable now'), findsOneWidget);
+    expect(find.text(en.scheduledTaskEnableNow), findsOneWidget);
     // One form at every width. A dialog here gave the fields a surface the
     // same colour as themselves, and made the same form two things.
     expect(find.byType(Dialog), findsNothing);
     expect(find.byType(BottomSheet), findsOneWidget);
     // Five fields, each labelled by which one it is.
-    expect(find.text('Day of month'), findsOneWidget);
-    expect(find.text('Day of week'), findsOneWidget);
+    expect(find.text(en.scheduledTaskFieldDayOfMonth), findsOneWidget);
+    expect(find.text(en.scheduledTaskFieldDayOfWeek), findsOneWidget);
     // The preview says what the fields add up to, before anything is saved.
-    expect(find.text('Every day at 02:00'), findsWidgets);
+    expect(find.text(en.cronDailyAtFmt('02:00')), findsWidgets);
 
     // Below the sheet's own height: the form is taller than 60% of it.
     await tester.ensureVisible(find.widgetWithText(TextButton, libL10n.cancel));
@@ -271,7 +273,7 @@ void main() {
     for (var i = 0; i < 4; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
-    expect(find.text('Enable now'), findsNothing);
+    expect(find.text(en.scheduledTaskEnableNow), findsNothing);
 
     await close(tester);
   });

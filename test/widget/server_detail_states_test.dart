@@ -31,6 +31,7 @@ import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
 import 'package:server_box/view/widget/server_func_btns.dart';
 
+import '../helpers/l10n.dart';
 import '../helpers/spi_fixture.dart';
 import '../helpers/test_db.dart';
 
@@ -384,7 +385,9 @@ void main() {
 
     expect(tester.takeException(), isNull);
     // Said at the top of the page, once, with the way to ask again.
-    final said = find.textContaining(RegExp(r'Everything below is from'));
+    final said = find.textContaining(
+      startOf(app_locale.l10n.staleSinceFmt(l10nHole, l10nHole)),
+    );
     expect(said, findsOneWidget);
     expect(find.text(libL10n.refresh), findsOneWidget);
     // In a card about as tall as the way to ask again, which is the tallest
@@ -403,7 +406,8 @@ void main() {
     );
     // And in the rows, where the note is the timestamp rather than what the
     // figure is of.
-    expect(find.textContaining(RegExp(r'^at \d')), findsWidgets);
+    final at = startOf(app_locale.l10n.atTimeFmt(l10nHole)).pattern;
+    expect(find.textContaining(RegExp('$at\\d')), findsWidgets);
     // The chart stops where the samples do, and says so.
     final band = find.text(app_locale.l10n.noData);
     expect(band, findsOneWidget);

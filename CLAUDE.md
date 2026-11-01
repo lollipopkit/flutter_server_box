@@ -20,6 +20,7 @@ Flutter app for managing servers, in a Rust workspace monorepo. Feature notes li
 - Opt-in e2e, skipped when unset: `SBM_E2E_SSH_HOST` in `.env` + `cargo test -p sbm_parser --test ssh_e2e -- --ignored` (libvirt: `-p sbm_virt`); RDP: `SBM_E2E_RDP_{HOST,PORT,USER,PASSWORD}` + `cargo test -p sbm_ffi --lib rdp_e2e -- --ignored` (an alpine `xrdp xorgxrdp` container serves); `flutter test test/e2e/virt_real_test.dart` (variables in its header; dartssh2 has no ssh-agent, so use `SBM_E2E_SSH_IDENTITY` or `SBM_E2E_SSH_KEY_PASSPHRASE`).
 - Backups and chats end to end, each starting what it needs on loopback: `scripts/monitor-backup-e2e.sh` (the agent's, rclone + nginx WebDAV, Go's age), `scripts/app-backup-e2e.sh` (the app's sync to WebDAV and an agent, the `age` CLI), `scripts/agent-chat-encryption-e2e.sh OLD NEW` (Agent mode's chats encrypted in place, an older agent binary then this one). A test that sets up `TestWidgetsFlutterBinding` and makes real HTTP requests clears `HttpOverrides.global`: the binding answers every request 400.
 - Widget tests whose tree writes a store: `openTestDb()` in `setUp`, `SqliteDb.close` in `tearDown`, the store's `forTest()` — many widgets persist on their own, and a real file write in fake-async hangs.
+- **UI text in a test comes from the localization**, never a copied string: the instance the code reads (`l10n`, `libL10n`), else `AppLocalizationsEn()` / `LibLocalizationsEn()` / `LlmLocalizationsEn()`; panel: `get(LL).key()`. A message embedded in a longer text: `startOf` (`test/helpers/l10n.dart`). Server output and fixture data stay literal.
 - Breakpoints: size `tester.view.physicalSize` + `devicePixelRatio`. `pumpAndSettle` never returns with a text field; use `pump(duration)`.
 
 ### CI
@@ -49,7 +50,7 @@ Flutter app for managing servers, in a Rust workspace monorepo. Feature notes li
 - `monitor/` — the agent (Rust + Svelte panel), see `monitor/CLAUDE.md`. `monitor/sdk/`: what installed desk apps use: `serverbox-desk` (the bridge client, on npm; Apache-2.0 for closed third-party apps; it also puts the desk's design system, served by the agent, on the app's page) and a template. Machine pages are listed as `features` in `/capabilities`.
 - `lib/core/` utilities, `lib/view/` UI, `lib/data/{model,provider,store}/`, `lib/src/rust/` generated, `lib/hive/` legacy adapters for `HiveImport` only (TODO: remove).
 - `packages/` — Dart forks as submodules (dartssh2, xterm, fl_lib, fl_build, …) and the in-repo `webui`. `packages/fl_tty` — the shell on this device, shared with LLMBox: pty, rootfs (`Rootfs`, manifest), proot (Android) and ish-arm64 (iOS, `packages/fl_tty/third_party/ish-arm64`), all built by its hook; ServerBox sets it up in `lib/core/tty.dart` and names the device in `lib/core/utils/local_device.dart`. `third_party/` — `ironrdp`. `website/` — Svelte + bun.
-- `third_party/ironrdp` is upstream IronRDP's **main** plus ServerBox's commits (branch `serverbox`, squash-merged; the commits live on the latest `patches/upstream-<sha>` tag); `sbm_ffi` takes every IronRDP crate from it by path, on ring. Following upstream: `docs/dev/ironrdp.md`.
+- `third_party/ironrdp` is upstream IronRDP's **main** plus ServerBox's commits (branch `serverbox`, squash-merged; the commits live on the latest `patches/upstream-<sha>` tag); `sbm_ffi` takes every IronRDP crate from it by path, on ring. Following upstream: `docs/dev/ironrdp.md`. A ServerBox commit squash-merged onto `serverbox` between upstream follows: cherry-pick it onto the latest tag and tag that `patches/upstream-<sha>-<n>` (tags are never moved: no force push).
 - **The Agent is `packages/fl_pi_llm`** (submodule shared with GPT Box and the monitor, its own Cargo workspace; PR changes there). Memory, skills and MCP tools are its Rust (`rust/src/{memory,skills,mcp}.rs`); `ui` keeps files, fetching and the mcp_dart client. This app hooks in at `lib/core/llm/` (`LlmHost`, `AgentTools`, `AgentScope`/`TerminalHosts`/`AgentChats`). `.claude/skills/serverbox-help` ships as assets: a new file needs its directory in `pubspec.yaml`, and its docs links must exist (`builtin_skill_test.dart`). Tests load `build/native_assets/<os>/libfl_pi_llm.*`.
 - Themes are fl_lib's (`package:fl_lib/theme.dart`); this app describes itself in `lib/core/service/theme_host.dart`. `SettingStore` keys are fixed — renaming one loses it. `store/` is the official theme repository (and `store/apps/`, the Monitor's web apps: the `serverbox-webapp` skill) (details: `docs/src/content/docs/development/themes.md`, the `serverbox-theme` skill); no store theme is bundled in the app (a committed `.fsbt` is a binary git cannot diff).
 - `lollipopkit/shellbox-rootfs` is not a submodule: fl_tty reads its signed manifest (`packages/fl_tty/assets/rootfs_manifest.json` offline, URL and key `RootfsManifestConfig.shellbox`, verified by `RootfsManifestTrust`).
@@ -58,8 +59,9 @@ Flutter app for managing servers, in a Rust workspace monorepo. Feature notes li
 
 ### Connection methods
 
-A server is reached over SSH, a monitor agent, both, or is this device (`Spi.local`).
+A server is reached over SSH, the Monitor (HTTP), both, or is this device (`Spi.local`).
 
+- **A feature SSH supports must also work over Monitor HTTP**: build both paths (in the Monitor first when it lacks the endpoint); a gap is a TODO. Open gap: libvirt disk image upload (needs `byteStream`, SSH-only).
 - `Spix.transport` picks the lead (SSH when both, unless `preferredTransport`); `Spix.fallbackTransport` is the other. At least one is required (DB `CHECK`).
 - **`ServerNotifier.ensureExec()` is the one place a command reaches a server**, falling back to the other transport; a monitor-only server never uses sshd. `ensureShellClient()` is SSH-only.
 - **`ServerTcpDialer` is the one place a TCP connection from the server's side is made** (SSH direct-tcpip, the agent's `/stream/ws`, or local).
@@ -74,6 +76,7 @@ A server is reached over SSH, a monitor agent, both, or is this device (`Spi.loc
 - Git LFS holds images, fonts, `.fsbt` and PDFs under `monitor/`, `docs/`, `website/`, `store/` only: F-Droid clones without LFS, so nothing the app's build or `fastlane/` reads goes there (`.gitattributes`). `scripts/check-lfs.sh` fails a build that finds a pointer.
 - Never hand-edit `*.g.dart` / `*.freezed.dart`. `flutter gen-l10n` after ARB edits; check `libL10n` (fl_lib) first.
 - GetIt for stores and services. `fl_lib` widgets (`CustomAppBar`, `context.showRoundDialog`, `Input`, `Btnx.cancelOk`; context7 `lppcg fl_lib KEYWORD`). Split UI into build / actions / utils with `extension on`.
+- **In `lib/`, a page is `AppRoute.go`, `AppPageRoute` or `AppPage` (fl_lib), never a bare `MaterialPageRoute` / `MaterialPage`**: a predictive back (Android, and the iOS/macOS edge swipe) pops every route current in its own navigator, and only these leave it to the page on screen. Navigators side by side or kept alive while hidden (tabs, workspace panes, the settings pane) sit under a `BackScope(enabled:)` saying which one back is for.
 
 ### Storage (`lib/data/store/CLAUDE.md` before any change)
 

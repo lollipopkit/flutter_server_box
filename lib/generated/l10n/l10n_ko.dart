@@ -13,24 +13,24 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get crashCollectIntro =>
-      'ServerBox는 문제를 해결할 수 있도록 실행 중 발생한 일을 기록합니다. 전송할 정보의 양을 선택할 수 있습니다.';
+      'ServerBox는 문제를 조사하고 해결하는 데 도움이 되도록 실행 중 정보를 기록합니다.';
 
   @override
   String get crashCollectNone => '전송 안 함';
 
   @override
-  String get crashCollectNoneTip => '보고서는 이 기기에 남아 있으며, 충돌 후 직접 보낼 수도 있습니다.';
+  String get crashCollectNoneTip => '보고서는 이 기기에만 저장됩니다. 충돌 후 직접 전송할 수 있습니다.';
 
   @override
   String get crashCollectBasic => '기본 정보';
 
   @override
   String get crashCollectBasicTip =>
-      '충돌 정보만 포함하며 로그와 성능 데이터는 포함하지 않습니다. **앱을 개선하고 버그를 수정하는 데 도움이 됩니다.**';
+      '충돌 정보만 포함하며 로그나 성능 데이터는 포함하지 않습니다. **앱 개선과 버그 수정에 도움이 됩니다.**';
 
   @override
   String get crashCollectFooter =>
-      '모든 수준에서 알려진 서버 이름, 주소, 사용자 이름은 기록할 때 자리 표시자로 대체됩니다. 나중에 설정에서 수집 수준을 변경할 수 있습니다.';
+      '선택한 수준과 관계없이 기록 시 알려진 서버 이름, 주소, 사용자 이름은 자리표시자로 대체됩니다. 수집 수준은 나중에 설정에서 변경할 수 있습니다.';
 
   @override
   String get privacy => '개인정보';
@@ -143,7 +143,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get agentAuthMethod => '인증 방식';
 
   @override
-  String get agentSshConnectTip => 'Agent가 SSH 연결을 원합니다. 여기에 비밀번호를 입력하세요';
+  String get agentSshConnectTip => 'Agent가 SSH 연결을 요청했습니다. 여기에 비밀번호를 입력하세요.';
 
   @override
   String get agentAdHocSessions => '임시 연결';
@@ -152,10 +152,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get agentSaveServerTitle => '서버로 저장';
 
   @override
-  String get agentSaveServerTip => '이 호스트와 입력한 비밀번호는 이 기기에 저장됩니다';
+  String get agentSaveServerTip => '이 호스트의 정보와 입력한 비밀번호는 이 기기에 저장됩니다.';
 
   @override
-  String get agentMonitorOptional => 'monitor 에이전트(선택)';
+  String get agentMonitorOptional => 'Monitor(선택)';
 
   @override
   String get authFailTip => '인증에 실패했습니다. 정보를 확인하세요';
@@ -222,7 +222,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get distNameMapTip =>
-      '마크를 두는 곳의 파일 이름이 이 앱이 쓰는 이름과 다른 배포판에만 사용합니다. 키는 이 앱이 쓰는 이름, 값은 실제로 가져올 이름입니다. 빠진 마크가 없다면 비워 두세요.';
+      '배포판의 마크 파일 이름이 호스트 위치에서 앱이 사용하는 이름과 다를 때만 설정하세요. 키에는 앱 내 이름을, 값에는 실제 파일 이름을 입력합니다. 마크가 누락되지 않았다면 비워 두세요.';
 
   @override
   String get logoUrl => '로고 주소';
@@ -246,7 +246,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get navTabMenuTip =>
-      '탭을 길게 누르거나 마우스 오른쪽 버튼으로 누르면 그 안의 모든 항목을 한 번에 연결하거나 끊을 수 있습니다.';
+      '탭을 길게 누르거나 마우스 오른쪽 버튼으로 클릭하면 해당 탭의 모든 서버를 한 번에 연결하거나 연결 해제할 수 있습니다.';
 
   @override
   String nTags(int count) {
@@ -258,17 +258,17 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get monitorHttpsRequired =>
-      '원격 monitor 에이전트에는 HTTPS가 필요합니다. HTTP를 허용한 경우는 예외입니다.';
+      '원격 Monitor에는 HTTPS가 필요합니다. 해당 Monitor에 HTTP를 허용한 경우는 예외입니다.';
 
   @override
   String get monitorAllowInsecureHttp => 'HTTP 허용';
 
   @override
-  String get plainHttpTitle => '이 agent는 평문 HTTP로 제공됩니다';
+  String get plainHttpTitle => '이 Monitor는 암호화되지 않은 HTTP로 제공됩니다.';
 
   @override
   String get plainHttpTip =>
-      '비밀번호와 이 앱이 요청하는 모든 내용이 암호화되지 않은 채 전송됩니다. 아직 아무것도 보내지 않았습니다.';
+      '비밀번호와 앱이 요청하는 모든 데이터가 암호화되지 않은 상태로 전송됩니다. 연결을 허용하기 전에는 데이터가 전송되지 않습니다.';
 
   @override
   String get allowForThisServer => '이 서버에만 허용';
@@ -282,7 +282,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String monitorHttpTip(String url) {
-    return 'SSH로 명령을 실행하는 대신 **monitor**의 HTTP API에서 이 서버의 상태를 읽습니다.\n\n먼저 서버에 monitor를 설치해야 하며, 추이 그래프와 워치 앱, 홈 위젯이 이에 의존합니다.\n\n[monitor 설치 방법]($url)';
+    return 'SSH로 명령을 실행하는 대신 **Monitor**의 HTTP API를 통해 이 서버의 상태를 읽습니다.\n\n먼저 서버에 Monitor를 설치해야 합니다. 차트, Watch 앱, 홈 화면 위젯은 Monitor가 있어야 사용할 수 있습니다.\n\n[Monitor 설치 방법]($url)';
   }
 
   @override
@@ -394,15 +394,15 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get containerTrySudoTip =>
-      '예: 앱에서 사용자를 aaa로 설정했지만 Docker가 root 사용자로 설치된 경우, 이 옵션을 활성화해야 합니다.';
+      '예를 들어 앱의 사용자 이름은 aaa인데 Docker가 root 사용자로 설치되어 있다면 이 옵션을 사용 설정하세요.';
 
   @override
   String get containerSudoPasswordRequired =>
-      'Docker에 접근하려면 sudo 비밀번호가 필요합니다. 비밀번호를 입력해 주세요.';
+      'Docker에 접근하려면 sudo 비밀번호가 필요합니다. 비밀번호를 입력하세요.';
 
   @override
   String get containerSudoPasswordIncorrect =>
-      'sudo 비밀번호가 올바르지 않거나 허용되지 않습니다. 다시 시도해 주세요.';
+      'sudo 비밀번호가 잘못되었거나 현재 계정에 sudo 권한이 없습니다. 다시 시도하세요.';
 
   @override
   String get copyPath => '경로 복사';
@@ -479,7 +479,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String fileTooLarge(String file, String size, String sizeMax) {
-    return '파일 \'$file\'이(가) 너무 큽니다. 크기 $size, 최대 $sizeMax';
+    return '파일 “$file”의 크기 $size이(가) 최대 크기 $sizeMax을(를) 초과합니다.';
   }
 
   @override
@@ -556,7 +556,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get macDmgImportFailed => '이전 버전의 데이터를 읽지 못했습니다';
 
   @override
-  String get macDmgTip => '로컬 터미널과 로컬 snippet 실행 (DMG 버전)';
+  String get macDmgTip => 'DMG 버전에서는 로컬 터미널과 코드 snippet의 로컬 실행을 사용할 수 있습니다.';
 
   @override
   String get macDmgTitle => 'DMG 버전';
@@ -681,7 +681,7 @@ class AppLocalizationsKo extends AppLocalizations {
       '점프 서버와 ProxyCommand는 함께 사용할 수 없습니다.';
 
   @override
-  String get noConnectionMethod => 'SSH, monitor 또는 둘 다 설정하세요';
+  String get noConnectionMethod => 'SSH, Monitor 또는 둘 다 설정하세요.';
 
   @override
   String get keepForeground => '앱을 포그라운드에 유지해 주세요!';
@@ -712,18 +712,18 @@ class AppLocalizationsKo extends AppLocalizations {
   String get linuxShellTip => '터미널을 시작할 셸. 비우면 /bin/sh로 돌아갑니다.';
 
   @override
-  String get linuxNetTip => 'DNS 서버. 비우면 기본값으로 돌아갑니다';
+  String get linuxNetTip => 'DNS 서버입니다. 비워 두면 기본 설정을 사용합니다.';
 
   @override
   String madeWithLove(String myGithub) {
-    return '$myGithub이(가) ❤️로 만들었습니다';
+    return '$myGithub가 ❤️를 담아 만들었습니다.';
   }
 
   @override
   String get maxConcurrency => '최대 동시 실행 수';
 
   @override
-  String get maxRetryCount => '서버 재연결 횟수';
+  String get maxRetryCount => '서버 재연결 시도 최대 횟수';
 
   @override
   String get mirror => '미러';
@@ -788,7 +788,7 @@ class AppLocalizationsKo extends AppLocalizations {
       '접수되었지만 전원 상태는 아직 바뀌지 않았습니다. graceful 동작은 OS에 달려 있습니다';
 
   @override
-  String get bmcPowerUnsupported => '이 서비스는 해당 작업에 대해 아무것도 허용하지 않습니다';
+  String get bmcPowerUnsupported => '이 서비스는 이 유형의 작업을 지원하지 않습니다.';
 
   @override
   String get bmcUnauthorized => 'BMC가 이 계정을 거부했습니다';
@@ -809,7 +809,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get bmcNotAService => '이 주소에는 Redfish 서비스가 없습니다';
 
   @override
-  String get bmcNoSystem => '서비스가 시스템을 보고하지 않습니다';
+  String get bmcNoSystem => '서비스에서 시스템 정보를 보고하지 않았습니다.';
 
   @override
   String get bmcSensorsTruncated => '앞쪽 센서만 표시됩니다';
@@ -849,7 +849,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get proxyCommandSandboxed =>
-      '이 빌드는 샌드박스에서 실행됩니다: 명령이 받는 home은 비어 있어 당신 것이 아니며, ~/.ssh를 읽는 것은 모두 실패합니다. DMG 버전은 아닙니다.';
+      '이 버전은 sandbox에서 실행됩니다. 명령에는 사용자의 home이 아닌 빈 home 디렉터리가 전달되므로 ~/.ssh에 의존하는 명령은 실패합니다. DMG 버전에는 이 제한이 없습니다.';
 
   @override
   String privateKeyFileUnreadable(String path, String reason) {
@@ -885,7 +885,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get pveIgnoreCertTip =>
-      '활성화를 권장하지 않습니다. 보안 위험에 주의하세요! PVE 기본 인증서를 사용하는 경우 이 옵션을 활성화해야 합니다.';
+      'PVE에서 기본 자체 서명 인증서를 사용하는 경우 이 옵션을 사용 설정해야 합니다. 단, 보안 위험이 있습니다.';
 
   @override
   String get pvePasswordRequired => 'PVE 비밀번호가 필요합니다. 서버 설정에서 설정해 주세요.';
@@ -910,7 +910,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get pveInvalidResponseBody => 'PVE 로그인이 잘못된 응답 본문을 반환했습니다.';
 
   @override
-  String get pveInvalidResponseData => 'PVE 로그인 응답에 유효한 데이터가 포함되어 있지 않습니다.';
+  String get pveInvalidResponseData => 'PVE 로그인 응답에 유효한 data 필드가 없습니다.';
 
   @override
   String get pveMissingAuthTicket => 'PVE 로그인은 성공했지만 인증 티켓이 반환되지 않았습니다.';
@@ -922,7 +922,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get pvePassword => 'PVE 비밀번호';
 
   @override
-  String get pvePasswordHint => '키 기반 SSH 인증을 사용할 때 필요합니다';
+  String get pvePasswordHint => 'SSH 키 인증을 사용하는 경우에도 입력해야 합니다.';
 
   @override
   String get read => '읽기';
@@ -934,7 +934,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get rememberPwdInMem => '메모리에 비밀번호 저장';
 
   @override
-  String get rememberPwdInMemTip => '컨테이너, 일시 중지 등에 사용됩니다.';
+  String get rememberPwdInMemTip => '컨테이너 관리, 일시 중지 등의 작업에 이 비밀번호가 필요합니다.';
 
   @override
   String get remotePath => '원격 경로';
@@ -946,7 +946,7 @@ class AppLocalizationsKo extends AppLocalizations {
     String latest,
     String pm,
   ) {
-    return '$distro $installed이(가) 설치되어 있고 $latest가 있습니다. 업데이트는 컨테이너 전체를 교체합니다: $pm 데이터가 사라집니다';
+    return '현재 $distro $installed이(가) 설치되어 있으며 $latest(으)로 업데이트할 수 있습니다. 업데이트하면 컨테이너 전체를 다시 다운로드하고 교체하므로 $pm의 데이터가 삭제됩니다.';
   }
 
   @override
@@ -963,14 +963,14 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get sameIdServerExist => '동일한 ID의 서버가 이미 존재합니다';
+  String get sameIdServerExist => 'ID가 같은 서버가 이미 있습니다.';
 
   @override
   String get second => '초';
 
   @override
   String get serverFilesUnavailableTip =>
-      '이 서버에 대한 SSH가 필요하거나, server_box_monitor를 설치하고 파일 API를 켜야 합니다.';
+      '이 서버에 SSH로 연결하거나 Monitor를 설치하고 파일 API를 사용 설정해야 합니다.';
 
   @override
   String get back => '뒤로';
@@ -1005,10 +1005,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get serverTabEmpty => '아직 서버가 없습니다';
 
   @override
-  String get serverTabConnBadge => '서버 탭의 연결 수';
+  String get serverTabConnBadge => '서버 탭에 표시할 연결 수';
 
   @override
-  String get serverTabConnBadgeTip => '연결된 서버 수(예: 2/4)';
+  String get serverTabConnBadgeTip => '연결된 서버 수입니다(예: 2/4).';
 
   @override
   String get serverTabRequired => '서버 탭은 제거할 수 없습니다';
@@ -1084,7 +1084,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get sftpEditorTip =>
-      '비우면 내장 편집기를 씁니다. 예를 들어 `vim`(`EDITOR`에서 읽는 것을 권장).';
+      '비워 두면 앱 내장 편집기를 사용합니다. `vim` 같은 편집기를 지정할 수도 있습니다(`EDITOR` 환경 변수에서 자동으로 가져오는 것을 권장).';
 
   @override
   String get sftpRmrDirSummary => 'SFTP에서 `rm -r`을 사용하여 폴더를 삭제합니다.';
@@ -1111,18 +1111,18 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get tempIsCelsiusTip =>
-      '활성화하면 온도 값이 밀리섭씨가 아닌 섭씨로 처리됩니다. 온도가 잘못 표시될 때만 켜세요 (예: 58°C 대신 0.1°C로 표시되는 경우).';
+      '사용 설정하면 온도를 밀리섭씨가 아닌 섭씨로 처리합니다. 온도가 잘못 표시될 때만 사용하세요(예: 실제로는 58°C인데 0.1°C로 표시되는 경우).';
 
   @override
   String get diskCountsNetwork => '네트워크 파일 시스템을 합계에 포함';
 
   @override
   String get diskCountsNetworkTip =>
-      'NFS, SMB 등 네트워크 마운트는 항상 목록에 표시됩니다. 용량은 다른 컴퓨터의 것이므로 기본적으로 디스크 합계에서 제외됩니다. SSH로 상태를 수집할 때 적용되며, monitor agent를 통할 때는 agent 자체 설정을 따릅니다.';
+      'NFS, SMB 등의 네트워크 마운트는 항상 목록에 표시됩니다. 다른 컴퓨터의 저장 공간이므로 기본적으로 디스크 합계에 포함되지 않습니다. 이 설정은 SSH로 상태를 수집할 때 적용됩니다. Monitor를 사용하는 경우에는 Monitor 자체 설정을 따릅니다.';
 
   @override
   String get diskCountsNetworkAgentTip =>
-      'NFS, SMB 등 네트워크 마운트는 항상 목록에 표시됩니다. 용량은 다른 컴퓨터의 것이므로 기본적으로 디스크 합계에서 제외됩니다. agent가 기록에 저장하고 디스크 알림 판단에 쓰는 값이 이 합계입니다.';
+      'NFS, SMB 등의 네트워크 마운트는 항상 목록에 표시됩니다. 다른 컴퓨터의 저장 공간이므로 기본적으로 디스크 합계에 포함되지 않습니다. Monitor가 기록을 저장하고 디스크 알림을 판단할 때도 이 합계를 사용합니다.';
 
   @override
   String spentTime(String time) {
@@ -1140,7 +1140,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get sshConfigFound => '시스템에서 SSH 설정을 발견했습니다.';
+  String get sshConfigFound => '시스템에서 SSH 설정을 찾았습니다.';
 
   @override
   String sshConfigFoundServers(int totalCount) {
@@ -1152,19 +1152,19 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get sshConfigImportPermission =>
-      '~/.ssh/config를 읽고 서버 설정을 자동으로 가져올 수 있는 권한을 부여하시겠습니까?';
+      '~/.ssh/config를 읽고 서버 설정을 자동으로 가져오도록 허용할까요?';
 
   @override
   String get sshConfigImportTip => '첫 서버 생성 시 ~/.ssh/config 읽기 안내';
 
   @override
   String sshConfigImported(int count) {
-    return 'SSH 설정에서 서버 $count개를 가져왔습니다';
+    return 'SSH 설정에서 서버 $count대를 가져왔습니다.';
   }
 
   @override
   String sshHostKeyChangedDesc(String serverName) {
-    return '$serverName의 SSH 호스트 키가 변경되었습니다. 이 서버를 신뢰하는 경우에만 계속 진행하세요.';
+    return '$serverName의 SSH 호스트 키가 변경되었습니다. 이 서버를 신뢰하는 경우에만 연결을 계속하세요.';
   }
 
   @override
@@ -1178,7 +1178,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String sshHostKeyNewDesc(String serverName) {
-    return '$serverName에서 새 SSH 호스트 키를 수신했습니다. 신뢰하기 전에 지문을 확인해 주세요.';
+    return '$serverName에서 새 SSH 호스트 키를 받았습니다. 신뢰하기 전에 fingerprint를 확인하세요.';
   }
 
   @override
@@ -1215,7 +1215,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get supportFmtArgs => '다음 형식 매개변수가 지원됩니다:';
 
   @override
-  String get suspendTip => '일시 중지 기능은 root 권한과 systemd 지원이 필요합니다.';
+  String get suspendTip => 'suspend 기능을 사용하려면 root 권한과 systemd가 필요합니다.';
 
   @override
   String switchTo(String val) {
@@ -1250,7 +1250,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get updateServerStatusInterval => '서버 상태 업데이트 간격';
 
   @override
-  String get useNoPwd => '비밀번호를 사용하지 않습니다';
+  String get useNoPwd => '비밀번호 사용 안 함';
 
   @override
   String get usePodmanByDefault => '기본적으로 Podman 사용';
@@ -1471,17 +1471,17 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get watchServersTip =>
-      '시계는 스스로 monitor에서 가져오므로 monitor가 있는 서버만 고를 수 있습니다.';
+      '시계는 스스로 Monitor에서 가져오므로 Monitor가 설정된 서버만 고를 수 있습니다.';
 
   @override
-  String get watchNoMonitorServer => 'monitor 에이전트가 설정된 서버가 없습니다';
+  String get watchNoMonitorServer => 'Monitor가 설정된 서버가 없습니다.';
 
   @override
   String get legacyStatusGoneTitle => '상태 URL이 더 이상 작동하지 않습니다';
 
   @override
   String get legacyStatusGoneBody =>
-      '워치 앱과 홈 위젯은 직접 입력한 `/status` 주소를 읽었습니다. 이 엔드포인트는 제거되었습니다. 현재 값을 텍스트로만 반환할 수 있었고, 그래서 그래프를 표시할 수 없었습니다.\n\n이제는 monitor의 인증된 API를 읽으므로 추이를 그리고 앱과 자동으로 동기화됩니다. 앱에서 서버를 한 번 설정하면 모든 워치와 위젯이 이를 가져옵니다.';
+      '워치 앱과 홈 위젯은 직접 입력한 `/status` 주소를 읽었습니다. 이 엔드포인트는 제거되었습니다. 현재 값을 텍스트로만 반환할 수 있었고, 그래서 그래프를 표시할 수 없었습니다.\n\n이제는 Monitor의 인증된 API를 읽으므로 추이를 그리고 앱과 자동으로 동기화됩니다. 앱에서 서버를 한 번 설정하면 모든 워치와 위젯이 이를 가져옵니다.';
 
   @override
   String get services => '서비스';
@@ -1555,17 +1555,17 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String serviceUpFor(String duration) {
-    return 'up $duration';
+    return '$duration 동안 실행 중';
   }
 
   @override
   String serviceDownFor(String duration) {
-    return 'down $duration';
+    return '$duration 동안 중지됨';
   }
 
   @override
   String serviceNextIn(String duration) {
-    return 'next $duration';
+    return '다음 실행까지 $duration';
   }
 
   @override
@@ -2007,7 +2007,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get historyNoStored =>
-      '기록을 저장하는 것은 monitor 에이전트뿐입니다. 이 연결은 앱이 연결한 뒤 본 것만 유지합니다.';
+      '기록은 Monitor만 저장합니다. 이 연결에서는 앱이 연결된 뒤 수집한 데이터만 유지됩니다.';
 
   @override
   String get noHistoryYet => '아직 측정값이 없습니다';
@@ -2022,11 +2022,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get to => '끝';
 
   @override
-  String get beyondRetention => '이 agent가 보관한 범위 밖';
+  String get beyondRetention => '이 Monitor가 보관한 범위를 벗어났습니다.';
 
   @override
   String agentRetentionFmt(String kept) {
-    return 'agent 보관 기간 $kept';
+    return 'Monitor 데이터 보관 기간: $kept';
   }
 
   @override
@@ -2034,14 +2034,13 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get agentServerToolsTip =>
-      '서버에서 명령을 실행하고 파일을 읽고 쓰며, SSH로 다른 호스트에 연결하고 ServerBox 자체 기능을 사용합니다.';
+      '서버에서 명령을 실행하고 파일을 읽고 쓰거나, SSH로 다른 호스트에 연결하고 ServerBox 기능을 사용할 수 있습니다.';
 
   @override
   String get agentTerminalTools => '터미널';
 
   @override
-  String get agentTerminalToolsTip =>
-      '터미널 자체 채팅에서: 터미널에 표시된 내용을 읽고 해당 서버에서 명령을 실행합니다.';
+  String get agentTerminalToolsTip => '터미널 세션에서 화면 내용을 읽고 해당 서버에서 명령을 실행합니다.';
 
   @override
   String get agentToolTerminalScreen => '화면 읽기';
@@ -2059,7 +2058,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get agentToolsTip => 'Agent가 쓸 수 있는 도구와 MCP 서버';
 
   @override
-  String get agentSnippetToolsTip => 'snippet 목록 보기, 추가, 수정, 삭제. 변경 시 확인합니다.';
+  String get agentSnippetToolsTip => 'snippet을 나열하고 추가, 수정 또는 삭제합니다.';
 
   @override
   String get agentVirtToolsTip => '가상화 탭이 불러온 VM과 컨테이너를 읽습니다.';
@@ -2081,7 +2080,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get agentPermissions => '권한';
 
   @override
-  String get agentEmptyHint => '서버에 대해 묻거나 Agent에게 서버에서 할 일을 요청하세요.';
+  String get agentEmptyHint => '서버에 대해 묻거나 Agent에게 서버에서 작업을 실행하도록 요청하세요.';
 
   @override
   String get agentTerminalEmptyHint =>
@@ -2118,7 +2117,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String lastSampleFmt(String ago) {
-    return '마지막 샘플 $ago';
+    return '마지막 샘플: $ago';
   }
 
   @override
@@ -2178,6 +2177,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String countOfFmt(int count, String what) {
     return '$what $count개';
   }
+
+  @override
+  String get filesystems => '파일 시스템';
+
+  @override
+  String get blockDevices => '블록 장치';
+
+  @override
+  String get notMounted => '마운트되지 않음';
 
   @override
   String get unitDevices => '장치';
@@ -2300,7 +2308,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get remoteDesktopIntro =>
-      '서버의 RDP 또는 VNC 데스크톱을 앱 안에서 엽니다. 연결은 서버의 SSH 연결이나 Monitor 에이전트를 거치므로 데스크톱 포트를 네트워크에 열어 둘 필요가 없습니다.';
+      '서버의 RDP 또는 VNC 데스크톱을 앱 안에서 엽니다. 연결은 서버의 SSH 연결이나 Monitor를 거치므로 데스크톱 포트를 네트워크에 열어 둘 필요가 없습니다.';
 
   @override
   String get remoteDesktopIntroProfiles =>
@@ -2308,7 +2316,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get localServerIntro =>
-      'ServerBox를 실행 중인 기기를 서버로 추가합니다. 상태, 프로세스, 서비스, 컨테이너, 터미널, 파일을 SSH나 Monitor 에이전트 없이 사용할 수 있습니다.';
+      'ServerBox를 실행 중인 기기를 서버로 추가합니다. 상태, 프로세스, 서비스, 컨테이너, 터미널, 파일을 SSH나 Monitor 없이 사용할 수 있습니다.';
 
   @override
   String get localServerAdd => '이 기기 추가';
@@ -2320,11 +2328,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get transportSectionOff => '꺼져 있습니다. 다시 켤 때를 위해 아래 항목은 그대로 보관됩니다.';
 
   @override
-  String get monitorAgent => 'Monitor 에이전트';
+  String get monitorAgent => 'Monitor';
 
   @override
   String get plainHttpEditTip =>
-      '자격 증명과 측정값이 암호화되지 않은 채 네트워크를 지납니다. LAN이나 Tailscale 주소로 제한하거나, 에이전트를 TLS 뒤에 두세요.';
+      '자격 증명과 측정값이 암호화되지 않은 채 네트워크를 지납니다. LAN이나 Tailscale 주소로 제한하거나, Monitor를 TLS 뒤에 두세요.';
 
   @override
   String get behaviour => '동작';
@@ -2495,7 +2503,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String cronHourlyAtFmt(String minute) {
-    return '매시 :$minute분';
+    return '매시간 $minute분에 실행';
   }
 
   @override
@@ -2505,7 +2513,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String cronEveryHoursAtFmt(int hours, String minute) {
-    return '$hours시간마다 :$minute분';
+    return '$hours시간마다 $minute분에 실행';
   }
 
   @override
@@ -2529,13 +2537,13 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get monitorSettings => 'Monitor settings';
+  String get monitorSettings => 'Monitor 설정';
 
   @override
-  String get monitorAgentDefault => 'Agent default';
+  String get monitorAgentDefault => 'Monitor 기본값';
 
   @override
-  String get monitorNeedsRestart => 'agent를 다시 시작한 후 적용';
+  String get monitorNeedsRestart => 'Monitor를 다시 시작한 후 적용';
 
   @override
   String get monitorCollection => 'Collection';
@@ -2585,7 +2593,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get pushHeaders => 'Headers';
 
   @override
-  String get pushSecretSet => 'agent에 설정됨, 표시하지 않음';
+  String get pushSecretSet => 'Monitor에 설정되어 있어 표시하지 않습니다.';
 
   @override
   String get pushSecretKeep => '기존 값을 유지하려면 비워 두세요';
@@ -2604,7 +2612,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get pushUnknownType =>
-      '이 agent에는 해당 채널 유형의 발신 기능이 없어 설정을 표시할 수 없습니다. 여기서 삭제하거나 agent의 config.toml에서 편집할 수 있습니다.';
+      '이 Monitor에는 해당 채널 유형의 전송 기능이 없어 설정을 표시하지 않습니다. 여기서 삭제하거나 Monitor의 config.toml에서 수정할 수 있습니다.';
 
   @override
   String get pushJsonInvalid => '유효한 JSON이 아닙니다';
@@ -2613,7 +2621,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get dataRetention => 'Data retention';
 
   @override
-  String get dataRetentionTip => '끄면 agent가 데이터를 삭제하지 않아 데이터베이스가 제한 없이 커집니다.';
+  String get dataRetentionTip =>
+      '사용 중지하면 Monitor가 아무것도 삭제하지 않아 데이터베이스가 제한 없이 커집니다.';
 
   @override
   String get retentionMetrics => 'Keep metrics';
@@ -2632,19 +2641,19 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get corsOriginsTip =>
-      '브라우저 패널이 이 agent를 호출할 수 있는 origin입니다. 비워 두면 same-origin만 허용합니다.';
+      '브라우저 패널이 이 Monitor를 호출할 수 있는 origin입니다. 비워 두면 same-origin만 허용합니다.';
 
   @override
   String get monitorNoRemoteAccess =>
-      '이 agent는 암호화되지 않은 HTTP에서는 모니터링 외의 작업을 거부합니다. HTTPS로 연결하거나 agent([remote_access] allow_insecure)와 이 앱 모두에서 HTTP를 허용하세요.';
+      '이 Monitor는 모니터링 전용으로 설정되어 있습니다. 여기서 터미널을 열거나 명령을 실행하거나 파일을 탐색할 수 없습니다. 이 기능을 사용하려면 Monitor의 config.toml에서 [remote_access]를 수정하세요.';
 
   @override
   String get monitorAgentTooOld =>
-      '이 Monitor agent는 현재 ServerBox 버전이 지원하는 것보다 오래되었습니다. 서버에서 agent를 업데이트하세요.';
+      '이 Monitor는 현재 ServerBox 버전이 지원하는 것보다 오래되었습니다. 서버에서 Monitor를 업데이트하세요.';
 
   @override
   String get monitorClientTooOld =>
-      '이 Monitor agent는 더 이상 현재 ServerBox 버전을 지원하지 않습니다. 앱을 업데이트하세요.';
+      '이 Monitor는 더 이상 현재 ServerBox 버전을 지원하지 않습니다. 앱을 업데이트하세요.';
 
   @override
   String get alerts => '알림';
@@ -2792,7 +2801,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get remoteDesktopTargetTip =>
-      '대상은 SSH 서버 또는 Monitor 에이전트에서 확인됩니다. localhost는 해당 머신을 가리킵니다.';
+      '대상은 SSH 서버 또는 Monitor에서 확인됩니다. localhost는 해당 머신을 가리킵니다.';
 
   @override
   String get remoteDesktopDomain => '도메인(선택)';
@@ -2850,6 +2859,98 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get remoteDesktopWaiting => '데스크톱을 기다리는 중…';
+
+  @override
+  String get remoteDesktopFailStandardRdpSecurityOnly =>
+      '서버가 Standard RDP Security(RC4)만 제공하며, 이는 지원되지 않습니다. xrdp.ini에서 security_layer=tls(또는 negotiate)로 설정하고 xrdp가 TLS 인증서를 읽을 수 있는지 확인하세요.';
+
+  @override
+  String get remoteDesktopFailServerCertificateMissing =>
+      '서버에 TLS 인증서가 없습니다. 서버에 인증서를 설치하세요. xrdp의 경우 xrdp.ini에서 certificate와 key_file을 설정하세요.';
+
+  @override
+  String get remoteDesktopFailClientCertificateRequired =>
+      '서버가 클라이언트 인증서(스마트 카드 로그온)를 요구하며, 이는 지원되지 않습니다.';
+
+  @override
+  String get remoteDesktopFailWrongCredentials => '사용자 이름 또는 비밀번호가 잘못되었습니다.';
+
+  @override
+  String get remoteDesktopFailAccountLockedOut =>
+      '계정이 잠겼습니다. 나중에 다시 시도하거나 관리자에게 잠금 해제를 요청하세요.';
+
+  @override
+  String get remoteDesktopFailAccountDisabled => '계정이 비활성화되었습니다.';
+
+  @override
+  String get remoteDesktopFailAccountExpired => '계정이 만료되었습니다.';
+
+  @override
+  String get remoteDesktopFailPasswordExpired =>
+      '비밀번호가 만료되었거나 변경해야 합니다. 먼저 서버에서 비밀번호를 변경하세요.';
+
+  @override
+  String get remoteDesktopFailLogonRestricted =>
+      '이 계정은 현재 시간이나 이 기기에서 로그온할 수 없거나, 빈 비밀번호로는 원격 로그온할 수 없습니다.';
+
+  @override
+  String get remoteDesktopFailRemoteLogonDenied =>
+      '이 계정은 원격 데스크톱을 통한 로그온이 허용되지 않습니다. 서버에서 Remote Desktop Users 그룹에 추가하세요.';
+
+  @override
+  String get remoteDesktopFailFreshCredentialsRequired =>
+      '서버가 저장된 자격 증명을 허용하지 않습니다. 비밀번호를 다시 입력하세요.';
+
+  @override
+  String get remoteDesktopFailIdleTimeout => '서버의 유휴 시간 제한으로 세션 연결이 끊어졌습니다.';
+
+  @override
+  String get remoteDesktopFailSessionTimeLimit => '세션이 서버의 시간 제한에 도달했습니다.';
+
+  @override
+  String get remoteDesktopFailReplacedByOtherConnection =>
+      '다른 연결이 이 세션을 가져갔습니다.';
+
+  @override
+  String get remoteDesktopFailDisconnectedOnServer => '서버에서 세션 연결이 끊어졌습니다.';
+
+  @override
+  String get remoteDesktopFailLoggedOffByAdministrator => '관리자가 세션을 로그오프했습니다.';
+
+  @override
+  String get remoteDesktopFailLoggedOff => '세션이 로그오프되었습니다.';
+
+  @override
+  String get remoteDesktopFailServerShutdown => '서버가 종료 중입니다.';
+
+  @override
+  String get remoteDesktopFailServerReboot => '서버가 다시 시작 중입니다.';
+
+  @override
+  String get remoteDesktopFailServerDeniedConnection => '서버가 연결을 거부했습니다.';
+
+  @override
+  String get remoteDesktopFailLicensingFailed =>
+      '서버의 원격 데스크톱 라이선스 확인에 실패했습니다. 라이선스 서버와 클라이언트 액세스 라이선스(CAL)를 확인하세요.';
+
+  @override
+  String get remoteDesktopFailVncSecurityUnsupported =>
+      'VNC 서버가 지원되는 보안 유형을 제공하지 않습니다. VNC 비밀번호 또는 인증 없음만 지원됩니다. TigerVNC는 SecurityTypes=VncAuth로 설정하세요.';
+
+  @override
+  String get remoteDesktopFailPasswordRequired => 'VNC 서버에 비밀번호가 필요합니다.';
+
+  @override
+  String get tcpTargetUnreachable =>
+      '서버가 이 주소에 연결할 수 없습니다. 서비스가 실행 중이고 해당 포트에서 수신 대기 중인지 확인하세요.';
+
+  @override
+  String get sshTcpForwardingProhibited =>
+      'SSH 서버가 이 연결의 포워딩을 거부했습니다. sshd_config의 AllowTcpForwarding과 PermitOpen, 그리고 authorized_keys에서 해당 키의 no-port-forwarding 또는 permitopen 옵션을 확인하세요.';
+
+  @override
+  String get monitorRelayForbidden =>
+      '이 Monitor 계정은 이 주소에 연결할 수 없습니다. 역할의 connect 권한에서 이 주소를 허용해야 합니다.';
 
   @override
   String get remoteDesktopCertificateChanged => '원격 데스크톱 인증서가 변경되었습니다';
@@ -2961,7 +3062,7 @@ class AppLocalizationsKo extends AppLocalizations {
       'libvirt의 virsh가 설치된 서버는 QEMU/KVM 가상 머신과 함께 호스트로 표시됩니다.';
 
   @override
-  String get virtIntroTransports => '둘 다 SSH, Monitor 에이전트 또는 이 기기에서 작동합니다.';
+  String get virtIntroTransports => '둘 다 SSH, Monitor 또는 이 기기에서 작동합니다.';
 
   @override
   String get virtIntroTokens =>
@@ -3110,10 +3211,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get virtErrCertChanged => '호스트 인증서가 변경되었습니다';
 
   @override
-  String get virtErrRelayNotGranted => 'Monitor 에이전트가 연결을 중계하지 않습니다';
+  String get virtErrRelayNotGranted =>
+      'Monitor가 이 계정에 서버에서 TCP 연결을 여는 것을 허용하지 않습니다(connect 권한)';
 
   @override
-  String get virtErrExecNotGranted => 'Monitor 에이전트가 명령을 실행하지 않습니다';
+  String get virtErrExecNotGranted => 'Monitor가 명령을 실행하지 않습니다';
 
   @override
   String get virtErrNotInstalled => '이 서버에 virsh가 설치되어 있지 않습니다';
@@ -3138,7 +3240,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get remoteSessionIdleTimeoutTip =>
-      '원격 데스크톱이나 게스트 콘솔을 떠난 뒤 연결을 유지하는 시간입니다. 닫히기 전에 알림이 표시되며 10초 안에 유지할 수 있습니다.';
+      '원격 데스크톱이나 VM 콘솔을 떠난 뒤에도 연결을 일정 시간 유지합니다. 종료 전에 알림이 표시되며, 10초 안에 연결을 유지하도록 선택할 수 있습니다.';
 
   @override
   String get remoteSessionKeepAlive => '유지';
@@ -3321,10 +3423,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get virtCreateCoresInvalid => '이 호스트가 허용하는 것보다 코어가 많습니다.';
 
   @override
-  String get virtCreateMemoryInvalid => '메모리가 부족합니다.';
+  String get virtCreateMemoryInvalid => '사용 가능한 메모리가 부족합니다.';
 
   @override
-  String get virtCreateStorageMissing => '디스크를 둘 곳을 선택하세요.';
+  String get virtCreateStorageMissing => '디스크를 저장할 위치를 선택하세요.';
 
   @override
   String get virtCreateDiskInvalid => '1 GiB에서 64 TiB까지.';
@@ -3333,7 +3435,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get virtCreateTemplateMissing => '템플릿을 선택하세요.';
 
   @override
-  String get virtCreateCredentialsMissing => 'root 비밀번호나 SSH 키를 설정하세요.';
+  String get virtCreateCredentialsMissing => 'root 비밀번호 또는 SSH 공개 키를 설정하세요.';
 
   @override
   String virtCreatePasswordShort(int min) {
@@ -3672,7 +3774,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get virtHwVolumeKept =>
-      '제거했지만 실행 중인 게스트가 아직 디스크를 사용 중이라 볼륨은 남겨 두었습니다. 다음 시작 시 분리됩니다.';
+      '디스크 설정은 제거했지만 실행 중인 VM이 계속 사용 중이므로 볼륨을 보존했습니다. VM을 다음에 시작할 때 분리됩니다.';
 
   @override
   String get virtHwBus => '버스';
@@ -3872,7 +3974,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get virtBackupNoStorage => '이 노드에는 백업을 저장할 스토리지가 없습니다.';
 
   @override
-  String get virtBackupLiveTip => '실행 중: snapshot 모드, 중단 없음';
+  String get virtBackupLiveTip => 'VM 실행 중에도 snapshot 모드로 백업하며 중단이 없습니다.';
 
   @override
   String get virtBackupStoppedTip => '중지됨: 현재 상태로 백업';
@@ -4263,15 +4365,15 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get virtCloudImageTip =>
-      '시스템이 설치된 디스크: 복사한 뒤 저장소의 크기로 늘리고, 첫 부팅 때 cloud-init이 설정합니다. 이미지 자체는 그대로 둡니다.';
+      'OS가 설치된 디스크 이미지입니다. VM 생성 시 복사한 뒤 저장소에서 지정한 크기로 확장하고, 첫 부팅 때 cloud-init이 설정합니다. 원본 이미지는 변경되지 않습니다.';
 
   @override
   String get virtNoCloudImagesLibvirt =>
-      '클라우드 이미지가 없습니다: 어떤 VM도 쓰지 않는 qcow2 또는 raw 이미지를 풀에 넣으세요(저장소에서 업로드).';
+      '사용할 수 있는 cloud image가 없습니다. qcow2 또는 raw 이미지를 저장소 풀에 업로드하고, 어떤 VM도 사용하지 않는지 확인하세요.';
 
   @override
   String get virtNoCloudImagesPve =>
-      '클라우드 이미지가 없습니다: qcow2, raw 또는 vmdk 이미지를 Import 콘텐츠 유형의 저장소에 업로드하세요(PVE 8.2+).';
+      '사용할 수 있는 cloud image가 없습니다. Import 콘텐츠 유형을 지원하는 저장소에 qcow2, raw 또는 vmdk 이미지를 업로드하세요(PVE 8.2 이상).';
 
   @override
   String get virtCreateWindowsTitle => 'Windows 11에는 UEFI와 TPM 2.0이 필요합니다';
@@ -4292,7 +4394,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get virtCreateImageMissing => '클라우드 이미지를 선택하세요.';
 
   @override
-  String get virtCreateIncomplete => '먼저 주황색으로 표시된 부분을 채우세요.';
+  String get virtCreateIncomplete => '주황색으로 표시된 항목을 모두 입력하세요.';
 
   @override
   String virtCreateOn(String host) {
@@ -4300,7 +4402,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get virtCiTip => 'sudo 권한이 있는 계정으로, 비밀번호, SSH 키 또는 둘 다로 로그인합니다.';
+  String get virtCiTip =>
+      'sudo 권한이 있는 계정을 만들고 비밀번호, SSH 키 또는 둘 다로 로그인할 수 있습니다.';
 
   @override
   String get virtCiUserInvalid => '소문자, 숫자, _, -만 가능하며 문자 또는 _로 시작';
@@ -4331,14 +4434,14 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get virtCiSeedNote =>
-      '디스크 옆의 작은 ISO에 기록해 CD-ROM으로 연결하며 VM과 함께 삭제합니다. 비밀번호는 해시만 저장합니다.';
+      '설정은 작은 ISO 파일에 기록되어 CD-ROM으로 연결됩니다. VM을 삭제하면 이 파일도 삭제됩니다. 비밀번호는 해시만 저장합니다.';
 
   @override
   String get virtCiNoToolTitle => '호스트에 cloud-init 데이터를 만들 도구가 없습니다';
 
   @override
   String virtCiNoToolBody(String tools) {
-    return '호스트에 $tools 중 하나를 설치하세요. cloud-init 없이는 로그인할 계정 없이 시작됩니다.';
+    return '호스트에 $tools 중 하나를 설치하세요. 그렇지 않으면 cloud-init이 설정을 만들 수 없어 이미지로 부팅한 뒤 로그인할 계정이 없습니다.';
   }
 
   @override
@@ -4356,14 +4459,14 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get virtCiEditTip =>
-      'cloud-init이 이 VM에서 설정하는 내용: sudo 권한 계정, 로그인 방법, 호스트 이름과 주소.';
+      '이 VM의 cloud-init 설정( sudo 권한 계정, 로그인 방법, 호스트 이름, 주소)을 구성합니다.';
 
   @override
   String get virtCiForeignTitle => '이 seed에는 이 앱이 쓰지 않는 설정이 있습니다';
 
   @override
   String get virtCiForeignBody =>
-      '다른 곳에서 만든 설정(패키지, 명령, 다른 계정)은 여기에 표시되지 않습니다. 저장하면 seed가 여기 표시된 내용으로 바뀝니다.';
+      '다른 도구가 작성한 설정(예: 패키지, 명령, 다른 계정)은 여기에 표시되지 않습니다. 저장하면 seed가 현재 화면의 설정으로 바뀝니다.';
 
   @override
   String get virtCiPasswordKept => '설정됨. 비워 두면 유지합니다';
@@ -4376,7 +4479,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get virtCiKeysAdded =>
-      '키는 계정에 추가됩니다. 여기서 뺀 키는 시스템 안에서 지울 때까지 남아 있고, 새 사용자 이름은 기존 계정 옆에 새 계정을 만듭니다.';
+      '키는 계정에 추가됩니다. 여기서 키를 제거해도 시스템에서는 삭제되지 않으므로 별도로 삭제해야 합니다. 사용자 이름을 바꾸면 새 계정이 만들어지고 기존 계정은 유지됩니다.';
 
   @override
   String get virtCiEffectTitle => '다음 부팅 때 적용';
@@ -4386,7 +4489,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get virtCiEffectPve =>
-      'PVE는 cloud-init 드라이브를 즉시 다시 씁니다. 인스턴스 ID는 이 설정에서 계산되므로 여기서 바꾸면 항상 새 ID가 됩니다.';
+      'PVE는 cloud-init 드라이브를 즉시 다시 작성합니다. 인스턴스 ID는 이 설정으로 생성되므로 변경할 때마다 새 ID가 만들어집니다.';
 
   @override
   String get virtCiNewInstance =>
@@ -4400,7 +4503,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get virtSnapshotExternalTip =>
-      '게스트는 계속 실행됩니다. 각 디스크는 선택한 풀에 qcow2 오버레이를 얻고, 게스트는 체인 위에 남습니다.';
+      'VM은 계속 실행됩니다. 각 디스크에 선택한 저장소 풀의 qcow2 overlay가 생성되며, VM은 이후에도 이 snapshot chain을 사용합니다.';
 
   @override
   String get virtSnapshotFormInternal => '내부(이미지 안)';
@@ -4437,7 +4540,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get virtSnapshotRevertChain =>
-      '체인에서 되돌리면 실행 중인 오버레이가 이미지에 병합되고 이후 스냅샷은 사용할 수 없게 됩니다. 최신 스냅샷만 되돌릴 수 있습니다.';
+      'chain의 snapshot을 복원하면 실행 중인 overlay가 이미지에 병합되어 이후 snapshot을 사용할 수 없게 됩니다. 최신 snapshot만 복원할 수 있습니다.';
 
   @override
   String get virtSnapshotRevertHasChildren => '이후 스냅샷이 이 위에 있는 동안은 거부됩니다.';
@@ -4679,11 +4782,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String virtNetEditAsk(int count) {
-    return '실행 중인 네트워크는 재시작할 때까지 현재 상태를 유지합니다. 재시작하면 연결된 가상 머신($count)의 연결이 끊깁니다.';
+    return '재시작하기 전까지 실행 중인 네트워크에는 변경 사항이 적용되지 않습니다. 재시작하면 연결된 VM $count대의 네트워크가 끊깁니다.';
   }
 
   @override
-  String get virtNetEditAskNoGuest => '실행 중인 네트워크는 재시작할 때까지 현재 상태를 유지합니다.';
+  String get virtNetEditAskNoGuest =>
+      '재시작하기 전까지 실행 중인 네트워크에는 변경 사항이 적용되지 않습니다.';
 
   @override
   String get virtNetEditRestart => '재시작하여 지금 적용';
@@ -4724,7 +4828,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get virtNetHostEmpty =>
-      '고유 주소가 지정된 MAC이 없습니다: 모든 가상 머신은 DHCP 범위에서 주소를 받습니다.';
+      '고정 IP가 할당된 MAC 주소가 없습니다. 모든 VM은 DHCP 범위에서 IP를 받습니다.';
 
   @override
   String get virtNetHostOthers => '다른 모든 가상 머신은 DHCP 범위에서 주소를 받습니다.';
@@ -4739,7 +4843,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get virtNetManagementTip =>
-      '호스트의 관리 트래픽을 전달하거나 이를 전달하는 인터페이스 아래에 있습니다: 앱에서 편집하지 않습니다.';
+      '호스트 관리 트래픽이 이 인터페이스를 사용하거나 관리 인터페이스가 여기에 연결되어 있습니다. 앱에서는 수정하지 않습니다.';
 
   @override
   String get virtNetPhysicalTip => '물리 인터페이스는 호스트 자체의 것입니다: 앱은 브리지만 편집합니다.';
@@ -4833,7 +4937,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String funcNeedsAgentHttps(String func) {
-    return '$func에는 이 Monitor agent로의 HTTPS 연결 또는 agent와 이 앱 모두에서 HTTP 허용이 필요합니다.';
+    return '$func을(를) 사용하려면 이 Monitor에 HTTPS로 연결해야 합니다. 또는 Monitor와 앱 양쪽에서 HTTP를 허용하세요.';
   }
 
   @override
@@ -4859,7 +4963,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get monitorPasswordNotSaved =>
-      'agent의 비밀번호는 변경되었지만 앱에 저장하지 못했습니다. 이 서버 설정에서 Monitor 비밀번호를 업데이트하세요.';
+      'Monitor의 비밀번호는 변경되었지만 앱에 저장하지 못했습니다. 이 서버 설정에서 Monitor 비밀번호를 업데이트하세요.';
 
   @override
   String get firewall => '방화벽';
@@ -4986,7 +5090,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String firewallMayRefuseFmt(String access) {
-    return '$access: 이 앱의 새 연결이 거부될 수 있습니다. 연결이 들어오는 주소나 인터페이스에 따라 다르며, 앱에서는 이를 알 수 없습니다.';
+    return '$access: 원본 IP 주소나 인바운드 네트워크 인터페이스에 따라 이 앱에 대한 새 연결이 거부될 수 있습니다. 앱에서는 미리 확인할 수 없습니다.';
   }
 
   @override
@@ -5077,20 +5181,20 @@ class AppLocalizationsKo extends AppLocalizations {
       'port=80:proto=tcp:toport=8080 형식을 사용하고 toport, toaddr 또는 둘 다 지정하세요.';
 
   @override
-  String get monitorSyncNeedsServer => '백업을 저장할 Monitor 에이전트의 서버를 선택하세요.';
+  String get monitorSyncNeedsServer => '백업을 저장할 Monitor가 있는 서버를 선택하세요.';
 
   @override
   String get monitorBackupUnsupported =>
-      '이 Monitor 에이전트는 백업을 저장할 수 없습니다. 에이전트를 업데이트하세요.';
+      '이 Monitor는 백업을 저장할 수 없습니다. Monitor를 업데이트하세요.';
 
   @override
   String monitorBackupTooLarge(String max) {
-    return '백업이 Monitor 에이전트가 허용하는 크기($max)보다 큽니다.';
+    return '백업이 Monitor가 허용하는 크기($max)보다 큽니다.';
   }
 
   @override
   String get monitorBackupTooMany =>
-      'Monitor 에이전트에 저장된 백업 수가 한도에 도달했습니다. 먼저 하나를 삭제하세요.';
+      'Monitor에 저장된 백업 수가 한도에 도달했습니다. 먼저 하나를 삭제하세요.';
 
   @override
   String get virtCreateVmidInvalid => 'VMID는 100부터 999999999까지입니다.';
@@ -5129,16 +5233,16 @@ class AppLocalizationsKo extends AppLocalizations {
   String get virtBackupIssueNodeOffline => '작업의 노드가 온라인이 아닙니다.';
 
   @override
-  String get programWaiting => '대기 중';
+  String get programWaiting => '작업을 기다리는 중';
 
   @override
-  String get programWaitingPermission => '승인 대기 중';
+  String get programWaitingPermission => '승인을 기다리는 중';
 
   @override
-  String get programWaitingQuestion => '답변 대기 중';
+  String get programWaitingQuestion => '답변을 기다리는 중';
 
   @override
-  String get programWaitingAuth => '로그인 대기 중';
+  String get programWaitingAuth => '로그인을 기다리는 중';
 
   @override
   String get programStatus => '프로그램 상태';
@@ -5216,7 +5320,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String workspaceClosed(String what) {
-    return '$what 닫음';
+    return '$what을(를) 닫았습니다.';
   }
 
   @override

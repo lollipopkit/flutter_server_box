@@ -19,7 +19,7 @@ cargo sqlx migrate run / cargo sqlx prepare # migrations; offline query cache in
 - `../crates/sbm_native/`: the native sampler, always on the one `native-sampler` thread (Windows' sysinfo components are thread-bound WMI objects), feeding `sbm_parser::linux::parse_*` unchanged; GPUs every cycle, sensors/batteries/SMART on the extended cycle via the script; merged in `monitoring.rs::collect_metrics`.
 - `src/`: `cli/`, `core/` (config, `fs_roots.rs`, `config_file.rs`, `blobs`), `api/` (`server.rs` the route table, `authz.rs`, `respond.rs`: `{"error": code}`, a cause logged and never sent; `require!` in `api/mod.rs`), `pty.rs`, `monitoring/`, `stacks/` (web apps, catalog `../store/apps/`), `agent_mode/`, `apps/` (desk app packages), `monitor_backup/`, `db/`, `utils/lock.rs` (`LockExt`: std locks taken through a poisoning).
 - Filesystem work in a handler goes through `spawn_blocking` (`config_file::read_async`/`write_async`).
-- `frontend/src/`: Svelte 5 runes, Tailwind 4, no router. Tests: vitest + testing-library; svelte-check is the type gate.
+- `frontend/src/`: Svelte 5 runes, Tailwind 4, no router. Tests: vitest + testing-library; svelte-check is the type gate. Tests read UI text from the dictionary (`get(LL).key()`), never a copied string.
 - `apps/<name>`: first-party desk app packages (guest crate + `wit/` + `ui/` + `manifest.json`), built and signed by `scripts/build-desk-app.sh <name> --store` into `../store/desk/` (embedded with `include_bytes!`).
 
 ### Cross-platform semantics left as is (changing them would change stored history)

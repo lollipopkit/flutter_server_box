@@ -167,6 +167,7 @@ pub(super) fn adapt_status(
         cpu_brand: format_cpu_brand(&status.cpu_brand),
         gpus,
         disk_details,
+        block_devices: status.block_devices,
         ifaces,
         uptime: carry_forward_opt(status.uptime, prev_metrics.and_then(|p| p.uptime.clone())),
         conn: carry_forward_opt(status.conn, prev_metrics.and_then(|p| p.conn)),

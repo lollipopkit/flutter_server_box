@@ -11,6 +11,12 @@ import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/server/reading_text.dart';
 
+/// A metric's name where only a few letters fit, upper-cased: whole up to four
+/// letters, else its first three.
+String shortMetricName(String name) => name.length <= 4
+    ? name.toUpperCase()
+    : name.substring(0, 3).toUpperCase();
+
 /// Which reading a row, or the chart above the rows, is showing.
 enum ServerMetricKind {
   cpu,

@@ -219,12 +219,12 @@ void main() {
     await pump(tester, width: 700);
     expect(find.byType(PressureBar), findsOneWidget);
     expect(find.text('CPU'), findsOneWidget);
-    expect(find.text('MEM'), findsOneWidget);
-    expect(find.text('DISK'), findsOneWidget);
+    expect(find.text(shortMetricName(libL10n.memory)), findsOneWidget);
+    expect(find.text(shortMetricName(libL10n.disk)), findsOneWidget);
 
     await pump(tester, width: 320);
     expect(find.byType(PressureBar), findsOneWidget);
-    expect(find.text('DISK'), findsNothing);
+    expect(find.text(shortMetricName(libL10n.disk)), findsNothing);
     expect(
       tester.getSize(find.byType(PressureBar)).width,
       greaterThanOrEqualTo(48),

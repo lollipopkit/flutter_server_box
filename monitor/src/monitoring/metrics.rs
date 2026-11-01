@@ -77,6 +77,10 @@ pub struct SystemMetrics {
     pub gpus: Vec<GpuMetrics>,
     #[serde(default)]
     pub disk_details: Vec<DiskDetail>,
+    /// Every block device, mounted or not (Linux `lsblk`, #1829). Sizes in
+    /// bytes.
+    #[serde(default)]
+    pub block_devices: Vec<sbm_parser::types::BlockDevice>,
     #[serde(default)]
     pub ifaces: Vec<IfaceMetrics>,
     /// System uptime, already formatted by the collection script (e.g. "up 3 days, 2:14")

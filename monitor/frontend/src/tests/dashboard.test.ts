@@ -1,8 +1,10 @@
+import { get } from 'svelte/store'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import { flushSync } from 'svelte'
 import Dashboard from '../desk/apps/status/StatusApp.svelte'
+import { LL } from '../i18n/i18n-svelte'
 import { api } from '../lib/api'
 import { capabilitiesStore } from '../lib/capabilities.svelte'
 import { servers } from '../lib/servers.svelte'
@@ -45,6 +47,7 @@ vi.mock('../desk/sys/window.svelte', async (importOriginal) => ({
   },
 }))
 const menuLabels = () => (menus.provide?.() ?? []).flatMap((m) => m.items.map((i) => i.label ?? ''))
+const ll = get(LL)
 
 const mocked = vi.mocked(api)
 
@@ -68,7 +71,7 @@ const caps = (features: string[]): Capabilities =>
 
 /// The dashboard renders once its first metrics poll has answered.
 async function rendered() {
-  return screen.findByRole('button', { name: /refresh/i })
+  return screen.findByRole('button', { name: ll.deskPauseRefresh() })
 }
 
 beforeEach(() => {
@@ -105,7 +108,7 @@ describe('Dashboard custom commands', () => {
   it('draws no card when there are no commands', async () => {
     render(Dashboard)
     await rendered()
-    expect(screen.queryByText(/custom commands/i)).toBeNull()
+    expect(screen.queryByText(ll.customCmd())).toBeNull()
   })
 
   it('shows a one-line output as a plain row, with the count', async () => {
@@ -114,7 +117,7 @@ describe('Dashboard custom commands', () => {
     await rendered()
     expect(await screen.findByText('health')).toBeInTheDocument()
     expect(screen.getByText('ok')).toBeInTheDocument()
-    expect(screen.getByText(/1 commands/)).toBeInTheDocument()
+    expect(screen.getByText(ll.customCmdCount({ count: 1 }))).toBeInTheDocument()
     // Nothing to open: the row is not interactive.
     expect(screen.queryByRole('dialog')).toBeNull()
   })
@@ -187,14 +190,14 @@ describe('Dashboard iperf action', () => {
     capabilitiesStore.byServer['local'] = caps([])
     render(Dashboard)
     await rendered()
-    expect(menuLabels().some((l) => /^iperf/i.test(l))).toBe(false)
+    expect(menuLabels().some((l) => l.startsWith(ll.iperf()))).toBe(false)
   })
 
   it('is offered when the agent lists iperf and the account holds shell', async () => {
     capabilitiesStore.byServer['local'] = caps(['iperf'])
     render(Dashboard)
     await rendered()
-    expect(menuLabels().some((l) => /^iperf/i.test(l))).toBe(true)
+    expect(menuLabels().some((l) => l.startsWith(ll.iperf()))).toBe(true)
   })
 })
 
@@ -214,7 +217,7 @@ describe('Dashboard card arrangement', () => {
   const toggleArranging = () => {
     const item = (menus.provide?.() ?? [])
       .flatMap((m) => m.items)
-      .find((i) => i.label === 'Rearrange cards') as { action: () => void } | undefined
+      .find((i) => i.label === ll.arrangeCards()) as { action: () => void } | undefined
     if (!item) throw new Error('no Rearrange cards item')
     flushSync(() => item.action())
   }
@@ -223,14 +226,16 @@ describe('Dashboard card arrangement', () => {
     render(Dashboard)
     await rendered()
     toggleArranging()
-    expect(screen.getByRole('button', { name: 'Move CPU earlier' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: ll.cardMoveEarlier({ name: ll.cpuUsage() }) })).toBeDisabled()
 
-    const later = screen.getByRole('button', { name: 'Move CPU later' })
+    const later = screen.getByRole('button', { name: ll.cardMoveLater({ name: ll.cpuUsage() }) })
     later.focus()
     await fireEvent.click(later)
     expect(mocked.updateCardOrder.mock.calls[0][0].slice(0, 2)).toEqual(['memory', 'cpu'])
-    expect(await screen.findByText(/^CPU moved to position 2 of \d+$/)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Move CPU later' })).toHaveFocus()
+    // Any total: the visible cards, which the saved order does not count.
+    const moved = ll.cardMoved({ name: ll.cpuUsage(), position: 2, total: 0 }).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    expect(await screen.findByText(new RegExp(`^${moved.replace('0', '\\d+')}$`))).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: ll.cardMoveLater({ name: ll.cpuUsage() }) })).toHaveFocus()
   })
 
   it('keeps the order when another server is removed', async () => {

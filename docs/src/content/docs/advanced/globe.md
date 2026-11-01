@@ -32,7 +32,7 @@ server.
 A VPS accessed through a VPN or internal hostname may still have a public IP
 on one of its network interfaces. The regular status poll already collects
 interface addresses over SSH or through a
-[Monitor agent](/docs/advanced/monitor-agent/). Server Box selects a public
+[Monitor](/docs/advanced/monitor-agent/). Server Box selects a public
 address and looks it up in the local city dataset; it does not run an additional
 command or contact an external "what is my IP" service.
 

@@ -3,7 +3,7 @@ title: 项目结构
 description: 了解 Server Box 的代码库结构
 ---
 
-仓库采用 monorepo 布局。Flutter App 位于根目录，并与 Rust workspace、Monitor agent、文档站和项目网站一起维护。
+仓库采用 monorepo 布局。Flutter App 位于根目录，并与 Rust workspace、Monitor、文档站和项目网站一起维护。
 
 ## Monorepo 布局
 
@@ -14,7 +14,7 @@ flutter_server_box/
 │   ├── sbm_parser/    # App 和 Monitor 共用的状态解析库
 │   ├── sbm_ffi/       # flutter_rust_bridge binding crate
 │   └── sbm_native/    # Monitor 使用的原生采样器
-├── monitor/           # Monitor agent（Rust 服务 + Svelte 面板）
+├── monitor/           # Monitor（Rust 服务 + Svelte 面板）
 ├── packages/          # path 依赖的 Dart fork 和共享 webui 包
 ├── docs/              # Astro Starlight 文档站
 ├── website/           # 项目网站
@@ -91,8 +91,8 @@ Riverpod provider 协调依赖、异步操作以及跨页面共享的状态。�
 ## Rust workspace
 
 - `crates/sbm_parser/`：将命令输出解析为结构化服务器状态。Flutter App 通过 FFI 调用；Monitor 在脚本采集路径中使用它。
-- `crates/sbm_native/`：在 Monitor agent 所在主机上采集指标，使用 syscall、procfs 或 sysfs。Flutter App 通过 SSH 获取远程数据，不会在远程主机上调用此 crate。
+- `crates/sbm_native/`：在 Monitor 所在主机上采集指标，使用 syscall、procfs 或 sysfs。Flutter App 通过 SSH 获取远程数据，不会在远程主机上调用此 crate。
 - `crates/sbm_ffi/`：向 Flutter 暴露 Rust API，包括 parser 和 native SSH cryptography。生成的 Dart bindings 位于 `lib/src/rust/`。
-- `monitor/`：独立的 Monitor agent。详细说明见 `monitor/README_zh.md`。
+- `monitor/`：独立的 Monitor。详细说明见 `monitor/README_zh.md`。
 
-App 通过 SSH 采集远程服务器数据，Monitor agent 在自身所在主机采样。两者共用部分 model 和 parser，但采集流程各自独立。
+App 通过 SSH 采集远程服务器数据，Monitor 在自身所在主机采样。两者共用部分 model 和 parser，但采集流程各自独立。

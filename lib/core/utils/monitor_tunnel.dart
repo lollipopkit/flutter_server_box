@@ -101,7 +101,7 @@ class MonitorTunnelChannel implements SshTunnelChannel {
           channel.close();
           throw const MonitorHttpErr(
             type: MonitorHttpErrType.net,
-            message: 'The monitor agent did not open the connection in time',
+            message: 'The Monitor did not open the connection in time',
           );
         },
       );
@@ -171,7 +171,7 @@ class MonitorTunnelChannel implements SshTunnelChannel {
       _ready.completeError(
         const MonitorHttpErr(
           type: MonitorHttpErrType.net,
-          message: 'The monitor agent closed the connection',
+          message: 'The Monitor closed the connection',
         ),
       );
     }
@@ -212,7 +212,14 @@ class MonitorTunnelChannel implements SshTunnelChannel {
         final message = msg['message'] as String? ?? 'Stream error';
         if (!_ready.isCompleted) {
           _ready.completeError(
-            MonitorHttpErr(type: MonitorHttpErrType.net, message: message),
+            MonitorHttpErr(
+              type: switch (msg['code']) {
+                'connect_failed' => MonitorHttpErrType.targetUnreachable,
+                'forbidden' => MonitorHttpErrType.relayForbidden,
+                _ => MonitorHttpErrType.net,
+              },
+              message: message,
+            ),
           );
         } else {
           Loggers.app.warning('Monitor stream error: $message');

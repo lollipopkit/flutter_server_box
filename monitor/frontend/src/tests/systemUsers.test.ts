@@ -1,7 +1,9 @@
+import { get } from 'svelte/store'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import SystemUsers from '../desk/apps/system_users/SystemUsersApp.svelte'
+import { LL } from '../i18n/i18n-svelte'
 import { api } from '../lib/api'
 import type { GroupRow, UserRow, UserView } from '../types'
 
@@ -9,6 +11,7 @@ vi.mock('../lib/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../lib/api')>()),
   api: { getSystemUsers: vi.fn(), actSystemUser: vi.fn() },
 }))
+const ll = get(LL)
 const getSystemUsers = vi.mocked(api.getSystemUsers)
 const actSystemUser = vi.mocked(api.actSystemUser)
 
@@ -69,7 +72,7 @@ describe('System users page', () => {
   it('offers no removal of root or of the agent own account', async () => {
     render(SystemUsers)
     await fireEvent.click(await screen.findByRole('button', { name: /^root/ }))
-    expect(screen.getByRole('button', { name: /delete user/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: ll.userDelete() })).toBeDisabled()
   })
 
   it('asks before deleting, and retries as root with the sudo password', async () => {
@@ -78,20 +81,20 @@ describe('System users page', () => {
       .mockResolvedValueOnce(ok)
     render(SystemUsers)
     await fireEvent.click(await screen.findByRole('button', { name: /^deploy/ }))
-    await fireEvent.click(screen.getByRole('button', { name: /delete user/i }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.userDelete() }))
     expect(actSystemUser).not.toHaveBeenCalled()
-    expect(screen.getByText(/delete deploy\?/i)).toBeInTheDocument()
+    expect(screen.getByText(ll.userDeleteConfirm({ name: 'deploy' }))).toBeInTheDocument()
 
-    await fireEvent.click(screen.getByLabelText(/remove the home directory/i))
-    await fireEvent.click(screen.getAllByRole('button', { name: /delete user/i }).at(-1)!)
+    await fireEvent.click(screen.getByLabelText(ll.userRemoveHome()))
+    await fireEvent.click(screen.getAllByRole('button', { name: ll.userDelete() }).at(-1)!)
     await waitFor(() =>
       expect(actSystemUser).toHaveBeenCalledWith({ action: 'delete', name: 'deploy', remove_home: true }),
     )
 
     // Refused for want of root: the dialog asks for the password and sends it
     // as its own field on the second attempt.
-    await fireEvent.input(await screen.findByLabelText(/sudo password/i), { target: { value: 'hunter2' } })
-    await fireEvent.click(screen.getAllByRole('button', { name: /delete user/i }).at(-1)!)
+    await fireEvent.input(await screen.findByLabelText(ll.powerPassword(), { exact: false }), { target: { value: 'hunter2' } })
+    await fireEvent.click(screen.getAllByRole('button', { name: ll.userDelete() }).at(-1)!)
     await waitFor(() =>
       expect(actSystemUser).toHaveBeenLastCalledWith({
         action: 'delete',
@@ -100,16 +103,16 @@ describe('System users page', () => {
         password: 'hunter2',
       }),
     )
-    expect(await screen.findByText('Removed deploy.')).toBeInTheDocument()
+    expect(await screen.findByText(ll.userDoneDeleted({ name: 'deploy' }))).toBeInTheDocument()
   })
 
   it('edits a group the same way as an account', async () => {
     actSystemUser.mockResolvedValue(ok)
     render(SystemUsers)
-    await fireEvent.click(await screen.findByRole('tab', { name: /^groups$/i }))
+    await fireEvent.click(await screen.findByRole('tab', { name: ll.groupTab() }))
     await fireEvent.click(await screen.findByRole('button', { name: /^ops/ }))
-    await fireEvent.click(screen.getByRole('button', { name: /edit group/i }))
-    await fireEvent.click(screen.getByRole('button', { name: /^save$/i }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.groupEdit() }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.save() }))
     await waitFor(() =>
       expect(actSystemUser).toHaveBeenCalledWith(
         expect.objectContaining({ action: 'edit', kind: 'group', name: 'ops' }),
@@ -129,6 +132,6 @@ describe('System users page', () => {
       groups: [],
     })
     render(SystemUsers)
-    expect(await screen.findByText(/linux/i)).toBeInTheDocument()
+    expect(await screen.findByText(ll.userUnsupportedPlatform())).toBeInTheDocument()
   })
 })

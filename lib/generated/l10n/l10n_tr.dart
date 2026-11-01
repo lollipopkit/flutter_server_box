@@ -13,25 +13,25 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get crashCollectIntro =>
-      'ServerBox, sorunların düzeltilebilmesi için çalışırken olanları kaydeder. Ne kadar bilgi gönderileceğini seçin.';
+      'ServerBox, sorunları araştırıp çözmeye yardımcı olmak için çalışma sırasında bilgi kaydeder.';
 
   @override
   String get crashCollectNone => 'Hiçbir şey';
 
   @override
   String get crashCollectNoneTip =>
-      'Raporlar bu cihazda tutulur; çökmenin ardından bir raporu elle gönderebilirsiniz.';
+      'Rapor yalnızca bu cihazda saklanır. Çökmeden sonra elle gönderebilirsiniz.';
 
   @override
   String get crashCollectBasic => 'Temel bilgiler';
 
   @override
   String get crashCollectBasicTip =>
-      'Yalnızca çökme bilgileri dahil edilir; günlükler ve performans verileri dahil edilmez. **Bu, uygulamayı geliştirmemize ve hataları düzeltmemize yardımcı olur.**';
+      'Yalnızca çökme bilgilerini içerir; günlükleri veya performans verilerini içermez. **Uygulamayı iyileştirmeye ve hataları düzeltmeye yardımcı olur.**';
 
   @override
   String get crashCollectFooter =>
-      'Her düzeyde bilinen sunucu adları, adresler ve kullanıcı adları kaydedilirken yer tutucularla değiştirilir. Toplama düzeyini daha sonra Ayarlar\'dan değiştirebilirsiniz.';
+      'Seçilen düzey ne olursa olsun, bilinen sunucu adları, adresler ve kullanıcı adları kaydedilirken yer tutucularla değiştirilir. Toplama düzeyini daha sonra Ayarlar’dan değiştirebilirsiniz.';
 
   @override
   String get privacy => 'Gizlilik';
@@ -150,7 +150,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get agentSshConnectTip =>
-      'Agent bir SSH bağlantısı istiyor. Parolayı buraya gir';
+      'Agent bir SSH bağlantısı istedi. Parolayı buraya girin.';
 
   @override
   String get agentAdHocSessions => 'Geçici bağlantılar';
@@ -160,10 +160,10 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get agentSaveServerTip =>
-      'Bu host ve girdiğin parola bu cihazda saklanır';
+      'Bu ana bilgisayara ait bilgiler ve girdiğiniz parola bu cihazda saklanır.';
 
   @override
-  String get agentMonitorOptional => 'monitor aracısı (isteğe bağlı)';
+  String get agentMonitorOptional => 'Monitor (isteğe bağlı)';
 
   @override
   String get authFailTip => 'Kimlik doğrulama başarısız. Bilgileri kontrol et';
@@ -232,7 +232,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get distNameMapTip =>
-      'Yalnızca işaretleri barındırdığınız yerde dosyası başka adla duran bir dağıtım için. Anahtar, bu uygulamanın kullandığı ad; değer ise indirilecek ad. Eksik bir işaret olmadıkça boş bırakın.';
+      'Yalnızca dağıtım simgesi dosyasının ana bilgisayardaki adı uygulamanın kullandığı addan farklıysa ayarlayın. Anahtar olarak uygulamadaki adı, değer olarak gerçek dosya adını kullanın. Eksik simge yoksa boş bırakın.';
 
   @override
   String get logoUrl => 'Logo adresi';
@@ -257,7 +257,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get navTabMenuTip =>
-      'İçindeki her şeyi tek seferde bağlamak veya bağlantısını kesmek için bir sekmeye uzun basın ya da sağ tıklayın.';
+      'Bir sekmeye basılı tutun veya sağ tıklayın; o sekmedeki tüm sunucuları tek seferde bağlayabilir ya da bağlantılarını kesebilirsiniz.';
 
   @override
   String nTags(int count) {
@@ -270,18 +270,17 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get monitorHttpsRequired =>
-      'Uzak monitor ajanı HTTPS ister, HTTP’ye izin verilmediyse.';
+      'Uzak bir Monitor, HTTP’ye izin verilmediyse HTTPS ister.';
 
   @override
   String get monitorAllowInsecureHttp => 'HTTP’ye izin ver';
 
   @override
-  String get plainHttpTitle =>
-      'Bu agent şifrelenmemiş HTTP üzerinden sunuluyor';
+  String get plainHttpTitle => 'Bu Monitor şifrelenmemiş HTTP kullanıyor.';
 
   @override
   String get plainHttpTip =>
-      'Parola ve bu uygulamanın istediği her şey şifrelenmeden iletilir. Henüz hiçbir şey gönderilmedi.';
+      'Parolalar ve uygulamanın istediği tüm veriler şifrelenmeden gönderilir. Bağlantıya izin verene kadar hiçbir veri gönderilmez.';
 
   @override
   String get allowForThisServer => 'Bu sunucu için izin ver';
@@ -295,7 +294,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String monitorHttpTip(String url) {
-    return 'Bu sunucunun durumunu SSH ile komut çalıştırmak yerine bir **monitor** aracısının HTTP API\'sinden okur.\n\nAracının önce sunucuya kurulması gerekir; eğilimler, saat uygulaması ve ana ekran bileşenleri buna bağlıdır.\n\n[monitor aracısı nasıl kurulur]($url)';
+    return 'Komutları SSH üzerinden çalıştırmak yerine bu sunucunun durumunu **Monitor**’ün HTTP API’sinden okuyun.\n\nMonitor’ün önce sunucuya yüklenmesi gerekir; grafikler, Watch uygulaması ve ana ekran widget’ları onun sayesinde çalışır.\n\n[Monitor nasıl kurulur]($url)';
   }
 
   @override
@@ -414,15 +413,15 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get containerTrySudoTip =>
-      'Örneğin: Uygulamada kullanıcı aaa olarak ayarlanmış, ancak Docker root kullanıcısı altında kurulmuş. Bu durumda bu seçeneği etkinleştirmeniz gerekir.';
+      'Örneğin uygulamadaki kullanıcı adı aaa ise ancak Docker root kullanıcısıyla kurulduysa bu seçeneği etkinleştirin.';
 
   @override
   String get containerSudoPasswordRequired =>
-      'Docker\'e erişmek için sudo şifresi gereklidir. Lütfen şifrenizi girin.';
+      'Docker erişimi için sudo parolası gerekir. Parolayı girin.';
 
   @override
   String get containerSudoPasswordIncorrect =>
-      'Sudo şifresi yanlış veya izin verilmiyor. Lütfen tekrar deneyin.';
+      'sudo parolası yanlış veya bu hesabın sudo kullanma izni yok. Yeniden deneyin.';
 
   @override
   String get copyPath => 'Yolu kopyala';
@@ -440,7 +439,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get dirEmpty => 'Klasörün boş olduğundan emin olun.';
 
   @override
-  String get discoverSshServers => 'SSH Sunucularını Keşfet';
+  String get discoverSshServers => 'SSH sunucularını bul';
 
   @override
   String get discoveryFailed => 'Keşif başarısız';
@@ -502,7 +501,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String fileTooLarge(String file, String size, String sizeMax) {
-    return '\'$file\' dosyası çok büyük $size, maksimum $sizeMax';
+    return '“$file” dosyası $size boyutunda ve $sizeMax sınırını aşıyor.';
   }
 
   @override
@@ -581,7 +580,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get macDmgTip =>
-      'Yerel terminal ve snippet’leri yerelde çalıştırma (DMG sürümü)';
+      'DMG sürümü yerel terminali ve kod snippet’lerini yerel olarak çalıştırmayı destekler.';
 
   @override
   String get macDmgTitle => 'DMG sürümü';
@@ -712,7 +711,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get noConnectionMethod =>
-      'SSH, monitor aracısı veya ikisini birden yapılandırın';
+      'SSH, Monitor veya her ikisini yapılandırın.';
 
   @override
   String get keepForeground => 'Uygulamayı ön planda tut!';
@@ -745,7 +744,8 @@ class AppLocalizationsTr extends AppLocalizations {
       'Terminalin hangi kabukla açılacağı. Boş bırakınca /bin/sh’a döner.';
 
   @override
-  String get linuxNetTip => 'DNS sunucuları. Boş bırakınca varsayılana döner';
+  String get linuxNetTip =>
+      'DNS sunucusu. Varsayılanı kullanmak için boş bırakın.';
 
   @override
   String madeWithLove(String myGithub) {
@@ -756,7 +756,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get maxConcurrency => 'Maksimum Eşzamanlılık';
 
   @override
-  String get maxRetryCount => 'Sunucu yeniden bağlantı sayısı';
+  String get maxRetryCount =>
+      'Sunucuya yeniden bağlanma denemelerinin üst sınırı';
 
   @override
   String get mirror => 'Yansı';
@@ -824,8 +825,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'Kabul edildi ama güç durumu değişmedi. Nazik işlem işletim sistemine bağlı';
 
   @override
-  String get bmcPowerUnsupported =>
-      'Bu hizmet o eylem için hiçbir şeye izin vermiyor';
+  String get bmcPowerUnsupported => 'Bu hizmet bu işlem türünü desteklemiyor.';
 
   @override
   String get bmcUnauthorized => 'BMC hesabı reddetti';
@@ -847,7 +847,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get bmcNotAService => 'Bu adreste Redfish hizmeti yok';
 
   @override
-  String get bmcNoSystem => 'Hizmet herhangi bir sistem bildirmiyor';
+  String get bmcNoSystem => 'Hizmet herhangi bir sistem bilgisi bildirmedi.';
 
   @override
   String get bmcSensorsTruncated => 'Yalnızca ilk sensörler gösteriliyor';
@@ -890,11 +890,11 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get proxyCommandSandboxed =>
-      'Bu sürüm kum havuzunda çalışır: komut boş bir home alır, seninkini değil, bu yüzden ~/.ssh okuyan her şey başarısız olur. DMG sürümünde bu kısıtlama yok.';
+      'Bu sürüm sandbox içinde çalışır. Komutlara sizin home dizininiz yerine boş bir home dizini verilir; bu nedenle ~/.ssh gerektiren komutlar başarısız olur. DMG sürümünde bu kısıtlama yoktur.';
 
   @override
   String privateKeyFileUnreadable(String path, String reason) {
-    return 'Özel anahtar dosyası $path okunamıyor: $reason';
+    return 'Özel anahtar dosyası $path okunamadı: $reason';
   }
 
   @override
@@ -926,7 +926,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get pveIgnoreCertTip =>
-      'Etkinleştirilmesi önerilmez, güvenlik risklerine dikkat edin! PVE\'den varsayılan sertifikayı kullanıyorsanız, bu seçeneği etkinleştirmeniz gerekir.';
+      'PVE varsayılan self-signed sertifikasını kullanıyorsa bu seçeneği etkinleştirin. Bunun güvenlik riski oluşturduğunu unutmayın.';
 
   @override
   String get pvePasswordRequired =>
@@ -955,7 +955,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get pveInvalidResponseData =>
-      'PVE oturum açma yanıtı geçerli bir veri içermiyordu.';
+      'PVE oturum açma yanıtında geçerli bir data alanı yok.';
 
   @override
   String get pveMissingAuthTicket =>
@@ -969,7 +969,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get pvePasswordHint =>
-      'Anahtar tabanlı SSH kimlik doğrulaması kullanılırken gerekir';
+      'SSH anahtarıyla kimlik doğrularken de gereklidir.';
 
   @override
   String get read => 'Oku';
@@ -982,7 +982,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get rememberPwdInMemTip =>
-      'Konteynerler, askıya alma vb. için kullanılır.';
+      'Bu parola kapsayıcı yönetimi, askıya alma ve benzeri işlemler için gerekir.';
 
   @override
   String get remotePath => 'Uzak yol';
@@ -994,7 +994,7 @@ class AppLocalizationsTr extends AppLocalizations {
     String latest,
     String pm,
   ) {
-    return '$distro $installed kurulu, $latest var. Güncelleme tüm konteyneri değiştirir: $pm verisi kaybolur';
+    return '$distro $installed yüklü; $latest sürümüne güncellenebilir. Güncelleme tüm kapsayıcıyı yeniden indirip değiştirir ve $pm içindeki verileri siler.';
   }
 
   @override
@@ -1011,14 +1011,14 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get sameIdServerExist => 'Aynı kimliğe sahip bir sunucu zaten mevcut';
+  String get sameIdServerExist => 'Aynı ID’ye sahip bir sunucu zaten var.';
 
   @override
   String get second => 's';
 
   @override
   String get serverFilesUnavailableTip =>
-      'Bu sunucuya SSH ya da dosya API’si açık server_box_monitor gerekir.';
+      'Bu sunucuya SSH ile bağlanın veya Monitor’ü yükleyip dosya API’sini etkinleştirin.';
 
   @override
   String get back => 'Geri';
@@ -1054,10 +1054,11 @@ class AppLocalizationsTr extends AppLocalizations {
   String get serverTabEmpty => 'Henüz sunucu yok';
 
   @override
-  String get serverTabConnBadge => 'Sunucu sekmesindeki bağlantı sayısı';
+  String get serverTabConnBadge =>
+      'Sunucu sekmesinde gösterilen bağlantı sayısı';
 
   @override
-  String get serverTabConnBadgeTip => 'Bağlı sunucu sayısı, örneğin 2/4';
+  String get serverTabConnBadgeTip => 'Bağlı sunucu sayısı; örneğin 2/4.';
 
   @override
   String get serverTabRequired => 'Sunucu sekmesi kaldırılamaz';
@@ -1130,7 +1131,8 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu paylaşım daha yeni bir ServerBox sürümüyle oluşturuldu. Açmak için uygulamayı güncelleyin.';
 
   @override
-  String get shareUnreadable => 'Bu, geçerli bir ServerBox paylaşımı değil.';
+  String get shareUnreadable =>
+      'Bu geçerli bir ServerBox paylaşım verisi değil.';
 
   @override
   String get shareVia => 'Şununla paylaş';
@@ -1140,7 +1142,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get sftpEditorTip =>
-      'Boşsa yerleşik düzenleyici kullanılır. Örneğin `vim` (`EDITOR`’dan okumak önerilir).';
+      'Uygulamanın yerleşik düzenleyicisini kullanmak için boş bırakın. `vim` gibi bir düzenleyici de belirtebilirsiniz (`EDITOR` ortam değişkeninden ayarlanması önerilir).';
 
   @override
   String get sftpRmrDirSummary =>
@@ -1169,18 +1171,18 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get tempIsCelsiusTip =>
-      'Açıkken sıcaklık değeri milisantigrat yerine santigrat olarak işlenir. Yalnızca sıcaklık yanlış görünüyorsa aç (örneğin 58 °C yerine 0,1 °C).';
+      'Etkinleştirildiğinde sıcaklıklar miliderece yerine Santigrat derece olarak okunur. Yalnızca sıcaklık yanlış görünüyorsa açın (ör. 58 °C olması gerekirken 0,1 °C görünmesi).';
 
   @override
   String get diskCountsNetwork => 'Ağ dosya sistemlerini toplama dahil et';
 
   @override
   String get diskCountsNetworkTip =>
-      'NFS, SMB ve benzeri bağlamalar her zaman listelenir. Kapasiteleri başka bir makineye ait olduğundan varsayılan olarak disk toplamına dahil edilmez. Durum SSH üzerinden toplandığında geçerlidir; monitor agent üzerinden agent\'ın kendi ayarı belirler.';
+      'NFS ve SMB gibi ağ bağlamaları listede her zaman gösterilir. Kapasiteleri başka bir makineye aittir ve varsayılan olarak disk toplamına katılmaz. Bu ayar yalnızca SSH ile durum toplandığında geçerlidir; Monitor üzerinden toplandığında Monitor’ün kendi ayarı belirleyicidir.';
 
   @override
   String get diskCountsNetworkAgentTip =>
-      'NFS, SMB ve benzeri bağlamalar her zaman listelenir. Kapasiteleri başka bir makineye ait olduğundan varsayılan olarak disk toplamına dahil edilmez; agent\'ın geçmişe kaydettiği ve disk uyarılarında kullandığı değer bu toplamdır.';
+      'NFS ve SMB gibi ağ bağlamaları listede her zaman gösterilir. Kapasiteleri başka bir makineye aittir ve varsayılan olarak disk toplamına katılmaz. Monitor’ün geçmişe kaydettiği ve disk uyarılarını karşılaştırdığı değer bu toplamdır.';
 
   @override
   String spentTime(String time) {
@@ -1198,7 +1200,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get sshConfigFound => 'Sisteminizde SSH yapılandırması bulduk';
+  String get sshConfigFound => 'Sistemde SSH yapılandırması bulundu.';
 
   @override
   String sshConfigFoundServers(int totalCount) {
@@ -1210,7 +1212,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get sshConfigImportPermission =>
-      '~/.ssh/config dosyasını okumak ve sunucu ayarlarını otomatik olarak içe aktarmak için izin vermek ister misiniz?';
+      'Uygulamanın ~/.ssh/config dosyasını okuyup sunucu ayarlarını otomatik olarak içe aktarmasına izin verilsin mi?';
 
   @override
   String get sshConfigImportTip =>
@@ -1218,12 +1220,12 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String sshConfigImported(int count) {
-    return 'SSH yapılandırmasından $count sunucu içe aktarıldı';
+    return 'SSH yapılandırmasından $count sunucu içe aktarıldı.';
   }
 
   @override
   String sshHostKeyChangedDesc(String serverName) {
-    return '$serverName için SSH ana bilgisayar anahtarı değişti. Yalnızca bu sunucuya güveniyorsanız devam edin.';
+    return '$serverName sunucusunun SSH ana bilgisayar anahtarı değişti. Yalnızca sunucuya güveniyorsanız devam edin.';
   }
 
   @override
@@ -1238,7 +1240,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String sshHostKeyNewDesc(String serverName) {
-    return '$serverName üzerinden yeni bir SSH ana bilgisayar anahtarı alındı. Güvenmeden önce parmak izini kontrol edin.';
+    return '$serverName sunucusundan yeni bir SSH ana bilgisayar anahtarı alındı. Güvenmeden önce fingerprint değerini doğrulayın.';
   }
 
   @override
@@ -1278,7 +1280,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get suspendTip =>
-      'Askıya alma işlevi, root izni ve systemd desteği gerektirir.';
+      'suspend özelliği root yetkisi ve systemd gerektirir.';
 
   @override
   String switchTo(String val) {
@@ -1313,7 +1315,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get updateServerStatusInterval => 'Sunucu durumu güncelleme aralığı';
 
   @override
-  String get useNoPwd => 'Şifre kullanılmayacak';
+  String get useNoPwd => 'Parola kullanma';
 
   @override
   String get usePodmanByDefault => 'Varsayılan olarak Podman kullan';
@@ -1553,18 +1555,17 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get watchServersTip =>
-      'Saat veriyi monitor’dan kendisi alır, bu yüzden yalnızca monitor’u olan sunucular seçilebilir.';
+      'Saat veriyi Monitor’dan kendisi alır, bu yüzden yalnızca Monitor’u olan sunucular seçilebilir.';
 
   @override
-  String get watchNoMonitorServer =>
-      'monitor aracısı yapılandırılmış sunucu yok';
+  String get watchNoMonitorServer => 'Monitor yapılandırılmış sunucu yok.';
 
   @override
   String get legacyStatusGoneTitle => 'Durum URL\'leri artık çalışmıyor';
 
   @override
   String get legacyStatusGoneBody =>
-      'Saat uygulaması ve ana ekran bileşenleri elle yazılan bir `/status` adresini okuyordu. Bu uç nokta kaldırıldı: yalnızca anlık değerleri metin olarak döndürebiliyordu, grafik gösterememelerinin nedeni buydu.\n\nArtık monitor aracısının kimlik doğrulamalı API\'sini okuyorlar; eğilimleri çiziyor ve uygulamayla kendiliğinden eşleşiyorlar. Sunucuyu uygulamada bir kez yapılandırın, her saat ve bileşen onu alsın.';
+      'Saat uygulaması ve ana ekran bileşenleri elle yazılan bir `/status` adresini okuyordu. Bu uç nokta kaldırıldı: yalnızca anlık değerleri metin olarak döndürebiliyordu, grafik gösterememelerinin nedeni buydu.\n\nArtık Monitor’ün kimlik doğrulamalı API\'sini okuyorlar; eğilimleri çiziyor ve uygulamayla kendiliğinden eşleşiyorlar. Sunucuyu uygulamada bir kez yapılandırın, her saat ve bileşen onu alsın.';
 
   @override
   String get services => 'Hizmetler';
@@ -1645,17 +1646,17 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String serviceUpFor(String duration) {
-    return 'up $duration';
+    return '$duration süredir çalışıyor';
   }
 
   @override
   String serviceDownFor(String duration) {
-    return 'down $duration';
+    return '$duration süredir durmuş';
   }
 
   @override
   String serviceNextIn(String duration) {
-    return 'next $duration';
+    return 'Sonraki çalışma: $duration sonra';
   }
 
   @override
@@ -2118,7 +2119,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get historyNoStored =>
-      'Geçmişi yalnızca monitor aracısı saklar. Bu bağlantı yalnızca uygulamanın bağlandıktan sonra gördüğünü tutar.';
+      'Geçmişi yalnızca Monitor saklar. Bu bağlantıda yalnızca uygulamanın bağlandığından beri gördükleri tutulur.';
 
   @override
   String get noHistoryYet => 'Henüz ölçüm yok';
@@ -2133,11 +2134,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get to => 'Bitiş';
 
   @override
-  String get beyondRetention => 'bu agent\'ın sakladığından daha geriye';
+  String get beyondRetention =>
+      'bu Monitor’ün sakladığı veri aralığının dışında';
 
   @override
   String agentRetentionFmt(String kept) {
-    return 'Agent $kept saklıyor';
+    return 'Monitor veri saklama süresi: $kept';
   }
 
   @override
@@ -2145,14 +2147,14 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get agentServerToolsTip =>
-      'Sunucularınızda komut çalıştırma, dosya okuma veya yazma, SSH ile başka sunuculara bağlanma ve ServerBox\'ın kendi işlemlerini kullanma.';
+      'Sunucuda komut çalıştırın, dosyaları okuyup yazın, SSH ile diğer ana bilgisayarlara bağlanın ve ServerBox özelliklerini kullanın.';
 
   @override
   String get agentTerminalTools => 'Terminal';
 
   @override
   String get agentTerminalToolsTip =>
-      'Bir terminalin kendi sohbetlerinde: terminalde görüneni okuma ve sunucusunda komut çalıştırma.';
+      'Terminal ekranındaki içeriği okuyun ve ilgili sunucuda komut çalıştırın.';
 
   @override
   String get agentToolTerminalScreen => 'Ekranı oku';
@@ -2172,7 +2174,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get agentSnippetToolsTip =>
-      'Snippet’leri listele, ekle, değiştir ve sil. Değişiklikler sorulur.';
+      'Snippet’leri listeleyin, ekleyin, düzenleyin ve silin.';
 
   @override
   String get agentVirtToolsTip =>
@@ -2197,12 +2199,11 @@ class AppLocalizationsTr extends AppLocalizations {
   String get agentPermissions => 'İzinler';
 
   @override
-  String get agentEmptyHint =>
-      'Sunucularınız hakkında soru sorun ya da Agent\'tan onlarda bir şey yapmasını isteyin.';
+  String get agentEmptyHint => 'Sunucuda işlemler gerçekleştirin.';
 
   @override
   String get agentTerminalEmptyHint =>
-      'Bu sunucu hakkında soru sorun. Agent bu terminali okuyabilir ve burada komut çalıştırabilir.';
+      'Geçerli terminal içeriğini okuyun ve burada komut çalıştırın.';
 
   @override
   String oldestSampleFmt(String time) {
@@ -2236,7 +2237,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String lastSampleFmt(String ago) {
-    return 'son ölçüm $ago';
+    return 'Son örnek: $ago';
   }
 
   @override
@@ -2296,6 +2297,15 @@ class AppLocalizationsTr extends AppLocalizations {
   String countOfFmt(int count, String what) {
     return '$count $what';
   }
+
+  @override
+  String get filesystems => 'Dosya sistemleri';
+
+  @override
+  String get blockDevices => 'Blok aygıtları';
+
+  @override
+  String get notMounted => 'Bağlı değil';
 
   @override
   String get unitDevices => 'aygıt';
@@ -2419,7 +2429,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get remoteDesktopIntro =>
-      'Bir sunucunun RDP veya VNC masaüstünü uygulama içinde açar. Bağlantı sunucunun SSH bağlantısı veya Monitor ajanı üzerinden geçer; bu yüzden masaüstü bağlantı noktasının ağdan erişilebilir olması gerekmez.';
+      'Bir sunucunun RDP veya VNC masaüstünü uygulama içinde açar. Bağlantı sunucunun SSH bağlantısı veya Monitor’ü üzerinden geçer; bu yüzden masaüstü bağlantı noktasının ağdan erişilebilir olması gerekmez.';
 
   @override
   String get remoteDesktopIntroProfiles =>
@@ -2427,7 +2437,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get localServerIntro =>
-      'ServerBox\'ı çalıştıran cihazı sunucu olarak ekler. Durum, işlemler, hizmetler, konteynerler, terminal ve dosyalar SSH veya Monitor ajanı olmadan çalışır.';
+      'ServerBox\'ı çalıştıran cihazı sunucu olarak ekler. Durum, işlemler, hizmetler, konteynerler, terminal ve dosyalar SSH veya Monitor olmadan çalışır.';
 
   @override
   String get localServerAdd => 'Bu cihazı ekle';
@@ -2441,11 +2451,11 @@ class AppLocalizationsTr extends AppLocalizations {
       'Kapalı. Aşağıdaki alanlar, yeniden açtığınızda kullanılmak üzere saklanıyor.';
 
   @override
-  String get monitorAgent => 'Monitor aracısı';
+  String get monitorAgent => 'Monitor';
 
   @override
   String get plainHttpEditTip =>
-      'Kimlik bilgileri ve ölçümler ağdan şifrelenmeden geçer. Bunu bir LAN veya Tailscale adresiyle sınırlayın ya da aracıyı TLS arkasına alın.';
+      'Kimlik bilgileri ve ölçümler ağdan şifrelenmeden geçer. Bunu bir LAN veya Tailscale adresiyle sınırlayın ya da Monitor’ü TLS arkasına alın.';
 
   @override
   String get behaviour => 'Davranış';
@@ -2504,7 +2514,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String tagOnThisServerFmt(int count) {
-    return 'bu sunucuda $count';
+    return 'Bu sunucuda $count';
   }
 
   @override
@@ -2622,7 +2632,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String cronHourlyAtFmt(String minute) {
-    return 'Her saat :$minute geçe';
+    return 'Her saat, $minute. dakikada';
   }
 
   @override
@@ -2632,7 +2642,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String cronEveryHoursAtFmt(int hours, String minute) {
-    return 'Her $hours saatte bir, :$minute geçe';
+    return 'Her $hours saatte bir, $minute. dakikada';
   }
 
   @override
@@ -2656,14 +2666,14 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get monitorSettings => 'Monitor settings';
+  String get monitorSettings => 'Monitor ayarları';
 
   @override
-  String get monitorAgentDefault => 'Agent default';
+  String get monitorAgentDefault => 'Monitor varsayılanı';
 
   @override
   String get monitorNeedsRestart =>
-      'Agent yeniden başlatıldıktan sonra geçerli olur';
+      'Monitor yeniden başlatıldıktan sonra geçerli olur';
 
   @override
   String get monitorCollection => 'Collection';
@@ -2713,7 +2723,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get pushHeaders => 'Headers';
 
   @override
-  String get pushSecretSet => 'Agent üzerinde ayarlı, gösterilmiyor';
+  String get pushSecretSet => 'Monitor’de ayarlı, gösterilmiyor.';
 
   @override
   String get pushSecretKeep => 'Korumak için boş bırakın';
@@ -2733,7 +2743,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get pushUnknownType =>
-      'Bu Agent, söz konusu kanal türü için bir göndericiye sahip olmadığından ayarları gösterilmiyor. Kanalı buradan kaldırabilir veya Agent\'ın config.toml dosyasında düzenleyebilirsiniz.';
+      'Bu Monitor’de bu kanal türü için gönderici olmadığından ayarları gösterilmiyor. Buradan silebilir veya Monitor’ün config.toml dosyasında düzenleyebilirsiniz.';
 
   @override
   String get pushJsonInvalid => 'geçerli bir JSON değil';
@@ -2743,7 +2753,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get dataRetentionTip =>
-      'Kapalı olduğunda Agent hiçbir şeyi silmez ve veritabanı sınırsız büyür.';
+      'Kapalıysa Monitor hiçbir şeyi silmez ve veritabanı sınırsız büyür.';
 
   @override
   String get retentionMetrics => 'Keep metrics';
@@ -2762,19 +2772,19 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get corsOriginsTip =>
-      'Tarayıcı panelinin bu Agent\'a erişebileceği origin\'ler. Boş bırakılırsa yalnızca aynı origin\'e izin verilir.';
+      'Tarayıcı panelinin bu Monitor’ü çağırabileceği origin\'ler. Boş bırakılırsa yalnızca aynı origin\'e izin verilir.';
 
   @override
   String get monitorNoRemoteAccess =>
-      'Bu agent şifrelenmemiş HTTP üzerinden izleme dışındaki her şeyi reddeder. HTTPS ile bağlanın veya HTTP\'ye hem agent\'ta ([remote_access] allow_insecure) hem de bu uygulamada izin verin.';
+      'Bu Monitor yalnızca izleme için yapılandırılmıştır. Buradan terminal açamaz, komut çalıştıramaz veya dosyalara göz atamazsınız. Bu özellikleri etkinleştirmek için Monitor’ün config.toml dosyasındaki [remote_access] bölümünü düzenleyin.';
 
   @override
   String get monitorAgentTooOld =>
-      'Bu Monitor agent\'ı, ServerBox\'ın bu sürümünün desteklediğinden daha eski. Sunucudaki agent\'ı güncelleyin.';
+      'Bu Monitor, ServerBox\'ın bu sürümünün desteklediğinden daha eski. Sunucudaki Monitor’ü güncelleyin.';
 
   @override
   String get monitorClientTooOld =>
-      'Bu Monitor agent\'ı artık ServerBox\'ın bu sürümünü desteklemiyor. Uygulamayı güncelleyin.';
+      'Bu Monitor artık ServerBox\'ın bu sürümünü desteklemiyor. Uygulamayı güncelleyin.';
 
   @override
   String get alerts => 'Uyarılar';
@@ -2926,7 +2936,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get remoteDesktopTargetTip =>
-      'Hedef, SSH sunucusu veya Monitor ajanı tarafından çözümlenir. localhost o makineyi belirtir.';
+      'Hedef, SSH sunucusu veya Monitor tarafından çözümlenir. localhost o makineyi belirtir.';
 
   @override
   String get remoteDesktopDomain => 'Etki alanı (isteğe bağlı)';
@@ -2988,6 +2998,105 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get remoteDesktopWaiting => 'Masaüstü bekleniyor…';
+
+  @override
+  String get remoteDesktopFailStandardRdpSecurityOnly =>
+      'Sunucu yalnızca Standard RDP Security (RC4) sunuyor ve bu desteklenmiyor. xrdp.ini dosyasında security_layer=tls (veya negotiate) ayarlayın ve xrdp\'nin TLS sertifikasını okuyabildiğinden emin olun.';
+
+  @override
+  String get remoteDesktopFailServerCertificateMissing =>
+      'Sunucunun TLS sertifikası yok. Sunucuya bir sertifika yükleyin; xrdp için xrdp.ini dosyasında certificate ve key_file ayarlayın.';
+
+  @override
+  String get remoteDesktopFailClientCertificateRequired =>
+      'Sunucu bir istemci sertifikası (akıllı kartla oturum açma) istiyor ve bu desteklenmiyor.';
+
+  @override
+  String get remoteDesktopFailWrongCredentials =>
+      'Kullanıcı adı veya parola yanlış.';
+
+  @override
+  String get remoteDesktopFailAccountLockedOut =>
+      'Hesap kilitlendi. Daha sonra tekrar deneyin veya bir yöneticiden kilidi açmasını isteyin.';
+
+  @override
+  String get remoteDesktopFailAccountDisabled => 'Hesap devre dışı.';
+
+  @override
+  String get remoteDesktopFailAccountExpired => 'Hesabın süresi doldu.';
+
+  @override
+  String get remoteDesktopFailPasswordExpired =>
+      'Parolanın süresi doldu veya değiştirilmesi gerekiyor. Önce sunucuda değiştirin.';
+
+  @override
+  String get remoteDesktopFailLogonRestricted =>
+      'Hesap bu saatte veya bu cihazdan oturum açamaz ya da boş parolasıyla uzaktan oturum açmaya izin verilmiyor.';
+
+  @override
+  String get remoteDesktopFailRemoteLogonDenied =>
+      'Hesabın Uzak Masaüstü ile oturum açmasına izin verilmiyor. Sunucuda Remote Desktop Users grubuna ekleyin.';
+
+  @override
+  String get remoteDesktopFailFreshCredentialsRequired =>
+      'Sunucu kayıtlı kimlik bilgilerini kabul etmiyor. Parolayı yeniden girin.';
+
+  @override
+  String get remoteDesktopFailIdleTimeout =>
+      'Oturum, sunucunun boşta kalma süresi sınırından sonra kesildi.';
+
+  @override
+  String get remoteDesktopFailSessionTimeLimit =>
+      'Oturum sunucunun süre sınırına ulaştı.';
+
+  @override
+  String get remoteDesktopFailReplacedByOtherConnection =>
+      'Başka bir bağlantı bu oturumu devraldı.';
+
+  @override
+  String get remoteDesktopFailDisconnectedOnServer =>
+      'Oturum sunucuda kesildi.';
+
+  @override
+  String get remoteDesktopFailLoggedOffByAdministrator =>
+      'Bir yönetici oturumu kapattı.';
+
+  @override
+  String get remoteDesktopFailLoggedOff => 'Oturum kapatıldı.';
+
+  @override
+  String get remoteDesktopFailServerShutdown => 'Sunucu kapanıyor.';
+
+  @override
+  String get remoteDesktopFailServerReboot => 'Sunucu yeniden başlatılıyor.';
+
+  @override
+  String get remoteDesktopFailServerDeniedConnection =>
+      'Sunucu bağlantıyı reddetti.';
+
+  @override
+  String get remoteDesktopFailLicensingFailed =>
+      'Sunucuda Uzak Masaüstü lisanslaması başarısız oldu. Lisans sunucusunu ve İstemci Erişim Lisanslarını (CAL) kontrol edin.';
+
+  @override
+  String get remoteDesktopFailVncSecurityUnsupported =>
+      'VNC sunucusu desteklenen bir güvenlik türü sunmuyor; yalnızca VNC parolası veya güvenliksiz bağlantı destekleniyor. TigerVNC için SecurityTypes=VncAuth ayarlayın.';
+
+  @override
+  String get remoteDesktopFailPasswordRequired =>
+      'VNC sunucusu parola istiyor.';
+
+  @override
+  String get tcpTargetUnreachable =>
+      'Sunucu bu adrese bağlanamadı. Hizmetin çalıştığını ve o bağlantı noktasını dinlediğini kontrol edin.';
+
+  @override
+  String get sshTcpForwardingProhibited =>
+      'SSH sunucusu bu bağlantıyı yönlendirmeyi reddetti. sshd_config dosyasındaki AllowTcpForwarding ve PermitOpen ayarlarını, authorized_keys içindeki anahtarda no-port-forwarding veya permitopen seçeneği olup olmadığını kontrol edin.';
+
+  @override
+  String get monitorRelayForbidden =>
+      'Bu Monitor hesabının bu adrese bağlanmasına izin verilmiyor. Rolünün connect izni bu adrese izin vermelidir.';
 
   @override
   String get remoteDesktopCertificateChanged =>
@@ -3103,7 +3212,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get virtIntroTransports =>
-      'İkisi de SSH üzerinden, bir Monitor ajanı aracılığıyla veya bu cihazda çalışır.';
+      'İkisi de SSH üzerinden, Monitor aracılığıyla veya bu cihazda çalışır.';
 
   @override
   String get virtIntroTokens =>
@@ -3256,10 +3365,10 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get virtErrRelayNotGranted =>
-      'Monitor aracısı bağlantıları aktarmıyor';
+      'Monitor bu hesap için sunucudan TCP bağlantısı açmıyor (connect izni)';
 
   @override
-  String get virtErrExecNotGranted => 'Monitor aracısı komut çalıştırmıyor';
+  String get virtErrExecNotGranted => 'Monitor komut çalıştırmıyor';
 
   @override
   String get virtErrNotInstalled => 'Bu sunucuda virsh kurulu değil';
@@ -3286,7 +3395,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get remoteSessionIdleTimeoutTip =>
-      'Uzak masaüstünden veya bir konuğun konsolundan ayrıldıktan sonra bağlantının ne kadar süre açık kalacağı. Kapanmadan önce bir bildirim, bağlantıyı korumanız için 10 saniye verir.';
+      'Uzak masaüstünden veya VM konsolundan ayrıldıktan sonra bağlantı bir süre açık kalır. Kapatılmadan önce bir uyarı gösterilir; bağlantıyı açık tutmak için 10 saniyeniz vardır.';
 
   @override
   String get remoteSessionKeepAlive => 'Açık tut';
@@ -3479,10 +3588,10 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu ana makinenin izin verdiğinden fazla çekirdek.';
 
   @override
-  String get virtCreateMemoryInvalid => 'Bellek yetersiz.';
+  String get virtCreateMemoryInvalid => 'Kullanılabilir bellek yetersiz.';
 
   @override
-  String get virtCreateStorageMissing => 'Diskinin nereye gideceğini seçin.';
+  String get virtCreateStorageMissing => 'Diskin depolanacağı konumu seçin.';
 
   @override
   String get virtCreateDiskInvalid => '1 GiB ile 64 TiB arası.';
@@ -3492,7 +3601,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get virtCreateCredentialsMissing =>
-      'Bir root parolası veya SSH anahtarı belirleyin.';
+      'Bir root parolası veya SSH açık anahtarı ayarlayın.';
 
   @override
   String virtCreatePasswordShort(int min) {
@@ -3842,7 +3951,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get virtHwVolumeKept =>
-      'Kaldırıldı, ancak çalışan konuk diski hâlâ kullanıyor, bu yüzden birimi korundu. Bir sonraki başlatmada ayrılacak.';
+      'Disk yapılandırması kaldırıldı ancak çalışan VM diski kullanmaya devam ediyor; bu nedenle volume korundu. VM bir sonraki başlatıldığında bağlantısı kesilecek.';
 
   @override
   String get virtHwBus => 'Veri yolu';
@@ -4052,7 +4161,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get virtBackupNoStorage => 'Bu düğümde yedekleri tutan depolama yok.';
 
   @override
-  String get virtBackupLiveTip => 'Çalışıyor: snapshot modu, kesinti yok';
+  String get virtBackupLiveTip =>
+      'VM çalışırken kesinti olmadan snapshot modunda yedekleyin.';
 
   @override
   String get virtBackupStoppedTip => 'Kapalı: olduğu gibi yedeklenir';
@@ -4462,15 +4572,15 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get virtCloudImageTip =>
-      'Üzerinde sistem olan bir disk: kopyalanır, Depolama altındaki boyuta büyütülür ve ilk açılışta cloud-init ile yapılandırılır. İmajın kendisi olduğu gibi kalır.';
+      'Bu, işletim sistemi kurulu bir disk imajıdır. VM oluşturulurken kopyalanır ve Depolama’da belirtilen boyuta genişletilir; ilk açılışta cloud-init yapılandırır. Orijinal imaj değişmez.';
 
   @override
   String get virtNoCloudImagesLibvirt =>
-      'Burada bulut imajı yok: hiçbir VM\'nin kullanmadığı bir qcow2 veya raw imajını bir havuza koyun (Depolama\'dan yükleyin).';
+      'Kullanılabilir cloud image yok. qcow2 veya raw imajı depolama havuzuna yükleyin ve herhangi bir VM tarafından kullanılmadığını doğrulayın.';
 
   @override
   String get virtNoCloudImagesPve =>
-      'Burada bulut imajı yok: bir qcow2, raw veya vmdk imajını Import içerik türüne sahip bir depolamaya yükleyin (PVE 8.2+).';
+      'Kullanılabilir cloud image yok. qcow2, raw veya vmdk imajını Import içerik türünü destekleyen depolamaya yükleyin (PVE 8.2 veya üzeri gerekir).';
 
   @override
   String get virtCreateWindowsTitle => 'Windows 11 UEFI ve TPM 2.0 gerektirir';
@@ -4493,7 +4603,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get virtCreateIncomplete =>
-      'Önce turuncu işaretli kısımları tamamlayın.';
+      'Önce turuncu ile işaretlenen tüm alanları doldurun.';
 
   @override
   String virtCreateOn(String host) {
@@ -4502,7 +4612,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get virtCiTip =>
-      'sudo yetkili bir hesap; parola, SSH anahtarı veya ikisiyle giriş yapılır.';
+      'sudo yetkili bir hesap oluşturun. Parola, SSH anahtarı veya ikisiyle oturum açabilirsiniz.';
 
   @override
   String get virtCiUserInvalid =>
@@ -4536,7 +4646,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get virtCiSeedNote =>
-      'Diskin yanındaki küçük bir ISO\'ya yazılır, CD-ROM olarak takılır ve VM ile birlikte silinir. Parolanın yalnızca özeti saklanır.';
+      'Ayarlar küçük bir ISO dosyasına yazılır ve CD-ROM olarak bağlanır. VM silindiğinde bu dosya da silinir. Parolanın yalnızca hash’i saklanır.';
 
   @override
   String get virtCiNoToolTitle =>
@@ -4544,7 +4654,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String virtCiNoToolBody(String tools) {
-    return 'Ana makineye $tools araçlarından birini kurun. cloud-init olmadan imaj, giriş yapılacak hesap olmadan başlar.';
+    return 'Ana bilgisayara $tools araçlarından birini yükleyin. Aksi halde cloud-init yapılandırma oluşturamaz ve imaj başladıktan sonra oturum açılacak bir hesap olmaz.';
   }
 
   @override
@@ -4562,7 +4672,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get virtCiEditTip =>
-      'cloud-init\'in bu VM\'de kurduğu şeyler: sudo yetkili bir hesap, ona nasıl girileceği, ana makine adı ve adres.';
+      'Bu VM’nin cloud-init ayarlarını; sudo yetkili hesabı, oturum açma yöntemi, ana bilgisayar adı ve adres dahil yapılandırın.';
 
   @override
   String get virtCiForeignTitle =>
@@ -4570,7 +4680,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get virtCiForeignBody =>
-      'Başka yerde yapılan ayarlar (paketler, komutlar, diğer hesaplar) burada gösterilmez. Kaydetmek seedi burada gösterilenle değiştirir.';
+      'Başka araçların yazdığı paketler, komutlar ve diğer hesaplar gibi ayarlar burada gösterilmez. Kaydettiğinizde seed bu sayfadaki ayarlarla değiştirilir.';
 
   @override
   String get virtCiPasswordKept => 'Ayarlı. Korumak için boş bırakın';
@@ -4583,7 +4693,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get virtCiKeysAdded =>
-      'Anahtarlar hesaba eklenir. Burada çıkarılan bir anahtar, orada silinene kadar sistemde kalır; yeni bir kullanıcı adı eskisinin yanında yeni bir hesap açar.';
+      'Anahtarlar hesaba eklenir. Buradan kaldırmak sistemden silmez; ayrıca silmeniz gerekir. Kullanıcı adını değiştirmek yeni bir hesap oluşturur, eskisini korur.';
 
   @override
   String get virtCiEffectTitle => 'Bir sonraki açılışta geçerli olur';
@@ -4594,7 +4704,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get virtCiEffectPve =>
-      'PVE cloud-init sürücüsünü hemen yeniden yazar; örnek kimliği bu ayarlardan türetilir, bu yüzden buradaki her değişiklik yenisini oluşturur.';
+      'PVE cloud-init sürücüsünü hemen yeniden yazar. Instance ID bu ayarlardan üretildiğinden her değişiklik yeni bir ID oluşturur.';
 
   @override
   String get virtCiNewInstance =>
@@ -4608,7 +4718,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get virtSnapshotExternalTip =>
-      'Guest çalışmaya devam eder. Her disk seçilen havuza bir qcow2 katmanı alır; guest bir zincirde kalır.';
+      'VM çalışmaya devam eder. Her disk için seçilen depolama havuzunda bir qcow2 overlay oluşturulur ve VM bu snapshot zincirini kullanmayı sürdürür.';
 
   @override
   String get virtSnapshotFormInternal => 'Dahili (imaj içinde)';
@@ -4646,7 +4756,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get virtSnapshotRevertChain =>
-      'Bir zincirde geri dönmek, çalışan katmanı imaja birleştirir ve sonraki tüm anlık görüntüleri kullanılamaz bırakır. Yalnızca en yeni anlık görüntüye dönülebilir.';
+      'Zincirdeki bir snapshot’a dönmek, çalışan overlay’i imajla birleştirir ve sonraki snapshot’ları kullanılamaz hale getirir. Yalnızca en yeni snapshot’a dönülebilir.';
 
   @override
   String get virtSnapshotRevertHasChildren =>
@@ -4898,12 +5008,12 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String virtNetEditAsk(int count) {
-    return 'Çalışan ağ, yeniden başlatılana kadar mevcut durumunu korur. Yeniden başlatmak üzerindeki VM\'lerin ($count) bağlantısını keser.';
+    return 'Çalışan ağ yeniden başlatılana kadar değişmez. Yeniden başlatma, bağlı $count VM’nin ağ bağlantısını keser.';
   }
 
   @override
   String get virtNetEditAskNoGuest =>
-      'Çalışan ağ, yeniden başlatılana kadar mevcut durumunu korur.';
+      'Çalışan ağ yeniden başlatılana kadar değişmez.';
 
   @override
   String get virtNetEditRestart => 'Şimdi uygulamak için yeniden başlat';
@@ -4946,7 +5056,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get virtNetHostEmpty =>
-      'Hiçbir MAC\'e kendi adresi verilmiyor: her VM, DHCP aralığından bir adres alır.';
+      'Hiçbir MAC adresine sabit IP atanmadı; tüm VM’ler DHCP aralığından IP alacak.';
 
   @override
   String get virtNetHostOthers =>
@@ -4962,7 +5072,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get virtNetManagementTip =>
-      'Ana makinenin yönetim trafiğini taşıyor ya da taşıyan bir arabirimin altında: uygulama bunu düzenlemez.';
+      'Bu arayüz ana bilgisayarın yönetim trafiğini taşır veya yönetim arayüzünün altındadır. Uygulama bunu değiştirmez.';
 
   @override
   String get virtNetPhysicalTip =>
@@ -5060,7 +5170,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String funcNeedsAgentHttps(String func) {
-    return '$func, bu Monitor agent\'a HTTPS veya hem agent\'ta hem bu uygulamada izin verilmiş HTTP gerektirir.';
+    return '$func, bu Monitor’e HTTPS ile bağlanmayı ya da hem Monitor’de hem bu uygulamada düz HTTP’ye izin verilmesini gerektirir.';
   }
 
   @override
@@ -5086,7 +5196,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get monitorPasswordNotSaved =>
-      'Parola agent üzerinde değiştirildi, ancak uygulama kaydedemedi. Bu sunucunun ayarlarında Monitor parolasını güncelleyin.';
+      'Parola Monitor’de değiştirildi, ancak uygulama kaydedemedi. Bu sunucunun ayarlarında Monitor parolasını güncelleyin.';
 
   @override
   String get firewall => 'Güvenlik duvarı';
@@ -5218,7 +5328,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String firewallMayRefuseFmt(String access) {
-    return '$access: bu uygulamanın yeni bağlantıları reddedilebilir. Bu, bağlantının geldiği adrese veya arayüze bağlıdır ve uygulama bunu bilemez.';
+    return '$access: Kaynak IP adresine veya gelen ağ arayüzüne bağlı olarak bu uygulamaya yeni bağlantılar reddedilebilir. Uygulama bunu önceden belirleyemez.';
   }
 
   @override
@@ -5312,20 +5422,20 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get monitorSyncNeedsServer =>
-      'Yedeği saklayacak monitor aracısının sunucusunu seçin.';
+      'Yedeği saklayacak Monitor’ün sunucusunu seçin.';
 
   @override
   String get monitorBackupUnsupported =>
-      'Bu monitor aracısı yedek saklayamaz. Aracıyı güncelleyin.';
+      'Bu Monitor yedek saklayamaz. Monitor’ü güncelleyin.';
 
   @override
   String monitorBackupTooLarge(String max) {
-    return 'Yedek, monitor aracısının kabul ettiği boyuttan ($max) büyük.';
+    return 'Yedek, Monitor’ün kabul ettiği boyuttan ($max) büyük.';
   }
 
   @override
   String get monitorBackupTooMany =>
-      'Monitor aracısı izin verdiği sayıda yedeği zaten saklıyor. Önce birini silin.';
+      'Monitor izin verdiği sayıda yedeği zaten saklıyor. Önce birini silin.';
 
   @override
   String get virtCreateVmidInvalid => '100 ile 999999999 arasında bir VMID.';
@@ -5367,16 +5477,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get virtBackupIssueNodeOffline => 'İşin düğümü çevrimiçi değil.';
 
   @override
-  String get programWaiting => 'Sizi bekliyor';
+  String get programWaiting => 'İşleminiz bekleniyor';
 
   @override
-  String get programWaitingPermission => 'Onayınızı bekliyor';
+  String get programWaitingPermission => 'Onayınız bekleniyor';
 
   @override
-  String get programWaitingQuestion => 'Yanıtınızı bekliyor';
+  String get programWaitingQuestion => 'Yanıtınız bekleniyor';
 
   @override
-  String get programWaitingAuth => 'Oturum açmanızı bekliyor';
+  String get programWaitingAuth => 'Oturum açmanız bekleniyor';
 
   @override
   String get programStatus => 'Program durumu';

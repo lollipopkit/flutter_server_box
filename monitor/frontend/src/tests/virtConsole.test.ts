@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { get } from 'svelte/store'
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import { flushSync } from 'svelte'
@@ -7,6 +8,7 @@ import { api } from '../lib/api'
 import { openConsoleSocket } from '../lib/virtConsole'
 import { theme } from '../lib/theme.svelte'
 import { screenReader } from '../lib/screenReader.svelte'
+import { LL } from '../i18n/i18n-svelte'
 import type { VirtConsoleAnswer, VirtGuest } from '../types'
 
 vi.mock('../lib/api', async (importOriginal) => ({
@@ -54,6 +56,7 @@ vi.mock('@xterm/xterm/css/xterm.css', () => ({}))
 
 const mockedConsole = vi.mocked(api.virtConsole)
 const mockedSocket = vi.mocked(openConsoleSocket)
+const ll = get(LL)
 
 const answer: VirtConsoleAnswer = { ticket: 't', vnc_password: null, password_known: true, command: null, error: null }
 const guest = { id: 'g1' } as VirtGuest
@@ -95,8 +98,8 @@ describe('VirtConsole', () => {
     mockedConsole.mockResolvedValue(answer)
     mockedSocket.mockResolvedValue(socket)
     render(VirtConsole, { guest, kind: 'text', sudoPassword: null })
-    await fireEvent.click(screen.getByRole('button', { name: 'Open' }))
-    const close = await screen.findByRole('button', { name: 'Close' })
+    await fireEvent.click(screen.getByRole('button', { name: ll.virtConsoleOpen() }))
+    const close = await screen.findByRole('button', { name: ll.virtConsoleClose() })
     await waitFor(() => expect(terminals).toHaveLength(1))
 
     await fireEvent.click(close)
@@ -111,7 +114,7 @@ describe('VirtConsole', () => {
     const socket = fakeSocket()
     mockedSocket.mockResolvedValue(socket)
     const { unmount } = render(VirtConsole, { guest, kind: 'text', sudoPassword: null })
-    await fireEvent.click(screen.getByRole('button', { name: 'Open' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.virtConsoleOpen() }))
     unmount()
     answerNow(answer)
     await new Promise((r) => setTimeout(r, 10))
@@ -124,7 +127,7 @@ describe('VirtConsole', () => {
     let socketNow!: (s: WebSocket) => void
     mockedSocket.mockReturnValue(new Promise((r) => (socketNow = r)))
     const { unmount } = render(VirtConsole, { guest, kind: 'text', sudoPassword: null })
-    await fireEvent.click(screen.getByRole('button', { name: 'Open' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.virtConsoleOpen() }))
     await waitFor(() => expect(mockedSocket).toHaveBeenCalled())
     unmount()
     const socket = fakeSocket()
@@ -139,7 +142,7 @@ describe('VirtConsole', () => {
     mockedConsole.mockResolvedValue(answer)
     mockedSocket.mockResolvedValue(fakeSocket())
     render(VirtConsole, { guest, kind: 'text', sudoPassword: null })
-    await fireEvent.click(screen.getByRole('button', { name: 'Open' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.virtConsoleOpen() }))
     await waitFor(() => expect(terminals).toHaveLength(1))
     expect(terminals[0].options.theme).toMatchObject({ background: '#ffffff' })
 
@@ -154,20 +157,20 @@ describe('VirtConsole', () => {
     mockedSocket.mockResolvedValue(socket)
     failXterm = true
     render(VirtConsole, { guest, kind: 'text', sudoPassword: null })
-    await fireEvent.click(screen.getByRole('button', { name: 'Open' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.virtConsoleOpen() }))
     await waitFor(() => expect(socket.close).toHaveBeenCalled())
     expect(terminals).toHaveLength(0)
     expect(await screen.findByText('chunk failed')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Open' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: ll.virtConsoleOpen() })).toBeInTheDocument()
   })
 
   it('starts without screen reader mode and follows its toggle', async () => {
     mockedConsole.mockResolvedValue(answer)
     mockedSocket.mockResolvedValue(fakeSocket())
     render(VirtConsole, { guest, kind: 'text', sudoPassword: null })
-    const toggle = screen.getByRole('button', { name: 'Screen reader mode' })
+    const toggle = screen.getByRole('button', { name: ll.terminalScreenReader() })
     expect(toggle).toHaveAttribute('aria-pressed', 'false')
-    await fireEvent.click(screen.getByRole('button', { name: 'Open' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.virtConsoleOpen() }))
     await waitFor(() => expect(terminals).toHaveLength(1))
     expect(terminals[0].options.screenReaderMode).toBe(false)
 

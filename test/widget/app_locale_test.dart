@@ -1,3 +1,5 @@
+import 'package:fl_lib/generated/l10n/lib_l10n_en.dart';
+import 'package:fl_lib/generated/l10n/lib_l10n_zh.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,6 +13,8 @@ import '../helpers/test_db.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  final libEn = LibLocalizationsEn();
+  final libZh = LibLocalizationsZh();
   late SettingStore setting;
 
   setUp(() async {
@@ -34,7 +38,7 @@ void main() {
     await tester.pumpWidget(const ProviderScope(child: MyApp()));
     await tester.pumpAndSettle();
 
-    expect(find.text('Initialize'), findsOneWidget);
+    expect(find.text(libEn.init), findsOneWidget);
     expect(tester.widget<MaterialApp>(find.byType(MaterialApp)).locale, isNull);
 
     setting.locale.put('zh');
@@ -52,8 +56,8 @@ void main() {
       Localizations.localeOf(tester.element(find.byType(ListView).first)),
       const Locale('zh'),
     );
-    expect(find.text('Initialize'), findsNothing);
-    expect(find.text('初始化'), findsOneWidget);
+    expect(find.text(libEn.init), findsNothing);
+    expect(find.text(libZh.init), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });

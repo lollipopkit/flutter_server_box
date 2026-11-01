@@ -62,7 +62,7 @@ class MonitorExec implements CommandExec {
 
     if (out.truncated) {
       Loggers.app.warning(
-        'Monitor exec output was truncated by the agent at '
+        'Monitor exec output was truncated by the Monitor at '
         '${out.stdout.length + out.stderr.length} bytes; what the caller '
         'parses is a prefix of: ${script.split('\n').first}',
       );

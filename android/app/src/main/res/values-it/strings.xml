@@ -13,13 +13,13 @@
     <string name="widget_configure_server">Server</string>
     <string name="widget_configure_metric">Metrica principale</string>
     <string name="widget_configure_save">Salva</string>
-    <string name="widget_configure_empty">Non c\'è ancora un server con agente monitor.\nAggiungine uno in ServerBox e torna qui.</string>
+    <string name="widget_configure_empty">Non hai ancora configurato un server con ServerBox Monitor.\nAggiungi un server in ServerBox, poi torna qui.</string>
     <string name="widget_metric_cpu">CPU</string>
     <string name="widget_metric_memory">Memoria</string>
     <string name="widget_metric_disk">Disco</string>
     <string name="widget_metric_network">Rete</string>
     <string name="widget_err_not_configured">Tocca per scegliere un server</string>
-    <string name="widget_err_no_token">Nessuna credenziale — apri ServerBox</string>
+    <string name="widget_err_no_token">Credenziali di accesso mancanti — apri ServerBox</string>
     <string name="widget_err_insecure">HTTPS richiesto</string>
     <string name="widget_err_network">Errore di rete</string>
     <string name="widget_err_timeout">Tempo scaduto</string>
@@ -28,10 +28,10 @@
     <string name="widget_small_label">Valori del server</string>
     <string name="widget_medium_label">Grafici del server</string>
     <string name="widget_label">Stato del server</string>
-    <string name="widget_description">CPU, memoria, disco e rete a colpo d’occhio. Ingrandiscilo per vedere di più.</string>
+    <string name="widget_description">Controlla rapidamente CPU, memoria, disco e rete. Ingrandisci il widget per vedere altri dettagli.</string>
 
-    <string name="process_text_label">Salva come snippet</string>
-    <string name="tile_no_sessions">Nessuna sessione attiva</string>
+    <string name="process_text_label">Salva come snippet di codice</string>
+    <string name="tile_no_sessions">Nessuna sessione in corso</string>
     <plurals name="tile_sessions">
         <item quantity="one">%d sessione</item>
         <item quantity="other">%d sessioni</item>

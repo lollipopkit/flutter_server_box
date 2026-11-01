@@ -620,9 +620,7 @@ class _Totals {
     ])
       (
         kind: kind,
-        short: name.length <= 4
-            ? name.toUpperCase()
-            : name.substring(0, 3).toUpperCase(),
+        short: shortMetricName(name),
         pct: pct,
         over: (pct ?? 0) >= kServerAlertPercent,
       ),

@@ -1,7 +1,9 @@
+import { get } from 'svelte/store'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import Desktop from '../desk/apps/remote_desktop/RemoteDesktopApp.svelte'
+import { LL } from '../i18n/i18n-svelte'
 import { api, ApiError } from '../lib/api'
 import type { Desktop as Route } from '../types'
 
@@ -9,6 +11,7 @@ vi.mock('../lib/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../lib/api')>()),
   api: { getDesktops: vi.fn(), updateDesktops: vi.fn(), issueWsTicket: vi.fn() },
 }))
+const ll = get(LL)
 const getDesktops = vi.mocked(api.getDesktops)
 const updateDesktops = vi.mocked(api.updateDesktops)
 
@@ -34,16 +37,16 @@ describe('Desktop page', () => {
   it('asks for the password only when a session is opened', async () => {
     render(Desktop)
     await fireEvent.click(await screen.findByRole('button', { name: /office/ }))
-    await fireEvent.click(screen.getByRole('button', { name: /open session/i }))
-    expect(screen.getByLabelText(/password/i)).toHaveAttribute('type', 'password')
+    await fireEvent.click(screen.getByRole('button', { name: ll.desktopConnect() }))
+    expect(screen.getByLabelText(ll.desktopPassword(), { exact: false })).toHaveAttribute('type', 'password')
   })
 
   it('removes a route by sending the set without it', async () => {
     updateDesktops.mockResolvedValue({ desktops: [], protocols })
     render(Desktop)
     await fireEvent.click(await screen.findByRole('button', { name: /office/ }))
-    await fireEvent.click(screen.getByRole('button', { name: /delete desktop/i }))
-    const confirm = screen.getAllByRole('button', { name: /delete desktop/i })
+    await fireEvent.click(screen.getByRole('button', { name: ll.desktopDelete() }))
+    const confirm = screen.getAllByRole('button', { name: ll.desktopDelete() })
     await fireEvent.click(confirm[confirm.length - 1])
     await waitFor(() => expect(updateDesktops).toHaveBeenCalledWith([]))
   })
@@ -54,9 +57,9 @@ describe('Desktop page', () => {
     )
     render(Desktop)
     await fireEvent.click(await screen.findByRole('button', { name: /office/ }))
-    await fireEvent.click(screen.getByRole('button', { name: /delete desktop/i }))
-    const confirm = screen.getAllByRole('button', { name: /delete desktop/i })
+    await fireEvent.click(screen.getByRole('button', { name: ll.desktopDelete() }))
+    const confirm = screen.getAllByRole('button', { name: ll.desktopDelete() })
     await fireEvent.click(confirm[confirm.length - 1])
-    expect(await screen.findByText(/one host name or address/)).toBeInTheDocument()
+    expect(await screen.findByText(ll.desktopInvalidHost())).toBeInTheDocument()
   })
 })

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/cron_schedule.dart';
 
 import '../../helpers/rust_lib_helper.dart';
@@ -61,17 +62,17 @@ void main() {
     test('says the common schedules in words', () {
       String? describe(String expr) => CronSchedule.tryParse(expr)?.describe();
 
-      expect(describe('@reboot'), 'At boot');
-      expect(describe('* * * * *'), 'Every minute');
-      expect(describe('*/5 * * * *'), 'Every 5 minutes');
-      expect(describe('30 * * * *'), 'Every hour at :30');
-      expect(describe('0 */6 * * *'), 'Every 6 hours');
-      expect(describe('15 */6 * * *'), 'Every 6 hours at :15');
-      expect(describe('0 2 * * *'), 'Every day at 02:00');
-      expect(describe('@daily'), 'Every day at 00:00');
-      expect(describe('15 3 * * 1-5'), 'On weekdays at 03:15');
-      expect(describe('30 4 * * 0'), 'Every Sunday at 04:30');
-      expect(describe('0 0 1 * *'), 'Day 1 of every month at 00:00');
+      expect(describe('@reboot'), l10n.cronAtBoot);
+      expect(describe('* * * * *'), l10n.cronEveryMin);
+      expect(describe('*/5 * * * *'), l10n.cronEveryMinsFmt(5));
+      expect(describe('30 * * * *'), l10n.cronHourlyAtFmt('30'));
+      expect(describe('0 */6 * * *'), l10n.cronEveryHoursFmt(6));
+      expect(describe('15 */6 * * *'), l10n.cronEveryHoursAtFmt(6, '15'));
+      expect(describe('0 2 * * *'), l10n.cronDailyAtFmt('02:00'));
+      expect(describe('@daily'), l10n.cronDailyAtFmt('00:00'));
+      expect(describe('15 3 * * 1-5'), l10n.cronWeekdaysAtFmt('03:15'));
+      expect(describe('30 4 * * 0'), l10n.cronWeekdayAtFmt('Sunday', '04:30'));
+      expect(describe('0 0 1 * *'), l10n.cronMonthlyAtFmt(1, '00:00'));
     });
 
     /// A description that drops a field says the line runs more often than it

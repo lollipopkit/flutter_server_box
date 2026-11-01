@@ -3,7 +3,7 @@
 # ServerBox Monitor
 
 ServerBox Monitor 是
-[ServerBox](https://github.com/lollipopkit/flutter_server_box) 的服务端 agent，
+[ServerBox](https://github.com/lollipopkit/flutter_server_box) 的服务端组件，
 负责记录服务器指标、提供 Monitor HTTP API，并在需要时托管网页面板。
 不同版本之间可能会调整配置格式，升级后请重新检查 `config.example.toml`。
 
@@ -39,7 +39,7 @@ ServerBox Monitor 是
 # systemd: 安装为 `systemctl --user` 服务, 以你自己的账号运行
 curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/install.sh | sh -s -- install
 
-# OpenRC (Alpine): 写 /etc/init.d 需要 root, 但 agent 仍以你 sudo 前的账号运行
+# OpenRC (Alpine): 写 /etc/init.d 需要 root, 但 Monitor 仍以你 sudo 前的账号运行
 curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/install.sh | sudo sh -s -- install
 
 # 两种 init 系统, 都以 root 运行
@@ -65,7 +65,7 @@ Docker 的系统镜像，分别基于 Alpine Linux（`sbOS_musl_*`）和 Debian
 
 配置文件是二进制旁边的 `config.toml`。所有配置项及其注释都在
 [`config.example.toml`](config.example.toml) 里；`cargo run -- config` 会打印
-解析后的值。agent 默认监听 `0.0.0.0:3770`，当 `frontend/dist` 存在时同时在该
+解析后的值。Monitor 默认监听 `0.0.0.0:3770`，当 `frontend/dist` 存在时同时在该
 地址提供面板。
 
 ### 登录
@@ -87,8 +87,8 @@ cd /opt/server-box-monitor   # 或 ~/.local/share/server-box-monitor
 
 ### ServerBox App 需要什么
 
-在 App 里以 **monitor** 方式添加的服务器，只通过这个 agent 的 HTTP API 访问，
-不携带任何 SSH 凭据。agent 在 `GET /api/v1/capabilities` 上报它提供什么，App
+在 App 里以 **monitor** 方式添加的服务器，只通过这个 Monitor 的 HTTP API 访问，
+不携带任何 SSH 凭据。Monitor 在 `GET /api/v1/capabilities` 上报它提供什么，App
 就只提供什么：
 
 | App 功能 | 端点 |
@@ -99,17 +99,17 @@ cd /opt/server-box-monitor   # 或 ~/.local/share/server-box-monitor
 | 远程桌面、本地和动态端口转发 | `/api/v1/stream/ws` |
 | 远程端口转发 | `/api/v1/listen/ws` |
 | 面板里的远程桌面（VNC、RDP） | `/api/v1/stream/ws`、`/api/v1/rdp/ws` |
-| 备份同步到这个 agent、面板的备份页面 | `/api/v1/backup` |
+| 备份同步到这个 Monitor、面板的备份页面 | `/api/v1/backup` |
 
-`/api/v1/stream/ws` 以 agent 进程所属的账号从本机向 App 指定的地址发起一条 TCP
-连接并中继。`/api/v1/listen/ws` 方向相反：agent 在本机监听一个端口，把每条进来的
+`/api/v1/stream/ws` 以 Monitor 进程所属的账号从本机向 App 指定的地址发起一条 TCP
+连接并中继。`/api/v1/listen/ws` 方向相反：Monitor 在本机监听一个端口，把每条进来的
 连接交给 App，App 再通过一条 `stream` 连接接管。
 
-monitor 服务器不提供 SFTP：agent 的文件 API 传输的是文件内容，不是 SSH 字节流。
+monitor 服务器不提供 SFTP：Monitor 的文件 API 传输的是文件内容，不是 SSH 字节流。
 
 ## 访问
 
-**登录后可以做 agent 进程所属的系统账号能做的一切**：shell、它的文件、从本机发起
+**登录后可以做 Monitor 进程所属的系统账号能做的一切**：shell、它的文件、从本机发起
 连接、在本机端口上监听。没有角色，也没有按功能划分的权限：agent 安装时使用的账号
 就是上限。因此 `install.sh` 默认以普通账号运行 agent：systemd 下是
 `systemctl --user` 服务，OpenRC 下是带 `command_user` 的 `/etc/init.d` 脚本；
@@ -122,7 +122,7 @@ monitor 服务器不提供 SFTP：agent 的文件 API 传输的是文件内容�
 修改密码会注销其他所有会话：之前签发的 token 失效，已配对的手表和小组件被解除配对，
 打开的终端、relay 和监听被关闭。
 
-从有多个账号的 agent 升级时，保留最早的 admin 账号的密码，其他账号的 Agent mode
+从有多个账号的 Monitor 升级时，保留最早的 admin 账号的密码，其他账号的 Agent mode
 任务、memory 和桌面主题转移给它。
 
 补充：
@@ -133,7 +133,7 @@ monitor 服务器不提供 SFTP：agent 的文件 API 传输的是文件内容�
   `terminal.allow_insecure` 和 `fs.allow_insecure` 与之等效）。App 还必须对该
   Monitor 连接单独开启「允许不安全 HTTP」；两端开关缺一不可。否则凭据、终端流量和
   文件内容会以明文传输，不应在普通局域网或不受控制的网络中使用。
-- 文件 API 从不提供 agent 自身的状态：数据库、`jwt.secret`、`config.toml`、`.env`、
+- 文件 API 从不提供 Monitor 自身的状态：数据库、`jwt.secret`、`config.toml`、`.env`、
   TLS 私钥等。
 - `access_log` 记录打开了什么、从何处、结果如何，不记录任何凭据。
 - 登录失败按来源地址限流；没有登录过的客户端还共用一个计数。登录成功后设备会得到一个 token，带着它登录的设备单独计数，其他地方的失败不会把它锁住。修改密码会让所有设备 token 失效。

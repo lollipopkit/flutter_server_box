@@ -1,3 +1,10 @@
+<script lang="ts" module>
+  /// 1 MiB, mirroring `Miscs.editorMaxSize` in the app
+  /// (`lib/data/res/misc.dart`). Nothing in Rust holds it: the agent does not
+  /// edit, so the limit is the panel's to keep.
+  export const EDITOR_MAX_BYTES = 1024 * 1024
+</script>
+
 <script lang="ts">
   import { errorText } from '../../../lib/errorText'
   import {
@@ -40,10 +47,6 @@
   const access = $derived(filesAccess(caps))
   const available = $derived(access.available)
 
-  /// 1 MiB, mirroring `Miscs.editorMaxSize` in the app
-  /// (`lib/data/res/misc.dart`). Nothing in Rust holds it: the agent does not
-  /// edit, so the limit is the panel's to keep.
-  const EDITOR_MAX_BYTES = 1024 * 1024
 
   /// The desk's accent at low opacity: the fill a picked row, an active view
   /// button and the menu's hover take, as the sidebar's own rows do.

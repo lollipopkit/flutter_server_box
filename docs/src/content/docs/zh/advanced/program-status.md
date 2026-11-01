@@ -5,7 +5,7 @@ description: 查看终端中的程序何时正在等待你、已完成或执行�
 
 终端中运行的程序可以向 Server Box 报告自身状态：正在运行、等待你操作、已完成或执行失败。Server Box 会在终端名称旁显示状态；终端当前不可见时，也会发送通知。
 
-服务器无需安装额外软件。程序会将简短的 escape sequence 写入输出，Server Box 可像读取其他终端输出一样，通过 SSH、Monitor agent 终端或本机终端接收。
+服务器无需安装额外软件。程序会将简短的 escape sequence 写入输出，Server Box 可像读取其他终端输出一样，通过 SSH、Monitor 终端或本机终端接收。
 
 ## Server Box 读取的内容
 
@@ -23,7 +23,7 @@ description: 查看终端中的程序何时正在等待你、已完成或执行�
 - **通知**：终端当前不可见时，例如显示其他标签页或 App 在后台运行，程序开始等待、完成或失败时会显示通知。运行时间达到 30 秒的命令结束时也会显示通知。点击通知可打开对应终端。可在 **设置 → SSH → 程序需要你时通知** 中关闭此功能。
 - Android 上的**持续通知**和 iOS 上的 **Live Activity** 会显示 session 中程序的状态（等待、已完成、失败或运行中），而不是地址。这两处无需解锁即可查看，因此只显示状态，不显示程序报告的标题或消息；上述通知开关关闭时不显示。
 - **Agent** 会结合屏幕内容读取这些报告，因此可以判断程序正在等待回答。
-- **Monitor agent 的 Web panel** 会在终端上方显示优先级最高的报告。
+- **Monitor 的 Web panel** 会在终端上方显示优先级最高的报告。
 
 ## 在自有脚本中报告状态
 
@@ -45,6 +45,6 @@ status done 'Backup finished'
 
 Server Box 以 control mode 连接 tmux，tmux 会原样传递每个 pane 的输出，因此 tmux pane 中的报告无需额外设置。
 
-Monitor agent 的 Web panel 会连接普通 tmux client。tmux 会丢弃它不识别的 sequence，因此只有启用 `allow-passthrough`（`set -g allow-passthrough on`），且程序为 tmux 封装报告（`ESC P tmux; …  ESC \`，并将其中每个 `ESC` 加倍）时，报告才会传到 panel。
+Monitor 的 Web panel 会连接普通 tmux client。tmux 会丢弃它不识别的 sequence，因此只有启用 `allow-passthrough`（`set -g allow-passthrough on`），且程序为 tmux 封装报告（`ESC P tmux; …  ESC \`，并将其中每个 `ESC` 加倍）时，报告才会传到 panel。
 
 程序查询终端是否支持报告（`OSC 7501 ; ?`）时，通过 tmux 无法收到应答，因为 tmux 会先响应后续查询。程序仍可发送报告。

@@ -46,6 +46,10 @@ pub struct NativeState {
     /// tree each sample's `df` is merged into.
     #[cfg(target_os = "linux")]
     block_devices: String,
+    /// The same output as a device tree, parsed once per refresh rather than
+    /// once per sample.
+    #[cfg(target_os = "linux")]
+    device_tree: Vec<sbm_parser::types::BlockDevice>,
 }
 
 impl NativeState {
@@ -61,10 +65,15 @@ impl NativeState {
 pub fn sample(#[allow(unused_variables)] state: &mut NativeState, system: SystemType) -> ServerStatus {
     match system {
         #[cfg(target_os = "linux")]
-        SystemType::Linux => linux::sample(&state.block_devices),
+        SystemType::Linux => linux::sample(&state.block_devices, &state.device_tree),
         #[cfg(any(target_os = "macos", target_os = "windows"))]
         SystemType::Bsd | SystemType::Windows => {
-            sysinfo_backend::sample(state.sysinfo.get_or_insert_with(Default::default))
+            match &mut state.sysinfo {
+                Some(s) => sysinfo_backend::sample(s),
+                slot => sysinfo_backend::State::new()
+                    .map(|s| sysinfo_backend::sample(slot.insert(s)))
+                    .unwrap_or_default(),
+            }
         }
         #[allow(unreachable_patterns)]
         _ => ServerStatus::default(),
@@ -95,6 +104,7 @@ pub fn refresh_block_devices(#[allow(unused_variables)] state: &mut NativeState)
     #[cfg(target_os = "linux")]
     {
         state.block_devices = linux::block_devices();
+        state.device_tree = sbm_parser::linux::parse_block_devices(&state.block_devices);
     }
 }
 
