@@ -70,6 +70,7 @@ A server is reached over SSH, the Monitor (HTTP), both, or is this device (`Spi.
 - **Never run code formatters.**
 - Never hand-edit `*.g.dart` / `*.freezed.dart`. `flutter gen-l10n` after ARB edits; check `libL10n` (fl_lib) first.
 - GetIt for stores and services. `fl_lib` widgets (`CustomAppBar`, `context.showRoundDialog`, `Input`, `Btnx.cancelOk`; context7 `lppcg fl_lib KEYWORD`). Split UI into build / actions / utils with `extension on`.
+- **In `lib/`, a page is `AppRoute.go`, `AppPageRoute` or `AppPage` (fl_lib), never a bare `MaterialPageRoute` / `MaterialPage`**: a predictive back (Android, and the iOS/macOS edge swipe) pops every route current in its own navigator, and only these leave it to the page on screen. Navigators side by side or kept alive while hidden (tabs, workspace panes, the settings pane) sit under a `BackScope(enabled:)` saying which one back is for.
 
 ### Storage (`lib/data/store/CLAUDE.md`)
 

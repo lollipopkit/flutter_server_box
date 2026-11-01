@@ -538,7 +538,7 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
     }
     if (!mounted) return;
     await Navigator.of(context).push<void>(
-      MaterialPageRoute(
+      AppPageRoute(
         builder: (_) => Scaffold(
           body: SafeArea(
             child: RemoteDesktopViewer(

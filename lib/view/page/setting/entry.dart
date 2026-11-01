@@ -249,7 +249,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   /// nothing at all, and the editor stayed put whichever section was picked.
   ///
   /// `route.settings is Page` is what tells the two apart: the declarative ones
-  /// each come from a `MaterialPage`, and a hand-pushed one does not.
+  /// each come from an `AppPage`, and a hand-pushed one does not.
   void _dropPushedPages() {
     final nav = _contentNav.currentState;
     if (nav == null) return;

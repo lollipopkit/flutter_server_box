@@ -286,7 +286,7 @@ extension _SettingsLayout on _SettingsPageState {
   ///
   /// Declarative rather than pushed by hand: [_path] already says which levels
   /// are open, and letting the navigator read it means the two cannot disagree.
-  /// A level arriving or leaving the list is a `MaterialPage` doing so, which is
+  /// A level arriving or leaving the list is an `AppPage` doing so, which is
   /// where the transition comes from.
   Widget _buildContent({
     required bool wide,
@@ -319,13 +319,13 @@ extension _SettingsLayout on _SettingsPageState {
         if (wide)
           // Never keyed by the search: the results are drawn over this
           // navigator, not as a page of it — see where they are laid out.
-          MaterialPage<void>(
+          AppPage<void>(
             key: ValueKey(level.firstOrNull?.id ?? 'root'),
             child: _opaque(pagesOf(level)),
           )
         else ...[
           // What settings there are, which is where a narrow window starts.
-          MaterialPage<void>(
+          AppPage<void>(
             key: const ValueKey('root'),
             child: _opaque(
               _SettingsList(
@@ -337,7 +337,7 @@ extension _SettingsLayout on _SettingsPageState {
             ),
           ),
           for (final entered in _path)
-            MaterialPage<void>(
+            AppPage<void>(
               key: ValueKey(entered.id),
               child: _opaque(pagesOf(_levelOf(entered))),
             ),

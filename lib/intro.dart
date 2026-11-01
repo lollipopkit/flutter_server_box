@@ -137,7 +137,7 @@ final class _IntroPage extends StatelessWidget {
     // consent counter above says the question was put.
     unawaited(DiagnosticsUpload.sync());
     Navigator.of(ctx).pushReplacement(
-      MaterialPageRoute(builder: (_) => _buildHomeWithWindowFrame()),
+      AppPageRoute(builder: (_) => _buildHomeWithWindowFrame()),
     );
   }
 
