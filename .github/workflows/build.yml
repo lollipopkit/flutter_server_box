@@ -248,11 +248,11 @@ jobs:
     env:
       APP_NAME: ${{ needs.reproducibilityCheck.outputs.appName }}
       BUILD_NUMBER: ${{ needs.reproducibilityCheck.outputs.buildNumber }}
-    # Build one DMG per architecture instead of a universal DMG. `arch` is the
-    # architecture name used in release assets, consistent with the APK and
-    # AppImage names. `xcarch` is Xcode's equivalent and becomes `ARCHS`.
+    # One build per architecture, as the release's Developer ID DMGs are. `arch`
+    # is the architecture name used in release assets, consistent with the APK
+    # and AppImage names. `xcarch` is Xcode's equivalent and becomes `ARCHS`.
     #
-    # Separate builds also make the Intel build verifiable. This runner uses
+    # Separate builds make the Intel build verifiable. This runner uses
     # Apple silicon, so nothing executed the x86_64 slice of the former
     # universal binary before publication. The checks below inspect every
     # bundle and use Rosetta to launch the Intel build when available.
@@ -262,14 +262,17 @@ jobs:
         include:
           - arch: arm64
             xcarch: arm64
+            impeller: 'YES'
+          # Skia: Impeller's MetalSDF garbles an Intel/AMD Mac (#1798), as the
+          # release script's `impeller_for` says.
           - arch: amd64
             xcarch: x86_64
+            impeller: 'NO'
     runs-on: macos-latest
     timeout-minutes: 45
     # Read-only, on a release run as on any other. Nothing here writes to the
-    # repository: the artifact is handed to `publishRelease`, which is the one
-    # job that needs a write-capable token — and it runs nothing but the
-    # publication.
+    # repository, and nothing it builds is published: it checks the build and
+    # keeps the dSYMs.
     permissions:
       contents: read
     steps:
@@ -331,10 +334,23 @@ jobs:
         # as `-dDarwinArchs`.
         env:
           FLUTTER_XCODE_ARCHS: ${{ matrix.xcarch }}
+          FLUTTER_XCODE_FLT_ENABLE_IMPELLER: ${{ matrix.impeller }}
         run: |
           flutter build macos --release \
             --build-number="${BUILD_NUMBER}" \
             --build-name="1.0.${BUILD_NUMBER}"
+      # Info.plist takes the value from a build setting, and an empty one reads
+      # as off: check it arrived.
+      - name: Check the renderer
+        shell: bash
+        env:
+          EXPECTED: ${{ matrix.impeller }}
+        run: |
+          set -euo pipefail
+          plist="build/macos/Build/Products/Release/Server Box.app/Contents/Info.plist"
+          got="$(/usr/libexec/PlistBuddy -c 'Print :FLTEnableImpeller' "$plist")"
+          echo "FLTEnableImpeller=$got"
+          [[ "$got" == "$EXPECTED" ]] || { echo "::error::FLTEnableImpeller is '$got', expected '$EXPECTED'"; exit 1; }
       # Verify every Mach-O instead of trusting the requested architecture.
       # This matters because `native_toolchain_rust` falls back to the host
       # target when the requested Rust target is missing. Without this check,
@@ -421,38 +437,11 @@ jobs:
           done
 
           cat "$log_file"
-      # Ad-hoc signed, like the unsigned IPA: the artifact is for looking at,
-      # not for handing to someone. macOS will refuse to open it without the
-      # user overriding Gatekeeper, and the name has to say so — `spctl` is
-      # expected to fail here, which is why the script only warns.
-      - name: Package dmg
-        shell: bash
-        env:
-          # `APP_NAME` is the *bundle* name and has a space in it. The job's
-          # own `env` sets it to `ServerBox`, which reaches every step —
-          # without this override `ditto` would stage the app into the DMG
-          # under a name it does not have, and the volume would differ from
-          # what `make package-dmg` produces locally.
-          #
-          # The two `${{ env.APP_NAME }}` below still read `ServerBox`: what a
-          # step's `env` block is evaluated against is the workflow's and the
-          # job's, never its own.
-          APP_NAME: Server Box
-          APP_ASSET_NAME: ${{ env.APP_NAME }}
-          APP_PATH: build/macos/Build/Products/Release/Server Box.app
-          DMG_BASENAME: ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_NoSign_${{ matrix.arch }}
-        run: bash scripts/release/package-dmg-from-xcarchive.sh
-      # Always, release or not. The artifact is how the build reaches
-      # `publishRelease`; `if-no-files-found: error` is what makes a rename
-      # that did not fire fail here, in the job that would know why, rather
-      # than by publishing a release with whatever else happened to be there.
-      - name: Upload artifacts
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        with:
-          name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-macos-${{ matrix.arch }}
-          path: build/artifacts/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_NoSign_${{ matrix.arch }}.dmg
-          if-no-files-found: error
-          retention-days: 14
+      # No DMG here: an ad-hoc signature carries no keychain entitlement, so a
+      # build signed this way stops at its first keychain write (#1798). The
+      # release's DMGs are the Developer ID ones `release-macos-dmg.sh` signs,
+      # notarizes and uploads.
+
       # macOS subscribes to MetricKit the same way iOS does, so it needs the
       # same symbols: a call stack there is a binary UUID and an offset too.
       # `sbm_ffi.framework.dSYM` is the one that matters most -- Rust is linked
@@ -964,8 +953,6 @@ jobs:
           set -euo pipefail
 
           expected=(
-            "${APP_NAME}_${TAG}_NoSign_arm64.dmg"
-            "${APP_NAME}_${TAG}_NoSign_amd64.dmg"
             "${APP_NAME}_${TAG}_NoSign.ipa"
             "${APP_NAME}_${TAG}_arm64.apk"
             "${APP_NAME}_${TAG}_arm.apk"
