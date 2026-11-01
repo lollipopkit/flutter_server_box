@@ -864,6 +864,7 @@
   "remoteDesktopVncPasswordAscii": "클래식 VNC 비밀번호는 ASCII 문자만 포함할 수 있습니다.",
   "remoteDesktopCertificateRequired": "인증서 확인이 필요합니다",
   "remoteDesktopWaiting": "데스크톱을 기다리는 중…",
+  "remoteDesktopUnsupportedSecurity": "서버가 Standard RDP Security(RC4)만 제공하며, 이는 지원되지 않습니다. xrdp.ini에서 security_layer=tls(또는 negotiate)로 설정하고 xrdp가 TLS 인증서를 읽을 수 있는지 확인하세요.",
   "remoteDesktopCertificateChanged": "원격 데스크톱 인증서가 변경되었습니다",
   "remoteDesktopTrustCertificate": "인증서를 신뢰할까요?",
   "remoteDesktopCertificateChangedTip": "인증서 지문이 저장된 값과 더 이상 일치하지 않습니다. 신뢰를 교체하기 전에 새 지문을 확인하세요.",

@@ -3125,6 +3125,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get remoteDesktopWaiting => 'En attente du bureau…';
 
   @override
+  String get remoteDesktopUnsupportedSecurity =>
+      'Le serveur ne propose que Standard RDP Security (RC4), qui n\'est pas pris en charge. Dans xrdp.ini, définissez security_layer=tls (ou negotiate) et assurez-vous que xrdp peut lire son certificat TLS.';
+
+  @override
   String get remoteDesktopCertificateChanged =>
       'Le certificat du bureau à distance a changé';
 

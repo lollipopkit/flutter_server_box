@@ -2867,6 +2867,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get remoteDesktopWaiting => '正在等待桌面…';
 
   @override
+  String get remoteDesktopUnsupportedSecurity =>
+      '服务器仅提供 Standard RDP Security（RC4），不受支持。请在 xrdp.ini 中设置 security_layer=tls（或 negotiate），并确保 xrdp 能读取其 TLS 证书。';
+
+  @override
   String get remoteDesktopCertificateChanged => '远程桌面证书已更改';
 
   @override
@@ -8560,6 +8564,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get remoteDesktopWaiting => '正在等待桌面…';
+
+  @override
+  String get remoteDesktopUnsupportedSecurity =>
+      '伺服器僅提供 Standard RDP Security（RC4），不受支援。請在 xrdp.ini 中設定 security_layer=tls（或 negotiate），並確保 xrdp 能讀取其 TLS 憑證。';
 
   @override
   String get remoteDesktopCertificateChanged => '遠端桌面憑證已變更';

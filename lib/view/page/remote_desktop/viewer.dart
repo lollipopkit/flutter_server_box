@@ -695,6 +695,9 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
   Widget _status(RemoteDesktopSessionView session) {
     final text = session.certificate != null
         ? l10n.remoteDesktopCertificateRequired
+        : session.endReason ==
+              ffi.RemoteDesktopEndReason.unsupportedSecurity
+        ? l10n.remoteDesktopUnsupportedSecurity
         : session.error ??
               switch (session.connectionState) {
                 ffi.RemoteDesktopConnectionState.connecting =>

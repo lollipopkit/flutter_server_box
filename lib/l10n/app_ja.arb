@@ -864,6 +864,7 @@
   "remoteDesktopVncPasswordAscii": "従来の VNC パスワードは ASCII 文字のみ使用できます。",
   "remoteDesktopCertificateRequired": "証明書の確認が必要です",
   "remoteDesktopWaiting": "デスクトップを待機しています…",
+  "remoteDesktopUnsupportedSecurity": "サーバーは Standard RDP Security（RC4）のみを提供しており、これはサポートされていません。xrdp.ini で security_layer=tls（または negotiate）を設定し、xrdp が TLS 証明書を読み取れることを確認してください。",
   "remoteDesktopCertificateChanged": "リモートデスクトップの証明書が変更されました",
   "remoteDesktopTrustCertificate": "証明書を信頼しますか？",
   "remoteDesktopCertificateChangedTip": "証明書のフィンガープリントが保存された値と一致しません。信頼を置き換える前に新しいフィンガープリントを確認してください。",

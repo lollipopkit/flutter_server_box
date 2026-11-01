@@ -2919,6 +2919,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get remoteDesktopWaiting => 'デスクトップを待機しています…';
 
   @override
+  String get remoteDesktopUnsupportedSecurity =>
+      'サーバーは Standard RDP Security（RC4）のみを提供しており、これはサポートされていません。xrdp.ini で security_layer=tls（または negotiate）を設定し、xrdp が TLS 証明書を読み取れることを確認してください。';
+
+  @override
   String get remoteDesktopCertificateChanged => 'リモートデスクトップの証明書が変更されました';
 
   @override

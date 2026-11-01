@@ -3087,6 +3087,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get remoteDesktopWaiting => 'Ожидание рабочего стола…';
 
   @override
+  String get remoteDesktopUnsupportedSecurity =>
+      'Сервер предлагает только Standard RDP Security (RC4), которая не поддерживается. В xrdp.ini установите security_layer=tls (или negotiate) и убедитесь, что xrdp может прочитать свой TLS-сертификат.';
+
+  @override
   String get remoteDesktopCertificateChanged =>
       'Сертификат удалённого рабочего стола изменился';
 

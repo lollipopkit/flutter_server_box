@@ -864,6 +864,7 @@
   "remoteDesktopVncPasswordAscii": "Kata sandi VNC klasik hanya boleh berisi karakter ASCII.",
   "remoteDesktopCertificateRequired": "Konfirmasi sertifikat diperlukan",
   "remoteDesktopWaiting": "Menunggu desktop…",
+  "remoteDesktopUnsupportedSecurity": "Server hanya menawarkan Standard RDP Security (RC4), yang tidak didukung. Di xrdp.ini, atur security_layer=tls (atau negotiate) dan pastikan xrdp dapat membaca sertifikat TLS-nya.",
   "remoteDesktopCertificateChanged": "Sertifikat desktop jarak jauh berubah",
   "remoteDesktopTrustCertificate": "Percayai sertifikat?",
   "remoteDesktopCertificateChangedTip": "Sidik jari sertifikat tidak lagi cocok dengan nilai tersimpan. Verifikasi sidik jari baru sebelum mengganti kepercayaan.",

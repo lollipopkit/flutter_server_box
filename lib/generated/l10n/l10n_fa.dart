@@ -3083,6 +3083,10 @@ class AppLocalizationsFa extends AppLocalizations {
   String get remoteDesktopWaiting => 'در انتظار دسکتاپ…';
 
   @override
+  String get remoteDesktopUnsupportedSecurity =>
+      'سرور فقط Standard RDP Security (RC4) را ارائه می‌دهد که پشتیبانی نمی‌شود. در xrdp.ini مقدار security_layer=tls (یا negotiate) را تنظیم کنید و مطمئن شوید xrdp می‌تواند گواهی TLS خود را بخواند.';
+
+  @override
   String get remoteDesktopCertificateChanged =>
       'گواهی ریموت دسکتاپ تغییر کرده است';
 

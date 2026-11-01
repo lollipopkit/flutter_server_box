@@ -3062,6 +3062,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get remoteDesktopWaiting => 'Masaüstü bekleniyor…';
 
   @override
+  String get remoteDesktopUnsupportedSecurity =>
+      'Sunucu yalnızca Standard RDP Security (RC4) sunuyor ve bu desteklenmiyor. xrdp.ini dosyasında security_layer=tls (veya negotiate) ayarlayın ve xrdp\'nin TLS sertifikasını okuyabildiğinden emin olun.';
+
+  @override
   String get remoteDesktopCertificateChanged =>
       'Uzak masaüstü sertifikası değişti';
 

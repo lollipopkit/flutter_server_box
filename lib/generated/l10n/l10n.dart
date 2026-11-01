@@ -5316,6 +5316,12 @@ abstract class AppLocalizations {
   /// **'Waiting for desktop…'**
   String get remoteDesktopWaiting;
 
+  /// No description provided for @remoteDesktopUnsupportedSecurity.
+  ///
+  /// In en, this message translates to:
+  /// **'The server only offers Standard RDP Security (RC4), which is not supported. In xrdp.ini set security_layer=tls (or negotiate) and make sure xrdp can read its TLS certificate.'**
+  String get remoteDesktopUnsupportedSecurity;
+
   /// No description provided for @remoteDesktopCertificateChanged.
   ///
   /// In en, this message translates to:

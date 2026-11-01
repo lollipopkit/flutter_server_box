@@ -864,6 +864,7 @@
   "remoteDesktopVncPasswordAscii": "Klasik VNC parolaları yalnızca ASCII karakter içerebilir.",
   "remoteDesktopCertificateRequired": "Sertifika onayı gerekli",
   "remoteDesktopWaiting": "Masaüstü bekleniyor…",
+  "remoteDesktopUnsupportedSecurity": "Sunucu yalnızca Standard RDP Security (RC4) sunuyor ve bu desteklenmiyor. xrdp.ini dosyasında security_layer=tls (veya negotiate) ayarlayın ve xrdp'nin TLS sertifikasını okuyabildiğinden emin olun.",
   "remoteDesktopCertificateChanged": "Uzak masaüstü sertifikası değişti",
   "remoteDesktopTrustCertificate": "Sertifikaya güvenilsin mi?",
   "remoteDesktopCertificateChangedTip": "Sertifikanın parmak izi artık kaydedilen değerle eşleşmiyor. Güveni değiştirmeden önce yeni parmak izini doğrulayın.",

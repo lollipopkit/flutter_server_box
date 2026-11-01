@@ -864,6 +864,7 @@
   "remoteDesktopVncPasswordAscii": "Klassische VNC-Passwörter dürfen nur ASCII-Zeichen enthalten.",
   "remoteDesktopCertificateRequired": "Bestätigung des Zertifikats erforderlich",
   "remoteDesktopWaiting": "Warte auf Desktop…",
+  "remoteDesktopUnsupportedSecurity": "Der Server bietet nur Standard RDP Security (RC4) an, was nicht unterstützt wird. Setzen Sie in xrdp.ini security_layer=tls (oder negotiate) und stellen Sie sicher, dass xrdp sein TLS-Zertifikat lesen kann.",
   "remoteDesktopCertificateChanged": "Zertifikat des Remotedesktops hat sich geändert",
   "remoteDesktopTrustCertificate": "Zertifikat vertrauen?",
   "remoteDesktopCertificateChangedTip": "Der Fingerabdruck des Zertifikats stimmt nicht mehr mit dem gespeicherten Wert überein. Prüfen Sie den neuen Fingerabdruck, bevor Sie das Vertrauen ersetzen.",

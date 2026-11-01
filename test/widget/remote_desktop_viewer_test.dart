@@ -21,6 +21,7 @@ import 'package:server_box/data/provider/remote_desktop.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
+import 'package:server_box/generated/l10n/l10n_en.dart';
 import 'package:server_box/src/rust/api/remote_desktop.dart' as ffi;
 import 'package:server_box/view/page/remote_desktop/viewer.dart';
 
@@ -94,6 +95,26 @@ class _RecordingSessions extends RemoteDesktopSessions {
   }) => resizes.add((width, height));
 }
 
+/// Ended on a server that offers only Standard RDP Security, with the
+/// connector's own message as the error.
+class _UnsupportedSecuritySessions extends _RecordingSessions {
+  static const message =
+      '[Initiation] reason: client advertised SSL | HYBRID | HYBRID_EX, '
+      'but server selected STANDARD_RDP_SECURITY';
+
+  @override
+  RemoteDesktopSessionsState build() => const RemoteDesktopSessionsState()
+      .put(
+        RemoteDesktopSessionView(
+          profile: _profile,
+          connectionState: ffi.RemoteDesktopConnectionState.disconnected,
+          endReason: ffi.RemoteDesktopEndReason.unsupportedSecurity,
+          error: message,
+        ),
+      )
+      .select(_profile.id);
+}
+
 Future<void> _pumpViewer(WidgetTester tester, _RecordingSessions sessions) =>
     tester.pumpWidget(
       ProviderScope(
@@ -139,6 +160,20 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     expect(sessions.resizes, hasLength(2));
     expect(sessions.resizes.last.$1, greaterThan(initial.$1));
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  // #1835
+  testWidgets('a server offering only Standard RDP Security says what to '
+      'change on it', (tester) async {
+    await _pumpViewer(tester, _UnsupportedSecuritySessions());
+    await tester.pump();
+    expect(
+      find.text(AppLocalizationsEn().remoteDesktopUnsupportedSecurity),
+      findsOneWidget,
+    );
+    expect(find.text(_UnsupportedSecuritySessions.message), findsNothing);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });

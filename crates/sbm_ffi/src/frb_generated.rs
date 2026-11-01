@@ -28,10 +28,10 @@
 // Section: imports
 
 use crate::api::remote_desktop::*;
-use crate::api::virt::*;
-use crate::api::bmc::*;
 use crate::api::ssh_crypto::*;
-use crate::api::pve::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::virt::*;
+use crate::api::pve::*;
+use crate::api::bmc::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};
 
@@ -5954,8 +5954,9 @@ return crate::api::bmc::RedfishTopology{root: var_root, system_path: var_systemP
 1 => crate::api::remote_desktop::RemoteDesktopEndReason::AuthenticationFailed,
 2 => crate::api::remote_desktop::RemoteDesktopEndReason::CertificateRejected,
 3 => crate::api::remote_desktop::RemoteDesktopEndReason::ConfigurationError,
-4 => crate::api::remote_desktop::RemoteDesktopEndReason::TransportError,
-5 => crate::api::remote_desktop::RemoteDesktopEndReason::ServerDisconnected,
+4 => crate::api::remote_desktop::RemoteDesktopEndReason::UnsupportedSecurity,
+5 => crate::api::remote_desktop::RemoteDesktopEndReason::TransportError,
+6 => crate::api::remote_desktop::RemoteDesktopEndReason::ServerDisconnected,
             _ => unreachable!("Invalid variant for RemoteDesktopEndReason: {}", inner),
         };}
                 }
@@ -8148,8 +8149,9 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::remote_desktop::RemoteDesktop
 Self::AuthenticationFailed => 1.into_dart(),
 Self::CertificateRejected => 2.into_dart(),
 Self::ConfigurationError => 3.into_dart(),
-Self::TransportError => 4.into_dart(),
-Self::ServerDisconnected => 5.into_dart(),
+Self::UnsupportedSecurity => 4.into_dart(),
+Self::TransportError => 5.into_dart(),
+Self::ServerDisconnected => 6.into_dart(),
                     _ => unreachable!(),
                 }
                 }
@@ -10127,8 +10129,9 @@ crate::api::remote_desktop::RemoteDesktopConnectionState::Disconnected => { 3 }
 crate::api::remote_desktop::RemoteDesktopEndReason::AuthenticationFailed => { 1 }
 crate::api::remote_desktop::RemoteDesktopEndReason::CertificateRejected => { 2 }
 crate::api::remote_desktop::RemoteDesktopEndReason::ConfigurationError => { 3 }
-crate::api::remote_desktop::RemoteDesktopEndReason::TransportError => { 4 }
-crate::api::remote_desktop::RemoteDesktopEndReason::ServerDisconnected => { 5 }
+crate::api::remote_desktop::RemoteDesktopEndReason::UnsupportedSecurity => { 4 }
+crate::api::remote_desktop::RemoteDesktopEndReason::TransportError => { 5 }
+crate::api::remote_desktop::RemoteDesktopEndReason::ServerDisconnected => { 6 }
  _ => { unimplemented!(""); }}, serializer);}
                 }
                 
@@ -10573,10 +10576,10 @@ crate::api::virt::VirtUploadEntryKind::SudoPassword => { 2 }
 // Section: imports
 
 use crate::api::remote_desktop::*;
-use crate::api::virt::*;
-use crate::api::bmc::*;
 use crate::api::ssh_crypto::*;
-use crate::api::pve::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::virt::*;
+use crate::api::pve::*;
+use crate::api::bmc::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};use super::*;
 
@@ -10708,10 +10711,10 @@ flutter_rust_bridge::frb_generated_boilerplate_io!();
 // Section: imports
 
 use crate::api::remote_desktop::*;
-use crate::api::virt::*;
-use crate::api::bmc::*;
 use crate::api::ssh_crypto::*;
-use crate::api::pve::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::virt::*;
+use crate::api::pve::*;
+use crate::api::bmc::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};use super::*;
                 use flutter_rust_bridge::for_generated::wasm_bindgen;

@@ -864,6 +864,7 @@
   "remoteDesktopVncPasswordAscii": "傳統 VNC 密碼只能包含 ASCII 字元。",
   "remoteDesktopCertificateRequired": "需要確認憑證",
   "remoteDesktopWaiting": "正在等待桌面…",
+  "remoteDesktopUnsupportedSecurity": "伺服器僅提供 Standard RDP Security（RC4），不受支援。請在 xrdp.ini 中設定 security_layer=tls（或 negotiate），並確保 xrdp 能讀取其 TLS 憑證。",
   "remoteDesktopCertificateChanged": "遠端桌面憑證已變更",
   "remoteDesktopTrustCertificate": "是否信任此憑證？",
   "remoteDesktopCertificateChangedTip": "憑證指紋與儲存的值不一致。替換信任前，請先核實新的指紋。",

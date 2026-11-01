@@ -3073,6 +3073,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get remoteDesktopWaiting => 'Menunggu desktop…';
 
   @override
+  String get remoteDesktopUnsupportedSecurity =>
+      'Server hanya menawarkan Standard RDP Security (RC4), yang tidak didukung. Di xrdp.ini, atur security_layer=tls (atau negotiate) dan pastikan xrdp dapat membaca sertifikat TLS-nya.';
+
+  @override
   String get remoteDesktopCertificateChanged =>
       'Sertifikat desktop jarak jauh berubah';
 

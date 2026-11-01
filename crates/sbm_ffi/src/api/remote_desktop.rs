@@ -88,6 +88,9 @@ pub enum RemoteDesktopEndReason {
     AuthenticationFailed,
     CertificateRejected,
     ConfigurationError,
+    /// The server offers only Standard RDP Security (RC4, no server
+    /// authentication), which is not supported.
+    UnsupportedSecurity,
     TransportError,
     ServerDisconnected,
 }
@@ -1024,7 +1027,9 @@ fn send_rdp_fast_path(
 
 fn classify_rdp_failure(message: &str) -> RemoteDesktopEndReason {
     let lower = message.to_ascii_lowercase();
-    if lower.contains("credential") || lower.contains("logon") || lower.contains("authentication") {
+    if lower.contains("server selected standard_rdp_security") {
+        RemoteDesktopEndReason::UnsupportedSecurity
+    } else if lower.contains("credential") || lower.contains("logon") || lower.contains("authentication") {
         RemoteDesktopEndReason::AuthenticationFailed
     } else if lower.contains("certificate") {
         RemoteDesktopEndReason::CertificateRejected
@@ -1711,6 +1716,16 @@ mod tests {
         let (validate, rejected) = pinned_certificate(None);
         assert!(!validate(der, "host:3389", "UnknownIssuer"), "nothing pinned, nothing passes");
         assert_eq!(rejected.lock().unwrap().as_deref(), Some(der));
+    }
+
+    // #1835: xrdp with `security_layer=rdp`, or `negotiate` without a usable
+    // certificate. Retrying cannot change what the server offers.
+    #[test]
+    fn a_server_offering_only_standard_rdp_security_is_not_a_transport_error() {
+        let message = "[Initiation] reason: client advertised SSL | HYBRID | HYBRID_EX, \
+                       but server selected STANDARD_RDP_SECURITY";
+        assert_eq!(classify_rdp_failure(message), RemoteDesktopEndReason::UnsupportedSecurity);
+        assert_eq!(classify_rdp_failure("connection reset"), RemoteDesktopEndReason::TransportError);
     }
 
     #[test]

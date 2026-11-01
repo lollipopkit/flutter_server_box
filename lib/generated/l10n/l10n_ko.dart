@@ -2923,6 +2923,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get remoteDesktopWaiting => '데스크톱을 기다리는 중…';
 
   @override
+  String get remoteDesktopUnsupportedSecurity =>
+      '서버가 Standard RDP Security(RC4)만 제공하며, 이는 지원되지 않습니다. xrdp.ini에서 security_layer=tls(또는 negotiate)로 설정하고 xrdp가 TLS 인증서를 읽을 수 있는지 확인하세요.';
+
+  @override
   String get remoteDesktopCertificateChanged => '원격 데스크톱 인증서가 변경되었습니다';
 
   @override

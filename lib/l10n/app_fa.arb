@@ -864,6 +864,7 @@
   "remoteDesktopVncPasswordAscii": "گذرواژه‌های VNC کلاسیک فقط باید شامل نویسه‌های ASCII باشند.",
   "remoteDesktopCertificateRequired": "تأیید گواهی الزامی است",
   "remoteDesktopWaiting": "در انتظار دسکتاپ…",
+  "remoteDesktopUnsupportedSecurity": "سرور فقط Standard RDP Security (RC4) را ارائه می‌دهد که پشتیبانی نمی‌شود. در xrdp.ini مقدار security_layer=tls (یا negotiate) را تنظیم کنید و مطمئن شوید xrdp می‌تواند گواهی TLS خود را بخواند.",
   "remoteDesktopCertificateChanged": "گواهی ریموت دسکتاپ تغییر کرده است",
   "remoteDesktopTrustCertificate": "به گواهی اعتماد شود؟",
   "remoteDesktopCertificateChangedTip": "اثر انگشت گواهی دیگر با مقدار ذخیره‌شده مطابقت ندارد. قبل از جایگزینی اعتماد، اثر انگشت جدید را بررسی کنید.",

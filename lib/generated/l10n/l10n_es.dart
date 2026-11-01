@@ -3118,6 +3118,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get remoteDesktopWaiting => 'Esperando al escritorio…';
 
   @override
+  String get remoteDesktopUnsupportedSecurity =>
+      'El servidor solo ofrece Standard RDP Security (RC4), que no es compatible. En xrdp.ini, establezca security_layer=tls (o negotiate) y asegúrese de que xrdp pueda leer su certificado TLS.';
+
+  @override
   String get remoteDesktopCertificateChanged =>
       'El certificado del escritorio remoto ha cambiado';
 

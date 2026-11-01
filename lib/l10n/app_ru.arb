@@ -864,6 +864,7 @@
   "remoteDesktopVncPasswordAscii": "Классические пароли VNC могут содержать только символы ASCII.",
   "remoteDesktopCertificateRequired": "Требуется подтверждение сертификата",
   "remoteDesktopWaiting": "Ожидание рабочего стола…",
+  "remoteDesktopUnsupportedSecurity": "Сервер предлагает только Standard RDP Security (RC4), которая не поддерживается. В xrdp.ini установите security_layer=tls (или negotiate) и убедитесь, что xrdp может прочитать свой TLS-сертификат.",
   "remoteDesktopCertificateChanged": "Сертификат удалённого рабочего стола изменился",
   "remoteDesktopTrustCertificate": "Доверять сертификату?",
   "remoteDesktopCertificateChangedTip": "Отпечаток сертификата больше не совпадает с сохранённым значением. Проверьте новый отпечаток, прежде чем заменять доверие.",

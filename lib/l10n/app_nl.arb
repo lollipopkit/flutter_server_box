@@ -864,6 +864,7 @@
   "remoteDesktopVncPasswordAscii": "Klassieke VNC-wachtwoorden mogen alleen ASCII-tekens bevatten.",
   "remoteDesktopCertificateRequired": "Bevestiging van certificaat vereist",
   "remoteDesktopWaiting": "Wachten op bureaublad…",
+  "remoteDesktopUnsupportedSecurity": "De server biedt alleen Standard RDP Security (RC4) aan, wat niet wordt ondersteund. Stel in xrdp.ini security_layer=tls (of negotiate) in en zorg dat xrdp zijn TLS-certificaat kan lezen.",
   "remoteDesktopCertificateChanged": "Certificaat van extern bureaublad is gewijzigd",
   "remoteDesktopTrustCertificate": "Certificaat vertrouwen?",
   "remoteDesktopCertificateChangedTip": "De vingerafdruk van het certificaat komt niet meer overeen met de opgeslagen waarde. Controleer de nieuwe vingerafdruk voordat u het vertrouwen vervangt.",

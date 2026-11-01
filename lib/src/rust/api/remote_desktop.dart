@@ -142,6 +142,10 @@ enum RemoteDesktopEndReason {
   authenticationFailed,
   certificateRejected,
   configurationError,
+
+  /// The server offers only Standard RDP Security (RC4, no server
+  /// authentication), which is not supported.
+  unsupportedSecurity,
   transportError,
   serverDisconnected,
 }
