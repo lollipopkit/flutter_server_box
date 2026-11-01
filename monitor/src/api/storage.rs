@@ -137,12 +137,16 @@ pub async fn view(req: HttpRequest, state: Arc<AppState>) -> Result<HttpResponse
     let job = state.storage.job().map(|j| j.view(u64::MAX));
     let health = state.storage.health();
     let maintenance = crate::storage_watch::tasks(&state.db).await;
-    Ok(HttpResponse::Ok().json(&json!({
-        "disks": v.disks, "busy": v.busy, "system": v.system, "arrays": v.arrays, "pools": v.pools, "tools": v.tools, "job": job, "health": health,
-        "maintenance": maintenance,
+    // The view whole, so a field it gains reaches the clients.
+    let mut body = serde_json::to_value(&v).unwrap_or_default();
+    if let Some(o) = body.as_object_mut() {
+        o.insert("job".into(), json!(job));
+        o.insert("health".into(), json!(health));
+        o.insert("maintenance".into(), json!(maintenance));
         // Who a sudoers rule for the schedule names.
-        "account": std::env::var("USER").ok(),
-    })))
+        o.insert("account".into(), json!(std::env::var("USER").ok()));
+    }
+    Ok(HttpResponse::Ok().json(&body))
 }
 
 /// Every disk's SMART as root; `Err` is sudo's refusal, as `act` answers it.

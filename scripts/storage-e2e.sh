@@ -6,7 +6,8 @@
 #   scripts/storage-e2e.sh <node>
 #
 # Builds the agent and the Rust e2e binaries on SBM_E2E_BUILD_HOST (lkd-wsl,
-# an x86_64 Linux with Rust) and the panel here; starts a VM with four empty
+# an x86_64 Linux with Rust; with SBM_E2E_BUILD_IMAGE, e.g. rust:1-alpine,
+# in that image under Docker there instead) and the panel here; starts a VM with four empty
 # disks; runs the agent there as an ordinary account with a sudo password;
 # then, against it:
 #   1. frontend/e2e/storage.e2e.ts  (Playwright, the disks)
@@ -31,8 +32,15 @@ rsync -az --delete \
   --exclude target --exclude node_modules --exclude build --exclude .dart_tool --exclude .git \
   --exclude 'frontend/dist' --exclude '.claude/worktrees' \
   "$root/" "$build:$src/"
-remote ". \"\$HOME/.cargo/env\" 2>/dev/null; cd ~/$src && cargo build -q -p server_box_monitor --profile monitor-test && \
-  cargo test -p server_box_monitor --test storage_e2e --test shares_e2e --no-run 2>&1 | sed -n 's/.*Executable .*(\(.*\))/\1/p'" > "$work/tests"
+cargo='cargo build -q -p server_box_monitor --profile monitor-test && cargo test -p server_box_monitor --test storage_e2e --test shares_e2e --no-run'
+if [ -n "${SBM_E2E_BUILD_IMAGE:-}" ]; then
+  # Root in the container: the registry is a volume kept between runs, the
+  # target directory the tree's own (removed with `docker run … rm -rf`).
+  cargo="docker run --rm -e http_proxy -e https_proxy -e HTTP_PROXY -e HTTPS_PROXY -e no_proxy -e NO_PROXY \
+    -v sbm-e2e-cargo:/usr/local/cargo/registry -v \"\$PWD:/src\" -w /src $SBM_E2E_BUILD_IMAGE \
+    sh -c 'apk add -q musl-dev >/dev/null 2>&1; $cargo'"
+fi
+remote "[ ! -f \"\$HOME/.cargo/env\" ] || . \"\$HOME/.cargo/env\"; cd ~/$src && $cargo 2>&1 | sed -n 's/.*Executable .*(\(.*\))/\1/p'" > "$work/tests"
 storage_test="$src/$(grep storage_e2e "$work/tests")"
 shares_test="$src/$(grep shares_e2e "$work/tests")"
 echo "==> build: panel"
