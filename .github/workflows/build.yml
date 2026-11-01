@@ -262,8 +262,12 @@ jobs:
         include:
           - arch: arm64
             xcarch: arm64
+            impeller: 'YES'
+          # Skia: Impeller's MetalSDF garbles an Intel/AMD Mac (#1798), as the
+          # release script's `impeller_for` says.
           - arch: amd64
             xcarch: x86_64
+            impeller: 'NO'
     runs-on: macos-latest
     timeout-minutes: 45
     # Read-only, on a release run as on any other. Nothing here writes to the
@@ -330,10 +334,23 @@ jobs:
         # as `-dDarwinArchs`.
         env:
           FLUTTER_XCODE_ARCHS: ${{ matrix.xcarch }}
+          FLUTTER_XCODE_FLT_ENABLE_IMPELLER: ${{ matrix.impeller }}
         run: |
           flutter build macos --release \
             --build-number="${BUILD_NUMBER}" \
             --build-name="1.0.${BUILD_NUMBER}"
+      # Info.plist takes the value from a build setting, and an empty one reads
+      # as off: check it arrived.
+      - name: Check the renderer
+        shell: bash
+        env:
+          EXPECTED: ${{ matrix.impeller }}
+        run: |
+          set -euo pipefail
+          plist="build/macos/Build/Products/Release/Server Box.app/Contents/Info.plist"
+          got="$(/usr/libexec/PlistBuddy -c 'Print :FLTEnableImpeller' "$plist")"
+          echo "FLTEnableImpeller=$got"
+          [[ "$got" == "$EXPECTED" ]] || { echo "::error::FLTEnableImpeller is '$got', expected '$EXPECTED'"; exit 1; }
       # Verify every Mach-O instead of trusting the requested architecture.
       # This matters because `native_toolchain_rust` falls back to the host
       # target when the requested Rust target is missing. Without this check,
