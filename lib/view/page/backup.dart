@@ -155,8 +155,9 @@ final class _BackupPageState extends ConsumerState<BackupPage>
                         Toast.show(l10n.remoteBackupPasswordRequired);
                         return;
                       }
-                      // In iCloud Keychain there: gone from every device.
-                      if (isIOS || isMacOS) {
+                      // In iCloud Keychain: gone from every device.
+                      if (await SecureStoreProps.bakPwd.inSyncedStore()) {
+                        if (!context.mounted) return;
                         final ok = await context.showRoundDialog<bool>(
                           title: libL10n.delete,
                           child: Text(l10n.backupPasswordRemoveSynced),

@@ -213,9 +213,11 @@ final class LkcSyncWatch {
   final ValueListenable<bool> _toggle;
   final VoidCallback _onRemoteChange;
 
-  /// After listening could not start, or ended while still signed in.
+  /// After listening could not start, or ended while still signed in; twice
+  /// as long after each failure in a row, up to 32 times, until connected.
   final Duration _retryAfter;
   Timer? _retry;
+  var _failures = 0;
 
   /// Listening whatever the window: a desktop app runs on behind other windows
   /// and in the tray, and should be up to date when it comes back. A phone's
@@ -240,8 +242,13 @@ final class LkcSyncWatch {
       forget: Lkc.client.forget,
       toggle: BakSyncer.lkcSync.listenable(),
       // Not held back: another device's write is the whole reason to sync,
-      // and a sync already running takes it on when it ends.
-      onRemoteChange: () => bakSync.syncSoon(milliDelay: 0, throttleMilli: 0),
+      // and a sync already running takes it on when it ends. Only while LK
+      // Cloud is where the backup syncs: another remote ranks above it.
+      onRemoteChange: () {
+        if (bakSync.remoteStorage is LkcRemoteStorage) {
+          bakSync.syncSoon(milliDelay: 0, throttleMilli: 0);
+        }
+      },
       inBackground: isDesktop,
     )..start();
   }
@@ -323,7 +330,9 @@ final class LkcSyncWatch {
 
   void _retryLater() {
     _retry?.cancel();
-    _retry = Timer(_retryAfter, () {
+    final wait = _retryAfter * (1 << min(_failures, 5));
+    _failures++;
+    _retry = Timer(wait, () {
       _retry = null;
       unawaited(_update());
     });
@@ -334,6 +343,7 @@ final class LkcSyncWatch {
       Loggers.app.info('LK Cloud sync events: $why');
       return;
     }
+    if (event.connected) _failures = 0;
     if (event.connected || event.name == Miscs.bakFileName) _onRemoteChange();
   }
 }

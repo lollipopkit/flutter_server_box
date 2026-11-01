@@ -231,11 +231,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
           ? const <String>{}
           : _mergeSqliteStore(
               Stores.setting,
-              _mergeDataForStore(
-                Stores.setting,
-                settings,
-                deviceLocal: SettingStore.deviceLocalKeys,
-              ),
+              _mergeDataForStore(Stores.setting, settings),
               force: force,
             );
       // Restoring does not run the schema migrator. Convert legacy setting
@@ -332,12 +328,39 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       pve: Stores.pve.getAllMap(),
       history: _backupStore(Stores.history),
       settings: includeSettings
-          ? _backupStore(
-              Stores.setting,
-              deviceLocal: SettingStore.deviceLocalKeys,
-            )
+          ? _backupStore(Stores.setting)
           : const {},
       themes: includeSettings ? await _themes(blobs) : const {},
+    );
+  }
+
+  /// Whether this file lacks a record this device holds, or holds one older
+  /// than this device's, a delete included — see `SyncIface.lacks`. Records
+  /// and their stamps only: those converge. The themes do not (they are what
+  /// each device could install), so they are left out.
+  bool lacksLocal({required bool includeSettings}) => [
+    (Stores.server.getAllMap(), spis),
+    (Stores.snippet.getAllMap(), snippets),
+    (Stores.key.getAllMap(), keys),
+    (Stores.bmcCredential.getAllMap(), bmcCredentials),
+    (Stores.portForward.getAllMap(), portForwards),
+    (Stores.remoteDesktop.getAllMap(), remoteDesktopProfiles),
+    (_backupStore(Stores.history), history),
+    if (includeSettings) (_backupStore(Stores.setting), settings),
+  ].any((pair) => _lacks(pair.$1, pair.$2));
+
+  static bool _lacks(Map<String, Object?> local, Map<String, Object?> remote) {
+    const tsKey = StoreDefaults.defaultLastUpdateTsKey;
+    Map<String, int> stamps(Map<String, Object?> rows) => _kvTimestamps(
+      rows[tsKey],
+      rows.keys.where((key) => key != tsKey),
+    );
+    final remoteStamps = stamps(remote);
+    for (final MapEntry(:key, value: at) in stamps(local).entries) {
+      if (at > (remoteStamps[key] ?? 0)) return true;
+    }
+    return local.keys.any(
+      (key) => !_isInternalStoreKey(key) && !remote.containsKey(key),
     );
   }
 
@@ -876,41 +899,40 @@ Object? _jsonWithRestoredServerIds(
 /// layout and migration markers. Restoring those markers from another device
 /// can make this device skip a migration or claim a schema it does not have.
 ///
-/// [deviceLocal] is the same idea for keys with ordinary names — see
-/// [SettingStore.deviceLocalKeys], where a permission granted on one machine
-/// must not be granted on another by restoring a file.
-Map<String, Object?> _backupStore(
-  SqliteStore store, {
-  Set<String> deviceLocal = const {},
-}) {
+/// Device-local keys ([SqliteStore.isDeviceLocalKey]) are the same idea for
+/// keys with ordinary names — see [SettingStore.deviceLocalKeys], where a
+/// permission granted on one machine must not be granted on another by
+/// restoring a file.
+Map<String, Object?> _backupStore(SqliteStore store) {
   final rows = store.getAllMap(includeInternalKeys: true);
-  rows.removeWhere((key, _) => _isLocalOnly(store, key, deviceLocal));
-  // Their timestamps too: a build that does not hold a key device-local reads
-  // one with no row as deleted there, and deletes its own.
-  _dropStamps(rows, store.lastUpdateTsKey, deviceLocal);
+  rows.removeWhere((key, _) => _isLocalOnly(store, key));
+  // The stamps as read, without device-local ones (a build that does not
+  // hold a key device-local reads one with no row as deleted there, and
+  // deletes its own), and as the map: a string holding it made two devices'
+  // backups differ in shape.
+  if (store.lastUpdateTs case final stamps?) rows[store.lastUpdateTsKey] = stamps;
   return rows;
-}
-
-/// [keys] out of the timestamp map at [tsKey], in the shape it is in.
-void _dropStamps(Map<String, Object?> rows, String tsKey, Set<String> keys) {
-  final ts = rows[tsKey];
-  if (keys.isEmpty || ts == null) return;
-  final stamps = _kvTimestamps(ts, const []);
-  if (!stamps.keys.any(keys.contains)) return;
-  stamps.removeWhere((key, _) => keys.contains(key));
-  rows[tsKey] = ts is String ? json.encode(stamps) : stamps;
 }
 
 Map<String, Object?> _mergeDataForStore(
   SqliteStore store,
-  Map<String, Object?> rows, {
-  Set<String> deviceLocal = const {},
-}) {
+  Map<String, Object?> rows,
+) {
   final result = Map<String, Object?>.from(rows)
-    ..removeWhere((key, _) => _isLocalOnly(store, key, deviceLocal));
-  // An older build's stamp for one would make the merge rewrite this device's
-  // own value and take that stamp, which moves [Stores.lastModTime].
-  _dropStamps(result, store.lastUpdateTsKey, deviceLocal);
+    ..removeWhere((key, _) => _isLocalOnly(store, key));
+  // An older build's stamp on a device-local key would make the merge rewrite
+  // this device's own value and take that stamp.
+  // TODO: rm once no build that stamps device-local keys is around.
+  final ts = result[store.lastUpdateTsKey];
+  if (ts != null) {
+    result[store.lastUpdateTsKey] = {
+      for (final MapEntry(:key, :value) in _kvTimestamps(
+        ts,
+        result.keys.where((key) => key != store.lastUpdateTsKey),
+      ).entries)
+        if (!store.isDeviceLocalKey(key)) key: value,
+    };
+  }
 
   // Mergeable treats an absent key as a deletion. Keep local-only state in
   // the input until fl_lib can expose an internal-key exclusion policy.
@@ -918,7 +940,7 @@ Map<String, Object?> _mergeDataForStore(
       in store
           .getAllMap(includeInternalKeys: true)
           .entries
-          .where((entry) => _isLocalOnly(store, entry.key, deviceLocal))) {
+          .where((entry) => _isLocalOnly(store, entry.key))) {
     result[entry.key] = entry.value;
   }
   return result;
@@ -1087,9 +1109,9 @@ void _notifySqliteStore(SqliteStore store, Iterable<String> keys) {
 /// Whether [key] belongs to this device rather than to the backup.
 ///
 /// `lastUpdateTs` is internal and still travels: it is what sync compares.
-bool _isLocalOnly(SqliteStore store, String key, Set<String> deviceLocal) =>
+bool _isLocalOnly(SqliteStore store, String key) =>
     (store.isInternalKey(key) && key != store.lastUpdateTsKey) ||
-    deviceLocal.contains(key);
+    store.isDeviceLocalKey(key);
 
 Object? _toEncodable(Object? value) {
   if (value is Enum) return value.name;

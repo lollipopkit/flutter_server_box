@@ -120,6 +120,7 @@ final class BakSyncer extends SyncIface {
         Diag.crumb(SbDiag.sync, 'skipped', data: {'why': 'no password'});
         return;
       }
+      await _followPassword(pwd);
     }
     return super.sync(
       throttleMilli: throttleMilli,
@@ -145,6 +146,18 @@ final class BakSyncer extends SyncIface {
       // mandatory, is still accepted: the password is only used on an
       // encrypted payload.
       final plain = await BackupV2.unlock(content, pwd);
+      // It opens what the devices share, so it is theirs: one kept on this
+      // device only (set by an older build) goes to iCloud Keychain now,
+      // where it cannot be replacing another device's newer one.
+      if (pwd != null &&
+          pwd.isNotEmpty &&
+          await SecureStoreProps.bakPwd.inLegacyOnly()) {
+        try {
+          await SecureStoreProps.bakPwd.write(pwd);
+        } catch (e, s) {
+          Loggers.app.warning('Backup password not moved to iCloud', e, s);
+        }
+      }
       final mergeable = await compute(_parse, plain);
       return _normalizeSyncPayload(mergeable, includeSettings: includeSettings);
     } on SchemaTooNewException catch (e) {
@@ -186,21 +199,51 @@ final class BakSyncer extends SyncIface {
     };
   }
 
-  /// Calls [onEdit] on each edit to the settings or the history, which no
-  /// provider syncs on as the entity stores' do. Every such edit stamps its
-  /// store, so what is watched is the stamps' row: device-local settings and
-  /// internal keys stamp nothing. Settings only while they are synced.
-  static List<StreamSubscription<String>> watchEdits(VoidCallback onEdit) => [
-    Stores.setting.watch().listen((key) {
-      if (key == Stores.setting.lastUpdateTsKey &&
-          PrefProps.syncAppSettings.get()) {
-        onEdit();
-      }
-    }),
-    Stores.history.watch().listen((key) {
-      if (key == Stores.history.lastUpdateTsKey) onEdit();
-    }),
-  ];
+  /// Calls [onEdit] on each edit to a synced setting, which no provider syncs
+  /// on as the entity stores' do. Every such edit stamps the store, so what is
+  /// watched is the stamps' row: device-local settings and internal keys stamp
+  /// nothing. Only while settings are synced.
+  ///
+  /// Not the history: tabs, workspaces and the last SFTP path change with
+  /// every move, and each would be an upload and a merge on every device
+  /// listening. It goes with the next sync.
+  static StreamSubscription<String> watchEdits(VoidCallback onEdit) =>
+      Stores.setting.watch().listen((key) {
+        if (key == Stores.setting.lastUpdateTsKey &&
+            PrefProps.syncAppSettings.get()) {
+          onEdit();
+        }
+      });
+
+  /// See [SyncIface.lacks] and [BackupV2.lacksLocal]; an older format is
+  /// always written over.
+  @override
+  bool lacks(Mergeable downloaded) =>
+      downloaded is! BackupV2 ||
+      downloaded.lacksLocal(includeSettings: PrefProps.syncAppSettings.get());
+
+  /// The password this device last synced with, kept on this device only.
+  ///
+  /// One set on another device arrives through iCloud Keychain, and what
+  /// setting it here forgets ([forgetPasswordState]) has to be forgotten here
+  /// too: the checkpoint stands for a file sealed with the old one, and the
+  /// theme packages' names for packages sealed with it.
+  static const _pwdSeen = SecureProp('bakPwdSeen');
+
+  static Future<void> _followPassword(String pwd) async {
+    // Past the rate limit: a sync is not a user asking, and runs on its own.
+    final seen = await _pwdSeen.storage.read(key: _pwdSeen.key);
+    if (seen == pwd) return;
+    // None on the first sync of this build: nothing known to forget.
+    if (seen != null) await forgetPasswordState();
+    await _pwdSeen.storage.write(key: _pwdSeen.key, value: pwd);
+  }
+
+  /// What a backup password sealed: see [_followPassword].
+  static Future<void> forgetPasswordState() async {
+    await forgetCheckpoint();
+    await LkcThemeBlobs.forgetNames();
+  }
 
   /// Refuses to upload after a failed read of newer remote data, and waits for
   /// [inheritLegacyRemote] to finish deciding. Everything else defers to the

@@ -553,14 +553,11 @@ class SettingStore extends SqliteStore with ThemeSettings {
     'rightHanded',
   };
 
-  /// None for [deviceLocalKeys]: a change to one is not an edit a sync moves,
-  /// and stamping it moves [Stores.lastModTime] — `windowState` on every
-  /// resize — and with it a whole sync and upload.
+  /// [deviceLocalKeys]: neither stamped nor counted — a change to one is not
+  /// an edit a sync moves, and stamping it moved [Stores.lastModTime]
+  /// (`windowState` on every resize) and with it a whole sync and upload.
   @override
-  Future<bool> updateLastUpdateTs({int? ts, required String? key}) async {
-    if (key != null && deviceLocalKeys.contains(key)) return false;
-    return super.updateLastUpdateTs(ts: ts, key: key);
-  }
+  bool isDeviceLocalKey(String key) => deviceLocalKeys.contains(key);
 
   /// The floating Agent's placement and size, as one row.
   ///

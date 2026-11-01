@@ -9,6 +9,7 @@ import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/entity_store.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -51,6 +52,8 @@ void main() {
     current = null;
     await checkpoint.remove();
     SecureProp.resetRateLimits();
+    // The mock keeps one map whatever the store's options: one store here.
+    SecureProp.legacyApart = false;
     FlutterSecureStorage.setMockInitialValues({
       SecureStoreProps.bakPwd.key: 'remote-password',
     });
@@ -58,6 +61,7 @@ void main() {
   });
 
   tearDown(() async {
+    SecureProp.legacyApart = null;
     await _leave();
     await PrefProps.syncAppSettings.set(false);
     await tempDir.delete(recursive: true);
@@ -181,15 +185,11 @@ void main() {
     );
   });
 
-  test('an edit to a synced setting or the history starts a sync', () async {
+  test('an edit to a synced setting starts a sync', () async {
     await become(phone);
     var edits = 0;
-    final subs = BakSyncer.watchEdits(() => edits++);
-    addTearDown(() async {
-      for (final sub in subs) {
-        await sub.cancel();
-      }
-    });
+    final sub = BakSyncer.watchEdits(() => edits++);
+    addTearDown(sub.cancel);
 
     Stores.setting.maxRetryCount.put(6);
     await _settle();
@@ -201,12 +201,59 @@ void main() {
 
     Stores.history.set('homeTab', 2);
     await _settle();
-    expect(edits, 2);
+    expect(edits, 1, reason: 'the history goes with the next sync');
 
     await PrefProps.syncAppSettings.set(false);
     Stores.setting.maxRetryCount.put(7);
     await _settle();
-    expect(edits, 2, reason: 'settings not synced');
+    expect(edits, 1, reason: 'settings not synced');
+  });
+
+  test('a remote written over with less is written back by a device that was not edited', () async {
+    await seedPhone();
+    await sync();
+    await become(desktop);
+    await sync();
+
+    // What a device that synced less leaves there (an older build, a
+    // restore): no `s2`, and no delete of it either.
+    final full = await BackupV2.loadFromStore();
+    final spis = Map<String, Object?>.of(full.spis)..remove('s2');
+    final stamps = Map<String, Object?>.from(
+      spis[EntityStore.lastModKey] as Map,
+    )..remove('s2');
+    spis[EntityStore.lastModKey] = stamps;
+    final short = full.copyWith(spis: spis);
+    await remote.file.writeAsString(
+      await AgeCryptor.encrypt(
+        gzip.encode(utf8.encode(short.toJsonString())),
+        'remote-password',
+      ),
+    );
+    remote.uploads++;
+    final before = remote.uploads;
+
+    await become(phone);
+    await sync();
+    expect(remote.uploads, before + 1, reason: 'or the remote stays without s2');
+    await become(desktop);
+    await sync();
+    expect(Stores.server.fetch().map((s) => s.id).toSet(), {'s1', 's2'});
+  });
+
+  test('a password set on another device forgets what the old one sealed', () async {
+    await seedPhone();
+    await sync();
+    const names = PrefProp<String>('lkc_theme_blobs');
+    await names.set('{"theme":"blob-1.age"}');
+    await sync();
+    expect(names.get(), isNotNull, reason: 'same password');
+
+    // What iCloud Keychain does when another device sets one.
+    await SecureStoreProps.bakPwd.write('new-password');
+    SecureProp.resetRateLimits();
+    await sync();
+    expect(names.get(), isNull);
   });
 
   test('a merged setting reaches what is showing it', () async {
