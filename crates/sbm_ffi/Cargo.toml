@@ -19,7 +19,7 @@ flutter_rust_bridge = "=2.13.0"
 hmac = "0.13"
 # Upstream IronRDP's main with ServerBox's few changes (lollipopkit/IronRDP,
 # branch `serverbox`), every crate of it: no release to wait for.
-ironrdp = { path = "../../third_party/ironrdp/crates/ironrdp", default-features = false, features = ["client", "client-clipboard", "cliprdr", "core", "displaycontrol", "graphics", "input", "pdu", "rustls-ring", "session"] }
+ironrdp = { path = "../../third_party/ironrdp/crates/ironrdp", default-features = false, features = ["client", "client-clipboard", "cliprdr", "connector", "core", "displaycontrol", "graphics", "input", "pdu", "rustls-ring", "session"] }
 # Its certificate-validation types, which the meta crate does not re-export.
 ironrdp-tls = { path = "../../third_party/ironrdp/crates/ironrdp-tls", features = ["rustls-ring"] }
 jpeg-decoder = "0.3"

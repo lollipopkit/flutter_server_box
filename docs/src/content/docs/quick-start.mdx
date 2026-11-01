@@ -17,30 +17,30 @@ Add a server, connect to it, and check its monitoring data.
    - **Password or Key**: Choose an authentication method
 4. Tap **Save**.
 
-### Connect through Monitor agent
+### Connect through the Monitor
 
-Use Monitor agent instead when opening an SSH port is inconvenient:
+Use the Monitor instead when opening an SSH port is inconvenient:
 
-1. Install and configure [Monitor agent](/docs/advanced/monitor-agent/) on the server.
+1. Install and configure the [Monitor](/docs/advanced/monitor-agent/) on the server.
 2. Enable **Monitor HTTP** on the Add Server page.
-3. Enter the agent URL, panel username, and password. If the agent uses a self-signed certificate, enable **Monitor Ignore certificate** only when needed.
+3. Enter the Monitor URL, panel username, and password. If the Monitor uses a self-signed certificate, enable **Monitor Ignore certificate** only when needed.
 4. Save the configuration.
 
-SSH and Monitor HTTP can be enabled together. When both are configured, **Preferred transport** only controls which connection the App tries first; the other remains available. A server configured only through Monitor HTTP has no SSH credentials, and its command, terminal, and file features depend on the permissions enabled by the agent.
+SSH and Monitor HTTP can be enabled together. When both are configured, **Preferred transport** only controls which connection the App tries first; the other remains available. A server configured only through Monitor HTTP has no SSH credentials, and its command, terminal, and file features depend on the permissions enabled by the Monitor.
 
 ## Step 2: Connect and view status
 
 1. Tap the server card.
 2. After connecting, view CPU, memory, swap, disk, and network status.
 
-A server using Monitor agent can show history collected before the App connected. An SSH-only server starts its local history when the App begins sampling.
+A server using the Monitor can show history collected before the App connected. An SSH-only server starts its local history when the App begins sampling.
 
 ## Step 3: Explore features
 
 After connecting, you can:
 
 - **Open the terminal**: SSH connections can open the terminal directly. For Monitor HTTP, the account's role must include the `shell` permission.
-- **Browse files**: SSH connections use SFTP. Monitor HTTP connections use the agent's file API, which requires the account role's `files` permission and configured `[remote_access.fs].roots`.
+- **Browse files**: SSH connections use SFTP. Monitor HTTP connections use the Monitor's file API, which requires the account role's `files` permission and configured `[remote_access.fs].roots`.
 - **Manage containers**: View and control Docker or Podman containers.
 - **View processes**: Inspect running processes.
 - **Run snippets**: Execute saved commands.
@@ -49,5 +49,5 @@ After connecting, you can:
 ## Useful settings
 
 - **Biometrics**: On mobile, enable Face ID, Touch ID, or fingerprint authentication to unlock the App quickly.
-- **Home screen widgets**: After installing Monitor agent, add the server to an iOS or Android widget.
+- **Home screen widgets**: After installing the Monitor, add the server to an iOS or Android widget.
 - **Android background running**: To keep connections alive in the background, enable background running and allow notifications and background activity.

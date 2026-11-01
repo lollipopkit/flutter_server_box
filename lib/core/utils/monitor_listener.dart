@@ -67,7 +67,7 @@ class MonitorRemoteListener {
         timeout,
         onTimeout: () => throw const MonitorHttpErr(
           type: MonitorHttpErrType.net,
-          message: 'The monitor agent did not start listening in time',
+          message: 'The Monitor did not start listening in time',
         ),
       );
     } catch (_) {
@@ -151,7 +151,7 @@ class MonitorRemoteListener {
       _ready.completeError(
         const MonitorHttpErr(
           type: MonitorHttpErrType.net,
-          message: 'The monitor agent closed the listener',
+          message: 'The Monitor closed the listener',
         ),
       );
     }

@@ -155,7 +155,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get agentSaveServerTip => '이 호스트의 정보와 입력한 비밀번호는 이 기기에 저장됩니다.';
 
   @override
-  String get agentMonitorOptional => 'monitor 에이전트(선택)';
+  String get agentMonitorOptional => 'Monitor(선택)';
 
   @override
   String get authFailTip => '인증에 실패했습니다. 정보를 확인하세요';
@@ -254,13 +254,13 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get monitorHttpsRequired =>
-      '원격 monitor 에이전트에는 HTTPS가 필요합니다. HTTP를 허용한 경우는 예외입니다.';
+      '원격 Monitor에는 HTTPS가 필요합니다. 해당 Monitor에 HTTP를 허용한 경우는 예외입니다.';
 
   @override
   String get monitorAllowInsecureHttp => 'HTTP 허용';
 
   @override
-  String get plainHttpTitle => '이 Monitor는 암호화되지 않은 HTTP를 사용합니다.';
+  String get plainHttpTitle => '이 Monitor는 암호화되지 않은 HTTP로 제공됩니다.';
 
   @override
   String get plainHttpTip =>
@@ -278,7 +278,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String monitorHttpTip(String url) {
-    return 'SSH로 명령을 실행하는 대신 **Monitor**의 HTTP API를 통해 이 서버의 상태를 읽습니다.\n\n먼저 서버에 Monitor를 설치해야 합니다. 차트, Watch 앱, 데스크톱 위젯에서 사용합니다.\n\n[Monitor 설치 방법]($url)';
+    return 'SSH로 명령을 실행하는 대신 **Monitor**의 HTTP API를 통해 이 서버의 상태를 읽습니다.\n\n먼저 서버에 Monitor를 설치해야 합니다. 차트, Watch 앱, 홈 화면 위젯은 Monitor가 있어야 사용할 수 있습니다.\n\n[Monitor 설치 방법]($url)';
   }
 
   @override
@@ -677,7 +677,7 @@ class AppLocalizationsKo extends AppLocalizations {
       '점프 서버와 ProxyCommand는 함께 사용할 수 없습니다.';
 
   @override
-  String get noConnectionMethod => 'SSH 또는 Monitor 연결을 설정하세요.';
+  String get noConnectionMethod => 'SSH, Monitor 또는 둘 다 설정하세요.';
 
   @override
   String get keepForeground => '앱을 포그라운드에 유지해 주세요!';
@@ -1114,11 +1114,11 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get diskCountsNetworkTip =>
-      'NFS, SMB 등의 네트워크 마운트는 항상 목록에 표시됩니다. 다른 컴퓨터의 저장 공간이므로 기본적으로 디스크 합계에 포함되지 않습니다. 이 설정은 SSH로 상태를 수집할 때 적용됩니다. Monitor agent를 사용하는 경우에는 agent 자체 설정을 따릅니다.';
+      'NFS, SMB 등의 네트워크 마운트는 항상 목록에 표시됩니다. 다른 컴퓨터의 저장 공간이므로 기본적으로 디스크 합계에 포함되지 않습니다. 이 설정은 SSH로 상태를 수집할 때 적용됩니다. Monitor를 사용하는 경우에는 Monitor 자체 설정을 따릅니다.';
 
   @override
   String get diskCountsNetworkAgentTip =>
-      'NFS, SMB 등의 네트워크 마운트는 항상 목록에 표시됩니다. 다른 컴퓨터의 저장 공간이므로 기본적으로 디스크 합계에 포함되지 않습니다. Monitor agent가 기록을 저장하고 디스크 알림을 판단할 때도 이 합계를 사용합니다.';
+      'NFS, SMB 등의 네트워크 마운트는 항상 목록에 표시됩니다. 다른 컴퓨터의 저장 공간이므로 기본적으로 디스크 합계에 포함되지 않습니다. Monitor가 기록을 저장하고 디스크 알림을 판단할 때도 이 합계를 사용합니다.';
 
   @override
   String spentTime(String time) {
@@ -1499,7 +1499,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get watchServersTip =>
-      '시계는 스스로 monitor에서 가져오므로 monitor가 있는 서버만 고를 수 있습니다.';
+      '시계는 스스로 Monitor에서 가져오므로 Monitor가 설정된 서버만 고를 수 있습니다.';
 
   @override
   String get watchNoMonitorServer => 'Monitor가 설정된 서버가 없습니다.';
@@ -1509,7 +1509,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get legacyStatusGoneBody =>
-      '워치 앱과 홈 위젯은 직접 입력한 `/status` 주소를 읽었습니다. 이 엔드포인트는 제거되었습니다. 현재 값을 텍스트로만 반환할 수 있었고, 그래서 그래프를 표시할 수 없었습니다.\n\n이제는 monitor의 인증된 API를 읽으므로 추이를 그리고 앱과 자동으로 동기화됩니다. 앱에서 서버를 한 번 설정하면 모든 워치와 위젯이 이를 가져옵니다.';
+      '워치 앱과 홈 위젯은 직접 입력한 `/status` 주소를 읽었습니다. 이 엔드포인트는 제거되었습니다. 현재 값을 텍스트로만 반환할 수 있었고, 그래서 그래프를 표시할 수 없었습니다.\n\n이제는 Monitor의 인증된 API를 읽으므로 추이를 그리고 앱과 자동으로 동기화됩니다. 앱에서 서버를 한 번 설정하면 모든 워치와 위젯이 이를 가져옵니다.';
 
   @override
   String get services => '서비스';
@@ -2041,17 +2041,17 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String funcNeedsAgentGrant(String func, String setting) {
-    return '$func을(를) 사용하려면 Monitor에서 $setting을(를) 사용 설정해야 합니다.';
+    return '$func을(를) 사용하려면 Monitor의 $setting을(를) 켜야 합니다.';
   }
 
   @override
   String funcNeedsAgentUpdate(String func) {
-    return '$func을(를) 사용하려면 Monitor를 업데이트해야 합니다.';
+    return '$func을(를) 사용하려면 최신 Monitor가 필요합니다.';
   }
 
   @override
   String get portForwardRemoteNeedsAgent =>
-      'Monitor를 통한 원격 포트 전달에는 최신 agent가 필요합니다. 서버에서 업데이트하세요.';
+      'Monitor를 통한 원격 포트 전달에는 최신 Monitor가 필요합니다. 서버에서 업데이트하세요.';
 
   @override
   String get rangeLive => '실시간';
@@ -2070,7 +2070,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get historyNoStored =>
-      '기록 데이터는 Monitor에서만 확인할 수 있습니다. SSH 연결에서는 앱이 연결된 뒤 수집한 데이터만 볼 수 있습니다.';
+      '기록은 Monitor만 저장합니다. 이 연결에서는 앱이 연결된 뒤 수집한 데이터만 유지됩니다.';
 
   @override
   String get noHistoryYet => '아직 측정값이 없습니다';
@@ -2085,7 +2085,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get to => '끝';
 
   @override
-  String get beyondRetention => 'Monitor에 저장된 데이터 범위를 벗어났습니다.';
+  String get beyondRetention => '이 Monitor가 보관한 범위를 벗어났습니다.';
 
   @override
   String agentRetentionFmt(String kept) {
@@ -2143,10 +2143,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get agentPermissions => '권한';
 
   @override
-  String get agentEmptyHint => '서버에서 작업을 실행합니다.';
+  String get agentEmptyHint => '서버에 대해 묻거나 Agent에게 서버에서 작업을 실행하도록 요청하세요.';
 
   @override
-  String get agentTerminalEmptyHint => '현재 터미널 내용을 읽고 여기에서 명령을 실행합니다.';
+  String get agentTerminalEmptyHint =>
+      '이 서버에 대해 물어보세요. Agent는 이 터미널을 읽고 여기에서 명령을 실행할 수 있습니다.';
 
   @override
   String oldestSampleFmt(String time) {
@@ -2370,7 +2371,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get remoteDesktopIntro =>
-      '서버의 RDP 또는 VNC 데스크톱을 앱 안에서 엽니다. 연결은 서버의 SSH 연결이나 Monitor 에이전트를 거치므로 데스크톱 포트를 네트워크에 열어 둘 필요가 없습니다.';
+      '서버의 RDP 또는 VNC 데스크톱을 앱 안에서 엽니다. 연결은 서버의 SSH 연결이나 Monitor를 거치므로 데스크톱 포트를 네트워크에 열어 둘 필요가 없습니다.';
 
   @override
   String get remoteDesktopIntroProfiles =>
@@ -2378,7 +2379,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get localServerIntro =>
-      'ServerBox를 실행 중인 기기를 서버로 추가합니다. 상태, 프로세스, 서비스, 컨테이너, 터미널, 파일을 SSH나 Monitor 에이전트 없이 사용할 수 있습니다.';
+      'ServerBox를 실행 중인 기기를 서버로 추가합니다. 상태, 프로세스, 서비스, 컨테이너, 터미널, 파일을 SSH나 Monitor 없이 사용할 수 있습니다.';
 
   @override
   String get localServerAdd => '이 기기 추가';
@@ -2390,11 +2391,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get transportSectionOff => '꺼져 있습니다. 다시 켤 때를 위해 아래 항목은 그대로 보관됩니다.';
 
   @override
-  String get monitorAgent => 'Monitor 에이전트';
+  String get monitorAgent => 'Monitor';
 
   @override
   String get plainHttpEditTip =>
-      '자격 증명과 측정값이 암호화되지 않은 채 네트워크를 지납니다. LAN이나 Tailscale 주소로 제한하거나, 에이전트를 TLS 뒤에 두세요.';
+      '자격 증명과 측정값이 암호화되지 않은 채 네트워크를 지납니다. LAN이나 Tailscale 주소로 제한하거나, Monitor를 TLS 뒤에 두세요.';
 
   @override
   String get behaviour => '동작';
@@ -2599,13 +2600,13 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get monitorSettings => 'Monitor settings';
+  String get monitorSettings => 'Monitor 설정';
 
   @override
-  String get monitorAgentDefault => 'Agent default';
+  String get monitorAgentDefault => 'Monitor 기본값';
 
   @override
-  String get monitorNeedsRestart => 'agent를 다시 시작한 후 적용';
+  String get monitorNeedsRestart => 'Monitor를 다시 시작한 후 적용';
 
   @override
   String get monitorCollection => 'Collection';
@@ -2674,7 +2675,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get pushUnknownType =>
-      '이 Monitor에는 해당 유형의 전송 기능이 없어 설정을 표시하지 않습니다. 삭제하거나 config.toml에서 수정할 수 있습니다.';
+      '이 Monitor에는 해당 채널 유형의 전송 기능이 없어 설정을 표시하지 않습니다. 여기서 삭제하거나 Monitor의 config.toml에서 수정할 수 있습니다.';
 
   @override
   String get pushJsonInvalid => '유효한 JSON이 아닙니다';
@@ -2684,7 +2685,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get dataRetentionTip =>
-      '사용 중지하면 Monitor가 데이터를 삭제하지 않아 데이터베이스가 계속 커집니다.';
+      '사용 중지하면 Monitor가 아무것도 삭제하지 않아 데이터베이스가 제한 없이 커집니다.';
 
   @override
   String get retentionMetrics => 'Keep metrics';
@@ -2703,19 +2704,19 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get corsOriginsTip =>
-      '브라우저 패널이 이 agent를 호출할 수 있는 origin입니다. 비워 두면 same-origin만 허용합니다.';
+      '브라우저 패널이 이 Monitor를 호출할 수 있는 origin입니다. 비워 두면 same-origin만 허용합니다.';
 
   @override
   String get monitorNoRemoteAccess =>
-      '이 agent는 모니터링 전용으로 설정되어 있습니다. 여기서 터미널을 열거나 명령을 실행하거나 파일을 탐색할 수 없습니다. 이 기능을 사용하려면 agent의 config.toml에서 [remote_access]를 수정하세요.';
+      '이 Monitor는 모니터링 전용으로 설정되어 있습니다. 여기서 터미널을 열거나 명령을 실행하거나 파일을 탐색할 수 없습니다. 이 기능을 사용하려면 Monitor의 config.toml에서 [remote_access]를 수정하세요.';
 
   @override
   String get monitorAgentTooOld =>
-      '이 Monitor agent는 현재 ServerBox 버전이 지원하는 것보다 오래되었습니다. 서버에서 agent를 업데이트하세요.';
+      '이 Monitor는 현재 ServerBox 버전이 지원하는 것보다 오래되었습니다. 서버에서 Monitor를 업데이트하세요.';
 
   @override
   String get monitorClientTooOld =>
-      '이 Monitor agent는 더 이상 현재 ServerBox 버전을 지원하지 않습니다. 앱을 업데이트하세요.';
+      '이 Monitor는 더 이상 현재 ServerBox 버전을 지원하지 않습니다. 앱을 업데이트하세요.';
 
   @override
   String get alerts => '알림';
@@ -2863,7 +2864,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get remoteDesktopTargetTip =>
-      '대상은 SSH 서버 또는 Monitor 에이전트에서 확인됩니다. localhost는 해당 머신을 가리킵니다.';
+      '대상은 SSH 서버 또는 Monitor에서 확인됩니다. localhost는 해당 머신을 가리킵니다.';
 
   @override
   String get remoteDesktopDomain => '도메인(선택)';
@@ -2921,6 +2922,98 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get remoteDesktopWaiting => '데스크톱을 기다리는 중…';
+
+  @override
+  String get remoteDesktopFailStandardRdpSecurityOnly =>
+      '서버가 Standard RDP Security(RC4)만 제공하며, 이는 지원되지 않습니다. xrdp.ini에서 security_layer=tls(또는 negotiate)로 설정하고 xrdp가 TLS 인증서를 읽을 수 있는지 확인하세요.';
+
+  @override
+  String get remoteDesktopFailServerCertificateMissing =>
+      '서버에 TLS 인증서가 없습니다. 서버에 인증서를 설치하세요. xrdp의 경우 xrdp.ini에서 certificate와 key_file을 설정하세요.';
+
+  @override
+  String get remoteDesktopFailClientCertificateRequired =>
+      '서버가 클라이언트 인증서(스마트 카드 로그온)를 요구하며, 이는 지원되지 않습니다.';
+
+  @override
+  String get remoteDesktopFailWrongCredentials => '사용자 이름 또는 비밀번호가 잘못되었습니다.';
+
+  @override
+  String get remoteDesktopFailAccountLockedOut =>
+      '계정이 잠겼습니다. 나중에 다시 시도하거나 관리자에게 잠금 해제를 요청하세요.';
+
+  @override
+  String get remoteDesktopFailAccountDisabled => '계정이 비활성화되었습니다.';
+
+  @override
+  String get remoteDesktopFailAccountExpired => '계정이 만료되었습니다.';
+
+  @override
+  String get remoteDesktopFailPasswordExpired =>
+      '비밀번호가 만료되었거나 변경해야 합니다. 먼저 서버에서 비밀번호를 변경하세요.';
+
+  @override
+  String get remoteDesktopFailLogonRestricted =>
+      '이 계정은 현재 시간이나 이 기기에서 로그온할 수 없거나, 빈 비밀번호로는 원격 로그온할 수 없습니다.';
+
+  @override
+  String get remoteDesktopFailRemoteLogonDenied =>
+      '이 계정은 원격 데스크톱을 통한 로그온이 허용되지 않습니다. 서버에서 Remote Desktop Users 그룹에 추가하세요.';
+
+  @override
+  String get remoteDesktopFailFreshCredentialsRequired =>
+      '서버가 저장된 자격 증명을 허용하지 않습니다. 비밀번호를 다시 입력하세요.';
+
+  @override
+  String get remoteDesktopFailIdleTimeout => '서버의 유휴 시간 제한으로 세션 연결이 끊어졌습니다.';
+
+  @override
+  String get remoteDesktopFailSessionTimeLimit => '세션이 서버의 시간 제한에 도달했습니다.';
+
+  @override
+  String get remoteDesktopFailReplacedByOtherConnection =>
+      '다른 연결이 이 세션을 가져갔습니다.';
+
+  @override
+  String get remoteDesktopFailDisconnectedOnServer => '서버에서 세션 연결이 끊어졌습니다.';
+
+  @override
+  String get remoteDesktopFailLoggedOffByAdministrator => '관리자가 세션을 로그오프했습니다.';
+
+  @override
+  String get remoteDesktopFailLoggedOff => '세션이 로그오프되었습니다.';
+
+  @override
+  String get remoteDesktopFailServerShutdown => '서버가 종료 중입니다.';
+
+  @override
+  String get remoteDesktopFailServerReboot => '서버가 다시 시작 중입니다.';
+
+  @override
+  String get remoteDesktopFailServerDeniedConnection => '서버가 연결을 거부했습니다.';
+
+  @override
+  String get remoteDesktopFailLicensingFailed =>
+      '서버의 원격 데스크톱 라이선스 확인에 실패했습니다. 라이선스 서버와 클라이언트 액세스 라이선스(CAL)를 확인하세요.';
+
+  @override
+  String get remoteDesktopFailVncSecurityUnsupported =>
+      'VNC 서버가 지원되는 보안 유형을 제공하지 않습니다. VNC 비밀번호 또는 인증 없음만 지원됩니다. TigerVNC는 SecurityTypes=VncAuth로 설정하세요.';
+
+  @override
+  String get remoteDesktopFailPasswordRequired => 'VNC 서버에 비밀번호가 필요합니다.';
+
+  @override
+  String get tcpTargetUnreachable =>
+      '서버가 이 주소에 연결할 수 없습니다. 서비스가 실행 중이고 해당 포트에서 수신 대기 중인지 확인하세요.';
+
+  @override
+  String get sshTcpForwardingProhibited =>
+      'SSH 서버가 이 연결의 포워딩을 거부했습니다. sshd_config의 AllowTcpForwarding과 PermitOpen, 그리고 authorized_keys에서 해당 키의 no-port-forwarding 또는 permitopen 옵션을 확인하세요.';
+
+  @override
+  String get monitorRelayForbidden =>
+      '이 Monitor 계정은 이 주소에 연결할 수 없습니다. 역할의 connect 권한에서 이 주소를 허용해야 합니다.';
 
   @override
   String get remoteDesktopCertificateChanged => '원격 데스크톱 인증서가 변경되었습니다';
@@ -3032,7 +3125,7 @@ class AppLocalizationsKo extends AppLocalizations {
       'libvirt의 virsh가 설치된 서버는 QEMU/KVM 가상 머신과 함께 호스트로 표시됩니다.';
 
   @override
-  String get virtIntroTransports => '둘 다 SSH, Monitor 에이전트 또는 이 기기에서 작동합니다.';
+  String get virtIntroTransports => '둘 다 SSH, Monitor 또는 이 기기에서 작동합니다.';
 
   @override
   String get virtIntroTokens =>
@@ -3181,10 +3274,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get virtErrCertChanged => '호스트 인증서가 변경되었습니다';
 
   @override
-  String get virtErrRelayNotGranted => 'Monitor 에이전트가 연결을 중계하지 않습니다';
+  String get virtErrRelayNotGranted =>
+      'Monitor가 이 계정에 서버에서 TCP 연결을 여는 것을 허용하지 않습니다(connect 권한)';
 
   @override
-  String get virtErrExecNotGranted => 'Monitor 에이전트가 명령을 실행하지 않습니다';
+  String get virtErrExecNotGranted => 'Monitor가 명령을 실행하지 않습니다';
 
   @override
   String get virtErrNotInstalled => '이 서버에 virsh가 설치되어 있지 않습니다';
@@ -4911,7 +5005,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String funcNeedsAgentHttps(String func) {
-    return '$func을(를) 사용하려면 Monitor에 HTTPS로 연결해야 합니다. 또는 Monitor와 앱 양쪽에서 HTTP를 허용하세요.';
+    return '$func을(를) 사용하려면 이 Monitor에 HTTPS로 연결해야 합니다. 또는 Monitor와 앱 양쪽에서 HTTP를 허용하세요.';
   }
 
   @override
@@ -4921,7 +5015,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get monitorFilesReadOnly =>
-      '읽기 전용: 이 계정은 Monitor 파일을 볼 수 있지만 수정할 수 없습니다.';
+      '읽기 전용: 이 계정은 Monitor의 파일을 볼 수 있지만 수정할 수 없습니다.';
 
   @override
   String get monitorAccess => '접근';
@@ -4957,7 +5051,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get monitorErrReauth => '비밀번호가 틀렸습니다.';
 
   @override
-  String get monitorErrLastAdmin => '관리자 계정이 하나 이상 있어야 합니다.';
+  String get monitorErrLastAdmin => 'Monitor에는 관리자 계정이 하나 이상 있어야 합니다.';
 
   @override
   String get monitorErrConflict => '이미 존재하거나 아직 사용 중입니다.';
@@ -4973,7 +5067,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get monitorGrantShellTip =>
-      '터미널, 프로세스, 서비스, 컨테이너, 스니펫, 전원 — agent 계정으로 실행';
+      '터미널, 프로세스, 서비스, 컨테이너, 스니펫, 전원 — Monitor 계정으로 실행';
 
   @override
   String get monitorGrantSshTerminal => 'SSH를 통한 패널 터미널';
@@ -4982,7 +5076,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get monitorGrantVirt => '가상화';
 
   @override
-  String get monitorGrantVirtTip => '에이전트 웹 패널에서 연결하는 Proxmox VE, libvirt, BMC';
+  String get monitorGrantVirtTip =>
+      'Monitor 웹 패널에서 연결하는 Proxmox VE, libvirt, BMC';
 
   @override
   String get monitorGrantFiles => '파일';
@@ -5016,17 +5111,17 @@ class AppLocalizationsKo extends AppLocalizations {
   String get monitorBuiltin => '기본 제공';
 
   @override
-  String get monitorAdminRoleTip => '계정, 역할 및 agent 설정을 관리합니다';
+  String get monitorAdminRoleTip => '계정, 역할 및 Monitor 설정을 관리합니다';
 
   @override
   String get monitorYou => '나';
 
   @override
-  String get monitorNoAccessToSettings => '관리자만 이 agent의 설정을 변경할 수 있습니다.';
+  String get monitorNoAccessToSettings => '관리자만 이 Monitor의 설정을 변경할 수 있습니다.';
 
   @override
   String get monitorPasswordNotSaved =>
-      'agent의 비밀번호는 변경되었지만 앱에 저장하지 못했습니다. 이 서버 설정에서 Monitor 비밀번호를 업데이트하세요.';
+      'Monitor의 비밀번호는 변경되었지만 앱에 저장하지 못했습니다. 이 서버 설정에서 Monitor 비밀번호를 업데이트하세요.';
 
   @override
   String get firewall => '방화벽';
@@ -5244,23 +5339,23 @@ class AppLocalizationsKo extends AppLocalizations {
       'port=80:proto=tcp:toport=8080 형식을 사용하고 toport, toaddr 또는 둘 다 지정하세요.';
 
   @override
-  String get monitorSyncNeedsServer => '백업을 저장할 Monitor 에이전트의 서버를 선택하세요.';
+  String get monitorSyncNeedsServer => '백업을 저장할 Monitor가 있는 서버를 선택하세요.';
 
   @override
   String get monitorBackupUnsupported =>
-      '이 Monitor 에이전트는 백업을 저장할 수 없습니다. 에이전트를 업데이트하세요.';
+      '이 Monitor는 백업을 저장할 수 없습니다. Monitor를 업데이트하세요.';
 
   @override
-  String get monitorBackupAdminOnly => 'Monitor 에이전트의 관리자 계정만 백업을 저장할 수 있습니다.';
+  String get monitorBackupAdminOnly => 'Monitor의 관리자 계정만 백업을 저장할 수 있습니다.';
 
   @override
   String monitorBackupTooLarge(String max) {
-    return '백업이 Monitor 에이전트가 허용하는 크기($max)보다 큽니다.';
+    return '백업이 Monitor가 허용하는 크기($max)보다 큽니다.';
   }
 
   @override
   String get monitorBackupTooMany =>
-      'Monitor 에이전트에 저장된 백업 수가 한도에 도달했습니다. 먼저 하나를 삭제하세요.';
+      'Monitor에 저장된 백업 수가 한도에 도달했습니다. 먼저 하나를 삭제하세요.';
 
   @override
   String get virtCreateVmidInvalid => 'VMID는 100부터 999999999까지입니다.';

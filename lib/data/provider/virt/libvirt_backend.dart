@@ -79,6 +79,8 @@ class LibvirtBackend implements VirtBackend {
       exec: () => ref.read(serverProvider(serverId).notifier).ensureExec(),
       knownSudoPassword: () => SudoPassword.known(serverId),
       onSudoRejected: () => SudoPassword.forget(serverId),
+      // TODO: upload over the Monitor too (its file API, or a byte-stream
+      // exec); today an image goes up only through SSH or on this device.
       canStream: () =>
           local() || ref.read(serverProvider(serverId)).capabilities.byteStream,
       byteExec: () async => local()

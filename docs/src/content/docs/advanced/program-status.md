@@ -8,7 +8,7 @@ waiting for you, finished or failed. Server Box shows that next to the
 terminal's name and, when the terminal is out of sight, as a notification.
 
 No server-side software is required. The program writes a short escape
-sequence to its output, which reaches the App through SSH, a Monitor agent
+sequence to its output, which reaches the App through SSH, a Monitor
 terminal, or a terminal on this device, alongside the rest of the output.
 
 ## What Server Box reads
@@ -42,7 +42,7 @@ terminal, or a terminal on this device, alongside the rest of the output.
   the notification switch above is off.
 - **The Agent** reads the reports along with the screen, so it can tell that a
   program is waiting for an answer.
-- **The Monitor agent's web panel** shows the most urgent report above its
+- **The Monitor's web panel** shows the most urgent report above its
   terminal.
 
 ## Reporting from your own scripts
@@ -71,7 +71,7 @@ several reports from one program, are in the
 Server Box attaches to tmux in control mode, which passes every pane's output
 through as it is, so reports from tmux panes need no tmux setting.
 
-The Monitor agent's web panel attaches a regular tmux client. tmux drops
+The Monitor's web panel attaches a regular tmux client. tmux drops
 sequences it does not know there, so a report only reaches the panel when
 `allow-passthrough` is on (`set -g allow-passthrough on`) and the program wraps
 it for tmux (`ESC P tmux; …  ESC \`, with every `ESC` inside doubled).

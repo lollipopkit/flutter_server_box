@@ -92,5 +92,5 @@ system features. The App exposes Rust APIs to Dart through `crates/sbm_ffi`
 and flutter_rust_bridge; generated bindings are in `lib/src/rust/`.
 
 `crates/sbm_parser` contains parsing logic shared by the projects.
-`crates/sbm_native` collects metrics for Monitor agent on the machine running
-the agent. The App does not invoke `sbm_native` on remote servers.
+`crates/sbm_native` collects metrics for the Monitor on the machine running
+the Monitor. The App does not invoke `sbm_native` on remote servers.

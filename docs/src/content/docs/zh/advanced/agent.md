@@ -93,13 +93,13 @@ skills。模型会按 skill 的内容执行，请只安装你信任的来源；s
 App 每天最多一次（启动时或打开 Skills 页时）询问各来源 skill 是否有变化，并标出有更新的
 skill；**全部更新** 会安装这些更新，**检查更新** 会立即检查一次。不会未经你确认就安装。
 
-App 自带一个 skill：**serverbox-help**，内容是 Server Box 的用法和 Monitor agent 的部署，
-Agent 因此可以回答关于 App 本身的问题，也可以在你批准后帮你在服务器上部署 Monitor agent。它随
+App 自带一个 skill：**serverbox-help**，内容是 Server Box 的用法和 Monitor 的部署，
+Agent 因此可以回答关于 App 本身的问题，也可以在你批准后帮你在服务器上部署 Monitor。它随
 App 更新，可以关闭，但不能删除。
 
 Agent 的文件工具需要 SSH。仅配置 Monitor HTTP 的服务器不提供这些工具。其独立的
 **文件** 标签页可以在运维人员开启 `[remote_access.fs]` 且请求路径位于 `roots` 下时，
-使用 Monitor agent 的文件 API。
+使用 Monitor 的文件 API。
 
 ## 审核操作
 

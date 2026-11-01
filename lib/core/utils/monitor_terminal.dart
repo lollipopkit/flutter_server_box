@@ -171,7 +171,7 @@ class MonitorShellSession implements ShellSession {
         close();
         throw const MonitorHttpErr(
           type: MonitorHttpErrType.net,
-          message: 'The monitor agent did not open a shell in time',
+          message: 'The Monitor did not open a shell in time',
         );
       },
     );
@@ -262,7 +262,7 @@ class MonitorShellSession implements ShellSession {
       case 'prompt':
         // Only the SSH paths can ask for anything; there is nothing to answer
         // here, and silently ignoring it would leave the session wedged.
-        _fail('The agent asked for credentials on a passwordless session');
+        _fail('The Monitor asked for credentials on a passwordless session');
       default:
         break;
     }

@@ -153,7 +153,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentSaveServerTip => '这台主机的信息和你输入的密码将保存在本设备上。';
 
   @override
-  String get agentMonitorOptional => 'Monitor 代理（可选）';
+  String get agentMonitorOptional => 'Monitor（可选）';
 
   @override
   String get authFailTip => '认证失败，请检查信息是否正确';
@@ -248,7 +248,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get remoteBackupPasswordRequired => '远程备份需要非空的备份密码';
 
   @override
-  String get monitorHttpsRequired => '远程监控代理必须使用 HTTPS，除非该连接已允许 HTTP。';
+  String get monitorHttpsRequired => '远程 Monitor 必须使用 HTTPS，除非已允许它使用 HTTP。';
 
   @override
   String get monitorAllowInsecureHttp => '允许 HTTP';
@@ -271,7 +271,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String monitorHttpTip(String url) {
-    return '通过 **Monitor** 的 HTTP 接口读取此服务器的状态，而不是经由 SSH 执行命令。\n\n需要先在服务器上安装 monitor；曲线、手表 App 和桌面小部件都依赖它。\n\n[如何部署 monitor]($url)';
+    return '通过 **Monitor** 的 HTTP 接口读取此服务器的状态，而不是经由 SSH 执行命令。\n\n需要先在服务器上安装 Monitor；曲线、手表 App 和桌面小部件都依赖它。\n\n[如何部署 Monitor]($url)';
   }
 
   @override
@@ -663,7 +663,7 @@ class AppLocalizationsZh extends AppLocalizations {
       '跳板服务器与 ProxyCommand 不能同时使用。';
 
   @override
-  String get noConnectionMethod => '请配置 SSH / Monitor';
+  String get noConnectionMethod => '请配置 SSH、Monitor，或两者都配置';
 
   @override
   String get keepForeground => '请将应用保持在前台运行';
@@ -1093,11 +1093,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get diskCountsNetworkTip =>
-      'NFS、SMB 等网络挂载始终会列在明细中。它们的容量属于另一台机器，默认不计入磁盘总量。此设置仅在通过 SSH 采集状态时生效；通过 Monitor agent 采集时，则由 agent 自身的设置决定。';
+      'NFS、SMB 等网络挂载始终会列在明细中。它们的容量属于另一台机器，默认不计入磁盘总量。此设置仅在通过 SSH 采集状态时生效；通过 Monitor 采集时，则由 Monitor 自身的设置决定。';
 
   @override
   String get diskCountsNetworkAgentTip =>
-      'NFS、SMB 等网络挂载始终会显示在明细中。它们的容量属于另一台机器，默认不计入磁盘总量。Monitor agent 记录历史数据和触发磁盘告警时也会使用此总量。';
+      'NFS、SMB 等网络挂载始终会显示在明细中。它们的容量属于另一台机器，默认不计入磁盘总量。Monitor 记录历史数据和判断磁盘告警时使用的也是此总量。';
 
   @override
   String spentTime(String time) {
@@ -1463,7 +1463,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get watchServers => '手表上的服务器';
 
   @override
-  String get watchServersTip => '手表独立向 monitor 取数据，所以只能选择已配置 monitor 的服务器。';
+  String get watchServersTip => '手表独立从 Monitor 获取数据，所以只能选择已配置 Monitor 的服务器。';
 
   @override
   String get watchNoMonitorServer => '没有服务器配置了 Monitor';
@@ -2002,12 +2002,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String funcNeedsAgentUpdate(String func) {
-    return '$func需要更新 Monitor。';
+    return '$func需要更新版本的 Monitor。';
   }
 
   @override
   String get portForwardRemoteNeedsAgent =>
-      '通过 Monitor 进行远程转发需要更新版本的 agent，请在服务器上更新。';
+      '通过 Monitor 进行远程转发需要更新版本的 Monitor，请在服务器上更新。';
 
   @override
   String get rangeLive => '实时';
@@ -2025,8 +2025,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cores => '核心';
 
   @override
-  String get historyNoStored =>
-      '只有 Monitor 能展示历史数据。通过 SSH 连接时，只能查看本应用连接后采集到的数据。';
+  String get historyNoStored => '只有 Monitor 会保存历史数据。当前连接只保留本应用连接后采集到的数据。';
 
   @override
   String get noHistoryYet => '还没有采样';
@@ -2041,7 +2040,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get to => '止';
 
   @override
-  String get beyondRetention => '超出 Monitor 已保存的数据范围';
+  String get beyondRetention => '超出此 Monitor 已保存的数据范围';
 
   @override
   String agentRetentionFmt(String kept) {
@@ -2098,10 +2097,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentPermissions => '权限';
 
   @override
-  String get agentEmptyHint => '在服务器上执行操作。';
+  String get agentEmptyHint => '询问你的服务器，或让 Agent 在服务器上执行操作。';
 
   @override
-  String get agentTerminalEmptyHint => '读取当前终端的内容，并在其中执行命令。';
+  String get agentTerminalEmptyHint => '询问此服务器。Agent 可以读取此终端，并在这里执行命令。';
 
   @override
   String oldestSampleFmt(String time) {
@@ -2324,7 +2323,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get remoteDesktopIntro =>
-      '在应用内打开服务器的 RDP 或 VNC 桌面。连接经由服务器的 SSH 连接或其 Monitor agent 转发，桌面端口无需对网络开放。';
+      '在应用内打开服务器的 RDP 或 VNC 桌面。连接经由服务器的 SSH 连接或其 Monitor 转发，桌面端口无需对网络开放。';
 
   @override
   String get remoteDesktopIntroProfiles =>
@@ -2332,7 +2331,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get localServerIntro =>
-      '将运行 ServerBox 的设备添加为服务器。状态、进程、服务、容器、终端和文件都无需 SSH 或 Monitor agent。';
+      '将运行 ServerBox 的设备添加为服务器。状态、进程、服务、容器、终端和文件都无需 SSH 或 Monitor。';
 
   @override
   String get localServerAdd => '添加本机';
@@ -2344,11 +2343,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get transportSectionOff => '已关闭。下面的字段会保留，供你再次开启时使用。';
 
   @override
-  String get monitorAgent => 'Monitor 代理';
+  String get monitorAgent => 'Monitor';
 
   @override
   String get plainHttpEditTip =>
-      '凭据和指标会以明文穿过网络。请限制在局域网或 Tailscale 地址内，或者把代理放到 TLS 后面。';
+      '凭据和指标会以明文穿过网络。请限制在局域网或 Tailscale 地址内，或者把 Monitor 放到 TLS 后面。';
 
   @override
   String get behaviour => '行为';
@@ -2555,10 +2554,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get monitorSettings => 'Monitor 设置';
 
   @override
-  String get monitorAgentDefault => 'agent 默认值';
+  String get monitorAgentDefault => 'Monitor 默认值';
 
   @override
-  String get monitorNeedsRestart => 'agent 重启后生效';
+  String get monitorNeedsRestart => 'Monitor 重启后生效';
 
   @override
   String get monitorCollection => '采集';
@@ -2627,7 +2626,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get pushUnknownType =>
-      '此 Monitor 没有该类型的发送实现，因此不显示其配置。可以删除，或在 config.toml 中编辑。';
+      '此 Monitor 没有该类型渠道的发送实现，因此不显示其配置。可以在此删除，或在 Monitor 的 config.toml 中编辑。';
 
   @override
   String get pushJsonInvalid => '不是合法的 JSON';
@@ -2636,7 +2635,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dataRetention => '数据保留';
 
   @override
-  String get dataRetentionTip => '关闭后，Monitor 不会删除数据，数据库会一直增长。';
+  String get dataRetentionTip => '关闭后，Monitor 不会删除任何数据，其数据库会无限增长。';
 
   @override
   String get retentionMetrics => '指标保留';
@@ -2654,19 +2653,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get corsOrigins => 'CORS 允许来源';
 
   @override
-  String get corsOriginsTip => '允许浏览器面板从哪些来源调用此 agent。留空表示仅同源。';
+  String get corsOriginsTip => '允许浏览器面板从哪些来源调用此 Monitor。留空表示仅同源。';
 
   @override
   String get monitorNoRemoteAccess =>
-      '此 agent 目前只能查看监控数据，不能打开终端、执行命令或浏览文件。要开启这些功能，请修改 agent 的 config.toml，在 [remote_access] 下打开对应选项。';
+      '此 Monitor 目前只能查看监控数据，不能打开终端、执行命令或浏览文件。要开启这些功能，请修改 Monitor 的 config.toml，在 [remote_access] 下打开对应选项。';
 
   @override
   String get monitorAgentTooOld =>
-      '此 Monitor agent 版本过旧，当前版本的 ServerBox 已不再支持。请在服务器上更新 agent。';
+      '此 Monitor 版本过旧，当前版本的 ServerBox 已不再支持。请在服务器上更新 Monitor。';
 
   @override
-  String get monitorClientTooOld =>
-      '此 Monitor agent 已不再支持当前版本的 ServerBox。请更新 App。';
+  String get monitorClientTooOld => '此 Monitor 已不再支持当前版本的 ServerBox。请更新 App。';
 
   @override
   String get alerts => '告警';
@@ -2809,7 +2807,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get remoteDesktopTargetTip =>
-      '目标地址由 SSH 服务器或 Monitor Agent 解析，localhost 指向该服务器。';
+      '目标地址由 SSH 服务器或 Monitor 解析，localhost 指向该服务器。';
 
   @override
   String get remoteDesktopDomain => '域（可选）';
@@ -2865,6 +2863,94 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get remoteDesktopWaiting => '正在等待桌面…';
+
+  @override
+  String get remoteDesktopFailStandardRdpSecurityOnly =>
+      '服务器仅提供 Standard RDP Security（RC4），不受支持。请在 xrdp.ini 中设置 security_layer=tls（或 negotiate），并确保 xrdp 能读取其 TLS 证书。';
+
+  @override
+  String get remoteDesktopFailServerCertificateMissing =>
+      '服务器没有 TLS 证书。请在服务器上安装证书；xrdp 请在 xrdp.ini 中设置 certificate 和 key_file。';
+
+  @override
+  String get remoteDesktopFailClientCertificateRequired =>
+      '服务器要求客户端证书（智能卡登录），不受支持。';
+
+  @override
+  String get remoteDesktopFailWrongCredentials => '用户名或密码错误。';
+
+  @override
+  String get remoteDesktopFailAccountLockedOut => '账户已被锁定。请稍后再试，或请管理员解锁。';
+
+  @override
+  String get remoteDesktopFailAccountDisabled => '账户已被禁用。';
+
+  @override
+  String get remoteDesktopFailAccountExpired => '账户已过期。';
+
+  @override
+  String get remoteDesktopFailPasswordExpired => '密码已过期或必须修改。请先在服务器上修改密码。';
+
+  @override
+  String get remoteDesktopFailLogonRestricted =>
+      '该账户在此时间或从此设备不允许登录，或其空密码不允许远程登录。';
+
+  @override
+  String get remoteDesktopFailRemoteLogonDenied =>
+      '该账户不允许通过远程桌面登录。请在服务器上将其加入 Remote Desktop Users 组。';
+
+  @override
+  String get remoteDesktopFailFreshCredentialsRequired =>
+      '服务器不接受已保存的凭据。请重新输入密码。';
+
+  @override
+  String get remoteDesktopFailIdleTimeout => '会话因达到服务器的空闲时间限制而断开。';
+
+  @override
+  String get remoteDesktopFailSessionTimeLimit => '会话已达到服务器的时间限制。';
+
+  @override
+  String get remoteDesktopFailReplacedByOtherConnection => '另一个连接接管了此会话。';
+
+  @override
+  String get remoteDesktopFailDisconnectedOnServer => '会话在服务器上被断开。';
+
+  @override
+  String get remoteDesktopFailLoggedOffByAdministrator => '管理员注销了此会话。';
+
+  @override
+  String get remoteDesktopFailLoggedOff => '会话已注销。';
+
+  @override
+  String get remoteDesktopFailServerShutdown => '服务器正在关机。';
+
+  @override
+  String get remoteDesktopFailServerReboot => '服务器正在重启。';
+
+  @override
+  String get remoteDesktopFailServerDeniedConnection => '服务器拒绝了连接。';
+
+  @override
+  String get remoteDesktopFailLicensingFailed =>
+      '服务器的远程桌面授权失败。请检查其许可证服务器和客户端访问许可证（CAL）。';
+
+  @override
+  String get remoteDesktopFailVncSecurityUnsupported =>
+      'VNC 服务器未提供受支持的安全类型；仅支持 VNC 密码或无认证。TigerVNC 请设置 SecurityTypes=VncAuth。';
+
+  @override
+  String get remoteDesktopFailPasswordRequired => 'VNC 服务器需要密码。';
+
+  @override
+  String get tcpTargetUnreachable => '服务器无法连接到此地址。请检查服务是否在运行并监听该端口。';
+
+  @override
+  String get sshTcpForwardingProhibited =>
+      'SSH 服务器拒绝转发此连接。请检查其 sshd_config 中的 AllowTcpForwarding 和 PermitOpen，以及 authorized_keys 中该密钥的 no-port-forwarding 或 permitopen 选项。';
+
+  @override
+  String get monitorRelayForbidden =>
+      '此 Monitor 账户不允许连接到该地址。其角色的 connect 权限必须允许该地址。';
 
   @override
   String get remoteDesktopCertificateChanged => '远程桌面证书已更改';
@@ -2974,7 +3060,7 @@ class AppLocalizationsZh extends AppLocalizations {
       '安装了 libvirt 的 virsh 的服务器会显示为主机，并列出其 QEMU/KVM 虚拟机。';
 
   @override
-  String get virtIntroTransports => '两者都可以通过 SSH、Monitor agent 或在本设备上使用。';
+  String get virtIntroTransports => '两者都可以通过 SSH、经由 Monitor 或在本设备上使用。';
 
   @override
   String get virtIntroTokens =>
@@ -3122,10 +3208,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtErrCertChanged => '宿主机的证书已更改';
 
   @override
-  String get virtErrRelayNotGranted => 'Monitor agent 不转发连接';
+  String get virtErrRelayNotGranted =>
+      'Monitor 不允许此账户从服务器发起 TCP 连接（connect 权限）';
 
   @override
-  String get virtErrExecNotGranted => 'Monitor agent 不执行命令';
+  String get virtErrExecNotGranted => 'Monitor 不执行命令';
 
   @override
   String get virtErrNotInstalled => '此服务器上未安装 virsh';
@@ -4826,12 +4913,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String funcNeedsAgentPermission(String func) {
-    return '你在此 Monitor 上的账号没有 $func 的权限，请联系管理员。';
+    return '你在此 Monitor 上的账号没有 $func 的权限，请联系 Monitor 的管理员。';
   }
 
   @override
   String funcNeedsAgentHttps(String func) {
-    return '$func 需要通过 HTTPS 连接此 Monitor，或允许 HTTP。';
+    return '$func 需要通过 HTTPS 连接此 Monitor，或在 Monitor 和本 App 中都允许 HTTP。';
   }
 
   @override
@@ -4876,7 +4963,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get monitorErrReauth => '密码错误。';
 
   @override
-  String get monitorErrLastAdmin => '至少需要一个管理员账号。';
+  String get monitorErrLastAdmin => 'Monitor 至少需要一个管理员账号。';
 
   @override
   String get monitorErrConflict => '已存在，或仍在使用中。';
@@ -4891,7 +4978,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get monitorGrantShell => 'Shell 和命令';
 
   @override
-  String get monitorGrantShellTip => '终端、进程、服务、容器、代码片段、电源 —— 以 agent 的系统账号运行';
+  String get monitorGrantShellTip => '终端、进程、服务、容器、代码片段、电源 —— 以 Monitor 的系统账号运行';
 
   @override
   String get monitorGrantSshTerminal => '面板 SSH 终端';
@@ -4900,7 +4987,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get monitorGrantVirt => '虚拟化';
 
   @override
-  String get monitorGrantVirtTip => 'agent 网页面板中连接的 Proxmox VE、libvirt 和 BMC';
+  String get monitorGrantVirtTip =>
+      'Monitor 网页面板中可连接的 Proxmox VE、libvirt 和 BMC';
 
   @override
   String get monitorGrantFiles => '文件';
@@ -4934,17 +5022,17 @@ class AppLocalizationsZh extends AppLocalizations {
   String get monitorBuiltin => '内置';
 
   @override
-  String get monitorAdminRoleTip => '管理账号、角色和 agent 的设置';
+  String get monitorAdminRoleTip => '管理账号、角色和 Monitor 的设置';
 
   @override
   String get monitorYou => '你';
 
   @override
-  String get monitorNoAccessToSettings => '只有管理员可以修改此 agent 的设置。';
+  String get monitorNoAccessToSettings => '只有管理员可以修改此 Monitor 的设置。';
 
   @override
   String get monitorPasswordNotSaved =>
-      'agent 上的密码已修改，但 App 未能保存新密码。请在这台服务器的设置中更新 Monitor 密码。';
+      'Monitor 上的密码已修改，但 App 未能保存新密码。请在这台服务器的设置中更新 Monitor 密码。';
 
   @override
   String get firewall => '防火墙';
@@ -5156,21 +5244,21 @@ class AppLocalizationsZh extends AppLocalizations {
       '格式为 port=80:proto=tcp:toport=8080，需包含 toport、toaddr 或两者。';
 
   @override
-  String get monitorSyncNeedsServer => '请选择存放备份的服务器（使用其 Monitor 代理）。';
+  String get monitorSyncNeedsServer => '请选择由其 Monitor 存放备份的服务器。';
 
   @override
-  String get monitorBackupUnsupported => '此 Monitor 代理不支持存放备份，请更新代理。';
+  String get monitorBackupUnsupported => '此 Monitor 不支持存放备份，请更新 Monitor。';
 
   @override
-  String get monitorBackupAdminOnly => '只有 Monitor 代理的管理员账户可以在其上存放备份。';
+  String get monitorBackupAdminOnly => '只有 Monitor 的管理员账户可以在其上存放备份。';
 
   @override
   String monitorBackupTooLarge(String max) {
-    return '备份超过了 Monitor 代理允许的大小（$max）。';
+    return '备份超过了 Monitor 允许的大小（$max）。';
   }
 
   @override
-  String get monitorBackupTooMany => 'Monitor 代理存放的备份数量已达上限，请先删除一个。';
+  String get monitorBackupTooMany => 'Monitor 存放的备份数量已达上限，请先删除一个。';
 
   @override
   String get virtCreateVmidInvalid => 'VMID 须在 100 到 999999999 之间。';
@@ -5849,7 +5937,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get agentSaveServerTip => '這臺主機的資訊和你輸入的密碼將保存在本設備上。';
 
   @override
-  String get agentMonitorOptional => 'Monitor 代理（選填）';
+  String get agentMonitorOptional => 'Monitor（選填）';
 
   @override
   String get authFailTip => '認證失敗，請檢查資訊是否正確';
@@ -5944,7 +6032,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get remoteBackupPasswordRequired => '遠端備份需要非空的備份密碼';
 
   @override
-  String get monitorHttpsRequired => '遠端監控代理必須使用 HTTPS，除非該連線已允許 HTTP。';
+  String get monitorHttpsRequired => '遠端 Monitor 必須使用 HTTPS，除非已允許它使用 HTTP。';
 
   @override
   String get monitorAllowInsecureHttp => '允許 HTTP';
@@ -5967,7 +6055,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String monitorHttpTip(String url) {
-    return '透過 **Monitor** 的 HTTP 介面讀取此伺服器的狀態，而不是透過 SSH 執行指令。\n\n請先在伺服器上安裝 Monitor。圖表、Watch App 和桌面小工具都會使用這項功能。\n\n[如何安裝 Monitor]($url)';
+    return '透過 **Monitor** 的 HTTP 介面讀取此伺服器的狀態，而不是透過 SSH 執行指令。\n\n請先在伺服器上安裝 Monitor。圖表、Watch App 和桌面小工具都需要它。\n\n[如何安裝 Monitor]($url)';
   }
 
   @override
@@ -6359,7 +6447,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       '跳板伺服器與 ProxyCommand 不能同時使用。';
 
   @override
-  String get noConnectionMethod => '請設定 SSH / Monitor';
+  String get noConnectionMethod => '請設定 SSH、Monitor，或兩者都設定';
 
   @override
   String get keepForeground => '請讓 App 保持在前景執行';
@@ -6789,11 +6877,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get diskCountsNetworkTip =>
-      'NFS、SMB 等網絡掛載始終會列在明細中。它們的容量屬於另一臺機器，默認不計入磁碟總量。此設定僅在通過 SSH 採集狀態時生效；通過 Monitor agent 採集時，則由 agent 自身的設定決定。';
+      'NFS、SMB 等網路掛載始終會列在明細中。它們的容量屬於另一臺機器，預設不計入磁碟總量。此設定僅在透過 SSH 採集狀態時生效；透過 Monitor 採集時，則由 Monitor 自身的設定決定。';
 
   @override
   String get diskCountsNetworkAgentTip =>
-      'NFS、SMB 等網絡掛載始終會顯示在明細中。它們的容量屬於另一臺機器，默認不計入磁碟總量。Monitor agent 記錄歷史資料和觸發磁碟告警時也會使用此總量。';
+      'NFS、SMB 等網路掛載始終會顯示在明細中。它們的容量屬於另一臺機器，預設不計入磁碟總量。Monitor 記錄歷史資料和判斷磁碟告警時使用的也是此總量。';
 
   @override
   String spentTime(String time) {
@@ -7159,7 +7247,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get watchServers => '手錶上的伺服器';
 
   @override
-  String get watchServersTip => '手錶獨立向 monitor 取資料，所以只能選擇已設定 monitor 的伺服器。';
+  String get watchServersTip => '手錶獨立從 Monitor 取得資料，所以只能選擇已設定 Monitor 的伺服器。';
 
   @override
   String get watchNoMonitorServer => '沒有伺服器設定了 Monitor';
@@ -7697,12 +7785,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String funcNeedsAgentUpdate(String func) {
-    return '$func需要更新 Monitor。';
+    return '$func需要更新版本的 Monitor。';
   }
 
   @override
   String get portForwardRemoteNeedsAgent =>
-      '通過 Monitor 進行遠程轉發需要更新版本的 agent，請在伺服器上更新。';
+      '透過 Monitor 進行遠端轉發需要更新版本的 Monitor，請在伺服器上更新。';
 
   @override
   String get rangeLive => '即時';
@@ -7720,8 +7808,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get cores => '核心';
 
   @override
-  String get historyNoStored =>
-      '只有 Monitor 能展示歷史資料。通過 SSH 連線時，只能查看本App連線後採集到的資料。';
+  String get historyNoStored => '只有 Monitor 會保存歷史資料。目前連線只保留本 App 連線後採集到的資料。';
 
   @override
   String get noHistoryYet => '還沒有取樣';
@@ -7736,7 +7823,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get to => '迄';
 
   @override
-  String get beyondRetention => '超出 Monitor 已保存的資料範圍';
+  String get beyondRetention => '超出此 Monitor 已保存的資料範圍';
 
   @override
   String agentRetentionFmt(String kept) {
@@ -7793,10 +7880,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get agentPermissions => '權限';
 
   @override
-  String get agentEmptyHint => '在伺服器上執行操作。';
+  String get agentEmptyHint => '詢問你的伺服器，或讓 Agent 在伺服器上執行操作。';
 
   @override
-  String get agentTerminalEmptyHint => '讀取當前終端的內容，並在其中執行命令。';
+  String get agentTerminalEmptyHint => '詢問此伺服器。Agent 可以讀取此終端機，並在這裡執行命令。';
 
   @override
   String oldestSampleFmt(String time) {
@@ -8019,7 +8106,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get remoteDesktopIntro =>
-      '在應用程式內開啟伺服器的 RDP 或 VNC 桌面。連線經由伺服器的 SSH 連線或其 Monitor agent 轉送，桌面連接埠無需對網路開放。';
+      '在應用程式內開啟伺服器的 RDP 或 VNC 桌面。連線經由伺服器的 SSH 連線或其 Monitor 轉送，桌面連接埠無需對網路開放。';
 
   @override
   String get remoteDesktopIntroProfiles =>
@@ -8027,7 +8114,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get localServerIntro =>
-      '將執行 ServerBox 的裝置新增為伺服器。狀態、程序、服務、容器、終端機和檔案都無需 SSH 或 Monitor agent。';
+      '將執行 ServerBox 的裝置新增為伺服器。狀態、程序、服務、容器、終端機和檔案都無需 SSH 或 Monitor。';
 
   @override
   String get localServerAdd => '新增本機';
@@ -8039,11 +8126,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get transportSectionOff => '已關閉。下面的欄位會保留，供你再次開啟時使用。';
 
   @override
-  String get monitorAgent => 'Monitor 代理';
+  String get monitorAgent => 'Monitor';
 
   @override
   String get plainHttpEditTip =>
-      '憑證和指標會以明文穿過網路。請限制在區域網路或 Tailscale 位址內，或者把代理放到 TLS 後面。';
+      '憑證和指標會以明文穿過網路。請限制在區域網路或 Tailscale 位址內，或者把 Monitor 放到 TLS 後面。';
 
   @override
   String get behaviour => '行為';
@@ -8250,10 +8337,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get monitorSettings => 'Monitor 設定';
 
   @override
-  String get monitorAgentDefault => 'agent 預設值';
+  String get monitorAgentDefault => 'Monitor 預設值';
 
   @override
-  String get monitorNeedsRestart => 'agent 重啟後生效';
+  String get monitorNeedsRestart => 'Monitor 重啟後生效';
 
   @override
   String get monitorCollection => '採集';
@@ -8322,7 +8409,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get pushUnknownType =>
-      '此 Monitor 沒有該類型的傳送實現，因此不顯示其設定。可以刪除，或在 config.toml 中編輯。';
+      '此 Monitor 沒有該類型頻道的傳送實作，因此不顯示其設定。可以在此刪除，或在 Monitor 的 config.toml 中編輯。';
 
   @override
   String get pushJsonInvalid => '不是合法的 JSON';
@@ -8331,7 +8418,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get dataRetention => '資料保留';
 
   @override
-  String get dataRetentionTip => '關閉後，Monitor 不會刪除資料，資料庫會一直增長。';
+  String get dataRetentionTip => '關閉後，Monitor 不會刪除任何資料，其資料庫會無限增長。';
 
   @override
   String get retentionMetrics => '指標保留';
@@ -8349,19 +8436,18 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get corsOrigins => 'CORS 允許來源';
 
   @override
-  String get corsOriginsTip => '允許瀏覽器面板從哪些來源呼叫此 agent。留空表示僅同源。';
+  String get corsOriginsTip => '允許瀏覽器面板從哪些來源呼叫此 Monitor。留空表示僅同源。';
 
   @override
   String get monitorNoRemoteAccess =>
-      '此 agent 目前只能查看監控資料，不能開啟終端、執行命令或瀏覽檔案。若要開啟這些功能，請修改 agent 的 config.toml，在 [remote_access] 下開啟對應選項。';
+      '此 Monitor 目前只能查看監控資料，不能開啟終端、執行命令或瀏覽檔案。若要開啟這些功能，請修改 Monitor 的 config.toml，在 [remote_access] 下開啟對應選項。';
 
   @override
   String get monitorAgentTooOld =>
-      '此 Monitor agent 版本過舊，目前版本的 ServerBox 已不再支援。請在伺服器上更新 agent。';
+      '此 Monitor 版本過舊，目前版本的 ServerBox 已不再支援。請在伺服器上更新 Monitor。';
 
   @override
-  String get monitorClientTooOld =>
-      '此 Monitor agent 已不再支援目前版本的 ServerBox。請更新 App。';
+  String get monitorClientTooOld => '此 Monitor 已不再支援目前版本的 ServerBox。請更新 App。';
 
   @override
   String get alerts => '警示';
@@ -8504,7 +8590,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get remoteDesktopTargetTip =>
-      '目標由 SSH 伺服器或 Monitor Agent 解析，localhost 指向該伺服器。';
+      '目標由 SSH 伺服器或 Monitor 解析，localhost 指向該伺服器。';
 
   @override
   String get remoteDesktopDomain => '網域（選填）';
@@ -8560,6 +8646,94 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get remoteDesktopWaiting => '正在等待桌面…';
+
+  @override
+  String get remoteDesktopFailStandardRdpSecurityOnly =>
+      '伺服器僅提供 Standard RDP Security（RC4），不受支援。請在 xrdp.ini 中設定 security_layer=tls（或 negotiate），並確保 xrdp 能讀取其 TLS 憑證。';
+
+  @override
+  String get remoteDesktopFailServerCertificateMissing =>
+      '伺服器沒有 TLS 憑證。請在伺服器上安裝憑證；xrdp 請在 xrdp.ini 中設定 certificate 與 key_file。';
+
+  @override
+  String get remoteDesktopFailClientCertificateRequired =>
+      '伺服器要求用戶端憑證（智慧卡登入），不受支援。';
+
+  @override
+  String get remoteDesktopFailWrongCredentials => '使用者名稱或密碼錯誤。';
+
+  @override
+  String get remoteDesktopFailAccountLockedOut => '帳戶已被鎖定。請稍後再試，或請管理員解除鎖定。';
+
+  @override
+  String get remoteDesktopFailAccountDisabled => '帳戶已被停用。';
+
+  @override
+  String get remoteDesktopFailAccountExpired => '帳戶已過期。';
+
+  @override
+  String get remoteDesktopFailPasswordExpired => '密碼已過期或必須變更。請先在伺服器上變更密碼。';
+
+  @override
+  String get remoteDesktopFailLogonRestricted =>
+      '此帳戶在此時間或從此裝置不允許登入，或其空白密碼不允許遠端登入。';
+
+  @override
+  String get remoteDesktopFailRemoteLogonDenied =>
+      '此帳戶不允許透過遠端桌面登入。請在伺服器上將其加入 Remote Desktop Users 群組。';
+
+  @override
+  String get remoteDesktopFailFreshCredentialsRequired =>
+      '伺服器不接受已儲存的認證。請重新輸入密碼。';
+
+  @override
+  String get remoteDesktopFailIdleTimeout => '工作階段因達到伺服器的閒置時間限制而中斷。';
+
+  @override
+  String get remoteDesktopFailSessionTimeLimit => '工作階段已達到伺服器的時間限制。';
+
+  @override
+  String get remoteDesktopFailReplacedByOtherConnection => '另一個連線接管了此工作階段。';
+
+  @override
+  String get remoteDesktopFailDisconnectedOnServer => '工作階段在伺服器上被中斷。';
+
+  @override
+  String get remoteDesktopFailLoggedOffByAdministrator => '管理員登出了此工作階段。';
+
+  @override
+  String get remoteDesktopFailLoggedOff => '工作階段已登出。';
+
+  @override
+  String get remoteDesktopFailServerShutdown => '伺服器正在關機。';
+
+  @override
+  String get remoteDesktopFailServerReboot => '伺服器正在重新啟動。';
+
+  @override
+  String get remoteDesktopFailServerDeniedConnection => '伺服器拒絕了連線。';
+
+  @override
+  String get remoteDesktopFailLicensingFailed =>
+      '伺服器的遠端桌面授權失敗。請檢查其授權伺服器與用戶端存取授權（CAL）。';
+
+  @override
+  String get remoteDesktopFailVncSecurityUnsupported =>
+      'VNC 伺服器未提供支援的安全性類型；僅支援 VNC 密碼或無驗證。TigerVNC 請設定 SecurityTypes=VncAuth。';
+
+  @override
+  String get remoteDesktopFailPasswordRequired => 'VNC 伺服器需要密碼。';
+
+  @override
+  String get tcpTargetUnreachable => '伺服器無法連線到此位址。請檢查服務是否正在執行並監聽該連接埠。';
+
+  @override
+  String get sshTcpForwardingProhibited =>
+      'SSH 伺服器拒絕轉送此連線。請檢查其 sshd_config 中的 AllowTcpForwarding 與 PermitOpen，以及 authorized_keys 中該金鑰的 no-port-forwarding 或 permitopen 選項。';
+
+  @override
+  String get monitorRelayForbidden =>
+      '此 Monitor 帳戶不允許連線到該位址。其角色的 connect 權限必須允許該位址。';
 
   @override
   String get remoteDesktopCertificateChanged => '遠端桌面憑證已變更';
@@ -8668,7 +8842,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       '安裝了 libvirt 的 virsh 的伺服器會顯示為主機，並列出其 QEMU/KVM 虛擬機器。';
 
   @override
-  String get virtIntroTransports => '兩者都可以透過 SSH、Monitor agent 或在本裝置上使用。';
+  String get virtIntroTransports => '兩者都可以透過 SSH、經由 Monitor 或在本裝置上使用。';
 
   @override
   String get virtIntroTokens =>
@@ -8816,10 +8990,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtErrCertChanged => '主機的憑證已變更';
 
   @override
-  String get virtErrRelayNotGranted => 'Monitor agent 不轉送連線';
+  String get virtErrRelayNotGranted =>
+      'Monitor 不允許此帳戶從伺服器發起 TCP 連線（connect 權限）';
 
   @override
-  String get virtErrExecNotGranted => 'Monitor agent 不執行命令';
+  String get virtErrExecNotGranted => 'Monitor 不執行命令';
 
   @override
   String get virtErrNotInstalled => '此伺服器上未安裝 virsh';
@@ -10521,12 +10696,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String funcNeedsAgentPermission(String func) {
-    return '你在此 Monitor 上的賬號沒有 $func 的權限，請聯繫管理員。';
+    return '你在此 Monitor 上的帳號沒有 $func 的權限，請聯繫 Monitor 的管理員。';
   }
 
   @override
   String funcNeedsAgentHttps(String func) {
-    return '$func 需要透過 HTTPS 連線至此 Monitor；或者，在 Monitor 和 App 中都允許使用 HTTP。';
+    return '$func 需要透過 HTTPS 連線至此 Monitor；或者，在 Monitor 和本 App 中都允許使用 HTTP。';
   }
 
   @override
@@ -10535,7 +10710,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get monitorFilesReadOnly => '只讀：此賬號可以瀏覽 Monitor 上的檔案，但不能修改。';
+  String get monitorFilesReadOnly => '唯讀：此帳號可以瀏覽 Monitor 上的檔案，但不能修改。';
 
   @override
   String get monitorAccess => '存取';
@@ -10571,7 +10746,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get monitorErrReauth => '密碼錯誤。';
 
   @override
-  String get monitorErrLastAdmin => '至少要有一個管理員賬號。';
+  String get monitorErrLastAdmin => 'Monitor 至少要有一個管理員帳號。';
 
   @override
   String get monitorErrConflict => '已存在，或仍在使用中。';
@@ -10586,7 +10761,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get monitorGrantShell => 'Shell 和指令';
 
   @override
-  String get monitorGrantShellTip => '終端機、程序、服務、容器、程式碼片段、電源 —— 以 agent 的系統帳號執行';
+  String get monitorGrantShellTip =>
+      '終端機、程序、服務、容器、程式碼片段、電源 —— 以 Monitor 的系統帳號執行';
 
   @override
   String get monitorGrantSshTerminal => '面板 SSH 終端機';
@@ -10595,7 +10771,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get monitorGrantVirt => '虛擬化';
 
   @override
-  String get monitorGrantVirtTip => 'agent 網頁面板中連接的 Proxmox VE、libvirt 和 BMC';
+  String get monitorGrantVirtTip =>
+      'Monitor 網頁面板中可連接的 Proxmox VE、libvirt 和 BMC';
 
   @override
   String get monitorGrantFiles => '檔案';
@@ -10629,17 +10806,17 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get monitorBuiltin => '內建';
 
   @override
-  String get monitorAdminRoleTip => '管理帳號、角色和 agent 的設定';
+  String get monitorAdminRoleTip => '管理帳號、角色和 Monitor 的設定';
 
   @override
   String get monitorYou => '你';
 
   @override
-  String get monitorNoAccessToSettings => '只有管理員可以變更此 agent 的設定。';
+  String get monitorNoAccessToSettings => '只有管理員可以變更此 Monitor 的設定。';
 
   @override
   String get monitorPasswordNotSaved =>
-      'agent 上的密碼已修改，但 App 未能儲存新密碼。請在這台伺服器的設定中更新 Monitor 密碼。';
+      'Monitor 上的密碼已修改，但 App 未能儲存新密碼。請在這台伺服器的設定中更新 Monitor 密碼。';
 
   @override
   String get firewall => '防火牆';
@@ -10851,21 +11028,21 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       '格式為 port=80:proto=tcp:toport=8080，需包含 toport、toaddr 或兩者。';
 
   @override
-  String get monitorSyncNeedsServer => '請選擇存放備份的伺服器（使用其 Monitor 代理）。';
+  String get monitorSyncNeedsServer => '請選擇由其 Monitor 存放備份的伺服器。';
 
   @override
-  String get monitorBackupUnsupported => '此 Monitor 代理不支援存放備份，請更新代理。';
+  String get monitorBackupUnsupported => '此 Monitor 不支援存放備份，請更新 Monitor。';
 
   @override
-  String get monitorBackupAdminOnly => '只有 Monitor 代理的管理員帳戶可以在其上存放備份。';
+  String get monitorBackupAdminOnly => '只有 Monitor 的管理員帳戶可以在其上存放備份。';
 
   @override
   String monitorBackupTooLarge(String max) {
-    return '備份超過了 Monitor 代理允許的大小（$max）。';
+    return '備份超過了 Monitor 允許的大小（$max）。';
   }
 
   @override
-  String get monitorBackupTooMany => 'Monitor 代理存放的備份數量已達上限，請先刪除一個。';
+  String get monitorBackupTooMany => 'Monitor 存放的備份數量已達上限，請先刪除一個。';
 
   @override
   String get virtCreateVmidInvalid => 'VMID 須介於 100 到 999999999。';

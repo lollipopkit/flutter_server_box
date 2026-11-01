@@ -164,7 +164,7 @@ class AppLocalizationsNl extends AppLocalizations {
       'De gegevens van deze host en het wachtwoord dat je invoert, worden op dit apparaat opgeslagen.';
 
   @override
-  String get agentMonitorOptional => 'monitor-agent (optioneel)';
+  String get agentMonitorOptional => 'Monitor (optioneel)';
 
   @override
   String get authFailTip => 'Authenticatie mislukt. Controleer de gegevens';
@@ -267,7 +267,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get monitorHttpsRequired =>
-      'Een externe monitor-agent vereist HTTPS, tenzij HTTP is toegestaan.';
+      'Een externe Monitor vereist HTTPS, tenzij HTTP ervoor is toegestaan.';
 
   @override
   String get monitorAllowInsecureHttp => 'HTTP toestaan';
@@ -291,7 +291,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String monitorHttpTip(String url) {
-    return 'Lees de status van deze server via de HTTP-interface van **Monitor** in plaats van opdrachten via SSH uit te voeren.\n\nInstalleer Monitor eerst op de server. Grafieken, de Watch-app en desktopwidgets gebruiken deze functie.\n\n[Monitor installeren]($url)';
+    return 'Lees de status van deze server via de HTTP-interface van **Monitor** in plaats van opdrachten via SSH uit te voeren.\n\nMonitor moet eerst op de server zijn geïnstalleerd; dat maakt trends, de Watch-app en de widgets op het startscherm mogelijk.\n\n[Monitor instellen]($url)';
   }
 
   @override
@@ -1178,11 +1178,11 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get diskCountsNetworkTip =>
-      'Netwerkkoppelingen zoals NFS en SMB blijven altijd in de lijst staan. Hun opslagruimte hoort bij een andere computer en telt standaard niet mee in het schijftotaal. Dit geldt alleen wanneer status via SSH wordt opgehaald; bij de Monitor-agent bepaalt de agentinstelling dit.';
+      'Netwerkkoppelingen zoals NFS en SMB blijven altijd in de lijst staan. Hun opslagruimte hoort bij een andere computer en telt standaard niet mee in het schijftotaal. Dit geldt alleen wanneer status via SSH wordt opgehaald; via Monitor bepaalt de eigen instelling van Monitor dit.';
 
   @override
   String get diskCountsNetworkAgentTip =>
-      'Netwerkkoppelingen zoals NFS en SMB blijven altijd in de lijst staan. Hun opslagruimte hoort bij een andere computer en telt standaard niet mee in het schijftotaal. De Monitor-agent gebruikt dit totaal ook voor historie en schijfmeldingen.';
+      'Netwerkkoppelingen zoals NFS en SMB blijven altijd in de lijst staan. Hun opslagruimte hoort bij een andere computer en telt standaard niet mee in het schijftotaal — het totaal dat Monitor in zijn historie opslaat en waartegen het schijfmeldingen controleert.';
 
   @override
   String spentTime(String time) {
@@ -1597,7 +1597,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get watchServersTip =>
-      'De horloge haalt de gegevens zelf bij de monitor op, dus alleen servers met een monitor zijn kiesbaar.';
+      'Het horloge haalt de gegevens zelf bij de Monitor op, dus alleen servers met de Monitor zijn kiesbaar.';
 
   @override
   String get watchNoMonitorServer => 'Er is geen server ingesteld met Monitor.';
@@ -1607,7 +1607,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get legacyStatusGoneBody =>
-      'De Watch-app en de widgets lazen een handmatig ingevoerd `/status`-adres. Dat eindpunt is verdwenen: het kon alleen actuele waarden als tekst teruggeven, en daarom was er nooit een grafiek mogelijk.\n\nZe lezen nu de geverifieerde API van de monitor-agent, tekenen trendlijnen en blijven zelf gelijk met de app. Stel de server één keer in de app in, dan pikt elke watch en widget hem op.';
+      'De Watch-app en de widgets lazen een handmatig ingevoerd `/status`-adres. Dat eindpunt is verdwenen: het kon alleen actuele waarden als tekst teruggeven, en daarom was er nooit een grafiek mogelijk.\n\nZe lezen nu de geverifieerde API van Monitor, tekenen trendlijnen en blijven zelf gelijk met de app. Stel de server één keer in de app in, dan pikt elke watch en widget hem op.';
 
   @override
   String get services => 'Diensten';
@@ -2175,12 +2175,12 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String funcNeedsAgentUpdate(String func) {
-    return 'Voor $func moet Monitor worden bijgewerkt.';
+    return 'Voor $func is een nieuwere Monitor nodig.';
   }
 
   @override
   String get portForwardRemoteNeedsAgent =>
-      'Voor doorsturen op afstand via Monitor is een nieuwere agent nodig. Werk deze bij op de server.';
+      'Voor doorsturen op afstand via Monitor is een nieuwere Monitor nodig. Werk deze bij op de server.';
 
   @override
   String get rangeLive => 'Live';
@@ -2199,7 +2199,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get historyNoStored =>
-      'Alleen Monitor kan historische gegevens tonen. Via SSH zie je alleen gegevens die de app sinds het verbinden heeft verzameld.';
+      'Alleen Monitor slaat historie op. Deze verbinding bewaart wat de app sinds het verbinden heeft gezien.';
 
   @override
   String get noHistoryYet => 'Nog niets gemeten';
@@ -2214,12 +2214,11 @@ class AppLocalizationsNl extends AppLocalizations {
   String get to => 'Tot';
 
   @override
-  String get beyondRetention =>
-      'Buiten het bereik van de door Monitor bewaarde gegevens';
+  String get beyondRetention => 'Buiten wat deze Monitor heeft bewaard';
 
   @override
   String agentRetentionFmt(String kept) {
-    return 'Bewaartermijn van Monitor-gegevens: $kept';
+    return 'Monitor bewaart $kept';
   }
 
   @override
@@ -2517,7 +2516,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get remoteDesktopIntro =>
-      'Opent het RDP- of VNC-bureaublad van een server in de app. De verbinding loopt via de SSH-verbinding van de server of via zijn Monitor-agent, dus de bureaubladpoort hoeft niet bereikbaar te zijn vanaf het netwerk.';
+      'Opent het RDP- of VNC-bureaublad van een server in de app. De verbinding loopt via de SSH-verbinding van de server of via zijn Monitor, dus de bureaubladpoort hoeft niet bereikbaar te zijn vanaf het netwerk.';
 
   @override
   String get remoteDesktopIntroProfiles =>
@@ -2525,7 +2524,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get localServerIntro =>
-      'Voegt het apparaat waarop ServerBox draait toe als server. Status, processen, services, containers, de terminal en bestanden werken zonder SSH of Monitor-agent.';
+      'Voegt het apparaat waarop ServerBox draait toe als server. Status, processen, services, containers, de terminal en bestanden werken zonder SSH of Monitor.';
 
   @override
   String get localServerAdd => 'Dit apparaat toevoegen';
@@ -2539,11 +2538,11 @@ class AppLocalizationsNl extends AppLocalizations {
       'Uit. De velden hieronder blijven bewaard voor wanneer u het weer aanzet.';
 
   @override
-  String get monitorAgent => 'Monitor-agent';
+  String get monitorAgent => 'Monitor';
 
   @override
   String get plainHttpEditTip =>
-      'Inloggegevens en metingen gaan onversleuteld over het netwerk. Houd het bij een LAN of een Tailscale-adres, of zet de agent achter TLS.';
+      'Inloggegevens en metingen gaan onversleuteld over het netwerk. Houd het bij een LAN of een Tailscale-adres, of zet Monitor achter TLS.';
 
   @override
   String get behaviour => 'Gedrag';
@@ -2761,14 +2760,14 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String get monitorSettings => 'Monitor settings';
+  String get monitorSettings => 'Monitor-instellingen';
 
   @override
-  String get monitorAgentDefault => 'Agent default';
+  String get monitorAgentDefault => 'Standaard van Monitor';
 
   @override
   String get monitorNeedsRestart =>
-      'Wordt van kracht nadat de agent opnieuw is gestart';
+      'Wordt van kracht nadat Monitor opnieuw is gestart';
 
   @override
   String get monitorCollection => 'Collection';
@@ -2838,7 +2837,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get pushUnknownType =>
-      'Deze Monitor implementeert geen verzending voor dit type, dus de instellingen worden niet getoond. Verwijder het hier of bewerk het in config.toml.';
+      'Deze Monitor heeft geen verzender voor dit kanaaltype, dus de instellingen worden niet getoond. Verwijder het hier of bewerk het in de config.toml van Monitor.';
 
   @override
   String get pushJsonInvalid => 'is geen geldige JSON';
@@ -2848,7 +2847,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get dataRetentionTip =>
-      'Als je dit uitschakelt, verwijdert Monitor geen gegevens en blijft de database groeien.';
+      'Uit betekent dat Monitor nooit iets verwijdert en de database onbeperkt groeit.';
 
   @override
   String get retentionMetrics => 'Keep metrics';
@@ -2867,19 +2866,19 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get corsOriginsTip =>
-      'Origins van waaruit een browserpaneel deze agent mag aanroepen. Leeg betekent alleen dezelfde origin.';
+      'Origins van waaruit een browserpaneel deze Monitor mag aanroepen. Leeg betekent alleen dezelfde origin.';
 
   @override
   String get monitorNoRemoteAccess =>
-      'Deze agent is alleen ingesteld voor monitoring. U kunt hier geen terminal openen, opdrachten uitvoeren of bestanden bekijken. Bewerk [remote_access] in de config.toml van de agent om deze functies in te schakelen.';
+      'Deze Monitor is alleen ingesteld voor monitoring. U kunt hier geen terminal openen, opdrachten uitvoeren of bestanden bekijken. Bewerk [remote_access] in de config.toml van Monitor om deze functies in te schakelen.';
 
   @override
   String get monitorAgentTooOld =>
-      'Deze Monitor-agent is ouder dan deze versie van ServerBox ondersteunt. Werk de agent op de server bij.';
+      'Deze Monitor is ouder dan deze versie van ServerBox ondersteunt. Werk Monitor op de server bij.';
 
   @override
   String get monitorClientTooOld =>
-      'Deze Monitor-agent ondersteunt deze versie van ServerBox niet meer. Werk de app bij.';
+      'Deze Monitor ondersteunt deze versie van ServerBox niet meer. Werk de app bij.';
 
   @override
   String get alerts => 'Waarschuwingen';
@@ -3029,7 +3028,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get remoteDesktopTargetTip =>
-      'Het doel wordt opgelost via de SSH-server of de Monitor-agent. localhost verwijst naar die machine.';
+      'Het doel wordt opgelost via de SSH-server of Monitor. localhost verwijst naar die machine.';
 
   @override
   String get remoteDesktopDomain => 'Domein (optioneel)';
@@ -3092,6 +3091,107 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get remoteDesktopWaiting => 'Wachten op bureaublad…';
+
+  @override
+  String get remoteDesktopFailStandardRdpSecurityOnly =>
+      'De server biedt alleen Standard RDP Security (RC4) aan, wat niet wordt ondersteund. Stel in xrdp.ini security_layer=tls (of negotiate) in en zorg dat xrdp zijn TLS-certificaat kan lezen.';
+
+  @override
+  String get remoteDesktopFailServerCertificateMissing =>
+      'De server heeft geen TLS-certificaat. Installeer er een op de server; stel voor xrdp certificate en key_file in xrdp.ini in.';
+
+  @override
+  String get remoteDesktopFailClientCertificateRequired =>
+      'De server vereist een clientcertificaat (aanmelden met smartcard), wat niet wordt ondersteund.';
+
+  @override
+  String get remoteDesktopFailWrongCredentials =>
+      'Onjuiste gebruikersnaam of onjuist wachtwoord.';
+
+  @override
+  String get remoteDesktopFailAccountLockedOut =>
+      'Het account is vergrendeld. Probeer het later opnieuw of vraag een beheerder het te ontgrendelen.';
+
+  @override
+  String get remoteDesktopFailAccountDisabled =>
+      'Het account is uitgeschakeld.';
+
+  @override
+  String get remoteDesktopFailAccountExpired => 'Het account is verlopen.';
+
+  @override
+  String get remoteDesktopFailPasswordExpired =>
+      'Het wachtwoord is verlopen of moet worden gewijzigd. Wijzig het eerst op de server.';
+
+  @override
+  String get remoteDesktopFailLogonRestricted =>
+      'Het account mag zich op dit moment of vanaf dit apparaat niet aanmelden, of het lege wachtwoord is niet toegestaan voor aanmelden op afstand.';
+
+  @override
+  String get remoteDesktopFailRemoteLogonDenied =>
+      'Het account mag zich niet aanmelden via Extern bureaublad. Voeg het op de server toe aan de groep Remote Desktop Users.';
+
+  @override
+  String get remoteDesktopFailFreshCredentialsRequired =>
+      'De server accepteert geen opgeslagen aanmeldgegevens. Voer het wachtwoord opnieuw in.';
+
+  @override
+  String get remoteDesktopFailIdleTimeout =>
+      'De sessie is verbroken na de inactiviteitslimiet van de server.';
+
+  @override
+  String get remoteDesktopFailSessionTimeLimit =>
+      'De sessie heeft de tijdslimiet van de server bereikt.';
+
+  @override
+  String get remoteDesktopFailReplacedByOtherConnection =>
+      'Een andere verbinding heeft deze sessie overgenomen.';
+
+  @override
+  String get remoteDesktopFailDisconnectedOnServer =>
+      'De sessie is op de server verbroken.';
+
+  @override
+  String get remoteDesktopFailLoggedOffByAdministrator =>
+      'Een beheerder heeft de sessie afgemeld.';
+
+  @override
+  String get remoteDesktopFailLoggedOff => 'De sessie is afgemeld.';
+
+  @override
+  String get remoteDesktopFailServerShutdown => 'De server wordt afgesloten.';
+
+  @override
+  String get remoteDesktopFailServerReboot =>
+      'De server wordt opnieuw opgestart.';
+
+  @override
+  String get remoteDesktopFailServerDeniedConnection =>
+      'De server heeft de verbinding geweigerd.';
+
+  @override
+  String get remoteDesktopFailLicensingFailed =>
+      'De licentieverlening voor Extern bureaublad is mislukt op de server. Controleer de licentieserver en de clienttoegangslicenties (CAL\'s).';
+
+  @override
+  String get remoteDesktopFailVncSecurityUnsupported =>
+      'De VNC-server biedt geen ondersteund beveiligingstype; alleen een VNC-wachtwoord of geen wordt ondersteund. Stel voor TigerVNC SecurityTypes=VncAuth in.';
+
+  @override
+  String get remoteDesktopFailPasswordRequired =>
+      'De VNC-server vereist een wachtwoord.';
+
+  @override
+  String get tcpTargetUnreachable =>
+      'De server kon geen verbinding maken met dit adres. Controleer of de dienst draait en op die poort luistert.';
+
+  @override
+  String get sshTcpForwardingProhibited =>
+      'De SSH-server weigerde deze verbinding door te sturen. Controleer AllowTcpForwarding en PermitOpen in zijn sshd_config, en een eventuele no-port-forwarding- of permitopen-optie bij de sleutel in authorized_keys.';
+
+  @override
+  String get monitorRelayForbidden =>
+      'Dit Monitor-account mag geen verbinding maken met dit adres. De connect-machtiging van zijn rol moet het toestaan.';
 
   @override
   String get remoteDesktopCertificateChanged =>
@@ -3207,7 +3307,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get virtIntroTransports =>
-      'Beide werken via SSH, via een Monitor-agent of op dit apparaat.';
+      'Beide werken via SSH, via Monitor of op dit apparaat.';
 
   @override
   String get virtIntroTokens =>
@@ -3367,11 +3467,10 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get virtErrRelayNotGranted =>
-      'De Monitor-agent stuurt geen verbindingen door';
+      'De Monitor opent voor dit account geen TCP-verbindingen vanaf de server (connect-machtiging)';
 
   @override
-  String get virtErrExecNotGranted =>
-      'De Monitor-agent voert geen opdrachten uit';
+  String get virtErrExecNotGranted => 'Monitor voert geen opdrachten uit';
 
   @override
   String get virtErrNotInstalled =>
@@ -5191,7 +5290,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String funcNeedsAgentPermission(String func) {
-    return 'Het account op deze Monitor heeft geen toestemming voor $func. Vraag de Monitor-beheerder om toegang.';
+    return 'Je account op deze Monitor heeft geen toestemming voor $func. Vraag het de beheerder van Monitor.';
   }
 
   @override
@@ -5201,7 +5300,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String funcNeedsAgentSetup(String func) {
-    return '$func is niet ingesteld in deze Monitor. De beheerder moet dit configureren.';
+    return '$func is niet ingesteld op deze Monitor. De beheerder ervan moet dit configureren.';
   }
 
   @override
@@ -5244,7 +5343,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get monitorErrLastAdmin =>
-      'Er moet minstens één beheerdersaccount zijn.';
+      'Monitor heeft minstens één beheerdersaccount nodig.';
 
   @override
   String get monitorErrConflict => 'Bestaat al of is nog in gebruik.';
@@ -5261,7 +5360,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get monitorGrantShellTip =>
-      'Terminal, processen, services, containers, snippets, voeding — als het account van de agent';
+      'Terminal, processen, services, containers, snippets, voeding — als het account van Monitor';
 
   @override
   String get monitorGrantSshTerminal => 'Paneelterminal via SSH';
@@ -5271,7 +5370,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get monitorGrantVirtTip =>
-      'Proxmox VE, libvirt en BMC’s die de agent bereikt, in zijn webpaneel';
+      'Proxmox VE, libvirt en BMC’s die Monitor bereikt, in zijn webpaneel';
 
   @override
   String get monitorGrantFiles => 'Bestanden';
@@ -5307,18 +5406,18 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get monitorAdminRoleTip =>
-      'Beheert accounts, rollen en de instellingen van de agent';
+      'Beheert accounts, rollen en de instellingen van Monitor';
 
   @override
   String get monitorYou => 'Jij';
 
   @override
   String get monitorNoAccessToSettings =>
-      'Alleen een beheerder kan de instellingen van deze agent wijzigen.';
+      'Alleen een beheerder kan de instellingen van deze Monitor wijzigen.';
 
   @override
   String get monitorPasswordNotSaved =>
-      'Het wachtwoord is op de agent gewijzigd, maar de app kon het niet opslaan. Werk het Monitor-wachtwoord bij in de instellingen van deze server.';
+      'Het wachtwoord is op Monitor gewijzigd, maar de app kon het niet opslaan. Werk het Monitor-wachtwoord bij in de instellingen van deze server.';
 
   @override
   String get firewall => 'Firewall';
@@ -5546,24 +5645,24 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get monitorSyncNeedsServer =>
-      'Kies de server waarvan de monitor-agent de back-up opslaat.';
+      'Kies de server waarvan Monitor de back-up opslaat.';
 
   @override
   String get monitorBackupUnsupported =>
-      'Deze monitor-agent kan geen back-ups opslaan. Werk de agent bij.';
+      'Deze Monitor kan geen back-ups opslaan. Werk Monitor bij.';
 
   @override
   String get monitorBackupAdminOnly =>
-      'Alleen een beheerdersaccount van de monitor-agent kan er back-ups op opslaan.';
+      'Alleen een beheerdersaccount van Monitor kan er back-ups op opslaan.';
 
   @override
   String monitorBackupTooLarge(String max) {
-    return 'De back-up is groter dan de monitor-agent accepteert ($max).';
+    return 'De back-up is groter dan Monitor accepteert ($max).';
   }
 
   @override
   String get monitorBackupTooMany =>
-      'De monitor-agent bewaart al het maximale aantal back-ups. Verwijder er eerst een.';
+      'Monitor bewaart al het maximale aantal back-ups. Verwijder er eerst een.';
 
   @override
   String get virtCreateVmidInvalid => 'Een VMID van 100 tot 999999999.';

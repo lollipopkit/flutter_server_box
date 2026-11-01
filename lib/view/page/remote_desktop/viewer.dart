@@ -20,6 +20,7 @@ import 'package:server_box/view/page/remote_desktop/geometry.dart';
 import 'package:server_box/view/page/remote_desktop/input.dart';
 
 part 'cursor.dart';
+part 'failure.dart';
 part 'guide.dart';
 part 'touchpad.dart';
 
@@ -693,9 +694,12 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
   }
 
   Widget _status(RemoteDesktopSessionView session) {
+    final failure = session.certificate == null ? session.failure : null;
     final text = session.certificate != null
         ? l10n.remoteDesktopCertificateRequired
-        : session.error ??
+        : failure?.text ??
+              session.hint ??
+              session.error ??
               switch (session.connectionState) {
                 ffi.RemoteDesktopConnectionState.connecting =>
                   l10n.remoteDesktopConnecting,
@@ -723,6 +727,16 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
               textAlign: TextAlign.center,
               style: const TextStyle(color: Colors.white70),
             ),
+            // The protocol's own words, for a report.
+            if ((failure != null || session.hint != null) &&
+                session.error != null) ...[
+              const SizedBox(height: 7),
+              Text(
+                session.error!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white38, fontSize: 12),
+              ),
+            ],
             if (retry) ...[
               const SizedBox(height: 13),
               TextButton.icon(

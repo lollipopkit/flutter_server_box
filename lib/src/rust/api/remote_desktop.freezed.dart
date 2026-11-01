@@ -146,7 +146,7 @@ return ended(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( RemoteDesktopConnectionState state,  int attempt)?  connectionState,TResult Function( Uint8List bgra,  int width,  int height,  BigInt sequence)?  frame,TResult Function( int width,  int height)?  resolution,TResult Function()?  cursorDefault,TResult Function()?  cursorHidden,TResult Function( int x,  int y)?  cursorPosition,TResult Function( Uint8List rgba,  int width,  int height,  int hotspotX,  int hotspotY)?  cursorBitmap,TResult Function( String text)?  clipboardText,TResult Function( String sha256,  String subject,  String issuer,  String validFrom,  String validTo,  String? previousSha256)?  certificateRequest,TResult Function( String message,  bool retryable)?  error,TResult Function( RemoteDesktopEndReason reason,  String? message)?  ended,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( RemoteDesktopConnectionState state,  int attempt)?  connectionState,TResult Function( Uint8List bgra,  int width,  int height,  BigInt sequence)?  frame,TResult Function( int width,  int height)?  resolution,TResult Function()?  cursorDefault,TResult Function()?  cursorHidden,TResult Function( int x,  int y)?  cursorPosition,TResult Function( Uint8List rgba,  int width,  int height,  int hotspotX,  int hotspotY)?  cursorBitmap,TResult Function( String text)?  clipboardText,TResult Function( String sha256,  String subject,  String issuer,  String validFrom,  String validTo,  String? previousSha256)?  certificateRequest,TResult Function( String message,  bool retryable)?  error,TResult Function( RemoteDesktopEndReason reason,  RemoteDesktopFailure? failure,  String? message)?  ended,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case RemoteDesktopEvent_ConnectionState() when connectionState != null:
 return connectionState(_that.state,_that.attempt);case RemoteDesktopEvent_Frame() when frame != null:
@@ -159,7 +159,7 @@ return cursorBitmap(_that.rgba,_that.width,_that.height,_that.hotspotX,_that.hot
 return clipboardText(_that.text);case RemoteDesktopEvent_CertificateRequest() when certificateRequest != null:
 return certificateRequest(_that.sha256,_that.subject,_that.issuer,_that.validFrom,_that.validTo,_that.previousSha256);case RemoteDesktopEvent_Error() when error != null:
 return error(_that.message,_that.retryable);case RemoteDesktopEvent_Ended() when ended != null:
-return ended(_that.reason,_that.message);case _:
+return ended(_that.reason,_that.failure,_that.message);case _:
   return orElse();
 
 }
@@ -177,7 +177,7 @@ return ended(_that.reason,_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( RemoteDesktopConnectionState state,  int attempt)  connectionState,required TResult Function( Uint8List bgra,  int width,  int height,  BigInt sequence)  frame,required TResult Function( int width,  int height)  resolution,required TResult Function()  cursorDefault,required TResult Function()  cursorHidden,required TResult Function( int x,  int y)  cursorPosition,required TResult Function( Uint8List rgba,  int width,  int height,  int hotspotX,  int hotspotY)  cursorBitmap,required TResult Function( String text)  clipboardText,required TResult Function( String sha256,  String subject,  String issuer,  String validFrom,  String validTo,  String? previousSha256)  certificateRequest,required TResult Function( String message,  bool retryable)  error,required TResult Function( RemoteDesktopEndReason reason,  String? message)  ended,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( RemoteDesktopConnectionState state,  int attempt)  connectionState,required TResult Function( Uint8List bgra,  int width,  int height,  BigInt sequence)  frame,required TResult Function( int width,  int height)  resolution,required TResult Function()  cursorDefault,required TResult Function()  cursorHidden,required TResult Function( int x,  int y)  cursorPosition,required TResult Function( Uint8List rgba,  int width,  int height,  int hotspotX,  int hotspotY)  cursorBitmap,required TResult Function( String text)  clipboardText,required TResult Function( String sha256,  String subject,  String issuer,  String validFrom,  String validTo,  String? previousSha256)  certificateRequest,required TResult Function( String message,  bool retryable)  error,required TResult Function( RemoteDesktopEndReason reason,  RemoteDesktopFailure? failure,  String? message)  ended,}) {final _that = this;
 switch (_that) {
 case RemoteDesktopEvent_ConnectionState():
 return connectionState(_that.state,_that.attempt);case RemoteDesktopEvent_Frame():
@@ -190,7 +190,7 @@ return cursorBitmap(_that.rgba,_that.width,_that.height,_that.hotspotX,_that.hot
 return clipboardText(_that.text);case RemoteDesktopEvent_CertificateRequest():
 return certificateRequest(_that.sha256,_that.subject,_that.issuer,_that.validFrom,_that.validTo,_that.previousSha256);case RemoteDesktopEvent_Error():
 return error(_that.message,_that.retryable);case RemoteDesktopEvent_Ended():
-return ended(_that.reason,_that.message);}
+return ended(_that.reason,_that.failure,_that.message);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -204,7 +204,7 @@ return ended(_that.reason,_that.message);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( RemoteDesktopConnectionState state,  int attempt)?  connectionState,TResult? Function( Uint8List bgra,  int width,  int height,  BigInt sequence)?  frame,TResult? Function( int width,  int height)?  resolution,TResult? Function()?  cursorDefault,TResult? Function()?  cursorHidden,TResult? Function( int x,  int y)?  cursorPosition,TResult? Function( Uint8List rgba,  int width,  int height,  int hotspotX,  int hotspotY)?  cursorBitmap,TResult? Function( String text)?  clipboardText,TResult? Function( String sha256,  String subject,  String issuer,  String validFrom,  String validTo,  String? previousSha256)?  certificateRequest,TResult? Function( String message,  bool retryable)?  error,TResult? Function( RemoteDesktopEndReason reason,  String? message)?  ended,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( RemoteDesktopConnectionState state,  int attempt)?  connectionState,TResult? Function( Uint8List bgra,  int width,  int height,  BigInt sequence)?  frame,TResult? Function( int width,  int height)?  resolution,TResult? Function()?  cursorDefault,TResult? Function()?  cursorHidden,TResult? Function( int x,  int y)?  cursorPosition,TResult? Function( Uint8List rgba,  int width,  int height,  int hotspotX,  int hotspotY)?  cursorBitmap,TResult? Function( String text)?  clipboardText,TResult? Function( String sha256,  String subject,  String issuer,  String validFrom,  String validTo,  String? previousSha256)?  certificateRequest,TResult? Function( String message,  bool retryable)?  error,TResult? Function( RemoteDesktopEndReason reason,  RemoteDesktopFailure? failure,  String? message)?  ended,}) {final _that = this;
 switch (_that) {
 case RemoteDesktopEvent_ConnectionState() when connectionState != null:
 return connectionState(_that.state,_that.attempt);case RemoteDesktopEvent_Frame() when frame != null:
@@ -217,7 +217,7 @@ return cursorBitmap(_that.rgba,_that.width,_that.height,_that.hotspotX,_that.hot
 return clipboardText(_that.text);case RemoteDesktopEvent_CertificateRequest() when certificateRequest != null:
 return certificateRequest(_that.sha256,_that.subject,_that.issuer,_that.validFrom,_that.validTo,_that.previousSha256);case RemoteDesktopEvent_Error() when error != null:
 return error(_that.message,_that.retryable);case RemoteDesktopEvent_Ended() when ended != null:
-return ended(_that.reason,_that.message);case _:
+return ended(_that.reason,_that.failure,_that.message);case _:
   return null;
 
 }
@@ -853,10 +853,11 @@ as bool,
 
 
 class RemoteDesktopEvent_Ended extends RemoteDesktopEvent {
-  const RemoteDesktopEvent_Ended({required this.reason, this.message}): super._();
+  const RemoteDesktopEvent_Ended({required this.reason, this.failure, this.message}): super._();
   
 
  final  RemoteDesktopEndReason reason;
+ final  RemoteDesktopFailure? failure;
  final  String? message;
 
 /// Create a copy of RemoteDesktopEvent
@@ -869,16 +870,16 @@ $RemoteDesktopEvent_EndedCopyWith<RemoteDesktopEvent_Ended> get copyWith => _$Re
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RemoteDesktopEvent_Ended&&(identical(other.reason, reason) || other.reason == reason)&&(identical(other.message, message) || other.message == message));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RemoteDesktopEvent_Ended&&(identical(other.reason, reason) || other.reason == reason)&&(identical(other.failure, failure) || other.failure == failure)&&(identical(other.message, message) || other.message == message));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,reason,message);
+int get hashCode => Object.hash(runtimeType,reason,failure,message);
 
 @override
 String toString() {
-  return 'RemoteDesktopEvent.ended(reason: $reason, message: $message)';
+  return 'RemoteDesktopEvent.ended(reason: $reason, failure: $failure, message: $message)';
 }
 
 
@@ -889,7 +890,7 @@ abstract mixin class $RemoteDesktopEvent_EndedCopyWith<$Res> implements $RemoteD
   factory $RemoteDesktopEvent_EndedCopyWith(RemoteDesktopEvent_Ended value, $Res Function(RemoteDesktopEvent_Ended) _then) = _$RemoteDesktopEvent_EndedCopyWithImpl;
 @useResult
 $Res call({
- RemoteDesktopEndReason reason, String? message
+ RemoteDesktopEndReason reason, RemoteDesktopFailure? failure, String? message
 });
 
 
@@ -906,10 +907,11 @@ class _$RemoteDesktopEvent_EndedCopyWithImpl<$Res>
 
 /// Create a copy of RemoteDesktopEvent
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? reason = null,Object? message = freezed,}) {
+@pragma('vm:prefer-inline') $Res call({Object? reason = null,Object? failure = freezed,Object? message = freezed,}) {
   return _then(RemoteDesktopEvent_Ended(
 reason: null == reason ? _self.reason : reason // ignore: cast_nullable_to_non_nullable
-as RemoteDesktopEndReason,message: freezed == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
+as RemoteDesktopEndReason,failure: freezed == failure ? _self.failure : failure // ignore: cast_nullable_to_non_nullable
+as RemoteDesktopFailure?,message: freezed == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

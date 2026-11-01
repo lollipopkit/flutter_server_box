@@ -15462,6 +15462,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  RemoteDesktopFailure dco_decode_box_autoadd_remote_desktop_failure(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_remote_desktop_failure(raw);
+  }
+
+  @protected
   ResetRequest dco_decode_box_autoadd_reset_request(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_reset_request(raw);
@@ -16406,6 +16414,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  RemoteDesktopFailure? dco_decode_opt_box_autoadd_remote_desktop_failure(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null
+        ? null
+        : dco_decode_box_autoadd_remote_desktop_failure(raw);
+  }
+
+  @protected
   ResetRequest? dco_decode_opt_box_autoadd_reset_request(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_reset_request(raw);
@@ -16835,11 +16853,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       case 10:
         return RemoteDesktopEvent_Ended(
           reason: dco_decode_remote_desktop_end_reason(raw[1]),
-          message: dco_decode_opt_String(raw[2]),
+          failure: dco_decode_opt_box_autoadd_remote_desktop_failure(raw[2]),
+          message: dco_decode_opt_String(raw[3]),
         );
       default:
         throw Exception('unreachable');
     }
+  }
+
+  @protected
+  RemoteDesktopFailure dco_decode_remote_desktop_failure(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return RemoteDesktopFailure.values[raw as int];
   }
 
   @protected
@@ -17967,6 +17992,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return sse_decode_remote_desktop_event(deserializer);
+  }
+
+  @protected
+  RemoteDesktopFailure sse_decode_box_autoadd_remote_desktop_failure(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_remote_desktop_failure(deserializer);
   }
 
   @protected
@@ -19308,6 +19341,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  RemoteDesktopFailure? sse_decode_opt_box_autoadd_remote_desktop_failure(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_box_autoadd_remote_desktop_failure(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   ResetRequest? sse_decode_opt_box_autoadd_reset_request(
     SseDeserializer deserializer,
   ) {
@@ -19892,14 +19938,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         );
       case 10:
         final var_reason = sse_decode_remote_desktop_end_reason(deserializer);
+        final var_failure = sse_decode_opt_box_autoadd_remote_desktop_failure(
+          deserializer,
+        );
         final var_message = sse_decode_opt_String(deserializer);
         return RemoteDesktopEvent_Ended(
           reason: var_reason,
+          failure: var_failure,
           message: var_message,
         );
       default:
         throw UnimplementedError('');
     }
+  }
+
+  @protected
+  RemoteDesktopFailure sse_decode_remote_desktop_failure(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final inner = sse_decode_i_32(deserializer);
+    return RemoteDesktopFailure.values[inner];
   }
 
   @protected
@@ -21090,6 +21149,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_remote_desktop_failure(
+    RemoteDesktopFailure self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_remote_desktop_failure(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_reset_request(
     ResetRequest self,
     SseSerializer serializer,
@@ -22255,6 +22323,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_box_autoadd_remote_desktop_failure(
+    RemoteDesktopFailure? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_remote_desktop_failure(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_opt_box_autoadd_reset_request(
     ResetRequest? self,
     SseSerializer serializer,
@@ -22755,12 +22836,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_bool(retryable, serializer);
       case RemoteDesktopEvent_Ended(
         reason: final reason,
+        failure: final failure,
         message: final message,
       ):
         sse_encode_i_32(10, serializer);
         sse_encode_remote_desktop_end_reason(reason, serializer);
+        sse_encode_opt_box_autoadd_remote_desktop_failure(failure, serializer);
         sse_encode_opt_String(message, serializer);
     }
+  }
+
+  @protected
+  void sse_encode_remote_desktop_failure(
+    RemoteDesktopFailure self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
   }
 
   @protected

@@ -637,6 +637,19 @@ void main() {
       ),
       isTrue,
     );
+    // A relayed target that is not listening yet, typed apart from `net`.
+    expect(
+      isRetryableTerminalConnectionError(
+        const MonitorHttpErr(type: MonitorHttpErrType.targetUnreachable),
+      ),
+      isTrue,
+    );
+    expect(
+      isRetryableTerminalConnectionError(
+        const MonitorHttpErr(type: MonitorHttpErrType.relayForbidden),
+      ),
+      isFalse,
+    );
     expect(
       isRetryableTerminalConnectionError(
         const MonitorHttpErr(type: MonitorHttpErrType.auth),

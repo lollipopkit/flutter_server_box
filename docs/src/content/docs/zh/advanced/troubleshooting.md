@@ -71,15 +71,15 @@ description: 常见问题及处理方法
 
 ### 小组件不更新
 
-- 确认 Monitor agent 正在运行且配置的 URL 可访问，并检查 App 中的 Monitor HTTP 设置。
+- 确认 Monitor 正在运行且配置的 URL 可访问，并检查 App 中的 Monitor HTTP 设置。
 - iOS 系统决定小组件的刷新时间。请等待下次刷新，或移除后重新添加小组件。
 - Android 上可点击小组件手动刷新，再打开其配置页面检查所选服务器和指标。
 - Watch App 必须与 iPhone 配对。修改服务器后，在 iPhone 上打开 Server Box 并等待同步。
 
 ### 小组件显示错误或没有服务器
 
-- 在 App 中至少添加一台配置了 Monitor agent 的服务器。
-- 检查 agent 的 HTTPS 地址是否可访问，以及登录凭据是否正确。
+- 在 App 中至少添加一台配置了 Monitor 的服务器。
+- 检查 Monitor 的 HTTPS 地址是否可访问，以及登录凭据是否正确。
 - 小组件使用 App 中的服务器列表，不再读取手动填写的 `/status` URL。如果旧版本留有此类地址，请按 App 中的一次性提示重新配置服务器。
 
 ## 性能问题
@@ -103,4 +103,4 @@ description: 常见问题及处理方法
 
 1. 搜索 [GitHub Issues](https://github.com/lollipopkit/flutter_server_box/issues)。
 2. 提交 Issue，并注明 App 版本、平台、相关日志和复现步骤。
-3. 如果问题涉及 Monitor agent，也请提供其版本和相关配置；先删除密码、token 等敏感信息。
+3. 如果问题涉及 Monitor，也请提供其版本和相关配置；先删除密码、token 等敏感信息。

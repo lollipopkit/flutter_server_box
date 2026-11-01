@@ -2,7 +2,7 @@ English | [简体中文](README_zh.md)
 
 # ServerBox Monitor
 
-ServerBox Monitor is the server-side agent for
+ServerBox Monitor is the server-side component for
 [ServerBox](https://github.com/lollipopkit/flutter_server_box). It records
 server metrics, serves the Monitor HTTP API, and can host the web panel.
 The configuration format may change between releases, so review
@@ -41,7 +41,7 @@ The configuration format may change between releases, so review
 # systemd: a `systemctl --user` service, running as your own account
 curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/install.sh | sh -s -- install
 
-# OpenRC (Alpine): needs root to write /etc/init.d, but still runs the agent
+# OpenRC (Alpine): needs root to write /etc/init.d, but still runs the Monitor
 # as the account you sudo'd from
 curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/install.sh | sudo sh -s -- install
 
@@ -69,14 +69,14 @@ with a locally built package, or [Docker](Dockerfile).
 
 Configuration lives in `config.toml` beside the binary. Every key, with the
 comments explaining it, is in [`config.example.toml`](config.example.toml);
-`cargo run -- config` prints the resolved values. The agent listens on
+`cargo run -- config` prints the resolved values. The Monitor listens on
 `0.0.0.0:3770` and serves its own panel there when `frontend/dist` is present.
 
 ### Signing in
 
 The panel user lives in the SQLite database, not in `config.toml` — `jwt_secret`
 there signs tokens and is not a password. On the first start with an empty user
-table the agent creates `admin`, in the `admin` role, with a random password and writes it beside the
+table the Monitor creates `admin`, in the `admin` role, with a random password and writes it beside the
 database as `initial-admin-credentials.txt` (0600). Change the password and
 delete that file:
 
@@ -89,14 +89,14 @@ It prompts twice without echo, and `--password-env VAR` reads the password from
 the environment instead; there is no argument form, since a command line reaches
 `ps` and the shell history. The same command creates a user that does not exist
 yet, as a `viewer` unless `--role <name>` says otherwise; `--role` also moves an
-existing account. Admins can add accounts from the app or the panel too. Run it from the agent's own directory — `config.toml` and the database path
+existing account. Admins can add accounts from the app or the panel too. Run it from the Monitor's own directory — `config.toml` and the database path
 are relative to the working directory, so elsewhere it silently sets a password
 in a new, empty database.
 
 ### What the ServerBox app needs
 
 A server added to the app as a **monitor** server is reached through this
-agent's HTTP API and nowhere else — it carries no SSH credentials. The agent
+Monitor's HTTP API and nowhere else — it carries no SSH credentials. The Monitor
 reports what it will accept on `GET /api/v1/capabilities`, and the app offers
 exactly that:
 
@@ -110,31 +110,31 @@ exactly that:
 | The panel's in-browser terminal | `ssh_terminal` |
 | The panel's remote desktops (VNC, RDP) | `connect` (`/api/v1/stream/ws`, `/api/v1/rdp/ws`), the same `allow` list |
 | The panel's BMCs (Redfish): state and power | `virt` (`/api/v1/bmc`); adding a BMC and its credentials: admin |
-| Backup sync to this agent, the panel's backup page | admin (`/api/v1/backup`) |
+| Backup sync to this Monitor, the panel's backup page | admin (`/api/v1/backup`) |
 
 `/api/v1/stream/ws` relays one TCP connection to an address the app names,
-dialled from this machine as the agent's account. `/api/v1/listen/ws` is the
-other direction: the agent listens on a port here and hands each connection to
+dialled from this machine as the Monitor's account. `/api/v1/listen/ws` is the
+other direction: the Monitor listens on a port here and hands each connection to
 the app, which takes it over a `stream` socket.
 
-SFTP is not offered on a monitor server: the agent's file API moves file
-contents rather than an SSH byte stream. An agent older than these endpoints
+SFTP is not offered on a monitor server: the Monitor's file API moves file
+contents rather than an SSH byte stream. A Monitor older than these endpoints
 reports neither, and the app greys out what needs them.
 
 ## Accounts and permissions
 
 Every account can read status, charts and history. Everything else is a
 **grant**, and an account holds the grants of its **role**. Roles live in the
-agent's database, not in `config.toml`, and an admin edits accounts and roles
+Monitor's database, not in `config.toml`, and an admin edits accounts and roles
 from the app or the panel, entering their own password again for every change.
 A change applies at once: a terminal, relay or listener that relied on a grant
 the account lost is closed. The full API contract is
 [`docs/dev/monitor-permissions.md`](../docs/dev/monitor-permissions.md).
 
-- **`admin`** (built in) manages accounts, roles and the agent's settings, and
+- **`admin`** (built in) manages accounts, roles and the Monitor's settings, and
   holds whatever grants it is given. The last admin account cannot be deleted
   or moved to another role. Editing custom commands also needs `shell`, since
-  the agent runs them.
+  the Monitor runs them.
 - **`viewer`** (built in) holds no grants.
 - Admins can add roles, for example one that may only `connect` to
   `127.0.0.1:3389`.
@@ -145,14 +145,14 @@ anywhere, `listen` on loopback, `shell`, `ssh_terminal`), or none with
 --init-permissions read` when running the binary yourself. That choice is read
 only when the first account is created.
 
-**`shell` is a shell as the account the agent runs as**, and in practice covers
+**`shell` is a shell as the account the Monitor runs as**, and in practice covers
 the other grants: whoever can run commands can read files and open connections
-themselves. That is why `install.sh` runs the agent as an ordinary account by
+themselves. That is why `install.sh` runs the Monitor as an ordinary account by
 default — a `systemctl --user` service under systemd, or an `/etc/init.d` script
 with `command_user` under OpenRC. Grant `files`, `connect` or `listen` on their
 own when that is all an account needs.
 
-**`ssh_terminal`** is the panel's in-browser terminal. The agent acts as an SSH
+**`ssh_terminal`** is the panel's in-browser terminal. The Monitor acts as an SSH
 client to `ssh_addr`, so a session has exactly the privileges of the SSH account
 the browser signs in as — the panel password alone grants no shell, and sshd's
 own logging, `AllowUsers` and two-factor prompts all still apply. Sessions
@@ -161,19 +161,19 @@ rejoins the same shell instead of losing it.
 
 **`connect.allow`** takes IP addresses or CIDR ranges with an optional port or
 port range (`10.0.0.0/8`, `127.0.0.1:3389`, `[::1]:5900-5910`); empty is
-anywhere. A host name is resolved by the agent and every address it resolves to
+anywhere. A host name is resolved by the Monitor and every address it resolves to
 must be allowed, so `localhost` — usually both `127.0.0.1` and `::1` — needs
 both, or the client should send the address. **`listen`** binds loopback only
 unless `public` is on (sshd's `GatewayPorts`), and only inside its port range
 when one is set.
 
-Upgrading from an agent without roles converts the old switches once: every
+Upgrading from a Monitor version without roles converts the old switches once: every
 existing account becomes an admin, and the `admin` role gets what they actually
 granted — `[remote_access.terminal] enabled` becomes `ssh_terminal`;
 `full_access` (with its platform default and `SBM_FULL_ACCESS`), counted only
 while the terminal was enabled, becomes `shell`, `connect` and `listen`;
 `listen_public` becomes `listen.public`; `[remote_access.fs] enabled` with roots
-becomes `files` write. The agent then stops reading those keys and logs once
+becomes `files` write. The Monitor then stops reading those keys and logs once
 that they can go. The panel's first-run prompt to turn shell access off removes
 `shell`, `connect` and `listen` from every role.
 
@@ -191,8 +191,8 @@ Notes:
   in plaintext, so do not use this for an ordinary LAN or a network you do not
   control.
 - `files` serves nothing without `[remote_access.fs] roots`. `roots = ["/"]`
-  with write access is worth a shell, and the agent warns about it at startup.
-- The agent pins the host key of the sshd it connects to on first use and
+  with write access is worth a shell, and the Monitor warns about it at startup.
+- The Monitor pins the host key of the sshd it connects to on first use and
   refuses a changed one, rather than re-pinning silently. Clearing the pin is
   deliberate: delete the row from `ssh_known_hosts`.
 - `access_log` records who opened what, from where, and whether it worked, and

@@ -52,7 +52,7 @@ exports use the nested layout above.
 |---|---|---|
 | `name` | Yes | Server name shown in the App |
 | `ssh` | No | SSH configuration; omit for a server configured only through Monitor HTTP |
-| `monitorHttp` | No | Monitor agent configuration: `addr`, `user`, `pwd`, `ignoreCert`, `allowInsecure` |
+| `monitorHttp` | No | Monitor configuration: `addr`, `user`, `pwd`, `ignoreCert`, `allowInsecure` |
 | `preferredTransport` | No | Which transport leads when both SSH and Monitor HTTP are configured: `ssh` or `monitorHttp`. SSH leads when omitted |
 | `tags` | No | Tags used to group servers |
 | `autoConnect` | No | Connect automatically when the App starts |
@@ -100,7 +100,7 @@ A server needs at least one connection method. If both `ssh` and
 
 `allowInsecure` defaults to `false`. Set it only if you intend this Monitor
 connection to use plaintext HTTP, including when the address is a private
-non-loopback IP. The Monitor agent separately enforces its own
+non-loopback IP. The Monitor separately enforces its own
 `allow_insecure` setting for sensitive endpoints.
 
 ## Import steps

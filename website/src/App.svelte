@@ -26,7 +26,7 @@
   const capabilities = [
     'Status chart', 'SSH Terminal', 'SFTP', 'SCP', 'Docker', 'Process',
     'Systemd', 'S.M.A.R.T', 'GPU', 'Sensors', 'Push', 'Home Widget', 'watchOS',
-    'Monitor Agent', 'AI Agent', 'Globe', 'Benchmark', 'iperf',
+    'Monitor', 'AI Agent', 'Globe', 'Benchmark', 'iperf',
     'Port Forward', 'Local Shell', 'Workspace', 'RDP', 'VNC', 'libvirt',
     'Proxmox VE', 'Redfish', 'Firewall', 'Cron', 'Users & Groups', 'Themes',
   ]
