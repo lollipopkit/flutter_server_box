@@ -4,6 +4,7 @@
     "mem": "supported",
     "swap": "hardware_dependent",
     "disks": "supported",
+    "block_devices": "not_implemented",
     "net": "supported",
     "temps": "hardware_dependent",
     "conn": "not_implemented",

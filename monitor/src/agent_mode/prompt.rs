@@ -88,7 +88,7 @@ fn shell_note() -> &'static str {
 /// `PRETTY_NAME`, or the OS family.
 #[cfg(windows)]
 pub fn os_name() -> String {
-    sysinfo::System::long_os_version().unwrap_or_else(|| "Windows".into())
+    sysinfo::System::long_os_version().unwrap_or_else(|_| "Windows".into())
 }
 
 /// The system's name as `/etc/os-release` gives it, or the OS family.
