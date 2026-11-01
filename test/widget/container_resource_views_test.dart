@@ -213,8 +213,8 @@ void main() {
 
     await _pumpAt(tester, width: 390, child: containerView(items));
 
-    expect(find.text('1 Running · 1 Unknown'), findsOneWidget);
-    expect(find.textContaining('Stopped'), findsNothing);
+    expect(find.text('1 ${libL10n.running} · 1 ${libL10n.unknown}'), findsOneWidget);
+    expect(find.textContaining(libL10n.stopped), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -580,7 +580,7 @@ void main() {
 
     expect(find.text('production-stack'), findsOneWidget);
     expect(find.byIcon(Icons.folder_open), findsOneWidget);
-    expect(find.text('1 Running · 1 Stopped'), findsOneWidget);
+    expect(find.text('1 ${libL10n.running} · 1 ${libL10n.stopped}'), findsOneWidget);
     expect(find.text('web'), findsOneWidget);
     expect(find.text('db'), findsOneWidget);
 
@@ -706,8 +706,8 @@ void main() {
 
     // Per-image badges only. The unused total moved to the page's summary
     // card, which is above the tabs rather than inside this view.
-    expect(find.text('Dangling'), findsOneWidget);
-    expect(find.text('Unused'), findsOneWidget);
+    expect(find.text(app_locale.l10n.dangling), findsOneWidget);
+    expect(find.text(app_locale.l10n.unused), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -769,8 +769,8 @@ void main() {
       child: SingleChildScrollView(child: imagePruneOptions()),
     );
 
-    expect(find.text('Dangling: 2'), findsOneWidget);
-    expect(find.text('Unused tagged: 1'), findsOneWidget);
+    expect(find.text('${app_locale.l10n.dangling}: 2'), findsOneWidget);
+    expect(find.text('${app_locale.l10n.unusedTaggedImages}: 1'), findsOneWidget);
     expect(find.text('docker image prune -f'), findsOneWidget);
     expect(find.byIcon(Icons.radio_button_checked), findsOneWidget);
     expect(
@@ -810,7 +810,10 @@ void main() {
       ),
     );
 
-    expect(find.text('Unused tagged: Unknown'), findsOneWidget);
+    expect(
+      find.text('${app_locale.l10n.unusedTaggedImages}: ${libL10n.unknown}'),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
 

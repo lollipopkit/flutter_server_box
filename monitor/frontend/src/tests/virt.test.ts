@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { get } from 'svelte/store'
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import Virt from '../pages/Virt.svelte'
@@ -6,6 +7,7 @@ import { api } from '../lib/api'
 import { capabilitiesStore } from '../lib/capabilities.svelte'
 import { servers } from '../lib/servers.svelte'
 import { enabledFeatures } from '../lib/features'
+import { LL } from '../i18n/i18n-svelte'
 import { allocation, createIssueText, createSpec, issueText, lines, orderedActions, pushSample, pveDraft, refText, snapshotTree, virtErrorText, words, HISTORY_LEN, type CreateDraft } from '../lib/virt'
 import type { Capabilities, VirtCreateForm, VirtCreateIssue, VirtCreateOptions, VirtGuest, VirtLoad, VirtNetwork, VirtPool, VirtSnapshot, VirtStats } from '../types'
 
@@ -64,6 +66,8 @@ const cloneForm = vi.mocked(api.cloneForm)
 const cloneGuest = vi.mocked(api.cloneGuest)
 const makeTemplate = vi.mocked(api.makeTemplate)
 const virtHardware = vi.mocked(api.virtHardware)
+
+const ll = get(LL)
 
 function guest(over: Partial<VirtGuest>): VirtGuest {
   return {
@@ -146,14 +150,14 @@ describe('the virtualization helpers', () => {
     })
     expect(e).toContain("pveum acl modify / --tokens 'root@pam!sb'")
     const host = virtErrorText({ kind: 'action_failed', message: "can't lock file", detail: null, cert: null, previous_fingerprint: null })
-    expect(host).toMatch(/refused the action\.\ncan't lock file/)
+    expect(host).toBe(`${ll.virtErrActionFailed()}\ncan't lock file`)
   })
 
   it('phrases a refused storage or network change', () => {
     const refused = (detail: NonNullable<Parameters<typeof virtErrorText>[0]['detail']>) =>
       virtErrorText({ kind: 'unsupported', message: null, detail, cert: null, previous_fingerprint: null })
     expect(refused({ code: 'refused', issue: 'in_use' })).toBe(issueText('in_use'))
-    expect(issueText('management_iface')).toMatch(/management traffic/)
+    expect(issueText('management_iface')).toBe(ll.virtIssueManagementIface())
     expect(refused({ code: 'apply_touches_management', ifaces: ['vmbr0', 'nic0'] })).toContain('vmbr0, nic0')
     expect(
       refused({
@@ -225,24 +229,24 @@ describe('the virtualization page', () => {
     render(Virt, { onback: () => {} })
     expect(await screen.findByText('db')).toBeInTheDocument()
     expect(screen.getAllByText('web').length).toBeGreaterThan(0)
-    expect(screen.getByRole('button', { name: /force stop/i })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /^resume$/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: ll.virtActForceStop() })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: ll.virtActResume() })).not.toBeInTheDocument()
     expect(screen.getByText('25.0%')).toBeInTheDocument()
 
     await fireEvent.click(screen.getByText('db'))
     // In the header and on the stopped card.
-    expect(await screen.findAllByRole('button', { name: /^start$/i })).toHaveLength(2)
-    expect(screen.getByText('Usage information appears here while the guest is running.')).toBeInTheDocument()
+    expect(await screen.findAllByRole('button', { name: ll.virtActStart() })).toHaveLength(2)
+    expect(screen.getByText(ll.virtStoppedNote())).toBeInTheDocument()
   })
 
   it('asks before stopping, then sends it and reads the host again', async () => {
     loadVirt.mockResolvedValue(loaded([guest({})]))
     virtPower.mockResolvedValue({ error: null })
     render(Virt, { onback: () => {} })
-    await fireEvent.click(await screen.findByRole('button', { name: /force stop/i }))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.virtActForceStop() }))
     expect(virtPower).not.toHaveBeenCalled()
-    expect(screen.getByText(/pulling the plug/)).toBeInTheDocument()
-    const buttons = screen.getAllByRole('button', { name: /force stop/i })
+    expect(screen.getByText(ll.virtConfirmForce({ name: 'web' }))).toBeInTheDocument()
+    const buttons = screen.getAllByRole('button', { name: ll.virtActForceStop() })
     await fireEvent.click(buttons[buttons.length - 1])
     await waitFor(() => expect(virtPower).toHaveBeenCalledWith('qemu/100', 'force_stop', undefined))
     await waitFor(() => expect(loadVirt).toHaveBeenCalledTimes(2))
@@ -262,9 +266,9 @@ describe('the virtualization page', () => {
     pinPve.mockResolvedValue({ error: null })
     render(Virt, { onback: () => {} })
     expect(await screen.findByText('AB:CD')).toBeInTheDocument()
-    await fireEvent.click(screen.getByRole('button', { name: /trust this certificate/i }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.bmcCertTrust() }))
     await waitFor(() => expect(pinPve).toHaveBeenCalledWith('abcd'))
-    expect(await screen.findByText('Certificate trusted.')).toBeInTheDocument()
+    expect(await screen.findByText(ll.pveCertTrusted())).toBeInTheDocument()
   })
 
   it('does not offer a viewer to trust a certificate', async () => {
@@ -274,8 +278,8 @@ describe('the virtualization page', () => {
     )
     render(Virt, { onback: () => {} })
     expect(await screen.findByText('EF:01')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /trust this certificate/i })).not.toBeInTheDocument()
-    expect(screen.getByText(/An admin has to trust/)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: ll.bmcCertTrust() })).not.toBeInTheDocument()
+    expect(screen.getByText(ll.pveCertAdmin())).toBeInTheDocument()
   })
 
   it('sends a TOTP code, then reads the host', async () => {
@@ -285,7 +289,7 @@ describe('the virtualization page', () => {
     render(Virt, { onback: () => {} })
     const code = await screen.findByPlaceholderText('123456')
     await fireEvent.input(code, { target: { value: '654321' } })
-    await fireEvent.click(screen.getByRole('button', { name: /sign in/i }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.pveTfaSend() }))
     await waitFor(() => expect(pveTfa).toHaveBeenCalledWith('654321'))
     await waitFor(() => expect(loadVirt).toHaveBeenCalledTimes(2))
   })
@@ -300,16 +304,16 @@ describe('the virtualization page', () => {
     })
     loadVirt.mockResolvedValue(loaded([guest({})]))
     render(Virt, { onback: () => {} })
-    const field = await screen.findByPlaceholderText('sudo password')
+    const field = await screen.findByPlaceholderText(ll.virtSudoPassword())
     await fireEvent.input(field, { target: { value: 'hunter2' } })
-    await fireEvent.click(screen.getByRole('button', { name: /^use$/i }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.virtSudoSend() }))
     await waitFor(() => expect(loadVirt).toHaveBeenLastCalledWith('hunter2'))
   })
 
   it('tells an admin that PVE runs here and has to be set up', async () => {
     loadVirt.mockResolvedValue({ host: 'pve', supported: true, pve_configured: false, view: null, error: null })
     render(Virt, { onback: () => {} })
-    expect(await screen.findByText(/Set up how this Monitor signs in/)).toBeInTheDocument()
+    expect(await screen.findByText(ll.pveSetupAdmin())).toBeInTheDocument()
   })
 
   it('reads a guest\'s hardware when its view opens', async () => {
@@ -342,7 +346,7 @@ describe('the virtualization page', () => {
       error: null,
     })
     render(Virt, { onback: () => {} })
-    await fireEvent.click(await screen.findByRole('button', { name: /^hardware$/i }))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.virtViewHardware() }))
     await fireEvent.click(await screen.findByRole('button', { name: /^scsi0/ }))
     expect(await screen.findByText(/local-lvm:vm-100-disk-0/)).toBeInTheDocument()
     expect(screen.getAllByText(/vmbr0/).length).toBeGreaterThan(0)
@@ -357,8 +361,8 @@ describe('the virtualization page', () => {
     })
     virtConsole.mockResolvedValue({ ticket: null, vnc_password: null, password_known: true, command: "virsh --connect qemu:///system console --force --domain 'uuid-1'", error: null })
     render(Virt, { onback: () => {} })
-    await fireEvent.click(await screen.findByRole('button', { name: /^console$/i }))
-    await fireEvent.click(await screen.findByRole('button', { name: /^open$/i }))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.virtViewConsole() }))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.virtConsoleOpen() }))
     expect(await screen.findByText(/console --force --domain 'uuid-1'/)).toBeInTheDocument()
     expect(virtConsole).toHaveBeenCalledWith('uuid-1', 'text', undefined)
   })
@@ -371,7 +375,7 @@ describe('the virtualization page', () => {
     // The chart sizes itself to its box; jsdom has no layout to observe.
     vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} })
     render(Virt, { onback: () => {} })
-    await fireEvent.click(await screen.findByRole('button', { name: /^day$/i }))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.virtRangeDay() }))
     await waitFor(() => expect(virtHistory).toHaveBeenCalledWith('qemu/100', 'day'))
     vi.unstubAllGlobals()
   })
@@ -389,10 +393,10 @@ describe('the virtualization page', () => {
     })
     virtSnapshot.mockResolvedValue({ error: null })
     render(Virt, { onback: () => {} })
-    await fireEvent.click(await screen.findByRole('button', { name: /^snapshots$/i }))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.virtViewSnapshots() }))
     expect(await screen.findByText('pre-up')).toBeInTheDocument()
-    await fireEvent.input(screen.getByPlaceholderText('Name'), { target: { value: 'pre-down' } })
-    await fireEvent.click(screen.getByRole('button', { name: /take snapshot/i }))
+    await fireEvent.input(screen.getByPlaceholderText(ll.virtSnapName()), { target: { value: 'pre-down' } })
+    await fireEvent.click(screen.getByRole('button', { name: ll.virtSnapTake() }))
     await waitFor(() =>
       expect(virtSnapshot).toHaveBeenCalledWith(
         'qemu/100',
@@ -400,11 +404,11 @@ describe('the virtualization page', () => {
         undefined,
       ),
     )
-    await fireEvent.click(screen.getAllByRole('button', { name: /^revert$/i })[0])
-    expect(screen.getByText(/disks will return to their state/)).toBeInTheDocument()
+    await fireEvent.click(screen.getAllByRole('button', { name: ll.virtSnapRevert() })[0])
+    expect(screen.getByText(ll.virtSnapRevertDisk({ name: 'pre-up' }))).toBeInTheDocument()
     expect(virtSnapshot).toHaveBeenCalledTimes(1)
     // The dialog closes and the revert it asked about is the one sent.
-    const reverts = screen.getAllByRole('button', { name: /^revert$/i })
+    const reverts = screen.getAllByRole('button', { name: ll.virtSnapRevert() })
     await fireEvent.click(reverts[reverts.length - 1])
     await waitFor(() => expect(virtSnapshot).toHaveBeenLastCalledWith('qemu/100', { op: 'revert', name: 'pre-up', start: false }, undefined))
   })
@@ -415,9 +419,9 @@ describe('the virtualization page', () => {
     loadVirt.mockResolvedValue(view)
     virtSnapshots.mockResolvedValue({ snapshots: [], memory: 'optional', refusal: 'snapshot feature is not available: local', chain: null, error: null })
     render(Virt, { onback: () => {} })
-    await fireEvent.click(await screen.findByRole('button', { name: /^snapshots$/i }))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.virtViewSnapshots() }))
     expect(await screen.findByText(/not available: local/)).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /take snapshot/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: ll.virtSnapTake() })).not.toBeInTheDocument()
   })
 })
 
@@ -520,13 +524,13 @@ describe('the virtualization page: storage and networks', () => {
       error: { kind: 'unsupported', message: null, detail: { code: 'refused', issue: 'in_use' }, cert: null, previous_fingerprint: null },
     })
     render(Virt, { onback: () => {} })
-    await fireEvent.click(await screen.findByRole('button', { name: /^storage$/i }))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.virtSectionStorage() }))
     expect(await screen.findByText('vm-100-disk-0.qcow2')).toBeInTheDocument()
     expect(virtVolumes).toHaveBeenCalledWith('pve/local', undefined)
-    expect(screen.getByText(/Used by web/)).toBeInTheDocument()
+    expect(screen.getByText(ll.virtVolumeUsedBy({ who: 'web' }))).toBeInTheDocument()
     const deletes = screen.getAllByRole('button').filter((b) => b.querySelector('.lucide-trash-2'))
     await fireEvent.click(deletes[deletes.length - 1])
-    await fireEvent.click(screen.getByRole('button', { name: /^delete$/i }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.virtDelete() }))
     await waitFor(() =>
       expect(virtManage).toHaveBeenCalledWith({ op: 'volume_delete', pool: 'pve/local', volume: 'local:100/vm-100-disk-0.qcow2' }, undefined),
     )
@@ -541,15 +545,15 @@ describe('the virtualization page: storage and networks', () => {
     })
     virtManage.mockResolvedValue({ error: null })
     render(Virt, { onback: () => {} })
-    await fireEvent.click(await screen.findByRole('button', { name: /^networks$/i }))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.virtSectionNetworks() }))
     expect(await screen.findByText('vmbr9')).toBeInTheDocument()
     // Only the bridge of its own is editable.
-    expect(screen.getAllByRole('button', { name: /^edit$/i })).toHaveLength(1)
-    expect(screen.getByText(/Pending changes on pve/)).toBeInTheDocument()
-    await fireEvent.click(screen.getByRole('button', { name: /^apply$/i }))
+    expect(screen.getAllByRole('button', { name: ll.virtEdit() })).toHaveLength(1)
+    expect(screen.getByText(ll.virtNetChanges({ node: 'pve' }))).toBeInTheDocument()
+    await fireEvent.click(screen.getByRole('button', { name: ll.virtNetApply() }))
     expect(virtManage).not.toHaveBeenCalled()
-    expect(screen.getByText(/reload its network configuration/)).toBeInTheDocument()
-    const applies = screen.getAllByRole('button', { name: /^apply$/i })
+    expect(screen.getByText(ll.virtNetApplyConfirm({ node: 'pve' }))).toBeInTheDocument()
+    const applies = screen.getAllByRole('button', { name: ll.virtNetApply() })
     await fireEvent.click(applies[applies.length - 1])
     await waitFor(() => expect(virtManage).toHaveBeenCalledWith({ op: 'network_apply', node: 'pve' }, undefined))
   })
@@ -613,7 +617,7 @@ describe('creating, copying and deleting guests: the helpers', () => {
         createIssueText(issue),
       )
     }
-    expect(createIssueText('secure_boot')).toMatch(/UEFI/)
+    expect(createIssueText('secure_boot')).toBe(ll.virtCrIssueSecureBoot())
   })
 
   it('splits keys by line and lists by spaces or commas', () => {
@@ -739,10 +743,10 @@ describe('the virtualization page: creating, copying and deleting', () => {
       error: { kind: 'exists', message: null, detail: { code: 'create_refused', issue: 'vmid_taken' }, cert: null, previous_fingerprint: null },
     })
     render(Virt, { onback: () => {} })
-    await fireEvent.click(await screen.findByRole('button', { name: /^new$/i }))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.virtNew() }))
     expect(await screen.findByText('debian.iso')).toBeInTheDocument()
     expect(createForm).toHaveBeenCalledWith('qemu', 'pve', undefined)
-    const submit = screen.getByRole('button', { name: /^create vm$/i })
+    const submit = screen.getByRole('button', { name: ll.virtCreateVmAction() })
     await fireEvent.click(submit)
     await waitFor(() => expect(createGuest).toHaveBeenCalledTimes(1))
     const [spec] = createGuest.mock.calls[0]
@@ -760,8 +764,8 @@ describe('the virtualization page: creating, copying and deleting', () => {
 
     createGuest.mockResolvedValueOnce({ created: { id: 'qemu/105', start_error: 'kvm: no space', disk_kept_bytes: null }, error: null })
     loadVirt.mockResolvedValue(withCreate([guest({}), guest({ id: 'qemu/105', name: 'vm-105', vmid: 105, state: 'stopped' })]))
-    await fireEvent.click(screen.getByRole('button', { name: /^create vm$/i }))
-    expect(await screen.findByText(/did not start: kvm: no space/)).toBeInTheDocument()
+    await fireEvent.click(screen.getByRole('button', { name: ll.virtCreateVmAction() }))
+    expect(await screen.findByText(ll.virtCreatedNotStarted({ name: 'vm-105', why: 'kvm: no space' }))).toBeInTheDocument()
     await waitFor(() => expect(screen.getByRole('button', { current: true })).toHaveTextContent('vm-105'))
   })
 
@@ -770,15 +774,15 @@ describe('the virtualization page: creating, copying and deleting', () => {
     deleteGuest.mockResolvedValue({ error: null })
     cloneGuest.mockResolvedValue({ id: 'qemu/106', error: null })
     render(Virt, { onback: () => {} })
-    await fireEvent.click(await screen.findByRole('button', { name: /^settings$/i }))
-    await fireEvent.click(await screen.findByRole('button', { name: /^delete guest$/i }))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.virtViewSettings() }))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.virtDeleteGuest() }))
     expect(deleteGuest).not.toHaveBeenCalled()
-    await fireEvent.click(screen.getByRole('button', { name: /^confirm: delete web$/i }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.virtConfirmDelete({ name: 'web' }) }))
     await waitFor(() => expect(deleteGuest).toHaveBeenCalledWith('qemu/100', true, undefined))
-    expect(await screen.findByText('Deleted web.')).toBeInTheDocument()
+    expect(await screen.findByText(ll.virtDeleted({ name: 'web' }))).toBeInTheDocument()
 
-    await fireEvent.click(screen.getByRole('button', { name: /^settings$/i }))
-    await fireEvent.click(await screen.findByRole('button', { name: /^clone$/i }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.virtViewSettings() }))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.virtClone() }))
     await waitFor(() => expect(cloneGuest).toHaveBeenCalledWith('qemu/100', { name: 'web-clone', full: true }, undefined))
     expect(makeTemplate).not.toHaveBeenCalled()
   })
@@ -786,8 +790,8 @@ describe('the virtualization page: creating, copying and deleting', () => {
   it('keeps delete closed while the guest runs', async () => {
     loadVirt.mockResolvedValue(withCreate([guest({})]))
     render(Virt, { onback: () => {} })
-    await fireEvent.click(await screen.findByRole('button', { name: /^settings$/i }))
-    expect(await screen.findByRole('button', { name: /^delete guest$/i })).toBeDisabled()
-    expect(screen.getAllByText('Shut it down first.').length).toBeGreaterThan(0)
+    await fireEvent.click(await screen.findByRole('button', { name: ll.virtViewSettings() }))
+    expect(await screen.findByRole('button', { name: ll.virtDeleteGuest() })).toBeDisabled()
+    expect(screen.getAllByText(ll.virtStopFirst()).length).toBeGreaterThan(0)
   })
 })

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/view/widget/virt_key_semantics.dart';
 
@@ -25,7 +26,7 @@ void main() {
     expect(
       tester.getSemantics(find.byType(VirtKeySemantics)),
       matchesSemantics(
-        label: 'Control',
+        label: l10n.keyControl,
         isButton: true,
         hasEnabledState: true,
         isEnabled: true,
@@ -45,7 +46,7 @@ void main() {
     expect(
       tester.getSemantics(find.byType(VirtKeySemantics)),
       isSemantics(
-        label: 'Up arrow',
+        label: l10n.keyArrowUp,
         isButton: true,
         hasToggledState: false,
         hasTapAction: true,

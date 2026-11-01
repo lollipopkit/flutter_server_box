@@ -1,6 +1,8 @@
+import { get } from 'svelte/store'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
+import { LL } from '../i18n/i18n-svelte'
 import Containers from '../pages/Containers.svelte'
 import { ApiError, api } from '../lib/api'
 import { capabilitiesStore } from '../lib/capabilities.svelte'
@@ -11,6 +13,7 @@ vi.mock('../lib/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../lib/api')>()),
   api: { getContainers: vi.fn(), actContainer: vi.fn() },
 }))
+const ll = get(LL)
 const getContainers = vi.mocked(api.getContainers)
 const actContainer = vi.mocked(api.actContainer)
 
@@ -63,15 +66,15 @@ describe('Containers page', () => {
 
   it('asks before pruning volumes, and prunes only on the answer', async () => {
     render(Containers, { onback: () => {} })
-    await fireEvent.click(await screen.findByRole('button', { name: /remove unused volumes/i }))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.containerPruneVolumes() }))
     expect(actContainer).not.toHaveBeenCalled()
-    expect(await screen.findByText(/cannot be recovered/i)).toBeInTheDocument()
+    expect(await screen.findByText(ll.containerPruneVolumesConfirm())).toBeInTheDocument()
 
-    await fireEvent.click(screen.getByRole('button', { name: /cancel/i }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.cancel() }))
     expect(actContainer).not.toHaveBeenCalled()
 
-    await fireEvent.click(screen.getByRole('button', { name: /remove unused volumes/i }))
-    const buttons = await screen.findAllByRole('button', { name: /remove unused volumes/i })
+    await fireEvent.click(screen.getByRole('button', { name: ll.containerPruneVolumes() }))
+    const buttons = await screen.findAllByRole('button', { name: ll.containerPruneVolumes() })
     await fireEvent.click(buttons.at(-1)!)
     await waitFor(() => expect(actContainer).toHaveBeenCalledWith({ action: 'prune_volumes' }))
   })
@@ -79,27 +82,28 @@ describe('Containers page', () => {
   /// Confirms a volume prune, the simplest action to drive from the page.
   async function pruneVolumes() {
     render(Containers, { onback: () => {} })
-    await fireEvent.click(await screen.findByRole('button', { name: /remove unused volumes/i }))
-    const buttons = await screen.findAllByRole('button', { name: /remove unused volumes/i })
+    await fireEvent.click(await screen.findByRole('button', { name: ll.containerPruneVolumes() }))
+    const buttons = await screen.findAllByRole('button', { name: ll.containerPruneVolumes() })
     await fireEvent.click(buttons.at(-1)!)
   }
 
   it('says an action failed even when the runtime printed nothing', async () => {
     actContainer.mockResolvedValue({ ...view(), exit_code: 1, output: null } as never)
     await pruneVolumes()
-    expect(await screen.findByText(/failed \(exit 1\)/i)).toBeInTheDocument()
+    expect(await screen.findByText(ll.containerActionFailed({ code: 1 }))).toBeInTheDocument()
   })
 
   it('says an action did not finish when the answer has no exit code', async () => {
     actContainer.mockResolvedValue(view() as never)
     await pruneVolumes()
-    expect(await screen.findByText(/did not finish/i)).toBeInTheDocument()
+    expect(await screen.findByText(ll.containerActionUnfinished())).toBeInTheDocument()
   })
 
   it('says nothing about a quiet success', async () => {
     await pruneVolumes()
     await waitFor(() => expect(actContainer).toHaveBeenCalled())
-    expect(screen.queryByText(/failed \(exit|did not finish/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(ll.containerActionFailed({ code: 0 }))).not.toBeInTheDocument()
+    expect(screen.queryByText(ll.containerActionUnfinished())).not.toBeInTheDocument()
   })
 })
 
@@ -121,13 +125,13 @@ describe('Containers page on the images tab', () => {
 
   it('reads the images again when a change answers the other listing', async () => {
     render(Containers, { onback: () => {} })
-    await fireEvent.click(await screen.findByRole('button', { name: /^images$/i }))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.containerImages() }))
     expect(await screen.findByText(/alpine/)).toBeInTheDocument()
 
     // `system prune` answers the container listing, so this tab is stale and
     // has to be read again rather than replaced with a listing it does not show.
-    await fireEvent.click(screen.getByRole('button', { name: /prune system/i }))
-    const buttons = await screen.findAllByRole('button', { name: /prune system/i })
+    await fireEvent.click(screen.getByRole('button', { name: ll.containerPruneSystem() }))
+    const buttons = await screen.findAllByRole('button', { name: ll.containerPruneSystem() })
     await fireEvent.click(buttons.at(-1)!)
 
     await waitFor(() =>
@@ -143,14 +147,14 @@ describe('Containers page on the images tab', () => {
 
   it('asks before removing an image, and sends the tag on the row', async () => {
     render(Containers, { onback: () => {} })
-    await fireEvent.click(await screen.findByRole('button', { name: /^images$/i }))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.containerImages() }))
     await screen.findByText(/alpine/)
 
-    await fireEvent.click(screen.getByRole('button', { name: /^remove$/i }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.containerRemove() }))
     expect(actContainer).not.toHaveBeenCalled()
-    expect(await screen.findByText(/remove image alpine:latest/i)).toBeInTheDocument()
+    expect(await screen.findByText(ll.containerRemoveImageConfirm({ name: 'alpine:latest' }))).toBeInTheDocument()
 
-    const buttons = await screen.findAllByRole('button', { name: /^remove$/i })
+    const buttons = await screen.findAllByRole('button', { name: ll.containerRemove() })
     await fireEvent.click(buttons.at(-1)!)
     await waitFor(() =>
       expect(actContainer).toHaveBeenCalledWith({ action: 'remove_image', id: 'alpine:latest' }),
@@ -168,10 +172,10 @@ describe('Containers page on the images tab', () => {
         : view(),
     )
     render(Containers, { onback: () => {} })
-    await fireEvent.click(await screen.findByRole('button', { name: /^images$/i }))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.containerImages() }))
     await screen.findAllByText(/<none>/)
-    await fireEvent.click(screen.getByRole('button', { name: /^remove$/i }))
-    const buttons = await screen.findAllByRole('button', { name: /^remove$/i })
+    await fireEvent.click(screen.getByRole('button', { name: ll.containerRemove() }))
+    const buttons = await screen.findAllByRole('button', { name: ll.containerRemove() })
     await fireEvent.click(buttons.at(-1)!)
     await waitFor(() =>
       expect(actContainer).toHaveBeenCalledWith({ action: 'remove_image', id: 'sha256:abc' }),
@@ -180,12 +184,12 @@ describe('Containers page on the images tab', () => {
 
   it('sends the prune scope from the checkbox', async () => {
     render(Containers, { onback: () => {} })
-    await fireEvent.click(await screen.findByRole('button', { name: /^images$/i }))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.containerImages() }))
     await screen.findByText(/alpine/)
 
-    await fireEvent.click(screen.getByRole('button', { name: /prune images/i }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.containerPruneImages() }))
     await fireEvent.click(screen.getByRole('checkbox'))
-    const buttons = await screen.findAllByRole('button', { name: /prune images/i })
+    const buttons = await screen.findAllByRole('button', { name: ll.containerPruneImages() })
     await fireEvent.click(buttons.at(-1)!)
 
     await waitFor(() =>
@@ -201,14 +205,14 @@ describe('Containers page on the images tab', () => {
       }),
     )
     render(Containers, { onback: () => {} })
-    await fireEvent.click(await screen.findByRole('button', { name: /^images$/i }))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.containerImages() }))
     await screen.findByText(/alpine/)
 
-    await fireEvent.click(screen.getByRole('button', { name: /^remove$/i }))
-    const buttons = await screen.findAllByRole('button', { name: /^remove$/i })
+    await fireEvent.click(screen.getByRole('button', { name: ll.containerRemove() }))
+    const buttons = await screen.findAllByRole('button', { name: ll.containerRemove() })
     await fireEvent.click(buttons.at(-1)!)
 
-    expect(await screen.findByText(/image reference contains a character/i)).toBeInTheDocument()
+    expect(await screen.findByText(ll.containerErrInvalidReference())).toBeInTheDocument()
   })
 
   it('drops an answer that arrives after the server changed', async () => {
@@ -218,10 +222,10 @@ describe('Containers page on the images tab', () => {
     actContainer.mockReturnValueOnce(new Promise((resolve) => (answer = resolve)))
 
     render(Containers, { onback: () => {} })
-    await fireEvent.click(await screen.findByRole('button', { name: /^images$/i }))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.containerImages() }))
     await screen.findByText(/alpine/)
-    await fireEvent.click(screen.getByRole('button', { name: /prune images/i }))
-    const buttons = await screen.findAllByRole('button', { name: /prune images/i })
+    await fireEvent.click(screen.getByRole('button', { name: ll.containerPruneImages() }))
+    const buttons = await screen.findAllByRole('button', { name: ll.containerPruneImages() })
     await fireEvent.click(buttons.at(-1)!)
     await waitFor(() => expect(actContainer).toHaveBeenCalled())
 
@@ -256,7 +260,7 @@ describe('Containers page shell action', () => {
     } as unknown as Capabilities
     render(Containers, { onback: () => {} })
     await screen.findByText('web')
-    expect(screen.queryByRole('button', { name: /open shell/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: ll.containerOpenShell() })).toBeNull()
   })
 
   it('is offered for a running container when the agent and the account allow it', async () => {
@@ -266,6 +270,6 @@ describe('Containers page shell action', () => {
     } as unknown as Capabilities
     render(Containers, { onback: () => {} })
     await screen.findByText('web')
-    expect(await screen.findByRole('button', { name: /open shell/i })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: ll.containerOpenShell() })).toBeInTheDocument()
   })
 })

@@ -19,6 +19,7 @@ Flutter app for managing servers, in a Rust workspace monorepo. Feature notes li
 - `test/unit/` is split by **feature** (`ssh/`, `terminal/`, `file/`, `server/`, `virt/`, `monitor/`, …); `store/` is storage infrastructure, `app/` what belongs to no feature. Helpers: `test/helpers/`.
 - Opt-in e2e, skipped when unset: `SBM_E2E_SSH_HOST` in `.env` + `cargo test -p sbm_parser --test ssh_e2e -- --ignored` (libvirt: `-p sbm_virt`); RDP: `SBM_E2E_RDP_{HOST,PORT,USER,PASSWORD}` + `cargo test -p sbm_ffi --lib rdp_e2e -- --ignored` (an alpine `xrdp xorgxrdp` container serves); `flutter test test/e2e/virt_real_test.dart` (variables in its header; dartssh2 has no ssh-agent, so use `SBM_E2E_SSH_IDENTITY` or `SBM_E2E_SSH_KEY_PASSPHRASE`).
 - Widget tests whose tree writes a store: `openTestDb()` in `setUp`, `SqliteDb.close` in `tearDown`, the store's `forTest()` — many widgets persist on their own, and a real file write in fake-async hangs.
+- **UI text in a test comes from the localization**, never a copied string: the instance the code reads (`l10n`, `libL10n`), else `AppLocalizationsEn()` / `LibLocalizationsEn()` / `LlmLocalizationsEn()`; panel: `get(LL).key()`. A message embedded in a longer text: `startOf` (`test/helpers/l10n.dart`). Server output and fixture data stay literal.
 - Breakpoints: size `tester.view.physicalSize` + `devicePixelRatio`. `pumpAndSettle` never returns with a text field; use `pump(duration)`.
 
 ### CI

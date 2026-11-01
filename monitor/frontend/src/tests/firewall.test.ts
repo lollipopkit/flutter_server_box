@@ -1,9 +1,11 @@
+import { get } from 'svelte/store'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
+import { LL } from '../i18n/i18n-svelte'
 import Firewall from '../pages/Firewall.svelte'
 import { ApiError, api } from '../lib/api'
-import { refusalText } from '../lib/firewall'
+import { refusalText, ruleText } from '../lib/firewall'
 import { servers } from '../lib/servers.svelte'
 import type { FirewallPlan, FirewallView, FirewalldZone, UfwRule } from '../types'
 
@@ -11,9 +13,13 @@ vi.mock('../lib/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../lib/api')>()),
   api: { getFirewall: vi.fn(), planFirewall: vi.fn(), actFirewall: vi.fn() },
 }))
+const ll = get(LL)
 const getFirewall = vi.mocked(api.getFirewall)
 const planFirewall = vi.mocked(api.planFirewall)
 const actFirewall = vi.mocked(api.actFirewall)
+
+/// What the confirmation says about SSH on port 22 once it would be refused.
+const sshRefused = () => ll.fwWillRefuse({ access: ll.fwAccessSsh({ port: 22 }) })
 
 const ssh = { via: 'ssh' as const, port: 22, client: null, server: null, iface: null }
 
@@ -107,7 +113,7 @@ const plan = (extra: Partial<FirewallPlan> = {}): FirewallPlan => ({
 
 /// The open add form's own button, among every list's add button.
 const submitAdd = () =>
-  screen.getAllByRole('button', { name: /^add$/i }).find((b) => b.getAttribute('type') === 'submit')!
+  screen.getAllByRole('button', { name: ll.add() }).find((b) => b.getAttribute('type') === 'submit')!
 
 const done = {
   succeeded: true,
@@ -131,15 +137,15 @@ describe('Firewall page', () => {
   it('says why a machine has no firewall to show', async () => {
     getFirewall.mockResolvedValue({ ...base, available: false, reason_kind: 'unsupported_platform', kind: null })
     render(Firewall, { onback: () => {} })
-    expect(await screen.findByText(/linux/i)).toBeInTheDocument()
+    expect(await screen.findByText(ll.fwLinuxOnly())).toBeInTheDocument()
   })
 
   it('asks for the sudo password and reads again with it', async () => {
     getFirewall.mockResolvedValueOnce({ ...base, available: false, sudo_required: true, kind: null })
     getFirewall.mockResolvedValueOnce(ufwView())
     render(Firewall, { onback: () => {} })
-    await fireEvent.input(await screen.findByLabelText(/sudo password/i), { target: { value: 'hunter2' } })
-    await fireEvent.click(screen.getByRole('button', { name: /^confirm$/i }))
+    await fireEvent.input(await screen.findByLabelText(ll.powerPassword()), { target: { value: 'hunter2' } })
+    await fireEvent.click(screen.getByRole('button', { name: ll.confirm() }))
     await waitFor(() => expect(getFirewall).toHaveBeenLastCalledWith(undefined, 'hunter2'))
     expect(await screen.findByText('ufw 0.36.2')).toBeInTheDocument()
   })
@@ -157,20 +163,20 @@ describe('Firewall page', () => {
       plan_id: 'p1',
     })
     render(Firewall, { onback: () => {} })
-    await fireEvent.click(await screen.findByRole('button', { name: /delete rule/i }))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.fwDeleteRule({ rule: ruleText(sshRule) }) }))
     const change = { kind: 'ufw', change: { type: 'delete_rule', tuples: sshRule.tuples } }
     expect(planFirewall).toHaveBeenCalledWith(change, undefined)
 
-    expect(await screen.findByText(/SSH \(port 22\): new connection attempts will be refused/)).toBeInTheDocument()
-    expect(screen.getByRole('checkbox', { name: /keep these ports open before continuing/i })).toBeChecked()
+    expect(await screen.findByText(sshRefused())).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: (name) => name.startsWith(ll.fwKeepOpen()) })).toBeChecked()
     // Nothing runs until the countdown is over and the user confirms.
-    const confirm = screen.getByRole('button', { name: /confirm \(3\)/i })
+    const confirm = screen.getByRole('button', { name: `${ll.confirm()} (3)` })
     expect(confirm).toBeDisabled()
     expect(actFirewall).not.toHaveBeenCalled()
-    await waitFor(() => expect(screen.getByRole('button', { name: /^confirm$/i })).toBeEnabled(), {
+    await waitFor(() => expect(screen.getByRole('button', { name: ll.confirm() })).toBeEnabled(), {
       timeout: 4000,
     })
-    await fireEvent.click(screen.getByRole('button', { name: /^confirm$/i }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.confirm() }))
     await waitFor(() => expect(actFirewall).toHaveBeenCalledWith(change, true, undefined, 'p1'))
   })
 
@@ -182,7 +188,7 @@ describe('Firewall page', () => {
       plan_id: 'p0',
     })
     render(Firewall, { onback: () => {} })
-    const add = await screen.findAllByRole('button', { name: /^add$/i })
+    const add = await screen.findAllByRole('button', { name: ll.add() })
     // Services is the third list.
     await fireEvent.click(add[2])
     await fireEvent.click(submitAdd())
@@ -205,13 +211,13 @@ describe('Firewall page', () => {
       plan_id: 'new',
     })
     render(Firewall, { onback: () => {} })
-    await fireEvent.click(await screen.findByRole('button', { name: /^reload$/i }))
-    await fireEvent.click(await screen.findByRole('button', { name: /^confirm$/i }))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.fwReload() }))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.confirm() }))
     const change = { kind: 'ufw', change: { type: 'reload' } }
     await waitFor(() => expect(actFirewall).toHaveBeenCalledWith(change, false, undefined, 'old'))
     // Nothing ran; the plan as it is now is asked about instead.
-    expect(await screen.findByText(/SSH \(port 22\): new connection attempts will be refused/)).toBeInTheDocument()
-    await fireEvent.click(screen.getByRole('button', { name: /^confirm$/i }))
+    expect(await screen.findByText(sshRefused())).toBeInTheDocument()
+    await fireEvent.click(screen.getByRole('button', { name: ll.confirm() }))
     await waitFor(() => expect(actFirewall).toHaveBeenLastCalledWith(change, false, undefined, 'new'))
   })
 
@@ -220,7 +226,7 @@ describe('Firewall page', () => {
     let answer: (v: Awaited<ReturnType<typeof api.planFirewall>>) => void = () => {}
     planFirewall.mockReturnValue(new Promise((resolve) => (answer = resolve)))
     render(Firewall, { onback: () => {} })
-    await fireEvent.click(await screen.findByRole('button', { name: /^reload$/i }))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.fwReload() }))
     servers.add('https://another.example')
     answer({ sudo_required: false, plan: plan({ confirm: false }), plan_id: 'p' })
     await new Promise((r) => setTimeout(r, 50))
@@ -236,12 +242,12 @@ describe('Firewall page', () => {
       }),
     )
     render(Firewall, { onback: () => {} })
-    const add = await screen.findAllByRole('button', { name: /^add$/i })
+    const add = await screen.findAllByRole('button', { name: ll.add() })
     await fireEvent.click(add[1])
-    await fireEvent.input(screen.getByRole('textbox', { name: /sources/i }), { target: { value: 'not an address' } })
+    await fireEvent.input(screen.getByRole('textbox', { name: ll.fwSources() }), { target: { value: 'not an address' } })
     await fireEvent.click(submitAdd())
     await waitFor(() => expect(planFirewall).toHaveBeenCalled())
-    expect(await screen.findByText(/invalid source/i)).toBeInTheDocument()
+    expect(await screen.findByText(ll.fwInvalidSource())).toBeInTheDocument()
     expect(actFirewall).not.toHaveBeenCalled()
   })
 })
@@ -249,6 +255,6 @@ describe('Firewall page', () => {
 describe('firewall refusals', () => {
   it('a code this build does not know is shown as sent', () => {
     expect(refusalText('somethingNew')).toBe('somethingNew')
-    expect(refusalText('noSuchRule')).toMatch(/no longer exists/)
+    expect(refusalText('noSuchRule')).toBe(ll.fwNoSuchRule())
   })
 })

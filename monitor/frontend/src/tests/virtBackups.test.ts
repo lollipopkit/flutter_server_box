@@ -1,10 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { get } from 'svelte/store'
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import VirtBackups from '../components/VirtBackups.svelte'
 import VirtBackupJobs from '../components/VirtBackupJobs.svelte'
 import Virt from '../pages/Virt.svelte'
 import { api } from '../lib/api'
+import { LL } from '../i18n/i18n-svelte'
 import {
   backupIssueText,
   createIssueText,
@@ -51,6 +53,8 @@ const runBackupJob = vi.mocked(api.runBackupJob)
 const checkBackupSchedule = vi.mocked(api.checkBackupSchedule)
 const virtStorage = vi.mocked(api.virtStorage)
 const loadVirt = vi.mocked(api.loadVirt)
+
+const ll = get(LL)
 
 const ISSUES: VirtBackupIssue[] = [
   'schedule_empty',
@@ -169,12 +173,12 @@ describe('backups: the helpers', () => {
   })
 
   it('says which guests a job takes, and how', () => {
-    expect(selectionText(job({ all: true, vmids: [] }))).toBe('All guests')
-    expect(selectionText(job({ all: true, vmids: [], exclude: [101, 102] }))).toBe('All guests except 101, 102')
-    expect(selectionText(job({ vmids: [100, 101] }))).toBe('VMID 100, 101')
-    expect(selectionText(job({ pool: 'prod' }))).toBe('Pool prod')
-    expect(modeText('stop', '0')).toBe('stop · none')
-    expect(modeText(null, null)).toBe('snapshot · none')
+    expect(selectionText(job({ all: true, vmids: [] }))).toBe(ll.virtBakSelAll())
+    expect(selectionText(job({ all: true, vmids: [], exclude: [101, 102] }))).toBe(ll.virtBakSelAllExcept({ vmids: '101, 102' }))
+    expect(selectionText(job({ vmids: [100, 101] }))).toBe(ll.virtBakSelVmids({ vmids: '100, 101' }))
+    expect(selectionText(job({ pool: 'prod' }))).toBe(ll.virtBakSelPool({ pool: 'prod' }))
+    expect(modeText('stop', '0')).toBe(`stop · ${ll.virtBakCompressNone()}`)
+    expect(modeText(null, null)).toBe(`snapshot · ${ll.virtBakCompressNone()}`)
     expect(modeText('snapshot', 'zstd')).toBe('snapshot · zstd')
   })
 
@@ -194,8 +198,8 @@ describe('backups: the helpers', () => {
     d.keep['keep-last'] = ''
     expect(pruneString(d)).toBe('keep-daily=4,keep-weekly=2,keep-all=0')
     expect(pruneString(retentionDraft(null))).toBeNull()
-    expect(pruneText('keep-last=7,keep-daily=4')).toBe('Last 7 · Daily 4')
-    expect(pruneText(null)).toBe('The storage\'s own')
+    expect(pruneText('keep-last=7,keep-daily=4')).toBe(`${ll.virtBakKeepLast()} 7 · ${ll.virtBakKeepDaily()} 4`)
+    expect(pruneText(null)).toBe(ll.virtBakRetentionDefault())
   })
 
   it('turns a job into its editor and back, every field carried', () => {
@@ -253,17 +257,17 @@ describe('a guest\'s backups', () => {
     virtBackups.mockResolvedValue(listing({ backups: [] }))
     virtBackup.mockResolvedValue({ error: null })
     render(VirtBackups, { view: hostView(), guest: guest(), onchanged: () => {} })
-    expect(await screen.findByText('No backups.')).toBeInTheDocument()
-    await fireEvent.click(screen.getByRole('button', { name: /^back up now$/i }))
+    expect(await screen.findByText(ll.virtBakNone())).toBeInTheDocument()
+    await fireEvent.click(screen.getByRole('button', { name: ll.virtBakNow() }))
     await fireEvent.click(screen.getByRole('button', { name: /^stop$/i }))
     await fireEvent.click(screen.getByRole('button', { name: /^lzo$/i }))
-    await fireEvent.input(screen.getByPlaceholderText('Optional'), { target: { value: ' before upgrade ' } })
-    await fireEvent.click(screen.getByRole('checkbox', { name: /protected/i }))
-    await fireEvent.click(screen.getByRole('button', { name: /^start backup$/i }))
+    await fireEvent.input(screen.getByPlaceholderText(ll.virtBakOptional()), { target: { value: ' before upgrade ' } })
+    await fireEvent.click(screen.getByRole('checkbox', { name: ll.virtBakProtected() }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.virtBakStart() }))
     await waitFor(() =>
       expect(virtBackup).toHaveBeenCalledWith('qemu/100', { storage: 'local', mode: 'stop', compress: 'lzo', protected: true, notes: 'before upgrade' }),
     )
-    expect(await screen.findByText('Backed up web.')).toBeInTheDocument()
+    expect(await screen.findByText(ll.virtBakTaken({ name: 'web' }))).toBeInTheDocument()
     expect(virtBackups).toHaveBeenCalledTimes(2)
   })
 
@@ -271,8 +275,8 @@ describe('a guest\'s backups', () => {
     virtBackups.mockResolvedValue(listing())
     virtBackup.mockResolvedValue({ error: err({ detail: { code: 'backup_refused', issue: 'storage' } }) })
     render(VirtBackups, { view: hostView(), guest: guest(), onchanged: () => {} })
-    await fireEvent.click(await screen.findByRole('button', { name: /^back up now$/i }))
-    await fireEvent.click(screen.getByRole('button', { name: /^start backup$/i }))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.virtBakNow() }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.virtBakStart() }))
     expect(await screen.findByText(backupIssueText('storage'))).toBeInTheDocument()
   })
 
@@ -283,18 +287,18 @@ describe('a guest\'s backups', () => {
     const { rerender } = render(VirtBackups, { view: hostView(), guest: guest(), onchanged })
     await fireEvent.click(await screen.findByRole('button', { expanded: false }))
     // Running: as a new guest is what is offered first; over it is closed.
-    await fireEvent.click(screen.getByRole('button', { name: /^over this guest$/i }))
-    expect(screen.getByRole('button', { name: /^restore$/i })).toBeDisabled()
-    expect(screen.getByText('Shut it down first.')).toBeInTheDocument()
+    await fireEvent.click(screen.getByRole('button', { name: ll.virtBakOverGuest() }))
+    expect(screen.getByRole('button', { name: ll.virtBakRestore() })).toBeDisabled()
+    expect(screen.getByText(ll.virtStopFirst())).toBeInTheDocument()
 
     await rerender({ view: hostView(), guest: guest({ state: 'stopped' }), onchanged })
-    const restore = screen.getByRole('button', { name: /^restore$/i })
+    const restore = screen.getByRole('button', { name: ll.virtBakRestore() })
     expect(restore).toBeEnabled()
     await fireEvent.click(restore)
     expect(virtRestoreBackup).not.toHaveBeenCalled()
-    await fireEvent.click(screen.getByRole('button', { name: /^confirm: overwrite web$/i }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.virtBakConfirmRestore({ name: 'web' }) }))
     await waitFor(() => expect(virtRestoreBackup).toHaveBeenCalledWith('qemu/100', backup().id, {}))
-    expect(await screen.findByText('Restored web from the backup.')).toBeInTheDocument()
+    expect(await screen.findByText(ll.virtBakRestored({ name: 'web' }))).toBeInTheDocument()
     expect(onchanged).toHaveBeenCalled()
   })
 
@@ -303,10 +307,10 @@ describe('a guest\'s backups', () => {
     virtRestoreBackup.mockResolvedValue({ error: err({ kind: 'exists', detail: { code: 'create_refused', issue: 'vmid_taken' } }) })
     render(VirtBackups, { view: hostView(), guest: guest(), onchanged: () => {} })
     await fireEvent.click(await screen.findByRole('button', { expanded: false }))
-    await fireEvent.input(screen.getByPlaceholderText('Next free'), { target: { value: '120' } })
+    await fireEvent.input(screen.getByPlaceholderText(ll.virtVmidNext()), { target: { value: '120' } })
     const storage = await screen.findByRole('option', { name: 'local-lvm · dir' })
     await fireEvent.change(storage.closest('select')!, { target: { value: 'local-lvm' } })
-    await fireEvent.click(screen.getByRole('button', { name: /^restore$/i }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.virtBakRestore() }))
     await waitFor(() => expect(virtRestoreBackup).toHaveBeenCalledWith('qemu/100', backup().id, { vmid: 120, storage: 'local-lvm' }))
     expect(await screen.findByText(createIssueText('vmid_taken'))).toBeInTheDocument()
   })
@@ -317,10 +321,10 @@ describe('a guest\'s backups', () => {
     virtDeleteBackup.mockResolvedValue({ error: null })
     render(VirtBackups, { view: hostView(), guest: guest(), onchanged: () => {} })
     await fireEvent.click(await screen.findByRole('button', { expanded: false }))
-    expect(screen.getByRole('button', { name: /^delete$/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: ll.virtBakDelete() })).toBeDisabled()
     await fireEvent.input(screen.getByDisplayValue('nightly'), { target: { value: 'kept' } })
-    await fireEvent.click(screen.getByRole('checkbox', { name: /protected/i }))
-    await fireEvent.click(screen.getByRole('button', { name: /^save$/i }))
+    await fireEvent.click(screen.getByRole('checkbox', { name: `${ll.virtBakProtected()} ${ll.virtBakProtectedNote()}` }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.save() }))
     await waitFor(() => expect(virtEditBackup).toHaveBeenCalledWith('qemu/100', backup().id, { notes: 'kept', protected: false }))
 
     virtBackups.mockResolvedValue(listing())
@@ -328,10 +332,10 @@ describe('a guest\'s backups', () => {
     render(VirtBackups, { view: hostView(), guest: guest({ id: 'qemu/101' }), onchanged: () => {} })
     const rows = await screen.findAllByRole('button', { expanded: false })
     await fireEvent.click(rows.at(-1)!)
-    const del = screen.getAllByRole('button', { name: /^delete$/i }).find((b) => !(b as HTMLButtonElement).disabled)!
+    const del = screen.getAllByRole('button', { name: ll.virtBakDelete() }).find((b) => !(b as HTMLButtonElement).disabled)!
     await fireEvent.click(del)
     expect(virtDeleteBackup).not.toHaveBeenCalled()
-    await fireEvent.click(screen.getByRole('button', { name: /^confirm: delete backup$/i }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.virtBakConfirmDelete() }))
     await waitFor(() => expect(virtDeleteBackup).toHaveBeenCalledWith('qemu/101', backup().id))
   })
 
@@ -342,20 +346,20 @@ describe('a guest\'s backups', () => {
     editBackupJob.mockResolvedValue({ error: null })
     const onjobs = vi.fn()
     render(VirtBackups, { view: hostView(), guest: guest(), onchanged: () => {}, onjobs })
-    expect(await screen.findByText('This job also includes other guests. Edit it on the Backup jobs page.')).toBeInTheDocument()
-    expect(screen.getAllByText('Last 7').length).toBe(2)
-    await fireEvent.click(screen.getByRole('button', { name: /datacenter/i }))
+    expect(await screen.findByText(ll.virtBakSharedJob())).toBeInTheDocument()
+    expect(screen.getAllByText(`${ll.virtBakKeepLast()} 7`).length).toBe(2)
+    await fireEvent.click(screen.getByRole('button', { name: ll.virtBakDatacenter() }))
     expect(onjobs).toHaveBeenCalled()
 
-    await fireEvent.click(screen.getByRole('button', { name: /^edit$/i }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.virtBakEditPlan() }))
     await fireEvent.input(screen.getByDisplayValue('02:00'), { target: { value: 'sat 03:00' } })
-    await fireEvent.click(screen.getByRole('button', { name: /^save$/i }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.save() }))
     await waitFor(() => expect(editBackupJob).toHaveBeenCalledTimes(1))
     expect(editBackupJob.mock.calls[0][0]).toMatchObject({ id: 'own', is_new: false, schedule: 'sat 03:00', vmids: [100], all: false, prune: 'keep-last=7' })
 
-    await fireEvent.click(await screen.findByRole('button', { name: /^remove schedule$/i }))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.virtBakRemovePlan() }))
     expect(editBackupJob).toHaveBeenCalledTimes(1)
-    await fireEvent.click(screen.getByRole('button', { name: /^confirm: remove job own$/i }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.virtBakConfirmRemovePlan({ id: 'own' }) }))
     await waitFor(() => expect(editBackupJob).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'own' }), true))
   })
 
@@ -363,9 +367,9 @@ describe('a guest\'s backups', () => {
     virtBackups.mockResolvedValue(listing({ jobs: [] }))
     editBackupJob.mockResolvedValue({ error: null })
     render(VirtBackups, { view: hostView(), guest: guest(), onchanged: () => {} })
-    expect(await screen.findByText('No backup job includes this guest.')).toBeInTheDocument()
-    await fireEvent.click(screen.getByRole('button', { name: /^add a schedule$/i }))
-    await fireEvent.click(screen.getByRole('button', { name: /^save$/i }))
+    expect(await screen.findByText(ll.virtBakNoPlan())).toBeInTheDocument()
+    await fireEvent.click(screen.getByRole('button', { name: ll.virtBakAddPlan() }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.save() }))
     await waitFor(() =>
       expect(editBackupJob).toHaveBeenCalledWith(expect.objectContaining({ is_new: true, storage: 'local', vmids: [100], all: false, schedule: '02:00' })),
     )
@@ -382,28 +386,28 @@ describe('the datacenter\'s backup jobs', () => {
     checkBackupSchedule.mockResolvedValueOnce({ check: { error: null, next: [1_790_000_000, 1_790_086_400, 1_790_172_800] }, error: null })
     checkBackupSchedule.mockResolvedValueOnce({ check: { error: 'value \'25:00\' out of range', next: [] }, error: null })
     render(VirtBackupJobs, { view: hostView() })
-    await fireEvent.click(await screen.findByRole('button', { name: /^new job$/i }))
-    await fireEvent.click(screen.getByRole('button', { name: /^validate$/i }))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.virtBakNewJob() }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.virtBakValidate() }))
     await waitFor(() => expect(checkBackupSchedule).toHaveBeenCalledWith('02:00'))
     expect(await screen.findByText(new Date(1_790_086_400 * 1000).toLocaleString())).toBeInTheDocument()
 
     await fireEvent.input(screen.getByDisplayValue('02:00'), { target: { value: '25:00' } })
     expect(screen.queryByText(new Date(1_790_086_400 * 1000).toLocaleString())).not.toBeInTheDocument()
-    await fireEvent.click(screen.getByRole('button', { name: /^validate$/i }))
-    expect(await screen.findByText('PVE does not take this schedule: value \'25:00\' out of range')).toBeInTheDocument()
+    await fireEvent.click(screen.getByRole('button', { name: ll.virtBakValidate() }))
+    expect(await screen.findByText(ll.virtBakScheduleRefused({ why: 'value \'25:00\' out of range' }))).toBeInTheDocument()
   })
 
   it('offers the chosen node\'s storages and sends the whole job', async () => {
     editBackupJob.mockResolvedValue({ error: null })
     render(VirtBackupJobs, { view: hostView() })
-    await fireEvent.click(await screen.findByRole('button', { name: /^new job$/i }))
-    const node = screen.getByRole('option', { name: 'Any node' }).closest('select')!
+    await fireEvent.click(await screen.findByRole('button', { name: ll.virtBakNewJob() }))
+    const node = screen.getByRole('option', { name: ll.virtBakAnyNode() }).closest('select')!
     await fireEvent.change(node, { target: { value: 'pve2' } })
-    const storage = screen.getByRole('option', { name: 'Pick a storage' }).closest('select')!
+    const storage = screen.getByRole('option', { name: ll.virtBakPickStorage() }).closest('select')!
     expect(within(storage).queryByRole('option', { name: 'nfs' })).toBeInTheDocument()
     await fireEvent.change(storage, { target: { value: 'nfs' } })
     await fireEvent.input(screen.getByPlaceholderText('101, 102'), { target: { value: '101 102' } })
-    await fireEvent.click(screen.getByRole('button', { name: /^save$/i }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.save() }))
     await waitFor(() =>
       expect(editBackupJob).toHaveBeenCalledWith(expect.objectContaining({ is_new: true, node: 'pve2', storage: 'nfs', all: true, exclude: [101, 102], vmids: [] })),
     )
@@ -413,15 +417,15 @@ describe('the datacenter\'s backup jobs', () => {
     let finish: (v: { error: null }) => void = () => {}
     runBackupJob.mockReturnValue(new Promise((r) => (finish = r)))
     render(VirtBackupJobs, { view: hostView() })
-    expect(await screen.findByText(/All guests except 101/)).toBeInTheDocument()
+    expect(await screen.findByText(ll.virtBakSelAllExcept({ vmids: '101' }), { exact: false })).toBeInTheDocument()
     await fireEvent.click(screen.getByRole('button', { expanded: false }))
-    await fireEvent.click(screen.getByRole('button', { name: /^run now$/i }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.virtBakRunNow() }))
     expect(runBackupJob).not.toHaveBeenCalled()
-    await fireEvent.click(screen.getByRole('button', { name: /^confirm: run nightly now$/i }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.virtBakConfirmRun({ id: 'nightly' }) }))
     expect(runBackupJob).toHaveBeenCalledWith('nightly')
-    expect(await screen.findByText('Running job nightly…')).toBeInTheDocument()
+    expect(await screen.findByText(ll.virtBakJobRunning({ id: 'nightly' }))).toBeInTheDocument()
     finish({ error: null })
-    expect(await screen.findByText('Job nightly finished.')).toBeInTheDocument()
+    expect(await screen.findByText(ll.virtBakJobRan({ id: 'nightly' }))).toBeInTheDocument()
   })
 })
 
@@ -437,12 +441,12 @@ describe('the virtualization page: backups', () => {
     view.guests = [guest({ template: true, state: 'stopped', actions: [] })]
     loadVirt.mockResolvedValue({ host: 'pve', supported: true, pve_configured: true, view, error: null })
     render(Virt, { onback: () => {} })
-    await fireEvent.click(await screen.findByRole('button', { name: /^backup$/i }))
-    expect(await screen.findByRole('button', { name: /^back up now$/i })).toBeInTheDocument()
+    await fireEvent.click(await screen.findByRole('button', { name: ll.virtViewBackup() }))
+    expect(await screen.findByRole('button', { name: ll.virtBakNow() })).toBeInTheDocument()
     expect(virtBackups).toHaveBeenCalledWith('qemu/100')
-    await fireEvent.click(screen.getByRole('button', { name: /datacenter/i }))
-    expect(await screen.findByText('No backup jobs.')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /^backup jobs$/i })).toHaveAttribute('aria-current', 'page')
+    await fireEvent.click(screen.getByRole('button', { name: ll.virtBakDatacenter() }))
+    expect(await screen.findByText(ll.virtBakNoJobs())).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: ll.virtSectionBackupJobs() })).toHaveAttribute('aria-current', 'page')
   })
 
   it('offers neither where it does not (libvirt)', async () => {
@@ -451,8 +455,8 @@ describe('the virtualization page: backups', () => {
     view.capabilities = { lxc: false, pause: true, cluster: false, backup: false, backup_jobs: false }
     loadVirt.mockResolvedValue({ host: 'libvirt', supported: true, pve_configured: false, view, error: null })
     render(Virt, { onback: () => {} })
-    expect(await screen.findByRole('button', { name: /^overview$/i })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /^backup$/i })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /^backup jobs$/i })).not.toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: ll.virtViewOverview() })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: ll.virtViewBackup() })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: ll.virtSectionBackupJobs() })).not.toBeInTheDocument()
   })
 })

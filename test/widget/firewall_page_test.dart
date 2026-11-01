@@ -170,7 +170,7 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.text(libL10n.active), findsOneWidget);
       expect(find.text('ufw 0.36.2'), findsOneWidget);
-      expect(find.text('Rules · 12'), findsOneWidget);
+      expect(find.text('${app_locale.l10n.firewallRules} · 12'), findsOneWidget);
       expect(find.text('22/tcp'), findsOneWidget);
       expect(find.text('ssh access'), findsOneWidget);
       await tester.scrollUntilVisible(find.text('My App'), 200);
@@ -183,7 +183,7 @@ void main() {
     testWidgets('fits a desktop window too', (tester) async {
       await pumpUfw(tester, size: const Size(1280, 800));
       expect(tester.takeException(), isNull);
-      expect(find.text('Rules · 12'), findsOneWidget);
+      expect(find.text('${app_locale.l10n.firewallRules} · 12'), findsOneWidget);
     });
 
     testWidgets('turning it off shows and runs ufw disable', (tester) async {

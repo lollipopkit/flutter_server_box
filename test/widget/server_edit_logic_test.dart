@@ -276,7 +276,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
 
       final keyAuth = find.descendant(
-        of: find.widgetWithText(ListTile, 'Key Auth'),
+        of: find.widgetWithText(ListTile, app_locale.l10n.keyAuth),
         matching: find.byType(Switch),
       );
       expect(keyAuth, findsOneWidget);

@@ -749,8 +749,8 @@ void main() {
   ) async {
     final handle = tester.ensureSemantics();
     for (final (conn, name) in [
-      (ServerConn.finished, 'Disconnect'),
-      (ServerConn.disconnected, 'Connect'),
+      (ServerConn.finished, l10n.disconnect),
+      (ServerConn.disconnected, l10n.connect),
     ]) {
       await pump(tester, promoted: null, onPromote: (_) {}, conn: conn);
       final data = tester
@@ -889,6 +889,8 @@ void main() {
       of: find.byType(ServerCard),
       matching: find.byType(ClipRRect),
     );
+    final mem = shortMetricName(libL10n.memory);
+    final disk = shortMetricName(libL10n.disk);
 
     testWidgets('draws one bar, and names what it is made of', (tester) async {
       await pump(
@@ -908,19 +910,19 @@ void main() {
       Color? nameColor(String name) =>
           tester.widget<Text>(find.text(name)).style?.color;
       expect(nameColor('CPU'), ChartPalette.cpu);
-      expect(nameColor('MEM'), ChartPalette.mem);
-      expect(nameColor('DISK'), ChartPalette.diskRead);
+      expect(nameColor(mem), ChartPalette.mem);
+      expect(nameColor(disk), ChartPalette.diskRead);
       // In the bar's own order.
       expect(
         tester.getCenter(find.text('CPU')).dx,
-        lessThan(tester.getCenter(find.text('MEM')).dx),
+        lessThan(tester.getCenter(find.text(mem)).dx),
       );
       expect(
-        tester.getCenter(find.text('MEM')).dx,
-        lessThan(tester.getCenter(find.text('DISK')).dx),
+        tester.getCenter(find.text(mem)).dx,
+        lessThan(tester.getCenter(find.text(disk)).dx),
       );
       // A swap is not part of the bar, and nobody is watching it.
-      expect(find.text('SWAP'), findsNothing);
+      expect(find.text(shortMetricName('Swap')), findsNothing);
     });
 
     testWidgets('keeps the bar and the watched number when narrow', (
@@ -938,9 +940,9 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(bar, findsOneWidget);
       expect(tester.getSize(bar).width, greaterThanOrEqualTo(48));
-      expect(find.text('MEM'), findsOneWidget);
+      expect(find.text(mem), findsOneWidget);
       expect(find.text('CPU'), findsNothing);
-      expect(find.text('DISK'), findsNothing);
+      expect(find.text(disk), findsNothing);
     });
 
     testWidgets('a watched reading the bar does not hold comes first', (

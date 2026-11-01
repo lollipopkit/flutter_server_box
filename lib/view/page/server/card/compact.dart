@@ -357,11 +357,9 @@ class ServerCardLoad extends StatelessWidget {
         child: Row(
           children: [
             Text(
-              // Three letters of it: the number beside it is what is being
+              // A few letters of it: the number beside it is what is being
               // read, and the width is the bar's.
-              m.label.length <= 4
-                  ? m.label.toUpperCase()
-                  : m.label.substring(0, 3).toUpperCase(),
+              shortMetricName(m.label),
               style: TextStyle(fontSize: 10, height: 1, color: name),
               maxLines: 1,
             ),
