@@ -249,7 +249,7 @@ fn disk_changes(seen: &mut Seen, disks: &[DiskHealth]) -> Vec<(String, &'static 
     let mut out = Vec::new();
     for d in disks.iter().filter(|d| d.supported) {
         let key = format!("disk:{}", d.device);
-        let failing = d.passed == Some(false) || d.last_test.as_ref().is_some_and(|t| t.outcome == "failed");
+        let failing = d.failing();
         if failing && seen.bad.insert(key.clone()) {
             out.push((key.clone(), "storage.diskFailing", serde_json::json!({ "device": d.device })));
         } else if !failing {
@@ -365,7 +365,7 @@ mod tests {
     }
 
     fn disk(device: &str, passed: bool, bad_sectors: i64) -> DiskHealth {
-        DiskHealth { device: device.into(), supported: true, asleep: false, passed: Some(passed), temperature: None, power_on_hours: None, bad_sectors: Some(bad_sectors), testing: None, last_test: None, attributes: vec![], tests: vec![] }
+        DiskHealth { device: device.into(), supported: true, asleep: false, passed: Some(passed), temperature: None, power_on_hours: None, bad_sectors: Some(bad_sectors), testing: None, last_test: None, attributes: vec![], tests: vec![], verdict: st::HealthVerdict::Healthy }
     }
 
     #[test]

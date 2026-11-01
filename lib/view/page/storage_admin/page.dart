@@ -616,15 +616,13 @@ extension on _StoragePageState {
     _ => code,
   };
 
-  String _healthText(DiskHealth health) {
-    if (health.asleep) return l10n.storageHealthAsleep;
-    if (!health.supported) return l10n.storageHealthUnsupported;
-    if (health.passed == false || health.lastTest?.outcome == 'failed') {
-      return l10n.storageHealthFailing;
-    }
-    if ((health.badSectors ?? 0) > 0) return l10n.storageHealthWearing;
-    return l10n.storageHealthy;
-  }
+  String _healthText(DiskHealth health) => switch (health.verdict) {
+    'asleep' => l10n.storageHealthAsleep,
+    'unsupported' => l10n.storageHealthUnsupported,
+    'failing' => l10n.storageHealthFailing,
+    'wearing' => l10n.storageHealthWearing,
+    _ => l10n.storageHealthy,
+  };
 
   String _healthFacts(DiskHealth health) => [
     if (health.testing != null) l10n.storageTesting(health.testing!),

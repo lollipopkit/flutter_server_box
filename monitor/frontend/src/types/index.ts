@@ -3125,6 +3125,9 @@ export interface HealthReading {
 }
 
 /// `sbm_parser::storage::DiskHealth`.
+/// What a disk's SMART reading says.
+export type HealthVerdict = 'healthy' | 'wearing' | 'failing' | 'unsupported' | 'asleep'
+
 export interface DiskHealth {
   device: string
   /// The disk answers SMART; false for a virtual disk or a USB bridge.
@@ -3138,6 +3141,8 @@ export interface DiskHealth {
   /// Percent left of a self-test running now.
   testing: number | null
   last_test: SelfTestResult | null
+  /// What the reading says, for the disk's badge.
+  verdict: HealthVerdict
   /// Every attribute the disk reports (ATA) or its NVMe health log fields;
   /// absent from older agents.
   attributes?: SmartAttribute[]

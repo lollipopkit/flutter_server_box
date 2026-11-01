@@ -349,6 +349,7 @@ final class DiskHealth {
     required this.lastTest,
     required this.attributes,
     required this.tests,
+    required this.verdict,
   });
 
   factory DiskHealth.fromJson(Map<String, Object?> json) => DiskHealth(
@@ -371,6 +372,7 @@ final class DiskHealth {
       for (final item in (json['tests'] as List? ?? const []))
         SelfTest.fromJson(item as Map<String, Object?>),
     ],
+    verdict: json['verdict'] as String,
   );
 
   final String device;
@@ -384,6 +386,10 @@ final class DiskHealth {
   final SelfTest? lastTest;
   final List<SmartAttribute> attributes;
   final List<SelfTest> tests;
+
+  /// What the reading says: `healthy`, `wearing`, `failing`, `unsupported`,
+  /// `asleep`.
+  final String verdict;
 }
 
 final class SmartAttribute {

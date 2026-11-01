@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import StorageApp from '../desk/apps/storage/StorageApp.svelte'
-import { arrayDevice, disksOf, isLuks, opened, verdict, volumesOf } from '../desk/apps/storage/model'
+import { arrayDevice, disksOf, isLuks, opened, volumesOf } from '../desk/apps/storage/model'
 import { LL } from '../i18n/i18n-svelte'
 import { api, ApiError } from '../lib/api'
 import { servers } from '../lib/servers.svelte'
@@ -80,12 +80,13 @@ const health = (device: string, extra: Partial<DiskHealth> = {}): DiskHealth => 
   bad_sectors: 0,
   testing: null,
   last_test: null,
+  verdict: 'healthy',
   ...extra,
 })
 
 const reading: HealthReading = {
   at: Math.floor(Date.now() / 1000),
-  disks: [health('/dev/sda', { testing: 90 }), health('/dev/sdb', { bad_sectors: 8 }), health('/dev/sdc', { supported: false, passed: null }), health('/dev/sdd', { supported: false, asleep: true })],
+  disks: [health('/dev/sda', { testing: 90 }), health('/dev/sdb', { bad_sectors: 8, verdict: 'wearing' }), health('/dev/sdc', { supported: false, passed: null, verdict: 'unsupported' }), health('/dev/sdd', { supported: false, asleep: true, verdict: 'asleep' })],
 }
 
 describe('the storage model', () => {
@@ -104,13 +105,6 @@ describe('the storage model', () => {
     const luks = dev('/dev/sdc1', 'part', { fstype: 'crypto_LUKS', children: [mapper] })
     expect([isLuks(luks), opened(luks)?.path, opened({ ...luks, children: [] })]).toEqual([true, '/dev/mapper/luks-1', undefined])
     expect(volumesOf(dev('/dev/sdd', 'disk', { fstype: 'crypto_LUKS', children: [mapper] })).map((v) => v.path)).toEqual(['/dev/sdd'])
-  })
-
-  it('says what a disk\'s SMART says', () => {
-    expect(reading.disks.map(verdict)).toEqual(['healthy', 'wearing', 'unsupported', 'asleep'])
-    expect(verdict(health('/dev/sde', { passed: false }))).toBe('failing')
-    expect(verdict(health('/dev/sde', { last_test: { long: true, outcome: 'failed', hours: 1 } }))).toBe('failing')
-    expect(verdict(health('/dev/sde', { last_test: { long: false, outcome: 'aborted', hours: 1 } }))).toBe('healthy')
   })
 
   it('keeps the system\'s mounts and firmware partitions', async () => {

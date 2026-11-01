@@ -545,6 +545,40 @@ pub struct DiskHealth {
     /// Self-tests that ended, newest first.
     #[serde(default)]
     pub tests: Vec<SelfTest>,
+    /// What the reading says, for the disk's badge.
+    pub verdict: HealthVerdict,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum HealthVerdict {
+    Healthy,
+    /// Bad sectors, the disk's own verdict still passing.
+    Wearing,
+    Failing,
+    Unsupported,
+    Asleep,
+}
+
+impl DiskHealth {
+    /// The disk's own verdict failed, or its last self-test did.
+    pub fn failing(&self) -> bool {
+        self.passed == Some(false) || self.last_test.as_ref().is_some_and(|t| t.outcome == "failed")
+    }
+
+    fn verdict(&self) -> HealthVerdict {
+        if self.asleep {
+            HealthVerdict::Asleep
+        } else if !self.supported {
+            HealthVerdict::Unsupported
+        } else if self.failing() {
+            HealthVerdict::Failing
+        } else if self.bad_sectors.unwrap_or(0) > 0 {
+            HealthVerdict::Wearing
+        } else {
+            HealthVerdict::Healthy
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -616,6 +650,7 @@ fn health_of(device: &str, d: Value) -> DiskHealth {
             last_test: None,
             attributes: Vec::new(),
             tests: Vec::new(),
+            verdict: if asleep { HealthVerdict::Asleep } else { HealthVerdict::Unsupported },
         };
     }
     let attrs = d["ata_smart_attributes"]["table"].as_array();
@@ -626,7 +661,7 @@ fn health_of(device: &str, d: Value) -> DiskHealth {
     } else {
         nvme["media_errors"].as_i64().or_else(|| d["scsi_grown_defect_list"].as_i64())
     };
-    DiskHealth {
+    let mut health = DiskHealth {
         device: device.into(),
         supported: true,
         asleep: false,
@@ -638,7 +673,10 @@ fn health_of(device: &str, d: Value) -> DiskHealth {
         last_test: self_tests(&d).into_iter().next(),
         attributes: attributes(&d),
         tests: self_tests(&d),
-    }
+        verdict: HealthVerdict::Healthy,
+    };
+    health.verdict = health.verdict();
+    health
 }
 
 fn attributes(d: &Value) -> Vec<SmartAttribute> {
@@ -1735,6 +1773,15 @@ md127 : inactive sdg[0](S)\n      976630488 blocks super 1.2\n\nunused devices: 
         assert!(!h[5].asleep && !h[5].supported);
         assert!(!h[6].supported);
         assert!(parse_health("").is_empty());
+
+        use HealthVerdict::*;
+        let verdicts: Vec<HealthVerdict> = h.iter().map(|d| d.verdict).collect();
+        assert_eq!(verdicts, [Healthy, Healthy, Unsupported, Failing, Asleep, Unsupported, Unsupported]);
+        // Bad sectors with nothing failed: wearing; an aborted test is no verdict.
+        let aborted = SelfTest { long: false, outcome: "aborted".into(), hours: Some(1) };
+        assert_eq!(DiskHealth { last_test: Some(aborted.clone()), ..ata.clone() }.verdict(), Wearing);
+        assert_eq!(DiskHealth { last_test: Some(aborted), bad_sectors: Some(0), ..ata.clone() }.verdict(), Healthy);
+        assert_eq!(DiskHealth { last_test: None, bad_sectors: Some(0), passed: Some(false), ..ata.clone() }.verdict(), Failing);
     }
 
     #[test]

@@ -13,10 +13,10 @@
   import { api, ApiError } from '../../../lib/api'
   import { fmtBytes, fmtEpochSeconds } from '../../../lib/format'
   import { servers } from '../../../lib/servers.svelte'
-  import type { BlockDevice, DiskHealth, HealthReading, MdArray, StackJob, StorageAction, StorageView, ZPool } from '../../../types'
+  import type { BlockDevice, DiskHealth, HealthReading, HealthVerdict, MdArray, StackJob, StorageAction, StorageView, ZPool } from '../../../types'
   import StorageConfirm from './StorageConfirm.svelte'
   import StorageMaintenance from './StorageMaintenance.svelte'
-  import { arrayDevice, deviceAt, disksOf, healthOf, isLuks, opened, shortName, verdict, volumesOf, type HealthVerdict } from './model'
+  import { arrayDevice, deviceAt, disksOf, healthOf, isLuks, opened, shortName, volumesOf } from './model'
   import { untrack } from 'svelte'
 
   type Tab = 'disks' | 'raid' | 'pools' | 'maintenance'
@@ -428,7 +428,7 @@
       {#each disks as d (d.path)}
         {@const why = busyText(d)}
         {@const health = healthOf(view, d.path)}
-        {@const badge = health && healthBadge(verdict(health))}
+        {@const badge = health && healthBadge(health.verdict)}
         <Group title={`${diskTitle(d)} · ${fmtBytes(d.size)}`}>
           <Row label={d.path} value={[kindText(d), d.transport?.toUpperCase(), d.serial].filter(Boolean).join(' · ')} mono>
             <div class="flex shrink-0 gap-[5px]">

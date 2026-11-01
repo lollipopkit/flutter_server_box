@@ -21,17 +21,6 @@ export function shortName(path: string): string {
   return path.replace(/^\/dev\//, '')
 }
 
-/// What a disk's SMART says, for its badge.
-export type HealthVerdict = 'healthy' | 'wearing' | 'failing' | 'unsupported' | 'asleep'
-
-export function verdict(h: DiskHealth): HealthVerdict {
-  if (h.asleep) return 'asleep'
-  if (!h.supported) return 'unsupported'
-  if (h.passed === false || h.last_test?.outcome === 'failed') return 'failing'
-  if ((h.bad_sectors ?? 0) > 0) return 'wearing'
-  return 'healthy'
-}
-
 /// [path]'s reading in the last one made, if it was read.
 export function healthOf(view: StorageView, path: string): DiskHealth | undefined {
   return view.health?.disks.find((d) => d.device === path)
