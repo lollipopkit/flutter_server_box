@@ -3518,7 +3518,7 @@ void _pveTestVm(_Agent agent) {
       }
       expect(g.actions, {VirtPowerAction.start});
       // A start straight after a stop meets `qmeventd`'s cleanup holding
-      // the config lock for 30 s (docs/dev/virt.md).
+      // the config lock for 30 s.
       await Future<void>.delayed(const Duration(seconds: 5));
       await w.host.power(g.id, VirtPowerAction.start);
       g = await settle((g) => g.state == VirtGuestState.running);
@@ -3628,7 +3628,7 @@ void _pveTestVm(_Agent agent) {
     });
 
     test('shutdown (ACPI), start, force stop', () async {
-      // Past the boot: an ACPI request during it is lost (docs/dev/virt.md).
+      // Past the boot: an ACPI request during it is lost.
       for (var i = 0; i < 60 && (vm().uptime?.inSeconds ?? 0) < 30; i++) {
         await Future<void>.delayed(const Duration(seconds: 1));
         await w.host.refresh();
@@ -4346,7 +4346,7 @@ final _dialerProvider = riverpod.Provider.family<ServerTcpDialer, Spi>(
 /// Runs [op] again while PVE refuses it on the guest's config lock (`can't
 /// lock file ... got timeout`), for up to a minute: a stop leaves
 /// `qmeventd`'s cleanup of the old QEMU process holding it for as long as
-/// 30 s (PVE 9.2, see docs/dev/virt.md).
+/// 30 s (PVE 9.2).
 Future<T> _pveWhileLocked<T>(Future<T> Function() op) async {
   final deadline = DateTime.now().add(const Duration(minutes: 1));
   while (true) {

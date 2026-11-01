@@ -1,4 +1,4 @@
-/// The example's service (`docs/dev/desk-sys.md`, "The backend").
+/// The example's service (`docs/src/content/docs/development/desk-app-reference.md`, "The backend").
 package example:uptime;
 
 interface api {

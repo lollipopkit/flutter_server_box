@@ -24,7 +24,7 @@ first, and the other stays available.
 |---|---|---|
 | Needs something installed on the server | no (an SSH server) | yes, the Monitor |
 | Status and charts | yes | yes, with history from before the app connected |
-| Terminal, commands, processes, containers, systemd, snippets, power, firewall | yes | yes, as the system account the agent runs as, over a secure transport |
+| Terminal, commands, processes, containers, systemd, snippets, power, firewall | yes | yes, as the system account the Monitor runs as, over a secure transport |
 | File browser | yes (SFTP) | yes, through the Monitor's file API, over a secure transport |
 | Port forwarding (local, dynamic, remote), remote desktop | yes | yes, over a secure transport (a Monitor older than the relay or the listener reports none: update it) |
 | SFTP transfers | yes | **never** — configure SSH for the same server too |
@@ -50,8 +50,8 @@ It is a configuration answer, not a bug. Details and the fix:
 
 You may be able to do this for the user: in the Agent tab you can run commands
 on their servers, each one approved by them. Before you change a Monitor's
-configuration, say what the change allows and wait for a yes — the agent's
-password is worth a shell as the account the agent runs as. Never install the
+configuration, say what the change allows and wait for a yes — the Monitor's
+password is worth a shell as the account the Monitor runs as. Never install the
 Monitor as root, and never open access the user did not ask for.
 Everything needed is in `references/monitor.md`.
 

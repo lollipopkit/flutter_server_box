@@ -4,6 +4,7 @@ import { deskApi } from '../desk/deskApi'
 import { servers } from '../lib/servers.svelte'
 import { get } from 'svelte/store'
 import { LL, setLocale } from '../i18n/i18n-svelte'
+import { i18nObject } from '../i18n/i18n-util'
 
 describe.each([
   ['JSON', () => api.getSettings()],
@@ -118,6 +119,6 @@ describe('a failure without words of its own', () => {
     vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new TypeError('Failed to fetch'))))
     await expect(getStatusFor(servers.current!)).rejects.toMatchObject({ code: 'unreachable' })
     await expect(loginTo('https://first.example', { password: 'pw' })).rejects.toMatchObject({ message: get(LL).agentUnreachable() })
-    expect(get(LL).agentUnreachable()).toBe('无法连接到 agent。')
+    expect(get(LL).agentUnreachable()).toBe(i18nObject('zh-CN').agentUnreachable())
   })
 })

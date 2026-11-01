@@ -1,9 +1,13 @@
+import { get } from 'svelte/store'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import StackProgress from '../components/stack/StackProgress.svelte'
+import { LL } from '../i18n/i18n-svelte'
 import { servers } from '../lib/servers.svelte'
 import type { StackJob } from '../types'
+
+const ll = get(LL)
 
 beforeEach(() => {
   servers.list = [{ id: 'local', url: '', token: 't' }]
@@ -29,6 +33,6 @@ describe('StackProgress', () => {
     const { getByLabelText } = render(StackProgress, { job: summary, title: 'Working', read, stop: null, ondone: () => {} })
     await new Promise((r) => setTimeout(r, 600))
     expect(read).toHaveBeenCalledWith(0)
-    expect(getByLabelText('Log').textContent).toBe(all.map((l) => l.text).join('\n'))
+    expect(getByLabelText(ll.stackLog()).textContent).toBe(all.map((l) => l.text).join('\n'))
   })
 })

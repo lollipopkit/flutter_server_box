@@ -81,7 +81,7 @@ describe('Services page', () => {
     render(Services)
     expect(await screen.findByText('nginx.service')).toBeInTheDocument()
 
-    await fireEvent.click(screen.getAllByRole('button', { name: /^failed/i })[0])
+    await fireEvent.click(screen.getAllByRole('button', { name: (n) => n.startsWith(ll.serviceStateFailed()) })[0])
     expect(screen.queryByText('nginx.service')).not.toBeInTheDocument()
     expect(screen.getByText('ssh.service')).toBeInTheDocument()
   })

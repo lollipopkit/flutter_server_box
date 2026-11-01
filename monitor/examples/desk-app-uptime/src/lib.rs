@@ -1,4 +1,4 @@
-//! The backend of an example desk app (`kind: wasm`, docs/dev/desk-sys.md):
+//! The backend of an example desk app (`kind: wasm`, docs/src/content/docs/development/desk-app-reference.md):
 //! a component exporting `api` (`wit/uptime.wit`). `status` answers the
 //! machine's name, uptime and CPU use from the agent's sample, `who` runs
 //! `who` as the agent's account (the `process` permission).

@@ -120,10 +120,10 @@ void main() {
     for (var i = 0; i < 6; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
-    expect(find.text('SMB'), findsOneWidget);
+    expect(find.text(app_locale.l10n.sharingSmb), findsOneWidget);
     expect(find.text('media'), findsOneWidget);
     expect(find.text('/srv/media'), findsOneWidget);
-    expect(find.text('Set up outside ServerBox'), findsNothing);
+    expect(find.text(app_locale.l10n.sharingElsewhere), findsNothing);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });

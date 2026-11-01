@@ -2442,7 +2442,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get localServerTip =>
-      'Считывает данные этого устройства напрямую, запуская здесь скрипт состояния. SSH и агент monitor не используются, их настройки сохраняются.';
+      'Считывает данные этого устройства напрямую, запуская здесь скрипт состояния. SSH и Monitor не используются, их настройки сохраняются.';
 
   @override
   String get localServerUnsupported =>
@@ -2797,7 +2797,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get monitorNoRemoteAccess =>
-      'Этот Monitor настроен только для мониторинга. Здесь нельзя открыть терминал, выполнять команды и просматривать файлы. Чтобы включить эти функции, измените раздел [remote_access] в config.toml этого Monitor.';
+      'Этот Monitor по незашифрованному HTTP отклоняет всё, кроме мониторинга. Подключитесь по HTTPS или разрешите HTTP и в Monitor, и в этом приложении.';
 
   @override
   String get monitorAgentTooOld =>
@@ -3120,7 +3120,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get monitorRelayForbidden =>
-      'Этой учётной записи Monitor запрещено подключаться к этому адресу. Разрешение connect её роли должно его разрешать.';
+      'Monitor отклонил это подключение: пароль изменился или он не принимает подключения по незашифрованному HTTP. Войдите снова или подключитесь по HTTPS.';
 
   @override
   String get remoteDesktopCertificateChanged =>
@@ -3397,7 +3397,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get virtErrRelayNotGranted =>
-      'Monitor не открывает TCP-подключения с сервера для этой учётной записи (разрешение connect)';
+      'Monitor не открывает TCP-подключения с сервера через это соединение.';
 
   @override
   String get virtErrExecNotGranted => 'Monitor не выполняет команды';
@@ -6875,7 +6875,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get storageNeedsSudo =>
-      'sudo запросил пароль: запустите agent от имени root или разрешите команды выше.';
+      'sudo запросил пароль: запустите Monitor от имени root или разрешите команды выше.';
 
   @override
   String get monitorTab => 'Monitor';
@@ -6894,15 +6894,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get monitorNoAgents =>
-      'Пока нет серверов, подключённых через агент Monitor.';
+      'Пока нет серверов, подключённых через Monitor.';
 
   @override
   String get monitorNotOffered =>
-      'Эта версия агента этого не поддерживает. Обновите агент.';
+      'Эта версия Monitor этого не поддерживает. Обновите Monitor.';
 
   @override
   String get monitorAlertsNotOffered =>
-      'Эта версия агента не сообщает об оповещениях.';
+      'Эта версия Monitor не сообщает об оповещениях.';
 
   @override
   String get monitorAlertsNone => 'Ни одно правило не срабатывает.';
@@ -6914,7 +6914,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String monitorAgentVersion(String version) {
-    return 'Агент $version';
+    return 'Monitor $version';
   }
 
   @override
@@ -7040,7 +7040,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String monitorAgentsCount(int count) {
-    return 'Агентов: $count';
+    return 'Monitor: $count';
   }
 
   @override
@@ -7071,7 +7071,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get monitorLiveNoDevices => 'Ни одно устройство не входило.';
 
   @override
-  String get monitorUpdateAgent => 'Обновить агент';
+  String get monitorUpdateAgent => 'Обновить Monitor';
 
   @override
   String get monitorAgentTooOldTip =>
@@ -7079,20 +7079,20 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get monitorAgentTooOldBody =>
-      'Этот агент выпущен до перехода на один пароль, и приложение не может войти. После обновления паролем станет пароль самой старой учётной записи администратора.';
+      'Этот Monitor выпущен до перехода на один пароль, и приложение не может войти. После обновления паролем станет пароль самой старой учётной записи администратора.';
 
   @override
   String monitorAgentOutdatedBody(String latest, String running) {
-    return 'Вышла $latest; у этого агента $running.';
+    return 'Вышла $latest; у этого Monitor $running.';
   }
 
   @override
   String get monitorUpdateRunHint =>
-      'Выполните на сервере от учётной записи, из-под которой устанавливали агент:';
+      'Выполните на сервере от учётной записи, из-под которой устанавливали Monitor:';
 
   @override
   String get monitorUpdateSshHint =>
-      'Терминал выполнит её. Если агент установлен для всей системы и терминал работает через SSH, sudo запросит там пароль.';
+      'Терминал выполнит её. Если Monitor установлен для всей системы и терминал работает через SSH, sudo запросит там пароль.';
 
   @override
   String get monitorUpdateNoSsh =>
@@ -7117,14 +7117,14 @@ class AppLocalizationsRu extends AppLocalizations {
       'Установлен модулем NixOS: обновите его через конфигурацию системы и пересоберите.';
 
   @override
-  String get noticeAgentUpdate => 'Доступно обновление агента';
+  String get noticeAgentUpdate => 'Доступно обновление Monitor';
 
   @override
   String get monitorUpdateLegacyUser => 'Имя учётной записи';
 
   @override
   String get monitorUpdateLegacyHint =>
-      'Этот агент ещё входит по имени учётной записи и паролю: имени, которое приложение использовало раньше (обычно admin), и сохранённому паролю.';
+      'Этот Monitor ещё входит по имени учётной записи и паролю: имени, которое приложение использовало раньше (обычно admin), и сохранённому паролю.';
 
   @override
   String get monitorUpdateNow => 'Обновить';
@@ -7134,11 +7134,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get monitorUpdateRestarting =>
-      'Агент перезапускается; подключение вернётся через несколько секунд…';
+      'Monitor перезапускается; подключение вернётся через несколько секунд…';
 
   @override
   String monitorUpdateDone(String version) {
-    return 'Обновлено: агент работает на $version.';
+    return 'Обновлено: Monitor работает на $version.';
   }
 
   @override
@@ -7146,7 +7146,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get monitorUpdateAgentHint =>
-      'Агент запускает установщик отдельно от себя, поэтому перезапуск не прерывает обновление. Подключение к нему на несколько секунд пропадёт; это окно следит за обновлением и после перезапуска.';
+      'Monitor запускает установщик отдельно от себя, поэтому перезапуск не прерывает обновление. Подключение к нему на несколько секунд пропадёт; это окно следит за обновлением и после перезапуска.';
 
   @override
   String get monitorUpdateSudoPassword => 'Пароль sudo';
@@ -7160,7 +7160,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get monitorUpdateNoAnswer =>
-      'Агент не вернулся. Проверьте его на сервере.';
+      'Monitor не вернулся. Проверьте его на сервере.';
 
   @override
   String get keyArrowDown => 'Стрелка вниз';

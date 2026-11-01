@@ -35,7 +35,7 @@ https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/in
 - 它监听的地址和端口
 - `loginctl show-user <user> -p Linger` 的结果。没有 linger,--user 服务会
   在我登出时停止。
-- config.toml 和数据库的权限位。配置里可能有推送凭据，数据库里有 agent 的
+- config.toml 和数据库的权限位。配置里可能有推送凭据，数据库里有 Monitor 的
   密码哈希，两者都不应该对同组或其他用户可读。
 ```
 
@@ -128,7 +128,7 @@ ServerBox app 没有为 <host> 上的 Monitor 提供 <功能>。请先查清原�
 | 需要在服务器上安装额外软件 | 否 | 是 |
 | 查看状态和图表 | 支持 | 支持 |
 | 查看 App 连接前的历史数据 | 不支持 | 支持 |
-| 终端、命令和文件浏览 | 支持 | 支持，以 agent 运行所用的账户执行 |
+| 终端、命令和文件浏览 | 支持 | 支持，以 Monitor 运行所用的账户执行 |
 | SFTP 传输 | 支持 | 不支持 |
 | 端口转发（本地、动态、远程）和远程桌面 | 支持 | 支持 |
 | 推送告警、主屏幕小组件和 Watch App | 不支持 | 支持 |
@@ -156,7 +156,7 @@ curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main
 
 `sh -s --` 后面的参数会传给安装脚本；执行 `uninstall` 和 `upgrade` 时也使用相同方式。仓库中也包含该脚本，可在 checkout 根目录运行 `./monitor/install.sh install`。此时使用的是 checkout 中的版本，可能与上述命令从 `main` 下载的版本不同。
 
-默认情况下，Monitor 以普通用户运行。登录后可以做该用户能做的一切，因此 agent 运行所用的账户决定了上限，详见[访问](#访问)。加上 `--system`（配合 `sudo`）则安装为 root 服务，登录后就是 root shell。
+默认情况下，Monitor 以普通用户运行。登录后可以做该用户能做的一切，因此 Monitor 运行所用的账户决定了上限，详见[访问](#访问)。加上 `--system`（配合 `sudo`）则安装为 root 服务，登录后就是 root shell。
 
 Monitor 从二进制文件所在目录读取 `config.toml`。所有可用配置项见 [`config.example.toml`](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/config.example.toml)。默认监听地址是 `0.0.0.0:3770`；该目录下存在 `frontend/dist` 时，Monitor 也会在此提供网页面板。
 
@@ -172,24 +172,24 @@ JWT secret、`database_url` 和 `[remote_access]`（是否允许明文、SSH 地
 
 ### 升级
 
-在服务器上，以安装 agent 时所用的账户运行：
+在服务器上，以安装 Monitor 时所用的账户运行：
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/install.sh | sh -s -- upgrade
 ```
 
-它会安装最新的 `monitor-v*` release，保留 `config.toml` 和数据库。不加 `--user` 或 `--system` 时，安装脚本会自行识别已安装的形式：`systemctl --user` unit、系统 unit 或 OpenRC 服务。后两种会通过 `sudo` 重新运行自身，并要求输入密码。找不到已安装的 agent 时（例如运行在 Docker 中）不做任何修改；Docker 请拉取新镜像并重建容器。
+它会安装最新的 `monitor-v*` release，保留 `config.toml` 和数据库。不加 `--user` 或 `--system` 时，安装脚本会自行识别已安装的形式：`systemctl --user` unit、系统 unit 或 OpenRC 服务。后两种会通过 `sudo` 重新运行自身，并要求输入密码。找不到已安装的 Monitor 时（例如运行在 Docker 中）不做任何修改；Docker 请拉取新镜像并重建容器。
 
-升级在 agent 运行时原地进行：先替换文件，最后重启。因此这条命令可以在 agent 自己打开的终端里运行；agent 重启时该终端会关闭，agent 几秒后恢复。
+升级在 Monitor 运行时原地进行：先替换文件，最后重启。因此这条命令可以在 Monitor 自己打开的终端里运行；Monitor 重启时该终端会关闭，Monitor 几秒后恢复。
 
 #### 在面板或 App 中更新
 
-agent 每 12 小时检查一次 release，有新版本时留下一条通知。agent 知道自己的安装方式：`install.sh`、容器、NixOS 模块或其他。只有 `install.sh` 安装的可以自行更新，其他方式会说明各自的更新方法。
+Monitor 每 12 小时检查一次 release，有新版本时留下一条通知。Monitor 知道自己的安装方式：`install.sh`、容器、NixOS 模块或其他。只有 `install.sh` 安装的可以自行更新，其他方式会说明各自的更新方法。
 
-更新在 agent 之外运行：systemd 下是一个独立的临时服务（`systemd-run`），其他情况下是一个独立的会话。agent 重启会断开经由它的所有连接（包括面板和 App 的连接），但不会中断更新。输出写入 agent 目录下的 `update.log`，重启后的 agent 会报告更新结果。OpenRC 下安装脚本需要 root，agent 会要求输入 sudo 密码；密码只用一次，不会保存。
+更新在 Monitor 之外运行：systemd 下是一个独立的临时服务（`systemd-run`），其他情况下是一个独立的会话。Monitor 重启会断开经由它的所有连接（包括面板和 App 的连接），但不会中断更新。输出写入 Monitor 目录下的 `update.log`，重启后的 Monitor 会报告更新结果。OpenRC 下安装脚本需要 root，Monitor 会要求输入 sudo 密码；密码只用一次，不会保存。
 
-- **面板**：**设置 → 服务器 → ServerBox Monitor** 显示当前版本和最新 release，可点 **立即检查** 和 **立即更新**。更新期间页面显示输出，agent 重启时会提示，恢复后显示新版本。点击通知会打开此页面。
-- **App**：**Monitor** 标签页会标出有新 release 的 agent，以及因版本过旧 App 无法登录的 agent。点击标记会打开同样的步骤，可点 **立即更新**。只用密码无法登录的旧 agent 仍需账户名：App 会请你填写账户名（通常是 `admin`），用它和已保存的密码登录一次，通过该 agent 的命令接口启动同样的更新。账户名不会保存。App 通过 SSH 连接服务器、而 agent 无法自行启动更新时，App 会在 SSH 终端中运行命令，重启不影响该终端。
+- **面板**：**设置 → 服务器 → ServerBox Monitor** 显示当前版本和最新 release，可点 **立即检查** 和 **立即更新**。更新期间页面显示输出，Monitor 重启时会提示，恢复后显示新版本。点击通知会打开此页面。
+- **App**：**Monitor** 标签页会标出有新 release 的 Monitor，以及因版本过旧 App 无法登录的 Monitor。点击标记会打开同样的步骤，可点 **立即更新**。只用密码无法登录的旧 Monitor 仍需账户名：App 会请你填写账户名（通常是 `admin`），用它和已保存的密码登录一次，通过该 Monitor 的命令接口启动同样的更新。账户名不会保存。App 通过 SSH 连接服务器、而 Monitor 无法自行启动更新时，App 会在 SSH 终端中运行命令，重启不影响该终端。
 
 ## App 能回溯多久
 
@@ -197,7 +197,7 @@ agent 每 12 小时检查一次 release，有新版本时留下一条通知。ag
 
 ## 面板凭据
 
-agent 只有一个账号，只用密码登录，没有用户名。密码保存在 Monitor 的 SQLite 数据库中，不在 `config.toml` 里配置。该文件中的 `jwt_secret` 用于签署会话 token，并不是密码。
+Monitor 只有一个账号，只用密码登录，没有用户名。密码保存在 Monitor 的 SQLite 数据库中，不在 `config.toml` 里配置。该文件中的 `jwt_secret` 用于签署会话 token，并不是密码。
 
 以下命令必须由运行 Monitor 的账户在其工作目录中执行：root 服务使用 `/opt/server-box-monitor`，其他情况使用 `~/.local/share/server-box-monitor`。`config.toml` 和数据库路径都相对于当前工作目录解析。如果在其他目录执行，命令会创建默认配置和空数据库，并成功修改一个实际服务不会使用的数据库。
 
@@ -260,15 +260,15 @@ Monitor HTTP 配置不会添加 SSH 凭据。若没有另外配置 SSH，App 只
 
 ## Monitor 标签页
 
-App 的 **Monitor** 标签页显示所有通过 Monitor agent 添加的服务器。新安装的 App 不会把它放在导航栏中：可以从 **更多** 打开，或在 **设置 › 应用 › 主页标签** 中添加。在宽屏窗口中，左侧一栏是各部分和服务器列表；在手机上，从栏上的标题切换部分，从服务器按钮切换服务器。
+App 的 **Monitor** 标签页显示所有通过 Monitor 添加的服务器。新安装的 App 不会把它放在导航栏中：可以从 **更多** 打开，或在 **设置 › 应用 › 主页标签** 中添加。在宽屏窗口中，左侧一栏是各部分和服务器列表；在手机上，从栏上的标题切换部分，从服务器按钮切换服务器。
 
-- **概览**：每个 agent 是否可连接、它的版本（落后时同时显示最新版本）、正在触发的[告警规则](#告警规则)及当前读数和持续时间，以及未读通知、异常或有更新的 Web 应用的入口。
+- **概览**：每个 Monitor 是否可连接、它的版本（落后时同时显示最新版本）、正在触发的[告警规则](#告警规则)及当前读数和持续时间，以及未读通知、异常或有更新的 Web 应用的入口。
 - **Web 应用**：见 [Monitor Web 应用](../monitor-apps/#在-serverbox-app-中打开应用)。
-- **通知**：agent 报告的事件，按时间倒序，以 App 的语言显示：规则开始触发、Web 应用停止运行、恢复或有更新、磁盘、阵列或存储池异常。已读状态与面板同步。
-- **审计日志**：一次显示一台服务器。包括登录（成功和被拒绝的，以及来源地址）、终端、命令、文件写入、主机管理、部署等，可按类型和结果筛选。只有在 agent 允许操作的连接上才会显示（HTTPS、本机回环，或开启了 `allow_insecure`）。
-- **会话与设备**：一次显示一台服务器。包括终端会话、经 agent 中转的连接（端口转发、远程桌面、控制台）、手表和小组件的令牌，以及用密码登录过的设备。可以结束会话或连接，也可以撤销令牌。忘记设备后，它下次登录会计入账户级的失败尝试限制；这不会让设备退出登录，因为保存了密码的设备会再次登录。要阻止某台设备，请修改密码。
+- **通知**：Monitor 报告的事件，按时间倒序，以 App 的语言显示：规则开始触发、Web 应用停止运行、恢复或有更新、磁盘、阵列或存储池异常。已读状态与面板同步。
+- **审计日志**：一次显示一台服务器。包括登录（成功和被拒绝的，以及来源地址）、终端、命令、文件写入、主机管理、部署等，可按类型和结果筛选。只有在 Monitor 允许操作的连接上才会显示（HTTPS、本机回环，或开启了 `allow_insecure`）。
+- **会话与设备**：一次显示一台服务器。包括终端会话、经 Monitor 中转的连接（端口转发、远程桌面、控制台）、手表和小组件的令牌，以及用密码登录过的设备。可以结束会话或连接，也可以撤销令牌。忘记设备后，它下次登录会计入账户级的失败尝试限制；这不会让设备退出登录，因为保存了密码的设备会再次登录。要阻止某台设备，请修改密码。
 
-agent 版本过旧、不提供某个部分时，该部分会显示提示。
+Monitor 版本过旧、不提供某个部分时，该部分会显示提示。
 
 ## 集成显卡监控
 
@@ -284,15 +284,15 @@ App 和 Monitor 采集数据时都不会等待交互式 `sudo` 输入。如果 S
 
 登录 Monitor 后，可以做 Monitor 运行所用的系统账户能做的一切：执行命令、进程、systemd、容器、代码片段、电源、计划任务、防火墙、终端、文件、远程桌面、端口转发，以及网页面板中的 Proxmox VE、libvirt 和 BMC 页面。没有角色，也没有按功能划分的权限；该系统账户就是上限。
 
-因此 `install.sh` 默认以普通用户运行 agent。使用 `--system` 时以 root 运行，登录后就是 root shell。若要限制 agent 能访问的范围，请以只能访问这些内容的账户安装它。
+因此 `install.sh` 默认以普通用户运行 Monitor。使用 `--system` 时以 root 运行，登录后就是 root shell。若要限制 Monitor 能访问的范围，请以只能访问这些内容的账户安装它。
 
-无论该账户能访问什么，文件 API 都不会提供 agent 自己的文件，包括数据库、`jwt.secret`、`credentials.key`、`config.toml` 及其备份、`.env`、TLS 密钥和证书、自定义命令，因为这些文件包含凭据。
+无论该账户能访问什么，文件 API 都不会提供 Monitor 自己的文件，包括数据库、`jwt.secret`、`credentials.key`、`config.toml` 及其备份、`.env`、TLS 密钥和证书、自定义命令，因为这些文件包含凭据。
 
-Monitor 保存的凭据（BMC 和 Proxmox VE 密码、Agent mode 的 provider key、MCP token、WebDAV 密码）在数据库中用同目录下的 `credentials.key` 加密。手动迁移 agent 时需要把这两个文件一起复制；缺少这个密钥时，这些凭据需要重新填写。设置备份不需要这个密钥。
+Monitor 保存的凭据（BMC 和 Proxmox VE 密码、Agent mode 的 provider key、MCP token、WebDAV 密码）在数据库中用同目录下的 `credentials.key` 加密。手动迁移 Monitor 时需要把这两个文件一起复制；缺少这个密钥时，这些凭据需要重新填写。设置备份不需要这个密钥。
 
 ### 从有多个账号的 Monitor 升级
 
-旧版 agent 支持多个账号，并使用角色和权限。升级后，最早的 admin 账号的密码成为 agent 的密码。其他账号的 Agent mode 任务、memory 和桌面主题转移给它；它们的桌面布局、窗口和已配对的手表会被删除。角色和权限不会保留。
+旧版 Monitor 支持多个账号，并使用角色和权限。升级后，最早的 admin 账号的密码成为 Monitor 的密码。其他账号的 Agent mode 任务、memory 和桌面主题转移给它；它们的桌面布局、窗口和已配对的手表会被删除。角色和权限不会保留。
 
 该模型使用的 `config.toml` 配置项 —— `full_access`、`listen_public`、`[remote_access.terminal] enabled`、`[remote_access.fs] enabled` 和 `[remote_access.fs] roots` —— 不再读取，可以删除。
 
@@ -333,7 +333,7 @@ Monitor HTTP 连接不支持 SFTP：SFTP 运行在 SSH channel 上。文件 API 
 | `discord` | `webhook_url` | `content`、`username`、`avatar_url`、`thread_id` |
 | `ntfy` | `topic` | `server`、`title`、`message`、`priority`、`tags`、`click`、`icon`、`attach`、`delay`、`email`、`markdown`、`token`、`username`、`password` |
 
-- **从环境变量读取凭据**：在 `config.toml` 中，凭据字段（`sc_key`、Bark 的 `key` 和 `cipher_key`、iOS 的 `token`、webhook 的 header 值、SMTP 和 ntfy 的 `password`、ntfy 的 `token`、`bot_token`、`webhook_url`）可以用 `${NAME}` 引用环境变量，可以单独使用，也可以写在值中间（`Authorization = "Bearer ${HA_TOKEN}"`）；`$${` 表示字面的 `${`。发送通知时从 agent 的环境变量或 `.env` 读取，`config.toml` 中保留引用本身。变量未设置或为空时，保存会被拒绝，发送也会失败，错误中会给出变量名。其他设置不做替换。在 App 或网页面板中填写的凭据按原样保存，不会被当作引用，因此登录后无法通过这里读取 agent 的环境变量。
+- **从环境变量读取凭据**：在 `config.toml` 中，凭据字段（`sc_key`、Bark 的 `key` 和 `cipher_key`、iOS 的 `token`、webhook 的 header 值、SMTP 和 ntfy 的 `password`、ntfy 的 `token`、`bot_token`、`webhook_url`）可以用 `${NAME}` 引用环境变量，可以单独使用，也可以写在值中间（`Authorization = "Bearer ${HA_TOKEN}"`）；`$${` 表示字面的 `${`。发送通知时从 Monitor 的环境变量或 `.env` 读取，`config.toml` 中保留引用本身。变量未设置或为空时，保存会被拒绝，发送也会失败，错误中会给出变量名。其他设置不做替换。在 App 或网页面板中填写的凭据按原样保存，不会被当作引用，因此登录后无法通过这里读取 Monitor 的环境变量。
 - **Bark**：设置 `cipher_key` 后，通知内容使用 AES-CBC 加密（16、24 或 32 个字符的 key，分别对应 AES-128/192/256）。在 Bark App 的“推送加密”中填写相同的 key 和算法。Bark 服务器只能收到 device key 和密文。
 - **SMTP**：`security` 可选 `starttls`（587 端口，默认）、`tls`（465）或 `none`（25）。使用 `none` 时，只有服务器在本机才接受密码。`to` 可以填写多个地址，用逗号分隔。
 - **Telegram**：设置 `parse_mode` 后，消息内容和服务器名称会按该模式转义，只有你自己写的 `text` 会被当作标记解析。
@@ -439,7 +439,7 @@ threshold = ">=70c"
 
 ## 故障排除
 
-**功能缺失或显示为灰色。** App 显示的是 Monitor 上报的功能。读取监控数据以外的功能都需要 HTTPS 或同机调用方，见[明文 HTTP](#明文-http)。早于某项功能的 Monitor 不会上报它，请更新 agent。修改 `config.toml` 后需要重启 Monitor。
+**功能缺失或显示为灰色。** App 显示的是 Monitor 上报的功能。读取监控数据以外的功能都需要 HTTPS 或同机调用方，见[明文 HTTP](#明文-http)。早于某项功能的 Monitor 不会上报它，请更新 Monitor。修改 `config.toml` 后需要重启 Monitor。
 
 **操作因权限不足失败。** Monitor 以它运行的系统账户执行操作，无法访问该账户访问不到的内容。见[访问](#访问)。
 

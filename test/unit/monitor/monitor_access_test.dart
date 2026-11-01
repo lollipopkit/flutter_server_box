@@ -1,5 +1,5 @@
 /// `MonitorHttpClient` against a stand-in for an agent with one account: the
-/// login and password shapes `docs/dev/monitor-permissions.md` fixes, and the
+/// login and password shapes `docs/src/content/docs/development/monitor-agent.md` fixes, and the
 /// `access` answer of `/capabilities`.
 library;
 

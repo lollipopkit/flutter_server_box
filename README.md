@@ -111,7 +111,7 @@ Download packages only from sources you trust.
   - [`serverbox-onboarding`](.claude/skills/serverbox-onboarding): working on the code — setting up the Flutter + Rust + Node environment, building and testing, and how the project works.
   - [`serverbox-theme`](.claude/skills/serverbox-theme): making a theme package (`.fsbt`), validating it and publishing it to the theme store.
 
-  Their source is in this repository, so you can read what they will tell your agent before installing them.
+  Their source is in this repository, so you can read what they will tell your Monitor before installing them.
 
 Before opening an issue, please:
 

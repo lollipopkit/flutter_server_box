@@ -1,5 +1,5 @@
 /// An app's handle on the window it runs in: the one way an app reaches the
-/// desk (see `docs/dev/desk-sys.md`).
+/// desk (see `docs/src/content/docs/development/desk-app-reference.md`).
 
 import { getContext, untrack } from 'svelte'
 import type { MenuEntry } from '../lk/Menu.svelte'

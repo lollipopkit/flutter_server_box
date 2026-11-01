@@ -1,6 +1,6 @@
 # Example desk app
 
-A `web` desk app (`docs/dev/desk-sys.md`): a counter kept in the app's
+A `web` desk app (`docs/src/content/docs/development/desk-app-reference.md`): a counter kept in the app's
 storage, a toolbar button and a menu that send a notification.
 
 Package it and install it as an admin (Settings → Apps, or the API):

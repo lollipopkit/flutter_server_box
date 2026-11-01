@@ -2297,7 +2297,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get localServerTip =>
-      'ステータススクリプトをこのデバイス上で実行して直接読み取ります。SSH と Monitor エージェントは使用せず、その設定は保持されます。';
+      'ステータススクリプトをこのデバイス上で実行して直接読み取ります。SSH と Monitorは使用せず、その設定は保持されます。';
 
   @override
   String get localServerUnsupported =>
@@ -2643,7 +2643,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get monitorNoRemoteAccess =>
-      'この Monitor は監視専用に設定されています。ここからターミナルを開いたり、コマンドを実行したり、ファイルを閲覧したりすることはできません。これらの機能を有効にするには、Monitor の config.toml にある [remote_access] を編集してください。';
+      'この Monitor は暗号化されていない HTTP では監視以外の操作を拒否します。HTTPS で接続するか、Monitor とこのアプリの両方で HTTP を許可してください。';
 
   @override
   String get monitorAgentTooOld =>
@@ -2947,7 +2947,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get monitorRelayForbidden =>
-      'この Monitor アカウントはこのアドレスに接続できません。ロールの connect 権限でこのアドレスを許可する必要があります。';
+      'Monitor がこの接続を拒否しました。パスワードが変更されたか、暗号化されていない HTTP での接続を受け付けていません。再度サインインするか、HTTPS で接続してください。';
 
   @override
   String get remoteDesktopCertificateChanged => 'リモートデスクトップの証明書が変更されました';
@@ -3208,8 +3208,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get virtErrCertChanged => 'ホストの証明書が変更されました';
 
   @override
-  String get virtErrRelayNotGranted =>
-      'Monitor はこのアカウントに、サーバーからの TCP 接続を許可していません（connect 権限）';
+  String get virtErrRelayNotGranted => 'Monitor はこの接続経由でサーバーから TCP 接続を開始しません。';
 
   @override
   String get virtErrExecNotGranted => 'Monitor はコマンドを実行しません';
@@ -6545,7 +6544,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get storageNeedsSudo =>
-      'sudo がパスワードを要求しました。agent を root として実行するか、上記のコマンドを許可してください。';
+      'sudo がパスワードを要求しました。Monitor を root として実行するか、上記のコマンドを許可してください。';
 
   @override
   String get monitorTab => 'Monitor';
@@ -6563,14 +6562,14 @@ class AppLocalizationsJa extends AppLocalizations {
   String get monitorLive => 'セッションとデバイス';
 
   @override
-  String get monitorNoAgents => 'Monitor エージェント経由で接続しているサーバーはまだありません。';
+  String get monitorNoAgents => 'Monitor 経由で接続しているサーバーはまだありません。';
 
   @override
   String get monitorNotOffered =>
-      'このバージョンのエージェントには、この機能がありません。エージェントを更新してください。';
+      'このバージョンのMonitorには、この機能がありません。Monitorを更新してください。';
 
   @override
-  String get monitorAlertsNotOffered => 'このバージョンのエージェントはアラートを報告しません。';
+  String get monitorAlertsNotOffered => 'このバージョンのMonitorはアラートを報告しません。';
 
   @override
   String get monitorAlertsNone => '発火中のルールはありません。';
@@ -6582,7 +6581,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String monitorAgentVersion(String version) {
-    return 'エージェント $version';
+    return 'Monitor $version';
   }
 
   @override
@@ -6708,7 +6707,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String monitorAgentsCount(int count) {
-    return 'エージェント $count 台';
+    return 'Monitor $count 台';
   }
 
   @override
@@ -6739,26 +6738,26 @@ class AppLocalizationsJa extends AppLocalizations {
   String get monitorLiveNoDevices => 'サインインしたデバイスはありません。';
 
   @override
-  String get monitorUpdateAgent => 'エージェントを更新';
+  String get monitorUpdateAgent => 'Monitorを更新';
 
   @override
   String get monitorAgentTooOldTip => '更新手順は Monitor タブにあります。';
 
   @override
   String get monitorAgentTooOldBody =>
-      'このエージェントは単一パスワード化以前のもので、このアプリからサインインできません。更新後のパスワードは、最も古い管理者アカウントのものになります。';
+      'このMonitorは単一パスワード化以前のもので、このアプリからサインインできません。更新後のパスワードは、最も古い管理者アカウントのものになります。';
 
   @override
   String monitorAgentOutdatedBody(String latest, String running) {
-    return '$latest が公開されています。このエージェントは $running です。';
+    return '$latest が公開されています。このMonitorは $running です。';
   }
 
   @override
-  String get monitorUpdateRunHint => 'サーバー上で、エージェントをインストールしたアカウントで実行します：';
+  String get monitorUpdateRunHint => 'サーバー上で、Monitorをインストールしたアカウントで実行します：';
 
   @override
   String get monitorUpdateSshHint =>
-      'ターミナルで実行します。システム全体にインストールしたエージェントを SSH のターミナルで更新する場合、sudo がそこでパスワードを求めます。';
+      'ターミナルで実行します。システム全体にインストールしたMonitorを SSH のターミナルで更新する場合、sudo がそこでパスワードを求めます。';
 
   @override
   String get monitorUpdateNoSsh =>
@@ -6781,14 +6780,14 @@ class AppLocalizationsJa extends AppLocalizations {
       'NixOS モジュールでインストールされています。システム構成で更新して rebuild してください。';
 
   @override
-  String get noticeAgentUpdate => 'エージェントの更新があります';
+  String get noticeAgentUpdate => 'Monitorの更新があります';
 
   @override
   String get monitorUpdateLegacyUser => 'アカウント名';
 
   @override
   String get monitorUpdateLegacyHint =>
-      'このエージェントはまだアカウント名とパスワードでサインインします。以前このアプリで使っていた名前（多くは admin）と保存済みのパスワードを使います。';
+      'このMonitorはまだアカウント名とパスワードでサインインします。以前このアプリで使っていた名前（多くは admin）と保存済みのパスワードを使います。';
 
   @override
   String get monitorUpdateNow => '今すぐ更新';
@@ -6797,11 +6796,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get monitorUpdating => '更新中…';
 
   @override
-  String get monitorUpdateRestarting => 'エージェントを再起動しています。数秒で接続が戻ります…';
+  String get monitorUpdateRestarting => 'Monitorを再起動しています。数秒で接続が戻ります…';
 
   @override
   String monitorUpdateDone(String version) {
-    return '更新しました。エージェントは $version で動作しています。';
+    return '更新しました。Monitorは $version で動作しています。';
   }
 
   @override
@@ -6809,7 +6808,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get monitorUpdateAgentHint =>
-      'エージェントはインストーラーを自分とは別に実行するため、再起動で更新が止まることはありません。その間エージェントへの接続は数秒切れますが、このウィンドウは再起動をまたいで進行を追います。';
+      'Monitorはインストーラーを自分とは別に実行するため、再起動で更新が止まることはありません。その間Monitorへの接続は数秒切れますが、このウィンドウは再起動をまたいで進行を追います。';
 
   @override
   String get monitorUpdateSudoPassword => 'sudo パスワード';
@@ -6822,7 +6821,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get monitorUpdateSudoRefused => 'sudo がこのパスワードを受け付けませんでした。';
 
   @override
-  String get monitorUpdateNoAnswer => 'エージェントが戻りません。サーバーで確認してください。';
+  String get monitorUpdateNoAnswer => 'Monitorが戻りません。サーバーで確認してください。';
 
   @override
   String get keyArrowDown => '下矢印';

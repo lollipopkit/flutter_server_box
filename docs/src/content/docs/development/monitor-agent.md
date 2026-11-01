@@ -82,11 +82,10 @@ now. The App includes `minutes` in each request, so Monitor versions that predat
 
 ## Access model
 
-The agent has one account, signed in with its password alone, and it may do
-whatever the system account the agent runs as may do. There are no roles,
-grants, or file roots. The full contract, including every request and response
-shape, is
-[docs/dev/monitor-permissions.md](https://github.com/lollipopkit/flutter_server_box/blob/main/docs/dev/monitor-permissions.md) in the repository.
+The Monitor has one account, signed in with its password alone, and it may do
+whatever the system account the Monitor runs as may do. There are no roles,
+grants, or file roots. The Monitor, the web panel, and the App share the
+contract below.
 
 Reading status, metrics, history, velocity, capabilities, and the card order
 needs a login or a watch token. A watch token can do nothing else; every other
@@ -96,8 +95,25 @@ endpoint answers it `401`.
 
 | Endpoint | Body |
 |---|---|
-| `POST /api/v1/login` | `password`; a `username` field is ignored |
-| `PUT /api/v1/me/password` | `current_password`, `new_password` (at least 8 characters) |
+| `POST /api/v1/login` | `password`, `device` (optional), `name` (optional); a `username` field is ignored. Answers `token` and, for a device the Monitor does not know, a new `device` token |
+| `PUT /api/v1/me/password` | `current_password`, `new_password` (at least 8 characters); answers `204` |
+
+A client keeps the `device` token per Monitor (the App in the Keychain or
+Keystore, the panel in `localStorage`) and sends it with every later sign-in.
+`name` is what the device is listed as under `GET /live`, else its User-Agent:
+at most 80 characters, control characters dropped. Every sign-in, accepted or
+refused, is an audit row (`login`, the address, and `device known`,
+`new device`, `wrong password` or `throttled`); it never holds the password or
+a token.
+
+Sign-ins are throttled per source address and per caller: a known device (its
+token is kept as a SHA-256 for 180 days since last use, the newest 64) on its
+own counter, every other client on one shared counter, and a signed-in caller
+entering the password again on a counter only such callers share. Failures
+from unknown clients therefore cannot lock out a device that signed in before.
+Three failures pass per address and per device, twenty on the shared counter;
+then the delay doubles from 1 s up to 5 min. A password change forgets every
+device.
 
 `server_box_monitor password` sets the password on the database from the
 command line (`--password-env VAR` reads it from the environment), creating
@@ -107,8 +123,7 @@ Some changes ask for the current password again in the body
 (`current_password`): changing the password, deploying a web app, changing its
 settings or removing it, revealing its first login, restoring or deleting a
 container backup, and approving or removing a desk app. It goes through the
-login throttle, per source address and on a counter only signed-in callers
-share. A wrong or missing one answers `403 reauth`; a run of wrong ones
+login throttle described above. A wrong or missing one answers `403 reauth`; a run of wrong ones
 answers `429 throttled` with `Retry-After`.
 
 Errors are `{"error": "<code>", "message": "..."}`:
@@ -120,16 +135,19 @@ Errors are `{"error": "<code>", "message": "..."}`:
 | `forbidden` | 403 | The transport rule refuses it |
 | `reauth` | 403 | `current_password` is missing or wrong |
 | `throttled` | 429 | Too many failed attempts |
+| `not_found` | 404 | An unknown `/api/v1/*` path |
 
 ### Password change
 
 A password change signs out everything else. Panel tokens issued before it
-answer `401` everywhere, watch tokens are deleted, and in a running agent
+answer `401` everywhere (a token from the same second still counts, so
+signing in again right after works), watch tokens and the LK Cloud session are
+deleted, and in a running Monitor
 terminal sessions, outstanding tickets, running Agent mode tasks, web app
 windows, relays, and listeners receive
 `{"type":"error","code":"password_changed"}` and are closed. A reset from the
-command line cannot reach a running agent's open connections; they end when
-the agent restarts.
+command line cannot reach a running Monitor's open connections; they end when
+the Monitor restarts.
 
 ### Transport
 
@@ -141,6 +159,17 @@ longer need them. Until then, `[remote_access.terminal] allow_insecure` and
 the App also needs **Allow insecure HTTP** for that server. Without either,
 capabilities report `access` with `why: insecure_transport`, and the
 endpoints answer `forbidden`.
+
+### Monitor tab endpoints
+
+| Endpoint | Answers | Rule |
+|---|---|---|
+| `GET /api/v1/alerts` | `checked_at`, `alerts`: `rule`, `monitor_type`, `matcher`, `threshold`, `value`, `since` for each rule firing at the last check (kept in memory: a restart forgets `since`) | Any login |
+| `GET /api/v1/update[?check=1]` | `version`, `latest`, `checked_at`, `error`, `outdated`, `install`, `command`, `needs_password`, `run`. The release is read every 12 hours; `check=1` reads it again, at most once a minute. `run` is `state` (`running`, `done`, `failed`, `interrupted`), `started_at`, `exit`, `lines` | Any login |
+| `POST /api/v1/update/run` | `202`. Takes `password` (sudo's) where `needs_password`; a wrong one is `403 sudo_password`. `409 not_script` when `install.sh` did not install the Monitor, `409 running` while an update runs. Audited | Transport |
+| `GET /api/v1/audit?limit&before&kind&result` | `entries` (`id`, `timestamp`, `kind`, `action`, `result`, `subject`, `remote_ip`, `ssh_user`, `detail`), newest first, and `next` for `before`. An unknown `kind` or `result` is `400 invalid_input` | Transport |
+| `GET /api/v1/live` | `sessions`, `connections`, `watch_tokens`, `devices` | Transport |
+| `DELETE /api/v1/live/{sessions,connections,devices}/{id}` | `204`, or `404` when it is gone. An ended session or connection is told `ended`; a forgotten device is not signed out, but its next sign-in counts as an unknown client's and gets a new token. Audited | Transport |
 
 ### File API
 
@@ -155,5 +184,5 @@ directories cannot be renamed, removed, or chmod-ed.
 ### Terminal endpoint
 
 The terminal of the App and of the web panel is a local shell running as the
-Monitor process user, on a PTY. The agent does not sign in to sshd: an `open`
+Monitor process user, on a PTY. The Monitor does not sign in to sshd: an `open`
 carrying SSH credentials is refused.

@@ -1,3 +1,4 @@
+import { get } from 'svelte/store'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
@@ -7,6 +8,7 @@ import StackWindowHarness from './fixtures/StackWindowHarness.svelte'
 import { Desk } from '../desk/deskState.svelte'
 import { enterUrl, pick } from '../components/stack/text'
 import { stackDeployed, stackOf } from '../components/stack/apps'
+import { LL } from '../i18n/i18n-svelte'
 import { api } from '../lib/api'
 import { capabilitiesStore } from '../lib/capabilities.svelte'
 import { servers } from '../lib/servers.svelte'
@@ -25,6 +27,7 @@ vi.mock('../lib/api', async (importOriginal) => ({
   },
 }))
 
+const ll = get(LL)
 const mocked = vi.mocked(api)
 
 const manifest: StackManifest = {
@@ -77,8 +80,8 @@ describe('the Immich window', () => {
     capabilitiesStore.byServer = { local: caps(false) }
     mocked.listStacks.mockResolvedValue({ apps: [app(null)] })
     render(StackHost, { stackId: 'futo.immich' })
-    expect(await screen.findByText('Not set up')).toBeInTheDocument()
-    expect(screen.getByText('This needs HTTPS, or a proxy on the same host.')).toBeInTheDocument()
+    expect(await screen.findByText(ll.stackNotSetUp())).toBeInTheDocument()
+    expect(screen.getByText(ll.whyInsecureTransport())).toBeInTheDocument()
     expect(mocked.prepareStack).not.toHaveBeenCalled()
   })
 
@@ -95,17 +98,17 @@ describe('the Immich window', () => {
     })
     render(StackHost, { stackId: 'futo.immich' })
     expect(await screen.findByDisplayValue('/srv/stacks/immich/library')).toBeInTheDocument()
-    await fireEvent.click(screen.getByRole('button', { name: /set up/i }))
+    await fireEvent.click(screen.getByRole('button', { name: (n) => n.includes(ll.stackInstall()) }))
 
     expect(await screen.findByText('ghcr.io/immich-app/immich-server:v3.3.1')).toBeInTheDocument()
     expect(screen.getByText('Immich (FUTO)')).toBeInTheDocument()
-    expect(screen.getByText('2283 is in use; 2284 will be used')).toBeInTheDocument()
+    expect(screen.getByText(ll.stackPortMoved({ from: 2283, to: 2284 }))).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'AGPL-3.0' })).toHaveAttribute('href', 'https://example.com/LICENSE')
-    const go = screen.getByRole('button', { name: 'Continue' })
+    const go = screen.getByRole('button', { name: ll.stackContinue() })
     expect(go).toBeDisabled()
-    await fireEvent.click(screen.getByLabelText(/I understand this installs Immich/))
+    await fireEvent.click(screen.getByLabelText(ll.stackAckThirdParty({ name: 'Immich' }), { exact: false }))
     expect(go).toBeDisabled()
-    await fireEvent.click(screen.getByLabelText('I accept the AGPL-3.0 licence'))
+    await fireEvent.click(screen.getByLabelText(ll.stackLicenseAccept({ spdx: 'AGPL-3.0' })))
     expect(go).toBeEnabled()
     await fireEvent.click(go)
     await vi.waitFor(() => expect(document.querySelector('input[type=password]')).not.toBeNull())
@@ -119,9 +122,9 @@ describe('the Immich window', () => {
     mocked.checkStack.mockRejectedValue(Object.assign(new ApiError('invalid', 400), { body: { error: 'invalidSetting', field: 'port' } }))
     render(StackHost, { stackId: 'futo.immich' })
     await screen.findByDisplayValue('/srv/stacks/immich/library')
-    await fireEvent.click(screen.getByRole('button', { name: /set up/i }))
-    expect(await screen.findByText('Check Port.')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull()
+    await fireEvent.click(screen.getByRole('button', { name: (n) => n.includes(ll.stackInstall()) }))
+    expect(await screen.findByText(ll.stackInvalidSetting({ setting: 'Port' }))).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: ll.stackContinue() })).toBeNull()
   })
 
   it('frames the running app through its proxy', async () => {
@@ -148,19 +151,19 @@ describe('the settings of a deployed app', () => {
     mocked.reconfigureStack.mockResolvedValue({ id: 1, kind: 'reconfigure', state: 'running', error: null, lines: [], next: 0 })
     mocked.stackJob.mockResolvedValue({ id: 1, kind: 'reconfigure', state: 'running', error: null, lines: [], next: 0 })
     render(StackDetail, { stackId: 'futo.immich' })
-    await fireEvent.click(await screen.findByRole('button', { name: 'Change settings' }))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.stackChangeSettings() }))
     const port = await screen.findByDisplayValue('2283')
     await fireEvent.input(port, { target: { value: '3000' } })
-    await fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.save() }))
     // No licence or third-party confirmation again: the password.
     await vi.waitFor(() => expect(document.querySelector('input[type=password]')).not.toBeNull())
-    expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull()
+    expect(screen.queryByRole('button', { name: ll.stackContinue() })).toBeNull()
     expect(mocked.checkStack).toHaveBeenCalledWith('futo.immich', { ...settings, port: 3000 })
     const password = document.querySelector('input[type=password]') as HTMLInputElement
     await fireEvent.input(password, { target: { value: 'pw' } })
     await fireEvent.submit(password.form!)
     await vi.waitFor(() => expect(mocked.reconfigureStack).toHaveBeenCalledWith('futo.immich', { ...settings, port: 3000 }, 'pw'))
-    expect(await screen.findByText('Applying the settings of Immich…')).toBeInTheDocument()
+    expect(await screen.findByText(ll.stackReconfiguring({ name: 'Immich' }))).toBeInTheDocument()
   })
 
   it('name a port in use by its number', async () => {
@@ -169,10 +172,10 @@ describe('the settings of a deployed app', () => {
     const { ApiError } = await import('../lib/api')
     mocked.checkStack.mockRejectedValue(Object.assign(new ApiError('taken', 409), { body: { error: 'portTaken', field: 'port' } }))
     render(StackDetail, { stackId: 'futo.immich' })
-    await fireEvent.click(await screen.findByRole('button', { name: 'Change settings' }))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.stackChangeSettings() }))
     await screen.findByDisplayValue('2283')
-    await fireEvent.click(screen.getByRole('button', { name: 'Save' }))
-    expect(await screen.findByText('Port 2283 is already in use on this machine.')).toBeInTheDocument()
+    await fireEvent.click(screen.getByRole('button', { name: ll.save() }))
+    expect(await screen.findByText(ll.stackPortTaken({ port: 2283 }))).toBeInTheDocument()
   })
 })
 

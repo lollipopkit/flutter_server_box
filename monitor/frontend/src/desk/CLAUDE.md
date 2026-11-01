@@ -1,6 +1,6 @@
 # The desk (the panel's web desktop)
 
-The panel is a macOS-style desktop: a lock screen to choose a server, then that server's desk (menubar, dock, Apps, windows, Spotlight, notification centre). Every feature is an app in a window. Agent side: `monitor/src/api/desk.rs`. **Details of each piece (web apps, packages, themes, Agent mode, the guide, the shell): `docs/dev/desk.md`**; the app framework's design: `docs/dev/desk-sys.md`.
+The panel is a macOS-style desktop: a lock screen to choose a server, then that server's desk (menubar, dock, Apps, windows, Spotlight, notification centre). Every feature is an app in a window. Agent side: `monitor/src/api/desk.rs`. The contract with installed apps: `docs/src/content/docs/development/desk-app-reference.md`.
 
 ## Layout
 
@@ -13,7 +13,7 @@ The panel is a macOS-style desktop: a lock screen to choose a server, then that 
 
 ## Design system: lollipopkit (`lk/`)
 
-**Apps build their UI from `lk` and nothing else**; values are the design system's, never invented. Installed apps get it as an interface (`/desk-app/desk.css`), never the code: classes and tokens are a contract with them (`docs/dev/desk-sys.md`, UI).
+**Apps build their UI from `lk` and nothing else**; values are the design system's, never invented. Installed apps get it as an interface (`/desk-app/desk.css`), never the code: classes and tokens are a contract with them (`docs/src/content/docs/development/desk-app-reference.md`, UI).
 
 - Tokens on `.lk` (`--color-accent`, `--surface-*`, `--text-*`, `--space-*` odd scale, `--radius-*`, `--dur-*`/`--ease-*`); dark via `data-theme="dark"` on `<html>`. Components are listed in `lk/index.ts`.
 - One seed (berry `#730c37`, no accent picker); Figtree 13px, JetBrains Mono for paths (`lk-mono`), tabular figures (`lk-num`); flat cards; one 0.5px hairline; glass only for chrome over the wallpaper; list selection solid accent, sidebar selection soft accent; section headings `lk-caps`; sentence case, no emoji; empty state = one glyph + at most two words.

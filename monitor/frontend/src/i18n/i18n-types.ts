@@ -281,7 +281,7 @@ type RootTranslation = {
 	 */
 	benchmarkCancelTitle: string
 	/**
-	 * S​t​o​p​ ​t​h​i​s​ ​b​e​n​c​h​m​a​r​k​?​ ​T​h​e​ ​e​n​t​i​r​e​ ​p​r​o​c​e​s​s​ ​g​r​o​u​p​ ​m​u​s​t​ ​b​e​ ​s​t​o​p​p​e​d​ ​b​e​c​a​u​s​e​ ​f​i​o​,​ ​i​p​e​r​f​3​,​ ​a​n​d​ ​G​e​e​k​b​e​n​c​h​ ​r​u​n​ ​a​s​ ​s​e​p​a​r​a​t​e​ ​p​r​o​c​e​s​s​e​s​.
+	 * S​t​o​p​p​i​n​g​ ​k​i​l​l​s​ ​t​h​e​ ​b​e​n​c​h​m​a​r​k​ ​p​r​o​c​e​s​s​ ​g​r​o​u​p​.​ ​f​i​o​,​ ​i​p​e​r​f​3​,​ ​a​n​d​ ​G​e​e​k​b​e​n​c​h​ ​r​u​n​ ​a​s​ ​s​e​p​a​r​a​t​e​ ​p​r​o​c​e​s​s​e​s​.
 	 */
 	benchmarkCancelConfirm: string
 	/**
@@ -1860,7 +1860,7 @@ type RootTranslation = {
 	 */
 	lkc: string
 	/**
-	 * S​i​g​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​i​n​ ​t​o​ ​y​o​u​r​ ​L​K​ ​C​l​o​u​d​ ​a​c​c​o​u​n​t​.
+	 * S​i​g​n​ ​t​h​i​s​ ​M​o​n​i​t​o​r​ ​i​n​ ​t​o​ ​y​o​u​r​ ​L​K​ ​C​l​o​u​d​ ​a​c​c​o​u​n​t​.
 	 */
 	lkcHint: string
 	/**
@@ -1912,7 +1912,7 @@ type RootTranslation = {
 	 */
 	reauthTitle: string
 	/**
-	 * C​h​a​n​g​i​n​g​ ​w​h​o​ ​c​a​n​ ​d​o​ ​w​h​a​t​ ​o​n​ ​t​h​i​s​ ​M​o​n​i​t​o​r​ ​n​e​e​d​s​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​p​a​s​s​w​o​r​d​.
+	 * T​h​i​s​ ​c​h​a​n​g​e​ ​n​e​e​d​s​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​p​a​s​s​w​o​r​d​.
 	 */
 	reauthBody: string
 	/**
@@ -2744,7 +2744,7 @@ type RootTranslation = {
 	 */
 	bmcGone: string
 	/**
-	 * T​h​e​ ​s​a​v​e​d​ ​p​a​s​s​w​o​r​d​ ​c​a​n​ ​n​o​ ​l​o​n​g​e​r​ ​b​e​ ​r​e​a​d​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​.​ ​E​n​t​e​r​ ​i​t​ ​a​g​a​i​n​.
+	 * T​h​e​ ​s​a​v​e​d​ ​p​a​s​s​w​o​r​d​ ​c​a​n​ ​n​o​ ​l​o​n​g​e​r​ ​b​e​ ​r​e​a​d​ ​o​n​ ​t​h​i​s​ ​M​o​n​i​t​o​r​.​ ​E​n​t​e​r​ ​i​t​ ​a​g​a​i​n​.
 	 */
 	bmcPasswordRequired: string
 	/**
@@ -3148,7 +3148,7 @@ type RootTranslation = {
 	 */
 	pveSettings: string
 	/**
-	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​r​u​n​s​ ​P​r​o​x​m​o​x​ ​V​E​.​ ​S​e​t​ ​u​p​ ​h​o​w​ ​t​h​i​s​ ​a​g​e​n​t​ ​s​i​g​n​s​ ​i​n​ ​t​o​ ​i​t​s​ ​A​P​I​;​ ​a​n​ ​A​P​I​ ​t​o​k​e​n​ ​i​s​ ​r​e​c​o​m​m​e​n​d​e​d​.
+	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​r​u​n​s​ ​P​r​o​x​m​o​x​ ​V​E​.​ ​S​e​t​ ​u​p​ ​h​o​w​ ​t​h​i​s​ ​M​o​n​i​t​o​r​ ​s​i​g​n​s​ ​i​n​ ​t​o​ ​i​t​s​ ​A​P​I​;​ ​a​n​ ​A​P​I​ ​t​o​k​e​n​ ​i​s​ ​r​e​c​o​m​m​e​n​d​e​d​.
 	 */
 	pveSetupNote: string
 	/**
@@ -6005,7 +6005,7 @@ type RootTranslation = {
 	 */
 	settingsThemeInstalled: string
 	/**
-	 * N​e​e​d​s​ ​a​ ​n​e​w​e​r​ ​a​g​e​n​t
+	 * N​e​e​d​s​ ​a​ ​n​e​w​e​r​ ​M​o​n​i​t​o​r
 	 */
 	settingsThemeNeedsNewer: string
 	/**
@@ -6530,7 +6530,7 @@ type RootTranslation = {
 	 */
 	settingsSecurity: string
 	/**
-	 * {​s​e​r​v​e​r​}​ ​i​t​s​e​l​f​.​ ​S​a​v​i​n​g​ ​c​h​a​n​g​e​s​ ​t​h​e​ ​a​g​e​n​t​'​s​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​.
+	 * {​s​e​r​v​e​r​}​ ​i​t​s​e​l​f​.​ ​S​a​v​i​n​g​ ​c​h​a​n​g​e​s​ ​t​h​e​ ​M​o​n​i​t​o​r​'​s​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​.
 	 * @param {unknown} server
 	 */
 	settingsServerDesc: RequiredParams<'server'>
@@ -6774,7 +6774,7 @@ type RootTranslation = {
 	 */
 	settingsPermStatus: string
 	/**
-	 * r​u​n​ ​p​r​o​g​r​a​m​s​ ​o​n​ ​t​h​i​s​ ​s​e​r​v​e​r​ ​a​s​ ​t​h​e​ ​a​g​e​n​t​'​s​ ​a​c​c​o​u​n​t
+	 * r​u​n​ ​p​r​o​g​r​a​m​s​ ​o​n​ ​t​h​i​s​ ​s​e​r​v​e​r​ ​a​s​ ​t​h​e​ ​M​o​n​i​t​o​r​'​s​ ​a​c​c​o​u​n​t
 	 */
 	settingsPermProcess: string
 	/**
@@ -8101,7 +8101,7 @@ type RootTranslation = {
 	 */
 	stackPoweredBy: RequiredParams<'name' | 'version'>
 	/**
-	 * Y​o​u​ ​c​a​n​ ​c​l​o​s​e​ ​t​h​i​s​ ​w​i​n​d​o​w​;​ ​t​h​e​ ​a​g​e​n​t​ ​c​a​r​r​i​e​s​ ​o​n​.
+	 * Y​o​u​ ​c​a​n​ ​c​l​o​s​e​ ​t​h​i​s​ ​w​i​n​d​o​w​;​ ​t​h​e​ ​M​o​n​i​t​o​r​ ​c​a​r​r​i​e​s​ ​o​n​.
 	 */
 	stackProgressHint: string
 	/**
@@ -8149,7 +8149,7 @@ type RootTranslation = {
 	 */
 	stackCoresValue: RequiredParams<'have' | 'need'>
 	/**
-	 * D​o​c​k​e​r​ ​o​r​ ​P​o​d​m​a​n​ ​i​s​ ​n​o​t​ ​i​n​s​t​a​l​l​e​d​,​ ​o​r​ ​t​h​e​ ​a​g​e​n​t​'​s​ ​a​c​c​o​u​n​t​ ​m​a​y​ ​n​o​t​ ​u​s​e​ ​i​t​.
+	 * D​o​c​k​e​r​ ​o​r​ ​P​o​d​m​a​n​ ​i​s​ ​n​o​t​ ​i​n​s​t​a​l​l​e​d​,​ ​o​r​ ​t​h​e​ ​M​o​n​i​t​o​r​'​s​ ​a​c​c​o​u​n​t​ ​m​a​y​ ​n​o​t​ ​u​s​e​ ​i​t​.
 	 */
 	stackNoRuntime: string
 	/**
@@ -8357,7 +8357,7 @@ type RootTranslation = {
 	 */
 	stackOpenTab: string
 	/**
-	 * T​h​i​s​ ​p​a​g​e​ ​i​s​ ​H​T​T​P​S​ ​a​n​d​ ​t​h​e​ ​a​g​e​n​t​ ​d​o​e​s​ ​n​o​t​ ​s​e​r​v​e​ ​T​L​S​ ​i​t​s​e​l​f​,​ ​s​o​ ​t​h​e​ ​b​r​o​w​s​e​r​ ​b​l​o​c​k​s​ ​t​h​e​ ​a​p​p​'​s​ ​w​i​n​d​o​w​.​ ​G​i​v​e​ ​t​h​e​ ​a​g​e​n​t​ ​a​ ​c​e​r​t​i​f​i​c​a​t​e​,​ ​o​r​ ​o​p​e​n​ ​t​h​e​ ​p​a​n​e​l​ ​o​v​e​r​ ​H​T​T​P​ ​o​n​ ​t​h​e​ ​l​o​c​a​l​ ​n​e​t​w​o​r​k​.
+	 * T​h​i​s​ ​p​a​g​e​ ​i​s​ ​H​T​T​P​S​ ​a​n​d​ ​t​h​e​ ​M​o​n​i​t​o​r​ ​d​o​e​s​ ​n​o​t​ ​s​e​r​v​e​ ​T​L​S​ ​i​t​s​e​l​f​,​ ​s​o​ ​t​h​e​ ​b​r​o​w​s​e​r​ ​b​l​o​c​k​s​ ​t​h​e​ ​a​p​p​'​s​ ​w​i​n​d​o​w​.​ ​G​i​v​e​ ​t​h​e​ ​M​o​n​i​t​o​r​ ​a​ ​c​e​r​t​i​f​i​c​a​t​e​,​ ​o​r​ ​o​p​e​n​ ​t​h​e​ ​p​a​n​e​l​ ​o​v​e​r​ ​H​T​T​P​ ​o​n​ ​t​h​e​ ​l​o​c​a​l​ ​n​e​t​w​o​r​k​.
 	 */
 	stackMixedContent: string
 	/**
@@ -8592,7 +8592,7 @@ type RootTranslation = {
 	 */
 	stackPortMoved: RequiredParams<'from' | 'to'>
 	/**
-	 * T​h​e​ ​a​g​e​n​t​ ​r​u​n​s​ ​i​n​ ​a​ ​c​o​n​t​a​i​n​e​r​ ​o​r​ ​u​n​d​e​r​ ​W​S​L​,​ ​s​o​ ​p​o​r​t​s​ ​o​t​h​e​r​ ​p​r​o​g​r​a​m​s​ ​u​s​e​ ​m​a​y​ ​n​o​t​ ​a​l​l​ ​b​e​ ​d​e​t​e​c​t​e​d​.
+	 * T​h​e​ ​M​o​n​i​t​o​r​ ​r​u​n​s​ ​i​n​ ​a​ ​c​o​n​t​a​i​n​e​r​ ​o​r​ ​u​n​d​e​r​ ​W​S​L​,​ ​s​o​ ​p​o​r​t​s​ ​o​t​h​e​r​ ​p​r​o​g​r​a​m​s​ ​u​s​e​ ​m​a​y​ ​n​o​t​ ​a​l​l​ ​b​e​ ​d​e​t​e​c​t​e​d​.
 	 */
 	stackPortsPartial: string
 	/**
@@ -8676,7 +8676,7 @@ type RootTranslation = {
 	 */
 	storeDeskFrom: string
 	/**
-	 * S​h​i​p​p​e​d​ ​w​i​t​h​ ​t​h​e​ ​a​g​e​n​t
+	 * S​h​i​p​p​e​d​ ​w​i​t​h​ ​t​h​e​ ​M​o​n​i​t​o​r
 	 */
 	storeDeskShipped: string
 	/**
@@ -8704,7 +8704,7 @@ type RootTranslation = {
 	 */
 	storeUnknownPublisher: string
 	/**
-	 * I​t​s​ ​p​u​b​l​i​s​h​e​r​ ​i​s​ ​n​o​t​ ​k​n​o​w​n​ ​t​o​ ​t​h​i​s​ ​a​g​e​n​t​:​ ​i​n​s​t​a​l​l​ ​i​t​ ​o​n​l​y​ ​i​f​ ​y​o​u​ ​t​r​u​s​t​ ​w​h​e​r​e​ ​i​t​ ​c​a​m​e​ ​f​r​o​m​.
+	 * I​t​s​ ​p​u​b​l​i​s​h​e​r​ ​i​s​ ​n​o​t​ ​k​n​o​w​n​ ​t​o​ ​t​h​i​s​ ​M​o​n​i​t​o​r​:​ ​i​n​s​t​a​l​l​ ​i​t​ ​o​n​l​y​ ​i​f​ ​y​o​u​ ​t​r​u​s​t​ ​w​h​e​r​e​ ​i​t​ ​c​a​m​e​ ​f​r​o​m​.
 	 */
 	storeUnknownPublisherNote: string
 	/**
@@ -8712,7 +8712,7 @@ type RootTranslation = {
 	 */
 	stackFrom: string
 	/**
-	 * S​h​i​p​p​e​d​ ​w​i​t​h​ ​t​h​e​ ​a​g​e​n​t
+	 * S​h​i​p​p​e​d​ ​w​i​t​h​ ​t​h​e​ ​M​o​n​i​t​o​r
 	 */
 	stackFromBundled: string
 	/**
@@ -8924,7 +8924,7 @@ type RootTranslation = {
 	 */
 	selfUpdateRun: string
 	/**
-	 * T​h​e​ ​a​g​e​n​t​ ​r​u​n​s​ ​t​h​e​ ​i​n​s​t​a​l​l​e​r​ ​a​p​a​r​t​ ​f​r​o​m​ ​i​t​s​e​l​f​,​ ​s​o​ ​i​t​s​ ​r​e​s​t​a​r​t​ ​d​o​e​s​ ​n​o​t​ ​s​t​o​p​ ​t​h​e​ ​u​p​d​a​t​e​.​ ​T​h​e​ ​p​a​n​e​l​ ​l​o​s​e​s​ ​t​h​e​ ​a​g​e​n​t​ ​f​o​r​ ​a​ ​f​e​w​ ​s​e​c​o​n​d​s​ ​m​e​a​n​w​h​i​l​e​ ​a​n​d​ ​f​o​l​l​o​w​s​ ​t​h​e​ ​u​p​d​a​t​e​ ​a​c​r​o​s​s​ ​t​h​e​ ​r​e​s​t​a​r​t​.
+	 * T​h​e​ ​M​o​n​i​t​o​r​ ​r​u​n​s​ ​t​h​e​ ​i​n​s​t​a​l​l​e​r​ ​a​p​a​r​t​ ​f​r​o​m​ ​i​t​s​e​l​f​,​ ​s​o​ ​i​t​s​ ​r​e​s​t​a​r​t​ ​d​o​e​s​ ​n​o​t​ ​s​t​o​p​ ​t​h​e​ ​u​p​d​a​t​e​.​ ​T​h​e​ ​p​a​n​e​l​ ​l​o​s​e​s​ ​t​h​e​ ​M​o​n​i​t​o​r​ ​f​o​r​ ​a​ ​f​e​w​ ​s​e​c​o​n​d​s​ ​m​e​a​n​w​h​i​l​e​ ​a​n​d​ ​f​o​l​l​o​w​s​ ​t​h​e​ ​u​p​d​a​t​e​ ​a​c​r​o​s​s​ ​t​h​e​ ​r​e​s​t​a​r​t​.
 	 */
 	selfUpdateRunHint: string
 	/**
@@ -8932,7 +8932,7 @@ type RootTranslation = {
 	 */
 	selfUpdateNoTerminal: string
 	/**
-	 * T​h​i​s​ ​a​g​e​n​t​ ​r​u​n​s​ ​i​n​ ​a​ ​c​o​n​t​a​i​n​e​r​:​ ​p​u​l​l​ ​t​h​e​ ​n​e​w​ ​i​m​a​g​e​ ​a​n​d​ ​r​e​c​r​e​a​t​e​ ​t​h​e​ ​c​o​n​t​a​i​n​e​r​.
+	 * T​h​i​s​ ​M​o​n​i​t​o​r​ ​r​u​n​s​ ​i​n​ ​a​ ​c​o​n​t​a​i​n​e​r​:​ ​p​u​l​l​ ​t​h​e​ ​n​e​w​ ​i​m​a​g​e​ ​a​n​d​ ​r​e​c​r​e​a​t​e​ ​t​h​e​ ​c​o​n​t​a​i​n​e​r​.
 	 */
 	selfUpdateContainer: string
 	/**
@@ -8940,7 +8940,7 @@ type RootTranslation = {
 	 */
 	selfUpdateNix: string
 	/**
-	 * T​h​i​s​ ​a​g​e​n​t​ ​w​a​s​ ​n​o​t​ ​i​n​s​t​a​l​l​e​d​ ​b​y​ ​i​n​s​t​a​l​l​.​s​h​:​ ​u​p​d​a​t​e​ ​i​t​ ​t​h​e​ ​w​a​y​ ​i​t​ ​w​a​s​ ​i​n​s​t​a​l​l​e​d​.
+	 * T​h​i​s​ ​M​o​n​i​t​o​r​ ​w​a​s​ ​n​o​t​ ​i​n​s​t​a​l​l​e​d​ ​b​y​ ​i​n​s​t​a​l​l​.​s​h​:​ ​u​p​d​a​t​e​ ​i​t​ ​t​h​e​ ​w​a​y​ ​i​t​ ​w​a​s​ ​i​n​s​t​a​l​l​e​d​.
 	 */
 	selfUpdateOther: string
 	/**
@@ -8948,11 +8948,11 @@ type RootTranslation = {
 	 */
 	selfUpdateRunning: string
 	/**
-	 * T​h​e​ ​a​g​e​n​t​ ​i​s​ ​r​e​s​t​a​r​t​i​n​g​;​ ​t​h​e​ ​p​a​n​e​l​ ​r​e​c​o​n​n​e​c​t​s​ ​i​n​ ​a​ ​f​e​w​ ​s​e​c​o​n​d​s​…
+	 * T​h​e​ ​M​o​n​i​t​o​r​ ​i​s​ ​r​e​s​t​a​r​t​i​n​g​;​ ​t​h​e​ ​p​a​n​e​l​ ​r​e​c​o​n​n​e​c​t​s​ ​i​n​ ​a​ ​f​e​w​ ​s​e​c​o​n​d​s​…
 	 */
 	selfUpdateRestarting: string
 	/**
-	 * U​p​d​a​t​e​d​:​ ​t​h​e​ ​a​g​e​n​t​ ​r​u​n​s​ ​{​v​e​r​s​i​o​n​}​.
+	 * U​p​d​a​t​e​d​:​ ​t​h​e​ ​M​o​n​i​t​o​r​ ​r​u​n​s​ ​{​v​e​r​s​i​o​n​}​.
 	 * @param {unknown} version
 	 */
 	selfUpdateDone: RequiredParams<'version'>
@@ -8961,7 +8961,7 @@ type RootTranslation = {
 	 */
 	selfUpdateFailed: string
 	/**
-	 * T​h​e​ ​a​g​e​n​t​ ​h​a​s​ ​n​o​t​ ​c​o​m​e​ ​b​a​c​k​.​ ​C​h​e​c​k​ ​i​t​ ​o​n​ ​t​h​e​ ​m​a​c​h​i​n​e​.
+	 * T​h​e​ ​M​o​n​i​t​o​r​ ​h​a​s​ ​n​o​t​ ​c​o​m​e​ ​b​a​c​k​.​ ​C​h​e​c​k​ ​i​t​ ​o​n​ ​t​h​e​ ​m​a​c​h​i​n​e​.
 	 */
 	selfUpdateNoAnswer: string
 	/**
@@ -9284,7 +9284,7 @@ type RootTranslation = {
 	 */
 	storageTypeToConfirm: RequiredParams<'word'>
 	/**
-	 * s​u​d​o​ ​p​a​s​s​w​o​r​d​ ​(​i​f​ ​t​h​e​ ​a​g​e​n​t​'​s​ ​a​c​c​o​u​n​t​ ​n​e​e​d​s​ ​o​n​e​)
+	 * s​u​d​o​ ​p​a​s​s​w​o​r​d​ ​(​i​f​ ​t​h​e​ ​M​o​n​i​t​o​r​'​s​ ​a​c​c​o​u​n​t​ ​n​e​e​d​s​ ​o​n​e​)
 	 */
 	storageSudoPassword: string
 	/**
@@ -9292,7 +9292,7 @@ type RootTranslation = {
 	 */
 	storageSudoRejected: string
 	/**
-	 * T​h​e​ ​a​g​e​n​t​'​s​ ​a​c​c​o​u​n​t​ ​c​a​n​n​o​t​ ​u​s​e​ ​s​u​d​o​ ​h​e​r​e​.
+	 * T​h​e​ ​M​o​n​i​t​o​r​'​s​ ​a​c​c​o​u​n​t​ ​c​a​n​n​o​t​ ​u​s​e​ ​s​u​d​o​ ​h​e​r​e​.
 	 */
 	storageSudoUnavailable: string
 	/**
@@ -9638,11 +9638,11 @@ type RootTranslation = {
 	 */
 	storageRunNow: string
 	/**
-	 * s​u​d​o​ ​a​s​k​e​d​ ​f​o​r​ ​a​ ​p​a​s​s​w​o​r​d​:​ ​r​u​n​ ​t​h​e​ ​a​g​e​n​t​ ​a​s​ ​r​o​o​t​,​ ​o​r​ ​a​l​l​o​w​ ​t​h​e​s​e​ ​c​o​m​m​a​n​d​s​ ​(​a​b​o​v​e​)​.
+	 * s​u​d​o​ ​a​s​k​e​d​ ​f​o​r​ ​a​ ​p​a​s​s​w​o​r​d​:​ ​r​u​n​ ​t​h​e​ ​M​o​n​i​t​o​r​ ​a​s​ ​r​o​o​t​,​ ​o​r​ ​a​l​l​o​w​ ​t​h​e​s​e​ ​c​o​m​m​a​n​d​s​ ​(​a​b​o​v​e​)​.
 	 */
 	storageNeedsSudo: string
 	/**
-	 * T​h​e​ ​s​c​h​e​d​u​l​e​ ​r​u​n​s​ ​w​i​t​h​o​u​t​ ​a​ ​p​a​s​s​w​o​r​d​.​ ​U​n​l​e​s​s​ ​t​h​e​ ​a​g​e​n​t​ ​r​u​n​s​ ​a​s​ ​r​o​o​t​,​ ​s​u​d​o​ ​m​u​s​t​ ​l​e​t​ ​i​t​s​ ​a​c​c​o​u​n​t​ ​r​u​n​ ​t​h​e​s​e​ ​c​o​m​m​a​n​d​s​ ​w​i​t​h​o​u​t​ ​o​n​e​,​ ​f​o​r​ ​e​x​a​m​p​l​e​ ​i​n​ ​/​e​t​c​/​s​u​d​o​e​r​s​.​d​/​s​e​r​v​e​r​b​o​x​-​s​t​o​r​a​g​e​:
+	 * T​h​e​ ​s​c​h​e​d​u​l​e​ ​r​u​n​s​ ​w​i​t​h​o​u​t​ ​a​ ​p​a​s​s​w​o​r​d​.​ ​U​n​l​e​s​s​ ​t​h​e​ ​M​o​n​i​t​o​r​ ​r​u​n​s​ ​a​s​ ​r​o​o​t​,​ ​s​u​d​o​ ​m​u​s​t​ ​l​e​t​ ​i​t​s​ ​a​c​c​o​u​n​t​ ​r​u​n​ ​t​h​e​s​e​ ​c​o​m​m​a​n​d​s​ ​w​i​t​h​o​u​t​ ​o​n​e​,​ ​f​o​r​ ​e​x​a​m​p​l​e​ ​i​n​ ​/​e​t​c​/​s​u​d​o​e​r​s​.​d​/​s​e​r​v​e​r​b​o​x​-​s​t​o​r​a​g​e​:
 	 */
 	storageMaintenanceSudo: string
 	/**
@@ -10047,7 +10047,7 @@ type RootTranslation = {
 	 */
 	containerBackupDisk: string
 	/**
-	 * B​e​s​i​d​e​ ​t​h​e​ ​a​g​e​n​t​'​s​ ​d​a​t​a​b​a​s​e
+	 * B​e​s​i​d​e​ ​t​h​e​ ​M​o​n​i​t​o​r​'​s​ ​d​a​t​a​b​a​s​e
 	 */
 	containerBackupDefaultFolder: string
 	/**
@@ -10059,7 +10059,7 @@ type RootTranslation = {
 	 */
 	containerBackupDestinationMissing: string
 	/**
-	 * T​h​e​ ​a​g​e​n​t​ ​c​a​n​n​o​t​ ​w​r​i​t​e​ ​i​n​ ​t​h​a​t​ ​f​o​l​d​e​r​.
+	 * T​h​e​ ​M​o​n​i​t​o​r​ ​c​a​n​n​o​t​ ​w​r​i​t​e​ ​i​n​ ​t​h​a​t​ ​f​o​l​d​e​r​.
 	 */
 	containerBackupDestinationNotWritable: string
 	/**
@@ -10152,11 +10152,11 @@ type RootTranslation = {
 	 */
 	weekdaySun: string
 	/**
-	 * C​o​u​l​d​ ​n​o​t​ ​r​e​a​c​h​ ​t​h​e​ ​a​g​e​n​t​.
+	 * C​o​u​l​d​ ​n​o​t​ ​r​e​a​c​h​ ​t​h​e​ ​M​o​n​i​t​o​r​.
 	 */
 	agentUnreachable: string
 	/**
-	 * T​h​e​ ​a​g​e​n​t​ ​a​n​s​w​e​r​e​d​ ​{​s​t​a​t​u​s​}​.
+	 * T​h​e​ ​M​o​n​i​t​o​r​ ​a​n​s​w​e​r​e​d​ ​{​s​t​a​t​u​s​}​.
 	 * @param {number} status
 	 */
 	agentAnswered: RequiredParams<'status'>
@@ -10165,7 +10165,7 @@ type RootTranslation = {
 	 */
 	agentSessionExpired: string
 	/**
-	 * R​e​m​o​t​e​ ​m​o​n​i​t​o​r​ ​a​g​e​n​t​s​ ​r​e​q​u​i​r​e​ ​H​T​T​P​S​;​ ​H​T​T​P​ ​i​s​ ​a​l​l​o​w​e​d​ ​o​n​l​y​ ​o​n​ ​l​o​o​p​b​a​c​k​.
+	 * R​e​m​o​t​e​ ​M​o​n​i​t​o​r​s​ ​r​e​q​u​i​r​e​ ​H​T​T​P​S​;​ ​H​T​T​P​ ​i​s​ ​a​l​l​o​w​e​d​ ​o​n​l​y​ ​o​n​ ​l​o​o​p​b​a​c​k​.
 	 */
 	agentHttpsRequired: string
 	/**
@@ -10186,7 +10186,7 @@ type RootTranslation = {
 	 */
 	deskGuideWebAppsTitle: string
 	/**
-	 * T​h​e​ ​a​g​e​n​t​ ​c​a​n​ ​r​u​n​ ​s​e​l​f​-​h​o​s​t​e​d​ ​s​e​r​v​i​c​e​s​ ​w​i​t​h​ ​D​o​c​k​e​r​.​ ​B​e​f​o​r​e​ ​a​n​y​t​h​i​n​g​ ​i​s​ ​d​e​p​l​o​y​e​d​,​ ​t​h​e​ ​A​p​p​ ​S​t​o​r​e​ ​s​h​o​w​s​ ​w​h​a​t​ ​a​n​ ​a​p​p​ ​w​i​l​l​ ​r​u​n​ ​a​n​d​ ​a​s​k​s​ ​f​o​r​ ​y​o​u​r​ ​p​a​s​s​w​o​r​d​.
+	 * T​h​e​ ​M​o​n​i​t​o​r​ ​c​a​n​ ​r​u​n​ ​s​e​l​f​-​h​o​s​t​e​d​ ​s​e​r​v​i​c​e​s​ ​w​i​t​h​ ​D​o​c​k​e​r​.​ ​B​e​f​o​r​e​ ​a​n​y​t​h​i​n​g​ ​i​s​ ​d​e​p​l​o​y​e​d​,​ ​t​h​e​ ​A​p​p​ ​S​t​o​r​e​ ​s​h​o​w​s​ ​w​h​a​t​ ​a​n​ ​a​p​p​ ​w​i​l​l​ ​r​u​n​ ​a​n​d​ ​a​s​k​s​ ​f​o​r​ ​y​o​u​r​ ​p​a​s​s​w​o​r​d​.
 	 */
 	deskGuideWebAppsBody: string
 	/**
@@ -10895,7 +10895,7 @@ export type TranslationFunctions = {
 	 */
 	benchmarkCancelTitle: () => LocalizedString
 	/**
-	 * Stop this benchmark? The entire process group must be stopped because fio, iperf3, and Geekbench run as separate processes.
+	 * Stopping kills the benchmark process group. fio, iperf3, and Geekbench run as separate processes.
 	 */
 	benchmarkCancelConfirm: () => LocalizedString
 	/**
@@ -12435,7 +12435,7 @@ export type TranslationFunctions = {
 	 */
 	lkc: () => LocalizedString
 	/**
-	 * Sign this agent in to your LK Cloud account.
+	 * Sign this Monitor in to your LK Cloud account.
 	 */
 	lkcHint: () => LocalizedString
 	/**
@@ -12487,7 +12487,7 @@ export type TranslationFunctions = {
 	 */
 	reauthTitle: () => LocalizedString
 	/**
-	 * Changing who can do what on this Monitor needs your current password.
+	 * This change needs your current password.
 	 */
 	reauthBody: () => LocalizedString
 	/**
@@ -13287,7 +13287,7 @@ export type TranslationFunctions = {
 	 */
 	bmcGone: () => LocalizedString
 	/**
-	 * The saved password can no longer be read on this agent. Enter it again.
+	 * The saved password can no longer be read on this Monitor. Enter it again.
 	 */
 	bmcPasswordRequired: () => LocalizedString
 	/**
@@ -13676,7 +13676,7 @@ export type TranslationFunctions = {
 	 */
 	pveSettings: () => LocalizedString
 	/**
-	 * This machine runs Proxmox VE. Set up how this agent signs in to its API; an API token is recommended.
+	 * This machine runs Proxmox VE. Set up how this Monitor signs in to its API; an API token is recommended.
 	 */
 	pveSetupNote: () => LocalizedString
 	/**
@@ -16459,7 +16459,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	settingsThemeInstalled: () => LocalizedString
 	/**
-	 * Needs a newer agent
+	 * Needs a newer Monitor
 	 */
 	settingsThemeNeedsNewer: () => LocalizedString
 	/**
@@ -16975,7 +16975,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	settingsSecurity: () => LocalizedString
 	/**
-	 * {server} itself. Saving changes the agent's configuration.
+	 * {server} itself. Saving changes the Monitor's configuration.
 	 */
 	settingsServerDesc: (arg: { server: unknown }) => LocalizedString
 	/**
@@ -17207,7 +17207,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	settingsPermStatus: () => LocalizedString
 	/**
-	 * run programs on this server as the agent's account
+	 * run programs on this server as the Monitor's account
 	 */
 	settingsPermProcess: () => LocalizedString
 	/**
@@ -18483,7 +18483,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	stackPoweredBy: (arg: { name: unknown, version: unknown }) => LocalizedString
 	/**
-	 * You can close this window; the agent carries on.
+	 * You can close this window; the Monitor carries on.
 	 */
 	stackProgressHint: () => LocalizedString
 	/**
@@ -18527,7 +18527,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	stackCoresValue: (arg: { have: unknown, need: unknown }) => LocalizedString
 	/**
-	 * Docker or Podman is not installed, or the agent's account may not use it.
+	 * Docker or Podman is not installed, or the Monitor's account may not use it.
 	 */
 	stackNoRuntime: () => LocalizedString
 	/**
@@ -18723,7 +18723,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	stackOpenTab: () => LocalizedString
 	/**
-	 * This page is HTTPS and the agent does not serve TLS itself, so the browser blocks the app's window. Give the agent a certificate, or open the panel over HTTP on the local network.
+	 * This page is HTTPS and the Monitor does not serve TLS itself, so the browser blocks the app's window. Give the Monitor a certificate, or open the panel over HTTP on the local network.
 	 */
 	stackMixedContent: () => LocalizedString
 	/**
@@ -18947,7 +18947,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	stackPortMoved: (arg: { from: unknown, to: unknown }) => LocalizedString
 	/**
-	 * The agent runs in a container or under WSL, so ports other programs use may not all be detected.
+	 * The Monitor runs in a container or under WSL, so ports other programs use may not all be detected.
 	 */
 	stackPortsPartial: () => LocalizedString
 	/**
@@ -19027,7 +19027,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	storeDeskFrom: () => LocalizedString
 	/**
-	 * Shipped with the agent
+	 * Shipped with the Monitor
 	 */
 	storeDeskShipped: () => LocalizedString
 	/**
@@ -19055,7 +19055,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	storeUnknownPublisher: () => LocalizedString
 	/**
-	 * Its publisher is not known to this agent: install it only if you trust where it came from.
+	 * Its publisher is not known to this Monitor: install it only if you trust where it came from.
 	 */
 	storeUnknownPublisherNote: () => LocalizedString
 	/**
@@ -19063,7 +19063,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	stackFrom: () => LocalizedString
 	/**
-	 * Shipped with the agent
+	 * Shipped with the Monitor
 	 */
 	stackFromBundled: () => LocalizedString
 	/**
@@ -19259,7 +19259,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	selfUpdateRun: () => LocalizedString
 	/**
-	 * The agent runs the installer apart from itself, so its restart does not stop the update. The panel loses the agent for a few seconds meanwhile and follows the update across the restart.
+	 * The Monitor runs the installer apart from itself, so its restart does not stop the update. The panel loses the Monitor for a few seconds meanwhile and follows the update across the restart.
 	 */
 	selfUpdateRunHint: () => LocalizedString
 	/**
@@ -19267,7 +19267,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	selfUpdateNoTerminal: () => LocalizedString
 	/**
-	 * This agent runs in a container: pull the new image and recreate the container.
+	 * This Monitor runs in a container: pull the new image and recreate the container.
 	 */
 	selfUpdateContainer: () => LocalizedString
 	/**
@@ -19275,7 +19275,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	selfUpdateNix: () => LocalizedString
 	/**
-	 * This agent was not installed by install.sh: update it the way it was installed.
+	 * This Monitor was not installed by install.sh: update it the way it was installed.
 	 */
 	selfUpdateOther: () => LocalizedString
 	/**
@@ -19283,11 +19283,11 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	selfUpdateRunning: () => LocalizedString
 	/**
-	 * The agent is restarting; the panel reconnects in a few seconds…
+	 * The Monitor is restarting; the panel reconnects in a few seconds…
 	 */
 	selfUpdateRestarting: () => LocalizedString
 	/**
-	 * Updated: the agent runs {version}.
+	 * Updated: the Monitor runs {version}.
 	 */
 	selfUpdateDone: (arg: { version: unknown }) => LocalizedString
 	/**
@@ -19295,7 +19295,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	selfUpdateFailed: () => LocalizedString
 	/**
-	 * The agent has not come back. Check it on the machine.
+	 * The Monitor has not come back. Check it on the machine.
 	 */
 	selfUpdateNoAnswer: () => LocalizedString
 	/**
@@ -19591,7 +19591,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	storageTypeToConfirm: (arg: { word: unknown }) => LocalizedString
 	/**
-	 * sudo password (if the agent's account needs one)
+	 * sudo password (if the Monitor's account needs one)
 	 */
 	storageSudoPassword: () => LocalizedString
 	/**
@@ -19599,7 +19599,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	storageSudoRejected: () => LocalizedString
 	/**
-	 * The agent's account cannot use sudo here.
+	 * The Monitor's account cannot use sudo here.
 	 */
 	storageSudoUnavailable: () => LocalizedString
 	/**
@@ -19923,11 +19923,11 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	storageRunNow: () => LocalizedString
 	/**
-	 * sudo asked for a password: run the agent as root, or allow these commands (above).
+	 * sudo asked for a password: run the Monitor as root, or allow these commands (above).
 	 */
 	storageNeedsSudo: () => LocalizedString
 	/**
-	 * The schedule runs without a password. Unless the agent runs as root, sudo must let its account run these commands without one, for example in /etc/sudoers.d/serverbox-storage:
+	 * The schedule runs without a password. Unless the Monitor runs as root, sudo must let its account run these commands without one, for example in /etc/sudoers.d/serverbox-storage:
 	 */
 	storageMaintenanceSudo: () => LocalizedString
 	/**
@@ -20307,7 +20307,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	containerBackupDisk: () => LocalizedString
 	/**
-	 * Beside the agent's database
+	 * Beside the Monitor's database
 	 */
 	containerBackupDefaultFolder: () => LocalizedString
 	/**
@@ -20319,7 +20319,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	containerBackupDestinationMissing: () => LocalizedString
 	/**
-	 * The agent cannot write in that folder.
+	 * The Monitor cannot write in that folder.
 	 */
 	containerBackupDestinationNotWritable: () => LocalizedString
 	/**
@@ -20407,11 +20407,11 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	weekdaySun: () => LocalizedString
 	/**
-	 * Could not reach the agent.
+	 * Could not reach the Monitor.
 	 */
 	agentUnreachable: () => LocalizedString
 	/**
-	 * The agent answered {status}.
+	 * The Monitor answered {status}.
 	 */
 	agentAnswered: (arg: { status: number }) => LocalizedString
 	/**
@@ -20419,7 +20419,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	agentSessionExpired: () => LocalizedString
 	/**
-	 * Remote monitor agents require HTTPS; HTTP is allowed only on loopback.
+	 * Remote Monitors require HTTPS; HTTP is allowed only on loopback.
 	 */
 	agentHttpsRequired: () => LocalizedString
 	/**
@@ -20439,7 +20439,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	deskGuideWebAppsTitle: () => LocalizedString
 	/**
-	 * The agent can run self-hosted services with Docker. Before anything is deployed, the App Store shows what an app will run and asks for your password.
+	 * The Monitor can run self-hosted services with Docker. Before anything is deployed, the App Store shows what an app will run and asks for your password.
 	 */
 	deskGuideWebAppsBody: () => LocalizedString
 	/**

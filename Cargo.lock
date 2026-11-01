@@ -5277,7 +5277,7 @@ version = "0.1.0"
 dependencies = [
  "libc",
  "sbm_parser",
- "sysinfo 0.40.1",
+ "sysinfo",
 ]
 
 [[package]]
@@ -5593,7 +5593,7 @@ dependencies = [
  "serde_json",
  "sha2 0.11.0",
  "sqlx",
- "sysinfo 0.39.6",
+ "sysinfo",
  "tar",
  "tempfile",
  "thiserror 2.0.21",
@@ -6128,20 +6128,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.119",
-]
-
-[[package]]
-name = "sysinfo"
-version = "0.39.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d2071df9448915b71c4fe6d25deaf1c22f12bd234f01540b77312bb8e41361e6"
-dependencies = [
- "libc",
- "memchr",
- "ntapi",
- "objc2-core-foundation",
- "objc2-io-kit",
- "windows",
 ]
 
 [[package]]

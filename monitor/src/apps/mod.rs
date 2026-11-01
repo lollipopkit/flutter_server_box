@@ -1,4 +1,4 @@
-//! Desk apps' backends run by the agent (`docs/dev/desk-sys.md`): the
+//! Desk apps' backends run by the agent (`docs/src/content/docs/development/desk-app-reference.md`): the
 //! compiled components by package, and each app's job.
 
 pub mod catalog;

@@ -2,7 +2,7 @@
 /// its own: the desk serves its design system to the frame (`/desk-app/desk.css`,
 /// the `lk-*` classes, the tokens and their fonts), and this puts it on the
 /// page and keeps it in the desk's mode and theme. The app writes markup
-/// with those classes and tokens (docs/dev/desk-sys.md, "UI"); outside the
+/// with those classes and tokens (docs/src/content/docs/development/desk-app-reference.md, "UI"); outside the
 /// desk there is nothing to load, so it is the desk's to use only.
 
 import type { AppTheme } from './protocol.js'

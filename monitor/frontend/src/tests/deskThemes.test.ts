@@ -1,3 +1,4 @@
+import { get } from 'svelte/store'
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
@@ -5,7 +6,9 @@ import type { InstalledTheme, PackageTheme } from '../desk/deskApi'
 import type { DeskThemes } from '../desk/themes.svelte'
 import { css, themeDark, themeOf, themeValue, themeVars, themeWallpaper } from '../desk/themeStyle'
 import ThemesGroup from '../desk/apps/settings/ThemesGroup.svelte'
+import { LL } from '../i18n/i18n-svelte'
 
+const ll = get(LL)
 const role = (base: number) => (name: string) => base + name.length
 function theme(over: Partial<PackageTheme> = {}): PackageTheme {
   const light: Record<string, number> = {}
@@ -111,10 +114,10 @@ describe('ThemesGroup', () => {
     const themes = fake([pkg('p', [theme({ variant: { key: 'rainbow', name: 'Rainbow' } }), trans], 'Pride')])
     render(ThemesGroup, { themes, selected: 'p#rainbow', onstore: vi.fn() })
     expect(screen.getByRole('radio', { name: 'Pride · Rainbow' })).toBeChecked()
-    expect(screen.getByText('Dark only')).toBeInTheDocument()
+    expect(screen.getByText(ll.settingsThemeDarkOnly())).toBeInTheDocument()
     await fireEvent.click(screen.getByRole('radio', { name: 'Pride · Trans' }))
     expect(themes.select).toHaveBeenCalledWith('p', trans)
-    await fireEvent.click(screen.getByRole('radio', { name: 'Default' }))
+    await fireEvent.click(screen.getByRole('radio', { name: ll.settingsThemeDefault() }))
     expect(themes.select).toHaveBeenCalledWith(null, null)
   })
 
@@ -122,11 +125,11 @@ describe('ThemesGroup', () => {
     const themes = fake([pkg('p', [theme({ variant: { key: 'a', name: 'A' } }), theme({ variant: { key: 'b', name: 'B' } })], 'Pride')])
     const onstore = vi.fn()
     render(ThemesGroup, { themes, selected: null, onstore })
-    const removes = screen.getAllByRole('button', { name: 'Remove Pride' })
+    const removes = screen.getAllByRole('button', { name: ll.settingsThemeRemove({ name: 'Pride' }) })
     expect(removes).toHaveLength(1)
     await fireEvent.click(removes[0])
     expect(themes.remove).toHaveBeenCalledWith('p')
-    await fireEvent.click(screen.getByRole('button', { name: /Theme store/ }))
+    await fireEvent.click(screen.getByRole('button', { name: (name) => name.includes(ll.settingsThemeStore()) }))
     expect(onstore).toHaveBeenCalled()
   })
 })

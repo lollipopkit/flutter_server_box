@@ -1,5 +1,5 @@
 /// Why a `monitor` agent refuses everything beyond reading, as it says it —
-/// see `docs/dev/monitor-permissions.md`.
+/// see `docs/src/content/docs/development/monitor-agent.md`.
 enum MonitorAccessWhy {
   /// Plaintext HTTP away from loopback, without the agent's `allow_insecure`.
   insecureTransport,

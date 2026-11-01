@@ -87,8 +87,8 @@ with an explanation when they cannot be installed.
 
 ## In the Monitor panel
 
-The [Monitor agent](/docs/advanced/monitor-agent/)'s web panel uses the same
-`.fsbt` packages as the App. Themes in the panel are kept on the agent for
+The [Monitor](/docs/advanced/monitor-agent/)'s web panel uses the same
+`.fsbt` packages as the App. Themes in the panel are kept on the Monitor for
 your account, so they apply in every browser you sign in from, and they are
 separate from the themes installed in the App.
 
@@ -96,13 +96,13 @@ Open **Settings → Appearance → Themes** in the panel:
 
 - Select **Default** for the desk's own colors, or select an installed theme.
   A package with variants lists each one, such as `Pride · Trans`.
-- **Install a theme → From file** uploads a `.fsbt` package. The agent reads
+- **Install a theme → From file** uploads a `.fsbt` package. The Monitor reads
   and checks it with the same code as the App, and refuses a package that
   fails the checks.
-- **Theme store** lists the themes of the ServerBox catalog. The agent
+- **Theme store** lists the themes of the ServerBox catalog. The Monitor
   downloads the package over HTTPS and checks its SHA-256 before installing it;
-  the panel cannot make the agent download from any other address. A theme
-  that needs a newer agent is shown but cannot be installed. A newer version
+  the panel cannot make the Monitor download from any other address. A theme
+  that needs a newer Monitor is shown but cannot be installed. A newer version
   of an installed theme shows **Update**.
 - The delete button beside a theme removes it. Removing the theme in use
   returns the desk to **Default**.

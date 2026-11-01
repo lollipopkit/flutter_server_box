@@ -2433,7 +2433,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get localServerTip =>
-      'Membaca perangkat ini secara langsung dengan menjalankan skrip status di sini. SSH dan agen monitor tidak digunakan, dan pengaturannya tetap disimpan.';
+      'Membaca perangkat ini secara langsung dengan menjalankan skrip status di sini. SSH dan Monitor tidak digunakan, dan pengaturannya tetap disimpan.';
 
   @override
   String get localServerUnsupported =>
@@ -2788,7 +2788,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get monitorNoRemoteAccess =>
-      'Monitor ini hanya dikonfigurasi untuk pemantauan. Anda tidak dapat membuka terminal, menjalankan perintah, atau menjelajahi berkas dari sini. Untuk mengaktifkan fitur tersebut, edit [remote_access] dalam config.toml Monitor.';
+      'Monitor ini menolak semua hal selain pemantauan melalui HTTP tanpa enkripsi. Hubungkan melalui HTTPS atau izinkan HTTP di Monitor dan aplikasi ini.';
 
   @override
   String get monitorAgentTooOld =>
@@ -3106,7 +3106,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get monitorRelayForbidden =>
-      'Akun Monitor ini tidak boleh terhubung ke alamat ini. Izin connect pada perannya harus mengizinkannya.';
+      'Monitor menolak koneksi ini: kata sandinya telah berubah atau tidak menerima koneksi melalui HTTP tanpa enkripsi. Masuk lagi atau hubungkan melalui HTTPS.';
 
   @override
   String get remoteDesktopCertificateChanged =>
@@ -3375,7 +3375,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get virtErrRelayNotGranted =>
-      'Monitor tidak membuka koneksi TCP dari server untuk akun ini (izin connect)';
+      'Monitor tidak membuka koneksi TCP dari server melalui tautan ini.';
 
   @override
   String get virtErrExecNotGranted => 'Monitor tidak menjalankan perintah';
@@ -6831,7 +6831,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get storageNeedsSudo =>
-      'sudo meminta kata sandi: jalankan agent sebagai root atau izinkan perintah di atas.';
+      'sudo meminta kata sandi: jalankan Monitor sebagai root atau izinkan perintah di atas.';
 
   @override
   String get monitorTab => 'Monitor';
@@ -6850,15 +6850,15 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get monitorNoAgents =>
-      'Belum ada server yang terhubung melalui agen Monitor.';
+      'Belum ada server yang terhubung melalui Monitor.';
 
   @override
   String get monitorNotOffered =>
-      'Versi agen ini tidak menyediakannya. Perbarui agen.';
+      'Versi Monitor ini tidak menyediakannya. Perbarui Monitor.';
 
   @override
   String get monitorAlertsNotOffered =>
-      'Versi agen ini tidak melaporkan peringatan.';
+      'Versi Monitor ini tidak melaporkan peringatan.';
 
   @override
   String get monitorAlertsNone => 'Tidak ada aturan yang terpicu.';
@@ -6870,7 +6870,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String monitorAgentVersion(String version) {
-    return 'Agen $version';
+    return 'Monitor $version';
   }
 
   @override
@@ -6996,7 +6996,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String monitorAgentsCount(int count) {
-    return '$count agen';
+    return '$count Monitor';
   }
 
   @override
@@ -7028,7 +7028,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get monitorLiveNoDevices => 'Belum ada perangkat yang masuk.';
 
   @override
-  String get monitorUpdateAgent => 'Perbarui agen';
+  String get monitorUpdateAgent => 'Perbarui Monitor';
 
   @override
   String get monitorAgentTooOldTip =>
@@ -7036,20 +7036,20 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get monitorAgentTooOldBody =>
-      'Agen ini dari sebelum hanya memakai satu kata sandi, dan aplikasi tidak bisa masuk. Setelah diperbarui, kata sandinya adalah milik akun admin tertuanya.';
+      'Monitor ini dari sebelum hanya memakai satu kata sandi, dan aplikasi tidak bisa masuk. Setelah diperbarui, kata sandinya adalah milik akun admin tertuanya.';
 
   @override
   String monitorAgentOutdatedBody(String latest, String running) {
-    return '$latest telah rilis; agen ini menjalankan $running.';
+    return '$latest telah rilis; Monitor ini menjalankan $running.';
   }
 
   @override
   String get monitorUpdateRunHint =>
-      'Jalankan di server, dengan akun yang dipakai memasang agen:';
+      'Jalankan di server, dengan akun yang dipakai memasang Monitor:';
 
   @override
   String get monitorUpdateSshHint =>
-      'Terminal menjalankannya. Jika agen dipasang untuk seluruh sistem dan terminal lewat SSH, sudo akan meminta kata sandinya di sana.';
+      'Terminal menjalankannya. Jika Monitor dipasang untuk seluruh sistem dan terminal lewat SSH, sudo akan meminta kata sandinya di sana.';
 
   @override
   String get monitorUpdateNoSsh =>
@@ -7074,14 +7074,14 @@ class AppLocalizationsId extends AppLocalizations {
       'Dipasang lewat modul NixOS: perbarui melalui konfigurasi sistem lalu rebuild.';
 
   @override
-  String get noticeAgentUpdate => 'Ada pembaruan untuk agen';
+  String get noticeAgentUpdate => 'Ada pembaruan untuk Monitor';
 
   @override
   String get monitorUpdateLegacyUser => 'Nama akun';
 
   @override
   String get monitorUpdateLegacyHint =>
-      'Agen ini masih masuk dengan nama akun dan kata sandi: nama yang dulu dipakai aplikasi ini (biasanya admin) dan kata sandi tersimpan.';
+      'Monitor ini masih masuk dengan nama akun dan kata sandi: nama yang dulu dipakai aplikasi ini (biasanya admin) dan kata sandi tersimpan.';
 
   @override
   String get monitorUpdateNow => 'Perbarui sekarang';
@@ -7091,11 +7091,11 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get monitorUpdateRestarting =>
-      'Agen sedang dimulai ulang; koneksi kembali dalam beberapa detik…';
+      'Monitor sedang dimulai ulang; koneksi kembali dalam beberapa detik…';
 
   @override
   String monitorUpdateDone(String version) {
-    return 'Diperbarui: agen menjalankan $version.';
+    return 'Diperbarui: Monitor menjalankan $version.';
   }
 
   @override
@@ -7103,7 +7103,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get monitorUpdateAgentHint =>
-      'Agen menjalankan penginstal terpisah dari dirinya, jadi mulai ulang tidak menghentikan pembaruan. Selama itu koneksi terputus beberapa detik; jendela ini mengikuti pembaruan melewati mulai ulang.';
+      'Monitor menjalankan penginstal terpisah dari dirinya, jadi mulai ulang tidak menghentikan pembaruan. Selama itu koneksi terputus beberapa detik; jendela ini mengikuti pembaruan melewati mulai ulang.';
 
   @override
   String get monitorUpdateSudoPassword => 'Kata sandi sudo';
@@ -7116,7 +7116,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get monitorUpdateSudoRefused => 'sudo tidak menerima kata sandi ini.';
 
   @override
-  String get monitorUpdateNoAnswer => 'Agen tidak kembali. Periksa di server.';
+  String get monitorUpdateNoAnswer =>
+      'Monitor tidak kembali. Periksa di server.';
 
   @override
   String get keyArrowDown => 'Panah bawah';

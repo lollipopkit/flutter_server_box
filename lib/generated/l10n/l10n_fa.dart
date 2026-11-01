@@ -2799,7 +2799,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get monitorNoRemoteAccess =>
-      'این Monitor فقط برای پایش تنظیم شده است. شما نمی‌توانید در اینجا ترمینال باز کنید، دستورات را اجرا نمایید یا فایل‌ها را مرور کنید. برای فعال کردن این قابلیت‌ها، بخش [remote_access] را در config.toml مربوط به Monitor ویرایش کنید.';
+      'Monitor از طریق HTTP رمزنگاری‌نشده هر چیزی جز پایش را رد می‌کند. از طریق HTTPS متصل شوید یا HTTP را هم در Monitor و هم در این برنامه مجاز کنید.';
 
   @override
   String get monitorAgentTooOld =>
@@ -3116,7 +3116,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get monitorRelayForbidden =>
-      'این حساب Monitor اجازه اتصال به این نشانی را ندارد. مجوز connect نقش آن باید این نشانی را مجاز کند.';
+      'Monitor این اتصال را رد کرد: گذرواژه‌اش تغییر کرده یا از طریق HTTP رمزنگاری‌نشده درخواست نمی‌پذیرد. دوباره وارد شوید یا از طریق HTTPS متصل شوید.';
 
   @override
   String get remoteDesktopCertificateChanged =>
@@ -3391,7 +3391,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get virtErrRelayNotGranted =>
-      'Monitor برای این حساب از سرور اتصال TCP باز نمی‌کند (مجوز connect)';
+      'Monitor از طریق این پیوند اتصال TCP از سرور برقرار نمی‌کند.';
 
   @override
   String get virtErrExecNotGranted => 'Monitor دستورات را اجرا نمی‌کند';
@@ -6875,7 +6875,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get storageNeedsSudo =>
-      'sudo asked for a password: run the agent as root, or allow these commands (above).';
+      'sudo asked for a password: run the Monitor as root, or allow these commands (above).';
 
   @override
   String get monitorTab => 'Monitor';
@@ -6893,16 +6893,15 @@ class AppLocalizationsFa extends AppLocalizations {
   String get monitorLive => 'Sessions & devices';
 
   @override
-  String get monitorNoAgents =>
-      'No server is reached through a Monitor agent yet.';
+  String get monitorNoAgents => 'No server is reached through a Monitor yet.';
 
   @override
   String get monitorNotOffered =>
-      'This agent\'s version does not offer this. Update the agent.';
+      'This Monitor version does not offer this. Update the Monitor.';
 
   @override
   String get monitorAlertsNotOffered =>
-      'This agent\'s version does not report alerts.';
+      'This Monitor version does not report alerts.';
 
   @override
   String get monitorAlertsNone => 'No rule is firing.';
@@ -6914,7 +6913,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String monitorAgentVersion(String version) {
-    return 'Agent $version';
+    return 'Monitor $version';
   }
 
   @override
@@ -7040,7 +7039,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String monitorAgentsCount(int count) {
-    return '$count agents';
+    return '$count Monitors';
   }
 
   @override
@@ -7071,7 +7070,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get monitorLiveNoDevices => 'No device has signed in.';
 
   @override
-  String get monitorUpdateAgent => 'Update the agent';
+  String get monitorUpdateAgent => 'Update the Monitor';
 
   @override
   String get monitorAgentTooOldTip =>
@@ -7079,20 +7078,20 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get monitorAgentTooOldBody =>
-      'This agent is from before it had one password, and this app cannot sign in to it. After the update, its password is the one its oldest admin account had.';
+      'This Monitor is from before it had one password, and this app cannot sign in to it. After the update, its password is the one its oldest admin account had.';
 
   @override
   String monitorAgentOutdatedBody(String latest, String running) {
-    return '$latest is out; this agent runs $running.';
+    return '$latest is out; this Monitor runs $running.';
   }
 
   @override
   String get monitorUpdateRunHint =>
-      'Run this on the server, as the account the agent was installed from:';
+      'Run this on the server, as the account the Monitor was installed from:';
 
   @override
   String get monitorUpdateSshHint =>
-      'The terminal runs it. If the agent was installed system-wide and the terminal goes over SSH, sudo asks for its password there.';
+      'The terminal runs it. If the Monitor was installed system-wide and the terminal goes over SSH, sudo asks for its password there.';
 
   @override
   String get monitorUpdateNoSsh =>
@@ -7117,14 +7116,14 @@ class AppLocalizationsFa extends AppLocalizations {
       'Installed by the NixOS module: update it through your system configuration and rebuild.';
 
   @override
-  String get noticeAgentUpdate => 'The agent has an update';
+  String get noticeAgentUpdate => 'The Monitor has an update';
 
   @override
   String get monitorUpdateLegacyUser => 'Its account name';
 
   @override
   String get monitorUpdateLegacyHint =>
-      'This agent still signs in with an account name and a password: the name this app used before (often admin) and the saved password.';
+      'This Monitor still signs in with an account name and a password: the name this app used before (often admin) and the saved password.';
 
   @override
   String get monitorUpdateNow => 'Update now';
@@ -7134,11 +7133,11 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get monitorUpdateRestarting =>
-      'The agent is restarting; the connection is back in a few seconds…';
+      'The Monitor is restarting; the connection is back in a few seconds…';
 
   @override
   String monitorUpdateDone(String version) {
-    return 'Updated: the agent runs $version.';
+    return 'Updated: the Monitor runs $version.';
   }
 
   @override
@@ -7146,7 +7145,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get monitorUpdateAgentHint =>
-      'The agent runs the installer apart from itself, so its restart does not stop the update. The connection to it drops for a few seconds meanwhile; this window follows the update across the restart.';
+      'The Monitor runs the installer apart from itself, so its restart does not stop the update. The connection to it drops for a few seconds meanwhile; this window follows the update across the restart.';
 
   @override
   String get monitorUpdateSudoPassword => 'sudo password';
@@ -7160,7 +7159,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get monitorUpdateNoAnswer =>
-      'The agent has not come back. Check it on the server.';
+      'The Monitor has not come back. Check it on the server.';
 
   @override
   String get keyArrowDown => 'کلید جهت‌نمای پایین';

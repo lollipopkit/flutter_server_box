@@ -157,9 +157,8 @@ enum MonitorHttpErrType {
   /// `connect_failed`.
   targetUnreachable,
 
-  /// The Monitor would not relay to that address for this account: the
-  /// stream's `forbidden`, which covers the role's grant and the addresses
-  /// its `connect` permission allows.
+  /// The Monitor would not relay: the stream's `forbidden`, sent when its
+  /// password changed or the link may not act (plain HTTP).
   relayForbidden,
 }
 

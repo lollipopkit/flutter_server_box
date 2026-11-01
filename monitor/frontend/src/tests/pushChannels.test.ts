@@ -1,7 +1,9 @@
+import { get } from 'svelte/store'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import PushChannels from '../desk/apps/settings/PushChannels.svelte'
+import { LL } from '../i18n/i18n-svelte'
 import { api } from '../lib/api'
 import { servers } from '../lib/servers.svelte'
 
@@ -10,6 +12,7 @@ vi.mock('../lib/api', async (importOriginal) => ({
   api: { getPush: vi.fn(), updatePush: vi.fn(), testPush: vi.fn() },
 }))
 
+const ll = get(LL)
 const mocked = vi.mocked(api)
 
 const listed = {
@@ -45,7 +48,7 @@ describe('push channels', () => {
   it('saves an offered setting only once it is filled in', async () => {
     render(PushChannels)
     await screen.findByLabelText('subtitle')
-    await fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await fireEvent.click(screen.getByRole('button', { name: (n) => n.includes(ll.save()) }))
     await waitFor(() => expect(mocked.updatePush).toHaveBeenCalledTimes(1))
     // Nothing offered and left alone reaches the agent, the off switches included.
     expect(mocked.updatePush.mock.calls[0][0].pushes[0].config).toEqual({
@@ -54,7 +57,7 @@ describe('push channels', () => {
     })
 
     await fireEvent.input(screen.getByLabelText('subtitle'), { target: { value: 'on {{name}}' } })
-    await fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await fireEvent.click(screen.getByRole('button', { name: (n) => n.includes(ll.save()) }))
     await waitFor(() => expect(mocked.updatePush).toHaveBeenCalledTimes(2))
     expect(mocked.updatePush.mock.calls[1][0].pushes[0].config).toMatchObject({ subtitle: 'on {{name}}' })
   })

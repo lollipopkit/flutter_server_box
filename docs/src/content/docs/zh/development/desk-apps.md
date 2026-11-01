@@ -5,13 +5,13 @@ description: 使用 serverbox-desk 为 Monitor 面板的桌面开发第三方应
 
 Desk 应用是一个静态网页包，由 Monitor 面板在窗口中的沙箱 frame 里运行。它打包为
 `.fsba` 文件，在面板中安装并批准（见 [Desk 应用](/docs/zh/advanced/monitor-desk-apps/)）。
-完整设计（包括消息协议）见
-[`docs/dev/desk-sys.md`](https://github.com/lollipopkit/flutter_server_box/blob/main/docs/dev/desk-sys.md)。
+完整约定（包括消息协议）见
+[Desk 应用参考](/docs/zh/development/desk-app-reference/)。
 
 | 类型 | 包含 | 能访问 |
 |---|---|---|
 | `web` | 静态网页包（HTML、JavaScript、CSS） | 通过 `serverbox-desk` 访问桌面 |
-| `wasm` | `web` 网页包加 `backend.wasm`，即由 agent 运行的 WebAssembly component | 桌面，以及通过 `desk.call()` 和 `desk.job()` 访问自己后端的服务 |
+| `wasm` | `web` 网页包加 `backend.wasm`，即由 Monitor 运行的 WebAssembly component | 桌面，以及通过 `desk.call()` 和 `desk.job()` 访问自己后端的服务 |
 
 ## 从模板开始
 
@@ -52,7 +52,7 @@ await desk.storage.set('count', count + 1)
 | 窗口 | `setTitle`、`setAppName`、`setIcon`、`setBadge`、`setAppState`（窗口恢复时带回的 JSON，最多 16 KiB，不能存放密钥）、`close` |
 | 窗口栏 | `toolbar({ title, subtitle, actions })`、`menus([...])`；由桌面绘制，使用时发送 `action` 事件 |
 | 通知 | `notify({ title, body, level })`，需要 `notifications` 权限 |
-| 存储 | `storage.get/set/remove/keys`：按应用保存在 agent 上的 JSON（每个应用 256 KiB） |
+| 存储 | `storage.get/set/remove/keys`：按应用保存在 Monitor 上的 JSON（每个应用 256 KiB） |
 | 其他应用 | `open(appId, { path })` 打开另一个应用，可以带上文件或目录；`handlers(path, kind)` 列出能打开它的应用 |
 | 后台 | `keepAlive(reason)`，需要 `background` 权限 |
 | 后端 | `call(fn, args, { sudo })`、`job(fn, args, { sudo, onLine })`、`jobView`、`follow`、`cancelJob`，仅 `wasm` 应用 |
@@ -80,13 +80,13 @@ await desk.storage.set('count', count + 1)
 图标按钮（`lk-iconbtn`）、输入框（`lk-input`、`lk-select`）、开关（`lk-switch`）、
 卡片（`lk-card`）、徽标、表格（`lk-table`）、设置分组（`lk-setgroup`、`lk-setrow`）和
 图标（`lk-icon`，使用 Material Symbols Rounded 名称）见
-[设计文档的 UI 部分](https://github.com/lollipopkit/flutter_server_box/blob/main/docs/dev/desk-sys.md#ui-third-party-apps)。
-样式表由 agent 提供，不在包内，因此应用只在面板中才能正确显示。
+[参考文档的 UI 部分](/docs/zh/development/desk-app-reference/#ui)。
+样式表由 Monitor 提供，不在包内，因此应用只在面板中才能正确显示。
 `connect({ style: false })` 不修改页面。
 
 ## Manifest
 
-`manifest.json` 位于包的根目录。agent 会拒绝未知字段。
+`manifest.json` 位于包的根目录。Monitor 会拒绝未知字段。
 
 ```json
 {
@@ -117,16 +117,16 @@ await desk.storage.set('count', count + 1)
 | `size`、`min_size` | `{ "width", "height" }`：首个窗口的大小和允许的最小尺寸 |
 | `opens` | `{ "ext": ["md", "txt"], "dirs": false }`：在 Files 的“打开方式”中可打开的文件（`"*"` 表示任意）及是否可打开目录 |
 | `keywords` | Spotlight 额外匹配的词 |
-| `os` | 应用适用的系统，按 `/etc/os-release` 的 `ID`（`["ubuntu"]`）；agent 的目录只在这些系统上提供它。缺省为任意系统 |
+| `os` | 应用适用的系统，按 `/etc/os-release` 的 `ID`（`["ubuntu"]`）；Monitor 的目录只在这些系统上提供它。缺省为任意系统 |
 
 ## 打包
 
 `.fsba` 是 gzip 压缩的 tar，包含 `manifest.json`、`ui/`（网页包，入口为
 `ui/index.html`）、`backend.wasm`（仅且必须在类型为 `wasm` 时存在），以及可选的
 `LICENSE`、`NOTICE`、`README.md` 和 `SIGNATURE`；其他内容不被接受。ServerBox 会为自己的包签名；
-没有 agent 认识的签名的包会显示为未知发布者。agent 只接受普通文件和普通相对
+没有 Monitor 认识的签名的包会显示为未知发布者。Monitor 只接受普通文件和普通相对
 路径，最多 2000 个文件，压缩前后都不超过 20 MiB。在 macOS 上运行 `tar` 时需要设置
-`COPYFILE_DISABLE=1`，否则会加入 agent 拒绝的 `._` 文件；模板的 `npm run pack` 已经
+`COPYFILE_DISABLE=1`，否则会加入 Monitor 拒绝的 `._` 文件；模板的 `npm run pack` 已经
 这样做。
 
 ## 后端（`wasm`）
@@ -134,7 +134,7 @@ await desk.storage.set('count', count + 1)
 `backend.wasm` 是一个 WebAssembly component（`wasm32-wasip2`）。它的 world 包含
 `sbm:app/imports`（[`monitor/wit/app.wit`](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/wit/app.wit)），
 并导出应用自己的服务。服务用 WIT 描述，类似 gRPC 用 protobuf 描述服务：`api` 是 frame 调用并等待结果的函数，
-`jobs` 是较长的任务，由 agent 作为该应用的 job 运行（同一时间只有一个），日志逐行推送给 frame。
+`jobs` 是较长的任务，由 Monitor 作为该应用的 job 运行（同一时间只有一个），日志逐行推送给 frame。
 每个函数都返回 `result<T, error>`；`error` 是 gRPC 的标准状态码，frame 收到的是 `DeskError`，
 应用给出的说明在 `detail` 中。
 
@@ -158,10 +158,10 @@ const notes = await desk.call<Note[]>('list', { folder: 'work' })
 ```
 
 参数按名称组成一个对象传递，值以 JSON 传递：名称使用 camelCase，`variant` 为 `{ tag, val }`，
-`option` 为 `null` 或其值，`result` 为 `{ ok }` 或 `{ err }`。agent 在安装时检查 component，
+`option` 为 `null` 或其值，`result` 为 `{ ok }` 或 `{ err }`。Monitor 在安装时检查 component，
 函数的参数或返回值含有 resource 或 stream 时拒绝安装。
 
-agent 使用 wasmtime 运行它，每次调用或 job 使用新的实例；应用需要保留的数据通过 `kv` 保存。
+Monitor 使用 wasmtime 运行它，每次调用或 job 使用新的实例；应用需要保留的数据通过 `kv` 保存。
 它没有自己的文件、网络和环境变量。宿主函数：
 
 | 函数 | 需要 |
@@ -169,13 +169,13 @@ agent 使用 wasmtime 运行它，每次调用或 job 使用新的实例；应�
 | `log` | — |
 | `kv-get`、`kv-set`、`kv-remove` | —（调用账户在该应用下的存储，JSON 文本） |
 | `status` | `status` |
-| `exec` | `process`：以 agent 的系统账户运行脚本 |
+| `exec` | `process`：以 Monitor 的系统账户运行脚本 |
 | `exec-root` | `root`，以及桌面为这次调用或 job 询问的 sudo 密码 |
 | `job.line`、`job.run-root` | 仅 job：写一行日志；以 root 身份运行脚本，输出逐行写入日志 |
 
 需要 root 时，frame 在请求中带上 `sudo: { title, body, confirmWord? }`；桌面在应用名称下方显示这些文字，
-弹出自己的对话框，并把 sudo 密码随请求发给 agent。每次调用最多使用 64 MiB 内存、10 秒自身 CPU 时间，
-总时长 60 秒；job 一直运行到返回或被取消。`process` 和 `root` 遵循 agent 的传输规则：需要 HTTPS
+弹出自己的对话框，并把 sudo 密码随请求发给 Monitor。每次调用最多使用 64 MiB 内存、10 秒自身 CPU 时间，
+总时长 60 秒；job 一直运行到返回或被取消。`process` 和 `root` 遵循 Monitor 的传输规则：需要 HTTPS
 或同机调用方，除非设置了 `[remote_access] allow_insecure`。
 
 [`monitor/examples/desk-app-uptime`](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor/examples/desk-app-uptime)

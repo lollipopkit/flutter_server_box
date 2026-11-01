@@ -34,7 +34,7 @@ export interface DeskPreferences {
   wallpaper_fit: 'cover' | 'contain' | 'fill'
   dock: string[]
   icons: DeskIcon[]
-  /// Hidden apps keep running; off suspends them (`docs/dev/desk-sys.md`).
+  /// Hidden apps keep running; off suspends them (`docs/src/content/docs/development/desk-app-reference.md`).
   background: boolean
   /// Apps suspended when hidden even while [background] is on.
   background_denied: string[]

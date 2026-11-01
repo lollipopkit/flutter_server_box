@@ -1317,7 +1317,7 @@ Future<VirtGuest> _pveVm(PveBackend pve, int vmid) async =>
 
 /// A start straight after a stop leaves `qmeventd`'s cleanup of the old
 /// QEMU process holding the VM's config lock for 30 s, and every action in
-/// that window fails on it after 10 s (PVE 9.2, see docs/dev/virt.md). The cleanup
+/// that window fails on it after 10 s (PVE 9.2). The cleanup
 /// takes well under a second when nothing has started yet.
 Future<void> _afterStop() => Future<void>.delayed(const Duration(seconds: 5));
 

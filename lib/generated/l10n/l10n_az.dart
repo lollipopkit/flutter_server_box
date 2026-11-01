@@ -2436,7 +2436,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get localServerTip =>
-      'Status skriptini burada işlədərək bu cihazı birbaşa oxuyur. SSH və Monitor agenti istifadə olunmur, onların ayarları saxlanılır.';
+      'Status skriptini burada işlədərək bu cihazı birbaşa oxuyur. SSH və Monitor istifadə olunmur, onların ayarları saxlanılır.';
 
   @override
   String get localServerUnsupported =>
@@ -2791,7 +2791,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get monitorNoRemoteAccess =>
-      'Bu Monitor yalnız monitorinq üçündür. Buradan terminal aça, əmrlər işlədə və fayllara baxa bilməzsiniz. Bu funksiyaları aktivləşdirmək üçün Monitor-un config.toml faylında [remote_access] bölməsini redaktə edin.';
+      'Bu Monitor şifrələnməmiş HTTP üzərindən monitorinqdən başqa hər şeyi rədd edir. HTTPS ilə qoşulun və ya həm Monitor-da, həm də bu tətbiqdə HTTP-yə icazə verin.';
 
   @override
   String get monitorAgentTooOld =>
@@ -3114,7 +3114,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get monitorRelayForbidden =>
-      'Bu Monitor hesabının bu ünvana qoşulmasına icazə verilmir. Rolunun connect icazəsi buna icazə verməlidir.';
+      'Monitor bu bağlantını rədd etdi: parolu dəyişib və ya HTTP üzərindən işləməyə razı deyil. Yenidən daxil olun və ya HTTPS ilə qoşulun.';
 
   @override
   String get remoteDesktopCertificateChanged =>
@@ -3383,7 +3383,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get virtErrRelayNotGranted =>
-      'Monitor bu hesab üçün serverdən TCP bağlantısı açmır (connect icazəsi)';
+      'Monitor bu bağlantı üzərindən serverdən TCP bağlantıları açmır.';
 
   @override
   String get virtErrExecNotGranted => 'Monitor əmrləri icra etmir';
@@ -6826,7 +6826,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get storageNeedsSudo =>
-      'sudo parol istədi: agenti root kimi işə salın və ya bu əmrlərə icazə verin (yuxarıda).';
+      'sudo parol istədi: Monitor-u root kimi işə salın və ya bu əmrlərə icazə verin (yuxarıda).';
 
   @override
   String get monitorTab => 'Monitor';
@@ -6845,15 +6845,15 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get monitorNoAgents =>
-      'Hələ Monitor agenti vasitəsilə qoşulan server yoxdur.';
+      'Hələ Monitor vasitəsilə qoşulan server yoxdur.';
 
   @override
   String get monitorNotOffered =>
-      'Agentin bu versiyası bunu təklif etmir. Agenti yeniləyin.';
+      'Monitor-un bu versiyası bunu təklif etmir. Monitor-u yeniləyin.';
 
   @override
   String get monitorAlertsNotOffered =>
-      'Agentin bu versiyası xəbərdarlıqları bildirmir.';
+      'Monitor-un bu versiyası xəbərdarlıqları bildirmir.';
 
   @override
   String get monitorAlertsNone => 'Heç bir qayda işə düşməyib.';
@@ -6865,7 +6865,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String monitorAgentVersion(String version) {
-    return 'Agent $version';
+    return 'Monitor $version';
   }
 
   @override
@@ -6991,7 +6991,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String monitorAgentsCount(int count) {
-    return '$count agent';
+    return '$count Monitor';
   }
 
   @override
@@ -7022,27 +7022,27 @@ class AppLocalizationsAz extends AppLocalizations {
   String get monitorLiveNoDevices => 'Daxil olmuş cihaz yoxdur.';
 
   @override
-  String get monitorUpdateAgent => 'Agenti yenilə';
+  String get monitorUpdateAgent => 'Monitor-u yenilə';
 
   @override
   String get monitorAgentTooOldTip => 'Yeniləmə addımları Monitor tabındadır.';
 
   @override
   String get monitorAgentTooOldBody =>
-      'Bu agent tək parol dövründən əvvəlkidir və tətbiq daxil ola bilmir. Yeniləmədən sonra onun parolu ən köhnə admin hesabının parolu olur.';
+      'Bu Monitor tək parol dövründən əvvəlkidir və tətbiq daxil ola bilmir. Yeniləmədən sonra onun parolu ən köhnə admin hesabının parolu olur.';
 
   @override
   String monitorAgentOutdatedBody(String latest, String running) {
-    return '$latest çıxıb; bu agent $running işlədir.';
+    return '$latest çıxıb; bu Monitor $running işlədir.';
   }
 
   @override
   String get monitorUpdateRunHint =>
-      'Serverdə agentin quraşdırıldığı hesabla işə salın:';
+      'Serverdə Monitor-un quraşdırıldığı hesabla işə salın:';
 
   @override
   String get monitorUpdateSshHint =>
-      'Terminal onu işlədir. Agent bütün sistem üçün quraşdırılıbsa və terminal SSH ilədirsə, sudo orada parol soruşacaq.';
+      'Terminal onu işlədir. Monitor bütün sistem üçün quraşdırılıbsa və terminal SSH ilədirsə, sudo orada parol soruşacaq.';
 
   @override
   String get monitorUpdateNoSsh =>
@@ -7067,14 +7067,14 @@ class AppLocalizationsAz extends AppLocalizations {
       'NixOS modulu ilə quraşdırılıb: sistem konfiqurasiyanızdan yeniləyin və yenidən qurun.';
 
   @override
-  String get noticeAgentUpdate => 'Agent üçün yeniləmə var';
+  String get noticeAgentUpdate => 'Monitor üçün yeniləmə var';
 
   @override
   String get monitorUpdateLegacyUser => 'Hesab adı';
 
   @override
   String get monitorUpdateLegacyHint =>
-      'Bu agent hələ hesab adı və parolla daxil olur: bu tətbiqin əvvəl istifadə etdiyi ad (adətən admin) və saxlanmış parol.';
+      'Bu Monitor hələ hesab adı və parolla daxil olur: bu tətbiqin əvvəl istifadə etdiyi ad (adətən admin) və saxlanmış parol.';
 
   @override
   String get monitorUpdateNow => 'İndi yenilə';
@@ -7084,11 +7084,11 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get monitorUpdateRestarting =>
-      'Agent yenidən başlayır; bağlantı bir neçə saniyəyə qayıdır…';
+      'Monitor yenidən başlayır; bağlantı bir neçə saniyəyə qayıdır…';
 
   @override
   String monitorUpdateDone(String version) {
-    return 'Yeniləndi: agent $version işlədir.';
+    return 'Yeniləndi: Monitor $version işlədir.';
   }
 
   @override
@@ -7096,7 +7096,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get monitorUpdateAgentHint =>
-      'Agent quraşdırıcını özündən ayrı işlədir, ona görə yenidən başlaması yeniləməni dayandırmır. Bu vaxt bağlantı bir neçə saniyə kəsilir; bu pəncərə yeniləməni yenidən başlamadan sonra da izləyir.';
+      'Monitor quraşdırıcını özündən ayrı işlədir, ona görə yenidən başlaması yeniləməni dayandırmır. Bu vaxt bağlantı bir neçə saniyə kəsilir; bu pəncərə yeniləməni yenidən başlamadan sonra da izləyir.';
 
   @override
   String get monitorUpdateSudoPassword => 'sudo parolu';
@@ -7109,7 +7109,7 @@ class AppLocalizationsAz extends AppLocalizations {
   String get monitorUpdateSudoRefused => 'sudo bu parolu qəbul etmədi.';
 
   @override
-  String get monitorUpdateNoAnswer => 'Agent qayıtmadı. Serverdə yoxlayın.';
+  String get monitorUpdateNoAnswer => 'Monitor qayıtmadı. Serverdə yoxlayın.';
 
   @override
   String get keyArrowDown => 'Aşağı ox';

@@ -5,14 +5,14 @@ description: Build third-party apps for the Monitor panel's desk with serverbox-
 
 A desk app is a static web bundle that the Monitor panel runs in a window,
 inside a sandboxed frame. It is packaged as a `.fsba` file, which the
-agent's owner installs and approves (see [Desk Apps](/docs/advanced/monitor-desk-apps/)).
-The full design, including the message protocol, is
-[`docs/dev/desk-sys.md`](https://github.com/lollipopkit/flutter_server_box/blob/main/docs/dev/desk-sys.md).
+Monitor's owner installs and approves (see [Desk Apps](/docs/advanced/monitor-desk-apps/)).
+The full contract, including the message protocol, is the
+[Desk App Reference](/docs/development/desk-app-reference/).
 
 | Kind | What it contains | What it can reach |
 |---|---|---|
 | `web` | A static bundle (HTML, JavaScript, CSS) | The desk, through `serverbox-desk` |
-| `wasm` | A `web` bundle and `backend.wasm`, a WebAssembly component the agent runs | The desk, and its backend's service through `desk.call()` and `desk.job()` |
+| `wasm` | A `web` bundle and `backend.wasm`, a WebAssembly component the Monitor runs | The desk, and its backend's service through `desk.call()` and `desk.job()` |
 
 ## Start from the template
 
@@ -56,7 +56,7 @@ returned object offers:
 | Window | `setTitle`, `setAppName`, `setIcon`, `setBadge`, `setAppState` (JSON up to 16 KiB that the window comes back with; never secrets), `close` |
 | Chrome | `toolbar({ title, subtitle, actions })`, `menus([...])`; the desk draws them and sends an `action` event when one is used |
 | Notifications | `notify({ title, body, level })`, with the `notifications` permission |
-| Storage | `storage.get/set/remove/keys`: JSON per app, kept on the agent (256 KiB per app) |
+| Storage | `storage.get/set/remove/keys`: JSON per app, kept on the Monitor (256 KiB per app) |
 | Other apps | `open(appId, { path })` opens another app, optionally with a file or folder; `handlers(path, kind)` lists the apps that can open it |
 | Background | `keepAlive(reason)`, with the `background` permission |
 | Backend | `call(fn, args, { sudo })`, `job(fn, args, { sudo, onLine })`, `jobView`, `follow`, `cancelJob`; `wasm` apps only |
@@ -87,14 +87,14 @@ Buttons (`lk-btn` with `--primary`, `--secondary`, `--tinted`, `--ghost`,
 `lk-select`), switches (`lk-switch`), cards (`lk-card`), badges, tables
 (`lk-table`), settings groups (`lk-setgroup`, `lk-setrow`) and icons
 (`lk-icon` with a Material Symbols Rounded name) are listed in the
-[UI section of the design](https://github.com/lollipopkit/flutter_server_box/blob/main/docs/dev/desk-sys.md#ui-third-party-apps).
-The stylesheet is served by the agent and is not in the package, so the app
+[UI section of the reference](/docs/development/desk-app-reference/#ui).
+The stylesheet is served by the Monitor and is not in the package, so the app
 looks right only inside the panel. `connect({ style: false })` leaves the page
 alone.
 
 ## Manifest
 
-`manifest.json` sits at the root of the package. The agent refuses unknown
+`manifest.json` sits at the root of the package. The Monitor refuses unknown
 fields.
 
 ```json
@@ -126,17 +126,17 @@ fields.
 | `size`, `min_size` | `{ "width", "height" }`: the first window's size and the smallest allowed |
 | `opens` | `{ "ext": ["md", "txt"], "dirs": false }`: the files (`"*"` for any) and whether folders the app offers to open in Files' "Open with" |
 | `keywords` | Extra words Spotlight matches |
-| `os` | The systems the app is for, by `/etc/os-release`'s `ID` (`["ubuntu"]`); the agent's catalog offers it only there. Any when absent |
+| `os` | The systems the app is for, by `/etc/os-release`'s `ID` (`["ubuntu"]`); the Monitor's catalog offers it only there. Any when absent |
 
 ## Package
 
 A `.fsba` is a gzipped tar of `manifest.json`, `ui/` (the bundle, with
 `ui/index.html` as the entry), `backend.wasm` (present exactly when the kind is
 `wasm`), and optionally `LICENSE`, `NOTICE`, `README.md` and `SIGNATURE`; nothing else is
-accepted. ServerBox signs its own packages; one without a signature the agent knows is
-shown as from an unknown publisher. The agent accepts regular files only, with plain relative paths,
+accepted. ServerBox signs its own packages; one without a signature the Monitor knows is
+shown as from an unknown publisher. The Monitor accepts regular files only, with plain relative paths,
 at most 2000 files and 20 MiB compressed and unpacked. On macOS set
-`COPYFILE_DISABLE=1` for `tar`, or it adds `._` files that the agent refuses;
+`COPYFILE_DISABLE=1` for `tar`, or it adds `._` files that the Monitor refuses;
 the template's `npm run pack` does this.
 
 ## A backend (`wasm`)
@@ -146,7 +146,7 @@ includes `sbm:app/imports`
 ([`monitor/wit/app.wit`](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/wit/app.wit))
 and exports the app's own service, written in WIT as a gRPC service is in
 protobuf: `api`, functions the frame calls and waits for, and `jobs`, longer
-work the agent runs as the app's job (one at a time), its lines streamed to
+work the Monitor runs as the app's job (one at a time), its lines streamed to
 the frame. Every function returns `result<T, error>`; `error` holds gRPC's
 canonical codes, which the frame gets as `DeskError` with the app's words in
 `detail`.
@@ -172,11 +172,11 @@ const notes = await desk.call<Note[]>('list', { folder: 'work' })
 
 Parameters go as one object by name and values cross as JSON: names in
 camelCase, a `variant` as `{ tag, val }`, an `option` as `null` or its value, a
-`result` as `{ ok }` or `{ err }`. The agent checks the component when it is
+`result` as `{ ok }` or `{ err }`. The Monitor checks the component when it is
 installed and refuses one whose functions take or answer resources or
 streams.
 
-The agent runs it with wasmtime, in a fresh instance for each call or job;
+The Monitor runs it with wasmtime, in a fresh instance for each call or job;
 what an app keeps goes through `kv`. It has no files, network or environment
 of its own. Host functions:
 
@@ -185,15 +185,15 @@ of its own. Host functions:
 | `log` | — |
 | `kv-get`, `kv-set`, `kv-remove` | — (the calling account's app storage, JSON texts) |
 | `status` | `status` |
-| `exec` | `process`: a script as the agent's system account |
+| `exec` | `process`: a script as the Monitor's system account |
 | `exec-root` | `root`, and the sudo password the desk asked for with this call or job |
 | `job.line`, `job.run-root` | In a job: a line of its log; a script as root, its output streamed to the log |
 
 To run as root, the frame asks with `sudo: { title, body, confirmWord? }`;
 the desk shows its own dialog with that text under the app's name, and sends
-sudo's password to the agent with the request. Each call has 64 MiB of memory,
+sudo's password to the Monitor with the request. Each call has 64 MiB of memory,
 10 seconds of its own CPU time and 60 seconds in all; a job runs until it
-returns or is cancelled. `process` and `root` follow the agent's transport
+returns or is cancelled. `process` and `root` follow the Monitor's transport
 rule: HTTPS or a caller on the same host, unless `[remote_access]
 allow_insecure`.
 

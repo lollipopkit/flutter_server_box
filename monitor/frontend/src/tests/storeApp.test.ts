@@ -1,7 +1,9 @@
+import { get } from 'svelte/store'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import StoreApp from '../desk/apps/store/StoreApp.svelte'
+import { LL } from '../i18n/i18n-svelte'
 import { api } from '../lib/api'
 import { capabilitiesStore } from '../lib/capabilities.svelte'
 import { servers } from '../lib/servers.svelte'
@@ -22,6 +24,7 @@ vi.mock('../lib/api', async (importOriginal) => ({
 }))
 
 const mocked = vi.mocked(api)
+const ll = get(LL)
 
 // jsdom has no Web Animations API, which the page transitions reach for.
 Element.prototype.animate ??= function (this: Element) {
@@ -97,11 +100,11 @@ describe('the App Store', () => {
     render(StoreApp)
     expect(await screen.findByText('Immich does things.')).toBeInTheDocument()
     // The badge, beside the sidebar's place of the same name
-    expect(screen.getAllByText('Installed')).toHaveLength(2)
+    expect(screen.getAllByText(ll.stackInstalled())).toHaveLength(2)
     // Installed, but its containers are not running.
-    expect(screen.getByText('Down')).toBeInTheDocument()
+    expect(screen.getByText(ll.stackDown())).toBeInTheDocument()
     expect(screen.getByText('Media does things.')).toBeInTheDocument()
-    await fireEvent.input(screen.getByPlaceholderText('Search apps'), { target: { value: 'media' } })
+    await fireEvent.input(screen.getByPlaceholderText(ll.storeSearch()), { target: { value: 'media' } })
     expect(screen.queryByText('Immich does things.')).toBeNull()
     expect(screen.getByText('Media does things.')).toBeInTheDocument()
   })
@@ -110,10 +113,10 @@ describe('the App Store', () => {
     capabilitiesStore.byServer = { local: caps(false) }
     render(StoreApp)
     expect(await screen.findByText('Media does things.')).toBeInTheDocument()
-    await fireEvent.click(screen.getByRole('button', { name: /^Installed/ }))
+    await fireEvent.click(screen.getByRole('button', { name: (name) => name.startsWith(ll.stackInstalled()) }))
     expect(screen.getByText('Immich does things.')).toBeInTheDocument()
     expect(screen.queryByText('Media does things.')).toBeNull()
-    await fireEvent.input(screen.getByPlaceholderText('Search apps'), { target: { value: 'media' } })
+    await fireEvent.input(screen.getByPlaceholderText(ll.storeSearch()), { target: { value: 'media' } })
     expect(screen.getByText('Media does things.')).toBeInTheDocument()
   })
 
@@ -121,13 +124,13 @@ describe('the App Store', () => {
     capabilitiesStore.byServer = { local: caps(true) }
     mocked.removeApp.mockResolvedValue(undefined as never)
     render(StoreApp)
-    await fireEvent.click(await screen.findByRole('button', { name: /^Desk apps/ }))
+    await fireEvent.click(await screen.findByRole('button', { name: (name) => name.startsWith(ll.storeDeskApps()) }))
     await fireEvent.click(await screen.findByText('The kernels GRUB boots.'))
-    expect(await screen.findByText(/run scripts as root/)).toBeInTheDocument()
-    expect(screen.getByText('Shipped with the agent')).toBeInTheDocument()
-    await fireEvent.click(screen.getByRole('button', { name: 'Uninstall' }))
-    await fireEvent.input(screen.getByLabelText('Current password'), { target: { value: 'pw' } })
-    await fireEvent.click(screen.getByRole('button', { name: 'Confirm' }))
+    expect(await screen.findByText(ll.settingsPermRoot(), { exact: false })).toBeInTheDocument()
+    expect(screen.getByText(ll.storeDeskShipped())).toBeInTheDocument()
+    await fireEvent.click(screen.getByRole('button', { name: ll.storeDeskUninstall() }))
+    await fireEvent.input(screen.getByLabelText(ll.currentPassword()), { target: { value: 'pw' } })
+    await fireEvent.click(screen.getByRole('button', { name: ll.confirm() }))
     await vi.waitFor(() => expect(mocked.removeApp).toHaveBeenCalledWith('serverbox.kernel', 'pw'))
   })
 
@@ -135,14 +138,14 @@ describe('the App Store', () => {
     capabilitiesStore.byServer = { local: caps(false) }
     const first = render(StoreApp)
     await fireEvent.click(await screen.findByText('Media does things.'))
-    expect(await screen.findByText('This needs HTTPS, or a proxy on the same host.')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Get' })).toBeNull()
+    expect(await screen.findByText(ll.whyInsecureTransport())).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: ll.stackGet() })).toBeNull()
     first.unmount()
 
     capabilitiesStore.byServer = { local: caps(true) }
     render(StoreApp)
     await fireEvent.click(await screen.findByText('Media does things.'))
-    expect(await screen.findByRole('button', { name: 'Get' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: ll.stackGet() })).toBeInTheDocument()
     expect(screen.getAllByText('Media team').length).toBeGreaterThan(0)
   })
 
@@ -150,8 +153,8 @@ describe('the App Store', () => {
     capabilitiesStore.byServer = { local: caps(true) }
     mocked.refreshStacks.mockResolvedValue({ apps: structuredClone(apps) })
     render(StoreApp)
-    expect(await screen.findByText('Local')).toBeInTheDocument()
-    await fireEvent.click(screen.getByRole('button', { name: 'Check for new apps and versions' }))
+    expect(await screen.findByText(ll.storeLocal())).toBeInTheDocument()
+    await fireEvent.click(screen.getByRole('button', { name: ll.storeRefresh() }))
     expect(mocked.refreshStacks).toHaveBeenCalled()
   })
 })

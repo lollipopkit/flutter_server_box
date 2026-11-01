@@ -65,18 +65,18 @@ icon，上方的分段按钮用于在 Light 和 Dark 之间、以及主题包的
 
 ## 在 Monitor 面板中使用
 
-[Monitor agent](/docs/zh/advanced/monitor-agent/) 的网页面板使用和 App 相同的
-`.fsbt` 主题包。面板中的主题按账号保存在 agent 上，从任何浏览器登录都会生效，
+[Monitor](/docs/zh/advanced/monitor-agent/) 的网页面板使用和 App 相同的
+`.fsbt` 主题包。面板中的主题按账号保存在 Monitor 上，从任何浏览器登录都会生效，
 与 App 中安装的主题互不影响。
 
 在面板中打开 **Settings → Appearance → Themes**：
 
 - 选择 **Default** 使用桌面自身的配色，或选择一个已安装的主题。带变体的主题包会
   分别列出每个变体，例如 `Pride · Trans`。
-- **Install a theme → From file** 上传一个 `.fsbt` 主题包。agent 使用与 App 相同的
+- **Install a theme → From file** 上传一个 `.fsbt` 主题包。Monitor 使用与 App 相同的
   代码读取并检查它，检查不通过的主题包会被拒绝。
-- **Theme store** 列出 ServerBox 目录中的主题。agent 通过 HTTPS 下载主题包，校验
-  SHA-256 后再安装；面板无法让 agent 从其他地址下载。需要更新版本 agent 的主题会
+- **Theme store** 列出 ServerBox 目录中的主题。Monitor 通过 HTTPS 下载主题包，校验
+  SHA-256 后再安装；面板无法让 Monitor 从其他地址下载。需要更新版本 Monitor 的主题会
   显示出来，但无法安装。已安装主题有新版本时显示 **Update**。
 - 主题旁的删除按钮用于移除主题。移除正在使用的主题后，桌面恢复为 **Default**。
 

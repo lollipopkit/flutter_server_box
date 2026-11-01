@@ -1,11 +1,11 @@
 ---
 name: serverbox-webapp
-description: Adapt a self-hosted web service (Immich, Jellyfin, Paperless-ngx, Vaultwarden, …) into a ServerBox Monitor web app — a folder in `store/apps/<publisher>.<name>/` with a `manifest.toml` and the Docker Compose files the agent deploys — then validate it and propose it for the catalog. Use this whenever someone wants to add, port, update, fix or validate an app for the Monitor's app catalog, including requests that never say "manifest", such as "add Jellyfin to the monitor", "make the monitor able to install Nextcloud", "bump Immich to the new release", "why does my web app fail validation", or "turn this docker-compose.yml into a monitor app".
+description: Adapt a self-hosted web service (Immich, Jellyfin, Paperless-ngx, Vaultwarden, …) into a ServerBox Monitor web app — a folder in `store/apps/<publisher>.<name>/` with a `manifest.toml` and the Docker Compose files the Monitor deploys — then validate it and propose it for the catalog. Use this whenever someone wants to add, port, update, fix or validate an app for the Monitor's app catalog, including requests that never say "manifest", such as "add Jellyfin to the monitor", "make the monitor able to install Nextcloud", "bump Immich to the new release", "why does my web app fail validation", or "turn this docker-compose.yml into a monitor app".
 ---
 
 # ServerBox Monitor web apps
 
-A web app is a web service the Monitor agent deploys with Docker Compose and
+A web app is a web service the Monitor deploys with Docker Compose and
 the panel's desk shows in a window. Its source is one folder:
 
 ```
@@ -15,7 +15,7 @@ store/apps/<publisher>.<name>/
   …                    any other file they use (extends)
 ```
 
-The agent copies the folder (minus the manifest) into the stack's directory,
+The Monitor copies the folder (minus the manifest) into the stack's directory,
 writes `.env` from the manifest and the deploy dialog's answers, and runs
 `docker compose -p sbm-<publisher>-<name> --env-file .env -f …`. The window reaches the
 service on loopback at the port setting `[web] port` names.
@@ -38,7 +38,7 @@ changed. Files copied unchanged say so.
 
 ### 2. Adjust the compose file
 
-- Remove `name:` and every `container_name:` — the agent names the project,
+- Remove `name:` and every `container_name:` — the Monitor names the project,
   and fixed names collide with a copy the user already runs.
 - Pin images to the release (`image: org/app:${APP_VERSION}` with
   `APP_VERSION` in `[env]`), or by digest for supporting images.
@@ -50,7 +50,7 @@ changed. Files copied unchanged say so.
 - Keep upstream's structure otherwise (`extends`, healthchecks,
   `env_file: [.env]`): a later release is then a small diff.
 - Run as the shared folder's owner (`PUID=${SBM_UID}`, `PGID=${SBM_GID}`,
-  or `user: "${SBM_UID}:${SBM_GID}"`) and set `TZ: ${SBM_TZ}`; the agent
+  or `user: "${SBM_UID}:${SBM_GID}"`) and set `TZ: ${SBM_TZ}`; the Monitor
   writes those three for every app.
 - Downloads, media, music, books, comics and documents go in the shared
   folder (`{shared}/downloads`, `{shared}/media/movies`, …), not the stack's
@@ -91,7 +91,7 @@ python3 <skill>/scripts/validate.py store/apps/<publisher>.<name> --compose
 
 It checks the manifest against the published JSON Schema (via
 `uvx`/`pipx` `check-jsonschema`; pass `--schema docs/schemas/monitor-app.schema.json`
-inside the repository to use the local copy), then the rules only the agent
+inside the repository to use the local copy), then the rules only the Monitor
 knows (files, env names, defaults, compose variables), and with `--compose`
 runs `docker compose config` over the stack with the defaults' env file.
 Fix every error; read the warnings. Inside the repository also run:
@@ -100,10 +100,10 @@ Fix every error; read the warnings. Inside the repository also run:
 cargo test -p server_box_monitor --lib stacks::
 ```
 
-which reads every folder in `store/apps/` with the agent's own reader.
+which reads every folder in `store/apps/` with the Monitor's own reader.
 
-Then deploy it on a machine with Docker through the agent, as a desk window
-reaches it (HTTPS, through the agent's proxy, signed in with what `[login]`
+Then deploy it on a machine with Docker through the Monitor, as a desk window
+reaches it (HTTPS, through the Monitor's proxy, signed in with what `[login]`
 shows):
 
 ```sh
@@ -114,13 +114,13 @@ and add the app's sign-in to that test's `sign_in`.
 
 ### 5. Try it
 
-The quickest way is a Monitor agent itself: put the folder in a directory
-the agent's `config.toml` names as `[stacks] local_apps` and restart it. The
+The quickest way is a Monitor itself: put the folder in a directory
+the Monitor's `config.toml` names as `[stacks] local_apps` and restart it. The
 app shows in the App Store marked Local, and installs, opens, takes new
 settings and uninstalls as a catalog app does. `monitor/tests/apps/` holds
-a small one (`serverbox.testweb`) the agent's Docker e2e test deploys.
+a small one (`serverbox.testweb`) the Monitor's Docker e2e test deploys.
 
-Without an agent, on a Linux machine with Docker: copy the folder (without the manifest),
+Without a Monitor, on a Linux machine with Docker: copy the folder (without the manifest),
 write a `.env` like the validator's (`--compose` builds one from the
 defaults), `docker compose -p sbm-<publisher>-<name> --env-file .env -f compose.yaml up -d`,
 and open the port. Check first-run steps (an admin account to create, a

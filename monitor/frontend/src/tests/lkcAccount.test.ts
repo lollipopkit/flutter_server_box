@@ -1,3 +1,4 @@
+import { get } from 'svelte/store'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
@@ -5,6 +6,9 @@ import LkcAccount from '../desk/apps/settings/LkcAccount.svelte'
 import { ApiError, api } from '../lib/api'
 import { servers } from '../lib/servers.svelte'
 import type { LkcState, LkcSignIn } from '../types'
+import { LL } from '../i18n/i18n-svelte'
+
+const ll = get(LL)
 
 vi.mock('../lib/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../lib/api')>()),
@@ -41,13 +45,13 @@ describe('LK Cloud account', () => {
   it('starts a device sign-in and shows its code', async () => {
     mocked.getLkc.mockResolvedValueOnce({ user: null, sign_in: null })
     render(LkcAccount)
-    const button = await screen.findByRole('button', { name: 'Sign in' })
+    const button = await screen.findByRole('button', { name: ll.lkcSignIn() })
     mocked.startLkcSignIn.mockResolvedValue({ sign_in: signIn() })
     mocked.getLkc.mockResolvedValue({ user: null, sign_in: signIn() })
     await fireEvent.click(button)
     expect(mocked.startLkcSignIn).toHaveBeenCalledOnce()
     expect(await screen.findByText('AbCd1234')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Open sign-in page' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: ll.lkcOpen() })).toBeInTheDocument()
   })
 
   it('shows the account and signs out of it', async () => {
@@ -56,9 +60,9 @@ describe('LK Cloud account', () => {
     expect(await screen.findByText('Ada')).toBeInTheDocument()
     mocked.signOutLkc.mockResolvedValue(undefined)
     mocked.getLkc.mockResolvedValue({ user: null, sign_in: null })
-    await fireEvent.click(screen.getByRole('button', { name: 'Sign out' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.lkcSignOut() }))
     expect(mocked.signOutLkc).toHaveBeenCalledOnce()
-    expect(await screen.findByRole('button', { name: 'Sign in' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: ll.lkcSignIn() })).toBeInTheDocument()
   })
 
   it('says why a sign-in ended without signing in', async () => {
@@ -71,7 +75,7 @@ describe('LK Cloud account', () => {
     mocked.getLkc.mockResolvedValue({ user: null, sign_in: null })
     mocked.startLkcSignIn.mockRejectedValue(new ApiError('LK Cloud cannot be reached', 502, 'lkc_unreachable'))
     render(LkcAccount)
-    await fireEvent.click(await screen.findByRole('button', { name: 'Sign in' }))
-    expect(await screen.findByText('The account service cannot be reached.')).toBeInTheDocument()
+    await fireEvent.click(await screen.findByRole('button', { name: ll.lkcSignIn() }))
+    expect(await screen.findByText(ll.lkcUnreachable())).toBeInTheDocument()
   })
 })

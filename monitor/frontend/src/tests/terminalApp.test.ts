@@ -1,6 +1,7 @@
 /// The desk terminal opens a local shell, rejoins its stored session, and
 /// keeps tmux targets available without offering SSH credentials.
 
+import { get } from 'svelte/store'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
@@ -65,6 +66,9 @@ vi.mock('../lib/terminalSurface.svelte', () => ({ terminalSurface: { current: '#
 import Terminal from '../desk/apps/terminal/TerminalApp.svelte'
 import TerminalWindowHarness from './fixtures/TerminalWindowHarness.svelte'
 import { capabilitiesStore } from '../lib/capabilities.svelte'
+import { LL } from '../i18n/i18n-svelte'
+
+const ll = get(LL)
 
 class FakeSocket {
   static instances: FakeSocket[] = []
@@ -118,7 +122,7 @@ const SESSION = {
 }
 
 function sessionMenu() {
-  return screen.getByRole('button', { name: 'tmux sessions' })
+  return screen.getByRole('button', { name: ll.terminalTmuxSessions() })
 }
 
 async function started(index = 0): Promise<FakeSocket> {
@@ -173,7 +177,6 @@ describe('desk terminal app', () => {
       auth: { kind: 'local' },
     })
     expect(socket.sent[0]).not.toHaveProperty('target')
-    expect(screen.queryByRole('button', { name: 'Open a terminal' })).toBeNull()
   })
 
   it('reattaches a stored handle instead of opening a fresh shell', async () => {
@@ -188,7 +191,7 @@ describe('desk terminal app', () => {
     setCapabilities({ ok: false, features: [] })
     render(Terminal)
 
-    expect(await screen.findByText('This needs HTTPS, or a proxy on the same host.')).toBeInTheDocument()
+    expect(await screen.findByText(ll.whyInsecureTransport())).toBeInTheDocument()
     expect(FakeSocket.instances).toHaveLength(0)
     expect(mocks.issueWsTicket).not.toHaveBeenCalled()
     expect(screen.queryByLabelText(/SSH|password|private key/i)).toBeNull()
@@ -200,11 +203,11 @@ describe('desk terminal app', () => {
     const first = await started()
     first.control({ type: 'ready', session: 'first-handle', since: 0 })
 
-    await fireEvent.click(await screen.findByRole('button', { name: 'End session' }))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.terminalDisconnect() }))
     expect(FakeSocket.instances).toHaveLength(1)
-    expect(await screen.findByText('Session ended')).toBeInTheDocument()
+    expect(await screen.findByText(ll.terminalEnded())).toBeInTheDocument()
 
-    await fireEvent.click(screen.getByRole('button', { name: 'New session' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.terminalNewSession() }))
     const second = await started(1)
     expect(second.sent[0]).toMatchObject({ type: 'open', auth: { kind: 'local' } })
     expect(second.sent[0]).not.toHaveProperty('target')
@@ -217,7 +220,7 @@ describe('desk terminal app', () => {
     await fireEvent.click(sessionMenu())
 
     expect(await screen.findByText('work')).toBeInTheDocument()
-    expect(screen.getByText(/windows: 2/)).toBeInTheDocument()
+    expect(screen.getByText(ll.terminalTmuxWindows({ count: 2 }), { exact: false })).toBeInTheDocument()
     expect(mocks.getTmux).toHaveBeenCalledTimes(1)
     await fireEvent.click(screen.getByRole('menuitem', { name: /work/ }))
 
@@ -235,9 +238,9 @@ describe('desk terminal app', () => {
     first.control({ type: 'ready', session: 'first-handle', since: 0 })
     await fireEvent.click(sessionMenu())
     await screen.findByText('work')
-    await fireEvent.click(screen.getByRole('menuitem', { name: /New tmux session/ }))
-    await fireEvent.input(screen.getByPlaceholderText('Session name'), { target: { value: ' lab ' } })
-    await fireEvent.click(screen.getByRole('button', { name: 'Create' }))
+    await fireEvent.click(screen.getByRole('menuitem', { name: ll.terminalTmuxNew() }))
+    await fireEvent.input(screen.getByPlaceholderText(ll.terminalTmuxNewName()), { target: { value: ' lab ' } })
+    await fireEvent.click(screen.getByRole('button', { name: ll.terminalTmuxCreate() }))
 
     const socket = await started(1)
     expect(socket.sent[0]).toMatchObject({
@@ -253,9 +256,9 @@ describe('desk terminal app', () => {
     first.control({ type: 'ready', session: 'first-handle', since: 0 })
     await fireEvent.click(sessionMenu())
     await screen.findByText('work')
-    await fireEvent.click(screen.getByRole('menuitem', { name: /New tmux session/ }))
-    await fireEvent.input(screen.getByPlaceholderText('Session name'), { target: { value: 'a:b' } })
-    await fireEvent.click(screen.getByRole('button', { name: 'Create' }))
+    await fireEvent.click(screen.getByRole('menuitem', { name: ll.terminalTmuxNew() }))
+    await fireEvent.input(screen.getByPlaceholderText(ll.terminalTmuxNewName()), { target: { value: 'a:b' } })
+    await fireEvent.click(screen.getByRole('button', { name: ll.terminalTmuxCreate() }))
     const socket = await started(1)
     socket.control({
       type: 'error',
@@ -264,7 +267,7 @@ describe('desk terminal app', () => {
       message: "the session name contains ':' or '.'",
     })
 
-    expect(await screen.findByText(/cannot contain/i)).toBeInTheDocument()
+    expect(await screen.findByText(ll.terminalTmuxErrNameSeparator())).toBeInTheDocument()
   })
 
   it('shows tmux listing failures in the toolbar popover', async () => {
@@ -276,7 +279,7 @@ describe('desk terminal app', () => {
     render(Terminal)
     await fireEvent.click(sessionMenu())
 
-    expect(await screen.findByText('Could not list tmux sessions')).toBeInTheDocument()
+    expect(await screen.findByText(ll.terminalTmuxListFailed())).toBeInTheDocument()
     expect(screen.getByText('error connecting to /tmp/tmux-1000/default (Permission denied)')).toBeInTheDocument()
   })
 
@@ -287,7 +290,7 @@ describe('desk terminal app', () => {
     socket.control({ type: 'error', code: 'password_changed', message: 'password changed' })
     socket.close()
 
-    expect(await screen.findByText('The password was changed. Sign in again.')).toBeInTheDocument()
+    expect(await screen.findByText(ll.passwordChangedSignIn())).toBeInTheDocument()
     expect(sessionStorage.getItem('terminal.session')).toBeNull()
     expect(FakeSocket.instances).toHaveLength(1)
   })

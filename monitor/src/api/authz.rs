@@ -2,7 +2,7 @@
 //!
 //! The agent has one account, its own: whoever holds its password may do
 //! what the system account the agent runs as may do, and nothing in the
-//! agent narrows that (`docs/dev/monitor-permissions.md`). What is left to
+//! agent narrows that (`docs/src/content/docs/development/monitor-agent.md`). What is left to
 //! decide per request is the credential — a panel JWT issued after the
 //! password was last set, or a watch token that only reads — and the
 //! transport: anything beyond reading the numbers needs TLS or a loopback

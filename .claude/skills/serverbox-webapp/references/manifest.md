@@ -1,7 +1,7 @@
 # Web app manifest reference
 
 `store/apps/<publisher>.<name>/manifest.toml`, schema 1. The JSON Schema is
-`docs/schemas/monitor-app.schema.json`; the agent's reader is
+`docs/schemas/monitor-app.schema.json`; the Monitor's reader is
 `monitor/src/stacks/manifest.rs`. Unknown tables and fields are errors.
 
 ## Folder
@@ -49,12 +49,12 @@ Before deploying, the panel shows the project (`name`, `developer`,
 will pull with the chosen settings, the data folders, the port and the
 notices, and says the service is third-party. The admin ticks that they
 understand this installs third-party software (always) and that they accept
-the licence (when `license.accept`); the agent refuses a deploy without
+the licence (when `license.accept`); the Monitor refuses a deploy without
 either.
 
 ### `notices`
 
-The agent shows these as plain notices; nothing is refused. List what the
+The Monitor shows these as plain notices; nothing is refused. List what the
 compose files do:
 
 | Notice | When |
@@ -80,17 +80,17 @@ compose files do:
 ## `[requirements]`
 
 All optional: `memory_min_mib`, `memory_recommended_mib`, `cores_min`, `arch`
-(`amd64 arm64 arm`), `os` (`linux macos windows`). The agent compares them with
+(`amd64 arm64 arm`), `os` (`linux macos windows`). The Monitor compares them with
 the machine and says what does not fit.
 
 ## `[compose]`
 
 `files`: compose files in merge order (`-f` each). Leave out `name:` and
-`container_name:`: the agent names the project, and a fixed container name
+`container_name:`: the Monitor names the project, and a fixed container name
 collides with a copy the user already runs.
 
 `jobs` (optional): services that run once and exit, such as a database
-migration. The agent watches every deployed app's containers and tells the
+migration. The Monitor watches every deployed app's containers and tells the
 admin when one stops; a job exited with 0 is done, not down. Give services a
 `healthcheck` where the image allows: the panel shows it as the app's
 health.
@@ -114,10 +114,10 @@ package and a `localhost/` image:
 - `build:` is a mapping naming `dockerfile:`, a file of the package;
   `context` is `.` or left out. `additional_contexts` and `dockerfile_inline`
   are refused.
-- The image is `localhost/…` exactly when it is built: the agent pulls every
+- The image is `localhost/…` exactly when it is built: the Monitor pulls every
   other image (`pull --ignore-buildable`), then builds (`build --pull`, so an
   update gets the base's fixes), then starts.
-- The context is the stack's folder, which holds the env file: the agent writes
+- The context is the stack's folder, which holds the env file: the Monitor writes
   a `.dockerignore` of `*` there, so nothing of it reaches the build. A file
   the image needs goes inline (`COPY <<EOF /path`), and no package file may be
   named `*.dockerignore`.
@@ -131,9 +131,9 @@ package and a `localhost/` image:
 
 | Field | Notes |
 |---|---|
-| `port` | The key of the `port` setting the window reaches (the agent connects to it on loopback) |
+| `port` | The key of the `port` setting the window reaches (the Monitor connects to it on loopback) |
 | `path` | Where the window opens, default `/` |
-| `basic_auth` | `true` when the service asks for HTTP basic auth (Transmission): a browser cannot answer that inside the desk's frame, so the agent's proxy sends `[login]`'s `user` and `password` itself, server side. Needs both in `[login]`; a direct visit to the published port still asks |
+| `basic_auth` | `true` when the service asks for HTTP basic auth (Transmission): a browser cannot answer that inside the desk's frame, so the Monitor's proxy sends `[login]`'s `user` and `password` itself, server side. Needs both in `[login]`; a direct visit to the published port still asks |
 
 An app with no page of its own leaves `[web]` out; it then serves `[llm]`.
 
@@ -149,7 +149,7 @@ inference's engines (`monitor/inference/engines/`) are such apps.
 | `path` | Default `/v1`: `<path>/models`, `<path>/chat/completions` |
 | `model` | Optional: the key of the text setting naming the model it serves |
 | `key` | Optional: a `[[secrets]]` entry it asks for as a bearer token |
-| `tools` | Optional, `vllm` or `sglang` (needs `model`): the agent writes `SBM_TOOL_PARSER`, the engine's tool-call parser for the model's family (empty when it knows none), and Agent mode is offered the app only with one; pass it on only when set (`${SBM_TOOL_PARSER:+--tool-call-parser …}` in a shell) |
+| `tools` | Optional, `vllm` or `sglang` (needs `model`): the Monitor writes `SBM_TOOL_PARSER`, the engine's tool-call parser for the model's family (empty when it knows none), and Agent mode is offered the app only with one; pass it on only when set (`${SBM_TOOL_PARSER:+--tool-call-parser …}` in a shell) |
 
 ## `[login]`
 
@@ -200,7 +200,7 @@ A sidecar joins the app's compose file:
   (`store/apps/transmission.transmission/mcp-gate.conf.template`), and
   `service = "mcp-gate"`.
 
-Prefer a credential the agent knows at deploy (`secret`: a key the service
+Prefer a credential the Monitor knows at deploy (`secret`: a key the service
 reads from env, a password it is seeded with). A service that makes its API
 keys only once set up takes one as an optional `text` setting the sidecar
 reads, set by the admin afterwards (Immich, Jellyfin; a sidecar that exits
@@ -210,13 +210,13 @@ signs in with the seeded password once the service is healthy, makes the
 key and writes it, mode 0600, into a folder of the data path only the
 sidecar or gate mounts; the gate reads it at start into the header it sends
 on (`store/apps/n8n.n8n`, `store/apps/triliumnext.trilium`), a sidecar into
-its own env (`store/apps/grafana.grafana`). The agent then never holds the
+its own env (`store/apps/grafana.grafana`). The Monitor then never holds the
 service's key, and an optional setting still overrides it. `asked` is for a
 token the service's own server takes.
 
 ## The env file
 
-The agent writes `.env` in the stack's directory and runs
+The Monitor writes `.env` in the stack's directory and runs
 `docker compose --env-file .env`. Every value is written single-quoted
 (`NAME='value'`), so no value may contain `'`, a line break or NUL. Each env
 name is set by exactly one of:
@@ -231,7 +231,7 @@ name is set by exactly one of:
   `length`), for a key a service takes as hex (`openssl rand -hex 32`).
 - `[[settings]]`: what the deploy dialog asks, below.
 
-The agent also writes, for every app (a manifest uses them and never sets
+The Monitor also writes, for every app (a manifest uses them and never sets
 them):
 
 | Name | Value |

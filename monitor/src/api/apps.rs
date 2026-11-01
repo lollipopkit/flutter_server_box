@@ -1,4 +1,4 @@
-//! `/api/v1/apps*` — desk apps the operator installs (`docs/dev/desk-sys.md`).
+//! `/api/v1/apps*` — desk apps the operator installs (`docs/src/content/docs/development/desk-app-reference.md`).
 //!
 //! - `GET /apps`: the installed apps, approved or waiting for approval.
 //! - `POST /apps`: a package (`.fsba`, a gzipped tar) as the body.

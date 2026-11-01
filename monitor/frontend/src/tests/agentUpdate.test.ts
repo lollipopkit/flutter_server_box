@@ -1,7 +1,9 @@
+import { get } from 'svelte/store'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import AgentUpdate from '../desk/apps/settings/AgentUpdate.svelte'
+import { LL } from '../i18n/i18n-svelte'
 import { api, ApiError } from '../lib/api'
 import { capabilitiesStore } from '../lib/capabilities.svelte'
 import { servers } from '../lib/servers.svelte'
@@ -13,6 +15,7 @@ vi.mock('../lib/api', async (importOriginal) => ({
   api: { getUpdate: vi.fn(), startUpdate: vi.fn() },
 }))
 
+const ll = get(LL)
 const getUpdate = vi.mocked(api.getUpdate)
 const startUpdate = vi.mocked(api.startUpdate)
 
@@ -49,20 +52,20 @@ describe("the agent's update in Settings", () => {
         now = async () => behind({ run: running })
       })
       render(AgentUpdate)
-      await fireEvent.click(await screen.findByRole('button', { name: 'Update now' }))
+      await fireEvent.click(await screen.findByRole('button', { name: ll.selfUpdateRun() }))
       expect(startUpdate).toHaveBeenCalledWith(undefined)
-      expect(await screen.findByText('Updating…')).toBeInTheDocument()
+      expect(await screen.findByText(ll.selfUpdateRunning())).toBeInTheDocument()
       expect(await screen.findByText('Downloading the package')).toBeInTheDocument()
       now = async () => {
         throw new ApiError('Failed to read the update')
       }
       await vi.advanceTimersByTimeAsync(2000)
-      expect(await screen.findByText(/The agent is restarting/)).toBeInTheDocument()
+      expect(await screen.findByText(ll.selfUpdateRestarting(), { exact: false })).toBeInTheDocument()
       // What it said before stays while it does not answer.
       expect(screen.getByText('Downloading the package')).toBeInTheDocument()
       now = async () => behind({ version: '0.3.0', outdated: false, run: { ...running, state: 'done', exit: 0, lines: ['Upgrade success'] } })
       await vi.advanceTimersByTimeAsync(2000)
-      expect(await screen.findByText('Updated: the agent runs 0.3.0.')).toBeInTheDocument()
+      expect(await screen.findByText(ll.selfUpdateDone({ version: '0.3.0' }))).toBeInTheDocument()
       expect(screen.getByText('Upgrade success')).toBeInTheDocument()
     } finally {
       vi.useRealTimers()
@@ -73,20 +76,20 @@ describe("the agent's update in Settings", () => {
     getUpdate.mockResolvedValue(behind({ needs_password: true }))
     startUpdate.mockRejectedValue(new ApiError('forbidden', 403, 'sudo_password'))
     render(AgentUpdate)
-    const update = await screen.findByRole('button', { name: 'Update now' })
+    const update = await screen.findByRole('button', { name: ll.selfUpdateRun() })
     expect(update).toBeDisabled()
     const field = document.querySelector('input[type="password"]') as HTMLInputElement
     await fireEvent.input(field, { target: { value: 'pw' } })
     await fireEvent.click(update)
     expect(startUpdate).toHaveBeenCalledWith('pw')
-    expect(await screen.findByText('sudo did not accept this password.')).toBeInTheDocument()
+    expect(await screen.findByText(ll.selfUpdateSudoRefused())).toBeInTheDocument()
   })
 
   it('asks the agent to read its releases again', async () => {
     getUpdate.mockResolvedValue(behind({ latest: '0.2.0', outdated: false }))
     render(AgentUpdate)
-    expect(await screen.findByText('Up to date')).toBeInTheDocument()
-    await fireEvent.click(screen.getByRole('button', { name: 'Check now' }))
+    expect(await screen.findByText(ll.selfUpdateUpToDate())).toBeInTheDocument()
+    await fireEvent.click(screen.getByRole('button', { name: ll.selfUpdateCheck() }))
     expect(getUpdate).toHaveBeenLastCalledWith(true)
   })
 
@@ -95,12 +98,12 @@ describe("the agent's update in Settings", () => {
     getUpdate.mockResolvedValue(behind())
     const { unmount } = render(AgentUpdate)
     expect(await screen.findByText(behind().command!)).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Update now' })).toBeNull()
+    expect(screen.queryByRole('button', { name: ll.selfUpdateRun() })).toBeNull()
     unmount()
 
     getUpdate.mockResolvedValue(behind({ install: 'container', command: undefined }))
     render(AgentUpdate)
-    expect(await screen.findByText(/pull the new image/)).toBeInTheDocument()
+    expect(await screen.findByText(ll.selfUpdateContainer(), { exact: false })).toBeInTheDocument()
   })
 
   it("its notification opens Settings at the server's section", () => {

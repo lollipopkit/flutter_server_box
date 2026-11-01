@@ -2300,7 +2300,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get localServerTip =>
-      '상태 스크립트를 이 기기에서 실행해 직접 읽습니다. SSH와 Monitor 에이전트는 사용하지 않으며 해당 설정은 유지됩니다.';
+      '상태 스크립트를 이 기기에서 실행해 직접 읽습니다. SSH와 Monitor는 사용하지 않으며 해당 설정은 유지됩니다.';
 
   @override
   String get localServerUnsupported =>
@@ -2645,7 +2645,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get monitorNoRemoteAccess =>
-      '이 Monitor는 모니터링 전용으로 설정되어 있습니다. 여기서 터미널을 열거나 명령을 실행하거나 파일을 탐색할 수 없습니다. 이 기능을 사용하려면 Monitor의 config.toml에서 [remote_access]를 수정하세요.';
+      '이 Monitor는 암호화되지 않은 HTTP에서는 모니터링 외의 작업을 거부합니다. HTTPS로 연결하거나 Monitor와 이 앱 모두에서 HTTP를 허용하세요.';
 
   @override
   String get monitorAgentTooOld =>
@@ -2950,7 +2950,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get monitorRelayForbidden =>
-      '이 Monitor 계정은 이 주소에 연결할 수 없습니다. 역할의 connect 권한에서 이 주소를 허용해야 합니다.';
+      'Monitor가 이 연결을 거부했습니다. 비밀번호가 변경되었거나 암호화되지 않은 HTTP 연결을 받지 않습니다. 다시 로그인하거나 HTTPS로 연결하세요.';
 
   @override
   String get remoteDesktopCertificateChanged => '원격 데스크톱 인증서가 변경되었습니다';
@@ -3212,7 +3212,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get virtErrRelayNotGranted =>
-      'Monitor가 이 계정에 서버에서 TCP 연결을 여는 것을 허용하지 않습니다(connect 권한)';
+      'Monitor는 이 연결을 통해 서버에서 TCP 연결을 열지 않습니다.';
 
   @override
   String get virtErrExecNotGranted => 'Monitor가 명령을 실행하지 않습니다';
@@ -6547,7 +6547,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get storageNeedsSudo =>
-      'sudo에서 비밀번호를 요청했습니다. agent를 root로 실행하거나 위 명령을 허용하세요.';
+      'sudo에서 비밀번호를 요청했습니다. Monitor를 root로 실행하거나 위 명령을 허용하세요.';
 
   @override
   String get monitorTab => 'Monitor';
@@ -6565,13 +6565,14 @@ class AppLocalizationsKo extends AppLocalizations {
   String get monitorLive => '세션 및 기기';
 
   @override
-  String get monitorNoAgents => '아직 Monitor 에이전트로 연결된 서버가 없습니다.';
+  String get monitorNoAgents => '아직 Monitor로 연결된 서버가 없습니다.';
 
   @override
-  String get monitorNotOffered => '이 에이전트 버전은 이 기능을 제공하지 않습니다. 에이전트를 업데이트하세요.';
+  String get monitorNotOffered =>
+      '이 Monitor 버전은 이 기능을 제공하지 않습니다. Monitor를 업데이트하세요.';
 
   @override
-  String get monitorAlertsNotOffered => '이 에이전트 버전은 알림을 보고하지 않습니다.';
+  String get monitorAlertsNotOffered => '이 Monitor 버전은 알림을 보고하지 않습니다.';
 
   @override
   String get monitorAlertsNone => '발생 중인 규칙이 없습니다.';
@@ -6583,7 +6584,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String monitorAgentVersion(String version) {
-    return '에이전트 $version';
+    return 'Monitor $version';
   }
 
   @override
@@ -6709,7 +6710,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String monitorAgentsCount(int count) {
-    return '에이전트 $count개';
+    return 'Monitor $count개';
   }
 
   @override
@@ -6740,26 +6741,26 @@ class AppLocalizationsKo extends AppLocalizations {
   String get monitorLiveNoDevices => '로그인한 기기가 없습니다.';
 
   @override
-  String get monitorUpdateAgent => '에이전트 업데이트';
+  String get monitorUpdateAgent => 'Monitor 업데이트';
 
   @override
   String get monitorAgentTooOldTip => '업데이트 방법은 Monitor 탭에 있습니다.';
 
   @override
   String get monitorAgentTooOldBody =>
-      '이 에이전트는 단일 비밀번호 이전 버전이라 앱에서 로그인할 수 없습니다. 업데이트 후 비밀번호는 가장 오래된 관리자 계정의 비밀번호가 됩니다.';
+      '이 Monitor는 단일 비밀번호 이전 버전이라 앱에서 로그인할 수 없습니다. 업데이트 후 비밀번호는 가장 오래된 관리자 계정의 비밀번호가 됩니다.';
 
   @override
   String monitorAgentOutdatedBody(String latest, String running) {
-    return '$latest이(가) 나왔습니다. 이 에이전트는 $running입니다.';
+    return '$latest이(가) 나왔습니다. 이 Monitor는 $running입니다.';
   }
 
   @override
-  String get monitorUpdateRunHint => '서버에서, 에이전트를 설치한 계정으로 실행하세요:';
+  String get monitorUpdateRunHint => '서버에서, Monitor를 설치한 계정으로 실행하세요:';
 
   @override
   String get monitorUpdateSshHint =>
-      '터미널에서 실행합니다. 시스템 전체에 설치된 에이전트를 SSH 터미널에서 업데이트하면 sudo가 그곳에서 비밀번호를 요구합니다.';
+      '터미널에서 실행합니다. 시스템 전체에 설치된 Monitor를 SSH 터미널에서 업데이트하면 sudo가 그곳에서 비밀번호를 요구합니다.';
 
   @override
   String get monitorUpdateNoSsh => '앱이 이 서버에서 터미널을 열 수 없습니다. 서버에서 직접 실행하세요.';
@@ -6781,14 +6782,14 @@ class AppLocalizationsKo extends AppLocalizations {
       'NixOS 모듈로 설치됨: 시스템 구성에서 업데이트하고 다시 rebuild하세요.';
 
   @override
-  String get noticeAgentUpdate => '에이전트 업데이트가 있습니다';
+  String get noticeAgentUpdate => 'Monitor 업데이트가 있습니다';
 
   @override
   String get monitorUpdateLegacyUser => '계정 이름';
 
   @override
   String get monitorUpdateLegacyHint =>
-      '이 에이전트는 아직 계정 이름과 비밀번호로 로그인합니다. 앱이 전에 쓰던 이름(보통 admin)과 저장된 비밀번호를 사용합니다.';
+      '이 Monitor는 아직 계정 이름과 비밀번호로 로그인합니다. 앱이 전에 쓰던 이름(보통 admin)과 저장된 비밀번호를 사용합니다.';
 
   @override
   String get monitorUpdateNow => '지금 업데이트';
@@ -6797,11 +6798,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get monitorUpdating => '업데이트 중…';
 
   @override
-  String get monitorUpdateRestarting => '에이전트가 재시작 중입니다. 몇 초 후 연결이 돌아옵니다…';
+  String get monitorUpdateRestarting => 'Monitor가 재시작 중입니다. 몇 초 후 연결이 돌아옵니다…';
 
   @override
   String monitorUpdateDone(String version) {
-    return '업데이트됨: 에이전트가 $version으로 실행 중입니다.';
+    return '업데이트됨: Monitor가 $version으로 실행 중입니다.';
   }
 
   @override
@@ -6809,7 +6810,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get monitorUpdateAgentHint =>
-      '에이전트는 설치 스크립트를 자신과 분리해 실행하므로 재시작해도 업데이트가 멈추지 않습니다. 그동안 에이전트 연결이 몇 초 끊기며, 이 창은 재시작 이후에도 진행을 따라갑니다.';
+      'Monitor는 설치 스크립트를 자신과 분리해 실행하므로 재시작해도 업데이트가 멈추지 않습니다. 그동안 Monitor 연결이 몇 초 끊기며, 이 창은 재시작 이후에도 진행을 따라갑니다.';
 
   @override
   String get monitorUpdateSudoPassword => 'sudo 비밀번호';
@@ -6822,7 +6823,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get monitorUpdateSudoRefused => 'sudo가 이 비밀번호를 받아들이지 않았습니다.';
 
   @override
-  String get monitorUpdateNoAnswer => '에이전트가 돌아오지 않았습니다. 서버에서 확인하세요.';
+  String get monitorUpdateNoAnswer => 'Monitor가 돌아오지 않았습니다. 서버에서 확인하세요.';
 
   @override
   String get keyArrowDown => '아래쪽 화살표';

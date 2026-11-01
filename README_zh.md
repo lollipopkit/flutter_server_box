@@ -113,7 +113,7 @@
   - [`serverbox-onboarding`](.claude/skills/serverbox-onboarding)：参与开发，包括搭建 Flutter + Rust + Node 开发环境、构建与测试，以及项目的工作原理。
   - [`serverbox-theme`](.claude/skills/serverbox-theme)：制作主题包（`.fsbt`），校验后发布到主题商店。
 
-  它们的源文件都在本仓库中，安装前可以先读一读它们会告诉你的 agent 什么。
+  它们的源文件都在本仓库中，安装前可以先读一读它们会告诉你的 Monitor 什么。
 
 提交 issue 前请确认：
 

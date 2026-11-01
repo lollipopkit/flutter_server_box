@@ -1,4 +1,4 @@
-// A minimal client of the desk's app bridge (docs/dev/desk-sys.md), enough
+// A minimal client of the desk's app bridge (docs/src/content/docs/development/desk-app-reference.md), enough
 // for this example; `monitor/sdk/serverbox-desk` is the full one. The desk hands
 // this page a MessagePort once it has loaded; everything goes over it.
 ;(function () {

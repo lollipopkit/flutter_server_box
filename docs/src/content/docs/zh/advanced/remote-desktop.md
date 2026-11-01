@@ -4,12 +4,12 @@ description: 通过 SSH 或 Monitor 连接图形桌面
 ---
 
 Server Box 在 Android、iOS、Linux、macOS 和 Windows 上提供 RDP 与 VNC 客户端。客户端
-通过已有的服务器连接访问桌面：使用 SSH，或使用 Monitor。 这样无需将桌面端口暴露到
+通过已有的服务器连接访问桌面：使用 SSH，或使用 Monitor。这样无需将桌面端口暴露到
 运行 Server Box 的网络。
 
 ## 配置连接
 
-1. 在 Server Box 中为服务器配置 SSH，或配置 Monitor。 两种方式都可用时，
+1. 在 Server Box 中为服务器配置 SSH，或配置 Monitor。两种方式都可用时，
    应用会先尝试服务器设置中的**优先连接方式**，失败后再回退到另一种方式。
 2. 打开**远程桌面**主标签并选择服务器，也可以从该服务器的详情页进入。
 3. 为桌面添加连接配置。同一服务器内的配置名称不能重复。

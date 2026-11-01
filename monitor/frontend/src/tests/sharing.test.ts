@@ -1,8 +1,10 @@
+import { get } from 'svelte/store'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import SharingApp from '../desk/apps/sharing/SharingApp.svelte'
 import { firewallIntent, mountedFolders, shareNameOk, withExport, withShare, withoutExport, withoutShare } from '../desk/apps/sharing/model'
+import { LL } from '../i18n/i18n-svelte'
 import { api, ApiError } from '../lib/api'
 import { servers } from '../lib/servers.svelte'
 import { capabilitiesStore } from '../lib/capabilities.svelte'
@@ -23,6 +25,7 @@ vi.mock('../lib/api', async (importOriginal) => ({
   },
 }))
 
+const ll = get(LL)
 const mocked = vi.mocked(api)
 
 const share = (name: string, managed = true, extra: Partial<SmbShare> = {}): SmbShare => ({
@@ -115,17 +118,17 @@ describe('the Sharing app', () => {
     mocked.setSmbShares.mockResolvedValue({ ...structuredClone(view), smb: [...view.smb, share('photos')] })
     render(SharingApp)
     expect(await screen.findByText('media')).toBeInTheDocument()
-    expect(screen.getByText('Set up outside ServerBox')).toBeInTheDocument()
+    expect(screen.getByText(ll.sharingElsewhere())).toBeInTheDocument()
     // Only ServerBox's share can be edited.
-    expect(screen.getAllByRole('button', { name: 'Edit' })).toHaveLength(1)
+    expect(screen.getAllByRole('button', { name: ll.sharingEdit() })).toHaveLength(1)
 
-    await fireEvent.click(screen.getByRole('button', { name: 'Add share' }))
-    await fireEvent.input(screen.getByLabelText('Name'), { target: { value: 'photos' } })
-    await fireEvent.input(screen.getByLabelText(/^Folder/), { target: { value: '/srv/photos' } })
+    await fireEvent.click(screen.getByRole('button', { name: ll.sharingAddShare() }))
+    await fireEvent.input(screen.getByLabelText(ll.storageName()), { target: { value: 'photos' } })
+    await fireEvent.input(screen.getByLabelText((label) => label.startsWith(ll.sharingFolder())), { target: { value: '/srv/photos' } })
     await fireEvent.click(screen.getByRole('checkbox', { name: 'alice' }))
-    await fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
-    await fireEvent.input(screen.getByLabelText(/sudo password/), { target: { value: 'pw' } })
-    await fireEvent.click(screen.getAllByRole('button', { name: 'Save' }).at(-1)!)
+    await fireEvent.click(screen.getByRole('button', { name: ll.storageContinue() }))
+    await fireEvent.input(screen.getByLabelText(ll.storageSudoPassword(), { exact: false }), { target: { value: 'pw' } })
+    await fireEvent.click(screen.getAllByRole('button', { name: ll.sharingSave() }).at(-1)!)
     await vi.waitFor(() =>
       expect(mocked.setSmbShares).toHaveBeenCalledWith(
         [share('backup', true, { users: ['alice'] }), share('photos', true, { users: ['alice'] })],
@@ -138,12 +141,12 @@ describe('the Sharing app', () => {
   it('saves Time Machine and recycle options on an SMB share', async () => {
     mocked.setSmbShares.mockResolvedValue({ ...structuredClone(view), smb: [share('backup', true, { users: ['alice'], time_machine: true, recycle: true })] })
     render(SharingApp)
-    await fireEvent.click(await screen.findByRole('button', { name: 'Edit' }))
-    await fireEvent.click(screen.getByRole('checkbox', { name: 'Time Machine backups (Mac)' }))
-    await fireEvent.click(screen.getByRole('checkbox', { name: 'Keep deleted files in .recycle' }))
-    await fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
-    await fireEvent.input(await screen.findByLabelText(/sudo password/), { target: { value: 'pw' } })
-    await fireEvent.click(screen.getAllByRole('button', { name: 'Save' }).at(-1)!)
+    await fireEvent.click(await screen.findByRole('button', { name: ll.sharingEdit() }))
+    await fireEvent.click(screen.getByRole('checkbox', { name: ll.sharingTimeMachineOption() }))
+    await fireEvent.click(screen.getByRole('checkbox', { name: ll.sharingRecycleOption() }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.storageContinue() }))
+    await fireEvent.input(await screen.findByLabelText(ll.storageSudoPassword(), { exact: false }), { target: { value: 'pw' } })
+    await fireEvent.click(screen.getAllByRole('button', { name: ll.sharingSave() }).at(-1)!)
     await vi.waitFor(() =>
       expect(mocked.setSmbShares).toHaveBeenCalledWith(
         [share('backup', true, { users: ['alice'], time_machine: true, recycle: true })],
@@ -169,9 +172,9 @@ describe('the Sharing app', () => {
       nfs: [],
     })
     render(SharingApp)
-    await fireEvent.click(await screen.findByRole('button', { name: 'Show connections' }))
-    await fireEvent.input(await screen.findByLabelText(/sudo password/i), { target: { value: 'pw' } })
-    await fireEvent.click(screen.getAllByRole('button', { name: 'Show connections' }).at(-1)!)
+    await fireEvent.click(await screen.findByRole('button', { name: ll.sharingShowConnections() }))
+    await fireEvent.input(await screen.findByLabelText(ll.storageSudoPassword(), { exact: false }), { target: { value: 'pw' } })
+    await fireEvent.click(screen.getAllByRole('button', { name: ll.sharingShowConnections() }).at(-1)!)
     expect(await screen.findByText('media · alice · 10.0.0.9')).toBeInTheDocument()
     expect(mocked.shareConnections).toHaveBeenLastCalledWith('pw')
   })
@@ -179,10 +182,10 @@ describe('the Sharing app', () => {
   it('says why a change was refused and keeps the dialog', async () => {
     mocked.setNfsExports.mockRejectedValue(new ApiError('notAFolder', 409, 'notAFolder', { error: 'notAFolder', path: '/srv/media' }))
     render(SharingApp)
-    await fireEvent.click(await screen.findByText('NFS'))
-    await fireEvent.click(await screen.findByRole('button', { name: 'Remove' }))
-    await fireEvent.click(screen.getAllByRole('button', { name: 'Remove' }).at(-1)!)
-    expect(await screen.findByText('/srv/media is not a folder on the server.')).toBeInTheDocument()
+    await fireEvent.click(await screen.findByText(ll.sharingNfs()))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.sharingRemove() }))
+    await fireEvent.click(screen.getAllByRole('button', { name: ll.sharingRemove() }).at(-1)!)
+    expect(await screen.findByText(ll.sharingNotAFolder({ path: '/srv/media' }))).toBeInTheDocument()
     expect(mocked.setNfsExports).toHaveBeenCalledWith([], '')
   })
 
@@ -191,9 +194,9 @@ describe('the Sharing app', () => {
     mocked.installShares.mockResolvedValue({ id: 1, kind: 'shares', state: 'running', error: null, lines: [], next: 0 })
     mocked.sharesJob.mockResolvedValue({ id: 1, kind: 'shares', state: 'running', error: null, lines: [], next: 0 })
     render(SharingApp)
-    await fireEvent.click(await screen.findByRole('button', { name: 'Install Samba' }))
-    await fireEvent.click(screen.getAllByRole('button', { name: 'Install Samba' }).at(-1)!)
+    await fireEvent.click(await screen.findByRole('button', { name: ll.sharingInstallSamba() }))
+    await fireEvent.click(screen.getAllByRole('button', { name: ll.sharingInstallSamba() }).at(-1)!)
     await vi.waitFor(() => expect(mocked.installShares).toHaveBeenCalledWith(false, ''))
-    expect(await screen.findByText('Installing…')).toBeInTheDocument()
+    expect(await screen.findByText(ll.sharingInstalling())).toBeInTheDocument()
   })
 })

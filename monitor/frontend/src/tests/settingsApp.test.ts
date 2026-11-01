@@ -1,9 +1,11 @@
+import { get } from 'svelte/store'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import SettingsWindowHarness from './fixtures/SettingsWindowHarness.svelte'
 import { Desk } from '../desk/deskState.svelte'
 import { isSection, resolveSection, SETTINGS_SECTIONS } from '../desk/apps/settings/sections'
+import { LL } from '../i18n/i18n-svelte'
 import { api } from '../lib/api'
 import { capabilitiesStore } from '../lib/capabilities.svelte'
 import { servers } from '../lib/servers.svelte'
@@ -21,6 +23,7 @@ vi.mock('../lib/api', async (importOriginal) => ({
 }))
 
 const mocked = vi.mocked(api)
+const ll = get(LL)
 
 // jsdom has no Web Animations API, which `in:fade` reaches for; the settings
 // panel must still render (that is the observable part).
@@ -97,17 +100,17 @@ describe('settings app', () => {
     const { desk, id } = deskWith({ section: 'server' })
     render(SettingsWindowHarness, { desk, id })
 
-    expect(await screen.findByRole('heading', { level: 1, name: /server settings/i })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: (name) => name.includes(ll.serverSettings()) })).toBeInTheDocument()
   })
 
   it('writes the chosen section to the window and shows its panel', async () => {
     const { desk, id } = deskWith({ section: 'general' })
     render(SettingsWindowHarness, { desk, id })
 
-    await fireEvent.click(screen.getByRole('button', { name: /^server settings$/i }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.serverSettings() }))
 
     expect(appStateOf(desk, id)).toEqual({ section: 'server' })
-    expect(await screen.findByRole('heading', { level: 1, name: /server settings/i })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: (name) => name.includes(ll.serverSettings()) })).toBeInTheDocument()
   })
 
   it('follows a second open that asks for another section', async () => {
@@ -116,15 +119,14 @@ describe('settings app', () => {
 
     desk.windows.setAppState(id, { section: 'account' })
 
-    expect(await screen.findByRole('heading', { level: 1, name: /^account$/i })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: ll.settingsAccount() })).toBeInTheDocument()
   })
 
   it('changes the password where the account may act over this link', async () => {
     const { desk, id } = deskWith({ section: 'account' })
     render(SettingsWindowHarness, { desk, id })
 
-    expect(await screen.findByRole('button', { name: /^change…$/i })).toBeInTheDocument()
-    expect(screen.queryByText('Role')).toBeNull()
+    expect(await screen.findByRole('button', { name: ll.settingsChange() })).toBeInTheDocument()
   })
 
   it('says why neither the password nor the agent settings change over a plaintext link', async () => {
@@ -132,12 +134,12 @@ describe('settings app', () => {
     const { desk, id } = deskWith({ section: 'server' })
     render(SettingsWindowHarness, { desk, id })
 
-    expect(await screen.findByText('This needs HTTPS, or a proxy on the same host.')).toBeInTheDocument()
+    expect(await screen.findByText(ll.whyInsecureTransport())).toBeInTheDocument()
     expect(mocked.getSettings).not.toHaveBeenCalled()
 
     desk.windows.setAppState(id, { section: 'account' })
-    expect(await screen.findByRole('heading', { level: 1, name: /^account$/i })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /^change…$/i })).toBeNull()
+    expect(await screen.findByRole('heading', { level: 1, name: ll.settingsAccount() })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: ll.settingsChange() })).toBeNull()
   })
 
   it('offers Agent mode only where the account may act over this link', () => {
@@ -145,10 +147,10 @@ describe('settings app', () => {
     const { desk, id } = deskWith({ section: 'agent' })
     render(SettingsWindowHarness, { desk, id })
 
-    expect(screen.queryByRole('button', { name: /^agent$/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: ll.settingsAgent() })).toBeNull()
     // The section it asked for is not offered, so it falls back rather than
     // showing a panel with nothing in it.
-    expect(screen.getByRole('heading', { level: 1, name: /^account$/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: ll.settingsAccount() })).toBeInTheDocument()
   })
 })
 
@@ -176,7 +178,7 @@ describe('settings pages of other apps', () => {
     await fireEvent.click(await screen.findByRole('button', { name: /^Greeter/ }))
     expect(desk.windows.get(id)?.appState).toEqual({ section: 'apps', app: 'acme.greeter' })
     expect(await screen.findByRole('heading', { name: 'Greeter' })).toBeInTheDocument()
-    expect(screen.getByRole('switch', { name: 'Show in the dock' })).toBeInTheDocument()
+    expect(screen.getByRole('switch', { name: ll.settingsAppShowInDock() })).toBeInTheDocument()
     // Its own preferences, in that page.
     await fireEvent.click(await screen.findByRole('button', { name: 'Save greeting' }))
     expect(await screen.findByText('saved: hi')).toBeInTheDocument()
@@ -186,7 +188,7 @@ describe('settings pages of other apps', () => {
 
     // Without an app, the list again.
     desk.windows.setAppState(id, { section: 'apps' })
-    expect(await screen.findByText('All apps')).toBeInTheDocument()
+    expect(await screen.findByText(ll.settingsAppList())).toBeInTheDocument()
     off()
   })
 })

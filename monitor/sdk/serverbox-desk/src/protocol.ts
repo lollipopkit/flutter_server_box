@@ -1,5 +1,5 @@
 /// The messages between the desk and an installed app's frame
-/// (`docs/dev/desk-sys.md`). Every message carries `sbm: 1`.
+/// (`docs/src/content/docs/development/desk-app-reference.md`). Every message carries `sbm: 1`.
 ///
 /// The desk posts `{ sbm, event: 'connect' }` with a `MessagePort` to the
 /// frame's first page; everything after goes over that port (a page the

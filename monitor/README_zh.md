@@ -58,7 +58,7 @@ checkout 中的脚本, 不一定与上面命令下载的 `main` 上的版本一�
 若尚无对应 release，请用 `SBM_INSTALL_PKG` 指向本地构建的包，或使用
 [Docker](Dockerfile)。
 
-没有操作系统的机器可以直接启动 **sbOS**：每个 release 附带内含 agent、面板和
+没有操作系统的机器可以直接启动 **sbOS**：每个 release 附带内含 Monitor、面板和
 Docker 的系统镜像，分别基于 Alpine Linux（`sbOS_musl_*`）和 Debian
 （`sbOS_GNU_*`），支持 x64 和 arm64。写入 U 盘后启动，或者运行 `sbm-install`
 把系统装到磁盘上——见 [`os/README.md`](os/README.md)。
@@ -70,8 +70,8 @@ Docker 的系统镜像，分别基于 Alpine Linux（`sbOS_musl_*`）和 Debian
 
 ### 登录
 
-agent 只有一个账号，只用密码登录。账号保存在 SQLite 数据库中，不在 `config.toml`
-里——那里的 `jwt_secret` 用于签发 token，不是密码。首次启动时 agent 会设置一个随机
+Monitor 只有一个账号，只用密码登录。账号保存在 SQLite 数据库中，不在 `config.toml`
+里——那里的 `jwt_secret` 用于签发 token，不是密码。首次启动时 Monitor 会设置一个随机
 密码，写到数据库旁边的 `initial-admin-credentials.txt`（0600）。请修改密码并删除
 该文件：
 
@@ -82,7 +82,7 @@ cd /opt/server-box-monitor   # 或 ~/.local/share/server-box-monitor
 
 它会无回显地提示输入两次；`--password-env VAR` 改为从环境变量读取密码。没有通过
 参数传入密码的方式，因为命令行会出现在 `ps` 和 shell 历史中。App 和面板也可以修改
-密码。请在 agent 自己的目录下运行：`config.toml` 和数据库路径都相对于工作目录，在
+密码。请在 Monitor 自己的目录下运行：`config.toml` 和数据库路径都相对于工作目录，在
 其他目录运行会在一个新的空数据库里设置密码，且不会有任何提示。
 
 ### ServerBox App 需要什么
@@ -110,11 +110,11 @@ monitor 服务器不提供 SFTP：Monitor 的文件 API 传输的是文件内容
 ## 访问
 
 **登录后可以做 Monitor 进程所属的系统账号能做的一切**：shell、它的文件、从本机发起
-连接、在本机端口上监听。没有角色，也没有按功能划分的权限：agent 安装时使用的账号
-就是上限。因此 `install.sh` 默认以普通账号运行 agent：systemd 下是
+连接、在本机端口上监听。没有角色，也没有按功能划分的权限：Monitor 安装时使用的账号
+就是上限。因此 `install.sh` 默认以普通账号运行 Monitor：systemd 下是
 `systemctl --user` 服务，OpenRC 下是带 `command_user` 的 `/etc/init.d` 脚本；
 `--system`（root）则意味着登录后就是 root shell。完整的 API 约定见
-[`docs/dev/monitor-permissions.md`](../docs/dev/monitor-permissions.md)。
+[Monitor API 与访问模型](https://serverbox.lollipopkit.com/docs/zh/development/monitor-agent/)。
 
 终端（App 的和面板的）就是 PTY 上的这个 shell。会话在连接断开后会保留几分钟，手机
 切换网络后可以接回同一个 shell 而不是丢失它。

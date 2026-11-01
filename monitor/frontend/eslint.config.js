@@ -30,7 +30,7 @@ export default tseslint.config(
     },
   },
   {
-    // An app reaches the desk through `sys` only (docs/dev/desk-sys.md):
+    // An app reaches the desk through `sys` only (docs/src/content/docs/development/desk-app-reference.md):
     // never the shell's internals, never another app's directory.
     files: ['src/desk/apps/*/**/*.{ts,svelte}'],
     ignores: ['src/desk/apps/settings/**'],

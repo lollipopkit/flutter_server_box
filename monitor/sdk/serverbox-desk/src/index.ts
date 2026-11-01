@@ -1,5 +1,5 @@
 /// `serverbox-desk`: what an installed desk app uses of the desk,
-/// from inside its sandboxed frame (docs/dev/desk-sys.md).
+/// from inside its sandboxed frame (docs/src/content/docs/development/desk-app-reference.md).
 ///
 ///   import { connect } from 'serverbox-desk'
 ///   const desk = await connect() // the desk's styles and theme are on the page

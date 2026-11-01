@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check a ServerBox Monitor web app folder the way the agent reads it.
+"""Check a ServerBox Monitor web app folder the way the Monitor reads it.
 
     python3 validate.py <app-folder> [--schema <monitor-app.schema.json>] [--compose]
 
@@ -8,7 +8,7 @@ Three layers:
 1. The manifest against the published JSON Schema
    (docs/schemas/monitor-app.schema.json) through `check-jsonschema`, run by
    `uvx` or `pipx` when it is not installed.
-2. What the schema cannot say, the same rules as the agent's reader
+2. What the schema cannot say, the same rules as the Monitor's reader
    (monitor/src/stacks/manifest.rs): files in the folder, env names set by
    one place only, `web.port` (or `[llm]`) naming a port setting, defaults that fit their
    setting, and every variable a compose file needs being one the env file
@@ -63,12 +63,12 @@ def env_value_ok(value: str) -> bool:
     return len(value.encode()) <= 1024 and not any(c in value for c in "'\n\r\0")
 
 
-# The name a built image must have, as the agent requires (`BUILT_PREFIX`).
+# The name a built image must have, as the Monitor requires (`BUILT_PREFIX`).
 BUILT_PREFIX = "localhost/"
 
 
 def yaml_entries(text: str):
-    """`key: value` lines of a compose file, values unquoted, as the agent reads them."""
+    """`key: value` lines of a compose file, values unquoted, as the Monitor reads them."""
     for line in text.splitlines():
         line = line.split(" #", 1)[0].lstrip()
         if line.startswith("- "):
@@ -83,7 +83,7 @@ def yaml_entries(text: str):
 
 def compose_builds(file: str, text: str, texts: dict, rep) -> list[str]:
     """The Dockerfiles a compose file builds from, its `build:` sections held
-    to what the agent accepts: a mapping, context `.`, a Dockerfile of the
+    to what the Monitor accepts: a mapping, context `.`, a Dockerfile of the
     package, no `additional_contexts` or `dockerfile_inline`."""
     builds, dockerfiles = 0, []
     for key, value in yaml_entries(text):
@@ -215,7 +215,7 @@ PINNED = re.compile(r"^.+@sha256:[0-9a-fA-F]{64}$")
 
 
 def base_images(dockerfile: str) -> list[str]:
-    """The images a Dockerfile starts from, as the agent reads them
+    """The images a Dockerfile starts from, as the Monitor reads them
     (`stacks::manifest::base_images`): stages and `scratch` left out, `${ARG}`
     from the `ARG` defaults before it, heredoc bodies skipped."""
     images, stages, args, heredoc = [], set(), {}, None
@@ -374,7 +374,7 @@ def check_manifest(m: dict, folder: Path, texts: dict[str, str], rep: Report) ->
 
     for name, where in sources.items():
         if name in RESERVED:
-            rep.error(f"{where[0]}: {name} is written by the agent")
+            rep.error(f"{where[0]}: {name} is written by the Monitor")
         if not ENV_NAME.match(name):
             rep.error(f"{where[0]}: {name!r} is not an env name")
         if len(where) > 1:
@@ -411,7 +411,7 @@ def check_manifest(m: dict, folder: Path, texts: dict[str, str], rep: Report) ->
 
     for name in texts:
         if name.endswith(".dockerignore"):
-            rep.error(f"{name}: no .dockerignore: the agent writes the stack's")
+            rep.error(f"{name}: no .dockerignore: the Monitor writes the stack's")
 
     provided = set(sources) | RESERVED
     if (m.get("llm") or {}).get("tools"):
@@ -440,7 +440,7 @@ def check_manifest(m: dict, folder: Path, texts: dict[str, str], rep: Report) ->
 
 
 def defaults_env(m: dict, stack: Path) -> str:
-    """The env file the agent writes for the defaults, on a machine with no GPU."""
+    """The env file the Monitor writes for the defaults, on a machine with no GPU."""
     values = {k: str(v) for k, v in m.get("env", {}).items()}
     for s in m.get("secrets", []):
         values[s["env"]] = ("a" if s.get("hex") else "x") * s.get("length", 32)

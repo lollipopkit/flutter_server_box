@@ -850,7 +850,7 @@ class MonitorHttpClient {
 
   // ------------------------------------------------------------- account
   //
-  // One account, signed in with its password — `docs/dev/monitor-permissions.md`.
+  // One account, signed in with its password — `docs/src/content/docs/development/monitor-agent.md`.
 
   /// Changes this account's own password. The app keeps logging in with the
   /// one it has stored, so a caller updates that as well.

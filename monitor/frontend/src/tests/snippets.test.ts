@@ -59,9 +59,9 @@ describe('Snippets page', () => {
     render(Snippets)
 
     await fireEvent.click(await screen.findByRole('button', { name: /Disk/ }))
-    await fireEvent.click(screen.getByRole('button', { name: /^run$/i }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.snippetRun() }))
 
-    expect(await screen.findByText(/close one to run a snippet/)).toBeInTheDocument()
+    expect(await screen.findByText(ll.snippetNoTerminal(), { exact: false })).toBeInTheDocument()
   })
 
   it('drops a plan that answers after the server was switched', async () => {

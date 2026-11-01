@@ -1,6 +1,6 @@
 # Example desk app with a backend
 
-A `wasm` desk app (`docs/dev/desk-sys.md`): the UI asks its backend
+A `wasm` desk app (`docs/src/content/docs/development/desk-app-reference.md`): the UI asks its backend
 (`src/lib.rs`, a component the agent runs; its service is
 `wit/uptime.wit`) for the machine's uptime (the `status` permission), and
 for `who` (`process`).

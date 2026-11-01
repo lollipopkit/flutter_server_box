@@ -2455,7 +2455,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get localServerTip =>
-      'Liest dieses Gerät direkt aus, indem das Statusskript hier ausgeführt wird. SSH und Monitor-Agent werden nicht verwendet; ihre Einstellungen bleiben erhalten.';
+      'Liest dieses Gerät direkt aus, indem das Statusskript hier ausgeführt wird. SSH und Monitor werden nicht verwendet; ihre Einstellungen bleiben erhalten.';
 
   @override
   String get localServerUnsupported =>
@@ -2818,7 +2818,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get monitorNoRemoteAccess =>
-      'Dieser Monitor ist nur für die Überwachung eingerichtet. Hier können Sie kein Terminal öffnen, keine Befehle ausführen und keine Dateien durchsuchen. Aktivieren Sie diese Funktionen unter [remote_access] in der config.toml des Monitors.';
+      'Dieser Monitor verweigert über unverschlüsseltes HTTP alles außer der Überwachung. Verbinden Sie sich über HTTPS oder erlauben Sie HTTP sowohl im Monitor als auch in dieser App.';
 
   @override
   String get monitorAgentTooOld =>
@@ -3139,7 +3139,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get monitorRelayForbidden =>
-      'Dieses Monitor-Konto darf keine Verbindung zu dieser Adresse herstellen. Die connect-Berechtigung seiner Rolle muss sie erlauben.';
+      'Der Monitor hat diese Verbindung abgelehnt: Sein Passwort wurde geändert oder er nimmt keine Verbindungen über unverschlüsseltes HTTP an. Melden Sie sich erneut an oder verbinden Sie sich über HTTPS.';
 
   @override
   String get remoteDesktopCertificateChanged =>
@@ -3416,7 +3416,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get virtErrRelayNotGranted =>
-      'Der Monitor öffnet für dieses Konto keine TCP-Verbindungen vom Server aus (connect-Berechtigung)';
+      'Der Monitor öffnet über diese Verbindung keine TCP-Verbindungen vom Server aus.';
 
   @override
   String get virtErrExecNotGranted => 'Der Monitor führt keine Befehle aus';
@@ -6914,7 +6914,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get storageNeedsSudo =>
-      'sudo hat nach einem Passwort gefragt: Führe den Agent als root aus oder erlaube die obigen Befehle.';
+      'sudo hat nach einem Passwort gefragt: Führe den Monitor als root aus oder erlaube die obigen Befehle.';
 
   @override
   String get monitorTab => 'Monitor';
@@ -6933,15 +6933,15 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get monitorNoAgents =>
-      'Noch kein Server wird über einen Monitor-Agent erreicht.';
+      'Noch kein Server wird über einen Monitor erreicht.';
 
   @override
   String get monitorNotOffered =>
-      'Diese Agent-Version bietet das nicht an. Aktualisieren Sie den Agent.';
+      'Diese Monitor-Version bietet das nicht an. Aktualisieren Sie den Monitor.';
 
   @override
   String get monitorAlertsNotOffered =>
-      'Diese Agent-Version meldet keine Warnungen.';
+      'Diese Monitor-Version meldet keine Warnungen.';
 
   @override
   String get monitorAlertsNone => 'Keine Regel schlägt an.';
@@ -6953,7 +6953,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String monitorAgentVersion(String version) {
-    return 'Agent $version';
+    return 'Monitor $version';
   }
 
   @override
@@ -7079,7 +7079,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String monitorAgentsCount(int count) {
-    return '$count Agents';
+    return '$count Monitore';
   }
 
   @override
@@ -7110,7 +7110,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get monitorLiveNoDevices => 'Kein Gerät hat sich angemeldet.';
 
   @override
-  String get monitorUpdateAgent => 'Agent aktualisieren';
+  String get monitorUpdateAgent => 'Monitor aktualisieren';
 
   @override
   String get monitorAgentTooOldTip =>
@@ -7118,20 +7118,20 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get monitorAgentTooOldBody =>
-      'Dieser Agent stammt aus der Zeit vor dem einzelnen Passwort; die App kann sich nicht anmelden. Nach dem Update gilt das Passwort seines ältesten Admin-Kontos.';
+      'Dieser Monitor stammt aus der Zeit vor dem einzelnen Passwort; die App kann sich nicht anmelden. Nach dem Update gilt das Passwort seines ältesten Admin-Kontos.';
 
   @override
   String monitorAgentOutdatedBody(String latest, String running) {
-    return '$latest ist erschienen; dieser Agent läuft mit $running.';
+    return '$latest ist erschienen; dieser Monitor läuft mit $running.';
   }
 
   @override
   String get monitorUpdateRunHint =>
-      'Auf dem Server ausführen, mit dem Konto, unter dem der Agent installiert wurde:';
+      'Auf dem Server ausführen, mit dem Konto, unter dem der Monitor installiert wurde:';
 
   @override
   String get monitorUpdateSshHint =>
-      'Das Terminal führt ihn aus. Ist der Agent systemweit installiert und läuft das Terminal über SSH, fragt sudo dort nach dem Passwort.';
+      'Das Terminal führt ihn aus. Ist der Monitor systemweit installiert und läuft das Terminal über SSH, fragt sudo dort nach dem Passwort.';
 
   @override
   String get monitorUpdateNoSsh =>
@@ -7156,14 +7156,14 @@ class AppLocalizationsDe extends AppLocalizations {
       'Über das NixOS-Modul installiert: aktualisieren Sie ihn über Ihre Systemkonfiguration und bauen Sie neu.';
 
   @override
-  String get noticeAgentUpdate => 'Für den Agenten gibt es ein Update';
+  String get noticeAgentUpdate => 'Für den Monitor gibt es ein Update';
 
   @override
   String get monitorUpdateLegacyUser => 'Kontoname';
 
   @override
   String get monitorUpdateLegacyHint =>
-      'Dieser Agent meldet sich noch mit Kontoname und Passwort an: dem Namen, den diese App zuvor verwendet hat (oft admin), und dem gespeicherten Passwort.';
+      'Dieser Monitor meldet sich noch mit Kontoname und Passwort an: dem Namen, den diese App zuvor verwendet hat (oft admin), und dem gespeicherten Passwort.';
 
   @override
   String get monitorUpdateNow => 'Jetzt aktualisieren';
@@ -7173,11 +7173,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get monitorUpdateRestarting =>
-      'Der Agent startet neu; die Verbindung ist in wenigen Sekunden wieder da…';
+      'Der Monitor startet neu; die Verbindung ist in wenigen Sekunden wieder da…';
 
   @override
   String monitorUpdateDone(String version) {
-    return 'Aktualisiert: Der Agent läuft mit $version.';
+    return 'Aktualisiert: Der Monitor läuft mit $version.';
   }
 
   @override
@@ -7186,7 +7186,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get monitorUpdateAgentHint =>
-      'Der Agent führt den Installer getrennt von sich selbst aus, sodass sein Neustart das Update nicht abbricht. Die Verbindung zu ihm fällt dabei einige Sekunden aus; dieses Fenster verfolgt das Update über den Neustart hinweg.';
+      'Der Monitor führt den Installer getrennt von sich selbst aus, sodass sein Neustart das Update nicht abbricht. Die Verbindung zu ihm fällt dabei einige Sekunden aus; dieses Fenster verfolgt das Update über den Neustart hinweg.';
 
   @override
   String get monitorUpdateSudoPassword => 'sudo-Passwort';
@@ -7201,7 +7201,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get monitorUpdateNoAnswer =>
-      'Der Agent ist nicht zurückgekommen. Prüfen Sie ihn auf dem Server.';
+      'Der Monitor ist nicht zurückgekommen. Prüfen Sie ihn auf dem Server.';
 
   @override
   String get keyArrowDown => 'Pfeil nach unten';

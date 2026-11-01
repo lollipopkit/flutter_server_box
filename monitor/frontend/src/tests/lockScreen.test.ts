@@ -1,9 +1,13 @@
+import { get } from 'svelte/store'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import LockScreen from '../desk/lock/LockScreen.svelte'
 import { ApiError, loginTo, testConnection } from '../lib/api'
 import { servers } from '../lib/servers.svelte'
+import { LL } from '../i18n/i18n-svelte'
+
+const ll = get(LL)
 
 // Partial mock: ApiError stays real so instanceof narrowing works.
 vi.mock('../lib/api', async (importOriginal) => ({
@@ -48,9 +52,9 @@ describe('LockScreen', () => {
     const onunlock = vi.fn()
     render(LockScreen, { onunlock })
 
-    expect(screen.queryByLabelText('Username')).toBeNull()
-    await fill('Password', 'pw')
-    await fireEvent.click(screen.getByRole('button', { name: /^Sign in/ }))
+    expect(screen.queryByLabelText(ll.username())).toBeNull()
+    await fill(ll.password(), 'pw')
+    await fireEvent.click(screen.getByRole('button', { name: (name) => name.startsWith(ll.signIn()) }))
 
     await waitFor(() => expect(onunlock).toHaveBeenCalledWith(id))
     expect(mockedLogin).toHaveBeenCalledWith('https://a.example', { password: 'pw' })
@@ -63,10 +67,10 @@ describe('LockScreen', () => {
     const onunlock = vi.fn()
     render(LockScreen, { onunlock })
 
-    await fill('Password', 'y')
-    await fireEvent.click(screen.getByRole('button', { name: /^Sign in/ }))
+    await fill(ll.password(), 'y')
+    await fireEvent.click(screen.getByRole('button', { name: (name) => name.startsWith(ll.signIn()) }))
 
-    expect(await screen.findByText('That password is not right.')).toBeInTheDocument()
+    expect(await screen.findByText(ll.accessErrReauth())).toBeInTheDocument()
     expect(onunlock).not.toHaveBeenCalled()
   })
 
@@ -75,7 +79,7 @@ describe('LockScreen', () => {
     const onunlock = vi.fn()
     render(LockScreen, { onunlock })
 
-    await fireEvent.click(screen.getByRole('button', { name: /^Unlock/ }))
+    await fireEvent.click(screen.getByRole('button', { name: (name) => name.startsWith(ll.deskUnlock()) }))
     await waitFor(() => expect(onunlock).toHaveBeenCalledWith(id))
     expect(mockedLogin).not.toHaveBeenCalled()
   })
@@ -85,17 +89,17 @@ describe('LockScreen', () => {
     mockedLogin.mockResolvedValue({ token: 'tok' })
     const onunlock = vi.fn()
     render(LockScreen, { onunlock })
-    await fireEvent.click(screen.getByRole('button', { name: 'Connect to another instance' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.lockConnectOther() }))
 
     mockedTest.mockResolvedValue(false)
-    await fill('Server URL', 'https://b.example')
-    await fill('Password', 'pw')
-    await fireEvent.click(screen.getByRole('button', { name: /^Connect and sign in/ }))
-    expect(await screen.findByText('No server answered at that address')).toBeInTheDocument()
+    await fill(ll.serverUrlLabel(), 'https://b.example')
+    await fill(ll.password(), 'pw')
+    await fireEvent.click(screen.getByRole('button', { name: (name) => name.startsWith(ll.lockConnectAndSignIn()) }))
+    expect(await screen.findByText(ll.deskUnreachable())).toBeInTheDocument()
     expect(servers.list).toHaveLength(1)
 
     mockedTest.mockResolvedValue(true)
-    await fireEvent.click(screen.getByRole('button', { name: /^Connect and sign in/ }))
+    await fireEvent.click(screen.getByRole('button', { name: (name) => name.startsWith(ll.lockConnectAndSignIn()) }))
     await waitFor(() => expect(servers.list.map((s) => s.url)).toContain('https://b.example'))
     const added = servers.list.find((s) => s.url === 'https://b.example')!
     await waitFor(() => expect(onunlock).toHaveBeenCalledWith(added.id))
@@ -106,19 +110,19 @@ describe('LockScreen', () => {
     addServer('https://b.example')
     render(LockScreen, { onunlock: vi.fn() })
 
-    expect(screen.getByText('Instances')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Connect a new instance/ })).toBeInTheDocument()
+    expect(screen.getByText(ll.lockInstances())).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: (name) => name.includes(ll.lockConnectNew()) })).toBeInTheDocument()
     expect(screen.getAllByText('b.example').length).toBeGreaterThan(0)
     await fireEvent.keyDown(window, { key: 'ArrowDown' })
     // Past the last server: a new one.
-    expect(await screen.findByText('New instance')).toBeInTheDocument()
+    expect(await screen.findByText(ll.lockNewInstance())).toBeInTheDocument()
   })
 
   it('offers neither connecting nor removing on the panel an agent serves', () => {
     addServer('https://a.example')
     servers.servedByAgent = true
     render(LockScreen, { onunlock: vi.fn() })
-    expect(screen.queryByRole('button', { name: /Connect/ })).toBeNull()
-    expect(screen.queryByRole('button', { name: 'Remove server' })).toBeNull()
+    expect(screen.queryByRole('button', { name: (name) => [ll.lockConnectOther(), ll.lockConnectNew(), ll.lockConnectAndSignIn()].some((c) => name.includes(c)) })).toBeNull()
+    expect(screen.queryByRole('button', { name: ll.removeServer() })).toBeNull()
   })
 })

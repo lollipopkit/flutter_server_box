@@ -97,7 +97,7 @@ void main() {
       () => Future<void>.delayed(const Duration(milliseconds: 100)),
     );
     await tester.pump();
-    expect(find.text('Disks').first, findsOneWidget);
+    expect(find.text(app_locale.l10n.storageDisks).first, findsOneWidget);
     expect(find.textContaining('Test SSD'), findsOneWidget);
     expect(find.text('/dev/sda1'), findsOneWidget);
     expect(tester.takeException(), isNull);

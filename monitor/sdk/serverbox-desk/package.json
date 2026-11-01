@@ -30,6 +30,6 @@
     "url": "git+https://github.com/lollipopkit/flutter_server_box.git",
     "directory": "monitor/sdk/serverbox-desk"
   },
-  "homepage": "https://github.com/lollipopkit/flutter_server_box/blob/main/docs/dev/desk-sys.md",
+  "homepage": "https://serverbox.lollipopkit.com/docs/development/desk-app-reference/",
   "license": "Apache-2.0"
 }

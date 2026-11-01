@@ -3150,7 +3150,7 @@
   "@thisDevice": {
     "description": "User-facing label or message for this device."
   },
-  "localServerTip": "Reads this device directly, by running the status script here. SSH and Monitor Agent are not used, and their settings are kept.",
+  "localServerTip": "Reads this device directly, by running the status script here. SSH and the Monitor are not used, and their settings are kept.",
   "@localServerTip": {
     "description": "Help text for the local server setting or action."
   },
@@ -3184,7 +3184,7 @@
   },
   "monitorAgent": "Monitor",
   "@monitorAgent": {
-    "description": "User-facing label or message for monitor agent."
+    "description": "User-facing label or message for Monitor."
   },
   "plainHttpEditTip": "Credentials and metrics cross the network unencrypted. Keep it to a LAN or a Tailscale address, or put the Monitor behind TLS.",
   "@plainHttpEditTip": {
@@ -3506,7 +3506,7 @@
   },
   "monitorAgentDefault": "Monitor default",
   "@monitorAgentDefault": {
-    "description": "User-facing label or message for monitor agent default."
+    "description": "User-facing label or message for Monitor default."
   },
   "monitorNeedsRestart": "Takes effect after the Monitor restarts",
   "@monitorNeedsRestart": {
@@ -3636,17 +3636,17 @@
   "@corsOriginsTip": {
     "description": "Help text for the cors origins setting or action."
   },
-  "monitorNoRemoteAccess": "This Monitor is set up for monitoring only. You can't open a terminal, run commands, or browse files here. To enable these features, edit [remote_access] in the Monitor's config.toml.",
+  "monitorNoRemoteAccess": "This Monitor refuses everything beyond monitoring over plain HTTP. Connect over HTTPS, or allow plain HTTP on both the Monitor ([remote_access] allow_insecure) and this app.",
   "@monitorNoRemoteAccess": {
     "description": "User-facing label or message for monitor no remote access."
   },
   "monitorAgentTooOld": "This Monitor is older than this version of ServerBox supports. Update the Monitor on the server.",
   "@monitorAgentTooOld": {
-    "description": "Shown when the Monitor agent speaks an older protocol than this app reads."
+    "description": "Shown when the Monitor speaks an older protocol than this app reads."
   },
   "monitorClientTooOld": "This Monitor no longer supports this version of ServerBox. Update the app.",
   "@monitorClientTooOld": {
-    "description": "Shown when the Monitor agent no longer answers this app's protocol (HTTP 426)."
+    "description": "Shown when the Monitor no longer answers this app's protocol (HTTP 426)."
   },
   "alerts": "Alerts",
   "@alerts": {
@@ -3864,7 +3864,7 @@
   "remoteDesktopFailPasswordRequired": "The VNC server requires a password.",
   "tcpTargetUnreachable": "The server could not connect to this address. Check that the service is running and listening on that port.",
   "sshTcpForwardingProhibited": "The SSH server refused to forward this connection. Check AllowTcpForwarding and PermitOpen in its sshd_config, and any no-port-forwarding or permitopen option on the key in authorized_keys.",
-  "monitorRelayForbidden": "This Monitor account may not connect to this address. Its role's connect permission must allow it.",
+  "monitorRelayForbidden": "The Monitor refused this connection: its password has changed, or it does not act over plain HTTP. Sign in again, or connect over HTTPS.",
   "remoteDesktopCertificateChanged": "Remote desktop certificate changed",
   "remoteDesktopTrustCertificate": "Trust certificate?",
   "remoteDesktopCertificateChangedTip": "The certificate fingerprint no longer matches the saved value. Verify the new fingerprint before replacing trust.",
@@ -4218,13 +4218,13 @@
   "@virtErrCertChanged": {
     "description": "Error: the PVE certificate is not the one confirmed before."
   },
-  "virtErrRelayNotGranted": "The Monitor does not open TCP connections from the server for this account (connect permission)",
+  "virtErrRelayNotGranted": "The Monitor does not open TCP connections from the server over this link",
   "@virtErrRelayNotGranted": {
-    "description": "Error: the Monitor agent does not relay TCP connections to PVE."
+    "description": "Error: the Monitor does not relay TCP connections to PVE."
   },
   "virtErrExecNotGranted": "The Monitor does not run commands",
   "@virtErrExecNotGranted": {
-    "description": "Error: the Monitor agent does not run commands (its full access is off), so libvirt cannot be reached through it."
+    "description": "Error: the Monitor does not run commands (its full access is off), so libvirt cannot be reached through it."
   },
   "virtErrNotInstalled": "virsh is not installed on this server",
   "@virtErrNotInstalled": {
@@ -6738,7 +6738,7 @@
   "monitorErrReauth": "Your password was wrong.",
   "monitorPasswordNotSaved": "The password was changed on the Monitor, but the app could not save it. Update this server's Monitor password in its settings.",
   "@monitorPasswordNotSaved": {
-    "description": "Shown when the agent accepted a new password but the app failed to update the credential it stores for the server."
+    "description": "Shown when the Monitor accepted a new password but the app failed to update the credential it stores for the server."
   },
   "firewall": "Firewall",
   "@firewall": {
@@ -7027,15 +7027,15 @@
   },
   "monitorSyncNeedsServer": "Pick the server whose Monitor stores the backup.",
   "@monitorSyncNeedsServer": {
-    "description": "Backup sync to a monitor agent: no server is chosen yet."
+    "description": "Backup sync to a Monitor: no server is chosen yet."
   },
   "monitorBackupUnsupported": "This Monitor cannot store backups. Update the Monitor.",
   "@monitorBackupUnsupported": {
-    "description": "Backup sync to a monitor agent: the agent is too old to store backups."
+    "description": "Backup sync to a Monitor: the Monitor is too old to store backups."
   },
   "monitorBackupTooLarge": "The backup is larger than the Monitor accepts ({max}).",
   "@monitorBackupTooLarge": {
-    "description": "Backup sync to a monitor agent: the file exceeds the agent's size limit, given as max.",
+    "description": "Backup sync to a Monitor: the file exceeds the Monitor's size limit, given as max.",
     "placeholders": {
       "max": {
         "type": "String"
@@ -7044,7 +7044,7 @@
   },
   "monitorBackupTooMany": "The Monitor already holds as many backups as it allows. Delete one first.",
   "@monitorBackupTooMany": {
-    "description": "Backup sync to a monitor agent: the agent's blob count limit is reached."
+    "description": "Backup sync to a Monitor: the Monitor's blob count limit is reached."
   },
   "virtCreateVmidInvalid": "A VMID from 100 to 999999999.",
   "@virtCreateVmidInvalid": {
@@ -8601,7 +8601,7 @@
   },
   "webApps": "Web apps",
   "@webApps": {
-    "description": "Server page: card listing the web apps the Monitor agent deployed (Docker Compose services)."
+    "description": "Server page: card listing the web apps the Monitor deployed (Docker Compose services)."
   },
   "webAppUnhealthy": "Unhealthy",
   "@webAppUnhealthy": {
@@ -8642,7 +8642,7 @@
   },
   "noticeStackDown": "{app} is down",
   "@noticeStackDown": {
-    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "description": "Monitor tab: a Monitor notification or storage task, as the panel words it.",
     "placeholders": {
       "app": {
         "type": "String"
@@ -8651,7 +8651,7 @@
   },
   "noticeStackDownBody": "Not running: {services}.",
   "@noticeStackDownBody": {
-    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "description": "Monitor tab: a Monitor notification or storage task, as the panel words it.",
     "placeholders": {
       "services": {
         "type": "String"
@@ -8660,11 +8660,11 @@
   },
   "noticeStackDownBodyEmpty": "None of its containers is running.",
   "@noticeStackDownBodyEmpty": {
-    "description": "Monitor tab: an agent notification or storage task, as the panel words it."
+    "description": "Monitor tab: a Monitor notification or storage task, as the panel words it."
   },
   "noticeStackUnhealthy": "{app} is unhealthy",
   "@noticeStackUnhealthy": {
-    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "description": "Monitor tab: a Monitor notification or storage task, as the panel words it.",
     "placeholders": {
       "app": {
         "type": "String"
@@ -8673,7 +8673,7 @@
   },
   "noticeStackUnhealthyBody": "Failing its health check: {services}.",
   "@noticeStackUnhealthyBody": {
-    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "description": "Monitor tab: a Monitor notification or storage task, as the panel words it.",
     "placeholders": {
       "services": {
         "type": "String"
@@ -8682,7 +8682,7 @@
   },
   "noticeStackBack": "{app} is running again",
   "@noticeStackBack": {
-    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "description": "Monitor tab: a Monitor notification or storage task, as the panel words it.",
     "placeholders": {
       "app": {
         "type": "String"
@@ -8691,11 +8691,11 @@
   },
   "noticeStackBackBody": "Every container is up.",
   "@noticeStackBackBody": {
-    "description": "Monitor tab: an agent notification or storage task, as the panel words it."
+    "description": "Monitor tab: a Monitor notification or storage task, as the panel words it."
   },
   "noticeStackUpdate": "{app}: an update is available",
   "@noticeStackUpdate": {
-    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "description": "Monitor tab: a Monitor notification or storage task, as the panel words it.",
     "placeholders": {
       "app": {
         "type": "String"
@@ -8704,7 +8704,7 @@
   },
   "noticeStackUpdateBody": "{project} {version} can be installed (now {current}).",
   "@noticeStackUpdateBody": {
-    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "description": "Monitor tab: a Monitor notification or storage task, as the panel words it.",
     "placeholders": {
       "project": {
         "type": "String"
@@ -8719,7 +8719,7 @@
   },
   "noticeStorageArrayDegraded": "/dev/{array} is degraded",
   "@noticeStorageArrayDegraded": {
-    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "description": "Monitor tab: a Monitor notification or storage task, as the panel words it.",
     "placeholders": {
       "array": {
         "type": "String"
@@ -8728,11 +8728,11 @@
   },
   "noticeStorageArrayDegradedBody": "A member failed or is missing; the array runs without its redundancy.",
   "@noticeStorageArrayDegradedBody": {
-    "description": "Monitor tab: an agent notification or storage task, as the panel words it."
+    "description": "Monitor tab: a Monitor notification or storage task, as the panel words it."
   },
   "noticeStorageArrayBack": "/dev/{array} is healthy again",
   "@noticeStorageArrayBack": {
-    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "description": "Monitor tab: a Monitor notification or storage task, as the panel words it.",
     "placeholders": {
       "array": {
         "type": "String"
@@ -8741,11 +8741,11 @@
   },
   "noticeStorageArrayBackBody": "Every member is working.",
   "@noticeStorageArrayBackBody": {
-    "description": "Monitor tab: an agent notification or storage task, as the panel words it."
+    "description": "Monitor tab: a Monitor notification or storage task, as the panel words it."
   },
   "noticeStoragePoolUnhealthy": "Pool {pool} is {health}",
   "@noticeStoragePoolUnhealthy": {
-    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "description": "Monitor tab: a Monitor notification or storage task, as the panel words it.",
     "placeholders": {
       "pool": {
         "type": "String"
@@ -8757,11 +8757,11 @@
   },
   "noticeStoragePoolUnhealthyBody": "Open Storage to see which device.",
   "@noticeStoragePoolUnhealthyBody": {
-    "description": "Monitor tab: an agent notification or storage task, as the panel words it."
+    "description": "Monitor tab: a Monitor notification or storage task, as the panel words it."
   },
   "noticeStoragePoolBack": "Pool {pool} is online again",
   "@noticeStoragePoolBack": {
-    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "description": "Monitor tab: a Monitor notification or storage task, as the panel words it.",
     "placeholders": {
       "pool": {
         "type": "String"
@@ -8770,11 +8770,11 @@
   },
   "noticeStoragePoolBackBody": "Every device is working.",
   "@noticeStoragePoolBackBody": {
-    "description": "Monitor tab: an agent notification or storage task, as the panel words it."
+    "description": "Monitor tab: a Monitor notification or storage task, as the panel words it."
   },
   "noticeStorageDiskFailing": "{device} is failing",
   "@noticeStorageDiskFailing": {
-    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "description": "Monitor tab: a Monitor notification or storage task, as the panel words it.",
     "placeholders": {
       "device": {
         "type": "String"
@@ -8783,11 +8783,11 @@
   },
   "noticeStorageDiskFailingBody": "Its SMART check or self-test failed: copy what it holds elsewhere and replace it.",
   "@noticeStorageDiskFailingBody": {
-    "description": "Monitor tab: an agent notification or storage task, as the panel words it."
+    "description": "Monitor tab: a Monitor notification or storage task, as the panel words it."
   },
   "noticeStorageDiskSectors": "{device} has {count} bad sectors",
   "@noticeStorageDiskSectors": {
-    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "description": "Monitor tab: a Monitor notification or storage task, as the panel words it.",
     "placeholders": {
       "device": {
         "type": "String"
@@ -8799,7 +8799,7 @@
   },
   "noticeStorageDiskSectorsBody": "It had {was}. A disk losing sectors often fails soon.",
   "@noticeStorageDiskSectorsBody": {
-    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "description": "Monitor tab: a Monitor notification or storage task, as the panel words it.",
     "placeholders": {
       "was": {
         "type": "int"
@@ -8808,7 +8808,7 @@
   },
   "noticeStorageMaintenanceFailed": "Storage maintenance did not run: {task}",
   "@noticeStorageMaintenanceFailed": {
-    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "description": "Monitor tab: a Monitor notification or storage task, as the panel words it.",
     "placeholders": {
       "task": {
         "type": "String"
@@ -8817,19 +8817,19 @@
   },
   "storageTaskScrub": "Scrub pools and check arrays",
   "@storageTaskScrub": {
-    "description": "Monitor tab: an agent notification or storage task, as the panel words it."
+    "description": "Monitor tab: a Monitor notification or storage task, as the panel words it."
   },
   "storageTaskSmartShort": "Short SMART test",
   "@storageTaskSmartShort": {
-    "description": "Monitor tab: an agent notification or storage task, as the panel words it."
+    "description": "Monitor tab: a Monitor notification or storage task, as the panel words it."
   },
   "storageTaskSmartLong": "Long SMART test",
   "@storageTaskSmartLong": {
-    "description": "Monitor tab: an agent notification or storage task, as the panel words it."
+    "description": "Monitor tab: a Monitor notification or storage task, as the panel words it."
   },
-  "storageNeedsSudo": "sudo asked for a password: run the agent as root, or allow these commands (above).",
+  "storageNeedsSudo": "sudo asked for a password: run the Monitor as root, or allow these commands (above).",
   "@storageNeedsSudo": {
-    "description": "Monitor tab: an agent notification or storage task, as the panel words it."
+    "description": "Monitor tab: a Monitor notification or storage task, as the panel words it."
   },
   "monitorTab": "Monitor",
   "@monitorTab": {
@@ -8837,31 +8837,31 @@
   },
   "monitorOverview": "Overview",
   "@monitorOverview": {
-    "description": "Monitor tab section: each agent, its version and its firing alerts."
+    "description": "Monitor tab section: each Monitor, its version and its firing alerts."
   },
   "monitorNotices": "Notifications",
   "@monitorNotices": {
-    "description": "Monitor tab section: the agents' notifications."
+    "description": "Monitor tab section: the Monitors' notifications."
   },
   "monitorAudit": "Audit log",
   "@monitorAudit": {
-    "description": "Monitor tab section: an agent's audit log."
+    "description": "Monitor tab section: a Monitor's audit log."
   },
   "monitorLive": "Sessions & devices",
   "@monitorLive": {
-    "description": "Monitor tab section: what is signed in to an agent and open on it."
+    "description": "Monitor tab section: what is signed in to a Monitor and open on it."
   },
-  "monitorNoAgents": "No server is reached through a Monitor agent yet.",
+  "monitorNoAgents": "No server is reached through a Monitor yet.",
   "@monitorNoAgents": {
-    "description": "Monitor tab when no server is reached through a Monitor agent."
+    "description": "Monitor tab when no server is reached through a Monitor."
   },
-  "monitorNotOffered": "This agent's version does not offer this. Update the agent.",
+  "monitorNotOffered": "This Monitor version does not offer this. Update the Monitor.",
   "@monitorNotOffered": {
-    "description": "Monitor tab when the agent is too old for a section."
+    "description": "Monitor tab when the Monitor is too old for a section."
   },
-  "monitorAlertsNotOffered": "This agent's version does not report alerts.",
+  "monitorAlertsNotOffered": "This Monitor version does not report alerts.",
   "@monitorAlertsNotOffered": {
-    "description": "Overview card: the agent is too old to report alerts."
+    "description": "Overview card: the Monitor is too old to report alerts."
   },
   "monitorAlertsNone": "No rule is firing.",
   "@monitorAlertsNone": {
@@ -8876,9 +8876,9 @@
       }
     }
   },
-  "monitorAgentVersion": "Agent {version}",
+  "monitorAgentVersion": "Monitor {version}",
   "@monitorAgentVersion": {
-    "description": "Overview card: the agent's version.",
+    "description": "Overview card: the Monitor's version.",
     "placeholders": {
       "version": {
         "type": "String"
@@ -8887,7 +8887,7 @@
   },
   "monitorAgentUpdate": "{version} available",
   "@monitorAgentUpdate": {
-    "description": "Overview card: a newer agent release exists.",
+    "description": "Overview card: a newer Monitor release exists.",
     "placeholders": {
       "version": {
         "type": "String"
@@ -8939,7 +8939,7 @@
   },
   "monitorAuditExec": "Commands",
   "@monitorAuditExec": {
-    "description": "Audit log kind: commands run through the agent."
+    "description": "Audit log kind: commands run through the Monitor."
   },
   "monitorAuditMachine": "Machine management",
   "@monitorAuditMachine": {
@@ -8947,7 +8947,7 @@
   },
   "monitorAuditListen": "Listened ports",
   "@monitorAuditListen": {
-    "description": "Audit log kind and connection kind: ports the agent listened on."
+    "description": "Audit log kind and connection kind: ports the Monitor listened on."
   },
   "monitorAuditTicket": "Connection tickets",
   "@monitorAuditTicket": {
@@ -9056,7 +9056,7 @@
   },
   "monitorLiveStream": "Relayed connection",
   "@monitorLiveStream": {
-    "description": "Connection kind: a TCP connection relayed by the agent."
+    "description": "Connection kind: a TCP connection relayed by the Monitor."
   },
   "monitorLiveAccepted": "Forwarded connection",
   "@monitorLiveAccepted": {
@@ -9066,9 +9066,9 @@
   "@monitorLiveConsole": {
     "description": "Connection kind: a virtual machine's console."
   },
-  "monitorAgentsCount": "{count} agents",
+  "monitorAgentsCount": "{count} Monitors",
   "@monitorAgentsCount": {
-    "description": "Monitor tab header: how many agents a section covers.",
+    "description": "Monitor tab header: how many Monitors a section covers.",
     "placeholders": {
       "count": {
         "type": "int"
@@ -9077,7 +9077,7 @@
   },
   "monitorStatOnline": "Online",
   "@monitorStatOnline": {
-    "description": "Overview count: agents answering."
+    "description": "Overview count: Monitors answering."
   },
   "monitorStatFiring": "Alerts firing",
   "@monitorStatFiring": {
@@ -9111,21 +9111,21 @@
   "@monitorLiveNoDevices": {
     "description": "Sessions: no device has signed in."
   },
-  "monitorUpdateAgent": "Update the agent",
+  "monitorUpdateAgent": "Update the Monitor",
   "@monitorUpdateAgent": {
-    "description": "Title of the guide to updating a monitor agent."
+    "description": "Title of the guide to updating a Monitor."
   },
   "monitorAgentTooOldTip": "The Monitor tab has the steps to update it.",
   "@monitorAgentTooOldTip": {
-    "description": "Solution shown with a sign-in an agent too old refused."
+    "description": "Solution shown with a sign-in a Monitor too old refused."
   },
-  "monitorAgentTooOldBody": "This agent is from before it had one password, and this app cannot sign in to it. After the update, its password is the one its oldest admin account had.",
+  "monitorAgentTooOldBody": "This Monitor is from before it had one password, and this app cannot sign in to it. After the update, its password is the one its oldest admin account had.",
   "@monitorAgentTooOldBody": {
-    "description": "Update guide: why an agent from before one account must be updated."
+    "description": "Update guide: why a Monitor from before one account must be updated."
   },
-  "monitorAgentOutdatedBody": "{latest} is out; this agent runs {running}.",
+  "monitorAgentOutdatedBody": "{latest} is out; this Monitor runs {running}.",
   "@monitorAgentOutdatedBody": {
-    "description": "Update guide: an agent behind the newest release.",
+    "description": "Update guide: a Monitor behind the newest release.",
     "placeholders": {
       "latest": {
         "type": "String"
@@ -9135,11 +9135,11 @@
       }
     }
   },
-  "monitorUpdateRunHint": "Run this on the server, as the account the agent was installed from:",
+  "monitorUpdateRunHint": "Run this on the server, as the account the Monitor was installed from:",
   "@monitorUpdateRunHint": {
     "description": "Update guide: where the command runs."
   },
-  "monitorUpdateSshHint": "The terminal runs it. If the agent was installed system-wide and the terminal goes over SSH, sudo asks for its password there.",
+  "monitorUpdateSshHint": "The terminal runs it. If the Monitor was installed system-wide and the terminal goes over SSH, sudo asks for its password there.",
   "@monitorUpdateSshHint": {
     "description": "Update guide: what the terminal button does."
   },
@@ -9149,7 +9149,7 @@
   },
   "monitorUpdateDocker": "In Docker? Pull the new image and recreate the container instead.",
   "@monitorUpdateDocker": {
-    "description": "Update guide: an agent in Docker."
+    "description": "Update guide: a Monitor in Docker."
   },
   "monitorUpdateAfter": "Once it has restarted, refresh the Monitor tab.",
   "@monitorUpdateAfter": {
@@ -9165,19 +9165,19 @@
   },
   "monitorUpdateNix": "Installed by the NixOS module: update it through your system configuration and rebuild.",
   "@monitorUpdateNix": {
-    "description": "Update guide: an agent installed by the NixOS module."
+    "description": "Update guide: a Monitor installed by the NixOS module."
   },
-  "noticeAgentUpdate": "The agent has an update",
+  "noticeAgentUpdate": "The Monitor has an update",
   "@noticeAgentUpdate": {
-    "description": "Notification: a newer monitor agent is released."
+    "description": "Notification: a newer Monitor is released."
   },
   "monitorUpdateLegacyUser": "Its account name",
   "@monitorUpdateLegacyUser": {
-    "description": "Update guide: the old agent account name to sign in with."
+    "description": "Update guide: the old Monitor account name to sign in with."
   },
-  "monitorUpdateLegacyHint": "This agent still signs in with an account name and a password: the name this app used before (often admin) and the saved password.",
+  "monitorUpdateLegacyHint": "This Monitor still signs in with an account name and a password: the name this app used before (often admin) and the saved password.",
   "@monitorUpdateLegacyHint": {
-    "description": "Update guide: why an old agent needs its account name."
+    "description": "Update guide: why an old Monitor needs its account name."
   },
   "monitorUpdateNow": "Update now",
   "@monitorUpdateNow": {
@@ -9187,11 +9187,11 @@
   "@monitorUpdating": {
     "description": "Update progress: running."
   },
-  "monitorUpdateRestarting": "The agent is restarting; the connection is back in a few seconds…",
+  "monitorUpdateRestarting": "The Monitor is restarting; the connection is back in a few seconds…",
   "@monitorUpdateRestarting": {
-    "description": "Update progress: the agent does not answer while it restarts."
+    "description": "Update progress: the Monitor does not answer while it restarts."
   },
-  "monitorUpdateDone": "Updated: the agent runs {version}.",
+  "monitorUpdateDone": "Updated: the Monitor runs {version}.",
   "@monitorUpdateDone": {
     "description": "Update progress: done.",
     "placeholders": {
@@ -9204,9 +9204,9 @@
   "@monitorUpdateFailed": {
     "description": "Update progress: failed."
   },
-  "monitorUpdateAgentHint": "The agent runs the installer apart from itself, so its restart does not stop the update. The connection to it drops for a few seconds meanwhile; this window follows the update across the restart.",
+  "monitorUpdateAgentHint": "The Monitor runs the installer apart from itself, so its restart does not stop the update. The connection to it drops for a few seconds meanwhile; this window follows the update across the restart.",
   "@monitorUpdateAgentHint": {
-    "description": "Update guide: the agent runs the update apart from itself."
+    "description": "Update guide: the Monitor runs the update apart from itself."
   },
   "monitorUpdateSudoPassword": "sudo password",
   "@monitorUpdateSudoPassword": {
@@ -9220,9 +9220,9 @@
   "@monitorUpdateSudoRefused": {
     "description": "Update guide: wrong sudo password."
   },
-  "monitorUpdateNoAnswer": "The agent has not come back. Check it on the server.",
+  "monitorUpdateNoAnswer": "The Monitor has not come back. Check it on the server.",
   "@monitorUpdateNoAnswer": {
-    "description": "Update progress: the agent never came back."
+    "description": "Update progress: the Monitor never came back."
   },
   "keyArrowDown": "Down arrow",
   "@keyArrowDown": {

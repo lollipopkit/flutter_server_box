@@ -1,7 +1,9 @@
+import { get } from 'svelte/store'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import ContainerBackups from '../desk/apps/containers/ContainerBackups.svelte'
+import { LL } from '../i18n/i18n-svelte'
 import { api } from '../lib/api'
 import { servers } from '../lib/servers.svelte'
 import type { ContainerBackup } from '../types'
@@ -18,6 +20,7 @@ vi.mock('../lib/api', async (importOriginal) => ({
 }))
 
 const mocked = vi.mocked(api)
+const ll = get(LL)
 
 const backup: ContainerBackup = {
   id: '20261011-013000-sbm-futo-immich',
@@ -52,16 +55,16 @@ describe('container backups', () => {
     mocked.restoreContainerBackup.mockResolvedValue(job)
     mocked.containerBackupJob.mockResolvedValue(job)
     render(ContainerBackups)
-    expect(await screen.findByText('Volume pgdata → /var/lib/postgresql/data')).toBeInTheDocument()
-    expect(screen.getByText('Left out: a file, not a folder')).toBeInTheDocument()
-    expect(screen.getByText('Stopped while archived')).toBeInTheDocument()
+    expect(await screen.findByText(ll.containerBackupVolume({ name: 'pgdata', at: '/var/lib/postgresql/data' }))).toBeInTheDocument()
+    expect(screen.getByText(ll.containerBackupSkippedFile())).toBeInTheDocument()
+    expect(screen.getByText(ll.containerBackupStopped())).toBeInTheDocument()
     expect(screen.getByText('/mnt/backup/serverbox-container-backups')).toBeInTheDocument()
-    expect(screen.getByText('Every Sunday at 03:30')).toBeInTheDocument()
-    await fireEvent.click(screen.getByRole('button', { name: 'Restore' }))
+    expect(screen.getByText(ll.containerBackupWeekly({ day: ll.weekdaySun(), at: '03:30' }))).toBeInTheDocument()
+    await fireEvent.click(screen.getByRole('button', { name: ll.containerBackupRestore() }))
     const password = await vi.waitFor(() => document.querySelector('input[type=password]') as HTMLInputElement)
     await fireEvent.input(password, { target: { value: 'pw' } })
     await fireEvent.submit(password.form!)
     await vi.waitFor(() => expect(mocked.restoreContainerBackup).toHaveBeenCalledWith(backup.id, 'pw'))
-    expect(await screen.findByText('Restoring…')).toBeInTheDocument()
+    expect(await screen.findByText(ll.containerBackupRestoring())).toBeInTheDocument()
   })
 })

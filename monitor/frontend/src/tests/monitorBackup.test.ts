@@ -1,3 +1,4 @@
+import { get } from 'svelte/store'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
@@ -6,6 +7,7 @@ import { api, errorFromBody } from '../lib/api'
 import { servers } from '../lib/servers.svelte'
 import { noticeText } from '../desk/noticeText'
 import en from '../i18n/en'
+import { LL } from '../i18n/i18n-svelte'
 import { i18nObject } from '../i18n/i18n-util'
 import { loadAllLocales } from '../i18n/i18n-util.sync'
 import type { MonitorBackupFile, MonitorBackupView } from '../types'
@@ -24,6 +26,7 @@ vi.mock('../lib/api', async (importOriginal) => ({
 }))
 
 const mocked = vi.mocked(api)
+const ll = get(LL)
 
 const view: MonitorBackupView = {
   configured: true,
@@ -68,17 +71,17 @@ describe('monitor backup', () => {
   it('shows the folder, the key, the last failure in words, and the backups', async () => {
     render(MonitorBackupSection)
     expect(await screen.findByDisplayValue('https://dav.example.com/box/')).toBeInTheDocument()
-    expect(screen.getByText('Backups are encrypted to key 0a1b2c3d.')).toBeInTheDocument()
-    expect(screen.getByText('The WebDAV server refused the user name or password.')).toBeInTheDocument()
+    expect(screen.getByText(ll.monitorBackupKeySetHint({ id: '0a1b2c3d' }))).toBeInTheDocument()
+    expect(screen.getByText(ll.monitorBackupErrUnauthorized())).toBeInTheDocument()
     expect((await screen.findAllByText(/ · 0a1b2c3d$/)).length).toBe(1)
-    expect(screen.getByText('Another server')).toBeInTheDocument()
+    expect(screen.getByText(ll.monitorBackupOtherServer())).toBeInTheDocument()
   })
 
   it('saves with the password and keeps the saved WebDAV password unsent', async () => {
     mocked.saveMonitorBackup.mockResolvedValue(view)
     render(MonitorBackupSection)
     await screen.findByDisplayValue('https://dav.example.com/box/')
-    await fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.save() }))
     await submitPassword('pw')
     await vi.waitFor(() =>
       expect(mocked.saveMonitorBackup).toHaveBeenCalledWith(
@@ -93,12 +96,12 @@ describe('monitor backup', () => {
     mocked.saveMonitorBackup.mockResolvedValueOnce({ ...view, has_password: false })
     render(MonitorBackupSection)
     await screen.findByDisplayValue('https://dav.example.com/box/')
-    await fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.save() }))
     await submitPassword('pw')
-    expect(await screen.findByText('Type the password: the saved one is only sent to the server it was saved for.')).toBeInTheDocument()
+    expect(await screen.findByText(ll.monitorBackupErrPasswordRequired())).toBeInTheDocument()
     await vi.waitFor(() => expect(document.querySelector('input[autocomplete=current-password]')).toBeNull())
-    await fireEvent.click(screen.getByText('Remove the saved password'))
-    await fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await fireEvent.click(screen.getByText(ll.monitorBackupForgetPassword()))
+    await fireEvent.click(screen.getByRole('button', { name: ll.save() }))
     await submitPassword('pw')
     await vi.waitFor(() => expect(mocked.saveMonitorBackup).toHaveBeenLastCalledWith(expect.objectContaining({ password: '' }), 'pw'))
   })
@@ -106,17 +109,17 @@ describe('monitor backup', () => {
   it('offers no run while backups are off', async () => {
     mocked.getMonitorBackup.mockResolvedValue({ ...view, enabled: false })
     render(MonitorBackupSection)
-    expect(await screen.findByText('Automatic backups are off.')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Back up now' })).toBeDisabled()
+    expect(await screen.findByText(ll.monitorBackupOff())).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: ll.monitorBackupRunNow() })).toBeDisabled()
   })
 
   it('sets a passphrase only when it is long enough and typed twice', async () => {
     mocked.setMonitorBackupKey.mockResolvedValue(view)
     render(MonitorBackupSection)
-    await fireEvent.click(await screen.findByRole('button', { name: 'Change passphrase' }))
+    await fireEvent.click(await screen.findByRole('button', { name: ll.monitorBackupKeyChange() }))
     const [first, again] = [...document.querySelectorAll('input[autocomplete=new-password]')].slice(-2) as HTMLInputElement[]
     await fireEvent.input(first, { target: { value: 'short' } })
-    expect(screen.getByText('At least 12 characters.')).toBeInTheDocument()
+    expect(screen.getByText(ll.monitorBackupPassphraseShort({ min: 12 }))).toBeInTheDocument()
     await fireEvent.input(first, { target: { value: 'a long enough passphrase' } })
     await fireEvent.input(again, { target: { value: 'a long enough passphrase' } })
     await fireEvent.submit(first.form!)
@@ -128,12 +131,12 @@ describe('monitor backup', () => {
     mocked.restoreMonitorBackup.mockRejectedValueOnce(errorFromBody(400, { error: 'wrongPassphrase' }))
     mocked.restoreMonitorBackup.mockResolvedValueOnce({ restored: { tables: [], blobs: 0, config: true }, restart: true })
     render(MonitorBackupSection)
-    await fireEvent.click((await screen.findAllByRole('button', { name: 'Restore' }))[0])
+    await fireEvent.click((await screen.findAllByRole('button', { name: ll.monitorBackupRestore() }))[0])
     const passphrase = document.querySelector('#backup-restore-passphrase') as HTMLInputElement
     await fireEvent.input(passphrase, { target: { value: 'wrong passphrase' } })
     await fireEvent.submit(passphrase.form!)
     await submitPassword('pw')
-    expect(await screen.findByText('The passphrase does not open this backup.')).toBeInTheDocument()
+    expect(await screen.findByText(ll.monitorBackupErrWrongPassphrase())).toBeInTheDocument()
     const again = document.querySelector('#backup-restore-passphrase') as HTMLInputElement
     await fireEvent.input(again, { target: { value: 'right passphrase' } })
     await fireEvent.submit(again.form!)
@@ -141,14 +144,14 @@ describe('monitor backup', () => {
     await vi.waitFor(() => expect(mocked.restoreMonitorBackup).toHaveBeenLastCalledWith(file.name, 'right passphrase', 'pw'))
     // The session is over; the sign-in screen says why.
     await vi.waitFor(() => expect(servers.list[0].token).toBeNull())
-    expect(servers.notices.local).toBe('The monitor is restarting. Sign in again with the password from the backup.')
+    expect(servers.notices.local).toBe(`${ll.monitorBackupRestoredRestarting()} ${ll.monitorBackupRestoredSignIn()}`)
   })
 
   it('words its notices in the reader language', () => {
     loadAllLocales()
     const zh = i18nObject('zh-CN')
     const n = { id: 1, created_at: '', level: 'warning' as const, source: 'backup', subject: 'Settings backup failed', body: '', read: false, kind: 'backup.failed', params: { error: 'keyMissing' } }
-    expect(noticeText(n, zh, 'zh-CN')).toEqual({ subject: '设置备份失败', body: '文件夹中没有这份备份的密钥，无法打开。' })
+    expect(noticeText(n, zh, 'zh-CN')).toEqual({ subject: zh.noticeMonitorBackupFailed(), body: zh.monitorBackupErrKeyMissing() })
     expect(noticeText({ ...n, kind: 'backup.back', params: {} }, i18nObject('en'), 'en').subject).toBe(en.noticeMonitorBackupBack)
   })
 })

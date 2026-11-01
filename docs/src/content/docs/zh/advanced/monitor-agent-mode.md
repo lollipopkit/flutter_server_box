@@ -3,10 +3,10 @@ title: Monitor Agent 模式
 description: 在 Monitor 面板中于服务器上运行 AI Agent，包括权限模式、MCP 服务器和技能
 ---
 
-Agent 模式是 Monitor 面板中的 AI Agent。它在运行 Monitor agent 的机器上，以 agent 运行所用的系统账户执行命令。
+Agent 模式是 Monitor 面板中的 AI Agent。它在运行 Monitor 的机器上，以 Monitor 运行所用的系统账户执行命令。
 
 Agent 模式是面板的功能。手机 App 的 [Agent](/docs/zh/advanced/agent/) 是另一项功能，
-有自己的设置。安装 Monitor agent 的方法见 [Monitor Agent](/docs/zh/advanced/monitor-agent/)。
+有自己的设置。安装 Monitor 的方法见 [Monitor](/docs/zh/advanced/monitor-agent/)。
 
 ## 设置
 
@@ -180,7 +180,7 @@ Agent 知道 Monitor 在服务器上部署了哪些 Web 应用。每个任务的
    - **请求头**：`Authorization`
    - **值**：`Bearer <token>`，其中 `<token>` 为第 2 步的访问令牌
 
-该地址使用回环地址，因此 Monitor agent 必须与 Home Assistant 运行在同一台机器上。
+该地址使用回环地址，因此 Monitor 必须与 Home Assistant 运行在同一台机器上。
 
 ## 技能
 
@@ -198,7 +198,7 @@ Agent 知道 Monitor 在服务器上部署了哪些 Web 应用。每个任务的
 每个技能都有 **启用** 开关和 **移除** 按钮。每个任务都会得知哪些技能已启用及其用途，任务匹配某个技能时
 会加载它。
 
-也可以将包含 `SKILL.md` 文件的文件夹放入 agent 数据目录下的 `skills` 文件夹。面板会将这些文件夹与已安装的技能一并列出。
+也可以将包含 `SKILL.md` 文件的文件夹放入 Monitor 数据目录下的 `skills` 文件夹。面板会将这些文件夹与已安装的技能一并列出。
 
 ## 搜索
 

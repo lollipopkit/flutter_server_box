@@ -4,11 +4,11 @@ description: Run an AI agent on a server from the Monitor panel, with permission
 ---
 
 Agent mode is an AI agent in the Monitor panel. It runs commands on the machine
-where the Monitor agent runs, as the system account the agent runs as.
+where the Monitor runs, as the system account the Monitor runs as.
 
 Agent mode is a feature of the panel. The mobile app's
 [Agent](/docs/advanced/agent/) is a separate feature with its own settings.
-To install the Monitor agent, see [Monitor Agent](/docs/advanced/monitor-agent/).
+To install the Monitor, see [Monitor](/docs/advanced/monitor-agent/).
 
 ## Settings
 
@@ -223,7 +223,7 @@ recorded in the audit log.
    - **Value**: `Bearer <token>`, where `<token>` is the access token from
      step 2
 
-The address uses loopback, so the Monitor agent must run on the same machine
+The address uses loopback, so the Monitor must run on the same machine
 as Home Assistant.
 
 ## Skills
@@ -246,7 +246,7 @@ which skills are on, and what they are for. A task loads a skill when the task
 matches it.
 
 You can also put a folder that contains a `SKILL.md` file in the `skills`
-folder of the agent's data directory. The panel lists these folders with the
+folder of the Monitor's data directory. The panel lists these folders with the
 installed skills.
 
 ## Search
@@ -260,7 +260,7 @@ a change returns a draft plan.
 
 You can turn on **Copy tasks for pi** under **Settings → Agent**. When it
 is on, each task is also saved as a session of pi's coding agent, in the
-session directory of the agent's account. Run `pi -r` in the agent's working
+session directory of the Monitor's account. Run `pi -r` in the agent's working
 folder to list the sessions. Deleting a task also deletes its copy.
 
 ## Privacy

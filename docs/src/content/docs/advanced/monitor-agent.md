@@ -43,7 +43,7 @@ When you finish, report:
 - what `loginctl show-user <user> -p Linger` says. Without linger a --user
   service stops when I log out.
 - the mode of config.toml and of the database. The config can hold push
-  credentials and the database holds the agent's password hash, so neither
+  credentials and the database holds the Monitor's password hash, so neither
   should be group- or world-readable.
 ```
 
@@ -124,7 +124,7 @@ changing anything.
   `insecure_transport` means it needs TLS or a loopback caller, or
   `[remote_access] allow_insecure`. The machine pages it serves are listed
   under `features`.
-- Signing in allows what the system account the agent runs as may do. A
+- Signing in allows what the system account the Monitor runs as may do. A
   command, file or port that account cannot reach fails.
 - SFTP is never available through the Monitor: it needs SSH configured for
   the same server in the app.
@@ -143,7 +143,7 @@ changing anything.
 | Requires additional software on the server | No | Yes |
 | Status and charts | Yes | Yes |
 | History from before the App connected | No | Yes |
-| Terminal, commands, and file browsing | Yes | Yes, as the account the agent runs as |
+| Terminal, commands, and file browsing | Yes | Yes, as the account the Monitor runs as |
 | SFTP transfers | Yes | No |
 | Port forwarding (local, dynamic, remote) and remote desktop | Yes | Yes |
 | Push alerts, home-screen widgets, and Watch app | No | Yes |
@@ -183,7 +183,7 @@ can run `./monitor/install.sh install` from a checkout root. That uses the
 checked-out script, which may differ from the version fetched from `main` by
 the commands above.
 
-The Monitor runs as an ordinary user by default. Whoever signs in may do what that user may do, so the account the agent runs as sets the limit; see [Access](#access). Adding `--system` (with `sudo`) installs it as root instead, and signing in then means a root shell.
+The Monitor runs as an ordinary user by default. Whoever signs in may do what that user may do, so the account the Monitor runs as sets the limit; see [Access](#access). Adding `--system` (with `sudo`) installs it as root instead, and signing in then means a root shell.
 
 The Monitor reads `config.toml` from the directory beside its binary. See
 [`config.example.toml`](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/config.example.toml)
@@ -218,7 +218,7 @@ certificate** for that server in the App.
 
 ### Upgrade
 
-Run this on the server as the account the agent was installed from:
+Run this on the server as the account the Monitor was installed from:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/install.sh | sh -s -- upgrade
@@ -228,39 +228,39 @@ It installs the newest `monitor-v*` release and keeps `config.toml` and the
 database. Without `--user` or `--system`, the installer finds the installed
 form itself: a `systemctl --user` unit, a system unit, or an OpenRC service.
 For the last two it runs itself again through `sudo`, which asks for the
-password. When it finds no installation, as for an agent in Docker, it changes
+password. When it finds no installation, as for a Monitor in Docker, it changes
 nothing; for Docker, pull the new image and recreate the container.
 
-The agent upgrades in place: the new files replace the old ones while it runs,
-and it restarts last. So the command can run in a terminal the agent itself
-opened; that terminal closes when the agent restarts, and the agent is back
+The Monitor upgrades in place: the new files replace the old ones while it runs,
+and it restarts last. So the command can run in a terminal the Monitor itself
+opened; that terminal closes when the Monitor restarts, and the Monitor is back
 within a few seconds.
 
 #### Update from the panel or the App
 
-The agent checks its releases every 12 hours and leaves a notification when a
+The Monitor checks its releases every 12 hours and leaves a notification when a
 newer one is out. It knows how it was installed: by `install.sh`, in a
 container, by the NixOS module, or otherwise. Only the first can update itself;
 the others are told how to update instead.
 
-The update runs apart from the agent: under systemd as a transient service of
-its own (`systemd-run`), elsewhere in a session of its own. The agent's restart
+The update runs apart from the Monitor: under systemd as a transient service of
+its own (`systemd-run`), elsewhere in a session of its own. The Monitor's restart
 ends every connection through it, the panel's and the App's included, but not
-the update. The output goes to `update.log` in the agent's directory, and the
-agent that comes back reports how it went. Under OpenRC the installer needs
-root, so the agent asks for the sudo password; it is used once and not saved.
+the update. The output goes to `update.log` in the Monitor's directory, and the
+Monitor that comes back reports how it went. Under OpenRC the installer needs
+root, so the Monitor asks for the sudo password; it is used once and not saved.
 
 - **Panel**: **Settings → Server → ServerBox Monitor** shows the version and
   the newest release, with **Check now** and **Update now**. While the update
-  runs, the page shows its output, says when the agent is restarting, and shows
+  runs, the page shows its output, says when the Monitor is restarting, and shows
   the new version when it is back. Clicking the notification opens this page.
-- **App**: the **Monitor** tab marks an agent with a newer release, and one too
+- **App**: the **Monitor** tab marks a Monitor with a newer release, and one too
   old for the App to sign in to. Tapping the mark opens the same steps with
-  **Update now**. An agent too old to sign in to with the password alone still
+  **Update now**. A Monitor too old to sign in to with the password alone still
   asks for an account name: the App asks for it (often `admin`), signs in once
   with it and the saved password, and starts the same update through that
-  agent's command endpoint. The name is not saved. When the App reaches the
-  server over SSH and the agent cannot start the update itself, the App runs the
+  Monitor's command endpoint. The name is not saved. When the App reaches the
+  server over SSH and the Monitor cannot start the update itself, the App runs the
   command in an SSH terminal, which the restart does not affect.
 
 ## How far back the App can ask
@@ -272,7 +272,7 @@ provide. For API fields and history-query behavior, see
 
 ## Panel credentials
 
-The agent has one account, signed in with its password alone; there is no
+The Monitor has one account, signed in with its password alone; there is no
 username. The password is stored in the Monitor's SQLite database, not in
 `config.toml`. The `jwt_secret` in that file signs session tokens; it is not a
 password.
@@ -379,33 +379,33 @@ App can reach the server only through capabilities that the Monitor exposes.
 
 ## The Monitor tab
 
-The App's **Monitor** tab shows every server added through the Monitor agent.
+The App's **Monitor** tab shows every server added through the Monitor.
 A fresh install does not put the tab in the bar: open it from **More**, or add
 it under **Settings › Application › Home Tabs**. On a wide window the sections
 and the servers are in a column on the left; on a phone the section is picked
 from the bar's title and the server from its server button.
 
-- **Overview**: each agent, whether it answers, its version (with the newest
+- **Overview**: each Monitor, whether it answers, its version (with the newest
   release when it is older), the [alert rules](#alert-rules) firing now with
   the reading and how long they have fired, and shortcuts to unread
   notifications and to web apps that are down or have an update.
 - **Web apps**: see [Monitor web apps](../monitor-apps/#open-apps-from-the-serverbox-app).
-- **Notifications**: what the agents reported, newest first, in the App's
+- **Notifications**: what the Monitors reported, newest first, in the App's
   language: a rule that started firing, a web app down, back or with an
   update, a disk, array or pool in trouble. Read state is shared with the panel.
 - **Audit log**: one server at a time. Sign-ins (accepted and refused, with the
   address), terminals, commands, file writes, machine management, deployments
   and the rest, filtered by type and result. It is shown only over a link the
-  agent lets act (HTTPS, loopback, or `allow_insecure`).
+  Monitor lets act (HTTPS, loopback, or `allow_insecure`).
 - **Sessions & devices**: one server at a time. Terminal sessions,
-  connections relayed through the agent (forwarded ports, desktops, consoles),
+  connections relayed through the Monitor (forwarded ports, desktops, consoles),
   watch and widget tokens, and the devices that signed in with the password.
   A session or connection can be ended and a token revoked. Forgetting a device
   makes its next sign-in count against the account-wide limit on failed
   attempts; it does not sign the device out, since a device that has the
   password signs in again. To keep a device out, change the password.
 
-An agent older than a section says so instead of showing it.
+A Monitor older than a section says so instead of showing it.
 
 ## Integrated GPU monitoring
 
@@ -429,7 +429,7 @@ show a distinct, stable entry for each device.
 
 ## Access
 
-Signing in to the Monitor allows what the operating-system account the agent
+Signing in to the Monitor allows what the operating-system account the Monitor
 runs as may do: commands, processes, systemd, containers, snippets, power,
 scheduled tasks, the firewall, the terminal, files, remote desktop, port
 forwarding, and the web panel's Proxmox VE, libvirt and BMC pages. There are
@@ -439,15 +439,15 @@ The installer therefore runs the Monitor as an ordinary user by default. With
 `--system` it runs as root, and signing in then means a root shell. To limit
 what the Monitor can reach, install it as an account that can reach only that.
 
-Whatever that account can reach, the file API never serves the agent's own
+Whatever that account can reach, the file API never serves the Monitor's own
 files — its database, `jwt.secret`, `credentials.key`, `config.toml` and its
 backups, `.env`, the TLS key and certificate, and the custom commands — since
 they hold credentials.
 
-The credentials the agent stores (BMC and Proxmox VE passwords, Agent mode
+The credentials the Monitor stores (BMC and Proxmox VE passwords, Agent mode
 provider keys, MCP tokens, the WebDAV password) are encrypted in the database
 with `credentials.key`, kept beside it. Copy the two together when moving the
-agent by hand; without the key, those credentials have to be entered again. A
+Monitor by hand; without the key, those credentials have to be entered again. A
 settings backup does not need the key.
 
 ### Upgrading from a Monitor with several accounts
@@ -523,12 +523,12 @@ fields. Every type is listed in
   SMTP and ntfy `password`, ntfy `token`, `bot_token`, `webhook_url`) may name
   an environment variable as `${NAME}`, alone or inside the value
   (`Authorization = "Bearer ${HA_TOKEN}"`); `$${` writes a literal `${`. It is
-  read when a notification is sent, from the agent's environment or its
+  read when a notification is sent, from the Monitor's environment or its
   `.env`; `config.toml` keeps the reference. A channel whose variable is unset
   or empty is refused on save and fails to send, naming the variable. Other
   settings are not expanded. A credential entered in the App or the web panel
   is taken as typed, never as a reference: signing in does not give access to
-  the agent's environment.
+  the Monitor's environment.
 - **Bark**: with `cipher_key` set, the notification is encrypted with AES-CBC
   (a 16, 24 or 32 character key for AES-128/192/256). Enter the same key and
   algorithm under Push Encryption in the Bark app. Only the device key and the
@@ -656,7 +656,7 @@ Rate limits apply to each notification channel. Configure `push_rate` in
 
 **A feature is missing or greyed out.** The App offers what the Monitor
 reports. Everything beyond reading the numbers needs HTTPS or a caller on the
-same host; see [Plaintext HTTP](#plaintext-http). An agent older than a
+same host; see [Plaintext HTTP](#plaintext-http). A Monitor older than a
 feature does not report it; update the Monitor. Restart the Monitor after editing
 `config.toml`.
 

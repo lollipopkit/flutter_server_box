@@ -1,4 +1,4 @@
-/// What the agent offers a desk app's backend (`docs/dev/desk-sys.md`).
+/// What the agent offers a desk app's backend (`docs/src/content/docs/development/desk-app-reference.md`).
 ///
 /// An app's own package names its service, as a gRPC service is named:
 ///
@@ -11,7 +11,7 @@
 /// the app's job (one at a time), their lines streamed to the frame, until
 /// they return or are cancelled. Every function returns `result<T, error>`.
 /// The frame names a function and passes its parameters as a JSON object;
-/// values cross as JSON (`docs/dev/desk-sys.md`, "Values").
+/// values cross as JSON (`docs/src/content/docs/development/desk-app-reference.md`, "The backend").
 ///
 /// Each call or job is a fresh instance: what lasts goes through `kv`.
 package sbm:app@0.1.0;

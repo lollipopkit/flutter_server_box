@@ -1,9 +1,12 @@
+import { get } from 'svelte/store'
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import DetailPanel from '../desk/apps/status/DetailPanel.svelte'
+import { LL } from '../i18n/i18n-svelte'
 import type { GpuMetrics, SystemMetrics } from '../types'
 
+const ll = get(LL)
 const gpu = (processes: GpuMetrics['processes']): GpuMetrics => ({
   id: 'nvidia:0',
   vendor: 'nvidia',
@@ -27,11 +30,11 @@ describe('the GPU detail', () => {
     })
     expect(screen.getByText('python3')).toBeInTheDocument()
     expect(screen.getByText('6144 MiB')).toBeInTheDocument()
-    expect(screen.getByText('Unnamed process')).toBeInTheDocument()
+    expect(screen.getByText(ll.gpuProcessUnnamed())).toBeInTheDocument()
   })
 
   it('says why none are listed while memory is in use', () => {
     render(DetailPanel, { kind: 'gpu', history: [], metrics: metrics(gpu([])) })
-    expect(screen.getByText(/The driver lists no process/)).toBeInTheDocument()
+    expect(screen.getByText(ll.gpuNoProcesses(), { exact: false })).toBeInTheDocument()
   })
 })

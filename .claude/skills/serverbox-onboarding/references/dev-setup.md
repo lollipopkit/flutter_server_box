@@ -1,7 +1,7 @@
 # Development setup
 
 For building and running ServerBox from source. Installing and using the app,
-and deploying the agent on a server, are the `serverbox-help` skill.
+and deploying the Monitor on a server, are the `serverbox-help` skill.
 
 `CONTRIBUTING.md` is the short authoritative version of this file, and
 `docs/src/content/docs/development/` (`building`, `codegen`, `testing`,
@@ -127,7 +127,7 @@ cd monitor/frontend && npm run dev
 
 - Config is `monitor/config.toml`, every key documented in
   `config.example.toml`; `cargo run -- config` prints the resolved values.
-- The panel is served by the agent itself when `frontend/dist` exists, so a
+- The panel is served by the Monitor itself when `frontend/dist` exists, so a
   production build is `npm run build` in `monitor/frontend`.
 - `npm run build` runs a `prebuild` that installs `packages/webui`'s own
   dependencies. `@serverbox/webui` is a `file:` dependency, so an ordinary
@@ -135,9 +135,10 @@ cd monitor/frontend && npm run dev
   under its `src/`. Run the npm script rather than calling vite directly.
 - sqlx verifies queries at compile time: set `DATABASE_URL`, or refresh the
   offline cache with `cargo sqlx prepare`.
-- `monitor/CLAUDE.md` holds that side's rules; `docs/dev/monitor-api.md` is
-  the detailed map of each endpoint and `docs/dev/monitor-permissions.md` the
-  access model.
+- `monitor/CLAUDE.md` holds that side's rules;
+  `docs/src/content/docs/development/monitor-agent.md` is the API and access
+  model, `docs/src/content/docs/development/desk-app-reference.md` the
+  contract with desk apps.
 
 ## Building releases
 

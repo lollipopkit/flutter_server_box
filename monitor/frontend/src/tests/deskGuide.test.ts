@@ -2,6 +2,7 @@
 /// state lives in `GuideFlow`; whether it is on screen at all is the
 /// account's (`DeskPrefs.needsGuide`, `/desk/onboarding`).
 
+import { get } from 'svelte/store'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
@@ -10,9 +11,12 @@ import GuideHarness from './fixtures/GuideHarness.svelte'
 import { Desk } from '../desk/deskState.svelte'
 import { DeskPrefs, defaults as defaultPreferences } from '../desk/prefs.svelte'
 import { GuideFlow } from '../desk/guide/flow.svelte'
+import { LL } from '../i18n/i18n-svelte'
 import type { DeskPreferences, SessionSave, StoredSession } from '../desk/deskApi'
 import { BrowserStorage, type DeskStorage } from '../desk/storage'
 import { servers } from '../lib/servers.svelte'
+
+const ll = get(LL)
 
 /// A storage that keeps what it is given, as the agent's does.
 class FakeStorage implements DeskStorage {
@@ -113,15 +117,15 @@ describe('the first-run guide', () => {
     const desk = new Desk({ id: 'a', url: 'https://box.example', token: 't' })
     render(GuideHarness, { desk, prefs })
 
-    expect(screen.getByRole('dialog')).toHaveTextContent('Welcome to the desk')
-    await fireEvent.click(screen.getByRole('button', { name: 'Next' }))
-    expect(screen.getByRole('dialog')).toHaveTextContent('Where the apps are')
-    await fireEvent.click(screen.getByRole('button', { name: 'Next' }))
-    expect(screen.getByRole('dialog')).toHaveTextContent('Recommended web apps')
+    expect(screen.getByRole('dialog')).toHaveTextContent(ll.deskGuideWelcomeTitle())
+    await fireEvent.click(screen.getByRole('button', { name: ll.deskGuideNext() }))
+    expect(screen.getByRole('dialog')).toHaveTextContent(ll.deskGuideAppsTitle())
+    await fireEvent.click(screen.getByRole('button', { name: ll.deskGuideNext() }))
+    expect(screen.getByRole('dialog')).toHaveTextContent(ll.deskGuideWebAppsTitle())
 
     // The last step has no Skip: Done ends it the same way.
-    expect(screen.queryByRole('button', { name: 'Skip' })).toBeNull()
-    await fireEvent.click(screen.getByRole('button', { name: 'Done' }))
+    expect(screen.queryByRole('button', { name: ll.deskGuideSkip() })).toBeNull()
+    await fireEvent.click(screen.getByRole('button', { name: ll.deskGuideDone() }))
     expect(prefs.needsGuide).toBe(false)
     expect(screen.queryByRole('dialog')).toBeNull()
   })

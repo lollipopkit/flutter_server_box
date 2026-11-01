@@ -1,4 +1,4 @@
-/// `sys`: everything an app may use of the desk (see `docs/dev/desk-sys.md`).
+/// `sys`: everything an app may use of the desk (see `docs/src/content/docs/development/desk-app-reference.md`).
 /// An app imports from here, from `lk` (the lollipopkit Design System) and
 /// from shared code outside `desk/`; never from the shell.
 

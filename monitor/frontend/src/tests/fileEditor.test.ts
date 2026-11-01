@@ -216,10 +216,10 @@ describe('the Files page moving around', () => {
     await fireEvent.dblClick(screen.getByText('sub'))
 
     // The folder is empty, so the listing says so rather than showing `sub`.
-    expect(await screen.findByText('Empty folder')).toBeInTheDocument()
+    expect(await screen.findByText(ll.filesEmptyState())).toBeInTheDocument()
     expect(mocks.fsList).toHaveBeenLastCalledWith(`${ROOT}/sub`)
 
-    await fireEvent.click(screen.getByRole('button', { name: 'Back' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.back() }))
 
     await vi.waitFor(() => expect(mocks.fsList).toHaveBeenLastCalledWith(ROOT))
     expect(await screen.findByText('sub')).toBeInTheDocument()
@@ -259,14 +259,14 @@ describe('the Files page moving around', () => {
     })
     render(Files)
     await fireEvent.dblClick(await screen.findByText('sub'))
-    await screen.findByText('Empty folder')
+    await screen.findByText(ll.filesEmptyState())
 
     fail = true
-    await fireEvent.click(screen.getByRole('button', { name: 'Back' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.back() }))
     expect(await screen.findByText('gone')).toBeInTheDocument()
     // Still able to go back: the failed step did not move the history.
-    expect(screen.getByRole('button', { name: 'Back' })).toBeEnabled()
-    expect(screen.getByRole('button', { name: 'Forward' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: ll.back() })).toBeEnabled()
+    expect(screen.getByRole('button', { name: ll.filesForward() })).toBeDisabled()
   })
 
   it('hides dot entries unless hidden files are shown', async () => {
@@ -274,7 +274,7 @@ describe('the Files page moving around', () => {
     render(Files)
     await screen.findByText('note.txt')
     expect(screen.queryByText('.bashrc')).toBeNull()
-    expect(screen.getByText(/^1 items/)).toBeInTheDocument()
+    expect(screen.getByText(ll.filesItems({ count: 1 }), { exact: false })).toBeInTheDocument()
   })
 
   it('switches between the list and the grid', async () => {
@@ -284,12 +284,12 @@ describe('the Files page moving around', () => {
 
     // The list carries a permissions column; the grid shows tiles instead.
     expect(screen.getByText('644')).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'List' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tab', { name: ll.filesViewList() })).toHaveAttribute('aria-selected', 'true')
 
-    await fireEvent.click(screen.getByRole('tab', { name: 'Grid' }))
+    await fireEvent.click(screen.getByRole('tab', { name: ll.filesViewGrid() }))
 
-    expect(screen.getByRole('tab', { name: 'Grid' })).toHaveAttribute('aria-selected', 'true')
-    expect(screen.getByRole('tab', { name: 'List' })).toHaveAttribute('aria-selected', 'false')
+    expect(screen.getByRole('tab', { name: ll.filesViewGrid() })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tab', { name: ll.filesViewList() })).toHaveAttribute('aria-selected', 'false')
     expect(screen.queryByText('644')).toBeNull()
     // Still the same folder, just laid out the other way.
     expect(screen.getByText('note.txt')).toBeInTheDocument()
@@ -301,11 +301,11 @@ describe('the Files page moving around', () => {
     // Select the row; its menu hangs off the status bar's button.
     await fireEvent.click(await screen.findByText('note.txt'))
 
-    await fireEvent.click(screen.getByRole('button', { name: 'More actions' }))
+    await fireEvent.click(screen.getByRole('button', { name: ll.filesMoreActions() }))
 
     // The same menu the context menu opens, actions and all.
-    expect(await screen.findByRole('menuitem', { name: 'Edit' })).toBeInTheDocument()
-    expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeInTheDocument()
+    expect(await screen.findByRole('menuitem', { name: ll.filesEdit() })).toBeInTheDocument()
+    expect(screen.getByRole('menuitem', { name: ll.filesDelete() })).toBeInTheDocument()
   })
 
   it('adds a folder to the desk from its menu', async () => {
@@ -313,7 +313,7 @@ describe('the Files page moving around', () => {
     render(Files)
     await screen.findByText('sub')
 
-    await chooseAction('sub', 'Add to desk')
+    await chooseAction('sub', ll.deskAddToDesk())
 
     expect(deskMocks.addPathIcon).toHaveBeenCalledWith(`${ROOT}/sub`, 'sub')
   })

@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-ServerBox Monitor: the agent (Rust, ntex, SQLite) that samples a machine, raises alerts, and serves the API and the Svelte panel. Part of the ServerBox monorepo (root `../CLAUDE.md`). **Per-endpoint behaviour: `docs/dev/monitor-api.md`**; access: `docs/dev/monitor-permissions.md`; the panel: `frontend/src/desk/CLAUDE.md`.
+ServerBox Monitor: the agent (Rust, ntex, SQLite) that samples a machine, raises alerts, and serves the API and the Svelte panel. Part of the ServerBox monorepo (root `../CLAUDE.md`). The API and access contract: `docs/src/content/docs/development/monitor-agent.md`; the panel: `frontend/src/desk/CLAUDE.md`.
 
 ## Commands
 

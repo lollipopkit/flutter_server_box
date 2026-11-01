@@ -342,29 +342,32 @@
     {/if}
     {#if blockRows.length}
       <Card>
-        <table class="w-full text-sm table-fixed">
+        <table class="status-table w-full table-fixed">
           <thead>
-            <tr class="border-b border-line">
-              <th class="py-2 pr-4 text-left font-medium text-muted-fg">{$LL.blockDevices()}</th>
-              <th class="py-2 text-right font-medium text-muted-fg w-24 sm:w-28"></th>
+            <tr class="border-b border-(--border-hairline)">
+              <th class="py-2 pr-4 text-left">{$LL.blockDevices()}</th>
+              <th class="w-24 py-2 text-right sm:w-28"></th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-line">
+          <tbody>
             {#each blockRows as { d, depth } (d.path || d.name)}
               <tr>
                 <td class="py-2 pr-4" style:padding-left={`${depth * 1.25}rem`}>
-                  <span class="block text-fg truncate" title={d.path}>
+                  <span class="block truncate" title={d.path}>
                     {d.name}{d.model ? ` · ${d.model}` : ''}
                   </span>
-                  <span class="block text-xs text-faint-fg truncate">
+                  <span class="block truncate text-[12px] text-(--text-tertiary)">
                     {[d.kind, d.tran, d.fs_type].filter(Boolean).join(' · ')}{d.mount ? ` · ${d.mount}` : d.in_use ? '' : ` · ${$LL.notMounted()}`}
                   </span>
                 </td>
-                <td class="py-2 text-right whitespace-nowrap text-muted-fg">{fmtBytes(d.size)}</td>
+                <td class="lk-num whitespace-nowrap py-[7px] text-right text-[12px] text-(--text-tertiary)">{fmtBytes(d.size)}</td>
               </tr>
             {/each}
           </tbody>
         </table>
+        <div class="status-table__status lk-num">
+          {$LL.blockDevices()} · {blockRows.length}
+        </div>
       </Card>
     {/if}
   {:else if kind === 'network'}

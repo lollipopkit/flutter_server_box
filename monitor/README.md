@@ -64,16 +64,16 @@ repository. Releases are cut by the `monitor-release.yml` workflow, which is
 with a locally built package, or [Docker](Dockerfile).
 
 A machine with no operating system to install it on can boot **sbOS**
-instead: each release carries images with the agent, its panel and Docker on
+instead: each release carries images with the Monitor, its panel and Docker on
 Alpine Linux (`sbOS_musl_*`) or Debian (`sbOS_GNU_*`), for x64 and arm64.
 Write one to a USB stick and boot it, or run `sbm-install` on it to put the
 system on a disk — see [`os/README.md`](os/README.md).
 
 `upgrade` without `--user` or `--system` finds the installed form itself and
 reruns through `sudo` for a system unit or OpenRC; with none installed it
-changes nothing. It replaces the files while the agent runs and restarts it
-last, so it can run in a terminal the agent opened (which then closes). The
-agent reads its releases itself (`GET /api/v1/update`, every 12 hours, with a
+changes nothing. It replaces the files while the Monitor runs and restarts it
+last, so it can run in a terminal the Monitor opened (which then closes). The
+Monitor reads its releases itself (`GET /api/v1/update`, every 12 hours, with a
 desk notification per newer version); the panel's Settings → Server and the
 App's Monitor tab offer the same command
 (`sbm_parser::monitor_agent::upgrade_command`) in a terminal.
@@ -85,7 +85,7 @@ comments explaining it, is in [`config.example.toml`](config.example.toml);
 
 ### Signing in
 
-The agent has one account, signed in with its password alone. It lives in the
+The Monitor has one account, signed in with its password alone. It lives in the
 SQLite database, not in `config.toml` — `jwt_secret` there signs tokens and is
 not a password. On the first start the Monitor sets a random password and writes
 it beside the database as `initial-admin-credentials.txt` (0600). Change it and
@@ -137,7 +137,7 @@ is the limit. That is why `install.sh` runs the Monitor as an ordinary account b
 default — a `systemctl --user` service under systemd, or an `/etc/init.d` script
 with `command_user` under OpenRC — and `--system` (root) makes signing in a root
 shell. The full API contract is
-[`docs/dev/monitor-permissions.md`](../docs/dev/monitor-permissions.md).
+[Monitor API and Access Model](https://serverbox.lollipopkit.com/docs/development/monitor-agent/).
 
 A terminal (the app's or the panel's) is that same shell on a PTY. Sessions
 survive a dropped connection for a few minutes, so a phone changing networks

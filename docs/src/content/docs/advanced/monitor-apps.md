@@ -3,9 +3,9 @@ title: Monitor Apps
 description: Install and manage Docker Compose apps through the Monitor panel
 ---
 
-The Monitor agent can deploy web apps with Docker Compose and show them in the
-panel's App Store and desk. An app runs on the server where the agent runs.
-Installing, changing, or removing an app asks for the agent's password again.
+The Monitor can deploy web apps with Docker Compose and show them in the
+panel's App Store and desk. An app runs on the server where the Monitor runs.
+Installing, changing, or removing an app asks for the Monitor's password again.
 Apps that run inside the panel
 itself, installed from `.fsba` packages, are [Desk Apps](/docs/advanced/monitor-desk-apps/).
 
@@ -17,8 +17,8 @@ what its Compose files do. Select **Install** and complete the app's settings.
 
 Before deployment, the confirmation lists the settings, images to pull, data
 folders, and ports. Review these along with the project metadata and licence.
-The agent asks for your password; acknowledge that this is third-party software
-and accept the licence when the app requires it. The agent then downloads the
+The Monitor asks for your password; acknowledge that this is third-party software
+and accept the licence when the app requires it. The Monitor then downloads the
 images and deploys the Compose project. The page shows the job's progress.
 
 Some apps build an image on the server from a Dockerfile in the app's package,
@@ -34,20 +34,20 @@ data folder is not moved to a newly selected folder.
 
 ### Ports
 
-The agent checks every configured port against other containers and the
+The Monitor checks every configured port against other containers and the
 app's own running containers. For a suggested port, it chooses another free
 port if the suggestion became occupied before deployment. A port you chose
 explicitly is refused if it is occupied. Starting, restarting, updating, or
 saving settings does not silently change a chosen port.
 
-Port checks are partial when the agent cannot see the host's network namespace,
-such as when the agent runs in a container, and for Windows host ports when the agent runs under WSL.
+Port checks are partial when the Monitor cannot see the host's network namespace,
+such as when the Monitor runs in a container, and for Windows host ports when the Monitor runs under WSL.
 Check host port availability yourself in those setups. The app page reports
-when the agent's port check is partial.
+when the Monitor's port check is partial.
 
 ## App health and updates
 
-The agent checks installed apps about once a minute. It reports apps as healthy,
+The Monitor checks installed apps about once a minute. It reports apps as healthy,
 starting, unhealthy, down, or stopped. While an app job is running, health is
 not checked. A desk notification is sent when an app goes down or becomes
 unhealthy, when it recovers, and when a newer catalog version is available.
@@ -60,7 +60,7 @@ now, choose **Check for new apps and versions** in the App Store.
 
 ### Remove an app
 
-Choose **Remove** on the app page or from its window. By default, the agent
+Choose **Remove** on the app page or from its window. By default, the Monitor
 removes the app's containers but keeps its data so a later installation can
 reuse it. Choose the option to remove data only when you no longer need it;
 data paths are deleted and cannot be recovered. Removing an app takes it out
@@ -71,10 +71,10 @@ of **All Apps**.
 The catalog combines three sources. When two sources contain the same app id,
 the first source in this list takes precedence:
 
-1. The folder configured by `[stacks] local_apps`, read when the agent starts.
-2. App repositories, refreshed at agent startup and hourly. Use **Check for new
+1. The folder configured by `[stacks] local_apps`, read when the Monitor starts.
+2. App repositories, refreshed at Monitor startup and hourly. Use **Check for new
    apps and versions** to refresh manually.
-3. Apps shipped with the agent.
+3. Apps shipped with the Monitor.
 
 For example, create `/srv/sbm-apps/example.web/` with a `manifest.toml` and its
 Compose files, then configure:
@@ -84,15 +84,15 @@ Compose files, then configure:
 local_apps = "/srv/sbm-apps"
 ```
 
-Restart the agent after adding or changing a local app. Local app packages are
-read from the configured folder; the agent does not copy them into the catalog.
+Restart the Monitor after adding or changing a local app. Local app packages are
+read from the configured folder; the Monitor does not copy them into the catalog.
 
 ## Shared folder and first sign-in
 
 Apps that download, play or serve files use one shared folder, so a
 downloader's files show up in a media server's library. Its subfolders are
 `downloads`, `media/movies`, `media/tv`, `music`, `books`, `comics` and
-`documents`. By default it is `shared/` next to the agent's database; set
+`documents`. By default it is `shared/` next to the Monitor's database; set
 another location with:
 
 ```toml
@@ -104,15 +104,15 @@ Apps run as the owner of that folder, so change its owner to choose which
 user's files they create. Removing an app never deletes anything in the shared
 folder.
 
-When an app has an administrator account, the agent creates it with a
+When an app has an administrator account, the Monitor creates it with a
 generated password where the app allows that. You can see the account and,
-after entering the agent's password again, the generated password under
+after entering the Monitor's password again, the generated password under
 **Sign-in** on the app's page.
 
 ## Open apps from the ServerBox app
 
 The **Web apps** section of the app's [Monitor tab](../monitor-agent/#the-monitor-tab)
-lists the apps deployed on every server added through the Monitor agent,
+lists the apps deployed on every server added through the Monitor,
 grouped by server, with their health. An app with a newer version in the
 catalog comes first, and the update button in the bar shows only those. A
 server's own page also has a **Web apps** card with that server's apps.
@@ -120,13 +120,13 @@ server's own page also has a **Web apps** card with that server's apps.
 Tap an app to open it, or its info button for its page (health, description,
 version, homepage, and the **Open** button).
 
-Tap an app to open it in the device's browser: the app asks the agent for a
-single-use ticket and the browser enters the app through the agent's proxy,
+Tap an app to open it in the device's browser: the app asks the Monitor for a
+single-use ticket and the browser enters the app through the Monitor's proxy,
 as a panel window does. From then on the browser talks to the proxy with a
 session of its own, so the ServerBox app may go to the background or be
 closed. Deploying, updating and removing apps stay in the panel.
 
-The browser checks the agent's TLS certificate itself: the app's **Ignore
+The browser checks the Monitor's TLS certificate itself: the app's **Ignore
 certificate** setting does not apply to it, so a self-signed certificate shows
 the browser's warning. The proxy ports (or the apps host below) must be
 reachable from the device.
@@ -134,8 +134,8 @@ reachable from the device.
 ## App windows and reverse proxies
 
 By default, each deployed app has its own proxy port in the range 3780–3799 on
-the agent's host. The panel enters the app through that proxy. These ports need
-to be reachable by the browser; if the agent is behind a reverse proxy or
+the Monitor's host. The panel enters the app through that proxy. These ports need
+to be reachable by the browser; if the Monitor is behind a reverse proxy or
 Cloudflare Tunnel, configure the apps host listener instead:
 
 ```toml
@@ -193,28 +193,28 @@ If the panel is hosted on Cloudflare Pages, give it a custom domain on the
 same site as the apps, for example `panel.example.com` alongside
 `*.apps.example.com`. Safari blocks the apps' login cookies when the panel is
 opened on `*.pages.dev`; other browsers retain them using partitioned cookies.
-If you run multiple agents, give each agent its own wildcard domain and
+If you run multiple Monitors, give each Monitor its own wildcard domain and
 certificate.
 
 ## Container backups
 
 Open **Containers → Backups**, select a container, and choose **Back Up**. You
 can back up one container or its whole Compose project. The archive contains
-its volumes and bound folders. The agent skips bound system folders (for
+its volumes and bound folders. The Monitor skips bound system folders (for
 example `/` and `/etc`) and bound files; the panel lists skipped mounts. You can
-ask the agent to stop the containers while archiving, which helps avoid copying
-a database while it is being written. The agent starts the containers again
+ask the Monitor to stop the containers while archiving, which helps avoid copying
+a database while it is being written. The Monitor starts the containers again
 after archiving, including when the archive job fails.
 
-To restore, select a backup and choose **Restore**. The agent stops the
+To restore, select a backup and choose **Restore**. The Monitor stops the
 containers still present in the project, clears each restored mount, and
 unpacks the archived data there. Restore and delete ask for your password.
 
-By default backups are kept on the agent host under the database directory at
+By default backups are kept on the Monitor host under the database directory at
 `container-backups/<backup-id>/`, with metadata in `meta.json`. To keep them on
 a separate disk, mount it in **Storage** with **Let ServerBox write here**, then
 choose **Where backups go → Change** in **Containers → Backups** and pick a
-folder on it. The agent writes into `serverbox-container-backups/` there.
+folder on it. The Monitor writes into `serverbox-container-backups/` there.
 Backups already made stay where they are.
 
 **Backups kept of each** sets how many backups of each container or project are
@@ -250,7 +250,7 @@ you can:
   the last self-test), see every attribute and self-test in **Details**, and
   start a short or long self-test on a disk that has SMART.
 
-Every change asks for the sudo password of the agent's account and runs as
+Every change asks for the sudo password of the Monitor's account and runs as
 root. A disk or partition that is mounted, used as swap, or a member of an
 array or pool is never partitioned, formatted or built on, nor is a firmware partition (EFI system, BIOS boot). What the system is mounted from (`/`, `/boot`, `/boot/efi`) is never unmounted. Partitioning,
 formatting and building an array or pool erase what is on the disks; the
@@ -266,7 +266,7 @@ Under **Maintenance**, three tasks can run weekly or monthly: scrubbing every
 ZFS pool and checking every RAID array, a short SMART test and a long SMART
 test on every disk that has SMART. **Run now** starts one at once.
 
-The schedule runs without a password. If the agent does not run as root, sudo
+The schedule runs without a password. If the Monitor does not run as root, sudo
 must allow its account these commands without one; the page shows the line,
 for example in `/etc/sudoers.d/serverbox-storage`:
 
@@ -274,7 +274,7 @@ for example in `/etc/sudoers.d/serverbox-storage`:
 serverbox ALL=(root) NOPASSWD: /usr/sbin/smartctl, /usr/sbin/zpool scrub *, /usr/sbin/mdadm --action=check *
 ```
 
-The agent also watches the storage: every five minutes the arrays and pools,
+The Monitor also watches the storage: every five minutes the arrays and pools,
 and every hour each disk's SMART (with the same sudo rule, or from the last
 reading made on the page). A degraded array, a pool that is not online, a disk
 whose SMART check or self-test failed, or a disk with more bad sectors than

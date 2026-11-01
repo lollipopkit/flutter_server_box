@@ -1,12 +1,14 @@
 /// A window closed while its app waits on the agent leaves nothing running:
 /// no poll started by the late answer, no console socket kept open.
 
+import { get } from 'svelte/store'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import Bmc from '../desk/apps/bmc/BmcApp.svelte'
 import Benchmark from '../desk/apps/benchmark/BenchmarkApp.svelte'
 import VirtConsole from '../desk/apps/virt/VirtConsole.svelte'
+import { LL } from '../i18n/i18n-svelte'
 import { api } from '../lib/api'
 import { openConsoleSocket } from '../lib/virtConsole'
 import type { BenchView, BmcList, VirtConsoleAnswer, VirtGuest } from '../types'
@@ -25,6 +27,7 @@ vi.mock('../lib/virtConsole', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../lib/virtConsole')>()),
   openConsoleSocket: vi.fn(),
 }))
+const ll = get(LL)
 const mocked = vi.mocked(api)
 
 /// A promise the test settles.
@@ -74,7 +77,7 @@ describe('a window closed mid-request', () => {
     vi.mocked(openConsoleSocket).mockResolvedValue(socket)
     const guest = { id: 'g1', name: 'vm' } as VirtGuest
     const { unmount } = render(VirtConsole, { guest, kind: 'text', sudoPassword: null })
-    await fireEvent.click(screen.getByRole('button', { name: /open/i }))
+    await fireEvent.click(screen.getByRole('button', { name: (n) => n.includes(ll.virtConsoleOpen()) }))
     unmount()
     answer.settle({ ticket: 't', password_known: true } as VirtConsoleAnswer)
     await vi.advanceTimersByTimeAsync(1_000)

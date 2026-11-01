@@ -2251,8 +2251,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get thisDevice => '本机';
 
   @override
-  String get localServerTip =>
-      '直接在本机运行状态脚本读取本机信息，不使用 SSH 和 Monitor 代理，二者的设置会保留。';
+  String get localServerTip => '直接在本机运行状态脚本读取本机信息，不使用 SSH 和 Monitor，二者的设置会保留。';
 
   @override
   String get localServerUnsupported =>
@@ -2594,7 +2593,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get monitorNoRemoteAccess =>
-      '此 Monitor 目前只能查看监控数据，不能打开终端、执行命令或浏览文件。要开启这些功能，请修改 Monitor 的 config.toml，在 [remote_access] 下打开对应选项。';
+      '此 Monitor 拒绝通过明文 HTTP 执行监控以外的操作。请改用 HTTPS 连接，或在 Monitor（[remote_access] allow_insecure）和本 App 中同时允许 HTTP。';
 
   @override
   String get monitorAgentTooOld =>
@@ -2887,7 +2886,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get monitorRelayForbidden =>
-      '此 Monitor 账户不允许连接到该地址。其角色的 connect 权限必须允许该地址。';
+      'Monitor 拒绝了这个连接：它的密码已更改，或它不接受通过明文 HTTP 的操作。请重新登录，或改用 HTTPS 连接。';
 
   @override
   String get remoteDesktopCertificateChanged => '远程桌面证书已更改';
@@ -3145,8 +3144,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtErrCertChanged => '宿主机的证书已更改';
 
   @override
-  String get virtErrRelayNotGranted =>
-      'Monitor 不允许此账户从服务器发起 TCP 连接（connect 权限）';
+  String get virtErrRelayNotGranted => 'Monitor 不会通过这条连接从服务器发起 TCP 连接';
 
   @override
   String get virtErrExecNotGranted => 'Monitor 不执行命令';
@@ -6438,7 +6436,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get storageTaskSmartLong => 'SMART 完整自检';
 
   @override
-  String get storageNeedsSudo => 'sudo 要求输入密码：请以 root 运行 agent，或按上方说明允许这些命令。';
+  String get storageNeedsSudo => 'sudo 要求输入密码：请以 root 运行 Monitor，或按上方说明允许这些命令。';
 
   @override
   String get monitorTab => 'Monitor';
@@ -6456,13 +6454,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get monitorLive => '会话与设备';
 
   @override
-  String get monitorNoAgents => '还没有通过 Monitor agent 连接的服务器。';
+  String get monitorNoAgents => '还没有通过 Monitor 连接的服务器。';
 
   @override
-  String get monitorNotOffered => '此 agent 版本不提供该功能，请更新 agent。';
+  String get monitorNotOffered => '此 Monitor 版本不提供该功能，请更新 Monitor。';
 
   @override
-  String get monitorAlertsNotOffered => '此 agent 版本不报告告警。';
+  String get monitorAlertsNotOffered => '此 Monitor 版本不报告告警。';
 
   @override
   String get monitorAlertsNone => '没有正在触发的规则。';
@@ -6474,7 +6472,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String monitorAgentVersion(String version) {
-    return 'Agent $version';
+    return 'Monitor $version';
   }
 
   @override
@@ -6600,7 +6598,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String monitorAgentsCount(int count) {
-    return '$count 个 agent';
+    return '$count 个 Monitor';
   }
 
   @override
@@ -6631,26 +6629,26 @@ class AppLocalizationsZh extends AppLocalizations {
   String get monitorLiveNoDevices => '没有登录过的设备。';
 
   @override
-  String get monitorUpdateAgent => '更新 agent';
+  String get monitorUpdateAgent => '更新 Monitor';
 
   @override
   String get monitorAgentTooOldTip => '更新步骤见 Monitor 标签页。';
 
   @override
   String get monitorAgentTooOldBody =>
-      '此 agent 来自只用一个密码之前的版本，本 App 无法登录。更新后，它的密码是原先最早的管理员账户的密码。';
+      '此 Monitor 来自只用一个密码之前的版本，本 App 无法登录。更新后，它的密码是原先最早的管理员账户的密码。';
 
   @override
   String monitorAgentOutdatedBody(String latest, String running) {
-    return '已发布 $latest，此 agent 运行的是 $running。';
+    return '已发布 $latest，此 Monitor 运行的是 $running。';
   }
 
   @override
-  String get monitorUpdateRunHint => '在服务器上，以安装 agent 时所用的账户运行：';
+  String get monitorUpdateRunHint => '在服务器上，以安装 Monitor 时所用的账户运行：';
 
   @override
   String get monitorUpdateSshHint =>
-      '终端会运行它。系统级安装的 agent 通过 SSH 终端更新时，sudo 会在终端里要求输入密码。';
+      '终端会运行它。系统级安装的 Monitor 通过 SSH 终端更新时，sudo 会在终端里要求输入密码。';
 
   @override
   String get monitorUpdateNoSsh => 'App 无法在此服务器上打开终端，请自行在服务器上运行。';
@@ -6659,7 +6657,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get monitorUpdateDocker => '用 Docker 运行？请拉取新镜像并重建容器。';
 
   @override
-  String get monitorUpdateAfter => 'agent 重启后，刷新 Monitor 标签页。';
+  String get monitorUpdateAfter => 'Monitor 重启后，刷新 Monitor 标签页。';
 
   @override
   String get monitorUpdateInTerminal => '在终端中运行';
@@ -6671,14 +6669,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get monitorUpdateNix => '通过 NixOS 模块安装：请在系统配置中更新并重新 rebuild。';
 
   @override
-  String get noticeAgentUpdate => 'Agent 有可用更新';
+  String get noticeAgentUpdate => 'Monitor 有可用更新';
 
   @override
   String get monitorUpdateLegacyUser => '账户名';
 
   @override
   String get monitorUpdateLegacyHint =>
-      '这个 agent 仍需账户名和密码登录：填写 App 之前使用的账户名（通常是 admin），密码使用已保存的密码。';
+      '这个 Monitor 仍需账户名和密码登录：填写 App 之前使用的账户名（通常是 admin），密码使用已保存的密码。';
 
   @override
   String get monitorUpdateNow => '立即更新';
@@ -6687,11 +6685,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get monitorUpdating => '正在更新…';
 
   @override
-  String get monitorUpdateRestarting => 'agent 正在重启，连接几秒后恢复…';
+  String get monitorUpdateRestarting => 'Monitor 正在重启，连接几秒后恢复…';
 
   @override
   String monitorUpdateDone(String version) {
-    return '已更新：agent 现在运行 $version。';
+    return '已更新：Monitor 现在运行 $version。';
   }
 
   @override
@@ -6699,7 +6697,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get monitorUpdateAgentHint =>
-      'agent 会在自身进程之外运行安装脚本，因此重启不会中断更新。重启期间到 agent 的连接会断开几秒，此窗口会跨越重启继续跟踪进度。';
+      'Monitor 会在自身进程之外运行安装脚本，因此重启不会中断更新。重启期间到 Monitor 的连接会断开几秒，此窗口会跨越重启继续跟踪进度。';
 
   @override
   String get monitorUpdateSudoPassword => 'sudo 密码';
@@ -6711,7 +6709,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get monitorUpdateSudoRefused => 'sudo 不接受这个密码。';
 
   @override
-  String get monitorUpdateNoAnswer => 'agent 没有恢复，请到服务器上检查。';
+  String get monitorUpdateNoAnswer => 'Monitor 没有恢复，请到服务器上检查。';
 
   @override
   String get keyArrowDown => '下箭头';
@@ -9109,8 +9107,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get thisDevice => '本機';
 
   @override
-  String get localServerTip =>
-      '直接在本機執行狀態腳本讀取本機資訊，不使用 SSH 和 Monitor 代理，兩者的設定會保留。';
+  String get localServerTip => '直接在本機執行狀態腳本讀取本機資訊，不使用 SSH 和 Monitor，兩者的設定會保留。';
 
   @override
   String get localServerUnsupported =>
@@ -9452,7 +9449,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get monitorNoRemoteAccess =>
-      '此 Monitor 目前只能查看監控資料，不能開啟終端、執行命令或瀏覽檔案。若要開啟這些功能，請修改 Monitor 的 config.toml，在 [remote_access] 下開啟對應選項。';
+      '此 Monitor 拒絕透過明文 HTTP 執行監控以外的操作。請改用 HTTPS 連線，或在 Monitor（[remote_access] allow_insecure）和本 App 中同時允許 HTTP。';
 
   @override
   String get monitorAgentTooOld =>
@@ -9745,7 +9742,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get monitorRelayForbidden =>
-      '此 Monitor 帳戶不允許連線到該位址。其角色的 connect 權限必須允許該位址。';
+      'Monitor 拒絕了這個連線：它的密碼已變更，或它不接受透過明文 HTTP 的操作。請重新登入，或改用 HTTPS 連線。';
 
   @override
   String get remoteDesktopCertificateChanged => '遠端桌面憑證已變更';
@@ -10002,8 +9999,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtErrCertChanged => '主機的憑證已變更';
 
   @override
-  String get virtErrRelayNotGranted =>
-      'Monitor 不允許此帳戶從伺服器發起 TCP 連線（connect 權限）';
+  String get virtErrRelayNotGranted => 'Monitor 不會透過這條連線從伺服器發起 TCP 連線';
 
   @override
   String get virtErrExecNotGranted => 'Monitor 不執行命令';
@@ -13301,7 +13297,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get storageTaskSmartLong => 'SMART 完整自我檢測';
 
   @override
-  String get storageNeedsSudo => 'sudo 要求輸入密碼：請以 root 執行 agent，或按上方說明允許這些命令。';
+  String get storageNeedsSudo => 'sudo 要求輸入密碼：請以 root 執行 Monitor，或按上方說明允許這些命令。';
 
   @override
   String get monitorTab => 'Monitor';
@@ -13319,13 +13315,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get monitorLive => '工作階段與裝置';
 
   @override
-  String get monitorNoAgents => '尚無透過 Monitor agent 連線的伺服器。';
+  String get monitorNoAgents => '還沒有透過 Monitor 連線的伺服器。';
 
   @override
-  String get monitorNotOffered => '此 agent 版本不提供此功能，請更新 agent。';
+  String get monitorNotOffered => '此 Monitor 版本不提供此功能，請更新 Monitor。';
 
   @override
-  String get monitorAlertsNotOffered => '此 agent 版本不回報警示。';
+  String get monitorAlertsNotOffered => '此 Monitor 版本不回報告警。';
 
   @override
   String get monitorAlertsNone => '沒有正在觸發的規則。';
@@ -13337,7 +13333,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String monitorAgentVersion(String version) {
-    return 'Agent $version';
+    return 'Monitor $version';
   }
 
   @override
@@ -13463,7 +13459,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String monitorAgentsCount(int count) {
-    return '$count 個 agent';
+    return '$count 個 Monitor';
   }
 
   @override
@@ -13494,26 +13490,26 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get monitorLiveNoDevices => '沒有登入過的裝置。';
 
   @override
-  String get monitorUpdateAgent => '更新 agent';
+  String get monitorUpdateAgent => '更新 Monitor';
 
   @override
   String get monitorAgentTooOldTip => '更新步驟見 Monitor 分頁。';
 
   @override
   String get monitorAgentTooOldBody =>
-      '此 agent 來自只用一個密碼之前的版本，本 App 無法登入。更新後，它的密碼是原先最早的管理員帳戶的密碼。';
+      '此 Monitor 來自只用一個密碼之前的版本，本 App 無法登入。更新後，它的密碼是原先最早的管理員帳戶的密碼。';
 
   @override
   String monitorAgentOutdatedBody(String latest, String running) {
-    return '已發布 $latest，此 agent 執行的是 $running。';
+    return '已發布 $latest，此 Monitor 執行的是 $running。';
   }
 
   @override
-  String get monitorUpdateRunHint => '在伺服器上，以安裝 agent 時所用的帳戶執行：';
+  String get monitorUpdateRunHint => '在伺服器上，以安裝 Monitor 時所用的帳戶執行：';
 
   @override
   String get monitorUpdateSshHint =>
-      '終端機會執行它。系統層級安裝的 agent 透過 SSH 終端機更新時，sudo 會在終端機裡要求輸入密碼。';
+      '終端機會執行它。系統層級安裝的 Monitor 透過 SSH 終端機更新時，sudo 會在終端機裡要求輸入密碼。';
 
   @override
   String get monitorUpdateNoSsh => 'App 無法在此伺服器上開啟終端機，請自行在伺服器上執行。';
@@ -13522,7 +13518,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get monitorUpdateDocker => '用 Docker 執行？請拉取新映像並重建容器。';
 
   @override
-  String get monitorUpdateAfter => 'agent 重新啟動後，重新整理 Monitor 分頁。';
+  String get monitorUpdateAfter => 'Monitor 重新啟動後，重新整理 Monitor 分頁。';
 
   @override
   String get monitorUpdateInTerminal => '在終端機中執行';
@@ -13534,14 +13530,14 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get monitorUpdateNix => '透過 NixOS 模組安裝：請在系統設定中更新並重新 rebuild。';
 
   @override
-  String get noticeAgentUpdate => 'Agent 有可用更新';
+  String get noticeAgentUpdate => 'Monitor 有可用更新';
 
   @override
   String get monitorUpdateLegacyUser => '帳戶名稱';
 
   @override
   String get monitorUpdateLegacyHint =>
-      '這個 agent 仍需帳戶名稱和密碼登入：填寫 App 之前使用的帳戶名稱（通常是 admin），密碼使用已儲存的密碼。';
+      '這個 Monitor 仍需帳戶名稱和密碼登入：填寫 App 之前使用的帳戶名稱（通常是 admin），密碼使用已儲存的密碼。';
 
   @override
   String get monitorUpdateNow => '立即更新';
@@ -13550,11 +13546,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get monitorUpdating => '正在更新…';
 
   @override
-  String get monitorUpdateRestarting => 'agent 正在重新啟動，連線幾秒後恢復…';
+  String get monitorUpdateRestarting => 'Monitor 正在重新啟動，連線幾秒後恢復…';
 
   @override
   String monitorUpdateDone(String version) {
-    return '已更新：agent 現在執行 $version。';
+    return '已更新：Monitor 現在執行 $version。';
   }
 
   @override
@@ -13562,7 +13558,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get monitorUpdateAgentHint =>
-      'agent 會在自身程序之外執行安裝腳本，因此重新啟動不會中斷更新。重新啟動期間到 agent 的連線會中斷幾秒，此視窗會跨越重新啟動繼續追蹤進度。';
+      'Monitor 會在自身行程之外執行安裝腳本，因此重新啟動不會中斷更新。重新啟動期間到 Monitor 的連線會中斷幾秒，此視窗會跨越重新啟動繼續追蹤進度。';
 
   @override
   String get monitorUpdateSudoPassword => 'sudo 密碼';
@@ -13574,7 +13570,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get monitorUpdateSudoRefused => 'sudo 不接受這個密碼。';
 
   @override
-  String get monitorUpdateNoAnswer => 'agent 沒有恢復，請到伺服器上檢查。';
+  String get monitorUpdateNoAnswer => 'Monitor 沒有恢復，請到伺服器上檢查。';
 
   @override
   String get keyArrowDown => '下箭頭';

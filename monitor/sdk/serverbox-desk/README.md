@@ -3,7 +3,7 @@
 The client an installed desk app uses, from inside its sandboxed frame, to
 reach the ServerBox monitor's desk. The design, the permissions and the
 message protocol: [Developing Desk Apps](https://serverbox.lollipopkit.com/docs/development/desk-apps/)
-and [`docs/dev/desk-sys.md`](https://github.com/lollipopkit/flutter_server_box/blob/main/docs/dev/desk-sys.md).
+and the [Desk App Reference](https://serverbox.lollipopkit.com/docs/development/desk-app-reference/).
 A starting point: [`monitor/sdk/template`](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor/sdk/template).
 
 ```sh
@@ -31,7 +31,7 @@ await desk.job('reindex', {}, { sudo: { title: 'Reindex', body: 'Reads every fol
 Once `connect()` resolves, the page is in the desk's design system: the desk
 serves its stylesheet (`/desk-app/desk.css`) and keeps the page in its mode
 and theme, so the app writes markup with its classes and tokens and carries
-none of it ([`docs/dev/desk-sys.md`, "UI"](https://github.com/lollipopkit/flutter_server_box/blob/main/docs/dev/desk-sys.md#ui-third-party-apps)):
+none of it ([Desk App Reference, "UI"](https://serverbox.lollipopkit.com/docs/development/desk-app-reference/#ui)):
 
 ```html
 <body>
