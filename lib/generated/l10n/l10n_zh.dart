@@ -184,6 +184,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get backupPassword => '备份密码';
 
   @override
+  String get backupPasswordRemoveSynced =>
+      '这会从使用同一 iCloud 钥匙串的所有设备上移除备份密码。重新设置密码之前，这些设备的同步会停止。';
+
+  @override
   String get backupPasswordRemoved => '备份密码已移除';
 
   @override
@@ -6936,6 +6940,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get backupPassword => '備份密碼';
+
+  @override
+  String get backupPasswordRemoveSynced =>
+      '這會從使用同一 iCloud 鑰匙圈的所有裝置上移除備份密碼。重新設定密碼之前，這些裝置的同步會停止。';
 
   @override
   String get backupPasswordRemoved => '備份密碼已移除';

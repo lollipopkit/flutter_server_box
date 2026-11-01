@@ -185,6 +185,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get backupPassword => 'バックアップパスワード';
 
   @override
+  String get backupPasswordRemoveSynced =>
+      '同じ iCloud キーチェーンを使用しているすべてのデバイスからバックアップパスワードが削除されます。パスワードを再設定するまで、それらのデバイスの同期は停止します。';
+
+  @override
   String get backupPasswordRemoved => 'バックアップパスワードが削除されました';
 
   @override

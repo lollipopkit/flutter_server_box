@@ -198,6 +198,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get backupPassword => 'Contraseña de respaldo';
 
   @override
+  String get backupPasswordRemoveSynced =>
+      'Esto elimina la contraseña de respaldo de todos los dispositivos que usan el mismo Llavero de iCloud. Su sincronización se detiene hasta que se vuelva a establecer una contraseña.';
+
+  @override
   String get backupPasswordRemoved => 'Contraseña de respaldo eliminada';
 
   @override

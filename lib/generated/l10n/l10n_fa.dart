@@ -195,6 +195,10 @@ class AppLocalizationsFa extends AppLocalizations {
   String get backupPassword => 'گذرواژه پشتیبان‌گیری';
 
   @override
+  String get backupPasswordRemoveSynced =>
+      'این کار گذرواژه پشتیبان‌گیری را از همه دستگاه‌هایی که از همان جاکلیدی iCloud استفاده می‌کنند حذف می‌کند. همگام‌سازی آن‌ها تا تنظیم دوباره گذرواژه متوقف می‌شود.';
+
+  @override
   String get backupPasswordRemoved => 'گذرواژه پشتیبان‌گیری حذف شد';
 
   @override

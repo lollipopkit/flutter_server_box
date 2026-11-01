@@ -27,6 +27,7 @@
   "backupEncrypted": "Backup ist verschlüsselt",
   "backupNotEncrypted": "Backup ist nicht verschlüsselt",
   "backupPassword": "Backup-Passwort",
+  "backupPasswordRemoveSynced": "Dadurch wird das Backup-Passwort von allen Geräten entfernt, die denselben iCloud-Schlüsselbund verwenden. Ihre Synchronisierung stoppt, bis wieder ein Passwort gesetzt wird.",
   "backupPasswordRemoved": "Backup-Passwort entfernt",
   "backupPasswordSet": "Backup-Passwort gesetzt",
   "backupPasswordTip": "Setzen Sie ein Passwort, um Backup-Dateien zu verschlüsseln. Leer lassen, um Verschlüsselung zu deaktivieren.",

@@ -27,6 +27,7 @@
   "backupEncrypted": "La sauvegarde est chiffrée",
   "backupNotEncrypted": "La sauvegarde n'est pas chiffrée",
   "backupPassword": "Mot de passe de sauvegarde",
+  "backupPasswordRemoveSynced": "Cela supprime le mot de passe de sauvegarde de tous les appareils utilisant le même trousseau iCloud. Leur synchronisation s'arrête jusqu'à ce qu'un mot de passe soit de nouveau défini.",
   "backupPasswordRemoved": "Mot de passe de sauvegarde supprimé",
   "backupPasswordSet": "Mot de passe de sauvegarde défini",
   "backupPasswordTip": "Définissez un mot de passe pour chiffrer les fichiers de sauvegarde. Laissez vide pour désactiver le chiffrement.",

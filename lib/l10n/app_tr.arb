@@ -27,6 +27,7 @@
   "backupEncrypted": "Yedekleme şifrelenmiş",
   "backupNotEncrypted": "Yedekleme şifreli değil",
   "backupPassword": "Yedekleme parolası",
+  "backupPasswordRemoveSynced": "Bu, yedekleme parolasını aynı iCloud Anahtar Zinciri'ni kullanan tüm cihazlardan kaldırır. Yeniden bir parola ayarlanana kadar bu cihazların eşitlemesi durur.",
   "backupPasswordRemoved": "Yedekleme parolası kaldırıldı",
   "backupPasswordSet": "Yedekleme parolası ayarlandı",
   "backupPasswordTip": "Yedekleme dosyalarını şifrelemek için bir parola belirleyin. Şifrelemeyi devre dışı bırakmak için boş bırakın.",

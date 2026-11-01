@@ -194,6 +194,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backupPassword => 'Backup password';
 
   @override
+  String get backupPasswordRemoveSynced =>
+      'This removes the backup password from every device using the same iCloud Keychain. Their sync stops until a password is set again.';
+
+  @override
   String get backupPasswordRemoved => 'Backup password removed';
 
   @override

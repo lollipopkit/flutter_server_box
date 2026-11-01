@@ -189,7 +189,11 @@ abstract final class Stores {
     for (final store in _kvStores) {
       final last = store.lastUpdateTs;
       if (last == null) continue;
-      for (final ts in last.values) {
+      for (final MapEntry(:key, value: ts) in last.entries) {
+        // Stamped by builds before they were device-local.
+        if (store == setting && SettingStore.deviceLocalKeys.contains(key)) {
+          continue;
+        }
         if (ts > lastModTime) lastModTime = ts;
       }
     }

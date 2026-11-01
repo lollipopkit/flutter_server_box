@@ -469,6 +469,12 @@ abstract class AppLocalizations {
   /// **'Backup password'**
   String get backupPassword;
 
+  /// Confirmation before removing the backup password on iOS or macOS, where it is in iCloud Keychain and so removed from the person's other Apple devices too.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes the backup password from every device using the same iCloud Keychain. Their sync stops until a password is set again.'**
+  String get backupPasswordRemoveSynced;
+
   /// User-facing label or message for backup password removed.
   ///
   /// In en, this message translates to:

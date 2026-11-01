@@ -225,6 +225,10 @@
   "@backupPassword": {
     "description": "User-facing label or message for backup password."
   },
+  "backupPasswordRemoveSynced": "This removes the backup password from every device using the same iCloud Keychain. Their sync stops until a password is set again.",
+  "@backupPasswordRemoveSynced": {
+    "description": "Confirmation before removing the backup password on iOS or macOS, where it is in iCloud Keychain and so removed from the person's other Apple devices too."
+  },
   "backupPasswordRemoved": "Backup password removed",
   "@backupPasswordRemoved": {
     "description": "User-facing label or message for backup password removed."

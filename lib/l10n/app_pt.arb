@@ -27,6 +27,7 @@
   "backupEncrypted": "Backup está criptografado",
   "backupNotEncrypted": "Backup não está criptografado",
   "backupPassword": "Senha de backup",
+  "backupPasswordRemoveSynced": "Isso remove a senha de backup de todos os dispositivos que usam o mesmo Porta-chaves do iCloud. A sincronização deles para até que uma senha seja definida novamente.",
   "backupPasswordRemoved": "Senha de backup removida",
   "backupPasswordSet": "Senha de backup definida",
   "backupPasswordTip": "Defina uma senha para criptografar arquivos de backup. Deixe vazio para desabilitar a criptografia.",

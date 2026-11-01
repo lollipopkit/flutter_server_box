@@ -885,7 +885,20 @@ Map<String, Object?> _backupStore(
 }) {
   final rows = store.getAllMap(includeInternalKeys: true);
   rows.removeWhere((key, _) => _isLocalOnly(store, key, deviceLocal));
+  // Their timestamps too: a build that does not hold a key device-local reads
+  // one with no row as deleted there, and deletes its own.
+  _dropStamps(rows, store.lastUpdateTsKey, deviceLocal);
   return rows;
+}
+
+/// [keys] out of the timestamp map at [tsKey], in the shape it is in.
+void _dropStamps(Map<String, Object?> rows, String tsKey, Set<String> keys) {
+  final ts = rows[tsKey];
+  if (keys.isEmpty || ts == null) return;
+  final stamps = _kvTimestamps(ts, const []);
+  if (!stamps.keys.any(keys.contains)) return;
+  stamps.removeWhere((key, _) => keys.contains(key));
+  rows[tsKey] = ts is String ? json.encode(stamps) : stamps;
 }
 
 Map<String, Object?> _mergeDataForStore(
@@ -895,6 +908,9 @@ Map<String, Object?> _mergeDataForStore(
 }) {
   final result = Map<String, Object?>.from(rows)
     ..removeWhere((key, _) => _isLocalOnly(store, key, deviceLocal));
+  // An older build's stamp for one would make the merge rewrite this device's
+  // own value and take that stamp, which moves [Stores.lastModTime].
+  _dropStamps(result, store.lastUpdateTsKey, deviceLocal);
 
   // Mergeable treats an absent key as a deletion. Keep local-only state in
   // the input until fl_lib can expose an internal-key exclusion policy.
@@ -976,7 +992,15 @@ Set<String> _mergeSqliteStore(
     if (!backupHasKey || !currentHasKey) continue;
     if (!force && backupTimestamp <= currentTimestamp) continue;
     final value = backupData[key];
-    if (value == current[key]) continue;
+    if (const DeepCollectionEquality().equals(value, current[key])) {
+      // The same, edited later there: the later stamp, or the two devices'
+      // stamps differ for good and so does every backup they write.
+      if (!store.isInternalKey(key) && backupTimestamp > currentTimestamp) {
+        timestamps[key] = backupTimestamp;
+        timestampDirty = true;
+      }
+      continue;
+    }
     if (value == null) {
       _deleteKv(store, key);
     } else {
@@ -1002,9 +1026,9 @@ Set<String> _mergeSqliteStore(
   }
 
   if (timestampDirty) {
-    // KvStore persists the timestamp map as a JSON string inside the JSON
-    // value column; retain that wire shape for existing readers.
-    _writeKv(store, store.lastUpdateTsKey, json.encode(timestamps));
+    // The map itself, as `KvStore` writes it: a string holding it read the
+    // same but made the next backup differ in shape from the other device's.
+    _writeKv(store, store.lastUpdateTsKey, timestamps);
     notifications.add(store.lastUpdateTsKey);
   }
   return notifications;

@@ -195,6 +195,10 @@ class AppLocalizationsNl extends AppLocalizations {
   String get backupPassword => 'Back-up wachtwoord';
 
   @override
+  String get backupPasswordRemoveSynced =>
+      'Hiermee wordt het back-upwachtwoord verwijderd van alle apparaten die dezelfde iCloud-sleutelhanger gebruiken. Hun synchronisatie stopt totdat er opnieuw een wachtwoord is ingesteld.';
+
+  @override
   String get backupPasswordRemoved => 'Back-up wachtwoord verwijderd';
 
   @override

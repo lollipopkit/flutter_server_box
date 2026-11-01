@@ -27,6 +27,7 @@
   "backupEncrypted": "El respaldo está encriptado",
   "backupNotEncrypted": "El respaldo no está encriptado",
   "backupPassword": "Contraseña de respaldo",
+  "backupPasswordRemoveSynced": "Esto elimina la contraseña de respaldo de todos los dispositivos que usan el mismo Llavero de iCloud. Su sincronización se detiene hasta que se vuelva a establecer una contraseña.",
   "backupPasswordRemoved": "Contraseña de respaldo eliminada",
   "backupPasswordSet": "Contraseña de respaldo establecida",
   "backupPasswordTip": "Establece una contraseña para encriptar archivos de respaldo. Déjalo vacío para desactivar la encriptación.",

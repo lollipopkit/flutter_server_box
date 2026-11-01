@@ -196,6 +196,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get backupPassword => 'Пароль резервного копіювання';
 
   @override
+  String get backupPasswordRemoveSynced =>
+      'Пароль резервного копіювання буде видалено з усіх пристроїв, що використовують ту саму в\'язку ключів iCloud. Їхня синхронізація зупиниться, доки пароль не буде встановлено знову.';
+
+  @override
   String get backupPasswordRemoved => 'Пароль резервного копіювання видалено';
 
   @override

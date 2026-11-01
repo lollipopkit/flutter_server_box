@@ -185,6 +185,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get backupPassword => '백업 비밀번호';
 
   @override
+  String get backupPasswordRemoveSynced =>
+      '같은 iCloud 키체인을 사용하는 모든 기기에서 백업 비밀번호가 삭제됩니다. 비밀번호를 다시 설정할 때까지 해당 기기의 동기화가 중지됩니다.';
+
+  @override
   String get backupPasswordRemoved => '백업 비밀번호가 제거되었습니다';
 
   @override

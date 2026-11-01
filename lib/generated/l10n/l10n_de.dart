@@ -196,6 +196,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get backupPassword => 'Backup-Passwort';
 
   @override
+  String get backupPasswordRemoveSynced =>
+      'Dadurch wird das Backup-Passwort von allen Geräten entfernt, die denselben iCloud-Schlüsselbund verwenden. Ihre Synchronisierung stoppt, bis wieder ein Passwort gesetzt wird.';
+
+  @override
   String get backupPasswordRemoved => 'Backup-Passwort entfernt';
 
   @override

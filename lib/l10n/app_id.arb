@@ -27,6 +27,7 @@
   "backupEncrypted": "Cadangan telah dienkripsi",
   "backupNotEncrypted": "Cadangan tidak dienkripsi",
   "backupPassword": "Kata sandi cadangan",
+  "backupPasswordRemoveSynced": "Ini menghapus kata sandi cadangan dari semua perangkat yang menggunakan Rantai Kunci iCloud yang sama. Sinkronisasinya berhenti sampai kata sandi diatur lagi.",
   "backupPasswordRemoved": "Kata sandi cadangan dihapus",
   "backupPasswordSet": "Kata sandi cadangan ditetapkan",
   "backupPasswordTip": "Setel kata sandi untuk mengenkripsi file cadangan. Biarkan kosong untuk menonaktifkan enkripsi.",

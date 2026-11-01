@@ -196,6 +196,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get backupPassword => 'Kata sandi cadangan';
 
   @override
+  String get backupPasswordRemoveSynced =>
+      'Ini menghapus kata sandi cadangan dari semua perangkat yang menggunakan Rantai Kunci iCloud yang sama. Sinkronisasinya berhenti sampai kata sandi diatur lagi.';
+
+  @override
   String get backupPasswordRemoved => 'Kata sandi cadangan dihapus';
 
   @override

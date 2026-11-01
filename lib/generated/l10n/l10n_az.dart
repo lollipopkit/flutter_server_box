@@ -196,6 +196,10 @@ class AppLocalizationsAz extends AppLocalizations {
   String get backupPassword => 'Ehtiyat nüsxə parolu';
 
   @override
+  String get backupPasswordRemoveSynced =>
+      'Bu, ehtiyat nüsxə parolunu eyni iCloud Açar Zəncirindən istifadə edən bütün cihazlardan silir. Parol yenidən təyin edilənə qədər onların sinxronizasiyası dayanır.';
+
+  @override
   String get backupPasswordRemoved => 'Ehtiyat nüsxə parolu silindi';
 
   @override

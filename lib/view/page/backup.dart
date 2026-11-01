@@ -155,6 +155,15 @@ final class _BackupPageState extends ConsumerState<BackupPage>
                         Toast.show(l10n.remoteBackupPasswordRequired);
                         return;
                       }
+                      // In iCloud Keychain there: gone from every device.
+                      if (isIOS || isMacOS) {
+                        final ok = await context.showRoundDialog<bool>(
+                          title: libL10n.delete,
+                          child: Text(l10n.backupPasswordRemoveSynced),
+                          actions: Btnx.cancelRedOk,
+                        );
+                        if (ok != true) return;
+                      }
                       await SecureStoreProps.bakPwd.write(null);
                       // Same reason as setting one — see `_onTapSetBakPwd`.
                       await BakSyncer.forgetCheckpoint();

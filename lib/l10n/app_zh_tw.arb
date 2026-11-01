@@ -56,6 +56,7 @@
   "backupEncrypted": "備份已加密",
   "backupNotEncrypted": "備份未加密",
   "backupPassword": "備份密碼",
+  "backupPasswordRemoveSynced": "這會從使用同一 iCloud 鑰匙圈的所有裝置上移除備份密碼。重新設定密碼之前，這些裝置的同步會停止。",
   "backupPasswordRemoved": "備份密碼已移除",
   "backupPasswordSet": "備份密碼已設定",
   "backupPasswordTip": "設定密碼來加密備份檔案。留空則停用加密。",

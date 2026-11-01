@@ -2,10 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
-import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/theme.dart' show ThemeBlobStore;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:server_box/core/lkc.dart';
 import 'package:server_box/core/sync.dart';
@@ -184,42 +184,111 @@ final class LkcThemeBlobs implements ThemeBlobStore {
 
 }
 
-/// While LK Cloud is the sync destination and the app is in the foreground,
-/// listens for other devices' writes of the backup and syncs on each, and on
-/// every (re)connection, which may have missed some.
-abstract final class LkcSyncWatch {
-  static StreamSubscription<LkcSyncEvent>? _sub;
-  static LkcSync? _sync;
-  static var _starting = false;
-  static AppLifecycleListener? _lifecycle;
-  static final _switch = BakSyncer.lkcSync.listenable();
+/// While LK Cloud is the sync destination and the app is in the foreground
+/// (on a desktop, running), listens for other devices' writes of the backup
+/// and syncs on each, and on every (re)connection, which may have missed some.
+final class LkcSyncWatch {
+  LkcSyncWatch({
+    required Listenable user,
+    required bool Function() signedIn,
+    required Future<LkcSync> Function() open,
+    required Future<void> Function() forget,
+    required ValueListenable<bool> toggle,
+    required VoidCallback onRemoteChange,
+    Duration retryAfter = const Duration(seconds: 30),
+    bool inBackground = false,
+  }) : _user = user,
+       _signedIn = signedIn,
+       _open = open,
+       _forget = forget,
+       _toggle = toggle,
+       _onRemoteChange = onRemoteChange,
+       _retryAfter = retryAfter,
+       _inBackground = inBackground;
+
+  final Listenable _user;
+  final bool Function() _signedIn;
+  final Future<LkcSync> Function() _open;
+  final Future<void> Function() _forget;
+  final ValueListenable<bool> _toggle;
+  final VoidCallback _onRemoteChange;
+
+  /// After listening could not start, or ended while still signed in.
+  final Duration _retryAfter;
+  Timer? _retry;
+
+  /// Listening whatever the window: a desktop app runs on behind other windows
+  /// and in the tray, and should be up to date when it comes back. A phone's
+  /// system ends the connection in the background anyway.
+  final bool _inBackground;
+
+  StreamSubscription<LkcSyncEvent>? _sub;
+  LkcSync? _sync;
+  var _starting = false;
+  AppLifecycleListener? _lifecycle;
+
+  static LkcSyncWatch? _shared;
 
   static void init() {
-    if (!Lkc.enabled || _lifecycle != null) return;
+    if (!Lkc.enabled || _shared != null) return;
+    _shared = LkcSyncWatch(
+      user: Lkc.client.user,
+      // The user too: signing out clears it before the session is, and nothing
+      // says so after.
+      signedIn: () => Lkc.client.signedIn && Lkc.client.user.value != null,
+      open: () => Lkc.client.sync(Lkc.app),
+      forget: Lkc.client.forget,
+      toggle: BakSyncer.lkcSync.listenable(),
+      // Not held back: another device's write is the whole reason to sync,
+      // and a sync already running takes it on when it ends.
+      onRemoteChange: () => bakSync.syncSoon(milliDelay: 0, throttleMilli: 0),
+      inBackground: isDesktop,
+    )..start();
+  }
+
+  void start() {
+    if (_lifecycle != null) return;
     _lifecycle = AppLifecycleListener(onStateChange: (_) => _update());
-    Lkc.client.user.addListener(_update);
-    _switch.addListener(_update);
+    _user.addListener(_update);
+    _toggle.addListener(_update);
     _update();
   }
 
-  static bool get _wanted {
-    final state = WidgetsBinding.instance.lifecycleState;
-    final foreground = state == null || state == AppLifecycleState.resumed;
-    return foreground && BakSyncer.lkcSync.get() && Lkc.client.signedIn;
+  Future<void> dispose() async {
+    _lifecycle?.dispose();
+    _lifecycle = null;
+    _user.removeListener(_update);
+    _toggle.removeListener(_update);
+    await _stop();
   }
 
-  static Future<void> _update() async {
-    if (!_wanted) {
-      final sub = _sub;
-      _sub = null;
-      _sync?.stopListening();
-      await sub?.cancel();
-      return;
-    }
+  bool get _wanted {
+    final state = WidgetsBinding.instance.lifecycleState;
+    // Inactive too: a desktop window out of focus is still in front of the
+    // user, and on a phone it is a moment's overlay.
+    final foreground =
+        _inBackground ||
+        state == null ||
+        state == AppLifecycleState.resumed ||
+        state == AppLifecycleState.inactive;
+    return _lifecycle != null && foreground && _toggle.value && _signedIn();
+  }
+
+  Future<void> _stop() async {
+    _retry?.cancel();
+    _retry = null;
+    final sub = _sub;
+    _sub = null;
+    _sync?.stopListening();
+    await sub?.cancel();
+  }
+
+  Future<void> _update() async {
+    if (!_wanted) return _stop();
     if (_sub != null || _starting) return;
     _starting = true;
     try {
-      final sync = _sync ??= await Lkc.client.sync(Lkc.app);
+      final sync = _sync ??= await _open();
       // Changed meanwhile: the next change of state starts it.
       if (!_wanted) return;
       late final StreamSubscription<LkcSyncEvent> sub;
@@ -227,27 +296,44 @@ abstract final class LkcSyncWatch {
         _onEvent,
         onError: (Object e, StackTrace s) =>
             Loggers.app.warning('LK Cloud sync events', e, s),
-        // Ended by homebase refusing the session: signed out here too, which
-        // a later sign-in starts listening from.
         onDone: () {
-          if (identical(_sub, sub)) _sub = null;
-          if (!Lkc.client.signedIn) unawaited(Lkc.client.forget());
+          if (!identical(_sub, sub)) return;
+          _sub = null;
+          // Ended by homebase refusing the session: signed out here too,
+          // which a later sign-in starts listening from.
+          if (!_signedIn()) {
+            unawaited(
+              _forget().catchError(
+                (Object e, StackTrace s) =>
+                    Loggers.app.warning('LK Cloud sign-out', e, s),
+              ),
+            );
+            return;
+          }
+          _retryLater();
         },
       );
     } catch (e, s) {
       Loggers.app.warning('LK Cloud sync events', e, s);
+      _retryLater();
     } finally {
       _starting = false;
     }
   }
 
-  static void _onEvent(LkcSyncEvent event) {
+  void _retryLater() {
+    _retry?.cancel();
+    _retry = Timer(_retryAfter, () {
+      _retry = null;
+      unawaited(_update());
+    });
+  }
+
+  void _onEvent(LkcSyncEvent event) {
     if (event.lost case final why?) {
       Loggers.app.info('LK Cloud sync events: $why');
       return;
     }
-    if (event.connected || event.name == Miscs.bakFileName) {
-      bakSync.syncSoon(milliDelay: 0);
-    }
+    if (event.connected || event.name == Miscs.bakFileName) _onRemoteChange();
   }
 }

@@ -199,6 +199,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get backupPassword => 'Mot de passe de sauvegarde';
 
   @override
+  String get backupPasswordRemoveSynced =>
+      'Cela supprime le mot de passe de sauvegarde de tous les appareils utilisant le même trousseau iCloud. Leur synchronisation s\'arrête jusqu\'à ce qu\'un mot de passe soit de nouveau défini.';
+
+  @override
   String get backupPasswordRemoved => 'Mot de passe de sauvegarde supprimé';
 
   @override

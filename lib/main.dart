@@ -477,6 +477,7 @@ Future<void> _doPlatformRelated() async {
   // Off the launch path: it reads the keychain and asks homebase who is signed
   // in. LK Cloud sync waits for the session; its first connection syncs.
   if (Lkc.enabled) unawaited(Lkc.init().then((_) => LkcSyncWatch.init()));
+  BakSyncer.watchEdits(() => bakSync.syncSoon());
   unawaited(KeyPassphrases.init());
 
   // The watch app used to learn about servers only while the user sat on the

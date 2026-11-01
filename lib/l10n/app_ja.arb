@@ -27,6 +27,7 @@
   "backupEncrypted": "バックアップは暗号化されています",
   "backupNotEncrypted": "バックアップは暗号化されていません",
   "backupPassword": "バックアップパスワード",
+  "backupPasswordRemoveSynced": "同じ iCloud キーチェーンを使用しているすべてのデバイスからバックアップパスワードが削除されます。パスワードを再設定するまで、それらのデバイスの同期は停止します。",
   "backupPasswordRemoved": "バックアップパスワードが削除されました",
   "backupPasswordSet": "バックアップパスワードが設定されました",
   "backupPasswordTip": "バックアップファイルを暗号化するためのパスワードを設定してください。暗号化を無効にするには空白のままにしてください。",

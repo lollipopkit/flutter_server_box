@@ -186,6 +186,22 @@ final class BakSyncer extends SyncIface {
     };
   }
 
+  /// Calls [onEdit] on each edit to the settings or the history, which no
+  /// provider syncs on as the entity stores' do. Every such edit stamps its
+  /// store, so what is watched is the stamps' row: device-local settings and
+  /// internal keys stamp nothing. Settings only while they are synced.
+  static List<StreamSubscription<String>> watchEdits(VoidCallback onEdit) => [
+    Stores.setting.watch().listen((key) {
+      if (key == Stores.setting.lastUpdateTsKey &&
+          PrefProps.syncAppSettings.get()) {
+        onEdit();
+      }
+    }),
+    Stores.history.watch().listen((key) {
+      if (key == Stores.history.lastUpdateTsKey) onEdit();
+    }),
+  ];
+
   /// Refuses to upload after a failed read of newer remote data, and waits for
   /// [inheritLegacyRemote] to finish deciding. Everything else defers to the
   /// base implementation.

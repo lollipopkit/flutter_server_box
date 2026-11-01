@@ -515,7 +515,52 @@ class SettingStore extends SqliteStore with ThemeSettings {
     // TODO: remove with the key; no theme is bundled any more, it only
     // records the ones seeded before.
     'bundledThemesSeeded',
+    // The rootfs manifest this device last verified: a cache, re-verified
+    // when read.
+    'rootfsManifestSerial',
+    'rootfsManifestCache',
+    'rootfsManifestCacheSig',
+    // The build this install last ran: another device's newer one makes
+    // `migrateBuildFeatures` skip the upgrade it gates.
+    'lastVer',
+    // What this install has been shown or asked.
+    'introVer',
+    'featureIntroVer',
+    'diagnosticsConsentVer',
+    'dmgTipBuild',
+    'legacyStatusNoticePending',
+    'firstTimeReadSSHCfg',
+    // Files only this device has.
+    'fontPath',
+    'sshBgImage',
+    // This device's screen, hardware and network.
+    'windowState',
+    'agentShell',
+    'terminalShell',
+    'useBioAuth',
+    'delayBioAuthLock',
+    'bgRun',
+    // A profile installed on this device, and the network it is on.
+    'linuxProfile',
+    'linuxDns',
+    // Sized for this device's screen: a phone's and a desktop's differ.
+    'textFactor',
+    'termFontSize',
+    'editorFontSize',
+    'paneListWidth',
+    'paneListCollapsed',
+    'fullScreen',
+    'rightHanded',
   };
+
+  /// None for [deviceLocalKeys]: a change to one is not an edit a sync moves,
+  /// and stamping it moves [Stores.lastModTime] — `windowState` on every
+  /// resize — and with it a whole sync and upload.
+  @override
+  Future<bool> updateLastUpdateTs({int? ts, required String? key}) async {
+    if (key != null && deviceLocalKeys.contains(key)) return false;
+    return super.updateLastUpdateTs(ts: ts, key: key);
+  }
 
   /// The floating Agent's placement and size, as one row.
   ///
@@ -726,9 +771,6 @@ class SettingStore extends SqliteStore with ThemeSettings {
 
   /// Close the editor after saving
   late final closeAfterSave = propertyDefault('closeAfterSave', false);
-
-  /// The backup password
-  late final backupPassword = SecureProp('bakPasswd');
 
   /// Whether to read SSH config from ~/.ssh/config on first time
   late final firstTimeReadSSHCfg = propertyDefault('firstTimeReadSSHCfg', true);

@@ -197,6 +197,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get backupPassword => 'Password di backup';
 
   @override
+  String get backupPasswordRemoveSynced =>
+      'Questo rimuove la password di backup da tutti i dispositivi che usano lo stesso Portachiavi iCloud. La loro sincronizzazione si interrompe finché non viene impostata di nuovo una password.';
+
+  @override
   String get backupPasswordRemoved => 'Password di backup rimossa';
 
   @override

@@ -194,6 +194,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get backupPassword => 'Yedekleme parolası';
 
   @override
+  String get backupPasswordRemoveSynced =>
+      'Bu, yedekleme parolasını aynı iCloud Anahtar Zinciri\'ni kullanan tüm cihazlardan kaldırır. Yeniden bir parola ayarlanana kadar bu cihazların eşitlemesi durur.';
+
+  @override
   String get backupPasswordRemoved => 'Yedekleme parolası kaldırıldı';
 
   @override
