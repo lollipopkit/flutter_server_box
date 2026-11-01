@@ -57,7 +57,7 @@ beforeEach(() => {
   capabilitiesStore.byServer.local = { features: ['shares', 'storage', 'firewall'], access: { ok: true } } as never
   mocked.getShares.mockResolvedValue(structuredClone(view))
   mocked.shareConnections.mockResolvedValue({ smb: [], nfs: [] })
-  mocked.getStorage.mockResolvedValue({ disks: [], busy: {}, arrays: [], pools: [], tools: [], job: null } satisfies StorageView)
+  mocked.getStorage.mockResolvedValue({ disks: [], busy: {}, free: [], overlaps: {}, growable_partitions: [], next_md: 'md0', raid_levels: [], pool_layouts: [], arrays: [], pools: [], tools: [], job: null } satisfies StorageView)
   mocked.getSystemUsers.mockResolvedValue({
     part: 'list', available: true, reason_kind: null, reason: null, agent_account: 'sbm', uid_min: 1000, gid_min: 1000, groups: [], name: null, detail: null,
     users: [
@@ -86,6 +86,7 @@ describe('the sharing model', () => {
       mountpoints,
       mounted: mountpoints.some((m) => m.startsWith('/')),
       mountable: false,
+      expandable: false,
       available: null,
       used: null,
       children,
@@ -94,6 +95,7 @@ describe('the sharing model', () => {
       disks: [dev('/dev/sda1', ['/srv/data']), dev('/dev/sda2', ['/'], [dev('/dev/sda2/child', ['/boot/efi', '/mnt/backup'])])],
       busy: {},
       system: ['/dev/sda2'],
+      free: [], overlaps: {}, growable_partitions: [], next_md: 'md0', raid_levels: [], pool_layouts: [],
       arrays: [],
       pools: [],
       tools: [],

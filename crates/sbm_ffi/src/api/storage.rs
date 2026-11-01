@@ -38,7 +38,8 @@ pub fn storage_view_script() -> String {
 }
 
 /// [`storage_view_script`]'s output → `StorageView` JSON (`disks`, `busy`,
-/// `system`, `arrays`, `pools`, `tools`)
+/// `system`, `free`, `overlaps`, `growable_partitions`, `next_md`,
+/// `raid_levels`, `pool_layouts`, `arrays`, `pools`, `tools`)
 pub fn parse_storage_view_json(raw: String) -> Result<String, StorageFfiError> {
     let view = st::parse_view(&raw).ok_or_else(|| error("unreadable"))?;
     serde_json::to_string(&view).map_err(malformed)

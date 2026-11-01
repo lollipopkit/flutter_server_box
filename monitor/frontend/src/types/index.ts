@@ -3024,6 +3024,8 @@ export interface BlockDevice {
   mounted: boolean
   /// A filesystem nothing mounts, and not a member of an array, pool or volume group.
   mountable: boolean
+  /// A mounted filesystem the device grew under, which can grow to fill it.
+  expandable: boolean
   /// The filesystem's size, mounted only; absent from older agents.
   fs_size?: number | null
   available: number | null
@@ -3039,6 +3041,8 @@ export interface MdArray {
   raid_disks: number | null
   working_disks: number | null
   sync: { action: string; permille: number; finish: string | null } | null
+  /// Grows by one more working member (RAID 1, 5, 6).
+  growable: boolean
 }
 
 export interface ZPool {
@@ -3052,7 +3056,15 @@ export interface ZPool {
   scanning?: boolean
   /// `section`: outside the data vdevs (`spares`, `logs`, `cache`…); absent
   /// from older agents.
-  vdevs: { name: string; state: string; depth: number; errors: number; section?: string | null }[]
+  vdevs: {
+    name: string
+    state: string
+    depth: number
+    errors: number
+    section?: string | null
+    /// What may be asked of the device, by where it sits.
+    actions: { replace: boolean; attach: boolean; remove: boolean; online: boolean }
+  }[]
 }
 
 /// Why a device may not be partitioned, formatted or built on.
@@ -3065,6 +3077,16 @@ export interface StorageView {
   /// Devices mounted where the system lives: never unmounted. Absent from
   /// older agents.
   system?: string[]
+  /// What may be given to a new array or pool, or formatted, in the tree's order.
+  free: string[]
+  /// For each free device, the free devices it is or holds: never picked together.
+  overlaps: Record<string, string[]>
+  /// Each disk's last partition with room after it.
+  growable_partitions: string[]
+  /// The first `md` name no array has.
+  next_md: string
+  raid_levels: { value: number; minimum: number }[]
+  pool_layouts: { value: string; minimum: number }[]
   arrays: MdArray[]
   pools: ZPool[]
   /// mdadm, zpool, smartctl, mkfs.ext4, mkfs.xfs, mkfs.btrfs, sfdisk, wipefs.

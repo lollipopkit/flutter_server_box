@@ -18,6 +18,7 @@ final class BlockDevice {
     required this.mountpoints,
     required this.mounted,
     required this.mountable,
+    required this.expandable,
     required this.fsSize,
     required this.available,
     required this.used,
@@ -42,6 +43,7 @@ final class BlockDevice {
     mountpoints: (json['mountpoints'] as List).cast<String>(),
     mounted: json['mounted'] as bool,
     mountable: json['mountable'] as bool,
+    expandable: json['expandable'] as bool,
     fsSize: json['fs_size'] as int?,
     available: json['available'] as int?,
     used: json['used'] as int?,
@@ -73,6 +75,9 @@ final class BlockDevice {
   /// A filesystem nothing mounts, and not a member of an array, pool or
   /// volume group.
   final bool mountable;
+
+  /// A mounted filesystem the device grew under, which can grow to fill it.
+  final bool expandable;
   final int? fsSize;
   final int? available;
   final int? used;
@@ -97,6 +102,7 @@ final class MdArray {
     required this.raidDisks,
     required this.workingDisks,
     required this.sync,
+    required this.growable,
   });
 
   factory MdArray.fromJson(Map<String, Object?> json) {
@@ -112,6 +118,7 @@ final class MdArray {
       raidDisks: json['raid_disks'] as int?,
       workingDisks: json['working_disks'] as int?,
       sync: sync == null ? null : MdSync.fromJson(sync as Map<String, Object?>),
+      growable: json['growable'] as bool,
     );
   }
 
@@ -122,6 +129,9 @@ final class MdArray {
   final int? raidDisks;
   final int? workingDisks;
   final MdSync? sync;
+
+  /// Grows by one more working member (RAID 1, 5, 6).
+  final bool growable;
 
   bool get degraded => raidDisks != null && workingDisks != null && workingDisks! < raidDisks!;
 }
@@ -199,21 +209,46 @@ final class StorageVdev {
     required this.depth,
     required this.errors,
     required this.section,
+    required this.actions,
   });
 
-  factory StorageVdev.fromJson(Map<String, Object?> json) => StorageVdev(
-    name: json['name'] as String,
-    state: json['state'] as String,
-    depth: json['depth'] as int,
-    errors: json['errors'] as int,
-    section: json['section'] as String?,
-  );
+  factory StorageVdev.fromJson(Map<String, Object?> json) {
+    final actions = json['actions'] as Map<String, Object?>;
+    return StorageVdev(
+      name: json['name'] as String,
+      state: json['state'] as String,
+      depth: json['depth'] as int,
+      errors: json['errors'] as int,
+      section: json['section'] as String?,
+      actions: (
+        replace: actions['replace'] as bool,
+        attach: actions['attach'] as bool,
+        remove: actions['remove'] as bool,
+        online: actions['online'] as bool,
+      ),
+    );
+  }
 
   final String name;
   final String state;
   final int depth;
   final int errors;
   final String? section;
+
+  /// What may be asked of the device, by where it sits.
+  final ({bool replace, bool attach, bool remove, bool online}) actions;
+}
+
+/// An md level or pool layout one may pick, and the fewest devices it takes.
+final class StorageChoice {
+  const StorageChoice({required this.value, required this.minimum});
+
+  factory StorageChoice.fromJson(Map<String, Object?> json) =>
+      StorageChoice(value: '${json['value']}', minimum: json['minimum'] as int);
+
+  /// An md level (`'1'`) or a pool layout (`'mirror'`).
+  final String value;
+  final int minimum;
 }
 
 final class StorageView {
@@ -221,6 +256,12 @@ final class StorageView {
     required this.disks,
     required this.busy,
     required this.system,
+    required this.free,
+    required this.overlaps,
+    required this.growablePartitions,
+    required this.nextMd,
+    required this.raidLevels,
+    required this.poolLayouts,
     required this.arrays,
     required this.pools,
     required this.tools,
@@ -233,6 +274,21 @@ final class StorageView {
     ],
     busy: (json['busy'] as Map).cast<String, String>(),
     system: (json['system'] as List).cast<String>(),
+    free: (json['free'] as List).cast<String>(),
+    overlaps: {
+      for (final MapEntry(:key, :value) in (json['overlaps'] as Map).entries)
+        key as String: (value as List).cast<String>(),
+    },
+    growablePartitions: (json['growable_partitions'] as List).cast<String>(),
+    nextMd: json['next_md'] as String,
+    raidLevels: [
+      for (final choice in json['raid_levels'] as List)
+        StorageChoice.fromJson(choice as Map<String, Object?>),
+    ],
+    poolLayouts: [
+      for (final choice in json['pool_layouts'] as List)
+        StorageChoice.fromJson(choice as Map<String, Object?>),
+    ],
     arrays: [
       for (final array in json['arrays'] as List)
         MdArray.fromJson(array as Map<String, Object?>),
@@ -247,6 +303,21 @@ final class StorageView {
   final List<BlockDevice> disks;
   final Map<String, String> busy;
   final List<String> system;
+
+  /// What may be given to a new array or pool, or formatted, in the tree's
+  /// order.
+  final List<String> free;
+
+  /// For each of [free], the others it is or holds: never picked together.
+  final Map<String, List<String>> overlaps;
+
+  /// Each disk's last partition with room after it.
+  final List<String> growablePartitions;
+
+  /// The first `md` name no array has.
+  final String nextMd;
+  final List<StorageChoice> raidLevels;
+  final List<StorageChoice> poolLayouts;
   final List<MdArray> arrays;
   final List<StoragePool> pools;
   final List<String> tools;

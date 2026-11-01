@@ -16,7 +16,7 @@
   import type { BlockDevice, DiskHealth, HealthReading, MdArray, StackJob, StorageAction, StorageView, ZPool } from '../../../types'
   import StorageConfirm from './StorageConfirm.svelte'
   import StorageMaintenance from './StorageMaintenance.svelte'
-  import { arrayDevice, disksOf, expandable, freeDevices, growableArray, growablePartition, healthOf, isLuks, minimum, nextMd, opened, overlaps, poolDeviceActions, shortName, verdict, volumesOf, type HealthVerdict } from './model'
+  import { arrayDevice, deviceAt, disksOf, healthOf, isLuks, opened, shortName, verdict, volumesOf, type HealthVerdict } from './model'
   import { untrack } from 'svelte'
 
   type Tab = 'disks' | 'raid' | 'pools' | 'maintenance'
@@ -128,7 +128,11 @@
 
   const has = (tool: string) => view?.tools.includes(tool) === true
   const disks = $derived(view ? disksOf(view) : [])
-  const free = $derived(view ? freeDevices(view) : [])
+  const free = $derived(view ? view.free.flatMap((path) => deviceAt(view!, path) ?? []) : [])
+  const choices = $derived(
+    !view ? [] : creating === 'raid' ? view.raid_levels.map((c) => ({ value: String(c.value), label: `RAID ${c.value}`, minimum: c.minimum })) : view.pool_layouts.map((c) => ({ ...c, label: c.value })),
+  )
+  const minimum = $derived(choices.find((c) => c.value === newLevel)?.minimum ?? 1)
 
   function ask(action: StorageAction | 'readHealth', title: string, body: string, confirmWord?: string) {
     pending = { action, title, body, confirmWord }
@@ -234,7 +238,7 @@
   function openCreate(what: 'raid' | 'pool') {
     creating = what
     picked = []
-    newName = what === 'raid' && view ? nextMd(view) : 'tank'
+    newName = what === 'raid' && view ? view.next_md : 'tank'
     newLevel = what === 'raid' ? '1' : 'mirror'
   }
 
@@ -244,7 +248,7 @@
     growPool = p.name
     picked = []
     const first = p.vdevs.find((v) => v.depth === 1)?.name ?? ''
-    newLevel = ['mirror', 'raidz1', 'raidz2', 'raidz3'].find((l) => first.startsWith(l)) ?? 'stripe'
+    newLevel = view?.pool_layouts.map((l) => l.value).find((l) => l !== 'stripe' && first.startsWith(l)) ?? 'stripe'
   }
 
   function pick(title: string, message: string, then: (device: string) => void) {
@@ -336,7 +340,7 @@
   }
 </script>
 
-{#snippet volume(v: BlockDevice, label: string, disk?: BlockDevice)}
+{#snippet volume(v: BlockDevice, label: string)}
   {@const inside = isLuks(v) ? opened(v) : undefined}
   <Row
     {label}
@@ -353,7 +357,7 @@
           <Button size="sm" variant="secondary" icon="lock_open" disabled={job?.state === 'running'} onclick={() => unlock(v)}>{$LL.storageUnlock()}</Button>
         {/if}
       {/if}
-      {#if disk && growablePartition(disk, v) && has('sfdisk')}
+      {#if view?.growable_partitions.includes(v.path) && has('sfdisk')}
         <Button size="sm" variant="secondary" icon="open_in_full" disabled={job?.state === 'running'} onclick={() => ask({ action: 'growPartition', device: v.path }, $LL.storageGrowPartition(), $LL.storageGrowPartitionBody({ device: v.path }))}>{$LL.storageGrowPartition()}</Button>
       {/if}
       {#if view?.busy[v.path] === 'systemPartition'}
@@ -365,7 +369,7 @@
       {:else if v.mountable}
         <Button size="sm" variant="secondary" disabled={job?.state === 'running'} onclick={() => openMount(v)}>{$LL.storageMount()}</Button>
       {/if}
-      {#if expandable(v)}
+      {#if v.expandable}
         <Button size="sm" variant="secondary" icon="open_in_full" disabled={job?.state === 'running'} onclick={() => ask({ action: 'expandFilesystem', device: v.path }, $LL.storageExpand(), $LL.storageExpandBody({ device: v.path }))}>{$LL.storageExpand()}</Button>
       {/if}
       {#if view?.busy[v.path] === undefined}
@@ -436,7 +440,7 @@
             <Row label={$LL.storageSmart()} value={smartFacts(d)} sub={[lastTest(d), view.health ? $LL.storageHealthAt({ time: fmtEpochSeconds(view.health.at) }) : undefined].filter(Boolean).join(' · ')} />
           {/if}
           {#each volumesOf(d) as v (v.path)}
-            {@render volume(v, v.path === d.path ? $LL.storageWholeDisk() : v.path, d)}
+            {@render volume(v, v.path === d.path ? $LL.storageWholeDisk() : v.path)}
           {/each}
           <div class="flex justify-end gap-[7px] px-[13px] py-[9px]">
             {#if health?.supported}
@@ -471,7 +475,7 @@
           {/each}
           <div class="flex justify-end gap-[7px] px-[13px] py-[9px]">
             <Button size="sm" variant="ghost" disabled={job?.state === 'running'} onclick={() => ask({ action: 'deleteRaid', array: a.name }, $LL.storageDeleteRaid(), $LL.storageDeleteRaidBody({ array: a.name }), a.name)}>{$LL.storageDeleteRaid()}</Button>
-            {#if growableArray(a.level)}
+            {#if a.growable}
               <Button size="sm" variant="secondary" icon="open_in_full" disabled={job?.state === 'running' || free.length === 0} onclick={() => openAdd(a, true)}>{$LL.storageGrowRaid()}</Button>
             {/if}
             <Button size="sm" variant="secondary" icon="add" disabled={job?.state === 'running' || free.length === 0} onclick={() => openAdd(a, false)}>{$LL.storageAddMember()}</Button>
@@ -491,7 +495,7 @@
           </Row>
           {#if p.scan}<Row label={$LL.storageScan()} value={p.scan} />{/if}
           {#each p.vdevs as v, i (`${v.name}-${i}`)}
-            {@const can = poolDeviceActions(p, i)}
+            {@const can = v.actions}
             <Row label={`${'  '.repeat(v.depth + (v.section ? 1 : 0))}${v.name}`} sub={v.section ?? undefined} value={v.errors ? $LL.storageErrors({ count: v.errors }) : v.state} mono>
               <div class="flex shrink-0 gap-[5px]">
                 {#if can.online}
@@ -579,23 +583,21 @@
       <Select
         label={creating === 'raid' ? $LL.storageLevel() : $LL.storageLayout()}
         value={newLevel}
-        options={creating === 'raid'
-          ? ['0', '1', '5', '6', '10'].map((l) => ({ value: l, label: `RAID ${l}` }))
-          : ['mirror', 'raidz1', 'raidz2', 'raidz3', 'stripe'].map((l) => ({ value: l, label: l }))}
+        options={choices.map(({ value, label }) => ({ value, label }))}
         onchange={(e: Event) => (newLevel = (e.currentTarget as HTMLSelectElement).value)}
       />
-      <p class="text-[12px] text-(--text-tertiary)">{$LL.storagePickDevices({ count: minimum(creating === 'raid' ? Number(newLevel) : newLevel) })}</p>
+      <p class="text-[12px] text-(--text-tertiary)">{$LL.storagePickDevices({ count: minimum })}</p>
       {#each free as d (d.path)}
         <Checkbox
           checked={picked.includes(d.path)}
-          disabled={!picked.includes(d.path) && picked.some((p) => overlaps(view!, p, d.path))}
+          disabled={!picked.includes(d.path) && picked.some((p) => view?.overlaps[d.path]?.includes(p))}
           label={`${d.path} · ${fmtBytes(d.size)}${d.model ? ` · ${d.model}` : ''}`} onchange={(e: Event) => toggle(d.path, (e.currentTarget as HTMLInputElement).checked)} />
       {:else}
         <p class="text-[13px] text-(--text-secondary)">{$LL.storageNoFreeDevices()}</p>
       {/each}
     </div>
     {#snippet actions()}
-      <Button variant="destructive" block disabled={picked.length < minimum(creating === 'raid' ? Number(newLevel) : newLevel) || (creating !== 'poolAdd' && !newName.trim())} onclick={confirmCreate}>{$LL.storageContinue()}</Button>
+      <Button variant="destructive" block disabled={picked.length < minimum || (creating !== 'poolAdd' && !newName.trim())} onclick={confirmCreate}>{$LL.storageContinue()}</Button>
       <Button variant="secondary" block onclick={() => (creating = null)}>{$LL.cancel()}</Button>
     {/snippet}
   </Dialog>

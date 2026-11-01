@@ -3,11 +3,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import StorageApp from '../desk/apps/storage/StorageApp.svelte'
-import { arrayDevice, disksOf, expandable, freeDevices, growableArray, growablePartition, isLuks, minimum, nextMd, opened, overlaps, poolDeviceActions, verdict, volumesOf } from '../desk/apps/storage/model'
+import { arrayDevice, disksOf, isLuks, opened, verdict, volumesOf } from '../desk/apps/storage/model'
 import { LL } from '../i18n/i18n-svelte'
 import { api, ApiError } from '../lib/api'
 import { servers } from '../lib/servers.svelte'
-import type { BlockDevice, DiskHealth, HealthReading, StorageView, ZPool } from '../types'
+import type { BlockDevice, DiskHealth, HealthReading, StorageView } from '../types'
 
 vi.mock('../lib/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../lib/api')>()),
@@ -34,6 +34,7 @@ const dev = (path: string, kind: string, extra: Partial<BlockDevice> = {}): Bloc
   mountpoints: [],
   mounted: false,
   mountable: false,
+  expandable: false,
   available: null,
   used: null,
   children: [],
@@ -49,7 +50,13 @@ const view: StorageView = {
     dev('/dev/sr0', 'rom'),
   ],
   busy: { '/dev/sda': 'mounted', '/dev/sda1': 'mounted', '/dev/sdb': 'raidMember', '/dev/sdb1': 'raidMember' },
-  arrays: [{ name: 'md0', state: 'active', level: 'raid1', members: [{ name: 'sdb1', faulty: false, spare: false }], raid_disks: 2, working_disks: 1, sync: null }],
+  free: ['/dev/sdc', '/dev/sdd'],
+  overlaps: {},
+  growable_partitions: [],
+  next_md: 'md1',
+  raid_levels: [{ value: 0, minimum: 2 }, { value: 1, minimum: 2 }, { value: 5, minimum: 3 }, { value: 6, minimum: 4 }, { value: 10, minimum: 4 }],
+  pool_layouts: [{ value: 'stripe', minimum: 1 }, { value: 'mirror', minimum: 2 }, { value: 'raidz1', minimum: 3 }, { value: 'raidz2', minimum: 4 }, { value: 'raidz3', minimum: 5 }],
+  arrays: [{ name: 'md0', state: 'active', level: 'raid1', members: [{ name: 'sdb1', faulty: false, spare: false }], raid_disks: 2, working_disks: 1, sync: null, growable: true }],
   pools: [],
   tools: ['mdadm', 'mkfs.ext4', 'sfdisk', 'wipefs', 'smartctl'],
   job: null,
@@ -82,59 +89,21 @@ const reading: HealthReading = {
 }
 
 describe('the storage model', () => {
-  it('offers what is free, and mounts what can be', () => {
+  it('lists the disks and their filesystems', () => {
     expect(disksOf(view).map((d) => d.path)).toEqual(['/dev/sda', '/dev/sdb', '/dev/sdc', '/dev/sdd'])
-    expect(freeDevices(view).map((d) => d.path)).toEqual(['/dev/sdc', '/dev/sdd'])
     expect(volumesOf(view.disks[3]).map((d) => d.path)).toEqual(['/dev/sdd'])
-    expect(nextMd(view)).toBe('md1')
-    expect([minimum(1), minimum(5), minimum(10), minimum('raidz2'), minimum('stripe')]).toEqual([2, 3, 4, 4, 1])
-    expect([overlaps(view, '/dev/sdb', '/dev/sdb1'), overlaps(view, '/dev/sdb1', '/dev/sdb'), overlaps(view, '/dev/sdc', '/dev/sdd')]).toEqual([true, true, false])
   })
 
-  it('finds an array\'s filesystem and what can grow', () => {
-    const md = dev('/dev/md0', 'raid1', { fstype: 'ext4', mountpoints: ['/srv/data'], mounted: true, size: 8 * 2 ** 30, fs_size: 4 * 2 ** 30 })
+  it('finds an array\'s filesystem and a LUKS container\'s opened device', () => {
+    const md = dev('/dev/md0', 'raid1', { fstype: 'ext4' })
     const v = { ...structuredClone(view), disks: [dev('/dev/sdb', 'disk', { children: [dev('/dev/sdb1', 'part', { children: [md] })] })] }
     expect(arrayDevice(v, 'md0')?.path).toBe('/dev/md0')
     expect(arrayDevice(v, 'md9')).toBeUndefined()
-    expect(expandable(md)).toBe(true)
-    // What ext4 keeps for itself is not room to grow into.
-    expect(expandable({ ...md, fs_size: 7.8 * 2 ** 30 })).toBe(false)
-    expect(expandable({ ...md, mountpoints: [], mounted: false })).toBe(false)
-    expect(expandable({ ...md, fstype: 'vfat' })).toBe(false)
-    expect(['raid0', 'raid1', 'raid5', 'raid6', 'raid10', null].map(growableArray)).toEqual([false, true, true, true, false, false])
-  })
-
-  it('knows what a partition, a LUKS container and a pool\'s devices allow', () => {
-    const p1 = dev('/dev/sdb1', 'part', { size: 2 * 2 ** 30 })
-    const disk = dev('/dev/sdb', 'disk', { size: 8 * 2 ** 30, children: [dev('/dev/sdb0', 'part', { size: 2 ** 20 }), p1] })
-    expect(growablePartition(disk, p1)).toBe(true)
-    expect(growablePartition(disk, disk.children[0])).toBe(false)
-    expect(growablePartition({ ...disk, size: 2 * 2 ** 30 + 2 ** 21 }, p1)).toBe(false)
 
     const mapper = dev('/dev/mapper/luks-1', 'crypt', { fstype: 'ext4' })
     const luks = dev('/dev/sdc1', 'part', { fstype: 'crypto_LUKS', children: [mapper] })
     expect([isLuks(luks), opened(luks)?.path, opened({ ...luks, children: [] })]).toEqual([true, '/dev/mapper/luks-1', undefined])
     expect(volumesOf(dev('/dev/sdd', 'disk', { fstype: 'crypto_LUKS', children: [mapper] })).map((v) => v.path)).toEqual(['/dev/sdd'])
-
-    const pool: ZPool = {
-      name: 'tank', size: 1, allocated: 0, free: 1, health: 'DEGRADED', scan: null,
-      vdevs: [
-        { name: 'mirror-0', state: 'DEGRADED', depth: 0, errors: 0 },
-        { name: '/dev/sdb', state: 'ONLINE', depth: 1, errors: 0 },
-        { name: '/dev/sdc', state: 'OFFLINE', depth: 1, errors: 0 },
-        { name: 'raidz1-1', state: 'ONLINE', depth: 0, errors: 0 },
-        { name: '/dev/sdf', state: 'ONLINE', depth: 1, errors: 0 },
-        { name: '/dev/sdg', state: 'ONLINE', depth: 0, errors: 0 },
-        { name: '/dev/sdd', state: 'AVAIL', depth: 0, errors: 0, section: 'spares' },
-      ],
-    }
-    const acts = pool.vdevs.map((_, i) => poolDeviceActions(pool, i))
-    expect(acts[0]).toEqual({ replace: false, attach: false, remove: false, online: false })
-    expect(acts[1]).toEqual({ replace: true, attach: true, remove: false, online: false })
-    expect(acts[2]).toEqual({ replace: true, attach: true, remove: false, online: true })
-    expect(acts[4]).toEqual({ replace: true, attach: false, remove: false, online: false })
-    expect(acts[5]).toEqual({ replace: true, attach: true, remove: false, online: false })
-    expect(acts[6]).toEqual({ replace: false, attach: false, remove: true, online: false })
   })
 
   it('says what a disk\'s SMART says', () => {
@@ -279,13 +248,14 @@ describe('the Storage app', () => {
   })
 
   it('replaces a pool\'s device with a free one', async () => {
+    const none = { replace: false, attach: false, remove: false, online: false }
     const job = { id: 4, kind: 'storage' as const, state: 'running' as const, error: null, lines: [], next: 0 }
     mocked.storageAct.mockResolvedValue(job)
     mocked.storageJob.mockResolvedValue(job)
     mocked.getStorage.mockResolvedValue({
       ...structuredClone(view),
       tools: [...view.tools, 'zpool'],
-      pools: [{ name: 'tank', size: 1, allocated: 0, free: 1, health: 'DEGRADED', scan: null, vdevs: [{ name: 'mirror-0', state: 'DEGRADED', depth: 0, errors: 0 }, { name: '/dev/sdx', state: 'FAULTED', depth: 1, errors: 3 }] }],
+      pools: [{ name: 'tank', size: 1, allocated: 0, free: 1, health: 'DEGRADED', scan: null, vdevs: [{ name: 'mirror-0', state: 'DEGRADED', depth: 0, errors: 0, actions: none }, { name: '/dev/sdx', state: 'FAULTED', depth: 1, errors: 3, actions: { ...none, replace: true, attach: true } }] }],
     })
     render(StorageApp)
     await fireEvent.click(await screen.findByText(ll.storagePools()))

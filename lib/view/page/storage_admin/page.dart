@@ -316,7 +316,7 @@ extension on _StoragePageState {
               icon: const Icon(Icons.lock_open),
               onPressed: _busy ? null : () => _unlock(volume),
             ),
-          if (storageGrowablePartition(disk, volume) && _has('sfdisk'))
+          if ((_view?.growablePartitions.contains(volume.path) ?? false) && _has('sfdisk'))
             IconButton(
               tooltip: l10n.storageGrowPartition,
               icon: const Icon(Icons.open_in_full),
@@ -349,7 +349,7 @@ extension on _StoragePageState {
               icon: const Icon(Icons.folder_open),
               onPressed: _busy ? null : () => _mount(volume),
             ),
-          if (storageExpandable(volume))
+          if (volume.expandable)
             IconButton(
               tooltip: l10n.storageExpand,
               icon: const Icon(Icons.expand),
@@ -452,7 +452,7 @@ extension on _StoragePageState {
                       ),
                 child: Text(l10n.storageDeleteRaid),
               ),
-              if (storageGrowableRaid(array.level))
+              if (array.growable)
                 TextButton(
                   onPressed: _busy ? null : () => _pickDevice(array, grow: true),
                   child: Text(l10n.storageGrowRaid),
@@ -527,7 +527,7 @@ extension on _StoragePageState {
   }
 
   Widget _poolDevice(StoragePool pool, StorageVdev device, int index) {
-    final can = storagePoolActions(pool, index);
+    final can = pool.vdevs[index].actions;
     final title = '${'  ' * (device.depth + (device.section == null ? 0 : 1))}${device.name}';
     return ListTile(
       dense: true,
@@ -1058,11 +1058,11 @@ extension on _StoragePageState {
   }) async {
     final view = _view;
     if (view == null) return null;
-    final free = freeStorageDevices(view);
-    final name = TextEditingController(text: raid ? _nextMd(view) : poolName ?? 'tank');
-    final levels = raid
-        ? ['0', '1', '5', '6', '10']
-        : ['stripe', 'mirror', 'raidz1', 'raidz2', 'raidz3'];
+    final free = _free(view);
+    final name = TextEditingController(text: raid ? view.nextMd : poolName ?? 'tank');
+    final choices = raid ? view.raidLevels : view.poolLayouts;
+    int minimum(String value) =>
+        choices.firstWhereOrNull((choice) => choice.value == value)?.minimum ?? 1;
     var layout = raid ? '1' : 'mirror';
     final selected = <String>{};
     final result = await context.showRoundDialog<bool>(
@@ -1079,14 +1079,14 @@ extension on _StoragePageState {
                 initialValue: layout,
                 decoration: InputDecoration(labelText: raid ? l10n.storageLevel : l10n.storageLayout),
                 items: [
-                  for (final value in levels)
+                  for (final StorageChoice(:value) in choices)
                     DropdownMenuItem(value: value, child: Text(raid ? 'RAID $value' : value)),
                 ],
                 onChanged: (value) => setDialogState(() {
                   layout = value ?? layout;
                 }),
               ),
-              Text(l10n.storagePickDevices(storageMinimum(raid ? int.parse(layout) : layout))),
+              Text(l10n.storagePickDevices(minimum(layout))),
               Flexible(
                 child: ListView(
                   shrinkWrap: true,
@@ -1095,13 +1095,16 @@ extension on _StoragePageState {
                       CheckboxListTile(
                         value: selected.contains(device.path),
                         title: Text('${device.path} · ${_bytes(device.size)}'),
-                        onChanged: (value) => setDialogState(() {
-                          if (value == true) {
-                            selected.add(device.path);
-                          } else {
-                            selected.remove(device.path);
-                          }
-                        }),
+                        onChanged: !selected.contains(device.path) &&
+                                (view.overlaps[device.path] ?? const []).any(selected.contains)
+                            ? null
+                            : (value) => setDialogState(() {
+                                if (value == true) {
+                                  selected.add(device.path);
+                                } else {
+                                  selected.remove(device.path);
+                                }
+                              }),
                       ),
                   ],
                 ),
@@ -1115,7 +1118,7 @@ extension on _StoragePageState {
     final value = _CreateDraft(name.text.trim(), layout, selected.toList());
     _disposeAfterExit([name]);
     if (result != true || !mounted) return null;
-    if (value.devices.length < storageMinimum(raid ? int.parse(layout) : layout) ||
+    if (value.devices.length < minimum(layout) ||
         value.name.isEmpty) {
       Toast.error(l10n.storageTooFewDevices);
       return null;
@@ -1123,16 +1126,10 @@ extension on _StoragePageState {
     return value;
   }
 
-  String _nextMd(StorageView view) {
-    final taken = view.arrays.map((array) => array.name).toSet();
-    for (var i = 0; i < 1000; i++) {
-      if (!taken.contains('md$i')) return 'md$i';
-    }
-    return 'md999';
-  }
+  List<BlockDevice> _free(StorageView view) => view.free.map(view.find).nonNulls.toList();
 
   Future<String?> _chooseDevice(String title, String message) async {
-    final free = _view == null ? <BlockDevice>[] : freeStorageDevices(_view!);
+    final free = _view == null ? <BlockDevice>[] : _free(_view!);
     if (free.isEmpty) return null;
     var path = free.first.path;
     final ok = await context.showRoundDialog<bool>(

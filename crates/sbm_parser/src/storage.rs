@@ -52,6 +52,11 @@ pub struct BlockDevice {
     /// not a member of an array, pool or volume group ([`is_member_fs`]).
     #[serde(default)]
     pub mountable: bool,
+    /// A mounted filesystem [`growable`] well smaller than the device (10%,
+    /// and at least 256 MiB, past what the filesystem keeps for itself): the
+    /// device grew under it.
+    #[serde(default)]
+    pub expandable: bool,
     /// The filesystem's size, mounted only: below the device's after the
     /// device grew, until the filesystem is expanded.
     #[serde(default)]
@@ -97,7 +102,7 @@ fn device(v: &Value) -> Option<BlockDevice> {
     let fstype = text(&v["fstype"]);
     let mounted = mountpoints.iter().any(|m| m.starts_with('/'));
     let mountable = !mounted && fstype.as_deref().is_some_and(|f| f != "swap" && !is_member_fs(f));
-    Some(BlockDevice {
+    let mut dev = BlockDevice {
         path: text(&v["path"]).unwrap_or_else(|| format!("/dev/{name}")),
         name,
         kind: text(&v["type"]).unwrap_or_default(),
@@ -115,11 +120,14 @@ fn device(v: &Value) -> Option<BlockDevice> {
         mountpoints,
         mounted,
         mountable,
+        expandable: false,
         fs_size: number(&v["fssize"]),
         available: number(&v["fsavail"]),
         used: number(&v["fsused"]),
         children: v["children"].as_array().map(|c| c.iter().filter_map(device).collect()).unwrap_or_default(),
-    })
+    };
+    dev.expandable = growable(&dev) && dev.fs_size.is_some_and(|fs| dev.size.saturating_sub(fs) > (dev.size / 10).max(256 << 20));
+    Some(dev)
 }
 
 /// Reads [`LSBLK_COMMAND`]'s JSON; nothing when it is not that.
@@ -276,6 +284,9 @@ pub struct MdArray {
     pub working_disks: Option<u32>,
     /// A sync running: `resync`, `recovery`, `check`, `reshape`.
     pub sync: Option<MdSync>,
+    /// Grows by one more working member ([`raid_growable`]).
+    #[serde(default)]
+    pub growable: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -292,6 +303,11 @@ pub struct MdSync {
     /// Tenths of a percent.
     pub permille: u32,
     pub finish: Option<String>,
+}
+
+/// RAID levels that grow by one more working member: 1, 5, 6.
+pub fn raid_growable(level: Option<&str>) -> bool {
+    matches!(level, Some("raid1" | "raid5" | "raid6"))
 }
 
 impl MdArray {
@@ -324,7 +340,8 @@ pub fn parse_mdstat(text: &str) -> Vec<MdArray> {
                     Some(MdMember { name: name.to_string(), faulty: w.ends_with("(F)"), spare: w.ends_with("(S)") })
                 })
                 .collect();
-            out.push(MdArray { name: name.to_string(), state, level, members, raid_disks: None, working_disks: None, sync: None });
+            let growable = raid_growable(level.as_deref());
+            out.push(MdArray { name: name.to_string(), state, level, members, raid_disks: None, working_disks: None, sync: None, growable });
             continue;
         }
         let Some(array) = out.last_mut() else { continue };
@@ -386,6 +403,34 @@ pub struct Vdev {
     /// Outside the data vdevs: `spares`, `logs`, `cache`, `special`, `dedup`.
     #[serde(default)]
     pub section: Option<String>,
+    /// What may be asked of it, by where it sits ([`vdev_actions`]).
+    #[serde(default)]
+    pub actions: VdevActions,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VdevActions {
+    pub replace: bool,
+    pub attach: bool,
+    pub remove: bool,
+    pub online: bool,
+}
+
+/// What the device at [index] of a pool's [vdevs] may be asked for: a data
+/// device is replaced, and a single disk or a mirror's side gets another
+/// (attach); only spares and caches leave; an offline one comes online.
+/// Nothing for a vdev itself (`mirror-0`).
+pub fn vdev_actions(vdevs: &[Vdev], index: usize) -> VdevActions {
+    let Some(v) = vdevs.get(index).filter(|v| v.name.starts_with('/')) else { return VdevActions::default() };
+    let online = v.state == "OFFLINE";
+    if let Some(section) = &v.section {
+        return VdevActions { remove: section == "spares" || section == "cache", online, ..VdevActions::default() };
+    }
+    // The vdev it belongs to: the nearest shallower row above.
+    let parent = (v.depth > 0)
+        .then(|| vdevs[..index].iter().rev().find(|p| p.depth < v.depth && p.section.is_none()))
+        .flatten();
+    VdevActions { replace: true, attach: v.depth == 0 || parent.is_some_and(|p| p.name.starts_with("mirror")), remove: false, online }
 }
 
 pub fn parse_zpool_list(stdout: &str) -> Vec<Pool> {
@@ -449,7 +494,12 @@ pub fn merge_zpool_status(pools: &mut [Pool], stdout: &str) {
             // further, what they are made of two more.
             let depth = (indent.saturating_sub(base_indent + 2) / 2) as u32;
             let errors = f.iter().skip(2).take(3).filter_map(|e| e.parse::<u64>().ok()).sum();
-            pools[i].vdevs.push(Vdev { name: f[0].to_string(), state: f[1].to_string(), depth, errors, section: section.clone() });
+            pools[i].vdevs.push(Vdev { name: f[0].to_string(), state: f[1].to_string(), depth, errors, section: section.clone(), actions: VdevActions::default() });
+        }
+    }
+    for pool in pools {
+        for i in 0..pool.vdevs.len() {
+            pool.vdevs[i].actions = vdev_actions(&pool.vdevs, i);
         }
     }
 }
@@ -740,6 +790,33 @@ pub const FILESYSTEMS: &[&str] = &["ext4", "xfs", "btrfs"];
 pub const RAID_LEVELS: &[u8] = &[0, 1, 5, 6, 10];
 pub const POOL_LAYOUTS: &[&str] = &["stripe", "mirror", "raidz1", "raidz2", "raidz3"];
 
+/// The fewest devices an md level takes.
+pub fn raid_minimum(level: u8) -> usize {
+    match level {
+        5 => 3,
+        6 | 10 => 4,
+        _ => 2,
+    }
+}
+
+/// The fewest devices a pool layout takes.
+pub fn pool_minimum(layout: &str) -> usize {
+    match layout {
+        "stripe" => 1,
+        "mirror" => 2,
+        "raidz1" => 3,
+        "raidz2" => 4,
+        _ => 5,
+    }
+}
+
+/// An md level or pool layout one may pick, and the fewest devices it takes.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Choice<T> {
+    pub value: T,
+    pub minimum: usize,
+}
+
 /// Host folders never mounted over.
 const SYSTEM_DIRS: &[&str] = &[
     "/", "/bin", "/boot", "/dev", "/etc", "/home", "/lib", "/lib32", "/lib64", "/opt", "/proc", "/root", "/run", "/sbin",
@@ -975,13 +1052,7 @@ impl StorageAction {
                     return Err(StorageError::InvalidLevel);
                 }
                 devices.iter().try_for_each(|d| device_ok(d))?;
-                let min = match level {
-                    0 | 1 => 2,
-                    5 => 3,
-                    6 | 10 => 4,
-                    _ => 2,
-                };
-                if devices.len() < min || has_duplicates(devices) {
+                if devices.len() < raid_minimum(*level) || has_duplicates(devices) {
                     return Err(StorageError::TooFewDevices);
                 }
                 Ok(())
@@ -997,14 +1068,7 @@ impl StorageAction {
                     return Err(StorageError::InvalidLevel);
                 }
                 devices.iter().try_for_each(|d| device_ok(d))?;
-                let min = match layout.as_str() {
-                    "stripe" => 1,
-                    "mirror" => 2,
-                    "raidz1" => 3,
-                    "raidz2" => 4,
-                    _ => 5,
-                };
-                if devices.len() < min || has_duplicates(devices) {
+                if devices.len() < pool_minimum(layout) || has_duplicates(devices) {
                     return Err(StorageError::TooFewDevices);
                 }
                 Ok(())
@@ -1228,6 +1292,24 @@ pub struct StorageView {
     pub busy: std::collections::BTreeMap<String, String>,
     /// Devices mounted where the system lives ([`system_mounted`]).
     pub system: Vec<String>,
+    /// What may be given to a new array or pool, or formatted, in the tree's
+    /// order: a disk, partition or loop device with a size, not [`busy`].
+    #[serde(default)]
+    pub free: Vec<String>,
+    /// For each of [`free`], the others it is or holds ([`overlapping`]):
+    /// never picked together. Left out when there are none.
+    #[serde(default)]
+    pub overlaps: std::collections::BTreeMap<String, Vec<String>>,
+    /// Each disk's last partition with room after it ([`growable_partition`]).
+    #[serde(default)]
+    pub growable_partitions: Vec<String>,
+    /// The first `md` name no array has.
+    #[serde(default)]
+    pub next_md: String,
+    #[serde(default)]
+    pub raid_levels: Vec<Choice<u8>>,
+    #[serde(default)]
+    pub pool_layouts: Vec<Choice<String>>,
     pub arrays: Vec<MdArray>,
     pub pools: Vec<Pool>,
     pub tools: Vec<String>,
@@ -1269,7 +1351,57 @@ pub fn parse_view(stdout: &str) -> Option<StorageView> {
         .filter_map(|d| in_use(&disks, &d.path, &held).map(|why| (d.path.clone(), why.to_string())))
         .collect();
     let system = disks.iter().flat_map(BlockDevice::walk).filter(|d| system_mounted(d)).map(|d| d.path.clone()).collect();
-    Some(StorageView { disks, busy, system, arrays, pools, tools: parse_tools(section("tools")) })
+    let free = free_devices(&disks, &busy);
+    let overlaps = free
+        .iter()
+        .map(|a| (a.clone(), free.iter().filter(|b| *b != a && overlapping(&disks, &[a, b])).cloned().collect::<Vec<_>>()))
+        .filter(|(_, with)| !with.is_empty())
+        .collect();
+    let growable_partitions =
+        disks.iter().flat_map(BlockDevice::walk).filter(|d| growable_partition(&disks, &d.path)).map(|d| d.path.clone()).collect();
+    let taken: Vec<&str> = arrays.iter().map(|a| a.name.as_str()).collect();
+    let next_md = (0..1000).map(|n| format!("md{n}")).find(|n| !taken.contains(&n.as_str())).unwrap_or_else(|| "md999".into());
+    Some(StorageView {
+        disks,
+        busy,
+        system,
+        free,
+        overlaps,
+        growable_partitions,
+        next_md,
+        raid_levels: RAID_LEVELS.iter().map(|&value| Choice { value, minimum: raid_minimum(value) }).collect(),
+        pool_layouts: POOL_LAYOUTS.iter().map(|&l| Choice { value: l.to_string(), minimum: pool_minimum(l) }).collect(),
+        arrays,
+        pools,
+        tools: parse_tools(section("tools")),
+    })
+}
+
+/// A disk with a size (not an optical drive or an empty loop device).
+fn is_disk(d: &BlockDevice) -> bool {
+    d.kind != "rom" && d.size > 0
+}
+
+/// See [`StorageView::free`].
+fn free_devices(disks: &[BlockDevice], busy: &std::collections::BTreeMap<String, String>) -> Vec<String> {
+    disks
+        .iter()
+        .filter(|d| is_disk(d))
+        .flat_map(BlockDevice::walk)
+        .filter(|d| matches!(d.kind.as_str(), "disk" | "part" | "loop") && d.size > 0 && !busy.contains_key(&d.path))
+        .map(|d| d.path.clone())
+        .collect()
+}
+
+/// [path] is its disk's last partition and free space follows it (more than
+/// 1% of the disk and 64 MiB, past alignment): [`StorageAction::GrowPartition`]
+/// has room to take.
+pub fn growable_partition(disks: &[BlockDevice], path: &str) -> bool {
+    disks.iter().filter(|d| is_disk(d)).any(|disk| {
+        let parts: Vec<&BlockDevice> = disk.children.iter().filter(|c| c.kind == "part").collect();
+        parts.last().is_some_and(|last| last.path == path)
+            && disk.size.saturating_sub(parts.iter().map(|p| p.size).sum()) > (disk.size / 100).max(64 << 20)
+    })
 }
 
 /// Why [action] is refused on the machine as [view] says it is: an HTTP
@@ -1312,13 +1444,13 @@ pub fn check(view: &StorageView, action: &StorageAction) -> Result<(), Refusal> 
             }
         }
         StorageAction::GrowPartition { device } => {
-            if find(disks, device).is_none_or(|d| d.kind != "part") {
+            if !growable_partition(disks, device) {
                 return Err(refusal(409, "notGrowable"));
             }
         }
         StorageAction::RemoveFromPool { name, device } => {
             let removable = view.pools.iter().find(|p| &p.name == name).is_some_and(|p| {
-                p.vdevs.iter().any(|v| &v.name == device && matches!(v.section.as_deref(), Some("spares" | "cache")))
+                p.vdevs.iter().enumerate().any(|(i, v)| &v.name == device && vdev_actions(&p.vdevs, i).remove)
             });
             if !removable {
                 return Err(refusal(409, "notRemovable"));
@@ -1326,7 +1458,7 @@ pub fn check(view: &StorageView, action: &StorageAction) -> Result<(), Refusal> 
         }
         StorageAction::GrowRaid { array, .. } => {
             let level = view.arrays.iter().find(|a| &a.name == array).and_then(|a| a.level.as_deref());
-            if !matches!(level, Some("raid1" | "raid5" | "raid6")) {
+            if !raid_growable(level) {
                 return Err(refusal(409, "notGrowable"));
             }
         }
@@ -1392,6 +1524,58 @@ mod tests {
         assert_eq!(d[0].children[1].available, Some(400_000_000_000));
         assert_eq!(find(&d, "/dev/md0").unwrap().kind, "raid1");
         assert!(parse_lsblk("not json").is_empty());
+    }
+
+    #[test]
+    fn room_to_grow_and_overlapping_picks_are_read_here() {
+        const G: u64 = 1 << 30;
+        let lsblk = format!(
+            r#"{{"blockdevices":[
+              {{"name":"sdx","path":"/dev/sdx","type":"disk","size":{},"mountpoints":[null],"children":[
+                {{"name":"sdx1","path":"/dev/sdx1","type":"part","size":{},"fstype":"ext4","mountpoints":["/data"],"fssize":{}}}]}},
+              {{"name":"sdy","path":"/dev/sdy","type":"disk","size":{},"mountpoints":[null],"children":[
+                {{"name":"sdy1","path":"/dev/sdy1","type":"part","size":{},"mountpoints":[null]}}]}}
+            ]}}"#,
+            10 * G,
+            4 * G,
+            2 * G,
+            G,
+            G - (1 << 20)
+        );
+        let v = parse_view(&format!("### lsblk\n{lsblk}\n### tools\n")).unwrap();
+        assert!(find(&v.disks, "/dev/sdx1").unwrap().expandable);
+        assert_eq!(v.growable_partitions, ["/dev/sdx1"]);
+        assert_eq!(check(&v, &StorageAction::GrowPartition { device: "/dev/sdy1".into() }).unwrap_err().error, "notGrowable");
+        assert_eq!(v.free, ["/dev/sdy", "/dev/sdy1"]);
+        assert_eq!(v.overlaps["/dev/sdy"], ["/dev/sdy1"]);
+        assert_eq!(v.overlaps["/dev/sdy1"], ["/dev/sdy"]);
+
+        // What ext4 keeps for itself is not room to grow into; only ext, xfs
+        // and btrfs grow, and only mounted.
+        let fs = |fstype: &str, mount: &str, fs_size: u64| {
+            parse_lsblk(&format!(
+                r#"{{"blockdevices":[{{"name":"md0","type":"raid1","size":{},"fstype":"{fstype}","mountpoints":[{mount}],"fssize":{fs_size}}}]}}"#,
+                8 * G
+            ))[0]
+                .expandable
+        };
+        assert!(fs("ext4", r#""/srv""#, 4 * G));
+        assert!(!fs("ext4", r#""/srv""#, 8 * G - 200 * (1 << 20)));
+        assert!(!fs("ext4", "null", 4 * G));
+        assert!(!fs("vfat", r#""/srv""#, 4 * G));
+
+        // Only the last partition, and only with more than alignment after it.
+        let parts = |disk: u64| {
+            format!(
+                r#"{{"blockdevices":[{{"name":"sdb","path":"/dev/sdb","type":"disk","size":{disk},"children":[
+                  {{"name":"sdb1","path":"/dev/sdb1","type":"part","size":{}}},{{"name":"sdb2","path":"/dev/sdb2","type":"part","size":{}}}]}}]}}"#,
+                1 << 20,
+                2 * G
+            )
+        };
+        let roomy = parse_lsblk(&parts(8 * G));
+        assert!(growable_partition(&roomy, "/dev/sdb2") && !growable_partition(&roomy, "/dev/sdb1"));
+        assert!(!growable_partition(&parse_lsblk(&parts(2 * G + (3 << 20))), "/dev/sdb2"));
     }
 
     #[test]
@@ -1467,6 +1651,7 @@ md127 : inactive sdg[0](S)\n      976630488 blocks super 1.2\n\nunused devices: 
         assert!(a[1].members.iter().any(|m| m.name == "sdf1" && m.spare));
         assert!(!a[1].degraded());
         assert_eq!((a[2].state.as_str(), a[2].level.as_deref()), ("inactive", None));
+        assert_eq!(a.iter().map(|a| a.growable).collect::<Vec<_>>(), [true, true, false]);
     }
 
     #[test]
@@ -1586,6 +1771,20 @@ md127 : inactive sdg[0](S)\n      976630488 blocks super 1.2\n\nunused devices: 
         merge_zpool_status(&mut pools, status);
         let v: Vec<(&str, u32, Option<&str>)> = pools[0].vdevs.iter().map(|v| (v.name.as_str(), v.depth, v.section.as_deref())).collect();
         assert_eq!(v, [("mirror-0", 0, None), ("/dev/sdb", 1, None), ("/dev/sdc", 1, None), ("/dev/sdd", 0, Some("spares"))]);
+        let side = VdevActions { replace: true, attach: true, remove: false, online: false };
+        // A raidz member is replaced, never attached to; a single disk becomes a mirror.
+        let mut more = pools.clone();
+        merge_zpool_status(
+            &mut more,
+            "  pool: tank\nconfig:\n\n\tNAME          STATE     READ WRITE CKSUM\n\ttank          ONLINE       0     0     0\n\t  raidz1-1    ONLINE       0     0     0\n\t    /dev/sdf  ONLINE       0     0     0\n\t  /dev/sdg    ONLINE       0     0     0\n\nerrors: No known data errors\n",
+        );
+        let tail: Vec<VdevActions> = more[0].vdevs[4..].iter().map(|v| v.actions).collect();
+        assert_eq!(tail, [VdevActions::default(), VdevActions { attach: false, ..side }, side]);
+        let actions: Vec<VdevActions> = pools[0].vdevs.iter().map(|v| v.actions).collect();
+        assert_eq!(
+            actions,
+            [VdevActions::default(), side, VdevActions { online: true, ..side }, VdevActions { remove: true, ..VdevActions::default() }]
+        );
 
         let replace = StorageAction::ReplaceInPool { name: "tank".into(), old: "/dev/sdc".into(), new: "/dev/sde".into() };
         assert_eq!(replace.script().unwrap(), "wipefs -a '/dev/sde' && zpool set autoexpand=on 'tank' && zpool replace 'tank' '/dev/sdc' '/dev/sde'");
@@ -1632,6 +1831,11 @@ md127 : inactive sdg[0](S)\n      976630488 blocks super 1.2\n\nunused devices: 
         assert_eq!(v.tools, ["mdadm", "sfdisk"]);
         assert_eq!(v.busy.get("/dev/sdb1").map(String::as_str), Some("raidMember"));
         assert!(v.system.contains(&"/dev/sda2".to_string()));
+        assert_eq!(v.free, ["/dev/sdc"]);
+        assert!(v.overlaps.is_empty() && v.growable_partitions.is_empty());
+        assert_eq!(v.next_md, "md1");
+        assert_eq!(v.raid_levels[2], Choice { value: 5, minimum: 3 });
+        assert_eq!(v.pool_layouts[0], Choice { value: "stripe".to_string(), minimum: 1 });
         assert_eq!(parse_view("### lsblk\nlsblk: not found\n"), None);
 
         let format = |d: &str| StorageAction::Format { device: d.into(), fstype: "ext4".into(), label: None, encrypt: false };
