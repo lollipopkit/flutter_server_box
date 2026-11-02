@@ -20,7 +20,7 @@ ads, advertising identifiers, or cross-app tracking.
 | Server names, addresses, ports, usernames and settings | Encrypted SQLite database |
 | SSH passwords, private keys, Monitor and BMC credentials | Encrypted SQLite database; the database encryption key is kept in the platform keychain |
 | AI provider API keys | Platform keychain, one entry per provider |
-| Backup password, WebDAV password and GitHub token | Platform secure storage |
+| Backup password, sync key, WebDAV password and GitHub token | Platform secure storage |
 | App logs | Local log files only; the current and previous run are retained for troubleshooting |
 | Agent conversations, memory notes, AI providers and tool settings | Local encrypted database; conversations may contain prompts, model responses, command output, terminal text, file content and fetched pages |
 | Active terminal output | Kept in the active session; the terminal does not retain it after the session ends |
@@ -225,7 +225,7 @@ automatic diagnostic payload described above.
 | Request | Destination | When and what it carries |
 |---|---|---|
 | AI request | The endpoint configured by you | When you send an Agent message; see [AI requests](#ai-requests) |
-| Backup or sync | iCloud, your WebDAV server, GitHub Gist, or your Monitor | When you upload, download or sync a backup; the selected backup file, which may be encrypted |
+| Backup or sync | iCloud, your WebDAV server, GitHub Gist, or your Monitor | When you upload, download or sync a backup; the selected backup file, which may be encrypted. With iCloud or WebDAV, also each device's changes, encrypted to a sync key, and that key, encrypted with the backup password |
 | Update check | `api.github.com` | On launch when automatic update checks are enabled |
 | Linux userland manifest | `github.com` | When the app checks for a newer local Linux release; it contains release metadata and signatures |
 | Linux userland image | The distribution mirror or source URL selected by the verified manifest | When you install or update a local Linux environment; the image is checked against the manifest's digest |

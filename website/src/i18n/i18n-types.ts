@@ -59,6 +59,10 @@ type RootTranslation = {
 		 */
 		os: string
 		/**
+		 * B​e​t​a
+		 */
+		beta: string
+		/**
 		 * P​l​u​g​i​n​s
 		 */
 		plugins: string
@@ -726,6 +730,10 @@ export type TranslationFunctions = {
 		 * ServerBox OS
 		 */
 		os: () => LocalizedString
+		/**
+		 * Beta
+		 */
+		beta: () => LocalizedString
 		/**
 		 * Plugins
 		 */

@@ -16,11 +16,31 @@ import 'package:server_box/data/store/sync_recorder.dart';
 import 'package:server_box/data/store/sync_records.dart';
 import 'package:server_box/data/store/sync_themes.dart';
 
+part 'segment_sync.dart';
+
+/// Whether records of collection [c] are synced now: the settings, and the
+/// themes they select, only while the user syncs settings.
+bool syncCarries(String c) => (c != 'kv:${Stores.setting.name}' && c != SyncThemes.c) || PrefProps.syncAppSettings.get();
+
 /// A record's change as the log carries it: `fl_sync::Op`.
 typedef SyncOp = ({String c, String id, String h, Object? d});
 
+/// Where large records are kept beside the log (`op-<name>.age`).
+abstract interface class SyncBlobStore {
+  /// [body] kept as [name] beside the log; already there is done.
+  Future<void> putBlob(String name, Uint8List body);
+
+  /// The blob [name], null when it is gone.
+  Future<Uint8List?> getBlob(String name);
+
+  /// The blobs whose name starts with [prefix], and when each was written.
+  Future<List<({String name, DateTime? at})>> blobs(String prefix);
+
+  Future<void> deleteBlob(String name);
+}
+
 /// Where the log is kept (LK Cloud's `/v2/sync/{app}/log`).
-abstract interface class SyncLogTransport {
+abstract interface class SyncLogTransport implements SyncBlobStore {
   /// Appends [body] once per [key]: the seq given, of which log, and whether
   /// a snapshot is due.
   Future<({String log, int seq, bool compact})> append(String key, Uint8List body);
@@ -34,17 +54,6 @@ abstract interface class SyncLogTransport {
 
   /// The snapshot, null before there is one.
   Future<({String log, int seq, Uint8List body})?> snapshot();
-
-  /// [body] kept as [name] beside the log; already there is done.
-  Future<void> putBlob(String name, Uint8List body);
-
-  /// The blob [name], null when it is gone.
-  Future<Uint8List?> getBlob(String name);
-
-  /// The blobs whose name starts with [prefix], and when each was written.
-  Future<List<({String name, DateTime? at})>> blobs(String prefix);
-
-  Future<void> deleteBlob(String name);
 }
 
 final class SyncLogPage {
@@ -96,14 +105,15 @@ final class SyncLogPartial implements Exception {
   const SyncLogPartial();
 }
 
-/// The operation-log sync (`docs/dev/sync-log.md`): sends this device's
-/// changes as batches of ops, applies the ops other devices sent that win,
-/// and writes a snapshot when the log asks for one. Everything it keeps is in
-/// `sync_state`; one run at a time.
-final class LogSync {
-  LogSync(
-    this._transport,
-    this._seal, {
+/// What the operation-log syncs share, whatever keeps the log: reading the
+/// records as ops (a large one as a blob), sealing them in batches, and
+/// applying the ops other devices sent that win. State in `sync_state`
+/// under the engine's [_prefix]; one run at a time.
+abstract base class SyncEngine {
+  SyncEngine(
+    this._blobs,
+    this._seal,
+    this._prefix, {
     FutureOr<void> Function(List<SyncOp> won)? write,
     bool Function(String c)? carries,
     void Function()? stamp,
@@ -111,11 +121,15 @@ final class LogSync {
        _carries = carries ?? _all,
        _stamp = stamp ?? SyncThemes.stamp;
 
+  final SyncBlobStore _blobs;
+
+  /// Where this engine's keys are in `sync_state`: `log.`, `seg.`.
+  final String _prefix;
+
   /// Stamps what changed without a write that stamps it (an installed
   /// theme), before what is pending is read.
   final void Function() _stamp;
 
-  final SyncLogTransport _transport;
   final SyncSeal _seal;
 
   /// Writes the ops that won and tells the app.
@@ -142,16 +156,255 @@ final class LogSync {
   static const _blobGrace = Duration(days: 1);
 
   static const _version = 1;
-  static const _logKey = 'log';
-  static const _cursorKey = 'cursor';
-  static const _sentKey = 'sent';
-  static const _joinedKey = 'joined';
 
   /// Set once an op was left out ([_carries]): what this device holds is then
   /// not the whole log, so it writes no snapshot (one would drop those ops).
   static const _partialKey = 'partial';
 
   Future<void> _running = Future.value();
+
+  Future<void> _serial(Future<void> Function() run) {
+    final next = _running.then((_) => run());
+    _running = next.catchError((Object _) {});
+    return next;
+  }
+
+  /// [records] (the oldest first) as ops; [complete] false when one could not
+  /// be read ([SyncRecords.unread]): the ops are those before it.
+  Future<({List<SyncOp> ops, bool complete})> _opsOf(List<({String c, String id, String hlc})> records) async {
+    final read = SyncRecords.reader();
+    final ops = <SyncOp>[];
+    Set<String>? there;
+    for (final r in records) {
+      final d = await read(r.c, r.id);
+      if (identical(d, SyncRecords.unread)) return (ops: ops, complete: false);
+      // A theme is added only: one removed here says nothing to the others.
+      if (d == null && r.c == SyncThemes.c) continue;
+      final json = utf8.encode(jsonEncode(d));
+      if (json.length <= inlineMax) {
+        ops.add((c: r.c, id: r.id, h: r.hlc, d: d));
+        continue;
+      }
+      // Named by the op's stamp alone: a snapshot carrying the same op names
+      // the batch's blob, whatever this build makes of the record now, so the
+      // sweep keeps what a batch still names.
+      final name = _blobName(r.hlc);
+      there ??= {for (final b in await _blobs.blobs(_blobPrefix)) b.name};
+      if (!there.contains(name)) {
+        await _blobs.putBlob(name, await _seal.seal(Uint8List.fromList(gzip.encode(json))));
+        there.add(name);
+      }
+      ops.add((c: r.c, id: r.id, h: r.hlc, d: {_blobKey: name}));
+    }
+    return (ops: ops, complete: true);
+  }
+
+  /// The blob of the op stamped [h]: named by the stamp alone.
+  String _blobName(String h) => '$_blobPrefix${_seal.nameOf(utf8.encode(h))}.age';
+
+  /// The blobs [_sweepBlobs] may remove.
+  String get _sweepPrefix => _blobPrefix;
+
+  static String? _blobOf(Object? d) => d is Map && d.length == 1 && d[_blobKey] is String ? d[_blobKey] as String : null;
+
+  /// Removes the blobs the snapshot just written does not name, past
+  /// [_blobGrace]. A batch the snapshot covers may name one still: then its
+  /// op lost to a later one of its record (the snapshot holds the op that
+  /// won, and names that one's blob), which a device reading the batch
+  /// reads after it, so the op is passed over (see [_resolve]). Best effort.
+  Future<void> _sweepBlobs(Set<String> named) async {
+    try {
+      final before = DateTime.now().subtract(_blobGrace);
+      for (final blob in await _blobs.blobs(_sweepPrefix)) {
+        if (named.contains(blob.name) || (blob.at?.isAfter(before) ?? true)) continue;
+        await _blobs.deleteBlob(blob.name);
+      }
+    } catch (e, s) {
+      Loggers.app.warning('Sync blobs sweep', e, s);
+    }
+  }
+
+  /// [ops] with each blob an op names read in; an op whose blob is gone is
+  /// left out (a later op of its record has replaced it).
+  Future<List<SyncOp>> _resolve(List<SyncOp> ops) async {
+    final out = <SyncOp>[];
+    for (final op in ops) {
+      final name = _blobOf(op.d);
+      if (name == null) {
+        out.add(op);
+        continue;
+      }
+      final sealed = await _blobs.getBlob(name);
+      if (sealed == null) {
+        Loggers.app.warning('Sync passed over ${op.c}/${op.id}: its blob is gone');
+        continue;
+      }
+      try {
+        out.add((c: op.c, id: op.id, h: op.h, d: jsonDecode(utf8.decode(gzip.decode(await _open(sealed))))));
+      } on Object catch (e) {
+        // As an unreadable batch is (see [_decode]): nothing here reads it.
+        Loggers.app.warning('Sync passed over ${op.c}/${op.id}: its blob is unreadable', e);
+      }
+    }
+    return out;
+  }
+
+  /// The ops that win over what is here, written.
+  Future<void> _apply(List<SyncOp>? received, Map<String, String?> state) async {
+    if (received == null) return _put(state);
+    final carried = [for (final op in received) if (_carries(op.c)) op];
+    if (carried.length < received.length) state = {...state, _partialKey: '1'};
+    // Every await before the stamps are read: an edit made meanwhile is then
+    // among them, and an older op does not overwrite it.
+    final ops = await _resolve(carried);
+    final current = SyncRecorder.stampsOf({for (final op in ops) (op.c, op.id)});
+    final won = (jsonDecode(
+      syncWinners(
+        opsJson: jsonEncode([for (final op in ops) {'c': op.c, 'id': op.id, 'h': op.h, 'd': op.d}]),
+        currentJson: jsonEncode({for (final MapEntry(:key, :value) in current.entries) '${key.$1}\u0000${key.$2}': value}),
+      ),
+    ) as List)
+        .cast<Map<String, dynamic>>();
+    if (won.isNotEmpty) {
+      await _write([for (final op in won) (c: op['c'] as String, id: op['id'] as String, h: op['h'] as String, d: op['d'])]);
+    }
+    _put(state);
+  }
+
+  /// [ops] in batches each sealed under [batchMax]. One op too large alone is
+  /// left out and logged.
+  Future<List<({List<SyncOp> ops, Uint8List body})>> _batches(List<SyncOp> ops) async {
+    if (ops.isEmpty) return const [];
+    final body = await _seal.seal(_encode(ops));
+    if (body.length <= batchMax) return [(ops: ops, body: body)];
+    if (ops.length == 1) {
+      // A large record goes as a blob ([inlineMax]): only a key this long.
+      Loggers.app.warning('Sync left out ${ops.single.c}/${ops.single.id}: ${body.length} bytes');
+      return const [];
+    }
+    final half = ops.length ~/ 2;
+    return [...await _batches(ops.sublist(0, half)), ...await _batches(ops.sublist(half))];
+  }
+
+  /// [ops] as a batch or snapshot holds them, with [extra] beside them.
+  static Uint8List _encode(List<SyncOp> ops, [Map<String, Object?> extra = const {}]) => Uint8List.fromList(
+    gzip.encode(
+      utf8.encode(
+        jsonEncode({
+          'v': _version,
+          'ops': [for (final op in ops) {'c': op.c, 'id': op.id, 'h': op.h, 'd': op.d}],
+          ...extra,
+        }),
+      ),
+    ),
+  );
+
+  /// Whether the key was looked for again in this read of the log: once is
+  /// enough to find one that replaced it.
+  var _refreshed = false;
+
+  /// [sealed] opened; sealed to a key that replaced the one held here, that
+  /// key is taken first.
+  Future<Uint8List> _open(Uint8List sealed) async {
+    try {
+      return await _seal.open(sealed);
+    } on FormatException {
+      if (_refreshed) rethrow;
+      _refreshed = true;
+      if (!await _seal.refresh()) rethrow;
+      return _seal.open(sealed);
+    }
+  }
+
+  /// [sealed]'s ops; null, logged, for one nothing here can ever read (not
+  /// sealed to this key, damaged), so the log is read on past it. A newer
+  /// format stops the read: an update reads it.
+  Future<List<SyncOp>?> _decode(Uint8List sealed, String what) async {
+    final Uint8List plain;
+    try {
+      plain = await _open(sealed);
+    } on Object catch (e) {
+      Loggers.app.warning('Sync skipped unreadable $what', e);
+      return null;
+    }
+    return _parse(plain, what)?.ops;
+  }
+
+  /// [plain]'s ops and what it holds besides; null, logged, when it is not
+  /// one this build reads. A newer format throws [SyncLogTooNew].
+  static ({List<SyncOp> ops, Map<String, dynamic> json})? _parse(Uint8List plain, String what) {
+    final Map<String, dynamic> json;
+    try {
+      json = jsonDecode(utf8.decode(gzip.decode(plain))) as Map<String, dynamic>;
+    } on Object catch (e) {
+      Loggers.app.warning('Sync skipped unreadable $what', e);
+      return null;
+    }
+    final version = json['v'];
+    if (version is int && version > _version) throw SyncLogTooNew(version);
+    try {
+      if (version != _version) throw FormatException('version $version');
+      return (
+        ops: [
+          for (final op in json['ops'] as List)
+            (c: op['c'] as String, id: op['id'] as String, h: op['h'] as String, d: op['d']),
+        ],
+        json: json,
+      );
+    } on Object catch (e) {
+      Loggers.app.warning('Sync skipped unreadable $what', e);
+      return null;
+    }
+  }
+
+  /// A batch's `Idempotency-Key`: random, kept with its bytes until answered.
+  static String _newKey() {
+    final random = Random.secure();
+    return List.generate(16, (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0')).join();
+  }
+
+  String? _get(String k) => _stateAt(_prefix, k);
+
+  void _put(Map<String, String?> values) => _setStateAt(_prefix, values);
+
+  static String? _stateAt(String prefix, String k) {
+    final rows = SqliteDb.instance.select('SELECT v FROM sync_state WHERE k = ?;', ['$prefix$k']);
+    return rows.isEmpty ? null : rows.first['v'] as String;
+  }
+
+  static void _setStateAt(String prefix, Map<String, String?> values) {
+    SqliteStore.transact(() {
+      for (final MapEntry(:key, :value) in values.entries) {
+        if (value == null) {
+          SqliteDb.instance.execute('DELETE FROM sync_state WHERE k = ?;', ['$prefix$key']);
+        } else {
+          SqliteDb.instance.execute(
+            'INSERT INTO sync_state (k, v) VALUES (?, ?) ON CONFLICT (k) DO UPDATE SET v = excluded.v;',
+            ['$prefix$key', value],
+          );
+        }
+      }
+    });
+  }
+}
+
+/// The operation-log sync on a server-ordered log, LK Cloud's
+/// (`docs/dev/sync-log.md`): sends this device's changes as batches of ops,
+/// applies the ops other devices sent that win, and writes a snapshot when
+/// the log asks for one.
+final class LogSync extends SyncEngine {
+  LogSync(this._transport, SyncSeal seal, {super.write, super.carries, super.stamp}) : super(_transport, seal, 'log.');
+
+  final SyncLogTransport _transport;
+
+  static String? _state(String k) => SyncEngine._stateAt('log.', k);
+
+  static void _setState(Map<String, String?> values) => SyncEngine._setStateAt('log.', values);
+
+  static const _logKey = 'log';
+  static const _cursorKey = 'cursor';
+  static const _sentKey = 'sent';
+  static const _joinedKey = 'joined';
 
   /// A batch sealed and not yet answered: sent again as it is, so homebase
   /// takes it once.
@@ -192,19 +445,13 @@ final class LogSync {
   /// key until homebase drops them.
   Future<void> rotate(Future<void> Function() rekey) => _serial(() async {
     await _pull();
-    if (_state(_partialKey) != null) throw const SyncLogPartial();
+    if (_state(SyncEngine._partialKey) != null) throw const SyncLogPartial();
     await rekey();
     // A snapshot goes past the last one: a batch makes room for it.
-    await _append((key: _newKey(), body: await _seal.seal(_encode(const [])), last: _state(_sentKey) ?? ''));
+    await _append((key: SyncEngine._newKey(), body: await _seal.seal(SyncEngine._encode(const [])), last: _state(_sentKey) ?? ''));
     await _pull();
     if (!await _writeSnapshot()) throw StateError('no snapshot written');
   });
-
-  Future<void> _serial(Future<void> Function() run) {
-    final next = _running.then((_) => run());
-    _running = next.catchError((Object _) {});
-    return next;
-  }
 
   Future<void> _pull() async {
     _refreshed = false;
@@ -256,7 +503,7 @@ final class LogSync {
       for (final op in chunk.ops) {
         if (op.h.substring(16) == mine && op.h.compareTo(last) > 0) last = op.h;
       }
-      compact |= await _append((key: _newKey(), body: chunk.body, last: last));
+      compact |= await _append((key: SyncEngine._newKey(), body: chunk.body, last: last));
     }
     // Past what was left out too, so it is not looked at again.
     final newest = stamped.map((r) => r.hlc).where((h) => h.substring(16) == mine).fold(last, (a, h) => h.compareTo(a) > 0 ? h : a);
@@ -298,7 +545,7 @@ final class LogSync {
   Future<bool> _writeSnapshot() async {
     final cursor = int.tryParse(_state(_cursorKey) ?? '') ?? 0;
     if (cursor == 0) return false;
-    if (_state(_partialKey) != null) {
+    if (_state(SyncEngine._partialKey) != null) {
       Loggers.app.info('Sync snapshot left to a device holding the whole log');
       return false;
     }
@@ -308,211 +555,19 @@ final class LogSync {
       Loggers.app.info('Sync snapshot left: a record could not be read');
       return false;
     }
-    final body = await _seal.seal(_encode(ops));
+    final body = await _seal.seal(SyncEngine._encode(ops));
     if (!await _transport.putSnapshot(cursor, body)) {
       Loggers.app.info('Sync snapshot at $cursor: another is there already');
       return true;
     }
-    await _sweepBlobs({for (final op in ops) ?_blobOf(op.d)});
+    await _sweepBlobs({for (final op in ops) ?SyncEngine._blobOf(op.d)});
     return true;
-  }
-
-  /// [records] as ops, each as the store holds it now; a large one put in a
-  /// blob it names.
-  /// [records] (the oldest first) as ops; [complete] false when one could not
-  /// be read ([SyncRecords.unread]): the ops are those before it.
-  Future<({List<SyncOp> ops, bool complete})> _opsOf(List<({String c, String id, String hlc})> records) async {
-    final read = SyncRecords.reader();
-    final ops = <SyncOp>[];
-    Set<String>? there;
-    for (final r in records) {
-      final d = await read(r.c, r.id);
-      if (identical(d, SyncRecords.unread)) return (ops: ops, complete: false);
-      // A theme is added only: one removed here says nothing to the others.
-      if (d == null && r.c == SyncThemes.c) continue;
-      final json = utf8.encode(jsonEncode(d));
-      if (json.length <= inlineMax) {
-        ops.add((c: r.c, id: r.id, h: r.hlc, d: d));
-        continue;
-      }
-      // Named by the op's stamp alone: a snapshot carrying the same op names
-      // the batch's blob, whatever this build makes of the record now, so the
-      // sweep keeps what a batch still names.
-      final name = '$_blobPrefix${_seal.nameOf(utf8.encode(r.hlc))}.age';
-      there ??= {for (final b in await _transport.blobs(_blobPrefix)) b.name};
-      if (!there.contains(name)) {
-        await _transport.putBlob(name, await _seal.seal(Uint8List.fromList(gzip.encode(json))));
-        there.add(name);
-      }
-      ops.add((c: r.c, id: r.id, h: r.hlc, d: {_blobKey: name}));
-    }
-    return (ops: ops, complete: true);
-  }
-
-  static String? _blobOf(Object? d) => d is Map && d.length == 1 && d[_blobKey] is String ? d[_blobKey] as String : null;
-
-  /// Removes the blobs the snapshot just written does not name, past
-  /// [_blobGrace]. A batch the snapshot covers may name one still: then its
-  /// op lost to a later one of its record (the snapshot holds the op that
-  /// won, and names that one's blob), which a device reading the batch
-  /// reads after it, so the op is passed over (see [_resolve]). Best effort.
-  Future<void> _sweepBlobs(Set<String> named) async {
-    try {
-      final before = DateTime.now().subtract(_blobGrace);
-      for (final blob in await _transport.blobs(_blobPrefix)) {
-        if (named.contains(blob.name) || (blob.at?.isAfter(before) ?? true)) continue;
-        await _transport.deleteBlob(blob.name);
-      }
-    } catch (e, s) {
-      Loggers.app.warning('Sync blobs sweep', e, s);
-    }
-  }
-
-  /// [ops] with each blob an op names read in; an op whose blob is gone is
-  /// left out (a later op of its record has replaced it).
-  Future<List<SyncOp>> _resolve(List<SyncOp> ops) async {
-    final out = <SyncOp>[];
-    for (final op in ops) {
-      final name = _blobOf(op.d);
-      if (name == null) {
-        out.add(op);
-        continue;
-      }
-      final sealed = await _transport.getBlob(name);
-      if (sealed == null) {
-        Loggers.app.warning('Sync passed over ${op.c}/${op.id}: its blob is gone');
-        continue;
-      }
-      try {
-        out.add((c: op.c, id: op.id, h: op.h, d: jsonDecode(utf8.decode(gzip.decode(await _open(sealed))))));
-      } on Object catch (e) {
-        // As an unreadable batch is (see [_decode]): nothing here reads it.
-        Loggers.app.warning('Sync passed over ${op.c}/${op.id}: its blob is unreadable', e);
-      }
-    }
-    return out;
-  }
-
-  /// The ops that win over what is here, written.
-  Future<void> _apply(List<SyncOp>? received, Map<String, String?> state) async {
-    if (received == null) return _setState(state);
-    final carried = [for (final op in received) if (_carries(op.c)) op];
-    if (carried.length < received.length) state = {...state, _partialKey: '1'};
-    // Every await before the stamps are read: an edit made meanwhile is then
-    // among them, and an older op does not overwrite it.
-    final ops = await _resolve(carried);
-    final current = SyncRecorder.stampsOf({for (final op in ops) (op.c, op.id)});
-    final won = (jsonDecode(
-      syncWinners(
-        opsJson: jsonEncode([for (final op in ops) {'c': op.c, 'id': op.id, 'h': op.h, 'd': op.d}]),
-        currentJson: jsonEncode({for (final MapEntry(:key, :value) in current.entries) '${key.$1}\u0000${key.$2}': value}),
-      ),
-    ) as List)
-        .cast<Map<String, dynamic>>();
-    if (won.isNotEmpty) {
-      await _write([for (final op in won) (c: op['c'] as String, id: op['id'] as String, h: op['h'] as String, d: op['d'])]);
-    }
-    _setState(state);
-  }
-
-  /// [ops] in batches each sealed under [batchMax]. One op too large alone is
-  /// left out and logged.
-  Future<List<({List<SyncOp> ops, Uint8List body})>> _batches(List<SyncOp> ops) async {
-    if (ops.isEmpty) return const [];
-    final body = await _seal.seal(_encode(ops));
-    if (body.length <= batchMax) return [(ops: ops, body: body)];
-    if (ops.length == 1) {
-      // A large record goes as a blob ([inlineMax]): only a key this long.
-      Loggers.app.warning('Sync left out ${ops.single.c}/${ops.single.id}: ${body.length} bytes');
-      return const [];
-    }
-    final half = ops.length ~/ 2;
-    return [...await _batches(ops.sublist(0, half)), ...await _batches(ops.sublist(half))];
-  }
-
-  static Uint8List _encode(List<SyncOp> ops) => Uint8List.fromList(
-    gzip.encode(
-      utf8.encode(
-        jsonEncode({
-          'v': _version,
-          'ops': [for (final op in ops) {'c': op.c, 'id': op.id, 'h': op.h, 'd': op.d}],
-        }),
-      ),
-    ),
-  );
-
-  /// Whether the key was looked for again in this read of the log: once is
-  /// enough to find one that replaced it.
-  var _refreshed = false;
-
-  /// [sealed] opened; sealed to a key that replaced the one held here, that
-  /// key is taken first.
-  Future<Uint8List> _open(Uint8List sealed) async {
-    try {
-      return await _seal.open(sealed);
-    } on FormatException {
-      if (_refreshed) rethrow;
-      _refreshed = true;
-      if (!await _seal.refresh()) rethrow;
-      return _seal.open(sealed);
-    }
-  }
-
-  /// [sealed]'s ops; null, logged, for one nothing here can ever read (not
-  /// sealed to this key, damaged), so the log is read on past it. A newer
-  /// format stops the read: an update reads it.
-  Future<List<SyncOp>?> _decode(Uint8List sealed, String what) async {
-    final Map<String, dynamic> json;
-    try {
-      json = jsonDecode(utf8.decode(gzip.decode(await _open(sealed)))) as Map<String, dynamic>;
-    } on Object catch (e) {
-      Loggers.app.warning('Sync skipped unreadable $what', e);
-      return null;
-    }
-    final version = json['v'];
-    if (version is int && version > _version) throw SyncLogTooNew(version);
-    try {
-      if (version != _version) throw FormatException('version $version');
-      return [
-        for (final op in json['ops'] as List)
-          (c: op['c'] as String, id: op['id'] as String, h: op['h'] as String, d: op['d']),
-      ];
-    } on Object catch (e) {
-      Loggers.app.warning('Sync skipped unreadable $what', e);
-      return null;
-    }
-  }
-
-  /// A batch's `Idempotency-Key`: random, kept with its bytes until answered.
-  static String _newKey() {
-    final random = Random.secure();
-    return List.generate(16, (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0')).join();
-  }
-
-  static String? _state(String k) {
-    final rows = SqliteDb.instance.select('SELECT v FROM sync_state WHERE k = ?;', ['log.$k']);
-    return rows.isEmpty ? null : rows.first['v'] as String;
-  }
-
-  static void _setState(Map<String, String?> values) {
-    SqliteStore.transact(() {
-      for (final MapEntry(:key, :value) in values.entries) {
-        if (value == null) {
-          SqliteDb.instance.execute('DELETE FROM sync_state WHERE k = ?;', ['log.$key']);
-        } else {
-          SqliteDb.instance.execute(
-            'INSERT INTO sync_state (k, v) VALUES (?, ?) ON CONFLICT (k) DO UPDATE SET v = excluded.v;',
-            ['log.$key', value],
-          );
-        }
-      }
-    });
   }
 
   /// Forgets the log: the next sync reads it from its start and joins it
   /// again. For another account, or what is carried changing.
   static void forget() =>
-      _setState({_logKey: null, _cursorKey: null, _sentKey: null, _joinedKey: null, _partialKey: null});
+      _setState({_logKey: null, _cursorKey: null, _sentKey: null, _joinedKey: null, SyncEngine._partialKey: null});
 
   /// The log of [account] from now on: another account's is forgotten.
   static void bind(String account) {

@@ -1566,3 +1566,21 @@ body {
     transition: none;
   }
 }
+
+/* ServerBox OS is in beta: said beside its name wherever it is offered. */
+.beta-tag {
+  display: inline-block;
+  margin-left: 0.4em;
+  padding: 0.1em 0.5em;
+  border-radius: var(--radius-pill);
+  background: var(--brand-tint);
+  color: var(--brand);
+  font: 600 0.7em/1.4 var(--font-body);
+  letter-spacing: 0.02em;
+  vertical-align: 0.15em;
+}
+
+.beta-tag--hero {
+  font-size: 0.3em;
+  vertical-align: 0.9em;
+}

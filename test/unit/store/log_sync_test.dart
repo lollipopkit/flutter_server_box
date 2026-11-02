@@ -335,7 +335,7 @@ void main() {
     final log = _Log();
     log.blobStore['op-stale.age'] = (body: Uint8List(1), at: DateTime.now().subtract(const Duration(days: 3)));
     await _device();
-    final big = 'x' * (LogSync.inlineMax + 1);
+    final big = 'x' * (SyncEngine.inlineMax + 1);
     Stores.setting.set('bigNote', big);
     await _sync(log).sync();
     expect(log.blobStore.keys.where((k) => k != 'op-stale.age'), hasLength(1));
@@ -424,7 +424,7 @@ void main() {
   test("a snapshot names the batch's blob for the same op, so the sweep keeps it", () async {
     final log = _Log();
     await _device();
-    Stores.setting.set('bigNote', 'y' * (LogSync.inlineMax + 1));
+    Stores.setting.set('bigNote', 'y' * (SyncEngine.inlineMax + 1));
     await _sync(log).sync();
     final named = log.blobStore.keys.single;
     log.blobStore[named] = (body: log.blobStore[named]!.body, at: DateTime.now().subtract(const Duration(days: 3)));

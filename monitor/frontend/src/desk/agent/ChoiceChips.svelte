@@ -5,24 +5,38 @@
 
   import { LL } from '../../i18n/i18n-svelte'
   import type { Flow, ModelChoice, ModelRef } from '../../lib/agentApi'
-  import { Icon } from '../lk'
+  import { Icon, Menu, type MenuEntry } from '../lk'
   import type { AgentStore } from './agentStore.svelte'
   import type { Draft } from './attachments.svelte'
+  import { placeMenu } from './placeMenu'
 
   interface Props {
     store: AgentStore
     draft: Draft
     flow?: Flow | null
     small?: boolean
-    /// Where the menus open: above (a composer at the bottom) or below.
-    down?: boolean
     disabled?: boolean
+    /// Where the menus are drawn, when the chips sit in a row that clips what
+    /// leaves it (the composer's, which collapses on focus): the menu opens
+    /// from there, under the chips.
+    host?: HTMLElement | null
   }
 
-  const { store, draft, flow = null, small = false, down = false, disabled = false }: Props = $props()
+  const { store, draft, flow = null, small = false, disabled = false, host = null }: Props = $props()
 
   let open = $state<'model' | 'thinking' | null>(null)
   let root = $state<HTMLDivElement | null>(null)
+  let menu = $state<HTMLDivElement | null>(null)
+  // The chips' offset in [host], where a menu drawn there starts.
+  let left = $state(0)
+
+  function inHost(node: HTMLElement) {
+    if (!host || !root) return
+    const at = root.getBoundingClientRect()
+    left = at.left - host.getBoundingClientRect().left
+    host.appendChild(node)
+    return { destroy: () => node.remove() }
+  }
 
   const same = (a: ModelRef | null | undefined, b: ModelRef | null | undefined) => !!a && !!b && a.provider === b.provider && a.id === b.id
   const choices = $derived(store.choices)
@@ -41,13 +55,28 @@
   $effect(() => {
     if (!open) return
     const down = (e: MouseEvent) => {
-      if (!root?.contains(e.target as Node)) open = null
+      const at = e.target as Node
+      if (!root?.contains(at) && !menu?.contains(at)) open = null
     }
     document.addEventListener('mousedown', down)
     return () => document.removeEventListener('mousedown', down)
   })
 
   const keep = (e: Event) => e.preventDefault()
+
+  const modelItems = $derived<MenuEntry[]>([
+    { heading: $LL.deskAgentPickModel() },
+    ...(choices?.models ?? []).map((m) => ({
+      label: m.name ?? m.id,
+      shortcut: m.provider,
+      checked: same(m, model),
+      action: () => (draft.model = { provider: m.provider, id: m.id }),
+    })),
+  ])
+  const thinkingItems = $derived<MenuEntry[]>([
+    { heading: $LL.deskAgentPickThinking() },
+    ...(choices?.thinkingLevels ?? []).map((l) => ({ label: level(l), checked: l === thinking, action: () => (draft.thinking = l) })),
+  ])
 </script>
 
 {#if choices && model && choices.models.length}
@@ -83,47 +112,19 @@
         <Icon name="psychology" size={small ? 14 : 15} />{level(thinking)}<Icon name="expand_more" size={small ? 14 : 15} />
       </button>
     {/if}
-    {#if open === 'model'}
-      <div class="menu" class:menu--down={down} role="menu" aria-label={$LL.deskAgentPickModel()}>
-        <div class="lk-caps menu__head">{$LL.deskAgentPickModel()}</div>
-        {#each choices.models as m (`${m.provider}/${m.id}`)}
-          <button
-            type="button"
-            role="menuitemradio"
-            aria-checked={same(m, model)}
-            class="item"
-            class:item--on={same(m, model)}
-            onmousedown={keep}
-            onclick={() => {
-              draft.model = { provider: m.provider, id: m.id }
-              open = null
-            }}
-          >
-            <span class="item__text"><span class="item__label">{m.name ?? m.id}</span><span class="item__id">{m.provider}</span></span>
-            {#if same(m, model)}<Icon name="check" size={16} weight={600} color="var(--color-accent-text)" />{/if}
-          </button>
-        {/each}
-      </div>
-    {:else if open === 'thinking'}
-      <div class="menu menu--narrow" class:menu--down={down} role="menu" aria-label={$LL.deskAgentPickThinking()}>
-        <div class="lk-caps menu__head">{$LL.deskAgentPickThinking()}</div>
-        {#each choices.thinkingLevels as l (l)}
-          <button
-            type="button"
-            role="menuitemradio"
-            aria-checked={l === thinking}
-            class="item"
-            class:item--on={l === thinking}
-            onmousedown={keep}
-            onclick={() => {
-              draft.thinking = l
-              open = null
-            }}
-          >
-            <span class="item__text"><span class="item__label">{level(l)}</span></span>
-            {#if l === thinking}<Icon name="check" size={16} weight={600} color="var(--color-accent-text)" />{/if}
-          </button>
-        {/each}
+    {#if open}
+      <!-- The design system's menu; this places it, below or above, wherever it fits. -->
+      <div
+        bind:this={menu}
+        use:inHost
+        use:placeMenu={host ?? root}
+        class="menu"
+        class:menu--narrow={open === 'thinking'}
+        style:left={host ? `${left}px` : null}
+        role="presentation"
+        onmousedown={keep}
+      >
+        <Menu items={open === 'model' ? modelItems : thinkingItems} onselect={() => (open = null)} onclose={() => (open = null)} />
       </div>
     {/if}
   </div>
@@ -172,65 +173,27 @@
   }
   .menu {
     position: absolute;
-    bottom: calc(100% + 9px);
     left: 0;
     z-index: 10;
     width: 320px;
-    max-height: 360px;
-    overflow: auto;
-    box-sizing: border-box;
-    padding: 5px;
-    border-radius: 13px;
-    background: var(--glass-menu);
-    -webkit-backdrop-filter: var(--blur-menu);
-    backdrop-filter: var(--blur-menu);
-    box-shadow: var(--shadow-menu);
   }
   .menu--narrow {
     width: 200px;
   }
-  .menu--down {
-    top: calc(100% + 9px);
-    bottom: auto;
+  .menu :global(.lk-menu) {
+    max-height: min(360px, var(--menu-max, 360px));
+    overflow: hidden auto;
+    box-sizing: border-box;
+    transform-origin: var(--menu-origin, top left);
   }
-  .menu__head {
-    padding: 7px 9px 5px;
-  }
-  .item {
-    width: 100%;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 16px;
-    gap: var(--space-11);
-    align-items: center;
-    padding: 9px;
-    border: 0;
-    border-radius: 9px;
-    background: transparent;
-    color: inherit;
-    font: inherit;
-    text-align: left;
-    cursor: default;
-  }
-  .item:hover {
-    background: var(--fill-hover);
-  }
-  .item--on {
-    background: var(--fill-press);
-  }
-  .item__text {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+  /* A model's name longer than the menu is cut short, never scrolled to:
+     the menu scrolls one way, down the list. */
+  .menu :global(.lk-menu__label) {
     min-width: 0;
-  }
-  .item__label {
-    font: 500 var(--text-13) / 1.3 var(--font-ui);
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
   }
-  .item__id {
-    font: 400 var(--text-11) / 1.3 var(--font-mono);
-    color: var(--text-tertiary);
+  .menu :global(.lk-menu__short) {
+    flex: none;
   }
 </style>

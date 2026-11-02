@@ -255,7 +255,7 @@
       <nav>
         <a href="#features" onclick={(event) => scrollToSection(event, 'features')}>{$LL.nav.features()}</a>
         <a href="#capabilities" onclick={(event) => scrollToSection(event, 'capabilities')}>{$LL.nav.capabilities()}</a>
-        <a href={`/os/?lang=${locale}`}>{$LL.nav.os()}</a>
+        <a href={`/os/?lang=${locale}`}>{$LL.nav.os()}<span class="beta-tag">{$LL.nav.beta()}</span></a>
         <a href="#themes" onclick={(event) => scrollToSection(event, 'themes')}>{$LL.nav.themes()}</a>
         {#if showPlugins}
           <a href="#plugins" onclick={(event) => scrollToSection(event, 'plugins')}>{$LL.nav.plugins()}</a>
@@ -524,7 +524,7 @@
       <div class="footer-links">
         <a href="#features" onclick={(event) => scrollToSection(event, 'features')}>{$LL.footer.features()}</a>
         <a href="#capabilities" onclick={(event) => scrollToSection(event, 'capabilities')}>{$LL.footer.capabilities()}</a>
-        <a href={`/os/?lang=${locale}`}>{$LL.nav.os()}</a>
+        <a href={`/os/?lang=${locale}`}>{$LL.nav.os()}<span class="beta-tag">{$LL.nav.beta()}</span></a>
         <a href="#themes" onclick={(event) => scrollToSection(event, 'themes')}>{$LL.nav.themes()}</a>
         <a href="https://github.com/lollipopkit/flutter_server_box">GitHub</a>
         <a href="https://github.com/lollipopkit/flutter_server_box/releases">{$LL.footer.releases()}</a>

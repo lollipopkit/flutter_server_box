@@ -14,6 +14,7 @@ const ja: Translation = {
     docs: 'ドキュメント',
     themes: 'テーマ',
     os: 'ServerBox OS',
+    beta: 'ベータ',
     plugins: 'プラグイン',
     languageLabel: '言語',
   },

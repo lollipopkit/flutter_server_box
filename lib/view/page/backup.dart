@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -8,10 +9,12 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/file_log_sync.dart';
 import 'package:server_box/core/lkc.dart';
 import 'package:server_box/core/lkc_log_sync.dart';
 import 'package:server_box/core/lkc_sync.dart';
 import 'package:server_box/core/sync.dart';
+import 'package:server_box/core/sync_key.dart';
 import 'package:server_box/core/utils/monitor_backup_storage.dart';
 import 'package:server_box/data/model/app/bak/backup_service.dart';
 import 'package:server_box/data/model/app/bak/backup_source.dart';
@@ -97,6 +100,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
   List<Widget> get _syncTiles => [
     _buildTip,
     _buildBakPwd,
+    _buildSyncSettings,
     if (isICloudSupported) _buildIcloud,
     _buildWebdav,
     _buildGist,
@@ -286,7 +290,13 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     // upload. Nothing reaches the remote again, and nothing says so.
     // LK Cloud's theme packages are sealed with it as well, and the log's key.
     await BakSyncer.forgetPasswordState();
-    if (previous != pwd) await LkcSyncKey.passwordChanged(previous);
+    if (previous != pwd) {
+      await SyncKey.passwordChanged(previous);
+      LkcLogSync.reset();
+      FileLogSync.reset();
+      unawaited(LkcLogSync.sync());
+      unawaited(FileLogSync.sync());
+    }
     Toast.show(l10n.backupPasswordSet);
     setState(() {});
     return true;
@@ -331,7 +341,6 @@ final class _BackupPageState extends ConsumerState<BackupPage>
         title: const Text('iCloud'),
         initiallyExpanded: false,
         children: [
-          _buildSyncSettingsTile(),
           _buildIcloudStatus,
           ListTile(
             title: Text(libL10n.auto),
@@ -366,7 +375,6 @@ final class _BackupPageState extends ConsumerState<BackupPage>
         title: const Text('WebDAV'),
         initiallyExpanded: false,
         children: [
-          _buildSyncSettingsTile(),
           ListTile(
             title: Text(libL10n.setting),
             trailing: const Icon(Icons.settings),
@@ -443,7 +451,6 @@ final class _BackupPageState extends ConsumerState<BackupPage>
         title: const Text('GitHub Gist'),
         initiallyExpanded: false,
         children: [
-          _buildSyncSettingsTile(),
           ListTile(
             title: Text(libL10n.setting),
             trailing: const Icon(Icons.settings),
@@ -521,7 +528,6 @@ final class _BackupPageState extends ConsumerState<BackupPage>
         title: Text(l10n.monitorAgent),
         initiallyExpanded: false,
         children: [
-          _buildSyncSettingsTile(),
           ListTile(
             title: Text(libL10n.server),
             subtitle: Text(
@@ -603,7 +609,6 @@ final class _BackupPageState extends ConsumerState<BackupPage>
         title: const Text('LK Cloud'),
         initiallyExpanded: false,
         children: [
-          _buildSyncSettingsTile(),
           ListTile(
             title: Text(libL10n.lkcAccount),
             subtitle: Lkc.client.user.listenVal(
@@ -742,11 +747,15 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     );
   }
 
-  Widget _buildSyncSettingsTile() {
-    return ListTile(
-      title: Text(l10n.syncAppSettings),
-      subtitle: Text(l10n.syncAppSettingsTip, style: UIs.textGrey),
-      trailing: StoreSwitch(prop: PrefProps.syncAppSettings),
+  /// One switch for every destination: what the sync carries, not where.
+  Widget get _buildSyncSettings {
+    return CardX(
+      child: ListTile(
+        leading: const Icon(Icons.settings),
+        title: Text(l10n.syncAppSettings),
+        subtitle: Text(l10n.syncAppSettingsTip, style: UIs.textGrey),
+        trailing: StoreSwitch(prop: PrefProps.syncAppSettings),
+      ),
     );
   }
 

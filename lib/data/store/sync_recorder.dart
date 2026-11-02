@@ -43,8 +43,8 @@ abstract final class SyncRecorder {
   static String? _last;
 
   /// Notified of each record stamped by this device (not while [applying] or
-  /// [receiving]): what makes the log sync send.
-  static void Function()? onLocal;
+  /// [receiving]): what makes the log syncs send.
+  static final onLocal = <void Function()>[];
 
   /// Writes an op another device made, stamped [h]: every record [write]
   /// stamps gets [h] as it is, and the clock moves past it.
@@ -147,7 +147,11 @@ abstract final class SyncRecorder {
       'ON CONFLICT (c, id) DO UPDATE SET hlc = excluded.hlc WHERE excluded.hlc > sync_record.hlc;',
       [c, id, h],
     );
-    if (notify && _receiving == null && _applying == 0) onLocal?.call();
+    if (notify && _receiving == null && _applying == 0) {
+      for (final f in onLocal) {
+        f();
+      }
+    }
     return h;
   }
 
@@ -215,6 +219,6 @@ abstract final class SyncRecorder {
   static void resetForTest() {
     _device = null;
     _last = null;
-    onLocal = null;
+    onLocal.clear();
   }
 }

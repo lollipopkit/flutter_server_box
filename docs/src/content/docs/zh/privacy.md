@@ -16,7 +16,7 @@ App 还会为诊断和你使用的功能发起独立的网络请求。下文会�
 | 服务器名称、地址、端口、用户名和设置 | 加密的 SQLite 数据库 |
 | SSH 密码、私钥、Monitor 和 BMC 凭据 | 加密的 SQLite 数据库；数据库加密密钥保存在系统钥匙串中 |
 | AI provider 的 API key | 系统钥匙串，每个 provider 一项 |
-| 备份密码、WebDAV 密码和 GitHub token | 系统安全存储 |
+| 备份密码、同步密钥、WebDAV 密码和 GitHub token | 系统安全存储 |
 | App 日志 | 仅保存在本机日志文件中；为便于排查问题，会保留当前运行和上一次运行的日志 |
 | Agent 对话、记忆笔记、AI provider 与工具设置 | 本机加密数据库；对话中可能包含 prompt、模型回复、命令输出、终端文本、文件内容和读取的网页 |
 | 活动终端输出 | 保存在活动会话中；会话结束后，终端不会继续保留这些内容 |
@@ -113,7 +113,7 @@ App 只保存服务器最近上报的公网网卡地址结果，包括“未上�
 | 请求 | 目标 | 时机和内容 |
 |---|---|---|
 | AI 请求 | 你配置的 endpoint | 发送 Agent 消息时；详见 [AI 请求](#ai-请求) |
-| 备份或同步 | iCloud、你的 WebDAV server、GitHub Gist 或你的 Monitor | 上传、下载或同步备份时；携带选定的备份文件，文件可能已加密 |
+| 备份或同步 | iCloud、你的 WebDAV server、GitHub Gist 或你的 Monitor | 上传、下载或同步备份时；携带选定的备份文件，文件可能已加密。使用 iCloud 或 WebDAV 时，还会携带每台设备的更改（用同步密钥加密）和该密钥（用备份密码加密） |
 | 检查更新 | `api.github.com` | 开启自动检查更新后，在启动时发起 |
 | Linux userland manifest | `github.com` | App 检查本机 Linux 环境是否有更新时发起；携带版本元数据和签名 |
 | Linux userland 镜像 | 经验证的 manifest 指定的 distribution mirror 或 source URL | 安装或更新本机 Linux 环境时发起；下载的镜像会按 manifest 中的 digest 校验 |

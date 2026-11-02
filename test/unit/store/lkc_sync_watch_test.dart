@@ -14,8 +14,6 @@ void main() {
   late ValueNotifier<bool> toggle;
   late bool signedIn;
   late int changes;
-  late int forgets;
-  late bool forgetFails;
   late bool openFails;
   late Completer<void>? opening;
   late LkcSyncWatch watch;
@@ -27,8 +25,6 @@ void main() {
     toggle = ValueNotifier(true);
     signedIn = true;
     changes = 0;
-    forgets = 0;
-    forgetFails = false;
     openFails = false;
     opening = null;
     watch = LkcSyncWatch(
@@ -38,10 +34,6 @@ void main() {
         await opening?.future;
         if (openFails) throw StateError('offline');
         return sync;
-      },
-      forget: () async {
-        forgets++;
-        if (forgetFails) throw StateError('vault');
       },
       toggle: toggle,
       onRemoteChange: () => changes++,
@@ -120,7 +112,6 @@ void main() {
       user: user,
       signedIn: () => signedIn,
       open: () async => sync,
-      forget: () async {},
       toggle: toggle,
       onRemoteChange: () => changes++,
       inBackground: true,
@@ -144,15 +135,14 @@ void main() {
     user.value++;
     await pumpEventQueue();
     expect(sync.listening, isFalse);
-    expect(forgets, 0);
   });
 
-  test('homebase ending the stream of a refused session signs out', () async {
+  test('homebase ending the stream of a refused session is not listened to again', () async {
     await start();
     signedIn = false;
     sync.end();
     await pumpEventQueue();
-    expect(forgets, 1);
+    expect(sync.listens, 1);
 
     signedIn = true;
     user.value++;
@@ -164,18 +154,8 @@ void main() {
     await start();
     sync.end();
     await pumpEventQueue();
-    expect(forgets, 0);
     expect(sync.listens, 2);
     expect(sync.listening, isTrue);
-  });
-
-  test('a sign-out that fails is logged, not thrown', () async {
-    forgetFails = true;
-    await start();
-    signedIn = false;
-    sync.end();
-    await pumpEventQueue();
-    expect(forgets, 1);
   });
 
   test('listening that cannot start is tried again', () async {

@@ -14,6 +14,7 @@ const it: Translation = {
     docs: 'Documenti',
     themes: 'Temi',
     os: 'ServerBox OS',
+    beta: 'Beta',
     plugins: 'Plugin',
     languageLabel: 'Lingua',
   },
