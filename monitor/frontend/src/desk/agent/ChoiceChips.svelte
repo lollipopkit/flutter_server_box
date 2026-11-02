@@ -8,14 +8,13 @@
   import { Icon, Menu, type MenuEntry } from '../lk'
   import type { AgentStore } from './agentStore.svelte'
   import type { Draft } from './attachments.svelte'
+  import { placeMenu } from './placeMenu'
 
   interface Props {
     store: AgentStore
     draft: Draft
     flow?: Flow | null
     small?: boolean
-    /// Where the menus open: above (a composer at the bottom) or below.
-    down?: boolean
     disabled?: boolean
     /// Where the menus are drawn, when the chips sit in a row that clips what
     /// leaves it (the composer's, which collapses on focus): the menu opens
@@ -23,7 +22,7 @@
     host?: HTMLElement | null
   }
 
-  const { store, draft, flow = null, small = false, down = false, disabled = false, host = null }: Props = $props()
+  const { store, draft, flow = null, small = false, disabled = false, host = null }: Props = $props()
 
   let open = $state<'model' | 'thinking' | null>(null)
   let root = $state<HTMLDivElement | null>(null)
@@ -114,13 +113,13 @@
       </button>
     {/if}
     {#if open}
-      <!-- The design system's menu; this places it, above the chips or below. -->
+      <!-- The design system's menu; this places it, below or above, wherever it fits. -->
       <div
         bind:this={menu}
         use:inHost
+        use:placeMenu={host ?? root}
         class="menu"
         class:menu--narrow={open === 'thinking'}
-        class:menu--down={down}
         style:left={host ? `${left}px` : null}
         role="presentation"
         onmousedown={keep}
@@ -174,7 +173,6 @@
   }
   .menu {
     position: absolute;
-    bottom: calc(100% + 9px);
     left: 0;
     z-index: 10;
     width: 320px;
@@ -182,15 +180,11 @@
   .menu--narrow {
     width: 200px;
   }
-  .menu--down {
-    top: calc(100% + 9px);
-    bottom: auto;
-  }
   .menu :global(.lk-menu) {
-    max-height: 360px;
+    max-height: min(360px, var(--menu-max, 360px));
     overflow: hidden auto;
     box-sizing: border-box;
-    transform-origin: bottom left;
+    transform-origin: var(--menu-origin, top left);
   }
   /* A model's name longer than the menu is cut short, never scrolled to:
      the menu scrolls one way, down the list. */
@@ -201,8 +195,5 @@
   }
   .menu :global(.lk-menu__short) {
     flex: none;
-  }
-  .menu--down :global(.lk-menu) {
-    transform-origin: top left;
   }
 </style>

@@ -12,6 +12,7 @@
   import AttachmentChips from './AttachmentChips.svelte'
   import ChoiceChips from './ChoiceChips.svelte'
   import { autosize } from './autosize'
+  import { placeMenu } from './placeMenu'
 
   interface Props {
     store: AgentStore
@@ -231,7 +232,7 @@
   <div class="choicebox" inert={focused}>
     <div class="choices">
       {@render chip(false)}
-      <ChoiceChips {store} draft={d} {disabled} host={box} down />
+      <ChoiceChips {store} draft={d} {disabled} host={box} />
     </div>
   </div>
   <div class="hintbox" inert={!focused}>
@@ -249,7 +250,7 @@
     <div class="error"><Icon name="error" size={15} />{error ?? atts.error}</div>
   {/if}
   {#if modeOpen}
-    <div bind:this={menu} class="menu" role="menu" aria-label={$LL.deskAgentModeTitle()}>
+    <div bind:this={menu} use:placeMenu={box} class="menu" role="menu" aria-label={$LL.deskAgentModeTitle()}>
       <div class="lk-caps menu__head">{$LL.deskAgentModeTitle()}</div>
       {#each MODES as m (m.id)}
         <button
@@ -519,12 +520,13 @@
     font-size: var(--text-13);
     color: var(--color-danger);
   }
-  /* Opens below the box, from the chip's side: the chip is on the box's
-     last row, focused or not. */
+  /* Opens from the chip's side, below the box or above it, wherever it fits
+     ([placeMenu]). */
   .menu {
     position: absolute;
-    top: calc(100% + 9px);
     left: 0;
+    max-height: var(--menu-max, none);
+    overflow-y: auto;
     z-index: 10;
     width: 360px;
     max-width: 100%;
@@ -537,7 +539,7 @@
     box-shadow:
       var(--shadow-menu),
       inset 0 0 0 0.5px var(--border-glass);
-    transform-origin: top left;
+    transform-origin: var(--menu-origin, top left);
     animation: lk-menu-in 220ms var(--ease-spring);
     font-size: var(--text-13);
     color: var(--text-primary);
