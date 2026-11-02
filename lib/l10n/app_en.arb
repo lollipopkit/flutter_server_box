@@ -9407,5 +9407,6 @@
         "type": "int"
       }
     }
-  }
+  },
+  "syncKeyRotate": "Replace sync key"
 }

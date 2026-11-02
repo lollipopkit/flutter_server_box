@@ -7322,4 +7322,7 @@ class AppLocalizationsRu extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get syncKeyRotate => 'Заменить ключ синхронизации';
 }

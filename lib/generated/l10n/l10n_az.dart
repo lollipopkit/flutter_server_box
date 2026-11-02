@@ -7263,4 +7263,7 @@ class AppLocalizationsAz extends AppLocalizations {
   String transfersActive(int count) {
     return '$count ötürmə';
   }
+
+  @override
+  String get syncKeyRotate => 'Sinxronizasiya açarını əvəz et';
 }

@@ -7382,4 +7382,7 @@ class AppLocalizationsFr extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get syncKeyRotate => 'Remplacer la clé de synchronisation';
 }

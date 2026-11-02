@@ -2035,5 +2035,6 @@
   "hostCertAuthorityNoHosts": "Zəmanət verdiyi hostları daxil edin, məsələn *",
   "hostCertAuthorityExists": "Artıq siyahıdadır",
   "addToHomeScreen": "Əsas ekrana əlavə et",
-  "transfersActive": "{count} ötürmə"
+  "transfersActive": "{count} ötürmə",
+  "syncKeyRotate": "Sinxronizasiya açarını əvəz et"
 }

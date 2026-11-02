@@ -2035,5 +2035,6 @@
   "hostCertAuthorityNoHosts": "Kefil olduğu ana makineleri girin, örneğin *",
   "hostCertAuthorityExists": "Zaten listede",
   "addToHomeScreen": "Ana ekrana ekle",
-  "transfersActive": "{count} aktarım"
+  "transfersActive": "{count} aktarım",
+  "syncKeyRotate": "Eşitleme anahtarını değiştir"
 }

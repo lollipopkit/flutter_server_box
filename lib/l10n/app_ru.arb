@@ -2035,5 +2035,6 @@
   "hostCertAuthorityNoHosts": "Укажите хосты, за которые он ручается, например *",
   "hostCertAuthorityExists": "Уже в списке",
   "addToHomeScreen": "Добавить на главный экран",
-  "transfersActive": "{count, plural, =1{{count} передача} few{{count} передачи} many{{count} передач} other{{count} передачи}}"
+  "transfersActive": "{count, plural, =1{{count} передача} few{{count} передачи} many{{count} передач} other{{count} передачи}}",
+  "syncKeyRotate": "Заменить ключ синхронизации"
 }

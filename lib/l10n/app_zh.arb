@@ -2035,5 +2035,6 @@
   "hostCertAuthorityNoHosts": "请填写它担保的主机，例如 *",
   "hostCertAuthorityExists": "已在列表中",
   "addToHomeScreen": "添加到主屏幕",
-  "transfersActive": "{count} 个传输"
+  "transfersActive": "{count} 个传输",
+  "syncKeyRotate": "更换同步密钥"
 }

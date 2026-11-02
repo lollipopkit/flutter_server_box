@@ -2035,5 +2035,6 @@
   "hostCertAuthorityNoHosts": "Vul de hosts in waarvoor ze instaat, bijvoorbeeld *",
   "hostCertAuthorityExists": "Staat al in de lijst",
   "addToHomeScreen": "Toevoegen aan startscherm",
-  "transfersActive": "{count, plural, =1{1 overdracht} other{{count} overdrachten}}"
+  "transfersActive": "{count, plural, =1{1 overdracht} other{{count} overdrachten}}",
+  "syncKeyRotate": "Synchronisatiesleutel vervangen"
 }

@@ -7319,4 +7319,7 @@ class AppLocalizationsFa extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get syncKeyRotate => 'جایگزینی کلید همگام‌سازی';
 }

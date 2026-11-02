@@ -2035,5 +2035,6 @@
   "hostCertAuthorityNoHosts": "保証するホストを入力してください（例: *）",
   "hostCertAuthorityExists": "すでに一覧にあります",
   "addToHomeScreen": "ホーム画面に追加",
-  "transfersActive": "{count} 件の転送"
+  "transfersActive": "{count} 件の転送",
+  "syncKeyRotate": "同期キーを置き換える"
 }

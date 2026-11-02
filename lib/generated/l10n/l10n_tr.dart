@@ -7257,4 +7257,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String transfersActive(int count) {
     return '$count aktarım';
   }
+
+  @override
+  String get syncKeyRotate => 'Eşitleme anahtarını değiştir';
 }

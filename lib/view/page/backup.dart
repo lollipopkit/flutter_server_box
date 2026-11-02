@@ -9,6 +9,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/lkc.dart';
+import 'package:server_box/core/lkc_log_sync.dart';
 import 'package:server_box/core/lkc_sync.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/core/utils/monitor_backup_storage.dart';
@@ -274,6 +275,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
       Toast.show(emptyMessage ?? libL10n.empty);
       return false;
     }
+    final previous = await SecureStoreProps.bakPwd.read();
     await SecureStoreProps.bakPwd.write(pwd);
     // The password decides what the remote file *is*, and neither side's sync
     // tag moves when it changes: `lastModTime` is about the user's data and
@@ -284,6 +286,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     // upload. Nothing reaches the remote again, and nothing says so.
     // LK Cloud's theme packages are sealed with it as well, and the log's key.
     await BakSyncer.forgetPasswordState();
+    if (previous != pwd) await LkcSyncKey.passwordChanged(previous);
     Toast.show(l10n.backupPasswordSet);
     setState(() {});
     return true;
@@ -665,9 +668,47 @@ final class _BackupPageState extends ConsumerState<BackupPage>
               );
             }),
           ),
+          // Only where the log is whole here: one that leaves the settings
+          // out writes no snapshot.
+          ListenableBuilder(
+            listenable: Listenable.merge([
+              BakSyncer.lkcSync.listenable(),
+              PrefProps.syncAppSettings.listenable(),
+            ]),
+            builder: (_, _) {
+              if (!BakSyncer.lkcSync.get() || !PrefProps.syncAppSettings.get()) {
+                return UIs.placeholder;
+              }
+              return ListTile(
+                title: Text(l10n.syncKeyRotate),
+                trailing: const Icon(Icons.key),
+                onTap: () async => _onTapRotateSyncKey(context),
+              );
+            },
+          ),
         ],
       ),
     );
+  }
+
+  /// A new key and a new backup password together: a device that still knows
+  /// the password reads the new key from LK Cloud.
+  Future<void> _onTapRotateSyncKey(BuildContext context) async {
+    final ok = await context.showRoundDialog<bool>(
+      title: l10n.syncKeyRotate,
+      actions: Btnx.cancelRedOk,
+    );
+    if (ok != true || !context.mounted) return;
+    if (!await _onTapSetBakPwd(context)) return;
+    lkcLoading.value = true;
+    try {
+      await LkcLogSync.rotateKey();
+      Toast.show(libL10n.success);
+    } catch (e, s) {
+      if (mounted) _showLkcErr(e, s, l10n.syncKeyRotate);
+    } finally {
+      lkcLoading.value = false;
+    }
   }
 
   void _showLkcErr(Object e, StackTrace s, String operation) {

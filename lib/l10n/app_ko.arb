@@ -2035,5 +2035,6 @@
   "hostCertAuthorityNoHosts": "보증할 호스트를 입력하세요(예: *)",
   "hostCertAuthorityExists": "이미 목록에 있습니다",
   "addToHomeScreen": "홈 화면에 추가",
-  "transfersActive": "전송 {count}개"
+  "transfersActive": "전송 {count}개",
+  "syncKeyRotate": "동기화 키 교체"
 }

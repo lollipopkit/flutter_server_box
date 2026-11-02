@@ -15,10 +15,12 @@ import 'package:server_box/data/model/app/bak/utils.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/res/misc.dart';
 
-/// Theme packages kept apart from the backup on LK Cloud: `blob-<random>.age`
-/// each, sealed with the backup password as the backup is. The name is
-/// random so homebase never learns which theme it holds; the backup's entry
-/// names it.
+/// Theme packages kept apart from the backup on LK Cloud: `blob-<name>.age`
+/// each, sealed with the backup password as the backup is. The name is the
+/// package keyed by the account's sync key and the password
+/// (`fl_sync::blob_name`): equal packages are kept once, homebase never
+/// learns which theme it holds, and a package sealed again with a new
+/// password is a new blob. The backup's entry names it.
 final class LkcThemeBlobs implements ThemeBlobStore {
   LkcThemeBlobs._();
 
@@ -36,8 +38,8 @@ final class LkcThemeBlobs implements ThemeBlobStore {
   /// come.
   static const _grace = Duration(days: 1);
 
-  /// Installation id to the blob it is kept as, as this device last wrote or
-  /// read it. Device-local.
+  /// Installation id to the blob it is kept as, from when names were random.
+  /// TODO: rm with [forgetNames] once no install can still hold it.
   static const _names = PrefProp<String>('lkc_theme_blobs');
 
   LkcSync? _sync;
@@ -50,8 +52,7 @@ final class LkcThemeBlobs implements ThemeBlobStore {
 
   Future<LkcSync> get _client async => _sync ??= await Lkc.client.sync(Lkc.app);
 
-  /// Blobs are sealed with the backup password: after it changes, none
-  /// written before is reused.
+  /// Removes what names were kept by before they were derived.
   static Future<void> forgetNames() => _names.remove();
 
   /// Before a backup is written.
@@ -60,18 +61,6 @@ final class LkcThemeBlobs implements ThemeBlobStore {
     _used.clear();
   }
 
-  Map<String, String> _read() {
-    try {
-      final raw = jsonDecode(_names.get() ?? '{}');
-      if (raw is Map) return raw.cast<String, String>();
-    } catch (_) {}
-    return {};
-  }
-
-  Future<void> _remember(String id, String name) async {
-    final names = _read()..[id] = name;
-    await _names.set(jsonEncode(names));
-  }
 
   Future<Map<String, DateTime?>> _list() async {
     final files = await (await _client).list();
@@ -90,26 +79,27 @@ final class LkcThemeBlobs implements ThemeBlobStore {
   @override
   Future<String> put(String id, Uint8List bytes) async {
     final listed = _listed ??= await _list();
-    final known = _read()[id];
-    if (known != null && listed.containsKey(known)) {
-      _used.add(known);
-      return known;
-    }
-    final sealed = await AgeCryptor.encrypt(bytes, await _password());
-    final rand = Random.secure();
-    final name =
-        '$_prefix${List.generate(16, (_) => rand.nextInt(256).toRadixString(16).padLeft(2, '0')).join()}.age';
+    final client = await _client;
+    final user = Lkc.client.user.value;
+    if (user == null) throw StateError('signed out');
+    final pwd = await _password();
+    final key = await LkcSyncKey.load(client, user.id);
+    final name = '$_prefix${key.nameOf([...utf8.encode(pwd), 0, ...bytes])}.age';
+    _used.add(name);
+    if (listed.containsKey(name)) return name;
+    final sealed = await AgeCryptor.encrypt(bytes, pwd);
     final dir = await Directory.systemTemp.createTemp('sb-theme-blob-');
     try {
       final file = File('${dir.path}/$name');
       await file.writeAsString(sealed);
-      await (await _client).upload(name: name, from: file.path);
+      await client.upload(name: name, from: file.path);
+    } on LkcSyncError catch (e) {
+      // Put there meanwhile by another device: the same package.
+      if (e.kind != LkcSyncErrorKind.changed) rethrow;
     } finally {
       await dir.delete(recursive: true);
     }
     listed[name] = DateTime.now();
-    _used.add(name);
-    await _remember(id, name);
     return name;
   }
 
@@ -120,12 +110,10 @@ final class LkcThemeBlobs implements ThemeBlobStore {
       final path = '${dir.path}/$name';
       final fetched = await (await _client).download(name: name, to: path);
       if (fetched.missing) throw StateError('Theme package $name is gone');
-      final bytes = await AgeCryptor.decrypt(
+      return await AgeCryptor.decrypt(
         await File(path).readAsBytes(),
         await _password(),
       );
-      await _remember(id, name);
-      return bytes;
     } finally {
       await dir.delete(recursive: true);
     }

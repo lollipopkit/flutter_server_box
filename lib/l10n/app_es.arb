@@ -2035,5 +2035,6 @@
   "hostCertAuthorityNoHosts": "Indica los hosts que avala, por ejemplo *",
   "hostCertAuthorityExists": "Ya está en la lista",
   "addToHomeScreen": "Añadir a la pantalla de inicio",
-  "transfersActive": "{count, plural, =1{1 transferencia} other{{count} transferencias}}"
+  "transfersActive": "{count, plural, =1{1 transferencia} other{{count} transferencias}}",
+  "syncKeyRotate": "Reemplazar la clave de sincronización"
 }

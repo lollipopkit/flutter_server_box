@@ -2035,5 +2035,6 @@
   "hostCertAuthorityNoHosts": "Indica gli host che garantisce, ad esempio *",
   "hostCertAuthorityExists": "Già nell'elenco",
   "addToHomeScreen": "Aggiungi alla schermata Home",
-  "transfersActive": "{count, plural, =1{1 trasferimento} other{{count} trasferimenti}}"
+  "transfersActive": "{count, plural, =1{1 trasferimento} other{{count} trasferimenti}}",
+  "syncKeyRotate": "Sostituisci la chiave di sincronizzazione"
 }

@@ -96,26 +96,35 @@ abstract final class SyncRecords {
   static Object? _entity(EntityStore store, ({String c, String id, String h, Object? d}) op) {
     final isServer = store == Stores.server;
     final d = op.d;
+    // The record this device holds the op's under ([_aliasOf]).
+    final id = _aliasOf(op.c, op.id) ?? op.id;
     if (d == null) {
-      store.db.execute('DELETE FROM ${store.table} WHERE ${store.idColumn} = ?;', [op.id]);
-      store.synced.tombstone(op.id);
+      store.db.execute('DELETE FROM ${store.table} WHERE ${store.idColumn} = ?;', [id]);
+      store.synced.tombstone(id);
+      if (id != op.id) SyncRecorder.record(op.c, op.id);
       return null;
     }
     if (d is! Map) return null;
     final json = isServer ? d['spi'] : d;
     if (json is! Map) return null;
     final map = Map<String, dynamic>.from(_plain(json) as Map);
-    map['id'] ??= op.id;
+    map['id'] = id;
+    // Not [EntityStore.reconcile]: it matches by name alone, for backups
+    // written before ids existed. An op names its record by id; another
+    // record of the same name is another record unless it is the same in
+    // every field ([_yieldName]).
+    final yielded = _yieldName(store, op.c, id, op.h, map);
+    if (yielded == null) {
+      // The same record as one here under another id: that id is this one's.
+      SyncRecorder.record(op.c, op.id);
+      return null;
+    }
     final item = store.fromJson(map);
     if (item == null) return null;
-    final resolved = store.reconcile(item);
-    // [reconcile] may answer this device's record of the same name, under
-    // its own id: the children go to that one, and the op's id is stamped
-    // too, so the op is not taken again.
-    final id = store.idOf(resolved);
     try {
       SqliteStore.transact(() {
-        store.write(resolved);
+        yielded();
+        store.write(item);
         store.synced.stamp(id);
         if (id != op.id) SyncRecorder.record(op.c, op.id);
         if (isServer) {
@@ -127,12 +136,82 @@ abstract final class SyncRecords {
         }
       });
     } on SqliteException catch (e) {
-      // TODO: two devices naming two records alike; the later op should
-      // keep the name and the other be shown with a suffix.
       Loggers.app.warning('Sync skipped ${op.c}/${op.id}', e);
       return null;
     }
-    return resolved;
+    return item;
+  }
+
+  /// The names a table holds once (per `scope` column, its JSON field).
+  static const _uniqueNames = <String, ({String scope, String scopeJson})?>{
+    'private_key': null,
+    'bmc_credential': null,
+    'snippet': null,
+    'remote_desktop_profile': (scope: 'server_id', scopeJson: 'serverId'),
+  };
+
+  /// Two devices naming two records alike: the one stamped later keeps the
+  /// name, the other is given `<name> (<its id's start>)`. Derived from the
+  /// stamps alone and written unstamped, so every device comes to the same
+  /// names and none sends a rename that could race another's.
+  ///
+  /// The rename of the record here, if any, to run with the write (nothing
+  /// to do: a no-op); null when the one here is the same record in every
+  /// field but the id, as two devices that each restored a backup written
+  /// before ids existed hold one: the op's id then names it from now on.
+  static void Function()? _yieldName(EntityStore store, String c, String id, String h, Map<String, dynamic> map) {
+    void none() {}
+    if (!_uniqueNames.containsKey(store.table)) return none;
+    final name = map['name'];
+    if (name is! String) return none;
+    final scope = _uniqueNames[store.table];
+    final rows = store.db.select(
+      'SELECT id FROM ${store.table} WHERE name = ? AND id != ?${scope == null ? '' : ' AND ${scope.scope} = ?'};',
+      [name, id, if (scope != null) map[scope.scopeJson]],
+    );
+    if (rows.isEmpty) return none;
+    final holder = rows.first['id'] as String;
+    if (store.db.select('SELECT 1 FROM ${store.table} WHERE id = ?;', [id]).isEmpty && _sameBut(store, holder, map)) {
+      _alias(c, id, holder);
+      return null;
+    }
+    final held = SyncRecorder.stampsOf([(c, holder)])[(c, holder)] ?? '';
+    if (h.compareTo(held) > 0) {
+      final renamed = _suffixed(store, name, holder, scope, map);
+      return () => store.db.execute('UPDATE ${store.table} SET name = ? WHERE id = ?;', [renamed, holder]);
+    }
+    map['name'] = _suffixed(store, name, id, scope, map);
+    return none;
+  }
+
+  /// Whether [holder] is [map] in every field but the id.
+  static bool _sameBut(EntityStore store, String holder, Map<String, dynamic> map) {
+    final item = store.fetchOneRaw(holder);
+    final incoming = store.fromJson({...map, 'id': holder});
+    if (item == null || incoming == null) return false;
+    return jsonEncode(store.toJson(item)) == jsonEncode(store.toJson(incoming));
+  }
+
+  /// The id this device holds another device's record [id] under, the same
+  /// record made under two ids ([_yieldName]).
+  static String? _aliasOf(String c, String id) =>
+      SqliteDb.instance.select('SELECT v FROM sync_state WHERE k = ?;', ['alias:$c:$id']).firstOrNull?['v'] as String?;
+
+  static void _alias(String c, String id, String local) => SqliteDb.instance.execute(
+    'INSERT INTO sync_state (k, v) VALUES (?, ?) ON CONFLICT (k) DO UPDATE SET v = excluded.v;',
+    ['alias:$c:$id', local],
+  );
+
+  static String _suffixed(EntityStore store, String name, String id, ({String scope, String scopeJson})? scope, Map<String, dynamic> map) {
+    for (final len in [6, id.length]) {
+      final candidate = '$name (${id.substring(0, len.clamp(0, id.length))})';
+      final taken = store.db.select(
+        'SELECT 1 FROM ${store.table} WHERE name = ? AND id != ?${scope == null ? '' : ' AND ${scope.scope} = ?'};',
+        [candidate, id, if (scope != null) map[scope.scopeJson]],
+      );
+      if (taken.isEmpty) return candidate;
+    }
+    return '$name ($id)';
   }
 
   static SqliteStore? _kvStore(String c) {

@@ -12352,6 +12352,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 transfer} other{{count} transfers}}'**
   String transfersActive(int count);
+
+  /// No description provided for @syncKeyRotate.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace sync key'**
+  String get syncKeyRotate;
 }
 
 class _AppLocalizationsDelegate

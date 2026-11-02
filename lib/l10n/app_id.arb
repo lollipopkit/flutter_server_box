@@ -2035,5 +2035,6 @@
   "hostCertAuthorityNoHosts": "Masukkan host yang dijaminnya, misalnya *",
   "hostCertAuthorityExists": "Sudah ada di daftar",
   "addToHomeScreen": "Tambahkan ke layar utama",
-  "transfersActive": "{count} transfer"
+  "transfersActive": "{count} transfer",
+  "syncKeyRotate": "Ganti kunci sinkronisasi"
 }

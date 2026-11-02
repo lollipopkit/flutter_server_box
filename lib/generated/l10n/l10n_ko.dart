@@ -6975,4 +6975,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String transfersActive(int count) {
     return '전송 $count개';
   }
+
+  @override
+  String get syncKeyRotate => '동기화 키 교체';
 }

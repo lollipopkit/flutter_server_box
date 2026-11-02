@@ -7271,4 +7271,7 @@ class AppLocalizationsId extends AppLocalizations {
   String transfersActive(int count) {
     return '$count transfer';
   }
+
+  @override
+  String get syncKeyRotate => 'Ganti kunci sinkronisasi';
 }

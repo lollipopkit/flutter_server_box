@@ -6859,6 +6859,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String transfersActive(int count) {
     return '$count 个传输';
   }
+
+  @override
+  String get syncKeyRotate => '更换同步密钥';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -13720,4 +13723,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String transfersActive(int count) {
     return '$count 個傳輸';
   }
+
+  @override
+  String get syncKeyRotate => '更換同步金鑰';
 }

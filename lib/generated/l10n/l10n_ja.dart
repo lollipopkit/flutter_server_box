@@ -6974,4 +6974,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String transfersActive(int count) {
     return '$count 件の転送';
   }
+
+  @override
+  String get syncKeyRotate => '同期キーを置き換える';
 }

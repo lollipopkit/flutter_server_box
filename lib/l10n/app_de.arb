@@ -2035,5 +2035,6 @@
   "hostCertAuthorityNoHosts": "Gib die Hosts an, für die sie bürgt, zum Beispiel *",
   "hostCertAuthorityExists": "Bereits in der Liste",
   "addToHomeScreen": "Zum Startbildschirm hinzufügen",
-  "transfersActive": "{count, plural, =1{1 Übertragung} other{{count} Übertragungen}}"
+  "transfersActive": "{count, plural, =1{1 Übertragung} other{{count} Übertragungen}}",
+  "syncKeyRotate": "Sync-Schlüssel ersetzen"
 }

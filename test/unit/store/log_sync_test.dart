@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -59,6 +60,23 @@ final class _Log implements SyncLogTransport {
   @override
   Future<({String log, int seq, Uint8List body})?> snapshot() async =>
       snap == null ? null : (log: 'L1', seq: snap!.seq, body: snap!.body);
+
+  final blobStore = <String, ({Uint8List body, DateTime at})>{};
+
+  @override
+  Future<void> putBlob(String name, Uint8List body) async => blobStore.putIfAbsent(name, () => (body: body, at: DateTime.now()));
+
+  @override
+  Future<Uint8List?> getBlob(String name) async => blobStore[name]?.body;
+
+  @override
+  Future<List<({String name, DateTime? at})>> blobs(String prefix) async => [
+    for (final MapEntry(:key, :value) in blobStore.entries)
+      if (key.startsWith(prefix)) (name: key, at: value.at),
+  ];
+
+  @override
+  Future<void> deleteBlob(String name) async => blobStore.remove(name);
 }
 
 /// No encryption: what is under test is what goes into it.
@@ -67,6 +85,45 @@ final class _Clear implements SyncSeal {
   Future<Uint8List> open(Uint8List sealed) async => sealed;
   @override
   Future<Uint8List> seal(Uint8List plain) async => plain;
+
+  @override
+  String nameOf(List<int> data) => syncBlobName(secret: 'test', data: data);
+
+  @override
+  Future<bool> refresh() async => false;
+}
+
+/// A key per device, and the account's keys as `identity.age` holds them.
+final class _Keyed implements SyncSeal {
+  _Keyed(this.remote) : held = [...remote];
+
+  final List<String> remote;
+  List<String> held;
+
+  @override
+  Future<Uint8List> seal(Uint8List plain) async => Uint8List.fromList([...utf8.encode('${held.first}|'), ...plain]);
+
+  @override
+  Future<Uint8List> open(Uint8List sealed) async {
+    final bar = sealed.indexOf(124);
+    if (!held.contains(utf8.decode(sealed.sublist(0, bar)))) throw const FormatException('not ours');
+    return Uint8List.sublistView(sealed, bar + 1);
+  }
+
+  @override
+  String nameOf(List<int> data) => syncBlobName(secret: held.first, data: data);
+
+  @override
+  Future<bool> refresh() async {
+    if (remote.every(held.contains)) return false;
+    held = {...remote, ...held}.toList();
+    return true;
+  }
+
+  Future<void> rotate(String next) async {
+    remote.insert(0, next);
+    held = [...remote];
+  }
 }
 
 Future<void> _device() async {
@@ -247,5 +304,130 @@ void main() {
     Stores.snippet.put(snippet);
     await sync.sync();
     expect(LogSync.behind(log.batches.length), isFalse);
+  });
+
+  test('two records named alike: the later keeps the name, the other is suffixed alike everywhere', () async {
+    final log = _Log();
+    await _device();
+    Stores.snippet.put(const Snippet(id: 'aaaaaaaa1', name: 'up', script: 'uptime'));
+    await _sync(log).sync();
+
+    await _device();
+    await Future<void>.delayed(const Duration(milliseconds: 2));
+    Stores.snippet.put(const Snippet(id: 'bbbbbbbb2', name: 'up', script: 'w'));
+    await _sync(log).sync();
+    expect(Stores.snippet.fetchOneRaw('bbbbbbbb2')?.name, 'up');
+    expect(Stores.snippet.fetchOneRaw('aaaaaaaa1')?.name, 'up (aaaaaa)');
+
+    // A third device reads them the other way round and comes to the same.
+    await _device();
+    await _sync(log).sync();
+    expect(Stores.snippet.fetchOneRaw('bbbbbbbb2')?.name, 'up');
+    expect(Stores.snippet.fetchOneRaw('aaaaaaaa1')?.name, 'up (aaaaaa)');
+  });
+
+  test('a large record goes as a blob, and one nothing names is swept with a snapshot', () async {
+    final log = _Log();
+    log.blobStore['op-stale.age'] = (body: Uint8List(1), at: DateTime.now().subtract(const Duration(days: 3)));
+    await _device();
+    final big = 'x' * (LogSync.inlineMax + 1);
+    Stores.setting.set('bigNote', big);
+    await _sync(log).sync();
+    expect(log.blobStore.keys.where((k) => k != 'op-stale.age'), hasLength(1));
+
+    await _device();
+    await _sync(log).sync();
+    expect(Stores.setting.get<String>('bigNote'), big);
+
+    log.compactAfter = 0;
+    Stores.setting.timeout.put(9);
+    await _sync(log).sync();
+    expect(log.snap, isNotNull);
+    expect(log.blobStore.containsKey('op-stale.age'), isFalse);
+    expect(log.blobStore, hasLength(1), reason: 'the one the snapshot names stays');
+  });
+
+  test('a replaced key: devices that held the old one take the new, and one that joins reads all', () async {
+    final log = _Log();
+    final account = ['k1'];
+    await _device();
+    final a = _Keyed(account);
+    Stores.snippet.put(snippet);
+    await LogSync(log, a).sync();
+
+    // Another device, behind, holding k1 only.
+    final behind = _Keyed(account);
+
+    final sync = LogSync(log, a);
+    await sync.rotate(() => a.rotate('k2'));
+    expect(log.snap, isNotNull);
+    Stores.setting.timeout.put(21);
+    await sync.sync();
+
+    await _device();
+    await LogSync(log, behind).sync();
+    expect(behind.held.first, 'k2');
+    expect(Stores.setting.timeout.fetch(), 21);
+    expect(Stores.snippet.fetchOneRaw(snippet.id), isNotNull);
+
+    // A device that joins after has both keys from the account's file.
+    await _device();
+    await LogSync(log, _Keyed(account)).sync();
+    expect(Stores.snippet.fetchOneRaw(snippet.id), isNotNull);
+    expect(Stores.setting.timeout.fetch(), 21);
+  });
+
+  test('a device that leaves records out does not replace the key', () async {
+    final log = _Log();
+    await _device();
+    Stores.setting.timeout.put(17);
+    await _sync(log).sync();
+    await _device();
+    final sync = _sync(log, settings: false);
+    await expectLater(sync.rotate(() async {}), throwsA(isA<SyncLogPartial>()));
+  });
+
+  test('the same record under two ids (restored before ids existed) is one record, not two', () async {
+    final log = _Log();
+    await _device();
+    Stores.snippet.put(const Snippet(id: 'aaaaaaaa1', name: 'deploy', script: 'make deploy'));
+    await _sync(log).sync();
+
+    await _device();
+    Stores.snippet.put(const Snippet(id: 'bbbbbbbb2', name: 'deploy', script: 'make deploy'));
+    await _sync(log).sync();
+    expect(Stores.snippet.fetch().map((e) => e.name), ['deploy']);
+
+    // An edit of it where it is `aaaaaaaa1` lands on `bbbbbbbb2` here.
+    final edit = _Log()..batches.addAll(log.batches);
+    final h = syncTick(device: BigInt.from(99), last: '', nowMs: BigInt.from(SyncClock.now() + 1000));
+    edit.batches.add((edit.batches.length + 1, Uint8List.fromList(gzip.encode(utf8.encode(jsonEncode({
+      'v': 1,
+      'ops': [
+        {'c': 'snippet', 'id': 'aaaaaaaa1', 'h': h, 'd': {'id': 'aaaaaaaa1', 'name': 'deploy', 'script': 'make release'}},
+      ],
+    }))))));
+    await _sync(edit).pull();
+    expect(Stores.snippet.fetch().map((e) => (e.id, e.script)), [('bbbbbbbb2', 'make release')]);
+
+    // A third device holds it once too.
+    await _device();
+    await _sync(log).sync();
+    expect(Stores.snippet.fetch(), hasLength(1));
+  });
+
+  test("a snapshot names the batch's blob for the same op, so the sweep keeps it", () async {
+    final log = _Log();
+    await _device();
+    Stores.setting.set('bigNote', 'y' * (LogSync.inlineMax + 1));
+    await _sync(log).sync();
+    final named = log.blobStore.keys.single;
+    log.blobStore[named] = (body: log.blobStore[named]!.body, at: DateTime.now().subtract(const Duration(days: 3)));
+
+    log.compactAfter = 0;
+    Stores.setting.timeout.put(9);
+    await _sync(log).sync();
+    expect(log.snap, isNotNull);
+    expect(log.blobStore.keys, [named]);
   });
 }

@@ -2035,5 +2035,6 @@
   "hostCertAuthorityNoHosts": "請填寫它擔保的主機，例如 *",
   "hostCertAuthorityExists": "已在清單中",
   "addToHomeScreen": "加入主畫面",
-  "transfersActive": "{count} 個傳輸"
+  "transfersActive": "{count} 個傳輸",
+  "syncKeyRotate": "更換同步金鑰"
 }
