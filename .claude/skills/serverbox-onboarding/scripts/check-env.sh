@@ -17,7 +17,7 @@ if [ -z "$ROOT" ]; then
 fi
 
 if [ ! -f "$ROOT/pubspec.yaml" ] || [ ! -d "$ROOT/crates/sbm_ffi" ]; then
-    echo "Not a flutter_server_box checkout: $ROOT"
+    echo "Not a ServerBox checkout: $ROOT"
     echo "Pass the repository root as the first argument."
     exit 1
 fi

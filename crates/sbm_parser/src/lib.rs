@@ -1,7 +1,7 @@
 //! ServerBox shared status parsing library
 //!
 //! Pure parsing, no IO: input is a map of command key → raw output, output is
-//! structured status. The semantic baseline is flutter_server_box's Dart
+//! structured status. The semantic baseline is the app's Dart
 //! implementation (`lib/data/model/server/`); behavior is locked by the app's
 //! fixture tests during migration.
 //!
