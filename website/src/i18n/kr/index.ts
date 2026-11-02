@@ -14,6 +14,7 @@ const kr: Translation = {
     docs: '문서',
     themes: '테마',
     os: 'ServerBox OS',
+    beta: '베타',
     plugins: '플러그인',
     languageLabel: '언어',
   },

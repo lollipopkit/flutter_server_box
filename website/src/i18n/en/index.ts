@@ -14,6 +14,7 @@ const en: BaseTranslation = {
     docs: 'Docs',
     themes: 'Themes',
     os: 'ServerBox OS',
+    beta: 'Beta',
     plugins: 'Plugins',
     languageLabel: 'Language',
   },

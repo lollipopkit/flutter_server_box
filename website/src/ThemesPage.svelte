@@ -178,7 +178,7 @@
     <a class="brand" href={`/?lang=${locale}`}>ServerBox</a>
     <nav>
       <a href={`/?lang=${locale}#features`}>{$LL.nav.features()}</a>
-      <a href={`/os/?lang=${locale}`}>{$LL.nav.os()}</a>
+      <a href={`/os/?lang=${locale}`}>{$LL.nav.os()}<span class="beta-tag">{$LL.nav.beta()}</span></a>
       <a href={`/themes/?lang=${locale}`} aria-current="page">{$LL.nav.themes()}</a>
       <a href={`/?lang=${locale}#download`}>{$LL.nav.download()}</a>
       <a href="/docs/">{$LL.nav.docs()}</a>

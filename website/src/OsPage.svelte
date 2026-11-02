@@ -86,7 +86,7 @@
     </a>
     <nav>
       <a href={`/?lang=${locale}#features`}>{$LL.nav.features()}</a>
-      <a href={`/os/?lang=${locale}`} aria-current="page">{$LL.nav.os()}</a>
+      <a href={`/os/?lang=${locale}`} aria-current="page">{$LL.nav.os()}<span class="beta-tag">{$LL.nav.beta()}</span></a>
       <a href={`/themes/?lang=${locale}`}>{$LL.nav.themes()}</a>
       <a href={`/?lang=${locale}#download`}>{$LL.nav.download()}</a>
       <a href="/docs/">{$LL.nav.docs()}</a>
@@ -105,7 +105,7 @@
 
   <section class="page-section os-hero">
     <p class="hero-platforms">Linux · x64 · arm64</p>
-    <h1>{$LL.os.heroTitle()}<br /><span>{$LL.os.tagline()}</span></h1>
+    <h1>{$LL.os.heroTitle()}<span class="beta-tag beta-tag--hero">{$LL.nav.beta()}</span><br /><span>{$LL.os.tagline()}</span></h1>
     <p class="hero-subtitle">{$LL.os.subtitle()}</p>
     <div class="hero-actions">
       <Button href="#install" onclick={(event) => scrollTo(event, 'install')}>{$LL.os.installAction()}</Button>

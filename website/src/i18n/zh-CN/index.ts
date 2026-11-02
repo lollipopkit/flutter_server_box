@@ -14,6 +14,7 @@ const zhCN: Translation = {
     docs: '文档',
     themes: '主题',
     os: 'ServerBox OS',
+    beta: 'Beta',
     plugins: '插件',
     languageLabel: '语言',
   },
