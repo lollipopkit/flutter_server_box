@@ -157,7 +157,7 @@ ntex = { version = "4", features = ["no-test-logging"] }
 # Repository trees for `tests/theme_store.rs` (`fl_theme::repo::Index`).
 indexmap = "2"
 # Building theme packages in `tests/desk_themes.rs`.
-zip = { version = "8", default-features = false, features = ["deflate-flate2"] }
+zip = { version = "9", default-features = false, features = ["deflate-flate2"] }
 # Test modules for the app runtime, written as text.
 wat = "1"
 tempfile = "3.27.0"
