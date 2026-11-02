@@ -187,9 +187,19 @@
   }
   .menu :global(.lk-menu) {
     max-height: 360px;
-    overflow: auto;
+    overflow: hidden auto;
     box-sizing: border-box;
     transform-origin: bottom left;
+  }
+  /* A model's name longer than the menu is cut short, never scrolled to:
+     the menu scrolls one way, down the list. */
+  .menu :global(.lk-menu__label) {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .menu :global(.lk-menu__short) {
+    flex: none;
   }
   .menu--down :global(.lk-menu) {
     transform-origin: top left;
