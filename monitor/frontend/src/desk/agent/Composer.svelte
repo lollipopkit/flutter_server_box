@@ -221,7 +221,7 @@
     </label>
     <div class="ctl" inert={focused}>
       {@render chip(false)}
-      <ChoiceChips {store} draft={d} {disabled} />
+      <ChoiceChips {store} draft={d} {disabled} host={box} />
       <IconButton icon="attach_file" label={$LL.deskAgentAttach()} {disabled} onmousedown={keep} onclick={() => picker?.click()} />
       <Button variant="primary" icon="arrow_upward" disabled={(!d.text.trim() && !atts.length) || sending || disabled} onclick={() => send()}>
         {$LL.deskAgentSend()}

@@ -17,12 +17,26 @@
     /// Where the menus open: above (a composer at the bottom) or below.
     down?: boolean
     disabled?: boolean
+    /// Where the menus are drawn, when the chips sit in a row that clips what
+    /// leaves it (the composer's, which collapses on focus): the menu opens
+    /// from there, under the chips.
+    host?: HTMLElement | null
   }
 
-  const { store, draft, flow = null, small = false, down = false, disabled = false }: Props = $props()
+  const { store, draft, flow = null, small = false, down = false, disabled = false, host = null }: Props = $props()
 
   let open = $state<'model' | 'thinking' | null>(null)
   let root = $state<HTMLDivElement | null>(null)
+  let menu = $state<HTMLDivElement | null>(null)
+  // The chips' offset in [host], where a menu drawn there starts.
+  let left = $state(0)
+
+  function inHost(node: HTMLElement) {
+    if (!host || !root) return
+    left = root.getBoundingClientRect().left - host.getBoundingClientRect().left
+    host.appendChild(node)
+    return { destroy: () => node.remove() }
+  }
 
   const same = (a: ModelRef | null | undefined, b: ModelRef | null | undefined) => !!a && !!b && a.provider === b.provider && a.id === b.id
   const choices = $derived(store.choices)
@@ -41,7 +55,8 @@
   $effect(() => {
     if (!open) return
     const down = (e: MouseEvent) => {
-      if (!root?.contains(e.target as Node)) open = null
+      const at = e.target as Node
+      if (!root?.contains(at) && !menu?.contains(at)) open = null
     }
     document.addEventListener('mousedown', down)
     return () => document.removeEventListener('mousedown', down)
@@ -84,7 +99,7 @@
       </button>
     {/if}
     {#if open === 'model'}
-      <div class="menu" class:menu--down={down} role="menu" aria-label={$LL.deskAgentPickModel()}>
+      <div bind:this={menu} use:inHost class="menu" class:menu--down={down} style:left={host ? `${left}px` : null} role="menu" aria-label={$LL.deskAgentPickModel()}>
         <div class="lk-caps menu__head">{$LL.deskAgentPickModel()}</div>
         {#each choices.models as m (`${m.provider}/${m.id}`)}
           <button
@@ -105,7 +120,7 @@
         {/each}
       </div>
     {:else if open === 'thinking'}
-      <div class="menu menu--narrow" class:menu--down={down} role="menu" aria-label={$LL.deskAgentPickThinking()}>
+      <div bind:this={menu} use:inHost class="menu menu--narrow" class:menu--down={down} style:left={host ? `${left}px` : null} role="menu" aria-label={$LL.deskAgentPickThinking()}>
         <div class="lk-caps menu__head">{$LL.deskAgentPickThinking()}</div>
         {#each choices.thinkingLevels as l (l)}
           <button
