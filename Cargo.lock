@@ -1889,7 +1889,7 @@ dependencies = [
  "tar",
  "toml 1.1.6+spec-1.1.0",
  "url",
- "zip 9.2.0",
+ "zip",
 ]
 
 [[package]]
@@ -5610,7 +5610,7 @@ dependencies = [
  "wat",
  "windows-sys 0.61.2",
  "zeroize",
- "zip 8.6.0",
+ "zip",
 ]
 
 [[package]]
@@ -6668,12 +6668,6 @@ checksum = "cb30dbbd9036155e74adad6812e9898d03ec374946234fbcebd5dfc7b9187b90"
 dependencies = [
  "rustc-hash 2.1.3",
 ]
-
-[[package]]
-name = "typed-path"
-version = "0.12.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "54ec2755506471f54baf5e4bb5499d8e510cc1caf271270e778a736bd2d7336c"
 
 [[package]]
 name = "typed-path"
@@ -8007,19 +8001,6 @@ dependencies = [
 
 [[package]]
 name = "zip"
-version = "8.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2d04a6b5381502aa6087c94c669499eb1602eb9c5e8198e534de571f7154809b"
-dependencies = [
- "crc32fast",
- "flate2",
- "indexmap",
- "memchr",
- "typed-path 0.12.4",
-]
-
-[[package]]
-name = "zip"
 version = "9.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3f5b58784007ff6e5f280ec82c8596686a3b9b5dd5836c63288d4479f84728b9"
@@ -8030,7 +8011,7 @@ dependencies = [
  "indexmap",
  "memchr",
  "nix 0.31.3",
- "typed-path 0.13.0",
+ "typed-path",
  "windows-sys 0.61.2",
 ]
 
