@@ -179,7 +179,6 @@ final class LkcSyncWatch {
     required Listenable user,
     required bool Function() signedIn,
     required Future<LkcSync> Function() open,
-    required Future<void> Function() forget,
     required ValueListenable<bool> toggle,
     required VoidCallback onRemoteChange,
     void Function(int? seq)? onLog,
@@ -188,7 +187,6 @@ final class LkcSyncWatch {
   }) : _user = user,
        _signedIn = signedIn,
        _open = open,
-       _forget = forget,
        _toggle = toggle,
        _onRemoteChange = onRemoteChange,
        _onLog = onLog,
@@ -198,7 +196,6 @@ final class LkcSyncWatch {
   final Listenable _user;
   final bool Function() _signedIn;
   final Future<LkcSync> Function() _open;
-  final Future<void> Function() _forget;
   final ValueListenable<bool> _toggle;
   final VoidCallback _onRemoteChange;
 
@@ -232,7 +229,6 @@ final class LkcSyncWatch {
       // says so after.
       signedIn: () => Lkc.client.signedIn && Lkc.client.user.value != null,
       open: () => Lkc.client.sync(Lkc.app),
-      forget: Lkc.client.forget,
       toggle: BakSyncer.lkcSync.listenable(),
       // Not held back: another device's write is the whole reason to sync,
       // and a sync already running takes it on when it ends. Only while LK
@@ -300,17 +296,10 @@ final class LkcSyncWatch {
         onDone: () {
           if (!identical(_sub, sub)) return;
           _sub = null;
-          // Ended by homebase refusing the session: signed out here too,
-          // which a later sign-in starts listening from.
-          if (!_signedIn()) {
-            unawaited(
-              _forget().catchError(
-                (Object e, StackTrace s) =>
-                    Loggers.app.warning('LK Cloud sign-out', e, s),
-              ),
-            );
-            return;
-          }
+          // Ended by homebase refusing the session: the session ended
+          // with it (fl_lib clears the account), and a later sign-in starts
+          // listening from there.
+          if (!_signedIn()) return;
           _retryLater();
         },
       );
