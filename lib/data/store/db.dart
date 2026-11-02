@@ -690,6 +690,26 @@ class SyncStates extends Table {
   Set<Column> get primaryKey => {k};
 }
 
+/// Each synced record's newest stamp (`fl_sync`'s HLC): the last change made
+/// here or applied from elsewhere. `c` is the record's collection (a sync
+/// root's table, or `kv:<store>` for a key of a kv store), `id` its id or key.
+/// The stamp carries the device that made it, so what this device still has
+/// to send is its own stamps after the last one sent (`SyncRecorder`).
+@DataClassName('SyncRecordRow')
+class SyncRecords extends Table {
+  @override
+  String get tableName => 'sync_record';
+  @override
+  bool get withoutRowId => true;
+
+  TextColumn get c => text()();
+  TextColumn get id => text()();
+  TextColumn get hlc => text()();
+
+  @override
+  Set<Column> get primaryKey => {c, id};
+}
+
 /// The database, over the connection the app already opened and keyed.
 ///
 /// Drift is a query and mapping layer here, not the owner of the connection:
@@ -733,6 +753,7 @@ class SyncStates extends Table {
     BenchmarkRuns,
     Tombstones,
     SyncStates,
+    SyncRecords,
   ],
 )
 class AppDb extends _$AppDb {
@@ -788,5 +809,7 @@ class AppDb extends _$AppDb {
         'ON benchmark_run(server_id, started_at DESC);',
     'CREATE INDEX IF NOT EXISTS idx_tombstone_deleted '
         'ON tombstone(deleted_at);',
+    // What is still to send: this device's stamps after the last one sent.
+    'CREATE INDEX IF NOT EXISTS idx_sync_record_hlc ON sync_record(hlc);',
   ];
 }

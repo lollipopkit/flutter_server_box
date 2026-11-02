@@ -90,6 +90,9 @@ abstract final class Stores {
     remoteDesktop,
   ];
 
+  /// The sync roots' tables: what `SyncRecorder` stamps as records.
+  static List<String> get syncedTables => [for (final store in _entityStores) store.table];
+
   static Future<void> init() async {
     getIt.registerLazySingleton<SettingStore>(() => SettingStore.instance);
     getIt.registerLazySingleton<ServerStore>(() => ServerStore.instance);

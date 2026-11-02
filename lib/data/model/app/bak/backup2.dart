@@ -39,6 +39,7 @@ import 'package:server_box/data/store/migrations/m021_home_tabs_bar.dart';
 import 'package:server_box/data/store/migrations/m030_pve_virt.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/sync_recorder.dart';
 
 part 'backup2.freezed.dart';
 part 'backup2.g.dart';
@@ -144,7 +145,12 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     // earlier stores visible without it.
     final restored = _restoredServerGraph();
     final keysBefore = [for (final k in Stores.key.fetch()) k.key];
-    SqliteStore.transact(() {
+    // A restore the user started ([force]) is their change, and syncs out; a
+    // sync's merge is another device's, stamped as no device's
+    // (`SyncRecorder.applying`).
+    T asChanged<T>(T Function() write) =>
+        force ? write() : SyncRecorder.applying(write);
+    asChanged(() => SqliteStore.transact(() {
       keysChanged = Stores.key.merge(keys, force: force, notify: false);
       credsChanged = Stores.bmcCredential.merge(
         bmcCredentials,
@@ -244,7 +250,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
         const VirtKeyNamesMigration().applySync();
         const HomeTabsBarMigration().applySync();
       }
-    });
+    }));
 
     // Notifications and provider reloads happen only after the outer
     // transaction commits. A failed restore therefore has no observable half.
@@ -987,7 +993,7 @@ Set<String> _mergeSqliteStore(
       }
       final value = backupData[key];
       if (value == null) continue;
-      _writeKv(store, key, value);
+      _writeKv(store, key, value, at: backupTimestamp);
       notifications.add(key);
       if (!store.isInternalKey(key)) {
         timestamps[key] = backupTimestamp;
@@ -998,7 +1004,7 @@ Set<String> _mergeSqliteStore(
 
     if (!backupHasKey && currentHasKey) {
       if (!force && backupTimestamp <= currentTimestamp) continue;
-      _deleteKv(store, key);
+      _deleteKv(store, key, at: backupTimestamp);
       notifications.add(key);
       if (!store.isInternalKey(key)) {
         // Preserve the existing merge contract: a deletion keeps the local
@@ -1024,9 +1030,9 @@ Set<String> _mergeSqliteStore(
       continue;
     }
     if (value == null) {
-      _deleteKv(store, key);
+      _deleteKv(store, key, at: backupTimestamp);
     } else {
-      _writeKv(store, key, value);
+      _writeKv(store, key, value, at: backupTimestamp);
     }
     notifications.add(key);
     if (!store.isInternalKey(key)) {
@@ -1077,7 +1083,9 @@ Map<String, int> _kvTimestamps(Object? raw, Iterable<String> recordKeys) {
   };
 }
 
-void _writeKv(SqliteStore store, String key, Object value) {
+/// Writes [key] as the merge decided; when it is a key that syncs, stamps it
+/// too ([at]: the backup's time for it), as `KvStore.onEdit` would.
+void _writeKv(SqliteStore store, String key, Object value, {int? at}) {
   final encoded = json.encode(_toJsonValue(value));
   SqliteDb.instance.execute(
     'INSERT INTO kv (store, key, value, updated_at) VALUES (?, ?, ?, ?) '
@@ -1085,13 +1093,21 @@ void _writeKv(SqliteStore store, String key, Object value) {
     'value = excluded.value, updated_at = excluded.updated_at;',
     [store.name, key, encoded, SyncClock.now()],
   );
+  _recordKv(store, key, at);
 }
 
-void _deleteKv(SqliteStore store, String key) {
+void _deleteKv(SqliteStore store, String key, {int? at}) {
   SqliteDb.instance.execute('DELETE FROM kv WHERE store = ? AND key = ?;', [
     store.name,
     key,
   ]);
+  _recordKv(store, key, at);
+}
+
+void _recordKv(SqliteStore store, String key, int? at) {
+  if (!SyncRecorder.syncedStores.contains(store.name)) return;
+  if (store.isInternalKey(key) || store.isDeviceLocalKey(key)) return;
+  SyncRecorder.record('kv:${store.name}', key, at: at);
 }
 
 void _notifySqliteStore(SqliteStore store, Iterable<String> keys) {

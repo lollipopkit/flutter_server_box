@@ -39,6 +39,7 @@ import 'package:server_box/data/ssh/session_manager.dart';
 import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/migrations/build_features.dart';
 import 'package:server_box/data/store/schema.dart';
+import 'package:server_box/data/store/sync_recorder.dart';
 import 'package:server_box/data/store/tables.dart';
 import 'package:server_box/hive/hive_registrar.g.dart';
 import 'package:server_box/hive/legacy_adapters.dart';
@@ -536,6 +537,15 @@ Future<void> _doPlatformRelated() async {
 
 // It may contains some async heavy funcs.
 Future<void> _doDbMigrate() async {
+  // fl_lib's Rust stamps synced changes (`SyncRecorder`), and the storage step
+  // below seeds those stamps (`m033`). Without it nothing is stamped and the
+  // app still starts.
+  try {
+    await FlRust.ensureInitialized();
+  } catch (e, s) {
+    Loggers.app.warning('fl_lib Rust', e, s);
+  }
+
   // Storage layout first: it must finish before anything decodes a record as
   // its current type. Throws SchemaTooNewException when the data was written
   // by a newer build — that must not be swallowed, since continuing would let
@@ -548,6 +558,7 @@ Future<void> _doDbMigrate() async {
   // exactly the settings the refusal exists to protect.
   await SchemaVersion.migrate(kSchemaMigrations);
   Diag.tag(SbDiagTag.schema, '${SchemaVersion.current}');
+  SyncRecorder.install();
 
   migrateBuildFeatures(BuildData.build);
 
