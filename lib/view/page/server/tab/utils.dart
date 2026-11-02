@@ -118,27 +118,7 @@ extension _Actions on _ServerPageState {
     at: contextMenuAnchorBelow(anchor),
   );
 
-  List<ContextMenuAction> _addServerMenu() => [
-    for (final way in _AddServerWay.values)
-      if (way.available)
-        ContextMenuAction(
-          text: way.label,
-          icon: way.icon,
-          onTap: () => unawaited(_addServer(way)),
-        ),
-  ];
-
-  Future<void> _addServer(_AddServerWay way) async {
-    if (!mounted) return;
-    switch (way) {
-      case _AddServerWay.manual:
-        unawaited(ServerEditPage.route.go(context));
-      case _AddServerWay.qr:
-        await ServerShareUi.receiveFromQr(context, ref);
-      case _AddServerWay.file:
-        await ServerShareUi.receiveFromFile(context, ref);
-    }
-  }
+  List<ContextMenuAction> _addServerMenu() => addServerMenu(context, ref);
 
   /// Opens a server something else asked for — today the Agent's `open_server`.
   ///
@@ -292,31 +272,3 @@ extension _Utils on _ServerPageState {
   }
 }
 
-/// The ways a server gets onto this device.
-///
-/// An enum rather than three buttons so the list, the icons and the labels are
-/// one thing — and so a platform that cannot offer one of them (a desktop has
-/// no camera to scan with) drops it in a single place.
-enum _AddServerWay {
-  manual,
-  qr,
-  file;
-
-  bool get available => switch (this) {
-    // `isMobile` matches where the scanner page can actually open one.
-    _AddServerWay.qr => isMobile,
-    _ => true,
-  };
-
-  IconData get icon => switch (this) {
-    _AddServerWay.manual => Icons.edit,
-    _AddServerWay.qr => Icons.qr_code_scanner,
-    _AddServerWay.file => Icons.file_present,
-  };
-
-  String get label => switch (this) {
-    _AddServerWay.manual => libL10n.manual,
-    _AddServerWay.qr => l10n.shareScanQr,
-    _AddServerWay.file => l10n.shareImportFile,
-  };
-}

@@ -111,8 +111,8 @@ final class WidgetSync {
           await MonitorHttpClient(
             MonitorHttpCredential(
               addr: previous.endpoint,
-              user: monitor.user,
               pwd: monitor.pwd,
+              legacyUser: monitor.legacyUser,
               ignoreCert: monitor.ignoreCert,
               allowInsecure: monitor.allowInsecure,
             ),

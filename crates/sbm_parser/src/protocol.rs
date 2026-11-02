@@ -12,7 +12,12 @@
 //! [`MIN_AGENT_PROTOCOL`] is what drops a shape, together with its shims.
 
 /// What this build speaks.
-pub const PROTOCOL: u32 = 1;
+///
+/// 2: one account. `/capabilities` reports `access` instead of
+/// `remote_access`, `grants` and `me`; `/bmc` no longer says `editable`;
+/// accounts, roles and the SSH terminal are gone. A client at 1 is answered
+/// in its shape by the agent's `api::compat_v1`.
+pub const PROTOCOL: u32 = 2;
 
 /// The oldest client the agent still answers; older ones get `426`.
 pub const MIN_CLIENT_PROTOCOL: u32 = 1;

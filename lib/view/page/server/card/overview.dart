@@ -161,7 +161,10 @@ class _ServerOverviewState extends ConsumerState<ServerOverview> {
           _bars(totals, compact: compact)
         else
           Expanded(child: _pressure(totals, compact: compact)),
-        if (said != null) _divider(context),
+        // A hairline opens a section. With a bar each and no room for the
+        // words, the dot alone is not one: it sits at the end of the bars'
+        // section, or the line read as a third section with nothing in it.
+        if (said != null && (showLast || !separate)) _divider(context),
         if (showLast)
           Expanded(
             child: said == null

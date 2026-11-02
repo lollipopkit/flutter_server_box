@@ -1,0 +1,81 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Node-RED: deployed with Docker Compose from compose.yaml and settings.js
+# beside this file, shown in a desk window through the agent.
+
+schema = 1
+publisher = "nodered"
+name = "node_red"
+project = "Node-RED"
+developer = "OpenJS Foundation"
+version = "5.0.8"
+homepage = "https://nodered.org"
+source = "https://github.com/node-red/node-red/tree/5.0.8"
+glyph = "hub"
+tone = "berry"
+categories = ["home", "development"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Node-RED"
+
+[description]
+en = "Wire devices, APIs and online services together in flows drawn in the browser: MQTT, HTTP, Home Assistant and thousands of community nodes."
+zh = "在浏览器中绘制流程，把设备、API 和在线服务连接起来：支持 MQTT、HTTP、Home Assistant 以及数千个社区节点。"
+zh-TW = "在瀏覽器中繪製流程，把裝置、API 和線上服務連接起來：支援 MQTT、HTTP、Home Assistant 以及數千個社群節點。"
+
+[license]
+spdx = "Apache-2.0"
+url = "https://github.com/node-red/node-red/blob/5.0.8/LICENSE"
+
+[requirements]
+arch = ["amd64", "arm64", "arm"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+NODE_RED_VERSION = "5.0.8"
+
+[[secrets]]
+env = "NODE_RED_PASSWORD"
+length = 32
+bcrypt = "NODE_RED_PASSWORD_BCRYPT"
+
+[[secrets]]
+env = "NODE_RED_CREDENTIAL_SECRET"
+length = 48
+
+[login]
+user = "admin"
+password = "NODE_RED_PASSWORD"
+note = { en = "The editor's sign-in is set by the app at every start, so change it here, not in Node-RED. Flows' HTTP endpoints answer without signing in.", zh = "编辑器的登录信息由应用在每次启动时设置，请勿在 Node-RED 中修改。流程中的 HTTP 端点无需登录即可访问。", zh-TW = "編輯器的登入資訊由應用在每次啟動時設定，請勿在 Node-RED 中修改。流程中的 HTTP 端點無需登入即可存取。" }
+
+[[settings]]
+key = "data"
+type = "path"
+env = "NODE_RED_DATA"
+default = "{stack}/data"
+data = true
+label = { en = "Data", zh = "数据", zh-TW = "資料" }
+help = { en = "The flows, their credentials and installed nodes.", zh = "流程及其凭据，以及已安装的节点。", zh-TW = "流程及其憑證，以及已安裝的節點。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "NODE_RED_PORT"
+default = 1880
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "Also what devices calling its flows' HTTP endpoints need. Off: only through the desk.", zh = "设备调用流程的 HTTP 端点也需要开启。关闭时只能通过桌面访问。", zh-TW = "裝置呼叫流程的 HTTP 端點也需要開啟。關閉時只能透過桌面存取。" }
+on = { NODE_RED_BIND = "0.0.0.0" }
+off = { NODE_RED_BIND = "127.0.0.1" }

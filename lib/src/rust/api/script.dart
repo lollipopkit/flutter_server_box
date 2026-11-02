@@ -123,6 +123,43 @@ String? customResultName({required String key}) =>
 bool sudoPasswordRejected({required String stderr}) =>
     RustLib.instance.api.crateApiScriptSudoPasswordRejected(stderr: stderr);
 
+/// Command that upgrades the monitor agent `install.sh` installed on the
+/// server, in whichever form it is there — see
+/// `sbm_parser::monitor_agent::upgrade_command`.
+String monitorUpgradeCommand() =>
+    RustLib.instance.api.crateApiScriptMonitorUpgradeCommand();
+
+/// Page `page` (from 1) of this repository's releases, where the agent's
+/// newest is looked for — see `sbm_parser::monitor_agent::release_page`.
+String monitorReleasesUrl({required int page}) =>
+    RustLib.instance.api.crateApiScriptMonitorReleasesUrl(page: page);
+
+/// How many pages of releases are read at most.
+int monitorReleaseMaxPages() =>
+    RustLib.instance.api.crateApiScriptMonitorReleaseMaxPages();
+
+MonitorReleasePage monitorReleasePage({required String listing}) =>
+    RustLib.instance.api.crateApiScriptMonitorReleasePage(listing: listing);
+
+/// Whether an agent reporting `running` is older than `latest`; false when
+/// either does not read as a version.
+bool monitorOutdated({required String running, required String latest}) =>
+    RustLib.instance.api.crateApiScriptMonitorOutdated(
+      running: running,
+      latest: latest,
+    );
+
+/// What starts the agent's update outside it, so that it outlives the
+/// restart: for an agent too old to start one itself (`POST /update/run`),
+/// sent through its `/exec` — see
+/// `sbm_parser::monitor_agent::start_update_script`.
+String monitorStartUpdateScript() =>
+    RustLib.instance.api.crateApiScriptMonitorStartUpdateScript();
+
+/// [monitor_start_update_script]'s exit status when sudo refused the password.
+int monitorUpdateSudoRefusedExit() =>
+    RustLib.instance.api.crateApiScriptMonitorUpdateSudoRefusedExit();
+
 /// Custom status command; a Vec preserves the Dart map's insertion order,
 /// which affects script bytes
 class CustomCmd {
@@ -141,6 +178,28 @@ class CustomCmd {
           runtimeType == other.runtimeType &&
           name == other.name &&
           cmd == other.cmd;
+}
+
+/// What one page of releases says about the agent's.
+class MonitorReleasePage {
+  /// The highest `monitor-v*` version on it, drafts and prereleases left out.
+  final String? newest;
+
+  /// Whether the next page may hold one.
+  final bool readOn;
+
+  const MonitorReleasePage({this.newest, required this.readOn});
+
+  @override
+  int get hashCode => newest.hashCode ^ readOn.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MonitorReleasePage &&
+          runtimeType == other.runtimeType &&
+          newest == other.newest &&
+          readOn == other.readOn;
 }
 
 /// One section of the script's output.

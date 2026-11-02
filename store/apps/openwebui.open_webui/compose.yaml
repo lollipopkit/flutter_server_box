@@ -1,0 +1,62 @@
+# Open WebUI 0.11.4 (Open WebUI License), https://github.com/open-webui/open-webui/tree/v0.11.4
+#
+# Adapted from the release's docker-compose.yaml for ServerBox Monitor
+# (2026-10-17):
+# - only the open-webui service: upstream's ollama service is left out, model
+#   servers are added in the admin settings (Local inference deploys its own);
+# - no `name:`, no `container_name`, no `build:`, no `pull_policy`: the agent
+#   names the project and pulls the pinned release image;
+# - the data folder, the published address and port come from the env file
+#   the agent writes; WEBUI_SECRET_KEY is generated once;
+# - the administrator is made at the first start from WEBUI_ADMIN_* (backend
+#   open_webui/main.py), which turns sign-up off;
+# - telemetry off;
+# - seed-cache is a one-shot job: the image carries its embedding, speech and
+#   tokenizer models under /app/backend/data/cache, which a bind mount hides
+#   (a named volume would have been filled from the image). It copies them
+#   into the data folder once, so the first start does not fetch them from
+#   Hugging Face again (minutes, or retries until they fail, on a network
+#   that cannot reach it).
+
+services:
+  seed-cache:
+    image: ghcr.io/open-webui/open-webui:${OPEN_WEBUI_VERSION}
+    volumes:
+      - ${OPEN_WEBUI_DATA}:/seed
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        set -e
+        [ -e /seed/cache ] && exit 0
+        rm -rf /seed/cache.partial
+        cp -a /app/backend/data/cache /seed/cache.partial
+        mv /seed/cache.partial /seed/cache
+    restart: "no"
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:${OPEN_WEBUI_VERSION}
+    depends_on:
+      seed-cache:
+        condition: service_completed_successfully
+    volumes:
+      - ${OPEN_WEBUI_DATA}:/app/backend/data
+    ports:
+      - '${OPEN_WEBUI_BIND}:${OPEN_WEBUI_PORT}:8080'
+    environment:
+      TZ: ${SBM_TZ}
+      WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY}
+      WEBUI_ADMIN_EMAIL: ${WEBUI_ADMIN_EMAIL}
+      WEBUI_ADMIN_PASSWORD: ${WEBUI_ADMIN_PASSWORD}
+      # No Ollama beside it: added as a connection when there is one.
+      ENABLE_OLLAMA_API: 'false'
+      SCARF_NO_ANALYTICS: 'true'
+      DO_NOT_TRACK: 'true'
+      ANONYMIZED_TELEMETRY: 'false'
+    restart: unless-stopped
+    # /health is the route the image's own HEALTHCHECK uses; the image has curl.
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 300s

@@ -4,8 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
-import 'package:server_box/data/model/server/monitor_grants.dart';
-import 'package:server_box/data/model/server/monitor_remote_access.dart';
+import 'package:server_box/data/model/server/monitor_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/store.dart';
 
@@ -27,7 +26,9 @@ enum ServerFuncBtn {
   users(1579),
   scheduledTasks(1579),
   remoteDesktop(1617),
-  firewall(1719);
+  firewall(1719),
+  storage(1719),
+  shares(1719);
 
   /// The last released build that did not contain this entry.
   ///
@@ -84,6 +85,8 @@ enum ServerFuncBtn {
     scheduledTasks,
     remoteDesktop,
     firewall,
+    storage,
+    shares,
   ].map((e) => e.name).toList();
 
   /// The entry a stored row names.
@@ -212,6 +215,8 @@ enum ServerFuncBtn {
     scheduledTasks => Icons.schedule,
     remoteDesktop => Icons.desktop_windows_outlined,
     firewall => Icons.shield_outlined,
+    storage => Icons.storage,
+    shares => Icons.folder_shared,
   };
 
   /// Whether a connection with [caps] can actually do what this entry opens.
@@ -229,7 +234,9 @@ enum ServerFuncBtn {
     power ||
     users ||
     scheduledTasks ||
-    firewall => caps.shell,
+    firewall ||
+    storage ||
+    shares => caps.shell,
     // Browsing files is its own question: a transport could grow a file API
     // without growing a stream this app can point anywhere.
     files => caps.files,
@@ -246,7 +253,7 @@ enum ServerFuncBtn {
   /// a port forward only of the transport it goes through when the agent
   /// leads (see [ServerCapabilities.forwardsOf]), everything else of the
   /// server's union.
-  bool availableOn(Spi spi, MonitorRemoteAccess? granted) => availableWith(
+  bool availableOn(Spi spi, MonitorAccess? granted) => availableWith(
     this == portForward
         ? ServerCapabilities.forwardsOf(spi, granted: granted)
         : ServerCapabilities.ofSpi(spi, granted: granted),
@@ -258,7 +265,7 @@ enum ServerFuncBtn {
   /// Only a server reached through its agent alone gets an answer of its own:
   /// with SSH there is nothing the agent could add, and this device's answer
   /// is this app's.
-  String unavailableReason(Spi spi, MonitorRemoteAccess? granted) {
+  String unavailableReason(Spi spi, MonitorAccess? granted) {
     final generic = l10n.funcUnavailableFmt(toStr);
     // A forward on a server whose agent leads goes through the agent alone,
     // SSH or not, so the agent is what would have to change.
@@ -268,34 +275,12 @@ enum ServerFuncBtn {
     if (!agentOnly || spi.monitorOn == null || granted == null) {
       return generic;
     }
-    // An agent with roles says which grant and why, for this account.
-    if (granted.grants case final grants?) {
-      // A forward is either grant's — see [availableWith] — so the reason is
-      // `connect`'s, or `listen`'s where that one says more.
-      if (this == portForward) {
-        return monitorGrantReason(toStr, grants.connect) ??
-            monitorGrantReason(toStr, grants.listen) ??
-            generic;
-      }
-      final grant = switch (this) {
-        files => grants.files,
-        remoteDesktop => grants.connect,
-        _ => grants.shell,
-      };
-      return monitorGrantReason(toStr, grant) ?? generic;
-    }
-    final grant = switch (this) {
-      files => '[remote_access.fs]',
-      // The relay is granted with `full_access`: one that has it and still
-      // does not relay is an agent from before the endpoint.
-      portForward || remoteDesktop when granted.fullAccess => null,
-      terminal || snippet || iperf when granted.fullAccess =>
-        '[remote_access.terminal]',
-      _ => 'full_access',
+    // The agent's one account may do anything the agent can; what it refuses
+    // is a plaintext link.
+    return switch (granted.why) {
+      MonitorAccessWhy.insecureTransport => l10n.funcNeedsAgentHttps(toStr),
+      _ => generic,
     };
-    return grant == null
-        ? l10n.funcNeedsAgentUpdate(toStr)
-        : l10n.funcNeedsAgentGrant(toStr, grant);
   }
 
   String get toStr => switch (this) {
@@ -314,15 +299,7 @@ enum ServerFuncBtn {
     scheduledTasks => l10n.scheduledTasks,
     remoteDesktop => l10n.remoteDesktop,
     firewall => l10n.firewall,
+    storage => l10n.storageTitle,
+    shares => l10n.sharingTitle,
   };
 }
-
-/// Why [func] cannot be had through a `monitor` agent that answered [grant],
-/// or null when it says nothing a person could act on.
-String? monitorGrantReason(String func, MonitorGrant grant) =>
-    switch (grant.why) {
-      MonitorGrantWhy.notGranted => l10n.funcNeedsAgentPermission(func),
-      MonitorGrantWhy.insecureTransport => l10n.funcNeedsAgentHttps(func),
-      MonitorGrantWhy.notConfigured => l10n.funcNeedsAgentSetup(func),
-      MonitorGrantWhy.unknown || null => null,
-    };

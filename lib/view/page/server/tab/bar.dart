@@ -342,15 +342,21 @@ extension _Bar on _ServerPageState {
   /// pane, which is what decides whether it has to carry its own way out: the
   /// bar holding the toggle is not on screen then, and neither is the
   /// navigation.
+  ///
+  /// Clear of the home indicator on its own: the tab's body leaves the bottom
+  /// inset to what is in it.
   Widget _buildGlobe(List<String> filtered, {bool immersive = false}) {
-    return ServerGlobe(
+    return SafeArea(
       key: const ValueKey('globe'),
-      ids: filtered,
-      onTapServer: (spi) =>
-          _onTapCard(context, ref.read(serverProvider(spi.id))),
-      onEditServer: (spi) =>
-          ServerEditPage.route.go(context, args: ServerEditArgs(spi)),
-      action: immersive ? _buildGlobeExit() : null,
+      top: false,
+      child: ServerGlobe(
+        ids: filtered,
+        onTapServer: (spi) =>
+            _onTapCard(context, ref.read(serverProvider(spi.id))),
+        onEditServer: (spi) =>
+            ServerEditPage.route.go(context, args: ServerEditArgs(spi)),
+        action: immersive ? _buildGlobeExit() : null,
+      ),
     );
   }
 

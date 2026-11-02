@@ -70,8 +70,27 @@ int railShownCount({
 /// The tab strip: the bar on a phone, the rail beside a window, and the
 /// "more" both of them open.
 extension _HomePageStrip on _HomePageState {
-  /// Whether the window gets a rail rather than a bar.
-  bool _hasRail(bool narrow) => !narrow && !_wantsWindow;
+  /// Whether the window gets a rail rather than a bar: a wide one, or one
+  /// with a column of the system's own bars on the side the rail is for
+  /// ([column], see [_railColumn]) — which the rail then stands in at any
+  /// width, as the system's tab bar does there.
+  bool _hasRail(bool narrow, Rect? column) =>
+      !_wantsWindow && (column != null || !narrow);
+
+  /// The line iPhone Duo centres its own vertical bar on
+  /// ([WindowControls.verticalBar]), when it is on the side of the hand the
+  /// rail is for
+  /// ([SettingStore.rightHanded]). Null on every other device, and when the
+  /// bar is on the other side.
+  ///
+  /// Only while [area] is the window: the column is in the window's
+  /// coordinates, and anything between the two is free to hand down less.
+  Rect? _railColumn(Size area) {
+    final bar = WindowControls.verticalBar.value;
+    if (bar == null || area != MediaQuery.sizeOf(context)) return null;
+    final right = bar.left > area.width / 2;
+    return right == Stores.setting.rightHanded.fetch() ? bar : null;
+  }
 
   Widget _buildBottomBar() {
     return ListenableBuilder(
@@ -205,6 +224,32 @@ extension _HomePageStrip on _HomePageState {
             return _buildRail(shown: shown);
           },
         ),
+      ),
+    );
+  }
+
+  /// The rail in [column]: its own room, below the status bar and camera and
+  /// above the home indicator, so nothing of the window's insets is left for
+  /// it to keep clear of.
+  Widget _buildColumnRail(Rect column) {
+    return MediaQuery.removePadding(
+      context: context,
+      removeLeft: true,
+      removeTop: true,
+      removeRight: true,
+      removeBottom: true,
+      child: Builder(
+        builder: (context) {
+          final shown = railShownCount(
+            wanted: _barTabs.length,
+            total: _tabs.length,
+            capacity: railCapacity(
+              height: column.height,
+              destinationExtent: railDestinationExtent,
+            ),
+          );
+          return _buildRail(shown: shown);
+        },
       ),
     );
   }

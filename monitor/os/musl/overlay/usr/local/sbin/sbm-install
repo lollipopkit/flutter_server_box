@@ -1,0 +1,63 @@
+#!/bin/sh
+# Writes this live system to a disk with Alpine's `setup-disk -m sys`: the
+# packages the image carries, its configuration (/etc) and the agent's package
+# (/usr/share/server-box-monitor, listed in
+# /etc/apk/protected_paths.d/server-box-monitor.list). The agent installs
+# itself again on the disk's first boot; the live session's database and
+# Docker data stay behind.
+#
+#   sbm-install [-y] <disk>     e.g.  sbm-install /dev/sda
+
+set -eu
+
+usage() {
+	echo "usage: sbm-install [-y] <disk>"
+	echo
+	echo "Disks on this machine:"
+	lsblk -dpno NAME,SIZE,MODEL 2>/dev/null || awk 'NR > 2 { print "/dev/" $4 }' /proc/partitions
+	exit "$1"
+}
+
+yes=""
+disk=""
+for arg in "$@"; do
+	case "$arg" in
+		-y | --yes) yes=1 ;;
+		-h | --help) usage 0 ;;
+		-*) usage 1 ;;
+		/dev/*) disk="$arg" ;;
+		*) disk="/dev/$arg" ;;
+	esac
+done
+
+[ "$(id -u)" = 0 ] || { echo "sbm-install needs root."; exit 1; }
+[ -n "$disk" ] || usage 1
+[ -b "$disk" ] || { echo "$disk is not a block device."; usage 1; }
+
+if ! grep -q '^[^ ]* / tmpfs ' /proc/mounts; then
+	echo "This system is installed already; sbm-install writes a live system to a disk."
+	exit 1
+fi
+
+# The medium this system booted from is not a target.
+# shellcheck disable=SC2013  # device paths have no spaces
+for dev in $(awk '$2 ~ "^/media/" { print $1 }' /proc/mounts); do
+	parent=$(lsblk -no pkname "$dev" 2>/dev/null || true)
+	if [ "$dev" = "$disk" ] || [ "/dev/$parent" = "$disk" ]; then
+		echo "$disk holds the medium this system booted from."
+		exit 1
+	fi
+done
+
+echo "This erases everything on $disk:"
+lsblk -po NAME,SIZE,FSTYPE,LABEL,MOUNTPOINT "$disk" 2>/dev/null || true
+if [ -z "$yes" ]; then
+	printf 'Type %s to continue: ' "$disk"
+	read -r answer || answer=""
+	[ "$answer" = "$disk" ] || { echo "Nothing was written."; exit 1; }
+fi
+
+ERASE_DISKS="$disk" setup-disk -m sys "$disk"
+
+echo
+echo "Done. Remove the medium and reboot; the agent installs itself on the first boot."

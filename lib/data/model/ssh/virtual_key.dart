@@ -244,7 +244,7 @@ extension VirtKeyX on VirtKey {
       // `TerminalSession.connect` acts on — so this says whether *this* shell
       // has an exec channel rather than guessing from which transport leads.
       // Read off `Spi.transport` it was wrong for the one server that is both:
-      // an agent that leads without the `full_access` grant falls back to SSH,
+      // an agent that leads but refuses access falls back to SSH,
       // which carries tmux perfectly well, and the key was hidden anyway.
       //
       // The grant is read before the first key is drawn, from the same provider

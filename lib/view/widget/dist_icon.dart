@@ -116,11 +116,13 @@ class DistIcon extends ConsumerWidget {
     // Read off the map rather than `serverProvider(id)`, which throws for an
     // id it does not know — the known-hosts page lists ids of servers that may
     // since have been deleted.
-    final known = ref.watch(serversProvider).servers.containsKey(serverId);
+    // Selected, both: every icon in every list is rebuilt otherwise on every
+    // status poll of every server.
+    final known = ref.watch(serversProvider.select((s) => s.servers.containsKey(serverId)));
     // The live reading first: it is the newer of the two, and on a server
     // being polled right now it is what the cache is about to be set to.
     final live = known
-        ? ref.watch(serverProvider(serverId)).status.dist
+        ? ref.watch(serverProvider(serverId).select((s) => s.status.dist))
         : null;
 
     // Rebuilt when the cache changes, so a row drawn before the first poll

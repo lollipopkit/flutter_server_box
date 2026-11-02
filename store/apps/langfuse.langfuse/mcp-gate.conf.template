@@ -1,0 +1,28 @@
+# Written for ServerBox Monitor: the gate in front of Langfuse's MCP server
+# (/api/public/mcp), which asks for the project's keys as HTTP basic auth. It
+# asks Agent mode for MCP_TOKEN and passes requests on with the keys
+# (LANGFUSE_BASIC, made at start): the agent never holds them. nginx's image
+# fills ${MCP_TOKEN} and ${LANGFUSE_BASIC} in at start (envsubst over the
+# variables it is given; nginx's own `$…` stay).
+server {
+    listen 8080;
+
+    location = /mcp {
+        if ($http_authorization != "Bearer ${MCP_TOKEN}") {
+            return 401;
+        }
+        proxy_pass http://langfuse-web:3000/api/public/mcp;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        # One of the hosts Langfuse's MCP server answers (security.ts).
+        proxy_set_header Host localhost:3000;
+        proxy_set_header Authorization "Basic ${LANGFUSE_BASIC}";
+        # Streamable HTTP answers as an event stream: passed on as it comes.
+        proxy_buffering off;
+        proxy_read_timeout 1h;
+    }
+
+    location / {
+        return 404;
+    }
+}

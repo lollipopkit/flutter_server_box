@@ -17,13 +17,10 @@ App 和 Monitor 使用同一个协议版本号（`sbm_parser::protocol`）。只
 
 ## Capability discovery
 
-App 通过 `GET /api/v1/capabilities` 查询 Monitor 支持的功能，以及当前登录账号可以使用的功能。返回内容针对调用者：
+App 通过 `GET /api/v1/capabilities` 查询 Monitor 支持的功能，以及当前调用者能否使用它们。返回内容包括：
 
-- `me`：`username`、`role` 和 `admin`。watch token 没有 `me`。
-- `grants`：`shell`、`ssh_terminal`、`files`、`connect` 和 `listen` 各一项，带有 `ok`，不可用时还带有 `why`：`not_granted`（角色没有这项权限）、`insecure_transport`（需要 TLS、loopback 调用方或 `[remote_access] allow_insecure`）、`not_configured`（`files` 没有配置 `roots`）。每项权限还带有它的选项：`files.mode`、`connect.allow`、`listen.public` 和 `listen.ports`。watch token 的每项权限都是 `not_granted`。
-- `remote_access`：角色功能之前的 Monitor 上报的布尔值，由 `grants` 推导出来，供旧版 App 使用（`terminal` 对应 `ssh_terminal` 或 `shell`，`full_access` 对应 `shell`，`stream` 对应 `connect`）。存在 `grants` 时，App 读取 `grants`。
-
-TODO：最低支持版本的 App 改为读取 `grants` 后，删除旧版 `remote_access` response。
+- `access`：`ok`，为 false 时还带有 `why`。`insecure_transport` 表示请求需要 TLS、loopback 调用方或 `[remote_access] allow_insecure`。watch token 的 `access` 是 `{"ok": false}`。
+- `features`：Monitor 提供的机器管理 endpoint，例如 `power`。名称在列表中且 `access.ok` 时，客户端才提供对应页面。`container_exec`、`iperf` 和 `tmux` 是终端的 target，不是页面；各自只在列出时提供。`alerts`、`audit` 和 `live` 对应 Monitor 标签页的各部分（`GET /alerts`、`GET /audit`、`/live*`），`desk` 对应其中的通知。`update` 对应 `GET /update`：Monitor 的版本、读到的最新 release（`?check=1` 重新读取）、`outdated`、安装方式（`install`：`script`、`container`、`nix`、`other`），`script` 时还有用于更新的 `command`、启动更新是否需要 sudo 密码，以及上一次更新的 `run`（状态和输出）。`POST /update/run` 在 Monitor 之外启动更新，更新不受 Monitor 重启影响。
 
 不要仅根据 Monitor 版本或默认配置推断功能是否可用；应读取运行中 Monitor
 返回的 capabilities。
@@ -47,67 +44,59 @@ GET /api/v1/metrics/history?from=<epoch-seconds>&to=<epoch-seconds>
 
 ## 访问模型
 
-每个账号属于一个角色，角色带有若干权限。完整的约定（包括每个请求和响应的格式）见仓库中的 [docs/dev/monitor-permissions.md](https://github.com/lollipopkit/flutter_server_box/blob/main/docs/dev/monitor-permissions.md)。
+Monitor 只有一个账号，只用密码登录；它可以做 Monitor 运行所用的系统账户能做的一切。没有角色、权限或文件 roots。Monitor、Web 面板和 App 共用下面的约定。
 
-| 权限 | Endpoint |
-|---|---|
-| `shell` | `POST /api/v1/exec`、App 终端（`/api/v1/terminal/ws` 上的本地 PTY）、执行自定义命令 |
-| `ssh_terminal` | `/api/v1/terminal/ws` 上的网页面板终端，使用 SSH 凭据登录 `ssh_addr` |
-| `files` | `/api/v1/fs/*`；`mode = "read"` 时只允许 `roots`、`list`、`stat` 和 `read` |
-| `connect` | `/api/v1/stream/ws` 上的 `open`，按 `allow` 检查 |
-| `listen` | `/api/v1/listen/ws`，以及 `/api/v1/stream/ws` 上的 `accept` |
+读取状态、指标、历史、velocity、capabilities 和卡片顺序，需要登录或 watch token。watch token 不能做其他任何事；其他 endpoint 对它返回 `401`。
 
-读取状态、指标、历史、velocity、capabilities 和卡片顺序，只需要任意账号或 watch token。watch token 不能做其他任何事。
-
-### 账号和角色
-
-除两个 `/me` endpoint 任何账号都可以调用外，下列 endpoint 只有 `admin` 角色的账号可以调用：
+### 登录和密码
 
 | Endpoint | 请求体 |
 |---|---|
-| `GET /api/v1/me` | 无，返回 `username` 和完整的 `role` |
-| `PUT /api/v1/me/password` | `current_password`、`new_password`（至少 8 个字符） |
-| `GET /api/v1/users` | 无 |
-| `POST /api/v1/users` | `username`、`password`、`role`、`current_password` |
-| `PUT /api/v1/users/{username}` | 可选的 `role` 和 `password`，以及 `current_password` |
-| `DELETE /api/v1/users/{username}` | `current_password` |
-| `GET /api/v1/roles` | 无 |
-| `POST /api/v1/roles` | `role`、`current_password` |
-| `PUT /api/v1/roles/{name}` | `role`、`current_password` |
-| `DELETE /api/v1/roles/{name}` | `current_password` |
+| `POST /api/v1/login` | `password`、`device`（可选）、`name`（可选）；`username` 字段会被忽略。返回 `token`；如果 Monitor 不认识该设备，还会返回新的 `device` token |
+| `PUT /api/v1/me/password` | `current_password`、`new_password`（至少 8 个字符）；返回 `204` |
 
-`current_password` 是调用者（admin）自己的密码。它与登录共用限流，连续输错会返回 `429 throttled` 和 `Retry-After`。Monitor 设置（`/settings`、`/push`、`/push/test`、`PUT /card-order`）同样只允许 admin；`PUT /custom-cmds` 还需要可用的 `shell`，因为自定义命令由 Monitor 执行。
+客户端会按 Monitor 保存 `device` token（App 保存在 Keychain 或 Keystore，面板保存在 `localStorage`），并在之后每次登录时发送。`name` 是设备在 `GET /live` 中显示的名称；未提供时使用 User-Agent，最多 80 个字符，并会丢弃控制字符。每次登录，无论成功或被拒绝，都会写入 audit（`login`、地址，以及 `device known`、`new device`、`wrong password` 或 `throttled`）；其中不保存密码或 token。
+
+登录会按来源地址和调用方限流：已知设备（其 token 以 SHA-256 形式保存，自上次使用起保留 180 天，最多保留最近使用的 64 个设备）使用独立计数器；其他客户端共用一个计数器；已登录调用方再次输入密码时，使用这些调用方共用的另一个计数器。因此，未知客户端的失败不会锁定之前登录过的设备。每个地址和设备可有 3 次失败，共享计数器可有 20 次；超过后延迟从 1 秒开始逐次翻倍，最高 5 分钟。修改密码会清除所有设备。
+
+`server_box_monitor password` 在命令行中直接修改数据库中的密码（`--password-env VAR` 从环境变量读取），没有账号时会创建它。
+
+部分修改需要在请求体中再次提供当前密码（`current_password`）：修改密码、部署 Web 应用、修改其设置或移除它、查看它的初始登录信息、恢复或删除容器备份，以及批准或移除 desk 应用。它也受上述登录限流约束。缺失或错误时返回 `403 reauth`；连续输错会返回 `429 throttled` 和 `Retry-After`。
 
 错误格式为 `{"error": "<code>", "message": "..."}`：
 
 | Code | 状态码 | 含义 |
 |---|---|---|
-| `bad_request` | 400 | 请求体格式不对，包括未知的权限名 |
-| `unauthorized` | 401 | 没有有效登录；已删除账号的 token 在所有 endpoint 都会得到它 |
-| `forbidden` | 403 | 不是 admin，或角色没有这项权限 |
+| `bad_request` | 400 | 请求体格式不对 |
+| `unauthorized` | 401 | 没有有效登录、token 签发于最近一次修改密码之前，或 watch token 超出其范围 |
+| `forbidden` | 403 | 传输规则拒绝了请求 |
 | `reauth` | 403 | `current_password` 缺失或错误 |
-| `not_found` | 404 | 账号或角色不存在 |
-| `conflict` | 409 | 名称已存在，或角色仍在使用 |
-| `last_admin` | 409 | 修改后将没有任何 admin 账号 |
+| `throttled` | 429 | 失败次数过多 |
+| `not_found` | 404 | 未知的 `/api/v1/*` 路径 |
 
-### 正在进行的会话
+### 修改密码
 
-修改账号或角色会立即生效。如果终端、relay 或监听所属的账号不再拥有所需权限，会收到 `{"type":"error","code":"permission_revoked"}` 并被关闭。账号缺少所需权限时，WebSocket 请求返回 `forbidden`；`listen` 超出角色的 `public` 或 `ports` 限制时返回 `not_permitted`。旧接口 `DELETE /api/v1/remote-access/full-access` 会从所有角色移除 `shell`、`connect` 和 `listen`，并以 `full_access_disabled` 关闭失去权限的会话。TODO：面板的提示改为直接编辑角色后，删除这个接口。
+修改密码会注销其他所有访问。修改前签发的面板 token 在所有 endpoint 都返回 `401`（同一秒签发的 token 仍然有效，因此修改后立即重新登录可以正常使用），watch token 和 LK Cloud session 都会被删除；在运行中的 Monitor 里，终端会话、未使用的 ticket、正在运行的 Agent mode 任务、Web 应用窗口、relay 和监听会收到 `{"type":"error","code":"password_changed"}` 并被关闭。在命令行中重置密码无法通知正在运行的 Monitor，已打开的连接会保持到 Monitor 重启。
 
 ### 传输安全
 
-所有权限都需要 TLS 或 loopback 调用方（包括同机反向代理），除非设置了 `[remote_access] allow_insecure = true`。TODO：配置不再需要兼容后，删除旧版 `allow_insecure` key。目前 `[remote_access.terminal] allow_insecure` 只覆盖 `shell`、`ssh_terminal`、`connect` 和 `listen`；`[remote_access.fs] allow_insecure` 只覆盖 `files`。App 通过明文连接时，还需要为该服务器开启**允许不安全 HTTP**。条件不满足时，Monitor 会以 `why: insecure_transport` 上报该权限不可用。
+读取以外的所有操作都需要 TLS 或 loopback 调用方（包括同机反向代理），除非设置了 `[remote_access] allow_insecure = true`。TODO：配置不再需要兼容后，删除旧版 `allow_insecure` key。目前 `[remote_access.terminal] allow_insecure` 和 `[remote_access.fs] allow_insecure` 与它等效。App 通过明文连接时，还需要为该服务器开启**允许不安全 HTTP**。条件不满足时，capabilities 的 `access` 带有 `why: insecure_transport`，对应 endpoint 返回 `forbidden`。
 
-### 连接和监听
+### Monitor 标签页 endpoint
 
-`connect.allow` 的每一项是 IP 地址或 CIDR 网段，后面可以跟端口或端口范围；IPv6 写作 `[addr]:port`。连接使用主机名时，Monitor 会解析主机名，要求解析得到的每个地址都在允许范围内，并连接这些地址。`localhost` 通常同时解析为 `127.0.0.1` 和 `::1`，因此客户端应直接发送目标地址。
-
-除非开启 `public`，`listen` 只绑定 loopback 地址；设置了 `ports` 时，只能绑定范围内的端口。
+| Endpoint | 返回内容 | 规则 |
+|---|---|---|
+| `GET /api/v1/alerts` | `checked_at`、`alerts`：最近一次检查时每条触发规则的 `rule`、`monitor_type`、`matcher`、`threshold`、`value`、`since`（保存在内存中；重启后会忘记 `since`） | 任意登录 |
+| `GET /api/v1/update[?check=1]` | `version`、`latest`、`checked_at`、`error`、`outdated`、`install`、`command`、`needs_password`、`run`。每 12 小时读取一次 release；`check=1` 会重新读取，最多每分钟一次。`run` 包含 `state`（`running`、`done`、`failed`、`interrupted`）、`started_at`、`exit`、`lines` | 任意登录 |
+| `POST /api/v1/update/run` | `202`。`needs_password` 时接收 `password`（sudo 密码）；密码错误返回 `403 sudo_password`。若 Monitor 不是通过 `install.sh` 安装，返回 `409 not_script`；更新正在运行时返回 `409 running`。会写入 audit | 传输规则 |
+| `GET /api/v1/audit?limit&before&kind&result` | 按时间倒序返回 `entries`（`id`、`timestamp`、`kind`、`action`、`result`、`subject`、`remote_ip`、`ssh_user`、`detail`），以及用于 `before` 的 `next`。未知的 `kind` 或 `result` 返回 `400 invalid_input` | 传输规则 |
+| `GET /api/v1/live` | `sessions`、`connections`、`watch_tokens`、`devices` | 传输规则 |
+| `DELETE /api/v1/live/{sessions,connections,devices}/{id}` | 返回 `204`；已不存在时返回 `404`。已结束的 session 或 connection 会收到 `ended`；忘记设备不会使其登出，但设备下次登录会按未知客户端计数，并获取新的 token。会写入 audit | 传输规则 |
 
 ### File API
 
-`files` 权限只能访问 `[remote_access.fs] roots` 中列出的目录。Monitor 会解析请求路径、跟随 symlink、拒绝 `..`，并确认解析后的路径仍在已配置的 root 下，因此 symlink 不能用来越过 roots。设置 `roots = ["/"]` 会开放整个文件系统，Monitor 启动时会发出警告。
+`/api/v1/fs/*` 可以访问 Monitor 的系统账户能访问的一切，但不包括 Monitor 自身的状态：数据库及其 journal 文件、`jwt.secret`、`credentials.key`、`initial-admin-credentials.txt`、`config.toml` 及其备份、`.env`、TLS 证书和私钥、自定义命令目录、blob 存储、stack 的 `.env` 文件和容器备份。这些路径在解析 symlink 后匹配，访问时返回 `403`，不出现在列表中，其所在目录也不能重命名、删除或 chmod。
 
 ### Terminal endpoint
 
-网页面板终端作为 SSH 客户端连接 `ssh_addr`，使用该 SSH 账户的权限，需要 `ssh_terminal`。App 终端使用 Monitor 进程用户的本地 shell，需要 `shell`。该 endpoint 的第一条消息可能包含 SSH 密码，所以它遵循上面的传输安全规则。
+App 和网页面板的终端都是以 Monitor 进程用户身份在 PTY 上运行的本地 shell。Monitor 不登录 sshd：携带 SSH 凭据的 `open` 会被拒绝。

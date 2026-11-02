@@ -19,28 +19,11 @@ use serde_json::{Value, json};
 use common::machine::{audit, call, server};
 
 async fn get(srv: &TestServer, query: &str) -> (u16, Value) {
-    call(srv, Some("admin"), Method::GET, &format!("/api/v1/containers{query}"), None).await
+    call(srv, true, Method::GET, &format!("/api/v1/containers{query}"), None).await
 }
 
-async fn post(srv: &TestServer, user: &str, body: Value) -> (u16, Value) {
-    call(srv, Some(user), Method::POST, "/api/v1/containers", Some(body)).await
-}
-
-#[ntex::test]
-async fn both_halves_need_the_shell_grant() {
-    let (srv, db) = server().await;
-    let (status, _) = call(&srv, None, Method::GET, "/api/v1/containers", None).await;
-    assert_eq!(status, 401);
-
-    let (status, body) = call(&srv, Some("viewer"), Method::GET, "/api/v1/containers", None).await;
-    assert_eq!((status, body["error"].as_str()), (403, Some("forbidden")));
-    let (status, _) = post(&srv, "viewer", json!({ "action": "stop", "id": "abc" })).await;
-    assert_eq!(status, 403);
-
-    let rows = audit(&db).await;
-    assert_eq!(rows.len(), 2, "{rows:?}");
-    assert!(rows.iter().all(|(action, _, subject, _)| action == "denied" && subject.as_deref() == Some("viewer")));
-    assert_eq!(rows[1].3.as_deref(), Some("containers stop abc: shell not_granted"));
+async fn post(srv: &TestServer, body: Value) -> (u16, Value) {
+    call(srv, true, Method::POST, "/api/v1/containers", Some(body)).await
 }
 
 /// Each part answers with the same envelope, so the page has one shape to
@@ -87,7 +70,7 @@ async fn what_this_build_does_not_have_is_refused() {
     let (srv, db) = server().await;
     assert_eq!(get(&srv, "?part=volumes").await.0, 400);
     for body in [json!({ "action": "exec", "id": "abc" }), json!({ "action": "stop" }), json!({ "id": "abc" })] {
-        assert_eq!(post(&srv, "admin", body.clone()).await.0, 400, "{body}");
+        assert_eq!(post(&srv, body.clone()).await.0, 400, "{body}");
     }
     assert!(audit(&db).await.is_empty());
 }
@@ -95,7 +78,7 @@ async fn what_this_build_does_not_have_is_refused() {
 #[ntex::test]
 async fn capabilities_list_the_containers_page() {
     let (srv, _) = server().await;
-    let (_, caps) = call(&srv, Some("viewer"), Method::GET, "/api/v1/capabilities", None).await;
+    let (_, caps) = call(&srv, true, Method::GET, "/api/v1/capabilities", None).await;
     assert!(caps["features"].as_array().unwrap().iter().any(|f| f == "containers"), "{caps}");
     // A panel offers the container shell only where an agent lists this, since
     // an older agent would ignore the target and open a host shell.
@@ -127,7 +110,7 @@ async fn an_invalid_value_is_refused_before_anything_runs() {
         ),
     ];
     for (body, code) in &cases {
-        let (status, answer) = post(&srv, "admin", body.clone()).await;
+        let (status, answer) = post(&srv, body.clone()).await;
         assert_eq!(status, 400, "{body}: {answer}");
         assert_eq!(answer["error"], "invalid_input", "{body}: {answer}");
         assert_eq!(answer["issue"], *code, "{body}: {answer}");
@@ -136,25 +119,7 @@ async fn an_invalid_value_is_refused_before_anything_runs() {
     let rows = audit(&db).await;
     assert_eq!(rows.len(), cases.len(), "{rows:?}");
     assert!(
-        rows.iter().all(|(action, result, subject, _)| action == "denied"
-            && result == "denied"
-            && subject.as_deref() == Some("admin")),
+        rows.iter().all(|(action, result, _, _)| action == "denied" && result == "denied"),
         "{rows:?}"
     );
-}
-
-/// The image and run actions need `shell` exactly as the container ones do.
-#[ntex::test]
-async fn every_new_action_needs_the_shell_grant() {
-    let (srv, _) = server().await;
-    for action in [
-        json!({ "action": "remove_image", "id": "abc" }),
-        json!({ "action": "pull_image", "reference": "alpine" }),
-        json!({ "action": "prune_images", "all_unused": true }),
-        json!({ "action": "prune_system", "all_unused_images": false, "include_volumes": false }),
-        json!({ "action": "run", "image": "alpine", "name": "", "args": "" }),
-    ] {
-        let (status, body) = post(&srv, "viewer", action.clone()).await;
-        assert_eq!((status, body["error"].as_str()), (403, Some("forbidden")), "{action}");
-    }
 }

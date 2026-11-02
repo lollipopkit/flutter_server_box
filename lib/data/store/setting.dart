@@ -400,6 +400,13 @@ class SettingStore extends SqliteStore with ThemeSettings {
   /// and moving that under them would undo the choice this exists to keep.
   late final paneListWidth = propertyDefault('paneListWidth', 220.0);
 
+  /// Which hand the tab rail is for, where the system keeps a column of its own
+  /// bars at one side — iPhone Duo. The rail stands in that column when it is
+  /// on this hand's side, as the system's own bars do; otherwise it is where
+  /// it is on every other device. Right by default: the column is on the right
+  /// unless the window is the left one of two.
+  late final rightHanded = propertyDefault('rightHanded', true);
+
   /// Whether that column is folded away entirely.
   ///
   /// Shared with [paneListWidth] for the same reason: one answer for every
@@ -505,8 +512,52 @@ class SettingStore extends SqliteStore with ThemeSettings {
     'appImportedFontPath',
     'themeStoreCache',
     // What this device's themes directory holds, like `appThemePackage`.
+    // TODO: remove with the key; no theme is bundled any more, it only
+    // records the ones seeded before.
     'bundledThemesSeeded',
+    // The rootfs manifest this device last verified: a cache, re-verified
+    // when read.
+    'rootfsManifestSerial',
+    'rootfsManifestCache',
+    'rootfsManifestCacheSig',
+    // The build this install last ran: another device's newer one makes
+    // `migrateBuildFeatures` skip the upgrade it gates.
+    'lastVer',
+    // What this install has been shown or asked.
+    'introVer',
+    'featureIntroVer',
+    'diagnosticsConsentVer',
+    'dmgTipBuild',
+    'legacyStatusNoticePending',
+    'firstTimeReadSSHCfg',
+    // Files only this device has.
+    'fontPath',
+    'sshBgImage',
+    // This device's screen, hardware and network.
+    'windowState',
+    'agentShell',
+    'terminalShell',
+    'useBioAuth',
+    'delayBioAuthLock',
+    'bgRun',
+    // A profile installed on this device, and the network it is on.
+    'linuxProfile',
+    'linuxDns',
+    // Sized for this device's screen: a phone's and a desktop's differ.
+    'textFactor',
+    'termFontSize',
+    'editorFontSize',
+    'paneListWidth',
+    'paneListCollapsed',
+    'fullScreen',
+    'rightHanded',
   };
+
+  /// [deviceLocalKeys]: neither stamped nor counted — a change to one is not
+  /// an edit a sync moves, and stamping it moved [Stores.lastModTime]
+  /// (`windowState` on every resize) and with it a whole sync and upload.
+  @override
+  bool isDeviceLocalKey(String key) => deviceLocalKeys.contains(key);
 
   /// The floating Agent's placement and size, as one row.
   ///
@@ -717,9 +768,6 @@ class SettingStore extends SqliteStore with ThemeSettings {
 
   /// Close the editor after saving
   late final closeAfterSave = propertyDefault('closeAfterSave', false);
-
-  /// The backup password
-  late final backupPassword = SecureProp('bakPasswd');
 
   /// Whether to read SSH config from ~/.ssh/config on first time
   late final firstTimeReadSSHCfg = propertyDefault('firstTimeReadSSHCfg', true);

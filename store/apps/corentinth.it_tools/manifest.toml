@@ -1,0 +1,60 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# IT-Tools, developer utilities in the browser: built and deployed with Docker
+# Compose from compose.yaml and it-tools.Dockerfile beside this file, shown in
+# a desk window through the agent.
+
+schema = 1
+publisher = "corentinth"
+name = "it_tools"
+project = "IT-Tools"
+developer = "Corentin Thomasset"
+version = "2024.10.22-7ca5933"
+homepage = "https://it-tools.tech"
+source = "https://github.com/CorentinTh/it-tools/tree/v2024.10.22-7ca5933"
+glyph = "handyman"
+tone = "mist"
+categories = ["tools", "development"]
+notices = ["pullsImages", "buildsImages", "publishesPort"]
+
+[title]
+en = "IT-Tools"
+
+[description]
+en = "Over a hundred small tools for developers and admins: encoders, hashes, UUIDs, JWT and certificate decoders, converters and generators. Everything runs in the browser."
+zh = "一百多个面向开发者和管理员的小工具：编码、哈希、UUID、JWT 与证书解析、格式转换和生成器。全部在浏览器中运行。"
+zh-TW = "一百多個面向開發者和管理員的小工具：編碼、雜湊、UUID、JWT 與憑證解析、格式轉換和產生器。全部在瀏覽器中執行。"
+
+[license]
+spdx = "GPL-3.0"
+url = "https://github.com/CorentinTh/it-tools/blob/v2024.10.22-7ca5933/LICENSE"
+accept = true
+
+[requirements]
+arch = ["amd64", "arm64", "arm"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+IT_TOOLS_VERSION = "2024.10.22-7ca5933"
+
+[[settings]]
+key = "port"
+type = "port"
+env = "IT_TOOLS_PORT"
+default = 8094
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "Off: only through the desk.", zh = "关闭时只能通过桌面访问。", zh-TW = "關閉時只能透過桌面存取。" }
+on = { IT_TOOLS_BIND = "0.0.0.0" }
+off = { IT_TOOLS_BIND = "127.0.0.1" }

@@ -6,6 +6,20 @@
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
+/// What the terminal's file key runs on a channel of its own when the shell
+/// has said nothing of its directory (no OSC 7).
+String filesTerminalShellsCommand() =>
+    RustLib.instance.api.crateApiFilesFilesTerminalShellsCommand();
+
+/// The directory of the shell in that output opened `age_secs` ago.
+String? filesTerminalShellCwd({
+  required String output,
+  required double ageSecs,
+}) => RustLib.instance.api.crateApiFilesFilesTerminalShellCwd(
+  output: output,
+  ageSecs: ageSecs,
+);
+
 String filesListCommand({required String path}) =>
     RustLib.instance.api.crateApiFilesFilesListCommand(path: path);
 

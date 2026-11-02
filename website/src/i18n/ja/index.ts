@@ -13,6 +13,7 @@ const ja: Translation = {
     download: 'ダウンロード',
     docs: 'ドキュメント',
     themes: 'テーマ',
+    os: 'ServerBox OS',
     plugins: 'プラグイン',
     languageLabel: '言語',
   },
@@ -103,6 +104,84 @@ const ja: Translation = {
     installIosPrompt: '# iOS',
     installReleasePrompt: '# Android、Linux、Windows',
   },
+  os: {
+    metaTitle: 'ServerBox OS — ServerBox のサーバー側',
+    metaDescription:
+      'ServerBox OS はサーバー上で動作する ServerBox Monitor です。アプリストア、ストレージ、Agent mode、アラート、バックアップを備えたブラウザー内のデスクトップです。Linux にインストールするか、システム全体として起動できます。',
+    heroTitle: 'ServerBox OS',
+    tagline: 'ServerBox のサーバー側。',
+    subtitle:
+      'ServerBox Monitor はサーバー上で動作します。アプリから接続でき、ブラウザー内蔵のデスクトップからはアプリなしでマシンを管理できます。既存の Linux サーバーにインストールするか、システム全体として起動できます。',
+    installAction: 'Linux にインストール',
+    images: 'イメージをダウンロード',
+    previewAction: 'デモを見る',
+    previewTitle: '実際の動作',
+    previewSubtitle:
+      'ServerBox OS はベータ版です。実際のサーバーでの短いデモ：ブラウザーのデスクトップ、アプリ、そして Agent モードの動作。',
+    previewPlay: 'ServerBox OS のデモを再生',
+    previewYoutube: 'YouTube で見る',
+    featuresTitle: 'サーバー上でできること',
+    featuresSubtitle: 'マシン上で 1 つのプログラムが動作し、ブラウザーまたはアプリからアクセスできます。',
+    desk: {
+      title: 'ブラウザー内のデスクトップ',
+      description:
+        'サーバーのアドレスを開くと、状態、ファイル、ターミナル、コンテナ、プロセス、サービスなどの各機能がウィンドウ内のアプリとして表示されます。',
+    },
+    apps: {
+      title: 'アプリストア',
+      description:
+        'Docker Compose で Immich、Jellyfin、Gitea、Home Assistant など 40 種類以上のセルフホストサービスをデプロイできます。Tailscale、リバースプロキシ、カーネル、ローカル AI モデル用のアプリも追加できます。',
+    },
+    storage: {
+      title: 'ストレージと共有',
+      description:
+        'ディスクのパーティション作成、フォーマット、マウント、RAID アレイや ZFS プールの構築、S.M.A.R.T. の確認ができ、SMB と NFS でフォルダーを共有できます。',
+    },
+    agent: {
+      title: 'Agent mode',
+      description:
+        'マシン上の AI Agent にタスクを依頼できます。計画を立て、リスクのあるコマンドの前に確認し、許可した場合のみ sudo を使い、MCP 経由でデプロイ済みのアプリにアクセスします。',
+    },
+    alerts: {
+      title: 'アラート',
+      description:
+        'CPU、メモリ、ディスク、サービスのルールに基づき、アプリ、Telegram、Discord、ntfy、Bark、ServerChan、メール、Webhook に通知します。',
+    },
+    backups: {
+      title: 'バックアップ',
+      description:
+        '設定は WebDAV に age で暗号化してバックアップされます。コンテナのデータは、選択したディスクにスケジュールに沿ってバックアップされます。',
+    },
+    security: {
+      title: '1 つのパスワード',
+      description:
+        '1 つのアカウントにパスワードでサインインします。読み取り以外の操作には HTTPS が必要で、認証情報は保存時に暗号化され、サインインと root 操作は監査ログに記録されます。',
+    },
+    app: {
+      title: 'アプリと連携',
+      description:
+        'ServerBox にサーバーを HTTPS で追加すれば SSH の代わりに、または SSH と併用して接続できます。スマートフォンから状態と履歴を確認し、ターミナル、ファイル、Agent mode のタスク、Web アプリを利用できます。',
+    },
+    installTitle: '2 つの実行方法',
+    installSubtitle: '既存の Linux サーバーで実行するか、専用マシンのシステム全体として起動します。',
+    linuxTitle: 'Linux サーバーで実行',
+    promptUser: '# systemd：自分のアカウントで実行するユーザーサービス',
+    promptOpenrc: '# OpenRC (Alpine)：root がサービスを作成し、サービスは引き続き自分のアカウントで実行',
+    promptRoot: '# どちらの init システムでも root として実行',
+    linuxNote:
+      '実行に使うアカウントによって、できる操作が決まります。更新または削除するには install を upgrade または uninstall に置き換えてください。',
+    copy: 'インストールコマンドをコピー',
+    imageTitle: 'システム全体として起動',
+    stepWrite: 'イメージをダウンロードして USB メモリに書き込む (dd、Etcher、Ventoy) か、仮想マシンに接続します。',
+    stepBoot:
+      '起動すると、コンソールにアクセス先のアドレス、照合する証明書のフィンガープリント、初期パスワードの場所が表示されます。',
+    stepInstall: 'sbm-install <ディスク> はそのディスクを消去し、システムをインストールします。',
+    liveNote:
+      'インストールするまではメモリ上で動作するため、再起動するとデータベース、イメージ、アプリのデータは失われます。',
+    note: 'ServerBox OS はアプリと同様に AGPLv3 のオープンソースです。',
+    docs: 'Monitor のドキュメント',
+    appAction: 'アプリを入手',
+  },
   themes: {
     title: '自分好みの見た目に。',
     subtitle:
@@ -143,8 +222,6 @@ const ja: Translation = {
     disabled: '無効',
     loadFailed: 'このテーマのプレビューを読み込めませんでした。',
     retry: '再試行',
-    previewNote:
-      'プレビューではテーマのアイコンと配色を確認できます。その他の画面はイメージです。',
     iconPacks: 'アイコンパック',
     iconPacksSubtitle:
       'アイコンパックはテーマとは別に選択でき、現在のテーマと組み合わせて使えます。「設定 → 外観 → テーマストア → アイコンパック」からインストールできます。',
@@ -162,7 +239,7 @@ const ja: Translation = {
     copied: 'インストールコマンドをコピーしました',
     copyPrompt: 'このインストールコマンドをコピーしてください:',
     note:
-      '信頼できる配布元からのみダウンロードしてください。サーバー側の通知、ウィジェットのデータ、独立した監視を利用するには、サーバーに ServerBox Monitor を別途インストールしてください。',
+      '信頼できる配布元からのみダウンロードしてください。サーバー側の通知、ウィジェットのデータ、独立した監視を利用するには、サーバーに ServerBox OS をインストールしてください。',
   },
   cta: {
     title: 'ServerBox は AGPLv3 の無料オープンソースです。',

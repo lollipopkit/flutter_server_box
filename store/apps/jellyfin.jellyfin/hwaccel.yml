@@ -1,0 +1,45 @@
+# Jellyfin 12.2 transcoding backends (GPL-2.0-only), https://github.com/jellyfin/jellyfin/releases/tag/v12.2
+#
+# Written for ServerBox Monitor's Media app from Jellyfin's hardware acceleration
+# pages (jellyfin.org/docs/general/post-install/transcoding/hardware-acceleration,
+# and its Intel, AMD and NVIDIA pages). Not copied from a release file.
+# One service per option; compose.yaml extends the one the admin chose.
+# The backend must also be enabled in Jellyfin's transcoding settings.
+
+services:
+  cpu: {}
+
+  nvidia:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  # Intel and AMD on Linux. The render node's group (SBM_RENDER_GID, from the
+  # agent) is needed because the container runs as the shared folder's owner.
+  vaapi-intel:
+    devices:
+      - /dev/dri:/dev/dri
+    group_add:
+      - "${SBM_RENDER_GID}"
+
+  vaapi-amd:
+    devices:
+      - /dev/dri:/dev/dri
+    group_add:
+      - "${SBM_RENDER_GID}"
+
+  # VA-API under WSL2: the GPU is exposed as /dev/dxg with Mesa's d3d12 driver.
+  vaapi-wsl:
+    devices:
+      - /dev/dri:/dev/dri
+      - /dev/dxg:/dev/dxg
+    group_add:
+      - "${SBM_RENDER_GID}"
+    volumes:
+      - /usr/lib/wsl:/usr/lib/wsl
+    environment:
+      LIBVA_DRIVER_NAME: d3d12

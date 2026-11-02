@@ -16,6 +16,19 @@ pub struct ShellFileRecord {
     pub mode: Option<u32>,
 }
 
+/// What the terminal's file key runs on a channel of its own when the shell
+/// has said nothing of its directory (no OSC 7).
+#[flutter_rust_bridge::frb(sync)]
+pub fn files_terminal_shells_command() -> String {
+    files::terminal_shells_command()
+}
+
+/// The directory of the shell in that output opened `age_secs` ago.
+#[flutter_rust_bridge::frb(sync)]
+pub fn files_terminal_shell_cwd(output: String, age_secs: f64) -> Option<String> {
+    files::terminal_shell_cwd(&output, age_secs)
+}
+
 #[flutter_rust_bridge::frb(sync)]
 pub fn files_list_command(path: String) -> String {
     files::list_command(&path)

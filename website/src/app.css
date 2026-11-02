@@ -546,6 +546,169 @@ body {
   gap: 1rem;
 }
 
+/* ServerBox OS: eight points, four by two; two columns, then one on a phone. */
+.os-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 1040px) {
+  .os-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .os-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.os-hero {
+  display: grid;
+  gap: 1.4rem;
+  padding-bottom: clamp(2rem, 4vw, 3rem);
+}
+
+.os-hero h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2.8rem, 6.2vw, 5rem);
+  font-weight: 800;
+  font-variation-settings: 'opsz' 96;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--black);
+}
+
+.os-hero h1 span {
+  color: var(--brand);
+}
+
+.os-hero .hero-platforms {
+  justify-self: start;
+}
+
+/* A command is one line; the block scrolls sideways when it is too wide. */
+.os-code .command {
+  white-space: nowrap;
+}
+
+.os-hero .hero-subtitle {
+  max-width: 62ch;
+}
+
+/* The tour: a 16:9 frame, its thumbnail until it is played. */
+.os-video {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  max-width: 100%;
+  border-radius: var(--radius-container);
+  border: 1px solid var(--light-gray);
+  overflow: hidden;
+  background: var(--snow);
+}
+
+.os-video iframe,
+.os-video-play {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.os-video-play {
+  padding: 0;
+  cursor: pointer;
+  background: none;
+}
+
+.os-video-play img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.os-video-icon {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 72px;
+  height: 72px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: var(--black);
+  opacity: 0.85;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.os-video-icon::after {
+  content: '';
+  position: absolute;
+  left: 29px;
+  top: 22px;
+  border-style: solid;
+  border-width: 14px 0 14px 22px;
+  border-color: transparent transparent transparent var(--white);
+}
+
+.os-video-play:hover .os-video-icon,
+.os-video-play:focus-visible .os-video-icon {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.06);
+}
+
+.os-video-foot {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.os-subhead {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--black);
+  margin-top: 2.5rem;
+}
+
+.os-subhead + .code-block,
+.os-subhead + .download-list {
+  margin-top: 1rem;
+}
+
+.os-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.os-image {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.os-image-about {
+  color: var(--stone);
+  font-size: 0.88rem;
+}
+
+.os-steps {
+  margin-top: 1.5rem;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 0.5rem;
+  color: var(--near-black);
+  line-height: 1.6;
+  max-width: 72ch;
+}
+
 .store-card {
   gap: 0.75rem;
 }
@@ -643,18 +806,7 @@ body {
   margin-top: 0;
 }
 
-.preview-note {
-  color: var(--stone);
-  font-size: 0.8rem;
-  line-height: 1.5;
-  margin: 0 0 0.9rem;
-}
 
-.detail-preview .preview-note {
-  max-width: 286px;
-  margin: 0.8rem 0 0;
-  text-align: center;
-}
 
 .store-grid-wide {
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));

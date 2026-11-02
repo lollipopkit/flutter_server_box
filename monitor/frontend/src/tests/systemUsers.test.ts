@@ -2,8 +2,8 @@ import { get } from 'svelte/store'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
+import SystemUsers from '../desk/apps/system_users/SystemUsersApp.svelte'
 import { LL } from '../i18n/i18n-svelte'
-import SystemUsers from '../pages/SystemUsers.svelte'
 import { api } from '../lib/api'
 import type { GroupRow, UserRow, UserView } from '../types'
 
@@ -70,7 +70,7 @@ describe('System users page', () => {
   })
 
   it('offers no removal of root or of the agent own account', async () => {
-    render(SystemUsers, { onback: () => {} })
+    render(SystemUsers)
     await fireEvent.click(await screen.findByRole('button', { name: /^root/ }))
     expect(screen.getByRole('button', { name: ll.userDelete() })).toBeDisabled()
   })
@@ -79,7 +79,7 @@ describe('System users page', () => {
     actSystemUser
       .mockResolvedValueOnce({ ...ok, succeeded: false, sudo_rejected: true })
       .mockResolvedValueOnce(ok)
-    render(SystemUsers, { onback: () => {} })
+    render(SystemUsers)
     await fireEvent.click(await screen.findByRole('button', { name: /^deploy/ }))
     await fireEvent.click(screen.getByRole('button', { name: ll.userDelete() }))
     expect(actSystemUser).not.toHaveBeenCalled()
@@ -93,7 +93,7 @@ describe('System users page', () => {
 
     // Refused for want of root: the dialog asks for the password and sends it
     // as its own field on the second attempt.
-    await fireEvent.input(await screen.findByLabelText(ll.powerPassword()), { target: { value: 'hunter2' } })
+    await fireEvent.input(await screen.findByLabelText(ll.powerPassword(), { exact: false }), { target: { value: 'hunter2' } })
     await fireEvent.click(screen.getAllByRole('button', { name: ll.userDelete() }).at(-1)!)
     await waitFor(() =>
       expect(actSystemUser).toHaveBeenLastCalledWith({
@@ -108,8 +108,8 @@ describe('System users page', () => {
 
   it('edits a group the same way as an account', async () => {
     actSystemUser.mockResolvedValue(ok)
-    render(SystemUsers, { onback: () => {} })
-    await fireEvent.click(await screen.findByRole('button', { name: ll.groupTab() }))
+    render(SystemUsers)
+    await fireEvent.click(await screen.findByRole('tab', { name: ll.groupTab() }))
     await fireEvent.click(await screen.findByRole('button', { name: /^ops/ }))
     await fireEvent.click(screen.getByRole('button', { name: ll.groupEdit() }))
     await fireEvent.click(screen.getByRole('button', { name: ll.save() }))
@@ -131,7 +131,7 @@ describe('System users page', () => {
       users: [],
       groups: [],
     })
-    render(SystemUsers, { onback: () => {} })
+    render(SystemUsers)
     expect(await screen.findByText(ll.userUnsupportedPlatform())).toBeInTheDocument()
   })
 })

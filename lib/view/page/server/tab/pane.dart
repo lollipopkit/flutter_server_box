@@ -122,7 +122,8 @@ extension _Pane on _ServerPageState {
     );
 
     return ListView(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      // Down to the window's foot, its last row clear of the home indicator.
+      padding: EdgeInsets.only(top: 4, bottom: 4 + MediaQuery.paddingOf(context).bottom),
       children: [
         for (final group in groupByTag(filtered, (id) => servers[id]?.tags)) ...[
           if (group.label case final label?) SideBarSection(label),

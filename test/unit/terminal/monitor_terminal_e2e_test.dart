@@ -6,8 +6,7 @@ import 'package:server_box/core/utils/monitor_terminal.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
 
-/// End-to-end against a live `monitor` agent with
-/// `remote_access.passwordless_terminal` on.
+/// End-to-end against a live `monitor` agent over HTTPS or loopback.
 ///
 /// This path has no SSH in it: the agent runs the PTY itself, so the only
 /// thing that can prove the client speaks the protocol correctly is a real
@@ -15,7 +14,6 @@ import 'package:server_box/data/model/server/shell_backend.dart';
 ///
 /// ```sh
 /// SBM_E2E_MONITOR_URL=http://127.0.0.1:3771 \
-/// SBM_E2E_MONITOR_USER=admin \
 /// SBM_E2E_MONITOR_PASSWORD=... \
 /// flutter test test/unit/terminal/monitor_terminal_e2e_test.dart
 /// ```
@@ -25,10 +23,9 @@ import 'package:server_box/data/model/server/shell_backend.dart';
 void main() {
   final env = Platform.environment;
   final url = env['SBM_E2E_MONITOR_URL'];
-  final user = env['SBM_E2E_MONITOR_USER'];
   final pwd = env['SBM_E2E_MONITOR_PASSWORD'];
 
-  if (url == null || user == null || pwd == null) {
+  if (url == null || pwd == null) {
     test(
       'monitor terminal e2e (skipped: SBM_E2E_MONITOR_* unset)',
       () {},
@@ -40,7 +37,7 @@ void main() {
   late MonitorHttpCredential monitor;
 
   setUpAll(() {
-    monitor = MonitorHttpCredential(addr: url, user: user, pwd: pwd);
+    monitor = MonitorHttpCredential(addr: url, pwd: pwd);
   });
 
   /// Opens a shell and returns it together with a buffer of everything it has

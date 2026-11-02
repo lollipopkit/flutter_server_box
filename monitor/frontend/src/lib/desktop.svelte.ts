@@ -7,6 +7,8 @@
 /// writes its version string the moment it is attached.
 
 import { agentWsUrl, wsTicketProtocol } from './agentUrl'
+
+import { errorText } from './errorText'
 import { api } from './api'
 import { servers } from './servers.svelte'
 import type { Desktop } from '../types'
@@ -42,8 +44,8 @@ export const MAX_EARLY_BYTES = 64 * 1024
 /// the relay's own control frames taken out.
 ///
 /// Text frames on the relay are the agent's, not the desktop's: `exit` when
-/// the desktop hung up, `error` when the connection was cut — a grant taken
-/// away mid-session, say. noVNC would read one as screen bytes; here an
+/// the desktop hung up, `error` when the connection was cut — the password
+/// changed mid-session, say. noVNC would read one as screen bytes; here an
 /// `error` is kept as `reason` for the page and the channel closes.
 ///
 /// Bytes that arrive before noVNC attaches are kept and handed over when it
@@ -55,6 +57,8 @@ export class RelayChannel {
   onerror: ((e: Event) => void) | null = null
   /// Why the agent ended the connection, when it said.
   reason: string | null = null
+  /// Its code (`password_changed`, ...), for a reason the page phrases itself.
+  code: string | null = null
   private receiver: ((e: MessageEvent) => void) | null = null
   private early: MessageEvent[] = []
   private earlyBytes = 0
@@ -83,7 +87,10 @@ export class RelayChannel {
         return
       }
       const control = parseControl(e.data)
-      if (control?.type === 'error') this.reason = control.message || control.code
+      if (control?.type === 'error') {
+        this.reason = control.message || control.code
+        this.code = control.code
+      }
       if (control?.type === 'error' || control?.type === 'exit') socket.close()
     }
     socket.onclose = (e) => this.onclose?.(e)
@@ -162,7 +169,7 @@ export class DesktopSession {
     try {
       ticket = (await api.issueWsTicket('stream')).ticket
     } catch (e) {
-      if (generation === this.generation) this.fail(e instanceof Error ? e.message : String(e))
+      if (generation === this.generation) this.fail(errorText(e))
       return answered
     }
     if (generation !== this.generation) return answered
@@ -185,8 +192,8 @@ export class DesktopSession {
         this.fail(control.message || control.code)
       }
     }
-    // Closing before `ready` is the relay refusing: a bad ticket, the grant
-    // off, the address not allowed or not answering.
+    // Closing before `ready` is the relay refusing: a bad ticket, a plaintext
+    // link, the address not allowed or not answering.
     socket.onclose = () => {
       if (generation === this.generation) this.fail(this.error ?? 'The connection ended')
     }

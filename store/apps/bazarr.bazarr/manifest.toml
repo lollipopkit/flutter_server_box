@@ -1,0 +1,94 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Bazarr: deployed with Docker Compose from compose.yaml beside this
+# file, shown in a desk window through the agent.
+
+schema = 1
+publisher = "bazarr"
+name = "bazarr"
+project = "Bazarr"
+developer = "morpheus65535"
+version = "1.6.2"
+homepage = "https://www.bazarr.media"
+source = "https://github.com/morpheus65535/bazarr/tree/v1.6.2"
+glyph = "subtitles"
+tone = "amber"
+categories = ["media"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Bazarr"
+
+[description]
+en = "Subtitles for what Sonarr and Radarr file: searched for in the languages you choose and kept beside each episode and film."
+zh = "为 Sonarr 和 Radarr 整理的内容下载字幕：按你选择的语言搜索，保存在每一集和每部电影旁边。"
+zh-TW = "為 Sonarr 和 Radarr 整理的內容下載字幕：依你選擇的語言搜尋，儲存在每一集和每部電影旁邊。"
+
+[license]
+spdx = "GPL-3.0"
+url = "https://github.com/morpheus65535/bazarr/blob/v1.6.2/LICENSE"
+accept = true
+
+# linuxserver.io builds amd64 and arm64.
+[requirements]
+arch = ["amd64", "arm64"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+jobs = ["seed-login"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+BAZARR_TAG = "v1.6.2-ls368"
+
+[[secrets]]
+env = "BAZARR_PASSWORD"
+length = 32
+
+[login]
+user = "admin"
+password = "BAZARR_PASSWORD"
+note = { en = "Connect Sonarr and Radarr in Settings at host.docker.internal:<their port>, with them reachable from the network. Their libraries are at /tv and /movies here as there.", zh = "在 Settings 中通过 host.docker.internal:<端口> 连接 Sonarr 和 Radarr，它们需要开启“允许从网络访问”。剧集库和电影库在这里和在它们那里一样位于 /tv 和 /movies。", zh-TW = "在 Settings 中透過 host.docker.internal:<連接埠> 連線 Sonarr 和 Radarr，它們需要開啟「允許從網路存取」。劇集庫和電影庫在這裡和在它們那裡一樣位於 /tv 和 /movies。" }
+
+[[settings]]
+key = "config"
+type = "path"
+env = "BAZARR_CONFIG"
+default = "{stack}/config"
+data = true
+label = { en = "Configuration and database", zh = "配置和数据库", zh-TW = "設定和資料庫" }
+
+[[settings]]
+key = "movies"
+type = "path"
+env = "BAZARR_MOVIES"
+default = "{shared}/media/movies"
+label = { en = "Movie library", zh = "电影库", zh-TW = "電影庫" }
+help = { en = "Radarr's, at /movies.", zh = "Radarr 的电影库，位于 /movies。", zh-TW = "Radarr 的電影庫，位於 /movies。" }
+
+[[settings]]
+key = "tv"
+type = "path"
+env = "BAZARR_TV"
+default = "{shared}/media/tv"
+label = { en = "TV library", zh = "剧集库", zh-TW = "劇集庫" }
+help = { en = "Sonarr's, at /tv.", zh = "Sonarr 的剧集库，位于 /tv。", zh-TW = "Sonarr 的劇集庫，位於 /tv。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "BAZARR_PORT"
+default = 6767
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "Off: only through the desk.", zh = "关闭时只能通过桌面访问。", zh-TW = "關閉時只能透過桌面存取。" }
+on = { BAZARR_BIND = "0.0.0.0" }
+off = { BAZARR_BIND = "127.0.0.1" }

@@ -1,0 +1,105 @@
+# qBittorrent 5.2.4 (GPLv2+), https://github.com/qbittorrent/qBittorrent/releases/tag/release-5.2.4
+# Image: linuxserver.io's build, https://github.com/linuxserver/docker-qbittorrent
+# (Alpine based, amd64 and arm64; tag 5.2.4_v2.0.15-ls480). Upstream publishes no image.
+#
+# Written for ServerBox Monitor's Downloads app:
+# - no `name:` and no `container_name`: the agent names the project;
+# - PUID/PGID/TZ come from the agent (SBM_UID, SBM_GID, SBM_TZ);
+# - TORRENTING_PORT makes the image listen on the published peer port
+#   (the image passes it to qbittorrent-nox as --torrenting-port);
+# - seed-config is a one-shot job. The image prints a temporary WebUI password
+#   in its log since 4.6.1, so the job writes the password from the secret
+#   (PBKDF2-HMAC-SHA512, the format qBittorrent 5.2 reads) into
+#   qBittorrent.conf before the main service starts, and turns off the two
+#   WebUI checks that the agent's reverse proxy would fail (Host header and
+#   Origin/Referer, see the comments in the job).
+
+services:
+  seed-config:
+    image: lscr.io/linuxserver/qbittorrent:${QBITTORRENT_TAG}
+    user: "${SBM_UID}:${SBM_GID}"
+    entrypoint: ["python3", "-c"]
+    environment:
+      WEBUI_PASSWORD: ${QBITTORRENT_PASSWORD}
+    volumes:
+      - ${QBITTORRENT_CONFIG}:/config
+    command:
+      - |
+        import base64, hashlib, os, secrets
+
+        conf = "/config/qBittorrent/qBittorrent.conf"
+        os.makedirs(os.path.dirname(conf), exist_ok=True)
+        if not os.path.exists(conf):
+            # The same default the image's init copies when the file is missing.
+            with open("/defaults/qBittorrent.conf") as src:
+                text = src.read()
+            with open(conf, "w") as dst:
+                dst.write(text)
+
+        with open(conf) as f:
+            lines = f.read().split("\n")
+        if "[Preferences]" not in lines:
+            lines.append("[Preferences]")
+
+        def set_key(key, value, only_if_empty):
+            # Changes one key in [Preferences]; a key that is already set is kept
+            # when only_if_empty is true.
+            start = lines.index("[Preferences]")
+            end = len(lines)
+            for i in range(start + 1, len(lines)):
+                if lines[i].startswith("["):
+                    end = i
+                    break
+            for i in range(start + 1, end):
+                if lines[i].startswith(key + "="):
+                    current = lines[i][len(key) + 1:].strip('"')
+                    if only_if_empty and current:
+                        return
+                    lines[i] = key + "=" + value
+                    return
+            lines.insert(end, key + "=" + value)
+
+        # The reverse proxy in the agent (the desk's window) forwards the agent's own
+        # Host (another port than the WebUI's) and the desk's Origin, so qBittorrent
+        # would refuse every request with a 401 unless these two checks are off.
+        # Clickjacking protection stays on: the agent removes X-Frame-Options and
+        # replaces frame-ancestors with the desk's origins.
+        set_key("WebUI\\HostHeaderValidation", "false", False)
+        set_key("WebUI\\CSRFProtection", "false", False)
+
+        # PBKDF2-HMAC-SHA512, 100000 iterations, 64-byte key, 16-byte random salt,
+        # stored as "@ByteArray(<salt base64>:<key base64>)" (qBittorrent's
+        # Utils::Password::PBKDF2). Written only while no password is set, so a
+        # password changed in the WebUI survives a restart.
+        salt = secrets.token_bytes(16)
+        key = hashlib.pbkdf2_hmac("sha512", os.environ["WEBUI_PASSWORD"].encode(), salt, 100000, dklen=64)
+        value = '"@ByteArray(' + base64.b64encode(salt).decode() + ":" + base64.b64encode(key).decode() + ')"'
+        set_key("WebUI\\Password_PBKDF2", value, True)
+
+        with open(conf, "w") as f:
+            f.write("\n".join(lines))
+    restart: "no"
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:${QBITTORRENT_TAG}
+    environment:
+      PUID: ${SBM_UID}
+      PGID: ${SBM_GID}
+      TZ: ${SBM_TZ}
+      TORRENTING_PORT: ${TORRENTING_PORT}
+    volumes:
+      - ${QBITTORRENT_CONFIG}:/config
+      - ${DOWNLOADS_LOCATION}:/downloads
+    ports:
+      - '${QBITTORRENT_BIND}:${QBITTORRENT_PORT}:8080'
+      - '${TORRENTING_PORT}:${TORRENTING_PORT}'
+      - '${TORRENTING_PORT}:${TORRENTING_PORT}/udp'
+    depends_on:
+      seed-config:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -o /dev/null http://127.0.0.1:8080/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

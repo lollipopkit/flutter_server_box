@@ -441,7 +441,7 @@ pub fn parse_list(output: &str) -> Result<UserCatalog, UserError> {
     let mut section = "";
 
     // Bound to a local: every row below borrows from it.
-    let normalized = output.replace("\r\n", "\n").replace('\r', "\n");
+    let normalized = crate::common::normalize_newlines(output);
     for raw_line in normalized.split('\n') {
         let line = raw_line.trim_end();
         if let Some(rest) = line.strip_prefix(CURRENT_MARKER) {
@@ -641,7 +641,7 @@ pub fn parse_detail(output: &str, name: &str) -> UserDetail {
     let mut sections: HashMap<&str, Vec<&str>> = HashMap::new();
     let mut section = "";
     // Bound to a local: every section below borrows from it.
-    let normalized = output.replace("\r\n", "\n").replace('\r', "\n");
+    let normalized = crate::common::normalize_newlines(output);
     for raw_line in normalized.split('\n') {
         let line = raw_line.trim_end();
         if let Some(marker) = MARKERS.iter().find(|marker| **marker == line) {

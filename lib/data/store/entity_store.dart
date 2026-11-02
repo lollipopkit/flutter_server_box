@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/data/store/sync_recorder.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 /// Raised when a write would collide with a `UNIQUE` column.
@@ -69,9 +70,13 @@ class SyncedTable {
   /// `rev` moves too: two edits inside one millisecond are indistinguishable
   /// by the clock alone.
   void stamp(String id, {int? at}) {
+    final h = SyncRecorder.record(table, id, at: at);
+    // The stamp's own time: the snapshot sync compares `updated_at`, and a
+    // device given this record by the log stores the stamp's, so both agree
+    // and neither takes the other's copy back as newer.
     db.execute(
       'UPDATE $table SET updated_at = ?, rev = rev + 1 WHERE $idColumn = ?;',
-      [at ?? DateTimeX.timestamp, id],
+      [at ?? (h == null ? SyncClock.now() : SyncRecorder.msOf(h)), id],
     );
     db.execute('DELETE FROM tombstone WHERE tbl = ? AND row_id = ?;', [
       table,
@@ -84,10 +89,11 @@ class SyncedTable {
   /// A peer that still holds the row would otherwise read its absence as an
   /// addition and put it back on the next sync.
   void tombstone(String id, {int? at}) {
+    final h = SyncRecorder.record(table, id, at: at);
     db.execute(
       'INSERT OR REPLACE INTO tombstone (tbl, row_id, deleted_at) '
       'VALUES (?, ?, ?);',
-      [table, id, at ?? DateTimeX.timestamp],
+      [table, id, at ?? (h == null ? SyncClock.now() : SyncRecorder.msOf(h))],
     );
   }
 
@@ -350,7 +356,7 @@ abstract class EntityStore<T extends Object> {
         // And a record with no timestamp is stamped as now. Stamping 0 would
         // leave it looking older than anything, and the next sync would take
         // it straight back out.
-        final at = bakTs ?? DateTimeX.timestamp;
+        final at = bakTs ?? SyncClock.now();
 
         if (!records.contains(id)) {
           // Only a record the backup knew about and no longer holds is a
@@ -406,11 +412,16 @@ abstract class EntityStore<T extends Object> {
         // a server at its key or its BMC account by name then had nothing to
         // point at, and the server lost the reference or was skipped outright.
         // `reconcile` is what turns the name back into this device's id.
-        if (json['id'] == null) json['id'] = id;
+        final idLess = json['id'] == null;
+        if (idLess) json['id'] = id;
         final item = fromJson(json);
         if (item == null) continue;
         try {
-          final resolved = reconcile(item);
+          // By name only for a restore, or a record without an id: in a sync
+          // another device's record of the same name is another record, as
+          // the operation log has it (`SyncRecords`); taking it for this
+          // one's overwrote it.
+          final resolved = force || idLess ? reconcile(item) : item;
           write(resolved);
           written.add(resolved);
           synced.stamp(idOf(resolved), at: at);

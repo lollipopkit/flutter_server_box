@@ -1,0 +1,94 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Headscale with Headplane: deployed with Docker Compose from compose.yaml,
+# headscale.yaml and headplane.yaml beside this file, Headplane shown in a
+# desk window through the agent.
+
+schema = 1
+publisher = "juanfont"
+name = "headscale"
+project = "Headscale"
+developer = "Juan Font"
+version = "0.29.5"
+homepage = "https://headscale.net"
+source = "https://github.com/juanfont/headscale/tree/v0.29.5"
+glyph = "vpn_lock"
+tone = "ink"
+categories = ["network", "security"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Headscale"
+
+[description]
+en = "Your own Tailscale control server: devices running the Tailscale app join a private network you run, managed here with Headplane (machines, users, keys, access rules)."
+zh = "自建的 Tailscale 控制服务器：运行 Tailscale 客户端的设备加入你自己运营的私有网络，并在这里通过 Headplane 管理（设备、用户、密钥、访问规则）。"
+zh-TW = "自架的 Tailscale 控制伺服器：執行 Tailscale 用戶端的裝置加入你自己營運的私有網路，並在這裡透過 Headplane 管理（裝置、使用者、金鑰、存取規則）。"
+
+[license]
+spdx = "BSD-3-Clause"
+url = "https://github.com/juanfont/headscale/blob/v0.29.5/LICENSE"
+
+[requirements]
+arch = ["amd64", "arm64"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+jobs = ["seed-api-key"]
+
+[web]
+port = "port"
+path = "/admin"
+
+[env]
+HEADSCALE_VERSION = "0.29.5"
+HEADPLANE_VERSION = "0.8.1"
+
+[[secrets]]
+env = "HEADPLANE_COOKIE_SECRET"
+length = 32
+
+[login]
+note = { en = "Headplane signs in with a Headscale API key: the one made for it is in the file headplane-api-key in the app's data folder (open it in Files). Devices join with the address set for them.", zh = "Headplane 使用 Headscale API 密钥登录：为它创建的密钥在应用数据文件夹中的 headplane-api-key 文件里（可在 Files 中打开）。设备使用为其设置的地址加入。", zh-TW = "Headplane 使用 Headscale API 金鑰登入：為它建立的金鑰在應用資料資料夾中的 headplane-api-key 檔案裡（可在 Files 中開啟）。裝置使用為其設定的位址加入。" }
+
+[[settings]]
+key = "url"
+type = "text"
+env = "HEADSCALE_URL"
+default = "http://localhost:8086"
+pattern = '^https?://[A-Za-z0-9.:\[\]-]+(/[A-Za-z0-9._~/-]*)?$'
+label = { en = "Address for devices", zh = "设备使用的地址", zh-TW = "裝置使用的位址" }
+help = { en = "Where Tailscale clients reach Headscale, this machine's address and the port below (https:// behind a reverse proxy). It cannot change once devices have joined.", zh = "Tailscale 客户端访问 Headscale 的地址，即本机地址加下方端口（使用反向代理时为 https://）。设备加入后不能再修改。", zh-TW = "Tailscale 用戶端存取 Headscale 的位址，即本機位址加下方連接埠（使用反向代理時為 https://）。裝置加入後不能再修改。" }
+
+[[settings]]
+key = "data"
+type = "path"
+env = "HEADSCALE_DATA"
+default = "{stack}/data"
+data = true
+label = { en = "Data", zh = "数据", zh-TW = "資料" }
+help = { en = "Headscale's database and keys, Headplane's data, and Headplane's API key.", zh = "Headscale 的数据库和密钥、Headplane 的数据，以及 Headplane 的 API 密钥。", zh-TW = "Headscale 的資料庫和金鑰、Headplane 的資料，以及 Headplane 的 API 金鑰。" }
+
+[[settings]]
+key = "headscale_port"
+type = "port"
+env = "HEADSCALE_PORT"
+default = 8086
+label = { en = "Port for devices", zh = "设备连接端口", zh-TW = "裝置連線連接埠" }
+help = { en = "Always reachable from the network: Tailscale clients connect here.", zh = "始终允许从网络访问：Tailscale 客户端连接此端口。", zh-TW = "一律允許從網路存取：Tailscale 用戶端連線此連接埠。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "HEADPLANE_PORT"
+default = 3008
+label = { en = "Headplane port", zh = "Headplane 端口", zh-TW = "Headplane 連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Headplane reachable from the network", zh = "Headplane 允许从网络访问", zh-TW = "Headplane 允許從網路存取" }
+help = { en = "Off: only through the desk.", zh = "关闭时只能通过桌面访问。", zh-TW = "關閉時只能透過桌面存取。" }
+on = { HEADPLANE_BIND = "0.0.0.0" }
+off = { HEADPLANE_BIND = "127.0.0.1" }

@@ -15,10 +15,11 @@ import 'package:server_box/data/provider/server/monitor_http.dart';
 /// switching the user to a different data source with different semantics.
 class MonitorHttpDataSource implements ServerDataSource {
   MonitorHttpDataSource(this.credential)
-    : _client = MonitorHttpClient(credential.monitor);
+    : _lease = MonitorClientLease(credential.monitor);
 
   final ServerConnectCredentialMonitorHttp credential;
-  final MonitorHttpClient _client;
+  final MonitorClientLease _lease;
+  MonitorHttpClient get _client => _lease.client;
 
   /// Whether this source was built from the same connection config, i.e.
   /// whether it can be reused across a refresh or must be rebuilt (and
@@ -96,7 +97,7 @@ class MonitorHttpDataSource implements ServerDataSource {
   }
 
   @override
-  void close() => _client.dispose();
+  void close() => _lease.release();
 
   static int? _epochMs(String iso) =>
       DateTime.tryParse(iso)?.millisecondsSinceEpoch;

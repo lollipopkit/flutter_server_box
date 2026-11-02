@@ -1501,7 +1501,7 @@ class _ContainerImageRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = context.theme.colorScheme;
-    final id = image.id ?? _imageReference(image);
+    final id = image.id ?? image.reference;
     final created = _imageCreatedLabel(image, Localizations.localeOf(context));
     final shortId = _shortId(image.id) ?? libL10n.unknown;
     final unused = image.isUnused;
@@ -1533,7 +1533,7 @@ class _ContainerImageRow extends StatelessWidget {
                 children: [
                   Flexible(
                     child: Text(
-                      _imageReference(image),
+                      image.reference,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -1716,16 +1716,6 @@ String? _extractMetricValue(String raw) {
     return match.group(1)!.replaceAll(RegExp(r'\s+'), ' ').trim();
   }
   return null;
-}
-
-String _imageReference(ContainerImg image) {
-  final repository = image.repository.trim();
-  final tag = image.tag?.trim();
-  final noRepository = repository.isEmpty || repository == '<none>';
-  final noTag = tag == null || tag.isEmpty || tag == '<none>';
-  if (noRepository) return _shortId(image.id) ?? '<none>';
-  if (noTag) return repository;
-  return '$repository:$tag';
 }
 
 String? _shortId(String? id) {

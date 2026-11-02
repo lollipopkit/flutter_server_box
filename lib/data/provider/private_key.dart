@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/utils/ssh_key_passphrase.dart';
@@ -54,7 +55,9 @@ class PrivateKeyNotifier extends _$PrivateKeyNotifier {
     try {
       final serversNotifier = ref.read(serversProvider.notifier);
       await serversNotifier.reload(refreshConnections: false);
-    } catch (_) {}
+    } catch (e, s) {
+      Loggers.app.warning('Reloading servers after deleting a key', e, s);
+    }
   }
 
   /// The id never changes, so this is one write either way. The branch that

@@ -333,8 +333,9 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
         // A button of its own for a screen reader, which has no other way to
         // the output; behind ⋮ otherwise, so on a phone it never takes a slot
         // from a button that is used more.
-        sessionActions: _serverActions(textView: reader),
+        sessionActions: _serverActions(textView: reader, onBar: true),
         sessionMenu: reader ? null : () => [_textViewMenuItem],
+        sessionMenuActions: _serverActions(textView: reader, onBar: false),
         leadingActions: [_sortAction, _searchAction, _settingsAction],
         // In place of the strip, not over it. Only on the picker: a search here
         // narrows that list, and the tabs beside it are open terminals rather
@@ -689,7 +690,12 @@ extension _Actions on _SSHTabPageState {
   ///
   /// [_floatBtn] is last, which puts it in the corner of the window — the
   /// place a control over the window itself belongs.
-  List<BarAction> _serverActions({required bool textView}) {
+  ///
+  /// [onBar] picks a half for the narrow bar: true for what stays on it —
+  /// the state, the agent, the metrics and the floating window — and false
+  /// for the rest, which lives behind ⋮. Null is every button, for a bar
+  /// wide enough for them all.
+  List<BarAction> _serverActions({required bool textView, bool? onBar}) {
     final current = _sessions.current;
     if (current == null) return const [];
     final args = current.data.page.args;
@@ -699,26 +705,23 @@ extension _Actions on _SSHTabPageState {
       paneLabel: (pane) =>
           current.data.pageKey.currentState?.tmuxPaneLabel(pane),
     );
-    return onServer
-        ? [
-            status,
-            if (args.canReconnect) _reconnectAction,
-            _agentAction,
-            _snippetAction,
-            if (textView) _textViewAction,
-            _metricsAction,
-            _settingsAction,
-            _moveAction,
-            _floatAction,
-          ]
-        : [
-            status,
-            if (args.canReconnect) _reconnectAction,
-            _snippetAction,
-            if (textView) _textViewAction,
-            _settingsAction,
-            _floatAction,
-          ];
+    final all = <(BarAction, bool)>[
+      (status, true),
+      if (args.canReconnect) (_reconnectAction, false),
+      if (onServer) (_agentAction, true),
+      (_snippetAction, false),
+      // On the bar: only asked for by a screen reader, which has no other
+      // way to the output.
+      if (textView) (_textViewAction, true),
+      if (onServer) (_metricsAction, true),
+      (_settingsAction, false),
+      if (onServer) (_moveAction, false),
+      (_floatAction, true),
+    ];
+    return [
+      for (final (action, bar) in all)
+        if (onBar == null || onBar == bar) action,
+    ];
   }
 
   /// Sends the terminal on screen into the window that floats over every tab,

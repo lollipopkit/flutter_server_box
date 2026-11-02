@@ -2,7 +2,7 @@ import { get } from 'svelte/store'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, cleanup } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
-import IperfModal from '../components/IperfModal.svelte'
+import IperfModal from '../desk/apps/status/IperfModal.svelte'
 import { LL } from '../i18n/i18n-svelte'
 import { servers } from '../lib/servers.svelte'
 
@@ -93,7 +93,7 @@ describe('IperfModal', () => {
     FakeSocket.instances = []
     ticketMock.mockClear()
     vi.stubGlobal('WebSocket', FakeSocket)
-    servers.list = [{ id: 'local', url: '', token: 't', username: 'admin' }]
+    servers.list = [{ id: 'local', url: '', token: 't' }]
     servers.currentId = 'local'
   })
 

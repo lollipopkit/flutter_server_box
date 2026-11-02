@@ -1,0 +1,14 @@
+# sbOS's boot step (/usr/share/server-box-monitor/sbm-setup): the agent
+# installed when missing, its address on the console.
+[Unit]
+Description=sbOS: install ServerBox Monitor from the image
+Wants=network-online.target
+After=network-online.target docker.service systemd-logind.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/share/server-box-monitor/sbm-setup
+
+[Install]
+WantedBy=multi-user.target

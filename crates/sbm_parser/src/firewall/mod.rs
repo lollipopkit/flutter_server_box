@@ -278,7 +278,7 @@ fi
 pub fn parse_probe(output: &str) -> FirewallProbeResult {
     let mut result = FirewallProbeResult::default();
     let mut iface = None;
-    for raw in output.replace("\r\n", "\n").split('\n') {
+    for raw in crate::common::normalize_newlines(output).split('\n') {
         let line = raw.trim_end();
         let value = |marker: &str| line.strip_prefix(marker).map(str::trim);
         if let Some(v) = value(PROBE_UFW) {

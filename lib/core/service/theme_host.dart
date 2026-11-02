@@ -8,10 +8,6 @@ import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
 
-/// Where the store themes this app ships are: one `<id>.fsbt` each, the exact
-/// bytes the store publishes for that version.
-const themeBundledDir = 'assets/store_themes/';
-
 /// The copy of the theme catalog compiled in, read when its address does not
 /// answer.
 const themeCatalogAsset = 'assets/catalog/repos.toml';
@@ -29,7 +25,6 @@ void initThemeHost() => ThemeHost.init(
       namespaces: {ThemeFileIcon.namespace},
       untinted: {ThemeFileIcon.namespace},
     ),
-    bundledThemesDir: themeBundledDir,
     catalogUrl: Urls.themeCatalog,
     catalogAsset: themeCatalogAsset,
     packageDocUrl: Urls.themePackageDoc,

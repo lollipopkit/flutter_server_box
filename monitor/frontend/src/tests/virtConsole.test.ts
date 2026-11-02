@@ -3,7 +3,7 @@ import { get } from 'svelte/store'
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import { flushSync } from 'svelte'
-import VirtConsole from '../components/VirtConsole.svelte'
+import VirtConsole from '../desk/apps/virt/VirtConsole.svelte'
 import { api } from '../lib/api'
 import { openConsoleSocket } from '../lib/virtConsole'
 import { theme } from '../lib/theme.svelte'
@@ -25,6 +25,10 @@ class FakeTerminal {
   options: Record<string, unknown>
   cols = 80
   rows = 24
+  parser = {
+    registerOscHandler: () => ({ dispose() {} }),
+    registerEscHandler: () => ({ dispose() {} }),
+  }
   dispose = vi.fn()
   constructor(options: Record<string, unknown>) {
     this.options = { ...options }
@@ -34,6 +38,8 @@ class FakeTerminal {
   open() {}
   onData() {}
   onResize() {}
+  onBell() {}
+  onTitleChange() {}
   write() {}
   focus() {}
 }
@@ -142,7 +148,7 @@ describe('VirtConsole', () => {
 
     theme.set('dark')
     flushSync()
-    expect(terminals[0].options.theme).toMatchObject({ background: '#0b0f14' })
+    expect(terminals[0].options.theme).toMatchObject({ background: '#0e0a0c' })
   })
 
   it('closes the socket when the terminal fails to load', async () => {

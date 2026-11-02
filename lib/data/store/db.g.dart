@@ -9406,6 +9406,240 @@ class SyncStatesCompanion extends UpdateCompanion<SyncStateRow> {
   }
 }
 
+class $SyncRecordsTable extends SyncRecords
+    with TableInfo<$SyncRecordsTable, SyncRecordRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SyncRecordsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _cMeta = const VerificationMeta('c');
+  @override
+  late final GeneratedColumn<String> c = GeneratedColumn<String>(
+    'c',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _hlcMeta = const VerificationMeta('hlc');
+  @override
+  late final GeneratedColumn<String> hlc = GeneratedColumn<String>(
+    'hlc',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [c, id, hlc];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sync_record';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SyncRecordRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('c')) {
+      context.handle(_cMeta, c.isAcceptableOrUnknown(data['c']!, _cMeta));
+    } else if (isInserting) {
+      context.missing(_cMeta);
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('hlc')) {
+      context.handle(
+        _hlcMeta,
+        hlc.isAcceptableOrUnknown(data['hlc']!, _hlcMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_hlcMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {c, id};
+  @override
+  SyncRecordRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SyncRecordRow(
+      c: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}c'],
+      )!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      hlc: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}hlc'],
+      )!,
+    );
+  }
+
+  @override
+  $SyncRecordsTable createAlias(String alias) {
+    return $SyncRecordsTable(attachedDatabase, alias);
+  }
+
+  @override
+  bool get withoutRowId => true;
+}
+
+class SyncRecordRow extends DataClass implements Insertable<SyncRecordRow> {
+  final String c;
+  final String id;
+  final String hlc;
+  const SyncRecordRow({required this.c, required this.id, required this.hlc});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['c'] = Variable<String>(c);
+    map['id'] = Variable<String>(id);
+    map['hlc'] = Variable<String>(hlc);
+    return map;
+  }
+
+  SyncRecordsCompanion toCompanion(bool nullToAbsent) {
+    return SyncRecordsCompanion(c: Value(c), id: Value(id), hlc: Value(hlc));
+  }
+
+  factory SyncRecordRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SyncRecordRow(
+      c: serializer.fromJson<String>(json['c']),
+      id: serializer.fromJson<String>(json['id']),
+      hlc: serializer.fromJson<String>(json['hlc']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'c': serializer.toJson<String>(c),
+      'id': serializer.toJson<String>(id),
+      'hlc': serializer.toJson<String>(hlc),
+    };
+  }
+
+  SyncRecordRow copyWith({String? c, String? id, String? hlc}) =>
+      SyncRecordRow(c: c ?? this.c, id: id ?? this.id, hlc: hlc ?? this.hlc);
+  SyncRecordRow copyWithCompanion(SyncRecordsCompanion data) {
+    return SyncRecordRow(
+      c: data.c.present ? data.c.value : this.c,
+      id: data.id.present ? data.id.value : this.id,
+      hlc: data.hlc.present ? data.hlc.value : this.hlc,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncRecordRow(')
+          ..write('c: $c, ')
+          ..write('id: $id, ')
+          ..write('hlc: $hlc')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(c, id, hlc);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SyncRecordRow &&
+          other.c == this.c &&
+          other.id == this.id &&
+          other.hlc == this.hlc);
+}
+
+class SyncRecordsCompanion extends UpdateCompanion<SyncRecordRow> {
+  final Value<String> c;
+  final Value<String> id;
+  final Value<String> hlc;
+  const SyncRecordsCompanion({
+    this.c = const Value.absent(),
+    this.id = const Value.absent(),
+    this.hlc = const Value.absent(),
+  });
+  SyncRecordsCompanion.insert({
+    required String c,
+    required String id,
+    required String hlc,
+  }) : c = Value(c),
+       id = Value(id),
+       hlc = Value(hlc);
+  static Insertable<SyncRecordRow> custom({
+    Expression<String>? c,
+    Expression<String>? id,
+    Expression<String>? hlc,
+  }) {
+    return RawValuesInsertable({
+      if (c != null) 'c': c,
+      if (id != null) 'id': id,
+      if (hlc != null) 'hlc': hlc,
+    });
+  }
+
+  SyncRecordsCompanion copyWith({
+    Value<String>? c,
+    Value<String>? id,
+    Value<String>? hlc,
+  }) {
+    return SyncRecordsCompanion(
+      c: c ?? this.c,
+      id: id ?? this.id,
+      hlc: hlc ?? this.hlc,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (c.present) {
+      map['c'] = Variable<String>(c.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (hlc.present) {
+      map['hlc'] = Variable<String>(hlc.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncRecordsCompanion(')
+          ..write('c: $c, ')
+          ..write('id: $id, ')
+          ..write('hlc: $hlc')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDb extends GeneratedDatabase {
   _$AppDb(QueryExecutor e) : super(e);
   $AppDbManager get managers => $AppDbManager(this);
@@ -9438,6 +9672,7 @@ abstract class _$AppDb extends GeneratedDatabase {
   late final $BenchmarkRunsTable benchmarkRuns = $BenchmarkRunsTable(this);
   late final $TombstonesTable tombstones = $TombstonesTable(this);
   late final $SyncStatesTable syncStates = $SyncStatesTable(this);
+  late final $SyncRecordsTable syncRecords = $SyncRecordsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -9465,6 +9700,7 @@ abstract class _$AppDb extends GeneratedDatabase {
     benchmarkRuns,
     tombstones,
     syncStates,
+    syncRecords,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -18500,6 +18736,151 @@ typedef $$SyncStatesTableProcessedTableManager =
       SyncStateRow,
       PrefetchHooks Function()
     >;
+typedef $$SyncRecordsTableCreateCompanionBuilder =
+    SyncRecordsCompanion Function({
+      required String c,
+      required String id,
+      required String hlc,
+    });
+typedef $$SyncRecordsTableUpdateCompanionBuilder =
+    SyncRecordsCompanion Function({
+      Value<String> c,
+      Value<String> id,
+      Value<String> hlc,
+    });
+
+class $$SyncRecordsTableFilterComposer
+    extends Composer<_$AppDb, $SyncRecordsTable> {
+  $$SyncRecordsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get c => $composableBuilder(
+    column: $table.c,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get hlc => $composableBuilder(
+    column: $table.hlc,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SyncRecordsTableOrderingComposer
+    extends Composer<_$AppDb, $SyncRecordsTable> {
+  $$SyncRecordsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get c => $composableBuilder(
+    column: $table.c,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hlc => $composableBuilder(
+    column: $table.hlc,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SyncRecordsTableAnnotationComposer
+    extends Composer<_$AppDb, $SyncRecordsTable> {
+  $$SyncRecordsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get c =>
+      $composableBuilder(column: $table.c, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get hlc =>
+      $composableBuilder(column: $table.hlc, builder: (column) => column);
+}
+
+class $$SyncRecordsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDb,
+          $SyncRecordsTable,
+          SyncRecordRow,
+          $$SyncRecordsTableFilterComposer,
+          $$SyncRecordsTableOrderingComposer,
+          $$SyncRecordsTableAnnotationComposer,
+          $$SyncRecordsTableCreateCompanionBuilder,
+          $$SyncRecordsTableUpdateCompanionBuilder,
+          (
+            SyncRecordRow,
+            BaseReferences<_$AppDb, $SyncRecordsTable, SyncRecordRow>,
+          ),
+          SyncRecordRow,
+          PrefetchHooks Function()
+        > {
+  $$SyncRecordsTableTableManager(_$AppDb db, $SyncRecordsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SyncRecordsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SyncRecordsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SyncRecordsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> c = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> hlc = const Value.absent(),
+              }) => SyncRecordsCompanion(c: c, id: id, hlc: hlc),
+          createCompanionCallback:
+              ({required String c, required String id, required String hlc}) =>
+                  SyncRecordsCompanion.insert(c: c, id: id, hlc: hlc),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SyncRecordsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDb,
+      $SyncRecordsTable,
+      SyncRecordRow,
+      $$SyncRecordsTableFilterComposer,
+      $$SyncRecordsTableOrderingComposer,
+      $$SyncRecordsTableAnnotationComposer,
+      $$SyncRecordsTableCreateCompanionBuilder,
+      $$SyncRecordsTableUpdateCompanionBuilder,
+      (
+        SyncRecordRow,
+        BaseReferences<_$AppDb, $SyncRecordsTable, SyncRecordRow>,
+      ),
+      SyncRecordRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDbManager {
   final _$AppDb _db;
@@ -18548,4 +18929,6 @@ class $AppDbManager {
       $$TombstonesTableTableManager(_db, _db.tombstones);
   $$SyncStatesTableTableManager get syncStates =>
       $$SyncStatesTableTableManager(_db, _db.syncStates);
+  $$SyncRecordsTableTableManager get syncRecords =>
+      $$SyncRecordsTableTableManager(_db, _db.syncRecords);
 }

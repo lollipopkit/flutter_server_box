@@ -445,10 +445,10 @@ extension on _ServicesPageState {
     }
     final grouped = _statusFilter == null;
     final attention = grouped
-        ? units.where((u) => u.state.needsAttention).toList()
+        ? units.where((u) => u.needsAttention).toList()
         : const <ServiceUnit>[];
     final rest = grouped
-        ? units.where((u) => !u.state.needsAttention).toList()
+        ? units.where((u) => !u.needsAttention).toList()
         : units;
     final scheme = Theme.of(context).colorScheme;
 

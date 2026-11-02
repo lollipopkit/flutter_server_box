@@ -1,13 +1,16 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart'
-    show Chats, Composer, LlmConversation, LlmStores, llmL10n;
+    show Chats, Composer, LlmConversation, LlmStores, MenuBtn, llmL10n;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/llm/scope.dart';
 import 'package:server_box/data/provider/ai/adhoc_ssh.dart';
+import 'package:server_box/data/provider/ai/remote_agent.dart';
 import 'package:server_box/view/page/agent/history.dart';
+import 'package:server_box/view/page/agent/remote_composer.dart';
+import 'package:server_box/view/page/agent/remote_task.dart';
 import 'package:server_box/view/widget/float_shell.dart';
 
 /// The buttons that act on the conversation rather than on the window around
@@ -156,6 +159,27 @@ class AgentConversationView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (scope != null) return _buildLocal(context);
+    // A server's task, picked in the history, takes the pane until a chat of
+    // this device is.
+    return ValueListenableBuilder<RemoteTaskRef?>(
+      valueListenable: RemoteAgentTasks.selected,
+      builder: (context, task, _) => task == null
+          ? _buildLocal(context)
+          : RemoteTaskView(
+              key: ValueKey(task),
+              task: task,
+              header: showHeader
+                  ? (title, actions) {
+                      final all = [...actions, ?headerAction];
+                      return compact ? _buildBar(context, title, all) : _buildPaneHeader(title, all);
+                    }
+                  : null,
+            ),
+    );
+  }
+
+  Widget _buildLocal(BuildContext context) {
     final current = AgentChats.of(scope);
     return ValueListenableBuilder<String?>(
       valueListenable: current,
@@ -164,6 +188,11 @@ class AgentConversationView extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (showHeader) _buildHeader(context, id),
+            // A new conversation of the app-wide Agent: here, or as a task
+            // on a server.
+            if (id == null && scope == null)
+              Expanded(child: _NewOn(compact: compact, local: (target) => _buildNewLocal(context, target)))
+            else ...[
             Expanded(
               child: id == null
                   ? _buildEmpty(context)
@@ -202,9 +231,37 @@ class AgentConversationView extends StatelessWidget {
                 );
               },
             ),
+            ],
           ],
         );
       },
+    );
+  }
+
+  /// A new chat of this device: the empty page and the chat composer, under
+  /// [target], the choice of where it is made.
+  Widget _buildNewLocal(BuildContext context, Widget? target) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(child: _buildEmpty(context)),
+        _inset(
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ?target,
+              Composer(
+                key: ValueKey('new:$scope'),
+                chatId: null,
+                scope: scope,
+                compact: compact,
+                onChatCreated: (created) => AgentChats.select(scope, created),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -420,6 +477,151 @@ class AgentBusyBuilder extends StatelessWidget {
       ]),
       builder: (context, _) =>
           builder(context, AgentActivity.of(AgentChats.of(scope).value)),
+    );
+  }
+}
+
+/// [child] inset and as wide as the messages above it, as the composer is.
+Widget _inset(Widget child) => LayoutBuilder(
+  builder: (context, cons) {
+    final side = (cons.maxWidth * 0.03).clamp(9.0, 20.0);
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(side, 0, side, 13),
+        child: Center(
+          heightFactor: 1,
+          child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 760), child: child),
+        ),
+      ),
+    );
+  },
+);
+
+/// Where a new conversation of the app-wide Agent is made: this device, or
+/// a server whose agent runs it as a task (`RemoteAgentTasks.newOn`). Offers
+/// the choice only while a server does; [local] draws this device's page
+/// with the choice to put over its composer.
+class _NewOn extends StatefulWidget {
+  const _NewOn({required this.compact, required this.local});
+
+  final bool compact;
+  final Widget Function(Widget? target) local;
+
+  @override
+  State<_NewOn> createState() => _NewOnState();
+}
+
+class _NewOnState extends State<_NewOn> {
+  @override
+  void initState() {
+    super.initState();
+    RemoteAgentTasks.follow();
+  }
+
+  @override
+  void dispose() {
+    RemoteAgentTasks.unfollow();
+    super.dispose();
+  }
+
+  Future<bool> _start(String serverId, RemoteMessage m) async {
+    final client = RemoteAgentTasks.client(serverId);
+    if (client == null) return false;
+    try {
+      final flow = await client.agentStart(
+        m.text,
+        mode: m.mode,
+        files: m.files,
+        model: m.model,
+        thinkingLevel: m.thinkingLevel,
+      );
+      AgentChats.engaged.value = true;
+      RemoteAgentTasks.select((serverId: serverId, flowId: flow.id));
+      return true;
+    } catch (e) {
+      Toast.show('$e');
+      return false;
+    }
+  }
+
+  Widget _target(List<({String id, String name})> servers, ({String id, String name})? on) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(left: 5, bottom: 5),
+      child: MenuBtn(
+        actions: [
+          ContextMenuAction(
+            text: context.l10n.agentThisDevice,
+            icon: Icons.devices_outlined,
+            checked: on == null,
+            onTap: () => RemoteAgentTasks.newOn.value = null,
+          ),
+          for (final s in servers)
+            ContextMenuAction(
+              text: s.name,
+              icon: Icons.dns_outlined,
+              checked: s.id == on?.id,
+              onTap: () => RemoteAgentTasks.newOn.value = s.id,
+            ),
+        ],
+        builder: (toggle) => Btn.row(
+          icon: Icon(on == null ? Icons.devices_outlined : Icons.dns_outlined, size: 16, color: theme.colorScheme.onSurfaceVariant),
+          text: context.l10n.agentNewOn(on?.name ?? context.l10n.agentThisDevice),
+          textStyle: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
+          mainAxisSize: MainAxisSize.min,
+          padding: const EdgeInsets.all(5),
+          onTap: toggle,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: Listenable.merge([RemoteAgentTasks.tasks, RemoteAgentTasks.newOn]),
+      builder: (context, _) {
+        final servers = RemoteAgentTasks.servers();
+        final on = servers.firstWhereOrNull((s) => s.id == RemoteAgentTasks.newOn.value);
+        final target = servers.isEmpty ? null : _target(servers, on);
+        if (on == null) return widget.local(target);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.dns_outlined, size: 40, color: Theme.of(context).colorScheme.outline),
+                      UIs.height13,
+                      Text(context.l10n.agentRemoteNewHint(on.name), textAlign: TextAlign.center, style: UIs.textGrey),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            _inset(
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ?target,
+                  RemoteComposer(
+                    key: ValueKey('new:${on.id}'),
+                    serverId: on.id,
+                    hint: context.l10n.agentRemoteNewHint(on.name),
+                    onSend: (m) => _start(on.id, m),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

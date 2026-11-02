@@ -69,5 +69,6 @@ abstract final class Tables {
     'benchmark_run',
     'tombstone',
     'sync_state',
+    'sync_record',
   ];
 }

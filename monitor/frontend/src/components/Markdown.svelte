@@ -33,15 +33,15 @@
     margin-top: 0.5em;
   }
   .markdown-body :global(code) {
-    background: var(--color-soft);
+    background: var(--surface-control);
     padding: 0.1em 0.4em;
-    border-radius: 4px;
+    border-radius: var(--radius-xs);
     font-family: var(--font-mono);
     font-size: 0.9em;
   }
   .markdown-body :global(strong) {
-    font-weight: 600;
-    color: var(--color-fg);
+    font-weight: var(--weight-semibold);
+    color: var(--text-primary);
   }
   .markdown-body :global(ul) {
     margin: 0.35em 0 0;
@@ -55,7 +55,6 @@
     margin-top: 0.25em;
   }
   .markdown-body :global(a) {
-    color: var(--color-accent);
-    text-decoration: underline;
+    color: var(--color-accent-text);
   }
 </style>

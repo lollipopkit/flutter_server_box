@@ -29,7 +29,12 @@ enum AppTab {
 
   /// Several views of several servers at once, split into panes.
   @HiveField(8)
-  workspace;
+  workspace,
+
+  /// The servers' monitor agents: their state and alerts, the web apps
+  /// they deployed, their notifications, audit logs and sessions.
+  @HiveField(9)
+  monitor;
 
   /// Indices that named a tab which no longer exists, and so are never
   /// resolved as an integer.

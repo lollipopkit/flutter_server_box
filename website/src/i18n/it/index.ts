@@ -13,6 +13,7 @@ const it: Translation = {
     download: 'Scarica',
     docs: 'Documenti',
     themes: 'Temi',
+    os: 'ServerBox OS',
     plugins: 'Plugin',
     languageLabel: 'Lingua',
   },
@@ -103,6 +104,84 @@ const it: Translation = {
     installIosPrompt: '# iOS',
     installReleasePrompt: '# Android, Linux e Windows',
   },
+  os: {
+    metaTitle: 'ServerBox OS — il lato server di ServerBox',
+    metaDescription:
+      'ServerBox OS è ServerBox Monitor sul tuo server: un desktop nel browser con App Store, archiviazione, Agent mode, avvisi e backup. Installalo su Linux o avvialo come sistema completo.',
+    heroTitle: 'ServerBox OS',
+    tagline: 'Il lato server di ServerBox.',
+    subtitle:
+      'ServerBox Monitor viene eseguito sul server stesso. L’app si connette a esso, mentre il desktop integrato nel browser consente di gestire la macchina anche senza l’app. Installalo su un server Linux esistente oppure avvialo come sistema completo.',
+    installAction: 'Installa su Linux',
+    images: 'Scarica le immagini',
+    previewAction: 'Guarda il tour',
+    previewTitle: 'Guardalo in azione',
+    previewSubtitle:
+      'ServerBox OS è in beta. Un breve tour su un server reale: il desktop nel browser, le sue app e la modalità Agent all’opera.',
+    previewPlay: 'Riproduci il tour di ServerBox OS',
+    previewYoutube: 'Guarda su YouTube',
+    featuresTitle: 'Cosa viene eseguito sul server',
+    featuresSubtitle: 'Un programma sulla macchina, accessibile dal browser o dall’app.',
+    desk: {
+      title: 'Un desktop nel browser',
+      description:
+        'Apri l’indirizzo del server: ogni funzionalità è un’app in una finestra, tra cui stato, file, terminale, container, processi e servizi.',
+    },
+    apps: {
+      title: 'App Store',
+      description:
+        'Distribuisci oltre 40 servizi self-hosted con Docker Compose, come Immich, Jellyfin, Gitea e Home Assistant, e aggiungi app per Tailscale, reverse proxy, kernel e modelli IA locali.',
+    },
+    storage: {
+      title: 'Archiviazione e condivisione',
+      description:
+        'Partiziona, formatta e monta i dischi, crea array RAID e pool ZFS, consulta S.M.A.R.T. e condividi cartelle tramite SMB e NFS.',
+    },
+    agent: {
+      title: 'Agent mode',
+      description:
+        'Assegna un’attività a un Agent IA sulla macchina. La pianifica, chiede prima di eseguire comandi rischiosi, usa sudo solo con il tuo consenso e accede alle app distribuite tramite MCP.',
+    },
+    alerts: {
+      title: 'Avvisi',
+      description:
+        'Le regole su CPU, memoria, dischi e servizi inviano notifiche all’app, a Telegram, Discord, ntfy, Bark, ServerChan, via e-mail o a un webhook.',
+    },
+    backups: {
+      title: 'Backup',
+      description:
+        'La configurazione viene salvata su WebDAV e cifrata con age; i dati dei container vengono salvati secondo una pianificazione sul disco scelto.',
+    },
+    security: {
+      title: 'Una password',
+      description:
+        'Un account accede con la propria password. Qualsiasi operazione oltre alla lettura richiede HTTPS; le credenziali sono cifrate a riposo e gli accessi e le azioni di root vengono registrati.',
+    },
+    app: {
+      title: 'Con l’app',
+      description:
+        'Aggiungi il server in ServerBox tramite HTTPS invece di SSH, oppure usa entrambi: consulta stato e cronologia e accedi dal telefono a terminale, file, attività Agent mode e app web.',
+    },
+    installTitle: 'Due modi per eseguirlo',
+    installSubtitle: 'Su un server Linux esistente oppure come sistema completo su una macchina dedicata.',
+    linuxTitle: 'Su un server Linux',
+    promptUser: '# systemd: un servizio utente eseguito con il tuo account',
+    promptOpenrc: '# OpenRC (Alpine): root scrive il servizio, che continua a essere eseguito con il tuo account',
+    promptRoot: '# Con entrambi i sistemi init, come root',
+    linuxNote:
+      'L’account con cui viene eseguito determina cosa può fare. Sostituisci install con upgrade o uninstall per aggiornarlo o rimuoverlo.',
+    copy: 'Copia il comando di installazione',
+    imageTitle: 'Come sistema completo',
+    stepWrite: 'Scarica un’immagine e scrivila su una chiavetta USB (dd, Etcher, Ventoy), oppure collegala a una macchina virtuale.',
+    stepBoot:
+      'Avvialo. La console mostra l’indirizzo da aprire, l’impronta del certificato da confrontare e dove trovare la prima password.',
+    stepInstall: 'sbm-install <disco> cancella quel disco e vi installa il sistema.',
+    liveNote:
+      'Prima dell’installazione, viene eseguito dalla memoria: al riavvio si perdono il database, le immagini e i dati delle app.',
+    note: 'ServerBox OS è open source con licenza AGPLv3, come l’app.',
+    docs: 'Documentazione Monitor',
+    appAction: 'Ottieni l’app',
+  },
   themes: {
     title: 'A modo tuo.',
     subtitle:
@@ -144,8 +223,6 @@ const it: Translation = {
     disabled: 'Disattivato',
     loadFailed: 'Impossibile caricare l’anteprima di questo tema.',
     retry: 'Riprova',
-    previewNote:
-      'Le anteprime mostrano le icone e i colori del tema; il resto dell’interfaccia è solo a scopo illustrativo.',
     iconPacks: 'Pacchetti di icone',
     iconPacksSubtitle:
       'Pacchetti di icone indipendenti dal tema, utilizzabili con quello attivo. Installali nell’app da Impostazioni → Aspetto → Negozio temi → Pacchetti di icone.',
@@ -164,7 +241,7 @@ const it: Translation = {
     copied: 'Comando copiato',
     copyPrompt: 'Copia questo comando:',
     note:
-      'Scarica i pacchetti solo da fonti attendibili. Per le notifiche lato server, i dati dei widget e il monitoraggio autonomo, installa ServerBox Monitor sui server.',
+      'Scarica i pacchetti solo da fonti attendibili. Per le notifiche lato server, i dati dei widget e il monitoraggio autonomo, installa ServerBox OS sui server.',
   },
   cta: {
     title: 'ServerBox è gratuito e open source, distribuito con licenza AGPLv3.',

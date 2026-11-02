@@ -1,0 +1,30 @@
+# Navidrome 0.64.2 (GPL-3.0), https://github.com/navidrome/navidrome/tree/v0.64.2
+#
+# Adapted from the upstream Docker example (navidrome.org, installation/docker)
+# for ServerBox Monitor's Music app (2026-10-13):
+# - no `name:` and no `container_name`: the agent names the project;
+# - `user:` is the upstream way to run without root: the user must own /data
+#   and read /music. The image has no USER of its own (root by default);
+# - the music folder is mounted read-only, as upstream's example does;
+# - the published address and port come from the env file the agent writes.
+
+services:
+  navidrome:
+    image: deluan/navidrome:${NAVIDROME_VERSION}
+    user: "${SBM_UID}:${SBM_GID}"
+    environment:
+      TZ: ${SBM_TZ}
+      # Anonymous usage reports are on upstream; nothing leaves unasked here.
+      ND_ENABLEINSIGHTSCOLLECTOR: 'false'
+    volumes:
+      - ${NAVIDROME_DATA_LOCATION}:/data
+      - ${NAVIDROME_MUSIC_LOCATION}:/music:ro
+    ports:
+      - '${NAVIDROME_WEB_BIND}:${NAVIDROME_WEB_PORT}:4533'
+    restart: unless-stopped
+    # /ping is Navidrome's heartbeat route (server/server.go); the image has curl.
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:4533/ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

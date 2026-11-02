@@ -70,7 +70,7 @@ object WidgetApi {
     private const val TIMEOUT_MS = 8_000
 
     /** `sbm_parser::protocol::PROTOCOL`; `crates/sbm_parser/tests/protocol_clients.rs` keeps it equal. */
-    private const val SBM_PROTOCOL = "1"
+    private const val SBM_PROTOCOL = "2"
 
     /**
      * How many history points to ask the agent for.

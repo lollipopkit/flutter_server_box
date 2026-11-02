@@ -131,11 +131,7 @@ class Backup implements Mergeable {
       _restoreInto(Stores.history, history);
 
       if (settings_ != null) {
-        _restoreInto(
-          Stores.setting,
-          settings_,
-          deviceLocal: SettingStore.deviceLocalKeys,
-        );
+        _restoreInto(Stores.setting, settings_);
       }
     });
 
@@ -209,9 +205,9 @@ class Backup implements Mergeable {
 /// forced restore of an older file holding preferences that file does not
 /// have, which is not the state the user asked to go back to.
 ///
-/// [deviceLocal] names keys this device answers for itself; they are neither
-/// written from the backup nor deleted for being absent from one. See
-/// [SettingStore.deviceLocalKeys].
+/// Device-local keys ([SqliteStore.isDeviceLocalKey]) are this device's to
+/// answer: neither written from the backup nor deleted for being absent from
+/// one. See [SettingStore.deviceLocalKeys].
 ///
 /// Nothing here stamps `lastUpdateTs`, which is what writing straight to the
 /// Hive box used to achieve. A restore is not an edit: marking every restored
@@ -222,17 +218,13 @@ class Backup implements Mergeable {
 /// `lastUpdateTs` entry is not one of the ones deleted for being absent from
 /// the backup — `getAllMap` leaves it out of the backup by the same rule, so
 /// the box-level version deleted it on every non-forced merge.
-void _restoreInto(
-  SqliteStore store,
-  Map<String, Object?> incoming, {
-  Set<String> deviceLocal = const {},
-}) {
+void _restoreInto(SqliteStore store, Map<String, Object?> incoming) {
   for (final key in store.keys().difference(incoming.keys.toSet())) {
-    if (deviceLocal.contains(key)) continue;
+    if (store.isDeviceLocalKey(key)) continue;
     store.remove(key, updateLastUpdateTsOnRemove: false);
   }
   for (final entry in incoming.entries) {
-    if (deviceLocal.contains(entry.key)) continue;
+    if (store.isDeviceLocalKey(entry.key)) continue;
     final value = entry.value;
     if (value == null) {
       store.remove(entry.key, updateLastUpdateTsOnRemove: false);

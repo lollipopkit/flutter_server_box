@@ -1,0 +1,105 @@
+/// Tailscale's service (`sbm_parser::tailscale`): installed, the daemon,
+/// signed in or the URL a sign-in waits on, this device, its peers and its
+/// settings.
+package serverbox:tailscale;
+
+interface api {
+  use sbm:app/types@0.1.0.{error};
+
+  record peer {
+    id: string,
+    name: string,
+    dns-name: option<string>,
+    ips: list<string>,
+    os: option<string>,
+    online: bool,
+    active: bool,
+    exit-node-option: bool,
+    exit-node: bool,
+    routes: list<string>,
+    direct: option<string>,
+    relay: option<string>,
+    rx-bytes: u64,
+    tx-bytes: u64,
+  }
+
+  record prefs {
+    control-url: string,
+    hostname: string,
+    accept-routes: bool,
+    accept-dns: bool,
+    ssh: bool,
+    shields-up: bool,
+    want-running: bool,
+    logged-out: bool,
+    exit-node-id: string,
+    exit-node-ip: string,
+    exit-node-allow-lan: bool,
+    advertise-routes: list<string>,
+    advertise-exit-node: bool,
+    operator: string,
+  }
+
+  record status {
+    installable: bool,
+    version: option<string>,
+    daemon: bool,
+    state: option<string>,
+    /// What a sign-in waits on being opened.
+    auth-url: option<string>,
+    name: option<string>,
+    dns-name: option<string>,
+    ips: list<string>,
+    tailnet: option<string>,
+    user: option<string>,
+    health: list<string>,
+    peers: list<peer>,
+    prefs: option<prefs>,
+  }
+
+  record pong {
+    ok: bool,
+    output: string,
+  }
+
+  view: func() -> result<status, error>;
+  /// `tailscale ping` to a peer's Tailscale IP, as the agent's account.
+  ping: func(ip: string) -> result<pong, error>;
+}
+
+/// Each checked against a fresh read, run as root.
+interface jobs {
+  use sbm:app/types@0.1.0.{error};
+
+  /// What `tailscale set` changes; an absent field stays as it is.
+  record settings {
+    /// A peer's id or Tailscale IP; empty uses none.
+    exit-node: option<string>,
+    exit-node-allow-lan: option<bool>,
+    accept-routes: option<bool>,
+    accept-dns: option<bool>,
+    ssh: option<bool>,
+    shields-up: option<bool>,
+    hostname: option<string>,
+    advertise-exit-node: option<bool>,
+    advertise-routes: option<list<string>>,
+  }
+
+  install: func() -> result<_, error>;
+  start-daemon: func() -> result<_, error>;
+  /// With [auth-key] (into a private file the command reads), or waiting
+  /// until the sign-in URL (`view`'s `auth-url`) is opened.
+  login: func(login-server: option<string>, hostname: option<string>, auth-key: option<string>) -> result<_, error>;
+  logout: func() -> result<_, error>;
+  connect: func() -> result<_, error>;
+  disconnect: func() -> result<_, error>;
+  /// [lan-cut-ok]: the caller knows an exit node without LAN access cuts
+  /// this machine's LAN off.
+  set: func(settings: settings, lan-cut-ok: bool) -> result<_, error>;
+}
+
+world tailscale {
+  include sbm:app/imports@0.1.0;
+  export api;
+  export jobs;
+}

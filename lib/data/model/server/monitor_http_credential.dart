@@ -13,9 +13,17 @@ final class MonitorHttpCredential {
   /// e.g. `https://1.2.3.4:3770`
   final String addr;
 
-  final String? user;
-
   final String? pwd;
+
+  /// The account name an agent from before it had one account signs in with.
+  /// Kept (`server.monitor_user`, `user` in a backup) and sent with every
+  /// `/login`, which a one-account agent ignores, so such an agent stays
+  /// reachable until it is updated (`showMonitorUpdate`).
+  ///
+  /// TODO: remove, with the column, once no agent from before the one-account
+  /// agent is left.
+  @JsonKey(name: 'user')
+  final String? legacyUser;
 
   final bool ignoreCert;
 
@@ -23,22 +31,31 @@ final class MonitorHttpCredential {
   ///
   /// Off by default: a private address does not prove a link cannot be read or
   /// redirected. The monitor must independently allow any sensitive endpoint
-  /// over plaintext, such as `[remote_access.fs] allow_insecure = true`.
+  /// over plaintext: `[remote_access] allow_insecure = true`.
   final bool allowInsecure;
 
   const MonitorHttpCredential({
     required this.addr,
-    this.user,
     this.pwd,
+    this.legacyUser,
     this.ignoreCert = false,
     this.allowInsecure = false,
   });
 
-  /// The same agent with another password — this account's own, changed.
+  /// The same agent, signed in to as [user] — see [legacyUser].
+  MonitorHttpCredential withLegacyUser(String user) => MonitorHttpCredential(
+    addr: addr,
+    pwd: pwd,
+    legacyUser: user,
+    ignoreCert: ignoreCert,
+    allowInsecure: allowInsecure,
+  );
+
+  /// The same agent with another password — its account's, changed.
   MonitorHttpCredential withPwd(String pwd) => MonitorHttpCredential(
     addr: addr,
-    user: user,
     pwd: pwd,
+    legacyUser: legacyUser,
     ignoreCert: ignoreCert,
     allowInsecure: allowInsecure,
   );
@@ -66,8 +83,8 @@ final class MonitorHttpCredential {
   /// The same connection with plaintext HTTP permitted.
   MonitorHttpCredential allowingInsecure() => MonitorHttpCredential(
     addr: addr,
-    user: user,
     pwd: pwd,
+    legacyUser: legacyUser,
     ignoreCert: ignoreCert,
     allowInsecure: true,
   );
@@ -76,8 +93,8 @@ final class MonitorHttpCredential {
   bool operator ==(Object other) {
     return other is MonitorHttpCredential &&
         other.addr == addr &&
-        other.user == user &&
         other.pwd == pwd &&
+        other.legacyUser == legacyUser &&
         other.ignoreCert == ignoreCert &&
         other.allowInsecure == allowInsecure;
   }
@@ -85,8 +102,8 @@ final class MonitorHttpCredential {
   @override
   int get hashCode => Object.hash(
     addr,
-    user,
     pwd,
+    legacyUser,
     ignoreCert,
     allowInsecure,
   );

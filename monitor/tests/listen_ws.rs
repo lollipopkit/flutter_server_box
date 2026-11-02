@@ -11,14 +11,13 @@ use std::sync::{Arc, Once};
 use std::time::Duration;
 
 use ntex::io::{Io, Sealed};
+use ntex::service::map_state_factory;
 use ntex::time::{Seconds, timeout};
 use ntex::util::{ByteString, Bytes};
-use ntex::service::map_state_factory;
 use ntex::web::test::{self as web_test, TestServer};
 use ntex::web::{self, App};
 use ntex::ws::{self, WsClient, WsClientConfig, WsConnection};
 use rustls::crypto::ring;
-use server_box_monitor::api::authz::revoke_lost;
 use server_box_monitor::api::server::{Agent, AppState};
 use server_box_monitor::api::ws::listen::listen_ws;
 use server_box_monitor::api::ws::stream::stream_ws;
@@ -34,22 +33,17 @@ fn ensure_crypto_provider() {
     });
 }
 
-async fn app_state(listen_public: bool) -> Arc<AppState> {
+async fn app_state() -> Arc<AppState> {
     ensure_crypto_provider();
-    let mut config = Config {
+    let config = Config {
         jwt_secret: Some("test-secret-that-is-long-enough-32ch".to_string()),
         ..Default::default()
     };
-    let mut remote = config.get_remote_access();
-    remote.terminal.enabled = Some(true);
-    remote.full_access = Some(true);
-    remote.listen_public = Some(listen_public);
-    config.remote_access = Some(remote);
 
     let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
     sqlx::migrate!("./migrations").run(&db).await.unwrap();
 
-    common::seed_as_upgrade(&db, &config).await;
+    common::add_owner(&db).await;
     AppState::new(Arc::new(config), db)
 }
 
@@ -104,7 +98,7 @@ async fn next_control(io: &Io<Sealed>, codec: &ws::Codec) -> serde_json::Value {
 /// Listens on an OS-chosen loopback port and answers it, with the control
 /// socket that holds it.
 async fn listen(srv: &TestServer, state: &AppState) -> (Io<Sealed>, ws::Codec, u16) {
-    let ticket = state.tickets.issue(Purpose::Listen, "admin").unwrap();
+    let ticket = state.tickets.issue(Purpose::Listen).unwrap();
     let (io, codec) = connect(srv, "/api/v1/listen/ws", &ticket).await;
     send_text(&io, &codec, r#"{"type":"listen","host":"127.0.0.1","port":0}"#.into()).await;
     let ready = next_control(&io, &codec).await;
@@ -118,10 +112,9 @@ async fn listen(srv: &TestServer, state: &AppState) -> (Io<Sealed>, ws::Codec, u
 async fn accept(
     srv: &TestServer,
     state: &AppState,
-    subject: &str,
     id: &str,
 ) -> (Io<Sealed>, ws::Codec, serde_json::Value) {
-    let ticket = state.tickets.issue(Purpose::Stream, subject).unwrap();
+    let ticket = state.tickets.issue(Purpose::Stream).unwrap();
     let (io, codec) = connect(srv, "/api/v1/stream/ws", &ticket).await;
     send_text(&io, &codec, format!(r#"{{"type":"accept","id":"{id}"}}"#)).await;
     let reply = next_control(&io, &codec).await;
@@ -130,7 +123,7 @@ async fn accept(
 
 #[ntex::test]
 async fn a_connection_to_the_port_is_relayed_to_the_app() {
-    let state = app_state(false).await;
+    let state = app_state().await;
     let srv = test_server(state.clone()).await;
     let (control, control_codec, port) = listen(&srv, &state).await;
 
@@ -141,7 +134,7 @@ async fn a_connection_to_the_port_is_relayed_to_the_app() {
     assert_eq!(id.len(), 32);
     assert!(incoming["peer"].as_str().unwrap().starts_with("127.0.0.1:"));
 
-    let (io, codec, reply) = accept(&srv, &state, "admin", &id).await;
+    let (io, codec, reply) = accept(&srv, &state, &id).await;
     assert_eq!(reply["type"], "ready", "{reply}");
 
     // Towards the app.
@@ -169,34 +162,16 @@ async fn a_connection_to_the_port_is_relayed_to_the_app() {
 }
 
 #[ntex::test]
-async fn a_connection_is_only_taken_by_the_account_that_listened() {
-    let state = app_state(false).await;
-    let srv = test_server(state.clone()).await;
-    let (control, control_codec, port) = listen(&srv, &state).await;
-    let _client = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
-    let id = next_control(&control, &control_codec).await["id"]
-        .as_str()
-        .unwrap()
-        .to_string();
-
-    let (_, _, reply) = accept(&srv, &state, "intruder", &id).await;
-    assert_eq!(reply["code"], "not_found");
-    // Still there for its owner.
-    let (_, _, reply) = accept(&srv, &state, "admin", &id).await;
-    assert_eq!(reply["type"], "ready");
-}
-
-#[ntex::test]
 async fn an_unknown_id_is_not_found() {
-    let state = app_state(false).await;
+    let state = app_state().await;
     let srv = test_server(state.clone()).await;
-    let (_, _, reply) = accept(&srv, &state, "admin", "00".repeat(16).as_str()).await;
+    let (_, _, reply) = accept(&srv, &state, "00".repeat(16).as_str()).await;
     assert_eq!(reply["code"], "not_found");
 }
 
 #[ntex::test]
 async fn closing_the_control_socket_drops_what_waits() {
-    let state = app_state(false).await;
+    let state = app_state().await;
     let srv = test_server(state.clone()).await;
     let (control, control_codec, port) = listen(&srv, &state).await;
     let _client = TcpStream::connect(("127.0.0.1", port)).await.unwrap();
@@ -210,7 +185,7 @@ async fn closing_the_control_socket_drops_what_waits() {
     // The agent sees the close on its own schedule.
     let mut reply = serde_json::Value::Null;
     for _ in 0..50 {
-        reply = accept(&srv, &state, "admin", &id).await.2;
+        reply = accept(&srv, &state, &id).await.2;
         if reply["code"] == "not_found" {
             break;
         }
@@ -222,18 +197,18 @@ async fn closing_the_control_socket_drops_what_waits() {
 }
 
 #[ntex::test]
-async fn a_public_address_needs_listen_public() {
-    let state = app_state(false).await;
+async fn a_public_address_is_bound_as_the_system_account_may() {
+    let state = app_state().await;
     let srv = test_server(state.clone()).await;
-    let ticket = state.tickets.issue(Purpose::Listen, "admin").unwrap();
+    let ticket = state.tickets.issue(Purpose::Listen).unwrap();
     let (io, codec) = connect(&srv, "/api/v1/listen/ws", &ticket).await;
     send_text(&io, &codec, r#"{"type":"listen","host":"0.0.0.0","port":0}"#.into()).await;
-    assert_eq!(next_control(&io, &codec).await["code"], "not_permitted");
+    assert_eq!(next_control(&io, &codec).await["type"], "ready");
 }
 
 #[ntex::test]
 async fn a_second_listen_on_one_socket_is_refused() {
-    let state = app_state(false).await;
+    let state = app_state().await;
     let srv = test_server(state.clone()).await;
     let (io, codec, _) = listen(&srv, &state).await;
     send_text(&io, &codec, r#"{"type":"listen","host":"127.0.0.1","port":0}"#.into()).await;
@@ -242,8 +217,8 @@ async fn a_second_listen_on_one_socket_is_refused() {
 
 #[ntex::test]
 async fn a_stream_ticket_is_not_a_listen_ticket() {
-    let state = app_state(false).await;
-    let ticket = state.tickets.issue(Purpose::Stream, "admin").unwrap();
+    let state = app_state().await;
+    let ticket = state.tickets.issue(Purpose::Stream).unwrap();
     let srv = test_server(state).await;
     let result = WsClient::new(
         srv.url("/api/v1/listen/ws"),
@@ -258,63 +233,18 @@ async fn a_stream_ticket_is_not_a_listen_ticket() {
 }
 
 #[ntex::test]
-async fn taking_listen_away_closes_the_listener() {
-    let state = app_state(false).await;
-    let srv = test_server(state.clone()).await;
-    let (io, codec, _) = listen(&srv, &state).await;
-
-    let mut grants = common::grants_of(&state.db, "admin").await;
-    grants.listen = None;
-    common::set_grants(&state.db, "admin", &grants).await;
-    revoke_lost(&state, "permission_revoked").await;
-
-    assert_eq!(next_control(&io, &codec).await["code"], "permission_revoked");
-}
-
-#[ntex::test]
-async fn a_change_that_leaves_listen_alone_keeps_the_listener() {
-    // Every role change is broadcast; a listener whose own account kept what
-    // it needs must not be closed by somebody else's edit.
-    let state = app_state(false).await;
-    let srv = test_server(state.clone()).await;
-    let (io, codec, _) = listen(&srv, &state).await;
-
-    revoke_lost(&state, "permission_revoked").await;
-    send_text(&io, &codec, r#"{"type":"ping"}"#.into()).await;
-    assert_eq!(next_control(&io, &codec).await["type"], "pong");
-}
-
-#[ntex::test]
-async fn a_port_outside_the_roles_range_is_refused() {
-    let state = app_state(false).await;
-    let mut grants = common::grants_of(&state.db, "admin").await;
-    grants.listen = Some(server_box_monitor::core::permissions::ListenGrant {
-        public: false,
-        ports: Some([20000, 20010]),
-    });
-    common::set_grants(&state.db, "admin", &grants).await;
-    let srv = test_server(state.clone()).await;
-    let ticket = state.tickets.issue(Purpose::Listen, "admin").unwrap();
-    let (io, codec) = connect(&srv, "/api/v1/listen/ws", &ticket).await;
-
-    send_text(&io, &codec, r#"{"type":"listen","host":"127.0.0.1","port":0}"#.into()).await;
-    assert_eq!(next_control(&io, &codec).await["code"], "not_permitted");
-}
-
-#[ntex::test]
 async fn a_password_change_closes_the_listener() {
-    // The role is unchanged, so this is not what `revoke_lost` sees: what
-    // ends it is that the account's password moved on since it was opened —
-    // the reason to change a password is that someone else may have it.
-    let state = app_state(false).await;
+    // What ends it is that the password moved on since it was opened — the
+    // reason to change a password is that someone else may have it.
+    let state = app_state().await;
     let srv = test_server(state.clone()).await;
     let (io, codec, _) = listen(&srv, &state).await;
 
     let hash = bcrypt::hash("a-new-password", 4).unwrap();
-    server_box_monitor::db::accounts::set_password_hash(&state.db, "admin", &hash)
+    server_box_monitor::db::accounts::set_password_hash(&state.db, &hash)
         .await
         .unwrap();
-    server_box_monitor::api::authz::end_account(&state, "admin", "permission_revoked");
+    server_box_monitor::api::authz::end_account(&state, "password_changed");
 
-    assert_eq!(next_control(&io, &codec).await["code"], "permission_revoked");
+    assert_eq!(next_control(&io, &codec).await["code"], "password_changed");
 }

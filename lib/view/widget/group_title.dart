@@ -15,6 +15,7 @@ class GroupTitle extends StatelessWidget {
     super.key,
     this.right,
     this.rightColor,
+    this.tip,
     this.padding = const EdgeInsets.fromLTRB(3, 17, 3, 7),
   });
 
@@ -25,6 +26,9 @@ class GroupTitle extends StatelessWidget {
 
   /// [right]'s colour where it is a warning rather than a summary.
   final Color? rightColor;
+
+  /// Markdown behind a help glyph after the name — see [TipButton].
+  final String? tip;
 
   final EdgeInsets padding;
 
@@ -51,9 +55,13 @@ class GroupTitle extends StatelessWidget {
           // The name first, up to 60 %: a long one beside a sentence of a
           // value took the row past a phone's width.
           final bounded = cons.maxWidth.isFinite;
-          final titleMax = bounded ? cons.maxWidth * 0.6 : double.infinity;
+          final tipWidth = tip == null ? 0.0 : _tipGap + TipButton.size;
+          final titleMax = bounded
+              ? cons.maxWidth * 0.6 - tipWidth
+              : double.infinity;
           final titleWidth = bounded
-              ? math.min(_measure(context, title, titleStyle), titleMax)
+              ? math.min(_measure(context, title, titleStyle), titleMax) +
+                    tipWidth
               : 0.0;
           final rightMax = bounded
               ? math.max(0.0, cons.maxWidth - titleWidth - 2 * 9 - _ruleMin)
@@ -69,6 +77,10 @@ class GroupTitle extends StatelessWidget {
                   style: titleStyle,
                 ),
               ),
+              if (tip case final tip?) ...[
+                const SizedBox(width: _tipGap),
+                TipButton(tip, isMarkdown: true),
+              ],
               const SizedBox(width: 9),
               const Expanded(child: Divider(height: 1)),
               if (right != null) ...[
@@ -94,6 +106,8 @@ class GroupTitle extends StatelessWidget {
 
   /// The shortest rule worth drawing between the name and the value.
   static const _ruleMin = 17.0;
+
+  static const _tipGap = 5.0;
 
   /// [text]'s width as `Text` lays it out: [style] over the inherited one
   /// (the theme's font family and fallbacks), which `Text` merges and a bare

@@ -140,6 +140,16 @@ jobs:
       - name: Check out IronRDP
         run: git submodule update --init --depth 1 third_party/ironrdp
 
+      # The agent reads theme packages with fl_lib's `fl_theme`
+      # (`packages/fl_lib/rust/theme`), a path dependency into this submodule.
+      - name: Check out fl_lib
+        run: git submodule update --init --depth 1 packages/fl_lib
+
+      # Agent mode runs pi through `fl_pi_llm`'s Rust host
+      # (`packages/fl_pi_llm/fl_pi_llm/rust`), a path dependency into this submodule.
+      - name: Check out fl_pi_llm
+        run: git submodule update --init --depth 1 packages/fl_pi_llm
+
       - name: Install musl toolchain
         if: matrix.platform == 'linux'
         run: |
@@ -297,9 +307,72 @@ jobs:
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
 
+  os:
+    name: sbOS ${{ matrix.flavor }} ${{ matrix.arch }}
+    needs: [meta, native]
+    strategy:
+      fail-fast: false
+      matrix:
+        flavor: [musl, gnu]
+        arch: [x64, arm64]
+        include:
+          - arch: x64
+            runner: ubuntu-latest
+            pkg: monitor-pkg-linux-amd64
+            required: true
+          # A native arm64 runner, so nothing is emulated. Not allowed to hold
+          # the release: a runner that cannot build it is not a reason to
+          # publish no release at all.
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+            pkg: monitor-pkg-linux-arm64
+            required: false
+    runs-on: ${{ matrix.runner }}
+    continue-on-error: ${{ !matrix.required }}
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      # The release package of this architecture: the static musl binary, the
+      # panel's build and the migrations, exactly as install.sh installs them.
+      - name: Download release package
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: ${{ matrix.pkg }}
+          path: os-pkg
+
+      - name: Build image
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          pkg=(os-pkg/*.tar.gz)
+          if [ "${#pkg[@]}" -ne 1 ]; then
+            echo "Expected one package in os-pkg, found ${#pkg[@]}."
+            exit 1
+          fi
+          monitor/os/build.sh "${{ matrix.flavor }}" \
+            --arch "${{ matrix.arch }}" \
+            --version "${{ needs.meta.outputs.version }}" \
+            --pkg "${pkg[0]}" \
+            --out os-out
+
+      - name: Upload image
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: monitor-os-${{ matrix.flavor }}-${{ matrix.arch }}
+          path: |
+            os-out/*.img
+            os-out/*.packages.txt
+          if-no-files-found: error
+          retention-days: 3
+
   release:
     name: Create GitHub Release
-    needs: [meta, native, docker]
+    needs: [meta, native, docker, os]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -312,13 +385,20 @@ jobs:
           path: packages
           merge-multiple: true
 
+      - name: Download sbOS images
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          pattern: monitor-os-*
+          path: packages
+          merge-multiple: true
+
       - name: Checksums
         shell: bash
         working-directory: packages
         # `--`, so an archive is never read as an option. The names are all
         # `server-box-monitor_…` today, which is the kind of thing that holds
         # until it doesn't; it keeps the bare filenames `sha256sum -c` expects.
-        run: sha256sum -- *.tar.gz *.zip > SHA256SUMS
+        run: sha256sum -- *.tar.gz *.zip *.img > SHA256SUMS
 
       - name: Create Release
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
@@ -348,12 +428,10 @@ jobs:
             curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/monitor/install.sh | sh -s -- install
             ```
 
-            As a root-owned system service. An account whose role holds `shell` then gets a root shell:
+            As a root-owned system service. Signing in to the agent is then a root shell:
             ```sh
             curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/monitor/install.sh | sudo sh -s -- install --system
             ```
-
-            Add `--permissions read` to start the first admin read-only.
 
             ## Docker
             ```sh
@@ -364,12 +442,20 @@ jobs:
 
             Also tagged `latest`. `linux/amd64` and `linux/arm64`.
 
+            ## sbOS
+            ServerBox Monitor and Docker as a bootable system: write the image to a USB stick, boot it, and the console shows the panel's address; `sbm-install <disk>` installs it on a disk. `sbOS_musl_*` is based on Alpine Linux, `sbOS_GNU_*` on Debian 13; `x64` boots BIOS and UEFI, `arm64` UEFI. Each `.packages.txt` lists the distribution packages inside and where their sources are. sbOS is not affiliated with Alpine Linux or Debian; Debian is a registered trademark owned by Software in the Public Interest, Inc.
+            ```sh
+            dd if=sbOS_GNU_x64.img of=/dev/sdX bs=4M status=progress conv=fsync
+            ```
+
             ```sh
             sha256sum -c SHA256SUMS --ignore-missing
             ```
           files: |
             packages/*.tar.gz
             packages/*.zip
+            packages/*.img
+            packages/*.packages.txt
             packages/SHA256SUMS
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

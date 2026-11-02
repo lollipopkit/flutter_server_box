@@ -1,0 +1,65 @@
+{
+  "publisher": "serverbox",
+  "name": "kernel",
+  "version": "1.3.0",
+  "api": 2,
+  "kind": "wasm",
+  "title": {
+    "en": "Kernels",
+    "de": "Kernel",
+    "es": "Kernels",
+    "fr": "Noyaux",
+    "id": "Kernel",
+    "it": "Kernel",
+    "ja": "カーネル",
+    "ko": "커널",
+    "nl": "Kernels",
+    "pt": "Kernels",
+    "ru": "Ядра",
+    "tr": "Çekirdekler",
+    "uk": "Ядра",
+    "zh-CN": "内核",
+    "zh-TW": "核心"
+  },
+  "description": {
+    "en": "The kernels installed on Debian and Ubuntu, which one GRUB boots, and other versions of the series to install. Boot one once or by default, and remove old ones safely.",
+    "de": "Die unter Debian und Ubuntu installierten Kernel, welchen GRUB startet, und weitere Versionen der Serie zum Installieren. Einen einmalig oder standardmäßig starten und alte sicher entfernen.",
+    "es": "Los kernels instalados en Debian y Ubuntu, cuál arranca GRUB y otras versiones de la serie para instalar. Arranca uno una vez o por defecto y elimina los antiguos con seguridad.",
+    "fr": "Les noyaux installés sur Debian et Ubuntu, celui que GRUB démarre et d’autres versions de la série à installer. Démarrez-en un une fois ou par défaut, et supprimez les anciens sans risque.",
+    "id": "Kernel yang terpasang di Debian dan Ubuntu, yang di-boot GRUB, dan versi lain dari seri tersebut untuk dipasang. Boot sekali atau sebagai bawaan, dan hapus yang lama dengan aman.",
+    "it": "I kernel installati su Debian e Ubuntu, quello che avvia GRUB e altre versioni della serie da installare. Avviane uno una volta o come predefinito e rimuovi quelli vecchi in sicurezza.",
+    "ja": "Debian と Ubuntu にインストールされたカーネル、GRUB が起動するもの、同じ系列のインストール可能な他のバージョン。一度だけまたは既定で起動し、古いものを安全に削除します。",
+    "ko": "Debian과 Ubuntu에 설치된 커널, GRUB이 부팅하는 커널, 설치할 수 있는 같은 시리즈의 다른 버전. 한 번 또는 기본으로 부팅하고 오래된 커널을 안전하게 제거합니다.",
+    "nl": "De kernels op Debian en Ubuntu, welke GRUB start en andere versies uit de reeks om te installeren. Start er één eenmalig of standaard, en verwijder oude veilig.",
+    "pt": "Os kernels instalados no Debian e no Ubuntu, qual o GRUB inicia e outras versões da série para instalar. Inicie um uma vez ou por padrão e remova os antigos com segurança.",
+    "ru": "Установленные в Debian и Ubuntu ядра, какое загружает GRUB, и другие версии серии для установки. Загрузить одно однократно или по умолчанию и безопасно удалить старые.",
+    "tr": "Debian ve Ubuntu'da kurulu çekirdekler, GRUB'un hangisini başlattığı ve kurulabilecek diğer sürümler. Birini bir kez ya da varsayılan olarak başlatın, eskileri güvenle kaldırın.",
+    "uk": "Встановлені в Debian і Ubuntu ядра, яке завантажує GRUB, та інші версії серії для встановлення. Завантажити одне одноразово чи за замовчуванням і безпечно прибрати старі.",
+    "zh-CN": "Debian 和 Ubuntu 上已安装的内核、GRUB 启动的是哪一个，以及同系列可安装的其他版本。可单次或默认从某个内核启动，并安全删除旧内核。",
+    "zh-TW": "Debian 和 Ubuntu 上已安裝的核心、GRUB 開機的是哪一個，以及同系列可安裝的其他版本。可單次或預設從某個核心開機，並安全移除舊核心。"
+  },
+  "keywords": [
+    "kernel",
+    "linux",
+    "grub",
+    "boot"
+  ],
+  "glyph": "memory",
+  "tone": "ink",
+  "permissions": [
+    "process",
+    "root"
+  ],
+  "size": {
+    "width": 860,
+    "height": 680
+  },
+  "min_size": {
+    "width": 360,
+    "height": 380
+  },
+  "os": [
+    "debian",
+    "ubuntu"
+  ]
+}

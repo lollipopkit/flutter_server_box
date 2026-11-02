@@ -71,7 +71,7 @@ Where a role name is accepted as a color (components, `icons.colors`,
 | `colors` | key → ARGB or role name; only keys that `images` carries (schema 2) |
 
 Keys: `tab.<t>` and `tab.<t>.selected` for `server ssh file snippet agent
-benchmark remoteDesktop virt`; `nav.more nav.settings nav.tune nav.privacy
+benchmark remoteDesktop virt workspace monitor`; `nav.more nav.settings nav.tune nav.privacy
 nav.agent nav.tabs nav.server nav.sort nav.terminal nav.folder nav.cloud
 nav.snippet nav.inbox nav.key nav.info nav.download nav.desktop`; Files
 window `file.dir file.link file.default` and `file.<ext>` (`file.py`,

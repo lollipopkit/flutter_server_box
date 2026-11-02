@@ -1,6 +1,6 @@
 ---
 name: serverbox-onboarding
-description: Orientation for working on ServerBox (flutter_server_box) from source — bootstrapping the Flutter + Rust + Node development environment, running, testing and building the app and the ServerBox Monitor agent, and explaining how the project actually works (SSH vs monitor HTTP, the shared Rust parser, SQLite storage, Riverpod state). Use this whenever someone asks how to get the repo running, why a build fails, where to start contributing, or how some part of the code or its design works — including questions that never name the project outright, such as "how do I get this repo running", "pub get fails after cloning", "where does the status data come from", or a first-time contributor asking where to start. Using the app or deploying the monitor agent on a server is the `serverbox-help` skill instead.
+description: Orientation for working on ServerBox (flutter_server_box) from source — bootstrapping the Flutter + Rust + Node development environment, running, testing and building the app and the ServerBox Monitor, and explaining how the project actually works (SSH vs monitor HTTP, the shared Rust parser, SQLite storage, Riverpod state). Use this whenever someone asks how to get the repo running, why a build fails, where to start contributing, or how some part of the code or its design works — including questions that never name the project outright, such as "how do I get this repo running", "pub get fails after cloning", "where does the status data come from", or a first-time contributor asking where to start. Using the app or deploying the Monitor on a server is the `serverbox-help` skill instead.
 ---
 
 # ServerBox onboarding
@@ -15,18 +15,18 @@ containers, processes, systemd. The repository is a monorepo:
 | `crates/sbm_parser` | Shared status parser — one source of truth for the command manifest and the parsing, used by the app over FFI and by the monitor |
 | `crates/sbm_ffi` | flutter_rust_bridge binding crate, built into the app by `hook/build.dart` |
 | `crates/sbm_native` | Native per-platform sampler, monitor only |
-| `monitor/` | ServerBox Monitor: a Rust agent installed on a server, plus its Svelte panel |
+| `monitor/` | ServerBox Monitor: a Rust program installed on a server, plus its Svelte panel |
 | `packages/` | Vendored Dart forks, each a submodule, referenced by path from `pubspec.yaml` |
 | `docs/` | The documentation site (Astro Starlight), English with a `zh/` mirror |
 
-A server can use **SSH, a monitor agent's HTTP API, or both**. Each configured
+A server can use **SSH, a Monitor's HTTP API, or both**. Each configured
 transport contributes its own capabilities; see `references/principles.md`.
 
 ## Work out which question this is first
 
 People arrive at this project from two directions, and the answers barely
 overlap. This skill is for working on it; someone *using* the app or running
-the monitor agent on a server wants the `serverbox-help` skill, which is also
+the Monitor on a server wants the `serverbox-help` skill, which is also
 what the app's own Agent is given. Read the one reference that matches, not
 all of them.
 
@@ -34,10 +34,10 @@ all of them.
 |---|---|
 | Build and run the project from source, or contribute | `references/dev-setup.md` |
 | Understand how something works, or why it was built that way | `references/principles.md` |
-| Install or use the app, or deploy and configure the monitor agent | the `serverbox-help` skill |
+| Install or use the app, or deploy and configure the Monitor | the `serverbox-help` skill |
 
 Mixed asks are common and the wording rarely says which is which. "The
-terminal button disappeared" is the agent's capability model
+terminal button disappeared" is the Monitor's capability model
 (`serverbox-help`), not a bug. "`flutter pub get` fails right after cloning"
 is almost always uninitialised submodules (`dev-setup.md`). When it is
 genuinely ambiguous, ask whether they are running ServerBox or working on it.
@@ -53,7 +53,7 @@ with the repo is worse than no skill. Inside a checkout, prefer these:
 | Flutter / Dart minimum | `environment:` in `pubspec.yaml` |
 | Rust channel and shipped targets | `crates/sbm_ffi/rust-toolchain.toml` |
 | Node version | `monitor/frontend/.node-version` |
-| Every agent config key | `monitor/config.example.toml` |
+| Every Monitor config key | `monitor/config.example.toml` |
 | Contribution rules and checks | `CONTRIBUTING.md` |
 | Working rules for agents | `CLAUDE.md`, `monitor/CLAUDE.md` |
 | User-facing documentation | `docs/src/content/docs/**` |
@@ -75,7 +75,7 @@ make gen         # build_runner + gen-l10n — after touching any annotated mode
 make analyze     # flutter analyze lib test integration_test
 make test        # flutter test
 cargo test --workspace          # parser, native sampler, FFI, monitor
-make monitor-dev                # agent API on :3770 + panel dev server on :3000
+make monitor-dev                # Monitor API on :3770 + panel dev server on :3000
 make build PLATFORM=<android|ios|macos|linux|windows>
 ```
 

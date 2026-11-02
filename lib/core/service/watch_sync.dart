@@ -357,8 +357,8 @@ final class WatchSync {
         ? monitor
         : MonitorHttpCredential(
             addr: revocationEndpoint,
-            user: monitor.user,
             pwd: monitor.pwd,
+            legacyUser: monitor.legacyUser,
             ignoreCert: monitor.ignoreCert,
             allowInsecure: monitor.allowInsecure,
           );

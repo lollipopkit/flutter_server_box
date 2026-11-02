@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/tab.dart';
-import 'package:server_box/data/model/server/monitor_remote_access.dart';
+import 'package:server_box/data/model/server/monitor_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/model/server/snippet.dart';
@@ -33,7 +33,7 @@ Future<TerminalSession?> showSnippetRun(
   required Snippet snippet,
 }) async {
   final server = ref.read(serverProvider(spi.id));
-  final granted = server.remoteAccess;
+  final granted = server.agentAccess;
   final session = TerminalSession(source: ServerSource(spi))
     ..adopt(server.client, granted: granted);
 
@@ -103,7 +103,7 @@ class SnippetRunPage extends ConsumerStatefulWidget {
 }
 
 class _SnippetRunPageState extends ConsumerState<SnippetRunPage> {
-  late final MonitorRemoteAccess? _granted;
+  late final MonitorAccess? _granted;
   late final TerminalSession _session;
   final _running = ValueNotifier(true);
 
@@ -116,7 +116,7 @@ class _SnippetRunPageState extends ConsumerState<SnippetRunPage> {
   void initState() {
     super.initState();
     final server = ref.read(serverProvider(widget.args.spi.id));
-    _granted = server.remoteAccess;
+    _granted = server.agentAccess;
     _session = TerminalSession(source: ServerSource(widget.args.spi))
       ..adopt(server.client, granted: _granted);
   }
@@ -197,7 +197,7 @@ class _SnippetRunView extends StatefulWidget {
   /// be about a server at all.
   final Spi spi;
 
-  final MonitorRemoteAccess? granted;
+  final MonitorAccess? granted;
   final ValueNotifier<bool> running;
 
   /// Take whatever room there is, rather than the box a dialog can afford.

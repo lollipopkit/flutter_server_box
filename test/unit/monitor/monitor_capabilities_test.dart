@@ -3,8 +3,9 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
 import 'package:server_box/data/model/server/connect_credential.dart';
+import 'package:server_box/data/model/server/monitor_access.dart';
+import 'package:server_box/data/model/server/monitor_capabilities.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
-import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 
@@ -22,13 +23,11 @@ void main() {
       expect(caps.terminal, isFalse);
     });
 
-    test('an agent with terminal and full access grants both', () {
-      // The PTY needs both grants. Commands use full access, while the
-      // terminal endpoint can be disabled independently.
+    test('an agent that grants access opens a terminal and runs commands', () {
       final spi = Spi(name: 'test', id: 'd', monitorHttp: monitor);
       final caps = ServerCapabilities.of(
         ServerConnectCredential.fromSpi(spi),
-        granted: const MonitorRemoteAccess(terminal: true, fullAccess: true),
+        granted: MonitorAccess.granted,
       );
       expect(caps.terminal, isTrue);
       expect(caps.shell, isTrue);
@@ -112,67 +111,40 @@ void main() {
 
   group('MonitorHttpCapabilities', () {
     test('grants nothing before the agent has been asked', () {
-      const caps = MonitorHttpCapabilities(MonitorRemoteAccess.none);
+      const caps = MonitorHttpCapabilities(MonitorAccess.none);
       expect(caps.shell, isFalse);
       expect(caps.terminal, isFalse);
       expect(caps.byteStream, isFalse);
+      expect(caps.tcpRelay, isFalse);
+      expect(caps.remoteListen, isFalse);
+      expect(caps.files, isFalse);
     });
 
-    test('a terminal alone is not the grant commands need', () {
-      // The terminal endpoint alone cannot open a shell as the agent's
-      // account; that also needs full access.
-      const caps = MonitorHttpCapabilities(
-        MonitorRemoteAccess(terminal: true),
-      );
-      expect(caps.shell, isFalse);
-      expect(caps.terminal, isFalse);
-    });
-
-    test('full access carries no SSH byte stream, but does relay TCP', () {
+    test('access carries no SSH byte stream, but does relay TCP', () {
       // The agent has no channel this app can point at an SFTP subsystem, so
       // `byteStream` — which is what the file transfer asks — stays false and
       // the file browser keeps using the agent's own API. What it *can* do is
       // dial an address the app names, which is the question remote desktop
       // asks instead (`tcpRelay`).
-      const caps = MonitorHttpCapabilities(
-        MonitorRemoteAccess(fullAccess: true, stream: true),
-      );
+      const caps = MonitorHttpCapabilities(MonitorAccess.granted);
       expect(caps.shell, isTrue);
-      expect(caps.terminal, isFalse);
+      expect(caps.terminal, isTrue);
       expect(caps.byteStream, isFalse);
       expect(caps.tcpRelay, isTrue);
-    });
-
-    test('an old agent reports full access and no relay', () {
-      // The endpoint is newer than the grant, so an agent that predates it
-      // reports `full_access` and would still refuse the upgrade. Reading
-      // `fullAccess` for this is what would offer a session that cannot open.
-      const caps = MonitorHttpCapabilities(
-        MonitorRemoteAccess(fullAccess: true),
-      );
-      expect(caps.shell, isTrue);
-      expect(caps.tcpRelay, isFalse);
+      expect(caps.remoteListen, isTrue);
+      expect(caps.files, isTrue);
     });
 
     test('no session to be in the middle of', () {
-      const caps = MonitorHttpCapabilities(
-        MonitorRemoteAccess(fullAccess: true),
-      );
+      const caps = MonitorHttpCapabilities(MonitorAccess.granted);
       expect(caps.persistentSession, isFalse);
     });
   });
 
   group('ServerFuncBtn.availableWith', () {
     const ssh = SshCapabilities();
-    const granted = MonitorHttpCapabilities(
-      MonitorRemoteAccess(terminal: true, fullAccess: true, stream: true),
-    );
-    /// What an agent older than the relay endpoint reports: the grant, with no
-    /// endpoint behind it.
-    const grantedBeforeRelay = MonitorHttpCapabilities(
-      MonitorRemoteAccess(terminal: true, fullAccess: true),
-    );
-    const refused = MonitorHttpCapabilities(MonitorRemoteAccess.none);
+    const granted = MonitorHttpCapabilities(MonitorAccess.granted);
+    const refused = MonitorHttpCapabilities(MonitorAccess.none);
 
     test('an SSH server offers every entry', () {
       for (final btn in ServerFuncBtn.values) {
@@ -180,94 +152,42 @@ void main() {
       }
     });
 
-    test('an agent that granted nothing offers none', () {
+    test('an agent that refuses offers none', () {
       for (final btn in ServerFuncBtn.values) {
         expect(btn.availableWith(refused), isFalse, reason: btn.name);
       }
     });
 
-    test('powering a machine down needs a shell, not a terminal', () {
-      // It runs one of the script's functions, so it belongs with the process
-      // and service pages rather than with the entries that open a terminal.
-      expect(ServerFuncBtn.power.availableWith(granted), isTrue);
-      expect(ServerFuncBtn.power.availableWith(refused), isFalse);
-    });
-
-    test('a full-access agent offers everything but files', () {
-      // Full access is the shell grant, and the file API is a grant of its
-      // own — see the next test.
-      expect(ServerFuncBtn.files.availableWith(granted), isFalse);
+    test('an agent that grants access offers every entry', () {
       for (final btn in ServerFuncBtn.values) {
-        if (btn == ServerFuncBtn.files) continue;
         expect(btn.availableWith(granted), isTrue, reason: btn.name);
       }
-    });
-
-    test('remote desktop and port forwarding follow the relay, not the grant '
-        'behind it', () {
-      // The endpoint is what both need — a local forward is dialled through
-      // it as a session is — and an agent that has the grant but not the
-      // endpoint cannot carry one.
-      for (final btn in [
-        ServerFuncBtn.remoteDesktop,
-        ServerFuncBtn.portForward,
-      ]) {
-        expect(btn.availableWith(granted), isTrue, reason: btn.name);
-        expect(
-          btn.availableWith(grantedBeforeRelay),
-          isFalse,
-          reason: btn.name,
-        );
-      }
-    });
-
-    test('the file entry follows the agent\'s file grant alone', () {
-      // The whole point of the entry no longer being called SFTP: an agent
-      // that serves files and nothing else is browsable, and one that grants a
-      // shell but no file roots is not.
-      const filesOnly = MonitorHttpCapabilities(
-        MonitorRemoteAccess(files: true),
-      );
-      expect(ServerFuncBtn.files.availableWith(filesOnly), isTrue);
-      expect(ServerFuncBtn.terminal.availableWith(filesOnly), isFalse);
-      expect(ServerFuncBtn.files.availableWith(granted), isFalse);
     });
   });
+
   group('ServerFuncBtn.unavailableReason', () {
     const monitor = MonitorHttpCredential(addr: 'https://agent:3770');
     final agentOnly = Spi(name: 'test', id: 'r', monitorHttp: monitor);
+    const insecure = MonitorAccess(
+      ok: false,
+      why: MonitorAccessWhy.insecureTransport,
+    );
 
-    test('names the grant an agent-only server is missing', () {
-      const shellOnly = MonitorRemoteAccess(fullAccess: true);
-      expect(
-        ServerFuncBtn.files.unavailableReason(agentOnly, shellOnly),
-        contains('[remote_access.fs]'),
-      );
-      expect(
-        ServerFuncBtn.terminal.unavailableReason(agentOnly, shellOnly),
-        contains('[remote_access.terminal]'),
-      );
-      expect(
-        ServerFuncBtn.process.unavailableReason(
-          agentOnly,
-          MonitorRemoteAccess.none,
-        ),
-        contains('full_access'),
-      );
-    });
-
-    test('a relay missing under full access is an agent to update', () {
-      const beforeRelay = MonitorRemoteAccess(terminal: true, fullAccess: true);
-      for (final btn in [
-        ServerFuncBtn.remoteDesktop,
-        ServerFuncBtn.portForward,
-      ]) {
+    test('a plaintext link is what an agent-only server is told', () {
+      for (final btn in ServerFuncBtn.values) {
         expect(
-          btn.unavailableReason(agentOnly, beforeRelay),
-          l10n.funcNeedsAgentUpdate(btn.toStr),
+          btn.unavailableReason(agentOnly, insecure),
+          l10n.funcNeedsAgentHttps(btn.toStr),
           reason: btn.name,
         );
       }
+    });
+
+    test('a refusal with no reason gets the plain answer', () {
+      expect(
+        ServerFuncBtn.process.unavailableReason(agentOnly, MonitorAccess.none),
+        l10n.funcUnavailableFmt(ServerFuncBtn.process.toStr),
+      );
     });
 
     test('an agent not heard from yet gets the plain answer', () {
@@ -287,11 +207,9 @@ void main() {
       monitorHttp: monitor,
       preferredTransport: preferred,
     );
-    /// An agent from before the listen endpoint.
-    const relayOnly = MonitorRemoteAccess(
-      terminal: true,
-      fullAccess: true,
-      stream: true,
+    const insecure = MonitorAccess(
+      ok: false,
+      why: MonitorAccessWhy.insecureTransport,
     );
 
     test('the agent leading, answers with the agent alone', () {
@@ -299,16 +217,16 @@ void main() {
       // listen says nothing about what the forward can do.
       final caps = ServerCapabilities.forwardsOf(
         both(ServerTransport.monitorHttp),
-        granted: relayOnly,
+        granted: MonitorAccess.none,
       );
-      expect(caps.tcpRelay, isTrue);
+      expect(caps.tcpRelay, isFalse);
       expect(caps.remoteListen, isFalse);
     });
 
     test('SSH leading, answers with both', () {
       final caps = ServerCapabilities.forwardsOf(
         both(ServerTransport.ssh),
-        granted: MonitorRemoteAccess.none,
+        granted: MonitorAccess.none,
       );
       expect(caps.tcpRelay, isTrue);
       expect(caps.remoteListen, isTrue);
@@ -316,39 +234,53 @@ void main() {
 
     test('the entry follows the agent where it leads, SSH or not', () {
       final spi = both(ServerTransport.monitorHttp);
+      expect(ServerFuncBtn.portForward.availableOn(spi, insecure), isFalse);
       expect(
-        ServerFuncBtn.portForward.availableOn(spi, MonitorRemoteAccess.none),
-        isFalse,
+        ServerFuncBtn.portForward.availableOn(spi, MonitorAccess.granted),
+        isTrue,
       );
-      expect(ServerFuncBtn.portForward.availableOn(spi, relayOnly), isTrue);
       // And says what the agent is missing, as an agent-only server would.
       expect(
-        ServerFuncBtn.portForward.unavailableReason(
-          spi,
-          MonitorRemoteAccess.none,
-        ),
-        contains('full_access'),
+        ServerFuncBtn.portForward.unavailableReason(spi, insecure),
+        l10n.funcNeedsAgentHttps(ServerFuncBtn.portForward.toStr),
       );
       // Everything else still asks the union.
+      expect(ServerFuncBtn.files.availableOn(spi, insecure), isTrue);
+    });
+  });
+
+  // TODO: remove with the fallbacks when MIN_AGENT_PROTOCOL reaches 2.
+  group('access, as each protocol says it', () {
+    MonitorAccess of(Map<String, dynamic> json) => MonitorCapabilities.fromJson(json).access;
+
+    test('protocol 2 says access', () {
+      expect(of({'access': {'ok': true}}), MonitorAccess.granted);
       expect(
-        ServerFuncBtn.files.availableOn(spi, MonitorRemoteAccess.none),
-        isTrue,
+        of({'access': {'ok': false, 'why': 'insecure_transport'}}),
+        const MonitorAccess(ok: false, why: MonitorAccessWhy.insecureTransport),
       );
     });
 
-    test('an agent that listens can take a remote forward', () {
-      const listens = MonitorHttpCapabilities(
-        MonitorRemoteAccess(fullAccess: true, stream: true, listen: true),
-      );
-      expect(listens.remoteListen, isTrue);
-      expect(const MonitorHttpCapabilities(relayOnly).remoteListen, isFalse);
-      expect(const SshCapabilities().remoteListen, isTrue);
+    test('protocol 1 says it as the shell grant', () {
+      expect(of({'grants': {'shell': {'ok': true}, 'files': {'ok': false}}}), MonitorAccess.granted);
       expect(
-        MonitorRemoteAccess.fromJson({'stream': true, 'listen': true}).listen,
-        isTrue,
+        of({'grants': {'shell': {'ok': false, 'why': 'insecure_transport'}}}),
+        const MonitorAccess(ok: false, why: MonitorAccessWhy.insecureTransport),
       );
-      // An agent too old to say is one that cannot.
-      expect(MonitorRemoteAccess.fromJson({'stream': true}).listen, isFalse);
+      expect(of({'grants': {'shell': {'ok': false, 'why': 'not_granted'}}}).ok, isFalse);
+    });
+
+    test('an agent from before roles says it as full access', () {
+      expect(of({'remote_access': {'full_access': true}}), MonitorAccess.granted);
+      expect(of({'remote_access': {'full_access': false}}), MonitorAccess.none);
+    });
+
+    test('access wins over what an agent answering both protocols adds', () {
+      expect(of({'access': {'ok': false}, 'grants': {'shell': {'ok': true}}}).ok, isFalse);
+    });
+
+    test('nothing said grants nothing', () {
+      expect(of(const {}), MonitorAccess.none);
     });
   });
 }

@@ -11,13 +11,21 @@ enum _Method {
   };
 
   String get label => switch (this) {
-    _Method.monitorHttp => 'Monitor HTTP',
+    _Method.monitorHttp => l10n.monitorAgent,
     _Method.ssh => 'SSH',
+  };
+
+  /// What the method is, where it needs saying: the agent has to be
+  /// installed first, and the docs say how.
+  String? get tip => switch (this) {
+    _Method.monitorHttp => l10n.monitorHttpTip(Urls.monitorAgentDoc),
+    _Method.ssh => null,
   };
 }
 
 extension _Widgets on _ServerEditPageState {
-  Widget _buildGroupTitle(String title) => GroupTitle(title);
+  Widget _buildGroupTitle(String title, {String? tip}) =>
+      GroupTitle(title, tip: tip);
 
   /// A line of explanation under a group, in the form's own voice.
   Widget _buildGroupNote(String text) => Padding(
@@ -215,15 +223,25 @@ extension _Widgets on _ServerEditPageState {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        method.label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: on ? null : UIs.textGrey.color,
-                        ),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              method.label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: on ? null : UIs.textGrey.color,
+                              ),
+                            ),
+                          ),
+                          if (method.tip case final tip?) ...[
+                            const SizedBox(width: 5),
+                            TipButton(tip, isMarkdown: true),
+                          ],
+                        ],
                       ),
                       if (summary.isNotEmpty)
                         Text(
@@ -264,15 +282,12 @@ extension _Widgets on _ServerEditPageState {
         _preferMonitorHttp,
       ]),
       builder: (_, _) {
-        final title = switch (method) {
-          _Method.monitorHttp => l10n.monitorAgent,
-          _Method.ssh => 'SSH',
-        };
+        final title = method.label;
         return Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildGroupTitle(title),
+            _buildGroupTitle(title, tip: method.tip),
             if (!_methodOn(method))
               _buildGroupNote(l10n.transportSectionOff)
             else
@@ -1083,16 +1098,8 @@ extension _Widgets on _ServerEditPageState {
               hint: addr,
               suggestion: false,
             ),
-            // Prefixed to say which account this is: the agent's panel login,
-            // not a system account on the far host. A server reached this way
-            // has no system account configured here at all.
-            Input(
-              controller: _monitorUserCtrl,
-              type: TextInputType.text,
-              icon: MingCute.user_2_line,
-              label: 'Monitor ${libL10n.user}',
-              suggestion: false,
-            ),
+            // Prefixed to say which password this is: the agent's own login,
+            // not a system account's on the far host.
             Input(
               controller: _monitorPwdCtrl,
               type: TextInputType.visiblePassword,
@@ -1101,18 +1108,6 @@ extension _Widgets on _ServerEditPageState {
               obscureText: true,
               suggestion: false,
             ),
-            // What a monitor agent *is*, where there is not one yet. It is the
-            // only way in on this page that does not exist until something has
-            // been installed on the server, which no switch can convey — and
-            // once an address is typed the question has been answered, so the
-            // explanation goes rather than sitting there for good.
-            if (_monitorAddrCtrl.text.trim().isEmpty)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(3, 0, 3, 7),
-                child: SimpleMarkdown(
-                  data: l10n.monitorHttpTip(Urls.monitorAgentDoc),
-                ),
-              ),
             if (!plain)
               ListTile(
                 leading: const Icon(MingCute.certificate_line),

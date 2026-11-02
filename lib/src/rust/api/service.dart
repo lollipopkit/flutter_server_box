@@ -6,7 +6,7 @@
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `manager`, `unit`
+// These functions are ignored because they are not marked as `pub`: `manager`, `service_state`, `unit`
 
 /// POSIX `sh`, for `CommandExec.run(script, entry: 'sh')`.
 String serviceDetectScript() =>
@@ -126,6 +126,11 @@ List<String> serviceActions({required String state, bool? enabled}) => RustLib
     .instance
     .api
     .crateApiServiceServiceActions(state: state, enabled: enabled);
+
+/// Whether a unit in `state` is listed first: the rule every listing's
+/// `needs_attention` is.
+bool serviceNeedsAttention({required String state}) =>
+    RustLib.instance.api.crateApiServiceServiceNeedsAttention(state: state);
 
 /// One command a listing is read from, by the name its output goes back
 /// under ([`service_parse_listing_json`]). `None`: none for this manager.

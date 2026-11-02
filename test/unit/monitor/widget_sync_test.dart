@@ -31,7 +31,6 @@ void main() {
     return spiFixture(name: name, id: id).copyWith(
       monitorHttp: MonitorHttpCredential(
         addr: addr,
-        user: 'admin',
         pwd: 'secret',
         ignoreCert: ignoreCert,
         allowInsecure: allowInsecure,

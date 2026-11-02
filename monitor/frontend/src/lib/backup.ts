@@ -1,6 +1,7 @@
 /// The panel's half of `/api/v1/backup` that is not drawing: which names the
 /// agent takes, and its refusals in the viewer's language.
 import { get } from 'svelte/store'
+import { errorText } from './errorText'
 import { LL } from '../i18n/i18n-svelte'
 import { ApiError } from './api'
 
@@ -15,7 +16,7 @@ export function validBackupName(name: string): boolean {
 }
 
 export function backupRefusalText(e: unknown): string {
-  if (!(e instanceof ApiError)) return e instanceof Error ? e.message : String(e)
+  if (!(e instanceof ApiError)) return errorText(e)
   const ll = get(LL)
   switch (e.message) {
     case 'invalidName':

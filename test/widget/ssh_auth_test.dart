@@ -368,7 +368,7 @@ void main() {
 
     expect(
       tester.widget<TextField>(find.byType(TextField)).decoration?.labelText,
-      '验证码',
+      app_locale.l10n.sshVerificationCode,
     );
     await tester.enterText(find.byType(TextField), '123456');
     await tester.tap(find.byType(TextButton).last);

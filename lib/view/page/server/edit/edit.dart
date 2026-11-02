@@ -125,7 +125,6 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   /// then. Otherwise saving keeps the stored one (see `_pveConfigToSave`).
   bool _pveCertForgot = false;
   final _monitorAddrCtrl = TextEditingController();
-  final _monitorUserCtrl = TextEditingController();
   final _monitorPwdCtrl = TextEditingController();
   final _preferTempDevCtrl = TextEditingController();
   final _logoUrlCtrl = TextEditingController();
@@ -293,7 +292,6 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     _pveUseToken.dispose();
     _pveCert.dispose();
     _monitorAddrCtrl.dispose();
-    _monitorUserCtrl.dispose();
     _monitorPwdCtrl.dispose();
 
     _keyIdx.dispose();

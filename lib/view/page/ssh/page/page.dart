@@ -29,6 +29,7 @@ import 'package:server_box/data/provider/app/keybindings.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/app/terminal_shell.dart';
 import 'package:server_box/data/provider/server/await_client.dart';
+import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/provider/virtual_keyboard.dart';
 import 'package:server_box/data/res/store.dart';
@@ -42,6 +43,7 @@ import 'package:server_box/data/ssh/terminal_status.dart';
 import 'package:server_box/data/ssh/terminal_status_alerts.dart';
 import 'package:server_box/data/ssh/tmux/tmux_export.dart';
 import 'package:server_box/data/ssh/tmux/tmux_ids.dart';
+import 'package:server_box/src/rust/api/files.dart';
 import 'package:server_box/view/page/agent/view.dart';
 import 'package:server_box/view/page/ssh/ask_ai_layout.dart';
 import 'package:server_box/view/page/ssh/metrics_bar.dart';
@@ -641,7 +643,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     final serverState = serverId == null
         ? null
         : ref.readPresentServer(serverId);
-    _sess.adopt(serverState?.client, granted: serverState?.remoteAccess);
+    _sess.adopt(serverState?.client, granted: serverState?.agentAccess);
     _sess.onForegroundDone = _onForegroundSessionDone;
 
     if (++_sshConnCount == 1) {
@@ -722,9 +724,8 @@ class SSHPageState extends ConsumerState<SSHPage>
     );
     if (floating) return _buildFloatedAway();
 
-    final bgImage = Stores.setting.sshBgImage.fetch();
-    final bgFile = bgImage.isEmpty ? null : File(bgImage);
-    final hasBg = bgFile != null && bgFile.existsSync();
+    final bgFile = _bgFileFor(Stores.setting.sshBgImage.fetch());
+    final hasBg = bgFile != null;
 
     Widget child = PopScope(
       canPop: false,
@@ -840,6 +841,28 @@ class SSHPageState extends ConsumerState<SSHPage>
       ),
     ];
   }
+
+  /// The background image at [path], or null while there is none: looked up
+  /// once per path (each picture gets a path of its own), off the UI isolate,
+  /// the page drawn again when it is found.
+  File? _bgFileFor(String path) {
+    if (path != _bgPath) {
+      _bgPath = path;
+      _bgFile = null;
+      if (path.isNotEmpty) {
+        final file = File(path);
+        unawaited(
+          file.exists().then((found) {
+            if (found && mounted && _bgPath == path) setState(() => _bgFile = file);
+          }),
+        );
+      }
+    }
+    return _bgFile;
+  }
+
+  String? _bgPath;
+  File? _bgFile;
 
   Widget _buildBody(bool hasBg) {
     final letterCache = Stores.setting.letterCache.fetch();

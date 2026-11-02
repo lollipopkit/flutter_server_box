@@ -1,10 +1,15 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 
+import '../../helpers/rust_lib_helper.dart';
+
 AskAiCommand _call(String name, Map<String, Object?> args) =>
     AskAiCommand.fromToolCall(id: 'call-1', name: name, args: args);
 
 void main() {
+  // The command risk is `sbm_parser::command_risk`, over FFI.
+  setUpAll(initRustLibForTest);
+
   group('a tool call, as the app reviews it', () {
     test('says in one line what each tool is about', () {
       expect(_call('run_shell_command', {'command': ' ls -la '}).command, 'ls -la');

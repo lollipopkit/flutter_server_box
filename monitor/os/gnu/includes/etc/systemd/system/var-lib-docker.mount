@@ -1,0 +1,15 @@
+# A live boot's root is an overlay, which Docker's overlay2 cannot sit on:
+# its data goes to memory, as the rest of a live system does.
+[Unit]
+Description=Docker's data in memory on a live boot
+ConditionKernelCommandLine=boot=live
+Before=docker.service
+
+[Mount]
+What=tmpfs
+Where=/var/lib/docker
+Type=tmpfs
+Options=mode=0711
+
+[Install]
+WantedBy=local-fs.target

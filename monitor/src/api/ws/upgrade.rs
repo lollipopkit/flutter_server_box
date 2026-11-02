@@ -15,6 +15,7 @@
 //! TODO: remove once ntex lets the caller set the limit, and go back to
 //! `ntex::web::ws::start`.
 
+use crate::api::WebError;
 use std::{fmt, rc::Rc};
 
 use ntex::codec::{Decoder, Encoder};
@@ -30,7 +31,6 @@ use ntex::{SharedCfg, rt};
 
 use tokio::sync::mpsc;
 
-use crate::api::WebError;
 
 /// The largest frame a client may send: well past what any client of the
 /// agent sends at once (the app's relay writes 64 KiB, a terminal paste a

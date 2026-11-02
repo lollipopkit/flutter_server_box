@@ -98,7 +98,8 @@ abstract final class SchemaVersion {
   ///      certificate), and the Virtualization tab added for installs with PVE
   /// v32: the Agent's conversations dropped, its chats being fl_pi_llm's now
   /// v33: `server.disk_counts_network`
-  static const current = 33;
+  /// v34: `sync_record`, each synced record's newest stamp (the op log)
+  static const current = 34;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

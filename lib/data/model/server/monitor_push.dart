@@ -6,7 +6,8 @@
 /// credential handling below lives in one place.
 ///
 /// **A credential is write-only.** These entries hold a ServerChan key, a Bark
-/// key, an iOS token, an `Authorization` header; the agent answers `null` at
+/// key, an iOS token, an `Authorization` header, an SMTP password, a Telegram
+/// bot token, a Discord webhook URL; the agent answers `null` at
 /// every one of them rather than handing them to whoever holds the panel
 /// password. So on this side:
 ///

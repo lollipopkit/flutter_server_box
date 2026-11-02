@@ -94,6 +94,16 @@ class _HomeTabsConfigPageState extends State<HomeTabsConfigPage> {
               ),
             ),
           ),
+          // Only where there is a column for the rail to stand in.
+          ValueListenableBuilder(
+            valueListenable: WindowControls.verticalBar,
+            builder: (_, bar, _) => bar == null
+                ? UIs.placeholder
+                : Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 7),
+                    child: CardX(child: _buildHandedness()),
+                  ),
+          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(17, 13, 17, 7),
             child: Text(l10n.homeTabsCustomizeDesc, style: UIs.textGrey),
@@ -106,6 +116,32 @@ class _HomeTabsConfigPageState extends State<HomeTabsConfigPage> {
     return Scaffold(
       appBar: CustomAppBar(title: Text(l10n.homeTabs)),
       body: body,
+    );
+  }
+
+  Widget _buildHandedness() {
+    final prop = Stores.setting.rightHanded;
+    return prop.listenable().listenVal(
+      (right) => ListTile(
+        leading: const Icon(Icons.back_hand_outlined),
+        title: Text(l10n.handedness),
+        subtitle: Text(l10n.handednessTip, style: UIs.textGrey),
+        trailing: Text(right ? l10n.handednessRight : l10n.handednessLeft),
+        onTap: () => showRowsSheet<void>(
+          context,
+          rows: (ctx) => [
+            for (final choice in [false, true])
+              SheetChoiceTile(
+                title: choice ? l10n.handednessRight : l10n.handednessLeft,
+                selected: choice == right,
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  prop.put(choice);
+                },
+              ),
+          ],
+        ),
+      ),
     );
   }
 

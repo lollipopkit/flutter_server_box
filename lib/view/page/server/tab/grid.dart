@@ -1,6 +1,14 @@
 part of 'tab.dart';
 
 extension _Grid on _ServerPageState {
+  /// The grid's inset, with the window's foot under it: the last card scrolls
+  /// up clear of the home indicator rather than the page stopping short of
+  /// it. Nothing there on a phone, whose bottom bar spends it.
+  EdgeInsets _scrollPadding(BuildContext context) =>
+      MasonryList.kPadding.copyWith(
+        bottom: MasonryList.kPadding.bottom + MediaQuery.paddingOf(context).bottom,
+      );
+
   /// The list, and the one card of it that has grown into the page.
   ///
   /// One widget for both, because they are one thing: opening a server does
@@ -134,7 +142,7 @@ extension _Grid on _ServerPageState {
             // change every column's width — so every other card would slide
             // sideways for a movement that is not about them. The card makes
             // up the difference in its own padding instead.
-            padding: scrollable ? MasonryList.kPadding : EdgeInsets.zero,
+            padding: scrollable ? _scrollPadding(context) : EdgeInsets.zero,
             // The cards make way at the same pace as the one growing, so the
             // whole thing reads as one movement rather than as a card
             // growing into a grid that is still settling.
@@ -189,7 +197,7 @@ extension _Grid on _ServerPageState {
         animation: _open,
         builder: (_, _) => SingleChildScrollView(
           controller: _scrollController,
-          padding: MasonryList.kPadding,
+          padding: _scrollPadding(context),
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

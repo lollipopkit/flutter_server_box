@@ -18,8 +18,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
+import 'package:server_box/data/model/server/monitor_access.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
-import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/remote_desktop.dart';
@@ -176,12 +176,8 @@ void main() {
 
   test('the entry is offered exactly when the relay is', () {
     // The pair that has to agree: the button's gate and the session's ability.
-    const withRelay = MonitorHttpCapabilities(
-      MonitorRemoteAccess(fullAccess: true, stream: true),
-    );
-    const withoutRelay = MonitorHttpCapabilities(
-      MonitorRemoteAccess(fullAccess: true),
-    );
+    const withRelay = MonitorHttpCapabilities(MonitorAccess.granted);
+    const withoutRelay = MonitorHttpCapabilities(MonitorAccess.none);
 
     expect(ServerFuncBtn.remoteDesktop.availableWith(withRelay), isTrue);
     expect(ServerFuncBtn.remoteDesktop.availableWith(withoutRelay), isFalse);

@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
 import 'package:server_box/data/model/server/connect_credential.dart';
+import 'package:server_box/data/model/server/monitor_access.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
-import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
@@ -21,11 +21,7 @@ import 'package:server_box/view/page/storage/server_file.dart';
 void main() {
   const monitor = MonitorHttpCredential(addr: 'https://agent:3770');
   const ssh = SshCredential(ip: 'host', port: 22, user: 'root', pwd: 'p');
-  const full = MonitorRemoteAccess(
-    terminal: true,
-    fullAccess: true,
-    files: true,
-  );
+  const full = MonitorAccess.granted;
 
   Spi server({
     bool withSsh = true,
@@ -56,21 +52,13 @@ void main() {
       expect(serverShellUsesAgent(server(), full), isFalse);
     });
 
-    test('falls back to SSH when the agent leads but grants no shell', () {
+    test('falls back to SSH when the agent leads but refuses', () {
       // A preference the agent will not honour is not honoured into a dead
       // end. The alternative is a terminal that refuses to open on a server
       // whose sshd is right there.
       final spi = server(prefer: ServerTransport.monitorHttp);
-      expect(serverShellUsesAgent(spi, const MonitorRemoteAccess()), isFalse);
+      expect(serverShellUsesAgent(spi, MonitorAccess.none), isFalse);
       expect(serverShellUsesAgent(spi, null), isFalse);
-    });
-
-    test('full access without a terminal does not select the agent PTY', () {
-      final spi = server(prefer: ServerTransport.monitorHttp);
-      expect(
-        serverShellUsesAgent(spi, const MonitorRemoteAccess(fullAccess: true)),
-        isFalse,
-      );
     });
 
     test('is the agent for a server that has no SSH at all', () {
@@ -83,7 +71,7 @@ void main() {
     // An agent's PTY has no exec channel, so the switcher cannot list
     // anything — and a key drawn on a strip that does nothing when tapped is
     // the failure `worksOn` exists to prevent.
-    bool tmuxOn(Spi spi, MonitorRemoteAccess? granted) => VirtKey.tmux.worksOn(
+    bool tmuxOn(Spi spi, MonitorAccess? granted) => VirtKey.tmux.worksOn(
       ServerSource(spi),
       shellUsesAgent: serverShellUsesAgent(spi, granted),
     );
@@ -103,7 +91,7 @@ void main() {
     // was hidden on the one server that is configured both ways.
     test('is there when the agent leads but will not serve a shell', () {
       final spi = server(prefer: ServerTransport.monitorHttp);
-      expect(tmuxOn(spi, const MonitorRemoteAccess()), isTrue);
+      expect(tmuxOn(spi, MonitorAccess.none), isTrue);
       expect(tmuxOn(spi, null), isTrue);
     });
 
@@ -123,16 +111,16 @@ void main() {
       expect(serverFilesUseAgent(spi, full), isFalse);
     });
 
-    test('uses SFTP when the agent leads without its file API', () {
+    test('uses SFTP when the agent leads but refuses', () {
       final spi = server(prefer: ServerTransport.monitorHttp);
-      expect(serverFilesUseAgent(spi, const MonitorRemoteAccess()), isFalse);
+      expect(serverFilesUseAgent(spi, MonitorAccess.none), isFalse);
       expect(serverFilesUseAgent(spi, null), isFalse);
       // Not `ServerCapabilities.files`, which is the union and so answers true
       // for every server with an SSH credential however the agent is
       // configured — asking it here put the agent's page in front of a server
       // whose agent serves no files.
       expect(
-        ServerCapabilities.ofSpi(spi, granted: const MonitorRemoteAccess())
+        ServerCapabilities.ofSpi(spi, granted: MonitorAccess.none)
             .files,
         isTrue,
       );

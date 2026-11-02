@@ -251,7 +251,7 @@ extension _Sheets on _WorkspaceTabState {
   Future<void> _showPicker(String? paneId) async {
     final spi = await pickServer(context);
     if (spi == null || !mounted) return;
-    final granted = ref.read(serverProvider(spi.id)).remoteAccess;
+    final granted = ref.read(serverProvider(spi.id)).agentAccess;
     final ws = _state.current;
     final at = ws.order.indexOf(paneId ?? ws.focusId ?? '');
     final view = await showRowsSheet<WorkspaceView>(
@@ -373,7 +373,7 @@ class _QuickOpenState extends ConsumerState<_QuickOpen> {
     // a list nobody reads.
     if (words.isNotEmpty) {
       for (final spi in servers.values) {
-        final granted = ref.read(serverProvider(spi.id)).remoteAccess;
+        final granted = ref.read(serverProvider(spi.id)).agentAccess;
         for (final v in WorkspaceView.values) {
           if (v.unavailableOn(spi, granted) != null) continue;
           if (!match('${spi.name} ${v.label} ${v.name}')) continue;

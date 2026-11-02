@@ -214,3 +214,60 @@ pub fn custom_result_name(key: String) -> Option<String> {
 pub fn sudo_password_rejected(stderr: String) -> bool {
     sbm_parser::script::sudo_password_rejected(&stderr)
 }
+
+/// Command that upgrades the monitor agent `install.sh` installed on the
+/// server, in whichever form it is there — see
+/// `sbm_parser::monitor_agent::upgrade_command`.
+#[flutter_rust_bridge::frb(sync)]
+pub fn monitor_upgrade_command() -> String {
+    sbm_parser::monitor_agent::upgrade_command()
+}
+
+/// Page `page` (from 1) of this repository's releases, where the agent's
+/// newest is looked for — see `sbm_parser::monitor_agent::release_page`.
+#[flutter_rust_bridge::frb(sync)]
+pub fn monitor_releases_url(page: u32) -> String {
+    sbm_parser::monitor_agent::releases_url(page)
+}
+
+/// How many pages of releases are read at most.
+#[flutter_rust_bridge::frb(sync)]
+pub fn monitor_release_max_pages() -> u32 {
+    sbm_parser::monitor_agent::MAX_PAGES
+}
+
+/// What one page of releases says about the agent's.
+pub struct MonitorReleasePage {
+    /// The highest `monitor-v*` version on it, drafts and prereleases left out.
+    pub newest: Option<String>,
+    /// Whether the next page may hold one.
+    pub read_on: bool,
+}
+
+#[flutter_rust_bridge::frb(sync)]
+pub fn monitor_release_page(listing: String) -> MonitorReleasePage {
+    let page = sbm_parser::monitor_agent::release_page(&listing);
+    MonitorReleasePage { newest: page.newest, read_on: page.read_on }
+}
+
+/// Whether an agent reporting `running` is older than `latest`; false when
+/// either does not read as a version.
+#[flutter_rust_bridge::frb(sync)]
+pub fn monitor_outdated(running: String, latest: String) -> bool {
+    sbm_parser::monitor_agent::outdated(&running, &latest)
+}
+
+/// What starts the agent's update outside it, so that it outlives the
+/// restart: for an agent too old to start one itself (`POST /update/run`),
+/// sent through its `/exec` — see
+/// `sbm_parser::monitor_agent::start_update_script`.
+#[flutter_rust_bridge::frb(sync)]
+pub fn monitor_start_update_script() -> String {
+    sbm_parser::monitor_agent::start_update_script()
+}
+
+/// [monitor_start_update_script]'s exit status when sudo refused the password.
+#[flutter_rust_bridge::frb(sync)]
+pub fn monitor_update_sudo_refused_exit() -> i32 {
+    sbm_parser::monitor_agent::SUDO_REFUSED_EXIT
+}

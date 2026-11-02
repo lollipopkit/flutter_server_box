@@ -27,7 +27,6 @@ class _MapBackend implements FileBackend {
     this.failWith,
     this.sudoFallback = false,
     this.roots = const [],
-    this.readOnly = false,
   });
 
   final Map<String, List<FileEntry>> tree;
@@ -37,9 +36,6 @@ class _MapBackend implements FileBackend {
   Object? failWith;
 
   final bool sudoFallback;
-
-  /// A `monitor` agent whose role grants `files` in read mode.
-  final bool readOnly;
 
   /// What the far side says it will serve. Empty is a backend with no such
   /// limit, which is what both real non-agent ones answer.
@@ -57,7 +53,7 @@ class _MapBackend implements FileBackend {
 
   @override
   FileBackendTraits get traits =>
-      FileBackendTraits(sudoFallback: sudoFallback, readOnly: readOnly);
+      FileBackendTraits(sudoFallback: sudoFallback);
 
   @override
   Future<List<String>> reachableRoots() async => roots;
@@ -528,27 +524,6 @@ final anySelected = find.textContaining(
     expect(find.text(libL10n.file), findsOneWidget);
     // Not an entry's menu: nothing was clicked on.
     expect(find.text(libL10n.rename), findsNothing);
-  });
-
-  testWidgets('a read-only backend offers nothing that writes', (
-    tester,
-  ) async {
-    // An account whose role reads files and no more: the agent would refuse
-    // every one of these, so none is offered — and the bar says why.
-    final backend = _MapBackend({
-      '/': [_file('notes.txt')],
-    }, readOnly: true);
-
-    await pump(tester, backend);
-    expect(find.byIcon(Icons.add), findsNothing);
-    expect(find.byIcon(Icons.lock_outline), findsOneWidget);
-
-    await tester.longPress(find.text('notes.txt'));
-    await tester.pumpAndSettle();
-    expect(find.text(libL10n.rename), findsNothing);
-    expect(find.text(libL10n.delete), findsNothing);
-    // What only reads is still there.
-    expect(find.text(libL10n.select), findsOneWidget);
   });
 
   testWidgets('the add button drops its menu from itself', (tester) async {

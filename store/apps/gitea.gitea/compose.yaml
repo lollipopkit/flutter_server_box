@@ -1,0 +1,39 @@
+# Gitea 28.0.0 (MIT), https://github.com/go-gitea/gitea/tree/v28.0.0
+#
+# Adapted from upstream's rootless Docker installation (docs.gitea.com,
+# installation/install-with-docker-rootless) for ServerBox Monitor
+# (2026-10-17):
+# - no `name:` and no `container_name`: the agent names the project;
+# - the rootless image, run as the shared folder's owner (upstream's `user:`);
+# - SQLite, given to the image's app.ini template (docker/rootless/etc/
+#   templates/app.ini) on the first start, so the installation page only
+#   asks for the administrator; sign-up is off;
+# - SSH_PORT is the published SSH port, so clone addresses name it;
+# - the public address comes from each request (PUBLIC_URL_DETECTION, auto
+#   since 1.26): the desk and the published port both get links to
+#   themselves.
+
+services:
+  gitea:
+    image: docker.gitea.com/gitea:${GITEA_VERSION}-rootless
+    user: "${SBM_UID}:${SBM_GID}"
+    environment:
+      TZ: ${SBM_TZ}
+      DB_TYPE: sqlite3
+      SSH_PORT: ${GITEA_SSH_PORT}
+      SSH_LISTEN_PORT: '2222'
+      DISABLE_REGISTRATION: 'true'
+    volumes:
+      - ${GITEA_DATA}:/var/lib/gitea
+      - ${GITEA_CONFIG}:/etc/gitea
+    ports:
+      - '${GITEA_BIND}:${GITEA_PORT}:3000'
+      - '${GITEA_BIND}:${GITEA_SSH_PORT}:2222'
+    restart: unless-stopped
+    # /api/healthz is Gitea's health route; the image has curl.
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:3000/api/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s

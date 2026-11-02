@@ -4,9 +4,11 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:fl_lib/theme.dart' show ThemeBackup, ThemeRestoreReport;
+import 'package:fl_lib/theme.dart'
+    show ThemeBackup, ThemeBlobStore, ThemeRestoreReport;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:logging/logging.dart';
+import 'package:server_box/core/lkc_sync.dart';
 import 'package:server_box/core/utils/local_file_backend.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_key_passphrase.dart';
@@ -37,6 +39,7 @@ import 'package:server_box/data/store/migrations/m021_home_tabs_bar.dart';
 import 'package:server_box/data/store/migrations/m030_pve_virt.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/sync_recorder.dart';
 
 part 'backup2.freezed.dart';
 part 'backup2.g.dart';
@@ -120,7 +123,9 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     // Before the settings that select one: the network is not something to
     // hold the transaction open for, and a selection is only restored onto a
     // theme that is there.
-    final themeReport = themes.isEmpty ? null : await ThemeBackup.restore(themes);
+    final themeReport = themes.isEmpty
+        ? null
+        : await ThemeBackup.restore(themes, blobs: LkcThemeBlobs.available);
     if (themeReport != null && themeReport.failed.isNotEmpty) {
       _loggerV2.warning('Themes not restored: ${themeReport.failed}');
     }
@@ -140,7 +145,12 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     // earlier stores visible without it.
     final restored = _restoredServerGraph();
     final keysBefore = [for (final k in Stores.key.fetch()) k.key];
-    SqliteStore.transact(() {
+    // A restore the user started ([force]) is their change, and syncs out; a
+    // sync's merge is another device's, stamped as no device's
+    // (`SyncRecorder.applying`).
+    T asChanged<T>(T Function() write) =>
+        force ? write() : SyncRecorder.applying(write);
+    asChanged(() => SqliteStore.transact(() {
       keysChanged = Stores.key.merge(keys, force: force, notify: false);
       credsChanged = Stores.bmcCredential.merge(
         bmcCredentials,
@@ -227,11 +237,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
           ? const <String>{}
           : _mergeSqliteStore(
               Stores.setting,
-              _mergeDataForStore(
-                Stores.setting,
-                settings,
-                deviceLocal: SettingStore.deviceLocalKeys,
-              ),
+              _mergeDataForStore(Stores.setting, settings),
               force: force,
             );
       // Restoring does not run the schema migrator. Convert legacy setting
@@ -244,7 +250,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
         const VirtKeyNamesMigration().applySync();
         const HomeTabsBarMigration().applySync();
       }
-    });
+    }));
 
     // Notifications and provider reloads happen only after the outer
     // transaction commits. A failed restore therefore has no observable half.
@@ -309,7 +315,12 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
   /// would drift.
   static const formatVer = SchemaVersion.current;
 
-  static Future<BackupV2> loadFromStore({bool includeSettings = true}) async {
+  /// [blobs]: where theme packages are kept apart, when the backup goes
+  /// where they can be (LK Cloud).
+  static Future<BackupV2> loadFromStore({
+    bool includeSettings = true,
+    ThemeBlobStore? blobs,
+  }) async {
     return BackupV2(
       version: formatVer,
       date: DateTimeX.timestamp,
@@ -323,17 +334,44 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       pve: Stores.pve.getAllMap(),
       history: _backupStore(Stores.history),
       settings: includeSettings
-          ? _backupStore(
-              Stores.setting,
-              deviceLocal: SettingStore.deviceLocalKeys,
-            )
+          ? _backupStore(Stores.setting)
           : const {},
-      themes: includeSettings ? await _themes() : const {},
+      themes: includeSettings ? await _themes(blobs) : const {},
     );
   }
 
-  static Future<Map<String, Object?>> _themes() async {
-    final export = await ThemeBackup.export();
+  /// Whether this file lacks a record this device holds, or holds one older
+  /// than this device's, a delete included — see `SyncIface.lacks`. Records
+  /// and their stamps only: those converge. The themes do not (they are what
+  /// each device could install), so they are left out.
+  bool lacksLocal({required bool includeSettings}) => [
+    (Stores.server.getAllMap(), spis),
+    (Stores.snippet.getAllMap(), snippets),
+    (Stores.key.getAllMap(), keys),
+    (Stores.bmcCredential.getAllMap(), bmcCredentials),
+    (Stores.portForward.getAllMap(), portForwards),
+    (Stores.remoteDesktop.getAllMap(), remoteDesktopProfiles),
+    (_backupStore(Stores.history), history),
+    if (includeSettings) (_backupStore(Stores.setting), settings),
+  ].any((pair) => _lacks(pair.$1, pair.$2));
+
+  static bool _lacks(Map<String, Object?> local, Map<String, Object?> remote) {
+    const tsKey = StoreDefaults.defaultLastUpdateTsKey;
+    Map<String, int> stamps(Map<String, Object?> rows) => _kvTimestamps(
+      rows[tsKey],
+      rows.keys.where((key) => key != tsKey),
+    );
+    final remoteStamps = stamps(remote);
+    for (final MapEntry(:key, value: at) in stamps(local).entries) {
+      if (at > (remoteStamps[key] ?? 0)) return true;
+    }
+    return local.keys.any(
+      (key) => !_isInternalStoreKey(key) && !remote.containsKey(key),
+    );
+  }
+
+  static Future<Map<String, Object?>> _themes(ThemeBlobStore? blobs) async {
+    final export = await ThemeBackup.export(blobs: blobs);
     if (export.skipped.isNotEmpty) {
       // Listed with nothing to install them from; the restore names them.
       _loggerV2.warning('Themes without a package to carry: ${export.skipped}');
@@ -345,18 +383,21 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     String? name,
     String? password,
     bool includeSettings = true,
+    ThemeBlobStore? blobs,
   ]) async {
-    final bak = await BackupV2.loadFromStore(includeSettings: includeSettings);
+    final bak = await BackupV2.loadFromStore(
+      includeSettings: includeSettings,
+      blobs: blobs,
+    );
     var result = bak.toJsonString();
 
-    if (password != null && password.isNotEmpty) {
+    final encrypted = password != null && password.isNotEmpty;
+    if (encrypted) {
       // Compressed *inside* the envelope, so what goes over the wire is
       // roughly an eighth of what it was: this JSON is one shape repeated a
       // few hundred times, and every key name is spelled out in every record.
-      // Base64 then expands it once, rather than once per layer — which is
-      // why this goes through `encryptBytes` instead of encoding to text
-      // first.
-      result = Cryptor.encryptBytes(
+      // The armor then expands it once, rather than once per layer.
+      result = await AgeCryptor.encrypt(
         compressBackups
             ? gzip.encode(utf8.encode(result))
             : utf8.encode(result),
@@ -364,7 +405,9 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       );
     }
 
-    final path = Paths.doc.joinPath(name ?? Miscs.bakFileName);
+    final path = Paths.doc.joinPath(
+      name ?? (encrypted ? Miscs.bakFileName : Miscs.plainBakFileName),
+    );
     final bytes = utf8.encode(result);
     await const LocalFileBackend().write(
       path,
@@ -376,20 +419,10 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
 
   /// Whether a new backup is compressed before it is encrypted.
   ///
-  /// **Turning this on is a one-way format change for the sync file.** The
-  /// envelope is unchanged — the default cost still writes V01, so an older
-  /// build recognises the file and decrypts it correctly. What it then has is
-  /// gzip, and its `Cryptor.decrypt` ends in `utf8.decode`, so it throws (as
-  /// "invalid Base64 format", which is the wrong message and the reason to
-  /// expect this in a bug report). `SyncIface._sync` catches that and returns
-  /// **before** it uploads. So such a device stops syncing until it is
-  /// updated; it does not overwrite anything, which is why this is a release
-  /// note rather than a migration.
-  ///
-  /// Deliberately not a filename bump, which is how v2 -> v3 was handled. A
-  /// second name would let an old build keep writing the old one, and the two
-  /// histories would diverge silently in both directions. Stopping is the
-  /// recoverable failure; diverging is not.
+  /// It was a one-way format change for the v3 sync file: an older build
+  /// decrypted the envelope, found gzip where it expected text, and stopped
+  /// syncing before it uploaded. The age envelope goes further, under the v4
+  /// name (`Miscs.bakFileName`): a build before it never sees the file.
   ///
   /// TODO: remove this constant once no supported build predates it, and
   /// compress unconditionally.
@@ -409,17 +442,32 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
   /// unbounded allocation, and refusing is cheaper than finding out.
   static const _maxPlainBytes = 256 * 1024 * 1024;
 
-  factory BackupV2.fromJsonString(String jsonString, [String? password]) {
-    if (Cryptor.isEncrypted(jsonString)) {
-      if (password == null || password.isEmpty) {
-        throw Exception('Backup is encrypted but no password provided');
-      }
-      final bytes = Cryptor.decryptBytes(jsonString, password);
-      jsonString = _looksGzipped(bytes)
-          ? utf8.decode(gunzipCapped(bytes))
-          : utf8.decode(bytes);
-    }
+  /// [data] as [backup] wrote it: an encrypted backup opened with [password]
+  /// (`AgeCryptor`: age, or the `LKFL_ENC` envelope of every build before),
+  /// or a plain export. Decrypts in rage's isolate and parses in the
+  /// caller's; the app's readers split the two ([unlock], then
+  /// [BackupV2.fromPlainBytes] in a worker).
+  static Future<BackupV2> open(List<int> data, [String? password]) async =>
+      BackupV2.fromPlainBytes(await unlock(data, password));
 
+  /// [data] decrypted when it is encrypted ([password] required then), and
+  /// as it is otherwise: gzip or JSON, what [BackupV2.fromPlainBytes] reads.
+  static Future<Uint8List> unlock(List<int> data, String? password) async {
+    if (!AgeCryptor.isEncrypted(data)) {
+      return data is Uint8List ? data : Uint8List.fromList(data);
+    }
+    if (password == null || password.isEmpty) {
+      throw Exception('Backup is encrypted but no password provided');
+    }
+    return AgeCryptor.decrypt(data, password);
+  }
+
+  /// What the envelope holds, or a plain export: gzip, or the JSON itself.
+  factory BackupV2.fromPlainBytes(List<int> bytes) => BackupV2.fromJsonString(
+    utf8.decode(_looksGzipped(bytes) ? gunzipCapped(bytes) : bytes),
+  );
+
+  factory BackupV2.fromJsonString(String jsonString) {
     final map = json.decode(jsonString) as Map<String, dynamic>;
 
     // Checked before decoding. `version` was written from the beginning but
@@ -738,7 +786,12 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
         restored[key] = json.encode(
           _jsonWithRestoredServerIds(json.decode(value), serverIds),
         );
-      } catch (_) {}
+      } catch (e, s) {
+        // Tabs that name servers by their old ids point at nothing: none
+        // rather than those.
+        Loggers.app.warning('Restore: $key unreadable, dropped', e, s);
+        restored.remove(key);
+      }
     }
     return restored;
   }
@@ -852,25 +905,40 @@ Object? _jsonWithRestoredServerIds(
 /// layout and migration markers. Restoring those markers from another device
 /// can make this device skip a migration or claim a schema it does not have.
 ///
-/// [deviceLocal] is the same idea for keys with ordinary names — see
-/// [SettingStore.deviceLocalKeys], where a permission granted on one machine
-/// must not be granted on another by restoring a file.
-Map<String, Object?> _backupStore(
-  SqliteStore store, {
-  Set<String> deviceLocal = const {},
-}) {
+/// Device-local keys ([SqliteStore.isDeviceLocalKey]) are the same idea for
+/// keys with ordinary names — see [SettingStore.deviceLocalKeys], where a
+/// permission granted on one machine must not be granted on another by
+/// restoring a file.
+Map<String, Object?> _backupStore(SqliteStore store) {
   final rows = store.getAllMap(includeInternalKeys: true);
-  rows.removeWhere((key, _) => _isLocalOnly(store, key, deviceLocal));
+  rows.removeWhere((key, _) => _isLocalOnly(store, key));
+  // The stamps as read, without device-local ones (a build that does not
+  // hold a key device-local reads one with no row as deleted there, and
+  // deletes its own), and as the map: a string holding it made two devices'
+  // backups differ in shape.
+  if (store.lastUpdateTs case final stamps?) rows[store.lastUpdateTsKey] = stamps;
   return rows;
 }
 
 Map<String, Object?> _mergeDataForStore(
   SqliteStore store,
-  Map<String, Object?> rows, {
-  Set<String> deviceLocal = const {},
-}) {
+  Map<String, Object?> rows,
+) {
   final result = Map<String, Object?>.from(rows)
-    ..removeWhere((key, _) => _isLocalOnly(store, key, deviceLocal));
+    ..removeWhere((key, _) => _isLocalOnly(store, key));
+  // An older build's stamp on a device-local key would make the merge rewrite
+  // this device's own value and take that stamp.
+  // TODO: rm once no build that stamps device-local keys is around.
+  final ts = result[store.lastUpdateTsKey];
+  if (ts != null) {
+    result[store.lastUpdateTsKey] = {
+      for (final MapEntry(:key, :value) in _kvTimestamps(
+        ts,
+        result.keys.where((key) => key != store.lastUpdateTsKey),
+      ).entries)
+        if (!store.isDeviceLocalKey(key)) key: value,
+    };
+  }
 
   // Mergeable treats an absent key as a deletion. Keep local-only state in
   // the input until fl_lib can expose an internal-key exclusion policy.
@@ -878,7 +946,7 @@ Map<String, Object?> _mergeDataForStore(
       in store
           .getAllMap(includeInternalKeys: true)
           .entries
-          .where((entry) => _isLocalOnly(store, entry.key, deviceLocal))) {
+          .where((entry) => _isLocalOnly(store, entry.key))) {
     result[entry.key] = entry.value;
   }
   return result;
@@ -925,7 +993,7 @@ Set<String> _mergeSqliteStore(
       }
       final value = backupData[key];
       if (value == null) continue;
-      _writeKv(store, key, value);
+      _writeKv(store, key, value, at: backupTimestamp);
       notifications.add(key);
       if (!store.isInternalKey(key)) {
         timestamps[key] = backupTimestamp;
@@ -936,7 +1004,7 @@ Set<String> _mergeSqliteStore(
 
     if (!backupHasKey && currentHasKey) {
       if (!force && backupTimestamp <= currentTimestamp) continue;
-      _deleteKv(store, key);
+      _deleteKv(store, key, at: backupTimestamp);
       notifications.add(key);
       if (!store.isInternalKey(key)) {
         // Preserve the existing merge contract: a deletion keeps the local
@@ -952,11 +1020,19 @@ Set<String> _mergeSqliteStore(
     if (!backupHasKey || !currentHasKey) continue;
     if (!force && backupTimestamp <= currentTimestamp) continue;
     final value = backupData[key];
-    if (value == current[key]) continue;
+    if (const DeepCollectionEquality().equals(value, current[key])) {
+      // The same, edited later there: the later stamp, or the two devices'
+      // stamps differ for good and so does every backup they write.
+      if (!store.isInternalKey(key) && backupTimestamp > currentTimestamp) {
+        timestamps[key] = backupTimestamp;
+        timestampDirty = true;
+      }
+      continue;
+    }
     if (value == null) {
-      _deleteKv(store, key);
+      _deleteKv(store, key, at: backupTimestamp);
     } else {
-      _writeKv(store, key, value);
+      _writeKv(store, key, value, at: backupTimestamp);
     }
     notifications.add(key);
     if (!store.isInternalKey(key)) {
@@ -978,9 +1054,9 @@ Set<String> _mergeSqliteStore(
   }
 
   if (timestampDirty) {
-    // KvStore persists the timestamp map as a JSON string inside the JSON
-    // value column; retain that wire shape for existing readers.
-    _writeKv(store, store.lastUpdateTsKey, json.encode(timestamps));
+    // The map itself, as `KvStore` writes it: a string holding it read the
+    // same but made the next backup differ in shape from the other device's.
+    _writeKv(store, store.lastUpdateTsKey, timestamps);
     notifications.add(store.lastUpdateTsKey);
   }
   return notifications;
@@ -1007,21 +1083,31 @@ Map<String, int> _kvTimestamps(Object? raw, Iterable<String> recordKeys) {
   };
 }
 
-void _writeKv(SqliteStore store, String key, Object value) {
+/// Writes [key] as the merge decided; when it is a key that syncs, stamps it
+/// too ([at]: the backup's time for it), as `KvStore.onEdit` would.
+void _writeKv(SqliteStore store, String key, Object value, {int? at}) {
   final encoded = json.encode(_toJsonValue(value));
   SqliteDb.instance.execute(
     'INSERT INTO kv (store, key, value, updated_at) VALUES (?, ?, ?, ?) '
     'ON CONFLICT (store, key) DO UPDATE SET '
     'value = excluded.value, updated_at = excluded.updated_at;',
-    [store.name, key, encoded, DateTimeX.timestamp],
+    [store.name, key, encoded, SyncClock.now()],
   );
+  _recordKv(store, key, at);
 }
 
-void _deleteKv(SqliteStore store, String key) {
+void _deleteKv(SqliteStore store, String key, {int? at}) {
   SqliteDb.instance.execute('DELETE FROM kv WHERE store = ? AND key = ?;', [
     store.name,
     key,
   ]);
+  _recordKv(store, key, at);
+}
+
+void _recordKv(SqliteStore store, String key, int? at) {
+  if (!SyncRecorder.syncedStores.contains(store.name)) return;
+  if (store.isInternalKey(key) || store.isDeviceLocalKey(key)) return;
+  SyncRecorder.record('kv:${store.name}', key, at: at);
 }
 
 void _notifySqliteStore(SqliteStore store, Iterable<String> keys) {
@@ -1039,9 +1125,9 @@ void _notifySqliteStore(SqliteStore store, Iterable<String> keys) {
 /// Whether [key] belongs to this device rather than to the backup.
 ///
 /// `lastUpdateTs` is internal and still travels: it is what sync compares.
-bool _isLocalOnly(SqliteStore store, String key, Set<String> deviceLocal) =>
+bool _isLocalOnly(SqliteStore store, String key) =>
     (store.isInternalKey(key) && key != store.lastUpdateTsKey) ||
-    deviceLocal.contains(key);
+    store.isDeviceLocalKey(key);
 
 Object? _toEncodable(Object? value) {
   if (value is Enum) return value.name;

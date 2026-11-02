@@ -119,7 +119,7 @@ class _BenchmarkTabPageState extends ConsumerState<BenchmarkTabPage> {
   /// Every server, in the order the server tab shows them.
   ///
   /// Not filtered by capability, though it could be. Whether a monitor-backed
-  /// server can run a command is its agent's `full_access` grant, and that is
+  /// server can run a command is its agent's `access` answer, and that is
   /// unknown until the agent has been asked — so filtering on it would hide
   /// servers that can, on the strength of not having looked. The run reports a
   /// refusal itself, which is both later and honest.

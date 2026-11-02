@@ -46,9 +46,9 @@ pub enum Kind {
     /// subject is the channel names and types, plus the host a test webhook
     /// went to — never a key, a token or a header value.
     Push,
-    /// A change to who may do what: an account or a role created, changed or
-    /// removed, a password changed. The detail names the account or role and
-    /// what changed — never a password.
+    /// A change to the account: its password set or changed, or the
+    /// LK Cloud account signed in to or out of (`api::lkc`). The
+    /// detail says what changed — never a password or a token.
     Admin,
     /// The machine-management endpoints (`api::machine`): power, processes,
     /// services and the rest. The subject is the account; the detail starts
@@ -60,10 +60,42 @@ pub enum Kind {
     /// account; the detail the verb, the blob's name and its size — never its
     /// contents.
     Backup,
+    /// Agent mode (`agent_mode`): a task started, a command it ran, an answer
+    /// given, the configuration changed. The subject is the account; the
+    /// detail the verb and the command's first line — never a password, an
+    /// API key, what was typed or what a command printed.
+    Agent,
+    /// A web app the agent deploys (`stacks`): deployed, updated, started,
+    /// stopped, removed, or a window entered through its proxy. The subject
+    /// is the account; the detail the verb and the app — never a setting's
+    /// value or a secret.
+    Stack,
+    /// A sign-in with the password, let in or refused. The detail says
+    /// whether the device was one that signed in before (`device known`) —
+    /// never the password or the device token.
+    Login,
 }
 
 impl Kind {
-    fn as_str(self) -> &'static str {
+    /// Every kind, as `GET /audit?kind=` takes them.
+    pub const ALL: [Kind; 14] = [
+        Kind::Ticket,
+        Kind::Terminal,
+        Kind::Exec,
+        Kind::Stream,
+        Kind::Listen,
+        Kind::Fs,
+        Kind::CustomCmd,
+        Kind::Push,
+        Kind::Admin,
+        Kind::Machine,
+        Kind::Backup,
+        Kind::Agent,
+        Kind::Stack,
+        Kind::Login,
+    ];
+
+    pub fn as_str(self) -> &'static str {
         match self {
             Kind::Ticket => "ticket",
             Kind::Terminal => "terminal",
@@ -76,6 +108,9 @@ impl Kind {
             Kind::Admin => "admin",
             Kind::Machine => "machine",
             Kind::Backup => "backup",
+            Kind::Agent => "agent",
+            Kind::Stack => "stack",
+            Kind::Login => "login",
         }
     }
 }
@@ -95,6 +130,8 @@ pub enum Action {
     Connect,
     /// Something stored was replaced or removed.
     Write,
+    /// A secret was shown to the caller.
+    Reveal,
 }
 
 impl Action {
@@ -107,6 +144,7 @@ impl Action {
             Action::Denied => "denied",
             Action::Connect => "connect",
             Action::Write => "write",
+            Action::Reveal => "reveal",
         }
     }
 }
@@ -119,7 +157,9 @@ pub enum Outcome {
 }
 
 impl Outcome {
-    fn as_str(self) -> &'static str {
+    pub const ALL: [Outcome; 3] = [Outcome::Ok, Outcome::Denied, Outcome::Error];
+
+    pub fn as_str(self) -> &'static str {
         match self {
             Outcome::Ok => "ok",
             Outcome::Denied => "denied",

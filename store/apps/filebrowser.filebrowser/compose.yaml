@@ -1,0 +1,37 @@
+# File Browser 2.63.23 (Apache-2.0), https://github.com/filebrowser/filebrowser/tree/v2.63.23
+#
+# Written for ServerBox Monitor (2026-10-18) from File Browser's Docker
+# install guide:
+# - no `name:` and no `container_name`: the agent names the project;
+# - image pinned to the release; runs as the shared folder's owner, so it
+#   listens on 8080 instead of 80; set from the environment alone (FB_*)
+#   instead of the image's /config/settings.json, the database in the data
+#   folder from the env file;
+# - the first user (admin) is made at the first start with the generated
+#   password, given hashed (FB_PASSWORD, the agent's bcrypt of it) instead of
+#   the random one File Browser logs.
+
+services:
+  filebrowser:
+    image: filebrowser/filebrowser:${FILEBROWSER_VERSION}
+    user: "${SBM_UID}:${SBM_GID}"
+    environment:
+      TZ: ${SBM_TZ}
+      FB_ADDRESS: 0.0.0.0
+      FB_PORT: '8080'
+      FB_ROOT: /srv
+      FB_DATABASE: /database/filebrowser.db
+      FB_USERNAME: admin
+      FB_PASSWORD: ${FILEBROWSER_PASSWORD_BCRYPT}
+    volumes:
+      - ${FILEBROWSER_ROOT}:/srv
+      - ${FILEBROWSER_DATA}:/database
+    ports:
+      - '${FILEBROWSER_BIND}:${FILEBROWSER_PORT}:8080'
+    entrypoint: ["tini", "--", "filebrowser"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

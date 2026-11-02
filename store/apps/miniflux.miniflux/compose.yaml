@@ -1,0 +1,49 @@
+# Miniflux 2.3.3 (Apache-2.0), https://github.com/miniflux/v2/tree/2.3.3
+#
+# Adapted from the Docker Compose example of Miniflux's docs
+# (miniflux.app/docs/docker.html, "basic.yml") for ServerBox Monitor
+# (2026-10-18):
+# - no `name:` and no `container_name`: the agent names the project;
+# - images pinned (upstream: miniflux:latest, postgres:18); bind mounts from
+#   the env file instead of the named volume; the database password
+#   generated once;
+# - the administrator (admin) is made at the first start with the generated
+#   password (CREATE_ADMIN).
+
+services:
+  miniflux:
+    image: miniflux/miniflux:${MINIFLUX_VERSION}
+    user: "${SBM_UID}:${SBM_GID}"
+    ports:
+      - '${MINIFLUX_BIND}:${MINIFLUX_PORT}:8080'
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      TZ: ${SBM_TZ}
+      DATABASE_URL: postgres://miniflux:${POSTGRES_PASSWORD}@db/miniflux?sslmode=disable
+      RUN_MIGRATIONS: '1'
+      CREATE_ADMIN: '1'
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: ${MINIFLUX_PASSWORD}
+      BASE_URL: ${MINIFLUX_URL}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/usr/bin/miniflux", "-healthcheck", "auto"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  db:
+    image: postgres:${POSTGRES_VERSION}
+    environment:
+      POSTGRES_USER: miniflux
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: miniflux
+    volumes:
+      - ${MINIFLUX_DB}:/var/lib/postgresql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "miniflux"]
+      interval: 10s
+      start_period: 30s

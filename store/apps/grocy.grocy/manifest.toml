@@ -1,0 +1,78 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Grocy: deployed with Docker Compose from compose.yaml beside this file,
+# shown in a desk window through the agent.
+
+schema = 1
+publisher = "grocy"
+name = "grocy"
+project = "Grocy"
+developer = "Bernd Bestel"
+version = "4.7.1"
+homepage = "https://grocy.info"
+source = "https://github.com/grocy/grocy/tree/v4.7.1"
+glyph = "kitchen"
+tone = "leaf"
+categories = ["home"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Grocy"
+
+[description]
+en = "Groceries and household management: what is in stock and when it expires, shopping lists, recipes and meal plans, chores, batteries and tasks."
+zh = "家庭杂货与家务管理：记录库存和保质期，管理购物清单、食谱和膳食计划、家务、电池与待办任务。"
+zh-TW = "家庭雜貨與家務管理：記錄庫存和保存期限，管理購物清單、食譜和餐點計畫、家務、電池與待辦任務。"
+
+[license]
+spdx = "MIT"
+url = "https://github.com/grocy/grocy/blob/v4.7.1/LICENSE.md"
+
+# linuxserver.io builds amd64 and arm64.
+[requirements]
+arch = ["amd64", "arm64"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+jobs = ["seed-admin"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+GROCY_TAG = "v4.7.1-ls344"
+
+[[secrets]]
+env = "GROCY_PASSWORD"
+length = 32
+
+[login]
+user = "admin"
+password = "GROCY_PASSWORD"
+note = { en = "The password is set when Grocy is first set up; change it later in Manage users.", zh = "密码在首次部署时设置，之后请在 Manage users 中修改。", zh-TW = "密碼在首次部署時設定，之後請在 Manage users 中修改。" }
+
+[[settings]]
+key = "config"
+type = "path"
+env = "GROCY_CONFIG"
+default = "{stack}/config"
+data = true
+label = { en = "Data", zh = "数据", zh-TW = "資料" }
+help = { en = "The database, its settings and uploaded pictures.", zh = "数据库、设置和上传的图片。", zh-TW = "資料庫、設定和上傳的圖片。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "GROCY_PORT"
+default = 9283
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "For the phone apps and barcode scanners. Off: only through the desk.", zh = "供手机应用和条码扫描器使用。关闭时只能通过桌面访问。", zh-TW = "供手機應用程式和條碼掃描器使用。關閉時只能透過桌面存取。" }
+on = { GROCY_BIND = "0.0.0.0" }
+off = { GROCY_BIND = "127.0.0.1" }

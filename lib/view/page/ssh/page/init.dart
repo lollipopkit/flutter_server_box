@@ -20,7 +20,7 @@ extension _Init on SSHPageState {
   /// [_awaitServerClient] — and a connection of the terminal's own otherwise.
   Future<ShellBackend> _connectBackend() async {
     final granted = switch (widget.args.spi) {
-      final spi? => ref.readPresentServer(spi.id)?.remoteAccess,
+      final spi? => ref.readPresentServer(spi.id)?.agentAccess,
       null => null,
     };
     final shared = await _awaitServerClient();

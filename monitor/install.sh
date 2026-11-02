@@ -5,15 +5,9 @@
 # binary + frontend/dist + migrations + example config.
 #
 # The agent runs as an ordinary account by default. That matters beyond
-# tidiness: an account whose role holds `shell` opens a shell as whoever the
-# agent runs as — as root that would be the whole machine. Pass --system for
-# the old root-owned service.
-#
-# --permissions full|read is what a fresh install's admin role starts with:
-# every grant (the default), or none, to be turned on from the app or the
-# panel. It reaches the agent as SBM_INIT_PERMISSIONS in the service's
-# environment and is read only when the agent creates its first account, so
-# it stays there harmlessly afterwards.
+# tidiness: whoever signs in to the agent may do what the account it runs as
+# may do — a shell, its files — and as root that is the whole machine. Pass
+# --system for the old root-owned service.
 #
 # systemd and OpenRC both, because the second is what Alpine has and the binary
 # is a static musl build that runs there perfectly well. They arrive at the
@@ -43,15 +37,15 @@ else
 fi
 
 MODE="user"
+# Set by --user or --system. Without either, `upgrade` upgrades the form
+# that is installed rather than assuming the default.
+MODE_GIVEN=""
 CMD=""
-PERMISSIONS="full"
-USAGE="Usage: $SELF [install|uninstall|upgrade] [--user|--system] [--permissions full|read]"
+USAGE="Usage: $SELF [install|uninstall|upgrade] [--user|--system]"
 while [ $# -gt 0 ]; do
     case "$1" in
-        --system) MODE="system" ;;
-        --user) MODE="user" ;;
-        --permissions) shift; PERMISSIONS="${1:-}" ;;
-        --permissions=*) PERMISSIONS="${1#*=}" ;;
+        --system) MODE="system"; MODE_GIVEN=1 ;;
+        --user) MODE="user"; MODE_GIVEN=1 ;;
         install|uninstall|upgrade) CMD="$1" ;;
         *)
             echo "Unknown argument: $1"
@@ -61,14 +55,6 @@ while [ $# -gt 0 ]; do
     esac
     shift
 done
-case "$PERMISSIONS" in
-    full|read) ;;
-    *)
-        echo "--permissions takes full or read, not '$PERMISSIONS'"
-        echo "$USAGE"
-        exit 1
-        ;;
-esac
 
 # Which init system will be asked to keep the agent running.
 #
@@ -168,10 +154,17 @@ else
         APP_DIR="/opt/server-box-monitor"
         RUN_USER="root"
     else
-        # Whoever reached root from their own account. Running the script as
-        # root outright leaves nothing to infer, and guessing here would pick
-        # the account the agent runs as — not a thing to guess.
-        RUN_USER="${SUDO_USER:-${DOAS_USER:-}}"
+        # Whoever reached root from their own account, or SBM_RUN_USER (an
+        # image installing for its own account). Running the script as root
+        # outright leaves nothing to infer, and guessing here would pick the
+        # account the agent runs as — not a thing to guess.
+        RUN_USER="${SBM_RUN_USER:-${SUDO_USER:-${DOAS_USER:-}}}"
+        # An installed agent keeps the account its script names: an upgrade
+        # by another admin, or by root outright, does not move it.
+        if [ "$CMD" != "install" ] && [ -f "$UNIT" ]; then
+            installed_user=$(sed -n 's/^command_user="\(.*\)"$/\1/p' "$UNIT")
+            [ -n "$installed_user" ] && RUN_USER="$installed_user"
+        fi
         if [ -z "$RUN_USER" ]; then
             echo "Cannot tell which account the agent should run as."
             echo
@@ -179,6 +172,13 @@ else
             echo "  --system to deliberately run the agent as root."
             exit 1
         fi
+        # It is expanded by `eval` below: an account name and nothing else.
+        case "$RUN_USER" in
+            *[!A-Za-z0-9._-]* | -*)
+                echo "Not an account name: $RUN_USER"
+                exit 1
+                ;;
+        esac
         RUN_HOME=$(eval echo "~$RUN_USER")
         APP_DIR="$RUN_HOME/.local/share/server-box-monitor"
     fi
@@ -299,15 +299,25 @@ cleanup() {
     rm -rf "$TMP_DIR"
 }
 
-# Overwrite program files, keep .env and the database
+# Overwrite program files, keep .env and the database.
+#
+# Each one is copied beside its target and renamed over it, so the running
+# agent keeps its own until the restart: copying onto a running binary fails
+# ("Text file busy"), and stopping the agent first would end an upgrade run
+# from a terminal the agent itself opened, before anything started it again.
 install_files() {
     pkg="$TMP_DIR/server-box-monitor"
     mkdir -p "$APP_DIR"
-    rm -rf "$APP_DIR/frontend" "$APP_DIR/migrations"
-    cp "$pkg/server_box_monitor" "$APP_DIR/"
-    chmod 755 "$APP_DIR/server_box_monitor"
-    cp -r "$pkg/frontend" "$APP_DIR/frontend"
-    cp -r "$pkg/migrations" "$APP_DIR/migrations"
+    cp "$pkg/server_box_monitor" "$APP_DIR/.server_box_monitor.new"
+    chmod 755 "$APP_DIR/.server_box_monitor.new"
+    mv -f "$APP_DIR/.server_box_monitor.new" "$APP_DIR/server_box_monitor"
+    for dir in frontend migrations; do
+        rm -rf "$APP_DIR/.$dir.new" "$APP_DIR/.$dir.old"
+        cp -r "$pkg/$dir" "$APP_DIR/.$dir.new"
+        [ -e "$APP_DIR/$dir" ] && mv "$APP_DIR/$dir" "$APP_DIR/.$dir.old"
+        mv "$APP_DIR/.$dir.new" "$APP_DIR/$dir"
+        rm -rf "$APP_DIR/.$dir.old"
+    done
     cp "$pkg/config.example.toml" "$pkg/.env.example" "$APP_DIR/"
 
     if [ ! -f "$APP_DIR/.env" ]; then
@@ -414,9 +424,6 @@ write_openrc_script() {
         # Same reason as the systemd unit's Environment=: the default filter
         # is ERROR only.
         echo "export RUST_LOG=info"
-        # Read once, when the agent creates its first account — see the top
-        # of this file.
-        echo "export SBM_INIT_PERMISSIONS=$PERMISSIONS"
         echo
         echo "depend() {"
         echo "    need net"
@@ -454,9 +461,6 @@ install_service() {
         # remote-access summary and its security warnings. docker-compose.yaml
         # already defaults to info.
         echo "Environment=RUST_LOG=info"
-        # Read once, when the agent creates its first account — see the top
-        # of this file.
-        echo "Environment=SBM_INIT_PERMISSIONS=$PERMISSIONS"
         # The agent collects by running ordinary tools — `sh` first, then
         # whatever the command manifest asks for: cat, df, uptime, lsblk.
         # A unit that sets no PATH gets systemd's compiled-in one, and that is
@@ -518,9 +522,7 @@ install() {
     echo "Install success ($MODE service). Config: $APP_DIR/.env"
     if [ "$MODE" = "system" ]; then
         echo
-        echo "This runs as root: any account whose role holds shell gets a"
-        echo "root shell. Take shell off the roles that should not have one"
-        echo "(the app or the panel, as an admin)."
+        echo "This runs as root: signing in to the agent is a root shell."
     fi
 }
 
@@ -532,10 +534,67 @@ upgrade() {
     fi
 
     download
-    svc_stop
     install_files
+    echo "Restarting the agent. Connections through it (a terminal it opened, the"
+    echo "panel, the app) drop now; the agent is back in a few seconds."
+    # The restart ends the agent, and with it a terminal the agent opened,
+    # which may be the one running this. Its hangup must not cut the restart
+    # short: OpenRC's rc-service stops and starts from this process tree
+    # (systemd's job runs in the service manager either way).
+    trap '' HUP
     svc_restart || { echo "Restart service failed"; exit 1; }
     echo "Upgrade success"
+}
+
+# For `upgrade` without --user or --system: which form is installed.
+#
+# The default form, assumed, found nothing on a machine with the other one and
+# installed a second agent beside it — and so did one in a container. The
+# account's own service first, then the system one; OpenRC has one script for
+# both, told apart by where the binary is. With none, nothing is changed.
+detect_installed_mode() {
+    if [ "$INIT" = "systemd" ]; then
+        if [ "$(id -u)" -ne 0 ] && [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user/$SERVICE" ]; then
+            MODE="user"
+            return
+        fi
+        if [ -f "/etc/systemd/system/$SERVICE" ]; then
+            MODE="system"
+            return
+        fi
+    elif [ -f "/etc/init.d/$RC_SERVICE" ]; then
+        if [ -f /opt/server-box-monitor/server_box_monitor ]; then
+            MODE="system"
+        else
+            MODE="user"
+        fi
+        return
+    fi
+    echo "No agent installed by this script was found for $(id -un)."
+    echo
+    echo "  One in Docker is updated by pulling its image and recreating the"
+    echo "  container. To install one here: $SELF install"
+    exit 1
+}
+
+# Runs this `upgrade` again as root when the installed form needs it (a
+# system service, or any OpenRC script), through sudo, which asks on the
+# terminal. sudo keeps the invoking account in SUDO_USER, which is who an
+# OpenRC agent of the default form runs as.
+upgrade_as_root_if_needed() {
+    if [ "$INIT" = "systemd" ] && [ "$MODE" = "user" ]; then return; fi
+    if [ "$(id -u)" -eq 0 ]; then return; fi
+    if ! command -v sudo >/dev/null 2>&1; then
+        echo "Upgrading this agent needs root: $SELF_ROOT upgrade --$MODE"
+        exit 1
+    fi
+    if [ -f "$0" ]; then
+        exec sudo sh "$0" upgrade "--$MODE"
+    fi
+    # Piped into sh: there is no file to hand sudo, so fetch one.
+    script=$(mktemp) || exit 1
+    curl -fsSL "$INSTALL_URL" -o "$script" || { echo "Download of $INSTALL_URL failed"; exit 1; }
+    exec sudo sh "$script" upgrade "--$MODE"
 }
 
 uninstall() {
@@ -551,7 +610,9 @@ uninstall() {
         # Ask the terminal, not stdin. Piped into sh, stdin *is* this script,
         # so a bare `read` consumes the lines below instead of an answer. With
         # no terminal to ask, keep the directory — the reversible direction.
-        if [ -r /dev/tty ]; then
+        # Opening it is the test: /dev/tty is there and readable without a
+        # controlling terminal too, and only fails when opened.
+        if (: </dev/tty) 2>/dev/null; then
             printf "Remove %s (including database and .env)? [y/N] " "$APP_DIR"
             read -r ans < /dev/tty || ans=""
         else
@@ -568,16 +629,19 @@ uninstall() {
 case "$CMD" in
     install) resolve_target; install ;;
     uninstall) resolve_target; uninstall ;;
-    upgrade) resolve_target; upgrade ;;
+    upgrade)
+        if [ -z "$MODE_GIVEN" ]; then
+            detect_installed_mode
+            upgrade_as_root_if_needed
+        fi
+        resolve_target
+        upgrade
+        ;;
     *)
         echo "$USAGE"
         echo
         echo "  --user    (default) the agent runs as an ordinary account"
         echo "  --system  the agent runs as root"
-        echo "  --permissions full|read"
-        echo "            what a fresh install's admin starts with: every"
-        echo "            permission (default), or read-only, to be widened"
-        echo "            from the app or the panel"
         echo
         echo "Init system detected: $INIT"
         if [ "$INIT" = "systemd" ]; then

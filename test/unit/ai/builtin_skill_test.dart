@@ -4,10 +4,13 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/llm/host.dart';
 
+import '../../helpers/llm_lib_helper.dart';
+
 /// The skill the Agent ships with: read from the assets, which are the files
 /// in `.claude/skills/`, and pointing at documentation that exists.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(loadLlmLibForTest);
 
   test('serverbox-help is shipped whole', () async {
     final skills = await LlmHost.builtinSkills();

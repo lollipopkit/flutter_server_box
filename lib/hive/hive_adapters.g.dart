@@ -80,6 +80,10 @@ class ServerFuncBtnAdapter extends TypeAdapter<ServerFuncBtn> {
         return ServerFuncBtn.remoteDesktop;
       case 15:
         return ServerFuncBtn.firewall;
+      case 16:
+        return ServerFuncBtn.storage;
+      case 17:
+        return ServerFuncBtn.shares;
       default:
         return ServerFuncBtn.terminal;
     }
@@ -114,6 +118,10 @@ class ServerFuncBtnAdapter extends TypeAdapter<ServerFuncBtn> {
         writer.writeByte(14);
       case ServerFuncBtn.firewall:
         writer.writeByte(15);
+      case ServerFuncBtn.storage:
+        writer.writeByte(16);
+      case ServerFuncBtn.shares:
+        writer.writeByte(17);
     }
   }
 

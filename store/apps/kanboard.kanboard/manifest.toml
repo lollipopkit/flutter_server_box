@@ -1,0 +1,85 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Kanboard: deployed with Docker Compose from compose.yaml beside this file,
+# shown in a desk window through the agent.
+
+schema = 1
+publisher = "kanboard"
+name = "kanboard"
+project = "Kanboard"
+developer = "Frédéric Guillot"
+version = "1.2.54"
+homepage = "https://kanboard.org"
+source = "https://github.com/kanboard/kanboard/tree/v1.2.54"
+glyph = "view_kanban"
+tone = "leaf"
+categories = ["productivity"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Kanboard"
+
+[description]
+en = "A simple Kanban board for projects: tasks in columns and swimlanes, subtasks, time tracking, automatic actions and a calendar."
+zh = "简单的项目看板：任务按列和泳道排布，支持子任务、计时、自动操作和日历。"
+zh-TW = "簡單的專案看板：任務依欄和泳道排列，支援子任務、計時、自動動作和行事曆。"
+
+[license]
+spdx = "MIT"
+url = "https://github.com/kanboard/kanboard/blob/v1.2.54/LICENSE"
+
+[requirements]
+arch = ["amd64", "arm64", "arm"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+jobs = ["seed-admin"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+KANBOARD_VERSION = "v1.2.54"
+
+[[secrets]]
+env = "KANBOARD_PASSWORD"
+length = 32
+
+[login]
+user = "admin"
+password = "KANBOARD_PASSWORD"
+note = { en = "The password is set when Kanboard is first set up; change it later in your user's settings.", zh = "密码在首次部署时设置，之后请在用户设置中修改。", zh-TW = "密碼在首次部署時設定，之後請在使用者設定中修改。" }
+
+[[settings]]
+key = "data"
+type = "path"
+env = "KANBOARD_DATA"
+default = "{stack}/data"
+data = true
+label = { en = "Data", zh = "数据", zh-TW = "資料" }
+help = { en = "The database and attached files.", zh = "数据库和附件。", zh-TW = "資料庫和附件。" }
+
+[[settings]]
+key = "plugins"
+type = "path"
+env = "KANBOARD_PLUGINS"
+default = "{stack}/plugins"
+data = true
+label = { en = "Plugins", zh = "插件", zh-TW = "外掛程式" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "KANBOARD_PORT"
+default = 8091
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "Off: only through the desk.", zh = "关闭时只能通过桌面访问。", zh-TW = "關閉時只能透過桌面存取。" }
+on = { KANBOARD_BIND = "0.0.0.0" }
+off = { KANBOARD_BIND = "127.0.0.1" }

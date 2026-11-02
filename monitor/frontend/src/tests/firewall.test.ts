@@ -2,8 +2,8 @@ import { get } from 'svelte/store'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
+import Firewall from '../desk/apps/firewall/FirewallApp.svelte'
 import { LL } from '../i18n/i18n-svelte'
-import Firewall from '../pages/Firewall.svelte'
 import { ApiError, api } from '../lib/api'
 import { refusalText, ruleText } from '../lib/firewall'
 import { servers } from '../lib/servers.svelte'
@@ -136,14 +136,14 @@ describe('Firewall page', () => {
 
   it('says why a machine has no firewall to show', async () => {
     getFirewall.mockResolvedValue({ ...base, available: false, reason_kind: 'unsupported_platform', kind: null })
-    render(Firewall, { onback: () => {} })
+    render(Firewall)
     expect(await screen.findByText(ll.fwLinuxOnly())).toBeInTheDocument()
   })
 
   it('asks for the sudo password and reads again with it', async () => {
     getFirewall.mockResolvedValueOnce({ ...base, available: false, sudo_required: true, kind: null })
     getFirewall.mockResolvedValueOnce(ufwView())
-    render(Firewall, { onback: () => {} })
+    render(Firewall)
     await fireEvent.input(await screen.findByLabelText(ll.powerPassword()), { target: { value: 'hunter2' } })
     await fireEvent.click(screen.getByRole('button', { name: ll.confirm() }))
     await waitFor(() => expect(getFirewall).toHaveBeenLastCalledWith(undefined, 'hunter2'))
@@ -162,7 +162,7 @@ describe('Firewall page', () => {
       }),
       plan_id: 'p1',
     })
-    render(Firewall, { onback: () => {} })
+    render(Firewall)
     await fireEvent.click(await screen.findByRole('button', { name: ll.fwDeleteRule({ rule: ruleText(sshRule) }) }))
     const change = { kind: 'ufw', change: { type: 'delete_rule', tuples: sshRule.tuples } }
     expect(planFirewall).toHaveBeenCalledWith(change, undefined)
@@ -187,7 +187,7 @@ describe('Firewall page', () => {
       plan: plan({ confirm: false, destructive: false }),
       plan_id: 'p0',
     })
-    render(Firewall, { onback: () => {} })
+    render(Firewall)
     const add = await screen.findAllByRole('button', { name: ll.add() })
     // Services is the third list.
     await fireEvent.click(add[2])
@@ -210,7 +210,7 @@ describe('Firewall page', () => {
       }),
       plan_id: 'new',
     })
-    render(Firewall, { onback: () => {} })
+    render(Firewall)
     await fireEvent.click(await screen.findByRole('button', { name: ll.fwReload() }))
     await fireEvent.click(await screen.findByRole('button', { name: ll.confirm() }))
     const change = { kind: 'ufw', change: { type: 'reload' } }
@@ -225,7 +225,7 @@ describe('Firewall page', () => {
     getFirewall.mockResolvedValue(ufwView())
     let answer: (v: Awaited<ReturnType<typeof api.planFirewall>>) => void = () => {}
     planFirewall.mockReturnValue(new Promise((resolve) => (answer = resolve)))
-    render(Firewall, { onback: () => {} })
+    render(Firewall)
     await fireEvent.click(await screen.findByRole('button', { name: ll.fwReload() }))
     servers.add('https://another.example')
     answer({ sudo_required: false, plan: plan({ confirm: false }), plan_id: 'p' })
@@ -241,7 +241,7 @@ describe('Firewall page', () => {
         issue: { code: 'input', issue: 'invalid_source' },
       }),
     )
-    render(Firewall, { onback: () => {} })
+    render(Firewall)
     const add = await screen.findAllByRole('button', { name: ll.add() })
     await fireEvent.click(add[1])
     await fireEvent.input(screen.getByRole('textbox', { name: ll.fwSources() }), { target: { value: 'not an address' } })

@@ -308,7 +308,7 @@ void main() {
     expect((await _err(virt.load())).type, VirtErrType.unreachable);
   });
 
-  // Found against a real agent with `full_access` off: the tab said the host
+  // Found against a real agent that refused commands: the tab said the host
   // could not be reached, when the agent had answered and refused.
   test('an agent that will not run commands is execNotGranted', () async {
     final exec = _Exec(

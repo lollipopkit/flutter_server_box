@@ -1,0 +1,93 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Backrest: deployed with Docker Compose from compose.yaml beside this file,
+# shown in a desk window through the agent.
+
+schema = 1
+publisher = "garethgeorge"
+name = "backrest"
+project = "Backrest"
+developer = "Gareth George"
+version = "1.14.1"
+homepage = "https://garethgeorge.github.io/backrest/"
+source = "https://github.com/garethgeorge/backrest/tree/v1.14.1"
+glyph = "backup"
+tone = "teal"
+categories = ["files", "tools"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Backrest"
+
+[description]
+en = "Scheduled, encrypted and deduplicated backups with restic: plans for what to back up and when, to a local folder, SFTP, S3 or Backblaze B2, browsed and restored from the page."
+zh = "基于 restic 的定时、加密、去重备份：用计划决定备份内容和时间，可备份到本地文件夹、SFTP、S3 或 Backblaze B2，并在页面中浏览和恢复。"
+zh-TW = "基於 restic 的排程、加密、去重複備份：用計畫決定備份內容和時間，可備份到本機資料夾、SFTP、S3 或 Backblaze B2，並在頁面中瀏覽和還原。"
+
+[license]
+spdx = "GPL-3.0"
+url = "https://github.com/garethgeorge/backrest/blob/v1.14.1/LICENSE"
+accept = true
+
+[requirements]
+arch = ["amd64", "arm64", "arm"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+BACKREST_TAG = "v1.14.1-alpine"
+
+[[secrets]]
+env = "BACKREST_PASSWORD"
+length = 32
+bcrypt = "BACKREST_PASSWORD_BCRYPT"
+
+[login]
+user = "admin"
+password = "BACKREST_PASSWORD"
+note = { en = "The password is set when Backrest is first set up; change it later in Settings. What to back up is at /userdata, local repositories at /repos.", zh = "密码在首次部署时设置，之后请在 Settings 中修改。要备份的内容位于 /userdata，本地仓库位于 /repos。", zh-TW = "密碼在首次部署時設定，之後請在 Settings 中修改。要備份的內容位於 /userdata，本機儲存庫位於 /repos。" }
+
+[[settings]]
+key = "source"
+type = "path"
+env = "BACKREST_SOURCE"
+default = "{shared}"
+label = { en = "What it can back up", zh = "可备份的内容", zh-TW = "可備份的內容" }
+help = { en = "At /userdata. Backrest reads it as the shared folder's owner.", zh = "位于 /userdata。Backrest 以共享文件夹所有者的身份读取。", zh-TW = "位於 /userdata。Backrest 以共用資料夾擁有者的身分讀取。" }
+
+[[settings]]
+key = "repos"
+type = "path"
+env = "BACKREST_REPOS"
+default = "{shared}/backups"
+label = { en = "Local repositories", zh = "本地仓库", zh-TW = "本機儲存庫" }
+help = { en = "At /repos, for repositories on this machine. Better on another disk.", zh = "位于 /repos，用于本机上的仓库。最好放在另一块磁盘上。", zh-TW = "位於 /repos，用於本機上的儲存庫。最好放在另一顆磁碟上。" }
+
+[[settings]]
+key = "data"
+type = "path"
+env = "BACKREST_DATA"
+default = "{stack}/data"
+data = true
+label = { en = "Settings, history and cache", zh = "设置、历史记录和缓存", zh-TW = "設定、歷史紀錄和快取" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "BACKREST_PORT"
+default = 9898
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "Off: only through the desk.", zh = "关闭时只能通过桌面访问。", zh-TW = "關閉時只能透過桌面存取。" }
+on = { BACKREST_BIND = "0.0.0.0" }
+off = { BACKREST_BIND = "127.0.0.1" }

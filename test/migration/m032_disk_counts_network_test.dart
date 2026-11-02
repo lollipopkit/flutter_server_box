@@ -5,7 +5,6 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/migrations/m032_disk_counts_network.dart';
-import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/tables.dart';
 
@@ -28,13 +27,12 @@ void main() {
     await SqliteDb.close();
   });
 
-  test('is the last registered schema step', () {
+  test('is registered once', () {
     expect(const DiskCountsNetworkMigration().from, 32);
     expect(
       kSchemaMigrations.whereType<DiskCountsNetworkMigration>(),
       hasLength(1),
     );
-    expect(kSchemaMigrations.last.from, SchemaVersion.current - 1);
   });
 
   test('adds the same column a fresh database has', () async {

@@ -56,12 +56,16 @@ pub fn nvidia_from_xml(raw: &str) -> Vec<NvidiaSmiItem> {
                         .filter(|c| c.has_tag_name("process_info"))
                         .filter_map(|proc| {
                             let pid = child_text(proc, "pid")?;
-                            let name = child_text(proc, "process_name")?;
-                            let memory = child_text(proc, "used_memory")?;
+                            // Under WDDM (Windows, and WSL through it) the
+                            // driver reports no per-process memory, `N/A`,
+                            // and a name only with enough privilege. The
+                            // process is still the answer to what holds the
+                            // card, so it is kept: 0 is "not reported".
                             Some(GpuMemProcess {
                                 pid: pid.parse().ok()?,
-                                name,
-                                memory: parse_first_int(Some(&memory))?,
+                                name: child_text(proc, "process_name").unwrap_or_default(),
+                                memory: parse_first_int(child_text(proc, "used_memory").as_deref())
+                                    .unwrap_or(0),
                             })
                         })
                         .collect()

@@ -1,0 +1,116 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# vLLM, a model server: deployed with Docker Compose from the file beside
+# this one, its OpenAI-compatible API offered to Agent mode. The Inference app
+# picks the model for this machine's GPU.
+
+schema = 1
+publisher = "vllm"
+name = "vllm"
+project = "vLLM"
+developer = "vLLM project"
+version = "0.30.0"
+homepage = "https://vllm.ai"
+source = "https://github.com/vllm-project/vllm/tree/v0.30.0"
+glyph = "bolt"
+tone = "violet"
+categories = ["ai"]
+notices = ["pullsImages", "bindsPaths", "gpuDevices", "publishesPort"]
+
+[title]
+en = "vLLM"
+
+[description]
+en = "Serve one model at high throughput on an NVIDIA GPU with vLLM, behind an OpenAI-compatible API that Agent mode can use."
+zh = "用 vLLM 在 NVIDIA GPU 上高吞吐地运行一个模型，提供 Agent 模式可用的 OpenAI 兼容 API。"
+zh-TW = "用 vLLM 在 NVIDIA GPU 上高吞吐地執行一個模型，提供 Agent 模式可用的 OpenAI 相容 API。"
+
+[license]
+spdx = "Apache-2.0"
+url = "https://github.com/vllm-project/vllm/blob/v0.30.0/LICENSE"
+
+[requirements]
+memory_min_mib = 16384
+arch = ["amd64", "arm64"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[llm]
+port = "port"
+path = "/v1"
+model = "model"
+key = "API_KEY"
+tools = "vllm"
+
+[env]
+VLLM_VERSION = "v0.30.0"
+
+# The key the API asks for.
+[[secrets]]
+env = "API_KEY"
+length = 48
+
+[login]
+password = "API_KEY"
+note = { en = "No account: the password shown here is the API key. Send it as Authorization: Bearer <key>. Agent mode is given it on its own.", zh = "没有账号：这里显示的密码就是 API 密钥，以 Authorization: Bearer <密钥> 发送。Agent 模式会自动获得它。", zh-TW = "沒有帳號：這裡顯示的密碼就是 API 金鑰，以 Authorization: Bearer <金鑰> 傳送。Agent 模式會自動取得它。" }
+
+[[settings]]
+key = "model"
+type = "text"
+env = "MODEL"
+default = "Qwen/Qwen3-0.6B"
+pattern = "[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9._-]+"
+label = { en = "Model", zh = "模型", zh-TW = "模型" }
+help = { en = "A Hugging Face repository (Qwen/Qwen3-8B, or an AWQ build to fit a smaller GPU). The Inference app suggests one that fits.", zh = "Hugging Face 仓库（Qwen/Qwen3-8B；显存较小时可选 AWQ 版本）。推理 app 会推荐适合这台机器的模型。", zh-TW = "Hugging Face 儲存庫（Qwen/Qwen3-8B；顯示記憶體較小時可選 AWQ 版本）。推理 app 會推薦適合這台機器的模型。" }
+
+[[settings]]
+key = "context"
+type = "text"
+env = "CONTEXT"
+default = "8192"
+pattern = "[1-9][0-9]{2,6}"
+label = { en = "Context length", zh = "上下文长度", zh-TW = "上下文長度" }
+help = { en = "The longest request in tokens. Longer leaves less room for concurrent requests.", zh = "单个请求的最大 token 数。越长，可同时处理的请求越少。", zh-TW = "單一請求的最大 token 數。越長，可同時處理的請求越少。" }
+
+[[settings]]
+key = "gpu_memory"
+type = "text"
+env = "GPU_MEMORY"
+default = "0.90"
+pattern = "0\\.[1-9][0-9]?"
+label = { en = "Share of GPU memory", zh = "GPU 显存占比", zh-TW = "GPU 顯示記憶體佔比" }
+help = { en = "vLLM takes this share of the GPU's memory for the model and its cache.", zh = "vLLM 占用这一比例的显存，用于模型和缓存。", zh-TW = "vLLM 佔用這一比例的顯示記憶體，用於模型和快取。" }
+
+[[settings]]
+key = "models"
+type = "path"
+env = "MODELS_LOCATION"
+default = "{shared}/models/huggingface"
+label = { en = "Models", zh = "模型", zh-TW = "模型" }
+help = { en = "The Hugging Face cache downloaded models are kept in, shared with SGLang.", zh = "下载的模型所在的 Hugging Face 缓存，与 SGLang 共用。", zh-TW = "下載的模型所在的 Hugging Face 快取，與 SGLang 共用。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "VLLM_PORT"
+default = 8000
+label = { en = "API port", zh = "API 端口", zh-TW = "API 連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "Requests still need the API key, shown under the first sign-in. Off: this machine only.", zh = "请求仍需 API 密钥，可在首次登录信息中查看。关闭时仅限本机。", zh-TW = "請求仍需 API 金鑰，可在首次登入資訊中檢視。關閉時僅限本機。" }
+on = { VLLM_BIND = "0.0.0.0" }
+off = { VLLM_BIND = "127.0.0.1" }
+
+[[settings]]
+key = "offline"
+type = "bool"
+default = false
+label = { en = "Use downloaded models only", zh = "只用已下载的模型", zh-TW = "只用已下載的模型" }
+help = { en = "For a machine that cannot reach Hugging Face: vLLM loads the model from the models folder and asks the network nothing (put the model's cache there first). Off, it downloads what is missing.", zh = "用于无法访问 Hugging Face 的机器：vLLM 只从模型文件夹加载模型，不访问网络（需先把模型缓存放进去）。关闭时会下载缺少的文件。", zh-TW = "用於無法存取 Hugging Face 的機器：vLLM 只從模型資料夾載入模型，不存取網路（需先把模型快取放進去）。關閉時會下載缺少的檔案。" }
+on = { HF_HUB_OFFLINE = "1" }
+off = { HF_HUB_OFFLINE = "0" }

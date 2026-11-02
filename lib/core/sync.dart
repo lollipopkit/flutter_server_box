@@ -2,8 +2,11 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_lib/theme.dart' show ThemeBlobStore;
 import 'package:flutter/foundation.dart';
 import 'package:server_box/core/diag.dart';
+import 'package:server_box/core/lkc.dart';
+import 'package:server_box/core/lkc_sync.dart';
 import 'package:server_box/core/service/report_filter.dart';
 import 'package:server_box/core/utils/monitor_backup_storage.dart';
 import 'package:server_box/data/model/app/bak/backup.dart';
@@ -40,10 +43,15 @@ final class BakSyncer extends SyncIface {
   /// than this build understands.
   static SchemaTooNewException? get remoteTooNew => _remoteTooNew;
 
+  /// Set by [backup] while it writes for LK Cloud, where theme packages are
+  /// kept apart.
+  LkcThemeBlobs? _themeBlobs;
+
   @override
   Future<void> saveToFile() async {
     await writeEncryptedBackup(
       includeSettings: PrefProps.syncAppSettings.get(),
+      blobs: _themeBlobs,
     );
   }
 
@@ -55,10 +63,11 @@ final class BakSyncer extends SyncIface {
   Future<String> writeEncryptedBackup({
     String? name,
     bool includeSettings = true,
+    ThemeBlobStore? blobs,
   }) async {
     final pwd = await SecureStoreProps.bakPwd.read();
     if (pwd == null || pwd.isEmpty) throw const RemoteBackupPasswordMissing();
-    return BackupV2.backup(name, pwd, includeSettings);
+    return BackupV2.backup(name, pwd, includeSettings, blobs);
   }
 
   /// The sync an edit starts, which nobody waits for.
@@ -111,6 +120,7 @@ final class BakSyncer extends SyncIface {
         Diag.crumb(SbDiag.sync, 'skipped', data: {'why': 'no password'});
         return;
       }
+      await _followPassword(pwd);
     }
     return super.sync(
       throttleMilli: throttleMilli,
@@ -122,19 +132,33 @@ final class BakSyncer extends SyncIface {
   @override
   Future<Mergeable> fromFile(String path) async {
     _remoteTooNew = null;
-    final content = await File(path).readAsString();
+    final content = await File(path).readAsBytes();
     final pwd = await SecureStoreProps.bakPwd.read();
     final includeSettings = PrefProps.syncAppSettings.get();
     try {
-      // Only decrypting and decoding leave this isolate: they read nothing but
-      // their arguments. Prefs, secure storage and [_remoteTooNew] belong to
-      // this one — in a worker the pref answered its default and dropped every
-      // synced setting, with no error anywhere (#1562).
+      // Only decrypting (in rage's isolate) and decoding leave this isolate:
+      // they read nothing but their arguments. Prefs, secure storage and
+      // [_remoteTooNew] belong to this one — in a worker the pref answered
+      // its default and dropped every synced setting, with no error anywhere
+      // (#1562).
       //
       // A plaintext backup, uploaded before remote encryption became
       // mandatory, is still accepted: the password is only used on an
       // encrypted payload.
-      final mergeable = await compute(_parse, (content, pwd));
+      final plain = await BackupV2.unlock(content, pwd);
+      // It opens what the devices share, so it is theirs: one kept on this
+      // device only (set by an older build) goes to iCloud Keychain now,
+      // where it cannot be replacing another device's newer one.
+      if (pwd != null &&
+          pwd.isNotEmpty &&
+          await SecureStoreProps.bakPwd.inLegacyOnly()) {
+        try {
+          await SecureStoreProps.bakPwd.write(pwd);
+        } catch (e, s) {
+          Loggers.app.warning('Backup password not moved to iCloud', e, s);
+        }
+      }
+      final mergeable = await compute(_parse, plain);
       return _normalizeSyncPayload(mergeable, includeSettings: includeSettings);
     } on SchemaTooNewException catch (e) {
       // Recorded so `backup` refuses to upload over data this build cannot
@@ -144,8 +168,8 @@ final class BakSyncer extends SyncIface {
     }
   }
 
-  static Mergeable _parse((String, String?) args) =>
-      MergeableUtils.fromJsonString(args.$1, args.$2).$1;
+  static Mergeable _parse(Uint8List plain) =>
+      MergeableUtils.fromBytes(plain).$1;
 
   Mergeable _normalizeSyncPayload(
     Mergeable mergeable, {
@@ -173,6 +197,52 @@ final class BakSyncer extends SyncIface {
       ),
       _ => mergeable,
     };
+  }
+
+  /// Calls [onEdit] on each edit to a synced setting, which no provider syncs
+  /// on as the entity stores' do. Every such edit stamps the store, so what is
+  /// watched is the stamps' row: device-local settings and internal keys stamp
+  /// nothing. Only while settings are synced.
+  ///
+  /// Not the history: tabs, workspaces and the last SFTP path change with
+  /// every move, and each would be an upload and a merge on every device
+  /// listening. It goes with the next sync.
+  static StreamSubscription<String> watchEdits(VoidCallback onEdit) =>
+      Stores.setting.watch().listen((key) {
+        if (key == Stores.setting.lastUpdateTsKey &&
+            PrefProps.syncAppSettings.get()) {
+          onEdit();
+        }
+      });
+
+  /// See [SyncIface.lacks] and [BackupV2.lacksLocal]; an older format is
+  /// always written over.
+  @override
+  bool lacks(Mergeable downloaded) =>
+      downloaded is! BackupV2 ||
+      downloaded.lacksLocal(includeSettings: PrefProps.syncAppSettings.get());
+
+  /// The password this device last synced with, kept on this device only.
+  ///
+  /// One set on another device arrives through iCloud Keychain, and what
+  /// setting it here forgets ([forgetPasswordState]) has to be forgotten here
+  /// too: the checkpoint stands for a file sealed with the old one, and the
+  /// theme packages' names for packages sealed with it.
+  static const _pwdSeen = SecureProp('bakPwdSeen');
+
+  static Future<void> _followPassword(String pwd) async {
+    // Past the rate limit: a sync is not a user asking, and runs on its own.
+    final seen = await _pwdSeen.storage.read(key: _pwdSeen.key);
+    if (seen == pwd) return;
+    // None on the first sync of this build: nothing known to forget.
+    if (seen != null) await forgetPasswordState();
+    await _pwdSeen.storage.write(key: _pwdSeen.key, value: pwd);
+  }
+
+  /// What a backup password sealed: see [_followPassword].
+  static Future<void> forgetPasswordState() async {
+    await forgetCheckpoint();
+    await LkcThemeBlobs.forgetNames();
   }
 
   /// Refuses to upload after a failed read of newer remote data, and waits for
@@ -206,21 +276,30 @@ final class BakSyncer extends SyncIface {
       return;
     }
     Diag.crumb(SbDiag.sync, 'upload');
-    return super.backup(rs);
+    final target = rs ?? remoteStorage;
+    if (target is! LkcRemoteStorage) return super.backup(target);
+    final blobs = _themeBlobs = LkcThemeBlobs.shared..begin();
+    try {
+      await super.backup(target);
+    } finally {
+      _themeBlobs = null;
+    }
+    // Only once the backup naming them is written.
+    await blobs.sweep();
   }
 
   /// The inherit in flight, awaited by [backup] so an upload cannot overtake
   /// it.
   Future<void>? _inheriting;
 
-  /// Reads the pre-v3 remote file once, so upgrading doesn't look like a
-  /// fresh start.
+  /// Reads the newest remote file an older build synced to, once, so
+  /// upgrading doesn't look like a fresh start.
   ///
-  /// The versioned name means this build ignores `srvbox_bak.json` from then
-  /// on; a device still on an older build keeps updating it, and the two
-  /// histories diverge from here. That divergence is the cost of not letting
-  /// those builds overwrite data they cannot read — see the note at
-  /// `Paths.init`.
+  /// The versioned name means this build ignores the older names from then
+  /// on; a device still on an older build keeps updating its own, and the
+  /// two histories diverge until it is updated and merges this build's file
+  /// with what it has. That divergence is the cost of not letting those
+  /// builds overwrite data they cannot read — see the note at `Paths.init`.
   ///
   /// A no-op once the versioned file exists remotely, so it runs at most once
   /// per remote. An attempt is memoized for the same reason within a launch: a
@@ -232,7 +311,7 @@ final class BakSyncer extends SyncIface {
   /// next call may well have somewhere to look — and memoizing it would turn
   /// "not yet" into "never" for the rest of the launch.
   ///
-  /// TODO: remove with the rest of the v2 compatibility shims.
+  /// TODO: remove with the rest of the v2/v3 compatibility shims.
   Future<void> inheritLegacyRemote() {
     final rs = remoteStorage;
     if (rs == null) return Future.value();
@@ -242,18 +321,15 @@ final class BakSyncer extends SyncIface {
   Future<void> _inheritLegacyRemote(RemoteStorage rs) async {
     try {
       if (await rs.exists(Paths.bakName)) return;
-      if (!await rs.exists(Miscs.legacyBakFileName)) return;
-
-      final localPath = Paths.doc.joinPath(Miscs.legacyBakFileName);
-      await rs.download(
-        relativePath: Miscs.legacyBakFileName,
-        localPath: localPath,
-      );
-      final mergeable = await fromFile(localPath);
-      await mergeable.merge();
-      Loggers.app.info(
-        'Inherited sync history from ${Miscs.legacyBakFileName}',
-      );
+      for (final name in Miscs.legacyBakFileNames) {
+        if (!await rs.exists(name)) continue;
+        final localPath = Paths.doc.joinPath(name);
+        await rs.download(relativePath: name, localPath: localPath);
+        final mergeable = await fromFile(localPath);
+        await mergeable.merge();
+        Loggers.app.info('Inherited sync history from $name');
+        return;
+      }
     } catch (e, s) {
       // Best-effort: failing to inherit leaves the user with an empty remote
       // they can populate by syncing, which is recoverable. Failing loudly
@@ -332,8 +408,20 @@ final class BakSyncer extends SyncIface {
 
     if (monitorSync.get()) return monitorStorage;
 
+    if (Lkc.enabled && lkcSync.get() && Lkc.client.signedIn) return lkcStorage;
+
     return null;
   }
+
+  /// Whether the backup syncs to LK Cloud, as the signed-in account. Beside
+  /// [monitorSync] for the same reasons. Key is permanent.
+  static const lkcSync = PrefPropDefault(
+    'lkc_sync',
+    false,
+    updateLastUpdateTsOnSetProp: false,
+  );
+
+  static final lkcStorage = LkcRemoteStorage(Lkc.client, Lkc.app);
 
   /// Whether the backup syncs to one of this app's own monitor agents, and to
   /// which server's. Device-local prefs like the other three switches, and

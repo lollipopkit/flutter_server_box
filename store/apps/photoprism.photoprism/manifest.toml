@@ -1,0 +1,112 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# PhotoPrism: deployed with Docker Compose from compose.yaml beside this file,
+# shown in a desk window through the agent.
+
+schema = 1
+publisher = "photoprism"
+name = "photoprism"
+project = "PhotoPrism"
+developer = "PhotoPrism"
+version = "261007-65faaae5d"
+homepage = "https://www.photoprism.app"
+source = "https://github.com/photoprism/photoprism/tree/261007-65faaae5d"
+glyph = "photo_library"
+tone = "sky"
+categories = ["photos", "media"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "PhotoPrism"
+
+[description]
+en = "Browse, search and organise a photo and video library in the folder you choose: faces, places, labels and duplicates found on this machine, nothing sent out."
+zh = "浏览、搜索和整理你选择的文件夹中的照片与视频库：人脸、地点、标签和重复项都在本机识别，不向外发送任何内容。"
+zh-TW = "瀏覽、搜尋和整理你選擇的資料夾中的相片與影片庫：人臉、地點、標籤和重複項都在本機辨識，不向外傳送任何內容。"
+
+[license]
+spdx = "AGPL-3.0"
+url = "https://github.com/photoprism/photoprism/blob/261007-65faaae5d/LICENSE"
+accept = true
+
+[requirements]
+memory_min_mib = 2048
+memory_recommended_mib = 4096
+arch = ["amd64", "arm64"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+PHOTOPRISM_TAG = "261007"
+MARIADB_VERSION = "12.3"
+
+[[secrets]]
+env = "PHOTOPRISM_ADMIN_PASSWORD"
+length = 32
+
+[[secrets]]
+env = "MARIADB_PASSWORD"
+length = 32
+
+[[secrets]]
+env = "MARIADB_ROOT_PASSWORD"
+length = 32
+
+[login]
+user = "admin"
+password = "PHOTOPRISM_ADMIN_PASSWORD"
+note = { en = "The password is set when PhotoPrism is first set up; change it later in Settings → Account. Put photos in its folder, then Library → Index.", zh = "密码在首次部署时设置，之后请在 Settings → Account 中修改。把照片放进它的文件夹后，在 Library → Index 中建立索引。", zh-TW = "密碼在首次部署時設定，之後請在 Settings → Account 中修改。把相片放進它的資料夾後，在 Library → Index 中建立索引。" }
+
+[[settings]]
+key = "originals"
+type = "path"
+env = "PHOTOPRISM_ORIGINALS"
+default = "{shared}/photos"
+label = { en = "Photo library", zh = "照片库", zh-TW = "相片庫" }
+help = { en = "The original photos and videos, indexed where they are.", zh = "原始照片和视频，在原位置建立索引。", zh-TW = "原始相片和影片，在原位置建立索引。" }
+
+[[settings]]
+key = "storage"
+type = "path"
+env = "PHOTOPRISM_STORAGE"
+default = "{stack}/storage"
+data = true
+label = { en = "Cache, thumbnails and backups", zh = "缓存、缩略图和备份", zh-TW = "快取、縮圖和備份" }
+
+[[settings]]
+key = "db"
+type = "path"
+env = "PHOTOPRISM_DB"
+default = "{stack}/database"
+data = true
+label = { en = "Database", zh = "数据库", zh-TW = "資料庫" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "PHOTOPRISM_PORT"
+default = 2342
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "For phones and WebDAV. Off: only through the desk.", zh = "供手机和 WebDAV 使用。关闭时只能通过桌面访问。", zh-TW = "供手機和 WebDAV 使用。關閉時只能透過桌面存取。" }
+on = { PHOTOPRISM_BIND = "0.0.0.0" }
+off = { PHOTOPRISM_BIND = "127.0.0.1" }
+
+[[settings]]
+key = "url"
+type = "text"
+env = "PHOTOPRISM_URL"
+default = "http://localhost:2342/"
+pattern = '^https?://[A-Za-z0-9.:\[\]-]+(/[A-Za-z0-9._~/-]*)?$'
+label = { en = "Public address", zh = "公开地址", zh-TW = "公開位址" }
+help = { en = "The address PhotoPrism's share links name. Set it when it is reachable from the network.", zh = "PhotoPrism 分享链接使用的地址。允许从网络访问时请设置。", zh-TW = "PhotoPrism 分享連結使用的位址。允許從網路存取時請設定。" }

@@ -1,8 +1,6 @@
 //! `/api/v1/system-users` — the accounts of the machine the agent runs on, one
 //! account's own records, and the create, change or removal of one.
 //!
-//! Not `/users`, which is this agent's own accounts (`api/admin.rs`).
-//!
 //! # Why this is not `/exec`
 //!
 //! Which files an account is, how a group membership is derived from two of
@@ -29,7 +27,7 @@
 //!
 //! # Privilege
 //!
-//! The `shell` grant for both halves (`api::machine::gate`): a listing shows
+//! The transport rule, both ways (`api::machine::gate`): a listing shows
 //! every account and the shadow records the agent's user can read, and anyone
 //! who can open a shell can run `useradd` in it. The reads run as the agent's
 //! own user, and the detail says which parts it could not read rather than
@@ -38,6 +36,7 @@
 //! written to sudo's stdin, and the account's own inside the script, which
 //! then goes through `machine::as_root_private` rather than a command line.
 
+use crate::api::WebError;
 use std::sync::Arc;
 
 use ntex::web::{self, HttpRequest, HttpResponse};
@@ -53,7 +52,6 @@ use sbm_parser::users::{
 use super::machine;
 use super::server::AppState;
 use super::ws::audit::{Action, Event, Kind, Outcome};
-use crate::core::permissions::Grant;
 use crate::monitoring::system_type;
 
 /// The listing reads both catalogs whole, and on a machine wired to a directory
@@ -186,8 +184,8 @@ pub async fn list(
     req: HttpRequest,
     query: web::types::Query<UserQuery>,
     state: Arc<AppState>,
-) -> Result<HttpResponse, crate::api::WebError> {
-    if let Err(refused) = machine::gate(&req, &state, Grant::Shell, "system-users list").await {
+) -> Result<HttpResponse, WebError> {
+    if let Err(refused) = machine::gate(&req, &state, "system-users list").await {
         return Ok(refused);
     }
     let part = query.part.unwrap_or_default();
@@ -259,18 +257,17 @@ pub async fn act(
     req: HttpRequest,
     body: web::types::Json<UserActRequest>,
     state: Arc<AppState>,
-) -> Result<HttpResponse, crate::api::WebError> {
+) -> Result<HttpResponse, WebError> {
     let request = body.into_inner();
     // The action and the account, never a field's value or a password.
     let what = format!("system-users {}", request.subject());
-    let gated = match machine::gate(&req, &state, Grant::Shell, &what).await {
+    let gated = match machine::gate(&req, &state, &what).await {
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),
     };
     let exec = &state.remote_access.exec;
     let record = |action, outcome, detail: Option<&str>| {
         Event::new(Kind::Machine, action, outcome)
-            .subject(&gated.caller.username)
             .remote_ip(gated.remote_ip.clone())
             .detail(match detail {
                 Some(detail) => format!("{what}: {detail}"),

@@ -15,6 +15,8 @@ import 'package:server_box/app.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/lkc.dart';
+import 'package:server_box/core/lkc_log_sync.dart';
+import 'package:server_box/core/lkc_sync.dart';
 import 'package:server_box/core/llm/host.dart';
 import 'package:server_box/core/motion.dart';
 import 'package:server_box/core/service/crash_report.dart';
@@ -38,6 +40,7 @@ import 'package:server_box/data/ssh/session_manager.dart';
 import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/migrations/build_features.dart';
 import 'package:server_box/data/store/schema.dart';
+import 'package:server_box/data/store/sync_recorder.dart';
 import 'package:server_box/data/store/tables.dart';
 import 'package:server_box/hive/hive_registrar.g.dart';
 import 'package:server_box/hive/legacy_adapters.dart';
@@ -194,13 +197,15 @@ Future<void> _initApp(ProviderContainer container) async {
   // only leave empty directories beside the boxes.
   //
   // `bakName` is versioned on purpose. Sync is a single shared file on
-  // iCloud/WebDAV/Gist, and `SyncIface._sync` uploads unconditionally after a
-  // failed merge — so a build that cannot read the remote copy overwrites it.
-  // Builds already released have no version check and cannot be given one, and
-  // the only thing that stops them is not seeing the file at all.
+  // iCloud/WebDAV/Gist/a monitor agent, and a build that cannot read the
+  // remote copy must never overwrite it. `SyncIface._sync` returns before
+  // uploading when the merge fails, but a release that predates a format has
+  // no version check and cannot be given one: the only thing certain to stop
+  // it is not seeing the file at all. Each format is a name: v3 the nested
+  // `Spi`, v4 the age envelope.
   //
-  // TODO: drop the legacy name (and `BakSyncer.inheritLegacyRemote`) once no
-  // install can still be writing `srvbox_bak.json`.
+  // TODO: drop the legacy names (and `BakSyncer.inheritLegacyRemote`) once no
+  // install can still be writing them.
   await Paths.init(
     BuildData.name,
     bakName: Miscs.bakFileName,
@@ -344,9 +349,6 @@ Future<void> _initData() async {
   unawaited(TerminalFont.load(Stores.setting.fontPath.fetch()));
   await ThemePackages.prepareSelectedTheme();
   ThemePackages.reconcileSelection();
-  // Not awaited: a bundled theme is one more choice in the picker, and the
-  // first frame does not wait for it.
-  unawaited(ThemePackages.seedBundled());
   await AppFont.loadStored();
 }
 
@@ -474,8 +476,17 @@ Future<void> _doPlatformRelated() async {
     );
   }
 
-  // Off the launch path: it reads the keychain and asks homebase who is signed in.
-  if (Lkc.enabled) unawaited(Lkc.init());
+  // Off the launch path: it reads the keychain and asks homebase who is signed
+  // in. LK Cloud sync waits for the session; its first connection syncs.
+  if (Lkc.enabled) {
+    unawaited(
+      Lkc.init().then((_) {
+        LkcLogSync.init();
+        LkcSyncWatch.init();
+      }),
+    );
+  }
+  BakSyncer.watchEdits(() => bakSync.syncSoon());
   unawaited(KeyPassphrases.init());
 
   // The watch app used to learn about servers only while the user sat on the
@@ -534,6 +545,15 @@ Future<void> _doPlatformRelated() async {
 
 // It may contains some async heavy funcs.
 Future<void> _doDbMigrate() async {
+  // fl_lib's Rust stamps synced changes (`SyncRecorder`), and the storage step
+  // below seeds those stamps (`m033`). Without it nothing is stamped and the
+  // app still starts.
+  try {
+    await FlRust.ensureInitialized();
+  } catch (e, s) {
+    Loggers.app.warning('fl_lib Rust', e, s);
+  }
+
   // Storage layout first: it must finish before anything decodes a record as
   // its current type. Throws SchemaTooNewException when the data was written
   // by a newer build — that must not be swallowed, since continuing would let
@@ -546,6 +566,7 @@ Future<void> _doDbMigrate() async {
   // exactly the settings the refusal exists to protect.
   await SchemaVersion.migrate(kSchemaMigrations);
   Diag.tag(SbDiagTag.schema, '${SchemaVersion.current}');
+  SyncRecorder.install();
 
   migrateBuildFeatures(BuildData.build);
 

@@ -1,0 +1,76 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Gotify: deployed with Docker Compose from compose.yaml beside this file,
+# shown in a desk window through the agent.
+
+schema = 1
+publisher = "gotify"
+name = "gotify"
+project = "Gotify"
+developer = "Gotify"
+version = "3.1.1"
+homepage = "https://gotify.net"
+source = "https://github.com/gotify/server/tree/v3.1.1"
+glyph = "notifications_active"
+tone = "sky"
+categories = ["tools", "network"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Gotify"
+
+[description]
+en = "Push notifications from your scripts and services to your phone and browser: each sender is an application with its own token, sending with one HTTP request."
+zh = "从你的脚本和服务向手机和浏览器推送通知：每个发送方是一个拥有独立令牌的应用，一个 HTTP 请求即可发送。"
+zh-TW = "從你的腳本和服務向手機和瀏覽器推送通知：每個傳送方是一個擁有獨立權杖的應用，一個 HTTP 請求即可傳送。"
+
+[license]
+spdx = "MIT"
+url = "https://github.com/gotify/server/blob/v3.1.1/LICENSE"
+
+[requirements]
+arch = ["amd64", "arm64", "arm"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+GOTIFY_VERSION = "3.1.1"
+
+[[secrets]]
+env = "GOTIFY_PASSWORD"
+length = 32
+
+[login]
+user = "admin"
+password = "GOTIFY_PASSWORD"
+note = { en = "The password is set when Gotify is first set up; change it later in Gotify itself. The Android app and other senders need it reachable from the network.", zh = "密码在首次部署时设置，之后请在 Gotify 中修改。Android 应用和其他发送方需要开启“允许从网络访问”。", zh-TW = "密碼在首次部署時設定，之後請在 Gotify 中修改。Android 應用程式和其他傳送方需要開啟「允許從網路存取」。" }
+
+[[settings]]
+key = "data"
+type = "path"
+env = "GOTIFY_DATA"
+default = "{stack}/data"
+data = true
+label = { en = "Data", zh = "数据", zh-TW = "資料" }
+help = { en = "The database, uploaded images and plugins.", zh = "数据库、上传的图片和插件。", zh-TW = "資料庫、上傳的圖片和外掛程式。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "GOTIFY_PORT"
+default = 8070
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "For the phone app and senders on other machines. Off: only through the desk.", zh = "供手机应用和其他机器上的发送方使用。关闭时只能通过桌面访问。", zh-TW = "供手機應用程式和其他機器上的傳送方使用。關閉時只能透過桌面存取。" }
+on = { GOTIFY_BIND = "0.0.0.0" }
+off = { GOTIFY_BIND = "127.0.0.1" }

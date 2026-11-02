@@ -18,26 +18,18 @@ import 'package:server_box/data/provider/server/monitor_http.dart';
 /// about what a path means is how they stop agreeing, and the one that matters
 /// is the end holding the filesystem.
 class MonitorFileBackend implements FileBackend {
-  /// Acquires a shared session for [monitor].
-  ///
-  /// File backends with the same credential share login, roots discovery, and
-  /// Dio's connection pool. The reference-counted session is still separate
-  /// from status polling, whose lifetime belongs to `ServerNotifier`.
+  /// Leases the shared session for [monitor] ([MonitorClientLease]).
   MonitorFileBackend(
     MonitorHttpCredential monitor, {
     bool permissions = false,
-    this.readOnly = false,
   }) : _permissions = permissions,
-       _shared = _SharedMonitorClient.acquire(monitor);
+       _lease = MonitorClientLease(monitor);
 
-  final _SharedMonitorClient _shared;
+  final MonitorClientLease _lease;
   final bool _permissions;
-
-  /// The account's `files` grant is read-only — see [FileBackendTraits.readOnly].
-  final bool readOnly;
   bool _closed = false;
 
-  MonitorHttpClient get _client => _shared.client;
+  MonitorHttpClient get _client => _lease.client;
 
   @override
   FileBackendTraits get traits => FileBackendTraits(
@@ -46,7 +38,6 @@ class MonitorFileBackend implements FileBackend {
     // Nowhere to escalate to. The agent runs as one account and offers no way
     // to ask for another; what it will not do, it will not do.
     sudoFallback: false,
-    readOnly: readOnly,
   );
 
   /// The agent's own answer, cached for the life of this backend.
@@ -150,7 +141,7 @@ class MonitorFileBackend implements FileBackend {
   Future<void> close() async {
     if (_closed) return;
     _closed = true;
-    _shared.release();
+    _lease.release();
   }
 
   static FileEntry _entryOf(Map<String, dynamic> json) {
@@ -172,32 +163,5 @@ class MonitorFileBackend implements FileBackend {
       mode: (json['mode'] as num?)?.toInt(),
       linkTarget: json['link_target'] as String?,
     );
-  }
-}
-
-final class _SharedMonitorClient {
-  _SharedMonitorClient(this.monitor) : client = MonitorHttpClient(monitor);
-
-  static final _clients = <MonitorHttpCredential, _SharedMonitorClient>{};
-
-  final MonitorHttpCredential monitor;
-  final MonitorHttpClient client;
-  int _references = 0;
-
-  static _SharedMonitorClient acquire(MonitorHttpCredential monitor) {
-    final shared = _clients.putIfAbsent(
-      monitor,
-      () => _SharedMonitorClient(monitor),
-    );
-    shared._references++;
-    return shared;
-  }
-
-  void release() {
-    if (_references == 0) return;
-    _references--;
-    if (_references != 0) return;
-    if (identical(_clients[monitor], this)) _clients.remove(monitor);
-    client.dispose();
   }
 }

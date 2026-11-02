@@ -1,0 +1,27 @@
+{
+  // The first-party desk apps' UIs (`*/ui`, `common/ui`), checked with the
+  // panel's dependencies: `cd monitor/frontend && npm run check:apps`.
+  "extends": "../frontend/node_modules/@tsconfig/svelte/tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "typeRoots": ["../frontend/node_modules/@types", "../frontend/node_modules"],
+    "types": ["svelte", "vite/client"],
+    "paths": {
+      "$lk/*": ["../frontend/src/desk/lk/*"],
+      "$common/*": ["./common/ui/*"],
+      "serverbox-desk": ["../sdk/serverbox-desk/src/index.ts"],
+      "svelte": ["../frontend/node_modules/svelte"],
+      "svelte/*": ["../frontend/node_modules/svelte/src/*"]
+    }
+  },
+  "include": ["*/ui/**/*.ts", "*/ui/**/*.svelte"]
+}

@@ -612,7 +612,7 @@ pub struct CronDocument {
 
 impl CronDocument {
     pub fn parse(raw: &str) -> Self {
-        let normalized = raw.replace("\r\n", "\n").replace('\r', "\n");
+        let normalized = crate::common::normalize_newlines(raw);
         let mut lines: Vec<String> = if normalized.is_empty() {
             Vec::new()
         } else {
@@ -902,7 +902,7 @@ pub struct CronCatalog {
 /// — a login banner or a shell that echoed something first would otherwise be
 /// read as crontab content and then written back as such.
 pub fn parse_list(output: &str) -> Result<CronCatalog, CronParseError> {
-    let normalized = output.replace("\r\n", "\n").replace('\r', "\n");
+    let normalized = crate::common::normalize_newlines(output);
     let body_marker = format!("{MARKER_BODY}\n");
     let body_start = normalized
         .find(&body_marker)

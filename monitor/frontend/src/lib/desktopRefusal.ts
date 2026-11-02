@@ -3,11 +3,12 @@
 /// editor applies too) and the set's own (`api::desktops::Refusal`). A code
 /// this build does not know is shown as the agent sent it.
 import { get } from 'svelte/store'
+import { errorText } from './errorText'
 import { LL } from '../i18n/i18n-svelte'
 import { ApiError } from './api'
 
 export function desktopRefusalText(e: unknown): string {
-  if (!(e instanceof ApiError)) return e instanceof Error ? e.message : String(e)
+  if (!(e instanceof ApiError)) return errorText(e)
   const ll = get(LL)
   switch (e.message) {
     case 'invalidId':

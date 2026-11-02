@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/secure_endpoint.dart';
 
 void main() {
-  test('remote Monitor HTTP needs an explicit opt-in', () {
+  test('a remote Monitor Agent needs an explicit opt-in', () {
     final remote = Uri.parse('http://100.64.0.10:3770');
     expect(isSecureRemoteEndpoint(remote), isFalse);
     expect(

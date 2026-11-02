@@ -1,0 +1,78 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Mealie, a recipe manager: deployed with Docker Compose from compose.yaml
+# beside this file, shown in a desk window through the agent.
+
+schema = 1
+publisher = "mealie"
+name = "mealie"
+project = "Mealie"
+developer = "Mealie"
+version = "3.28.0"
+homepage = "https://mealie.io"
+source = "https://github.com/mealie-recipes/mealie/tree/v3.28.0"
+glyph = "restaurant"
+tone = "leaf"
+categories = ["home", "productivity"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Mealie"
+
+[description]
+en = "Keep your recipes, import them from any site by URL, and plan meals and shopping lists for your household."
+zh = "保存菜谱，通过网址从任意网站导入，并为家庭规划餐食和购物清单。"
+zh-TW = "保存食譜，透過網址從任意網站匯入，並為家庭規劃餐點和購物清單。"
+
+[license]
+spdx = "AGPL-3.0"
+url = "https://github.com/mealie-recipes/mealie/blob/v3.28.0/LICENSE"
+accept = true
+
+[requirements]
+arch = ["amd64", "arm64"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+jobs = ["seed-password"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+MEALIE_VERSION = "v3.28.0"
+
+[[secrets]]
+env = "MEALIE_ADMIN_PASSWORD"
+length = 32
+
+[login]
+user = "changeme@example.com"
+password = "MEALIE_ADMIN_PASSWORD"
+note = { en = "Mealie's first account; change its email in the user settings.", zh = "这是 Mealie 的第一个账号，可在用户设置中修改其邮箱。", zh-TW = "這是 Mealie 的第一個帳號，可在使用者設定中修改其電子郵件。" }
+
+[[settings]]
+key = "data"
+type = "path"
+env = "MEALIE_DATA"
+default = "{stack}/data"
+data = true
+label = { en = "Data", zh = "数据", zh-TW = "資料" }
+help = { en = "The database, recipe images and backups.", zh = "数据库、菜谱图片和备份。", zh-TW = "資料庫、食譜圖片和備份。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "MEALIE_PORT"
+default = 9925
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "For phones in the kitchen. Off: only through the desk.", zh = "供厨房里的手机访问。关闭时只能通过桌面访问。", zh-TW = "供廚房裡的手機存取。關閉時只能透過桌面存取。" }
+on = { MEALIE_BIND = "0.0.0.0" }
+off = { MEALIE_BIND = "127.0.0.1" }

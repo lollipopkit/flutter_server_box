@@ -1,0 +1,31 @@
+# llama.cpp's GPU backends, written for ServerBox Monitor from llama.cpp's
+# Docker page (github.com/ggml-org/llama.cpp/blob/master/docs/docker.md). One
+# service per option, each option also picking the image built for it;
+# compose.yaml extends the one the admin chose.
+
+services:
+  cpu: {}
+
+  nvidia:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  rocm:
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
+    group_add:
+      - video
+      - "${SBM_RENDER_GID}"
+
+  # Intel, AMD or any GPU with a Vulkan driver, through its render node.
+  vulkan:
+    devices:
+      - /dev/dri:/dev/dri
+    group_add:
+      - "${SBM_RENDER_GID}"

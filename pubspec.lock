@@ -42,7 +42,7 @@ packages:
     source: hosted
     version: "2.0.3"
   archive:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: archive
       sha256: "0d58d1fa1fddf6588251ccf2819f3fb3b6d0452c1b2813ac7413a05592bfbefe"
@@ -723,7 +723,7 @@ packages:
     source: hosted
     version: "1.0.5"
   flutter_math_fork:
-    dependency: "direct overridden"
+    dependency: transitive
     description:
       name: flutter_math_fork
       sha256: "6d5f2f1aa57ae539ffb0a04bb39d2da67af74601d685a161aff7ce5bda5fa407"

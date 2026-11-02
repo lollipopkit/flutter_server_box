@@ -94,7 +94,7 @@ dependencies:
 - `fl_build/`: Cross-platform build tool
 - Other platform plugins and component packages
 
-`packages/webui/` is shared by the Monitor panel and project website. This
+`packages/webui/` is used by the project website. This
 Svelte package provides UI primitives and design tokens.
 
 ## Rust workspace

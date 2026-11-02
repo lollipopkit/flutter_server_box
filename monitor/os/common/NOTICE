@@ -1,0 +1,19 @@
+sbOS
+
+sbOS is ServerBox Monitor and Docker on a Linux distribution: Alpine Linux
+(sbOS musl) or Debian (sbOS GNU). It is not affiliated with, sponsored or
+endorsed by the Alpine Linux project or the Debian project. Debian is a
+registered trademark owned by Software in the Public Interest, Inc.
+
+The distribution's packages are included unmodified, each under its own
+licence (its copyright file under /usr/share/doc, or its package's licence).
+Each image is published with <image>.packages.txt, which lists every package
+and version it carries and where their sources are kept:
+
+  sbOS musl: Alpine's aports at the commit named there, and
+             https://distfiles.alpinelinux.org/distfiles/
+  sbOS GNU:  https://snapshot.debian.org/ at the date named there
+
+ServerBox Monitor is licensed under the GNU Affero General Public License,
+version 3; its source is https://github.com/lollipopkit/flutter_server_box
+(monitor/, and monitor/os/ for how these images are built).

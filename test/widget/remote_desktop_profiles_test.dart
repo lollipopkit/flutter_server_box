@@ -339,7 +339,7 @@ void main() {
       await tester.pumpAndSettle();
       final restingX = tester.getTopLeft(editor).dx;
       expect(restingX, lessThan(startingX));
-      await tester.tap(find.byTooltip('Back'));
+      await tester.tap(find.byTooltip(const DefaultMaterialLocalizations().backButtonTooltip));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
       expect(tester.getTopLeft(editor).dx, greaterThan(restingX));

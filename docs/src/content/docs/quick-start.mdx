@@ -23,10 +23,10 @@ Use the Monitor instead when opening an SSH port is inconvenient:
 
 1. Install and configure the [Monitor](/docs/advanced/monitor-agent/) on the server.
 2. Enable **Monitor HTTP** on the Add Server page.
-3. Enter the Monitor URL, panel username, and password. If the Monitor uses a self-signed certificate, enable **Monitor Ignore certificate** only when needed.
+3. Enter the Monitor URL and its password. If the Monitor uses a self-signed certificate, enable **Monitor Ignore certificate** only when needed.
 4. Save the configuration.
 
-SSH and Monitor HTTP can be enabled together. When both are configured, **Preferred transport** only controls which connection the App tries first; the other remains available. A server configured only through Monitor HTTP has no SSH credentials, and its command, terminal, and file features depend on the permissions enabled by the Monitor.
+SSH and Monitor HTTP can be enabled together. When both are configured, **Preferred transport** only controls which connection the App tries first; the other remains available. A server configured only through Monitor HTTP has no SSH credentials, and its command, terminal, and file features reach what the system account running the Monitor can reach.
 
 ## Step 2: Connect and view status
 
@@ -39,8 +39,8 @@ A server using the Monitor can show history collected before the App connected. 
 
 After connecting, you can:
 
-- **Open the terminal**: SSH connections can open the terminal directly. For Monitor HTTP, the account's role must include the `shell` permission.
-- **Browse files**: SSH connections use SFTP. Monitor HTTP connections use the Monitor's file API, which requires the account role's `files` permission and configured `[remote_access.fs].roots`.
+- **Open the terminal**: SSH connections can open the terminal directly. Monitor HTTP connections open a shell as the account the Monitor runs as.
+- **Browse files**: SSH connections use SFTP. Monitor HTTP connections use the Monitor's file API.
 - **Manage containers**: View and control Docker or Podman containers.
 - **View processes**: Inspect running processes.
 - **Run snippets**: Execute saved commands.

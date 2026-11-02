@@ -32,24 +32,24 @@ New features do not change the protocol version; they are listed in `features`.
 ## Capability discovery
 
 The App calls `GET /api/v1/capabilities` to learn which features a Monitor
-supports and what the signed-in account may use. The response answers for the
-caller:
+supports and whether the signed-in caller may use them. The response includes:
 
-- `me`: `username`, `role`, and `admin`. A watch token gets no `me`.
-- `grants`: one entry for each of `shell`, `ssh_terminal`, `files`,
-  `connect`, and `listen`, with `ok` and, when it is not usable, `why`:
-  `not_granted` (the role does not hold it), `insecure_transport` (it needs
-  TLS, a loopback caller, or `[remote_access] allow_insecure`), or
-  `not_configured` (`files` with no `roots`). A grant also carries its
-  options: `files.mode`, `connect.allow`, `listen.public`, and
-  `listen.ports`. For a watch token every grant is `not_granted`.
-- `remote_access`: the booleans that Monitor versions before roles
-  reported, derived from `grants` for older Apps (`terminal` is `ssh_terminal` or `shell`,
-  `full_access` is `shell`, `stream` is `connect`). The App reads `grants`
-  when it is present.
-
-TODO: Remove the legacy `remote_access` response when the minimum supported
-App version reads `grants`.
+- `access`: `ok`, and when it is false, `why`. `insecure_transport` means
+  the request needs TLS, a loopback caller, or
+  `[remote_access] allow_insecure`. For a watch token `access` is
+  `{"ok": false}`.
+- `features`: the machine-management endpoints the Monitor serves, such as
+  `power`. A client offers a page when its name is listed and `access.ok`.
+  `container_exec`, `iperf`, and `tmux` are terminal targets rather than
+  pages; each is offered only where it is listed. `alerts`, `audit`, and
+  `live` are the Monitor tab's sections (`GET /alerts`, `GET /audit`,
+  `/live*`), and `desk` its notifications. `update` is `GET /update`: the
+  Monitor's version, the newest release it read (`?check=1` reads again),
+  `outdated`, how it was installed (`install`: `script`, `container`, `nix`,
+  `other`) and, for `script`, the `command` that updates it, whether starting
+  it needs the sudo password, and the last update's `run` (state and output).
+  `POST /update/run` starts it apart from the Monitor, which survives the
+  Monitor's restart.
 
 Do not infer feature availability from the Monitor version or configuration
 defaults. Use the capabilities response from the running Monitor.
@@ -82,104 +82,107 @@ now. The App includes `minutes` in each request, so Monitor versions that predat
 
 ## Access model
 
-Each account has one role, and a role holds grants. The full contract,
-including every request and response shape, is
-[docs/dev/monitor-permissions.md](https://github.com/lollipopkit/flutter_server_box/blob/main/docs/dev/monitor-permissions.md) in the repository.
-
-| Grant | Endpoints |
-|---|---|
-| `shell` | `POST /api/v1/exec`, the App's terminal (a local PTY on `/api/v1/terminal/ws`), running custom commands |
-| `ssh_terminal` | The web panel's terminal on `/api/v1/terminal/ws`, which signs in to `ssh_addr` with SSH credentials |
-| `files` | `/api/v1/fs/*`; `mode = "read"` allows `roots`, `list`, `stat`, and `read` only |
-| `connect` | `open` on `/api/v1/stream/ws`, checked against `allow` |
-| `listen` | `/api/v1/listen/ws`, and `accept` on `/api/v1/stream/ws` |
+The Monitor has one account, signed in with its password alone, and it may do
+whatever the system account the Monitor runs as may do. There are no roles,
+grants, or file roots. The Monitor, the web panel, and the App share the
+contract below.
 
 Reading status, metrics, history, velocity, capabilities, and the card order
-needs any account or a watch token. A watch token can do nothing else.
+needs a login or a watch token. A watch token can do nothing else; every other
+endpoint answers it `401`.
 
-### Accounts and roles
-
-Only an account in the `admin` role may call these, apart from the two `/me`
-routes, which any account may call:
+### Signing in and the password
 
 | Endpoint | Body |
 |---|---|
-| `GET /api/v1/me` | — answers `username` and the full `role` |
-| `PUT /api/v1/me/password` | `current_password`, `new_password` (at least 8 characters) |
-| `GET /api/v1/users` | — |
-| `POST /api/v1/users` | `username`, `password`, `role`, `current_password` |
-| `PUT /api/v1/users/{username}` | optional `role` and `password`, `current_password` |
-| `DELETE /api/v1/users/{username}` | `current_password` |
-| `GET /api/v1/roles` | — |
-| `POST /api/v1/roles` | `role`, `current_password` |
-| `PUT /api/v1/roles/{name}` | `role`, `current_password` |
-| `DELETE /api/v1/roles/{name}` | `current_password` |
+| `POST /api/v1/login` | `password`, `device` (optional), `name` (optional); a `username` field is ignored. Answers `token` and, for a device the Monitor does not know, a new `device` token |
+| `PUT /api/v1/me/password` | `current_password`, `new_password` (at least 8 characters); answers `204` |
 
-`current_password` is the calling admin's own password. It goes through the
-login throttle, so a run of wrong ones answers `429 throttled` with
-`Retry-After`. The Monitor's settings (`/settings`, `/push`, `/push/test`,
-`PUT /card-order`) are admin-only as well, and `PUT /custom-cmds` also needs a
-usable `shell`, because the Monitor runs custom commands.
+A client keeps the `device` token per Monitor (the App in the Keychain or
+Keystore, the panel in `localStorage`) and sends it with every later sign-in.
+`name` is what the device is listed as under `GET /live`, else its User-Agent:
+at most 80 characters, control characters dropped. Every sign-in, accepted or
+refused, is an audit row (`login`, the address, and `device known`,
+`new device`, `wrong password` or `throttled`); it never holds the password or
+a token.
+
+Sign-ins are throttled per source address and per caller: a known device (its
+token is kept as a SHA-256 for 180 days since last use, the newest 64) on its
+own counter, every other client on one shared counter, and a signed-in caller
+entering the password again on a counter only such callers share. Failures
+from unknown clients therefore cannot lock out a device that signed in before.
+Three failures pass per address and per device, twenty on the shared counter;
+then the delay doubles from 1 s up to 5 min. A password change forgets every
+device.
+
+`server_box_monitor password` sets the password on the database from the
+command line (`--password-env VAR` reads it from the environment), creating
+the account if there is none.
+
+Some changes ask for the current password again in the body
+(`current_password`): changing the password, deploying a web app, changing its
+settings or removing it, revealing its first login, restoring or deleting a
+container backup, and approving or removing a desk app. It goes through the
+login throttle described above. A wrong or missing one answers `403 reauth`; a run of wrong ones
+answers `429 throttled` with `Retry-After`.
 
 Errors are `{"error": "<code>", "message": "..."}`:
 
 | Code | Status | Meaning |
 |---|---|---|
-| `bad_request` | 400 | The body has the wrong shape, including an unknown grant |
-| `unauthorized` | 401 | No valid login; a deleted account's token gets this everywhere |
-| `forbidden` | 403 | Not an admin, or the role lacks the grant |
+| `bad_request` | 400 | The body has the wrong shape |
+| `unauthorized` | 401 | No valid login, a token issued before the last password change, or a watch token outside its scope |
+| `forbidden` | 403 | The transport rule refuses it |
 | `reauth` | 403 | `current_password` is missing or wrong |
-| `not_found` | 404 | No such account or role |
-| `conflict` | 409 | The name exists, or the role is still in use |
-| `last_admin` | 409 | The change would leave no admin account |
+| `throttled` | 429 | Too many failed attempts |
+| `not_found` | 404 | An unknown `/api/v1/*` path |
 
-### Live sessions
+### Password change
 
-A change to an account or a role applies immediately. A terminal, relay, or
-listener whose account no longer holds the grant it needs receives
-`{"type":"error","code":"permission_revoked"}` and is closed. A WebSocket
-request that needs a grant the account lacks answers `forbidden`; a `listen`
-outside the role's `public` or `ports` limits answers `not_permitted`.
-The legacy `DELETE /api/v1/remote-access/full-access` removes `shell`,
-`connect`, and `listen` from every role and closes the sessions that lost a
-grant with `full_access_disabled`. TODO: Remove the endpoint once the panel's
-prompt edits roles itself.
+A password change signs out everything else. Panel tokens issued before it
+answer `401` everywhere (a token from the same second still counts, so
+signing in again right after works), watch tokens and the LK Cloud session are
+deleted, and in a running Monitor
+terminal sessions, outstanding tickets, running Agent mode tasks, web app
+windows, relays, and listeners receive
+`{"type":"error","code":"password_changed"}` and are closed. A reset from the
+command line cannot reach a running Monitor's open connections; they end when
+the Monitor restarts.
 
 ### Transport
 
-Every grant needs TLS or a loopback caller, which includes a reverse proxy on
-the same host, unless `[remote_access] allow_insecure = true`. TODO: Remove the
-legacy `allow_insecure` keys when existing configurations no longer need them.
-Until then, they cover only their previous scopes:
-`[remote_access.terminal] allow_insecure` for `shell`, `ssh_terminal`,
-`connect` and `listen`, `[remote_access.fs] allow_insecure` for `files`. A plaintext connection from the App also needs
-**Allow insecure HTTP** for that server. Without either, the grant is reported
-with `why: insecure_transport`.
+Everything beyond reading needs TLS or a loopback caller, which includes a
+reverse proxy on the same host, unless `[remote_access] allow_insecure = true`.
+TODO: Remove the legacy `allow_insecure` keys when existing configurations no
+longer need them. Until then, `[remote_access.terminal] allow_insecure` and
+`[remote_access.fs] allow_insecure` count as it. A plaintext connection from
+the App also needs **Allow insecure HTTP** for that server. Without either,
+capabilities report `access` with `why: insecure_transport`, and the
+endpoints answer `forbidden`.
 
-### Connections and listeners
+### Monitor tab endpoints
 
-`connect.allow` entries are an IP address or CIDR range with an optional port
-or port range, with IPv6 written as `[addr]:port`. When a connection names a
-host, the Monitor resolves it, requires every resulting address to be allowed,
-and dials those addresses. `localhost` often resolves to both `127.0.0.1` and
-`::1`, so a client should send the address it means.
-
-`listen` binds loopback addresses only unless `public` is on, and only ports
-inside `ports` when that is set.
+| Endpoint | Answers | Rule |
+|---|---|---|
+| `GET /api/v1/alerts` | `checked_at`, `alerts`: `rule`, `monitor_type`, `matcher`, `threshold`, `value`, `since` for each rule firing at the last check (kept in memory: a restart forgets `since`) | Any login |
+| `GET /api/v1/update[?check=1]` | `version`, `latest`, `checked_at`, `error`, `outdated`, `install`, `command`, `needs_password`, `run`. The release is read every 12 hours; `check=1` reads it again, at most once a minute. `run` is `state` (`running`, `done`, `failed`, `interrupted`), `started_at`, `exit`, `lines` | Any login |
+| `POST /api/v1/update/run` | `202`. Takes `password` (sudo's) where `needs_password`; a wrong one is `403 sudo_password`. `409 not_script` when `install.sh` did not install the Monitor, `409 running` while an update runs. Audited | Transport |
+| `GET /api/v1/audit?limit&before&kind&result` | `entries` (`id`, `timestamp`, `kind`, `action`, `result`, `subject`, `remote_ip`, `ssh_user`, `detail`), newest first, and `next` for `before`. An unknown `kind` or `result` is `400 invalid_input` | Transport |
+| `GET /api/v1/live` | `sessions`, `connections`, `watch_tokens`, `devices` | Transport |
+| `DELETE /api/v1/live/{sessions,connections,devices}/{id}` | `204`, or `404` when it is gone. An ended session or connection is told `ended`; a forgotten device is not signed out, but its next sign-in counts as an unknown client's and gets a new token. Audited | Transport |
 
 ### File API
 
-The `files` grant reaches only the directories listed in
-`[remote_access.fs] roots`. The Monitor resolves requested paths, follows
-symlinks, rejects `..`, and verifies that the resolved path remains under a
-configured root. A symlink cannot be used to escape those roots. Setting
-`roots = ["/"]` exposes the complete filesystem and triggers a startup
-warning.
+`/api/v1/fs/*` reaches whatever the Monitor's system account can, except the
+Monitor's own state: its database and journal files, `jwt.secret`, `credentials.key`,
+`initial-admin-credentials.txt`, `config.toml` and its backups, `.env`, the
+TLS certificate and key, the custom-commands directory, the blob store,
+stacks' `.env` files, and container backups. These paths are matched after
+resolving symlinks, refused with `403`, left out of listings, and their
+directories cannot be renamed, removed, or chmod-ed.
 
 ### Terminal endpoint
 
-The web-panel terminal connects to `ssh_addr` as an SSH client and uses the
-SSH account's permissions; it needs `ssh_terminal`. The App terminal uses the
-Monitor process user's local shell and needs `shell`. The endpoint's first
-message may contain an SSH password, which is why it follows the transport
-rule above.
+The terminal of the App and of the web panel is a local shell running as the
+Monitor process user, on a PTY. The Monitor does not sign in to sshd: an `open`
+carrying SSH credentials is refused.

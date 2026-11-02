@@ -153,13 +153,11 @@ List<String> scopedClientIdsFor(String serverId) => [
 /// only ever stop *handing out* a credential; the agent-side row stays valid
 /// for up to ninety days.
 ///
-/// Three ways a server moves away from its agent, and all three leave a live
-/// token behind:
+/// Two ways a server moves away from its agent, and both leave a live token
+/// behind:
 ///
 /// - its monitor configuration is removed outright;
-/// - its address changes, so the new token is minted somewhere else;
-/// - its username changes, since the agent keys `watch_tokens` by
-///   `(subject, client_id)` and the subject is the account that asked.
+/// - its address changes, so the new token is minted somewhere else.
 ///
 /// Best effort and never rethrows. A server must stay editable while its agent
 /// is offline, and once the record is written there is no retry target — the
@@ -173,8 +171,7 @@ Future<void> revokeScopedTokensLeftBehind(Spi old, Spi next) async {
   final movedOn =
       current == null ||
       normalizeAgentEndpoint(current.addr) !=
-          normalizeAgentEndpoint(previous.addr) ||
-      current.user != previous.user;
+          normalizeAgentEndpoint(previous.addr);
   if (!movedOn) return;
 
   final client = MonitorHttpClient(previous);

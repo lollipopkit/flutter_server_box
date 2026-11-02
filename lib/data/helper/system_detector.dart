@@ -3,64 +3,41 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system.dart';
+import 'package:server_box/src/rust/api/parser.dart' as ffi;
 
 /// Detects the operating system exposed by a remote SSH server.
+///
+/// The probes and what their output means are Rust's (`sbm_parser::system`);
+/// this runs them, before the status script is installed. A server reached
+/// through its agent is told by the agent itself.
 class SystemDetector {
-  /// Returns the configured system type or detects it from remote commands.
-  ///
-  /// First checks if a custom system type is configured in [spi].
-  /// If not, attempts to detect the system by running commands:
-  /// 1. 'uname -a' command to detect Linux/BSD/Darwin
-  /// 2. 'ver' command to detect Windows (if uname fails)
-  ///
-  /// Returns [SystemType.linux] as default if detection fails.
+  /// The configured system type, or the one the probes tell: `uname` first,
+  /// then Windows' `ver`. Linux when neither says.
   static Future<SystemType> detect(SSHClient client, Spi spi) async {
-    SystemType? detectedSystemType = spi.customSystemType;
-    if (detectedSystemType != null) {
-      dprint(
-        'Using custom system type ${detectedSystemType.name} for ${spi.oldId}',
-      );
-      return detectedSystemType;
+    final configured = spi.customSystemType;
+    if (configured != null) {
+      dprint('Using custom system type ${configured.name} for ${spi.oldId}');
+      return configured;
     }
 
     try {
-      // `uname` is the least invasive probe and identifies Unix-like systems.
-      final unixResult = await client.runSafe(
-        'uname -a 2>/dev/null',
-        context: 'uname detection for ${spi.oldId}',
-      );
-      if (unixResult.contains('Linux')) {
-        detectedSystemType = SystemType.linux;
-        dprint('Detected Linux system type for ${spi.oldId}');
-        return detectedSystemType;
-      } else if (unixResult.contains('Darwin') || unixResult.contains('BSD')) {
-        detectedSystemType = SystemType.bsd;
-        dprint('Detected BSD system type for ${spi.oldId}');
-        return detectedSystemType;
-      }
+      final uname = await client.runSafe(ffi.systemProbeUname(), context: 'uname detection for ${spi.oldId}');
+      final unix = SystemType.fromWire(ffi.systemFromUname(output: uname));
+      if (unix != null) return unix;
 
-      // Fall back to the Windows `ver` command when `uname` is inconclusive.
-      final powershellResult = await client.runSafe(
-        'ver 2>nul',
+      final ver = await client.runSafe(
+        ffi.systemProbeVer(),
         systemType: SystemType.windows,
         context: 'ver detection for ${spi.oldId}',
       );
-      if (powershellResult.isNotEmpty &&
-          (powershellResult.contains('Windows') ||
-              powershellResult.contains('NT'))) {
-        detectedSystemType = SystemType.windows;
-        dprint('Detected Windows system type for ${spi.oldId}');
-        return detectedSystemType;
-      }
+      final windows = SystemType.fromWire(ffi.systemFromVer(output: ver));
+      if (windows != null) return windows;
     } catch (e, stackTrace) {
-      Loggers.app.warning(
-        'System detection failed for ${spi.oldId}: $e\n$stackTrace',
-      );
+      Loggers.app.warning('System detection failed for ${spi.oldId}: $e\n$stackTrace');
     }
 
     // Preserve the historical Linux default when neither probe succeeds.
-    detectedSystemType = SystemType.linux;
     dprint('Defaulting to Linux system type for ${spi.oldId}');
-    return detectedSystemType;
+    return SystemType.linux;
   }
 }

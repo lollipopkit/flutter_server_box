@@ -1,0 +1,78 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# FreshRSS, as the Monitor's Feeds app: deployed with Docker Compose from the
+# file beside this one, shown in a desk window through the agent.
+
+schema = 1
+publisher = "freshrss"
+name = "freshrss"
+project = "FreshRSS"
+developer = "FreshRSS"
+version = "1.30.1"
+homepage = "https://freshrss.org"
+source = "https://github.com/FreshRSS/FreshRSS/tree/1.30.1"
+glyph = "rss_feed"
+tone = "amber"
+categories = ["productivity"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "FreshRSS"
+
+[description]
+en = "Follow websites and podcasts through RSS and Atom feeds, read them in one place, and sync with mobile readers."
+zh = "通过 RSS 和 Atom 订阅网站与播客，在一处阅读，并与手机阅读器同步。"
+zh-TW = "透過 RSS 和 Atom 訂閱網站與 Podcast，在一處閱讀，並與手機閱讀器同步。"
+
+[license]
+spdx = "AGPL-3.0-only"
+url = "https://github.com/FreshRSS/FreshRSS/blob/1.30.1/LICENSE.txt"
+accept = true
+
+[requirements]
+arch = ["amd64", "arm64", "arm"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+FRESHRSS_VERSION = "1.30.1-alpine"
+
+[login]
+user = "admin"
+password = "FRESHRSS_ADMIN_PASSWORD"
+note = { en = "Mobile and desktop readers sign in with an API password: set one in the app under Profile.", zh = "手机和桌面阅读器使用 API 密码登录：请在应用的“个人资料”中设置。", zh-TW = "手機和桌面閱讀器使用 API 密碼登入：請在應用的「個人檔案」中設定。" }
+
+[[secrets]]
+env = "FRESHRSS_ADMIN_PASSWORD"
+length = 32
+
+
+[[settings]]
+key = "data"
+type = "path"
+env = "DATA_LOCATION"
+default = "{stack}/data"
+data = true
+label = { en = "Data", zh = "数据", zh-TW = "資料" }
+help = { en = "Accounts, feeds and articles (SQLite).", zh = "账户、订阅源和文章（SQLite）。", zh-TW = "帳戶、訂閱來源與文章（SQLite）。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "FRESHRSS_PORT"
+default = 8080
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "Off: only through the desk.", zh = "关闭时只能通过桌面访问。", zh-TW = "關閉時只能透過桌面存取。" }
+on = { FRESHRSS_BIND = "0.0.0.0" }
+off = { FRESHRSS_BIND = "127.0.0.1" }

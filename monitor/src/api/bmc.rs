@@ -22,10 +22,11 @@
 //!
 //! # Privilege
 //!
-//! `virt` to see and control (`docs/dev/monitor-permissions.md`); admin to
-//! change the targets or probe an address, since those decide where the agent
-//! sends a password.
+//! The transport rule to see and control (`api::machine::gate`). Changing
+//! the targets or probing an address decides where the agent sends a
+//! password.
 
+use crate::api::WebError;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::Duration;
@@ -39,10 +40,10 @@ use sbm_redfish::client::{Auth, Client, ClientConfig};
 use sbm_redfish::model::{PowerIntent, ResetRequest};
 
 use super::authz;
+use crate::db::sealed::{self, Sealer};
 use super::machine;
 use super::server::AppState;
 use super::ws::audit::{Action, Event, Kind, Outcome};
-use crate::core::permissions::Grant;
 
 /// The most targets the set may hold.
 pub const MAX_TARGETS: usize = 64;
@@ -86,8 +87,6 @@ pub struct TargetInput {
 #[derive(Serialize)]
 struct ListResponse {
     targets: Vec<TargetView>,
-    /// Whether this caller may change the set.
-    editable: bool,
 }
 
 #[derive(Deserialize)]
@@ -138,14 +137,7 @@ impl Serialize for Refusal {
     }
 }
 
-fn refusal(status: StatusCode, error: &'static str) -> HttpResponse {
-    HttpResponse::builder(status).json(&serde_json::json!({ "error": error }))
-}
 
-fn internal_error(e: &sqlx::Error) -> HttpResponse {
-    tracing::error!("bmc: {e}");
-    refusal(StatusCode::INTERNAL_SERVER_ERROR, "internal")
-}
 
 /// An upstream failure, as the panel reads it. The detail is
 /// `sbm_redfish`'s, which never carries a credential or a response body.
@@ -157,20 +149,27 @@ fn upstream(e: &sbm_redfish::Error) -> HttpResponse {
     }))
 }
 
+/// The targets, as `GET` and `PUT /bmc` answer them.
+fn list_answer(req: &HttpRequest, sealer: &Sealer, rows: Vec<Row>) -> HttpResponse {
+    let view = ListResponse { targets: rows.into_iter().map(|row| row.view(sealer)).collect() };
+    let mut body = serde_json::to_value(&view).unwrap_or_default();
+    // TODO: remove when MIN_CLIENT_PROTOCOL reaches 2.
+    if super::compat_v1::applies(req) {
+        super::compat_v1::bmc_list(&mut body);
+    }
+    HttpResponse::Ok().json(&body)
+}
+
 pub async fn list(
     req: HttpRequest,
     state: Arc<AppState>,
-) -> Result<HttpResponse, crate::api::WebError> {
-    let gated = match machine::gate(&req, &state, Grant::Virt, "bmc list").await {
-        Ok(gated) => gated,
-        Err(refused) => return Ok(refused),
-    };
+) -> Result<HttpResponse, WebError> {
+    if let Err(refused) = machine::gate(&req, &state, "bmc list").await {
+        return Ok(refused);
+    }
     match load(&state.db).await {
-        Ok(rows) => Ok(HttpResponse::Ok().json(&ListResponse {
-            targets: rows.into_iter().map(|row| row.view()).collect(),
-            editable: gated.caller.is_admin(),
-        })),
-        Err(e) => Ok(internal_error(&e)),
+        Ok(rows) => Ok(list_answer(&req, &state.sealer, rows)),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 
@@ -178,38 +177,33 @@ pub async fn replace(
     req: HttpRequest,
     body: web::types::Json<ReplaceRequest>,
     state: Arc<AppState>,
-) -> Result<HttpResponse, crate::api::WebError> {
-    let caller = match authz::admin_caller(&req, &state).await {
-        Ok(caller) => caller,
-        Err(refused) => return Ok(refused),
-    };
+) -> Result<HttpResponse, WebError> {
+    if let Err(refused) = authz::acting_caller(&req, &state).await {
+        return Ok(refused);
+    }
     let targets: Vec<TargetInput> = body.into_inner().targets.into_iter().map(normalize).collect();
     if let Err(refusal) = validate(&targets) {
         return Ok(HttpResponse::BadRequest().json(&refusal));
     }
 
     let names = targets.iter().map(|t| t.name.as_str()).collect::<Vec<_>>().join(", ");
-    let result = match store(&state.db, &targets).await {
+    let result = match store(&state.db, &state.sealer, &targets).await {
         Ok(Err(refusal)) => return Ok(HttpResponse::BadRequest().json(&refusal)),
         Ok(Ok(())) => Ok(()),
         Err(e) => Err(e),
     };
     let outcome = if result.is_ok() { Outcome::Ok } else { Outcome::Error };
     Event::new(Kind::Machine, Action::Write, outcome)
-        .subject(&caller.username)
         .remote_ip(super::ws::audit::peer_ip(&req))
         .detail(format!("bmc replace: {names}"))
         .record(&state.db)
         .await;
     match result {
         Ok(()) => match load(&state.db).await {
-            Ok(rows) => Ok(HttpResponse::Ok().json(&ListResponse {
-                targets: rows.into_iter().map(|row| row.view()).collect(),
-                editable: true,
-            })),
-            Err(e) => Ok(internal_error(&e)),
+            Ok(rows) => Ok(list_answer(&req, &state.sealer, rows)),
+            Err(e) => Ok(super::respond::internal(&e)),
         },
-        Err(e) => Ok(internal_error(&e)),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 
@@ -219,12 +213,12 @@ pub async fn probe(
     req: HttpRequest,
     body: web::types::Json<ProbeRequest>,
     state: Arc<AppState>,
-) -> Result<HttpResponse, crate::api::WebError> {
-    if let Err(refused) = authz::admin_caller(&req, &state).await {
+) -> Result<HttpResponse, WebError> {
+    if let Err(refused) = authz::acting_caller(&req, &state).await {
         return Ok(refused);
     }
     let Some((host, port)) = host_port(&body.url) else {
-        return Ok(refusal(StatusCode::BAD_REQUEST, "invalidUrl"));
+        return Ok(super::respond::error(StatusCode::BAD_REQUEST, "invalidUrl"));
     };
     match sbm_redfish::cert::fetch_server_cert(&host, port, PROBE_TIMEOUT).await {
         Ok(info) => Ok(HttpResponse::Ok().json(&info)),
@@ -236,11 +230,11 @@ pub async fn status(
     req: HttpRequest,
     path: web::types::Path<String>,
     state: Arc<AppState>,
-) -> Result<HttpResponse, crate::api::WebError> {
-    if let Err(refused) = machine::gate(&req, &state, Grant::Virt, "bmc status").await {
+) -> Result<HttpResponse, WebError> {
+    if let Err(refused) = machine::gate(&req, &state, "bmc status").await {
         return Ok(refused);
     }
-    let client = match connect(&state.db, &path).await {
+    let client = match connect(&state.db, &state.sealer, &path).await {
         Ok(client) => client,
         Err(response) => return Ok(response),
     };
@@ -272,14 +266,14 @@ pub async fn power(
     path: web::types::Path<String>,
     body: web::types::Json<PowerRequest>,
     state: Arc<AppState>,
-) -> Result<HttpResponse, crate::api::WebError> {
+) -> Result<HttpResponse, WebError> {
     let intent = body.into_inner().intent;
     let what = format!("bmc power {}", intent.as_str());
-    let gated = match machine::gate(&req, &state, Grant::Virt, &what).await {
+    let gated = match machine::gate(&req, &state, &what).await {
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),
     };
-    let client = match connect(&state.db, &path).await {
+    let client = match connect(&state.db, &state.sealer, &path).await {
         Ok(client) => client,
         Err(response) => return Ok(response),
     };
@@ -291,7 +285,6 @@ pub async fn power(
 
     let outcome = if result.is_ok() { Outcome::Ok } else { Outcome::Error };
     Event::new(Kind::Machine, Action::Write, outcome)
-        .subject(&gated.caller.username)
         .remote_ip(gated.remote_ip)
         .detail(format!("{what} {}", path.as_str()))
         .record(&state.db)
@@ -303,7 +296,7 @@ pub async fn power(
 }
 
 /// A client for the target `id`, or the answer to give instead.
-async fn connect(db: &SqlitePool, id: &str) -> Result<Client, HttpResponse> {
+async fn connect(db: &SqlitePool, sealer: &Sealer, id: &str) -> Result<Client, HttpResponse> {
     let row = match sqlx::query_as::<_, Row>(
         "SELECT id, name, url, username, password, cert_sha256 FROM bmc_target WHERE id = ?",
     )
@@ -312,13 +305,18 @@ async fn connect(db: &SqlitePool, id: &str) -> Result<Client, HttpResponse> {
         .await
     {
         Ok(Some(row)) => row,
-        Ok(None) => return Err(refusal(StatusCode::NOT_FOUND, "noSuchTarget")),
-        Err(e) => return Err(internal_error(&e)),
+        Ok(None) => return Err(super::respond::error(StatusCode::NOT_FOUND, "noSuchTarget")),
+        Err(e) => return Err(super::respond::internal(&e)),
     };
+    // One the credentials key no longer opens is asked for again.
+    let password = sealer.open_opt(sealed::BMC_PASSWORD, row.password.as_deref()).map_err(|e| {
+        tracing::warn!("bmc {id}: {e}");
+        super::respond::error(StatusCode::CONFLICT, "passwordRequired")
+    })?;
     Client::new(ClientConfig {
         base_url: row.url,
         user: row.username,
-        password: row.password,
+        password,
         pinned_sha256: row.cert_sha256,
         require_pin: true,
         auth: Auth::default(),
@@ -412,13 +410,14 @@ struct Row {
 }
 
 impl Row {
-    fn view(self) -> TargetView {
+    /// A password the credentials key no longer opens is not shown as stored.
+    fn view(self, sealer: &Sealer) -> TargetView {
         TargetView {
             id: self.id,
             name: self.name,
             url: self.url,
             username: self.username,
-            has_password: self.password.is_some_and(|p| !p.is_empty()),
+            has_password: sealer.open_or_none(sealed::BMC_PASSWORD, self.password.as_deref()).is_some_and(|p| !p.is_empty()),
             cert_sha256: self.cert_sha256,
         }
     }
@@ -435,7 +434,11 @@ async fn load(db: &SqlitePool) -> Result<Vec<Row>, sqlx::Error> {
 /// Replaces the set in one transaction, carrying each kept password over by
 /// id — for the same `url` only, or an admin could point a target at a host of
 /// their own and have the agent hand it a password they cannot read.
-async fn store(db: &SqlitePool, targets: &[TargetInput]) -> Result<Result<(), Refusal>, sqlx::Error> {
+async fn store(
+    db: &SqlitePool,
+    sealer: &Sealer,
+    targets: &[TargetInput],
+) -> Result<Result<(), Refusal>, sqlx::Error> {
     let mut tx = db.begin().await?;
     let stored: HashMap<String, (String, Option<String>)> =
         sqlx::query_as::<_, (String, String, Option<String>)>("SELECT id, url, password FROM bmc_target")
@@ -448,7 +451,7 @@ async fn store(db: &SqlitePool, targets: &[TargetInput]) -> Result<Result<(), Re
     let now = chrono::Utc::now().to_rfc3339();
     for (position, t) in targets.iter().enumerate() {
         let password = match (&t.password, stored.get(&t.id)) {
-            (Some(password), _) => Some(password.clone()),
+            (Some(password), _) => Some(sealer.seal(sealed::BMC_PASSWORD, password)?),
             (None, Some((url, password))) if password.as_deref().is_some_and(|p| !p.is_empty()) => {
                 if *url != t.url {
                     return Ok(Err(Refusal::PasswordRequired { index: position }));
@@ -527,19 +530,22 @@ mod tests {
 
     #[tokio::test]
     async fn a_kept_password_stays_with_its_address() {
-        let db = pool().await;
+        let (db, sealer) = (pool().await, Sealer::temporary());
         let saved = TargetInput { password: Some("secret".into()), ..target("a", "one") };
-        assert_eq!(store(&db, &[saved]).await.unwrap(), Ok(()));
-        let password = || async { load(&db).await.unwrap().remove(0).password };
+        assert_eq!(store(&db, &sealer, &[saved]).await.unwrap(), Ok(()));
+        let password = || async {
+            let stored = load(&db).await.unwrap().remove(0).password;
+            sealer.open_opt(sealed::BMC_PASSWORD, stored.as_deref()).unwrap()
+        };
 
         // The same address: kept, whatever else changed.
-        assert_eq!(store(&db, &[target("a", "renamed")]).await.unwrap(), Ok(()));
+        assert_eq!(store(&db, &sealer, &[target("a", "renamed")]).await.unwrap(), Ok(()));
         assert_eq!(password().await.as_deref(), Some("secret"));
 
         // Another address: refused, and nothing written.
         let moved = TargetInput { url: "https://attacker.example".into(), ..target("a", "one") };
         assert_eq!(
-            store(&db, &[target("b", "two"), moved.clone()]).await.unwrap(),
+            store(&db, &sealer, &[target("b", "two"), moved.clone()]).await.unwrap(),
             Err(Refusal::PasswordRequired { index: 1 })
         );
         let rows = load(&db).await.unwrap();
@@ -547,7 +553,7 @@ mod tests {
 
         // Another address with the password given again: taken.
         let moved = TargetInput { password: Some("other".into()), ..moved };
-        assert_eq!(store(&db, &[moved]).await.unwrap(), Ok(()));
+        assert_eq!(store(&db, &sealer, &[moved]).await.unwrap(), Ok(()));
         assert_eq!(password().await.as_deref(), Some("other"));
     }
 

@@ -50,6 +50,7 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
     ServerDetailCards.battery,
     ServerDetailCards.pve,
     ServerDetailCards.bmc,
+    ServerDetailCards.webApps,
     ServerDetailCards.custom,
   ];
 

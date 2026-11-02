@@ -75,25 +75,14 @@ fn leave_the_crate() {
 async fn permissive_state() -> Arc<AppState> {
     leave_the_crate();
     ensure_crypto_provider();
-    let mut config = Config {
+    let config = Config {
         jwt_secret: Some(SECRET.to_string()),
         ..Default::default()
     };
-    let mut remote = config.get_remote_access();
-    remote.terminal.enabled = Some(true);
-    remote.full_access = Some(true);
-    remote.fs.enabled = Some(true);
-    remote.fs.roots = vec![
-        std::fs::canonicalize(std::env::current_dir().unwrap())
-            .unwrap()
-            .to_string_lossy()
-            .into_owned(),
-    ];
-    config.remote_access = Some(remote);
 
     let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
     sqlx::migrate!("./migrations").run(&db).await.unwrap();
-    common::seed_as_upgrade(&db, &config).await;
+    common::add_owner(&db).await;
     AppState::new(Arc::new(config), db)
 }
 
@@ -105,7 +94,7 @@ async fn test_server(state: Arc<AppState>) -> TestServer {
 }
 
 fn jwt() -> String {
-    generate_token("admin", SECRET).unwrap()
+    generate_token(SECRET).unwrap()
 }
 
 /// A real watch token, minted through the endpoint that mints them.
@@ -133,8 +122,12 @@ async fn status_with(
     path: &str,
     body: Option<serde_json::Value>,
 ) -> u16 {
+    // Generous, as in `permissions_api.rs`: `/process` reads the whole
+    // process table, and on a loaded machine (the suite's other binaries
+    // running) that outlasted the client's 5 s default.
     let req = srv
         .request(method, srv.url(path))
+        .timeout(std::time::Duration::from_secs(30))
         .header("Authorization", format!("Bearer {token}"));
     let resp = match body {
         Some(body) => req.send_json(&body).await.unwrap(),
@@ -210,7 +203,6 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
             "/api/v1/fs/remove",
             Some(json!({ "path": "/tmp/a", "recursive": false })),
         ),
-        (Method::DELETE, "/api/v1/remote-access/full-access", None),
         (Method::GET, "/api/v1/custom-cmds", None),
         (
             Method::PUT,
@@ -238,6 +230,9 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
             })),
         ),
         (Method::GET, "/api/v1/settings", None),
+        (Method::GET, "/api/v1/audit", None),
+        (Method::GET, "/api/v1/alerts", None),
+        (Method::GET, "/api/v1/live", None),
         (
             Method::PUT,
             "/api/v1/settings",
@@ -253,46 +248,12 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
             "/api/v1/card-order",
             Some(json!({ "card_order": [] })),
         ),
-        // Accounts and roles. The panel-login half sends a wrong
-        // `current_password` to every one that would change something, so
-        // they stop at re-authentication — which is still not a 401.
-        (Method::GET, "/api/v1/me", None),
+        // The password. The panel-login half sends a wrong `current_password`,
+        // so it stops at re-authentication — which is still not a 401.
         (
             Method::PUT,
             "/api/v1/me/password",
             Some(json!({ "current_password": "nope", "new_password": "new-password" })),
-        ),
-        (Method::GET, "/api/v1/users", None),
-        (
-            Method::POST,
-            "/api/v1/users",
-            Some(json!({ "username": "x", "password": "password-x", "role": "viewer", "current_password": "nope" })),
-        ),
-        (
-            Method::PUT,
-            "/api/v1/users/intruder",
-            Some(json!({ "role": "viewer", "current_password": "nope" })),
-        ),
-        (
-            Method::DELETE,
-            "/api/v1/users/intruder",
-            Some(json!({ "current_password": "nope" })),
-        ),
-        (Method::GET, "/api/v1/roles", None),
-        (
-            Method::POST,
-            "/api/v1/roles",
-            Some(json!({ "role": { "name": "x", "grants": {} }, "current_password": "nope" })),
-        ),
-        (
-            Method::PUT,
-            "/api/v1/roles/viewer",
-            Some(json!({ "role": { "name": "viewer", "grants": {} }, "current_password": "nope" })),
-        ),
-        (
-            Method::DELETE,
-            "/api/v1/roles/viewer",
-            Some(json!({ "current_password": "nope" })),
         ),
         // The machine-management endpoints (#1623). Each request is one the
         // panel login can send harmlessly: a PID nothing holds, a unit no
@@ -410,6 +371,32 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
         ),
         (Method::POST, "/api/v1/virt/backup-jobs/run", Some(json!({ "id": "x" }))),
         (Method::POST, "/api/v1/virt/backup-jobs/schedule", Some(json!({ "schedule": "02:00" }))),
+        // Agent mode: nothing is configured on a test server, so a start is
+        // refused after the auth check.
+        (Method::GET, "/api/v1/agent/flows", None),
+        (Method::POST, "/api/v1/agent/flows", Some(json!({ "prompt": "hi" }))),
+        (Method::GET, "/api/v1/agent/flows/absent", None),
+        (Method::DELETE, "/api/v1/agent/flows/absent", None),
+        (Method::POST, "/api/v1/agent/flows/absent/stop", None),
+        (Method::POST, "/api/v1/agent/flows/absent/reply", Some(json!({ "text": "hi" }))),
+        (Method::POST, "/api/v1/agent/flows/absent/answer", Some(json!({ "id": "x", "action": "cancel" }))),
+        (Method::GET, "/api/v1/agent/settings", None),
+        (Method::GET, "/api/v1/agent/choices", None),
+        (Method::GET, "/api/v1/agent/mcp", None),
+        (Method::PUT, "/api/v1/agent/mcp", Some(json!({ "servers": [] }))),
+        (Method::GET, "/api/v1/agent/skills", None),
+        (Method::POST, "/api/v1/agent/skills", Some(json!({ "source": "owner/repo" }))),
+        (Method::PUT, "/api/v1/agent/skills/absent", Some(json!({ "enabled": false }))),
+        (Method::DELETE, "/api/v1/agent/skills/absent", None),
+        (Method::POST, "/api/v1/agent/search", Some(json!({ "query": "x" }))),
+        (Method::GET, "/api/v1/agent/permissions", None),
+        (Method::POST, "/api/v1/agent/files?name=a.txt", Some(json!("x"))),
+        (Method::DELETE, "/api/v1/agent/files/absent", None),
+        (Method::POST, "/api/v1/agent/search/absent/task", Some(json!({}))),
+        (Method::GET, "/api/v1/agent/memory", None),
+        (Method::GET, "/api/v1/agent/memory/file?path=a.md", None),
+        (Method::PUT, "/api/v1/agent/memory/file", Some(json!({ "path": "a.md", "content": "x" }))),
+        (Method::DELETE, "/api/v1/agent/memory/file?path=a.md", None),
     ]
 }
 
@@ -502,10 +489,35 @@ async fn a_watch_tokens_capabilities_grant_nothing() {
         .await
         .unwrap();
     let body: serde_json::Value = resp.json().await.unwrap();
-    assert!(body.get("me").is_none(), "{body}");
-    for grant in ["shell", "ssh_terminal", "files", "connect", "listen"] {
-        assert_eq!(body["grants"][grant]["ok"], false, "{grant}");
-        assert_eq!(body["grants"][grant]["why"], "not_granted", "{grant}");
-    }
-    assert_eq!(body["remote_access"]["full_access"], false);
+    assert_eq!(body["access"], serde_json::json!({ "ok": false }), "{body}");
+}
+
+/// Minting and revoking a watch token, a credential good for months, are
+/// audited by client id; the token is in no row.
+#[ntex::test]
+async fn minting_and_revoking_a_watch_token_are_audited() {
+    let state = permissive_state().await;
+    let srv = test_server(state.clone()).await;
+    let token = issue_watch_token(&srv).await;
+    let resp = srv
+        .delete("/api/v1/watch-token")
+        .header("Authorization", format!("Bearer {}", jwt()))
+        .send_json(&json!({ "client_id": "widget:test" }))
+        .await
+        .unwrap();
+    assert!(resp.status().is_success());
+
+    let rows: Vec<(String, String)> = sqlx::query_as("SELECT action, detail FROM access_log WHERE kind = 'admin' ORDER BY id")
+        .fetch_all(&state.db)
+        .await
+        .unwrap();
+    assert_eq!(
+        rows,
+        [
+            ("open".to_string(), "watch token for widget:test".to_string()),
+            ("close".to_string(), "watch token for widget:test revoked".to_string()),
+        ]
+    );
+    let all: Vec<String> = sqlx::query_scalar("SELECT COALESCE(detail, '') FROM access_log").fetch_all(&state.db).await.unwrap();
+    assert!(all.iter().all(|d| !d.contains(&token)));
 }

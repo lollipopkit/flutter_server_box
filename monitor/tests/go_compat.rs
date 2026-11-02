@@ -284,7 +284,6 @@ fn test_parse_disk_go_fixture() {
 
 // ---------- /status endpoint: web/web.go + web/base.go ----------
 
-
 // The Go-compat `GET /status` shape is gone: it answered preformatted strings
 // and no history, which is why nothing built on it could ever draw a trend.
 // The two tests that pinned that shape went with it; `watch_token_scope.rs`
