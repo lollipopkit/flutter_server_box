@@ -23,6 +23,10 @@ abstract final class SyncThemes {
   @visibleForTesting
   static String? root;
 
+  /// What [read] answers, for a test of a send meeting themes it cannot read.
+  @visibleForTesting
+  static Future<Map<String, Object?>?> Function()? readForTest;
+
   static const _pkg = 'pkg';
 
   /// The name [_Carried] answers for a package it holds.
@@ -41,9 +45,11 @@ abstract final class SyncThemes {
   }
 
   /// Each installation's op value, read once per send or snapshot (only one
-  /// that carries a theme record). Empty, logged, when the themes cannot be
-  /// read: the rest of the send goes on without them.
-  static Future<Map<String, Object?>> read() async {
+  /// that carries a theme record). Null, logged, when the themes cannot be
+  /// read now: told apart from a theme that is not here, so it is not sent
+  /// as gone and is read again next time.
+  static Future<Map<String, Object?>?> read() async {
+    if (readForTest case final read?) return read();
     final carried = _Carried();
     try {
       final export = await ThemeBackup.export(rootDirectory: root, blobs: carried);
@@ -57,7 +63,7 @@ abstract final class SyncThemes {
       };
     } catch (e, s) {
       Loggers.app.warning('Sync read the themes', e, s);
-      return const {};
+      return null;
     }
   }
 

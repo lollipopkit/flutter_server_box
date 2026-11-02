@@ -506,4 +506,27 @@ void main() {
     expect(Stores.setting.appThemePreset.fetch(), v2.preset, reason: 'the choice is not rewritten');
     expect(Stores.setting.appThemePackage.fetch(), v1.installationId);
   });
+
+  test('themes that cannot be read now are sent later, not skipped', () async {
+    final log = _Log();
+    addTearDown(() => SyncThemes.readForTest = null);
+    await _device();
+    final sync = _sync(log);
+    Stores.setting.timeout.put(9);
+    await sync.sync();
+
+    SyncRecorder.record('theme', 'abc');
+    Stores.snippet.put(snippet);
+    SyncThemes.readForTest = () async => null;
+    await sync.sync();
+    expect(SyncRecorder.pending(''), hasLength(greaterThanOrEqualTo(2)));
+    final sentBefore = log.batches.length;
+
+    SyncThemes.readForTest = () async => {'abc': {'id': 'example.x', 'name': 'X', 'bundled': 'example.x'}};
+    await sync.sync();
+    expect(log.batches.length, sentBefore + 1);
+    await _device();
+    await _sync(log, settings: false).pull();
+    expect(Stores.snippet.fetchOneRaw(snippet.id), isNotNull, reason: 'what came after the unread theme went too');
+  });
 }

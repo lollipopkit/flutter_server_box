@@ -245,8 +245,11 @@ final class LogSync {
       compact |= await _append(batch);
     }
     _stamp();
-    final stamped = joining ? SyncRecorder.all() : SyncRecorder.pending(_state(_sentKey) ?? '');
-    final ops = await _opsOf([for (final r in stamped) if (_carries(r.c)) r]);
+    final all = joining ? SyncRecorder.all() : SyncRecorder.pending(_state(_sentKey) ?? '');
+    final (:ops, :complete) = await _opsOf([for (final r in all) if (_carries(r.c)) r]);
+    // A record that could not be read stops the send just before it, so it
+    // and what follows are read again next time.
+    final stamped = complete ? all : [for (final r in all) if (r.hlc.compareTo(ops.lastOrNull?.h ?? '') <= 0) r];
     final mine = SyncRecorder.deviceHexOf(SyncRecorder.device);
     var last = _state(_sentKey) ?? '';
     for (final chunk in await _batches(ops)) {
@@ -258,7 +261,7 @@ final class LogSync {
     // Past what was left out too, so it is not looked at again.
     final newest = stamped.map((r) => r.hlc).where((h) => h.substring(16) == mine).fold(last, (a, h) => h.compareTo(a) > 0 ? h : a);
     if (newest != last) _setState({_sentKey: newest});
-    if (joining) _setState({_joinedKey: _state(_logKey)});
+    if (joining && complete) _setState({_joinedKey: _state(_logKey)});
     if (compact) {
       await _pull();
       await _writeSnapshot();
@@ -300,7 +303,11 @@ final class LogSync {
       return false;
     }
     _stamp();
-    final ops = await _opsOf([for (final r in SyncRecorder.all()) if (_carries(r.c)) r]);
+    final (:ops, :complete) = await _opsOf([for (final r in SyncRecorder.all()) if (_carries(r.c)) r]);
+    if (!complete) {
+      Loggers.app.info('Sync snapshot left: a record could not be read');
+      return false;
+    }
     final body = await _seal.seal(_encode(ops));
     if (!await _transport.putSnapshot(cursor, body)) {
       Loggers.app.info('Sync snapshot at $cursor: another is there already');
@@ -312,12 +319,15 @@ final class LogSync {
 
   /// [records] as ops, each as the store holds it now; a large one put in a
   /// blob it names.
-  Future<List<SyncOp>> _opsOf(List<({String c, String id, String hlc})> records) async {
+  /// [records] (the oldest first) as ops; [complete] false when one could not
+  /// be read ([SyncRecords.unread]): the ops are those before it.
+  Future<({List<SyncOp> ops, bool complete})> _opsOf(List<({String c, String id, String hlc})> records) async {
     final read = SyncRecords.reader();
     final ops = <SyncOp>[];
     Set<String>? there;
     for (final r in records) {
       final d = await read(r.c, r.id);
+      if (identical(d, SyncRecords.unread)) return (ops: ops, complete: false);
       // A theme is added only: one removed here says nothing to the others.
       if (d == null && r.c == SyncThemes.c) continue;
       final json = utf8.encode(jsonEncode(d));
@@ -336,7 +346,7 @@ final class LogSync {
       }
       ops.add((c: r.c, id: r.id, h: r.hlc, d: {_blobKey: name}));
     }
-    return ops;
+    return (ops: ops, complete: true);
   }
 
   static String? _blobOf(Object? d) => d is Map && d.length == 1 && d[_blobKey] is String ? d[_blobKey] as String : null;
