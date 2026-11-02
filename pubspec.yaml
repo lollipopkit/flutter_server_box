@@ -150,6 +150,8 @@ dev_dependencies:
   # own theme files; the app reads them through fl_lib.
   toml: ^0.18.0
   xml: ^7.0.1
+  # Theme packages (`.fsbt`, zip) built for the sync tests, as fl_lib's do.
+  archive: ^4.0.0
   # The QR encoder, so `server_share_qr_test.dart` can hold the share's
   # capacity cap against what actually gets drawn. fl_lib depends on it too,
   # and `QrView` is the only thing in the app that draws one.

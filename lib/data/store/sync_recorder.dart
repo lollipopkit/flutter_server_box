@@ -126,7 +126,8 @@ abstract final class SyncRecorder {
   /// loaded). A record keeps the greater of its stamp and this one: a stamp
   /// never moves back (the snapshot sync taking back this device's own edit
   /// stamps it as no device's, which sorts before it).
-  static String? record(String c, String id, {int? at}) {
+  /// [notify] false leaves out [onLocal]: for a stamp made by the send itself.
+  static String? record(String c, String id, {int? at, bool notify = true}) {
     if (!_ready) return null;
     final String h;
     if (_receiving case final received?) {
@@ -146,7 +147,7 @@ abstract final class SyncRecorder {
       'ON CONFLICT (c, id) DO UPDATE SET hlc = excluded.hlc WHERE excluded.hlc > sync_record.hlc;',
       [c, id, h],
     );
-    if (_receiving == null && _applying == 0) onLocal?.call();
+    if (notify && _receiving == null && _applying == 0) onLocal?.call();
     return h;
   }
 

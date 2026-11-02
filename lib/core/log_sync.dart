@@ -14,6 +14,7 @@ import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/sync_recorder.dart';
 import 'package:server_box/data/store/sync_records.dart';
+import 'package:server_box/data/store/sync_themes.dart';
 
 /// A record's change as the log carries it: `fl_sync::Op`.
 typedef SyncOp = ({String c, String id, String h, Object? d});
@@ -100,15 +101,25 @@ final class SyncLogPartial implements Exception {
 /// and writes a snapshot when the log asks for one. Everything it keeps is in
 /// `sync_state`; one run at a time.
 final class LogSync {
-  LogSync(this._transport, this._seal, {void Function(List<SyncOp> won)? write, bool Function(String c)? carries})
-    : _write = write ?? SyncAnnounce.write,
-      _carries = carries ?? _all;
+  LogSync(
+    this._transport,
+    this._seal, {
+    FutureOr<void> Function(List<SyncOp> won)? write,
+    bool Function(String c)? carries,
+    void Function()? stamp,
+  }) : _write = write ?? SyncAnnounce.write,
+       _carries = carries ?? _all,
+       _stamp = stamp ?? SyncThemes.stamp;
+
+  /// Stamps what changed without a write that stamps it (an installed
+  /// theme), before what is pending is read.
+  final void Function() _stamp;
 
   final SyncLogTransport _transport;
   final SyncSeal _seal;
 
   /// Writes the ops that won and tells the app.
-  final void Function(List<SyncOp> won) _write;
+  final FutureOr<void> Function(List<SyncOp> won) _write;
 
   /// Whether records of collection `c` are sent and taken (the settings only
   /// while the user syncs them).
@@ -233,6 +244,7 @@ final class LogSync {
     if (_unanswered case final batch?) {
       compact |= await _append(batch);
     }
+    _stamp();
     final stamped = joining ? SyncRecorder.all() : SyncRecorder.pending(_state(_sentKey) ?? '');
     final ops = await _opsOf([for (final r in stamped) if (_carries(r.c)) r]);
     final mine = SyncRecorder.deviceHexOf(SyncRecorder.device);
@@ -287,6 +299,7 @@ final class LogSync {
       Loggers.app.info('Sync snapshot left to a device holding the whole log');
       return false;
     }
+    _stamp();
     final ops = await _opsOf([for (final r in SyncRecorder.all()) if (_carries(r.c)) r]);
     final body = await _seal.seal(_encode(ops));
     if (!await _transport.putSnapshot(cursor, body)) {
@@ -304,7 +317,9 @@ final class LogSync {
     final ops = <SyncOp>[];
     Set<String>? there;
     for (final r in records) {
-      final d = read(r.c, r.id);
+      final d = await read(r.c, r.id);
+      // A theme is added only: one removed here says nothing to the others.
+      if (d == null && r.c == SyncThemes.c) continue;
       final json = utf8.encode(jsonEncode(d));
       if (json.length <= inlineMax) {
         ops.add((c: r.c, id: r.id, h: r.hlc, d: d));
@@ -385,7 +400,7 @@ final class LogSync {
     ) as List)
         .cast<Map<String, dynamic>>();
     if (won.isNotEmpty) {
-      _write([for (final op in won) (c: op['c'] as String, id: op['id'] as String, h: op['h'] as String, d: op['d'])]);
+      await _write([for (final op in won) (c: op['c'] as String, id: op['id'] as String, h: op['h'] as String, d: op['d'])]);
     }
     _setState(state);
   }
@@ -499,12 +514,16 @@ final class LogSync {
   static const _accountKey = 'account';
 }
 
-/// Writes ops that won ([SyncRecords.write]) and tells the app what changed,
-/// as a backup's merge does.
+/// Writes ops that won ([SyncRecords.write], [SyncThemes.install]) and tells
+/// the app what changed, as a backup's merge does.
 abstract final class SyncAnnounce {
-  static void write(List<SyncOp> won) {
+  static Future<void> write(List<SyncOp> won) async {
     final keysBefore = [for (final k in Stores.key.fetch()) k.key];
-    final collections = SyncRecords.write(won);
+    final collections = SyncRecords.write([for (final op in won) if (op.c != SyncThemes.c) op]);
+    final themes = [for (final op in won) if (op.c == SyncThemes.c) op];
+    await SyncThemes.install(themes);
+    // The preset may have come before or after its theme.
+    if (themes.isNotEmpty || collections.contains('kv:${Stores.setting.name}')) SyncThemes.reselect();
     final servers = collections.contains(Stores.server.table);
     if (collections.contains(Stores.key.table)) {
       Stores.key.invalidate();

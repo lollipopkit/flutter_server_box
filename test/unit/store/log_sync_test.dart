@@ -3,8 +3,10 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_lib/theme.dart' show ThemePackages;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/log_sync.dart';
+import 'package:server_box/core/service/theme_host.dart';
 import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/snippet.dart';
@@ -12,7 +14,9 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/entity_store.dart';
 import 'package:server_box/data/store/sync_recorder.dart';
 import 'package:server_box/data/store/sync_records.dart';
+import 'package:server_box/data/store/sync_themes.dart';
 
+import '../../helpers/fsbt.dart';
 import '../../helpers/spi_fixture.dart';
 
 /// LK Cloud's log, in memory: batches numbered as appended, once per key.
@@ -141,7 +145,7 @@ Future<void> _device() async {
 }
 
 LogSync _sync(_Log log, {bool settings = true}) =>
-    LogSync(log, _Clear(), carries: (c) => settings || c != 'kv:setting');
+    LogSync(log, _Clear(), carries: (c) => settings || (c != 'kv:setting' && c != 'theme'));
 
 void main() {
   setUpAll(() async {
@@ -441,5 +445,65 @@ void main() {
     }, force: false);
     expect(changed, isFalse, reason: 'the name is taken here: left to the log, which suffixes one');
     expect(Stores.snippet.fetchOneRaw('phone0001')?.script, 'from the phone');
+  });
+
+  test('a theme installed on one device is installed on the next, with its own package', () async {
+    final log = _Log();
+    addTearDown(() => SyncThemes.root = null);
+    Future<void> device(String name) async {
+      final dir = await Directory.systemTemp.createTemp('sbm-themes-$name-');
+      addTearDown(() => dir.delete(recursive: true));
+      SyncThemes.root = dir.path;
+      await _device();
+      initThemeHost();
+    }
+
+    await device('a');
+    final theme = await ThemePackages.install(fsbtOf('example.amethyst', 'Amethyst'), rootDirectory: SyncThemes.root);
+    await _sync(log).sync();
+
+    await device('b');
+    expect(ThemePackages.installed(theme.installationId, rootDirectory: SyncThemes.root), isNull);
+    await _sync(log).sync();
+    expect(ThemePackages.installed(theme.installationId, rootDirectory: SyncThemes.root)?.name, 'Amethyst');
+
+    // Chosen elsewhere: this device points its own keys at its copy, and a
+    // preset whose theme is not here yet is left as it is, not undone.
+    Stores.setting.appThemePreset.put(theme.preset);
+    SyncThemes.reselect();
+    expect(Stores.setting.appThemePackage.fetch(), theme.installationId);
+    Stores.setting.appThemePreset.put(ThemePackages.presetOf('0' * 64));
+    final preset = Stores.setting.appThemePreset.fetch();
+    SyncThemes.reselect();
+    expect(Stores.setting.appThemePreset.fetch(), preset);
+
+    // Left alone where the settings do not sync.
+    await device('c');
+    await _sync(log, settings: false).sync();
+    expect(ThemePackages.installed(theme.installationId, rootDirectory: SyncThemes.root), isNull);
+  });
+
+  test('a theme here at another version is kept, and the selection points at it', () async {
+    final log = _Log();
+    addTearDown(() => SyncThemes.root = null);
+    Future<void> device(String name) async {
+      final dir = await Directory.systemTemp.createTemp('sbm-themes-$name-');
+      addTearDown(() => dir.delete(recursive: true));
+      SyncThemes.root = dir.path;
+      await _device();
+      initThemeHost();
+    }
+
+    await device('a');
+    final v2 = await ThemePackages.install(fsbtOf('example.amethyst', 'Amethyst 2'), rootDirectory: SyncThemes.root);
+    Stores.setting.appThemePreset.put(v2.preset);
+    await _sync(log).sync();
+
+    await device('b');
+    final v1 = await ThemePackages.install(fsbtOf('example.amethyst', 'Amethyst'), rootDirectory: SyncThemes.root);
+    await _sync(log).sync();
+    expect(ThemePackages.installed(v2.installationId, rootDirectory: SyncThemes.root), isNull);
+    expect(Stores.setting.appThemePreset.fetch(), v2.preset, reason: 'the choice is not rewritten');
+    expect(Stores.setting.appThemePackage.fetch(), v1.installationId);
   });
 }
