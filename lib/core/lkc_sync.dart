@@ -8,6 +8,7 @@ import 'package:fl_lib/theme.dart' show ThemeBlobStore;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:server_box/core/lkc.dart';
+import 'package:server_box/core/lkc_log_sync.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/app/bak/utils.dart';
@@ -195,6 +196,7 @@ final class LkcSyncWatch {
     required Future<void> Function() forget,
     required ValueListenable<bool> toggle,
     required VoidCallback onRemoteChange,
+    void Function(int? seq)? onLog,
     Duration retryAfter = const Duration(seconds: 30),
     bool inBackground = false,
   }) : _user = user,
@@ -203,6 +205,7 @@ final class LkcSyncWatch {
        _forget = forget,
        _toggle = toggle,
        _onRemoteChange = onRemoteChange,
+       _onLog = onLog,
        _retryAfter = retryAfter,
        _inBackground = inBackground;
 
@@ -212,6 +215,10 @@ final class LkcSyncWatch {
   final Future<void> Function() _forget;
   final ValueListenable<bool> _toggle;
   final VoidCallback _onRemoteChange;
+
+  /// The log reached a seq, or (null) listening began again and may have
+  /// missed some.
+  final void Function(int? seq)? _onLog;
 
   /// After listening could not start, or ended while still signed in; twice
   /// as long after each failure in a row, up to 32 times, until connected.
@@ -249,6 +256,7 @@ final class LkcSyncWatch {
           bakSync.syncSoon(milliDelay: 0, throttleMilli: 0);
         }
       },
+      onLog: (seq) => unawaited(seq == null ? LkcLogSync.sync() : LkcLogSync.pull(seq)),
       inBackground: isDesktop,
     )..start();
   }
@@ -345,5 +353,7 @@ final class LkcSyncWatch {
     }
     if (event.connected) _failures = 0;
     if (event.connected || event.name == Miscs.bakFileName) _onRemoteChange();
+    if (event.connected) _onLog?.call(null);
+    if (event.logSeq case final seq?) _onLog?.call(seq);
   }
 }

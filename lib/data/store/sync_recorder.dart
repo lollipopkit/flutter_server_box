@@ -38,8 +38,38 @@ abstract final class SyncRecorder {
   static Database get _db => SqliteDb.instance;
 
   static int _applying = 0;
+  static String? _receiving;
   static BigInt? _device;
   static String? _last;
+
+  /// Notified of each record stamped by this device (not while [applying] or
+  /// [receiving]): what makes the log sync send.
+  static void Function()? onLocal;
+
+  /// Writes an op another device made, stamped [h]: every record [write]
+  /// stamps gets [h] as it is, and the clock moves past it.
+  static T receiving<T>(String h, T Function() write) {
+    final previous = _receiving;
+    _receiving = h;
+    try {
+      return write();
+    } finally {
+      _receiving = previous;
+    }
+  }
+
+  /// The milliseconds of the op being [receiving], for the snapshot sync's
+  /// own stamps (`updated_at`, `lastUpdateTs`) of what it writes.
+  static int? get receivingMs => switch (_receiving) {
+    final h? => msOf(h),
+    null => null,
+  };
+
+  /// A stamp's wall-clock part.
+  static int msOf(String h) => int.parse(h.substring(0, 12), radix: 16);
+
+  /// A stamp's device, as [pending] compares it.
+  static String deviceHexOf(BigInt device) => device.toRadixString(16).padLeft(16, '0');
 
   /// Writes changes that came from elsewhere through [write]: their stamps
   /// are no device's ([legacy]) and never [pending].
@@ -95,12 +125,16 @@ abstract final class SyncRecorder {
     };
   }
 
-  /// [c]/[id] changed: here at the clock's next stamp, or, while [applying],
-  /// at [at] (milliseconds) as no device's change.
+  /// [c]/[id] changed: here at the clock's next stamp; while [receiving], at
+  /// its stamp; while [applying], at [at] (milliseconds) as no device's
+  /// change.
   static void record(String c, String id, {int? at}) {
     if (!_ready) return;
     final String h;
-    if (_applying > 0) {
+    if (_receiving case final received?) {
+      h = received;
+      _last = syncLater(last: _newest, seen: h);
+    } else if (_applying > 0) {
       h = syncStampOf(ms: BigInt.from(at ?? SyncClock.now()), device: legacy);
       // What came from elsewhere moves the clock too: the next change made
       // here is stamped after it.
@@ -114,12 +148,30 @@ abstract final class SyncRecorder {
       'ON CONFLICT (c, id) DO UPDATE SET hlc = excluded.hlc;',
       [c, id, h],
     );
+    if (_receiving == null && _applying == 0) onLocal?.call();
   }
+
+  /// Each record's stamp, for the ones [ids] names: what an incoming op is
+  /// compared against.
+  static Map<(String, String), String> stampsOf(Iterable<(String, String)> ids) {
+    final out = <(String, String), String>{};
+    for (final (c, id) in ids) {
+      final rows = _db.select('SELECT hlc FROM sync_record WHERE c = ? AND id = ?;', [c, id]);
+      if (rows.isNotEmpty) out[(c, id)] = rows.first['hlc'] as String;
+    }
+    return out;
+  }
+
+  /// Every record and its stamp, the oldest first: what a snapshot holds.
+  static List<({String c, String id, String hlc})> all() => [
+    for (final row in _db.select('SELECT c, id, hlc FROM sync_record ORDER BY hlc;'))
+      (c: row['c'] as String, id: row['id'] as String, hlc: row['hlc'] as String),
+  ];
 
   /// Records made here and stamped after [after] (empty: all of them), the
   /// oldest first: what the next sync sends.
   static List<({String c, String id, String hlc})> pending(String after) {
-    final mine = device.toRadixString(16).padLeft(16, '0');
+    final mine = deviceHexOf(device);
     return [
       for (final row in _db.select(
         'SELECT c, id, hlc FROM sync_record WHERE hlc > ? AND substr(hlc, 17) = ? ORDER BY hlc;',
@@ -163,5 +215,6 @@ abstract final class SyncRecorder {
   static void resetForTest() {
     _device = null;
     _last = null;
+    onLocal = null;
   }
 }

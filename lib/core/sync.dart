@@ -6,6 +6,7 @@ import 'package:fl_lib/theme.dart' show ThemeBlobStore;
 import 'package:flutter/foundation.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/lkc.dart';
+import 'package:server_box/core/lkc_log_sync.dart';
 import 'package:server_box/core/lkc_sync.dart';
 import 'package:server_box/core/service/report_filter.dart';
 import 'package:server_box/core/utils/monitor_backup_storage.dart';
@@ -243,6 +244,7 @@ final class BakSyncer extends SyncIface {
   static Future<void> forgetPasswordState() async {
     await forgetCheckpoint();
     await LkcThemeBlobs.forgetNames();
+    await LkcSyncKey.passwordChanged();
   }
 
   /// Refuses to upload after a failed read of newer remote data, and waits for

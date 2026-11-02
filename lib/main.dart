@@ -15,6 +15,7 @@ import 'package:server_box/app.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/lkc.dart';
+import 'package:server_box/core/lkc_log_sync.dart';
 import 'package:server_box/core/lkc_sync.dart';
 import 'package:server_box/core/llm/host.dart';
 import 'package:server_box/core/motion.dart';
@@ -477,7 +478,14 @@ Future<void> _doPlatformRelated() async {
 
   // Off the launch path: it reads the keychain and asks homebase who is signed
   // in. LK Cloud sync waits for the session; its first connection syncs.
-  if (Lkc.enabled) unawaited(Lkc.init().then((_) => LkcSyncWatch.init()));
+  if (Lkc.enabled) {
+    unawaited(
+      Lkc.init().then((_) {
+        LkcLogSync.init();
+        LkcSyncWatch.init();
+      }),
+    );
+  }
   BakSyncer.watchEdits(() => bakSync.syncSoon());
   unawaited(KeyPassphrases.init());
 

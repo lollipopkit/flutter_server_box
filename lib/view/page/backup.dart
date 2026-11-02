@@ -282,9 +282,8 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     // readable only with the old password — and the first time data does
     // change, the merge fails to decrypt it and `_sync` returns before the
     // upload. Nothing reaches the remote again, and nothing says so.
-    await BakSyncer.forgetCheckpoint();
-    // LK Cloud's theme packages are sealed with it as well.
-    await LkcThemeBlobs.forgetNames();
+    // LK Cloud's theme packages are sealed with it as well, and the log's key.
+    await BakSyncer.forgetPasswordState();
     Toast.show(l10n.backupPasswordSet);
     setState(() {});
     return true;

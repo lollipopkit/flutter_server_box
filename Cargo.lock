@@ -1845,6 +1845,8 @@ checksum = "d45db016d36b838f563236e9193d0ee6ce38f3f68b6c94e914b4929c96bbb890"
 name = "fl_lkc"
 version = "0.1.0"
 dependencies = [
+ "base64 0.23.1",
+ "blake3",
  "bytes",
  "futures-util",
  "reqwest 0.13.5",

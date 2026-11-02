@@ -72,7 +72,7 @@ class SyncedTable {
   void stamp(String id, {int? at}) {
     db.execute(
       'UPDATE $table SET updated_at = ?, rev = rev + 1 WHERE $idColumn = ?;',
-      [at ?? SyncClock.now(), id],
+      [at ?? SyncRecorder.receivingMs ?? SyncClock.now(), id],
     );
     db.execute('DELETE FROM tombstone WHERE tbl = ? AND row_id = ?;', [
       table,
@@ -89,7 +89,7 @@ class SyncedTable {
     db.execute(
       'INSERT OR REPLACE INTO tombstone (tbl, row_id, deleted_at) '
       'VALUES (?, ?, ?);',
-      [table, id, at ?? SyncClock.now()],
+      [table, id, at ?? SyncRecorder.receivingMs ?? SyncClock.now()],
     );
     SyncRecorder.record(table, id, at: at);
   }

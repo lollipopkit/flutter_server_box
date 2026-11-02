@@ -93,6 +93,9 @@ abstract final class Stores {
   /// The sync roots' tables: what `SyncRecorder` stamps as records.
   static List<String> get syncedTables => [for (final store in _entityStores) store.table];
 
+  /// The stores of [syncedTables], by table.
+  static Map<String, EntityStore> get syncedEntities => {for (final store in _entityStores) store.table: store};
+
   static Future<void> init() async {
     getIt.registerLazySingleton<SettingStore>(() => SettingStore.instance);
     getIt.registerLazySingleton<ServerStore>(() => ServerStore.instance);
