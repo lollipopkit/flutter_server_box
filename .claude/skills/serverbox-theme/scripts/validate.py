@@ -160,7 +160,7 @@ class Report:
 def find_schema(explicit: str | None) -> Path | None:
     if explicit:
         return Path(explicit)
-    # Inside a checkout of flutter_server_box, the schema is beside the docs.
+    # Inside a ServerBox checkout, the schema is beside the docs.
     for parent in [Path.cwd(), *Path.cwd().parents, *Path(__file__).resolve().parents]:
         candidate = parent / "docs/schemas/fsbt-manifest.schema.json"
         if candidate.is_file():

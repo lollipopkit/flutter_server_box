@@ -2,7 +2,7 @@
 //!
 //! Commands, segment separator, and parsers evolve in lockstep. Both the app's
 //! script generation and the monitor's local collection take commands from here.
-//! Commands mirror flutter_server_box one by one
+//! Commands mirror the app's one by one
 //! `lib/data/model/app/scripts/cmd_types.dart`。
 //! Commands listed in [`EXTENDED`] are kept out of the fast status function
 //! and emitted by the extended one instead; see that constant.

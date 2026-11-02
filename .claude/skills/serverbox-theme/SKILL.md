@@ -1,6 +1,6 @@
 ---
 name: serverbox-theme
-description: Make a ServerBox app theme — a `.fsbt` package (a folder with `manifest.toml`, optional icons, background and splash) — or an icon pack (icons only, chosen apart from the theme) from a description, a brand color or an existing color scheme, then validate it, pack it and share it. Use this whenever someone wants to create, port, tweak, fix, validate or publish a theme for ServerBox (flutter_server_box), including requests that never say ".fsbt" or "manifest", such as "make ServerBox look like Nord", "port my VS Code theme to the app", "a dark purple theme for server box", "why does my theme fail to install", "add custom tab icons", or "put my theme in the theme store".
+description: Make a ServerBox app theme — a `.fsbt` package (a folder with `manifest.toml`, optional icons, background and splash) — or an icon pack (icons only, chosen apart from the theme) from a description, a brand color or an existing color scheme, then validate it, pack it and share it. Use this whenever someone wants to create, port, tweak, fix, validate or publish a theme for ServerBox, including requests that never say ".fsbt" or "manifest", such as "make ServerBox look like Nord", "port my VS Code theme to the app", "a dark purple theme for server box", "why does my theme fail to install", "add custom tab icons", or "put my theme in the theme store".
 ---
 
 # ServerBox themes
@@ -155,13 +155,13 @@ theme repository listing needs. Ways to share, simplest first:
 - **A link**: Install theme → URL takes an HTTPS `.fsbt` link.
 - **The theme store**: the author's own GitHub repository is the theme
   repository; see "Publishing in your own repository" below.
-- **Official themes** are maintained in flutter_server_box `store/themes/` and
+- **Official themes** are maintained in the ServerBox repository's `store/themes/` and
   published by maintainers with `scripts/publish-themes.py` (this skill's
   `publish.py` with `store/` as the repository); propose one with a pull
   request adding `store/themes/<id>/` (the folder) and `store/themes/<id>.toml`
   (the listing, without versions) — an icon pack under `store/icons/` the
   same way. Only official themes are released from
-  flutter_server_box.
+  the ServerBox repository.
 
 ## Publishing in your own repository
 
@@ -192,7 +192,7 @@ git add themes && git commit -m "themes: release" && git push
 - Push the listings: the store reads the default branch
   (`<repo>/archive/HEAD.tar.gz`). Then open a pull request adding
   `[[repo]] url = "https://github.com/<you>/<repo>"` to
-  `assets/catalog/repos.toml` in flutter_server_box.
+  `assets/catalog/repos.toml` in the ServerBox repository.
 
 Validate every theme (step 5) before publishing: the script checks ids, the
 schema range and size, not the contents.

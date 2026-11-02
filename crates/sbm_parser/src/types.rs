@@ -1,6 +1,6 @@
 //! Structured status types and diff helpers
 //!
-//! Semantic reference: flutter_server_box `lib/data/model/server/`
+//! Semantic reference: the app's `lib/data/model/server/`
 //! (cpu.dart / memory.dart / disk.dart / net_speed.dart / temp.dart)
 
 use serde::{Deserialize, Serialize};

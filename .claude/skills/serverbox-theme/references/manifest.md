@@ -225,7 +225,7 @@ theme, uploads it to the repository's `themes` pre-release and appends the
 entry. List every version still offered: each app installs the newest one its
 schema range can read. Never change the bytes behind a recorded version; publish a new
 version instead. To appear in the app's store, open a pull request adding
-`[[repo]] url = "…"` to `assets/catalog/repos.toml` in flutter_server_box.
+`[[repo]] url = "…"` to `assets/catalog/repos.toml` in the ServerBox repository.
 Limits: tree ≤ 16 MiB compressed, 64 MiB unpacked, 8 MiB per file.
 
 ## Icon packs
