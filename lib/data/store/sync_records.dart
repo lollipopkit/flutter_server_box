@@ -5,6 +5,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/entity_store.dart';
 import 'package:server_box/data/store/sync_recorder.dart';
+import 'package:server_box/data/store/sync_themes.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 /// A synced record as an op carries it (`docs/dev/sync-log.md`): read from the
@@ -16,16 +17,22 @@ import 'package:sqlite3/sqlite3.dart';
 abstract final class SyncRecords {
   static const _kvPrefix = 'kv:';
 
-  /// [c]/[id] as it is now, JSON; null when it is not here (deleted).
-  static Object? read(String c, String id) => reader()(c, id);
+  /// What [read] answers for a record it could not read now (the themes'
+  /// files), as against null for one that is not here.
+  static const unread = Object();
 
-  /// [read] for many records: the stores and the servers' children are
-  /// read once.
-  static Object? Function(String c, String id) reader() {
+  /// [c]/[id] as it is now, JSON; null when it is not here (deleted).
+  static FutureOr<Object?> read(String c, String id) => reader()(c, id);
+
+  /// [read] for many records: the stores, the servers' children and the
+  /// themes are read once.
+  static FutureOr<Object?> Function(String c, String id) reader() {
     final entities = Stores.syncedEntities;
     Map<String, Object?>? containers;
     Map<String, Object?>? pves;
+    Future<Map<String, Object?>?>? themes;
     return (c, id) {
+      if (c == SyncThemes.c) return (themes ??= SyncThemes.read()).then((t) => t == null ? unread : t[id]);
       if (c.startsWith(_kvPrefix)) {
         final store = _kvStore(c);
         if (store == null || !_syncedKey(store, id)) return null;

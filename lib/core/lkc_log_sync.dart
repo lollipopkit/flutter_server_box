@@ -10,6 +10,7 @@ import 'package:server_box/core/sync.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/sync_recorder.dart';
+import 'package:server_box/data/store/sync_themes.dart';
 
 /// [LogSync] on LK Cloud: homebase's log (`/v2/sync/serverbox/log`).
 final class LkcLogTransport implements SyncLogTransport {
@@ -339,7 +340,8 @@ abstract final class LkcLogSync {
     return LogSync(
       LkcLogTransport(sync),
       key,
-      carries: (c) => c != 'kv:${Stores.setting.name}' || PrefProps.syncAppSettings.get(),
+      // The themes go with the settings: they are what the settings select.
+      carries: (c) => (c != 'kv:${Stores.setting.name}' && c != SyncThemes.c) || PrefProps.syncAppSettings.get(),
     );
   }
 
