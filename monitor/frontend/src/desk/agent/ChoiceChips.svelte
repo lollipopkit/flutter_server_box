@@ -33,7 +33,8 @@
 
   function inHost(node: HTMLElement) {
     if (!host || !root) return
-    left = root.getBoundingClientRect().left - host.getBoundingClientRect().left
+    const at = root.getBoundingClientRect()
+    left = at.left - host.getBoundingClientRect().left
     host.appendChild(node)
     return { destroy: () => node.remove() }
   }

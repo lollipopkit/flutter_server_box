@@ -220,12 +220,18 @@
       ></textarea>
     </label>
     <div class="ctl" inert={focused}>
-      {@render chip(false)}
-      <ChoiceChips {store} draft={d} {disabled} host={box} />
       <IconButton icon="attach_file" label={$LL.deskAgentAttach()} {disabled} onmousedown={keep} onclick={() => picker?.click()} />
       <Button variant="primary" icon="arrow_upward" disabled={(!d.text.trim() && !atts.length) || sending || disabled} onclick={() => send()}>
         {$LL.deskAgentSend()}
       </Button>
+    </div>
+  </div>
+  <!-- What the task runs with, on a row of its own: beside the field it
+       left the field too little room. Focused, the hints below take it in. -->
+  <div class="choicebox" inert={focused}>
+    <div class="choices">
+      {@render chip(false)}
+      <ChoiceChips {store} draft={d} {disabled} host={box} down />
     </div>
   </div>
   <div class="hintbox" inert={!focused}>
@@ -243,7 +249,7 @@
     <div class="error"><Icon name="error" size={15} />{error ?? atts.error}</div>
   {/if}
   {#if modeOpen}
-    <div bind:this={menu} class="menu" class:menu--down={focused} role="menu" aria-label={$LL.deskAgentModeTitle()}>
+    <div bind:this={menu} class="menu" role="menu" aria-label={$LL.deskAgentModeTitle()}>
       <div class="lk-caps menu__head">{$LL.deskAgentModeTitle()}</div>
       {#each MODES as m (m.id)}
         <button
@@ -388,17 +394,44 @@
     align-items: center;
     gap: var(--space-5);
     overflow: hidden;
-    /* Room for all four (mode, model and thinking, attach, send); a bound
-       only so collapsing it on focus can be animated. */
-    max-width: 640px;
+    /* Room for attach and send; a bound only so collapsing it on focus can
+       be animated. */
+    max-width: 240px;
     opacity: 1;
     transition:
       max-width var(--grow),
       opacity 240ms var(--ease-standard) 240ms;
   }
-  /* Only the model chips give way; the rest keep their size. */
-  .ctl > :global(:not(.chips)) {
+  .ctl > :global(*) {
     flex-shrink: 0;
+  }
+  .choicebox {
+    display: grid;
+    grid-template-rows: 1fr;
+    margin-top: 9px;
+    margin-left: -8px;
+    opacity: 1;
+    transition:
+      grid-template-rows var(--grow),
+      margin var(--grow),
+      opacity 240ms var(--ease-standard) 240ms;
+  }
+  .box--focused .choicebox {
+    grid-template-rows: 0fr;
+    margin-top: 0;
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      grid-template-rows var(--grow),
+      margin var(--grow),
+      opacity 150ms var(--ease-exit);
+  }
+  .choices {
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
   }
   .box--focused .ctl {
     max-width: 0;
@@ -486,10 +519,12 @@
     font-size: var(--text-13);
     color: var(--color-danger);
   }
+  /* Opens below the box, from the chip's side: the chip is on the box's
+     last row, focused or not. */
   .menu {
     position: absolute;
-    bottom: calc(100% + 9px);
-    right: 0;
+    top: calc(100% + 9px);
+    left: 0;
     z-index: 10;
     width: 360px;
     max-width: 100%;
@@ -502,17 +537,10 @@
     box-shadow:
       var(--shadow-menu),
       inset 0 0 0 0.5px var(--border-glass);
-    transform-origin: bottom right;
+    transform-origin: top left;
     animation: lk-menu-in 220ms var(--ease-spring);
     font-size: var(--text-13);
     color: var(--text-primary);
-  }
-  .menu--down {
-    top: calc(100% + 9px);
-    bottom: auto;
-    left: 0;
-    right: auto;
-    transform-origin: top left;
   }
   .menu__head {
     padding: 7px 9px 5px;
