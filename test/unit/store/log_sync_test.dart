@@ -9,6 +9,7 @@ import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/entity_store.dart';
 import 'package:server_box/data/store/sync_recorder.dart';
 import 'package:server_box/data/store/sync_records.dart';
 
@@ -429,5 +430,16 @@ void main() {
     await _sync(log).sync();
     expect(log.snap, isNotNull);
     expect(log.blobStore.keys, [named]);
+  });
+
+  test("the snapshot sync takes another device's record of the same name as another record", () async {
+    await _device();
+    Stores.snippet.put(const Snippet(id: 'phone0001', name: 'a', script: 'from the phone'));
+    final changed = Stores.snippet.merge({
+      'mac000001': const Snippet(id: 'mac000001', name: 'a', script: 'from the mac').toJson(),
+      EntityStore.lastModKey: {'mac000001': SyncClock.now() + 1000},
+    }, force: false);
+    expect(changed, isFalse, reason: 'the name is taken here: left to the log, which suffixes one');
+    expect(Stores.snippet.fetchOneRaw('phone0001')?.script, 'from the phone');
   });
 }

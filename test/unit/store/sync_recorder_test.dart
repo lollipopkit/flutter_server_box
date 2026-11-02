@@ -102,4 +102,16 @@ void main() {
     SyncRecorder.resetForTest();
     expect(SyncRecorder.device, id);
   });
+
+  test("a stamp never moves back, and an edit's updated_at is its stamp's time", () {
+    const snippet = Snippet(id: 'sn9', name: 'echo', script: 'echo');
+    Stores.snippet.put(snippet);
+    final own = _stampOf('snippet', snippet.id)!;
+    final at = SqliteDb.instance.select('SELECT updated_at FROM snippet WHERE id = ?;', [snippet.id]).first['updated_at'] as int;
+    expect(at, SyncRecorder.msOf(own));
+
+    // The snapshot sync taking the same edit back from another device.
+    SyncRecorder.applying(() => SyncRecorder.record('snippet', snippet.id, at: at));
+    expect(_stampOf('snippet', snippet.id), own);
+  });
 }

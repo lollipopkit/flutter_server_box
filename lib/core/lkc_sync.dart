@@ -80,10 +80,8 @@ final class LkcThemeBlobs implements ThemeBlobStore {
   Future<String> put(String id, Uint8List bytes) async {
     final listed = _listed ??= await _list();
     final client = await _client;
-    final user = Lkc.client.user.value;
-    if (user == null) throw StateError('signed out');
     final pwd = await _password();
-    final key = await LkcSyncKey.load(client, user.id);
+    final key = await LkcLogSync.key();
     final name = '$_prefix${key.nameOf([...utf8.encode(pwd), 0, ...bytes])}.age';
     _used.add(name);
     if (listed.containsKey(name)) return name;

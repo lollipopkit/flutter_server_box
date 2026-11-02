@@ -58,13 +58,6 @@ abstract final class SyncRecorder {
     }
   }
 
-  /// The milliseconds of the op being [receiving], for the snapshot sync's
-  /// own stamps (`updated_at`, `lastUpdateTs`) of what it writes.
-  static int? get receivingMs => switch (_receiving) {
-    final h? => msOf(h),
-    null => null,
-  };
-
   /// A stamp's wall-clock part.
   static int msOf(String h) => int.parse(h.substring(0, 12), radix: 16);
 
@@ -128,8 +121,13 @@ abstract final class SyncRecorder {
   /// [c]/[id] changed: here at the clock's next stamp; while [receiving], at
   /// its stamp; while [applying], at [at] (milliseconds) as no device's
   /// change.
-  static void record(String c, String id, {int? at}) {
-    if (!_ready) return;
+  ///
+  /// Answers the stamp made, null when none can be (fl_lib's Rust is not
+  /// loaded). A record keeps the greater of its stamp and this one: a stamp
+  /// never moves back (the snapshot sync taking back this device's own edit
+  /// stamps it as no device's, which sorts before it).
+  static String? record(String c, String id, {int? at}) {
+    if (!_ready) return null;
     final String h;
     if (_receiving case final received?) {
       h = received;
@@ -145,10 +143,11 @@ abstract final class SyncRecorder {
     }
     _db.execute(
       'INSERT INTO sync_record (c, id, hlc) VALUES (?, ?, ?) '
-      'ON CONFLICT (c, id) DO UPDATE SET hlc = excluded.hlc;',
+      'ON CONFLICT (c, id) DO UPDATE SET hlc = excluded.hlc WHERE excluded.hlc > sync_record.hlc;',
       [c, id, h],
     );
     if (_receiving == null && _applying == 0) onLocal?.call();
+    return h;
   }
 
   /// Each record's stamp, for the ones [ids] names: what an incoming op is

@@ -70,15 +70,18 @@ class SyncedTable {
   /// `rev` moves too: two edits inside one millisecond are indistinguishable
   /// by the clock alone.
   void stamp(String id, {int? at}) {
+    final h = SyncRecorder.record(table, id, at: at);
+    // The stamp's own time: the snapshot sync compares `updated_at`, and a
+    // device given this record by the log stores the stamp's, so both agree
+    // and neither takes the other's copy back as newer.
     db.execute(
       'UPDATE $table SET updated_at = ?, rev = rev + 1 WHERE $idColumn = ?;',
-      [at ?? SyncRecorder.receivingMs ?? SyncClock.now(), id],
+      [at ?? (h == null ? SyncClock.now() : SyncRecorder.msOf(h)), id],
     );
     db.execute('DELETE FROM tombstone WHERE tbl = ? AND row_id = ?;', [
       table,
       id,
     ]);
-    SyncRecorder.record(table, id, at: at);
   }
 
   /// Records that this record existed and no longer does.
@@ -86,12 +89,12 @@ class SyncedTable {
   /// A peer that still holds the row would otherwise read its absence as an
   /// addition and put it back on the next sync.
   void tombstone(String id, {int? at}) {
+    final h = SyncRecorder.record(table, id, at: at);
     db.execute(
       'INSERT OR REPLACE INTO tombstone (tbl, row_id, deleted_at) '
       'VALUES (?, ?, ?);',
-      [table, id, at ?? SyncRecorder.receivingMs ?? SyncClock.now()],
+      [table, id, at ?? (h == null ? SyncClock.now() : SyncRecorder.msOf(h))],
     );
-    SyncRecorder.record(table, id, at: at);
   }
 
   /// The newest change this table holds, including deletions.
@@ -409,11 +412,16 @@ abstract class EntityStore<T extends Object> {
         // a server at its key or its BMC account by name then had nothing to
         // point at, and the server lost the reference or was skipped outright.
         // `reconcile` is what turns the name back into this device's id.
-        if (json['id'] == null) json['id'] = id;
+        final idLess = json['id'] == null;
+        if (idLess) json['id'] = id;
         final item = fromJson(json);
         if (item == null) continue;
         try {
-          final resolved = reconcile(item);
+          // By name only for a restore, or a record without an id: in a sync
+          // another device's record of the same name is another record, as
+          // the operation log has it (`SyncRecords`); taking it for this
+          // one's overwrote it.
+          final resolved = force || idLess ? reconcile(item) : item;
           write(resolved);
           written.add(resolved);
           synced.stamp(idOf(resolved), at: at);

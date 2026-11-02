@@ -287,7 +287,14 @@ abstract final class LkcLogSync {
       unawaited(opening.then((s) => s.reset()).then((_) => sync(), onError: (Object _) => LogSync.forget()));
     });
     // Signed out, or in as someone else: the next run opens anew.
-    Lkc.client.user.addListener(reset);
+    Lkc.client.user.addListener(() {
+      reset();
+      unawaited(sync());
+    });
+    // Not only on the event stream connecting: a device whose network keeps
+    // it from listening still sends what was edited while sync was off.
+    BakSyncer.lkcSync.listenable().addListener(() => unawaited(sync()));
+    unawaited(sync());
   }
 
   /// Reads what other devices sent, then sends what this one has.
@@ -318,7 +325,12 @@ abstract final class LkcLogSync {
     }
   }
 
-  static Future<LogSync> _open() async {
+  static Future<LogSync> _open() => _openOnce().catchError((Object e) {
+    _opening = null;
+    throw e;
+  });
+
+  static Future<LogSync> _openOnce() async {
     final user = Lkc.client.user.value;
     if (user == null) throw StateError('signed out');
     final sync = await Lkc.client.sync(Lkc.app);
@@ -329,6 +341,13 @@ abstract final class LkcLogSync {
       key,
       carries: (c) => c != 'kv:${Stores.setting.name}' || PrefProps.syncAppSettings.get(),
     );
+  }
+
+  /// The account's sync key, as the log sync holds it: loaded (and sealed
+  /// again after a password change) in one place.
+  static Future<LkcSyncKey> key() async {
+    await (_opening ??= _open());
+    return _key!;
   }
 
   /// Replaces the account's sync key (a device that held it is gone):
