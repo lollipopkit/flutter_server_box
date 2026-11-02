@@ -30,17 +30,18 @@ describe('the model and thinking chips', () => {
     render(ChoiceChips, { store, draft, host })
 
     await fireEvent.click(screen.getByRole('button', { name: ll.deskAgentPickModel() }))
-    const models = screen.getByRole('menu', { name: ll.deskAgentPickModel() })
+    const models = screen.getByRole('menu')
     expect(host.contains(models)).toBe(true)
-    await fireEvent.mouseDown(screen.getByRole('menuitemradio', { name: /Claude/ }))
-    await fireEvent.click(screen.getByRole('menuitemradio', { name: /Claude/ }))
+    expect(models).toHaveClass('lk-menu')
+    await fireEvent.mouseDown(screen.getByRole('menuitem', { name: /Claude/ }))
+    await fireEvent.click(screen.getByRole('menuitem', { name: /Claude/ }))
     expect(draft.model).toEqual({ provider: 'anthropic', id: 'claude' })
     expect(screen.queryByRole('menu')).toBeNull()
 
     await fireEvent.click(screen.getByRole('button', { name: ll.deskAgentPickThinking() }))
-    const levels = screen.getByRole('menu', { name: ll.deskAgentPickThinking() })
+    const levels = screen.getByRole('menu')
     expect(host.contains(levels)).toBe(true)
-    await fireEvent.click(screen.getByRole('menuitemradio', { name: ll.settingsAgentThinkingHigh() }))
+    await fireEvent.click(screen.getByRole('menuitem', { name: ll.settingsAgentThinkingHigh() }))
     expect(draft.thinking).toBe('high')
   })
 

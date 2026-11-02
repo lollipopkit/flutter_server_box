@@ -5,7 +5,7 @@
 
   import { LL } from '../../i18n/i18n-svelte'
   import type { Flow, ModelChoice, ModelRef } from '../../lib/agentApi'
-  import { Icon } from '../lk'
+  import { Icon, Menu, type MenuEntry } from '../lk'
   import type { AgentStore } from './agentStore.svelte'
   import type { Draft } from './attachments.svelte'
 
@@ -63,6 +63,20 @@
   })
 
   const keep = (e: Event) => e.preventDefault()
+
+  const modelItems = $derived<MenuEntry[]>([
+    { heading: $LL.deskAgentPickModel() },
+    ...(choices?.models ?? []).map((m) => ({
+      label: m.name ?? m.id,
+      shortcut: m.provider,
+      checked: same(m, model),
+      action: () => (draft.model = { provider: m.provider, id: m.id }),
+    })),
+  ])
+  const thinkingItems = $derived<MenuEntry[]>([
+    { heading: $LL.deskAgentPickThinking() },
+    ...(choices?.thinkingLevels ?? []).map((l) => ({ label: level(l), checked: l === thinking, action: () => (draft.thinking = l) })),
+  ])
 </script>
 
 {#if choices && model && choices.models.length}
@@ -98,47 +112,19 @@
         <Icon name="psychology" size={small ? 14 : 15} />{level(thinking)}<Icon name="expand_more" size={small ? 14 : 15} />
       </button>
     {/if}
-    {#if open === 'model'}
-      <div bind:this={menu} use:inHost class="menu" class:menu--down={down} style:left={host ? `${left}px` : null} role="menu" aria-label={$LL.deskAgentPickModel()}>
-        <div class="lk-caps menu__head">{$LL.deskAgentPickModel()}</div>
-        {#each choices.models as m (`${m.provider}/${m.id}`)}
-          <button
-            type="button"
-            role="menuitemradio"
-            aria-checked={same(m, model)}
-            class="item"
-            class:item--on={same(m, model)}
-            onmousedown={keep}
-            onclick={() => {
-              draft.model = { provider: m.provider, id: m.id }
-              open = null
-            }}
-          >
-            <span class="item__text"><span class="item__label">{m.name ?? m.id}</span><span class="item__id">{m.provider}</span></span>
-            {#if same(m, model)}<Icon name="check" size={16} weight={600} color="var(--color-accent-text)" />{/if}
-          </button>
-        {/each}
-      </div>
-    {:else if open === 'thinking'}
-      <div bind:this={menu} use:inHost class="menu menu--narrow" class:menu--down={down} style:left={host ? `${left}px` : null} role="menu" aria-label={$LL.deskAgentPickThinking()}>
-        <div class="lk-caps menu__head">{$LL.deskAgentPickThinking()}</div>
-        {#each choices.thinkingLevels as l (l)}
-          <button
-            type="button"
-            role="menuitemradio"
-            aria-checked={l === thinking}
-            class="item"
-            class:item--on={l === thinking}
-            onmousedown={keep}
-            onclick={() => {
-              draft.thinking = l
-              open = null
-            }}
-          >
-            <span class="item__text"><span class="item__label">{level(l)}</span></span>
-            {#if l === thinking}<Icon name="check" size={16} weight={600} color="var(--color-accent-text)" />{/if}
-          </button>
-        {/each}
+    {#if open}
+      <!-- The design system's menu; this places it, above the chips or below. -->
+      <div
+        bind:this={menu}
+        use:inHost
+        class="menu"
+        class:menu--narrow={open === 'thinking'}
+        class:menu--down={down}
+        style:left={host ? `${left}px` : null}
+        role="presentation"
+        onmousedown={keep}
+      >
+        <Menu items={open === 'model' ? modelItems : thinkingItems} onselect={() => (open = null)} onclose={() => (open = null)} />
       </div>
     {/if}
   </div>
@@ -191,15 +177,6 @@
     left: 0;
     z-index: 10;
     width: 320px;
-    max-height: 360px;
-    overflow: auto;
-    box-sizing: border-box;
-    padding: 5px;
-    border-radius: 13px;
-    background: var(--glass-menu);
-    -webkit-backdrop-filter: var(--blur-menu);
-    backdrop-filter: var(--blur-menu);
-    box-shadow: var(--shadow-menu);
   }
   .menu--narrow {
     width: 200px;
@@ -208,44 +185,13 @@
     top: calc(100% + 9px);
     bottom: auto;
   }
-  .menu__head {
-    padding: 7px 9px 5px;
+  .menu :global(.lk-menu) {
+    max-height: 360px;
+    overflow: auto;
+    box-sizing: border-box;
+    transform-origin: bottom left;
   }
-  .item {
-    width: 100%;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 16px;
-    gap: var(--space-11);
-    align-items: center;
-    padding: 9px;
-    border: 0;
-    border-radius: 9px;
-    background: transparent;
-    color: inherit;
-    font: inherit;
-    text-align: left;
-    cursor: default;
-  }
-  .item:hover {
-    background: var(--fill-hover);
-  }
-  .item--on {
-    background: var(--fill-press);
-  }
-  .item__text {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-  }
-  .item__label {
-    font: 500 var(--text-13) / 1.3 var(--font-ui);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .item__id {
-    font: 400 var(--text-11) / 1.3 var(--font-mono);
-    color: var(--text-tertiary);
+  .menu--down :global(.lk-menu) {
+    transform-origin: top left;
   }
 </style>
