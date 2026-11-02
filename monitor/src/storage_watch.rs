@@ -19,6 +19,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::api::desk::{Level, Source};
 use crate::api::server::AppState;
+use crate::monitoring::push::{Alert, push_all};
 use crate::stacks::Refusal;
 
 const WATCH_EVERY: Duration = Duration::from_secs(300);
@@ -322,7 +323,9 @@ async fn notify(state: &AppState, level: Level, key: &str, subject: &str, body: 
         tracing::error!("storage {key}: notifying: {e}");
     }
     if push {
-        crate::monitoring::push::push_all(&state.config, &format!("{subject}: {body}")).await;
+        let message = format!("{subject}: {body}");
+        let thread = format!("storage:{key}");
+        push_all(state, Alert { message: &message, level, thread: &thread }).await;
     }
 }
 

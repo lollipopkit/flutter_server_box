@@ -18,8 +18,9 @@ pub struct Firing {
     pub message: String,
 }
 
-/// Checks every rule, pushes what fires, and answers the rules firing now —
-/// for the desk's notifications and `/alerts` (`api::desk`).
+/// Checks every rule and answers the rules firing now: the monitoring loop
+/// pushes them, and they make the desk's notifications and `/alerts`
+/// (`api::desk`).
 pub async fn check_rules_with_velocity(
     metrics: &SystemMetrics,
     config: &Config,
@@ -27,7 +28,7 @@ pub async fn check_rules_with_velocity(
 ) -> Result<Vec<Firing>> {
     let mut firing = Vec::new();
     for rule in &config.get_monitoring().rules {
-        match check_enhanced_rule(rule, metrics, config, velocity_manager).await {
+        match check_enhanced_rule(rule, metrics, velocity_manager).await {
             Ok(Some(fired)) => firing.push(fired),
             Ok(None) => {}
             Err(e) => warn!("Failed to check enhanced rule '{}': {}", rule.name, e),
@@ -79,7 +80,6 @@ impl RuleKind {
 async fn check_enhanced_rule(
     rule: &MonitoringRule, 
     metrics: &SystemMetrics, 
-    config: &Config, 
     velocity_manager: &VelocityManager
 ) -> Result<Option<Firing>> {
     let Some(kind) = RuleKind::parse(&rule.monitor_type) else {
@@ -106,8 +106,6 @@ async fn check_enhanced_rule(
         );
         
         info!("Triggering enhanced alert: {}", message);
-        
-        crate::monitoring::push::push_all(config, &message).await;
         return Ok(Some(Firing {
             rule: rule.name.clone(),
             monitor_type: rule.monitor_type.clone(),

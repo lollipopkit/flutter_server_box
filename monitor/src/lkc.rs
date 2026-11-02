@@ -20,11 +20,13 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
-use fl_lkc::{Client, DeviceAuthorization, DevicePoll, Failure, Tokens, User, now_ms};
+use fl_lkc::{Client, DeviceAuthorization, DevicePoll, Failure, Tokens, User, now_ms, push};
 use serde::Serialize;
 use sqlx::SqlitePool;
 
+use crate::api::desk::Level;
 use crate::api::server::AppState;
+use crate::monitoring::push::Alert;
 use crate::api::ws::audit::{Action, Event, Kind, Outcome};
 use crate::db::sealed::{self, Sealer};
 use crate::utils::lock::LockExt;
@@ -495,6 +497,81 @@ pub async fn current(state: &AppState) -> Option<User> {
     serde_json::from_str(&user).ok()
 }
 
+/// Sends [alert] to the account's devices as this install's sender
+/// (`fl_lkc::push`): true when homebase took it. Nothing when signed out. A
+/// sender homebase no longer knows (the person removed it) is registered
+/// again, once.
+pub async fn push(state: &AppState, alert: Alert<'_>) -> bool {
+    let Some(session) = session(state).await else { return false };
+    let Ok(client) = state.lkc.client() else { return false };
+    let name = state.config.get_server_name();
+    let thread = thread_of(alert.thread);
+    for again in [false, true] {
+        let sender = match sender(state, &client, &session, &name, again).await {
+            Ok(sender) => sender,
+            Err(e) => {
+                tracing::warn!("LK Cloud push: registering this agent: {e}");
+                return false;
+            }
+        };
+        let level = match alert.level {
+            Level::Info => push::Level::Info,
+            Level::Warning => push::Level::Warning,
+            Level::Critical => push::Level::Critical,
+        };
+        let push = push::Push { sender: &sender, body: alert.message, title: Some(&name), level, thread: Some(&thread), data: None, dedupe_key: None };
+        match client.push(&session.tokens.access, &push).await {
+            Ok(sent) => {
+                tracing::debug!("LK Cloud push: {} of {} devices ({} muted)", sent.sent, sent.devices, sent.muted);
+                return true;
+            }
+            Err(e) if e.failure == push::PushFailure::SenderUnknown && !again => continue,
+            Err(e) => {
+                tracing::warn!("LK Cloud push: {e}");
+                return false;
+            }
+        }
+    }
+    false
+}
+
+/// Homebase's sender id for this install and [session]'s account: the one
+/// kept, or registered now under the install's key (made once).
+async fn sender(state: &AppState, client: &Client, session: &Session, name: &str, again: bool) -> Result<String, String> {
+    let row: Option<(String, Option<String>, Option<String>)> =
+        sqlx::query_as("SELECT sender_key, sender_id, user_id FROM lkc_push WHERE id = 1").fetch_optional(&state.db).await.map_err(|e| e.to_string())?;
+    let key = match row {
+        Some((_, Some(id), Some(user))) if !again && user == session.user.id => return Ok(id),
+        Some((key, _, _)) => key,
+        None => {
+            let key = crate::utils::secrets::random_hex(16).map_err(|e| e.to_string())?;
+            sqlx::query("INSERT OR IGNORE INTO lkc_push (id, sender_key) VALUES (1, ?)").bind(&key).execute(&state.db).await.map_err(|e| e.to_string())?;
+            let (key,): (String,) = sqlx::query_as("SELECT sender_key FROM lkc_push WHERE id = 1").fetch_one(&state.db).await.map_err(|e| e.to_string())?;
+            key
+        }
+    };
+    let sender = client.register_sender(&session.tokens.access, &format!("serverbox-monitor.{key}"), name).await.map_err(|e| e.to_string())?;
+    sqlx::query("UPDATE lkc_push SET sender_id = ?, user_id = ? WHERE id = 1")
+        .bind(&sender.id)
+        .bind(&session.user.id)
+        .execute(&state.db)
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(sender.id)
+}
+
+/// [thread] as homebase takes one (letters, digits and `._:-`, up to 64): as
+/// it is when it already fits, else hashed, so two names never become one.
+fn thread_of(thread: &str) -> String {
+    let fits = thread.len() <= 64 && thread.chars().all(|c| c.is_ascii_alphanumeric() || "._:-".contains(c));
+    if fits {
+        return thread.to_string();
+    }
+    let digest = ring::digest::digest(&ring::digest::SHA256, thread.as_bytes());
+    let hex: String = digest.as_ref()[..16].iter().map(|b| format!("{b:02x}")).collect();
+    format!("h:{hex}")
+}
+
 /// A refresh token being sent ([`Lkc::sending`]); over when dropped.
 pub struct Sending<'a>(&'a AtomicBool);
 
@@ -639,6 +716,15 @@ async fn forget(db: &SqlitePool) -> sqlx::Result<()> {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn threads_fit_or_are_hashed() {
+        assert_eq!(super::thread_of("rule:cpu-high"), "rule:cpu-high");
+        let a = super::thread_of("rule:CPU 告警");
+        let b = super::thread_of("rule:CPU 报警");
+        assert!(a.starts_with("h:") && a.len() == 34 && a != b, "{a} {b}");
+        assert_eq!(super::thread_of(&"x".repeat(65)).len(), 34);
+    }
+
     use super::*;
 
     fn session(expires_in_ms: i64) -> Session {

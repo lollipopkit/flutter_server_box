@@ -1,3 +1,5 @@
+use crate::api::desk::Level;
+use crate::api::server::AppState;
 use crate::utils::lock::LockExt;
 use crate::{core::config::{Config, PushConfig}, utils::error::Result};
 use futures::StreamExt;
@@ -286,9 +288,21 @@ fn is_env_name(name: &str) -> bool {
     chars.next().is_some_and(|c| c.is_ascii_alphabetic() || c == '_') && chars.all(|c| c.is_ascii_alphanumeric() || c == '_')
 }
 
-/// Sends [message] through every configured channel, each within its rate
-/// limit (`config.get_push_rate()`).
-pub async fn push_all(config: &Config, message: &str) {
+/// What a push says, and what the account's devices sort it by.
+#[derive(Debug, Clone, Copy)]
+pub struct Alert<'a> {
+    pub message: &'a str,
+    pub level: Level,
+    /// What a newer alert replaces on a device (`rule:cpu-high`,
+    /// `storage:md0`).
+    pub thread: &'a str,
+}
+
+/// Sends [alert] through every configured channel, each within its rate
+/// limit (`config.get_push_rate()`), and to the LK Cloud account's devices
+/// when this agent is signed in (`lkc::push`).
+pub async fn push_all(state: &AppState, alert: Alert<'_>) {
+    let config = &state.config;
     let (rate_times, rate_window) = config.get_push_rate();
     let limiter = PushRateLimiter::global();
     for push_config in &config.get_push() {
@@ -296,10 +310,17 @@ pub async fn push_all(config: &Config, message: &str) {
             warn!("Push '{}' rate limit reached, skipping", push_config.name);
             continue;
         }
-        match send_notification(config, push_config, message).await {
+        match send_notification(config, push_config, alert.message).await {
             Ok(()) => limiter.acquire(&push_config.name),
             Err(e) => warn!("Failed to send push notification via '{}': {}", push_config.name, e),
         }
+    }
+    // Within the same rate as a channel, on a limiter of its own: a channel
+    // the operator named `lkc` does not share its budget.
+    static LKC: OnceLock<PushRateLimiter> = OnceLock::new();
+    let lkc = LKC.get_or_init(PushRateLimiter::new);
+    if lkc.check("lkc", rate_times, rate_window) && crate::lkc::push(state, alert).await {
+        lkc.acquire("lkc");
     }
 }
 

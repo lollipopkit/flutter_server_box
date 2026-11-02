@@ -101,6 +101,8 @@ pub const LEFT_OUT: &[&str] = &[
     "monitor_backup",
     "push_literal_pending",
     "lkc_session",
+    // A sender per machine: a restore elsewhere registers its own.
+    "lkc_push",
 ];
 
 /// The account's columns a backup carries.

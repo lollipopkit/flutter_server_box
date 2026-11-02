@@ -1,5 +1,6 @@
+use crate::monitoring::push::{Alert, push_all};
 use crate::{
-    api::server::AppState,
+    api::{desk::Level, server::AppState},
     core::config::Config,
     utils::error::{MonitorError, Result},
 };
@@ -113,7 +114,13 @@ pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
                 )
                 .await
                 {
-                    Ok(firing) => app_state.desk.rules_checked(&app_state.db, firing).await,
+                    Ok(firing) => {
+                        for fired in &firing {
+                            let thread = format!("rule:{}", fired.rule);
+                            push_all(&app_state, Alert { message: &fired.message, level: Level::Warning, thread: &thread }).await;
+                        }
+                        app_state.desk.rules_checked(&app_state.db, firing).await
+                    }
                     Err(e) => error!("Failed to check enhanced rules: {}", e),
                 }
 

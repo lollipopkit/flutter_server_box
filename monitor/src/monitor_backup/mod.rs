@@ -29,6 +29,7 @@ use tokio::sync::Notify;
 use zeroize::Zeroizing;
 
 use crate::api::desk::{Level, Source};
+use crate::monitoring::push::{Alert, push_all};
 use crate::api::server::AppState;
 use crate::core::blobs::Blobs;
 use crate::db::sealed::{self, Sealer};
@@ -1115,7 +1116,8 @@ async fn notify(state: &AppState, level: Level, subject: &str, body: &str, kind:
         tracing::error!("monitor backup: notifying: {e}");
     }
     if push {
-        crate::monitoring::push::push_all(&state.config, &format!("{subject}: {body}")).await;
+        let message = format!("{subject}: {body}");
+        push_all(state, Alert { message: &message, level, thread: kind }).await;
     }
 }
 
