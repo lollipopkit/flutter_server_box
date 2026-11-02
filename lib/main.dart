@@ -14,6 +14,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:server_box/app.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/diag.dart';
+import 'package:server_box/core/file_log_sync.dart';
 import 'package:server_box/core/lkc.dart';
 import 'package:server_box/core/lkc_log_sync.dart';
 import 'package:server_box/core/lkc_sync.dart';
@@ -487,6 +488,7 @@ Future<void> _doPlatformRelated() async {
     );
   }
   BakSyncer.watchEdits(() => bakSync.syncSoon());
+  FileLogSync.init();
   unawaited(KeyPassphrases.init());
 
   // The watch app used to learn about servers only while the user sat on the

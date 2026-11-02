@@ -7,7 +7,10 @@
 #    under the v4 name, another device restores it, a v3-only remote is
 #    inherited and moved to v4;
 # 3. each uploaded file opened with the `age` CLI and the backup password,
-#    nothing of ServerBox's, and what is in it read.
+#    nothing of ServerBox's, and what is in it read;
+# 4. `test/e2e/segment_sync_test.dart` against the WebDAV: the log sync's
+#    segments reach other devices; the sync key opened with the backup
+#    password, and a segment with that key, by the `age` CLI.
 #
 #     scripts/app-backup-e2e.sh
 #
@@ -76,6 +79,24 @@ for remote in webdav monitor; do
         catch wait result
         exit [lindex $result 3]'
     gunzip -c "$WORK/$remote.gz" | python3 -c 'import json,sys; v=json.load(sys.stdin); assert v["settings"]["timeOut"] == 17, v["settings"].get("timeOut"); print("timeOut", v["settings"]["timeOut"])'
+done
+
+echo "== The log sync against webdav"
+mkdir -p "$WORK/segments"
+SBM_E2E_SEGMENT_OUT="$WORK/segments" flutter test --timeout 300s test/e2e/segment_sync_test.dart
+
+echo "== Its key and a segment opened with the age CLI"
+BACKUP_PASSWORD=$BACKUP_PASSWORD IN="$WORK/segments/identity.age" OUT="$WORK/segments/identity.txt" expect -c '
+    log_user 0
+    spawn age -d -o $env(OUT) $env(IN)
+    expect "passphrase"
+    send "$env(BACKUP_PASSWORD)\r"
+    expect eof
+    catch wait result
+    exit [lindex $result 3]'
+for seg in "$WORK"/segments/seg-*.age; do
+    age -d -i "$WORK/segments/identity.txt" "$seg" | gunzip -c |
+        python3 -c 'import json,sys; v=json.load(sys.stdin); assert v["v"] == 1 and v["ops"], v; print(len(v["ops"]), "ops")'
 done
 
 echo "== All passed"

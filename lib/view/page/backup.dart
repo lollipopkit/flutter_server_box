@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -8,10 +9,12 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/file_log_sync.dart';
 import 'package:server_box/core/lkc.dart';
 import 'package:server_box/core/lkc_log_sync.dart';
 import 'package:server_box/core/lkc_sync.dart';
 import 'package:server_box/core/sync.dart';
+import 'package:server_box/core/sync_key.dart';
 import 'package:server_box/core/utils/monitor_backup_storage.dart';
 import 'package:server_box/data/model/app/bak/backup_service.dart';
 import 'package:server_box/data/model/app/bak/backup_source.dart';
@@ -286,7 +289,13 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     // upload. Nothing reaches the remote again, and nothing says so.
     // LK Cloud's theme packages are sealed with it as well, and the log's key.
     await BakSyncer.forgetPasswordState();
-    if (previous != pwd) await LkcSyncKey.passwordChanged(previous);
+    if (previous != pwd) {
+      await SyncKey.passwordChanged(previous);
+      LkcLogSync.reset();
+      FileLogSync.reset();
+      unawaited(LkcLogSync.sync());
+      unawaited(FileLogSync.sync());
+    }
     Toast.show(l10n.backupPasswordSet);
     setState(() {});
     return true;
