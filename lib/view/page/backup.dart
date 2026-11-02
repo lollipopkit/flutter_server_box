@@ -100,6 +100,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
   List<Widget> get _syncTiles => [
     _buildTip,
     _buildBakPwd,
+    _buildSyncSettings,
     if (isICloudSupported) _buildIcloud,
     _buildWebdav,
     _buildGist,
@@ -340,7 +341,6 @@ final class _BackupPageState extends ConsumerState<BackupPage>
         title: const Text('iCloud'),
         initiallyExpanded: false,
         children: [
-          _buildSyncSettingsTile(),
           _buildIcloudStatus,
           ListTile(
             title: Text(libL10n.auto),
@@ -375,7 +375,6 @@ final class _BackupPageState extends ConsumerState<BackupPage>
         title: const Text('WebDAV'),
         initiallyExpanded: false,
         children: [
-          _buildSyncSettingsTile(),
           ListTile(
             title: Text(libL10n.setting),
             trailing: const Icon(Icons.settings),
@@ -452,7 +451,6 @@ final class _BackupPageState extends ConsumerState<BackupPage>
         title: const Text('GitHub Gist'),
         initiallyExpanded: false,
         children: [
-          _buildSyncSettingsTile(),
           ListTile(
             title: Text(libL10n.setting),
             trailing: const Icon(Icons.settings),
@@ -530,7 +528,6 @@ final class _BackupPageState extends ConsumerState<BackupPage>
         title: Text(l10n.monitorAgent),
         initiallyExpanded: false,
         children: [
-          _buildSyncSettingsTile(),
           ListTile(
             title: Text(libL10n.server),
             subtitle: Text(
@@ -612,7 +609,6 @@ final class _BackupPageState extends ConsumerState<BackupPage>
         title: const Text('LK Cloud'),
         initiallyExpanded: false,
         children: [
-          _buildSyncSettingsTile(),
           ListTile(
             title: Text(libL10n.lkcAccount),
             subtitle: Lkc.client.user.listenVal(
@@ -751,11 +747,15 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     );
   }
 
-  Widget _buildSyncSettingsTile() {
-    return ListTile(
-      title: Text(l10n.syncAppSettings),
-      subtitle: Text(l10n.syncAppSettingsTip, style: UIs.textGrey),
-      trailing: StoreSwitch(prop: PrefProps.syncAppSettings),
+  /// One switch for every destination: what the sync carries, not where.
+  Widget get _buildSyncSettings {
+    return CardX(
+      child: ListTile(
+        leading: const Icon(Icons.settings),
+        title: Text(l10n.syncAppSettings),
+        subtitle: Text(l10n.syncAppSettingsTip, style: UIs.textGrey),
+        trailing: StoreSwitch(prop: PrefProps.syncAppSettings),
+      ),
     );
   }
 
