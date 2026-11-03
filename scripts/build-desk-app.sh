@@ -4,9 +4,10 @@
 # both put with its manifest and the licence into a `.fsba`, file order,
 # times and owners fixed so the same sources make the same package, and
 # signed with the first-party key (`monitor/src/apps/sign.rs`): from the
-# keychain item `sbm-app-signing`, or SBM_APP_SIGNING_KEY (base64 PKCS#8
-# DER) where there is no keychain; it reaches openssl through a pipe, never
-# a file or an argument. SBM_APP_UNSIGNED=1 leaves the package unsigned.
+# 1Password item `sbm-app-signing` (vault $OP_VAULT, default Dev), or
+# SBM_APP_SIGNING_KEY (base64 PKCS#8 DER) where there is no 1Password; it
+# reaches openssl through a pipe, never a file or an argument.
+# SBM_APP_UNSIGNED=1 leaves the package unsigned.
 #
 #   scripts/build-desk-app.sh <name>          # → monitor/apps/<name>/target/<publisher>.<name>.fsba
 #   scripts/build-desk-app.sh <name> --store  # and into store/desk/, which the agent ships and the store offers
@@ -36,8 +37,9 @@ for base, _, names in os.walk(ui):
 if os.environ.get('SBM_APP_UNSIGNED') != '1':
     listing = ''.join(f"{hashlib.sha256(files[p]).hexdigest()}  {p}\n" for p in sorted(files))
     digest = hashlib.sha256(listing.encode()).digest()
+    vault = os.environ.get('OP_VAULT', 'Dev')
     key = os.environ.get('SBM_APP_SIGNING_KEY') or subprocess.run(
-        ['security', 'find-generic-password', '-s', 'sbm-app-signing', '-w'], capture_output=True, check=True, text=True).stdout
+        ['op', 'read', '--no-newline', f'op://{vault}/sbm-app-signing/password'], capture_output=True, check=True, text=True).stdout
     r, w = os.pipe()
     os.write(w, base64.b64decode(key.strip()))
     os.close(w)
