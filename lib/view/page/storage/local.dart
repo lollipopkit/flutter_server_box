@@ -98,7 +98,7 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> {
   }
 
   List<BarAction> _actions(FileBrowserHandle handle) => [
-    if (isDesktop)
+    if (isDesktop || isIOS)
       BarAction(
         icon: Icons.folder_open_outlined,
         label: libL10n.open,
