@@ -48,15 +48,11 @@ extension ListingEnumerator {
         ListingEnumerator(names: LinuxFS.systems) { try? LinuxItem(LinuxFS.Doc(system: $0, path: "/")) }
     }
 
-    /// What is in [doc]. The app's bookkeeping at a system's top drops out:
-    /// `resolve` refuses it by where it is, however it was reached.
+    /// What is in [doc]. The marker at a system's top drops out: `resolve`
+    /// refuses it by where it is, however it was reached.
     static func children(of doc: LinuxFS.Doc) -> ListingEnumerator {
         ListingEnumerator(
-            names: {
-                let dir = try doc.resolve(followLast: true)
-                guard LinuxFS.kind(dir) == S_IFDIR else { throw NSFileProviderError(.noSuchItem) }
-                return try FileManager.default.contentsOfDirectory(atPath: dir).sorted()
-            },
+            names: { try doc.directory().0.names().sorted() },
             item: { try? LinuxItem(doc.child($0)) }
         )
     }

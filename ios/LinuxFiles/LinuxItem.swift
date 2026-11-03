@@ -24,9 +24,14 @@ final class LinuxItem: NSObject, NSFileProviderItem {
     let creationDate: Date?
 
     init(_ doc: LinuxFS.Doc) throws {
-        let host = try doc.resolve(followLast: true)
+        let entry = try doc.resolve(followLast: false)
+        let host = LinuxFS.kind(entry) == S_IFLNK ? try doc.resolve(followLast: true) : entry
+        let kind = LinuxFS.kind(host)
+        // A FIFO, a socket or a device node would block or mislead whoever
+        // opens it; a dangling link is still listed, as a file to delete.
+        if let kind, kind != S_IFREG, kind != S_IFDIR { throw NSFileProviderError(.noSuchItem) }
         let attrs = try? FileManager.default.attributesOfItem(atPath: host)
-        let isDir = LinuxFS.kind(host) == S_IFDIR
+        let isDir = kind == S_IFDIR
         let isTop = doc.path == "/"
 
         itemIdentifier = doc.identifier
@@ -47,9 +52,7 @@ final class LinuxItem: NSObject, NSFileProviderItem {
         } else if writable {
             caps.insert(.allowsWriting)
         }
-        if !isTop,
-           let link = try? doc.resolve(followLast: false),
-           access((link as NSString).deletingLastPathComponent, W_OK) == 0 {
+        if !isTop, access((entry as NSString).deletingLastPathComponent, W_OK) == 0 {
             caps.formUnion([.allowsRenaming, .allowsReparenting, .allowsDeleting])
         }
         capabilities = caps

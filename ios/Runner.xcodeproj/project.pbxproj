@@ -12,6 +12,7 @@
 		0ED874E4EAD5E07E8DED87C1 /* Enumerators.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CAD9510794444CE7396D3F1 /* Enumerators.swift */; };
 		1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */ = {isa = PBXBuildFile; fileRef = 1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */; };
 		2A965F44457D8A54D42B43DA /* FileProviderExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16244507312AFEF5E85512CA /* FileProviderExtension.swift */; };
+		3AE095092873F592A8065237 /* DirHandle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000AD2A4C98BC77F82478390 /* DirHandle.swift */; };
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
 		4A2DCD6B2E4B127100CF68B7 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A2DCD692E4B127100CF68B7 /* LiveActivityManager.swift */; };
 		4A2DCD6C2E4B127100CF68B7 /* TerminalLiveActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A2DCD6A2E4B127100CF68B7 /* TerminalLiveActivityAttributes.swift */; };
@@ -144,6 +145,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		000AD2A4C98BC77F82478390 /* DirHandle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DirHandle.swift; sourceTree = "<group>"; };
 		037D3334A924384792298479 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GeneratedPluginRegistrant.h; sourceTree = "<group>"; };
 		1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GeneratedPluginRegistrant.m; sourceTree = "<group>"; };
@@ -378,6 +380,7 @@
 				4DD47A069F0D317CF417390B /* Info.plist */,
 				B006042AE654D62956E03491 /* LinuxFiles.entitlements */,
 				037D3334A924384792298479 /* PrivacyInfo.xcprivacy */,
+				000AD2A4C98BC77F82478390 /* DirHandle.swift */,
 			);
 			name = LinuxFiles;
 			path = LinuxFiles;
@@ -745,6 +748,7 @@
 				B7E35D9020B92CAE44B8E186 /* LinuxFS.swift in Sources */,
 				02187010A2FE13F3A002F00E /* LinuxItem.swift in Sources */,
 				0ED874E4EAD5E07E8DED87C1 /* Enumerators.swift in Sources */,
+				3AE095092873F592A8065237 /* DirHandle.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -10,15 +10,11 @@ import Foundation
 /// [GuestPath], so a link points where it points for the guest, and neither a
 /// link nor a crafted identifier reaches anything outside the system.
 enum LinuxFS {
-    /// `LinuxProfile.marker`.
+    /// `LinuxProfile.marker`: deleting it uninstalls the system.
     static let marker = ".installed"
-    /// The system's `/dev`, a fakefs whose database the engine has mounted.
-    static let devStore = ".dev"
 
-    static var container: URL {
-        NSFileProviderManager.default.documentStorageURL
-            .appendingPathComponent("linux", isDirectory: true)
-    }
+    static let container = NSFileProviderManager.default.documentStorageURL
+        .appendingPathComponent("linux", isDirectory: true)
 
     struct Doc {
         let system: String
@@ -53,49 +49,54 @@ enum LinuxFS {
             Doc(system: system, path: GuestPath.child(path, name))
         }
 
-        /// The host path, or `noSuchItem` for a lookup that loops or lands on
-        /// the app's own bookkeeping — deleting the marker uninstalls the
-        /// system, and the `/dev` store is a live mount's database.
+        /// The host path, free of links but, unless [followLast], the last
+        /// component; `noSuchItem` for a lookup that loops or lands on the
+        /// marker, however it was reached.
         func resolve(followLast: Bool) throws -> String {
             guard let host = try GuestPath.resolve(
                 root: root, guest: path, followLast: followLast, readLink: LinuxFS.readLink
             ) else { throw NSFileProviderError(.noSuchItem) }
-            for name in LinuxFS.reserved {
-                let own = root + "/" + name
-                if host == own || host.hasPrefix(own + "/") { throw NSFileProviderError(.noSuchItem) }
-            }
-            // Checked by the kernel too, as late as it can be: the guest may
-            // have swapped a directory checked above for a link since. What
-            // still separates the check from the use is not guarded against.
-            guard LinuxFS.within(root, host, followLast: followLast) else {
-                throw NSFileProviderError(.noSuchItem)
-            }
+            if host == root + "/" + LinuxFS.marker { throw NSFileProviderError(.noSuchItem) }
             return host
         }
 
-        /// [name] as an entry for [self] to hold; the app's bookkeeping names
-        /// are not one at a system's top.
-        func checkChild(_ name: String) throws -> String {
+        /// The directory [self] names, held open, and its host path.
+        func directory() throws -> (DirHandle, String) {
+            let host = try resolve(followLast: true)
+            return (try DirHandle.open(root: root, path: host), host)
+        }
+
+        /// The directory holding the entry [self] names itself — a link, not
+        /// what it points to — held open, the entry's name, and its host path.
+        func entry() throws -> (DirHandle, String, String) {
+            guard path != "/" else { throw NSFileProviderError(.noSuchItem) }
+            let host = try resolve(followLast: false)
+            let dir = try DirHandle.open(root: root, path: (host as NSString).deletingLastPathComponent)
+            return (dir, (host as NSString).lastPathComponent, host)
+        }
+
+        /// The host path the Files app reads, through every link — checked by
+        /// the kernel too, as late as it can be here. The Files app opens it by
+        /// path, so a swap after this is not guarded against; it can only make
+        /// it read, never write, outside.
+        func readable() throws -> String {
+            let host = try resolve(followLast: true)
+            guard LinuxFS.within(root, host) else { throw NSFileProviderError(.noSuchItem) }
+            return host
+        }
+
+        /// [name] as a new entry in the directory at [host]; the marker's name
+        /// is not one at a system's top, however that was reached.
+        func checkChild(_ name: String, in host: String) throws -> String {
             let name = try LinuxFS.checkName(name)
-            if path == "/", LinuxFS.reserved.contains(name) {
-                throw CocoaError(.fileWriteInvalidFileName)
-            }
+            if host == root, name == LinuxFS.marker { throw CocoaError(.fileWriteInvalidFileName) }
             return name
         }
     }
 
-    static let reserved: Set<String> = [marker, devStore]
-
-    /// Whether the host kernel, resolving every link, also lands [host] in
-    /// [root] — for the last component only when [followLast], and for the
-    /// nearest part that exists when the rest does not.
-    static func within(_ root: String, _ host: String, followLast: Bool) -> Bool {
-        guard let base = realpath(root) else { return false }
-        var probe = followLast ? host : (host as NSString).deletingLastPathComponent
-        while kind(probe) == nil, probe.count > root.count {
-            probe = (probe as NSString).deletingLastPathComponent
-        }
-        guard let real = realpath(probe) else { return false }
+    /// Whether the host kernel, resolving every link, lands [host] in [root].
+    static func within(_ root: String, _ host: String) -> Bool {
+        guard let base = realpath(root), let real = realpath(host) else { return false }
         return real == base || real.hasPrefix(base + "/")
     }
 
@@ -157,28 +158,17 @@ enum LinuxFS {
         return trimmed
     }
 
-    /// [name], or `name 2.ext` when that is taken, as the Files app names a
-    /// copy.
-    static func freeName(in dir: String, _ name: String) -> String {
-        if kind(dir + "/" + name) == nil { return name }
+    /// [name], or `name 2.ext` when that is taken in [dir], as the Files app
+    /// names a copy.
+    static func freeName(in dir: DirHandle, _ name: String) -> String {
+        if dir.kind(name) == nil { return name }
         let ext = (name as NSString).pathExtension
         let base = ext.isEmpty ? name : (name as NSString).deletingPathExtension
         var n = 2
         while true {
             let candidate = ext.isEmpty ? "\(base) \(n)" : "\(base) \(n).\(ext)"
-            if kind(dir + "/" + candidate) == nil { return candidate }
+            if dir.kind(candidate) == nil { return candidate }
             n += 1
         }
-    }
-
-    /// Removes [path], and a directory's contents first, never through a link.
-    static func deleteTree(_ path: String) throws {
-        if kind(path) == S_IFDIR {
-            for name in try FileManager.default.contentsOfDirectory(atPath: path) {
-                try deleteTree(path + "/" + name)
-            }
-        }
-        // `removeItem` on a link removes the link.
-        try FileManager.default.removeItem(atPath: path)
     }
 }

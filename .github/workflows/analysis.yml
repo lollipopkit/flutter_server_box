@@ -435,6 +435,11 @@ jobs:
 
       - uses: ./.github/actions/setup-flutter
 
+      # The Files app's view of the systems resolves the guest's links; this is
+      # where that is held to staying inside a system.
+      - name: Linux files extension tests
+        run: ios/LinuxFiles/Tests/run.sh
+
       # meson and ninja build the engine; llvm because the guest VDSO targets
       # Linux, which Apple's clang cannot; lld because Homebrew ships it apart
       # from llvm and that is the linker the VDSO asks for by name; libarchive

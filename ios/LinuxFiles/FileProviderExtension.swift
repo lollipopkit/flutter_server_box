@@ -20,7 +20,7 @@ final class FileProviderExtension: NSFileProviderExtension {
     override func urlForItem(withPersistentIdentifier identifier: NSFileProviderItemIdentifier) -> URL? {
         guard identifier != .rootContainer,
               let doc = try? LinuxFS.Doc(identifier),
-              let host = try? doc.resolve(followLast: true)
+              let host = try? doc.readable()
         else { return nil }
         return URL(fileURLWithPath: host)
     }
@@ -48,7 +48,9 @@ final class FileProviderExtension: NSFileProviderExtension {
     }
 
     override func startProvidingItem(at url: URL, completionHandler: @escaping (Error?) -> Void) {
-        completionHandler(LinuxFS.kind(url.path) == nil ? NSFileProviderError(.noSuchItem) : nil)
+        // Only what can be read through: a FIFO would block its reader.
+        let kind = LinuxFS.kind(url.path)
+        completionHandler(kind == S_IFREG || kind == S_IFDIR ? nil : NSFileProviderError(.noSuchItem))
     }
 
     override func itemChanged(at url: URL) {}
@@ -72,10 +74,10 @@ final class FileProviderExtension: NSFileProviderExtension {
     ) {
         run(completionHandler) {
             let parent = try LinuxFS.Doc(parentItemIdentifier)
-            let dir = try parent.resolve(followLast: true)
-            let name = try parent.checkChild(directoryName)
-            if LinuxFS.kind(dir + "/" + name) != nil { throw NSFileProviderError(.filenameCollision) }
-            try FileManager.default.createDirectory(atPath: dir + "/" + name, withIntermediateDirectories: false)
+            let (dir, host) = try parent.directory()
+            let name = try parent.checkChild(directoryName, in: host)
+            if dir.kind(name) != nil { throw NSFileProviderError(.filenameCollision) }
+            try dir.makeDirectory(name)
             return try LinuxItem(parent.child(name))
         }
     }
@@ -87,12 +89,11 @@ final class FileProviderExtension: NSFileProviderExtension {
     ) {
         run(completionHandler) {
             let parent = try LinuxFS.Doc(parentItemIdentifier)
-            let dir = try parent.resolve(followLast: true)
-            guard LinuxFS.kind(dir) == S_IFDIR else { throw NSFileProviderError(.noSuchItem) }
+            let (dir, host) = try parent.directory()
             let scoped = fileURL.startAccessingSecurityScopedResource()
             defer { if scoped { fileURL.stopAccessingSecurityScopedResource() } }
-            let name = LinuxFS.freeName(in: dir, try parent.checkChild(fileURL.lastPathComponent))
-            try FileManager.default.copyItem(at: fileURL, to: URL(fileURLWithPath: dir + "/" + name))
+            let name = LinuxFS.freeName(in: dir, try parent.checkChild(fileURL.lastPathComponent, in: host))
+            try dir.importItem(fileURL, as: name)
             return try LinuxItem(parent.child(name))
         }
     }
@@ -104,9 +105,8 @@ final class FileProviderExtension: NSFileProviderExtension {
     ) {
         run(completionHandler) {
             let doc = try LinuxFS.Doc(itemIdentifier)
-            guard doc.path != "/" else { throw NSFileProviderError(.noSuchItem) }
             let parent = LinuxFS.Doc(system: doc.system, path: GuestPath.parent(doc.path))
-            return try move(doc, into: parent, as: parent.checkChild(itemName))
+            return try move(doc, into: parent, as: itemName)
         }
     }
 
@@ -119,8 +119,7 @@ final class FileProviderExtension: NSFileProviderExtension {
         run(completionHandler) {
             let doc = try LinuxFS.Doc(itemIdentifier)
             let parent = try LinuxFS.Doc(parentItemIdentifier)
-            guard doc.path != "/" else { throw NSFileProviderError(.noSuchItem) }
-            return try move(doc, into: parent, as: parent.checkChild(newName ?? GuestPath.name(doc.path)))
+            return try move(doc, into: parent, as: newName ?? GuestPath.name(doc.path))
         }
     }
 
@@ -129,9 +128,8 @@ final class FileProviderExtension: NSFileProviderExtension {
         completionHandler: @escaping (Error?) -> Void
     ) {
         do {
-            let doc = try LinuxFS.Doc(itemIdentifier)
-            guard doc.path != "/" else { throw NSFileProviderError(.noSuchItem) }
-            try LinuxFS.deleteTree(doc.resolve(followLast: false))
+            let (dir, name, _) = try LinuxFS.Doc(itemIdentifier).entry()
+            try dir.remove(name)
             completionHandler(nil)
         } catch {
             completionHandler(error)
@@ -143,18 +141,21 @@ final class FileProviderExtension: NSFileProviderExtension {
     /// Moves the entry [doc] names itself — a link stays a link — to [name]
     /// in [parent]. Between two systems a copy and then a delete: they are
     /// separate trees, and the copy is whole before the original goes.
-    private func move(_ doc: LinuxFS.Doc, into parent: LinuxFS.Doc, as name: String) throws -> NSFileProviderItem {
-        let from = try doc.resolve(followLast: false)
-        let dir = try parent.resolve(followLast: true)
-        let to = dir + "/" + name
+    private func move(_ doc: LinuxFS.Doc, into parent: LinuxFS.Doc, as newName: String) throws -> NSFileProviderItem {
+        let (from, entry, fromHost) = try doc.entry()
+        let (into, intoHost) = try parent.directory()
+        let name = try parent.checkChild(newName, in: intoHost)
         // Not into itself: `mv a a/b` would detach the tree.
-        guard to != from, !to.hasPrefix(from + "/") else { throw CocoaError(.fileWriteInvalidFileName) }
-        if LinuxFS.kind(to) != nil { throw NSFileProviderError(.filenameCollision) }
+        let toHost = intoHost + "/" + name
+        guard toHost != fromHost, !toHost.hasPrefix(fromHost + "/") else {
+            throw CocoaError(.fileWriteInvalidFileName)
+        }
         if parent.system == doc.system {
-            try FileManager.default.moveItem(atPath: from, toPath: to)
+            try from.rename(entry, to: into, as: name)
         } else {
-            try FileManager.default.copyItem(atPath: from, toPath: to)
-            try LinuxFS.deleteTree(from)
+            if into.kind(name) != nil { throw NSFileProviderError(.filenameCollision) }
+            try from.copy(entry, to: into, as: name)
+            try from.remove(entry)
         }
         return try LinuxItem(parent.child(name))
     }
