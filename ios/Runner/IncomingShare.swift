@@ -92,18 +92,20 @@ enum IncomingShare {
     let scoped = url.startAccessingSecurityScopedResource()
     defer { if scoped { url.stopAccessingSecurityScopedResource() } }
 
+    // The inbox is this app's to clean up, and what is in it is a credential
+    // — read or not: the Files app lists the inbox too. Anything elsewhere
+    // belongs to the user and is left alone.
+    defer {
+      if url.path.contains("/Documents/Inbox/") {
+        try? FileManager.default.removeItem(at: url)
+      }
+    }
+
     guard
       let attrs = try? FileManager.default.attributesOfItem(atPath: url.path),
       let size = attrs[.size] as? Int, size <= maxBytes,
       let data = try? Data(contentsOf: url)
     else { return nil }
-    let text = String(data: data, encoding: .utf8)
-
-    // The inbox is this app's to clean up, and what is in it is a credential.
-    // Anything elsewhere belongs to the user and is left alone.
-    if url.path.contains("/Documents/Inbox/") {
-      try? FileManager.default.removeItem(at: url)
-    }
-    return text
+    return String(data: data, encoding: .utf8)
   }
 }
