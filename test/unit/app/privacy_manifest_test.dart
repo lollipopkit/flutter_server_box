@@ -110,6 +110,7 @@ void main() {
       manifests.map(_repoPath),
       containsAll([
         'ios/Runner/PrivacyInfo.xcprivacy',
+        'ios/LinuxFiles/PrivacyInfo.xcprivacy',
         'ios/StatusWidget/PrivacyInfo.xcprivacy',
         'ios/WatchApp/PrivacyInfo.xcprivacy',
         'macos/Runner/PrivacyInfo.xcprivacy',

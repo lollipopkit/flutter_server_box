@@ -11,9 +11,10 @@ abstract final class MethodChans {
   static const _channel = MethodChannel('${Miscs.pkgName}/main_chan');
 
   /// Tells the system file picker the installed Linux systems changed, so the
-  /// roots it lists for them follow (`LinuxDocumentsProvider`).
+  /// roots it lists for them follow (`LinuxDocumentsProvider`, and the Files
+  /// app's `ios/LinuxFiles`).
   static Future<void> linuxSystemsChanged() async {
-    if (!isAndroid) return;
+    if (!isAndroid && !isIOS) return;
     try {
       await _channel.invokeMethod('linuxSystemsChanged');
     } catch (e, s) {
