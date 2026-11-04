@@ -11,6 +11,8 @@ void configFlTty() {
   FlTty.brand = 'serverbox';
   FlTty.appName = 'ServerBox';
   FlTty.onSystemsChanged = () => unawaited(MethodChans.linuxSystemsChanged());
+  // Shared with `ios/LinuxFiles`, which lists the systems in the Files app.
+  FlTty.iosAppGroup = 'group.com.lollipopkit.toolbox';
 }
 
 /// fl_tty's settings, in the keys ServerBox has always kept them under.

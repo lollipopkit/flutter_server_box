@@ -2,6 +2,7 @@ import UIKit
 import WidgetKit
 import Flutter
 import ActivityKit
+import FileProvider
 import UserNotifications
 
 @main
@@ -233,6 +234,10 @@ import UserNotifications
                    let fg = args["fg"] as? Int {
                     DynamicIslandBrand.shared.setColors(background: bg, foreground: fg)
                 }
+                result(nil)
+            // The Files app lists the systems again (`ios/LinuxFiles`).
+            case "linuxSystemsChanged":
+                NSFileProviderManager.default.signalEnumerator(for: .rootContainer) { _ in }
                 result(nil)
             // Whether something is in flight that suspension would cut off:
             // see [InFlightWork].
