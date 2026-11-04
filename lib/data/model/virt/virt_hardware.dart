@@ -724,14 +724,6 @@ enum VirtHwIssue {
     final i => values.asNameMap()[i.name] ?? unsupported,
   };
 
-  /// The issue `sbm_virt` names (`disk_shrink`).
-  static VirtHwIssue? ofRust(String? name) => switch (name) {
-    null => null,
-    _ => values.firstWhere(
-      (i) => i.name == name.replaceAllMapped(RegExp('_([a-z])'), (m) => m[1]!.toUpperCase()),
-      orElse: () => unsupported,
-    ),
-  };
 }
 
 /// Whether [disk] can be grown from here (`sbm_virt::hardware::disk_growable`).

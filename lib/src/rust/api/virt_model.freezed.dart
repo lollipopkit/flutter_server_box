@@ -12,6 +12,1206 @@ part of 'virt_model.dart';
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
+mixin _$Detail {
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'Detail()';
+}
+
+
+}
+
+/// @nodoc
+class $DetailCopyWith<$Res>  {
+$DetailCopyWith(Detail _, $Res Function(Detail) __);
+}
+
+
+/// Adds pattern-matching-related methods to [Detail].
+extension DetailPatterns on Detail {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( Detail_NoUser value)?  noUser,TResult Function( Detail_PasswordRequired value)?  passwordRequired,TResult Function( Detail_TokenIncomplete value)?  tokenIncomplete,TResult Function( Detail_OtpRequired value)?  otpRequired,TResult Function( Detail_OtpEmpty value)?  otpEmpty,TResult Function( Detail_OtpRejected value)?  otpRejected,TResult Function( Detail_InvalidBody value)?  invalidBody,TResult Function( Detail_InvalidData value)?  invalidData,TResult Function( Detail_MissingTicket value)?  missingTicket,TResult Function( Detail_NoPrivileges value)?  noPrivileges,TResult Function( Detail_NotOffered value)?  notOffered,TResult Function( Detail_TaskStillRunning value)?  taskStillRunning,TResult Function( Detail_CertNotPresented value)?  certNotPresented,TResult Function( Detail_NeedsPrivilege value)?  needsPrivilege,TResult Function( Detail_Refused value)?  refused,TResult Function( Detail_CreateRefused value)?  createRefused,TResult Function( Detail_HardwareRefused value)?  hardwareRefused,TResult Function( Detail_BackupRefused value)?  backupRefused,TResult Function( Detail_ApplyTouchesManagement value)?  applyTouchesManagement,TResult Function( Detail_ApplyUnreadable value)?  applyUnreadable,required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case Detail_NoUser() when noUser != null:
+return noUser(_that);case Detail_PasswordRequired() when passwordRequired != null:
+return passwordRequired(_that);case Detail_TokenIncomplete() when tokenIncomplete != null:
+return tokenIncomplete(_that);case Detail_OtpRequired() when otpRequired != null:
+return otpRequired(_that);case Detail_OtpEmpty() when otpEmpty != null:
+return otpEmpty(_that);case Detail_OtpRejected() when otpRejected != null:
+return otpRejected(_that);case Detail_InvalidBody() when invalidBody != null:
+return invalidBody(_that);case Detail_InvalidData() when invalidData != null:
+return invalidData(_that);case Detail_MissingTicket() when missingTicket != null:
+return missingTicket(_that);case Detail_NoPrivileges() when noPrivileges != null:
+return noPrivileges(_that);case Detail_NotOffered() when notOffered != null:
+return notOffered(_that);case Detail_TaskStillRunning() when taskStillRunning != null:
+return taskStillRunning(_that);case Detail_CertNotPresented() when certNotPresented != null:
+return certNotPresented(_that);case Detail_NeedsPrivilege() when needsPrivilege != null:
+return needsPrivilege(_that);case Detail_Refused() when refused != null:
+return refused(_that);case Detail_CreateRefused() when createRefused != null:
+return createRefused(_that);case Detail_HardwareRefused() when hardwareRefused != null:
+return hardwareRefused(_that);case Detail_BackupRefused() when backupRefused != null:
+return backupRefused(_that);case Detail_ApplyTouchesManagement() when applyTouchesManagement != null:
+return applyTouchesManagement(_that);case Detail_ApplyUnreadable() when applyUnreadable != null:
+return applyUnreadable(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( Detail_NoUser value)  noUser,required TResult Function( Detail_PasswordRequired value)  passwordRequired,required TResult Function( Detail_TokenIncomplete value)  tokenIncomplete,required TResult Function( Detail_OtpRequired value)  otpRequired,required TResult Function( Detail_OtpEmpty value)  otpEmpty,required TResult Function( Detail_OtpRejected value)  otpRejected,required TResult Function( Detail_InvalidBody value)  invalidBody,required TResult Function( Detail_InvalidData value)  invalidData,required TResult Function( Detail_MissingTicket value)  missingTicket,required TResult Function( Detail_NoPrivileges value)  noPrivileges,required TResult Function( Detail_NotOffered value)  notOffered,required TResult Function( Detail_TaskStillRunning value)  taskStillRunning,required TResult Function( Detail_CertNotPresented value)  certNotPresented,required TResult Function( Detail_NeedsPrivilege value)  needsPrivilege,required TResult Function( Detail_Refused value)  refused,required TResult Function( Detail_CreateRefused value)  createRefused,required TResult Function( Detail_HardwareRefused value)  hardwareRefused,required TResult Function( Detail_BackupRefused value)  backupRefused,required TResult Function( Detail_ApplyTouchesManagement value)  applyTouchesManagement,required TResult Function( Detail_ApplyUnreadable value)  applyUnreadable,}){
+final _that = this;
+switch (_that) {
+case Detail_NoUser():
+return noUser(_that);case Detail_PasswordRequired():
+return passwordRequired(_that);case Detail_TokenIncomplete():
+return tokenIncomplete(_that);case Detail_OtpRequired():
+return otpRequired(_that);case Detail_OtpEmpty():
+return otpEmpty(_that);case Detail_OtpRejected():
+return otpRejected(_that);case Detail_InvalidBody():
+return invalidBody(_that);case Detail_InvalidData():
+return invalidData(_that);case Detail_MissingTicket():
+return missingTicket(_that);case Detail_NoPrivileges():
+return noPrivileges(_that);case Detail_NotOffered():
+return notOffered(_that);case Detail_TaskStillRunning():
+return taskStillRunning(_that);case Detail_CertNotPresented():
+return certNotPresented(_that);case Detail_NeedsPrivilege():
+return needsPrivilege(_that);case Detail_Refused():
+return refused(_that);case Detail_CreateRefused():
+return createRefused(_that);case Detail_HardwareRefused():
+return hardwareRefused(_that);case Detail_BackupRefused():
+return backupRefused(_that);case Detail_ApplyTouchesManagement():
+return applyTouchesManagement(_that);case Detail_ApplyUnreadable():
+return applyUnreadable(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( Detail_NoUser value)?  noUser,TResult? Function( Detail_PasswordRequired value)?  passwordRequired,TResult? Function( Detail_TokenIncomplete value)?  tokenIncomplete,TResult? Function( Detail_OtpRequired value)?  otpRequired,TResult? Function( Detail_OtpEmpty value)?  otpEmpty,TResult? Function( Detail_OtpRejected value)?  otpRejected,TResult? Function( Detail_InvalidBody value)?  invalidBody,TResult? Function( Detail_InvalidData value)?  invalidData,TResult? Function( Detail_MissingTicket value)?  missingTicket,TResult? Function( Detail_NoPrivileges value)?  noPrivileges,TResult? Function( Detail_NotOffered value)?  notOffered,TResult? Function( Detail_TaskStillRunning value)?  taskStillRunning,TResult? Function( Detail_CertNotPresented value)?  certNotPresented,TResult? Function( Detail_NeedsPrivilege value)?  needsPrivilege,TResult? Function( Detail_Refused value)?  refused,TResult? Function( Detail_CreateRefused value)?  createRefused,TResult? Function( Detail_HardwareRefused value)?  hardwareRefused,TResult? Function( Detail_BackupRefused value)?  backupRefused,TResult? Function( Detail_ApplyTouchesManagement value)?  applyTouchesManagement,TResult? Function( Detail_ApplyUnreadable value)?  applyUnreadable,}){
+final _that = this;
+switch (_that) {
+case Detail_NoUser() when noUser != null:
+return noUser(_that);case Detail_PasswordRequired() when passwordRequired != null:
+return passwordRequired(_that);case Detail_TokenIncomplete() when tokenIncomplete != null:
+return tokenIncomplete(_that);case Detail_OtpRequired() when otpRequired != null:
+return otpRequired(_that);case Detail_OtpEmpty() when otpEmpty != null:
+return otpEmpty(_that);case Detail_OtpRejected() when otpRejected != null:
+return otpRejected(_that);case Detail_InvalidBody() when invalidBody != null:
+return invalidBody(_that);case Detail_InvalidData() when invalidData != null:
+return invalidData(_that);case Detail_MissingTicket() when missingTicket != null:
+return missingTicket(_that);case Detail_NoPrivileges() when noPrivileges != null:
+return noPrivileges(_that);case Detail_NotOffered() when notOffered != null:
+return notOffered(_that);case Detail_TaskStillRunning() when taskStillRunning != null:
+return taskStillRunning(_that);case Detail_CertNotPresented() when certNotPresented != null:
+return certNotPresented(_that);case Detail_NeedsPrivilege() when needsPrivilege != null:
+return needsPrivilege(_that);case Detail_Refused() when refused != null:
+return refused(_that);case Detail_CreateRefused() when createRefused != null:
+return createRefused(_that);case Detail_HardwareRefused() when hardwareRefused != null:
+return hardwareRefused(_that);case Detail_BackupRefused() when backupRefused != null:
+return backupRefused(_that);case Detail_ApplyTouchesManagement() when applyTouchesManagement != null:
+return applyTouchesManagement(_that);case Detail_ApplyUnreadable() when applyUnreadable != null:
+return applyUnreadable(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  noUser,TResult Function()?  passwordRequired,TResult Function()?  tokenIncomplete,TResult Function()?  otpRequired,TResult Function()?  otpEmpty,TResult Function()?  otpRejected,TResult Function()?  invalidBody,TResult Function()?  invalidData,TResult Function()?  missingTicket,TResult Function( bool token,  String account,  String command)?  noPrivileges,TResult Function()?  notOffered,TResult Function( String node,  String upid,  BigInt minutes)?  taskStillRunning,TResult Function()?  certNotPresented,TResult Function( String account,  String privilege,  String path,  String command)?  needsPrivilege,TResult Function( ResourceIssue issue)?  refused,TResult Function( CreateIssue issue)?  createRefused,TResult Function( HwIssue issue)?  hardwareRefused,TResult Function( BackupIssue issue)?  backupRefused,TResult Function( List<String> ifaces)?  applyTouchesManagement,TResult Function()?  applyUnreadable,required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case Detail_NoUser() when noUser != null:
+return noUser();case Detail_PasswordRequired() when passwordRequired != null:
+return passwordRequired();case Detail_TokenIncomplete() when tokenIncomplete != null:
+return tokenIncomplete();case Detail_OtpRequired() when otpRequired != null:
+return otpRequired();case Detail_OtpEmpty() when otpEmpty != null:
+return otpEmpty();case Detail_OtpRejected() when otpRejected != null:
+return otpRejected();case Detail_InvalidBody() when invalidBody != null:
+return invalidBody();case Detail_InvalidData() when invalidData != null:
+return invalidData();case Detail_MissingTicket() when missingTicket != null:
+return missingTicket();case Detail_NoPrivileges() when noPrivileges != null:
+return noPrivileges(_that.token,_that.account,_that.command);case Detail_NotOffered() when notOffered != null:
+return notOffered();case Detail_TaskStillRunning() when taskStillRunning != null:
+return taskStillRunning(_that.node,_that.upid,_that.minutes);case Detail_CertNotPresented() when certNotPresented != null:
+return certNotPresented();case Detail_NeedsPrivilege() when needsPrivilege != null:
+return needsPrivilege(_that.account,_that.privilege,_that.path,_that.command);case Detail_Refused() when refused != null:
+return refused(_that.issue);case Detail_CreateRefused() when createRefused != null:
+return createRefused(_that.issue);case Detail_HardwareRefused() when hardwareRefused != null:
+return hardwareRefused(_that.issue);case Detail_BackupRefused() when backupRefused != null:
+return backupRefused(_that.issue);case Detail_ApplyTouchesManagement() when applyTouchesManagement != null:
+return applyTouchesManagement(_that.ifaces);case Detail_ApplyUnreadable() when applyUnreadable != null:
+return applyUnreadable();case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  noUser,required TResult Function()  passwordRequired,required TResult Function()  tokenIncomplete,required TResult Function()  otpRequired,required TResult Function()  otpEmpty,required TResult Function()  otpRejected,required TResult Function()  invalidBody,required TResult Function()  invalidData,required TResult Function()  missingTicket,required TResult Function( bool token,  String account,  String command)  noPrivileges,required TResult Function()  notOffered,required TResult Function( String node,  String upid,  BigInt minutes)  taskStillRunning,required TResult Function()  certNotPresented,required TResult Function( String account,  String privilege,  String path,  String command)  needsPrivilege,required TResult Function( ResourceIssue issue)  refused,required TResult Function( CreateIssue issue)  createRefused,required TResult Function( HwIssue issue)  hardwareRefused,required TResult Function( BackupIssue issue)  backupRefused,required TResult Function( List<String> ifaces)  applyTouchesManagement,required TResult Function()  applyUnreadable,}) {final _that = this;
+switch (_that) {
+case Detail_NoUser():
+return noUser();case Detail_PasswordRequired():
+return passwordRequired();case Detail_TokenIncomplete():
+return tokenIncomplete();case Detail_OtpRequired():
+return otpRequired();case Detail_OtpEmpty():
+return otpEmpty();case Detail_OtpRejected():
+return otpRejected();case Detail_InvalidBody():
+return invalidBody();case Detail_InvalidData():
+return invalidData();case Detail_MissingTicket():
+return missingTicket();case Detail_NoPrivileges():
+return noPrivileges(_that.token,_that.account,_that.command);case Detail_NotOffered():
+return notOffered();case Detail_TaskStillRunning():
+return taskStillRunning(_that.node,_that.upid,_that.minutes);case Detail_CertNotPresented():
+return certNotPresented();case Detail_NeedsPrivilege():
+return needsPrivilege(_that.account,_that.privilege,_that.path,_that.command);case Detail_Refused():
+return refused(_that.issue);case Detail_CreateRefused():
+return createRefused(_that.issue);case Detail_HardwareRefused():
+return hardwareRefused(_that.issue);case Detail_BackupRefused():
+return backupRefused(_that.issue);case Detail_ApplyTouchesManagement():
+return applyTouchesManagement(_that.ifaces);case Detail_ApplyUnreadable():
+return applyUnreadable();}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  noUser,TResult? Function()?  passwordRequired,TResult? Function()?  tokenIncomplete,TResult? Function()?  otpRequired,TResult? Function()?  otpEmpty,TResult? Function()?  otpRejected,TResult? Function()?  invalidBody,TResult? Function()?  invalidData,TResult? Function()?  missingTicket,TResult? Function( bool token,  String account,  String command)?  noPrivileges,TResult? Function()?  notOffered,TResult? Function( String node,  String upid,  BigInt minutes)?  taskStillRunning,TResult? Function()?  certNotPresented,TResult? Function( String account,  String privilege,  String path,  String command)?  needsPrivilege,TResult? Function( ResourceIssue issue)?  refused,TResult? Function( CreateIssue issue)?  createRefused,TResult? Function( HwIssue issue)?  hardwareRefused,TResult? Function( BackupIssue issue)?  backupRefused,TResult? Function( List<String> ifaces)?  applyTouchesManagement,TResult? Function()?  applyUnreadable,}) {final _that = this;
+switch (_that) {
+case Detail_NoUser() when noUser != null:
+return noUser();case Detail_PasswordRequired() when passwordRequired != null:
+return passwordRequired();case Detail_TokenIncomplete() when tokenIncomplete != null:
+return tokenIncomplete();case Detail_OtpRequired() when otpRequired != null:
+return otpRequired();case Detail_OtpEmpty() when otpEmpty != null:
+return otpEmpty();case Detail_OtpRejected() when otpRejected != null:
+return otpRejected();case Detail_InvalidBody() when invalidBody != null:
+return invalidBody();case Detail_InvalidData() when invalidData != null:
+return invalidData();case Detail_MissingTicket() when missingTicket != null:
+return missingTicket();case Detail_NoPrivileges() when noPrivileges != null:
+return noPrivileges(_that.token,_that.account,_that.command);case Detail_NotOffered() when notOffered != null:
+return notOffered();case Detail_TaskStillRunning() when taskStillRunning != null:
+return taskStillRunning(_that.node,_that.upid,_that.minutes);case Detail_CertNotPresented() when certNotPresented != null:
+return certNotPresented();case Detail_NeedsPrivilege() when needsPrivilege != null:
+return needsPrivilege(_that.account,_that.privilege,_that.path,_that.command);case Detail_Refused() when refused != null:
+return refused(_that.issue);case Detail_CreateRefused() when createRefused != null:
+return createRefused(_that.issue);case Detail_HardwareRefused() when hardwareRefused != null:
+return hardwareRefused(_that.issue);case Detail_BackupRefused() when backupRefused != null:
+return backupRefused(_that.issue);case Detail_ApplyTouchesManagement() when applyTouchesManagement != null:
+return applyTouchesManagement(_that.ifaces);case Detail_ApplyUnreadable() when applyUnreadable != null:
+return applyUnreadable();case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class Detail_NoUser extends Detail {
+  const Detail_NoUser(): super._();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_NoUser);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'Detail.noUser()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class Detail_PasswordRequired extends Detail {
+  const Detail_PasswordRequired(): super._();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_PasswordRequired);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'Detail.passwordRequired()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class Detail_TokenIncomplete extends Detail {
+  const Detail_TokenIncomplete(): super._();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_TokenIncomplete);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'Detail.tokenIncomplete()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class Detail_OtpRequired extends Detail {
+  const Detail_OtpRequired(): super._();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_OtpRequired);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'Detail.otpRequired()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class Detail_OtpEmpty extends Detail {
+  const Detail_OtpEmpty(): super._();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_OtpEmpty);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'Detail.otpEmpty()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class Detail_OtpRejected extends Detail {
+  const Detail_OtpRejected(): super._();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_OtpRejected);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'Detail.otpRejected()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class Detail_InvalidBody extends Detail {
+  const Detail_InvalidBody(): super._();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_InvalidBody);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'Detail.invalidBody()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class Detail_InvalidData extends Detail {
+  const Detail_InvalidData(): super._();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_InvalidData);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'Detail.invalidData()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class Detail_MissingTicket extends Detail {
+  const Detail_MissingTicket(): super._();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_MissingTicket);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'Detail.missingTicket()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class Detail_NoPrivileges extends Detail {
+  const Detail_NoPrivileges({required this.token, required this.account, required this.command}): super._();
+  
+
+ final  bool token;
+ final  String account;
+ final  String command;
+
+/// Create a copy of Detail
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$Detail_NoPrivilegesCopyWith<Detail_NoPrivileges> get copyWith => _$Detail_NoPrivilegesCopyWithImpl<Detail_NoPrivileges>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_NoPrivileges&&(identical(other.token, token) || other.token == token)&&(identical(other.account, account) || other.account == account)&&(identical(other.command, command) || other.command == command));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,token,account,command);
+
+@override
+String toString() {
+  return 'Detail.noPrivileges(token: $token, account: $account, command: $command)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $Detail_NoPrivilegesCopyWith<$Res> implements $DetailCopyWith<$Res> {
+  factory $Detail_NoPrivilegesCopyWith(Detail_NoPrivileges value, $Res Function(Detail_NoPrivileges) _then) = _$Detail_NoPrivilegesCopyWithImpl;
+@useResult
+$Res call({
+ bool token, String account, String command
+});
+
+
+
+
+}
+/// @nodoc
+class _$Detail_NoPrivilegesCopyWithImpl<$Res>
+    implements $Detail_NoPrivilegesCopyWith<$Res> {
+  _$Detail_NoPrivilegesCopyWithImpl(this._self, this._then);
+
+  final Detail_NoPrivileges _self;
+  final $Res Function(Detail_NoPrivileges) _then;
+
+/// Create a copy of Detail
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? token = null,Object? account = null,Object? command = null,}) {
+  return _then(Detail_NoPrivileges(
+token: null == token ? _self.token : token // ignore: cast_nullable_to_non_nullable
+as bool,account: null == account ? _self.account : account // ignore: cast_nullable_to_non_nullable
+as String,command: null == command ? _self.command : command // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class Detail_NotOffered extends Detail {
+  const Detail_NotOffered(): super._();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_NotOffered);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'Detail.notOffered()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class Detail_TaskStillRunning extends Detail {
+  const Detail_TaskStillRunning({required this.node, required this.upid, required this.minutes}): super._();
+  
+
+ final  String node;
+ final  String upid;
+ final  BigInt minutes;
+
+/// Create a copy of Detail
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$Detail_TaskStillRunningCopyWith<Detail_TaskStillRunning> get copyWith => _$Detail_TaskStillRunningCopyWithImpl<Detail_TaskStillRunning>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_TaskStillRunning&&(identical(other.node, node) || other.node == node)&&(identical(other.upid, upid) || other.upid == upid)&&(identical(other.minutes, minutes) || other.minutes == minutes));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,node,upid,minutes);
+
+@override
+String toString() {
+  return 'Detail.taskStillRunning(node: $node, upid: $upid, minutes: $minutes)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $Detail_TaskStillRunningCopyWith<$Res> implements $DetailCopyWith<$Res> {
+  factory $Detail_TaskStillRunningCopyWith(Detail_TaskStillRunning value, $Res Function(Detail_TaskStillRunning) _then) = _$Detail_TaskStillRunningCopyWithImpl;
+@useResult
+$Res call({
+ String node, String upid, BigInt minutes
+});
+
+
+
+
+}
+/// @nodoc
+class _$Detail_TaskStillRunningCopyWithImpl<$Res>
+    implements $Detail_TaskStillRunningCopyWith<$Res> {
+  _$Detail_TaskStillRunningCopyWithImpl(this._self, this._then);
+
+  final Detail_TaskStillRunning _self;
+  final $Res Function(Detail_TaskStillRunning) _then;
+
+/// Create a copy of Detail
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? node = null,Object? upid = null,Object? minutes = null,}) {
+  return _then(Detail_TaskStillRunning(
+node: null == node ? _self.node : node // ignore: cast_nullable_to_non_nullable
+as String,upid: null == upid ? _self.upid : upid // ignore: cast_nullable_to_non_nullable
+as String,minutes: null == minutes ? _self.minutes : minutes // ignore: cast_nullable_to_non_nullable
+as BigInt,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class Detail_CertNotPresented extends Detail {
+  const Detail_CertNotPresented(): super._();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_CertNotPresented);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'Detail.certNotPresented()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class Detail_NeedsPrivilege extends Detail {
+  const Detail_NeedsPrivilege({required this.account, required this.privilege, required this.path, required this.command}): super._();
+  
+
+ final  String account;
+ final  String privilege;
+ final  String path;
+ final  String command;
+
+/// Create a copy of Detail
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$Detail_NeedsPrivilegeCopyWith<Detail_NeedsPrivilege> get copyWith => _$Detail_NeedsPrivilegeCopyWithImpl<Detail_NeedsPrivilege>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_NeedsPrivilege&&(identical(other.account, account) || other.account == account)&&(identical(other.privilege, privilege) || other.privilege == privilege)&&(identical(other.path, path) || other.path == path)&&(identical(other.command, command) || other.command == command));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,account,privilege,path,command);
+
+@override
+String toString() {
+  return 'Detail.needsPrivilege(account: $account, privilege: $privilege, path: $path, command: $command)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $Detail_NeedsPrivilegeCopyWith<$Res> implements $DetailCopyWith<$Res> {
+  factory $Detail_NeedsPrivilegeCopyWith(Detail_NeedsPrivilege value, $Res Function(Detail_NeedsPrivilege) _then) = _$Detail_NeedsPrivilegeCopyWithImpl;
+@useResult
+$Res call({
+ String account, String privilege, String path, String command
+});
+
+
+
+
+}
+/// @nodoc
+class _$Detail_NeedsPrivilegeCopyWithImpl<$Res>
+    implements $Detail_NeedsPrivilegeCopyWith<$Res> {
+  _$Detail_NeedsPrivilegeCopyWithImpl(this._self, this._then);
+
+  final Detail_NeedsPrivilege _self;
+  final $Res Function(Detail_NeedsPrivilege) _then;
+
+/// Create a copy of Detail
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? account = null,Object? privilege = null,Object? path = null,Object? command = null,}) {
+  return _then(Detail_NeedsPrivilege(
+account: null == account ? _self.account : account // ignore: cast_nullable_to_non_nullable
+as String,privilege: null == privilege ? _self.privilege : privilege // ignore: cast_nullable_to_non_nullable
+as String,path: null == path ? _self.path : path // ignore: cast_nullable_to_non_nullable
+as String,command: null == command ? _self.command : command // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class Detail_Refused extends Detail {
+  const Detail_Refused({required this.issue}): super._();
+  
+
+ final  ResourceIssue issue;
+
+/// Create a copy of Detail
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$Detail_RefusedCopyWith<Detail_Refused> get copyWith => _$Detail_RefusedCopyWithImpl<Detail_Refused>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_Refused&&(identical(other.issue, issue) || other.issue == issue));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,issue);
+
+@override
+String toString() {
+  return 'Detail.refused(issue: $issue)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $Detail_RefusedCopyWith<$Res> implements $DetailCopyWith<$Res> {
+  factory $Detail_RefusedCopyWith(Detail_Refused value, $Res Function(Detail_Refused) _then) = _$Detail_RefusedCopyWithImpl;
+@useResult
+$Res call({
+ ResourceIssue issue
+});
+
+
+
+
+}
+/// @nodoc
+class _$Detail_RefusedCopyWithImpl<$Res>
+    implements $Detail_RefusedCopyWith<$Res> {
+  _$Detail_RefusedCopyWithImpl(this._self, this._then);
+
+  final Detail_Refused _self;
+  final $Res Function(Detail_Refused) _then;
+
+/// Create a copy of Detail
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? issue = null,}) {
+  return _then(Detail_Refused(
+issue: null == issue ? _self.issue : issue // ignore: cast_nullable_to_non_nullable
+as ResourceIssue,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class Detail_CreateRefused extends Detail {
+  const Detail_CreateRefused({required this.issue}): super._();
+  
+
+ final  CreateIssue issue;
+
+/// Create a copy of Detail
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$Detail_CreateRefusedCopyWith<Detail_CreateRefused> get copyWith => _$Detail_CreateRefusedCopyWithImpl<Detail_CreateRefused>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_CreateRefused&&(identical(other.issue, issue) || other.issue == issue));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,issue);
+
+@override
+String toString() {
+  return 'Detail.createRefused(issue: $issue)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $Detail_CreateRefusedCopyWith<$Res> implements $DetailCopyWith<$Res> {
+  factory $Detail_CreateRefusedCopyWith(Detail_CreateRefused value, $Res Function(Detail_CreateRefused) _then) = _$Detail_CreateRefusedCopyWithImpl;
+@useResult
+$Res call({
+ CreateIssue issue
+});
+
+
+
+
+}
+/// @nodoc
+class _$Detail_CreateRefusedCopyWithImpl<$Res>
+    implements $Detail_CreateRefusedCopyWith<$Res> {
+  _$Detail_CreateRefusedCopyWithImpl(this._self, this._then);
+
+  final Detail_CreateRefused _self;
+  final $Res Function(Detail_CreateRefused) _then;
+
+/// Create a copy of Detail
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? issue = null,}) {
+  return _then(Detail_CreateRefused(
+issue: null == issue ? _self.issue : issue // ignore: cast_nullable_to_non_nullable
+as CreateIssue,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class Detail_HardwareRefused extends Detail {
+  const Detail_HardwareRefused({required this.issue}): super._();
+  
+
+ final  HwIssue issue;
+
+/// Create a copy of Detail
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$Detail_HardwareRefusedCopyWith<Detail_HardwareRefused> get copyWith => _$Detail_HardwareRefusedCopyWithImpl<Detail_HardwareRefused>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_HardwareRefused&&(identical(other.issue, issue) || other.issue == issue));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,issue);
+
+@override
+String toString() {
+  return 'Detail.hardwareRefused(issue: $issue)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $Detail_HardwareRefusedCopyWith<$Res> implements $DetailCopyWith<$Res> {
+  factory $Detail_HardwareRefusedCopyWith(Detail_HardwareRefused value, $Res Function(Detail_HardwareRefused) _then) = _$Detail_HardwareRefusedCopyWithImpl;
+@useResult
+$Res call({
+ HwIssue issue
+});
+
+
+
+
+}
+/// @nodoc
+class _$Detail_HardwareRefusedCopyWithImpl<$Res>
+    implements $Detail_HardwareRefusedCopyWith<$Res> {
+  _$Detail_HardwareRefusedCopyWithImpl(this._self, this._then);
+
+  final Detail_HardwareRefused _self;
+  final $Res Function(Detail_HardwareRefused) _then;
+
+/// Create a copy of Detail
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? issue = null,}) {
+  return _then(Detail_HardwareRefused(
+issue: null == issue ? _self.issue : issue // ignore: cast_nullable_to_non_nullable
+as HwIssue,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class Detail_BackupRefused extends Detail {
+  const Detail_BackupRefused({required this.issue}): super._();
+  
+
+ final  BackupIssue issue;
+
+/// Create a copy of Detail
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$Detail_BackupRefusedCopyWith<Detail_BackupRefused> get copyWith => _$Detail_BackupRefusedCopyWithImpl<Detail_BackupRefused>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_BackupRefused&&(identical(other.issue, issue) || other.issue == issue));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,issue);
+
+@override
+String toString() {
+  return 'Detail.backupRefused(issue: $issue)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $Detail_BackupRefusedCopyWith<$Res> implements $DetailCopyWith<$Res> {
+  factory $Detail_BackupRefusedCopyWith(Detail_BackupRefused value, $Res Function(Detail_BackupRefused) _then) = _$Detail_BackupRefusedCopyWithImpl;
+@useResult
+$Res call({
+ BackupIssue issue
+});
+
+
+
+
+}
+/// @nodoc
+class _$Detail_BackupRefusedCopyWithImpl<$Res>
+    implements $Detail_BackupRefusedCopyWith<$Res> {
+  _$Detail_BackupRefusedCopyWithImpl(this._self, this._then);
+
+  final Detail_BackupRefused _self;
+  final $Res Function(Detail_BackupRefused) _then;
+
+/// Create a copy of Detail
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? issue = null,}) {
+  return _then(Detail_BackupRefused(
+issue: null == issue ? _self.issue : issue // ignore: cast_nullable_to_non_nullable
+as BackupIssue,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class Detail_ApplyTouchesManagement extends Detail {
+  const Detail_ApplyTouchesManagement({required final  List<String> ifaces}): _ifaces = ifaces,super._();
+  
+
+ final  List<String> _ifaces;
+ List<String> get ifaces {
+  if (_ifaces is EqualUnmodifiableListView) return _ifaces;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_ifaces);
+}
+
+
+/// Create a copy of Detail
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$Detail_ApplyTouchesManagementCopyWith<Detail_ApplyTouchesManagement> get copyWith => _$Detail_ApplyTouchesManagementCopyWithImpl<Detail_ApplyTouchesManagement>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_ApplyTouchesManagement&&const DeepCollectionEquality().equals(other._ifaces, _ifaces));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_ifaces));
+
+@override
+String toString() {
+  return 'Detail.applyTouchesManagement(ifaces: $ifaces)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $Detail_ApplyTouchesManagementCopyWith<$Res> implements $DetailCopyWith<$Res> {
+  factory $Detail_ApplyTouchesManagementCopyWith(Detail_ApplyTouchesManagement value, $Res Function(Detail_ApplyTouchesManagement) _then) = _$Detail_ApplyTouchesManagementCopyWithImpl;
+@useResult
+$Res call({
+ List<String> ifaces
+});
+
+
+
+
+}
+/// @nodoc
+class _$Detail_ApplyTouchesManagementCopyWithImpl<$Res>
+    implements $Detail_ApplyTouchesManagementCopyWith<$Res> {
+  _$Detail_ApplyTouchesManagementCopyWithImpl(this._self, this._then);
+
+  final Detail_ApplyTouchesManagement _self;
+  final $Res Function(Detail_ApplyTouchesManagement) _then;
+
+/// Create a copy of Detail
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? ifaces = null,}) {
+  return _then(Detail_ApplyTouchesManagement(
+ifaces: null == ifaces ? _self._ifaces : ifaces // ignore: cast_nullable_to_non_nullable
+as List<String>,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class Detail_ApplyUnreadable extends Detail {
+  const Detail_ApplyUnreadable(): super._();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Detail_ApplyUnreadable);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'Detail.applyUnreadable()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
 mixin _$HwChange {
 
 

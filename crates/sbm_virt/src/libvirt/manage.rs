@@ -20,6 +20,7 @@
 //! password.
 
 use sbm_parser::script::{self, shell_quote_unix};
+pub use sbm_parser::sudo::SudoEntry;
 use crate::libvirt::{
     CONNECT_URI, RC_PREFIX, VirtError, prelude, run_fn, sections, take, xml_escape,
 };
@@ -506,23 +507,12 @@ pub fn parse_resource(raw: &str) -> Result<(), VirtError> {
 // Uploading into a volume
 // ---------------------------------------------------------------------------
 
-/// How the upload command reaches the daemon: as this account, or through
-/// sudo with or without a password, as `PrivilegedExec` decided for the
-/// other scripts.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum VirtUploadEntry {
-    Direct,
-    SudoNoPassword,
-    SudoPassword,
-}
-
 /// The command that writes its stdin into the volume `name` of `pool`, for
 /// an exec channel that carries bytes (not a script for `sh` on stdin: stdin
 /// is the file). Parse its output with [`parse_vol_upload`].
 ///
 /// The caller writes, in order: the sudo password and a newline (only with
-/// [`VirtUploadEntry::SudoPassword`]), [`UPLOAD_GO`] and a newline; waits for
+/// [`SudoEntry::SudoPassword`]), [`UPLOAD_GO`] and a newline; waits for
 /// [`UPLOAD_READY`] on stdout; then the file's bytes, and closes stdin.
 ///
 /// The go line is what keeps a password out of the volume: `sudo -S` reads
@@ -537,7 +527,9 @@ pub enum VirtUploadEntry {
 /// The script travels base64-encoded inside single quotes, so the command
 /// line holds nothing a login shell reads differently — fish treats `\` and
 /// `'` inside single quotes its own way, and names can hold both.
-pub fn vol_upload_command(pool: &str, name: &str, entry: VirtUploadEntry) -> Result<String, VirtError> {
+/// `entry` is how it reaches the daemon, as `PrivilegedExec` decided for the
+/// other scripts.
+pub fn vol_upload_command(pool: &str, name: &str, entry: SudoEntry) -> Result<String, VirtError> {
     if pool.is_empty() || name.is_empty() || format!("{pool}{name}").chars().any(char::is_control) {
         return Err(VirtError::Malformed {
             message: "invalid upload: volume".into(),
@@ -561,11 +553,7 @@ pub fn vol_upload_command(pool: &str, name: &str, entry: VirtUploadEntry) -> Res
     use base64::Engine;
     let b64 = base64::engine::general_purpose::STANDARD.encode(script);
     let body = format!("sh -c 'eval \"$(echo {b64} | base64 -d)\"'");
-    Ok(match entry {
-        VirtUploadEntry::Direct => body,
-        VirtUploadEntry::SudoNoPassword => format!("sudo -n {body}"),
-        VirtUploadEntry::SudoPassword => format!("sudo -S -p '' {body}"),
-    })
+    Ok(entry.wrap(&body))
 }
 
 /// [`vol_upload_command`]'s output. `Ok(true)` when the volume has the
@@ -758,12 +746,12 @@ mod tests {
     #[test]
     fn upload_command_is_quote_safe() {
         let hostile = "it's \"odd\" \\ $(id)";
-        for entry in [VirtUploadEntry::Direct, VirtUploadEntry::SudoNoPassword, VirtUploadEntry::SudoPassword] {
+        for entry in [SudoEntry::Direct, SudoEntry::SudoNoPassword, SudoEntry::SudoPassword] {
             let c = vol_upload_command(hostile, hostile, entry).unwrap();
             let body = &c[c.find("sh -c '").unwrap() + 7..c.len() - 1];
             assert!(!body.contains('\'') && !body.contains('\\'), "{c}");
         }
-        assert!(vol_upload_command("p", "a\nb", VirtUploadEntry::Direct).is_err());
+        assert!(vol_upload_command("p", "a\nb", SudoEntry::Direct).is_err());
         assert_eq!(parse_vol_upload(&sec(KEY_UPLOAD, "", 0)), Ok(true));
         assert_eq!(
             parse_vol_upload(&format!("{}\n", script::cmd_marker(KEY_UPLOAD_REFUSED))),

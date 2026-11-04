@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_lib/theme.dart' show ThemeRestoreReport;
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/diag.dart';
@@ -71,145 +72,88 @@ class BackupService {
       restoreData(context, utf8.encode(text));
 
   /// Decodes [data], prompting for a password when it is encrypted.
+  ///
+  /// The saved password is tried first, and a wrong one asks for another
+  /// without saying so: it is only out of date. A typed one that is wrong asks
+  /// whether to try again.
   static Future<void> restoreData(BuildContext context, List<int> data) async {
-    final isEncrypted = AgeCryptor.isEncrypted(data);
-    String? password;
-
-    if (!isEncrypted) {
-      try {
-        final (backup, err) = await context.showLoadingDialog(
-          fn: () => _decode(data, null),
-        );
-        // [err] has been reported by `showLoadingDialog` already; a dialog
-        // here was a second one for the same failure.
-        if (err != null) return;
-        if (backup == null) {
-          if (context.mounted) {
-            context.showErrDialog(
-              '${libL10n.empty}: ${libL10n.backup}',
-              null,
-              libL10n.restore,
-            );
-          }
-          return;
-        }
-
-        if (!context.mounted) return;
-        await _confirmAndRestore(context, backup);
-      } catch (e, s) {
-        Loggers.app.warning('Import backup failed', e, s);
-        if (context.mounted) context.showErrDialog(e, s, libL10n.restore);
-      }
+    if (!AgeCryptor.isEncrypted(data)) {
+      await _open(context, data, null);
       return;
     }
 
-    // Avoid prompting when the saved password can decrypt this backup.
-    final savedPassword = await SecureStoreProps.bakPwd.read();
+    final saved = await SecureStoreProps.bakPwd.read();
     if (!context.mounted) return;
-    if (savedPassword != null && savedPassword.isNotEmpty) {
-      try {
-        final (backup, err) = await context.showLoadingDialog(
-          fn: () => _decode(data, savedPassword),
-        );
-        if (err == null && backup != null) {
-          if (!context.mounted) return;
-          await _confirmAndRestore(context, backup);
-          return;
-        }
-      } catch (e, s) {
-        Loggers.app.warning(
-          'Failed to restore with saved password, will prompt for manual input',
-          e,
-          s,
-        );
-      }
+    if (saved != null && saved.isNotEmpty) {
+      if (await _open(context, data, saved) != _Opened.wrongPassword) return;
     }
 
-    // Prompt for password with retry logic
-    while (true) {
-      if (!context.mounted) return;
-      password = await _showPasswordDialog(
+    while (context.mounted) {
+      final password = await _showPasswordDialog(
         context,
         title: libL10n.pwd,
         hint: l10n.backupEncrypted,
       );
-      if (!context.mounted) return;
-      if (password == null) return; // User cancelled
-
-      try {
-        final (backup, err) = await context.showLoadingDialog(
-          fn: () => _decode(data, password),
-        );
-        if (!context.mounted) return;
-        if (err != null) {
-          if (err is WrongPasswordException) {
-            final retry = await context.showRoundDialog<bool>(
-              title: l10n.backupPasswordWrong,
-              child: Text(l10n.backupPasswordWrong),
-              actions: [
-                TextButton(
-                  onPressed: () => context.popDialog(false),
-                  child: Text(libL10n.cancel),
-                ),
-                TextButton(
-                  onPressed: () => context.popDialog(true),
-                  child: Text(libL10n.retry),
-                ),
-              ],
-            );
-            if (retry != true) return;
-            continue;
-          }
-          if (context.mounted) {
-            context.showErrDialog(err, null, libL10n.restore);
-          }
-          return;
-        }
-        if (backup == null) {
-          context.showErrDialog(
-            '${libL10n.empty}: ${libL10n.backup}',
-            null,
-            libL10n.restore,
-          );
-          return;
-        }
-
-        await _confirmAndRestore(context, backup);
-        return;
-      } catch (e) {
-        if (!context.mounted) return;
-        if (e is WrongPasswordException) {
-          final retry = await context.showRoundDialog<bool>(
-            title: l10n.backupPasswordWrong,
-            child: Text(l10n.backupPasswordWrong),
-            actions: [
-              TextButton(
-                onPressed: () => context.popDialog(false),
-                child: Text(libL10n.cancel),
-              ),
-              TextButton(
-                onPressed: () => context.popDialog(true),
-                child: Text(libL10n.retry),
-              ),
-            ],
-          );
-          if (retry != true) return;
-          continue; // Try again
-        } else {
-          // Other error, show and exit
-          if (context.mounted) {
-            context.showErrDialog(e, null, libL10n.restore);
-          }
-          return;
-        }
-      }
+      if (password == null || !context.mounted) return;
+      if (await _open(context, data, password) != _Opened.wrongPassword) return;
+      if (!context.mounted || !await _askRetry(context)) return;
     }
+  }
+
+  /// Opens [data] with [password], then confirms and restores it.
+  ///
+  /// A failure is reported once, by the loading dialog; a wrong password is
+  /// an answer instead, left to [restoreData].
+  static Future<_Opened> _open(
+    BuildContext context,
+    List<int> data,
+    String? password,
+  ) async {
+    final (opened, err) = await context.showLoadingDialog(
+      // A slow device takes its time over the key derivation.
+      timeout: null,
+      fn: () async {
+        try {
+          return (backup: await _decode(data, password), wrongPassword: false);
+        } on WrongPasswordException {
+          return (backup: null, wrongPassword: true);
+        }
+      },
+    );
+    if (err != null || opened == null) return _Opened.failed;
+    if (opened.wrongPassword) return _Opened.wrongPassword;
+    final backup = opened.backup;
+    if (!context.mounted) return _Opened.failed;
+    if (backup == null) {
+      context.showErrDialog('${libL10n.empty}: ${libL10n.backup}', null, libL10n.restore);
+      return _Opened.failed;
+    }
+    await _confirmAndRestore(context, backup);
+    return _Opened.restored;
+  }
+
+  /// Asks whether to try another password after a wrong one.
+  static Future<bool> _askRetry(BuildContext context) async {
+    final retry = await context.showRoundDialog<bool>(
+      title: l10n.backupPasswordWrong,
+      actions: [
+        TextButton(
+          onPressed: () => context.popDialog(false),
+          child: Text(libL10n.cancel),
+        ),
+        TextButton(
+          onPressed: () => context.popDialog(true),
+          child: Text(libL10n.retry),
+        ),
+      ],
+    );
+    return retry == true;
   }
 
   /// Confirm and execute restore operation
   static Future<void> _confirmAndRestore(
     BuildContext context,
-    (dynamic, String) backup,
+    (Mergeable, String) backup,
   ) async {
     if (!context.mounted) return;
     await context.showRoundDialog(
@@ -219,18 +163,26 @@ class BackupService {
           '${libL10n.restore} ${libL10n.backup}(${backup.$2})',
         ),
       ),
-      actions: [
+      actionsBuilder: (dialogCtx) => [
         Btn.cancel(),
         Btn.ok(
           onTap: () async {
+            // Taken before the restore: the page may be gone when it ends,
+            // and only this dialog is to close, whatever is above it then.
+            final nav = Navigator.of(dialogCtx);
+            final route = ModalRoute.of(dialogCtx);
+            void close() {
+              if (route != null && route.isActive) nav.removeRoute(route);
+            }
             try {
               final mergeable = backup.$1;
-              final themes = mergeable is BackupV2
-                  ? await mergeable.mergeReporting(force: true)
-                  : null;
-              if (mergeable is! BackupV2) await mergeable.merge(force: true);
-              if (!context.mounted) return;
-              context.popDialog();
+              ThemeRestoreReport? themes;
+              if (mergeable is BackupV2) {
+                themes = await mergeable.restoreStores(force: true);
+              } else {
+                await mergeable.merge(force: true);
+              }
+              close();
               // Said once the restore is done, not as a failure of it: the
               // rest of the backup is in place, and these can be installed
               // again by hand.
@@ -243,9 +195,8 @@ class BackupService {
                 );
               }
             } catch (e, s) {
-              if (!context.mounted) return;
-              context.popDialog();
-              context.showErrDialog(e, s, libL10n.restore);
+              close();
+              if (context.mounted) context.showErrDialog(e, s, libL10n.restore);
             }
           },
         ),
@@ -254,7 +205,7 @@ class BackupService {
   }
 
   /// Decrypted in rage's isolate, decoded in a worker: neither on this one.
-  static Future<(dynamic, String)?> _decode(
+  static Future<(Mergeable, String)?> _decode(
     List<int> data,
     String? password,
   ) async {
@@ -301,3 +252,6 @@ class BackupService {
     return result;
   }
 }
+
+/// What [BackupService._open] came to.
+enum _Opened { restored, wrongPassword, failed }

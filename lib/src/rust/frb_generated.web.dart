@@ -580,6 +580,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   SystemGroup dco_decode_box_autoadd_system_group(dynamic raw);
 
   @protected
+  SystemType dco_decode_box_autoadd_system_type(dynamic raw);
+
+  @protected
   SystemUser dco_decode_box_autoadd_system_user(dynamic raw);
 
   @protected
@@ -706,6 +709,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   CertInfo dco_decode_box_cert_info(dynamic raw);
 
   @protected
+  Detail dco_decode_box_detail(dynamic raw);
+
+  @protected
   Capabilities dco_decode_capabilities(dynamic raw);
 
   @protected
@@ -812,6 +818,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   CustomCmd dco_decode_custom_cmd(dynamic raw);
+
+  @protected
+  Detail dco_decode_detail(dynamic raw);
 
   @protected
   DeviceKind dco_decode_device_kind(dynamic raw);
@@ -1542,6 +1551,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   SystemGroup? dco_decode_opt_box_autoadd_system_group(dynamic raw);
 
   @protected
+  SystemType? dco_decode_opt_box_autoadd_system_type(dynamic raw);
+
+  @protected
   int? dco_decode_opt_box_autoadd_u_16(dynamic raw);
 
   @protected
@@ -1606,6 +1618,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   CertInfo? dco_decode_opt_box_cert_info(dynamic raw);
+
+  @protected
+  Detail? dco_decode_opt_box_detail(dynamic raw);
 
   @protected
   List<String>? dco_decode_opt_list_String(dynamic raw);
@@ -1915,6 +1930,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   StorageView dco_decode_storage_view(dynamic raw);
 
   @protected
+  SudoEntry dco_decode_sudo_entry(dynamic raw);
+
+  @protected
   Support dco_decode_support(dynamic raw);
 
   @protected
@@ -1922,6 +1940,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   SystemGroup dco_decode_system_group(dynamic raw);
+
+  @protected
+  SystemType dco_decode_system_type(dynamic raw);
 
   @protected
   SystemUser dco_decode_system_user(dynamic raw);
@@ -2168,9 +2189,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   VirtStorage dco_decode_virt_storage(dynamic raw);
-
-  @protected
-  VirtUploadEntryKind dco_decode_virt_upload_entry_kind(dynamic raw);
 
   @protected
   VirtVersion dco_decode_virt_version(dynamic raw);
@@ -2766,6 +2784,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   SystemGroup sse_decode_box_autoadd_system_group(SseDeserializer deserializer);
 
   @protected
+  SystemType sse_decode_box_autoadd_system_type(SseDeserializer deserializer);
+
+  @protected
   SystemUser sse_decode_box_autoadd_system_user(SseDeserializer deserializer);
 
   @protected
@@ -2936,6 +2957,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   CertInfo sse_decode_box_cert_info(SseDeserializer deserializer);
 
   @protected
+  Detail sse_decode_box_detail(SseDeserializer deserializer);
+
+  @protected
   Capabilities sse_decode_capabilities(SseDeserializer deserializer);
 
   @protected
@@ -3052,6 +3076,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   CustomCmd sse_decode_custom_cmd(SseDeserializer deserializer);
+
+  @protected
+  Detail sse_decode_detail(SseDeserializer deserializer);
 
   @protected
   DeviceKind sse_decode_device_kind(SseDeserializer deserializer);
@@ -3926,6 +3953,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  SystemType? sse_decode_opt_box_autoadd_system_type(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   int? sse_decode_opt_box_autoadd_u_16(SseDeserializer deserializer);
 
   @protected
@@ -4020,6 +4052,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   CertInfo? sse_decode_opt_box_cert_info(SseDeserializer deserializer);
+
+  @protected
+  Detail? sse_decode_opt_box_detail(SseDeserializer deserializer);
 
   @protected
   List<String>? sse_decode_opt_list_String(SseDeserializer deserializer);
@@ -4361,6 +4396,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   StorageView sse_decode_storage_view(SseDeserializer deserializer);
 
   @protected
+  SudoEntry sse_decode_sudo_entry(SseDeserializer deserializer);
+
+  @protected
   Support sse_decode_support(SseDeserializer deserializer);
 
   @protected
@@ -4368,6 +4406,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   SystemGroup sse_decode_system_group(SseDeserializer deserializer);
+
+  @protected
+  SystemType sse_decode_system_type(SseDeserializer deserializer);
 
   @protected
   SystemUser sse_decode_system_user(SseDeserializer deserializer);
@@ -4624,11 +4665,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   VirtStorage sse_decode_virt_storage(SseDeserializer deserializer);
-
-  @protected
-  VirtUploadEntryKind sse_decode_virt_upload_entry_kind(
-    SseDeserializer deserializer,
-  );
 
   @protected
   VirtVersion sse_decode_virt_version(SseDeserializer deserializer);
@@ -5366,6 +5402,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_box_autoadd_system_type(
+    SystemType self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_system_user(
     SystemUser self,
     SseSerializer serializer,
@@ -5597,6 +5639,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_box_cert_info(CertInfo self, SseSerializer serializer);
 
   @protected
+  void sse_encode_box_detail(Detail self, SseSerializer serializer);
+
+  @protected
   void sse_encode_capabilities(Capabilities self, SseSerializer serializer);
 
   @protected
@@ -5727,6 +5772,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_custom_cmd(CustomCmd self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_detail(Detail self, SseSerializer serializer);
 
   @protected
   void sse_encode_device_kind(DeviceKind self, SseSerializer serializer);
@@ -6854,6 +6902,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_opt_box_autoadd_system_type(
+    SystemType? self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_opt_box_autoadd_u_16(int? self, SseSerializer serializer);
 
   @protected
@@ -6969,6 +7023,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_opt_box_cert_info(CertInfo? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_detail(Detail? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_list_String(List<String>? self, SseSerializer serializer);
@@ -7403,6 +7460,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_storage_view(StorageView self, SseSerializer serializer);
 
   @protected
+  void sse_encode_sudo_entry(SudoEntry self, SseSerializer serializer);
+
+  @protected
   void sse_encode_support(Support self, SseSerializer serializer);
 
   @protected
@@ -7410,6 +7470,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_system_group(SystemGroup self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_system_type(SystemType self, SseSerializer serializer);
 
   @protected
   void sse_encode_system_user(SystemUser self, SseSerializer serializer);
@@ -7719,12 +7782,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_virt_storage(VirtStorage self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_virt_upload_entry_kind(
-    VirtUploadEntryKind self,
-    SseSerializer serializer,
-  );
 
   @protected
   void sse_encode_virt_version(VirtVersion self, SseSerializer serializer);

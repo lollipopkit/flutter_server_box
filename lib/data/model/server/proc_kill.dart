@@ -8,7 +8,7 @@ import 'package:server_box/src/rust/api/proc.dart' as ffi;
 abstract final class ProcKill {
   /// Null where the platform cannot check what it would signal.
   static String? command(Proc target, SystemType system, ProcSignal signal) =>
-      ffi.procKillCommand(pid: target.pid, startId: target.startId, system: system.name, signal: signal);
+      ffi.procKillCommand(pid: target.pid, startId: target.startId, system: system.ffi, signal: signal);
 
   static ProcKillOutcome outcome(String output) => ffi.procKillOutcome(output: output);
 }

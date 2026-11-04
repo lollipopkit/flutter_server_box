@@ -24,6 +24,7 @@ import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/virt/libvirt_backend.dart';
 import 'package:server_box/src/rust/api/script.dart' as script;
 import 'package:server_box/src/rust/api/virt.dart' as ffi;
+import 'package:server_box/src/rust/api/virt_model.dart' as fm;
 
 import '../../helpers/rust_lib_helper.dart';
 
@@ -98,8 +99,8 @@ void main() {
         ),
         VirtResIssue.managementIface,
       );
-      expect(VirtResIssue.ofRust('management_iface'), VirtResIssue.managementIface);
-      expect(VirtResIssue.ofRust(null), isNull);
+      expect(VirtResIssue.of(fm.ResourceIssue.managementIface), VirtResIssue.managementIface);
+      expect(VirtResIssue.of(null), isNull);
     });
 
     test('what a form offers', () {

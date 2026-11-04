@@ -360,14 +360,6 @@ enum VirtCreateIssue {
     final i => values.asNameMap()[i.name] ?? unsupported,
   };
 
-  /// The issue `sbm_virt` names (`name_taken`).
-  static VirtCreateIssue? ofRust(String? name) => switch (name) {
-    null => null,
-    _ => values.firstWhere(
-      (i) => i.name == name.replaceAllMapped(RegExp('_([a-z])'), (m) => m[1]!.toUpperCase()),
-      orElse: () => unsupported,
-    ),
-  };
 }
 
 /// What a [VirtCreateIssue] says where no field says it: a refusal's

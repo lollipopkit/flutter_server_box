@@ -6,14 +6,14 @@
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `parse_system_or_err`, `parse_system`, `system_name`, `whole`
+// These functions are ignored because they are not marked as `pub`: `whole`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `from`, `from`
 
 /// Parses all output of one collection round. `system`: "linux" | "bsd" |
 /// "windows"; see `ParseOptions` for `temp_divisor`. Async: runs on the Rust
 /// thread pool without blocking the UI isolate.
 Future<StatusReport> parseStatus({
-  required String system,
+  required SystemType system,
   required Map<String, String> raw,
   required double tempDivisor,
   required bool countNetwork,
@@ -31,12 +31,12 @@ String systemProbeUname() =>
 /// The probe that tells Windows, run when `uname` said nothing it knows.
 String systemProbeVer() => RustLib.instance.api.crateApiParserSystemProbeVer();
 
-/// What `uname -a` said, as `linux` / `bsd`; `None` when it says neither.
-String? systemFromUname({required String output}) =>
+/// What `uname -a` said: Linux or a BSD; `None` when it says neither.
+SystemType? systemFromUname({required String output}) =>
     RustLib.instance.api.crateApiParserSystemFromUname(output: output);
 
-/// `windows` when `ver` answered as Windows does.
-String? systemFromVer({required String output}) =>
+/// Windows when `ver` answered as Windows does.
+SystemType? systemFromVer({required String output}) =>
     RustLib.instance.api.crateApiParserSystemFromVer(output: output);
 
 /// The seconds a status's `uptime` string says (`sbm_parser::common::uptime_seconds`);
@@ -45,7 +45,7 @@ BigInt? uptimeSeconds({required String formatted}) =>
     RustLib.instance.api.crateApiParserUptimeSeconds(formatted: formatted);
 
 /// Per-platform collection command manifest (the app's script generation derives from it, versioned with the parsers)
-List<CommandSpec> commandSpecs({required String system}) =>
+List<CommandSpec> commandSpecs({required SystemType system}) =>
     RustLib.instance.api.crateApiParserCommandSpecs(system: system);
 
 class AmdSmiItem {
@@ -851,4 +851,13 @@ class Swap {
           total == other.total &&
           free == other.free &&
           cached == other.cached;
+}
+
+/// The platform a server runs (mirrors sbm_parser::SystemType).
+enum SystemType {
+  linux,
+
+  /// BSD family, including macOS
+  bsd,
+  windows,
 }

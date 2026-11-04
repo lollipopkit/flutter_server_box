@@ -9,7 +9,7 @@
 //!
 //! A host view crosses as `sbm_virt::model::HostView` JSON, the agent's wire
 //! format, which the app reads into its own models. A failure crosses as
-//! [`PveError`], whose `kind` the app branches on and whose `detail_json`
+//! [`PveError`], whose `kind` the app branches on and whose `detail`
 //! (`sbm_virt::error::Detail`) carries what it phrases itself.
 
 use std::sync::{Arc, RwLock};
@@ -22,7 +22,7 @@ use sbm_virt::pve::{self, Auth, Client};
 use super::bmc::CertInfo;
 use super::virt::VirtActionKind;
 use super::virt_model::{
-    Backup, BackupEdit, BackupJob, BackupJobEdit, BackupRequest, CloneRequest, CloudInitEdit, CloudInitState, CreateOptions, CreateSpec, Created,
+    Backup, BackupEdit, BackupJob, BackupJobEdit, BackupRequest, CloneRequest, CloudInitEdit, CloudInitState, CreateOptions, CreateSpec, Created, Detail,
     Hardware, HostDevices, HwChange, Network, NetworkChanges, Outcome, ResourceChange, ResourcePool, ScheduleCheck, Volume,
 };
 use super::virt_view::{Diff, Snapshot, Stats, VirtGuestDetailReport, VirtHostReport};
@@ -81,8 +81,9 @@ impl From<ErrorKind> for VirtFailure {
 pub struct PveError {
     pub kind: VirtFailure,
     pub message: Option<String>,
-    /// `sbm_virt::error::Detail` as JSON (`{"code": ..., ...}`).
-    pub detail_json: Option<String>,
+    /// What the app phrases itself, in its own language, when no host text
+    /// says it (`sbm_virt::error::Detail`).
+    pub detail: Option<Box<Detail>>,
     pub cert: Option<Box<CertInfo>>,
     pub previous_fingerprint: Option<String>,
     /// The HTTP status the host answered with, when it was one.
@@ -94,7 +95,7 @@ impl From<Error> for PveError {
         Self {
             kind: e.kind.into(),
             message: e.message,
-            detail_json: e.detail.and_then(|d| serde_json::to_string(&d).ok()),
+            detail: e.detail,
             cert: e.cert.map(|c| Box::new((*c).into())),
             previous_fingerprint: e.previous_fingerprint,
             status: e.status,

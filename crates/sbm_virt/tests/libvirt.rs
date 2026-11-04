@@ -2626,11 +2626,11 @@ fn run_command(command: &str, path: &str, input: &[u8]) -> String {
 #[cfg(unix)]
 #[test]
 fn upload_streams_stdin_into_the_volume() {
-    use sbm_virt::libvirt::manage::{self as m, VirtUploadEntry};
+    use sbm_virt::libvirt::manage::{self as m, SudoEntry};
     let d = manage_stub("upload");
     let path = format!("{}:/usr/bin:/bin", d.display());
     let hostile = "it's \"odd\" \\ $(id) `id`.iso";
-    let command = m::vol_upload_command("images", hostile, VirtUploadEntry::Direct).unwrap();
+    let command = m::vol_upload_command("images", hostile, SudoEntry::Direct).unwrap();
 
     // Binary content, a line that looks like the go line included
     let mut data: Vec<u8> = (0..=255u8).cycle().take(300_000).collect();

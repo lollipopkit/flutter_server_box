@@ -54,7 +54,7 @@ abstract final class ProcTable {
     int? sampledAtMillis,
   }) => procView(
     raw: raw,
-    system: system.name,
+    system: system.ffi,
     sort: sort,
     ascending: ascending,
     previous: previous,
@@ -66,6 +66,6 @@ extension PsViewX on PsView {
   /// This reading ordered by [sort] (null: its default), [ascending] (null:
   /// that order's own default).
   Future<PsView> sortedBy(SystemType system, ProcSortMode? sort, {bool? ascending}) =>
-      procSorted(view: this, system: system.name, sort: sort, ascending: ascending);
+      procSorted(view: this, system: system.ffi, sort: sort, ascending: ascending);
 }
 

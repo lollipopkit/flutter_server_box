@@ -1019,24 +1019,60 @@ class MonitorHttpClient {
   /// `event`, `resync`), until the agent ends the stream or the
   /// subscription is cancelled. The agent pings every 25 s, so a stream
   /// silent for longer than [_eventsSilence] is gone.
-  Stream<Map<String, dynamic>> agentEvents() async* {
-    final body = await _authed(() async {
-      final resp = await _session().get<ResponseBody>(
-        '/api/v1/agent/events',
-        options: Options(responseType: ResponseType.stream, receiveTimeout: _eventsSilence),
-      );
-      return resp.data;
-    });
-    if (body == null) return;
-    var pending = '';
-    await for (final chunk in body.stream.cast<List<int>>().transform(utf8.decoder)) {
-      pending += chunk.replaceAll('\r\n', '\n');
-      for (var end = pending.indexOf('\n\n'); end >= 0; end = pending.indexOf('\n\n')) {
-        final frame = pending.substring(0, end);
-        pending = pending.substring(end + 2);
-        if (sseData(frame) case final e?) yield e;
-      }
-    }
+  Stream<Map<String, dynamic>> agentEvents() {
+    // Cancelling the stream ends the request at once. An `async*` body would
+    // reach its `finally` only at its next `yield`, which an idle agent,
+    // sending only `: ping`, never gives it.
+    final cancel = CancelToken();
+    StreamSubscription<String>? frames;
+    late final StreamController<Map<String, dynamic>> out;
+    out = StreamController(
+      onListen: () async {
+        try {
+          final body = await _authed(() async {
+            final resp = await _session().get<ResponseBody>(
+              '/api/v1/agent/events',
+              cancelToken: cancel,
+              options: Options(responseType: ResponseType.stream, receiveTimeout: _eventsSilence),
+            );
+            return resp.data;
+          });
+          if (body == null || cancel.isCancelled) {
+            // Cancelled while the headers arrived: the body still holds the
+            // connection until it is cancelled.
+            if (body != null) unawaited(body.stream.listen(null).cancel());
+            return unawaited(out.close());
+          }
+          var pending = '';
+          frames = body.stream.cast<List<int>>().transform(utf8.decoder).listen(
+            (chunk) {
+              pending += chunk.replaceAll('\r\n', '\n');
+              for (var end = pending.indexOf('\n\n'); end >= 0; end = pending.indexOf('\n\n')) {
+                final frame = pending.substring(0, end);
+                pending = pending.substring(end + 2);
+                if (sseData(frame) case final e?) out.add(e);
+              }
+            },
+            onError: out.addError,
+            onDone: out.close,
+            cancelOnError: true,
+          );
+        } catch (e, s) {
+          // After a cancel nothing listens, and the cancel is the reason.
+          if (!cancel.isCancelled) out.addError(e, s);
+          unawaited(out.close());
+        }
+      },
+      onCancel: () async {
+        cancel.cancel();
+        try {
+          await frames?.cancel();
+        } catch (_) {
+          // The connection the cancel closed.
+        }
+      },
+    );
+    return out.stream;
   }
 
   static const _eventsSilence = Duration(seconds: 75);

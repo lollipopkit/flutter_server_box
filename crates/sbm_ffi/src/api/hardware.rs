@@ -4,7 +4,7 @@
 //! The rules a change is checked by, and libvirt's reads mapped onto the
 //! model and a change onto the `virsh` step that makes it. The models are
 //! `sbm_virt`'s own, mirrored ([`super::virt_model`], [`super::virt_libvirt`]);
-//! a refusal is [`PveError`] (`sbm_virt::error::Error`, its `detail_json`
+//! a refusal is [`PveError`] (`sbm_virt::error::Error`, its `detail`
 //! saying which rule), an issue its [`HwIssue`].
 //!
 //! PVE's calls are [`super::pve::PveSession`]'s.

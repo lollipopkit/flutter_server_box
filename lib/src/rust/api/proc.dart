@@ -4,6 +4,7 @@
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
+import 'package:server_box/src/rust/api/parser.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `result_of`
@@ -13,7 +14,7 @@ import 'package:server_box/src/rust/frb_generated.dart';
 /// returned it; `sampled_at_millis` is when `raw` was produced.
 Future<PsView> procView({
   required String raw,
-  required String system,
+  required SystemType system,
   ProcSortMode? sort,
   bool? ascending,
   PsView? previous,
@@ -30,7 +31,7 @@ Future<PsView> procView({
 /// A reading [`proc_view`] returned, ordered again.
 Future<PsView> procSorted({
   required PsView view,
-  required String system,
+  required SystemType system,
   ProcSortMode? sort,
   bool? ascending,
 }) => RustLib.instance.api.crateApiProcProcSorted(
@@ -46,7 +47,7 @@ Future<PsView> procSorted({
 String? procKillCommand({
   required PlatformInt64 pid,
   String? startId,
-  required String system,
+  required SystemType system,
   required ProcSignal signal,
 }) => RustLib.instance.api.crateApiProcProcKillCommand(
   pid: pid,

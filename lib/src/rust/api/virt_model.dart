@@ -718,6 +718,49 @@ class Created {
           diskKeptBytes == other.diskKeptBytes;
 }
 
+@freezed
+sealed class Detail with _$Detail {
+  const Detail._();
+
+  const factory Detail.noUser() = Detail_NoUser;
+  const factory Detail.passwordRequired() = Detail_PasswordRequired;
+  const factory Detail.tokenIncomplete() = Detail_TokenIncomplete;
+  const factory Detail.otpRequired() = Detail_OtpRequired;
+  const factory Detail.otpEmpty() = Detail_OtpEmpty;
+  const factory Detail.otpRejected() = Detail_OtpRejected;
+  const factory Detail.invalidBody() = Detail_InvalidBody;
+  const factory Detail.invalidData() = Detail_InvalidData;
+  const factory Detail.missingTicket() = Detail_MissingTicket;
+  const factory Detail.noPrivileges({
+    required bool token,
+    required String account,
+    required String command,
+  }) = Detail_NoPrivileges;
+  const factory Detail.notOffered() = Detail_NotOffered;
+  const factory Detail.taskStillRunning({
+    required String node,
+    required String upid,
+    required BigInt minutes,
+  }) = Detail_TaskStillRunning;
+  const factory Detail.certNotPresented() = Detail_CertNotPresented;
+  const factory Detail.needsPrivilege({
+    required String account,
+    required String privilege,
+    required String path,
+    required String command,
+  }) = Detail_NeedsPrivilege;
+  const factory Detail.refused({required ResourceIssue issue}) = Detail_Refused;
+  const factory Detail.createRefused({required CreateIssue issue}) =
+      Detail_CreateRefused;
+  const factory Detail.hardwareRefused({required HwIssue issue}) =
+      Detail_HardwareRefused;
+  const factory Detail.backupRefused({required BackupIssue issue}) =
+      Detail_BackupRefused;
+  const factory Detail.applyTouchesManagement({required List<String> ifaces}) =
+      Detail_ApplyTouchesManagement;
+  const factory Detail.applyUnreadable() = Detail_ApplyUnreadable;
+}
+
 enum DeviceKind { usb, pci, tpm }
 
 enum DiskKind { disk, cdrom, rootfs, mount }

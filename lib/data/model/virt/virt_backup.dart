@@ -4,6 +4,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_rust.dart';
 import 'package:server_box/src/rust/api/backup.dart' as ffi;
+import 'package:server_box/src/rust/api/virt_model.dart' show BackupIssue;
 
 part 'virt_backup.freezed.dart';
 
@@ -216,15 +217,15 @@ final class VirtBackupEdit {
   final bool protected;
 }
 
-/// What a refused backup request says (`sbm_virt::backup::Issue`, by name).
-String? virtBackupIssueText(String? issue) => switch (issue) {
+/// What a refused backup request says (`sbm_virt::backup::Issue`).
+String? virtBackupIssueText(BackupIssue? issue) => switch (issue) {
   null => null,
-  'schedule_empty' || 'schedule_invalid' => l10n.virtBackupScheduleInvalid,
-  'storage' => l10n.virtBackupIssueStorage,
-  'mode' || 'compress' => l10n.virtBackupIssueOption,
-  'guests' => l10n.virtBackupSelectionNone,
-  'node_offline' => l10n.virtBackupIssueNodeOffline,
-  'not_stopped' => l10n.virtBackupStopFirst,
-  'not_found' => l10n.virtResNotFound,
-  _ => l10n.virtResUnsupported,
+  BackupIssue.scheduleEmpty || BackupIssue.scheduleInvalid => l10n.virtBackupScheduleInvalid,
+  BackupIssue.storage => l10n.virtBackupIssueStorage,
+  BackupIssue.mode || BackupIssue.compress => l10n.virtBackupIssueOption,
+  BackupIssue.guests => l10n.virtBackupSelectionNone,
+  BackupIssue.nodeOffline => l10n.virtBackupIssueNodeOffline,
+  BackupIssue.notStopped => l10n.virtBackupStopFirst,
+  BackupIssue.notFound => l10n.virtResNotFound,
+  BackupIssue.unsupported => l10n.virtResUnsupported,
 };

@@ -312,8 +312,9 @@ class PveError implements FrbException {
   final VirtFailure kind;
   final String? message;
 
-  /// `sbm_virt::error::Detail` as JSON (`{"code": ..., ...}`).
-  final String? detailJson;
+  /// What the app phrases itself, in its own language, when no host text
+  /// says it (`sbm_virt::error::Detail`).
+  final Detail? detail;
   final CertInfo? cert;
   final String? previousFingerprint;
 
@@ -323,7 +324,7 @@ class PveError implements FrbException {
   const PveError({
     required this.kind,
     this.message,
-    this.detailJson,
+    this.detail,
     this.cert,
     this.previousFingerprint,
     this.status,
@@ -333,7 +334,7 @@ class PveError implements FrbException {
   int get hashCode =>
       kind.hashCode ^
       message.hashCode ^
-      detailJson.hashCode ^
+      detail.hashCode ^
       cert.hashCode ^
       previousFingerprint.hashCode ^
       status.hashCode;
@@ -345,7 +346,7 @@ class PveError implements FrbException {
           runtimeType == other.runtimeType &&
           kind == other.kind &&
           message == other.message &&
-          detailJson == other.detailJson &&
+          detail == other.detail &&
           cert == other.cert &&
           previousFingerprint == other.previousFingerprint &&
           status == other.status;

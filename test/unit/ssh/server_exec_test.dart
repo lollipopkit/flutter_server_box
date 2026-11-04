@@ -301,7 +301,7 @@ void main() {
         runtimeName: 'docker',
         sudo: true,
       );
-      expect(command, startsWith('sudo -S env '));
+      expect(command, startsWith("sudo -S -p '' env "));
       expect(command, isNot(contains('base64')));
       expect(command, isNot(contains('echo')));
     });

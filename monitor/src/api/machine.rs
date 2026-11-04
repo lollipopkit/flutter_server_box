@@ -13,6 +13,7 @@ use std::collections::HashMap;
 use ntex::http::StatusCode;
 
 use sbm_parser::output::CommandOutput;
+use sbm_parser::sudo::SudoEntry;
 
 use super::exec::{ExecResponse, Limits, run};
 use ntex::web::{HttpRequest, HttpResponse};
@@ -196,7 +197,7 @@ pub(crate) async fn as_root(
     limits: &Limits,
 ) -> std::io::Result<ExecResponse> {
     let (entry, stdin, env) = root_invocation(text, password);
-    run(entry, stdin.as_deref(), Some(&env), limits).await
+    run(&entry, stdin.as_deref(), Some(&env), limits).await
 }
 
 /// [`as_root`] for text that holds a secret of its own — an account's new
@@ -280,15 +281,12 @@ impl Drop for PrivateScript {
 fn root_invocation(
     text: &str,
     password: Option<&str>,
-) -> (&'static str, Option<String>, HashMap<String, String>) {
+) -> (String, Option<String>, HashMap<String, String>) {
     let env = HashMap::from([(ROOT_SCRIPT_VAR.to_owned(), text.to_owned())]);
+    let body = format!(r#"sh -c "${ROOT_SCRIPT_VAR}""#);
     match password {
-        Some(password) => (
-            r#"sudo -S -p '' sh -c "$SBM_ROOT_SCRIPT""#,
-            Some(format!("{password}\n")),
-            env,
-        ),
-        None => (r#"sudo -n sh -c "$SBM_ROOT_SCRIPT""#, None, env),
+        Some(password) => (SudoEntry::SudoPassword.wrap(&body), Some(format!("{password}\n")), env),
+        None => (SudoEntry::SudoNoPassword.wrap(&body), None, env),
     }
 }
 

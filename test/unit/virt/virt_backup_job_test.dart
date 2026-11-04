@@ -4,6 +4,7 @@ import 'package:server_box/data/model/virt/virt_backup.dart';
 import 'package:server_box/data/model/virt/virt_backup_schedule.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
+import 'package:server_box/src/rust/api/virt_model.dart' show BackupIssue;
 
 import '../../helpers/rust_lib_helper.dart';
 
@@ -41,19 +42,8 @@ void main() {
     });
 
     test('a refusal says which rule', () {
-      for (final issue in [
-        'schedule_empty',
-        'schedule_invalid',
-        'storage',
-        'mode',
-        'compress',
-        'guests',
-        'node_offline',
-        'not_stopped',
-        'not_found',
-        'unsupported',
-      ]) {
-        expect(virtBackupIssueText(issue), isNotEmpty, reason: issue);
+      for (final issue in BackupIssue.values) {
+        expect(virtBackupIssueText(issue), isNotEmpty, reason: issue.name);
       }
       expect(virtBackupIssueText(null), isNull);
     });

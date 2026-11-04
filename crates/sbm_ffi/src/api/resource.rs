@@ -3,7 +3,7 @@
 //! The rules a change is checked by before it is sent, what a form offers
 //! for a pool, and libvirt's listings mapped onto `sbm_virt::resource`. The
 //! models are `sbm_virt`'s own, mirrored ([`super::virt_model`]); a refusal
-//! crosses as [`PveError`] (`sbm_virt::error::Error`, its `detail_json`
+//! crosses as [`PveError`] (`sbm_virt::error::Error`, its `detail`
 //! saying which rule), an issue as its [`ResourceIssue`].
 //!
 //! PVE's listings and changes are [`super::pve::PveSession`]'s.

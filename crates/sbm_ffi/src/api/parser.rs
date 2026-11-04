@@ -21,19 +21,15 @@ pub struct CommandSpec {
     pub cmd: String,
 }
 
-fn parse_system(system: &str) -> Option<sbm_parser::SystemType> {
-    match system {
-        "linux" => Some(sbm_parser::SystemType::Linux),
-        "bsd" => Some(sbm_parser::SystemType::Bsd),
-        "windows" => Some(sbm_parser::SystemType::Windows),
-        _ => None,
-    }
-}
+pub use sbm_parser::SystemType;
 
-/// Shared by the script FFI module; not exposed over the bridge
-#[flutter_rust_bridge::frb(ignore)]
-pub(crate) fn parse_system_or_err(system: &str) -> Result<sbm_parser::SystemType, String> {
-    parse_system(system).ok_or_else(|| format!("unknown system: {system}"))
+/// The platform a server runs (mirrors sbm_parser::SystemType).
+#[flutter_rust_bridge::frb(mirror(SystemType))]
+pub enum _SystemType {
+    Linux,
+    /// BSD family, including macOS
+    Bsd,
+    Windows,
 }
 
 /// One collection round, parsed. The readings are `sbm_parser`'s own,
@@ -168,14 +164,13 @@ fn whole(v: &Value) -> Option<i64> {
     }
 }
 
-/// Parses all output of one collection round. `system`: "linux" | "bsd" |
-/// "windows"; see `ParseOptions` for `temp_divisor`. Async: runs on the Rust
+/// Parses all output of one collection round; see `ParseOptions` for
+/// `temp_divisor`. Async: runs on the Rust
 /// thread pool without blocking the UI isolate.
-pub fn parse_status(system: String, raw: HashMap<String, String>, temp_divisor: f64, count_network: bool) -> Result<StatusReport, String> {
-    let system = parse_system(&system).ok_or_else(|| format!("unknown system: {}", system))?;
+pub fn parse_status(system: SystemType, raw: HashMap<String, String>, temp_divisor: f64, count_network: bool) -> StatusReport {
     let status = sbm_parser::parse_status_opts(system, &raw, sbm_parser::ParseOptions { temp_divisor });
     let (disk_used, disk_size) = types::disk_usage(&status.disks, count_network);
-    Ok(StatusReport {
+    StatusReport {
         block_devices: status.block_devices.iter().map(Into::into).collect(),
         temps: status.temps.0.into_iter().collect(),
         disk_smart: status.disk_smart.into_iter().map(Into::into).collect(),
@@ -200,7 +195,7 @@ pub fn parse_status(system: String, raw: HashMap<String, String>, temp_divisor: 
         nvidia: status.nvidia,
         amd: status.amd,
         gpus: status.gpus,
-    })
+    }
 }
 
 // --- Mirrors -----------------------------------------------------------------
@@ -363,25 +358,16 @@ pub fn system_probe_ver() -> String {
     sbm_parser::system::VER_PROBE.to_owned()
 }
 
-/// What `uname -a` said, as `linux` / `bsd`; `None` when it says neither.
+/// What `uname -a` said: Linux or a BSD; `None` when it says neither.
 #[flutter_rust_bridge::frb(sync)]
-pub fn system_from_uname(output: String) -> Option<String> {
-    sbm_parser::system::from_uname(&output).map(system_name)
+pub fn system_from_uname(output: String) -> Option<SystemType> {
+    sbm_parser::system::from_uname(&output)
 }
 
-/// `windows` when `ver` answered as Windows does.
+/// Windows when `ver` answered as Windows does.
 #[flutter_rust_bridge::frb(sync)]
-pub fn system_from_ver(output: String) -> Option<String> {
-    sbm_parser::system::from_ver(&output).map(system_name)
-}
-
-fn system_name(system: sbm_parser::SystemType) -> String {
-    match system {
-        sbm_parser::SystemType::Linux => "linux",
-        sbm_parser::SystemType::Bsd => "bsd",
-        sbm_parser::SystemType::Windows => "windows",
-    }
-    .to_owned()
+pub fn system_from_ver(output: String) -> Option<SystemType> {
+    sbm_parser::system::from_ver(&output)
 }
 
 /// The seconds a status's `uptime` string says (`sbm_parser::common::uptime_seconds`);
@@ -393,12 +379,11 @@ pub fn uptime_seconds(formatted: String) -> Option<u64> {
 
 /// Per-platform collection command manifest (the app's script generation derives from it, versioned with the parsers)
 #[flutter_rust_bridge::frb(sync)]
-pub fn command_specs(system: String) -> Result<Vec<CommandSpec>, String> {
-    let system = parse_system(&system).ok_or_else(|| format!("unknown system: {}", system))?;
-    Ok(sbm_parser::commands::commands(system)
+pub fn command_specs(system: SystemType) -> Vec<CommandSpec> {
+    sbm_parser::commands::commands(system)
         .iter()
         .map(|spec| CommandSpec { key: spec.key.to_string(), cmd: spec.cmd.to_string() })
-        .collect())
+        .collect()
 }
 
 /// Once per process, however many isolates load the library: each

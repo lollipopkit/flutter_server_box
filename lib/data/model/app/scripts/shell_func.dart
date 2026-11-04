@@ -1,6 +1,7 @@
 import 'package:server_box/data/model/app/scripts/script_consts.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/res/build_data.dart';
+import 'package:server_box/src/rust/api/parser.dart' as rs show SystemType;
 import 'package:server_box/src/rust/api/script.dart' as ffi;
 
 /// Shell functions of the generated script.
@@ -34,14 +35,9 @@ extension ShellFuncX on ShellFunc {
 class ShellFuncManager {
   const ShellFuncManager._();
 
-  /// Returns the platform name expected by the FFI.
-  ///
-  /// A null value defaults to Linux; Linux and BSD use the same Unix script.
-  static String ffiSystem(SystemType? systemType) => switch (systemType) {
-    SystemType.windows => 'windows',
-    SystemType.bsd => 'bsd',
-    _ => 'linux',
-  };
+  /// The platform the FFI builds for: Linux where none is known, the
+  /// historical default.
+  static rs.SystemType ffiSystem(SystemType? systemType) => (systemType ?? SystemType.linux).ffi;
 
   /// Removes trailing path separators from [dir].
   static String _normalizeDir(String dir, bool isWindows) {

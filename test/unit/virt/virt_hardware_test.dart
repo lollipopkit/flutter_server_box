@@ -105,10 +105,9 @@ void main() {
   });
 
   test('an issue sbm_virt names maps back; each one is said', () {
-    expect(VirtHwIssue.ofRust('disk_shrink'), VirtHwIssue.diskShrink);
-    expect(VirtHwIssue.ofRust('not_offered'), VirtHwIssue.notOffered);
-    expect(VirtHwIssue.ofRust('what'), VirtHwIssue.unsupported);
-    expect(VirtHwIssue.ofRust(null), isNull);
+    expect(VirtHwIssue.of(fm.HwIssue.diskShrink), VirtHwIssue.diskShrink);
+    expect(VirtHwIssue.of(fm.HwIssue.notOffered), VirtHwIssue.notOffered);
+    expect(VirtHwIssue.of(null), isNull);
     for (final i in VirtHwIssue.values) {
       expect(virtHwIssueText(i), isNotEmpty, reason: i.name);
     }

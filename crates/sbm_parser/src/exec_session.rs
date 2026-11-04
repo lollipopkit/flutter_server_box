@@ -11,6 +11,8 @@
 //! it back ([`find_marker`]), checks that the session is its own run's
 //! ([`owns_command`]) and kills what is left in it ([`kill_command`]).
 
+use crate::sudo::SudoEntry;
+
 /// Exported by [`wrap`], with the run's own nonce, to everything the command
 /// starts: what ties a session id read off stderr to this run.
 pub const ENV_NAME: &str = "SBM_EXEC_ID";
@@ -59,11 +61,12 @@ pub fn wrap(command: &str, nonce: &str) -> String {
 /// `pkill` without `-s`.
 ///
 /// Waits a moment only when there was something to kill, for it to be gone
-/// from the process table.
-pub fn kill_command(id: u32) -> String {
-    format!(
+/// from the process table. `entry` is how it reaches the session's processes:
+/// as the account, or through sudo when they changed user.
+pub fn kill_command(id: u32, entry: SudoEntry) -> String {
+    entry.wrap(&format!(
         "sh -c 'kill -KILL -- -{id} 2>/dev/null; pkill -KILL -s {id} 2>/dev/null && sleep 1; pgrep -s {id} >/dev/null 2>&1; [ $? -eq 1 ] && echo {GONE}'"
-    )
+    ))
 }
 
 /// Prints [`OWNED`] when one of session `id`'s processes carries
@@ -215,7 +218,7 @@ mod shell_tests {
     fn the_kill_and_the_ownership_check_are_one_command_each() {
         for name in ["sh", "fish"] {
             let Some(sh) = shell(name) else { continue };
-            for program in [kill_command(123), owns_command(123, "0abc")] {
+            for program in [kill_command(123, SudoEntry::Direct), owns_command(123, "0abc")] {
                 // `printf` in place of `sh`: what the login shell hands on, unrun.
                 let r = Command::new(&sh).args(["-c", &program.replacen("sh -c ", "printf %s ", 1)]).output().unwrap();
                 assert!(r.status.success(), "{name}: {}", String::from_utf8_lossy(&r.stderr));

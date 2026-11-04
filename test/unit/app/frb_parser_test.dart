@@ -43,7 +43,7 @@ void main() {
   setUpAll(initRustLibForTest);
 
   Future<StatusReport> parseViaFfi(Map<String, String> raw) =>
-      parseStatus(system: 'linux', raw: raw, tempDivisor: 1000.0, countNetwork: false);
+      parseStatus(system: SystemType.linux, raw: raw, tempDivisor: 1000.0, countNetwork: false);
 
   test('cpu section', () async {
     final cpu = (await parseViaFfi({'cpu': _cpuRaw})).cpu;
@@ -91,14 +91,14 @@ void main() {
   test('temps honors tempDivisor', () async {
     const types = '/sys/class/thermal/thermal_zone0/x86_pkg_temp';
     final milli = await parseStatus(
-      system: 'linux',
+      system: SystemType.linux,
       raw: {'tempType': types, 'tempVal': '45000'},
       tempDivisor: 1000.0,
       countNetwork: false,
     );
     expect(milli.temps, [('x86_pkg_temp', 45.0)]);
     final celsius = await parseStatus(
-      system: 'linux',
+      system: SystemType.linux,
       raw: {'tempType': types, 'tempVal': '45'},
       tempDivisor: 1.0,
       countNetwork: false,
@@ -211,16 +211,16 @@ __SBM_GPU_END__
   });
 
   test('command specs cover linux/bsd/windows', () {
-    for (final system in ['linux', 'bsd', 'windows']) {
+    for (final system in SystemType.values) {
       final specs = commandSpecs(system: system);
-      expect(specs, isNotEmpty, reason: system);
+      expect(specs, isNotEmpty, reason: system.name);
       expect(specs.map((s) => s.key), contains('cpu'));
     }
   });
 
   test('buildScript smoke via FFI', () {
     final unix = script.buildScript(
-      system: 'linux',
+      system: SystemType.linux,
       disabled: [],
       buildNumber: 'test',
     );
@@ -229,7 +229,7 @@ __SBM_GPU_END__
     expect(unix, contains('case \$1 in'));
 
     final win = script.buildScript(
-      system: 'windows',
+      system: SystemType.windows,
       disabled: [],
       buildNumber: 'test',
     );
@@ -241,7 +241,7 @@ __SBM_GPU_END__
     // The whole point of the move: what a user typed never reaches a shell
     // this app generated. It travels encoded and lands in a file.
     final install = script.installCustomCmdsCommand(
-      system: 'linux',
+      system: SystemType.linux,
       cmds: [script.CustomCmd(name: 'probe', cmd: 'rm -rf / #')],
     );
     expect(install, isNot(contains('rm -rf /')));
@@ -259,7 +259,7 @@ __SBM_GPU_END__
     // listing script prints is what the parser turns back into commands. A
     // directory that does not exist is a different answer from an empty one —
     // the migration seeds the first and must leave the second alone.
-    final read = script.readCustomCmdsCommand(system: 'linux');
+    final read = script.readCustomCmdsCommand(system: SystemType.linux);
     expect(read, contains(r'$HOME/.config/server_box/custom_cmds'));
     expect(read, contains('base64'));
 
@@ -326,10 +326,10 @@ __SBM_GPU_END__
   });
 
   test('enum names stay in sync with the FFI manifest', () {
-    final cases = <(String, List<ShellCmdType>)>[
-      ('linux', StatusCmdType.values),
-      ('bsd', BSDStatusCmdType.values),
-      ('windows', WindowsStatusCmdType.values),
+    final cases = <(SystemType, List<ShellCmdType>)>[
+      (SystemType.linux, StatusCmdType.values),
+      (SystemType.bsd, BSDStatusCmdType.values),
+      (SystemType.windows, WindowsStatusCmdType.values),
     ];
     for (final (system, types) in cases) {
       final manifestKeys = {

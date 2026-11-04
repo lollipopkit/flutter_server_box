@@ -20,6 +20,7 @@
 
 use crate::bench::posix;
 use crate::script::shell_quote_unix as quote;
+use crate::sudo::SudoEntry;
 
 /// What a shell command run for the file browser is wrapped in when its
 /// output is read: [`OUT_MARK`] opens it, so whatever a login banner or a
@@ -284,11 +285,8 @@ pub fn write_base64_command(data: &str, path: &str) -> String {
 /// `inner` run as root, the password on `sudo -S`'s stdin through `printf`, a
 /// shell builtin, so it never becomes a process argument.
 pub fn sudo_command(inner: &str, password: &str) -> String {
-    format!(
-        "printf '%s\\n' {} | sudo -S -- sh -c {}",
-        quote(password),
-        quote(&format!("({inner}) 2>&1"))
-    )
+    let sh = format!("-- sh -c {}", quote(&format!("({inner}) 2>&1")));
+    format!("printf '%s\\n' {} | {}", quote(password), SudoEntry::SudoPassword.wrap(&sh))
 }
 
 /// The account's `passwd` line, read by [`parse_home`].

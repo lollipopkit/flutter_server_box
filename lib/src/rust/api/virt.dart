@@ -4,11 +4,12 @@
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
+import 'package:server_box/src/rust/api/exec_session.dart';
 import 'package:server_box/src/rust/api/virt_libvirt.dart';
 import 'package:server_box/src/rust/api/virt_view.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `clone`, `eq`, `fmt`, `fmt`, `from`, `from`, `from`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `clone`, `eq`, `fmt`, `fmt`, `from`, `from`, `from`
 
 /// Host probe: Proxmox VE, a container, or `virsh` answering this user
 String virtProbeScript() => RustLib.instance.api.crateApiVirtVirtProbeScript();
@@ -460,7 +461,7 @@ void parseVirtResource({required String raw}) =>
 String virtVolUploadCommand({
   required String pool,
   required String name,
-  required VirtUploadEntryKind entry,
+  required SudoEntry entry,
 }) => RustLib.instance.api.crateApiVirtVirtVolUploadCommand(
   pool: pool,
   name: name,
@@ -637,17 +638,4 @@ class VirtOverlay {
           runtimeType == other.runtimeType &&
           target == other.target &&
           path == other.path;
-}
-
-/// How the upload command reaches the daemon (mirrors
-/// sbm_virt::libvirt::manage::VirtUploadEntry)
-enum VirtUploadEntryKind {
-  /// As this account
-  direct,
-
-  /// `sudo -n`
-  sudoNoPassword,
-
-  /// `sudo -S`, the password first on stdin
-  sudoPassword,
 }
