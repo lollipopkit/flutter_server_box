@@ -744,8 +744,12 @@ class AppLocalizationsTr extends AppLocalizations {
       'Terminalin hangi kabukla açılacağı. Boş bırakınca /bin/sh’a döner.';
 
   @override
-  String get linuxNetTip =>
+  String get linuxDnsTip =>
       'DNS sunucusu. Varsayılanı kullanmak için boş bırakın.';
+
+  @override
+  String get linuxMirrorTip =>
+      'Seçili dağıtımın paket yansısı. Varsayılanı kullanmak için boş bırakın.';
 
   @override
   String madeWithLove(String myGithub) {

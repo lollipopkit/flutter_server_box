@@ -746,8 +746,12 @@ class AppLocalizationsId extends AppLocalizations {
       'Shell yang dipakai terminal. Kosong mengembalikan /bin/sh.';
 
   @override
-  String get linuxNetTip =>
+  String get linuxDnsTip =>
       'Server DNS. Kosongkan untuk menggunakan setelan bawaan.';
+
+  @override
+  String get linuxMirrorTip =>
+      'Mirror paket untuk distribusi yang dipilih. Kosongkan untuk menggunakan mirror bawaan.';
 
   @override
   String madeWithLove(String myGithub) {

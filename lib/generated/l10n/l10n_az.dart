@@ -749,8 +749,12 @@ class AppLocalizationsAz extends AppLocalizations {
       'Terminalın başladacağı əmr örtüyü. Boş olduqda /bin/sh bərpa olunur.';
 
   @override
-  String get linuxNetTip =>
+  String get linuxDnsTip =>
       'DNS serverləri. Boş saxladıqda standart ayarlar istifadə olunur.';
+
+  @override
+  String get linuxMirrorTip =>
+      'Seçilmiş distributiv üçün paket güzgüsü. Boş saxladıqda standart güzgü istifadə olunur.';
 
   @override
   String madeWithLove(String myGithub) {

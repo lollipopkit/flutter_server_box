@@ -747,8 +747,12 @@ class AppLocalizationsRu extends AppLocalizations {
       'С какой оболочки запускается терминал. Пусто — вернуть /bin/sh.';
 
   @override
-  String get linuxNetTip =>
+  String get linuxDnsTip =>
       'DNS-сервер. Оставьте поле пустым, чтобы использовать значение по умолчанию.';
+
+  @override
+  String get linuxMirrorTip =>
+      'Зеркало пакетов для выбранного дистрибутива. Оставьте поле пустым, чтобы использовать зеркало по умолчанию.';
 
   @override
   String madeWithLove(String myGithub) {

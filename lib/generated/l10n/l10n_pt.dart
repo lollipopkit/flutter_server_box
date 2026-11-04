@@ -744,7 +744,11 @@ class AppLocalizationsPt extends AppLocalizations {
       'Com que shell arranca um terminal. Vazio repõe /bin/sh.';
 
   @override
-  String get linuxNetTip => 'Servidor DNS. Deixe em branco para usar o padrão.';
+  String get linuxDnsTip => 'Servidor DNS. Deixe em branco para usar o padrão.';
+
+  @override
+  String get linuxMirrorTip =>
+      'Espelho de pacotes da distribuição selecionada. Deixe em branco para usar o padrão.';
 
   @override
   String madeWithLove(String myGithub) {

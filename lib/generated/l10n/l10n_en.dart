@@ -739,7 +739,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Which shell a terminal starts. Empty restores /bin/sh.';
 
   @override
-  String get linuxNetTip => 'DNS servers. Empty restores the defaults';
+  String get linuxDnsTip => 'DNS servers. Empty restores the defaults.';
+
+  @override
+  String get linuxMirrorTip =>
+      'Package mirror for the selected distribution. Empty restores the default.';
 
   @override
   String madeWithLove(String myGithub) {

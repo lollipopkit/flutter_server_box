@@ -697,7 +697,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get linuxShellTip => '终端用什么 shell 启动。留空恢复 /bin/sh。';
 
   @override
-  String get linuxNetTip => 'DNS 服务器。留空则使用默认设置。';
+  String get linuxDnsTip => 'DNS 服务器。留空则使用默认设置。';
+
+  @override
+  String get linuxMirrorTip => '所选发行版的软件包镜像。留空则使用默认镜像。';
 
   @override
   String madeWithLove(String myGithub) {
@@ -7557,7 +7560,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get linuxShellTip => '終端用什麼 shell 啟動。留空恢復 /bin/sh。';
 
   @override
-  String get linuxNetTip => 'DNS 伺服器。留空則使用默認設定。';
+  String get linuxDnsTip => 'DNS 伺服器。留空則使用默認設定。';
+
+  @override
+  String get linuxMirrorTip => '所選發行版的軟體套件鏡像。留空則使用預設鏡像。';
 
   @override
   String madeWithLove(String myGithub) {

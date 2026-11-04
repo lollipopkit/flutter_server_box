@@ -1,5 +1,8 @@
 part of '../entry.dart';
 
+/// A toolbar button's glyph, which is what each of a profile's actions is.
+const _linuxActionIconSize = 18.0;
+
 /// The Linux systems on this device: which ones there are, and where they get
 /// their bytes.
 ///
@@ -75,15 +78,17 @@ extension _Linux on _AppSettingsPageState {
   Widget _buildLinuxProfileList() {
     final profiles = Rootfs.profiles;
     final selected = Rootfs.selected;
+    final scheme = Theme.of(context).colorScheme;
     return Column(
       children: [
         for (final profile in profiles)
           ListTile(
-            leading: Icon(
-              profile.id == selected?.id
-                  ? Icons.radio_button_checked
-                  : Icons.radio_button_unchecked,
-            ),
+            // The distribution's mark, as the terminal tab draws the same
+            // system. The current one is the row's selected state and the
+            // check after the actions, as it is there.
+            leading: linuxDistIcon(profile.distro),
+            selected: profile.id == selected?.id,
+            selectedTileColor: scheme.secondaryContainer,
             title: Text(profile.label),
             // What it is, under what it is called: the label is the user's and
             // says nothing about which distribution or which release.
@@ -99,6 +104,7 @@ extension _Linux on _AppSettingsPageState {
               children: [
                 if (Rootfs.isOutdated(profile))
                   IconButton(
+                    iconSize: _linuxActionIconSize,
                     icon: const Icon(Icons.update),
                     tooltip: libL10n.update,
                     onPressed: () async {
@@ -107,6 +113,7 @@ extension _Linux on _AppSettingsPageState {
                     },
                   ),
                 IconButton(
+                  iconSize: _linuxActionIconSize,
                   icon: const Icon(Icons.edit_outlined),
                   tooltip: libL10n.rename,
                   onPressed: () async {
@@ -115,6 +122,7 @@ extension _Linux on _AppSettingsPageState {
                   },
                 ),
                 IconButton(
+                  iconSize: _linuxActionIconSize,
                   icon: const Icon(Icons.delete_outline),
                   tooltip: libL10n.delete,
                   // The one coloured thing on this page, and it means what it
@@ -126,6 +134,14 @@ extension _Linux on _AppSettingsPageState {
                     await removeRootfs(context, profile: profile);
                     refresh();
                   },
+                ),
+                // Reserved on every row, so the actions line up whichever
+                // one is current.
+                SizedBox(
+                  width: 24,
+                  child: profile.id == selected?.id
+                      ? Icon(Icons.check, size: 20, color: scheme.primary)
+                      : null,
                 ),
               ],
             ),
@@ -384,7 +400,7 @@ extension _Linux on _AppSettingsPageState {
       label,
       () => ListTile(
         leading: const Icon(Icons.cloud_download_outlined),
-        title: TipText(label, l10n.linuxNetTip),
+        title: TipText(label, l10n.linuxMirrorTip),
         subtitle: ValBuilder(
           listenable: _setting.linuxMirrors.listenable(),
           // The mirror in force, not the row stored for it: nothing stored
@@ -399,7 +415,7 @@ extension _Linux on _AppSettingsPageState {
         trailing: const Icon(Icons.keyboard_arrow_right),
         onTap: _onTapLinuxMirror,
       ),
-      keywords: l10n.linuxNetTip,
+      keywords: l10n.linuxMirrorTip,
     );
   }
 
@@ -408,7 +424,7 @@ extension _Linux on _AppSettingsPageState {
       'DNS',
       () => ListTile(
         leading: const Icon(Icons.dns_outlined),
-        title: TipText('DNS', l10n.linuxNetTip),
+        title: TipText('DNS', l10n.linuxDnsTip),
         subtitle: ValBuilder(
           listenable: _setting.linuxDns.listenable(),
           builder: (val) => Text(
@@ -421,7 +437,7 @@ extension _Linux on _AppSettingsPageState {
         trailing: const Icon(Icons.keyboard_arrow_right),
         onTap: _onTapLinuxDns,
       ),
-      keywords: l10n.linuxNetTip,
+      keywords: l10n.linuxDnsTip,
     );
   }
 

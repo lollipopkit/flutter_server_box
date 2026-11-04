@@ -745,8 +745,12 @@ class AppLocalizationsNl extends AppLocalizations {
       'Met welke shell een terminal start. Leeg herstelt /bin/sh.';
 
   @override
-  String get linuxNetTip =>
+  String get linuxDnsTip =>
       'DNS-server. Laat leeg om de standaardinstelling te gebruiken.';
+
+  @override
+  String get linuxMirrorTip =>
+      'Pakketmirror voor de geselecteerde distributie. Laat leeg om de standaardmirror te gebruiken.';
 
   @override
   String madeWithLove(String myGithub) {

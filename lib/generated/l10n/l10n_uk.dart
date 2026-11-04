@@ -748,8 +748,12 @@ class AppLocalizationsUk extends AppLocalizations {
       'З якої оболонки запускається термінал. Порожньо — повернути /bin/sh.';
 
   @override
-  String get linuxNetTip =>
+  String get linuxDnsTip =>
       'DNS-сервер. Залиште поле порожнім, щоб використовувати типове значення.';
+
+  @override
+  String get linuxMirrorTip =>
+      'Дзеркало пакетів для вибраного дистрибутива. Залиште поле порожнім, щоб використовувати типове дзеркало.';
 
   @override
   String madeWithLove(String myGithub) {

@@ -749,8 +749,12 @@ class AppLocalizationsEs extends AppLocalizations {
       'Con qué shell arranca un terminal. Vacío restaura /bin/sh.';
 
   @override
-  String get linuxNetTip =>
+  String get linuxDnsTip =>
       'Servidores DNS. Déjalo vacío para usar los valores predeterminados.';
+
+  @override
+  String get linuxMirrorTip =>
+      'Mirror de paquetes de la distribución seleccionada. Déjalo vacío para usar el predeterminado.';
 
   @override
   String madeWithLove(String myGithub) {
