@@ -16,6 +16,8 @@ const zhCN: Translation = {
     os: 'ServerBox OS',
     beta: 'Beta',
     plugins: '插件',
+    otherApps: '更多',
+    signIn: '登录',
     languageLabel: '语言',
   },
   hero: {
@@ -105,13 +107,20 @@ const zhCN: Translation = {
     installReleasePrompt: '# Android、Linux 与 Windows',
   },
   os: {
-    metaTitle: 'ServerBox OS — 运行在服务器端的 Web 桌面与监控引擎',
+    metaTitle: 'ServerBox OS（原 ServerBox Monitor）— 运行在服务器端的 Web 桌面与监控引擎',
     metaDescription:
-      'ServerBox OS 将浏览器桌面、40+ 一键自托管应用、RAID/ZFS 存储管理、AI Agent 运维、多渠道告警与加密备份带入你的服务器。',
+      'ServerBox OS（原 ServerBox Monitor）将浏览器桌面、40+ 一键自托管应用、RAID/ZFS 存储管理、AI Agent 运维、多渠道告警与加密备份带入你的服务器。',
     heroTitle: 'ServerBox OS',
+    formerlyMonitor: '原 ServerBox Monitor',
+    navPreview: '演示',
+    navInstall: '安装',
+    navApp: 'ServerBox 客户端',
     tagline: '是浏览器里的云端桌面，也是 App 的最强服务端。',
     subtitle:
       '只需在 Linux 服务器上运行一个轻量程序，即可获得完整的浏览器窗口化桌面、40+ 一键自托管应用与 AI 运维模式，并通过 HTTPS 与 ServerBox 客户端无缝联动；也可直接作为独立系统镜像启动。',
+    monitorNote:
+      'ServerBox OS 即全面升级后的 ServerBox Monitor（server_box_monitor）。已安装旧版 Monitor 的服务器可使用同一条脚本原位升级，继续为客户端提供离线推送、桌面小组件、Apple Watch 与历史图表支持。',
+    exploreAction: '了解 ServerBox OS',
     installAction: '在 Linux 上安装',
     images: '下载系统镜像',
     previewAction: '观看实机演示',
@@ -235,6 +244,45 @@ const zhCN: Translation = {
       '代码完全透明，欢迎在 GitHub 参与共建，或立即下载体验。',
     appStoreAction: 'App Store 下载',
     githubAction: 'GitHub Releases',
+  },
+  pride: {
+    badge: '支持 LGBTQ+',
+    title: '多元与包容，与骄傲同行。',
+    description:
+      'ServerBox 坚定支持 LGBTQ+ 群体。内置主题商店官方提供 Pride 主题，包含六色彩虹（Rainbow）、跨性别（Trans）与非二元（Nonbinary）三款旗帜变体。',
+    rainbow: '六色彩虹',
+    trans: '跨性别',
+    nonbinary: '非二元',
+  },
+  otherApps: {
+    title: '更多服务与应用。',
+    subtitle: '同样秉持轻快体验、克制设计与实用主义的配套云服务及原生客户端。',
+    servicesHeading: '服务',
+    appsHeading: 'Apps',
+    llmapi: {
+      title: 'LLM API',
+      description:
+        '聚合主流前沿大模型的统一 API 网关，可直接接入 ServerBox AI 运维助手、GPT Box 或你的开发工具。',
+    },
+    uptimer: {
+      title: 'Uptimer',
+      description:
+        '轻量可靠的网站、接口与服务器在线率监控服务，支持公开状态页与掉线即时通知。',
+    },
+    gptbox: {
+      title: 'GPT Box',
+      tag: 'iOS · Android · macOS · Linux · Windows',
+      description:
+        '轻快原生的 OpenAI 及兼容大模型 API 第三方客户端，支持自定义接口、工具调用与本地优先的对话存储。',
+      action: 'GitHub',
+    },
+    mfuse: {
+      title: 'MFuse',
+      tag: 'macOS · File Provider',
+      description:
+        '基于 macOS 原生 File Provider，无需内核扩展即可将 SFTP、S3、WebDAV 等远程存储直接挂载进访达（Finder）。',
+      action: 'mfuse.lollipopkit.com',
+    },
   },
   footer: {
     features: '功能',

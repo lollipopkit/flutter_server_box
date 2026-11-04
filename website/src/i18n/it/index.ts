@@ -16,6 +16,8 @@ const it: Translation = {
     os: 'ServerBox OS',
     beta: 'Beta',
     plugins: 'Plugin',
+    otherApps: 'Altro',
+    signIn: 'Accedi',
     languageLabel: 'Lingua',
   },
   hero: {
@@ -106,13 +108,20 @@ const it: Translation = {
     installReleasePrompt: '# Android, Linux e Windows',
   },
   os: {
-    metaTitle: 'ServerBox OS — Il compagno lato server di ServerBox',
+    metaTitle: 'ServerBox OS (ex ServerBox Monitor) — Il compagno lato server di ServerBox',
     metaDescription:
-      'ServerBox OS porta sul tuo server un desktop nel browser, oltre 40 app Docker in un clic, gestione ZFS/RAID, modalità Agent IA, avvisi e backup cifrati.',
+      'ServerBox OS (ex ServerBox Monitor) porta sul tuo server un desktop nel browser, oltre 40 app Docker in un clic, gestione ZFS/RAID, modalità Agent IA, avvisi e backup cifrati.',
     heroTitle: 'ServerBox OS',
+    formerlyMonitor: 'Ex ServerBox Monitor',
+    navPreview: 'Demo',
+    navInstall: 'Installa',
+    navApp: 'App ServerBox',
     tagline: 'Il tuo server, nel browser e nell’app.',
     subtitle:
       'Un singolo demone leggero che offre a qualsiasi macchina Linux un desktop completo nel browser, oltre 40 app self-hosted e sincronizzazione HTTPS con ServerBox — oppure si avvia come sistema operativo dedicato.',
+    monitorNote:
+      'ServerBox OS è l’evoluzione di ServerBox Monitor (server_box_monitor). Le installazioni Monitor esistenti si aggiornano sul posto con lo stesso comando e continuano a fornire avvisi push, widget, watchOS e grafici storici per l’app.',
+    exploreAction: 'Scopri ServerBox OS',
     installAction: 'Installa su Linux',
     images: 'Scarica immagini',
     previewAction: 'Guarda la demo',
@@ -250,6 +259,46 @@ const it: Translation = {
       'Esplora il codice su GitHub o scarica l’ultima versione per il tuo dispositivo.',
     appStoreAction: 'App Store',
     githubAction: 'GitHub Releases',
+  },
+  pride: {
+    badge: 'LGBTQ+ Friendly',
+    title: 'Creato con Orgoglio.',
+    description:
+      'ServerBox sostiene con orgoglio la comunità LGBTQ+. Il tema ufficiale Pride nello store include le varianti Rainbow, Trans e Nonbinary.',
+    rainbow: 'Rainbow',
+    trans: 'Trans',
+    nonbinary: 'Nonbinary',
+  },
+  otherApps: {
+    title: 'Altri servizi e app.',
+    subtitle:
+      'Servizi cloud e app native realizzati con la stessa attenzione a velocità, pulizia e praticità.',
+    servicesHeading: 'Servizi',
+    appsHeading: 'App',
+    llmapi: {
+      title: 'LLM API',
+      description:
+        'Gateway API unificato per i principali modelli LLM, pronto per l’agente IA di ServerBox, GPT Box o i tuoi strumenti.',
+    },
+    uptimer: {
+      title: 'Uptimer',
+      description:
+        'Monitoraggio leggero dell’uptime e pagine di stato per siti web, API e server con avvisi immediati.',
+    },
+    gptbox: {
+      title: 'GPT Box',
+      tag: 'iOS · Android · macOS · Linux · Windows',
+      description:
+        'Client nativo e veloce per le API OpenAI e modelli compatibili, con cronologia locale, tool calling ed endpoint personalizzati.',
+      action: 'GitHub',
+    },
+    mfuse: {
+      title: 'MFuse',
+      tag: 'macOS · File Provider',
+      description:
+        'Monta SFTP, S3, WebDAV e storage remoti direttamente nel Finder di macOS tramite il File Provider nativo, senza estensioni del kernel.',
+      action: 'mfuse.lollipopkit.com',
+    },
   },
   footer: {
     features: 'Funzionalità',

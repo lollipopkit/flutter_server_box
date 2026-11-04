@@ -16,6 +16,8 @@ const kr: Translation = {
     os: 'ServerBox OS',
     beta: '베타',
     plugins: '플러그인',
+    otherApps: '더보기',
+    signIn: '로그인',
     languageLabel: '언어',
   },
   hero: {
@@ -106,13 +108,20 @@ const kr: Translation = {
     installReleasePrompt: '# Android, Linux, Windows',
   },
   os: {
-    metaTitle: 'ServerBox OS — 브라우저 데스크톱과 서버 모니터링 엔진',
+    metaTitle: 'ServerBox OS (구 ServerBox Monitor) — 브라우저 데스크톱과 서버 모니터링 엔진',
     metaDescription:
-      'ServerBox OS는 브라우저 데스크톱, 40개 이상의 원클릭 Docker 앱, ZFS/RAID 스토리지, AI 에이전트, 알림, 암호화 백업을 서버에 제공합니다.',
+      'ServerBox OS (구 ServerBox Monitor)는 브라우저 데스크톱, 40개 이상의 원클릭 Docker 앱, ZFS/RAID 스토리지, AI 에이전트, 알림, 암호화 백업을 서버에 제공합니다.',
     heroTitle: 'ServerBox OS',
+    formerlyMonitor: '구 ServerBox Monitor',
+    navPreview: '데모',
+    navInstall: '설치',
+    navApp: 'ServerBox 앱',
     tagline: '브라우저에서도, 앱에서도 완벽한 서버 파트너.',
     subtitle:
       '가벼운 단일 프로그램 하나로 Linux 서버에 브라우저 멀티윈도우 데스크톱, 40개 이상의 셀프호스팅 앱, AI 에이전트, 그리고 ServerBox 앱과의 HTTPS 연동을 제공합니다.',
+    monitorNote:
+      'ServerBox OS는 기존 ServerBox Monitor(server_box_monitor)의 업그레이드 버전입니다. 기존 Monitor 설치 환경도 동일한 명령어로 제자리 업그레이드되며, 푸시 알림·홈 위젯·watchOS·이력 차트를 그대로 지원합니다.',
+    exploreAction: 'ServerBox OS 자세히 보기',
     installAction: 'Linux에 설치',
     images: 'OS 이미지 다운로드',
     previewAction: '데모 보기',
@@ -248,6 +257,46 @@ const kr: Translation = {
       'GitHub에서 코드를 확인하고 기여하거나 지금 바로 최신 버전을 다운로드하세요.',
     appStoreAction: 'App Store',
     githubAction: 'GitHub Releases',
+  },
+  pride: {
+    badge: 'LGBTQ+ 프렌들리',
+    title: '다양성과 자긍심을 담아.',
+    description:
+      'ServerBox는 LGBTQ+ 커뮤니티를 자랑스럽게 지지합니다. 테마 스토어에서 Rainbow, Trans, Nonbinary 3가지 변형을 담은 공식 Pride 테마를 만나보세요.',
+    rainbow: 'Rainbow',
+    trans: 'Trans',
+    nonbinary: 'Nonbinary',
+  },
+  otherApps: {
+    title: '더 많은 서비스와 앱.',
+    subtitle:
+      '빠른 반응성과 깔끔한 설계 철학을 공유하는 클라우드 서비스 및 네이티브 앱입니다.',
+    servicesHeading: '서비스',
+    appsHeading: 'Apps',
+    llmapi: {
+      title: 'LLM API',
+      description:
+        '주요 프런티어 LLM을 하나로 묶은 통합 API 게이트웨이로, ServerBox AI 에이전트와 GPT Box 및 개발 도구에 바로 연결됩니다.',
+    },
+    uptimer: {
+      title: 'Uptimer',
+      description:
+        '웹사이트, API, 서버의 가동 상태를 모니터링하고 상태 페이지와 즉각적인 장애 알림을 제공하는 경량 서비스입니다.',
+    },
+    gptbox: {
+      title: 'GPT Box',
+      tag: 'iOS · Android · macOS · Linux · Windows',
+      description:
+        'OpenAI 및 호환 LLM API를 위한 빠르고 가벼운 네이티브 클라이언트로, 로컬 대화 보관, 도구 호출, 커스텀 엔드포인트를 지원합니다.',
+      action: 'GitHub',
+    },
+    mfuse: {
+      title: 'MFuse',
+      tag: 'macOS · File Provider',
+      description:
+        '커널 확장 없이 macOS 네이티브 File Provider를 통해 SFTP, S3, WebDAV 등 원격 스토리지를 Finder에 바로 마운트합니다.',
+      action: 'mfuse.lollipopkit.com',
+    },
   },
   footer: {
     features: '기능',
