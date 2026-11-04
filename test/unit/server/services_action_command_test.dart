@@ -112,7 +112,7 @@ class _FakeServerNotifier extends ServerNotifier {
 
 /// A systemd host whose account has [uid], recording what it was asked to run.
 Map<String, String?> get _commands => {
-  for (final c in ffi.serviceListingCommands(managerName: 'systemd')) c.name: c.command,
+  for (final c in ffi.serviceListingCommands(manager: ffi.ServiceManagerType.systemd)) c.name: c.command,
 };
 
 class _SystemdExec implements CommandExec {

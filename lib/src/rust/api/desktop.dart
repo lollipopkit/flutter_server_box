@@ -6,16 +6,64 @@
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
-/// Why a route cannot be saved, as `ProfileError`'s code, or `None`. The
-/// input is `ProfileInput` JSON; JSON the app should never send is
-/// `malformed`.
-String? desktopValidateProfile({required String inputJson}) => RustLib
-    .instance
-    .api
-    .crateApiDesktopDesktopValidateProfile(inputJson: inputJson);
+/// Why a route cannot be saved, or `None`.
+ProfileError? desktopValidateProfile({required ProfileInput input}) =>
+    RustLib.instance.api.crateApiDesktopDesktopValidateProfile(input: input);
 
 /// Why a classic VNC password would not work, or `None`.
-String? desktopValidateVncPassword({required String password}) => RustLib
-    .instance
-    .api
-    .crateApiDesktopDesktopValidateVncPassword(password: password);
+VncPasswordError? desktopValidateVncPassword({required String password}) =>
+    RustLib.instance.api.crateApiDesktopDesktopValidateVncPassword(
+      password: password,
+    );
+
+enum ProfileError {
+  nameRequired,
+  invalidName,
+  invalidProtocol,
+  hostRequired,
+  invalidHost,
+  invalidPort,
+  usernameRequired,
+  invalidCredential,
+}
+
+class ProfileInput {
+  final String name;
+  final String protocol;
+  final String host;
+  final PlatformInt64? port;
+  final String? username;
+  final String? domain;
+
+  const ProfileInput({
+    required this.name,
+    required this.protocol,
+    required this.host,
+    this.port,
+    this.username,
+    this.domain,
+  });
+
+  @override
+  int get hashCode =>
+      name.hashCode ^
+      protocol.hashCode ^
+      host.hashCode ^
+      port.hashCode ^
+      username.hashCode ^
+      domain.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ProfileInput &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          protocol == other.protocol &&
+          host == other.host &&
+          port == other.port &&
+          username == other.username &&
+          domain == other.domain;
+}
+
+enum VncPasswordError { notAscii }

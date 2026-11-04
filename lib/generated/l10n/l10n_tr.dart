@@ -2991,6 +2991,9 @@ class AppLocalizationsTr extends AppLocalizations {
       'Hedef ana makine boşluk veya satır sonu içeremez.';
 
   @override
+  String get remoteDesktopProtocolInvalid => 'Unsupported protocol.';
+
+  @override
   String get remoteDesktopCredentialInvalid =>
       'Kullanıcı adı ve etki alanı en fazla 256 karakter olabilir ve satır sonu içeremez.';
 
@@ -6364,6 +6367,9 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get storageTooFewDevices => 'Not enough valid devices were selected.';
+
+  @override
+  String get storageKeyRequired => 'A passphrase is required.';
 
   @override
   String get storageExpand => 'Genişlet';

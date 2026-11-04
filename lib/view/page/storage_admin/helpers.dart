@@ -2,7 +2,7 @@ import 'package:server_box/data/model/server/storage.dart';
 
 List<BlockDevice> storageDisks(StorageView view) => [
   for (final disk in view.disks)
-    if (disk.kind != 'rom' && disk.size > 0) disk,
+    if (disk.kind != 'rom' && disk.size > BigInt.zero) disk,
 ];
 
 List<BlockDevice> storageVolumes(BlockDevice disk) {

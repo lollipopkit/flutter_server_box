@@ -24,6 +24,7 @@ import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/discovery_result.dart';
 import 'package:server_box/data/model/server/geo.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';

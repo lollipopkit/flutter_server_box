@@ -1,24 +1,48 @@
 //! Remote desktop route rules FFI (sbm_parser::desktop)
 //!
 //! The rules the agent's `/desktops` endpoint applies to the panel's routes,
-//! so the app's profile editor accepts exactly what the agent does. Answers
-//! are error codes the app phrases, or `None`.
+//! so the app's profile editor accepts exactly what the agent does. The input
+//! and the refusals are `sbm_parser::desktop`'s own, mirrored.
 
-use sbm_parser::desktop::{self, ProfileInput};
+use flutter_rust_bridge::frb;
+use sbm_parser::desktop;
+pub use sbm_parser::desktop::{ProfileError, ProfileInput, VncPasswordError};
 
-/// Why a route cannot be saved, as `ProfileError`'s code, or `None`. The
-/// input is `ProfileInput` JSON; JSON the app should never send is
-/// `malformed`.
-#[flutter_rust_bridge::frb(sync)]
-pub fn desktop_validate_profile(input_json: String) -> Option<String> {
-    match serde_json::from_str::<ProfileInput>(&input_json) {
-        Ok(input) => desktop::validate_profile(&input).err().map(|e| e.as_str().to_string()),
-        Err(_) => Some("malformed".to_string()),
-    }
+#[frb(mirror(ProfileInput))]
+pub struct _ProfileInput {
+    pub name: String,
+    pub protocol: String,
+    pub host: String,
+    pub port: Option<i64>,
+    pub username: Option<String>,
+    pub domain: Option<String>,
+}
+
+#[frb(mirror(ProfileError))]
+pub enum _ProfileError {
+    NameRequired,
+    InvalidName,
+    InvalidProtocol,
+    HostRequired,
+    InvalidHost,
+    InvalidPort,
+    UsernameRequired,
+    InvalidCredential,
+}
+
+#[frb(mirror(VncPasswordError))]
+pub enum _VncPasswordError {
+    NotAscii,
+}
+
+/// Why a route cannot be saved, or `None`.
+#[frb(sync)]
+pub fn desktop_validate_profile(input: ProfileInput) -> Option<ProfileError> {
+    desktop::validate_profile(&input).err()
 }
 
 /// Why a classic VNC password would not work, or `None`.
-#[flutter_rust_bridge::frb(sync)]
-pub fn desktop_validate_vnc_password(password: String) -> Option<String> {
-    desktop::validate_vnc_password(&password).err().map(|e| e.as_str().to_string())
+#[frb(sync)]
+pub fn desktop_validate_vnc_password(password: String) -> Option<VncPasswordError> {
+    desktop::validate_vnc_password(&password).err()
 }

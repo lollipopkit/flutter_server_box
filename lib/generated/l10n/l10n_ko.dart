@@ -2852,6 +2852,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get remoteDesktopHostInvalid => '대상 호스트에는 공백이나 줄바꿈을 쓸 수 없습니다.';
 
   @override
+  String get remoteDesktopProtocolInvalid => 'Unsupported protocol.';
+
+  @override
   String get remoteDesktopCredentialInvalid =>
       '사용자 이름과 도메인은 256자 이하이며 줄바꿈을 쓸 수 없습니다.';
 
@@ -6104,6 +6107,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get storageTooFewDevices => 'Not enough valid devices were selected.';
+
+  @override
+  String get storageKeyRequired => 'A passphrase is required.';
 
   @override
   String get storageExpand => '확장';

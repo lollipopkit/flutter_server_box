@@ -4,8 +4,6 @@
 // `setState` from one of them.
 // ignore_for_file: invalid_use_of_protected_member
 
-import 'dart:convert';
-
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -561,30 +559,33 @@ String? validateRemoteDesktopProfileInput({
   String domain = '',
 }) {
   final rdp = protocol == RemoteDesktopProtocol.rdp;
-  final code =
-      ffi.desktopValidateProfile(
-        inputJson: jsonEncode({
-          // What the profile will carry: the rules refuse untrimmed values.
-          'name': name.trim(),
-          'protocol': protocol.name,
-          'host': host.trim(),
-          'port': port,
-          // A VNC profile keeps neither.
-          'username': rdp ? username.trim() : null,
-          'domain': rdp ? domain.trim() : null,
-        }),
-      ) ??
-      (rdp ? null : ffi.desktopValidateVncPassword(password: password));
-  return switch (code) {
+  final refused = ffi.desktopValidateProfile(
+    input: ffi.ProfileInput(
+      // What the profile will carry: the rules refuse untrimmed values.
+      name: name.trim(),
+      protocol: protocol.name,
+      host: host.trim(),
+      port: port,
+      // A VNC profile keeps neither.
+      username: rdp ? username.trim() : null,
+      domain: rdp ? domain.trim() : null,
+    ),
+  );
+  if (refused != null) {
+    return switch (refused) {
+      ffi.ProfileError.nameRequired => l10n.remoteDesktopNameRequired,
+      ffi.ProfileError.invalidName => l10n.remoteDesktopNameInvalid,
+      ffi.ProfileError.invalidProtocol => l10n.remoteDesktopProtocolInvalid,
+      ffi.ProfileError.hostRequired => l10n.remoteDesktopHostRequired,
+      ffi.ProfileError.invalidHost => l10n.remoteDesktopHostInvalid,
+      ffi.ProfileError.invalidPort => l10n.remoteDesktopPortRequired,
+      ffi.ProfileError.usernameRequired => l10n.remoteDesktopUsernameRequired,
+      ffi.ProfileError.invalidCredential => l10n.remoteDesktopCredentialInvalid,
+    };
+  }
+  if (rdp) return null;
+  return switch (ffi.desktopValidateVncPassword(password: password)) {
     null => null,
-    'nameRequired' => l10n.remoteDesktopNameRequired,
-    'invalidName' => l10n.remoteDesktopNameInvalid,
-    'hostRequired' => l10n.remoteDesktopHostRequired,
-    'invalidHost' => l10n.remoteDesktopHostInvalid,
-    'invalidPort' => l10n.remoteDesktopPortRequired,
-    'usernameRequired' => l10n.remoteDesktopUsernameRequired,
-    'invalidCredential' => l10n.remoteDesktopCredentialInvalid,
-    'vncPasswordAscii' => l10n.remoteDesktopVncPasswordAscii,
-    _ => code,
+    ffi.VncPasswordError.notAscii => l10n.remoteDesktopVncPasswordAscii,
   };
 }

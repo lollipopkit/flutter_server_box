@@ -3029,6 +3029,9 @@ class AppLocalizationsPt extends AppLocalizations {
       'O host de destino não pode conter espaços nem quebras de linha.';
 
   @override
+  String get remoteDesktopProtocolInvalid => 'Unsupported protocol.';
+
+  @override
   String get remoteDesktopCredentialInvalid =>
       'O usuário e o domínio podem ter até 256 caracteres e não podem conter quebras de linha.';
 
@@ -6434,6 +6437,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get storageTooFewDevices => 'Not enough valid devices were selected.';
+
+  @override
+  String get storageKeyRequired => 'A passphrase is required.';
 
   @override
   String get storageExpand => 'Expandir';

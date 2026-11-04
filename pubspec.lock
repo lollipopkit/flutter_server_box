@@ -922,14 +922,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.4.0"
-  hive_ce_generator:
-    dependency: "direct dev"
-    description:
-      name: hive_ce_generator
-      sha256: "69800cb5e9bde43d457d24d38c20f458cf95b122c25ba04cfe9519578f31548d"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.11.2"
   hooks:
     dependency: transitive
     description:
@@ -2276,14 +2268,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.1.4"
-  yaml_writer:
-    dependency: transitive
-    description:
-      name: yaml_writer
-      sha256: "69651cd7238411179ac32079937d4aa9a2970150d6b2ae2c6fe6de09402a5dc5"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.1.0"
   zmodem:
     dependency: transitive
     description:

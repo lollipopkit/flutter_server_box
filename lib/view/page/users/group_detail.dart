@@ -19,13 +19,13 @@ final class GroupDetailPageArgs {
   });
 
   final Spi spi;
-  final ServerGroup group;
-  final ServerUserCatalog catalog;
+  final SystemGroup group;
+  final UserCatalog catalog;
 
   /// Answers true when the group changed, which closes this page: what it
   /// is showing no longer describes anything.
-  final Future<bool> Function(ServerGroup group) onEdit;
-  final Future<bool> Function(ServerGroup group) onDelete;
+  final Future<bool> Function(SystemGroup group) onEdit;
+  final Future<bool> Function(SystemGroup group) onDelete;
 }
 
 final class GroupDetailPage extends ConsumerStatefulWidget {
@@ -43,7 +43,7 @@ final class GroupDetailPage extends ConsumerStatefulWidget {
 }
 
 final class _GroupDetailPageState extends ConsumerState<GroupDetailPage> {
-  ServerGroup get _group => widget.args.group;
+  SystemGroup get _group => widget.args.group;
 
   @override
   Widget build(BuildContext context) {
@@ -88,7 +88,7 @@ final class _GroupDetailPageState extends ConsumerState<GroupDetailPage> {
     );
   }
 
-  Widget _buildIdentity(ServerUserCatalog catalog) {
+  Widget _buildIdentity(UserCatalog catalog) {
     final scheme = Theme.of(context).colorScheme;
     final root = _group.isRoot;
     return Row(
@@ -161,7 +161,7 @@ final class _GroupDetailPageState extends ConsumerState<GroupDetailPage> {
     ]);
   }
 
-  Future<void> _run(Future<bool> Function(ServerGroup group) action) async {
+  Future<void> _run(Future<bool> Function(SystemGroup group) action) async {
     final changed = await action(_group);
     if (changed && mounted) context.pop();
   }

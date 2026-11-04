@@ -1,62 +1,88 @@
-import 'dart:convert';
-
 import 'package:server_box/core/utils/privileged_exec.dart';
 import 'package:server_box/data/admin/command_output.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/shares.dart';
+import 'package:server_box/data/model/server/sudo_error.dart';
 import 'package:server_box/src/rust/api/shares.dart' as ffi;
 
-final class SharesManagerException implements Exception {
-  const SharesManagerException(this.code, {this.path, this.detail});
+/// Why a shares read or change did not happen. Sudo refusing the password
+/// is [SudoRejected].
+sealed class SharesFailure implements Exception {
+  const SharesFailure();
+}
 
-  final String code;
-  final String? path;
-  final String? detail;
+/// `sbm_parser::shares` refused a share as given.
+final class SharesInvalid extends SharesFailure {
+  const SharesInvalid(this.error);
+
+  final ShareError error;
 
   @override
-  String toString() => detail ?? code;
+  String toString() => error.name;
+}
+
+/// A share's path is not a folder on the machine.
+final class SharesNotAFolder extends SharesFailure {
+  const SharesNotAFolder(this.path);
+
+  final String? path;
+
+  @override
+  String toString() => path ?? 'notAFolder';
+}
+
+/// Samba or `exportfs` refused the result; the previous file is back.
+final class SharesRefused extends SharesFailure {
+  const SharesRefused(this.detail);
+
+  final String detail;
+
+  @override
+  String toString() => detail;
+}
+
+/// The command ran and failed; [detail] is the last line it printed.
+final class SharesCommandFailed extends SharesFailure {
+  const SharesCommandFailed(this.detail);
+
+  final String detail;
+
+  @override
+  String toString() => detail;
 }
 
 /// Reads, parses and writes the machine's SMB and NFS configuration.
 abstract final class SharesManager {
-  static Future<SharesView> read(CommandExec exec) async {
+  static Future<Shares> read(CommandExec exec) async {
     final result = await exec.run(ffi.sharesReadScript(), entry: 'sh');
     if (!result.succeeded) {
-      throw SharesManagerException(
-        'failed',
-        detail: lastOutputLine(result.combined, 'Unable to read shares'),
-      );
+      throw SharesCommandFailed(lastOutputLine(result.combined, 'Unable to read shares'));
     }
-    try {
-      final json = await ffi.parseSharesJson(raw: result.stdout);
-      return SharesView.fromJson(jsonDecode(json) as Map<String, Object?>);
-    } on ffi.SharesFfiError catch (e) {
-      throw SharesManagerException(e.code);
-    }
+    return ffi.sharesParse(raw: result.stdout);
   }
 
   /// Writes only ServerBox-managed entries, keeping shares configured elsewhere.
-  static Future<SharesView> setSmb(
+  static Future<Shares> setSmb(
     CommandExec exec,
     List<SmbShare> shares, {
     required bool isRoot,
     String? password,
   }) async {
     final managed = shares.where((share) => share.managed).toList();
-    final script = _smbScript(managed);
+    final script = _build(() => ffi.sharesSmbScript(shares: managed));
     await _write(exec, script, isRoot: isRoot, password: password);
     return read(exec);
   }
 
   /// Writes only ServerBox-managed exports.
-  static Future<SharesView> setNfs(
+  static Future<Shares> setNfs(
     CommandExec exec,
     List<NfsExport> exports, {
     required bool isRoot,
     String? password,
   }) async {
     final managed = exports.where((export) => export.managed).toList();
-    final script = _nfsScript(managed);
+    final script = _build(() => ffi.sharesNfsScript(exports: managed));
     await _write(exec, script, isRoot: isRoot, password: password);
     return read(exec);
   }
@@ -68,7 +94,7 @@ abstract final class SharesManager {
     required bool isRoot,
     String? sudoPassword,
   }) async {
-    final script = _passwordScript(user, password);
+    final script = _build(() => ffi.sharesSmbPasswordScript(user: user, password: password));
     await _write(exec, script, isRoot: isRoot, password: sudoPassword);
   }
 
@@ -77,16 +103,9 @@ abstract final class SharesManager {
     required bool nfs,
     required bool isRoot,
     String? password,
-  }) async {
-    await _write(
-      exec,
-      ffi.sharesInstallScript(nfs: nfs),
-      isRoot: isRoot,
-      password: password,
-    );
-  }
+  }) => _write(exec, ffi.sharesInstallScript(nfs: nfs), isRoot: isRoot, password: password);
 
-  static Future<ShareConnections> connections(
+  static Future<Connections> connections(
     CommandExec exec, {
     required bool isRoot,
     String? password,
@@ -98,46 +117,17 @@ abstract final class SharesManager {
       password: password,
     );
     if (!result.succeeded) {
-      throw SharesManagerException(
-        !isRoot && result.sudoRejected
-            ? 'sudo_rejected'
-            : 'failed',
-        detail: lastOutputLine(result.combined, 'Unable to read connections'),
-      );
+      result.throwIfSudoRejected();
+      throw SharesCommandFailed(lastOutputLine(result.combined, 'Unable to read connections'));
     }
-    try {
-      final json = await ffi.parseSharesConnectionsJson(raw: result.stdout);
-      return ShareConnections.fromJson(jsonDecode(json) as Map<String, Object?>);
-    } on ffi.SharesFfiError catch (e) {
-      throw SharesManagerException(e.code);
-    }
+    return ffi.sharesParseConnections(raw: result.stdout);
   }
 
-  static String _smbScript(List<SmbShare> shares) {
+  static String _build(String Function() script) {
     try {
-      return ffi.sharesSmbScript(
-        sharesJson: jsonEncode([for (final share in shares) share.toJson()]),
-      );
-    } on ffi.SharesFfiError catch (e) {
-      throw SharesManagerException(e.code);
-    }
-  }
-
-  static String _nfsScript(List<NfsExport> exports) {
-    try {
-      return ffi.sharesNfsScript(
-        exportsJson: jsonEncode([for (final export in exports) export.toJson()]),
-      );
-    } on ffi.SharesFfiError catch (e) {
-      throw SharesManagerException(e.code);
-    }
-  }
-
-  static String _passwordScript(String user, String password) {
-    try {
-      return ffi.sharesSmbPasswordScript(user: user, password: password);
-    } on ffi.SharesFfiError catch (e) {
-      throw SharesManagerException(e.code);
+      return script();
+    } on ShareError catch (e) {
+      throw SharesInvalid(e);
     }
   }
 
@@ -154,24 +144,13 @@ abstract final class SharesManager {
       password: password,
     );
     if (result.succeeded) return;
-    if (!isRoot && result.sudoRejected) {
-      throw const SharesManagerException('sudo_rejected');
-    }
+    result.throwIfSudoRejected();
     if (result.exitCode == ffi.sharesExitNotAFolder()) {
-      throw SharesManagerException(
-        'notAFolder',
-        path: firstOutputLine(result.stderr),
-      );
+      throw SharesNotAFolder(firstOutputLine(result.stderr));
     }
     if (result.exitCode == ffi.sharesExitRefused()) {
-      throw SharesManagerException(
-        'refused',
-        detail: lastOutputLine(result.stderr, 'The configuration was refused'),
-      );
+      throw SharesRefused(lastOutputLine(result.stderr, 'The configuration was refused'));
     }
-    throw SharesManagerException(
-      'failed',
-      detail: lastOutputLine(result.combined, 'Share action failed'),
-    );
+    throw SharesCommandFailed(lastOutputLine(result.combined, 'Share action failed'));
   }
 }

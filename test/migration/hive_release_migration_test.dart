@@ -14,7 +14,6 @@ import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/stores.dart';
-import 'package:server_box/hive/hive_registrar.g.dart';
 import 'package:server_box/hive/legacy_adapters.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -22,8 +21,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// wrote.
 ///
 /// The SQLite layout has never shipped, so **every** install in the field is
-/// on Hive and any released version is a migration source. `hive_adapters.g
-/// .dart` is byte-identical across 1466, 1480 and 1491, so the three share one
+/// on Hive and any released version is a migration source. The generated
+/// adapters were byte-identical across 1466, 1480 and 1491, so the three share one
 /// set of assertions — but 1491 also shipped an `agent_conversation` box, so
 /// each gets a fixture of its own rather than the later ones being assumed
 /// equal to the first.
@@ -54,7 +53,6 @@ void main() {
     await PrefStore.shared.init();
 
     Hive.init(tempDir.path);
-    Hive.registerAdapters();
     registerHiveLegacyAdapters();
   });
 

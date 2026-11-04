@@ -12,7 +12,7 @@ import '../../helpers/rust_lib_helper.dart';
 final class _ByName implements CommandExec {
   _ByName(ServiceManagerType type, this.answers)
     : names = {
-        for (final c in ffi.serviceListingCommands(managerName: type.name)) c.command!: c.name,
+        for (final c in ffi.serviceListingCommands(manager: type)) c.command!: c.name,
       };
 
   final Map<String, String> names;
@@ -45,20 +45,6 @@ String _fixture(String name) =>
 /// reads is asserted on the Rust side (`service_compat.rs`).
 void main() {
   setUpAll(initRustLibForTest);
-
-  test('a unit from an agent that predates needs_attention is judged by its state', () {
-    ServiceUnit unit(String state, [bool? flag]) => ServiceUnit.fromJson({
-      'name': 'nginx',
-      'type': 'service',
-      'scope': 'system',
-      'state': state,
-      'needs_attention': ?flag,
-    });
-    expect(unit('failed').needsAttention, isTrue);
-    expect(unit('running').needsAttention, isFalse);
-    // The agent's answer, when it gives one.
-    expect(unit('running', true).needsAttention, isTrue);
-  });
 
   test('the manager the machine runs', () async {
     final exec = _ByName(ServiceManagerType.systemd, {
@@ -111,11 +97,13 @@ void main() {
   test('a unit crosses back to name its commands', () {
     const unit = ServiceUnit(
       name: 'chronyd',
-      type: ServiceUnitType.service,
+      fullName: 'chronyd.service',
+      unitType: ServiceUnitType.service,
       scope: ServiceScope.system,
       state: ServiceState.stopped,
       enabled: false,
       actions: [ServiceAction.start, ServiceAction.enable],
+      needsAttention: false,
     );
     const openrc = ServiceManager(ServiceManagerType.openrc);
     expect(openrc.commandFor(unit, ServiceAction.enable), "rc-update add 'chronyd' default");
@@ -127,10 +115,12 @@ void main() {
   test('a procd log, and none where logread is missing', () async {
     const unit = ServiceUnit(
       name: 'dnsmasq',
-      type: ServiceUnitType.service,
+      fullName: 'dnsmasq.service',
+      unitType: ServiceUnitType.service,
       scope: ServiceScope.system,
       state: ServiceState.running,
       actions: [],
+      needsAttention: false,
     );
     const procd = ServiceManager(ServiceManagerType.procd);
     final command = "logread -e 'dnsmasq' | tail -n 5";

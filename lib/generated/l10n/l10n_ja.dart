@@ -2849,6 +2849,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get remoteDesktopHostInvalid => '接続先ホストに空白や改行は使えません。';
 
   @override
+  String get remoteDesktopProtocolInvalid => 'Unsupported protocol.';
+
+  @override
   String get remoteDesktopCredentialInvalid =>
       'ユーザー名とドメインは 256 文字以内で、改行は使えません。';
 
@@ -6098,6 +6101,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get storageTooFewDevices => 'Not enough valid devices were selected.';
+
+  @override
+  String get storageKeyRequired => 'A passphrase is required.';
 
   @override
   String get storageExpand => '拡張';

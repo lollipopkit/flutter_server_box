@@ -6,26 +6,22 @@
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `malformed`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `fmt`, `from`
-
 /// What is installed and running, every share and export
 String sharesReadScript() =>
     RustLib.instance.api.crateApiSharesSharesReadScript();
 
-/// [`shares_read_script`]'s output → `Shares` JSON
-Future<String> parseSharesJson({required String raw}) =>
-    RustLib.instance.api.crateApiSharesParseSharesJson(raw: raw);
+/// [`shares_read_script`]'s output
+Future<Shares> sharesParse({required String raw}) =>
+    RustLib.instance.api.crateApiSharesSharesParse(raw: raw);
 
-/// Root's script making `shares_json` (every share ServerBox keeps) the SMB
-/// shares
-String sharesSmbScript({required String sharesJson}) =>
-    RustLib.instance.api.crateApiSharesSharesSmbScript(sharesJson: sharesJson);
+/// Root's script making `shares` (every share ServerBox keeps) the SMB shares
+String sharesSmbScript({required List<SmbShare> shares}) =>
+    RustLib.instance.api.crateApiSharesSharesSmbScript(shares: shares);
 
-/// Root's script making `exports_json` (every export ServerBox keeps) the
-/// NFS exports
-String sharesNfsScript({required String exportsJson}) => RustLib.instance.api
-    .crateApiSharesSharesNfsScript(exportsJson: exportsJson);
+/// Root's script making `exports` (every export ServerBox keeps) the NFS
+/// exports
+String sharesNfsScript({required List<NfsExport> exports}) =>
+    RustLib.instance.api.crateApiSharesSharesNfsScript(exports: exports);
 
 /// Root's script setting `user`'s SMB password (in its text: send on stdin)
 String sharesSmbPasswordScript({
@@ -44,9 +40,9 @@ String sharesInstallScript({required bool nfs}) =>
 String sharesConnectionsScript() =>
     RustLib.instance.api.crateApiSharesSharesConnectionsScript();
 
-/// [`shares_connections_script`]'s output → `Connections` JSON
-Future<String> parseSharesConnectionsJson({required String raw}) =>
-    RustLib.instance.api.crateApiSharesParseSharesConnectionsJson(raw: raw);
+/// [`shares_connections_script`]'s output
+Future<Connections> sharesParseConnections({required String raw}) =>
+    RustLib.instance.api.crateApiSharesSharesParseConnections(raw: raw);
 
 /// The exit code of a write script whose path is not a folder (stderr names
 /// it)
@@ -58,21 +54,197 @@ int sharesExitNotAFolder() =>
 int sharesExitRefused() =>
     RustLib.instance.api.crateApiSharesSharesExitRefused();
 
-/// `code`: `sbm_parser::shares::ShareError`'s (`invalidName`, `invalidPath`,
-/// `invalidComment`, `invalidUser`, `invalidClient`, `invalidSquash`,
-/// `duplicate`, `invalidPassword`), or `malformed`.
-class SharesFfiError implements FrbException {
-  final String code;
+class Connections {
+  final List<SmbConnection> smb;
+  final List<String> nfs;
 
-  const SharesFfiError({required this.code});
+  const Connections({required this.smb, required this.nfs});
 
   @override
-  int get hashCode => code.hashCode;
+  int get hashCode => smb.hashCode ^ nfs.hashCode;
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is SharesFfiError &&
+      other is Connections &&
           runtimeType == other.runtimeType &&
-          code == other.code;
+          smb == other.smb &&
+          nfs == other.nfs;
+}
+
+class NfsClient {
+  final String host;
+  final bool readOnly;
+  final String squash;
+  final List<String> options;
+
+  const NfsClient({
+    required this.host,
+    required this.readOnly,
+    required this.squash,
+    required this.options,
+  });
+
+  @override
+  int get hashCode =>
+      host.hashCode ^ readOnly.hashCode ^ squash.hashCode ^ options.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is NfsClient &&
+          runtimeType == other.runtimeType &&
+          host == other.host &&
+          readOnly == other.readOnly &&
+          squash == other.squash &&
+          options == other.options;
+}
+
+class NfsExport {
+  final String path;
+  final List<NfsClient> clients;
+  final bool managed;
+
+  const NfsExport({
+    required this.path,
+    required this.clients,
+    required this.managed,
+  });
+
+  @override
+  int get hashCode => path.hashCode ^ clients.hashCode ^ managed.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is NfsExport &&
+          runtimeType == other.runtimeType &&
+          path == other.path &&
+          clients == other.clients &&
+          managed == other.managed;
+}
+
+enum ShareError {
+  invalidName,
+  invalidPath,
+  invalidComment,
+  invalidUser,
+  invalidClient,
+  invalidSquash,
+  duplicate,
+  invalidPassword,
+}
+
+class Shares {
+  final List<String> tools;
+  final bool smbActive;
+  final bool nfsActive;
+  final List<SmbShare> smb;
+  final List<NfsExport> nfs;
+
+  const Shares({
+    required this.tools,
+    required this.smbActive,
+    required this.nfsActive,
+    required this.smb,
+    required this.nfs,
+  });
+
+  @override
+  int get hashCode =>
+      tools.hashCode ^
+      smbActive.hashCode ^
+      nfsActive.hashCode ^
+      smb.hashCode ^
+      nfs.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Shares &&
+          runtimeType == other.runtimeType &&
+          tools == other.tools &&
+          smbActive == other.smbActive &&
+          nfsActive == other.nfsActive &&
+          smb == other.smb &&
+          nfs == other.nfs;
+}
+
+class SmbConnection {
+  final String share;
+  final String? user;
+  final String machine;
+  final String? since;
+
+  const SmbConnection({
+    required this.share,
+    this.user,
+    required this.machine,
+    this.since,
+  });
+
+  @override
+  int get hashCode =>
+      share.hashCode ^ user.hashCode ^ machine.hashCode ^ since.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SmbConnection &&
+          runtimeType == other.runtimeType &&
+          share == other.share &&
+          user == other.user &&
+          machine == other.machine &&
+          since == other.since;
+}
+
+class SmbShare {
+  final String name;
+  final String path;
+  final String? comment;
+  final bool readOnly;
+  final bool guest;
+  final List<String> users;
+  final bool timeMachine;
+  final bool recycle;
+  final bool managed;
+
+  const SmbShare({
+    required this.name,
+    required this.path,
+    this.comment,
+    required this.readOnly,
+    required this.guest,
+    required this.users,
+    required this.timeMachine,
+    required this.recycle,
+    required this.managed,
+  });
+
+  @override
+  int get hashCode =>
+      name.hashCode ^
+      path.hashCode ^
+      comment.hashCode ^
+      readOnly.hashCode ^
+      guest.hashCode ^
+      users.hashCode ^
+      timeMachine.hashCode ^
+      recycle.hashCode ^
+      managed.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SmbShare &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          path == other.path &&
+          comment == other.comment &&
+          readOnly == other.readOnly &&
+          guest == other.guest &&
+          users == other.users &&
+          timeMachine == other.timeMachine &&
+          recycle == other.recycle &&
+          managed == other.managed;
 }

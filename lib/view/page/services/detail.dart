@@ -362,7 +362,7 @@ extension on _ServiceDetailViewState {
   Widget _buildTiles(ServiceUnit unit, {required int columns}) {
     final tiles = [
       (context.l10n.serviceStartup, unit.startup ?? '—'),
-      (context.l10n.serviceUnitType, unit.type.name),
+      (context.l10n.serviceUnitType, unit.unitType.name),
       (context.l10n.serviceScope, ServiceUi.scopeLabel(unit.scope)),
       (
         libL10n.memory,

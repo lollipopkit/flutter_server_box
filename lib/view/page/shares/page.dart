@@ -12,6 +12,8 @@ import 'package:server_box/data/admin/user_manager.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/shares.dart';
+import 'package:server_box/data/model/server/storage.dart';
+import 'package:server_box/data/model/server/sudo_error.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/system_user.dart';
 import 'package:server_box/data/provider/server/single.dart';
@@ -34,9 +36,9 @@ enum _SharesTab { smb, nfs }
 
 final class _SharesPageState extends ConsumerState<SharesPage> {
   late final _provider = serverProvider(widget.args.spi.id);
-  SharesView? _view;
-  ShareConnections? _connections;
-  List<ServerUser> _users = [];
+  Shares? _view;
+  Connections? _connections;
+  List<SystemUser> _users = [];
   int _uidMin = 1000;
   List<String> _folders = [];
   _SharesTab _tab = _SharesTab.smb;
@@ -163,7 +165,7 @@ extension on _SharesPageState {
         ],
       );
 
-  List<Widget> _smbContent(SharesView view) {
+  List<Widget> _smbContent(Shares view) {
     if (!view.tools.contains('smbd')) {
       return [
         _notice(
@@ -201,7 +203,7 @@ extension on _SharesPageState {
     ];
   }
 
-  List<Widget> _nfsContent(SharesView view) {
+  List<Widget> _nfsContent(Shares view) {
     if (!view.tools.contains('exportfs')) {
       return [
         _notice(
@@ -507,16 +509,14 @@ extension on _SharesPageState {
             _connectionsLocked = false;
           });
         }
-      } on SharesManagerException catch (e) {
-        if (mounted && e.code == 'sudo_rejected') {
-          _rebuild(() => _connectionsLocked = true);
-        }
+      } on SudoRejected {
+        if (mounted) _rebuild(() => _connectionsLocked = true);
       } catch (e, s) {
         Loggers.app.warning('Read share connections on ${widget.args.spi.id}', e, s);
       }
       return;
     }
-    final outcome = await _withSudo<ShareConnections>(
+    final outcome = await _withSudo<Connections>(
       (exec, password) => SharesManager.connections(
         exec,
         isRoot: widget.args.spi.isRoot,
@@ -530,8 +530,7 @@ extension on _SharesPageState {
           _connectionsLocked = false;
         });
       }
-    } else if (outcome.error?.code == 'sudo_cancelled' ||
-        outcome.error?.code == 'sudo_rejected') {
+    } else if (outcome.error is SudoCancelled || outcome.error is SudoRejected) {
       if (mounted) _rebuild(() => _connectionsLocked = true);
     } else if (outcome.error != null) {
       _showShareError(outcome.error!);
@@ -543,7 +542,7 @@ extension on _SharesPageState {
     bool quiet = false,
   }) async {
     try {
-      var finalError = <SharesManagerException>[];
+      var finalError = <Exception>[];
       final result = await SudoPassword.retry<_ShareAttempt<T>>(
         context,
         widget.args.spi.id,
@@ -551,22 +550,23 @@ extension on _SharesPageState {
         attempt: (password) async {
           try {
             return _ShareAttempt.value(await run(await _exec(), password));
-          } on SharesManagerException catch (e) {
+          } on SharesFailure catch (e) {
+            finalError = [e];
+            return _ShareAttempt.failure(e);
+          } on SudoRejected catch (e) {
             finalError = [e];
             return _ShareAttempt.failure(e);
           }
         },
-        rejected: (attempt) => attempt.error?.code == 'sudo_rejected',
+        rejected: (attempt) => attempt.error is SudoRejected,
       );
       if (result?.value case final value?) return _ShareResult.value(value);
       final error = result?.error ?? finalError.firstOrNull;
       if (error != null) return _ShareResult.failure(error);
-      return const _ShareResult.failure(SharesManagerException('sudo_cancelled'));
+      return const _ShareResult.failure(SudoCancelled());
     } catch (e, s) {
       Loggers.app.warning('Privileged share action on ${widget.args.spi.id}', e, s);
-      return _ShareResult.failure(
-        SharesManagerException('failed', detail: '$e'),
-      );
+      return _ShareResult.failure(SharesCommandFailed('$e'));
     }
   }
 
@@ -584,7 +584,7 @@ extension on _SharesPageState {
           _rebuild(() => _busy = false);
         }
         await _refresh();
-      } else if (outcome.error?.code != 'sudo_cancelled') {
+      } else if (outcome.error is! SudoCancelled) {
         _showShareError(outcome.error!);
       }
     } finally {
@@ -592,18 +592,19 @@ extension on _SharesPageState {
     }
   }
 
-  void _showShareError(SharesManagerException error) {
-    final message = switch (error.code) {
-      'sudo_rejected' => l10n.virtErrSudoRejected,
-      'notAFolder' => l10n.sharingNotAFolder(error.path ?? ''),
-      'refused' => l10n.sharingRefused(error.detail ?? ''),
-      'duplicate' => l10n.sharingDuplicate,
-      'invalidName' => l10n.sharingInvalidName,
-      'invalidPath' => l10n.sharingInvalidPath,
-      'invalidUser' || 'invalidClient' => l10n.sharingInvalidClient,
-      'invalidSquash' || 'invalidComment' => l10n.sharingInvalidPath,
-      'invalidPassword' => l10n.sharingInvalidPassword,
-      _ => error.detail ?? error.code,
+  void _showShareError(Exception error) {
+    final message = switch (error) {
+      SharesNotAFolder(:final path) => l10n.sharingNotAFolder(path ?? ''),
+      SharesRefused(:final detail) => l10n.sharingRefused(detail),
+      SharesInvalid(:final error) => switch (error) {
+        ShareError.duplicate => l10n.sharingDuplicate,
+        ShareError.invalidName => l10n.sharingInvalidName,
+        ShareError.invalidPath => l10n.sharingInvalidPath,
+        ShareError.invalidUser || ShareError.invalidClient => l10n.sharingInvalidClient,
+        ShareError.invalidSquash || ShareError.invalidComment => l10n.sharingInvalidPath,
+        ShareError.invalidPassword => l10n.sharingInvalidPassword,
+      },
+      _ => '$error',
     };
     Toast.error(message);
   }
@@ -938,7 +939,7 @@ final class _ShareAttempt<T> {
   const _ShareAttempt.failure(this.error) : value = null;
 
   final T? value;
-  final SharesManagerException? error;
+  final Exception? error;
 }
 
 final class _ShareResult<T> {
@@ -946,7 +947,7 @@ final class _ShareResult<T> {
   const _ShareResult.failure(this.error) : value = null;
 
   final T? value;
-  final SharesManagerException? error;
+  final Exception? error;
 
   bool get succeeded => error == null && value != null;
 }

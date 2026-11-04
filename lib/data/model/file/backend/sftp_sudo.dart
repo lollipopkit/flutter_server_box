@@ -8,6 +8,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/sudo_error.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/src/rust/api/files.dart' as files;
 
@@ -147,17 +148,17 @@ final class SftpSudoHelper {
 
   Future<String> _runAndRead(String innerCommand, {String? password}) async {
     final pwd = password ?? await ensurePassword();
-    if (pwd == null) throw const SftpSudoCancelled();
+    if (pwd == null) throw const SudoCancelled();
 
     var result = await client.execWithPwd(_buildSudoCommand(innerCommand, pwd));
     if (result.rejected) {
       clearCache();
       final retryPwd = await ensurePassword(force: true);
-      if (retryPwd == null) throw const SftpSudoCancelled();
+      if (retryPwd == null) throw const SudoCancelled();
       result = await client.execWithPwd(_buildSudoCommand(innerCommand, retryPwd));
       if (result.rejected) {
         clearCache();
-        throw const SftpSudoRejected();
+        throw const SudoRejected();
       }
     }
     if (result.exitCode != 0) {
@@ -169,25 +170,6 @@ final class SftpSudoHelper {
 
   static String _buildSudoCommand(String command, String password) =>
       files.filesSudoCommand(inner: command, password: password);
-}
-
-/// The user was asked for a password and did not give one.
-///
-/// Public and readable because it now reaches the browser, which reports what
-/// a failed operation said: a class name in a snackbar is not an explanation.
-final class SftpSudoCancelled implements Exception {
-  const SftpSudoCancelled();
-
-  @override
-  String toString() => libL10n.cancel;
-}
-
-/// Sudo refused the password, asked for again once.
-final class SftpSudoRejected implements Exception {
-  const SftpSudoRejected();
-
-  @override
-  String toString() => l10n.virtErrSudoRejected;
 }
 
 /// The command ran as root and failed; [output] is what it printed.

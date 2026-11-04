@@ -10,6 +10,7 @@ import 'package:server_box/data/admin/user_manager.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/storage.dart';
+import 'package:server_box/data/model/server/sudo_error.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/provider/server/reading_fmt.dart';
 import 'package:server_box/data/provider/server/single.dart';
@@ -248,7 +249,7 @@ extension on _StoragePageState {
                     onPressed: _busy || health!.testing != null
                         ? null
                         : () => _runAction(
-                            StorageAction.smartTest(disk.path),
+                            StorageAction.smartTest(device: disk.path, long: false),
                             l10n.storageSmartTest,
                             l10n.storageSmartTestBody(disk.path),
                           ),
@@ -259,7 +260,7 @@ extension on _StoragePageState {
                     onPressed: _busy
                         ? null
                         : () => _runAction(
-                            StorageAction.partition(disk.path),
+                            StorageAction.partition(device: disk.path),
                             l10n.storageInitialize,
                             l10n.storageInitializeBody(disk.path),
                             confirmWord: disk.path,
@@ -305,7 +306,7 @@ extension on _StoragePageState {
               onPressed: _busy
                   ? null
                   : () => _runAction(
-                      StorageAction.lock(volume.path),
+                      StorageAction.lock(device: volume.path),
                       l10n.storageLock,
                       l10n.storageLockBody(volume.path),
                     ),
@@ -323,7 +324,7 @@ extension on _StoragePageState {
               onPressed: _busy
                   ? null
                   : () => _runAction(
-                      StorageAction.growPartition(volume.path),
+                      StorageAction.growPartition(device: volume.path),
                       l10n.storageGrowPartition,
                       l10n.storageGrowPartitionBody(volume.path),
                     ),
@@ -338,7 +339,7 @@ extension on _StoragePageState {
               onPressed: _busy
                   ? null
                   : () => _runAction(
-                      StorageAction.unmount(volume.mountpoints.first),
+                      StorageAction.unmount(mountpoint: volume.mountpoints.first),
                       l10n.storageUnmount,
                       l10n.storageUnmountBody(volume.mountpoints.first),
                     ),
@@ -356,7 +357,7 @@ extension on _StoragePageState {
               onPressed: _busy
                   ? null
                   : () => _runAction(
-                      StorageAction.expandFilesystem(volume.path),
+                      StorageAction.expandFilesystem(device: volume.path),
                       l10n.storageExpand,
                       l10n.storageExpandBody(volume.path),
                     ),
@@ -399,14 +400,14 @@ extension on _StoragePageState {
             ),
           ),
           if (device != null) _volume(view, device, device),
-          if (array.sync != null)
+          if (array.sync_ != null)
             ListTile(
               dense: true,
-              title: Text(l10n.storageSync(array.sync!.action)),
+              title: Text(l10n.storageSync(array.sync_!.action)),
               subtitle: LinearProgressIndicator(
-                value: array.sync!.permille / 1000,
+                value: array.sync_!.permille / 1000,
               ),
-              trailing: Text('${(array.sync!.permille / 10).toStringAsFixed(1)}%'),
+              trailing: Text('${(array.sync_!.permille / 10).toStringAsFixed(1)}%'),
             ),
           for (final member in array.members)
             ListTile(
@@ -425,10 +426,7 @@ extension on _StoragePageState {
                 onPressed: _busy
                     ? null
                     : () => _runAction(
-                        StorageAction.removeFromRaid(
-                          array.name,
-                          '/dev/${member.name}',
-                        ),
+                        StorageAction.removeFromRaid(array: array.name, device: '/dev/${member.name}'),
                         l10n.storageRemoveMember,
                         l10n.storageRemoveMemberBody(
                           array.name,
@@ -445,7 +443,7 @@ extension on _StoragePageState {
                 onPressed: _busy
                     ? null
                     : () => _runAction(
-                        StorageAction.deleteRaid(array.name),
+                        StorageAction.deleteRaid(array: array.name),
                         l10n.storageDeleteRaid,
                         l10n.storageDeleteRaidBody(array.name),
                         confirmWord: array.name,
@@ -469,7 +467,7 @@ extension on _StoragePageState {
     );
   }
 
-  Widget _poolCard(StorageView view, StoragePool pool) {
+  Widget _poolCard(StorageView view, Pool pool) {
     return CardX(
       margin: const EdgeInsets.only(bottom: 11),
       child: Column(
@@ -493,7 +491,7 @@ extension on _StoragePageState {
                 onPressed: _busy
                     ? null
                     : () => _runAction(
-                        StorageAction.destroyPool(pool.name),
+                        StorageAction.destroyPool(name: pool.name),
                         l10n.storageDestroyPool,
                         l10n.storageDestroyPoolBody(pool.name),
                         confirmWord: pool.name,
@@ -512,7 +510,7 @@ extension on _StoragePageState {
                 onPressed: _busy
                     ? null
                     : () => _runAction(
-                        StorageAction.scrubPool(pool.name),
+                        StorageAction.scrubPool(name: pool.name),
                         l10n.storageScrub,
                         l10n.storageScrubBody(pool.name),
                       ),
@@ -526,14 +524,14 @@ extension on _StoragePageState {
     );
   }
 
-  Widget _poolDevice(StoragePool pool, StorageVdev device, int index) {
+  Widget _poolDevice(Pool pool, Vdev device, int index) {
     final can = pool.vdevs[index].actions;
     final title = '${'  ' * (device.depth + (device.section == null ? 0 : 1))}${device.name}';
     return ListTile(
       dense: true,
       title: Text(title, style: const TextStyle(fontFamily: 'monospace')),
       subtitle: Text(
-        [device.section, device.state, if (device.errors > 0) l10n.storageErrors(device.errors)]
+        [device.section, device.state, if (device.errors > BigInt.zero) l10n.storageErrors(device.errors.toInt())]
             .whereType<String>()
             .join(' · '),
       ),
@@ -547,7 +545,7 @@ extension on _StoragePageState {
               onPressed: _busy
                   ? null
                   : () => _runAction(
-                      StorageAction.onlineInPool(pool.name, device.name),
+                      StorageAction.onlineInPool(name: pool.name, device: device.name),
                       l10n.storageOnline,
                       l10n.storageOnlineBody(device.name, pool.name),
                     ),
@@ -575,7 +573,7 @@ extension on _StoragePageState {
               onPressed: _busy
                   ? null
                   : () => _runAction(
-                      StorageAction.removeFromPool(pool.name, device.name),
+                      StorageAction.removeFromPool(name: pool.name, device: device.name),
                       l10n.storageRemoveDevice,
                       l10n.storageRemoveDeviceBody(device.name, pool.name),
                     ),
@@ -603,7 +601,7 @@ extension on _StoragePageState {
     ),
   );
 
-  String _bytes(int bytes) => ReadingFmt.size(bytes.toDouble());
+  String _bytes(BigInt bytes) => ReadingFmt.size(bytes.toDouble());
 
   String _busyText(String code) => switch (code) {
     'mounted' => l10n.storageBusyMounted,
@@ -617,11 +615,11 @@ extension on _StoragePageState {
   };
 
   String _healthText(DiskHealth health) => switch (health.verdict) {
-    'asleep' => l10n.storageHealthAsleep,
-    'unsupported' => l10n.storageHealthUnsupported,
-    'failing' => l10n.storageHealthFailing,
-    'wearing' => l10n.storageHealthWearing,
-    _ => l10n.storageHealthy,
+    HealthVerdict.asleep => l10n.storageHealthAsleep,
+    HealthVerdict.unsupported => l10n.storageHealthUnsupported,
+    HealthVerdict.failing => l10n.storageHealthFailing,
+    HealthVerdict.wearing => l10n.storageHealthWearing,
+    HealthVerdict.healthy => l10n.storageHealthy,
   };
 
   String _healthFacts(DiskHealth health) => [
@@ -707,7 +705,7 @@ extension on _StoragePageState {
   void _syncPoll() {
     final view = _view;
     final active = view != null &&
-        (view.arrays.any((array) => array.sync != null) ||
+        (view.arrays.any((array) => array.sync_ != null) ||
             view.pools.any((pool) => pool.scanning));
     _poll?.cancel();
     _poll = active ? Timer.periodic(const Duration(seconds: 3), (_) => _refresh()) : null;
@@ -746,11 +744,13 @@ extension on _StoragePageState {
                 password: password,
               ),
             );
-          } on StorageManagerException catch (e) {
+          } on StorageFailure catch (e) {
+            return _HealthAttempt.failure(e);
+          } on SudoRejected catch (e) {
             return _HealthAttempt.failure(e);
           }
         },
-        rejected: (attempt) => attempt.error?.code == 'sudo_rejected',
+        rejected: (attempt) => attempt.error is SudoRejected,
       );
       if (result?.disks case final disks?) {
         if (mounted) {
@@ -770,7 +770,7 @@ extension on _StoragePageState {
       }
     } catch (e, s) {
       Loggers.app.warning('Read storage health on ${widget.args.spi.id}', e, s);
-      if (quiet && e is StorageManagerException && e.code == 'sudo_rejected') {
+      if (quiet && e is SudoRejected) {
         if (mounted) _rebuild(() => _healthLocked = true);
       } else if (!quiet && mounted) {
         Toast.error('$e');
@@ -804,11 +804,13 @@ extension on _StoragePageState {
               passphrase: passphrase,
             );
             return const _ActionAttempt.success();
-          } on StorageManagerException catch (e) {
+          } on StorageFailure catch (e) {
+            return _ActionAttempt.failure(e);
+          } on SudoRejected catch (e) {
             return _ActionAttempt.failure(e);
           }
         },
-        rejected: (attempt) => attempt.error?.code == 'sudo_rejected',
+        rejected: (attempt) => attempt.error is SudoRejected,
       );
       if (result == null) return;
       if (result.error case final error?) {
@@ -825,24 +827,31 @@ extension on _StoragePageState {
     }
   }
 
-  void _showActionError(StorageManagerException error) {
-    final message = switch (error.code) {
-      'inUse' => l10n.storageInUse(error.device ?? ''),
-      'busy' => l10n.storageBusy,
-      'systemMount' => l10n.storageSystemMount,
-      'notMounted' => l10n.storageNotMounted,
-      'mounted' => l10n.storageMountedInside,
-      'notRemovable' => l10n.storageNotRemovable,
-      'notGrowable' => l10n.storageNotGrowable,
-      'overlapping' => l10n.storageOverlapping,
-      'invalidDevice' => l10n.storageInvalidDevice,
-      'invalidMountpoint' => l10n.storageInvalidMountpoint,
-      'invalidName' => l10n.storageInvalidName,
-      'invalidFilesystem' => l10n.storageInvalidFilesystem,
-      'invalidLabel' => l10n.storageInvalidLabel,
-      'invalidLevel' => l10n.storageInvalidLevel,
-      'tooFewDevices' => l10n.storageTooFewDevices,
-      _ => error.detail ?? error.code,
+  void _showActionError(Exception error) {
+    final message = switch (error) {
+      StorageRefused(:final refusal) => switch (refusal.error) {
+        'inUse' => l10n.storageInUse(refusal.device ?? ''),
+        'busy' => l10n.storageBusy,
+        'systemMount' => l10n.storageSystemMount,
+        'notMounted' => l10n.storageNotMounted,
+        'mounted' => l10n.storageMountedInside,
+        'notRemovable' => l10n.storageNotRemovable,
+        'notGrowable' => l10n.storageNotGrowable,
+        'overlapping' => l10n.storageOverlapping,
+        final code => code,
+      },
+      StorageInvalid(:final error) => switch (error) {
+        StorageError.invalidDevice => l10n.storageInvalidDevice,
+        StorageError.invalidMountpoint => l10n.storageInvalidMountpoint,
+        StorageError.invalidName => l10n.storageInvalidName,
+        StorageError.invalidFilesystem => l10n.storageInvalidFilesystem,
+        StorageError.invalidLabel => l10n.storageInvalidLabel,
+        StorageError.invalidLevel => l10n.storageInvalidLevel,
+        StorageError.tooFewDevices => l10n.storageTooFewDevices,
+        StorageError.keyRequired => l10n.storageKeyRequired,
+        StorageError.invalidPassphrase => l10n.storageInvalidPassphrase,
+      },
+      _ => '$error',
     };
     Toast.error(message);
   }
@@ -952,12 +961,7 @@ extension on _StoragePageState {
       return;
     }
     await _runAction(
-      StorageAction.format(
-        device.path,
-        fs,
-        label: label.trim().isEmpty ? null : label.trim(),
-        encrypt: encrypt,
-      ),
+      StorageAction.format(device: device.path, fstype: fs, label: label.trim().isEmpty ? null : label.trim(), encrypt: encrypt),
       l10n.storageFormat,
       l10n.storageFormatBody(device.path),
       confirmWord: device.path,
@@ -998,7 +1002,7 @@ extension on _StoragePageState {
     _disposeAfterExit([controller]);
     if (ok != true || !mounted) return;
     await _runAction(
-      StorageAction.mount(device.path, mountpoint, persist: persist, own: own),
+      StorageAction.mount(device: device.path, mountpoint: mountpoint, persist: persist, own: own),
       l10n.storageMount,
       l10n.storageMountBody(device.path, mountpoint),
     );
@@ -1019,7 +1023,7 @@ extension on _StoragePageState {
     _disposeAfterExit([controller]);
     if (ok != true || !mounted) return;
     await _runAction(
-      StorageAction.unlock(device.path),
+      StorageAction.unlock(device: device.path),
       l10n.storageUnlock,
       l10n.storageUnlockBody(device.path),
       passphrase: passphrase,
@@ -1032,7 +1036,7 @@ extension on _StoragePageState {
     final draft = await _createDraft(raid: true);
     if (draft == null || !mounted) return;
     await _runAction(
-      StorageAction.createRaid(draft.name, int.parse(draft.layout), draft.devices),
+      StorageAction.createRaid(name: draft.name, level: int.parse(draft.layout), devices: draft.devices),
       l10n.storageCreateRaid,
       l10n.storageCreateRaidBody(draft.devices.join(', '), draft.layout, draft.name),
       confirmWord: draft.name,
@@ -1043,7 +1047,7 @@ extension on _StoragePageState {
     final draft = await _createDraft(raid: false);
     if (draft == null || !mounted) return;
     await _runAction(
-      StorageAction.createPool(draft.name, draft.layout, draft.devices),
+      StorageAction.createPool(name: draft.name, layout: draft.layout, devices: draft.devices),
       l10n.storageCreatePool,
       l10n.storageCreatePoolBody(draft.devices.join(', '), draft.layout, draft.name),
       confirmWord: draft.name,
@@ -1058,7 +1062,9 @@ extension on _StoragePageState {
     if (view == null) return null;
     final free = _free(view);
     final name = TextEditingController(text: raid ? view.nextMd : poolName ?? 'tank');
-    final choices = raid ? view.raidLevels : view.poolLayouts;
+    final choices = raid
+        ? [for (final c in view.raidLevels) (value: '${c.value}', minimum: c.minimum)]
+        : [for (final c in view.poolLayouts) (value: c.value, minimum: c.minimum)];
     int minimum(String value) =>
         choices.firstWhereOrNull((choice) => choice.value == value)?.minimum ?? 1;
     var layout = raid ? '1' : 'mirror';
@@ -1077,7 +1083,7 @@ extension on _StoragePageState {
                 initialValue: layout,
                 decoration: InputDecoration(labelText: raid ? l10n.storageLevel : l10n.storageLayout),
                 items: [
-                  for (final StorageChoice(:value) in choices)
+                  for (final (:value, minimum: _) in choices)
                     DropdownMenuItem(value: value, child: Text(raid ? 'RAID $value' : value)),
                 ],
                 onChanged: (value) => setDialogState(() {
@@ -1162,8 +1168,8 @@ extension on _StoragePageState {
     if (path == null || !mounted) return;
     await _runAction(
       grow
-          ? StorageAction.growRaid(array.name, path)
-          : StorageAction.addToRaid(array.name, path),
+          ? StorageAction.growRaid(array: array.name, device: path)
+          : StorageAction.addToRaid(array: array.name, device: path),
       grow ? l10n.storageGrowRaid : l10n.storageAddMember,
       grow
           ? l10n.storageGrowRaidBody(array.name, path)
@@ -1172,44 +1178,44 @@ extension on _StoragePageState {
     );
   }
 
-  Future<void> _pickPoolDevice(StoragePool pool) async {
+  Future<void> _pickPoolDevice(Pool pool) async {
     final path = await _chooseDevice(l10n.storageAddSpare, pool.name);
     if (path == null || !mounted) return;
     await _runAction(
-      StorageAction.addSpare(pool.name, [path]),
+      StorageAction.addSpare(name: pool.name, devices: [path]),
       l10n.storageAddSpare,
       l10n.storageAddSpareBody(path, pool.name),
       confirmWord: path,
     );
   }
 
-  Future<void> _createPoolVdev(StoragePool pool) async {
+  Future<void> _createPoolVdev(Pool pool) async {
     final draft = await _createDraft(raid: false, poolName: pool.name);
     if (draft == null || !mounted) return;
     await _runAction(
-      StorageAction.addToPool(pool.name, draft.layout, draft.devices),
+      StorageAction.addToPool(name: pool.name, layout: draft.layout, devices: draft.devices),
       l10n.storageAddToPool,
       l10n.storageAddToPoolBody(draft.devices.join(', '), draft.layout, pool.name),
       confirmWord: pool.name,
     );
   }
 
-  Future<void> _pickReplacement(StoragePool pool, String old) async {
+  Future<void> _pickReplacement(Pool pool, String old) async {
     final path = await _chooseDevice(l10n.storageReplace, old);
     if (path == null || !mounted) return;
     await _runAction(
-      StorageAction.replaceInPool(pool.name, old, path),
+      StorageAction.replaceInPool(name: pool.name, old: old, new_: path),
       l10n.storageReplace,
       l10n.storageReplaceBody(pool.name, old, path),
       confirmWord: path,
     );
   }
 
-  Future<void> _pickAttach(StoragePool pool, String existing) async {
+  Future<void> _pickAttach(Pool pool, String existing) async {
     final path = await _chooseDevice(l10n.storageAttach, existing);
     if (path == null || !mounted) return;
     await _runAction(
-      StorageAction.attachToPool(pool.name, existing, path),
+      StorageAction.attachToPool(name: pool.name, existing: existing, new_: path),
       l10n.storageAttach,
       l10n.storageAttachBody(existing, path),
       confirmWord: path,
@@ -1231,7 +1237,7 @@ extension on _StoragePageState {
                 dense: true,
                 title: Text('${attribute.id ?? ''} ${attribute.name}'),
                 subtitle: Text(
-                  '${l10n.storageAttrValue}: ${attribute.value ?? '–'} · ${l10n.storageAttrWorst}: ${attribute.worst ?? '–'} · ${l10n.storageAttrThresh}: ${attribute.threshold ?? '–'}',
+                  '${l10n.storageAttrValue}: ${attribute.value ?? '–'} · ${l10n.storageAttrWorst}: ${attribute.worst ?? '–'} · ${l10n.storageAttrThresh}: ${attribute.thresh ?? '–'}',
                 ),
                 trailing: Text(attribute.raw),
               ),
@@ -1248,7 +1254,7 @@ extension on _StoragePageState {
           onTap: () {
             context.popDialog();
             unawaited(_runAction(
-              StorageAction.smartTest(health.device, long: true),
+              StorageAction.smartTest(device: health.device, long: true),
               l10n.storageLongTest,
               l10n.storageSmartLongTestBody(health.device),
             ));
@@ -1265,14 +1271,14 @@ final class _HealthAttempt {
   const _HealthAttempt.failure(this.error) : disks = null;
 
   final List<DiskHealth>? disks;
-  final StorageManagerException? error;
+  final Exception? error;
 }
 
 final class _ActionAttempt {
   const _ActionAttempt.success() : error = null;
   const _ActionAttempt.failure(this.error);
 
-  final StorageManagerException? error;
+  final Exception? error;
 }
 
 final class _CreateDraft {

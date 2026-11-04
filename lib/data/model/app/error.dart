@@ -9,10 +9,11 @@ import 'package:server_box/src/rust/api/bmc.dart' show CertInfo;
 // - An `Err<Type>` here when the user is told what to do about it: a
 //   connection, a transport or a server's own refusal, whose `solution` is the
 //   advice. One enum per subsystem, matched by type, never by message.
-// - Otherwise a typed `Exception` beside the service that throws it
-//   (`SharesManagerException`, `CronManagerException`, ...), its `toString`
-//   already the user's words, and any code it carries an FFI error code as
-//   `sbm_parser` names it.
+// - Otherwise a typed `Exception` beside the service that throws it — a sealed
+//   family where there are several reasons (`SharesFailure`, `StorageFailure`),
+//   its `toString` already the user's words. A refusal from `sbm_parser` is its
+//   own FRB enum (`ShareError`, `UserError`), matched by case, never a string
+//   code. Sudo refusing the password is `SudoRejected`.
 // - `StateError` and `ArgumentError` only for a programming error: never shown
 //   as a message, never caught to decide anything. A bare `Exception('...')`
 //   or a thrown `String` is neither, and is not used.

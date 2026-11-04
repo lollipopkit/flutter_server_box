@@ -1,6 +1,5 @@
-import 'dart:convert';
-
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:server_box/src/rust/api/bench.dart' as ffi;
 
 part 'yabs_options.freezed.dart';
 part 'yabs_options.g.dart';
@@ -108,14 +107,19 @@ abstract class YabsOptions with _$YabsOptions {
 
   /// The options as `sbm_parser::bench::BenchOptions`, which builds every
   /// command a run is driven by (`src/rust/api/bench.dart`).
-  String get rustJson => jsonEncode({
-    'disk': disk,
-    'network': network,
-    'reduced_network': reducedNetwork,
-    'cpu': cpu,
-    'geekbench_version': geekbenchVersion.name,
-    'ip_info': ipInfo,
-    'prefer_precompiled_binaries': preferPrecompiledBinaries,
-    'work_dir': workDir,
-  });
+  ffi.BenchOptions get rust => ffi.BenchOptions(
+    disk: disk,
+    network: network,
+    reducedNetwork: reducedNetwork,
+    cpu: cpu,
+    geekbenchVersion: switch (geekbenchVersion) {
+      GeekbenchVersion.v4 => ffi.GeekbenchVersion.v4,
+      GeekbenchVersion.v5 => ffi.GeekbenchVersion.v5,
+      GeekbenchVersion.v6 => ffi.GeekbenchVersion.v6,
+      GeekbenchVersion.v7 => ffi.GeekbenchVersion.v7,
+    },
+    ipInfo: ipInfo,
+    preferPrecompiledBinaries: preferPrecompiledBinaries,
+    workDir: workDir,
+  );
 }

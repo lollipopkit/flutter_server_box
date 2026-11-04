@@ -3013,6 +3013,9 @@ class AppLocalizationsFa extends AppLocalizations {
       'میزبان مقصد نمی‌تواند شامل فاصله یا شکستگی خط باشد.';
 
   @override
+  String get remoteDesktopProtocolInvalid => 'Unsupported protocol.';
+
+  @override
   String get remoteDesktopCredentialInvalid =>
       'نام کاربری و دامنه می‌توانند حداکثر تا ۲۵۶ نویسه باشند و نباید شامل شکستگی خط باشند.';
 
@@ -6271,8 +6274,7 @@ class AppLocalizationsFa extends AppLocalizations {
       'At least 8 characters. Without it the data cannot be read: keep it safe.';
 
   @override
-  String get storageInvalidPassphrase =>
-      'The passphrase must be 8 to 512 characters, on one line.';
+  String get storageInvalidPassphrase => 'This passphrase cannot be used.';
 
   @override
   String get storagePassphrasesDiffer => 'The two passphrases differ.';
@@ -6422,6 +6424,9 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get storageTooFewDevices => 'Not enough valid devices were selected.';
+
+  @override
+  String get storageKeyRequired => 'A passphrase is required.';
 
   @override
   String get storageExpand => 'Expand';

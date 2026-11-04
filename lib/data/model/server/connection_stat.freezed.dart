@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ConnectionStat {
 
-@HiveField(0) String get serverId;@HiveField(1) String get serverName;@HiveField(2) DateTime get timestamp;@HiveField(3) ConnectionResult get result;@HiveField(4) String get errorMessage;@HiveField(5) int get durationMs;
+ String get serverId; String get serverName; DateTime get timestamp; ConnectionResult get result; String get errorMessage; int get durationMs;
 /// Create a copy of ConnectionStat
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -48,7 +48,7 @@ abstract mixin class $ConnectionStatCopyWith<$Res>  {
   factory $ConnectionStatCopyWith(ConnectionStat value, $Res Function(ConnectionStat) _then) = _$ConnectionStatCopyWithImpl;
 @useResult
 $Res call({
-@HiveField(0) String serverId,@HiveField(1) String serverName,@HiveField(2) DateTime timestamp,@HiveField(3) ConnectionResult result,@HiveField(4) String errorMessage,@HiveField(5) int durationMs
+ String serverId, String serverName, DateTime timestamp, ConnectionResult result, String errorMessage, int durationMs
 });
 
 
@@ -158,7 +158,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@HiveField(0)  String serverId, @HiveField(1)  String serverName, @HiveField(2)  DateTime timestamp, @HiveField(3)  ConnectionResult result, @HiveField(4)  String errorMessage, @HiveField(5)  int durationMs)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String serverId,  String serverName,  DateTime timestamp,  ConnectionResult result,  String errorMessage,  int durationMs)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ConnectionStat() when $default != null:
 return $default(_that.serverId,_that.serverName,_that.timestamp,_that.result,_that.errorMessage,_that.durationMs);case _:
@@ -179,7 +179,7 @@ return $default(_that.serverId,_that.serverName,_that.timestamp,_that.result,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@HiveField(0)  String serverId, @HiveField(1)  String serverName, @HiveField(2)  DateTime timestamp, @HiveField(3)  ConnectionResult result, @HiveField(4)  String errorMessage, @HiveField(5)  int durationMs)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String serverId,  String serverName,  DateTime timestamp,  ConnectionResult result,  String errorMessage,  int durationMs)  $default,) {final _that = this;
 switch (_that) {
 case _ConnectionStat():
 return $default(_that.serverId,_that.serverName,_that.timestamp,_that.result,_that.errorMessage,_that.durationMs);case _:
@@ -199,7 +199,7 @@ return $default(_that.serverId,_that.serverName,_that.timestamp,_that.result,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@HiveField(0)  String serverId, @HiveField(1)  String serverName, @HiveField(2)  DateTime timestamp, @HiveField(3)  ConnectionResult result, @HiveField(4)  String errorMessage, @HiveField(5)  int durationMs)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String serverId,  String serverName,  DateTime timestamp,  ConnectionResult result,  String errorMessage,  int durationMs)?  $default,) {final _that = this;
 switch (_that) {
 case _ConnectionStat() when $default != null:
 return $default(_that.serverId,_that.serverName,_that.timestamp,_that.result,_that.errorMessage,_that.durationMs);case _:
@@ -214,15 +214,15 @@ return $default(_that.serverId,_that.serverName,_that.timestamp,_that.result,_th
 @JsonSerializable()
 
 class _ConnectionStat implements ConnectionStat {
-  const _ConnectionStat({@HiveField(0) required this.serverId, @HiveField(1) required this.serverName, @HiveField(2) required this.timestamp, @HiveField(3) required this.result, @HiveField(4) this.errorMessage = '', @HiveField(5) required this.durationMs});
+  const _ConnectionStat({required this.serverId, required this.serverName, required this.timestamp, required this.result, this.errorMessage = '', required this.durationMs});
   factory _ConnectionStat.fromJson(Map<String, dynamic> json) => _$ConnectionStatFromJson(json);
 
-@override@HiveField(0) final  String serverId;
-@override@HiveField(1) final  String serverName;
-@override@HiveField(2) final  DateTime timestamp;
-@override@HiveField(3) final  ConnectionResult result;
-@override@JsonKey()@HiveField(4) final  String errorMessage;
-@override@HiveField(5) final  int durationMs;
+@override final  String serverId;
+@override final  String serverName;
+@override final  DateTime timestamp;
+@override final  ConnectionResult result;
+@override@JsonKey() final  String errorMessage;
+@override final  int durationMs;
 
 /// Create a copy of ConnectionStat
 /// with the given fields replaced by the non-null parameter values.
@@ -257,7 +257,7 @@ abstract mixin class _$ConnectionStatCopyWith<$Res> implements $ConnectionStatCo
   factory _$ConnectionStatCopyWith(_ConnectionStat value, $Res Function(_ConnectionStat) _then) = __$ConnectionStatCopyWithImpl;
 @override @useResult
 $Res call({
-@HiveField(0) String serverId,@HiveField(1) String serverName,@HiveField(2) DateTime timestamp,@HiveField(3) ConnectionResult result,@HiveField(4) String errorMessage,@HiveField(5) int durationMs
+ String serverId, String serverName, DateTime timestamp, ConnectionResult result, String errorMessage, int durationMs
 });
 
 
@@ -293,7 +293,7 @@ as int,
 /// @nodoc
 mixin _$ServerConnectionStats {
 
-@HiveField(0) String get serverId;@HiveField(1) String get serverName;@HiveField(2) int get totalAttempts;@HiveField(3) int get successCount;@HiveField(4) int get failureCount;@HiveField(5) DateTime? get lastSuccessTime;@HiveField(6) DateTime? get lastFailureTime;@HiveField(7) List<ConnectionStat> get recentConnections;@HiveField(8) double get successRate;
+ String get serverId; String get serverName; int get totalAttempts; int get successCount; int get failureCount; DateTime? get lastSuccessTime; DateTime? get lastFailureTime; List<ConnectionStat> get recentConnections; double get successRate;
 /// Create a copy of ServerConnectionStats
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -326,7 +326,7 @@ abstract mixin class $ServerConnectionStatsCopyWith<$Res>  {
   factory $ServerConnectionStatsCopyWith(ServerConnectionStats value, $Res Function(ServerConnectionStats) _then) = _$ServerConnectionStatsCopyWithImpl;
 @useResult
 $Res call({
-@HiveField(0) String serverId,@HiveField(1) String serverName,@HiveField(2) int totalAttempts,@HiveField(3) int successCount,@HiveField(4) int failureCount,@HiveField(5) DateTime? lastSuccessTime,@HiveField(6) DateTime? lastFailureTime,@HiveField(7) List<ConnectionStat> recentConnections,@HiveField(8) double successRate
+ String serverId, String serverName, int totalAttempts, int successCount, int failureCount, DateTime? lastSuccessTime, DateTime? lastFailureTime, List<ConnectionStat> recentConnections, double successRate
 });
 
 
@@ -439,7 +439,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@HiveField(0)  String serverId, @HiveField(1)  String serverName, @HiveField(2)  int totalAttempts, @HiveField(3)  int successCount, @HiveField(4)  int failureCount, @HiveField(5)  DateTime? lastSuccessTime, @HiveField(6)  DateTime? lastFailureTime, @HiveField(7)  List<ConnectionStat> recentConnections, @HiveField(8)  double successRate)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String serverId,  String serverName,  int totalAttempts,  int successCount,  int failureCount,  DateTime? lastSuccessTime,  DateTime? lastFailureTime,  List<ConnectionStat> recentConnections,  double successRate)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ServerConnectionStats() when $default != null:
 return $default(_that.serverId,_that.serverName,_that.totalAttempts,_that.successCount,_that.failureCount,_that.lastSuccessTime,_that.lastFailureTime,_that.recentConnections,_that.successRate);case _:
@@ -460,7 +460,7 @@ return $default(_that.serverId,_that.serverName,_that.totalAttempts,_that.succes
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@HiveField(0)  String serverId, @HiveField(1)  String serverName, @HiveField(2)  int totalAttempts, @HiveField(3)  int successCount, @HiveField(4)  int failureCount, @HiveField(5)  DateTime? lastSuccessTime, @HiveField(6)  DateTime? lastFailureTime, @HiveField(7)  List<ConnectionStat> recentConnections, @HiveField(8)  double successRate)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String serverId,  String serverName,  int totalAttempts,  int successCount,  int failureCount,  DateTime? lastSuccessTime,  DateTime? lastFailureTime,  List<ConnectionStat> recentConnections,  double successRate)  $default,) {final _that = this;
 switch (_that) {
 case _ServerConnectionStats():
 return $default(_that.serverId,_that.serverName,_that.totalAttempts,_that.successCount,_that.failureCount,_that.lastSuccessTime,_that.lastFailureTime,_that.recentConnections,_that.successRate);case _:
@@ -480,7 +480,7 @@ return $default(_that.serverId,_that.serverName,_that.totalAttempts,_that.succes
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@HiveField(0)  String serverId, @HiveField(1)  String serverName, @HiveField(2)  int totalAttempts, @HiveField(3)  int successCount, @HiveField(4)  int failureCount, @HiveField(5)  DateTime? lastSuccessTime, @HiveField(6)  DateTime? lastFailureTime, @HiveField(7)  List<ConnectionStat> recentConnections, @HiveField(8)  double successRate)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String serverId,  String serverName,  int totalAttempts,  int successCount,  int failureCount,  DateTime? lastSuccessTime,  DateTime? lastFailureTime,  List<ConnectionStat> recentConnections,  double successRate)?  $default,) {final _that = this;
 switch (_that) {
 case _ServerConnectionStats() when $default != null:
 return $default(_that.serverId,_that.serverName,_that.totalAttempts,_that.successCount,_that.failureCount,_that.lastSuccessTime,_that.lastFailureTime,_that.recentConnections,_that.successRate);case _:
@@ -495,24 +495,24 @@ return $default(_that.serverId,_that.serverName,_that.totalAttempts,_that.succes
 @JsonSerializable()
 
 class _ServerConnectionStats implements ServerConnectionStats {
-  const _ServerConnectionStats({@HiveField(0) required this.serverId, @HiveField(1) required this.serverName, @HiveField(2) required this.totalAttempts, @HiveField(3) required this.successCount, @HiveField(4) required this.failureCount, @HiveField(5) this.lastSuccessTime = null, @HiveField(6) this.lastFailureTime = null, @HiveField(7) final  List<ConnectionStat> recentConnections = const [], @HiveField(8) required this.successRate}): _recentConnections = recentConnections;
+  const _ServerConnectionStats({required this.serverId, required this.serverName, required this.totalAttempts, required this.successCount, required this.failureCount, this.lastSuccessTime = null, this.lastFailureTime = null, final  List<ConnectionStat> recentConnections = const [], required this.successRate}): _recentConnections = recentConnections;
   factory _ServerConnectionStats.fromJson(Map<String, dynamic> json) => _$ServerConnectionStatsFromJson(json);
 
-@override@HiveField(0) final  String serverId;
-@override@HiveField(1) final  String serverName;
-@override@HiveField(2) final  int totalAttempts;
-@override@HiveField(3) final  int successCount;
-@override@HiveField(4) final  int failureCount;
-@override@JsonKey()@HiveField(5) final  DateTime? lastSuccessTime;
-@override@JsonKey()@HiveField(6) final  DateTime? lastFailureTime;
+@override final  String serverId;
+@override final  String serverName;
+@override final  int totalAttempts;
+@override final  int successCount;
+@override final  int failureCount;
+@override@JsonKey() final  DateTime? lastSuccessTime;
+@override@JsonKey() final  DateTime? lastFailureTime;
  final  List<ConnectionStat> _recentConnections;
-@override@JsonKey()@HiveField(7) List<ConnectionStat> get recentConnections {
+@override@JsonKey() List<ConnectionStat> get recentConnections {
   if (_recentConnections is EqualUnmodifiableListView) return _recentConnections;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_recentConnections);
 }
 
-@override@HiveField(8) final  double successRate;
+@override final  double successRate;
 
 /// Create a copy of ServerConnectionStats
 /// with the given fields replaced by the non-null parameter values.
@@ -547,7 +547,7 @@ abstract mixin class _$ServerConnectionStatsCopyWith<$Res> implements $ServerCon
   factory _$ServerConnectionStatsCopyWith(_ServerConnectionStats value, $Res Function(_ServerConnectionStats) _then) = __$ServerConnectionStatsCopyWithImpl;
 @override @useResult
 $Res call({
-@HiveField(0) String serverId,@HiveField(1) String serverName,@HiveField(2) int totalAttempts,@HiveField(3) int successCount,@HiveField(4) int failureCount,@HiveField(5) DateTime? lastSuccessTime,@HiveField(6) DateTime? lastFailureTime,@HiveField(7) List<ConnectionStat> recentConnections,@HiveField(8) double successRate
+ String serverId, String serverName, int totalAttempts, int successCount, int failureCount, DateTime? lastSuccessTime, DateTime? lastFailureTime, List<ConnectionStat> recentConnections, double successRate
 });
 
 

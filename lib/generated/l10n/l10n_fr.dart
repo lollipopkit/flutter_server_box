@@ -3052,6 +3052,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'L’hôte cible ne peut pas contenir d’espace ni de saut de ligne.';
 
   @override
+  String get remoteDesktopProtocolInvalid => 'Unsupported protocol.';
+
+  @override
   String get remoteDesktopCredentialInvalid =>
       'Le nom d’utilisateur et le domaine peuvent comporter jusqu’à 256 caractères, sans saut de ligne.';
 
@@ -6475,6 +6478,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get storageTooFewDevices => 'Not enough valid devices were selected.';
+
+  @override
+  String get storageKeyRequired => 'A passphrase is required.';
 
   @override
   String get storageExpand => 'Étendre';

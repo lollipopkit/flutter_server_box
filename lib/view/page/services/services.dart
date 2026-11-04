@@ -568,7 +568,7 @@ extension on _ServicesPageState {
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: _nameBlock(unit, attention: attention, fontSize: 14),
             ),
-            type: cell(unit.type.name),
+            type: cell(unit.unitType.name),
             scope: cell(ServiceUi.scopeLabel(unit.scope)),
             startup: cell(
               startup ?? '—',
@@ -898,7 +898,7 @@ extension on _ServicesPageState {
   String _summary(ServiceUnit unit, {required bool withTime}) {
     final startup = unit.startup;
     return {
-      if (unit.type != ServiceUnitType.service) unit.type.name,
+      if (unit.unitType != ServiceUnitType.service) unit.unitType.name,
       if (unit.state == ServiceState.stopped && unit.since != null) 'inactive',
       if (startup != null && startup != 'transient') startup,
       if (unit.scope == ServiceScope.user) ServiceUi.scopeLabel(unit.scope),
