@@ -1,6 +1,6 @@
-// sbm_virt::libvirt through FFI: the same fixtures and expected JSON as
+// sbm_virt::libvirt through FFI: the same fixtures as
 // crates/sbm_virt/tests/libvirt.rs, so the bridge is shown to carry the
-// parsers' output unchanged. Parsing behaviour itself is locked there.
+// parsers' output. Parsing behaviour itself is locked there.
 // Build the native library first: cargo build -p sbm_ffi
 
 import 'dart:convert';
@@ -9,6 +9,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/src/rust/api/script.dart' as script;
 import 'package:server_box/src/rust/api/virt.dart';
+import 'package:server_box/src/rust/api/virt_view.dart';
 
 import '../../helpers/rust_lib_helper.dart';
 
@@ -24,7 +25,7 @@ String _section(String key, String body, [int rc = 0]) =>
 void main() {
   setUpAll(initRustLibForTest);
 
-  test('overview fixture parses to the expected JSON', () async {
+  test('overview fixture crosses as the view the parser made', () {
     final raw = [
       _section('virt.version', _fixture('version_libvirt11.txt')),
       _section('virt.list', _fixture('list_uuid_name.txt')),
@@ -32,18 +33,20 @@ void main() {
       _section('virt.persistent', _fixture('list_persistent.txt')),
       _section('virt.stats', _fixture('domstats.txt')),
     ].join();
-    final json = jsonDecode(await parseVirtOverviewJson(raw: raw));
-    expect(json, jsonDecode(_fixture('overview.expected.json')));
-    final odd = (json['domains'] as List).last as Map<String, dynamic>;
-    expect(odd['name'], 'it\'s-"odd"');
-    expect(odd['state'], 'stopped');
-    expect(odd['reason'], 'failed');
+    final view = LibvirtRates().view(raw: raw, atMs: 0, upload: false);
+    final expected = jsonDecode(_fixture('overview.expected.json')) as Map<String, dynamic>;
+    final domains = (expected['domains'] as List).cast<Map<String, dynamic>>();
+    expect([for (final g in view.guests) g.name], [for (final d in domains) d['name']]);
+    final odd = view.guests.last;
+    expect(odd.name, 'it\'s-"odd"');
+    expect(odd.state, GuestState.stopped);
+    expect(odd.stateReason, 'failed');
   });
 
   test('permission error crosses as a typed exception', () async {
     final raw = _section('virt.version', _fixture('error_permission.txt'), 1);
     await expectLater(
-      parseVirtProbeJson(raw: raw),
+      virtLibvirtProbe(raw: raw),
       throwsA(
         isA<VirtFfiError>()
             .having((e) => e.kind, 'kind', VirtErrorKind.permissionDenied)

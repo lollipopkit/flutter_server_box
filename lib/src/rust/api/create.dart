@@ -6,72 +6,74 @@
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
 import 'package:server_box/src/rust/api/pve.dart';
+import 'package:server_box/src/rust/api/virt_libvirt.dart';
+import 'package:server_box/src/rust/api/virt_model.dart';
+import 'package:server_box/src/rust/api/virt_view.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `host`, `ids`, `issue_name`, `kind`, `read_opt`, `read`, `write`
+// These functions are ignored because they are not marked as `pub`: `guests_of`, `host`, `ids`, `kind`
 
-/// Why `spec_json` (a `CreateSpec`) cannot be created, as an `Issue`'s
-/// name; None when it can. The lists are the host's; `media_json` and
-/// `image_json` the volumes the spec names, as their pools list them (None
-/// where they do not); `options_json` what the host offers a new VM.
-String? virtCreateIssue({
-  required String specJson,
+/// Why `spec` cannot be created, or None when it can. The lists are the
+/// host's; `media` and `image` the volumes the spec names, as their pools
+/// list them (None where they do not); `options` what the host offers a new
+/// VM.
+CreateIssue? virtCreateIssue({
+  required CreateSpec spec,
   required bool pve,
-  required String guestsJson,
-  required String nodesJson,
-  required String poolsJson,
-  required String networksJson,
-  String? mediaJson,
-  String? imageJson,
-  required String optionsJson,
+  required List<VirtGuestReport> guests,
+  required List<Node> nodes,
+  required List<ResourcePool> pools,
+  required List<Network> networks,
+  Volume? media,
+  Volume? image,
+  required CreateOptions options,
 }) => RustLib.instance.api.crateApiCreateVirtCreateIssue(
-  specJson: specJson,
+  spec: spec,
   pve: pve,
-  guestsJson: guestsJson,
-  nodesJson: nodesJson,
-  poolsJson: poolsJson,
-  networksJson: networksJson,
-  mediaJson: mediaJson,
-  imageJson: imageJson,
-  optionsJson: optionsJson,
+  guests: guests,
+  nodes: nodes,
+  pools: pools,
+  networks: networks,
+  media: media,
+  image: image,
+  options: options,
 );
 
-/// Why `ci_json` (a `CloudInit`) cannot be written, as an `Issue`'s name;
-/// None when it can. `keeps_password`: the account has a password already,
-/// which stays.
-String? virtCloudInitIssue({
-  required String ciJson,
+/// Why `ci` cannot be written, or None when it can. `keeps_password`: the
+/// account has a password already, which stays.
+CreateIssue? virtCloudInitIssue({
+  required CloudInit ci,
   required bool pve,
   required bool keepsPassword,
 }) => RustLib.instance.api.crateApiCreateVirtCloudInitIssue(
-  ciJson: ciJson,
+  ci: ci,
   pve: pve,
   keepsPassword: keepsPassword,
 );
 
-/// Why a clone cannot go to `storage` on `target_node`, as an `Issue`'s
-/// name; `storages_json` are the source node's pools.
-String? virtCloneStorageIssue({
-  required String storagesJson,
+/// Why a clone cannot go to `storage` on `target_node`; `storages` are the
+/// source node's pools.
+CreateIssue? virtCloneStorageIssue({
+  required List<ResourcePool> storages,
   String? storage,
   required bool full,
   required bool lxc,
   String? targetNode,
 }) => RustLib.instance.api.crateApiCreateVirtCloneStorageIssue(
-  storagesJson: storagesJson,
+  storages: storages,
   storage: storage,
   full: full,
   lxc: lxc,
   targetNode: targetNode,
 );
 
-/// Why `target_node` cannot be a clone's node, as an `Issue`'s name.
-String? virtCloneNodeIssue({
-  required String nodesJson,
+/// Why `target_node` cannot be a clone's node.
+CreateIssue? virtCloneNodeIssue({
+  required List<Node> nodes,
   String? targetNode,
   String? sourceNode,
 }) => RustLib.instance.api.crateApiCreateVirtCloneNodeIssue(
-  nodesJson: nodesJson,
+  nodes: nodes,
   targetNode: targetNode,
   sourceNode: sourceNode,
 );
@@ -82,12 +84,12 @@ bool virtGuestNameOk({required String name, required bool pve}) =>
 
 /// The ids of the pools a new guest's disk can go in.
 List<String> virtDiskStorages({
-  required String poolsJson,
+  required List<ResourcePool> pools,
   required bool pve,
   required bool lxc,
   String? node,
 }) => RustLib.instance.api.crateApiCreateVirtDiskStorages(
-  poolsJson: poolsJson,
+  pools: pools,
   pve: pve,
   lxc: lxc,
   node: node,
@@ -96,12 +98,12 @@ List<String> virtDiskStorages({
 /// The ids of the pools install media (a VM) or templates (a container)
 /// are found in.
 List<String> virtMediaStorages({
-  required String poolsJson,
+  required List<ResourcePool> pools,
   required bool pve,
   required bool lxc,
   String? node,
 }) => RustLib.instance.api.crateApiCreateVirtMediaStorages(
-  poolsJson: poolsJson,
+  pools: pools,
   pve: pve,
   lxc: lxc,
   node: node,
@@ -109,183 +111,171 @@ List<String> virtMediaStorages({
 
 /// The ids of the pools cloud images are found in.
 List<String> virtImageStorages({
-  required String poolsJson,
+  required List<ResourcePool> pools,
   required bool pve,
   String? node,
 }) => RustLib.instance.api.crateApiCreateVirtImageStorages(
-  poolsJson: poolsJson,
+  pools: pools,
   pve: pve,
   node: node,
 );
 
 /// The ids of the networks a new guest's NIC can be on.
 List<String> virtCreateNetworks({
-  required String networksJson,
+  required List<Network> networks,
   required bool pve,
   String? node,
 }) => RustLib.instance.api.crateApiCreateVirtCreateNetworks(
-  networksJson: networksJson,
+  networks: networks,
   pve: pve,
   node: node,
 );
 
-/// Whether `volume_json` is install media (a VM) or a template (a
-/// container).
-bool virtIsMedia({required String volumeJson, required bool lxc}) => RustLib
+/// Whether `volume` is install media (a VM) or a template (a container).
+bool virtIsMedia({required Volume volume, required bool lxc}) =>
+    RustLib.instance.api.crateApiCreateVirtIsMedia(volume: volume, lxc: lxc);
+
+/// Whether `volume` is a disk image a new VM can be a copy of.
+bool virtIsCloudImage({required Volume volume, required bool pve}) => RustLib
     .instance
     .api
-    .crateApiCreateVirtIsMedia(volumeJson: volumeJson, lxc: lxc);
-
-/// Whether `volume_json` is a disk image a new VM can be a copy of.
-bool virtIsCloudImage({required String volumeJson, required bool pve}) =>
-    RustLib.instance.api.crateApiCreateVirtIsCloudImage(
-      volumeJson: volumeJson,
-      pve: pve,
-    );
+    .crateApiCreateVirtIsCloudImage(volume: volume, pve: pve);
 
 /// The image format a libvirt pool of `pool_type` takes.
 String virtLibvirtDiskFormat({required String poolType}) => RustLib.instance.api
     .crateApiCreateVirtLibvirtDiskFormat(poolType: poolType);
 
-/// What a new domain can be given, `CreateOptions` JSON, from
-/// [`super::virt::parse_virt_create_host_json`]'s host and
-/// [`super::virt::parse_virt_firmware_json`]'s descriptors.
-String virtLibvirtCreateOptions({
-  required String hostJson,
-  required String firmwareJson,
+/// What a new domain can be given, from the host's read and its firmware
+/// descriptors.
+CreateOptions virtLibvirtCreateOptions({
+  required VirtCreateHost host,
+  required List<FirmwareDescriptor> firmware,
 }) => RustLib.instance.api.crateApiCreateVirtLibvirtCreateOptions(
-  hostJson: hostJson,
-  firmwareJson: firmwareJson,
+  host: host,
+  firmware: firmware,
 );
 
-/// `spec_json` as the scripts' `VirtCreateSpec` JSON, checked first: what
+/// `spec` as the scripts' spec, checked first: what
 /// [`super::virt::virt_create_volume_script`] makes the disk and seed from.
 /// A cloud-init password leaves as its SHA-512 crypt hash only.
 /// `seed_tools` narrows the ISO tools tried (the end-to-end tests).
-String virtLibvirtCreateSpec({
-  required String specJson,
-  required String hostJson,
-  required String firmwareJson,
-  required String guestsJson,
-  required String poolsJson,
-  required String networksJson,
-  String? mediaJson,
-  String? imageJson,
+VirtCreateSpec virtLibvirtCreateSpec({
+  required CreateSpec spec,
+  required VirtCreateHost host,
+  required List<FirmwareDescriptor> firmware,
+  required List<VirtGuestReport> guests,
+  required List<ResourcePool> pools,
+  required List<Network> networks,
+  Volume? media,
+  Volume? image,
   List<String>? seedTools,
 }) => RustLib.instance.api.crateApiCreateVirtLibvirtCreateSpec(
-  specJson: specJson,
-  hostJson: hostJson,
-  firmwareJson: firmwareJson,
-  guestsJson: guestsJson,
-  poolsJson: poolsJson,
-  networksJson: networksJson,
-  mediaJson: mediaJson,
-  imageJson: imageJson,
+  spec: spec,
+  host: host,
+  firmware: firmware,
+  guests: guests,
+  pools: pools,
+  networks: networks,
+  media: media,
+  image: image,
   seedTools: seedTools,
 );
 
-/// `spec_json` (a `VirtCreateSpec`) on the paths
-/// [`super::virt::parse_virt_create_volumes_json`] read (`made_json`): what
+/// `spec` on the paths the volume step made: what
 /// [`super::virt::virt_define_script`] defines the domain from.
-String virtLibvirtWithVolumes({
-  required String specJson,
-  required String madeJson,
+VirtCreateSpec virtLibvirtWithVolumes({
+  required VirtCreateSpec spec,
+  required VirtCreateVolumes made,
 }) => RustLib.instance.api.crateApiCreateVirtLibvirtWithVolumes(
-  specJson: specJson,
-  madeJson: madeJson,
+  spec: spec,
+  made: made,
 );
 
-/// What creating came to, `Created` JSON, from the spec, the volumes made
-/// and [`super::virt::parse_virt_create_json`]'s answer.
-String virtLibvirtCreated({
-  required String specJson,
-  required String madeJson,
-  required String createdJson,
+/// What creating came to, from the spec, the volumes made and the define
+/// step's answer.
+Created virtLibvirtCreated({
+  required VirtCreateSpec spec,
+  required VirtCreateVolumes made,
+  required VirtCreated created,
 }) => RustLib.instance.api.crateApiCreateVirtLibvirtCreated(
-  specJson: specJson,
-  madeJson: madeJson,
-  createdJson: createdJson,
+  spec: spec,
+  made: made,
+  created: created,
 );
 
-/// `ci_json` (a `CloudInit`) as the seed's `VirtCloudInit` JSON for the
-/// domain `name`: the password as its hash (or `keep_hash` where none was
-/// typed), a new instance ID, the NIC by `mac`; `extra_networks_json` the
-/// seed's NICs after the first, as read.
-String virtLibvirtCloudInit({
-  required String ciJson,
+/// `ci` as the seed for the domain `name`: the password as its hash (or
+/// `keep_hash` where none was typed), a new instance ID, the NIC by `mac`;
+/// `extra_networks` the seed's NICs after the first, as read.
+VirtCloudInit virtLibvirtCloudInit({
+  required CloudInit ci,
   required String name,
   String? mac,
   String? keepHash,
-  required String extraNetworksJson,
+  required List<VirtCiNetwork> extraNetworks,
   required bool passwordExpire,
 }) => RustLib.instance.api.crateApiCreateVirtLibvirtCloudInit(
-  ciJson: ciJson,
+  ci: ci,
   name: name,
   mac: mac,
   keepHash: keepHash,
-  extraNetworksJson: extraNetworksJson,
+  extraNetworks: extraNetworks,
   passwordExpire: passwordExpire,
 );
 
 /// A MAC in QEMU's range, for a new NIC.
 String virtNewMac() => RustLib.instance.api.crateApiCreateVirtNewMac();
 
-/// Whether deleting with the disks needs the disks' chains read:
-/// `snapshots_json` (the domain's `Snapshot`s) has external ones.
-bool virtLibvirtDeleteNeedsChain({required String snapshotsJson}) => RustLib
+/// Whether deleting with the disks needs the disks' chains read: the
+/// domain's snapshots have external ones.
+bool virtLibvirtDeleteNeedsChain({required List<Snapshot> snapshots}) => RustLib
     .instance
     .api
-    .crateApiCreateVirtLibvirtDeleteNeedsChain(snapshotsJson: snapshotsJson);
+    .crateApiCreateVirtLibvirtDeleteNeedsChain(snapshots: snapshots);
 
-/// What goes with domain `id` (`name`) when its disks do. `detail_json` is
-/// [`super::virt::parse_virt_domain_detail_json`]'s; `storage_json`
-/// [`super::virt::parse_virt_storage_json`]'s; `volumes_json` each active
-/// pool's `Volume`s, `[[pool, [volume, ...]], ...]`; `snapshots_json` the
-/// domain's `Snapshot`s; `chain_raw` the disks' chain script output, where
-/// [`virt_libvirt_delete_needs_chain`] says.
+/// What goes with domain `id` (`name`) when its disks do: from its detail,
+/// the host's storage, each active pool's volumes, its snapshots, and the
+/// disks' chain script output where [`virt_libvirt_delete_needs_chain`] says.
 VirtDeletePlan virtLibvirtDeletePlan({
   required String id,
   required String name,
-  required String detailJson,
-  required String storageJson,
-  required String volumesJson,
-  required String snapshotsJson,
+  required VirtDomainDetail detail,
+  required VirtStorage storage,
+  required List<VirtPoolVolumes> volumes,
+  required List<Snapshot> snapshots,
   String? chainRaw,
 }) => RustLib.instance.api.crateApiCreateVirtLibvirtDeletePlan(
   id: id,
   name: name,
-  detailJson: detailJson,
-  storageJson: storageJson,
-  volumesJson: volumesJson,
-  snapshotsJson: snapshotsJson,
+  detail: detail,
+  storage: storage,
+  volumes: volumes,
+  snapshots: snapshots,
   chainRaw: chainRaw,
 );
 
-/// A copy of `guest_json` as [`super::virt::virt_clone_volumes_script`]'s
-/// `VirtCloneSpec` JSON, checked first. `hardware_json` is
-/// [`super::virt::parse_virt_hardware_json`]'s; `guests_json` the host's;
-/// `storage_json` [`super::virt::parse_virt_storage_json`]'s.
-String virtLibvirtCloneSpec({
-  required String guestJson,
-  required String hardwareJson,
-  required String requestJson,
-  required String guestsJson,
-  required String storageJson,
+/// A copy of `guest` as [`super::virt::virt_clone_volumes_script`]'s spec,
+/// checked first, from its hardware read, the host's guests and storage.
+VirtCloneSpec virtLibvirtCloneSpec({
+  required VirtGuestReport guest,
+  required VirtHardwareInfo hardware,
+  required CloneRequest request,
+  required List<VirtGuestReport> guests,
+  required VirtStorage storage,
 }) => RustLib.instance.api.crateApiCreateVirtLibvirtCloneSpec(
-  guestJson: guestJson,
-  hardwareJson: hardwareJson,
-  requestJson: requestJson,
-  guestsJson: guestsJson,
-  storageJson: storageJson,
+  guest: guest,
+  hardware: hardware,
+  request: request,
+  guests: guests,
+  storage: storage,
 );
 
 /// The copy's disks for [`super::virt::virt_clone_define_script`]: each
-/// target of `spec_json` with the path made for it, `[[target, path], ...]`.
-String virtLibvirtCloneDisks({
-  required String specJson,
+/// target of `spec` with the path made for it.
+List<(String, String)> virtLibvirtCloneDisks({
+  required VirtCloneSpec spec,
   required List<String> paths,
 }) => RustLib.instance.api.crateApiCreateVirtLibvirtCloneDisks(
-  specJson: specJson,
+  spec: spec,
   paths: paths,
 );
 
@@ -324,4 +314,23 @@ class VirtDeletePlan {
           pools == other.pools &&
           files == other.files &&
           kept == other.kept;
+}
+
+/// One active pool's volumes, for [`virt_libvirt_delete_plan`].
+class VirtPoolVolumes {
+  final String pool;
+  final List<Volume> volumes;
+
+  const VirtPoolVolumes({required this.pool, required this.volumes});
+
+  @override
+  int get hashCode => pool.hashCode ^ volumes.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is VirtPoolVolumes &&
+          runtimeType == other.runtimeType &&
+          pool == other.pool &&
+          volumes == other.volumes;
 }

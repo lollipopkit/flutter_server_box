@@ -4,18 +4,16 @@
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
-import 'package:server_box/src/rust/api/bmc.dart';
-import 'package:server_box/src/rust/api/pve.dart';
+import 'package:server_box/src/rust/api/virt_model.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
-/// Why `schedule` cannot be a backup job's, as an `Issue`'s name
-/// (`schedule_invalid`); None when it has the shape of one PVE takes.
-String? virtScheduleIssue({required String schedule}) =>
+/// Why `schedule` cannot be a backup job's; None when it has the shape of
+/// one PVE takes.
+BackupIssue? virtScheduleIssue({required String schedule}) =>
     RustLib.instance.api.crateApiBackupVirtScheduleIssue(schedule: schedule);
 
-/// Whether `job_json` (a `BackupJob`) takes `vmid` and no other guest: the
-/// guest's own plan.
-bool virtBackupJobTakesOnly({required String jobJson, int? vmid}) => RustLib
+/// Whether `job` takes `vmid` and no other guest: the guest's own plan.
+bool virtBackupJobTakesOnly({required BackupJob job, int? vmid}) => RustLib
     .instance
     .api
-    .crateApiBackupVirtBackupJobTakesOnly(jobJson: jobJson, vmid: vmid);
+    .crateApiBackupVirtBackupJobTakesOnly(job: job, vmid: vmid);

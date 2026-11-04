@@ -11,7 +11,6 @@ part of 'virt_detail.dart';
 
 // dart format off
 T _$identity<T>(T value) => value;
-
 /// @nodoc
 mixin _$VirtDisk {
 
@@ -28,8 +27,6 @@ mixin _$VirtDisk {
 @pragma('vm:prefer-inline')
 $VirtDiskCopyWith<VirtDisk> get copyWith => _$VirtDiskCopyWithImpl<VirtDisk>(this as VirtDisk, _$identity);
 
-  /// Serializes this VirtDisk to a JSON map.
-  Map<String, dynamic> toJson();
 
 
 @override
@@ -37,7 +34,7 @@ bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtDisk&&(identical(other.device, device) || other.device == device)&&(identical(other.sourceType, sourceType) || other.sourceType == sourceType)&&(identical(other.source, source) || other.source == source)&&(identical(other.target, target) || other.target == target)&&(identical(other.bus, bus) || other.bus == bus)&&(identical(other.format, format) || other.format == format)&&(identical(other.readonly, readonly) || other.readonly == readonly)&&(identical(other.size, size) || other.size == size));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,device,sourceType,source,target,bus,format,readonly,size);
 
@@ -220,10 +217,10 @@ return $default(_that.device,_that.sourceType,_that.source,_that.target,_that.bu
 
 /// @nodoc
 
-@JsonSerializable(fieldRename: FieldRename.snake)
+
 class _VirtDisk implements VirtDisk {
   const _VirtDisk({this.device = 'disk', this.sourceType, this.source, this.target, this.bus, this.format, this.readonly = false, this.size});
-  factory _VirtDisk.fromJson(Map<String, dynamic> json) => _$VirtDiskFromJson(json);
+  
 
 /// `disk`, `cdrom`, `floppy`, `lun`; PVE containers: `rootfs`, `mp`.
 @override@JsonKey() final  String device;
@@ -246,17 +243,14 @@ class _VirtDisk implements VirtDisk {
 @pragma('vm:prefer-inline')
 _$VirtDiskCopyWith<_VirtDisk> get copyWith => __$VirtDiskCopyWithImpl<_VirtDisk>(this, _$identity);
 
-@override
-Map<String, dynamic> toJson() {
-  return _$VirtDiskToJson(this, );
-}
+
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtDisk&&(identical(other.device, device) || other.device == device)&&(identical(other.sourceType, sourceType) || other.sourceType == sourceType)&&(identical(other.source, source) || other.source == source)&&(identical(other.target, target) || other.target == target)&&(identical(other.bus, bus) || other.bus == bus)&&(identical(other.format, format) || other.format == format)&&(identical(other.readonly, readonly) || other.readonly == readonly)&&(identical(other.size, size) || other.size == size));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,device,sourceType,source,target,bus,format,readonly,size);
 
@@ -307,7 +301,6 @@ as int?,
 
 }
 
-
 /// @nodoc
 mixin _$VirtNic {
 
@@ -323,8 +316,6 @@ mixin _$VirtNic {
 @pragma('vm:prefer-inline')
 $VirtNicCopyWith<VirtNic> get copyWith => _$VirtNicCopyWithImpl<VirtNic>(this as VirtNic, _$identity);
 
-  /// Serializes this VirtNic to a JSON map.
-  Map<String, dynamic> toJson();
 
 
 @override
@@ -332,7 +323,7 @@ bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtNic&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.mac, mac) || other.mac == mac)&&(identical(other.source, source) || other.source == source)&&(identical(other.model, model) || other.model == model)&&(identical(other.target, target) || other.target == target));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,kind,mac,source,model,target);
 
@@ -512,10 +503,10 @@ return $default(_that.kind,_that.mac,_that.source,_that.model,_that.target);case
 
 /// @nodoc
 
-@JsonSerializable(fieldRename: FieldRename.snake)
+
 class _VirtNic implements VirtNic {
   const _VirtNic({this.kind = '', this.mac, this.source, this.model, this.target});
-  factory _VirtNic.fromJson(Map<String, dynamic> json) => _$VirtNicFromJson(json);
+  
 
 /// libvirt `network`/`bridge`/`direct`/...; PVE `net0`, `net1`, ...
 @override@JsonKey() final  String kind;
@@ -534,17 +525,14 @@ class _VirtNic implements VirtNic {
 @pragma('vm:prefer-inline')
 _$VirtNicCopyWith<_VirtNic> get copyWith => __$VirtNicCopyWithImpl<_VirtNic>(this, _$identity);
 
-@override
-Map<String, dynamic> toJson() {
-  return _$VirtNicToJson(this, );
-}
+
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtNic&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.mac, mac) || other.mac == mac)&&(identical(other.source, source) || other.source == source)&&(identical(other.model, model) || other.model == model)&&(identical(other.target, target) || other.target == target));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,kind,mac,source,model,target);
 
@@ -592,7 +580,6 @@ as String?,
 
 }
 
-
 /// @nodoc
 mixin _$VirtGraphics {
 
@@ -604,8 +591,6 @@ mixin _$VirtGraphics {
 @pragma('vm:prefer-inline')
 $VirtGraphicsCopyWith<VirtGraphics> get copyWith => _$VirtGraphicsCopyWithImpl<VirtGraphics>(this as VirtGraphics, _$identity);
 
-  /// Serializes this VirtGraphics to a JSON map.
-  Map<String, dynamic> toJson();
 
 
 @override
@@ -613,7 +598,7 @@ bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtGraphics&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.port, port) || other.port == port)&&(identical(other.tlsPort, tlsPort) || other.tlsPort == tlsPort)&&(identical(other.autoport, autoport) || other.autoport == autoport)&&(identical(other.listen, listen) || other.listen == listen)&&(identical(other.socket, socket) || other.socket == socket));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,kind,port,tlsPort,autoport,listen,socket);
 
@@ -794,10 +779,10 @@ return $default(_that.kind,_that.port,_that.tlsPort,_that.autoport,_that.listen,
 
 /// @nodoc
 
-@JsonSerializable(fieldRename: FieldRename.snake)
+
 class _VirtGraphics implements VirtGraphics {
   const _VirtGraphics({this.kind = '', this.port, this.tlsPort, this.autoport = false, this.listen, this.socket});
-  factory _VirtGraphics.fromJson(Map<String, dynamic> json) => _$VirtGraphicsFromJson(json);
+  
 
 /// `vnc`, `spice`, ...; PVE's `vga` type (`std`, `qxl`, `serial0`).
 @override@JsonKey() final  String kind;
@@ -813,17 +798,14 @@ class _VirtGraphics implements VirtGraphics {
 @pragma('vm:prefer-inline')
 _$VirtGraphicsCopyWith<_VirtGraphics> get copyWith => __$VirtGraphicsCopyWithImpl<_VirtGraphics>(this, _$identity);
 
-@override
-Map<String, dynamic> toJson() {
-  return _$VirtGraphicsToJson(this, );
-}
+
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtGraphics&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.port, port) || other.port == port)&&(identical(other.tlsPort, tlsPort) || other.tlsPort == tlsPort)&&(identical(other.autoport, autoport) || other.autoport == autoport)&&(identical(other.listen, listen) || other.listen == listen)&&(identical(other.socket, socket) || other.socket == socket));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,kind,port,tlsPort,autoport,listen,socket);
 
@@ -872,7 +854,6 @@ as String?,
 
 }
 
-
 /// @nodoc
 mixin _$VirtDisplay {
 
@@ -884,8 +865,6 @@ mixin _$VirtDisplay {
 @pragma('vm:prefer-inline')
 $VirtDisplayCopyWith<VirtDisplay> get copyWith => _$VirtDisplayCopyWithImpl<VirtDisplay>(this as VirtDisplay, _$identity);
 
-  /// Serializes this VirtDisplay to a JSON map.
-  Map<String, dynamic> toJson();
 
 
 @override
@@ -893,7 +872,7 @@ bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtDisplay&&(identical(other.uri, uri) || other.uri == uri)&&(identical(other.protocol, protocol) || other.protocol == protocol)&&(identical(other.host, host) || other.host == host)&&(identical(other.port, port) || other.port == port)&&(identical(other.tlsPort, tlsPort) || other.tlsPort == tlsPort)&&(identical(other.socket, socket) || other.socket == socket));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,uri,protocol,host,port,tlsPort,socket);
 
@@ -1074,10 +1053,10 @@ return $default(_that.uri,_that.protocol,_that.host,_that.port,_that.tlsPort,_th
 
 /// @nodoc
 
-@JsonSerializable(fieldRename: FieldRename.snake)
+
 class _VirtDisplay implements VirtDisplay {
   const _VirtDisplay({required this.uri, required this.protocol, this.host, this.port, this.tlsPort, this.socket});
-  factory _VirtDisplay.fromJson(Map<String, dynamic> json) => _$VirtDisplayFromJson(json);
+  
 
 @override final  String uri;
 @override final  String protocol;
@@ -1093,17 +1072,14 @@ class _VirtDisplay implements VirtDisplay {
 @pragma('vm:prefer-inline')
 _$VirtDisplayCopyWith<_VirtDisplay> get copyWith => __$VirtDisplayCopyWithImpl<_VirtDisplay>(this, _$identity);
 
-@override
-Map<String, dynamic> toJson() {
-  return _$VirtDisplayToJson(this, );
-}
+
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtDisplay&&(identical(other.uri, uri) || other.uri == uri)&&(identical(other.protocol, protocol) || other.protocol == protocol)&&(identical(other.host, host) || other.host == host)&&(identical(other.port, port) || other.port == port)&&(identical(other.tlsPort, tlsPort) || other.tlsPort == tlsPort)&&(identical(other.socket, socket) || other.socket == socket));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,uri,protocol,host,port,tlsPort,socket);
 

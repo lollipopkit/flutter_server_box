@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/error.dart';
@@ -11,128 +12,120 @@ import 'package:server_box/data/model/virt/virt_hardware.dart';
 import 'package:server_box/data/model/virt/virt_manage.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/src/rust/api/pve.dart';
+import 'package:server_box/src/rust/api/virt_model.dart' as vm;
+import 'package:server_box/src/rust/api/virt_view.dart' as vv;
 
-/// `sbm_virt::model::HostView` JSON (snake_case, the agent's wire format) read
-/// into this app's models. What a guest offers, its state and its usage are
-/// decided in Rust for both backends; this only carries them over.
+/// `sbm_virt`'s models as the FFI mirrors them, mapped to this app's and
+/// back. What a guest offers, its state and its usage are decided in Rust
+/// for both backends; this only carries them over.
 abstract final class VirtRust {
-  static VirtSnapshot snapshot(Object? json, {required String serverId}) {
-    if (json is! Map) throw _invalid('host view');
-    final host = json['host'];
-    final guests = json['guests'];
-    final stats = json['stats'];
-    final caps = json['capabilities'];
-    if (host is! Map || guests is! List || stats is! Map || caps is! Map) {
-      throw _invalid('host view');
-    }
-    return VirtSnapshot(
-      host: VirtHost(
-        serverId: serverId,
-        kind: _hostKind(host['kind']),
-        version: host['version'] as String?,
-        hypervisor: host['hypervisor'] as String?,
-        nodes: [
-          for (final n in (host['nodes'] as List? ?? const []).whereType<Map>())
-            VirtNode(
-              name: n['name'] as String,
-              online: n['online'] as bool? ?? true,
-              cpu: (n['cpu'] as num?)?.toDouble(),
-              maxCpu: n['max_cpu'] as int?,
-              memUsed: n['mem_used'] as int?,
-              memTotal: n['mem_total'] as int?,
-              uptime: _seconds(n['uptime']),
-            ),
-        ],
-      ),
-      guests: [for (final g in guests.whereType<Map>()) guest(g)],
-      stats: {
-        for (final MapEntry(:key, :value) in stats.entries)
-          if (key is String && value is Map) key: _stats(value),
+  static VirtSnapshot snapshot(vv.VirtHostReport view, {required String serverId}) => VirtSnapshot(
+    host: VirtHost(
+      serverId: serverId,
+      kind: switch (view.host.kind) {
+        vv.HostKind.pve => VirtHostKind.pve,
+        vv.HostKind.libvirt => VirtHostKind.libvirt,
       },
-      capabilities: capabilities(caps),
-    );
-  }
+      version: view.host.version,
+      hypervisor: view.host.hypervisor,
+      nodes: [
+        for (final n in view.host.nodes)
+          VirtNode(
+            name: n.name,
+            online: n.online,
+            cpu: n.cpu,
+            maxCpu: n.maxCpu,
+            memUsed: n.memUsed?.toInt(),
+            memTotal: n.memTotal?.toInt(),
+            uptime: _seconds(n.uptime?.toInt()),
+          ),
+      ],
+    ),
+    guests: [for (final g in view.guests) guest(g)],
+    stats: {for (final (id, s) in view.stats) id: _stats(s)},
+    capabilities: capabilities(view.capabilities),
+  );
 
-  static VirtGuest guest(Map g) => VirtGuest(
-    id: g['id'] as String,
-    name: g['name'] as String,
-    kind: g['kind'] == 'lxc' ? VirtGuestKind.lxc : VirtGuestKind.qemu,
-    state: _state(g['state']),
-    stateReason: g['state_reason'] as String?,
-    vmid: g['vmid'] as int?,
-    node: g['node'] as String?,
-    vcpu: g['vcpu'] as int?,
-    memBytes: g['mem_bytes'] as int?,
-    uptime: _seconds(g['uptime']),
-    tags: [...(g['tags'] as List? ?? const []).whereType<String>()],
-    template: g['template'] as bool? ?? false,
-    autostart: g['autostart'] as bool?,
-    actions: {
-      for (final a in (g['actions'] as List? ?? const []).whereType<String>())
-        ?_action(a),
+  static VirtGuest guest(vv.VirtGuestReport g) => VirtGuest(
+    id: g.id,
+    name: g.name,
+    kind: switch (g.kind) {
+      vv.GuestKind.lxc => VirtGuestKind.lxc,
+      vv.GuestKind.qemu => VirtGuestKind.qemu,
     },
+    state: VirtGuestState.values.byName(g.state.name),
+    stateReason: g.stateReason,
+    vmid: g.vmid,
+    node: g.node,
+    vcpu: g.vcpu,
+    memBytes: g.memBytes?.toInt(),
+    uptime: _seconds(g.uptime?.toInt()),
+    tags: g.tags,
+    template: g.template,
+    autostart: g.autostart,
+    actions: {for (final a in g.actions) VirtPowerAction.values.byName(a.name)},
   );
 
   /// [g] as `sbm_virt::model::Guest`.
-  static Map<String, Object?> guestJson(VirtGuest g) => {
-    'id': g.id,
-    'name': g.name,
-    'kind': g.kind.name,
-    'state': g.state.name,
-    'state_reason': g.stateReason,
-    'vmid': g.vmid,
-    'node': g.node,
-    'vcpu': g.vcpu,
-    'mem_bytes': g.memBytes,
-    'uptime': g.uptime?.inSeconds,
-    'tags': g.tags,
-    'template': g.template,
-    'autostart': g.autostart,
-    'actions': [for (final a in g.actions) actionName(a)],
-  };
+  static vv.VirtGuestReport guestFfi(VirtGuest g) => vv.VirtGuestReport(
+    id: g.id,
+    name: g.name,
+    kind: vv.GuestKind.values.byName(g.kind.name),
+    state: vv.GuestState.values.byName(g.state.name),
+    stateReason: g.stateReason,
+    vmid: g.vmid,
+    node: g.node,
+    vcpu: g.vcpu,
+    memBytes: _big(g.memBytes),
+    uptime: _big(g.uptime?.inSeconds),
+    tags: g.tags,
+    template: g.template,
+    autostart: g.autostart,
+    actions: [for (final a in g.actions) vv.PowerAction.values.byName(a.name)],
+  );
 
   /// [n] as `sbm_virt::model::Node`.
-  static Map<String, Object?> nodeJson(VirtNode n) => {
-    'name': n.name,
-    'online': n.online,
-    'cpu': n.cpu,
-    'max_cpu': n.maxCpu,
-    'mem_used': n.memUsed,
-    'mem_total': n.memTotal,
-    'uptime': n.uptime?.inSeconds,
-  };
+  static vv.Node nodeFfi(VirtNode n) => vv.Node(
+    name: n.name,
+    online: n.online,
+    cpu: n.cpu,
+    maxCpu: n.maxCpu,
+    memUsed: _big(n.memUsed),
+    memTotal: _big(n.memTotal),
+    uptime: _big(n.uptime?.inSeconds),
+  );
 
   /// [spec] as `sbm_virt::create::CreateSpec`: what it names, by id. Its
   /// passwords go in it as typed; it is sent to the host, never logged.
-  static Map<String, Object?> specJson(VirtCreateSpec spec) => {
-    'kind': spec.kind.name,
-    'name': spec.name,
-    'node': spec.node,
-    'vmid': spec.vmid,
-    'cores': spec.cores,
-    'memory_mib': spec.memoryMiB,
-    'storage': spec.storage.id,
-    'disk_gib': spec.diskGiB,
-    'media': _volumeRef(spec.media),
-    'image': _volumeRef(spec.image),
-    'network': spec.network?.id,
-    'password': spec.password,
-    'ssh_keys': _lines(spec.sshKeys),
-    'unprivileged': spec.unprivileged,
-    'bus': spec.bus,
-    'nic_model': spec.nicModel,
-    'uefi': spec.uefi,
-    'secure_boot': spec.secureBoot,
-    'tpm': spec.tpm,
-    'cloud_init': switch (spec.cloudInit) {
-      final ci? => cloudInitJson(ci),
+  static vm.CreateSpec specFfi(VirtCreateSpec spec) => vm.CreateSpec(
+    kind: vv.GuestKind.values.byName(spec.kind.name),
+    name: spec.name,
+    node: spec.node,
+    vmid: spec.vmid,
+    cores: spec.cores,
+    memoryMib: BigInt.from(spec.memoryMiB),
+    storage: spec.storage.id,
+    diskGib: BigInt.from(spec.diskGiB),
+    media: _volumeRef(spec.media),
+    image: _volumeRef(spec.image),
+    network: spec.network?.id,
+    password: spec.password,
+    sshKeys: _lines(spec.sshKeys),
+    unprivileged: spec.unprivileged,
+    bus: spec.bus,
+    nicModel: spec.nicModel,
+    uefi: spec.uefi,
+    secureBoot: spec.secureBoot,
+    tpm: spec.tpm,
+    cloudInit: switch (spec.cloudInit) {
+      final ci? => cloudInitFfi(ci),
       null => null,
     },
-    'start': spec.start,
-  };
+    start: spec.start,
+  );
 
-  static Map<String, Object?>? _volumeRef(VirtPoolVolume? v) => switch (v) {
-    final v? => {'pool': v.pool.id, 'volume': v.volume.id},
+  static vm.VolumeRef? _volumeRef(VirtPoolVolume? v) => switch (v) {
+    final v? => vm.VolumeRef(pool: v.pool.id, volume: v.volume.id),
     null => null,
   };
 
@@ -142,545 +135,438 @@ abstract final class VirtRust {
   ];
 
   /// [ci] as `sbm_virt::create::CloudInit`.
-  static Map<String, Object?> cloudInitJson(VirtCloudInit ci) => {
-    'user': ci.user,
-    'password': ci.password,
-    'ssh_keys': ci.keys,
-    'hostname': ci.hostname,
-    'address': ci.address,
-    'gateway': ci.gateway,
-    'dns': ci.dns,
-    'search_domains': ci.searchDomains,
-  };
+  static vm.CloudInit cloudInitFfi(VirtCloudInit ci) => vm.CloudInit(
+    user: ci.user,
+    password: ci.password,
+    sshKeys: ci.keys,
+    hostname: ci.hostname,
+    address: ci.address,
+    gateway: ci.gateway,
+    dns: ci.dns,
+    searchDomains: ci.searchDomains,
+  );
 
   /// [r] as `sbm_virt::create::CloneRequest`.
-  static Map<String, Object?> cloneRequestJson(VirtCloneRequest r) => {
-    'name': r.name,
-    'full': r.full,
-    'vmid': r.vmid,
-    'storage': r.storage,
-    'target_node': r.targetNode,
-    'target_pool': r.targetPool,
-  };
+  static vm.CloneRequest cloneRequestFfi(VirtCloneRequest r) => vm.CloneRequest(
+    name: r.name,
+    full: r.full,
+    vmid: r.vmid,
+    storage: r.storage,
+    targetNode: r.targetNode,
+    targetPool: r.targetPool,
+  );
 
   /// `sbm_virt::create::CreateOptions`.
-  static VirtCreateOptions createOptions(Object? json) {
-    final o = json is Map ? json : throw _invalid('create options');
-    return VirtCreateOptions(
-      buses: _strings(o['buses']),
-      nicModels: _strings(o['nic_models']),
-      uefi: o['uefi'] as bool? ?? false,
-      secureBoot: o['secure_boot'] as bool? ?? false,
-      tpm: o['tpm'] as bool? ?? false,
-      cloudImages: o['cloud_images'] as bool? ?? false,
-      cloudInit: o['cloud_init'] as bool? ?? false,
-      cloudInitMissing: o['cloud_init_missing'] as String?,
-    );
-  }
+  static VirtCreateOptions createOptions(vm.CreateOptions o) => VirtCreateOptions(
+    buses: o.buses,
+    nicModels: o.nicModels,
+    uefi: o.uefi,
+    secureBoot: o.secureBoot,
+    tpm: o.tpm,
+    cloudImages: o.cloudImages,
+    cloudInit: o.cloudInit,
+    cloudInitMissing: o.cloudInitMissing,
+  );
 
-  static Map<String, Object?> createOptionsJson(VirtCreateOptions o) => {
-    'buses': o.buses,
-    'nic_models': o.nicModels,
-    'uefi': o.uefi,
-    'secure_boot': o.secureBoot,
-    'tpm': o.tpm,
-    'cloud_images': o.cloudImages,
-    'cloud_init': o.cloudInit,
-    'cloud_init_missing': o.cloudInitMissing,
-  };
+  static vm.CreateOptions createOptionsFfi(VirtCreateOptions o) => vm.CreateOptions(
+    buses: o.buses,
+    nicModels: o.nicModels,
+    uefi: o.uefi,
+    secureBoot: o.secureBoot,
+    tpm: o.tpm,
+    cloudImages: o.cloudImages,
+    cloudInit: o.cloudInit,
+    cloudInitMissing: o.cloudInitMissing,
+  );
 
   /// `sbm_virt::create::Created`.
-  static VirtCreated created(Object? json) {
-    final c = json is Map ? json : throw _invalid('created');
-    return VirtCreated(
-      id: c['id'] as String,
-      startError: c['start_error'] as String?,
-      diskKeptBytes: c['disk_kept_bytes'] as int?,
-    );
-  }
+  static VirtCreated created(vm.Created c) =>
+      VirtCreated(id: c.id, startError: c.startError, diskKeptBytes: c.diskKeptBytes?.toInt());
 
   // --- Backups (sbm_virt::backup) ---
 
-  static DateTime? _unix(Object? v) => switch (v) {
-    final int t => DateTime.fromMillisecondsSinceEpoch(t * 1000),
-    _ => null,
-  };
+  static DateTime? _unix(int? t) => t == null ? null : DateTime.fromMillisecondsSinceEpoch(t * 1000);
 
-  static List<int> _ints(Object? v) => [...(v as List? ?? const []).whereType<int>()];
-
-  /// A list of `sbm_virt::backup::Backup`.
-  static List<VirtBackup> backups(Object? json) => [
-    for (final b in _maps(json, 'backups'))
-      VirtBackup(
-        id: b['id'] as String,
-        storage: b['storage'] as String,
-        node: b['node'] as String,
-        vmid: b['vmid'] as int?,
-        createdAt: _unix(b['created_at']),
-        size: b['size'] as int?,
-        format: b['format'] as String?,
-        notes: b['notes'] as String?,
-        protected: b['protected'] as bool? ?? false,
-        verification: b['verification'] as String?,
-        kind: switch (b['kind']) {
-          'qemu' => VirtGuestKind.qemu,
-          'lxc' => VirtGuestKind.lxc,
-          _ => null,
-        },
-      ),
-  ];
-
-  static Map<String, Object?> backupJson(VirtBackup b) => {
-    'id': b.id,
-    'storage': b.storage,
-    'node': b.node,
-    'vmid': b.vmid,
-    'created_at': switch (b.createdAt) {
-      final t? => t.millisecondsSinceEpoch ~/ 1000,
-      null => null,
-    },
-    'size': b.size,
-    'format': b.format,
-    'notes': b.notes,
-    'protected': b.protected,
-    'verification': b.verification,
-    'kind': b.kind?.name,
-  };
-
-  /// A list of `sbm_virt::backup::BackupJob`.
-  static List<VirtBackupJob> backupJobs(Object? json) => [
-    for (final j in _maps(json, 'backup jobs'))
-      VirtBackupJob(
-        id: j['id'] as String,
-        schedule: j['schedule'] as String?,
-        storage: j['storage'] as String?,
-        mode: VirtBackupMode.fromName(j['mode']),
-        compress: j['compress'] as String?,
-        keep: j['prune'] as String?,
-        enabled: j['enabled'] as bool? ?? true,
-        all: j['all'] as bool? ?? false,
-        vmids: _ints(j['vmids']),
-        exclude: _ints(j['exclude']),
-        pool: j['pool'] as String?,
-        node: j['node'] as String?,
-        comment: j['comment'] as String?,
-        notesTemplate: j['notes_template'] as String?,
-        mailNotification: j['mail_notification'] as String?,
-        prune: j['prune'] as String?,
-      ),
-  ];
-
-  static Map<String, Object?> backupJobJson(VirtBackupJob j) => {
-    'id': j.id,
-    'schedule': j.schedule,
-    'storage': j.storage,
-    'mode': j.mode?.name,
-    'compress': j.compress,
-    'enabled': j.enabled,
-    'all': j.all,
-    'vmids': j.vmids,
-    'exclude': j.exclude,
-    'pool': j.pool,
-    'node': j.node,
-    'comment': j.comment,
-    'notes_template': j.notesTemplate,
-    'mail_notification': j.mailNotification,
-    'prune': j.prune ?? j.keep,
-  };
-
-  static Map<String, Object?> backupJobEditJson(VirtBackupJobEdit e) => {
-    'id': e.id,
-    'is_new': e.isNew,
-    'node': e.node,
-    'storage': e.storage,
-    'schedule': e.schedule,
-    'mode': e.mode.name,
-    'compress': e.compress,
-    'enabled': e.enabled,
-    'all': e.all,
-    'vmids': e.vmids,
-    'exclude': e.exclude,
-    'pool': e.pool,
-    'comment': e.comment,
-    'notes_template': e.notesTemplate,
-    'mail_notification': e.mailNotification,
-    'prune': e.prune,
-  };
-
-  static Map<String, Object?> backupRequestJson(VirtBackupRequest r) => {
-    'storage': r.storage,
-    'mode': r.mode.name,
-    'compress': r.compress,
-    'notes': r.notes,
-    'protected': r.protected,
-    'prune': r.prune,
-  };
-
-  static Map<String, Object?> backupEditJson(VirtBackupEdit e) => {
-    'notes': e.notes,
-    'protected': e.protected,
-  };
-
-  /// `sbm_virt::backup::ScheduleCheck`: the next runs in UTC.
-  static VirtScheduleCheck scheduleCheck(Object? json) {
-    final c = json is Map ? json : const {};
-    return VirtScheduleCheck(
-      error: c['error'] as String?,
-      next: [
-        for (final t in _ints(c['next'])) DateTime.fromMillisecondsSinceEpoch(t * 1000, isUtc: true),
-      ],
-    );
-  }
-
-  // --- Hardware (sbm_virt::hardware) ---
-
-  static List<Map> _list(Object? v) => [...(v as List? ?? const []).whereType<Map>()];
-
-  static T? _enumOf<T extends Enum>(List<T> values, Object? name) {
-    if (name is! String) return null;
-    final camel = name.replaceAllMapped(RegExp('_([a-z])'), (m) => m[1]!.toUpperCase());
-    for (final v in values) {
-      if (v.name == camel) return v;
-    }
-    return null;
-  }
-
-  static String _snake(Enum e) =>
-      e.name.replaceAllMapped(RegExp('[A-Z]'), (m) => '_${m[0]!.toLowerCase()}');
-
-  /// `sbm_virt::hardware::Hardware`.
-  static VirtHardware hardware(Object? json) {
-    final h = json is Map ? json : throw _invalid('hardware');
-    final cpu = h['cpu'] as Map;
-    final mem = h['memory'] as Map;
-    final fw = h['firmware'] as Map?;
-    final display = h['display'] as Map?;
-    final support = h['support'] as Map? ?? const {};
-    final limits = h['limits'] as Map? ?? const {};
-    return VirtHardware(
-      kind: h['kind'] == 'lxc' ? VirtGuestKind.lxc : VirtGuestKind.qemu,
-      running: h['running'] as bool? ?? false,
-      cpu: VirtHwCpu(
-        sockets: cpu['sockets'] as int,
-        cores: cpu['cores'] as int,
-        threads: cpu['threads'] as int? ?? 1,
-        online: cpu['online'] as int?,
-        type: cpu['type'] as String?,
-      ),
-      memory: VirtHwMemory(
-        mib: mem['mib'] as int,
-        minMib: mem['min_mib'] as int?,
-        balloon: mem['balloon'] as bool? ?? false,
-        swapMib: mem['swap_mib'] as int?,
-      ),
-      disks: [for (final d in _list(h['disks'])) hwDisk(d)],
-      nics: [
-        for (final n in _list(h['nics']))
-          VirtHwNic(
-            key: n['key'] as String,
-            mac: n['mac'] as String?,
-            type: n['type'] as String?,
-            source: n['source'] as String?,
-            model: n['model'] as String?,
-            linkUp: n['link_up'] as bool? ?? true,
-            firewall: n['firewall'] as bool?,
-            name: n['name'] as String?,
-          ),
-      ],
-      boot: switch (h['boot']) {
-        final List b => [...b.whereType<String>()],
-        _ => null,
-      },
-      autostart: h['autostart'] as bool? ?? false,
-      name: h['name'] as String?,
-      description: h['description'] as String?,
-      protection: h['protection'] as bool?,
-      renameRunning: h['rename_running'] as bool? ?? true,
-      pending: [
-        for (final p in _list(h['pending']))
-          VirtPendingField(
-            key: p['key'] as String,
-            current: p['current'] as String?,
-            pending: p['pending'] as String?,
-            delete: p['delete'] as bool? ?? false,
-          ),
-      ],
-      revision: h['revision'] as String?,
-      limits: VirtHwLimits(
-        hostCpus: limits['host_cpus'] as int?,
-        hostMemoryBytes: limits['host_memory_bytes'] as int?,
-      ),
-      cpuTypes: _strings(h['cpu_types']),
-      configText: h['config_text'] as String?,
-      firmware: fw == null
-          ? null
-          : VirtHwFirmware(
-              uefi: fw['uefi'] as bool? ?? false,
-              secureBoot: fw['secure_boot'] as bool? ?? false,
-              varsStorage: fw['vars_storage'] as String?,
-            ),
-      display: display == null
-          ? null
-          : VirtHwDisplay(
-              protocol: display['protocol'] as String?,
-              listen: display['listen'] as String?,
-              gpu: display['gpu'] as String?,
-              port: display['port'] as int?,
-            ),
-      devices: [
-        for (final d in _list(h['devices']))
-          VirtHwDevice(
-            key: d['key'] as String,
-            kind: _enumOf(VirtHwDeviceKind.values, d['kind']) ?? VirtHwDeviceKind.usb,
-            detail: d['detail'] as String?,
-            mapping: d['mapping'] as bool? ?? false,
-          ),
-      ],
-      support: VirtHwSupport(
-        buses: _strings(support['buses']),
-        caches: _strings(support['caches']),
-        nicModels: _strings(support['nic_models']),
-        mac: support['mac'] as bool? ?? false,
-        protocols: _strings(support['protocols']),
-        listen: support['listen'] as bool? ?? false,
-        gpus: _strings(support['gpus']),
-        uefi: support['uefi'] as bool? ?? false,
-        secureBoot: support['secure_boot'] as bool? ?? false,
-        tpm: support['tpm'] as bool? ?? false,
-        usb: support['usb'] as bool? ?? false,
-        pci: support['pci'] as bool? ?? false,
-      ),
-    );
-  }
-
-  static VirtHwDisk hwDisk(Map d) => VirtHwDisk(
-    key: d['key'] as String,
-    kind: _enumOf(VirtHwDiskKind.values, d['kind']) ?? VirtHwDiskKind.disk,
-    source: d['source'] as String?,
-    size: d['size'] as int?,
-    storage: d['storage'] as String?,
-    mountPoint: d['mount_point'] as String?,
-    bus: d['bus'] as String?,
-    format: d['format'] as String?,
-    readonly: d['readonly'] as bool? ?? false,
-    cache: d['cache'] as String?,
-    cloudInit: d['cloud_init'] as bool? ?? false,
-    resizable: d['resizable'] as bool? ?? true,
-  );
-
-  static Map<String, Object?> hwDiskJson(VirtHwDisk d) => {
-    'key': d.key,
-    'kind': _snake(d.kind),
-    'source': d.source,
-    'size': d.size,
-    'storage': d.storage,
-    'mount_point': d.mountPoint,
-    'bus': d.bus,
-    'format': d.format,
-    'readonly': d.readonly,
-    'cache': d.cache,
-    'cloud_init': d.cloudInit,
-    'resizable': d.resizable,
-  };
-
-  /// [hw] as `sbm_virt::hardware::Hardware`, what the rules are given.
-  static Map<String, Object?> hardwareJson(VirtHardware hw) => {
-    'kind': hw.kind.name,
-    'running': hw.running,
-    'cpu': {
-      'sockets': hw.cpu.sockets,
-      'cores': hw.cpu.cores,
-      'threads': hw.cpu.threads,
-      'online': hw.cpu.online,
-      'type': hw.cpu.type,
-    },
-    'memory': {
-      'mib': hw.memory.mib,
-      'min_mib': hw.memory.minMib,
-      'balloon': hw.memory.balloon,
-      'swap_mib': hw.memory.swapMib,
-    },
-    'disks': [for (final d in hw.disks) hwDiskJson(d)],
-    'nics': [
-      for (final n in hw.nics)
-        {
-          'key': n.key,
-          'mac': n.mac,
-          'type': n.type,
-          'source': n.source,
-          'model': n.model,
-          'link_up': n.linkUp,
-          'firewall': n.firewall,
-          'name': n.name,
-        },
-    ],
-    'boot': hw.boot,
-    'autostart': hw.autostart,
-    'name': hw.name,
-    'description': hw.description,
-    'protection': hw.protection,
-    'rename_running': hw.renameRunning,
-    'pending': [
-      for (final p in hw.pending)
-        {'key': p.key, 'current': p.current, 'pending': p.pending, 'delete': p.delete},
-    ],
-    'revision': hw.revision,
-    'limits': {'host_cpus': hw.limits.hostCpus, 'host_memory_bytes': hw.limits.hostMemoryBytes},
-    'cpu_types': hw.cpuTypes,
-    'firmware': switch (hw.firmware) {
-      final f? => {'uefi': f.uefi, 'secure_boot': f.secureBoot, 'vars_storage': f.varsStorage},
-      null => null,
-    },
-    'display': switch (hw.display) {
-      final d? => {'protocol': d.protocol, 'listen': d.listen, 'gpu': d.gpu, 'port': d.port},
-      null => null,
-    },
-    'devices': [
-      for (final d in hw.devices)
-        {'key': d.key, 'kind': d.kind.name, 'detail': d.detail, 'mapping': d.mapping},
-    ],
-    'support': {
-      'buses': hw.support.buses,
-      'caches': hw.support.caches,
-      'nic_models': hw.support.nicModels,
-      'mac': hw.support.mac,
-      'protocols': hw.support.protocols,
-      'listen': hw.support.listen,
-      'gpus': hw.support.gpus,
-      'uefi': hw.support.uefi,
-      'secure_boot': hw.support.secureBoot,
-      'tpm': hw.support.tpm,
-      'usb': hw.support.usb,
-      'pci': hw.support.pci,
-    },
-  };
-
-  static VirtHostDevice hostDevice(Map d) => VirtHostDevice(
-    id: d['id'] as String,
-    label: d['label'] as String? ?? '',
-    detail: d['detail'] as String?,
-    mapping: d['mapping'] as bool? ?? false,
-    usbBus: d['usb_bus'] as int?,
-    usbPort: d['usb_port'] as String?,
-    usbDevice: d['usb_device'] as int?,
-    iommuGroup: d['iommu_group'] as int?,
-    groupSize: d['group_size'] as int? ?? 0,
-  );
-
-  static Map<String, Object?> hostDeviceJson(VirtHostDevice d) => {
-    'id': d.id,
-    'label': d.label,
-    'detail': d.detail,
-    'mapping': d.mapping,
-    'usb_bus': d.usbBus,
-    'usb_port': d.usbPort,
-    'usb_device': d.usbDevice,
-    'iommu_group': d.iommuGroup,
-    'group_size': d.groupSize,
-  };
-
-  /// `sbm_virt::hardware::HostDevices`.
-  static VirtHostDevices hostDevices(Object? json) {
-    final d = json is Map ? json : throw _invalid('host devices');
-    return VirtHostDevices(
-      usb: [for (final u in _list(d['usb'])) hostDevice(u)],
-      pci: [for (final p in _list(d['pci'])) hostDevice(p)],
-      iommu: d['iommu'] as bool? ?? true,
-      mappingsOnly: d['mappings_only'] as bool? ?? false,
-    );
-  }
-
-  static Map<String, Object?>? _poolVolume(VirtPoolVolume? v) => switch (v) {
-    final v? => {'pool': v.pool.id, 'volume': v.volume.id},
+  static VirtGuestKind? _guestKind(vv.GuestKind? k) => switch (k) {
+    vv.GuestKind.qemu => VirtGuestKind.qemu,
+    vv.GuestKind.lxc => VirtGuestKind.lxc,
     null => null,
   };
 
+  static List<VirtBackup> backups(List<vm.Backup> list) => [
+    for (final b in list)
+      VirtBackup(
+        id: b.id,
+        storage: b.storage,
+        node: b.node,
+        vmid: b.vmid,
+        createdAt: _unix(b.createdAt),
+        size: b.size?.toInt(),
+        format: b.format,
+        notes: b.notes,
+        protected: b.protected,
+        verification: b.verification,
+        kind: _guestKind(b.kind),
+      ),
+  ];
+
+  static vm.Backup backupFfi(VirtBackup b) => vm.Backup(
+    id: b.id,
+    storage: b.storage,
+    node: b.node,
+    vmid: b.vmid,
+    createdAt: switch (b.createdAt) {
+      final t? => t.millisecondsSinceEpoch ~/ 1000,
+      null => null,
+    },
+    size: _big(b.size),
+    format: b.format,
+    notes: b.notes,
+    protected: b.protected,
+    verification: b.verification,
+    kind: switch (b.kind) {
+      null => null,
+      final k => vv.GuestKind.values.byName(k.name),
+    },
+  );
+
+  static List<VirtBackupJob> backupJobs(List<vm.BackupJob> list) => [
+    for (final j in list)
+      VirtBackupJob(
+        id: j.id,
+        schedule: j.schedule,
+        storage: j.storage,
+        mode: VirtBackupMode.fromName(j.mode),
+        compress: j.compress,
+        keep: j.prune,
+        enabled: j.enabled,
+        all: j.all,
+        vmids: j.vmids,
+        exclude: j.exclude,
+        pool: j.pool,
+        node: j.node,
+        comment: j.comment,
+        notesTemplate: j.notesTemplate,
+        mailNotification: j.mailNotification,
+        prune: j.prune,
+      ),
+  ];
+
+  static vm.BackupJob backupJobFfi(VirtBackupJob j) => vm.BackupJob(
+    id: j.id,
+    schedule: j.schedule,
+    storage: j.storage,
+    mode: j.mode?.name,
+    compress: j.compress,
+    enabled: j.enabled,
+    all: j.all,
+    vmids: Uint32List.fromList(j.vmids),
+    exclude: Uint32List.fromList(j.exclude),
+    pool: j.pool,
+    node: j.node,
+    comment: j.comment,
+    notesTemplate: j.notesTemplate,
+    mailNotification: j.mailNotification,
+    prune: j.prune ?? j.keep,
+  );
+
+  static vm.BackupJobEdit backupJobEditFfi(VirtBackupJobEdit e) => vm.BackupJobEdit(
+    id: e.id,
+    isNew: e.isNew,
+    node: e.node,
+    storage: e.storage,
+    schedule: e.schedule,
+    mode: e.mode.name,
+    compress: e.compress,
+    enabled: e.enabled,
+    all: e.all,
+    vmids: Uint32List.fromList(e.vmids),
+    exclude: Uint32List.fromList(e.exclude),
+    pool: e.pool,
+    comment: e.comment,
+    notesTemplate: e.notesTemplate,
+    mailNotification: e.mailNotification,
+    prune: e.prune,
+  );
+
+  static vm.BackupRequest backupRequestFfi(VirtBackupRequest r) => vm.BackupRequest(
+    storage: r.storage,
+    mode: r.mode.name,
+    compress: r.compress,
+    notes: r.notes,
+    protected: r.protected,
+    prune: r.prune,
+  );
+
+  static vm.BackupEdit backupEditFfi(VirtBackupEdit e) => vm.BackupEdit(notes: e.notes, protected: e.protected);
+
+  /// `sbm_virt::backup::ScheduleCheck`: the next runs in UTC.
+  static VirtScheduleCheck scheduleCheck(vm.ScheduleCheck c) => VirtScheduleCheck(
+    error: c.error,
+    next: [for (final t in c.next) DateTime.fromMillisecondsSinceEpoch(t.toInt() * 1000, isUtc: true)],
+  );
+
+  static BigInt? _big(int? v) => v == null ? null : BigInt.from(v);
+
+  // --- Hardware (sbm_virt::hardware) ---
+
+  /// `sbm_virt::hardware::Hardware`.
+  static VirtHardware hardware(vm.Hardware h) => VirtHardware(
+    kind: _guestKind(h.kind)!,
+    running: h.running,
+    cpu: VirtHwCpu(
+      sockets: h.cpu.sockets,
+      cores: h.cpu.cores,
+      threads: h.cpu.threads,
+      online: h.cpu.online,
+      type: h.cpu.cpuType,
+    ),
+    memory: VirtHwMemory(
+      mib: h.memory.mib.toInt(),
+      minMib: h.memory.minMib?.toInt(),
+      balloon: h.memory.balloon,
+      swapMib: h.memory.swapMib?.toInt(),
+    ),
+    disks: [for (final d in h.disks) hwDisk(d)],
+    nics: [
+      for (final n in h.nics)
+        VirtHwNic(
+          key: n.key,
+          mac: n.mac,
+          type: n.nicType,
+          source: n.source,
+          model: n.model,
+          linkUp: n.linkUp,
+          firewall: n.firewall,
+          name: n.name,
+        ),
+    ],
+    boot: h.boot,
+    autostart: h.autostart,
+    name: h.name,
+    description: h.description,
+    protection: h.protection,
+    renameRunning: h.renameRunning,
+    pending: [
+      for (final p in h.pending)
+        VirtPendingField(key: p.key, current: p.current, pending: p.pending, delete: p.delete),
+    ],
+    revision: h.revision,
+    limits: VirtHwLimits(hostCpus: h.limits.hostCpus, hostMemoryBytes: h.limits.hostMemoryBytes?.toInt()),
+    cpuTypes: h.cpuTypes,
+    configText: h.configText,
+    firmware: switch (h.firmware) {
+      final f? => VirtHwFirmware(uefi: f.uefi, secureBoot: f.secureBoot, varsStorage: f.varsStorage),
+      null => null,
+    },
+    display: switch (h.display) {
+      final d? => VirtHwDisplay(protocol: d.protocol, listen: d.listen, gpu: d.gpu, port: d.port),
+      null => null,
+    },
+    devices: [
+      for (final d in h.devices)
+        VirtHwDevice(
+          key: d.key,
+          kind: VirtHwDeviceKind.values.byName(d.kind.name),
+          detail: d.detail,
+          mapping: d.mapping,
+        ),
+    ],
+    support: VirtHwSupport(
+      buses: h.support.buses,
+      caches: h.support.caches,
+      nicModels: h.support.nicModels,
+      mac: h.support.mac,
+      protocols: h.support.protocols,
+      listen: h.support.listen,
+      gpus: h.support.gpus,
+      uefi: h.support.uefi,
+      secureBoot: h.support.secureBoot,
+      tpm: h.support.tpm,
+      usb: h.support.usb,
+      pci: h.support.pci,
+    ),
+  );
+
+  static VirtHwDisk hwDisk(vm.HwDisk d) => VirtHwDisk(
+    key: d.key,
+    kind: VirtHwDiskKind.values.byName(d.kind.name),
+    source: d.source,
+    size: d.size?.toInt(),
+    storage: d.storage,
+    mountPoint: d.mountPoint,
+    bus: d.bus,
+    format: d.format,
+    readonly: d.readonly,
+    cache: d.cache,
+    cloudInit: d.cloudInit,
+    resizable: d.resizable,
+  );
+
+  static vm.HwDisk hwDiskFfi(VirtHwDisk d) => vm.HwDisk(
+    key: d.key,
+    kind: vm.DiskKind.values.byName(d.kind.name),
+    source: d.source,
+    size: _big(d.size),
+    storage: d.storage,
+    mountPoint: d.mountPoint,
+    bus: d.bus,
+    format: d.format,
+    readonly: d.readonly,
+    cache: d.cache,
+    cloudInit: d.cloudInit,
+    resizable: d.resizable,
+  );
+
+  /// [hw] as `sbm_virt::hardware::Hardware`, what the rules are given.
+  static vm.Hardware hardwareFfi(VirtHardware hw) => vm.Hardware(
+    kind: vv.GuestKind.values.byName(hw.kind.name),
+    running: hw.running,
+    cpu: vm.Cpu(
+      sockets: hw.cpu.sockets,
+      cores: hw.cpu.cores,
+      threads: hw.cpu.threads,
+      online: hw.cpu.online,
+      cpuType: hw.cpu.type,
+    ),
+    memory: vm.HwMemory(
+      mib: BigInt.from(hw.memory.mib),
+      minMib: _big(hw.memory.minMib),
+      balloon: hw.memory.balloon,
+      swapMib: _big(hw.memory.swapMib),
+    ),
+    disks: [for (final d in hw.disks) hwDiskFfi(d)],
+    nics: [
+      for (final n in hw.nics)
+        vm.HwNic(
+          key: n.key,
+          mac: n.mac,
+          nicType: n.type,
+          source: n.source,
+          model: n.model,
+          linkUp: n.linkUp,
+          firewall: n.firewall,
+          name: n.name,
+        ),
+    ],
+    boot: hw.boot,
+    autostart: hw.autostart,
+    name: hw.name,
+    description: hw.description,
+    protection: hw.protection,
+    renameRunning: hw.renameRunning,
+    pending: [
+      for (final p in hw.pending) vm.PendingField(key: p.key, current: p.current, pending: p.pending, delete: p.delete),
+    ],
+    revision: hw.revision,
+    limits: vm.Limits(hostCpus: hw.limits.hostCpus, hostMemoryBytes: _big(hw.limits.hostMemoryBytes)),
+    cpuTypes: hw.cpuTypes,
+    configText: hw.configText,
+    firmware: switch (hw.firmware) {
+      final f? => vm.Firmware(uefi: f.uefi, secureBoot: f.secureBoot, varsStorage: f.varsStorage),
+      null => null,
+    },
+    display: switch (hw.display) {
+      final d? => vm.HwDisplay(protocol: d.protocol, listen: d.listen, gpu: d.gpu, port: d.port),
+      null => null,
+    },
+    devices: [
+      for (final d in hw.devices)
+        vm.HwDevice(key: d.key, kind: vm.DeviceKind.values.byName(d.kind.name), detail: d.detail, mapping: d.mapping),
+    ],
+    support: vm.Support(
+      buses: hw.support.buses,
+      caches: hw.support.caches,
+      nicModels: hw.support.nicModels,
+      mac: hw.support.mac,
+      protocols: hw.support.protocols,
+      listen: hw.support.listen,
+      gpus: hw.support.gpus,
+      uefi: hw.support.uefi,
+      secureBoot: hw.support.secureBoot,
+      tpm: hw.support.tpm,
+      usb: hw.support.usb,
+      pci: hw.support.pci,
+    ),
+  );
+
+  static VirtHostDevice hostDevice(vm.HostDevice d) => VirtHostDevice(
+    id: d.id,
+    label: d.label,
+    detail: d.detail,
+    mapping: d.mapping,
+    usbBus: d.usbBus,
+    usbPort: d.usbPort,
+    usbDevice: d.usbDevice,
+    iommuGroup: d.iommuGroup,
+    groupSize: d.groupSize,
+  );
+
+  static vm.HostDevice hostDeviceFfi(VirtHostDevice d) => vm.HostDevice(
+    id: d.id,
+    label: d.label,
+    detail: d.detail,
+    mapping: d.mapping,
+    usbBus: d.usbBus,
+    usbPort: d.usbPort,
+    usbDevice: d.usbDevice,
+    iommuGroup: d.iommuGroup,
+    groupSize: d.groupSize,
+  );
+
+  /// `sbm_virt::hardware::HostDevices`.
+  static VirtHostDevices hostDevices(vm.HostDevices d) => VirtHostDevices(
+    usb: [for (final u in d.usb) hostDevice(u)],
+    pci: [for (final p in d.pci) hostDevice(p)],
+    iommu: d.iommu,
+    mappingsOnly: d.mappingsOnly,
+  );
+
   /// [change] as `sbm_virt::hardware::Change`: what it names, by id.
-  static Map<String, Object?> hwChangeJson(VirtHwChange change) => switch (change) {
-    VirtHwSetCpu(:final sockets, :final cores, :final online, :final type) => {
-      'op': 'set_cpu',
-      'sockets': sockets,
-      'cores': cores,
-      'online': online,
-      'type': type,
-    },
-    VirtHwSetMemory(:final mib, :final minMib, :final swapMib) => {
-      'op': 'set_memory',
-      'mib': mib,
-      'min_mib': minMib,
-      'swap_mib': swapMib,
-    },
-    VirtHwGrowDisk(:final key, :final bytes) => {'op': 'grow_disk', 'key': key, 'bytes': bytes},
-    VirtHwAddDisk(:final storage, :final gib, :final mountPoint) => {
-      'op': 'add_disk',
-      'pool': storage.id,
-      'gib': gib,
-      'mount_point': mountPoint,
-    },
-    VirtHwAttachVolume(:final storage, :final volume, :final mountPoint) => {
-      'op': 'attach_volume',
-      'volume': {'pool': storage.id, 'volume': volume.id},
-      'mount_point': mountPoint,
-    },
-    VirtHwRemoveDisk(:final key, :final deleteVolume) => {
-      'op': 'remove_disk',
-      'key': key,
-      'delete_volume': deleteVolume,
-    },
-    VirtHwAddCdrom(:final media) => {'op': 'add_cdrom', 'media': _poolVolume(media)},
-    VirtHwSetMedia(:final key, :final media) => {'op': 'set_media', 'key': key, 'media': _poolVolume(media)},
-    VirtHwAddNic(:final network, :final model) => {'op': 'add_nic', 'network': network.id, 'model': model},
-    VirtHwRemoveNic(:final key) => {'op': 'remove_nic', 'key': key},
-    VirtHwUpdateNic(:final key, :final network, :final linkUp, :final firewall) => {
-      'op': 'update_nic',
-      'key': key,
-      'network': network?.id,
-      'link_up': linkUp,
-      'firewall': firewall,
-    },
-    VirtHwSetBoot(:final order) => {'op': 'set_boot', 'order': order},
-    VirtHwSetAutostart(:final on) => {'op': 'set_autostart', 'on': on},
-    VirtHwSetName(:final name) => {'op': 'set_name', 'name': name},
-    VirtHwSetDescription(:final text) => {'op': 'set_description', 'text': text},
-    VirtHwSetProtection(:final on) => {'op': 'set_protection', 'on': on},
-    VirtHwUpdateDisk(:final key, :final bus, :final cache) => {
-      'op': 'update_disk',
-      'key': key,
-      'bus': bus,
-      'cache': cache,
-    },
-    VirtHwSetNicHardware(:final key, :final model, :final mac) => {
-      'op': 'set_nic_hardware',
-      'key': key,
-      'model': model,
-      'mac': mac,
-    },
-    VirtHwSetFirmware(:final uefi, :final secureBoot, :final storage) => {
-      'op': 'set_firmware',
-      'uefi': uefi,
-      'secure_boot': secureBoot,
-      'storage': storage?.id,
-    },
-    VirtHwSetDisplay(:final protocol, :final listen, :final gpu) => {
-      'op': 'set_display',
-      'protocol': protocol,
-      'listen': listen,
-      'gpu': gpu,
-    },
-    VirtHwAddDevice(:final kind, :final host, :final storage, :final usbNaming) => {
-      'op': 'add_device',
-      'kind': kind.name,
-      'host': switch (host) {
-        final h? => hostDeviceJson(h),
+  static vm.HwChange hwChangeFfi(VirtHwChange change) => switch (change) {
+    VirtHwSetCpu(:final sockets, :final cores, :final online, :final type) =>
+      vm.HwChange.setCpu(sockets: sockets, cores: cores, online: online, cpuType: type),
+    VirtHwSetMemory(:final mib, :final minMib, :final swapMib) =>
+      vm.HwChange.setMemory(mib: BigInt.from(mib), minMib: _big(minMib), swapMib: _big(swapMib)),
+    VirtHwGrowDisk(:final key, :final bytes) => vm.HwChange.growDisk(key: key, bytes: BigInt.from(bytes)),
+    VirtHwAddDisk(:final storage, :final gib, :final mountPoint) =>
+      vm.HwChange.addDisk(pool: storage.id, gib: BigInt.from(gib), mountPoint: mountPoint),
+    VirtHwAttachVolume(:final storage, :final volume, :final mountPoint) => vm.HwChange.attachVolume(
+      volume: vm.VolumeRef(pool: storage.id, volume: volume.id),
+      mountPoint: mountPoint,
+    ),
+    VirtHwRemoveDisk(:final key, :final deleteVolume) => vm.HwChange.removeDisk(key: key, deleteVolume: deleteVolume),
+    VirtHwAddCdrom(:final media) => vm.HwChange.addCdrom(media: _volumeRef(media)),
+    VirtHwSetMedia(:final key, :final media) => vm.HwChange.setMedia(key: key, media: _volumeRef(media)),
+    VirtHwAddNic(:final network, :final model) => vm.HwChange.addNic(network: network.id, model: model),
+    VirtHwRemoveNic(:final key) => vm.HwChange.removeNic(key: key),
+    VirtHwUpdateNic(:final key, :final network, :final linkUp, :final firewall) =>
+      vm.HwChange.updateNic(key: key, network: network?.id, linkUp: linkUp, firewall: firewall),
+    VirtHwSetBoot(:final order) => vm.HwChange.setBoot(order: order),
+    VirtHwSetAutostart(:final on) => vm.HwChange.setAutostart(on_: on),
+    VirtHwSetName(:final name) => vm.HwChange.setName(name: name),
+    VirtHwSetDescription(:final text) => vm.HwChange.setDescription(text: text),
+    VirtHwSetProtection(:final on) => vm.HwChange.setProtection(on_: on),
+    VirtHwUpdateDisk(:final key, :final bus, :final cache) => vm.HwChange.updateDisk(key: key, bus: bus, cache: cache),
+    VirtHwSetNicHardware(:final key, :final model, :final mac) =>
+      vm.HwChange.setNicHardware(key: key, model: model, mac: mac),
+    VirtHwSetFirmware(:final uefi, :final secureBoot, :final storage) =>
+      vm.HwChange.setFirmware(uefi: uefi, secureBoot: secureBoot, storage: storage?.id),
+    VirtHwSetDisplay(:final protocol, :final listen, :final gpu) =>
+      vm.HwChange.setDisplay(protocol: protocol, listen: listen, gpu: gpu),
+    VirtHwAddDevice(:final kind, :final host, :final storage, :final usbNaming) => vm.HwChange.addDevice(
+      kind: vm.DeviceKind.values.byName(kind.name),
+      host: switch (host) {
+        final h? => hostDeviceFfi(h),
         null => null,
       },
-      'storage': storage?.id,
-      'usb_naming': _snake(usbNaming),
-    },
-    VirtHwRemoveDevice(:final key) => {'op': 'remove_device', 'key': key},
-    VirtHwRevert(:final keys) => {'op': 'revert', 'keys': keys},
+      storage: storage?.id,
+      usbNaming: vm.UsbNaming.values.byName(usbNaming.name),
+    ),
+    VirtHwRemoveDevice(:final key) => vm.HwChange.removeDevice(key: key),
+    VirtHwRevert(:final keys) => vm.HwChange.revert(keys: keys),
     // Its own call (`VirtBackend.revertPending`), never a change.
-    VirtHwRevertPending() => {'op': 'revert', 'keys': const <String>[]},
+    VirtHwRevertPending() => const vm.HwChange.revert(keys: []),
   };
 
   /// What [change] names, as it carries them: the pools, networks and
@@ -697,537 +583,448 @@ abstract final class VirtRust {
       };
 
   /// `sbm_virt::hardware::Outcome`.
-  static VirtHwOutcome hwOutcome(Object? json) {
-    final o = json is Map ? json : const {};
-    return VirtHwOutcome(
-      liveError: o['live_error'] as String?,
-      volumeKept: o['volume_kept'] as bool? ?? false,
-    );
-  }
+  static VirtHwOutcome hwOutcome(vm.Outcome o) => VirtHwOutcome(liveError: o.liveError, volumeKept: o.volumeKept);
 
   /// `sbm_virt::hardware::CloudInitState`.
-  static VirtCloudInitState cloudInitState(Object? json) {
-    final c = json is Map ? json : throw _invalid('cloud-init');
-    return VirtCloudInitState(
-      user: c['user'] as String? ?? '',
-      sshKeys: _strings(c['ssh_keys']),
-      hostname: c['hostname'] as String?,
-      address: c['address'] as String?,
-      gateway: c['gateway'] as String?,
-      dns: _strings(c['dns']),
-      searchDomains: _strings(c['search_domains']),
-      nics: c['nics'] as int? ?? 0,
-      passwordSet: c['password_set'] as bool? ?? false,
-      passwordExpires: c['password_expires'] as bool? ?? false,
-      network: c['network'] as bool? ?? false,
-      foreign: c['foreign'] as bool? ?? false,
-      revision: c['revision'] as String? ?? '',
-    );
-  }
+  static VirtCloudInitState cloudInitState(vm.CloudInitState c) => VirtCloudInitState(
+    user: c.user,
+    sshKeys: c.sshKeys,
+    hostname: c.hostname,
+    address: c.address,
+    gateway: c.gateway,
+    dns: c.dns,
+    searchDomains: c.searchDomains,
+    nics: c.nics,
+    passwordSet: c.passwordSet,
+    passwordExpires: c.passwordExpires,
+    network: c.network,
+    foreign: c.foreign,
+    revision: c.revision,
+  );
 
   /// [edit] made from [base] as `sbm_virt::hardware::CloudInitEdit`.
-  static Map<String, Object?> cloudInitEditJson(VirtCloudInitState base, VirtCloudInitEdit edit) => {
-    'values': cloudInitJson(edit.values),
-    'remove_password': edit.removePassword,
-    'password_expires': edit.passwordExpires,
-    'revision': base.revision,
-  };
+  static vm.CloudInitEdit cloudInitEditFfi(VirtCloudInitState base, VirtCloudInitEdit edit) => vm.CloudInitEdit(
+    values: cloudInitFfi(edit.values),
+    removePassword: edit.removePassword,
+    passwordExpires: edit.passwordExpires,
+    revision: base.revision,
+  );
 
   /// `sbm_virt::model::GuestDetail`.
-  static VirtGuestDetail detail(Object? json) {
-    if (json is! Map) throw _invalid('guest detail');
-    List<Map<String, dynamic>> maps(Object? v) => [
-      for (final e in (v as List? ?? const []).whereType<Map>())
-        Map<String, dynamic>.from(e),
-    ];
-    final display = json['display'];
-    return VirtGuestDetail(
-      disks: [for (final d in maps(json['disks'])) VirtDisk.fromJson(d)],
-      nics: [for (final n in maps(json['nics'])) VirtNic.fromJson(n)],
-      graphics: [for (final g in maps(json['graphics'])) VirtGraphics.fromJson(g)],
-      display: display is Map
-          ? VirtDisplay.fromJson(Map<String, dynamic>.from(display))
-          : null,
-      consoles: {
-        for (final c in (json['consoles'] as List? ?? const []))
-          if (c == 'text') VirtConsoleKind.text else if (c == 'vnc') VirtConsoleKind.vnc,
-      },
-      description: json['description'] as String?,
-      arch: json['arch'] as String?,
-      machine: json['machine'] as String?,
-    );
-  }
+  static VirtGuestDetail detail(vv.VirtGuestDetailReport d) => VirtGuestDetail(
+    disks: [
+      for (final k in d.disks)
+        VirtDisk(
+          device: k.device,
+          sourceType: k.sourceType,
+          source: k.source,
+          target: k.target,
+          bus: k.bus,
+          format: k.format,
+          readonly: k.readonly,
+          size: k.size?.toInt(),
+        ),
+    ],
+    nics: [
+      for (final n in d.nics) VirtNic(kind: n.kind, mac: n.mac, source: n.source, model: n.model, target: n.target),
+    ],
+    graphics: [
+      for (final g in d.graphics)
+        VirtGraphics(
+          kind: g.kind,
+          port: g.port,
+          tlsPort: g.tlsPort,
+          autoport: g.autoport,
+          listen: g.listen,
+          socket: g.socket,
+        ),
+    ],
+    display: switch (d.display) {
+      null => null,
+      final v => VirtDisplay(
+        uri: v.uri,
+        protocol: v.protocol,
+        host: v.host,
+        port: v.port,
+        tlsPort: v.tlsPort,
+        socket: v.socket,
+      ),
+    },
+    consoles: {
+      for (final c in d.consoles)
+        switch (c) {
+          vv.ConsoleKind.text => VirtConsoleKind.text,
+          vv.ConsoleKind.vnc => VirtConsoleKind.vnc,
+        },
+    },
+    description: d.description,
+    arch: d.arch,
+    machine: d.machine,
+  );
 
-  /// A list of `sbm_virt::snapshot::Snapshot`.
-  static List<VirtGuestSnapshot> snapshots(Object? json) {
-    if (json is! List) throw _invalid('snapshots');
-    return [
-      for (final s in json.whereType<Map>())
-        VirtGuestSnapshot(
-          name: s['name'] as String,
-          parent: s['parent'] as String?,
-          description: s['description'] as String?,
-          createdAt: switch (s['created_at']) {
-            final int t => DateTime.fromMillisecondsSinceEpoch(t * 1000),
-            _ => null,
-          },
-          current: s['current'] as bool? ?? false,
-          withMemory: s['with_memory'] as bool? ?? false,
-          external: s['external'] as bool? ?? false,
-          layers: [
-            for (final l in (s['layers'] as List? ?? const []).whereType<Map>())
-              VirtSnapshotLayer(
-                target: l['target'] as String,
-                file: l['file'] as String?,
-                external: l['external'] as bool? ?? false,
+  static List<VirtGuestSnapshot> snapshots(List<vv.Snapshot> list) => [
+    for (final s in list)
+      VirtGuestSnapshot(
+        name: s.name,
+        parent: s.parent,
+        description: s.description,
+        createdAt: switch (s.createdAt) {
+          final t? => DateTime.fromMillisecondsSinceEpoch(t * 1000),
+          null => null,
+        },
+        current: s.current,
+        withMemory: s.withMemory,
+        external: s.external_,
+        layers: [
+          for (final l in s.layers) VirtSnapshotLayer(target: l.target, file: l.file, external: l.external_),
+        ],
+      ),
+  ];
+
+  static List<VirtSnapDiff> diff(List<vv.Diff> list) => [
+    for (final d in list)
+      VirtSnapDiff(
+        group: VirtSnapDiffGroup.values.byName(d.group.name),
+        key: d.key,
+        before: d.before,
+        after: d.after,
+      ),
+  ];
+
+  static VirtSnapChain chain(vv.Chain c) => VirtSnapChain(
+    pools: c.pools,
+    refusal: c.refusal,
+    externalRefusal: c.externalRefusal,
+    disks: [
+      for (final d in c.disks)
+        VirtSnapChainDisk(
+          target: d.target,
+          pool: d.pool,
+          error: d.error,
+          files: [
+            for (final f in d.files)
+              VirtSnapChainFile(
+                path: f.path,
+                format: f.format,
+                allocation: f.allocation?.toInt(),
+                backing: f.backing,
+                snap: f.snap,
+                active: f.active,
               ),
           ],
         ),
-    ];
-  }
-
-  /// A list of `sbm_virt::snapshot::Diff`.
-  static List<VirtSnapDiff> diff(Object? json) {
-    if (json is! List) throw _invalid('snapshot diff');
-    return [
-      for (final d in json.whereType<Map>())
-        VirtSnapDiff(
-          group: VirtSnapDiffGroup.values.firstWhere(
-            (g) => g.name == d['group'],
-            orElse: () => VirtSnapDiffGroup.other,
-          ),
-          key: d['key'] as String,
-          before: d['before'] as String?,
-          after: d['after'] as String?,
-        ),
-    ];
-  }
-
-  /// `sbm_virt::snapshot::Chain`.
-  static VirtSnapChain chain(Object? json) {
-    if (json is! Map) throw _invalid('snapshot chain');
-    return VirtSnapChain(
-      pools: [...(json['pools'] as List? ?? const []).whereType<String>()],
-      refusal: json['refusal'] as String?,
-      externalRefusal: json['external_refusal'] as String?,
-      disks: [
-        for (final d in (json['disks'] as List? ?? const []).whereType<Map>())
-          VirtSnapChainDisk(
-            target: d['target'] as String,
-            pool: d['pool'] as String?,
-            error: d['error'] as String?,
-            files: [
-              for (final f in (d['files'] as List? ?? const []).whereType<Map>())
-                VirtSnapChainFile(
-                  path: f['path'] as String,
-                  format: f['format'] as String?,
-                  allocation: f['allocation'] as int?,
-                  backing: f['backing'] as String?,
-                  snap: f['snap'] as String?,
-                  active: f['active'] as bool? ?? false,
-                ),
-            ],
-          ),
-      ],
-    );
-  }
-
-  /// A list of `sbm_virt::model::Stats`.
-  static List<VirtStats> history(Object? json) {
-    if (json is! List) throw _invalid('history');
-    return [for (final s in json.whereType<Map>()) _stats(s)];
-  }
-
-  static VirtStats _stats(Map s) => VirtStats(
-    at: DateTime.fromMillisecondsSinceEpoch(s['at'] as int),
-    cpu: (s['cpu'] as num?)?.toDouble(),
-    memUsed: s['mem_used'] as int?,
-    memTotal: s['mem_total'] as int?,
-    diskUsed: s['disk_used'] as int?,
-    diskTotal: s['disk_total'] as int?,
-    diskRead: (s['disk_read'] as num?)?.toDouble(),
-    diskWrite: (s['disk_write'] as num?)?.toDouble(),
-    netIn: (s['net_in'] as num?)?.toDouble(),
-    netOut: (s['net_out'] as num?)?.toDouble(),
+    ],
   );
 
-  static VirtCapabilities capabilities(Map c) {
-    bool b(String key) => c[key] == true;
-    List<String> l(String key) => [...(c[key] as List? ?? const []).whereType<String>()];
-    return VirtCapabilities(
-      lxc: b('lxc'),
-      pause: b('pause'),
-      snapshots: b('snapshots'),
-      snapshotMemoryRequired: b('snapshot_memory_required'),
-      snapshotExternal: b('snapshot_external'),
-      snapshotSupported: b('snapshot_supported'),
-      storage: b('storage'),
-      network: b('network'),
-      backup: b('backup'),
-      clone: b('clone'),
-      linkedClone: b('linked_clone'),
-      template: b('template'),
-      cloneTarget: b('clone_target'),
-      backupJobs: b('backup_jobs'),
-      cluster: b('cluster'),
-      serialConsole: b('serial_console'),
-      vncConsole: b('vnc_console'),
-      termConsole: b('term_console'),
-      storedHistory: b('stored_history'),
-      create: b('create'),
-      deleteKeepsDisks: b('delete_keeps_disks'),
-      hardware: b('hardware'),
-      hardwareRevert: b('hardware_revert'),
-      hardwareRevertPending: b('hardware_revert_pending'),
-      storageEdit: b('storage_edit'),
-      poolTypes: l('pool_types'),
-      poolAutostart: b('pool_autostart'),
-      poolDeleteStorage: b('pool_delete_storage'),
-      volumeResize: b('volume_resize'),
-      volumeClone: b('volume_clone'),
-      upload: b('upload'),
-      networkEdit: b('network_edit'),
-      networkModes: l('network_modes'),
-      networkStart: b('network_start'),
-      networkApply: b('network_apply'),
-      networkEditExisting: b('network_edit_existing'),
-      networkRestart: b('network_restart'),
-    );
-  }
+  /// Oldest first.
+  static List<VirtStats> history(List<vv.Stats> list) => [for (final s in list) _stats(s)];
+
+  static VirtStats _stats(vv.Stats s) => VirtStats(
+    at: DateTime.fromMillisecondsSinceEpoch(s.at),
+    cpu: s.cpu,
+    memUsed: s.memUsed?.toInt(),
+    memTotal: s.memTotal?.toInt(),
+    diskUsed: s.diskUsed?.toInt(),
+    diskTotal: s.diskTotal?.toInt(),
+    diskRead: s.diskRead,
+    diskWrite: s.diskWrite,
+    netIn: s.netIn,
+    netOut: s.netOut,
+  );
+
+  static VirtCapabilities capabilities(vv.Capabilities c) => VirtCapabilities(
+    lxc: c.lxc,
+    pause: c.pause,
+    snapshots: c.snapshots,
+    snapshotMemoryRequired: c.snapshotMemoryRequired,
+    snapshotExternal: c.snapshotExternal,
+    snapshotSupported: c.snapshotSupported,
+    storage: c.storage,
+    network: c.network,
+    backup: c.backup,
+    clone: c.clone,
+    linkedClone: c.linkedClone,
+    template: c.template,
+    cloneTarget: c.cloneTarget,
+    backupJobs: c.backupJobs,
+    cluster: c.cluster,
+    serialConsole: c.serialConsole,
+    vncConsole: c.vncConsole,
+    termConsole: c.termConsole,
+    storedHistory: c.storedHistory,
+    create: c.create,
+    deleteKeepsDisks: c.deleteKeepsDisks,
+    hardware: c.hardware,
+    hardwareRevert: c.hardwareRevert,
+    hardwareRevertPending: c.hardwareRevertPending,
+    storageEdit: c.storageEdit,
+    poolTypes: c.poolTypes,
+    poolAutostart: c.poolAutostart,
+    poolDeleteStorage: c.poolDeleteStorage,
+    volumeResize: c.volumeResize,
+    volumeClone: c.volumeClone,
+    upload: c.upload,
+    networkEdit: c.networkEdit,
+    networkModes: c.networkModes,
+    networkStart: c.networkStart,
+    networkApply: c.networkApply,
+    networkEditExisting: c.networkEditExisting,
+    networkRestart: c.networkRestart,
+  );
 
   // -------------------------------------------------------------------------
   // Storage and networks (`sbm_virt::resource`)
   // -------------------------------------------------------------------------
 
-  static List<Map> _maps(Object? json, String what) {
-    if (json is! List) throw _invalid(what);
-    return [...json.whereType<Map>()];
-  }
+  static VirtGuestRef guestRef(vm.GuestRef r) =>
+      VirtGuestRef(guestId: r.guestId, vmid: r.vmid, device: r.device, mac: r.mac, ip: r.ip);
 
-  static List<String> _strings(Object? v) => [
-    ...(v as List? ?? const []).whereType<String>(),
-  ];
-
-  static VirtGuestRef guestRef(Map r) => VirtGuestRef(
-    guestId: r['guest_id'] as String?,
-    vmid: r['vmid'] as int?,
-    device: r['device'] as String?,
-    mac: r['mac'] as String?,
-    ip: r['ip'] as String?,
-  );
-
-  static Map<String, Object?> guestRefJson(VirtGuestRef r) => {
-    'guest_id': r.guestId,
-    'vmid': r.vmid,
-    'device': r.device,
-    'mac': r.mac,
-    'ip': r.ip,
-  };
-
-  static List<VirtGuestRef> _refs(Object? v) => [
-    for (final r in (v as List? ?? const []).whereType<Map>()) guestRef(r),
-  ];
+  static vm.GuestRef guestRefFfi(VirtGuestRef r) =>
+      vm.GuestRef(guestId: r.guestId, vmid: r.vmid, device: r.device, mac: r.mac, ip: r.ip);
 
   /// A list of `sbm_virt::resource::Pool`.
-  static List<VirtStoragePool> pools(Object? json) => [
-    for (final p in _maps(json, 'storage'))
+  static List<VirtStoragePool> pools(List<vm.ResourcePool> list) => [
+    for (final p in list)
       VirtStoragePool(
-        id: p['id'] as String,
-        name: p['name'] as String,
-        node: p['node'] as String?,
-        type: p['type'] as String? ?? '',
-        path: p['path'] as String?,
-        source: p['source'] as String?,
-        capacity: p['capacity'] as int?,
-        used: p['used'] as int?,
-        available: p['available'] as int?,
-        active: p['active'] as bool? ?? true,
-        autostart: p['autostart'] as bool?,
-        enabled: p['enabled'] as bool?,
-        shared: p['shared'] as bool?,
-        content: _strings(p['content']),
-        volumeCount: p['volume_count'] as int?,
+        id: p.id,
+        name: p.name,
+        node: p.node,
+        type: p.poolType,
+        path: p.path,
+        source: p.source,
+        capacity: p.capacity?.toInt(),
+        used: p.used?.toInt(),
+        available: p.available?.toInt(),
+        active: p.active,
+        autostart: p.autostart,
+        enabled: p.enabled,
+        shared: p.shared,
+        content: p.content,
+        volumeCount: p.volumeCount?.toInt(),
       ),
   ];
 
-  static Map<String, Object?> poolJson(VirtStoragePool p) => {
-    'id': p.id,
-    'name': p.name,
-    'node': p.node,
-    'type': p.type,
-    'path': p.path,
-    'source': p.source,
-    'capacity': p.capacity,
-    'used': p.used,
-    'available': p.available,
-    'active': p.active,
-    'autostart': p.autostart,
-    'enabled': p.enabled,
-    'shared': p.shared,
-    'content': p.content,
-    'volume_count': p.volumeCount,
-  };
+  static vm.ResourcePool poolFfi(VirtStoragePool p) => vm.ResourcePool(
+    id: p.id,
+    name: p.name,
+    node: p.node,
+    poolType: p.type,
+    path: p.path,
+    source: p.source,
+    capacity: _big(p.capacity),
+    used: _big(p.used),
+    available: _big(p.available),
+    active: p.active,
+    autostart: p.autostart,
+    enabled: p.enabled,
+    shared: p.shared,
+    content: p.content,
+    volumeCount: _big(p.volumeCount),
+  );
 
   /// A list of `sbm_virt::resource::Volume`.
-  static List<VirtVolume> volumes(Object? json) => [
-    for (final v in _maps(json, 'volumes'))
+  static List<VirtVolume> volumes(List<vm.Volume> list) => [
+    for (final v in list)
       VirtVolume(
-        id: v['id'] as String,
-        name: v['name'] as String,
-        path: v['path'] as String?,
-        format: v['format'] as String?,
-        content: v['content'] as String?,
-        capacity: v['capacity'] as int?,
-        allocation: v['allocation'] as int?,
-        backing: v['backing'] as String?,
-        createdAt: switch (v['created_at']) {
-          final int t => DateTime.fromMillisecondsSinceEpoch(t * 1000),
-          _ => null,
+        id: v.id,
+        name: v.name,
+        path: v.path,
+        format: v.format,
+        content: v.content,
+        capacity: v.capacity?.toInt(),
+        allocation: v.allocation?.toInt(),
+        backing: v.backing,
+        createdAt: switch (v.createdAt) {
+          final t? => DateTime.fromMillisecondsSinceEpoch(t * 1000),
+          null => null,
         },
-        users: _refs(v['users']),
-        backs: _strings(v['backs']),
+        users: [for (final r in v.users) guestRef(r)],
+        backs: v.backs,
       ),
   ];
 
-  static Map<String, Object?> volumeJson(VirtVolume v) => {
-    'id': v.id,
-    'name': v.name,
-    'path': v.path,
-    'format': v.format,
-    'content': v.content,
-    'capacity': v.capacity,
-    'allocation': v.allocation,
-    'backing': v.backing,
-    'created_at': switch (v.createdAt) {
+  static vm.Volume volumeFfi(VirtVolume v) => vm.Volume(
+    id: v.id,
+    name: v.name,
+    path: v.path,
+    format: v.format,
+    content: v.content,
+    capacity: _big(v.capacity),
+    allocation: _big(v.allocation),
+    backing: v.backing,
+    createdAt: switch (v.createdAt) {
       final t? => t.millisecondsSinceEpoch ~/ 1000,
       null => null,
     },
-    'users': [for (final r in v.users) guestRefJson(r)],
-    'backs': v.backs,
-  };
+    users: [for (final r in v.users) guestRefFfi(r)],
+    backs: v.backs,
+  );
 
   /// A list of `sbm_virt::resource::Network`.
-  static List<VirtNetwork> networks(Object? json) => [
-    for (final n in _maps(json, 'networks'))
+  static List<VirtNetwork> networks(List<vm.Network> list) => [
+    for (final n in list)
       VirtNetwork(
-        id: n['id'] as String,
-        name: n['name'] as String,
-        node: n['node'] as String?,
-        mode: n['mode'] as String? ?? '',
-        bridge: n['bridge'] as String?,
-        cidrs: _strings(n['cidrs']),
-        gateway: n['gateway'] as String?,
-        dhcpRanges: _strings(n['dhcp_ranges']),
-        ports: _strings(n['ports']),
-        vlanAware: n['vlan_aware'] as bool?,
-        vlanId: n['vlan_id'] as int?,
-        vlanDevice: n['vlan_device'] as String?,
-        bondMode: n['bond_mode'] as String?,
-        active: n['active'] as bool? ?? true,
-        autostart: n['autostart'] as bool?,
-        comment: n['comment'] as String?,
-        hosts: [
-          for (final h in (n['hosts'] as List? ?? const []).whereType<Map>())
-            VirtNetHost(
-              mac: h['mac'] as String,
-              ip: h['ip'] as String,
-              name: h['name'] as String?,
-            ),
-        ],
-        xml: n['xml'] as String? ?? '',
-        pendingRestart: n['pending_restart'] as bool? ?? false,
-        managementEditable: n['management_editable'] as bool? ?? true,
-        users: _refs(n['users']),
+        id: n.id,
+        name: n.name,
+        node: n.node,
+        mode: n.mode,
+        bridge: n.bridge,
+        cidrs: n.cidrs,
+        gateway: n.gateway,
+        dhcpRanges: n.dhcpRanges,
+        ports: n.ports,
+        vlanAware: n.vlanAware,
+        vlanId: n.vlanId,
+        vlanDevice: n.vlanDevice,
+        bondMode: n.bondMode,
+        active: n.active,
+        autostart: n.autostart,
+        comment: n.comment,
+        hosts: [for (final h in n.hosts) VirtNetHost(mac: h.mac, ip: h.ip, name: h.name)],
+        xml: n.xml,
+        pendingRestart: n.pendingRestart,
+        managementEditable: n.managementEditable,
+        users: [for (final r in n.users) guestRef(r)],
       ),
   ];
 
-  static Map<String, Object?> networkJson(VirtNetwork n) => {
-    'id': n.id,
-    'name': n.name,
-    'node': n.node,
-    'mode': n.mode,
-    'bridge': n.bridge,
-    'cidrs': n.cidrs,
-    'gateway': n.gateway,
-    'dhcp_ranges': n.dhcpRanges,
-    'ports': n.ports,
-    'vlan_aware': n.vlanAware,
-    'vlan_id': n.vlanId,
-    'vlan_device': n.vlanDevice,
-    'bond_mode': n.bondMode,
-    'active': n.active,
-    'autostart': n.autostart,
-    'comment': n.comment,
-    'hosts': [for (final h in n.hosts) _hostJson(h)],
-    'xml': n.xml,
-    'pending_restart': n.pendingRestart,
-    'management_editable': n.managementEditable,
-    'users': [for (final r in n.users) guestRefJson(r)],
-  };
+  static vm.Network networkFfi(VirtNetwork n) => vm.Network(
+    id: n.id,
+    name: n.name,
+    node: n.node,
+    mode: n.mode,
+    bridge: n.bridge,
+    cidrs: n.cidrs,
+    gateway: n.gateway,
+    dhcpRanges: n.dhcpRanges,
+    ports: n.ports,
+    vlanAware: n.vlanAware,
+    vlanId: n.vlanId,
+    vlanDevice: n.vlanDevice,
+    bondMode: n.bondMode,
+    active: n.active,
+    autostart: n.autostart,
+    comment: n.comment,
+    hosts: [for (final h in n.hosts) _hostFfi(h)],
+    xml: n.xml,
+    pendingRestart: n.pendingRestart,
+    managementEditable: n.managementEditable,
+    users: [for (final r in n.users) guestRefFfi(r)],
+  );
 
-  static Map<String, Object?> _hostJson(VirtNetHost h) => {
-    'mac': h.mac,
-    'ip': h.ip,
-    'name': h.name,
-  };
+  static vm.NetHost _hostFfi(VirtNetHost h) => vm.NetHost(mac: h.mac, ip: h.ip, name: h.name);
 
   /// A list of `sbm_virt::resource::NetworkChanges`.
-  static List<VirtNetworkChanges> networkChanges(Object? json) => [
-    for (final c in _maps(json, 'network changes'))
-      VirtNetworkChanges(node: c['node'] as String, diff: c['diff'] as String),
+  static List<VirtNetworkChanges> networkChanges(List<vm.NetworkChanges> list) => [
+    for (final c in list) VirtNetworkChanges(node: c.node, diff: c.diff),
   ];
 
-  /// [change] as `sbm_virt::resource::Change`: what it is to named by id,
+  /// [change] as `sbm_virt::resource::Change`: what it is to, named by id,
   /// resolved against what the host lists when it is made.
-  static Map<String, Object?> changeJson(VirtResourceChange change) =>
-      switch (change) {
-        VirtPoolCreate(
-          :final name,
-          :final type,
-          :final source,
-          :final target,
-          :final node,
-          :final content,
-          :final autostart,
-        ) =>
-          {
-            'op': 'pool_create',
-            'name': name,
-            'type': type,
-            'source': source,
-            'target': target,
-            'node': node,
-            'content': content,
-            'autostart': autostart,
-          },
-        VirtPoolSetActive(:final pool, :final active) => {
-          'op': 'pool_set_active',
-          'pool': pool.id,
-          'active': active,
-        },
-        VirtPoolSetAutostart(:final pool, :final on) => {
-          'op': 'pool_set_autostart',
-          'pool': pool.id,
-          'on': on,
-        },
-        VirtPoolRefresh(:final pool) => {'op': 'pool_refresh', 'pool': pool.id},
-        VirtPoolDelete(:final pool, :final deleteStorage) => {
-          'op': 'pool_delete',
-          'pool': pool.id,
-          'delete_storage': deleteStorage,
-        },
-        VirtVolumeCreate(:final pool, :final name, :final gib, :final format) => {
-          'op': 'volume_create',
-          'pool': pool.id,
-          'name': name,
-          'gib': gib,
-          'format': format,
-        },
-        VirtVolumeDelete(:final pool, :final volume) => {
-          'op': 'volume_delete',
-          'pool': pool.id,
-          'volume': volume.id,
-        },
-        VirtVolumeResize(:final pool, :final volume, :final bytes) => {
-          'op': 'volume_resize',
-          'pool': pool.id,
-          'volume': volume.id,
-          'bytes': bytes,
-        },
-        VirtVolumeClone(:final pool, :final volume, :final name) => {
-          'op': 'volume_clone',
-          'pool': pool.id,
-          'volume': volume.id,
-          'name': name,
-        },
-        VirtNetworkCreate(
-          :final name,
-          :final mode,
-          :final node,
-          :final bridge,
-          :final cidr,
-          :final dhcpStart,
-          :final dhcpEnd,
-          :final vlanAware,
-          :final autostart,
-        ) =>
-          {
-            'op': 'network_create',
-            'name': name,
-            'mode': mode,
-            'node': node,
-            'bridge': bridge,
-            'cidr': cidr,
-            'dhcp_start': dhcpStart,
-            'dhcp_end': dhcpEnd,
-            'vlan_aware': vlanAware,
-            'autostart': autostart,
-          },
-        VirtNetworkEdit(
-          :final network,
-          :final mode,
-          :final bridge,
-          :final address,
-          :final prefix,
-          :final dhcpStart,
-          :final dhcpEnd,
-          :final hosts,
-          :final restart,
-        ) =>
-          {
-            'op': 'network_edit',
-            'network': network.id,
-            'mode': mode,
-            'bridge': bridge,
-            'address': address,
-            'prefix': prefix,
-            'dhcp_start': dhcpStart,
-            'dhcp_end': dhcpEnd,
-            'hosts': [for (final h in hosts) _hostJson(h)],
-            'restart': restart,
-            // The definition the edit was made from: one changed since is
-            // refused rather than overwritten.
-            'base_xml': network.xml.isEmpty ? null : network.xml,
-          },
-        VirtNetworkEditBridge(
-          :final network,
-          :final ports,
-          :final cidr,
-          :final gateway,
-          :final vlanAware,
-          :final autostart,
-        ) =>
-          {
-            'op': 'network_edit_bridge',
-            'network': network.id,
-            'ports': ports,
-            'cidr': cidr,
-            'gateway': gateway,
-            'vlan_aware': vlanAware,
-            'autostart': autostart,
-          },
-        VirtNetworkRestart(:final network) => {
-          'op': 'network_restart',
-          'network': network.id,
-          'base_xml': network.xml.isEmpty ? null : network.xml,
-        },
-        VirtNetworkSetActive(:final network, :final active) => {
-          'op': 'network_set_active',
-          'network': network.id,
-          'active': active,
-        },
-        VirtNetworkSetAutostart(:final network, :final on) => {
-          'op': 'network_set_autostart',
-          'network': network.id,
-          'on': on,
-        },
-        VirtNetworkDelete(:final network) => {
-          'op': 'network_delete',
-          'network': network.id,
-        },
-        VirtNetworkApply(:final node) => {'op': 'network_apply', 'node': node},
-        VirtNetworkRevert(:final node) => {'op': 'network_revert', 'node': node},
-      };
+  static vm.ResourceChange changeFfi(VirtResourceChange change) => switch (change) {
+    VirtPoolCreate(
+      :final name,
+      :final type,
+      :final source,
+      :final target,
+      :final node,
+      :final content,
+      :final autostart,
+    ) =>
+      vm.ResourceChange.poolCreate(
+        name: name,
+        poolType: type,
+        source: source,
+        target: target,
+        node: node,
+        content: content,
+        autostart: autostart,
+      ),
+    VirtPoolSetActive(:final pool, :final active) => vm.ResourceChange.poolSetActive(pool: pool.id, active: active),
+    VirtPoolSetAutostart(:final pool, :final on) => vm.ResourceChange.poolSetAutostart(pool: pool.id, on_: on),
+    VirtPoolRefresh(:final pool) => vm.ResourceChange.poolRefresh(pool: pool.id),
+    VirtPoolDelete(:final pool, :final deleteStorage) =>
+      vm.ResourceChange.poolDelete(pool: pool.id, deleteStorage: deleteStorage),
+    VirtVolumeCreate(:final pool, :final name, :final gib, :final format) =>
+      vm.ResourceChange.volumeCreate(pool: pool.id, name: name, gib: BigInt.from(gib), format: format),
+    VirtVolumeDelete(:final pool, :final volume) => vm.ResourceChange.volumeDelete(pool: pool.id, volume: volume.id),
+    VirtVolumeResize(:final pool, :final volume, :final bytes) =>
+      vm.ResourceChange.volumeResize(pool: pool.id, volume: volume.id, bytes: BigInt.from(bytes)),
+    VirtVolumeClone(:final pool, :final volume, :final name) =>
+      vm.ResourceChange.volumeClone(pool: pool.id, volume: volume.id, name: name),
+    VirtNetworkCreate(
+      :final name,
+      :final mode,
+      :final node,
+      :final bridge,
+      :final cidr,
+      :final dhcpStart,
+      :final dhcpEnd,
+      :final vlanAware,
+      :final autostart,
+    ) =>
+      vm.ResourceChange.networkCreate(
+        name: name,
+        mode: mode,
+        node: node,
+        bridge: bridge,
+        cidr: cidr,
+        dhcpStart: dhcpStart,
+        dhcpEnd: dhcpEnd,
+        vlanAware: vlanAware,
+        autostart: autostart,
+      ),
+    VirtNetworkEdit(
+      :final network,
+      :final mode,
+      :final bridge,
+      :final address,
+      :final prefix,
+      :final dhcpStart,
+      :final dhcpEnd,
+      :final hosts,
+      :final restart,
+    ) =>
+      vm.ResourceChange.networkEdit(
+        network: network.id,
+        mode: mode,
+        bridge: bridge,
+        address: address,
+        prefix: prefix,
+        dhcpStart: dhcpStart,
+        dhcpEnd: dhcpEnd,
+        hosts: [for (final h in hosts) _hostFfi(h)],
+        restart: restart,
+        // The definition the edit was made from: one changed since is
+        // refused rather than overwritten.
+        baseXml: network.xml.isEmpty ? null : network.xml,
+      ),
+    VirtNetworkEditBridge(
+      :final network,
+      :final ports,
+      :final cidr,
+      :final gateway,
+      :final vlanAware,
+      :final autostart,
+    ) =>
+      vm.ResourceChange.networkEditBridge(
+        network: network.id,
+        ports: ports,
+        cidr: cidr,
+        gateway: gateway,
+        vlanAware: vlanAware,
+        autostart: autostart,
+      ),
+    VirtNetworkRestart(:final network) =>
+      vm.ResourceChange.networkRestart(network: network.id, baseXml: network.xml.isEmpty ? null : network.xml),
+    VirtNetworkSetActive(:final network, :final active) =>
+      vm.ResourceChange.networkSetActive(network: network.id, active: active),
+    VirtNetworkSetAutostart(:final network, :final on) =>
+      vm.ResourceChange.networkSetAutostart(network: network.id, on_: on),
+    VirtNetworkDelete(:final network) => vm.ResourceChange.networkDelete(network: network.id),
+    VirtNetworkApply(:final node) => vm.ResourceChange.networkApply(node: node),
+    VirtNetworkRevert(:final node) => vm.ResourceChange.networkRevert(node: node),
+  };
 
   /// `sbm_virt::error::Error` as this app phrases it. What `sbm_virt` leaves
   /// to the caller (`detail_json`) is said in the user's language; the
@@ -1329,28 +1126,6 @@ abstract final class VirtRust {
     _ => action.name,
   };
 
-  static VirtPowerAction? _action(String name) => switch (name) {
-    'start' => VirtPowerAction.start,
-    'shutdown' => VirtPowerAction.shutdown,
-    'reboot' => VirtPowerAction.reboot,
-    'force_stop' => VirtPowerAction.forceStop,
-    'suspend' => VirtPowerAction.suspend,
-    'resume' => VirtPowerAction.resume,
-    _ => null,
-  };
-
-  static VirtGuestState _state(Object? name) =>
-      VirtGuestState.values.firstWhere(
-        (s) => s.name == name,
-        orElse: () => VirtGuestState.unknown,
-      );
-
-  static VirtHostKind _hostKind(Object? name) =>
-      name == 'pve' ? VirtHostKind.pve : VirtHostKind.libvirt;
-
   static Duration? _seconds(Object? v) =>
       v is int && v > 0 ? Duration(seconds: v) : null;
-
-  static VirtErr _invalid(String what) =>
-      VirtErr(type: VirtErrType.invalidResponse, message: 'Unreadable $what');
 }

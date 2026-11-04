@@ -1,11 +1,9 @@
-import 'dart:convert';
-
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/model/virt/virt_rust.dart';
-import 'package:server_box/src/rust/api/pve.dart' show PveError;
 import 'package:server_box/src/rust/api/resource.dart' as ffi;
+import 'package:server_box/src/rust/api/virt_model.dart' as vm;
 
 /// One change to a host's storage or networks (the Storage and Network
 /// sections). Checked with [virtResourceIssue] before it is sent; made by
@@ -496,6 +494,13 @@ enum VirtResIssue {
   /// Not something this kind of host does.
   unsupported;
 
+  /// `ResourceIssue`, as the FFI returns it; one this build does not know is
+  /// [unsupported].
+  static VirtResIssue? of(vm.ResourceIssue? issue) => switch (issue) {
+    null => null,
+    final i => values.asNameMap()[i.name] ?? unsupported,
+  };
+
   /// The issue `sbm_virt` names (`in_use`).
   static VirtResIssue? ofRust(String? name) => switch (name) {
     null => null,
@@ -528,8 +533,6 @@ String? virtResIssueText(VirtResIssue? issue) => switch (issue) {
   VirtResIssue.notFound => l10n.virtResNotFound,
   VirtResIssue.unsupported => l10n.virtResUnsupported,
 };
-
-String _json(Object? value) => jsonEncode(value);
 
 /// Why [change] cannot be made on a host of [host]
 /// (`sbm_virt::resource::issue`); null when it can. [pools] and [networks]
@@ -571,19 +574,15 @@ VirtResIssue? virtResourceIssue(
     ...networks,
     if (network != null && !networks.any((n) => n.id == network.id)) network,
   ];
-  try {
-    return VirtResIssue.ofRust(
-      ffi.virtResourceIssue(
-        changeJson: _json(VirtRust.changeJson(change)),
-        pve: host == VirtHostKind.pve,
-        poolsJson: _json([for (final p in allPools) VirtRust.poolJson(p)]),
-        networksJson: _json([for (final n in allNetworks) VirtRust.networkJson(n)]),
-        volumesJson: _json([for (final v in allVolumes) VirtRust.volumeJson(v)]),
-      ),
-    );
-  } on PveError {
-    return VirtResIssue.unsupported;
-  }
+  return VirtResIssue.of(
+    ffi.virtResourceIssue(
+      change: VirtRust.changeFfi(change),
+      pve: host == VirtHostKind.pve,
+      pools: [for (final p in allPools) VirtRust.poolFfi(p)],
+      networks: [for (final n in allNetworks) VirtRust.networkFfi(n)],
+      volumes: [for (final v in allVolumes) VirtRust.volumeFfi(v)],
+    ),
+  );
 }
 
 /// Why an upload of [name] into [pool] cannot start; null when it can.
@@ -592,28 +591,28 @@ VirtResIssue? virtUploadIssue(
   String name,
   int size, {
   List<VirtVolume> volumes = const [],
-}) => VirtResIssue.ofRust(
+}) => VirtResIssue.of(
   ffi.virtUploadIssue(
-    poolJson: _json(VirtRust.poolJson(pool)),
+    pool: VirtRust.poolFfi(pool),
     name: name,
     size: BigInt.from(size < 0 ? 0 : size),
-    volumesJson: _json([for (final v in volumes) VirtRust.volumeJson(v)]),
+    volumes: [for (final v in volumes) VirtRust.volumeFfi(v)],
   ),
 );
 
 /// Whether [pool] takes uploads of install media.
 bool virtPoolTakesMedia(VirtStoragePool pool) =>
-    ffi.virtPoolTakesMedia(poolJson: _json(VirtRust.poolJson(pool)));
+    ffi.virtPoolTakesMedia(pool: VirtRust.poolFfi(pool));
 
 /// The formats a new volume in [pool] can have, the first the default.
 List<String> virtVolumeFormats(VirtStoragePool pool) =>
-    ffi.virtVolumeFormats(poolJson: _json(VirtRust.poolJson(pool)));
+    ffi.virtVolumeFormats(pool: VirtRust.poolFfi(pool));
 
 /// PVE: the name a new volume is given, with the format as its extension on
 /// a file-based storage.
 String virtVolumeFileName(VirtStoragePool pool, String name, String format) =>
     ffi.virtVolumeFileName(
-      poolJson: _json(VirtRust.poolJson(pool)),
+      pool: VirtRust.poolFfi(pool),
       name: name,
       format: format,
     );

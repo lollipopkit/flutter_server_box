@@ -12,7 +12,6 @@ import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server.dart' show ServerConn;
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/model/virt/libvirt.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_backup.dart';
 import 'package:server_box/data/model/virt/virt_backup_schedule.dart';
@@ -28,6 +27,7 @@ import 'package:server_box/data/provider/virt/backend.dart';
 import 'package:server_box/data/provider/virt/libvirt_backend.dart';
 import 'package:server_box/data/provider/virt/pve_backend.dart';
 import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/src/rust/api/virt_libvirt.dart' as vl;
 
 part 'virt.freezed.dart';
 part 'virt.g.dart';
@@ -221,11 +221,11 @@ class VirtHosts extends _$VirtHosts {
     try {
       final found = await backend.probe();
       result = switch (found) {
-        VirtHostProbeResult(:final pve?) => VirtProbe(
+        vl.VirtHostProbe(:final pve?) => VirtProbe(
           status: VirtProbeStatus.pve,
           pve: pve,
         ),
-        VirtHostProbeResult(:final libvirt?) => VirtProbe(
+        vl.VirtHostProbe(:final libvirt?) => VirtProbe(
           status: VirtProbeStatus.found,
           version: libvirt.libvirt,
         ),

@@ -4,9 +4,10 @@
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
+import 'package:server_box/src/rust/api/virt_libvirt.dart';
+import 'package:server_box/src/rust/api/virt_view.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `json_err`, `spec_of`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `clone`, `eq`, `fmt`, `fmt`, `from`, `from`, `from`, `from`
 
 /// Host probe: Proxmox VE, a container, or `virsh` answering this user
@@ -33,17 +34,18 @@ String virtActionScript({
 String virtConsoleCommand({required String domain}) =>
     RustLib.instance.api.crateApiVirtVirtConsoleCommand(domain: domain);
 
-/// [`virt_probe_script`]'s output → `VirtHostProbe` JSON
-Future<String> parseVirtProbeJson({required String raw}) =>
-    RustLib.instance.api.crateApiVirtParseVirtProbeJson(raw: raw);
+/// [`virt_probe_script`]'s output as `VirtHostProbe`
+Future<VirtHostProbe> virtLibvirtProbe({required String raw}) =>
+    RustLib.instance.api.crateApiVirtVirtLibvirtProbe(raw: raw);
 
-/// [`virt_overview_script`]'s output → `VirtOverview` JSON
-Future<String> parseVirtOverviewJson({required String raw}) =>
-    RustLib.instance.api.crateApiVirtParseVirtOverviewJson(raw: raw);
+/// [`virt_overview_script`]'s output checked as [`LibvirtRates::view`] reads
+/// it, without touching any counters: what tells a refusal from a listing.
+Future<void> virtOverviewCheck({required String raw}) =>
+    RustLib.instance.api.crateApiVirtVirtOverviewCheck(raw: raw);
 
 /// [`virt_domain_detail_script`]'s output read into
-/// `sbm_virt::model::GuestDetail` JSON (sbm_virt::libvirt::host).
-String virtLibvirtGuestDetail({required String raw}) =>
+/// `sbm_virt::model::GuestDetail` (sbm_virt::libvirt::host).
+VirtGuestDetailReport virtLibvirtGuestDetail({required String raw}) =>
     RustLib.instance.api.crateApiVirtVirtLibvirtGuestDetail(raw: raw);
 
 /// An active pool of files: where an overlay can go.
@@ -59,31 +61,31 @@ String? virtLibvirtPoolOfFile({
   file: file,
 );
 
-/// [`virt_snapshots_script`]'s output as `sbm_virt::snapshot::Snapshot`
-/// JSON.
-String virtLibvirtSnapshots({required String raw}) =>
+/// [`virt_snapshots_script`]'s output as `sbm_virt::snapshot::Snapshot`s.
+List<Snapshot> virtLibvirtSnapshots({required String raw}) =>
     RustLib.instance.api.crateApiVirtVirtLibvirtSnapshots(raw: raw);
 
-/// [`virt_snap_chain_script`]'s output as `sbm_virt::snapshot::Chain` JSON:
-/// each layer named for the snapshot (`snapshots_json`, from
-/// [`virt_libvirt_snapshots`]) that left the disk on it, each disk's pool.
-String virtLibvirtChain({
+/// [`virt_snap_chain_script`]'s output as `sbm_virt::snapshot::Chain`: each
+/// layer named for the snapshot (`snapshots`, from [`virt_libvirt_snapshots`])
+/// that left the disk on it, each disk's pool.
+Chain virtLibvirtChain({
   required String chainRaw,
-  required String snapshotsJson,
+  required List<Snapshot> snapshots,
   required List<LibvirtPoolRef> pools,
 }) => RustLib.instance.api.crateApiVirtVirtLibvirtChain(
   chainRaw: chainRaw,
-  snapshotsJson: snapshotsJson,
+  snapshots: snapshots,
   pools: pools,
 );
 
-/// Where an external snapshot `name` puts each disk's overlay in `dir`; none
-/// without one (libvirt names them beside each disk).
-List<VirtOverlay> virtLibvirtOverlays({
+/// The external snapshot `name` from [`virt_snap_chain_script`]'s output:
+/// its overlays in `dir`, or none named without one (libvirt puts them
+/// beside each disk).
+VirtExternalSnapshot virtLibvirtExternalSnapshot({
   required String chainRaw,
   required String name,
   String? dir,
-}) => RustLib.instance.api.crateApiVirtVirtLibvirtOverlays(
+}) => RustLib.instance.api.crateApiVirtVirtLibvirtExternalSnapshot(
   chainRaw: chainRaw,
   name: name,
   dir: dir,
@@ -127,14 +129,14 @@ List<VirtActionKind>? virtLibvirtPowerPlan({
 String virtVncConsoleScript({required String domain}) =>
     RustLib.instance.api.crateApiVirtVirtVncConsoleScript(domain: domain);
 
-/// [`virt_vnc_console_script`]'s output → `VirtVncConsoleInfo` JSON. Holds
+/// [`virt_vnc_console_script`]'s output as `VirtVncConsoleInfo`. Holds
 /// the password: never logged.
-Future<String> parseVirtVncConsoleJson({required String raw}) =>
-    RustLib.instance.api.crateApiVirtParseVirtVncConsoleJson(raw: raw);
+Future<VirtVncConsoleInfo> virtLibvirtVncConsole({required String raw}) =>
+    RustLib.instance.api.crateApiVirtVirtLibvirtVncConsole(raw: raw);
 
-/// [`virt_domain_detail_script`]'s output → `VirtDomainDetail` JSON
-Future<String> parseVirtDomainDetailJson({required String raw}) =>
-    RustLib.instance.api.crateApiVirtParseVirtDomainDetailJson(raw: raw);
+/// [`virt_domain_detail_script`]'s output as `VirtDomainDetail`
+Future<VirtDomainDetail> virtLibvirtDomainDetail({required String raw}) =>
+    RustLib.instance.api.crateApiVirtVirtLibvirtDomainDetail(raw: raw);
 
 /// [`virt_action_script`]'s output: `Ok` when virsh accepted the action
 void parseVirtAction({required String raw}) =>
@@ -143,10 +145,6 @@ void parseVirtAction({required String raw}) =>
 /// Every snapshot of one domain
 String virtSnapshotsScript({required String domain}) =>
     RustLib.instance.api.crateApiVirtVirtSnapshotsScript(domain: domain);
-
-/// [`virt_snapshots_script`]'s output → `Vec<VirtSnapshotInfo>` JSON
-Future<String> parseVirtSnapshotsJson({required String raw}) =>
-    RustLib.instance.api.crateApiVirtParseVirtSnapshotsJson(raw: raw);
 
 /// An internal snapshot; with memory when the domain is active. Parse with
 /// [`parse_virt_action`].
@@ -197,9 +195,9 @@ Future<void> parseVirtSnapshotDelete({required String raw}) =>
 String virtSnapChainScript({required String domain}) =>
     RustLib.instance.api.crateApiVirtVirtSnapChainScript(domain: domain);
 
-/// [`virt_snap_chain_script`]'s output → `VirtSnapChain` JSON
-Future<String> parseVirtSnapChainJson({required String raw}) =>
-    RustLib.instance.api.crateApiVirtParseVirtSnapChainJson(raw: raw);
+/// [`virt_snap_chain_script`]'s output checked: the error it reports, if any.
+Future<void> virtSnapChainCheck({required String raw}) =>
+    RustLib.instance.api.crateApiVirtVirtSnapChainCheck(raw: raw);
 
 /// What deciding whether the host would refuse deleting or reverting to
 /// snapshot `name` needs: its layers, the chain, the security model and the
@@ -242,34 +240,24 @@ String virtSnapshotExternalScript({
 );
 
 /// A snapshot's configuration and the guest's current one. Parse with
-/// [`parse_virt_snap_diff_json`].
+/// [`virt_libvirt_snap_diff`].
 String virtSnapDiffScript({required String domain, required String name}) =>
     RustLib.instance.api.crateApiVirtVirtSnapDiffScript(
       domain: domain,
       name: name,
     );
 
-/// [`virt_snap_diff_script`]'s output → `Vec<VirtSnapDiff>` JSON
-Future<String> parseVirtSnapDiffJson({required String raw}) =>
-    RustLib.instance.api.crateApiVirtParseVirtSnapDiffJson(raw: raw);
-
-/// Why an external snapshot cannot be taken, from a `VirtSnapChain` JSON
-String? virtExternalSnapshotRefusal({required String chainJson}) => RustLib
-    .instance
-    .api
-    .crateApiVirtVirtExternalSnapshotRefusal(chainJson: chainJson);
-
-/// Why no snapshot at all can be taken, from a `VirtSnapChain` JSON
-String? virtSnapshotRefusal({required String chainJson}) =>
-    RustLib.instance.api.crateApiVirtVirtSnapshotRefusal(chainJson: chainJson);
+/// [`virt_snap_diff_script`]'s output as `Vec<VirtSnapDiff>`
+Future<List<Diff>> virtLibvirtSnapDiff({required String raw}) =>
+    RustLib.instance.api.crateApiVirtVirtLibvirtSnapDiff(raw: raw);
 
 /// Pools, volume names and every domain's disks
 String virtStorageScript() =>
     RustLib.instance.api.crateApiVirtVirtStorageScript();
 
-/// [`virt_storage_script`]'s output → `VirtStorage` JSON
-Future<String> parseVirtStorageJson({required String raw}) =>
-    RustLib.instance.api.crateApiVirtParseVirtStorageJson(raw: raw);
+/// [`virt_storage_script`]'s output as `VirtStorage`
+Future<VirtStorage> virtLibvirtStorage({required String raw}) =>
+    RustLib.instance.api.crateApiVirtVirtLibvirtStorage(raw: raw);
 
 /// What each of `names` in `pool` is: format and sizes. Read with
 /// [`super::resource::virt_libvirt_volumes`].
@@ -294,19 +282,19 @@ Future<void> parseVirtNetChange({required String raw}) =>
 String virtCreateHostScript() =>
     RustLib.instance.api.crateApiVirtVirtCreateHostScript();
 
-/// [`virt_create_host_script`]'s output → `VirtCreateHost` JSON
-Future<String> parseVirtCreateHostJson({required String raw}) =>
-    RustLib.instance.api.crateApiVirtParseVirtCreateHostJson(raw: raw);
+/// [`virt_create_host_script`]'s output as `VirtCreateHost`
+Future<VirtCreateHost> virtLibvirtCreateHost({required String raw}) =>
+    RustLib.instance.api.crateApiVirtVirtLibvirtCreateHost(raw: raw);
 
 /// A new domain's disk (empty, or a copy of a cloud image) and its
-/// cloud-init seed; `spec_json` is a `VirtCreateSpec`
-String virtCreateVolumeScript({required String specJson}) =>
-    RustLib.instance.api.crateApiVirtVirtCreateVolumeScript(specJson: specJson);
+/// cloud-init seed
+String virtCreateVolumeScript({required VirtCreateSpec spec}) =>
+    RustLib.instance.api.crateApiVirtVirtCreateVolumeScript(spec: spec);
 
-/// [`virt_create_volume_script`]'s output → `VirtCreateVolumes` JSON (the
+/// [`virt_create_volume_script`]'s output as `VirtCreateVolumes` (the
 /// disk's and the seed's paths)
-Future<String> parseVirtCreateVolumesJson({required String raw}) =>
-    RustLib.instance.api.crateApiVirtParseVirtCreateVolumesJson(raw: raw);
+Future<VirtCreateVolumes> virtLibvirtCreateVolumes({required String raw}) =>
+    RustLib.instance.api.crateApiVirtVirtLibvirtCreateVolumes(raw: raw);
 
 /// `$6$<salt>$…`: a cloud-init password as SHA-512 crypt, so only the hash
 /// ever leaves the app. `salt` is up to 16 of `./0-9A-Za-z`, drawn from a
@@ -319,34 +307,34 @@ String virtHashPassword({required String password, required String salt}) =>
       salt: salt,
     );
 
-/// A clone's disks (`VirtCloneSpec` JSON), each copied or made empty in
+/// A clone's disks, each copied or made empty in
 /// its source's pool
-String virtCloneVolumesScript({required String specJson}) =>
-    RustLib.instance.api.crateApiVirtVirtCloneVolumesScript(specJson: specJson);
+String virtCloneVolumesScript({required VirtCloneSpec spec}) =>
+    RustLib.instance.api.crateApiVirtVirtCloneVolumesScript(spec: spec);
 
 /// [`virt_clone_volumes_script`]'s output: the new volumes' paths, in order
 Future<List<String>> parseVirtCloneVolumes({required String raw}) =>
     RustLib.instance.api.crateApiVirtParseVirtCloneVolumes(raw: raw);
 
-/// Defines the clone of `base_xml` called `name` on `disks_json`
-/// (`[[target, path], ...]`); parse with [`parse_virt_create_json`]
+/// Defines the clone of `base_xml` called `name` on `disks`
+/// (`[[target, path], ...]`); parse with [`virt_libvirt_define_result`]
 String virtCloneDefineScript({
   required String baseXml,
   required String name,
-  required String disksJson,
+  required List<(String, String)> disks,
 }) => RustLib.instance.api.crateApiVirtVirtCloneDefineScript(
   baseXml: baseXml,
   name: name,
-  disksJson: disksJson,
+  disks: disks,
 );
 
 /// Defines (and optionally starts) the domain on that disk
-String virtDefineScript({required String specJson}) =>
-    RustLib.instance.api.crateApiVirtVirtDefineScript(specJson: specJson);
+String virtDefineScript({required VirtCreateSpec spec}) =>
+    RustLib.instance.api.crateApiVirtVirtDefineScript(spec: spec);
 
-/// [`virt_define_script`]'s output → `VirtCreated` JSON
-Future<String> parseVirtCreateJson({required String raw}) =>
-    RustLib.instance.api.crateApiVirtParseVirtCreateJson(raw: raw);
+/// [`virt_define_script`]'s output as `VirtCreated`
+Future<VirtCreated> virtLibvirtDefineResult({required String raw}) =>
+    RustLib.instance.api.crateApiVirtVirtLibvirtDefineResult(raw: raw);
 
 /// `undefine`, with the volumes of the disk targets in `storage` (none keeps
 /// them all), and the domain's own cloud-init `seed` and the `chain` files
@@ -373,29 +361,28 @@ void parseVirtUndefine({required String raw}) =>
 
 /// A domain's cloud-init seed at `seed` (its path, as the domain's metadata
 /// names it), read back from its volume. Parse with
-/// [`parse_virt_seed_read_json`].
+/// [`virt_libvirt_seed_read`].
 String virtSeedReadScript({required String seed}) =>
     RustLib.instance.api.crateApiVirtVirtSeedReadScript(seed: seed);
 
-/// [`virt_seed_read_script`]'s output → `VirtSeedRead` JSON: what the seed
+/// [`virt_seed_read_script`]'s output as `VirtSeedRead`: what the seed
 /// says (its password as the hash in it), whether it holds more than the
 /// app writes, and its revision
-Future<String> parseVirtSeedReadJson({required String raw}) =>
-    RustLib.instance.api.crateApiVirtParseVirtSeedReadJson(raw: raw);
+Future<VirtSeedRead> virtLibvirtSeedRead({required String raw}) =>
+    RustLib.instance.api.crateApiVirtVirtLibvirtSeedRead(raw: raw);
 
-/// The seed at `seed` rewritten in place from `cloud_init_json` (a
-/// `VirtCloudInit`), made from the read of `revision`; `tools` narrows the
+/// The seed at `seed` rewritten in place from `cloud_init`, made from the read of `revision`; `tools` narrows the
 /// ISO tools tried (none: all, in their order). Parse with
 /// [`parse_virt_seed_update`].
 String virtSeedUpdateScript({
   required String seed,
   required String revision,
-  required String cloudInitJson,
+  required VirtCloudInit cloudInit,
   List<String>? tools,
 }) => RustLib.instance.api.crateApiVirtVirtSeedUpdateScript(
   seed: seed,
   revision: revision,
-  cloudInitJson: cloudInitJson,
+  cloudInit: cloudInit,
   tools: tools,
 );
 
@@ -408,28 +395,28 @@ void parseVirtSeedUpdate({required String raw}) =>
 String virtHardwareScript({required String domain}) =>
     RustLib.instance.api.crateApiVirtVirtHardwareScript(domain: domain);
 
-/// [`virt_hardware_script`]'s output → `VirtHardwareInfo` JSON
-Future<String> parseVirtHardwareJson({required String raw}) =>
-    RustLib.instance.api.crateApiVirtParseVirtHardwareJson(raw: raw);
+/// [`virt_hardware_script`]'s output as `VirtHardwareInfo`
+Future<VirtHardwareInfo> virtLibvirtHardwareRead({required String raw}) =>
+    RustLib.instance.api.crateApiVirtVirtLibvirtHardwareRead(raw: raw);
 
-/// One hardware change; `change_json` is a `VirtHwChange`, `base_xml` the
+/// One hardware change; `base_xml` the
 /// persistent definition it was made from. Parse with
-/// [`parse_virt_hardware_change_json`].
+/// [`virt_libvirt_hardware_outcome`].
 String virtHardwareChangeScript({
   required String domain,
   required bool running,
   String? baseXml,
-  required String changeJson,
+  required VirtHwChange change,
 }) => RustLib.instance.api.crateApiVirtVirtHardwareChangeScript(
   domain: domain,
   running: running,
   baseXml: baseXml,
-  changeJson: changeJson,
+  change: change,
 );
 
-/// [`virt_hardware_change_script`]'s output → `VirtHwOutcome` JSON
-Future<String> parseVirtHardwareChangeJson({required String raw}) =>
-    RustLib.instance.api.crateApiVirtParseVirtHardwareChangeJson(raw: raw);
+/// [`virt_hardware_change_script`]'s output as `VirtHwOutcome`
+Future<VirtHwOutcome> virtLibvirtHardwareOutcome({required String raw}) =>
+    RustLib.instance.api.crateApiVirtVirtLibvirtHardwareOutcome(raw: raw);
 
 /// Which pool types the daemon has a backend for (`pool-capabilities`).
 /// Parse with [`parse_virt_pool_types`].
@@ -443,26 +430,25 @@ List<String>? parseVirtPoolTypes({required String raw}) =>
 
 /// The host's firmware descriptors (`/usr/share/qemu/firmware/*.json`), for
 /// what a new domain can boot with. Parse with
-/// [`parse_virt_firmware_json`].
+/// [`virt_libvirt_firmware`].
 String virtFirmwareScript() =>
     RustLib.instance.api.crateApiVirtVirtFirmwareScript();
 
-/// [`virt_firmware_script`]'s output → `Vec<FirmwareDescriptor>` JSON
-Future<String> parseVirtFirmwareJson({required String raw}) =>
-    RustLib.instance.api.crateApiVirtParseVirtFirmwareJson(raw: raw);
+/// [`virt_firmware_script`]'s output as `Vec<FirmwareDescriptor>`
+Future<List<FirmwareDescriptor>> virtLibvirtFirmware({required String raw}) =>
+    RustLib.instance.api.crateApiVirtVirtLibvirtFirmware(raw: raw);
 
 /// The host's USB and PCI devices, for passing one to a guest
 String virtHostDevicesScript() =>
     RustLib.instance.api.crateApiVirtVirtHostDevicesScript();
 
-/// [`virt_host_devices_script`]'s output → `VirtHostDevices` JSON
-Future<String> parseVirtHostDevicesJson({required String raw}) =>
-    RustLib.instance.api.crateApiVirtParseVirtHostDevicesJson(raw: raw);
+/// [`virt_host_devices_script`]'s output as `VirtHostDevices`
+Future<VirtHostDevices> virtLibvirtHostDevicesRead({required String raw}) =>
+    RustLib.instance.api.crateApiVirtVirtLibvirtHostDevicesRead(raw: raw);
 
-/// One change to the host's storage or networks; `op_json` is a
-/// `VirtResourceOp`. Parse with [`parse_virt_resource`].
-String virtResourceScript({required String opJson}) =>
-    RustLib.instance.api.crateApiVirtVirtResourceScript(opJson: opJson);
+/// One change to the host's storage or networks. Parse with [`parse_virt_resource`].
+String virtResourceScript({required VirtResourceOp op}) =>
+    RustLib.instance.api.crateApiVirtVirtResourceScript(op: op);
 
 /// [`virt_resource_script`]'s output: `Ok` when every step ran
 void parseVirtResource({required String raw}) =>
@@ -504,7 +490,7 @@ abstract class LibvirtRates implements RustOpaqueInterface {
   /// `raw` is [`virt_overview_script`]'s output, `at_ms` when it was read.
   /// `pool_types` is [`parse_virt_pool_types`]'s answer; `upload` whether
   /// the channel carries bytes for `vol-upload`.
-  String view({
+  VirtHostReport view({
     required String raw,
     required PlatformInt64 atMs,
     List<String>? poolTypes,
@@ -594,6 +580,26 @@ enum VirtErrorKind {
 
   /// Output cut off or not what the script prints
   malformed,
+}
+
+/// An external snapshot as one read of the chain decides it: why it cannot
+/// be taken, or each disk's overlay.
+class VirtExternalSnapshot {
+  final String? refusal;
+  final List<VirtOverlay> overlays;
+
+  const VirtExternalSnapshot({this.refusal, required this.overlays});
+
+  @override
+  int get hashCode => refusal.hashCode ^ overlays.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is VirtExternalSnapshot &&
+          runtimeType == other.runtimeType &&
+          refusal == other.refusal &&
+          overlays == other.overlays;
 }
 
 /// A classified virsh failure; `message` is virsh's own error text.

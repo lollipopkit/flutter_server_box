@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/virt/virt.dart';
@@ -7,7 +5,7 @@ import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/model/virt/virt_rust.dart';
 import 'package:server_box/src/rust/api/hardware.dart' as ffi;
-import 'package:server_box/src/rust/api/pve.dart' show PveError;
+import 'package:server_box/src/rust/api/virt_model.dart' as vm;
 
 part 'virt_hardware.freezed.dart';
 
@@ -719,6 +717,13 @@ enum VirtHwIssue {
   notFound,
   unsupported;
 
+  /// `HwIssue`, as the FFI returns it; one this build does not know is
+  /// [unsupported].
+  static VirtHwIssue? of(vm.HwIssue? issue) => switch (issue) {
+    null => null,
+    final i => values.asNameMap()[i.name] ?? unsupported,
+  };
+
   /// The issue `sbm_virt` names (`disk_shrink`).
   static VirtHwIssue? ofRust(String? name) => switch (name) {
     null => null,
@@ -731,7 +736,7 @@ enum VirtHwIssue {
 
 /// Whether [disk] can be grown from here (`sbm_virt::hardware::disk_growable`).
 bool virtHwDiskGrowable(VirtHwDisk disk) =>
-    ffi.virtHwDiskGrowable(diskJson: jsonEncode(VirtRust.hwDiskJson(disk)));
+    ffi.virtHwDiskGrowable(disk: VirtRust.hwDiskFfi(disk));
 
 /// Whether [device] can be given by its address: the host said where it
 /// sits.
@@ -740,7 +745,7 @@ bool virtUsbHasAddress(VirtHostDevice device) =>
 
 /// The address [device] is given by, as its backend writes it.
 String? virtUsbAddress(VirtHostDevice device, VirtHostKind host) => ffi.virtUsbAddress(
-  deviceJson: jsonEncode(VirtRust.hostDeviceJson(device)),
+  device: VirtRust.hostDeviceFfi(device),
   pve: host == VirtHostKind.pve,
 );
 
@@ -765,23 +770,19 @@ VirtHwIssue? virtHwIssue(
   VirtHwChange change, {
   VirtHostKind? host,
 }) {
-  String? on(bool pve) {
-    final (pools, networks, volumes) = VirtRust.hwListing(change);
-    try {
-      return ffi.virtHwIssue(
-        hardwareJson: jsonEncode(VirtRust.hardwareJson(hw)),
-        changeJson: jsonEncode(VirtRust.hwChangeJson(change)),
-        pve: pve,
-        poolsJson: jsonEncode([for (final p in pools) VirtRust.poolJson(p)]),
-        networksJson: jsonEncode([for (final n in networks) VirtRust.networkJson(n)]),
-        volumesJson: jsonEncode([for (final v in volumes) VirtRust.volumeJson(v)]),
-      );
-    } on PveError {
-      return 'unsupported';
-    }
-  }
+  final (pools, networks, volumes) = VirtRust.hwListing(change);
+  final hardware = VirtRust.hardwareFfi(hw);
+  final ffiChange = VirtRust.hwChangeFfi(change);
+  vm.HwIssue? on(bool pve) => ffi.virtHwIssue(
+    hardware: hardware,
+    change: ffiChange,
+    pve: pve,
+    pools: [for (final p in pools) VirtRust.poolFfi(p)],
+    networks: [for (final n in networks) VirtRust.networkFfi(n)],
+    volumes: [for (final v in volumes) VirtRust.volumeFfi(v)],
+  );
 
-  return VirtHwIssue.ofRust(switch (host) {
+  return VirtHwIssue.of(switch (host) {
     VirtHostKind.pve => on(true),
     VirtHostKind.libvirt => on(false),
     null => on(true) ?? on(false),

@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:collection/collection.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:server_box/data/model/virt/virt.dart';
@@ -507,7 +505,7 @@ enum VirtExternalIssue {
 /// (`sbm_virt::resource::volume_resizable`).
 bool virtVolumeResizable(VirtStoragePool pool, VirtHostKind host) =>
     res.virtVolumeResizable(
-      poolJson: jsonEncode(VirtRust.poolJson(pool)),
+      pool: VirtRust.poolFfi(pool),
       pve: host == VirtHostKind.pve,
     );
 

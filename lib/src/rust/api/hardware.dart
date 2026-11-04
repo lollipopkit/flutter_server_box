@@ -6,28 +6,30 @@
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
 import 'package:server_box/src/rust/api/pve.dart';
+import 'package:server_box/src/rust/api/virt_libvirt.dart';
+import 'package:server_box/src/rust/api/virt_model.dart';
+import 'package:server_box/src/rust/api/virt_view.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `host`, `read`, `write`
+// These functions are ignored because they are not marked as `pub`: `host`
 
-/// Why `change_json` (a `Change`) cannot be made to `hardware_json` (a
-/// `Hardware`), as an `Issue`'s name; None when it can. The lists are the
-/// pools and networks of the guest's host (PVE: its node's), and the
+/// Why `change` cannot be made to `hardware`, or None when it can. The lists
+/// are the pools and networks of the guest's host (PVE: its node's), and the
 /// volumes the change names.
-String? virtHwIssue({
-  required String hardwareJson,
-  required String changeJson,
+HwIssue? virtHwIssue({
+  required Hardware hardware,
+  required HwChange change,
   required bool pve,
-  required String poolsJson,
-  required String networksJson,
-  required String volumesJson,
+  required List<ResourcePool> pools,
+  required List<Network> networks,
+  required List<Volume> volumes,
 }) => RustLib.instance.api.crateApiHardwareVirtHwIssue(
-  hardwareJson: hardwareJson,
-  changeJson: changeJson,
+  hardware: hardware,
+  change: change,
   pve: pve,
-  poolsJson: poolsJson,
-  networksJson: networksJson,
-  volumesJson: volumesJson,
+  pools: pools,
+  networks: networks,
+  volumes: volumes,
 );
 
 /// A unicast MAC: six octets, the first even, not all zero.
@@ -38,84 +40,85 @@ bool virtIsUnicastMac({required String mac}) =>
 bool virtMountPointOk({required String path}) =>
     RustLib.instance.api.crateApiHardwareVirtMountPointOk(path: path);
 
-/// Whether `disk_json` (an `HwDisk`) can be grown from here.
-bool virtHwDiskGrowable({required String diskJson}) =>
-    RustLib.instance.api.crateApiHardwareVirtHwDiskGrowable(diskJson: diskJson);
+/// Whether `disk` can be grown from here.
+bool virtHwDiskGrowable({required HwDisk disk}) =>
+    RustLib.instance.api.crateApiHardwareVirtHwDiskGrowable(disk: disk);
 
-/// The address `device_json` (a `HostDevice`) is given by on a host of the
-/// kind; None where the host said nothing of where it sits.
-String? virtUsbAddress({required String deviceJson, required bool pve}) =>
+/// The address `device` is given by on a host of the kind; None where the
+/// host said nothing of where it sits.
+String? virtUsbAddress({required HostDevice device, required bool pve}) =>
     RustLib.instance.api.crateApiHardwareVirtUsbAddress(
-      deviceJson: deviceJson,
+      device: device,
       pve: pve,
     );
 
-/// [`super::virt::parse_virt_hardware_json`]'s read as `Hardware` JSON for
-/// the domain `name`.
-String virtLibvirtHardware({required String infoJson, required String name}) =>
-    RustLib.instance.api.crateApiHardwareVirtLibvirtHardware(
-      infoJson: infoJson,
-      name: name,
-    );
+/// The read ([`super::virt::virt_libvirt_hardware_read`]) as the model has
+/// it, for the domain `name`.
+Hardware virtLibvirtHardware({
+  required VirtHardwareInfo info,
+  required String name,
+}) => RustLib.instance.api.crateApiHardwareVirtLibvirtHardware(
+  info: info,
+  name: name,
+);
 
-/// `change_json` as the `VirtHwChange` JSON
-/// [`super::virt::virt_hardware_change_script`] makes, checked first against
-/// the read `info_json` (made from the read whose revision is `revision`)
-/// and the host's lists.
-String virtLibvirtHwChange({
-  required String infoJson,
+/// `change` as the step [`super::virt::virt_hardware_change_script`]
+/// makes, checked first against the read `info` (whose revision is
+/// `revision`) and the host's lists.
+VirtHwChange virtLibvirtHwChange({
+  required VirtHardwareInfo info,
   required String name,
   String? revision,
-  required String changeJson,
-  required String poolsJson,
-  required String networksJson,
-  required String volumesJson,
+  required HwChange change,
+  required List<ResourcePool> pools,
+  required List<Network> networks,
+  required List<Volume> volumes,
 }) => RustLib.instance.api.crateApiHardwareVirtLibvirtHwChange(
-  infoJson: infoJson,
+  info: info,
   name: name,
   revision: revision,
-  changeJson: changeJson,
-  poolsJson: poolsJson,
-  networksJson: networksJson,
-  volumesJson: volumesJson,
+  change: change,
+  pools: pools,
+  networks: networks,
+  volumes: volumes,
 );
 
-/// Every pending change discarded: the `VirtHwChange` JSON that writes the
-/// definition again from what the domain runs.
-String virtLibvirtHwRevert({required String infoJson, String? revision}) =>
-    RustLib.instance.api.crateApiHardwareVirtLibvirtHwRevert(
-      infoJson: infoJson,
-      revision: revision,
-    );
+/// Every pending change discarded: the step that writes the definition again
+/// from what the domain runs.
+VirtHwChange virtLibvirtHwRevert({
+  required VirtHardwareInfo info,
+  String? revision,
+}) => RustLib.instance.api.crateApiHardwareVirtLibvirtHwRevert(
+  info: info,
+  revision: revision,
+);
 
-/// [`super::virt::parse_virt_seed_read_json`]'s read as `CloudInitState`
-/// JSON; `macs` are the domain's NICs.
-String virtLibvirtCloudInitState({
-  required String readJson,
+/// The seed's read as the model has it; `macs` are the domain's NICs.
+CloudInitState virtLibvirtCloudInitState({
+  required VirtSeedRead read,
   required List<String> macs,
 }) => RustLib.instance.api.crateApiHardwareVirtLibvirtCloudInitState(
-  readJson: readJson,
+  read: read,
   macs: macs,
 );
 
-/// The seed `edit_json` (a `CloudInitEdit`) writes, as `VirtCloudInit` JSON
-/// for [`super::virt::virt_seed_update_script`], made from the seed as read
-/// now (`read_json`) — refused once it changed since the edit's read.
-String virtLibvirtCloudInitUpdate({
-  required String readJson,
+/// The seed `edit` writes, for [`super::virt::virt_seed_update_script`], made
+/// from the seed as read now (`read`) — refused once it changed since the
+/// edit's read.
+VirtCloudInit virtLibvirtCloudInitUpdate({
+  required VirtSeedRead read,
   required String name,
   required List<String> macs,
-  required String editJson,
+  required CloudInitEdit edit,
 }) => RustLib.instance.api.crateApiHardwareVirtLibvirtCloudInitUpdate(
-  readJson: readJson,
+  read: read,
   name: name,
   macs: macs,
-  editJson: editJson,
+  edit: edit,
 );
 
-/// [`super::virt::parse_virt_host_devices_json`]'s devices as `HostDevices`
-/// JSON.
-String virtLibvirtHostDevices({required String devicesJson}) => RustLib
-    .instance
-    .api
-    .crateApiHardwareVirtLibvirtHostDevices(devicesJson: devicesJson);
+/// The host's devices as the model has them.
+HostDevices virtLibvirtHostDevices({required VirtHostDevices devices}) =>
+    RustLib.instance.api.crateApiHardwareVirtLibvirtHostDevices(
+      devices: devices,
+    );

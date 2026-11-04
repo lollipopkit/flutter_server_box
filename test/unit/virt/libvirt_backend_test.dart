@@ -14,7 +14,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
-import 'package:server_box/data/model/virt/libvirt.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
@@ -26,6 +25,7 @@ import 'package:server_box/data/provider/virt/libvirt_backend.dart';
 import 'package:server_box/src/rust/api/script.dart' as script;
 import 'package:server_box/src/rust/api/virt.dart'
     show virtUploadGoLine, virtUploadReadyMarker;
+import 'package:server_box/src/rust/api/virt_libvirt.dart' as vl;
 
 import '../../helpers/rust_lib_helper.dart';
 
@@ -275,7 +275,7 @@ void main() {
   test('no virsh: the probe says so, the overview is notInstalled', () async {
     final exec = _Exec((call) => _ok('${_marker('virt.missing')}\n'));
     final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
-    expect(await virt.probe(), const VirtHostProbeResult());
+    expect(await virt.probe(), const vl.VirtHostProbe());
     expect((await _err(virt.load())).type, VirtErrType.notInstalled);
   });
 
@@ -293,11 +293,11 @@ void main() {
     final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
     expect(
       await virt.probe(),
-      const VirtHostProbeResult(pve: 'pve-manager/9.2.2/b9984c6d90a4bd80'),
+      const vl.VirtHostProbe(pve: 'pve-manager/9.2.2/b9984c6d90a4bd80'),
     );
     out = '${_marker('virt.container')}\nnone\n\nLXC\n'
         '${_marker('virt.missing')}\n';
-    expect(await virt.probe(), const VirtHostProbeResult(container: 'lxc'));
+    expect(await virt.probe(), const vl.VirtHostProbe(container: 'lxc'));
   });
 
   test('a transport failure is unreachable', () async {

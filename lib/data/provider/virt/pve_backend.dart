@@ -178,8 +178,7 @@ class PveBackend implements VirtBackend {
 
   @override
   Future<VirtSnapshot> load() async {
-    final json = await _rust((s) => s.load());
-    return VirtRust.snapshot(jsonDecode(json), serverId: serverId);
+    return VirtRust.snapshot(await _rust((s) => s.load()), serverId: serverId);
   }
 
   @override
@@ -195,9 +194,8 @@ class PveBackend implements VirtBackend {
   }
 
   @override
-  Future<VirtGuestDetail> detail(VirtGuest guest) async => VirtRust.detail(
-    jsonDecode(await _rust((s) => s.detail(guest: _ref(guest)))),
-  );
+  Future<VirtGuestDetail> detail(VirtGuest guest) async =>
+      VirtRust.detail(await _rust((s) => s.detail(guest: _ref(guest))));
 
   @override
   Future<PveConsole> console(VirtGuest guest, VirtConsoleKind kind) async {
@@ -258,16 +256,14 @@ class PveBackend implements VirtBackend {
     VirtGuest guest, {
     VirtHistoryWindow window = VirtHistoryWindow.hour,
   }) async => VirtRust.history(
-    jsonDecode(
-      await _rust(
-        (s) => s.history(
-          guest: _ref(guest),
-          window: switch (window) {
-            VirtHistoryWindow.hour => PveHistoryWindow.hour,
-            VirtHistoryWindow.day => PveHistoryWindow.day,
-            VirtHistoryWindow.week => PveHistoryWindow.week,
-          },
-        ),
+    await _rust(
+      (s) => s.history(
+        guest: _ref(guest),
+        window: switch (window) {
+          VirtHistoryWindow.hour => PveHistoryWindow.hour,
+          VirtHistoryWindow.day => PveHistoryWindow.day,
+          VirtHistoryWindow.week => PveHistoryWindow.week,
+        },
       ),
     ),
   );
@@ -278,7 +274,7 @@ class PveBackend implements VirtBackend {
 
   @override
   Future<List<VirtGuestSnapshot>> snapshots(VirtGuest guest) async =>
-      VirtRust.snapshots(jsonDecode(await _rust((s) => s.snapshots(guest: _ref(guest)))));
+      VirtRust.snapshots(await _rust((s) => s.snapshots(guest: _ref(guest))));
 
   /// PVE's own answer whether every disk of [guest] is on a storage that
   /// snapshots (`sbm_virt::pve::Client::snapshot_supported`); null where it
@@ -293,9 +289,7 @@ class PveBackend implements VirtBackend {
 
   @override
   Future<List<VirtSnapDiff>> snapshotDiff(VirtGuest guest, String name) async =>
-      VirtRust.diff(
-        jsonDecode(await _rust((s) => s.snapshotDiff(guest: _ref(guest), name: name))),
-      );
+      VirtRust.diff(await _rust((s) => s.snapshotDiff(guest: _ref(guest), name: name)));
 
   /// PVE has no external form: a snapshot is a volume-level one taken by the
   /// storage, and a running VM's memory is `vmstate`.
@@ -349,14 +343,14 @@ class PveBackend implements VirtBackend {
   /// wait for a release with `import` content.
   @override
   Future<VirtCreateOptions> createOptions() async =>
-      VirtRust.createOptions(jsonDecode(await _rust((s) async => s.createOptions())));
+      VirtRust.createOptions(await _rust((s) async => s.createOptions()));
 
   /// `sbm_virt::pve::Client::create`: checked against what the host lists
   /// now, made, a cloud image's disk grown to the size asked for, then
   /// started as a request of its own.
   @override
   Future<VirtCreated> create(VirtCreateSpec spec) async => VirtRust.created(
-    jsonDecode(await _rust((s) => s.create(specJson: jsonEncode(VirtRust.specJson(spec))))),
+    await _rust((s) => s.create(spec: VirtRust.specFfi(spec))),
   );
 
   /// Purged, with the disks of its VMID no configuration names. PVE deletes
@@ -377,7 +371,7 @@ class PveBackend implements VirtBackend {
   Future<String> clone(VirtGuest guest, VirtCloneRequest request) => _rust(
     (s) => s.cloneGuest(
       guest: _ref(guest),
-      requestJson: jsonEncode(VirtRust.cloneRequestJson(request)),
+      request: VirtRust.cloneRequestFfi(request),
     ),
   );
 
@@ -385,26 +379,26 @@ class PveBackend implements VirtBackend {
   /// (`sbm_virt::pve::Client::backups`).
   @override
   Future<List<VirtBackup>> backups(VirtGuest guest) async =>
-      VirtRust.backups(jsonDecode(await _rust((s) => s.backups(guest: _ref(guest)))));
+      VirtRust.backups(await _rust((s) => s.backups(guest: _ref(guest))));
 
   @override
   Future<List<VirtStoragePool>> backupStorages(VirtGuest guest) async =>
-      VirtRust.pools(jsonDecode(await _rust((s) => s.backupStorages(node: guest.node!))));
+      VirtRust.pools(await _rust((s) => s.backupStorages(node: guest.node!)));
 
   /// Every online node's backup storages, one per `node/storage`.
   @override
   Future<List<VirtStoragePool>> allBackupStorages() async =>
-      VirtRust.pools(jsonDecode(await _rust((s) => s.allBackupStorages())));
+      VirtRust.pools(await _rust((s) => s.allBackupStorages()));
 
   /// The jobs that take the guest. `/cluster/backup` needs `Sys.Audit`: an
   /// account without it sees no plan, which is not a failure of the view.
   @override
   Future<List<VirtBackupJob>> backupJobs(VirtGuest guest) async =>
-      VirtRust.backupJobs(jsonDecode(await _rust((s) => s.backupJobs(guest: _ref(guest)))));
+      VirtRust.backupJobs(await _rust((s) => s.backupJobs(guest: _ref(guest))));
 
   @override
   Future<List<VirtBackupJob>> allBackupJobs() async =>
-      VirtRust.backupJobs(jsonDecode(await _rust((s) => s.allBackupJobs())));
+      VirtRust.backupJobs(await _rust((s) => s.allBackupJobs()));
 
   /// Made or edited — `Sys.Modify` on `/`; checked first
   /// (`sbm_virt::backup::job_issue`).
@@ -419,18 +413,18 @@ class PveBackend implements VirtBackend {
   );
 
   Future<void> _editJob(VirtBackupJobEdit edit, {required bool remove}) => _rust(
-    (s) => s.editBackupJob(editJson: jsonEncode(VirtRust.backupJobEditJson(edit)), remove: remove),
+    (s) => s.editBackupJob(edit: VirtRust.backupJobEditFfi(edit), remove: remove),
   );
 
   /// What PVE makes of [schedule] (`GET /cluster/jobs/schedule-analyze`).
   @override
   Future<VirtScheduleCheck> checkSchedule(String schedule) async =>
-      VirtRust.scheduleCheck(jsonDecode(await _rust((s) => s.checkSchedule(schedule: schedule))));
+      VirtRust.scheduleCheck(await _rust((s) => s.checkSchedule(schedule: schedule)));
 
   /// `vzdump` for the one guest, waited for.
   @override
   Future<void> backup(VirtGuest guest, VirtBackupRequest request) => _rust(
-    (s) => s.backup(guest: _ref(guest), requestJson: jsonEncode(VirtRust.backupRequestJson(request))),
+    (s) => s.backup(guest: _ref(guest), request: VirtRust.backupRequestFfi(request)),
   );
 
   /// A job's "Run now", on its node or every online one.
@@ -453,14 +447,14 @@ class PveBackend implements VirtBackend {
   @override
   Future<void> editBackup(VirtBackup backup, VirtBackupEdit edit) => _rust(
     (s) => s.editBackup(
-      backupJson: jsonEncode(VirtRust.backupJson(backup)),
-      editJson: jsonEncode(VirtRust.backupEditJson(edit)),
+      backup: VirtRust.backupFfi(backup),
+      edit: VirtRust.backupEditFfi(edit),
     ),
   );
 
   @override
   Future<void> deleteBackup(VirtGuest guest, VirtBackup backup) =>
-      _rust((s) => s.deleteBackup(backupJson: jsonEncode(VirtRust.backupJson(backup))));
+      _rust((s) => s.deleteBackup(backup: VirtRust.backupFfi(backup)));
 
   // ---------------------------------------------------------------------------
   // Hardware
@@ -471,7 +465,7 @@ class PveBackend implements VirtBackend {
   /// running guest has instead, and the node's CPUs, memory and CPU models.
   @override
   Future<VirtHardware> hardware(VirtGuest guest) async =>
-      VirtRust.hardware(jsonDecode(await _rust((s) => s.hardware(guest: _ref(guest)))));
+      VirtRust.hardware(await _rust((s) => s.hardware(guest: _ref(guest))));
 
   /// One change, made from [base]'s digest and checked against the guest as
   /// it is now (`sbm_virt::pve::Client::change_hardware`). What the running
@@ -482,14 +476,8 @@ class PveBackend implements VirtBackend {
     VirtHardware base,
     VirtHwChange change,
   ) async => VirtRust.hwOutcome(
-    jsonDecode(
-      await _rust(
-        (s) => s.changeHardware(
-          guest: _ref(guest),
-          revision: base.revision,
-          changeJson: jsonEncode(VirtRust.hwChangeJson(change)),
-        ),
-      ),
+    await _rust(
+      (s) => s.changeHardware(guest: _ref(guest), revision: base.revision, change: VirtRust.hwChangeFfi(change)),
     ),
   );
 
@@ -501,7 +489,7 @@ class PveBackend implements VirtBackend {
   /// PVE's `ci*` options.
   @override
   Future<VirtCloudInitState> cloudInit(VirtGuest guest) async =>
-      VirtRust.cloudInitState(jsonDecode(await _rust((s) => s.cloudInit(guest: _ref(guest)))));
+      VirtRust.cloudInitState(await _rust((s) => s.cloudInit(guest: _ref(guest))));
 
   /// The `ci*` options set with [base]'s digest, then the drive written at
   /// once. The password goes in the request body; PVE keeps its hash.
@@ -513,7 +501,7 @@ class PveBackend implements VirtBackend {
   ) => _rust(
     (s) => s.setCloudInit(
       guest: _ref(guest),
-      editJson: jsonEncode(VirtRust.cloudInitEditJson(base, edit)),
+      edit: VirtRust.cloudInitEditFfi(base, edit),
     ),
   );
 
@@ -521,7 +509,7 @@ class PveBackend implements VirtBackend {
   /// with its password.
   @override
   Future<VirtHostDevices> hostDevices(VirtGuest guest) async =>
-      VirtRust.hostDevices(jsonDecode(await _rust((s) => s.hostDevices(guest: _ref(guest)))));
+      VirtRust.hostDevices(await _rust((s) => s.hostDevices(guest: _ref(guest))));
 
   // ---------------------------------------------------------------------------
   // Storage and networks
@@ -529,17 +517,11 @@ class PveBackend implements VirtBackend {
 
   @override
   Future<List<VirtStoragePool>> storagePools() async =>
-      VirtRust.pools(jsonDecode(await _rust((s) => s.storagePools())));
+      VirtRust.pools(await _rust((s) => s.storagePools()));
 
   @override
   Future<List<VirtVolume>> volumes(VirtStoragePool pool) async =>
-      VirtRust.volumes(
-        jsonDecode(
-          await _rust(
-            (s) => s.volumes(poolJson: jsonEncode(VirtRust.poolJson(pool))),
-          ),
-        ),
-      );
+      VirtRust.volumes(await _rust((s) => s.volumes(pool: VirtRust.poolFfi(pool))));
 
   /// Every online node's interfaces, with the guests whose NICs are on each
   /// bridge and which may be changed at all
@@ -548,7 +530,7 @@ class PveBackend implements VirtBackend {
   Future<List<VirtNetwork>> networks() async {
     final live = await _liveNet();
     return VirtRust.networks(
-      jsonDecode(await _rust((s) => s.networks(live: live))),
+      await _rust((s) => s.networks(live: live)),
     );
   }
 
@@ -560,7 +542,7 @@ class PveBackend implements VirtBackend {
     final live = network ? await _liveNet() : null;
     await _rust(
       (s) => s.manage(
-        changeJson: jsonEncode(VirtRust.changeJson(change)),
+        change: VirtRust.changeFfi(change),
         live: live,
       ),
     );
@@ -601,7 +583,7 @@ class PveBackend implements VirtBackend {
   @override
   Future<List<VirtNetworkChanges>> networkChanges() async =>
       VirtRust.networkChanges(
-        jsonDecode(await _rust((s) => s.networkChanges())),
+        await _rust((s) => s.networkChanges()),
       );
 
   /// How long PVE may take to answer an upload once it has the bytes: it

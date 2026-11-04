@@ -21,6 +21,11 @@ use sbm_virt::pve::{self, Auth, Client};
 
 use super::bmc::CertInfo;
 use super::virt::VirtActionKind;
+use super::virt_model::{
+    Backup, BackupEdit, BackupJob, BackupJobEdit, BackupRequest, CloneRequest, CloudInitEdit, CloudInitState, CreateOptions, CreateSpec, Created,
+    Hardware, HostDevices, HwChange, Network, NetworkChanges, Outcome, ResourceChange, ResourcePool, ScheduleCheck, Volume,
+};
+use super::virt_view::{Diff, Snapshot, Stats, VirtGuestDetailReport, VirtHostReport};
 
 /// Why a host could not be read or an action did not happen (mirrors
 /// sbm_virt::error::ErrorKind).
@@ -328,10 +333,8 @@ impl PveSession {
         Ok(self.client.confirm_cert(&fingerprint)?)
     }
 
-    /// `sbm_virt::model::HostView` JSON.
-    pub async fn load(&self) -> Result<String, PveError> {
-        let view = self.client.load().await?;
-        serde_json::to_string(&view).map_err(|e| Error::msg(ErrorKind::InvalidResponse, e.to_string()).into())
+    pub async fn load(&self) -> Result<VirtHostReport, PveError> {
+        Ok(self.client.load().await?.into())
     }
 
     /// Runs `action` on `guest` and returns once PVE has finished it.
@@ -343,23 +346,20 @@ impl PveSession {
         Ok(self.client.submit_tfa(&code).await?)
     }
 
-    /// `sbm_virt::model::GuestDetail` JSON.
-    pub async fn detail(&self, guest: PveGuestRef) -> Result<String, PveError> {
+    pub async fn detail(&self, guest: PveGuestRef) -> Result<VirtGuestDetailReport, PveError> {
         let guest: Guest = guest.into();
-        let detail = self.client.detail(&guest).await?;
-        serde_json::to_string(&detail).map_err(|e| Error::msg(ErrorKind::InvalidResponse, e.to_string()).into())
+        Ok(self.client.detail(&guest).await?.into())
     }
 
-    /// `sbm_virt::model::Stats` JSON list, oldest first.
-    pub async fn history(&self, guest: PveGuestRef, window: PveHistoryWindow) -> Result<String, PveError> {
+    /// Oldest first.
+    pub async fn history(&self, guest: PveGuestRef, window: PveHistoryWindow) -> Result<Vec<Stats>, PveError> {
         let guest: Guest = guest.into();
         let window = match window {
             PveHistoryWindow::Hour => sbm_virt::model::HistoryWindow::Hour,
             PveHistoryWindow::Day => sbm_virt::model::HistoryWindow::Day,
             PveHistoryWindow::Week => sbm_virt::model::HistoryWindow::Week,
         };
-        let history = self.client.history(&guest, window).await?;
-        serde_json::to_string(&history).map_err(|e| Error::msg(ErrorKind::InvalidResponse, e.to_string()).into())
+        Ok(self.client.history(&guest, window).await?)
     }
 
     /// A fresh console ticket.
@@ -389,10 +389,8 @@ impl PveSession {
         Ok(PveConsoleChannel(self.client.open_console(&console.into()).await?))
     }
 
-    /// `sbm_virt::snapshot::Snapshot` JSON list.
-    pub async fn snapshots(&self, guest: PveGuestRef) -> Result<String, PveError> {
-        let list = self.client.snapshots(&guest.into()).await?;
-        serde_json::to_string(&list).map_err(|e| Error::msg(ErrorKind::InvalidResponse, e.to_string()).into())
+    pub async fn snapshots(&self, guest: PveGuestRef) -> Result<Vec<Snapshot>, PveError> {
+        Ok(self.client.snapshots(&guest.into()).await?)
     }
 
     /// PVE's own answer whether every disk snapshots; None where it cannot say.
@@ -404,10 +402,8 @@ impl PveSession {
         self.client.snapshot_refusal(&guest.into()).await
     }
 
-    /// `sbm_virt::snapshot::Diff` JSON list.
-    pub async fn snapshot_diff(&self, guest: PveGuestRef, name: String) -> Result<String, PveError> {
-        let diff = self.client.snapshot_diff(&guest.into(), &name).await?;
-        serde_json::to_string(&diff).map_err(|e| Error::msg(ErrorKind::InvalidResponse, e.to_string()).into())
+    pub async fn snapshot_diff(&self, guest: PveGuestRef, name: String) -> Result<Vec<Diff>, PveError> {
+        Ok(self.client.snapshot_diff(&guest.into(), &name).await?)
     }
 
     pub async fn create_snapshot(
@@ -436,36 +432,33 @@ impl PveSession {
 
     // --- Storage and networks (sbm_virt::resource) ---
 
-    /// Every online node's storages, `sbm_virt::resource::Pool` JSON.
-    pub async fn storage_pools(&self) -> Result<String, PveError> {
-        to_json(&self.client.storage_pools().await?)
+    /// Every online node's storages.
+    pub async fn storage_pools(&self) -> Result<Vec<ResourcePool>, PveError> {
+        Ok(self.client.storage_pools().await?)
     }
 
-    /// The volumes on `pool_json` (a `Pool`), `Volume` JSON.
-    pub async fn volumes(&self, pool_json: String) -> Result<String, PveError> {
-        let pool: sbm_virt::resource::Pool = from_json(&pool_json)?;
-        to_json(&self.client.volumes(&pool).await?)
+    /// The volumes on `pool`.
+    pub async fn volumes(&self, pool: ResourcePool) -> Result<Vec<Volume>, PveError> {
+        Ok(self.client.volumes(&pool).await?)
     }
 
-    /// Every online node's interfaces, `Network` JSON. `live` is what
+    /// Every online node's interfaces. `live` is what
     /// [`super::resource::virt_pve_live_net_script`] printed on the server
     /// this session reaches PVE through; None protects every interface with
     /// an address.
-    pub async fn networks(&self, live: Option<String>) -> Result<String, PveError> {
+    pub async fn networks(&self, live: Option<String>) -> Result<Vec<Network>, PveError> {
         let live = live.as_deref().and_then(sbm_virt::pve::net::parse_live_net);
-        to_json(&self.client.networks(live.as_ref()).await?)
+        Ok(self.client.networks(live.as_ref()).await?)
     }
 
-    /// Each online node's pending network configuration,
-    /// `NetworkChanges` JSON.
-    pub async fn network_changes(&self) -> Result<String, PveError> {
-        to_json(&self.client.network_changes().await?)
+    /// Each online node's pending network configuration.
+    pub async fn network_changes(&self) -> Result<Vec<NetworkChanges>, PveError> {
+        Ok(self.client.network_changes().await?)
     }
 
-    /// Makes `change_json` (a `Change`), checked first against what the host
-    /// lists now; `live` as for [`PveSession::networks`].
-    pub async fn manage(&self, change_json: String, live: Option<String>) -> Result<(), PveError> {
-        let change: sbm_virt::resource::Change = from_json(&change_json)?;
+    /// Makes `change`, checked first against what the host lists now; `live`
+    /// as for [`PveSession::networks`].
+    pub async fn manage(&self, change: ResourceChange, live: Option<String>) -> Result<(), PveError> {
         let live = live.as_deref().and_then(sbm_virt::pve::net::parse_live_net);
         Ok(self.client.manage(&change, live.as_ref()).await?)
     }
@@ -477,17 +470,15 @@ impl PveSession {
         Ok(self.client.next_vmid().await?)
     }
 
-    /// What a new VM can be given, `CreateOptions` JSON.
+    /// What a new VM can be given.
     #[flutter_rust_bridge::frb(sync)]
-    pub fn create_options(&self) -> Result<String, PveError> {
-        to_json(&self.client.create_options())
+    pub fn create_options(&self) -> CreateOptions {
+        self.client.create_options()
     }
 
-    /// Creates `spec_json` (a `CreateSpec`), checked first against what the
-    /// host lists now; `Created` JSON.
-    pub async fn create(&self, spec_json: String) -> Result<String, PveError> {
-        let spec: sbm_virt::create::CreateSpec = from_json(&spec_json)?;
-        to_json(&self.client.create(&spec).await?)
+    /// Creates `spec`, checked first against what the host lists now.
+    pub async fn create(&self, spec: CreateSpec) -> Result<Created, PveError> {
+        Ok(self.client.create(&spec).await?)
     }
 
     /// Deletes a stopped guest with its disks, waited for.
@@ -500,26 +491,22 @@ impl PveSession {
         Ok(self.client.make_template(&guest.into()).await?)
     }
 
-    /// Copies `guest` as `request_json` (a `CloneRequest`) asks, waited for;
-    /// the copy's id.
-    pub async fn clone_guest(&self, guest: PveGuestRef, request_json: String) -> Result<String, PveError> {
-        let request: sbm_virt::create::CloneRequest = from_json(&request_json)?;
+    /// Copies `guest` as `request` asks, waited for; the copy's id.
+    pub async fn clone_guest(&self, guest: PveGuestRef, request: CloneRequest) -> Result<String, PveError> {
         Ok(self.client.clone_guest(&guest.into(), &request).await?)
     }
 
     // --- Hardware, settings, cloud-init (sbm_virt::hardware) ---
 
-    /// `guest`'s hardware as it stands, `Hardware` JSON.
-    pub async fn hardware(&self, guest: PveGuestRef) -> Result<String, PveError> {
-        to_json(&self.client.hardware(&guest.into()).await?)
+    /// `guest`'s hardware as it stands.
+    pub async fn hardware(&self, guest: PveGuestRef) -> Result<Hardware, PveError> {
+        Ok(self.client.hardware(&guest.into()).await?)
     }
 
-    /// Makes `change_json` (a `Change`) from the read whose digest is
-    /// `revision`, checked first against the guest as it is now; `Outcome`
-    /// JSON.
-    pub async fn change_hardware(&self, guest: PveGuestRef, revision: Option<String>, change_json: String) -> Result<String, PveError> {
-        let change: sbm_virt::hardware::Change = from_json(&change_json)?;
-        to_json(&self.client.change_hardware(&guest.into(), revision.as_deref(), &change).await?)
+    /// Makes `change` from the read whose digest is `revision`, checked first
+    /// against the guest as it is now.
+    pub async fn change_hardware(&self, guest: PveGuestRef, revision: Option<String>, change: HwChange) -> Result<Outcome, PveError> {
+        Ok(self.client.change_hardware(&guest.into(), revision.as_deref(), &change).await?)
     }
 
     /// Drops every pending change.
@@ -527,20 +514,19 @@ impl PveSession {
         Ok(self.client.revert_pending(&guest.into(), revision.as_deref()).await?)
     }
 
-    /// A VM's cloud-init settings, `CloudInitState` JSON.
-    pub async fn cloud_init(&self, guest: PveGuestRef) -> Result<String, PveError> {
-        to_json(&self.client.cloud_init(&guest.into()).await?)
+    /// A VM's cloud-init settings.
+    pub async fn cloud_init(&self, guest: PveGuestRef) -> Result<CloudInitState, PveError> {
+        Ok(self.client.cloud_init(&guest.into()).await?)
     }
 
-    /// Writes `edit_json` (a `CloudInitEdit`), and the drive at once.
-    pub async fn set_cloud_init(&self, guest: PveGuestRef, edit_json: String) -> Result<(), PveError> {
-        let edit: sbm_virt::hardware::CloudInitEdit = from_json(&edit_json)?;
+    /// Writes `edit`, and the drive at once.
+    pub async fn set_cloud_init(&self, guest: PveGuestRef, edit: CloudInitEdit) -> Result<(), PveError> {
         Ok(self.client.set_cloud_init(&guest.into(), &edit).await?)
     }
 
-    /// The devices `guest` can be given, `HostDevices` JSON.
-    pub async fn host_devices(&self, guest: PveGuestRef) -> Result<String, PveError> {
-        to_json(&self.client.host_devices(&guest.into()).await?)
+    /// The devices `guest` can be given.
+    pub async fn host_devices(&self, guest: PveGuestRef) -> Result<HostDevices, PveError> {
+        Ok(self.client.host_devices(&guest.into()).await?)
     }
 
     /// A refusal met on a connection of the app's own (an upload, which
@@ -553,47 +539,43 @@ impl PveSession {
 
     // --- Backups and backup jobs (sbm_virt::backup) ---
 
-    /// `guest`'s backups on its node's backup storages, `Backup` JSON.
-    pub async fn backups(&self, guest: PveGuestRef) -> Result<String, PveError> {
-        to_json(&self.client.backups(&guest.into()).await?)
+    /// `guest`'s backups on its node's backup storages.
+    pub async fn backups(&self, guest: PveGuestRef) -> Result<Vec<Backup>, PveError> {
+        Ok(self.client.backups(&guest.into()).await?)
     }
 
-    /// `node`'s storages that hold backups, `Pool` JSON.
-    pub async fn backup_storages(&self, node: String) -> Result<String, PveError> {
-        to_json(&self.client.backup_storages(&node).await?)
+    /// `node`'s storages that hold backups.
+    pub async fn backup_storages(&self, node: String) -> Result<Vec<ResourcePool>, PveError> {
+        Ok(self.client.backup_storages(&node).await?)
     }
 
-    /// Every online node's backup storages, `Pool` JSON.
-    pub async fn all_backup_storages(&self) -> Result<String, PveError> {
-        to_json(&self.client.all_backup_storages().await?)
+    /// Every online node's backup storages.
+    pub async fn all_backup_storages(&self) -> Result<Vec<ResourcePool>, PveError> {
+        Ok(self.client.all_backup_storages().await?)
     }
 
-    /// The jobs that take `guest`, `BackupJob` JSON.
-    pub async fn backup_jobs(&self, guest: PveGuestRef) -> Result<String, PveError> {
-        to_json(&self.client.backup_jobs(&guest.into()).await?)
+    /// The jobs that take `guest`.
+    pub async fn backup_jobs(&self, guest: PveGuestRef) -> Result<Vec<BackupJob>, PveError> {
+        Ok(self.client.backup_jobs(&guest.into()).await?)
     }
 
-    /// The datacenter's jobs, `BackupJob` JSON.
-    pub async fn all_backup_jobs(&self) -> Result<String, PveError> {
-        to_json(&self.client.all_backup_jobs().await?)
+    /// The datacenter's jobs.
+    pub async fn all_backup_jobs(&self) -> Result<Vec<BackupJob>, PveError> {
+        Ok(self.client.all_backup_jobs().await?)
     }
 
-    /// Makes, edits or (`remove`) removes `edit_json` (a `BackupJobEdit`),
-    /// checked first.
-    pub async fn edit_backup_job(&self, edit_json: String, remove: bool) -> Result<(), PveError> {
-        let edit: sbm_virt::backup::BackupJobEdit = from_json(&edit_json)?;
+    /// Makes, edits or (`remove`) removes `edit`, checked first.
+    pub async fn edit_backup_job(&self, edit: BackupJobEdit, remove: bool) -> Result<(), PveError> {
         Ok(self.client.edit_backup_job(&edit, remove).await?)
     }
 
-    /// What the host makes of `schedule`, `ScheduleCheck` JSON.
-    pub async fn check_schedule(&self, schedule: String) -> Result<String, PveError> {
-        to_json(&self.client.check_schedule(&schedule).await?)
+    /// What the host makes of `schedule`.
+    pub async fn check_schedule(&self, schedule: String) -> Result<ScheduleCheck, PveError> {
+        Ok(self.client.check_schedule(&schedule).await?)
     }
 
-    /// A backup of `guest` now, as `request_json` (a `BackupRequest`) asks,
-    /// waited for.
-    pub async fn backup(&self, guest: PveGuestRef, request_json: String) -> Result<(), PveError> {
-        let request: sbm_virt::backup::BackupRequest = from_json(&request_json)?;
+    /// A backup of `guest` now, as `request` asks, waited for.
+    pub async fn backup(&self, guest: PveGuestRef, request: BackupRequest) -> Result<(), PveError> {
         Ok(self.client.backup(&guest.into(), &request).await?)
     }
 
@@ -608,16 +590,13 @@ impl PveSession {
         Ok(self.client.restore_backup(&guest.into(), &backup_id, vmid, storage.as_deref()).await?)
     }
 
-    /// `backup_json`'s notes and protection, as `edit_json` sets them.
-    pub async fn edit_backup(&self, backup_json: String, edit_json: String) -> Result<(), PveError> {
-        let backup: sbm_virt::backup::Backup = from_json(&backup_json)?;
-        let edit: sbm_virt::backup::BackupEdit = from_json(&edit_json)?;
+    /// `backup`'s notes and protection, as `edit` sets them.
+    pub async fn edit_backup(&self, backup: Backup, edit: BackupEdit) -> Result<(), PveError> {
         Ok(self.client.edit_backup(&backup, &edit).await?)
     }
 
-    /// Deletes `backup_json`, waited for.
-    pub async fn delete_backup(&self, backup_json: String) -> Result<(), PveError> {
-        let backup: sbm_virt::backup::Backup = from_json(&backup_json)?;
+    /// Deletes `backup`, waited for.
+    pub async fn delete_backup(&self, backup: Backup) -> Result<(), PveError> {
         Ok(self.client.delete_backup(&backup).await?)
     }
 
@@ -632,14 +611,6 @@ impl PveSession {
             .map(|(name, value)| PveHeader { name, value })
             .collect())
     }
-}
-
-fn to_json<T: serde::Serialize>(value: &T) -> Result<String, PveError> {
-    serde_json::to_string(value).map_err(|e| Error::msg(ErrorKind::InvalidResponse, e.to_string()).into())
-}
-
-fn from_json<T: serde::de::DeserializeOwned>(json: &str) -> Result<T, PveError> {
-    serde_json::from_str(json).map_err(|e| Error::msg(ErrorKind::InvalidResponse, e.to_string()).into())
 }
 
 fn power_action(kind: VirtActionKind) -> PowerAction {

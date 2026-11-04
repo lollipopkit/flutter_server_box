@@ -7,64 +7,65 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
 import 'package:server_box/src/rust/api/pve.dart';
 import 'package:server_box/src/rust/api/virt.dart';
+import 'package:server_box/src/rust/api/virt_libvirt.dart';
+import 'package:server_box/src/rust/api/virt_model.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `issue_name`, `kind`, `read`, `write`
+// These functions are ignored because they are not marked as `pub`: `kind`
 
-/// Why `change_json` (a `Change`) cannot be made on the host, as the
-/// `Issue`'s name (`in_use`); None when it can. The lists are the host's:
-/// its pools and networks, and the volumes of the pool the change is to.
-String? virtResourceIssue({
-  required String changeJson,
+/// Why `change` cannot be made on the host, or None when it can. The lists
+/// are the host's: its pools and networks, and the volumes of the pool the
+/// change is to.
+ResourceIssue? virtResourceIssue({
+  required ResourceChange change,
   required bool pve,
-  required String poolsJson,
-  required String networksJson,
-  required String volumesJson,
+  required List<ResourcePool> pools,
+  required List<Network> networks,
+  required List<Volume> volumes,
 }) => RustLib.instance.api.crateApiResourceVirtResourceIssue(
-  changeJson: changeJson,
+  change: change,
   pve: pve,
-  poolsJson: poolsJson,
-  networksJson: networksJson,
-  volumesJson: volumesJson,
+  pools: pools,
+  networks: networks,
+  volumes: volumes,
 );
 
-/// Why an upload of `name` into `pool_json` cannot start, as an `Issue`'s
-/// name; None when it can.
-String? virtUploadIssue({
-  required String poolJson,
+/// Why an upload of `name` into `pool` cannot start, or None when it can.
+ResourceIssue? virtUploadIssue({
+  required ResourcePool pool,
   required String name,
   required BigInt size,
-  required String volumesJson,
+  required List<Volume> volumes,
 }) => RustLib.instance.api.crateApiResourceVirtUploadIssue(
-  poolJson: poolJson,
+  pool: pool,
   name: name,
   size: size,
-  volumesJson: volumesJson,
+  volumes: volumes,
 );
 
-bool virtPoolTakesMedia({required String poolJson}) =>
-    RustLib.instance.api.crateApiResourceVirtPoolTakesMedia(poolJson: poolJson);
+bool virtPoolTakesMedia({required ResourcePool pool}) =>
+    RustLib.instance.api.crateApiResourceVirtPoolTakesMedia(pool: pool);
 
 /// The formats a new volume in the pool can have, the first the default.
-List<String> virtVolumeFormats({required String poolJson}) =>
-    RustLib.instance.api.crateApiResourceVirtVolumeFormats(poolJson: poolJson);
+List<String> virtVolumeFormats({required ResourcePool pool}) =>
+    RustLib.instance.api.crateApiResourceVirtVolumeFormats(pool: pool);
 
 /// PVE: the file a new volume is given, the format as its extension on a
 /// storage of files.
 String virtVolumeFileName({
-  required String poolJson,
+  required ResourcePool pool,
   required String name,
   required String format,
 }) => RustLib.instance.api.crateApiResourceVirtVolumeFileName(
-  poolJson: poolJson,
+  pool: pool,
   name: name,
   format: format,
 );
 
 /// Whether a volume of the pool is grown on its own.
-bool virtVolumeResizable({required String poolJson, required bool pve}) =>
+bool virtVolumeResizable({required ResourcePool pool, required bool pve}) =>
     RustLib.instance.api.crateApiResourceVirtVolumeResizable(
-      poolJson: poolJson,
+      pool: pool,
       pve: pve,
     );
 
@@ -83,49 +84,48 @@ List<String>? virtDefaultDhcpRange({required String cidr}) =>
 String virtPveLiveNetScript() =>
     RustLib.instance.api.crateApiResourceVirtPveLiveNetScript();
 
-/// [`super::virt::parse_virt_storage_json`]'s storage as the host's pools
-/// (`Pool` JSON).
-String virtLibvirtPools({required String storageJson}) => RustLib.instance.api
-    .crateApiResourceVirtLibvirtPools(storageJson: storageJson);
+/// The storage read as the host's pools.
+List<ResourcePool> virtLibvirtPools({required VirtStorage storage}) =>
+    RustLib.instance.api.crateApiResourceVirtLibvirtPools(storage: storage);
 
-/// [`super::virt::virt_volumes_script`]'s output for `pool` as `Volume`
-/// JSON, with the domains whose disks each is (from `storage_json`).
-String virtLibvirtVolumes({
+/// [`super::virt::virt_volumes_script`]'s output for `pool`, with the
+/// domains whose disks each is (from `storage`).
+List<Volume> virtLibvirtVolumes({
   required String raw,
   required String pool,
-  required String storageJson,
+  required VirtStorage storage,
 }) => RustLib.instance.api.crateApiResourceVirtLibvirtVolumes(
   raw: raw,
   pool: pool,
-  storageJson: storageJson,
+  storage: storage,
 );
 
-/// `volumes_json` with what is made on each: the volumes in `every_json`
-/// (every active pool's) whose backing file it is.
-String virtLibvirtWithBacks({
-  required String volumesJson,
-  required String everyJson,
+/// `volumes` with what is made on each: the volumes in `every` (every active
+/// pool's) whose backing file it is.
+List<Volume> virtLibvirtWithBacks({
+  required List<Volume> volumes,
+  required List<Volume> every,
 }) => RustLib.instance.api.crateApiResourceVirtLibvirtWithBacks(
-  volumesJson: volumesJson,
-  everyJson: everyJson,
+  volumes: volumes,
+  every: every,
 );
 
-/// [`super::virt::virt_networks_script`]'s output as `Network` JSON.
-String virtLibvirtNetworks({required String raw}) =>
+/// [`super::virt::virt_networks_script`]'s output as the host's networks.
+List<Network> virtLibvirtNetworks({required String raw}) =>
     RustLib.instance.api.crateApiResourceVirtLibvirtNetworks(raw: raw);
 
-/// `change_json` as the script that makes it, checked first against the
-/// host's lists, read for this change.
+/// `change` as the script that makes it, checked first against the host's
+/// lists, read for this change.
 VirtResourceScript virtLibvirtResourceScript({
-  required String changeJson,
-  required String poolsJson,
-  required String networksJson,
-  required String volumesJson,
+  required ResourceChange change,
+  required List<ResourcePool> pools,
+  required List<Network> networks,
+  required List<Volume> volumes,
 }) => RustLib.instance.api.crateApiResourceVirtLibvirtResourceScript(
-  changeJson: changeJson,
-  poolsJson: poolsJson,
-  networksJson: networksJson,
-  volumesJson: volumesJson,
+  change: change,
+  pools: pools,
+  networks: networks,
+  volumes: volumes,
 );
 
 /// The script a change runs as on a libvirt host.
