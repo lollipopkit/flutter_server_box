@@ -934,6 +934,15 @@
   "@linuxMirrorTip": {
     "description": "Help text for the Linux package mirror setting."
   },
+  "linuxMirrorOf": "{distro} mirror",
+  "@linuxMirrorOf": {
+    "description": "Name of one distribution's package mirror.",
+    "placeholders": {
+      "distro": {
+        "type": "String"
+      }
+    }
+  },
   "madeWithLove": "Made with ❤️ by {myGithub}",
   "@madeWithLove": {
     "description": "User-facing label or message for made with love.",

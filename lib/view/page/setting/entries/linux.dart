@@ -65,6 +65,7 @@ extension _Linux on _AppSettingsPageState {
             // after the actions took a column from every row.
             leading: _linuxProfileLeading(
               profile,
+              scheme,
               current: profile.id == selected?.id,
             ),
             selected: profile.id == selected?.id,
@@ -143,8 +144,11 @@ extension _Linux on _AppSettingsPageState {
   ///
   /// With marks turned off there is no mark to put it on: the check stands
   /// alone, and the other rows keep its width so the titles line up.
-  Widget _linuxProfileLeading(LinuxProfile profile, {required bool current}) {
-    final scheme = Theme.of(context).colorScheme;
+  Widget _linuxProfileLeading(
+    LinuxProfile profile,
+    ColorScheme scheme, {
+    required bool current,
+  }) {
     final mark = linuxDistIcon(profile.distro);
     if (mark == null) {
       return SizedBox(
@@ -418,9 +422,11 @@ extension _Linux on _AppSettingsPageState {
 
   /// The mirror's name with its distribution's, as the dialog is titled: a
   /// mirror belongs to one distribution, and the row would otherwise not say
-  /// which.
+  /// which. A message of its own rather than the two words joined, since
+  /// lowercasing `mirror` to follow a name is wrong wherever nouns keep
+  /// their capital ("Alpine spiegelserver").
   String _linuxMirrorLabel(LinuxDistro distro) =>
-      '${distro.label} ${l10n.mirror.toLowerCase()}';
+      l10n.linuxMirrorOf(distro.label);
 
   SettingsRow _buildLinuxMirror() {
     final label = l10n.mirror;

@@ -209,6 +209,7 @@
   "linuxShellTip": "终端用什么 shell 启动。留空恢复 /bin/sh。",
   "linuxDnsTip": "DNS 服务器。留空则使用默认设置。",
   "linuxMirrorTip": "所选发行版的软件包镜像。留空则使用默认镜像。",
+  "linuxMirrorOf": "{distro} 镜像",
   "madeWithLove": "由 {myGithub} 用 ❤️ 制作",
   "maxConcurrency": "最大并发数",
   "maxRetryCount": "服务器重连尝试次数上限",

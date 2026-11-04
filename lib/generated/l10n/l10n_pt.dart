@@ -751,6 +751,11 @@ class AppLocalizationsPt extends AppLocalizations {
       'Espelho de pacotes da distribuição selecionada. Deixe em branco para usar o padrão.';
 
   @override
+  String linuxMirrorOf(String distro) {
+    return 'Espelho do $distro';
+  }
+
+  @override
   String madeWithLove(String myGithub) {
     return 'Feito por $myGithub com ❤️';
   }

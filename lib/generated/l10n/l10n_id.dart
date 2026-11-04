@@ -754,6 +754,11 @@ class AppLocalizationsId extends AppLocalizations {
       'Mirror paket untuk distribusi yang dipilih. Kosongkan untuk menggunakan mirror bawaan.';
 
   @override
+  String linuxMirrorOf(String distro) {
+    return 'Mirror $distro';
+  }
+
+  @override
   String madeWithLove(String myGithub) {
     return 'Dibuat dengan ❤️ oleh $myGithub';
   }

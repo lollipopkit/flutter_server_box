@@ -756,6 +756,11 @@ class AppLocalizationsUk extends AppLocalizations {
       'Дзеркало пакетів для вибраного дистрибутива. Залиште поле порожнім, щоб використовувати типове дзеркало.';
 
   @override
+  String linuxMirrorOf(String distro) {
+    return 'Дзеркало $distro';
+  }
+
+  @override
   String madeWithLove(String myGithub) {
     return 'Створено $myGithub з ❤️';
   }

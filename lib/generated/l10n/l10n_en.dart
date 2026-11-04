@@ -746,6 +746,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Package mirror for the selected distribution. Empty restores the default.';
 
   @override
+  String linuxMirrorOf(String distro) {
+    return '$distro mirror';
+  }
+
+  @override
   String madeWithLove(String myGithub) {
     return 'Made with ❤️ by $myGithub';
   }

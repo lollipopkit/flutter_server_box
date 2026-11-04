@@ -1429,6 +1429,12 @@ abstract class AppLocalizations {
   /// **'Package mirror for the selected distribution. Empty restores the default.'**
   String get linuxMirrorTip;
 
+  /// Name of one distribution's package mirror.
+  ///
+  /// In en, this message translates to:
+  /// **'{distro} mirror'**
+  String linuxMirrorOf(String distro);
+
   /// User-facing label or message for made with love.
   ///
   /// In en, this message translates to:

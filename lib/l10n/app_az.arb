@@ -211,6 +211,7 @@
   "linuxShellTip": "Terminalın başladacağı əmr örtüyü. Boş olduqda /bin/sh bərpa olunur.",
   "linuxDnsTip": "DNS serverləri. Boş saxladıqda standart ayarlar istifadə olunur.",
   "linuxMirrorTip": "Seçilmiş distributiv üçün paket güzgüsü. Boş saxladıqda standart güzgü istifadə olunur.",
+  "linuxMirrorOf": "{distro} güzgüsü",
   "madeWithLove": "❤️ ilə {myGithub} tərəfindən hazırlanıb",
   "maxConcurrency": "Maksimum paralel əməliyyat sayı",
   "maxRetryCount": "Serverə yenidən qoşulma cəhdlərinin sayı",

@@ -760,6 +760,11 @@ class AppLocalizationsFr extends AppLocalizations {
       'Miroir de paquets de la distribution sélectionnée. Laissez ce champ vide pour utiliser le miroir par défaut.';
 
   @override
+  String linuxMirrorOf(String distro) {
+    return 'Miroir $distro';
+  }
+
+  @override
   String madeWithLove(String myGithub) {
     return 'Créé avec ❤️ par $myGithub';
   }

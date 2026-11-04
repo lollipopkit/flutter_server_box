@@ -718,6 +718,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get linuxMirrorTip => '選択したディストリビューションのパッケージミラー。空欄にすると既定のミラーを使用します。';
 
   @override
+  String linuxMirrorOf(String distro) {
+    return '$distro ミラー';
+  }
+
+  @override
   String madeWithLove(String myGithub) {
     return '$myGithub が ❤️ を込めて作成';
   }

@@ -158,6 +158,7 @@
   "linuxShellTip": "Shell yang dipakai terminal. Kosong mengembalikan /bin/sh.",
   "linuxDnsTip": "Server DNS. Kosongkan untuk menggunakan setelan bawaan.",
   "linuxMirrorTip": "Mirror paket untuk distribusi yang dipilih. Kosongkan untuk menggunakan mirror bawaan.",
+  "linuxMirrorOf": "Mirror {distro}",
   "madeWithLove": "Dibuat dengan ❤️ oleh {myGithub}",
   "maxConcurrency": "Konkurensi Maksimum",
   "maxRetryCount": "Jumlah maksimum percobaan untuk menyambungkan kembali ke server",

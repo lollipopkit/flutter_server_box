@@ -158,6 +158,7 @@
   "linuxShellTip": "Terminalin hangi kabukla açılacağı. Boş bırakınca /bin/sh’a döner.",
   "linuxDnsTip": "DNS sunucusu. Varsayılanı kullanmak için boş bırakın.",
   "linuxMirrorTip": "Seçili dağıtımın paket yansısı. Varsayılanı kullanmak için boş bırakın.",
+  "linuxMirrorOf": "{distro} yansısı",
   "madeWithLove": "{myGithub} tarafından ❤️ ile yapıldı",
   "maxConcurrency": "Maksimum Eşzamanlılık",
   "maxRetryCount": "Sunucuya yeniden bağlanma denemelerinin üst sınırı",

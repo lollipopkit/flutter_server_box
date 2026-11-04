@@ -757,6 +757,11 @@ class AppLocalizationsAz extends AppLocalizations {
       'Seçilmiş distributiv üçün paket güzgüsü. Boş saxladıqda standart güzgü istifadə olunur.';
 
   @override
+  String linuxMirrorOf(String distro) {
+    return '$distro güzgüsü';
+  }
+
+  @override
   String madeWithLove(String myGithub) {
     return '❤️ ilə $myGithub tərəfindən hazırlanıb';
   }

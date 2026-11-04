@@ -755,6 +755,11 @@ class AppLocalizationsRu extends AppLocalizations {
       'Зеркало пакетов для выбранного дистрибутива. Оставьте поле пустым, чтобы использовать зеркало по умолчанию.';
 
   @override
+  String linuxMirrorOf(String distro) {
+    return 'Зеркало $distro';
+  }
+
+  @override
   String madeWithLove(String myGithub) {
     return 'Сделано $myGithub с ❤️';
   }

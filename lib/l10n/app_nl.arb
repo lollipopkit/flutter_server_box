@@ -158,6 +158,7 @@
   "linuxShellTip": "Met welke shell een terminal start. Leeg herstelt /bin/sh.",
   "linuxDnsTip": "DNS-server. Laat leeg om de standaardinstelling te gebruiken.",
   "linuxMirrorTip": "Pakketmirror voor de geselecteerde distributie. Laat leeg om de standaardmirror te gebruiken.",
+  "linuxMirrorOf": "{distro}-mirror",
   "madeWithLove": "Gemaakt door {myGithub} met ❤️",
   "maxConcurrency": "Maximale gelijktijdigheid",
   "maxRetryCount": "Maximum aantal pogingen om opnieuw met de server te verbinden",

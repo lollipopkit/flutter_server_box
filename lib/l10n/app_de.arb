@@ -158,6 +158,7 @@
   "linuxShellTip": "Mit welcher Shell ein Terminal startet. Leer stellt /bin/sh wieder her.",
   "linuxDnsTip": "DNS-Server. Leer lassen, um die Standardeinstellungen zu verwenden.",
   "linuxMirrorTip": "Paketspiegel der ausgewählten Distribution. Leer lassen, um den Standardspiegel zu verwenden.",
+  "linuxMirrorOf": "{distro}-Spiegelserver",
   "madeWithLove": "Mit ❤️ von {myGithub} erstellt",
   "maxConcurrency": "Maximale Gleichzeitigkeit",
   "maxRetryCount": "Anzahl der Wiederverbindungsversuche zum Server",

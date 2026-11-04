@@ -158,6 +158,7 @@
   "linuxShellTip": "ターミナルを起動するシェル。空にすると /bin/sh に戻ります。",
   "linuxDnsTip": "DNS サーバー。空欄にすると既定の設定を使用します。",
   "linuxMirrorTip": "選択したディストリビューションのパッケージミラー。空欄にすると既定のミラーを使用します。",
+  "linuxMirrorOf": "{distro} ミラー",
   "madeWithLove": "{myGithub} が ❤️ を込めて作成",
   "maxConcurrency": "最大同時実行数",
   "maxRetryCount": "サーバーへの再接続試行回数の上限",

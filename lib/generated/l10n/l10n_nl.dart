@@ -753,6 +753,11 @@ class AppLocalizationsNl extends AppLocalizations {
       'Pakketmirror voor de geselecteerde distributie. Laat leeg om de standaardmirror te gebruiken.';
 
   @override
+  String linuxMirrorOf(String distro) {
+    return '$distro-mirror';
+  }
+
+  @override
   String madeWithLove(String myGithub) {
     return 'Gemaakt door $myGithub met ❤️';
   }

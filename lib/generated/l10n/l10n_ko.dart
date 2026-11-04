@@ -718,6 +718,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get linuxMirrorTip => '선택한 배포판의 패키지 미러입니다. 비워 두면 기본 미러를 사용합니다.';
 
   @override
+  String linuxMirrorOf(String distro) {
+    return '$distro 미러';
+  }
+
+  @override
   String madeWithLove(String myGithub) {
     return '$myGithub가 ❤️를 담아 만들었습니다.';
   }

@@ -703,6 +703,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get linuxMirrorTip => '所选发行版的软件包镜像。留空则使用默认镜像。';
 
   @override
+  String linuxMirrorOf(String distro) {
+    return '$distro 镜像';
+  }
+
+  @override
   String madeWithLove(String myGithub) {
     return '由 $myGithub 用 ❤️ 制作';
   }
@@ -7564,6 +7569,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get linuxMirrorTip => '所選發行版的軟體套件鏡像。留空則使用預設鏡像。';
+
+  @override
+  String linuxMirrorOf(String distro) {
+    return '$distro 鏡像';
+  }
 
   @override
   String madeWithLove(String myGithub) {

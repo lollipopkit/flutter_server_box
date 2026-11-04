@@ -178,6 +178,7 @@
   "linuxShellTip": "터미널을 시작할 셸. 비우면 /bin/sh로 돌아갑니다.",
   "linuxDnsTip": "DNS 서버입니다. 비워 두면 기본 설정을 사용합니다.",
   "linuxMirrorTip": "선택한 배포판의 패키지 미러입니다. 비워 두면 기본 미러를 사용합니다.",
+  "linuxMirrorOf": "{distro} 미러",
   "madeWithLove": "{myGithub}가 ❤️를 담아 만들었습니다.",
   "maxConcurrency": "최대 동시 실행 수",
   "maxRetryCount": "서버 재연결 시도 최대 횟수",

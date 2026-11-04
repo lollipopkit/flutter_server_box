@@ -752,6 +752,11 @@ class AppLocalizationsTr extends AppLocalizations {
       'Seçili dağıtımın paket yansısı. Varsayılanı kullanmak için boş bırakın.';
 
   @override
+  String linuxMirrorOf(String distro) {
+    return '$distro yansısı';
+  }
+
+  @override
   String madeWithLove(String myGithub) {
     return '$myGithub tarafından ❤️ ile yapıldı';
   }

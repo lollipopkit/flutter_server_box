@@ -158,6 +158,7 @@
   "linuxShellTip": "Com que shell arranca um terminal. Vazio repõe /bin/sh.",
   "linuxDnsTip": "Servidor DNS. Deixe em branco para usar o padrão.",
   "linuxMirrorTip": "Espelho de pacotes da distribuição selecionada. Deixe em branco para usar o padrão.",
+  "linuxMirrorOf": "Espelho do {distro}",
   "madeWithLove": "Feito por {myGithub} com ❤️",
   "maxConcurrency": "Concorrência máxima",
   "maxRetryCount": "Número máximo de tentativas de reconexão ao servidor",

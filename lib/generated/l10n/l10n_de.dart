@@ -755,6 +755,11 @@ class AppLocalizationsDe extends AppLocalizations {
       'Paketspiegel der ausgewählten Distribution. Leer lassen, um den Standardspiegel zu verwenden.';
 
   @override
+  String linuxMirrorOf(String distro) {
+    return '$distro-Spiegelserver';
+  }
+
+  @override
   String madeWithLove(String myGithub) {
     return 'Mit ❤️ von $myGithub erstellt';
   }
