@@ -234,11 +234,13 @@ pub fn storage_parse_view(raw: String) -> Option<StorageView> {
 }
 
 /// Why `action` is refused on the machine `view` describes, or `None` when
-/// it may run. Check against a view read just before, not the one a page
-/// drew earlier.
+/// it may run: `Err` for an action that is invalid as given, whatever the
+/// machine. Check against a view read just before, not the one a page drew
+/// earlier.
 #[frb(sync)]
-pub fn storage_check(view: StorageView, action: StorageAction) -> Option<Refusal> {
-    st::check(&view, &action).err()
+pub fn storage_check(view: StorageView, action: StorageAction) -> Result<Option<Refusal>, StorageError> {
+    action.validate()?;
+    Ok(st::check(&view, &action).err())
 }
 
 /// The root script that makes `action`; `passphrase` for an encrypted format
@@ -280,7 +282,9 @@ mod tests {
         assert!(storage_action_needs_key(unlock.clone()));
         assert_eq!(storage_action_script(unlock.clone(), None).unwrap_err(), StorageError::KeyRequired);
         assert!(storage_action_script(unlock, Some("a passphrase".into())).unwrap().starts_with("k=$(mktemp)"));
-        let refusal = storage_check(StorageView::default(), StorageAction::Partition { device: "/dev/sdz".into() }).unwrap();
+        let mount = StorageAction::Mount { device: "/dev/sdz".into(), mountpoint: "relative".into(), persist: false, own: false };
+        assert_eq!(storage_check(StorageView::default(), mount).unwrap_err(), StorageError::InvalidMountpoint);
+        let refusal = storage_check(StorageView::default(), StorageAction::Partition { device: "/dev/sdz".into() }).unwrap().unwrap();
         assert_eq!((refusal.error.as_str(), refusal.why.as_deref()), ("inUse", Some("notFound")));
     }
 }

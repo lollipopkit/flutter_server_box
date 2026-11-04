@@ -106,6 +106,20 @@ void main() {
     }
   });
 
+  test('an action invalid as given is StorageInvalid, not a refusal', () async {
+    final exec = _QueueExec([
+      const ExecResult(exitCode: 0, stdout: _view, stderr: ''),
+    ]);
+    await expectLater(
+      StorageManager.act(
+        exec,
+        const StorageAction.mount(device: '/dev/sdb', mountpoint: 'relative', persist: false, own: false),
+        isRoot: true,
+      ),
+      throwsA(isA<StorageInvalid>().having((e) => e.error, 'error', StorageError.invalidMountpoint)),
+    );
+  });
+
   test('act refuses a fresh view that says a device is in use', () async {
     final exec = _QueueExec([
       const ExecResult(exitCode: 0, stdout: _view, stderr: ''),

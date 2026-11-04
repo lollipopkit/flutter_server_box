@@ -27,10 +27,10 @@
 
 // Section: imports
 
-use crate::api::virt::*;
 use crate::api::bmc::*;
-use crate::api::remote_desktop::*;
+use crate::api::virt::*;
 use crate::api::pve::*;
+use crate::api::remote_desktop::*;
 use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};
@@ -3454,8 +3454,8 @@ let api_passphrase = <Option<String>>::sse_decode(&mut deserializer);deserialize
             let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
             let api_view = <crate::api::storage::StorageView>::sse_decode(&mut deserializer);
 let api_action = <crate::api::storage::StorageAction>::sse_decode(&mut deserializer);deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::storage::storage_check(api_view, api_action))?;   std::result::Result::Ok(output_ok)
+                transform_result_sse::<_, crate::api::storage::StorageError>((move || {
+                     let output_ok = crate::api::storage::storage_check(api_view, api_action)?;   std::result::Result::Ok(output_ok)
                 })()) })
             }fn wire__crate__api__storage__storage_health_script_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
                 FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "storage_health_script", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
@@ -14783,10 +14783,10 @@ crate::api::virt::VirtUploadEntryKind::SudoPassword => { 2 }
 
 // Section: imports
 
-use crate::api::virt::*;
 use crate::api::bmc::*;
-use crate::api::remote_desktop::*;
+use crate::api::virt::*;
 use crate::api::pve::*;
+use crate::api::remote_desktop::*;
 use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};use super::*;
@@ -14918,10 +14918,10 @@ flutter_rust_bridge::frb_generated_boilerplate_io!();
 
 // Section: imports
 
-use crate::api::virt::*;
 use crate::api::bmc::*;
-use crate::api::remote_desktop::*;
+use crate::api::virt::*;
 use crate::api::pve::*;
+use crate::api::remote_desktop::*;
 use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};use super::*;

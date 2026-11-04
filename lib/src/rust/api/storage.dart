@@ -18,8 +18,9 @@ Future<StorageView?> storageParseView({required String raw}) =>
     RustLib.instance.api.crateApiStorageStorageParseView(raw: raw);
 
 /// Why `action` is refused on the machine `view` describes, or `None` when
-/// it may run. Check against a view read just before, not the one a page
-/// drew earlier.
+/// it may run: `Err` for an action that is invalid as given, whatever the
+/// machine. Check against a view read just before, not the one a page drew
+/// earlier.
 Refusal? storageCheck({
   required StorageView view,
   required StorageAction action,

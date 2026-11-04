@@ -11519,7 +11519,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_opt_box_autoadd_refusal,
-          decodeErrorData: null,
+          decodeErrorData: sse_decode_storage_error,
         ),
         constMeta: kCrateApiStorageStorageCheckConstMeta,
         argValues: [view, action],

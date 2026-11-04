@@ -82,11 +82,12 @@ abstract final class StorageManager {
     String? passphrase,
   }) async {
     // The page's view may be stale: the check reads the machine again.
-    if (ffi.storageCheck(view: await view(exec), action: action) case final refusal?) {
-      throw StorageRefused(refusal);
-    }
+    final current = await view(exec);
     final String script;
     try {
+      if (ffi.storageCheck(view: current, action: action) case final refusal?) {
+        throw StorageRefused(refusal);
+      }
       script = ffi.storageActionScript(action: action, passphrase: passphrase);
     } on StorageError catch (e) {
       throw StorageInvalid(e);
