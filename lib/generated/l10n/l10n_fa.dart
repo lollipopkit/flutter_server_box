@@ -746,8 +746,17 @@ class AppLocalizationsFa extends AppLocalizations {
       'ترمینال با کدام پوسته (Shell) شروع به کار کند. خالی گذاشتن آن /bin/sh را بازیابی می‌کند.';
 
   @override
-  String get linuxNetTip =>
+  String get linuxDnsTip =>
       'سرورهای DNS. برای استفاده از تنظیمات پیش‌فرض، خالی بگذارید.';
+
+  @override
+  String get linuxMirrorTip =>
+      'میرور بسته‌ها برای توزیع انتخاب‌شده. برای استفاده از میرور پیش‌فرض، خالی بگذارید.';
+
+  @override
+  String linuxMirrorOf(String distro) {
+    return 'میرور $distro';
+  }
 
   @override
   String madeWithLove(String myGithub) {

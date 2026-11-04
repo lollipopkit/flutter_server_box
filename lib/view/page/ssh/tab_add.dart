@@ -148,9 +148,11 @@ class _AddPageState extends ConsumerState<_AddPage> {
               onTap: () => widget.onRootfsOpen(profile.id),
               onLongPress: () => widget.onRootfsRemove(profile),
             ),
+          // Install while there is nothing, and manage after: the tap opens
+          // the Linux settings, where adding is one of the things done.
           CardTile(
-            icon: Icons.add,
-            title: Rootfs.profiles.isEmpty ? libL10n.install : libL10n.add,
+            icon: Rootfs.profiles.isEmpty ? Icons.add : Icons.tune,
+            title: Rootfs.profiles.isEmpty ? libL10n.install : libL10n.manage,
             // Only where there is nothing yet: the line explains what a
             // Linux system on this device *is*, which is a question the
             // second one does not raise.
@@ -200,7 +202,7 @@ class _LinuxTile extends StatelessWidget {
         // The distribution's own mark, from the same place a server's comes
         // from: these are Alpine, Ubuntu and Rocky, and a server running one
         // of them is drawn with exactly this icon.
-        leading: distIconOf(_distOf(profile.distro), size: 26),
+        leading: linuxDistIcon(profile.distro, size: 26),
         title: Text(
           profile.label,
           style: UIs.text18,
@@ -233,15 +235,6 @@ class _LinuxTile extends StatelessWidget {
     final version = profile.version;
     return version.isEmpty ? name : '$name · $version';
   }
-
-  /// The [Dist] this [LinuxDistro] is, for the icon.
-  ///
-  /// By name, and null for anything unmatched: the two enums are separate
-  /// lists that happen to overlap — one is what can be installed here, the
-  /// other everything a server might report — and a system whose distribution
-  /// has no mark simply gets no mark.
-  static Dist? _distOf(LinuxDistro distro) =>
-      Dist.values.firstWhereOrNull((e) => e.name == distro.name);
 }
 
 /// The same two things as [_AddPage], in a column too narrow for cards: the
@@ -375,7 +368,7 @@ class _SideBarState extends ConsumerState<_SideBar> {
               SideBarTile(
                 title: Rootfs.profiles.isEmpty
                     ? 'Linux'
-                    : '${libL10n.add} Linux',
+                    : '${libL10n.manage} Linux',
                 onTap: widget.onRootfsAdd,
               ),
             ],

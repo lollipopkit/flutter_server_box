@@ -926,9 +926,22 @@
   "@linuxShellTip": {
     "description": "Help text for the linux shell setting or action."
   },
-  "linuxNetTip": "DNS servers. Empty restores the defaults",
-  "@linuxNetTip": {
-    "description": "Help text for the linux net setting or action."
+  "linuxDnsTip": "DNS servers. Empty restores the defaults.",
+  "@linuxDnsTip": {
+    "description": "Help text for the Linux DNS setting."
+  },
+  "linuxMirrorTip": "Package mirror for the selected distribution. Empty restores the default.",
+  "@linuxMirrorTip": {
+    "description": "Help text for the Linux package mirror setting."
+  },
+  "linuxMirrorOf": "{distro} mirror",
+  "@linuxMirrorOf": {
+    "description": "Name of one distribution's package mirror.",
+    "placeholders": {
+      "distro": {
+        "type": "String"
+      }
+    }
   },
   "madeWithLove": "Made with ❤️ by {myGithub}",
   "@madeWithLove": {

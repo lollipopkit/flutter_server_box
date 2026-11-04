@@ -752,8 +752,17 @@ class AppLocalizationsFr extends AppLocalizations {
       'Le shell avec lequel un terminal démarre. Vide restaure /bin/sh.';
 
   @override
-  String get linuxNetTip =>
+  String get linuxDnsTip =>
       'Serveurs DNS. Laissez ce champ vide pour utiliser les valeurs par défaut.';
+
+  @override
+  String get linuxMirrorTip =>
+      'Miroir de paquets de la distribution sélectionnée. Laissez ce champ vide pour utiliser le miroir par défaut.';
+
+  @override
+  String linuxMirrorOf(String distro) {
+    return 'Miroir $distro';
+  }
 
   @override
   String madeWithLove(String myGithub) {
