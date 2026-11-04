@@ -96,13 +96,36 @@ eq(String(mode(real + "/modes2"), radix: 8), "711")
 try top.remove("modes")
 try top.remove("modes2")
 
-// A copy that fails partway leaves nothing behind.
+// A copy that fails partway leaves nothing behind, in staging or at the
+// destination; one that succeeds is published whole.
+try top.makeDirectory("staging")
+let staging = try top.open("staging")
 try top.makeDirectory("mixed")
 fm.createFile(atPath: real + "/mixed/a", contents: Data([1]))
 check(mkfifo(real + "/mixed/fifo", 0o644) == 0, "mkfifo")
-check((try? top.copy("mixed", to: top, as: "partial")) == nil, "copied a fifo")
-check(top.kind("partial") == nil, "partial copy left behind")
+check((try? top.publish("partial", staging: staging) { try top.copy("mixed", to: $0, as: $1) }) == nil,
+      "copied a fifo")
+check(top.kind("partial") == nil, "partial copy published")
+eq(try staging.names().joined(), "")
 try top.remove("mixed")
+fm.createFile(atPath: real + "/one", contents: Data([1]))
+try top.publish("two", staging: staging) { try top.copy("one", to: $0, as: $1) }
+check(fm.contents(atPath: real + "/two") == Data([1]), "published copy")
+eq(try staging.names().joined(), "")
+// Publishing never replaces what is there, and keeps it.
+check((try? top.publish("two", staging: staging) { try top.copy("one", to: $0, as: $1) }) == nil,
+      "published over a file")
+check(fm.contents(atPath: real + "/two") == Data([1]), "publish changed the target")
+eq(try staging.names().joined(), "")
+
+// A read-only tree, as a finished part of a copy leaves it, is removable.
+try top.makeDirectory("ro")
+try top.open("ro").makeDirectory("inner")
+fm.createFile(atPath: real + "/ro/inner/f", contents: Data([1]))
+chmod(real + "/ro/inner", 0o555)
+chmod(real + "/ro", 0o500)
+try top.remove("ro")
+check(top.kind("ro") == nil, "read-only tree removed")
 
 // A rename never replaces what is there.
 fm.createFile(atPath: real + "/a", contents: Data([1]))

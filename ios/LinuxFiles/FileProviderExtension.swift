@@ -93,7 +93,7 @@ final class FileProviderExtension: NSFileProviderExtension {
             let scoped = fileURL.startAccessingSecurityScopedResource()
             defer { if scoped { fileURL.stopAccessingSecurityScopedResource() } }
             let name = LinuxFS.freeName(in: dir, try parent.checkChild(fileURL.lastPathComponent, in: host))
-            try dir.importItem(fileURL, as: name)
+            try dir.publish(name, staging: try LinuxFS.staging()) { try $0.importItem(fileURL, as: $1) }
             return try LinuxItem(parent.child(name))
         }
     }
@@ -153,8 +153,7 @@ final class FileProviderExtension: NSFileProviderExtension {
         if parent.system == doc.system {
             try from.rename(entry, to: into, as: name)
         } else {
-            if into.kind(name) != nil { throw NSFileProviderError(.filenameCollision) }
-            try from.copy(entry, to: into, as: name)
+            try into.publish(name, staging: try LinuxFS.staging()) { try from.copy(entry, to: $0, as: $1) }
             try from.remove(entry)
         }
         return try LinuxItem(parent.child(name))

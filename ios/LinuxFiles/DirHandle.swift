@@ -43,6 +43,13 @@ final class DirHandle {
         return st.st_mode & S_IFMT
     }
 
+    /// When [name] last changed, not following a link.
+    func modified(_ name: String) -> Date? {
+        var st = stat()
+        guard fstatat(fd, name, &st, AT_SYMLINK_NOFOLLOW) == 0 else { return nil }
+        return Date(timeIntervalSince1970: TimeInterval(st.st_mtimespec.tv_sec))
+    }
+
     func names() throws -> [String] {
         let copy = dup(fd)
         guard copy >= 0 else { throw posixError() }
@@ -75,9 +82,15 @@ final class DirHandle {
     }
 
     /// Removes [name], a directory's contents first; a link is removed as a
-    /// link.
+    /// link. A read-only directory is made writable first: the guest is root.
     func remove(_ name: String) throws {
-        if kind(name) == S_IFDIR {
+        var st = stat()
+        if fstatat(fd, name, &st, AT_SYMLINK_NOFOLLOW) == 0, st.st_mode & S_IFMT == S_IFDIR {
+            if st.st_mode & S_IRWXU != S_IRWXU {
+                guard fchmodat(fd, name, (st.st_mode & 0o7777) | S_IRWXU, AT_SYMLINK_NOFOLLOW) == 0 else {
+                    throw posixError()
+                }
+            }
             let child = try open(name)
             for entry in try child.names() { try child.remove(entry) }
             guard unlinkat(fd, name, AT_REMOVEDIR) == 0 else { throw posixError() }
@@ -92,16 +105,11 @@ final class DirHandle {
         switch kind(name) {
         case S_IFDIR:
             try dir.makeDirectory(newName)
-            do {
-                let from = try open(name)
-                let into = try dir.open(newName)
-                for entry in try from.names() { try from.copy(entry, to: into, as: entry) }
-                // Last: a read-only directory takes no children.
-                try copyMode(from: from.fd, to: into.fd)
-            } catch {
-                try? dir.remove(newName)
-                throw error
-            }
+            let from = try open(name)
+            let into = try dir.open(newName)
+            for entry in try from.names() { try from.copy(entry, to: into, as: entry) }
+            // Last: a read-only directory takes no children.
+            try copyMode(from: from.fd, to: into.fd)
         case S_IFLNK:
             var buffer = [CChar](repeating: 0, count: Int(PATH_MAX) + 1)
             let length = readlinkat(fd, name, &buffer, buffer.count - 1)
@@ -115,6 +123,21 @@ final class DirHandle {
             try dir.write(newName, from: source, keepMode: true)
         default:
             throw CocoaError(.fileReadUnsupportedScheme)
+        }
+    }
+
+    /// Builds an entry with [build] in [staging], under a name of its own, and
+    /// only once it is whole moves it here as [name]. On a failure only that
+    /// entry is removed: nothing here is touched, and the guest never sees
+    /// half of one.
+    func publish(_ name: String, staging: DirHandle, _ build: (DirHandle, String) throws -> Void) throws {
+        let temp = UUID().uuidString
+        do {
+            try build(staging, temp)
+            try staging.rename(temp, to: self, as: name)
+        } catch {
+            try? staging.remove(temp)
+            throw error
         }
     }
 

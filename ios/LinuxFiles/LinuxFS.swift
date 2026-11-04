@@ -106,6 +106,22 @@ enum LinuxFS {
         return String(cString: p)
     }
 
+    /// Where a copy into a system is built: beside the systems and in none of
+    /// them, so no guest sees it, and on their volume, so it goes in with one
+    /// rename. What an extension that was stopped mid-copy left is removed a
+    /// day later; anything younger may be another copy's.
+    static func staging() throws -> DirHandle {
+        let name = ".staging"
+        let top = try DirHandle.open(root: container.path, path: container.path)
+        do { try top.makeDirectory(name) } catch let e as NSError where e.code == Int(EEXIST) {}
+        let dir = try top.open(name)
+        let stale = Date().addingTimeInterval(-86400)
+        for entry in (try? dir.names()) ?? [] where (dir.modified(entry) ?? stale) < stale {
+            try? dir.remove(entry)
+        }
+        return dir
+    }
+
     /// The installed systems: directories carrying the marker.
     static func systems() -> [String] {
         let names = (try? FileManager.default.contentsOfDirectory(atPath: container.path)) ?? []
