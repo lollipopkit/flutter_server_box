@@ -32,9 +32,9 @@ Neighbor                        Linklayer Address  Netif Expire    St Flgs Prbs
 fe80::1%en0                     0:11:22:33:44:55     en0 23h59m58s S  R
 2001:db8::5                     0:11:22:33:44:66     en0 23h59m58s S
 ''';
-    // The header is not an address. A scoped one is, and `discover` drops it
-    // with every other link-local one.
-    expect(_ips(DiscoveryParse.ndp(out)), {'fe80::1%en0', '2001:db8::5'});
+    // The header is not an address. A scoped one is, without its zone, and
+    // `discover` drops it with every other link-local one.
+    expect(_ips(DiscoveryParse.ndp(out)), {'fe80::1', '2001:db8::5'});
   });
 
   test('ip -o -4 addr: each network, with its bounds', () {

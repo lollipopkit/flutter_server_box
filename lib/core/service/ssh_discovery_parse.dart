@@ -81,8 +81,10 @@ abstract final class DiscoveryParse {
       if (m.group(1)! case final ip when ip.isNotEmpty) ?InternetAddress.tryParse(ip),
   };
 
+  /// The first field, without a `%zone`: whether one parses depends on the
+  /// platform having that interface.
   static String? _leading(String line) {
-    final first = line.trim().split(_whitespace).first;
+    final first = line.trim().split(_whitespace).first.split('%').first;
     return first.isEmpty ? null : first;
   }
 
