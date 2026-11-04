@@ -4,17 +4,10 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/core/service/ssh_discovery_parse.dart';
 import 'package:server_box/data/model/server/discovery_result.dart';
 
 // Reused across discovery passes to avoid recompiling each pattern per host.
-final _whitespaceRegExp = RegExp(r'\s+');
-final _ipv4InParenthesesRegExp = RegExp(r'\((\d+\.\d+\.\d+\.\d+)\)');
-final _interfaceRegExp = RegExp(r'^([a-z0-9]+):');
-final _ipv4AddrRegExp = RegExp(r'inet (\d+\.\d+\.\d+\.\d+)/(\d+)');
-final _ifconfigAddrRegExp = RegExp(r'inet\s+(\d+\.\d+\.\d+\.\d+)\s+netmask\s+0x([0-9a-fA-F]+)(?:\s+broadcast\s+(\d+\.\d+\.\d+\.\d+))?');
-final _sshServiceRegExp = RegExp(r'Add\s+\d+\s+(\S+)\.\s+_ssh\._tcp\.');
-final _dnsSdAddressRegExp = RegExp(r'Address\s*=\s*([0-9a-fA-F:\.]+)');
-final _avahiAddressRegExp = RegExp(r'address = \[(.*?)\]');
 
 class SshDiscoveryService {
   static const _sshPort = 22;
@@ -33,7 +26,7 @@ class SshDiscoveryService {
     final cidrs = await _localIPv4Cidrs();
     for (final c in cidrs) {
       if (c.prefix >= 24 && c.prefix <= 30) {
-        candidates.addAll(c.enumerateHosts(limit: config.hostEnumerationLimit));
+        candidates.addAll(c.hosts(limit: config.hostEnumerationLimit));
       }
     }
 
@@ -113,134 +106,44 @@ class SshDiscoveryService {
   static bool get _isMac => Platform.isMacOS;
 
   static Future<Set<InternetAddress>> _neighborsIPv4() async {
-    final set = <InternetAddress>{};
     if (_isLinux) {
       final s = await _run('ip', ['neigh']);
-      if (s != null) {
-        for (final line in const LineSplitter().convert(s)) {
-          final tok = line.split(_whitespaceRegExp);
-          if (tok.isNotEmpty) {
-            final ip = tok[0];
-            if (InternetAddress.tryParse(ip)?.type ==
-                InternetAddressType.IPv4) {
-              set.add(InternetAddress(ip));
-            }
-          }
-        }
-      }
-    } else if (_isMac) {
-      final s = await _run('/usr/sbin/arp', ['-an']);
-      if (s != null) {
-        int matchCount = 0;
-        for (final line in const LineSplitter().convert(s)) {
-          final m = _ipv4InParenthesesRegExp.firstMatch(line);
-          if (m != null) {
-            set.add(InternetAddress(m.group(1)!));
-            matchCount++;
-          }
-        }
-        if (matchCount == 0) {
-          Loggers.app.warning(
-            '[ssh_discovery] Warning: No ARP entries parsed on macOS. Output may be unexpected or localized. Output sample: ${s.length > 100 ? '${s.substring(0, 100)}...' : s}',
-          );
-        }
-      }
+      return s == null ? {} : DiscoveryParse.ipNeigh(s, InternetAddressType.IPv4);
     }
-    return set;
+    if (_isMac) {
+      final s = await _run('/usr/sbin/arp', ['-an']);
+      if (s == null) return {};
+      final found = DiscoveryParse.arp(s);
+      if (found.isEmpty) {
+        Loggers.app.warning(
+          '[ssh_discovery] No ARP entries parsed on macOS; the output may be localized: '
+          '${s.length > 100 ? '${s.substring(0, 100)}...' : s}',
+        );
+      }
+      return found;
+    }
+    return {};
   }
 
   static Future<Set<InternetAddress>> _neighborsIPv6() async {
-    final set = <InternetAddress>{};
-    if (_isLinux) {
-      final s = await _run('ip', ['-6', 'neigh']);
-      if (s != null) {
-        for (final line in const LineSplitter().convert(s)) {
-          final ip = line.split(_whitespaceRegExp).firstOrNull;
-          if (ip != null &&
-              InternetAddress.tryParse(ip)?.type == InternetAddressType.IPv6) {
-            set.add(InternetAddress(ip));
-          }
-        }
-      }
-    } else if (_isMac) {
-      final s = await _run('/usr/sbin/ndp', ['-a']);
-      if (s != null) {
-        for (final line in const LineSplitter().convert(s)) {
-          final ip = line.trim().split(_whitespaceRegExp).firstOrNull;
-          if (ip != null &&
-              InternetAddress.tryParse(ip)?.type == InternetAddressType.IPv6) {
-            set.add(InternetAddress(ip));
-          }
-        }
-      }
-    }
-    return set;
+    final s = _isLinux
+        ? await _run('ip', ['-6', 'neigh'])
+        : _isMac
+        ? await _run('/usr/sbin/ndp', ['-a'])
+        : null;
+    return s == null ? {} : DiscoveryParse.ndp(s);
   }
 
-  static Future<List<_Cidr>> _localIPv4Cidrs() async {
-    final res = <_Cidr>[];
+  static Future<List<DiscoveryCidr>> _localIPv4Cidrs() async {
     if (_isLinux) {
-      final s = await _run('ip', [
-        '-o',
-        '-4',
-        'addr',
-        'show',
-        'scope',
-        'global',
-      ]);
-      if (s != null) {
-        for (final line in const LineSplitter().convert(s)) {
-          final m = _ipv4AddrRegExp.firstMatch(line);
-          if (m != null) {
-            final ip = InternetAddress(m.group(1)!);
-            final prefix = int.parse(m.group(2)!);
-            final mask = _prefixToMask(prefix);
-            final net = _networkAddress(ip, mask);
-            final brd = _broadcastAddress(ip, mask);
-            res.add(_Cidr(ip, prefix, mask, net, brd));
-          }
-        }
-      }
-    } else if (_isMac) {
-      final s = await _run('/sbin/ifconfig', []);
-      if (s != null) {
-        for (final raw in const LineSplitter().convert(s)) {
-          final line = raw.trimRight();
-          final ifMatch = _interfaceRegExp.firstMatch(line);
-          if (ifMatch != null) {
-            continue;
-          }
-          if (line.contains('inet ') && !line.contains('127.0.0.1')) {
-            try {
-              final ipm = _ifconfigAddrRegExp.firstMatch(line);
-              if (ipm == null) {
-                Loggers.app.warning(
-                  '[ssh_discovery] Warning: Unexpected ifconfig line format: $line',
-                );
-                continue;
-              }
-              final ip = InternetAddress(ipm.group(1)!);
-              final hexMask = int.parse(ipm.group(2)!, radix: 16);
-              final dotted =
-                  '${(hexMask >> 24) & 0xff}.${(hexMask >> 16) & 0xff}.${(hexMask >> 8) & 0xff}.${hexMask & 0xff}';
-              final mask = InternetAddress(dotted);
-              final prefix = _maskToPrefix(mask.address);
-              final net = _networkAddress(ip, mask);
-              final brd = InternetAddress(
-                ipm.group(3) ?? _broadcastAddress(ip, mask).address,
-              );
-              res.add(_Cidr(ip, prefix, mask, net, brd));
-            } catch (e) {
-              Loggers.app.warning(
-                '[ssh_discovery] Error parsing ifconfig output: $e, line: $line',
-              );
-              continue;
-            }
-          }
-        }
-      }
+      final s = await _run('ip', ['-o', '-4', 'addr', 'show', 'scope', 'global']);
+      return s == null ? const [] : DiscoveryParse.ipAddr(s);
     }
-    return res;
+    if (_isMac) {
+      final s = await _run('/sbin/ifconfig', []);
+      return s == null ? const [] : DiscoveryParse.ifconfig(s);
+    }
+    return const [];
   }
 
   static bool _isBroadcastOrMulticast(InternetAddress a) {
@@ -275,23 +178,14 @@ class SshDiscoveryService {
         proc.kill();
         await subscription.cancel();
 
-        for (final l in lines) {
-          final m = _sshServiceRegExp.firstMatch(l);
-          if (m != null) {
-            final name = m.group(1)!;
-            final det = await _run('/usr/bin/dns-sd', [
-              '-L',
-              name,
-              '_ssh._tcp',
-              'local.',
-            ], timeout: const Duration(seconds: 3));
-            if (det != null) {
-              for (final ip in _dnsSdAddressRegExp.allMatches(det).map((e) => e.group(1)!)) {
-                final parsed = InternetAddress.tryParse(ip);
-                if (parsed != null) set.add(parsed);
-              }
-            }
-          }
+        for (final name in DiscoveryParse.dnsSdServices(lines)) {
+          final det = await _run('/usr/bin/dns-sd', [
+            '-L',
+            name,
+            '_ssh._tcp',
+            'local.',
+          ], timeout: const Duration(seconds: 3));
+          if (det != null) set.addAll(DiscoveryParse.dnsSdAddresses(det));
         }
       } catch (e, s) {
         Loggers.app.warning(
@@ -306,39 +200,10 @@ class SshDiscoveryService {
       // and it is wrong on NixOS, where nothing but /bin/sh and /usr/bin/env
       // live at an FHS path.
       final s = await _run('avahi-browse', ['-rat', '_ssh._tcp']);
-      if (s != null) {
-        for (final ip in _avahiAddressRegExp.allMatches(s).map((m) => m.group(1)!).where((e) => e.isNotEmpty)) {
-          final parsed = InternetAddress.tryParse(ip);
-          if (parsed != null) set.add(parsed);
-        }
-      }
+      if (s != null) set.addAll(DiscoveryParse.avahiAddresses(s));
     }
     return set;
   }
-}
-
-class _Cidr {
-  final InternetAddress ip;
-  final int prefix;
-  final InternetAddress netmask;
-  final InternetAddress network;
-  final InternetAddress broadcast;
-
-  _Cidr(this.ip, this.prefix, this.netmask, this.network, this.broadcast);
-
-  Iterable<InternetAddress> enumerateHosts({int? limit}) sync* {
-    final n = _ipv4ToInt(network.address);
-    final b = _ipv4ToInt(broadcast.address);
-    int emitted = 0;
-    for (int v = n + 1; v <= b - 1; v++) {
-      if (limit != null && emitted >= limit) break;
-      emitted++;
-      yield InternetAddress(_intToIPv4(v));
-    }
-  }
-
-  @override
-  String toString() => '${network.address}/$prefix';
 }
 
 class _ScanResult {
@@ -426,42 +291,3 @@ class _Semaphore {
 
 Future<T> _guarded<T>(_Semaphore sem, Future<T> Function() fn) =>
     sem.withPermit(fn);
-
-// IPv4 utilities
-
-int _ipv4ToInt(String ip) {
-  final p = ip.split('.').map(int.parse).toList();
-  return (p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3];
-}
-
-String _intToIPv4(int v) =>
-    '${(v >> 24) & 0xff}.${(v >> 16) & 0xff}.${(v >> 8) & 0xff}.${v & 0xff}';
-
-InternetAddress _prefixToMask(int prefix) {
-  final mask = prefix == 0 ? 0 : 0xffffffff << (32 - prefix);
-  return InternetAddress(_intToIPv4(mask & 0xffffffff));
-}
-
-int _maskToPrefix(String mask) {
-  final v = _ipv4ToInt(mask);
-  int c = 0;
-  for (int i = 31; i >= 0; i--) {
-    if ((v & (1 << i)) != 0) {
-      c++;
-    } else {
-      break;
-    }
-  }
-  return c;
-}
-
-InternetAddress _networkAddress(InternetAddress ip, InternetAddress mask) {
-  final v = _ipv4ToInt(ip.address) & _ipv4ToInt(mask.address);
-  return InternetAddress(_intToIPv4(v));
-}
-
-InternetAddress _broadcastAddress(InternetAddress ip, InternetAddress mask) {
-  final n = _ipv4ToInt(ip.address) & _ipv4ToInt(mask.address);
-  final b = n | (~_ipv4ToInt(mask.address) & 0xffffffff);
-  return InternetAddress(_intToIPv4(b));
-}

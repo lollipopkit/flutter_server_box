@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:meta/meta.dart';
-import 'package:server_box/core/utils/local_device.dart';
+import 'package:server_box/core/local/device.dart';
 import 'package:server_box/src/rust/api/command_risk.dart';
 
 /// How much of a command the local check could actually establish.

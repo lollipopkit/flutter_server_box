@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:riverpod/riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:server_box/data/model/server/monitor_overview.dart';
+import 'package:server_box/data/model/server/monitor/monitor_capabilities.dart';
+import 'package:server_box/data/model/server/monitor/monitor_overview.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/agent_poll.dart';
 import 'package:server_box/data/provider/server/all.dart';
@@ -57,10 +58,16 @@ final class MonitorOverviewState {
 /// ([MonitorClientLease]).
 @riverpod
 class MonitorOverviewNotifier extends _$MonitorOverviewNotifier {
-  static const watched = {'alerts', 'audit', 'live', 'desk', 'update'};
+  static const watched = {
+    MonitorFeature.alerts,
+    MonitorFeature.audit,
+    MonitorFeature.live,
+    MonitorFeature.desk,
+    MonitorFeature.update,
+  };
 
   /// What [refresh] polls; `audit` and `live` are read when asked.
-  static const _polled = {'alerts', 'desk', 'update'};
+  static const _polled = {MonitorFeature.alerts, MonitorFeature.desk, MonitorFeature.update};
 
   AgentPoll? _poll;
 
@@ -114,9 +121,9 @@ class MonitorOverviewNotifier extends _$MonitorOverviewNotifier {
     try {
       // One after the other: the first signs the client in, and two at once
       // would both find it signed out.
-      final alerts = _features.contains('alerts') ? await client.alerts() : null;
-      final notices = _features.contains('desk') ? await client.notices() : null;
-      final update = _features.contains('update') ? await client.update() : null;
+      final alerts = _features.contains(MonitorFeature.alerts) ? await client.alerts() : null;
+      final notices = _features.contains(MonitorFeature.desk) ? await client.notices() : null;
+      final update = _features.contains(MonitorFeature.update) ? await client.update() : null;
       if (current()) state = state.copyWith(alerts: alerts, notices: notices, update: update);
     } catch (e) {
       if (current()) state = state.copyWith(error: '$e');

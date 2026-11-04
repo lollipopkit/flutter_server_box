@@ -4,12 +4,12 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/connection_stat.dart';
 import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/provider/server/metric.dart';
+import 'package:server_box/data/provider/server/reading_fmt.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
-import 'package:server_box/data/res/store.dart';
-import 'package:server_box/view/page/server/card/metric.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/view/page/server/card/pressure.dart';
-import 'package:server_box/view/page/server/reading_text.dart';
 
 /// How long back the recent list looks.
 const _kRecentWindow = Duration(hours: 24);

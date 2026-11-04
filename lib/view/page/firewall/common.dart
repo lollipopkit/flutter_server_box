@@ -51,7 +51,7 @@ mixin _FirewallView<T extends ConsumerStatefulWidget> on ConsumerState<T> {
         isRoot: password == null && (host.probe.root || host.spi.isRoot),
         password: password,
       ),
-      rejected: (r) => r.exitCode == kSudoPasswordRejected,
+      rejected: (r) => r.sudoRejected,
     );
   }
 

@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/ssh_key_passphrase.dart';
-import 'package:server_box/core/utils/ssh_key_unlock.dart';
-import 'package:server_box/core/utils/ssh_keygen.dart';
+import 'package:server_box/core/ssh/key_passphrase.dart';
+import 'package:server_box/core/ssh/key_unlock.dart';
+import 'package:server_box/core/ssh/keygen.dart';
 import 'package:server_box/data/model/app/error.dart';
 
 import '../../helpers/rust_lib_helper.dart';

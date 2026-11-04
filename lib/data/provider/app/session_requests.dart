@@ -2,7 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
-import 'package:server_box/data/ssh/terminal_session.dart';
+import 'package:server_box/data/terminal/terminal_session.dart';
 
 part 'session_requests.g.dart';
 

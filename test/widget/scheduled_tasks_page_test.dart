@@ -18,7 +18,7 @@ import 'package:server_box/data/res/status.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/generated/l10n/l10n_en.dart';
 import 'package:server_box/src/rust/api/cron.dart' as ffi;
-import 'package:server_box/view/page/scheduled_tasks.dart';
+import 'package:server_box/view/page/scheduled_tasks/scheduled_tasks.dart';
 
 import '../helpers/rust_lib_helper.dart';
 import '../helpers/spi_fixture.dart';

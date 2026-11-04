@@ -15,24 +15,25 @@ import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/model/app/tab.dart';
-import 'package:server_box/data/model/server/battery.dart';
-import 'package:server_box/data/model/server/disk_smart.dart';
-import 'package:server_box/data/model/server/gpu.dart';
-import 'package:server_box/data/model/server/sensors.dart';
 import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/status/battery.dart';
+import 'package:server_box/data/model/server/status/disk_smart.dart';
+import 'package:server_box/data/model/server/status/gpu.dart';
+import 'package:server_box/data/model/server/status/sensors.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/bmc/bmc.dart';
 import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/server/metric.dart';
+import 'package:server_box/data/provider/server/reading_fmt.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/server/web_apps.dart';
 import 'package:server_box/data/res/chart_palette.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
 import 'package:server_box/view/page/server/card/chart_hero.dart';
-import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/card/name_hero.dart';
 import 'package:server_box/view/page/server/card/notices.dart';
 import 'package:server_box/view/page/server/card/sizes.dart';
@@ -46,11 +47,10 @@ import 'package:server_box/view/page/server/detail/readout.dart';
 import 'package:server_box/view/page/server/detail/window_gaps.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/server/metric_row.dart';
-import 'package:server_box/view/page/server/reading_text.dart';
 import 'package:server_box/view/page/server/text_scale.dart';
+import 'package:server_box/view/page/server/widget/server_func_btns.dart';
 import 'package:server_box/view/page/web_apps/status.dart';
 import 'package:server_box/view/widget/built_from.dart';
-import 'package:server_box/view/widget/server_func_btns.dart';
 
 part 'bmc.dart';
 part 'extra_cards.dart';
@@ -116,16 +116,16 @@ class ServerDetailPage extends ConsumerStatefulWidget {
 /// .bare] means the tab floats it above, over the same content.
 const _kFuncBarInset = kFuncBarInset;
 
-/// The entries the function row draws for [si], and whether any can be used.
+/// The entries the function row draws for [srv], and whether any can be used.
 ///
 /// One answer for the page and for the tab that hosts it: a machine with
 /// nothing to show yet keeps the row, greyed, so the positions stay put while
 /// it connects — see `_buildNothingYet`.
 ({List<ServerFuncEntry> entries, bool any}) serverDetailFuncBtns(
-  ServerState si,
+  ServerState srv,
 ) {
-  final entries = serverFuncBtnsFor(si.spi, si.agentAccess);
-  if (!serverDetailHasContent(si)) {
+  final entries = serverFuncBtnsFor(srv.spi, srv.agentAccess);
+  if (!serverDetailHasContent(srv)) {
     return (
       entries: [for (final e in entries) (btn: e.btn, available: false, reason: null)],
       any: false,
@@ -333,7 +333,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   /// [ServerDetailPage.bare] is the server tab having grown a card into this:
   /// the bar is already up there and so is the window's own inset, so a second
   /// of each would be a page inside a page.
-  Widget _hosted(ServerState si, Widget body) {
+  Widget _hosted(ServerState srv, Widget body) {
     if (widget.bare) return body;
     return Scaffold(
       // Says the machine's name and nothing about its state, so it is built
@@ -341,8 +341,8 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
       appBar: PreferredSize(
         preferredSize: CustomAppBar.calcPreferredSize(),
         child: BuiltFrom(
-          [si.spi, PaneScope.closeDetailOf(context) != null, context.isDark],
-          builder: (_) => _buildAppBar(si),
+          [srv.spi, PaneScope.closeDetailOf(context) != null, context.isDark],
+          builder: (_) => _buildAppBar(srv),
         ),
       ),
       // The tab's body carries this already, and a page pushed on its own is
@@ -356,7 +356,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
 
   bool _hasContent(ServerState state) => serverDetailHasContent(state);
 
-  Widget _buildMainPage(ServerState si) {
+  Widget _buildMainPage(ServerState srv) {
     // What this connection can actually serve, asked once and used twice: to
     // decide whether the row is drawn at all, and then as the row's content.
     //
@@ -365,8 +365,8 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     // Whether any of them can be used. An entry this connection cannot serve
     // is still on the row, dimmed and last; a row of nothing but those is not
     // a row, and what belongs in its place is the explanation below.
-    final (entries: funcBtns, any: buildFuncs) = serverDetailFuncBtns(si);
-    final logo = _buildLogo(si);
+    final (entries: funcBtns, any: buildFuncs) = serverDetailFuncBtns(srv);
+    final logo = _buildLogo(srv);
 
     // Everything that is not one of the metrics: a table or a one-off reading,
     // which is what makes it a card rather than a row.
@@ -375,14 +375,14 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     final cards = <Widget>[
       for (final entry in _cardBuildMap.entries)
         if (!_cardsOff.contains(entry.key.name))
-          if (entry.value(si) case final card?) RepaintBoundary(child: card),
+          if (entry.value(srv) case final card?) RepaintBoundary(child: card),
     ];
     // Beside the readings rather than under them, in the column that says how
     // this machine is reached: the readings are fine and this is about the row
     // of things to do, so it belongs with the facts about the connection and
     // not at the end of what the page came to show. Nothing is drawn while the
     // func bar is there — this only explains a bar that is missing.
-    final noAccess = buildFuncs ? null : _buildNoRemoteAccessCard(si);
+    final noAccess = buildFuncs ? null : _buildNoRemoteAccessCard(srv);
 
     // The readings for each of the two shapes this page takes, kept between
     // the builder's runs and dropped whenever this method is called again.
@@ -395,7 +395,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     final byWidth = <bool, Widget>{};
 
     return _hosted(
-      si,
+      srv,
       Stack(
           children: [
             LayoutBuilder(
@@ -404,7 +404,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
                 // it is the pane that has to hold two columns.
                 cons.maxWidth >= ServerCardSizes.columnsWidth,
                 () => _buildReadings(
-                  si,
+                  srv,
                   logo: logo,
                   cards: cards,
                   bottomInset: buildFuncs ? _kFuncBarInset : 0,
@@ -416,7 +416,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
             // Pinned above the readings rather than scrolling with them: it is
             // about the page, and what it says — that the first answer is on
             // its way — stops being true the moment it arrives.
-            if (serverNeverSampled(si))
+            if (serverNeverSampled(srv))
               const Positioned(
                 top: 0,
                 left: 0,
@@ -443,8 +443,8 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
                   // rather than about what it is doing: the same buttons on
                   // every poll.
                   child: BuiltFrom(
-                    [si.spi, ...funcBtns],
-                    builder: (_) => ServerFuncBar(spi: si.spi, btns: funcBtns),
+                    [srv.spi, ...funcBtns],
+                    builder: (_) => ServerFuncBar(spi: srv.spi, btns: funcBtns),
                   ),
                 ),
               ),
@@ -523,7 +523,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   /// rather than beside them, because a 330pt column takes the chart down to
   /// something too narrow to read a shape in.
   Widget _buildReadings(
-    ServerState si, {
+    ServerState srv, {
     required Widget? logo,
     required List<Widget> cards,
     required double bottomInset,
@@ -533,8 +533,8 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     // Whether the card this page grew out of is drawing each of these — see
     // [_handed]. Asked of the card's own definitions, so the two never
     // disagree about who has a block.
-    final cardNotice = ServerNotice.onCard(si) != null;
-    final cardBody = serverCardHasBody(si);
+    final cardNotice = ServerNotice.onCard(srv) != null;
+    final cardBody = serverCardHasBody(srv);
     // Which column the image sits in, which is the whole of what `wide`
     // changes about it. In two columns it belongs at the head of the facts:
     // the readings column is what the page came to show and an image above
@@ -551,16 +551,16 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
       // draws nothing in it — see `ServerCard._full`.
       if (logo != null && !logoAtSide)
         _entering(logo, from: const Offset(0, -24)),
-      if (_buildErrCard(si) case final errCard?)
+      if (_buildErrCard(srv) case final errCard?)
         _handed(errCard, byCard: cardNotice, from: const Offset(0, 24)),
-      if (_buildStaleCard(si) case final stale?)
+      if (_buildStaleCard(srv) case final stale?)
         _handed(
           stale,
-          byCard: serverCardStaleSince(si) != null,
+          byCard: serverCardStaleSince(srv) != null,
           from: const Offset(0, 24),
         ),
       _handed(
-        _buildMetrics(si, wide: wide),
+        _buildMetrics(srv, wide: wide),
         byCard: cardBody,
         from: const Offset(0, 24),
       ),
@@ -580,7 +580,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
       // No `_entering` of its own: the column below already carries one, and
       // two nested would compound the movement.
       if (logoAtSide) logo,
-      ..._buildInfoCards(si),
+      ..._buildInfoCards(srv),
       ?noAccess,
       if (!wide) ServerDetailCardGrid(cards: cards),
     ];
@@ -641,9 +641,9 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   /// change (uptime, the delay), the Hardware ones are what it is built of and
   /// do not. Kept out of the metric rows entirely, where they would be the
   /// only lines that never move.
-  List<Widget> _buildInfoCards(ServerState si) {
-    final about = ServerDetailInfoCard.aboutRows(si);
-    final hardware = ServerDetailInfoCard.hardwareRows(si);
+  List<Widget> _buildInfoCards(ServerState srv) {
+    final about = ServerDetailInfoCard.aboutRows(srv);
+    final hardware = ServerDetailInfoCard.hardwareRows(srv);
 
     return [
       // Still the About card the setting knows by name: an install that
@@ -664,7 +664,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     ];
   }
 
-  CustomAppBar _buildAppBar(ServerState si) {
+  CustomAppBar _buildAppBar(ServerState srv) {
     // At the root of a detail pane there is nothing to pop, so no back button
     // is drawn and there is no way to hand the width back to the list. Null
     // everywhere else, where the implicit back button is the way out.
@@ -680,10 +680,10 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
       // Where the card's name lands when this page was pushed from it; hosted
       // in the tab, the card grew into the page and nothing flies.
       title: ServerNameHero(
-        id: si.spi.id,
+        id: srv.spi.id,
         enabled: !widget.bare,
         child: Text(
-          si.spi.name,
+          srv.spi.name,
           style: TextStyle(
             fontSize: 20,
             color: context.isDark ? Colors.white : Colors.black,
@@ -693,7 +693,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
       actions: [
         for (final action in ServerPageAction.of(
           context,
-          si.spi,
+          srv.spi,
           onDeleted: context.pop,
         ))
           IconButton(
@@ -720,8 +720,8 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   ///
   /// Its height is stated in [ServerCardSizes], because the card that grows
   /// into this page keeps the image's room without drawing it.
-  Widget? _buildLogo(ServerState si) {
-    final logoUrl = si.getLogoUrl(context);
+  Widget? _buildLogo(ServerState srv) {
+    final logoUrl = srv.getLogoUrl(context);
     // Null, not an empty placeholder: the wrapping Padding was laid out either
     // way, leaving a band of dead space above the first card on every server
     // without a logo configured.
@@ -757,7 +757,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
                         logoUrl,
                         fit: BoxFit.contain,
                         // Named for the reader that speaks the page aloud.
-                        semanticsLabel: si.spi.name,
+                        semanticsLabel: srv.spi.name,
                       )
                     : ExtendedImage(
                         image: serverLogoImage(

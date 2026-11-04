@@ -7,11 +7,11 @@ import 'package:server_box/data/model/app/diagnostics_level.dart';
 import 'package:server_box/data/model/app/float_shell_config.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/motion.dart';
-import 'package:server_box/data/model/app/server_sort.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/app/tray.dart';
 import 'package:server_box/data/model/server/host_cert_authority.dart';
-import 'package:server_box/data/model/ssh/virtual_key.dart';
+import 'package:server_box/data/model/terminal/virtual_key.dart';
+import 'package:server_box/data/provider/server/sort.dart';
 import 'package:server_box/data/res/default.dart';
 import 'package:server_box/data/store/field_prop.dart';
 import 'package:server_box/data/store/migrations/m008_settings_fixups.dart';
@@ -110,7 +110,7 @@ class SettingStore extends SqliteStore with ThemeSettings {
   // Disabled detail cards (for persistence when toggling visibility)
   late final detailCardDisabled = listProperty<String>('detailCardDisabled');
 
-  /// Virtual keys the user has hidden, by [VirtKey.name] — see [sshVirtKeys]
+  /// Virtual keys the user has hidden, by [VirtualKey.name] — see [sshVirtKeys]
   /// for why not by index.
   late final sshVirtKeysDisabled = listProperty<String>(
     'sshVirtKeysDisabled',
@@ -223,19 +223,19 @@ class SettingStore extends SqliteStore with ThemeSettings {
 
   late final fullScreenJitter = propertyDefault('fullScreenJitter', true);
 
-  /// The order the virtual keys are drawn in, by [VirtKey.name].
+  /// The order the virtual keys are drawn in, by [VirtualKey.name].
   ///
   /// By name, never by index. An index changes meaning the moment a case is
-  /// inserted into [VirtKey] — every stored arrangement then names different
+  /// inserted into [VirtualKey] — every stored arrangement then names different
   /// keys, silently, with nothing to say it happened — and this value outlives
   /// the build that wrote it, through a backup and through a sync. It was a
   /// list of indices; [VirtKeyNamesMigration] is the one pass that converts.
   ///
   /// A name this build cannot place reads as absent rather than as a key,
-  /// which is what [VirtKeyX.loadFromStore] drops.
+  /// which is what [VirtualKeyX.loadFromStore] drops.
   late final sshVirtKeys = listProperty<String>(
     'sshVirtKeys',
-    defaultValue: VirtKeyX.defaultOrder.map((e) => e.name).toList(),
+    defaultValue: VirtualKeyX.defaultOrder.map((e) => e.name).toList(),
     fromObj: _virtKeyNames,
   );
 
@@ -677,7 +677,7 @@ class SettingStore extends SqliteStore with ThemeSettings {
   /// Separate from [sshTermHelpShown], which gates a dialog about the terminal
   /// body and is the only guidance a desktop gets — there are no virtual keys
   /// there to walk through.
-  late final virtKeyIntroShown = propertyDefault('virtKeyIntroShown', false);
+  late final virtualKeyIntroShown = propertyDefault('virtKeyIntroShown', false);
 
   /// How many rows of virtual keys the terminal shows at once, 0 for all.
   ///
@@ -685,7 +685,7 @@ class SettingStore extends SqliteStore with ThemeSettings {
   /// switch meaning "one row, scrolled sideways", which is this set to 1 —
   /// with the difference that a swipe now lands on whole rows rather than
   /// leaving the row halfway between two keys. See [VirtKeyRowsMigration].
-  late final virtKeyRows = propertyDefault('virtKeyRows', 0);
+  late final virtualKeyRows = propertyDefault('virtKeyRows', 0);
 
   /// general wake lock
   late final generalWakeLock = propertyDefault('generalWakeLock', false);
@@ -1008,7 +1008,7 @@ class SettingStore extends SqliteStore with ThemeSettings {
   ///
   /// TODO: [serverPageSortBy] and [serverPageSortAsc] are only still read as
   /// this map's empty-key default, for installs that chose before it existed.
-  /// Delete both, and the fallback in `ServerSortOrder.of`, a few releases on.
+  /// Delete both, and the fallback in `ServerSortOrder.of`, 5 releases after v1.0.1715.
   late final serverListSort = propertyDefault<Map<String, String>>(
     'serverListSort',
     const {},
@@ -1088,13 +1088,7 @@ class SettingStore extends SqliteStore with ThemeSettings {
   /// installs are cleaned without another migration flag becoming permanent
   /// state of its own.
   Future<void> removeRetiredKeys() async {
-    // Nothing is deleted from storage this build cannot read. `Stores.init`
-    // calls this before `SchemaVersion.migrate` gets to refuse the downgrade,
-    // so without this the refusal arrived after the keys were already gone —
-    // and "retired here" says nothing about whether the build that wrote them
-    // still reads them.
-    if (schemaVersion.fetch() > SchemaVersion.current) return;
-
+    // Only ever after `Stores.init` has refused storage a newer build wrote.
     for (final key in const [
       'moveOutServerTabFuncBtns',
       'forceSinglePane',
@@ -1158,7 +1152,7 @@ class SettingStore extends SqliteStore with ThemeSettings {
       );
     }
 
-    // The switch `virtKeyRows` replaced, for the same reason and on the same
+    // The switch `virtualKeyRows` replaced, for the same reason and on the same
     // terms: the step that reads it runs after this does, and a restore of an
     // older backup writes it back long after that step can run again.
     //

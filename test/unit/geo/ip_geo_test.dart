@@ -8,12 +8,12 @@ import 'package:server_box/core/service/ip_geo.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/geo.dart';
 import 'package:server_box/data/model/server/geo_source.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/self_addr.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 
 import '../../helpers/geo_fixture.dart';
 import '../../helpers/test_db.dart';

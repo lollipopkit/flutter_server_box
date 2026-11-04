@@ -69,14 +69,14 @@ extension _SSH on _AppSettingsPageState {
         return;
       }
 
-      await _processSSHServers(servers);
+      await _confirmAndImportServers(servers);
     } catch (e, s) {
       if (!mounted) return;
-      await _handleImportSSHCfgPermissionIssue(e, s);
+      await _onSSHConfigImportError(e, s);
     }
   }
 
-  Future<void> _processSSHServers(List<Spi> servers) async {
+  Future<void> _confirmAndImportServers(List<Spi> servers) async {
     final existing = Stores.server.fetch();
     final deduplicated = ServerDeduplication.deduplicateServers(
       servers,
@@ -130,7 +130,7 @@ extension _SSH on _AppSettingsPageState {
     }
   }
 
-  Future<void> _handleImportSSHCfgPermissionIssue(
+  Future<void> _onSSHConfigImportError(
     Object e,
     StackTrace s,
   ) async {
@@ -179,7 +179,7 @@ extension _SSH on _AppSettingsPageState {
           return;
         }
 
-        await _processSSHServers(servers);
+        await _confirmAndImportServers(servers);
       }
     } catch (e, s) {
       if (!mounted) return;

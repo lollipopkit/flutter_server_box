@@ -7,11 +7,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
-import 'package:server_box/data/ssh/terminal_session.dart';
-import 'package:server_box/data/ssh/terminal_source.dart';
-import 'package:server_box/data/ssh/tmux/tmux_control_client.dart';
-import 'package:server_box/data/ssh/tmux/tmux_control_shell_session.dart';
-import 'package:server_box/data/ssh/tmux/tmux_ids.dart';
+import 'package:server_box/data/terminal/terminal_session.dart';
+import 'package:server_box/data/terminal/terminal_source.dart';
+import 'package:server_box/data/terminal/tmux/tmux_control_client.dart';
+import 'package:server_box/data/terminal/tmux/tmux_control_shell_session.dart';
+import 'package:server_box/data/terminal/tmux/tmux_ids.dart';
 import 'package:xterm/core.dart';
 
 /// Runs the CC parser and command queue against the real tmux binary.

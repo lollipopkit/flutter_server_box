@@ -7,24 +7,24 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
-import 'package:server_box/data/model/server/conn.dart';
 import 'package:server_box/data/model/server/connection_stat.dart';
-import 'package:server_box/data/model/server/cpu.dart';
-import 'package:server_box/data/model/server/disk.dart';
-import 'package:server_box/data/model/server/memory.dart';
-import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/status/conn.dart';
+import 'package:server_box/data/model/server/status/cpu.dart';
+import 'package:server_box/data/model/server/status/disk.dart';
+import 'package:server_box/data/model/server/status/memory.dart';
+import 'package:server_box/data/model/server/status/net_speed.dart';
+import 'package:server_box/data/model/server/status/temp.dart';
 import 'package:server_box/data/model/server/system.dart';
-import 'package:server_box/data/model/server/temp.dart';
+import 'package:server_box/data/provider/server/metric.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/connection_stats.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
-import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/card/overview.dart';
 import 'package:server_box/view/page/server/card/pressure.dart';
 
@@ -98,7 +98,7 @@ void main() {
     return status;
   }
 
-  Future<void> record({required bool ok}) =>
+  void record({required bool ok}) =>
       Stores.connectionStats.recordConnection(
         ConnectionStat(
           serverId: id,
@@ -286,7 +286,7 @@ void main() {
   testWidgets('what happened last is a colour and a way in, not a count', (
     tester,
   ) async {
-    await tester.runAsync(() => record(ok: true));
+    record(ok: true);
     await pump(tester, width: 390);
 
     expect(find.textContaining('+'), findsNothing);
@@ -301,7 +301,7 @@ void main() {
   });
 
   testWidgets('and the colour is the last one that failed', (tester) async {
-    await tester.runAsync(() => record(ok: false));
+    record(ok: false);
     await pump(tester, width: 390);
 
     expect(controlDot(tester), StatePalette.failed);
@@ -313,7 +313,7 @@ void main() {
     // The line has no room for the words, so the colour is all of it — and a
     // dot that opened onto connections that went fine would not have said
     // why it was amber.
-    await tester.runAsync(() => record(ok: true));
+    record(ok: true);
     await pump(tester, width: 390, status: sampled(diskPercent: 95));
 
     expect(controlDot(tester), StatePalette.warn);
@@ -330,7 +330,7 @@ void main() {
   testWidgets('with room for the words, the dot is at the head of them', (
     tester,
   ) async {
-    await tester.runAsync(() => record(ok: true));
+    record(ok: true);
     await pump(tester, width: 1000);
 
     expect(find.textContaining('120 ms'), findsOneWidget);

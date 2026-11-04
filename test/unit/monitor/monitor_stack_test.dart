@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/model/server/monitor_stack.dart';
+import 'package:server_box/data/model/server/monitor/monitor_stack.dart';
 
 void main() {
   group('MonitorWebApp.deployed', () {

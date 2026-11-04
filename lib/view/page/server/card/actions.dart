@@ -8,13 +8,13 @@ import 'package:server_box/data/model/app/app_link.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/server/metric.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/view/page/server/card/card.dart';
-import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
+import 'package:server_box/view/page/server/widget/server_power.dart';
+import 'package:server_box/view/page/server/widget/server_share.dart';
 import 'package:server_box/view/widget/app_link.dart';
-import 'package:server_box/view/widget/server_power.dart';
-import 'package:server_box/view/widget/server_share.dart';
 
 /// What can be done to one machine without leaving the list.
 ///

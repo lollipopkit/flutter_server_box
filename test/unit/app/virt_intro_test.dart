@@ -6,10 +6,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/app.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/pve.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 
 import '../../helpers/spi_fixture.dart';
 import '../../helpers/test_db.dart';

@@ -1,15 +1,16 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
-import 'package:server_box/data/model/app/server_sort.dart';
-import 'package:server_box/data/model/server/conn.dart';
-import 'package:server_box/data/model/server/cpu.dart';
-import 'package:server_box/data/model/server/disk.dart';
-import 'package:server_box/data/model/server/memory.dart';
-import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/status/conn.dart';
+import 'package:server_box/data/model/server/status/cpu.dart';
+import 'package:server_box/data/model/server/status/disk.dart';
+import 'package:server_box/data/model/server/status/memory.dart';
+import 'package:server_box/data/model/server/status/net_speed.dart';
+import 'package:server_box/data/model/server/status/status_history.dart';
+import 'package:server_box/data/model/server/status/temp.dart';
 import 'package:server_box/data/model/server/system.dart';
-import 'package:server_box/data/model/server/temp.dart';
 import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/data/provider/server/sort.dart';
 
 import '../../helpers/rust_lib_helper.dart';
 import '../../helpers/spi_fixture.dart';
@@ -55,7 +56,7 @@ void main() {
       diskIO: DiskIO(),
     );
     if (uptime != null) ss.more[StatusCmdType.uptime] = uptime;
-    if (sampledAtMs != null) ss.history.add(timeMs: sampledAtMs, cpu: cpu);
+    if (sampledAtMs != null) ss.history.add(StatusHistorySample(timeMs: sampledAtMs, cpu: cpu));
     return ServerState(
       spi: spiFixture(id: id, name: id, ip: 'h', user: 'u'),
       status: ss,

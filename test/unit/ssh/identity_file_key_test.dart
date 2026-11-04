@@ -17,11 +17,13 @@ import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/server.dart';
+import 'package:server_box/core/ssh/client.dart';
+import 'package:server_box/core/ssh/identities.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/store/migrations/m004_kv_to_tables.dart';
+import 'package:server_box/data/store/migrations/m034_identity_files.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
 
@@ -129,7 +131,12 @@ void main() {
     /// The old shape: the key's id *was* its name.
     void seedKey(String name) => seed('key', name, {'id': name, 'key': 'PEM'});
 
-    Future<void> migrate() => const KvToTablesMigration().apply();
+    // And the step that moved `ssh_key_path` into its own table, which every
+    // install runs after this one.
+    Future<void> migrate() async {
+      await const KvToTablesMigration().apply();
+      await const IdentityFilesMigration().apply();
+    }
 
     Spi reread(String id) => servers.fetchOneRaw(id)!;
 
@@ -139,7 +146,7 @@ void main() {
       await migrate();
 
       final ssh = reread('a').ssh!;
-      expect(ssh.keyPath, '~/.ssh/id_ed25519');
+      expect(ssh.resolvedIdentityFiles.firstOrNull, '~/.ssh/id_ed25519');
       expect(ssh.keyId, isNull);
     });
 
@@ -152,7 +159,7 @@ void main() {
       await migrate();
 
       final ssh = reread('b').ssh!;
-      expect(ssh.keyPath, isNull);
+      expect(ssh.resolvedIdentityFiles.firstOrNull, isNull);
       // The id it points at is generated now, and it is the one the key got.
       expect(ssh.keyId, keys.fetchByName('keys/prod')!.id);
     });
@@ -166,7 +173,7 @@ void main() {
       final key = keys.fetchByName('work')!;
       expect(key.id, isNot('work'), reason: 'an id is not a name');
       expect(reread('c').ssh!.keyId, key.id);
-      expect(reread('c').ssh!.keyPath, isNull);
+      expect(reread('c').ssh!.resolvedIdentityFiles.firstOrNull, isNull);
     });
 
     test('a keyPath already set is not overwritten', () async {
@@ -174,7 +181,7 @@ void main() {
 
       await migrate();
 
-      expect(reread('d').ssh!.keyPath, '/abs/path/key');
+      expect(reread('d').ssh!.resolvedIdentityFiles.firstOrNull, '/abs/path/key');
       expect(reread('d').ssh!.keyId, isNull);
     });
 

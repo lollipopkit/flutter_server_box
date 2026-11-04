@@ -5,13 +5,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/workspace/tree.dart';
 import 'package:server_box/data/model/workspace/workspace.dart';
 import 'package:server_box/data/provider/workspace.dart';
-import 'package:server_box/data/res/store.dart';
-import 'package:server_box/data/ssh/terminal_session.dart';
-import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/data/store/history.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/data/terminal/terminal_session.dart';
+import 'package:server_box/data/terminal/terminal_source.dart';
 
 import '../../helpers/spi_fixture.dart';
 import '../../helpers/test_db.dart';

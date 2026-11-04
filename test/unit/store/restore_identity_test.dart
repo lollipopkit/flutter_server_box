@@ -10,7 +10,7 @@ import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 
 /// Who a restored record *is*, and what a restore is allowed to overwrite.
 ///
@@ -160,7 +160,7 @@ void main() {
         ssh: SshCredential(ip: '10.0.0.1', keyId: 'mykey'),
       );
 
-      final backup = Backup(
+      final backup = BackupV1(
         version: 1,
         date: '',
         spis: const [spi],

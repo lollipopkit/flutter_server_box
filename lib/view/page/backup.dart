@@ -2,30 +2,31 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:computer/computer.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/file_log_sync.dart';
 import 'package:server_box/core/lkc.dart';
-import 'package:server_box/core/lkc_log_sync.dart';
-import 'package:server_box/core/lkc_sync.dart';
-import 'package:server_box/core/sync.dart';
-import 'package:server_box/core/sync_key.dart';
-import 'package:server_box/core/utils/monitor_backup_storage.dart';
+import 'package:server_box/core/monitor/backup_storage.dart';
+import 'package:server_box/core/sync/file_log.dart';
+import 'package:server_box/core/sync/key.dart';
+import 'package:server_box/core/sync/lkc.dart';
+import 'package:server_box/core/sync/lkc_log.dart';
+import 'package:server_box/core/sync/lkc_prefs.dart';
+import 'package:server_box/core/sync/sync.dart';
+import 'package:server_box/data/model/app/bak/backup_reader.dart';
 import 'package:server_box/data/model/app/bak/backup_service.dart';
 import 'package:server_box/data/model/app/bak/backup_source.dart';
-import 'package:server_box/data/model/app/bak/utils.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/misc.dart';
-import 'package:server_box/data/res/store.dart';
-import 'package:server_box/view/widget/server_share.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/view/page/server/widget/server_share.dart';
 import 'package:webdav_client_plus/webdav_client_plus.dart';
 
 /// Which half of the page to show.
@@ -199,7 +200,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
       PrefProps.webdavSync,
       PrefProps.gistSync,
       BakSyncer.monitorSync,
-      if (Lkc.enabled) BakSyncer.lkcSync,
+      if (Lkc.enabled) LkcSyncPrefs.enabled,
     ];
     return props.any((prop) => prop != but && prop.get());
   }
@@ -552,7 +553,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
                   Toast.show(l10n.autoBackupConflict);
                   return false;
                 }
-                final storage = bakSync.monitorStorage;
+                final storage = bakSync.monitorStorage();
                 if (chosen == null || storage == null) {
                   Toast.show(l10n.monitorSyncNeedsServer);
                   return false;
@@ -624,10 +625,10 @@ final class _BackupPageState extends ConsumerState<BackupPage>
           ListTile(
             title: Text(libL10n.auto),
             trailing: StoreSwitch(
-              prop: BakSyncer.lkcSync,
+              prop: LkcSyncPrefs.enabled,
               validator: (p0) async {
                 if (!p0) return true;
-                if (_remoteSyncOn(but: BakSyncer.lkcSync)) {
+                if (_remoteSyncOn(but: LkcSyncPrefs.enabled)) {
                   Toast.show(l10n.autoBackupConflict);
                   return false;
                 }
@@ -640,7 +641,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
 
                 lkcLoading.value = true;
                 try {
-                  final storage = BakSyncer.lkcStorage;
+                  final storage = LkcSyncPrefs.storage;
                   // A checkpoint left from an earlier time on would skip the
                   // write this needs to see.
                   await BakSyncer.forgetCheckpoint();
@@ -677,11 +678,11 @@ final class _BackupPageState extends ConsumerState<BackupPage>
           // out writes no snapshot.
           ListenableBuilder(
             listenable: Listenable.merge([
-              BakSyncer.lkcSync.listenable(),
+              LkcSyncPrefs.enabled.listenable(),
               PrefProps.syncAppSettings.listenable(),
             ]),
             builder: (_, _) {
-              if (!BakSyncer.lkcSync.get() || !PrefProps.syncAppSettings.get()) {
+              if (!LkcSyncPrefs.enabled.get() || !PrefProps.syncAppSettings.get()) {
                 return UIs.placeholder;
               }
               return ListTile(
@@ -884,9 +885,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
         final text = str.trim();
         if (!await _routeImport(context, text)) return;
         final (list, _) = await context.showLoadingDialog(
-          fn: () => Computer.shared.start((s) {
-            return json.decode(s) as List;
-          }, text),
+          fn: () => compute((s) => json.decode(s) as List, text),
         );
         if (list == null || list.isEmpty || !context.mounted) return;
         final snippets = <Snippet>[];
@@ -926,7 +925,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
         if (confirmed != true || !context.mounted) return;
         final notifier = ref.read(snippetProvider.notifier);
         for (final snippet in snippets) {
-          await notifier.add(snippet);
+          notifier.add(snippet);
         }
         context.pop();
       },
@@ -958,7 +957,7 @@ extension on _BackupPageState {
       return false;
     }
     final (isBackup, err) = await context.showLoadingDialog(
-      fn: () => Computer.shared.start(MergeableUtils.isBackup, text),
+      fn: () => compute(BackupReader.isBackup, text),
     );
     // A context that has been deactivated cannot open the dialog every caller
     // leads with, and `showLoadingDialog` closes the one it was reading behind
@@ -1079,7 +1078,7 @@ extension on _BackupPageState {
   }
 
   Future<void> _onTapMonitorDl(BuildContext context) async {
-    final storage = bakSync.monitorStorage;
+    final storage = bakSync.monitorStorage();
     if (storage == null) return Toast.show(l10n.monitorSyncNeedsServer);
     monitorLoading.value = true;
     try {
@@ -1104,7 +1103,7 @@ extension on _BackupPageState {
   }
 
   Future<void> _onTapMonitorUp(BuildContext context) async {
-    final storage = bakSync.monitorStorage;
+    final storage = bakSync.monitorStorage();
     if (storage == null) return Toast.show(l10n.monitorSyncNeedsServer);
     monitorLoading.value = true;
     final date = DateTime.now().ymdhms(ymdSep: '-', hmsSep: '-', sep: '-');
@@ -1352,7 +1351,7 @@ extension on _BackupPageState {
       text = text.trim();
       if (!await _routeImport(context, text)) return;
       final (spis, err) = await context.showLoadingDialog(
-        fn: () => Computer.shared.start((val) {
+        fn: () => compute((String val) {
           final list = json.decode(val) as List;
           return [
             for (final e in list)

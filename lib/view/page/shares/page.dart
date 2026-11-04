@@ -6,15 +6,15 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
+import 'package:server_box/data/admin/shares_manager.dart';
+import 'package:server_box/data/admin/storage_manager.dart';
+import 'package:server_box/data/admin/user_manager.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/shares.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/system_user.dart';
 import 'package:server_box/data/provider/server/single.dart';
-import 'package:server_box/data/service/shares_manager.dart';
-import 'package:server_box/data/service/storage_manager.dart';
-import 'package:server_box/data/service/user_manager.dart';
 
 final class SharesPage extends ConsumerStatefulWidget {
   const SharesPage({super.key, required this.args});

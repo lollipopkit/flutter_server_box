@@ -3,11 +3,11 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/utils/privileged_exec.dart';
+import 'package:server_box/data/admin/service_manager.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/service.dart';
 import 'package:server_box/data/provider/server/single.dart';
-import 'package:server_box/data/service/service_manager.dart';
 
 part 'services.freezed.dart';
 part 'services.g.dart';
@@ -112,7 +112,7 @@ class ServicesNotifier extends _$ServicesNotifier {
 
   /// Runs [action] on [unit] here, as root where the unit needs it.
   ///
-  /// Answers the result for the page to read: a [kSudoPasswordRejected] exit
+  /// Answers the result for the page to read: [SudoRejection.sudoRejected]
   /// is the page's cue to ask for a password and call again with it. Null
   /// before a listing has said which manager this is.
   Future<ExecResult?> runAction(
@@ -206,7 +206,7 @@ class ServicesNotifier extends _$ServicesNotifier {
   /// one — while a listing started before the edit is still in flight. Writing
   /// `state` then throws `UnmountedRefException` out of a `Future` nobody is
   /// awaiting, which reaches the zone handler and is reported as a crash.
-  Future<void> getServices() async {
+  Future<void> refresh() async {
     state = state.copyWith(isBusy: true);
 
     final CommandExec exec;

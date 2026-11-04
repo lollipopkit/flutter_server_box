@@ -13,10 +13,10 @@
 library;
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 
 import '../helpers/test_db.dart';
 

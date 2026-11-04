@@ -7,7 +7,7 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/server/monitor_settings/page.dart';
-import 'package:server_box/view/widget/server_share.dart';
+import 'package:server_box/view/page/server/widget/server_share.dart';
 
 /// What a server's own page offers in its bar: share, the agent's settings,
 /// edit.

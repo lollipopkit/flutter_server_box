@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:server_box/core/utils/ssh_local_tunnel.dart';
+import 'package:server_box/core/ssh/local_tunnel.dart';
 
 /// An authenticated loopback tunnel whose every connection is carried to
 /// [port] on this machine — what `ServerTcpDialer.loopback` gives

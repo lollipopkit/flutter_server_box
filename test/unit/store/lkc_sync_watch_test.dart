@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/lkc_sync.dart';
+import 'package:server_box/core/sync/lkc.dart';
 import 'package:server_box/data/res/misc.dart';
 
 void main() {

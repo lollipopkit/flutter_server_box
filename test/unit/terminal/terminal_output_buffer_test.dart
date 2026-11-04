@@ -1,4 +1,4 @@
-import 'package:server_box/data/ssh/terminal_output_buffer.dart';
+import 'package:server_box/data/terminal/terminal_output_buffer.dart';
 import 'package:test/test.dart';
 
 void main() {

@@ -54,7 +54,7 @@ extension _Actions on _FileBrowserPageState {
     await _run(
       () => backend.write(
         BrowsePath.join(_path.path, name),
-        const Stream<List<int>>.empty(),
+        () => const Stream<List<int>>.empty(),
         size: 0,
       ),
     );

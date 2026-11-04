@@ -8,7 +8,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/error.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/provider/server/monitor_http.dart';
 import 'package:server_box/src/rust/api/protocol.dart';
 
@@ -66,30 +66,30 @@ void main() {
 
   test('every request names the protocol', () async {
     await agent({'protocol': monitorProtocol(), 'min_client_protocol': 1});
-    await client.fetchCapabilities();
+    await client.capabilities();
     expect(named, isNotEmpty);
     expect(named, everyElement('${monitorProtocol()}'));
   });
 
   test('an agent from before /health, or before the protocol, is the first', () async {
     await agent(null);
-    await client.fetchCapabilities();
-    await client.fetchCapabilities();
+    await client.capabilities();
+    await client.capabilities();
     expect(paths, ['/api/v1/health', '/api/v1/login', '/api/v1/capabilities', '/api/v1/capabilities']);
   });
 
   test('an agent that no longer answers this app says to update the app', () async {
     await agent({'protocol': monitorProtocol() + 2, 'min_client_protocol': monitorProtocol() + 1});
-    await expectLater(client.fetchCapabilities(), failsAs(MonitorHttpErrType.clientTooOld));
+    await expectLater(client.capabilities(), failsAs(MonitorHttpErrType.clientTooOld));
   });
 
   test('an agent older than this app reads says to update the agent', () async {
     await agent({'protocol': 0, 'min_client_protocol': 0});
-    await expectLater(client.fetchCapabilities(), failsAs(MonitorHttpErrType.agentTooOld));
+    await expectLater(client.capabilities(), failsAs(MonitorHttpErrType.agentTooOld));
   });
 
   test('a 426 from an agent replaced since is the same as being told by /health', () async {
     await agent({'protocol': monitorProtocol()}, status: 426);
-    await expectLater(client.fetchCapabilities(), failsAs(MonitorHttpErrType.clientTooOld));
+    await expectLater(client.capabilities(), failsAs(MonitorHttpErrType.clientTooOld));
   });
 }

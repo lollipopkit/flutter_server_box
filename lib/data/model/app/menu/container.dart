@@ -16,7 +16,14 @@ enum ContainerMenu {
   /// offered in every state.
   static List<ContainerMenu> items(ContainerStatus status) => [
     for (final kind in ffi.containerMenuItems(statusName: status.name))
-      kind == 'remove' ? rm : values.byName(kind),
+      switch (kind) {
+        ffi.ContainerMenuKind.start => start,
+        ffi.ContainerMenuKind.stop => stop,
+        ffi.ContainerMenuKind.restart => restart,
+        ffi.ContainerMenuKind.remove => rm,
+        ffi.ContainerMenuKind.logs => logs,
+        ffi.ContainerMenuKind.terminal => terminal,
+      },
   ];
 
   IconData get icon => switch (this) {

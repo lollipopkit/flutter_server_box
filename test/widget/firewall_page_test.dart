@@ -14,7 +14,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
 import 'package:server_box/core/route.dart';
-import 'package:server_box/data/model/server/firewall.dart';
+import 'package:server_box/data/model/server/firewall/firewall.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/status.dart';

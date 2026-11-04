@@ -8,7 +8,7 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
-import 'package:server_box/data/model/app/bak/utils.dart';
+import 'package:server_box/data/model/app/bak/backup_reader.dart';
 import 'package:server_box/data/res/misc.dart';
 
 void main() {
@@ -21,7 +21,7 @@ void main() {
   Future<void> restores(String file) async {
     final data = File('$dir/$file').readAsBytesSync();
     expect(AgeCryptor.isEncrypted(data), isTrue, reason: file);
-    final (mergeable, _) = MergeableUtils.fromBytes(
+    final (mergeable, _) = BackupReader.fromBytes(
       await BackupV2.unlock(data, password),
     );
     expect(mergeable, isA<BackupV2>(), reason: file);

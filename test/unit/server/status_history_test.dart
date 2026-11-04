@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/model/server/status_history.dart';
+import 'package:server_box/data/model/server/status/status_history.dart';
 
 /// The rolling buffer, and in particular the per-device series the focus chart
 /// draws one line each from.
@@ -14,9 +14,9 @@ void main() {
     test('a device that appears mid-run is padded to the buffer length', () {
       final h = StatusHistory();
 
-      h.add(timeMs: 1, diskWrites: const {'sda': 10});
-      h.add(timeMs: 2, diskWrites: const {'sda': 20});
-      h.add(timeMs: 3, diskWrites: const {'sda': 30, 'sdb': 5});
+      h.add(StatusHistorySample(timeMs: 1, diskWrites: const {'sda': 10}));
+      h.add(StatusHistorySample(timeMs: 2, diskWrites: const {'sda': 20}));
+      h.add(StatusHistorySample(timeMs: 3, diskWrites: const {'sda': 30, 'sdb': 5}));
 
       expect(h.length, 3);
       expect(h.diskWritesByDevice['sda'], [10, 20, 30]);
@@ -30,8 +30,8 @@ void main() {
     test('a device that stops reporting keeps its place', () {
       final h = StatusHistory();
 
-      h.add(timeMs: 1, netTxs: const {'eth0': 1, 'tun0': 2});
-      h.add(timeMs: 2, netTxs: const {'eth0': 3});
+      h.add(StatusHistorySample(timeMs: 1, netTxs: const {'eth0': 1, 'tun0': 2}));
+      h.add(StatusHistorySample(timeMs: 2, netTxs: const {'eth0': 3}));
 
       expect(h.netTxByDevice['eth0'], [1, 3]);
       expect(h.netTxByDevice['tun0'], [2, null]);
@@ -40,27 +40,27 @@ void main() {
     test('a device gone for a whole buffer is dropped', () {
       final h = StatusHistory();
 
-      h.add(timeMs: 0, netTxs: const {'eth0': 1, 'tun0': 2});
+      h.add(StatusHistorySample(timeMs: 0, netTxs: const {'eth0': 1, 'tun0': 2}));
       for (var t = 1; t < StatusHistory.capacity; t++) {
-        h.add(timeMs: t, netTxs: const {'eth0': 1});
+        h.add(StatusHistorySample(timeMs: t, netTxs: const {'eth0': 1}));
       }
       expect(h.netTxByDevice, contains('tun0'));
 
-      h.add(timeMs: StatusHistory.capacity, netTxs: const {'eth0': 1});
+      h.add(StatusHistorySample(timeMs: StatusHistory.capacity, netTxs: const {'eth0': 1}));
       expect(h.netTxByDevice.keys, ['eth0']);
     });
 
     test('each metric keeps its own devices', () {
       final h = StatusHistory();
 
-      h.add(
+      h.add(StatusHistorySample(
         timeMs: 1,
         diskReads: const {'sda': 1},
         diskWrites: const {'sda': 2},
         netRxs: const {'eth0': 3},
         netTxs: const {'eth0': 4},
         temps: const {'coretemp': 42},
-      );
+      ));
 
       expect(h.diskReadsByDevice['sda'], [1]);
       expect(h.diskWritesByDevice['sda'], [2]);
@@ -74,7 +74,7 @@ void main() {
       final h = StatusHistory();
 
       for (var i = 0; i < StatusHistory.capacity + 10; i++) {
-        h.add(timeMs: i + 1, diskWrites: {'sda': i.toDouble()});
+        h.add(StatusHistorySample(timeMs: i + 1, diskWrites: {'sda': i.toDouble()}));
       }
 
       expect(h.length, StatusHistory.capacity);
@@ -85,8 +85,8 @@ void main() {
     test('a repeated instant is not a second sample', () {
       final h = StatusHistory();
 
-      h.add(timeMs: 1, diskWrites: const {'sda': 10});
-      h.add(timeMs: 1, diskWrites: const {'sda': 20});
+      h.add(StatusHistorySample(timeMs: 1, diskWrites: const {'sda': 10}));
+      h.add(StatusHistorySample(timeMs: 1, diskWrites: const {'sda': 20}));
 
       expect(h.length, 1);
       expect(h.diskWritesByDevice['sda'], [10]);
@@ -96,8 +96,8 @@ void main() {
   test('GPU load is kept like any other percentage', () {
     final h = StatusHistory();
 
-    h.add(timeMs: 1, gpu: 41);
-    h.add(timeMs: 2);
+    h.add(StatusHistorySample(timeMs: 1, gpu: 41));
+    h.add(StatusHistorySample(timeMs: 2));
 
     expect(h.gpu, [41, null]);
   });
@@ -113,7 +113,7 @@ void main() {
     test('goes before the live samples, which keep everything they had', () {
       final h = StatusHistory();
       // The first live sample has no CPU rate yet.
-      h.add(timeMs: 100, cpu: null, mem: 50, netRxs: const {'eth0': 7});
+      h.add(StatusHistorySample(timeMs: 100, cpu: null, mem: 50, netRxs: const {'eth0': 7}));
       h.seed(const [
         StatusHistorySample(timeMs: 10, cpu: 1),
         StatusHistorySample(timeMs: 20, cpu: 2),
@@ -129,7 +129,7 @@ void main() {
 
     test('past the capacity the oldest stored samples go, never live ones', () {
       final h = StatusHistory();
-      h.add(timeMs: 1000000, cpu: 5);
+      h.add(StatusHistorySample(timeMs: 1000000, cpu: 5));
       h.seed([for (var i = 0; i < StatusHistory.capacity; i++) StatusHistorySample(timeMs: i, cpu: 1)]);
       expect(h.length, StatusHistory.capacity);
       expect(h.time.last, 1000000);

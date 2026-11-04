@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/server.dart';
+import 'package:server_box/core/ssh/host_keys.dart';
 
 import '../../helpers/spi_fixture.dart';
 

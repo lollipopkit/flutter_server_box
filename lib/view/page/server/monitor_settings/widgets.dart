@@ -1,7 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/model/server/monitor_settings.dart';
+import 'package:server_box/data/model/server/monitor/monitor_settings.dart';
 
 /// What the settings form and the list pages it opens both draw.
 ///

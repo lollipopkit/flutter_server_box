@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:server_box/core/utils/ssh_key_passphrase.dart';
+import 'package:server_box/core/ssh/key_passphrase.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/provider/entity_helpers.dart';
 import 'package:server_box/data/provider/server/all.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 
 part 'private_key.freezed.dart';
 part 'private_key.g.dart';
@@ -38,7 +38,7 @@ class PrivateKeyNotifier extends _$PrivateKeyNotifier {
     return stateOrNull?.copyWith(keys: keys) ?? PrivateKeyState(keys: keys);
   }
 
-  Future<void> add(PrivateKeyInfo info) async {
+  void add(PrivateKeyInfo info) {
     state = state.copyWith(keys: entityAdd(Stores.key, state.keys, info));
   }
 
@@ -63,7 +63,7 @@ class PrivateKeyNotifier extends _$PrivateKeyNotifier {
   /// The id never changes, so this is one write either way. The branch that
   /// deleted the old record existed because the id *was* the name — and with
   /// ids equal it deleted the record it had just written.
-  Future<void> update(PrivateKeyInfo old, PrivateKeyInfo newInfo) async {
+  void update(PrivateKeyInfo old, PrivateKeyInfo newInfo) {
     final stored = _storedKey(old.id) ?? old.key;
     state = state.copyWith(
       keys: entityUpdate(

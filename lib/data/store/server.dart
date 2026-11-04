@@ -1,11 +1,9 @@
-import 'dart:convert';
-
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show LlmStores;
 import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/geo.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/model/server/system.dart';
@@ -19,12 +17,10 @@ import 'package:sqlite3/sqlite3.dart';
 
 /// Servers, as rows in `server` plus the child tables hanging off it.
 ///
-/// A [Spi] is assembled from six tables, but never six queries per server:
+/// A [Spi] is assembled from seven tables, but never six queries per server:
 /// [readAll] reads each child table once and groups in Dart, so the cost is
 /// the number of tables rather than the number of servers.
 class ServerStore extends EntityStore<Spi> {
-  static const _identityFilesPrefix = 'server-box:identity-files:';
-
   ServerStore({
     PortForwardStore? portForwards,
     RemoteDesktopStore? remoteDesktops,
@@ -95,6 +91,10 @@ class ServerStore extends EntityStore<Spi> {
       'SELECT server_id, jump_id FROM server_jump ORDER BY ord;',
       'jump_id',
     );
+    final identityFiles = _group(
+      'SELECT server_id, path FROM server_identity_file ORDER BY ord;',
+      'path',
+    );
     final envs = _pairs(
       'SELECT server_id, key, value FROM server_env;',
       'key',
@@ -113,6 +113,7 @@ class ServerStore extends EntityStore<Spi> {
           tags: tags[row['id']],
           disabled: disabled[row['id']],
           jumps: jumps[row['id']],
+          identityFiles: identityFiles[row['id']],
           envs: envs[row['id']],
           cmds: cmds[row['id']],
         ),
@@ -141,11 +142,11 @@ class ServerStore extends EntityStore<Spi> {
     List<String>? tags,
     List<String>? disabled,
     List<String>? jumps,
+    List<String>? identityFiles,
     Map<String, String>? envs,
     Map<String, String>? cmds,
   }) {
     final sshIp = row['ssh_ip'] as String?;
-    final identityFiles = _decodeIdentityFiles(row['ssh_key_path'] as String?);
     final monitorAddr = row['monitor_addr'] as String?;
     return Spi(
       id: row['id'] as String,
@@ -165,8 +166,7 @@ class ServerStore extends EntityStore<Spi> {
               user: row['ssh_user'] as String? ?? 'root',
               pwd: row['ssh_pwd'] as String?,
               keyId: row['ssh_key_id'] as String?,
-              keyPath: identityFiles.$1,
-              identityFiles: identityFiles.$2,
+              identityFiles: identityFiles,
               alterUrl: row['ssh_alter_url'] as String?,
               proxyCommand: row['ssh_proxy_command'] as String?,
               // By name, never by index — and null for every row written
@@ -181,7 +181,6 @@ class ServerStore extends EntityStore<Spi> {
               // those builds proposed: false.
               allowLegacyAlgorithms:
                   (row['ssh_allow_legacy_algorithms'] as int? ?? 0) == 1,
-              jumpId: jumps?.firstOrNull,
               jumpIds: jumps,
             ),
       preferredTransport: ServerTransport.fromName(row['preferred_transport']),
@@ -220,34 +219,6 @@ class ServerStore extends EntityStore<Spi> {
             ),
       custom: _customOf(row, cmds),
     );
-  }
-
-  static (String?, List<String>?) _decodeIdentityFiles(String? stored) {
-    if (stored == null || !stored.startsWith(_identityFilesPrefix)) {
-      return (stored, null);
-    }
-    try {
-      final decoded = jsonDecode(stored.substring(_identityFilesPrefix.length));
-      if (decoded is! List) return (stored, null);
-      final paths = decoded
-          .whereType<String>()
-          .where((e) => e.isNotEmpty)
-          .toList();
-      if (paths.isEmpty) return (null, null);
-      return (paths.first, paths);
-    } catch (_) {
-      // Preserve an old or manually edited literal rather than making its key
-      // disappear because it happens to share the reserved prefix.
-      return (stored, null);
-    }
-  }
-
-  static String? _encodeIdentityFiles(SshCredential? ssh) {
-    if (ssh == null) return null;
-    final paths = ssh.resolvedIdentityFiles;
-    if (paths.isEmpty) return null;
-    if (paths.length == 1) return paths.first;
-    return '$_identityFilesPrefix${jsonEncode(paths)}';
   }
 
   /// Null when the record says nothing beyond the defaults.
@@ -350,7 +321,9 @@ class ServerStore extends EntityStore<Spi> {
       ssh?.user,
       ssh?.pwd,
       ssh?.keyId,
-      _encodeIdentityFiles(ssh),
+      // TODO(migration): unused since `server_identity_file` (v35); dropped
+      // with the next rebuild of `server`.
+      null,
       ssh?.alterUrl,
       ssh?.proxyCommand,
       ssh?.fileTransport.name,
@@ -396,6 +369,7 @@ class ServerStore extends EntityStore<Spi> {
       'server_tag',
       'server_env',
       'server_jump',
+      'server_identity_file',
       'server_disabled_cmd',
       'server_custom_cmd',
     ]) {
@@ -415,6 +389,14 @@ class ServerStore extends EntityStore<Spi> {
         v,
       ]);
     });
+    var ord = 0;
+    for (final path in item.ssh?.resolvedIdentityFiles ?? const <String>[]) {
+      db.execute('INSERT INTO server_identity_file VALUES (?, ?, ?);', [
+        item.id,
+        ord++,
+        path,
+      ]);
+    }
     for (final cmd in item.disabledCmdTypes ?? const <String>[]) {
       db.execute('INSERT OR IGNORE INTO server_disabled_cmd VALUES (?, ?);', [
         item.id,

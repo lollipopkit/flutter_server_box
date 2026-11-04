@@ -4,20 +4,20 @@ import 'dart:convert';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:logging/logging.dart';
-import 'package:server_box/core/utils/server.dart';
-import 'package:server_box/core/utils/ssh_key_passphrase.dart';
-import 'package:server_box/core/utils/ssh_key_unlock.dart';
+import 'package:server_box/core/ssh/identities.dart';
+import 'package:server_box/core/ssh/key_passphrase.dart';
+import 'package:server_box/core/ssh/key_unlock.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/migrations/m008_settings_fixups.dart';
 import 'package:server_box/data/store/migrations/m009_grouped_settings.dart';
 import 'package:server_box/data/store/migrations/m011_virt_key_rows.dart';
 import 'package:server_box/data/store/migrations/m013_virt_key_names.dart';
 import 'package:server_box/data/store/migrations/m021_home_tabs_bar.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 
 part 'backup.g.dart';
 
@@ -29,8 +29,12 @@ final _logger = Logger('Backup');
 /// have written it can still be restored. It carries one timestamp for the
 /// whole file rather than one per record, which is why a merge here can only
 /// take or leave each store whole.
+///
+/// TODO(migration): remove with [_diyDecrypt], the v1 branch of
+/// `BackupReader` and `test/fixtures/backup/`'s v1 file once no supported
+/// install can still hold a v1 backup.
 @JsonSerializable()
-class Backup implements Mergeable {
+class BackupV1 implements Mergeable {
   // backup format version
   final int version;
   final String date;
@@ -45,7 +49,7 @@ class Backup implements Mergeable {
   /// The PVE configuration of each entry of [spis], by position, read out of
   /// the raw records: this format predates `server_pve` and kept PVE inside
   /// each server's `custom`, which [Spi] no longer reads.
-  // TODO(migration): remove after 5 releases, with
+  // TODO(migration): remove after 5 releases from v1.0.1715, with
   // `PveConfig.fromLegacyRecord`.
   @JsonKey(readValue: _readLegacyPve, includeToJson: false)
   final List<Map<String, dynamic>?> legacyPve;
@@ -59,7 +63,7 @@ class Backup implements Mergeable {
     ];
   }
 
-  const Backup({
+  const BackupV1({
     required this.version,
     required this.date,
     required this.spis,
@@ -72,9 +76,9 @@ class Backup implements Mergeable {
     this.legacyPve = const [],
   });
 
-  factory Backup.fromJson(Map<String, dynamic> json) => _$BackupFromJson(json);
+  factory BackupV1.fromJson(Map<String, dynamic> json) => _$BackupV1FromJson(json);
 
-  Map<String, dynamic> toJson() => _$BackupToJson(this);
+  Map<String, dynamic> toJson() => _$BackupV1ToJson(this);
 
   @override
   Future<void> merge({bool force = false}) async {
@@ -120,7 +124,7 @@ class Backup implements Mergeable {
       Stores.snippet.replaceAll(snippets);
       Stores.container.restoreLegacyMap(container);
       // The file is the complete state, so a server without PVE has none.
-      // TODO(migration): remove after 5 releases, with [legacyPve].
+      // TODO(migration): remove after 5 releases from v1.0.1715, with [legacyPve].
       for (final (i, spi) in restoredSpis.indexed) {
         Stores.pve.restoreOne(
           Stores.server.reconcile(spi).id,
@@ -139,7 +143,7 @@ class Backup implements Mergeable {
     // restore is neither a launch nor a version bump, so nothing else will
     // look at what just landed. This format predates the grouped settings
     // entirely, so its settings map is always the old per-field keys — and,
-    // being older still, the pre-`virtKeyRows` switch and the `int`
+    // being older still, the pre-`virtualKeyRows` switch and the `int`
     // `sshConnectionMode` as well.
     //
     // Only when the file brought settings, for the reason [BackupV2.merge]
@@ -192,8 +196,8 @@ class Backup implements Mergeable {
     ];
   }
 
-  factory Backup.fromJsonString(String raw) =>
-      Backup.fromJson(json.decode(_diyDecrypt(raw)));
+  factory BackupV1.fromJsonString(String raw) =>
+      BackupV1.fromJson(json.decode(_diyDecrypt(raw)));
 }
 
 /// Writes one section of a backup into the key-value store it came from.

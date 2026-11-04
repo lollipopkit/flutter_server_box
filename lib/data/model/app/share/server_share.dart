@@ -2,7 +2,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 
 part 'server_share.freezed.dart';
 part 'server_share.g.dart';
@@ -93,7 +93,7 @@ abstract class ServerShare with _$ServerShare {
   /// What is encoded: [toJson], with [pve] also written into `spi.custom`
   /// the way a build from before `server_pve` reads it — see
   /// `PveConfig.toLegacyCustom`. Such a build ignores [pve].
-  // TODO(migration): back to plain `toJson` after 5 releases.
+  // TODO(migration): back to plain `toJson` after 5 releases from v1.0.1715.
   Map<String, dynamic> toWireJson() {
     final out = toJson();
     final pve = this.pve;
@@ -186,7 +186,7 @@ abstract class ServerShare with _$ServerShare {
   }
 }
 
-// TODO(migration): drop the `spi.custom` fallback after 5 releases, with
+// TODO(migration): drop the `spi.custom` fallback after 5 releases from v1.0.1715, with
 // `PveConfig.fromLegacyRecord`.
 Object? _readSharedPve(Map json, String key) {
   final pve = json[key];

@@ -576,7 +576,7 @@ void main() {
     test('back up, restore, edit and delete reach the host; refusals are said', () async {
       final api = backupHost();
       final pve = api.backend(token);
-      await pve.backup(vm, const VirtBackupRequest(storage: 'local', mode: 'stop'));
+      await pve.backup(vm, const VirtBackupRequest(storage: 'local', mode: VirtBackupMode.stop));
       expect(form(api.bodies[api.paths.indexOf('POST /nodes/pve/vzdump')]), containsPair('mode', 'stop'));
       final notHere = await _err(pve.backup(vm, const VirtBackupRequest(storage: 'nas')));
       expect(notHere.type, VirtErrType.unsupported);

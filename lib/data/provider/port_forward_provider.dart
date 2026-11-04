@@ -6,17 +6,17 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/utils/monitor_listener.dart';
-import 'package:server_box/core/utils/monitor_tunnel.dart';
+import 'package:server_box/core/monitor/listener.dart';
+import 'package:server_box/core/monitor/tunnel.dart';
+import 'package:server_box/core/ssh/local_tunnel.dart';
 import 'package:server_box/core/utils/server_tcp.dart';
-import 'package:server_box/core/utils/ssh_local_tunnel.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/monitor_http.dart';
 import 'package:server_box/data/provider/server/single.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 
 part 'port_forward_provider.g.dart';
 
@@ -34,8 +34,7 @@ part 'port_forward_provider.g.dart';
     granted: server.agentAccess,
   );
   final unknown =
-      server.spi.transport == ServerTransport.monitorHttp &&
-      server.agentAccess == null;
+      ServerCapabilities.forwardsViaAgent(server.spi) && server.agentAccess == null;
   return (
     relay: caps.tcpRelay || unknown,
     listen: caps.remoteListen || unknown,
@@ -275,11 +274,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     }
   }
 
-  /// Whether this server's forwards go through its agent alone: when the
-  /// agent leads, a forward never touches SSH — no session opened first, no
-  /// falling back to sshd when the agent refuses.
-  bool _viaAgent(ServerState server) =>
-      server.spi.transport == ServerTransport.monitorHttp;
+  bool _viaAgent(ServerState server) => ServerCapabilities.forwardsViaAgent(server.spi);
 
   /// Before binding, so a forward cannot look active with nothing behind its
   /// listener: what the leading transport can do, and an SSH session where SSH
@@ -289,7 +284,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     required bool listen,
   }) async {
     final reason = portForwardUnavailable(server, listen: listen);
-    if (reason != null) throw Exception(reason);
+    if (reason != null) throw PortForwardUnavailable(reason);
     if (server.spi.transport == ServerTransport.ssh) await _connectedClient();
   }
 
@@ -305,7 +300,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
 
   Future<_ForwardEntry> _startLocalForward(PortForwardConfig config) async {
     if (config.remoteHost == null || config.remotePort == null) {
-      throw Exception('Invalid local port forward: remote destination not set');
+      throw StateError('A local forward without a destination');
     }
     final server = ref.read(serverProvider(_serverId));
     await _ensureCarried(server, listen: false);
@@ -335,9 +330,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
 
   Future<_ForwardEntry> _startRemoteForward(PortForwardConfig config) async {
     if (config.remoteHost == null || config.remotePort == null) {
-      throw Exception(
-        'Invalid remote port forward: remote destination not set',
-      );
+      throw StateError('A remote forward without a destination');
     }
     final server = ref.read(serverProvider(_serverId));
     await _ensureCarried(server, listen: true);
@@ -350,7 +343,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
       port: config.remotePort!,
     );
     if (forward == null) {
-      throw Exception('Failed to start remote port forward: server rejected');
+      throw PortForwardUnavailable(l10n.sshTcpForwardingProhibited);
     }
     Loggers.app.info(
       'Remote port forward started: ${config.remoteHost}:${config.remotePort}',
@@ -373,7 +366,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
   ) async {
     final monitor = server.spi.monitorOn;
     if (monitor == null) {
-      throw Exception(l10n.funcUnavailableFmt(libL10n.portForward));
+      throw PortForwardUnavailable(l10n.funcUnavailableFmt(libL10n.portForward));
     }
     final lease = MonitorClientLease(monitor);
     final client = lease.client;
@@ -583,4 +576,14 @@ class _ActiveConnection {
       await forward.close();
     } catch (_) {}
   }
+}
+
+/// Why a forward could not start, in the user's words.
+final class PortForwardUnavailable implements Exception {
+  const PortForwardUnavailable(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
 }

@@ -4,11 +4,11 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
-import 'package:server_box/view/widget/conn_count_badge.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/view/page/server/widget/conn_count_badge.dart';
 import 'package:server_box/view/widget/nav_rail.dart';
 
 import '../helpers/spi_fixture.dart';

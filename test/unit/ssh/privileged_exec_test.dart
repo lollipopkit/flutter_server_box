@@ -69,7 +69,7 @@ void main() {
       isRoot: false,
     );
 
-    expect(result.exitCode, kSudoPasswordRejected);
+    expect(result.sudoRejected, isTrue);
     expect(exec.calls, hasLength(1));
     expect(exec.calls.first.script, 'true');
     expect(exec.calls.first.entry, 'sudo -n sh');

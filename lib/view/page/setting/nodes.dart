@@ -166,7 +166,7 @@ List<SettingsNode> _buildNodes() {
           id: 'terminal.virtKey',
           title: l10n.editVirtKeys,
           icon: Icons.keyboard_outlined,
-          page: () => const SSHVirtKeySettingPage(embedded: true),
+          page: () => const SSHVirtualKeySettingPage(embedded: true),
         ),
       ],
     ),

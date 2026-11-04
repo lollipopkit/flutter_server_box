@@ -331,7 +331,7 @@ extension _Init on SSHPageState {
     // Where there are virtual keys, the walkthrough says all of this and says
     // it beside the keys it is naming. This paragraph is what a desktop gets
     // instead, having no such row to point at.
-    if (_virtKeysHeight > 0 && !Stores.setting.virtKeyIntroShown.fetch()) {
+    if (_virtKeysHeight > 0 && !Stores.setting.virtualKeyIntroShown.fetch()) {
       Stores.setting.sshTermHelpShown.put(true);
       return;
     }

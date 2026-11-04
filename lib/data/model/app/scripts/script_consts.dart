@@ -4,8 +4,10 @@
 /// Script content, markers, headers, and output splitting live in the shared
 /// Rust library (`sbm_parser::script`); only path/filename conventions and
 /// Flutter-connection state remain here.
-// TODO(migration): residue of the Dart script layer — reevaluate once the app
-// endpoints move fully onto the FFI script API.
+// TODO(migration): residue of the Dart script layer. What still has to move
+// into sbm_parser's script API: the script directory constants below and
+// [ScriptPaths]' per-server directory state (which directory the last write
+// fell back to).
 class ScriptConstants {
   const ScriptConstants._();
 

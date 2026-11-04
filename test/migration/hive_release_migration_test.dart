@@ -11,9 +11,9 @@ import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/system.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/schema.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/hive/hive_registrar.g.dart';
 import 'package:server_box/hive/legacy_adapters.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -194,7 +194,7 @@ void main() {
 
         test('jump hosts and proxy command land on the credential', () {
           final jump = Stores.server.fetchOneRaw('srv-jump')!;
-          expect(jump.ssh?.jumpId, 'srv-pwd');
+          expect(jump.ssh?.resolvedJumpIds.firstOrNull, 'srv-pwd');
           expect(jump.ssh?.jumpIds, ['srv-pwd', 'srv-key']);
           expect(jump.ssh?.proxyCommand, isNull);
 
@@ -286,7 +286,7 @@ void main() {
           ]);
           // Written as `[0, 1, 2, 13, 14]` by that release and converted to
           // names by m013 — an index stops meaning the same key the moment a
-          // case is inserted into `VirtKey`.
+          // case is inserted into `VirtualKey`.
           expect(Stores.setting.sshVirtKeys.get(), [
             'esc',
             'alt',

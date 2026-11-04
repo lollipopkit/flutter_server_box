@@ -1,12 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
-import 'package:server_box/data/model/server/battery.dart';
-import 'package:server_box/data/model/server/cpu.dart';
-import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/dist.dart';
-import 'package:server_box/data/model/server/sensors.dart';
 import 'package:server_box/data/model/server/server.dart';
-import 'package:server_box/data/model/server/server_status_update_req.dart';
+import 'package:server_box/data/model/server/status/battery.dart';
+import 'package:server_box/data/model/server/status/cpu.dart';
+import 'package:server_box/data/model/server/status/disk.dart';
+import 'package:server_box/data/model/server/status/sensors.dart';
+import 'package:server_box/data/model/server/status/server_status_update_req.dart';
+import 'package:server_box/data/model/server/status/status_history.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/res/status.dart';
 
@@ -203,8 +204,8 @@ __SBM_GPU_END__
       // buffer left them holding only the sample taken moments ago, which
       // fl_chart plots as a single point against the left edge.
       final previous = InitStatus.status;
-      previous.history.add(timeMs: 1, cpu: 1);
-      previous.history.add(timeMs: 2, cpu: 2);
+      previous.history.add(StatusHistorySample(timeMs: 1, cpu: 1));
+      previous.history.add(StatusHistorySample(timeMs: 2, cpu: 2));
 
       final result = await getStatus(
         ServerStatusUpdateReq(

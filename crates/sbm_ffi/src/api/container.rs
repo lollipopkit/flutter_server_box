@@ -10,7 +10,8 @@
 //! Every command returned is a whole line, the runtime's name included.
 
 use sbm_parser::container::{
-    self, Container, ContainerAction, ContainerCmd, ContainerImage, ContainerStats, ContainerStatus, ContainerType,
+    self, Container, ContainerAction, ContainerActionKind, ContainerCmd, ContainerImage, ContainerStats, ContainerStatus,
+    ContainerType,
 };
 
 fn runtime(name: &str) -> Result<ContainerType, String> {
@@ -241,14 +242,34 @@ pub fn container_shell_command(runtime_name: String, id: String) -> Result<Strin
     Ok(container::shell_command(runtime(&runtime_name)?, &id))
 }
 
-/// The actions a container in `status` is offered: `start`, `stop`,
-/// `restart`, `remove`, `logs`, `terminal`.
+/// Which action, without which container: what [`container_menu_items`]
+/// answers, as `sbm_parser::container::ContainerActionKind`.
+pub enum ContainerMenuKind {
+    Start,
+    Stop,
+    Restart,
+    Remove,
+    Logs,
+    Terminal,
+}
+
+impl From<ContainerActionKind> for ContainerMenuKind {
+    fn from(kind: ContainerActionKind) -> Self {
+        match kind {
+            ContainerActionKind::Start => Self::Start,
+            ContainerActionKind::Stop => Self::Stop,
+            ContainerActionKind::Restart => Self::Restart,
+            ContainerActionKind::Remove => Self::Remove,
+            ContainerActionKind::Logs => Self::Logs,
+            ContainerActionKind::Terminal => Self::Terminal,
+        }
+    }
+}
+
+/// The actions a container in `status` is offered, in menu order.
 #[flutter_rust_bridge::frb(sync)]
-pub fn container_menu_items(status_name: String) -> Result<Vec<String>, String> {
-    Ok(container::menu_items(status(&status_name)?)
-        .into_iter()
-        .filter_map(|kind| serde_json::to_value(kind).ok().and_then(|v| v.as_str().map(str::to_owned)))
-        .collect())
+pub fn container_menu_items(status_name: String) -> Result<Vec<ContainerMenuKind>, String> {
+    Ok(container::menu_items(status(&status_name)?).into_iter().map(Into::into).collect())
 }
 
 /// Whether the shell said the runtime is not installed.

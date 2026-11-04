@@ -6,7 +6,7 @@ import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart'
     show AttachButton, ComposerBox, ComposerButton, ComposerModelChip, ComposerThinkingChip, MenuBtn, llmL10n;
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/model/server/monitor_agent.dart';
+import 'package:server_box/data/model/server/monitor/monitor_agent.dart';
 import 'package:server_box/data/provider/ai/remote_agent.dart';
 
 /// What [RemoteComposer] hands on: the words, the uploads made for them, a
@@ -17,7 +17,7 @@ typedef RemoteMessage = ({
   List<String> files,
   MonitorAgentModel? model,
   String? thinkingLevel,
-  String? mode,
+  AgentPermissionMode? mode,
 });
 
 /// The box a message to a server's Agent mode is written in — a reply to a
@@ -68,7 +68,7 @@ class _RemoteComposerState extends State<RemoteComposer> {
   String? _thinking;
 
   /// The permission mode picked for a new task; null for the server's.
-  String? _mode;
+  AgentPermissionMode? _mode;
 
   /// As many files as one task takes at once (the agent's `MAX_PER_TASK`).
   static const _maxFiles = 10;
@@ -114,9 +114,9 @@ class _RemoteComposerState extends State<RemoteComposer> {
 
   /// The permission mode a new task starts in: picked, else the server's;
   /// `bypass` only where the server allows it.
-  String _effectiveMode(({String defaultMode, bool bypassAllowed})? server) {
-    final m = _mode ?? server?.defaultMode ?? 'manual';
-    return m == 'bypass' && !(server?.bypassAllowed ?? false) ? 'manual' : m;
+  AgentPermissionMode _effectiveMode(({AgentPermissionMode defaultMode, bool bypassAllowed})? server) {
+    final m = _mode ?? server?.defaultMode ?? AgentPermissionMode.manual;
+    return m == AgentPermissionMode.bypass && !(server?.bypassAllowed ?? false) ? AgentPermissionMode.manual : m;
   }
 
   Future<void> _pickModel() async {
@@ -192,13 +192,13 @@ class _RemoteComposerState extends State<RemoteComposer> {
           enabled: !blocked,
           hint: widget.hint,
           onSubmit: () => unawaited(_send()),
-          top: _files.isEmpty && mode != 'bypass'
+          top: _files.isEmpty && mode != AgentPermissionMode.bypass
               ? null
               : Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (mode == 'bypass')
+                    if (mode == AgentPermissionMode.bypass)
                       Padding(
                         padding: const EdgeInsets.only(left: 5, bottom: 5),
                         child: Row(
@@ -256,22 +256,20 @@ class _RemoteComposerState extends State<RemoteComposer> {
 class _ModeChip extends StatelessWidget {
   const _ModeChip({required this.mode, required this.bypassAllowed, required this.onPick});
 
-  final String mode;
+  final AgentPermissionMode mode;
   final bool bypassAllowed;
-  final void Function(String mode) onPick;
+  final void Function(AgentPermissionMode mode) onPick;
 
-  static const _modes = ['auto', 'manual', 'bypass'];
-
-  static IconData _icon(String mode) => switch (mode) {
-    'auto' => Icons.auto_mode,
-    'bypass' => Icons.bolt,
-    _ => Icons.rule,
+  static IconData _icon(AgentPermissionMode mode) => switch (mode) {
+    AgentPermissionMode.auto => Icons.auto_mode,
+    AgentPermissionMode.bypass => Icons.bolt,
+    AgentPermissionMode.manual => Icons.rule,
   };
 
-  static String _label(BuildContext context, String mode) => switch (mode) {
-    'auto' => context.l10n.agentModeAuto,
-    'bypass' => context.l10n.agentModeBypass,
-    _ => context.l10n.agentModeManual,
+  static String _label(BuildContext context, AgentPermissionMode mode) => switch (mode) {
+    AgentPermissionMode.auto => context.l10n.agentModeAuto,
+    AgentPermissionMode.bypass => context.l10n.agentModeBypass,
+    AgentPermissionMode.manual => context.l10n.agentModeManual,
   };
 
   @override
@@ -279,19 +277,19 @@ class _ModeChip extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     // As the web panel: the default neutral, auto in the accent, allow-all a warning.
     final color = switch (mode) {
-      'auto' => scheme.primary,
-      'bypass' => scheme.error,
-      _ => scheme.onSurfaceVariant,
+      AgentPermissionMode.auto => scheme.primary,
+      AgentPermissionMode.bypass => scheme.error,
+      AgentPermissionMode.manual => scheme.onSurfaceVariant,
     };
     return MenuBtn(
       actions: [
-        for (final m in _modes)
+        for (final m in AgentPermissionMode.values)
           ContextMenuAction(
             text: _label(context, m),
             icon: _icon(m),
             checked: m == mode,
-            enabled: m != 'bypass' || bypassAllowed,
-            note: m == 'bypass' && !bypassAllowed ? context.l10n.agentModeBypassOff : null,
+            enabled: m != AgentPermissionMode.bypass || bypassAllowed,
+            note: m == AgentPermissionMode.bypass && !bypassAllowed ? context.l10n.agentModeBypassOff : null,
             onTap: () => onPick(m),
           ),
       ],

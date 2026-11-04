@@ -6,9 +6,9 @@ import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:server_box/core/utils/pve_console.dart';
+import 'package:server_box/core/pve/console.dart';
+import 'package:server_box/core/ssh/local_tunnel.dart';
 import 'package:server_box/core/utils/server_tcp.dart';
-import 'package:server_box/core/utils/ssh_local_tunnel.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
@@ -25,7 +25,7 @@ import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/model/virt/virt_rust.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/virt/backend.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
 import 'package:server_box/src/rust/api/pve.dart';
 import 'package:server_box/src/rust/api/resource.dart' as res;
@@ -406,10 +406,19 @@ class PveBackend implements VirtBackend {
   Future<List<VirtBackupJob>> allBackupJobs() async =>
       VirtRust.backupJobs(jsonDecode(await _rust((s) => s.allBackupJobs())));
 
-  /// Made, edited or removed — `Sys.Modify` on `/`; checked first
+  /// Made or edited — `Sys.Modify` on `/`; checked first
   /// (`sbm_virt::backup::job_issue`).
   @override
-  Future<void> editBackupJob(VirtBackupJobEdit edit, {bool remove = false}) => _rust(
+  Future<void> editBackupJob(VirtBackupJobEdit edit) => _editJob(edit, remove: false);
+
+  @override
+  Future<void> deleteBackupJob(VirtBackupJob job) => _editJob(
+    // The removal reads only the id; the rest satisfies the edit's shape.
+    VirtBackupJobEdit(id: job.id, node: job.node, storage: job.storage ?? '', schedule: job.schedule ?? ''),
+    remove: true,
+  );
+
+  Future<void> _editJob(VirtBackupJobEdit edit, {required bool remove}) => _rust(
     (s) => s.editBackupJob(editJson: jsonEncode(VirtRust.backupJobEditJson(edit)), remove: remove),
   );
 

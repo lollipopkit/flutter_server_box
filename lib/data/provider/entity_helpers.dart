@@ -1,4 +1,4 @@
-import 'package:server_box/core/sync.dart';
+import 'package:server_box/core/sync/sync.dart';
 import 'package:server_box/data/store/entity_store.dart';
 
 /// Shared helpers for the three named-entity providers (BMC, private keys,

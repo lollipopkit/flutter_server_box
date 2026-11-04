@@ -280,6 +280,23 @@ class ServerJumps extends Table {
   Set<Column> get primaryKey => {serverId, ord};
 }
 
+/// A server's `IdentityFile` paths, in the order OpenSSH tries them.
+@DataClassName('ServerIdentityFileRow')
+class ServerIdentityFiles extends Table {
+  @override
+  String get tableName => 'server_identity_file';
+  @override
+  bool get withoutRowId => true;
+
+  TextColumn get serverId =>
+      text().references(Servers, #id, onDelete: KeyAction.cascade)();
+  IntColumn get ord => integer()();
+  TextColumn get path => text()();
+
+  @override
+  Set<Column> get primaryKey => {serverId, ord};
+}
+
 @DataClassName('ServerDisabledCmdRow')
 class ServerDisabledCmds extends Table {
   @override
@@ -737,6 +754,7 @@ class SyncRecords extends Table {
     ServerTags,
     ServerEnvs,
     ServerJumps,
+    ServerIdentityFiles,
     ServerDisabledCmds,
     ServerCustomCmds,
     KnownHosts,

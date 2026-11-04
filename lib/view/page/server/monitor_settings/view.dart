@@ -4,9 +4,9 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
-import 'package:server_box/data/model/server/monitor_push.dart';
-import 'package:server_box/data/model/server/monitor_settings.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_push.dart';
+import 'package:server_box/data/model/server/monitor/monitor_settings.dart';
 import 'package:server_box/data/provider/server/monitor_http.dart';
 import 'package:server_box/view/page/server/monitor_settings/lists.dart';
 import 'package:server_box/view/page/server/monitor_settings/password.dart';
@@ -531,7 +531,7 @@ extension on _MonitorSettingsViewState {
     try {
       // First: over a refused connection every request below is a 403, which
       // would be shown as an error rather than as the reason.
-      final access = (await client.fetchCapabilities()).access;
+      final access = (await client.capabilities()).access;
       if (!mounted || generation != _loadGeneration) return;
       if (!access.ok) {
         setState(() => _refused = true);
@@ -541,8 +541,8 @@ extension on _MonitorSettingsViewState {
       // Sequential rather than concurrent: both go through the same session,
       // and a first request that has to log in is what the second one waits
       // for anyway.
-      final settings = await client.fetchSettings();
-      final push = await client.fetchPush();
+      final settings = await client.settings();
+      final push = await client.push();
       if (!mounted || generation != _loadGeneration) return;
       setState(() {
         _settings = settings;

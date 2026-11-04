@@ -5,9 +5,9 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/utils/monitor_backup_storage.dart';
+import 'package:server_box/core/monitor/backup_storage.dart';
 import 'package:server_box/data/model/app/error.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 
 import '../../helpers/fake_agent_health.dart';
 import '../../helpers/local_http.dart';

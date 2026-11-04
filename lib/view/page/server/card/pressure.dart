@@ -1,8 +1,8 @@
 import 'dart:math' as math;
 
 import 'package:material_ui/material_ui.dart';
+import 'package:server_box/data/provider/server/metric.dart';
 import 'package:server_box/data/res/chart_palette.dart';
-import 'package:server_box/view/page/server/card/metric.dart';
 
 /// How tall the pressure bar is, and its corner.
 ///

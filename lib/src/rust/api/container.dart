@@ -7,6 +7,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `command_kind`, `image_back`, `image_item`, `item`, `runtime`, `status_name`, `status`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `from`
 
 /// What [image] is named by (`sbm_parser::container::ContainerImage::reference`).
 String containerImageReference({required ContainerImageItem image}) =>
@@ -134,12 +135,11 @@ String containerShellCommand({
   id: id,
 );
 
-/// The actions a container in `status` is offered: `start`, `stop`,
-/// `restart`, `remove`, `logs`, `terminal`.
-List<String> containerMenuItems({required String statusName}) => RustLib
-    .instance
-    .api
-    .crateApiContainerContainerMenuItems(statusName: statusName);
+/// The actions a container in `status` is offered, in menu order.
+List<ContainerMenuKind> containerMenuItems({required String statusName}) =>
+    RustLib.instance.api.crateApiContainerContainerMenuItems(
+      statusName: statusName,
+    );
 
 /// Whether the shell said the runtime is not installed.
 bool containerIsNotInstalled({
@@ -346,6 +346,10 @@ class ContainerItem {
           status == other.status &&
           stats == other.stats;
 }
+
+/// Which action, without which container: what [`container_menu_items`]
+/// answers, as `sbm_parser::container::ContainerActionKind`.
+enum ContainerMenuKind { start, stop, restart, remove, logs, terminal }
 
 /// The runtime's own renderings, split so the app can word the row.
 class ContainerStatsItem {

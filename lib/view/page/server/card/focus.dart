@@ -2,15 +2,15 @@ import 'dart:ui' show lerpDouble;
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:server_box/data/provider/server/metric.dart';
+import 'package:server_box/data/provider/server/reading_fmt.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/view/page/server/card/arrival.dart';
 import 'package:server_box/view/page/server/card/chart_hero.dart';
 import 'package:server_box/view/page/server/card/fold.dart';
-import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/card/sizes.dart';
 import 'package:server_box/view/page/server/chart.dart';
 import 'package:server_box/view/page/server/metric_row.dart';
-import 'package:server_box/view/page/server/reading_text.dart';
 
 /// When the chart's scale arrives, over the movement that takes the card to
 /// the page.

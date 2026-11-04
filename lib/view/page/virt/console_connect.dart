@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:server_box/core/utils/pve_console.dart';
-import 'package:server_box/core/utils/pve_termproxy.dart';
+import 'package:server_box/core/pve/console.dart';
+import 'package:server_box/core/pve/termproxy.dart';
 import 'package:server_box/core/utils/server_tcp.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
@@ -15,8 +15,8 @@ import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/session_keep_alive.dart';
 import 'package:server_box/data/provider/virt/text_consoles.dart';
 import 'package:server_box/data/provider/virt/virt.dart';
-import 'package:server_box/data/ssh/terminal_session.dart';
-import 'package:server_box/data/ssh/terminal_source.dart';
+import 'package:server_box/data/terminal/terminal_session.dart';
+import 'package:server_box/data/terminal/terminal_source.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/virt/common.dart';
 

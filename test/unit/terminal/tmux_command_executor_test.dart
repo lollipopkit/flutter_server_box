@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:server_box/data/ssh/tmux/tmux_command_executor.dart';
-import 'package:server_box/data/ssh/tmux/tmux_control_protocol.dart';
+import 'package:server_box/data/terminal/tmux/tmux_command_executor.dart';
+import 'package:server_box/data/terminal/tmux/tmux_control_protocol.dart';
 import 'package:test/test.dart';
 
 void main() {

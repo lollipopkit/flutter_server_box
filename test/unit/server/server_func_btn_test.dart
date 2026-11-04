@@ -1,12 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
-import 'package:server_box/data/model/server/monitor_access.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_access.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
-import 'package:server_box/view/widget/server_func_btns.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/view/page/server/widget/server_func_btns.dart';
 
 import '../../helpers/test_db.dart';
 

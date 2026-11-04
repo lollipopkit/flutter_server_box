@@ -1,6 +1,6 @@
 //! Proxmox VE's `termproxy` protocol, spoken over a node's `vncwebsocket`.
 //!
-//! Ported from the app's `lib/core/utils/pve_termproxy.dart`, written against
+//! Ported from the app's `lib/core/pve/termproxy.dart`, written against
 //! PVE's own client (`pve-xtermjs`) and verified on PVE 9.2.2
 //! (proxmox-termproxy 2.1.0):
 //!

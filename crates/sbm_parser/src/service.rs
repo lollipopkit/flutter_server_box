@@ -1,6 +1,6 @@
 //! Service units — the model, the manager detector and the three backends.
 //!
-//! Ported from the app's `lib/data/service/{detector,systemd,procd,openrc,
+//! Ported from the app's `lib/data/admin/{detector,systemd,procd,openrc,
 //! service_manager}.dart` and `lib/data/model/server/service.dart`; the Dart
 //! implementation stays until this one is asserted identical against the same
 //! fixtures.

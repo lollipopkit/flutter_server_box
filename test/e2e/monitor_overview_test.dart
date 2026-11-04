@@ -13,7 +13,7 @@ library;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/error.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/provider/server/monitor_http.dart';
 
 import '../helpers/ssh_e2e.dart';
@@ -36,7 +36,7 @@ void main() {
   tearDownAll(client.dispose);
 
   test('the agent offers the tab\'s sections', () async {
-    final caps = await client.fetchCapabilities();
+    final caps = await client.capabilities();
     expect(caps.features, containsAll(['alerts', 'audit', 'live', 'desk']));
     expect(caps.access.ok, isTrue, reason: 'the audit log and sessions need a link the agent lets act');
   });

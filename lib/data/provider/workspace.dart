@@ -5,8 +5,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/workspace/tree.dart';
 import 'package:server_box/data/model/workspace/workspace.dart';
-import 'package:server_box/data/res/store.dart';
-import 'package:server_box/data/ssh/terminal_session.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/data/terminal/terminal_session.dart';
 
 part 'workspace.g.dart';
 

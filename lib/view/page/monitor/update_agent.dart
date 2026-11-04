@@ -5,14 +5,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/error.dart';
-import 'package:server_box/data/model/server/monitor_access.dart';
-import 'package:server_box/data/model/server/monitor_overview.dart';
+import 'package:server_box/data/model/server/monitor/monitor_access.dart';
+import 'package:server_box/data/model/server/monitor/monitor_overview.dart';
+import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/monitor_http.dart';
 import 'package:server_box/data/res/url.dart';
-import 'package:server_box/data/ssh/terminal_source.dart';
+import 'package:server_box/data/terminal/terminal_source.dart';
 import 'package:server_box/src/rust/api/script.dart' as rust;
 import 'package:server_box/view/page/ssh/page/page.dart';
 
@@ -311,7 +312,7 @@ class _UpdateDialogState extends ConsumerState<_UpdateDialog> {
         if (out.exitCode == rust.monitorUpdateSudoRefusedExit()) {
           throw const MonitorHttpErr(type: MonitorHttpErrType.sudoRefused);
         }
-        if (out.exitCode != 0) throw Exception('${out.stdout}${out.stderr}'.trim());
+        if (out.exitCode != 0) throw CommandFailed('update', ExecResult(exitCode: out.exitCode, stdout: out.stdout, stderr: out.stderr));
       } else {
         await client.startUpdate(password: password);
       }

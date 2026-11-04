@@ -8,15 +8,16 @@ import 'package:fl_lib/theme.dart'
     show ThemeBackup, ThemeBlobStore, ThemeRestoreReport;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:logging/logging.dart';
-import 'package:server_box/core/lkc_sync.dart';
-import 'package:server_box/core/utils/local_file_backend.dart';
-import 'package:server_box/core/utils/server.dart';
-import 'package:server_box/core/utils/ssh_key_passphrase.dart';
-import 'package:server_box/core/utils/ssh_key_unlock.dart';
+import 'package:server_box/core/ssh/identities.dart';
+import 'package:server_box/core/ssh/key_passphrase.dart';
+import 'package:server_box/core/ssh/key_unlock.dart';
+import 'package:server_box/core/sync/lkc.dart';
+import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/file/backend/local.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/bmc_credential.dart';
 import 'package:server_box/data/model/server/custom.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
@@ -24,13 +25,8 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
-import 'package:server_box/data/provider/bmc_credential.dart';
-import 'package:server_box/data/provider/container.dart';
-import 'package:server_box/data/provider/private_key.dart';
-import 'package:server_box/data/provider/server/all.dart';
-import 'package:server_box/data/provider/snippet.dart';
+import 'package:server_box/data/provider/store_reload.dart';
 import 'package:server_box/data/res/misc.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/migrations/m008_settings_fixups.dart';
 import 'package:server_box/data/store/migrations/m009_grouped_settings.dart';
 import 'package:server_box/data/store/migrations/m011_virt_key_rows.dart';
@@ -39,6 +35,7 @@ import 'package:server_box/data/store/migrations/m021_home_tabs_bar.dart';
 import 'package:server_box/data/store/migrations/m030_pve_virt.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/data/store/sync_recorder.dart';
 
 part 'backup2.freezed.dart';
@@ -285,19 +282,13 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     _notifySqliteStore(Stores.history, historyNotifications);
     _notifySqliteStore(Stores.setting, settingNotifications);
 
-    // Not awaited: the reload reconnects every server, which a merge has no
-    // reason to wait for.
-    if (serversChanged) {
-      unawaited(GlobalRef.gRef?.read(serversProvider.notifier).reload());
-    }
-    if (snippetsChanged) {
-      GlobalRef.gRef?.read(snippetProvider.notifier).reload();
-    }
-    if (keysChanged) GlobalRef.gRef?.read(privateKeyProvider.notifier).reload();
-    if (credsChanged) {
-      GlobalRef.gRef?.read(bmcCredentialProvider.notifier).reload();
-    }
-    if (containerChanged) GlobalRef.gRef?.invalidate(containerProvider);
+    StoreReload.after(
+      servers: serversChanged,
+      snippets: snippetsChanged,
+      keys: keysChanged,
+      bmcCredentials: credsChanged,
+      containers: containerChanged,
+    );
 
     // After the settings: it points what they restored at this device's
     // installations, and falls back where a theme did not come back.
@@ -411,7 +402,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     final bytes = utf8.encode(result);
     await const LocalFileBackend().write(
       path,
-      Stream.value(bytes),
+      () => Stream.value(bytes),
       size: bytes.length,
     );
     return path;
@@ -457,7 +448,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       return data is Uint8List ? data : Uint8List.fromList(data);
     }
     if (password == null || password.isEmpty) {
-      throw Exception('Backup is encrypted but no password provided');
+      throw const RemoteBackupPasswordMissing();
     }
     return AgeCryptor.decrypt(data, password);
   }
@@ -726,7 +717,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
   ///   reach newer ones. [force] (restoring a backup) is the exception: the
   ///   user asked for the file's state, and at the time it was written the
   ///   server had no PVE.
-  // TODO(migration): after 5 releases every file has the section; reduce this
+  // TODO(migration): after 5 releases from v1.0.1715 every file has the section; reduce this
   // to its first branch, with `PveConfig.fromLegacyRecord` and `mergeLegacy`.
   Object? _pveToRestore(
     String serverId,
@@ -750,7 +741,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
   /// record's `custom`, where a build from before `server_pve` reads it —
   /// see `PveConfig.toLegacyCustom`. Such a build ignores the [pve] section
   /// and writes back only what it read.
-  // TODO(migration): remove after 5 releases.
+  // TODO(migration): remove after 5 releases from v1.0.1715.
   static Map<String, Object?> _withLegacyPve(
     Map<String, Object?> spis,
     Map<String, PveConfig> pve,

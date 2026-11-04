@@ -10,9 +10,8 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/llm/screen.dart';
 import 'package:server_box/core/service/tray.dart';
-import 'package:server_box/core/sync.dart';
+import 'package:server_box/core/sync/sync.dart';
 import 'package:server_box/core/utils/desktop_shortcuts.dart';
 import 'package:server_box/data/model/app/keybinding.dart';
 import 'package:server_box/data/model/app/tab.dart';
@@ -21,21 +20,22 @@ import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/virt/virt.dart';
 import 'package:server_box/data/res/build_data.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/view/agent/screen.dart';
 import 'package:server_box/view/page/floating_panels.dart';
 import 'package:server_box/view/page/home/android_system.dart';
 import 'package:server_box/view/page/home_tab.dart';
 import 'package:server_box/view/page/macos_menu_bar.dart';
+import 'package:server_box/view/page/server/widget/legacy_status_notice.dart';
+import 'package:server_box/view/page/server/widget/server_share.dart';
 import 'package:server_box/view/page/setting/entries/home_tabs.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/widget/app_link.dart';
 import 'package:server_box/view/widget/dmg_notice.dart';
 import 'package:server_box/view/widget/incoming.dart';
-import 'package:server_box/view/widget/legacy_status_notice.dart';
 import 'package:server_box/view/widget/nav_bar.dart';
 import 'package:server_box/view/widget/nav_rail.dart';
-import 'package:server_box/view/widget/server_share.dart';
 import 'package:server_box/view/widget/store_unreadable_notice.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
@@ -58,8 +58,7 @@ class _HomePageState extends ConsumerState<HomePage>
         AutomaticKeepAliveClientMixin,
         AfterLayoutMixin,
         WidgetsBindingObserver,
-        SingleTickerProviderStateMixin,
-        GlobalRef {
+        SingleTickerProviderStateMixin {
   /// Which tab to come back to, by [AppTab.name] — see
   /// [_HomePageTabs._rememberTab].
   ///

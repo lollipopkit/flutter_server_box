@@ -2,11 +2,11 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
-import 'package:server_box/data/model/ssh/virtual_key.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/model/terminal/virtual_key.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
-import 'package:server_box/view/page/setting/seq/virt_key.dart';
+import 'package:server_box/view/page/setting/seq/virtual_key.dart';
 
 import '../helpers/test_db.dart';
 
@@ -26,7 +26,7 @@ void main() {
   testWidgets('an unconfigured virtual key remains available to enable', (
     tester,
   ) async {
-    Stores.setting.sshVirtKeys.put([VirtKey.esc.name]);
+    Stores.setting.sshVirtKeys.put([VirtualKey.esc.name]);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -39,7 +39,7 @@ void main() {
           builder: (context) {
             app_locale.l10n = AppLocalizations.of(context)!;
             context.setLibL10n();
-            return const SSHVirtKeySettingPage();
+            return const SSHVirtualKeySettingPage();
           },
         ),
       ),
@@ -47,13 +47,13 @@ void main() {
     addTearDown(() => tester.pumpWidget(const SizedBox.shrink()));
 
     await tester.scrollUntilVisible(
-      find.text(VirtKey.underscore.text),
+      find.text(VirtualKey.underscore.text),
       300,
       scrollable: find.byType(Scrollable).last,
     );
 
     final row = find.ancestor(
-      of: find.text(VirtKey.underscore.text),
+      of: find.text(VirtualKey.underscore.text),
       matching: find.byType(ListTile),
     );
     final checkbox = find.descendant(of: row, matching: find.byType(Checkbox));
@@ -64,11 +64,11 @@ void main() {
 
     expect(
       Stores.setting.sshVirtKeys.fetch(),
-      contains(VirtKey.underscore.name),
+      contains(VirtualKey.underscore.name),
     );
     expect(
       Stores.setting.sshVirtKeysDisabled.fetch(),
-      isNot(contains(VirtKey.underscore.name)),
+      isNot(contains(VirtualKey.underscore.name)),
     );
   });
 }

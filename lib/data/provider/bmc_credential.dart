@@ -5,7 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/data/model/server/bmc_credential.dart';
 import 'package:server_box/data/provider/entity_helpers.dart';
 import 'package:server_box/data/provider/server/all.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 
 part 'bmc_credential.freezed.dart';
 part 'bmc_credential.g.dart';
@@ -40,7 +40,7 @@ class BmcCredentialNotifier extends _$BmcCredentialNotifier {
         BmcCredentialState(creds: creds);
   }
 
-  Future<void> add(BmcCredential cred) async {
+  void add(BmcCredential cred) {
     state = state.copyWith(
       creds: entityAdd(Stores.bmcCredential, state.creds, cred),
     );
@@ -49,7 +49,7 @@ class BmcCredentialNotifier extends _$BmcCredentialNotifier {
   /// The id never changes — see [PrivateKeyNotifier.update] for why that
   /// matters. A rename is an `UPDATE` of one column, and every server pointing
   /// at this account keeps pointing at it.
-  Future<void> update(BmcCredential old, BmcCredential fresh) async {
+  void update(BmcCredential old, BmcCredential fresh) {
     state = state.copyWith(
       creds: entityUpdate(
         Stores.bmcCredential,

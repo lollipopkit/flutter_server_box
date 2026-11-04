@@ -14,7 +14,8 @@ String storageViewScript() =>
     RustLib.instance.api.crateApiStorageStorageViewScript();
 
 /// [`storage_view_script`]'s output → `StorageView` JSON (`disks`, `busy`,
-/// `system`, `arrays`, `pools`, `tools`)
+/// `system`, `free`, `overlaps`, `growable_partitions`, `next_md`,
+/// `raid_levels`, `pool_layouts`, `arrays`, `pools`, `tools`)
 Future<String> parseStorageViewJson({required String raw}) =>
     RustLib.instance.api.crateApiStorageParseStorageViewJson(raw: raw);
 

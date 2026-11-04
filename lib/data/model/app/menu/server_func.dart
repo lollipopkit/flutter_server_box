@@ -4,9 +4,9 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
-import 'package:server_box/data/model/server/monitor_access.dart';
+import 'package:server_box/data/model/server/monitor/monitor_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 
 enum ServerFuncBtn {
   terminal(),
@@ -271,7 +271,7 @@ enum ServerFuncBtn {
     // SSH or not, so the agent is what would have to change.
     final agentOnly =
         spi.sshOn == null ||
-        (this == portForward && spi.transport == ServerTransport.monitorHttp);
+        (this == portForward && ServerCapabilities.forwardsViaAgent(spi));
     if (!agentOnly || spi.monitorOn == null || granted == null) {
       return generic;
     }

@@ -6,14 +6,12 @@ import 'package:server_box/core/utils/private_address.dart';
 import 'package:server_box/data/model/server/geo.dart';
 import 'package:server_box/data/model/server/geo_source.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 
 /// Where each server is, resolved in one place and in one order.
 ///
-/// **Two gates, then the chain**, and they are different kinds of thing — a
-/// gate decides whether to ask at all, a link answers. Listing them as one
-/// numbered sequence read as though the second gate were a source that the
-/// third entry could follow, which is the opposite of what it does.
+/// **Two gates, then the chain**: a gate decides whether to ask at all, a
+/// link answers.
 ///
 /// Gate one: [SettingStore.globeEnabled]. Nothing here runs with the globe
 /// off — no file is opened, no name is resolved. Checked first and separately
@@ -44,18 +42,11 @@ final class IpGeo {
   final GeoData data;
   final Future<List<InternetAddress>> Function(String) _lookup;
 
-  /// The coordinate for [spi], or null if nothing can place it.
+  /// The coordinate for [spi], or the reason there is none.
   ///
-  /// **Nothing is cached, and that is a decision rather than an omission.**
-  /// A lookup is about fourteen reads of eight bytes from a file this device
-  /// already holds open — see `GeoBundle` — so a row read and a JSON decode in
-  /// front of it would cost more than the answer they stand in for. The store
-  /// that used to sit here dates from when a lookup meant fetching a shard over
-  /// the network, and it outlived that reason twice over: keyed by a host
-  /// string it could not notice a name resolving somewhere new, and it answered
-  /// from itself rather than from the installed month, so a coordinate never
-  /// changed after a data update.
-  /// Includes the reason when no coordinate is available.
+  /// Not cached: a lookup is about fourteen reads of eight bytes from a file
+  /// this device already holds open (`GeoBundle`), cheaper than a cache read
+  /// in front of it, and never stale after a name moves or the data updates.
   ///
   /// Both halves in one pass because the reason is only knowable from inside
   /// the chain: by the time a caller has a null it can no longer tell a
@@ -124,11 +115,8 @@ final class IpGeo {
 
     if (isPrivateHost(host)) return (geo: null, miss: GeoMiss.private);
 
-    // A name that will not resolve reads as [GeoMiss.noData], and there is
-    // nothing held back to answer it with. That is the one thing lost with the
-    // cache: a name-addressed server used to stay on the globe while the device
-    // was offline. It costs little — the servers are unreachable in that state
-    // anyway — and it is what bought an answer that never went stale.
+    // A name that will not resolve reads as [GeoMiss.noData]: offline, a
+    // name-addressed server leaves the globe, as it is unreachable anyway.
     final addr = await _addressOf(host);
     if (addr == null) return (geo: null, miss: GeoMiss.noData);
 
@@ -194,13 +182,8 @@ final class IpGeo {
     if (literal != null) return literal;
     try {
       final found = await _lookup(host);
-      // IPv4 first when both are offered. It used to be a coverage argument —
-      // the bundled database was almost entirely IPv4 — and it is not one any
-      // more: the two downloaded files hold 3.5M and 3.8M records. What it is
-      // now is a tie-break, and worth keeping as one. A resolver may list a
-      // dual-stack host's addresses in either order, so without a rule the
-      // globe would place such a server from whichever came first and move it
-      // between runs for no reason the user could see.
+      // IPv4 first as a stable tie-break: a resolver may list a dual-stack
+      // host's addresses in either order, which would move it between runs.
       // Unwrapped for the test, returned as it came: a v4-mapped answer is a
       // v4 address and should win this, and `_cityOf` unwraps it again.
       for (final addr in found) {

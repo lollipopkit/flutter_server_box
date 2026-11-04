@@ -9,12 +9,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:server_box/data/model/server/connection_stat.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/history.dart';
 import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/migrations/m003_hive_to_sqlite.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/data/store/tables.dart';
 import 'package:server_box/hive/hive_registrar.g.dart';
 import 'package:server_box/hive/legacy_adapters.dart';
@@ -506,7 +506,7 @@ void main() {
     expect(spi.ssh?.pwd, 'secret');
     expect(spi.ssh?.keyId, 'k1');
     expect(spi.ssh?.alterUrl, 'alt.example');
-    expect(spi.ssh?.jumpId, 'srv-1');
+    expect(spi.ssh?.resolvedJumpIds.firstOrNull, 'srv-1');
     expect(spi.ssh?.jumpIds, ['srv-1']);
     expect(spi.ssh?.proxyCommand, 'nc %h %p');
     // 1466 had no monitor support, so field 18 was never written.

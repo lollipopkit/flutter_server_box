@@ -1,12 +1,12 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:plain_notification_token/plain_notification_token.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/service/watch_sync.dart';
-import 'package:server_box/core/utils/misc.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 
 class IosSettingsPage extends StatefulWidget {
   /// Whether it is being shown inside the settings pane rather than pushed.
@@ -33,7 +33,7 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
   /// would install itself as the channel's only method call handler and take
   /// the callbacks away from it.
   late final _watchPairedFuture = WatchSync.instance.isWatchPaired;
-  late final _pushTokenFuture = getToken();
+  late final _pushTokenFuture = _requestPushToken();
 
   /// Whether iOS itself would allow one. Read once per visit to this page: the
   /// user can change it in Settings, but only by leaving this one.
@@ -234,4 +234,14 @@ extension _Actions on _IosSettingsPageState {
     await WatchSync.instance.updateExclusions(next);
     _refresh();
   }
+}
+
+/// The APNs token, asking for notification permission first: showing it is
+/// what this page is for, and iOS issues none without.
+Future<String?> _requestPushToken() async {
+  if (!isIOS) return null;
+  final instance = ApnsToken()..requestPermission();
+  // Until the permission dialog is closed.
+  await instance.onIosSettingsRegistered.first;
+  return await instance.getToken();
 }

@@ -4,7 +4,7 @@ import 'package:clock/clock.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/widgets.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 
 part 'session_keep_alive.g.dart';
 

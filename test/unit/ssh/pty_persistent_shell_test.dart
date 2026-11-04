@@ -5,7 +5,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
-import 'package:server_box/data/ssh/persistent_shell.dart';
+import 'package:server_box/data/terminal/persistent_shell.dart';
 
 import '../../helpers/fake_shell.dart';
 

@@ -58,7 +58,7 @@ class VirtBackupJobList extends ConsumerWidget {
             meta: j.schedule ?? '',
             sub: [
               ?j.storage,
-              ?j.mode,
+              ?j.mode?.name,
               if (!j.enabled) libL10n.disabled,
             ].join(' · '),
             selected: j.id == selectedId,
@@ -467,7 +467,7 @@ class _VirtBackupJobViewState extends ConsumerState<VirtBackupJobView>
     }
     setState(() => _saving = true);
     try {
-      await _notifier.editBackupJob(_removal(job), remove: true);
+      await _notifier.deleteBackupJob(job);
       Toast.success(l10n.virtBackupJobDeleted);
       widget.onDeleted?.call();
     } on VirtErr catch (e) {
@@ -501,14 +501,6 @@ class _VirtBackupJobViewState extends ConsumerState<VirtBackupJobView>
     }
   }
 }
-
-/// What deletes [job]: `editBackupJob(..., remove: true)` reads only its id.
-VirtBackupJobEdit _removal(VirtBackupJob job) => VirtBackupJobEdit(
-  id: job.id,
-  node: job.node,
-  storage: job.storage ?? '',
-  schedule: job.schedule ?? '',
-);
 
 /// Where a job's backups can go, one entry per storage name: the host lists
 /// a storage once per node that has it. A job pinned to [node] is offered
@@ -549,7 +541,7 @@ final class _JobForm {
   /// Picked by the user or the job's own; null: the first storage offered,
   /// which is what the storage row shows ([storageIn]).
   String? storage;
-  String mode = 'snapshot';
+  VirtBackupMode mode = VirtBackupMode.snapshot;
   String compress = 'zstd';
   String mail = 'failure';
   var enabled = true;
@@ -574,7 +566,7 @@ final class _JobForm {
     prune.text = job.prune ?? '';
     comment.text = job.comment ?? '';
     storage = job.storage;
-    mode = job.mode ?? 'snapshot';
+    mode = job.mode ?? VirtBackupMode.snapshot;
     compress = job.compress ?? 'zstd';
     mail = job.mailNotification ?? 'failure';
     enabled = job.enabled;
@@ -718,11 +710,11 @@ mixin _JobFormRows<W extends ConsumerStatefulWidget>
       _seg(
         Icons.restart_alt,
         libL10n.mode,
-        const ['snapshot', 'suspend', 'stop'],
-        f.mode,
+        [for (final m in VirtBackupMode.values) m.name],
+        f.mode.name,
         key: '$key:mode',
         indent: indent,
-        onSelected: busy ? null : (v) => setState(() => f.mode = v),
+        onSelected: busy ? null : (v) => setState(() => f.mode = VirtBackupMode.values.byName(v)),
       ),
       _seg(
         Icons.compress,

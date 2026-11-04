@@ -25,11 +25,11 @@ import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/model/virt/virt_hardware.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/virt/virt.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/pve.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/virt/guest.dart';
 import 'package:server_box/view/page/virt/hardware.dart';
@@ -108,7 +108,7 @@ const _job = VirtBackupJob(
   id: 'nightly',
   schedule: '02:00',
   storage: 'local',
-  mode: 'snapshot',
+  mode: VirtBackupMode.snapshot,
   compress: 'zstd',
   keep: 'keep-last=7',
   vmids: [100],
@@ -424,13 +424,15 @@ class _FakeHost extends VirtHostNotifier {
   Future<List<VirtBackupJob>> allBackupJobs() async => [..._jobList, _poolJob];
 
   @override
-  Future<void> editBackupJob(
-    VirtBackupJobEdit edit, {
-    bool remove = false,
-  }) async {
+  Future<void> deleteBackupJob(VirtBackupJob job) async {
+    _calls.add('delete job ${job.id}');
+  }
+
+  @override
+  Future<void> editBackupJob(VirtBackupJobEdit edit) async {
     _jobEdits.add(edit);
     _calls.add(
-      'job ${edit.id} remove=$remove ${edit.schedule} '
+      'job ${edit.id} ${edit.schedule} '
       'pool=${edit.pool} all=${edit.all} vmids=${edit.vmids}',
     );
   }
@@ -449,7 +451,7 @@ class _FakeHost extends VirtHostNotifier {
   @override
   Future<void> backup(String guestId, VirtBackupRequest request) async {
     await _backupGate?.future;
-    _calls.add('backup $guestId ${request.storage} ${request.mode}');
+    _calls.add('backup $guestId ${request.storage} ${request.mode.name}');
   }
 
   @override
@@ -851,7 +853,7 @@ void main() {
       expect((edit.node, edit.storage), (null, 'local'));
       expect((edit.schedule, edit.mode, edit.prune), (
         'sat 03:00',
-        'stop',
+        VirtBackupMode.stop,
         'keep-last=3',
       ));
       // Closed once the host has it.
@@ -888,7 +890,7 @@ void main() {
       expect(_key('plan:nightly:confirm'), findsOneWidget);
       await tap(tester, delete);
       expect(_calls, [
-        'job nightly remove=true 02:00 pool=null all=false vmids=[]',
+        'delete job nightly',
       ]);
     });
 
@@ -986,7 +988,7 @@ void main() {
     await tap(tester, _key('job:save'));
     expect(
       _calls,
-      contains('job by-pool remove=false sun 04:00 pool=prod all=false vmids=[]'),
+      contains('job by-pool sun 04:00 pool=prod all=false vmids=[]'),
     );
   });
 

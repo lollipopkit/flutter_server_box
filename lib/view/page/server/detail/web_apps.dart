@@ -6,8 +6,8 @@ extension on _ServerDetailPageState {
   /// The agent's deployed web apps, each opened in a browser through the
   /// agent's proxy. Absent unless the agent has some: deploying is the
   /// panel's.
-  Widget? _buildWebApps(ServerState si) {
-    final state = ref.watch(webAppsProvider(si.spi.id));
+  Widget? _buildWebApps(ServerState srv) {
+    final state = ref.watch(webAppsProvider(srv.spi.id));
     final apps = state.apps;
     if (apps == null || apps.isEmpty) return null;
     final locale = Localizations.localeOf(context).toLanguageTag();
@@ -28,7 +28,7 @@ extension on _ServerDetailPageState {
               v: status,
               sub: app.failing.isEmpty ? null : app.failing.join(', '),
               dot: tone.color(scheme),
-              onTap: app.proxy ? () => openWebApp(ref, si.spi.id, app.id) : null,
+              onTap: app.proxy ? () => openWebApp(ref, srv.spi.id, app.id) : null,
             ),
       ],
       initiallyExpanded: true,

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/model/server/monitor_capabilities.dart';
+import 'package:server_box/data/model/server/monitor/monitor_capabilities.dart';
 
 /// What a client may ask an agent for is the agent's to say.
 ///

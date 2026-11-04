@@ -2,10 +2,10 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:server_box/data/provider/server/metric.dart';
 import 'package:server_box/data/provider/server/single.dart';
-import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
-import 'package:server_box/view/widget/server_func_btns.dart';
+import 'package:server_box/view/page/server/widget/server_func_btns.dart';
 
 /// The row of things that can be done to the open machine.
 ///

@@ -471,6 +471,32 @@ fn rejects_unsafe_names_and_root_deletion() {
     );
 }
 
+/// Root, the account the app is signed in as, and a name `userdel` would not
+/// take are offered no delete — the same answer the pages ask for.
+#[test]
+fn delete_refusal_names_root_and_the_current_account() {
+    let mut root = user("root", "/root");
+    root.uid = 0;
+    assert_eq!(root.delete_refusal(None), Some(UserError::RootNotDeletable));
+
+    let mut forged = user("root", "/home/root");
+    forged.uid = 1001;
+    assert_eq!(forged.delete_refusal(None), Some(UserError::RootNotDeletable));
+
+    let deploy = user("deploy", "/home/deploy");
+    assert_eq!(
+        deploy.delete_refusal(Some("deploy")),
+        Some(UserError::CurrentUserNotDeletable)
+    );
+    assert_eq!(deploy.delete_refusal(Some("admin")), None);
+    assert_eq!(deploy.delete_refusal(None), None);
+
+    assert_eq!(
+        user("Bad Name", "/home/x").delete_refusal(None),
+        Some(UserError::InvalidName)
+    );
+}
+
 /// A password with a line break in it would be a second `name:password` pair
 /// and a second account's password changed.
 #[test]

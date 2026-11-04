@@ -1,7 +1,7 @@
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/setting.dart';
 
-/// `horizonVirtKey`, a switch, becomes `virtKeyRows`, a count.
+/// `horizonVirtKey`, a switch, becomes `virtualKeyRows`, a count.
 ///
 /// The switch meant "show one row and scroll it sideways"; the count says how
 /// many rows to show, with the rest on pages swiped sideways. On means one
@@ -43,7 +43,7 @@ class VirtKeyRowsMigration implements SchemaMigration {
     // every install claim a newer copy than whatever it last synced with.
     // `set` answers false rather than throwing, and this step has no return
     // value — a quiet failure would let `SchemaVersion.migrate` record v12 and
-    // never come back, leaving `horizonVirtKey` set and `virtKeyRows` absent.
+    // never come back, leaving `horizonVirtKey` set and `virtualKeyRows` absent.
     if (!store.set(key, 1, updateLastUpdateTsOnSet: false)) {
       throw StateError('m011: writing "$key" failed');
     }

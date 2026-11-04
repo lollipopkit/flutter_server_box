@@ -8,20 +8,20 @@ import 'dart:typed_data';
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/llm/host.dart';
-import 'package:server_box/core/llm/scope.dart';
-import 'package:server_box/core/llm/tools.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/data/model/server/snippet.dart';
+import 'package:server_box/data/provider/ai/agent_scope.dart';
 import 'package:server_box/data/provider/snippet.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/pve.dart';
 import 'package:server_box/data/store/remote_desktop.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/data/store/snippet.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/view/agent/host.dart';
+import 'package:server_box/view/agent/tools.dart';
 
 import '../../helpers/llm_lib_helper.dart';
 import '../../helpers/rust_lib_helper.dart';
@@ -274,7 +274,7 @@ void main() {
       // database has, which the setting points at.
       Stores.server.put(spiFixture(name: 'web', id: 'srv-1', ip: '10.0.0.1'));
       addTearDown(() => Stores.server.deleteById('srv-1'));
-      await AgentScope.container.read(snippetProvider.notifier).add(
+      AgentScope.container.read(snippetProvider.notifier).add(
         const Snippet(id: 'sn-1', name: 'uptime', script: 'uptime', autoRunOn: ['srv-1']),
       );
       expect(text(await snippet.run({'action': 'list'}, ctx)), isNot(contains('autoRunOn')));

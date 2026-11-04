@@ -149,9 +149,9 @@ extension on _BmcCredentialEditPageState {
 
     try {
       if (existing == null) {
-        await _notifier.add(saved);
+        _notifier.add(saved);
       } else {
-        await _notifier.update(existing, saved);
+        _notifier.update(existing, saved);
       }
     } on DuplicateNameException catch (e) {
       // The name is `UNIQUE` in the schema, so the collision is found here

@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:server_box/view/page/server/reading_text.dart';
+import 'package:server_box/data/provider/server/reading_fmt.dart';
 
 /// What a reading's history is drawn as, wherever it is drawn.
 ///

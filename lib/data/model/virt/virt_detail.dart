@@ -125,6 +125,4 @@ abstract class VirtGuestDetail with _$VirtGuestDetail {
     String? machine,
   }) = _VirtGuestDetail;
 
-  factory VirtGuestDetail.fromJson(Map<String, dynamic> json) =>
-      _$VirtGuestDetailFromJson(json);
 }

@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/ish_proxy_socket.dart';
+import 'package:server_box/core/ssh/ish_proxy_socket.dart';
 
 void main() {
   group('IshProxySocket.wrap', () {

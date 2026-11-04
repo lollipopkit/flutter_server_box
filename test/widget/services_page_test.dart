@@ -11,8 +11,8 @@ import 'package:server_box/data/provider/services.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/generated/l10n/l10n_zh.dart';
 import 'package:server_box/src/rust/api/service.dart' as ffi;
-import 'package:server_box/view/page/service_detail.dart';
-import 'package:server_box/view/page/services.dart';
+import 'package:server_box/view/page/services/detail.dart';
+import 'package:server_box/view/page/services/services.dart';
 
 import '../helpers/rust_lib_helper.dart';
 import '../helpers/spi_fixture.dart';
@@ -26,7 +26,7 @@ final class _Fixed extends ServicesNotifier {
   ServicesState build(Spi spi) => _state;
 
   @override
-  Future<void> getServices() async {}
+  Future<void> refresh() async {}
 }
 
 ServiceUnit _unit(

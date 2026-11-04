@@ -5,7 +5,7 @@ part of 'view.dart';
 extension on _ServerDetailPageState {
   /// The window the chart is drawing, which is either what this app has seen
   /// or what the agent answered for the chosen range.
-  MetricWindow _window(ServerState si) {
+  MetricWindow _window(ServerState srv) {
     if (_custom != null) {
       final answer = _customAnswer;
       return answer == null
@@ -13,7 +13,7 @@ extension on _ServerDetailPageState {
           : MetricWindow.of(answer.samples);
     }
     final minutes = _range.minutes;
-    if (minutes == null) return MetricWindow.live(si.status.history);
+    if (minutes == null) return MetricWindow.live(srv.status.history);
     final answer = _rangeWindows[_range];
     if (answer == null) return const MetricWindow();
     return MetricWindow.of(answer.samples);
@@ -26,7 +26,7 @@ extension on _ServerDetailPageState {
   /// 24-hour request would fill the card, and a page left in the background
   /// for four minutes would draw a line straight across the gap.
   ({({int from, int to})? window, List<ChartBand> bands}) _chartWindow(
-    ServerState si,
+    ServerState srv,
     DetailMetric m,
     MetricWindow w,
   ) {
@@ -109,10 +109,10 @@ extension on _ServerDetailPageState {
   /// "stored history", "since connect · not stored" — on every card of every
   /// server, which is a line that never changes and was read once. Where the
   /// samples come from is already answered by which ranges the header offers.
-  String? _historyNote(ServerState si, {bool wide = true}) {
+  String? _historyNote(ServerState srv, {bool wide = true}) {
     // A page whose newest sample is minutes old is the one fact the reader
     // needs, and the only one worth a line of its own.
-    if (serverStaleSince(si) case final at?) return l10n.lastSampleFmt(at.toAgoStr());
+    if (serverStaleSince(srv) case final at?) return l10n.lastSampleFmt(at.toAgoStr());
     // Narrow, the header's chip holds only the window's length, so this line
     // is where its two ends fit.
     if (!wide && _custom != null) return _rangeLabel(wide: true);
@@ -139,8 +139,8 @@ extension on _ServerDetailPageState {
   /// Three of them where there is room. On a narrow card only the chosen one,
   /// because three chips plus the picker is most of the header at 320pt — and
   /// in a language whose word for "live" is longer, more than all of it.
-  Widget _buildRangeChips(ServerState si, {required bool wide}) {
-    final stored = si.capabilities.storedHistory;
+  Widget _buildRangeChips(ServerState srv, {required bool wide}) {
+    final stored = srv.capabilities.storedHistory;
     final scheme = Theme.of(context).colorScheme;
     final custom = _custom;
     final selected = _range;
@@ -209,7 +209,7 @@ extension on _ServerDetailPageState {
               shape: const StadiumBorder(),
               child: InkWell(
                 customBorder: const StadiumBorder(),
-                onTap: () => _showRangePicker(si),
+                onTap: () => _showRangePicker(srv),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 9,
@@ -233,7 +233,7 @@ extension on _ServerDetailPageState {
             label: libL10n.custom,
             child: InkWell(
               customBorder: const StadiumBorder(),
-              onTap: () => _showRangePicker(si),
+              onTap: () => _showRangePicker(srv),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
                 child: Icon(
@@ -259,9 +259,9 @@ extension on _ServerDetailPageState {
   /// bottom is that answer in full. Writing "24 h" into the app and hoping
   /// would draw an empty chart on an agent keeping three hours and call it a
   /// quiet machine.
-  Future<void> _showRangePicker(ServerState si) async {
-    final stored = si.capabilities.storedHistory;
-    final caps = si.agentCapabilities;
+  Future<void> _showRangePicker(ServerState srv) async {
+    final stored = srv.capabilities.storedHistory;
+    final caps = srv.agentCapabilities;
     final earliest = caps?.historyFrom;
     final scheme = Theme.of(context).colorScheme;
 

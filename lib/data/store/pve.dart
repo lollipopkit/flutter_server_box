@@ -3,7 +3,7 @@ import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 /// Each server's Proxmox VE configuration: the `server_pve` table.

@@ -21,10 +21,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/services.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 
 import '../../helpers/rust_lib_helper.dart';
 import '../../helpers/spi_fixture.dart';
@@ -68,7 +68,7 @@ void main() {
     // The listing succeeds — this is the ordinary path, arriving late.
     final gate = Completer<void>();
     final container = containerWith(_GatedExec(gate.future));
-    final pending = container.read(servicesProvider(spi).notifier).getServices();
+    final pending = container.read(servicesProvider(spi).notifier).refresh();
 
     // Far enough in to be waiting on the probe.
     await Future<void>.delayed(Duration.zero);
@@ -83,7 +83,7 @@ void main() {
     // off, or the credentials were what the user was editing — and its handler
     // writes `state` as well.
     final container = containerWith(null);
-    final pending = container.read(servicesProvider(spi).notifier).getServices();
+    final pending = container.read(servicesProvider(spi).notifier).refresh();
 
     container.dispose();
 
@@ -96,7 +96,7 @@ void main() {
     addTearDown(container.dispose);
     final notifier = container.read(servicesProvider(spi).notifier);
 
-    await notifier.getServices();
+    await notifier.refresh();
 
     final state = container.read(servicesProvider(spi));
     expect(state.isBusy, isFalse);

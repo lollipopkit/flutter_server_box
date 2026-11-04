@@ -2,9 +2,9 @@ import 'dart:collection';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/data/admin/storage_manager.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/storage.dart';
-import 'package:server_box/data/service/storage_manager.dart';
 import 'package:server_box/src/rust/api/storage.dart' as ffi;
 
 import '../../helpers/rust_lib_helper.dart';
@@ -131,7 +131,24 @@ void main() {
     expect(exec.scripts, [ffi.storageViewScript()]);
   });
 
-  test('exit code two is sudo rejection only for a non-root caller', () async {
+  test('sudo refusing a non-root caller is sudo_rejected, an exit 2 is not', () async {
+    final refused = _QueueExec([
+      const ExecResult(exitCode: 0, stdout: _view, stderr: ''),
+      const ExecResult(exitCode: 1, stdout: '', stderr: 'sudo: a password is required'),
+    ]);
+    await expectLater(
+      StorageManager.act(
+        refused,
+        StorageAction.format('/dev/sdb', 'ext4'),
+        isRoot: false,
+      ),
+      throwsA(isA<StorageManagerException>().having(
+        (error) => error.code,
+        'code',
+        'sudo_rejected',
+      )),
+    );
+
     final nonRoot = _QueueExec([
       const ExecResult(exitCode: 0, stdout: _view, stderr: ''),
       const ExecResult(exitCode: 2, stdout: '', stderr: 'operation failed'),
@@ -145,7 +162,7 @@ void main() {
       throwsA(isA<StorageManagerException>().having(
         (error) => error.code,
         'code',
-        'sudo_rejected',
+        'failed',
       )),
     );
 

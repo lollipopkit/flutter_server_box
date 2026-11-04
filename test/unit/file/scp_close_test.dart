@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/scp_file_backend.dart';
+import 'package:server_box/data/model/file/backend/scp.dart';
 
 /// Never reached: the write under test is still spooling its input when the
 /// backend is closed, which is before any channel is asked for.
@@ -21,7 +21,7 @@ void main() {
     producer.add([1, 2, 3]);
 
     final backend = ScpFileBackend(_UnusedClient());
-    final write = backend.write('/tmp/x', producer.stream);
+    final write = backend.write('/tmp/x', () => producer.stream);
     await Future<void>.delayed(const Duration(milliseconds: 50));
 
     await backend.close();

@@ -14,8 +14,8 @@ import 'package:server_box/data/model/file/transfer_status.dart';
 import 'package:server_box/data/provider/app/keybindings.dart';
 import 'package:server_box/data/provider/file_transfer.dart';
 import 'package:server_box/data/provider/server/all.dart';
-import 'package:server_box/data/res/store.dart';
-import 'package:server_box/data/ssh/session_manager.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/data/terminal/session_manager.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/setting/entries/keybindings.dart';
 

@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/extension/ssh_client.dart';
+import 'package:server_box/data/model/server/server_exec.dart';
 
 void main() {
-  group('SSHExecResult', () {
+  group('ExecResult over SSH', () {
     test('accepts stderr warnings when the remote command succeeds', () {
-      const result = SSHExecResult(
+      const result = ExecResult(
         exitCode: 0,
         stdout: '',
         stderr:
@@ -15,7 +15,7 @@ void main() {
     });
 
     test('rejects non-zero exit codes', () {
-      const failed = SSHExecResult(
+      const failed = ExecResult(
         exitCode: 1,
         stdout: '',
         stderr: 'mkdir: Permission denied',
@@ -25,12 +25,12 @@ void main() {
     });
 
     test('falls back to stderr when the server omits the exit code', () {
-      const succeeded = SSHExecResult(
+      const succeeded = ExecResult(
         exitCode: null,
         stdout: '',
         stderr: '',
       );
-      const failed = SSHExecResult(
+      const failed = ExecResult(
         exitCode: null,
         stdout: '',
         stderr: 'mkdir: Permission denied',

@@ -1,5 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:meta/meta.dart';
+import 'package:server_box/data/model/server/monitor/agent_endpoint.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/monitor_http.dart';
 
@@ -105,11 +106,6 @@ class ScopedToken {
   @override
   String toString() => 'ScopedToken($endpoint, expires $expiresAt)';
 }
-
-/// An agent address with surrounding space and trailing slashes removed, so
-/// two spellings of one endpoint compare equal.
-String normalizeAgentEndpoint(String value) =>
-    value.trim().replaceFirst(RegExp(r'/+$'), '');
 
 /// Which of [serverIds] already hold a token that can be handed over again,
 /// and which have to be issued a fresh one.

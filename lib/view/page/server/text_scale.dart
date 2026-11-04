@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 
 /// How big the text of the server pages is: what the system asks for, times
 /// this app's own setting for these pages.

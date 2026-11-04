@@ -1,8 +1,8 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/model/server/monitor_desk_app.dart';
-import 'package:server_box/data/model/server/monitor_stack.dart';
+import 'package:server_box/data/model/server/monitor/monitor_desk_app.dart';
+import 'package:server_box/data/model/server/monitor/monitor_stack.dart';
 import 'package:server_box/data/provider/server/web_apps.dart';
 import 'package:server_box/view/page/server/detail/readout.dart';
 

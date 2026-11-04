@@ -3,7 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/tab.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/view/page/home_tab.dart';
 import 'package:server_box/view/page/setting/seq/reorder_proxy_decorator.dart';
 

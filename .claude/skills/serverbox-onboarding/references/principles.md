@@ -40,7 +40,7 @@ key so a shell that will not open does not also stop the status page
 refreshing.
 
 Where the SSH byte stream comes from is a separate axis, resolved in `genClient`
-(`lib/core/utils/server.dart`): direct, through a jump server, or through a
+(`lib/core/ssh/client.dart`): direct, through a jump server, or through a
 `ProxyCommand`. The last two are mutually exclusive. Everything above
 `SSHSocket` is identical either way, and the app verifies the host key itself in
 every case.

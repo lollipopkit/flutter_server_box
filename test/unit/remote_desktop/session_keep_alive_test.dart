@@ -9,8 +9,8 @@ import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/data/provider/remote_desktop.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/session_keep_alive.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 
 import '../../helpers/test_db.dart';
 

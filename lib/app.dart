@@ -12,22 +12,22 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/app_navigator.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/llm/screen.dart';
+import 'package:server_box/core/local/server.dart';
 import 'package:server_box/core/motion.dart';
 import 'package:server_box/core/service/diagnostics_upload.dart';
-import 'package:server_box/core/utils/local_server.dart';
 import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/chart_palette.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
+import 'package:server_box/view/agent/screen.dart';
 import 'package:server_box/view/page/home.dart';
+import 'package:server_box/view/page/ssh/widget/session_keep_alive_notice.dart';
 import 'package:server_box/view/widget/diagnostics_level_picker.dart';
-import 'package:server_box/view/widget/session_keep_alive_notice.dart';
 
 part 'intro.dart';
 

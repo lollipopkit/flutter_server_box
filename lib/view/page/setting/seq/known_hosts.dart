@@ -2,8 +2,8 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/utils/server.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/core/ssh/host_keys.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/view/widget/dist_icon.dart';
 
 /// Every host key this app has accepted, and a way to take one back.

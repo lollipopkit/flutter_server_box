@@ -5,14 +5,14 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
+import 'package:server_box/data/admin/storage_manager.dart';
+import 'package:server_box/data/admin/user_manager.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/storage.dart';
 import 'package:server_box/data/model/server/system.dart';
+import 'package:server_box/data/provider/server/reading_fmt.dart';
 import 'package:server_box/data/provider/server/single.dart';
-import 'package:server_box/data/service/storage_manager.dart';
-import 'package:server_box/data/service/user_manager.dart';
-import 'package:server_box/view/page/server/reading_text.dart';
 import 'package:server_box/view/page/storage_admin/helpers.dart';
 
 enum _StorageTab { disks, raid, zfs }

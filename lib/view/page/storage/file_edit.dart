@@ -1,7 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/misc.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 
 /// The editor as a file page opens it, with the user's editor settings.
 EditorPageArgs fileEditorArgs({

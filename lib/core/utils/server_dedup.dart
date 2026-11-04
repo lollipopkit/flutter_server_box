@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/all.dart';
-import 'package:server_box/data/store/server.dart';
+import 'package:server_box/data/store/stores.dart';
 
 class ServerDeduplication {
   /// Removes imported servers that match an existing server, or one accepted
@@ -12,7 +12,7 @@ class ServerDeduplication {
     List<Spi> importedServers, {
     List<Spi>? existingServers,
   }) {
-    final existing = existingServers ?? ServerStore.instance.fetch();
+    final existing = existingServers ?? Stores.server.fetch();
     final deduplicated = <Spi>[];
 
     for (final imported in importedServers) {
@@ -41,7 +41,7 @@ class ServerDeduplication {
     List<Spi> importedServers, {
     List<Spi>? existingServers,
   }) {
-    final existing = existingServers ?? ServerStore.instance.fetch();
+    final existing = existingServers ?? Stores.server.fetch();
     final existingNames = existing.map((s) => s.name).toSet();
     final processedNames = <String>{};
     final result = <Spi>[];
@@ -131,7 +131,7 @@ class ServerDeduplication {
   }
 
   static List<Spi> _resolveServers(List<Spi> servers) {
-    final existing = ServerStore.instance.fetch();
+    final existing = Stores.server.fetch();
     final deduplicated = deduplicateServers(servers, existingServers: existing);
     final resolved = resolveNameConflicts(
       deduplicated,

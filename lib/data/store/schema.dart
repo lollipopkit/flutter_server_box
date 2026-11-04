@@ -73,7 +73,7 @@ abstract final class SchemaVersion {
   /// v10: the Agent shell's eight settings keys and the AI provider's six
   ///      folded into one object row each
   /// v11: `server_dist`, caching what each server was last seen running
-  /// v12: `horizonVirtKey`, a switch, becomes `virtKeyRows`, a count
+  /// v12: `horizonVirtKey`, a switch, becomes `virtualKeyRows`, a count
   /// v13: the trusted host keys v5 moved into `known_host` put back into the
   ///      setting the app actually reads
   /// v14: the virtual keys' order and hidden set by name rather than by index
@@ -99,7 +99,7 @@ abstract final class SchemaVersion {
   /// v32: the Agent's conversations dropped, its chats being fl_pi_llm's now
   /// v33: `server.disk_counts_network`
   /// v34: `sync_record`, each synced record's newest stamp (the op log)
-  static const current = 34;
+  static const current = 35;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

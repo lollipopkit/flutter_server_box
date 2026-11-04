@@ -1,7 +1,7 @@
 // ignore_for_file: avoid_print
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/model/server/disk.dart';
+import 'package:server_box/data/model/server/status/disk.dart';
 import 'package:server_box/data/model/server/system.dart';
 
 // Parsing tests migrated to crates/sbm_parser/tests/dart_compat.rs

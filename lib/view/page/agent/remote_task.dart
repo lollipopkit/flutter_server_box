@@ -5,9 +5,9 @@ import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart'
     show LlmEntry, StreamingReply, StreamingView, ThreadBlock, ThreadBlockView, ReplyBlock, SummaryBlock, UserBlock, threadBlocks;
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/llm/scope.dart';
 import 'package:server_box/data/model/app/error.dart';
-import 'package:server_box/data/model/server/monitor_agent.dart';
+import 'package:server_box/data/model/server/monitor/monitor_agent.dart';
+import 'package:server_box/data/provider/ai/agent_scope.dart';
 import 'package:server_box/data/provider/ai/remote_agent.dart';
 import 'package:server_box/view/page/agent/remote_composer.dart';
 

@@ -6,16 +6,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/tab.dart';
-import 'package:server_box/data/model/ssh/virtual_key.dart';
+import 'package:server_box/data/model/terminal/virtual_key.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/app/terminal_shell.dart';
 import 'package:server_box/data/provider/virtual_keyboard.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/terminal.dart';
-import 'package:server_box/data/ssh/terminal_session.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/data/terminal/terminal_session.dart';
 import 'package:server_box/view/page/ssh/present_server.dart';
+import 'package:server_box/view/page/ssh/widget/virtual_key_semantics.dart';
 import 'package:server_box/view/widget/float_shell.dart';
-import 'package:server_box/view/widget/virt_key_semantics.dart';
 import 'package:xterm/core.dart';
 import 'package:xterm/ui.dart' hide TerminalThemes;
 
@@ -138,14 +138,14 @@ extension _Utils on _FloatTerminalState {
   /// password, the tmux switcher — and every one of them opens a page or a
   /// dialog belonging to the terminal *page*, which is not what is in this
   /// window. Left in, they would be buttons that take a tap and do nothing,
-  /// which is the failure `VirtKeyX.worksOn` exists to avoid; so they are not
+  /// which is the failure `VirtualKeyX.worksOn` exists to avoid; so they are not
   /// drawn here, on the same terms.
   ///
   /// Read on every build rather than cached: this is a short list behind a
   /// widget that rebuilds only when a modifier is armed, and a strip that went
   /// stale the moment the keys were reordered in the settings would be the
   /// more surprising of the two.
-  List<VirtKey> get _keys {
+  List<VirtualKey> get _keys {
     final disabled = Stores.setting.sshVirtKeysDisabled.fetch().toSet();
     final spi = widget.session.spi;
     // The same answer the strip on the page reaches, from the same field, so
@@ -156,7 +156,7 @@ extension _Utils on _FloatTerminalState {
           spi,
           ref.readPresentServer(spi.id)?.agentAccess,
         );
-    return VirtKeyX.loadFromStore(persistRepairs: false)
+    return VirtualKeyX.loadFromStore(persistRepairs: false)
         .where((key) => !disabled.contains(key.name))
         .where(
           (key) => key.worksOn(
@@ -189,8 +189,8 @@ extension _Widgets on _FloatTerminalState {
   Widget _buildKeys() {
     return Consumer(
       builder: (context, ref, _) {
-        final state = ref.watch(virtKeyboardProvider);
-        final notifier = ref.read(virtKeyboardProvider.notifier);
+        final state = ref.watch(virtualKeyboardProvider);
+        final notifier = ref.read(virtualKeyboardProvider.notifier);
         // The modifiers are the terminal's, not the strip's, and while this
         // window is up the tab is drawing a placeholder — so nothing else is
         // setting this.
@@ -214,9 +214,9 @@ extension _Widgets on _FloatTerminalState {
   }
 
   Widget _buildKey(
-    VirtKey item,
+    VirtualKey item,
     VirtKeyState state,
-    VirtKeyboard notifier,
+    VirtualKeyboard notifier,
     bool isDark,
   ) {
     final armed = switch (item.key) {
@@ -227,7 +227,7 @@ extension _Widgets on _FloatTerminalState {
     };
     final color = isDark ? Colors.white : Colors.black;
 
-    return VirtKeySemantics(
+    return VirtualKeySemantics(
       item: item,
       armed: armed,
       child: InkWell(
@@ -256,7 +256,7 @@ extension _Widgets on _FloatTerminalState {
 }
 
 extension _Actions on _FloatTerminalState {
-  void _press(VirtKey item, VirtKeyboard notifier) {
+  void _press(VirtualKey item, VirtualKeyboard notifier) {
     switch (item.func) {
       case VirtualKeyFunc.toggleIME:
         HapticFeedback.mediumImpact();

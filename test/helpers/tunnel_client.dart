@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:server_box/core/utils/ssh_local_tunnel.dart';
+import 'package:server_box/core/ssh/local_tunnel.dart';
 
 /// Connects to [tunnel] as the remote desktop engine does: its access token
 /// first, when it has one.

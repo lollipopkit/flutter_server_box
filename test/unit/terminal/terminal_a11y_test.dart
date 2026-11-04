@@ -1,6 +1,6 @@
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/ssh/terminal_a11y.dart';
+import 'package:server_box/data/terminal/terminal_a11y.dart';
 import 'package:xterm/core.dart';
 
 Terminal _terminal({int cols = 20, int rows = 4, int maxLines = 1000}) =>

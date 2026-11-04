@@ -12,8 +12,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/generated/l10n/l10n_en.dart';
 import 'package:server_box/view/page/storage/file_browser.dart';
@@ -98,10 +98,9 @@ class _MapBackend implements FileBackend {
   @override
   Future<void> write(
     String path,
-    Stream<List<int>> data, {
+    Stream<List<int>> Function() open, {
     int? size,
     void Function(String staging)? onStaging,
-    Stream<List<int>> Function()? replayData,
   }) async {}
 }
 

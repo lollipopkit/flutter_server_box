@@ -32,7 +32,7 @@ void main() {
       "('s2', 's2', '10.0.1.2'), ('s3', 's3', '10.0.1.3');",
     );
     store = ConnectionStatsStore.instance;
-    await store.init();
+    store.init();
   });
 
   tearDown(closeTestDb);
@@ -60,7 +60,7 @@ void main() {
 
   test('history comes back newest first', () async {
     for (var i = 0; i < 3; i++) {
-      await store.recordConnection(
+      store.recordConnection(
         stat('a', at: base.add(Duration(minutes: i))),
       );
     }
@@ -72,8 +72,8 @@ void main() {
   });
 
   test('one server does not see another', () async {
-    await store.recordConnection(stat('a', at: base));
-    await store.recordConnection(stat('b', at: base));
+    store.recordConnection(stat('a', at: base));
+    store.recordConnection(stat('b', at: base));
 
     expect(history('a').single.serverId, 'a');
     expect(history('b').single.serverId, 'b');
@@ -81,7 +81,7 @@ void main() {
 
   test('a server keeps its newest 100 and no more', () async {
     for (var i = 0; i < 130; i++) {
-      await store.recordConnection(
+      store.recordConnection(
         stat('a', at: base.add(Duration(minutes: i))),
       );
     }
@@ -106,11 +106,11 @@ void main() {
 
   test('the cap is per server, not overall', () async {
     for (var i = 0; i < 100; i++) {
-      await store.recordConnection(
+      store.recordConnection(
         stat('a', at: base.add(Duration(minutes: i))),
       );
     }
-    await store.recordConnection(stat('b', at: base));
+    store.recordConnection(stat('b', at: base));
 
     expect(
       store
@@ -127,13 +127,13 @@ void main() {
     // connection attempt against every server, and paying for a whole-table
     // sweep each time bought nothing in the common case where nothing has
     // expired. It runs once per launch instead.
-    await store.recordConnection(
+    store.recordConnection(
       stat('a', at: DateTime.now().subtract(const Duration(days: 31))),
     );
-    await store.recordConnection(stat('a', at: base));
+    store.recordConnection(stat('a', at: base));
     expect(history('a'), hasLength(2));
 
-    await store.init();
+    store.init();
 
     final kept = history('a');
     expect(kept, hasLength(1));
@@ -145,8 +145,8 @@ void main() {
     // attempt overwrote the first and the counters under-reported. The id is
     // generated now, and this is what that buys.
     final at = base;
-    await store.recordConnection(stat('a', at: at));
-    await store.recordConnection(stat('a', at: at, name: 'renamed'));
+    store.recordConnection(stat('a', at: at));
+    store.recordConnection(stat('a', at: at, name: 'renamed'));
 
     final recent = history('a');
     expect(recent.length, 2);
@@ -156,20 +156,20 @@ void main() {
   test('an attempt against a server that is gone is not recorded', () async {
     // `server_id` is a foreign key. A status refresh can land after the user
     // deleted the server, and the row would only ever be orphaned statistics.
-    await store.recordConnection(stat('deleted-server', at: base));
+    store.recordConnection(stat('deleted-server', at: base));
     expect(history('deleted-server'), isEmpty);
   });
 
   test('the summary counts both outcomes', () async {
-    await store.recordConnection(stat('a', at: base));
-    await store.recordConnection(
+    store.recordConnection(stat('a', at: base));
+    store.recordConnection(
       stat(
         'a',
         at: base.add(const Duration(minutes: 1)),
         result: ConnectionResult.timeout,
       ),
     );
-    await store.recordConnection(
+    store.recordConnection(
       stat('a', at: base.add(const Duration(minutes: 2))),
     );
 
@@ -191,7 +191,7 @@ void main() {
       // `b` being left out of it. With nothing recorded at all `getAllServerStats`
       // returns early on `totals.isEmpty`, and every server is absent from the
       // empty list — which a stub answering `[]` would pass just as well.
-      await store.recordConnection(stat('a', at: base));
+      store.recordConnection(stat('a', at: base));
 
       final all = store.getAllServerStats();
       expect(all.map((e) => e.serverId), ['a']);
@@ -200,11 +200,11 @@ void main() {
   );
 
   test('the overall list names each server as it was named last', () async {
-    await store.recordConnection(stat('a', at: base, name: 'old-name'));
-    await store.recordConnection(
+    store.recordConnection(stat('a', at: base, name: 'old-name'));
+    store.recordConnection(
       stat('a', at: base.add(const Duration(minutes: 1)), name: 'new-name'),
     );
-    await store.recordConnection(stat('b', at: base, name: 'other'));
+    store.recordConnection(stat('b', at: base, name: 'other'));
 
     final all = store.getAllServerStats();
     expect(all.length, 2);
@@ -216,18 +216,18 @@ void main() {
   });
 
   test('clearing one server leaves the others', () async {
-    await store.recordConnection(stat('a', at: base));
-    await store.recordConnection(stat('b', at: base));
+    store.recordConnection(stat('a', at: base));
+    store.recordConnection(stat('b', at: base));
 
-    await store.clearServerStats('a');
+    store.clearServerStats('a');
 
     expect(history('a'), isEmpty);
     expect(history('b'), hasLength(1));
   });
 
   test('clearing everything leaves nothing', () async {
-    await store.recordConnection(stat('a', at: base));
-    await store.clearAll();
+    store.recordConnection(stat('a', at: base));
+    store.clearAll();
     expect(store.getAllServerStats(), isEmpty);
   });
 
@@ -237,7 +237,7 @@ void main() {
       test('the overall list aggregates each server correctly', () async {
         for (var server = 0; server < 4; server++) {
           for (var i = 0; i < 25; i++) {
-            await store.recordConnection(
+            store.recordConnection(
               stat(
                 's$server',
                 at: base.add(Duration(minutes: i)),
@@ -282,7 +282,7 @@ void main() {
         'each server carries at most 20 recent attempts, newest first',
         () async {
           for (var i = 0; i < 40; i++) {
-            await store.recordConnection(
+            store.recordConnection(
               stat('a', at: base.add(Duration(minutes: i))),
             );
           }
@@ -295,8 +295,8 @@ void main() {
       );
 
       test('a rename shows the newest name, not the oldest row\'s', () async {
-        await store.recordConnection(stat('a', at: base, name: 'before'));
-        await store.recordConnection(
+        store.recordConnection(stat('a', at: base, name: 'before'));
+        store.recordConnection(
           stat('a', at: base.add(const Duration(minutes: 1)), name: 'after'),
         );
 
@@ -304,7 +304,7 @@ void main() {
       });
 
       test('a server with only failures reports no last success', () async {
-        await store.recordConnection(
+        store.recordConnection(
           stat('a', at: base, result: ConnectionResult.authFailed),
         );
 

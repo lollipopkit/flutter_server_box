@@ -5,11 +5,13 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/custom.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/model/server/system.dart';
+import 'package:server_box/data/model/server/transport.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
-import 'package:server_box/data/store/server.dart';
+
+export 'package:server_box/data/model/server/transport.dart';
 
 part 'server_private_info.freezed.dart';
 part 'server_private_info.g.dart';
@@ -25,23 +27,6 @@ enum SpiValidationError {
   /// is tried first; what it still may not do is carry neither, which is a
   /// name and an address of nothing.
   noConnectionMethod,
-}
-
-/// Which way of reaching a server is tried first.
-///
-/// Only meaningful when both are configured. Stored **by name**, never by
-/// index: an index silently changes meaning when a case is inserted, and this
-/// outlives the build that wrote it.
-enum ServerTransport {
-  ssh,
-  monitorHttp,
-
-  /// This device, with no connection at all — see [Spi.local]. Never stored
-  /// as a preference: a local server has nothing to order.
-  local;
-
-  static ServerTransport? fromName(Object? name) =>
-      ServerTransport.values.firstWhereOrNull((e) => e.name == name);
 }
 
 class SpiValidationException implements Exception {
@@ -329,8 +314,6 @@ extension Spix on Spi {
     return s == null ? id : '${s.user}@${s.ip}:${s.port}';
   }
 
-  /// Save the [Spi] to the local storage.
-  void save() => ServerStore.instance.put(this);
 
   /// Json encode to string.
   String toJsonString() => json.encode(toJson());

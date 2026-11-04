@@ -3,7 +3,7 @@ import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:meta/meta.dart';
-import 'package:server_box/core/service/scoped_token.dart';
+import 'package:server_box/data/model/server/monitor/agent_endpoint.dart';
 
 /// Per agent endpoint, the device token its last sign-in gave this app.
 ///

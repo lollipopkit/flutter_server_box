@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/model/server/monitor_push.dart';
-import 'package:server_box/data/model/server/monitor_settings.dart';
+import 'package:server_box/data/model/server/monitor/monitor_push.dart';
+import 'package:server_box/data/model/server/monitor/monitor_settings.dart';
 
 /// The app's half of two contracts whose other half is in Rust
 /// (`monitor/src/api/server.rs` and `monitor/src/api/push.rs`).

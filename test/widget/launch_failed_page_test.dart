@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/view/page/launch_failed.dart';
-import 'package:server_box/view/page/rescue_app.dart';
+import 'package:server_box/view/page/rescue/launch_failed.dart';
+import 'package:server_box/view/page/rescue/rescue_app.dart';
 
 /// What a launch that threw shows instead of no window at all (#1633).
 void main() {

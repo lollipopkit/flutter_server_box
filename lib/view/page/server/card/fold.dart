@@ -1,8 +1,8 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:server_box/data/provider/server/reading_fmt.dart';
 import 'package:server_box/view/page/server/card/sizes.dart';
 import 'package:server_box/view/page/server/metric_row.dart';
-import 'package:server_box/view/page/server/reading_text.dart';
 
 /// How many readings the card is not showing, and the way to them and back.
 ///

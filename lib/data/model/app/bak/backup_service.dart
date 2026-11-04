@@ -1,13 +1,13 @@
 import 'dart:convert';
 
-import 'package:computer/computer.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
+import 'package:server_box/data/model/app/bak/backup_reader.dart';
 import 'package:server_box/data/model/app/bak/backup_source.dart';
-import 'package:server_box/data/model/app/bak/utils.dart';
 
 /// Coordinates backup and restore operations with their UI feedback.
 class BackupService {
@@ -259,7 +259,7 @@ class BackupService {
     String? password,
   ) async {
     final plain = await BackupV2.unlock(data, password);
-    return Computer.shared.start(MergeableUtils.fromBytes, plain);
+    return compute(BackupReader.fromBytes, plain);
   }
 
   /// Prompts for the backup password.

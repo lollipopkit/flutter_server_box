@@ -6,7 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/error.dart';
-import 'package:server_box/data/model/server/monitor_overview.dart';
+import 'package:server_box/data/model/server/monitor/monitor_capabilities.dart';
+import 'package:server_box/data/model/server/monitor/monitor_overview.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/monitor_release.dart';
@@ -46,7 +47,7 @@ class MonitorOverviewView extends ConsumerWidget {
         serverProvider(spi.id).select((s) {
           final err = s.status.err;
           if (err is MonitorHttpErr && err.type == MonitorHttpErrType.agentTooOld) return true;
-          return s.agentCapabilities?.features.contains('update') == false;
+          return s.agentCapabilities?.features.contains(MonitorFeature.update) == false;
         }),
       );
       final overview = ref.watch(monitorOverviewProvider(spi.id));
@@ -217,7 +218,7 @@ class _AgentCard extends ConsumerWidget {
         ServerConn.connecting => _line(Icons.hourglass_empty, libL10n.loadingEllipsis, null),
         _ => _line(Icons.link_off, libL10n.disconnected, null),
       };
-    } else if (!overview.offers('alerts')) {
+    } else if (!overview.offers(MonitorFeature.alerts)) {
       rules = _line(Icons.info_outline, l10n.monitorAlertsNotOffered, null);
     } else if (alerts == null) {
       rules = overview.error == null

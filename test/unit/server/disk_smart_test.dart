@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/model/server/disk_smart.dart';
+import 'package:server_box/data/model/server/status/disk_smart.dart';
 
 /// What a drive is judged on beyond SMART's own verdict.
 ///

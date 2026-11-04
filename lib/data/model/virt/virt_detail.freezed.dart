@@ -1152,7 +1152,6 @@ as String?,
 
 }
 
-
 /// @nodoc
 mixin _$VirtGuestDetail {
 
@@ -1165,8 +1164,6 @@ mixin _$VirtGuestDetail {
 @pragma('vm:prefer-inline')
 $VirtGuestDetailCopyWith<VirtGuestDetail> get copyWith => _$VirtGuestDetailCopyWithImpl<VirtGuestDetail>(this as VirtGuestDetail, _$identity);
 
-  /// Serializes this VirtGuestDetail to a JSON map.
-  Map<String, dynamic> toJson();
 
 
 @override
@@ -1174,7 +1171,7 @@ bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtGuestDetail&&const DeepCollectionEquality().equals(other.disks, disks)&&const DeepCollectionEquality().equals(other.nics, nics)&&const DeepCollectionEquality().equals(other.graphics, graphics)&&(identical(other.display, display) || other.display == display)&&const DeepCollectionEquality().equals(other.consoles, consoles)&&(identical(other.description, description) || other.description == description)&&(identical(other.arch, arch) || other.arch == arch)&&(identical(other.machine, machine) || other.machine == machine));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(disks),const DeepCollectionEquality().hash(nics),const DeepCollectionEquality().hash(graphics),display,const DeepCollectionEquality().hash(consoles),description,arch,machine);
 
@@ -1368,11 +1365,11 @@ return $default(_that.disks,_that.nics,_that.graphics,_that.display,_that.consol
 }
 
 /// @nodoc
-@JsonSerializable()
+
 
 class _VirtGuestDetail implements VirtGuestDetail {
   const _VirtGuestDetail({final  List<VirtDisk> disks = const <VirtDisk>[], final  List<VirtNic> nics = const <VirtNic>[], final  List<VirtGraphics> graphics = const <VirtGraphics>[], this.display, final  Set<VirtConsoleKind> consoles = const <VirtConsoleKind>{}, this.description, this.arch, this.machine}): _disks = disks,_nics = nics,_graphics = graphics,_consoles = consoles;
-  factory _VirtGuestDetail.fromJson(Map<String, dynamic> json) => _$VirtGuestDetailFromJson(json);
+  
 
  final  List<VirtDisk> _disks;
 @override@JsonKey() List<VirtDisk> get disks {
@@ -1415,17 +1412,14 @@ class _VirtGuestDetail implements VirtGuestDetail {
 @pragma('vm:prefer-inline')
 _$VirtGuestDetailCopyWith<_VirtGuestDetail> get copyWith => __$VirtGuestDetailCopyWithImpl<_VirtGuestDetail>(this, _$identity);
 
-@override
-Map<String, dynamic> toJson() {
-  return _$VirtGuestDetailToJson(this, );
-}
+
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtGuestDetail&&const DeepCollectionEquality().equals(other._disks, _disks)&&const DeepCollectionEquality().equals(other._nics, _nics)&&const DeepCollectionEquality().equals(other._graphics, _graphics)&&(identical(other.display, display) || other.display == display)&&const DeepCollectionEquality().equals(other._consoles, _consoles)&&(identical(other.description, description) || other.description == description)&&(identical(other.arch, arch) || other.arch == arch)&&(identical(other.machine, machine) || other.machine == machine));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_disks),const DeepCollectionEquality().hash(_nics),const DeepCollectionEquality().hash(_graphics),display,const DeepCollectionEquality().hash(_consoles),description,arch,machine);
 

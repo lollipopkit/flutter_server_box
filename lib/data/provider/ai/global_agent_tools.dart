@@ -10,16 +10,17 @@ import 'package:fl_tty/fl_tty.dart';
 import 'package:meta/meta.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/utils/adhoc_ssh_prompt.dart';
-import 'package:server_box/core/utils/local_device.dart';
-import 'package:server_box/core/utils/server.dart';
-import 'package:server_box/core/utils/ssh_auth.dart';
-import 'package:server_box/core/utils/ssh_exec.dart';
-import 'package:server_box/core/utils/ssh_file_backend.dart';
+import 'package:server_box/core/local/device.dart';
+import 'package:server_box/core/ssh/adhoc_prompt.dart';
+import 'package:server_box/core/ssh/auth.dart';
+import 'package:server_box/core/ssh/client.dart';
+import 'package:server_box/core/ssh/exec.dart';
+import 'package:server_box/core/ssh/host_keys.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/model/app/tab.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/file/backend/ssh.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
@@ -29,7 +30,7 @@ import 'package:server_box/data/provider/ai/agent_target.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/src/rust/api/files.dart' as files;
 
 export 'package:server_box/data/provider/ai/agent_target.dart';
@@ -1332,7 +1333,7 @@ class GlobalAgentToolService {
       // written out here; the backend does all three, and removes its own
       // leftovers when the write fails.
       await backend
-          .write(path, Stream<List<int>>.value(bytes), size: bytes.length)
+          .write(path, () => Stream<List<int>>.value(bytes), size: bytes.length)
           .timeout(_operationTimeout);
       // After, not only before. The write is the long await here, and a server
       // edited while it ran is one whose result must not be reported under the

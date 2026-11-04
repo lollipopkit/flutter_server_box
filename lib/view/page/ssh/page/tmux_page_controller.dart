@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:server_box/data/ssh/tmux/tmux_control_client.dart';
-import 'package:server_box/data/ssh/tmux/tmux_control_models.dart';
+import 'package:server_box/data/terminal/tmux/tmux_control_client.dart';
+import 'package:server_box/data/terminal/tmux/tmux_control_models.dart';
 
 /// Lifecycle phases for the tmux part of an SSH page.
 enum TmuxPageLifecyclePhase {

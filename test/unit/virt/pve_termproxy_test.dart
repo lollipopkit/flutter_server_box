@@ -9,7 +9,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/pve_termproxy.dart';
+import 'package:server_box/core/pve/termproxy.dart';
 import 'package:server_box/data/model/app/error.dart';
 
 import '../../helpers/fake_pve_console.dart';

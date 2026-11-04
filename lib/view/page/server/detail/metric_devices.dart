@@ -1,12 +1,12 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/model/server/net_speed.dart';
+import 'package:server_box/data/model/server/status/net_speed.dart';
+import 'package:server_box/data/provider/server/metric.dart';
+import 'package:server_box/data/provider/server/reading_fmt.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
-import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/chart.dart';
 import 'package:server_box/view/page/server/detail/metric_model.dart';
-import 'package:server_box/view/page/server/reading_text.dart';
 
 /// What one metric's devices are, and what is known about each of them.
 ///
@@ -49,8 +49,8 @@ class MetricDevices {
   /// The devices behind [kind], or null for a metric that has none and for a
   /// machine with only one of them — there is nothing to pick from or to tell
   /// apart.
-  static MetricDevices? of(ServerState si, ServerMetricKind kind) {
-    final ss = si.status;
+  static MetricDevices? of(ServerState srv, ServerMetricKind kind) {
+    final ss = srv.status;
     final h = ss.history;
     switch (kind) {
       case ServerMetricKind.diskIo:
@@ -130,7 +130,7 @@ class MetricDevices {
           // degree of each other, and picking by temperature alone draws them
           // all and drops the SSD.
           defaults: switch ([
-            for (final s in _tempSeries(si))
+            for (final s in _tempSeries(srv))
               if (names.contains(s.label)) s.label,
           ]) {
             // History with the aggregate only — seeded from an agent, before
@@ -236,8 +236,8 @@ double? _latest(List<double?> values) {
   return null;
 }
 
-List<HistorySeries> _tempSeries(ServerState si) {
-  final h = si.status.history;
+List<HistorySeries> _tempSeries(ServerState srv) {
+  final h = srv.status.history;
   if (h.tempsByDevice.isEmpty) {
     return [HistorySeries(libL10n.temperature, ChartPalette.accent, h.temp)];
   }

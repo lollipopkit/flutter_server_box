@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/dist.dart';
-import 'package:server_box/data/model/server/monitor_metrics.dart';
-import 'package:server_box/data/model/server/monitor_metrics_mapper.dart';
+import 'package:server_box/data/model/server/monitor/monitor_metrics.dart';
+import 'package:server_box/data/model/server/monitor/monitor_metrics_mapper.dart';
 import 'package:server_box/data/res/status.dart';
 
 void main() {

@@ -7,11 +7,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
-import 'package:server_box/core/utils/local_files.dart';
-import 'package:server_box/core/utils/sftp_escalation.dart';
-import 'package:server_box/core/utils/sftp_sudo.dart';
-import 'package:server_box/core/utils/sftp_timeout.dart';
-import 'package:server_box/core/utils/ssh_file_backend.dart';
+import 'package:server_box/core/local/files.dart';
+import 'package:server_box/data/model/file/backend/sftp_escalation.dart';
+import 'package:server_box/data/model/file/backend/sftp_sudo.dart';
+import 'package:server_box/data/model/file/backend/sftp_timeout.dart';
+import 'package:server_box/data/model/file/backend/ssh.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 import 'package:server_box/data/model/file/file_issue.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
@@ -20,8 +20,8 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/provider/file_transfer.dart';
 import 'package:server_box/data/provider/server/single.dart';
-import 'package:server_box/data/res/store.dart';
-import 'package:server_box/data/ssh/terminal_source.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/data/terminal/terminal_source.dart';
 import 'package:server_box/src/rust/api/files.dart' as files;
 import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/storage/file_browser.dart';
@@ -524,12 +524,8 @@ extension _Actions on _SftpPageState {
   }
 
   Future<bool> _canWrite(String dir) async {
-    final (code, _) = await _client.execWithPwd(
-      files.filesWritableCommand(dir: dir),
-      context: context,
-      id: '${_spi.id}_sftp_write_probe',
-    );
-    return code == 0;
+    final result = await _client.execWithPwd(files.filesWritableCommand(dir: dir));
+    return result.exitCode == 0;
   }
 
   /// Uploads somewhere this user cannot write: to `/tmp` as themselves, then

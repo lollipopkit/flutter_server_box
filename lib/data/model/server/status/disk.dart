@@ -1,0 +1,328 @@
+
+import 'package:equatable/equatable.dart';
+import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/data/model/server/status/time_seq.dart';
+import 'package:server_box/data/model/server/system.dart';
+
+
+class Disk extends Equatable {
+  final String path;
+  final String? fsTyp;
+  final String mount;
+  final int usedPercent;
+  final BigInt used;
+  final BigInt size;
+  final BigInt avail;
+
+  /// Device name (e.g., sda1, nvme0n1p1)
+  final String? name;
+
+  /// Internal kernel device name
+  final String? kname;
+
+  /// Filesystem UUID
+  final String? uuid;
+
+  /// Child disks (partitions)
+  final List<Disk> children;
+
+  const Disk({
+    required this.path,
+    this.fsTyp,
+    required this.mount,
+    required this.usedPercent,
+    required this.used,
+    required this.size,
+    required this.avail,
+    this.name,
+    this.kname,
+    this.uuid,
+    this.children = const [],
+  });
+
+  // Parsing implementation migrated to the shared Rust library sbm_parser
+
+  /// Whether this describes storage worth showing, rather than a kernel mount,
+  /// a read-only image, a container layer or a swap area.
+  ///
+  /// The parser drops the rest while reading `lsblk`/`df`. A [Disk] built from
+  /// a monitor agent's `disk_details` never went through it, so an agent older
+  /// than a given rule still sends what that rule removes.
+  ///
+  /// A [Disk] carries both a source and, where known, a filesystem type, so each
+  /// is classified in its own context. Otherwise a `df` source named
+  /// `squashfs` is mistaken for that type, while a squashfs whose mount point
+  /// is not under `/snap` is missed if only the source is checked.
+  bool get isStorage =>
+      _shouldCalcSource(path, mount) &&
+      (fsTyp == null || _shouldCalcType(fsTyp!, mount));
+
+  @override
+  List<Object?> get props => [
+    path,
+    name,
+    kname,
+    fsTyp,
+    mount,
+    usedPercent,
+    used,
+    size,
+    avail,
+    uuid,
+    children,
+  ];
+}
+
+class DiskIO extends TimeSeq<DiskIOPiece> {
+  DiskIO({SystemType system = SystemType.linux}) : _system = system;
+
+  DiskIO.copy(DiskIO source) : _system = source._system, super.copy(source) {
+    cachedAllSpeed = source.cachedAllSpeed;
+  }
+
+  SystemType _system;
+
+  /// `/proc/diskstats` reports in 512-byte units regardless of the drive's
+  /// physical sector size
+  static const _sectorBytes = 512;
+
+  /// Issue #314: real block devices only, not loop/ram/dm entries
+  static const _devPrefixes = ['nvme', 'sd', 'vd', 'hd', 'mmcblk', 'sr'];
+
+  @override
+  bool advances(List<DiskIOPiece> next) {
+    if (next.isEmpty || now.isEmpty) return true;
+    return next.first.time > now.first.time;
+  }
+
+  @override
+  void onUpdate() {
+    final (read, write) = allSpeedBytes;
+    cachedAllSpeed = (_fmt(read), _fmt(write));
+  }
+
+  void updateForSystem(List<DiskIOPiece> next, SystemType system) {
+    _system = system;
+    update(next);
+  }
+
+  /// Bytes per second for [dev]. Either both components are present or both
+  /// are `null`: a window with no baseline, no elapsed time, or counters that
+  /// went backwards has no rate at all. The old code divided by that
+  /// zero-width window and rendered `NaN B/s`; clamping to 0 instead would
+  /// have been indistinguishable from a genuinely idle disk.
+  (double?, double?) speedBytes(String dev) {
+    final searchDev = dev.startsWith('/dev/') ? dev.substring(5) : dev;
+    final old = pre.firstWhereOrNull((e) => e.dev == searchDev);
+    final new_ = now.firstWhereOrNull((e) => e.dev == searchDev);
+    if (old == null || new_ == null) return (null, null);
+
+    final elapsed = elapsedSeconds(old.time, new_.time);
+    if (elapsed == null) return (null, null);
+
+    final read = counterDelta(old.sectorsRead, new_.sectorsRead);
+    final write = counterDelta(old.sectorsWrite, new_.sectorsWrite);
+    if (read == null || write == null) return (null, null);
+
+    return (read * _sectorBytes / elapsed, write * _sectorBytes / elapsed);
+  }
+
+  (String?, String?) getSpeed(String dev) {
+    final (read, write) = speedBytes(dev);
+    return (_fmt(read), _fmt(write));
+  }
+
+  /// A partition of the device it is named after: `sda1`, `nvme0n1p2`.
+  static final _partition = RegExp(r'^p?\d+$');
+
+  /// The devices a rate is read from: real disks, without the partitions
+  /// sitting on them.
+  ///
+  /// `/proc/diskstats` lists `sda` and each of `sda1`, `sda2`…, and every one
+  /// of those rows counts the same bytes, so summing all of them reported a
+  /// machine as writing twice what it wrote. A partition whose whole disk is
+  /// absent from the list is kept: it is then the only row those bytes have.
+  ///
+  /// The Linux prefix filter keeps out the loop, ram and device-mapper rows.
+  /// Windows and BSD samplers already return the logical disks the UI shows,
+  /// whose names do not use Linux block-device prefixes (`C:`, `D:`, mount
+  /// paths, ...).
+  List<String> get devices {
+    if (_system != SystemType.linux) return [for (final e in now) e.dev];
+    final named = [
+      for (final e in now)
+        if (_devPrefixes.any(e.dev.startsWith)) e.dev,
+    ];
+    return [
+      for (final dev in named)
+        if (!named.any(
+          (parent) =>
+              parent.length < dev.length &&
+              dev.startsWith(parent) &&
+              _partition.hasMatch(dev.substring(parent.length)),
+        ))
+          dev,
+    ];
+  }
+
+  /// Summed across [devices]; `null` when none produced a reading
+  (double?, double?) get allSpeedBytes {
+    double? read, write;
+    for (final dev in devices) {
+      final (r, w) = speedBytes(dev);
+      if (r == null || w == null) continue;
+      read = (read ?? 0) + r;
+      write = (write ?? 0) + w;
+    }
+    return (read, write);
+  }
+
+  (String?, String?) cachedAllSpeed = (null, null);
+
+  static String? _fmt(double? bytesPerSec) =>
+      bytesPerSec == null ? null : '${bytesPerSec.bytes2Str}/s';
+
+}
+
+class DiskIOPiece extends TimeSeqIface<DiskIOPiece> {
+  final String dev;
+  final int sectorsRead;
+  final int sectorsWrite;
+  final int time;
+
+  DiskIOPiece({
+    required this.dev,
+    required this.sectorsRead,
+    required this.sectorsWrite,
+    required this.time,
+  });
+
+  @override
+  bool same(DiskIOPiece other) => dev == other.dev;
+}
+
+class DiskUsage {
+  final BigInt used;
+  final BigInt size;
+
+  DiskUsage({required this.used, required this.size});
+
+  double get usedPercent {
+    // Avoid division by zero
+    if (size == BigInt.zero) return 0;
+    return used / size * 100;
+  }
+}
+
+bool _shouldCalcSource(String source, String mount) {
+  // Checked before the inclusions below, so that a source spelled like a block
+  // device cannot bring these back: a host that exposes many device nodes
+  // publishes one devtmpfs row per node, two dozen lines all claiming 0 B used
+  // of the same size.
+  if (_isKernelMount(mount)) return false;
+  if (_isReadOnlyImageMount(mount)) return false;
+  if (_isMacosSystemVolume(mount)) return false;
+  if (_isSwapMount(mount)) return false;
+
+  if (source.startsWith('/dev')) return true;
+  // Some NAS may have mounted path like this `//192.168.1.2/`
+  if (source.startsWith('//')) return true;
+  if (mount.startsWith('/mnt')) return true;
+
+  if (_isVirtualFs(source)) return false;
+
+  return true;
+}
+
+bool _shouldCalcType(String fsType, String mount) {
+  if (_isReadOnlyImageType(fsType) || fsType == 'swap') return false;
+  return _shouldCalcSource(fsType, mount);
+}
+
+/// A kernel-backed filesystem with nothing stored behind it, by exact name.
+///
+/// Matched exactly rather than by prefix, because [fs] is a *source* under
+/// `df` and a source carries user-chosen text: a ZFS pool named `tmpfspool`,
+/// or an export from an NFS host named `shm-nas`, each begin with one of these
+/// and each is storage.
+///
+/// `overlay` and `overlayfs` are the current and pre-4.0 spellings of docker's
+/// own layers. `fuse-overlayfs` is what a rootless podman or docker mounts,
+/// one row per container carrying the host filesystem's own numbers.
+///
+/// `ramfs` is systemd's credential mounts, one per unit that takes a
+/// credential. Most `df` builds report `-` for its usage, which fails to parse
+/// and drops the row before any of this; naming it here does not depend on
+/// that, since a build reporting `0%` instead leaves a row of 0 B.
+///
+/// Mirrors `is_virtual_fs` in `crates/sbm_parser/src/types.rs`.
+bool _isVirtualFs(String fs) => const {
+  'shm',
+  'tmpfs',
+  'ramfs',
+  'devtmpfs',
+  'overlay',
+  'overlayfs',
+  'fuse-overlayfs',
+}.contains(fs);
+
+/// A read-only image mounted as a filesystem — a snap's squashfs, the same
+/// image handed to a container through `snapfuse`, a mounted ISO — rather than
+/// storage anyone manages. Each is full by construction, so it reports 100%
+/// and contributes its whole size to the total; a snap-heavy Ubuntu publishes
+/// twenty of them, which is the entire device list.
+///
+/// Matched on the image, never on `/dev/loop`: a loop device carrying a
+/// writable filesystem is storage someone mounted on purpose.
+///
+/// Mirrors `is_read_only_image_type` in `crates/sbm_parser/src/types.rs`.
+bool _isReadOnlyImageType(String fsType) => const {
+  'squashfs',
+  'erofs',
+  'iso9660',
+  'snapfuse',
+  'fuse.snapfuse',
+}.contains(fsType);
+
+/// The mount points such images live at. On macOS: the cryptexes the OS
+/// mounts for simulator runtimes and toolchains, and the wrapper an iOS app
+/// installed on a Mac runs from, each full or nearly so by construction.
+///
+/// Mirrors `is_read_only_image_mount` in `crates/sbm_parser/src/types.rs`.
+bool _isReadOnlyImageMount(String mount) => const [
+  '/snap/',
+  '/var/lib/snapd/snap/',
+  '/private/var/run/com.apple.security.cryptexd/',
+  '/private/var/folders/',
+].any(mount.startsWith);
+
+/// A volume macOS creates and manages for itself: `Preboot`, `VM`, `Update`,
+/// `Hardware` and the rest under `/System/Volumes`, and the recovery volume.
+/// `/System/Volumes/Data` is kept: it is where everything the user writes is.
+///
+/// Mirrors `is_macos_system_volume` in `crates/sbm_parser/src/types.rs`.
+bool _isMacosSystemVolume(String mount) {
+  if (mount == '/Volumes/Recovery') return true;
+  const prefix = '/System/Volumes/';
+  if (!mount.startsWith(prefix)) return false;
+  final rest = mount.substring(prefix.length);
+  return rest != 'Data' && !rest.startsWith('Data/');
+}
+
+/// A swap area, which `lsblk` lists beside filesystems. It has no mount point
+/// and no `FSSIZE`, so the row reads `0 B / 0 B`, and swap is reported on its
+/// own from `/proc/meminfo` anyway. `df` lists only mounted filesystems and
+/// never produces one of these.
+bool _isSwapMount(String mount) => mount == '[SWAP]';
+
+/// `/dev`, `/proc`, `/sys`, and anything mounted inside them.
+///
+/// `/run` is deliberately absent: several distributions mount removable media
+/// under `/run/media/<user>`, which is a disk someone wants to see. The tmpfs
+/// rows `/run` otherwise carries are excluded by their source instead.
+bool _isKernelMount(String mount) {
+  for (final prefix in const ['/dev', '/proc', '/sys']) {
+    if (mount == prefix || mount.startsWith('$prefix/')) return true;
+  }
+  return false;
+}

@@ -5,7 +5,7 @@ import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 import 'package:server_box/core/utils/drop_zones.dart';
 import 'package:server_box/data/res/misc.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 
 abstract final class MethodChans {
   static const _channel = MethodChannel('${Miscs.pkgName}/main_chan');

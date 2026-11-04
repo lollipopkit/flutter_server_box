@@ -19,7 +19,7 @@ import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/ssh_exec.dart';
+import 'package:server_box/core/ssh/exec.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 
 import '../helpers/rust_lib_helper.dart';

@@ -1,9 +1,9 @@
 import 'dart:collection';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/data/admin/user_manager.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/system_user.dart';
-import 'package:server_box/data/service/user_manager.dart';
 import 'package:server_box/src/rust/api/users.dart' as ffi;
 
 import '../../helpers/rust_lib_helper.dart';

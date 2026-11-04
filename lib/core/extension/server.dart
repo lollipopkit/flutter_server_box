@@ -5,8 +5,7 @@ import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/provider/server/single.dart';
-import 'package:server_box/data/res/store.dart';
-import 'package:server_box/view/widget/dist_icon.dart';
+import 'package:server_box/data/store/stores.dart';
 
 extension LogoExt on ServerState {
   /// The large image at the top of this server's page, or null for none.
