@@ -6,7 +6,7 @@ import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/service/tray.dart';
 import 'package:server_box/data/model/app/tray.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 
 /// What only a desktop has, which for now is the status icon.
 ///

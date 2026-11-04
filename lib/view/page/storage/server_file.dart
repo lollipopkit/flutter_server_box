@@ -5,16 +5,17 @@ import 'package:fl_tty/fl_tty.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/utils/local_file_backend.dart';
-import 'package:server_box/core/utils/monitor_file_backend.dart';
 import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/file/backend/local.dart';
+import 'package:server_box/data/model/file/backend/monitor.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
-import 'package:server_box/data/model/server/monitor_access.dart';
+import 'package:server_box/data/model/server/capabilities.dart';
+import 'package:server_box/data/model/server/monitor/monitor_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/provider/server/single.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/view/page/storage/file_browser.dart';
 import 'package:server_box/view/page/storage/file_edit.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
@@ -39,7 +40,7 @@ import 'package:server_box/view/page/storage/show_transfers.dart';
 /// asked here is whether the *agent* can serve them.
 bool serverFilesUseAgent(Spi spi, MonitorAccess? granted) {
   if (spi.monitorOn == null || granted?.ok != true) return false;
-  return spi.sshOn == null || spi.transport == ServerTransport.monitorHttp;
+  return ServerCapabilities.filesViaAgent(spi);
 }
 
 /// A server's files, whichever way they are reached.

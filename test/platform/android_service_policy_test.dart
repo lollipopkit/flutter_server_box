@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/data/res/misc.dart';
-import 'package:server_box/data/ssh/android_service_policy.dart';
+import 'package:server_box/data/terminal/android_service_policy.dart';
 
 void main() {
   final binding = TestWidgetsFlutterBinding.ensureInitialized();

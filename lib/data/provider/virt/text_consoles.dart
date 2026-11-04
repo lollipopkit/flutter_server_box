@@ -1,6 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/data/provider/session_keep_alive.dart';
-import 'package:server_box/data/ssh/terminal_session.dart';
+import 'package:server_box/data/terminal/terminal_session.dart';
 
 part 'text_consoles.g.dart';
 

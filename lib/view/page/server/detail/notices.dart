@@ -16,11 +16,11 @@ extension on _ServerDetailPageState {
   /// that failed draws the same block, and grows it into this — see
   /// [ServerNoticeForm.page]. The actions are this page's own, and come in
   /// under it the way the facts come in beside the readings.
-  Widget _buildNothingYet(ServerState si) {
-    final notice = ServerNotice.of(si);
+  Widget _buildNothingYet(ServerState srv) {
+    final notice = ServerNotice.of(srv);
 
     return _hosted(
-      si,
+      srv,
       Stack(
         children: [
           ListView(
@@ -40,7 +40,7 @@ extension on _ServerDetailPageState {
                   form: ServerNoticeForm.page,
                   openness: 1,
                 ),
-                byCard: ServerNotice.onCard(si) != null,
+                byCard: ServerNotice.onCard(srv) != null,
                 from: const Offset(0, 24),
               ),
               _entering(
@@ -54,7 +54,7 @@ extension on _ServerDetailPageState {
                         alignment: WrapAlignment.center,
                         spacing: 9,
                         runSpacing: 9,
-                        children: _actionsOf(si, notice),
+                        children: _actionsOf(srv, notice),
                       ),
                       if (notice.hint.isNotEmpty) ...[
                         UIs.height13,
@@ -80,8 +80,8 @@ extension on _ServerDetailPageState {
               right: 0,
               bottom: 0,
               child: ServerFuncBar(
-                spi: si.spi,
-                btns: serverDetailFuncBtns(si).entries,
+                spi: srv.spi,
+                btns: serverDetailFuncBtns(srv).entries,
               ),
             ),
         ],
@@ -90,7 +90,7 @@ extension on _ServerDetailPageState {
   }
 
   /// What changes the answer, for the state [notice] found the machine in.
-  List<Widget> _actionsOf(ServerState si, ServerNotice notice) {
+  List<Widget> _actionsOf(ServerState srv, ServerNotice notice) {
     final retry = Btn.elevated(
       text: libL10n.retry,
       icon: const Icon(Icons.refresh, size: 18),
@@ -98,13 +98,13 @@ extension on _ServerDetailPageState {
       // button fills whatever it is given and reads as a list row.
       mainAxisSize: MainAxisSize.min,
       gap: 8,
-      onTap: () => _reconnect(si),
+      onTap: () => _reconnect(srv),
     );
     final edit = Btn.text(
       text: libL10n.edit,
       onTap: () => ServerEditPage.route.go(
         context,
-        args: ServerEditArgs(si.spi),
+        args: ServerEditArgs(srv.spi),
       ),
     );
 
@@ -118,7 +118,7 @@ extension on _ServerDetailPageState {
           icon: const Icon(Icons.lock_open, size: 18),
           mainAxisSize: MainAxisSize.min,
           gap: 8,
-          onTap: () => _allowInsecure(si),
+          onTap: () => _allowInsecure(srv),
         ),
         edit,
       ],
@@ -127,10 +127,10 @@ extension on _ServerDetailPageState {
         // The title above is the error's own line; this is everything
         // around it — what the app was doing, and the copy button a bug
         // report needs.
-        if (si.status.err case final err?)
+        if (srv.status.err case final err?)
           Btn.text(
             text: l10n.viewError,
-            onTap: () => _showErrDetail(si, err),
+            onTap: () => _showErrDetail(srv, err),
           ),
         edit,
       ],
@@ -155,13 +155,13 @@ ${err.message ?? 'null'}
   /// `monitorHttp` — and `MonitorHttpCredential.==` counts `allowInsecure` —
   /// so `updateServer` clears the retry limiter and refreshes on its own.
   /// Reconnecting here as well would be a second attempt at the same thing.
-  Future<void> _allowInsecure(ServerState si) async {
-    final monitor = si.spi.monitorHttp;
+  Future<void> _allowInsecure(ServerState srv) async {
+    final monitor = srv.spi.monitorHttp;
     if (monitor == null) return;
     try {
       await ref
           .read(serversProvider.notifier)
-          .updateServer(si.spi, si.spi.copyWith(monitorHttp: monitor.allowingInsecure()));
+          .updateServer(srv.spi, srv.spi.copyWith(monitorHttp: monitor.allowingInsecure()));
     } catch (e, s) {
       if (mounted) context.showErrDialog(e, s);
     }
@@ -170,9 +170,9 @@ ${err.message ?? 'null'}
   /// Clears the retry limiter first: the user asking again *is* the new
   /// information, and without this the request is dropped by the backoff that
   /// the previous failures installed.
-  void _reconnect(ServerState si) {
-    TryLimiter.reset(si.spi.id);
-    ref.read(serversProvider.notifier).refresh(spi: si.spi);
+  void _reconnect(ServerState srv) {
+    TryLimiter.reset(srv.spi.id);
+    ref.read(serversProvider.notifier).refresh(spi: srv.spi);
   }
 
   /// That every figure on this page was taken a while ago, and the way to ask
@@ -184,11 +184,11 @@ ${err.message ?? 'null'}
   ///
   /// The line the card in the list draws, at the far end of its movement —
   /// see [ServerCardStale].
-  Widget? _buildStaleCard(ServerState si) {
-    if (si.status.err != null) return null;
-    final at = serverStaleSince(si);
+  Widget? _buildStaleCard(ServerState srv) {
+    if (srv.status.err != null) return null;
+    final at = serverStaleSince(srv);
     if (at == null) return null;
-    return ServerCardStale(at: at, spi: si.spi, openness: 1);
+    return ServerCardStale(at: at, spi: srv.spi, openness: 1);
   }
 
   /// Why there is no row of things to do, for a server whose agent refuses
@@ -200,9 +200,9 @@ ${err.message ?? 'null'}
   /// Only for a server reached *only* through an agent. One that also has SSH
   /// has the row anyway, so there is nothing to explain — and a server with no
   /// agent at all is not what this is about.
-  Widget? _buildNoRemoteAccessCard(ServerState si) {
-    if (si.spi.monitorHttp == null || si.spi.ssh != null) return null;
-    if (si.agentAccess == null) return null;
+  Widget? _buildNoRemoteAccessCard(ServerState srv) {
+    if (srv.spi.monitorHttp == null || srv.spi.ssh != null) return null;
+    if (srv.agentAccess == null) return null;
 
     return CardX(
       child: ListTile(
@@ -220,33 +220,33 @@ ${err.message ?? 'null'}
   ///
   /// The block the card in the list draws, at the far end of its movement —
   /// see [ServerNoticeForm.card]. Pressing it is the way to the whole error.
-  Widget? _buildErrCard(ServerState si) {
-    final err = si.status.err;
+  Widget? _buildErrCard(ServerState srv) {
+    final err = srv.status.err;
     if (err == null) return null;
     return ServerCardNotice(
-      notice: ServerNotice.of(si),
+      notice: ServerNotice.of(srv),
       form: ServerNoticeForm.card,
       openness: 1,
-      onTap: () => _showErrDetail(si, err),
+      onTap: () => _showErrDetail(srv, err),
     );
   }
 
   /// A server that has reported before shows its failure here rather than on
   /// the empty page, so the same one-tap answer has to be offered in both.
-  void _showErrDetail(ServerState si, Err err) {
+  void _showErrDetail(ServerState srv, Err err) {
     final md = _errMarkdown(err);
     context.showRoundDialog(
       title: libL10n.error,
       child: SingleChildScrollView(child: SimpleMarkdown(data: md)),
       actions: [
-        if (si.spi.monitorHttp?.needsInsecureOptIn == true)
+        if (srv.spi.monitorHttp?.needsInsecureOptIn == true)
           TextButton(
             // Closes the dialog itself and leaves the work to the page: an
             // `onPressed` replaces the navigator the button would have
             // resolved on its own — see the dialog rules in CLAUDE.md.
             onPressed: () {
               context.popDialog();
-              _allowInsecure(si);
+              _allowInsecure(srv);
             },
             child: Text(l10n.monitorAllowInsecureHttp),
           ),

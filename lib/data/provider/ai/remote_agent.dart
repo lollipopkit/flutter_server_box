@@ -3,9 +3,10 @@ import 'dart:async';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:server_box/core/llm/scope.dart';
-import 'package:server_box/data/model/server/monitor_agent.dart';
+import 'package:server_box/data/model/server/monitor/monitor_agent.dart';
+import 'package:server_box/data/model/server/monitor/monitor_capabilities.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/provider/ai/agent_scope.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/monitor_http.dart';
 import 'package:server_box/data/provider/server/single.dart';
@@ -36,7 +37,7 @@ abstract final class RemoteAgentTasks {
 
   /// Per server id, the permission mode a new task runs in unless another is
   /// picked, and whether `bypass` may be, as its list last said.
-  static final modes = ValueNotifier<Map<String, ({String defaultMode, bool bypassAllowed})>>(const {});
+  static final modes = ValueNotifier<Map<String, ({AgentPermissionMode defaultMode, bool bypassAllowed})>>(const {});
 
   /// Per server id, why its list could not be read, for the history to say.
   static final errors = ValueNotifier<Map<String, String>>(const {});
@@ -74,7 +75,7 @@ abstract final class RemoteAgentTasks {
 
   static bool _offers(ServerState s) {
     final caps = s.agentCapabilities;
-    return caps != null && caps.features.contains('agent_mode') && caps.access.ok;
+    return caps != null && caps.features.contains(MonitorFeature.agentMode) && caps.access.ok;
   }
 
   /// The client for server [serverId]'s agent, or null when it has none.

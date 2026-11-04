@@ -3,7 +3,7 @@ import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/utils/refresh_interval.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/res/default.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 
 /// Move a file from one place to another.
 ///

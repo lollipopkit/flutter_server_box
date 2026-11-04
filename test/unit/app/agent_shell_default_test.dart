@@ -1,12 +1,12 @@
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show ChatMeta, LlmStores;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/llm/scope.dart';
 import 'package:server_box/data/model/app/float_shell.dart';
+import 'package:server_box/data/provider/ai/agent_scope.dart';
 import 'package:server_box/data/provider/ai/agent_shell.dart';
 import 'package:server_box/data/provider/app/terminal_shell.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 
 import '../../helpers/test_db.dart';
 

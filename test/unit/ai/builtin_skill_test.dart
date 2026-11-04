@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/llm/host.dart';
+import 'package:server_box/view/agent/host.dart';
 
 import '../../helpers/llm_lib_helper.dart';
 

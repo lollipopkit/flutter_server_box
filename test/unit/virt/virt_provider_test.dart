@@ -25,7 +25,7 @@ import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/virt/pve_backend.dart';
 import 'package:server_box/data/provider/virt/virt.dart';
 import 'package:server_box/data/res/status.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/src/rust/api/script.dart' as script;
 import 'package:server_box/view/page/virt/console_connect.dart';
 

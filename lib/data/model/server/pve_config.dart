@@ -130,7 +130,7 @@ abstract class PveConfig with _$PveConfig {
   /// `pveIgnoreCert` is read and dropped: it accepted any certificate, and
   /// what replaces it is confirming one on the next connection, which is what
   /// no pin means.
-  // TODO(migration): remove after 5 releases, with every caller.
+  // TODO(migration): remove after 5 releases from v1.0.1715, with every caller.
   static PveConfig? fromLegacyRecord(Object? record) {
     if (record is! Map) return null;
     final custom = record['custom'];
@@ -165,7 +165,7 @@ abstract class PveConfig with _$PveConfig {
   /// the only thing an older build can express is accepting every
   /// certificate — which would send the login to whoever answers. An older
   /// build reaching a self-signed host needs its user to opt in there.
-  // TODO(migration): remove after 5 releases, with [mergeLegacy].
+  // TODO(migration): remove after 5 releases from v1.0.1715, with [mergeLegacy].
   Map<String, Object?> toLegacyCustom() => {
     'pveAddr': addr,
     'pveIgnoreCert': false,
@@ -174,7 +174,7 @@ abstract class PveConfig with _$PveConfig {
 
   /// [server] — a server record, as `Spi.toJson` or decoded JSON — with
   /// [cfg]'s [toLegacyCustom] fields written into its `custom`.
-  // TODO(migration): remove after 5 releases, with [toLegacyCustom].
+  // TODO(migration): remove after 5 releases from v1.0.1715, with [toLegacyCustom].
   static Map<String, Object?> withLegacyCustom(Map server, PveConfig cfg) {
     final out = Map<String, Object?>.from(server);
     final custom = out['custom'];
@@ -202,7 +202,7 @@ abstract class PveConfig with _$PveConfig {
   /// - The same address keeps the auth method, token and pin; the password
   ///   is the legacy one for a password login, and a token login has none
   ///   and keeps none.
-  // TODO(migration): remove after 5 releases, with [toLegacyCustom].
+  // TODO(migration): remove after 5 releases from v1.0.1715, with [toLegacyCustom].
   static PveConfig mergeLegacy(PveConfig? existing, PveConfig legacy) {
     if (existing == null) return legacy;
     if (existing.addr.trim() != legacy.addr.trim()) return legacy;

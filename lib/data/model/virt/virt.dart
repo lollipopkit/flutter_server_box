@@ -2,7 +2,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:server_box/core/utils/version.dart';
 
 part 'virt.freezed.dart';
-part 'virt.g.dart';
 
 /// Which kind of hypervisor manager a virtualization host is reached as.
 enum VirtHostKind {
@@ -127,8 +126,6 @@ abstract class VirtNode with _$VirtNode {
     Duration? uptime,
   }) = _VirtNode;
 
-  factory VirtNode.fromJson(Map<String, dynamic> json) =>
-      _$VirtNodeFromJson(json);
 }
 
 /// A virtualization host: one server, and what manages its guests.
@@ -148,8 +145,6 @@ abstract class VirtHost with _$VirtHost {
     @Default(<VirtNode>[]) List<VirtNode> nodes,
   }) = _VirtHost;
 
-  factory VirtHost.fromJson(Map<String, dynamic> json) =>
-      _$VirtHostFromJson(json);
 
   /// More than one node, so a guest's node is worth naming.
   bool get isCluster => nodes.length > 1;
@@ -207,8 +202,6 @@ abstract class VirtGuest with _$VirtGuest {
     @Default(<VirtPowerAction>{}) Set<VirtPowerAction> actions,
   }) = _VirtGuest;
 
-  factory VirtGuest.fromJson(Map<String, dynamic> json) =>
-      _$VirtGuestFromJson(json);
 }
 
 /// One reading of a guest's usage. Throughputs are rates, bytes per second.
@@ -232,8 +225,6 @@ abstract class VirtStats with _$VirtStats {
     double? netOut,
   }) = _VirtStats;
 
-  factory VirtStats.fromJson(Map<String, dynamic> json) =>
-      _$VirtStatsFromJson(json);
 }
 
 /// What the app can do with a host. The UI shows or hides by these, never by
@@ -383,8 +374,6 @@ abstract class VirtCapabilities with _$VirtCapabilities {
     @Default(false) bool networkRestart,
   }) = _VirtCapabilities;
 
-  factory VirtCapabilities.fromJson(Map<String, dynamic> json) =>
-      _$VirtCapabilitiesFromJson(json);
 }
 
 /// What one load of a host yields.

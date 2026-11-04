@@ -56,22 +56,26 @@ final class SshCredential {
   /// A private key on this machine's filesystem, as an `IdentityFile` line
   /// names one. Read when the connection is made, never copied into the app.
   ///
-  /// Only ever set by `~/.ssh/config` import, which is desktop-only — there is
-  /// no such file to point at on a phone. This remains the first path for
-  /// compatibility with older data and UI code; [identityFiles] preserves the
-  /// full ordered OpenSSH list when more than one directive applies.
+  /// Read from records written before [identityFiles] held every path; this
+  /// build writes only the list. Read [resolvedIdentityFiles].
+  ///
+  /// TODO(migration): drop, and its key in [toJson], once no supported build
+  /// reads `keyPath` alone (it was the only field before v1.0.1538).
+  @JsonKey(includeToJson: false)
   final String? keyPath;
 
-  /// Ordered `IdentityFile` paths. Null in legacy data and for stored keys.
+  /// Ordered `IdentityFile` paths, as an `~/.ssh/config` import found them:
+  /// desktop-only, never copied into the app. Null for a stored key.
   final List<String>? identityFiles;
 
   /// Fallback `user@host:port` tried when [ip] is unreachable
   final String? alterUrl;
 
-  /// [id] of the first jump server.
+  /// The first jump server, from records written before [jumpIds]; this build
+  /// writes only the list. Read [resolvedJumpIds].
   ///
-  /// Kept for compatibility with old storage and imports. New code should read
-  /// [resolvedJumpIds] so failover candidates are included.
+  /// TODO(migration): drop with [keyPath], and its key in [toJson].
+  @JsonKey(includeToJson: false)
   final String? jumpId;
 
   /// Ordered jump-server candidates.
@@ -132,7 +136,13 @@ final class SshCredential {
   factory SshCredential.fromJson(Map<String, dynamic> json) =>
       _$SshCredentialFromJson(json);
 
-  Map<String, dynamic> toJson() => _$SshCredentialToJson(this);
+  /// The single legacy fields too, from the lists, for a build that reads only
+  /// them (see [keyPath]).
+  Map<String, dynamic> toJson() => {
+    ..._$SshCredentialToJson(this),
+    'keyPath': ?resolvedIdentityFiles.firstOrNull,
+    'jumpId': ?resolvedJumpIds.firstOrNull,
+  };
 
   /// [jumpIds] first, falling back
   /// to the legacy single [jumpId] only when that list yields nothing.

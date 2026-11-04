@@ -3,8 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
-import 'package:flutter/widgets.dart';
-import 'package:server_box/data/helper/ssh_decoder.dart';
+import 'package:server_box/core/ssh/decoder.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/src/rust/api/script.dart' as script_ffi;
@@ -12,21 +11,6 @@ import 'package:server_box/src/rust/api/script.dart' as script_ffi;
 typedef OnStdout = void Function(String data, SSHSession session);
 typedef OnStderr = void Function(String data, SSHSession session);
 typedef OnStdin = void Function(SSHSession session);
-
-final class SSHExecResult {
-  final int? exitCode;
-  final String stdout;
-  final String stderr;
-
-  const SSHExecResult({
-    required this.exitCode,
-    required this.stdout,
-    required this.stderr,
-  });
-
-  bool get succeeded =>
-      exitCode == 0 || (exitCode == null && stderr.isEmpty);
-}
 
 Future<void> _collectOutput(
   SSHSession session, {
@@ -62,18 +46,18 @@ Future<void> _collectOutput(
 String _decodeOutput(
   List<int> bytes, {
   required bool isWindows,
-  String? context,
+  String? logLabel,
   String label = 'output',
 }) {
   try {
     return SSHDecoder.decode(
       bytes,
       isWindows: isWindows,
-      context: context != null ? '$context ($label)' : label,
+      context: logLabel != null ? '$logLabel ($label)' : label,
     );
   } on FormatException catch (e) {
-    throw Exception(
-      'Failed to decode $label${context != null ? ' [$context]' : ''}: $e',
+    throw FormatException(
+      'Failed to decode $label${logLabel != null ? ' [$logLabel]' : ''}: ${e.message}',
     );
   }
 }
@@ -130,13 +114,13 @@ extension SSHClientX on SSHClient {
     return (session, utf8.decode(result.takeBytes()));
   }
 
-  Future<(int?, String)> execWithPwd(
+  /// [script] on the session's stdin, saying whether sudo rejected the
+  /// password the script carries.
+  Future<SudoExecResult> execWithPwd(
     String script, {
     String? entry,
-    BuildContext? context,
     OnStdout? onStdout,
     OnStderr? onStderr,
-    required String id,
   }) async {
     final stderr = StringBuffer();
 
@@ -154,31 +138,32 @@ extension SSHClientX on SSHClient {
       stderr: false,
     );
 
-    // Read off the whole stream: a phrase can arrive split across two chunks.
-    if (script_ffi.sudoPasswordRejected(stderr: stderr.toString())) {
-      return (kSudoPasswordRejected, output);
-    }
-    return (await _exitCodeOf(session), output);
+    final err = stderr.toString();
+    return SudoExecResult(
+      ExecResult(exitCode: await _exitCodeOf(session), stdout: output, stderr: err),
+      // Read off the whole stream: a phrase can arrive split across two chunks.
+      rejected: script_ffi.sudoPasswordRejected(stderr: err),
+    );
   }
 
   Future<String> runSafe(
     String command, {
     SystemType? systemType,
-    String? context,
+    String? logLabel,
   }) async {
     final result = await run(command);
     return _decodeOutput(
       result,
       isWindows: systemType == SystemType.windows,
-      context: context,
+      logLabel: logLabel,
     );
   }
 
-  Future<SSHExecResult> execSafe(
+  Future<ExecResult> execSafe(
     void Function(SSHSession session) callback, {
     required String entry,
     SystemType? systemType,
-    String? context,
+    String? logLabel,
   }) async {
     final stdoutBuilder = BytesBuilder(copy: false);
     final stderrBuilder = BytesBuilder(copy: false);
@@ -198,17 +183,17 @@ extension SSHClientX on SSHClient {
     final stdout = _decodeOutput(
       stdoutBuilder.takeBytes(),
       isWindows: isWindows,
-      context: context,
+      logLabel: logLabel,
       label: 'stdout',
     );
     final stderr = _decodeOutput(
       stderrBuilder.takeBytes(),
       isWindows: isWindows,
-      context: context,
+      logLabel: logLabel,
       label: 'stderr',
     );
 
-    return SSHExecResult(
+    return ExecResult(
       exitCode: await _exitCodeOf(session),
       stdout: stdout,
       stderr: stderr,

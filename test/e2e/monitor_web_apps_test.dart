@@ -12,7 +12,7 @@ library;
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/provider/server/monitor_http.dart';
 
 import '../helpers/ssh_e2e.dart';

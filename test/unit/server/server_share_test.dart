@@ -16,15 +16,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/server_share.dart';
 import 'package:server_box/data/model/app/share/server_share.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/pve.dart';
 import 'package:server_box/data/store/server.dart';
+import 'package:server_box/data/store/stores.dart';
 
 import '../../helpers/test_db.dart';
 
@@ -99,8 +99,8 @@ void main() {
         ),
       );
 
-      expect(share.spi.ssh?.jumpId, isNull);
-      expect(share.spi.ssh?.keyPath, isNull);
+      expect(share.spi.ssh?.resolvedJumpIds.firstOrNull, isNull);
+      expect(share.spi.ssh?.resolvedIdentityFiles.firstOrNull, isNull);
       expect(share.spi.bmc?.credId, isNull);
       // The address is not a reference and survives; only the account goes.
       expect(share.spi.bmc?.addr, 'https://bmc.local');

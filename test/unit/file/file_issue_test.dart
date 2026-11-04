@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/sftp_escalation.dart';
+import 'package:server_box/data/model/file/backend/sftp_escalation.dart';
 import 'package:server_box/data/model/file/file_issue.dart';
 
 void main() {

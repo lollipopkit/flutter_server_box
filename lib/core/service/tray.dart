@@ -12,7 +12,7 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/selection.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/misc.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:window_manager/window_manager.dart';
 
 /// The desktop status icon, and the window behaviour that makes it worth

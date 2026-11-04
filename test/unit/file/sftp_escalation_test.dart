@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/sftp_escalation.dart';
+import 'package:server_box/data/model/file/backend/sftp_escalation.dart';
 
 class _Escalation implements SftpEscalation {
   _Escalation({

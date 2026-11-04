@@ -5,15 +5,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/tab.dart';
-import 'package:server_box/data/model/server/monitor_access.dart';
+import 'package:server_box/data/model/server/monitor/monitor_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/terminal.dart';
-import 'package:server_box/data/ssh/terminal_session.dart';
-import 'package:server_box/data/ssh/terminal_source.dart';
+import 'package:server_box/data/terminal/terminal_session.dart';
+import 'package:server_box/data/terminal/terminal_source.dart';
 import 'package:xterm/ui.dart' hide TerminalThemes;
 
 /// Runs [snippet] on [spi] in a terminal, without leaving the page.

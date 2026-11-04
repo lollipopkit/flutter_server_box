@@ -6,10 +6,10 @@ import 'dart:typed_data';
 import 'package:fl_tty/fl_tty.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:server_box/core/ssh/ish_proxy_socket.dart';
 import 'package:server_box/core/tty.dart';
-import 'package:server_box/core/utils/ish_proxy_socket.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 
 import '../test/helpers/test_db.dart';
 

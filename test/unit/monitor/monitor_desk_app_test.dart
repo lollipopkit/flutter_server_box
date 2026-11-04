@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/model/server/monitor_desk_app.dart';
+import 'package:server_box/data/model/server/monitor/monitor_desk_app.dart';
 
 void main() {
   test('approved desk apps, their titles and where they open', () {

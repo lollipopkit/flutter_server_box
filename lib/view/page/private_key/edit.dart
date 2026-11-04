@@ -9,11 +9,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/ssh/identities.dart';
+import 'package:server_box/core/ssh/key_passphrase.dart';
+import 'package:server_box/core/ssh/key_unlock.dart';
+import 'package:server_box/core/ssh/keygen.dart';
 import 'package:server_box/core/utils/app_auth.dart';
-import 'package:server_box/core/utils/server.dart';
-import 'package:server_box/core/utils/ssh_key_passphrase.dart';
-import 'package:server_box/core/utils/ssh_key_unlock.dart';
-import 'package:server_box/core/utils/ssh_keygen.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/provider/private_key.dart';
@@ -468,9 +468,9 @@ extension _Actions on _PrivateKeyEditPageState {
       }
       final originPki = this.pki;
       if (originPki != null) {
-        await _notifier.update(originPki, pki);
+        _notifier.update(originPki, pki);
       } else {
-        await _notifier.add(pki);
+        _notifier.add(pki);
       }
       // Only for a key that was stored.
       if (pwd.isNotEmpty && opened != key) {

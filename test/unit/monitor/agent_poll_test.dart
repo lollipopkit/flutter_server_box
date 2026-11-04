@@ -5,7 +5,7 @@ library;
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/provider/server/agent_poll.dart';
 
 void main() {

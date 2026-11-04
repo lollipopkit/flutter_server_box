@@ -161,10 +161,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pointycastle/export.dart'
     show DESedeEngine, HMac, KeyParameter, SHA1Digest;
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/utils/pve_console.dart';
-import 'package:server_box/core/utils/pve_termproxy.dart';
+import 'package:server_box/core/pve/console.dart';
+import 'package:server_box/core/pve/termproxy.dart';
+import 'package:server_box/core/ssh/exec.dart';
 import 'package:server_box/core/utils/server_tcp.dart';
-import 'package:server_box/core/utils/ssh_exec.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_exec.dart';

@@ -13,7 +13,7 @@ import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/remote_desktop.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/src/rust/api/remote_desktop.dart' as ffi;
 import 'package:server_box/view/page/remote_desktop/frame_decoder.dart';
 import 'package:server_box/view/page/remote_desktop/geometry.dart';

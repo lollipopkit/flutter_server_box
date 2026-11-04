@@ -445,6 +445,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ContainerItem dco_decode_container_item(dynamic raw);
 
   @protected
+  ContainerMenuKind dco_decode_container_menu_kind(dynamic raw);
+
+  @protected
   ContainerStatsItem dco_decode_container_stats_item(dynamic raw);
 
   @protected
@@ -554,6 +557,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<ContainerItem> dco_decode_list_container_item(dynamic raw);
+
+  @protected
+  List<ContainerMenuKind> dco_decode_list_container_menu_kind(dynamic raw);
 
   @protected
   List<CronJobLine> dco_decode_list_cron_job_line(dynamic raw);
@@ -1394,6 +1400,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ContainerItem sse_decode_container_item(SseDeserializer deserializer);
 
   @protected
+  ContainerMenuKind sse_decode_container_menu_kind(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   ContainerStatsItem sse_decode_container_stats_item(
     SseDeserializer deserializer,
   );
@@ -1517,6 +1528,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<ContainerItem> sse_decode_list_container_item(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<ContainerMenuKind> sse_decode_list_container_menu_kind(
     SseDeserializer deserializer,
   );
 
@@ -2514,6 +2530,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_container_item(ContainerItem self, SseSerializer serializer);
 
   @protected
+  void sse_encode_container_menu_kind(
+    ContainerMenuKind self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_container_stats_item(
     ContainerStatsItem self,
     SseSerializer serializer,
@@ -2681,6 +2703,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_list_container_item(
     List<ContainerItem> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_container_menu_kind(
+    List<ContainerMenuKind> self,
     SseSerializer serializer,
   );
 

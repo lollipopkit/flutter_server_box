@@ -8,8 +8,8 @@ import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
+import 'package:server_box/view/page/server/widget/server_func_btns.dart';
 import 'package:server_box/view/widget/dist_icon.dart';
-import 'package:server_box/view/widget/server_func_btns.dart';
 
 /// Acts on a `serverbox://` link, and puts one on the clipboard.
 ///

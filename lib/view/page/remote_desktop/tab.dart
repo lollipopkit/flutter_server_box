@@ -12,14 +12,14 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/remote_desktop.dart';
 import 'package:server_box/data/provider/server/all.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/src/rust/api/remote_desktop.dart' as ffi;
 import 'package:server_box/view/page/remote_desktop/pane_slide.dart';
 import 'package:server_box/view/page/remote_desktop/profiles.dart';
 import 'package:server_box/view/page/remote_desktop/viewer.dart';
+import 'package:server_box/view/page/server/widget/server_side_tile.dart';
 import 'package:server_box/view/widget/dist_icon.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
-import 'package:server_box/view/widget/server_side_tile.dart';
 
 part 'sort.dart';
 

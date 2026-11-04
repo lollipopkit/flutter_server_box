@@ -5,7 +5,7 @@ library;
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_tty/fl_tty.dart';
 import 'package:meta/meta.dart';
-import 'package:server_box/core/utils/local_device.dart';
+import 'package:server_box/core/local/device.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';

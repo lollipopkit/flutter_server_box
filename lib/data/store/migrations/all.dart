@@ -28,6 +28,7 @@ import 'package:server_box/data/store/migrations/m030_pve_virt.dart';
 import 'package:server_box/data/store/migrations/m031_drop_agent_conversations.dart';
 import 'package:server_box/data/store/migrations/m032_disk_counts_network.dart';
 import 'package:server_box/data/store/migrations/m033_sync_record.dart';
+import 'package:server_box/data/store/migrations/m034_identity_files.dart';
 import 'package:server_box/data/store/schema.dart';
 
 /// Every migration, ordered, in the one place that names them.
@@ -78,4 +79,5 @@ const kSchemaMigrations = <SchemaMigration>[
   DropAgentConversationsMigration(),
   DiskCountsNetworkMigration(),
   SyncRecordMigration(),
+  IdentityFilesMigration(),
 ];

@@ -53,6 +53,7 @@ abstract final class Tables {
     'server_tag',
     'server_env',
     'server_jump',
+    'server_identity_file',
     'server_disabled_cmd',
     'server_custom_cmd',
     'known_host',

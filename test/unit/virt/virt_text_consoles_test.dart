@@ -5,10 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/provider/session_keep_alive.dart';
 import 'package:server_box/data/provider/virt/text_consoles.dart';
-import 'package:server_box/data/res/store.dart';
-import 'package:server_box/data/ssh/terminal_session.dart';
-import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/data/terminal/terminal_session.dart';
+import 'package:server_box/data/terminal/terminal_source.dart';
 
 import '../../helpers/fake_shell.dart';
 import '../../helpers/test_db.dart';

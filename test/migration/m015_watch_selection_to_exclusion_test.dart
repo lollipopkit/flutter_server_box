@@ -8,7 +8,7 @@
 library;
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/store/migrations/m015_watch_selection_to_exclusion.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';

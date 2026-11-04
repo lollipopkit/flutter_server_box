@@ -7,7 +7,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/benchmark/benchmark_run.dart';
 import 'package:server_box/data/model/server/benchmark/yabs_result.dart';
-import 'package:server_box/data/store/benchmark.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/view/page/benchmark/log_view.dart';
 
 /// One benchmark's numbers.
@@ -51,7 +51,7 @@ class _BenchmarkResultPageState extends State<BenchmarkResultPage> {
   /// that never filled in.
   void _startTicking() {
     _tick = Timer.periodic(const Duration(seconds: 1), (_) {
-      final fresh = BenchmarkStore.instance.get(_run.id);
+      final fresh = Stores.benchmark.get(_run.id);
       if (!mounted) return;
       setState(() => _run = fresh ?? _run);
       if (_run.status.isTerminal) {

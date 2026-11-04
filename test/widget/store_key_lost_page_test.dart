@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
-import 'package:server_box/view/page/store_key_lost.dart';
+import 'package:server_box/view/page/rescue/store_key_lost.dart';
 
 void main() {
   Future<List<bool>> pumpPage(WidgetTester tester, StoreUnreadableReason reason) async {

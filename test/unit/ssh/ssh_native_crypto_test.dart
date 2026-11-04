@@ -25,7 +25,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart'
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pinenacl/tweetnacl.dart';
 import 'package:pointycastle/export.dart';
-import 'package:server_box/core/utils/ssh_native_crypto.dart';
+import 'package:server_box/core/ssh/native_crypto.dart';
 
 import '../../helpers/rust_lib_helper.dart';
 

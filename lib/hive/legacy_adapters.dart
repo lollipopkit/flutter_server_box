@@ -41,7 +41,7 @@ void registerHiveLegacyAdapters() {
 /// typeId 4: a virtual key, by the byte the generated adapter gave it — which
 /// is its place in `hive_adapters.g.yaml`, not in the enum.
 ///
-/// Frozen when `clipboard` left `VirtKey`: an adapter generated from the enum
+/// Frozen when `clipboard` left `VirtualKey`: an adapter generated from the enum
 /// without it no longer names that byte, and the name is what the store keeps.
 class LegacyVirtKeyV1 {
   const LegacyVirtKeyV1(this.name);

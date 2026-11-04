@@ -14,11 +14,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:server_box/app.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/diag.dart';
-import 'package:server_box/core/file_log_sync.dart';
 import 'package:server_box/core/lkc.dart';
-import 'package:server_box/core/lkc_log_sync.dart';
-import 'package:server_box/core/lkc_sync.dart';
-import 'package:server_box/core/llm/host.dart';
 import 'package:server_box/core/motion.dart';
 import 'package:server_box/core/service/crash_report.dart';
 import 'package:server_box/core/service/diagnostics_upload.dart';
@@ -26,30 +22,35 @@ import 'package:server_box/core/service/native_exit.dart';
 import 'package:server_box/core/service/theme_host.dart';
 import 'package:server_box/core/service/watch_sync.dart';
 import 'package:server_box/core/service/widget_sync.dart';
-import 'package:server_box/core/sync.dart';
+import 'package:server_box/core/ssh/key_passphrase.dart';
+import 'package:server_box/core/ssh/native_crypto.dart';
+import 'package:server_box/core/sync/file_log.dart';
+import 'package:server_box/core/sync/lkc.dart';
+import 'package:server_box/core/sync/lkc_log.dart';
+import 'package:server_box/core/sync/sync.dart';
 import 'package:server_box/core/tty.dart';
 import 'package:server_box/core/utils/sandbox_import.dart';
-import 'package:server_box/core/utils/ssh_key_passphrase.dart';
-import 'package:server_box/core/utils/ssh_native_crypto.dart';
 import 'package:server_box/core/utils/store_recovery.dart';
 import 'package:server_box/data/model/server/dist_license.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/misc.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/terminal.dart';
-import 'package:server_box/data/ssh/session_manager.dart';
 import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/migrations/build_features.dart';
 import 'package:server_box/data/store/schema.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/data/store/sync_recorder.dart';
 import 'package:server_box/data/store/tables.dart';
+import 'package:server_box/data/terminal/session_manager.dart';
 import 'package:server_box/hive/hive_registrar.g.dart';
 import 'package:server_box/hive/legacy_adapters.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
-import 'package:server_box/view/page/launch_failed.dart';
-import 'package:server_box/view/page/rescue_app.dart';
-import 'package:server_box/view/page/schema_too_new.dart';
-import 'package:server_box/view/page/store_key_lost.dart';
+import 'package:server_box/view/agent/host.dart';
+import 'package:server_box/view/page/rescue/launch_failed.dart';
+import 'package:server_box/view/page/rescue/rescue_app.dart';
+import 'package:server_box/view/page/rescue/schema_too_new.dart';
+import 'package:server_box/view/page/rescue/store_key_lost.dart';
+import 'package:server_box/view/widget/host_key_dialog.dart';
 
 Future<void> main() async {
   await _runInZone(() async {
@@ -64,7 +65,7 @@ Future<void> main() async {
       // to reinstall the newer build.
       //
       // Caught here rather than made non-fatal further down, because nothing
-      // after `_doDbMigrate` may run: the refusal is only worth anything while
+      // after `_migrateStorage` may run: the refusal is only worth anything while
       // nothing has been written. See [SchemaTooNewException].
       Loggers.app.severe('Storage is newer than this build', e);
       await _showRescueWindow();
@@ -171,6 +172,8 @@ Future<void> _initApp(ProviderContainer container) async {
   // As early as there is a binding: until the first report arrives, a bar is
   // laid out as if nothing covered it.
   MethodChans.watchWindowControls();
+  // Before anything connects: a host key question with no dialog is refused.
+  installHostKeyDialog();
 
   // Before anything that can fail, so that a failure during startup is at
   // least recorded — the errors worth catching most are the ones that stop the
@@ -242,7 +245,7 @@ Future<void> _initApp(ProviderContainer container) async {
   await AppMotion.init();
   await _initWindow();
 
-  await _doPlatformRelated();
+  await _startBackgroundServices();
 
   // Initialize platform session notifications and Live Activities.
   await TermSessionManager.init();
@@ -253,6 +256,8 @@ Future<void> _openStores({required bool fromImport}) async {
   try {
     await Stores.init();
   } catch (e, s) {
+    // A newer build's data is neither an import to undo nor a lost key.
+    if (e is SchemaTooNewException) rethrow;
     if (!fromImport && e is! StoreUnreadableException) rethrow;
 
     // Closed before the files are deleted or moved. `Stores.init` may have got
@@ -337,9 +342,7 @@ Future<void> _initData() async {
   final imported = await SandboxImport.run();
   await _openStores(fromImport: imported == SandboxImportResult.imported);
 
-  // It may effect the following logic, so await it.
-  // DO DB migration before load any provider.
-  await _doDbMigrate();
+  await _migrateStorage();
 
   if (Stores.setting.betaTest.fetch()) AppUpdate.chan = AppUpdateChan.beta;
 
@@ -367,7 +370,7 @@ void _setupDebug() {
   CrashLog.handleErrors();
   // Before the first error can arrive, so the marker knows from the outset
   // whether anything else is hearing about a crash. Answers false for most of
-  // startup — the sink goes in at the end of `_doPlatformRelated` — which is
+  // startup — the sink goes in at the end of `_startBackgroundServices` — which is
   // exactly the window whose crashes nothing used to report.
   CrashLog.uploadsNow = () => DiagnosticsUpload.uploading;
   // Local only, and that is the whole of it: nothing is sent anywhere, so
@@ -405,7 +408,9 @@ void _setupDebug() {
   );
 }
 
-Future<void> _doPlatformRelated() async {
+/// What runs once the stores are open: crash reporting, the Linux userland,
+/// sync and the platform integrations, mostly without holding up the launch.
+Future<void> _startBackgroundServices() async {
   if (isAndroid) {
     // try switch to highest refresh rate
     try {
@@ -489,7 +494,16 @@ Future<void> _doPlatformRelated() async {
     unawaited(
       Lkc.init().then((_) {
         LkcLogSync.init();
-        LkcSyncWatch.init();
+        LkcSyncWatch.init(
+          // Not held back: another device's write is the whole reason to sync,
+          // and a sync already running takes it on when it ends. Only while LK
+          // Cloud is where the backup syncs: another remote ranks above it.
+          onRemoteChange: () {
+            if (bakSync.remoteStorage is LkcRemoteStorage) {
+              bakSync.syncSoon(milliDelay: 0, throttleMilli: 0);
+            }
+          },
+        );
       }),
     );
   }
@@ -542,17 +556,14 @@ Future<void> _doPlatformRelated() async {
     );
   }
 
-  // Status parsing used to run on this pool, which is why its size followed
-  // the server count. It now runs on the Rust thread pool, while the remaining
-  // Computer tasks (backup parsing, editor work and PVE responses) are
-  // occasional and already queue safely. Starting several otherwise idle
-  // isolates before the first frame only makes a larger server list slower and
-  // more memory-hungry to open.
+  // Only for fl_lib's editor, the last user of the pool; this app's own
+  // background work goes through `compute`.
+  // TODO: drop with the `computer` dependency once fl_lib's editor moves off.
   await Computer.shared.turnOn(workersCount: 1);
 }
 
-// It may contains some async heavy funcs.
-Future<void> _doDbMigrate() async {
+/// The storage layout brought up to this build's, before any provider loads.
+Future<void> _migrateStorage() async {
   // fl_lib's Rust stamps synced changes (`SyncRecorder`), and the storage step
   // below seeds those stamps (`m033`). Without it nothing is stamped and the
   // app still starts.

@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/server/monitor/monitor_capabilities.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/monitor_overview.dart';
@@ -50,10 +51,10 @@ enum MonitorSection {
   /// says what each agent offers.
   String? get feature => switch (this) {
     overview => null,
-    apps => 'stacks',
-    notices => 'desk',
-    audit => 'audit',
-    live => 'live',
+    apps => MonitorFeature.stacks,
+    notices => MonitorFeature.desk,
+    audit => MonitorFeature.audit,
+    live => MonitorFeature.live,
   };
 }
 

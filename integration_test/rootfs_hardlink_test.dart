@@ -7,8 +7,8 @@ import 'package:integration_test/integration_test.dart';
 import 'package:server_box/core/tty.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/misc.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 
 import '../test/helpers/test_db.dart';
 

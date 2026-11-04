@@ -24,12 +24,12 @@ import 'package:server_box/data/model/app/share/server_share.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
-import 'package:server_box/view/widget/server_share.dart';
+import 'package:server_box/view/page/server/widget/server_share.dart';
 
 import '../helpers/test_db.dart';
 

@@ -3,7 +3,7 @@ import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/sync_recorder.dart';
 
 /// Adds `sync_record`: every synced record's newest stamp, the operation log's
-/// state (`docs/dev/sync-log.md`, phase 1).
+/// state.
 ///
 /// Seeded from what the device already knows: each sync root's `updated_at`,
 /// each tombstone's `deleted_at`, and each kv key's stamp in its store's

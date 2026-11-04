@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/scripts/shell_func.dart';
+import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/src/rust/api/script.dart' as ffi;
@@ -182,7 +183,7 @@ extension on _CustomCmdsPageState {
         entry: ShellFuncManager.customCmdsEntry(system),
       );
       if (!res.succeeded) {
-        throw '${res.exitCode}: ${res.combined}';
+        throw CommandFailed('custom commands', res);
       }
       // A directory that does not exist yet reads as no commands: the first
       // save creates it. Telling the two apart matters to the migration, not
@@ -214,7 +215,7 @@ extension on _CustomCmdsPageState {
         entry: ShellFuncManager.customCmdsEntry(system),
       );
       if (!res.succeeded) {
-        throw '${res.exitCode}: ${res.combined}';
+        throw CommandFailed('custom commands', res);
       }
       if (!mounted) return;
       setState(() => _dirty = false);

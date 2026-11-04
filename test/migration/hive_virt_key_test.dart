@@ -1,4 +1,4 @@
-/// A virtual key in a Hive box, read after `clipboard` left `VirtKey`.
+/// A virtual key in a Hive box, read after `clipboard` left `VirtualKey`.
 ///
 /// The generated adapter wrote a key as one byte, its place in
 /// `hive_adapters.g.yaml` — which is not the enum's order. Regenerated from the

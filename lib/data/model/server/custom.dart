@@ -20,8 +20,8 @@ final class ServerCustom {
   /// writes. This holds only what an older version of the app stored, until
   /// the first connection moves it there.
   // TODO(migration): delete this field, [withoutCmds], and
-  // `IndividualServerNotifier._migrateCustomCmds` once enough releases have
-  // passed for every install to have connected once.
+  // `ServerNotifier._migrateCustomCmds` 5 releases after v1.0.1538 (where it
+  // started), by which every install has connected once.
   final Map<String, String>? cmds;
 
   final String? preferTempDev;

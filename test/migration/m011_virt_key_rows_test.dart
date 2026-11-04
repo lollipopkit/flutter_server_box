@@ -1,4 +1,4 @@
-/// `horizonVirtKey`, a switch, becoming `virtKeyRows`, a count.
+/// `horizonVirtKey`, a switch, becoming `virtualKeyRows`, a count.
 ///
 /// Two things have to hold. Somebody who had the switch on keeps a one-row
 /// strip, and somebody who did not keeps all their rows — which means the step
@@ -43,7 +43,7 @@ void main() {
     await migration.apply();
 
     expect(store.get<int>('virtKeyRows'), isNull);
-    expect(store.virtKeyRows.fetch(), 0);
+    expect(store.virtualKeyRows.fetch(), 0);
   });
 
   test('an install that never held the key is left alone', () async {

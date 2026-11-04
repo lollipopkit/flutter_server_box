@@ -14,8 +14,8 @@ import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/schema.dart';
+import 'package:server_box/data/store/stores.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

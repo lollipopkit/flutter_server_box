@@ -5,7 +5,7 @@ import 'package:flutter/rendering.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/connection_stat.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 
 class ConnectionStatsPage extends StatefulWidget {
   const ConnectionStatsPage({super.key});
@@ -351,7 +351,7 @@ extension _Actions on _ConnectionStatsPageState {
   void _showClearStatsDialog({
     required String title,
     required String content,
-    required Future<void> Function() onConfirm,
+    required VoidCallback onConfirm,
   }) {
     context.showRoundDialog(
       title: title,
@@ -361,7 +361,7 @@ extension _Actions on _ConnectionStatsPageState {
         CountDownBtn(
           onTap: () async {
             try {
-              await onConfirm();
+              onConfirm();
               await _loadStats();
               if (mounted) {
                 context.popDialog();

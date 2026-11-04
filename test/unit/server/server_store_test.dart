@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/bmc_credential.dart';
 import 'package:server_box/data/model/server/custom.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
@@ -119,7 +119,7 @@ void main() {
     store.invalidate();
 
     final ssh = store.fetchOneRaw('multi-key')!.ssh!;
-    expect(ssh.keyPath, paths.first);
+    expect(ssh.resolvedIdentityFiles.firstOrNull, paths.first);
     expect(ssh.resolvedIdentityFiles, paths);
   });
 

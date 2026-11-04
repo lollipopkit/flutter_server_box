@@ -5,7 +5,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:server_box/core/utils/pve_console.dart';
+import 'package:server_box/core/pve/console.dart';
 import 'package:server_box/core/utils/refresh_interval.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/app/error.dart';
@@ -27,7 +27,7 @@ import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/virt/backend.dart';
 import 'package:server_box/data/provider/virt/libvirt_backend.dart';
 import 'package:server_box/data/provider/virt/pve_backend.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 
 part 'virt.freezed.dart';
 part 'virt.g.dart';
@@ -472,7 +472,12 @@ enum VirtSnapshotOp { create, revert, delete }
 class VirtHostNotifier extends _$VirtHostNotifier {
   static const sampleLimit = 120;
 
-  late VirtBackend _backend;
+  /// Null once the server is gone; every call through [_backend] then fails
+  /// with [VirtErrType.serverRemoved].
+  VirtBackend? _backendOrNull;
+
+  VirtBackend get _backend =>
+      _backendOrNull ?? (throw const VirtErr(type: VirtErrType.serverRemoved));
   Timer? _timer;
 
   /// Per guest, the latest power call's number — see [power].
@@ -521,7 +526,7 @@ class VirtHostNotifier extends _$VirtHostNotifier {
     if (spi == null) {
       // Its own error rather than "not configured": there is no server left
       // to configure, and the host list has already dropped it.
-      _backend = _MissingBackend(serverId);
+      _backendOrNull = null;
       _firstLoad = Future.value();
       return VirtHostState(
         serverId: serverId,
@@ -542,7 +547,7 @@ class VirtHostNotifier extends _$VirtHostNotifier {
     final backend = pve != null
         ? PveBackend.of(ref, spi, pve)
         : LibvirtBackend.of(ref, serverId);
-    _backend = backend;
+    _backendOrNull = backend;
     if (backend is PveBackend) {
       ref.listen(pveConfigsProvider.select((m) => m[serverId]), (_, next) {
         if (next == null || next == backend.config) return;
@@ -589,13 +594,13 @@ class VirtHostNotifier extends _$VirtHostNotifier {
       return (_againDone ??= Completer<void>()).future;
     }
     if (auto && (state.error?.needsInput ?? false)) return;
-    final backend = _backend;
-    if (backend is _MissingBackend) return;
+    final backend = _backendOrNull;
+    if (backend == null) return;
     _refreshing = true;
     if (!auto) state = state.copyWith(loading: true);
     try {
       final snapshot = await backend.load();
-      if (!ref.mounted || !identical(backend, _backend)) return;
+      if (!ref.mounted || !identical(backend, _backendOrNull)) return;
       state = state.copyWith(
         data: snapshot,
         error: null,
@@ -604,11 +609,11 @@ class VirtHostNotifier extends _$VirtHostNotifier {
         updatedAt: DateTime.now(),
       );
     } on VirtErr catch (e) {
-      if (!ref.mounted || !identical(backend, _backend)) return;
+      if (!ref.mounted || !identical(backend, _backendOrNull)) return;
       state = state.copyWith(error: e, loading: false);
     } catch (e, s) {
       Loggers.app.warning('Virtualization refresh failed', e, s);
-      if (!ref.mounted || !identical(backend, _backend)) return;
+      if (!ref.mounted || !identical(backend, _backendOrNull)) return;
       state = state.copyWith(
         error: VirtErr(type: VirtErrType.unknown, message: '$e', cause: e),
         loading: false,
@@ -1022,10 +1027,16 @@ class VirtHostNotifier extends _$VirtHostNotifier {
   Future<List<VirtStoragePool>> allBackupStorages() =>
       _backend.allBackupStorages();
 
-  /// See [VirtBackend.editBackupJob]: makes, edits or deletes a scheduled
-  /// job, then has the list read again.
-  Future<void> editBackupJob(VirtBackupJobEdit edit, {bool remove = false}) async {
-    await _backend.editBackupJob(edit, remove: remove);
+  /// See [VirtBackend.editBackupJob]: makes or edits a scheduled job, then
+  /// has the list read again.
+  Future<void> editBackupJob(VirtBackupJobEdit edit) async {
+    await _backend.editBackupJob(edit);
+    if (ref.mounted) _bump(VirtRevision.backupJobs);
+  }
+
+  /// See [VirtBackend.deleteBackupJob], then has the list read again.
+  Future<void> deleteBackupJob(VirtBackupJob job) async {
+    await _backend.deleteBackupJob(job);
     if (ref.mounted) _bump(VirtRevision.backupJobs);
   }
 
@@ -1252,7 +1263,7 @@ class VirtHostNotifier extends _$VirtHostNotifier {
     try {
       await backend.submitTfa(code);
     } on VirtErr catch (e) {
-      if (ref.mounted && identical(backend, _backend)) {
+      if (ref.mounted && identical(backend, _backendOrNull)) {
         state = state.copyWith(error: e);
       }
       rethrow;
@@ -1285,198 +1296,6 @@ class VirtHostNotifier extends _$VirtHostNotifier {
   }
 }
 
-/// The backend of a server that is gone: every call fails.
-final class _MissingBackend implements VirtBackend {
-  const _MissingBackend(this.serverId);
-
-  @override
-  final String serverId;
-
-  @override
-  VirtHostKind get kind => VirtHostKind.libvirt;
-
-  static Never _fail() =>
-      throw const VirtErr(type: VirtErrType.serverRemoved);
-
-  @override
-  Future<VirtSnapshot> load() async => _fail();
-
-  @override
-  Future<void> power(VirtGuest guest, VirtPowerAction action) async =>
-      _fail();
-
-  @override
-  Future<VirtGuestDetail> detail(VirtGuest guest) async => _fail();
-
-  @override
-  Future<int?> nextVmid() async => _fail();
-
-  @override
-  Future<VirtCreateOptions> createOptions() async => _fail();
-
-  @override
-  Future<VirtCreated> create(VirtCreateSpec spec) async => _fail();
-
-  @override
-  Future<VirtHardware> hardware(VirtGuest guest) async => _fail();
-
-  @override
-  Future<void> revertPending(VirtGuest guest, VirtHardware base) async =>
-      _fail();
-
-  @override
-  Future<VirtHwOutcome> changeHardware(
-    VirtGuest guest,
-    VirtHardware base,
-    VirtHwChange change,
-  ) async => _fail();
-
-  @override
-  Future<VirtHostDevices> hostDevices(VirtGuest guest) async => _fail();
-
-  @override
-  Future<VirtCloudInitState> cloudInit(VirtGuest guest) async => _fail();
-
-  @override
-  Future<void> setCloudInit(
-    VirtGuest guest,
-    VirtCloudInitState base,
-    VirtCloudInitEdit edit,
-  ) async => _fail();
-
-  @override
-  Future<String> clone(VirtGuest guest, VirtCloneRequest request) async =>
-      _fail();
-
-  @override
-  Future<void> makeTemplate(VirtGuest guest) async => _fail();
-
-  @override
-  Future<List<VirtBackup>> backups(VirtGuest guest) async => _fail();
-
-  @override
-  Future<List<VirtBackupJob>> backupJobs(VirtGuest guest) async => _fail();
-
-  @override
-  Future<List<VirtBackupJob>> allBackupJobs() async => _fail();
-
-  @override
-  Future<void> editBackupJob(
-    VirtBackupJobEdit edit, {
-    bool remove = false,
-  }) async => _fail();
-
-  @override
-  Future<VirtScheduleCheck> checkSchedule(String schedule) async => _fail();
-
-  @override
-  Future<List<VirtStoragePool>> backupStorages(VirtGuest guest) async =>
-      _fail();
-
-  @override
-  Future<List<VirtStoragePool>> allBackupStorages() async => _fail();
-
-  @override
-  Future<void> backup(VirtGuest guest, VirtBackupRequest request) async =>
-      _fail();
-
-  @override
-  Future<void> runBackupJob(VirtBackupJob job) async => _fail();
-
-  @override
-  Future<void> restoreBackup(
-    VirtGuest guest,
-    VirtBackup backup, {
-    int? vmid,
-    String? storage,
-  }) async => _fail();
-
-  @override
-  Future<void> editBackup(VirtBackup backup, VirtBackupEdit edit) async =>
-      _fail();
-
-  @override
-  Future<void> deleteBackup(VirtGuest guest, VirtBackup backup) async =>
-      _fail();
-
-  @override
-  Future<void> delete(VirtGuest guest, {bool removeDisks = true}) async =>
-      _fail();
-
-  @override
-  Future<VirtConsole> console(VirtGuest guest, VirtConsoleKind kind) async =>
-      _fail();
-
-  @override
-  Future<List<VirtStats>?> history(
-    VirtGuest guest, {
-    VirtHistoryWindow window = VirtHistoryWindow.hour,
-  }) async => _fail();
-
-  @override
-  Future<List<VirtGuestSnapshot>> snapshots(VirtGuest guest) async => _fail();
-
-  @override
-  Future<VirtSnapChain> snapshotChain(VirtGuest guest) async => _fail();
-
-  @override
-  Future<bool?> snapshotSupported(VirtGuest guest) async => _fail();
-
-  @override
-  Future<String?> snapshotRefusal(VirtGuest guest) async => _fail();
-
-  @override
-  Future<List<VirtSnapDiff>> snapshotDiff(VirtGuest guest, String name) async =>
-      _fail();
-
-  @override
-  Future<void> createSnapshot(
-    VirtGuest guest, {
-    required String name,
-    String? description,
-    bool memory = false,
-    VirtSnapshotForm form = VirtSnapshotForm.internal,
-    String? overlayPool,
-  }) async => _fail();
-
-  @override
-  Future<void> revertSnapshot(
-    VirtGuest guest,
-    String name, {
-    bool start = false,
-  }) async => _fail();
-
-  @override
-  Future<void> deleteSnapshot(VirtGuest guest, String name) async => _fail();
-
-  @override
-  Future<List<VirtStoragePool>> storagePools() async => _fail();
-
-  @override
-  Future<List<VirtVolume>> volumes(VirtStoragePool pool) async => _fail();
-
-  @override
-  Future<List<VirtNetwork>> networks() async => _fail();
-
-  @override
-  Future<void> manage(VirtResourceChange change) async => _fail();
-
-  @override
-  Future<bool> upload(
-    VirtUpload upload, {
-    void Function(int sent)? onProgress,
-    Future<void>? cancel,
-  }) async => _fail();
-
-  @override
-  Future<List<VirtNetworkChanges>> networkChanges() async => _fail();
-
-  @override
-  Future<void> reset() async {}
-
-  @override
-  Future<void> close() async {}
-}
 
 // -----------------------------------------------------------------------------
 // Snapshots, storage and networks of one host

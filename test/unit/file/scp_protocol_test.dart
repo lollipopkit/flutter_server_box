@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/scp_protocol.dart';
+import 'package:server_box/data/model/file/backend/scp_protocol.dart';
 
 /// A scripted `scp`, so the protocol can be exercised without a server.
 ///

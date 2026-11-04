@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:server_box/data/ssh/tmux/tmux_output_normalizer.dart';
+import 'package:server_box/data/terminal/tmux/tmux_output_normalizer.dart';
 import 'package:test/test.dart';
 import 'package:xterm/core.dart';
 

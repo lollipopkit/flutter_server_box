@@ -9,9 +9,9 @@ extension on _ServerDetailPageState {
   /// Absent unless configured: a card that appeared on every server to say
   /// "not configured" would be a row of noise on the machines that have no BMC,
   /// which is most of them.
-  Widget? _buildBmc(ServerState si) {
-    if (si.spi.bmc == null) return null;
-    final bmc = ref.watch(bmcProvider(si.spi));
+  Widget? _buildBmc(ServerState srv) {
+    if (srv.spi.bmc == null) return null;
+    final bmc = ref.watch(bmcProvider(srv.spi));
 
     final rows = <Widget>[];
     final system = bmc.topology?.system;
@@ -79,7 +79,7 @@ extension on _ServerDetailPageState {
       rows: rows,
       // Below the readings and never cut off by [kReadoutCardRows]: these are
       // the actions, and a truncated list must not be able to hide them.
-      extra: [if (bmc.hasData) _buildBmcPower(si, busy: bmc.isPowering)],
+      extra: [if (bmc.hasData) _buildBmcPower(srv, busy: bmc.isPowering)],
       footer: readoutFooter([
         readoutCountNote(
           rows.length,
@@ -107,8 +107,8 @@ extension on _ServerDetailPageState {
   /// unimplemented often enough that this is not hypothetical.
   ///
   /// [busy] while an action is being confirmed: one at a time.
-  Widget _buildBmcPower(ServerState si, {required bool busy}) {
-    final notifier = ref.read(bmcProvider(si.spi).notifier);
+  Widget _buildBmcPower(ServerState srv, {required bool busy}) {
+    final notifier = ref.read(bmcProvider(srv.spi).notifier);
     final available = [
       for (final intent in PowerIntent.values)
         if (notifier.plan(intent) != null) intent,
@@ -123,7 +123,7 @@ extension on _ServerDetailPageState {
         children: [
           for (final intent in available)
             OutlinedButton(
-              onPressed: busy ? null : () => _onTapBmcPower(si, intent),
+              onPressed: busy ? null : () => _onTapBmcPower(srv, intent),
               child: Text(_bmcIntentText(intent)),
             ),
         ],
@@ -131,8 +131,8 @@ extension on _ServerDetailPageState {
     );
   }
 
-  Future<void> _onTapBmcPower(ServerState si, PowerIntent intent) async {
-    final notifier = ref.read(bmcProvider(si.spi).notifier);
+  Future<void> _onTapBmcPower(ServerState srv, PowerIntent intent) async {
+    final notifier = ref.read(bmcProvider(srv.spi).notifier);
     final request = notifier.plan(intent);
     if (request == null) return;
 
@@ -142,7 +142,7 @@ extension on _ServerDetailPageState {
     // that has no graceful one, and that is worth seeing before agreeing.
     final ok = await context.showRoundDialog<bool>(
       title: _bmcIntentText(intent),
-      child: Text(l10n.bmcPowerConfirm(si.spi.name, request.resetType)),
+      child: Text(l10n.bmcPowerConfirm(srv.spi.name, request.resetType)),
       actions: Btnx.cancelRedOk,
     );
     if (ok != true) return;

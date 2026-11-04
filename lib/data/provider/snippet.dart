@@ -1,12 +1,10 @@
-import 'dart:async';
-
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:server_box/core/sync.dart';
+import 'package:server_box/core/sync/sync.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/entity_helpers.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 
 part 'snippet.freezed.dart';
 part 'snippet.g.dart';
@@ -68,12 +66,12 @@ class SnippetNotifier extends _$SnippetNotifier {
     return tags;
   }
 
-  Future<void> add(Snippet snippet) async {
+  void add(Snippet snippet) {
     final next = entityAdd(Stores.snippet, state.snippets, snippet);
     state = state.copyWith(snippets: next, tags: _computeTags(next));
   }
 
-  Future<void> del(Snippet snippet) async {
+  void del(Snippet snippet) {
     final next = entityDelete(
       Stores.snippet,
       state.snippets,
@@ -86,7 +84,7 @@ class SnippetNotifier extends _$SnippetNotifier {
   /// A rename is an update of columns, not a delete and an insert: the two
   /// carry the same id, and deleting first would tombstone a record that is
   /// still there and take its tags and auto-run targets with it.
-  Future<void> update(Snippet old, Snippet newOne) async {
+  void update(Snippet old, Snippet newOne) {
     final next = entityUpdate(
       Stores.snippet,
       state.snippets,
@@ -99,7 +97,7 @@ class SnippetNotifier extends _$SnippetNotifier {
 
   /// One `UPDATE` over the tag rows, rather than rewriting every snippet that
   /// carries the tag.
-  Future<void> renameTag(String old, String newOne) async {
+  void renameTag(String old, String newOne) {
     Stores.snippet.renameTag(old, newOne);
     state = _load();
     bakSync.syncSoon();

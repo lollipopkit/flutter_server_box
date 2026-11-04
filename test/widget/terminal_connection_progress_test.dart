@@ -4,7 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/generated/l10n/l10n_en.dart';
-import 'package:server_box/view/widget/terminal_connection_progress.dart';
+import 'package:server_box/view/page/ssh/widget/terminal_connection_progress.dart';
 
 void main() {
   final en = AppLocalizationsEn();

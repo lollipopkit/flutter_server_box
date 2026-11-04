@@ -1,5 +1,5 @@
 import 'package:server_box/data/res/default.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 
 int? normalizeServerStatusRefreshSeconds(int seconds) {
   if (seconds == 0) return null;

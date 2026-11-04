@@ -4,12 +4,12 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/block_device.dart';
-import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/status/disk.dart';
+import 'package:server_box/data/provider/server/metric.dart';
+import 'package:server_box/data/provider/server/reading_fmt.dart';
 import 'package:server_box/data/res/chart_palette.dart';
-import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/detail/metric_model.dart';
-import 'package:server_box/view/page/server/reading_text.dart';
 
 /// A part of the focus card that eases to the height of what is in it.
 ///

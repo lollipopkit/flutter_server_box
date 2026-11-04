@@ -1,8 +1,21 @@
 import 'package:dartssh2/dartssh2.dart' show SSHChannelOpenError;
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/transport.dart';
 import 'package:server_box/src/rust/api/bmc.dart' show CertInfo;
+
+// Which kind a new failure is:
+//
+// - An `Err<Type>` here when the user is told what to do about it: a
+//   connection, a transport or a server's own refusal, whose `solution` is the
+//   advice. One enum per subsystem, matched by type, never by message.
+// - Otherwise a typed `Exception` beside the service that throws it
+//   (`SharesManagerException`, `CronManagerException`, ...), its `toString`
+//   already the user's words, and any code it carries an FFI error code as
+//   `sbm_parser` names it.
+// - `StateError` and `ArgumentError` only for a programming error: never shown
+//   as a message, never caught to decide anything. A bare `Exception('...')`
+//   or a thrown `String` is neither, and is not used.
 
 /// Remote sync needs a backup password, and none is set.
 ///
@@ -27,7 +40,11 @@ enum SSHErrType {
 }
 
 class SSHErr extends Err<SSHErrType> {
-  const SSHErr({required super.type, super.message});
+  const SSHErr({required super.type, super.message, this.cause});
+
+  /// What was thrown, where there was something: kept for the log and the
+  /// crash report, which a message alone does not let anyone trace.
+  final Object? cause;
 
   @override
   String? get solution => switch (type) {

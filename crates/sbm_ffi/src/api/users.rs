@@ -12,7 +12,7 @@ use sbm_parser::users::{self, GroupDraft, SystemGroup, SystemUser, UserDraft, Us
 /// A refused account or draft. `code` is `sbm_parser::users::UserError`'s
 /// (`invalidName`, `lineBreak`, `invalidPrimaryGroup`,
 /// `invalidSupplementaryGroup`, `passwordLineBreak`, `renaming`,
-/// `rootNotDeletable`, `currentUserUnknown`, `unknownMember`,
+/// `rootNotDeletable`, `currentUserNotDeletable`, `currentUserUnknown`, `unknownMember`,
 /// `rootGroupNotDeletable`, `groupInUse`, `groupNotLocal`), or `malformed` for JSON the
 /// app should never have sent.
 #[derive(Debug, Clone)]
@@ -142,6 +142,15 @@ pub fn groups_edit_command(
         &group_draft(&draft_json)?,
         &accounts,
     )?)
+}
+
+/// Why `userdel` would be refused for `current` (the account the catalog was
+/// read as), as an error code, or `None`
+#[flutter_rust_bridge::frb(sync)]
+pub fn users_delete_refusal(user_json: String, current: Option<String>) -> Result<Option<String>, UserFfiError> {
+    Ok(account(&user_json)?
+        .delete_refusal(current.as_deref())
+        .map(|error| error.as_str().to_string()))
 }
 
 /// Why `groupdel` would be refused, as an error code, or `None`

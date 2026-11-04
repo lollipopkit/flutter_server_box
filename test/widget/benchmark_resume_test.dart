@@ -23,11 +23,11 @@ import 'package:server_box/data/model/server/benchmark/yabs_options.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/provider/benchmark.dart';
 import 'package:server_box/data/provider/server/single.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/benchmark.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/benchmark/history_tile.dart';
 import 'package:server_box/view/page/benchmark/result.dart';
@@ -58,6 +58,7 @@ void main() {
     await openTestDb();
     getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
     getIt.registerSingleton<ServerStore>(ServerStore());
+    getIt.registerSingleton<BenchmarkStore>(BenchmarkStore());
     getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore());
     Stores.setting.serverStatusUpdateInterval.put(0);
     Stores.server.put(spi);
@@ -80,7 +81,7 @@ void main() {
       runDir: '/tmp/x/.server_box_bench',
       log: log,
     );
-    BenchmarkStore.instance.put(run);
+    Stores.benchmark.put(run);
     return run;
   }
 
@@ -247,7 +248,7 @@ void main() {
 
   testWidgets('tapping a past run shows it beside the list', (tester) async {
     final run = seedRunning();
-    BenchmarkStore.instance.put(
+    Stores.benchmark.put(
       run.copyWith(status: BenchmarkStatus.completed, exitCode: 0),
     );
 
@@ -271,7 +272,7 @@ void main() {
     // not: that column *is* the root, so the button had nowhere to go and did
     // nothing at all when pressed.
     final run = seedRunning();
-    BenchmarkStore.instance.put(
+    Stores.benchmark.put(
       run.copyWith(status: BenchmarkStatus.completed, exitCode: 0),
     );
 
@@ -301,7 +302,7 @@ void main() {
     // so the result slid off the wrong edge. Asserted on the contract rather
     // than on the animation, which is the library's to run.
     final run = seedRunning();
-    BenchmarkStore.instance.put(
+    Stores.benchmark.put(
       run.copyWith(status: BenchmarkStatus.completed, exitCode: 0),
     );
 
@@ -333,7 +334,7 @@ void main() {
     );
     Stores.server.put(other);
     seedRunning();
-    BenchmarkStore.instance.put(
+    Stores.benchmark.put(
       BenchmarkRun(
         id: 'bench_other',
         serverId: other.id,
@@ -394,7 +395,7 @@ void main() {
     tester,
   ) async {
     final run = seedRunning();
-    BenchmarkStore.instance.put(
+    Stores.benchmark.put(
       run.copyWith(status: BenchmarkStatus.completed, exitCode: 0),
     );
 
@@ -568,10 +569,10 @@ void main() {
     // case `NestedNavigator` does mint a fresh page key for — which is why the
     // result page needs no key of its own, and why that has to stay true.
     final first = seedRunning();
-    BenchmarkStore.instance.put(
+    Stores.benchmark.put(
       first.copyWith(status: BenchmarkStatus.completed, exitCode: 0),
     );
-    BenchmarkStore.instance.put(
+    Stores.benchmark.put(
       BenchmarkRun(
         id: 'bench_resume_2',
         serverId: sid,
@@ -623,7 +624,7 @@ void main() {
     await pump(tester, const BenchmarkTabPage());
     expect(find.byType(BenchmarkHistoryTile), findsNothing);
 
-    BenchmarkStore.instance.put(
+    Stores.benchmark.put(
       BenchmarkRun(
         id: 'bench_fast_fail',
         serverId: sid,
@@ -649,7 +650,7 @@ void main() {
     // notifier's `history` — and the run form seeds its options from the newest
     // entry there, so a deleted run came back pre-filled.
     final run = seedRunning();
-    BenchmarkStore.instance.put(
+    Stores.benchmark.put(
       run.copyWith(status: BenchmarkStatus.completed, exitCode: 0),
     );
 
@@ -702,7 +703,7 @@ void main() {
     // What a poll does: it writes through the store rather than through the
     // page, so a page that only redrew would tick a clock over a log that never
     // filled in.
-    BenchmarkStore.instance.put(
+    Stores.benchmark.put(
       run.copyWith(
         status: BenchmarkStatus.completed,
         exitCode: 0,
@@ -726,7 +727,7 @@ void main() {
     final run = seedRunning();
     await pump(tester, BenchmarkResultPage(args: run));
 
-    BenchmarkStore.instance.put(
+    Stores.benchmark.put(
       run.copyWith(
         status: BenchmarkStatus.completed,
         exitCode: 0,

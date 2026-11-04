@@ -10,17 +10,18 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/service/monitor_login_devices.dart';
 import 'package:server_box/core/utils/secure_endpoint.dart';
 import 'package:server_box/data/model/app/error.dart';
-import 'package:server_box/data/model/server/monitor_agent.dart';
-import 'package:server_box/data/model/server/monitor_backup.dart';
-import 'package:server_box/data/model/server/monitor_capabilities.dart';
-import 'package:server_box/data/model/server/monitor_desk_app.dart';
-import 'package:server_box/data/model/server/monitor_exec_output.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
-import 'package:server_box/data/model/server/monitor_metrics.dart';
-import 'package:server_box/data/model/server/monitor_overview.dart';
-import 'package:server_box/data/model/server/monitor_push.dart';
-import 'package:server_box/data/model/server/monitor_settings.dart';
-import 'package:server_box/data/model/server/monitor_stack.dart';
+import 'package:server_box/data/model/server/monitor/monitor_agent.dart';
+import 'package:server_box/data/model/server/monitor/monitor_backup.dart';
+import 'package:server_box/data/model/server/monitor/monitor_capabilities.dart';
+import 'package:server_box/data/model/server/monitor/monitor_desk_app.dart';
+import 'package:server_box/data/model/server/monitor/monitor_exec_output.dart';
+import 'package:server_box/data/model/server/monitor/monitor_fs.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_metrics.dart';
+import 'package:server_box/data/model/server/monitor/monitor_overview.dart';
+import 'package:server_box/data/model/server/monitor/monitor_push.dart';
+import 'package:server_box/data/model/server/monitor/monitor_settings.dart';
+import 'package:server_box/data/model/server/monitor/monitor_stack.dart';
 import 'package:server_box/src/rust/api/protocol.dart';
 
 /// A [MonitorHttpClient] shared by every holder of a lease on the same
@@ -285,7 +286,7 @@ class MonitorHttpClient {
     }
   }
 
-  Future<MonitorMetrics> fetchStatus() {
+  Future<MonitorMetrics> metrics() {
     return _authed(() async {
       return MonitorMetrics.fromJson(await _object('/api/v1/metrics'));
     });
@@ -334,7 +335,7 @@ class MonitorHttpClient {
   /// of 300 for the caller to throw most of away. An agent from before that
   /// parameter existed ignores it and answers with 300, which is why nothing
   /// here assumes the count it asked for.
-  Future<List<MonitorHistoryPoint>> fetchHistory({
+  Future<List<MonitorHistoryPoint>> history({
     int minutes = 60,
     int maxPoints = 300,
     DateTime? from,
@@ -467,7 +468,7 @@ class MonitorHttpClient {
   Future<List<String>>? _fsRoots;
 
   /// One directory, as the agent's `EntryView` describes it.
-  Future<List<Map<String, dynamic>>> fsList(String path) {
+  Future<List<MonitorFsEntry>> fsList(String path) {
     return _authed(() async {
       // A bare JSON array, like `/metrics/history`.
       final resp = await _session().get<dynamic>(
@@ -483,7 +484,7 @@ class MonitorHttpClient {
               '${entries.runtimeType}, not a JSON array',
         );
       }
-      return entries.cast<Map<String, dynamic>>();
+      return [for (final e in entries.cast<Map<String, dynamic>>()) MonitorFsEntry.fromJson(e)];
     });
   }
 
@@ -493,10 +494,10 @@ class MonitorHttpClient {
   /// telling those apart would let a caller map the filesystem one status code
   /// at a time. Null therefore means "nothing you can have", which is the same
   /// thing from here.
-  Future<Map<String, dynamic>?> fsStat(String path) {
+  Future<MonitorFsEntry?> fsStat(String path) {
     return _authed(() async {
       try {
-        return await _object('/api/v1/fs/stat', query: {'path': path});
+        return MonitorFsEntry.fromJson(await _object('/api/v1/fs/stat', query: {'path': path}));
       } on DioException catch (e) {
         if (e.response?.statusCode == 404) return null;
         rethrow;
@@ -541,10 +542,10 @@ class MonitorHttpClient {
     Stream<List<int>> Function()? replayData,
     String? ifVersion,
   }) async {
-    // Validate or refresh the token with a replayable request before touching
-    // this one-shot body. `_authed` cannot safely retry the PUT itself: a
-    // `File.openRead()` stream has already been consumed by the first attempt.
-    await fsRoots();
+    // `_authed` cannot retry the PUT: a `File.openRead()` stream is consumed by
+    // the first attempt. Signed in first, so only an expiry in between needs
+    // [replayData].
+    if (_token == null) await _login();
 
     Future<String?> put(Stream<List<int>> body) async {
       final resp = await _session().put<dynamic>(
@@ -617,13 +618,13 @@ class MonitorHttpClient {
   // `/api/v1/stacks*`: the web apps the agent deployed, any account.
 
   /// The deployed web apps, in the agent's order.
-  Future<List<MonitorWebApp>> stacks() => _access(
+  Future<List<MonitorWebApp>> stacks() => _authed(
     () async => MonitorWebApp.deployed(await _object('/api/v1/stacks')),
   );
 
   /// A single-use ticket into web app [id] through the agent's proxy, which
   /// a browser takes within seconds ([MonitorStackEntry.uri]).
-  Future<MonitorStackEntry> stackEnter(String id) => _access(
+  Future<MonitorStackEntry> stackEnter(String id) => _authed(
     () async => MonitorStackEntry.fromJson(
       await _object('/api/v1/stacks/${Uri.encodeComponent(id)}/enter', post: const {}),
     ),
@@ -637,7 +638,7 @@ class MonitorHttpClient {
   // `/api/v1/apps`: the apps installed on the agent's desk, any account.
 
   /// The approved desk apps, in the agent's order.
-  Future<List<MonitorDeskApp>> deskApps() => _access(
+  Future<List<MonitorDeskApp>> deskApps() => _authed(
     () async => MonitorDeskApp.approved(await _object('/api/v1/apps')),
   );
 
@@ -647,32 +648,32 @@ class MonitorHttpClient {
   // notifications, the audit log, and what is signed in and open.
 
   /// The monitoring rules firing at the agent's last check.
-  Future<MonitorAlerts> alerts() => _access(
+  Future<MonitorAlerts> alerts() => _authed(
     () async => MonitorAlerts.fromJson(await _object('/api/v1/alerts')),
   );
 
   /// Whether a newer agent is released, and how this one is updated; with
   /// [check], the agent reads its releases again first.
-  Future<MonitorUpdate> update({bool check = false}) => _access(
+  Future<MonitorUpdate> update({bool check = false}) => _authed(
     () async => MonitorUpdate.fromJson(await _object('/api/v1/update', query: {if (check) 'check': 1})),
   );
 
   /// Starts the agent's update (`POST /api/v1/update/run`): it runs apart
   /// from the agent and outlives its restart; [update] then says how it goes.
   /// [password] is sudo's, where the agent `needsPassword`.
-  Future<void> startUpdate({String? password}) => _access(() async {
+  Future<void> startUpdate({String? password}) => _authed(() async {
     await _session().post<dynamic>('/api/v1/update/run', data: {'password': ?password});
   });
 
   /// The newest [limit] notifications, and how many are unread.
-  Future<MonitorNotices> notices({int limit = 100}) => _access(
+  Future<MonitorNotices> notices({int limit = 100}) => _authed(
     () async => MonitorNotices.fromJson(
       await _object('/api/v1/desk/notifications', query: {'limit': limit}),
     ),
   );
 
   /// Marks [ids] read, or every notification with [all].
-  Future<void> markNoticesRead({List<int> ids = const [], bool all = false}) => _access(() async {
+  Future<void> markNoticesRead({List<int> ids = const [], bool all = false}) => _authed(() async {
     await _session().post<dynamic>(
       '/api/v1/desk/notifications/read',
       data: {'ids': ids, 'all': all},
@@ -681,7 +682,7 @@ class MonitorHttpClient {
 
   /// A page of the audit log, newest first: rows older than [before], of one
   /// [kind] and [result] when given. Over a link the account may act on only.
-  Future<MonitorAuditPage> audit({int? before, String? kind, String? result, int limit = 100}) => _access(
+  Future<MonitorAuditPage> audit({int? before, String? kind, String? result, int limit = 100}) => _authed(
     () async => MonitorAuditPage.fromJson(
       await _object(
         '/api/v1/audit',
@@ -691,21 +692,21 @@ class MonitorHttpClient {
   );
 
   /// Terminal sessions, connections, watch tokens and signed-in devices.
-  Future<MonitorLive> live() => _access(
+  Future<MonitorLive> live() => _authed(
     () async => MonitorLive.fromJson(await _object('/api/v1/live')),
   );
 
-  Future<void> endSession(String id) => _access(() async {
+  Future<void> endSession(String id) => _authed(() async {
     await _session().delete<dynamic>('/api/v1/live/sessions/${Uri.encodeComponent(id)}');
   });
 
-  Future<void> endConnection(String id) => _access(() async {
+  Future<void> endConnection(String id) => _authed(() async {
     await _session().delete<dynamic>('/api/v1/live/connections/${Uri.encodeComponent(id)}');
   });
 
   /// Forgets a signed-in device: its next sign-in is a new device's. It does
   /// not sign it out; a new password does.
-  Future<void> forgetDevice(int id) => _access(() async {
+  Future<void> forgetDevice(int id) => _authed(() async {
     await _session().delete<dynamic>('/api/v1/live/devices/$id');
   });
 
@@ -713,7 +714,7 @@ class MonitorHttpClient {
   // sync. What is sent is already encrypted with the backup password, so the
   // agent holds bytes it cannot read. Admin accounts only.
 
-  Future<MonitorBackupList> fetchBackups() {
+  Future<MonitorBackupList> backups() {
     return _authed(
       () => _backup(() async {
         return MonitorBackupList.fromJson(await _object('/api/v1/backup'));
@@ -754,7 +755,7 @@ class MonitorHttpClient {
     Stream<List<int>> Function() open, {
     required int size,
   }) async {
-    final maxBytes = (await fetchBackups()).maxBytes;
+    final maxBytes = (await backups()).maxBytes;
     if (maxBytes != null && size > maxBytes) {
       throw MonitorHttpErr(
         type: MonitorHttpErrType.badRequest,
@@ -824,7 +825,7 @@ class MonitorHttpClient {
   // agent will not disclose, and keeping that on its own save means an edit to
   // an interval can never be what drops one. See `monitor_push.dart`.
 
-  Future<MonitorSettings> fetchSettings() {
+  Future<MonitorSettings> settings() {
     return _authed(() async {
       return MonitorSettings.fromJson(await _object('/api/v1/settings'));
     });
@@ -842,7 +843,7 @@ class MonitorHttpClient {
     });
   }
 
-  Future<MonitorPushList> fetchPush() {
+  Future<MonitorPushList> push() {
     return _authed(() async {
       return MonitorPushList.fromJson(await _object('/api/v1/push'));
     });
@@ -858,7 +859,7 @@ class MonitorHttpClient {
     required String currentPassword,
     required String newPassword,
   }) {
-    return _access(() async {
+    return _authed(() async {
       await _session().put<dynamic>(
         '/api/v1/me/password',
         data: {
@@ -876,7 +877,7 @@ class MonitorHttpClient {
   /// cursor [before] (a page's `next`), only those whose title or last line
   /// has [query]; every one without a [limit]. An agent from before paging
   /// ignores the three and answers them all, with no `next`.
-  Future<MonitorAgentFlows> agentFlows({int? limit, String? before, String? query}) => _access(
+  Future<MonitorAgentFlows> agentFlows({int? limit, String? before, String? query}) => _authed(
     () async => MonitorAgentFlows.fromJson(
       await _object(
         '/api/v1/agent/flows',
@@ -886,7 +887,7 @@ class MonitorHttpClient {
   );
 
   /// Task [id] with its conversation.
-  Future<MonitorAgentDetail> agentFlow(String id) => _access(
+  Future<MonitorAgentDetail> agentFlow(String id) => _authed(
     () async => MonitorAgentDetail.fromJson(
       await _object('/api/v1/agent/flows/${Uri.encodeComponent(id)}'),
     ),
@@ -897,17 +898,17 @@ class MonitorHttpClient {
   /// ([agentUpload]).
   Future<MonitorAgentFlow> agentStart(
     String prompt, {
-    String? mode,
+    AgentPermissionMode? mode,
     List<String> files = const [],
     MonitorAgentModel? model,
     String? thinkingLevel,
-  }) => _access(
+  }) => _authed(
     () async => MonitorAgentFlow.fromJson(
       await _object(
         '/api/v1/agent/flows',
         post: {
           'prompt': prompt,
-          'mode': ?mode,
+          'mode': ?mode?.name,
           if (files.isNotEmpty) 'files': files,
           'model': ?model?.toJson(),
           'thinkingLevel': ?thinkingLevel,
@@ -925,7 +926,7 @@ class MonitorHttpClient {
     List<String> files = const [],
     MonitorAgentModel? model,
     String? thinkingLevel,
-  }) => _access(
+  }) => _authed(
     () async => MonitorAgentFlow.fromJson(
       await _object(
         '/api/v1/agent/flows/${Uri.encodeComponent(id)}/reply',
@@ -940,7 +941,7 @@ class MonitorHttpClient {
   );
 
   /// What a task may run with: the models and thinking levels there are.
-  Future<MonitorAgentChoices> agentChoices() => _access(
+  Future<MonitorAgentChoices> agentChoices() => _authed(
     () async => MonitorAgentChoices.fromJson(await _object('/api/v1/agent/choices')),
   );
 
@@ -957,7 +958,7 @@ class MonitorHttpClient {
     final name = file.uri.pathSegments.lastOrNull ?? 'file';
     // An image goes to the model as one only under its own type.
     final type = mime ?? await file.mimeType ?? 'application/octet-stream';
-    return _access(() async {
+    return _authed(() async {
       final resp = await _session().post<dynamic>(
         '/api/v1/agent/files',
         queryParameters: {'name': name},
@@ -979,15 +980,15 @@ class MonitorHttpClient {
 
   /// Answers what task [id] waits on: [action] with what it needs (`text`,
   /// `index`, `password` and `remember`, `confirm`).
-  Future<void> agentAnswer(String id, Map<String, Object?> answer) => _access(() async {
+  Future<void> agentAnswer(String id, Map<String, Object?> answer) => _authed(() async {
     await _session().post<dynamic>('/api/v1/agent/flows/${Uri.encodeComponent(id)}/answer', data: answer);
   });
 
-  Future<void> agentStop(String id) => _access(() async {
+  Future<void> agentStop(String id) => _authed(() async {
     await _session().post<dynamic>('/api/v1/agent/flows/${Uri.encodeComponent(id)}/stop');
   });
 
-  Future<void> agentDelete(String id) => _access(() async {
+  Future<void> agentDelete(String id) => _authed(() async {
     await _session().delete<dynamic>('/api/v1/agent/flows/${Uri.encodeComponent(id)}');
   });
 
@@ -1034,20 +1035,6 @@ class MonitorHttpClient {
     }
   }
 
-  /// [fn] with the agent's refusals typed — see [accessErr]. A 401 still
-  /// reaches [_authed], which logs in again and retries.
-  Future<T> _access<T>(Future<T> Function() fn) {
-    return _authed(() async {
-      try {
-        return await fn();
-      } on DioException catch (e) {
-        final typed = accessErr(e.response?.statusCode, e.response?.data);
-        if (typed != null) throw typed;
-        rethrow;
-      }
-    });
-  }
-
   /// What a refusal means, from its status and the agent's
   /// `{"error": code, "message": ...}` body; null for a 401 and for anything
   /// that is not one of these.
@@ -1058,6 +1045,9 @@ class MonitorHttpClient {
     final type = switch ((status, code)) {
       (403, 'reauth') => MonitorHttpErrType.reauth,
       (403, 'sudo_password') => MonitorHttpErrType.sudoRefused,
+      // The agent's transport check (`authz::Why::InsecureTransport`): only
+      // the link changes this answer, as for `/exec` and `/ws-ticket`.
+      (403, _) when said == 'insecure_transport' => MonitorHttpErrType.notGranted,
       (409, _) => MonitorHttpErrType.conflict,
       (403, _) => MonitorHttpErrType.forbidden,
       (404, _) => MonitorHttpErrType.notFound,
@@ -1140,7 +1130,7 @@ class MonitorHttpClient {
   /// Reports what the agent will *do*, not what its config asks for — the
   /// transport check is already folded into `access`, so a caller can hide an
   /// entry rather than offer one that answers 403.
-  Future<MonitorCapabilities> fetchCapabilities() {
+  Future<MonitorCapabilities> capabilities() {
     return _authed(() async {
       return MonitorCapabilities.fromJson(
         await _object('/api/v1/capabilities'),
@@ -1294,7 +1284,9 @@ class MonitorHttpClient {
     if (status == 409 && data is Map && data['error'] == 'modified') {
       return MonitorHttpErr(type: MonitorHttpErrType.modified, message: message);
     }
-    return MonitorHttpErr(type: MonitorHttpErrType.unknown, message: message);
+    // Every endpoint maps a refusal the same way.
+    return accessErr(status, data) ??
+        MonitorHttpErr(type: MonitorHttpErrType.unknown, message: message);
   }
 }
 

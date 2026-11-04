@@ -6,7 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/service/crash_report.dart';
 import 'package:server_box/core/service/known_identifiers.dart';
-import 'package:server_box/core/utils/ssh_file_backend.dart';
+import 'package:server_box/data/model/file/backend/ssh.dart';
 
 import '../../helpers/spi_fixture.dart';
 

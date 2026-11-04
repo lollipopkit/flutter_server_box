@@ -99,12 +99,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' as riverpod show Provider;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pointycastle/export.dart' show DESedeEngine, KeyParameter;
-import 'package:server_box/core/utils/monitor_terminal.dart';
+import 'package:server_box/core/monitor/terminal.dart';
 import 'package:server_box/core/utils/privileged_exec.dart';
 import 'package:server_box/core/utils/server_tcp.dart';
 import 'package:server_box/data/model/app/error.dart';
-import 'package:server_box/data/model/server/monitor_access.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_access.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
@@ -120,8 +120,8 @@ import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/virt/libvirt_backend.dart';
 import 'package:server_box/data/provider/virt/pve_backend.dart';
 import 'package:server_box/data/provider/virt/virt.dart';
-import 'package:server_box/data/res/store.dart';
-import 'package:server_box/data/ssh/terminal_session.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/data/terminal/terminal_session.dart';
 import 'package:server_box/src/rust/api/remote_desktop.dart' as ffi;
 import 'package:server_box/view/page/virt/console_connect.dart';
 
@@ -2944,7 +2944,7 @@ void _pveCloneBackup(_Agent agent) {
       expect(targets, isNotEmpty);
       final target = targets.first;
       expect(await w.host.backups(src.id), isEmpty);
-      await w.host.backup(src.id, VirtBackupRequest(storage: target.name, mode: 'stop'));
+      await w.host.backup(src.id, VirtBackupRequest(storage: target.name, mode: VirtBackupMode.stop));
       final backups = await w.host.backups(src.id);
       expect(backups, hasLength(1));
       final b = backups.single;
@@ -3202,7 +3202,7 @@ void _pveCloneBackup(_Agent agent) {
           node: node,
           storage: target.name,
           schedule: 'mon..fri 02:30',
-          mode: 'snapshot',
+          mode: VirtBackupMode.snapshot,
           compress: 'zstd',
           enabled: false,
           vmids: [src.vmid!],
@@ -3218,7 +3218,7 @@ void _pveCloneBackup(_Agent agent) {
         try {
           final left = (await w.host.allBackupJobs()).where((j) => j.id == '$name-job');
           if (left.isNotEmpty) {
-            await w.host.editBackupJob(_jobEditOf(left.first), remove: true);
+            await w.host.deleteBackupJob(left.first);
           }
         } catch (_) {}
       });
@@ -3243,7 +3243,7 @@ void _pveCloneBackup(_Agent agent) {
 
       // Edited: the schedule and the mode, and off `all`.
       await w.host.editBackupJob(
-        _jobEditOf(job, schedule: 'sat 03:00', mode: 'stop'),
+        _jobEditOf(job, schedule: 'sat 03:00', mode: VirtBackupMode.stop),
       );
       final edited = (await w.host.allBackupJobs())
           .firstWhere((j) => j.id == '$name-job');
@@ -3258,7 +3258,7 @@ void _pveCloneBackup(_Agent agent) {
       }
 
       // Deleted, with the guest's own backups left where they were.
-      await w.host.editBackupJob(_jobEditOf(edited), remove: true);
+      await w.host.deleteBackupJob(edited);
       expect(
         (await w.host.allBackupJobs()).map((j) => j.id),
         isNot(contains('$name-job')),
@@ -3276,13 +3276,13 @@ void _pveCloneBackup(_Agent agent) {
 VirtBackupJobEdit _jobEditOf(
   VirtBackupJob job, {
   String? schedule,
-  String? mode,
+  VirtBackupMode? mode,
 }) => VirtBackupJobEdit(
   id: job.id,
   node: job.node,
   storage: job.storage ?? '',
   schedule: schedule ?? job.schedule ?? '',
-  mode: mode ?? job.mode ?? 'snapshot',
+  mode: mode ?? job.mode ?? VirtBackupMode.snapshot,
   compress: job.compress ?? 'zstd',
   enabled: job.enabled,
   all: job.all,
@@ -4908,7 +4908,7 @@ void _pveUnverified(_Agent agent) {
           node: node,
           storage: target.name,
           schedule: 'sat 03:00',
-          mode: 'stop',
+          mode: VirtBackupMode.stop,
           compress: 'zstd',
           enabled: false,
           vmids: [vmid],
@@ -4944,7 +4944,7 @@ void _pveUnverified(_Agent agent) {
       for (final b in backups) {
         await w.host.deleteBackup(g.id, b);
       }
-      await w.host.editBackupJob(_jobEditOf(job), remove: true);
+      await w.host.deleteBackupJob(job);
       jobs.remove(id);
       await remove(vmid);
     }, timeout: const Timeout(Duration(minutes: 10)));

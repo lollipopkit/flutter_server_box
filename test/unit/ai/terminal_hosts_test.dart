@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/llm/scope.dart';
+import 'package:server_box/data/provider/ai/agent_scope.dart';
 
 TerminalHost _host(String name) => TerminalHost(
   serverName: name,

@@ -1,9 +1,9 @@
-import 'package:server_box/data/ssh/tmux/tmux_ids.dart';
-import 'package:server_box/data/ssh/tmux/tmux_launch_plan.dart';
-import 'package:server_box/data/ssh/tmux/tmux_restore_state.dart';
-import 'package:server_box/data/ssh/tmux/tmux_session.dart';
-import 'package:server_box/data/ssh/tmux/tmux_session_info.dart';
-import 'package:server_box/data/ssh/tmux/tmux_window_info.dart';
+import 'package:server_box/data/terminal/tmux/tmux_ids.dart';
+import 'package:server_box/data/terminal/tmux/tmux_launch_plan.dart';
+import 'package:server_box/data/terminal/tmux/tmux_restore_state.dart';
+import 'package:server_box/data/terminal/tmux/tmux_session.dart';
+import 'package:server_box/data/terminal/tmux/tmux_session_info.dart';
+import 'package:server_box/data/terminal/tmux/tmux_window_info.dart';
 import 'package:test/test.dart';
 import '../../helpers/rust_lib_helper.dart';
 

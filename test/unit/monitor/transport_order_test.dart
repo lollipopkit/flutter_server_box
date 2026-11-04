@@ -1,13 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
 import 'package:server_box/data/model/server/connect_credential.dart';
-import 'package:server_box/data/model/server/monitor_access.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_access.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
-import 'package:server_box/data/model/ssh/virtual_key.dart';
-import 'package:server_box/data/ssh/terminal_session.dart';
-import 'package:server_box/data/ssh/terminal_source.dart';
+import 'package:server_box/data/model/terminal/virtual_key.dart';
+import 'package:server_box/data/terminal/terminal_session.dart';
+import 'package:server_box/data/terminal/terminal_source.dart';
 import 'package:server_box/view/page/storage/server_file.dart';
 
 /// What the order in the server editor actually decides.
@@ -71,7 +71,7 @@ void main() {
     // An agent's PTY has no exec channel, so the switcher cannot list
     // anything — and a key drawn on a strip that does nothing when tapped is
     // the failure `worksOn` exists to prevent.
-    bool tmuxOn(Spi spi, MonitorAccess? granted) => VirtKey.tmux.worksOn(
+    bool tmuxOn(Spi spi, MonitorAccess? granted) => VirtualKey.tmux.worksOn(
       ServerSource(spi),
       shellUsesAgent: serverShellUsesAgent(spi, granted),
     );

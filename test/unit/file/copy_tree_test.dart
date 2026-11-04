@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
-import 'package:server_box/core/utils/local_file_backend.dart';
+import 'package:server_box/data/model/file/backend/local.dart';
 import 'package:server_box/data/model/file/copy_tree.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 
@@ -101,7 +101,7 @@ void main() {
       await expectLater(
         backend.write(
           at('dest.txt'),
-          Stream<List<int>>.fromIterable([
+          () => Stream<List<int>>.fromIterable([
             utf8.encode('partial'),
           ]).followedBy(Stream.error(StateError('link died'))),
         ),
@@ -190,10 +190,9 @@ final class _ReplaySource extends _TestBackend {
   @override
   Future<void> write(
     String path,
-    Stream<List<int>> data, {
+    Stream<List<int>> Function() open, {
     int? size,
     void Function(String staging)? onStaging,
-    Stream<List<int>> Function()? replayData,
   }) => throw UnsupportedError('source only');
 }
 
@@ -207,12 +206,11 @@ final class _ReplayDestination extends _TestBackend {
   @override
   Future<void> write(
     String path,
-    Stream<List<int>> data, {
+    Stream<List<int>> Function() open, {
     int? size,
     void Function(String staging)? onStaging,
-    Stream<List<int>> Function()? replayData,
   }) async {
-    attempts.add(await data.expand((chunk) => chunk).toList());
-    attempts.add(await replayData!().expand((chunk) => chunk).toList());
+    attempts.add(await open().expand((chunk) => chunk).toList());
+    attempts.add(await open().expand((chunk) => chunk).toList());
   }
 }

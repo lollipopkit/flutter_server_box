@@ -8,9 +8,9 @@
 library;
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/model/app/server_sort.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/provider/server/sort.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 
 import '../../helpers/test_db.dart';
 

@@ -94,6 +94,14 @@ String groupsEditCommand({
   accounts: accounts,
 );
 
+/// Why `userdel` would be refused for `current` (the account the catalog was
+/// read as), as an error code, or `None`
+String? usersDeleteRefusal({required String userJson, String? current}) =>
+    RustLib.instance.api.crateApiUsersUsersDeleteRefusal(
+      userJson: userJson,
+      current: current,
+    );
+
 /// Why `groupdel` would be refused, as an error code, or `None`
 String? groupsDeleteRefusal({required String groupJson}) =>
     RustLib.instance.api.crateApiUsersGroupsDeleteRefusal(groupJson: groupJson);
@@ -106,7 +114,7 @@ String groupsDeleteCommand({required String groupJson}) =>
 /// A refused account or draft. `code` is `sbm_parser::users::UserError`'s
 /// (`invalidName`, `lineBreak`, `invalidPrimaryGroup`,
 /// `invalidSupplementaryGroup`, `passwordLineBreak`, `renaming`,
-/// `rootNotDeletable`, `currentUserUnknown`, `unknownMember`,
+/// `rootNotDeletable`, `currentUserNotDeletable`, `currentUserUnknown`, `unknownMember`,
 /// `rootGroupNotDeletable`, `groupInUse`, `groupNotLocal`), or `malformed` for JSON the
 /// app should never have sent.
 class UserFfiError implements FrbException {

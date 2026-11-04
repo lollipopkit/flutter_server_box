@@ -8,7 +8,7 @@ import 'package:server_box/data/model/server/wol_cfg.dart';
 /// `PrivateKeyInfo`, `Snippet`, `SshCredential` and `ServerCustom` are
 /// deliberately absent: all four gained a field the released boxes do not
 /// carry, so generating an adapter from them means generating one for a shape
-/// no box is in. So is `VirtKey`, which lost a case. They are frozen types in `legacy_adapters.dart` instead — see
+/// no box is in. So is `VirtualKey`, which lost a case. They are frozen types in `legacy_adapters.dart` instead — see
 /// the note there before adding a model back to this list.
 @GenerateAdapters([
   AdapterSpec<NetViewType>(),

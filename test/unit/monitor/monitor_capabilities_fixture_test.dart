@@ -3,8 +3,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
-import 'package:server_box/data/model/server/monitor_access.dart';
-import 'package:server_box/data/model/server/monitor_capabilities.dart';
+import 'package:server_box/data/model/server/monitor/monitor_access.dart';
+import 'package:server_box/data/model/server/monitor/monitor_capabilities.dart';
 import 'package:server_box/data/model/server/system.dart';
 
 /// `GET /api/v1/capabilities` in the shape the agent's `CapabilitiesView`

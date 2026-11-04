@@ -8,13 +8,13 @@ import 'package:server_box/core/extension/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/server/metric.dart';
+import 'package:server_box/data/provider/server/reading_fmt.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/view/page/server/card/arrival.dart';
-import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/card/sizes.dart';
 import 'package:server_box/view/page/server/metric_row.dart';
-import 'package:server_box/view/page/server/reading_text.dart';
 
 // --- The states that are not a body ---
 //

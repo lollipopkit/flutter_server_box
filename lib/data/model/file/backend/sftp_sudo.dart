@@ -1,0 +1,201 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:dartssh2/dartssh2.dart';
+import 'package:fl_lib/fl_lib.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/extension/ssh_client.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/src/rust/api/files.dart' as files;
+
+final class SftpSudoHelper {
+  final SSHClient client;
+  final Spi spi;
+  final BuildContext? Function() contextProvider;
+
+  String? _cachedPassword;
+  Timer? _cacheTimer;
+
+  static const _cacheTtl = Duration(minutes: 5);
+
+  void _scheduleCacheExpiry() {
+    _cacheTimer?.cancel();
+    _cacheTimer = Timer(_cacheTtl, () {
+      _cachedPassword = null;
+      Loggers.app.info('SFTP sudo password cache expired for ${spi.id}');
+    });
+  }
+
+  void clearCache() {
+    _cachedPassword = null;
+    _cacheTimer?.cancel();
+    _cacheTimer = null;
+  }
+
+  SftpSudoHelper({
+    required this.client,
+    required this.spi,
+    required this.contextProvider,
+  });
+
+  bool get enabled => !spi.isRoot;
+
+  bool get _rememberPwd => Stores.setting.rememberPwdInMem.fetch();
+
+  Future<String?> ensurePassword({bool force = false}) async {
+    if (!enabled) return '';
+
+    if (force) {
+      clearCache();
+    } else if (_rememberPwd && _cachedPassword != null) {
+      return _cachedPassword;
+    }
+
+    final context = contextProvider();
+    if (context == null || !context.mounted) return null;
+
+    final pwd = await context.showPwdDialog(
+      title: l10n.trySudo,
+      label: spi.ssh?.user,
+      id: '${spi.id}_sftp_sudo',
+      remember: _rememberPwd,
+    );
+    if (pwd == null || pwd.isEmpty) return null;
+    if (_rememberPwd) {
+      _cachedPassword = pwd;
+      _scheduleCacheExpiry();
+    }
+    return pwd;
+  }
+
+  /// Runs [command] as root and answers what it printed.
+  ///
+  /// The general form of everything below, for callers holding a command
+  /// rather than an intention — [SftpEscalation], whose whole contract is that
+  /// the backend says what to run and this side decides how to get the rights
+  /// to run it.
+  Future<String> runAsRoot(String command) => _runAndRead(command);
+
+  Future<int> getFileSize(String remotePath, {String? password}) async {
+    final output = await _runAndRead(
+      files.filesSizeCommand(path: remotePath),
+      password: password,
+    );
+    return files.filesParseSize(output: output) ?? 0;
+  }
+
+  Future<void> downloadTextFile(
+    String remotePath,
+    String localPath, {
+    String? password,
+  }) async {
+    final text = await _runAndRead(
+      files.filesReadCommand(path: remotePath),
+      password: password,
+    );
+    final file = File(localPath);
+    await file.parent.create(recursive: true);
+    await file.writeAsString(text);
+  }
+
+  Future<void> uploadTextFile(
+    String localPath,
+    String remotePath, {
+    String? password,
+  }) async {
+    final file = File(localPath);
+    final bytes = await file.readAsBytes();
+    final data = base64Encode(bytes);
+    await _runAndRead(
+      files.filesWriteBase64Command(data: data, path: remotePath),
+      password: password,
+    );
+  }
+
+  Future<void> rename(
+    String oldPath,
+    String newPath, {
+    String? password,
+  }) async {
+    // Refusing a destination that is a directory, as every other rename in
+    // the browser does: a plain `mv` filed the source away inside it.
+    await _runAndRead(
+      files.filesRenameCommand(from: oldPath, to: newPath),
+      password: password,
+    );
+  }
+
+  Future<void> delete(
+    String remotePath, {
+    required bool isDir,
+    required bool recursive,
+    String? password,
+  }) async {
+    await _runAndRead(
+      files.filesRemoveCommand(
+        path: remotePath,
+        isDir: isDir,
+        recursive: recursive,
+        force: false,
+      ),
+      password: password,
+    );
+  }
+
+  Future<String> _runAndRead(String innerCommand, {String? password}) async {
+    final pwd = password ?? await ensurePassword();
+    if (pwd == null) throw const SftpSudoCancelled();
+
+    var result = await client.execWithPwd(_buildSudoCommand(innerCommand, pwd));
+    if (result.rejected) {
+      clearCache();
+      final retryPwd = await ensurePassword(force: true);
+      if (retryPwd == null) throw const SftpSudoCancelled();
+      result = await client.execWithPwd(_buildSudoCommand(innerCommand, retryPwd));
+      if (result.rejected) {
+        clearCache();
+        throw const SftpSudoRejected();
+      }
+    }
+    if (result.exitCode != 0) {
+      final output = result.stdout.trim();
+      throw SftpSudoFailed(output.isEmpty ? null : output);
+    }
+    return result.stdout;
+  }
+
+  static String _buildSudoCommand(String command, String password) =>
+      files.filesSudoCommand(inner: command, password: password);
+}
+
+/// The user was asked for a password and did not give one.
+///
+/// Public and readable because it now reaches the browser, which reports what
+/// a failed operation said: a class name in a snackbar is not an explanation.
+final class SftpSudoCancelled implements Exception {
+  const SftpSudoCancelled();
+
+  @override
+  String toString() => libL10n.cancel;
+}
+
+/// Sudo refused the password, asked for again once.
+final class SftpSudoRejected implements Exception {
+  const SftpSudoRejected();
+
+  @override
+  String toString() => l10n.virtErrSudoRejected;
+}
+
+/// The command ran as root and failed; [output] is what it printed.
+final class SftpSudoFailed implements Exception {
+  const SftpSudoFailed(this.output);
+
+  final String? output;
+
+  @override
+  String toString() => output ?? libL10n.fail;
+}

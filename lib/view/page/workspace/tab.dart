@@ -7,7 +7,6 @@ import 'package:flutter/gestures.dart'
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/utils/server_picker.dart';
 import 'package:server_box/data/model/app/keybinding.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -18,10 +17,11 @@ import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/workspace.dart';
-import 'package:server_box/data/ssh/terminal_session.dart';
+import 'package:server_box/data/terminal/terminal_session.dart';
 import 'package:server_box/view/page/workspace/tab_host.dart';
 import 'package:server_box/view/page/workspace/view_meta.dart';
 import 'package:server_box/view/widget/edge_fade_scroll.dart';
+import 'package:server_box/view/widget/server_picker.dart';
 
 part 'area.dart';
 part 'pane.dart';

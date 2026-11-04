@@ -1,16 +1,16 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/model/server/battery.dart';
-import 'package:server_box/data/model/server/conn.dart';
-import 'package:server_box/data/model/server/cpu.dart';
-import 'package:server_box/data/model/server/disk.dart';
-import 'package:server_box/data/model/server/memory.dart';
-import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/status/battery.dart';
+import 'package:server_box/data/model/server/status/conn.dart';
+import 'package:server_box/data/model/server/status/cpu.dart';
+import 'package:server_box/data/model/server/status/disk.dart';
+import 'package:server_box/data/model/server/status/memory.dart';
+import 'package:server_box/data/model/server/status/net_speed.dart';
+import 'package:server_box/data/model/server/status/temp.dart';
 import 'package:server_box/data/model/server/system.dart';
-import 'package:server_box/data/model/server/temp.dart';
+import 'package:server_box/data/provider/server/metric.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
-import 'package:server_box/view/page/server/card/metric.dart';
 
 import '../../helpers/spi_fixture.dart';
 

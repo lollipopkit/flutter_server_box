@@ -4,9 +4,9 @@ import 'dart:convert';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:meta/meta.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:server_box/core/utils/local_server.dart';
+import 'package:server_box/core/local/server.dart';
+import 'package:server_box/core/ssh/exec.dart';
 import 'package:server_box/core/utils/privileged_exec.dart';
-import 'package:server_box/core/utils/ssh_exec.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
@@ -780,10 +780,10 @@ class LibvirtBackend implements VirtBackend {
   Future<List<VirtBackupJob>> allBackupJobs() async => const [];
 
   @override
-  Future<void> editBackupJob(
-    VirtBackupJobEdit edit, {
-    bool remove = false,
-  }) async => _noBackups();
+  Future<void> editBackupJob(VirtBackupJobEdit edit) async => _noBackups();
+
+  @override
+  Future<void> deleteBackupJob(VirtBackupJob job) async => _noBackups();
 
   @override
   Future<VirtScheduleCheck> checkSchedule(String schedule) async =>
@@ -1524,7 +1524,7 @@ class LibvirtBackend implements VirtBackend {
         password: password,
       ),
     );
-    if (result.exitCode == kSudoPasswordRejected) {
+    if (result.sudoRejected) {
       if (password == null) {
         throw const VirtErr(
           type: VirtErrType.sudoPasswordRequired,

@@ -7,10 +7,10 @@ import 'dart:io';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/server.dart';
+import 'package:server_box/core/ssh/client.dart';
 import 'package:server_box/data/model/server/host_cert_authority.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 
 import '../../helpers/spi_fixture.dart';
 import '../../helpers/test_db.dart';

@@ -3,7 +3,7 @@
 // whose tests (`tests/files_compat.rs`) hold this file's former fixtures.
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/shell_file_ops.dart';
+import 'package:server_box/data/model/file/backend/shell_file_ops.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 
 import '../../helpers/rust_lib_helper.dart';

@@ -2,13 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/entity_store.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/data/store/sync_recorder.dart';
 import 'package:server_box/data/store/sync_themes.dart';
 import 'package:sqlite3/sqlite3.dart';
 
-/// A synced record as an op carries it (`docs/dev/sync-log.md`): read from the
+/// A synced record as an op carries it: read from the
 /// stores to send, and written back when another device's op wins.
 ///
 /// A record is `(c, id)` as [SyncRecorder] stamps it: a sync root's table and

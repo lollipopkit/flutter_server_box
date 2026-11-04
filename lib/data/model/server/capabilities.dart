@@ -1,6 +1,6 @@
-import 'package:server_box/core/utils/local_server.dart';
+import 'package:server_box/core/local/server.dart';
 import 'package:server_box/data/model/server/connect_credential.dart';
-import 'package:server_box/data/model/server/monitor_access.dart';
+import 'package:server_box/data/model/server/monitor/monitor_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 
 /// What a way of reaching a server can do.
@@ -107,9 +107,20 @@ abstract interface class ServerCapabilities {
   static ServerCapabilities forwardsOf(
     Spi spi, {
     MonitorAccess? granted,
-  }) => spi.transport == ServerTransport.monitorHttp
+  }) => forwardsViaAgent(spi)
       ? of(ServerConnectCredential.fromSpi(spi), granted: granted)
       : ofSpi(spi, granted: granted);
+
+  /// Whether [spi]'s forwards go through its agent alone: when the agent
+  /// leads, a forward never touches SSH — no session opened first, no falling
+  /// back to sshd when the agent refuses.
+  static bool forwardsViaAgent(Spi spi) =>
+      spi.transport == ServerTransport.monitorHttp;
+
+  /// Whether [spi]'s files would be the agent's, should it serve them: it has
+  /// no SSH, or the agent leads.
+  static bool filesViaAgent(Spi spi) =>
+      spi.sshOn == null || spi.transport == ServerTransport.monitorHttp;
 
   /// What a server can do across every way it is reachable.
   ///

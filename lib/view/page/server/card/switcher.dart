@@ -4,9 +4,9 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/server.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/provider/server/metric.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
-import 'package:server_box/view/page/server/card/metric.dart';
 
 /// Which machine to look at, from the bar over an open one.
 ///

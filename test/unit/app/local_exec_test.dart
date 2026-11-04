@@ -25,7 +25,7 @@ void main() {
           password: 'hunter2',
         );
 
-        expect(result.exitCode, kSudoPasswordRejected);
+        expect(result.sudoRejected, isTrue);
       },
       skip: !onPosix,
     );

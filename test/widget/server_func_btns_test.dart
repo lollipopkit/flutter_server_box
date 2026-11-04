@@ -4,7 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
-import 'package:server_box/view/widget/server_func_btns.dart';
+import 'package:server_box/view/page/server/widget/server_func_btns.dart';
 
 import '../helpers/spi_fixture.dart';
 

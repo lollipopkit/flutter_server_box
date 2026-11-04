@@ -8,9 +8,9 @@ import 'package:flutter/foundation.dart';
 import 'package:server_box/core/service/diagnostics_upload.dart';
 import 'package:server_box/core/service/known_identifiers.dart';
 import 'package:server_box/core/service/native_exit.dart';
-import 'package:server_box/core/utils/ssh_file_backend.dart';
+import 'package:server_box/data/model/file/backend/ssh.dart';
 import 'package:server_box/data/res/build_data.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 
 /// The text a user pastes into an issue after a crash.
 ///

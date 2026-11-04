@@ -3,11 +3,11 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:server_box/data/model/server/shell_backend.dart';
-import 'package:server_box/data/ssh/tmux/tmux_control_client.dart';
-import 'package:server_box/data/ssh/tmux/tmux_control_models.dart';
-import 'package:server_box/data/ssh/tmux/tmux_control_shell_session.dart';
-import 'package:server_box/data/ssh/tmux/tmux_format.dart';
-import 'package:server_box/data/ssh/tmux/tmux_ids.dart';
+import 'package:server_box/data/terminal/tmux/tmux_control_client.dart';
+import 'package:server_box/data/terminal/tmux/tmux_control_models.dart';
+import 'package:server_box/data/terminal/tmux/tmux_control_shell_session.dart';
+import 'package:server_box/data/terminal/tmux/tmux_format.dart';
+import 'package:server_box/data/terminal/tmux/tmux_ids.dart';
 import 'package:test/test.dart';
 import 'package:xterm/core.dart';
 

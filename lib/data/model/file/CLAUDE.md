@@ -1,6 +1,6 @@
 # File transport
 
-A third axis: `SshCredential.fileTransport`, stored per server, read only in `openSshFileBackend` (`lib/core/utils/ssh_file_backend.dart`). Every caller goes through it rather than naming a backend class.
+A third axis: `SshCredential.fileTransport`, stored per server, read only in `openSshFileBackend` (`lib/data/model/file/backend/ssh.dart`). Every caller goes through it rather than naming a backend class.
 
 - **SFTP** is the default and what anything that can should use: one channel, random access, metadata answered in-protocol.
 - **SCP** is for a host with no SFTP subsystem — dropbear on OpenWrt, one static `scp` in firmware (#1288). `ScpFileBackend` moves contents with `scp -f`/`scp -t` (`scp_protocol.dart`, written against a `ScpChannel` rather than an `SSHSession` so it is testable against a scripted remote) and does list, stat, mkdir, rm, mv and chmod as shell commands. Its listing command and parser are shared with the SFTP backend's sudo escalation in `shell_file_ops.dart`.

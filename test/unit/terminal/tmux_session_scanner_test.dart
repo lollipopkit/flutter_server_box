@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:server_box/data/ssh/persistent_shell.dart';
-import 'package:server_box/data/ssh/tmux/tmux_ids.dart';
-import 'package:server_box/data/ssh/tmux/tmux_session_scanner.dart';
+import 'package:server_box/data/terminal/persistent_shell.dart';
+import 'package:server_box/data/terminal/tmux/tmux_ids.dart';
+import 'package:server_box/data/terminal/tmux/tmux_session_scanner.dart';
 import 'package:test/test.dart';
 
 import '../../helpers/fake_stream_sink.dart';

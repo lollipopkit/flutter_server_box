@@ -58,7 +58,7 @@ final class ServicesNotifierProvider
   }
 }
 
-String _$servicesNotifierHash() => r'12b56af9bd1258c087d059645cf70f0ab233c949';
+String _$servicesNotifierHash() => r'568a6aa4342564564fb6359ee2faaf4e2dc7ecde';
 
 final class ServicesNotifierFamily extends $Family
     with

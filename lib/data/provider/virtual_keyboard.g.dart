@@ -9,28 +9,28 @@ part of 'virtual_keyboard.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(VirtKeyboard)
-final virtKeyboardProvider = VirtKeyboardProvider._();
+@ProviderFor(VirtualKeyboard)
+final virtualKeyboardProvider = VirtualKeyboardProvider._();
 
-final class VirtKeyboardProvider
-    extends $NotifierProvider<VirtKeyboard, VirtKeyState> {
-  VirtKeyboardProvider._()
+final class VirtualKeyboardProvider
+    extends $NotifierProvider<VirtualKeyboard, VirtKeyState> {
+  VirtualKeyboardProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'virtKeyboardProvider',
+        name: r'virtualKeyboardProvider',
         isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$virtKeyboardHash();
+  String debugGetCreateSourceHash() => _$virtualKeyboardHash();
 
   @$internal
   @override
-  VirtKeyboard create() => VirtKeyboard();
+  VirtualKeyboard create() => VirtualKeyboard();
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(VirtKeyState value) {
@@ -41,9 +41,9 @@ final class VirtKeyboardProvider
   }
 }
 
-String _$virtKeyboardHash() => r'f8012f7bdf41d9a6a57b93c443cf0f5cab9e0baa';
+String _$virtualKeyboardHash() => r'b076d97b36548d59db68183c64c4163e4844604e';
 
-abstract class _$VirtKeyboard extends $Notifier<VirtKeyState> {
+abstract class _$VirtualKeyboard extends $Notifier<VirtKeyState> {
   VirtKeyState build();
   @$mustCallSuper
   @override

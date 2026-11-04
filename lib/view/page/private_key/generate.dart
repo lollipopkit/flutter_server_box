@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/utils/ssh_keygen.dart';
+import 'package:server_box/core/ssh/keygen.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/store/entity_store.dart';
@@ -229,7 +229,7 @@ class _PrivateKeyGeneratePageState
       // any use — so a page that has gone drops the key instead. Making
       // another costs only the wait.
       if (!mounted) return;
-      await ref
+      ref
           .read(privateKeyProvider.notifier)
           .add(
             PrivateKeyInfo(

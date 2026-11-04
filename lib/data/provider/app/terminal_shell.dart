@@ -1,8 +1,8 @@
 import 'package:flutter/painting.dart' show Alignment;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/data/model/app/float_shell.dart';
-import 'package:server_box/data/res/store.dart';
-import 'package:server_box/data/ssh/terminal_session.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/data/terminal/terminal_session.dart';
 
 part 'terminal_shell.g.dart';
 

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/monitor_ws_frames.dart';
+import 'package:server_box/core/monitor/ws_frames.dart';
 
 class _RealHttp extends HttpOverrides {}
 

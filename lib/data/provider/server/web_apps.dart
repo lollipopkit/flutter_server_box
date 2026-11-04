@@ -2,8 +2,9 @@ import 'dart:async';
 
 import 'package:riverpod/riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:server_box/data/model/server/monitor_desk_app.dart';
-import 'package:server_box/data/model/server/monitor_stack.dart';
+import 'package:server_box/data/model/server/monitor/monitor_capabilities.dart';
+import 'package:server_box/data/model/server/monitor/monitor_desk_app.dart';
+import 'package:server_box/data/model/server/monitor/monitor_stack.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/agent_poll.dart';
 import 'package:server_box/data/provider/server/all.dart';
@@ -57,7 +58,7 @@ class WebAppsNotifier extends _$WebAppsNotifier {
     final (:stacks, :desk) = ref.watch(
       serverProvider(serverId).select((s) {
         final features = s.agentCapabilities?.features;
-        return (stacks: features?.contains('stacks') ?? false, desk: features?.contains('desk') ?? false);
+        return (stacks: features?.contains(MonitorFeature.stacks) ?? false, desk: features?.contains(MonitorFeature.desk) ?? false);
       }),
     );
     if (cred == null || !(stacks || desk)) return const WebAppsState();

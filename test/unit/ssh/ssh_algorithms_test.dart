@@ -11,7 +11,7 @@ library;
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/ssh_algorithms.dart';
+import 'package:server_box/core/ssh/algorithms.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 
 void main() {

@@ -161,10 +161,9 @@ Future<void> runCopy(
     // is not a failure it gets to handle.
     await dest.write(
       item.to,
-      counted(),
+      counted,
       size: item.size,
       onStaging: onStaging,
-      replayData: counted,
     );
   }
 }

@@ -3700,6 +3700,265 @@ class ServerJumpsCompanion extends UpdateCompanion<ServerJumpRow> {
   }
 }
 
+class $ServerIdentityFilesTable extends ServerIdentityFiles
+    with TableInfo<$ServerIdentityFilesTable, ServerIdentityFileRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ServerIdentityFilesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _serverIdMeta = const VerificationMeta(
+    'serverId',
+  );
+  @override
+  late final GeneratedColumn<String> serverId = GeneratedColumn<String>(
+    'server_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES server (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _ordMeta = const VerificationMeta('ord');
+  @override
+  late final GeneratedColumn<int> ord = GeneratedColumn<int>(
+    'ord',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _pathMeta = const VerificationMeta('path');
+  @override
+  late final GeneratedColumn<String> path = GeneratedColumn<String>(
+    'path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [serverId, ord, path];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'server_identity_file';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ServerIdentityFileRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('server_id')) {
+      context.handle(
+        _serverIdMeta,
+        serverId.isAcceptableOrUnknown(data['server_id']!, _serverIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_serverIdMeta);
+    }
+    if (data.containsKey('ord')) {
+      context.handle(
+        _ordMeta,
+        ord.isAcceptableOrUnknown(data['ord']!, _ordMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ordMeta);
+    }
+    if (data.containsKey('path')) {
+      context.handle(
+        _pathMeta,
+        path.isAcceptableOrUnknown(data['path']!, _pathMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_pathMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {serverId, ord};
+  @override
+  ServerIdentityFileRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ServerIdentityFileRow(
+      serverId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}server_id'],
+      )!,
+      ord: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}ord'],
+      )!,
+      path: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}path'],
+      )!,
+    );
+  }
+
+  @override
+  $ServerIdentityFilesTable createAlias(String alias) {
+    return $ServerIdentityFilesTable(attachedDatabase, alias);
+  }
+
+  @override
+  bool get withoutRowId => true;
+}
+
+class ServerIdentityFileRow extends DataClass
+    implements Insertable<ServerIdentityFileRow> {
+  final String serverId;
+  final int ord;
+  final String path;
+  const ServerIdentityFileRow({
+    required this.serverId,
+    required this.ord,
+    required this.path,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['server_id'] = Variable<String>(serverId);
+    map['ord'] = Variable<int>(ord);
+    map['path'] = Variable<String>(path);
+    return map;
+  }
+
+  ServerIdentityFilesCompanion toCompanion(bool nullToAbsent) {
+    return ServerIdentityFilesCompanion(
+      serverId: Value(serverId),
+      ord: Value(ord),
+      path: Value(path),
+    );
+  }
+
+  factory ServerIdentityFileRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ServerIdentityFileRow(
+      serverId: serializer.fromJson<String>(json['serverId']),
+      ord: serializer.fromJson<int>(json['ord']),
+      path: serializer.fromJson<String>(json['path']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'serverId': serializer.toJson<String>(serverId),
+      'ord': serializer.toJson<int>(ord),
+      'path': serializer.toJson<String>(path),
+    };
+  }
+
+  ServerIdentityFileRow copyWith({String? serverId, int? ord, String? path}) =>
+      ServerIdentityFileRow(
+        serverId: serverId ?? this.serverId,
+        ord: ord ?? this.ord,
+        path: path ?? this.path,
+      );
+  ServerIdentityFileRow copyWithCompanion(ServerIdentityFilesCompanion data) {
+    return ServerIdentityFileRow(
+      serverId: data.serverId.present ? data.serverId.value : this.serverId,
+      ord: data.ord.present ? data.ord.value : this.ord,
+      path: data.path.present ? data.path.value : this.path,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ServerIdentityFileRow(')
+          ..write('serverId: $serverId, ')
+          ..write('ord: $ord, ')
+          ..write('path: $path')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(serverId, ord, path);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ServerIdentityFileRow &&
+          other.serverId == this.serverId &&
+          other.ord == this.ord &&
+          other.path == this.path);
+}
+
+class ServerIdentityFilesCompanion
+    extends UpdateCompanion<ServerIdentityFileRow> {
+  final Value<String> serverId;
+  final Value<int> ord;
+  final Value<String> path;
+  const ServerIdentityFilesCompanion({
+    this.serverId = const Value.absent(),
+    this.ord = const Value.absent(),
+    this.path = const Value.absent(),
+  });
+  ServerIdentityFilesCompanion.insert({
+    required String serverId,
+    required int ord,
+    required String path,
+  }) : serverId = Value(serverId),
+       ord = Value(ord),
+       path = Value(path);
+  static Insertable<ServerIdentityFileRow> custom({
+    Expression<String>? serverId,
+    Expression<int>? ord,
+    Expression<String>? path,
+  }) {
+    return RawValuesInsertable({
+      if (serverId != null) 'server_id': serverId,
+      if (ord != null) 'ord': ord,
+      if (path != null) 'path': path,
+    });
+  }
+
+  ServerIdentityFilesCompanion copyWith({
+    Value<String>? serverId,
+    Value<int>? ord,
+    Value<String>? path,
+  }) {
+    return ServerIdentityFilesCompanion(
+      serverId: serverId ?? this.serverId,
+      ord: ord ?? this.ord,
+      path: path ?? this.path,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (serverId.present) {
+      map['server_id'] = Variable<String>(serverId.value);
+    }
+    if (ord.present) {
+      map['ord'] = Variable<int>(ord.value);
+    }
+    if (path.present) {
+      map['path'] = Variable<String>(path.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ServerIdentityFilesCompanion(')
+          ..write('serverId: $serverId, ')
+          ..write('ord: $ord, ')
+          ..write('path: $path')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $ServerDisabledCmdsTable extends ServerDisabledCmds
     with TableInfo<$ServerDisabledCmdsTable, ServerDisabledCmdRow> {
   @override
@@ -9649,6 +9908,8 @@ abstract class _$AppDb extends GeneratedDatabase {
   late final $ServerTagsTable serverTags = $ServerTagsTable(this);
   late final $ServerEnvsTable serverEnvs = $ServerEnvsTable(this);
   late final $ServerJumpsTable serverJumps = $ServerJumpsTable(this);
+  late final $ServerIdentityFilesTable serverIdentityFiles =
+      $ServerIdentityFilesTable(this);
   late final $ServerDisabledCmdsTable serverDisabledCmds =
       $ServerDisabledCmdsTable(this);
   late final $ServerCustomCmdsTable serverCustomCmds = $ServerCustomCmdsTable(
@@ -9684,6 +9945,7 @@ abstract class _$AppDb extends GeneratedDatabase {
     serverTags,
     serverEnvs,
     serverJumps,
+    serverIdentityFiles,
     serverDisabledCmds,
     serverCustomCmds,
     knownHosts,
@@ -9745,6 +10007,13 @@ abstract class _$AppDb extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('server_jump', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'server',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('server_identity_file', kind: UpdateKind.delete)],
     ),
     WritePropagation(
       on: TableUpdateQuery.onTableName(
@@ -10641,6 +10910,29 @@ final class $$ServersTableReferences
   }
 
   static MultiTypedResultKey<
+    $ServerIdentityFilesTable,
+    List<ServerIdentityFileRow>
+  >
+  _serverIdentityFilesRefsTable(_$AppDb db) => MultiTypedResultKey.fromTable(
+    db.serverIdentityFiles,
+    aliasName: 'server__id__server_identity_file__server_id',
+  );
+
+  $$ServerIdentityFilesTableProcessedTableManager get serverIdentityFilesRefs {
+    final manager = $$ServerIdentityFilesTableTableManager(
+      $_db,
+      $_db.serverIdentityFiles,
+    ).filter((f) => f.serverId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _serverIdentityFilesRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<
     $ServerDisabledCmdsTable,
     List<ServerDisabledCmdRow>
   >
@@ -11154,6 +11446,31 @@ class $$ServersTableFilterComposer extends Composer<_$AppDb, $ServersTable> {
           }) => $$ServerEnvsTableFilterComposer(
             $db: $db,
             $table: $db.serverEnvs,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> serverIdentityFilesRefs(
+    Expression<bool> Function($$ServerIdentityFilesTableFilterComposer f) f,
+  ) {
+    final $$ServerIdentityFilesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.serverIdentityFiles,
+      getReferencedColumn: (t) => t.serverId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServerIdentityFilesTableFilterComposer(
+            $db: $db,
+            $table: $db.serverIdentityFiles,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -11959,6 +12276,32 @@ class $$ServersTableAnnotationComposer
     return f(composer);
   }
 
+  Expression<T> serverIdentityFilesRefs<T extends Object>(
+    Expression<T> Function($$ServerIdentityFilesTableAnnotationComposer a) f,
+  ) {
+    final $$ServerIdentityFilesTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.serverIdentityFiles,
+          getReferencedColumn: (t) => t.serverId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$ServerIdentityFilesTableAnnotationComposer(
+                $db: $db,
+                $table: $db.serverIdentityFiles,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+
   Expression<T> serverDisabledCmdsRefs<T extends Object>(
     Expression<T> Function($$ServerDisabledCmdsTableAnnotationComposer a) f,
   ) {
@@ -12281,6 +12624,7 @@ class $$ServersTableTableManager
             bool bmcCredId,
             bool serverTagsRefs,
             bool serverEnvsRefs,
+            bool serverIdentityFilesRefs,
             bool serverDisabledCmdsRefs,
             bool serverCustomCmdsRefs,
             bool knownHostsRefs,
@@ -12484,6 +12828,7 @@ class $$ServersTableTableManager
                 bmcCredId = false,
                 serverTagsRefs = false,
                 serverEnvsRefs = false,
+                serverIdentityFilesRefs = false,
                 serverDisabledCmdsRefs = false,
                 serverCustomCmdsRefs = false,
                 knownHostsRefs = false,
@@ -12502,6 +12847,7 @@ class $$ServersTableTableManager
                   explicitlyWatchedTables: [
                     if (serverTagsRefs) db.serverTags,
                     if (serverEnvsRefs) db.serverEnvs,
+                    if (serverIdentityFilesRefs) db.serverIdentityFiles,
                     if (serverDisabledCmdsRefs) db.serverDisabledCmds,
                     if (serverCustomCmdsRefs) db.serverCustomCmds,
                     if (knownHostsRefs) db.knownHosts,
@@ -12598,6 +12944,27 @@ class $$ServersTableTableManager
                                 table,
                                 p0,
                               ).serverEnvsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.serverId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (serverIdentityFilesRefs)
+                        await $_getPrefetchedData<
+                          ServerRow,
+                          $ServersTable,
+                          ServerIdentityFileRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ServersTableReferences
+                              ._serverIdentityFilesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ServersTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).serverIdentityFilesRefs,
                           referencedItemsForCurrentItem:
                               (item, referencedItems) => referencedItems.where(
                                 (e) => e.serverId == item.id,
@@ -12881,6 +13248,7 @@ typedef $$ServersTableProcessedTableManager =
         bool bmcCredId,
         bool serverTagsRefs,
         bool serverEnvsRefs,
+        bool serverIdentityFilesRefs,
         bool serverDisabledCmdsRefs,
         bool serverCustomCmdsRefs,
         bool knownHostsRefs,
@@ -13769,6 +14137,298 @@ typedef $$ServerJumpsTableProcessedTableManager =
       (ServerJumpRow, $$ServerJumpsTableReferences),
       ServerJumpRow,
       PrefetchHooks Function({bool serverId, bool jumpId})
+    >;
+typedef $$ServerIdentityFilesTableCreateCompanionBuilder =
+    ServerIdentityFilesCompanion Function({
+      required String serverId,
+      required int ord,
+      required String path,
+    });
+typedef $$ServerIdentityFilesTableUpdateCompanionBuilder =
+    ServerIdentityFilesCompanion Function({
+      Value<String> serverId,
+      Value<int> ord,
+      Value<String> path,
+    });
+
+final class $$ServerIdentityFilesTableReferences
+    extends
+        BaseReferences<
+          _$AppDb,
+          $ServerIdentityFilesTable,
+          ServerIdentityFileRow
+        > {
+  $$ServerIdentityFilesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $ServersTable _serverIdTable(_$AppDb db) =>
+      db.servers.createAlias('server_identity_file__server_id__server__id');
+
+  $$ServersTableProcessedTableManager get serverId {
+    final $_column = $_itemColumn<String>('server_id')!;
+
+    final manager = $$ServersTableTableManager(
+      $_db,
+      $_db.servers,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_serverIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$ServerIdentityFilesTableFilterComposer
+    extends Composer<_$AppDb, $ServerIdentityFilesTable> {
+  $$ServerIdentityFilesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get ord => $composableBuilder(
+    column: $table.ord,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get path => $composableBuilder(
+    column: $table.path,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ServersTableFilterComposer get serverId {
+    final $$ServersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableFilterComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ServerIdentityFilesTableOrderingComposer
+    extends Composer<_$AppDb, $ServerIdentityFilesTable> {
+  $$ServerIdentityFilesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get ord => $composableBuilder(
+    column: $table.ord,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get path => $composableBuilder(
+    column: $table.path,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ServersTableOrderingComposer get serverId {
+    final $$ServersTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableOrderingComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ServerIdentityFilesTableAnnotationComposer
+    extends Composer<_$AppDb, $ServerIdentityFilesTable> {
+  $$ServerIdentityFilesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get ord =>
+      $composableBuilder(column: $table.ord, builder: (column) => column);
+
+  GeneratedColumn<String> get path =>
+      $composableBuilder(column: $table.path, builder: (column) => column);
+
+  $$ServersTableAnnotationComposer get serverId {
+    final $$ServersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ServerIdentityFilesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDb,
+          $ServerIdentityFilesTable,
+          ServerIdentityFileRow,
+          $$ServerIdentityFilesTableFilterComposer,
+          $$ServerIdentityFilesTableOrderingComposer,
+          $$ServerIdentityFilesTableAnnotationComposer,
+          $$ServerIdentityFilesTableCreateCompanionBuilder,
+          $$ServerIdentityFilesTableUpdateCompanionBuilder,
+          (ServerIdentityFileRow, $$ServerIdentityFilesTableReferences),
+          ServerIdentityFileRow,
+          PrefetchHooks Function({bool serverId})
+        > {
+  $$ServerIdentityFilesTableTableManager(
+    _$AppDb db,
+    $ServerIdentityFilesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ServerIdentityFilesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ServerIdentityFilesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$ServerIdentityFilesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> serverId = const Value.absent(),
+                Value<int> ord = const Value.absent(),
+                Value<String> path = const Value.absent(),
+              }) => ServerIdentityFilesCompanion(
+                serverId: serverId,
+                ord: ord,
+                path: path,
+              ),
+          createCompanionCallback:
+              ({
+                required String serverId,
+                required int ord,
+                required String path,
+              }) => ServerIdentityFilesCompanion.insert(
+                serverId: serverId,
+                ord: ord,
+                path: path,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$ServerIdentityFilesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({serverId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (serverId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.serverId,
+                                referencedTable:
+                                    $$ServerIdentityFilesTableReferences
+                                        ._serverIdTable(db),
+                                referencedColumn:
+                                    $$ServerIdentityFilesTableReferences
+                                        ._serverIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ServerIdentityFilesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDb,
+      $ServerIdentityFilesTable,
+      ServerIdentityFileRow,
+      $$ServerIdentityFilesTableFilterComposer,
+      $$ServerIdentityFilesTableOrderingComposer,
+      $$ServerIdentityFilesTableAnnotationComposer,
+      $$ServerIdentityFilesTableCreateCompanionBuilder,
+      $$ServerIdentityFilesTableUpdateCompanionBuilder,
+      (ServerIdentityFileRow, $$ServerIdentityFilesTableReferences),
+      ServerIdentityFileRow,
+      PrefetchHooks Function({bool serverId})
     >;
 typedef $$ServerDisabledCmdsTableCreateCompanionBuilder =
     ServerDisabledCmdsCompanion Function({
@@ -18897,6 +19557,8 @@ class $AppDbManager {
       $$ServerEnvsTableTableManager(_db, _db.serverEnvs);
   $$ServerJumpsTableTableManager get serverJumps =>
       $$ServerJumpsTableTableManager(_db, _db.serverJumps);
+  $$ServerIdentityFilesTableTableManager get serverIdentityFiles =>
+      $$ServerIdentityFilesTableTableManager(_db, _db.serverIdentityFiles);
   $$ServerDisabledCmdsTableTableManager get serverDisabledCmds =>
       $$ServerDisabledCmdsTableTableManager(_db, _db.serverDisabledCmds);
   $$ServerCustomCmdsTableTableManager get serverCustomCmds =>

@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/monitor_terminal.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/core/monitor/terminal.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
 
 /// End-to-end against a live `monitor` agent over HTTPS or loopback.

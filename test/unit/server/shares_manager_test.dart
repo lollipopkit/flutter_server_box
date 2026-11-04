@@ -1,9 +1,9 @@
 import 'dart:collection';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/data/admin/shares_manager.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/shares.dart';
-import 'package:server_box/data/service/shares_manager.dart';
 import 'package:server_box/src/rust/api/shares.dart' as ffi;
 
 import '../../helpers/rust_lib_helper.dart';
@@ -158,7 +158,7 @@ void main() {
     );
   });
 
-  test('exit code two is sudo rejection only for non-root', () async {
+  test('sudo refusing a non-root caller is sudo_rejected, an exit 2 is not', () async {
     const share = SmbShare(
       name: 'photos',
       path: '/srv/photos',
@@ -170,6 +170,18 @@ void main() {
       recycle: false,
       managed: true,
     );
+    final refused = _QueueExec([
+      const ExecResult(exitCode: 1, stdout: '', stderr: 'sudo: a password is required'),
+    ]);
+    await expectLater(
+      SharesManager.setSmb(refused, [share], isRoot: false),
+      throwsA(isA<SharesManagerException>().having(
+        (error) => error.code,
+        'code',
+        'sudo_rejected',
+      )),
+    );
+
     final nonRoot = _QueueExec([
       const ExecResult(exitCode: 2, stdout: '', stderr: 'ordinary failure'),
     ]);
@@ -178,7 +190,7 @@ void main() {
       throwsA(isA<SharesManagerException>().having(
         (error) => error.code,
         'code',
-        'sudo_rejected',
+        'failed',
       )),
     );
 

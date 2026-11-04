@@ -7,13 +7,13 @@ import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/model/file/transfer.dart';
 import 'package:server_box/data/model/file/transfer_status.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
-import 'package:server_box/data/model/server/monitor_access.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_access.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 
 import '../../helpers/spi_fixture.dart';
 import '../../helpers/test_db.dart';

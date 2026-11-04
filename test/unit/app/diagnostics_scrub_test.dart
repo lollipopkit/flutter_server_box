@@ -3,10 +3,10 @@ import 'package:sentry/sentry.dart' as sentry;
 import 'package:server_box/core/service/diagnostics_upload.dart';
 import 'package:server_box/core/service/known_identifiers.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/server.dart';
+import 'package:server_box/data/store/stores.dart';
 
 import '../../helpers/spi_fixture.dart';
 import '../../helpers/test_db.dart';

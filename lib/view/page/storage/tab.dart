@@ -3,12 +3,13 @@ import 'dart:convert';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:server_box/core/llm/screen.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/view/agent/screen.dart';
+import 'package:server_box/view/page/server/widget/server_side_tile.dart';
 import 'package:server_box/view/page/storage/file_pane.dart';
 import 'package:server_box/view/page/storage/local.dart';
 import 'package:server_box/view/page/storage/send_to.dart';
@@ -16,7 +17,6 @@ import 'package:server_box/view/page/storage/server_file.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
 import 'package:server_box/view/widget/dist_icon.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
-import 'package:server_box/view/widget/server_side_tile.dart';
 
 /// Every open file browser, one tab each, plus a picker at the head of the
 /// strip.

@@ -11,9 +11,9 @@ library;
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
+import 'package:server_box/core/utils/logo_url.dart';
 import 'package:server_box/data/model/server/dist.dart';
 import 'package:server_box/data/store/setting.dart';
-import 'package:server_box/view/widget/dist_icon.dart';
 
 import '../../helpers/test_db.dart';
 

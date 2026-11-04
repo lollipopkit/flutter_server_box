@@ -685,15 +685,14 @@ extension _Actions on _ServerEditPageState {
             // Carried through rather than rebuilt from the form: nothing on
             // this page can type a path, and dropping it on save would take
             // away the only credential an imported server has
-            keyPath: selectedKey != null ? null : _keyPath.value,
-            identityFiles:
-                keyIdx == null && _keyPath.value == this.spi?.ssh?.keyPath
-                ? this.spi?.ssh?.identityFiles
-                : null,
+            identityFiles: switch ((selectedKey, _keyPath.value)) {
+              (null, final path?) =>
+                path == this.spi?.ssh?.resolvedIdentityFiles.firstOrNull
+                    ? this.spi!.ssh!.resolvedIdentityFiles
+                    : [path],
+              _ => null,
+            },
             alterUrl: _altUrlController.text.selfNotEmptyOrNull,
-            jumpId: _jumpServers.value.isEmpty
-                ? null
-                : _jumpServers.value.first,
             jumpIds: _jumpServers.value.isEmpty ? null : _jumpServers.value,
             proxyCommand: proxyCommandText.selfNotEmptyOrNull,
             fileTransport: _fileTransport.value,
@@ -1003,7 +1002,7 @@ extension _Utils on _ServerEditPageState {
             .keys
             .indexWhere((e) => e.id == ssh.keyId);
       }
-      _keyPath.value = ssh.keyPath;
+      _keyPath.value = ssh.resolvedIdentityFiles.firstOrNull;
       _altUrlController.text = ssh.alterUrl ?? '';
       _jumpServers.value = ssh.resolvedJumpIds;
       _proxyCommandCtrl.text = ssh.proxyCommand ?? '';

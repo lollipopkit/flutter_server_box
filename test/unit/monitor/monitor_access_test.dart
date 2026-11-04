@@ -12,9 +12,9 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/service/monitor_login_devices.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
-import 'package:server_box/data/model/server/monitor_access.dart';
-import 'package:server_box/data/model/server/monitor_capabilities.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_access.dart';
+import 'package:server_box/data/model/server/monitor/monitor_capabilities.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/provider/server/monitor_http.dart';
 
 import '../../helpers/fake_agent_health.dart';
@@ -236,6 +236,17 @@ void main() {
       ),
     );
     expect(cred.toJson()['user'], 'admin');
+  });
+
+  test('a transport refusal is notGranted, any other 403 forbidden', () {
+    expect(
+      MonitorHttpClient.accessErr(403, {'error': 'forbidden', 'message': 'insecure_transport'})?.type,
+      MonitorHttpErrType.notGranted,
+    );
+    expect(
+      MonitorHttpClient.accessErr(403, {'error': 'forbidden', 'message': 'not_admin'})?.type,
+      MonitorHttpErrType.forbidden,
+    );
   });
 
   test('a 401 is left to the login retry', () {

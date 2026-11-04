@@ -2,20 +2,20 @@
 /// names.
 ///
 /// An index means a different key the moment a case is inserted into
-/// [VirtKey], and these values travel through backups and sync. The conversion
+/// [VirtualKey], and these values travel through backups and sync. The conversion
 /// gets one pass over a user's arrangement, so what it drops it drops for good.
 library;
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/model/ssh/virtual_key.dart';
+import 'package:server_box/data/model/terminal/virtual_key.dart';
 import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/migrations/m013_virt_key_names.dart';
 import 'package:server_box/data/store/setting.dart';
 
 import '../helpers/test_db.dart';
 
-// Indices as the releases wrote them, which `VirtKey.index` stopped being when
+// Indices as the releases wrote them, which `VirtualKey.index` stopped being when
 // `clipboard` (12) left the enum.
 const _esc = 0;
 const _tab = 7;
@@ -50,7 +50,7 @@ void main() {
   });
 
   test('the order comes across as the same keys, in the same places', () async {
-    const order = [VirtKey.tab, VirtKey.ctrl, VirtKey.esc];
+    const order = [VirtualKey.tab, VirtualKey.ctrl, VirtualKey.esc];
     store.set(
       VirtKeyNamesMigration.orderKey,
       [_tab, _ctrl, _esc],
@@ -67,7 +67,7 @@ void main() {
     await migration.apply();
 
     // `clipboard` comes across by name, and is dropped where every name this
-    // build has no case for is: by [VirtKeyX.loadFromStore].
+    // build has no case for is: by [VirtualKeyX.loadFromStore].
     expect(store.sshVirtKeys.fetch(), ['ime', 'clipboard', 'tmux']);
   });
 
@@ -84,20 +84,20 @@ void main() {
 
     await migration.apply();
 
-    expect(store.sshVirtKeysDisabled.fetch(), [VirtKey.sudo.name]);
+    expect(store.sshVirtKeysDisabled.fetch(), [VirtualKey.sudo.name]);
   });
 
   test('an index no case answers to is dropped, not guessed at', () async {
     store.set(VirtKeyNamesMigration.orderKey, [
       _tab,
-      VirtKey.values.length + 3,
+      VirtualKey.values.length + 3,
       -1,
       _ctrl,
     ]);
 
     await migration.apply();
 
-    expect(store.sshVirtKeys.fetch(), [VirtKey.tab.name, VirtKey.ctrl.name]);
+    expect(store.sshVirtKeys.fetch(), [VirtualKey.tab.name, VirtualKey.ctrl.name]);
   });
 
   test('and a repeat is dropped, keeping the first', () async {
@@ -109,7 +109,7 @@ void main() {
 
     await migration.apply();
 
-    expect(store.sshVirtKeys.fetch(), [VirtKey.tab.name, VirtKey.ctrl.name]);
+    expect(store.sshVirtKeys.fetch(), [VirtualKey.tab.name, VirtualKey.ctrl.name]);
   });
 
   test('an install that never arranged them is left alone', () async {
@@ -117,7 +117,7 @@ void main() {
 
     expect(store.get<Object>(VirtKeyNamesMigration.orderKey), isNull);
     // Which reads as the default, not as an empty strip.
-    expect(store.sshVirtKeys.fetch(), VirtKeyX.defaultOrder.map((e) => e.name));
+    expect(store.sshVirtKeys.fetch(), VirtualKeyX.defaultOrder.map((e) => e.name));
   });
 
   /// A second pass is what a process stopped between `apply` and the version
@@ -128,19 +128,19 @@ void main() {
 
     await migration.apply();
 
-    expect(store.sshVirtKeys.fetch(), [VirtKey.tab.name]);
+    expect(store.sshVirtKeys.fetch(), [VirtualKey.tab.name]);
   });
 
   test('a list half converted by an interrupted write is finished', () async {
     // Two writes, so a crash between them leaves one key converted.
     store.set(VirtKeyNamesMigration.orderKey, [
-      VirtKey.tab.name,
+      VirtualKey.tab.name,
       _ctrl,
     ]);
 
     await migration.apply();
 
-    expect(store.sshVirtKeys.fetch(), [VirtKey.tab.name, VirtKey.ctrl.name]);
+    expect(store.sshVirtKeys.fetch(), [VirtualKey.tab.name, VirtualKey.ctrl.name]);
   });
 
   test('none of it counts as a user edit', () async {

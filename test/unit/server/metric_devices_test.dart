@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/model/server/status_history.dart';
+import 'package:server_box/data/model/server/status/status_history.dart';
+import 'package:server_box/data/provider/server/metric.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/status.dart';
-import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/detail/metric_devices.dart';
 
 import '../../helpers/spi_fixture.dart';

@@ -7,7 +7,7 @@ library;
 
 import 'package:flutter/widgets.dart' show IconData;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/view/page/server/card/metric.dart';
+import 'package:server_box/data/provider/server/metric.dart';
 
 ServerMetric _metric(ServerMetricKind kind, double? percent) => ServerMetric(
   kind: kind,

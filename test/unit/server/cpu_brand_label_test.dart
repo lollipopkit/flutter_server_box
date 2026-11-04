@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/model/server/cpu.dart';
+import 'package:server_box/data/model/server/status/cpu.dart';
 
 void main() {
   test('no brand, no label', () => expect(Cpus().brandLabel, isNull));

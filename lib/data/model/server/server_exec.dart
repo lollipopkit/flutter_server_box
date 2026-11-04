@@ -5,17 +5,56 @@ import 'package:server_box/src/rust/api/script.dart' as script_ffi;
 
 export 'package:fl_tty/fl_tty.dart' show CommandByteExec, CommandExec, ExecResult, ExecSession, OnExecOutput;
 
-/// The exit code [ServerExecSudo.runWithSudo] reports when sudo would not
-/// take the password it was given, or was not given one at all.
+/// What [ServerExecSudo.runWithSudo] answers: the command's own result, and
+/// whether sudo refused the password it was given (or was given none).
 ///
-/// A number rather than an exception because it travels with the rest of the
-/// result: the command's own output is still worth reading, and a caller that
-/// does not care about sudo can treat it as any other non-zero exit.
-const kSudoPasswordRejected = 2;
+/// Beside the exit code rather than in it: a command's own exit status can be
+/// any number, and the output is still worth reading either way.
+final class SudoExecResult extends ExecResult {
+  SudoExecResult(ExecResult result, {required this.rejected})
+    : super(
+        exitCode: result.exitCode,
+        stdout: result.stdout,
+        stderr: result.stderr,
+        outputIncomplete: result.outputIncomplete,
+        streamError: result.streamError,
+        streamErrorStackTrace: result.streamErrorStackTrace,
+        mayStillRun: result.mayStillRun,
+      );
+
+  final bool rejected;
+
+  @override
+  bool get succeeded => !rejected && super.succeeded;
+}
+
+extension SudoRejection on ExecResult {
+  /// Sudo refused the password: only ever true of [SudoExecResult].
+  bool get sudoRejected => switch (this) {
+    final SudoExecResult r => r.rejected,
+    _ => false,
+  };
+}
+
+/// A command that exited non-zero where it had to succeed. [toString] is what
+/// it printed, which is what the user is shown.
+final class CommandFailed implements Exception {
+  const CommandFailed(this.what, this.result);
+
+  /// What was being run, in a few words: `install`, `read`.
+  final String what;
+  final ExecResult result;
+
+  @override
+  String toString() {
+    final said = result.combined.trim();
+    return said.isEmpty ? '$what exited with ${result.exitCode}' : said;
+  }
+}
 
 extension ServerExecSudo on CommandExec {
-  /// Runs [script] with [password] on its stdin, reporting a rejected sudo
-  /// password as [kSudoPasswordRejected].
+  /// Runs [script] with [password] on its stdin, saying whether sudo rejected
+  /// the password ([SudoExecResult.rejected]).
   ///
   /// The password goes here rather than into the command `sudo -S` is part of,
   /// which is what `sudo -S` reading stdin is for. Written into the command it
@@ -25,7 +64,7 @@ extension ServerExecSudo on CommandExec {
   ///
   /// Null when the caller has no password to offer, which is the case where
   /// the far side is expected to allow the command without one.
-  Future<ExecResult> runWithSudo(
+  Future<SudoExecResult> runWithSudo(
     String script, {
     String? password,
     String? entry,
@@ -45,11 +84,9 @@ extension ServerExecSudo on CommandExec {
     // so without reading what it said a wrong password is indistinguishable
     // from the command itself failing. Read off the whole stream: a phrase
     // can arrive split across two chunks.
-    if (!script_ffi.sudoPasswordRejected(stderr: result.stderr)) return result;
-    return ExecResult(
-      exitCode: kSudoPasswordRejected,
-      stdout: result.stdout,
-      stderr: result.stderr,
+    return SudoExecResult(
+      result,
+      rejected: script_ffi.sudoPasswordRejected(stderr: result.stderr),
     );
   }
 }

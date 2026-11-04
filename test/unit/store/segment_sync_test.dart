@@ -5,10 +5,10 @@ import 'dart:typed_data';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/log_sync.dart';
-import 'package:server_box/core/sync_key.dart';
+import 'package:server_box/core/sync/key.dart';
+import 'package:server_box/core/sync/log.dart';
 import 'package:server_box/data/model/server/snippet.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/data/store/sync_recorder.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

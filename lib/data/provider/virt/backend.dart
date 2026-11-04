@@ -233,9 +233,12 @@ abstract interface class VirtBackend {
   /// view. Empty where the account may not read them (`Sys.Audit`).
   Future<List<VirtBackupJob>> allBackupJobs();
 
-  /// Creates, edits ([VirtBackupJobEdit.id] naming the job) or — with
-  /// [remove] — deletes a scheduled job. PVE only, and `Sys.Modify` on `/`.
-  Future<void> editBackupJob(VirtBackupJobEdit edit, {bool remove = false});
+  /// Creates or edits ([VirtBackupJobEdit.id] naming the job) a scheduled
+  /// job. PVE only, and `Sys.Modify` on `/`.
+  Future<void> editBackupJob(VirtBackupJobEdit edit);
+
+  /// Deletes a scheduled job; its backups stay. As [editBackupJob].
+  Future<void> deleteBackupJob(VirtBackupJob job);
 
   /// Asks the host what it makes of [schedule] — PVE's own parser, through
   /// the call its job editor's "Simulate" button makes — and returns its

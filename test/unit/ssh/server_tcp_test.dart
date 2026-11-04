@@ -14,11 +14,11 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/ssh/local_tunnel.dart';
 import 'package:server_box/core/utils/server_tcp.dart';
-import 'package:server_box/core/utils/ssh_local_tunnel.dart';
 import 'package:server_box/data/model/app/error.dart';
-import 'package:server_box/data/model/server/monitor_access.dart';
-import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor/monitor_access.dart';
+import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 

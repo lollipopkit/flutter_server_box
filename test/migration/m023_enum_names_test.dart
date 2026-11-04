@@ -1,7 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
-import 'package:server_box/data/model/app/server_sort.dart';
+import 'package:server_box/data/provider/server/sort.dart';
 import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/migrations/m023_enum_names.dart';
 import 'package:server_box/data/store/schema.dart';

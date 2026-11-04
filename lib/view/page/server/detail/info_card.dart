@@ -3,8 +3,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/service/self_addr.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
-import 'package:server_box/data/model/server/gpu.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/status/gpu.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/view/widget/built_from.dart';
 
@@ -31,22 +31,22 @@ class ServerDetailInfoCard extends StatelessWidget {
 
   /// The About card's rows: how the app reaches the machine, what the machine
   /// says of itself, and its public address.
-  static List<ServerInfoRow> aboutRows(ServerState si) {
-    final ss = si.status;
+  static List<ServerInfoRow> aboutRows(ServerState srv) {
+    final ss = srv.status;
     final publicIp = SelfAddr.pick(ss.ips);
     // One row, not two: how the app reaches this machine and how long that
     // took are the same fact — a delay means nothing without knowing whether
     // it timed an HTTP request or a shell script on a loaded box.
     final connection = [
-      _transportName(si),
-      if (si.agentVersion case final version?) 'v$version',
+      _transportName(srv),
+      if (srv.agentVersion case final version?) 'v$version',
     ].join(' ');
     return <ServerInfoRow>[
       (
         k: libL10n.conn,
-        v: si.latencyMs == null
+        v: srv.latencyMs == null
             ? connection
-            : '$connection · ${si.latencyMs}ms',
+            : '$connection · ${srv.latencyMs}ms',
         secret: false,
       ),
       for (final e in ss.more.entries) (k: e.key.i18n, v: e.value, secret: false),
@@ -56,8 +56,8 @@ class ServerDetailInfoCard extends StatelessWidget {
   }
 
   /// The Hardware card's rows: what the machine is built of.
-  static List<ServerInfoRow> hardwareRows(ServerState si) {
-    final ss = si.status;
+  static List<ServerInfoRow> hardwareRows(ServerState srv) {
+    final ss = srv.status;
     final cores = ss.cpu.coresCount;
     final usage = ss.diskUsage;
     return <ServerInfoRow>[
@@ -139,8 +139,8 @@ class ServerDetailInfoCard extends StatelessWidget {
 
 /// How the app reaches this machine — the transport that leads, which is
 /// the one a poll uses unless it fails over.
-String _transportName(ServerState si) {
-  return switch (si.spi.transport) {
+String _transportName(ServerState srv) {
+  return switch (srv.spi.transport) {
     ServerTransport.monitorHttp => 'monitor',
     ServerTransport.ssh => 'SSH',
     ServerTransport.local => 'localhost',

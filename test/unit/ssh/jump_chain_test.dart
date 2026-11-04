@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:server_box/core/utils/jump_chain.dart';
+import 'package:server_box/core/ssh/jump_chain.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 
 import '../../helpers/spi_fixture.dart';

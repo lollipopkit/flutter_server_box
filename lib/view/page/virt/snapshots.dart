@@ -45,6 +45,9 @@ class VirtSnapshotsView extends ConsumerStatefulWidget {
 
 class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView>
     with _PaneRows<VirtSnapshotsView> {
+  /// [setState] for the extension below, which may not call it itself.
+  void _setState(VoidCallback fn) => setState(fn);
+
   /// The new-snapshot form is open.
   bool _creating = false;
   final _name = TextEditingController();
@@ -612,9 +615,6 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView>
 // --- Actions ---
 
 extension _SnapshotActions on _VirtSnapshotsViewState {
-  // ignore: invalid_use_of_protected_member
-  void _setState(VoidCallback fn) => setState(fn);
-
   void _openForm(List<VirtGuestSnapshot> list) {
     var n = list.length + 1;
     while (list.any((s) => s.name == 'snap-$n')) {

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/model/server/monitor_agent.dart';
+import 'package:server_box/data/model/server/monitor/monitor_agent.dart';
 import 'package:server_box/data/provider/server/monitor_http.dart';
 
 void main() {
@@ -44,7 +44,7 @@ void main() {
       });
       expect(list.configured, isTrue);
       expect(list.next, isNull, reason: 'an agent that does not page lists it all');
-      expect(list.defaultMode, 'auto');
+      expect(list.defaultMode, AgentPermissionMode.auto);
       final f = list.flows.single;
       expect((f.id, f.title, f.status, f.waiting), ('f1', 'Disk usage', MonitorAgentStatus.waiting, 'sudo'));
       expect(f.status.active, isTrue);

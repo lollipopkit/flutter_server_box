@@ -6,9 +6,9 @@ library;
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
-import 'package:server_box/view/widget/server_side_tile.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/view/page/server/widget/server_side_tile.dart';
 
 import '../../helpers/spi_fixture.dart';
 import '../../helpers/test_db.dart';

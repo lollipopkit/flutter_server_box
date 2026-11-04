@@ -2,10 +2,10 @@ import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/migrations/m033_sync_record.dart';
 import 'package:server_box/data/store/schema.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/data/store/sync_recorder.dart';
 
 List<Map<String, Object?>> _table() => [

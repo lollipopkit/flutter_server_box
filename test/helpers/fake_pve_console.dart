@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:typed_data';
 
-import 'package:server_box/core/utils/pve_console.dart';
+import 'package:server_box/core/pve/console.dart';
 
 /// A [PveConsoleLink] the test plays the console's side of: [output] is what
 /// the console says, [calls] what was asked of it, in order.

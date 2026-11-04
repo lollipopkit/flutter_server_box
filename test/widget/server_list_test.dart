@@ -4,21 +4,22 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
-import 'package:server_box/data/model/server/conn.dart';
-import 'package:server_box/data/model/server/cpu.dart';
-import 'package:server_box/data/model/server/disk.dart';
-import 'package:server_box/data/model/server/memory.dart';
-import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/status/conn.dart';
+import 'package:server_box/data/model/server/status/cpu.dart';
+import 'package:server_box/data/model/server/status/disk.dart';
+import 'package:server_box/data/model/server/status/memory.dart';
+import 'package:server_box/data/model/server/status/net_speed.dart';
+import 'package:server_box/data/model/server/status/status_history.dart';
+import 'package:server_box/data/model/server/status/temp.dart';
 import 'package:server_box/data/model/server/system.dart';
-import 'package:server_box/data/model/server/temp.dart';
 import 'package:server_box/data/provider/server/single.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/connection_stats.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/pve.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/server/card/density.dart';
 import 'package:server_box/view/page/server/card/overview.dart';
@@ -84,7 +85,7 @@ void main() {
     status.more[StatusCmdType.uptime] = 'up 3 days';
     final now = DateTime.now().millisecondsSinceEpoch;
     for (var i = 0; i < 8; i++) {
-      status.history.add(timeMs: now - (8 - i) * 3000, cpu: 10.0 + i, mem: 50);
+      status.history.add(StatusHistorySample(timeMs: now - (8 - i) * 3000, cpu: 10.0 + i, mem: 50));
     }
     return status;
   }

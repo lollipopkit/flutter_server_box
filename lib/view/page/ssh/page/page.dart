@@ -12,10 +12,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/llm/scope.dart';
 import 'package:server_box/core/service/program_status_alerts.dart';
+import 'package:server_box/core/ssh/exec.dart';
 import 'package:server_box/core/utils/app_auth.dart';
-import 'package:server_box/core/utils/ssh_exec.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/model/app/error.dart';
@@ -24,7 +23,8 @@ import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/model/server/snippet.dart';
-import 'package:server_box/data/model/ssh/virtual_key.dart';
+import 'package:server_box/data/model/terminal/virtual_key.dart';
+import 'package:server_box/data/provider/ai/agent_scope.dart';
 import 'package:server_box/data/provider/app/keybindings.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/app/terminal_shell.dart';
@@ -32,17 +32,17 @@ import 'package:server_box/data/provider/server/await_client.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/provider/virtual_keyboard.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/terminal.dart';
-import 'package:server_box/data/ssh/persistent_shell.dart';
-import 'package:server_box/data/ssh/session_manager.dart';
-import 'package:server_box/data/ssh/terminal_a11y.dart';
-import 'package:server_box/data/ssh/terminal_session.dart';
-import 'package:server_box/data/ssh/terminal_source.dart';
-import 'package:server_box/data/ssh/terminal_status.dart';
-import 'package:server_box/data/ssh/terminal_status_alerts.dart';
-import 'package:server_box/data/ssh/tmux/tmux_export.dart';
-import 'package:server_box/data/ssh/tmux/tmux_ids.dart';
+import 'package:server_box/data/store/stores.dart';
+import 'package:server_box/data/terminal/persistent_shell.dart';
+import 'package:server_box/data/terminal/session_manager.dart';
+import 'package:server_box/data/terminal/terminal_a11y.dart';
+import 'package:server_box/data/terminal/terminal_session.dart';
+import 'package:server_box/data/terminal/terminal_source.dart';
+import 'package:server_box/data/terminal/terminal_status.dart';
+import 'package:server_box/data/terminal/terminal_status_alerts.dart';
+import 'package:server_box/data/terminal/tmux/tmux_export.dart';
+import 'package:server_box/data/terminal/tmux/tmux_ids.dart';
 import 'package:server_box/src/rust/api/files.dart';
 import 'package:server_box/view/page/agent/view.dart';
 import 'package:server_box/view/page/ssh/ask_ai_layout.dart';
@@ -51,13 +51,13 @@ import 'package:server_box/view/page/ssh/page/tmux_page_controller.dart';
 import 'package:server_box/view/page/ssh/page/virt_key_intro.dart';
 import 'package:server_box/view/page/ssh/present_server.dart';
 import 'package:server_box/view/page/ssh/text_view.dart';
+import 'package:server_box/view/page/ssh/widget/terminal_connection_progress.dart';
+import 'package:server_box/view/page/ssh/widget/terminal_status_dot.dart';
+import 'package:server_box/view/page/ssh/widget/tmux_session_picker_sheet.dart';
+import 'package:server_box/view/page/ssh/widget/tmux_window_bar.dart';
+import 'package:server_box/view/page/ssh/widget/virtual_key_semantics.dart';
 import 'package:server_box/view/page/storage/server_file.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
-import 'package:server_box/view/widget/terminal_connection_progress.dart';
-import 'package:server_box/view/widget/terminal_status_dot.dart';
-import 'package:server_box/view/widget/tmux_session_picker_sheet.dart';
-import 'package:server_box/view/widget/tmux_window_bar.dart';
-import 'package:server_box/view/widget/virt_key_semantics.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:xterm/core.dart';
 import 'package:xterm/ui.dart' hide TerminalThemes;
@@ -66,7 +66,7 @@ part 'ask_ai.dart';
 part 'init.dart';
 part 'keyboard.dart';
 part 'status.dart';
-part 'virt_key.dart';
+part 'virtual_key.dart';
 
 final class SshPageArgs {
   /// Where this terminal's shell comes from. A server, or this device — and
@@ -294,12 +294,12 @@ class SSHPageState extends ConsumerState<SSHPage>
   Terminal get _terminal => _sess.terminal;
 
   late final TerminalController _terminalController = TerminalController();
-  final List<List<VirtKey>> _virtKeysList = [];
+  final List<List<VirtualKey>> _virtKeysList = [];
 
-  /// The keys this session cannot use — see [VirtKeyX.worksOn]. Drawn
+  /// The keys this session cannot use — see [VirtualKeyX.worksOn]. Drawn
   /// disabled in their place rather than left out: a key left out moved every
   /// one after it, and the last row came up a key short of the others.
-  final Set<VirtKey> _virtKeysUnavailable = {};
+  final Set<VirtualKey> _virtKeysUnavailable = {};
   late final _termKey =
       widget.args.terminalKey ?? GlobalKey<TerminalViewState>();
 
@@ -332,7 +332,7 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   /// Moves the walkthrough, or ends it with a null [step].
   ///
-  /// Here rather than in the [_VirtKey] extension the rest of it lives in:
+  /// Here rather than in the [_VirtualKey] extension the rest of it lives in:
   /// `setState` is protected and an extension is not a subclass, so this is
   /// the one line of it that has to be on the class.
   void setIntroStep(int? step, {List<VirtKeyIntroStep>? steps}) {
@@ -587,7 +587,7 @@ class SSHPageState extends ConsumerState<SSHPage>
       _sess.dispose();
     }
     _removeVisibilityListener();
-    Stores.setting.virtKeyRows.listenable().removeListener(
+    Stores.setting.virtualKeyRows.listenable().removeListener(
       _handleVirtKeySettingsChanged,
     );
     Stores.setting.sshVirtKeys.listenable().removeListener(
@@ -623,7 +623,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     _terminalShell = ref.read(terminalShellProvider.notifier);
     _attachAgentHost();
     _reloadVirtKeys();
-    Stores.setting.virtKeyRows.listenable().addListener(
+    Stores.setting.virtualKeyRows.listenable().addListener(
       _handleVirtKeySettingsChanged,
     );
     Stores.setting.sshVirtKeys.listenable().addListener(
@@ -1005,8 +1005,8 @@ class SSHPageState extends ConsumerState<SSHPage>
             height: _virtKeysHeight,
             child: Consumer(
               builder: (context, ref, child) {
-                final virtKeyState = ref.watch(virtKeyboardProvider);
-                final virtKeyNotifier = ref.read(virtKeyboardProvider.notifier);
+                final virtKeyState = ref.watch(virtualKeyboardProvider);
+                final virtKeyNotifier = ref.read(virtualKeyboardProvider.notifier);
 
                 // Keep physical and virtual keyboard state in one notifier.
                 _terminal.inputHandler = virtKeyNotifier;
@@ -1141,7 +1141,7 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   Widget _buildVirtualKey(
     VirtKeyState virtKeyState,
-    VirtKeyboard virtKeyNotifier,
+    VirtualKeyboard virtKeyNotifier,
   ) {
     final count = _virtKeysList.firstOrNull?.length ?? 0;
     if (count == 0) return UIs.placeholder;
@@ -1151,7 +1151,7 @@ class SSHPageState extends ConsumerState<SSHPage>
       builder: (_, cons) {
         final virtKeyWidth = cons.maxWidth / count;
 
-        Widget pageOf(List<List<VirtKey>> rows) => Column(
+        Widget pageOf(List<List<VirtualKey>> rows) => Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             for (final row in rows)
@@ -1191,10 +1191,10 @@ class SSHPageState extends ConsumerState<SSHPage>
   }
 
   Widget _buildVirtKeyItem(
-    VirtKey item,
+    VirtualKey item,
     double virtKeyWidth,
     VirtKeyState virtKeyState,
-    VirtKeyboard virtKeyNotifier,
+    VirtualKeyboard virtKeyNotifier,
   ) {
     var selected = false;
     switch (item.key) {
@@ -1233,7 +1233,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     final lit = group == null || item.group == group;
     final available = !_virtKeysUnavailable.contains(item);
 
-    return VirtKeySemantics(
+    return VirtualKeySemantics(
       item: item,
       armed: selected,
       enabled: available,
@@ -1570,7 +1570,7 @@ class SSHPageState extends ConsumerState<SSHPage>
   /// setting says. Splitting on whole rows rather than on keys is the point of
   /// the paging: a sideways scroll used to leave the row halfway between two
   /// keys, and nothing said how much further it went.
-  List<List<List<VirtKey>>> get _virtKeyPages {
+  List<List<List<VirtualKey>>> get _virtKeyPages {
     // Every row while the walkthrough runs. It is about these keys, and a step
     // naming a kind of them cannot point at one that is on a page behind this.
     final perPage = _introStep == null ? _virtKeyRows : 0;

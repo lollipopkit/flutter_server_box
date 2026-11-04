@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/virt/virt.dart';
@@ -9,6 +10,16 @@ import 'package:server_box/src/rust/api/backup.dart' as ffi;
 part 'virt_backup.freezed.dart';
 
 /// One backup of a guest (PVE `vzdump`), as a backup storage lists it.
+/// How vzdump stops a guest to copy it, as PVE names the option.
+enum VirtBackupMode {
+  snapshot,
+  suspend,
+  stop;
+
+  static VirtBackupMode? fromName(Object? name) =>
+      values.firstWhereOrNull((m) => m.name == name);
+}
+
 @freezed
 abstract class VirtBackup with _$VirtBackup {
   const VirtBackup._();
@@ -59,8 +70,8 @@ abstract class VirtBackupJob with _$VirtBackupJob {
     String? schedule,
     String? storage,
 
-    /// `snapshot`, `suspend` or `stop`.
-    String? mode,
+    /// Null when the job names none, or one this app does not know.
+    VirtBackupMode? mode,
 
     /// `zstd`, `lzo`, `gzip`, or none.
     String? compress,
@@ -132,7 +143,7 @@ final class VirtBackupJobEdit {
     required this.node,
     required this.storage,
     required this.schedule,
-    this.mode = 'snapshot',
+    this.mode = VirtBackupMode.snapshot,
     this.compress = 'zstd',
     this.enabled = true,
     this.all = false,
@@ -156,7 +167,7 @@ final class VirtBackupJobEdit {
 
   /// systemd calendar format, as PVE's own `pve-calendar-event` takes it.
   final String schedule;
-  final String mode;
+  final VirtBackupMode mode;
   final String compress;
   final bool enabled;
 
@@ -175,7 +186,7 @@ final class VirtBackupJobEdit {
 final class VirtBackupRequest {
   const VirtBackupRequest({
     required this.storage,
-    this.mode = 'snapshot',
+    this.mode = VirtBackupMode.snapshot,
     this.compress = 'zstd',
     this.notes,
     this.protected = false,
@@ -186,7 +197,7 @@ final class VirtBackupRequest {
   final String storage;
 
   /// `snapshot` (a running guest keeps running), `suspend` or `stop`.
-  final String mode;
+  final VirtBackupMode mode;
 
   /// `zstd`, `lzo`, `gzip` or `0` for none.
   final String compress;

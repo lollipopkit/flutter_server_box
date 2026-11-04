@@ -1,5 +1,5 @@
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/model/server/monitor_overview.dart';
+import 'package:server_box/data/model/server/monitor/monitor_overview.dart';
 
 /// [notice] in this app's language, from its `kind` and `params`; the agent's
 /// own English for a kind this app does not know and for rows from before

@@ -14,7 +14,7 @@ import 'package:server_box/data/model/container/ps.dart';
 import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/provider/server/single.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/src/rust/api/container.dart' as ffi;
 
 part 'container.freezed.dart';
@@ -407,7 +407,7 @@ class ContainerNotifier extends _$ContainerNotifier {
     }
 
     /// Sudo password error
-    if (needSudo && result.exitCode == kSudoPasswordRejected) {
+    if (needSudo && result.sudoRejected) {
       SudoPassword.forget(hostId);
       _setRefreshError(
         target,
@@ -506,8 +506,10 @@ class ContainerNotifier extends _$ContainerNotifier {
           stats: output['stats'],
           version: state.version,
         );
+        if (_isStaleRefresh(refreshGeneration)) return;
         state = state.copyWith(items: items.map(ContainerPs.fromFfi).toList());
       } catch (e, trace) {
+        if (_isStaleRefresh(refreshGeneration)) return;
         if (_refreshError(target) == null) {
           _setRefreshError(
             target,
@@ -523,10 +525,12 @@ class ContainerNotifier extends _$ContainerNotifier {
           runtimeName: type.name,
           raw: output['images']!,
         );
+        if (_isStaleRefresh(refreshGeneration)) return;
         state = state.copyWith(
           images: images.map(ContainerImg.fromFfi).toList(),
         );
       } catch (e, trace) {
+        if (_isStaleRefresh(refreshGeneration)) return;
         if (_refreshError(target) == null) {
           _setRefreshError(
             target,
@@ -540,10 +544,10 @@ class ContainerNotifier extends _$ContainerNotifier {
   }
 
   Future<void> _finishRefresh(int generation) async {
-    // Cleared before the staleness check: a refresh that was superseded still
-    // has to let the next one start.
-    _refreshing = false;
+    // A superseded refresh leaves the guard alone: [_resetSudoProbe] lifted it
+    // when superseding, and it now belongs to the refresh that replaced this.
     if (_isStaleRefresh(generation)) return;
+    _refreshing = false;
     state = state.copyWith(isBusy: false);
     await _refreshPendingIfNeeded(generation);
   }
@@ -804,7 +808,7 @@ class ContainerNotifier extends _$ContainerNotifier {
 
     if (_isStaleRefresh(generation)) return null;
 
-    if (needSudo && result.exitCode == kSudoPasswordRejected) {
+    if (needSudo && result.sudoRejected) {
       SudoPassword.forget(hostId);
       await _finishRun();
       return ContainerErr(

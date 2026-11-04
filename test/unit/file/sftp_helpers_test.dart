@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/sftp_timeout.dart';
 import 'package:server_box/core/utils/shell_quote.dart';
+import 'package:server_box/data/model/file/backend/sftp_timeout.dart';
 
 void main() {
   group('shellSingleQuote', () {

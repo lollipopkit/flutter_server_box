@@ -4,7 +4,8 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/model/server/monitor_overview.dart';
+import 'package:server_box/data/model/server/monitor/monitor_capabilities.dart';
+import 'package:server_box/data/model/server/monitor/monitor_overview.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/monitor_overview.dart';
 import 'package:server_box/view/page/monitor/common.dart';
@@ -25,7 +26,7 @@ class MonitorNoticesView extends ConsumerWidget {
     final locale = Localizations.localeOf(context).toLanguageTag();
     final groups = [
       for (final spi in servers)
-        if (ref.watch(monitorOverviewProvider(spi.id)) case final state when state.offers('desk'))
+        if (ref.watch(monitorOverviewProvider(spi.id)) case final state when state.offers(MonitorFeature.desk))
           (spi: spi, state: state),
     ];
     final unread = groups.any((g) => (g.state.notices?.unread ?? 0) > 0);

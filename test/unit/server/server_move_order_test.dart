@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/model/app/server_sort.dart';
+import 'package:server_box/data/provider/server/sort.dart';
 
 /// Moving several machines at once in the manual arrangement.
 ///

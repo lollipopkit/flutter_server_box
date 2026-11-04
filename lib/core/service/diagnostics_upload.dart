@@ -9,7 +9,7 @@ import 'package:server_box/core/service/native_exit.dart';
 import 'package:server_box/core/service/report_filter.dart';
 import 'package:server_box/data/model/app/diagnostics_level.dart';
 import 'package:server_box/data/res/build_data.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 
 /// The revision of the crash-collection notice.
 ///
@@ -40,20 +40,9 @@ const kDiagnosticsConsentVer = 1;
 abstract final class DiagnosticsUpload {
   /// Where reports go.
   ///
-  /// Committed rather than injected, because a Sentry DSN is not a secret: it
-  /// ships inside every client that uses it, is recoverable from any build,
-  /// and grants only the ability to *write* events — it reads nothing back.
-  ///
-  /// The alternative was a build-time define, which would have left every
-  /// F-Droid build without an upload path. That sounds tidy and is the wrong
-  /// trade: opt-in and off-by-default is already what the anti-feature policy
-  /// requires, so the define bought no compliance — it only excluded the users
-  /// most likely to hit the crashes, since F-Droid is where a large part of
-  /// this app's Android install base comes from. All three open crash reports
-  /// are from that side.
-  ///
-  /// Still overridable with `--dart-define=SENTRY_DSN=...`, which is how a
-  /// build points at a test instance instead of the live one.
+  /// Not a secret: write-only and shipped in every client. Committed, so
+  /// F-Droid builds can upload too (opt-in already satisfies its policy).
+  /// `--dart-define=SENTRY_DSN=...` points a build at a test instance.
   static const dsn = String.fromEnvironment(
     'SENTRY_DSN',
     defaultValue: 'https://b13cb67be5014853ac12fb760acf2b97@sentry.lollipopkit.com/1',
@@ -76,7 +65,7 @@ abstract final class DiagnosticsUpload {
   ///
   /// Not the same question as [level]: a level that uploads still answers
   /// false for the whole of startup, because the sink goes in at the end of
-  /// `_doPlatformRelated`. That gap is what [CrashLog.uploadsNow] reads it
+  /// `_startBackgroundServices`. That gap is what [CrashLog.uploadsNow] reads it
   /// for — a crash inside it is one nothing sent, and the only one the next
   /// launch has to report on its behalf.
   static bool get uploading => _started != null;
@@ -134,41 +123,20 @@ abstract final class DiagnosticsUpload {
         options.dsn = dsn;
         options.release = 'server_box@1.0.${BuildData.build}';
 
-        // Nothing is traced: a report is sent when something breaks, never
-        // while the app is behaving. Set rather than left to the default, so
-        // a later SDK changing it cannot start sending on its own.
+        // Every privacy-relevant option is set explicitly, so an SDK default
+        // changing cannot turn it on: no tracing, no log streaming (see
+        // [SentrySink.log]), no PII, no print breadcrumbs, no thread dumps.
         options.tracesSampleRate = 0.0;
-        // Never, at any level — see [SentrySink.log]. Set rather than left to
-        // the default, because the default flipping in a later SDK would
-        // silently start streaming the app's log lines off the device.
         options.enableLogs = false;
-        // No IP address, no username, nothing the SDK infers. A crash report
-        // is about a build and a code path, not about a person. It is the
-        // default, and set anyway because a later SDK flipping it would be
-        // silent.
         options.sendDefaultPii = false;
-        // The crumbs this app places are deliberate and already redacted; the
-        // SDK does not get to turn every `print` into one as well.
         options.enablePrintBreadcrumbs = false;
         options.maxBreadcrumbs = 200;
-        // Thread names and stack dumps of unrelated isolates are not what a
-        // report needs, and are the SDK guessing at context rather than this
-        // app supplying it.
         options.attachThreads = false;
-        // The last thing every event passes through, and what decides whether
-        // it goes at all — see [scrubWithStoredIdentifiers].
-        //
-        // A transaction comes here too, and only because `beforeSendTransaction`
-        // is left unset: `SentryClient._runBeforeSend` tries that callback
-        // first and falls through to this one when it is null. Setting it would
-        // be a second entry point for a kind of event nothing in this app
-        // produces — no `startTransaction` call exists here or in fl_lib, and
-        // the pure-Dart SDK auto-instruments nothing. If one is ever started,
-        // its spans need covering as well, which is a different function.
-        //
-        // Before the scrub, an error that is not a defect goes nowhere — see
-        // [ReportFilter]. Here rather than in [SentrySink], because the SDK's
-        // own isolate-error integration captures without passing the sink.
+        // Decides whether an event goes at all ([ReportFilter], then
+        // [scrubWithStoredIdentifiers]). Here rather than in [SentrySink]: the
+        // SDK's isolate-error integration captures without passing the sink.
+        // Transactions fall through to this too, as `beforeSendTransaction` is
+        // unset; nothing in the app starts one.
         options.beforeSend = (event, hint) {
           final error = event.throwable;
           if (error != null && !ReportFilter.isDefect(error)) return null;
@@ -424,10 +392,9 @@ final class SentrySink extends DiagnosticsSink {
 
   @override
   void breadcrumb(Breadcrumb crumb) {
-    // The one thing `basic` withholds. A crumb is already redacted — it says
-    // "a machine on a LAN", not which — so this is not about identifiability
-    // but about how much of a session's shape leaves the device.
-    if (!DiagnosticsUpload.level.sendsBreadcrumbs) return;
+    // A crumb is already redacted — it says "a machine on a LAN", not which —
+    // and leaves only with the errors it gives context to.
+    if (!DiagnosticsUpload.level.uploads) return;
     sentry.Sentry.addBreadcrumb(
       sentry.Breadcrumb(
         category: crumb.category.name,

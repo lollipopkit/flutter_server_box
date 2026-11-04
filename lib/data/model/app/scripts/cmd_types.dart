@@ -25,7 +25,7 @@ enum CmdTypeSys {
 /// Commands and script generation live in the shared Rust library
 /// (sbm_parser commands.rs / script.rs, see the shared-parser design); these enums remain
 /// as typed keys for UI (disable toggles, i18n) and parsed-output lookup.
-// TODO(migration): enum names must stay in sync with the sbm_parser
+// The enum names must stay in sync with the sbm_parser
 // commands.rs keys (locked by test/unit/app/frb_parser_test.dart).
 sealed class ShellCmdType implements Enum {
   /// Platform that provides this command.

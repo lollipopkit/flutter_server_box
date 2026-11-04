@@ -5,7 +5,7 @@ import 'package:server_box/data/store/setting.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 /// Records every change a sync carries as its record's newest stamp in
-/// `sync_record` (`fl_sync`'s hybrid logical clock; `docs/dev/sync-log.md`).
+/// `sync_record` (`fl_sync`'s hybrid logical clock).
 ///
 /// Two ways in, the only two a synced change takes: [SyncedTable.stamp] and
 /// [SyncedTable.tombstone] for a sync root's row, and [KvStore.onEdit] for a

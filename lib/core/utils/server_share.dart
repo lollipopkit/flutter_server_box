@@ -10,7 +10,7 @@ import 'package:server_box/data/model/app/share/server_share.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/stores.dart';
 
 /// How a share payload is carried to the other device.
 ///
@@ -368,7 +368,7 @@ abstract final class ServerShareCodec {
         spi: Spi.fromJson(decoded),
         // Such a QR carried PVE inside `custom`, which `ServerCustom` no
         // longer reads.
-        // TODO(migration): remove after 5 releases, with
+        // TODO(migration): remove after 5 releases from v1.0.1715, with
         // `PveConfig.fromLegacyRecord`.
         pve: PveConfig.fromLegacyRecord(decoded),
       );
@@ -452,10 +452,7 @@ abstract final class ServerShareInstaller {
     if (spi.id.isEmpty || existing.any((e) => e.id == spi.id)) {
       spi = spi.copyWith(id: ShortId.generate());
     }
-    // `existingServers` passed rather than left to default, which reads
-    // `ServerStore.instance` — a different object from `Stores.server` with a
-    // cache of its own, so the default answers from whatever that instance
-    // last read. Two installs in a row saw an empty list the second time.
+    // `existingServers` passed: the list just read, with the id fixed above.
     spi = ServerDeduplication.resolveNameConflicts(
       [spi],
       existingServers: existing,

@@ -1,7 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/model/ssh/virtual_key.dart';
+import 'package:server_box/data/model/terminal/virtual_key.dart';
 
 /// One thing the walkthrough has to say, and which keys it is about.
 ///
@@ -25,7 +25,7 @@ final class VirtKeyIntroStep {
 
   final String title;
   final String body;
-  final VirtKeyGroup? group;
+  final VirtualKeyGroup? group;
 
   /// No `spot`: what this points at is outside the area the guide covers, so
   /// there is nothing to cut a hole for.
@@ -44,17 +44,17 @@ final class VirtKeyIntroStep {
       VirtKeyIntroStep(
         title: l10n.virtKeyIntroModifiers,
         body: l10n.virtKeyIntroModifiersTip,
-        group: VirtKeyGroup.modifiers,
+        group: VirtualKeyGroup.modifiers,
       ),
       VirtKeyIntroStep(
         title: l10n.virtKeyIntroNav,
         body: l10n.virtKeyIntroNavTip,
-        group: VirtKeyGroup.navigation,
+        group: VirtualKeyGroup.navigation,
       ),
       VirtKeyIntroStep(
         title: l10n.virtKeyIntroActions,
         body: l10n.virtKeyIntroActionsTip,
-        group: VirtKeyGroup.shortcuts,
+        group: VirtualKeyGroup.shortcuts,
       ),
       VirtKeyIntroStep(
         title: l10n.editVirtKeys,

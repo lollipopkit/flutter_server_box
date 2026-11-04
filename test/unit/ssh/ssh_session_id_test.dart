@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/ssh_exec.dart';
+import 'package:server_box/core/ssh/exec.dart';
 
 /// [SshSessionId.wrap] is handed to whatever the account's login shell is.
 /// Run here by the shells this machine has, as sshd would: `<shell> -c`, with
