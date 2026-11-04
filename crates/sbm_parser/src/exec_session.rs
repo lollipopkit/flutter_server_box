@@ -24,8 +24,15 @@ pub const GONE: &str = "sbm-session-gone";
 const MARKER_START: &[u8] = b"\x1esbm-sid:";
 const MARKER_END: &[u8] = b"\x1e\n";
 
-/// `command` run as before — by the login shell, `$SHELL` — after `sh` has
-/// printed the session marker on stderr and exported [`ENV_NAME`] as `nonce`.
+/// `command` run as before — by the login shell, `$SHELL` — under an `sh`
+/// that has printed the session marker on stderr and carries [`ENV_NAME`] as
+/// `nonce` in the environment it was started with.
+///
+/// That `sh` stays for the whole run, the login shell its child: it is what
+/// [`owns_command`] finds the nonce on. `exec`ing the login shell instead left
+/// nothing to find once that shell `exec`ed in turn — bash runs a lone last
+/// command in its own place, and `sudo cmd` then put a root process where the
+/// account's shell had been, whose environment the account cannot read.
 ///
 /// The login shell need not be a POSIX one, so what it is handed is valid in
 /// fish as well: one single-quoted program, and `command` single-quoted with
@@ -39,8 +46,10 @@ const MARKER_END: &[u8] = b"\x1e\n";
 pub fn wrap(command: &str, nonce: &str) -> String {
     assert_hex(nonce);
     let arg = command.replace('\\', r"\0134").replace('\'', r"\0047");
+    // `exit $?` after it, so the login shell is never the last command, which
+    // an `sh` may `exec` in its own place too.
     format!(
-        r#"exec sh -c 'printf "\036sbm-sid:%s\036\n" $$ >&2; export {ENV_NAME}={nonce}; exec "${{SHELL:-sh}}" -c "$(printf %b "$1")"' sbm '{arg}'"#
+        r#"exec env {ENV_NAME}={nonce} sh -c 'printf "\036sbm-sid:%s\036\n" $$ >&2; "${{SHELL:-sh}}" -c "$(printf %b "$1")"; exit $?' sbm '{arg}'"#
     )
 }
 
@@ -65,9 +74,8 @@ pub fn kill_command(id: u32) -> String {
 /// before the wrapper runs: nothing is killed by it until this has said the
 /// session is this run's, so a forged one reaches neither another session of
 /// the account nor, through its sudo password, one it could not have touched.
-/// Asked before the signal, while the command's own shell still carries the
-/// nonce: sudo resets the environment of what it runs, and the signal ends
-/// sudo itself, which runs as the account.
+/// Asked before the signal, which ends the [`wrap`]per that carries the nonce:
+/// sudo resets the environment of what it runs.
 pub fn owns_command(id: u32, nonce: &str) -> String {
     assert_hex(nonce);
     format!(
@@ -215,5 +223,35 @@ mod shell_tests {
                 assert!(parsed.status.success(), "{name}: {}", String::from_utf8_lossy(&parsed.stderr));
             }
         }
+    }
+
+    /// bash runs a lone last command in its own place: the nonce must still
+    /// be on a process of the session, readable as the account, while it runs.
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn the_nonce_stays_on_the_session_when_the_login_shell_execs_its_command() {
+        use std::io::Read;
+        let Some(bash) = shell("bash") else { return };
+        let mut child = Command::new("/bin/sh")
+            .args(["-c", &wrap("sleep 2", "0abc")])
+            .env("SHELL", &bash)
+            .stderr(std::process::Stdio::piped())
+            .spawn()
+            .unwrap();
+        let mut stderr = child.stderr.take().unwrap();
+        let mut head = Vec::new();
+        let mut buf = [0u8; 64];
+        let marker = loop {
+            let n = stderr.read(&mut buf).unwrap();
+            assert!(n > 0, "no marker");
+            head.extend_from_slice(&buf[..n]);
+            if let Some(m) = find_marker(&head) {
+                break m;
+            }
+        };
+        let environ = std::fs::read(format!("/proc/{}/environ", marker.id)).unwrap();
+        child.kill().ok();
+        child.wait().ok();
+        assert!(environ.split(|b| *b == 0).any(|e| e == format!("{ENV_NAME}=0abc").as_bytes()));
     }
 }
