@@ -1551,13 +1551,13 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get processForceKill => 'Force kill';
+  String get processForceKill => 'Zorla sonlandır';
 
   @override
-  String get processStarted => 'Started';
+  String get processStarted => 'Başlatıldı';
 
   @override
-  String get processThreads => 'Threads';
+  String get processThreads => 'İş parçacıkları';
 
   @override
   String get watchServers => 'Saatteki sunucular';
@@ -1642,16 +1642,16 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get serviceUnit => 'Unit';
+  String get serviceUnit => 'Birim';
 
   @override
-  String get serviceUnitType => 'Type';
+  String get serviceUnitType => 'Tür';
 
   @override
   String get serviceScope => 'Scope';
 
   @override
-  String get serviceStartup => 'Startup';
+  String get serviceStartup => 'Başlangıç';
 
   @override
   String serviceUpFor(String duration) {
@@ -2019,7 +2019,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bazı veriler silinemedi ve bu sürüm geriye kalanları hâlâ açamıyor. Erişmek için daha yeni sürümü yeniden yükleyin.';
 
   @override
-  String get systemUsers => 'Users';
+  String get systemUsers => 'Kullanıcılar';
 
   @override
   String get userManagerLinuxOnly =>
@@ -2038,16 +2038,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get userUid => 'UID';
 
   @override
-  String get userLoginStatus => 'Status';
+  String get userLoginStatus => 'Durum';
 
   @override
   String get userLoginEnabled => 'Login enabled';
 
   @override
-  String get userDetailAccount => 'Account';
+  String get userDetailAccount => 'Hesap';
 
   @override
-  String get userDetailSecurity => 'Security';
+  String get userDetailSecurity => 'Güvenlik';
 
   @override
   String get userSshKeys => 'SSH keys';
@@ -2059,26 +2059,26 @@ class AppLocalizationsTr extends AppLocalizations {
   String get userNever => 'Never';
 
   @override
-  String get userPasswordSet => 'Set';
+  String get userPasswordSet => 'Ayarlı';
 
   @override
-  String get userPasswordLocked => 'Locked';
+  String get userPasswordLocked => 'Kilitli';
 
   @override
-  String get userPasswordNone => 'None';
+  String get userPasswordNone => 'Yok';
 
   @override
   String get userSuperuser => 'Superuser';
 
   @override
-  String get userOpenShell => 'Open shell';
+  String get userOpenShell => 'Kabuk aç';
 
   @override
   String get userRootChangesWarning =>
       'root kullanıcısında yapılan değişiklikler tüm oturumlarda hemen geçerli olur.';
 
   @override
-  String get userComment => 'Comment';
+  String get userComment => 'Açıklama';
 
   @override
   String get userPrimaryGroup => 'Primary group';
@@ -2198,7 +2198,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'Uzak masaüstü profillerini listele; onayınla bağlan veya bağlantıyı kes.';
 
   @override
-  String get agentSkills => 'Skills';
+  String get agentSkills => 'Beceriler';
 
   @override
   String get agentSkillsTip =>
@@ -2551,13 +2551,13 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu crontab içindeki yorumlar, ortam değişkenleri ve tanınmayan satırlar korunur.';
 
   @override
-  String get scheduledTaskSchedule => 'Schedule';
+  String get scheduledTaskSchedule => 'Zamanlama';
 
   @override
   String get scheduledTaskAdd => 'Add task';
 
   @override
-  String get scheduledTaskNextRun => 'Next run';
+  String get scheduledTaskNextRun => 'Sonraki çalışma';
 
   @override
   String scheduledTaskNextInFmt(String time) {
@@ -2565,7 +2565,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get scheduledTaskEnabled => 'Enabled';
+  String get scheduledTaskEnabled => 'Etkin';
 
   @override
   String get scheduledTaskCommentedOut => 'Commented out';
@@ -2600,7 +2600,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get scheduledTaskFieldMinute => 'Minute';
 
   @override
-  String get scheduledTaskFieldHour => 'Hour';
+  String get scheduledTaskFieldHour => 'Saat';
 
   @override
   String get scheduledTaskFieldDayOfMonth => 'Ayın günü';
@@ -2632,7 +2632,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get cronAtBoot => 'At boot';
 
   @override
-  String get cronEveryMin => 'Every minute';
+  String get cronEveryMin => 'Her dakika';
 
   @override
   String cronEveryMinsFmt(int minutes) {
@@ -2685,7 +2685,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'Monitor yeniden başlatıldıktan sonra geçerli olur';
 
   @override
-  String get monitorCollection => 'Collection';
+  String get monitorCollection => 'Toplama';
 
   @override
   String get extendedInterval => 'Genişletilmiş döngü aralığı';
@@ -2710,10 +2710,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get ruleMonitorType => 'Metric';
 
   @override
-  String get ruleThreshold => 'Threshold';
+  String get ruleThreshold => 'Eşik';
 
   @override
-  String get ruleMatcher => 'Matcher';
+  String get ruleMatcher => 'Eşleştirici';
 
   @override
   String get ruleTip =>
@@ -2723,10 +2723,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get pushChannels => 'Bildirim kanalları';
 
   @override
-  String get pushType => 'Type';
+  String get pushType => 'Tür';
 
   @override
-  String get pushRate => 'Rate limit';
+  String get pushRate => 'Hız sınırı';
 
   @override
   String get pushHeaders => 'Headers';
@@ -2758,7 +2758,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get pushJsonInvalid => 'geçerli bir JSON değil';
 
   @override
-  String get dataRetention => 'Data retention';
+  String get dataRetention => 'Veri saklama';
 
   @override
   String get dataRetentionTip =>
@@ -2991,7 +2991,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'Hedef ana makine boşluk veya satır sonu içeremez.';
 
   @override
-  String get remoteDesktopProtocolInvalid => 'Unsupported protocol.';
+  String get remoteDesktopProtocolInvalid => 'Desteklenmeyen protokol.';
 
   @override
   String get remoteDesktopCredentialInvalid =>
@@ -5916,7 +5916,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get storageLinuxOnly =>
-      'Storage management currently supports Linux servers.';
+      'Depolama yönetimi şu anda Linux sunucularını destekler.';
 
   @override
   String get storageDisks => 'Diskler';
@@ -5937,7 +5937,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String storageFree(Object size) {
-    return '$size free';
+    return '$size boş';
   }
 
   @override
@@ -6148,8 +6148,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get storageConfirmationMismatch =>
-      'The confirmation text did not match.';
+  String get storageConfirmationMismatch => 'Onay metni eşleşmedi.';
 
   @override
   String storageInUse(Object device) {
@@ -6341,35 +6340,35 @@ class AppLocalizationsTr extends AppLocalizations {
       'Burada yalnızca yedek veya önbellek aygıtları çıkarılabilir.';
 
   @override
-  String get storageNotGrowable => 'This device cannot be grown here.';
+  String get storageNotGrowable => 'Bu aygıt burada genişletilemez.';
 
   @override
-  String get storageOverlapping => 'Choose devices that do not overlap.';
+  String get storageOverlapping => 'Birbiriyle çakışmayan aygıtlar seçin.';
 
   @override
   String get storageInvalidDevice =>
-      'The device is invalid or no longer available.';
+      'Aygıt geçersiz veya artık kullanılamıyor.';
 
   @override
-  String get storageInvalidMountpoint => 'The mount point is invalid.';
+  String get storageInvalidMountpoint => 'Bağlama noktası geçersiz.';
 
   @override
-  String get storageInvalidName => 'The name is invalid.';
+  String get storageInvalidName => 'Ad geçersiz.';
 
   @override
-  String get storageInvalidFilesystem => 'The filesystem is not supported.';
+  String get storageInvalidFilesystem => 'Dosya sistemi desteklenmiyor.';
 
   @override
-  String get storageInvalidLabel => 'The label is invalid.';
+  String get storageInvalidLabel => 'Etiket geçersiz.';
 
   @override
-  String get storageInvalidLevel => 'The RAID level or pool layout is invalid.';
+  String get storageInvalidLevel => 'RAID düzeyi veya havuz düzeni geçersiz.';
 
   @override
-  String get storageTooFewDevices => 'Not enough valid devices were selected.';
+  String get storageTooFewDevices => 'Yeterli sayıda geçerli aygıt seçilmedi.';
 
   @override
-  String get storageKeyRequired => 'A passphrase is required.';
+  String get storageKeyRequired => 'Parola ifadesi gerekli.';
 
   @override
   String get storageExpand => 'Genişlet';
@@ -6602,7 +6601,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get sharingConnectionsLinuxOnly =>
-      'Sharing management currently supports Linux servers.';
+      'Paylaşım yönetimi şu anda Linux sunucularını destekler.';
 
   @override
   String get agentThisDevice => 'Bu cihaz';

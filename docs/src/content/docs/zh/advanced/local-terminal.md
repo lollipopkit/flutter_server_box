@@ -1,55 +1,55 @@
 ---
 title: 本机终端
-description: 在运行 Server Box 的设备上打开 shell
+description: 在运行 Server Box 的设备上打开本地终端
 ---
 
-当前构建支持时，终端标签页会在远程服务器之前显示本机执行入口：运行在**本机**的 shell，以及 Server Box 提供的 Linux userland。
+当构建版本支持时，终端标签页会在远程服务器列表上方提供两个本地执行入口：**本机 Shell**，以及内置的 **Linux 运行环境**。
 
-这两个入口无需连接服务器或提供凭据。
+这两个入口均可直接使用，无需配置远程服务器或登录凭据。
 
-## 本机 shell
+## 本机 Shell
 
-本机 shell 运行在 Server Box 所在的计算机或设备上。在支持选择 shell 的平台上，App 会启动 `$SHELL` 指定的 shell，通常与终端 App 打开的 shell 相同。
+本机 Shell 直接运行在 Server Box 所在的计算机或设备上。在支持自定义 Shell 的桌面平台上，应用会默认启动 `$SHELL` 环境变量指定的程序（与系统终端应用保持一致）。
 
-| 平台 | 可用性 |
+| 平台 | 支持情况 |
 |---|---|
-| Linux、Windows | 可用 |
-| macOS（DMG 版本） | 可用 |
-| macOS（App Store 版本） | 不可用 |
-| Android | 可用，但 shell 能力与桌面端不同 |
-| iOS | 不可用 |
+| Linux、Windows | 支持 |
+| macOS（DMG 版本） | 支持 |
+| macOS（App Store 版本） | 不支持 |
+| Android | 支持（受系统权限限制，环境与桌面端不同） |
+| iOS | 不支持 |
 
-**macOS App Store 版本没有本机 shell。** 该版本受沙盒限制，无法打开伪终端，因此不会显示本机 shell 入口。DMG 版本可以提供本机 shell。Server Box 会检查当前构建，只在功能可用时显示入口。
+**macOS App Store 版本不支持本机 Shell。** 受限于 macOS 应用沙盒，App Store 版本无法创建伪终端（PTY），因此会自动隐藏该入口；独立分发的 DMG 版本则可正常使用。
 
-**iOS 不支持本机 shell。** App Store App 无法启动进程，沙盒中也没有 `/bin/sh` 可供启动。
+**iOS 不支持本机 Shell。** iOS 系统禁止应用直接派生外部进程，且沙盒内无 `/bin/sh` 可供调用。
 
-## Linux 环境
+## 内置 Linux 环境
 
-如果平台没有 shell，或本机 shell 功能有限，Server Box 可以安装独立的 Linux userland。目前默认版本为 Alpine 3.22.5；release 列表也可能提供 Debian、Ubuntu 等其他发行版和版本。
+对于没有系统级 Shell 或本机 Shell 受限的移动平台，Server Box 支持安装独立的内置 Linux 环境（目前默认为 Alpine 3.22.5，发布列表中也提供 Debian、Ubuntu 等发行版可选）。
 
-终端标签页会以 **<发行版> <版本>** 标记该环境，并将其列在本机 shell 旁边。安装时选择发行版和版本；更新会保留当前 profile，不能借更新切换版本。
+安装后，终端标签页会以 **<发行版> <版本>** 的名称将其列在本机 Shell 旁。更新环境时会保留当前用户目录与配置，但无法通过更新直接跨发行版切换。
 
-Android 和 iOS 使用不同的实现：
+Android 与 iOS 采用不同的底层实现：
 
-- **Android：**解包 Linux rootfs 并通过 `proot` 进入。当前构建支持 arm64；App 会下载 rootfs tarball，并用固定摘要校验文件。
-- **iOS：**App 无法直接启动进程，因此内置 Linux 解释器。这里的 userland 是该解释器使用的文件系统。
+- **Android**：下载并使用固定哈希校验 rootfs 压缩包（当前支持 arm64），解压后通过 `proot` 引导进入。
+- **iOS**：通过内置的指令解释器运行，下载的 Linux 环境作为该解释器的根文件系统。
 
-**是否提供这些功能取决于构建配置。** 某个构建可能只提供本机 shell、只提供 Alpine 环境、两者都提供，或两者都不提供。如果终端标签页中没有对应入口，说明当前构建未包含该能力。
+**具体可用性取决于构建版本。** 不同渠道的构建可能仅包含本机 Shell、仅包含内置 Linux 环境、两者兼有或均不包含；若终端页未显示对应入口，则代表当前构建未内置该模块。
 
 ### 适用场景
 
-- 在手机上使用 `curl`、`dig`、`ssh` 或 `jq` 等工具
-- 执行不希望直接在生产服务器上进行的临时操作
-- 为 Agent 提供与设备文件系统隔离的执行目标，详见[Agent](/docs/zh/advanced/agent/)
+- 在手机或平板上直接运行 `curl`、`dig`、`ssh`、`jq` 等命令行工具
+- 在本地沙盒中测试脚本，避免直接在生产服务器上操作
+- 为 AI Agent 提供与设备宿主文件隔离的本地执行环境（详见 [Agent](/docs/zh/advanced/agent/)）
 
-每个 userland 都采用对应发行版的标准目录结构和包管理器。例如，Alpine 使用 `apk add` 安装软件包，Debian 和 Ubuntu 使用 `apt install`。
+每个内置环境均保留对应发行版的标准目录结构与包管理器，例如在 Alpine 中使用 `apk add` 安装软件包，在 Debian / Ubuntu 中使用 `apt install`。
 
-### 文件隔离
+### 文件系统隔离
 
-Alpine userland 使用独立文件系统，无法读取手机存储、App 数据、私钥或用户文件。因此，移动端的**在本机执行命令**运行在隔离的 userland 中；桌面端则使用计算机自身的 shell。
+内置 Linux 环境使用独立的沙盒文件系统，无法访问手机本地存储、应用数据库、SSH 私钥或个人文件。因此，移动端的 **在本机执行命令** 始终运行在该隔离环境中；桌面端则会直接调用宿主操作系统的 Shell。
 
-## 与服务器终端的区别
+## 与远程终端的区别
 
-本机终端与服务器会话共用终端模拟器、虚拟键盘和标签页，区别仅在于终端输入和输出的来源。
+本机终端与远程服务器会话共用同一套终端模拟器、虚拟按键栏与多标签页管理，仅输入输出的数据源不同。
 
-本机 shell 不需要验证服务器 host key，也不会像服务器会话那样自动重连。它不会加入服务器列表，也没有状态图表。
+本机终端无需校验 SSH 主机密钥，断开后不会触发自动重连，也不会出现在服务器列表或状态监控图表中。

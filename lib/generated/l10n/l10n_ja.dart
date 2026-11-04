@@ -613,7 +613,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get ungrouped => '未分類';
 
   @override
-  String get containerReclaimable => 'Reclaimable';
+  String get containerReclaimable => '回収可能';
 
   @override
   String get unused => '未使用';
@@ -1462,13 +1462,13 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get processForceKill => 'Force kill';
+  String get processForceKill => '強制終了';
 
   @override
-  String get processStarted => 'Started';
+  String get processStarted => '開始時刻';
 
   @override
-  String get processThreads => 'Threads';
+  String get processThreads => 'スレッド';
 
   @override
   String get watchServers => 'Watch に表示するサーバー';
@@ -1535,10 +1535,10 @@ class AppLocalizationsJa extends AppLocalizations {
       'このアカウントにはサーバー上のユーザーセッションバスがないため、システム unit のみ表示しています。';
 
   @override
-  String get serviceSearchHint => 'Unit name';
+  String get serviceSearchHint => 'ユニット名';
 
   @override
-  String get serviceNeedsAttention => 'Needs attention';
+  String get serviceNeedsAttention => '要確認';
 
   @override
   String serviceOtherUnits(int count) {
@@ -1546,16 +1546,16 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get serviceUnit => 'Unit';
+  String get serviceUnit => 'ユニット';
 
   @override
-  String get serviceUnitType => 'Type';
+  String get serviceUnitType => '種類';
 
   @override
-  String get serviceScope => 'Scope';
+  String get serviceScope => 'スコープ';
 
   @override
-  String get serviceStartup => 'Startup';
+  String get serviceStartup => '自動起動';
 
   @override
   String serviceUpFor(String duration) {
@@ -1583,10 +1583,10 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get serviceFullJournal => 'Full journal';
+  String get serviceFullJournal => 'すべてのログ';
 
   @override
-  String get serviceUnitFile => 'Unit file';
+  String get serviceUnitFile => 'ユニットファイル';
 
   @override
   String serviceJournalRecent(int count) {
@@ -2076,7 +2076,7 @@ class AppLocalizationsJa extends AppLocalizations {
       'リモートデスクトップのプロファイルを一覧し、承認を得て接続または切断します。';
 
   @override
-  String get agentSkills => 'Skills';
+  String get agentSkills => 'スキル';
 
   @override
   String get agentSkillsTip => '特定の作業の手順書。GitHub やリンクからインストール';
@@ -2849,7 +2849,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get remoteDesktopHostInvalid => '接続先ホストに空白や改行は使えません。';
 
   @override
-  String get remoteDesktopProtocolInvalid => 'Unsupported protocol.';
+  String get remoteDesktopProtocolInvalid => 'サポートされていないプロトコルです。';
 
   @override
   String get remoteDesktopCredentialInvalid =>
@@ -5110,13 +5110,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get firewallDefaultZone => 'デフォルト zone';
 
   @override
-  String get firewallZone => 'Zone';
+  String get firewallZone => 'ゾーン';
 
   @override
-  String get firewallTarget => 'Target';
+  String get firewallTarget => 'ターゲット';
 
   @override
-  String get firewallMasquerade => 'Masquerade';
+  String get firewallMasquerade => 'マスカレード';
 
   @override
   String get firewallServices => 'サービス';
@@ -5131,7 +5131,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get firewallInterfaces => 'インターフェース';
 
   @override
-  String get firewallRichRules => 'Rich rules';
+  String get firewallRichRules => 'リッチルール';
 
   @override
   String get firewallForwardPorts => 'ポート転送';
@@ -5656,8 +5656,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get storageTitle => 'ストレージ';
 
   @override
-  String get storageLinuxOnly =>
-      'Storage management currently supports Linux servers.';
+  String get storageLinuxOnly => 'ストレージ管理は現在 Linux サーバーのみ対応しています。';
 
   @override
   String get storageDisks => 'ディスク';
@@ -5678,7 +5677,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String storageFree(Object size) {
-    return '$size free';
+    return '$size 空き';
   }
 
   @override
@@ -5885,8 +5884,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get storageConfirmationMismatch =>
-      'The confirmation text did not match.';
+  String get storageConfirmationMismatch => '確認テキストが一致しません。';
 
   @override
   String storageInUse(Object device) {
@@ -6075,35 +6073,34 @@ class AppLocalizationsJa extends AppLocalizations {
   String get storageNotRemovable => 'ここで取り外せるのはスペアまたはキャッシュデバイスのみです。';
 
   @override
-  String get storageNotGrowable => 'This device cannot be grown here.';
+  String get storageNotGrowable => 'このデバイスはここでは拡張できません。';
 
   @override
-  String get storageOverlapping => 'Choose devices that do not overlap.';
+  String get storageOverlapping => '重複しないデバイスを選択してください。';
 
   @override
-  String get storageInvalidDevice =>
-      'The device is invalid or no longer available.';
+  String get storageInvalidDevice => 'デバイスが無効か、利用できなくなりました。';
 
   @override
-  String get storageInvalidMountpoint => 'The mount point is invalid.';
+  String get storageInvalidMountpoint => 'マウントポイントが無効です。';
 
   @override
-  String get storageInvalidName => 'The name is invalid.';
+  String get storageInvalidName => '名前が無効です。';
 
   @override
-  String get storageInvalidFilesystem => 'The filesystem is not supported.';
+  String get storageInvalidFilesystem => 'このファイルシステムはサポートされていません。';
 
   @override
-  String get storageInvalidLabel => 'The label is invalid.';
+  String get storageInvalidLabel => 'ラベルが無効です。';
 
   @override
-  String get storageInvalidLevel => 'The RAID level or pool layout is invalid.';
+  String get storageInvalidLevel => 'RAID レベルまたはプール構成が無効です。';
 
   @override
-  String get storageTooFewDevices => 'Not enough valid devices were selected.';
+  String get storageTooFewDevices => '有効なデバイスが十分に選択されていません。';
 
   @override
-  String get storageKeyRequired => 'A passphrase is required.';
+  String get storageKeyRequired => 'パスフレーズが必要です。';
 
   @override
   String get storageExpand => '拡張';
@@ -6328,8 +6325,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sharingShowConnectionsBody => 'root として接続状況を読み取ります。';
 
   @override
-  String get sharingConnectionsLinuxOnly =>
-      'Sharing management currently supports Linux servers.';
+  String get sharingConnectionsLinuxOnly => '共有管理は現在 Linux サーバーのみ対応しています。';
 
   @override
   String get agentThisDevice => 'このデバイス';

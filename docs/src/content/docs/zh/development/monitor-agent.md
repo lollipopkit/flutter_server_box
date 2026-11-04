@@ -80,7 +80,7 @@ Monitor 只有一个账号，只用密码登录；它可以做 Monitor 运行所
 
 ### 传输安全
 
-读取以外的所有操作都需要 TLS 或 loopback 调用方（包括同机反向代理），除非设置了 `[remote_access] allow_insecure = true`。TODO：配置不再需要兼容后，删除旧版 `allow_insecure` key。目前 `[remote_access.terminal] allow_insecure` 和 `[remote_access.fs] allow_insecure` 与它等效。App 通过明文连接时，还需要为该服务器开启**允许不安全 HTTP**。条件不满足时，capabilities 的 `access` 带有 `why: insecure_transport`，对应 endpoint 返回 `forbidden`。
+除只读查询外的所有操作均要求使用 TLS 加密或本机回环（loopback）调用（包括同机部署的反向代理），除非显式配置了 `[remote_access] allow_insecure = true`（为兼容旧版配置，`[remote_access.terminal] allow_insecure` 与 `[remote_access.fs] allow_insecure` 同样等效）。此外，当客户端通过明文 HTTP 连接时，还需在应用内为该服务器开启 **允许不安全 HTTP**。若未满足上述条件，`/capabilities` 接口返回的 `access` 会标记 `why: insecure_transport`，且相关写操作接口均会返回 `403 forbidden`。
 
 ### Monitor 标签页 endpoint
 

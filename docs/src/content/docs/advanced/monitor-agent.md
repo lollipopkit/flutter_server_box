@@ -468,9 +468,8 @@ Everything beyond reading the numbers needs HTTPS or a caller on the same
 host, which includes a reverse proxy there. On a private network that already
 encrypts traffic, such as Tailscale, set `[remote_access] allow_insecure =
 true` and enable **Allow insecure HTTP** for this server in the App; both are
-required. TODO: Remove the legacy `allow_insecure` keys when existing
-configurations no longer need them. Until then, `[remote_access.terminal]
-allow_insecure` and `[remote_access.fs] allow_insecure` count as
+required. Legacy `[remote_access.terminal] allow_insecure` and
+`[remote_access.fs] allow_insecure` keys are also accepted as aliases for
 `[remote_access] allow_insecure`.
 
 For path validation, endpoint behavior, and error codes, see
@@ -572,9 +571,9 @@ threshold = ">=80%"
 | `network` | Blank or anything else | Receive plus transmit |
 | `temperature` | Ignored | The reading the Monitor reports as the machine's temperature |
 
-TODO: Remove the aliases from the Go version of the Monitor after the
-migration window. Configurations migrated from Go may use `mem`, `net`, and `temp`; other unknown metrics are
-logged once per cycle and their rules do not fire.
+Configurations migrated from the Go version of Monitor may also use `mem`,
+`net`, and `temp`; other unknown metrics are logged once per cycle and their
+rules do not fire.
 
 ### Threshold
 

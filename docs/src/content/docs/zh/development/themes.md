@@ -9,13 +9,7 @@ description: 内置主题如何打包、加载与分发
 
 ## 内置主题
 
-`BuiltinTheme`（`packages/fl_lib/lib/src/theme/builtin.dart`）列出本构建内置的主题及其在
-选择器中的标签，只包含离线也必须可用的主题。`Default` 是 Dart const，不读取 asset，
-它在选择器中的标签已本地化（fl_lib 的 `defaultLabel`）。TODO：支持的升级路径不再包含旧版
-AMOLED 模式后，删除对应的迁移逻辑。AMOLED 主题源目录为
-`packages/fl_lib/assets/themes/amoled/`，其 `manifest.toml` 已在 fl_lib 的 `pubspec.yaml` 中
-注册。其他官方主题都在主题商店中（见[官方主题](#官方主题)）；如果保存的
-预设指向本构建已不再内置的主题，会回退到 Default（`ThemePackages.reconcileSelection`）。
+`BuiltinTheme`（`packages/fl_lib/lib/src/theme/builtin.dart`）定义了随安装包内置的主题及其在选择器中的显示名称，仅包含离线状态下也必须可用的基础主题。其中 `Default` 是 Dart 常量，不读取外部资源文件，其显示名称通过 `fl_lib` 的 `defaultLabel` 本地化。AMOLED 纯黑主题的源文件位于 `packages/fl_lib/assets/themes/amoled/`，其 `manifest.toml` 已在 `fl_lib` 的 `pubspec.yaml` 中注册。其余所有官方主题均通过主题商店分发（见[官方主题](#官方主题)）；若已保存的预设指向当前构建不再内置的主题，会自动回退至默认主题（`ThemePackages.reconcileSelection`）。
 
 内置目录与导入目录和 `.fsbt` 压缩包共用同一个安装器，因此内置主题和已安装主题支持
 相同的字段。这些目录以源码形式入库，由 Flutter 直接打包；仓库不提交对应的压缩包或

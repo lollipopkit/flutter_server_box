@@ -1578,13 +1578,13 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get processForceKill => 'Force kill';
+  String get processForceKill => 'Forzar cierre';
 
   @override
-  String get processStarted => 'Started';
+  String get processStarted => 'Iniciada';
 
   @override
-  String get processThreads => 'Threads';
+  String get processThreads => 'Hilos';
 
   @override
   String get watchServers => 'Servidores en el reloj';
@@ -1670,16 +1670,16 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get serviceUnit => 'Unit';
+  String get serviceUnit => 'Unidad';
 
   @override
-  String get serviceUnitType => 'Type';
+  String get serviceUnitType => 'Tipo';
 
   @override
   String get serviceScope => 'Scope';
 
   @override
-  String get serviceStartup => 'Startup';
+  String get serviceStartup => 'Inicio';
 
   @override
   String serviceUpFor(String duration) {
@@ -2051,7 +2051,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'No se han podido eliminar algunos datos y esta versión aún no puede abrir lo que queda. Vuelve a instalar la versión más reciente para acceder a ellos.';
 
   @override
-  String get systemUsers => 'Users';
+  String get systemUsers => 'Usuarios';
 
   @override
   String get userManagerLinuxOnly =>
@@ -2070,16 +2070,16 @@ class AppLocalizationsEs extends AppLocalizations {
   String get userUid => 'UID';
 
   @override
-  String get userLoginStatus => 'Status';
+  String get userLoginStatus => 'Estado';
 
   @override
   String get userLoginEnabled => 'Login enabled';
 
   @override
-  String get userDetailAccount => 'Account';
+  String get userDetailAccount => 'Cuenta';
 
   @override
-  String get userDetailSecurity => 'Security';
+  String get userDetailSecurity => 'Seguridad';
 
   @override
   String get userSshKeys => 'SSH keys';
@@ -2091,26 +2091,26 @@ class AppLocalizationsEs extends AppLocalizations {
   String get userNever => 'Never';
 
   @override
-  String get userPasswordSet => 'Set';
+  String get userPasswordSet => 'Definido';
 
   @override
-  String get userPasswordLocked => 'Locked';
+  String get userPasswordLocked => 'Bloqueado';
 
   @override
-  String get userPasswordNone => 'None';
+  String get userPasswordNone => 'Ninguno';
 
   @override
   String get userSuperuser => 'Superuser';
 
   @override
-  String get userOpenShell => 'Open shell';
+  String get userOpenShell => 'Abrir shell';
 
   @override
   String get userRootChangesWarning =>
       'Los cambios en root se aplican inmediatamente a todas las sesiones.';
 
   @override
-  String get userComment => 'Comment';
+  String get userComment => 'Comentario';
 
   @override
   String get userPrimaryGroup => 'Primary group';
@@ -2231,7 +2231,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'Listar perfiles de escritorio remoto y, con tu aprobación, conectar o desconectar.';
 
   @override
-  String get agentSkills => 'Skills';
+  String get agentSkills => 'Habilidades';
 
   @override
   String get agentSkillsTip =>
@@ -2593,13 +2593,13 @@ class AppLocalizationsEs extends AppLocalizations {
       'Se conservan los comentarios, las variables de entorno y las líneas no reconocidas de este crontab.';
 
   @override
-  String get scheduledTaskSchedule => 'Schedule';
+  String get scheduledTaskSchedule => 'Programación';
 
   @override
   String get scheduledTaskAdd => 'Add task';
 
   @override
-  String get scheduledTaskNextRun => 'Next run';
+  String get scheduledTaskNextRun => 'Próxima ejecución';
 
   @override
   String scheduledTaskNextInFmt(String time) {
@@ -2607,7 +2607,7 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get scheduledTaskEnabled => 'Enabled';
+  String get scheduledTaskEnabled => 'Activada';
 
   @override
   String get scheduledTaskCommentedOut => 'Commented out';
@@ -2654,7 +2654,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get scheduledTaskFieldMinute => 'Minute';
 
   @override
-  String get scheduledTaskFieldHour => 'Hour';
+  String get scheduledTaskFieldHour => 'Hora';
 
   @override
   String get scheduledTaskFieldDayOfMonth => 'Day of month';
@@ -2687,7 +2687,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get cronAtBoot => 'At boot';
 
   @override
-  String get cronEveryMin => 'Every minute';
+  String get cronEveryMin => 'Cada minuto';
 
   @override
   String cronEveryMinsFmt(int minutes) {
@@ -2739,7 +2739,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get monitorNeedsRestart => 'Se aplica después de reiniciar el Monitor';
 
   @override
-  String get monitorCollection => 'Collection';
+  String get monitorCollection => 'Recolección';
 
   @override
   String get extendedInterval => 'Intervalo de recopilación ampliada';
@@ -2764,10 +2764,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get ruleMonitorType => 'Metric';
 
   @override
-  String get ruleThreshold => 'Threshold';
+  String get ruleThreshold => 'Umbral';
 
   @override
-  String get ruleMatcher => 'Matcher';
+  String get ruleMatcher => 'Coincidencia';
 
   @override
   String get ruleTip =>
@@ -2777,10 +2777,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get pushChannels => 'Canales de notificación';
 
   @override
-  String get pushType => 'Type';
+  String get pushType => 'Tipo';
 
   @override
-  String get pushRate => 'Rate limit';
+  String get pushRate => 'Límite de frecuencia';
 
   @override
   String get pushHeaders => 'Headers';
@@ -2812,7 +2812,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get pushJsonInvalid => 'no es JSON válido';
 
   @override
-  String get dataRetention => 'Data retention';
+  String get dataRetention => 'Retención de datos';
 
   @override
   String get dataRetentionTip =>
@@ -3045,7 +3045,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'El host de destino no puede contener espacios ni saltos de línea.';
 
   @override
-  String get remoteDesktopProtocolInvalid => 'Unsupported protocol.';
+  String get remoteDesktopProtocolInvalid => 'Protocolo no compatible.';
 
   @override
   String get remoteDesktopCredentialInvalid =>
@@ -4013,7 +4013,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get virtHwSource => 'Origen';
 
   @override
-  String get virtHwSwap => 'Swap';
+  String get virtHwSwap => 'Memoria de intercambio';
 
   @override
   String get virtHwTopology => 'Sockets × núcleos';
@@ -6016,7 +6016,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get storageLinuxOnly =>
-      'Storage management currently supports Linux servers.';
+      'La gestión de almacenamiento actualmente admite servidores Linux.';
 
   @override
   String get storageDisks => 'Discos';
@@ -6037,7 +6037,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String storageFree(Object size) {
-    return '$size free';
+    return '$size libre';
   }
 
   @override
@@ -6249,7 +6249,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get storageConfirmationMismatch =>
-      'The confirmation text did not match.';
+      'El texto de confirmación no coincide.';
 
   @override
   String storageInUse(Object device) {
@@ -6442,35 +6442,38 @@ class AppLocalizationsEs extends AppLocalizations {
       'Aquí solo se pueden retirar dispositivos de reserva o caché.';
 
   @override
-  String get storageNotGrowable => 'This device cannot be grown here.';
+  String get storageNotGrowable => 'Este dispositivo no se puede ampliar aquí.';
 
   @override
-  String get storageOverlapping => 'Choose devices that do not overlap.';
+  String get storageOverlapping => 'Elige dispositivos que no se solapen.';
 
   @override
   String get storageInvalidDevice =>
-      'The device is invalid or no longer available.';
+      'El dispositivo no es válido o ya no está disponible.';
 
   @override
-  String get storageInvalidMountpoint => 'The mount point is invalid.';
+  String get storageInvalidMountpoint => 'El punto de montaje no es válido.';
 
   @override
-  String get storageInvalidName => 'The name is invalid.';
+  String get storageInvalidName => 'El nombre no es válido.';
 
   @override
-  String get storageInvalidFilesystem => 'The filesystem is not supported.';
+  String get storageInvalidFilesystem =>
+      'El sistema de archivos no es compatible.';
 
   @override
-  String get storageInvalidLabel => 'The label is invalid.';
+  String get storageInvalidLabel => 'La etiqueta no es válida.';
 
   @override
-  String get storageInvalidLevel => 'The RAID level or pool layout is invalid.';
+  String get storageInvalidLevel =>
+      'El nivel RAID o el diseño del pool no es válido.';
 
   @override
-  String get storageTooFewDevices => 'Not enough valid devices were selected.';
+  String get storageTooFewDevices =>
+      'No se seleccionaron suficientes dispositivos válidos.';
 
   @override
-  String get storageKeyRequired => 'A passphrase is required.';
+  String get storageKeyRequired => 'Se requiere una frase de contraseña.';
 
   @override
   String get storageExpand => 'Ampliar';
@@ -6705,7 +6708,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get sharingConnectionsLinuxOnly =>
-      'Sharing management currently supports Linux servers.';
+      'La gestión de uso compartido actualmente admite servidores Linux.';
 
   @override
   String get agentThisDevice => 'Este dispositivo';

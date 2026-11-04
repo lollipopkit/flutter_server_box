@@ -2431,11 +2431,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get connectionTip =>
-      'Both can be on at once. The order is the order they are dialled.';
+      'Both can be enabled at once and are tried in the order shown.';
 
   @override
-  String get transportNoneOn =>
-      'Both are off — this server cannot be connected.';
+  String get transportNoneOn => 'Enable at least one connection method.';
 
   @override
   String get thisDevice => 'This device';
@@ -2526,7 +2525,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get tagOnThisServer => 'on this server';
+  String get tagOnThisServer => 'On this server';
 
   @override
   String tagServersFmt(int count) {
@@ -2827,8 +2826,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get disconnect => 'Disconnect';
 
   @override
-  String get searchServerTip =>
-      'Searches names and addresses — the two the editor asks for first.';
+  String get searchServerTip => 'Search by server name or address.';
 
   @override
   String get addServerTip =>
@@ -2847,7 +2845,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupByTag => 'Group by tag';
 
   @override
-  String get groupByTagTip => 'Tags are set in a server’s own editor.';
+  String get groupByTagTip => 'Add and manage tags when editing a server.';
 
   @override
   String get connecting => 'Connecting…';

@@ -4185,13 +4185,13 @@ abstract class AppLocalizations {
   /// Help text for the connection setting or action.
   ///
   /// In en, this message translates to:
-  /// **'Both can be on at once. The order is the order they are dialled.'**
+  /// **'Both can be enabled at once and are tried in the order shown.'**
   String get connectionTip;
 
   /// User-facing label or message for transport none on.
   ///
   /// In en, this message translates to:
-  /// **'Both are off — this server cannot be connected.'**
+  /// **'Enable at least one connection method.'**
   String get transportNoneOn;
 
   /// User-facing label or message for this device.
@@ -4347,7 +4347,7 @@ abstract class AppLocalizations {
   /// User-facing label or message for tag on this server.
   ///
   /// In en, this message translates to:
-  /// **'on this server'**
+  /// **'On this server'**
   String get tagOnThisServer;
 
   /// Formatted user-facing message for tag servers; runtime values are supplied by placeholders.
@@ -4869,7 +4869,7 @@ abstract class AppLocalizations {
   /// Help text for the search server setting or action.
   ///
   /// In en, this message translates to:
-  /// **'Searches names and addresses — the two the editor asks for first.'**
+  /// **'Search by server name or address.'**
   String get searchServerTip;
 
   /// Help text for the add server setting or action.
@@ -4905,7 +4905,7 @@ abstract class AppLocalizations {
   /// Help text for the group by tag setting or action.
   ///
   /// In en, this message translates to:
-  /// **'Tags are set in a server’s own editor.'**
+  /// **'Add and manage tags when editing a server.'**
   String get groupByTagTip;
 
   /// Action label for connecting.

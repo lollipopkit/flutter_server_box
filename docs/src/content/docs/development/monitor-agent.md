@@ -153,9 +153,8 @@ the Monitor restarts.
 
 Everything beyond reading needs TLS or a loopback caller, which includes a
 reverse proxy on the same host, unless `[remote_access] allow_insecure = true`.
-TODO: Remove the legacy `allow_insecure` keys when existing configurations no
-longer need them. Until then, `[remote_access.terminal] allow_insecure` and
-`[remote_access.fs] allow_insecure` count as it. A plaintext connection from
+For backward compatibility, `[remote_access.terminal] allow_insecure` and
+`[remote_access.fs] allow_insecure` are also accepted as aliases. A plaintext connection from
 the App also needs **Allow insecure HTTP** for that server. Without either,
 capabilities report `access` with `why: insecure_transport`, and the
 endpoints answer `forbidden`.

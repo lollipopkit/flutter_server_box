@@ -80,8 +80,7 @@ other credentials in a command.
 
 ## Legacy command storage
 
-TODO: Remove the legacy JSON migration after supported upgrade paths no longer
-need it. Older releases stored commands in server settings; the App preserves
-those entries until the first connection, then moves them to
+Older releases stored commands in server settings; the App preserves those
+entries until the first connection, then moves them to
 `~/.config/server_box/custom_cmds`. Current releases read and write commands
 only in that directory.

@@ -66,4 +66,4 @@ tail -20 /var/log/syslog
 
 ## 旧版命令存储
 
-TODO：支持的升级路径不再需要旧数据后，删除 JSON migration。早期版本将命令保存在服务器设置中；App 会暂存这些条目，直到首次连接时将它们移入 `~/.config/server_box/custom_cmds`。当前版本只从该目录读取和写入命令。
+早期版本曾将自定义命令保存在本地服务器设置中；升级后 App 会在首次连接服务器时自动将其迁移至服务器上的 `~/.config/server_box/custom_cmds` 目录。当前版本统一从该目录读写命令。

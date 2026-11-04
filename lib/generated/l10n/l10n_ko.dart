@@ -613,7 +613,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get ungrouped => '그룹 없음';
 
   @override
-  String get containerReclaimable => 'Reclaimable';
+  String get containerReclaimable => '회수 가능';
 
   @override
   String get unused => '미사용';
@@ -1466,13 +1466,13 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get processForceKill => 'Force kill';
+  String get processForceKill => '강제 종료';
 
   @override
-  String get processStarted => 'Started';
+  String get processStarted => '시작됨';
 
   @override
-  String get processThreads => 'Threads';
+  String get processThreads => '스레드';
 
   @override
   String get watchServers => '워치에 표시할 서버';
@@ -1539,10 +1539,10 @@ class AppLocalizationsKo extends AppLocalizations {
       '이 계정에는 서버에 사용자 세션 버스가 없어 시스템 unit만 표시됩니다.';
 
   @override
-  String get serviceSearchHint => 'Unit name';
+  String get serviceSearchHint => '유닛 이름';
 
   @override
-  String get serviceNeedsAttention => 'Needs attention';
+  String get serviceNeedsAttention => '확인 필요';
 
   @override
   String serviceOtherUnits(int count) {
@@ -1550,16 +1550,16 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get serviceUnit => 'Unit';
+  String get serviceUnit => '유닛';
 
   @override
-  String get serviceUnitType => 'Type';
+  String get serviceUnitType => '유형';
 
   @override
-  String get serviceScope => 'Scope';
+  String get serviceScope => '범위';
 
   @override
-  String get serviceStartup => 'Startup';
+  String get serviceStartup => '시작 설정';
 
   @override
   String serviceUpFor(String duration) {
@@ -1587,10 +1587,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get serviceFullJournal => 'Full journal';
+  String get serviceFullJournal => '전체 로그';
 
   @override
-  String get serviceUnitFile => 'Unit file';
+  String get serviceUnitFile => '유닛 파일';
 
   @override
   String serviceJournalRecent(int count) {
@@ -1910,73 +1910,73 @@ class AppLocalizationsKo extends AppLocalizations {
       '일부 데이터를 삭제하지 못했으며, 이 버전은 남은 데이터도 열 수 없습니다. 최신 버전을 다시 설치하여 접근하세요.';
 
   @override
-  String get systemUsers => 'Users';
+  String get systemUsers => '사용자';
 
   @override
   String get userManagerLinuxOnly => '시스템 사용자 관리는 현재 Linux 서버만 지원합니다.';
 
   @override
-  String get userRegularAccount => 'Regular';
+  String get userRegularAccount => '일반 계정';
 
   @override
-  String get userCurrentAccount => 'Current account';
+  String get userCurrentAccount => '현재 계정';
 
   @override
-  String get userSystemAccount => 'System account';
+  String get userSystemAccount => '시스템 계정';
 
   @override
   String get userUid => 'UID';
 
   @override
-  String get userLoginStatus => 'Status';
+  String get userLoginStatus => '상태';
 
   @override
-  String get userLoginEnabled => 'Login enabled';
+  String get userLoginEnabled => '로그인 허용';
 
   @override
-  String get userDetailAccount => 'Account';
+  String get userDetailAccount => '계정';
 
   @override
-  String get userDetailSecurity => 'Security';
+  String get userDetailSecurity => '보안';
 
   @override
-  String get userSshKeys => 'SSH keys';
+  String get userSshKeys => 'SSH 키';
 
   @override
-  String get userExpires => 'Expires';
+  String get userExpires => '만료일';
 
   @override
-  String get userNever => 'Never';
+  String get userNever => '만료 없음';
 
   @override
-  String get userPasswordSet => 'Set';
+  String get userPasswordSet => '설정됨';
 
   @override
-  String get userPasswordLocked => 'Locked';
+  String get userPasswordLocked => '잠김';
 
   @override
-  String get userPasswordNone => 'None';
+  String get userPasswordNone => '없음';
 
   @override
-  String get userSuperuser => 'Superuser';
+  String get userSuperuser => '슈퍼유저';
 
   @override
-  String get userOpenShell => 'Open shell';
+  String get userOpenShell => '셸 열기';
 
   @override
   String get userRootChangesWarning => 'root 변경 사항은 모든 세션에 즉시 적용됩니다.';
 
   @override
-  String get userComment => 'Comment';
+  String get userComment => '설명';
 
   @override
-  String get userPrimaryGroup => 'Primary group';
+  String get userPrimaryGroup => '주 그룹';
 
   @override
   String get userSupplementaryGroups => '보조 그룹';
 
   @override
-  String get userLoginShell => 'Login shell';
+  String get userLoginShell => '로그인 셸';
 
   @override
   String get userCreateHome => '홈 디렉터리 생성';
@@ -2079,7 +2079,7 @@ class AppLocalizationsKo extends AppLocalizations {
       '원격 데스크톱 프로필을 보고, 승인 후 연결하거나 연결을 끊습니다.';
 
   @override
-  String get agentSkills => 'Skills';
+  String get agentSkills => '스킬';
 
   @override
   String get agentSkillsTip => '특정 작업을 위한 지침, GitHub 또는 링크에서 설치';
@@ -2411,7 +2411,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get tagRenamesOnSave => '이름 변경은 저장할 때 적용됩니다';
 
   @override
-  String get scheduledTasks => 'Scheduled tasks';
+  String get scheduledTasks => '예약 작업';
 
   @override
   String get scheduledTaskLinuxOnly => '예약 작업 관리는 현재 Linux 서버만 지원합니다.';
@@ -2424,24 +2424,24 @@ class AppLocalizationsKo extends AppLocalizations {
       '이 crontab의 주석, 환경 변수, 인식할 수 없는 행은 그대로 보존됩니다.';
 
   @override
-  String get scheduledTaskSchedule => 'Schedule';
+  String get scheduledTaskSchedule => '일정';
 
   @override
-  String get scheduledTaskAdd => 'Add task';
+  String get scheduledTaskAdd => '작업 추가';
 
   @override
-  String get scheduledTaskNextRun => 'Next run';
+  String get scheduledTaskNextRun => '다음 실행';
 
   @override
   String scheduledTaskNextInFmt(String time) {
-    return 'in $time';
+    return '$time 후';
   }
 
   @override
-  String get scheduledTaskEnabled => 'Enabled';
+  String get scheduledTaskEnabled => '사용 중';
 
   @override
-  String get scheduledTaskCommentedOut => 'Commented out';
+  String get scheduledTaskCommentedOut => '주석 처리됨';
 
   @override
   String scheduledTaskSummaryFmt(int enabled, int total) {
@@ -2449,16 +2449,16 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get scheduledTaskFilterHint => 'Filter tasks';
+  String get scheduledTaskFilterHint => '작업 필터링';
 
   @override
-  String get scheduledTaskPreserved => 'Preserved lines';
+  String get scheduledTaskPreserved => '유지된 줄';
 
   @override
-  String get scheduledTaskRaw => 'Raw crontab';
+  String get scheduledTaskRaw => '원본 crontab';
 
   @override
-  String get scheduledTaskEnableNow => 'Enable now';
+  String get scheduledTaskEnableNow => '지금 활성화';
 
   @override
   String get scheduledTaskEnableNowTip => '끄면 해당 행을 주석 처리해 저장합니다.';
@@ -2469,19 +2469,19 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get scheduledTaskFieldMinute => 'Minute';
+  String get scheduledTaskFieldMinute => '분';
 
   @override
-  String get scheduledTaskFieldHour => 'Hour';
+  String get scheduledTaskFieldHour => '시간';
 
   @override
-  String get scheduledTaskFieldDayOfMonth => 'Day of month';
+  String get scheduledTaskFieldDayOfMonth => '일';
 
   @override
-  String get scheduledTaskFieldMonth => 'Month';
+  String get scheduledTaskFieldMonth => '월';
 
   @override
-  String get scheduledTaskFieldDayOfWeek => 'Day of week';
+  String get scheduledTaskFieldDayOfWeek => '요일';
 
   @override
   String get cronErrScheduleEmpty => '실행 주기가 필요합니다.';
@@ -2499,10 +2499,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get cronErrFieldCount => 'cron 주기는 다섯 필드 또는 @reboot처럼 macro로 지정합니다.';
 
   @override
-  String get cronAtBoot => 'At boot';
+  String get cronAtBoot => '부팅 시';
 
   @override
-  String get cronEveryMin => 'Every minute';
+  String get cronEveryMin => '매분';
 
   @override
   String cronEveryMinsFmt(int minutes) {
@@ -2554,7 +2554,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get monitorNeedsRestart => 'Monitor를 다시 시작한 후 적용';
 
   @override
-  String get monitorCollection => 'Collection';
+  String get monitorCollection => '수집';
 
   @override
   String get extendedInterval => '확장 수집 주기';
@@ -2567,22 +2567,22 @@ class AppLocalizationsKo extends AppLocalizations {
       '확장 수집은 smartctl, sensors, amd-smi를 실행합니다. 클라이언트가 조회하지 않을 때 멈추면 아무도 읽지 않는 데이터 때문에 디스크가 깨어나는 것을 막을 수 있습니다.';
 
   @override
-  String get idlePauseThreshold => 'Idle after';
+  String get idlePauseThreshold => '유휴 기준 시간';
 
   @override
-  String get monitorAlerts => 'Alerts';
+  String get monitorAlerts => '알림';
 
   @override
-  String get monitoringRules => 'Alert rules';
+  String get monitoringRules => '알림 규칙';
 
   @override
-  String get ruleMonitorType => 'Metric';
+  String get ruleMonitorType => '지표';
 
   @override
-  String get ruleThreshold => 'Threshold';
+  String get ruleThreshold => '임계값';
 
   @override
-  String get ruleMatcher => 'Matcher';
+  String get ruleMatcher => '매칭';
 
   @override
   String get ruleTip =>
@@ -2592,10 +2592,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get pushChannels => '알림 채널';
 
   @override
-  String get pushType => 'Type';
+  String get pushType => '유형';
 
   @override
-  String get pushRate => 'Rate limit';
+  String get pushRate => '전송 속도 제한';
 
   @override
   String get pushHeaders => 'Headers';
@@ -2626,17 +2626,17 @@ class AppLocalizationsKo extends AppLocalizations {
   String get pushJsonInvalid => '유효한 JSON이 아닙니다';
 
   @override
-  String get dataRetention => 'Data retention';
+  String get dataRetention => '데이터 보관';
 
   @override
   String get dataRetentionTip =>
       '사용 중지하면 Monitor가 아무것도 삭제하지 않아 데이터베이스가 제한 없이 커집니다.';
 
   @override
-  String get retentionMetrics => 'Keep metrics';
+  String get retentionMetrics => '지표 보관';
 
   @override
-  String get retentionAlerts => 'Keep alerts';
+  String get retentionAlerts => '알림 보관';
 
   @override
   String get retentionCleanup => '정리 실행 주기';
@@ -2852,7 +2852,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get remoteDesktopHostInvalid => '대상 호스트에는 공백이나 줄바꿈을 쓸 수 없습니다.';
 
   @override
-  String get remoteDesktopProtocolInvalid => 'Unsupported protocol.';
+  String get remoteDesktopProtocolInvalid => '지원하지 않는 프로토콜입니다.';
 
   @override
   String get remoteDesktopCredentialInvalid =>
@@ -5117,13 +5117,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get firewallDefaultZone => '기본 zone';
 
   @override
-  String get firewallZone => 'Zone';
+  String get firewallZone => '영역';
 
   @override
-  String get firewallTarget => 'Target';
+  String get firewallTarget => '대상 정책';
 
   @override
-  String get firewallMasquerade => 'Masquerade';
+  String get firewallMasquerade => '마스커레이드';
 
   @override
   String get firewallServices => '서비스';
@@ -5138,7 +5138,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get firewallInterfaces => '인터페이스';
 
   @override
-  String get firewallRichRules => 'Rich rules';
+  String get firewallRichRules => '리치 규칙';
 
   @override
   String get firewallForwardPorts => '포트 전달';
@@ -5661,8 +5661,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get storageTitle => '저장소';
 
   @override
-  String get storageLinuxOnly =>
-      'Storage management currently supports Linux servers.';
+  String get storageLinuxOnly => '스토리지 관리는 현재 Linux 서버만 지원합니다.';
 
   @override
   String get storageDisks => '디스크';
@@ -5683,7 +5682,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String storageFree(Object size) {
-    return '$size free';
+    return '$size 여유';
   }
 
   @override
@@ -5890,8 +5889,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get storageConfirmationMismatch =>
-      'The confirmation text did not match.';
+  String get storageConfirmationMismatch => '확인 텍스트가 일치하지 않습니다.';
 
   @override
   String storageInUse(Object device) {
@@ -6081,35 +6079,34 @@ class AppLocalizationsKo extends AppLocalizations {
   String get storageNotRemovable => '여기서는 예비 또는 캐시 장치만 제거할 수 있습니다.';
 
   @override
-  String get storageNotGrowable => 'This device cannot be grown here.';
+  String get storageNotGrowable => '이 장치는 여기서 확장할 수 없습니다.';
 
   @override
-  String get storageOverlapping => 'Choose devices that do not overlap.';
+  String get storageOverlapping => '서로 겹치지 않는 장치를 선택하세요.';
 
   @override
-  String get storageInvalidDevice =>
-      'The device is invalid or no longer available.';
+  String get storageInvalidDevice => '장치가 유효하지 않거나 더 이상 사용할 수 없습니다.';
 
   @override
-  String get storageInvalidMountpoint => 'The mount point is invalid.';
+  String get storageInvalidMountpoint => '마운트 지점이 유효하지 않습니다.';
 
   @override
-  String get storageInvalidName => 'The name is invalid.';
+  String get storageInvalidName => '이름이 유효하지 않습니다.';
 
   @override
-  String get storageInvalidFilesystem => 'The filesystem is not supported.';
+  String get storageInvalidFilesystem => '지원하지 않는 파일시스템입니다.';
 
   @override
-  String get storageInvalidLabel => 'The label is invalid.';
+  String get storageInvalidLabel => '레이블이 유효하지 않습니다.';
 
   @override
-  String get storageInvalidLevel => 'The RAID level or pool layout is invalid.';
+  String get storageInvalidLevel => 'RAID 수준 또는 풀 레이아웃이 유효하지 않습니다.';
 
   @override
-  String get storageTooFewDevices => 'Not enough valid devices were selected.';
+  String get storageTooFewDevices => '선택된 유효한 장치가 부족합니다.';
 
   @override
-  String get storageKeyRequired => 'A passphrase is required.';
+  String get storageKeyRequired => '암호 구문이 필요합니다.';
 
   @override
   String get storageExpand => '확장';
@@ -6332,8 +6329,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sharingShowConnectionsBody => 'root 권한으로 연결 정보를 읽습니다.';
 
   @override
-  String get sharingConnectionsLinuxOnly =>
-      'Sharing management currently supports Linux servers.';
+  String get sharingConnectionsLinuxOnly => '공유 관리는 현재 Linux 서버만 지원합니다.';
 
   @override
   String get agentThisDevice => '이 기기';
@@ -6890,7 +6886,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get userMembersHint => 'alice,bob';
 
   @override
-  String get userRegularGroup => 'Regular';
+  String get userRegularGroup => '일반 그룹';
 
   @override
   String get termMetricsBar => '터미널 아래에 서버 상태 표시';
