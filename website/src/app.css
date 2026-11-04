@@ -172,9 +172,8 @@ body {
   border-radius: var(--radius-pill);
   background: var(--white);
   color: var(--near-black);
-  font: 500 0.86rem var(--font-body);
-  line-height: 1;
-  padding: 0.55rem 1.9rem 0.55rem 0.9rem;
+  font: 500 0.86rem/1.35 var(--font-body);
+  padding: 0.42rem 1.9rem 0.42rem 0.9rem;
   cursor: pointer;
 }
 
@@ -212,16 +211,18 @@ body {
 .nav-cta {
   text-decoration: none;
   border-radius: var(--radius-pill);
-  background: var(--black);
-  color: var(--white);
-  padding: 0.55rem 1.25rem;
-  font-weight: 500;
-  font-size: 0.9rem;
-  transition: opacity 0.2s ease;
+  background: var(--brand);
+  color: var(--brand-ink);
+  padding: 0.55rem 1rem;
+  font-weight: 600;
+  font-size: 0.86rem;
+  line-height: 1;
+  white-space: nowrap;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .nav-cta:hover {
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
 .page-section {
@@ -1630,4 +1631,313 @@ body {
 .beta-tag--hero {
   font-size: 0.3em;
   vertical-align: 0.9em;
+}
+
+/* Above-the-fold ServerBox OS (formerly Monitor) callout pill in the hero. */
+.hero-os-pill {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  padding: 0.42rem 0.85rem 0.42rem 0.55rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-light);
+  background: color-mix(in srgb, var(--brand-tint) 45%, var(--white));
+  color: var(--near-black);
+  text-decoration: none;
+  font-size: 0.86rem;
+  transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
+}
+
+.hero-os-pill:hover {
+  border-color: var(--brand);
+  background: var(--brand-tint);
+  transform: translateY(-1px);
+}
+
+.hero-os-pill-badge {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--black);
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  border: 1px solid var(--light-gray);
+}
+
+.hero-os-pill-meta {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--stone);
+}
+
+.hero-os-pill-arrow {
+  color: var(--brand);
+  font-weight: 700;
+}
+
+/* /os/ identity and monitor migration callout. */
+.os-identity-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.os-formerly-badge {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--brand);
+  background: var(--brand-tint);
+  border: 1px solid color-mix(in srgb, var(--brand) 32%, transparent);
+  border-radius: var(--radius-pill);
+  padding: 0.32rem 0.8rem;
+}
+
+.os-monitor-callout {
+  border-left: 3px solid var(--brand);
+  background: color-mix(in srgb, var(--white) 82%, transparent);
+  border-radius: 0 12px 12px 0;
+  padding: 0.75rem 1rem;
+  color: var(--near-black);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  max-width: 68ch;
+}
+
+/* Pride & LGBTQ+ support banner in Themes and badge in Footer. */
+.pride-banner {
+  position: relative;
+  overflow: hidden;
+  margin-top: 1.75rem;
+  margin-bottom: 1.25rem;
+  padding: 1.4rem 1.6rem 1.4rem 1.85rem;
+  border-radius: var(--radius-container);
+  border: 1px solid var(--light-gray);
+  background: var(--snow);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+}
+
+.pride-banner::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background: linear-gradient(
+    180deg,
+    #e40303 0%,
+    #ff8c00 18%,
+    #ffed00 36%,
+    #008026 54%,
+    #24408e 72%,
+    #732982 90%
+  );
+}
+
+.pride-banner-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  max-width: 58ch;
+}
+
+.pride-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--near-black);
+}
+
+.pride-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: conic-gradient(
+    #e40303,
+    #ff8c00,
+    #ffed00,
+    #008026,
+    #24408e,
+    #732982,
+    #e40303
+  );
+  flex-shrink: 0;
+}
+
+.pride-banner-copy h3 {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--black);
+}
+
+.pride-banner-copy p {
+  color: var(--stone);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.pride-variants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.pride-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.48rem 0.85rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--light-gray);
+  background: var(--white);
+  color: var(--near-black);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.pride-chip:hover {
+  border-color: var(--brand);
+  transform: translateY(-1px);
+}
+
+.pride-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+
+.pride-swatch--rainbow {
+  background: linear-gradient(
+    135deg,
+    #e40303 0%,
+    #ff8c00 20%,
+    #ffed00 40%,
+    #008026 60%,
+    #24408e 80%,
+    #732982 100%
+  );
+}
+
+.pride-swatch--trans {
+  background: linear-gradient(
+    135deg,
+    #5bcefa 0%,
+    #f5a9b8 35%,
+    #ffffff 50%,
+    #f5a9b8 65%,
+    #5bcefa 100%
+  );
+}
+
+.pride-swatch--nonbinary {
+  background: linear-gradient(
+    135deg,
+    #fcf434 0%,
+    #ffffff 33%,
+    #9c59d1 66%,
+    #2c2c2c 100%
+  );
+}
+
+.footer-brand-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.pride-footer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.22rem 0.65rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--light-gray);
+  background: var(--snow);
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+/* More services & apps section. */
+.more-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.more-group + .more-group {
+  margin-top: 2rem;
+}
+
+.more-group-title {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--stone);
+}
+
+.other-apps-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.other-app-card {
+  justify-content: space-between;
+  gap: 0.9rem;
+}
+
+.other-app-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.other-app-head h4 {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--black);
+}
+
+.other-app-title-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.other-app-title-link:hover {
+  color: var(--brand);
+}
+
+@media (max-width: 768px) {
+  .other-apps-grid {
+    grid-template-columns: 1fr;
+  }
 }

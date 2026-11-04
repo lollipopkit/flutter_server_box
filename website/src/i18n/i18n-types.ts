@@ -67,6 +67,14 @@ type RootTranslation = {
 		 */
 		plugins: string
 		/**
+		 * M​o​r​e
+		 */
+		otherApps: string
+		/**
+		 * S​i​g​n​ ​i​n
+		 */
+		signIn: string
+		/**
 		 * L​a​n​g​u​a​g​e
 		 */
 		languageLabel: string
@@ -265,17 +273,33 @@ type RootTranslation = {
 	}
 	os: {
 		/**
-		 * S​e​r​v​e​r​B​o​x​ ​O​S​ ​—​ ​T​h​e​ ​s​e​r​v​e​r​ ​c​o​m​p​a​n​i​o​n​ ​f​o​r​ ​S​e​r​v​e​r​B​o​x
+		 * S​e​r​v​e​r​B​o​x​ ​O​S​ ​(​f​o​r​m​e​r​l​y​ ​S​e​r​v​e​r​B​o​x​ ​M​o​n​i​t​o​r​)​ ​—​ ​T​h​e​ ​s​e​r​v​e​r​ ​c​o​m​p​a​n​i​o​n​ ​f​o​r​ ​S​e​r​v​e​r​B​o​x
 		 */
 		metaTitle: string
 		/**
-		 * S​e​r​v​e​r​B​o​x​ ​O​S​ ​b​r​i​n​g​s​ ​a​ ​b​r​o​w​s​e​r​ ​d​e​s​k​t​o​p​,​ ​4​0​+​ ​o​n​e​-​c​l​i​c​k​ ​D​o​c​k​e​r​ ​a​p​p​s​,​ ​Z​F​S​/​R​A​I​D​ ​s​t​o​r​a​g​e​,​ ​A​I​ ​A​g​e​n​t​ ​o​p​s​,​ ​a​l​e​r​t​s​,​ ​a​n​d​ ​e​n​c​r​y​p​t​e​d​ ​b​a​c​k​u​p​s​ ​t​o​ ​y​o​u​r​ ​s​e​r​v​e​r​.
+		 * S​e​r​v​e​r​B​o​x​ ​O​S​ ​(​f​o​r​m​e​r​l​y​ ​S​e​r​v​e​r​B​o​x​ ​M​o​n​i​t​o​r​)​ ​b​r​i​n​g​s​ ​a​ ​b​r​o​w​s​e​r​ ​d​e​s​k​t​o​p​,​ ​4​0​+​ ​o​n​e​-​c​l​i​c​k​ ​D​o​c​k​e​r​ ​a​p​p​s​,​ ​Z​F​S​/​R​A​I​D​ ​s​t​o​r​a​g​e​,​ ​A​I​ ​A​g​e​n​t​ ​o​p​s​,​ ​a​l​e​r​t​s​,​ ​a​n​d​ ​e​n​c​r​y​p​t​e​d​ ​b​a​c​k​u​p​s​ ​t​o​ ​y​o​u​r​ ​s​e​r​v​e​r​.
 		 */
 		metaDescription: string
 		/**
 		 * S​e​r​v​e​r​B​o​x​ ​O​S
 		 */
 		heroTitle: string
+		/**
+		 * F​o​r​m​e​r​l​y​ ​S​e​r​v​e​r​B​o​x​ ​M​o​n​i​t​o​r
+		 */
+		formerlyMonitor: string
+		/**
+		 * P​r​e​v​i​e​w
+		 */
+		navPreview: string
+		/**
+		 * I​n​s​t​a​l​l
+		 */
+		navInstall: string
+		/**
+		 * S​e​r​v​e​r​B​o​x​ ​A​p​p
+		 */
+		navApp: string
 		/**
 		 * Y​o​u​r​ ​s​e​r​v​e​r​,​ ​i​n​ ​t​h​e​ ​b​r​o​w​s​e​r​ ​a​n​d​ ​t​h​e​ ​a​p​p​.
 		 */
@@ -284,6 +308,14 @@ type RootTranslation = {
 		 * A​ ​s​i​n​g​l​e​ ​l​i​g​h​t​w​e​i​g​h​t​ ​d​a​e​m​o​n​ ​t​h​a​t​ ​g​i​v​e​s​ ​a​n​y​ ​L​i​n​u​x​ ​m​a​c​h​i​n​e​ ​a​ ​f​u​l​l​ ​b​r​o​w​s​e​r​ ​d​e​s​k​t​o​p​,​ ​o​n​e​-​c​l​i​c​k​ ​s​e​l​f​-​h​o​s​t​e​d​ ​a​p​p​s​,​ ​a​n​d​ ​i​n​s​t​a​n​t​ ​H​T​T​P​S​ ​s​y​n​c​ ​w​i​t​h​ ​t​h​e​ ​S​e​r​v​e​r​B​o​x​ ​a​p​p​—​o​r​ ​b​o​o​t​s​ ​a​s​ ​a​ ​c​o​m​p​l​e​t​e​ ​O​S​.
 		 */
 		subtitle: string
+		/**
+		 * S​e​r​v​e​r​B​o​x​ ​O​S​ ​i​s​ ​t​h​e​ ​u​p​g​r​a​d​e​d​ ​S​e​r​v​e​r​B​o​x​ ​M​o​n​i​t​o​r​ ​(​s​e​r​v​e​r​_​b​o​x​_​m​o​n​i​t​o​r​)​.​ ​E​x​i​s​t​i​n​g​ ​M​o​n​i​t​o​r​ ​i​n​s​t​a​l​l​a​t​i​o​n​s​ ​u​p​g​r​a​d​e​ ​i​n​-​p​l​a​c​e​ ​w​i​t​h​ ​t​h​e​ ​s​a​m​e​ ​c​o​m​m​a​n​d​ ​a​n​d​ ​c​o​n​t​i​n​u​e​ ​t​o​ ​p​o​w​e​r​ ​p​u​s​h​ ​a​l​e​r​t​s​,​ ​h​o​m​e​-​s​c​r​e​e​n​ ​w​i​d​g​e​t​s​,​ ​w​a​t​c​h​O​S​,​ ​a​n​d​ ​h​i​s​t​o​r​i​c​a​l​ ​c​h​a​r​t​s​ ​f​o​r​ ​t​h​e​ ​S​e​r​v​e​r​B​o​x​ ​a​p​p​.
+		 */
+		monitorNote: string
+		/**
+		 * E​x​p​l​o​r​e​ ​S​e​r​v​e​r​B​o​x​ ​O​S
+		 */
+		exploreAction: string
 		/**
 		 * I​n​s​t​a​l​l​ ​o​n​ ​L​i​n​u​x
 		 */
@@ -674,6 +706,106 @@ type RootTranslation = {
 		 */
 		githubAction: string
 	}
+	pride: {
+		/**
+		 * L​G​B​T​Q​+​ ​F​r​i​e​n​d​l​y
+		 */
+		badge: string
+		/**
+		 * B​u​i​l​t​ ​w​i​t​h​ ​P​r​i​d​e​.
+		 */
+		title: string
+		/**
+		 * S​e​r​v​e​r​B​o​x​ ​p​r​o​u​d​l​y​ ​s​u​p​p​o​r​t​s​ ​t​h​e​ ​L​G​B​T​Q​+​ ​c​o​m​m​u​n​i​t​y​.​ ​T​h​e​ ​o​f​f​i​c​i​a​l​ ​P​r​i​d​e​ ​t​h​e​m​e​ ​s​h​i​p​s​ ​i​n​ ​t​h​e​ ​T​h​e​m​e​ ​S​t​o​r​e​ ​w​i​t​h​ ​R​a​i​n​b​o​w​,​ ​T​r​a​n​s​,​ ​a​n​d​ ​N​o​n​b​i​n​a​r​y​ ​f​l​a​g​ ​v​a​r​i​a​n​t​s​.
+		 */
+		description: string
+		/**
+		 * R​a​i​n​b​o​w
+		 */
+		rainbow: string
+		/**
+		 * T​r​a​n​s
+		 */
+		trans: string
+		/**
+		 * N​o​n​b​i​n​a​r​y
+		 */
+		nonbinary: string
+	}
+	otherApps: {
+		/**
+		 * M​o​r​e​ ​f​r​o​m​ ​l​o​l​l​i​p​o​p​k​i​t​.
+		 */
+		title: string
+		/**
+		 * C​o​m​p​a​n​i​o​n​ ​c​l​o​u​d​ ​s​e​r​v​i​c​e​s​ ​a​n​d​ ​n​a​t​i​v​e​ ​a​p​p​s​ ​b​u​i​l​t​ ​w​i​t​h​ ​t​h​e​ ​s​a​m​e​ ​f​o​c​u​s​ ​o​n​ ​s​p​e​e​d​ ​a​n​d​ ​c​l​e​a​n​ ​d​e​s​i​g​n​.
+		 */
+		subtitle: string
+		/**
+		 * S​e​r​v​i​c​e​s
+		 */
+		servicesHeading: string
+		/**
+		 * A​p​p​s
+		 */
+		appsHeading: string
+		llmapi: {
+			/**
+			 * L​L​M​ ​A​P​I
+			 */
+			title: string
+			/**
+			 * U​n​i​f​i​e​d​ ​A​P​I​ ​g​a​t​e​w​a​y​ ​f​o​r​ ​f​r​o​n​t​i​e​r​ ​L​L​M​s​—​p​l​u​g​ ​s​t​r​a​i​g​h​t​ ​i​n​t​o​ ​S​e​r​v​e​r​B​o​x​ ​A​I​ ​A​g​e​n​t​,​ ​G​P​T​ ​B​o​x​,​ ​o​r​ ​y​o​u​r​ ​o​w​n​ ​t​o​o​l​s​.
+			 */
+			description: string
+		}
+		uptimer: {
+			/**
+			 * U​p​t​i​m​e​r
+			 */
+			title: string
+			/**
+			 * L​i​g​h​t​w​e​i​g​h​t​ ​u​p​t​i​m​e​ ​m​o​n​i​t​o​r​i​n​g​ ​a​n​d​ ​s​t​a​t​u​s​ ​p​a​g​e​s​ ​f​o​r​ ​y​o​u​r​ ​w​e​b​s​i​t​e​s​,​ ​A​P​I​s​,​ ​a​n​d​ ​s​e​r​v​e​r​s​ ​w​i​t​h​ ​i​n​s​t​a​n​t​ ​a​l​e​r​t​s​.
+			 */
+			description: string
+		}
+		gptbox: {
+			/**
+			 * G​P​T​ ​B​o​x
+			 */
+			title: string
+			/**
+			 * i​O​S​ ​·​ ​A​n​d​r​o​i​d​ ​·​ ​m​a​c​O​S​ ​·​ ​L​i​n​u​x​ ​·​ ​W​i​n​d​o​w​s
+			 */
+			tag: string
+			/**
+			 * A​ ​f​a​s​t​,​ ​n​a​t​i​v​e​ ​t​h​i​r​d​-​p​a​r​t​y​ ​c​l​i​e​n​t​ ​f​o​r​ ​O​p​e​n​A​I​ ​a​n​d​ ​c​o​m​p​a​t​i​b​l​e​ ​L​L​M​ ​A​P​I​s​,​ ​f​e​a​t​u​r​i​n​g​ ​l​o​c​a​l​-​f​i​r​s​t​ ​c​h​a​t​ ​h​i​s​t​o​r​y​,​ ​t​o​o​l​ ​c​a​l​l​i​n​g​,​ ​a​n​d​ ​c​u​s​t​o​m​ ​e​n​d​p​o​i​n​t​s​.
+			 */
+			description: string
+			/**
+			 * G​i​t​H​u​b
+			 */
+			action: string
+		}
+		mfuse: {
+			/**
+			 * M​F​u​s​e
+			 */
+			title: string
+			/**
+			 * m​a​c​O​S​ ​·​ ​F​i​l​e​ ​P​r​o​v​i​d​e​r
+			 */
+			tag: string
+			/**
+			 * M​o​u​n​t​ ​S​F​T​P​,​ ​S​3​,​ ​W​e​b​D​A​V​,​ ​a​n​d​ ​r​e​m​o​t​e​ ​s​t​o​r​a​g​e​ ​d​i​r​e​c​t​l​y​ ​i​n​s​i​d​e​ ​m​a​c​O​S​ ​F​i​n​d​e​r​ ​t​h​r​o​u​g​h​ ​A​p​p​l​e​’​s​ ​n​a​t​i​v​e​ ​F​i​l​e​ ​P​r​o​v​i​d​e​r​—​n​o​ ​k​e​r​n​e​l​ ​e​x​t​e​n​s​i​o​n​s​ ​r​e​q​u​i​r​e​d​.
+			 */
+			description: string
+			/**
+			 * m​f​u​s​e​.​l​o​l​l​i​p​o​p​k​i​t​.​c​o​m
+			 */
+			action: string
+		}
+	}
 	footer: {
 		/**
 		 * F​e​a​t​u​r​e​s
@@ -738,6 +870,14 @@ export type TranslationFunctions = {
 		 * Plugins
 		 */
 		plugins: () => LocalizedString
+		/**
+		 * More
+		 */
+		otherApps: () => LocalizedString
+		/**
+		 * Sign in
+		 */
+		signIn: () => LocalizedString
 		/**
 		 * Language
 		 */
@@ -937,17 +1077,33 @@ export type TranslationFunctions = {
 	}
 	os: {
 		/**
-		 * ServerBox OS — The server companion for ServerBox
+		 * ServerBox OS (formerly ServerBox Monitor) — The server companion for ServerBox
 		 */
 		metaTitle: () => LocalizedString
 		/**
-		 * ServerBox OS brings a browser desktop, 40+ one-click Docker apps, ZFS/RAID storage, AI Agent ops, alerts, and encrypted backups to your server.
+		 * ServerBox OS (formerly ServerBox Monitor) brings a browser desktop, 40+ one-click Docker apps, ZFS/RAID storage, AI Agent ops, alerts, and encrypted backups to your server.
 		 */
 		metaDescription: () => LocalizedString
 		/**
 		 * ServerBox OS
 		 */
 		heroTitle: () => LocalizedString
+		/**
+		 * Formerly ServerBox Monitor
+		 */
+		formerlyMonitor: () => LocalizedString
+		/**
+		 * Preview
+		 */
+		navPreview: () => LocalizedString
+		/**
+		 * Install
+		 */
+		navInstall: () => LocalizedString
+		/**
+		 * ServerBox App
+		 */
+		navApp: () => LocalizedString
 		/**
 		 * Your server, in the browser and the app.
 		 */
@@ -956,6 +1112,14 @@ export type TranslationFunctions = {
 		 * A single lightweight daemon that gives any Linux machine a full browser desktop, one-click self-hosted apps, and instant HTTPS sync with the ServerBox app—or boots as a complete OS.
 		 */
 		subtitle: () => LocalizedString
+		/**
+		 * ServerBox OS is the upgraded ServerBox Monitor (server_box_monitor). Existing Monitor installations upgrade in-place with the same command and continue to power push alerts, home-screen widgets, watchOS, and historical charts for the ServerBox app.
+		 */
+		monitorNote: () => LocalizedString
+		/**
+		 * Explore ServerBox OS
+		 */
+		exploreAction: () => LocalizedString
 		/**
 		 * Install on Linux
 		 */
@@ -1344,6 +1508,106 @@ export type TranslationFunctions = {
 		 * GitHub Releases
 		 */
 		githubAction: () => LocalizedString
+	}
+	pride: {
+		/**
+		 * LGBTQ+ Friendly
+		 */
+		badge: () => LocalizedString
+		/**
+		 * Built with Pride.
+		 */
+		title: () => LocalizedString
+		/**
+		 * ServerBox proudly supports the LGBTQ+ community. The official Pride theme ships in the Theme Store with Rainbow, Trans, and Nonbinary flag variants.
+		 */
+		description: () => LocalizedString
+		/**
+		 * Rainbow
+		 */
+		rainbow: () => LocalizedString
+		/**
+		 * Trans
+		 */
+		trans: () => LocalizedString
+		/**
+		 * Nonbinary
+		 */
+		nonbinary: () => LocalizedString
+	}
+	otherApps: {
+		/**
+		 * More from lollipopkit.
+		 */
+		title: () => LocalizedString
+		/**
+		 * Companion cloud services and native apps built with the same focus on speed and clean design.
+		 */
+		subtitle: () => LocalizedString
+		/**
+		 * Services
+		 */
+		servicesHeading: () => LocalizedString
+		/**
+		 * Apps
+		 */
+		appsHeading: () => LocalizedString
+		llmapi: {
+			/**
+			 * LLM API
+			 */
+			title: () => LocalizedString
+			/**
+			 * Unified API gateway for frontier LLMs—plug straight into ServerBox AI Agent, GPT Box, or your own tools.
+			 */
+			description: () => LocalizedString
+		}
+		uptimer: {
+			/**
+			 * Uptimer
+			 */
+			title: () => LocalizedString
+			/**
+			 * Lightweight uptime monitoring and status pages for your websites, APIs, and servers with instant alerts.
+			 */
+			description: () => LocalizedString
+		}
+		gptbox: {
+			/**
+			 * GPT Box
+			 */
+			title: () => LocalizedString
+			/**
+			 * iOS · Android · macOS · Linux · Windows
+			 */
+			tag: () => LocalizedString
+			/**
+			 * A fast, native third-party client for OpenAI and compatible LLM APIs, featuring local-first chat history, tool calling, and custom endpoints.
+			 */
+			description: () => LocalizedString
+			/**
+			 * GitHub
+			 */
+			action: () => LocalizedString
+		}
+		mfuse: {
+			/**
+			 * MFuse
+			 */
+			title: () => LocalizedString
+			/**
+			 * macOS · File Provider
+			 */
+			tag: () => LocalizedString
+			/**
+			 * Mount SFTP, S3, WebDAV, and remote storage directly inside macOS Finder through Apple’s native File Provider—no kernel extensions required.
+			 */
+			description: () => LocalizedString
+			/**
+			 * mfuse.lollipopkit.com
+			 */
+			action: () => LocalizedString
+		}
 	}
 	footer: {
 		/**

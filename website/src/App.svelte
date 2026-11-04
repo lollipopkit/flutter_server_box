@@ -8,9 +8,10 @@
   import LL, { setLocale } from './i18n/i18n-svelte'
   import { loadLocale } from './i18n/i18n-util.sync'
   import {
+    docsHref,
     getInitialLocale,
     locales,
-    localeStorageKey,
+    persistUserLocale,
     syncLocaleToUrl,
   } from './lib/i18n'
   // store/ at build time: see store-data.js.
@@ -21,18 +22,8 @@
   // listed here would be one nobody can install.
   const showPlugins = false
 
-  // Keep product and protocol names untranslated. This list is the single
-  // source of truth; locale-specific copies would appear editable but be unused.
-  const capabilities = [
-    'SSH', 'SFTP', 'SCP', 'Docker', 'Podman', 'Systemd', 'S.M.A.R.T.',
-    'NVIDIA / AMD / Apple GPU', 'Sensors', 'Proxmox VE', 'libvirt', 'Redfish / IPMI',
-    'RDP', 'VNC', 'Port Forward', 'Local Shell', 'MCP / AI Agent', 'YABS',
-    'iperf3', 'Cron', 'Firewall', 'Push Alerts', 'Home Widgets', 'watchOS',
-  ]
-
-  // One per screenshot, in the order of the README's table. Features without
-  // a screenshot are in `capabilities` above. `tag` is what the screen talks
-  // to on the server, so it stays untranslated.
+  // One per screenshot, in the order of the README's table. `tag` is what the
+  // screen talks to on the server, so it stays untranslated.
   const features = [
     { key: 'list', shot: 'home', tag: 'ssh · monitor' },
     { key: 'charts', shot: 'server-details', tag: '/proc · /sys' },
@@ -101,8 +92,14 @@
   ]
 
   const releases = 'https://github.com/lollipopkit/flutter_server_box/releases'
-  const osInstallCommand =
-    'curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/install.sh | sh -s -- install'
+  const moreServiceList = [
+    { key: 'llmapi', href: 'https://cpa.lolli.tech' },
+    { key: 'uptimer', href: 'https://up.lolli.tech' },
+  ]
+  const otherAppList = [
+    { key: 'gptbox', href: 'https://github.com/lollipopkit/flutter_gpt_box' },
+    { key: 'mfuse', href: 'https://mfuse.lollipopkit.com' },
+  ]
 
   function detectPlatform() {
     if (typeof navigator === 'undefined') return undefined
@@ -200,7 +197,6 @@
     locale = nextLocale
     loadLocale(nextLocale)
     setLocale(nextLocale)
-    localStorage.setItem(localeStorageKey, nextLocale)
   }
 
   onMount(() => {
@@ -222,7 +218,8 @@
   function handleLocaleChange(event) {
     const nextLocale = event.currentTarget.value
     applyLocale(nextLocale)
-    syncLocaleToUrl(nextLocale)
+    persistUserLocale(nextLocale)
+    syncLocaleToUrl(nextLocale, true)
   }
 
   function handleStackMove(event) {
@@ -277,14 +274,14 @@
       </a>
       <nav>
         <a href="#features" onclick={(event) => scrollToSection(event, 'features')}>{$LL.nav.features()}</a>
-        <a href="#capabilities" onclick={(event) => scrollToSection(event, 'capabilities')}>{$LL.nav.capabilities()}</a>
         <a href={`/os/?lang=${locale}`}>{$LL.nav.os()}<span class="beta-tag">{$LL.nav.beta()}</span></a>
         <a href="#themes" onclick={(event) => scrollToSection(event, 'themes')}>{$LL.nav.themes()}</a>
         {#if showPlugins}
           <a href="#plugins" onclick={(event) => scrollToSection(event, 'plugins')}>{$LL.nav.plugins()}</a>
         {/if}
         <a href="#download" onclick={(event) => scrollToSection(event, 'download')}>{$LL.nav.download()}</a>
-        <a href="/docs/">{$LL.nav.docs()}</a>
+        <a href="#other-apps" onclick={(event) => scrollToSection(event, 'other-apps')}>{$LL.nav.otherApps()}</a>
+        <a href={docsHref(locale)}>{$LL.nav.docs()}</a>
       </nav>
       <div class="nav-actions">
         <label class="language-switcher">
@@ -301,6 +298,7 @@
             {/each}
           </select>
         </label>
+        <a class="nav-cta" href="https://api.lolli.tech">{$LL.nav.signIn()}</a>
       </div>
     </header>
 
@@ -315,6 +313,11 @@
           <Button href="#download" onclick={(event) => scrollToSection(event, 'download')}>{$LL.hero.primaryAction()}</Button>
           <Button variant="secondary" href="#features" onclick={(event) => scrollToSection(event, 'features')}>{$LL.hero.secondaryAction()}</Button>
         </div>
+        <a class="hero-os-pill" href={`/os/?lang=${locale}`}>
+          <span class="hero-os-pill-badge">{$LL.nav.os()}<span class="beta-tag">{$LL.nav.beta()}</span></span>
+          <span class="hero-os-pill-meta">{$LL.os.formerlyMonitor()}</span>
+          <span class="hero-os-pill-arrow" aria-hidden="true">→</span>
+        </a>
       </div>
 
       <div
@@ -393,21 +396,6 @@
       </div>
     </section>
 
-    <section class="protocol-section" id="capabilities">
-      <div class="section-head">
-        <h2>{$LL.capabilities.title()}</h2>
-        <p>
-          {$LL.capabilities.subtitle()}
-        </p>
-      </div>
-
-      <div class="protocol-badges">
-        {#each capabilities as item}
-          <span class="protocol-badge">{item}</span>
-        {/each}
-      </div>
-    </section>
-
     <section class="page-section" id="themes">
       <div class="section-head">
         <h2>{$LL.themes.title()}</h2>
@@ -431,10 +419,35 @@
         </div>
       {/if}
 
+      <div class="pride-banner">
+        <div class="pride-banner-copy">
+          <span class="pride-badge">
+            <span class="pride-dot" aria-hidden="true"></span>
+            {$LL.pride.badge()}
+          </span>
+          <h3>{$LL.pride.title()}</h3>
+          <p>{$LL.pride.description()}</p>
+        </div>
+        <div class="pride-variants">
+          <a class="pride-chip" href={`/themes/?lang=${locale}#serverbox.pride~rainbow`}>
+            <span class="pride-swatch pride-swatch--rainbow" aria-hidden="true"></span>
+            <span>{$LL.pride.rainbow()}</span>
+          </a>
+          <a class="pride-chip" href={`/themes/?lang=${locale}#serverbox.pride~trans`}>
+            <span class="pride-swatch pride-swatch--trans" aria-hidden="true"></span>
+            <span>{$LL.pride.trans()}</span>
+          </a>
+          <a class="pride-chip" href={`/themes/?lang=${locale}#serverbox.pride~nonbinary`}>
+            <span class="pride-swatch pride-swatch--nonbinary" aria-hidden="true"></span>
+            <span>{$LL.pride.nonbinary()}</span>
+          </a>
+        </div>
+      </div>
+
       <div class="store-footer">
         <p class="download-note">{$LL.themes.note()}</p>
         <div class="store-actions">
-          <a class="download-icon-btn" href="/docs/development/theme-authoring/">
+          <a class="download-icon-btn" href={docsHref(locale, 'development/theme-authoring/')}>
             <span>{$LL.themes.authoring()}</span>
             <ExternalLink size={14} strokeWidth={1.8} aria-hidden="true" />
           </a>
@@ -537,37 +550,67 @@
       <p class="download-note">{$LL.download.note()} {$LL.cta.title()}</p>
     </section>
 
-    <section class="cta-section">
-      <div class="cta-block">
-        <p class="hero-platforms">{$LL.os.heroTitle()}<span class="beta-tag">{$LL.nav.beta()}</span></p>
-        <h2>{$LL.os.tagline()}</h2>
-        <p>
-          {$LL.os.subtitle()}
-        </p>
-        <button
-          type="button"
-          class="cta-command"
-          onclick={() => copyCommand(osInstallCommand)}
-          aria-label={$LL.os.copy()}
-        >
-          <code>{osInstallCommand}</code>
-          <span>{copiedCommand === osInstallCommand ? $LL.download.copied() : $LL.os.copy()}</span>
-        </button>
-        <div class="cta-actions">
-          <Button href={`/os/?lang=${locale}`}>{$LL.nav.os()}</Button>
-          <Button variant="secondary" href="https://github.com/lollipopkit/flutter_server_box">GitHub · AGPLv3</Button>
+    <section class="page-section other-apps-section" id="other-apps">
+      <div class="section-head">
+        <h2>{$LL.otherApps.title()}</h2>
+        <p>{$LL.otherApps.subtitle()}</p>
+      </div>
+
+      <div class="more-group">
+        <h3 class="more-group-title">{$LL.otherApps.servicesHeading()}</h3>
+        <div class="other-apps-grid">
+          {#each moreServiceList as service}
+            <article class="feature-card other-app-card">
+              <div class="other-app-head">
+                <h4>
+                  <a class="other-app-title-link" href={service.href}>
+                    <span>{$LL.otherApps[service.key].title()}</span>
+                    <ExternalLink size={15} strokeWidth={1.8} aria-hidden="true" />
+                  </a>
+                </h4>
+              </div>
+              <p>{$LL.otherApps[service.key].description()}</p>
+            </article>
+          {/each}
+        </div>
+      </div>
+
+      <div class="more-group">
+        <h3 class="more-group-title">{$LL.otherApps.appsHeading()}</h3>
+        <div class="other-apps-grid">
+          {#each otherAppList as app}
+            <article class="feature-card other-app-card">
+              <div class="other-app-head">
+                <h4>{$LL.otherApps[app.key].title()}</h4>
+                <span class="protocol-badge">{$LL.otherApps[app.key].tag()}</span>
+              </div>
+              <p>{$LL.otherApps[app.key].description()}</p>
+              <div class="store-actions">
+                <a class="download-icon-btn" href={app.href}>
+                  <span>{$LL.otherApps[app.key].action()}</span>
+                  <ExternalLink size={14} strokeWidth={1.8} aria-hidden="true" />
+                </a>
+              </div>
+            </article>
+          {/each}
         </div>
       </div>
     </section>
 
     <footer class="site-footer">
-      <span>© 2026 lollipopkit</span>
+      <div class="footer-brand-row">
+        <span>© 2026 lollipopkit</span>
+        <a class="pride-footer-badge" href={`/themes/?lang=${locale}#serverbox.pride`}>
+          <span class="pride-dot" aria-hidden="true"></span>
+          {$LL.pride.badge()}
+        </a>
+      </div>
       <div class="footer-links">
         <a href="#features" onclick={(event) => scrollToSection(event, 'features')}>{$LL.footer.features()}</a>
-        <a href="#capabilities" onclick={(event) => scrollToSection(event, 'capabilities')}>{$LL.footer.capabilities()}</a>
         <a href={`/os/?lang=${locale}`}>{$LL.nav.os()}<span class="beta-tag">{$LL.nav.beta()}</span></a>
         <a href="#themes" onclick={(event) => scrollToSection(event, 'themes')}>{$LL.nav.themes()}</a>
-        <a href="/docs/">{$LL.nav.docs()}</a>
+        <a href="#other-apps" onclick={(event) => scrollToSection(event, 'other-apps')}>{$LL.nav.otherApps()}</a>
+        <a href={docsHref(locale)}>{$LL.nav.docs()}</a>
         <a href="https://github.com/lollipopkit/flutter_server_box">GitHub</a>
         <a href="https://github.com/lollipopkit/flutter_server_box/releases">{$LL.footer.releases()}</a>
       </div>

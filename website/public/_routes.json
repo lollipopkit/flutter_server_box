@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "include": [
+    "/",
+    "/os",
+    "/os/",
+    "/themes",
+    "/themes/",
+    "/docs",
+    "/docs/"
+  ],
+  "exclude": []
+}

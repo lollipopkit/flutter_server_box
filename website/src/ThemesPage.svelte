@@ -7,7 +7,7 @@
   import store from 'virtual:store'
   import LL, { setLocale } from './i18n/i18n-svelte'
   import { loadLocale } from './i18n/i18n-util.sync'
-  import { getInitialLocale, locales, localeStorageKey, syncLocaleToUrl } from './lib/i18n'
+  import { docsHref, getInitialLocale, locales, persistUserLocale, syncLocaleToUrl } from './lib/i18n'
   import ThemePreview from './lib/ThemePreview.svelte'
   import LazyThemePreview from './lib/LazyThemePreview.svelte'
   import ThemeIcon from './lib/ThemeIcon.svelte'
@@ -22,12 +22,8 @@
     locale = next
     loadLocale(next)
     setLocale(next)
-    try {
-      localStorage.setItem(localeStorageKey, next)
-    } catch {
-      // private mode: the choice lasts for this page
-    }
-    syncLocaleToUrl(next)
+    persistUserLocale(next)
+    syncLocaleToUrl(next, true)
   }
 
   $effect(() => {
@@ -196,7 +192,8 @@
       <a href={`/os/?lang=${locale}`}>{$LL.nav.os()}<span class="beta-tag">{$LL.nav.beta()}</span></a>
       <a href={`/themes/?lang=${locale}`} aria-current="page">{$LL.nav.themes()}</a>
       <a href={`/?lang=${locale}#download`}>{$LL.nav.download()}</a>
-      <a href="/docs/">{$LL.nav.docs()}</a>
+      <a href={`/?lang=${locale}#other-apps`}>{$LL.nav.otherApps()}</a>
+      <a href={docsHref(locale)}>{$LL.nav.docs()}</a>
     </nav>
     <div class="nav-actions">
       <label class="language-switcher">
@@ -207,6 +204,7 @@
           {/each}
         </select>
       </label>
+      <a class="nav-cta" href="https://api.lolli.tech">{$LL.nav.signIn()}</a>
     </div>
   </header>
 
@@ -517,7 +515,7 @@
 
       <div class="store-footer">
         <p class="download-note">{$LL.themes.note()}</p>
-        <a class="download-icon-btn" href="/docs/development/theme-authoring/">
+        <a class="download-icon-btn" href={docsHref(locale, 'development/theme-authoring/')}>
           <span>{$LL.themes.authoring()}</span>
           <ExternalLink size={14} strokeWidth={1.8} aria-hidden="true" />
         </a>
@@ -526,10 +524,16 @@
   {/if}
 
   <footer class="site-footer">
-    <span>© 2026 lollipopkit</span>
+    <div class="footer-brand-row">
+      <span>© 2026 lollipopkit</span>
+      <a class="pride-footer-badge" href={`/themes/?lang=${locale}#serverbox.pride`}>
+        <span class="pride-dot" aria-hidden="true"></span>
+        {$LL.pride.badge()}
+      </a>
+    </div>
     <div class="footer-links">
       <a href={`/?lang=${locale}`}>ServerBox</a>
-      <a href="/docs/">{$LL.nav.docs()}</a>
+      <a href={docsHref(locale)}>{$LL.nav.docs()}</a>
       <a href="https://github.com/lollipopkit/flutter_server_box">GitHub</a>
       <a href="https://github.com/lollipopkit/flutter_server_box/tree/main/store">store/</a>
     </div>

@@ -5,7 +5,7 @@
   import { ExternalLink } from '@lucide/svelte'
   import LL, { setLocale } from './i18n/i18n-svelte'
   import { loadLocale } from './i18n/i18n-util.sync'
-  import { getInitialLocale, locales, localeStorageKey, syncLocaleToUrl } from './lib/i18n'
+  import { docsHref, getInitialLocale, locales, persistUserLocale, syncLocaleToUrl } from './lib/i18n'
 
   const initialLocale = getInitialLocale()
   loadLocale(initialLocale)
@@ -16,12 +16,8 @@
     locale = next
     loadLocale(next)
     setLocale(next)
-    try {
-      localStorage.setItem(localeStorageKey, next)
-    } catch {
-      // private mode: the choice lasts for this page
-    }
-    syncLocaleToUrl(next)
+    persistUserLocale(next)
+    syncLocaleToUrl(next, true)
   }
 
   $effect(() => {
@@ -80,16 +76,16 @@
 
 <main class="site">
   <header class="site-nav" id="top">
-    <a class="brand" href={`/?lang=${locale}`}>
+    <a class="brand" href="#top" onclick={(event) => scrollTo(event, 'top')}>
       <img src="/app_icon.png" alt="" width="26" height="26" />
-      ServerBox
+      <span>{$LL.os.heroTitle()}<span class="beta-tag">{$LL.nav.beta()}</span></span>
     </a>
     <nav>
-      <a href={`/?lang=${locale}#features`}>{$LL.nav.features()}</a>
-      <a href={`/os/?lang=${locale}`} aria-current="page">{$LL.nav.os()}<span class="beta-tag">{$LL.nav.beta()}</span></a>
-      <a href={`/themes/?lang=${locale}`}>{$LL.nav.themes()}</a>
-      <a href={`/?lang=${locale}#download`}>{$LL.nav.download()}</a>
-      <a href="/docs/">{$LL.nav.docs()}</a>
+      <a href="#preview" onclick={(event) => scrollTo(event, 'preview')}>{$LL.os.navPreview()}</a>
+      <a href="#features" onclick={(event) => scrollTo(event, 'features')}>{$LL.nav.features()}</a>
+      <a href="#install" onclick={(event) => scrollTo(event, 'install')}>{$LL.os.navInstall()}</a>
+      <a href={docsHref(locale, 'advanced/monitor-agent/')}>{$LL.os.docs()}</a>
+      <a href={`/?lang=${locale}`}>{$LL.os.navApp()}</a>
     </nav>
     <div class="nav-actions">
       <label class="language-switcher">
@@ -100,13 +96,18 @@
           {/each}
         </select>
       </label>
+      <a class="nav-cta" href="https://api.lolli.tech">{$LL.nav.signIn()}</a>
     </div>
   </header>
 
   <section class="page-section os-hero">
-    <p class="hero-platforms">Linux · x64 · arm64</p>
+    <div class="os-identity-row">
+      <p class="hero-platforms">Linux · x64 · arm64</p>
+      <span class="os-formerly-badge">{$LL.os.formerlyMonitor()}</span>
+    </div>
     <h1>{$LL.os.heroTitle()}<span class="beta-tag beta-tag--hero">{$LL.nav.beta()}</span><br /><span>{$LL.os.tagline()}</span></h1>
     <p class="hero-subtitle">{$LL.os.subtitle()}</p>
+    <p class="os-monitor-callout">{$LL.os.monitorNote()}</p>
     <div class="hero-actions">
       <Button href="#install" onclick={(event) => scrollTo(event, 'install')}>{$LL.os.installAction()}</Button>
       <Button variant="secondary" href="#preview" onclick={(event) => scrollTo(event, 'preview')}>{$LL.os.previewAction()}</Button>
@@ -206,7 +207,7 @@
     <div class="store-footer">
       <p class="download-note">{$LL.os.note()}</p>
       <div class="store-actions">
-        <a class="download-icon-btn" href="/docs/advanced/monitor-agent/">
+        <a class="download-icon-btn" href={docsHref(locale, 'advanced/monitor-agent/')}>
           <span>{$LL.os.docs()}</span>
           <ExternalLink size={14} strokeWidth={1.8} aria-hidden="true" />
         </a>
@@ -216,7 +217,13 @@
   </section>
 
   <footer class="site-footer">
-    <span>© 2026 lollipopkit</span>
+    <div class="footer-brand-row">
+      <span>© 2026 lollipopkit</span>
+      <a class="pride-footer-badge" href={`/themes/?lang=${locale}#serverbox.pride`}>
+        <span class="pride-dot" aria-hidden="true"></span>
+        {$LL.pride.badge()}
+      </a>
+    </div>
     <div class="footer-links">
       <a href={`/?lang=${locale}`}>ServerBox</a>
       <a href="https://github.com/lollipopkit/flutter_server_box/tree/main/monitor">monitor/</a>

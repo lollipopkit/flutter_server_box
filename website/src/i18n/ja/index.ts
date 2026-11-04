@@ -16,6 +16,8 @@ const ja: Translation = {
     os: 'ServerBox OS',
     beta: 'ベータ',
     plugins: 'プラグイン',
+    otherApps: 'その他',
+    signIn: 'ログイン',
     languageLabel: '言語',
   },
   hero: {
@@ -106,13 +108,20 @@ const ja: Translation = {
     installReleasePrompt: '# Android、Linux、Windows',
   },
   os: {
-    metaTitle: 'ServerBox OS — ブラウザデスクトップと監視エンジンをサーバーに',
+    metaTitle: 'ServerBox OS（旧 ServerBox Monitor）— ブラウザデスクトップと監視エンジンをサーバーに',
     metaDescription:
-      'ServerBox OS はブラウザ内デスクトップ、40 以上のワンクリック Docker アプリ、ZFS/RAID 管理、AI エージェント、通知、暗号化バックアップを提供します。',
+      'ServerBox OS（旧 ServerBox Monitor）はブラウザ内デスクトップ、40 以上のワンクリック Docker アプリ、ZFS/RAID 管理、AI エージェント、通知、暗号化バックアップを提供します。',
     heroTitle: 'ServerBox OS',
+    formerlyMonitor: '旧 ServerBox Monitor',
+    navPreview: 'デモ',
+    navInstall: '導入',
+    navApp: 'ServerBox アプリ',
     tagline: 'ブラウザでも、アプリでも使えるサーバー基盤。',
     subtitle:
       '軽量な単一バイナリを Linux サーバーに入れるだけで、ブラウザ上のマルチウィンドウデスクトップ、40 以上のセルフホストアプリ、AI エージェント、ServerBox アプリとの HTTPS 連携がすぐに使えます。',
+    monitorNote:
+      'ServerBox OS は旧 ServerBox Monitor（server_box_monitor）の進化版です。既存の Monitor 環境も同じコマンドでそのままアップグレードでき、プッシュ通知・ウィジェット・watchOS・履歴グラフを引き続き提供します。',
+    exploreAction: 'ServerBox OS を詳しく見る',
     installAction: 'Linux にインストール',
     images: 'OS イメージを入手',
     previewAction: 'デモを見る',
@@ -248,6 +257,46 @@ const ja: Translation = {
       'コードの閲覧やコントリビュートは GitHub から。今すぐ最新リリースをお試しください。',
     appStoreAction: 'App Store',
     githubAction: 'GitHub Releases',
+  },
+  pride: {
+    badge: 'LGBTQ+ フレンドリー',
+    title: '誇りと多様性とともに。',
+    description:
+      'ServerBox は LGBTQ+ コミュニティを誇りをもって支持します。テーマストアでは Rainbow・Trans・Nonbinary の 3 バリアントを備えた公式 Pride テーマを配布しています。',
+    rainbow: 'Rainbow',
+    trans: 'Trans',
+    nonbinary: 'Nonbinary',
+  },
+  otherApps: {
+    title: 'その他のサービスとアプリ。',
+    subtitle:
+      '軽快な動作と洗練された設計思想を共有するクラウドサービスとネイティブアプリ。',
+    servicesHeading: 'サービス',
+    appsHeading: 'Apps',
+    llmapi: {
+      title: 'LLM API',
+      description:
+        '主要 LLM を束ねる統合 API ゲートウェイ。ServerBox の AI エージェントや GPT Box、各種開発ツールにそのまま接続できます。',
+    },
+    uptimer: {
+      title: 'Uptimer',
+      description:
+        'Web サイト、API、サーバーの稼働監視と公開ステータスページを提供する軽量モニタリングサービス。',
+    },
+    gptbox: {
+      title: 'GPT Box',
+      tag: 'iOS · Android · macOS · Linux · Windows',
+      description:
+        'OpenAI および互換 LLM API 向けの高速なネイティブクライアント。ローカル履歴保存、ツール呼び出し、カスタムエンドポイントに対応。',
+      action: 'GitHub',
+    },
+    mfuse: {
+      title: 'MFuse',
+      tag: 'macOS · File Provider',
+      description:
+        'macOS 標準の File Provider を通じて、カーネル拡張なしで SFTP・S3・WebDAV などのリモートストレージを Finder に直接マウント。',
+      action: 'mfuse.lollipopkit.com',
+    },
   },
   footer: {
     features: '機能',
