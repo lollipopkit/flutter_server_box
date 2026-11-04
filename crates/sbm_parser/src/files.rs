@@ -21,6 +21,38 @@
 use crate::bench::posix;
 use crate::script::shell_quote_unix as quote;
 
+/// What a shell command run for the file browser is wrapped in when its
+/// output is read: [`OUT_MARK`] opens it, so whatever a login banner or a
+/// `.profile` printed ahead of it is dropped, and [`OK_MARK`] closes it only
+/// when the command succeeded. Not words anybody types: a listing's own
+/// output is searched for them.
+pub const OUT_MARK: &str = "__sb_out__";
+pub const OK_MARK: &str = "__sb_ok__";
+
+/// `command` with its output between [`OUT_MARK`] and, when it succeeds,
+/// [`OK_MARK`].
+pub fn framed_command(command: &str) -> String {
+    format!("printf \"%s\" {OUT_MARK}; {{ {command}; }} && printf \"%s\" {OK_MARK}")
+}
+
+/// What [`framed_command`]'s command printed, or `None` when it did not
+/// finish: no opening mark, or no closing one.
+pub fn unframe(output: &str) -> Option<&str> {
+    let start = output.find(OUT_MARK)? + OUT_MARK.len();
+    output[start..].strip_suffix(OK_MARK)
+}
+
+/// [`stat_command`] with only the opening mark: its answer is in its exit
+/// code as well as its output, so it is not closed on success.
+pub fn framed_stat_command(path: &str) -> String {
+    format!("printf \"%s\" {OUT_MARK}; {}", stat_command(path))
+}
+
+/// What came after [`OUT_MARK`], or the whole of `output` without one.
+pub fn after_out_mark(output: &str) -> &str {
+    output.find(OUT_MARK).map_or(output, |i| &output[i + OUT_MARK.len()..])
+}
+
 /// `path` as an operand no command reads as an option: a relative path that
 /// begins with `-` is spelled `./-…`. For the commands here that take no `--`
 /// (`find`, `mktemp`, `scp`) or are not given one.
@@ -479,6 +511,17 @@ mod tests {
     use super::*;
 
     #[test]
+    fn a_framed_command_is_read_past_a_banner_and_only_when_it_finished() {
+        assert_eq!(framed_command("ls"), "printf \"%s\" __sb_out__; { ls; } && printf \"%s\" __sb_ok__");
+        assert_eq!(unframe("motd\n__sb_out__a\nb\n__sb_ok__"), Some("a\nb\n"));
+        assert_eq!(unframe("__sb_out__half"), None);
+        assert_eq!(unframe("no marks__sb_ok__"), None);
+        assert_eq!(after_out_mark("motd__sb_out__x"), "x");
+        assert_eq!(after_out_mark("x"), "x");
+        assert!(framed_stat_command("/a").starts_with("printf \"%s\" __sb_out__; "));
+    }
+
+    #[test]
     fn the_terminal_shell_is_the_one_opened_as_long_ago() {
         // Uptime 1000 s at 100 ticks: started 970 s and 600 s into it.
         let out = "shell 97000 /srv/app\r\nshell 60000 /home/lk\nshell 97050 /tmp/gone (deleted)\nclock 1000.00 100\n";
@@ -493,3 +536,4 @@ mod tests {
         assert_eq!(terminal_shell_cwd("", 1.0), None);
     }
 }
+

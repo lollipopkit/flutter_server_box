@@ -300,7 +300,6 @@ extension on _ServerDetailPageState {
   static const _smartOk = DiskSmart(
     device: '',
     healthy: true,
-    rawData: {},
     smartAttributes: {},
   );
 

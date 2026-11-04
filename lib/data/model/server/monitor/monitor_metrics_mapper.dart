@@ -388,7 +388,6 @@ void _applySmart(ServerStatus ss, MonitorMetrics m) {
           serial: d.serial,
           powerOnHours: d.powerOnHours,
           powerCycleCount: d.powerCycleCount,
-          rawData: const {},
           smartAttributes: const {},
         ),
       )

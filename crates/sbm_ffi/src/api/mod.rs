@@ -7,6 +7,7 @@ pub mod create;
 pub mod cron;
 pub mod desktop;
 pub mod digest;
+pub mod exec_session;
 pub mod file;
 pub mod files;
 pub mod firewall;

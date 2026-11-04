@@ -17,6 +17,7 @@ import 'package:server_box/src/rust/api/create.dart';
 import 'package:server_box/src/rust/api/cron.dart';
 import 'package:server_box/src/rust/api/desktop.dart';
 import 'package:server_box/src/rust/api/digest.dart';
+import 'package:server_box/src/rust/api/exec_session.dart';
 import 'package:server_box/src/rust/api/file.dart';
 import 'package:server_box/src/rust/api/files.dart';
 import 'package:server_box/src/rust/api/firewall.dart';
@@ -274,6 +275,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String dco_decode_String(dynamic raw);
 
   @protected
+  AmdSmiItem dco_decode_amd_smi_item(dynamic raw);
+
+  @protected
+  Battery dco_decode_battery(dynamic raw);
+
+  @protected
+  BatteryStatus dco_decode_battery_status(dynamic raw);
+
+  @protected
   BenchOptions dco_decode_bench_options(dynamic raw);
 
   @protected
@@ -308,6 +318,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   CertInfo dco_decode_box_autoadd_cert_info(dynamic raw);
+
+  @protected
+  Conn dco_decode_box_autoadd_conn(dynamic raw);
 
   @protected
   ContainerDiskUsageItem dco_decode_box_autoadd_container_disk_usage_item(
@@ -351,6 +364,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   FirewalldSnapshot dco_decode_box_autoadd_firewalld_snapshot(dynamic raw);
 
   @protected
+  GpuMem dco_decode_box_autoadd_gpu_mem(dynamic raw);
+
+  @protected
   GroupDraft dco_decode_box_autoadd_group_draft(dynamic raw);
 
   @protected
@@ -364,6 +380,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   MdSync dco_decode_box_autoadd_md_sync(dynamic raw);
+
+  @protected
+  Memory dco_decode_box_autoadd_memory(dynamic raw);
 
   @protected
   PasswordState dco_decode_box_autoadd_password_state(dynamic raw);
@@ -445,6 +464,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ServiceUnit dco_decode_box_autoadd_service_unit(dynamic raw);
 
   @protected
+  SessionMarker dco_decode_box_autoadd_session_marker(dynamic raw);
+
+  @protected
   SnapshotNameIssue dco_decode_box_autoadd_snapshot_name_issue(dynamic raw);
 
   @protected
@@ -455,6 +477,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   StorageView dco_decode_box_autoadd_storage_view(dynamic raw);
+
+  @protected
+  Swap dco_decode_box_autoadd_swap(dynamic raw);
 
   @protected
   SystemGroup dco_decode_box_autoadd_system_group(dynamic raw);
@@ -523,6 +548,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   CommandSpec dco_decode_command_spec(dynamic raw);
 
   @protected
+  Conn dco_decode_conn(dynamic raw);
+
+  @protected
   Connections dco_decode_connections(dynamic raw);
 
   @protected
@@ -539,6 +567,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ContainerStatsItem dco_decode_container_stats_item(dynamic raw);
+
+  @protected
+  CpuCore dco_decode_cpu_core(dynamic raw);
 
   @protected
   CronDocumentData dco_decode_cron_document_data(dynamic raw);
@@ -568,7 +599,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   CustomCmd dco_decode_custom_cmd(dynamic raw);
 
   @protected
+  Disk dco_decode_disk(dynamic raw);
+
+  @protected
   DiskHealth dco_decode_disk_health(dynamic raw);
+
+  @protected
+  DiskIoPiece dco_decode_disk_io_piece(dynamic raw);
 
   @protected
   EcdsaSignature dco_decode_ecdsa_signature(dynamic raw);
@@ -628,6 +665,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   GeekbenchVersion dco_decode_geekbench_version(dynamic raw);
 
   @protected
+  GpuItem dco_decode_gpu_item(dynamic raw);
+
+  @protected
+  GpuMem dco_decode_gpu_mem(dynamic raw);
+
+  @protected
+  GpuMemProcess dco_decode_gpu_mem_process(dynamic raw);
+
+  @protected
   GroupDraft dco_decode_group_draft(dynamic raw);
 
   @protected
@@ -649,6 +695,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<String> dco_decode_list_String(dynamic raw);
 
   @protected
+  List<AmdSmiItem> dco_decode_list_amd_smi_item(dynamic raw);
+
+  @protected
+  List<Battery> dco_decode_list_battery(dynamic raw);
+
+  @protected
   List<BlockDevice> dco_decode_list_block_device(dynamic raw);
 
   @protected
@@ -667,13 +719,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<ContainerMenuKind> dco_decode_list_container_menu_kind(dynamic raw);
 
   @protected
+  List<CpuCore> dco_decode_list_cpu_core(dynamic raw);
+
+  @protected
   List<CronJobLine> dco_decode_list_cron_job_line(dynamic raw);
 
   @protected
   List<CustomCmd> dco_decode_list_custom_cmd(dynamic raw);
 
   @protected
+  List<Disk> dco_decode_list_disk(dynamic raw);
+
+  @protected
   List<DiskHealth> dco_decode_list_disk_health(dynamic raw);
+
+  @protected
+  List<DiskIoPiece> dco_decode_list_disk_io_piece(dynamic raw);
 
   @protected
   List<Effect> dco_decode_list_effect(dynamic raw);
@@ -694,6 +755,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<FirewalldZone> dco_decode_list_firewalld_zone(dynamic raw);
 
   @protected
+  List<GpuItem> dco_decode_list_gpu_item(dynamic raw);
+
+  @protected
+  List<GpuMemProcess> dco_decode_list_gpu_mem_process(dynamic raw);
+
+  @protected
   List<LibvirtPoolRef> dco_decode_list_libvirt_pool_ref(dynamic raw);
 
   @protected
@@ -703,10 +770,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<MdMember> dco_decode_list_md_member(dynamic raw);
 
   @protected
+  List<NetIface> dco_decode_list_net_iface(dynamic raw);
+
+  @protected
   List<NfsClient> dco_decode_list_nfs_client(dynamic raw);
 
   @protected
   List<NfsExport> dco_decode_list_nfs_export(dynamic raw);
+
+  @protected
+  List<NvidiaSmiItem> dco_decode_list_nvidia_smi_item(dynamic raw);
 
   @protected
   List<PlanNote> dco_decode_list_plan_note(dynamic raw);
@@ -745,6 +818,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<RaidLevelChoice> dco_decode_list_raid_level_choice(dynamic raw);
 
   @protected
+  List<(String, double)> dco_decode_list_record_string_f_64(dynamic raw);
+
+  @protected
   List<(String, List<FirewalldPort>)>
   dco_decode_list_record_string_list_firewalld_port(dynamic raw);
 
@@ -757,6 +833,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<(String, String)> dco_decode_list_record_string_string(dynamic raw);
 
   @protected
+  List<(String, int)> dco_decode_list_record_string_u_32(dynamic raw);
+
+  @protected
   List<(UfwChain, UfwPolicy)> dco_decode_list_record_ufw_chain_ufw_policy(
     dynamic raw,
   );
@@ -766,6 +845,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<SelfTest> dco_decode_list_self_test(dynamic raw);
+
+  @protected
+  List<SensorItem> dco_decode_list_sensor_item(dynamic raw);
 
   @protected
   List<ServiceAction> dco_decode_list_service_action(dynamic raw);
@@ -791,10 +873,19 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<SmartAttribute> dco_decode_list_smart_attribute(dynamic raw);
 
   @protected
+  List<SmartReading> dco_decode_list_smart_reading(dynamic raw);
+
+  @protected
+  List<SmartReport> dco_decode_list_smart_report(dynamic raw);
+
+  @protected
   List<SmbConnection> dco_decode_list_smb_connection(dynamic raw);
 
   @protected
   List<SmbShare> dco_decode_list_smb_share(dynamic raw);
+
+  @protected
+  List<StatusBlockDevice> dco_decode_list_status_block_device(dynamic raw);
 
   @protected
   List<Step> dco_decode_list_step(dynamic raw);
@@ -839,13 +930,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   MdSync dco_decode_md_sync(dynamic raw);
 
   @protected
+  Memory dco_decode_memory(dynamic raw);
+
+  @protected
   MonitorReleasePage dco_decode_monitor_release_page(dynamic raw);
+
+  @protected
+  NetIface dco_decode_net_iface(dynamic raw);
 
   @protected
   NfsClient dco_decode_nfs_client(dynamic raw);
 
   @protected
   NfsExport dco_decode_nfs_export(dynamic raw);
+
+  @protected
+  NvidiaSmiItem dco_decode_nvidia_smi_item(dynamic raw);
 
   @protected
   String? dco_decode_opt_String(dynamic raw);
@@ -855,6 +955,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   CertInfo? dco_decode_opt_box_autoadd_cert_info(dynamic raw);
+
+  @protected
+  Conn? dco_decode_opt_box_autoadd_conn(dynamic raw);
 
   @protected
   ContainerDiskUsageItem? dco_decode_opt_box_autoadd_container_disk_usage_item(
@@ -887,6 +990,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   FirewallKind? dco_decode_opt_box_autoadd_firewall_kind(dynamic raw);
 
   @protected
+  GpuMem? dco_decode_opt_box_autoadd_gpu_mem(dynamic raw);
+
+  @protected
   int? dco_decode_opt_box_autoadd_i_32(dynamic raw);
 
   @protected
@@ -894,6 +1000,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   MdSync? dco_decode_opt_box_autoadd_md_sync(dynamic raw);
+
+  @protected
+  Memory? dco_decode_opt_box_autoadd_memory(dynamic raw);
 
   @protected
   PasswordState? dco_decode_opt_box_autoadd_password_state(dynamic raw);
@@ -955,12 +1064,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  SessionMarker? dco_decode_opt_box_autoadd_session_marker(dynamic raw);
+
+  @protected
   SnapshotNameIssue? dco_decode_opt_box_autoadd_snapshot_name_issue(
     dynamic raw,
   );
 
   @protected
   StorageView? dco_decode_opt_box_autoadd_storage_view(dynamic raw);
+
+  @protected
+  Swap? dco_decode_opt_box_autoadd_swap(dynamic raw);
 
   @protected
   SystemGroup? dco_decode_opt_box_autoadd_system_group(dynamic raw);
@@ -1104,6 +1219,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   RdpSessionParams dco_decode_rdp_session_params(dynamic raw);
 
   @protected
+  (String, double) dco_decode_record_string_f_64(dynamic raw);
+
+  @protected
   (String, List<FirewalldPort>) dco_decode_record_string_list_firewalld_port(
     dynamic raw,
   );
@@ -1113,6 +1231,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   (String, String) dco_decode_record_string_string(dynamic raw);
+
+  @protected
+  (String, int) dco_decode_record_string_u_32(dynamic raw);
 
   @protected
   (UfwChain, UfwPolicy) dco_decode_record_ufw_chain_ufw_policy(dynamic raw);
@@ -1159,6 +1280,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   SelfTest dco_decode_self_test(dynamic raw);
 
   @protected
+  SensorItem dco_decode_sensor_item(dynamic raw);
+
+  @protected
   ServiceAction dco_decode_service_action(dynamic raw);
 
   @protected
@@ -1198,6 +1322,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ServiceUnitType dco_decode_service_unit_type(dynamic raw);
 
   @protected
+  SessionMarker dco_decode_session_marker(dynamic raw);
+
+  @protected
   ShareError dco_decode_share_error(dynamic raw);
 
   @protected
@@ -1211,6 +1338,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   SmartAttribute dco_decode_smart_attribute(dynamic raw);
+
+  @protected
+  SmartAttributeFlags dco_decode_smart_attribute_flags(dynamic raw);
+
+  @protected
+  SmartReading dco_decode_smart_reading(dynamic raw);
+
+  @protected
+  SmartReport dco_decode_smart_report(dynamic raw);
 
   @protected
   SmbConnection dco_decode_smb_connection(dynamic raw);
@@ -1228,6 +1364,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   SnippetContext dco_decode_snippet_context(dynamic raw);
 
   @protected
+  StatusBlockDevice dco_decode_status_block_device(dynamic raw);
+
+  @protected
+  StatusReport dco_decode_status_report(dynamic raw);
+
+  @protected
   Step dco_decode_step(dynamic raw);
 
   @protected
@@ -1238,6 +1380,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   StorageView dco_decode_storage_view(dynamic raw);
+
+  @protected
+  Swap dco_decode_swap(dynamic raw);
 
   @protected
   SystemGroup dco_decode_system_group(dynamic raw);
@@ -1562,6 +1707,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String sse_decode_String(SseDeserializer deserializer);
 
   @protected
+  AmdSmiItem sse_decode_amd_smi_item(SseDeserializer deserializer);
+
+  @protected
+  Battery sse_decode_battery(SseDeserializer deserializer);
+
+  @protected
+  BatteryStatus sse_decode_battery_status(SseDeserializer deserializer);
+
+  @protected
   BenchOptions sse_decode_bench_options(SseDeserializer deserializer);
 
   @protected
@@ -1598,6 +1752,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   CertInfo sse_decode_box_autoadd_cert_info(SseDeserializer deserializer);
+
+  @protected
+  Conn sse_decode_box_autoadd_conn(SseDeserializer deserializer);
 
   @protected
   ContainerDiskUsageItem sse_decode_box_autoadd_container_disk_usage_item(
@@ -1661,6 +1818,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  GpuMem sse_decode_box_autoadd_gpu_mem(SseDeserializer deserializer);
+
+  @protected
   GroupDraft sse_decode_box_autoadd_group_draft(SseDeserializer deserializer);
 
   @protected
@@ -1676,6 +1836,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   MdSync sse_decode_box_autoadd_md_sync(SseDeserializer deserializer);
+
+  @protected
+  Memory sse_decode_box_autoadd_memory(SseDeserializer deserializer);
 
   @protected
   PasswordState sse_decode_box_autoadd_password_state(
@@ -1785,6 +1948,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ServiceUnit sse_decode_box_autoadd_service_unit(SseDeserializer deserializer);
 
   @protected
+  SessionMarker sse_decode_box_autoadd_session_marker(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   SnapshotNameIssue sse_decode_box_autoadd_snapshot_name_issue(
     SseDeserializer deserializer,
   );
@@ -1801,6 +1969,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   StorageView sse_decode_box_autoadd_storage_view(SseDeserializer deserializer);
+
+  @protected
+  Swap sse_decode_box_autoadd_swap(SseDeserializer deserializer);
 
   @protected
   SystemGroup sse_decode_box_autoadd_system_group(SseDeserializer deserializer);
@@ -1879,6 +2050,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   CommandSpec sse_decode_command_spec(SseDeserializer deserializer);
 
   @protected
+  Conn sse_decode_conn(SseDeserializer deserializer);
+
+  @protected
   Connections sse_decode_connections(SseDeserializer deserializer);
 
   @protected
@@ -1903,6 +2077,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ContainerStatsItem sse_decode_container_stats_item(
     SseDeserializer deserializer,
   );
+
+  @protected
+  CpuCore sse_decode_cpu_core(SseDeserializer deserializer);
 
   @protected
   CronDocumentData sse_decode_cron_document_data(SseDeserializer deserializer);
@@ -1934,7 +2111,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   CustomCmd sse_decode_custom_cmd(SseDeserializer deserializer);
 
   @protected
+  Disk sse_decode_disk(SseDeserializer deserializer);
+
+  @protected
   DiskHealth sse_decode_disk_health(SseDeserializer deserializer);
+
+  @protected
+  DiskIoPiece sse_decode_disk_io_piece(SseDeserializer deserializer);
 
   @protected
   EcdsaSignature sse_decode_ecdsa_signature(SseDeserializer deserializer);
@@ -2002,6 +2185,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   GeekbenchVersion sse_decode_geekbench_version(SseDeserializer deserializer);
 
   @protected
+  GpuItem sse_decode_gpu_item(SseDeserializer deserializer);
+
+  @protected
+  GpuMem sse_decode_gpu_mem(SseDeserializer deserializer);
+
+  @protected
+  GpuMemProcess sse_decode_gpu_mem_process(SseDeserializer deserializer);
+
+  @protected
   GroupDraft sse_decode_group_draft(SseDeserializer deserializer);
 
   @protected
@@ -2021,6 +2213,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<String> sse_decode_list_String(SseDeserializer deserializer);
+
+  @protected
+  List<AmdSmiItem> sse_decode_list_amd_smi_item(SseDeserializer deserializer);
+
+  @protected
+  List<Battery> sse_decode_list_battery(SseDeserializer deserializer);
 
   @protected
   List<BlockDevice> sse_decode_list_block_device(SseDeserializer deserializer);
@@ -2047,13 +2245,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  List<CpuCore> sse_decode_list_cpu_core(SseDeserializer deserializer);
+
+  @protected
   List<CronJobLine> sse_decode_list_cron_job_line(SseDeserializer deserializer);
 
   @protected
   List<CustomCmd> sse_decode_list_custom_cmd(SseDeserializer deserializer);
 
   @protected
+  List<Disk> sse_decode_list_disk(SseDeserializer deserializer);
+
+  @protected
   List<DiskHealth> sse_decode_list_disk_health(SseDeserializer deserializer);
+
+  @protected
+  List<DiskIoPiece> sse_decode_list_disk_io_piece(SseDeserializer deserializer);
 
   @protected
   List<Effect> sse_decode_list_effect(SseDeserializer deserializer);
@@ -2084,6 +2291,14 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  List<GpuItem> sse_decode_list_gpu_item(SseDeserializer deserializer);
+
+  @protected
+  List<GpuMemProcess> sse_decode_list_gpu_mem_process(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   List<LibvirtPoolRef> sse_decode_list_libvirt_pool_ref(
     SseDeserializer deserializer,
   );
@@ -2095,10 +2310,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<MdMember> sse_decode_list_md_member(SseDeserializer deserializer);
 
   @protected
+  List<NetIface> sse_decode_list_net_iface(SseDeserializer deserializer);
+
+  @protected
   List<NfsClient> sse_decode_list_nfs_client(SseDeserializer deserializer);
 
   @protected
   List<NfsExport> sse_decode_list_nfs_export(SseDeserializer deserializer);
+
+  @protected
+  List<NvidiaSmiItem> sse_decode_list_nvidia_smi_item(
+    SseDeserializer deserializer,
+  );
 
   @protected
   List<PlanNote> sse_decode_list_plan_note(SseDeserializer deserializer);
@@ -2143,6 +2366,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  List<(String, double)> sse_decode_list_record_string_f_64(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   List<(String, List<FirewalldPort>)>
   sse_decode_list_record_string_list_firewalld_port(
     SseDeserializer deserializer,
@@ -2159,6 +2387,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  List<(String, int)> sse_decode_list_record_string_u_32(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   List<(UfwChain, UfwPolicy)> sse_decode_list_record_ufw_chain_ufw_policy(
     SseDeserializer deserializer,
   );
@@ -2170,6 +2403,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<SelfTest> sse_decode_list_self_test(SseDeserializer deserializer);
+
+  @protected
+  List<SensorItem> sse_decode_list_sensor_item(SseDeserializer deserializer);
 
   @protected
   List<ServiceAction> sse_decode_list_service_action(
@@ -2205,12 +2441,25 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  List<SmartReading> sse_decode_list_smart_reading(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<SmartReport> sse_decode_list_smart_report(SseDeserializer deserializer);
+
+  @protected
   List<SmbConnection> sse_decode_list_smb_connection(
     SseDeserializer deserializer,
   );
 
   @protected
   List<SmbShare> sse_decode_list_smb_share(SseDeserializer deserializer);
+
+  @protected
+  List<StatusBlockDevice> sse_decode_list_status_block_device(
+    SseDeserializer deserializer,
+  );
 
   @protected
   List<Step> sse_decode_list_step(SseDeserializer deserializer);
@@ -2261,15 +2510,24 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   MdSync sse_decode_md_sync(SseDeserializer deserializer);
 
   @protected
+  Memory sse_decode_memory(SseDeserializer deserializer);
+
+  @protected
   MonitorReleasePage sse_decode_monitor_release_page(
     SseDeserializer deserializer,
   );
+
+  @protected
+  NetIface sse_decode_net_iface(SseDeserializer deserializer);
 
   @protected
   NfsClient sse_decode_nfs_client(SseDeserializer deserializer);
 
   @protected
   NfsExport sse_decode_nfs_export(SseDeserializer deserializer);
+
+  @protected
+  NvidiaSmiItem sse_decode_nvidia_smi_item(SseDeserializer deserializer);
 
   @protected
   String? sse_decode_opt_String(SseDeserializer deserializer);
@@ -2279,6 +2537,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   CertInfo? sse_decode_opt_box_autoadd_cert_info(SseDeserializer deserializer);
+
+  @protected
+  Conn? sse_decode_opt_box_autoadd_conn(SseDeserializer deserializer);
 
   @protected
   ContainerDiskUsageItem? sse_decode_opt_box_autoadd_container_disk_usage_item(
@@ -2317,6 +2578,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  GpuMem? sse_decode_opt_box_autoadd_gpu_mem(SseDeserializer deserializer);
+
+  @protected
   int? sse_decode_opt_box_autoadd_i_32(SseDeserializer deserializer);
 
   @protected
@@ -2324,6 +2588,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   MdSync? sse_decode_opt_box_autoadd_md_sync(SseDeserializer deserializer);
+
+  @protected
+  Memory? sse_decode_opt_box_autoadd_memory(SseDeserializer deserializer);
 
   @protected
   PasswordState? sse_decode_opt_box_autoadd_password_state(
@@ -2403,6 +2670,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  SessionMarker? sse_decode_opt_box_autoadd_session_marker(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   SnapshotNameIssue? sse_decode_opt_box_autoadd_snapshot_name_issue(
     SseDeserializer deserializer,
   );
@@ -2411,6 +2683,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   StorageView? sse_decode_opt_box_autoadd_storage_view(
     SseDeserializer deserializer,
   );
+
+  @protected
+  Swap? sse_decode_opt_box_autoadd_swap(SseDeserializer deserializer);
 
   @protected
   SystemGroup? sse_decode_opt_box_autoadd_system_group(
@@ -2568,6 +2843,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   RdpSessionParams sse_decode_rdp_session_params(SseDeserializer deserializer);
 
   @protected
+  (String, double) sse_decode_record_string_f_64(SseDeserializer deserializer);
+
+  @protected
   (String, List<FirewalldPort>) sse_decode_record_string_list_firewalld_port(
     SseDeserializer deserializer,
   );
@@ -2581,6 +2859,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   (String, String) sse_decode_record_string_string(
     SseDeserializer deserializer,
   );
+
+  @protected
+  (String, int) sse_decode_record_string_u_32(SseDeserializer deserializer);
 
   @protected
   (UfwChain, UfwPolicy) sse_decode_record_ufw_chain_ufw_policy(
@@ -2635,6 +2916,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   SelfTest sse_decode_self_test(SseDeserializer deserializer);
 
   @protected
+  SensorItem sse_decode_sensor_item(SseDeserializer deserializer);
+
+  @protected
   ServiceAction sse_decode_service_action(SseDeserializer deserializer);
 
   @protected
@@ -2680,6 +2964,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ServiceUnitType sse_decode_service_unit_type(SseDeserializer deserializer);
 
   @protected
+  SessionMarker sse_decode_session_marker(SseDeserializer deserializer);
+
+  @protected
   ShareError sse_decode_share_error(SseDeserializer deserializer);
 
   @protected
@@ -2693,6 +2980,17 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   SmartAttribute sse_decode_smart_attribute(SseDeserializer deserializer);
+
+  @protected
+  SmartAttributeFlags sse_decode_smart_attribute_flags(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  SmartReading sse_decode_smart_reading(SseDeserializer deserializer);
+
+  @protected
+  SmartReport sse_decode_smart_report(SseDeserializer deserializer);
 
   @protected
   SmbConnection sse_decode_smb_connection(SseDeserializer deserializer);
@@ -2714,6 +3012,14 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   SnippetContext sse_decode_snippet_context(SseDeserializer deserializer);
 
   @protected
+  StatusBlockDevice sse_decode_status_block_device(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  StatusReport sse_decode_status_report(SseDeserializer deserializer);
+
+  @protected
   Step sse_decode_step(SseDeserializer deserializer);
 
   @protected
@@ -2724,6 +3030,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   StorageView sse_decode_storage_view(SseDeserializer deserializer);
+
+  @protected
+  Swap sse_decode_swap(SseDeserializer deserializer);
 
   @protected
   SystemGroup sse_decode_system_group(SseDeserializer deserializer);
@@ -3087,6 +3396,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_String(String self, SseSerializer serializer);
 
   @protected
+  void sse_encode_amd_smi_item(AmdSmiItem self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_battery(Battery self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_battery_status(BatteryStatus self, SseSerializer serializer);
+
+  @protected
   void sse_encode_bench_options(BenchOptions self, SseSerializer serializer);
 
   @protected
@@ -3127,6 +3445,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     CertInfo self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_box_autoadd_conn(Conn self, SseSerializer serializer);
 
   @protected
   void sse_encode_box_autoadd_container_disk_usage_item(
@@ -3204,6 +3525,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_box_autoadd_gpu_mem(GpuMem self, SseSerializer serializer);
+
+  @protected
   void sse_encode_box_autoadd_group_draft(
     GroupDraft self,
     SseSerializer serializer,
@@ -3226,6 +3550,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_box_autoadd_md_sync(MdSync self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_memory(Memory self, SseSerializer serializer);
 
   @protected
   void sse_encode_box_autoadd_password_state(
@@ -3369,6 +3696,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_box_autoadd_session_marker(
+    SessionMarker self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_snapshot_name_issue(
     SnapshotNameIssue self,
     SseSerializer serializer,
@@ -3391,6 +3724,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     StorageView self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_box_autoadd_swap(Swap self, SseSerializer serializer);
 
   @protected
   void sse_encode_box_autoadd_system_group(
@@ -3492,6 +3828,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_command_spec(CommandSpec self, SseSerializer serializer);
 
   @protected
+  void sse_encode_conn(Conn self, SseSerializer serializer);
+
+  @protected
   void sse_encode_connections(Connections self, SseSerializer serializer);
 
   @protected
@@ -3520,6 +3859,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     ContainerStatsItem self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_cpu_core(CpuCore self, SseSerializer serializer);
 
   @protected
   void sse_encode_cron_document_data(
@@ -3558,7 +3900,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_custom_cmd(CustomCmd self, SseSerializer serializer);
 
   @protected
+  void sse_encode_disk(Disk self, SseSerializer serializer);
+
+  @protected
   void sse_encode_disk_health(DiskHealth self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_disk_io_piece(DiskIoPiece self, SseSerializer serializer);
 
   @protected
   void sse_encode_ecdsa_signature(
@@ -3654,6 +4002,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_gpu_item(GpuItem self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_gpu_mem(GpuMem self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_gpu_mem_process(GpuMemProcess self, SseSerializer serializer);
+
+  @protected
   void sse_encode_group_draft(GroupDraft self, SseSerializer serializer);
 
   @protected
@@ -3676,6 +4033,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_list_String(List<String> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_amd_smi_item(
+    List<AmdSmiItem> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_battery(List<Battery> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_block_device(
@@ -3714,6 +4080,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_cpu_core(List<CpuCore> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_cron_job_line(
     List<CronJobLine> self,
     SseSerializer serializer,
@@ -3726,8 +4095,17 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_disk(List<Disk> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_disk_health(
     List<DiskHealth> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_disk_io_piece(
+    List<DiskIoPiece> self,
     SseSerializer serializer,
   );
 
@@ -3765,6 +4143,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_gpu_item(List<GpuItem> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_gpu_mem_process(
+    List<GpuMemProcess> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_libvirt_pool_ref(
     List<LibvirtPoolRef> self,
     SseSerializer serializer,
@@ -3777,6 +4164,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_list_md_member(List<MdMember> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_net_iface(List<NetIface> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_nfs_client(
     List<NfsClient> self,
     SseSerializer serializer,
@@ -3785,6 +4175,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_list_nfs_export(
     List<NfsExport> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_nvidia_smi_item(
+    List<NvidiaSmiItem> self,
     SseSerializer serializer,
   );
 
@@ -3849,6 +4245,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_record_string_f_64(
+    List<(String, double)> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_record_string_list_firewalld_port(
     List<(String, List<FirewalldPort>)> self,
     SseSerializer serializer,
@@ -3867,6 +4269,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_record_string_u_32(
+    List<(String, int)> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_record_ufw_chain_ufw_policy(
     List<(UfwChain, UfwPolicy)> self,
     SseSerializer serializer,
@@ -3880,6 +4288,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_list_self_test(List<SelfTest> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_sensor_item(
+    List<SensorItem> self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_list_service_action(
@@ -3924,6 +4338,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_smart_reading(
+    List<SmartReading> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_smart_report(
+    List<SmartReport> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_smb_connection(
     List<SmbConnection> self,
     SseSerializer serializer,
@@ -3931,6 +4357,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_list_smb_share(List<SmbShare> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_status_block_device(
+    List<StatusBlockDevice> self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_list_step(List<Step> self, SseSerializer serializer);
@@ -3996,16 +4428,25 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_md_sync(MdSync self, SseSerializer serializer);
 
   @protected
+  void sse_encode_memory(Memory self, SseSerializer serializer);
+
+  @protected
   void sse_encode_monitor_release_page(
     MonitorReleasePage self,
     SseSerializer serializer,
   );
 
   @protected
+  void sse_encode_net_iface(NetIface self, SseSerializer serializer);
+
+  @protected
   void sse_encode_nfs_client(NfsClient self, SseSerializer serializer);
 
   @protected
   void sse_encode_nfs_export(NfsExport self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_nvidia_smi_item(NvidiaSmiItem self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_String(String? self, SseSerializer serializer);
@@ -4018,6 +4459,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     CertInfo? self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_opt_box_autoadd_conn(Conn? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_box_autoadd_container_disk_usage_item(
@@ -4065,6 +4509,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_opt_box_autoadd_gpu_mem(
+    GpuMem? self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_opt_box_autoadd_i_32(int? self, SseSerializer serializer);
 
   @protected
@@ -4076,6 +4526,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_opt_box_autoadd_md_sync(
     MdSync? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_memory(
+    Memory? self,
     SseSerializer serializer,
   );
 
@@ -4182,6 +4638,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_opt_box_autoadd_session_marker(
+    SessionMarker? self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_opt_box_autoadd_snapshot_name_issue(
     SnapshotNameIssue? self,
     SseSerializer serializer,
@@ -4192,6 +4654,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     StorageView? self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_opt_box_autoadd_swap(Swap? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_box_autoadd_system_group(
@@ -4392,6 +4857,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_record_string_f_64(
+    (String, double) self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_record_string_list_firewalld_port(
     (String, List<FirewalldPort>) self,
     SseSerializer serializer,
@@ -4406,6 +4877,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_record_string_string(
     (String, String) self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_record_string_u_32(
+    (String, int) self,
     SseSerializer serializer,
   );
 
@@ -4476,6 +4953,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_self_test(SelfTest self, SseSerializer serializer);
 
   @protected
+  void sse_encode_sensor_item(SensorItem self, SseSerializer serializer);
+
+  @protected
   void sse_encode_service_action(ServiceAction self, SseSerializer serializer);
 
   @protected
@@ -4536,6 +5016,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_session_marker(SessionMarker self, SseSerializer serializer);
+
+  @protected
   void sse_encode_share_error(ShareError self, SseSerializer serializer);
 
   @protected
@@ -4555,6 +5038,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     SmartAttribute self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_smart_attribute_flags(
+    SmartAttributeFlags self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_smart_reading(SmartReading self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_smart_report(SmartReport self, SseSerializer serializer);
 
   @protected
   void sse_encode_smb_connection(SmbConnection self, SseSerializer serializer);
@@ -4581,6 +5076,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_status_block_device(
+    StatusBlockDevice self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_status_report(StatusReport self, SseSerializer serializer);
+
+  @protected
   void sse_encode_step(Step self, SseSerializer serializer);
 
   @protected
@@ -4591,6 +5095,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_storage_view(StorageView self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_swap(Swap self, SseSerializer serializer);
 
   @protected
   void sse_encode_system_group(SystemGroup self, SseSerializer serializer);

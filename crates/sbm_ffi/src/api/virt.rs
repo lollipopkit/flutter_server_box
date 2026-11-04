@@ -2,9 +2,9 @@
 //!
 //! Scripts are POSIX `sh` for `CommandExec.run(script, entry: 'sh')` (or the
 //! sudo entry of `PrivilegedExec`). Parsed results cross as `sbm_virt`'s
-//! serde JSON, like `parse_status_json`, so the monitor can serve the same
-//! shape later; a failure crosses as [`VirtFfiError`], whose `kind` is what
-//! the app branches on (retry with sudo on `PermissionDenied`).
+//! serde JSON (TODO: FRB mirrors, as every other module's results are now); a
+//! failure crosses as [`VirtFfiError`], whose `kind` is what the app branches
+//! on (retry with sudo on `PermissionDenied`).
 
 use sbm_virt::libvirt::{self, manage, net, snapshot};
 

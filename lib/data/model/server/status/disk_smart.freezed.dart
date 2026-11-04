@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$DiskSmart {
 
- String get device; bool? get healthy; double? get temperature; String? get model; String? get serial; int? get powerOnHours; int? get powerCycleCount; Map<String, dynamic> get rawData; Map<String, SmartAttribute> get smartAttributes;
+ String get device; bool? get healthy; double? get temperature; String? get model; String? get serial; int? get powerOnHours; int? get powerCycleCount; Map<String, SmartAttribute> get smartAttributes;
 /// Create a copy of DiskSmart
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,12 +28,12 @@ $DiskSmartCopyWith<DiskSmart> get copyWith => _$DiskSmartCopyWithImpl<DiskSmart>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DiskSmart&&(identical(other.device, device) || other.device == device)&&(identical(other.healthy, healthy) || other.healthy == healthy)&&(identical(other.temperature, temperature) || other.temperature == temperature)&&(identical(other.model, model) || other.model == model)&&(identical(other.serial, serial) || other.serial == serial)&&(identical(other.powerOnHours, powerOnHours) || other.powerOnHours == powerOnHours)&&(identical(other.powerCycleCount, powerCycleCount) || other.powerCycleCount == powerCycleCount)&&const DeepCollectionEquality().equals(other.rawData, rawData)&&const DeepCollectionEquality().equals(other.smartAttributes, smartAttributes));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DiskSmart&&(identical(other.device, device) || other.device == device)&&(identical(other.healthy, healthy) || other.healthy == healthy)&&(identical(other.temperature, temperature) || other.temperature == temperature)&&(identical(other.model, model) || other.model == model)&&(identical(other.serial, serial) || other.serial == serial)&&(identical(other.powerOnHours, powerOnHours) || other.powerOnHours == powerOnHours)&&(identical(other.powerCycleCount, powerCycleCount) || other.powerCycleCount == powerCycleCount)&&const DeepCollectionEquality().equals(other.smartAttributes, smartAttributes));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,device,healthy,temperature,model,serial,powerOnHours,powerCycleCount,const DeepCollectionEquality().hash(rawData),const DeepCollectionEquality().hash(smartAttributes));
+int get hashCode => Object.hash(runtimeType,device,healthy,temperature,model,serial,powerOnHours,powerCycleCount,const DeepCollectionEquality().hash(smartAttributes));
 
 
 
@@ -44,7 +44,7 @@ abstract mixin class $DiskSmartCopyWith<$Res>  {
   factory $DiskSmartCopyWith(DiskSmart value, $Res Function(DiskSmart) _then) = _$DiskSmartCopyWithImpl;
 @useResult
 $Res call({
- String device, bool? healthy, double? temperature, String? model, String? serial, int? powerOnHours, int? powerCycleCount, Map<String, dynamic> rawData, Map<String, SmartAttribute> smartAttributes
+ String device, bool? healthy, double? temperature, String? model, String? serial, int? powerOnHours, int? powerCycleCount, Map<String, SmartAttribute> smartAttributes
 });
 
 
@@ -61,7 +61,7 @@ class _$DiskSmartCopyWithImpl<$Res>
 
 /// Create a copy of DiskSmart
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? device = null,Object? healthy = freezed,Object? temperature = freezed,Object? model = freezed,Object? serial = freezed,Object? powerOnHours = freezed,Object? powerCycleCount = freezed,Object? rawData = null,Object? smartAttributes = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? device = null,Object? healthy = freezed,Object? temperature = freezed,Object? model = freezed,Object? serial = freezed,Object? powerOnHours = freezed,Object? powerCycleCount = freezed,Object? smartAttributes = null,}) {
   return _then(_self.copyWith(
 device: null == device ? _self.device : device // ignore: cast_nullable_to_non_nullable
 as String,healthy: freezed == healthy ? _self.healthy : healthy // ignore: cast_nullable_to_non_nullable
@@ -70,8 +70,7 @@ as double?,model: freezed == model ? _self.model : model // ignore: cast_nullabl
 as String?,serial: freezed == serial ? _self.serial : serial // ignore: cast_nullable_to_non_nullable
 as String?,powerOnHours: freezed == powerOnHours ? _self.powerOnHours : powerOnHours // ignore: cast_nullable_to_non_nullable
 as int?,powerCycleCount: freezed == powerCycleCount ? _self.powerCycleCount : powerCycleCount // ignore: cast_nullable_to_non_nullable
-as int?,rawData: null == rawData ? _self.rawData : rawData // ignore: cast_nullable_to_non_nullable
-as Map<String, dynamic>,smartAttributes: null == smartAttributes ? _self.smartAttributes : smartAttributes // ignore: cast_nullable_to_non_nullable
+as int?,smartAttributes: null == smartAttributes ? _self.smartAttributes : smartAttributes // ignore: cast_nullable_to_non_nullable
 as Map<String, SmartAttribute>,
   ));
 }
@@ -157,10 +156,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String device,  bool? healthy,  double? temperature,  String? model,  String? serial,  int? powerOnHours,  int? powerCycleCount,  Map<String, dynamic> rawData,  Map<String, SmartAttribute> smartAttributes)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String device,  bool? healthy,  double? temperature,  String? model,  String? serial,  int? powerOnHours,  int? powerCycleCount,  Map<String, SmartAttribute> smartAttributes)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _DiskSmart() when $default != null:
-return $default(_that.device,_that.healthy,_that.temperature,_that.model,_that.serial,_that.powerOnHours,_that.powerCycleCount,_that.rawData,_that.smartAttributes);case _:
+return $default(_that.device,_that.healthy,_that.temperature,_that.model,_that.serial,_that.powerOnHours,_that.powerCycleCount,_that.smartAttributes);case _:
   return orElse();
 
 }
@@ -178,10 +177,10 @@ return $default(_that.device,_that.healthy,_that.temperature,_that.model,_that.s
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String device,  bool? healthy,  double? temperature,  String? model,  String? serial,  int? powerOnHours,  int? powerCycleCount,  Map<String, dynamic> rawData,  Map<String, SmartAttribute> smartAttributes)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String device,  bool? healthy,  double? temperature,  String? model,  String? serial,  int? powerOnHours,  int? powerCycleCount,  Map<String, SmartAttribute> smartAttributes)  $default,) {final _that = this;
 switch (_that) {
 case _DiskSmart():
-return $default(_that.device,_that.healthy,_that.temperature,_that.model,_that.serial,_that.powerOnHours,_that.powerCycleCount,_that.rawData,_that.smartAttributes);case _:
+return $default(_that.device,_that.healthy,_that.temperature,_that.model,_that.serial,_that.powerOnHours,_that.powerCycleCount,_that.smartAttributes);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -198,10 +197,10 @@ return $default(_that.device,_that.healthy,_that.temperature,_that.model,_that.s
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String device,  bool? healthy,  double? temperature,  String? model,  String? serial,  int? powerOnHours,  int? powerCycleCount,  Map<String, dynamic> rawData,  Map<String, SmartAttribute> smartAttributes)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String device,  bool? healthy,  double? temperature,  String? model,  String? serial,  int? powerOnHours,  int? powerCycleCount,  Map<String, SmartAttribute> smartAttributes)?  $default,) {final _that = this;
 switch (_that) {
 case _DiskSmart() when $default != null:
-return $default(_that.device,_that.healthy,_that.temperature,_that.model,_that.serial,_that.powerOnHours,_that.powerCycleCount,_that.rawData,_that.smartAttributes);case _:
+return $default(_that.device,_that.healthy,_that.temperature,_that.model,_that.serial,_that.powerOnHours,_that.powerCycleCount,_that.smartAttributes);case _:
   return null;
 
 }
@@ -213,7 +212,7 @@ return $default(_that.device,_that.healthy,_that.temperature,_that.model,_that.s
 @JsonSerializable()
 
 class _DiskSmart extends DiskSmart {
-  const _DiskSmart({required this.device, this.healthy, this.temperature, this.model, this.serial, this.powerOnHours, this.powerCycleCount, required final  Map<String, dynamic> rawData, required final  Map<String, SmartAttribute> smartAttributes}): _rawData = rawData,_smartAttributes = smartAttributes,super._();
+  const _DiskSmart({required this.device, this.healthy, this.temperature, this.model, this.serial, this.powerOnHours, this.powerCycleCount, required final  Map<String, SmartAttribute> smartAttributes}): _smartAttributes = smartAttributes,super._();
   factory _DiskSmart.fromJson(Map<String, dynamic> json) => _$DiskSmartFromJson(json);
 
 @override final  String device;
@@ -223,13 +222,6 @@ class _DiskSmart extends DiskSmart {
 @override final  String? serial;
 @override final  int? powerOnHours;
 @override final  int? powerCycleCount;
- final  Map<String, dynamic> _rawData;
-@override Map<String, dynamic> get rawData {
-  if (_rawData is EqualUnmodifiableMapView) return _rawData;
-  // ignore: implicit_dynamic_type
-  return EqualUnmodifiableMapView(_rawData);
-}
-
  final  Map<String, SmartAttribute> _smartAttributes;
 @override Map<String, SmartAttribute> get smartAttributes {
   if (_smartAttributes is EqualUnmodifiableMapView) return _smartAttributes;
@@ -251,12 +243,12 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DiskSmart&&(identical(other.device, device) || other.device == device)&&(identical(other.healthy, healthy) || other.healthy == healthy)&&(identical(other.temperature, temperature) || other.temperature == temperature)&&(identical(other.model, model) || other.model == model)&&(identical(other.serial, serial) || other.serial == serial)&&(identical(other.powerOnHours, powerOnHours) || other.powerOnHours == powerOnHours)&&(identical(other.powerCycleCount, powerCycleCount) || other.powerCycleCount == powerCycleCount)&&const DeepCollectionEquality().equals(other._rawData, _rawData)&&const DeepCollectionEquality().equals(other._smartAttributes, _smartAttributes));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DiskSmart&&(identical(other.device, device) || other.device == device)&&(identical(other.healthy, healthy) || other.healthy == healthy)&&(identical(other.temperature, temperature) || other.temperature == temperature)&&(identical(other.model, model) || other.model == model)&&(identical(other.serial, serial) || other.serial == serial)&&(identical(other.powerOnHours, powerOnHours) || other.powerOnHours == powerOnHours)&&(identical(other.powerCycleCount, powerCycleCount) || other.powerCycleCount == powerCycleCount)&&const DeepCollectionEquality().equals(other._smartAttributes, _smartAttributes));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,device,healthy,temperature,model,serial,powerOnHours,powerCycleCount,const DeepCollectionEquality().hash(_rawData),const DeepCollectionEquality().hash(_smartAttributes));
+int get hashCode => Object.hash(runtimeType,device,healthy,temperature,model,serial,powerOnHours,powerCycleCount,const DeepCollectionEquality().hash(_smartAttributes));
 
 
 
@@ -267,7 +259,7 @@ abstract mixin class _$DiskSmartCopyWith<$Res> implements $DiskSmartCopyWith<$Re
   factory _$DiskSmartCopyWith(_DiskSmart value, $Res Function(_DiskSmart) _then) = __$DiskSmartCopyWithImpl;
 @override @useResult
 $Res call({
- String device, bool? healthy, double? temperature, String? model, String? serial, int? powerOnHours, int? powerCycleCount, Map<String, dynamic> rawData, Map<String, SmartAttribute> smartAttributes
+ String device, bool? healthy, double? temperature, String? model, String? serial, int? powerOnHours, int? powerCycleCount, Map<String, SmartAttribute> smartAttributes
 });
 
 
@@ -284,7 +276,7 @@ class __$DiskSmartCopyWithImpl<$Res>
 
 /// Create a copy of DiskSmart
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? device = null,Object? healthy = freezed,Object? temperature = freezed,Object? model = freezed,Object? serial = freezed,Object? powerOnHours = freezed,Object? powerCycleCount = freezed,Object? rawData = null,Object? smartAttributes = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? device = null,Object? healthy = freezed,Object? temperature = freezed,Object? model = freezed,Object? serial = freezed,Object? powerOnHours = freezed,Object? powerCycleCount = freezed,Object? smartAttributes = null,}) {
   return _then(_DiskSmart(
 device: null == device ? _self.device : device // ignore: cast_nullable_to_non_nullable
 as String,healthy: freezed == healthy ? _self.healthy : healthy // ignore: cast_nullable_to_non_nullable
@@ -293,8 +285,7 @@ as double?,model: freezed == model ? _self.model : model // ignore: cast_nullabl
 as String?,serial: freezed == serial ? _self.serial : serial // ignore: cast_nullable_to_non_nullable
 as String?,powerOnHours: freezed == powerOnHours ? _self.powerOnHours : powerOnHours // ignore: cast_nullable_to_non_nullable
 as int?,powerCycleCount: freezed == powerCycleCount ? _self.powerCycleCount : powerCycleCount // ignore: cast_nullable_to_non_nullable
-as int?,rawData: null == rawData ? _self._rawData : rawData // ignore: cast_nullable_to_non_nullable
-as Map<String, dynamic>,smartAttributes: null == smartAttributes ? _self._smartAttributes : smartAttributes // ignore: cast_nullable_to_non_nullable
+as int?,smartAttributes: null == smartAttributes ? _self._smartAttributes : smartAttributes // ignore: cast_nullable_to_non_nullable
 as Map<String, SmartAttribute>,
   ));
 }

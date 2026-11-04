@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/app/scripts/script_consts.dart';
@@ -45,7 +43,7 @@ class ServerStatusUpdateReq {
 }
 
 /// Parsing lives in the shared Rust library `sbm_parser`; this
-/// file only assembles the FFI JSON into models and updates windowed state
+/// file only assembles the FFI report into models and updates windowed state
 /// (cpu/netSpeed/diskIO).
 Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
   final ss = _createWorkingStatus(req.ss, req.system);
@@ -55,13 +53,12 @@ Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
     SystemType.windows => 'windows',
   };
 
-  final statusJson = await ffi.parseStatusJson(
+  final status = await ffi.parseStatus(
     system: systemStr,
     raw: req.parsedOutput,
     tempDivisor: req.tempDivisor,
     countNetwork: req.diskCountsNetwork,
   );
-  final status = jsonDecode(statusJson) as Map<String, dynamic>;
 
   final time =
       int.tryParse(StatusCmdType.time.findInMap(req.parsedOutput).trim()) ??
@@ -140,7 +137,7 @@ String _reasonOf(String said) {
 /// machine whose temperature could not be read.
 void _noteFailedSections(
   ServerStatus ss,
-  Map<String, dynamic> status,
+  ffi.StatusReport status,
   Map<String, String> raw,
   SystemType system,
 ) {
@@ -166,35 +163,33 @@ void _noteFailedSections(
     }
   }
 
-  bool list(String key) => (status[key] as List?)?.isNotEmpty ?? false;
-
-  check(const ['cpu'], const ['cpu'], list('cpu'));
+  check(const ['cpu'], const ['cpu'], status.cpu.isNotEmpty);
   check(
     const ['mem'],
     // Only Linux reads swap, out of the same /proc/meminfo, and a swap that
     // parsed is not failed by a missing MemTotal.
-    ['mem', if (system == SystemType.linux && status['swap'] == null) 'swap'],
-    status['mem'] != null,
+    ['mem', if (system == SystemType.linux && status.swap == null) 'swap'],
+    status.mem != null,
     always: true,
   );
-  check(const ['disk'], const ['disk'], list('disks'));
+  check(const ['disk'], const ['disk'], status.disks.isNotEmpty);
   // Windows' interface counters are a second parse of the same segment, and
   // the shared one is empty there by design — asking it would report every
   // Windows host's network as unreadable.
   if (system != SystemType.windows) {
-    check(const ['net'], const ['net'], list('net'));
+    check(const ['net'], const ['net'], status.net.isNotEmpty);
   }
-  check(const ['diskio'], const ['diskio'], list('diskio'));
+  check(const ['diskio'], const ['diskio'], status.diskio.isNotEmpty);
   check(
     const ['tempType', 'tempVal', 'temp'],
     const ['temps'],
-    (status['temps'] as Map?)?.isNotEmpty ?? false,
+    status.temps.isNotEmpty,
   );
-  check(const ['battery'], const ['battery'], list('batteries'));
-  check(const ['sensors'], const ['sensors'], list('sensors'));
-  check(const ['gpu'], const ['gpus'], list('gpus'));
-  check(const ['nvidia'], const ['nvidia'], list('nvidia'));
-  check(const ['diskSmart'], const ['smart'], list('disk_smart'));
+  check(const ['battery'], const ['battery'], status.batteries.isNotEmpty);
+  check(const ['sensors'], const ['sensors'], status.sensors.isNotEmpty);
+  check(const ['gpu'], const ['gpus'], status.gpus.isNotEmpty);
+  check(const ['nvidia'], const ['nvidia'], status.nvidia.isNotEmpty);
+  check(const ['diskSmart'], const ['smart'], status.diskSmart.isNotEmpty);
 }
 
 void _apply(ServerStatus ss, String section, void Function() fn) {
@@ -248,25 +243,19 @@ ServerStatus _createWorkingStatus(ServerStatus source, SystemType system) {
   ..ips = source.ips;
 }
 
-List<SingleCpuCore> _coresFromJson(List cores) {
-  return cores
-      .map(
-        (c) => SingleCpuCore(
-          c['id'] as String,
-          c['user'] as int,
-          c['sys'] as int,
-          c['nice'] as int,
-          c['idle'] as int,
-          c['iowait'] as int,
-          c['irq'] as int,
-          c['softirq'] as int,
-        ),
-      )
-      .toList();
-}
+SingleCpuCore _core(ffi.CpuCore c) => SingleCpuCore(
+  c.id,
+  c.user.toInt(),
+  c.sys.toInt(),
+  c.nice.toInt(),
+  c.idle.toInt(),
+  c.iowait.toInt(),
+  c.irq.toInt(),
+  c.softirq.toInt(),
+);
 
-void _applyCpu(ServerStatus ss, Map<String, dynamic> status, SystemType system) {
-  var cores = _coresFromJson(status['cpu'] as List);
+void _applyCpu(ServerStatus ss, ffi.StatusReport status, SystemType system) {
+  var cores = status.cpu.map(_core).toList();
   if (cores.isEmpty) return;
 
   switch (system) {
@@ -287,11 +276,10 @@ void _applyCpu(ServerStatus ss, Map<String, dynamic> status, SystemType system) 
   }
   ss.cpu.update(cores);
 
-  final brand = status['cpu_brand'] as List;
-  if (brand.isNotEmpty) {
+  if (status.cpuBrand.isNotEmpty) {
     ss.cpu.brand.clear();
-    for (final entry in brand) {
-      ss.cpu.brand[entry[0] as String] = entry[1] as int;
+    for (final (name, count) in status.cpuBrand) {
+      ss.cpu.brand[name] = count;
     }
   }
 }
@@ -336,97 +324,79 @@ List<SingleCpuCore> _accumulatePercentCpu(
   return cores;
 }
 
-void _applyMemory(ServerStatus ss, Map<String, dynamic> status) {
-  final mem = status['mem'];
+void _applyMemory(ServerStatus ss, ffi.StatusReport status) {
+  final mem = status.mem;
   if (mem == null) return;
-  ss.mem = Memory(
-    total: mem['total'] as int,
-    free: mem['free'] as int,
-    avail: mem['avail'] as int,
-  );
+  ss.mem = Memory(total: mem.total.toInt(), free: mem.free.toInt(), avail: mem.avail.toInt());
 }
 
-void _applySwap(ServerStatus ss, Map<String, dynamic> status) {
-  final swap = status['swap'];
+void _applySwap(ServerStatus ss, ffi.StatusReport status) {
+  final swap = status.swap;
   if (swap == null) return;
-  ss.swap = Swap(
-    total: swap['total'] as int,
-    free: swap['free'] as int,
-    cached: swap['cached'] as int,
-  );
+  ss.swap = Swap(total: swap.total.toInt(), free: swap.free.toInt(), cached: swap.cached.toInt());
 }
 
-Disk _diskFromJson(Map<String, dynamic> d) {
-  return Disk(
-    path: d['path'] as String,
-    fsTyp: d['fs_type'] as String?,
-    mount: d['mount'] as String,
-    usedPercent: d['used_percent'] as int,
-    used: BigInt.from(d['used'] as int),
-    size: BigInt.from(d['size'] as int),
-    avail: BigInt.from(d['avail'] as int),
-    name: d['name'] as String?,
-    kname: d['kname'] as String?,
-    uuid: d['uuid'] as String?,
-    children: (d['children'] as List)
-        .map((c) => _diskFromJson(c as Map<String, dynamic>))
-        .toList(),
-  );
-}
+Disk _disk(ffi.Disk d) => Disk(
+  path: d.path,
+  fsTyp: d.fsType,
+  mount: d.mount,
+  usedPercent: d.usedPercent,
+  used: d.used,
+  size: d.size,
+  avail: d.avail,
+  name: d.name,
+  kname: d.kname,
+  uuid: d.uuid,
+  children: d.children.map(_disk).toList(),
+);
 
-void _applyDisks(ServerStatus ss, Map<String, dynamic> status) {
-  ss.blockDevices = ((status['block_devices'] as List?) ?? const [])
-      .map((d) => BlockDevice.fromJson(d as Map<String, dynamic>))
-      .toList();
-  ss.disk = (status['disks'] as List)
-      .map((d) => _diskFromJson(d as Map<String, dynamic>))
-      .toList();
-  ss.diskUsage = ss.disk.isEmpty
-      ? null
-      : DiskUsage(
-          used: BigInt.from(status['disk_used'] as int),
-          size: BigInt.from(status['disk_size'] as int),
-        );
+BlockDevice _blockDevice(ffi.StatusBlockDevice d) => BlockDevice(
+  name: d.name,
+  path: d.path,
+  kind: d.kind,
+  model: d.model,
+  size: d.size.toInt(),
+  tran: d.tran,
+  fsType: d.fsType,
+  mount: d.mount,
+  inUse: d.inUse,
+  children: d.children.map(_blockDevice).toList(),
+);
+
+void _applyDisks(ServerStatus ss, ffi.StatusReport status) {
+  ss.blockDevices = status.blockDevices.map(_blockDevice).toList();
+  ss.disk = status.disks.map(_disk).toList();
+  ss.diskUsage = ss.disk.isEmpty ? null : DiskUsage(used: status.diskUsed, size: status.diskSize);
 }
 
 /// Cumulative counters on every system, Windows included: the rates are
 /// taken across polls by [NetSpeed].
-void _applyNet(ServerStatus ss, Map<String, dynamic> status, int time) {
-  final parts = (status['net'] as List)
-      .map(
-        (n) => NetSpeedPart(
-          n['device'] as String,
-          BigInt.from(n['rx_bytes'] as int),
-          BigInt.from(n['tx_bytes'] as int),
-          time,
-        ),
-      )
-      .toList();
+void _applyNet(ServerStatus ss, ffi.StatusReport status, int time) {
+  final parts = [for (final n in status.net) NetSpeedPart(n.device, n.rxBytes, n.txBytes, time)];
   if (parts.isNotEmpty) {
     ss.netSpeed.update(parts);
   }
 }
 
-void _applyTemps(ServerStatus ss, Map<String, dynamic> status) {
-  final temps = status['temps'] as Map<String, dynamic>;
-  ss.temps.setAll(temps.map((k, v) => MapEntry(k, (v as num).toDouble())));
+void _applyTemps(ServerStatus ss, ffi.StatusReport status) {
+  ss.temps.setAll({for (final (name, celsius) in status.temps) name: celsius});
 }
 
-void _applyConn(ServerStatus ss, Map<String, dynamic> status) {
-  final conn = status['conn'];
+void _applyConn(ServerStatus ss, ffi.StatusReport status) {
+  final conn = status.conn;
   if (conn == null) return;
-  ss.tcp = Conn(maxConn: conn['max_conn'] as int, fail: conn['fail'] as int);
+  ss.tcp = Conn(maxConn: conn.maxConn, fail: conn.fail);
 }
 
-void _applyMore(ServerStatus ss, Map<String, dynamic> status) {
-  final sys = status['sys'] as String?;
+void _applyMore(ServerStatus ss, ffi.StatusReport status) {
+  final sys = status.sys;
   if (sys != null && sys.isNotEmpty) {
     ss.more[StatusCmdType.sys] = sys;
   }
   // Both absent on BSD and Windows, and on a Linux old enough to have no
   // `/etc/os-release`; left as they were rather than cleared, so a poll that
   // failed to read the file does not throw away what the last one found.
-  final osId = status['os_id'] as String?;
+  final osId = status.osId;
   if (osId != null && osId.isNotEmpty) {
     ss.osId = osId;
     // Written together, and only here. An `ID_LIKE` that came back empty is
@@ -437,26 +407,18 @@ void _applyMore(ServerStatus ss, Map<String, dynamic> status) {
     // whole section is missing. Without this, a host that stopped being a
     // derivative kept the parent it used to declare, and `resolveDist` fell
     // through to it whenever the new id was one this build does not know.
-    //
-    // `whereType`, not `cast`. A cast is a lazy view: a non-String element is
-    // found at the first iteration, which is `resolveDist` — reached from
-    // `DistIconOf` while the tree is building, so a malformed value would
-    // throw there instead of being caught by the section guard around this.
-    ss.osIdLike =
-        (status['os_id_like'] as List?)?.whereType<String>().toList() ??
-        const [];
+    ss.osIdLike = status.osIdLike;
   }
   // Left alone when the section is absent rather than cleared: this refreshes
   // on the extended cadence, so most polls carry no `ips` at all and clearing
   // would blank the globe's answer between two extended runs.
-  final ips = (status['ips'] as List?)?.whereType<String>().toList();
-  if (ips != null && ips.isNotEmpty) ss.ips = ips;
+  if (status.ips.isNotEmpty) ss.ips = status.ips;
 
-  final host = status['host'] as String?;
+  final host = status.host;
   if (host != null && !host.contains(ScriptConstants.scriptFile)) {
     ss.more[StatusCmdType.host] = host;
   }
-  final uptime = status['uptime'] as String?;
+  final uptime = status.uptime;
   if (uptime != null && uptime.isNotEmpty) {
     ss.more[StatusCmdType.uptime] = uptime;
   }
@@ -464,158 +426,145 @@ void _applyMore(ServerStatus ss, Map<String, dynamic> status) {
 
 void _applyDiskIO(
   ServerStatus ss,
-  Map<String, dynamic> status,
+  ffi.StatusReport status,
   SystemType system,
   int time,
 ) {
-  final pieces = (status['diskio'] as List)
-      .map(
-        (p) => DiskIOPiece(
-          dev: p['dev'] as String,
-          sectorsRead: p['sectors_read'] as int,
-          sectorsWrite: p['sectors_write'] as int,
-          time: time,
-        ),
-      )
-      .toList();
+  final pieces = [
+    for (final p in status.diskio)
+      DiskIOPiece(dev: p.dev, sectorsRead: p.sectorsRead, sectorsWrite: p.sectorsWrite, time: time),
+  ];
   if (pieces.isNotEmpty) {
     ss.diskIO.updateForSystem(pieces, system);
   }
 }
 
-void _applyBatteries(ServerStatus ss, Map<String, dynamic> status) {
-  final batteries = (status['batteries'] as List)
-      .map(
-        (b) => Battery(
-          percent: b['percent'] as int?,
-          status: BatteryStatus.values.byName(b['status'] as String),
-          name: b['name'] as String?,
-          cycle: b['cycle'] as int?,
-          tech: b['tech'] as String?,
+void _applyBatteries(ServerStatus ss, ffi.StatusReport status) {
+  ss.batteries
+    ..clear()
+    ..addAll([
+      for (final b in status.batteries)
+        Battery(
+          percent: b.percent,
+          status: BatteryStatus.values.byName(b.status.name),
+          name: b.name,
+          cycle: b.cycle,
+          tech: b.tech,
         ),
-      )
-      .toList();
-  ss.batteries.clear();
-  ss.batteries.addAll(batteries);
+    ]);
 }
 
-void _applySensors(ServerStatus ss, Map<String, dynamic> status) {
-  final sensors = (status['sensors'] as List).map((s) {
-    final details = <String, String>{};
-    for (final pair in s['details'] as List) {
-      details[pair[0] as String] = pair[1] as String;
-    }
-    return SensorItem(
-      device: s['device'] as String,
-      adapter: SensorAdaptor.parse(s['adapter'] as String),
-      details: details,
-    );
-  }).toList();
+void _applySensors(ServerStatus ss, ffi.StatusReport status) {
+  final sensors = [
+    for (final s in status.sensors)
+      SensorItem(
+        device: s.device,
+        adapter: SensorAdaptor.parse(s.adapter),
+        details: {for (final (key, value) in s.details) key: value},
+      ),
+  ];
   if (sensors.isNotEmpty) {
-    ss.sensors.clear();
-    ss.sensors.addAll(sensors);
+    ss.sensors
+      ..clear()
+      ..addAll(sensors);
   }
 }
 
-GpuMemProcessJson _gpuProcess(Map<String, dynamic> p) => (
-  pid: p['pid'] as int,
-  name: p['name'] as String,
-  memory: p['memory'] as int,
-);
+void _applyNvidia(ServerStatus ss, ffi.StatusReport status) {
+  ss.nvidia = [
+    for (final g in status.nvidia)
+      NvidiaSmiItem(
+        name: g.name,
+        temp: g.temp,
+        power: g.power,
+        percent: g.percent,
+        fanSpeed: g.fanSpeed,
+        memory: switch (g.memory) {
+          null => null,
+          final m => NvidiaSmiMem(m.total, m.used, m.unit, [
+            for (final p in m.processes) NvidiaSmiMemProcess(p.pid, p.name, p.memory),
+          ]),
+        },
+      ),
+  ];
+}
 
-typedef GpuMemProcessJson = ({int pid, String name, int memory});
+void _applyAmd(ServerStatus ss, ffi.StatusReport status) {
+  ss.amd = [
+    for (final g in status.amd)
+      AmdSmiItem(
+        name: g.name,
+        temp: g.temp,
+        power: g.power,
+        utilization: g.utilization,
+        fanSpeed: g.fanSpeed,
+        clockSpeed: g.clockSpeed,
+        memory: switch (g.memory) {
+          null => null,
+          final m => AmdSmiMem(m.total, m.used, m.unit, [
+            for (final p in m.processes) AmdSmiMemProcess(p.pid, p.name, p.memory),
+          ]),
+        },
+      ),
+  ];
+}
 
-void _applyNvidia(ServerStatus ss, Map<String, dynamic> status) {
-  ss.nvidia = (status['nvidia'] as List).map((g) {
-    final mem = g['memory'] as Map<String, dynamic>?;
-    return NvidiaSmiItem(
-      name: g['name'] as String,
-      temp: g['temp'] as int?,
-      power: g['power'] as String?,
-      percent: g['percent'] as int?,
-      fanSpeed: g['fan_speed'] as int?,
-      memory: mem == null
-          ? null
-          : NvidiaSmiMem(
-              mem['total'] as int,
-              mem['used'] as int,
-              mem['unit'] as String,
-              (mem['processes'] as List).map((p) {
-                final proc = _gpuProcess(p as Map<String, dynamic>);
-                return NvidiaSmiMemProcess(proc.pid, proc.name, proc.memory);
-              }).toList(),
+void _applyGpus(ServerStatus ss, ffi.StatusReport status) {
+  ss.gpus = [
+    for (final g in status.gpus)
+      GpuItem(
+        id: g.id,
+        vendor: g.vendor,
+        name: g.name,
+        utilization: g.utilization,
+        temperature: g.temperature,
+        power: g.power,
+        fanSpeed: g.fanSpeed,
+        clockSpeed: g.clockSpeed,
+        memory: switch (g.memory) {
+          null => null,
+          final m => GpuSmiMem(m.total, m.used, m.unit, [
+            for (final p in m.processes) GpuSmiMemProcess(p.pid, p.name, p.memory),
+          ]),
+        },
+      ),
+  ];
+}
+
+void _applySmart(ServerStatus ss, ffi.StatusReport status) {
+  ss.diskSmart = [
+    for (final d in status.diskSmart)
+      DiskSmart(
+        device: d.device,
+        healthy: d.healthy,
+        temperature: d.temperature,
+        model: d.model,
+        serial: d.serial,
+        powerOnHours: d.powerOnHours,
+        powerCycleCount: d.powerCycleCount,
+        smartAttributes: {
+          for (final a in d.attributes)
+            a.name: SmartAttribute(
+              id: a.id,
+              name: a.name,
+              value: a.value,
+              worst: a.worst,
+              thresh: a.thresh,
+              whenFailed: a.whenFailed,
+              rawValue: a.rawValue,
+              rawString: a.rawString,
+              flags: SmartAttributeFlags(
+                value: a.flags.value,
+                string: a.flags.string,
+                prefailure: a.flags.prefailure,
+                updatedOnline: a.flags.updatedOnline,
+                performance: a.flags.performance,
+                errorRate: a.flags.errorRate,
+                eventCount: a.flags.eventCount,
+                autoKeep: a.flags.autoKeep,
+              ),
             ),
-    );
-  }).toList();
-}
-
-void _applyAmd(ServerStatus ss, Map<String, dynamic> status) {
-  ss.amd = (status['amd'] as List).map((g) {
-    final mem = g['memory'] as Map<String, dynamic>?;
-    return AmdSmiItem(
-      name: g['name'] as String,
-      temp: g['temp'] as int?,
-      power: g['power'] as String?,
-      utilization: g['utilization'] as int?,
-      fanSpeed: g['fan_speed'] as int?,
-      clockSpeed: g['clock_speed'] as int?,
-      memory: mem == null
-          ? null
-          : AmdSmiMem(
-              mem['total'] as int,
-              mem['used'] as int,
-              mem['unit'] as String,
-              (mem['processes'] as List).map((p) {
-                final proc = _gpuProcess(p as Map<String, dynamic>);
-                return AmdSmiMemProcess(proc.pid, proc.name, proc.memory);
-              }).toList(),
-            ),
-    );
-  }).toList();
-}
-
-void _applyGpus(ServerStatus ss, Map<String, dynamic> status) {
-  ss.gpus = (status['gpus'] as List)
-      .map((gpu) => GpuItem.fromJson(gpu as Map<String, dynamic>))
-      .toList();
-}
-
-void _applySmart(ServerStatus ss, Map<String, dynamic> status) {
-  ss.diskSmart = (status['disk_smart'] as List).map((d) {
-    final attrs = <String, SmartAttribute>{};
-    (d['smart_attributes'] as Map<String, dynamic>).forEach((name, a) {
-      final flags = a['flags'] as Map<String, dynamic>;
-      attrs[name] = SmartAttribute(
-        id: a['id'] as int?,
-        name: a['name'] as String,
-        value: a['value'] as int?,
-        worst: a['worst'] as int?,
-        thresh: a['thresh'] as int?,
-        whenFailed: a['when_failed'] as String?,
-        rawValue: a['raw_value'],
-        rawString: a['raw_string'] as String?,
-        flags: SmartAttributeFlags(
-          value: flags['value'] as int?,
-          string: flags['string'] as String?,
-          prefailure: flags['prefailure'] as bool,
-          updatedOnline: flags['updated_online'] as bool,
-          performance: flags['performance'] as bool,
-          errorRate: flags['error_rate'] as bool,
-          eventCount: flags['event_count'] as bool,
-          autoKeep: flags['auto_keep'] as bool,
-        ),
-      );
-    });
-    return DiskSmart(
-      device: d['device'] as String,
-      healthy: d['healthy'] as bool?,
-      temperature: (d['temperature'] as num?)?.toDouble(),
-      model: d['model'] as String?,
-      serial: d['serial'] as String?,
-      powerOnHours: d['power_on_hours'] as int?,
-      powerCycleCount: d['power_cycle_count'] as int?,
-      rawData: d['raw_data'] as Map<String, dynamic>,
-      smartAttributes: attrs,
-    );
-  }).toList();
+        },
+      ),
+  ];
 }

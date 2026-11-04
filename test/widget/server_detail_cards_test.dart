@@ -68,7 +68,6 @@ void main() {
     device: device,
     healthy: healthy,
     temperature: temperature,
-    rawData: const {},
     smartAttributes: {
       if (reallocated != null)
         'Reallocated_Sector_Ct': SmartAttribute(

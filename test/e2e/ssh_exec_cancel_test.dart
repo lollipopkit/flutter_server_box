@@ -21,6 +21,7 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/ssh/exec.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
+import 'package:server_box/src/rust/api/exec_session.dart' as es;
 
 import '../helpers/rust_lib_helper.dart';
 import '../helpers/ssh_e2e.dart';
@@ -199,35 +200,35 @@ Future<void> main() async {
       final v = await session('');
       final r = await execSshE2e(
         client,
-        SshSessionId.owns(v.sid, 'n0t-this-run'),
+        es.execSessionOwnsCommand(id: v.sid, nonce: 'n0t-this-run'),
         null,
       );
-      expect(r.stdout, isNot(contains(SshSessionId.owned)));
+      expect(r.stdout, isNot(contains(es.execSessionOwned())));
     });
 
     test('is taken for the session this run started', () async {
-      final v = await session('env ${SshSessionId.envName}=th1s-run ');
+      final v = await session('env ${es.execSessionEnvName()}=th1s-run ');
       final r = await execSshE2e(
         client,
-        SshSessionId.owns(v.sid, 'th1s-run'),
+        es.execSessionOwnsCommand(id: v.sid, nonce: 'th1s-run'),
         null,
       );
-      expect(r.stdout, contains(SshSessionId.owned));
+      expect(r.stdout, contains(es.execSessionOwned()));
     });
 
     // Even one carrying the nonce: what runs as root is not the account's to
     // read.
     test('is not taken for a root session', () async {
       final v = await session(
-        "sudo -S -p '' env ${SshSessionId.envName}=r00t-run ",
+        "sudo -S -p '' env ${es.execSessionEnvName()}=r00t-run ",
         stdin: '$sudoPassword\n',
       );
       final r = await execSshE2e(
         client,
-        SshSessionId.owns(v.sid, 'r00t-run'),
+        es.execSessionOwnsCommand(id: v.sid, nonce: 'r00t-run'),
         null,
       );
-      expect(r.stdout, isNot(contains(SshSessionId.owned)));
+      expect(r.stdout, isNot(contains(es.execSessionOwned())));
     }, skip: sudoPassword == null ? 'SBM_E2E_SSH_SUDO_PASSWORD not set' : null);
   });
 

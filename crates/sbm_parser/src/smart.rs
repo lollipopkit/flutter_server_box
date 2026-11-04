@@ -91,7 +91,6 @@ fn parse_block(block: &str) -> Option<DiskSmart> {
             .as_i64()
             .or_else(|| attributes.get("Power_Cycle_Count")?.raw_value.as_i64()),
         smart_attributes: attributes,
-        raw_data: data,
         device,
     })
 }

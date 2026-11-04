@@ -155,14 +155,8 @@ class ScpFileBackend implements FileBackend {
     // against the two answers below, matching neither. This cannot go through
     // `_run` — the whole point of this command is the exit code it carries,
     // which `_run` treats as failure.
-    final result = await _exec(
-      'stat',
-      'printf "%s" $_startMark; ${shellStatCommand(path)}',
-    );
-    final start = result.stdout.indexOf(_startMark);
-    final printed = start < 0
-        ? result.stdout
-        : result.stdout.substring(start + _startMark.length);
+    final result = await _exec('stat', files.filesFramedStatCommand(path: path));
+    final printed = files.filesAfterOutMark(output: result.stdout);
     final said = printed.trim();
 
     // What the command said, before what the channel said: a host that reports
@@ -443,25 +437,17 @@ class ScpFileBackend implements FileBackend {
   /// non-interactive `ssh host cmd` too, so a login banner or a `.profile`
   /// that echoes something lands ahead of everything the command prints —
   /// where it was read as the first entry's name. Whatever arrives before
-  /// [_startMark] is the shell's, not the command's, and is dropped.
+  /// the opening mark is the shell's, not the command's, and is dropped
+  /// (`sbm_parser::files::framed_command`).
   Future<String> _run(String what, String command) async {
-    final result = await _exec(
-      what,
-      'printf "%s" $_startMark; { $command; } && printf "%s" $_okMark',
-    );
-    final said = result.stdout;
+    final result = await _exec(what, files.filesFramedCommand(command: command));
     final code = result.code;
-    final start = said.indexOf(_startMark);
-    if (start < 0 || !said.endsWith(_okMark) || (code != null && code != 0)) {
+    final said = files.filesUnframe(output: result.stdout);
+    if (said == null || (code != null && code != 0)) {
       throw ScpShellException(result.describe(what));
     }
-    return said.substring(start + _startMark.length, said.length - _okMark.length);
+    return said;
   }
-
-  /// What [_run] wraps a command's output in. Not words anybody types, because
-  /// a listing's own output is searched for them.
-  static const _startMark = '__sb_out__';
-  static const _okMark = '__sb_ok__';
 
   Future<_ShellResult> _exec(String what, String command) async {
     // Checked before and after, as [_opened] is, and for both reasons: a
