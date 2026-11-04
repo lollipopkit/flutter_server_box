@@ -394,27 +394,46 @@ extension _Linux on _AppSettingsPageState {
     );
   }
 
+  /// The distribution the mirror row is about: the selected system's, or the
+  /// one a first install would fetch.
+  ///
+  /// One getter for the row and its dialog. The row used to read
+  /// `linuxMirror()` with no argument, which is the distribution of the *next*
+  /// install — the last one added — so with Ubuntu selected after adding Rocky
+  /// it showed Rocky's mirror while the dialog edited Ubuntu's.
+  LinuxDistro get _linuxMirrorDistro =>
+      Rootfs.selected?.distro ?? Rootfs.nextDistro;
+
+  /// The mirror's name with its distribution's, as the dialog is titled: a
+  /// mirror belongs to one distribution, and the row would otherwise not say
+  /// which.
+  String _linuxMirrorLabel(LinuxDistro distro) =>
+      '${distro.label} ${l10n.mirror.toLowerCase()}';
+
   SettingsRow _buildLinuxMirror() {
     final label = l10n.mirror;
     return SettingsRow(
       label,
-      () => ListTile(
-        leading: const Icon(Icons.cloud_download_outlined),
-        title: TipText(label, l10n.linuxMirrorTip),
-        subtitle: ValBuilder(
-          listenable: _setting.linuxMirrors.listenable(),
-          // The mirror in force, not the row stored for it: nothing stored
-          // means the distribution's own default, which is what is fetched.
-          builder: (_) => Text(
-            linuxMirror(),
-            style: UIs.textGrey,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+      () {
+        final distro = _linuxMirrorDistro;
+        return ListTile(
+          leading: const Icon(Icons.cloud_download_outlined),
+          title: TipText(_linuxMirrorLabel(distro), l10n.linuxMirrorTip),
+          subtitle: ValBuilder(
+            listenable: _setting.linuxMirrors.listenable(),
+            // The mirror in force, not the row stored for it: nothing stored
+            // means the distribution's own default, which is what is fetched.
+            builder: (_) => Text(
+              linuxMirror(distro),
+              style: UIs.textGrey,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-        ),
-        trailing: const Icon(Icons.keyboard_arrow_right),
-        onTap: _onTapLinuxMirror,
-      ),
+          trailing: const Icon(Icons.keyboard_arrow_right),
+          onTap: _onTapLinuxMirror,
+        );
+      },
       keywords: l10n.linuxMirrorTip,
     );
   }
@@ -493,10 +512,10 @@ extension _Linux on _AppSettingsPageState {
   }
 
   void _onTapLinuxMirror() {
-    final distro = Rootfs.selected?.distro ?? Rootfs.nextDistro;
+    final distro = _linuxMirrorDistro;
     _showLinuxNetDialog(
       // Which distribution's mirror, since it is only that one's.
-      title: '${distro.label} ${l10n.mirror.toLowerCase()}',
+      title: _linuxMirrorLabel(distro),
       // What is stored, not what is in force: empty is how the default is
       // asked for, and pre-filling the default would make that impossible to
       // tell from having typed it.
