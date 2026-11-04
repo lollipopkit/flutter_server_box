@@ -92,9 +92,16 @@ final class DirHandle {
         switch kind(name) {
         case S_IFDIR:
             try dir.makeDirectory(newName)
-            let from = try open(name)
-            let into = try dir.open(newName)
-            for entry in try from.names() { try from.copy(entry, to: into, as: entry) }
+            do {
+                let from = try open(name)
+                let into = try dir.open(newName)
+                for entry in try from.names() { try from.copy(entry, to: into, as: entry) }
+                // Last: a read-only directory takes no children.
+                try copyMode(from: from.fd, to: into.fd)
+            } catch {
+                try? dir.remove(newName)
+                throw error
+            }
         case S_IFLNK:
             var buffer = [CChar](repeating: 0, count: Int(PATH_MAX) + 1)
             let length = readlinkat(fd, name, &buffer, buffer.count - 1)
@@ -105,7 +112,7 @@ final class DirHandle {
             let source = openat(fd, name, O_RDONLY | O_NOFOLLOW | O_CLOEXEC)
             guard source >= 0 else { throw posixError() }
             defer { close(source) }
-            try dir.write(newName, from: source)
+            try dir.write(newName, from: source, keepMode: true)
         default:
             throw CocoaError(.fileReadUnsupportedScheme)
         }
@@ -131,15 +138,29 @@ final class DirHandle {
         }
     }
 
-    private func write(_ name: String, from source: Int32) throws {
+    /// Writes [source] to a new [name], its mode too when [keepMode]; nothing
+    /// is left behind when that fails.
+    private func write(_ name: String, from source: Int32, keepMode: Bool = false) throws {
         let dest = openat(fd, name, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0o644)
         guard dest >= 0 else {
             if errno == EEXIST { throw NSFileProviderError(.filenameCollision) }
             throw posixError()
         }
         defer { close(dest) }
-        guard fcopyfile(source, dest, nil, copyfile_flags_t(COPYFILE_DATA)) == 0 else { throw posixError() }
+        do {
+            guard fcopyfile(source, dest, nil, copyfile_flags_t(COPYFILE_DATA)) == 0 else { throw posixError() }
+            if keepMode { try copyMode(from: source, to: dest) }
+        } catch {
+            unlinkat(fd, name, 0)
+            throw error
+        }
     }
+}
+
+/// The root filesystem is `realfs`: the host's permission bits are the guest's.
+private func copyMode(from source: Int32, to dest: Int32) throws {
+    var st = stat()
+    guard fstat(source, &st) == 0, fchmod(dest, st.st_mode & 0o7777) == 0 else { throw posixError() }
 }
 
 private func posixError() -> Error {

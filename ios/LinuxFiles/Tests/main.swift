@@ -81,6 +81,29 @@ try top.remove("copy")
 check(top.kind("tree") == nil && top.kind("copy") == nil, "trees removed")
 check(fm.fileExists(atPath: outside + "/secret"), "removed through a link")
 
+// A copy keeps permission bits: they are the guest's.
+func mode(_ path: String) -> mode_t {
+    var st = stat()
+    return lstat(path, &st) == 0 ? st.st_mode & 0o7777 : 0
+}
+try top.makeDirectory("modes")
+fm.createFile(atPath: real + "/modes/run", contents: Data([1]))
+chmod(real + "/modes/run", 0o750)
+chmod(real + "/modes", 0o711)
+try top.copy("modes", to: top, as: "modes2")
+eq(String(mode(real + "/modes2/run"), radix: 8), "750")
+eq(String(mode(real + "/modes2"), radix: 8), "711")
+try top.remove("modes")
+try top.remove("modes2")
+
+// A copy that fails partway leaves nothing behind.
+try top.makeDirectory("mixed")
+fm.createFile(atPath: real + "/mixed/a", contents: Data([1]))
+check(mkfifo(real + "/mixed/fifo", 0o644) == 0, "mkfifo")
+check((try? top.copy("mixed", to: top, as: "partial")) == nil, "copied a fifo")
+check(top.kind("partial") == nil, "partial copy left behind")
+try top.remove("mixed")
+
 // A rename never replaces what is there.
 fm.createFile(atPath: real + "/a", contents: Data([1]))
 fm.createFile(atPath: real + "/b", contents: Data([2]))
