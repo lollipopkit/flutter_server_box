@@ -112,7 +112,9 @@ final class SettingsSectionPage extends StatelessWidget {
       appBar: CustomAppBar(
         title: MarkedTitle(
           args.title,
-          mark: args.feature?.mark(),
+          // What a beta page warns about, on the mark rather than in a row
+          // of its own above the settings.
+          mark: args.feature?.mark(tip: l10n.betaTip),
         ),
       ),
       body: AppSettingsPage(section: args),

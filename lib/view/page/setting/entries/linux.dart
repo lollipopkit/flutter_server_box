@@ -32,35 +32,11 @@ extension _Linux on _AppSettingsPageState {
   /// them would rebuild that card alone.
   List<SettingsGroup> _buildLinux() {
     return [
-      SettingsGroup(libL10n.system, [
-        if (Feature.linux.beta) _buildLinuxBeta(),
-        _buildLinuxProfiles(),
-      ]),
+      SettingsGroup(libL10n.system, [_buildLinuxProfiles()]),
       if (_buildLinuxShell() case final shell?)
         SettingsGroup(libL10n.terminal, [shell]),
       SettingsGroup(libL10n.network, [_buildLinuxMirror(), _buildLinuxDns()]),
     ];
-  }
-
-  /// That this is beta, at the top of the page that manages it.
-  ///
-  /// A row of its own as well as the mark on the title. The settings list
-  /// that reached here already carries the mark, and what a mark cannot say
-  /// is the part that matters — that nothing here is guaranteed to work.
-  ///
-  /// Stays after the warning before an install has been dismissed: that one is
-  /// asked once and can be turned off, and this page would then be the only
-  /// place left that says it.
-  SettingsRow _buildLinuxBeta() {
-    return SettingsRow(
-      'Beta',
-      () => ListTile(
-        leading: const Icon(Icons.science_outlined),
-        title: const Text('Beta'),
-        subtitle: Text(l10n.betaTip, style: UIs.textGrey),
-      ),
-      keywords: l10n.betaTip,
-    );
   }
 
   /// Every system installed, and a row to add another.
