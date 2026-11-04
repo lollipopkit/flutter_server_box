@@ -30,6 +30,12 @@
     syncLocaleToUrl(next)
   }
 
+  $effect(() => {
+    document.documentElement.lang = $LL.meta.lang()
+    document.title = `${$LL.themes.storeTitle()} — ServerBox`
+    document.querySelector('meta[name="description"]')?.setAttribute('content', $LL.themes.storeSubtitle())
+  })
+
   // --- list ---
   let query = $state('')
   let modeFilter = $state('all')
@@ -135,6 +141,12 @@
     history.replaceState(null, '', `${location.pathname}${location.search}${hashOf(openId, key, detailMode)}`)
   }
 
+  function closeDetail(event) {
+    event.preventDefault()
+    history.pushState(null, '', `${location.pathname}${location.search}`)
+    readHash()
+  }
+
   onMount(() => {
     syncLocaleToUrl(locale)
     readHash()
@@ -175,7 +187,10 @@
 
 <main class="site">
   <header class="site-nav" id="top">
-    <a class="brand" href={`/?lang=${locale}`}>ServerBox</a>
+    <a class="brand" href={`/?lang=${locale}`}>
+      <img src="/app_icon.png" alt="" width="26" height="26" />
+      ServerBox
+    </a>
     <nav>
       <a href={`/?lang=${locale}#features`}>{$LL.nav.features()}</a>
       <a href={`/os/?lang=${locale}`}>{$LL.nav.os()}<span class="beta-tag">{$LL.nav.beta()}</span></a>
@@ -201,7 +216,7 @@
         <p>{$LL.themes.loadFailed()}</p>
         <div class="store-actions">
           <button type="button" class="download-icon-btn" onclick={() => attempt++}>{$LL.themes.retry()}</button>
-          <a class="download-icon-btn" href="#">{$LL.themes.back()}</a>
+          <a class="download-icon-btn" href={`/themes/?lang=${locale}`} onclick={closeDetail}>{$LL.themes.back()}</a>
         </div>
       </div>
     </section>
@@ -218,7 +233,7 @@
     {@const d = m.components.dialog ?? {}}
     {@const sh = m.components.sheet ?? {}}
     <section class="page-section store-detail">
-      <a class="download-icon-btn store-back" href="#">
+      <a class="download-icon-btn store-back" href={`/themes/?lang=${locale}`} onclick={closeDetail}>
         <ArrowLeft size={14} strokeWidth={1.8} aria-hidden="true" />
         <span>{$LL.themes.back()}</span>
       </a>
@@ -514,6 +529,7 @@
     <span>© 2026 lollipopkit</span>
     <div class="footer-links">
       <a href={`/?lang=${locale}`}>ServerBox</a>
+      <a href="/docs/">{$LL.nav.docs()}</a>
       <a href="https://github.com/lollipopkit/flutter_server_box">GitHub</a>
       <a href="https://github.com/lollipopkit/flutter_server_box/tree/main/store">store/</a>
     </div>
