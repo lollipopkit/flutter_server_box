@@ -1,44 +1,62 @@
-import 'dart:convert';
-
 import 'package:server_box/core/utils/privileged_exec.dart';
 import 'package:server_box/data/admin/command_output.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/storage.dart';
+import 'package:server_box/data/model/server/sudo_error.dart';
 import 'package:server_box/src/rust/api/storage.dart' as ffi;
 
-final class StorageManagerException implements Exception {
-  const StorageManagerException(this.code, {this.device, this.why, this.detail});
+/// Why a storage read or change did not happen. Sudo refusing the password
+/// is [SudoRejected].
+sealed class StorageFailure implements Exception {
+  const StorageFailure();
+}
 
-  final String code;
-  final String? device;
-  final String? why;
-  final String? detail;
+/// `sbm_parser::storage` refused the action as given.
+final class StorageInvalid extends StorageFailure {
+  const StorageInvalid(this.error);
+
+  final StorageError error;
 
   @override
-  String toString() => detail ?? code;
+  String toString() => error.name;
+}
+
+/// The machine, as read just before, does not allow it.
+final class StorageRefused extends StorageFailure {
+  const StorageRefused(this.refusal);
+
+  final Refusal refusal;
+
+  @override
+  String toString() => refusal.error;
+}
+
+/// lsblk answered nothing the view could be read from.
+final class StorageUnreadable extends StorageFailure {
+  const StorageUnreadable();
+
+  @override
+  String toString() => 'Unable to read storage';
+}
+
+/// The command ran and failed; [detail] is the last line it printed.
+final class StorageCommandFailed extends StorageFailure {
+  const StorageCommandFailed(this.detail);
+
+  final String detail;
+
+  @override
+  String toString() => detail;
 }
 
 /// Runs the Rust storage parser and scripts; policy remains in `sbm_parser`.
 abstract final class StorageManager {
-  static Future<StorageView> view(CommandExec exec) async =>
-      StorageView.fromJson(jsonDecode(await _viewJson(exec)) as Map<String, Object?>);
-
-  /// The view as Rust parsed it. [act] checks against this JSON itself, so
-  /// the check sees every field `sbm_parser` reads, whatever the Dart model
-  /// keeps.
-  static Future<String> _viewJson(CommandExec exec) async {
+  static Future<StorageView> view(CommandExec exec) async {
     final result = await exec.run(ffi.storageViewScript(), entry: 'sh');
     if (!result.succeeded) {
-      throw StorageManagerException(
-        'failed',
-        detail: lastOutputLine(result.combined, 'Unable to read storage'),
-      );
+      throw StorageCommandFailed(lastOutputLine(result.combined, 'Unable to read storage'));
     }
-    try {
-      return await ffi.parseStorageViewJson(raw: result.stdout);
-    } on ffi.StorageFfiError catch (e) {
-      throw StorageManagerException(e.code);
-    }
+    return await ffi.storageParseView(raw: result.stdout) ?? (throw const StorageUnreadable());
   }
 
   static Future<List<DiskHealth>> health(
@@ -52,23 +70,8 @@ abstract final class StorageManager {
       isRoot: isRoot,
       password: password,
     );
-    if (!result.succeeded) {
-      throw StorageManagerException(
-        !isRoot && result.sudoRejected
-            ? 'sudo_rejected'
-            : 'failed',
-        detail: lastOutputLine(result.combined, 'Unable to read disk health'),
-      );
-    }
-    try {
-      final json = await ffi.parseStorageHealthJson(raw: result.stdout);
-      return [
-        for (final item in jsonDecode(json) as List)
-          DiskHealth.fromJson(item as Map<String, Object?>),
-      ];
-    } on ffi.StorageFfiError catch (e) {
-      throw StorageManagerException(e.code);
-    }
+    _check(result, fallback: 'Unable to read disk health');
+    return ffi.storageParseHealth(raw: result.stdout);
   }
 
   static Future<void> act(
@@ -79,51 +82,28 @@ abstract final class StorageManager {
     String? passphrase,
   }) async {
     // The page's view may be stale: the check reads the machine again.
-    final actionJson = jsonEncode(action.toJson());
-    final refusalJson = ffi.storageCheckJson(
-      viewJson: await _viewJson(exec),
-      actionJson: actionJson,
-    );
-    if (refusalJson != null) {
-      try {
-        final refusal = StorageRefusal.fromJson(
-          jsonDecode(refusalJson) as Map<String, Object?>,
-        );
-        throw StorageManagerException(
-          refusal.error,
-          device: refusal.device,
-          why: refusal.why,
-        );
-      } on FormatException {
-        throw const StorageManagerException('malformed');
+    final current = await view(exec);
+    final String script;
+    try {
+      if (ffi.storageCheck(view: current, action: action) case final refusal?) {
+        throw StorageRefused(refusal);
       }
+      script = ffi.storageActionScript(action: action, passphrase: passphrase);
+    } on StorageError catch (e) {
+      throw StorageInvalid(e);
     }
-
-    final script = _actionScript(actionJson, passphrase);
     final result = await PrivilegedExec.run(
       exec,
       script,
       isRoot: isRoot,
       password: password,
     );
-    if (!result.succeeded) {
-      throw StorageManagerException(
-        !isRoot && result.sudoRejected
-            ? 'sudo_rejected'
-            : 'failed',
-        detail: lastOutputLine(result.combined, 'Storage action failed'),
-      );
-    }
+    _check(result, fallback: 'Storage action failed');
   }
 
-  static String _actionScript(String actionJson, String? passphrase) {
-    try {
-      return ffi.storageActionScript(
-        actionJson: actionJson,
-        passphrase: passphrase,
-      );
-    } on ffi.StorageFfiError catch (e) {
-      throw StorageManagerException(e.code);
-    }
+  static void _check(ExecResult result, {required String fallback}) {
+    if (result.succeeded) return;
+    result.throwIfSudoRejected();
+    throw StorageCommandFailed(lastOutputLine(result.combined, fallback));
   }
 }

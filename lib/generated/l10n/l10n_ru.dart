@@ -3014,6 +3014,9 @@ class AppLocalizationsRu extends AppLocalizations {
       'Целевой хост не может содержать пробелы или переносы строки.';
 
   @override
+  String get remoteDesktopProtocolInvalid => 'Unsupported protocol.';
+
+  @override
   String get remoteDesktopCredentialInvalid =>
       'Имя пользователя и домен — не более 256 символов, без переносов строки.';
 
@@ -6420,6 +6423,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get storageTooFewDevices => 'Not enough valid devices were selected.';
+
+  @override
+  String get storageKeyRequired => 'A passphrase is required.';
 
   @override
   String get storageExpand => 'Расширить';

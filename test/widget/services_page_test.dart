@@ -42,7 +42,8 @@ ServiceUnit _unit(
 }) {
   return ServiceUnit(
     name: name,
-    type: type,
+    fullName: '$name.${type.name}',
+    unitType: type,
     scope: scope,
     state: state,
     description: 'The $name unit, described at some length to test ellipsis',
@@ -51,12 +52,9 @@ ServiceUnit _unit(
     result: result,
     exitStatus: exitStatus,
     memoryBytes: memory,
-    since: since == null ? null : DateTime.now().subtract(since),
-    actions: [
-      for (final a in ffi.serviceActions(state: state.name, enabled: unitFileState == 'enabled'))
-        ServiceAction.values.byName(a),
-    ],
-    needsAttention: ffi.serviceNeedsAttention(state: state.name),
+    sinceMillis: since == null ? null : DateTime.now().subtract(since).millisecondsSinceEpoch,
+    actions: ffi.serviceActions(state: state, enabled: unitFileState == 'enabled'),
+    needsAttention: ffi.serviceNeedsAttention(state: state),
   );
 }
 

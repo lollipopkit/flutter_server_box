@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/admin/shares_manager.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/shares.dart';
+import 'package:server_box/data/model/server/sudo_error.dart';
 import 'package:server_box/src/rust/api/shares.dart' as ffi;
 
 import '../../helpers/rust_lib_helper.dart';
@@ -104,7 +105,7 @@ void main() {
       isRoot: true,
     );
 
-    expect(exec.scripts[0], ffi.sharesSmbScript(sharesJson: '[${_jsonShare(managed)}]'));
+    expect(exec.scripts[0], ffi.sharesSmbScript(shares: [managed]));
     expect(exec.scripts[1], ffi.sharesReadScript());
   });
 
@@ -135,9 +136,7 @@ void main() {
     await expectLater(
       SharesManager.setNfs(notFolder, [managed], isRoot: true),
       throwsA(
-        isA<SharesManagerException>()
-            .having((error) => error.code, 'code', 'notAFolder')
-            .having((error) => error.path, 'path', '/srv/missing'),
+        isA<SharesNotAFolder>().having((error) => error.path, 'path', '/srv/missing'),
       ),
     );
 
@@ -151,14 +150,12 @@ void main() {
     await expectLater(
       SharesManager.setNfs(refused, [managed], isRoot: true),
       throwsA(
-        isA<SharesManagerException>()
-            .having((error) => error.code, 'code', 'refused')
-            .having((error) => error.detail, 'detail', 'configuration rejected'),
+        isA<SharesRefused>().having((error) => error.detail, 'detail', 'configuration rejected'),
       ),
     );
   });
 
-  test('sudo refusing a non-root caller is sudo_rejected, an exit 2 is not', () async {
+  test('sudo refusing a non-root caller is SudoRejected, an exit 2 is not', () async {
     const share = SmbShare(
       name: 'photos',
       path: '/srv/photos',
@@ -175,11 +172,7 @@ void main() {
     ]);
     await expectLater(
       SharesManager.setSmb(refused, [share], isRoot: false),
-      throwsA(isA<SharesManagerException>().having(
-        (error) => error.code,
-        'code',
-        'sudo_rejected',
-      )),
+      throwsA(isA<SudoRejected>()),
     );
 
     final nonRoot = _QueueExec([
@@ -187,11 +180,7 @@ void main() {
     ]);
     await expectLater(
       SharesManager.setSmb(nonRoot, [share], isRoot: false),
-      throwsA(isA<SharesManagerException>().having(
-        (error) => error.code,
-        'code',
-        'failed',
-      )),
+      throwsA(isA<SharesCommandFailed>()),
     );
 
     final root = _QueueExec([
@@ -199,14 +188,8 @@ void main() {
     ]);
     await expectLater(
       SharesManager.setSmb(root, [share], isRoot: true),
-      throwsA(isA<SharesManagerException>().having(
-        (error) => error.code,
-        'code',
-        'failed',
-      )),
+      throwsA(isA<SharesCommandFailed>()),
     );
   });
 }
 
-String _jsonShare(SmbShare share) =>
-    '{"name":"${share.name}","path":"${share.path}","comment":null,"read_only":true,"guest":false,"users":[],"time_machine":false,"recycle":false,"managed":true}';

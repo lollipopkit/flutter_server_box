@@ -63,8 +63,8 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
   Completer<void>? _refreshCompleter;
   final _searchCtrl = TextEditingController();
 
-  PsResult _result = const PsResult(procs: []);
-  PsResult? _lastValidResult;
+  PsView _result = ProcTable.empty;
+  PsView? _lastValidResult;
   String? _loadErrorMessage;
   bool _hasLoaded = false;
   bool _isRefreshing = false;
@@ -83,7 +83,7 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
   /// The one row showing its command line and actions. Held as the process,
   /// not the PID, so a PID reused between refreshes does not open on whatever
   /// took the number.
-  Proc? _expanded;
+  ProcRow? _expanded;
 
   late final _provider = serverProvider(widget.args.spi.id);
 
@@ -146,7 +146,7 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
       final serverState = ref.read(_provider);
       final systemType = serverState.status.system;
       if (!_canRunProcessCmd(serverState)) {
-        _result = const PsResult(procs: []);
+        _result = ProcTable.empty;
         _loadErrorMessage = libL10n.disconnected;
         _hasLoaded = true;
         if (userTriggered && mounted) {
@@ -167,7 +167,7 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
           .combined;
       if (!mounted) return;
       if (result.trim().isEmpty) {
-        _result = const PsResult(procs: []);
+        _result = ProcTable.empty;
         _loadErrorMessage = libL10n.empty;
         _hasLoaded = true;
         if (userTriggered) Toast.show(libL10n.empty);
@@ -175,7 +175,7 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
       }
 
       final requestedSort = _procSortMode;
-      final parsed = await PsResult.parse(
+      final parsed = await ProcTable.parse(
         result,
         systemType,
         sort: requestedSort,
@@ -184,7 +184,7 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
       );
       if (!mounted) return;
       if (parsed.issue != null) {
-        _result = PsResult(procs: const [], issue: parsed.issue);
+        _result = ProcTable.failed(parsed.issue);
         _loadErrorMessage = null;
         _hasLoaded = true;
         return;
@@ -202,7 +202,7 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
       if (mounted && (userTriggered || !_hasLoaded)) {
         Toast.error(libL10n.error);
       }
-      _result = const PsResult(procs: []);
+      _result = ProcTable.empty;
       _loadErrorMessage = libL10n.error;
       _hasLoaded = true;
     } catch (e, s) {
@@ -210,7 +210,7 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
       if (mounted && (userTriggered || !_hasLoaded)) {
         Toast.error(libL10n.error);
       }
-      _result = const PsResult(procs: []);
+      _result = ProcTable.empty;
       _loadErrorMessage = libL10n.error;
       _hasLoaded = true;
     } finally {
@@ -533,10 +533,10 @@ extension _ProcessPageWidgets on _ProcessPageState {
         padding: const EdgeInsets.only(bottom: 40),
         itemCount: procs.length,
         itemBuilder: (_, index) {
-          final proc = procs[index];
+          final row = procs[index];
           return layout.wide
-              ? _buildWideRow(proc, layout, system)
-              : _buildNarrowRow(proc, system);
+              ? _buildWideRow(row, layout, system)
+              : _buildNarrowRow(row, system);
         },
       ),
     );
@@ -614,10 +614,10 @@ extension _ProcessPageWidgets on _ProcessPageState {
     );
   }
 
-  Widget _buildWideRow(Proc proc, _ProcessLayout layout, SystemType system) {
+  Widget _buildWideRow(ProcRow row, _ProcessLayout layout, SystemType system) {
     final scheme = Theme.of(context).colorScheme;
-    final expanded = _isExpanded(proc);
-    final canStop = proc.killable && _result.signals.isNotEmpty;
+    final expanded = _isExpanded(row);
+    final canStop = row.killable && _result.signals.isNotEmpty;
     final dim = TextStyle(color: scheme.onSurfaceVariant);
     Widget end(String text, {TextStyle? style}) => Text(
       text,
@@ -640,29 +640,29 @@ extension _ProcessPageWidgets on _ProcessPageState {
             ),
             child: _tableLine(
               layout,
-              pid: Text('${proc.pid}', style: _monoStyle(13)),
+              pid: Text('${row.proc.pid}', style: _monoStyle(13)),
               name: Text(
-                proc.command.isEmpty ? '—' : proc.command,
+                row.proc.command.isEmpty ? '—' : row.proc.command,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: _monoStyle(13).copyWith(
-                  color: proc.isKernelThread ? scheme.onSurfaceVariant : null,
+                  color: row.isKernelThread ? scheme.onSurfaceVariant : null,
                 ),
               ),
               user: Text(
-                proc.user ?? '—',
+                row.proc.user ?? '—',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontSize: 13),
               ),
-              cpu: _CpuCell(percent: proc.cpu),
+              cpu: _CpuCell(percent: row.proc.cpu),
               mem: end(
-                _formatPercent(proc.mem),
-                style: _isIdle(proc.mem) ? dim : null,
+                _formatPercent(row.proc.mem),
+                style: _isIdle(row.proc.mem) ? dim : null,
               ),
-              rss: end(_formatRss(proc)),
-              read: end(_formatNullableSpeed(proc.readSpeed)),
-              write: end(_formatNullableSpeed(proc.writeSpeed)),
+              rss: end(_formatRss(row)),
+              read: end(_formatNullableSpeed(row.proc.readSpeed)),
+              write: end(_formatNullableSpeed(row.proc.writeSpeed)),
               action: expanded
                   ? Icon(
                       Icons.expand_less,
@@ -690,7 +690,7 @@ extension _ProcessPageWidgets on _ProcessPageState {
                     color: scheme.error,
                   ),
                   onTap: () =>
-                      _confirmKill(proc, system, _defaultSignal(system)),
+                      _confirmKill(row, system, _defaultSignal(system)),
                 ),
               ),
             ),
@@ -706,7 +706,7 @@ extension _ProcessPageWidgets on _ProcessPageState {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          InkWell(onTap: () => _toggleExpanded(proc), child: line),
+          InkWell(onTap: () => _toggleExpanded(row), child: line),
           if (expanded)
             Padding(
               padding: const EdgeInsets.fromLTRB(
@@ -715,7 +715,7 @@ extension _ProcessPageWidgets on _ProcessPageState {
                 _kPad,
                 13,
               ),
-              child: _buildDetail(proc, system, wide: true),
+              child: _buildDetail(row, system, wide: true),
             ),
         ],
       ),
@@ -725,17 +725,17 @@ extension _ProcessPageWidgets on _ProcessPageState {
   /// Name and CPU on the first line, where the eye runs down the page; PID,
   /// user, memory and RSS under them. Behind both, a bar as wide as the CPU
   /// share, which is what makes a busy row findable before any number is read.
-  Widget _buildNarrowRow(Proc proc, SystemType system) {
+  Widget _buildNarrowRow(ProcRow row, SystemType system) {
     final scheme = Theme.of(context).colorScheme;
-    final expanded = _isExpanded(proc);
-    final share = ((proc.cpu ?? 0) / 100).clamp(0.0, 1.0);
+    final expanded = _isExpanded(row);
+    final share = ((row.proc.cpu ?? 0) / 100).clamp(0.0, 1.0);
     final barColor = _kCpuColor.withValues(alpha: 0.2);
     final secondary = [
-      if (proc.mem != null) _formatPercent(proc.mem),
-      if (proc.rssKb != null) _formatRss(proc),
+      if (row.proc.mem != null) _formatPercent(row.proc.mem),
+      if (row.rssKb != null) _formatRss(row),
     ].join(' · ');
 
-    final row = Padding(
+    final content = Padding(
       padding: const EdgeInsets.symmetric(horizontal: _kPad, vertical: 9),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -746,12 +746,12 @@ extension _ProcessPageWidgets on _ProcessPageState {
             children: [
               Expanded(
                 child: Text(
-                  proc.name,
+                  row.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: _monoStyle(14).copyWith(
                     fontWeight: FontWeight.w500,
-                    color: proc.isKernelThread
+                    color: row.isKernelThread
                         ? scheme.onSurfaceVariant
                         : scheme.onSurface,
                   ),
@@ -759,7 +759,7 @@ extension _ProcessPageWidgets on _ProcessPageState {
               ),
               const SizedBox(width: 9),
               Text(
-                proc.cpu == null ? '' : _formatPercent(proc.cpu),
+                row.proc.cpu == null ? '' : _formatPercent(row.proc.cpu),
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -773,7 +773,7 @@ extension _ProcessPageWidgets on _ProcessPageState {
             children: [
               Expanded(
                 child: Text(
-                  ['${proc.pid}', ?proc.user].join('   '),
+                  ['${row.proc.pid}', ?row.proc.user].join('   '),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: UIs.text12Grey.copyWith(
@@ -802,9 +802,9 @@ extension _ProcessPageWidgets on _ProcessPageState {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           InkWell(
-            onTap: () => _toggleExpanded(proc),
+            onTap: () => _toggleExpanded(row),
             child: expanded || share <= 0
-                ? row
+                ? content
                 : DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -812,13 +812,13 @@ extension _ProcessPageWidgets on _ProcessPageState {
                         stops: [0, share, share],
                       ),
                     ),
-                    child: row,
+                    child: content,
                   ),
           ),
           if (expanded)
             Padding(
               padding: const EdgeInsets.fromLTRB(_kPad, 0, _kPad, 13),
-              child: _buildDetail(proc, system, wide: false),
+              child: _buildDetail(row, system, wide: false),
             ),
         ],
       ),
@@ -830,29 +830,29 @@ extension _ProcessPageWidgets on _ProcessPageState {
   /// Stopping is offered here and on a hovered row, not on every row: a red
   /// button on each of a hundred lines was the loudest thing on the page and
   /// one slip from stopping the wrong process.
-  Widget _buildDetail(Proc proc, SystemType system, {required bool wide}) {
+  Widget _buildDetail(ProcRow row, SystemType system, {required bool wide}) {
     final scheme = Theme.of(context).colorScheme;
     final meta = <(String, String)>[
-      if (proc.ppid case final ppid?) ('PPID', '$ppid'),
-      if (proc.elapsedSeconds case final seconds?)
+      if (row.proc.ppid case final ppid?) ('PPID', '$ppid'),
+      if (row.proc.elapsedSeconds case final seconds?)
         (
           context.l10n.processStarted,
           DateTime.now().subtract(Duration(seconds: seconds)).simple(),
         ),
-      if (proc.threads case final threads?) (context.l10n.processThreads, '$threads'),
-      if (proc.nice case final nice?) ('nice', '$nice'),
-      if (proc.stat case final stat? when stat.isNotEmpty)
+      if (row.proc.threads case final threads?) (context.l10n.processThreads, '$threads'),
+      if (row.proc.nice case final nice?) ('nice', '$nice'),
+      if (row.proc.stat case final stat? when stat.isNotEmpty)
         (context.l10n.status, _stateLabel(stat)),
-      if (proc.time case final time? when time.isNotEmpty) ('TIME', time),
-      if (proc.vsz != null) ('VSZ', _formatVsz(proc)),
-      if (proc.tty case final tty? when tty != '?' && tty != '??')
+      if (row.proc.time case final time? when time.isNotEmpty) ('TIME', time),
+      if (row.proc.vsz != null) ('VSZ', _formatVsz(row)),
+      if (row.proc.tty case final tty? when tty != '?' && tty != '??')
         ('TTY', tty),
-      if (!wide && proc.readSpeed != null)
-        ('R/s', _formatNullableSpeed(proc.readSpeed)),
-      if (!wide && proc.writeSpeed != null)
-        ('W/s', _formatNullableSpeed(proc.writeSpeed)),
+      if (!wide && row.proc.readSpeed != null)
+        ('R/s', _formatNullableSpeed(row.proc.readSpeed)),
+      if (!wide && row.proc.writeSpeed != null)
+        ('W/s', _formatNullableSpeed(row.proc.writeSpeed)),
     ];
-    final signals = proc.killable ? _result.signals : const <ProcSignal>[];
+    final signals = row.killable ? _result.signals : const <ProcSignal>[];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -864,7 +864,7 @@ extension _ProcessPageWidgets on _ProcessPageState {
             borderRadius: BorderRadius.circular(7),
           ),
           child: SelectableText(
-            proc.command.isEmpty ? '—' : proc.command,
+            row.proc.command.isEmpty ? '—' : row.proc.command,
             style: _monoStyle(12).copyWith(
               color: scheme.onSurface,
               height: 1.5,
@@ -902,12 +902,12 @@ extension _ProcessPageWidgets on _ProcessPageState {
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             FilledButton.tonalIcon(
-              onPressed: () => Pfs.copy(proc.command),
+              onPressed: () => Pfs.copy(row.proc.command),
               icon: const Icon(Icons.content_copy, size: 15),
               label: Text(libL10n.copy),
             ),
             for (final signal in signals)
-              _buildStopButton(proc, system, signal, wide: wide),
+              _buildStopButton(row, system, signal, wide: wide),
           ],
         ),
       ],
@@ -915,7 +915,7 @@ extension _ProcessPageWidgets on _ProcessPageState {
   }
 
   Widget _buildStopButton(
-    Proc proc,
+    ProcRow row,
     SystemType system,
     ProcSignal signal, {
     required bool wide,
@@ -925,7 +925,7 @@ extension _ProcessPageWidgets on _ProcessPageState {
     final polite = signal == ProcSignal.term || system == SystemType.windows;
     final onPressed = _isRefreshing
         ? null
-        : () => _confirmKill(proc, system, signal);
+        : () => _confirmKill(row, system, signal);
     if (!polite) {
       return TextButton(
         onPressed: onPressed,
@@ -970,27 +970,27 @@ extension _ProcessPageWidgets on _ProcessPageState {
 extension _ProcessPageUtils on _ProcessPageState {
   int get _kernelCount => _result.procs.where((p) => p.isKernelThread).length;
 
-  List<Proc> _visibleProcs() {
+  List<ProcRow> _visibleProcs() {
     final needle = _query.trim().toLowerCase();
     return _result.procs
-        .where((proc) => _showKernelThreads || !proc.isKernelThread)
+        .where((row) => _showKernelThreads || !row.isKernelThread)
         .where(
-          (proc) =>
+          (row) =>
               needle.isEmpty ||
-              '${proc.pid}' == needle ||
-              proc.command.toLowerCase().contains(needle) ||
-              (proc.user?.toLowerCase().contains(needle) ?? false),
+              '${row.proc.pid}' == needle ||
+              row.proc.command.toLowerCase().contains(needle) ||
+              (row.proc.user?.toLowerCase().contains(needle) ?? false),
         )
         .toList(growable: false);
   }
 
-  bool _isExpanded(Proc proc) {
+  bool _isExpanded(ProcRow row) {
     final expanded = _expanded;
-    return expanded != null && _isSameProcess(expanded, proc);
+    return expanded != null && _isSameProcess(expanded, row);
   }
 
-  void _toggleExpanded(Proc proc) {
-    _rebuild(() => _expanded = _isExpanded(proc) ? null : proc);
+  void _toggleExpanded(ProcRow row) {
+    _rebuild(() => _expanded = _isExpanded(row) ? null : row);
   }
 
   String _sortLabel(ProcSortMode mode) => switch (mode) {
@@ -1043,16 +1043,16 @@ extension _ProcessPageUtils on _ProcessPageState {
   String _formatPercent(double? value) =>
       value == null ? '—' : '${value.toStringAsFixed(1)}%';
 
-  String _formatRss(Proc proc) {
-    final rssKb = proc.rssKb;
+  String _formatRss(ProcRow row) {
+    final rssKb = row.rssKb;
     if (rssKb == null) return '—';
     return (rssKb * 1024).bytes2Str;
   }
 
   /// Busybox prints a large VSZ with a unit suffix (`12m`), which is not a
   /// number of KiB and is shown as it came.
-  String _formatVsz(Proc proc) {
-    final raw = proc.vsz!;
+  String _formatVsz(ProcRow row) {
+    final raw = row.proc.vsz!;
     final kib = int.tryParse(raw);
     return kib == null ? raw : (kib * 1024).bytes2Str;
   }
@@ -1068,15 +1068,15 @@ extension _ProcessPageUtils on _ProcessPageState {
     return conn == ServerConn.connected || conn == ServerConn.finished;
   }
 
-  bool _isSameProcess(Proc expected, Proc current) {
-    if (expected.pid != current.pid) return false;
-    if (expected.startId != null || current.startId != null) {
-      return expected.startId != null && expected.startId == current.startId;
+  bool _isSameProcess(ProcRow expected, ProcRow current) {
+    if (expected.proc.pid != current.proc.pid) return false;
+    if (expected.proc.startId != null || current.proc.startId != null) {
+      return expected.proc.startId != null && expected.proc.startId == current.proc.startId;
     }
-    if (expected.start != null || current.start != null) {
-      return expected.start != null && expected.start == current.start;
+    if (expected.proc.start != null || current.proc.start != null) {
+      return expected.proc.start != null && expected.proc.start == current.proc.start;
     }
-    return expected.command == current.command;
+    return expected.proc.command == current.proc.command;
   }
 }
 
@@ -1084,19 +1084,19 @@ extension _ProcessPageUtils on _ProcessPageState {
 
 extension _ProcessPageActions on _ProcessPageState {
   Future<void> _confirmKill(
-    Proc proc,
+    ProcRow row,
     SystemType system,
     ProcSignal signal,
   ) async {
     final action = _signalLabel(signal, system, withName: true);
     final confirmed = await context.showRoundDialog<bool>(
       title: libL10n.attention,
-      child: Text(libL10n.askContinue('$action ${proc.name} (${proc.pid})')),
+      child: Text(libL10n.askContinue('$action ${row.name} (${row.proc.pid})')),
       actions: Btnx.cancelRedOk,
     );
     if (confirmed != true || !mounted) return;
 
-    final command = ProcKill.command(proc, system, signal);
+    final command = ProcKill.command(row.proc, system, signal);
     if (command == null) {
       Toast.show(libL10n.notAvailable);
       return;

@@ -1,10 +1,10 @@
 import 'dart:collection';
-import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/admin/storage_manager.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/storage.dart';
+import 'package:server_box/data/model/server/sudo_error.dart';
 import 'package:server_box/src/rust/api/storage.dart' as ffi;
 
 import '../../helpers/rust_lib_helper.dart';
@@ -67,48 +67,57 @@ void main() {
     expect(view.busy['/dev/sda1'], 'mounted');
   });
 
-  test('every action constructor serializes to a Rust-recognized payload', () {
+  test('every action builds a script in Rust', () {
     final actions = <StorageAction>[
-      StorageAction.partition('/dev/sdb'),
-      StorageAction.format('/dev/sdb', 'ext4', label: 'data', encrypt: true),
-      StorageAction.mount('/dev/sdb', '/mnt/data'),
-      StorageAction.unmount('/mnt/data'),
-      StorageAction.createRaid('md0', 1, ['/dev/sdb', '/dev/sdc']),
-      StorageAction.addToRaid('md0', '/dev/sdb'),
-      StorageAction.removeFromRaid('md0', '/dev/sdb'),
-      StorageAction.deleteRaid('md0'),
-      StorageAction.growRaid('md0', '/dev/sdb'),
-      StorageAction.createPool('tank', 'mirror', ['/dev/sdb', '/dev/sdc']),
-      StorageAction.addToPool('tank', 'mirror', ['/dev/sdb', '/dev/sdc']),
-      StorageAction.scrubPool('tank'),
-      StorageAction.destroyPool('tank'),
-      StorageAction.replaceInPool('tank', '/dev/sdb', '/dev/sdc'),
-      StorageAction.attachToPool('tank', '/dev/sdb', '/dev/sdc'),
-      StorageAction.addSpare('tank', ['/dev/sdb']),
-      StorageAction.removeFromPool('tank', '/dev/sdb'),
-      StorageAction.onlineInPool('tank', '/dev/sdb'),
-      StorageAction.expandFilesystem('/dev/sdb'),
-      StorageAction.growPartition('/dev/sdb1'),
-      StorageAction.unlock('/dev/sdb'),
-      StorageAction.lock('/dev/sdb'),
-      StorageAction.smartTest('/dev/sdb'),
+      StorageAction.partition(device: '/dev/sdb'),
+      StorageAction.format(device: '/dev/sdb', fstype: 'ext4', label: 'data', encrypt: true),
+      StorageAction.mount(device: '/dev/sdb', mountpoint: '/mnt/data', persist: true, own: true),
+      StorageAction.unmount(mountpoint: '/mnt/data'),
+      StorageAction.createRaid(name: 'md0', level: 1, devices: ['/dev/sdb', '/dev/sdc']),
+      StorageAction.addToRaid(array: 'md0', device: '/dev/sdb'),
+      StorageAction.removeFromRaid(array: 'md0', device: '/dev/sdb'),
+      StorageAction.deleteRaid(array: 'md0'),
+      StorageAction.growRaid(array: 'md0', device: '/dev/sdb'),
+      StorageAction.createPool(name: 'tank', layout: 'mirror', devices: ['/dev/sdb', '/dev/sdc']),
+      StorageAction.addToPool(name: 'tank', layout: 'mirror', devices: ['/dev/sdb', '/dev/sdc']),
+      StorageAction.scrubPool(name: 'tank'),
+      StorageAction.destroyPool(name: 'tank'),
+      StorageAction.replaceInPool(name: 'tank', old: '/dev/sdb', new_: '/dev/sdc'),
+      StorageAction.attachToPool(name: 'tank', existing: '/dev/sdb', new_: '/dev/sdc'),
+      StorageAction.addSpare(name: 'tank', devices: ['/dev/sdb']),
+      StorageAction.removeFromPool(name: 'tank', device: '/dev/sdb'),
+      StorageAction.onlineInPool(name: 'tank', device: '/dev/sdb'),
+      StorageAction.expandFilesystem(device: '/dev/sdb'),
+      StorageAction.growPartition(device: '/dev/sdb1'),
+      StorageAction.unlock(device: '/dev/sdb'),
+      StorageAction.lock(device: '/dev/sdb'),
+      StorageAction.smartTest(device: '/dev/sdb', long: false),
     ];
 
     for (final action in actions) {
-      final json = jsonEncode(action.toJson());
-      expect(action.toJson()['action'], isA<String>());
       expect(
         () => ffi.storageActionScript(
-          actionJson: json,
-          passphrase: action.json['encrypt'] == true ||
-                  action.json['action'] == 'unlock'
-              ? 'long enough passphrase'
-              : null,
+          action: action,
+          passphrase: ffi.storageActionNeedsKey(action: action) ? 'long enough passphrase' : null,
         ),
         returnsNormally,
-        reason: json,
+        reason: '$action',
       );
     }
+  });
+
+  test('an action invalid as given is StorageInvalid, not a refusal', () async {
+    final exec = _QueueExec([
+      const ExecResult(exitCode: 0, stdout: _view, stderr: ''),
+    ]);
+    await expectLater(
+      StorageManager.act(
+        exec,
+        const StorageAction.mount(device: '/dev/sdb', mountpoint: 'relative', persist: false, own: false),
+        isRoot: true,
+      ),
+      throwsA(isA<StorageInvalid>().having((e) => e.error, 'error', StorageError.invalidMountpoint)),
+    );
   });
 
   test('act refuses a fresh view that says a device is in use', () async {
@@ -119,19 +128,19 @@ void main() {
     await expectLater(
       StorageManager.act(
         exec,
-        StorageAction.format('/dev/sda1', 'ext4'),
+        StorageAction.format(device: '/dev/sda1', fstype: 'ext4', encrypt: false),
         isRoot: false,
       ),
       throwsA(
-        isA<StorageManagerException>()
-            .having((error) => error.code, 'code', 'inUse')
-            .having((error) => error.device, 'device', '/dev/sda1'),
+        isA<StorageRefused>()
+            .having((error) => error.refusal.error, 'error', 'inUse')
+            .having((error) => error.refusal.device, 'device', '/dev/sda1'),
       ),
     );
     expect(exec.scripts, [ffi.storageViewScript()]);
   });
 
-  test('sudo refusing a non-root caller is sudo_rejected, an exit 2 is not', () async {
+  test('sudo refusing a non-root caller is SudoRejected, an exit 2 is not', () async {
     final refused = _QueueExec([
       const ExecResult(exitCode: 0, stdout: _view, stderr: ''),
       const ExecResult(exitCode: 1, stdout: '', stderr: 'sudo: a password is required'),
@@ -139,14 +148,10 @@ void main() {
     await expectLater(
       StorageManager.act(
         refused,
-        StorageAction.format('/dev/sdb', 'ext4'),
+        StorageAction.format(device: '/dev/sdb', fstype: 'ext4', encrypt: false),
         isRoot: false,
       ),
-      throwsA(isA<StorageManagerException>().having(
-        (error) => error.code,
-        'code',
-        'sudo_rejected',
-      )),
+      throwsA(isA<SudoRejected>()),
     );
 
     final nonRoot = _QueueExec([
@@ -156,14 +161,10 @@ void main() {
     await expectLater(
       StorageManager.act(
         nonRoot,
-        StorageAction.format('/dev/sdb', 'ext4'),
+        StorageAction.format(device: '/dev/sdb', fstype: 'ext4', encrypt: false),
         isRoot: false,
       ),
-      throwsA(isA<StorageManagerException>().having(
-        (error) => error.code,
-        'code',
-        'failed',
-      )),
+      throwsA(isA<StorageCommandFailed>()),
     );
 
     final root = _QueueExec([
@@ -173,14 +174,10 @@ void main() {
     await expectLater(
       StorageManager.act(
         root,
-        StorageAction.format('/dev/sdb', 'ext4'),
+        StorageAction.format(device: '/dev/sdb', fstype: 'ext4', encrypt: false),
         isRoot: true,
       ),
-      throwsA(isA<StorageManagerException>().having(
-        (error) => error.code,
-        'code',
-        'failed',
-      )),
+      throwsA(isA<StorageCommandFailed>()),
     );
   });
 }

@@ -134,12 +134,12 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
         startedAt: DateTime.now(),
         status: BenchmarkStatus.running,
         options: options,
-        runDir: ffi.benchRunDir(optionsJson: options.rustJson),
+        runDir: ffi.benchRunDir(options: options.rust),
       );
 
       final res = await exec.run(
-        ffi.benchLauncher(optionsJson: options.rustJson),
-        entry: ffi.benchStartEntry(optionsJson: options.rustJson, runId: run.id),
+        ffi.benchLauncher(options: options.rust),
+        entry: ffi.benchStartEntry(options: options.rust, runId: run.id),
       );
       if (!ffi.benchStarted(output: res.combined)) {
         throw StateError(

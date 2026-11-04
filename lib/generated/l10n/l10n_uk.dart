@@ -3016,6 +3016,9 @@ class AppLocalizationsUk extends AppLocalizations {
       'Цільовий хост не може містити пробілів або перенесень рядка.';
 
   @override
+  String get remoteDesktopProtocolInvalid => 'Unsupported protocol.';
+
+  @override
   String get remoteDesktopCredentialInvalid =>
       'Імʼя користувача й домен — не більше 256 символів, без перенесень рядка.';
 
@@ -6423,6 +6426,9 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get storageTooFewDevices => 'Not enough valid devices were selected.';
+
+  @override
+  String get storageKeyRequired => 'A passphrase is required.';
 
   @override
   String get storageExpand => 'Розширити';

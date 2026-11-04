@@ -3,7 +3,7 @@ title: 代码生成
 description: 使用代码生成工具生成 Dart、Flutter 和 Rust 绑定代码
 ---
 
-项目通过代码生成创建 immutable model 实现、JSON serializer、Riverpod provider、Hive adapter、本地化代码和 Rust bindings。修改源码后，请运行对应的生成器。
+项目通过代码生成创建 immutable model 实现、JSON serializer、Riverpod provider、本地化代码和 Rust bindings。修改源码后，请运行对应的生成器。
 
 ## 什么时候运行代码生成
 
@@ -11,12 +11,11 @@ description: 使用代码生成工具生成 Dart、Flutter 和 Rust 绑定代码
 
 - 带 `@freezed` 注解的 model
 - 带 `@JsonSerializable` 注解的 class
-- 当前生成 adapter 列表中的 Hive model
 - 带 `@riverpod` 注解的 provider
 - ARB 本地化文件
 - `crates/sbm_ffi/src/api` 下的 Rust API
 
-TODO：支持的升级范围不再需要 Hive migration reader 后，删除这些 reader。`lib/hive/legacy_adapters.dart` 中的 adapter 被排除在生成列表外，因为它们要读取旧版本创建的 box；不要用当前 model 重新生成。
+TODO：支持的升级范围不再需要 Hive 读取器后，删除 `lib/hive/` 中的读取器。
 
 ## Dart 代码生成
 
@@ -81,19 +80,9 @@ class MyNotifier extends _$MyNotifier {
 }
 ```
 
-### Hive adapter（`*.g.dart`）
+### Hive 读取器
 
-Hive adapter 生成器只处理当前生成列表中的 model：
-
-```dart
-@HiveType(typeId: 0)
-class ServerModel {
-  @HiveField(0)
-  final String id;
-}
-```
-
-`lib/hive/legacy_adapters.dart` 中的 adapter 是冻结的读取器。不要重新生成它们，也不要把含新增字段的 model 加入旧版生成列表：旧 box 中没有这些字段，新增 non-nullable 字段可能导致旧 box 无法读取。只有已发布版本写入的数据确实需要兼容时才修改冻结读取器，并同步更新迁移测试。
+Hive adapter 不再由生成器产生，model 上也没有 Hive 注解。`lib/hive/` 中的读取器（`legacy_adapters.dart`、`frozen_adapters.dart`、`spi_legacy_adapter.dart`）是手写并冻结的，每个只读取已发布版本写入的字节。旧 box 中没有之后新增的字段，按当前 model 写的读取器可能导致旧 box 无法读取。只有已发布版本写入的数据确实需要兼容时才修改它们，并同步更新迁移测试。
 
 ## Rust bindings（flutter_rust_bridge）
 

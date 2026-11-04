@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/service.dart';
 import 'package:server_box/src/rust/api/service.dart' as ffi;
@@ -39,13 +37,7 @@ final class ServiceManager {
     final result = await exec.run(ffi.serviceDetectScript(), entry: 'sh');
     if (!result.succeeded) throw CommandFailed('service detection', result);
     final probe = ffi.serviceParseProbe(raw: result.stdout);
-    return ServiceManagerProbe(
-      type: switch (probe.manager) {
-        final m? => ServiceManagerType.values.byName(m),
-        null => null,
-      },
-      description: probe.description,
-    );
+    return ServiceManagerProbe(type: probe.manager, description: probe.description);
   }
 
   /// One listing. Its commands are run at once — each is its own round trip
@@ -53,7 +45,7 @@ final class ServiceManager {
   /// that throws (a dropped connection) is a command that failed, not an
   /// unobserved error.
   Future<ServiceListing> list(CommandExec exec) async {
-    final commands = ffi.serviceListingCommands(managerName: type.name);
+    final commands = ffi.serviceListingCommands(manager: type);
     final outputs = await Future.wait([
       for (final c in commands) _run(exec, c),
     ]);
@@ -61,8 +53,7 @@ final class ServiceManager {
     // differenced against.
     final now = DateTime.now();
     try {
-      final json = await ffi.serviceParseListingJson(managerName: type.name, outputs: outputs);
-      return ServiceListing.fromJson(jsonDecode(json) as Map<String, Object?>).onDeviceClock(now);
+      return await ffi.serviceParseListing(manager: type, outputs: outputs, nowMillis: now.millisecondsSinceEpoch);
     } on String catch (detail) {
       throw ServiceManagerLoadException(detail);
     }
@@ -81,41 +72,33 @@ final class ServiceManager {
     }
   }
 
-  String _unit(ServiceUnit unit) => jsonEncode(unit.toJson());
-
   /// The command, without `sudo`; whether it needs root is [needsRoot].
   String commandFor(ServiceUnit unit, ServiceAction action) =>
-      ffi.serviceCommand(managerName: type.name, unitJson: _unit(unit), action: action.name);
+      ffi.serviceCommand(manager: type, unit: unit, action: action);
 
   /// A systemd user unit is the one that must not: `sudo systemctl --user`
   /// talks to root's user manager, not this account's.
-  bool needsRoot(ServiceUnit unit) => ffi.serviceNeedsRoot(managerName: type.name, unitJson: _unit(unit));
+  bool needsRoot(ServiceUnit unit) => ffi.serviceNeedsRoot(manager: type, unit: unit);
 
   /// The last [lines] of the unit's log. Null where the manager keeps no log
   /// that can be read by unit.
   Future<ServiceLog?> recentLog(CommandExec exec, ServiceUnit unit, {int lines = 5}) async {
-    final command = ffi.serviceRecentLogCommand(managerName: type.name, unitJson: _unit(unit), lines: lines);
+    final command = ffi.serviceRecentLogCommand(manager: type, unit: unit, lines: lines);
     if (command == null) return null;
     final r = await exec.run(command);
-    final json = ffi.serviceParseRecentLogJson(
-      managerName: type.name,
-      stdout: r.stdout,
-      stderr: r.stderr,
-      succeeded: r.succeeded,
-    );
-    return json == null ? null : ServiceLog.fromJson(jsonDecode(json) as Map<String, Object?>);
+    return ffi.serviceParseRecentLog(manager: type, stdout: r.stdout, stderr: r.stderr, succeeded: r.succeeded);
   }
 
   /// A command to read the whole log in a terminal, null with no such log.
-  String? logCommand(ServiceUnit unit) => ffi.serviceLogCommand(managerName: type.name, unitJson: _unit(unit));
+  String? logCommand(ServiceUnit unit) => ffi.serviceLogCommand(manager: type, unit: unit);
 
   /// A command that prints the unit's definition.
   String definitionCommand(ServiceUnit unit) =>
-      ffi.serviceDefinitionCommand(managerName: type.name, unitJson: _unit(unit));
+      ffi.serviceDefinitionCommand(manager: type, unit: unit);
 
   /// What the manager itself says about the unit, for a terminal.
   String unitStatusCommand(ServiceUnit unit) =>
-      ffi.serviceUnitStatusCommand(managerName: type.name, unitJson: _unit(unit));
+      ffi.serviceUnitStatusCommand(manager: type, unit: unit);
 }
 
 /// [command] as typed into a terminal: prefixed with `sudo` when it needs root

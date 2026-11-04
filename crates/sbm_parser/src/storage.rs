@@ -848,11 +848,18 @@ pub fn pool_minimum(layout: &str) -> usize {
     }
 }
 
-/// An md level or pool layout one may pick, and the fewest devices it takes.
+/// An md level one may pick, and the fewest devices it takes.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Choice<T> {
-    pub value: T,
-    pub minimum: usize,
+pub struct RaidLevelChoice {
+    pub value: u8,
+    pub minimum: u32,
+}
+
+/// A pool layout one may pick, and the fewest devices it takes.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct PoolLayoutChoice {
+    pub value: String,
+    pub minimum: u32,
 }
 
 /// Host folders never mounted over.
@@ -1327,7 +1334,8 @@ pub struct StorageView {
     pub disks: Vec<BlockDevice>,
     /// Why each device may not be partitioned, formatted or built on
     /// ([`in_use`]).
-    pub busy: std::collections::BTreeMap<String, String>,
+    #[serde(serialize_with = "sorted")]
+    pub busy: std::collections::HashMap<String, String>,
     /// Devices mounted where the system lives ([`system_mounted`]).
     pub system: Vec<String>,
     /// What may be given to a new array or pool, or formatted, in the tree's
@@ -1337,7 +1345,8 @@ pub struct StorageView {
     /// For each of [`free`], the others it is or holds ([`overlapping`]):
     /// never picked together. Left out when there are none.
     #[serde(default)]
-    pub overlaps: std::collections::BTreeMap<String, Vec<String>>,
+    #[serde(serialize_with = "sorted")]
+    pub overlaps: std::collections::HashMap<String, Vec<String>>,
     /// Each disk's last partition with room after it ([`growable_partition`]).
     #[serde(default)]
     pub growable_partitions: Vec<String>,
@@ -1345,12 +1354,18 @@ pub struct StorageView {
     #[serde(default)]
     pub next_md: String,
     #[serde(default)]
-    pub raid_levels: Vec<Choice<u8>>,
+    pub raid_levels: Vec<RaidLevelChoice>,
     #[serde(default)]
-    pub pool_layouts: Vec<Choice<String>>,
+    pub pool_layouts: Vec<PoolLayoutChoice>,
     pub arrays: Vec<MdArray>,
     pub pools: Vec<Pool>,
     pub tools: Vec<String>,
+}
+
+/// A map written in key order, so the same machine reads as the same JSON.
+/// A `HashMap` in the model because FRB mirrors no ordered map.
+fn sorted<V: Serialize, S: serde::Serializer>(map: &std::collections::HashMap<String, V>, s: S) -> Result<S::Ok, S::Error> {
+    map.iter().collect::<std::collections::BTreeMap<_, _>>().serialize(s)
 }
 
 impl StorageView {
@@ -1407,8 +1422,8 @@ pub fn parse_view(stdout: &str) -> Option<StorageView> {
         overlaps,
         growable_partitions,
         next_md,
-        raid_levels: RAID_LEVELS.iter().map(|&value| Choice { value, minimum: raid_minimum(value) }).collect(),
-        pool_layouts: POOL_LAYOUTS.iter().map(|&l| Choice { value: l.to_string(), minimum: pool_minimum(l) }).collect(),
+        raid_levels: RAID_LEVELS.iter().map(|&value| RaidLevelChoice { value, minimum: raid_minimum(value) as u32 }).collect(),
+        pool_layouts: POOL_LAYOUTS.iter().map(|&l| PoolLayoutChoice { value: l.to_string(), minimum: pool_minimum(l) as u32 }).collect(),
         arrays,
         pools,
         tools: parse_tools(section("tools")),
@@ -1421,7 +1436,7 @@ fn is_disk(d: &BlockDevice) -> bool {
 }
 
 /// See [`StorageView::free`].
-fn free_devices(disks: &[BlockDevice], busy: &std::collections::BTreeMap<String, String>) -> Vec<String> {
+fn free_devices(disks: &[BlockDevice], busy: &std::collections::HashMap<String, String>) -> Vec<String> {
     disks
         .iter()
         .filter(|d| is_disk(d))
@@ -1881,8 +1896,8 @@ md127 : inactive sdg[0](S)\n      976630488 blocks super 1.2\n\nunused devices: 
         assert_eq!(v.free, ["/dev/sdc"]);
         assert!(v.overlaps.is_empty() && v.growable_partitions.is_empty());
         assert_eq!(v.next_md, "md1");
-        assert_eq!(v.raid_levels[2], Choice { value: 5, minimum: 3 });
-        assert_eq!(v.pool_layouts[0], Choice { value: "stripe".to_string(), minimum: 1 });
+        assert_eq!(v.raid_levels[2], RaidLevelChoice { value: 5, minimum: 3 });
+        assert_eq!(v.pool_layouts[0], PoolLayoutChoice { value: "stripe".to_string(), minimum: 1 });
         assert_eq!(parse_view("### lsblk\nlsblk: not found\n"), None);
 
         let format = |d: &str| StorageAction::Format { device: d.into(), fstype: "ext4".into(), label: None, encrypt: false };
@@ -1899,5 +1914,24 @@ md127 : inactive sdg[0](S)\n      976630488 blocks super 1.2\n\nunused devices: 
         assert!(s.starts_with("k=$(mktemp) && chmod 600 \"$k\" && trap 'rm -f \"$k\"' EXIT && printf %s 'it'\\''s a secret' > \"$k\""), "{s}");
         assert!(s.contains("cryptsetup open --key-file \"$k\" '/dev/sdc'"), "{s}");
         assert_eq!(luks.script_with_passphrase("short"), Err(StorageError::InvalidPassphrase));
+    }
+}
+
+#[cfg(test)]
+mod sorted_tests {
+    use super::*;
+
+    #[test]
+    fn busy_and_overlaps_serialize_in_key_order() {
+        let mut view = StorageView::default();
+        for d in ["/dev/sdc", "/dev/sda", "/dev/sdb"] {
+            view.busy.insert(d.into(), "mounted".into());
+            view.overlaps.insert(d.into(), vec![]);
+        }
+        let json = serde_json::to_string(&view).unwrap();
+        let a = json.find("\"/dev/sda\"").unwrap();
+        let b = json.find("\"/dev/sdb\"").unwrap();
+        let c = json.find("\"/dev/sdc\"").unwrap();
+        assert!(a < b && b < c, "{json}");
     }
 }

@@ -3,12 +3,30 @@
 //! The commands that install, start, watch, stop and clear a yabs run, and
 //! what a poll printed — the ones the monitor agent runs for its panel, for
 //! the app's benchmark page. The app runs them over its own connection.
-//! Options cross as `sbm_parser::bench::BenchOptions` JSON.
+//! Options are `sbm_parser::bench::BenchOptions`, mirrored.
 
-use sbm_parser::bench::{self, BenchOptions, BenchPollState};
+use flutter_rust_bridge::frb;
+use sbm_parser::bench::{self, BenchPollState};
+pub use sbm_parser::bench::{BenchOptions, GeekbenchVersion};
 
-fn options(json: &str) -> Result<BenchOptions, String> {
-    serde_json::from_str(json).map_err(|e| e.to_string())
+#[frb(mirror(GeekbenchVersion))]
+pub enum _GeekbenchVersion {
+    V4,
+    V5,
+    V6,
+    V7,
+}
+
+#[frb(mirror(BenchOptions))]
+pub struct _BenchOptions {
+    pub disk: bool,
+    pub network: bool,
+    pub reduced_network: bool,
+    pub cpu: bool,
+    pub geekbench_version: GeekbenchVersion,
+    pub ip_info: bool,
+    pub prefer_precompiled_binaries: bool,
+    pub work_dir: String,
 }
 
 /// The vendored yabs release, for the attribution the page shows.
@@ -49,21 +67,21 @@ pub fn bench_script_installed(output: String) -> bool {
 
 /// The directory a run happens in: the filesystem fio measures.
 #[flutter_rust_bridge::frb(sync)]
-pub fn bench_run_dir(options_json: String) -> Result<String, String> {
-    Ok(bench::run_dir(&options(&options_json)?.work_dir))
+pub fn bench_run_dir(options: BenchOptions) -> String {
+    bench::run_dir(&options.work_dir)
 }
 
 /// The launcher, sent on stdin to [`bench_start_entry`].
 #[flutter_rust_bridge::frb(sync)]
-pub fn bench_launcher(options_json: String) -> Result<String, String> {
-    Ok(bench::launcher(&options(&options_json)?))
+pub fn bench_launcher(options: BenchOptions) -> String {
+    bench::launcher(&options)
 }
 
 /// Writes the launcher and starts it detached; read the answer with
 /// [`bench_started`].
 #[flutter_rust_bridge::frb(sync)]
-pub fn bench_start_entry(options_json: String, run_id: String) -> Result<String, String> {
-    Ok(bench::start_entry(&options(&options_json)?, &run_id))
+pub fn bench_start_entry(options: BenchOptions, run_id: String) -> String {
+    bench::start_entry(&options, &run_id)
 }
 
 #[flutter_rust_bridge::frb(sync)]

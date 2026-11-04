@@ -3030,6 +3030,9 @@ class AppLocalizationsIt extends AppLocalizations {
       'L’host di destinazione non può contenere spazi o a capo.';
 
   @override
+  String get remoteDesktopProtocolInvalid => 'Unsupported protocol.';
+
+  @override
   String get remoteDesktopCredentialInvalid =>
       'Nome utente e dominio possono avere al massimo 256 caratteri e non possono contenere a capo.';
 
@@ -6442,6 +6445,9 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get storageTooFewDevices => 'Not enough valid devices were selected.';
+
+  @override
+  String get storageKeyRequired => 'A passphrase is required.';
 
   @override
   String get storageExpand => 'Espandi';

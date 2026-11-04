@@ -42,7 +42,6 @@ import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/data/store/sync_recorder.dart';
 import 'package:server_box/data/store/tables.dart';
 import 'package:server_box/data/terminal/session_manager.dart';
-import 'package:server_box/hive/hive_registrar.g.dart';
 import 'package:server_box/hive/legacy_adapters.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 import 'package:server_box/view/agent/host.dart';
@@ -327,9 +326,7 @@ Future<void> _initData() async {
   // TODO: drop this, `lib/hive/` and the `hive_ce*` dependencies together with
   // `HiveImport`, once no supported install can still be on Hive.
   await Hive.initFlutter();
-  Hive.registerAdapters();
-  // Reads every released server-record layout. The generated adapters no
-  // longer own the frozen type IDs because nothing writes Hive any more.
+  // Every record layout a released build wrote, frozen.
   registerHiveLegacyAdapters();
 
   await PrefStore.shared.init(); // Call this before accessing any store

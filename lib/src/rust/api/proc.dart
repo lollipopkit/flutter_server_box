@@ -6,49 +6,48 @@
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `sort_mode`, `view_json`
+// These functions are ignored because they are not marked as `pub`: `result_of`
 
-/// What the process function printed → `PsView` JSON, ordered by `sort`
-/// (`cpu`, `mem`, `rss`, `pid`, `user`, `name`, `read`, `write`) where the
-/// table can answer it. `previous` is the last reading that parsed cleanly,
-/// as this returned it; `sampled_at_millis` is when `raw` was produced.
-Future<String> procViewJson({
+/// What the process function printed, ordered by `sort` where the table can
+/// answer it. `previous` is the last reading that parsed cleanly, as this
+/// returned it; `sampled_at_millis` is when `raw` was produced.
+Future<PsView> procView({
   required String raw,
   required String system,
-  String? sort,
+  ProcSortMode? sort,
   bool? ascending,
-  String? previousJson,
+  PsView? previous,
   required PlatformInt64 sampledAtMillis,
-}) => RustLib.instance.api.crateApiProcProcViewJson(
+}) => RustLib.instance.api.crateApiProcProcView(
   raw: raw,
   system: system,
   sort: sort,
   ascending: ascending,
-  previousJson: previousJson,
+  previous: previous,
   sampledAtMillis: sampledAtMillis,
 );
 
-/// A reading [`proc_view_json`] returned, ordered again.
-Future<String> procSortedJson({
-  required String viewJsonIn,
+/// A reading [`proc_view`] returned, ordered again.
+Future<PsView> procSorted({
+  required PsView view,
   required String system,
-  String? sort,
+  ProcSortMode? sort,
   bool? ascending,
-}) => RustLib.instance.api.crateApiProcProcSortedJson(
-  viewJsonIn: viewJsonIn,
+}) => RustLib.instance.api.crateApiProcProcSorted(
+  view: view,
   system: system,
   sort: sort,
   ascending: ascending,
 );
 
-/// The command that sends `signal` (`term`, `kill`) to `pid` once its start
-/// identity is still `start_id`, or `None` where the platform cannot check
-/// it. What it prints is read by [`proc_kill_outcome`].
+/// The command that sends `signal` to `pid` once its start identity is still
+/// `start_id`, or `None` where the platform cannot check it. What it prints
+/// is read by [`proc_kill_outcome`].
 String? procKillCommand({
   required PlatformInt64 pid,
   String? startId,
   required String system,
-  required String signal,
+  required ProcSignal signal,
 }) => RustLib.instance.api.crateApiProcProcKillCommand(
   pid: pid,
   startId: startId,
@@ -56,6 +55,293 @@ String? procKillCommand({
   signal: signal,
 );
 
-/// What a stop printed: `succeeded`, `target_changed`, `denied` or `failed`.
-String procKillOutcome({required String output}) =>
+/// What a stop printed.
+ProcKillOutcome procKillOutcome({required String output}) =>
     RustLib.instance.api.crateApiProcProcKillOutcome(output: output);
+
+class Proc {
+  final String? user;
+  final PlatformInt64 pid;
+  final PlatformInt64? ppid;
+  final double? cpu;
+  final double? mem;
+  final String? vsz;
+  final String? rss;
+  final String? tty;
+  final String? stat;
+  final PlatformInt64? nice;
+  final PlatformInt64? threads;
+  final String? start;
+  final String? startId;
+  final String? time;
+  final PlatformInt64? elapsedSeconds;
+  final PlatformInt64? readBytes;
+  final PlatformInt64? writeBytes;
+  final double? readSpeed;
+  final double? writeSpeed;
+  final String command;
+  final String? processName;
+
+  const Proc({
+    this.user,
+    required this.pid,
+    this.ppid,
+    this.cpu,
+    this.mem,
+    this.vsz,
+    this.rss,
+    this.tty,
+    this.stat,
+    this.nice,
+    this.threads,
+    this.start,
+    this.startId,
+    this.time,
+    this.elapsedSeconds,
+    this.readBytes,
+    this.writeBytes,
+    this.readSpeed,
+    this.writeSpeed,
+    required this.command,
+    this.processName,
+  });
+
+  @override
+  int get hashCode =>
+      user.hashCode ^
+      pid.hashCode ^
+      ppid.hashCode ^
+      cpu.hashCode ^
+      mem.hashCode ^
+      vsz.hashCode ^
+      rss.hashCode ^
+      tty.hashCode ^
+      stat.hashCode ^
+      nice.hashCode ^
+      threads.hashCode ^
+      start.hashCode ^
+      startId.hashCode ^
+      time.hashCode ^
+      elapsedSeconds.hashCode ^
+      readBytes.hashCode ^
+      writeBytes.hashCode ^
+      readSpeed.hashCode ^
+      writeSpeed.hashCode ^
+      command.hashCode ^
+      processName.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Proc &&
+          runtimeType == other.runtimeType &&
+          user == other.user &&
+          pid == other.pid &&
+          ppid == other.ppid &&
+          cpu == other.cpu &&
+          mem == other.mem &&
+          vsz == other.vsz &&
+          rss == other.rss &&
+          tty == other.tty &&
+          stat == other.stat &&
+          nice == other.nice &&
+          threads == other.threads &&
+          start == other.start &&
+          startId == other.startId &&
+          time == other.time &&
+          elapsedSeconds == other.elapsedSeconds &&
+          readBytes == other.readBytes &&
+          writeBytes == other.writeBytes &&
+          readSpeed == other.readSpeed &&
+          writeSpeed == other.writeSpeed &&
+          command == other.command &&
+          processName == other.processName;
+}
+
+class ProcColumns {
+  final bool user;
+  final bool cpu;
+  final bool mem;
+  final bool rss;
+  final bool read;
+  final bool write;
+  final bool readSpeed;
+  final bool writeSpeed;
+
+  const ProcColumns({
+    required this.user,
+    required this.cpu,
+    required this.mem,
+    required this.rss,
+    required this.read,
+    required this.write,
+    required this.readSpeed,
+    required this.writeSpeed,
+  });
+
+  @override
+  int get hashCode =>
+      user.hashCode ^
+      cpu.hashCode ^
+      mem.hashCode ^
+      rss.hashCode ^
+      read.hashCode ^
+      write.hashCode ^
+      readSpeed.hashCode ^
+      writeSpeed.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ProcColumns &&
+          runtimeType == other.runtimeType &&
+          user == other.user &&
+          cpu == other.cpu &&
+          mem == other.mem &&
+          rss == other.rss &&
+          read == other.read &&
+          write == other.write &&
+          readSpeed == other.readSpeed &&
+          writeSpeed == other.writeSpeed;
+}
+
+enum ProcKillOutcome { succeeded, targetChanged, denied, failed }
+
+class ProcLoad {
+  final double one;
+  final double five;
+  final double fifteen;
+
+  const ProcLoad({
+    required this.one,
+    required this.five,
+    required this.fifteen,
+  });
+
+  @override
+  int get hashCode => one.hashCode ^ five.hashCode ^ fifteen.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ProcLoad &&
+          runtimeType == other.runtimeType &&
+          one == other.one &&
+          five == other.five &&
+          fifteen == other.fifteen;
+}
+
+class ProcRow {
+  final Proc proc;
+  final String name;
+  final PlatformInt64? rssKb;
+  final bool isKernelThread;
+  final bool killable;
+
+  const ProcRow({
+    required this.proc,
+    required this.name,
+    this.rssKb,
+    required this.isKernelThread,
+    required this.killable,
+  });
+
+  @override
+  int get hashCode =>
+      proc.hashCode ^
+      name.hashCode ^
+      rssKb.hashCode ^
+      isKernelThread.hashCode ^
+      killable.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ProcRow &&
+          runtimeType == other.runtimeType &&
+          proc == other.proc &&
+          name == other.name &&
+          rssKb == other.rssKb &&
+          isKernelThread == other.isKernelThread &&
+          killable == other.killable;
+}
+
+enum ProcSignal { term, kill }
+
+enum ProcSortMode { cpu, mem, rss, read, write, pid, user, name }
+
+enum PsParseFailure {
+  unsupportedOutput,
+  invalidRows,
+  invalidWindowsJson,
+  invalidWindowsRows,
+}
+
+class PsParseIssue {
+  final PsParseFailure failure;
+  final String diagnostics;
+
+  const PsParseIssue({required this.failure, required this.diagnostics});
+
+  @override
+  int get hashCode => failure.hashCode ^ diagnostics.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PsParseIssue &&
+          runtimeType == other.runtimeType &&
+          failure == other.failure &&
+          diagnostics == other.diagnostics;
+}
+
+class PsView {
+  final List<ProcRow> procs;
+  final PsParseIssue? issue;
+  final ProcLoad? load;
+  final PlatformInt64 sampledAtMillis;
+  final ProcColumns columns;
+  final List<ProcSortMode> sorts;
+  final ProcSortMode sort;
+  final bool ascending;
+  final List<ProcSignal> signals;
+
+  const PsView({
+    required this.procs,
+    this.issue,
+    this.load,
+    required this.sampledAtMillis,
+    required this.columns,
+    required this.sorts,
+    required this.sort,
+    required this.ascending,
+    required this.signals,
+  });
+
+  @override
+  int get hashCode =>
+      procs.hashCode ^
+      issue.hashCode ^
+      load.hashCode ^
+      sampledAtMillis.hashCode ^
+      columns.hashCode ^
+      sorts.hashCode ^
+      sort.hashCode ^
+      ascending.hashCode ^
+      signals.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PsView &&
+          runtimeType == other.runtimeType &&
+          procs == other.procs &&
+          issue == other.issue &&
+          load == other.load &&
+          sampledAtMillis == other.sampledAtMillis &&
+          columns == other.columns &&
+          sorts == other.sorts &&
+          sort == other.sort &&
+          ascending == other.ascending &&
+          signals == other.signals;
+}

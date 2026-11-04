@@ -3008,6 +3008,9 @@ class AppLocalizationsAz extends AppLocalizations {
       'Hədəf host boşluq və ya sətir sonu ehtiva edə bilməz.';
 
   @override
+  String get remoteDesktopProtocolInvalid => 'Unsupported protocol.';
+
+  @override
   String get remoteDesktopCredentialInvalid =>
       'İstifadəçi adı və domen ən çox 256 simvol ola bilər və sətir sonu ola bilməz.';
 
@@ -6373,6 +6376,9 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get storageTooFewDevices => 'Not enough valid devices were selected.';
+
+  @override
+  String get storageKeyRequired => 'A passphrase is required.';
 
   @override
   String get storageExpand => 'Expand';

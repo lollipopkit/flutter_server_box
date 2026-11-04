@@ -3844,6 +3844,10 @@
   "remoteDesktopUsernameRequired": "Enter the RDP username.",
   "remoteDesktopNameInvalid": "The profile name can be up to 64 characters and cannot contain line breaks.",
   "remoteDesktopHostInvalid": "The target host cannot contain spaces or line breaks.",
+  "remoteDesktopProtocolInvalid": "Unsupported protocol.",
+  "@remoteDesktopProtocolInvalid": {
+    "description": "Remote desktop: the protocol is not one the app supports."
+  },
   "remoteDesktopCredentialInvalid": "The username and domain can be up to 256 characters and cannot contain line breaks.",
   "remoteDesktopVncPasswordHint": "Classic VNC uses only the first 8 characters",
   "@remoteDesktopVncPasswordHint": {
@@ -8216,6 +8220,10 @@
   "storageTooFewDevices": "Not enough valid devices were selected.",
   "@storageTooFewDevices": {
     "description": "Storage and sharing page text."
+  },
+  "storageKeyRequired": "A passphrase is required.",
+  "@storageKeyRequired": {
+    "description": "Storage: an encrypted volume needs a passphrase."
   },
   "storageExpand": "Expand",
   "@storageExpand": {

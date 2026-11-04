@@ -4,67 +4,713 @@
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
+import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 import 'package:server_box/src/rust/frb_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `action`, `error`, `malformed`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `fmt`
+part 'storage.freezed.dart';
 
 /// Everything the Storage page draws, readable without root
 String storageViewScript() =>
     RustLib.instance.api.crateApiStorageStorageViewScript();
 
-/// [`storage_view_script`]'s output → `StorageView` JSON (`disks`, `busy`,
-/// `system`, `free`, `overlaps`, `growable_partitions`, `next_md`,
-/// `raid_levels`, `pool_layouts`, `arrays`, `pools`, `tools`)
-Future<String> parseStorageViewJson({required String raw}) =>
-    RustLib.instance.api.crateApiStorageParseStorageViewJson(raw: raw);
+/// [`storage_view_script`]'s output; `None` when lsblk answered nothing
+Future<StorageView?> storageParseView({required String raw}) =>
+    RustLib.instance.api.crateApiStorageStorageParseView(raw: raw);
 
-/// Why `action` is refused on the machine `view` describes (`Refusal` JSON:
-/// `status`, `error`, `device`, `why`), or `None` when it may run. Check
-/// against a view read just before, not the one a page drew earlier.
-String? storageCheckJson({
-  required String viewJson,
-  required String actionJson,
-}) => RustLib.instance.api.crateApiStorageStorageCheckJson(
-  viewJson: viewJson,
-  actionJson: actionJson,
+/// Why `action` is refused on the machine `view` describes, or `None` when
+/// it may run: `Err` for an action that is invalid as given, whatever the
+/// machine. Check against a view read just before, not the one a page drew
+/// earlier.
+Refusal? storageCheck({
+  required StorageView view,
+  required StorageAction action,
+}) => RustLib.instance.api.crateApiStorageStorageCheck(
+  view: view,
+  action: action,
 );
 
 /// The root script that makes `action`; `passphrase` for an encrypted format
 /// or an unlock (written into a key file the script makes and removes)
-String storageActionScript({required String actionJson, String? passphrase}) =>
-    RustLib.instance.api.crateApiStorageStorageActionScript(
-      actionJson: actionJson,
-      passphrase: passphrase,
-    );
+String storageActionScript({
+  required StorageAction action,
+  String? passphrase,
+}) => RustLib.instance.api.crateApiStorageStorageActionScript(
+  action: action,
+  passphrase: passphrase,
+);
 
 /// Whether `action` needs a LUKS passphrase
-bool storageActionNeedsKey({required String actionJson}) => RustLib.instance.api
-    .crateApiStorageStorageActionNeedsKey(actionJson: actionJson);
+bool storageActionNeedsKey({required StorageAction action}) =>
+    RustLib.instance.api.crateApiStorageStorageActionNeedsKey(action: action);
 
 /// Every disk's SMART, as root (or with a `NOPASSWD` sudoers rule)
 String storageHealthScript() =>
     RustLib.instance.api.crateApiStorageStorageHealthScript();
 
-/// [`storage_health_script`]'s output → `[DiskHealth]` JSON
-Future<String> parseStorageHealthJson({required String raw}) =>
-    RustLib.instance.api.crateApiStorageParseStorageHealthJson(raw: raw);
+/// [`storage_health_script`]'s output
+Future<List<DiskHealth>> storageParseHealth({required String raw}) =>
+    RustLib.instance.api.crateApiStorageStorageParseHealth(raw: raw);
 
-/// `code`: `sbm_parser::storage::StorageError`'s (`invalidDevice`,
-/// `keyRequired`, `invalidPassphrase`, …), `unreadable` when lsblk answered
-/// nothing, or `malformed` for JSON the app should never have sent.
-class StorageFfiError implements FrbException {
-  final String code;
+class BlockDevice {
+  final String name;
+  final String path;
+  final String kind;
+  final BigInt size;
+  final String? model;
+  final String? serial;
+  final bool rotational;
+  final String? transport;
+  final bool removable;
+  final bool readOnly;
+  final String? partType;
+  final String? fstype;
+  final String? label;
+  final String? uuid;
+  final List<String> mountpoints;
+  final bool mounted;
+  final bool mountable;
+  final bool expandable;
+  final BigInt? fsSize;
+  final BigInt? available;
+  final BigInt? used;
+  final List<BlockDevice> children;
 
-  const StorageFfiError({required this.code});
+  const BlockDevice({
+    required this.name,
+    required this.path,
+    required this.kind,
+    required this.size,
+    this.model,
+    this.serial,
+    required this.rotational,
+    this.transport,
+    required this.removable,
+    required this.readOnly,
+    this.partType,
+    this.fstype,
+    this.label,
+    this.uuid,
+    required this.mountpoints,
+    required this.mounted,
+    required this.mountable,
+    required this.expandable,
+    this.fsSize,
+    this.available,
+    this.used,
+    required this.children,
+  });
 
   @override
-  int get hashCode => code.hashCode;
+  int get hashCode =>
+      name.hashCode ^
+      path.hashCode ^
+      kind.hashCode ^
+      size.hashCode ^
+      model.hashCode ^
+      serial.hashCode ^
+      rotational.hashCode ^
+      transport.hashCode ^
+      removable.hashCode ^
+      readOnly.hashCode ^
+      partType.hashCode ^
+      fstype.hashCode ^
+      label.hashCode ^
+      uuid.hashCode ^
+      mountpoints.hashCode ^
+      mounted.hashCode ^
+      mountable.hashCode ^
+      expandable.hashCode ^
+      fsSize.hashCode ^
+      available.hashCode ^
+      used.hashCode ^
+      children.hashCode;
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is StorageFfiError &&
+      other is BlockDevice &&
           runtimeType == other.runtimeType &&
-          code == other.code;
+          name == other.name &&
+          path == other.path &&
+          kind == other.kind &&
+          size == other.size &&
+          model == other.model &&
+          serial == other.serial &&
+          rotational == other.rotational &&
+          transport == other.transport &&
+          removable == other.removable &&
+          readOnly == other.readOnly &&
+          partType == other.partType &&
+          fstype == other.fstype &&
+          label == other.label &&
+          uuid == other.uuid &&
+          mountpoints == other.mountpoints &&
+          mounted == other.mounted &&
+          mountable == other.mountable &&
+          expandable == other.expandable &&
+          fsSize == other.fsSize &&
+          available == other.available &&
+          used == other.used &&
+          children == other.children;
+}
+
+class DiskHealth {
+  final String device;
+  final bool supported;
+  final bool asleep;
+  final bool? passed;
+  final double? temperature;
+  final PlatformInt64? powerOnHours;
+  final PlatformInt64? badSectors;
+  final int? testing;
+  final SelfTest? lastTest;
+  final List<SmartAttribute> attributes;
+  final List<SelfTest> tests;
+  final HealthVerdict verdict;
+
+  const DiskHealth({
+    required this.device,
+    required this.supported,
+    required this.asleep,
+    this.passed,
+    this.temperature,
+    this.powerOnHours,
+    this.badSectors,
+    this.testing,
+    this.lastTest,
+    required this.attributes,
+    required this.tests,
+    required this.verdict,
+  });
+
+  @override
+  int get hashCode =>
+      device.hashCode ^
+      supported.hashCode ^
+      asleep.hashCode ^
+      passed.hashCode ^
+      temperature.hashCode ^
+      powerOnHours.hashCode ^
+      badSectors.hashCode ^
+      testing.hashCode ^
+      lastTest.hashCode ^
+      attributes.hashCode ^
+      tests.hashCode ^
+      verdict.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is DiskHealth &&
+          runtimeType == other.runtimeType &&
+          device == other.device &&
+          supported == other.supported &&
+          asleep == other.asleep &&
+          passed == other.passed &&
+          temperature == other.temperature &&
+          powerOnHours == other.powerOnHours &&
+          badSectors == other.badSectors &&
+          testing == other.testing &&
+          lastTest == other.lastTest &&
+          attributes == other.attributes &&
+          tests == other.tests &&
+          verdict == other.verdict;
+}
+
+enum HealthVerdict { healthy, wearing, failing, unsupported, asleep }
+
+class MdArray {
+  final String name;
+  final String state;
+  final String? level;
+  final List<MdMember> members;
+  final int? raidDisks;
+  final int? workingDisks;
+  final MdSync? sync_;
+  final bool growable;
+
+  const MdArray({
+    required this.name,
+    required this.state,
+    this.level,
+    required this.members,
+    this.raidDisks,
+    this.workingDisks,
+    this.sync_,
+    required this.growable,
+  });
+
+  @override
+  int get hashCode =>
+      name.hashCode ^
+      state.hashCode ^
+      level.hashCode ^
+      members.hashCode ^
+      raidDisks.hashCode ^
+      workingDisks.hashCode ^
+      sync_.hashCode ^
+      growable.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MdArray &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          state == other.state &&
+          level == other.level &&
+          members == other.members &&
+          raidDisks == other.raidDisks &&
+          workingDisks == other.workingDisks &&
+          sync_ == other.sync_ &&
+          growable == other.growable;
+}
+
+class MdMember {
+  final String name;
+  final bool faulty;
+  final bool spare;
+
+  const MdMember({
+    required this.name,
+    required this.faulty,
+    required this.spare,
+  });
+
+  @override
+  int get hashCode => name.hashCode ^ faulty.hashCode ^ spare.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MdMember &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          faulty == other.faulty &&
+          spare == other.spare;
+}
+
+class MdSync {
+  final String action;
+  final int permille;
+  final String? finish;
+
+  const MdSync({required this.action, required this.permille, this.finish});
+
+  @override
+  int get hashCode => action.hashCode ^ permille.hashCode ^ finish.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MdSync &&
+          runtimeType == other.runtimeType &&
+          action == other.action &&
+          permille == other.permille &&
+          finish == other.finish;
+}
+
+class Pool {
+  final String name;
+  final BigInt size;
+  final BigInt allocated;
+  final BigInt free;
+  final String health;
+  final String? scan;
+  final bool scanning;
+  final List<Vdev> vdevs;
+
+  const Pool({
+    required this.name,
+    required this.size,
+    required this.allocated,
+    required this.free,
+    required this.health,
+    this.scan,
+    required this.scanning,
+    required this.vdevs,
+  });
+
+  @override
+  int get hashCode =>
+      name.hashCode ^
+      size.hashCode ^
+      allocated.hashCode ^
+      free.hashCode ^
+      health.hashCode ^
+      scan.hashCode ^
+      scanning.hashCode ^
+      vdevs.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Pool &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          size == other.size &&
+          allocated == other.allocated &&
+          free == other.free &&
+          health == other.health &&
+          scan == other.scan &&
+          scanning == other.scanning &&
+          vdevs == other.vdevs;
+}
+
+class PoolLayoutChoice {
+  final String value;
+  final int minimum;
+
+  const PoolLayoutChoice({required this.value, required this.minimum});
+
+  @override
+  int get hashCode => value.hashCode ^ minimum.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PoolLayoutChoice &&
+          runtimeType == other.runtimeType &&
+          value == other.value &&
+          minimum == other.minimum;
+}
+
+class RaidLevelChoice {
+  final int value;
+  final int minimum;
+
+  const RaidLevelChoice({required this.value, required this.minimum});
+
+  @override
+  int get hashCode => value.hashCode ^ minimum.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is RaidLevelChoice &&
+          runtimeType == other.runtimeType &&
+          value == other.value &&
+          minimum == other.minimum;
+}
+
+class Refusal {
+  final int status;
+  final String error;
+  final String? device;
+  final String? why;
+
+  const Refusal({
+    required this.status,
+    required this.error,
+    this.device,
+    this.why,
+  });
+
+  @override
+  int get hashCode =>
+      status.hashCode ^ error.hashCode ^ device.hashCode ^ why.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Refusal &&
+          runtimeType == other.runtimeType &&
+          status == other.status &&
+          error == other.error &&
+          device == other.device &&
+          why == other.why;
+}
+
+class SelfTest {
+  final bool long;
+  final String outcome;
+  final PlatformInt64? hours;
+
+  const SelfTest({required this.long, required this.outcome, this.hours});
+
+  @override
+  int get hashCode => long.hashCode ^ outcome.hashCode ^ hours.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SelfTest &&
+          runtimeType == other.runtimeType &&
+          long == other.long &&
+          outcome == other.outcome &&
+          hours == other.hours;
+}
+
+class SmartAttribute {
+  final PlatformInt64? id;
+  final String name;
+  final PlatformInt64? value;
+  final PlatformInt64? worst;
+  final PlatformInt64? thresh;
+  final String raw;
+  final bool failing;
+
+  const SmartAttribute({
+    this.id,
+    required this.name,
+    this.value,
+    this.worst,
+    this.thresh,
+    required this.raw,
+    required this.failing,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      name.hashCode ^
+      value.hashCode ^
+      worst.hashCode ^
+      thresh.hashCode ^
+      raw.hashCode ^
+      failing.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SmartAttribute &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          name == other.name &&
+          value == other.value &&
+          worst == other.worst &&
+          thresh == other.thresh &&
+          raw == other.raw &&
+          failing == other.failing;
+}
+
+@freezed
+sealed class StorageAction with _$StorageAction {
+  const StorageAction._();
+
+  const factory StorageAction.partition({required String device}) =
+      StorageAction_Partition;
+  const factory StorageAction.format({
+    required String device,
+    required String fstype,
+    String? label,
+    required bool encrypt,
+  }) = StorageAction_Format;
+  const factory StorageAction.mount({
+    required String device,
+    required String mountpoint,
+    required bool persist,
+    required bool own,
+  }) = StorageAction_Mount;
+  const factory StorageAction.unmount({required String mountpoint}) =
+      StorageAction_Unmount;
+  const factory StorageAction.createRaid({
+    required String name,
+    required int level,
+    required List<String> devices,
+  }) = StorageAction_CreateRaid;
+  const factory StorageAction.addToRaid({
+    required String array,
+    required String device,
+  }) = StorageAction_AddToRaid;
+  const factory StorageAction.removeFromRaid({
+    required String array,
+    required String device,
+  }) = StorageAction_RemoveFromRaid;
+  const factory StorageAction.deleteRaid({required String array}) =
+      StorageAction_DeleteRaid;
+  const factory StorageAction.createPool({
+    required String name,
+    required String layout,
+    required List<String> devices,
+  }) = StorageAction_CreatePool;
+  const factory StorageAction.scrubPool({required String name}) =
+      StorageAction_ScrubPool;
+  const factory StorageAction.destroyPool({required String name}) =
+      StorageAction_DestroyPool;
+  const factory StorageAction.smartTest({
+    required String device,
+    required bool long,
+  }) = StorageAction_SmartTest;
+  const factory StorageAction.growRaid({
+    required String array,
+    required String device,
+  }) = StorageAction_GrowRaid;
+  const factory StorageAction.expandFilesystem({required String device}) =
+      StorageAction_ExpandFilesystem;
+  const factory StorageAction.addToPool({
+    required String name,
+    required String layout,
+    required List<String> devices,
+  }) = StorageAction_AddToPool;
+  const factory StorageAction.replaceInPool({
+    required String name,
+    required String old,
+    required String new_,
+  }) = StorageAction_ReplaceInPool;
+  const factory StorageAction.attachToPool({
+    required String name,
+    required String existing,
+    required String new_,
+  }) = StorageAction_AttachToPool;
+  const factory StorageAction.addSpare({
+    required String name,
+    required List<String> devices,
+  }) = StorageAction_AddSpare;
+  const factory StorageAction.removeFromPool({
+    required String name,
+    required String device,
+  }) = StorageAction_RemoveFromPool;
+  const factory StorageAction.onlineInPool({
+    required String name,
+    required String device,
+  }) = StorageAction_OnlineInPool;
+  const factory StorageAction.growPartition({required String device}) =
+      StorageAction_GrowPartition;
+  const factory StorageAction.unlock({required String device}) =
+      StorageAction_Unlock;
+  const factory StorageAction.lock({required String device}) =
+      StorageAction_Lock;
+}
+
+enum StorageError {
+  invalidDevice,
+  invalidMountpoint,
+  invalidLabel,
+  invalidFilesystem,
+  invalidName,
+  invalidLevel,
+  tooFewDevices,
+  keyRequired,
+  invalidPassphrase,
+}
+
+class StorageView {
+  final List<BlockDevice> disks;
+  final Map<String, String> busy;
+  final List<String> system;
+  final List<String> free;
+  final Map<String, List<String>> overlaps;
+  final List<String> growablePartitions;
+  final String nextMd;
+  final List<RaidLevelChoice> raidLevels;
+  final List<PoolLayoutChoice> poolLayouts;
+  final List<MdArray> arrays;
+  final List<Pool> pools;
+  final List<String> tools;
+
+  const StorageView({
+    required this.disks,
+    required this.busy,
+    required this.system,
+    required this.free,
+    required this.overlaps,
+    required this.growablePartitions,
+    required this.nextMd,
+    required this.raidLevels,
+    required this.poolLayouts,
+    required this.arrays,
+    required this.pools,
+    required this.tools,
+  });
+
+  @override
+  int get hashCode =>
+      disks.hashCode ^
+      busy.hashCode ^
+      system.hashCode ^
+      free.hashCode ^
+      overlaps.hashCode ^
+      growablePartitions.hashCode ^
+      nextMd.hashCode ^
+      raidLevels.hashCode ^
+      poolLayouts.hashCode ^
+      arrays.hashCode ^
+      pools.hashCode ^
+      tools.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is StorageView &&
+          runtimeType == other.runtimeType &&
+          disks == other.disks &&
+          busy == other.busy &&
+          system == other.system &&
+          free == other.free &&
+          overlaps == other.overlaps &&
+          growablePartitions == other.growablePartitions &&
+          nextMd == other.nextMd &&
+          raidLevels == other.raidLevels &&
+          poolLayouts == other.poolLayouts &&
+          arrays == other.arrays &&
+          pools == other.pools &&
+          tools == other.tools;
+}
+
+class Vdev {
+  final String name;
+  final String state;
+  final int depth;
+  final BigInt errors;
+  final String? section;
+  final VdevActions actions;
+
+  const Vdev({
+    required this.name,
+    required this.state,
+    required this.depth,
+    required this.errors,
+    this.section,
+    required this.actions,
+  });
+
+  @override
+  int get hashCode =>
+      name.hashCode ^
+      state.hashCode ^
+      depth.hashCode ^
+      errors.hashCode ^
+      section.hashCode ^
+      actions.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Vdev &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          state == other.state &&
+          depth == other.depth &&
+          errors == other.errors &&
+          section == other.section &&
+          actions == other.actions;
+}
+
+class VdevActions {
+  final bool replace;
+  final bool attach;
+  final bool remove;
+  final bool online;
+
+  const VdevActions({
+    required this.replace,
+    required this.attach,
+    required this.remove,
+    required this.online,
+  });
+
+  @override
+  int get hashCode =>
+      replace.hashCode ^ attach.hashCode ^ remove.hashCode ^ online.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is VdevActions &&
+          runtimeType == other.runtimeType &&
+          replace == other.replace &&
+          attach == other.attach &&
+          remove == other.remove &&
+          online == other.online;
 }

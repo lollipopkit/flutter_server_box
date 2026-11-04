@@ -2794,6 +2794,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get remoteDesktopHostInvalid => '目标主机不能包含空格或换行。';
 
   @override
+  String get remoteDesktopProtocolInvalid => '不支持的协议。';
+
+  @override
   String get remoteDesktopCredentialInvalid => '用户名和域最多 256 个字符，不能换行。';
 
   @override
@@ -5999,6 +6002,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get storageTooFewDevices => 'Not enough valid devices were selected.';
+
+  @override
+  String get storageKeyRequired => '需要输入密码短语。';
 
   @override
   String get storageExpand => '扩展';
@@ -9661,6 +9667,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get remoteDesktopHostInvalid => '目標主機不能包含空格或換行。';
 
   @override
+  String get remoteDesktopProtocolInvalid => '不支援的協定。';
+
+  @override
   String get remoteDesktopCredentialInvalid => '使用者名稱和網域最多 256 個字元，不能換行。';
 
   @override
@@ -12871,6 +12880,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get storageTooFewDevices => 'Not enough valid devices were selected.';
+
+  @override
+  String get storageKeyRequired => '需要輸入密碼短語。';
 
   @override
   String get storageExpand => '擴展';

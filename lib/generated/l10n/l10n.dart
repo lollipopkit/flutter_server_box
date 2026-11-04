@@ -5184,6 +5184,12 @@ abstract class AppLocalizations {
   /// **'The target host cannot contain spaces or line breaks.'**
   String get remoteDesktopHostInvalid;
 
+  /// Remote desktop: the protocol is not one the app supports.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsupported protocol.'**
+  String get remoteDesktopProtocolInvalid;
+
   /// No description provided for @remoteDesktopCredentialInvalid.
   ///
   /// In en, this message translates to:
@@ -10882,6 +10888,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Not enough valid devices were selected.'**
   String get storageTooFewDevices;
+
+  /// Storage: an encrypted volume needs a passphrase.
+  ///
+  /// In en, this message translates to:
+  /// **'A passphrase is required.'**
+  String get storageKeyRequired;
 
   /// Storage and sharing page text.
   ///

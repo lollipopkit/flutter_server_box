@@ -53,8 +53,8 @@ void main() {
       expect(availableHomeTabs(AppTab.values), isEmpty);
     });
 
-    /// The declaration order is the `@HiveField` index and what an `int` in a
-    /// stored record resolves against, so it is not free to follow the bar.
+    /// The declaration order is what an `int` in a stored record resolves
+    /// against, so it is not free to follow the bar.
     test('is allowed to differ from the declaration order', () {
       expect(AppTab.defaultOrder, isNot(AppTab.values));
       expect(AppTab.server.index, 0);

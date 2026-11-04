@@ -23,13 +23,13 @@ final class UserDetailPageArgs {
   });
 
   final Spi spi;
-  final ServerUser user;
-  final ServerUserCatalog catalog;
+  final SystemUser user;
+  final UserCatalog catalog;
 
   /// Answers true when the account changed, which closes this page: what it
   /// is showing no longer describes anything.
-  final Future<bool> Function(ServerUser user) onEdit;
-  final Future<bool> Function(ServerUser user) onDelete;
+  final Future<bool> Function(SystemUser user) onEdit;
+  final Future<bool> Function(SystemUser user) onDelete;
 }
 
 final class UserDetailPage extends ConsumerStatefulWidget {
@@ -49,10 +49,10 @@ final class UserDetailPage extends ConsumerStatefulWidget {
 final class _UserDetailPageState extends ConsumerState<UserDetailPage> {
   late final _provider = serverProvider(widget.args.spi.id);
 
-  ServerUserDetail? _detail;
+  UserDetail? _detail;
   var _loading = true;
 
-  ServerUser get _user => widget.args.user;
+  SystemUser get _user => widget.args.user;
 
   /// Reachable from the `extension on` blocks below, where `setState` is not.
   void _rebuild(VoidCallback update) => setState(update);
@@ -246,11 +246,11 @@ extension on _UserDetailPageState {
     ].join(' · ');
   }
 
-  String _passwordText(ServerUserPasswordState state, DateTime? changed) {
+  String _passwordText(PasswordState state, DateTime? changed) {
     final label = switch (state) {
-      ServerUserPasswordState.set => l10n.userPasswordSet,
-      ServerUserPasswordState.locked => l10n.userPasswordLocked,
-      ServerUserPasswordState.none => l10n.userPasswordNone,
+      PasswordState.set_ => l10n.userPasswordSet,
+      PasswordState.locked => l10n.userPasswordLocked,
+      PasswordState.none => l10n.userPasswordNone,
     };
     if (changed == null) return label;
     return '$label · ${changed.toLocal().toAgoStr()}';
@@ -272,7 +272,7 @@ extension on _UserDetailPageState {
     }
   }
 
-  Future<void> _run(Future<bool> Function(ServerUser user) action) async {
+  Future<void> _run(Future<bool> Function(SystemUser user) action) async {
     final changed = await action(_user);
     if (changed && mounted) context.pop();
   }

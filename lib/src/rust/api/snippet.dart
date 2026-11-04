@@ -4,25 +4,29 @@
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
+import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 import 'package:server_box/src/rust/frb_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `context`, `malformed`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `fmt`, `from`
+part 'snippet.freezed.dart';
 
-/// What to type, as `Step` JSON
-String snippetPlan({required String script, required String contextJson}) =>
-    RustLib.instance.api.crateApiSnippetSnippetPlan(
-      script: script,
-      contextJson: contextJson,
-    );
+/// What to type
+List<Step> snippetPlan({
+  required String script,
+  required SnippetContext context,
+}) => RustLib.instance.api.crateApiSnippetSnippetPlan(
+  script: script,
+  context: context,
+);
 
 /// The script as one command: server placeholders substituted, terminal
 /// macros left as written
-String snippetExpand({required String script, required String contextJson}) =>
-    RustLib.instance.api.crateApiSnippetSnippetExpand(
-      script: script,
-      contextJson: contextJson,
-    );
+String snippetExpand({
+  required String script,
+  required SnippetContext context,
+}) => RustLib.instance.api.crateApiSnippetSnippetExpand(
+  script: script,
+  context: context,
+);
 
 /// Whether the script names anything only a server can answer
 bool snippetUsesServerContext({required String script}) => RustLib.instance.api
@@ -32,23 +36,64 @@ bool snippetUsesServerContext({required String script}) => RustLib.instance.api
 List<String> snippetServerKeys() =>
     RustLib.instance.api.crateApiSnippetSnippetServerKeys();
 
-/// A script the context cannot answer. `code` is `unanswerable` with the
-/// placeholder in `key`, or `malformed` (empty `key`) for JSON the app should
-/// never have sent.
-class SnippetFfiError implements FrbException {
-  final String code;
-  final String key;
+@freezed
+sealed class PlanError with _$PlanError implements FrbException {
+  const PlanError._();
 
-  const SnippetFfiError({required this.code, required this.key});
+  const factory PlanError.unanswerable({required String key}) =
+      PlanError_Unanswerable;
+}
+
+class SnippetContext {
+  final String? host;
+  final String? port;
+  final String? user;
+  final String? pwd;
+  final String? id;
+  final String? name;
+
+  const SnippetContext({
+    this.host,
+    this.port,
+    this.user,
+    this.pwd,
+    this.id,
+    this.name,
+  });
 
   @override
-  int get hashCode => code.hashCode ^ key.hashCode;
+  int get hashCode =>
+      host.hashCode ^
+      port.hashCode ^
+      user.hashCode ^
+      pwd.hashCode ^
+      id.hashCode ^
+      name.hashCode;
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is SnippetFfiError &&
+      other is SnippetContext &&
           runtimeType == other.runtimeType &&
-          code == other.code &&
-          key == other.key;
+          host == other.host &&
+          port == other.port &&
+          user == other.user &&
+          pwd == other.pwd &&
+          id == other.id &&
+          name == other.name;
+}
+
+@freezed
+sealed class Step with _$Step {
+  const Step._();
+
+  const factory Step.text({required String text}) = Step_Text;
+  const factory Step.combo({
+    required bool ctrl,
+    required bool alt,
+    required String key,
+    required String rest,
+  }) = Step_Combo;
+  const factory Step.sleep({required BigInt seconds}) = Step_Sleep;
+  const factory Step.enter({required int times}) = Step_Enter;
 }

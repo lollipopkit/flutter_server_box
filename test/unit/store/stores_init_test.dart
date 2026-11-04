@@ -9,7 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/stores.dart';
-import 'package:server_box/hive/hive_registrar.g.dart';
+import 'package:server_box/hive/legacy_adapters.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// `Stores.init` against a database that is not open yet.
@@ -31,7 +31,7 @@ void main() {
     // `HiveImport` runs inside `Stores.init` and opens boxes through
     // `HiveStore`; registering twice throws, so this is once per process too.
     Hive.init(tempDir.path);
-    Hive.registerAdapters();
+    registerHiveLegacyAdapters();
   });
 
   tearDownAll(() => tempDir.delete(recursive: true));

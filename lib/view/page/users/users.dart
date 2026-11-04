@@ -53,7 +53,7 @@ final class _UsersPageState extends ConsumerState<UsersPage> {
   late final _provider = serverProvider(widget.args.spi.id);
   final _searchCtrl = TextEditingController();
 
-  ServerUserCatalog? _catalog;
+  UserCatalog? _catalog;
   _Subject _subject = _Subject.users;
   _UserFilter _filter = _UserFilter.all;
   _UserSort _sort = _UserSort.uid;
@@ -304,7 +304,7 @@ extension on _UsersPageState {
   /// No current-account segment at either width: that account's row is
   /// highlighted and carries its own badge, so it would repeat on every screen
   /// what one row already says.
-  Widget _buildFilters(ServerUserCatalog catalog, {required bool wide}) {
+  Widget _buildFilters(UserCatalog catalog, {required bool wide}) {
     final filters = _UserFilter.values
         .where(
           (filter) =>
@@ -328,7 +328,7 @@ extension on _UsersPageState {
     );
   }
 
-  Widget _buildGroupFilters(ServerUserCatalog catalog) {
+  Widget _buildGroupFilters(UserCatalog catalog) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
       child: SegmentedTabs<_GroupFilter>(
@@ -350,8 +350,8 @@ extension on _UsersPageState {
   /// One card per section, so the System block can collapse without leaving a
   /// gap inside a card that is still drawing its own background.
   List<Widget> _buildSections(
-    ServerUserCatalog catalog,
-    List<ServerUser> users, {
+    UserCatalog catalog,
+    List<SystemUser> users, {
     required bool wide,
   }) {
     // Sections say what a filter has already said, so they only earn their
@@ -391,9 +391,9 @@ extension on _UsersPageState {
   }
 
   Widget _buildSectionCard(
-    ServerUserCatalog catalog,
+    UserCatalog catalog,
     _SectionSpec? section,
-    List<ServerUser> users, {
+    List<SystemUser> users, {
     required bool wide,
   }) {
     final theme = Theme.of(context);
@@ -512,8 +512,8 @@ extension on _UsersPageState {
   }
 
   Widget _buildUser(
-    ServerUser user,
-    ServerUserCatalog catalog, {
+    SystemUser user,
+    UserCatalog catalog, {
     required bool wide,
     required bool last,
   }) {
@@ -595,7 +595,7 @@ extension on _UsersPageState {
   }
 
   Widget _buildUserTitle(
-    ServerUser user, {
+    SystemUser user, {
     required bool isCurrent,
     required Color? color,
   }) {
@@ -622,7 +622,7 @@ extension on _UsersPageState {
     );
   }
 
-  Widget _buildUserMenu(ServerUser user, {required bool isCurrent}) {
+  Widget _buildUserMenu(SystemUser user, {required bool isCurrent}) {
     if (!UserManager.validName(user.name) || _busy) {
       return const SizedBox(width: 24);
     }
@@ -662,7 +662,7 @@ extension on _UsersPageState {
 // --- Utils ---
 
 extension on _UsersPageState {
-  void _openDetail(ServerUser user, ServerUserCatalog catalog) {
+  void _openDetail(SystemUser user, UserCatalog catalog) {
     UserDetailPage.route.go(
       context,
       UserDetailPageArgs(
@@ -692,7 +692,7 @@ extension on _UsersPageState {
     _UserFilter.disabled => libL10n.disabled,
   };
 
-  int _filterCount(ServerUserCatalog catalog, _UserFilter filter) {
+  int _filterCount(UserCatalog catalog, _UserFilter filter) {
     return switch (filter) {
       _UserFilter.all => catalog.users.length,
       _UserFilter.regular => catalog.users
@@ -707,7 +707,7 @@ extension on _UsersPageState {
     };
   }
 
-  List<ServerUser> _visibleUsers(ServerUserCatalog catalog) {
+  List<SystemUser> _visibleUsers(UserCatalog catalog) {
     final filtered = switch (_filter) {
       _UserFilter.all => catalog.users,
       _UserFilter.regular => catalog.users
@@ -746,7 +746,7 @@ extension on _UsersPageState {
   /// A disabled account's shell is shown as its basename: every one of them is
   /// some path ending in `nologin`, and the paths differ between distributions
   /// without the difference meaning anything.
-  String _detailLine(ServerUser user, {required bool wide}) {
+  String _detailLine(SystemUser user, {required bool wide}) {
     final shell = user.loginDisabled
         ? user.shell.split('/').last
         : user.shell;
@@ -759,8 +759,8 @@ extension on _UsersPageState {
   }
 
   List<Widget> _buildGroupSections(
-    ServerUserCatalog catalog,
-    List<ServerGroup> groups, {
+    UserCatalog catalog,
+    List<SystemGroup> groups, {
     required bool wide,
   }) {
     if (_groupFilter != _GroupFilter.all) {
@@ -798,9 +798,9 @@ extension on _UsersPageState {
   }
 
   Widget _buildGroupSectionCard(
-    ServerUserCatalog catalog,
+    UserCatalog catalog,
     _GroupSectionSpec? section,
-    List<ServerGroup> groups, {
+    List<SystemGroup> groups, {
     required bool wide,
   }) {
     final theme = Theme.of(context);
@@ -871,8 +871,8 @@ extension on _UsersPageState {
   }
 
   Widget _buildGroup(
-    ServerGroup group,
-    ServerUserCatalog catalog, {
+    SystemGroup group,
+    UserCatalog catalog, {
     required bool wide,
     required bool last,
   }) {
@@ -946,7 +946,7 @@ extension on _UsersPageState {
     );
   }
 
-  Widget _buildGroupTitle(ServerGroup group, Color? color) {
+  Widget _buildGroupTitle(SystemGroup group, Color? color) {
     final scheme = Theme.of(context).colorScheme;
     return Wrap(
       spacing: 7,
@@ -963,7 +963,7 @@ extension on _UsersPageState {
     );
   }
 
-  Widget _buildGroupMenu(ServerGroup group) {
+  Widget _buildGroupMenu(SystemGroup group) {
     if (_busy) return const SizedBox(width: 24);
     return SizedBox(
       width: 24,
@@ -994,7 +994,7 @@ extension on _UsersPageState {
     _GroupFilter.system => libL10n.system,
   };
 
-  int _groupFilterCount(ServerUserCatalog catalog, _GroupFilter filter) {
+  int _groupFilterCount(UserCatalog catalog, _GroupFilter filter) {
     return switch (filter) {
       _GroupFilter.all => catalog.groups.length,
       _GroupFilter.regular => catalog.groups
@@ -1006,7 +1006,7 @@ extension on _UsersPageState {
     };
   }
 
-  List<ServerGroup> _visibleGroups(ServerUserCatalog catalog) {
+  List<SystemGroup> _visibleGroups(UserCatalog catalog) {
     final filtered = switch (_groupFilter) {
       _GroupFilter.all => catalog.groups,
       _GroupFilter.regular => catalog.groups
@@ -1039,7 +1039,7 @@ extension on _UsersPageState {
     return matched;
   }
 
-  String _groupDetailLine(ServerGroup group, {required bool wide}) {
+  String _groupDetailLine(SystemGroup group, {required bool wide}) {
     final primary = group.primaryMembers;
     final parts = [
       if (!wide && group.members.isNotEmpty)
@@ -1061,7 +1061,7 @@ final class _SectionSpec {
   });
 
   final String title;
-  final List<ServerUser> users;
+  final List<SystemUser> users;
   final bool collapsible;
   final bool expanded;
 }
@@ -1075,7 +1075,7 @@ final class _GroupSectionSpec {
   });
 
   final String title;
-  final List<ServerGroup> groups;
+  final List<SystemGroup> groups;
   final bool collapsible;
   final bool expanded;
 }
@@ -1113,7 +1113,7 @@ extension on _UsersPageState {
     }
   }
 
-  Future<bool> _editUser([ServerUser? user]) async {
+  Future<bool> _editUser([SystemUser? user]) async {
     final draft = await _showEditor(user);
     if (draft == null || !mounted) return false;
     final script = user == null
@@ -1124,7 +1124,7 @@ extension on _UsersPageState {
     return true;
   }
 
-  Future<bool> _deleteUser(ServerUser user) async {
+  Future<bool> _deleteUser(SystemUser user) async {
     var removeHome = false;
     final confirmed = await context.showRoundDialog<bool>(
       title: libL10n.attention,
@@ -1153,7 +1153,7 @@ extension on _UsersPageState {
     return true;
   }
 
-  void _openGroupDetail(ServerGroup group, ServerUserCatalog catalog) {
+  void _openGroupDetail(SystemGroup group, UserCatalog catalog) {
     GroupDetailPage.route.go(
       context,
       GroupDetailPageArgs(
@@ -1166,7 +1166,7 @@ extension on _UsersPageState {
     );
   }
 
-  Future<bool> _editGroup([ServerGroup? group]) async {
+  Future<bool> _editGroup([SystemGroup? group]) async {
     final catalog = _catalog;
     if (catalog == null) return false;
     final draft = await _showGroupEditor(group);
@@ -1179,7 +1179,7 @@ extension on _UsersPageState {
     return true;
   }
 
-  Future<bool> _deleteGroup(ServerGroup group) async {
+  Future<bool> _deleteGroup(SystemGroup group) async {
     final confirmed = await context.showRoundDialog<bool>(
       title: libL10n.attention,
       child: Text(libL10n.delFmt(l10n.systemGroups, group.name)),
@@ -1235,7 +1235,7 @@ extension on _UsersPageState {
 // --- Editor ---
 
 extension on _UsersPageState {
-  Future<ServerUserDraft?> _showEditor(ServerUser? user) async {
+  Future<UserDraft?> _showEditor(SystemUser? user) async {
     final catalog = _catalog;
     if (catalog == null) return null;
     // What is typed, kept between dialogs: a draft the checks below refuse
@@ -1387,7 +1387,7 @@ extension on _UsersPageState {
           .toSet()
           .toList()
         ..sort();
-      final draft = ServerUserDraft(
+      final draft = UserDraft(
         name: name.trim(),
         comment: comment.trim(),
         home: home.trim(),
@@ -1412,7 +1412,7 @@ extension on _UsersPageState {
     return null;
   }
 
-  Future<ServerGroupDraft?> _showGroupEditor(ServerGroup? group) async {
+  Future<GroupDraft?> _showGroupEditor(SystemGroup? group) async {
     final catalog = _catalog;
     if (catalog == null) return null;
     var name = group?.name ?? '';
@@ -1478,7 +1478,7 @@ extension on _UsersPageState {
           .toSet()
           .toList()
         ..sort();
-      final draft = ServerGroupDraft(
+      final draft = GroupDraft(
         name: group?.name ?? name.trim(),
         members: members,
         system: systemGroup,

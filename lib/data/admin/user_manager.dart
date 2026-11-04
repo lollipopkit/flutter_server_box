@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/system_user.dart';
 import 'package:server_box/src/rust/api/users.dart' as ffi;
@@ -23,7 +21,7 @@ abstract final class UserManager {
   /// first `if ...; then` — so the page showed fish's diagnostic where the
   /// user list should have been. The create, edit and delete scripts already
   /// reach `sh` through `PrivilegedExec`.
-  static Future<ServerUserCatalog> list(CommandExec exec) async {
+  static Future<UserCatalog> list(CommandExec exec) async {
     final result = await exec.run(ffi.usersListScript(), entry: 'sh');
     if (!result.succeeded) {
       final detail = result.combined.trim();
@@ -34,23 +32,20 @@ abstract final class UserManager {
     return parse(result.stdout);
   }
 
-  static Future<ServerUserCatalog> parse(String output) async {
+  static Future<UserCatalog> parse(String output) async {
     try {
-      final json = await ffi.parseUsersListJson(raw: output);
-      return ServerUserCatalog.fromJson(
-        jsonDecode(json) as Map<String, Object?>,
-      );
-    } on ffi.UserFfiError catch (e) {
-      throw UserManagerException(_message(e.code));
+      return await ffi.usersParseList(raw: output);
+    } on UserError catch (e) {
+      throw UserManagerException(message(e));
     }
   }
 
   /// Handed to `sh`, like [list]: the script has an `if`, and the account's
   /// login shell — which is what runs a command given without an entry — may
   /// be fish, which does not read one.
-  static Future<ServerUserDetail> detail(
+  static Future<UserDetail> detail(
     CommandExec exec,
-    ServerUser user,
+    SystemUser user,
   ) async {
     final result = await exec.run(detailScript(user), entry: 'sh');
     // Every read in the script is allowed to fail and the last one is
@@ -65,94 +60,84 @@ abstract final class UserManager {
     return parseDetail(result.stdout, user.name);
   }
 
-  static String detailScript(ServerUser user) =>
-      _command(() => ffi.usersDetailScript(userJson: _json(user.toJson())));
+  static String detailScript(SystemUser user) =>
+      _command(() => ffi.usersDetailScript(user: user));
 
   /// Only the rows naming [name], the account the script was run about, are
   /// read.
-  static Future<ServerUserDetail> parseDetail(String output, String name) async {
-    final json = await ffi.parseUserDetailJson(raw: output, name: name);
-    return ServerUserDetail.fromJson(jsonDecode(json) as Map<String, Object?>);
-  }
+  static Future<UserDetail> parseDetail(String output, String name) =>
+      ffi.usersParseDetail(raw: output, name: name);
 
   static bool validName(String name) => ffi.usersValidName(name: name);
 
   /// Why [draft] cannot be sent, or null when it can.
-  static String? validateDraft(ServerUserDraft draft) {
-    final code = ffi.usersValidateDraft(draftJson: _json(draft.toJson()));
-    return code == null ? null : _message(code);
-  }
+  static String? validateDraft(UserDraft draft) =>
+      switch (ffi.usersValidateDraft(draft: draft)) {
+        null => null,
+        final e => message(e),
+      };
 
-  static String createScript(ServerUserDraft draft) => _command(
-    () => ffi.usersCreateCommand(draftJson: _json(draft.toJson())),
+  static String createScript(UserDraft draft) => _command(
+    () => ffi.usersCreateCommand(draft: draft),
   );
 
-  static String editScript(ServerUser original, ServerUserDraft draft) =>
+  static String editScript(SystemUser original, UserDraft draft) =>
       _command(
-        () => ffi.usersEditCommand(
-          originalJson: _json(original.toJson()),
-          draftJson: _json(draft.toJson()),
-        ),
+        () => ffi.usersEditCommand(original: original, draft: draft),
       );
 
-  static String deleteScript(ServerUser user, {required bool removeHome}) =>
+  static String deleteScript(SystemUser user, {required bool removeHome}) =>
       _command(
-        () => ffi.usersDeleteCommand(
-          userJson: _json(user.toJson()),
-          removeHome: removeHome,
-        ),
+        () => ffi.usersDeleteCommand(user: user, removeHome: removeHome),
       );
 
   /// Why [draft] cannot be sent, or null when it can. [original] is the
   /// group being changed, null for a new one.
   static String? validateGroupDraft(
-    ServerGroupDraft draft,
-    ServerUserCatalog catalog, {
-    ServerGroup? original,
+    GroupDraft draft,
+    UserCatalog catalog, {
+    SystemGroup? original,
   }) {
-    final code = ffi.groupsValidateDraft(
-      draftJson: _json(draft.toJson()),
-      originalJson: original == null ? null : _json(original.toJson()),
-      accounts: catalog.accountNames,
-    );
-    if (code == null) return null;
-    if (code == 'invalidName') return 'Invalid group name';
-    return _message(code);
+    return switch (ffi.groupsValidateDraft(draft: draft, original: original, accounts: catalog.accountNames)) {
+      null => null,
+      UserError.invalidName => 'Invalid group name',
+      final e => message(e),
+    };
   }
 
   static String createGroupScript(
-    ServerGroupDraft draft,
-    ServerUserCatalog catalog,
+    GroupDraft draft,
+    UserCatalog catalog,
   ) => _command(
     () => ffi.groupsCreateCommand(
-      draftJson: _json(draft.toJson()),
+      draft: draft,
       accounts: catalog.accountNames,
     ),
   );
 
   static String editGroupScript(
-    ServerGroup original,
-    ServerGroupDraft draft,
-    ServerUserCatalog catalog,
+    SystemGroup original,
+    GroupDraft draft,
+    UserCatalog catalog,
   ) => _command(
     () => ffi.groupsEditCommand(
-      originalJson: _json(original.toJson()),
-      draftJson: _json(draft.toJson()),
+      original: original,
+      draft: draft,
       accounts: catalog.accountNames,
     ),
   );
 
   /// Whether [user] may be deleted by [current], the account the catalog was
   /// read as: never root, never the account doing the deleting.
-  static bool userDeletable(ServerUser user, {String? current}) =>
-      ffi.usersDeleteRefusal(userJson: _json(user.toJson()), current: current) == null;
+  static bool userDeletable(SystemUser user, {String? current}) =>
+      ffi.usersDeleteRefusal(user: user, current: current) == null;
 
   /// Whether [deleteGroupScript] would build a command for [group].
-  static bool groupDeletable(ServerGroup group) =>
-      ffi.groupsDeleteRefusal(groupJson: _json(group.toJson())) == null;
+  static bool groupDeletable(SystemGroup group) =>
+      ffi.groupsDeleteRefusal(group: group) == null;
 
-  static String deleteGroupScript(ServerGroup group) => _command(
-    () => ffi.groupsDeleteCommand(groupJson: _json(group.toJson())),
+  static String deleteGroupScript(SystemGroup group) => _command(
+    () => ffi.groupsDeleteCommand(group: group),
   );
 
   /// A refused draft or account is a caller's mistake — the form validates
@@ -161,28 +146,25 @@ abstract final class UserManager {
   static String _command(String Function() build) {
     try {
       return build();
-    } on ffi.UserFfiError catch (e) {
-      throw ArgumentError(_message(e.code));
+    } on UserError catch (e) {
+      throw ArgumentError(message(e));
     }
   }
 
-  static String _json(Map<String, Object?> value) => jsonEncode(value);
-
   /// `sbm_parser::users::UserError` in the words this app has always shown.
-  static String _message(String code) => switch (code) {
-    'invalidName' => 'Invalid user name',
-    'lineBreak' => 'User fields cannot contain line breaks',
-    'invalidPrimaryGroup' => 'Invalid primary group',
-    'invalidSupplementaryGroup' => 'Invalid supplementary group',
-    'passwordLineBreak' => 'Password cannot contain line breaks',
-    'renaming' => 'Renaming is not supported',
-    'rootNotDeletable' => 'The root user cannot be deleted',
-    'currentUserNotDeletable' => 'The current user cannot be deleted',
-    'currentUserUnknown' => 'Unable to determine the current user',
-    'unknownMember' => 'A member is not an account on this server',
-    'rootGroupNotDeletable' => 'The root group cannot be deleted',
-    'groupInUse' => "This group is an account's primary group",
-    'groupNotLocal' => 'Only groups in /etc/group can be changed',
-    _ => code,
+  static String message(UserError e) => switch (e) {
+    UserError.invalidName => 'Invalid user name',
+    UserError.lineBreak => 'User fields cannot contain line breaks',
+    UserError.invalidPrimaryGroup => 'Invalid primary group',
+    UserError.invalidSupplementaryGroup => 'Invalid supplementary group',
+    UserError.passwordLineBreak => 'Password cannot contain line breaks',
+    UserError.renaming => 'Renaming is not supported',
+    UserError.rootNotDeletable => 'The root user cannot be deleted',
+    UserError.currentUserNotDeletable => 'The current user cannot be deleted',
+    UserError.currentUserUnknown => 'Unable to determine the current user',
+    UserError.unknownMember => 'A member is not an account on this server',
+    UserError.rootGroupNotDeletable => 'The root group cannot be deleted',
+    UserError.groupInUse => "This group is an account's primary group",
+    UserError.groupNotLocal => 'Only groups in /etc/group can be changed',
   };
 }

@@ -3032,6 +3032,9 @@ class AppLocalizationsDe extends AppLocalizations {
       'Der Zielhost darf keine Leerzeichen oder Zeilenumbrüche enthalten.';
 
   @override
+  String get remoteDesktopProtocolInvalid => 'Unsupported protocol.';
+
+  @override
   String get remoteDesktopCredentialInvalid =>
       'Benutzername und Domäne dürfen höchstens 256 Zeichen lang sein und keine Zeilenumbrüche enthalten.';
 
@@ -6456,6 +6459,9 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get storageTooFewDevices => 'Not enough valid devices were selected.';
+
+  @override
+  String get storageKeyRequired => 'A passphrase is required.';
 
   @override
   String get storageExpand => 'Erweitern';

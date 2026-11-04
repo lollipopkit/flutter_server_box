@@ -2999,6 +2999,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'The target host cannot contain spaces or line breaks.';
 
   @override
+  String get remoteDesktopProtocolInvalid => 'Unsupported protocol.';
+
+  @override
   String get remoteDesktopCredentialInvalid =>
       'The username and domain can be up to 256 characters and cannot contain line breaks.';
 
@@ -6377,6 +6380,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get storageTooFewDevices => 'Not enough valid devices were selected.';
+
+  @override
+  String get storageKeyRequired => 'A passphrase is required.';
 
   @override
   String get storageExpand => 'Expand';

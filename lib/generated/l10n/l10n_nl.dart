@@ -3020,6 +3020,9 @@ class AppLocalizationsNl extends AppLocalizations {
       'De doelhost mag geen spaties of regeleinden bevatten.';
 
   @override
+  String get remoteDesktopProtocolInvalid => 'Unsupported protocol.';
+
+  @override
   String get remoteDesktopCredentialInvalid =>
       'Gebruikersnaam en domein mogen maximaal 256 tekens bevatten en geen regeleinden.';
 
@@ -6432,6 +6435,9 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get storageTooFewDevices => 'Not enough valid devices were selected.';
+
+  @override
+  String get storageKeyRequired => 'A passphrase is required.';
 
   @override
   String get storageExpand => 'Uitbreiden';

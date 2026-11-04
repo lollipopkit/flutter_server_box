@@ -1286,179 +1286,177 @@ class ServerNotifier extends _$ServerNotifier {
     }
   }
 
+  /// One SSH refresh: connect and install the script when there is no live
+  /// client, then read the status and apply it. Each phase answers whether
+  /// the refresh goes on; one that stops has already recorded why.
   Future<void> _refreshStatusSsh({
     required bool interactive,
     required int operation,
   }) async {
     final spi = state.spi;
-    final sid = spi.id;
-    var keyboardInteractiveRequested = false;
-
-    if (!TryLimiter.canTry(sid)) {
+    if (!TryLimiter.canTry(spi.id)) {
       if (state.conn != ServerConn.failed) {
         updateConnection(ServerConn.failed);
       }
       return;
     }
+    // Clear the previous error.
+    updateStatus(_copyStatus(state.status, err: null, setErr: true));
 
-    final newStatus = _copyStatus(
-      state.status,
-      err: null,
-      setErr: true,
-    ); // Clear previous error
-    updateStatus(newStatus);
-
-    if (state.conn < ServerConn.connecting ||
-        (state.client?.isClosed ?? true)) {
+    if (state.conn < ServerConn.connecting || (state.client?.isClosed ?? true)) {
       updateConnection(ServerConn.connecting);
-
-      // Wake on LAN
-      final wol = spi.wolCfg;
-      if (wol != null) {
-        try {
-          await wol.wake();
-          if (!_isRefreshCurrent(operation, spi)) return;
-        } catch (e) {
-          Loggers.app.warning('Wake on lan failed', e);
-        }
-        if (!_isRefreshCurrent(operation, spi)) return;
-      }
-
-      // Two clocks on purpose. [time1] is when this happened and is stored as
-      // such; [elapsed] is how long it took. Reading the wall clock twice and
-      // subtracting gets the second answer wrong whenever the first one moves
-      // — an NTP step during a connect is not rare, since a reconnect is what
-      // a device does on waking, and it lands in `durationMs` as a negative.
-      final time1 = DateTime.now();
-      final elapsed = Stopwatch()..start();
-      try {
-        final client = await genClient(
-          spi,
-          timeout: _timeout,
-          onKeyboardInteractive: (server, request) {
-            keyboardInteractiveRequested = true;
-            if (!interactive) return null;
-            return KeyboardInteractiveAuth.handle(server, request);
-          },
-        );
-        await client.authenticated;
-        if (!_isRefreshCurrent(operation, spi)) {
-          client.close();
-          return;
-        }
-        _setClient(client);
-
-        final spentTime = elapsed.elapsedMilliseconds;
-        if (spi.resolvedJumpIds.isEmpty) {
-          Loggers.app.info('Connected to ${spi.name} in $spentTime ms.');
-        } else {
-          Loggers.app.info('Jump to ${spi.name} in $spentTime ms.');
-        }
-
-        try {
-          Stores.connectionStats.recordConnection(
-            ConnectionStat(
-              serverId: spi.id,
-              serverName: spi.name,
-              timestamp: time1,
-              result: ConnectionResult.success,
-              durationMs: spentTime,
-            ),
-          );
-        } catch (e) {
-          Loggers.app.warning('Failed to record connection success', e);
-        }
-        if (!_isRefreshCurrent(operation, spi)) return;
-
-        final sessionId = 'ssh_${spi.id}';
-        TermSessionManager.add(
-          id: sessionId,
-          title: spi.name,
-          subtitle: spi.oldId,
-          startTimeMs: time1.millisecondsSinceEpoch,
-          disconnect: () =>
-              ref.read(serversProvider.notifier).closeOneServer(spi.id),
-          status: TermSessionStatus.connecting,
-          setAsActive: false,
-        );
-        TermSessionManager.setActive(sessionId, hasTerminal: false);
-      } catch (e) {
-        if (!_isRefreshCurrent(operation, spi)) return;
-        if (!keyboardInteractiveRequested || interactive) {
-          TryLimiter.inc(sid);
-        }
-
-        final durationMs = elapsed.elapsedMilliseconds;
-
-        ConnectionResult failureResult;
-        final errStr = e.toString().toLowerCase();
-        if (errStr.contains('timed out') || errStr.contains('timeout')) {
-          failureResult = ConnectionResult.timeout;
-        } else if (errStr.contains('auth') ||
-            errStr.contains('authentication') ||
-            errStr.contains('permission denied') ||
-            errStr.contains('access denied')) {
-          failureResult = ConnectionResult.authFailed;
-        } else if (errStr.contains('connection refused') ||
-            errStr.contains('no route to host') ||
-            errStr.contains('network') ||
-            errStr.contains('socket')) {
-          failureResult = ConnectionResult.networkError;
-        } else {
-          failureResult = ConnectionResult.unknownError;
-        }
-
-        try {
-          Stores.connectionStats.recordConnection(
-            ConnectionStat(
-              serverId: spi.id,
-              serverName: spi.name,
-              timestamp: time1,
-              result: failureResult,
-              errorMessage: e.toString(),
-              durationMs: durationMs,
-            ),
-          );
-        } catch (recErr) {
-          Loggers.app.warning('Failed to record connection failure', recErr);
-        }
-        if (!_isRefreshCurrent(operation, spi)) return;
-
-        final SSHErrType errType;
-        if (keyboardInteractiveRequested && !interactive) {
-          errType = SSHErrType.interactiveAuth;
-        } else if (e is SSHAuthError) {
-          errType = SSHErrType.auth;
-        } else {
-          errType = SSHErrType.connect;
-        }
-        _setFailedState(
-          _copyStatus(
-            state.status,
-            err: SSHErr(type: errType, message: e.toString()),
-            setErr: true,
-          ),
-          closeClient: true,
-        );
-        // Removed, not just marked dead: there is no session to reconnect to
-        TermSessionManager.remove(_sshSessionId);
-        Loggers.app.warning('Connect to ${spi.name} failed', e);
-        return;
-      }
-
+      if (!await _connectSsh(spi, interactive: interactive, operation: operation)) return;
       updateConnection(ServerConn.connected);
+      TermSessionManager.updateStatus(_sshSessionId, TermSessionStatus.connected);
+      if (!await _installScriptSsh(spi, operation: operation)) return;
+    }
 
-      // Update SSH session status to connected
-      final sessionId = 'ssh_${spi.id}';
-      TermSessionManager.updateStatus(sessionId, TermSessionStatus.connected);
+    if (state.conn == ServerConn.connecting) return;
 
+    // Keep finished status to prevent UI from refreshing to loading state
+    if (state.conn != ServerConn.finished) {
+      updateConnection(ServerConn.loading);
+    }
+
+    final read = await _readStatusSsh(spi, operation: operation);
+    if (read == null) return;
+    if (!await _applyStatusSsh(spi, read.raw, latencyMs: read.latencyMs, interactive: interactive, operation: operation)) {
+      return;
+    }
+
+    if (!_isRefreshCurrent(operation, spi)) return;
+    // A successful refresh leaves the connection ready for the next poll.
+    updateConnection(ServerConn.finished);
+    // Reset retries only after status preparation succeeds.
+    TryLimiter.reset(spi.id);
+  }
+
+  /// Wakes [spi] when it has a WOL config, connects, records the attempt and
+  /// registers the terminal session. False when the refresh stops here.
+  Future<bool> _connectSsh(Spi spi, {required bool interactive, required int operation}) async {
+    var keyboardInteractiveRequested = false;
+
+    final wol = spi.wolCfg;
+    if (wol != null) {
       try {
+        await wol.wake();
+      } catch (e) {
+        Loggers.app.warning('Wake on lan failed', e);
+      }
+      if (!_isRefreshCurrent(operation, spi)) return false;
+    }
+
+    // Two clocks on purpose. [startedAt] is when this happened and is stored
+    // as such; [elapsed] is how long it took. Reading the wall clock twice and
+    // subtracting gets the second answer wrong whenever the first one moves
+    // — an NTP step during a connect is not rare, since a reconnect is what
+    // a device does on waking, and it lands in `durationMs` as a negative.
+    final startedAt = DateTime.now();
+    final elapsed = Stopwatch()..start();
+    try {
+      final client = await genClient(
+        spi,
+        timeout: _timeout,
+        onKeyboardInteractive: (server, request) {
+          keyboardInteractiveRequested = true;
+          if (!interactive) return null;
+          return KeyboardInteractiveAuth.handle(server, request);
+        },
+      );
+      await client.authenticated;
+      if (!_isRefreshCurrent(operation, spi)) {
+        client.close();
+        return false;
+      }
+      _setClient(client);
+
+      final spentTime = elapsed.elapsedMilliseconds;
+      if (spi.resolvedJumpIds.isEmpty) {
+        Loggers.app.info('Connected to ${spi.name} in $spentTime ms.');
+      } else {
+        Loggers.app.info('Jump to ${spi.name} in $spentTime ms.');
+      }
+      _recordConnection(spi, startedAt, ConnectionResult.success, durationMs: spentTime);
+      if (!_isRefreshCurrent(operation, spi)) return false;
+
+      TermSessionManager.add(
+        id: _sshSessionId,
+        title: spi.name,
+        subtitle: spi.oldId,
+        startTimeMs: startedAt.millisecondsSinceEpoch,
+        disconnect: () => ref.read(serversProvider.notifier).closeOneServer(spi.id),
+        status: TermSessionStatus.connecting,
+        setAsActive: false,
+      );
+      TermSessionManager.setActive(_sshSessionId, hasTerminal: false);
+      return true;
+    } catch (e) {
+      if (!_isRefreshCurrent(operation, spi)) return false;
+      final needsPrompt = keyboardInteractiveRequested && !interactive;
+      if (!needsPrompt) TryLimiter.inc(spi.id);
+
+      _recordConnection(
+        spi,
+        startedAt,
+        ConnectionResult.fromError(e),
+        durationMs: elapsed.elapsedMilliseconds,
+        error: e,
+      );
+      if (!_isRefreshCurrent(operation, spi)) return false;
+
+      final errType = needsPrompt
+          ? SSHErrType.interactiveAuth
+          : e is SSHAuthError
+          ? SSHErrType.auth
+          : SSHErrType.connect;
+      _setFailedState(
+        _copyStatus(
+          state.status,
+          err: SSHErr(type: errType, message: e.toString()),
+          setErr: true,
+        ),
+        closeClient: true,
+      );
+      // Removed, not just marked dead: there is no session to reconnect to
+      TermSessionManager.remove(_sshSessionId);
+      Loggers.app.warning('Connect to ${spi.name} failed', e);
+      return false;
+    }
+  }
+
+  void _recordConnection(
+    Spi spi,
+    DateTime at,
+    ConnectionResult result, {
+    required int durationMs,
+    Object? error,
+  }) {
+    try {
+      Stores.connectionStats.recordConnection(
+        ConnectionStat(
+          serverId: spi.id,
+          serverName: spi.name,
+          timestamp: at,
+          result: result,
+          errorMessage: error?.toString() ?? '',
+          durationMs: durationMs,
+        ),
+      );
+    } catch (e) {
+      Loggers.app.warning('Failed to record the connection', e);
+    }
+  }
+
+  /// Detects the system, writes the status script and the custom commands.
+  /// False when the refresh stops here.
+  Future<bool> _installScriptSsh(Spi spi, {required int operation}) async {
+    try {
         // Detect system type
         final detectedSystemType = await SystemDetector.detect(
           state.client!,
           spi,
         );
-        if (!_isRefreshCurrent(operation, spi)) return;
+        if (!_isRefreshCurrent(operation, spi)) return false;
         final newStatus = _copyStatus(state.status, system: detectedSystemType);
         updateStatus(newStatus);
 
@@ -1486,7 +1484,7 @@ class ServerNotifier extends _$ServerNotifier {
           systemType: detectedSystemType,
           logLabel: 'WriteScript<${spi.name}>',
         );
-        if (!_isRefreshCurrent(operation, spi)) return;
+        if (!_isRefreshCurrent(operation, spi)) return false;
 
         if (writeScriptResult.stdout.isNotEmpty) {
           Loggers.app.info(
@@ -1521,37 +1519,29 @@ class ServerNotifier extends _$ServerNotifier {
           Loggers.app.info('Script written successfully for ${spi.name}');
           _scriptWritten = true;
         }
-      } on SSHAuthAbortError catch (e) {
-        _failSsh(SSHErrType.auth, e, operation: operation, closeClient: true);
-        return;
-      } on SSHAuthFailError catch (e) {
-        _failSsh(SSHErrType.auth, e, operation: operation, closeClient: true);
-        return;
-      } catch (e, s) {
-        _failSsh(
-          SSHErrType.writeScript,
-          e,
-          stack: s,
-          operation: operation,
-          closeClient: true,
-        );
-        return;
-      }
+      return true;
+    } on SSHAuthAbortError catch (e) {
+      _failSsh(SSHErrType.auth, e, operation: operation, closeClient: true);
+    } on SSHAuthFailError catch (e) {
+      _failSsh(SSHErrType.auth, e, operation: operation, closeClient: true);
+    } catch (e, s) {
+      _failSsh(
+        SSHErrType.writeScript,
+        e,
+        stack: s,
+        operation: operation,
+        closeClient: true,
+      );
     }
+    return false;
+  }
 
-    if (state.conn == ServerConn.connecting) return;
-
-    // Keep finished status to prevent UI from refreshing to loading state
-    if (state.conn != ServerConn.finished) {
-      updateConnection(ServerConn.loading);
-    }
-
-    String? raw;
-    // The status command and nothing after it: the extended commands below
-    // take seconds by design and run once every few minutes, so including
-    // them would report one poll in five as an unreachable machine.
-    int? latencyMs;
-
+  /// Runs the status command. Null when the refresh stops here: a reply with
+  /// no segments, a timeout, or a failure, each already recorded.
+  Future<({String raw, int? latencyMs})?> _readStatusSsh(Spi spi, {required int operation}) async {
+    // The status command and nothing after it: the extended commands take
+    // seconds by design and run once every few minutes, so including them
+    // would report one poll in five as an unreachable machine.
     try {
       final statusCmd = ShellFunc.status.exec(
         spi.id,
@@ -1559,9 +1549,8 @@ class ServerNotifier extends _$ServerNotifier {
         customDir: spi.custom?.scriptDir,
       );
       final read = await _runStatusCommand(statusCmd);
-      raw = read.raw;
-      latencyMs = read.elapsedMs;
-      if (!_isRefreshCurrent(operation, spi)) return;
+      final raw = read.raw;
+      if (!_isRefreshCurrent(operation, spi)) return null;
 
       // Output carrying no segment marker parses into an empty status: the
       // page keeps whatever its rolling state still holds (cpu, net speeds)
@@ -1587,7 +1576,7 @@ class ServerNotifier extends _$ServerNotifier {
           // last good reading to stay on screen, and the delay is part of that
           // reading rather than a separate claim about right now.
           if (state.conn != ServerConn.failed && state.status.more.isNotEmpty) {
-            return;
+            return null;
           }
         }
         _failSsh(
@@ -1598,14 +1587,15 @@ class ServerNotifier extends _$ServerNotifier {
               ? 'Empty response from server'
               : 'No status segments in response, raw:\n$raw',
         );
-        return;
+        return null;
       }
+      return (raw: raw, latencyMs: read.elapsedMs);
     } on TimeoutException catch (e, s) {
       Loggers.app.warning('Get status from ${spi.name} timed out', e, s);
       // Reached by throwing out of an await, so it skips the check that
       // follows that await: a read that timed out against the address this
       // server used to have must not stamp its error onto the one it has now.
-      if (!_isRefreshCurrent(operation, spi)) return;
+      if (!_isRefreshCurrent(operation, spi)) return null;
       // A slow command and a dead connection both end here, and only the
       // second one is worth dropping. sshd answers a keep-alive itself, however
       // busy the command is; no answer is a connection the network dropped —
@@ -1613,7 +1603,7 @@ class ServerNotifier extends _$ServerNotifier {
       // `ensureShellClient` would otherwise go on handing out.
       final client = state.client;
       if (client != null && !await _answersPing(client)) {
-        if (!_isRefreshCurrent(operation, spi)) return;
+        if (!_isRefreshCurrent(operation, spi)) return null;
         _failSsh(
           SSHErrType.getStatus,
           e,
@@ -1623,9 +1613,9 @@ class ServerNotifier extends _$ServerNotifier {
           // the limiter is for when that fails.
           countAttempt: false,
         );
-        return;
+        return null;
       }
-      if (!_isRefreshCurrent(operation, spi)) return;
+      if (!_isRefreshCurrent(operation, spi)) return null;
       // Not _failSsh: a timed-out status read leaves the connection itself
       // intact, so the session stays connected and the attempt isn't counted
       updateStatus(
@@ -1642,12 +1632,23 @@ class ServerNotifier extends _$ServerNotifier {
         _sshSessionId,
         TermSessionStatus.connected,
       );
-      return;
+      return null;
     } catch (e, s) {
       _failSsh(SSHErrType.getStatus, e, stack: s, operation: operation);
-      return;
+      return null;
     }
 
+  }
+
+  /// Adds the extended status and parses both into the server's status.
+  /// False when the refresh stops here.
+  Future<bool> _applyStatusSsh(
+    Spi spi,
+    String raw, {
+    required int? latencyMs,
+    required bool interactive,
+    required int operation,
+  }) async {
     try {
       // Segments the status function no longer carries, refreshed on their own
       // schedule and concatenated here: the parser splits by separator, so one
@@ -1684,8 +1685,9 @@ class ServerNotifier extends _$ServerNotifier {
       // The last two awaits are the longest in this method — the extended
       // commands take seconds by design. A refresh that started before the
       // server was edited arrives here holding the old host's status.
-      if (!_isRefreshCurrent(operation, spi)) return;
+      if (!_isRefreshCurrent(operation, spi)) return false;
       updateStatus(status, latencyMs: latencyMs);
+      return true;
     } catch (e, trace) {
       _failSsh(
         SSHErrType.getStatus,
@@ -1694,14 +1696,9 @@ class ServerNotifier extends _$ServerNotifier {
         message: 'Parse failed: $e\n\n$raw',
       );
       Loggers.app.warning('Server status', e, trace);
-      return;
+      return false;
     }
 
-    if (!_isRefreshCurrent(operation, spi)) return;
-    // A successful refresh leaves the connection ready for the next poll.
-    updateConnection(ServerConn.finished);
-    // Reset retries only after status preparation succeeds.
-    TryLimiter.reset(sid);
   }
 
   /// Runs [ShellFunc.statusExt] when [_extendedStatusInterval] has elapsed

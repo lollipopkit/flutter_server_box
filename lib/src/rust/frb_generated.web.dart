@@ -201,7 +201,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  String dco_decode_Char(dynamic raw);
+
+  @protected
   Map<String, String> dco_decode_Map_String_String_None(dynamic raw);
+
+  @protected
+  Map<String, List<String>> dco_decode_Map_String_list_String_None(dynamic raw);
 
   @protected
   Map<String, List<FirewalldPort>>
@@ -270,7 +276,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String dco_decode_String(dynamic raw);
 
   @protected
+  BenchOptions dco_decode_bench_options(dynamic raw);
+
+  @protected
   BenchPoll dco_decode_bench_poll(dynamic raw);
+
+  @protected
+  BlockDevice dco_decode_block_device(dynamic raw);
 
   @protected
   BmcError dco_decode_bmc_error(dynamic raw);
@@ -289,6 +301,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   bool dco_decode_bool(dynamic raw);
+
+  @protected
+  BenchOptions dco_decode_box_autoadd_bench_options(dynamic raw);
 
   @protected
   bool dco_decode_box_autoadd_bool(dynamic raw);
@@ -338,6 +353,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   FirewalldSnapshot dco_decode_box_autoadd_firewalld_snapshot(dynamic raw);
 
   @protected
+  GroupDraft dco_decode_box_autoadd_group_draft(dynamic raw);
+
+  @protected
   int dco_decode_box_autoadd_i_32(dynamic raw);
 
   @protected
@@ -347,7 +365,31 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   LibvirtPoolRef dco_decode_box_autoadd_libvirt_pool_ref(dynamic raw);
 
   @protected
+  MdSync dco_decode_box_autoadd_md_sync(dynamic raw);
+
+  @protected
+  PasswordState dco_decode_box_autoadd_password_state(dynamic raw);
+
+  @protected
   Plan dco_decode_box_autoadd_plan(dynamic raw);
+
+  @protected
+  ProcLoad dco_decode_box_autoadd_proc_load(dynamic raw);
+
+  @protected
+  ProcSortMode dco_decode_box_autoadd_proc_sort_mode(dynamic raw);
+
+  @protected
+  ProfileError dco_decode_box_autoadd_profile_error(dynamic raw);
+
+  @protected
+  ProfileInput dco_decode_box_autoadd_profile_input(dynamic raw);
+
+  @protected
+  PsParseIssue dco_decode_box_autoadd_ps_parse_issue(dynamic raw);
+
+  @protected
+  PsView dco_decode_box_autoadd_ps_view(dynamic raw);
 
   @protected
   PveConsoleTicket dco_decode_box_autoadd_pve_console_ticket(dynamic raw);
@@ -374,6 +416,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   RedfishTopology dco_decode_box_autoadd_redfish_topology(dynamic raw);
 
   @protected
+  Refusal dco_decode_box_autoadd_refusal(dynamic raw);
+
+  @protected
   RemoteDesktopEvent dco_decode_box_autoadd_remote_desktop_event(dynamic raw);
 
   @protected
@@ -385,7 +430,39 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ResetRequest dco_decode_box_autoadd_reset_request(dynamic raw);
 
   @protected
+  SelfTest dco_decode_box_autoadd_self_test(dynamic raw);
+
+  @protected
+  ServiceListingNotice dco_decode_box_autoadd_service_listing_notice(
+    dynamic raw,
+  );
+
+  @protected
+  ServiceLog dco_decode_box_autoadd_service_log(dynamic raw);
+
+  @protected
+  ServiceManagerType dco_decode_box_autoadd_service_manager_type(dynamic raw);
+
+  @protected
+  ServiceUnit dco_decode_box_autoadd_service_unit(dynamic raw);
+
+  @protected
   SnapshotNameIssue dco_decode_box_autoadd_snapshot_name_issue(dynamic raw);
+
+  @protected
+  SnippetContext dco_decode_box_autoadd_snippet_context(dynamic raw);
+
+  @protected
+  StorageAction dco_decode_box_autoadd_storage_action(dynamic raw);
+
+  @protected
+  StorageView dco_decode_box_autoadd_storage_view(dynamic raw);
+
+  @protected
+  SystemGroup dco_decode_box_autoadd_system_group(dynamic raw);
+
+  @protected
+  SystemUser dco_decode_box_autoadd_system_user(dynamic raw);
 
   @protected
   int dco_decode_box_autoadd_u_16(dynamic raw);
@@ -395,6 +472,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   BigInt dco_decode_box_autoadd_u_64(dynamic raw);
+
+  @protected
+  int dco_decode_box_autoadd_u_8(dynamic raw);
 
   @protected
   UfwChange dco_decode_box_autoadd_ufw_change(dynamic raw);
@@ -413,6 +493,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   UfwSnapshot dco_decode_box_autoadd_ufw_snapshot(dynamic raw);
+
+  @protected
+  UserDraft dco_decode_box_autoadd_user_draft(dynamic raw);
+
+  @protected
+  UserError dco_decode_box_autoadd_user_error(dynamic raw);
+
+  @protected
+  VncPasswordError dco_decode_box_autoadd_vnc_password_error(dynamic raw);
 
   @protected
   VncSessionParams dco_decode_box_autoadd_vnc_session_params(dynamic raw);
@@ -434,6 +523,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   CommandSpec dco_decode_command_spec(dynamic raw);
+
+  @protected
+  Connections dco_decode_connections(dynamic raw);
 
   @protected
   ContainerDiskUsageItem dco_decode_container_disk_usage_item(dynamic raw);
@@ -476,6 +568,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   CustomCmd dco_decode_custom_cmd(dynamic raw);
+
+  @protected
+  DiskHealth dco_decode_disk_health(dynamic raw);
 
   @protected
   EcdsaSignature dco_decode_ecdsa_signature(dynamic raw);
@@ -532,6 +627,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   FirewalldZone dco_decode_firewalld_zone(dynamic raw);
 
   @protected
+  GeekbenchVersion dco_decode_geekbench_version(dynamic raw);
+
+  @protected
+  GroupDraft dco_decode_group_draft(dynamic raw);
+
+  @protected
+  HealthVerdict dco_decode_health_verdict(dynamic raw);
+
+  @protected
   int dco_decode_i_16(dynamic raw);
 
   @protected
@@ -545,6 +649,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<String> dco_decode_list_String(dynamic raw);
+
+  @protected
+  List<BlockDevice> dco_decode_list_block_device(dynamic raw);
 
   @protected
   List<BmcReading> dco_decode_list_bmc_reading(dynamic raw);
@@ -568,6 +675,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<CustomCmd> dco_decode_list_custom_cmd(dynamic raw);
 
   @protected
+  List<DiskHealth> dco_decode_list_disk_health(dynamic raw);
+
+  @protected
   List<Effect> dco_decode_list_effect(dynamic raw);
 
   @protected
@@ -589,7 +699,25 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<LibvirtPoolRef> dco_decode_list_libvirt_pool_ref(dynamic raw);
 
   @protected
+  List<MdArray> dco_decode_list_md_array(dynamic raw);
+
+  @protected
+  List<MdMember> dco_decode_list_md_member(dynamic raw);
+
+  @protected
+  List<NfsClient> dco_decode_list_nfs_client(dynamic raw);
+
+  @protected
+  List<NfsExport> dco_decode_list_nfs_export(dynamic raw);
+
+  @protected
   List<PlanNote> dco_decode_list_plan_note(dynamic raw);
+
+  @protected
+  List<Pool> dco_decode_list_pool(dynamic raw);
+
+  @protected
+  List<PoolLayoutChoice> dco_decode_list_pool_layout_choice(dynamic raw);
 
   @protected
   Int32List dco_decode_list_prim_i_32_strict(dynamic raw);
@@ -604,11 +732,28 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
 
   @protected
+  List<ProcRow> dco_decode_list_proc_row(dynamic raw);
+
+  @protected
+  List<ProcSignal> dco_decode_list_proc_signal(dynamic raw);
+
+  @protected
+  List<ProcSortMode> dco_decode_list_proc_sort_mode(dynamic raw);
+
+  @protected
   List<PveHeader> dco_decode_list_pve_header(dynamic raw);
+
+  @protected
+  List<RaidLevelChoice> dco_decode_list_raid_level_choice(dynamic raw);
 
   @protected
   List<(String, List<FirewalldPort>)>
   dco_decode_list_record_string_list_firewalld_port(dynamic raw);
+
+  @protected
+  List<(String, List<String>)> dco_decode_list_record_string_list_string(
+    dynamic raw,
+  );
 
   @protected
   List<(String, String)> dco_decode_list_record_string_string(dynamic raw);
@@ -622,6 +767,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<ScriptSegment> dco_decode_list_script_segment(dynamic raw);
 
   @protected
+  List<SelfTest> dco_decode_list_self_test(dynamic raw);
+
+  @protected
+  List<ServiceAction> dco_decode_list_service_action(dynamic raw);
+
+  @protected
   List<ServiceCommand> dco_decode_list_service_command(dynamic raw);
 
   @protected
@@ -630,7 +781,31 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  List<ServiceLogLine> dco_decode_list_service_log_line(dynamic raw);
+
+  @protected
+  List<ServiceUnit> dco_decode_list_service_unit(dynamic raw);
+
+  @protected
   List<ShellFileRecord> dco_decode_list_shell_file_record(dynamic raw);
+
+  @protected
+  List<SmartAttribute> dco_decode_list_smart_attribute(dynamic raw);
+
+  @protected
+  List<SmbConnection> dco_decode_list_smb_connection(dynamic raw);
+
+  @protected
+  List<SmbShare> dco_decode_list_smb_share(dynamic raw);
+
+  @protected
+  List<Step> dco_decode_list_step(dynamic raw);
+
+  @protected
+  List<SystemGroup> dco_decode_list_system_group(dynamic raw);
+
+  @protected
+  List<SystemUser> dco_decode_list_system_user(dynamic raw);
 
   @protected
   List<TmuxSessionItem> dco_decode_list_tmux_session_item(dynamic raw);
@@ -648,13 +823,31 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<UfwRule> dco_decode_list_ufw_rule(dynamic raw);
 
   @protected
+  List<Vdev> dco_decode_list_vdev(dynamic raw);
+
+  @protected
   List<VirtActionKind> dco_decode_list_virt_action_kind(dynamic raw);
 
   @protected
   List<VirtOverlay> dco_decode_list_virt_overlay(dynamic raw);
 
   @protected
+  MdArray dco_decode_md_array(dynamic raw);
+
+  @protected
+  MdMember dco_decode_md_member(dynamic raw);
+
+  @protected
+  MdSync dco_decode_md_sync(dynamic raw);
+
+  @protected
   MonitorReleasePage dco_decode_monitor_release_page(dynamic raw);
+
+  @protected
+  NfsClient dco_decode_nfs_client(dynamic raw);
+
+  @protected
+  NfsExport dco_decode_nfs_export(dynamic raw);
 
   @protected
   String? dco_decode_opt_String(dynamic raw);
@@ -702,6 +895,27 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PlatformInt64? dco_decode_opt_box_autoadd_i_64(dynamic raw);
 
   @protected
+  MdSync? dco_decode_opt_box_autoadd_md_sync(dynamic raw);
+
+  @protected
+  PasswordState? dco_decode_opt_box_autoadd_password_state(dynamic raw);
+
+  @protected
+  ProcLoad? dco_decode_opt_box_autoadd_proc_load(dynamic raw);
+
+  @protected
+  ProcSortMode? dco_decode_opt_box_autoadd_proc_sort_mode(dynamic raw);
+
+  @protected
+  ProfileError? dco_decode_opt_box_autoadd_profile_error(dynamic raw);
+
+  @protected
+  PsParseIssue? dco_decode_opt_box_autoadd_ps_parse_issue(dynamic raw);
+
+  @protected
+  PsView? dco_decode_opt_box_autoadd_ps_view(dynamic raw);
+
+  @protected
   RedfishChassis? dco_decode_opt_box_autoadd_redfish_chassis(dynamic raw);
 
   @protected
@@ -709,6 +923,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   RedfishTopology? dco_decode_opt_box_autoadd_redfish_topology(dynamic raw);
+
+  @protected
+  Refusal? dco_decode_opt_box_autoadd_refusal(dynamic raw);
 
   @protected
   RemoteDesktopEvent? dco_decode_opt_box_autoadd_remote_desktop_event(
@@ -724,9 +941,31 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ResetRequest? dco_decode_opt_box_autoadd_reset_request(dynamic raw);
 
   @protected
+  SelfTest? dco_decode_opt_box_autoadd_self_test(dynamic raw);
+
+  @protected
+  ServiceListingNotice? dco_decode_opt_box_autoadd_service_listing_notice(
+    dynamic raw,
+  );
+
+  @protected
+  ServiceLog? dco_decode_opt_box_autoadd_service_log(dynamic raw);
+
+  @protected
+  ServiceManagerType? dco_decode_opt_box_autoadd_service_manager_type(
+    dynamic raw,
+  );
+
+  @protected
   SnapshotNameIssue? dco_decode_opt_box_autoadd_snapshot_name_issue(
     dynamic raw,
   );
+
+  @protected
+  StorageView? dco_decode_opt_box_autoadd_storage_view(dynamic raw);
+
+  @protected
+  SystemGroup? dco_decode_opt_box_autoadd_system_group(dynamic raw);
 
   @protected
   int? dco_decode_opt_box_autoadd_u_16(dynamic raw);
@@ -738,6 +977,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   BigInt? dco_decode_opt_box_autoadd_u_64(dynamic raw);
 
   @protected
+  int? dco_decode_opt_box_autoadd_u_8(dynamic raw);
+
+  @protected
   UfwDraftIssue? dco_decode_opt_box_autoadd_ufw_draft_issue(dynamic raw);
 
   @protected
@@ -745,6 +987,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   UfwLogLevel? dco_decode_opt_box_autoadd_ufw_log_level(dynamic raw);
+
+  @protected
+  UserError? dco_decode_opt_box_autoadd_user_error(dynamic raw);
+
+  @protected
+  VncPasswordError? dco_decode_opt_box_autoadd_vnc_password_error(dynamic raw);
 
   @protected
   CertInfo? dco_decode_opt_box_cert_info(dynamic raw);
@@ -765,10 +1013,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<VirtActionKind>? dco_decode_opt_list_virt_action_kind(dynamic raw);
 
   @protected
+  PasswordState dco_decode_password_state(dynamic raw);
+
+  @protected
   Plan dco_decode_plan(dynamic raw);
 
   @protected
+  PlanError dco_decode_plan_error(dynamic raw);
+
+  @protected
   PlanNote dco_decode_plan_note(dynamic raw);
+
+  @protected
+  Pool dco_decode_pool(dynamic raw);
+
+  @protected
+  PoolLayoutChoice dco_decode_pool_layout_choice(dynamic raw);
 
   @protected
   PowerIntent dco_decode_power_intent(dynamic raw);
@@ -777,7 +1037,43 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PowerState dco_decode_power_state(dynamic raw);
 
   @protected
+  Proc dco_decode_proc(dynamic raw);
+
+  @protected
+  ProcColumns dco_decode_proc_columns(dynamic raw);
+
+  @protected
+  ProcKillOutcome dco_decode_proc_kill_outcome(dynamic raw);
+
+  @protected
+  ProcLoad dco_decode_proc_load(dynamic raw);
+
+  @protected
+  ProcRow dco_decode_proc_row(dynamic raw);
+
+  @protected
+  ProcSignal dco_decode_proc_signal(dynamic raw);
+
+  @protected
+  ProcSortMode dco_decode_proc_sort_mode(dynamic raw);
+
+  @protected
+  ProfileError dco_decode_profile_error(dynamic raw);
+
+  @protected
+  ProfileInput dco_decode_profile_input(dynamic raw);
+
+  @protected
   ProtocolCompat dco_decode_protocol_compat(dynamic raw);
+
+  @protected
+  PsParseFailure dco_decode_ps_parse_failure(dynamic raw);
+
+  @protected
+  PsParseIssue dco_decode_ps_parse_issue(dynamic raw);
+
+  @protected
+  PsView dco_decode_ps_view(dynamic raw);
 
   @protected
   PveConsoleKind dco_decode_pve_console_kind(dynamic raw);
@@ -804,12 +1100,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PveTiming dco_decode_pve_timing(dynamic raw);
 
   @protected
+  RaidLevelChoice dco_decode_raid_level_choice(dynamic raw);
+
+  @protected
   RdpSessionParams dco_decode_rdp_session_params(dynamic raw);
 
   @protected
   (String, List<FirewalldPort>) dco_decode_record_string_list_firewalld_port(
     dynamic raw,
   );
+
+  @protected
+  (String, List<String>) dco_decode_record_string_list_string(dynamic raw);
 
   @protected
   (String, String) dco_decode_record_string_string(dynamic raw);
@@ -833,6 +1135,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   RedfishTopology dco_decode_redfish_topology(dynamic raw);
 
   @protected
+  Refusal dco_decode_refusal(dynamic raw);
+
+  @protected
   RemoteDesktopConnectionState dco_decode_remote_desktop_connection_state(
     dynamic raw,
   );
@@ -853,16 +1158,52 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ScriptSegment dco_decode_script_segment(dynamic raw);
 
   @protected
+  SelfTest dco_decode_self_test(dynamic raw);
+
+  @protected
+  ServiceAction dco_decode_service_action(dynamic raw);
+
+  @protected
   ServiceCommand dco_decode_service_command(dynamic raw);
 
   @protected
   ServiceCommandOutput dco_decode_service_command_output(dynamic raw);
 
   @protected
+  ServiceListing dco_decode_service_listing(dynamic raw);
+
+  @protected
+  ServiceListingNotice dco_decode_service_listing_notice(dynamic raw);
+
+  @protected
+  ServiceLog dco_decode_service_log(dynamic raw);
+
+  @protected
+  ServiceLogLine dco_decode_service_log_line(dynamic raw);
+
+  @protected
+  ServiceManagerType dco_decode_service_manager_type(dynamic raw);
+
+  @protected
   ServiceProbe dco_decode_service_probe(dynamic raw);
 
   @protected
-  SharesFfiError dco_decode_shares_ffi_error(dynamic raw);
+  ServiceScope dco_decode_service_scope(dynamic raw);
+
+  @protected
+  ServiceState dco_decode_service_state(dynamic raw);
+
+  @protected
+  ServiceUnit dco_decode_service_unit(dynamic raw);
+
+  @protected
+  ServiceUnitType dco_decode_service_unit_type(dynamic raw);
+
+  @protected
+  ShareError dco_decode_share_error(dynamic raw);
+
+  @protected
+  Shares dco_decode_shares(dynamic raw);
 
   @protected
   ShellFileRecord dco_decode_shell_file_record(dynamic raw);
@@ -871,16 +1212,40 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ShellFuncKind dco_decode_shell_func_kind(dynamic raw);
 
   @protected
+  SmartAttribute dco_decode_smart_attribute(dynamic raw);
+
+  @protected
+  SmbConnection dco_decode_smb_connection(dynamic raw);
+
+  @protected
+  SmbShare dco_decode_smb_share(dynamic raw);
+
+  @protected
   SnapshotMemoryKind dco_decode_snapshot_memory_kind(dynamic raw);
 
   @protected
   SnapshotNameIssue dco_decode_snapshot_name_issue(dynamic raw);
 
   @protected
-  SnippetFfiError dco_decode_snippet_ffi_error(dynamic raw);
+  SnippetContext dco_decode_snippet_context(dynamic raw);
 
   @protected
-  StorageFfiError dco_decode_storage_ffi_error(dynamic raw);
+  Step dco_decode_step(dynamic raw);
+
+  @protected
+  StorageAction dco_decode_storage_action(dynamic raw);
+
+  @protected
+  StorageError dco_decode_storage_error(dynamic raw);
+
+  @protected
+  StorageView dco_decode_storage_view(dynamic raw);
+
+  @protected
+  SystemGroup dco_decode_system_group(dynamic raw);
+
+  @protected
+  SystemUser dco_decode_system_user(dynamic raw);
 
   @protected
   TmuxSessionItem dco_decode_tmux_session_item(dynamic raw);
@@ -952,10 +1317,25 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void dco_decode_unit(dynamic raw);
 
   @protected
-  UserFfiError dco_decode_user_ffi_error(dynamic raw);
+  UserCatalog dco_decode_user_catalog(dynamic raw);
+
+  @protected
+  UserDetail dco_decode_user_detail(dynamic raw);
+
+  @protected
+  UserDraft dco_decode_user_draft(dynamic raw);
+
+  @protected
+  UserError dco_decode_user_error(dynamic raw);
 
   @protected
   BigInt dco_decode_usize(dynamic raw);
+
+  @protected
+  Vdev dco_decode_vdev(dynamic raw);
+
+  @protected
+  VdevActions dco_decode_vdev_actions(dynamic raw);
 
   @protected
   VirtActionKind dco_decode_virt_action_kind(dynamic raw);
@@ -980,6 +1360,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   VirtUploadEntryKind dco_decode_virt_upload_entry_kind(dynamic raw);
+
+  @protected
+  VncPasswordError dco_decode_vnc_password_error(dynamic raw);
 
   @protected
   VncSessionParams dco_decode_vnc_session_params(dynamic raw);
@@ -1102,7 +1485,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  String sse_decode_Char(SseDeserializer deserializer);
+
+  @protected
   Map<String, String> sse_decode_Map_String_String_None(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  Map<String, List<String>> sse_decode_Map_String_list_String_None(
     SseDeserializer deserializer,
   );
 
@@ -1173,7 +1564,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String sse_decode_String(SseDeserializer deserializer);
 
   @protected
+  BenchOptions sse_decode_bench_options(SseDeserializer deserializer);
+
+  @protected
   BenchPoll sse_decode_bench_poll(SseDeserializer deserializer);
+
+  @protected
+  BlockDevice sse_decode_block_device(SseDeserializer deserializer);
 
   @protected
   BmcError sse_decode_bmc_error(SseDeserializer deserializer);
@@ -1192,6 +1589,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   bool sse_decode_bool(SseDeserializer deserializer);
+
+  @protected
+  BenchOptions sse_decode_box_autoadd_bench_options(
+    SseDeserializer deserializer,
+  );
 
   @protected
   bool sse_decode_box_autoadd_bool(SseDeserializer deserializer);
@@ -1261,6 +1663,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  GroupDraft sse_decode_box_autoadd_group_draft(SseDeserializer deserializer);
+
+  @protected
   int sse_decode_box_autoadd_i_32(SseDeserializer deserializer);
 
   @protected
@@ -1272,7 +1677,41 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  MdSync sse_decode_box_autoadd_md_sync(SseDeserializer deserializer);
+
+  @protected
+  PasswordState sse_decode_box_autoadd_password_state(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   Plan sse_decode_box_autoadd_plan(SseDeserializer deserializer);
+
+  @protected
+  ProcLoad sse_decode_box_autoadd_proc_load(SseDeserializer deserializer);
+
+  @protected
+  ProcSortMode sse_decode_box_autoadd_proc_sort_mode(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  ProfileError sse_decode_box_autoadd_profile_error(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  ProfileInput sse_decode_box_autoadd_profile_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  PsParseIssue sse_decode_box_autoadd_ps_parse_issue(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  PsView sse_decode_box_autoadd_ps_view(SseDeserializer deserializer);
 
   @protected
   PveConsoleTicket sse_decode_box_autoadd_pve_console_ticket(
@@ -1311,6 +1750,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  Refusal sse_decode_box_autoadd_refusal(SseDeserializer deserializer);
+
+  @protected
   RemoteDesktopEvent sse_decode_box_autoadd_remote_desktop_event(
     SseDeserializer deserializer,
   );
@@ -1326,9 +1768,47 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  SelfTest sse_decode_box_autoadd_self_test(SseDeserializer deserializer);
+
+  @protected
+  ServiceListingNotice sse_decode_box_autoadd_service_listing_notice(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  ServiceLog sse_decode_box_autoadd_service_log(SseDeserializer deserializer);
+
+  @protected
+  ServiceManagerType sse_decode_box_autoadd_service_manager_type(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  ServiceUnit sse_decode_box_autoadd_service_unit(SseDeserializer deserializer);
+
+  @protected
   SnapshotNameIssue sse_decode_box_autoadd_snapshot_name_issue(
     SseDeserializer deserializer,
   );
+
+  @protected
+  SnippetContext sse_decode_box_autoadd_snippet_context(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  StorageAction sse_decode_box_autoadd_storage_action(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  StorageView sse_decode_box_autoadd_storage_view(SseDeserializer deserializer);
+
+  @protected
+  SystemGroup sse_decode_box_autoadd_system_group(SseDeserializer deserializer);
+
+  @protected
+  SystemUser sse_decode_box_autoadd_system_user(SseDeserializer deserializer);
 
   @protected
   int sse_decode_box_autoadd_u_16(SseDeserializer deserializer);
@@ -1338,6 +1818,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   BigInt sse_decode_box_autoadd_u_64(SseDeserializer deserializer);
+
+  @protected
+  int sse_decode_box_autoadd_u_8(SseDeserializer deserializer);
 
   @protected
   UfwChange sse_decode_box_autoadd_ufw_change(SseDeserializer deserializer);
@@ -1364,6 +1847,17 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   UfwSnapshot sse_decode_box_autoadd_ufw_snapshot(SseDeserializer deserializer);
 
   @protected
+  UserDraft sse_decode_box_autoadd_user_draft(SseDeserializer deserializer);
+
+  @protected
+  UserError sse_decode_box_autoadd_user_error(SseDeserializer deserializer);
+
+  @protected
+  VncPasswordError sse_decode_box_autoadd_vnc_password_error(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   VncSessionParams sse_decode_box_autoadd_vnc_session_params(
     SseDeserializer deserializer,
   );
@@ -1385,6 +1879,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   CommandSpec sse_decode_command_spec(SseDeserializer deserializer);
+
+  @protected
+  Connections sse_decode_connections(SseDeserializer deserializer);
 
   @protected
   ContainerDiskUsageItem sse_decode_container_disk_usage_item(
@@ -1437,6 +1934,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   CustomCmd sse_decode_custom_cmd(SseDeserializer deserializer);
+
+  @protected
+  DiskHealth sse_decode_disk_health(SseDeserializer deserializer);
 
   @protected
   EcdsaSignature sse_decode_ecdsa_signature(SseDeserializer deserializer);
@@ -1501,6 +2001,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   FirewalldZone sse_decode_firewalld_zone(SseDeserializer deserializer);
 
   @protected
+  GeekbenchVersion sse_decode_geekbench_version(SseDeserializer deserializer);
+
+  @protected
+  GroupDraft sse_decode_group_draft(SseDeserializer deserializer);
+
+  @protected
+  HealthVerdict sse_decode_health_verdict(SseDeserializer deserializer);
+
+  @protected
   int sse_decode_i_16(SseDeserializer deserializer);
 
   @protected
@@ -1514,6 +2023,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<String> sse_decode_list_String(SseDeserializer deserializer);
+
+  @protected
+  List<BlockDevice> sse_decode_list_block_device(SseDeserializer deserializer);
 
   @protected
   List<BmcReading> sse_decode_list_bmc_reading(SseDeserializer deserializer);
@@ -1541,6 +2053,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<CustomCmd> sse_decode_list_custom_cmd(SseDeserializer deserializer);
+
+  @protected
+  List<DiskHealth> sse_decode_list_disk_health(SseDeserializer deserializer);
 
   @protected
   List<Effect> sse_decode_list_effect(SseDeserializer deserializer);
@@ -1576,7 +2091,27 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  List<MdArray> sse_decode_list_md_array(SseDeserializer deserializer);
+
+  @protected
+  List<MdMember> sse_decode_list_md_member(SseDeserializer deserializer);
+
+  @protected
+  List<NfsClient> sse_decode_list_nfs_client(SseDeserializer deserializer);
+
+  @protected
+  List<NfsExport> sse_decode_list_nfs_export(SseDeserializer deserializer);
+
+  @protected
   List<PlanNote> sse_decode_list_plan_note(SseDeserializer deserializer);
+
+  @protected
+  List<Pool> sse_decode_list_pool(SseDeserializer deserializer);
+
+  @protected
+  List<PoolLayoutChoice> sse_decode_list_pool_layout_choice(
+    SseDeserializer deserializer,
+  );
 
   @protected
   Int32List sse_decode_list_prim_i_32_strict(SseDeserializer deserializer);
@@ -1591,11 +2126,32 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
 
   @protected
+  List<ProcRow> sse_decode_list_proc_row(SseDeserializer deserializer);
+
+  @protected
+  List<ProcSignal> sse_decode_list_proc_signal(SseDeserializer deserializer);
+
+  @protected
+  List<ProcSortMode> sse_decode_list_proc_sort_mode(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   List<PveHeader> sse_decode_list_pve_header(SseDeserializer deserializer);
+
+  @protected
+  List<RaidLevelChoice> sse_decode_list_raid_level_choice(
+    SseDeserializer deserializer,
+  );
 
   @protected
   List<(String, List<FirewalldPort>)>
   sse_decode_list_record_string_list_firewalld_port(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<(String, List<String>)> sse_decode_list_record_string_list_string(
     SseDeserializer deserializer,
   );
 
@@ -1615,6 +2171,14 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  List<SelfTest> sse_decode_list_self_test(SseDeserializer deserializer);
+
+  @protected
+  List<ServiceAction> sse_decode_list_service_action(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   List<ServiceCommand> sse_decode_list_service_command(
     SseDeserializer deserializer,
   );
@@ -1625,9 +2189,39 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  List<ServiceLogLine> sse_decode_list_service_log_line(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<ServiceUnit> sse_decode_list_service_unit(SseDeserializer deserializer);
+
+  @protected
   List<ShellFileRecord> sse_decode_list_shell_file_record(
     SseDeserializer deserializer,
   );
+
+  @protected
+  List<SmartAttribute> sse_decode_list_smart_attribute(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<SmbConnection> sse_decode_list_smb_connection(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<SmbShare> sse_decode_list_smb_share(SseDeserializer deserializer);
+
+  @protected
+  List<Step> sse_decode_list_step(SseDeserializer deserializer);
+
+  @protected
+  List<SystemGroup> sse_decode_list_system_group(SseDeserializer deserializer);
+
+  @protected
+  List<SystemUser> sse_decode_list_system_user(SseDeserializer deserializer);
 
   @protected
   List<TmuxSessionItem> sse_decode_list_tmux_session_item(
@@ -1649,6 +2243,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<UfwRule> sse_decode_list_ufw_rule(SseDeserializer deserializer);
 
   @protected
+  List<Vdev> sse_decode_list_vdev(SseDeserializer deserializer);
+
+  @protected
   List<VirtActionKind> sse_decode_list_virt_action_kind(
     SseDeserializer deserializer,
   );
@@ -1657,9 +2254,24 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<VirtOverlay> sse_decode_list_virt_overlay(SseDeserializer deserializer);
 
   @protected
+  MdArray sse_decode_md_array(SseDeserializer deserializer);
+
+  @protected
+  MdMember sse_decode_md_member(SseDeserializer deserializer);
+
+  @protected
+  MdSync sse_decode_md_sync(SseDeserializer deserializer);
+
+  @protected
   MonitorReleasePage sse_decode_monitor_release_page(
     SseDeserializer deserializer,
   );
+
+  @protected
+  NfsClient sse_decode_nfs_client(SseDeserializer deserializer);
+
+  @protected
+  NfsExport sse_decode_nfs_export(SseDeserializer deserializer);
 
   @protected
   String? sse_decode_opt_String(SseDeserializer deserializer);
@@ -1713,6 +2325,35 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PlatformInt64? sse_decode_opt_box_autoadd_i_64(SseDeserializer deserializer);
 
   @protected
+  MdSync? sse_decode_opt_box_autoadd_md_sync(SseDeserializer deserializer);
+
+  @protected
+  PasswordState? sse_decode_opt_box_autoadd_password_state(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  ProcLoad? sse_decode_opt_box_autoadd_proc_load(SseDeserializer deserializer);
+
+  @protected
+  ProcSortMode? sse_decode_opt_box_autoadd_proc_sort_mode(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  ProfileError? sse_decode_opt_box_autoadd_profile_error(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  PsParseIssue? sse_decode_opt_box_autoadd_ps_parse_issue(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  PsView? sse_decode_opt_box_autoadd_ps_view(SseDeserializer deserializer);
+
+  @protected
   RedfishChassis? sse_decode_opt_box_autoadd_redfish_chassis(
     SseDeserializer deserializer,
   );
@@ -1726,6 +2367,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   RedfishTopology? sse_decode_opt_box_autoadd_redfish_topology(
     SseDeserializer deserializer,
   );
+
+  @protected
+  Refusal? sse_decode_opt_box_autoadd_refusal(SseDeserializer deserializer);
 
   @protected
   RemoteDesktopEvent? sse_decode_opt_box_autoadd_remote_desktop_event(
@@ -1743,7 +2387,35 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  SelfTest? sse_decode_opt_box_autoadd_self_test(SseDeserializer deserializer);
+
+  @protected
+  ServiceListingNotice? sse_decode_opt_box_autoadd_service_listing_notice(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  ServiceLog? sse_decode_opt_box_autoadd_service_log(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  ServiceManagerType? sse_decode_opt_box_autoadd_service_manager_type(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   SnapshotNameIssue? sse_decode_opt_box_autoadd_snapshot_name_issue(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  StorageView? sse_decode_opt_box_autoadd_storage_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  SystemGroup? sse_decode_opt_box_autoadd_system_group(
     SseDeserializer deserializer,
   );
 
@@ -1757,6 +2429,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   BigInt? sse_decode_opt_box_autoadd_u_64(SseDeserializer deserializer);
 
   @protected
+  int? sse_decode_opt_box_autoadd_u_8(SseDeserializer deserializer);
+
+  @protected
   UfwDraftIssue? sse_decode_opt_box_autoadd_ufw_draft_issue(
     SseDeserializer deserializer,
   );
@@ -1766,6 +2441,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   UfwLogLevel? sse_decode_opt_box_autoadd_ufw_log_level(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  UserError? sse_decode_opt_box_autoadd_user_error(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  VncPasswordError? sse_decode_opt_box_autoadd_vnc_password_error(
     SseDeserializer deserializer,
   );
 
@@ -1792,10 +2477,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  PasswordState sse_decode_password_state(SseDeserializer deserializer);
+
+  @protected
   Plan sse_decode_plan(SseDeserializer deserializer);
 
   @protected
+  PlanError sse_decode_plan_error(SseDeserializer deserializer);
+
+  @protected
   PlanNote sse_decode_plan_note(SseDeserializer deserializer);
+
+  @protected
+  Pool sse_decode_pool(SseDeserializer deserializer);
+
+  @protected
+  PoolLayoutChoice sse_decode_pool_layout_choice(SseDeserializer deserializer);
 
   @protected
   PowerIntent sse_decode_power_intent(SseDeserializer deserializer);
@@ -1804,7 +2501,43 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PowerState sse_decode_power_state(SseDeserializer deserializer);
 
   @protected
+  Proc sse_decode_proc(SseDeserializer deserializer);
+
+  @protected
+  ProcColumns sse_decode_proc_columns(SseDeserializer deserializer);
+
+  @protected
+  ProcKillOutcome sse_decode_proc_kill_outcome(SseDeserializer deserializer);
+
+  @protected
+  ProcLoad sse_decode_proc_load(SseDeserializer deserializer);
+
+  @protected
+  ProcRow sse_decode_proc_row(SseDeserializer deserializer);
+
+  @protected
+  ProcSignal sse_decode_proc_signal(SseDeserializer deserializer);
+
+  @protected
+  ProcSortMode sse_decode_proc_sort_mode(SseDeserializer deserializer);
+
+  @protected
+  ProfileError sse_decode_profile_error(SseDeserializer deserializer);
+
+  @protected
+  ProfileInput sse_decode_profile_input(SseDeserializer deserializer);
+
+  @protected
   ProtocolCompat sse_decode_protocol_compat(SseDeserializer deserializer);
+
+  @protected
+  PsParseFailure sse_decode_ps_parse_failure(SseDeserializer deserializer);
+
+  @protected
+  PsParseIssue sse_decode_ps_parse_issue(SseDeserializer deserializer);
+
+  @protected
+  PsView sse_decode_ps_view(SseDeserializer deserializer);
 
   @protected
   PveConsoleKind sse_decode_pve_console_kind(SseDeserializer deserializer);
@@ -1831,10 +2564,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PveTiming sse_decode_pve_timing(SseDeserializer deserializer);
 
   @protected
+  RaidLevelChoice sse_decode_raid_level_choice(SseDeserializer deserializer);
+
+  @protected
   RdpSessionParams sse_decode_rdp_session_params(SseDeserializer deserializer);
 
   @protected
   (String, List<FirewalldPort>) sse_decode_record_string_list_firewalld_port(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  (String, List<String>) sse_decode_record_string_list_string(
     SseDeserializer deserializer,
   );
 
@@ -1864,6 +2605,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   RedfishTopology sse_decode_redfish_topology(SseDeserializer deserializer);
 
   @protected
+  Refusal sse_decode_refusal(SseDeserializer deserializer);
+
+  @protected
   RemoteDesktopConnectionState sse_decode_remote_desktop_connection_state(
     SseDeserializer deserializer,
   );
@@ -1890,6 +2634,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ScriptSegment sse_decode_script_segment(SseDeserializer deserializer);
 
   @protected
+  SelfTest sse_decode_self_test(SseDeserializer deserializer);
+
+  @protected
+  ServiceAction sse_decode_service_action(SseDeserializer deserializer);
+
+  @protected
   ServiceCommand sse_decode_service_command(SseDeserializer deserializer);
 
   @protected
@@ -1898,16 +2648,59 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  ServiceListing sse_decode_service_listing(SseDeserializer deserializer);
+
+  @protected
+  ServiceListingNotice sse_decode_service_listing_notice(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  ServiceLog sse_decode_service_log(SseDeserializer deserializer);
+
+  @protected
+  ServiceLogLine sse_decode_service_log_line(SseDeserializer deserializer);
+
+  @protected
+  ServiceManagerType sse_decode_service_manager_type(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   ServiceProbe sse_decode_service_probe(SseDeserializer deserializer);
 
   @protected
-  SharesFfiError sse_decode_shares_ffi_error(SseDeserializer deserializer);
+  ServiceScope sse_decode_service_scope(SseDeserializer deserializer);
+
+  @protected
+  ServiceState sse_decode_service_state(SseDeserializer deserializer);
+
+  @protected
+  ServiceUnit sse_decode_service_unit(SseDeserializer deserializer);
+
+  @protected
+  ServiceUnitType sse_decode_service_unit_type(SseDeserializer deserializer);
+
+  @protected
+  ShareError sse_decode_share_error(SseDeserializer deserializer);
+
+  @protected
+  Shares sse_decode_shares(SseDeserializer deserializer);
 
   @protected
   ShellFileRecord sse_decode_shell_file_record(SseDeserializer deserializer);
 
   @protected
   ShellFuncKind sse_decode_shell_func_kind(SseDeserializer deserializer);
+
+  @protected
+  SmartAttribute sse_decode_smart_attribute(SseDeserializer deserializer);
+
+  @protected
+  SmbConnection sse_decode_smb_connection(SseDeserializer deserializer);
+
+  @protected
+  SmbShare sse_decode_smb_share(SseDeserializer deserializer);
 
   @protected
   SnapshotMemoryKind sse_decode_snapshot_memory_kind(
@@ -1920,10 +2713,25 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
-  SnippetFfiError sse_decode_snippet_ffi_error(SseDeserializer deserializer);
+  SnippetContext sse_decode_snippet_context(SseDeserializer deserializer);
 
   @protected
-  StorageFfiError sse_decode_storage_ffi_error(SseDeserializer deserializer);
+  Step sse_decode_step(SseDeserializer deserializer);
+
+  @protected
+  StorageAction sse_decode_storage_action(SseDeserializer deserializer);
+
+  @protected
+  StorageError sse_decode_storage_error(SseDeserializer deserializer);
+
+  @protected
+  StorageView sse_decode_storage_view(SseDeserializer deserializer);
+
+  @protected
+  SystemGroup sse_decode_system_group(SseDeserializer deserializer);
+
+  @protected
+  SystemUser sse_decode_system_user(SseDeserializer deserializer);
 
   @protected
   TmuxSessionItem sse_decode_tmux_session_item(SseDeserializer deserializer);
@@ -1997,10 +2805,25 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_decode_unit(SseDeserializer deserializer);
 
   @protected
-  UserFfiError sse_decode_user_ffi_error(SseDeserializer deserializer);
+  UserCatalog sse_decode_user_catalog(SseDeserializer deserializer);
+
+  @protected
+  UserDetail sse_decode_user_detail(SseDeserializer deserializer);
+
+  @protected
+  UserDraft sse_decode_user_draft(SseDeserializer deserializer);
+
+  @protected
+  UserError sse_decode_user_error(SseDeserializer deserializer);
 
   @protected
   BigInt sse_decode_usize(SseDeserializer deserializer);
+
+  @protected
+  Vdev sse_decode_vdev(SseDeserializer deserializer);
+
+  @protected
+  VdevActions sse_decode_vdev_actions(SseDeserializer deserializer);
 
   @protected
   VirtActionKind sse_decode_virt_action_kind(SseDeserializer deserializer);
@@ -2029,6 +2852,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   VirtUploadEntryKind sse_decode_virt_upload_entry_kind(
     SseDeserializer deserializer,
   );
+
+  @protected
+  VncPasswordError sse_decode_vnc_password_error(SseDeserializer deserializer);
 
   @protected
   VncSessionParams sse_decode_vnc_session_params(SseDeserializer deserializer);
@@ -2170,8 +2996,17 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_Char(String self, SseSerializer serializer);
+
+  @protected
   void sse_encode_Map_String_String_None(
     Map<String, String> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_Map_String_list_String_None(
+    Map<String, List<String>> self,
     SseSerializer serializer,
   );
 
@@ -2254,7 +3089,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_String(String self, SseSerializer serializer);
 
   @protected
+  void sse_encode_bench_options(BenchOptions self, SseSerializer serializer);
+
+  @protected
   void sse_encode_bench_poll(BenchPoll self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_block_device(BlockDevice self, SseSerializer serializer);
 
   @protected
   void sse_encode_bmc_error(BmcError self, SseSerializer serializer);
@@ -2273,6 +3114,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_bool(bool self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_bench_options(
+    BenchOptions self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_box_autoadd_bool(bool self, SseSerializer serializer);
@@ -2359,6 +3206,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_box_autoadd_group_draft(
+    GroupDraft self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_i_32(int self, SseSerializer serializer);
 
   @protected
@@ -2374,7 +3227,49 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_box_autoadd_md_sync(MdSync self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_password_state(
+    PasswordState self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_plan(Plan self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_proc_load(
+    ProcLoad self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_proc_sort_mode(
+    ProcSortMode self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_profile_error(
+    ProfileError self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_profile_input(
+    ProfileInput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_ps_parse_issue(
+    PsParseIssue self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_ps_view(PsView self, SseSerializer serializer);
 
   @protected
   void sse_encode_box_autoadd_pve_console_ticket(
@@ -2425,6 +3320,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_box_autoadd_refusal(Refusal self, SseSerializer serializer);
+
+  @protected
   void sse_encode_box_autoadd_remote_desktop_event(
     RemoteDesktopEvent self,
     SseSerializer serializer,
@@ -2443,8 +3341,68 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_box_autoadd_self_test(
+    SelfTest self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_service_listing_notice(
+    ServiceListingNotice self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_service_log(
+    ServiceLog self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_service_manager_type(
+    ServiceManagerType self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_service_unit(
+    ServiceUnit self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_snapshot_name_issue(
     SnapshotNameIssue self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_snippet_context(
+    SnippetContext self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_storage_action(
+    StorageAction self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_storage_view(
+    StorageView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_system_group(
+    SystemGroup self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_system_user(
+    SystemUser self,
     SseSerializer serializer,
   );
 
@@ -2456,6 +3414,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_box_autoadd_u_64(BigInt self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_u_8(int self, SseSerializer serializer);
 
   @protected
   void sse_encode_box_autoadd_ufw_change(
@@ -2491,6 +3452,24 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_box_autoadd_user_draft(
+    UserDraft self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_user_error(
+    UserError self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_vnc_password_error(
+    VncPasswordError self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_vnc_session_params(
     VncSessionParams self,
     SseSerializer serializer,
@@ -2513,6 +3492,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_command_spec(CommandSpec self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_connections(Connections self, SseSerializer serializer);
 
   @protected
   void sse_encode_container_disk_usage_item(
@@ -2576,6 +3558,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_custom_cmd(CustomCmd self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_disk_health(DiskHealth self, SseSerializer serializer);
 
   @protected
   void sse_encode_ecdsa_signature(
@@ -2665,6 +3650,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_firewalld_zone(FirewalldZone self, SseSerializer serializer);
 
   @protected
+  void sse_encode_geekbench_version(
+    GeekbenchVersion self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_group_draft(GroupDraft self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_health_verdict(HealthVerdict self, SseSerializer serializer);
+
+  @protected
   void sse_encode_i_16(int self, SseSerializer serializer);
 
   @protected
@@ -2681,6 +3678,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_list_String(List<String> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_block_device(
+    List<BlockDevice> self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_list_bmc_reading(
@@ -2725,6 +3728,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_disk_health(
+    List<DiskHealth> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_effect(List<Effect> self, SseSerializer serializer);
 
   @protected
@@ -2764,7 +3773,34 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_md_array(List<MdArray> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_md_member(List<MdMember> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_nfs_client(
+    List<NfsClient> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_nfs_export(
+    List<NfsExport> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_plan_note(List<PlanNote> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_pool(List<Pool> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_pool_layout_choice(
+    List<PoolLayoutChoice> self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_list_prim_i_32_strict(
@@ -2788,14 +3824,41 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_proc_row(List<ProcRow> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_proc_signal(
+    List<ProcSignal> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_proc_sort_mode(
+    List<ProcSortMode> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_pve_header(
     List<PveHeader> self,
     SseSerializer serializer,
   );
 
   @protected
+  void sse_encode_list_raid_level_choice(
+    List<RaidLevelChoice> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_record_string_list_firewalld_port(
     List<(String, List<FirewalldPort>)> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_record_string_list_string(
+    List<(String, List<String>)> self,
     SseSerializer serializer,
   );
 
@@ -2818,6 +3881,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_self_test(List<SelfTest> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_service_action(
+    List<ServiceAction> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_service_command(
     List<ServiceCommand> self,
     SseSerializer serializer,
@@ -2830,8 +3902,50 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_service_log_line(
+    List<ServiceLogLine> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_service_unit(
+    List<ServiceUnit> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_shell_file_record(
     List<ShellFileRecord> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_smart_attribute(
+    List<SmartAttribute> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_smb_connection(
+    List<SmbConnection> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_smb_share(List<SmbShare> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_step(List<Step> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_system_group(
+    List<SystemGroup> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_system_user(
+    List<SystemUser> self,
     SseSerializer serializer,
   );
 
@@ -2860,6 +3974,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_list_ufw_rule(List<UfwRule> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_vdev(List<Vdev> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_virt_action_kind(
     List<VirtActionKind> self,
     SseSerializer serializer,
@@ -2872,10 +3989,25 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_md_array(MdArray self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_md_member(MdMember self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_md_sync(MdSync self, SseSerializer serializer);
+
+  @protected
   void sse_encode_monitor_release_page(
     MonitorReleasePage self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_nfs_client(NfsClient self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_nfs_export(NfsExport self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_String(String? self, SseSerializer serializer);
@@ -2944,6 +4076,48 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_opt_box_autoadd_md_sync(
+    MdSync? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_password_state(
+    PasswordState? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_proc_load(
+    ProcLoad? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_proc_sort_mode(
+    ProcSortMode? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_profile_error(
+    ProfileError? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_ps_parse_issue(
+    PsParseIssue? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_ps_view(
+    PsView? self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_opt_box_autoadd_redfish_chassis(
     RedfishChassis? self,
     SseSerializer serializer,
@@ -2958,6 +4132,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_opt_box_autoadd_redfish_topology(
     RedfishTopology? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_refusal(
+    Refusal? self,
     SseSerializer serializer,
   );
 
@@ -2980,8 +4160,44 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_opt_box_autoadd_self_test(
+    SelfTest? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_service_listing_notice(
+    ServiceListingNotice? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_service_log(
+    ServiceLog? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_service_manager_type(
+    ServiceManagerType? self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_opt_box_autoadd_snapshot_name_issue(
     SnapshotNameIssue? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_storage_view(
+    StorageView? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_system_group(
+    SystemGroup? self,
     SseSerializer serializer,
   );
 
@@ -2993,6 +4209,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_opt_box_autoadd_u_64(BigInt? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_u_8(int? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_box_autoadd_ufw_draft_issue(
@@ -3009,6 +4228,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_opt_box_autoadd_ufw_log_level(
     UfwLogLevel? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_user_error(
+    UserError? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_vnc_password_error(
+    VncPasswordError? self,
     SseSerializer serializer,
   );
 
@@ -3043,10 +4274,25 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_password_state(PasswordState self, SseSerializer serializer);
+
+  @protected
   void sse_encode_plan(Plan self, SseSerializer serializer);
 
   @protected
+  void sse_encode_plan_error(PlanError self, SseSerializer serializer);
+
+  @protected
   void sse_encode_plan_note(PlanNote self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_pool(Pool self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_pool_layout_choice(
+    PoolLayoutChoice self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_power_intent(PowerIntent self, SseSerializer serializer);
@@ -3055,10 +4301,52 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_power_state(PowerState self, SseSerializer serializer);
 
   @protected
+  void sse_encode_proc(Proc self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_proc_columns(ProcColumns self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_proc_kill_outcome(
+    ProcKillOutcome self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_proc_load(ProcLoad self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_proc_row(ProcRow self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_proc_signal(ProcSignal self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_proc_sort_mode(ProcSortMode self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_profile_error(ProfileError self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_profile_input(ProfileInput self, SseSerializer serializer);
+
+  @protected
   void sse_encode_protocol_compat(
     ProtocolCompat self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_ps_parse_failure(
+    PsParseFailure self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_ps_parse_issue(PsParseIssue self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_ps_view(PsView self, SseSerializer serializer);
 
   @protected
   void sse_encode_pve_console_kind(
@@ -3094,6 +4382,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_pve_timing(PveTiming self, SseSerializer serializer);
 
   @protected
+  void sse_encode_raid_level_choice(
+    RaidLevelChoice self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_rdp_session_params(
     RdpSessionParams self,
     SseSerializer serializer,
@@ -3102,6 +4396,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_record_string_list_firewalld_port(
     (String, List<FirewalldPort>) self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_record_string_list_string(
+    (String, List<String>) self,
     SseSerializer serializer,
   );
 
@@ -3142,6 +4442,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_refusal(Refusal self, SseSerializer serializer);
+
+  @protected
   void sse_encode_remote_desktop_connection_state(
     RemoteDesktopConnectionState self,
     SseSerializer serializer,
@@ -3172,6 +4475,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_script_segment(ScriptSegment self, SseSerializer serializer);
 
   @protected
+  void sse_encode_self_test(SelfTest self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_service_action(ServiceAction self, SseSerializer serializer);
+
+  @protected
   void sse_encode_service_command(
     ServiceCommand self,
     SseSerializer serializer,
@@ -3184,13 +4493,55 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_service_listing(
+    ServiceListing self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_service_listing_notice(
+    ServiceListingNotice self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_service_log(ServiceLog self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_service_log_line(
+    ServiceLogLine self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_service_manager_type(
+    ServiceManagerType self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_service_probe(ServiceProbe self, SseSerializer serializer);
 
   @protected
-  void sse_encode_shares_ffi_error(
-    SharesFfiError self,
+  void sse_encode_service_scope(ServiceScope self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_service_state(ServiceState self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_service_unit(ServiceUnit self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_service_unit_type(
+    ServiceUnitType self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_share_error(ShareError self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_shares(Shares self, SseSerializer serializer);
 
   @protected
   void sse_encode_shell_file_record(
@@ -3200,6 +4551,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_shell_func_kind(ShellFuncKind self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_smart_attribute(
+    SmartAttribute self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_smb_connection(SmbConnection self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_smb_share(SmbShare self, SseSerializer serializer);
 
   @protected
   void sse_encode_snapshot_memory_kind(
@@ -3214,16 +4577,28 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
-  void sse_encode_snippet_ffi_error(
-    SnippetFfiError self,
+  void sse_encode_snippet_context(
+    SnippetContext self,
     SseSerializer serializer,
   );
 
   @protected
-  void sse_encode_storage_ffi_error(
-    StorageFfiError self,
-    SseSerializer serializer,
-  );
+  void sse_encode_step(Step self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_storage_action(StorageAction self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_storage_error(StorageError self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_storage_view(StorageView self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_system_group(SystemGroup self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_system_user(SystemUser self, SseSerializer serializer);
 
   @protected
   void sse_encode_tmux_session_item(
@@ -3304,10 +4679,25 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_unit(void self, SseSerializer serializer);
 
   @protected
-  void sse_encode_user_ffi_error(UserFfiError self, SseSerializer serializer);
+  void sse_encode_user_catalog(UserCatalog self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_user_detail(UserDetail self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_user_draft(UserDraft self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_user_error(UserError self, SseSerializer serializer);
 
   @protected
   void sse_encode_usize(BigInt self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_vdev(Vdev self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_vdev_actions(VdevActions self, SseSerializer serializer);
 
   @protected
   void sse_encode_virt_action_kind(
@@ -3342,6 +4732,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_virt_upload_entry_kind(
     VirtUploadEntryKind self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_vnc_password_error(
+    VncPasswordError self,
     SseSerializer serializer,
   );
 

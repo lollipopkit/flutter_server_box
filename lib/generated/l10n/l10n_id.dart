@@ -3001,6 +3001,9 @@ class AppLocalizationsId extends AppLocalizations {
       'Host tujuan tidak boleh berisi spasi atau baris baru.';
 
   @override
+  String get remoteDesktopProtocolInvalid => 'Unsupported protocol.';
+
+  @override
   String get remoteDesktopCredentialInvalid =>
       'Nama pengguna dan domain paling banyak 256 karakter dan tidak boleh berisi baris baru.';
 
@@ -6377,6 +6380,9 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get storageTooFewDevices => 'Not enough valid devices were selected.';
+
+  @override
+  String get storageKeyRequired => 'A passphrase is required.';
 
   @override
   String get storageExpand => 'Perluas';
