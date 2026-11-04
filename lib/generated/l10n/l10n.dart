@@ -1093,12 +1093,6 @@ abstract class AppLocalizations {
   /// **'Customize which tabs appear on the home page and their order'**
   String get homeTabsCustomizeDesc;
 
-  /// User-facing label or message for ignore cert.
-  ///
-  /// In en, this message translates to:
-  /// **'Ignore certificate'**
-  String get ignoreCert;
-
   /// A container image, as in Docker. NOT a picture — do not replace this with libL10n.image, whose German is "Bild" and Japanese "画像".
   ///
   /// In en, this message translates to:
@@ -1651,29 +1645,11 @@ abstract class AppLocalizations {
   /// **'Not reviewed yet — tap to see the certificate'**
   String get bmcCertUnreviewed;
 
-  /// User-facing label or message for BMC cert review.
-  ///
-  /// In en, this message translates to:
-  /// **'A self-signed certificate. Compare it before accepting. Only this exact one is trusted afterwards.'**
-  String get bmcCertReview;
-
-  /// User-facing label or message for BMC cert changed.
-  ///
-  /// In en, this message translates to:
-  /// **'The certificate does not match. Check it.'**
-  String get bmcCertChanged;
-
   /// User-facing label or message for BMC cert expired.
   ///
   /// In en, this message translates to:
   /// **'Expired.'**
   String get bmcCertExpired;
-
-  /// User-facing label or message for BMC cert was.
-  ///
-  /// In en, this message translates to:
-  /// **'Previously accepted: {fingerprint}'**
-  String bmcCertWas(String fingerprint);
 
   /// User-facing label or message for BMC addr invalid.
   ///
@@ -1734,12 +1710,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'On a phone, the command runs in the selected Linux system. Install the tools it uses (nc, socat, …) there first.'**
   String get proxyCommandMobileTip;
-
-  /// Help text for the pve ignore cert setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'Not recommended to enable, beware of security risks! If you are using the default certificate from PVE, you need to enable this option.'**
-  String get pveIgnoreCertTip;
 
   /// User-facing label or message for pve password required.
   ///
@@ -5411,6 +5381,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Trust and reconnect'**
   String get remoteDesktopTrustReconnect;
+
+  /// Accepts a certificate shown for review, where nothing reconnects at once (a form field is set).
+  ///
+  /// In en, this message translates to:
+  /// **'Trust'**
+  String get certTrust;
 
   /// No description provided for @remoteDesktopDeleteProfile.
   ///

@@ -8,6 +8,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/pve/console.dart';
 import 'package:server_box/core/ssh/local_tunnel.dart';
+import 'package:server_box/core/utils/cert_fingerprint.dart';
 import 'package:server_box/core/utils/server_tcp.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
@@ -909,15 +910,7 @@ class PveBackend implements VirtBackend {
   }
 
   VirtErr _certErr(X509Certificate cert, String? pin, Object cause) {
-    final info =
-        certInfoFromDer(der: cert.der) ??
-        CertInfo(
-          fingerprint: certFingerprint(der: cert.der),
-          subject: cert.subject,
-          issuer: cert.issuer,
-          notBefore: cert.startValidity.millisecondsSinceEpoch ~/ 1000,
-          notAfter: cert.endValidity.millisecondsSinceEpoch ~/ 1000,
-        );
+    final info = certInfoOf(cert);
     _presented = info;
     if (pin == null || pin.isEmpty) {
       return VirtErr(

@@ -560,9 +560,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'Pas aan welke tabbladen op de startpagina worden weergegeven en hun volgorde';
 
   @override
-  String get ignoreCert => 'Certificaat negeren';
-
-  @override
   String get image => 'Afbeelding';
 
   @override
@@ -882,20 +879,7 @@ class AppLocalizationsNl extends AppLocalizations {
       'Nog niet beoordeeld — tik om het certificaat te zien';
 
   @override
-  String get bmcCertReview =>
-      'Een zelfondertekend certificaat. Vergelijk het voor je accepteert. Daarna wordt alleen dit vertrouwd.';
-
-  @override
-  String get bmcCertChanged =>
-      'Het certificaat komt niet overeen. Controleer het.';
-
-  @override
   String get bmcCertExpired => 'Verlopen.';
-
-  @override
-  String bmcCertWas(String fingerprint) {
-    return 'Eerder geaccepteerd: $fingerprint';
-  }
 
   @override
   String get bmcAddrInvalid =>
@@ -936,10 +920,6 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get proxyCommandMobileTip =>
       'Op een telefoon draait de opdracht in het geselecteerde Linux-systeem. Installeer daar eerst de hulpmiddelen die hij gebruikt (nc, socat, …).';
-
-  @override
-  String get pveIgnoreCertTip =>
-      'Schakel deze optie in als PVE het standaard zelfondertekende certificaat gebruikt. Dit brengt wel een beveiligingsrisico met zich mee.';
 
   @override
   String get pvePasswordRequired =>
@@ -3162,6 +3142,9 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get remoteDesktopTrustReconnect => 'Vertrouwen en opnieuw verbinden';
+
+  @override
+  String get certTrust => 'Vertrouwen';
 
   @override
   String remoteDesktopDeleteProfile(String name) {

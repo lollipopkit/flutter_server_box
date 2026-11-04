@@ -37,11 +37,25 @@ const diskCountsNetworkColumn =
     ', "disk_counts_network" INTEGER NOT NULL DEFAULT 0 '
     'CHECK ("disk_counts_network" IN (0, 1))';
 
-/// `server` as it was before v33: today's table less `disk_counts_network`,
+/// `server` as it was before v33: the v35 table less `disk_counts_network`,
 /// asserted to have been found.
 String serverDdlBeforeDiskCountsNetwork(String fresh) {
   expect(fresh, contains(diskCountsNetworkColumn));
-  return fresh.replaceFirst(diskCountsNetworkColumn, '');
+  return serverDdlBeforeMonitorCertPin(
+    fresh,
+  ).replaceFirst(diskCountsNetworkColumn, '');
+}
+
+/// `monitor_ignore_cert` as Drift declared it from v4 to v35.
+const monitorIgnoreCertColumn =
+    '"monitor_ignore_cert" INTEGER NULL CHECK ("monitor_ignore_cert" IN (0, 1)), ';
+
+/// `server` as it was at v35: today's table with `monitor_ignore_cert` where
+/// m035 put `monitor_cert_sha256`, the anchor asserted to have been found.
+String serverDdlBeforeMonitorCertPin(String fresh) {
+  const anchor = '"monitor_cert_sha256" TEXT NULL, ';
+  expect(fresh, contains(anchor));
+  return fresh.replaceFirst(anchor, monitorIgnoreCertColumn);
 }
 
 /// Replaces `server` with [ddl], keeping every child table: the same pragmas

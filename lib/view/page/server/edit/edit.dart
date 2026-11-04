@@ -40,6 +40,7 @@ import 'package:server_box/src/rust/api/bmc.dart';
 import 'package:server_box/view/page/bmc_credential/edit.dart';
 import 'package:server_box/view/page/private_key/edit.dart';
 import 'package:server_box/view/page/server/custom_cmds.dart';
+import 'package:server_box/view/widget/cert_dialog.dart';
 import 'package:server_box/view/widget/group_title.dart';
 import 'package:server_box/view/widget/ssh_discovery/dialog.dart';
 
@@ -179,7 +180,12 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   final _keyPath = ValueNotifier<String?>(null);
   final _autoConnect = ValueNotifier(true);
   final _jumpServers = <String>[].vn;
-  final _monitorIgnoreCert = ValueNotifier(false);
+  /// `MonitorHttpCredential.certSha256`: the agent's own certificate,
+  /// accepted here or on connecting.
+  final _monitorCert = ValueNotifier<String?>(null);
+
+  /// The monitor URL [_monitorCert] was read at.
+  String? _monitorCertAddr;
   final _monitorAllowInsecure = ValueNotifier(false);
 
   /// Connection method for this server: SSH+shell (false) or monitor's HTTP
@@ -299,7 +305,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     _keyPath.dispose();
     _autoConnect.dispose();
     _jumpServers.dispose();
-    _monitorIgnoreCert.dispose();
+    _monitorCert.dispose();
     _monitorAllowInsecure.dispose();
     _useSsh.dispose();
     _useMonitorHttp.dispose();

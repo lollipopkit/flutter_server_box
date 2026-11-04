@@ -41,7 +41,7 @@ SSH 配置位于 `ssh` 对象内。App 导出文件与导入对话框中的示�
 |-------|----------|-------------|
 | `name` | 是 | 在 App 中显示的服务器名称 |
 | `ssh` | 否 | SSH 配置，见下表；纯 Monitor 服务器可以省略 |
-| `monitorHttp` | 否 | Monitor 配置：`addr`、`user`、`pwd`、`ignoreCert`、`allowInsecure` |
+| `monitorHttp` | 否 | Monitor 配置：`addr`、`user`、`pwd`、`certSha256`、`allowInsecure` |
 | `preferredTransport` | 否 | 同时配置 SSH 和 Monitor HTTP 时优先使用哪一个：`ssh` 或 `monitorHttp`。省略时优先 SSH |
 | `tags` | 否 | 用于分组服务器的标签 |
 | `autoConnect` | 否 | App 启动时自动连接 |

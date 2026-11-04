@@ -143,7 +143,7 @@ JWT secret、`database_url` 和 `[remote_access]`（是否允许明文、SSH 地
 
 通知渠道、告警规则、采集间隔、数据保留和允许来源需要重启 Monitor 后生效。扩展采集周期和两个闲置暂停设置会立即生效。App 会标明哪些配置需要重启。
 
-如果要让其他设备连接 Monitor，请启用 HTTPS：可配置内置 TLS（`[server.tls]`），也可使用反向代理。若使用自签名证书，需在 App 中为该服务器明确开启 **忽略证书**。
+如果要让其他设备连接 Monitor，请启用 HTTPS：可配置内置 TLS（`[server.tls]`），也可使用反向代理。自签名证书会在 App 首次连接时显示；信任后只接受这一张证书，证书变化时会再次显示供核对。
 
 ### 升级
 
@@ -228,7 +228,7 @@ SBM_PW="$SBM_PW" ./server_box_monitor password --password-env SBM_PW
 3. 填写：
    - **URL**：例如 `https://1.2.3.4:3770`
    - **Monitor 密码**：Monitor 的密码，见[面板凭据](#面板凭据)
-   - **忽略证书**：仅在使用自签名证书时开启
+   - **Monitor 证书**：使用自签名证书时，在这里或首次连接时核对并信任
 4. 保存配置。
 
 Monitor HTTP 配置不会添加 SSH 凭据。若没有另外配置 SSH，App 只能使用 Monitor 明确提供的功能访问服务器。
@@ -418,7 +418,7 @@ threshold = ">=70c"
 
 **操作因权限不足失败。** Monitor 以它运行的系统账户执行操作，无法访问该账户访问不到的内容。见[访问](#访问)。
 
-**证书错误。** 配置有效的 TLS，将 Monitor 放在反向代理后，或为该服务器开启 **忽略证书**。
+**证书错误。** 配置有效的 TLS，或将 Monitor 放在反向代理后。使用自签名证书时，将 SHA-256 与 Monitor 上的证书核对（`openssl x509 -in tls.crt -noout -fingerprint -sha256`）后信任；证书变化时会再次显示。
 
 **面板使用不同的 origin。** 在 `config.toml` 的 `cors_allowed_origins` 或环境变量 `SBM_CORS_ORIGINS` 中添加该 origin。
 

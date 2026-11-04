@@ -561,9 +561,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Sesuaikan tab mana yang muncul di halaman beranda dan urutannya';
 
   @override
-  String get ignoreCert => 'Abaikan sertifikat';
-
-  @override
   String get image => 'Gambar';
 
   @override
@@ -882,19 +879,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Belum ditinjau — ketuk untuk melihat sertifikat';
 
   @override
-  String get bmcCertReview =>
-      'Sertifikat yang ditandatangani sendiri. Bandingkan sebelum menerima. Setelah itu hanya yang ini dipercaya.';
-
-  @override
-  String get bmcCertChanged => 'Sertifikat tidak cocok. Periksa.';
-
-  @override
   String get bmcCertExpired => 'Kedaluwarsa.';
-
-  @override
-  String bmcCertWas(String fingerprint) {
-    return 'Diterima sebelumnya: $fingerprint';
-  }
 
   @override
   String get bmcAddrInvalid =>
@@ -935,10 +920,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get proxyCommandMobileTip =>
       'Di ponsel, perintah dijalankan di sistem Linux yang dipilih. Pasang dulu alat yang dipakainya (nc, socat, …) di sana.';
-
-  @override
-  String get pveIgnoreCertTip =>
-      'Jika PVE menggunakan sertifikat self-signed bawaan, opsi ini perlu diaktifkan. Namun, tindakan ini berisiko bagi keamanan.';
 
   @override
   String get pvePasswordRequired =>
@@ -3140,6 +3121,9 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get remoteDesktopTrustReconnect => 'Percayai dan sambungkan ulang';
+
+  @override
+  String get certTrust => 'Percayai';
 
   @override
   String remoteDesktopDeleteProfile(String name) {

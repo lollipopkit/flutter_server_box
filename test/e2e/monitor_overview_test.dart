@@ -7,8 +7,8 @@
 /// environment or the workspace-root `.env`:
 ///
 /// - `SBM_E2E_MONITOR_WEBAPPS_ADDR`, `SBM_E2E_MONITOR_WEBAPPS_PASSWORD`.
-/// - `SBM_E2E_MONITOR_WEBAPPS_INSECURE=1` for an agent on plain HTTP,
-///   `SBM_E2E_MONITOR_WEBAPPS_IGNORE_CERT=1` for a self-signed one.
+/// - `SBM_E2E_MONITOR_WEBAPPS_INSECURE=1` for an agent on plain HTTP. A
+///   self-signed certificate is pinned as presented, as on a first connect.
 library;
 
 import 'package:flutter_test/flutter_test.dart';
@@ -18,7 +18,7 @@ import 'package:server_box/data/provider/server/monitor_http.dart';
 
 import '../helpers/ssh_e2e.dart';
 
-void main() {
+Future<void> main() async {
   final addr = e2eEnv('SBM_E2E_MONITOR_WEBAPPS_ADDR');
   final pwd = e2eEnv('SBM_E2E_MONITOR_WEBAPPS_PASSWORD');
   if (addr == null || pwd == null) {
@@ -29,7 +29,7 @@ void main() {
     MonitorHttpCredential(
       addr: addr,
       pwd: pwd,
-      ignoreCert: e2eEnv('SBM_E2E_MONITOR_WEBAPPS_IGNORE_CERT') == '1',
+      certSha256: await e2eAgentCertSha256(addr),
       allowInsecure: e2eEnv('SBM_E2E_MONITOR_WEBAPPS_INSECURE') == '1',
     ),
   );

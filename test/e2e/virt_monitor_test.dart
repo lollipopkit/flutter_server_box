@@ -78,8 +78,8 @@
 /// deleted with its backup. Everything it makes is removed.
 ///
 /// Every agent is expected to serve TLS with a certificate this device does
-/// not trust (`[server.tls]` with a self-signed pair), so the credential sets
-/// `ignoreCert`. Plain HTTP would need both opt-ins (`allowInsecure` here,
+/// not trust (`[server.tls]` with a self-signed pair), so the credential pins
+/// the certificate each presents, as a user accepts it on the first connect. Plain HTTP would need both opt-ins (`allowInsecure` here,
 /// `terminal.allow_insecure` there) and is not what a deployment should use.
 ///
 /// Run with `flutter test test/e2e/virt_monitor_test.dart`, after
@@ -216,10 +216,18 @@ Future<void> main() async {
 
 /// One agent's address and panel login.
 class _Agent {
-  const _Agent(this.addr, this.password, {this.allowInsecure = false});
+  const _Agent(
+    this.addr,
+    this.password, {
+    this.allowInsecure = false,
+    this.certSha256,
+  });
 
   final String addr;
   final String password;
+
+  /// The certificate the agent presented when probed; see the header.
+  final String? certSha256;
 
   /// This app's side of plaintext HTTP; the agent decides its own.
   final bool allowInsecure;
@@ -260,7 +268,14 @@ class _Agent {
     final uri = Uri.tryParse(agent.addr);
     final host = uri?.host;
     if (host == null || host.isEmpty) return agent;
-    if (await e2eReachable(host, uri!.port)) return agent;
+    if (await e2eReachable(host, uri!.port)) {
+      return _Agent(
+        agent.addr,
+        agent.password,
+        allowInsecure: agent.allowInsecure,
+        certSha256: await e2eAgentCertSha256(agent.addr),
+      );
+    }
     // ignore: avoid_print
     print('SBM_E2E_MONITOR_${name}_ADDR ($host:${uri.port}) is not reachable');
     return null;
@@ -270,7 +285,7 @@ class _Agent {
     addr: addr,
     pwd: password,
     // Self-signed `[server.tls]` on every test agent; see the header.
-    ignoreCert: true,
+    certSha256: certSha256,
     allowInsecure: allowInsecure,
   );
 

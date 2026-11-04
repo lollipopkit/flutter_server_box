@@ -31,14 +31,14 @@ void main() {
     required String name,
     String addr = addr,
     String? pwd = 'secret',
-    bool ignoreCert = false,
+    String? certSha256,
     bool allowInsecure = false,
   }) {
     return spiFixture(name: name, id: id).copyWith(
       monitorHttp: MonitorHttpCredential(
         addr: addr,
         pwd: pwd,
-        ignoreCert: ignoreCert,
+        certSha256: certSha256,
         allowInsecure: allowInsecure,
       ),
     );
@@ -92,7 +92,7 @@ void main() {
     test('carries what it needs to reach the agent', () {
       final result = payload(
         selectedIds: ['a'],
-        servers: [monitorSpi(id: 'a', name: 'Home', ignoreCert: true)],
+        servers: [monitorSpi(id: 'a', name: 'Home', certSha256: 'abababababababababababababababababababababababababababababababab')],
         tokens: {'a': tok('watch-token')},
       );
 
@@ -104,7 +104,7 @@ void main() {
           'addr': addr,
           'token': 'watch-token',
           'expiresAt': inDays(90),
-          'ignoreCert': true,
+          'certSha256': 'abababababababababababababababababababababababababababababababab',
           'allowInsecure': false,
         },
       ]);

@@ -123,7 +123,16 @@ extension on _ServerDetailPageState {
         edit,
       ],
       ServerNoticeKind.failed => [
-        retry,
+        if (_certRefusal(srv) case final err?)
+          Btn.elevated(
+            text: l10n.remoteDesktopTrustCertificate,
+            icon: const Icon(Icons.verified_user, size: 18),
+            mainAxisSize: MainAxisSize.min,
+            gap: 8,
+            onTap: () => _trustCert(srv, err),
+          )
+        else
+          retry,
         // The title above is the error's own line; this is everything
         // around it — what the app was doing, and the copy button a bug
         // report needs.
@@ -162,6 +171,37 @@ ${err.message ?? 'null'}
       await ref
           .read(serversProvider.notifier)
           .updateServer(srv.spi, srv.spi.copyWith(monitorHttp: monitor.allowingInsecure()));
+    } catch (e, s) {
+      if (mounted) context.showErrDialog(e, s);
+    }
+  }
+
+  /// The agent's certificate refusal this server failed on, when it did.
+  static MonitorHttpErr? _certRefusal(ServerState srv) => switch (srv.status.err) {
+    final MonitorHttpErr e
+        when e.cert != null &&
+            (e.type == MonitorHttpErrType.certUnconfirmed ||
+                e.type == MonitorHttpErrType.certChanged) =>
+      e,
+    _ => null,
+  };
+
+  /// Shows the certificate the agent presented and pins it if the user
+  /// accepts. Saving reconnects, as in [_allowInsecure].
+  Future<void> _trustCert(ServerState srv, MonitorHttpErr err) async {
+    final monitor = srv.spi.monitorHttp;
+    final cert = err.cert;
+    if (monitor == null || cert == null) return;
+    final accepted = await showCertTrustDialog(
+      context,
+      cert: cert,
+      previous: err.previousFingerprint,
+    );
+    if (!accepted || !mounted) return;
+    try {
+      await ref
+          .read(serversProvider.notifier)
+          .updateServer(srv.spi, srv.spi.copyWith(monitorHttp: monitor.withCertSha256(cert.fingerprint)));
     } catch (e, s) {
       if (mounted) context.showErrDialog(e, s);
     }
@@ -239,6 +279,14 @@ ${err.message ?? 'null'}
       title: libL10n.error,
       child: SingleChildScrollView(child: SimpleMarkdown(data: md)),
       actions: [
+        if (_certRefusal(srv) case final certErr?)
+          TextButton(
+            onPressed: () {
+              context.popDialog();
+              _trustCert(srv, certErr);
+            },
+            child: Text(l10n.remoteDesktopTrustCertificate),
+          ),
         if (srv.spi.monitorHttp?.needsInsecureOptIn == true)
           TextButton(
             // Closes the dialog itself and leaves the work to the page: an

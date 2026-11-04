@@ -23,7 +23,7 @@ Use the Monitor instead when opening an SSH port is inconvenient:
 
 1. Install and configure the [Monitor](/docs/advanced/monitor-agent/) on the server.
 2. Enable **Monitor HTTP** on the Add Server page.
-3. Enter the Monitor URL and its password. If the Monitor uses a self-signed certificate, enable **Monitor Ignore certificate** only when needed.
+3. Enter the Monitor URL and its password. A self-signed certificate is shown on the first connection; compare its SHA-256 and trust it, or review it beforehand under **Monitor Certificate**.
 4. Save the configuration.
 
 SSH and Monitor HTTP can be enabled together. When both are configured, **Preferred transport** only controls which connection the App tries first; the other remains available. A server configured only through Monitor HTTP has no SSH credentials, and its command, terminal, and file features reach what the system account running the Monitor can reach.

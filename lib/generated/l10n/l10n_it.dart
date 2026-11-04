@@ -563,9 +563,6 @@ class AppLocalizationsIt extends AppLocalizations {
       'Personalizza quali schede appaiono nella home page e il loro ordine';
 
   @override
-  String get ignoreCert => 'Ignora certificato';
-
-  @override
   String get image => 'Immagine';
 
   @override
@@ -885,19 +882,7 @@ class AppLocalizationsIt extends AppLocalizations {
       'Non ancora verificato — tocca per vedere il certificato';
 
   @override
-  String get bmcCertReview =>
-      'Un certificato autofirmato. Confrontalo prima di accettarlo. Dopo si fida solo di quello.';
-
-  @override
-  String get bmcCertChanged => 'Il certificato non corrisponde. Controllalo.';
-
-  @override
   String get bmcCertExpired => 'Scaduto.';
-
-  @override
-  String bmcCertWas(String fingerprint) {
-    return 'Accettato in precedenza: $fingerprint';
-  }
 
   @override
   String get bmcAddrInvalid =>
@@ -938,10 +923,6 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get proxyCommandMobileTip =>
       'Su un telefono, il comando viene eseguito nel sistema Linux selezionato. Installa prima lì gli strumenti che usa (nc, socat, …).';
-
-  @override
-  String get pveIgnoreCertTip =>
-      'Se PVE usa il certificato autofirmato predefinito, devi attivare questa opzione. Tieni presente che comporta un rischio per la sicurezza.';
 
   @override
   String get pvePasswordRequired =>
@@ -3173,6 +3154,9 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get remoteDesktopTrustReconnect =>
       'Considera attendibile e riconnetti';
+
+  @override
+  String get certTrust => 'Considera attendibile';
 
   @override
   String remoteDesktopDeleteProfile(String name) {

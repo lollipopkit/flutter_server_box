@@ -45,9 +45,7 @@ final class BmcCfg {
   /// credential: two BMCs do not present the same certificate.
   ///
   /// Absent means nothing has been reviewed yet, and a connection is refused
-  /// rather than trusted: the alternative is the ignore-the-certificate switch
-  /// PVE and the monitor agent carry, and a management interface holding power
-  /// control is the worst place to extend it to.
+  /// rather than trusted.
   final String? certSha256;
 
   const BmcCfg({required this.addr, this.credId, this.certSha256});

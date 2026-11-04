@@ -212,9 +212,10 @@ interval and both idle-pause settings apply immediately. The App marks any
 setting that needs a restart.
 
 If other devices need to connect to the Monitor, protect the connection with
-HTTPS. Configure built-in TLS under `[server.tls]` or use a reverse proxy. To
-connect with a self-signed certificate, explicitly enable **Monitor Ignore
-certificate** for that server in the App.
+HTTPS. Configure built-in TLS under `[server.tls]` or use a reverse proxy. A
+self-signed certificate is shown by the App on the first connection; once
+trusted, only that exact certificate is accepted, and a different one is shown
+again for review.
 
 ### Upgrade
 
@@ -371,7 +372,7 @@ the password forgets every device.
 3. Enter:
    - **URL**: for example, `https://1.2.3.4:3770`
    - **Monitor Password**: the Monitor's password — see [Panel credentials](#panel-credentials)
-   - **Monitor Ignore certificate**: enable only for a self-signed certificate
+   - **Monitor Certificate**: for a self-signed certificate, review and trust it here, or on the first connection
 4. Save the configuration.
 
 Monitor HTTP does not configure SSH credentials. With no SSH connection, the
@@ -663,7 +664,7 @@ feature does not report it; update the Monitor. Restart the Monitor after editin
 operating-system account it runs as, and cannot reach what that account
 cannot. See [Access](#access).
 
-**Certificate errors.** Configure valid TLS, put the Monitor behind a reverse proxy, or enable **Monitor Ignore certificate** for that server.
+**Certificate errors.** Configure valid TLS or put the Monitor behind a reverse proxy. For a self-signed certificate, compare its SHA-256 with the Monitor's (`openssl x509 -in tls.crt -noout -fingerprint -sha256`) and trust it; a changed certificate is shown again.
 
 **The panel uses a different origin.** Add that origin to
 `cors_allowed_origins` in `config.toml` or the `SBM_CORS_ORIGINS` environment

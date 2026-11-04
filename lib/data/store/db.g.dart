@@ -1063,20 +1063,18 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _monitorIgnoreCertMeta = const VerificationMeta(
-    'monitorIgnoreCert',
+  static const VerificationMeta _monitorCertSha256Meta = const VerificationMeta(
+    'monitorCertSha256',
   );
   @override
-  late final GeneratedColumn<bool> monitorIgnoreCert = GeneratedColumn<bool>(
-    'monitor_ignore_cert',
-    aliasedName,
-    true,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("monitor_ignore_cert" IN (0, 1))',
-    ),
-  );
+  late final GeneratedColumn<String> monitorCertSha256 =
+      GeneratedColumn<String>(
+        'monitor_cert_sha256',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _monitorAllowInsecureMeta =
       const VerificationMeta('monitorAllowInsecure');
   @override
@@ -1268,7 +1266,7 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
     monitorAddr,
     monitorUser,
     monitorPwd,
-    monitorIgnoreCert,
+    monitorCertSha256,
     monitorAllowInsecure,
     wolMac,
     wolIp,
@@ -1466,12 +1464,12 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
         monitorPwd.isAcceptableOrUnknown(data['monitor_pwd']!, _monitorPwdMeta),
       );
     }
-    if (data.containsKey('monitor_ignore_cert')) {
+    if (data.containsKey('monitor_cert_sha256')) {
       context.handle(
-        _monitorIgnoreCertMeta,
-        monitorIgnoreCert.isAcceptableOrUnknown(
-          data['monitor_ignore_cert']!,
-          _monitorIgnoreCertMeta,
+        _monitorCertSha256Meta,
+        monitorCertSha256.isAcceptableOrUnknown(
+          data['monitor_cert_sha256']!,
+          _monitorCertSha256Meta,
         ),
       );
     }
@@ -1681,9 +1679,9 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
         DriftSqlType.string,
         data['${effectivePrefix}monitor_pwd'],
       ),
-      monitorIgnoreCert: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}monitor_ignore_cert'],
+      monitorCertSha256: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}monitor_cert_sha256'],
       ),
       monitorAllowInsecure: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
@@ -1813,7 +1811,10 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
   final String? monitorAddr;
   final String? monitorUser;
   final String? monitorPwd;
-  final bool? monitorIgnoreCert;
+
+  /// `MonitorHttpCredential.certSha256`: the certificate accepted for an
+  /// agent the system does not trust, lowercase hex.
+  final String? monitorCertSha256;
   final bool? monitorAllowInsecure;
   final String? wolMac;
   final String? wolIp;
@@ -1883,7 +1884,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     this.monitorAddr,
     this.monitorUser,
     this.monitorPwd,
-    this.monitorIgnoreCert,
+    this.monitorCertSha256,
     this.monitorAllowInsecure,
     this.wolMac,
     this.wolIp,
@@ -1956,8 +1957,8 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     if (!nullToAbsent || monitorPwd != null) {
       map['monitor_pwd'] = Variable<String>(monitorPwd);
     }
-    if (!nullToAbsent || monitorIgnoreCert != null) {
-      map['monitor_ignore_cert'] = Variable<bool>(monitorIgnoreCert);
+    if (!nullToAbsent || monitorCertSha256 != null) {
+      map['monitor_cert_sha256'] = Variable<String>(monitorCertSha256);
     }
     if (!nullToAbsent || monitorAllowInsecure != null) {
       map['monitor_allow_insecure'] = Variable<bool>(monitorAllowInsecure);
@@ -2056,9 +2057,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       monitorPwd: monitorPwd == null && nullToAbsent
           ? const Value.absent()
           : Value(monitorPwd),
-      monitorIgnoreCert: monitorIgnoreCert == null && nullToAbsent
+      monitorCertSha256: monitorCertSha256 == null && nullToAbsent
           ? const Value.absent()
-          : Value(monitorIgnoreCert),
+          : Value(monitorCertSha256),
       monitorAllowInsecure: monitorAllowInsecure == null && nullToAbsent
           ? const Value.absent()
           : Value(monitorAllowInsecure),
@@ -2136,7 +2137,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       monitorAddr: serializer.fromJson<String?>(json['monitorAddr']),
       monitorUser: serializer.fromJson<String?>(json['monitorUser']),
       monitorPwd: serializer.fromJson<String?>(json['monitorPwd']),
-      monitorIgnoreCert: serializer.fromJson<bool?>(json['monitorIgnoreCert']),
+      monitorCertSha256: serializer.fromJson<String?>(
+        json['monitorCertSha256'],
+      ),
       monitorAllowInsecure: serializer.fromJson<bool?>(
         json['monitorAllowInsecure'],
       ),
@@ -2185,7 +2188,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       'monitorAddr': serializer.toJson<String?>(monitorAddr),
       'monitorUser': serializer.toJson<String?>(monitorUser),
       'monitorPwd': serializer.toJson<String?>(monitorPwd),
-      'monitorIgnoreCert': serializer.toJson<bool?>(monitorIgnoreCert),
+      'monitorCertSha256': serializer.toJson<String?>(monitorCertSha256),
       'monitorAllowInsecure': serializer.toJson<bool?>(monitorAllowInsecure),
       'wolMac': serializer.toJson<String?>(wolMac),
       'wolIp': serializer.toJson<String?>(wolIp),
@@ -2228,7 +2231,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     Value<String?> monitorAddr = const Value.absent(),
     Value<String?> monitorUser = const Value.absent(),
     Value<String?> monitorPwd = const Value.absent(),
-    Value<bool?> monitorIgnoreCert = const Value.absent(),
+    Value<String?> monitorCertSha256 = const Value.absent(),
     Value<bool?> monitorAllowInsecure = const Value.absent(),
     Value<String?> wolMac = const Value.absent(),
     Value<String?> wolIp = const Value.absent(),
@@ -2275,9 +2278,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     monitorAddr: monitorAddr.present ? monitorAddr.value : this.monitorAddr,
     monitorUser: monitorUser.present ? monitorUser.value : this.monitorUser,
     monitorPwd: monitorPwd.present ? monitorPwd.value : this.monitorPwd,
-    monitorIgnoreCert: monitorIgnoreCert.present
-        ? monitorIgnoreCert.value
-        : this.monitorIgnoreCert,
+    monitorCertSha256: monitorCertSha256.present
+        ? monitorCertSha256.value
+        : this.monitorCertSha256,
     monitorAllowInsecure: monitorAllowInsecure.present
         ? monitorAllowInsecure.value
         : this.monitorAllowInsecure,
@@ -2351,9 +2354,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       monitorPwd: data.monitorPwd.present
           ? data.monitorPwd.value
           : this.monitorPwd,
-      monitorIgnoreCert: data.monitorIgnoreCert.present
-          ? data.monitorIgnoreCert.value
-          : this.monitorIgnoreCert,
+      monitorCertSha256: data.monitorCertSha256.present
+          ? data.monitorCertSha256.value
+          : this.monitorCertSha256,
       monitorAllowInsecure: data.monitorAllowInsecure.present
           ? data.monitorAllowInsecure.value
           : this.monitorAllowInsecure,
@@ -2408,7 +2411,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           ..write('monitorAddr: $monitorAddr, ')
           ..write('monitorUser: $monitorUser, ')
           ..write('monitorPwd: $monitorPwd, ')
-          ..write('monitorIgnoreCert: $monitorIgnoreCert, ')
+          ..write('monitorCertSha256: $monitorCertSha256, ')
           ..write('monitorAllowInsecure: $monitorAllowInsecure, ')
           ..write('wolMac: $wolMac, ')
           ..write('wolIp: $wolIp, ')
@@ -2453,7 +2456,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     monitorAddr,
     monitorUser,
     monitorPwd,
-    monitorIgnoreCert,
+    monitorCertSha256,
     monitorAllowInsecure,
     wolMac,
     wolIp,
@@ -2497,7 +2500,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           other.monitorAddr == this.monitorAddr &&
           other.monitorUser == this.monitorUser &&
           other.monitorPwd == this.monitorPwd &&
-          other.monitorIgnoreCert == this.monitorIgnoreCert &&
+          other.monitorCertSha256 == this.monitorCertSha256 &&
           other.monitorAllowInsecure == this.monitorAllowInsecure &&
           other.wolMac == this.wolMac &&
           other.wolIp == this.wolIp &&
@@ -2539,7 +2542,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
   final Value<String?> monitorAddr;
   final Value<String?> monitorUser;
   final Value<String?> monitorPwd;
-  final Value<bool?> monitorIgnoreCert;
+  final Value<String?> monitorCertSha256;
   final Value<bool?> monitorAllowInsecure;
   final Value<String?> wolMac;
   final Value<String?> wolIp;
@@ -2579,7 +2582,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     this.monitorAddr = const Value.absent(),
     this.monitorUser = const Value.absent(),
     this.monitorPwd = const Value.absent(),
-    this.monitorIgnoreCert = const Value.absent(),
+    this.monitorCertSha256 = const Value.absent(),
     this.monitorAllowInsecure = const Value.absent(),
     this.wolMac = const Value.absent(),
     this.wolIp = const Value.absent(),
@@ -2620,7 +2623,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     this.monitorAddr = const Value.absent(),
     this.monitorUser = const Value.absent(),
     this.monitorPwd = const Value.absent(),
-    this.monitorIgnoreCert = const Value.absent(),
+    this.monitorCertSha256 = const Value.absent(),
     this.monitorAllowInsecure = const Value.absent(),
     this.wolMac = const Value.absent(),
     this.wolIp = const Value.absent(),
@@ -2662,7 +2665,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     Expression<String>? monitorAddr,
     Expression<String>? monitorUser,
     Expression<String>? monitorPwd,
-    Expression<bool>? monitorIgnoreCert,
+    Expression<String>? monitorCertSha256,
     Expression<bool>? monitorAllowInsecure,
     Expression<String>? wolMac,
     Expression<String>? wolIp,
@@ -2704,7 +2707,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
       if (monitorAddr != null) 'monitor_addr': monitorAddr,
       if (monitorUser != null) 'monitor_user': monitorUser,
       if (monitorPwd != null) 'monitor_pwd': monitorPwd,
-      if (monitorIgnoreCert != null) 'monitor_ignore_cert': monitorIgnoreCert,
+      if (monitorCertSha256 != null) 'monitor_cert_sha256': monitorCertSha256,
       if (monitorAllowInsecure != null)
         'monitor_allow_insecure': monitorAllowInsecure,
       if (wolMac != null) 'wol_mac': wolMac,
@@ -2748,7 +2751,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     Value<String?>? monitorAddr,
     Value<String?>? monitorUser,
     Value<String?>? monitorPwd,
-    Value<bool?>? monitorIgnoreCert,
+    Value<String?>? monitorCertSha256,
     Value<bool?>? monitorAllowInsecure,
     Value<String?>? wolMac,
     Value<String?>? wolIp,
@@ -2790,7 +2793,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
       monitorAddr: monitorAddr ?? this.monitorAddr,
       monitorUser: monitorUser ?? this.monitorUser,
       monitorPwd: monitorPwd ?? this.monitorPwd,
-      monitorIgnoreCert: monitorIgnoreCert ?? this.monitorIgnoreCert,
+      monitorCertSha256: monitorCertSha256 ?? this.monitorCertSha256,
       monitorAllowInsecure: monitorAllowInsecure ?? this.monitorAllowInsecure,
       wolMac: wolMac ?? this.wolMac,
       wolIp: wolIp ?? this.wolIp,
@@ -2883,8 +2886,8 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     if (monitorPwd.present) {
       map['monitor_pwd'] = Variable<String>(monitorPwd.value);
     }
-    if (monitorIgnoreCert.present) {
-      map['monitor_ignore_cert'] = Variable<bool>(monitorIgnoreCert.value);
+    if (monitorCertSha256.present) {
+      map['monitor_cert_sha256'] = Variable<String>(monitorCertSha256.value);
     }
     if (monitorAllowInsecure.present) {
       map['monitor_allow_insecure'] = Variable<bool>(
@@ -2962,7 +2965,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
           ..write('monitorAddr: $monitorAddr, ')
           ..write('monitorUser: $monitorUser, ')
           ..write('monitorPwd: $monitorPwd, ')
-          ..write('monitorIgnoreCert: $monitorIgnoreCert, ')
+          ..write('monitorCertSha256: $monitorCertSha256, ')
           ..write('monitorAllowInsecure: $monitorAllowInsecure, ')
           ..write('wolMac: $wolMac, ')
           ..write('wolIp: $wolIp, ')
@@ -10775,7 +10778,7 @@ typedef $$ServersTableCreateCompanionBuilder =
       Value<String?> monitorAddr,
       Value<String?> monitorUser,
       Value<String?> monitorPwd,
-      Value<bool?> monitorIgnoreCert,
+      Value<String?> monitorCertSha256,
       Value<bool?> monitorAllowInsecure,
       Value<String?> wolMac,
       Value<String?> wolIp,
@@ -10817,7 +10820,7 @@ typedef $$ServersTableUpdateCompanionBuilder =
       Value<String?> monitorAddr,
       Value<String?> monitorUser,
       Value<String?> monitorPwd,
-      Value<bool?> monitorIgnoreCert,
+      Value<String?> monitorCertSha256,
       Value<bool?> monitorAllowInsecure,
       Value<String?> wolMac,
       Value<String?> wolIp,
@@ -11284,8 +11287,8 @@ class $$ServersTableFilterComposer extends Composer<_$AppDb, $ServersTable> {
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<bool> get monitorIgnoreCert => $composableBuilder(
-    column: $table.monitorIgnoreCert,
+  ColumnFilters<String> get monitorCertSha256 => $composableBuilder(
+    column: $table.monitorCertSha256,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -11900,8 +11903,8 @@ class $$ServersTableOrderingComposer extends Composer<_$AppDb, $ServersTable> {
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<bool> get monitorIgnoreCert => $composableBuilder(
-    column: $table.monitorIgnoreCert,
+  ColumnOrderings<String> get monitorCertSha256 => $composableBuilder(
+    column: $table.monitorCertSha256,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -12123,8 +12126,8 @@ class $$ServersTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<bool> get monitorIgnoreCert => $composableBuilder(
-    column: $table.monitorIgnoreCert,
+  GeneratedColumn<String> get monitorCertSha256 => $composableBuilder(
+    column: $table.monitorCertSha256,
     builder: (column) => column,
   );
 
@@ -12675,7 +12678,7 @@ class $$ServersTableTableManager
                 Value<String?> monitorAddr = const Value.absent(),
                 Value<String?> monitorUser = const Value.absent(),
                 Value<String?> monitorPwd = const Value.absent(),
-                Value<bool?> monitorIgnoreCert = const Value.absent(),
+                Value<String?> monitorCertSha256 = const Value.absent(),
                 Value<bool?> monitorAllowInsecure = const Value.absent(),
                 Value<String?> wolMac = const Value.absent(),
                 Value<String?> wolIp = const Value.absent(),
@@ -12715,7 +12718,7 @@ class $$ServersTableTableManager
                 monitorAddr: monitorAddr,
                 monitorUser: monitorUser,
                 monitorPwd: monitorPwd,
-                monitorIgnoreCert: monitorIgnoreCert,
+                monitorCertSha256: monitorCertSha256,
                 monitorAllowInsecure: monitorAllowInsecure,
                 wolMac: wolMac,
                 wolIp: wolIp,
@@ -12757,7 +12760,7 @@ class $$ServersTableTableManager
                 Value<String?> monitorAddr = const Value.absent(),
                 Value<String?> monitorUser = const Value.absent(),
                 Value<String?> monitorPwd = const Value.absent(),
-                Value<bool?> monitorIgnoreCert = const Value.absent(),
+                Value<String?> monitorCertSha256 = const Value.absent(),
                 Value<bool?> monitorAllowInsecure = const Value.absent(),
                 Value<String?> wolMac = const Value.absent(),
                 Value<String?> wolIp = const Value.absent(),
@@ -12797,7 +12800,7 @@ class $$ServersTableTableManager
                 monitorAddr: monitorAddr,
                 monitorUser: monitorUser,
                 monitorPwd: monitorPwd,
-                monitorIgnoreCert: monitorIgnoreCert,
+                monitorCertSha256: monitorCertSha256,
                 monitorAllowInsecure: monitorAllowInsecure,
                 wolMac: wolMac,
                 wolIp: wolIp,

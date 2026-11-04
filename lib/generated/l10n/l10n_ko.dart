@@ -537,9 +537,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeTabsCustomizeDesc => '홈 페이지에 표시할 탭과 순서를 사용자 지정합니다';
 
   @override
-  String get ignoreCert => '인증서 무시';
-
-  @override
   String get image => '이미지';
 
   @override
@@ -839,18 +836,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get bmcCertUnreviewed => '아직 확인하지 않음 — 눌러서 인증서 보기';
 
   @override
-  String get bmcCertReview => '자체 서명 인증서입니다. 수락하기 전에 대조하세요. 이후에는 이 인증서만 신뢰합니다.';
-
-  @override
-  String get bmcCertChanged => '인증서가 일치하지 않습니다. 확인하세요.';
-
-  @override
   String get bmcCertExpired => '만료되었습니다.';
-
-  @override
-  String bmcCertWas(String fingerprint) {
-    return '이전에 수락함: $fingerprint';
-  }
 
   @override
   String get bmcAddrInvalid => 'BMC 주소는 URL이어야 합니다. 예: https://10.0.0.9';
@@ -890,10 +876,6 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get proxyCommandMobileTip =>
       '휴대폰에서는 이 명령이 선택한 Linux 시스템에서 실행됩니다. 명령에 쓰이는 도구(nc, socat 등)를 먼저 그곳에 설치하세요.';
-
-  @override
-  String get pveIgnoreCertTip =>
-      'PVE에서 기본 자체 서명 인증서를 사용하는 경우 이 옵션을 사용 설정해야 합니다. 단, 보안 위험이 있습니다.';
 
   @override
   String get pvePasswordRequired => 'PVE 비밀번호가 필요합니다. 서버 설정에서 설정해 주세요.';
@@ -2982,6 +2964,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get remoteDesktopTrustReconnect => '신뢰하고 다시 연결';
+
+  @override
+  String get certTrust => '신뢰';
 
   @override
   String remoteDesktopDeleteProfile(String name) {
