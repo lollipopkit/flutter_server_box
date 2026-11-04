@@ -24,11 +24,10 @@
   // Keep product and protocol names untranslated. This list is the single
   // source of truth; locale-specific copies would appear editable but be unused.
   const capabilities = [
-    'Status chart', 'SSH Terminal', 'SFTP', 'SCP', 'Docker', 'Process',
-    'Systemd', 'S.M.A.R.T', 'GPU', 'Sensors', 'Push', 'Home Widget', 'watchOS',
-    'Monitor', 'AI Agent', 'Globe', 'Benchmark', 'iperf',
-    'Port Forward', 'Local Shell', 'Workspace', 'RDP', 'VNC', 'libvirt',
-    'Proxmox VE', 'Redfish', 'Firewall', 'Cron', 'Users & Groups', 'Themes',
+    'SSH', 'SFTP', 'SCP', 'Docker', 'Podman', 'Systemd', 'S.M.A.R.T.',
+    'NVIDIA / AMD / Apple GPU', 'Sensors', 'Proxmox VE', 'libvirt', 'Redfish / IPMI',
+    'RDP', 'VNC', 'Port Forward', 'Local Shell', 'MCP / AI Agent', 'YABS',
+    'iperf3', 'Cron', 'Firewall', 'Push Alerts', 'Home Widgets', 'watchOS',
   ]
 
   // One per screenshot, in the order of the README's table. Features without
@@ -95,14 +94,31 @@
   // The order matches the stack transforms below. Each key also selects its
   // localized alt text, so update all locales when changing a key's image.
   const screenshots = [
-    { src: `${shotBase}/iphone/home.jpg`, key: 'one', x: -18, y: 8, hoverSlot: -1.5, rotate: -7, hoverRotate: -1.8, motion: 18 },
-    { src: `${shotBase}/iphone/server-details.jpg`, key: 'two', x: -6, y: -4, hoverSlot: -0.5, rotate: -2, hoverRotate: -0.6, motion: 12 },
-    { src: `${shotBase}/iphone/terminal.jpg`, key: 'three', x: 7, y: 4, hoverSlot: 0.5, rotate: 3, hoverRotate: 0.6, motion: 14 },
-    { src: `${shotBase}/iphone/files.jpg`, key: 'four', x: 18, y: -2, hoverSlot: 1.5, rotate: 8, hoverRotate: 1.8, motion: 20 },
+    { src: `${shotBase}/iphone/home.jpg`, key: 'one', x: -24, y: 8, hoverSlot: -1.5, rotate: -8, hoverRotate: -1.8, motion: 18 },
+    { src: `${shotBase}/iphone/server-details.jpg`, key: 'two', x: -8, y: -4, hoverSlot: -0.5, rotate: -2.5, hoverRotate: -0.6, motion: 12 },
+    { src: `${shotBase}/iphone/terminal.jpg`, key: 'three', x: 9, y: 4, hoverSlot: 0.5, rotate: 3, hoverRotate: 0.6, motion: 14 },
+    { src: `${shotBase}/iphone/files.jpg`, key: 'four', x: 24, y: -2, hoverSlot: 1.5, rotate: 8.5, hoverRotate: 1.8, motion: 20 },
   ]
 
   const releases = 'https://github.com/lollipopkit/flutter_server_box/releases'
+  const osInstallCommand =
+    'curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/install.sh | sh -s -- install'
 
+  function detectPlatform() {
+    if (typeof navigator === 'undefined') return undefined
+    const ua = navigator.userAgent || ''
+    const platform = navigator.platform || ''
+    if (/iPhone|iPad|iPod/i.test(ua) || (platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+      return 'ios'
+    }
+    if (/Android/i.test(ua)) return 'android'
+    if (/Mac/i.test(platform || ua)) return 'macos'
+    if (/Win/i.test(platform || ua)) return 'windows'
+    if (/Linux/i.test(platform || ua)) return 'linux'
+    return undefined
+  }
+
+  const currentPlatform = detectPlatform()
 
   // `file` says what the source gives you; formats and commands stay untranslated.
   const downloadGroups = [
@@ -147,6 +163,13 @@
       ],
     },
   ]
+
+  const orderedDownloadGroups = currentPlatform
+    ? [
+        ...downloadGroups.filter((g) => g.key === currentPlatform),
+        ...downloadGroups.filter((g) => g.key !== currentPlatform),
+      ]
+    : downloadGroups
 
   const stackMotion = spring(
     { x: 0, y: 0 },
@@ -331,9 +354,12 @@
                 class="tour-item"
                 class:active={index === activeFeature}
                 aria-pressed={index === activeFeature}
-                onclick={() => featureItems[index]?.scrollIntoView({ behavior: scrollBehavior(), block: 'center' })}
+                onclick={() => {
+                  activeFeature = index
+                  featureItems[index]?.scrollIntoView({ behavior: scrollBehavior(), block: 'center' })
+                }}
               >
-                <span class="tour-tag">{feature.tag}</span>
+                <span class="tour-tag">{String(index + 1).padStart(2, '0')} · {feature.tag}</span>
                 <span class="tour-title">{$LL.features[feature.key].title()}</span>
                 <span class="tour-desc">{$LL.features[feature.key].description()}</span>
               </button>
@@ -465,10 +491,15 @@
       </div>
 
       <div class="download-list">
-        {#each downloadGroups as group}
-          <article class="download-platform">
+        {#each orderedDownloadGroups as group}
+          <article class="download-platform" class:current={group.key === currentPlatform}>
             <div class="download-platform-copy">
-              <h3>{group.label}</h3>
+              <h3>
+                {group.label}
+                {#if group.key === currentPlatform}
+                  <span class="platform-dot" aria-hidden="true"></span>
+                {/if}
+              </h3>
             </div>
             <div class="download-actions">
               {#each group.sources as source}
@@ -503,18 +534,28 @@
         {/each}
       </div>
 
-      <p class="download-note">{$LL.download.note()}</p>
+      <p class="download-note">{$LL.download.note()} {$LL.cta.title()}</p>
     </section>
 
     <section class="cta-section">
       <div class="cta-block">
-        <h2>{$LL.cta.title()}</h2>
+        <p class="hero-platforms">{$LL.os.heroTitle()}<span class="beta-tag">{$LL.nav.beta()}</span></p>
+        <h2>{$LL.os.tagline()}</h2>
         <p>
-          {$LL.cta.subtitle()}
+          {$LL.os.subtitle()}
         </p>
+        <button
+          type="button"
+          class="cta-command"
+          onclick={() => copyCommand(osInstallCommand)}
+          aria-label={$LL.os.copy()}
+        >
+          <code>{osInstallCommand}</code>
+          <span>{copiedCommand === osInstallCommand ? $LL.download.copied() : $LL.os.copy()}</span>
+        </button>
         <div class="cta-actions">
-          <Button variant="secondary" href="https://apps.apple.com/app/id1586449703">{$LL.cta.appStoreAction()}</Button>
-          <Button href="https://github.com/lollipopkit/flutter_server_box/releases">{$LL.cta.githubAction()}</Button>
+          <Button href={`/os/?lang=${locale}`}>{$LL.nav.os()}</Button>
+          <Button variant="secondary" href="https://github.com/lollipopkit/flutter_server_box">GitHub · AGPLv3</Button>
         </div>
       </div>
     </section>
@@ -526,6 +567,7 @@
         <a href="#capabilities" onclick={(event) => scrollToSection(event, 'capabilities')}>{$LL.footer.capabilities()}</a>
         <a href={`/os/?lang=${locale}`}>{$LL.nav.os()}<span class="beta-tag">{$LL.nav.beta()}</span></a>
         <a href="#themes" onclick={(event) => scrollToSection(event, 'themes')}>{$LL.nav.themes()}</a>
+        <a href="/docs/">{$LL.nav.docs()}</a>
         <a href="https://github.com/lollipopkit/flutter_server_box">GitHub</a>
         <a href="https://github.com/lollipopkit/flutter_server_box/releases">{$LL.footer.releases()}</a>
       </div>
