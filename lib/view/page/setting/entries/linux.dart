@@ -84,9 +84,13 @@ extension _Linux on _AppSettingsPageState {
         for (final profile in profiles)
           ListTile(
             // The distribution's mark, as the terminal tab draws the same
-            // system. The current one is the row's selected state and the
-            // check after the actions, as it is there.
-            leading: linuxDistIcon(profile.distro),
+            // system. The current one is the row's selected state, with a
+            // check on the mark so it is not said by colour alone; a check
+            // after the actions took a column from every row.
+            leading: _linuxProfileLeading(
+              profile,
+              current: profile.id == selected?.id,
+            ),
             selected: profile.id == selected?.id,
             selectedTileColor: scheme.secondaryContainer,
             title: Text(profile.label),
@@ -135,14 +139,6 @@ extension _Linux on _AppSettingsPageState {
                     refresh();
                   },
                 ),
-                // Reserved on every row, so the actions line up whichever
-                // one is current.
-                SizedBox(
-                  width: 24,
-                  child: profile.id == selected?.id
-                      ? Icon(Icons.check, size: 20, color: scheme.primary)
-                      : null,
-                ),
               ],
             ),
             onTap: () => _selectProfile(profile),
@@ -162,6 +158,46 @@ extension _Linux on _AppSettingsPageState {
               : null,
           trailing: const Icon(Icons.keyboard_arrow_right),
           onTap: _addProfile,
+        ),
+      ],
+    );
+  }
+
+  /// A profile's mark, and the check on it when it is [current].
+  ///
+  /// With marks turned off there is no mark to put it on: the check stands
+  /// alone, and the other rows keep its width so the titles line up.
+  Widget _linuxProfileLeading(LinuxProfile profile, {required bool current}) {
+    final scheme = Theme.of(context).colorScheme;
+    final mark = linuxDistIcon(profile.distro);
+    if (mark == null) {
+      return SizedBox(
+        width: 24,
+        child: current ? Icon(Icons.check, color: scheme.primary) : null,
+      );
+    }
+    if (!current) return mark;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        mark,
+        Positioned(
+          right: -5,
+          bottom: -5,
+          child: Container(
+            width: 13,
+            height: 13,
+            decoration: BoxDecoration(
+              color: scheme.primary,
+              shape: BoxShape.circle,
+              // Cut out of the mark by the row's own colour.
+              border: Border.all(
+                color: scheme.secondaryContainer,
+                width: 1.5,
+              ),
+            ),
+            child: Icon(Icons.check, size: 9, color: scheme.onPrimary),
+          ),
         ),
       ],
     );
