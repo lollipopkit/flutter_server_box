@@ -278,14 +278,23 @@ extension _Widgets on _BenchmarkTabPageState {
         ),
       ),
       body: servers.isEmpty
-          ? _centered(l10n.benchmarkNoServers)
+          ? _empty(Icons.dns_outlined, l10n.benchmarkNoServers)
           : ListView(
               padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
               children: [
                 if (history.isEmpty)
-                  _centered(
-                    needle.isEmpty ? l10n.benchmarkNoRuns : libL10n.empty,
-                  )
+                  needle.isEmpty
+                      ? _empty(Icons.speed_outlined, l10n.benchmarkNoRuns)
+                      // A search with no hits says the query, and the way
+                      // out of it.
+                      : _empty(
+                          Icons.search_off,
+                          _search.value?.trim() ?? '',
+                          action: Btn.text(
+                            text: libL10n.clear,
+                            onTap: _search.end,
+                          ),
+                        )
                 else
                   // Every server's, not the selected one's. Switching machines
                   // to read a result would make the list jump under the hand
@@ -306,10 +315,12 @@ extension _Widgets on _BenchmarkTabPageState {
     );
   }
 
-  Widget _centered(String text) {
+  /// The empty mark: a 56px glyph, the line saying what is empty, and at most
+  /// one thing to do about it.
+  Widget _empty(IconData icon, String label, {Widget? action}) {
     return Padding(
-      padding: const EdgeInsets.all(27),
-      child: Text(text, style: UIs.textGrey, textAlign: TextAlign.center),
+      padding: const EdgeInsets.symmetric(vertical: 77),
+      child: EmptyMark(icon: icon, label: label, action: action),
     );
   }
 

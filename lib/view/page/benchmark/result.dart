@@ -7,8 +7,10 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/benchmark/benchmark_run.dart';
 import 'package:server_box/data/model/server/benchmark/yabs_result.dart';
+import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/view/page/benchmark/log_view.dart';
+import 'package:server_box/view/page/benchmark/status_mark.dart';
 
 /// One benchmark's numbers.
 ///
@@ -73,10 +75,10 @@ class _BenchmarkResultPageState extends State<BenchmarkResultPage> {
       appBar: CustomAppBar(
         title: Text(_run.startedAt.ymdhms()),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.copy),
-            tooltip: libL10n.copy,
-            onPressed: () => _copy(context, _run.resultJson ?? _run.log),
+          Btn.icon(
+            icon: const Icon(Icons.copy, size: 18),
+            text: libL10n.copy,
+            onTap: () => _copy(context, _run.resultJson ?? _run.log),
           ),
         ],
       ),
@@ -90,7 +92,7 @@ class _BenchmarkResultPageState extends State<BenchmarkResultPage> {
       padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
       children: [
         _summaryCard(),
-        if (_run.error.isNotEmpty) _errorCard(_run.error),
+        if (_run.error.isNotEmpty) _errorCard(context, _run.error),
         if (result == null)
           // Either nothing was produced, or yabs assembled a document no parser
           // accepts. The log is still the whole of what happened, so the page
@@ -127,6 +129,11 @@ class _BenchmarkResultPageState extends State<BenchmarkResultPage> {
   }
 }
 
+/// Digits of one width, so a column of figures lines up and a value that is
+/// still being polled does not shift its neighbours.
+const _tabular = [FontFeature.tabularFigures()];
+const _tabular12 = TextStyle(fontSize: 12, fontFeatures: _tabular);
+
 // --- Sections ---
 
 extension _Sections on _BenchmarkResultPageState {
@@ -136,12 +143,9 @@ extension _Sections on _BenchmarkResultPageState {
   /// else, so a run reached through the history — the only way to reach one
   /// that has already finished — said nothing about how long it took.
   Widget _summaryCard() {
-    final (icon, color, label) = switch (_run.status) {
-      BenchmarkStatus.completed => (Icons.check_circle, Colors.green, libL10n.success),
-      BenchmarkStatus.failed => (Icons.error_outline, Colors.red, libL10n.fail),
-      BenchmarkStatus.cancelled => (Icons.cancel_outlined, Colors.orange, libL10n.cancelled),
-      BenchmarkStatus.running => (Icons.timelapse, Colors.blue, l10n.benchmarkRunning),
-    };
+    final (icon, color, label) = _run.status.mark(
+      Theme.of(context).colorScheme,
+    );
     // yabs times itself, and its figure is the one to show when there is one:
     // it measures the benchmark rather than the round trip that started it.
     final reported = _result?.runtime?.elapsed;
@@ -157,13 +161,16 @@ extension _Sections on _BenchmarkResultPageState {
             Icon(icon, color: color, size: 17),
             UIs.width13,
             Expanded(
-              child: Text(fmtDuration(elapsed), style: UIs.text15),
+              child: Text(
+                fmtDuration(elapsed),
+                style: UIs.text15.copyWith(fontFeatures: _tabular),
+              ),
             ),
             if (_run.status == BenchmarkStatus.running)
-              const SizedBox(
-                width: 15,
-                height: 15,
-                child: CircularProgressIndicator(strokeWidth: 2),
+              const SizedLoading(
+                15,
+                padding: 0,
+                builder: SizedLoading.circularBuilder,
               ),
           ],
         ),
@@ -294,12 +301,12 @@ extension _Sections on _BenchmarkResultPageState {
                     barRods: [
                       BarChartRodData(
                         toY: rows[i].readBytesPerSec ?? 0,
-                        color: Colors.blue,
+                        color: ChartPalette.diskRead,
                         width: 7,
                       ),
                       BarChartRodData(
                         toY: rows[i].writeBytesPerSec ?? 0,
-                        color: Colors.orange,
+                        color: ChartPalette.diskWrite,
                         width: 7,
                       ),
                     ],
@@ -312,9 +319,9 @@ extension _Sections on _BenchmarkResultPageState {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _legend(Colors.blue, libL10n.read),
+            _legend(ChartPalette.diskRead, libL10n.read),
             UIs.width13,
-            _legend(Colors.orange, libL10n.write),
+            _legend(ChartPalette.diskWrite, libL10n.write),
           ],
         ),
         UIs.height13,
@@ -342,7 +349,7 @@ extension _Sections on _BenchmarkResultPageState {
       children: [
         for (final entry in byMode.entries) ...[
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 7),
+            padding: const EdgeInsets.only(top: 7, bottom: 3),
             child: Text(entry.key, style: UIs.text13Bold),
           ),
           Row(
@@ -388,21 +395,21 @@ extension _Sections on _BenchmarkResultPageState {
                   Expanded(
                     child: Text(
                       row.send,
-                      style: UIs.text12,
+                      style: _tabular12,
                       textAlign: TextAlign.end,
                     ),
                   ),
                   Expanded(
                     child: Text(
                       row.recv,
-                      style: UIs.text12,
+                      style: _tabular12,
                       textAlign: TextAlign.end,
                     ),
                   ),
                   Expanded(
                     child: Text(
                       row.latency,
-                      style: UIs.text12Grey,
+                      style: _tabular12.copyWith(color: Colors.grey),
                       textAlign: TextAlign.end,
                     ),
                   ),
@@ -437,12 +444,12 @@ extension _Sections on _BenchmarkResultPageState {
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
-                icon: const Icon(Icons.open_in_new, size: 15),
+                icon: const Icon(Icons.open_in_new, size: 18),
                 label: Text(l10n.benchmarkViewOnGeekbench),
                 onPressed: () => gb.url.launchUrl(),
               ),
             ),
-            Text(l10n.benchmarkGeekbenchPublic, style: UIs.text11Grey),
+            Text(l10n.benchmarkGeekbenchPublic, style: UIs.text12Grey),
           ],
         ],
       ],
@@ -452,9 +459,10 @@ extension _Sections on _BenchmarkResultPageState {
   Widget _score(String label, int? value) {
     return Column(
       children: [
+        // The one big figure this card leads with.
         Text(
           value?.toString() ?? libL10n.notAvailable,
-          style: UIs.text27,
+          style: UIs.text27.copyWith(fontFeatures: _tabular),
         ),
         Text(label, style: UIs.text12Grey),
       ],
@@ -489,13 +497,14 @@ extension _Parts on _BenchmarkResultPageState {
   }) {
     return CardX(
       child: Padding(
-        padding: const EdgeInsets.all(13),
+        // A titled block: 17 either side, 13 above and below.
+        padding: UIs.roundRectCardPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(title, style: UIs.text15Bold),
             if (subtitle != null && subtitle.isNotEmpty)
-              Text(subtitle, style: UIs.text11Grey),
+              Text(subtitle, style: UIs.text12Grey),
             UIs.height7,
             ...children,
           ],
@@ -504,15 +513,25 @@ extension _Parts on _BenchmarkResultPageState {
     );
   }
 
-  Widget _errorCard(String error) {
+  /// The ground of a persistent error block: the error container, so the
+  /// message is read on a tone made for it rather than as red text on a card.
+  Widget _errorCard(BuildContext context, String error) {
+    final scheme = Theme.of(context).colorScheme;
     return CardX(
+      color: scheme.errorContainer,
       child: Padding(
-        padding: const EdgeInsets.all(13),
+        padding: UIs.roundRectCardPadding,
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.error_outline, color: Colors.red),
+            Icon(Icons.error_outline, color: scheme.onErrorContainer),
             UIs.width13,
-            Expanded(child: Text(error, style: UIs.text13)),
+            Expanded(
+              child: SelectableText(
+                error,
+                style: UIs.text13.copyWith(color: scheme.onErrorContainer),
+              ),
+            ),
           ],
         ),
       ),
@@ -531,7 +550,7 @@ extension _Parts on _BenchmarkResultPageState {
             flex: 3,
             child: SelectableText(
               value,
-              style: UIs.text12,
+              style: _tabular12,
               textAlign: TextAlign.end,
             ),
           ),
@@ -544,9 +563,9 @@ extension _Parts on _BenchmarkResultPageState {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(width: 9, height: 9, color: color),
+        UIs.dot(color: color, size: 9),
         UIs.width7,
-        Text(label, style: UIs.text11Grey),
+        Text(label, style: UIs.text12Grey),
       ],
     );
   }
@@ -563,7 +582,7 @@ extension _Parts on _BenchmarkResultPageState {
       child: SingleChildScrollView(
         child: SelectableText(
           text,
-          style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
+          style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
         ),
       ),
     );

@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/data/model/server/benchmark/benchmark_run.dart';
+import 'package:server_box/view/page/benchmark/status_mark.dart';
 
 /// One past run, in the list of every past run.
 class BenchmarkHistoryTile extends StatelessWidget {
@@ -33,19 +34,17 @@ class BenchmarkHistoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (icon, color) = switch (run.status) {
-      BenchmarkStatus.completed => (Icons.check_circle, Colors.green),
-      BenchmarkStatus.failed => (Icons.error_outline, Colors.red),
-      BenchmarkStatus.cancelled => (Icons.cancel_outlined, Colors.orange),
-      BenchmarkStatus.running => (Icons.timelapse, Colors.blue),
-    };
+    final scheme = Theme.of(context).colorScheme;
+    final (icon, color, label) = run.status.mark(scheme);
+    // A selected row is the secondary container, as every list column beside
+    // a detail pane marks one: a tone of the card rather than an alpha of the
+    // accent laid over it.
     return CardX(
+      color: selected ? scheme.secondaryContainer : null,
       child: ListTile(
         selected: selected,
-        selectedTileColor: Theme.of(
-          context,
-        ).colorScheme.primary.withValues(alpha: 0.1),
-        leading: Icon(icon, color: color),
+        selectedColor: scheme.onSecondaryContainer,
+        leading: Icon(icon, color: color, semanticLabel: label),
         title: Text(
           serverName ?? libL10n.unknown,
           style: UIs.text15,
@@ -63,10 +62,11 @@ class BenchmarkHistoryTile extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: UIs.text12Grey,
         ),
-        trailing: IconButton(
-          tooltip: libL10n.delete,
-          icon: const Icon(Icons.delete_outline),
-          onPressed: onDelete,
+        // A toolbar-sized glyph: the row's own action, not its subject.
+        trailing: Btn.icon(
+          icon: const Icon(Icons.delete_outline, size: 18),
+          text: libL10n.delete,
+          onTap: onDelete,
         ),
         onTap: onTap,
       ),

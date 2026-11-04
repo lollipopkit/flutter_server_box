@@ -2,6 +2,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/benchmark/benchmark_run.dart';
+import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/view/page/benchmark/estimate.dart';
 import 'package:server_box/view/page/benchmark/log_view.dart';
 import 'package:server_box/view/page/benchmark/phase.dart';
@@ -24,22 +25,27 @@ class BenchmarkRunningCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final phase = BenchmarkPhase.of(run.log);
+    final scheme = Theme.of(context).colorScheme;
     return CardX(
       child: Padding(
-        padding: const EdgeInsets.all(13),
+        // A titled block: 17 either side, 13 above and below.
+        padding: UIs.roundRectCardPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                const SizedBox(
-                  width: 17,
-                  height: 17,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                // Fixed-size, so the title beside it does not move when the
+                // ring is swapped in or out.
+                const SizedLoading(
+                  17,
+                  padding: 0,
+                  builder: SizedLoading.circularBuilder,
                 ),
                 UIs.width13,
                 Expanded(child: Text(phase.label, style: UIs.text15Bold)),
-                Text(fmtDuration(run.elapsed), style: UIs.textGrey),
+                // Tabular, so the clock does not shift as it counts.
+                Text(fmtDuration(run.elapsed), style: _tabularGrey),
               ],
             ),
             UIs.height13,
@@ -62,18 +68,16 @@ class BenchmarkRunningCard extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // The warning hue on the glyph only: at 12px it is too
+                  // faint on a light card to carry text, and the message is
+                  // something to read.
                   const Icon(
                     Icons.sync_problem,
                     size: 15,
-                    color: Colors.orange,
+                    color: StatePalette.warn,
                   ),
                   UIs.width7,
-                  Expanded(
-                    child: Text(
-                      run.pollError,
-                      style: UIs.text12Grey.copyWith(color: Colors.orange),
-                    ),
-                  ),
+                  Expanded(child: Text(run.pollError, style: UIs.text12)),
                 ],
               ),
             ],
@@ -94,19 +98,11 @@ class BenchmarkRunningCard extends StatelessWidget {
                   constraints: const BoxConstraints(maxHeight: 140),
                   padding: const EdgeInsets.all(11),
                   decoration: BoxDecoration(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.surfaceContainerHighest,
+                    color: scheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(7),
                   ),
                   child: SingleChildScrollView(
-                    child: SelectableText(
-                      run.processes,
-                      style: const TextStyle(
-                        fontFamily: 'monospace',
-                        fontSize: 11,
-                      ),
-                    ),
+                    child: SelectableText(run.processes, style: _mono),
                   ),
                 ),
               ],
@@ -126,20 +122,27 @@ class BenchmarkRunningCard extends StatelessWidget {
                 children: [BenchmarkLogView(log: run.log)],
               ),
             ],
-            UIs.height13,
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton.icon(
-                  onPressed: busy ? null : onCancel,
-                  icon: const Icon(Icons.stop_circle_outlined),
-                  label: Text(libL10n.stop),
-                ),
-              ],
+            UIs.height7,
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: Btn.row(
+                icon: const Icon(Icons.stop_circle_outlined, size: 18),
+                text: libL10n.stop,
+                mainAxisSize: MainAxisSize.min,
+                onTap: busy ? null : onCancel,
+              ),
             ),
           ],
         ),
       ),
     );
   }
+
+  static const _tabularGrey = TextStyle(
+    color: Colors.grey,
+    fontFeatures: [FontFeature.tabularFigures()],
+  );
+
+  /// The mono caption: a dump read beside 12px text.
+  static const _mono = TextStyle(fontFamily: 'monospace', fontSize: 12);
 }

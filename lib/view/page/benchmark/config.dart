@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/benchmark/yabs_options.dart';
+import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/src/rust/api/bench.dart' as ffi;
 import 'package:server_box/view/page/benchmark/estimate.dart';
 
@@ -67,11 +68,11 @@ class _BenchmarkConfigState extends State<BenchmarkConfig> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        CardX(
-          child: Padding(
-            padding: const EdgeInsets.all(13),
-            child: Text(l10n.benchmarkIntro, style: UIs.text13Grey),
-          ),
+        Padding(
+          // The page's prose, not a card of its own: it explains the cards
+          // below it, and a card around it made it read as one more option.
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+          child: Text(l10n.benchmarkIntro, style: UIs.text13Grey),
         ),
         UIs.height13,
         CardX(child: Column(children: _buildOptions(estimate))),
@@ -80,16 +81,21 @@ class _BenchmarkConfigState extends State<BenchmarkConfig> {
         UIs.height13,
         _buildSummary(estimate),
         UIs.height13,
-        FilledButton.icon(
-          onPressed: widget.busy ? null : _onStart,
+        // The elevated button, the one shape here that carries a shadow at
+        // rest: it is the page's single primary action. A filled button is
+        // not a shape this app uses.
+        Btn.elevated(
+          text: libL10n.start,
           icon: widget.busy
-              ? const SizedBox(
-                  width: 15,
-                  height: 15,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+              ? const SizedLoading(
+                  18,
+                  padding: 0,
+                  builder: SizedLoading.circularBuilder,
                 )
-              : const Icon(Icons.play_arrow),
-          label: Text(libL10n.start),
+              : const Icon(Icons.play_arrow, size: 18),
+          gap: 7,
+          mainAxisAlignment: MainAxisAlignment.center,
+          onTap: widget.busy ? null : _onStart,
         ),
         UIs.height13,
         Center(
@@ -155,8 +161,11 @@ extension _Widgets on _BenchmarkConfigState {
         ),
         minLeadingWidth: _BenchmarkConfigState._iconSize,
         horizontalTitleGap: _BenchmarkConfigState._iconGap,
-        leading: const Icon(Icons.warning_amber_rounded, color: Colors.orange),
-        title: Text(l10n.benchmarkSensitiveOptions, style: UIs.text15),
+        leading: const Icon(
+          Icons.warning_amber_rounded,
+          color: StatePalette.warn,
+        ),
+        title: Text(l10n.benchmarkSensitiveOptions, style: UIs.text15Bold),
       ),
       _switch(
         title: 'CPU',
@@ -227,7 +236,7 @@ extension _Widgets on _BenchmarkConfigState {
       padding: const EdgeInsets.symmetric(horizontal: 13),
       child: Wrap(
         spacing: 13,
-        runSpacing: 4,
+        runSpacing: 7,
         children: [
           _chip(Icons.schedule, l10n.benchmarkEstimatedTime(estimate.minutes)),
           if (estimate.trafficBytes > 0)
@@ -251,7 +260,7 @@ extension _Widgets on _BenchmarkConfigState {
       children: [
         Icon(icon, size: 13, color: UIs.textGrey.color),
         UIs.width7,
-        Text(text, style: UIs.text12Grey),
+        Text(text, style: _tabular12Grey),
       ],
     );
   }
@@ -275,14 +284,42 @@ extension _Widgets on _BenchmarkConfigState {
           ? _BenchmarkConfigState._noIcon
           : Icon(icon, size: _BenchmarkConfigState._iconSize),
       title: Text(title, style: UIs.text15),
+      // Switched on, a sensitive option's explanation turns the error
+      // colour: it is the one line on the page that has to be read before the
+      // run starts, and the warning hue is too faint on a light card to carry
+      // text at 12px.
       subtitle: Text(
         subtitle,
         style: warn && value
-            ? UIs.text12Grey.copyWith(color: Colors.orange)
+            ? UIs.text12.copyWith(color: Theme.of(context).colorScheme.error)
             : UIs.text12Grey,
       ),
       value: value,
       onChanged: onChanged,
+    );
+  }
+
+  static const _tabular12Grey = TextStyle(
+    color: Colors.grey,
+    fontSize: 12,
+    fontFeatures: [FontFeature.tabularFigures()],
+  );
+
+  /// The field's outline: a hairline, the line every edge in the app is
+  /// drawn in, at the card's corner. The primary colour only while focused.
+  InputDecoration _fieldDecoration(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    const radius = BorderRadius.all(Radius.circular(13));
+    OutlineInputBorder border(Color color) => OutlineInputBorder(
+      borderRadius: radius,
+      borderSide: BorderSide(color: color),
+    );
+    return InputDecoration(
+      isDense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+      border: border(scheme.outlineVariant),
+      enabledBorder: border(scheme.outlineVariant),
+      focusedBorder: border(scheme.primary),
     );
   }
 
@@ -331,14 +368,8 @@ extension _Widgets on _BenchmarkConfigState {
                   autocorrect: false,
                   enableSuggestions: false,
                   onChanged: onChanged,
-                  decoration: const InputDecoration(
-                    isDense: true,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 11,
-                    ),
-                    border: OutlineInputBorder(),
-                  ),
+                  style: UIs.text15,
+                  decoration: _fieldDecoration(context),
                 ),
               ],
             ),
