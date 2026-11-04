@@ -18,7 +18,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get crashCollectNone => '不发送';
 
   @override
-  String get crashCollectNoneTip => '报告只保存在本机。发生崩溃后，你可以手动发送。';
+  String get crashCollectNoneTip => '崩溃报告仅保存在本地，可在发生崩溃后手动发送。';
 
   @override
   String get crashCollectBasic => '基本信息';
@@ -28,8 +28,7 @@ class AppLocalizationsZh extends AppLocalizations {
       '只包含崩溃信息，不包含日志或性能数据。**这些信息有助于改进 App 和修复问题。**';
 
   @override
-  String get crashCollectFooter =>
-      '无论选择哪个级别，记录信息时都会将已知的服务器名称、地址和用户名替换为占位符。之后可以在设置中更改收集级别。';
+  String get crashCollectFooter => '所有收集级别均会自动脱敏已知的服务器名称、地址和用户名。你可随时在设置中修改此项。';
 
   @override
   String get privacy => '隐私';
@@ -45,7 +44,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get crashReportHint =>
-      '这是上次运行的日志。已知的服务器名称和地址已替换为占位符，但其中可能仍包含其他信息。提交前请仔细阅读。';
+      '以下为上次运行的日志。已知的服务器名称和地址已脱敏，但日志中仍可能包含其他敏感信息，提交前请先确认。';
 
   @override
   String get crashReportSubmit => '复制并反馈';
@@ -209,23 +208,23 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get distIconIntroLegal =>
-      '标识只根据本设备从远程系统读取的信息显示。这些信息可能不准确或已过期，也不代表某个衍生版本、重构版本或特定版本。无法识别时会显示通用图标。\n\n各标识均为其所有者的商标，此处仅用于说明对应的系统。';
+      '系统图标仅根据从远程主机读取的系统信息推断显示，可能存在误差，也不代表具体发行版分支或版本；无法识别时将显示通用图标。\n\n各图标均为对应所有者的商标，此处仅用于标识系统类型。';
 
   @override
-  String get distIconTip => '在每台服务器旁显示一个小标识，表示它可能运行的系统';
+  String get distIconTip => '在服务器旁显示其操作系统图标';
 
   @override
   String get distNameMap => '名称映射';
 
   @override
   String get distNameMapTip =>
-      '仅当发行版标识文件在托管位置使用的名称与 App 中的名称不一致时才需要配置。键填写 App 使用的名称，值填写实际文件名。没有缺失标识时无需填写。';
+      '仅当自定义图标文件名与 App 内置发行版名称不一致时才需配置：键填写 App 识别的名称，值填写实际文件名。';
 
   @override
   String get logoUrl => 'Logo 地址';
 
   @override
-  String get logoUrlTip => '服务器详情页顶部的大图，按原色显示。';
+  String get logoUrlTip => '显示在服务器详情页顶部的横幅图片，保持原色。';
 
   @override
   String get globe => '地球仪';
@@ -238,7 +237,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get markUrl => '标识地址';
 
   @override
-  String get markUrlTip => '列表中服务器名字旁边的小标识。留空则不显示。\n\n和 Logo 不是同一张图';
+  String get markUrlTip => '显示在服务器列表名称旁的小图标，留空则不显示（与详情页顶部大图相互独立）。';
 
   @override
   String get navTabMenuTip => '长按标签栏中的标签，或用鼠标右键点击，可一次性连接或断开该标签下的所有服务器。';
@@ -252,30 +251,30 @@ class AppLocalizationsZh extends AppLocalizations {
   String get remoteBackupPasswordRequired => '远程备份需要非空的备份密码';
 
   @override
-  String get monitorHttpsRequired => '远程 Monitor 必须使用 HTTPS，除非已允许它使用 HTTP。';
+  String get monitorHttpsRequired =>
+      '连接远程 Monitor 默认需要 HTTPS，除非已在设置中允许明文 HTTP。';
 
   @override
   String get monitorAllowInsecureHttp => '允许 HTTP';
 
   @override
-  String get plainHttpTitle => '此 Monitor 使用未加密的 HTTP';
+  String get plainHttpTitle => '当前 Monitor 使用未加密的 HTTP 连接';
 
   @override
-  String get plainHttpTip => '密码和应用请求的所有内容都会以明文传输。允许连接前不会发送任何数据。';
+  String get plainHttpTip => '连接密码及所有传输数据均以明文发送。在你确认允许前，不会发送任何请求。';
 
   @override
-  String get allowForThisServer => '只对这台服务器允许';
+  String get allowForThisServer => '仅允许此服务器';
 
   @override
   String get viewError => '查看错误';
 
   @override
-  String get monitorAllowInsecureHttpTip =>
-      '仅应在 HTTP 之外具备传输加密的可信私有网络中开启，例如 Tailscale';
+  String get monitorAllowInsecureHttpTip => '仅建议在已具备传输层加密的可信专网（如 Tailscale）中开启';
 
   @override
   String monitorHttpTip(String url) {
-    return '通过 **Monitor** 的 HTTP 接口读取此服务器的状态，而不是经由 SSH 执行命令。\n\n需要先在服务器上安装 Monitor；曲线、手表 App 和桌面小部件都依赖它。\n\n[如何部署 Monitor]($url)';
+    return '通过 **Monitor** 的 HTTP 接口获取服务器状态，无需通过 SSH 执行采样脚本。\n\n需先在服务器上安装 Monitor；历史趋势图、Watch 应用和桌面小组件均依赖此服务。\n\n[查看部署指南]($url)';
   }
 
   @override
@@ -334,7 +333,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get trayCompactTip =>
-      '每台服务器显示一行，不显示图表。Linux 的面板菜单通过 D-Bus 传递标签而非自定义布局，因此始终使用单行布局，但仍可将所选图表作为图片显示。';
+      '每台服务器仅显示单行摘要，不展开图表。Linux 系统托盘受限于 D-Bus 菜单协议，固定使用单行文本，但仍可将所选图表渲染为图片项。';
 
   @override
   String get trayKeepRunning => '在托盘中继续运行';
@@ -504,15 +503,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get githubGistIdInvalid =>
-      '这既不是 Gist ID，也不是 Gist 链接。请使用 gist 地址的最后一部分 (https://gist.github.com/<user>/<ID>)，或留空以便在首次备份时创建新的私密 gist。';
+      '请输入有效的 Gist ID 或 Gist 链接（如 https://gist.github.com/<user>/<ID>），或直接留空，在首次备份时自动创建私密 Gist。';
 
   @override
   String get githubGistNotFound =>
-      'GitHub 找不到此 token 可读取的该 ID 对应 gist：ID 可能有误，gist 可能已被删除，或属于其他账户。请将 ID 留空，以便在首次备份时创建新的私密 gist。';
+      '无法通过当前 Token 找到该 Gist：请检查 ID 是否正确、Gist 是否已删除或属于其他账号。也可将 ID 留空，在首次备份时自动创建新的私密 Gist。';
 
   @override
   String get githubGistTokenRejected =>
-      'GitHub 拒绝了此 token：它可能有误、已过期或已撤销，也可能缺少 gist 权限 (classic token: \"gist\" scope；fine-grained token: Gists read and write)。';
+      'GitHub 拒绝了此 Token：请检查是否已过期、被撤销，或缺少 Gist 读写权限（Classic Token 需勾选 \"gist\"，Fine-grained Token 需开启 Gists 读写权限）。';
 
   @override
   String get goto => '前往';
@@ -531,16 +530,16 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get macDmgBody =>
-      'App Store 要求本应用沙盒运行，而沙盒内无法开启终端。DMG 版可以开启。\n\nApp Store 版以后可能停止更新。';
+      '受 macOS App Store 沙盒限制，商店版本无法使用本机终端。改用 DMG 版本即可使用完整功能。\n\nApp Store 版本后续可能停止更新。';
 
   @override
-  String get macDmgImportDenied => 'macOS 不允许读取此前安装版本的数据';
+  String get macDmgImportDenied => 'macOS 拒绝了读取旧版本数据的权限请求';
 
   @override
-  String get macDmgImported => '已导入此前安装版本的数据';
+  String get macDmgImported => '已导入旧版本数据';
 
   @override
-  String get macDmgImportFailed => '读不到此前安装版本的数据';
+  String get macDmgImportFailed => '无法读取旧版本数据';
 
   @override
   String get macDmgTip => 'DMG 版支持本机终端和在本机运行代码片段';
@@ -694,7 +693,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get letterCacheTip => '开启后，输入内容会经过普通输入法，这样可避免部分系统在终端弹出安全键盘';
 
   @override
-  String get linuxShellTip => '终端用什么 shell 启动。留空恢复 /bin/sh。';
+  String get linuxShellTip => '本机终端默认启动的 Shell，留空则使用 /bin/sh。';
 
   @override
   String get linuxDnsTip => 'DNS 服务器。留空则使用默认设置。';
@@ -777,7 +776,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get bmcPowerDone => '电源状态已改变';
 
   @override
-  String get bmcPowerAccepted => '操作已接受，但电源状态尚未改变。正常关机或重启是否成功取决于操作系统。';
+  String get bmcPowerAccepted => '指令已发送，正等待操作系统完成关机或重启。';
 
   @override
   String get bmcPowerUnsupported => '该服务不支持此类操作';
@@ -795,7 +794,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get bmcPowerOff => '已关机';
 
   @override
-  String get bmcCertRejected => '证书被拒绝——请在服务器设置里确认';
+  String get bmcCertRejected => '证书未获信任，请在服务器设置中确认';
 
   @override
   String get bmcNotAService => '该地址上没有 Redfish 服务';
@@ -817,23 +816,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get bmcCert => '证书';
 
   @override
-  String get bmcCertPinned => '已确认并钉住';
+  String get bmcCertPinned => '已信任并固定';
 
   @override
-  String get bmcCertUnreviewed => '尚未确认——点击查看证书';
+  String get bmcCertUnreviewed => '尚未确认，点击查看证书';
 
   @override
-  String get bmcCertReview => '收到自签名证书。接受前请核对指纹；接受后将只信任这张证书。';
+  String get bmcCertReview => '收到自签名证书。请核对以下指纹，确认信任后将仅接受此证书。';
 
   @override
-  String get bmcCertChanged => '证书不一致。请核对。';
+  String get bmcCertChanged => '证书指纹已变更，请重新核对。';
 
   @override
   String get bmcCertExpired => '已过期。';
 
   @override
   String bmcCertWas(String fingerprint) {
-    return '之前接受的：$fingerprint';
+    return '原信任指纹：$fingerprint';
   }
 
   @override
@@ -1453,7 +1452,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get legacyStatusGoneBody =>
-      '手表 App 和桌面小组件此前读取的是手动填写的 `/status` 地址。该接口已移除：它只能以文本形式返回当前值，这也是它们始终无法显示曲线的原因。\n\n现在它们读取 Monitor 的认证接口，可以绘制曲线，并自动与 App 保持同步。在 App 内配置一次服务器，所有手表和小组件都会自动获取。';
+      '旧版 Watch 应用和桌面小组件通过手动填写的 `/status` 接口获取文本状态，因此无法绘制历史曲线。\n\n新版已升级为读取 Monitor 认证接口，支持历史趋势图并与 App 自动同步。只需在 App 中为服务器配置好 Monitor，手表和小组件即可直接使用。';
 
   @override
   String get services => '服务';
@@ -1498,7 +1497,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get systemdUserScopeMissing => '未列出用户 unit';
 
   @override
-  String get systemdUserScopeMissingTip => '该账户在服务器上没有用户会话总线，因此只显示系统 unit。';
+  String get systemdUserScopeMissingTip =>
+      '当前登录账户未启动 systemd 用户会话总线（user session bus），因此仅显示系统级单元。';
 
   @override
   String get serviceSearchHint => '单元名';
@@ -1566,14 +1566,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get serverUnreachable => '无法在此服务器上执行命令';
 
   @override
-  String get containerNoRuntime => '此处没有容器运行时';
+  String get containerNoRuntime => '未检测到容器运行时';
 
   @override
   String get containerNoRuntimeTip =>
-      '这台机器上 `docker` 和 `podman` 都没有响应。如果它装在另一个账户下，请在设置中开启「尝试使用 sudo」。';
+      '当前服务器上 `docker` 与 `podman` 均无响应。若容器安装在 root 账户下，请在设置中开启「尝试使用 sudo」。';
 
   @override
-  String get containerUnreadable => '容器运行时返回了无法解析的内容';
+  String get containerUnreadable => '无法解析容器运行时返回的数据';
 
   @override
   String get power => '电源';
@@ -1597,11 +1597,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentLocalExec => '在本机执行命令';
 
   @override
-  String get agentLocalExecTip => '允许 Agent 在运行 ServerBox 的这台机器上工作。只读的命令也需要审核';
+  String get agentLocalExecTip => '允许 Agent 在当前设备上执行本机命令（所有命令执行前均需你确认）';
 
   @override
   String get agentLocalExecRootfsTip =>
-      '让 Agent 在本机运行，但只能操作 ServerBox 安装的 Linux 容器。';
+      '仅允许 Agent 在 ServerBox 内置的本地 Linux 容器中执行命令。';
 
   @override
   String macDmgImportedPartly(String path) {
@@ -1612,26 +1612,26 @@ class AppLocalizationsZh extends AppLocalizations {
   String get bmcAccount => '账户';
 
   @override
-  String get bmcAccountUnset => '未选择 — 点击选择或新建';
+  String get bmcAccountUnset => '未选择，点击选择或新建';
 
   @override
   String bmcAccountShared(int count) {
-    return '$count 台服务器在用';
+    return '$count 台服务器正在使用';
   }
 
   @override
   String get bmcAccounts => 'BMC 账户';
 
   @override
-  String get bmcAccountSharedTip => '在这里修改会改变所有这些服务器使用的账户。';
+  String get bmcAccountSharedTip => '修改此账户将同步影响所有关联的服务器。';
 
   @override
   String bmcAccountInUse(int count) {
-    return '$count 台服务器在用。它们会保留地址，但失去账户。';
+    return '正被 $count 台服务器使用。删除后这些服务器将保留 BMC 地址，但需重新绑定账户。';
   }
 
   @override
-  String get bmcStaleWrite => 'BMC 上的内容在写入期间被改动过，请重试。';
+  String get bmcStaleWrite => 'BMC 配置在保存期间已被其他客户端修改，请刷新后重试。';
 
   @override
   String get privacyBlur => '后台隐私保护';
@@ -1669,7 +1669,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get geoData => '城市级数据';
 
   @override
-  String get geoDataTip => '下载后，所有地理位置查询都使用保存在本机的数据，不会向下载服务发送服务器地址或查询活动。';
+  String get geoDataTip => '下载后所有 IP 归属地查询均在本地离线完成，不会向外部服务发送服务器地址。';
 
   @override
   String get geoDataMissing => '未下载';
@@ -1687,7 +1687,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String geoDataConsent(String download, String disk) {
-    return '**下载大小：$download · 本机占用：$disk。** 完整数据集保存在本机，后续所有地理位置查询均在本地完成，不会向下载服务发送服务器地址或查询活动。\n\n数据每月更新。新版本会替换已安装的数据，不保留额外副本；你可以随时删除。';
+    return '**下载大小：$download · 本地占用：$disk。** 数据包保存在本机，后续所有地理位置查询均在本地离线完成，不会向外部发送任何服务器地址。\n\n数据库每月更新一次并自动覆盖旧版本，你可随时在设置中删除。';
   }
 
   @override
@@ -1695,7 +1695,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get benchmarkIntro =>
-      '在此服务器上运行 Yet Another Bench Script：磁盘、网络与 CPU。完整跑一次需要 10–20 分钟，离开本页或关闭 App 都不会中断。';
+      '在服务器上运行 Yet Another Bench Script（YABS），测试磁盘 I/O、网络带宽与 CPU 性能。完整测试约需 10–20 分钟，后台运行不受切出页面或关闭应用影响。';
 
   @override
   String get benchmarkNoRuns => '还没有测试记录。';
@@ -1713,11 +1713,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get benchmarkDeleteConfirm => '删除此条测试结果？';
 
   @override
-  String get benchmarkNothingSelected => '所有项目均已关闭，本次只会采集系统信息，几秒即可完成。';
+  String get benchmarkNothingSelected => '未勾选任何测试项，本次仅采集系统基本信息，几秒内即可完成。';
 
   @override
   String get benchmarkDiskTip =>
-      'fio 四种 block size，约 3 分钟。会在工作目录写入 2 GB 测试文件，需要相应的空闲空间。';
+      '使用 fio 测试 4 种块大小，耗时约 3 分钟。测试期间会在工作目录写入 2 GB 临时文件，请确保空间充足。';
 
   @override
   String get benchmarkNetworkTip => 'iperf3 对测公共服务器，约 4 分钟。';
@@ -1749,13 +1749,13 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get benchmarkPreferBinTip =>
-      '从 GitHub 下载，而不使用主机自带的软件包。仅在主机两者都没有安装时开启。';
+      '直接下载官方预编译二进制文件，而不使用系统安装的软件包。仅建议在服务器未安装 fio 或 iperf3 时开启。';
 
   @override
   String get benchmarkWorkDir => '工作目录';
 
   @override
-  String get benchmarkWorkDirTip => '决定磁盘测试测的是哪个文件系统。留空表示登录账户的家目录。';
+  String get benchmarkWorkDirTip => '磁盘测试将对该目录所在的文件系统进行读写。留空则默认使用当前登录账户的主目录。';
 
   @override
   String benchmarkEstimatedTime(int minutes) {
@@ -1831,18 +1831,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tagsEmptyTip => '还没有标签。编辑服务器时添加标签，它就会显示在这里。';
 
   @override
-  String get benchmarkNoServers => '请先添加服务器，再回来进行性能测试。';
+  String get benchmarkNoServers => '请先添加服务器，再运行性能测试。';
 
   @override
-  String get schemaTooNewTitle => '这些数据比当前应用新';
+  String get schemaTooNewTitle => '数据版本高于当前应用';
 
   @override
   String schemaTooNewBody(int stored, int supported) {
-    return '这些数据由更新版本的 ServerBox 写入（存储版本 v$stored）。当前版本最高支持 v$supported，数据未被改动。';
+    return '当前本地数据由更高版本的 ServerBox 创建（存储格式 v$stored），而本版本最高仅支持 v$supported。现有数据完好无损。';
   }
 
   @override
-  String get schemaTooNewReinstall => '请重新安装更新的版本，即可再次打开全部数据。';
+  String get schemaTooNewReinstall => '请升级到最新版本的 ServerBox 以正常读取全部数据。';
 
   @override
   String get schemaTooNewExportPlain => '导出无密码副本';
@@ -1862,8 +1862,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get schemaTooNewWipeDone => '数据已删除。请重新打开应用，从头开始。';
 
   @override
-  String get schemaTooNewWipeFailed =>
-      '部分数据未能删除，当前版本仍然无法打开剩下的内容。请重新安装更新的版本来读取它。';
+  String get schemaTooNewWipeFailed => '部分数据清理失败。请安装最新版本的 ServerBox 以正常读取数据。';
 
   @override
   String get systemUsers => '用户';
@@ -1970,7 +1969,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cores => '核心';
 
   @override
-  String get historyNoStored => '只有 Monitor 会保存历史数据。当前连接只保留本应用连接后采集到的数据。';
+  String get historyNoStored => '仅 Monitor 连接支持持久保存历史记录；当前连接仅展示本次打开应用后采集的数据。';
 
   @override
   String get noHistoryYet => '还没有采样';
@@ -2021,7 +2020,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentToolsTip => 'Agent 可以使用的工具，以及 MCP 服务器';
 
   @override
-  String get agentSnippetToolsTip => '列出、新增、修改和删除 snippet。';
+  String get agentSnippetToolsTip => '查看、创建、编辑和删除代码片段。';
 
   @override
   String get agentVirtToolsTip => '读取虚拟化标签页已加载的虚拟机和容器。';
@@ -2033,7 +2032,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentRemoteDesktopToolsTip => '列出远程桌面配置；经你批准后连接或断开。';
 
   @override
-  String get agentSkills => 'Skills';
+  String get agentSkills => '技能';
 
   @override
   String get agentSkillsTip => '特定任务的操作说明，可从 GitHub 或链接安装';
@@ -2042,10 +2041,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentPermissions => '权限';
 
   @override
-  String get agentEmptyHint => '询问你的服务器，或让 Agent 在服务器上执行操作。';
+  String get agentEmptyHint => '询问服务器状态，或让 Agent 协助排查与执行操作。';
 
   @override
-  String get agentTerminalEmptyHint => '询问此服务器。Agent 可以读取此终端，并在这里执行命令。';
+  String get agentTerminalEmptyHint => '可结合当前终端上下文提问，或让 Agent 在此终端中执行命令。';
 
   @override
   String oldestSampleFmt(String time) {
@@ -2053,7 +2052,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get rangeEndsBeforeItStarts => '区间的结束必须晚于开始。';
+  String get rangeEndsBeforeItStarts => '结束时间必须晚于开始时间。';
 
   @override
   String get samples => '采样';
@@ -2062,7 +2061,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get unavailable => '不可用';
 
   @override
-  String get metricUnavailableTip => '页面其余部分不受影响。到主机上检查这项读数所用的命令。';
+  String get metricUnavailableTip => '不影响页面其他指标，请在服务器上检查对应采集命令是否可用。';
 
   @override
   String get waitingFirstSample => '等待第一次采样';
@@ -2082,7 +2081,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String staleSinceFmt(String ago, String time) {
-    return '以下全部是 $time 的数据，$ago。';
+    return '当前显示的是 $time（$ago）的数据。';
   }
 
   @override
@@ -2250,20 +2249,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get connection => '连接方式';
 
   @override
-  String get connectionTip => '两个可以同时开启。顺序就是拨号的顺序。';
+  String get connectionTip => '可同时启用多种方式，连接时按列表顺序依次尝试。';
 
   @override
-  String get transportNoneOn => '两个都关闭了 —— 这台服务器无法连接。';
+  String get transportNoneOn => '请至少启用一种连接方式。';
 
   @override
   String get thisDevice => '本机';
 
   @override
-  String get localServerTip => '直接在本机运行状态脚本读取本机信息，不使用 SSH 和 Monitor，二者的设置会保留。';
+  String get localServerTip =>
+      '直接在本机执行采集脚本获取系统状态，不使用 SSH 或 Monitor（原有连接配置仍会保留）。';
 
   @override
   String get localServerUnsupported =>
-      '当前平台无法将本机作为服务器读取。Linux、Windows 和 macOS DMG 版本支持。';
+      '当前平台不支持添加本机作为服务器（仅支持 Linux、Windows 及 macOS DMG 版）。';
 
   @override
   String get remoteDesktopIntro =>
@@ -2284,14 +2284,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get localServerIntroFooter => '之后也可以在服务器编辑页的「连接方式」中开启。';
 
   @override
-  String get transportSectionOff => '已关闭。下面的字段会保留，供你再次开启时使用。';
+  String get transportSectionOff => '当前未启用，下方配置将保留以便日后重新开启。';
 
   @override
   String get monitorAgent => 'Monitor';
 
   @override
   String get plainHttpEditTip =>
-      '凭据和指标会以明文穿过网络。请限制在局域网或 Tailscale 地址内，或者把 Monitor 放到 TLS 后面。';
+      '密码与监控数据将以明文在网络中传输。仅建议在局域网、Tailscale 等可信网络中开启，或为 Monitor 配置 HTTPS。';
 
   @override
   String get behaviour => '行为';
@@ -2339,7 +2339,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get tagOnThisServer => '在这台上';
+  String get tagOnThisServer => '当前服务器';
 
   @override
   String tagServersFmt(int count) {
@@ -2348,7 +2348,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String tagOnThisServerFmt(int count) {
-    return '此服务器上有 $count 个';
+    return '当前服务器已选 $count 个';
   }
 
   @override
@@ -2356,7 +2356,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get tagEditorTip =>
-      '输入会过滤列表；按钮新建标签并直接加到这台服务器上。铅笔是重命名，会改掉所有用到它的服务器。没有服务器再用的标签会在保存时消失。';
+      '输入文字可筛选或新建标签；点击铅笔图标可全局重命名标签。未被任何服务器使用的标签会在保存后自动清理。';
 
   @override
   String get tagRenamesOnSave => '重命名在保存时生效';
@@ -2514,7 +2514,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get idlePauseTip =>
-      '扩展采集会调用 smartctl、sensors 和 amd-smi。没有客户端轮询时暂停，可以避免为无人查看的数据唤醒硬盘。';
+      '扩展采集会调用 smartctl、sensors 和 amd-smi。无客户端查看时自动暂停，可避免频繁唤醒机械硬盘。';
 
   @override
   String get idlePauseThreshold => '闲置判定时长';
@@ -2551,26 +2551,26 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pushHeaders => 'Headers';
 
   @override
-  String get pushSecretSet => '已在 Monitor 上设置，不显示';
+  String get pushSecretSet => '已保存在 Monitor 中（出于安全原因不回显）';
 
   @override
   String get pushSecretKeep => '留空则保持不变';
 
   @override
-  String get pushTestTip => '按当前页面上的配置发送一条通知，无论是否已保存。';
+  String get pushTestTip => '使用当前表单填写的配置立即发送一条测试通知（无需先保存）。';
 
   @override
-  String get pushTestSent => '渠道已接受';
+  String get pushTestSent => '测试通知已发送';
 
   @override
-  String get pushTestFailed => '渠道拒绝了这条通知';
+  String get pushTestFailed => '测试通知发送失败';
 
   @override
   String get pushTestMessage => '来自 ServerBox Monitor 的测试通知';
 
   @override
   String get pushUnknownType =>
-      '此 Monitor 没有该类型渠道的发送实现，因此不显示其配置。可以在此删除，或在 Monitor 的 config.toml 中编辑。';
+      '当前版本的 Monitor 暂不支持此类型的通知渠道。你可在此将其删除，或直接编辑服务器上的 config.toml。';
 
   @override
   String get pushJsonInvalid => '不是合法的 JSON';
@@ -2579,7 +2579,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dataRetention => '数据保留';
 
   @override
-  String get dataRetentionTip => '关闭后，Monitor 不会删除任何数据，其数据库会无限增长。';
+  String get dataRetentionTip => '关闭后 Monitor 将永久保留所有历史数据，数据库体积会持续增长。';
 
   @override
   String get retentionMetrics => '指标保留';
@@ -2632,10 +2632,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get disconnect => '断开';
 
   @override
-  String get searchServerTip => '搜索名称和地址，也就是编辑页最先问的两项。';
+  String get searchServerTip => '按服务器名称或地址搜索';
 
   @override
-  String get addServerTip => '手动填写、扫描二维码，或导入别人分享的文件。';
+  String get addServerTip => '手动填写连接信息、扫描二维码，或导入他人分享的配置文件。';
 
   @override
   String get move => '移动';
@@ -2650,7 +2650,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get groupByTag => '按标签分组';
 
   @override
-  String get groupByTagTip => '标签是在服务器自己的编辑页里加的。';
+  String get groupByTagTip => '可在服务器的编辑页面中添加和管理标签。';
 
   @override
   String get connecting => '连接中…';
@@ -2897,7 +2897,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get monitorRelayForbidden =>
-      'Monitor 拒绝了这个连接：它的密码已更改，或它不接受通过明文 HTTP 的操作。请重新登录，或改用 HTTPS 连接。';
+      'Monitor 拒绝了此连接：密码已变更，或未允许通过明文 HTTP 执行此操作。请重新验证密码或改用 HTTPS。';
 
   @override
   String get remoteDesktopCertificateChanged => '远程桌面证书已更改';
@@ -2950,16 +2950,16 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get pveAuthToken => 'API token';
+  String get pveAuthToken => 'API 令牌';
 
   @override
   String get pveVersionLow => '当前该功能处于测试阶段，仅在 PVE 8+ 上测试过，请谨慎使用';
 
   @override
-  String get pveTokenId => 'Token ID';
+  String get pveTokenId => '令牌 ID';
 
   @override
-  String get pveTokenSecret => 'Token secret';
+  String get pveTokenSecret => '令牌密钥';
 
   @override
   String get pveTokenTip =>
@@ -3000,14 +3000,14 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtIntroPveMoved =>
-      'Proxmox VE 已从服务器页面移到此标签页。服务器的 PVE 卡片会在这里打开它。';
+      'Proxmox VE 管理已整合至此标签页，点击服务器详情页中的 PVE 卡片也会跳转到这里。';
 
   @override
   String get virtIntroLibvirt =>
-      '安装了 libvirt 的 virsh 的服务器会显示为主机，并列出其 QEMU/KVM 虚拟机。';
+      '安装了 libvirt（virsh）的服务器会自动识别为宿主机，并列出其上的 QEMU/KVM 虚拟机。';
 
   @override
-  String get virtIntroTransports => '两者都可以通过 SSH、经由 Monitor 或在本设备上使用。';
+  String get virtIntroTransports => '支持通过 SSH、Monitor 或本机直接连接。';
 
   @override
   String get virtIntroTokens =>
@@ -3043,7 +3043,8 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get virtProbeContainerTip => '这台服务器运行在容器里，本身不是宿主机。请在运行它的宿主机上管理。';
+  String get virtProbeContainerTip =>
+      '当前服务器本身运行在容器内，无法作为虚拟化宿主机。请连接其所在的物理宿主机进行管理。';
 
   @override
   String get virtProbePve => 'PVE，未配置';
@@ -3058,7 +3059,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtNoHostsTip =>
-      '运行 Proxmox VE 且填写了 API 访问信息的服务器是宿主机，能运行 virsh 的服务器也是。其他服务器可以在宿主机切换器中检查。';
+      '配置了 Proxmox VE API 的服务器，或安装了 virsh 的服务器会自动识别为宿主机；你也可以在宿主机列表中手动检测其他服务器。';
 
   @override
   String get virtNoGuests => '没有虚拟机或容器';
@@ -3097,7 +3098,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtConsoleGraphical => '图形';
 
   @override
-  String get virtVncPasswordNeeded => '这个显示需要密码';
+  String get virtVncPasswordNeeded => '此控制台需要密码';
 
   @override
   String get virtConsoleSerialTip =>
@@ -3117,7 +3118,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get virtConsoleEnterNow => '立即';
+  String get virtConsoleEnterNow => '立即发送';
 
   @override
   String get virtOffTip => '启动后在这里显示实时 CPU、内存、磁盘和网络。';
@@ -3155,10 +3156,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtErrCertChanged => '宿主机的证书已更改';
 
   @override
-  String get virtErrRelayNotGranted => 'Monitor 不会通过这条连接从服务器发起 TCP 连接';
+  String get virtErrRelayNotGranted => '当前连接不允许通过 Monitor 转发 TCP 流量';
 
   @override
-  String get virtErrExecNotGranted => 'Monitor 不执行命令';
+  String get virtErrExecNotGranted => '当前连接不允许通过 Monitor 执行命令';
 
   @override
   String get virtErrNotInstalled => '此服务器上未安装 virsh';
@@ -3318,7 +3319,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtNoTemplates => '这台主机上没有容器模板。可以在 PVE 中存储的 CT 模板里下载。';
 
   @override
-  String get virtNoDiskStorage => '这台主机上没有可以创建新磁盘的存储';
+  String get virtNoDiskStorage => '该主机上没有可用于创建新磁盘的存储池';
 
   @override
   String get virtStartAfterCreate => '创建后启动';
@@ -3391,7 +3392,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtDeleteDisks => '同时删除磁盘卷';
 
   @override
-  String get virtDeleteDisksPve => '磁盘会随它一起删除，安装介质会保留。';
+  String get virtDeleteDisksPve => '虚拟机的磁盘将一并删除，ISO 安装介质会保留。';
 
   @override
   String virtDeleted(String name) {
@@ -3414,7 +3415,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtErrConflict => '已在别处修改';
 
   @override
-  String get virtErrConflictTip => '此配置在读取后被他人修改，因此未做任何更改。已重新读取，如仍需要请再次修改。';
+  String get virtErrConflictTip => '该配置在读取后已被其他操作修改，本次更改未保存。现已刷新为最新配置，请确认后重试。';
 
   @override
   String get virtHardware => '硬件';
@@ -3650,7 +3651,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtHwRevertAll => '全部撤销';
 
   @override
-  String get virtSetRenameStopped => '关机后才能改名：libvirt 只能重命名未运行的虚拟机。';
+  String get virtSetRenameStopped => 'libvirt 仅支持在虚拟机关机状态下重命名。';
 
   @override
   String virtSetIssueDescription(int max) {
@@ -3673,7 +3674,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtSetDeleteStopFirst => '先关机再删除。';
 
   @override
-  String get virtSetDeleteProtected => '已开启保护，先在常规里关闭。';
+  String get virtSetDeleteProtected => '该虚拟机已开启保护，请先在「常规」设置中关闭保护。';
 
   @override
   String get virtSetDeleteAgain => '再点一次确认';
@@ -3785,7 +3786,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtHwMappingsOnly =>
-      '这里只能使用资源映射：PVE 只允许以密码登录的 root@pam 直通原始设备。可在 数据中心 → 资源映射 中创建映射。';
+      '当前认证方式仅支持使用资源映射（PVE 仅允许以密码登录的 root@pam 直接直通原始硬件）。请在 PVE「数据中心 → 资源映射」中创建映射。';
 
   @override
   String get virtHwTpmNote => 'Windows 11 需要 TPM 2.0。';
@@ -3822,7 +3823,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtHwSecureBootNote => '只引导已签名的内核和引导程序';
 
   @override
-  String get virtHwFirmwareWarnTitle => '已安装系统不要切换固件';
+  String get virtHwFirmwareWarnTitle => '请勿为已安装系统的虚拟机切换固件';
 
   @override
   String get virtHwFirmwareWarnBody => '在 UEFI 和 BIOS 之间切换会导致现有系统无法引导。';
@@ -3889,7 +3890,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtBackupNoPlanShort => '无计划';
 
   @override
-  String get virtBackupNoPlan => '没有包含它的定时备份任务。';
+  String get virtBackupNoPlan => '当前虚拟机未加入任何定时备份任务。';
 
   @override
   String get virtBackupKeep => '保留';
@@ -4003,7 +4004,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String virtPoolDeleteAsk(String name) {
-    return '删除存储池 $name？会删除它的定义，卷保留在原处。';
+    return '确定删除存储池 $name？仅移除存储池定义，原有磁盘卷将保留在原位置。';
   }
 
   @override
@@ -4384,7 +4385,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String virtCreateDiskKept(String size) {
-    return '磁盘保持为镜像本身的 $size，大于所选容量：磁盘不会被裁得比其中的系统还小。';
+    return '所选容量小于镜像大小，磁盘已保持为镜像原有的 $size。';
   }
 
   @override
@@ -4423,7 +4424,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtCiNewInstance =>
-      '下次启动时，cloud-init 会把系统当作新实例：重新设置主机名，账户不存在时创建它，设置密码、添加密钥，并重新写入网络配置。它还会生成新的 SSH 主机密钥，因此 SSH 客户端会提示主机密钥已变更。在那次启动之前不会有任何变化。';
+      '下次启动时，cloud-init 会将系统视为新实例：重新应用主机名、创建用户、设置密码与 SSH 密钥，并重写网络配置与 SSH 主机密钥（SSH 客户端连接时会提示主机密钥变更）。重启前不会产生任何影响。';
 
   @override
   String get virtCiSaved => '已保存，下次启动时生效。';
@@ -4759,16 +4760,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtNetHostOthers => '其余虚拟机都从 DHCP 范围中获取地址。';
 
   @override
-  String get virtNetHostInvalid => '宿主机会拒绝的 MAC、地址或名称，或同一个 MAC 出现两次。';
+  String get virtNetHostInvalid => 'MAC 地址、IP 地址或主机名格式无效，或存在重复的 MAC 地址。';
 
   @override
-  String get virtNetManagementIface => '此接口承载宿主机自身的地址。编辑或应用它会中断宿主机的连接。';
+  String get virtNetManagementIface => '此网卡承载宿主机的管理连接，修改或重载配置可能导致宿主机失联。';
 
   @override
   String get virtNetManagementTip => '此接口承载宿主机的管理流量，或是管理接口的下层接口；应用不会修改它。';
 
   @override
-  String get virtNetPhysicalTip => '物理接口属于宿主机本身：应用只编辑网桥。';
+  String get virtNetPhysicalTip => '物理网卡归属宿主机管理，此处仅支持编辑网桥。';
 
   @override
   String get virtNetVlanAware => 'VLAN 感知';
@@ -4811,7 +4812,7 @@ class AppLocalizationsZh extends AppLocalizations {
       '宿主机的固件描述文件中没有带已注册密钥的 Secure Boot 固件，开启后虚拟机无法启动。';
 
   @override
-  String get virtCreateSecureBoot => 'Secure Boot';
+  String get virtCreateSecureBoot => '安全启动';
 
   @override
   String get virtCreateSecureBootNote => '只引导已签名的内核和引导程序。';
@@ -4826,7 +4827,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String virtHwRevertPendingBody(String name) {
-    return '$name 将回到正在运行的状态：用运行中的定义重新写入配置，下次启动得到的与这次完全相同。其 NVRAM 文件与固件保持不变。';
+    return '将丢弃 $name 的所有待生效更改，恢复为当前运行配置。NVRAM 与固件保持不变。';
   }
 
   @override
@@ -4999,7 +5000,7 @@ class AppLocalizationsZh extends AppLocalizations {
       '此服务器未安装 ufw 或 firewalld。可用系统的包管理器安装其中一个，例如 `apt install ufw` 或 `dnf install firewalld`。';
 
   @override
-  String get firewallKeepAccess => '先保持本 App 使用的端口开放';
+  String get firewallKeepAccess => '请确保当前连接所用的端口保持放行';
 
   @override
   String firewallWillRefuseFmt(String access) {
@@ -5018,19 +5019,19 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get firewallConflict =>
-      'ufw 和 firewalld 同时开启。两者都会写入内核规则，最后加载的一方决定放行什么。';
+      'ufw 与 firewalld 同时处于启用状态。两者均会写入内核防火墙规则，实际放行策略取决于最后加载的一方。';
 
   @override
   String get firewallDefaultZone => '默认 zone';
 
   @override
-  String get firewallZone => 'Zone';
+  String get firewallZone => '区域';
 
   @override
-  String get firewallTarget => 'Target';
+  String get firewallTarget => '目标策略';
 
   @override
-  String get firewallMasquerade => 'Masquerade';
+  String get firewallMasquerade => 'IP 伪装';
 
   @override
   String get firewallServices => '服务';
@@ -5045,7 +5046,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get firewallInterfaces => '网络接口';
 
   @override
-  String get firewallRichRules => 'Rich rules';
+  String get firewallRichRules => '富规则';
 
   @override
   String get firewallForwardPorts => '端口转发';
@@ -5063,11 +5064,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get firewallDefaultTag => '默认';
 
   @override
-  String get firewallDrift => '当前生效的配置与已保存的不一致。reload 或重启后将改为已保存的配置。';
+  String get firewallDrift => '当前运行配置与永久配置不一致，重新加载防火墙或重启系统后将恢复为已保存的永久配置。';
 
   @override
   String firewallDriftLockoutFmt(String access) {
-    return 'reload 或重启后，$access 将被拒绝：已保存的配置没有放行它。';
+    return '已保存的永久配置未放行 $access，重新加载防火墙或重启系统后该连接将被阻断。';
   }
 
   @override
@@ -5097,7 +5098,7 @@ class AppLocalizationsZh extends AppLocalizations {
       '格式为 port=80:proto=tcp:toport=8080，需包含 toport、toaddr 或两者。';
 
   @override
-  String get monitorSyncNeedsServer => '请选择由其 Monitor 存放备份的服务器。';
+  String get monitorSyncNeedsServer => '请选择用于存放备份的 Monitor 服务器。';
 
   @override
   String get monitorBackupUnsupported => '此 Monitor 不支持存放备份，请更新 Monitor。';
@@ -5135,7 +5136,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtGuestIsTemplate => '它已经是模板。';
 
   @override
-  String get virtCreateImageBigger => '镜像比磁盘大：磁盘至少要和镜像一样大。';
+  String get virtCreateImageBigger => '磁盘容量不能小于镜像本身的大小。';
 
   @override
   String get virtBackupIssueStorage => '该存储在此节点上不存放备份。';
@@ -5182,11 +5183,11 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get programStatusAlerts => '程序需要你时通知';
+  String get programStatusAlerts => '终端等待输入或命令完成时通知';
 
   @override
   String get programStatusAlertsTip =>
-      '对于当前不可见的终端：程序报告正在等待你、已完成或失败时（OSC 7501、OSC 9;4），或者运行至少 30 秒的命令结束时（OSC 133）通知你。';
+      '当后台终端中的程序等待输入、执行完成或失败（OSC 7501、OSC 9;4），以及运行超过 30 秒的命令结束时（OSC 133）发送通知。';
 
   @override
   String get termLineHeight => '行高';
@@ -5301,7 +5302,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workspaceNoMatch => '没有匹配的结果';
 
   @override
-  String get workspaceNothingToReopen => '没有可以重新打开的标签';
+  String get workspaceNothingToReopen => '没有可重新打开的标签页';
 
   @override
   String workspacePane(int index) {
@@ -5557,8 +5558,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get storageTitle => '存储';
 
   @override
-  String get storageLinuxOnly =>
-      'Storage management currently supports Linux servers.';
+  String get storageLinuxOnly => '存储管理目前仅支持 Linux 服务器。';
 
   @override
   String get storageDisks => '磁盘';
@@ -5579,7 +5579,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String storageFree(Object size) {
-    return '$size free';
+    return '$size 可用';
   }
 
   @override
@@ -5637,7 +5637,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get storageMountPersist => '每次开机自动挂载（/etc/fstab）';
 
   @override
-  String get storageMountOwn => '允许 ServerBox 写入（用于备份）';
+  String get storageMountOwn => '授权 ServerBox 写入（用于备份）';
 
   @override
   String get storageName => '名称';
@@ -5786,8 +5786,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get storageConfirmationMismatch =>
-      'The confirmation text did not match.';
+  String get storageConfirmationMismatch => '输入的确认内容不匹配。';
 
   @override
   String storageInUse(Object device) {
@@ -5973,35 +5972,34 @@ class AppLocalizationsZh extends AppLocalizations {
   String get storageMountedInside => '请先卸载其文件系统。';
 
   @override
-  String get storageNotRemovable => '这里只能移除热备盘或缓存盘。';
+  String get storageNotRemovable => '此处仅支持移除热备盘或缓存盘。';
 
   @override
-  String get storageNotGrowable => 'This device cannot be grown here.';
+  String get storageNotGrowable => '无法在此扩容该设备。';
 
   @override
-  String get storageOverlapping => 'Choose devices that do not overlap.';
+  String get storageOverlapping => '请选择互不重叠的设备。';
 
   @override
-  String get storageInvalidDevice =>
-      'The device is invalid or no longer available.';
+  String get storageInvalidDevice => '设备无效或已不可用。';
 
   @override
-  String get storageInvalidMountpoint => 'The mount point is invalid.';
+  String get storageInvalidMountpoint => '挂载点无效。';
 
   @override
-  String get storageInvalidName => 'The name is invalid.';
+  String get storageInvalidName => '名称无效。';
 
   @override
-  String get storageInvalidFilesystem => 'The filesystem is not supported.';
+  String get storageInvalidFilesystem => '不支持该文件系统。';
 
   @override
-  String get storageInvalidLabel => 'The label is invalid.';
+  String get storageInvalidLabel => '卷标无效。';
 
   @override
-  String get storageInvalidLevel => 'The RAID level or pool layout is invalid.';
+  String get storageInvalidLevel => 'RAID 级别或存储池布局无效。';
 
   @override
-  String get storageTooFewDevices => 'Not enough valid devices were selected.';
+  String get storageTooFewDevices => '所选的有效设备数量不足。';
 
   @override
   String get storageKeyRequired => '需要输入密码短语。';
@@ -6224,8 +6222,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sharingShowConnectionsBody => '以 root 身份读取当前连接信息。';
 
   @override
-  String get sharingConnectionsLinuxOnly =>
-      'Sharing management currently supports Linux servers.';
+  String get sharingConnectionsLinuxOnly => '共享管理目前仅支持 Linux 服务器。';
 
   @override
   String get agentThisDevice => '本机';
@@ -6407,7 +6404,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get noticeStoragePoolUnhealthyBody => '打开存储查看是哪个设备。';
+  String get noticeStoragePoolUnhealthyBody => '请打开「存储」查看异常设备。';
 
   @override
   String noticeStoragePoolBack(String pool) {
@@ -6423,7 +6420,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get noticeStorageDiskFailingBody => 'SMART 检查或自检未通过：请把数据复制到别处并更换磁盘。';
+  String get noticeStorageDiskFailingBody => 'SMART 健康检查或自检未通过，请尽快迁移数据并更换磁盘。';
 
   @override
   String noticeStorageDiskSectors(String device, int count) {
@@ -6432,7 +6429,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String noticeStorageDiskSectorsBody(int was) {
-    return '之前是 $was 个。坏扇区增加的磁盘通常很快会故障。';
+    return '此前为 $was 个。坏扇区数量增加通常预示磁盘即将损坏，请及时备份数据。';
   }
 
   @override
@@ -6450,7 +6447,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get storageTaskSmartLong => 'SMART 完整自检';
 
   @override
-  String get storageNeedsSudo => 'sudo 要求输入密码：请以 root 运行 Monitor，或按上方说明允许这些命令。';
+  String get storageNeedsSudo =>
+      '执行此操作需要免密 sudo 权限。请以 root 身份运行 Monitor，或按上方说明配置 sudoers。';
 
   @override
   String get monitorTab => 'Monitor';
@@ -6559,7 +6557,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get monitorLiveDevicesTip =>
-      '忘记设备后，它下次登录会计入账户级的失败尝试限制。这不会让设备退出登录：保存了密码的设备会再次登录。要阻止某台设备，请修改密码。';
+      '移除设备记录后，该设备下次登录将重新受账户级失败次数限制；但已保存密码的客户端仍会自动重新登录。如需彻底阻止某台设备访问，请修改 Monitor 密码。';
 
   @override
   String get monitorLiveAttached => '已连接';
@@ -6650,7 +6648,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get monitorAgentTooOldBody =>
-      '此 Monitor 来自只用一个密码之前的版本，本 App 无法登录。更新后，它的密码是原先最早的管理员账户的密码。';
+      '此 Monitor 版本过旧，尚不支持单密码登录。升级后将默认使用原首个管理员账户的密码。';
 
   @override
   String monitorAgentOutdatedBody(String latest, String running) {
@@ -6662,7 +6660,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get monitorUpdateSshHint =>
-      '终端会运行它。系统级安装的 Monitor 通过 SSH 终端更新时，sudo 会在终端里要求输入密码。';
+      '将在终端中执行升级脚本。若 Monitor 为系统级服务，请按终端提示输入 sudo 密码。';
 
   @override
   String get monitorUpdateNoSsh => 'App 无法在此服务器上打开终端，请自行在服务器上运行。';
@@ -6711,13 +6709,13 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get monitorUpdateAgentHint =>
-      'Monitor 会在自身进程之外运行安装脚本，因此重启不会中断更新。重启期间到 Monitor 的连接会断开几秒，此窗口会跨越重启继续跟踪进度。';
+      '升级脚本在独立会话中运行，Monitor 重启不会中断升级流程。重启期间连接会短暂断开几秒，随后自动恢复。';
 
   @override
   String get monitorUpdateSudoPassword => 'sudo 密码';
 
   @override
-  String get monitorUpdateSudoHint => '这里的安装脚本需要 root（OpenRC 服务）。密码只用一次，不会保存。';
+  String get monitorUpdateSudoHint => '更新 OpenRC 服务需要 root 权限。密码仅本次使用，不会保存。';
 
   @override
   String get monitorUpdateSudoRefused => 'sudo 不接受这个密码。';
@@ -6800,7 +6798,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get reconnectEndsShell =>
-      '没有可以重新接入的 tmux 会话，重新连接会结束当前 shell 及其中仍在运行的程序，并清除屏幕上的输出。';
+      '未检测到可恢复的 tmux 会话，重新连接将终止当前 Shell 及其中的运行程序，并清空屏幕输出。';
 
   @override
   String get handedness => '惯用手';
@@ -6812,7 +6810,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get handednessRight => '右手';
 
   @override
-  String get handednessTip => '选择的手所在一侧有系统竖栏时，标签栏放在状态栏下方的竖栏里，和系统自带的栏一致。';
+  String get handednessTip => '当所选惯用手一侧存在系统侧栏时，将导航栏停靠在同一侧，方便单手操作。';
 
   @override
   String get storeUnreadableTitle => '无法打开之前的数据';
@@ -6861,7 +6859,7 @@ class AppLocalizationsZh extends AppLocalizations {
       '不是支持的 SSH 公钥（ssh-ed25519、ssh-rsa 或 ecdsa-sha2-*）';
 
   @override
-  String get hostCertAuthorityNoHosts => '请填写它担保的主机，例如 *';
+  String get hostCertAuthorityNoHosts => '请填写适用的主机匹配规则，例如 *';
 
   @override
   String get hostCertAuthorityExists => '已在列表中';
@@ -7669,7 +7667,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get bmcPowerOff => '已關機';
 
   @override
-  String get bmcCertRejected => '憑證被拒絕——請在伺服器設定裡確認';
+  String get bmcCertRejected => '憑證遭拒，請在伺服器設定中確認';
 
   @override
   String get bmcNotAService => '該位址上沒有 Redfish 服務';
@@ -7691,10 +7689,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get bmcCert => '憑證';
 
   @override
-  String get bmcCertPinned => '已確認並釘住';
+  String get bmcCertPinned => '已信任並固定';
 
   @override
-  String get bmcCertUnreviewed => '尚未確認——點擊查看憑證';
+  String get bmcCertUnreviewed => '尚未確認，點選查看憑證';
 
   @override
   String get bmcCertReview => '收到自簽憑證。接受前請核對指紋；接受後將只信任這張憑證。';
@@ -8386,7 +8384,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get serviceUnit => 'Unit';
+  String get serviceUnit => '單元';
 
   @override
   String get serviceUnitType => '類型';
@@ -8486,7 +8484,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get bmcAccount => '帳戶';
 
   @override
-  String get bmcAccountUnset => '未選擇 — 點擊選擇或新增';
+  String get bmcAccountUnset => '未選擇，點選以選擇或新增';
 
   @override
   String bmcAccountShared(int count) {
@@ -8501,7 +8499,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String bmcAccountInUse(int count) {
-    return '$count 台伺服器在用。它們會保留位址，但失去帳戶。';
+    return '正被 $count 台伺服器使用。刪除後這些伺服器將保留 BMC 位址，但需重新綁定帳戶。';
   }
 
   @override
@@ -8704,7 +8702,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get tagsEmptyTip => '尚無標籤。編輯伺服器時新增標籤，就會顯示在這裡。';
 
   @override
-  String get benchmarkNoServers => '請先新增伺服器，再返回執行效能測試。';
+  String get benchmarkNoServers => '請先新增伺服器，再執行效能測試。';
 
   @override
   String get schemaTooNewTitle => '這些資料比目前 App 新';
@@ -8906,7 +8904,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get agentRemoteDesktopToolsTip => '列出遠端桌面設定；經你核准後連線或中斷。';
 
   @override
-  String get agentSkills => 'Skills';
+  String get agentSkills => '技能';
 
   @override
   String get agentSkillsTip => '特定任務的操作說明，可從 GitHub 或連結安裝';
@@ -9123,10 +9121,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get connection => '連線方式';
 
   @override
-  String get connectionTip => '兩個可以同時開啟。順序就是撥接的順序。';
+  String get connectionTip => '可同時啟用多種方式，連線時依列表順序依次嘗試。';
 
   @override
-  String get transportNoneOn => '兩個都關閉了 —— 這台伺服器無法連線。';
+  String get transportNoneOn => '請至少啟用一種連線方式。';
 
   @override
   String get thisDevice => '本機';
@@ -9212,7 +9210,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get tagOnThisServer => '在這台上';
+  String get tagOnThisServer => '目前伺服器';
 
   @override
   String tagServersFmt(int count) {
@@ -9229,7 +9227,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get tagEditorTip =>
-      '輸入會過濾清單；按鈕會新增標籤並直接加到這台伺服器上。鉛筆是重新命名，會改掉所有用到它的伺服器。沒有伺服器再使用的標籤會在儲存時消失。';
+      '輸入文字可篩選或新增標籤；點選鉛筆圖示可全域重新命名標籤。未被任何伺服器使用的標籤會在儲存後自動清理。';
 
   @override
   String get tagRenamesOnSave => '重新命名在儲存時生效';
@@ -9505,7 +9503,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get disconnect => '中斷連線';
 
   @override
-  String get searchServerTip => '搜尋名稱和位址——編輯頁最先詢問的兩項資料。';
+  String get searchServerTip => '依伺服器名稱或位址搜尋';
 
   @override
   String get addServerTip => '填寫其中一項、掃描 QR code，或匯入他人分享的檔案。';
@@ -9523,7 +9521,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get groupByTag => '依標籤分組';
 
   @override
-  String get groupByTagTip => '標籤是在伺服器自己的編輯頁裡加的。';
+  String get groupByTagTip => '可在伺服器的編輯頁面中新增與管理標籤。';
 
   @override
   String get connecting => '連線中…';
@@ -9770,7 +9768,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get monitorRelayForbidden =>
-      'Monitor 拒絕了這個連線：它的密碼已變更，或它不接受透過明文 HTTP 的操作。請重新登入，或改用 HTTPS 連線。';
+      'Monitor 拒絕了此連線：密碼已變更，或未允許透過明文 HTTP 執行此操作。請重新驗證密碼或改用 HTTPS。';
 
   @override
   String get remoteDesktopCertificateChanged => '遠端桌面憑證已變更';
@@ -9823,16 +9821,16 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get pveAuthToken => 'API token';
+  String get pveAuthToken => 'API 權杖';
 
   @override
   String get pveVersionLow => '此功能目前處於測試階段，僅在 PVE 8+ 上進行過測試。請謹慎使用。';
 
   @override
-  String get pveTokenId => 'Token ID';
+  String get pveTokenId => '權杖 ID';
 
   @override
-  String get pveTokenSecret => 'Token secret';
+  String get pveTokenSecret => '權杖密鑰';
 
   @override
   String get pveTokenTip =>
@@ -11684,7 +11682,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       '主機系統的韌體描述檔中沒有帶已註冊金鑰的 Secure Boot 韌體，開啟後虛擬機器無法啟動。';
 
   @override
-  String get virtCreateSecureBoot => 'Secure Boot';
+  String get virtCreateSecureBoot => '安全啟動';
 
   @override
   String get virtCreateSecureBootNote => '只引導已簽署的核心與引導程式。';
@@ -11897,13 +11895,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get firewallDefaultZone => '預設 zone';
 
   @override
-  String get firewallZone => 'Zone';
+  String get firewallZone => '區域';
 
   @override
-  String get firewallTarget => 'Target';
+  String get firewallTarget => '目標原則';
 
   @override
-  String get firewallMasquerade => 'Masquerade';
+  String get firewallMasquerade => 'IP 偽裝';
 
   @override
   String get firewallServices => '服務';
@@ -11918,7 +11916,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get firewallInterfaces => '網路介面';
 
   @override
-  String get firewallRichRules => 'Rich rules';
+  String get firewallRichRules => '富規則';
 
   @override
   String get firewallForwardPorts => '連接埠轉送';
@@ -12435,8 +12433,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get storageTitle => '儲存空間';
 
   @override
-  String get storageLinuxOnly =>
-      'Storage management currently supports Linux servers.';
+  String get storageLinuxOnly => '儲存管理目前僅支援 Linux 伺服器。';
 
   @override
   String get storageDisks => '磁碟';
@@ -12457,7 +12454,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String storageFree(Object size) {
-    return '$size free';
+    return '$size 可用';
   }
 
   @override
@@ -12515,7 +12512,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get storageMountPersist => '每次開機自動掛載（/etc/fstab）';
 
   @override
-  String get storageMountOwn => '允許 ServerBox 寫入（用於備份）';
+  String get storageMountOwn => '授權 ServerBox 寫入（用於備份）';
 
   @override
   String get storageName => '名稱';
@@ -12664,8 +12661,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get storageConfirmationMismatch =>
-      'The confirmation text did not match.';
+  String get storageConfirmationMismatch => '輸入的確認內容不相符。';
 
   @override
   String storageInUse(Object device) {
@@ -12854,32 +12850,31 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get storageNotRemovable => '此處只能移除備援或快取裝置。';
 
   @override
-  String get storageNotGrowable => 'This device cannot be grown here.';
+  String get storageNotGrowable => '無法在此擴充該裝置。';
 
   @override
-  String get storageOverlapping => 'Choose devices that do not overlap.';
+  String get storageOverlapping => '請選擇互不重疊的裝置。';
 
   @override
-  String get storageInvalidDevice =>
-      'The device is invalid or no longer available.';
+  String get storageInvalidDevice => '裝置無效或已無法使用。';
 
   @override
-  String get storageInvalidMountpoint => 'The mount point is invalid.';
+  String get storageInvalidMountpoint => '掛載點無效。';
 
   @override
-  String get storageInvalidName => 'The name is invalid.';
+  String get storageInvalidName => '名稱無效。';
 
   @override
-  String get storageInvalidFilesystem => 'The filesystem is not supported.';
+  String get storageInvalidFilesystem => '不支援該檔案系統。';
 
   @override
-  String get storageInvalidLabel => 'The label is invalid.';
+  String get storageInvalidLabel => '標籤無效。';
 
   @override
-  String get storageInvalidLevel => 'The RAID level or pool layout is invalid.';
+  String get storageInvalidLevel => 'RAID 等級或儲存池配置無效。';
 
   @override
-  String get storageTooFewDevices => 'Not enough valid devices were selected.';
+  String get storageTooFewDevices => '所選的有效裝置數量不足。';
 
   @override
   String get storageKeyRequired => '需要輸入密碼短語。';
@@ -13102,8 +13097,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get sharingShowConnectionsBody => '以 root 身分讀取目前連線資訊。';
 
   @override
-  String get sharingConnectionsLinuxOnly =>
-      'Sharing management currently supports Linux servers.';
+  String get sharingConnectionsLinuxOnly => '共享管理目前僅支援 Linux 伺服器。';
 
   @override
   String get agentThisDevice => '本機';
@@ -13328,7 +13322,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get storageTaskSmartLong => 'SMART 完整自我檢測';
 
   @override
-  String get storageNeedsSudo => 'sudo 要求輸入密碼：請以 root 執行 Monitor，或按上方說明允許這些命令。';
+  String get storageNeedsSudo =>
+      '執行此操作需要免密碼 sudo 權限。請以 root 身分執行 Monitor，或依上方說明設定 sudoers。';
 
   @override
   String get monitorTab => 'Monitor';
@@ -13528,7 +13523,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get monitorAgentTooOldBody =>
-      '此 Monitor 來自只用一個密碼之前的版本，本 App 無法登入。更新後，它的密碼是原先最早的管理員帳戶的密碼。';
+      '此 Monitor 版本過舊，尚不支援單一密碼登入。升級後將預設沿用原首個管理員帳戶的密碼。';
 
   @override
   String monitorAgentOutdatedBody(String latest, String running) {
@@ -13739,7 +13734,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       '不是支援的 SSH 公鑰（ssh-ed25519、ssh-rsa 或 ecdsa-sha2-*）';
 
   @override
-  String get hostCertAuthorityNoHosts => '請填寫它擔保的主機，例如 *';
+  String get hostCertAuthorityNoHosts => '請填寫適用的主機比對規則，例如 *';
 
   @override
   String get hostCertAuthorityExists => '已在清單中';

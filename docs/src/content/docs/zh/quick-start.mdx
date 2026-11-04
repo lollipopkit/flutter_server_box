@@ -23,7 +23,7 @@ description: 添加服务器并查看监控数据
 
 1. 在服务器上安装并配置 [Monitor](/docs/zh/advanced/monitor-agent/)。
 2. 在添加服务器页面开启 **Monitor HTTP**。
-3. 填写 Monitor 地址和它的密码；使用自签名证书时，按需开启 **Monitor Ignore certificate**。
+3. 填写 Monitor 地址和它的密码；使用自签名证书时，按需开启 **忽略证书**。
 4. 保存配置。
 
 SSH 和 Monitor HTTP 可以同时启用。两者同时存在时，**优先使用**只决定 App 先尝试哪一种连接，另一种连接仍然可用。仅配置 Monitor HTTP 的服务器不包含 SSH 凭据，其命令、终端和文件功能的范围由运行 Monitor 的系统账户决定。

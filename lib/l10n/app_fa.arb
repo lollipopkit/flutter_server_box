@@ -1715,5 +1715,7 @@
       }
     }
   },
-  "syncKeyRotate": "جایگزینی کلید همگام‌سازی"
+  "syncKeyRotate": "جایگزینی کلید همگام‌سازی",
+  "remoteDesktopProtocolInvalid": "پروتکل پشتیبانی نمی‌شود.",
+  "storageKeyRequired": "عبارت عبور الزامی است."
 }

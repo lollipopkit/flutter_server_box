@@ -19,47 +19,40 @@ Server Box Monitor 运行在服务器上，并将状态发送给 App。你无需
 
 安装脚本是
 https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/install.sh
-它会自动识别 init 系统。通过管道交给 `sh` 时，它会安装为以我的账户运行的
-`systemctl --user` 服务。Alpine 上需要 `sudo sh` 才能写入 /etc/init.d，但 Monitor
-仍然以执行 sudo 的用户运行。
+它会自动识别 init 系统。通过管道交给 `sh` 时，默认会安装为当前用户的 `systemctl --user`
+服务。Alpine 上需要 `sudo sh` 才能写入 /etc/init.d，但 Monitor 仍以执行 sudo 的普通用户身份运行。
 
-不要把它装成 root 系统服务。登录 Monitor 后可以做它运行所用的账户能做的一切；
-以 root 运行时，就等于整台机器。
+请勿将其安装为 root 系统服务。登录 Monitor 后即拥有其运行账户的全部系统权限；若以 root
+运行，登录者将拥有整台机器的最高权限。
 
-不要在 config.toml 的 `[remote_access]` 下添加 `full_access`、`listen_public`、
-`roots` 或任何 `enabled`。Monitor 不读这些配置：没有需要配置的按功能权限。
+请勿在 config.toml 的 `[remote_access]` 下添加 `full_access`、`listen_public`、`roots`
+或 `enabled`。新版 Monitor 不再使用按功能细分的权限配置。
 
 安装完成后请告诉我：
-- config.toml 的路径，以及旁边 SQLite 数据库的路径
-- initial-admin-credentials.txt 的路径。不要输出其中的内容。
-- 它监听的地址和端口
-- `loginctl show-user <user> -p Linger` 的结果。没有 linger,--user 服务会
-  在我登出时停止。
-- config.toml 和数据库的权限位。配置里可能有推送凭据，数据库里有 Monitor 的
-  密码哈希，两者都不应该对同组或其他用户可读。
+- config.toml 的路径，以及同目录下 SQLite 数据库的路径
+- initial-admin-credentials.txt 的路径（请勿输出其中的密码内容）
+- 监听的地址和端口
+- `loginctl show-user <user> -p Linger` 的结果（若未开启 linger，用户登出后 `--user` 服务会自动停止）
+- config.toml 和数据库文件的权限位（配置文件可能包含推送凭据，数据库存有密码哈希，均不应对同组或其他用户可读）
 ```
 
 </details>
 
 <details>
-<summary>准备 remote access 的服务器配置</summary>
+<summary>准备远程访问的服务器配置</summary>
 
 ```text
-配置 <host> 上的 ServerBox Monitor，让 app 可以使用
+配置 <host> 上的 ServerBox Monitor，使 App 可以使用
 <终端 / 文件浏览 / 执行命令 / 端口转发>。
 
-修改前先说明这样做的影响，并等我同意。
+修改前请先说明影响，并等待我确认。
 
-请特别注意：
+请注意：
 
-- 没有需要开启的权限。登录 Monitor 后可以做 Monitor 运行所用的系统账户能做的
-  一切。不要为了让某项功能可用而改用 root 运行；请告诉我该账户缺少什么。
-- 读取监控数据以外的所有功能都需要 TLS 或 loopback 调用方，同机反向代理也
-  算 loopback。如果 Monitor 绑定在 127.0.0.1，或由同机代理终结 TLS，就不需要
-  其他配置。只有当另一台机器通过明文连接直接访问 Monitor 时，才考虑设置
-  `[remote_access] allow_insecure = true`；操作前请先说明。
+- Monitor 不设按功能细分的权限开关，登录者拥有 Monitor 运行账户的全部系统权限。请勿为了开启某项功能而直接改用 root 运行；如果当前账户权限不足，请先告知具体缺少哪项权限。
+- 除读取监控指标外，所有操作均要求使用 TLS 或由本机回环地址发起请求（包括同机反向代理）。如果 Monitor 监听在 127.0.0.1，或由同机反向代理终结 TLS，则无需额外配置。仅当跨机器直接通过明文 HTTP 访问时，才需考虑设置 `[remote_access] allow_insecure = true`，操作前请先向我说明风险。
 
-修改 config.toml 后重启 Monitor。然后告诉我你改了什么。
+修改 config.toml 后请重启 Monitor，并告知所做的改动。
 ```
 
 </details>
@@ -68,55 +61,37 @@ https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/in
 <summary>添加告警规则和通知渠道</summary>
 
 ```text
-给 <host> 上的 ServerBox Monitor 添加一条告警规则。
+为 <host> 上的 ServerBox Monitor 添加一条告警规则。
 
-我想在什么情况下收到告警：<描述>
+触发条件：<描述>
 
-请严格使用下面的规则格式：
+请严格遵循以下规则格式：
 
-- 一条规则是一个 `[[monitoring.rules]]` 表,含 `name`、`monitor_type`、
-  `matcher` 和 `threshold`。
-- `monitor_type` 取 cpu、memory、swap、disk、network、temperature 之一。
-  `mem`、`net`、`temp` 也可以使用。填入其他值时，Monitor 只会记录日志，这条规则
-  不会触发。
-- `matcher` 选取指标的哪一部分：`cpu0` 表示单个核心，memory 和 swap 用
-  `used`/`free`/`avail`，network 用 `rx`/`tx`。disk 和 temperature 完全忽略
-  它。
-- `matcher` **不是**网卡名，也不是挂载点。写成 `matcher = "eth0"` 的 network
-  规则会静默地改为测量 rx+tx 总量，而不是那块网卡。
-- `threshold` 是比较符 + 数值 + 单位：`>=80%`、`<10%`、`>10m/s`、`>=70c`。
-  不写比较符等于 `<`，所以 `80%` 的含义是「低于 80%」。
-- 单位必须与指标相符：cpu/memory/swap/disk 用 `%`，temperature 用 `c`，
-  network 用体积或体积加 `/s`。体积按 1024 进制、单位小写。不相符的组合会被
-  记录到日志且永不触发。
+- 每条规则为一个 `[[monitoring.rules]]` 表，包含 `name`、`monitor_type`、`matcher` 和 `threshold` 四个字段。
+- `monitor_type` 可取 cpu、memory、swap、disk、network、temperature（也兼容 `mem`、`net`、`temp`）。填写其他值时，Monitor 仅记录日志，规则不会触发。
+- `matcher` 指定要评估的指标子项：`cpu0` 表示单个核心，memory 和 swap 可填 `used`/`free`/`avail`，network 可填 `rx`/`tx`，disk 和 temperature 忽略此字段。
+- `matcher` **不是**网卡名或挂载点。若将 network 规则写为 `matcher = "eth0"`，Monitor 会将其视作统计全部网卡的收发总和，而非单独统计 eth0。
+- `threshold` 格式为“比较符 + 数值 + 单位”，例如 `>=80%`、`<10%`、`>10m/s`、`>=70c`。省略比较符时默认为 `<`（即 `80%` 表示“低于 80%”）。
+- 单位必须与指标类型匹配：cpu/memory/swap/disk 使用 `%`，temperature 使用 `c`，network 使用容量单位或带 `/s` 的速率单位（1024 进制、小写字母）。单位不匹配时仅记录日志，规则不会触发。
 
-如果我还要求配置通知渠道，请加上对应的 `[[push]]` 表。`push_rate` 在
-config.toml 中按渠道限流，而不是按规则限流。
+如果还需要配置通知渠道，请添加对应的 `[[push]]` 表。`push_rate` 在渠道级别限流，而非按单条规则限流。
 
-Monitor 只在启动时读取规则和渠道，所以修改后要重启。然后把实际写入的内容原样发给我。
+Monitor 仅在启动时加载规则和渠道配置，修改后请重启服务，并将实际写入的配置发给我确认。
 ```
 
 </details>
 
 <details>
-<summary>排查 app 里某个功能为什么不出现</summary>
+<summary>排查 App 中某项功能为何未显示</summary>
 
 ```text
-ServerBox app 没有为 <host> 上的 Monitor 提供 <功能>。请先查清原因，
-不要直接修改配置；先告诉我你的结论。
+ServerBox App 中未显示 <host> 上 Monitor 的 <功能>。请先排查原因并告知结论，暂勿直接修改配置：
 
-请先检查这些地方：
-
-- app 显示的是 Monitor 上报的功能。登录后请求 `GET /api/v1/capabilities`，
-  `access` 下有 `ok`，为 false 时还有 `why`。`insecure_transport` 表示需要
-  TLS 或 loopback 调用方，或者 `[remote_access] allow_insecure`。Monitor 提供的
-  机器页面列在 `features` 下。
-- 登录后可以做 Monitor 运行所用的系统账户能做的事。该账户访问不到的命令、文件
-  或端口会失败。
-- SFTP 无法通过 Monitor 使用，需要在 app 里为同一台服务器另行配置 SSH。
-- 早于 relay 或监听端点的 Monitor 不提供端口转发和远程桌面。请更新 Monitor。
-- Monitor 的 SQLite 数据库里的 `access_log` 表记录访问者、时间、来源、请求的
-  资源和结果，不记录凭据。
+- App 根据 Monitor 上报的 capabilities 展示功能。登录后请求 `GET /api/v1/capabilities`，检查 `access.ok` 及 `access.why`（若为 `insecure_transport`，说明需要启用 TLS、走同机反向代理，或配置 `[remote_access] allow_insecure`），并查看 `features` 列表。
+- 登录后可执行的操作受限于 Monitor 运行所用的系统账户；该账户无权访问的命令、文件或端口均会执行失败。
+- Monitor HTTP 连接不支持 SFTP，如需使用 SFTP，请在 App 中同时为该服务器配置 SSH。
+- 旧版 Monitor 若未包含 relay 或监听端点，则不支持端口转发和远程桌面，需升级 Monitor。
+- Monitor 的 SQLite 数据库 `access_log` 表记录了访问时间、来源地址、请求资源与结果（不含敏感凭据），可用于辅助排查。
 ```
 
 </details>
@@ -156,11 +131,11 @@ curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main
 
 `sh -s --` 后面的参数会传给安装脚本；执行 `uninstall` 和 `upgrade` 时也使用相同方式。仓库中也包含该脚本，可在 checkout 根目录运行 `./monitor/install.sh install`。此时使用的是 checkout 中的版本，可能与上述命令从 `main` 下载的版本不同。
 
-默认情况下，Monitor 以普通用户运行。登录后可以做该用户能做的一切，因此 Monitor 运行所用的账户决定了上限，详见[访问](#访问)。加上 `--system`（配合 `sudo`）则安装为 root 服务，登录后就是 root shell。
+默认情况下，Monitor 以当前普通用户身份运行。登录 Monitor 后即可执行该用户权限范围内的所有操作，详见[访问权限](#访问)。若传入 `--system`（配合 `sudo`）安装为 root 系统服务，登录后即拥有 root 权限。
 
 Monitor 从二进制文件所在目录读取 `config.toml`。所有可用配置项见 [`config.example.toml`](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/config.example.toml)。默认监听地址是 `0.0.0.0:3770`；该目录下存在 `frontend/dist` 时，Monitor 也会在此提供网页面板。
 
-无需直接编辑 `config.toml`，也可以修改采集间隔、告警规则、通知渠道、数据保留时间和允许的面板来源。在网页面板使用 **Server Settings**，或在 App 中打开已配置 Monitor 的服务器并点击顶部设置按钮。两个入口会修改同一个 Monitor 和配置文件。
+无需直接编辑 `config.toml`，也可以修改采集间隔、告警规则、通知渠道、数据保留时间和允许的面板来源。在网页面板使用 **服务器设置**，或在 App 中打开已配置 Monitor 的服务器并点击顶部设置按钮。两个入口会修改同一个 Monitor 和配置文件。
 
 JWT secret、`database_url` 和 `[remote_access]`（是否允许明文、SSH 地址和各项限额）只能通过配置文件修改。
 
@@ -168,7 +143,7 @@ JWT secret、`database_url` 和 `[remote_access]`（是否允许明文、SSH 地
 
 通知渠道、告警规则、采集间隔、数据保留和允许来源需要重启 Monitor 后生效。扩展采集周期和两个闲置暂停设置会立即生效。App 会标明哪些配置需要重启。
 
-如果要让其他设备连接 Monitor，请启用 HTTPS：可配置内置 TLS（`[server.tls]`），也可使用反向代理。若使用自签名证书，需在 App 中为该服务器明确开启 **Monitor Ignore certificate**。
+如果要让其他设备连接 Monitor，请启用 HTTPS：可配置内置 TLS（`[server.tls]`），也可使用反向代理。若使用自签名证书，需在 App 中为该服务器明确开启 **忽略证书**。
 
 ### 升级
 
@@ -188,8 +163,8 @@ Monitor 每 12 小时检查一次 release，有新版本时留下一条通知。
 
 更新在 Monitor 之外运行：systemd 下是一个独立的临时服务（`systemd-run`），其他情况下是一个独立的会话。Monitor 重启会断开经由它的所有连接（包括面板和 App 的连接），但不会中断更新。输出写入 Monitor 目录下的 `update.log`，重启后的 Monitor 会报告更新结果。OpenRC 下安装脚本需要 root，Monitor 会要求输入 sudo 密码；密码只用一次，不会保存。
 
-- **面板**：**设置 → 服务器 → ServerBox Monitor** 显示当前版本和最新 release，可点 **立即检查** 和 **立即更新**。更新期间页面显示输出，Monitor 重启时会提示，恢复后显示新版本。点击通知会打开此页面。
-- **App**：**Monitor** 标签页会标出有新 release 的 Monitor，以及因版本过旧 App 无法登录的 Monitor。点击标记会打开同样的步骤，可点 **立即更新**。只用密码无法登录的旧 Monitor 仍需账户名：App 会请你填写账户名（通常是 `admin`），用它和已保存的密码登录一次，通过该 Monitor 的命令接口启动同样的更新。账户名不会保存。App 通过 SSH 连接服务器、而 Monitor 无法自行启动更新时，App 会在 SSH 终端中运行命令，重启不影响该终端。
+- **面板**：**设置 → 服务器 → ServerBox Monitor** 显示当前版本和最新 release，可点击 **立即检查** 和 **立即更新**。更新期间页面实时显示日志，Monitor 重启后会自动重连并显示新版本。点击桌面通知也会直接打开此页面。
+- **App**：**Monitor** 标签页会标出有更新的 Monitor，以及因版本过旧无法单密码登录的实例。点击标记即可按引导执行 **立即更新**。尚不支持单密码登录的旧版 Monitor 仍需验证原账户名（通常为 `admin`）：App 会结合已保存的密码完成一次登录并触发更新，不会保存该账户名。若服务器同时配置了 SSH，而 Monitor 无法自行启动更新，App 会在 SSH 终端中执行升级命令。
 
 ## App 能回溯多久
 
@@ -238,7 +213,7 @@ SBM_PW="$SBM_PW" ./server_box_monitor password --password-env SBM_PW
 
 也可以在 App（服务器页面顶部的设置按钮，然后选择**访问**）或面板中修改密码，两处都需要输入当前密码。在 App 中修改时，App 会同时更新为该服务器保存的密码。
 
-在服务器上修改密码后，请在 App 中编辑服务器并更新 **Monitor Password**，其他保存了该密码的客户端也要同步更新。客户端不会收到密码变更通知，因此更新前无法登录。
+在服务器上修改密码后，请在 App 中编辑服务器并更新 **Monitor 密码**，其他保存了该密码的客户端也要同步更新。客户端不会收到密码变更通知，因此更新前无法登录。
 
 ### 忘记密码
 
@@ -249,11 +224,11 @@ SBM_PW="$SBM_PW" ./server_box_monitor password --password-env SBM_PW
 ## 在 App 中添加
 
 1. 点击 **+** 添加服务器。
-2. 打开 **Monitor HTTP**。它与 SSH 相互独立，可以单独启用，也可以同时启用两种连接方式。若两者都启用，在 **Preferred transport** 中选择 App 优先尝试的方式。
+2. 打开 **Monitor HTTP**。它与 SSH 相互独立，可以单独启用，也可以同时启用两种连接方式。若两者都启用，在 **优先连接方式** 中选择 App 优先尝试的方式。
 3. 填写：
    - **URL**：例如 `https://1.2.3.4:3770`
-   - **Monitor Password**：Monitor 的密码，见[面板凭据](#面板凭据)
-   - **Monitor Ignore certificate**：仅在使用自签名证书时开启
+   - **Monitor 密码**：Monitor 的密码，见[面板凭据](#面板凭据)
+   - **忽略证书**：仅在使用自签名证书时开启
 4. 保存配置。
 
 Monitor HTTP 配置不会添加 SSH 凭据。若没有另外配置 SSH，App 只能使用 Monitor 明确提供的功能访问服务器。
@@ -282,41 +257,41 @@ App 和 Monitor 采集数据时都不会等待交互式 `sudo` 输入。如果 S
 
 ## 访问
 
-登录 Monitor 后，可以做 Monitor 运行所用的系统账户能做的一切：执行命令、进程、systemd、容器、代码片段、电源、计划任务、防火墙、终端、文件、远程桌面、端口转发，以及网页面板中的 Proxmox VE、libvirt 和 BMC 页面。没有角色，也没有按功能划分的权限；该系统账户就是上限。
+登录 Monitor 后，你将拥有 Monitor 运行所用系统账户的全部权限：可执行命令、管理进程与 systemd 服务、操作容器与代码片段、控制电源、配置计划任务与防火墙、打开终端、读写文件、建立远程桌面与端口转发，以及使用网页面板中的 Proxmox VE、libvirt 和 BMC 功能。Monitor 不再区分角色或按功能细分的权限，运行账户本身的权限即为边界。
 
-因此 `install.sh` 默认以普通用户运行 Monitor。使用 `--system` 时以 root 运行，登录后就是 root shell。若要限制 Monitor 能访问的范围，请以只能访问这些内容的账户安装它。
+因此，`install.sh` 默认以普通用户身份安装和运行 Monitor。若使用 `--system` 以 root 身份安装，登录 Monitor 即拥有 root shell。如需限制 Monitor 的访问范围，请使用专门受限的系统账户运行它。
 
-无论该账户能访问什么，文件 API 都不会提供 Monitor 自己的文件，包括数据库、`jwt.secret`、`credentials.key`、`config.toml` 及其备份、`.env`、TLS 密钥和证书、自定义命令，因为这些文件包含凭据。
+出于安全保护，无论运行账户权限如何，文件 API 均禁止读取 Monitor 自身的敏感文件（包括数据库、`jwt.secret`、`credentials.key`、`config.toml` 及其备份、`.env`、TLS 密钥与证书，以及自定义命令目录）。
 
-Monitor 保存的凭据（BMC 和 Proxmox VE 密码、Agent mode 的 provider key、MCP token、WebDAV 密码）在数据库中用同目录下的 `credentials.key` 加密。手动迁移 Monitor 时需要把这两个文件一起复制；缺少这个密钥时，这些凭据需要重新填写。设置备份不需要这个密钥。
+Monitor 保存的外部凭据（BMC 与 Proxmox VE 密码、Agent 模式的模型密钥、MCP 令牌、WebDAV 密码）均使用同目录下的 `credentials.key` 加密存储在数据库中。手动迁移 Monitor 时请一并复制数据库和 `credentials.key`；若缺少该密钥，迁移后需重新填写这些凭据。WebDAV 设置备份采用独立的 age 密钥加密，不依赖此文件。
 
-### 从有多个账号的 Monitor 升级
+### 从多账号版本升级
 
-旧版 Monitor 支持多个账号，并使用角色和权限。升级后，最早的 admin 账号的密码成为 Monitor 的密码。其他账号的 Agent mode 任务、memory 和桌面主题转移给它；它们的桌面布局、窗口和已配对的手表会被删除。角色和权限不会保留。
+旧版 Monitor 支持多账号、角色与细分权限。升级后，最早创建的管理员账号密码将自动作为 Monitor 的登录密码；其他账号下的 Agent 任务、记忆文件和桌面主题会合并至该账号，原有的窗口布局与已配对 Watch 令牌则会清理，不再保留旧版的角色与权限设置。
 
-该模型使用的 `config.toml` 配置项 —— `full_access`、`listen_public`、`[remote_access.terminal] enabled`、`[remote_access.fs] enabled` 和 `[remote_access.fs] roots` —— 不再读取，可以删除。
+旧版 `config.toml` 中的 `full_access`、`listen_public`、`[remote_access.terminal] enabled`、`[remote_access.fs] enabled` 和 `[remote_access.fs] roots` 字段已废弃，可直接删除。
 
 ### 明文 HTTP
 
-读取监控数据以外的功能都需要 HTTPS，或由同一台主机发起请求（包括同机反向代理）。如果私有网络本身已加密（例如 Tailscale），可设置 `[remote_access] allow_insecure = true`，并在 App 中为该服务器开启**允许不安全 HTTP**；两项都必须启用。TODO：现有配置不再需要迁移后，删除旧 `allow_insecure` key。目前 `[remote_access.terminal] allow_insecure` 和 `[remote_access.fs] allow_insecure` 与 `[remote_access] allow_insecure` 等效。
+除读取监控指标外，所有管理与交互功能均要求使用 HTTPS，或由本机回环地址发起请求（包括部署在同一台主机上的反向代理）。若在已加密的私有网络（如 Tailscale）中使用明文 HTTP，需在配置文件中设置 `[remote_access] allow_insecure = true`，并在 App 中为该服务器开启**允许 HTTP**（两项均需开启）。旧版配置中的 `[remote_access.terminal] allow_insecure` 和 `[remote_access.fs] allow_insecure` 仍作为兼容别名生效。
 
-路径校验、endpoint 行为和错误码见[Monitor API 与访问模型](/docs/zh/development/monitor-agent/)。
+路径校验、接口行为与错误码说明详见[Monitor API 与访问模型](/docs/zh/development/monitor-agent/)。
 
 ## 不支持的功能
 
-Monitor HTTP 连接不支持 SFTP：SFTP 运行在 SSH channel 上。文件 API 支持**浏览**，通过传输文件内容工作，不提供通用字节流。
+Monitor HTTP 连接不支持 SFTP（SFTP 依赖 SSH 通道）。不过文件标签页可通过 Monitor 的文件 API 正常浏览和传输文件。
 
-以 Monitor 为主的服务器（只配置了 Monitor，或同时配置了 SSH 但优先 Monitor）的所有端口转发都只经过 Monitor，不会回退到 SSH。动态转发是本机上的 SOCKS5 代理，每条连接都从服务器发起。
+对于优先使用 Monitor 连接的服务器（仅配置了 Monitor，或同时配置了 SSH 但将 Monitor 设为优先连接方式），所有端口转发均通过 Monitor 建立，不会自动回退到 SSH。动态端口转发会在本机启动 SOCKS5 代理，并由服务器侧发起实际连接。
 
-要使用 SFTP，请同时在 App 中为该服务器配置 SSH。早于 relay 或监听端点的 Monitor 不提供远程桌面和端口转发；请更新 Monitor。
+如需使用 SFTP，请在 App 中同时为该服务器配置 SSH。若旧版 Monitor 提示不支持远程桌面或端口转发，请将其升级至最新版本。
 
 ## 小组件、推送和 Watch App
 
-小组件、推送通知和 Watch App 都直接读取 Monitor，因此 App 无需保持在前台：
+小组件、推送通知和 Watch App 都直接连接 Monitor 获取数据，无需保持 App 在前台运行：
 
-- **主屏幕小组件**：安装 Monitor 后，在 App 中配置服务器；小组件从 App 发布的服务器列表中选择目标，不需要手动填写 URL。
-- **Watch App**：只能显示已配置 Monitor 的服务器。默认会同步这些服务器，也可以在 iOS 设置中排除指定服务器。
-- **推送告警**：规则决定何时告警，渠道决定发往哪里 —— 即 `config.toml` 中的 `[[monitoring.rules]]` 和 `[[push]]`，也可以在 App 和网页面板里编辑这两个列表，渠道还带一个 **发送测试** 按钮。规则怎么写见 [告警规则](#告警规则)。
+- **主屏幕小组件**：安装 Monitor 并在 App 中添加服务器后，小组件可直接从 App 同步的服务器列表中选择目标，无需手动填写 URL。
+- **Watch App**：仅显示已配置 Monitor 的服务器。默认自动同步全部 Monitor 服务器，也可在 iOS 的设置中按需排除。
+- **推送告警**：告警规则决定触发条件，通知渠道决定发送目标（对应 `config.toml` 中的 `[[monitoring.rules]]` 和 `[[push]]`）。你也可以直接在 App 或网页面板中编辑这两项配置，并使用渠道旁的 **发送测试** 按钮验证配置。规则语法见下文[告警规则](#告警规则)。
 
 ## 通知渠道
 
@@ -368,7 +343,7 @@ threshold = ">=80%"
 | `network` | 留空或其他值 | 接收加发送 |
 | `temperature` | 忽略 | Monitor 上报的机器温度 |
 
-TODO：Go 版 Monitor 迁移窗口结束后，删除 `mem`、`net` 和 `temp` 别名。目前这些旧配置仍可使用；其他未知指标会在每个采集周期写入 Monitor 日志，对应规则不会触发。
+从 Go 版 Monitor 迁移的配置仍可使用 `mem`、`net` 和 `temp` 别名；其他未知指标名称会在每个采集周期记录一次日志，对应规则不会触发。
 
 ### 阈值
 
@@ -443,7 +418,7 @@ threshold = ">=70c"
 
 **操作因权限不足失败。** Monitor 以它运行的系统账户执行操作，无法访问该账户访问不到的内容。见[访问](#访问)。
 
-**证书错误。** 配置有效的 TLS，将 Monitor 放在反向代理后，或为该服务器开启 **Monitor Ignore certificate**。
+**证书错误。** 配置有效的 TLS，将 Monitor 放在反向代理后，或为该服务器开启 **忽略证书**。
 
 **面板使用不同的 origin。** 在 `config.toml` 的 `cors_allowed_origins` 或环境变量 `SBM_CORS_ORIGINS` 中添加该 origin。
 

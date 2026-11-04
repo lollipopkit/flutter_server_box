@@ -1,12 +1,12 @@
 ---
-title: 开发 Desk 应用
+title: 开发桌面应用
 description: 使用 serverbox-desk 为 Monitor 面板的桌面开发第三方应用
 ---
 
-Desk 应用是一个静态网页包，由 Monitor 面板在窗口中的沙箱 frame 里运行。它打包为
-`.fsba` 文件，在面板中安装并批准（见 [Desk 应用](/docs/zh/advanced/monitor-desk-apps/)）。
+桌面应用是一个静态网页包，由 Monitor 面板在窗口中的沙箱 frame 里运行。它打包为
+`.fsba` 文件，在面板中安装并批准（见 [桌面应用](/docs/zh/advanced/monitor-desk-apps/)）。
 完整约定（包括消息协议）见
-[Desk 应用参考](/docs/zh/development/desk-app-reference/)。
+[桌面应用参考](/docs/zh/development/desk-app-reference/)。
 
 | 类型 | 包含 | 能访问 |
 |---|---|---|
@@ -194,5 +194,5 @@ COPYFILE_DISABLE=1 tar -czf example.uptime.fsba manifest.json backend.wasm ui
 
 ## 测试
 
-在 **Settings → Apps → Installed** 中安装并批准应用包。每个新包都需要重新
+在 **设置 → 应用 → 已安装** 中安装并批准应用包。每个新包都需要重新
 批准，所以一次测试流程是：打包、安装、批准、打开。移除应用会清除它保存的数据。

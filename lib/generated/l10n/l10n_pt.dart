@@ -1654,7 +1654,7 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get serviceUnit => 'Unit';
+  String get serviceUnit => 'Unidade';
 
   @override
   String get serviceUnitType => 'Tipo';
@@ -2052,13 +2052,13 @@ class AppLocalizationsPt extends AppLocalizations {
   String get userUid => 'UID';
 
   @override
-  String get userLoginStatus => 'Status';
+  String get userLoginStatus => 'Estado';
 
   @override
   String get userLoginEnabled => 'Login ativado';
 
   @override
-  String get userDetailAccount => 'Account';
+  String get userDetailAccount => 'Conta';
 
   @override
   String get userDetailSecurity => 'Segurança';
@@ -2213,7 +2213,7 @@ class AppLocalizationsPt extends AppLocalizations {
       'Listar perfis de área de trabalho remota e, com sua aprovação, conectar ou desconectar.';
 
   @override
-  String get agentSkills => 'Skills';
+  String get agentSkills => 'Competências';
 
   @override
   String get agentSkillsTip =>
@@ -2575,13 +2575,13 @@ class AppLocalizationsPt extends AppLocalizations {
       'Os comentários, as variáveis de ambiente e as linhas não reconhecidas deste crontab serão preservados.';
 
   @override
-  String get scheduledTaskSchedule => 'Schedule';
+  String get scheduledTaskSchedule => 'Agendamento';
 
   @override
   String get scheduledTaskAdd => 'Add task';
 
   @override
-  String get scheduledTaskNextRun => 'Next run';
+  String get scheduledTaskNextRun => 'Próxima execução';
 
   @override
   String scheduledTaskNextInFmt(String time) {
@@ -2589,7 +2589,7 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get scheduledTaskEnabled => 'Enabled';
+  String get scheduledTaskEnabled => 'Ativada';
 
   @override
   String get scheduledTaskCommentedOut => 'Commented out';
@@ -2638,7 +2638,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get scheduledTaskFieldMinute => 'Minute';
 
   @override
-  String get scheduledTaskFieldHour => 'Hour';
+  String get scheduledTaskFieldHour => 'Hora';
 
   @override
   String get scheduledTaskFieldDayOfMonth => 'Dia do mês';
@@ -2670,7 +2670,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get cronAtBoot => 'At boot';
 
   @override
-  String get cronEveryMin => 'Every minute';
+  String get cronEveryMin => 'A cada minuto';
 
   @override
   String cronEveryMinsFmt(int minutes) {
@@ -2722,7 +2722,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get monitorNeedsRestart => 'Entra em vigor após reiniciar o Monitor';
 
   @override
-  String get monitorCollection => 'Collection';
+  String get monitorCollection => 'Coleta';
 
   @override
   String get extendedInterval => 'Intervalo do ciclo estendido';
@@ -2747,10 +2747,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get ruleMonitorType => 'Metric';
 
   @override
-  String get ruleThreshold => 'Threshold';
+  String get ruleThreshold => 'Limite';
 
   @override
-  String get ruleMatcher => 'Matcher';
+  String get ruleMatcher => 'Correspondência';
 
   @override
   String get ruleTip =>
@@ -2760,10 +2760,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get pushChannels => 'Canais de notificação';
 
   @override
-  String get pushType => 'Type';
+  String get pushType => 'Tipo';
 
   @override
-  String get pushRate => 'Rate limit';
+  String get pushRate => 'Limite de frequência';
 
   @override
   String get pushHeaders => 'Headers';
@@ -2795,7 +2795,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get pushJsonInvalid => 'não é um JSON válido';
 
   @override
-  String get dataRetention => 'Data retention';
+  String get dataRetention => 'Retenção de dados';
 
   @override
   String get dataRetentionTip =>
@@ -3029,7 +3029,7 @@ class AppLocalizationsPt extends AppLocalizations {
       'O host de destino não pode conter espaços nem quebras de linha.';
 
   @override
-  String get remoteDesktopProtocolInvalid => 'Unsupported protocol.';
+  String get remoteDesktopProtocolInvalid => 'Protocolo não suportado.';
 
   @override
   String get remoteDesktopCredentialInvalid =>
@@ -3982,13 +3982,13 @@ class AppLocalizationsPt extends AppLocalizations {
   String get virtSetDeleteLxc => 'Excluir contêiner';
 
   @override
-  String get virtHwSockets => 'Sockets';
+  String get virtHwSockets => 'Soquetes';
 
   @override
   String get virtHwSource => 'Origem';
 
   @override
-  String get virtHwSwap => 'Swap';
+  String get virtHwSwap => 'Memória swap';
 
   @override
   String get virtHwTopology => 'Sockets × núcleos';
@@ -5986,7 +5986,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get storageLinuxOnly =>
-      'Storage management currently supports Linux servers.';
+      'O gerenciamento de armazenamento suporta atualmente servidores Linux.';
 
   @override
   String get storageDisks => 'Discos';
@@ -6007,7 +6007,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String storageFree(Object size) {
-    return '$size free';
+    return '$size livres';
   }
 
   @override
@@ -6219,7 +6219,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get storageConfirmationMismatch =>
-      'The confirmation text did not match.';
+      'O texto de confirmação não coincide.';
 
   @override
   String storageInUse(Object device) {
@@ -6411,35 +6411,40 @@ class AppLocalizationsPt extends AppLocalizations {
       'Só é possível remover aqui dispositivos de reserva ou cache.';
 
   @override
-  String get storageNotGrowable => 'This device cannot be grown here.';
+  String get storageNotGrowable =>
+      'Este dispositivo não pode ser expandido aqui.';
 
   @override
-  String get storageOverlapping => 'Choose devices that do not overlap.';
+  String get storageOverlapping =>
+      'Escolha dispositivos que não se sobreponham.';
 
   @override
   String get storageInvalidDevice =>
-      'The device is invalid or no longer available.';
+      'O dispositivo é inválido ou não está mais disponível.';
 
   @override
-  String get storageInvalidMountpoint => 'The mount point is invalid.';
+  String get storageInvalidMountpoint => 'O ponto de montagem é inválido.';
 
   @override
-  String get storageInvalidName => 'The name is invalid.';
+  String get storageInvalidName => 'O nome é inválido.';
 
   @override
-  String get storageInvalidFilesystem => 'The filesystem is not supported.';
+  String get storageInvalidFilesystem =>
+      'O sistema de arquivos não é suportado.';
 
   @override
-  String get storageInvalidLabel => 'The label is invalid.';
+  String get storageInvalidLabel => 'O rótulo é inválido.';
 
   @override
-  String get storageInvalidLevel => 'The RAID level or pool layout is invalid.';
+  String get storageInvalidLevel =>
+      'O nível RAID ou layout do pool é inválido.';
 
   @override
-  String get storageTooFewDevices => 'Not enough valid devices were selected.';
+  String get storageTooFewDevices =>
+      'Não foram selecionados dispositivos válidos suficientes.';
 
   @override
-  String get storageKeyRequired => 'A passphrase is required.';
+  String get storageKeyRequired => 'É necessária uma frase-passe.';
 
   @override
   String get storageExpand => 'Expandir';
@@ -6671,7 +6676,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get sharingConnectionsLinuxOnly =>
-      'Sharing management currently supports Linux servers.';
+      'O gerenciamento de compartilhamento suporta atualmente servidores Linux.';
 
   @override
   String get agentThisDevice => 'Este dispositivo';

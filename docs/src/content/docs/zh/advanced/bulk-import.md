@@ -33,10 +33,7 @@ description: 从 JSON 文件导入多个服务器配置
 ]
 ```
 
-SSH 配置放在 `ssh` 对象中。App 导出和导入对话框中的示例都使用这种嵌套格式。
-
-TODO：迁移期结束后删除对扁平格式的支持。目前导入仍接受 `ip`、`port`、`user` 等字段直接位于
-顶层的旧文件，包括从 `~/.ssh/config` 导入的文件。新版导出使用上面的嵌套格式。
+SSH 配置位于 `ssh` 对象内。App 导出文件与导入对话框中的示例均采用这种嵌套格式。导入功能也兼容将 `ip`、`port`、`user` 等字段直接放在顶层的旧版格式（包括从 `~/.ssh/config` 转换生成的配置）。
 
 ## 字段说明
 
@@ -63,43 +60,38 @@ TODO：迁移期结束后删除对扁平格式的支持。目前导入仍接受 
 | `ip` | 是 | 域名或 IP 地址 |
 | `port` | 是 | SSH 端口，通常为 `22` |
 | `user` | 是 | SSH 用户名 |
-| `pwd` | 否 | 密码，不推荐；建议使用 SSH key |
-| `fileTransport` | 否 | 文件传输使用的协议：`sftp` 或 `scp`。默认 `sftp`；不提供 SFTP subsystem 的主机使用 `scp` |
-| `pubKeyId` | 否 | App 中已保存的 private key 记录 ID，不是 PEM 文件路径 |
-| `keyPath` | 否 | 仅桌面端使用的 private key 文件路径，由 `~/.ssh/config` 导入生成；连接时从该文件读取 |
+| `pwd` | 否 | 密码（不推荐，建议使用 SSH 密钥） |
+| `fileTransport` | 否 | 文件传输协议：`sftp` 或 `scp`。默认为 `sftp`；不支持 SFTP 子系统的主机可使用 `scp` |
+| `pubKeyId` | 否 | 应用内已保存私钥的记录 ID（非 PEM 文件路径） |
+| `keyPath` | 否 | 私钥文件路径（仅桌面端使用，由 `~/.ssh/config` 导入生成，连接时直接读取该文件） |
 | `alterUrl` | 否 | 备用地址，格式为 `user@ip:port` |
-| `jumpIds` | 否 | Jump server 链，按服务器 ID 指定 |
-| `proxyCommand` | 否 | ProxyCommand；手机上在内置 Linux 环境中运行。与 `jumpIds` 互斥 |
+| `jumpIds` | 否 | 跳板机链，按服务器 ID 依次指定 |
+| `proxyCommand` | 否 | ProxyCommand（移动端在内置 Linux 环境中运行，与 `jumpIds` 互斥） |
 
-以下字段放在 `pve` 对象中：
+以下字段位于 `pve` 对象内：
 
 | 字段 | 必填 | 说明 |
 |-------|----------|-------------|
-| `addr` | 是 | PVE Web 地址，例如 `https://127.0.0.1:8006`；主机名在服务器一侧解析 |
-| `auth` | 否 | `token` 或 `password`，默认 `password` |
-| `tokenId` | `token` 时必填 | API token ID，格式为 `user@realm!tokenid` |
-| `tokenSecret` | `token` 时必填 | Token 的 secret；属于凭据，文件需按凭据处理 |
-| `pwd` | 否 | `password` 时使用：SSH 用户在 `pam` realm 下的 PVE 密码。省略时使用 SSH 密码 |
-| `certSha256` | 否 | 信任的证书 SHA-256，小写十六进制。省略时，首次连接会请求确认证书 |
+| `addr` | 是 | PVE Web 地址，例如 `https://127.0.0.1:8006`（主机名在服务器端解析） |
+| `auth` | 否 | `token` 或 `password`，默认为 `password` |
+| `tokenId` | `token` 时必填 | API 令牌 ID，格式为 `user@realm!tokenid` |
+| `tokenSecret` | `token` 时必填 | 令牌密钥（属敏感凭据，请妥善保管导出文件） |
+| `pwd` | 否 | `password` 模式下使用：SSH 用户在 `pam` 域下的 PVE 密码。省略时默认使用 SSH 密码 |
+| `certSha256` | 否 | 受信任证书的 SHA-256 指纹（小写十六进制）。省略时首次连接会提示确认证书 |
 
-TODO：迁移期结束后删除这些旧版 PVE 字段。旧导出文件可能将 `pveAddr`、`pveIgnoreCert` 和
-`pvePwd` 放在 `custom` 中；导入时会将其转换为未固定证书的 password authentication 配置。
-新版导出使用 `pve` 对象。
+旧版导出文件可能将 `pveAddr`、`pveIgnoreCert` 和 `pvePwd` 放在 `custom` 对象中；导入时会自动转换为未绑定证书的密码认证配置。新版导出统一使用 `pve` 对象。
 
-每台服务器都必须至少配置一种连接方式。如果同时省略 `ssh` 和 `monitorHttp`，导入后将无法
-连接主机。
+每台服务器至少需配置一种连接方式。若同时省略 `ssh` 和 `monitorHttp`，导入后将无法连接该主机。
 
-`allowInsecure` 默认为 `false`。只有确实要让该 Monitor 连接使用明文 HTTP 时才设为 `true`，
-包括连接非 loopback 的私有 IP 地址。Monitor 还会根据自身的 `allow_insecure` 设置，
-单独检查敏感 endpoint 是否允许不安全连接。
+`allowInsecure` 默认为 `false`。仅在确需通过明文 HTTP 连接 Monitor 时才设为 `true`（包括连接非回环的内网 IP 地址）。此外，Monitor 还会根据自身的 `allow_insecure` 配置，单独检查敏感接口是否允许明文访问。
 
 ## 导入步骤
 
-1. 创建 JSON array，并在其中添加服务器配置对象。
+1. 创建 JSON 数组，并在其中填入服务器配置对象。
 2. 打开 **设置 → 备份 → 导入 → 服务器**。
 3. 选择 JSON 文件。
-4. 检查页面显示的服务器数量并确认导入。
-5. 导入结束后删除 JSON 文件及其副本。
+4. 核对页面显示的服务器数量并确认导入。
+5. 导入完成后删除 JSON 文件及其副本。
 
 ## 示例
 

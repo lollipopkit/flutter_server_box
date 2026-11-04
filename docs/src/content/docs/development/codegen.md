@@ -17,9 +17,6 @@ Run code generation after changing any of these inputs:
 - ARB localization files
 - Rust APIs under `crates/sbm_ffi/src/api`
 
-TODO: Remove the Hive readers in `lib/hive/` when the supported upgrade window
-no longer requires them.
-
 ## Dart generation
 
 ### Normal generation

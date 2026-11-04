@@ -771,7 +771,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Jumlah maksimum percobaan untuk menyambungkan kembali ke server';
 
   @override
-  String get mirror => 'Mirror';
+  String get mirror => 'Cerminkan';
 
   @override
   String get needRestart => 'Perlu memulai ulang aplikasi';
@@ -1557,13 +1557,13 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get processForceKill => 'Force kill';
+  String get processForceKill => 'Paksa hentikan';
 
   @override
-  String get processStarted => 'Started';
+  String get processStarted => 'Dimulai';
 
   @override
-  String get processThreads => 'Threads';
+  String get processThreads => 'Thread';
 
   @override
   String get watchServers => 'Server di jam tangan';
@@ -1652,13 +1652,13 @@ class AppLocalizationsId extends AppLocalizations {
   String get serviceUnit => 'Unit';
 
   @override
-  String get serviceUnitType => 'Type';
+  String get serviceUnitType => 'Tipe';
 
   @override
   String get serviceScope => 'Scope';
 
   @override
-  String get serviceStartup => 'Startup';
+  String get serviceStartup => 'Mulai';
 
   @override
   String serviceUpFor(String duration) {
@@ -2028,7 +2028,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Sebagian data tidak dapat dihapus, dan versi ini masih tidak dapat membuka data yang tersisa. Instal kembali versi yang lebih baru untuk mengaksesnya.';
 
   @override
-  String get systemUsers => 'Users';
+  String get systemUsers => 'Pengguna';
 
   @override
   String get userManagerLinuxOnly =>
@@ -2053,10 +2053,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get userLoginEnabled => 'Login enabled';
 
   @override
-  String get userDetailAccount => 'Account';
+  String get userDetailAccount => 'Akun';
 
   @override
-  String get userDetailSecurity => 'Security';
+  String get userDetailSecurity => 'Keamanan';
 
   @override
   String get userSshKeys => 'SSH keys';
@@ -2068,26 +2068,26 @@ class AppLocalizationsId extends AppLocalizations {
   String get userNever => 'Never';
 
   @override
-  String get userPasswordSet => 'Set';
+  String get userPasswordSet => 'Terisi';
 
   @override
-  String get userPasswordLocked => 'Locked';
+  String get userPasswordLocked => 'Terkunci';
 
   @override
-  String get userPasswordNone => 'None';
+  String get userPasswordNone => 'Tidak ada';
 
   @override
   String get userSuperuser => 'Superuser';
 
   @override
-  String get userOpenShell => 'Open shell';
+  String get userOpenShell => 'Buka shell';
 
   @override
   String get userRootChangesWarning =>
       'Perubahan pada root langsung berlaku di semua sesi.';
 
   @override
-  String get userComment => 'Comment';
+  String get userComment => 'Komentar';
 
   @override
   String get userPrimaryGroup => 'Primary group';
@@ -2209,7 +2209,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Menampilkan profil remote desktop; menghubungkan atau memutus dengan persetujuanmu.';
 
   @override
-  String get agentSkills => 'Skills';
+  String get agentSkills => 'Skill';
 
   @override
   String get agentSkillsTip =>
@@ -2564,13 +2564,13 @@ class AppLocalizationsId extends AppLocalizations {
       'Komentar, environment variable, dan baris yang tidak dikenali dalam crontab ini akan dipertahankan.';
 
   @override
-  String get scheduledTaskSchedule => 'Schedule';
+  String get scheduledTaskSchedule => 'Jadwal';
 
   @override
   String get scheduledTaskAdd => 'Add task';
 
   @override
-  String get scheduledTaskNextRun => 'Next run';
+  String get scheduledTaskNextRun => 'Jalan berikutnya';
 
   @override
   String scheduledTaskNextInFmt(String time) {
@@ -2578,7 +2578,7 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get scheduledTaskEnabled => 'Enabled';
+  String get scheduledTaskEnabled => 'Aktif';
 
   @override
   String get scheduledTaskCommentedOut => 'Commented out';
@@ -2613,7 +2613,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get scheduledTaskFieldMinute => 'Minute';
 
   @override
-  String get scheduledTaskFieldHour => 'Hour';
+  String get scheduledTaskFieldHour => 'Jam';
 
   @override
   String get scheduledTaskFieldDayOfMonth => 'Tanggal dalam bulan';
@@ -2645,7 +2645,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get cronAtBoot => 'At boot';
 
   @override
-  String get cronEveryMin => 'Every minute';
+  String get cronEveryMin => 'Setiap menit';
 
   @override
   String cronEveryMinsFmt(int minutes) {
@@ -2697,7 +2697,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get monitorNeedsRestart => 'Berlaku setelah Monitor dimulai ulang';
 
   @override
-  String get monitorCollection => 'Collection';
+  String get monitorCollection => 'Pengumpulan';
 
   @override
   String get extendedInterval => 'Interval siklus lanjutan';
@@ -2722,10 +2722,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get ruleMonitorType => 'Metric';
 
   @override
-  String get ruleThreshold => 'Threshold';
+  String get ruleThreshold => 'Ambang batas';
 
   @override
-  String get ruleMatcher => 'Matcher';
+  String get ruleMatcher => 'Pencocok';
 
   @override
   String get ruleTip =>
@@ -2735,10 +2735,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get pushChannels => 'Saluran notifikasi';
 
   @override
-  String get pushType => 'Type';
+  String get pushType => 'Tipe';
 
   @override
-  String get pushRate => 'Rate limit';
+  String get pushRate => 'Batas frekuensi';
 
   @override
   String get pushHeaders => 'Headers';
@@ -2770,7 +2770,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get pushJsonInvalid => 'bukan JSON yang valid';
 
   @override
-  String get dataRetention => 'Data retention';
+  String get dataRetention => 'Penyimpanan data';
 
   @override
   String get dataRetentionTip =>
@@ -3001,7 +3001,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Host tujuan tidak boleh berisi spasi atau baris baru.';
 
   @override
-  String get remoteDesktopProtocolInvalid => 'Unsupported protocol.';
+  String get remoteDesktopProtocolInvalid => 'Protokol tidak didukung.';
 
   @override
   String get remoteDesktopCredentialInvalid =>
@@ -3955,7 +3955,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get virtHwSource => 'Sumber';
 
   @override
-  String get virtHwSwap => 'Swap';
+  String get virtHwSwap => 'Memori swap';
 
   @override
   String get virtHwTopology => 'Soket × inti';
@@ -3967,7 +3967,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String virtHwTotal(String size) {
-    return '$size total';
+    return 'Total $size';
   }
 
   @override
@@ -5100,7 +5100,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Antarmuka fisik milik host sendiri: aplikasi hanya mengedit bridge.';
 
   @override
-  String get virtNetVlanAware => 'VLAN aware';
+  String get virtNetVlanAware => 'Mendukung VLAN';
 
   @override
   String get virtCiExpire => 'Kata sandi kedaluwarsa';
@@ -5929,7 +5929,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get storageLinuxOnly =>
-      'Storage management currently supports Linux servers.';
+      'Manajemen penyimpanan saat ini mendukung server Linux.';
 
   @override
   String get storageDisks => 'Disk';
@@ -5950,7 +5950,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String storageFree(Object size) {
-    return '$size free';
+    return '$size kosong';
   }
 
   @override
@@ -6161,8 +6161,7 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get storageConfirmationMismatch =>
-      'The confirmation text did not match.';
+  String get storageConfirmationMismatch => 'Teks konfirmasi tidak cocok.';
 
   @override
   String storageInUse(Object device) {
@@ -6354,35 +6353,38 @@ class AppLocalizationsId extends AppLocalizations {
       'Hanya perangkat cadangan atau cache yang dapat dilepas di sini.';
 
   @override
-  String get storageNotGrowable => 'This device cannot be grown here.';
+  String get storageNotGrowable =>
+      'Perangkat ini tidak dapat diperbesar di sini.';
 
   @override
-  String get storageOverlapping => 'Choose devices that do not overlap.';
+  String get storageOverlapping => 'Pilih perangkat yang tidak tumpang tindih.';
 
   @override
   String get storageInvalidDevice =>
-      'The device is invalid or no longer available.';
+      'Perangkat tidak valid atau tidak tersedia lagi.';
 
   @override
-  String get storageInvalidMountpoint => 'The mount point is invalid.';
+  String get storageInvalidMountpoint => 'Titik kait tidak valid.';
 
   @override
-  String get storageInvalidName => 'The name is invalid.';
+  String get storageInvalidName => 'Nama tidak valid.';
 
   @override
-  String get storageInvalidFilesystem => 'The filesystem is not supported.';
+  String get storageInvalidFilesystem => 'Sistem berkas tidak didukung.';
 
   @override
-  String get storageInvalidLabel => 'The label is invalid.';
+  String get storageInvalidLabel => 'Label tidak valid.';
 
   @override
-  String get storageInvalidLevel => 'The RAID level or pool layout is invalid.';
+  String get storageInvalidLevel =>
+      'Level RAID atau tata letak pool tidak valid.';
 
   @override
-  String get storageTooFewDevices => 'Not enough valid devices were selected.';
+  String get storageTooFewDevices =>
+      'Perangkat valid yang dipilih tidak cukup.';
 
   @override
-  String get storageKeyRequired => 'A passphrase is required.';
+  String get storageKeyRequired => 'Frasa sandi diperlukan.';
 
   @override
   String get storageExpand => 'Perluas';
@@ -6458,7 +6460,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get sharingAddExport => 'Tambah ekspor';
 
   @override
-  String get sharingEdit => 'Edit';
+  String get sharingEdit => 'Ubah';
 
   @override
   String get sharingRemove => 'Hapus';
@@ -6513,7 +6515,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Akun yang diizinkan (tidak ada yang dicentang: semua akun dengan kata sandi SMB):';
 
   @override
-  String get sharingFolder => 'Folder';
+  String get sharingFolder => 'Folder penyimpanan';
 
   @override
   String get sharingFolderHint =>
@@ -6615,7 +6617,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get sharingConnectionsLinuxOnly =>
-      'Sharing management currently supports Linux servers.';
+      'Manajemen berbagi saat ini mendukung server Linux.';
 
   @override
   String get agentThisDevice => 'Perangkat ini';

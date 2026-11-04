@@ -1569,13 +1569,13 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get processForceKill => 'Force kill';
+  String get processForceKill => 'Завершити примусово';
 
   @override
-  String get processStarted => 'Started';
+  String get processStarted => 'Запущено';
 
   @override
-  String get processThreads => 'Threads';
+  String get processThreads => 'Потоки';
 
   @override
   String get watchServers => 'Сервери на годиннику';
@@ -1660,16 +1660,16 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get serviceUnit => 'Unit';
+  String get serviceUnit => 'Юніт';
 
   @override
-  String get serviceUnitType => 'Type';
+  String get serviceUnitType => 'Тип';
 
   @override
   String get serviceScope => 'Scope';
 
   @override
-  String get serviceStartup => 'Startup';
+  String get serviceStartup => 'Запуск';
 
   @override
   String serviceUpFor(String duration) {
@@ -2038,7 +2038,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Не вдалося видалити частину даних, і ця версія досі не може відкрити те, що залишилося. Перевстановіть новішу версію, щоб отримати до них доступ.';
 
   @override
-  String get systemUsers => 'Users';
+  String get systemUsers => 'Користувачі';
 
   @override
   String get userManagerLinuxOnly =>
@@ -2057,16 +2057,16 @@ class AppLocalizationsUk extends AppLocalizations {
   String get userUid => 'UID';
 
   @override
-  String get userLoginStatus => 'Status';
+  String get userLoginStatus => 'Стан';
 
   @override
   String get userLoginEnabled => 'Login enabled';
 
   @override
-  String get userDetailAccount => 'Account';
+  String get userDetailAccount => 'Обліковий запис';
 
   @override
-  String get userDetailSecurity => 'Security';
+  String get userDetailSecurity => 'Безпека';
 
   @override
   String get userSshKeys => 'SSH keys';
@@ -2078,26 +2078,26 @@ class AppLocalizationsUk extends AppLocalizations {
   String get userNever => 'Never';
 
   @override
-  String get userPasswordSet => 'Set';
+  String get userPasswordSet => 'Задано';
 
   @override
-  String get userPasswordLocked => 'Locked';
+  String get userPasswordLocked => 'Заблоковано';
 
   @override
-  String get userPasswordNone => 'None';
+  String get userPasswordNone => 'Немає';
 
   @override
   String get userSuperuser => 'Superuser';
 
   @override
-  String get userOpenShell => 'Open shell';
+  String get userOpenShell => 'Відкрити оболонку';
 
   @override
   String get userRootChangesWarning =>
       'Зміни користувача root одразу застосовуються до всіх сеансів.';
 
   @override
-  String get userComment => 'Comment';
+  String get userComment => 'Коментар';
 
   @override
   String get userPrimaryGroup => 'Primary group';
@@ -2217,7 +2217,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Список профілів віддаленого робочого столу; підключення та відключення з вашого схвалення.';
 
   @override
-  String get agentSkills => 'Skills';
+  String get agentSkills => 'Навички';
 
   @override
   String get agentSkillsTip =>
@@ -2574,13 +2574,13 @@ class AppLocalizationsUk extends AppLocalizations {
       'Коментарі, змінні середовища та нерозпізнані рядки в цьому crontab буде збережено.';
 
   @override
-  String get scheduledTaskSchedule => 'Schedule';
+  String get scheduledTaskSchedule => 'Розклад';
 
   @override
   String get scheduledTaskAdd => 'Add task';
 
   @override
-  String get scheduledTaskNextRun => 'Next run';
+  String get scheduledTaskNextRun => 'Наступний запуск';
 
   @override
   String scheduledTaskNextInFmt(String time) {
@@ -2588,7 +2588,7 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get scheduledTaskEnabled => 'Enabled';
+  String get scheduledTaskEnabled => 'Увімкнено';
 
   @override
   String get scheduledTaskCommentedOut => 'Commented out';
@@ -2623,7 +2623,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get scheduledTaskFieldMinute => 'Minute';
 
   @override
-  String get scheduledTaskFieldHour => 'Hour';
+  String get scheduledTaskFieldHour => 'Година';
 
   @override
   String get scheduledTaskFieldDayOfMonth => 'День місяця';
@@ -2656,7 +2656,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get cronAtBoot => 'At boot';
 
   @override
-  String get cronEveryMin => 'Every minute';
+  String get cronEveryMin => 'Щохвилини';
 
   @override
   String cronEveryMinsFmt(int minutes) {
@@ -2708,7 +2708,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get monitorNeedsRestart => 'Набуде чинності після перезапуску Monitor';
 
   @override
-  String get monitorCollection => 'Collection';
+  String get monitorCollection => 'Збір';
 
   @override
   String get extendedInterval => 'Інтервал розширеного циклу';
@@ -2733,10 +2733,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get ruleMonitorType => 'Metric';
 
   @override
-  String get ruleThreshold => 'Threshold';
+  String get ruleThreshold => 'Поріг';
 
   @override
-  String get ruleMatcher => 'Matcher';
+  String get ruleMatcher => 'Зіставлення';
 
   @override
   String get ruleTip =>
@@ -2746,10 +2746,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get pushChannels => 'Канали сповіщень';
 
   @override
-  String get pushType => 'Type';
+  String get pushType => 'Тип';
 
   @override
-  String get pushRate => 'Rate limit';
+  String get pushRate => 'Обмеження частоти';
 
   @override
   String get pushHeaders => 'Headers';
@@ -2781,7 +2781,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get pushJsonInvalid => 'не є припустимим JSON';
 
   @override
-  String get dataRetention => 'Data retention';
+  String get dataRetention => 'Зберігання даних';
 
   @override
   String get dataRetentionTip =>
@@ -3016,7 +3016,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Цільовий хост не може містити пробілів або перенесень рядка.';
 
   @override
-  String get remoteDesktopProtocolInvalid => 'Unsupported protocol.';
+  String get remoteDesktopProtocolInvalid => 'Непідтримуваний протокол.';
 
   @override
   String get remoteDesktopCredentialInvalid =>
@@ -5975,7 +5975,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get storageLinuxOnly =>
-      'Storage management currently supports Linux servers.';
+      'Керування сховищем наразі підтримує сервери Linux.';
 
   @override
   String get storageDisks => 'Диски';
@@ -5996,7 +5996,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String storageFree(Object size) {
-    return '$size free';
+    return '$size вільно';
   }
 
   @override
@@ -6208,7 +6208,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get storageConfirmationMismatch =>
-      'The confirmation text did not match.';
+      'Текст підтвердження не збігається.';
 
   @override
   String storageInUse(Object device) {
@@ -6400,35 +6400,35 @@ class AppLocalizationsUk extends AppLocalizations {
       'Тут можна вилучати лише резервні пристрої або кеш.';
 
   @override
-  String get storageNotGrowable => 'This device cannot be grown here.';
+  String get storageNotGrowable => 'Цей пристрій не можна розширити тут.';
 
   @override
-  String get storageOverlapping => 'Choose devices that do not overlap.';
+  String get storageOverlapping => 'Виберіть пристрої, що не перетинаються.';
 
   @override
   String get storageInvalidDevice =>
-      'The device is invalid or no longer available.';
+      'Пристрій недійсний або більше недоступний.';
 
   @override
-  String get storageInvalidMountpoint => 'The mount point is invalid.';
+  String get storageInvalidMountpoint => 'Неприпустима точка монтування.';
 
   @override
-  String get storageInvalidName => 'The name is invalid.';
+  String get storageInvalidName => 'Неприпустиме ім’я.';
 
   @override
-  String get storageInvalidFilesystem => 'The filesystem is not supported.';
+  String get storageInvalidFilesystem => 'Файлова система не підтримується.';
 
   @override
-  String get storageInvalidLabel => 'The label is invalid.';
+  String get storageInvalidLabel => 'Неприпустима мітка.';
 
   @override
-  String get storageInvalidLevel => 'The RAID level or pool layout is invalid.';
+  String get storageInvalidLevel => 'Неприпустимий рівень RAID або схема пулу.';
 
   @override
-  String get storageTooFewDevices => 'Not enough valid devices were selected.';
+  String get storageTooFewDevices => 'Вибрано недостатньо дійсних пристроїв.';
 
   @override
-  String get storageKeyRequired => 'A passphrase is required.';
+  String get storageKeyRequired => 'Потрібна парольна фраза.';
 
   @override
   String get storageExpand => 'Розширити';
@@ -6662,7 +6662,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get sharingConnectionsLinuxOnly =>
-      'Sharing management currently supports Linux servers.';
+      'Керування спільним доступом наразі підтримує сервери Linux.';
 
   @override
   String get agentThisDevice => 'Цей пристрій';

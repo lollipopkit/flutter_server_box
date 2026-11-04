@@ -66,10 +66,9 @@ automatic upload.
 Changing the level to **Nothing** stops automatic delivery immediately; it does
 not wait for the next launch.
 
-TODO: Remove this upgrade note when supported installations no longer retain
-the old diagnostic level. Earlier versions also offered **Full information**,
-which added performance traces and feature-use analytics. It has been removed. An install
-that had chosen it is moved to **Basic information** when it updates, and the
+Earlier versions also offered **Full information**, which added performance
+traces and feature-use analytics. It has been removed. An install that had
+chosen it is moved to **Basic information** when it updates, and the
 per-install analytics identifier that level stored on the device is deleted.
 No performance traces or feature-use events are sent at any level.
 

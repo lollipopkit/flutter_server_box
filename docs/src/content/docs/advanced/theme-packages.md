@@ -31,8 +31,7 @@ one mode, the mode setting is locked while that theme is selected. Choose a
 theme that supports both modes to switch freely.
 
 AMOLED is a built-in theme. It uses black surfaces in Dark mode and standard
-light colors in Light mode. TODO: Remove the legacy AMOLED settings migration
-when supported upgrade paths no longer include those settings.
+light colors in Light mode.
 
 ## Install a theme
 

@@ -3151,11 +3151,11 @@
   "@connection": {
     "description": "Action label for connection."
   },
-  "connectionTip": "Both can be on at once. The order is the order they are dialled.",
+  "connectionTip": "Both can be enabled at once and are tried in the order shown.",
   "@connectionTip": {
     "description": "Help text for the connection setting or action."
   },
-  "transportNoneOn": "Both are off — this server cannot be connected.",
+  "transportNoneOn": "Enable at least one connection method.",
   "@transportNoneOn": {
     "description": "User-facing label or message for transport none on."
   },
@@ -3264,7 +3264,7 @@
       }
     }
   },
-  "tagOnThisServer": "on this server",
+  "tagOnThisServer": "On this server",
   "@tagOnThisServer": {
     "description": "User-facing label or message for tag on this server."
   },
@@ -3689,7 +3689,7 @@
   "@disconnect": {
     "description": "Action label for disconnect."
   },
-  "searchServerTip": "Searches names and addresses — the two the editor asks for first.",
+  "searchServerTip": "Search by server name or address.",
   "@searchServerTip": {
     "description": "Help text for the search server setting or action."
   },
@@ -3713,7 +3713,7 @@
   "@groupByTag": {
     "description": "User-facing label or message for group by tag."
   },
-  "groupByTagTip": "Tags are set in a server’s own editor.",
+  "groupByTagTip": "Add and manage tags when editing a server.",
   "@groupByTagTip": {
     "description": "Help text for the group by tag setting or action."
   },
@@ -6743,7 +6743,9 @@
   "funcNeedsAgentHttps": "{func} needs HTTPS to this Monitor, or plain HTTP allowed on both the Monitor and this app.",
   "@funcNeedsAgentHttps": {
     "placeholders": {
-      "func": { "type": "String" }
+      "func": {
+        "type": "String"
+      }
     }
   },
   "monitorAccess": "Access",

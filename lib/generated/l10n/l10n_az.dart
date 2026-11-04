@@ -3008,7 +3008,7 @@ class AppLocalizationsAz extends AppLocalizations {
       'Hədəf host boşluq və ya sətir sonu ehtiva edə bilməz.';
 
   @override
-  String get remoteDesktopProtocolInvalid => 'Unsupported protocol.';
+  String get remoteDesktopProtocolInvalid => 'Dəstəklənməyən protokol.';
 
   @override
   String get remoteDesktopCredentialInvalid =>
@@ -5927,7 +5927,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get storageLinuxOnly =>
-      'Storage management currently supports Linux servers.';
+      'Yaddaş idarəetməsi hazırda Linux serverlərini dəstəkləyir.';
 
   @override
   String get storageDisks => 'Disks';
@@ -5948,7 +5948,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String storageFree(Object size) {
-    return '$size free';
+    return '$size boş';
   }
 
   @override
@@ -6157,8 +6157,7 @@ class AppLocalizationsAz extends AppLocalizations {
   }
 
   @override
-  String get storageConfirmationMismatch =>
-      'The confirmation text did not match.';
+  String get storageConfirmationMismatch => 'Təsdiq mətni uyğun gəlmədi.';
 
   @override
   String storageInUse(Object device) {
@@ -6350,35 +6349,36 @@ class AppLocalizationsAz extends AppLocalizations {
       'Only a spare or cache device can be taken out here.';
 
   @override
-  String get storageNotGrowable => 'This device cannot be grown here.';
+  String get storageNotGrowable => 'Bu cihaz burada böyüdülə bilməz.';
 
   @override
-  String get storageOverlapping => 'Choose devices that do not overlap.';
+  String get storageOverlapping => 'Üst-üstə düşməyən cihazlar seçin.';
 
   @override
   String get storageInvalidDevice =>
-      'The device is invalid or no longer available.';
+      'Cihaz yanlışdır və ya artıq əlçatan deyil.';
 
   @override
-  String get storageInvalidMountpoint => 'The mount point is invalid.';
+  String get storageInvalidMountpoint => 'Qoşulma nöqtəsi yanlışdır.';
 
   @override
-  String get storageInvalidName => 'The name is invalid.';
+  String get storageInvalidName => 'Ad yanlışdır.';
 
   @override
-  String get storageInvalidFilesystem => 'The filesystem is not supported.';
+  String get storageInvalidFilesystem => 'Fayl sistemi dəstəklənmir.';
 
   @override
-  String get storageInvalidLabel => 'The label is invalid.';
+  String get storageInvalidLabel => 'Etiket yanlışdır.';
 
   @override
-  String get storageInvalidLevel => 'The RAID level or pool layout is invalid.';
+  String get storageInvalidLevel =>
+      'RAID səviyyəsi və ya hovuz düzülüşü yanlışdır.';
 
   @override
-  String get storageTooFewDevices => 'Not enough valid devices were selected.';
+  String get storageTooFewDevices => 'Kifayət qədər düzgün cihaz seçilməyib.';
 
   @override
-  String get storageKeyRequired => 'A passphrase is required.';
+  String get storageKeyRequired => 'Parol ifadəsi tələb olunur.';
 
   @override
   String get storageExpand => 'Expand';
@@ -6610,7 +6610,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get sharingConnectionsLinuxOnly =>
-      'Sharing management currently supports Linux servers.';
+      'Paylaşım idarəetməsi hazırda Linux serverlərini dəstəkləyir.';
 
   @override
   String get agentThisDevice => 'Bu cihaz';
