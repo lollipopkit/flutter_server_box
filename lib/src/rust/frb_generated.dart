@@ -38,6 +38,9 @@ import 'package:server_box/src/rust/api/storage.dart';
 import 'package:server_box/src/rust/api/tmux.dart';
 import 'package:server_box/src/rust/api/users.dart';
 import 'package:server_box/src/rust/api/virt.dart';
+import 'package:server_box/src/rust/api/virt_libvirt.dart';
+import 'package:server_box/src/rust/api/virt_model.dart';
+import 'package:server_box/src/rust/api/virt_view.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 import 'package:server_box/src/rust/frb_generated.io.dart'
     if (dart.library.js_interop) 'frb_generated.web.dart';
@@ -97,7 +100,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => 1669916084;
+  int get rustContentHash => -1350533021;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -142,7 +145,7 @@ abstract class RustLibApi extends BaseApi {
 
   LibvirtRates crateApiVirtLibvirtRatesNew();
 
-  String crateApiVirtLibvirtRatesView({
+  VirtHostReport crateApiVirtLibvirtRatesView({
     required LibvirtRates that,
     required String raw,
     required PlatformInt64 atMs,
@@ -179,9 +182,11 @@ abstract class RustLibApi extends BaseApi {
     required List<int> data,
   });
 
-  Future<String> crateApiPvePveSessionAllBackupJobs({required PveSession that});
+  Future<List<BackupJob>> crateApiPvePveSessionAllBackupJobs({
+    required PveSession that,
+  });
 
-  Future<String> crateApiPvePveSessionAllBackupStorages({
+  Future<List<ResourcePool>> crateApiPvePveSessionAllBackupStorages({
     required PveSession that,
   });
 
@@ -192,32 +197,32 @@ abstract class RustLibApi extends BaseApi {
   Future<void> crateApiPvePveSessionBackup({
     required PveSession that,
     required PveGuestRef guest,
-    required String requestJson,
+    required BackupRequest request,
   });
 
-  Future<String> crateApiPvePveSessionBackupJobs({
+  Future<List<BackupJob>> crateApiPvePveSessionBackupJobs({
     required PveSession that,
     required PveGuestRef guest,
   });
 
-  Future<String> crateApiPvePveSessionBackupStorages({
+  Future<List<ResourcePool>> crateApiPvePveSessionBackupStorages({
     required PveSession that,
     required String node,
   });
 
-  Future<String> crateApiPvePveSessionBackups({
+  Future<List<Backup>> crateApiPvePveSessionBackups({
     required PveSession that,
     required PveGuestRef guest,
   });
 
-  Future<String> crateApiPvePveSessionChangeHardware({
+  Future<Outcome> crateApiPvePveSessionChangeHardware({
     required PveSession that,
     required PveGuestRef guest,
     String? revision,
-    required String changeJson,
+    required HwChange change,
   });
 
-  Future<String> crateApiPvePveSessionCheckSchedule({
+  Future<ScheduleCheck> crateApiPvePveSessionCheckSchedule({
     required PveSession that,
     required String schedule,
   });
@@ -225,12 +230,12 @@ abstract class RustLibApi extends BaseApi {
   Future<String> crateApiPvePveSessionCloneGuest({
     required PveSession that,
     required PveGuestRef guest,
-    required String requestJson,
+    required CloneRequest request,
   });
 
   void crateApiPvePveSessionClose({required PveSession that});
 
-  Future<String> crateApiPvePveSessionCloudInit({
+  Future<CloudInitState> crateApiPvePveSessionCloudInit({
     required PveSession that,
     required PveGuestRef guest,
   });
@@ -246,12 +251,12 @@ abstract class RustLibApi extends BaseApi {
     required PveConsoleKind kind,
   });
 
-  Future<String> crateApiPvePveSessionCreate({
+  Future<Created> crateApiPvePveSessionCreate({
     required PveSession that,
-    required String specJson,
+    required CreateSpec spec,
   });
 
-  String crateApiPvePveSessionCreateOptions({required PveSession that});
+  CreateOptions crateApiPvePveSessionCreateOptions({required PveSession that});
 
   Future<void> crateApiPvePveSessionCreateSnapshot({
     required PveSession that,
@@ -268,7 +273,7 @@ abstract class RustLibApi extends BaseApi {
 
   Future<void> crateApiPvePveSessionDeleteBackup({
     required PveSession that,
-    required String backupJson,
+    required Backup backup,
   });
 
   Future<void> crateApiPvePveSessionDeleteSnapshot({
@@ -277,40 +282,40 @@ abstract class RustLibApi extends BaseApi {
     required String name,
   });
 
-  Future<String> crateApiPvePveSessionDetail({
+  Future<VirtGuestDetailReport> crateApiPvePveSessionDetail({
     required PveSession that,
     required PveGuestRef guest,
   });
 
   Future<void> crateApiPvePveSessionEditBackup({
     required PveSession that,
-    required String backupJson,
-    required String editJson,
+    required Backup backup,
+    required BackupEdit edit,
   });
 
   Future<void> crateApiPvePveSessionEditBackupJob({
     required PveSession that,
-    required String editJson,
+    required BackupJobEdit edit,
     required bool remove,
   });
 
-  Future<String> crateApiPvePveSessionHardware({
+  Future<Hardware> crateApiPvePveSessionHardware({
     required PveSession that,
     required PveGuestRef guest,
   });
 
-  Future<String> crateApiPvePveSessionHistory({
+  Future<List<Stats>> crateApiPvePveSessionHistory({
     required PveSession that,
     required PveGuestRef guest,
     required PveHistoryWindow window,
   });
 
-  Future<String> crateApiPvePveSessionHostDevices({
+  Future<HostDevices> crateApiPvePveSessionHostDevices({
     required PveSession that,
     required PveGuestRef guest,
   });
 
-  Future<String> crateApiPvePveSessionLoad({required PveSession that});
+  Future<VirtHostReport> crateApiPvePveSessionLoad({required PveSession that});
 
   Future<void> crateApiPvePveSessionMakeTemplate({
     required PveSession that,
@@ -319,15 +324,15 @@ abstract class RustLibApi extends BaseApi {
 
   Future<void> crateApiPvePveSessionManage({
     required PveSession that,
-    required String changeJson,
+    required ResourceChange change,
     String? live,
   });
 
-  Future<String> crateApiPvePveSessionNetworkChanges({
+  Future<List<NetworkChanges>> crateApiPvePveSessionNetworkChanges({
     required PveSession that,
   });
 
-  Future<String> crateApiPvePveSessionNetworks({
+  Future<List<Network>> crateApiPvePveSessionNetworks({
     required PveSession that,
     String? live,
   });
@@ -391,7 +396,7 @@ abstract class RustLibApi extends BaseApi {
   Future<void> crateApiPvePveSessionSetCloudInit({
     required PveSession that,
     required PveGuestRef guest,
-    required String editJson,
+    required CloudInitEdit edit,
   });
 
   void crateApiPvePveSessionSetLoopback({
@@ -400,7 +405,7 @@ abstract class RustLibApi extends BaseApi {
     required List<int> token,
   });
 
-  Future<String> crateApiPvePveSessionSnapshotDiff({
+  Future<List<Diff>> crateApiPvePveSessionSnapshotDiff({
     required PveSession that,
     required PveGuestRef guest,
     required String name,
@@ -416,12 +421,14 @@ abstract class RustLibApi extends BaseApi {
     required PveGuestRef guest,
   });
 
-  Future<String> crateApiPvePveSessionSnapshots({
+  Future<List<Snapshot>> crateApiPvePveSessionSnapshots({
     required PveSession that,
     required PveGuestRef guest,
   });
 
-  Future<String> crateApiPvePveSessionStoragePools({required PveSession that});
+  Future<List<ResourcePool>> crateApiPvePveSessionStoragePools({
+    required PveSession that,
+  });
 
   Future<void> crateApiPvePveSessionSubmitTfa({
     required PveSession that,
@@ -433,9 +440,9 @@ abstract class RustLibApi extends BaseApi {
     required PveLogin login,
   });
 
-  Future<String> crateApiPvePveSessionVolumes({
+  Future<List<Volume>> crateApiPvePveSessionVolumes({
     required PveSession that,
-    required String poolJson,
+    required ResourcePool pool,
   });
 
   Future<void> crateApiPvePveSessionWaitTask({
@@ -1113,37 +1120,13 @@ abstract class RustLibApi extends BaseApi {
 
   Future<List<String>> crateApiVirtParseVirtCloneVolumes({required String raw});
 
-  Future<String> crateApiVirtParseVirtCreateHostJson({required String raw});
-
-  Future<String> crateApiVirtParseVirtCreateJson({required String raw});
-
-  Future<String> crateApiVirtParseVirtCreateVolumesJson({required String raw});
-
-  Future<String> crateApiVirtParseVirtDomainDetailJson({required String raw});
-
-  Future<String> crateApiVirtParseVirtFirmwareJson({required String raw});
-
-  Future<String> crateApiVirtParseVirtHardwareChangeJson({required String raw});
-
-  Future<String> crateApiVirtParseVirtHardwareJson({required String raw});
-
-  Future<String> crateApiVirtParseVirtHostDevicesJson({required String raw});
-
   Future<void> crateApiVirtParseVirtNetChange({required String raw});
-
-  Future<String> crateApiVirtParseVirtOverviewJson({required String raw});
 
   List<String>? crateApiVirtParseVirtPoolTypes({required String raw});
 
-  Future<String> crateApiVirtParseVirtProbeJson({required String raw});
-
   void crateApiVirtParseVirtResource({required String raw});
 
-  Future<String> crateApiVirtParseVirtSeedReadJson({required String raw});
-
   void crateApiVirtParseVirtSeedUpdate({required String raw});
-
-  Future<String> crateApiVirtParseVirtSnapChainJson({required String raw});
 
   Future<List<String>> crateApiVirtParseVirtSnapDeleteLeftovers({
     required String raw,
@@ -1151,19 +1134,11 @@ abstract class RustLibApi extends BaseApi {
 
   Future<String?> crateApiVirtParseVirtSnapDeleteRefusal({required String raw});
 
-  Future<String> crateApiVirtParseVirtSnapDiffJson({required String raw});
-
   Future<String?> crateApiVirtParseVirtSnapRevertRefusal({required String raw});
 
   Future<void> crateApiVirtParseVirtSnapshotDelete({required String raw});
 
-  Future<String> crateApiVirtParseVirtSnapshotsJson({required String raw});
-
-  Future<String> crateApiVirtParseVirtStorageJson({required String raw});
-
   void crateApiVirtParseVirtUndefine({required String raw});
-
-  Future<String> crateApiVirtParseVirtVncConsoleJson({required String raw});
 
   bool crateApiVirtParseVirtVolUpload({required String raw});
 
@@ -1434,34 +1409,34 @@ abstract class RustLibApi extends BaseApi {
   });
 
   bool crateApiBackupVirtBackupJobTakesOnly({
-    required String jobJson,
+    required BackupJob job,
     int? vmid,
   });
 
   String crateApiVirtVirtCloneDefineScript({
     required String baseXml,
     required String name,
-    required String disksJson,
+    required List<(String, String)> disks,
   });
 
-  String? crateApiCreateVirtCloneNodeIssue({
-    required String nodesJson,
+  CreateIssue? crateApiCreateVirtCloneNodeIssue({
+    required List<Node> nodes,
     String? targetNode,
     String? sourceNode,
   });
 
-  String? crateApiCreateVirtCloneStorageIssue({
-    required String storagesJson,
+  CreateIssue? crateApiCreateVirtCloneStorageIssue({
+    required List<ResourcePool> storages,
     String? storage,
     required bool full,
     required bool lxc,
     String? targetNode,
   });
 
-  String crateApiVirtVirtCloneVolumesScript({required String specJson});
+  String crateApiVirtVirtCloneVolumesScript({required VirtCloneSpec spec});
 
-  String? crateApiCreateVirtCloudInitIssue({
-    required String ciJson,
+  CreateIssue? crateApiCreateVirtCloudInitIssue({
+    required CloudInit ci,
     required bool pve,
     required bool keepsPassword,
   });
@@ -1470,40 +1445,38 @@ abstract class RustLibApi extends BaseApi {
 
   String crateApiVirtVirtCreateHostScript();
 
-  String? crateApiCreateVirtCreateIssue({
-    required String specJson,
+  CreateIssue? crateApiCreateVirtCreateIssue({
+    required CreateSpec spec,
     required bool pve,
-    required String guestsJson,
-    required String nodesJson,
-    required String poolsJson,
-    required String networksJson,
-    String? mediaJson,
-    String? imageJson,
-    required String optionsJson,
+    required List<VirtGuestReport> guests,
+    required List<Node> nodes,
+    required List<ResourcePool> pools,
+    required List<Network> networks,
+    Volume? media,
+    Volume? image,
+    required CreateOptions options,
   });
 
   List<String> crateApiCreateVirtCreateNetworks({
-    required String networksJson,
+    required List<Network> networks,
     required bool pve,
     String? node,
   });
 
-  String crateApiVirtVirtCreateVolumeScript({required String specJson});
+  String crateApiVirtVirtCreateVolumeScript({required VirtCreateSpec spec});
 
   List<String>? crateApiResourceVirtDefaultDhcpRange({required String cidr});
 
-  String crateApiVirtVirtDefineScript({required String specJson});
+  String crateApiVirtVirtDefineScript({required VirtCreateSpec spec});
 
   List<String> crateApiCreateVirtDiskStorages({
-    required String poolsJson,
+    required List<ResourcePool> pools,
     required bool pve,
     required bool lxc,
     String? node,
   });
 
   String crateApiVirtVirtDomainDetailScript({required String domain});
-
-  String? crateApiVirtVirtExternalSnapshotRefusal({required String chainJson});
 
   String crateApiVirtVirtFirmwareScript();
 
@@ -1513,7 +1486,7 @@ abstract class RustLibApi extends BaseApi {
     required String domain,
     required bool running,
     String? baseXml,
-    required String changeJson,
+    required VirtHwChange change,
   });
 
   String crateApiVirtVirtHardwareScript({required String domain});
@@ -1525,145 +1498,178 @@ abstract class RustLibApi extends BaseApi {
 
   String crateApiVirtVirtHostDevicesScript();
 
-  bool crateApiHardwareVirtHwDiskGrowable({required String diskJson});
+  bool crateApiHardwareVirtHwDiskGrowable({required HwDisk disk});
 
-  String? crateApiHardwareVirtHwIssue({
-    required String hardwareJson,
-    required String changeJson,
+  HwIssue? crateApiHardwareVirtHwIssue({
+    required Hardware hardware,
+    required HwChange change,
     required bool pve,
-    required String poolsJson,
-    required String networksJson,
-    required String volumesJson,
+    required List<ResourcePool> pools,
+    required List<Network> networks,
+    required List<Volume> volumes,
   });
 
   List<String> crateApiCreateVirtImageStorages({
-    required String poolsJson,
+    required List<ResourcePool> pools,
     required bool pve,
     String? node,
   });
 
   bool crateApiCreateVirtIsCloudImage({
-    required String volumeJson,
+    required Volume volume,
     required bool pve,
   });
 
-  bool crateApiCreateVirtIsMedia({
-    required String volumeJson,
-    required bool lxc,
-  });
+  bool crateApiCreateVirtIsMedia({required Volume volume, required bool lxc});
 
   bool crateApiHardwareVirtIsUnicastMac({required String mac});
 
-  String crateApiVirtVirtLibvirtChain({
+  Chain crateApiVirtVirtLibvirtChain({
     required String chainRaw,
-    required String snapshotsJson,
+    required List<Snapshot> snapshots,
     required List<LibvirtPoolRef> pools,
   });
 
-  String crateApiCreateVirtLibvirtCloneDisks({
-    required String specJson,
+  List<(String, String)> crateApiCreateVirtLibvirtCloneDisks({
+    required VirtCloneSpec spec,
     required List<String> paths,
   });
 
-  String crateApiCreateVirtLibvirtCloneSpec({
-    required String guestJson,
-    required String hardwareJson,
-    required String requestJson,
-    required String guestsJson,
-    required String storageJson,
+  VirtCloneSpec crateApiCreateVirtLibvirtCloneSpec({
+    required VirtGuestReport guest,
+    required VirtHardwareInfo hardware,
+    required CloneRequest request,
+    required List<VirtGuestReport> guests,
+    required VirtStorage storage,
   });
 
-  String crateApiCreateVirtLibvirtCloudInit({
-    required String ciJson,
+  VirtCloudInit crateApiCreateVirtLibvirtCloudInit({
+    required CloudInit ci,
     required String name,
     String? mac,
     String? keepHash,
-    required String extraNetworksJson,
+    required List<VirtCiNetwork> extraNetworks,
     required bool passwordExpire,
   });
 
-  String crateApiHardwareVirtLibvirtCloudInitState({
-    required String readJson,
+  CloudInitState crateApiHardwareVirtLibvirtCloudInitState({
+    required VirtSeedRead read,
     required List<String> macs,
   });
 
-  String crateApiHardwareVirtLibvirtCloudInitUpdate({
-    required String readJson,
+  VirtCloudInit crateApiHardwareVirtLibvirtCloudInitUpdate({
+    required VirtSeedRead read,
     required String name,
     required List<String> macs,
-    required String editJson,
+    required CloudInitEdit edit,
   });
 
-  String crateApiCreateVirtLibvirtCreateOptions({
-    required String hostJson,
-    required String firmwareJson,
+  Future<VirtCreateHost> crateApiVirtVirtLibvirtCreateHost({
+    required String raw,
   });
 
-  String crateApiCreateVirtLibvirtCreateSpec({
-    required String specJson,
-    required String hostJson,
-    required String firmwareJson,
-    required String guestsJson,
-    required String poolsJson,
-    required String networksJson,
-    String? mediaJson,
-    String? imageJson,
+  CreateOptions crateApiCreateVirtLibvirtCreateOptions({
+    required VirtCreateHost host,
+    required List<FirmwareDescriptor> firmware,
+  });
+
+  VirtCreateSpec crateApiCreateVirtLibvirtCreateSpec({
+    required CreateSpec spec,
+    required VirtCreateHost host,
+    required List<FirmwareDescriptor> firmware,
+    required List<VirtGuestReport> guests,
+    required List<ResourcePool> pools,
+    required List<Network> networks,
+    Volume? media,
+    Volume? image,
     List<String>? seedTools,
   });
 
-  String crateApiCreateVirtLibvirtCreated({
-    required String specJson,
-    required String madeJson,
-    required String createdJson,
+  Future<VirtCreateVolumes> crateApiVirtVirtLibvirtCreateVolumes({
+    required String raw,
+  });
+
+  Created crateApiCreateVirtLibvirtCreated({
+    required VirtCreateSpec spec,
+    required VirtCreateVolumes made,
+    required VirtCreated created,
+  });
+
+  Future<VirtCreated> crateApiVirtVirtLibvirtDefineResult({
+    required String raw,
   });
 
   bool crateApiCreateVirtLibvirtDeleteNeedsChain({
-    required String snapshotsJson,
+    required List<Snapshot> snapshots,
   });
 
   VirtDeletePlan crateApiCreateVirtLibvirtDeletePlan({
     required String id,
     required String name,
-    required String detailJson,
-    required String storageJson,
-    required String volumesJson,
-    required String snapshotsJson,
+    required VirtDomainDetail detail,
+    required VirtStorage storage,
+    required List<VirtPoolVolumes> volumes,
+    required List<Snapshot> snapshots,
     String? chainRaw,
   });
 
   String crateApiCreateVirtLibvirtDiskFormat({required String poolType});
 
-  String crateApiVirtVirtLibvirtGuestDetail({required String raw});
-
-  String crateApiHardwareVirtLibvirtHardware({
-    required String infoJson,
-    required String name,
+  Future<VirtDomainDetail> crateApiVirtVirtLibvirtDomainDetail({
+    required String raw,
   });
 
-  String crateApiHardwareVirtLibvirtHostDevices({required String devicesJson});
-
-  String crateApiHardwareVirtLibvirtHwChange({
-    required String infoJson,
-    required String name,
-    String? revision,
-    required String changeJson,
-    required String poolsJson,
-    required String networksJson,
-    required String volumesJson,
-  });
-
-  String crateApiHardwareVirtLibvirtHwRevert({
-    required String infoJson,
-    String? revision,
-  });
-
-  String crateApiResourceVirtLibvirtNetworks({required String raw});
-
-  List<VirtOverlay> crateApiVirtVirtLibvirtOverlays({
+  VirtExternalSnapshot crateApiVirtVirtLibvirtExternalSnapshot({
     required String chainRaw,
     required String name,
     String? dir,
   });
+
+  Future<List<FirmwareDescriptor>> crateApiVirtVirtLibvirtFirmware({
+    required String raw,
+  });
+
+  VirtGuestDetailReport crateApiVirtVirtLibvirtGuestDetail({
+    required String raw,
+  });
+
+  Hardware crateApiHardwareVirtLibvirtHardware({
+    required VirtHardwareInfo info,
+    required String name,
+  });
+
+  Future<VirtHwOutcome> crateApiVirtVirtLibvirtHardwareOutcome({
+    required String raw,
+  });
+
+  Future<VirtHardwareInfo> crateApiVirtVirtLibvirtHardwareRead({
+    required String raw,
+  });
+
+  HostDevices crateApiHardwareVirtLibvirtHostDevices({
+    required VirtHostDevices devices,
+  });
+
+  Future<VirtHostDevices> crateApiVirtVirtLibvirtHostDevicesRead({
+    required String raw,
+  });
+
+  VirtHwChange crateApiHardwareVirtLibvirtHwChange({
+    required VirtHardwareInfo info,
+    required String name,
+    String? revision,
+    required HwChange change,
+    required List<ResourcePool> pools,
+    required List<Network> networks,
+    required List<Volume> volumes,
+  });
+
+  VirtHwChange crateApiHardwareVirtLibvirtHwRevert({
+    required VirtHardwareInfo info,
+    String? revision,
+  });
+
+  List<Network> crateApiResourceVirtLibvirtNetworks({required String raw});
 
   bool crateApiVirtVirtLibvirtPoolHoldsFiles({required LibvirtPoolRef pool});
 
@@ -1672,7 +1678,9 @@ abstract class RustLibApi extends BaseApi {
     required String file,
   });
 
-  String crateApiResourceVirtLibvirtPools({required String storageJson});
+  List<ResourcePool> crateApiResourceVirtLibvirtPools({
+    required VirtStorage storage,
+  });
 
   List<VirtActionKind>? crateApiVirtVirtLibvirtPowerPlan({
     String? stateReason,
@@ -1680,33 +1688,45 @@ abstract class RustLibApi extends BaseApi {
     required VirtActionKind action,
   });
 
+  Future<VirtHostProbe> crateApiVirtVirtLibvirtProbe({required String raw});
+
   VirtResourceScript crateApiResourceVirtLibvirtResourceScript({
-    required String changeJson,
-    required String poolsJson,
-    required String networksJson,
-    required String volumesJson,
+    required ResourceChange change,
+    required List<ResourcePool> pools,
+    required List<Network> networks,
+    required List<Volume> volumes,
   });
 
-  String crateApiVirtVirtLibvirtSnapshots({required String raw});
+  Future<VirtSeedRead> crateApiVirtVirtLibvirtSeedRead({required String raw});
 
-  String crateApiResourceVirtLibvirtVolumes({
+  Future<List<Diff>> crateApiVirtVirtLibvirtSnapDiff({required String raw});
+
+  List<Snapshot> crateApiVirtVirtLibvirtSnapshots({required String raw});
+
+  Future<VirtStorage> crateApiVirtVirtLibvirtStorage({required String raw});
+
+  Future<VirtVncConsoleInfo> crateApiVirtVirtLibvirtVncConsole({
+    required String raw,
+  });
+
+  List<Volume> crateApiResourceVirtLibvirtVolumes({
     required String raw,
     required String pool,
-    required String storageJson,
+    required VirtStorage storage,
   });
 
-  String crateApiResourceVirtLibvirtWithBacks({
-    required String volumesJson,
-    required String everyJson,
+  List<Volume> crateApiResourceVirtLibvirtWithBacks({
+    required List<Volume> volumes,
+    required List<Volume> every,
   });
 
-  String crateApiCreateVirtLibvirtWithVolumes({
-    required String specJson,
-    required String madeJson,
+  VirtCreateSpec crateApiCreateVirtLibvirtWithVolumes({
+    required VirtCreateSpec spec,
+    required VirtCreateVolumes made,
   });
 
   List<String> crateApiCreateVirtMediaStorages({
-    required String poolsJson,
+    required List<ResourcePool> pools,
     required bool pve,
     required bool lxc,
     String? node,
@@ -1718,9 +1738,11 @@ abstract class RustLibApi extends BaseApi {
 
   String crateApiCreateVirtNewMac();
 
+  Future<void> crateApiVirtVirtOverviewCheck({required String raw});
+
   String crateApiVirtVirtOverviewScript();
 
-  bool crateApiResourceVirtPoolTakesMedia({required String poolJson});
+  bool crateApiResourceVirtPoolTakesMedia({required ResourcePool pool});
 
   String crateApiVirtVirtPoolTypesScript();
 
@@ -1730,26 +1752,28 @@ abstract class RustLibApi extends BaseApi {
 
   int? crateApiResourceVirtPveVolumeVmid({required String name});
 
-  String? crateApiResourceVirtResourceIssue({
-    required String changeJson,
+  ResourceIssue? crateApiResourceVirtResourceIssue({
+    required ResourceChange change,
     required bool pve,
-    required String poolsJson,
-    required String networksJson,
-    required String volumesJson,
+    required List<ResourcePool> pools,
+    required List<Network> networks,
+    required List<Volume> volumes,
   });
 
-  String crateApiVirtVirtResourceScript({required String opJson});
+  String crateApiVirtVirtResourceScript({required VirtResourceOp op});
 
-  String? crateApiBackupVirtScheduleIssue({required String schedule});
+  BackupIssue? crateApiBackupVirtScheduleIssue({required String schedule});
 
   String crateApiVirtVirtSeedReadScript({required String seed});
 
   String crateApiVirtVirtSeedUpdateScript({
     required String seed,
     required String revision,
-    required String cloudInitJson,
+    required VirtCloudInit cloudInit,
     List<String>? tools,
   });
+
+  Future<void> crateApiVirtVirtSnapChainCheck({required String raw});
 
   String crateApiVirtVirtSnapChainScript({required String domain});
 
@@ -1794,8 +1818,6 @@ abstract class RustLibApi extends BaseApi {
     required List<String> existing,
   });
 
-  String? crateApiVirtVirtSnapshotRefusal({required String chainJson});
-
   String crateApiVirtVirtSnapshotRevertScript({
     required String domain,
     required String name,
@@ -1816,17 +1838,17 @@ abstract class RustLibApi extends BaseApi {
 
   String crateApiVirtVirtUploadGoLine();
 
-  String? crateApiResourceVirtUploadIssue({
-    required String poolJson,
+  ResourceIssue? crateApiResourceVirtUploadIssue({
+    required ResourcePool pool,
     required String name,
     required BigInt size,
-    required String volumesJson,
+    required List<Volume> volumes,
   });
 
   String crateApiVirtVirtUploadReadyMarker();
 
   String? crateApiHardwareVirtUsbAddress({
-    required String deviceJson,
+    required HostDevice device,
     required bool pve,
   });
 
@@ -1839,15 +1861,15 @@ abstract class RustLibApi extends BaseApi {
   });
 
   String crateApiResourceVirtVolumeFileName({
-    required String poolJson,
+    required ResourcePool pool,
     required String name,
     required String format,
   });
 
-  List<String> crateApiResourceVirtVolumeFormats({required String poolJson});
+  List<String> crateApiResourceVirtVolumeFormats({required ResourcePool pool});
 
   bool crateApiResourceVirtVolumeResizable({
-    required String poolJson,
+    required ResourcePool pool,
     required bool pve,
   });
 
@@ -2206,7 +2228,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: 'LibvirtRates_new', argNames: []);
 
   @override
-  String crateApiVirtLibvirtRatesView({
+  VirtHostReport crateApiVirtLibvirtRatesView({
     required LibvirtRates that,
     required String raw,
     required PlatformInt64 atMs,
@@ -2228,7 +2250,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
+          decodeSuccessData: sse_decode_virt_host_report,
           decodeErrorData: sse_decode_virt_ffi_error,
         ),
         constMeta: kCrateApiVirtLibvirtRatesViewConstMeta,
@@ -2458,7 +2480,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<String> crateApiPvePveSessionAllBackupJobs({
+  Future<List<BackupJob>> crateApiPvePveSessionAllBackupJobs({
     required PveSession that,
   }) {
     return handler.executeNormal(
@@ -2477,7 +2499,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           );
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
+          decodeSuccessData: sse_decode_list_backup_job,
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiPvePveSessionAllBackupJobsConstMeta,
@@ -2494,7 +2516,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<String> crateApiPvePveSessionAllBackupStorages({
+  Future<List<ResourcePool>> crateApiPvePveSessionAllBackupStorages({
     required PveSession that,
   }) {
     return handler.executeNormal(
@@ -2513,7 +2535,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           );
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
+          decodeSuccessData: sse_decode_list_resource_pool,
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiPvePveSessionAllBackupStoragesConstMeta,
@@ -2569,7 +2591,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Future<void> crateApiPvePveSessionBackup({
     required PveSession that,
     required PveGuestRef guest,
-    required String requestJson,
+    required BackupRequest request,
   }) {
     return handler.executeNormal(
       NormalTask(
@@ -2580,7 +2602,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             serializer,
           );
           sse_encode_box_autoadd_pve_guest_ref(guest, serializer);
-          sse_encode_String(requestJson, serializer);
+          sse_encode_box_autoadd_backup_request(request, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -2593,7 +2615,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiPvePveSessionBackupConstMeta,
-        argValues: [that, guest, requestJson],
+        argValues: [that, guest, request],
         apiImpl: this,
       ),
     );
@@ -2602,11 +2624,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiPvePveSessionBackupConstMeta =>
       const TaskConstMeta(
         debugName: 'PveSession_backup',
-        argNames: ['that', 'guest', 'requestJson'],
+        argNames: ['that', 'guest', 'request'],
       );
 
   @override
-  Future<String> crateApiPvePveSessionBackupJobs({
+  Future<List<BackupJob>> crateApiPvePveSessionBackupJobs({
     required PveSession that,
     required PveGuestRef guest,
   }) {
@@ -2627,7 +2649,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           );
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
+          decodeSuccessData: sse_decode_list_backup_job,
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiPvePveSessionBackupJobsConstMeta,
@@ -2644,7 +2666,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<String> crateApiPvePveSessionBackupStorages({
+  Future<List<ResourcePool>> crateApiPvePveSessionBackupStorages({
     required PveSession that,
     required String node,
   }) {
@@ -2665,7 +2687,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           );
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
+          decodeSuccessData: sse_decode_list_resource_pool,
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiPvePveSessionBackupStoragesConstMeta,
@@ -2682,7 +2704,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<String> crateApiPvePveSessionBackups({
+  Future<List<Backup>> crateApiPvePveSessionBackups({
     required PveSession that,
     required PveGuestRef guest,
   }) {
@@ -2703,7 +2725,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           );
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
+          decodeSuccessData: sse_decode_list_backup,
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiPvePveSessionBackupsConstMeta,
@@ -2720,11 +2742,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<String> crateApiPvePveSessionChangeHardware({
+  Future<Outcome> crateApiPvePveSessionChangeHardware({
     required PveSession that,
     required PveGuestRef guest,
     String? revision,
-    required String changeJson,
+    required HwChange change,
   }) {
     return handler.executeNormal(
       NormalTask(
@@ -2736,7 +2758,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           );
           sse_encode_box_autoadd_pve_guest_ref(guest, serializer);
           sse_encode_opt_String(revision, serializer);
-          sse_encode_String(changeJson, serializer);
+          sse_encode_box_autoadd_hw_change(change, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -2745,11 +2767,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           );
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
+          decodeSuccessData: sse_decode_outcome,
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiPvePveSessionChangeHardwareConstMeta,
-        argValues: [that, guest, revision, changeJson],
+        argValues: [that, guest, revision, change],
         apiImpl: this,
       ),
     );
@@ -2758,11 +2780,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiPvePveSessionChangeHardwareConstMeta =>
       const TaskConstMeta(
         debugName: 'PveSession_change_hardware',
-        argNames: ['that', 'guest', 'revision', 'changeJson'],
+        argNames: ['that', 'guest', 'revision', 'change'],
       );
 
   @override
-  Future<String> crateApiPvePveSessionCheckSchedule({
+  Future<ScheduleCheck> crateApiPvePveSessionCheckSchedule({
     required PveSession that,
     required String schedule,
   }) {
@@ -2783,7 +2805,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           );
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
+          decodeSuccessData: sse_decode_schedule_check,
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiPvePveSessionCheckScheduleConstMeta,
@@ -2803,7 +2825,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Future<String> crateApiPvePveSessionCloneGuest({
     required PveSession that,
     required PveGuestRef guest,
-    required String requestJson,
+    required CloneRequest request,
   }) {
     return handler.executeNormal(
       NormalTask(
@@ -2814,7 +2836,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             serializer,
           );
           sse_encode_box_autoadd_pve_guest_ref(guest, serializer);
-          sse_encode_String(requestJson, serializer);
+          sse_encode_box_autoadd_clone_request(request, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -2827,7 +2849,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiPvePveSessionCloneGuestConstMeta,
-        argValues: [that, guest, requestJson],
+        argValues: [that, guest, request],
         apiImpl: this,
       ),
     );
@@ -2836,7 +2858,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiPvePveSessionCloneGuestConstMeta =>
       const TaskConstMeta(
         debugName: 'PveSession_clone_guest',
-        argNames: ['that', 'guest', 'requestJson'],
+        argNames: ['that', 'guest', 'request'],
       );
 
   @override
@@ -2866,7 +2888,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: 'PveSession_close', argNames: ['that']);
 
   @override
-  Future<String> crateApiPvePveSessionCloudInit({
+  Future<CloudInitState> crateApiPvePveSessionCloudInit({
     required PveSession that,
     required PveGuestRef guest,
   }) {
@@ -2887,7 +2909,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           );
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
+          decodeSuccessData: sse_decode_cloud_init_state,
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiPvePveSessionCloudInitConstMeta,
@@ -2977,9 +2999,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<String> crateApiPvePveSessionCreate({
+  Future<Created> crateApiPvePveSessionCreate({
     required PveSession that,
-    required String specJson,
+    required CreateSpec spec,
   }) {
     return handler.executeNormal(
       NormalTask(
@@ -2989,7 +3011,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that,
             serializer,
           );
-          sse_encode_String(specJson, serializer);
+          sse_encode_box_autoadd_create_spec(spec, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -2998,11 +3020,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           );
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
+          decodeSuccessData: sse_decode_created,
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiPvePveSessionCreateConstMeta,
-        argValues: [that, specJson],
+        argValues: [that, spec],
         apiImpl: this,
       ),
     );
@@ -3011,11 +3033,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiPvePveSessionCreateConstMeta =>
       const TaskConstMeta(
         debugName: 'PveSession_create',
-        argNames: ['that', 'specJson'],
+        argNames: ['that', 'spec'],
       );
 
   @override
-  String crateApiPvePveSessionCreateOptions({required PveSession that}) {
+  CreateOptions crateApiPvePveSessionCreateOptions({required PveSession that}) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
@@ -3027,8 +3049,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 31)!;
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
-          decodeErrorData: sse_decode_pve_error,
+          decodeSuccessData: sse_decode_create_options,
+          decodeErrorData: null,
         ),
         constMeta: kCrateApiPvePveSessionCreateOptionsConstMeta,
         argValues: [that],
@@ -3128,7 +3150,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @override
   Future<void> crateApiPvePveSessionDeleteBackup({
     required PveSession that,
-    required String backupJson,
+    required Backup backup,
   }) {
     return handler.executeNormal(
       NormalTask(
@@ -3138,7 +3160,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that,
             serializer,
           );
-          sse_encode_String(backupJson, serializer);
+          sse_encode_box_autoadd_backup(backup, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -3151,7 +3173,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiPvePveSessionDeleteBackupConstMeta,
-        argValues: [that, backupJson],
+        argValues: [that, backup],
         apiImpl: this,
       ),
     );
@@ -3160,7 +3182,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiPvePveSessionDeleteBackupConstMeta =>
       const TaskConstMeta(
         debugName: 'PveSession_delete_backup',
-        argNames: ['that', 'backupJson'],
+        argNames: ['that', 'backup'],
       );
 
   @override
@@ -3204,7 +3226,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<String> crateApiPvePveSessionDetail({
+  Future<VirtGuestDetailReport> crateApiPvePveSessionDetail({
     required PveSession that,
     required PveGuestRef guest,
   }) {
@@ -3225,7 +3247,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           );
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
+          decodeSuccessData: sse_decode_virt_guest_detail_report,
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiPvePveSessionDetailConstMeta,
@@ -3244,8 +3266,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @override
   Future<void> crateApiPvePveSessionEditBackup({
     required PveSession that,
-    required String backupJson,
-    required String editJson,
+    required Backup backup,
+    required BackupEdit edit,
   }) {
     return handler.executeNormal(
       NormalTask(
@@ -3255,8 +3277,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that,
             serializer,
           );
-          sse_encode_String(backupJson, serializer);
-          sse_encode_String(editJson, serializer);
+          sse_encode_box_autoadd_backup(backup, serializer);
+          sse_encode_box_autoadd_backup_edit(edit, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -3269,7 +3291,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiPvePveSessionEditBackupConstMeta,
-        argValues: [that, backupJson, editJson],
+        argValues: [that, backup, edit],
         apiImpl: this,
       ),
     );
@@ -3278,13 +3300,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiPvePveSessionEditBackupConstMeta =>
       const TaskConstMeta(
         debugName: 'PveSession_edit_backup',
-        argNames: ['that', 'backupJson', 'editJson'],
+        argNames: ['that', 'backup', 'edit'],
       );
 
   @override
   Future<void> crateApiPvePveSessionEditBackupJob({
     required PveSession that,
-    required String editJson,
+    required BackupJobEdit edit,
     required bool remove,
   }) {
     return handler.executeNormal(
@@ -3295,7 +3317,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that,
             serializer,
           );
-          sse_encode_String(editJson, serializer);
+          sse_encode_box_autoadd_backup_job_edit(edit, serializer);
           sse_encode_bool(remove, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
@@ -3309,7 +3331,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiPvePveSessionEditBackupJobConstMeta,
-        argValues: [that, editJson, remove],
+        argValues: [that, edit, remove],
         apiImpl: this,
       ),
     );
@@ -3318,11 +3340,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiPvePveSessionEditBackupJobConstMeta =>
       const TaskConstMeta(
         debugName: 'PveSession_edit_backup_job',
-        argNames: ['that', 'editJson', 'remove'],
+        argNames: ['that', 'edit', 'remove'],
       );
 
   @override
-  Future<String> crateApiPvePveSessionHardware({
+  Future<Hardware> crateApiPvePveSessionHardware({
     required PveSession that,
     required PveGuestRef guest,
   }) {
@@ -3343,7 +3365,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           );
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
+          decodeSuccessData: sse_decode_hardware,
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiPvePveSessionHardwareConstMeta,
@@ -3360,7 +3382,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<String> crateApiPvePveSessionHistory({
+  Future<List<Stats>> crateApiPvePveSessionHistory({
     required PveSession that,
     required PveGuestRef guest,
     required PveHistoryWindow window,
@@ -3383,7 +3405,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           );
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
+          decodeSuccessData: sse_decode_list_stats,
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiPvePveSessionHistoryConstMeta,
@@ -3400,7 +3422,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<String> crateApiPvePveSessionHostDevices({
+  Future<HostDevices> crateApiPvePveSessionHostDevices({
     required PveSession that,
     required PveGuestRef guest,
   }) {
@@ -3421,7 +3443,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           );
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
+          decodeSuccessData: sse_decode_host_devices,
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiPvePveSessionHostDevicesConstMeta,
@@ -3438,7 +3460,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<String> crateApiPvePveSessionLoad({required PveSession that}) {
+  Future<VirtHostReport> crateApiPvePveSessionLoad({required PveSession that}) {
     return handler.executeNormal(
       NormalTask(
         callFfi: (port_) {
@@ -3455,7 +3477,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           );
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
+          decodeSuccessData: sse_decode_virt_host_report,
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiPvePveSessionLoadConstMeta,
@@ -3509,7 +3531,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @override
   Future<void> crateApiPvePveSessionManage({
     required PveSession that,
-    required String changeJson,
+    required ResourceChange change,
     String? live,
   }) {
     return handler.executeNormal(
@@ -3520,7 +3542,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that,
             serializer,
           );
-          sse_encode_String(changeJson, serializer);
+          sse_encode_box_autoadd_resource_change(change, serializer);
           sse_encode_opt_String(live, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
@@ -3534,7 +3556,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiPvePveSessionManageConstMeta,
-        argValues: [that, changeJson, live],
+        argValues: [that, change, live],
         apiImpl: this,
       ),
     );
@@ -3543,11 +3565,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiPvePveSessionManageConstMeta =>
       const TaskConstMeta(
         debugName: 'PveSession_manage',
-        argNames: ['that', 'changeJson', 'live'],
+        argNames: ['that', 'change', 'live'],
       );
 
   @override
-  Future<String> crateApiPvePveSessionNetworkChanges({
+  Future<List<NetworkChanges>> crateApiPvePveSessionNetworkChanges({
     required PveSession that,
   }) {
     return handler.executeNormal(
@@ -3566,7 +3588,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           );
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
+          decodeSuccessData: sse_decode_list_network_changes,
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiPvePveSessionNetworkChangesConstMeta,
@@ -3583,7 +3605,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<String> crateApiPvePveSessionNetworks({
+  Future<List<Network>> crateApiPvePveSessionNetworks({
     required PveSession that,
     String? live,
   }) {
@@ -3604,7 +3626,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           );
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
+          decodeSuccessData: sse_decode_list_network,
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiPvePveSessionNetworksConstMeta,
@@ -4021,7 +4043,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Future<void> crateApiPvePveSessionSetCloudInit({
     required PveSession that,
     required PveGuestRef guest,
-    required String editJson,
+    required CloudInitEdit edit,
   }) {
     return handler.executeNormal(
       NormalTask(
@@ -4032,7 +4054,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             serializer,
           );
           sse_encode_box_autoadd_pve_guest_ref(guest, serializer);
-          sse_encode_String(editJson, serializer);
+          sse_encode_box_autoadd_cloud_init_edit(edit, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -4045,7 +4067,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiPvePveSessionSetCloudInitConstMeta,
-        argValues: [that, guest, editJson],
+        argValues: [that, guest, edit],
         apiImpl: this,
       ),
     );
@@ -4054,7 +4076,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiPvePveSessionSetCloudInitConstMeta =>
       const TaskConstMeta(
         debugName: 'PveSession_set_cloud_init',
-        argNames: ['that', 'guest', 'editJson'],
+        argNames: ['that', 'guest', 'edit'],
       );
 
   @override
@@ -4093,7 +4115,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<String> crateApiPvePveSessionSnapshotDiff({
+  Future<List<Diff>> crateApiPvePveSessionSnapshotDiff({
     required PveSession that,
     required PveGuestRef guest,
     required String name,
@@ -4116,7 +4138,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           );
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
+          decodeSuccessData: sse_decode_list_diff,
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiPvePveSessionSnapshotDiffConstMeta,
@@ -4209,7 +4231,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<String> crateApiPvePveSessionSnapshots({
+  Future<List<Snapshot>> crateApiPvePveSessionSnapshots({
     required PveSession that,
     required PveGuestRef guest,
   }) {
@@ -4230,7 +4252,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           );
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
+          decodeSuccessData: sse_decode_list_snapshot,
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiPvePveSessionSnapshotsConstMeta,
@@ -4247,7 +4269,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<String> crateApiPvePveSessionStoragePools({required PveSession that}) {
+  Future<List<ResourcePool>> crateApiPvePveSessionStoragePools({
+    required PveSession that,
+  }) {
     return handler.executeNormal(
       NormalTask(
         callFfi: (port_) {
@@ -4264,7 +4288,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           );
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
+          decodeSuccessData: sse_decode_list_resource_pool,
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiPvePveSessionStoragePoolsConstMeta,
@@ -4352,9 +4376,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<String> crateApiPvePveSessionVolumes({
+  Future<List<Volume>> crateApiPvePveSessionVolumes({
     required PveSession that,
-    required String poolJson,
+    required ResourcePool pool,
   }) {
     return handler.executeNormal(
       NormalTask(
@@ -4364,7 +4388,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that,
             serializer,
           );
-          sse_encode_String(poolJson, serializer);
+          sse_encode_box_autoadd_resource_pool(pool, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -4373,11 +4397,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           );
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
+          decodeSuccessData: sse_decode_list_volume,
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiPvePveSessionVolumesConstMeta,
-        argValues: [that, poolJson],
+        argValues: [that, pool],
         apiImpl: this,
       ),
     );
@@ -4386,7 +4410,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiPvePveSessionVolumesConstMeta =>
       const TaskConstMeta(
         debugName: 'PveSession_volumes',
-        argNames: ['that', 'poolJson'],
+        argNames: ['that', 'pool'],
       );
 
   @override
@@ -9868,256 +9892,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<String> crateApiVirtParseVirtCreateHostJson({required String raw}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(raw, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 241,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
-          decodeErrorData: sse_decode_virt_ffi_error,
-        ),
-        constMeta: kCrateApiVirtParseVirtCreateHostJsonConstMeta,
-        argValues: [raw],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiVirtParseVirtCreateHostJsonConstMeta =>
-      const TaskConstMeta(
-        debugName: 'parse_virt_create_host_json',
-        argNames: ['raw'],
-      );
-
-  @override
-  Future<String> crateApiVirtParseVirtCreateJson({required String raw}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(raw, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 242,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
-          decodeErrorData: sse_decode_virt_ffi_error,
-        ),
-        constMeta: kCrateApiVirtParseVirtCreateJsonConstMeta,
-        argValues: [raw],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiVirtParseVirtCreateJsonConstMeta =>
-      const TaskConstMeta(
-        debugName: 'parse_virt_create_json',
-        argNames: ['raw'],
-      );
-
-  @override
-  Future<String> crateApiVirtParseVirtCreateVolumesJson({required String raw}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(raw, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 243,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
-          decodeErrorData: sse_decode_virt_ffi_error,
-        ),
-        constMeta: kCrateApiVirtParseVirtCreateVolumesJsonConstMeta,
-        argValues: [raw],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiVirtParseVirtCreateVolumesJsonConstMeta =>
-      const TaskConstMeta(
-        debugName: 'parse_virt_create_volumes_json',
-        argNames: ['raw'],
-      );
-
-  @override
-  Future<String> crateApiVirtParseVirtDomainDetailJson({required String raw}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(raw, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 244,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
-          decodeErrorData: sse_decode_virt_ffi_error,
-        ),
-        constMeta: kCrateApiVirtParseVirtDomainDetailJsonConstMeta,
-        argValues: [raw],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiVirtParseVirtDomainDetailJsonConstMeta =>
-      const TaskConstMeta(
-        debugName: 'parse_virt_domain_detail_json',
-        argNames: ['raw'],
-      );
-
-  @override
-  Future<String> crateApiVirtParseVirtFirmwareJson({required String raw}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(raw, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 245,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
-          decodeErrorData: sse_decode_virt_ffi_error,
-        ),
-        constMeta: kCrateApiVirtParseVirtFirmwareJsonConstMeta,
-        argValues: [raw],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiVirtParseVirtFirmwareJsonConstMeta =>
-      const TaskConstMeta(
-        debugName: 'parse_virt_firmware_json',
-        argNames: ['raw'],
-      );
-
-  @override
-  Future<String> crateApiVirtParseVirtHardwareChangeJson({
-    required String raw,
-  }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(raw, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 246,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
-          decodeErrorData: sse_decode_virt_ffi_error,
-        ),
-        constMeta: kCrateApiVirtParseVirtHardwareChangeJsonConstMeta,
-        argValues: [raw],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiVirtParseVirtHardwareChangeJsonConstMeta =>
-      const TaskConstMeta(
-        debugName: 'parse_virt_hardware_change_json',
-        argNames: ['raw'],
-      );
-
-  @override
-  Future<String> crateApiVirtParseVirtHardwareJson({required String raw}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(raw, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 247,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
-          decodeErrorData: sse_decode_virt_ffi_error,
-        ),
-        constMeta: kCrateApiVirtParseVirtHardwareJsonConstMeta,
-        argValues: [raw],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiVirtParseVirtHardwareJsonConstMeta =>
-      const TaskConstMeta(
-        debugName: 'parse_virt_hardware_json',
-        argNames: ['raw'],
-      );
-
-  @override
-  Future<String> crateApiVirtParseVirtHostDevicesJson({required String raw}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(raw, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 248,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
-          decodeErrorData: sse_decode_virt_ffi_error,
-        ),
-        constMeta: kCrateApiVirtParseVirtHostDevicesJsonConstMeta,
-        argValues: [raw],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiVirtParseVirtHostDevicesJsonConstMeta =>
-      const TaskConstMeta(
-        debugName: 'parse_virt_host_devices_json',
-        argNames: ['raw'],
-      );
-
-  @override
   Future<void> crateApiVirtParseVirtNetChange({required String raw}) {
     return handler.executeNormal(
       NormalTask(
@@ -10127,7 +9901,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 249,
+            funcId: 241,
             port: port_,
           );
         },
@@ -10149,37 +9923,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<String> crateApiVirtParseVirtOverviewJson({required String raw}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(raw, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 250,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
-          decodeErrorData: sse_decode_virt_ffi_error,
-        ),
-        constMeta: kCrateApiVirtParseVirtOverviewJsonConstMeta,
-        argValues: [raw],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiVirtParseVirtOverviewJsonConstMeta =>
-      const TaskConstMeta(
-        debugName: 'parse_virt_overview_json',
-        argNames: ['raw'],
-      );
-
-  @override
   List<String>? crateApiVirtParseVirtPoolTypes({required String raw}) {
     return handler.executeSync(
       SyncTask(
@@ -10189,7 +9932,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 251,
+            funcId: 242,
           )!;
         },
         codec: SseCodec(
@@ -10210,37 +9953,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<String> crateApiVirtParseVirtProbeJson({required String raw}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(raw, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 252,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
-          decodeErrorData: sse_decode_virt_ffi_error,
-        ),
-        constMeta: kCrateApiVirtParseVirtProbeJsonConstMeta,
-        argValues: [raw],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiVirtParseVirtProbeJsonConstMeta =>
-      const TaskConstMeta(
-        debugName: 'parse_virt_probe_json',
-        argNames: ['raw'],
-      );
-
-  @override
   void crateApiVirtParseVirtResource({required String raw}) {
     return handler.executeSync(
       SyncTask(
@@ -10250,7 +9962,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 253,
+            funcId: 243,
           )!;
         },
         codec: SseCodec(
@@ -10268,37 +9980,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: 'parse_virt_resource', argNames: ['raw']);
 
   @override
-  Future<String> crateApiVirtParseVirtSeedReadJson({required String raw}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(raw, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 254,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
-          decodeErrorData: sse_decode_virt_ffi_error,
-        ),
-        constMeta: kCrateApiVirtParseVirtSeedReadJsonConstMeta,
-        argValues: [raw],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiVirtParseVirtSeedReadJsonConstMeta =>
-      const TaskConstMeta(
-        debugName: 'parse_virt_seed_read_json',
-        argNames: ['raw'],
-      );
-
-  @override
   void crateApiVirtParseVirtSeedUpdate({required String raw}) {
     return handler.executeSync(
       SyncTask(
@@ -10308,7 +9989,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 255,
+            funcId: 244,
           )!;
         },
         codec: SseCodec(
@@ -10329,37 +10010,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<String> crateApiVirtParseVirtSnapChainJson({required String raw}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(raw, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 256,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
-          decodeErrorData: sse_decode_virt_ffi_error,
-        ),
-        constMeta: kCrateApiVirtParseVirtSnapChainJsonConstMeta,
-        argValues: [raw],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiVirtParseVirtSnapChainJsonConstMeta =>
-      const TaskConstMeta(
-        debugName: 'parse_virt_snap_chain_json',
-        argNames: ['raw'],
-      );
-
-  @override
   Future<List<String>> crateApiVirtParseVirtSnapDeleteLeftovers({
     required String raw,
   }) {
@@ -10371,7 +10021,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 257,
+            funcId: 245,
             port: port_,
           );
         },
@@ -10404,7 +10054,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 258,
+            funcId: 246,
             port: port_,
           );
         },
@@ -10426,37 +10076,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<String> crateApiVirtParseVirtSnapDiffJson({required String raw}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(raw, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 259,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
-          decodeErrorData: sse_decode_virt_ffi_error,
-        ),
-        constMeta: kCrateApiVirtParseVirtSnapDiffJsonConstMeta,
-        argValues: [raw],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiVirtParseVirtSnapDiffJsonConstMeta =>
-      const TaskConstMeta(
-        debugName: 'parse_virt_snap_diff_json',
-        argNames: ['raw'],
-      );
-
-  @override
   Future<String?> crateApiVirtParseVirtSnapRevertRefusal({
     required String raw,
   }) {
@@ -10468,7 +10087,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 260,
+            funcId: 247,
             port: port_,
           );
         },
@@ -10499,7 +10118,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 261,
+            funcId: 248,
             port: port_,
           );
         },
@@ -10521,68 +10140,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<String> crateApiVirtParseVirtSnapshotsJson({required String raw}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(raw, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 262,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
-          decodeErrorData: sse_decode_virt_ffi_error,
-        ),
-        constMeta: kCrateApiVirtParseVirtSnapshotsJsonConstMeta,
-        argValues: [raw],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiVirtParseVirtSnapshotsJsonConstMeta =>
-      const TaskConstMeta(
-        debugName: 'parse_virt_snapshots_json',
-        argNames: ['raw'],
-      );
-
-  @override
-  Future<String> crateApiVirtParseVirtStorageJson({required String raw}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(raw, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 263,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
-          decodeErrorData: sse_decode_virt_ffi_error,
-        ),
-        constMeta: kCrateApiVirtParseVirtStorageJsonConstMeta,
-        argValues: [raw],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiVirtParseVirtStorageJsonConstMeta =>
-      const TaskConstMeta(
-        debugName: 'parse_virt_storage_json',
-        argNames: ['raw'],
-      );
-
-  @override
   void crateApiVirtParseVirtUndefine({required String raw}) {
     return handler.executeSync(
       SyncTask(
@@ -10592,7 +10149,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 264,
+            funcId: 249,
           )!;
         },
         codec: SseCodec(
@@ -10610,37 +10167,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: 'parse_virt_undefine', argNames: ['raw']);
 
   @override
-  Future<String> crateApiVirtParseVirtVncConsoleJson({required String raw}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(raw, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 265,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
-          decodeErrorData: sse_decode_virt_ffi_error,
-        ),
-        constMeta: kCrateApiVirtParseVirtVncConsoleJsonConstMeta,
-        argValues: [raw],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiVirtParseVirtVncConsoleJsonConstMeta =>
-      const TaskConstMeta(
-        debugName: 'parse_virt_vnc_console_json',
-        argNames: ['raw'],
-      );
-
-  @override
   bool crateApiVirtParseVirtVolUpload({required String raw}) {
     return handler.executeSync(
       SyncTask(
@@ -10650,7 +10176,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 266,
+            funcId: 250,
           )!;
         },
         codec: SseCodec(
@@ -10688,7 +10214,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 267,
+            funcId: 251,
           )!;
         },
         codec: SseCodec(
@@ -10718,7 +10244,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 268,
+            funcId: 252,
           )!;
         },
         codec: SseCodec(
@@ -10753,7 +10279,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 269,
+            funcId: 253,
             port: port_,
           );
         },
@@ -10795,7 +10321,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 270,
+            funcId: 254,
             port: port_,
           );
         },
@@ -10832,7 +10358,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 271,
+            funcId: 255,
           )!;
         },
         codec: SseCodec(
@@ -10866,7 +10392,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 272,
+            funcId: 256,
           )!;
         },
         codec: SseCodec(
@@ -10900,7 +10426,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 273,
+            funcId: 257,
           )!;
         },
         codec: SseCodec(
@@ -10936,7 +10462,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 274,
+            funcId: 258,
           )!;
         },
         codec: SseCodec(
@@ -10970,7 +10496,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 275,
+            funcId: 259,
           )!;
         },
         codec: SseCodec(
@@ -10999,7 +10525,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 276,
+            funcId: 260,
           )!;
         },
         codec: SseCodec(
@@ -11028,7 +10554,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 277,
+            funcId: 261,
           )!;
         },
         codec: SseCodec(
@@ -11062,7 +10588,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 278,
+            funcId: 262,
           )!;
         },
         codec: SseCodec(
@@ -11092,7 +10618,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 279,
+            funcId: 263,
           )!;
         },
         codec: SseCodec(
@@ -11126,7 +10652,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 280,
+            funcId: 264,
           )!;
         },
         codec: SseCodec(
@@ -11162,7 +10688,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 281,
+            funcId: 265,
             port: port_,
           );
         },
@@ -11193,7 +10719,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 282,
+            funcId: 266,
           )!;
         },
         codec: SseCodec(
@@ -11228,7 +10754,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 283,
+            funcId: 267,
           )!;
         },
         codec: SseCodec(
@@ -11264,7 +10790,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 284,
+            funcId: 268,
           )!;
         },
         codec: SseCodec(
@@ -11300,7 +10826,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 285,
+            funcId: 269,
           )!;
         },
         codec: SseCodec(
@@ -11334,7 +10860,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 286,
+            funcId: 270,
           )!;
         },
         codec: SseCodec(
@@ -11363,7 +10889,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 287,
+            funcId: 271,
           )!;
         },
         codec: SseCodec(
@@ -11389,7 +10915,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 288,
+            funcId: 272,
           )!;
         },
         codec: SseCodec(
@@ -11415,7 +10941,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 289,
+            funcId: 273,
           )!;
         },
         codec: SseCodec(
@@ -11442,7 +10968,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 290,
+            funcId: 274,
           )!;
         },
         codec: SseCodec(
@@ -11472,7 +10998,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 291,
+            funcId: 275,
           )!;
         },
         codec: SseCodec(
@@ -11502,7 +11028,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 292,
+            funcId: 276,
             port: port_,
           );
         },
@@ -11532,7 +11058,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 293,
+            funcId: 277,
             port: port_,
           );
         },
@@ -11562,7 +11088,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 294,
+            funcId: 278,
           )!;
         },
         codec: SseCodec(
@@ -11593,7 +11119,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 295,
+            funcId: 279,
           )!;
         },
         codec: SseCodec(
@@ -11623,7 +11149,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 296,
+            funcId: 280,
           )!;
         },
         codec: SseCodec(
@@ -11650,7 +11176,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 297,
+            funcId: 281,
           )!;
         },
         codec: SseCodec(
@@ -11681,7 +11207,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 298,
+            funcId: 282,
           )!;
         },
         codec: SseCodec(
@@ -11715,7 +11241,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 299,
+            funcId: 283,
           )!;
         },
         codec: SseCodec(
@@ -11743,7 +11269,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 300,
+            funcId: 284,
           )!;
         },
         codec: SseCodec(
@@ -11770,7 +11296,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 301,
+            funcId: 285,
           )!;
         },
         codec: SseCodec(
@@ -11800,7 +11326,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 302,
+            funcId: 286,
           )!;
         },
         codec: SseCodec(
@@ -11834,7 +11360,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 303,
+            funcId: 287,
           )!;
         },
         codec: SseCodec(
@@ -11868,7 +11394,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 304,
+            funcId: 288,
           )!;
         },
         codec: SseCodec(
@@ -11897,7 +11423,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 305,
+            funcId: 289,
           )!;
         },
         codec: SseCodec(
@@ -11926,7 +11452,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 306,
+            funcId: 290,
             port: port_,
           );
         },
@@ -11954,7 +11480,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 307,
+            funcId: 291,
             port: port_,
           );
         },
@@ -11981,7 +11507,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 308,
+            funcId: 292,
           )!;
         },
         codec: SseCodec(
@@ -12008,7 +11534,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 309,
+            funcId: 293,
           )!;
         },
         codec: SseCodec(
@@ -12038,7 +11564,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 310,
+            funcId: 294,
           )!;
         },
         codec: SseCodec(
@@ -12065,7 +11591,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 311,
+            funcId: 295,
           )!;
         },
         codec: SseCodec(
@@ -12091,7 +11617,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 312,
+            funcId: 296,
           )!;
         },
         codec: SseCodec(
@@ -12117,7 +11643,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 313,
+            funcId: 297,
           )!;
         },
         codec: SseCodec(
@@ -12148,7 +11674,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 314,
+            funcId: 298,
           )!;
         },
         codec: SseCodec(
@@ -12184,7 +11710,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 315,
+            funcId: 299,
           )!;
         },
         codec: SseCodec(
@@ -12213,7 +11739,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 316,
+            funcId: 300,
           )!;
         },
         codec: SseCodec(
@@ -12240,7 +11766,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 317,
+            funcId: 301,
           )!;
         },
         codec: SseCodec(
@@ -12274,7 +11800,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 318,
+            funcId: 302,
           )!;
         },
         codec: SseCodec(
@@ -12308,7 +11834,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 319,
+            funcId: 303,
           )!;
         },
         codec: SseCodec(
@@ -12342,7 +11868,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 320,
+            funcId: 304,
           )!;
         },
         codec: SseCodec(
@@ -12373,7 +11899,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 321,
+            funcId: 305,
           )!;
         },
         codec: SseCodec(
@@ -12403,7 +11929,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 322,
+            funcId: 306,
           )!;
         },
         codec: SseCodec(
@@ -12433,7 +11959,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 323,
+            funcId: 307,
           )!;
         },
         codec: SseCodec(
@@ -12463,7 +11989,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 324,
+            funcId: 308,
           )!;
         },
         codec: SseCodec(
@@ -12490,7 +12016,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 325,
+            funcId: 309,
           )!;
         },
         codec: SseCodec(
@@ -12523,7 +12049,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 326,
+            funcId: 310,
           )!;
         },
         codec: SseCodec(
@@ -12551,7 +12077,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 327,
+            funcId: 311,
           )!;
         },
         codec: SseCodec(
@@ -12580,7 +12106,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 328,
+            funcId: 312,
           )!;
         },
         codec: SseCodec(
@@ -12607,7 +12133,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 329,
+            funcId: 313,
           )!;
         },
         codec: SseCodec(
@@ -12634,7 +12160,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 330,
+            funcId: 314,
           )!;
         },
         codec: SseCodec(
@@ -12668,7 +12194,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 331,
+            funcId: 315,
           )!;
         },
         codec: SseCodec(
@@ -12702,7 +12228,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 332,
+            funcId: 316,
           )!;
         },
         codec: SseCodec(
@@ -12732,7 +12258,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 333,
+            funcId: 317,
           )!;
         },
         codec: SseCodec(
@@ -12763,7 +12289,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 334,
+            funcId: 318,
           )!;
         },
         codec: SseCodec(
@@ -12792,7 +12318,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 335,
+            funcId: 319,
           )!;
         },
         codec: SseCodec(
@@ -12819,7 +12345,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 336,
+            funcId: 320,
           )!;
         },
         codec: SseCodec(
@@ -12853,7 +12379,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 337,
+            funcId: 321,
             port: port_,
           );
         },
@@ -12884,7 +12410,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 338,
+            funcId: 322,
             port: port_,
           );
         },
@@ -12912,7 +12438,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 339,
+            funcId: 323,
           )!;
         },
         codec: SseCodec(
@@ -12939,7 +12465,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 340,
+            funcId: 324,
           )!;
         },
         codec: SseCodec(
@@ -12973,7 +12499,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 341,
+            funcId: 325,
           )!;
         },
         codec: SseCodec(
@@ -12995,27 +12521,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @override
   bool crateApiBackupVirtBackupJobTakesOnly({
-    required String jobJson,
+    required BackupJob job,
     int? vmid,
   }) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(jobJson, serializer);
+          sse_encode_box_autoadd_backup_job(job, serializer);
           sse_encode_opt_box_autoadd_u_32(vmid, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 342,
+            funcId: 326,
           )!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
-          decodeErrorData: sse_decode_pve_error,
+          decodeErrorData: null,
         ),
         constMeta: kCrateApiBackupVirtBackupJobTakesOnlyConstMeta,
-        argValues: [jobJson, vmid],
+        argValues: [job, vmid],
         apiImpl: this,
       ),
     );
@@ -13024,14 +12550,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiBackupVirtBackupJobTakesOnlyConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_backup_job_takes_only',
-        argNames: ['jobJson', 'vmid'],
+        argNames: ['job', 'vmid'],
       );
 
   @override
   String crateApiVirtVirtCloneDefineScript({
     required String baseXml,
     required String name,
-    required String disksJson,
+    required List<(String, String)> disks,
   }) {
     return handler.executeSync(
       SyncTask(
@@ -13039,11 +12565,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(baseXml, serializer);
           sse_encode_String(name, serializer);
-          sse_encode_String(disksJson, serializer);
+          sse_encode_list_record_string_string(disks, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 343,
+            funcId: 327,
           )!;
         },
         codec: SseCodec(
@@ -13051,7 +12577,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_virt_ffi_error,
         ),
         constMeta: kCrateApiVirtVirtCloneDefineScriptConstMeta,
-        argValues: [baseXml, name, disksJson],
+        argValues: [baseXml, name, disks],
         apiImpl: this,
       ),
     );
@@ -13060,12 +12586,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiVirtVirtCloneDefineScriptConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_clone_define_script',
-        argNames: ['baseXml', 'name', 'disksJson'],
+        argNames: ['baseXml', 'name', 'disks'],
       );
 
   @override
-  String? crateApiCreateVirtCloneNodeIssue({
-    required String nodesJson,
+  CreateIssue? crateApiCreateVirtCloneNodeIssue({
+    required List<Node> nodes,
     String? targetNode,
     String? sourceNode,
   }) {
@@ -13073,21 +12599,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(nodesJson, serializer);
+          sse_encode_list_node(nodes, serializer);
           sse_encode_opt_String(targetNode, serializer);
           sse_encode_opt_String(sourceNode, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 344,
+            funcId: 328,
           )!;
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_opt_String,
-          decodeErrorData: sse_decode_pve_error,
+          decodeSuccessData: sse_decode_opt_box_autoadd_create_issue,
+          decodeErrorData: null,
         ),
         constMeta: kCrateApiCreateVirtCloneNodeIssueConstMeta,
-        argValues: [nodesJson, targetNode, sourceNode],
+        argValues: [nodes, targetNode, sourceNode],
         apiImpl: this,
       ),
     );
@@ -13096,12 +12622,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiCreateVirtCloneNodeIssueConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_clone_node_issue',
-        argNames: ['nodesJson', 'targetNode', 'sourceNode'],
+        argNames: ['nodes', 'targetNode', 'sourceNode'],
       );
 
   @override
-  String? crateApiCreateVirtCloneStorageIssue({
-    required String storagesJson,
+  CreateIssue? crateApiCreateVirtCloneStorageIssue({
+    required List<ResourcePool> storages,
     String? storage,
     required bool full,
     required bool lxc,
@@ -13111,7 +12637,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(storagesJson, serializer);
+          sse_encode_list_resource_pool(storages, serializer);
           sse_encode_opt_String(storage, serializer);
           sse_encode_bool(full, serializer);
           sse_encode_bool(lxc, serializer);
@@ -13119,15 +12645,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 345,
+            funcId: 329,
           )!;
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_opt_String,
-          decodeErrorData: sse_decode_pve_error,
+          decodeSuccessData: sse_decode_opt_box_autoadd_create_issue,
+          decodeErrorData: null,
         ),
         constMeta: kCrateApiCreateVirtCloneStorageIssueConstMeta,
-        argValues: [storagesJson, storage, full, lxc, targetNode],
+        argValues: [storages, storage, full, lxc, targetNode],
         apiImpl: this,
       ),
     );
@@ -13136,20 +12662,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiCreateVirtCloneStorageIssueConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_clone_storage_issue',
-        argNames: ['storagesJson', 'storage', 'full', 'lxc', 'targetNode'],
+        argNames: ['storages', 'storage', 'full', 'lxc', 'targetNode'],
       );
 
   @override
-  String crateApiVirtVirtCloneVolumesScript({required String specJson}) {
+  String crateApiVirtVirtCloneVolumesScript({required VirtCloneSpec spec}) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(specJson, serializer);
+          sse_encode_box_autoadd_virt_clone_spec(spec, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 346,
+            funcId: 330,
           )!;
         },
         codec: SseCodec(
@@ -13157,7 +12683,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_virt_ffi_error,
         ),
         constMeta: kCrateApiVirtVirtCloneVolumesScriptConstMeta,
-        argValues: [specJson],
+        argValues: [spec],
         apiImpl: this,
       ),
     );
@@ -13166,12 +12692,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiVirtVirtCloneVolumesScriptConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_clone_volumes_script',
-        argNames: ['specJson'],
+        argNames: ['spec'],
       );
 
   @override
-  String? crateApiCreateVirtCloudInitIssue({
-    required String ciJson,
+  CreateIssue? crateApiCreateVirtCloudInitIssue({
+    required CloudInit ci,
     required bool pve,
     required bool keepsPassword,
   }) {
@@ -13179,21 +12705,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(ciJson, serializer);
+          sse_encode_box_autoadd_cloud_init(ci, serializer);
           sse_encode_bool(pve, serializer);
           sse_encode_bool(keepsPassword, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 347,
+            funcId: 331,
           )!;
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_opt_String,
-          decodeErrorData: sse_decode_pve_error,
+          decodeSuccessData: sse_decode_opt_box_autoadd_create_issue,
+          decodeErrorData: null,
         ),
         constMeta: kCrateApiCreateVirtCloudInitIssueConstMeta,
-        argValues: [ciJson, pve, keepsPassword],
+        argValues: [ci, pve, keepsPassword],
         apiImpl: this,
       ),
     );
@@ -13202,7 +12728,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiCreateVirtCloudInitIssueConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_cloud_init_issue',
-        argNames: ['ciJson', 'pve', 'keepsPassword'],
+        argNames: ['ci', 'pve', 'keepsPassword'],
       );
 
   @override
@@ -13215,7 +12741,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 348,
+            funcId: 332,
           )!;
         },
         codec: SseCodec(
@@ -13244,7 +12770,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 349,
+            funcId: 333,
           )!;
         },
         codec: SseCodec(
@@ -13262,51 +12788,51 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: 'virt_create_host_script', argNames: []);
 
   @override
-  String? crateApiCreateVirtCreateIssue({
-    required String specJson,
+  CreateIssue? crateApiCreateVirtCreateIssue({
+    required CreateSpec spec,
     required bool pve,
-    required String guestsJson,
-    required String nodesJson,
-    required String poolsJson,
-    required String networksJson,
-    String? mediaJson,
-    String? imageJson,
-    required String optionsJson,
+    required List<VirtGuestReport> guests,
+    required List<Node> nodes,
+    required List<ResourcePool> pools,
+    required List<Network> networks,
+    Volume? media,
+    Volume? image,
+    required CreateOptions options,
   }) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(specJson, serializer);
+          sse_encode_box_autoadd_create_spec(spec, serializer);
           sse_encode_bool(pve, serializer);
-          sse_encode_String(guestsJson, serializer);
-          sse_encode_String(nodesJson, serializer);
-          sse_encode_String(poolsJson, serializer);
-          sse_encode_String(networksJson, serializer);
-          sse_encode_opt_String(mediaJson, serializer);
-          sse_encode_opt_String(imageJson, serializer);
-          sse_encode_String(optionsJson, serializer);
+          sse_encode_list_virt_guest_report(guests, serializer);
+          sse_encode_list_node(nodes, serializer);
+          sse_encode_list_resource_pool(pools, serializer);
+          sse_encode_list_network(networks, serializer);
+          sse_encode_opt_box_autoadd_volume(media, serializer);
+          sse_encode_opt_box_autoadd_volume(image, serializer);
+          sse_encode_box_autoadd_create_options(options, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 350,
+            funcId: 334,
           )!;
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_opt_String,
-          decodeErrorData: sse_decode_pve_error,
+          decodeSuccessData: sse_decode_opt_box_autoadd_create_issue,
+          decodeErrorData: null,
         ),
         constMeta: kCrateApiCreateVirtCreateIssueConstMeta,
         argValues: [
-          specJson,
+          spec,
           pve,
-          guestsJson,
-          nodesJson,
-          poolsJson,
-          networksJson,
-          mediaJson,
-          imageJson,
-          optionsJson,
+          guests,
+          nodes,
+          pools,
+          networks,
+          media,
+          image,
+          options,
         ],
         apiImpl: this,
       ),
@@ -13317,21 +12843,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(
         debugName: 'virt_create_issue',
         argNames: [
-          'specJson',
+          'spec',
           'pve',
-          'guestsJson',
-          'nodesJson',
-          'poolsJson',
-          'networksJson',
-          'mediaJson',
-          'imageJson',
-          'optionsJson',
+          'guests',
+          'nodes',
+          'pools',
+          'networks',
+          'media',
+          'image',
+          'options',
         ],
       );
 
   @override
   List<String> crateApiCreateVirtCreateNetworks({
-    required String networksJson,
+    required List<Network> networks,
     required bool pve,
     String? node,
   }) {
@@ -13339,21 +12865,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(networksJson, serializer);
+          sse_encode_list_network(networks, serializer);
           sse_encode_bool(pve, serializer);
           sse_encode_opt_String(node, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 351,
+            funcId: 335,
           )!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_list_String,
-          decodeErrorData: sse_decode_pve_error,
+          decodeErrorData: null,
         ),
         constMeta: kCrateApiCreateVirtCreateNetworksConstMeta,
-        argValues: [networksJson, pve, node],
+        argValues: [networks, pve, node],
         apiImpl: this,
       ),
     );
@@ -13362,20 +12888,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiCreateVirtCreateNetworksConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_create_networks',
-        argNames: ['networksJson', 'pve', 'node'],
+        argNames: ['networks', 'pve', 'node'],
       );
 
   @override
-  String crateApiVirtVirtCreateVolumeScript({required String specJson}) {
+  String crateApiVirtVirtCreateVolumeScript({required VirtCreateSpec spec}) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(specJson, serializer);
+          sse_encode_box_autoadd_virt_create_spec(spec, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 352,
+            funcId: 336,
           )!;
         },
         codec: SseCodec(
@@ -13383,7 +12909,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_virt_ffi_error,
         ),
         constMeta: kCrateApiVirtVirtCreateVolumeScriptConstMeta,
-        argValues: [specJson],
+        argValues: [spec],
         apiImpl: this,
       ),
     );
@@ -13392,7 +12918,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiVirtVirtCreateVolumeScriptConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_create_volume_script',
-        argNames: ['specJson'],
+        argNames: ['spec'],
       );
 
   @override
@@ -13405,7 +12931,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 353,
+            funcId: 337,
           )!;
         },
         codec: SseCodec(
@@ -13426,16 +12952,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  String crateApiVirtVirtDefineScript({required String specJson}) {
+  String crateApiVirtVirtDefineScript({required VirtCreateSpec spec}) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(specJson, serializer);
+          sse_encode_box_autoadd_virt_create_spec(spec, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 354,
+            funcId: 338,
           )!;
         },
         codec: SseCodec(
@@ -13443,21 +12969,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_virt_ffi_error,
         ),
         constMeta: kCrateApiVirtVirtDefineScriptConstMeta,
-        argValues: [specJson],
+        argValues: [spec],
         apiImpl: this,
       ),
     );
   }
 
   TaskConstMeta get kCrateApiVirtVirtDefineScriptConstMeta =>
-      const TaskConstMeta(
-        debugName: 'virt_define_script',
-        argNames: ['specJson'],
-      );
+      const TaskConstMeta(debugName: 'virt_define_script', argNames: ['spec']);
 
   @override
   List<String> crateApiCreateVirtDiskStorages({
-    required String poolsJson,
+    required List<ResourcePool> pools,
     required bool pve,
     required bool lxc,
     String? node,
@@ -13466,22 +12989,22 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(poolsJson, serializer);
+          sse_encode_list_resource_pool(pools, serializer);
           sse_encode_bool(pve, serializer);
           sse_encode_bool(lxc, serializer);
           sse_encode_opt_String(node, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 355,
+            funcId: 339,
           )!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_list_String,
-          decodeErrorData: sse_decode_pve_error,
+          decodeErrorData: null,
         ),
         constMeta: kCrateApiCreateVirtDiskStoragesConstMeta,
-        argValues: [poolsJson, pve, lxc, node],
+        argValues: [pools, pve, lxc, node],
         apiImpl: this,
       ),
     );
@@ -13490,7 +13013,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiCreateVirtDiskStoragesConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_disk_storages',
-        argNames: ['poolsJson', 'pve', 'lxc', 'node'],
+        argNames: ['pools', 'pve', 'lxc', 'node'],
       );
 
   @override
@@ -13503,7 +13026,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 356,
+            funcId: 340,
           )!;
         },
         codec: SseCodec(
@@ -13524,36 +13047,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  String? crateApiVirtVirtExternalSnapshotRefusal({required String chainJson}) {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(chainJson, serializer);
-          return pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 357,
-          )!;
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_opt_String,
-          decodeErrorData: sse_decode_virt_ffi_error,
-        ),
-        constMeta: kCrateApiVirtVirtExternalSnapshotRefusalConstMeta,
-        argValues: [chainJson],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiVirtVirtExternalSnapshotRefusalConstMeta =>
-      const TaskConstMeta(
-        debugName: 'virt_external_snapshot_refusal',
-        argNames: ['chainJson'],
-      );
-
-  @override
   String crateApiVirtVirtFirmwareScript() {
     return handler.executeSync(
       SyncTask(
@@ -13562,7 +13055,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 358,
+            funcId: 341,
           )!;
         },
         codec: SseCodec(
@@ -13593,7 +13086,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 359,
+            funcId: 342,
           )!;
         },
         codec: SseCodec(
@@ -13618,7 +13111,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     required String domain,
     required bool running,
     String? baseXml,
-    required String changeJson,
+    required VirtHwChange change,
   }) {
     return handler.executeSync(
       SyncTask(
@@ -13627,11 +13120,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_String(domain, serializer);
           sse_encode_bool(running, serializer);
           sse_encode_opt_String(baseXml, serializer);
-          sse_encode_String(changeJson, serializer);
+          sse_encode_box_autoadd_virt_hw_change(change, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 360,
+            funcId: 343,
           )!;
         },
         codec: SseCodec(
@@ -13639,7 +13132,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_virt_ffi_error,
         ),
         constMeta: kCrateApiVirtVirtHardwareChangeScriptConstMeta,
-        argValues: [domain, running, baseXml, changeJson],
+        argValues: [domain, running, baseXml, change],
         apiImpl: this,
       ),
     );
@@ -13648,7 +13141,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiVirtVirtHardwareChangeScriptConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_hardware_change_script',
-        argNames: ['domain', 'running', 'baseXml', 'changeJson'],
+        argNames: ['domain', 'running', 'baseXml', 'change'],
       );
 
   @override
@@ -13661,7 +13154,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 361,
+            funcId: 344,
           )!;
         },
         codec: SseCodec(
@@ -13695,7 +13188,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 362,
+            funcId: 345,
           )!;
         },
         codec: SseCodec(
@@ -13724,7 +13217,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 363,
+            funcId: 346,
           )!;
         },
         codec: SseCodec(
@@ -13742,24 +13235,24 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: 'virt_host_devices_script', argNames: []);
 
   @override
-  bool crateApiHardwareVirtHwDiskGrowable({required String diskJson}) {
+  bool crateApiHardwareVirtHwDiskGrowable({required HwDisk disk}) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(diskJson, serializer);
+          sse_encode_box_autoadd_hw_disk(disk, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 364,
+            funcId: 347,
           )!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
-          decodeErrorData: sse_decode_pve_error,
+          decodeErrorData: null,
         ),
         constMeta: kCrateApiHardwareVirtHwDiskGrowableConstMeta,
-        argValues: [diskJson],
+        argValues: [disk],
         apiImpl: this,
       ),
     );
@@ -13768,47 +13261,40 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiHardwareVirtHwDiskGrowableConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_hw_disk_growable',
-        argNames: ['diskJson'],
+        argNames: ['disk'],
       );
 
   @override
-  String? crateApiHardwareVirtHwIssue({
-    required String hardwareJson,
-    required String changeJson,
+  HwIssue? crateApiHardwareVirtHwIssue({
+    required Hardware hardware,
+    required HwChange change,
     required bool pve,
-    required String poolsJson,
-    required String networksJson,
-    required String volumesJson,
+    required List<ResourcePool> pools,
+    required List<Network> networks,
+    required List<Volume> volumes,
   }) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(hardwareJson, serializer);
-          sse_encode_String(changeJson, serializer);
+          sse_encode_box_autoadd_hardware(hardware, serializer);
+          sse_encode_box_autoadd_hw_change(change, serializer);
           sse_encode_bool(pve, serializer);
-          sse_encode_String(poolsJson, serializer);
-          sse_encode_String(networksJson, serializer);
-          sse_encode_String(volumesJson, serializer);
+          sse_encode_list_resource_pool(pools, serializer);
+          sse_encode_list_network(networks, serializer);
+          sse_encode_list_volume(volumes, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 365,
+            funcId: 348,
           )!;
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_opt_String,
-          decodeErrorData: sse_decode_pve_error,
+          decodeSuccessData: sse_decode_opt_box_autoadd_hw_issue,
+          decodeErrorData: null,
         ),
         constMeta: kCrateApiHardwareVirtHwIssueConstMeta,
-        argValues: [
-          hardwareJson,
-          changeJson,
-          pve,
-          poolsJson,
-          networksJson,
-          volumesJson,
-        ],
+        argValues: [hardware, change, pve, pools, networks, volumes],
         apiImpl: this,
       ),
     );
@@ -13817,19 +13303,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiHardwareVirtHwIssueConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_hw_issue',
-        argNames: [
-          'hardwareJson',
-          'changeJson',
-          'pve',
-          'poolsJson',
-          'networksJson',
-          'volumesJson',
-        ],
+        argNames: ['hardware', 'change', 'pve', 'pools', 'networks', 'volumes'],
       );
 
   @override
   List<String> crateApiCreateVirtImageStorages({
-    required String poolsJson,
+    required List<ResourcePool> pools,
     required bool pve,
     String? node,
   }) {
@@ -13837,21 +13316,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(poolsJson, serializer);
+          sse_encode_list_resource_pool(pools, serializer);
           sse_encode_bool(pve, serializer);
           sse_encode_opt_String(node, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 366,
+            funcId: 349,
           )!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_list_String,
-          decodeErrorData: sse_decode_pve_error,
+          decodeErrorData: null,
         ),
         constMeta: kCrateApiCreateVirtImageStoragesConstMeta,
-        argValues: [poolsJson, pve, node],
+        argValues: [pools, pve, node],
         apiImpl: this,
       ),
     );
@@ -13860,32 +13339,32 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiCreateVirtImageStoragesConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_image_storages',
-        argNames: ['poolsJson', 'pve', 'node'],
+        argNames: ['pools', 'pve', 'node'],
       );
 
   @override
   bool crateApiCreateVirtIsCloudImage({
-    required String volumeJson,
+    required Volume volume,
     required bool pve,
   }) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(volumeJson, serializer);
+          sse_encode_box_autoadd_volume(volume, serializer);
           sse_encode_bool(pve, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 367,
+            funcId: 350,
           )!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
-          decodeErrorData: sse_decode_pve_error,
+          decodeErrorData: null,
         ),
         constMeta: kCrateApiCreateVirtIsCloudImageConstMeta,
-        argValues: [volumeJson, pve],
+        argValues: [volume, pve],
         apiImpl: this,
       ),
     );
@@ -13894,32 +13373,29 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiCreateVirtIsCloudImageConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_is_cloud_image',
-        argNames: ['volumeJson', 'pve'],
+        argNames: ['volume', 'pve'],
       );
 
   @override
-  bool crateApiCreateVirtIsMedia({
-    required String volumeJson,
-    required bool lxc,
-  }) {
+  bool crateApiCreateVirtIsMedia({required Volume volume, required bool lxc}) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(volumeJson, serializer);
+          sse_encode_box_autoadd_volume(volume, serializer);
           sse_encode_bool(lxc, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 368,
+            funcId: 351,
           )!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
-          decodeErrorData: sse_decode_pve_error,
+          decodeErrorData: null,
         ),
         constMeta: kCrateApiCreateVirtIsMediaConstMeta,
-        argValues: [volumeJson, lxc],
+        argValues: [volume, lxc],
         apiImpl: this,
       ),
     );
@@ -13927,7 +13403,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   TaskConstMeta get kCrateApiCreateVirtIsMediaConstMeta => const TaskConstMeta(
     debugName: 'virt_is_media',
-    argNames: ['volumeJson', 'lxc'],
+    argNames: ['volume', 'lxc'],
   );
 
   @override
@@ -13940,7 +13416,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 369,
+            funcId: 352,
           )!;
         },
         codec: SseCodec(
@@ -13958,9 +13434,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: 'virt_is_unicast_mac', argNames: ['mac']);
 
   @override
-  String crateApiVirtVirtLibvirtChain({
+  Chain crateApiVirtVirtLibvirtChain({
     required String chainRaw,
-    required String snapshotsJson,
+    required List<Snapshot> snapshots,
     required List<LibvirtPoolRef> pools,
   }) {
     return handler.executeSync(
@@ -13968,20 +13444,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(chainRaw, serializer);
-          sse_encode_String(snapshotsJson, serializer);
+          sse_encode_list_snapshot(snapshots, serializer);
           sse_encode_list_libvirt_pool_ref(pools, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 370,
+            funcId: 353,
           )!;
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
+          decodeSuccessData: sse_decode_chain,
           decodeErrorData: sse_decode_virt_ffi_error,
         ),
         constMeta: kCrateApiVirtVirtLibvirtChainConstMeta,
-        argValues: [chainRaw, snapshotsJson, pools],
+        argValues: [chainRaw, snapshots, pools],
         apiImpl: this,
       ),
     );
@@ -13990,32 +13466,32 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiVirtVirtLibvirtChainConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_libvirt_chain',
-        argNames: ['chainRaw', 'snapshotsJson', 'pools'],
+        argNames: ['chainRaw', 'snapshots', 'pools'],
       );
 
   @override
-  String crateApiCreateVirtLibvirtCloneDisks({
-    required String specJson,
+  List<(String, String)> crateApiCreateVirtLibvirtCloneDisks({
+    required VirtCloneSpec spec,
     required List<String> paths,
   }) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(specJson, serializer);
+          sse_encode_box_autoadd_virt_clone_spec(spec, serializer);
           sse_encode_list_String(paths, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 371,
+            funcId: 354,
           )!;
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
-          decodeErrorData: sse_decode_pve_error,
+          decodeSuccessData: sse_decode_list_record_string_string,
+          decodeErrorData: null,
         ),
         constMeta: kCrateApiCreateVirtLibvirtCloneDisksConstMeta,
-        argValues: [specJson, paths],
+        argValues: [spec, paths],
         apiImpl: this,
       ),
     );
@@ -14024,44 +13500,38 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiCreateVirtLibvirtCloneDisksConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_libvirt_clone_disks',
-        argNames: ['specJson', 'paths'],
+        argNames: ['spec', 'paths'],
       );
 
   @override
-  String crateApiCreateVirtLibvirtCloneSpec({
-    required String guestJson,
-    required String hardwareJson,
-    required String requestJson,
-    required String guestsJson,
-    required String storageJson,
+  VirtCloneSpec crateApiCreateVirtLibvirtCloneSpec({
+    required VirtGuestReport guest,
+    required VirtHardwareInfo hardware,
+    required CloneRequest request,
+    required List<VirtGuestReport> guests,
+    required VirtStorage storage,
   }) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(guestJson, serializer);
-          sse_encode_String(hardwareJson, serializer);
-          sse_encode_String(requestJson, serializer);
-          sse_encode_String(guestsJson, serializer);
-          sse_encode_String(storageJson, serializer);
+          sse_encode_box_autoadd_virt_guest_report(guest, serializer);
+          sse_encode_box_autoadd_virt_hardware_info(hardware, serializer);
+          sse_encode_box_autoadd_clone_request(request, serializer);
+          sse_encode_list_virt_guest_report(guests, serializer);
+          sse_encode_box_autoadd_virt_storage(storage, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 372,
+            funcId: 355,
           )!;
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
+          decodeSuccessData: sse_decode_virt_clone_spec,
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiCreateVirtLibvirtCloneSpecConstMeta,
-        argValues: [
-          guestJson,
-          hardwareJson,
-          requestJson,
-          guestsJson,
-          storageJson,
-        ],
+        argValues: [guest, hardware, request, guests, storage],
         apiImpl: this,
       ),
     );
@@ -14070,53 +13540,40 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiCreateVirtLibvirtCloneSpecConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_libvirt_clone_spec',
-        argNames: [
-          'guestJson',
-          'hardwareJson',
-          'requestJson',
-          'guestsJson',
-          'storageJson',
-        ],
+        argNames: ['guest', 'hardware', 'request', 'guests', 'storage'],
       );
 
   @override
-  String crateApiCreateVirtLibvirtCloudInit({
-    required String ciJson,
+  VirtCloudInit crateApiCreateVirtLibvirtCloudInit({
+    required CloudInit ci,
     required String name,
     String? mac,
     String? keepHash,
-    required String extraNetworksJson,
+    required List<VirtCiNetwork> extraNetworks,
     required bool passwordExpire,
   }) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(ciJson, serializer);
+          sse_encode_box_autoadd_cloud_init(ci, serializer);
           sse_encode_String(name, serializer);
           sse_encode_opt_String(mac, serializer);
           sse_encode_opt_String(keepHash, serializer);
-          sse_encode_String(extraNetworksJson, serializer);
+          sse_encode_list_virt_ci_network(extraNetworks, serializer);
           sse_encode_bool(passwordExpire, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 373,
+            funcId: 356,
           )!;
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
+          decodeSuccessData: sse_decode_virt_cloud_init,
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiCreateVirtLibvirtCloudInitConstMeta,
-        argValues: [
-          ciJson,
-          name,
-          mac,
-          keepHash,
-          extraNetworksJson,
-          passwordExpire,
-        ],
+        argValues: [ci, name, mac, keepHash, extraNetworks, passwordExpire],
         apiImpl: this,
       ),
     );
@@ -14126,38 +13583,38 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(
         debugName: 'virt_libvirt_cloud_init',
         argNames: [
-          'ciJson',
+          'ci',
           'name',
           'mac',
           'keepHash',
-          'extraNetworksJson',
+          'extraNetworks',
           'passwordExpire',
         ],
       );
 
   @override
-  String crateApiHardwareVirtLibvirtCloudInitState({
-    required String readJson,
+  CloudInitState crateApiHardwareVirtLibvirtCloudInitState({
+    required VirtSeedRead read,
     required List<String> macs,
   }) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(readJson, serializer);
+          sse_encode_box_autoadd_virt_seed_read(read, serializer);
           sse_encode_list_String(macs, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 374,
+            funcId: 357,
           )!;
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
-          decodeErrorData: sse_decode_pve_error,
+          decodeSuccessData: sse_decode_cloud_init_state,
+          decodeErrorData: null,
         ),
         constMeta: kCrateApiHardwareVirtLibvirtCloudInitStateConstMeta,
-        argValues: [readJson, macs],
+        argValues: [read, macs],
         apiImpl: this,
       ),
     );
@@ -14166,36 +13623,36 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiHardwareVirtLibvirtCloudInitStateConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_libvirt_cloud_init_state',
-        argNames: ['readJson', 'macs'],
+        argNames: ['read', 'macs'],
       );
 
   @override
-  String crateApiHardwareVirtLibvirtCloudInitUpdate({
-    required String readJson,
+  VirtCloudInit crateApiHardwareVirtLibvirtCloudInitUpdate({
+    required VirtSeedRead read,
     required String name,
     required List<String> macs,
-    required String editJson,
+    required CloudInitEdit edit,
   }) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(readJson, serializer);
+          sse_encode_box_autoadd_virt_seed_read(read, serializer);
           sse_encode_String(name, serializer);
           sse_encode_list_String(macs, serializer);
-          sse_encode_String(editJson, serializer);
+          sse_encode_box_autoadd_cloud_init_edit(edit, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 375,
+            funcId: 358,
           )!;
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
+          decodeSuccessData: sse_decode_virt_cloud_init,
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiHardwareVirtLibvirtCloudInitUpdateConstMeta,
-        argValues: [readJson, name, macs, editJson],
+        argValues: [read, name, macs, edit],
         apiImpl: this,
       ),
     );
@@ -14204,32 +13661,65 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiHardwareVirtLibvirtCloudInitUpdateConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_libvirt_cloud_init_update',
-        argNames: ['readJson', 'name', 'macs', 'editJson'],
+        argNames: ['read', 'name', 'macs', 'edit'],
       );
 
   @override
-  String crateApiCreateVirtLibvirtCreateOptions({
-    required String hostJson,
-    required String firmwareJson,
+  Future<VirtCreateHost> crateApiVirtVirtLibvirtCreateHost({
+    required String raw,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 359,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_virt_create_host,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtVirtLibvirtCreateHostConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtLibvirtCreateHostConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_libvirt_create_host',
+        argNames: ['raw'],
+      );
+
+  @override
+  CreateOptions crateApiCreateVirtLibvirtCreateOptions({
+    required VirtCreateHost host,
+    required List<FirmwareDescriptor> firmware,
   }) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(hostJson, serializer);
-          sse_encode_String(firmwareJson, serializer);
+          sse_encode_box_autoadd_virt_create_host(host, serializer);
+          sse_encode_list_firmware_descriptor(firmware, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 376,
+            funcId: 360,
           )!;
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
-          decodeErrorData: sse_decode_pve_error,
+          decodeSuccessData: sse_decode_create_options,
+          decodeErrorData: null,
         ),
         constMeta: kCrateApiCreateVirtLibvirtCreateOptionsConstMeta,
-        argValues: [hostJson, firmwareJson],
+        argValues: [host, firmware],
         apiImpl: this,
       ),
     );
@@ -14238,54 +13728,54 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiCreateVirtLibvirtCreateOptionsConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_libvirt_create_options',
-        argNames: ['hostJson', 'firmwareJson'],
+        argNames: ['host', 'firmware'],
       );
 
   @override
-  String crateApiCreateVirtLibvirtCreateSpec({
-    required String specJson,
-    required String hostJson,
-    required String firmwareJson,
-    required String guestsJson,
-    required String poolsJson,
-    required String networksJson,
-    String? mediaJson,
-    String? imageJson,
+  VirtCreateSpec crateApiCreateVirtLibvirtCreateSpec({
+    required CreateSpec spec,
+    required VirtCreateHost host,
+    required List<FirmwareDescriptor> firmware,
+    required List<VirtGuestReport> guests,
+    required List<ResourcePool> pools,
+    required List<Network> networks,
+    Volume? media,
+    Volume? image,
     List<String>? seedTools,
   }) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(specJson, serializer);
-          sse_encode_String(hostJson, serializer);
-          sse_encode_String(firmwareJson, serializer);
-          sse_encode_String(guestsJson, serializer);
-          sse_encode_String(poolsJson, serializer);
-          sse_encode_String(networksJson, serializer);
-          sse_encode_opt_String(mediaJson, serializer);
-          sse_encode_opt_String(imageJson, serializer);
+          sse_encode_box_autoadd_create_spec(spec, serializer);
+          sse_encode_box_autoadd_virt_create_host(host, serializer);
+          sse_encode_list_firmware_descriptor(firmware, serializer);
+          sse_encode_list_virt_guest_report(guests, serializer);
+          sse_encode_list_resource_pool(pools, serializer);
+          sse_encode_list_network(networks, serializer);
+          sse_encode_opt_box_autoadd_volume(media, serializer);
+          sse_encode_opt_box_autoadd_volume(image, serializer);
           sse_encode_opt_list_String(seedTools, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 377,
+            funcId: 361,
           )!;
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
+          decodeSuccessData: sse_decode_virt_create_spec,
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiCreateVirtLibvirtCreateSpecConstMeta,
         argValues: [
-          specJson,
-          hostJson,
-          firmwareJson,
-          guestsJson,
-          poolsJson,
-          networksJson,
-          mediaJson,
-          imageJson,
+          spec,
+          host,
+          firmware,
+          guests,
+          pools,
+          networks,
+          media,
+          image,
           seedTools,
         ],
         apiImpl: this,
@@ -14297,43 +13787,76 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(
         debugName: 'virt_libvirt_create_spec',
         argNames: [
-          'specJson',
-          'hostJson',
-          'firmwareJson',
-          'guestsJson',
-          'poolsJson',
-          'networksJson',
-          'mediaJson',
-          'imageJson',
+          'spec',
+          'host',
+          'firmware',
+          'guests',
+          'pools',
+          'networks',
+          'media',
+          'image',
           'seedTools',
         ],
       );
 
   @override
-  String crateApiCreateVirtLibvirtCreated({
-    required String specJson,
-    required String madeJson,
-    required String createdJson,
+  Future<VirtCreateVolumes> crateApiVirtVirtLibvirtCreateVolumes({
+    required String raw,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 362,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_virt_create_volumes,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtVirtLibvirtCreateVolumesConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtLibvirtCreateVolumesConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_libvirt_create_volumes',
+        argNames: ['raw'],
+      );
+
+  @override
+  Created crateApiCreateVirtLibvirtCreated({
+    required VirtCreateSpec spec,
+    required VirtCreateVolumes made,
+    required VirtCreated created,
   }) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(specJson, serializer);
-          sse_encode_String(madeJson, serializer);
-          sse_encode_String(createdJson, serializer);
+          sse_encode_box_autoadd_virt_create_spec(spec, serializer);
+          sse_encode_box_autoadd_virt_create_volumes(made, serializer);
+          sse_encode_box_autoadd_virt_created(created, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 378,
+            funcId: 363,
           )!;
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
-          decodeErrorData: sse_decode_pve_error,
+          decodeSuccessData: sse_decode_created,
+          decodeErrorData: null,
         ),
         constMeta: kCrateApiCreateVirtLibvirtCreatedConstMeta,
-        argValues: [specJson, madeJson, createdJson],
+        argValues: [spec, made, created],
         apiImpl: this,
       ),
     );
@@ -14342,30 +13865,63 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiCreateVirtLibvirtCreatedConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_libvirt_created',
-        argNames: ['specJson', 'madeJson', 'createdJson'],
+        argNames: ['spec', 'made', 'created'],
+      );
+
+  @override
+  Future<VirtCreated> crateApiVirtVirtLibvirtDefineResult({
+    required String raw,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 364,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_virt_created,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtVirtLibvirtDefineResultConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtLibvirtDefineResultConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_libvirt_define_result',
+        argNames: ['raw'],
       );
 
   @override
   bool crateApiCreateVirtLibvirtDeleteNeedsChain({
-    required String snapshotsJson,
+    required List<Snapshot> snapshots,
   }) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(snapshotsJson, serializer);
+          sse_encode_list_snapshot(snapshots, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 379,
+            funcId: 365,
           )!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
-          decodeErrorData: sse_decode_pve_error,
+          decodeErrorData: null,
         ),
         constMeta: kCrateApiCreateVirtLibvirtDeleteNeedsChainConstMeta,
-        argValues: [snapshotsJson],
+        argValues: [snapshots],
         apiImpl: this,
       ),
     );
@@ -14374,17 +13930,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiCreateVirtLibvirtDeleteNeedsChainConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_libvirt_delete_needs_chain',
-        argNames: ['snapshotsJson'],
+        argNames: ['snapshots'],
       );
 
   @override
   VirtDeletePlan crateApiCreateVirtLibvirtDeletePlan({
     required String id,
     required String name,
-    required String detailJson,
-    required String storageJson,
-    required String volumesJson,
-    required String snapshotsJson,
+    required VirtDomainDetail detail,
+    required VirtStorage storage,
+    required List<VirtPoolVolumes> volumes,
+    required List<Snapshot> snapshots,
     String? chainRaw,
   }) {
     return handler.executeSync(
@@ -14393,15 +13949,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(id, serializer);
           sse_encode_String(name, serializer);
-          sse_encode_String(detailJson, serializer);
-          sse_encode_String(storageJson, serializer);
-          sse_encode_String(volumesJson, serializer);
-          sse_encode_String(snapshotsJson, serializer);
+          sse_encode_box_autoadd_virt_domain_detail(detail, serializer);
+          sse_encode_box_autoadd_virt_storage(storage, serializer);
+          sse_encode_list_virt_pool_volumes(volumes, serializer);
+          sse_encode_list_snapshot(snapshots, serializer);
           sse_encode_opt_String(chainRaw, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 380,
+            funcId: 366,
           )!;
         },
         codec: SseCodec(
@@ -14409,15 +13965,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiCreateVirtLibvirtDeletePlanConstMeta,
-        argValues: [
-          id,
-          name,
-          detailJson,
-          storageJson,
-          volumesJson,
-          snapshotsJson,
-          chainRaw,
-        ],
+        argValues: [id, name, detail, storage, volumes, snapshots, chainRaw],
         apiImpl: this,
       ),
     );
@@ -14429,10 +13977,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         argNames: [
           'id',
           'name',
-          'detailJson',
-          'storageJson',
-          'volumesJson',
-          'snapshotsJson',
+          'detail',
+          'storage',
+          'volumes',
+          'snapshots',
           'chainRaw',
         ],
       );
@@ -14447,7 +13995,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 381,
+            funcId: 367,
           )!;
         },
         codec: SseCodec(
@@ -14468,7 +14016,111 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  String crateApiVirtVirtLibvirtGuestDetail({required String raw}) {
+  Future<VirtDomainDetail> crateApiVirtVirtLibvirtDomainDetail({
+    required String raw,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 368,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_virt_domain_detail,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtVirtLibvirtDomainDetailConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtLibvirtDomainDetailConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_libvirt_domain_detail',
+        argNames: ['raw'],
+      );
+
+  @override
+  VirtExternalSnapshot crateApiVirtVirtLibvirtExternalSnapshot({
+    required String chainRaw,
+    required String name,
+    String? dir,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(chainRaw, serializer);
+          sse_encode_String(name, serializer);
+          sse_encode_opt_String(dir, serializer);
+          return pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 369,
+          )!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_virt_external_snapshot,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtVirtLibvirtExternalSnapshotConstMeta,
+        argValues: [chainRaw, name, dir],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtLibvirtExternalSnapshotConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_libvirt_external_snapshot',
+        argNames: ['chainRaw', 'name', 'dir'],
+      );
+
+  @override
+  Future<List<FirmwareDescriptor>> crateApiVirtVirtLibvirtFirmware({
+    required String raw,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 370,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_firmware_descriptor,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiVirtVirtLibvirtFirmwareConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtLibvirtFirmwareConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_libvirt_firmware',
+        argNames: ['raw'],
+      );
+
+  @override
+  VirtGuestDetailReport crateApiVirtVirtLibvirtGuestDetail({
+    required String raw,
+  }) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
@@ -14477,11 +14129,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 382,
+            funcId: 371,
           )!;
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
+          decodeSuccessData: sse_decode_virt_guest_detail_report,
           decodeErrorData: sse_decode_virt_ffi_error,
         ),
         constMeta: kCrateApiVirtVirtLibvirtGuestDetailConstMeta,
@@ -14498,28 +14150,28 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  String crateApiHardwareVirtLibvirtHardware({
-    required String infoJson,
+  Hardware crateApiHardwareVirtLibvirtHardware({
+    required VirtHardwareInfo info,
     required String name,
   }) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(infoJson, serializer);
+          sse_encode_box_autoadd_virt_hardware_info(info, serializer);
           sse_encode_String(name, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 383,
+            funcId: 372,
           )!;
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
-          decodeErrorData: sse_decode_pve_error,
+          decodeSuccessData: sse_decode_hardware,
+          decodeErrorData: null,
         ),
         constMeta: kCrateApiHardwareVirtLibvirtHardwareConstMeta,
-        argValues: [infoJson, name],
+        argValues: [info, name],
         apiImpl: this,
       ),
     );
@@ -14528,28 +14180,96 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiHardwareVirtLibvirtHardwareConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_libvirt_hardware',
-        argNames: ['infoJson', 'name'],
+        argNames: ['info', 'name'],
       );
 
   @override
-  String crateApiHardwareVirtLibvirtHostDevices({required String devicesJson}) {
+  Future<VirtHwOutcome> crateApiVirtVirtLibvirtHardwareOutcome({
+    required String raw,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 373,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_virt_hw_outcome,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtVirtLibvirtHardwareOutcomeConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtLibvirtHardwareOutcomeConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_libvirt_hardware_outcome',
+        argNames: ['raw'],
+      );
+
+  @override
+  Future<VirtHardwareInfo> crateApiVirtVirtLibvirtHardwareRead({
+    required String raw,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 374,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_virt_hardware_info,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtVirtLibvirtHardwareReadConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtLibvirtHardwareReadConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_libvirt_hardware_read',
+        argNames: ['raw'],
+      );
+
+  @override
+  HostDevices crateApiHardwareVirtLibvirtHostDevices({
+    required VirtHostDevices devices,
+  }) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(devicesJson, serializer);
+          sse_encode_box_autoadd_virt_host_devices(devices, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 384,
+            funcId: 375,
           )!;
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
-          decodeErrorData: sse_decode_pve_error,
+          decodeSuccessData: sse_decode_host_devices,
+          decodeErrorData: null,
         ),
         constMeta: kCrateApiHardwareVirtLibvirtHostDevicesConstMeta,
-        argValues: [devicesJson],
+        argValues: [devices],
         apiImpl: this,
       ),
     );
@@ -14558,50 +14278,75 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiHardwareVirtLibvirtHostDevicesConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_libvirt_host_devices',
-        argNames: ['devicesJson'],
+        argNames: ['devices'],
       );
 
   @override
-  String crateApiHardwareVirtLibvirtHwChange({
-    required String infoJson,
+  Future<VirtHostDevices> crateApiVirtVirtLibvirtHostDevicesRead({
+    required String raw,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 376,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_virt_host_devices,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtVirtLibvirtHostDevicesReadConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtLibvirtHostDevicesReadConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_libvirt_host_devices_read',
+        argNames: ['raw'],
+      );
+
+  @override
+  VirtHwChange crateApiHardwareVirtLibvirtHwChange({
+    required VirtHardwareInfo info,
     required String name,
     String? revision,
-    required String changeJson,
-    required String poolsJson,
-    required String networksJson,
-    required String volumesJson,
+    required HwChange change,
+    required List<ResourcePool> pools,
+    required List<Network> networks,
+    required List<Volume> volumes,
   }) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(infoJson, serializer);
+          sse_encode_box_autoadd_virt_hardware_info(info, serializer);
           sse_encode_String(name, serializer);
           sse_encode_opt_String(revision, serializer);
-          sse_encode_String(changeJson, serializer);
-          sse_encode_String(poolsJson, serializer);
-          sse_encode_String(networksJson, serializer);
-          sse_encode_String(volumesJson, serializer);
+          sse_encode_box_autoadd_hw_change(change, serializer);
+          sse_encode_list_resource_pool(pools, serializer);
+          sse_encode_list_network(networks, serializer);
+          sse_encode_list_volume(volumes, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 385,
+            funcId: 377,
           )!;
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
+          decodeSuccessData: sse_decode_virt_hw_change,
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiHardwareVirtLibvirtHwChangeConstMeta,
-        argValues: [
-          infoJson,
-          name,
-          revision,
-          changeJson,
-          poolsJson,
-          networksJson,
-          volumesJson,
-        ],
+        argValues: [info, name, revision, change, pools, networks, volumes],
         apiImpl: this,
       ),
     );
@@ -14611,39 +14356,39 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(
         debugName: 'virt_libvirt_hw_change',
         argNames: [
-          'infoJson',
+          'info',
           'name',
           'revision',
-          'changeJson',
-          'poolsJson',
-          'networksJson',
-          'volumesJson',
+          'change',
+          'pools',
+          'networks',
+          'volumes',
         ],
       );
 
   @override
-  String crateApiHardwareVirtLibvirtHwRevert({
-    required String infoJson,
+  VirtHwChange crateApiHardwareVirtLibvirtHwRevert({
+    required VirtHardwareInfo info,
     String? revision,
   }) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(infoJson, serializer);
+          sse_encode_box_autoadd_virt_hardware_info(info, serializer);
           sse_encode_opt_String(revision, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 386,
+            funcId: 378,
           )!;
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
+          decodeSuccessData: sse_decode_virt_hw_change,
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiHardwareVirtLibvirtHwRevertConstMeta,
-        argValues: [infoJson, revision],
+        argValues: [info, revision],
         apiImpl: this,
       ),
     );
@@ -14652,11 +14397,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiHardwareVirtLibvirtHwRevertConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_libvirt_hw_revert',
-        argNames: ['infoJson', 'revision'],
+        argNames: ['info', 'revision'],
       );
 
   @override
-  String crateApiResourceVirtLibvirtNetworks({required String raw}) {
+  List<Network> crateApiResourceVirtLibvirtNetworks({required String raw}) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
@@ -14665,11 +14410,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 387,
+            funcId: 379,
           )!;
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
+          decodeSuccessData: sse_decode_list_network,
           decodeErrorData: sse_decode_virt_ffi_error,
         ),
         constMeta: kCrateApiResourceVirtLibvirtNetworksConstMeta,
@@ -14686,42 +14431,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  List<VirtOverlay> crateApiVirtVirtLibvirtOverlays({
-    required String chainRaw,
-    required String name,
-    String? dir,
-  }) {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(chainRaw, serializer);
-          sse_encode_String(name, serializer);
-          sse_encode_opt_String(dir, serializer);
-          return pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 388,
-          )!;
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_list_virt_overlay,
-          decodeErrorData: sse_decode_virt_ffi_error,
-        ),
-        constMeta: kCrateApiVirtVirtLibvirtOverlaysConstMeta,
-        argValues: [chainRaw, name, dir],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiVirtVirtLibvirtOverlaysConstMeta =>
-      const TaskConstMeta(
-        debugName: 'virt_libvirt_overlays',
-        argNames: ['chainRaw', 'name', 'dir'],
-      );
-
-  @override
   bool crateApiVirtVirtLibvirtPoolHoldsFiles({required LibvirtPoolRef pool}) {
     return handler.executeSync(
       SyncTask(
@@ -14731,7 +14440,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 389,
+            funcId: 380,
           )!;
         },
         codec: SseCodec(
@@ -14765,7 +14474,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 390,
+            funcId: 381,
           )!;
         },
         codec: SseCodec(
@@ -14786,24 +14495,26 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  String crateApiResourceVirtLibvirtPools({required String storageJson}) {
+  List<ResourcePool> crateApiResourceVirtLibvirtPools({
+    required VirtStorage storage,
+  }) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(storageJson, serializer);
+          sse_encode_box_autoadd_virt_storage(storage, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 391,
+            funcId: 382,
           )!;
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
-          decodeErrorData: sse_decode_pve_error,
+          decodeSuccessData: sse_decode_list_resource_pool,
+          decodeErrorData: null,
         ),
         constMeta: kCrateApiResourceVirtLibvirtPoolsConstMeta,
-        argValues: [storageJson],
+        argValues: [storage],
         apiImpl: this,
       ),
     );
@@ -14812,7 +14523,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiResourceVirtLibvirtPoolsConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_libvirt_pools',
-        argNames: ['storageJson'],
+        argNames: ['storage'],
       );
 
   @override
@@ -14831,7 +14542,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 392,
+            funcId: 383,
           )!;
         },
         codec: SseCodec(
@@ -14852,24 +14563,52 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Future<VirtHostProbe> crateApiVirtVirtLibvirtProbe({required String raw}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 384,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_virt_host_probe,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtVirtLibvirtProbeConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtLibvirtProbeConstMeta =>
+      const TaskConstMeta(debugName: 'virt_libvirt_probe', argNames: ['raw']);
+
+  @override
   VirtResourceScript crateApiResourceVirtLibvirtResourceScript({
-    required String changeJson,
-    required String poolsJson,
-    required String networksJson,
-    required String volumesJson,
+    required ResourceChange change,
+    required List<ResourcePool> pools,
+    required List<Network> networks,
+    required List<Volume> volumes,
   }) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(changeJson, serializer);
-          sse_encode_String(poolsJson, serializer);
-          sse_encode_String(networksJson, serializer);
-          sse_encode_String(volumesJson, serializer);
+          sse_encode_box_autoadd_resource_change(change, serializer);
+          sse_encode_list_resource_pool(pools, serializer);
+          sse_encode_list_network(networks, serializer);
+          sse_encode_list_volume(volumes, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 393,
+            funcId: 385,
           )!;
         },
         codec: SseCodec(
@@ -14877,7 +14616,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_pve_error,
         ),
         constMeta: kCrateApiResourceVirtLibvirtResourceScriptConstMeta,
-        argValues: [changeJson, poolsJson, networksJson, volumesJson],
+        argValues: [change, pools, networks, volumes],
         apiImpl: this,
       ),
     );
@@ -14886,11 +14625,73 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiResourceVirtLibvirtResourceScriptConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_libvirt_resource_script',
-        argNames: ['changeJson', 'poolsJson', 'networksJson', 'volumesJson'],
+        argNames: ['change', 'pools', 'networks', 'volumes'],
       );
 
   @override
-  String crateApiVirtVirtLibvirtSnapshots({required String raw}) {
+  Future<VirtSeedRead> crateApiVirtVirtLibvirtSeedRead({required String raw}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 386,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_virt_seed_read,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtVirtLibvirtSeedReadConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtLibvirtSeedReadConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_libvirt_seed_read',
+        argNames: ['raw'],
+      );
+
+  @override
+  Future<List<Diff>> crateApiVirtVirtLibvirtSnapDiff({required String raw}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 387,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_diff,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtVirtLibvirtSnapDiffConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtLibvirtSnapDiffConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_libvirt_snap_diff',
+        argNames: ['raw'],
+      );
+
+  @override
+  List<Snapshot> crateApiVirtVirtLibvirtSnapshots({required String raw}) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
@@ -14899,11 +14700,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 394,
+            funcId: 388,
           )!;
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
+          decodeSuccessData: sse_decode_list_snapshot,
           decodeErrorData: sse_decode_virt_ffi_error,
         ),
         constMeta: kCrateApiVirtVirtLibvirtSnapshotsConstMeta,
@@ -14920,10 +14721,71 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  String crateApiResourceVirtLibvirtVolumes({
+  Future<VirtStorage> crateApiVirtVirtLibvirtStorage({required String raw}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 389,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_virt_storage,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtVirtLibvirtStorageConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtLibvirtStorageConstMeta =>
+      const TaskConstMeta(debugName: 'virt_libvirt_storage', argNames: ['raw']);
+
+  @override
+  Future<VirtVncConsoleInfo> crateApiVirtVirtLibvirtVncConsole({
+    required String raw,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 390,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_virt_vnc_console_info,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtVirtLibvirtVncConsoleConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtLibvirtVncConsoleConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_libvirt_vnc_console',
+        argNames: ['raw'],
+      );
+
+  @override
+  List<Volume> crateApiResourceVirtLibvirtVolumes({
     required String raw,
     required String pool,
-    required String storageJson,
+    required VirtStorage storage,
   }) {
     return handler.executeSync(
       SyncTask(
@@ -14931,19 +14793,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(raw, serializer);
           sse_encode_String(pool, serializer);
-          sse_encode_String(storageJson, serializer);
+          sse_encode_box_autoadd_virt_storage(storage, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 395,
+            funcId: 391,
           )!;
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
+          decodeSuccessData: sse_decode_list_volume,
           decodeErrorData: sse_decode_virt_ffi_error,
         ),
         constMeta: kCrateApiResourceVirtLibvirtVolumesConstMeta,
-        argValues: [raw, pool, storageJson],
+        argValues: [raw, pool, storage],
         apiImpl: this,
       ),
     );
@@ -14952,32 +14814,32 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiResourceVirtLibvirtVolumesConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_libvirt_volumes',
-        argNames: ['raw', 'pool', 'storageJson'],
+        argNames: ['raw', 'pool', 'storage'],
       );
 
   @override
-  String crateApiResourceVirtLibvirtWithBacks({
-    required String volumesJson,
-    required String everyJson,
+  List<Volume> crateApiResourceVirtLibvirtWithBacks({
+    required List<Volume> volumes,
+    required List<Volume> every,
   }) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(volumesJson, serializer);
-          sse_encode_String(everyJson, serializer);
+          sse_encode_list_volume(volumes, serializer);
+          sse_encode_list_volume(every, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 396,
+            funcId: 392,
           )!;
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
-          decodeErrorData: sse_decode_pve_error,
+          decodeSuccessData: sse_decode_list_volume,
+          decodeErrorData: null,
         ),
         constMeta: kCrateApiResourceVirtLibvirtWithBacksConstMeta,
-        argValues: [volumesJson, everyJson],
+        argValues: [volumes, every],
         apiImpl: this,
       ),
     );
@@ -14986,32 +14848,32 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiResourceVirtLibvirtWithBacksConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_libvirt_with_backs',
-        argNames: ['volumesJson', 'everyJson'],
+        argNames: ['volumes', 'every'],
       );
 
   @override
-  String crateApiCreateVirtLibvirtWithVolumes({
-    required String specJson,
-    required String madeJson,
+  VirtCreateSpec crateApiCreateVirtLibvirtWithVolumes({
+    required VirtCreateSpec spec,
+    required VirtCreateVolumes made,
   }) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(specJson, serializer);
-          sse_encode_String(madeJson, serializer);
+          sse_encode_box_autoadd_virt_create_spec(spec, serializer);
+          sse_encode_box_autoadd_virt_create_volumes(made, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 397,
+            funcId: 393,
           )!;
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
-          decodeErrorData: sse_decode_pve_error,
+          decodeSuccessData: sse_decode_virt_create_spec,
+          decodeErrorData: null,
         ),
         constMeta: kCrateApiCreateVirtLibvirtWithVolumesConstMeta,
-        argValues: [specJson, madeJson],
+        argValues: [spec, made],
         apiImpl: this,
       ),
     );
@@ -15020,12 +14882,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiCreateVirtLibvirtWithVolumesConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_libvirt_with_volumes',
-        argNames: ['specJson', 'madeJson'],
+        argNames: ['spec', 'made'],
       );
 
   @override
   List<String> crateApiCreateVirtMediaStorages({
-    required String poolsJson,
+    required List<ResourcePool> pools,
     required bool pve,
     required bool lxc,
     String? node,
@@ -15034,22 +14896,22 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(poolsJson, serializer);
+          sse_encode_list_resource_pool(pools, serializer);
           sse_encode_bool(pve, serializer);
           sse_encode_bool(lxc, serializer);
           sse_encode_opt_String(node, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 398,
+            funcId: 394,
           )!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_list_String,
-          decodeErrorData: sse_decode_pve_error,
+          decodeErrorData: null,
         ),
         constMeta: kCrateApiCreateVirtMediaStoragesConstMeta,
-        argValues: [poolsJson, pve, lxc, node],
+        argValues: [pools, pve, lxc, node],
         apiImpl: this,
       ),
     );
@@ -15058,7 +14920,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiCreateVirtMediaStoragesConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_media_storages',
-        argNames: ['poolsJson', 'pve', 'lxc', 'node'],
+        argNames: ['pools', 'pve', 'lxc', 'node'],
       );
 
   @override
@@ -15071,7 +14933,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 399,
+            funcId: 395,
           )!;
         },
         codec: SseCodec(
@@ -15097,7 +14959,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 400,
+            funcId: 396,
           )!;
         },
         codec: SseCodec(
@@ -15123,7 +14985,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 401,
+            funcId: 397,
           )!;
         },
         codec: SseCodec(
@@ -15141,6 +15003,34 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: 'virt_new_mac', argNames: []);
 
   @override
+  Future<void> crateApiVirtVirtOverviewCheck({required String raw}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 398,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtVirtOverviewCheckConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtOverviewCheckConstMeta =>
+      const TaskConstMeta(debugName: 'virt_overview_check', argNames: ['raw']);
+
+  @override
   String crateApiVirtVirtOverviewScript() {
     return handler.executeSync(
       SyncTask(
@@ -15149,7 +15039,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 402,
+            funcId: 399,
           )!;
         },
         codec: SseCodec(
@@ -15167,24 +15057,24 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: 'virt_overview_script', argNames: []);
 
   @override
-  bool crateApiResourceVirtPoolTakesMedia({required String poolJson}) {
+  bool crateApiResourceVirtPoolTakesMedia({required ResourcePool pool}) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(poolJson, serializer);
+          sse_encode_box_autoadd_resource_pool(pool, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 403,
+            funcId: 400,
           )!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
-          decodeErrorData: sse_decode_pve_error,
+          decodeErrorData: null,
         ),
         constMeta: kCrateApiResourceVirtPoolTakesMediaConstMeta,
-        argValues: [poolJson],
+        argValues: [pool],
         apiImpl: this,
       ),
     );
@@ -15193,7 +15083,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiResourceVirtPoolTakesMediaConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_pool_takes_media',
-        argNames: ['poolJson'],
+        argNames: ['pool'],
       );
 
   @override
@@ -15205,7 +15095,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 404,
+            funcId: 401,
           )!;
         },
         codec: SseCodec(
@@ -15231,7 +15121,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 405,
+            funcId: 402,
           )!;
         },
         codec: SseCodec(
@@ -15257,7 +15147,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 406,
+            funcId: 403,
           )!;
         },
         codec: SseCodec(
@@ -15284,7 +15174,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 407,
+            funcId: 404,
           )!;
         },
         codec: SseCodec(
@@ -15305,34 +15195,34 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  String? crateApiResourceVirtResourceIssue({
-    required String changeJson,
+  ResourceIssue? crateApiResourceVirtResourceIssue({
+    required ResourceChange change,
     required bool pve,
-    required String poolsJson,
-    required String networksJson,
-    required String volumesJson,
+    required List<ResourcePool> pools,
+    required List<Network> networks,
+    required List<Volume> volumes,
   }) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(changeJson, serializer);
+          sse_encode_box_autoadd_resource_change(change, serializer);
           sse_encode_bool(pve, serializer);
-          sse_encode_String(poolsJson, serializer);
-          sse_encode_String(networksJson, serializer);
-          sse_encode_String(volumesJson, serializer);
+          sse_encode_list_resource_pool(pools, serializer);
+          sse_encode_list_network(networks, serializer);
+          sse_encode_list_volume(volumes, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 408,
+            funcId: 405,
           )!;
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_opt_String,
-          decodeErrorData: sse_decode_pve_error,
+          decodeSuccessData: sse_decode_opt_box_autoadd_resource_issue,
+          decodeErrorData: null,
         ),
         constMeta: kCrateApiResourceVirtResourceIssueConstMeta,
-        argValues: [changeJson, pve, poolsJson, networksJson, volumesJson],
+        argValues: [change, pve, pools, networks, volumes],
         apiImpl: this,
       ),
     );
@@ -15341,26 +15231,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiResourceVirtResourceIssueConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_resource_issue',
-        argNames: [
-          'changeJson',
-          'pve',
-          'poolsJson',
-          'networksJson',
-          'volumesJson',
-        ],
+        argNames: ['change', 'pve', 'pools', 'networks', 'volumes'],
       );
 
   @override
-  String crateApiVirtVirtResourceScript({required String opJson}) {
+  String crateApiVirtVirtResourceScript({required VirtResourceOp op}) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(opJson, serializer);
+          sse_encode_box_autoadd_virt_resource_op(op, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 409,
+            funcId: 406,
           )!;
         },
         codec: SseCodec(
@@ -15368,20 +15252,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_virt_ffi_error,
         ),
         constMeta: kCrateApiVirtVirtResourceScriptConstMeta,
-        argValues: [opJson],
+        argValues: [op],
         apiImpl: this,
       ),
     );
   }
 
   TaskConstMeta get kCrateApiVirtVirtResourceScriptConstMeta =>
-      const TaskConstMeta(
-        debugName: 'virt_resource_script',
-        argNames: ['opJson'],
-      );
+      const TaskConstMeta(debugName: 'virt_resource_script', argNames: ['op']);
 
   @override
-  String? crateApiBackupVirtScheduleIssue({required String schedule}) {
+  BackupIssue? crateApiBackupVirtScheduleIssue({required String schedule}) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
@@ -15390,11 +15271,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 410,
+            funcId: 407,
           )!;
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_opt_String,
+          decodeSuccessData: sse_decode_opt_box_autoadd_backup_issue,
           decodeErrorData: null,
         ),
         constMeta: kCrateApiBackupVirtScheduleIssueConstMeta,
@@ -15420,7 +15301,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 411,
+            funcId: 408,
           )!;
         },
         codec: SseCodec(
@@ -15444,7 +15325,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   String crateApiVirtVirtSeedUpdateScript({
     required String seed,
     required String revision,
-    required String cloudInitJson,
+    required VirtCloudInit cloudInit,
     List<String>? tools,
   }) {
     return handler.executeSync(
@@ -15453,12 +15334,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(seed, serializer);
           sse_encode_String(revision, serializer);
-          sse_encode_String(cloudInitJson, serializer);
+          sse_encode_box_autoadd_virt_cloud_init(cloudInit, serializer);
           sse_encode_opt_list_String(tools, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 412,
+            funcId: 409,
           )!;
         },
         codec: SseCodec(
@@ -15466,7 +15347,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_virt_ffi_error,
         ),
         constMeta: kCrateApiVirtVirtSeedUpdateScriptConstMeta,
-        argValues: [seed, revision, cloudInitJson, tools],
+        argValues: [seed, revision, cloudInit, tools],
         apiImpl: this,
       ),
     );
@@ -15475,7 +15356,38 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiVirtVirtSeedUpdateScriptConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_seed_update_script',
-        argNames: ['seed', 'revision', 'cloudInitJson', 'tools'],
+        argNames: ['seed', 'revision', 'cloudInit', 'tools'],
+      );
+
+  @override
+  Future<void> crateApiVirtVirtSnapChainCheck({required String raw}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 410,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_virt_ffi_error,
+        ),
+        constMeta: kCrateApiVirtVirtSnapChainCheckConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVirtVirtSnapChainCheckConstMeta =>
+      const TaskConstMeta(
+        debugName: 'virt_snap_chain_check',
+        argNames: ['raw'],
       );
 
   @override
@@ -15488,7 +15400,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 413,
+            funcId: 411,
           )!;
         },
         codec: SseCodec(
@@ -15522,7 +15434,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 414,
+            funcId: 412,
           )!;
         },
         codec: SseCodec(
@@ -15556,7 +15468,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 415,
+            funcId: 413,
           )!;
         },
         codec: SseCodec(
@@ -15592,7 +15504,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 416,
+            funcId: 414,
           )!;
         },
         codec: SseCodec(
@@ -15630,7 +15542,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 417,
+            funcId: 415,
           )!;
         },
         codec: SseCodec(
@@ -15668,7 +15580,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 418,
+            funcId: 416,
           )!;
         },
         codec: SseCodec(
@@ -15704,7 +15616,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 419,
+            funcId: 417,
           )!;
         },
         codec: SseCodec(
@@ -15738,7 +15650,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 420,
+            funcId: 418,
           )!;
         },
         codec: SseCodec(
@@ -15759,36 +15671,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  String? crateApiVirtVirtSnapshotRefusal({required String chainJson}) {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(chainJson, serializer);
-          return pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 421,
-          )!;
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_opt_String,
-          decodeErrorData: sse_decode_virt_ffi_error,
-        ),
-        constMeta: kCrateApiVirtVirtSnapshotRefusalConstMeta,
-        argValues: [chainJson],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiVirtVirtSnapshotRefusalConstMeta =>
-      const TaskConstMeta(
-        debugName: 'virt_snapshot_refusal',
-        argNames: ['chainJson'],
-      );
-
-  @override
   String crateApiVirtVirtSnapshotRevertScript({
     required String domain,
     required String name,
@@ -15804,7 +15686,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 422,
+            funcId: 419,
           )!;
         },
         codec: SseCodec(
@@ -15834,7 +15716,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 423,
+            funcId: 420,
           )!;
         },
         codec: SseCodec(
@@ -15863,7 +15745,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 424,
+            funcId: 421,
           )!;
         },
         codec: SseCodec(
@@ -15900,7 +15782,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 425,
+            funcId: 422,
           )!;
         },
         codec: SseCodec(
@@ -15929,7 +15811,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 426,
+            funcId: 423,
           )!;
         },
         codec: SseCodec(
@@ -15947,32 +15829,32 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: 'virt_upload_go_line', argNames: []);
 
   @override
-  String? crateApiResourceVirtUploadIssue({
-    required String poolJson,
+  ResourceIssue? crateApiResourceVirtUploadIssue({
+    required ResourcePool pool,
     required String name,
     required BigInt size,
-    required String volumesJson,
+    required List<Volume> volumes,
   }) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(poolJson, serializer);
+          sse_encode_box_autoadd_resource_pool(pool, serializer);
           sse_encode_String(name, serializer);
           sse_encode_u_64(size, serializer);
-          sse_encode_String(volumesJson, serializer);
+          sse_encode_list_volume(volumes, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 427,
+            funcId: 424,
           )!;
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_opt_String,
-          decodeErrorData: sse_decode_pve_error,
+          decodeSuccessData: sse_decode_opt_box_autoadd_resource_issue,
+          decodeErrorData: null,
         ),
         constMeta: kCrateApiResourceVirtUploadIssueConstMeta,
-        argValues: [poolJson, name, size, volumesJson],
+        argValues: [pool, name, size, volumes],
         apiImpl: this,
       ),
     );
@@ -15981,7 +15863,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiResourceVirtUploadIssueConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_upload_issue',
-        argNames: ['poolJson', 'name', 'size', 'volumesJson'],
+        argNames: ['pool', 'name', 'size', 'volumes'],
       );
 
   @override
@@ -15993,7 +15875,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 428,
+            funcId: 425,
           )!;
         },
         codec: SseCodec(
@@ -16012,27 +15894,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @override
   String? crateApiHardwareVirtUsbAddress({
-    required String deviceJson,
+    required HostDevice device,
     required bool pve,
   }) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(deviceJson, serializer);
+          sse_encode_box_autoadd_host_device(device, serializer);
           sse_encode_bool(pve, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 429,
+            funcId: 426,
           )!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_opt_String,
-          decodeErrorData: sse_decode_pve_error,
+          decodeErrorData: null,
         ),
         constMeta: kCrateApiHardwareVirtUsbAddressConstMeta,
-        argValues: [deviceJson, pve],
+        argValues: [device, pve],
         apiImpl: this,
       ),
     );
@@ -16041,7 +15923,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiHardwareVirtUsbAddressConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_usb_address',
-        argNames: ['deviceJson', 'pve'],
+        argNames: ['device', 'pve'],
       );
 
   @override
@@ -16054,7 +15936,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 430,
+            funcId: 427,
           )!;
         },
         codec: SseCodec(
@@ -16090,7 +15972,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 431,
+            funcId: 428,
           )!;
         },
         codec: SseCodec(
@@ -16112,7 +15994,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @override
   String crateApiResourceVirtVolumeFileName({
-    required String poolJson,
+    required ResourcePool pool,
     required String name,
     required String format,
   }) {
@@ -16120,21 +16002,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(poolJson, serializer);
+          sse_encode_box_autoadd_resource_pool(pool, serializer);
           sse_encode_String(name, serializer);
           sse_encode_String(format, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 432,
+            funcId: 429,
           )!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
-          decodeErrorData: sse_decode_pve_error,
+          decodeErrorData: null,
         ),
         constMeta: kCrateApiResourceVirtVolumeFileNameConstMeta,
-        argValues: [poolJson, name, format],
+        argValues: [pool, name, format],
         apiImpl: this,
       ),
     );
@@ -16143,62 +16025,59 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiResourceVirtVolumeFileNameConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_volume_file_name',
-        argNames: ['poolJson', 'name', 'format'],
+        argNames: ['pool', 'name', 'format'],
       );
 
   @override
-  List<String> crateApiResourceVirtVolumeFormats({required String poolJson}) {
+  List<String> crateApiResourceVirtVolumeFormats({required ResourcePool pool}) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(poolJson, serializer);
+          sse_encode_box_autoadd_resource_pool(pool, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 433,
+            funcId: 430,
           )!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_list_String,
-          decodeErrorData: sse_decode_pve_error,
+          decodeErrorData: null,
         ),
         constMeta: kCrateApiResourceVirtVolumeFormatsConstMeta,
-        argValues: [poolJson],
+        argValues: [pool],
         apiImpl: this,
       ),
     );
   }
 
   TaskConstMeta get kCrateApiResourceVirtVolumeFormatsConstMeta =>
-      const TaskConstMeta(
-        debugName: 'virt_volume_formats',
-        argNames: ['poolJson'],
-      );
+      const TaskConstMeta(debugName: 'virt_volume_formats', argNames: ['pool']);
 
   @override
   bool crateApiResourceVirtVolumeResizable({
-    required String poolJson,
+    required ResourcePool pool,
     required bool pve,
   }) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(poolJson, serializer);
+          sse_encode_box_autoadd_resource_pool(pool, serializer);
           sse_encode_bool(pve, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 434,
+            funcId: 431,
           )!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
-          decodeErrorData: sse_decode_pve_error,
+          decodeErrorData: null,
         ),
         constMeta: kCrateApiResourceVirtVolumeResizableConstMeta,
-        argValues: [poolJson, pve],
+        argValues: [pool, pve],
         apiImpl: this,
       ),
     );
@@ -16207,7 +16086,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiResourceVirtVolumeResizableConstMeta =>
       const TaskConstMeta(
         debugName: 'virt_volume_resizable',
-        argNames: ['poolJson', 'pve'],
+        argNames: ['pool', 'pve'],
       );
 
   @override
@@ -16224,7 +16103,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 435,
+            funcId: 432,
           )!;
         },
         codec: SseCodec(
@@ -16253,7 +16132,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 436,
+            funcId: 433,
           )!;
         },
         codec: SseCodec(
@@ -16284,7 +16163,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 437,
+            funcId: 434,
           )!;
         },
         codec: SseCodec(
@@ -16709,6 +16588,112 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Backup dco_decode_backup(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 11)
+      throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
+    return Backup(
+      id: dco_decode_String(arr[0]),
+      storage: dco_decode_String(arr[1]),
+      node: dco_decode_String(arr[2]),
+      vmid: dco_decode_opt_box_autoadd_u_32(arr[3]),
+      createdAt: dco_decode_opt_box_autoadd_i_64(arr[4]),
+      size: dco_decode_opt_box_autoadd_u_64(arr[5]),
+      format: dco_decode_opt_String(arr[6]),
+      notes: dco_decode_opt_String(arr[7]),
+      protected: dco_decode_bool(arr[8]),
+      verification: dco_decode_opt_String(arr[9]),
+      kind: dco_decode_opt_box_autoadd_guest_kind(arr[10]),
+    );
+  }
+
+  @protected
+  BackupEdit dco_decode_backup_edit(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return BackupEdit(
+      notes: dco_decode_String(arr[0]),
+      protected: dco_decode_bool(arr[1]),
+    );
+  }
+
+  @protected
+  BackupIssue dco_decode_backup_issue(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return BackupIssue.values[raw as int];
+  }
+
+  @protected
+  BackupJob dco_decode_backup_job(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 15)
+      throw Exception('unexpected arr length: expect 15 but see ${arr.length}');
+    return BackupJob(
+      id: dco_decode_String(arr[0]),
+      schedule: dco_decode_opt_String(arr[1]),
+      storage: dco_decode_opt_String(arr[2]),
+      mode: dco_decode_opt_String(arr[3]),
+      compress: dco_decode_opt_String(arr[4]),
+      enabled: dco_decode_bool(arr[5]),
+      all: dco_decode_bool(arr[6]),
+      vmids: dco_decode_list_prim_u_32_strict(arr[7]),
+      exclude: dco_decode_list_prim_u_32_strict(arr[8]),
+      pool: dco_decode_opt_String(arr[9]),
+      node: dco_decode_opt_String(arr[10]),
+      comment: dco_decode_opt_String(arr[11]),
+      notesTemplate: dco_decode_opt_String(arr[12]),
+      mailNotification: dco_decode_opt_String(arr[13]),
+      prune: dco_decode_opt_String(arr[14]),
+    );
+  }
+
+  @protected
+  BackupJobEdit dco_decode_backup_job_edit(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 16)
+      throw Exception('unexpected arr length: expect 16 but see ${arr.length}');
+    return BackupJobEdit(
+      id: dco_decode_opt_String(arr[0]),
+      isNew: dco_decode_bool(arr[1]),
+      node: dco_decode_opt_String(arr[2]),
+      storage: dco_decode_String(arr[3]),
+      schedule: dco_decode_String(arr[4]),
+      mode: dco_decode_String(arr[5]),
+      compress: dco_decode_String(arr[6]),
+      enabled: dco_decode_bool(arr[7]),
+      all: dco_decode_bool(arr[8]),
+      vmids: dco_decode_list_prim_u_32_strict(arr[9]),
+      exclude: dco_decode_list_prim_u_32_strict(arr[10]),
+      pool: dco_decode_opt_String(arr[11]),
+      comment: dco_decode_opt_String(arr[12]),
+      notesTemplate: dco_decode_opt_String(arr[13]),
+      mailNotification: dco_decode_opt_String(arr[14]),
+      prune: dco_decode_opt_String(arr[15]),
+    );
+  }
+
+  @protected
+  BackupRequest dco_decode_backup_request(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return BackupRequest(
+      storage: dco_decode_String(arr[0]),
+      mode: dco_decode_String(arr[1]),
+      compress: dco_decode_String(arr[2]),
+      notes: dco_decode_opt_String(arr[3]),
+      protected: dco_decode_bool(arr[4]),
+      prune: dco_decode_opt_String(arr[5]),
+    );
+  }
+
+  @protected
   Battery dco_decode_battery(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -16866,6 +16851,42 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Backup dco_decode_box_autoadd_backup(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_backup(raw);
+  }
+
+  @protected
+  BackupEdit dco_decode_box_autoadd_backup_edit(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_backup_edit(raw);
+  }
+
+  @protected
+  BackupIssue dco_decode_box_autoadd_backup_issue(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_backup_issue(raw);
+  }
+
+  @protected
+  BackupJob dco_decode_box_autoadd_backup_job(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_backup_job(raw);
+  }
+
+  @protected
+  BackupJobEdit dco_decode_box_autoadd_backup_job_edit(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_backup_job_edit(raw);
+  }
+
+  @protected
+  BackupRequest dco_decode_box_autoadd_backup_request(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_backup_request(raw);
+  }
+
+  @protected
   BenchOptions dco_decode_box_autoadd_bench_options(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_bench_options(raw);
@@ -16881,6 +16902,24 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   CertInfo dco_decode_box_autoadd_cert_info(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_cert_info(raw);
+  }
+
+  @protected
+  CloneRequest dco_decode_box_autoadd_clone_request(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_clone_request(raw);
+  }
+
+  @protected
+  CloudInit dco_decode_box_autoadd_cloud_init(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_cloud_init(raw);
+  }
+
+  @protected
+  CloudInitEdit dco_decode_box_autoadd_cloud_init_edit(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_cloud_init_edit(raw);
   }
 
   @protected
@@ -16910,6 +16949,24 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  CreateIssue dco_decode_box_autoadd_create_issue(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_create_issue(raw);
+  }
+
+  @protected
+  CreateOptions dco_decode_box_autoadd_create_options(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_create_options(raw);
+  }
+
+  @protected
+  CreateSpec dco_decode_box_autoadd_create_spec(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_create_spec(raw);
+  }
+
+  @protected
   CronScheduleFields dco_decode_box_autoadd_cron_schedule_fields(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_cron_schedule_fields(raw);
@@ -16925,6 +16982,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   CronWall dco_decode_box_autoadd_cron_wall(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_cron_wall(raw);
+  }
+
+  @protected
+  Display dco_decode_box_autoadd_display(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_display(raw);
   }
 
   @protected
@@ -16972,6 +17035,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Firmware dco_decode_box_autoadd_firmware(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_firmware(raw);
+  }
+
+  @protected
   GpuMem dco_decode_box_autoadd_gpu_mem(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_gpu_mem(raw);
@@ -16981,6 +17050,48 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   GroupDraft dco_decode_box_autoadd_group_draft(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_group_draft(raw);
+  }
+
+  @protected
+  GuestKind dco_decode_box_autoadd_guest_kind(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_guest_kind(raw);
+  }
+
+  @protected
+  Hardware dco_decode_box_autoadd_hardware(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_hardware(raw);
+  }
+
+  @protected
+  HostDevice dco_decode_box_autoadd_host_device(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_host_device(raw);
+  }
+
+  @protected
+  HwChange dco_decode_box_autoadd_hw_change(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_hw_change(raw);
+  }
+
+  @protected
+  HwDisk dco_decode_box_autoadd_hw_disk(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_hw_disk(raw);
+  }
+
+  @protected
+  HwDisplay dco_decode_box_autoadd_hw_display(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_hw_display(raw);
+  }
+
+  @protected
+  HwIssue dco_decode_box_autoadd_hw_issue(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_hw_issue(raw);
   }
 
   @protected
@@ -17136,6 +17247,24 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  ResourceChange dco_decode_box_autoadd_resource_change(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_resource_change(raw);
+  }
+
+  @protected
+  ResourceIssue dco_decode_box_autoadd_resource_issue(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_resource_issue(raw);
+  }
+
+  @protected
+  ResourcePool dco_decode_box_autoadd_resource_pool(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_resource_pool(raw);
+  }
+
+  @protected
   SelfTest dco_decode_box_autoadd_self_test(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_self_test(raw);
@@ -17288,6 +17417,150 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  VirtCiIpv4 dco_decode_box_autoadd_virt_ci_ipv_4(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_virt_ci_ipv_4(raw);
+  }
+
+  @protected
+  VirtCiNetwork dco_decode_box_autoadd_virt_ci_network(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_virt_ci_network(raw);
+  }
+
+  @protected
+  VirtCloneSpec dco_decode_box_autoadd_virt_clone_spec(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_virt_clone_spec(raw);
+  }
+
+  @protected
+  VirtCloudInit dco_decode_box_autoadd_virt_cloud_init(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_virt_cloud_init(raw);
+  }
+
+  @protected
+  VirtCreateHost dco_decode_box_autoadd_virt_create_host(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_virt_create_host(raw);
+  }
+
+  @protected
+  VirtCreateSpec dco_decode_box_autoadd_virt_create_spec(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_virt_create_spec(raw);
+  }
+
+  @protected
+  VirtCreateVolumes dco_decode_box_autoadd_virt_create_volumes(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_virt_create_volumes(raw);
+  }
+
+  @protected
+  VirtCreated dco_decode_box_autoadd_virt_created(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_virt_created(raw);
+  }
+
+  @protected
+  VirtDisplay dco_decode_box_autoadd_virt_display(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_virt_display(raw);
+  }
+
+  @protected
+  VirtDomainDetail dco_decode_box_autoadd_virt_domain_detail(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_virt_domain_detail(raw);
+  }
+
+  @protected
+  VirtGuestReport dco_decode_box_autoadd_virt_guest_report(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_virt_guest_report(raw);
+  }
+
+  @protected
+  VirtHardwareInfo dco_decode_box_autoadd_virt_hardware_info(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_virt_hardware_info(raw);
+  }
+
+  @protected
+  VirtHostDevices dco_decode_box_autoadd_virt_host_devices(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_virt_host_devices(raw);
+  }
+
+  @protected
+  VirtHwCaps dco_decode_box_autoadd_virt_hw_caps(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_virt_hw_caps(raw);
+  }
+
+  @protected
+  VirtHwChange dco_decode_box_autoadd_virt_hw_change(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_virt_hw_change(raw);
+  }
+
+  @protected
+  VirtHwConfig dco_decode_box_autoadd_virt_hw_config(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_virt_hw_config(raw);
+  }
+
+  @protected
+  VirtHwGraphics dco_decode_box_autoadd_virt_hw_graphics(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_virt_hw_graphics(raw);
+  }
+
+  @protected
+  VirtHwNewDevice dco_decode_box_autoadd_virt_hw_new_device(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_virt_hw_new_device(raw);
+  }
+
+  @protected
+  VirtHwTpm dco_decode_box_autoadd_virt_hw_tpm(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_virt_hw_tpm(raw);
+  }
+
+  @protected
+  VirtNetIpv4 dco_decode_box_autoadd_virt_net_ipv_4(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_virt_net_ipv_4(raw);
+  }
+
+  @protected
+  VirtResourceOp dco_decode_box_autoadd_virt_resource_op(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_virt_resource_op(raw);
+  }
+
+  @protected
+  VirtSeedRead dco_decode_box_autoadd_virt_seed_read(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_virt_seed_read(raw);
+  }
+
+  @protected
+  VirtStorage dco_decode_box_autoadd_virt_storage(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_virt_storage(raw);
+  }
+
+  @protected
+  VirtVersion dco_decode_box_autoadd_virt_version(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_virt_version(raw);
+  }
+
+  @protected
   VncPasswordError dco_decode_box_autoadd_vnc_password_error(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_vnc_password_error(raw);
@@ -17300,9 +17573,68 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Volume dco_decode_box_autoadd_volume(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_volume(raw);
+  }
+
+  @protected
+  VolumeRef dco_decode_box_autoadd_volume_ref(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_volume_ref(raw);
+  }
+
+  @protected
   CertInfo dco_decode_box_cert_info(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_cert_info(raw);
+  }
+
+  @protected
+  Capabilities dco_decode_capabilities(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 37)
+      throw Exception('unexpected arr length: expect 37 but see ${arr.length}');
+    return Capabilities(
+      lxc: dco_decode_bool(arr[0]),
+      pause: dco_decode_bool(arr[1]),
+      snapshots: dco_decode_bool(arr[2]),
+      snapshotMemoryRequired: dco_decode_bool(arr[3]),
+      snapshotExternal: dco_decode_bool(arr[4]),
+      snapshotSupported: dco_decode_bool(arr[5]),
+      storage: dco_decode_bool(arr[6]),
+      network: dco_decode_bool(arr[7]),
+      backup: dco_decode_bool(arr[8]),
+      clone: dco_decode_bool(arr[9]),
+      linkedClone: dco_decode_bool(arr[10]),
+      template: dco_decode_bool(arr[11]),
+      cloneTarget: dco_decode_bool(arr[12]),
+      backupJobs: dco_decode_bool(arr[13]),
+      cluster: dco_decode_bool(arr[14]),
+      serialConsole: dco_decode_bool(arr[15]),
+      vncConsole: dco_decode_bool(arr[16]),
+      termConsole: dco_decode_bool(arr[17]),
+      storedHistory: dco_decode_bool(arr[18]),
+      create: dco_decode_bool(arr[19]),
+      deleteKeepsDisks: dco_decode_bool(arr[20]),
+      hardware: dco_decode_bool(arr[21]),
+      hardwareRevert: dco_decode_bool(arr[22]),
+      hardwareRevertPending: dco_decode_bool(arr[23]),
+      storageEdit: dco_decode_bool(arr[24]),
+      poolTypes: dco_decode_list_String(arr[25]),
+      poolAutostart: dco_decode_bool(arr[26]),
+      poolDeleteStorage: dco_decode_bool(arr[27]),
+      volumeResize: dco_decode_bool(arr[28]),
+      volumeClone: dco_decode_bool(arr[29]),
+      upload: dco_decode_bool(arr[30]),
+      networkEdit: dco_decode_bool(arr[31]),
+      networkModes: dco_decode_list_String(arr[32]),
+      networkStart: dco_decode_bool(arr[33]),
+      networkApply: dco_decode_bool(arr[34]),
+      networkEditExisting: dco_decode_bool(arr[35]),
+      networkRestart: dco_decode_bool(arr[36]),
+    );
   }
 
   @protected
@@ -17333,6 +17665,50 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Chain dco_decode_chain(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return Chain(
+      disks: dco_decode_list_chain_disk(arr[0]),
+      refusal: dco_decode_opt_String(arr[1]),
+      externalRefusal: dco_decode_opt_String(arr[2]),
+      pools: dco_decode_list_String(arr[3]),
+    );
+  }
+
+  @protected
+  ChainDisk dco_decode_chain_disk(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return ChainDisk(
+      target: dco_decode_String(arr[0]),
+      files: dco_decode_list_chain_file(arr[1]),
+      pool: dco_decode_opt_String(arr[2]),
+      error: dco_decode_opt_String(arr[3]),
+    );
+  }
+
+  @protected
+  ChainFile dco_decode_chain_file(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return ChainFile(
+      path: dco_decode_String(arr[0]),
+      format: dco_decode_opt_String(arr[1]),
+      allocation: dco_decode_opt_box_autoadd_u_64(arr[2]),
+      backing: dco_decode_opt_String(arr[3]),
+      snap: dco_decode_opt_String(arr[4]),
+      active: dco_decode_bool(arr[5]),
+    );
+  }
+
+  @protected
   ChangeError dco_decode_change_error(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     switch (raw[0]) {
@@ -17349,6 +17725,77 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       default:
         throw Exception('unreachable');
     }
+  }
+
+  @protected
+  CloneRequest dco_decode_clone_request(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return CloneRequest(
+      name: dco_decode_String(arr[0]),
+      full: dco_decode_bool(arr[1]),
+      vmid: dco_decode_opt_box_autoadd_u_32(arr[2]),
+      storage: dco_decode_opt_String(arr[3]),
+      targetNode: dco_decode_opt_String(arr[4]),
+      targetPool: dco_decode_opt_String(arr[5]),
+    );
+  }
+
+  @protected
+  CloudInit dco_decode_cloud_init(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 8)
+      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    return CloudInit(
+      user: dco_decode_String(arr[0]),
+      password: dco_decode_opt_String(arr[1]),
+      sshKeys: dco_decode_list_String(arr[2]),
+      hostname: dco_decode_opt_String(arr[3]),
+      address: dco_decode_opt_String(arr[4]),
+      gateway: dco_decode_opt_String(arr[5]),
+      dns: dco_decode_list_String(arr[6]),
+      searchDomains: dco_decode_list_String(arr[7]),
+    );
+  }
+
+  @protected
+  CloudInitEdit dco_decode_cloud_init_edit(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return CloudInitEdit(
+      values: dco_decode_cloud_init(arr[0]),
+      removePassword: dco_decode_bool(arr[1]),
+      passwordExpires: dco_decode_bool(arr[2]),
+      revision: dco_decode_String(arr[3]),
+    );
+  }
+
+  @protected
+  CloudInitState dco_decode_cloud_init_state(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 13)
+      throw Exception('unexpected arr length: expect 13 but see ${arr.length}');
+    return CloudInitState(
+      user: dco_decode_String(arr[0]),
+      sshKeys: dco_decode_list_String(arr[1]),
+      hostname: dco_decode_opt_String(arr[2]),
+      address: dco_decode_opt_String(arr[3]),
+      gateway: dco_decode_opt_String(arr[4]),
+      dns: dco_decode_list_String(arr[5]),
+      searchDomains: dco_decode_list_String(arr[6]),
+      nics: dco_decode_u_32(arr[7]),
+      passwordSet: dco_decode_bool(arr[8]),
+      passwordExpires: dco_decode_bool(arr[9]),
+      network: dco_decode_bool(arr[10]),
+      foreign: dco_decode_bool(arr[11]),
+      revision: dco_decode_String(arr[12]),
+    );
   }
 
   @protected
@@ -17391,6 +17838,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       smb: dco_decode_list_smb_connection(arr[0]),
       nfs: dco_decode_list_String(arr[1]),
     );
+  }
+
+  @protected
+  ConsoleKind dco_decode_console_kind(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return ConsoleKind.values[raw as int];
   }
 
   @protected
@@ -17468,6 +17921,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Cpu dco_decode_cpu(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return Cpu(
+      sockets: dco_decode_u_32(arr[0]),
+      cores: dco_decode_u_32(arr[1]),
+      threads: dco_decode_u_32(arr[2]),
+      online: dco_decode_opt_box_autoadd_u_32(arr[3]),
+      cpuType: dco_decode_opt_String(arr[4]),
+    );
+  }
+
+  @protected
   CpuCore dco_decode_cpu_core(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -17482,6 +17950,74 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       iowait: dco_decode_u_64(arr[5]),
       irq: dco_decode_u_64(arr[6]),
       softirq: dco_decode_u_64(arr[7]),
+    );
+  }
+
+  @protected
+  CreateIssue dco_decode_create_issue(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return CreateIssue.values[raw as int];
+  }
+
+  @protected
+  CreateOptions dco_decode_create_options(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 8)
+      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    return CreateOptions(
+      buses: dco_decode_list_String(arr[0]),
+      nicModels: dco_decode_list_String(arr[1]),
+      uefi: dco_decode_bool(arr[2]),
+      tpm: dco_decode_bool(arr[3]),
+      secureBoot: dco_decode_bool(arr[4]),
+      cloudImages: dco_decode_bool(arr[5]),
+      cloudInit: dco_decode_bool(arr[6]),
+      cloudInitMissing: dco_decode_opt_String(arr[7]),
+    );
+  }
+
+  @protected
+  CreateSpec dco_decode_create_spec(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 21)
+      throw Exception('unexpected arr length: expect 21 but see ${arr.length}');
+    return CreateSpec(
+      kind: dco_decode_guest_kind(arr[0]),
+      name: dco_decode_String(arr[1]),
+      node: dco_decode_opt_String(arr[2]),
+      vmid: dco_decode_opt_box_autoadd_u_32(arr[3]),
+      cores: dco_decode_u_32(arr[4]),
+      memoryMib: dco_decode_u_64(arr[5]),
+      storage: dco_decode_String(arr[6]),
+      diskGib: dco_decode_u_64(arr[7]),
+      media: dco_decode_opt_box_autoadd_volume_ref(arr[8]),
+      image: dco_decode_opt_box_autoadd_volume_ref(arr[9]),
+      network: dco_decode_opt_String(arr[10]),
+      password: dco_decode_opt_String(arr[11]),
+      sshKeys: dco_decode_list_String(arr[12]),
+      unprivileged: dco_decode_bool(arr[13]),
+      bus: dco_decode_opt_String(arr[14]),
+      nicModel: dco_decode_opt_String(arr[15]),
+      uefi: dco_decode_bool(arr[16]),
+      secureBoot: dco_decode_bool(arr[17]),
+      tpm: dco_decode_bool(arr[18]),
+      cloudInit: dco_decode_opt_box_autoadd_cloud_init(arr[19]),
+      start: dco_decode_bool(arr[20]),
+    );
+  }
+
+  @protected
+  Created dco_decode_created(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return Created(
+      id: dco_decode_String(arr[0]),
+      startError: dco_decode_opt_String(arr[1]),
+      diskKeptBytes: dco_decode_opt_box_autoadd_u_64(arr[2]),
     );
   }
 
@@ -17605,6 +18141,32 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  DeviceKind dco_decode_device_kind(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return DeviceKind.values[raw as int];
+  }
+
+  @protected
+  Diff dco_decode_diff(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return Diff(
+      group: dco_decode_diff_group(arr[0]),
+      key: dco_decode_String(arr[1]),
+      before: dco_decode_opt_String(arr[2]),
+      after: dco_decode_opt_String(arr[3]),
+    );
+  }
+
+  @protected
+  DiffGroup dco_decode_diff_group(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return DiffGroup.values[raw as int];
+  }
+
+  @protected
   Disk dco_decode_disk(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -17657,6 +18219,28 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       dev: dco_decode_String(arr[0]),
       sectorsRead: dco_decode_i_64(arr[1]),
       sectorsWrite: dco_decode_i_64(arr[2]),
+    );
+  }
+
+  @protected
+  DiskKind dco_decode_disk_kind(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return DiskKind.values[raw as int];
+  }
+
+  @protected
+  Display dco_decode_display(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return Display(
+      uri: dco_decode_String(arr[0]),
+      protocol: dco_decode_String(arr[1]),
+      host: dco_decode_opt_String(arr[2]),
+      port: dco_decode_opt_box_autoadd_u_16(arr[3]),
+      tlsPort: dco_decode_opt_box_autoadd_u_16(arr[4]),
+      socket: dco_decode_opt_String(arr[5]),
     );
   }
 
@@ -17917,6 +18501,32 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Firmware dco_decode_firmware(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return Firmware(
+      uefi: dco_decode_bool(arr[0]),
+      secureBoot: dco_decode_bool(arr[1]),
+      varsStorage: dco_decode_opt_String(arr[2]),
+    );
+  }
+
+  @protected
+  FirmwareDescriptor dco_decode_firmware_descriptor(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return FirmwareDescriptor(
+      name: dco_decode_String(arr[0]),
+      secureBoot: dco_decode_bool(arr[1]),
+      enrolledKeys: dco_decode_bool(arr[2]),
+    );
+  }
+
+  @protected
   GeekbenchVersion dco_decode_geekbench_version(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return GeekbenchVersion.values[raw as int];
@@ -17969,6 +18579,22 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Graphics dco_decode_graphics(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return Graphics(
+      kind: dco_decode_String(arr[0]),
+      port: dco_decode_opt_box_autoadd_u_16(arr[1]),
+      tlsPort: dco_decode_opt_box_autoadd_u_16(arr[2]),
+      autoport: dco_decode_bool(arr[3]),
+      listen: dco_decode_opt_String(arr[4]),
+      socket: dco_decode_opt_String(arr[5]),
+    );
+  }
+
+  @protected
   GroupDraft dco_decode_group_draft(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -17982,9 +18608,319 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  GuestKind dco_decode_guest_kind(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return GuestKind.values[raw as int];
+  }
+
+  @protected
+  GuestRef dco_decode_guest_ref(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return GuestRef(
+      guestId: dco_decode_opt_String(arr[0]),
+      vmid: dco_decode_opt_box_autoadd_u_32(arr[1]),
+      device: dco_decode_opt_String(arr[2]),
+      mac: dco_decode_opt_String(arr[3]),
+      ip: dco_decode_opt_String(arr[4]),
+    );
+  }
+
+  @protected
+  GuestState dco_decode_guest_state(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return GuestState.values[raw as int];
+  }
+
+  @protected
+  Hardware dco_decode_hardware(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 21)
+      throw Exception('unexpected arr length: expect 21 but see ${arr.length}');
+    return Hardware(
+      kind: dco_decode_guest_kind(arr[0]),
+      running: dco_decode_bool(arr[1]),
+      cpu: dco_decode_cpu(arr[2]),
+      memory: dco_decode_hw_memory(arr[3]),
+      disks: dco_decode_list_hw_disk(arr[4]),
+      nics: dco_decode_list_hw_nic(arr[5]),
+      boot: dco_decode_opt_list_String(arr[6]),
+      autostart: dco_decode_bool(arr[7]),
+      name: dco_decode_opt_String(arr[8]),
+      description: dco_decode_opt_String(arr[9]),
+      protection: dco_decode_opt_box_autoadd_bool(arr[10]),
+      renameRunning: dco_decode_bool(arr[11]),
+      pending: dco_decode_list_pending_field(arr[12]),
+      revision: dco_decode_opt_String(arr[13]),
+      limits: dco_decode_limits(arr[14]),
+      cpuTypes: dco_decode_list_String(arr[15]),
+      configText: dco_decode_opt_String(arr[16]),
+      firmware: dco_decode_opt_box_autoadd_firmware(arr[17]),
+      display: dco_decode_opt_box_autoadd_hw_display(arr[18]),
+      devices: dco_decode_list_hw_device(arr[19]),
+      support: dco_decode_support(arr[20]),
+    );
+  }
+
+  @protected
   HealthVerdict dco_decode_health_verdict(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return HealthVerdict.values[raw as int];
+  }
+
+  @protected
+  Host dco_decode_host(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return Host(
+      kind: dco_decode_host_kind(arr[0]),
+      version: dco_decode_opt_String(arr[1]),
+      hypervisor: dco_decode_opt_String(arr[2]),
+      nodes: dco_decode_list_node(arr[3]),
+    );
+  }
+
+  @protected
+  HostDevice dco_decode_host_device(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 9)
+      throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
+    return HostDevice(
+      id: dco_decode_String(arr[0]),
+      label: dco_decode_String(arr[1]),
+      detail: dco_decode_opt_String(arr[2]),
+      mapping: dco_decode_bool(arr[3]),
+      usbBus: dco_decode_opt_box_autoadd_u_32(arr[4]),
+      usbPort: dco_decode_opt_String(arr[5]),
+      usbDevice: dco_decode_opt_box_autoadd_u_32(arr[6]),
+      iommuGroup: dco_decode_opt_box_autoadd_u_32(arr[7]),
+      groupSize: dco_decode_u_32(arr[8]),
+    );
+  }
+
+  @protected
+  HostDevices dco_decode_host_devices(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return HostDevices(
+      usb: dco_decode_list_host_device(arr[0]),
+      pci: dco_decode_list_host_device(arr[1]),
+      iommu: dco_decode_bool(arr[2]),
+      mappingsOnly: dco_decode_bool(arr[3]),
+    );
+  }
+
+  @protected
+  HostKind dco_decode_host_kind(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return HostKind.values[raw as int];
+  }
+
+  @protected
+  HwChange dco_decode_hw_change(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    switch (raw[0]) {
+      case 0:
+        return HwChange_SetCpu(
+          sockets: dco_decode_u_32(raw[1]),
+          cores: dco_decode_u_32(raw[2]),
+          online: dco_decode_opt_box_autoadd_u_32(raw[3]),
+          cpuType: dco_decode_opt_String(raw[4]),
+        );
+      case 1:
+        return HwChange_SetMemory(
+          mib: dco_decode_u_64(raw[1]),
+          minMib: dco_decode_opt_box_autoadd_u_64(raw[2]),
+          swapMib: dco_decode_opt_box_autoadd_u_64(raw[3]),
+        );
+      case 2:
+        return HwChange_GrowDisk(
+          key: dco_decode_String(raw[1]),
+          bytes: dco_decode_u_64(raw[2]),
+        );
+      case 3:
+        return HwChange_AddDisk(
+          pool: dco_decode_String(raw[1]),
+          gib: dco_decode_u_64(raw[2]),
+          mountPoint: dco_decode_opt_String(raw[3]),
+        );
+      case 4:
+        return HwChange_AttachVolume(
+          volume: dco_decode_box_autoadd_volume_ref(raw[1]),
+          mountPoint: dco_decode_opt_String(raw[2]),
+        );
+      case 5:
+        return HwChange_RemoveDisk(
+          key: dco_decode_String(raw[1]),
+          deleteVolume: dco_decode_bool(raw[2]),
+        );
+      case 6:
+        return HwChange_AddCdrom(
+          media: dco_decode_opt_box_autoadd_volume_ref(raw[1]),
+        );
+      case 7:
+        return HwChange_SetMedia(
+          key: dco_decode_String(raw[1]),
+          media: dco_decode_opt_box_autoadd_volume_ref(raw[2]),
+        );
+      case 8:
+        return HwChange_AddNic(
+          network: dco_decode_String(raw[1]),
+          model: dco_decode_opt_String(raw[2]),
+        );
+      case 9:
+        return HwChange_RemoveNic(key: dco_decode_String(raw[1]));
+      case 10:
+        return HwChange_UpdateNic(
+          key: dco_decode_String(raw[1]),
+          network: dco_decode_opt_String(raw[2]),
+          linkUp: dco_decode_bool(raw[3]),
+          firewall: dco_decode_opt_box_autoadd_bool(raw[4]),
+        );
+      case 11:
+        return HwChange_SetBoot(order: dco_decode_list_String(raw[1]));
+      case 12:
+        return HwChange_SetAutostart(on_: dco_decode_bool(raw[1]));
+      case 13:
+        return HwChange_SetName(name: dco_decode_String(raw[1]));
+      case 14:
+        return HwChange_SetDescription(text: dco_decode_String(raw[1]));
+      case 15:
+        return HwChange_SetProtection(on_: dco_decode_bool(raw[1]));
+      case 16:
+        return HwChange_UpdateDisk(
+          key: dco_decode_String(raw[1]),
+          bus: dco_decode_opt_String(raw[2]),
+          cache: dco_decode_opt_String(raw[3]),
+        );
+      case 17:
+        return HwChange_SetNicHardware(
+          key: dco_decode_String(raw[1]),
+          model: dco_decode_opt_String(raw[2]),
+          mac: dco_decode_opt_String(raw[3]),
+        );
+      case 18:
+        return HwChange_SetFirmware(
+          uefi: dco_decode_bool(raw[1]),
+          secureBoot: dco_decode_bool(raw[2]),
+          storage: dco_decode_opt_String(raw[3]),
+        );
+      case 19:
+        return HwChange_SetDisplay(
+          protocol: dco_decode_opt_String(raw[1]),
+          listen: dco_decode_opt_String(raw[2]),
+          gpu: dco_decode_opt_String(raw[3]),
+        );
+      case 20:
+        return HwChange_AddDevice(
+          kind: dco_decode_device_kind(raw[1]),
+          host: dco_decode_opt_box_autoadd_host_device(raw[2]),
+          storage: dco_decode_opt_String(raw[3]),
+          usbNaming: dco_decode_usb_naming(raw[4]),
+        );
+      case 21:
+        return HwChange_RemoveDevice(key: dco_decode_String(raw[1]));
+      case 22:
+        return HwChange_Revert(keys: dco_decode_list_String(raw[1]));
+      default:
+        throw Exception('unreachable');
+    }
+  }
+
+  @protected
+  HwDevice dco_decode_hw_device(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return HwDevice(
+      key: dco_decode_String(arr[0]),
+      kind: dco_decode_device_kind(arr[1]),
+      detail: dco_decode_opt_String(arr[2]),
+      mapping: dco_decode_bool(arr[3]),
+    );
+  }
+
+  @protected
+  HwDisk dco_decode_hw_disk(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 12)
+      throw Exception('unexpected arr length: expect 12 but see ${arr.length}');
+    return HwDisk(
+      key: dco_decode_String(arr[0]),
+      kind: dco_decode_disk_kind(arr[1]),
+      source: dco_decode_opt_String(arr[2]),
+      size: dco_decode_opt_box_autoadd_u_64(arr[3]),
+      storage: dco_decode_opt_String(arr[4]),
+      mountPoint: dco_decode_opt_String(arr[5]),
+      bus: dco_decode_opt_String(arr[6]),
+      format: dco_decode_opt_String(arr[7]),
+      readonly: dco_decode_bool(arr[8]),
+      cache: dco_decode_opt_String(arr[9]),
+      cloudInit: dco_decode_bool(arr[10]),
+      resizable: dco_decode_bool(arr[11]),
+    );
+  }
+
+  @protected
+  HwDisplay dco_decode_hw_display(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return HwDisplay(
+      protocol: dco_decode_opt_String(arr[0]),
+      listen: dco_decode_opt_String(arr[1]),
+      gpu: dco_decode_opt_String(arr[2]),
+      port: dco_decode_opt_box_autoadd_i_32(arr[3]),
+    );
+  }
+
+  @protected
+  HwIssue dco_decode_hw_issue(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return HwIssue.values[raw as int];
+  }
+
+  @protected
+  HwMemory dco_decode_hw_memory(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return HwMemory(
+      mib: dco_decode_u_64(arr[0]),
+      minMib: dco_decode_opt_box_autoadd_u_64(arr[1]),
+      balloon: dco_decode_bool(arr[2]),
+      swapMib: dco_decode_opt_box_autoadd_u_64(arr[3]),
+    );
+  }
+
+  @protected
+  HwNic dco_decode_hw_nic(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 8)
+      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    return HwNic(
+      key: dco_decode_String(arr[0]),
+      mac: dco_decode_opt_String(arr[1]),
+      nicType: dco_decode_opt_String(arr[2]),
+      source: dco_decode_opt_String(arr[3]),
+      model: dco_decode_opt_String(arr[4]),
+      linkUp: dco_decode_bool(arr[5]),
+      firewall: dco_decode_opt_box_autoadd_bool(arr[6]),
+      name: dco_decode_opt_String(arr[7]),
+    );
   }
 
   @protected
@@ -18020,6 +18956,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Limits dco_decode_limits(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return Limits(
+      hostCpus: dco_decode_opt_box_autoadd_u_32(arr[0]),
+      hostMemoryBytes: dco_decode_opt_box_autoadd_u_64(arr[1]),
+    );
+  }
+
+  @protected
   List<String> dco_decode_list_String(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_String).toList();
@@ -18029,6 +18977,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   List<AmdSmiItem> dco_decode_list_amd_smi_item(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_amd_smi_item).toList();
+  }
+
+  @protected
+  List<Backup> dco_decode_list_backup(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_backup).toList();
+  }
+
+  @protected
+  List<BackupJob> dco_decode_list_backup_job(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_backup_job).toList();
   }
 
   @protected
@@ -18050,9 +19010,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<ChainDisk> dco_decode_list_chain_disk(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_chain_disk).toList();
+  }
+
+  @protected
+  List<ChainFile> dco_decode_list_chain_file(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_chain_file).toList();
+  }
+
+  @protected
   List<CommandSpec> dco_decode_list_command_spec(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_command_spec).toList();
+  }
+
+  @protected
+  List<ConsoleKind> dco_decode_list_console_kind(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_console_kind).toList();
   }
 
   @protected
@@ -18089,6 +19067,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   List<CustomCmd> dco_decode_list_custom_cmd(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_custom_cmd).toList();
+  }
+
+  @protected
+  List<Diff> dco_decode_list_diff(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_diff).toList();
   }
 
   @protected
@@ -18146,6 +19130,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<FirmwareDescriptor> dco_decode_list_firmware_descriptor(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_firmware_descriptor).toList();
+  }
+
+  @protected
   List<GpuItem> dco_decode_list_gpu_item(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_gpu_item).toList();
@@ -18155,6 +19145,42 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   List<GpuMemProcess> dco_decode_list_gpu_mem_process(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_gpu_mem_process).toList();
+  }
+
+  @protected
+  List<Graphics> dco_decode_list_graphics(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_graphics).toList();
+  }
+
+  @protected
+  List<GuestRef> dco_decode_list_guest_ref(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_guest_ref).toList();
+  }
+
+  @protected
+  List<HostDevice> dco_decode_list_host_device(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_host_device).toList();
+  }
+
+  @protected
+  List<HwDevice> dco_decode_list_hw_device(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_hw_device).toList();
+  }
+
+  @protected
+  List<HwDisk> dco_decode_list_hw_disk(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_hw_disk).toList();
+  }
+
+  @protected
+  List<HwNic> dco_decode_list_hw_nic(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_hw_nic).toList();
   }
 
   @protected
@@ -18176,9 +19202,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<NetHost> dco_decode_list_net_host(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_net_host).toList();
+  }
+
+  @protected
   List<NetIface> dco_decode_list_net_iface(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_net_iface).toList();
+  }
+
+  @protected
+  List<Network> dco_decode_list_network(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_network).toList();
+  }
+
+  @protected
+  List<NetworkChanges> dco_decode_list_network_changes(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_network_changes).toList();
   }
 
   @protected
@@ -18194,9 +19238,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<Nic> dco_decode_list_nic(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_nic).toList();
+  }
+
+  @protected
+  List<Node> dco_decode_list_node(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_node).toList();
+  }
+
+  @protected
   List<NvidiaSmiItem> dco_decode_list_nvidia_smi_item(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_nvidia_smi_item).toList();
+  }
+
+  @protected
+  List<PendingField> dco_decode_list_pending_field(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_pending_field).toList();
   }
 
   @protected
@@ -18218,9 +19280,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<PowerAction> dco_decode_list_power_action(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_power_action).toList();
+  }
+
+  @protected
   Int32List dco_decode_list_prim_i_32_strict(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as Int32List;
+  }
+
+  @protected
+  Int64List dco_decode_list_prim_i_64_strict(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dcoDecodeInt64List(raw);
   }
 
   @protected
@@ -18297,6 +19371,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<(String, Stats)> dco_decode_list_record_string_stats(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_record_string_stats).toList();
+  }
+
+  @protected
   List<(String, String)> dco_decode_list_record_string_string(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_record_string_string).toList();
@@ -18316,6 +19396,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     return (raw as List<dynamic>)
         .map(dco_decode_record_ufw_chain_ufw_policy)
         .toList();
+  }
+
+  @protected
+  List<ResourcePool> dco_decode_list_resource_pool(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_resource_pool).toList();
   }
 
   @protected
@@ -18407,6 +19493,24 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<Snapshot> dco_decode_list_snapshot(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_snapshot).toList();
+  }
+
+  @protected
+  List<SnapshotLayer> dco_decode_list_snapshot_layer(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_snapshot_layer).toList();
+  }
+
+  @protected
+  List<Stats> dco_decode_list_stats(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_stats).toList();
+  }
+
+  @protected
   List<StatusBlockDevice> dco_decode_list_status_block_device(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_status_block_device).toList();
@@ -18473,9 +19577,111 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<VirtCiNetwork> dco_decode_list_virt_ci_network(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_virt_ci_network).toList();
+  }
+
+  @protected
+  List<VirtCloneDisk> dco_decode_list_virt_clone_disk(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_virt_clone_disk).toList();
+  }
+
+  @protected
+  List<VirtDisk> dco_decode_list_virt_disk(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_virt_disk).toList();
+  }
+
+  @protected
+  List<VirtDiskReport> dco_decode_list_virt_disk_report(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_virt_disk_report).toList();
+  }
+
+  @protected
+  List<VirtDiskUse> dco_decode_list_virt_disk_use(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_virt_disk_use).toList();
+  }
+
+  @protected
+  List<VirtGraphics> dco_decode_list_virt_graphics(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_virt_graphics).toList();
+  }
+
+  @protected
+  List<VirtGuestReport> dco_decode_list_virt_guest_report(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_virt_guest_report).toList();
+  }
+
+  @protected
+  List<VirtHostPci> dco_decode_list_virt_host_pci(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_virt_host_pci).toList();
+  }
+
+  @protected
+  List<VirtHostUsb> dco_decode_list_virt_host_usb(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_virt_host_usb).toList();
+  }
+
+  @protected
+  List<VirtHwDisk> dco_decode_list_virt_hw_disk(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_virt_hw_disk).toList();
+  }
+
+  @protected
+  List<VirtHwHostdev> dco_decode_list_virt_hw_hostdev(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_virt_hw_hostdev).toList();
+  }
+
+  @protected
+  List<VirtHwNic> dco_decode_list_virt_hw_nic(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_virt_hw_nic).toList();
+  }
+
+  @protected
+  List<VirtNic> dco_decode_list_virt_nic(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_virt_nic).toList();
+  }
+
+  @protected
   List<VirtOverlay> dco_decode_list_virt_overlay(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_virt_overlay).toList();
+  }
+
+  @protected
+  List<VirtPool> dco_decode_list_virt_pool(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_virt_pool).toList();
+  }
+
+  @protected
+  List<VirtPoolVolumes> dco_decode_list_virt_pool_volumes(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_virt_pool_volumes).toList();
+  }
+
+  @protected
+  List<VirtVolumeRef> dco_decode_list_virt_volume_ref(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_virt_volume_ref).toList();
+  }
+
+  @protected
+  List<Volume> dco_decode_list_volume(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_volume).toList();
   }
 
   @protected
@@ -18548,6 +19754,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  NetHost dco_decode_net_host(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return NetHost(
+      mac: dco_decode_String(arr[0]),
+      ip: dco_decode_String(arr[1]),
+      name: dco_decode_opt_String(arr[2]),
+    );
+  }
+
+  @protected
   NetIface dco_decode_net_iface(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -18557,6 +19776,49 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       device: dco_decode_String(arr[0]),
       rxBytes: dco_decode_u_64(arr[1]),
       txBytes: dco_decode_u_64(arr[2]),
+    );
+  }
+
+  @protected
+  Network dco_decode_network(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 21)
+      throw Exception('unexpected arr length: expect 21 but see ${arr.length}');
+    return Network(
+      id: dco_decode_String(arr[0]),
+      name: dco_decode_String(arr[1]),
+      node: dco_decode_opt_String(arr[2]),
+      mode: dco_decode_String(arr[3]),
+      bridge: dco_decode_opt_String(arr[4]),
+      cidrs: dco_decode_list_String(arr[5]),
+      gateway: dco_decode_opt_String(arr[6]),
+      dhcpRanges: dco_decode_list_String(arr[7]),
+      ports: dco_decode_list_String(arr[8]),
+      vlanAware: dco_decode_opt_box_autoadd_bool(arr[9]),
+      vlanId: dco_decode_opt_box_autoadd_u_32(arr[10]),
+      vlanDevice: dco_decode_opt_String(arr[11]),
+      bondMode: dco_decode_opt_String(arr[12]),
+      active: dco_decode_bool(arr[13]),
+      autostart: dco_decode_opt_box_autoadd_bool(arr[14]),
+      comment: dco_decode_opt_String(arr[15]),
+      hosts: dco_decode_list_net_host(arr[16]),
+      xml: dco_decode_String(arr[17]),
+      pendingRestart: dco_decode_bool(arr[18]),
+      managementEditable: dco_decode_bool(arr[19]),
+      users: dco_decode_list_guest_ref(arr[20]),
+    );
+  }
+
+  @protected
+  NetworkChanges dco_decode_network_changes(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return NetworkChanges(
+      node: dco_decode_String(arr[0]),
+      diff: dco_decode_String(arr[1]),
     );
   }
 
@@ -18588,6 +19850,38 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Nic dco_decode_nic(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return Nic(
+      kind: dco_decode_String(arr[0]),
+      mac: dco_decode_opt_String(arr[1]),
+      source: dco_decode_opt_String(arr[2]),
+      model: dco_decode_opt_String(arr[3]),
+      target: dco_decode_opt_String(arr[4]),
+    );
+  }
+
+  @protected
+  Node dco_decode_node(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 7)
+      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    return Node(
+      name: dco_decode_String(arr[0]),
+      online: dco_decode_bool(arr[1]),
+      cpu: dco_decode_opt_box_autoadd_f_64(arr[2]),
+      maxCpu: dco_decode_opt_box_autoadd_u_32(arr[3]),
+      memUsed: dco_decode_opt_box_autoadd_u_64(arr[4]),
+      memTotal: dco_decode_opt_box_autoadd_u_64(arr[5]),
+      uptime: dco_decode_opt_box_autoadd_u_64(arr[6]),
+    );
+  }
+
+  @protected
   NvidiaSmiItem dco_decode_nvidia_smi_item(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -18610,6 +19904,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  BackupIssue? dco_decode_opt_box_autoadd_backup_issue(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_backup_issue(raw);
+  }
+
+  @protected
   bool? dco_decode_opt_box_autoadd_bool(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_bool(raw);
@@ -18619,6 +19919,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   CertInfo? dco_decode_opt_box_autoadd_cert_info(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_cert_info(raw);
+  }
+
+  @protected
+  CloudInit? dco_decode_opt_box_autoadd_cloud_init(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_cloud_init(raw);
   }
 
   @protected
@@ -18648,6 +19954,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  CreateIssue? dco_decode_opt_box_autoadd_create_issue(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_create_issue(raw);
+  }
+
+  @protected
   CronScheduleFields? dco_decode_opt_box_autoadd_cron_schedule_fields(
     dynamic raw,
   ) {
@@ -18670,6 +19982,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Display? dco_decode_opt_box_autoadd_display(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_display(raw);
+  }
+
+  @protected
   double? dco_decode_opt_box_autoadd_f_64(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_f_64(raw);
@@ -18688,9 +20006,39 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Firmware? dco_decode_opt_box_autoadd_firmware(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_firmware(raw);
+  }
+
+  @protected
   GpuMem? dco_decode_opt_box_autoadd_gpu_mem(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_gpu_mem(raw);
+  }
+
+  @protected
+  GuestKind? dco_decode_opt_box_autoadd_guest_kind(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_guest_kind(raw);
+  }
+
+  @protected
+  HostDevice? dco_decode_opt_box_autoadd_host_device(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_host_device(raw);
+  }
+
+  @protected
+  HwDisplay? dco_decode_opt_box_autoadd_hw_display(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_hw_display(raw);
+  }
+
+  @protected
+  HwIssue? dco_decode_opt_box_autoadd_hw_issue(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_hw_issue(raw);
   }
 
   @protected
@@ -18801,6 +20149,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ResetRequest? dco_decode_opt_box_autoadd_reset_request(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_reset_request(raw);
+  }
+
+  @protected
+  ResourceIssue? dco_decode_opt_box_autoadd_resource_issue(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_resource_issue(raw);
   }
 
   @protected
@@ -18916,9 +20270,81 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  VirtCiIpv4? dco_decode_opt_box_autoadd_virt_ci_ipv_4(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_virt_ci_ipv_4(raw);
+  }
+
+  @protected
+  VirtCiNetwork? dco_decode_opt_box_autoadd_virt_ci_network(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_virt_ci_network(raw);
+  }
+
+  @protected
+  VirtCloudInit? dco_decode_opt_box_autoadd_virt_cloud_init(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_virt_cloud_init(raw);
+  }
+
+  @protected
+  VirtDisplay? dco_decode_opt_box_autoadd_virt_display(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_virt_display(raw);
+  }
+
+  @protected
+  VirtHwCaps? dco_decode_opt_box_autoadd_virt_hw_caps(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_virt_hw_caps(raw);
+  }
+
+  @protected
+  VirtHwConfig? dco_decode_opt_box_autoadd_virt_hw_config(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_virt_hw_config(raw);
+  }
+
+  @protected
+  VirtHwGraphics? dco_decode_opt_box_autoadd_virt_hw_graphics(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_virt_hw_graphics(raw);
+  }
+
+  @protected
+  VirtHwTpm? dco_decode_opt_box_autoadd_virt_hw_tpm(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_virt_hw_tpm(raw);
+  }
+
+  @protected
+  VirtNetIpv4? dco_decode_opt_box_autoadd_virt_net_ipv_4(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_virt_net_ipv_4(raw);
+  }
+
+  @protected
+  VirtVersion? dco_decode_opt_box_autoadd_virt_version(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_virt_version(raw);
+  }
+
+  @protected
   VncPasswordError? dco_decode_opt_box_autoadd_vnc_password_error(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_vnc_password_error(raw);
+  }
+
+  @protected
+  Volume? dco_decode_opt_box_autoadd_volume(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_volume(raw);
+  }
+
+  @protected
+  VolumeRef? dco_decode_opt_box_autoadd_volume_ref(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_volume_ref(raw);
   }
 
   @protected
@@ -18958,9 +20384,41 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<VirtVolumeRef>? dco_decode_opt_list_virt_volume_ref(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_list_virt_volume_ref(raw);
+  }
+
+  @protected
+  Outcome dco_decode_outcome(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return Outcome(
+      liveError: dco_decode_opt_String(arr[0]),
+      volumeKept: dco_decode_bool(arr[1]),
+    );
+  }
+
+  @protected
   PasswordState dco_decode_password_state(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return PasswordState.values[raw as int];
+  }
+
+  @protected
+  PendingField dco_decode_pending_field(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return PendingField(
+      key: dco_decode_String(arr[0]),
+      current: dco_decode_opt_String(arr[1]),
+      pending: dco_decode_opt_String(arr[2]),
+      delete: dco_decode_bool(arr[3]),
+    );
   }
 
   @protected
@@ -19026,6 +20484,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       value: dco_decode_String(arr[0]),
       minimum: dco_decode_u_32(arr[1]),
     );
+  }
+
+  @protected
+  PowerAction dco_decode_power_action(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return PowerAction.values[raw as int];
   }
 
   @protected
@@ -19370,6 +20834,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  (String, Stats) dco_decode_record_string_stats(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2) {
+      throw Exception('Expected 2 elements, got ${arr.length}');
+    }
+    return (dco_decode_String(arr[0]), dco_decode_stats(arr[1]));
+  }
+
+  @protected
   (String, String) dco_decode_record_string_string(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -19581,6 +21055,164 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     return ResetRequest(
       target: dco_decode_String(arr[0]),
       resetType: dco_decode_String(arr[1]),
+    );
+  }
+
+  @protected
+  ResourceChange dco_decode_resource_change(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    switch (raw[0]) {
+      case 0:
+        return ResourceChange_PoolCreate(
+          name: dco_decode_String(raw[1]),
+          poolType: dco_decode_String(raw[2]),
+          source: dco_decode_String(raw[3]),
+          target: dco_decode_opt_String(raw[4]),
+          node: dco_decode_opt_String(raw[5]),
+          content: dco_decode_list_String(raw[6]),
+          autostart: dco_decode_bool(raw[7]),
+        );
+      case 1:
+        return ResourceChange_PoolSetActive(
+          pool: dco_decode_String(raw[1]),
+          active: dco_decode_bool(raw[2]),
+        );
+      case 2:
+        return ResourceChange_PoolSetAutostart(
+          pool: dco_decode_String(raw[1]),
+          on_: dco_decode_bool(raw[2]),
+        );
+      case 3:
+        return ResourceChange_PoolRefresh(pool: dco_decode_String(raw[1]));
+      case 4:
+        return ResourceChange_PoolDelete(
+          pool: dco_decode_String(raw[1]),
+          deleteStorage: dco_decode_bool(raw[2]),
+        );
+      case 5:
+        return ResourceChange_VolumeCreate(
+          pool: dco_decode_String(raw[1]),
+          name: dco_decode_String(raw[2]),
+          gib: dco_decode_u_64(raw[3]),
+          format: dco_decode_String(raw[4]),
+        );
+      case 6:
+        return ResourceChange_VolumeDelete(
+          pool: dco_decode_String(raw[1]),
+          volume: dco_decode_String(raw[2]),
+        );
+      case 7:
+        return ResourceChange_VolumeResize(
+          pool: dco_decode_String(raw[1]),
+          volume: dco_decode_String(raw[2]),
+          bytes: dco_decode_u_64(raw[3]),
+        );
+      case 8:
+        return ResourceChange_VolumeClone(
+          pool: dco_decode_String(raw[1]),
+          volume: dco_decode_String(raw[2]),
+          name: dco_decode_String(raw[3]),
+        );
+      case 9:
+        return ResourceChange_NetworkCreate(
+          name: dco_decode_String(raw[1]),
+          mode: dco_decode_String(raw[2]),
+          node: dco_decode_opt_String(raw[3]),
+          bridge: dco_decode_opt_String(raw[4]),
+          cidr: dco_decode_opt_String(raw[5]),
+          dhcpStart: dco_decode_opt_String(raw[6]),
+          dhcpEnd: dco_decode_opt_String(raw[7]),
+          vlanAware: dco_decode_bool(raw[8]),
+          autostart: dco_decode_bool(raw[9]),
+        );
+      case 10:
+        return ResourceChange_NetworkEdit(
+          network: dco_decode_String(raw[1]),
+          mode: dco_decode_String(raw[2]),
+          bridge: dco_decode_opt_String(raw[3]),
+          address: dco_decode_opt_String(raw[4]),
+          prefix: dco_decode_opt_box_autoadd_u_8(raw[5]),
+          dhcpStart: dco_decode_opt_String(raw[6]),
+          dhcpEnd: dco_decode_opt_String(raw[7]),
+          hosts: dco_decode_list_net_host(raw[8]),
+          restart: dco_decode_bool(raw[9]),
+          baseXml: dco_decode_opt_String(raw[10]),
+        );
+      case 11:
+        return ResourceChange_NetworkEditBridge(
+          network: dco_decode_String(raw[1]),
+          ports: dco_decode_opt_String(raw[2]),
+          cidr: dco_decode_opt_String(raw[3]),
+          gateway: dco_decode_opt_String(raw[4]),
+          vlanAware: dco_decode_opt_box_autoadd_bool(raw[5]),
+          autostart: dco_decode_opt_box_autoadd_bool(raw[6]),
+        );
+      case 12:
+        return ResourceChange_NetworkRestart(
+          network: dco_decode_String(raw[1]),
+          baseXml: dco_decode_opt_String(raw[2]),
+        );
+      case 13:
+        return ResourceChange_NetworkSetActive(
+          network: dco_decode_String(raw[1]),
+          active: dco_decode_bool(raw[2]),
+        );
+      case 14:
+        return ResourceChange_NetworkSetAutostart(
+          network: dco_decode_String(raw[1]),
+          on_: dco_decode_bool(raw[2]),
+        );
+      case 15:
+        return ResourceChange_NetworkDelete(network: dco_decode_String(raw[1]));
+      case 16:
+        return ResourceChange_NetworkApply(node: dco_decode_String(raw[1]));
+      case 17:
+        return ResourceChange_NetworkRevert(node: dco_decode_String(raw[1]));
+      default:
+        throw Exception('unreachable');
+    }
+  }
+
+  @protected
+  ResourceIssue dco_decode_resource_issue(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return ResourceIssue.values[raw as int];
+  }
+
+  @protected
+  ResourcePool dco_decode_resource_pool(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 15)
+      throw Exception('unexpected arr length: expect 15 but see ${arr.length}');
+    return ResourcePool(
+      id: dco_decode_String(arr[0]),
+      name: dco_decode_String(arr[1]),
+      node: dco_decode_opt_String(arr[2]),
+      poolType: dco_decode_String(arr[3]),
+      path: dco_decode_opt_String(arr[4]),
+      source: dco_decode_opt_String(arr[5]),
+      capacity: dco_decode_opt_box_autoadd_u_64(arr[6]),
+      used: dco_decode_opt_box_autoadd_u_64(arr[7]),
+      available: dco_decode_opt_box_autoadd_u_64(arr[8]),
+      active: dco_decode_bool(arr[9]),
+      autostart: dco_decode_opt_box_autoadd_bool(arr[10]),
+      enabled: dco_decode_opt_box_autoadd_bool(arr[11]),
+      shared: dco_decode_opt_box_autoadd_bool(arr[12]),
+      content: dco_decode_list_String(arr[13]),
+      volumeCount: dco_decode_opt_box_autoadd_u_64(arr[14]),
+    );
+  }
+
+  @protected
+  ScheduleCheck dco_decode_schedule_check(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return ScheduleCheck(
+      error: dco_decode_opt_String(arr[0]),
+      next: dco_decode_list_prim_i_64_strict(arr[1]),
     );
   }
 
@@ -19921,6 +21553,37 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Snapshot dco_decode_snapshot(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 8)
+      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    return Snapshot(
+      name: dco_decode_String(arr[0]),
+      parent: dco_decode_opt_String(arr[1]),
+      description: dco_decode_opt_String(arr[2]),
+      createdAt: dco_decode_opt_box_autoadd_i_64(arr[3]),
+      current: dco_decode_bool(arr[4]),
+      withMemory: dco_decode_bool(arr[5]),
+      external_: dco_decode_bool(arr[6]),
+      layers: dco_decode_list_snapshot_layer(arr[7]),
+    );
+  }
+
+  @protected
+  SnapshotLayer dco_decode_snapshot_layer(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return SnapshotLayer(
+      target: dco_decode_String(arr[0]),
+      file: dco_decode_opt_String(arr[1]),
+      external_: dco_decode_bool(arr[2]),
+    );
+  }
+
+  @protected
   SnapshotMemoryKind dco_decode_snapshot_memory_kind(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return SnapshotMemoryKind.values[raw as int];
@@ -19945,6 +21608,26 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       pwd: dco_decode_opt_String(arr[3]),
       id: dco_decode_opt_String(arr[4]),
       name: dco_decode_opt_String(arr[5]),
+    );
+  }
+
+  @protected
+  Stats dco_decode_stats(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 10)
+      throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
+    return Stats(
+      at: dco_decode_i_64(arr[0]),
+      cpu: dco_decode_opt_box_autoadd_f_64(arr[1]),
+      memUsed: dco_decode_opt_box_autoadd_u_64(arr[2]),
+      memTotal: dco_decode_opt_box_autoadd_u_64(arr[3]),
+      diskUsed: dco_decode_opt_box_autoadd_u_64(arr[4]),
+      diskTotal: dco_decode_opt_box_autoadd_u_64(arr[5]),
+      diskRead: dco_decode_opt_box_autoadd_f_64(arr[6]),
+      diskWrite: dco_decode_opt_box_autoadd_f_64(arr[7]),
+      netIn: dco_decode_opt_box_autoadd_f_64(arr[8]),
+      netOut: dco_decode_opt_box_autoadd_f_64(arr[9]),
     );
   }
 
@@ -20157,6 +21840,28 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       arrays: dco_decode_list_md_array(arr[9]),
       pools: dco_decode_list_pool(arr[10]),
       tools: dco_decode_list_String(arr[11]),
+    );
+  }
+
+  @protected
+  Support dco_decode_support(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 12)
+      throw Exception('unexpected arr length: expect 12 but see ${arr.length}');
+    return Support(
+      buses: dco_decode_list_String(arr[0]),
+      caches: dco_decode_list_String(arr[1]),
+      nicModels: dco_decode_list_String(arr[2]),
+      mac: dco_decode_bool(arr[3]),
+      protocols: dco_decode_list_String(arr[4]),
+      listen: dco_decode_bool(arr[5]),
+      gpus: dco_decode_list_String(arr[6]),
+      uefi: dco_decode_bool(arr[7]),
+      secureBoot: dco_decode_bool(arr[8]),
+      tpm: dco_decode_bool(arr[9]),
+      usb: dco_decode_bool(arr[10]),
+      pci: dco_decode_bool(arr[11]),
     );
   }
 
@@ -20458,6 +22163,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  UsbNaming dco_decode_usb_naming(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return UsbNaming.values[raw as int];
+  }
+
+  @protected
   UserCatalog dco_decode_user_catalog(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -20557,6 +22268,151 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  VirtCiIpv4 dco_decode_virt_ci_ipv_4(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return VirtCiIpv4(
+      address: dco_decode_String(arr[0]),
+      gateway: dco_decode_opt_String(arr[1]),
+    );
+  }
+
+  @protected
+  VirtCiNetwork dco_decode_virt_ci_network(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return VirtCiNetwork(
+      mac: dco_decode_String(arr[0]),
+      ipv4: dco_decode_opt_box_autoadd_virt_ci_ipv_4(arr[1]),
+      dns: dco_decode_list_String(arr[2]),
+      search: dco_decode_list_String(arr[3]),
+    );
+  }
+
+  @protected
+  VirtCloneDisk dco_decode_virt_clone_disk(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return VirtCloneDisk(
+      target: dco_decode_String(arr[0]),
+      source: dco_decode_String(arr[1]),
+      format: dco_decode_opt_String(arr[2]),
+    );
+  }
+
+  @protected
+  VirtCloneSpec dco_decode_virt_clone_spec(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return VirtCloneSpec(
+      source: dco_decode_String(arr[0]),
+      name: dco_decode_String(arr[1]),
+      full: dco_decode_bool(arr[2]),
+      disks: dco_decode_list_virt_clone_disk(arr[3]),
+      targetPool: dco_decode_opt_String(arr[4]),
+      targetBlock: dco_decode_bool(arr[5]),
+    );
+  }
+
+  @protected
+  VirtCloudInit dco_decode_virt_cloud_init(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 8)
+      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    return VirtCloudInit(
+      user: dco_decode_String(arr[0]),
+      passwordHash: dco_decode_opt_String(arr[1]),
+      sshKeys: dco_decode_list_String(arr[2]),
+      hostname: dco_decode_String(arr[3]),
+      instanceId: dco_decode_String(arr[4]),
+      network: dco_decode_opt_box_autoadd_virt_ci_network(arr[5]),
+      extraNetworks: dco_decode_list_virt_ci_network(arr[6]),
+      passwordExpire: dco_decode_bool(arr[7]),
+    );
+  }
+
+  @protected
+  VirtCreateHost dco_decode_virt_create_host(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return VirtCreateHost(
+      domainType: dco_decode_String(arr[0]),
+      machine: dco_decode_String(arr[1]),
+      arch: dco_decode_String(arr[2]),
+      maxVcpus: dco_decode_opt_box_autoadd_u_32(arr[3]),
+      caps: dco_decode_opt_box_autoadd_virt_hw_caps(arr[4]),
+      seedTool: dco_decode_opt_String(arr[5]),
+    );
+  }
+
+  @protected
+  VirtCreateSpec dco_decode_virt_create_spec(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 21)
+      throw Exception('unexpected arr length: expect 21 but see ${arr.length}');
+    return VirtCreateSpec(
+      name: dco_decode_String(arr[0]),
+      vcpus: dco_decode_u_32(arr[1]),
+      memoryMib: dco_decode_u_64(arr[2]),
+      host: dco_decode_virt_create_host(arr[3]),
+      diskPool: dco_decode_String(arr[4]),
+      diskGib: dco_decode_u_64(arr[5]),
+      diskFormat: dco_decode_String(arr[6]),
+      diskPath: dco_decode_opt_String(arr[7]),
+      baseImage: dco_decode_opt_String(arr[8]),
+      diskBus: dco_decode_opt_String(arr[9]),
+      cdrom: dco_decode_opt_String(arr[10]),
+      network: dco_decode_opt_String(arr[11]),
+      nicModel: dco_decode_opt_String(arr[12]),
+      mac: dco_decode_opt_String(arr[13]),
+      efi: dco_decode_bool(arr[14]),
+      secureBoot: dco_decode_bool(arr[15]),
+      tpm: dco_decode_bool(arr[16]),
+      cloudInit: dco_decode_opt_box_autoadd_virt_cloud_init(arr[17]),
+      seedPath: dco_decode_opt_String(arr[18]),
+      seedTools: dco_decode_opt_list_String(arr[19]),
+      start: dco_decode_bool(arr[20]),
+    );
+  }
+
+  @protected
+  VirtCreateVolumes dco_decode_virt_create_volumes(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return VirtCreateVolumes(
+      diskPath: dco_decode_String(arr[0]),
+      seedPath: dco_decode_opt_String(arr[1]),
+      copiedBytes: dco_decode_opt_box_autoadd_u_64(arr[2]),
+    );
+  }
+
+  @protected
+  VirtCreated dco_decode_virt_created(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return VirtCreated(
+      uuid: dco_decode_opt_String(arr[0]),
+      startError: dco_decode_opt_String(arr[1]),
+    );
+  }
+
+  @protected
   VirtDeletePlan dco_decode_virt_delete_plan(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -20572,9 +22428,120 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  VirtDisk dco_decode_virt_disk(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 7)
+      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    return VirtDisk(
+      device: dco_decode_String(arr[0]),
+      sourceType: dco_decode_opt_String(arr[1]),
+      source: dco_decode_opt_String(arr[2]),
+      target: dco_decode_opt_String(arr[3]),
+      bus: dco_decode_opt_String(arr[4]),
+      format: dco_decode_opt_String(arr[5]),
+      readonly: dco_decode_bool(arr[6]),
+    );
+  }
+
+  @protected
+  VirtDiskReport dco_decode_virt_disk_report(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 8)
+      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    return VirtDiskReport(
+      device: dco_decode_String(arr[0]),
+      sourceType: dco_decode_opt_String(arr[1]),
+      source: dco_decode_opt_String(arr[2]),
+      target: dco_decode_opt_String(arr[3]),
+      bus: dco_decode_opt_String(arr[4]),
+      format: dco_decode_opt_String(arr[5]),
+      readonly: dco_decode_bool(arr[6]),
+      size: dco_decode_opt_box_autoadd_u_64(arr[7]),
+    );
+  }
+
+  @protected
+  VirtDiskUse dco_decode_virt_disk_use(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return VirtDiskUse(
+      domain: dco_decode_String(arr[0]),
+      kind: dco_decode_String(arr[1]),
+      device: dco_decode_String(arr[2]),
+      target: dco_decode_String(arr[3]),
+      source: dco_decode_opt_String(arr[4]),
+    );
+  }
+
+  @protected
+  VirtDisplay dco_decode_virt_display(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return VirtDisplay(
+      uri: dco_decode_String(arr[0]),
+      protocol: dco_decode_String(arr[1]),
+      host: dco_decode_opt_String(arr[2]),
+      port: dco_decode_opt_box_autoadd_u_16(arr[3]),
+      tlsPort: dco_decode_opt_box_autoadd_u_16(arr[4]),
+      socket: dco_decode_opt_String(arr[5]),
+    );
+  }
+
+  @protected
+  VirtDomainDetail dco_decode_virt_domain_detail(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return VirtDomainDetail(
+      display: dco_decode_opt_box_autoadd_virt_display(arr[0]),
+      xml: dco_decode_virt_domain_xml(arr[1]),
+    );
+  }
+
+  @protected
+  VirtDomainXml dco_decode_virt_domain_xml(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 11)
+      throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
+    return VirtDomainXml(
+      name: dco_decode_opt_String(arr[0]),
+      uuid: dco_decode_opt_String(arr[1]),
+      title: dco_decode_opt_String(arr[2]),
+      description: dco_decode_opt_String(arr[3]),
+      arch: dco_decode_opt_String(arr[4]),
+      machine: dco_decode_opt_String(arr[5]),
+      disks: dco_decode_list_virt_disk(arr[6]),
+      nics: dco_decode_list_virt_nic(arr[7]),
+      graphics: dco_decode_list_virt_graphics(arr[8]),
+      hasSerialConsole: dco_decode_bool(arr[9]),
+      seed: dco_decode_opt_String(arr[10]),
+    );
+  }
+
+  @protected
   VirtErrorKind dco_decode_virt_error_kind(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return VirtErrorKind.values[raw as int];
+  }
+
+  @protected
+  VirtExternalSnapshot dco_decode_virt_external_snapshot(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return VirtExternalSnapshot(
+      refusal: dco_decode_opt_String(arr[0]),
+      overlays: dco_decode_list_virt_overlay(arr[1]),
+    );
   }
 
   @protected
@@ -20596,6 +22563,486 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  VirtGraphics dco_decode_virt_graphics(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return VirtGraphics(
+      kind: dco_decode_String(arr[0]),
+      port: dco_decode_opt_box_autoadd_u_16(arr[1]),
+      tlsPort: dco_decode_opt_box_autoadd_u_16(arr[2]),
+      autoport: dco_decode_bool(arr[3]),
+      listen: dco_decode_opt_String(arr[4]),
+      socket: dco_decode_opt_String(arr[5]),
+    );
+  }
+
+  @protected
+  VirtGuestDetailReport dco_decode_virt_guest_detail_report(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 8)
+      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    return VirtGuestDetailReport(
+      disks: dco_decode_list_virt_disk_report(arr[0]),
+      nics: dco_decode_list_nic(arr[1]),
+      graphics: dco_decode_list_graphics(arr[2]),
+      display: dco_decode_opt_box_autoadd_display(arr[3]),
+      consoles: dco_decode_list_console_kind(arr[4]),
+      description: dco_decode_opt_String(arr[5]),
+      arch: dco_decode_opt_String(arr[6]),
+      machine: dco_decode_opt_String(arr[7]),
+    );
+  }
+
+  @protected
+  VirtGuestReport dco_decode_virt_guest_report(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 14)
+      throw Exception('unexpected arr length: expect 14 but see ${arr.length}');
+    return VirtGuestReport(
+      id: dco_decode_String(arr[0]),
+      name: dco_decode_String(arr[1]),
+      kind: dco_decode_guest_kind(arr[2]),
+      state: dco_decode_guest_state(arr[3]),
+      stateReason: dco_decode_opt_String(arr[4]),
+      vmid: dco_decode_opt_box_autoadd_u_32(arr[5]),
+      node: dco_decode_opt_String(arr[6]),
+      vcpu: dco_decode_opt_box_autoadd_u_32(arr[7]),
+      memBytes: dco_decode_opt_box_autoadd_u_64(arr[8]),
+      uptime: dco_decode_opt_box_autoadd_u_64(arr[9]),
+      tags: dco_decode_list_String(arr[10]),
+      template: dco_decode_bool(arr[11]),
+      autostart: dco_decode_opt_box_autoadd_bool(arr[12]),
+      actions: dco_decode_list_power_action(arr[13]),
+    );
+  }
+
+  @protected
+  VirtHardwareInfo dco_decode_virt_hardware_info(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 11)
+      throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
+    return VirtHardwareInfo(
+      firmware: dco_decode_list_firmware_descriptor(arr[0]),
+      config: dco_decode_virt_hw_config(arr[1]),
+      live: dco_decode_opt_box_autoadd_virt_hw_config(arr[2]),
+      configXml: dco_decode_String(arr[3]),
+      configText: dco_decode_String(arr[4]),
+      liveXml: dco_decode_String(arr[5]),
+      autostart: dco_decode_bool(arr[6]),
+      description: dco_decode_opt_String(arr[7]),
+      hostCpus: dco_decode_opt_box_autoadd_u_32(arr[8]),
+      hostMemoryKib: dco_decode_opt_box_autoadd_u_64(arr[9]),
+      caps: dco_decode_opt_box_autoadd_virt_hw_caps(arr[10]),
+    );
+  }
+
+  @protected
+  VirtHostDevices dco_decode_virt_host_devices(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return VirtHostDevices(
+      usb: dco_decode_list_virt_host_usb(arr[0]),
+      pci: dco_decode_list_virt_host_pci(arr[1]),
+      iommu: dco_decode_bool(arr[2]),
+    );
+  }
+
+  @protected
+  VirtHostPci dco_decode_virt_host_pci(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 8)
+      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    return VirtHostPci(
+      address: dco_decode_String(arr[0]),
+      vendor: dco_decode_opt_String(arr[1]),
+      product: dco_decode_opt_String(arr[2]),
+      vendorName: dco_decode_opt_String(arr[3]),
+      productName: dco_decode_opt_String(arr[4]),
+      class_: dco_decode_opt_String(arr[5]),
+      iommuGroup: dco_decode_opt_box_autoadd_u_32(arr[6]),
+      groupSize: dco_decode_u_32(arr[7]),
+    );
+  }
+
+  @protected
+  VirtHostProbe dco_decode_virt_host_probe(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return VirtHostProbe(
+      pve: dco_decode_opt_String(arr[0]),
+      container: dco_decode_opt_String(arr[1]),
+      libvirt: dco_decode_opt_box_autoadd_virt_version(arr[2]),
+    );
+  }
+
+  @protected
+  VirtHostReport dco_decode_virt_host_report(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return VirtHostReport(
+      host: dco_decode_host(arr[0]),
+      guests: dco_decode_list_virt_guest_report(arr[1]),
+      stats: dco_decode_list_record_string_stats(arr[2]),
+      capabilities: dco_decode_capabilities(arr[3]),
+    );
+  }
+
+  @protected
+  VirtHostUsb dco_decode_virt_host_usb(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 7)
+      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    return VirtHostUsb(
+      vendor: dco_decode_String(arr[0]),
+      product: dco_decode_String(arr[1]),
+      vendorName: dco_decode_opt_String(arr[2]),
+      productName: dco_decode_opt_String(arr[3]),
+      bus: dco_decode_opt_box_autoadd_u_32(arr[4]),
+      device: dco_decode_opt_box_autoadd_u_32(arr[5]),
+      port: dco_decode_opt_String(arr[6]),
+    );
+  }
+
+  @protected
+  VirtHwCaps dco_decode_virt_hw_caps(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 7)
+      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    return VirtHwCaps(
+      efi: dco_decode_bool(arr[0]),
+      secureBoot: dco_decode_bool(arr[1]),
+      tpmEmulator: dco_decode_bool(arr[2]),
+      graphics: dco_decode_list_String(arr[3]),
+      video: dco_decode_list_String(arr[4]),
+      diskBuses: dco_decode_list_String(arr[5]),
+      hostdev: dco_decode_bool(arr[6]),
+    );
+  }
+
+  @protected
+  VirtHwChange dco_decode_virt_hw_change(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    switch (raw[0]) {
+      case 0:
+        return VirtHwChange_Cpu(
+          sockets: dco_decode_u_32(raw[1]),
+          cores: dco_decode_u_32(raw[2]),
+          current: dco_decode_opt_box_autoadd_u_32(raw[3]),
+        );
+      case 1:
+        return VirtHwChange_Memory(
+          memoryMib: dco_decode_u_64(raw[1]),
+          currentMib: dco_decode_opt_box_autoadd_u_64(raw[2]),
+        );
+      case 2:
+        return VirtHwChange_GrowDisk(
+          target: dco_decode_String(raw[1]),
+          bytes: dco_decode_u_64(raw[2]),
+          path: dco_decode_opt_String(raw[3]),
+          live: dco_decode_bool(raw[4]),
+        );
+      case 3:
+        return VirtHwChange_AddDisk(
+          pool: dco_decode_String(raw[1]),
+          volume: dco_decode_String(raw[2]),
+          gib: dco_decode_u_64(raw[3]),
+          format: dco_decode_String(raw[4]),
+          target: dco_decode_String(raw[5]),
+          bus: dco_decode_String(raw[6]),
+        );
+      case 4:
+        return VirtHwChange_AttachVolume(
+          path: dco_decode_String(raw[1]),
+          format: dco_decode_String(raw[2]),
+          target: dco_decode_String(raw[3]),
+          bus: dco_decode_String(raw[4]),
+        );
+      case 5:
+        return VirtHwChange_RemoveDisk(
+          target: dco_decode_String(raw[1]),
+          deletePath: dco_decode_opt_String(raw[2]),
+          config: dco_decode_bool(raw[3]),
+          live: dco_decode_bool(raw[4]),
+        );
+      case 6:
+        return VirtHwChange_AddCdrom(
+          target: dco_decode_String(raw[1]),
+          bus: dco_decode_String(raw[2]),
+          source: dco_decode_opt_String(raw[3]),
+        );
+      case 7:
+        return VirtHwChange_SetMedia(
+          target: dco_decode_String(raw[1]),
+          source: dco_decode_opt_String(raw[2]),
+          config: dco_decode_bool(raw[3]),
+          live: dco_decode_bool(raw[4]),
+        );
+      case 8:
+        return VirtHwChange_AddNic(
+          kind: dco_decode_String(raw[1]),
+          source: dco_decode_String(raw[2]),
+          model: dco_decode_String(raw[3]),
+          mac: dco_decode_String(raw[4]),
+        );
+      case 9:
+        return VirtHwChange_RemoveNic(
+          mac: dco_decode_String(raw[1]),
+          kind: dco_decode_opt_String(raw[2]),
+          liveKind: dco_decode_opt_String(raw[3]),
+        );
+      case 10:
+        return VirtHwChange_UpdateNic(
+          mac: dco_decode_String(raw[1]),
+          kind: dco_decode_String(raw[2]),
+          source: dco_decode_String(raw[3]),
+          model: dco_decode_opt_String(raw[4]),
+          linkUp: dco_decode_bool(raw[5]),
+          bootOrder: dco_decode_opt_box_autoadd_u_32(raw[6]),
+          liveBootOrder: dco_decode_opt_box_autoadd_u_32(raw[7]),
+          config: dco_decode_bool(raw[8]),
+          live: dco_decode_bool(raw[9]),
+        );
+      case 11:
+        return VirtHwChange_Boot(order: dco_decode_list_String(raw[1]));
+      case 12:
+        return VirtHwChange_Autostart(on_: dco_decode_bool(raw[1]));
+      case 13:
+        return VirtHwChange_Description(text: dco_decode_String(raw[1]));
+      case 14:
+        return VirtHwChange_Rename(name: dco_decode_String(raw[1]));
+      case 15:
+        return VirtHwChange_UpdateDisk(
+          target: dco_decode_String(raw[1]),
+          newTarget: dco_decode_opt_String(raw[2]),
+          bus: dco_decode_opt_String(raw[3]),
+          cache: dco_decode_opt_String(raw[4]),
+        );
+      case 16:
+        return VirtHwChange_UpdateNicHardware(
+          mac: dco_decode_String(raw[1]),
+          newMac: dco_decode_opt_String(raw[2]),
+          model: dco_decode_opt_String(raw[3]),
+        );
+      case 17:
+        return VirtHwChange_Firmware(
+          efi: dco_decode_bool(raw[1]),
+          secureBoot: dco_decode_bool(raw[2]),
+        );
+      case 18:
+        return VirtHwChange_Display(
+          graphics: dco_decode_opt_String(raw[1]),
+          listen: dco_decode_opt_String(raw[2]),
+          video: dco_decode_opt_String(raw[3]),
+        );
+      case 19:
+        return VirtHwChange_AddDevice(
+          device: dco_decode_box_autoadd_virt_hw_new_device(raw[1]),
+        );
+      case 20:
+        return VirtHwChange_RemoveDevice(key: dco_decode_String(raw[1]));
+      case 21:
+        return VirtHwChange_RevertLive(liveXml: dco_decode_String(raw[1]));
+      default:
+        throw Exception('unreachable');
+    }
+  }
+
+  @protected
+  VirtHwConfig dco_decode_virt_hw_config(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 15)
+      throw Exception('unexpected arr length: expect 15 but see ${arr.length}');
+    return VirtHwConfig(
+      cpu: dco_decode_virt_hw_cpu(arr[0]),
+      memoryKib: dco_decode_u_64(arr[1]),
+      currentMemoryKib: dco_decode_u_64(arr[2]),
+      disks: dco_decode_list_virt_hw_disk(arr[3]),
+      nics: dco_decode_list_virt_hw_nic(arr[4]),
+      boot: dco_decode_list_String(arr[5]),
+      balloon: dco_decode_bool(arr[6]),
+      efi: dco_decode_bool(arr[7]),
+      secureBoot: dco_decode_bool(arr[8]),
+      machine: dco_decode_opt_String(arr[9]),
+      graphics: dco_decode_opt_box_autoadd_virt_hw_graphics(arr[10]),
+      video: dco_decode_opt_String(arr[11]),
+      tpm: dco_decode_opt_box_autoadd_virt_hw_tpm(arr[12]),
+      hostdevs: dco_decode_list_virt_hw_hostdev(arr[13]),
+      seed: dco_decode_opt_String(arr[14]),
+    );
+  }
+
+  @protected
+  VirtHwCpu dco_decode_virt_hw_cpu(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 8)
+      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    return VirtHwCpu(
+      sockets: dco_decode_u_32(arr[0]),
+      dies: dco_decode_u_32(arr[1]),
+      clusters: dco_decode_u_32(arr[2]),
+      cores: dco_decode_u_32(arr[3]),
+      threads: dco_decode_u_32(arr[4]),
+      max: dco_decode_u_32(arr[5]),
+      current: dco_decode_u_32(arr[6]),
+      topology: dco_decode_bool(arr[7]),
+    );
+  }
+
+  @protected
+  VirtHwDisk dco_decode_virt_hw_disk(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 10)
+      throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
+    return VirtHwDisk(
+      target: dco_decode_String(arr[0]),
+      device: dco_decode_String(arr[1]),
+      bus: dco_decode_opt_String(arr[2]),
+      sourceType: dco_decode_opt_String(arr[3]),
+      source: dco_decode_opt_String(arr[4]),
+      format: dco_decode_opt_String(arr[5]),
+      readonly: dco_decode_bool(arr[6]),
+      capacity: dco_decode_opt_box_autoadd_u_64(arr[7]),
+      bootOrder: dco_decode_opt_box_autoadd_u_32(arr[8]),
+      cache: dco_decode_opt_String(arr[9]),
+    );
+  }
+
+  @protected
+  VirtHwGraphics dco_decode_virt_hw_graphics(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return VirtHwGraphics(
+      kind: dco_decode_String(arr[0]),
+      listen: dco_decode_opt_String(arr[1]),
+      port: dco_decode_opt_box_autoadd_i_32(arr[2]),
+    );
+  }
+
+  @protected
+  VirtHwHostdev dco_decode_virt_hw_hostdev(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return VirtHwHostdev(
+      key: dco_decode_String(arr[0]),
+      kind: dco_decode_String(arr[1]),
+      vendor: dco_decode_opt_String(arr[2]),
+      product: dco_decode_opt_String(arr[3]),
+      address: dco_decode_opt_String(arr[4]),
+    );
+  }
+
+  @protected
+  VirtHwNewDevice dco_decode_virt_hw_new_device(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    switch (raw[0]) {
+      case 0:
+        return VirtHwNewDevice_Tpm(model: dco_decode_String(raw[1]));
+      case 1:
+        return VirtHwNewDevice_Usb(
+          vendor: dco_decode_opt_String(raw[1]),
+          product: dco_decode_opt_String(raw[2]),
+          bus: dco_decode_opt_box_autoadd_u_32(raw[3]),
+          device: dco_decode_opt_box_autoadd_u_32(raw[4]),
+        );
+      case 2:
+        return VirtHwNewDevice_Pci(address: dco_decode_String(raw[1]));
+      default:
+        throw Exception('unreachable');
+    }
+  }
+
+  @protected
+  VirtHwNic dco_decode_virt_hw_nic(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return VirtHwNic(
+      mac: dco_decode_String(arr[0]),
+      kind: dco_decode_String(arr[1]),
+      source: dco_decode_opt_String(arr[2]),
+      model: dco_decode_opt_String(arr[3]),
+      linkUp: dco_decode_bool(arr[4]),
+      bootOrder: dco_decode_opt_box_autoadd_u_32(arr[5]),
+    );
+  }
+
+  @protected
+  VirtHwOutcome dco_decode_virt_hw_outcome(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return VirtHwOutcome(
+      liveError: dco_decode_opt_String(arr[0]),
+      volumeKept: dco_decode_bool(arr[1]),
+    );
+  }
+
+  @protected
+  VirtHwTpm dco_decode_virt_hw_tpm(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return VirtHwTpm(
+      model: dco_decode_String(arr[0]),
+      backend: dco_decode_String(arr[1]),
+      version: dco_decode_opt_String(arr[2]),
+    );
+  }
+
+  @protected
+  VirtNetIpv4 dco_decode_virt_net_ipv_4(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return VirtNetIpv4(
+      address: dco_decode_String(arr[0]),
+      prefix: dco_decode_u_8(arr[1]),
+      dhcpStart: dco_decode_opt_String(arr[2]),
+      dhcpEnd: dco_decode_opt_String(arr[3]),
+    );
+  }
+
+  @protected
+  VirtNic dco_decode_virt_nic(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return VirtNic(
+      kind: dco_decode_String(arr[0]),
+      mac: dco_decode_opt_String(arr[1]),
+      source: dco_decode_opt_String(arr[2]),
+      model: dco_decode_opt_String(arr[3]),
+      target: dco_decode_opt_String(arr[4]),
+    );
+  }
+
+  @protected
   VirtOverlay dco_decode_virt_overlay(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -20605,6 +23052,116 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       target: dco_decode_String(arr[0]),
       path: dco_decode_String(arr[1]),
     );
+  }
+
+  @protected
+  VirtPool dco_decode_virt_pool(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 11)
+      throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
+    return VirtPool(
+      name: dco_decode_String(arr[0]),
+      uuid: dco_decode_opt_String(arr[1]),
+      poolType: dco_decode_opt_String(arr[2]),
+      active: dco_decode_bool(arr[3]),
+      autostart: dco_decode_bool(arr[4]),
+      capacity: dco_decode_opt_box_autoadd_u_64(arr[5]),
+      allocation: dco_decode_opt_box_autoadd_u_64(arr[6]),
+      available: dco_decode_opt_box_autoadd_u_64(arr[7]),
+      target: dco_decode_opt_String(arr[8]),
+      source: dco_decode_opt_String(arr[9]),
+      volumes: dco_decode_opt_list_virt_volume_ref(arr[10]),
+    );
+  }
+
+  @protected
+  VirtPoolVolumes dco_decode_virt_pool_volumes(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return VirtPoolVolumes(
+      pool: dco_decode_String(arr[0]),
+      volumes: dco_decode_list_volume(arr[1]),
+    );
+  }
+
+  @protected
+  VirtResourceOp dco_decode_virt_resource_op(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    switch (raw[0]) {
+      case 0:
+        return VirtResourceOp_PoolCreate(
+          name: dco_decode_String(raw[1]),
+          poolType: dco_decode_String(raw[2]),
+          target: dco_decode_opt_String(raw[3]),
+          source: dco_decode_opt_String(raw[4]),
+          autostart: dco_decode_bool(raw[5]),
+        );
+      case 1:
+        return VirtResourceOp_PoolStart(name: dco_decode_String(raw[1]));
+      case 2:
+        return VirtResourceOp_PoolStop(name: dco_decode_String(raw[1]));
+      case 3:
+        return VirtResourceOp_PoolAutostart(
+          name: dco_decode_String(raw[1]),
+          on_: dco_decode_bool(raw[2]),
+        );
+      case 4:
+        return VirtResourceOp_PoolRefresh(name: dco_decode_String(raw[1]));
+      case 5:
+        return VirtResourceOp_PoolDelete(
+          name: dco_decode_String(raw[1]),
+          active: dco_decode_bool(raw[2]),
+          deleteStorage: dco_decode_bool(raw[3]),
+        );
+      case 6:
+        return VirtResourceOp_VolCreate(
+          pool: dco_decode_String(raw[1]),
+          name: dco_decode_String(raw[2]),
+          bytes: dco_decode_u_64(raw[3]),
+          format: dco_decode_String(raw[4]),
+        );
+      case 7:
+        return VirtResourceOp_VolDelete(
+          pool: dco_decode_String(raw[1]),
+          name: dco_decode_String(raw[2]),
+        );
+      case 8:
+        return VirtResourceOp_VolResize(
+          pool: dco_decode_String(raw[1]),
+          name: dco_decode_String(raw[2]),
+          bytes: dco_decode_u_64(raw[3]),
+        );
+      case 9:
+        return VirtResourceOp_VolClone(
+          pool: dco_decode_String(raw[1]),
+          name: dco_decode_String(raw[2]),
+          newName: dco_decode_String(raw[3]),
+        );
+      case 10:
+        return VirtResourceOp_NetCreate(
+          name: dco_decode_String(raw[1]),
+          mode: dco_decode_String(raw[2]),
+          bridge: dco_decode_opt_String(raw[3]),
+          ipv4: dco_decode_opt_box_autoadd_virt_net_ipv_4(raw[4]),
+          autostart: dco_decode_bool(raw[5]),
+        );
+      case 11:
+        return VirtResourceOp_NetStart(name: dco_decode_String(raw[1]));
+      case 12:
+        return VirtResourceOp_NetStop(name: dco_decode_String(raw[1]));
+      case 13:
+        return VirtResourceOp_NetAutostart(
+          name: dco_decode_String(raw[1]),
+          on_: dco_decode_bool(raw[2]),
+        );
+      case 14:
+        return VirtResourceOp_NetDelete(name: dco_decode_String(raw[1]));
+      default:
+        throw Exception('unreachable');
+    }
   }
 
   @protected
@@ -20620,9 +23177,72 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  VirtSeedRead dco_decode_virt_seed_read(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return VirtSeedRead(
+      cloudInit: dco_decode_virt_cloud_init(arr[0]),
+      foreign: dco_decode_bool(arr[1]),
+      revision: dco_decode_String(arr[2]),
+    );
+  }
+
+  @protected
+  VirtStorage dco_decode_virt_storage(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return VirtStorage(
+      pools: dco_decode_list_virt_pool(arr[0]),
+      disks: dco_decode_list_virt_disk_use(arr[1]),
+    );
+  }
+
+  @protected
   VirtUploadEntryKind dco_decode_virt_upload_entry_kind(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return VirtUploadEntryKind.values[raw as int];
+  }
+
+  @protected
+  VirtVersion dco_decode_virt_version(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return VirtVersion(
+      libvirt: dco_decode_opt_String(arr[0]),
+      hypervisor: dco_decode_opt_String(arr[1]),
+      hypervisorVersion: dco_decode_opt_String(arr[2]),
+    );
+  }
+
+  @protected
+  VirtVncConsoleInfo dco_decode_virt_vnc_console_info(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return VirtVncConsoleInfo(
+      display: dco_decode_opt_box_autoadd_virt_display(arr[0]),
+      password: dco_decode_opt_String(arr[1]),
+      passwordKnown: dco_decode_bool(arr[2]),
+    );
+  }
+
+  @protected
+  VirtVolumeRef dco_decode_virt_volume_ref(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return VirtVolumeRef(
+      name: dco_decode_String(arr[0]),
+      path: dco_decode_opt_String(arr[1]),
+    );
   }
 
   @protected
@@ -20643,6 +23263,39 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       accessToken: dco_decode_opt_list_prim_u_8_strict(arr[2]),
       password: dco_decode_opt_String(arr[3]),
       shared: dco_decode_bool(arr[4]),
+    );
+  }
+
+  @protected
+  Volume dco_decode_volume(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 11)
+      throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
+    return Volume(
+      id: dco_decode_String(arr[0]),
+      name: dco_decode_String(arr[1]),
+      path: dco_decode_opt_String(arr[2]),
+      format: dco_decode_opt_String(arr[3]),
+      content: dco_decode_opt_String(arr[4]),
+      capacity: dco_decode_opt_box_autoadd_u_64(arr[5]),
+      allocation: dco_decode_opt_box_autoadd_u_64(arr[6]),
+      backing: dco_decode_opt_String(arr[7]),
+      createdAt: dco_decode_opt_box_autoadd_i_64(arr[8]),
+      users: dco_decode_list_guest_ref(arr[9]),
+      backs: dco_decode_list_String(arr[10]),
+    );
+  }
+
+  @protected
+  VolumeRef dco_decode_volume_ref(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return VolumeRef(
+      pool: dco_decode_String(arr[0]),
+      volume: dco_decode_String(arr[1]),
     );
   }
 
@@ -21067,6 +23720,145 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Backup sse_decode_backup(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_id = sse_decode_String(deserializer);
+    final var_storage = sse_decode_String(deserializer);
+    final var_node = sse_decode_String(deserializer);
+    final var_vmid = sse_decode_opt_box_autoadd_u_32(deserializer);
+    final var_createdAt = sse_decode_opt_box_autoadd_i_64(deserializer);
+    final var_size = sse_decode_opt_box_autoadd_u_64(deserializer);
+    final var_format = sse_decode_opt_String(deserializer);
+    final var_notes = sse_decode_opt_String(deserializer);
+    final var_protected = sse_decode_bool(deserializer);
+    final var_verification = sse_decode_opt_String(deserializer);
+    final var_kind = sse_decode_opt_box_autoadd_guest_kind(deserializer);
+    return Backup(
+      id: var_id,
+      storage: var_storage,
+      node: var_node,
+      vmid: var_vmid,
+      createdAt: var_createdAt,
+      size: var_size,
+      format: var_format,
+      notes: var_notes,
+      protected: var_protected,
+      verification: var_verification,
+      kind: var_kind,
+    );
+  }
+
+  @protected
+  BackupEdit sse_decode_backup_edit(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_notes = sse_decode_String(deserializer);
+    final var_protected = sse_decode_bool(deserializer);
+    return BackupEdit(notes: var_notes, protected: var_protected);
+  }
+
+  @protected
+  BackupIssue sse_decode_backup_issue(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final inner = sse_decode_i_32(deserializer);
+    return BackupIssue.values[inner];
+  }
+
+  @protected
+  BackupJob sse_decode_backup_job(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_id = sse_decode_String(deserializer);
+    final var_schedule = sse_decode_opt_String(deserializer);
+    final var_storage = sse_decode_opt_String(deserializer);
+    final var_mode = sse_decode_opt_String(deserializer);
+    final var_compress = sse_decode_opt_String(deserializer);
+    final var_enabled = sse_decode_bool(deserializer);
+    final var_all = sse_decode_bool(deserializer);
+    final var_vmids = sse_decode_list_prim_u_32_strict(deserializer);
+    final var_exclude = sse_decode_list_prim_u_32_strict(deserializer);
+    final var_pool = sse_decode_opt_String(deserializer);
+    final var_node = sse_decode_opt_String(deserializer);
+    final var_comment = sse_decode_opt_String(deserializer);
+    final var_notesTemplate = sse_decode_opt_String(deserializer);
+    final var_mailNotification = sse_decode_opt_String(deserializer);
+    final var_prune = sse_decode_opt_String(deserializer);
+    return BackupJob(
+      id: var_id,
+      schedule: var_schedule,
+      storage: var_storage,
+      mode: var_mode,
+      compress: var_compress,
+      enabled: var_enabled,
+      all: var_all,
+      vmids: var_vmids,
+      exclude: var_exclude,
+      pool: var_pool,
+      node: var_node,
+      comment: var_comment,
+      notesTemplate: var_notesTemplate,
+      mailNotification: var_mailNotification,
+      prune: var_prune,
+    );
+  }
+
+  @protected
+  BackupJobEdit sse_decode_backup_job_edit(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_id = sse_decode_opt_String(deserializer);
+    final var_isNew = sse_decode_bool(deserializer);
+    final var_node = sse_decode_opt_String(deserializer);
+    final var_storage = sse_decode_String(deserializer);
+    final var_schedule = sse_decode_String(deserializer);
+    final var_mode = sse_decode_String(deserializer);
+    final var_compress = sse_decode_String(deserializer);
+    final var_enabled = sse_decode_bool(deserializer);
+    final var_all = sse_decode_bool(deserializer);
+    final var_vmids = sse_decode_list_prim_u_32_strict(deserializer);
+    final var_exclude = sse_decode_list_prim_u_32_strict(deserializer);
+    final var_pool = sse_decode_opt_String(deserializer);
+    final var_comment = sse_decode_opt_String(deserializer);
+    final var_notesTemplate = sse_decode_opt_String(deserializer);
+    final var_mailNotification = sse_decode_opt_String(deserializer);
+    final var_prune = sse_decode_opt_String(deserializer);
+    return BackupJobEdit(
+      id: var_id,
+      isNew: var_isNew,
+      node: var_node,
+      storage: var_storage,
+      schedule: var_schedule,
+      mode: var_mode,
+      compress: var_compress,
+      enabled: var_enabled,
+      all: var_all,
+      vmids: var_vmids,
+      exclude: var_exclude,
+      pool: var_pool,
+      comment: var_comment,
+      notesTemplate: var_notesTemplate,
+      mailNotification: var_mailNotification,
+      prune: var_prune,
+    );
+  }
+
+  @protected
+  BackupRequest sse_decode_backup_request(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_storage = sse_decode_String(deserializer);
+    final var_mode = sse_decode_String(deserializer);
+    final var_compress = sse_decode_String(deserializer);
+    final var_notes = sse_decode_opt_String(deserializer);
+    final var_protected = sse_decode_bool(deserializer);
+    final var_prune = sse_decode_opt_String(deserializer);
+    return BackupRequest(
+      storage: var_storage,
+      mode: var_mode,
+      compress: var_compress,
+      notes: var_notes,
+      protected: var_protected,
+      prune: var_prune,
+    );
+  }
+
+  @protected
   Battery sse_decode_battery(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final var_percent = sse_decode_opt_box_autoadd_i_64(deserializer);
@@ -21248,6 +24040,48 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Backup sse_decode_box_autoadd_backup(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_backup(deserializer);
+  }
+
+  @protected
+  BackupEdit sse_decode_box_autoadd_backup_edit(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_backup_edit(deserializer);
+  }
+
+  @protected
+  BackupIssue sse_decode_box_autoadd_backup_issue(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_backup_issue(deserializer);
+  }
+
+  @protected
+  BackupJob sse_decode_box_autoadd_backup_job(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_backup_job(deserializer);
+  }
+
+  @protected
+  BackupJobEdit sse_decode_box_autoadd_backup_job_edit(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_backup_job_edit(deserializer);
+  }
+
+  @protected
+  BackupRequest sse_decode_box_autoadd_backup_request(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_backup_request(deserializer);
+  }
+
+  @protected
   BenchOptions sse_decode_box_autoadd_bench_options(
     SseDeserializer deserializer,
   ) {
@@ -21265,6 +24099,28 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   CertInfo sse_decode_box_autoadd_cert_info(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return sse_decode_cert_info(deserializer);
+  }
+
+  @protected
+  CloneRequest sse_decode_box_autoadd_clone_request(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_clone_request(deserializer);
+  }
+
+  @protected
+  CloudInit sse_decode_box_autoadd_cloud_init(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_cloud_init(deserializer);
+  }
+
+  @protected
+  CloudInitEdit sse_decode_box_autoadd_cloud_init_edit(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_cloud_init_edit(deserializer);
   }
 
   @protected
@@ -21298,6 +24154,28 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  CreateIssue sse_decode_box_autoadd_create_issue(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_create_issue(deserializer);
+  }
+
+  @protected
+  CreateOptions sse_decode_box_autoadd_create_options(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_create_options(deserializer);
+  }
+
+  @protected
+  CreateSpec sse_decode_box_autoadd_create_spec(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_create_spec(deserializer);
+  }
+
+  @protected
   CronScheduleFields sse_decode_box_autoadd_cron_schedule_fields(
     SseDeserializer deserializer,
   ) {
@@ -21317,6 +24195,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   CronWall sse_decode_box_autoadd_cron_wall(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return sse_decode_cron_wall(deserializer);
+  }
+
+  @protected
+  Display sse_decode_box_autoadd_display(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_display(deserializer);
   }
 
   @protected
@@ -21374,6 +24258,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Firmware sse_decode_box_autoadd_firmware(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_firmware(deserializer);
+  }
+
+  @protected
   GpuMem sse_decode_box_autoadd_gpu_mem(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return sse_decode_gpu_mem(deserializer);
@@ -21383,6 +24273,48 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   GroupDraft sse_decode_box_autoadd_group_draft(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return sse_decode_group_draft(deserializer);
+  }
+
+  @protected
+  GuestKind sse_decode_box_autoadd_guest_kind(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_guest_kind(deserializer);
+  }
+
+  @protected
+  Hardware sse_decode_box_autoadd_hardware(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_hardware(deserializer);
+  }
+
+  @protected
+  HostDevice sse_decode_box_autoadd_host_device(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_host_device(deserializer);
+  }
+
+  @protected
+  HwChange sse_decode_box_autoadd_hw_change(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_hw_change(deserializer);
+  }
+
+  @protected
+  HwDisk sse_decode_box_autoadd_hw_disk(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_hw_disk(deserializer);
+  }
+
+  @protected
+  HwDisplay sse_decode_box_autoadd_hw_display(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_hw_display(deserializer);
+  }
+
+  @protected
+  HwIssue sse_decode_box_autoadd_hw_issue(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_hw_issue(deserializer);
   }
 
   @protected
@@ -21566,6 +24498,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  ResourceChange sse_decode_box_autoadd_resource_change(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_resource_change(deserializer);
+  }
+
+  @protected
+  ResourceIssue sse_decode_box_autoadd_resource_issue(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_resource_issue(deserializer);
+  }
+
+  @protected
+  ResourcePool sse_decode_box_autoadd_resource_pool(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_resource_pool(deserializer);
+  }
+
+  @protected
   SelfTest sse_decode_box_autoadd_self_test(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return sse_decode_self_test(deserializer);
@@ -21742,6 +24698,194 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  VirtCiIpv4 sse_decode_box_autoadd_virt_ci_ipv_4(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_virt_ci_ipv_4(deserializer);
+  }
+
+  @protected
+  VirtCiNetwork sse_decode_box_autoadd_virt_ci_network(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_virt_ci_network(deserializer);
+  }
+
+  @protected
+  VirtCloneSpec sse_decode_box_autoadd_virt_clone_spec(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_virt_clone_spec(deserializer);
+  }
+
+  @protected
+  VirtCloudInit sse_decode_box_autoadd_virt_cloud_init(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_virt_cloud_init(deserializer);
+  }
+
+  @protected
+  VirtCreateHost sse_decode_box_autoadd_virt_create_host(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_virt_create_host(deserializer);
+  }
+
+  @protected
+  VirtCreateSpec sse_decode_box_autoadd_virt_create_spec(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_virt_create_spec(deserializer);
+  }
+
+  @protected
+  VirtCreateVolumes sse_decode_box_autoadd_virt_create_volumes(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_virt_create_volumes(deserializer);
+  }
+
+  @protected
+  VirtCreated sse_decode_box_autoadd_virt_created(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_virt_created(deserializer);
+  }
+
+  @protected
+  VirtDisplay sse_decode_box_autoadd_virt_display(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_virt_display(deserializer);
+  }
+
+  @protected
+  VirtDomainDetail sse_decode_box_autoadd_virt_domain_detail(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_virt_domain_detail(deserializer);
+  }
+
+  @protected
+  VirtGuestReport sse_decode_box_autoadd_virt_guest_report(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_virt_guest_report(deserializer);
+  }
+
+  @protected
+  VirtHardwareInfo sse_decode_box_autoadd_virt_hardware_info(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_virt_hardware_info(deserializer);
+  }
+
+  @protected
+  VirtHostDevices sse_decode_box_autoadd_virt_host_devices(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_virt_host_devices(deserializer);
+  }
+
+  @protected
+  VirtHwCaps sse_decode_box_autoadd_virt_hw_caps(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_virt_hw_caps(deserializer);
+  }
+
+  @protected
+  VirtHwChange sse_decode_box_autoadd_virt_hw_change(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_virt_hw_change(deserializer);
+  }
+
+  @protected
+  VirtHwConfig sse_decode_box_autoadd_virt_hw_config(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_virt_hw_config(deserializer);
+  }
+
+  @protected
+  VirtHwGraphics sse_decode_box_autoadd_virt_hw_graphics(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_virt_hw_graphics(deserializer);
+  }
+
+  @protected
+  VirtHwNewDevice sse_decode_box_autoadd_virt_hw_new_device(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_virt_hw_new_device(deserializer);
+  }
+
+  @protected
+  VirtHwTpm sse_decode_box_autoadd_virt_hw_tpm(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_virt_hw_tpm(deserializer);
+  }
+
+  @protected
+  VirtNetIpv4 sse_decode_box_autoadd_virt_net_ipv_4(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_virt_net_ipv_4(deserializer);
+  }
+
+  @protected
+  VirtResourceOp sse_decode_box_autoadd_virt_resource_op(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_virt_resource_op(deserializer);
+  }
+
+  @protected
+  VirtSeedRead sse_decode_box_autoadd_virt_seed_read(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_virt_seed_read(deserializer);
+  }
+
+  @protected
+  VirtStorage sse_decode_box_autoadd_virt_storage(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_virt_storage(deserializer);
+  }
+
+  @protected
+  VirtVersion sse_decode_box_autoadd_virt_version(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_virt_version(deserializer);
+  }
+
+  @protected
   VncPasswordError sse_decode_box_autoadd_vnc_password_error(
     SseDeserializer deserializer,
   ) {
@@ -21758,9 +24902,102 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Volume sse_decode_box_autoadd_volume(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_volume(deserializer);
+  }
+
+  @protected
+  VolumeRef sse_decode_box_autoadd_volume_ref(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_volume_ref(deserializer);
+  }
+
+  @protected
   CertInfo sse_decode_box_cert_info(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return sse_decode_cert_info(deserializer);
+  }
+
+  @protected
+  Capabilities sse_decode_capabilities(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_lxc = sse_decode_bool(deserializer);
+    final var_pause = sse_decode_bool(deserializer);
+    final var_snapshots = sse_decode_bool(deserializer);
+    final var_snapshotMemoryRequired = sse_decode_bool(deserializer);
+    final var_snapshotExternal = sse_decode_bool(deserializer);
+    final var_snapshotSupported = sse_decode_bool(deserializer);
+    final var_storage = sse_decode_bool(deserializer);
+    final var_network = sse_decode_bool(deserializer);
+    final var_backup = sse_decode_bool(deserializer);
+    final var_clone = sse_decode_bool(deserializer);
+    final var_linkedClone = sse_decode_bool(deserializer);
+    final var_template = sse_decode_bool(deserializer);
+    final var_cloneTarget = sse_decode_bool(deserializer);
+    final var_backupJobs = sse_decode_bool(deserializer);
+    final var_cluster = sse_decode_bool(deserializer);
+    final var_serialConsole = sse_decode_bool(deserializer);
+    final var_vncConsole = sse_decode_bool(deserializer);
+    final var_termConsole = sse_decode_bool(deserializer);
+    final var_storedHistory = sse_decode_bool(deserializer);
+    final var_create = sse_decode_bool(deserializer);
+    final var_deleteKeepsDisks = sse_decode_bool(deserializer);
+    final var_hardware = sse_decode_bool(deserializer);
+    final var_hardwareRevert = sse_decode_bool(deserializer);
+    final var_hardwareRevertPending = sse_decode_bool(deserializer);
+    final var_storageEdit = sse_decode_bool(deserializer);
+    final var_poolTypes = sse_decode_list_String(deserializer);
+    final var_poolAutostart = sse_decode_bool(deserializer);
+    final var_poolDeleteStorage = sse_decode_bool(deserializer);
+    final var_volumeResize = sse_decode_bool(deserializer);
+    final var_volumeClone = sse_decode_bool(deserializer);
+    final var_upload = sse_decode_bool(deserializer);
+    final var_networkEdit = sse_decode_bool(deserializer);
+    final var_networkModes = sse_decode_list_String(deserializer);
+    final var_networkStart = sse_decode_bool(deserializer);
+    final var_networkApply = sse_decode_bool(deserializer);
+    final var_networkEditExisting = sse_decode_bool(deserializer);
+    final var_networkRestart = sse_decode_bool(deserializer);
+    return Capabilities(
+      lxc: var_lxc,
+      pause: var_pause,
+      snapshots: var_snapshots,
+      snapshotMemoryRequired: var_snapshotMemoryRequired,
+      snapshotExternal: var_snapshotExternal,
+      snapshotSupported: var_snapshotSupported,
+      storage: var_storage,
+      network: var_network,
+      backup: var_backup,
+      clone: var_clone,
+      linkedClone: var_linkedClone,
+      template: var_template,
+      cloneTarget: var_cloneTarget,
+      backupJobs: var_backupJobs,
+      cluster: var_cluster,
+      serialConsole: var_serialConsole,
+      vncConsole: var_vncConsole,
+      termConsole: var_termConsole,
+      storedHistory: var_storedHistory,
+      create: var_create,
+      deleteKeepsDisks: var_deleteKeepsDisks,
+      hardware: var_hardware,
+      hardwareRevert: var_hardwareRevert,
+      hardwareRevertPending: var_hardwareRevertPending,
+      storageEdit: var_storageEdit,
+      poolTypes: var_poolTypes,
+      poolAutostart: var_poolAutostart,
+      poolDeleteStorage: var_poolDeleteStorage,
+      volumeResize: var_volumeResize,
+      volumeClone: var_volumeClone,
+      upload: var_upload,
+      networkEdit: var_networkEdit,
+      networkModes: var_networkModes,
+      networkStart: var_networkStart,
+      networkApply: var_networkApply,
+      networkEditExisting: var_networkEditExisting,
+      networkRestart: var_networkRestart,
+    );
   }
 
   @protected
@@ -21789,6 +25026,55 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Chain sse_decode_chain(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_disks = sse_decode_list_chain_disk(deserializer);
+    final var_refusal = sse_decode_opt_String(deserializer);
+    final var_externalRefusal = sse_decode_opt_String(deserializer);
+    final var_pools = sse_decode_list_String(deserializer);
+    return Chain(
+      disks: var_disks,
+      refusal: var_refusal,
+      externalRefusal: var_externalRefusal,
+      pools: var_pools,
+    );
+  }
+
+  @protected
+  ChainDisk sse_decode_chain_disk(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_target = sse_decode_String(deserializer);
+    final var_files = sse_decode_list_chain_file(deserializer);
+    final var_pool = sse_decode_opt_String(deserializer);
+    final var_error = sse_decode_opt_String(deserializer);
+    return ChainDisk(
+      target: var_target,
+      files: var_files,
+      pool: var_pool,
+      error: var_error,
+    );
+  }
+
+  @protected
+  ChainFile sse_decode_chain_file(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_path = sse_decode_String(deserializer);
+    final var_format = sse_decode_opt_String(deserializer);
+    final var_allocation = sse_decode_opt_box_autoadd_u_64(deserializer);
+    final var_backing = sse_decode_opt_String(deserializer);
+    final var_snap = sse_decode_opt_String(deserializer);
+    final var_active = sse_decode_bool(deserializer);
+    return ChainFile(
+      path: var_path,
+      format: var_format,
+      allocation: var_allocation,
+      backing: var_backing,
+      snap: var_snap,
+      active: var_active,
+    );
+  }
+
+  @protected
   ChangeError sse_decode_change_error(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -21809,6 +25095,96 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       default:
         throw UnimplementedError('');
     }
+  }
+
+  @protected
+  CloneRequest sse_decode_clone_request(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_name = sse_decode_String(deserializer);
+    final var_full = sse_decode_bool(deserializer);
+    final var_vmid = sse_decode_opt_box_autoadd_u_32(deserializer);
+    final var_storage = sse_decode_opt_String(deserializer);
+    final var_targetNode = sse_decode_opt_String(deserializer);
+    final var_targetPool = sse_decode_opt_String(deserializer);
+    return CloneRequest(
+      name: var_name,
+      full: var_full,
+      vmid: var_vmid,
+      storage: var_storage,
+      targetNode: var_targetNode,
+      targetPool: var_targetPool,
+    );
+  }
+
+  @protected
+  CloudInit sse_decode_cloud_init(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_user = sse_decode_String(deserializer);
+    final var_password = sse_decode_opt_String(deserializer);
+    final var_sshKeys = sse_decode_list_String(deserializer);
+    final var_hostname = sse_decode_opt_String(deserializer);
+    final var_address = sse_decode_opt_String(deserializer);
+    final var_gateway = sse_decode_opt_String(deserializer);
+    final var_dns = sse_decode_list_String(deserializer);
+    final var_searchDomains = sse_decode_list_String(deserializer);
+    return CloudInit(
+      user: var_user,
+      password: var_password,
+      sshKeys: var_sshKeys,
+      hostname: var_hostname,
+      address: var_address,
+      gateway: var_gateway,
+      dns: var_dns,
+      searchDomains: var_searchDomains,
+    );
+  }
+
+  @protected
+  CloudInitEdit sse_decode_cloud_init_edit(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_values = sse_decode_cloud_init(deserializer);
+    final var_removePassword = sse_decode_bool(deserializer);
+    final var_passwordExpires = sse_decode_bool(deserializer);
+    final var_revision = sse_decode_String(deserializer);
+    return CloudInitEdit(
+      values: var_values,
+      removePassword: var_removePassword,
+      passwordExpires: var_passwordExpires,
+      revision: var_revision,
+    );
+  }
+
+  @protected
+  CloudInitState sse_decode_cloud_init_state(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_user = sse_decode_String(deserializer);
+    final var_sshKeys = sse_decode_list_String(deserializer);
+    final var_hostname = sse_decode_opt_String(deserializer);
+    final var_address = sse_decode_opt_String(deserializer);
+    final var_gateway = sse_decode_opt_String(deserializer);
+    final var_dns = sse_decode_list_String(deserializer);
+    final var_searchDomains = sse_decode_list_String(deserializer);
+    final var_nics = sse_decode_u_32(deserializer);
+    final var_passwordSet = sse_decode_bool(deserializer);
+    final var_passwordExpires = sse_decode_bool(deserializer);
+    final var_network = sse_decode_bool(deserializer);
+    final var_foreign = sse_decode_bool(deserializer);
+    final var_revision = sse_decode_String(deserializer);
+    return CloudInitState(
+      user: var_user,
+      sshKeys: var_sshKeys,
+      hostname: var_hostname,
+      address: var_address,
+      gateway: var_gateway,
+      dns: var_dns,
+      searchDomains: var_searchDomains,
+      nics: var_nics,
+      passwordSet: var_passwordSet,
+      passwordExpires: var_passwordExpires,
+      network: var_network,
+      foreign: var_foreign,
+      revision: var_revision,
+    );
   }
 
   @protected
@@ -21840,6 +25216,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final var_smb = sse_decode_list_smb_connection(deserializer);
     final var_nfs = sse_decode_list_String(deserializer);
     return Connections(smb: var_smb, nfs: var_nfs);
+  }
+
+  @protected
+  ConsoleKind sse_decode_console_kind(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final inner = sse_decode_i_32(deserializer);
+    return ConsoleKind.values[inner];
   }
 
   @protected
@@ -21944,6 +25327,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Cpu sse_decode_cpu(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_sockets = sse_decode_u_32(deserializer);
+    final var_cores = sse_decode_u_32(deserializer);
+    final var_threads = sse_decode_u_32(deserializer);
+    final var_online = sse_decode_opt_box_autoadd_u_32(deserializer);
+    final var_cpuType = sse_decode_opt_String(deserializer);
+    return Cpu(
+      sockets: var_sockets,
+      cores: var_cores,
+      threads: var_threads,
+      online: var_online,
+      cpuType: var_cpuType,
+    );
+  }
+
+  @protected
   CpuCore sse_decode_cpu_core(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final var_id = sse_decode_String(deserializer);
@@ -21963,6 +25363,98 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       iowait: var_iowait,
       irq: var_irq,
       softirq: var_softirq,
+    );
+  }
+
+  @protected
+  CreateIssue sse_decode_create_issue(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final inner = sse_decode_i_32(deserializer);
+    return CreateIssue.values[inner];
+  }
+
+  @protected
+  CreateOptions sse_decode_create_options(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_buses = sse_decode_list_String(deserializer);
+    final var_nicModels = sse_decode_list_String(deserializer);
+    final var_uefi = sse_decode_bool(deserializer);
+    final var_tpm = sse_decode_bool(deserializer);
+    final var_secureBoot = sse_decode_bool(deserializer);
+    final var_cloudImages = sse_decode_bool(deserializer);
+    final var_cloudInit = sse_decode_bool(deserializer);
+    final var_cloudInitMissing = sse_decode_opt_String(deserializer);
+    return CreateOptions(
+      buses: var_buses,
+      nicModels: var_nicModels,
+      uefi: var_uefi,
+      tpm: var_tpm,
+      secureBoot: var_secureBoot,
+      cloudImages: var_cloudImages,
+      cloudInit: var_cloudInit,
+      cloudInitMissing: var_cloudInitMissing,
+    );
+  }
+
+  @protected
+  CreateSpec sse_decode_create_spec(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_kind = sse_decode_guest_kind(deserializer);
+    final var_name = sse_decode_String(deserializer);
+    final var_node = sse_decode_opt_String(deserializer);
+    final var_vmid = sse_decode_opt_box_autoadd_u_32(deserializer);
+    final var_cores = sse_decode_u_32(deserializer);
+    final var_memoryMib = sse_decode_u_64(deserializer);
+    final var_storage = sse_decode_String(deserializer);
+    final var_diskGib = sse_decode_u_64(deserializer);
+    final var_media = sse_decode_opt_box_autoadd_volume_ref(deserializer);
+    final var_image = sse_decode_opt_box_autoadd_volume_ref(deserializer);
+    final var_network = sse_decode_opt_String(deserializer);
+    final var_password = sse_decode_opt_String(deserializer);
+    final var_sshKeys = sse_decode_list_String(deserializer);
+    final var_unprivileged = sse_decode_bool(deserializer);
+    final var_bus = sse_decode_opt_String(deserializer);
+    final var_nicModel = sse_decode_opt_String(deserializer);
+    final var_uefi = sse_decode_bool(deserializer);
+    final var_secureBoot = sse_decode_bool(deserializer);
+    final var_tpm = sse_decode_bool(deserializer);
+    final var_cloudInit = sse_decode_opt_box_autoadd_cloud_init(deserializer);
+    final var_start = sse_decode_bool(deserializer);
+    return CreateSpec(
+      kind: var_kind,
+      name: var_name,
+      node: var_node,
+      vmid: var_vmid,
+      cores: var_cores,
+      memoryMib: var_memoryMib,
+      storage: var_storage,
+      diskGib: var_diskGib,
+      media: var_media,
+      image: var_image,
+      network: var_network,
+      password: var_password,
+      sshKeys: var_sshKeys,
+      unprivileged: var_unprivileged,
+      bus: var_bus,
+      nicModel: var_nicModel,
+      uefi: var_uefi,
+      secureBoot: var_secureBoot,
+      tpm: var_tpm,
+      cloudInit: var_cloudInit,
+      start: var_start,
+    );
+  }
+
+  @protected
+  Created sse_decode_created(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_id = sse_decode_String(deserializer);
+    final var_startError = sse_decode_opt_String(deserializer);
+    final var_diskKeptBytes = sse_decode_opt_box_autoadd_u_64(deserializer);
+    return Created(
+      id: var_id,
+      startError: var_startError,
+      diskKeptBytes: var_diskKeptBytes,
     );
   }
 
@@ -22088,6 +25580,35 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  DeviceKind sse_decode_device_kind(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final inner = sse_decode_i_32(deserializer);
+    return DeviceKind.values[inner];
+  }
+
+  @protected
+  Diff sse_decode_diff(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_group = sse_decode_diff_group(deserializer);
+    final var_key = sse_decode_String(deserializer);
+    final var_before = sse_decode_opt_String(deserializer);
+    final var_after = sse_decode_opt_String(deserializer);
+    return Diff(
+      group: var_group,
+      key: var_key,
+      before: var_before,
+      after: var_after,
+    );
+  }
+
+  @protected
+  DiffGroup sse_decode_diff_group(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final inner = sse_decode_i_32(deserializer);
+    return DiffGroup.values[inner];
+  }
+
+  @protected
   Disk sse_decode_disk(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final var_path = sse_decode_String(deserializer);
@@ -22157,6 +25678,32 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       dev: var_dev,
       sectorsRead: var_sectorsRead,
       sectorsWrite: var_sectorsWrite,
+    );
+  }
+
+  @protected
+  DiskKind sse_decode_disk_kind(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final inner = sse_decode_i_32(deserializer);
+    return DiskKind.values[inner];
+  }
+
+  @protected
+  Display sse_decode_display(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_uri = sse_decode_String(deserializer);
+    final var_protocol = sse_decode_String(deserializer);
+    final var_host = sse_decode_opt_String(deserializer);
+    final var_port = sse_decode_opt_box_autoadd_u_16(deserializer);
+    final var_tlsPort = sse_decode_opt_box_autoadd_u_16(deserializer);
+    final var_socket = sse_decode_opt_String(deserializer);
+    return Display(
+      uri: var_uri,
+      protocol: var_protocol,
+      host: var_host,
+      port: var_port,
+      tlsPort: var_tlsPort,
+      socket: var_socket,
     );
   }
 
@@ -22471,6 +26018,34 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Firmware sse_decode_firmware(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_uefi = sse_decode_bool(deserializer);
+    final var_secureBoot = sse_decode_bool(deserializer);
+    final var_varsStorage = sse_decode_opt_String(deserializer);
+    return Firmware(
+      uefi: var_uefi,
+      secureBoot: var_secureBoot,
+      varsStorage: var_varsStorage,
+    );
+  }
+
+  @protected
+  FirmwareDescriptor sse_decode_firmware_descriptor(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_name = sse_decode_String(deserializer);
+    final var_secureBoot = sse_decode_bool(deserializer);
+    final var_enrolledKeys = sse_decode_bool(deserializer);
+    return FirmwareDescriptor(
+      name: var_name,
+      secureBoot: var_secureBoot,
+      enrolledKeys: var_enrolledKeys,
+    );
+  }
+
+  @protected
   GeekbenchVersion sse_decode_geekbench_version(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final inner = sse_decode_i_32(deserializer);
@@ -22527,6 +26102,25 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Graphics sse_decode_graphics(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_kind = sse_decode_String(deserializer);
+    final var_port = sse_decode_opt_box_autoadd_u_16(deserializer);
+    final var_tlsPort = sse_decode_opt_box_autoadd_u_16(deserializer);
+    final var_autoport = sse_decode_bool(deserializer);
+    final var_listen = sse_decode_opt_String(deserializer);
+    final var_socket = sse_decode_opt_String(deserializer);
+    return Graphics(
+      kind: var_kind,
+      port: var_port,
+      tlsPort: var_tlsPort,
+      autoport: var_autoport,
+      listen: var_listen,
+      socket: var_socket,
+    );
+  }
+
+  @protected
   GroupDraft sse_decode_group_draft(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final var_name = sse_decode_String(deserializer);
@@ -22536,10 +26130,409 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  GuestKind sse_decode_guest_kind(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final inner = sse_decode_i_32(deserializer);
+    return GuestKind.values[inner];
+  }
+
+  @protected
+  GuestRef sse_decode_guest_ref(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_guestId = sse_decode_opt_String(deserializer);
+    final var_vmid = sse_decode_opt_box_autoadd_u_32(deserializer);
+    final var_device = sse_decode_opt_String(deserializer);
+    final var_mac = sse_decode_opt_String(deserializer);
+    final var_ip = sse_decode_opt_String(deserializer);
+    return GuestRef(
+      guestId: var_guestId,
+      vmid: var_vmid,
+      device: var_device,
+      mac: var_mac,
+      ip: var_ip,
+    );
+  }
+
+  @protected
+  GuestState sse_decode_guest_state(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final inner = sse_decode_i_32(deserializer);
+    return GuestState.values[inner];
+  }
+
+  @protected
+  Hardware sse_decode_hardware(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_kind = sse_decode_guest_kind(deserializer);
+    final var_running = sse_decode_bool(deserializer);
+    final var_cpu = sse_decode_cpu(deserializer);
+    final var_memory = sse_decode_hw_memory(deserializer);
+    final var_disks = sse_decode_list_hw_disk(deserializer);
+    final var_nics = sse_decode_list_hw_nic(deserializer);
+    final var_boot = sse_decode_opt_list_String(deserializer);
+    final var_autostart = sse_decode_bool(deserializer);
+    final var_name = sse_decode_opt_String(deserializer);
+    final var_description = sse_decode_opt_String(deserializer);
+    final var_protection = sse_decode_opt_box_autoadd_bool(deserializer);
+    final var_renameRunning = sse_decode_bool(deserializer);
+    final var_pending = sse_decode_list_pending_field(deserializer);
+    final var_revision = sse_decode_opt_String(deserializer);
+    final var_limits = sse_decode_limits(deserializer);
+    final var_cpuTypes = sse_decode_list_String(deserializer);
+    final var_configText = sse_decode_opt_String(deserializer);
+    final var_firmware = sse_decode_opt_box_autoadd_firmware(deserializer);
+    final var_display = sse_decode_opt_box_autoadd_hw_display(deserializer);
+    final var_devices = sse_decode_list_hw_device(deserializer);
+    final var_support = sse_decode_support(deserializer);
+    return Hardware(
+      kind: var_kind,
+      running: var_running,
+      cpu: var_cpu,
+      memory: var_memory,
+      disks: var_disks,
+      nics: var_nics,
+      boot: var_boot,
+      autostart: var_autostart,
+      name: var_name,
+      description: var_description,
+      protection: var_protection,
+      renameRunning: var_renameRunning,
+      pending: var_pending,
+      revision: var_revision,
+      limits: var_limits,
+      cpuTypes: var_cpuTypes,
+      configText: var_configText,
+      firmware: var_firmware,
+      display: var_display,
+      devices: var_devices,
+      support: var_support,
+    );
+  }
+
+  @protected
   HealthVerdict sse_decode_health_verdict(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final inner = sse_decode_i_32(deserializer);
     return HealthVerdict.values[inner];
+  }
+
+  @protected
+  Host sse_decode_host(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_kind = sse_decode_host_kind(deserializer);
+    final var_version = sse_decode_opt_String(deserializer);
+    final var_hypervisor = sse_decode_opt_String(deserializer);
+    final var_nodes = sse_decode_list_node(deserializer);
+    return Host(
+      kind: var_kind,
+      version: var_version,
+      hypervisor: var_hypervisor,
+      nodes: var_nodes,
+    );
+  }
+
+  @protected
+  HostDevice sse_decode_host_device(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_id = sse_decode_String(deserializer);
+    final var_label = sse_decode_String(deserializer);
+    final var_detail = sse_decode_opt_String(deserializer);
+    final var_mapping = sse_decode_bool(deserializer);
+    final var_usbBus = sse_decode_opt_box_autoadd_u_32(deserializer);
+    final var_usbPort = sse_decode_opt_String(deserializer);
+    final var_usbDevice = sse_decode_opt_box_autoadd_u_32(deserializer);
+    final var_iommuGroup = sse_decode_opt_box_autoadd_u_32(deserializer);
+    final var_groupSize = sse_decode_u_32(deserializer);
+    return HostDevice(
+      id: var_id,
+      label: var_label,
+      detail: var_detail,
+      mapping: var_mapping,
+      usbBus: var_usbBus,
+      usbPort: var_usbPort,
+      usbDevice: var_usbDevice,
+      iommuGroup: var_iommuGroup,
+      groupSize: var_groupSize,
+    );
+  }
+
+  @protected
+  HostDevices sse_decode_host_devices(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_usb = sse_decode_list_host_device(deserializer);
+    final var_pci = sse_decode_list_host_device(deserializer);
+    final var_iommu = sse_decode_bool(deserializer);
+    final var_mappingsOnly = sse_decode_bool(deserializer);
+    return HostDevices(
+      usb: var_usb,
+      pci: var_pci,
+      iommu: var_iommu,
+      mappingsOnly: var_mappingsOnly,
+    );
+  }
+
+  @protected
+  HostKind sse_decode_host_kind(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final inner = sse_decode_i_32(deserializer);
+    return HostKind.values[inner];
+  }
+
+  @protected
+  HwChange sse_decode_hw_change(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final tag_ = sse_decode_i_32(deserializer);
+    switch (tag_) {
+      case 0:
+        final var_sockets = sse_decode_u_32(deserializer);
+        final var_cores = sse_decode_u_32(deserializer);
+        final var_online = sse_decode_opt_box_autoadd_u_32(deserializer);
+        final var_cpuType = sse_decode_opt_String(deserializer);
+        return HwChange_SetCpu(
+          sockets: var_sockets,
+          cores: var_cores,
+          online: var_online,
+          cpuType: var_cpuType,
+        );
+      case 1:
+        final var_mib = sse_decode_u_64(deserializer);
+        final var_minMib = sse_decode_opt_box_autoadd_u_64(deserializer);
+        final var_swapMib = sse_decode_opt_box_autoadd_u_64(deserializer);
+        return HwChange_SetMemory(
+          mib: var_mib,
+          minMib: var_minMib,
+          swapMib: var_swapMib,
+        );
+      case 2:
+        final var_key = sse_decode_String(deserializer);
+        final var_bytes = sse_decode_u_64(deserializer);
+        return HwChange_GrowDisk(key: var_key, bytes: var_bytes);
+      case 3:
+        final var_pool = sse_decode_String(deserializer);
+        final var_gib = sse_decode_u_64(deserializer);
+        final var_mountPoint = sse_decode_opt_String(deserializer);
+        return HwChange_AddDisk(
+          pool: var_pool,
+          gib: var_gib,
+          mountPoint: var_mountPoint,
+        );
+      case 4:
+        final var_volume = sse_decode_box_autoadd_volume_ref(deserializer);
+        final var_mountPoint = sse_decode_opt_String(deserializer);
+        return HwChange_AttachVolume(
+          volume: var_volume,
+          mountPoint: var_mountPoint,
+        );
+      case 5:
+        final var_key = sse_decode_String(deserializer);
+        final var_deleteVolume = sse_decode_bool(deserializer);
+        return HwChange_RemoveDisk(
+          key: var_key,
+          deleteVolume: var_deleteVolume,
+        );
+      case 6:
+        final var_media = sse_decode_opt_box_autoadd_volume_ref(deserializer);
+        return HwChange_AddCdrom(media: var_media);
+      case 7:
+        final var_key = sse_decode_String(deserializer);
+        final var_media = sse_decode_opt_box_autoadd_volume_ref(deserializer);
+        return HwChange_SetMedia(key: var_key, media: var_media);
+      case 8:
+        final var_network = sse_decode_String(deserializer);
+        final var_model = sse_decode_opt_String(deserializer);
+        return HwChange_AddNic(network: var_network, model: var_model);
+      case 9:
+        final var_key = sse_decode_String(deserializer);
+        return HwChange_RemoveNic(key: var_key);
+      case 10:
+        final var_key = sse_decode_String(deserializer);
+        final var_network = sse_decode_opt_String(deserializer);
+        final var_linkUp = sse_decode_bool(deserializer);
+        final var_firewall = sse_decode_opt_box_autoadd_bool(deserializer);
+        return HwChange_UpdateNic(
+          key: var_key,
+          network: var_network,
+          linkUp: var_linkUp,
+          firewall: var_firewall,
+        );
+      case 11:
+        final var_order = sse_decode_list_String(deserializer);
+        return HwChange_SetBoot(order: var_order);
+      case 12:
+        final var_on_ = sse_decode_bool(deserializer);
+        return HwChange_SetAutostart(on_: var_on_);
+      case 13:
+        final var_name = sse_decode_String(deserializer);
+        return HwChange_SetName(name: var_name);
+      case 14:
+        final var_text = sse_decode_String(deserializer);
+        return HwChange_SetDescription(text: var_text);
+      case 15:
+        final var_on_ = sse_decode_bool(deserializer);
+        return HwChange_SetProtection(on_: var_on_);
+      case 16:
+        final var_key = sse_decode_String(deserializer);
+        final var_bus = sse_decode_opt_String(deserializer);
+        final var_cache = sse_decode_opt_String(deserializer);
+        return HwChange_UpdateDisk(
+          key: var_key,
+          bus: var_bus,
+          cache: var_cache,
+        );
+      case 17:
+        final var_key = sse_decode_String(deserializer);
+        final var_model = sse_decode_opt_String(deserializer);
+        final var_mac = sse_decode_opt_String(deserializer);
+        return HwChange_SetNicHardware(
+          key: var_key,
+          model: var_model,
+          mac: var_mac,
+        );
+      case 18:
+        final var_uefi = sse_decode_bool(deserializer);
+        final var_secureBoot = sse_decode_bool(deserializer);
+        final var_storage = sse_decode_opt_String(deserializer);
+        return HwChange_SetFirmware(
+          uefi: var_uefi,
+          secureBoot: var_secureBoot,
+          storage: var_storage,
+        );
+      case 19:
+        final var_protocol = sse_decode_opt_String(deserializer);
+        final var_listen = sse_decode_opt_String(deserializer);
+        final var_gpu = sse_decode_opt_String(deserializer);
+        return HwChange_SetDisplay(
+          protocol: var_protocol,
+          listen: var_listen,
+          gpu: var_gpu,
+        );
+      case 20:
+        final var_kind = sse_decode_device_kind(deserializer);
+        final var_host = sse_decode_opt_box_autoadd_host_device(deserializer);
+        final var_storage = sse_decode_opt_String(deserializer);
+        final var_usbNaming = sse_decode_usb_naming(deserializer);
+        return HwChange_AddDevice(
+          kind: var_kind,
+          host: var_host,
+          storage: var_storage,
+          usbNaming: var_usbNaming,
+        );
+      case 21:
+        final var_key = sse_decode_String(deserializer);
+        return HwChange_RemoveDevice(key: var_key);
+      case 22:
+        final var_keys = sse_decode_list_String(deserializer);
+        return HwChange_Revert(keys: var_keys);
+      default:
+        throw UnimplementedError('');
+    }
+  }
+
+  @protected
+  HwDevice sse_decode_hw_device(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_key = sse_decode_String(deserializer);
+    final var_kind = sse_decode_device_kind(deserializer);
+    final var_detail = sse_decode_opt_String(deserializer);
+    final var_mapping = sse_decode_bool(deserializer);
+    return HwDevice(
+      key: var_key,
+      kind: var_kind,
+      detail: var_detail,
+      mapping: var_mapping,
+    );
+  }
+
+  @protected
+  HwDisk sse_decode_hw_disk(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_key = sse_decode_String(deserializer);
+    final var_kind = sse_decode_disk_kind(deserializer);
+    final var_source = sse_decode_opt_String(deserializer);
+    final var_size = sse_decode_opt_box_autoadd_u_64(deserializer);
+    final var_storage = sse_decode_opt_String(deserializer);
+    final var_mountPoint = sse_decode_opt_String(deserializer);
+    final var_bus = sse_decode_opt_String(deserializer);
+    final var_format = sse_decode_opt_String(deserializer);
+    final var_readonly = sse_decode_bool(deserializer);
+    final var_cache = sse_decode_opt_String(deserializer);
+    final var_cloudInit = sse_decode_bool(deserializer);
+    final var_resizable = sse_decode_bool(deserializer);
+    return HwDisk(
+      key: var_key,
+      kind: var_kind,
+      source: var_source,
+      size: var_size,
+      storage: var_storage,
+      mountPoint: var_mountPoint,
+      bus: var_bus,
+      format: var_format,
+      readonly: var_readonly,
+      cache: var_cache,
+      cloudInit: var_cloudInit,
+      resizable: var_resizable,
+    );
+  }
+
+  @protected
+  HwDisplay sse_decode_hw_display(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_protocol = sse_decode_opt_String(deserializer);
+    final var_listen = sse_decode_opt_String(deserializer);
+    final var_gpu = sse_decode_opt_String(deserializer);
+    final var_port = sse_decode_opt_box_autoadd_i_32(deserializer);
+    return HwDisplay(
+      protocol: var_protocol,
+      listen: var_listen,
+      gpu: var_gpu,
+      port: var_port,
+    );
+  }
+
+  @protected
+  HwIssue sse_decode_hw_issue(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final inner = sse_decode_i_32(deserializer);
+    return HwIssue.values[inner];
+  }
+
+  @protected
+  HwMemory sse_decode_hw_memory(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_mib = sse_decode_u_64(deserializer);
+    final var_minMib = sse_decode_opt_box_autoadd_u_64(deserializer);
+    final var_balloon = sse_decode_bool(deserializer);
+    final var_swapMib = sse_decode_opt_box_autoadd_u_64(deserializer);
+    return HwMemory(
+      mib: var_mib,
+      minMib: var_minMib,
+      balloon: var_balloon,
+      swapMib: var_swapMib,
+    );
+  }
+
+  @protected
+  HwNic sse_decode_hw_nic(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_key = sse_decode_String(deserializer);
+    final var_mac = sse_decode_opt_String(deserializer);
+    final var_nicType = sse_decode_opt_String(deserializer);
+    final var_source = sse_decode_opt_String(deserializer);
+    final var_model = sse_decode_opt_String(deserializer);
+    final var_linkUp = sse_decode_bool(deserializer);
+    final var_firewall = sse_decode_opt_box_autoadd_bool(deserializer);
+    final var_name = sse_decode_opt_String(deserializer);
+    return HwNic(
+      key: var_key,
+      mac: var_mac,
+      nicType: var_nicType,
+      source: var_source,
+      model: var_model,
+      linkUp: var_linkUp,
+      firewall: var_firewall,
+      name: var_name,
+    );
   }
 
   @protected
@@ -22576,6 +26569,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Limits sse_decode_limits(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_hostCpus = sse_decode_opt_box_autoadd_u_32(deserializer);
+    final var_hostMemoryBytes = sse_decode_opt_box_autoadd_u_64(deserializer);
+    return Limits(hostCpus: var_hostCpus, hostMemoryBytes: var_hostMemoryBytes);
+  }
+
+  @protected
   List<String> sse_decode_list_String(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -22595,6 +26596,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final ans_ = <AmdSmiItem>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_amd_smi_item(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<Backup> sse_decode_list_backup(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <Backup>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_backup(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<BackupJob> sse_decode_list_backup_job(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <BackupJob>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_backup_job(deserializer));
     }
     return ans_;
   }
@@ -22636,6 +26661,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<ChainDisk> sse_decode_list_chain_disk(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <ChainDisk>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_chain_disk(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<ChainFile> sse_decode_list_chain_file(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <ChainFile>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_chain_file(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   List<CommandSpec> sse_decode_list_command_spec(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -22643,6 +26692,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final ans_ = <CommandSpec>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_command_spec(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<ConsoleKind> sse_decode_list_console_kind(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <ConsoleKind>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_console_kind(deserializer));
     }
     return ans_;
   }
@@ -22723,6 +26784,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final ans_ = <CustomCmd>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_custom_cmd(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<Diff> sse_decode_list_diff(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <Diff>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_diff(deserializer));
     }
     return ans_;
   }
@@ -22848,6 +26921,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<FirmwareDescriptor> sse_decode_list_firmware_descriptor(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <FirmwareDescriptor>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_firmware_descriptor(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   List<GpuItem> sse_decode_list_gpu_item(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -22869,6 +26956,78 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final ans_ = <GpuMemProcess>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_gpu_mem_process(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<Graphics> sse_decode_list_graphics(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <Graphics>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_graphics(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<GuestRef> sse_decode_list_guest_ref(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <GuestRef>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_guest_ref(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<HostDevice> sse_decode_list_host_device(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <HostDevice>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_host_device(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<HwDevice> sse_decode_list_hw_device(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <HwDevice>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_hw_device(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<HwDisk> sse_decode_list_hw_disk(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <HwDisk>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_hw_disk(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<HwNic> sse_decode_list_hw_nic(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <HwNic>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_hw_nic(deserializer));
     }
     return ans_;
   }
@@ -22912,6 +27071,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<NetHost> sse_decode_list_net_host(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <NetHost>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_net_host(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   List<NetIface> sse_decode_list_net_iface(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -22919,6 +27090,32 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final ans_ = <NetIface>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_net_iface(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<Network> sse_decode_list_network(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <Network>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_network(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<NetworkChanges> sse_decode_list_network_changes(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <NetworkChanges>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_network_changes(deserializer));
     }
     return ans_;
   }
@@ -22948,6 +27145,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<Nic> sse_decode_list_nic(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <Nic>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_nic(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<Node> sse_decode_list_node(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <Node>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_node(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   List<NvidiaSmiItem> sse_decode_list_nvidia_smi_item(
     SseDeserializer deserializer,
   ) {
@@ -22957,6 +27178,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final ans_ = <NvidiaSmiItem>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_nvidia_smi_item(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<PendingField> sse_decode_list_pending_field(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <PendingField>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_pending_field(deserializer));
     }
     return ans_;
   }
@@ -23000,10 +27235,29 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<PowerAction> sse_decode_list_power_action(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <PowerAction>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_power_action(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   Int32List sse_decode_list_prim_i_32_strict(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final len_ = sse_decode_i_32(deserializer);
     return deserializer.buffer.getInt32List(len_);
+  }
+
+  @protected
+  Int64List sse_decode_list_prim_i_64_strict(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final len_ = sse_decode_i_32(deserializer);
+    return deserializer.buffer.getInt64List(len_);
   }
 
   @protected
@@ -23135,6 +27389,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<(String, Stats)> sse_decode_list_record_string_stats(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <(String, Stats)>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_record_string_stats(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   List<(String, String)> sse_decode_list_record_string_string(
     SseDeserializer deserializer,
   ) {
@@ -23172,6 +27440,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final ans_ = <(UfwChain, UfwPolicy)>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_record_ufw_chain_ufw_policy(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<ResourcePool> sse_decode_list_resource_pool(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <ResourcePool>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_resource_pool(deserializer));
     }
     return ans_;
   }
@@ -23363,6 +27645,44 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<Snapshot> sse_decode_list_snapshot(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <Snapshot>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_snapshot(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<SnapshotLayer> sse_decode_list_snapshot_layer(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <SnapshotLayer>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_snapshot_layer(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<Stats> sse_decode_list_stats(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <Stats>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_stats(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   List<StatusBlockDevice> sse_decode_list_status_block_device(
     SseDeserializer deserializer,
   ) {
@@ -23503,6 +27823,180 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<VirtCiNetwork> sse_decode_list_virt_ci_network(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <VirtCiNetwork>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_virt_ci_network(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<VirtCloneDisk> sse_decode_list_virt_clone_disk(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <VirtCloneDisk>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_virt_clone_disk(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<VirtDisk> sse_decode_list_virt_disk(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <VirtDisk>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_virt_disk(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<VirtDiskReport> sse_decode_list_virt_disk_report(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <VirtDiskReport>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_virt_disk_report(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<VirtDiskUse> sse_decode_list_virt_disk_use(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <VirtDiskUse>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_virt_disk_use(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<VirtGraphics> sse_decode_list_virt_graphics(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <VirtGraphics>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_virt_graphics(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<VirtGuestReport> sse_decode_list_virt_guest_report(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <VirtGuestReport>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_virt_guest_report(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<VirtHostPci> sse_decode_list_virt_host_pci(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <VirtHostPci>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_virt_host_pci(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<VirtHostUsb> sse_decode_list_virt_host_usb(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <VirtHostUsb>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_virt_host_usb(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<VirtHwDisk> sse_decode_list_virt_hw_disk(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <VirtHwDisk>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_virt_hw_disk(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<VirtHwHostdev> sse_decode_list_virt_hw_hostdev(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <VirtHwHostdev>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_virt_hw_hostdev(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<VirtHwNic> sse_decode_list_virt_hw_nic(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <VirtHwNic>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_virt_hw_nic(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<VirtNic> sse_decode_list_virt_nic(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <VirtNic>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_virt_nic(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   List<VirtOverlay> sse_decode_list_virt_overlay(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -23510,6 +28004,58 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final ans_ = <VirtOverlay>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_virt_overlay(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<VirtPool> sse_decode_list_virt_pool(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <VirtPool>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_virt_pool(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<VirtPoolVolumes> sse_decode_list_virt_pool_volumes(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <VirtPoolVolumes>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_virt_pool_volumes(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<VirtVolumeRef> sse_decode_list_virt_volume_ref(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <VirtVolumeRef>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_virt_volume_ref(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<Volume> sse_decode_list_volume(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <Volume>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_volume(deserializer));
     }
     return ans_;
   }
@@ -23579,6 +28125,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  NetHost sse_decode_net_host(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_mac = sse_decode_String(deserializer);
+    final var_ip = sse_decode_String(deserializer);
+    final var_name = sse_decode_opt_String(deserializer);
+    return NetHost(mac: var_mac, ip: var_ip, name: var_name);
+  }
+
+  @protected
   NetIface sse_decode_net_iface(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final var_device = sse_decode_String(deserializer);
@@ -23589,6 +28144,63 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       rxBytes: var_rxBytes,
       txBytes: var_txBytes,
     );
+  }
+
+  @protected
+  Network sse_decode_network(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_id = sse_decode_String(deserializer);
+    final var_name = sse_decode_String(deserializer);
+    final var_node = sse_decode_opt_String(deserializer);
+    final var_mode = sse_decode_String(deserializer);
+    final var_bridge = sse_decode_opt_String(deserializer);
+    final var_cidrs = sse_decode_list_String(deserializer);
+    final var_gateway = sse_decode_opt_String(deserializer);
+    final var_dhcpRanges = sse_decode_list_String(deserializer);
+    final var_ports = sse_decode_list_String(deserializer);
+    final var_vlanAware = sse_decode_opt_box_autoadd_bool(deserializer);
+    final var_vlanId = sse_decode_opt_box_autoadd_u_32(deserializer);
+    final var_vlanDevice = sse_decode_opt_String(deserializer);
+    final var_bondMode = sse_decode_opt_String(deserializer);
+    final var_active = sse_decode_bool(deserializer);
+    final var_autostart = sse_decode_opt_box_autoadd_bool(deserializer);
+    final var_comment = sse_decode_opt_String(deserializer);
+    final var_hosts = sse_decode_list_net_host(deserializer);
+    final var_xml = sse_decode_String(deserializer);
+    final var_pendingRestart = sse_decode_bool(deserializer);
+    final var_managementEditable = sse_decode_bool(deserializer);
+    final var_users = sse_decode_list_guest_ref(deserializer);
+    return Network(
+      id: var_id,
+      name: var_name,
+      node: var_node,
+      mode: var_mode,
+      bridge: var_bridge,
+      cidrs: var_cidrs,
+      gateway: var_gateway,
+      dhcpRanges: var_dhcpRanges,
+      ports: var_ports,
+      vlanAware: var_vlanAware,
+      vlanId: var_vlanId,
+      vlanDevice: var_vlanDevice,
+      bondMode: var_bondMode,
+      active: var_active,
+      autostart: var_autostart,
+      comment: var_comment,
+      hosts: var_hosts,
+      xml: var_xml,
+      pendingRestart: var_pendingRestart,
+      managementEditable: var_managementEditable,
+      users: var_users,
+    );
+  }
+
+  @protected
+  NetworkChanges sse_decode_network_changes(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_node = sse_decode_String(deserializer);
+    final var_diff = sse_decode_String(deserializer);
+    return NetworkChanges(node: var_node, diff: var_diff);
   }
 
   @protected
@@ -23616,6 +28228,44 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       path: var_path,
       clients: var_clients,
       managed: var_managed,
+    );
+  }
+
+  @protected
+  Nic sse_decode_nic(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_kind = sse_decode_String(deserializer);
+    final var_mac = sse_decode_opt_String(deserializer);
+    final var_source = sse_decode_opt_String(deserializer);
+    final var_model = sse_decode_opt_String(deserializer);
+    final var_target = sse_decode_opt_String(deserializer);
+    return Nic(
+      kind: var_kind,
+      mac: var_mac,
+      source: var_source,
+      model: var_model,
+      target: var_target,
+    );
+  }
+
+  @protected
+  Node sse_decode_node(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_name = sse_decode_String(deserializer);
+    final var_online = sse_decode_bool(deserializer);
+    final var_cpu = sse_decode_opt_box_autoadd_f_64(deserializer);
+    final var_maxCpu = sse_decode_opt_box_autoadd_u_32(deserializer);
+    final var_memUsed = sse_decode_opt_box_autoadd_u_64(deserializer);
+    final var_memTotal = sse_decode_opt_box_autoadd_u_64(deserializer);
+    final var_uptime = sse_decode_opt_box_autoadd_u_64(deserializer);
+    return Node(
+      name: var_name,
+      online: var_online,
+      cpu: var_cpu,
+      maxCpu: var_maxCpu,
+      memUsed: var_memUsed,
+      memTotal: var_memTotal,
+      uptime: var_uptime,
     );
   }
 
@@ -23650,6 +28300,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  BackupIssue? sse_decode_opt_box_autoadd_backup_issue(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_box_autoadd_backup_issue(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   bool? sse_decode_opt_box_autoadd_bool(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -23666,6 +28329,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
     if (sse_decode_bool(deserializer)) {
       return sse_decode_box_autoadd_cert_info(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  CloudInit? sse_decode_opt_box_autoadd_cloud_init(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_box_autoadd_cloud_init(deserializer);
     } else {
       return null;
     }
@@ -23709,6 +28385,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  CreateIssue? sse_decode_opt_box_autoadd_create_issue(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_box_autoadd_create_issue(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   CronScheduleFields? sse_decode_opt_box_autoadd_cron_schedule_fields(
     SseDeserializer deserializer,
   ) {
@@ -23740,6 +28429,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
     if (sse_decode_bool(deserializer)) {
       return sse_decode_box_autoadd_cron_wall(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  Display? sse_decode_opt_box_autoadd_display(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_box_autoadd_display(deserializer);
     } else {
       return null;
     }
@@ -23783,11 +28483,72 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Firmware? sse_decode_opt_box_autoadd_firmware(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_box_autoadd_firmware(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   GpuMem? sse_decode_opt_box_autoadd_gpu_mem(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
     if (sse_decode_bool(deserializer)) {
       return sse_decode_box_autoadd_gpu_mem(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  GuestKind? sse_decode_opt_box_autoadd_guest_kind(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_box_autoadd_guest_kind(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  HostDevice? sse_decode_opt_box_autoadd_host_device(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_box_autoadd_host_device(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  HwDisplay? sse_decode_opt_box_autoadd_hw_display(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_box_autoadd_hw_display(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  HwIssue? sse_decode_opt_box_autoadd_hw_issue(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_box_autoadd_hw_issue(deserializer);
     } else {
       return null;
     }
@@ -24001,6 +28762,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  ResourceIssue? sse_decode_opt_box_autoadd_resource_issue(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_box_autoadd_resource_issue(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   SelfTest? sse_decode_opt_box_autoadd_self_test(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -24208,6 +28982,136 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  VirtCiIpv4? sse_decode_opt_box_autoadd_virt_ci_ipv_4(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_box_autoadd_virt_ci_ipv_4(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  VirtCiNetwork? sse_decode_opt_box_autoadd_virt_ci_network(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_box_autoadd_virt_ci_network(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  VirtCloudInit? sse_decode_opt_box_autoadd_virt_cloud_init(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_box_autoadd_virt_cloud_init(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  VirtDisplay? sse_decode_opt_box_autoadd_virt_display(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_box_autoadd_virt_display(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  VirtHwCaps? sse_decode_opt_box_autoadd_virt_hw_caps(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_box_autoadd_virt_hw_caps(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  VirtHwConfig? sse_decode_opt_box_autoadd_virt_hw_config(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_box_autoadd_virt_hw_config(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  VirtHwGraphics? sse_decode_opt_box_autoadd_virt_hw_graphics(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_box_autoadd_virt_hw_graphics(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  VirtHwTpm? sse_decode_opt_box_autoadd_virt_hw_tpm(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_box_autoadd_virt_hw_tpm(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  VirtNetIpv4? sse_decode_opt_box_autoadd_virt_net_ipv_4(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_box_autoadd_virt_net_ipv_4(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  VirtVersion? sse_decode_opt_box_autoadd_virt_version(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_box_autoadd_virt_version(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   VncPasswordError? sse_decode_opt_box_autoadd_vnc_password_error(
     SseDeserializer deserializer,
   ) {
@@ -24215,6 +29119,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
     if (sse_decode_bool(deserializer)) {
       return sse_decode_box_autoadd_vnc_password_error(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  Volume? sse_decode_opt_box_autoadd_volume(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_box_autoadd_volume(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  VolumeRef? sse_decode_opt_box_autoadd_volume_ref(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_box_autoadd_volume_ref(deserializer);
     } else {
       return null;
     }
@@ -24293,10 +29221,46 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<VirtVolumeRef>? sse_decode_opt_list_virt_volume_ref(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_list_virt_volume_ref(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  Outcome sse_decode_outcome(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_liveError = sse_decode_opt_String(deserializer);
+    final var_volumeKept = sse_decode_bool(deserializer);
+    return Outcome(liveError: var_liveError, volumeKept: var_volumeKept);
+  }
+
+  @protected
   PasswordState sse_decode_password_state(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final inner = sse_decode_i_32(deserializer);
     return PasswordState.values[inner];
+  }
+
+  @protected
+  PendingField sse_decode_pending_field(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_key = sse_decode_String(deserializer);
+    final var_current = sse_decode_opt_String(deserializer);
+    final var_pending = sse_decode_opt_String(deserializer);
+    final var_delete = sse_decode_bool(deserializer);
+    return PendingField(
+      key: var_key,
+      current: var_current,
+      pending: var_pending,
+      delete: var_delete,
+    );
   }
 
   @protected
@@ -24372,6 +29336,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final var_value = sse_decode_String(deserializer);
     final var_minimum = sse_decode_u_32(deserializer);
     return PoolLayoutChoice(value: var_value, minimum: var_minimum);
+  }
+
+  @protected
+  PowerAction sse_decode_power_action(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final inner = sse_decode_i_32(deserializer);
+    return PowerAction.values[inner];
   }
 
   @protected
@@ -24763,6 +29734,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  (String, Stats) sse_decode_record_string_stats(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_field0 = sse_decode_String(deserializer);
+    final var_field1 = sse_decode_stats(deserializer);
+    return (var_field0, var_field1);
+  }
+
+  @protected
   (String, String) sse_decode_record_string_string(
     SseDeserializer deserializer,
   ) {
@@ -25024,6 +30003,226 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final var_target = sse_decode_String(deserializer);
     final var_resetType = sse_decode_String(deserializer);
     return ResetRequest(target: var_target, resetType: var_resetType);
+  }
+
+  @protected
+  ResourceChange sse_decode_resource_change(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final tag_ = sse_decode_i_32(deserializer);
+    switch (tag_) {
+      case 0:
+        final var_name = sse_decode_String(deserializer);
+        final var_poolType = sse_decode_String(deserializer);
+        final var_source = sse_decode_String(deserializer);
+        final var_target = sse_decode_opt_String(deserializer);
+        final var_node = sse_decode_opt_String(deserializer);
+        final var_content = sse_decode_list_String(deserializer);
+        final var_autostart = sse_decode_bool(deserializer);
+        return ResourceChange_PoolCreate(
+          name: var_name,
+          poolType: var_poolType,
+          source: var_source,
+          target: var_target,
+          node: var_node,
+          content: var_content,
+          autostart: var_autostart,
+        );
+      case 1:
+        final var_pool = sse_decode_String(deserializer);
+        final var_active = sse_decode_bool(deserializer);
+        return ResourceChange_PoolSetActive(pool: var_pool, active: var_active);
+      case 2:
+        final var_pool = sse_decode_String(deserializer);
+        final var_on_ = sse_decode_bool(deserializer);
+        return ResourceChange_PoolSetAutostart(pool: var_pool, on_: var_on_);
+      case 3:
+        final var_pool = sse_decode_String(deserializer);
+        return ResourceChange_PoolRefresh(pool: var_pool);
+      case 4:
+        final var_pool = sse_decode_String(deserializer);
+        final var_deleteStorage = sse_decode_bool(deserializer);
+        return ResourceChange_PoolDelete(
+          pool: var_pool,
+          deleteStorage: var_deleteStorage,
+        );
+      case 5:
+        final var_pool = sse_decode_String(deserializer);
+        final var_name = sse_decode_String(deserializer);
+        final var_gib = sse_decode_u_64(deserializer);
+        final var_format = sse_decode_String(deserializer);
+        return ResourceChange_VolumeCreate(
+          pool: var_pool,
+          name: var_name,
+          gib: var_gib,
+          format: var_format,
+        );
+      case 6:
+        final var_pool = sse_decode_String(deserializer);
+        final var_volume = sse_decode_String(deserializer);
+        return ResourceChange_VolumeDelete(pool: var_pool, volume: var_volume);
+      case 7:
+        final var_pool = sse_decode_String(deserializer);
+        final var_volume = sse_decode_String(deserializer);
+        final var_bytes = sse_decode_u_64(deserializer);
+        return ResourceChange_VolumeResize(
+          pool: var_pool,
+          volume: var_volume,
+          bytes: var_bytes,
+        );
+      case 8:
+        final var_pool = sse_decode_String(deserializer);
+        final var_volume = sse_decode_String(deserializer);
+        final var_name = sse_decode_String(deserializer);
+        return ResourceChange_VolumeClone(
+          pool: var_pool,
+          volume: var_volume,
+          name: var_name,
+        );
+      case 9:
+        final var_name = sse_decode_String(deserializer);
+        final var_mode = sse_decode_String(deserializer);
+        final var_node = sse_decode_opt_String(deserializer);
+        final var_bridge = sse_decode_opt_String(deserializer);
+        final var_cidr = sse_decode_opt_String(deserializer);
+        final var_dhcpStart = sse_decode_opt_String(deserializer);
+        final var_dhcpEnd = sse_decode_opt_String(deserializer);
+        final var_vlanAware = sse_decode_bool(deserializer);
+        final var_autostart = sse_decode_bool(deserializer);
+        return ResourceChange_NetworkCreate(
+          name: var_name,
+          mode: var_mode,
+          node: var_node,
+          bridge: var_bridge,
+          cidr: var_cidr,
+          dhcpStart: var_dhcpStart,
+          dhcpEnd: var_dhcpEnd,
+          vlanAware: var_vlanAware,
+          autostart: var_autostart,
+        );
+      case 10:
+        final var_network = sse_decode_String(deserializer);
+        final var_mode = sse_decode_String(deserializer);
+        final var_bridge = sse_decode_opt_String(deserializer);
+        final var_address = sse_decode_opt_String(deserializer);
+        final var_prefix = sse_decode_opt_box_autoadd_u_8(deserializer);
+        final var_dhcpStart = sse_decode_opt_String(deserializer);
+        final var_dhcpEnd = sse_decode_opt_String(deserializer);
+        final var_hosts = sse_decode_list_net_host(deserializer);
+        final var_restart = sse_decode_bool(deserializer);
+        final var_baseXml = sse_decode_opt_String(deserializer);
+        return ResourceChange_NetworkEdit(
+          network: var_network,
+          mode: var_mode,
+          bridge: var_bridge,
+          address: var_address,
+          prefix: var_prefix,
+          dhcpStart: var_dhcpStart,
+          dhcpEnd: var_dhcpEnd,
+          hosts: var_hosts,
+          restart: var_restart,
+          baseXml: var_baseXml,
+        );
+      case 11:
+        final var_network = sse_decode_String(deserializer);
+        final var_ports = sse_decode_opt_String(deserializer);
+        final var_cidr = sse_decode_opt_String(deserializer);
+        final var_gateway = sse_decode_opt_String(deserializer);
+        final var_vlanAware = sse_decode_opt_box_autoadd_bool(deserializer);
+        final var_autostart = sse_decode_opt_box_autoadd_bool(deserializer);
+        return ResourceChange_NetworkEditBridge(
+          network: var_network,
+          ports: var_ports,
+          cidr: var_cidr,
+          gateway: var_gateway,
+          vlanAware: var_vlanAware,
+          autostart: var_autostart,
+        );
+      case 12:
+        final var_network = sse_decode_String(deserializer);
+        final var_baseXml = sse_decode_opt_String(deserializer);
+        return ResourceChange_NetworkRestart(
+          network: var_network,
+          baseXml: var_baseXml,
+        );
+      case 13:
+        final var_network = sse_decode_String(deserializer);
+        final var_active = sse_decode_bool(deserializer);
+        return ResourceChange_NetworkSetActive(
+          network: var_network,
+          active: var_active,
+        );
+      case 14:
+        final var_network = sse_decode_String(deserializer);
+        final var_on_ = sse_decode_bool(deserializer);
+        return ResourceChange_NetworkSetAutostart(
+          network: var_network,
+          on_: var_on_,
+        );
+      case 15:
+        final var_network = sse_decode_String(deserializer);
+        return ResourceChange_NetworkDelete(network: var_network);
+      case 16:
+        final var_node = sse_decode_String(deserializer);
+        return ResourceChange_NetworkApply(node: var_node);
+      case 17:
+        final var_node = sse_decode_String(deserializer);
+        return ResourceChange_NetworkRevert(node: var_node);
+      default:
+        throw UnimplementedError('');
+    }
+  }
+
+  @protected
+  ResourceIssue sse_decode_resource_issue(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final inner = sse_decode_i_32(deserializer);
+    return ResourceIssue.values[inner];
+  }
+
+  @protected
+  ResourcePool sse_decode_resource_pool(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_id = sse_decode_String(deserializer);
+    final var_name = sse_decode_String(deserializer);
+    final var_node = sse_decode_opt_String(deserializer);
+    final var_poolType = sse_decode_String(deserializer);
+    final var_path = sse_decode_opt_String(deserializer);
+    final var_source = sse_decode_opt_String(deserializer);
+    final var_capacity = sse_decode_opt_box_autoadd_u_64(deserializer);
+    final var_used = sse_decode_opt_box_autoadd_u_64(deserializer);
+    final var_available = sse_decode_opt_box_autoadd_u_64(deserializer);
+    final var_active = sse_decode_bool(deserializer);
+    final var_autostart = sse_decode_opt_box_autoadd_bool(deserializer);
+    final var_enabled = sse_decode_opt_box_autoadd_bool(deserializer);
+    final var_shared = sse_decode_opt_box_autoadd_bool(deserializer);
+    final var_content = sse_decode_list_String(deserializer);
+    final var_volumeCount = sse_decode_opt_box_autoadd_u_64(deserializer);
+    return ResourcePool(
+      id: var_id,
+      name: var_name,
+      node: var_node,
+      poolType: var_poolType,
+      path: var_path,
+      source: var_source,
+      capacity: var_capacity,
+      used: var_used,
+      available: var_available,
+      active: var_active,
+      autostart: var_autostart,
+      enabled: var_enabled,
+      shared: var_shared,
+      content: var_content,
+      volumeCount: var_volumeCount,
+    );
+  }
+
+  @protected
+  ScheduleCheck sse_decode_schedule_check(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_error = sse_decode_opt_String(deserializer);
+    final var_next = sse_decode_list_prim_i_64_strict(deserializer);
+    return ScheduleCheck(error: var_error, next: var_next);
   }
 
   @protected
@@ -25401,6 +30600,42 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Snapshot sse_decode_snapshot(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_name = sse_decode_String(deserializer);
+    final var_parent = sse_decode_opt_String(deserializer);
+    final var_description = sse_decode_opt_String(deserializer);
+    final var_createdAt = sse_decode_opt_box_autoadd_i_64(deserializer);
+    final var_current = sse_decode_bool(deserializer);
+    final var_withMemory = sse_decode_bool(deserializer);
+    final var_external_ = sse_decode_bool(deserializer);
+    final var_layers = sse_decode_list_snapshot_layer(deserializer);
+    return Snapshot(
+      name: var_name,
+      parent: var_parent,
+      description: var_description,
+      createdAt: var_createdAt,
+      current: var_current,
+      withMemory: var_withMemory,
+      external_: var_external_,
+      layers: var_layers,
+    );
+  }
+
+  @protected
+  SnapshotLayer sse_decode_snapshot_layer(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_target = sse_decode_String(deserializer);
+    final var_file = sse_decode_opt_String(deserializer);
+    final var_external_ = sse_decode_bool(deserializer);
+    return SnapshotLayer(
+      target: var_target,
+      file: var_file,
+      external_: var_external_,
+    );
+  }
+
+  @protected
   SnapshotMemoryKind sse_decode_snapshot_memory_kind(
     SseDeserializer deserializer,
   ) {
@@ -25434,6 +30669,33 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       pwd: var_pwd,
       id: var_id,
       name: var_name,
+    );
+  }
+
+  @protected
+  Stats sse_decode_stats(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_at = sse_decode_i_64(deserializer);
+    final var_cpu = sse_decode_opt_box_autoadd_f_64(deserializer);
+    final var_memUsed = sse_decode_opt_box_autoadd_u_64(deserializer);
+    final var_memTotal = sse_decode_opt_box_autoadd_u_64(deserializer);
+    final var_diskUsed = sse_decode_opt_box_autoadd_u_64(deserializer);
+    final var_diskTotal = sse_decode_opt_box_autoadd_u_64(deserializer);
+    final var_diskRead = sse_decode_opt_box_autoadd_f_64(deserializer);
+    final var_diskWrite = sse_decode_opt_box_autoadd_f_64(deserializer);
+    final var_netIn = sse_decode_opt_box_autoadd_f_64(deserializer);
+    final var_netOut = sse_decode_opt_box_autoadd_f_64(deserializer);
+    return Stats(
+      at: var_at,
+      cpu: var_cpu,
+      memUsed: var_memUsed,
+      memTotal: var_memTotal,
+      diskUsed: var_diskUsed,
+      diskTotal: var_diskTotal,
+      diskRead: var_diskRead,
+      diskWrite: var_diskWrite,
+      netIn: var_netIn,
+      netOut: var_netOut,
     );
   }
 
@@ -25723,6 +30985,37 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       arrays: var_arrays,
       pools: var_pools,
       tools: var_tools,
+    );
+  }
+
+  @protected
+  Support sse_decode_support(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_buses = sse_decode_list_String(deserializer);
+    final var_caches = sse_decode_list_String(deserializer);
+    final var_nicModels = sse_decode_list_String(deserializer);
+    final var_mac = sse_decode_bool(deserializer);
+    final var_protocols = sse_decode_list_String(deserializer);
+    final var_listen = sse_decode_bool(deserializer);
+    final var_gpus = sse_decode_list_String(deserializer);
+    final var_uefi = sse_decode_bool(deserializer);
+    final var_secureBoot = sse_decode_bool(deserializer);
+    final var_tpm = sse_decode_bool(deserializer);
+    final var_usb = sse_decode_bool(deserializer);
+    final var_pci = sse_decode_bool(deserializer);
+    return Support(
+      buses: var_buses,
+      caches: var_caches,
+      nicModels: var_nicModels,
+      mac: var_mac,
+      protocols: var_protocols,
+      listen: var_listen,
+      gpus: var_gpus,
+      uefi: var_uefi,
+      secureBoot: var_secureBoot,
+      tpm: var_tpm,
+      usb: var_usb,
+      pci: var_pci,
     );
   }
 
@@ -26056,6 +31349,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  UsbNaming sse_decode_usb_naming(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final inner = sse_decode_i_32(deserializer);
+    return UsbNaming.values[inner];
+  }
+
+  @protected
   UserCatalog sse_decode_user_catalog(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final var_currentUser = sse_decode_String(deserializer);
@@ -26177,6 +31477,179 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  VirtCiIpv4 sse_decode_virt_ci_ipv_4(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_address = sse_decode_String(deserializer);
+    final var_gateway = sse_decode_opt_String(deserializer);
+    return VirtCiIpv4(address: var_address, gateway: var_gateway);
+  }
+
+  @protected
+  VirtCiNetwork sse_decode_virt_ci_network(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_mac = sse_decode_String(deserializer);
+    final var_ipv4 = sse_decode_opt_box_autoadd_virt_ci_ipv_4(deserializer);
+    final var_dns = sse_decode_list_String(deserializer);
+    final var_search = sse_decode_list_String(deserializer);
+    return VirtCiNetwork(
+      mac: var_mac,
+      ipv4: var_ipv4,
+      dns: var_dns,
+      search: var_search,
+    );
+  }
+
+  @protected
+  VirtCloneDisk sse_decode_virt_clone_disk(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_target = sse_decode_String(deserializer);
+    final var_source = sse_decode_String(deserializer);
+    final var_format = sse_decode_opt_String(deserializer);
+    return VirtCloneDisk(
+      target: var_target,
+      source: var_source,
+      format: var_format,
+    );
+  }
+
+  @protected
+  VirtCloneSpec sse_decode_virt_clone_spec(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_source = sse_decode_String(deserializer);
+    final var_name = sse_decode_String(deserializer);
+    final var_full = sse_decode_bool(deserializer);
+    final var_disks = sse_decode_list_virt_clone_disk(deserializer);
+    final var_targetPool = sse_decode_opt_String(deserializer);
+    final var_targetBlock = sse_decode_bool(deserializer);
+    return VirtCloneSpec(
+      source: var_source,
+      name: var_name,
+      full: var_full,
+      disks: var_disks,
+      targetPool: var_targetPool,
+      targetBlock: var_targetBlock,
+    );
+  }
+
+  @protected
+  VirtCloudInit sse_decode_virt_cloud_init(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_user = sse_decode_String(deserializer);
+    final var_passwordHash = sse_decode_opt_String(deserializer);
+    final var_sshKeys = sse_decode_list_String(deserializer);
+    final var_hostname = sse_decode_String(deserializer);
+    final var_instanceId = sse_decode_String(deserializer);
+    final var_network = sse_decode_opt_box_autoadd_virt_ci_network(
+      deserializer,
+    );
+    final var_extraNetworks = sse_decode_list_virt_ci_network(deserializer);
+    final var_passwordExpire = sse_decode_bool(deserializer);
+    return VirtCloudInit(
+      user: var_user,
+      passwordHash: var_passwordHash,
+      sshKeys: var_sshKeys,
+      hostname: var_hostname,
+      instanceId: var_instanceId,
+      network: var_network,
+      extraNetworks: var_extraNetworks,
+      passwordExpire: var_passwordExpire,
+    );
+  }
+
+  @protected
+  VirtCreateHost sse_decode_virt_create_host(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_domainType = sse_decode_String(deserializer);
+    final var_machine = sse_decode_String(deserializer);
+    final var_arch = sse_decode_String(deserializer);
+    final var_maxVcpus = sse_decode_opt_box_autoadd_u_32(deserializer);
+    final var_caps = sse_decode_opt_box_autoadd_virt_hw_caps(deserializer);
+    final var_seedTool = sse_decode_opt_String(deserializer);
+    return VirtCreateHost(
+      domainType: var_domainType,
+      machine: var_machine,
+      arch: var_arch,
+      maxVcpus: var_maxVcpus,
+      caps: var_caps,
+      seedTool: var_seedTool,
+    );
+  }
+
+  @protected
+  VirtCreateSpec sse_decode_virt_create_spec(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_name = sse_decode_String(deserializer);
+    final var_vcpus = sse_decode_u_32(deserializer);
+    final var_memoryMib = sse_decode_u_64(deserializer);
+    final var_host = sse_decode_virt_create_host(deserializer);
+    final var_diskPool = sse_decode_String(deserializer);
+    final var_diskGib = sse_decode_u_64(deserializer);
+    final var_diskFormat = sse_decode_String(deserializer);
+    final var_diskPath = sse_decode_opt_String(deserializer);
+    final var_baseImage = sse_decode_opt_String(deserializer);
+    final var_diskBus = sse_decode_opt_String(deserializer);
+    final var_cdrom = sse_decode_opt_String(deserializer);
+    final var_network = sse_decode_opt_String(deserializer);
+    final var_nicModel = sse_decode_opt_String(deserializer);
+    final var_mac = sse_decode_opt_String(deserializer);
+    final var_efi = sse_decode_bool(deserializer);
+    final var_secureBoot = sse_decode_bool(deserializer);
+    final var_tpm = sse_decode_bool(deserializer);
+    final var_cloudInit = sse_decode_opt_box_autoadd_virt_cloud_init(
+      deserializer,
+    );
+    final var_seedPath = sse_decode_opt_String(deserializer);
+    final var_seedTools = sse_decode_opt_list_String(deserializer);
+    final var_start = sse_decode_bool(deserializer);
+    return VirtCreateSpec(
+      name: var_name,
+      vcpus: var_vcpus,
+      memoryMib: var_memoryMib,
+      host: var_host,
+      diskPool: var_diskPool,
+      diskGib: var_diskGib,
+      diskFormat: var_diskFormat,
+      diskPath: var_diskPath,
+      baseImage: var_baseImage,
+      diskBus: var_diskBus,
+      cdrom: var_cdrom,
+      network: var_network,
+      nicModel: var_nicModel,
+      mac: var_mac,
+      efi: var_efi,
+      secureBoot: var_secureBoot,
+      tpm: var_tpm,
+      cloudInit: var_cloudInit,
+      seedPath: var_seedPath,
+      seedTools: var_seedTools,
+      start: var_start,
+    );
+  }
+
+  @protected
+  VirtCreateVolumes sse_decode_virt_create_volumes(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_diskPath = sse_decode_String(deserializer);
+    final var_seedPath = sse_decode_opt_String(deserializer);
+    final var_copiedBytes = sse_decode_opt_box_autoadd_u_64(deserializer);
+    return VirtCreateVolumes(
+      diskPath: var_diskPath,
+      seedPath: var_seedPath,
+      copiedBytes: var_copiedBytes,
+    );
+  }
+
+  @protected
+  VirtCreated sse_decode_virt_created(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_uuid = sse_decode_opt_String(deserializer);
+    final var_startError = sse_decode_opt_String(deserializer);
+    return VirtCreated(uuid: var_uuid, startError: var_startError);
+  }
+
+  @protected
   VirtDeletePlan sse_decode_virt_delete_plan(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final var_targets = sse_decode_list_String(deserializer);
@@ -26194,10 +31667,137 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  VirtDisk sse_decode_virt_disk(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_device = sse_decode_String(deserializer);
+    final var_sourceType = sse_decode_opt_String(deserializer);
+    final var_source = sse_decode_opt_String(deserializer);
+    final var_target = sse_decode_opt_String(deserializer);
+    final var_bus = sse_decode_opt_String(deserializer);
+    final var_format = sse_decode_opt_String(deserializer);
+    final var_readonly = sse_decode_bool(deserializer);
+    return VirtDisk(
+      device: var_device,
+      sourceType: var_sourceType,
+      source: var_source,
+      target: var_target,
+      bus: var_bus,
+      format: var_format,
+      readonly: var_readonly,
+    );
+  }
+
+  @protected
+  VirtDiskReport sse_decode_virt_disk_report(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_device = sse_decode_String(deserializer);
+    final var_sourceType = sse_decode_opt_String(deserializer);
+    final var_source = sse_decode_opt_String(deserializer);
+    final var_target = sse_decode_opt_String(deserializer);
+    final var_bus = sse_decode_opt_String(deserializer);
+    final var_format = sse_decode_opt_String(deserializer);
+    final var_readonly = sse_decode_bool(deserializer);
+    final var_size = sse_decode_opt_box_autoadd_u_64(deserializer);
+    return VirtDiskReport(
+      device: var_device,
+      sourceType: var_sourceType,
+      source: var_source,
+      target: var_target,
+      bus: var_bus,
+      format: var_format,
+      readonly: var_readonly,
+      size: var_size,
+    );
+  }
+
+  @protected
+  VirtDiskUse sse_decode_virt_disk_use(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_domain = sse_decode_String(deserializer);
+    final var_kind = sse_decode_String(deserializer);
+    final var_device = sse_decode_String(deserializer);
+    final var_target = sse_decode_String(deserializer);
+    final var_source = sse_decode_opt_String(deserializer);
+    return VirtDiskUse(
+      domain: var_domain,
+      kind: var_kind,
+      device: var_device,
+      target: var_target,
+      source: var_source,
+    );
+  }
+
+  @protected
+  VirtDisplay sse_decode_virt_display(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_uri = sse_decode_String(deserializer);
+    final var_protocol = sse_decode_String(deserializer);
+    final var_host = sse_decode_opt_String(deserializer);
+    final var_port = sse_decode_opt_box_autoadd_u_16(deserializer);
+    final var_tlsPort = sse_decode_opt_box_autoadd_u_16(deserializer);
+    final var_socket = sse_decode_opt_String(deserializer);
+    return VirtDisplay(
+      uri: var_uri,
+      protocol: var_protocol,
+      host: var_host,
+      port: var_port,
+      tlsPort: var_tlsPort,
+      socket: var_socket,
+    );
+  }
+
+  @protected
+  VirtDomainDetail sse_decode_virt_domain_detail(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_display = sse_decode_opt_box_autoadd_virt_display(deserializer);
+    final var_xml = sse_decode_virt_domain_xml(deserializer);
+    return VirtDomainDetail(display: var_display, xml: var_xml);
+  }
+
+  @protected
+  VirtDomainXml sse_decode_virt_domain_xml(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_name = sse_decode_opt_String(deserializer);
+    final var_uuid = sse_decode_opt_String(deserializer);
+    final var_title = sse_decode_opt_String(deserializer);
+    final var_description = sse_decode_opt_String(deserializer);
+    final var_arch = sse_decode_opt_String(deserializer);
+    final var_machine = sse_decode_opt_String(deserializer);
+    final var_disks = sse_decode_list_virt_disk(deserializer);
+    final var_nics = sse_decode_list_virt_nic(deserializer);
+    final var_graphics = sse_decode_list_virt_graphics(deserializer);
+    final var_hasSerialConsole = sse_decode_bool(deserializer);
+    final var_seed = sse_decode_opt_String(deserializer);
+    return VirtDomainXml(
+      name: var_name,
+      uuid: var_uuid,
+      title: var_title,
+      description: var_description,
+      arch: var_arch,
+      machine: var_machine,
+      disks: var_disks,
+      nics: var_nics,
+      graphics: var_graphics,
+      hasSerialConsole: var_hasSerialConsole,
+      seed: var_seed,
+    );
+  }
+
+  @protected
   VirtErrorKind sse_decode_virt_error_kind(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final inner = sse_decode_i_32(deserializer);
     return VirtErrorKind.values[inner];
+  }
+
+  @protected
+  VirtExternalSnapshot sse_decode_virt_external_snapshot(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_refusal = sse_decode_opt_String(deserializer);
+    final var_overlays = sse_decode_list_virt_overlay(deserializer);
+    return VirtExternalSnapshot(refusal: var_refusal, overlays: var_overlays);
   }
 
   @protected
@@ -26216,11 +31816,772 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  VirtGraphics sse_decode_virt_graphics(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_kind = sse_decode_String(deserializer);
+    final var_port = sse_decode_opt_box_autoadd_u_16(deserializer);
+    final var_tlsPort = sse_decode_opt_box_autoadd_u_16(deserializer);
+    final var_autoport = sse_decode_bool(deserializer);
+    final var_listen = sse_decode_opt_String(deserializer);
+    final var_socket = sse_decode_opt_String(deserializer);
+    return VirtGraphics(
+      kind: var_kind,
+      port: var_port,
+      tlsPort: var_tlsPort,
+      autoport: var_autoport,
+      listen: var_listen,
+      socket: var_socket,
+    );
+  }
+
+  @protected
+  VirtGuestDetailReport sse_decode_virt_guest_detail_report(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_disks = sse_decode_list_virt_disk_report(deserializer);
+    final var_nics = sse_decode_list_nic(deserializer);
+    final var_graphics = sse_decode_list_graphics(deserializer);
+    final var_display = sse_decode_opt_box_autoadd_display(deserializer);
+    final var_consoles = sse_decode_list_console_kind(deserializer);
+    final var_description = sse_decode_opt_String(deserializer);
+    final var_arch = sse_decode_opt_String(deserializer);
+    final var_machine = sse_decode_opt_String(deserializer);
+    return VirtGuestDetailReport(
+      disks: var_disks,
+      nics: var_nics,
+      graphics: var_graphics,
+      display: var_display,
+      consoles: var_consoles,
+      description: var_description,
+      arch: var_arch,
+      machine: var_machine,
+    );
+  }
+
+  @protected
+  VirtGuestReport sse_decode_virt_guest_report(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_id = sse_decode_String(deserializer);
+    final var_name = sse_decode_String(deserializer);
+    final var_kind = sse_decode_guest_kind(deserializer);
+    final var_state = sse_decode_guest_state(deserializer);
+    final var_stateReason = sse_decode_opt_String(deserializer);
+    final var_vmid = sse_decode_opt_box_autoadd_u_32(deserializer);
+    final var_node = sse_decode_opt_String(deserializer);
+    final var_vcpu = sse_decode_opt_box_autoadd_u_32(deserializer);
+    final var_memBytes = sse_decode_opt_box_autoadd_u_64(deserializer);
+    final var_uptime = sse_decode_opt_box_autoadd_u_64(deserializer);
+    final var_tags = sse_decode_list_String(deserializer);
+    final var_template = sse_decode_bool(deserializer);
+    final var_autostart = sse_decode_opt_box_autoadd_bool(deserializer);
+    final var_actions = sse_decode_list_power_action(deserializer);
+    return VirtGuestReport(
+      id: var_id,
+      name: var_name,
+      kind: var_kind,
+      state: var_state,
+      stateReason: var_stateReason,
+      vmid: var_vmid,
+      node: var_node,
+      vcpu: var_vcpu,
+      memBytes: var_memBytes,
+      uptime: var_uptime,
+      tags: var_tags,
+      template: var_template,
+      autostart: var_autostart,
+      actions: var_actions,
+    );
+  }
+
+  @protected
+  VirtHardwareInfo sse_decode_virt_hardware_info(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_firmware = sse_decode_list_firmware_descriptor(deserializer);
+    final var_config = sse_decode_virt_hw_config(deserializer);
+    final var_live = sse_decode_opt_box_autoadd_virt_hw_config(deserializer);
+    final var_configXml = sse_decode_String(deserializer);
+    final var_configText = sse_decode_String(deserializer);
+    final var_liveXml = sse_decode_String(deserializer);
+    final var_autostart = sse_decode_bool(deserializer);
+    final var_description = sse_decode_opt_String(deserializer);
+    final var_hostCpus = sse_decode_opt_box_autoadd_u_32(deserializer);
+    final var_hostMemoryKib = sse_decode_opt_box_autoadd_u_64(deserializer);
+    final var_caps = sse_decode_opt_box_autoadd_virt_hw_caps(deserializer);
+    return VirtHardwareInfo(
+      firmware: var_firmware,
+      config: var_config,
+      live: var_live,
+      configXml: var_configXml,
+      configText: var_configText,
+      liveXml: var_liveXml,
+      autostart: var_autostart,
+      description: var_description,
+      hostCpus: var_hostCpus,
+      hostMemoryKib: var_hostMemoryKib,
+      caps: var_caps,
+    );
+  }
+
+  @protected
+  VirtHostDevices sse_decode_virt_host_devices(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_usb = sse_decode_list_virt_host_usb(deserializer);
+    final var_pci = sse_decode_list_virt_host_pci(deserializer);
+    final var_iommu = sse_decode_bool(deserializer);
+    return VirtHostDevices(usb: var_usb, pci: var_pci, iommu: var_iommu);
+  }
+
+  @protected
+  VirtHostPci sse_decode_virt_host_pci(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_address = sse_decode_String(deserializer);
+    final var_vendor = sse_decode_opt_String(deserializer);
+    final var_product = sse_decode_opt_String(deserializer);
+    final var_vendorName = sse_decode_opt_String(deserializer);
+    final var_productName = sse_decode_opt_String(deserializer);
+    final var_class_ = sse_decode_opt_String(deserializer);
+    final var_iommuGroup = sse_decode_opt_box_autoadd_u_32(deserializer);
+    final var_groupSize = sse_decode_u_32(deserializer);
+    return VirtHostPci(
+      address: var_address,
+      vendor: var_vendor,
+      product: var_product,
+      vendorName: var_vendorName,
+      productName: var_productName,
+      class_: var_class_,
+      iommuGroup: var_iommuGroup,
+      groupSize: var_groupSize,
+    );
+  }
+
+  @protected
+  VirtHostProbe sse_decode_virt_host_probe(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_pve = sse_decode_opt_String(deserializer);
+    final var_container = sse_decode_opt_String(deserializer);
+    final var_libvirt = sse_decode_opt_box_autoadd_virt_version(deserializer);
+    return VirtHostProbe(
+      pve: var_pve,
+      container: var_container,
+      libvirt: var_libvirt,
+    );
+  }
+
+  @protected
+  VirtHostReport sse_decode_virt_host_report(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_host = sse_decode_host(deserializer);
+    final var_guests = sse_decode_list_virt_guest_report(deserializer);
+    final var_stats = sse_decode_list_record_string_stats(deserializer);
+    final var_capabilities = sse_decode_capabilities(deserializer);
+    return VirtHostReport(
+      host: var_host,
+      guests: var_guests,
+      stats: var_stats,
+      capabilities: var_capabilities,
+    );
+  }
+
+  @protected
+  VirtHostUsb sse_decode_virt_host_usb(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_vendor = sse_decode_String(deserializer);
+    final var_product = sse_decode_String(deserializer);
+    final var_vendorName = sse_decode_opt_String(deserializer);
+    final var_productName = sse_decode_opt_String(deserializer);
+    final var_bus = sse_decode_opt_box_autoadd_u_32(deserializer);
+    final var_device = sse_decode_opt_box_autoadd_u_32(deserializer);
+    final var_port = sse_decode_opt_String(deserializer);
+    return VirtHostUsb(
+      vendor: var_vendor,
+      product: var_product,
+      vendorName: var_vendorName,
+      productName: var_productName,
+      bus: var_bus,
+      device: var_device,
+      port: var_port,
+    );
+  }
+
+  @protected
+  VirtHwCaps sse_decode_virt_hw_caps(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_efi = sse_decode_bool(deserializer);
+    final var_secureBoot = sse_decode_bool(deserializer);
+    final var_tpmEmulator = sse_decode_bool(deserializer);
+    final var_graphics = sse_decode_list_String(deserializer);
+    final var_video = sse_decode_list_String(deserializer);
+    final var_diskBuses = sse_decode_list_String(deserializer);
+    final var_hostdev = sse_decode_bool(deserializer);
+    return VirtHwCaps(
+      efi: var_efi,
+      secureBoot: var_secureBoot,
+      tpmEmulator: var_tpmEmulator,
+      graphics: var_graphics,
+      video: var_video,
+      diskBuses: var_diskBuses,
+      hostdev: var_hostdev,
+    );
+  }
+
+  @protected
+  VirtHwChange sse_decode_virt_hw_change(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final tag_ = sse_decode_i_32(deserializer);
+    switch (tag_) {
+      case 0:
+        final var_sockets = sse_decode_u_32(deserializer);
+        final var_cores = sse_decode_u_32(deserializer);
+        final var_current = sse_decode_opt_box_autoadd_u_32(deserializer);
+        return VirtHwChange_Cpu(
+          sockets: var_sockets,
+          cores: var_cores,
+          current: var_current,
+        );
+      case 1:
+        final var_memoryMib = sse_decode_u_64(deserializer);
+        final var_currentMib = sse_decode_opt_box_autoadd_u_64(deserializer);
+        return VirtHwChange_Memory(
+          memoryMib: var_memoryMib,
+          currentMib: var_currentMib,
+        );
+      case 2:
+        final var_target = sse_decode_String(deserializer);
+        final var_bytes = sse_decode_u_64(deserializer);
+        final var_path = sse_decode_opt_String(deserializer);
+        final var_live = sse_decode_bool(deserializer);
+        return VirtHwChange_GrowDisk(
+          target: var_target,
+          bytes: var_bytes,
+          path: var_path,
+          live: var_live,
+        );
+      case 3:
+        final var_pool = sse_decode_String(deserializer);
+        final var_volume = sse_decode_String(deserializer);
+        final var_gib = sse_decode_u_64(deserializer);
+        final var_format = sse_decode_String(deserializer);
+        final var_target = sse_decode_String(deserializer);
+        final var_bus = sse_decode_String(deserializer);
+        return VirtHwChange_AddDisk(
+          pool: var_pool,
+          volume: var_volume,
+          gib: var_gib,
+          format: var_format,
+          target: var_target,
+          bus: var_bus,
+        );
+      case 4:
+        final var_path = sse_decode_String(deserializer);
+        final var_format = sse_decode_String(deserializer);
+        final var_target = sse_decode_String(deserializer);
+        final var_bus = sse_decode_String(deserializer);
+        return VirtHwChange_AttachVolume(
+          path: var_path,
+          format: var_format,
+          target: var_target,
+          bus: var_bus,
+        );
+      case 5:
+        final var_target = sse_decode_String(deserializer);
+        final var_deletePath = sse_decode_opt_String(deserializer);
+        final var_config = sse_decode_bool(deserializer);
+        final var_live = sse_decode_bool(deserializer);
+        return VirtHwChange_RemoveDisk(
+          target: var_target,
+          deletePath: var_deletePath,
+          config: var_config,
+          live: var_live,
+        );
+      case 6:
+        final var_target = sse_decode_String(deserializer);
+        final var_bus = sse_decode_String(deserializer);
+        final var_source = sse_decode_opt_String(deserializer);
+        return VirtHwChange_AddCdrom(
+          target: var_target,
+          bus: var_bus,
+          source: var_source,
+        );
+      case 7:
+        final var_target = sse_decode_String(deserializer);
+        final var_source = sse_decode_opt_String(deserializer);
+        final var_config = sse_decode_bool(deserializer);
+        final var_live = sse_decode_bool(deserializer);
+        return VirtHwChange_SetMedia(
+          target: var_target,
+          source: var_source,
+          config: var_config,
+          live: var_live,
+        );
+      case 8:
+        final var_kind = sse_decode_String(deserializer);
+        final var_source = sse_decode_String(deserializer);
+        final var_model = sse_decode_String(deserializer);
+        final var_mac = sse_decode_String(deserializer);
+        return VirtHwChange_AddNic(
+          kind: var_kind,
+          source: var_source,
+          model: var_model,
+          mac: var_mac,
+        );
+      case 9:
+        final var_mac = sse_decode_String(deserializer);
+        final var_kind = sse_decode_opt_String(deserializer);
+        final var_liveKind = sse_decode_opt_String(deserializer);
+        return VirtHwChange_RemoveNic(
+          mac: var_mac,
+          kind: var_kind,
+          liveKind: var_liveKind,
+        );
+      case 10:
+        final var_mac = sse_decode_String(deserializer);
+        final var_kind = sse_decode_String(deserializer);
+        final var_source = sse_decode_String(deserializer);
+        final var_model = sse_decode_opt_String(deserializer);
+        final var_linkUp = sse_decode_bool(deserializer);
+        final var_bootOrder = sse_decode_opt_box_autoadd_u_32(deserializer);
+        final var_liveBootOrder = sse_decode_opt_box_autoadd_u_32(deserializer);
+        final var_config = sse_decode_bool(deserializer);
+        final var_live = sse_decode_bool(deserializer);
+        return VirtHwChange_UpdateNic(
+          mac: var_mac,
+          kind: var_kind,
+          source: var_source,
+          model: var_model,
+          linkUp: var_linkUp,
+          bootOrder: var_bootOrder,
+          liveBootOrder: var_liveBootOrder,
+          config: var_config,
+          live: var_live,
+        );
+      case 11:
+        final var_order = sse_decode_list_String(deserializer);
+        return VirtHwChange_Boot(order: var_order);
+      case 12:
+        final var_on_ = sse_decode_bool(deserializer);
+        return VirtHwChange_Autostart(on_: var_on_);
+      case 13:
+        final var_text = sse_decode_String(deserializer);
+        return VirtHwChange_Description(text: var_text);
+      case 14:
+        final var_name = sse_decode_String(deserializer);
+        return VirtHwChange_Rename(name: var_name);
+      case 15:
+        final var_target = sse_decode_String(deserializer);
+        final var_newTarget = sse_decode_opt_String(deserializer);
+        final var_bus = sse_decode_opt_String(deserializer);
+        final var_cache = sse_decode_opt_String(deserializer);
+        return VirtHwChange_UpdateDisk(
+          target: var_target,
+          newTarget: var_newTarget,
+          bus: var_bus,
+          cache: var_cache,
+        );
+      case 16:
+        final var_mac = sse_decode_String(deserializer);
+        final var_newMac = sse_decode_opt_String(deserializer);
+        final var_model = sse_decode_opt_String(deserializer);
+        return VirtHwChange_UpdateNicHardware(
+          mac: var_mac,
+          newMac: var_newMac,
+          model: var_model,
+        );
+      case 17:
+        final var_efi = sse_decode_bool(deserializer);
+        final var_secureBoot = sse_decode_bool(deserializer);
+        return VirtHwChange_Firmware(efi: var_efi, secureBoot: var_secureBoot);
+      case 18:
+        final var_graphics = sse_decode_opt_String(deserializer);
+        final var_listen = sse_decode_opt_String(deserializer);
+        final var_video = sse_decode_opt_String(deserializer);
+        return VirtHwChange_Display(
+          graphics: var_graphics,
+          listen: var_listen,
+          video: var_video,
+        );
+      case 19:
+        final var_device = sse_decode_box_autoadd_virt_hw_new_device(
+          deserializer,
+        );
+        return VirtHwChange_AddDevice(device: var_device);
+      case 20:
+        final var_key = sse_decode_String(deserializer);
+        return VirtHwChange_RemoveDevice(key: var_key);
+      case 21:
+        final var_liveXml = sse_decode_String(deserializer);
+        return VirtHwChange_RevertLive(liveXml: var_liveXml);
+      default:
+        throw UnimplementedError('');
+    }
+  }
+
+  @protected
+  VirtHwConfig sse_decode_virt_hw_config(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_cpu = sse_decode_virt_hw_cpu(deserializer);
+    final var_memoryKib = sse_decode_u_64(deserializer);
+    final var_currentMemoryKib = sse_decode_u_64(deserializer);
+    final var_disks = sse_decode_list_virt_hw_disk(deserializer);
+    final var_nics = sse_decode_list_virt_hw_nic(deserializer);
+    final var_boot = sse_decode_list_String(deserializer);
+    final var_balloon = sse_decode_bool(deserializer);
+    final var_efi = sse_decode_bool(deserializer);
+    final var_secureBoot = sse_decode_bool(deserializer);
+    final var_machine = sse_decode_opt_String(deserializer);
+    final var_graphics = sse_decode_opt_box_autoadd_virt_hw_graphics(
+      deserializer,
+    );
+    final var_video = sse_decode_opt_String(deserializer);
+    final var_tpm = sse_decode_opt_box_autoadd_virt_hw_tpm(deserializer);
+    final var_hostdevs = sse_decode_list_virt_hw_hostdev(deserializer);
+    final var_seed = sse_decode_opt_String(deserializer);
+    return VirtHwConfig(
+      cpu: var_cpu,
+      memoryKib: var_memoryKib,
+      currentMemoryKib: var_currentMemoryKib,
+      disks: var_disks,
+      nics: var_nics,
+      boot: var_boot,
+      balloon: var_balloon,
+      efi: var_efi,
+      secureBoot: var_secureBoot,
+      machine: var_machine,
+      graphics: var_graphics,
+      video: var_video,
+      tpm: var_tpm,
+      hostdevs: var_hostdevs,
+      seed: var_seed,
+    );
+  }
+
+  @protected
+  VirtHwCpu sse_decode_virt_hw_cpu(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_sockets = sse_decode_u_32(deserializer);
+    final var_dies = sse_decode_u_32(deserializer);
+    final var_clusters = sse_decode_u_32(deserializer);
+    final var_cores = sse_decode_u_32(deserializer);
+    final var_threads = sse_decode_u_32(deserializer);
+    final var_max = sse_decode_u_32(deserializer);
+    final var_current = sse_decode_u_32(deserializer);
+    final var_topology = sse_decode_bool(deserializer);
+    return VirtHwCpu(
+      sockets: var_sockets,
+      dies: var_dies,
+      clusters: var_clusters,
+      cores: var_cores,
+      threads: var_threads,
+      max: var_max,
+      current: var_current,
+      topology: var_topology,
+    );
+  }
+
+  @protected
+  VirtHwDisk sse_decode_virt_hw_disk(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_target = sse_decode_String(deserializer);
+    final var_device = sse_decode_String(deserializer);
+    final var_bus = sse_decode_opt_String(deserializer);
+    final var_sourceType = sse_decode_opt_String(deserializer);
+    final var_source = sse_decode_opt_String(deserializer);
+    final var_format = sse_decode_opt_String(deserializer);
+    final var_readonly = sse_decode_bool(deserializer);
+    final var_capacity = sse_decode_opt_box_autoadd_u_64(deserializer);
+    final var_bootOrder = sse_decode_opt_box_autoadd_u_32(deserializer);
+    final var_cache = sse_decode_opt_String(deserializer);
+    return VirtHwDisk(
+      target: var_target,
+      device: var_device,
+      bus: var_bus,
+      sourceType: var_sourceType,
+      source: var_source,
+      format: var_format,
+      readonly: var_readonly,
+      capacity: var_capacity,
+      bootOrder: var_bootOrder,
+      cache: var_cache,
+    );
+  }
+
+  @protected
+  VirtHwGraphics sse_decode_virt_hw_graphics(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_kind = sse_decode_String(deserializer);
+    final var_listen = sse_decode_opt_String(deserializer);
+    final var_port = sse_decode_opt_box_autoadd_i_32(deserializer);
+    return VirtHwGraphics(kind: var_kind, listen: var_listen, port: var_port);
+  }
+
+  @protected
+  VirtHwHostdev sse_decode_virt_hw_hostdev(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_key = sse_decode_String(deserializer);
+    final var_kind = sse_decode_String(deserializer);
+    final var_vendor = sse_decode_opt_String(deserializer);
+    final var_product = sse_decode_opt_String(deserializer);
+    final var_address = sse_decode_opt_String(deserializer);
+    return VirtHwHostdev(
+      key: var_key,
+      kind: var_kind,
+      vendor: var_vendor,
+      product: var_product,
+      address: var_address,
+    );
+  }
+
+  @protected
+  VirtHwNewDevice sse_decode_virt_hw_new_device(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final tag_ = sse_decode_i_32(deserializer);
+    switch (tag_) {
+      case 0:
+        final var_model = sse_decode_String(deserializer);
+        return VirtHwNewDevice_Tpm(model: var_model);
+      case 1:
+        final var_vendor = sse_decode_opt_String(deserializer);
+        final var_product = sse_decode_opt_String(deserializer);
+        final var_bus = sse_decode_opt_box_autoadd_u_32(deserializer);
+        final var_device = sse_decode_opt_box_autoadd_u_32(deserializer);
+        return VirtHwNewDevice_Usb(
+          vendor: var_vendor,
+          product: var_product,
+          bus: var_bus,
+          device: var_device,
+        );
+      case 2:
+        final var_address = sse_decode_String(deserializer);
+        return VirtHwNewDevice_Pci(address: var_address);
+      default:
+        throw UnimplementedError('');
+    }
+  }
+
+  @protected
+  VirtHwNic sse_decode_virt_hw_nic(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_mac = sse_decode_String(deserializer);
+    final var_kind = sse_decode_String(deserializer);
+    final var_source = sse_decode_opt_String(deserializer);
+    final var_model = sse_decode_opt_String(deserializer);
+    final var_linkUp = sse_decode_bool(deserializer);
+    final var_bootOrder = sse_decode_opt_box_autoadd_u_32(deserializer);
+    return VirtHwNic(
+      mac: var_mac,
+      kind: var_kind,
+      source: var_source,
+      model: var_model,
+      linkUp: var_linkUp,
+      bootOrder: var_bootOrder,
+    );
+  }
+
+  @protected
+  VirtHwOutcome sse_decode_virt_hw_outcome(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_liveError = sse_decode_opt_String(deserializer);
+    final var_volumeKept = sse_decode_bool(deserializer);
+    return VirtHwOutcome(liveError: var_liveError, volumeKept: var_volumeKept);
+  }
+
+  @protected
+  VirtHwTpm sse_decode_virt_hw_tpm(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_model = sse_decode_String(deserializer);
+    final var_backend = sse_decode_String(deserializer);
+    final var_version = sse_decode_opt_String(deserializer);
+    return VirtHwTpm(
+      model: var_model,
+      backend: var_backend,
+      version: var_version,
+    );
+  }
+
+  @protected
+  VirtNetIpv4 sse_decode_virt_net_ipv_4(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_address = sse_decode_String(deserializer);
+    final var_prefix = sse_decode_u_8(deserializer);
+    final var_dhcpStart = sse_decode_opt_String(deserializer);
+    final var_dhcpEnd = sse_decode_opt_String(deserializer);
+    return VirtNetIpv4(
+      address: var_address,
+      prefix: var_prefix,
+      dhcpStart: var_dhcpStart,
+      dhcpEnd: var_dhcpEnd,
+    );
+  }
+
+  @protected
+  VirtNic sse_decode_virt_nic(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_kind = sse_decode_String(deserializer);
+    final var_mac = sse_decode_opt_String(deserializer);
+    final var_source = sse_decode_opt_String(deserializer);
+    final var_model = sse_decode_opt_String(deserializer);
+    final var_target = sse_decode_opt_String(deserializer);
+    return VirtNic(
+      kind: var_kind,
+      mac: var_mac,
+      source: var_source,
+      model: var_model,
+      target: var_target,
+    );
+  }
+
+  @protected
   VirtOverlay sse_decode_virt_overlay(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final var_target = sse_decode_String(deserializer);
     final var_path = sse_decode_String(deserializer);
     return VirtOverlay(target: var_target, path: var_path);
+  }
+
+  @protected
+  VirtPool sse_decode_virt_pool(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_name = sse_decode_String(deserializer);
+    final var_uuid = sse_decode_opt_String(deserializer);
+    final var_poolType = sse_decode_opt_String(deserializer);
+    final var_active = sse_decode_bool(deserializer);
+    final var_autostart = sse_decode_bool(deserializer);
+    final var_capacity = sse_decode_opt_box_autoadd_u_64(deserializer);
+    final var_allocation = sse_decode_opt_box_autoadd_u_64(deserializer);
+    final var_available = sse_decode_opt_box_autoadd_u_64(deserializer);
+    final var_target = sse_decode_opt_String(deserializer);
+    final var_source = sse_decode_opt_String(deserializer);
+    final var_volumes = sse_decode_opt_list_virt_volume_ref(deserializer);
+    return VirtPool(
+      name: var_name,
+      uuid: var_uuid,
+      poolType: var_poolType,
+      active: var_active,
+      autostart: var_autostart,
+      capacity: var_capacity,
+      allocation: var_allocation,
+      available: var_available,
+      target: var_target,
+      source: var_source,
+      volumes: var_volumes,
+    );
+  }
+
+  @protected
+  VirtPoolVolumes sse_decode_virt_pool_volumes(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_pool = sse_decode_String(deserializer);
+    final var_volumes = sse_decode_list_volume(deserializer);
+    return VirtPoolVolumes(pool: var_pool, volumes: var_volumes);
+  }
+
+  @protected
+  VirtResourceOp sse_decode_virt_resource_op(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final tag_ = sse_decode_i_32(deserializer);
+    switch (tag_) {
+      case 0:
+        final var_name = sse_decode_String(deserializer);
+        final var_poolType = sse_decode_String(deserializer);
+        final var_target = sse_decode_opt_String(deserializer);
+        final var_source = sse_decode_opt_String(deserializer);
+        final var_autostart = sse_decode_bool(deserializer);
+        return VirtResourceOp_PoolCreate(
+          name: var_name,
+          poolType: var_poolType,
+          target: var_target,
+          source: var_source,
+          autostart: var_autostart,
+        );
+      case 1:
+        final var_name = sse_decode_String(deserializer);
+        return VirtResourceOp_PoolStart(name: var_name);
+      case 2:
+        final var_name = sse_decode_String(deserializer);
+        return VirtResourceOp_PoolStop(name: var_name);
+      case 3:
+        final var_name = sse_decode_String(deserializer);
+        final var_on_ = sse_decode_bool(deserializer);
+        return VirtResourceOp_PoolAutostart(name: var_name, on_: var_on_);
+      case 4:
+        final var_name = sse_decode_String(deserializer);
+        return VirtResourceOp_PoolRefresh(name: var_name);
+      case 5:
+        final var_name = sse_decode_String(deserializer);
+        final var_active = sse_decode_bool(deserializer);
+        final var_deleteStorage = sse_decode_bool(deserializer);
+        return VirtResourceOp_PoolDelete(
+          name: var_name,
+          active: var_active,
+          deleteStorage: var_deleteStorage,
+        );
+      case 6:
+        final var_pool = sse_decode_String(deserializer);
+        final var_name = sse_decode_String(deserializer);
+        final var_bytes = sse_decode_u_64(deserializer);
+        final var_format = sse_decode_String(deserializer);
+        return VirtResourceOp_VolCreate(
+          pool: var_pool,
+          name: var_name,
+          bytes: var_bytes,
+          format: var_format,
+        );
+      case 7:
+        final var_pool = sse_decode_String(deserializer);
+        final var_name = sse_decode_String(deserializer);
+        return VirtResourceOp_VolDelete(pool: var_pool, name: var_name);
+      case 8:
+        final var_pool = sse_decode_String(deserializer);
+        final var_name = sse_decode_String(deserializer);
+        final var_bytes = sse_decode_u_64(deserializer);
+        return VirtResourceOp_VolResize(
+          pool: var_pool,
+          name: var_name,
+          bytes: var_bytes,
+        );
+      case 9:
+        final var_pool = sse_decode_String(deserializer);
+        final var_name = sse_decode_String(deserializer);
+        final var_newName = sse_decode_String(deserializer);
+        return VirtResourceOp_VolClone(
+          pool: var_pool,
+          name: var_name,
+          newName: var_newName,
+        );
+      case 10:
+        final var_name = sse_decode_String(deserializer);
+        final var_mode = sse_decode_String(deserializer);
+        final var_bridge = sse_decode_opt_String(deserializer);
+        final var_ipv4 = sse_decode_opt_box_autoadd_virt_net_ipv_4(
+          deserializer,
+        );
+        final var_autostart = sse_decode_bool(deserializer);
+        return VirtResourceOp_NetCreate(
+          name: var_name,
+          mode: var_mode,
+          bridge: var_bridge,
+          ipv4: var_ipv4,
+          autostart: var_autostart,
+        );
+      case 11:
+        final var_name = sse_decode_String(deserializer);
+        return VirtResourceOp_NetStart(name: var_name);
+      case 12:
+        final var_name = sse_decode_String(deserializer);
+        return VirtResourceOp_NetStop(name: var_name);
+      case 13:
+        final var_name = sse_decode_String(deserializer);
+        final var_on_ = sse_decode_bool(deserializer);
+        return VirtResourceOp_NetAutostart(name: var_name, on_: var_on_);
+      case 14:
+        final var_name = sse_decode_String(deserializer);
+        return VirtResourceOp_NetDelete(name: var_name);
+      default:
+        throw UnimplementedError('');
+    }
   }
 
   @protected
@@ -26234,12 +32595,69 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  VirtSeedRead sse_decode_virt_seed_read(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_cloudInit = sse_decode_virt_cloud_init(deserializer);
+    final var_foreign = sse_decode_bool(deserializer);
+    final var_revision = sse_decode_String(deserializer);
+    return VirtSeedRead(
+      cloudInit: var_cloudInit,
+      foreign: var_foreign,
+      revision: var_revision,
+    );
+  }
+
+  @protected
+  VirtStorage sse_decode_virt_storage(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_pools = sse_decode_list_virt_pool(deserializer);
+    final var_disks = sse_decode_list_virt_disk_use(deserializer);
+    return VirtStorage(pools: var_pools, disks: var_disks);
+  }
+
+  @protected
   VirtUploadEntryKind sse_decode_virt_upload_entry_kind(
     SseDeserializer deserializer,
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final inner = sse_decode_i_32(deserializer);
     return VirtUploadEntryKind.values[inner];
+  }
+
+  @protected
+  VirtVersion sse_decode_virt_version(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_libvirt = sse_decode_opt_String(deserializer);
+    final var_hypervisor = sse_decode_opt_String(deserializer);
+    final var_hypervisorVersion = sse_decode_opt_String(deserializer);
+    return VirtVersion(
+      libvirt: var_libvirt,
+      hypervisor: var_hypervisor,
+      hypervisorVersion: var_hypervisorVersion,
+    );
+  }
+
+  @protected
+  VirtVncConsoleInfo sse_decode_virt_vnc_console_info(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_display = sse_decode_opt_box_autoadd_virt_display(deserializer);
+    final var_password = sse_decode_opt_String(deserializer);
+    final var_passwordKnown = sse_decode_bool(deserializer);
+    return VirtVncConsoleInfo(
+      display: var_display,
+      password: var_password,
+      passwordKnown: var_passwordKnown,
+    );
+  }
+
+  @protected
+  VirtVolumeRef sse_decode_virt_volume_ref(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_name = sse_decode_String(deserializer);
+    final var_path = sse_decode_opt_String(deserializer);
+    return VirtVolumeRef(name: var_name, path: var_path);
   }
 
   @protected
@@ -26264,6 +32682,43 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       password: var_password,
       shared: var_shared,
     );
+  }
+
+  @protected
+  Volume sse_decode_volume(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_id = sse_decode_String(deserializer);
+    final var_name = sse_decode_String(deserializer);
+    final var_path = sse_decode_opt_String(deserializer);
+    final var_format = sse_decode_opt_String(deserializer);
+    final var_content = sse_decode_opt_String(deserializer);
+    final var_capacity = sse_decode_opt_box_autoadd_u_64(deserializer);
+    final var_allocation = sse_decode_opt_box_autoadd_u_64(deserializer);
+    final var_backing = sse_decode_opt_String(deserializer);
+    final var_createdAt = sse_decode_opt_box_autoadd_i_64(deserializer);
+    final var_users = sse_decode_list_guest_ref(deserializer);
+    final var_backs = sse_decode_list_String(deserializer);
+    return Volume(
+      id: var_id,
+      name: var_name,
+      path: var_path,
+      format: var_format,
+      content: var_content,
+      capacity: var_capacity,
+      allocation: var_allocation,
+      backing: var_backing,
+      createdAt: var_createdAt,
+      users: var_users,
+      backs: var_backs,
+    );
+  }
+
+  @protected
+  VolumeRef sse_decode_volume_ref(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_pool = sse_decode_String(deserializer);
+    final var_volume = sse_decode_String(deserializer);
+    return VolumeRef(pool: var_pool, volume: var_volume);
   }
 
   @protected
@@ -26713,6 +33168,90 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_backup(Backup self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.storage, serializer);
+    sse_encode_String(self.node, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.vmid, serializer);
+    sse_encode_opt_box_autoadd_i_64(self.createdAt, serializer);
+    sse_encode_opt_box_autoadd_u_64(self.size, serializer);
+    sse_encode_opt_String(self.format, serializer);
+    sse_encode_opt_String(self.notes, serializer);
+    sse_encode_bool(self.protected, serializer);
+    sse_encode_opt_String(self.verification, serializer);
+    sse_encode_opt_box_autoadd_guest_kind(self.kind, serializer);
+  }
+
+  @protected
+  void sse_encode_backup_edit(BackupEdit self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.notes, serializer);
+    sse_encode_bool(self.protected, serializer);
+  }
+
+  @protected
+  void sse_encode_backup_issue(BackupIssue self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_backup_job(BackupJob self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_opt_String(self.schedule, serializer);
+    sse_encode_opt_String(self.storage, serializer);
+    sse_encode_opt_String(self.mode, serializer);
+    sse_encode_opt_String(self.compress, serializer);
+    sse_encode_bool(self.enabled, serializer);
+    sse_encode_bool(self.all, serializer);
+    sse_encode_list_prim_u_32_strict(self.vmids, serializer);
+    sse_encode_list_prim_u_32_strict(self.exclude, serializer);
+    sse_encode_opt_String(self.pool, serializer);
+    sse_encode_opt_String(self.node, serializer);
+    sse_encode_opt_String(self.comment, serializer);
+    sse_encode_opt_String(self.notesTemplate, serializer);
+    sse_encode_opt_String(self.mailNotification, serializer);
+    sse_encode_opt_String(self.prune, serializer);
+  }
+
+  @protected
+  void sse_encode_backup_job_edit(
+    BackupJobEdit self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_opt_String(self.id, serializer);
+    sse_encode_bool(self.isNew, serializer);
+    sse_encode_opt_String(self.node, serializer);
+    sse_encode_String(self.storage, serializer);
+    sse_encode_String(self.schedule, serializer);
+    sse_encode_String(self.mode, serializer);
+    sse_encode_String(self.compress, serializer);
+    sse_encode_bool(self.enabled, serializer);
+    sse_encode_bool(self.all, serializer);
+    sse_encode_list_prim_u_32_strict(self.vmids, serializer);
+    sse_encode_list_prim_u_32_strict(self.exclude, serializer);
+    sse_encode_opt_String(self.pool, serializer);
+    sse_encode_opt_String(self.comment, serializer);
+    sse_encode_opt_String(self.notesTemplate, serializer);
+    sse_encode_opt_String(self.mailNotification, serializer);
+    sse_encode_opt_String(self.prune, serializer);
+  }
+
+  @protected
+  void sse_encode_backup_request(BackupRequest self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.storage, serializer);
+    sse_encode_String(self.mode, serializer);
+    sse_encode_String(self.compress, serializer);
+    sse_encode_opt_String(self.notes, serializer);
+    sse_encode_bool(self.protected, serializer);
+    sse_encode_opt_String(self.prune, serializer);
+  }
+
+  @protected
   void sse_encode_battery(Battery self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_opt_box_autoadd_i_64(self.percent, serializer);
@@ -26827,6 +33366,57 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_backup(Backup self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_backup(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_backup_edit(
+    BackupEdit self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_backup_edit(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_backup_issue(
+    BackupIssue self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_backup_issue(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_backup_job(
+    BackupJob self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_backup_job(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_backup_job_edit(
+    BackupJobEdit self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_backup_job_edit(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_backup_request(
+    BackupRequest self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_backup_request(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_bench_options(
     BenchOptions self,
     SseSerializer serializer,
@@ -26848,6 +33438,33 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_cert_info(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_clone_request(
+    CloneRequest self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_clone_request(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_cloud_init(
+    CloudInit self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_cloud_init(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_cloud_init_edit(
+    CloudInitEdit self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_cloud_init_edit(self, serializer);
   }
 
   @protected
@@ -26884,6 +33501,33 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_create_issue(
+    CreateIssue self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_create_issue(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_create_options(
+    CreateOptions self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_create_options(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_create_spec(
+    CreateSpec self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_create_spec(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_cron_schedule_fields(
     CronScheduleFields self,
     SseSerializer serializer,
@@ -26908,6 +33552,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_cron_wall(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_display(Display self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_display(self, serializer);
   }
 
   @protected
@@ -26971,6 +33621,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_firmware(
+    Firmware self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_firmware(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_gpu_mem(GpuMem self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_gpu_mem(self, serializer);
@@ -26983,6 +33642,63 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_group_draft(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_guest_kind(
+    GuestKind self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_guest_kind(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_hardware(
+    Hardware self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_hardware(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_host_device(
+    HostDevice self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_host_device(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_hw_change(
+    HwChange self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_hw_change(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_hw_disk(HwDisk self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_hw_disk(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_hw_display(
+    HwDisplay self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_hw_display(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_hw_issue(HwIssue self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_hw_issue(self, serializer);
   }
 
   @protected
@@ -27193,6 +33909,33 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_resource_change(
+    ResourceChange self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_resource_change(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_resource_issue(
+    ResourceIssue self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_resource_issue(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_resource_pool(
+    ResourcePool self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_resource_pool(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_self_test(
     SelfTest self,
     SseSerializer serializer,
@@ -27400,6 +34143,222 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_virt_ci_ipv_4(
+    VirtCiIpv4 self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_virt_ci_ipv_4(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_virt_ci_network(
+    VirtCiNetwork self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_virt_ci_network(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_virt_clone_spec(
+    VirtCloneSpec self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_virt_clone_spec(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_virt_cloud_init(
+    VirtCloudInit self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_virt_cloud_init(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_virt_create_host(
+    VirtCreateHost self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_virt_create_host(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_virt_create_spec(
+    VirtCreateSpec self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_virt_create_spec(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_virt_create_volumes(
+    VirtCreateVolumes self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_virt_create_volumes(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_virt_created(
+    VirtCreated self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_virt_created(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_virt_display(
+    VirtDisplay self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_virt_display(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_virt_domain_detail(
+    VirtDomainDetail self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_virt_domain_detail(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_virt_guest_report(
+    VirtGuestReport self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_virt_guest_report(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_virt_hardware_info(
+    VirtHardwareInfo self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_virt_hardware_info(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_virt_host_devices(
+    VirtHostDevices self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_virt_host_devices(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_virt_hw_caps(
+    VirtHwCaps self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_virt_hw_caps(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_virt_hw_change(
+    VirtHwChange self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_virt_hw_change(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_virt_hw_config(
+    VirtHwConfig self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_virt_hw_config(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_virt_hw_graphics(
+    VirtHwGraphics self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_virt_hw_graphics(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_virt_hw_new_device(
+    VirtHwNewDevice self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_virt_hw_new_device(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_virt_hw_tpm(
+    VirtHwTpm self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_virt_hw_tpm(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_virt_net_ipv_4(
+    VirtNetIpv4 self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_virt_net_ipv_4(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_virt_resource_op(
+    VirtResourceOp self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_virt_resource_op(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_virt_seed_read(
+    VirtSeedRead self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_virt_seed_read(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_virt_storage(
+    VirtStorage self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_virt_storage(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_virt_version(
+    VirtVersion self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_virt_version(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_vnc_password_error(
     VncPasswordError self,
     SseSerializer serializer,
@@ -27418,9 +34377,66 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_volume(Volume self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_volume(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_volume_ref(
+    VolumeRef self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_volume_ref(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_cert_info(CertInfo self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_cert_info(self, serializer);
+  }
+
+  @protected
+  void sse_encode_capabilities(Capabilities self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_bool(self.lxc, serializer);
+    sse_encode_bool(self.pause, serializer);
+    sse_encode_bool(self.snapshots, serializer);
+    sse_encode_bool(self.snapshotMemoryRequired, serializer);
+    sse_encode_bool(self.snapshotExternal, serializer);
+    sse_encode_bool(self.snapshotSupported, serializer);
+    sse_encode_bool(self.storage, serializer);
+    sse_encode_bool(self.network, serializer);
+    sse_encode_bool(self.backup, serializer);
+    sse_encode_bool(self.clone, serializer);
+    sse_encode_bool(self.linkedClone, serializer);
+    sse_encode_bool(self.template, serializer);
+    sse_encode_bool(self.cloneTarget, serializer);
+    sse_encode_bool(self.backupJobs, serializer);
+    sse_encode_bool(self.cluster, serializer);
+    sse_encode_bool(self.serialConsole, serializer);
+    sse_encode_bool(self.vncConsole, serializer);
+    sse_encode_bool(self.termConsole, serializer);
+    sse_encode_bool(self.storedHistory, serializer);
+    sse_encode_bool(self.create, serializer);
+    sse_encode_bool(self.deleteKeepsDisks, serializer);
+    sse_encode_bool(self.hardware, serializer);
+    sse_encode_bool(self.hardwareRevert, serializer);
+    sse_encode_bool(self.hardwareRevertPending, serializer);
+    sse_encode_bool(self.storageEdit, serializer);
+    sse_encode_list_String(self.poolTypes, serializer);
+    sse_encode_bool(self.poolAutostart, serializer);
+    sse_encode_bool(self.poolDeleteStorage, serializer);
+    sse_encode_bool(self.volumeResize, serializer);
+    sse_encode_bool(self.volumeClone, serializer);
+    sse_encode_bool(self.upload, serializer);
+    sse_encode_bool(self.networkEdit, serializer);
+    sse_encode_list_String(self.networkModes, serializer);
+    sse_encode_bool(self.networkStart, serializer);
+    sse_encode_bool(self.networkApply, serializer);
+    sse_encode_bool(self.networkEditExisting, serializer);
+    sse_encode_bool(self.networkRestart, serializer);
   }
 
   @protected
@@ -27441,6 +34457,35 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_chain(Chain self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_chain_disk(self.disks, serializer);
+    sse_encode_opt_String(self.refusal, serializer);
+    sse_encode_opt_String(self.externalRefusal, serializer);
+    sse_encode_list_String(self.pools, serializer);
+  }
+
+  @protected
+  void sse_encode_chain_disk(ChainDisk self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.target, serializer);
+    sse_encode_list_chain_file(self.files, serializer);
+    sse_encode_opt_String(self.pool, serializer);
+    sse_encode_opt_String(self.error, serializer);
+  }
+
+  @protected
+  void sse_encode_chain_file(ChainFile self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.path, serializer);
+    sse_encode_opt_String(self.format, serializer);
+    sse_encode_opt_box_autoadd_u_64(self.allocation, serializer);
+    sse_encode_opt_String(self.backing, serializer);
+    sse_encode_opt_String(self.snap, serializer);
+    sse_encode_bool(self.active, serializer);
+  }
+
+  @protected
   void sse_encode_change_error(ChangeError self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     switch (self) {
@@ -27457,6 +34502,63 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       case ChangeError_NoSuchZone():
         sse_encode_i_32(4, serializer);
     }
+  }
+
+  @protected
+  void sse_encode_clone_request(CloneRequest self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.name, serializer);
+    sse_encode_bool(self.full, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.vmid, serializer);
+    sse_encode_opt_String(self.storage, serializer);
+    sse_encode_opt_String(self.targetNode, serializer);
+    sse_encode_opt_String(self.targetPool, serializer);
+  }
+
+  @protected
+  void sse_encode_cloud_init(CloudInit self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.user, serializer);
+    sse_encode_opt_String(self.password, serializer);
+    sse_encode_list_String(self.sshKeys, serializer);
+    sse_encode_opt_String(self.hostname, serializer);
+    sse_encode_opt_String(self.address, serializer);
+    sse_encode_opt_String(self.gateway, serializer);
+    sse_encode_list_String(self.dns, serializer);
+    sse_encode_list_String(self.searchDomains, serializer);
+  }
+
+  @protected
+  void sse_encode_cloud_init_edit(
+    CloudInitEdit self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_cloud_init(self.values, serializer);
+    sse_encode_bool(self.removePassword, serializer);
+    sse_encode_bool(self.passwordExpires, serializer);
+    sse_encode_String(self.revision, serializer);
+  }
+
+  @protected
+  void sse_encode_cloud_init_state(
+    CloudInitState self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.user, serializer);
+    sse_encode_list_String(self.sshKeys, serializer);
+    sse_encode_opt_String(self.hostname, serializer);
+    sse_encode_opt_String(self.address, serializer);
+    sse_encode_opt_String(self.gateway, serializer);
+    sse_encode_list_String(self.dns, serializer);
+    sse_encode_list_String(self.searchDomains, serializer);
+    sse_encode_u_32(self.nics, serializer);
+    sse_encode_bool(self.passwordSet, serializer);
+    sse_encode_bool(self.passwordExpires, serializer);
+    sse_encode_bool(self.network, serializer);
+    sse_encode_bool(self.foreign, serializer);
+    sse_encode_String(self.revision, serializer);
   }
 
   @protected
@@ -27484,6 +34586,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_list_smb_connection(self.smb, serializer);
     sse_encode_list_String(self.nfs, serializer);
+  }
+
+  @protected
+  void sse_encode_console_kind(ConsoleKind self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
   }
 
   @protected
@@ -27553,6 +34661,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_cpu(Cpu self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_32(self.sockets, serializer);
+    sse_encode_u_32(self.cores, serializer);
+    sse_encode_u_32(self.threads, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.online, serializer);
+    sse_encode_opt_String(self.cpuType, serializer);
+  }
+
+  @protected
   void sse_encode_cpu_core(CpuCore self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.id, serializer);
@@ -27563,6 +34681,59 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_u_64(self.iowait, serializer);
     sse_encode_u_64(self.irq, serializer);
     sse_encode_u_64(self.softirq, serializer);
+  }
+
+  @protected
+  void sse_encode_create_issue(CreateIssue self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_create_options(CreateOptions self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_String(self.buses, serializer);
+    sse_encode_list_String(self.nicModels, serializer);
+    sse_encode_bool(self.uefi, serializer);
+    sse_encode_bool(self.tpm, serializer);
+    sse_encode_bool(self.secureBoot, serializer);
+    sse_encode_bool(self.cloudImages, serializer);
+    sse_encode_bool(self.cloudInit, serializer);
+    sse_encode_opt_String(self.cloudInitMissing, serializer);
+  }
+
+  @protected
+  void sse_encode_create_spec(CreateSpec self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_guest_kind(self.kind, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_opt_String(self.node, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.vmid, serializer);
+    sse_encode_u_32(self.cores, serializer);
+    sse_encode_u_64(self.memoryMib, serializer);
+    sse_encode_String(self.storage, serializer);
+    sse_encode_u_64(self.diskGib, serializer);
+    sse_encode_opt_box_autoadd_volume_ref(self.media, serializer);
+    sse_encode_opt_box_autoadd_volume_ref(self.image, serializer);
+    sse_encode_opt_String(self.network, serializer);
+    sse_encode_opt_String(self.password, serializer);
+    sse_encode_list_String(self.sshKeys, serializer);
+    sse_encode_bool(self.unprivileged, serializer);
+    sse_encode_opt_String(self.bus, serializer);
+    sse_encode_opt_String(self.nicModel, serializer);
+    sse_encode_bool(self.uefi, serializer);
+    sse_encode_bool(self.secureBoot, serializer);
+    sse_encode_bool(self.tpm, serializer);
+    sse_encode_opt_box_autoadd_cloud_init(self.cloudInit, serializer);
+    sse_encode_bool(self.start, serializer);
+  }
+
+  @protected
+  void sse_encode_created(Created self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_opt_String(self.startError, serializer);
+    sse_encode_opt_box_autoadd_u_64(self.diskKeptBytes, serializer);
   }
 
   @protected
@@ -27654,6 +34825,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_device_kind(DeviceKind self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_diff(Diff self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_diff_group(self.group, serializer);
+    sse_encode_String(self.key, serializer);
+    sse_encode_opt_String(self.before, serializer);
+    sse_encode_opt_String(self.after, serializer);
+  }
+
+  @protected
+  void sse_encode_diff_group(DiffGroup self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
   void sse_encode_disk(Disk self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.path, serializer);
@@ -27692,6 +34884,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_String(self.dev, serializer);
     sse_encode_i_64(self.sectorsRead, serializer);
     sse_encode_i_64(self.sectorsWrite, serializer);
+  }
+
+  @protected
+  void sse_encode_disk_kind(DiskKind self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_display(Display self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.uri, serializer);
+    sse_encode_String(self.protocol, serializer);
+    sse_encode_opt_String(self.host, serializer);
+    sse_encode_opt_box_autoadd_u_16(self.port, serializer);
+    sse_encode_opt_box_autoadd_u_16(self.tlsPort, serializer);
+    sse_encode_opt_String(self.socket, serializer);
   }
 
   @protected
@@ -27941,6 +35150,25 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_firmware(Firmware self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_bool(self.uefi, serializer);
+    sse_encode_bool(self.secureBoot, serializer);
+    sse_encode_opt_String(self.varsStorage, serializer);
+  }
+
+  @protected
+  void sse_encode_firmware_descriptor(
+    FirmwareDescriptor self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.name, serializer);
+    sse_encode_bool(self.secureBoot, serializer);
+    sse_encode_bool(self.enrolledKeys, serializer);
+  }
+
+  @protected
   void sse_encode_geekbench_version(
     GeekbenchVersion self,
     SseSerializer serializer,
@@ -27984,6 +35212,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_graphics(Graphics self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.kind, serializer);
+    sse_encode_opt_box_autoadd_u_16(self.port, serializer);
+    sse_encode_opt_box_autoadd_u_16(self.tlsPort, serializer);
+    sse_encode_bool(self.autoport, serializer);
+    sse_encode_opt_String(self.listen, serializer);
+    sse_encode_opt_String(self.socket, serializer);
+  }
+
+  @protected
   void sse_encode_group_draft(GroupDraft self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.name, serializer);
@@ -27992,9 +35231,305 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_guest_kind(GuestKind self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_guest_ref(GuestRef self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_opt_String(self.guestId, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.vmid, serializer);
+    sse_encode_opt_String(self.device, serializer);
+    sse_encode_opt_String(self.mac, serializer);
+    sse_encode_opt_String(self.ip, serializer);
+  }
+
+  @protected
+  void sse_encode_guest_state(GuestState self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_hardware(Hardware self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_guest_kind(self.kind, serializer);
+    sse_encode_bool(self.running, serializer);
+    sse_encode_cpu(self.cpu, serializer);
+    sse_encode_hw_memory(self.memory, serializer);
+    sse_encode_list_hw_disk(self.disks, serializer);
+    sse_encode_list_hw_nic(self.nics, serializer);
+    sse_encode_opt_list_String(self.boot, serializer);
+    sse_encode_bool(self.autostart, serializer);
+    sse_encode_opt_String(self.name, serializer);
+    sse_encode_opt_String(self.description, serializer);
+    sse_encode_opt_box_autoadd_bool(self.protection, serializer);
+    sse_encode_bool(self.renameRunning, serializer);
+    sse_encode_list_pending_field(self.pending, serializer);
+    sse_encode_opt_String(self.revision, serializer);
+    sse_encode_limits(self.limits, serializer);
+    sse_encode_list_String(self.cpuTypes, serializer);
+    sse_encode_opt_String(self.configText, serializer);
+    sse_encode_opt_box_autoadd_firmware(self.firmware, serializer);
+    sse_encode_opt_box_autoadd_hw_display(self.display, serializer);
+    sse_encode_list_hw_device(self.devices, serializer);
+    sse_encode_support(self.support, serializer);
+  }
+
+  @protected
   void sse_encode_health_verdict(HealthVerdict self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_host(Host self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_host_kind(self.kind, serializer);
+    sse_encode_opt_String(self.version, serializer);
+    sse_encode_opt_String(self.hypervisor, serializer);
+    sse_encode_list_node(self.nodes, serializer);
+  }
+
+  @protected
+  void sse_encode_host_device(HostDevice self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.label, serializer);
+    sse_encode_opt_String(self.detail, serializer);
+    sse_encode_bool(self.mapping, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.usbBus, serializer);
+    sse_encode_opt_String(self.usbPort, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.usbDevice, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.iommuGroup, serializer);
+    sse_encode_u_32(self.groupSize, serializer);
+  }
+
+  @protected
+  void sse_encode_host_devices(HostDevices self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_host_device(self.usb, serializer);
+    sse_encode_list_host_device(self.pci, serializer);
+    sse_encode_bool(self.iommu, serializer);
+    sse_encode_bool(self.mappingsOnly, serializer);
+  }
+
+  @protected
+  void sse_encode_host_kind(HostKind self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_hw_change(HwChange self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    switch (self) {
+      case HwChange_SetCpu(
+        sockets: final sockets,
+        cores: final cores,
+        online: final online,
+        cpuType: final cpuType,
+      ):
+        sse_encode_i_32(0, serializer);
+        sse_encode_u_32(sockets, serializer);
+        sse_encode_u_32(cores, serializer);
+        sse_encode_opt_box_autoadd_u_32(online, serializer);
+        sse_encode_opt_String(cpuType, serializer);
+      case HwChange_SetMemory(
+        mib: final mib,
+        minMib: final minMib,
+        swapMib: final swapMib,
+      ):
+        sse_encode_i_32(1, serializer);
+        sse_encode_u_64(mib, serializer);
+        sse_encode_opt_box_autoadd_u_64(minMib, serializer);
+        sse_encode_opt_box_autoadd_u_64(swapMib, serializer);
+      case HwChange_GrowDisk(key: final key, bytes: final bytes):
+        sse_encode_i_32(2, serializer);
+        sse_encode_String(key, serializer);
+        sse_encode_u_64(bytes, serializer);
+      case HwChange_AddDisk(
+        pool: final pool,
+        gib: final gib,
+        mountPoint: final mountPoint,
+      ):
+        sse_encode_i_32(3, serializer);
+        sse_encode_String(pool, serializer);
+        sse_encode_u_64(gib, serializer);
+        sse_encode_opt_String(mountPoint, serializer);
+      case HwChange_AttachVolume(
+        volume: final volume,
+        mountPoint: final mountPoint,
+      ):
+        sse_encode_i_32(4, serializer);
+        sse_encode_box_autoadd_volume_ref(volume, serializer);
+        sse_encode_opt_String(mountPoint, serializer);
+      case HwChange_RemoveDisk(
+        key: final key,
+        deleteVolume: final deleteVolume,
+      ):
+        sse_encode_i_32(5, serializer);
+        sse_encode_String(key, serializer);
+        sse_encode_bool(deleteVolume, serializer);
+      case HwChange_AddCdrom(media: final media):
+        sse_encode_i_32(6, serializer);
+        sse_encode_opt_box_autoadd_volume_ref(media, serializer);
+      case HwChange_SetMedia(key: final key, media: final media):
+        sse_encode_i_32(7, serializer);
+        sse_encode_String(key, serializer);
+        sse_encode_opt_box_autoadd_volume_ref(media, serializer);
+      case HwChange_AddNic(network: final network, model: final model):
+        sse_encode_i_32(8, serializer);
+        sse_encode_String(network, serializer);
+        sse_encode_opt_String(model, serializer);
+      case HwChange_RemoveNic(key: final key):
+        sse_encode_i_32(9, serializer);
+        sse_encode_String(key, serializer);
+      case HwChange_UpdateNic(
+        key: final key,
+        network: final network,
+        linkUp: final linkUp,
+        firewall: final firewall,
+      ):
+        sse_encode_i_32(10, serializer);
+        sse_encode_String(key, serializer);
+        sse_encode_opt_String(network, serializer);
+        sse_encode_bool(linkUp, serializer);
+        sse_encode_opt_box_autoadd_bool(firewall, serializer);
+      case HwChange_SetBoot(order: final order):
+        sse_encode_i_32(11, serializer);
+        sse_encode_list_String(order, serializer);
+      case HwChange_SetAutostart(on_: final on_):
+        sse_encode_i_32(12, serializer);
+        sse_encode_bool(on_, serializer);
+      case HwChange_SetName(name: final name):
+        sse_encode_i_32(13, serializer);
+        sse_encode_String(name, serializer);
+      case HwChange_SetDescription(text: final text):
+        sse_encode_i_32(14, serializer);
+        sse_encode_String(text, serializer);
+      case HwChange_SetProtection(on_: final on_):
+        sse_encode_i_32(15, serializer);
+        sse_encode_bool(on_, serializer);
+      case HwChange_UpdateDisk(
+        key: final key,
+        bus: final bus,
+        cache: final cache,
+      ):
+        sse_encode_i_32(16, serializer);
+        sse_encode_String(key, serializer);
+        sse_encode_opt_String(bus, serializer);
+        sse_encode_opt_String(cache, serializer);
+      case HwChange_SetNicHardware(
+        key: final key,
+        model: final model,
+        mac: final mac,
+      ):
+        sse_encode_i_32(17, serializer);
+        sse_encode_String(key, serializer);
+        sse_encode_opt_String(model, serializer);
+        sse_encode_opt_String(mac, serializer);
+      case HwChange_SetFirmware(
+        uefi: final uefi,
+        secureBoot: final secureBoot,
+        storage: final storage,
+      ):
+        sse_encode_i_32(18, serializer);
+        sse_encode_bool(uefi, serializer);
+        sse_encode_bool(secureBoot, serializer);
+        sse_encode_opt_String(storage, serializer);
+      case HwChange_SetDisplay(
+        protocol: final protocol,
+        listen: final listen,
+        gpu: final gpu,
+      ):
+        sse_encode_i_32(19, serializer);
+        sse_encode_opt_String(protocol, serializer);
+        sse_encode_opt_String(listen, serializer);
+        sse_encode_opt_String(gpu, serializer);
+      case HwChange_AddDevice(
+        kind: final kind,
+        host: final host,
+        storage: final storage,
+        usbNaming: final usbNaming,
+      ):
+        sse_encode_i_32(20, serializer);
+        sse_encode_device_kind(kind, serializer);
+        sse_encode_opt_box_autoadd_host_device(host, serializer);
+        sse_encode_opt_String(storage, serializer);
+        sse_encode_usb_naming(usbNaming, serializer);
+      case HwChange_RemoveDevice(key: final key):
+        sse_encode_i_32(21, serializer);
+        sse_encode_String(key, serializer);
+      case HwChange_Revert(keys: final keys):
+        sse_encode_i_32(22, serializer);
+        sse_encode_list_String(keys, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_hw_device(HwDevice self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.key, serializer);
+    sse_encode_device_kind(self.kind, serializer);
+    sse_encode_opt_String(self.detail, serializer);
+    sse_encode_bool(self.mapping, serializer);
+  }
+
+  @protected
+  void sse_encode_hw_disk(HwDisk self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.key, serializer);
+    sse_encode_disk_kind(self.kind, serializer);
+    sse_encode_opt_String(self.source, serializer);
+    sse_encode_opt_box_autoadd_u_64(self.size, serializer);
+    sse_encode_opt_String(self.storage, serializer);
+    sse_encode_opt_String(self.mountPoint, serializer);
+    sse_encode_opt_String(self.bus, serializer);
+    sse_encode_opt_String(self.format, serializer);
+    sse_encode_bool(self.readonly, serializer);
+    sse_encode_opt_String(self.cache, serializer);
+    sse_encode_bool(self.cloudInit, serializer);
+    sse_encode_bool(self.resizable, serializer);
+  }
+
+  @protected
+  void sse_encode_hw_display(HwDisplay self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_opt_String(self.protocol, serializer);
+    sse_encode_opt_String(self.listen, serializer);
+    sse_encode_opt_String(self.gpu, serializer);
+    sse_encode_opt_box_autoadd_i_32(self.port, serializer);
+  }
+
+  @protected
+  void sse_encode_hw_issue(HwIssue self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_hw_memory(HwMemory self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_64(self.mib, serializer);
+    sse_encode_opt_box_autoadd_u_64(self.minMib, serializer);
+    sse_encode_bool(self.balloon, serializer);
+    sse_encode_opt_box_autoadd_u_64(self.swapMib, serializer);
+  }
+
+  @protected
+  void sse_encode_hw_nic(HwNic self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.key, serializer);
+    sse_encode_opt_String(self.mac, serializer);
+    sse_encode_opt_String(self.nicType, serializer);
+    sse_encode_opt_String(self.source, serializer);
+    sse_encode_opt_String(self.model, serializer);
+    sse_encode_bool(self.linkUp, serializer);
+    sse_encode_opt_box_autoadd_bool(self.firewall, serializer);
+    sse_encode_opt_String(self.name, serializer);
   }
 
   @protected
@@ -28028,6 +35563,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_limits(Limits self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_opt_box_autoadd_u_32(self.hostCpus, serializer);
+    sse_encode_opt_box_autoadd_u_64(self.hostMemoryBytes, serializer);
+  }
+
+  @protected
   void sse_encode_list_String(List<String> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
@@ -28045,6 +35587,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
       sse_encode_amd_smi_item(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_backup(List<Backup> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_backup(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_backup_job(
+    List<BackupJob> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_backup_job(item, serializer);
     }
   }
 
@@ -28082,6 +35645,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_chain_disk(
+    List<ChainDisk> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_chain_disk(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_chain_file(
+    List<ChainFile> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_chain_file(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_command_spec(
     List<CommandSpec> self,
     SseSerializer serializer,
@@ -28090,6 +35677,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
       sse_encode_command_spec(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_console_kind(
+    List<ConsoleKind> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_console_kind(item, serializer);
     }
   }
 
@@ -28159,6 +35758,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
       sse_encode_custom_cmd(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_diff(List<Diff> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_diff(item, serializer);
     }
   }
 
@@ -28265,6 +35873,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_firmware_descriptor(
+    List<FirmwareDescriptor> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_firmware_descriptor(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_gpu_item(List<GpuItem> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
@@ -28282,6 +35902,69 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
       sse_encode_gpu_mem_process(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_graphics(List<Graphics> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_graphics(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_guest_ref(
+    List<GuestRef> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_guest_ref(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_host_device(
+    List<HostDevice> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_host_device(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_hw_device(
+    List<HwDevice> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_hw_device(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_hw_disk(List<HwDisk> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_hw_disk(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_hw_nic(List<HwNic> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_hw_nic(item, serializer);
     }
   }
 
@@ -28319,6 +36002,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_net_host(List<NetHost> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_net_host(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_net_iface(
     List<NetIface> self,
     SseSerializer serializer,
@@ -28327,6 +36019,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
       sse_encode_net_iface(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_network(List<Network> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_network(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_network_changes(
+    List<NetworkChanges> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_network_changes(item, serializer);
     }
   }
 
@@ -28355,6 +36068,24 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_nic(List<Nic> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_nic(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_node(List<Node> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_node(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_nvidia_smi_item(
     List<NvidiaSmiItem> self,
     SseSerializer serializer,
@@ -28363,6 +36094,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
       sse_encode_nvidia_smi_item(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_pending_field(
+    List<PendingField> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_pending_field(item, serializer);
     }
   }
 
@@ -28400,6 +36143,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_power_action(
+    List<PowerAction> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_power_action(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_prim_i_32_strict(
     Int32List self,
     SseSerializer serializer,
@@ -28407,6 +36162,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     serializer.buffer.putInt32List(self);
+  }
+
+  @protected
+  void sse_encode_list_prim_i_64_strict(
+    Int64List self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    serializer.buffer.putInt64List(self);
   }
 
   @protected
@@ -28535,6 +36300,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_record_string_stats(
+    List<(String, Stats)> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_record_string_stats(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_record_string_string(
     List<(String, String)> self,
     SseSerializer serializer,
@@ -28567,6 +36344,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
       sse_encode_record_ufw_chain_ufw_policy(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_resource_pool(
+    List<ResourcePool> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_resource_pool(item, serializer);
     }
   }
 
@@ -28739,6 +36528,36 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_snapshot(List<Snapshot> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_snapshot(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_snapshot_layer(
+    List<SnapshotLayer> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_snapshot_layer(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_stats(List<Stats> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_stats(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_status_block_device(
     List<StatusBlockDevice> self,
     SseSerializer serializer,
@@ -28859,6 +36678,159 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_virt_ci_network(
+    List<VirtCiNetwork> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_virt_ci_network(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_virt_clone_disk(
+    List<VirtCloneDisk> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_virt_clone_disk(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_virt_disk(
+    List<VirtDisk> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_virt_disk(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_virt_disk_report(
+    List<VirtDiskReport> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_virt_disk_report(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_virt_disk_use(
+    List<VirtDiskUse> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_virt_disk_use(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_virt_graphics(
+    List<VirtGraphics> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_virt_graphics(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_virt_guest_report(
+    List<VirtGuestReport> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_virt_guest_report(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_virt_host_pci(
+    List<VirtHostPci> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_virt_host_pci(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_virt_host_usb(
+    List<VirtHostUsb> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_virt_host_usb(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_virt_hw_disk(
+    List<VirtHwDisk> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_virt_hw_disk(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_virt_hw_hostdev(
+    List<VirtHwHostdev> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_virt_hw_hostdev(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_virt_hw_nic(
+    List<VirtHwNic> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_virt_hw_nic(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_virt_nic(List<VirtNic> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_virt_nic(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_virt_overlay(
     List<VirtOverlay> self,
     SseSerializer serializer,
@@ -28867,6 +36839,51 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
       sse_encode_virt_overlay(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_virt_pool(
+    List<VirtPool> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_virt_pool(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_virt_pool_volumes(
+    List<VirtPoolVolumes> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_virt_pool_volumes(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_virt_volume_ref(
+    List<VirtVolumeRef> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_virt_volume_ref(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_volume(List<Volume> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_volume(item, serializer);
     }
   }
 
@@ -28918,11 +36935,55 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_net_host(NetHost self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.mac, serializer);
+    sse_encode_String(self.ip, serializer);
+    sse_encode_opt_String(self.name, serializer);
+  }
+
+  @protected
   void sse_encode_net_iface(NetIface self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.device, serializer);
     sse_encode_u_64(self.rxBytes, serializer);
     sse_encode_u_64(self.txBytes, serializer);
+  }
+
+  @protected
+  void sse_encode_network(Network self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_opt_String(self.node, serializer);
+    sse_encode_String(self.mode, serializer);
+    sse_encode_opt_String(self.bridge, serializer);
+    sse_encode_list_String(self.cidrs, serializer);
+    sse_encode_opt_String(self.gateway, serializer);
+    sse_encode_list_String(self.dhcpRanges, serializer);
+    sse_encode_list_String(self.ports, serializer);
+    sse_encode_opt_box_autoadd_bool(self.vlanAware, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.vlanId, serializer);
+    sse_encode_opt_String(self.vlanDevice, serializer);
+    sse_encode_opt_String(self.bondMode, serializer);
+    sse_encode_bool(self.active, serializer);
+    sse_encode_opt_box_autoadd_bool(self.autostart, serializer);
+    sse_encode_opt_String(self.comment, serializer);
+    sse_encode_list_net_host(self.hosts, serializer);
+    sse_encode_String(self.xml, serializer);
+    sse_encode_bool(self.pendingRestart, serializer);
+    sse_encode_bool(self.managementEditable, serializer);
+    sse_encode_list_guest_ref(self.users, serializer);
+  }
+
+  @protected
+  void sse_encode_network_changes(
+    NetworkChanges self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.node, serializer);
+    sse_encode_String(self.diff, serializer);
   }
 
   @protected
@@ -28940,6 +37001,28 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_String(self.path, serializer);
     sse_encode_list_nfs_client(self.clients, serializer);
     sse_encode_bool(self.managed, serializer);
+  }
+
+  @protected
+  void sse_encode_nic(Nic self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.kind, serializer);
+    sse_encode_opt_String(self.mac, serializer);
+    sse_encode_opt_String(self.source, serializer);
+    sse_encode_opt_String(self.model, serializer);
+    sse_encode_opt_String(self.target, serializer);
+  }
+
+  @protected
+  void sse_encode_node(Node self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.name, serializer);
+    sse_encode_bool(self.online, serializer);
+    sse_encode_opt_box_autoadd_f_64(self.cpu, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.maxCpu, serializer);
+    sse_encode_opt_box_autoadd_u_64(self.memUsed, serializer);
+    sse_encode_opt_box_autoadd_u_64(self.memTotal, serializer);
+    sse_encode_opt_box_autoadd_u_64(self.uptime, serializer);
   }
 
   @protected
@@ -28967,6 +37050,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_box_autoadd_backup_issue(
+    BackupIssue? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_backup_issue(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_opt_box_autoadd_bool(bool? self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -28986,6 +37082,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_bool(self != null, serializer);
     if (self != null) {
       sse_encode_box_autoadd_cert_info(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_cloud_init(
+    CloudInit? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_cloud_init(self, serializer);
     }
   }
 
@@ -29022,6 +37131,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_bool(self != null, serializer);
     if (self != null) {
       sse_encode_box_autoadd_container_stats_item(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_create_issue(
+    CreateIssue? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_create_issue(self, serializer);
     }
   }
 
@@ -29065,6 +37187,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_box_autoadd_display(
+    Display? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_display(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_opt_box_autoadd_f_64(double? self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -29101,6 +37236,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_box_autoadd_firmware(
+    Firmware? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_firmware(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_opt_box_autoadd_gpu_mem(
     GpuMem? self,
     SseSerializer serializer,
@@ -29110,6 +37258,58 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_bool(self != null, serializer);
     if (self != null) {
       sse_encode_box_autoadd_gpu_mem(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_guest_kind(
+    GuestKind? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_guest_kind(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_host_device(
+    HostDevice? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_host_device(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_hw_display(
+    HwDisplay? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_hw_display(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_hw_issue(
+    HwIssue? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_hw_issue(self, serializer);
     }
   }
 
@@ -29332,6 +37532,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_box_autoadd_resource_issue(
+    ResourceIssue? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_resource_issue(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_opt_box_autoadd_self_test(
     SelfTest? self,
     SseSerializer serializer,
@@ -29538,6 +37751,136 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_box_autoadd_virt_ci_ipv_4(
+    VirtCiIpv4? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_virt_ci_ipv_4(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_virt_ci_network(
+    VirtCiNetwork? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_virt_ci_network(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_virt_cloud_init(
+    VirtCloudInit? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_virt_cloud_init(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_virt_display(
+    VirtDisplay? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_virt_display(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_virt_hw_caps(
+    VirtHwCaps? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_virt_hw_caps(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_virt_hw_config(
+    VirtHwConfig? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_virt_hw_config(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_virt_hw_graphics(
+    VirtHwGraphics? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_virt_hw_graphics(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_virt_hw_tpm(
+    VirtHwTpm? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_virt_hw_tpm(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_virt_net_ipv_4(
+    VirtNetIpv4? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_virt_net_ipv_4(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_virt_version(
+    VirtVersion? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_virt_version(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_opt_box_autoadd_vnc_password_error(
     VncPasswordError? self,
     SseSerializer serializer,
@@ -29547,6 +37890,32 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_bool(self != null, serializer);
     if (self != null) {
       sse_encode_box_autoadd_vnc_password_error(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_volume(
+    Volume? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_volume(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_volume_ref(
+    VolumeRef? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_volume_ref(self, serializer);
     }
   }
 
@@ -29626,9 +37995,38 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_list_virt_volume_ref(
+    List<VirtVolumeRef>? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_list_virt_volume_ref(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_outcome(Outcome self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_opt_String(self.liveError, serializer);
+    sse_encode_bool(self.volumeKept, serializer);
+  }
+
+  @protected
   void sse_encode_password_state(PasswordState self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_pending_field(PendingField self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.key, serializer);
+    sse_encode_opt_String(self.current, serializer);
+    sse_encode_opt_String(self.pending, serializer);
+    sse_encode_bool(self.delete, serializer);
   }
 
   @protected
@@ -29681,6 +38079,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.value, serializer);
     sse_encode_u_32(self.minimum, serializer);
+  }
+
+  @protected
+  void sse_encode_power_action(PowerAction self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
   }
 
   @protected
@@ -29972,6 +38376,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_record_string_stats(
+    (String, Stats) self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.$1, serializer);
+    sse_encode_stats(self.$2, serializer);
+  }
+
+  @protected
   void sse_encode_record_string_string(
     (String, String) self,
     SseSerializer serializer,
@@ -30193,6 +38607,206 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.target, serializer);
     sse_encode_String(self.resetType, serializer);
+  }
+
+  @protected
+  void sse_encode_resource_change(
+    ResourceChange self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    switch (self) {
+      case ResourceChange_PoolCreate(
+        name: final name,
+        poolType: final poolType,
+        source: final source,
+        target: final target,
+        node: final node,
+        content: final content,
+        autostart: final autostart,
+      ):
+        sse_encode_i_32(0, serializer);
+        sse_encode_String(name, serializer);
+        sse_encode_String(poolType, serializer);
+        sse_encode_String(source, serializer);
+        sse_encode_opt_String(target, serializer);
+        sse_encode_opt_String(node, serializer);
+        sse_encode_list_String(content, serializer);
+        sse_encode_bool(autostart, serializer);
+      case ResourceChange_PoolSetActive(pool: final pool, active: final active):
+        sse_encode_i_32(1, serializer);
+        sse_encode_String(pool, serializer);
+        sse_encode_bool(active, serializer);
+      case ResourceChange_PoolSetAutostart(pool: final pool, on_: final on_):
+        sse_encode_i_32(2, serializer);
+        sse_encode_String(pool, serializer);
+        sse_encode_bool(on_, serializer);
+      case ResourceChange_PoolRefresh(pool: final pool):
+        sse_encode_i_32(3, serializer);
+        sse_encode_String(pool, serializer);
+      case ResourceChange_PoolDelete(
+        pool: final pool,
+        deleteStorage: final deleteStorage,
+      ):
+        sse_encode_i_32(4, serializer);
+        sse_encode_String(pool, serializer);
+        sse_encode_bool(deleteStorage, serializer);
+      case ResourceChange_VolumeCreate(
+        pool: final pool,
+        name: final name,
+        gib: final gib,
+        format: final format,
+      ):
+        sse_encode_i_32(5, serializer);
+        sse_encode_String(pool, serializer);
+        sse_encode_String(name, serializer);
+        sse_encode_u_64(gib, serializer);
+        sse_encode_String(format, serializer);
+      case ResourceChange_VolumeDelete(pool: final pool, volume: final volume):
+        sse_encode_i_32(6, serializer);
+        sse_encode_String(pool, serializer);
+        sse_encode_String(volume, serializer);
+      case ResourceChange_VolumeResize(
+        pool: final pool,
+        volume: final volume,
+        bytes: final bytes,
+      ):
+        sse_encode_i_32(7, serializer);
+        sse_encode_String(pool, serializer);
+        sse_encode_String(volume, serializer);
+        sse_encode_u_64(bytes, serializer);
+      case ResourceChange_VolumeClone(
+        pool: final pool,
+        volume: final volume,
+        name: final name,
+      ):
+        sse_encode_i_32(8, serializer);
+        sse_encode_String(pool, serializer);
+        sse_encode_String(volume, serializer);
+        sse_encode_String(name, serializer);
+      case ResourceChange_NetworkCreate(
+        name: final name,
+        mode: final mode,
+        node: final node,
+        bridge: final bridge,
+        cidr: final cidr,
+        dhcpStart: final dhcpStart,
+        dhcpEnd: final dhcpEnd,
+        vlanAware: final vlanAware,
+        autostart: final autostart,
+      ):
+        sse_encode_i_32(9, serializer);
+        sse_encode_String(name, serializer);
+        sse_encode_String(mode, serializer);
+        sse_encode_opt_String(node, serializer);
+        sse_encode_opt_String(bridge, serializer);
+        sse_encode_opt_String(cidr, serializer);
+        sse_encode_opt_String(dhcpStart, serializer);
+        sse_encode_opt_String(dhcpEnd, serializer);
+        sse_encode_bool(vlanAware, serializer);
+        sse_encode_bool(autostart, serializer);
+      case ResourceChange_NetworkEdit(
+        network: final network,
+        mode: final mode,
+        bridge: final bridge,
+        address: final address,
+        prefix: final prefix,
+        dhcpStart: final dhcpStart,
+        dhcpEnd: final dhcpEnd,
+        hosts: final hosts,
+        restart: final restart,
+        baseXml: final baseXml,
+      ):
+        sse_encode_i_32(10, serializer);
+        sse_encode_String(network, serializer);
+        sse_encode_String(mode, serializer);
+        sse_encode_opt_String(bridge, serializer);
+        sse_encode_opt_String(address, serializer);
+        sse_encode_opt_box_autoadd_u_8(prefix, serializer);
+        sse_encode_opt_String(dhcpStart, serializer);
+        sse_encode_opt_String(dhcpEnd, serializer);
+        sse_encode_list_net_host(hosts, serializer);
+        sse_encode_bool(restart, serializer);
+        sse_encode_opt_String(baseXml, serializer);
+      case ResourceChange_NetworkEditBridge(
+        network: final network,
+        ports: final ports,
+        cidr: final cidr,
+        gateway: final gateway,
+        vlanAware: final vlanAware,
+        autostart: final autostart,
+      ):
+        sse_encode_i_32(11, serializer);
+        sse_encode_String(network, serializer);
+        sse_encode_opt_String(ports, serializer);
+        sse_encode_opt_String(cidr, serializer);
+        sse_encode_opt_String(gateway, serializer);
+        sse_encode_opt_box_autoadd_bool(vlanAware, serializer);
+        sse_encode_opt_box_autoadd_bool(autostart, serializer);
+      case ResourceChange_NetworkRestart(
+        network: final network,
+        baseXml: final baseXml,
+      ):
+        sse_encode_i_32(12, serializer);
+        sse_encode_String(network, serializer);
+        sse_encode_opt_String(baseXml, serializer);
+      case ResourceChange_NetworkSetActive(
+        network: final network,
+        active: final active,
+      ):
+        sse_encode_i_32(13, serializer);
+        sse_encode_String(network, serializer);
+        sse_encode_bool(active, serializer);
+      case ResourceChange_NetworkSetAutostart(
+        network: final network,
+        on_: final on_,
+      ):
+        sse_encode_i_32(14, serializer);
+        sse_encode_String(network, serializer);
+        sse_encode_bool(on_, serializer);
+      case ResourceChange_NetworkDelete(network: final network):
+        sse_encode_i_32(15, serializer);
+        sse_encode_String(network, serializer);
+      case ResourceChange_NetworkApply(node: final node):
+        sse_encode_i_32(16, serializer);
+        sse_encode_String(node, serializer);
+      case ResourceChange_NetworkRevert(node: final node):
+        sse_encode_i_32(17, serializer);
+        sse_encode_String(node, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_resource_issue(ResourceIssue self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_resource_pool(ResourcePool self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_opt_String(self.node, serializer);
+    sse_encode_String(self.poolType, serializer);
+    sse_encode_opt_String(self.path, serializer);
+    sse_encode_opt_String(self.source, serializer);
+    sse_encode_opt_box_autoadd_u_64(self.capacity, serializer);
+    sse_encode_opt_box_autoadd_u_64(self.used, serializer);
+    sse_encode_opt_box_autoadd_u_64(self.available, serializer);
+    sse_encode_bool(self.active, serializer);
+    sse_encode_opt_box_autoadd_bool(self.autostart, serializer);
+    sse_encode_opt_box_autoadd_bool(self.enabled, serializer);
+    sse_encode_opt_box_autoadd_bool(self.shared, serializer);
+    sse_encode_list_String(self.content, serializer);
+    sse_encode_opt_box_autoadd_u_64(self.volumeCount, serializer);
+  }
+
+  @protected
+  void sse_encode_schedule_check(ScheduleCheck self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_opt_String(self.error, serializer);
+    sse_encode_list_prim_i_64_strict(self.next, serializer);
   }
 
   @protected
@@ -30470,6 +39084,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_snapshot(Snapshot self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.name, serializer);
+    sse_encode_opt_String(self.parent, serializer);
+    sse_encode_opt_String(self.description, serializer);
+    sse_encode_opt_box_autoadd_i_64(self.createdAt, serializer);
+    sse_encode_bool(self.current, serializer);
+    sse_encode_bool(self.withMemory, serializer);
+    sse_encode_bool(self.external_, serializer);
+    sse_encode_list_snapshot_layer(self.layers, serializer);
+  }
+
+  @protected
+  void sse_encode_snapshot_layer(SnapshotLayer self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.target, serializer);
+    sse_encode_opt_String(self.file, serializer);
+    sse_encode_bool(self.external_, serializer);
+  }
+
+  @protected
   void sse_encode_snapshot_memory_kind(
     SnapshotMemoryKind self,
     SseSerializer serializer,
@@ -30499,6 +39134,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_opt_String(self.pwd, serializer);
     sse_encode_opt_String(self.id, serializer);
     sse_encode_opt_String(self.name, serializer);
+  }
+
+  @protected
+  void sse_encode_stats(Stats self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_64(self.at, serializer);
+    sse_encode_opt_box_autoadd_f_64(self.cpu, serializer);
+    sse_encode_opt_box_autoadd_u_64(self.memUsed, serializer);
+    sse_encode_opt_box_autoadd_u_64(self.memTotal, serializer);
+    sse_encode_opt_box_autoadd_u_64(self.diskUsed, serializer);
+    sse_encode_opt_box_autoadd_u_64(self.diskTotal, serializer);
+    sse_encode_opt_box_autoadd_f_64(self.diskRead, serializer);
+    sse_encode_opt_box_autoadd_f_64(self.diskWrite, serializer);
+    sse_encode_opt_box_autoadd_f_64(self.netIn, serializer);
+    sse_encode_opt_box_autoadd_f_64(self.netOut, serializer);
   }
 
   @protected
@@ -30728,6 +39378,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_list_md_array(self.arrays, serializer);
     sse_encode_list_pool(self.pools, serializer);
     sse_encode_list_String(self.tools, serializer);
+  }
+
+  @protected
+  void sse_encode_support(Support self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_String(self.buses, serializer);
+    sse_encode_list_String(self.caches, serializer);
+    sse_encode_list_String(self.nicModels, serializer);
+    sse_encode_bool(self.mac, serializer);
+    sse_encode_list_String(self.protocols, serializer);
+    sse_encode_bool(self.listen, serializer);
+    sse_encode_list_String(self.gpus, serializer);
+    sse_encode_bool(self.uefi, serializer);
+    sse_encode_bool(self.secureBoot, serializer);
+    sse_encode_bool(self.tpm, serializer);
+    sse_encode_bool(self.usb, serializer);
+    sse_encode_bool(self.pci, serializer);
   }
 
   @protected
@@ -30977,6 +39644,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_usb_naming(UsbNaming self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
   void sse_encode_user_catalog(UserCatalog self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.currentUser, serializer);
@@ -31054,6 +39727,127 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_virt_ci_ipv_4(VirtCiIpv4 self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.address, serializer);
+    sse_encode_opt_String(self.gateway, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_ci_network(
+    VirtCiNetwork self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.mac, serializer);
+    sse_encode_opt_box_autoadd_virt_ci_ipv_4(self.ipv4, serializer);
+    sse_encode_list_String(self.dns, serializer);
+    sse_encode_list_String(self.search, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_clone_disk(
+    VirtCloneDisk self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.target, serializer);
+    sse_encode_String(self.source, serializer);
+    sse_encode_opt_String(self.format, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_clone_spec(
+    VirtCloneSpec self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.source, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_bool(self.full, serializer);
+    sse_encode_list_virt_clone_disk(self.disks, serializer);
+    sse_encode_opt_String(self.targetPool, serializer);
+    sse_encode_bool(self.targetBlock, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_cloud_init(
+    VirtCloudInit self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.user, serializer);
+    sse_encode_opt_String(self.passwordHash, serializer);
+    sse_encode_list_String(self.sshKeys, serializer);
+    sse_encode_String(self.hostname, serializer);
+    sse_encode_String(self.instanceId, serializer);
+    sse_encode_opt_box_autoadd_virt_ci_network(self.network, serializer);
+    sse_encode_list_virt_ci_network(self.extraNetworks, serializer);
+    sse_encode_bool(self.passwordExpire, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_create_host(
+    VirtCreateHost self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.domainType, serializer);
+    sse_encode_String(self.machine, serializer);
+    sse_encode_String(self.arch, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.maxVcpus, serializer);
+    sse_encode_opt_box_autoadd_virt_hw_caps(self.caps, serializer);
+    sse_encode_opt_String(self.seedTool, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_create_spec(
+    VirtCreateSpec self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.name, serializer);
+    sse_encode_u_32(self.vcpus, serializer);
+    sse_encode_u_64(self.memoryMib, serializer);
+    sse_encode_virt_create_host(self.host, serializer);
+    sse_encode_String(self.diskPool, serializer);
+    sse_encode_u_64(self.diskGib, serializer);
+    sse_encode_String(self.diskFormat, serializer);
+    sse_encode_opt_String(self.diskPath, serializer);
+    sse_encode_opt_String(self.baseImage, serializer);
+    sse_encode_opt_String(self.diskBus, serializer);
+    sse_encode_opt_String(self.cdrom, serializer);
+    sse_encode_opt_String(self.network, serializer);
+    sse_encode_opt_String(self.nicModel, serializer);
+    sse_encode_opt_String(self.mac, serializer);
+    sse_encode_bool(self.efi, serializer);
+    sse_encode_bool(self.secureBoot, serializer);
+    sse_encode_bool(self.tpm, serializer);
+    sse_encode_opt_box_autoadd_virt_cloud_init(self.cloudInit, serializer);
+    sse_encode_opt_String(self.seedPath, serializer);
+    sse_encode_opt_list_String(self.seedTools, serializer);
+    sse_encode_bool(self.start, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_create_volumes(
+    VirtCreateVolumes self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.diskPath, serializer);
+    sse_encode_opt_String(self.seedPath, serializer);
+    sse_encode_opt_box_autoadd_u_64(self.copiedBytes, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_created(VirtCreated self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_opt_String(self.uuid, serializer);
+    sse_encode_opt_String(self.startError, serializer);
+  }
+
+  @protected
   void sse_encode_virt_delete_plan(
     VirtDeletePlan self,
     SseSerializer serializer,
@@ -31067,12 +39861,100 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_virt_disk(VirtDisk self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.device, serializer);
+    sse_encode_opt_String(self.sourceType, serializer);
+    sse_encode_opt_String(self.source, serializer);
+    sse_encode_opt_String(self.target, serializer);
+    sse_encode_opt_String(self.bus, serializer);
+    sse_encode_opt_String(self.format, serializer);
+    sse_encode_bool(self.readonly, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_disk_report(
+    VirtDiskReport self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.device, serializer);
+    sse_encode_opt_String(self.sourceType, serializer);
+    sse_encode_opt_String(self.source, serializer);
+    sse_encode_opt_String(self.target, serializer);
+    sse_encode_opt_String(self.bus, serializer);
+    sse_encode_opt_String(self.format, serializer);
+    sse_encode_bool(self.readonly, serializer);
+    sse_encode_opt_box_autoadd_u_64(self.size, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_disk_use(VirtDiskUse self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.domain, serializer);
+    sse_encode_String(self.kind, serializer);
+    sse_encode_String(self.device, serializer);
+    sse_encode_String(self.target, serializer);
+    sse_encode_opt_String(self.source, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_display(VirtDisplay self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.uri, serializer);
+    sse_encode_String(self.protocol, serializer);
+    sse_encode_opt_String(self.host, serializer);
+    sse_encode_opt_box_autoadd_u_16(self.port, serializer);
+    sse_encode_opt_box_autoadd_u_16(self.tlsPort, serializer);
+    sse_encode_opt_String(self.socket, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_domain_detail(
+    VirtDomainDetail self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_opt_box_autoadd_virt_display(self.display, serializer);
+    sse_encode_virt_domain_xml(self.xml, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_domain_xml(
+    VirtDomainXml self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_opt_String(self.name, serializer);
+    sse_encode_opt_String(self.uuid, serializer);
+    sse_encode_opt_String(self.title, serializer);
+    sse_encode_opt_String(self.description, serializer);
+    sse_encode_opt_String(self.arch, serializer);
+    sse_encode_opt_String(self.machine, serializer);
+    sse_encode_list_virt_disk(self.disks, serializer);
+    sse_encode_list_virt_nic(self.nics, serializer);
+    sse_encode_list_virt_graphics(self.graphics, serializer);
+    sse_encode_bool(self.hasSerialConsole, serializer);
+    sse_encode_opt_String(self.seed, serializer);
+  }
+
+  @protected
   void sse_encode_virt_error_kind(
     VirtErrorKind self,
     SseSerializer serializer,
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_external_snapshot(
+    VirtExternalSnapshot self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_opt_String(self.refusal, serializer);
+    sse_encode_list_virt_overlay(self.overlays, serializer);
   }
 
   @protected
@@ -31089,10 +39971,612 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_virt_graphics(VirtGraphics self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.kind, serializer);
+    sse_encode_opt_box_autoadd_u_16(self.port, serializer);
+    sse_encode_opt_box_autoadd_u_16(self.tlsPort, serializer);
+    sse_encode_bool(self.autoport, serializer);
+    sse_encode_opt_String(self.listen, serializer);
+    sse_encode_opt_String(self.socket, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_guest_detail_report(
+    VirtGuestDetailReport self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_virt_disk_report(self.disks, serializer);
+    sse_encode_list_nic(self.nics, serializer);
+    sse_encode_list_graphics(self.graphics, serializer);
+    sse_encode_opt_box_autoadd_display(self.display, serializer);
+    sse_encode_list_console_kind(self.consoles, serializer);
+    sse_encode_opt_String(self.description, serializer);
+    sse_encode_opt_String(self.arch, serializer);
+    sse_encode_opt_String(self.machine, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_guest_report(
+    VirtGuestReport self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_guest_kind(self.kind, serializer);
+    sse_encode_guest_state(self.state, serializer);
+    sse_encode_opt_String(self.stateReason, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.vmid, serializer);
+    sse_encode_opt_String(self.node, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.vcpu, serializer);
+    sse_encode_opt_box_autoadd_u_64(self.memBytes, serializer);
+    sse_encode_opt_box_autoadd_u_64(self.uptime, serializer);
+    sse_encode_list_String(self.tags, serializer);
+    sse_encode_bool(self.template, serializer);
+    sse_encode_opt_box_autoadd_bool(self.autostart, serializer);
+    sse_encode_list_power_action(self.actions, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_hardware_info(
+    VirtHardwareInfo self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_firmware_descriptor(self.firmware, serializer);
+    sse_encode_virt_hw_config(self.config, serializer);
+    sse_encode_opt_box_autoadd_virt_hw_config(self.live, serializer);
+    sse_encode_String(self.configXml, serializer);
+    sse_encode_String(self.configText, serializer);
+    sse_encode_String(self.liveXml, serializer);
+    sse_encode_bool(self.autostart, serializer);
+    sse_encode_opt_String(self.description, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.hostCpus, serializer);
+    sse_encode_opt_box_autoadd_u_64(self.hostMemoryKib, serializer);
+    sse_encode_opt_box_autoadd_virt_hw_caps(self.caps, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_host_devices(
+    VirtHostDevices self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_virt_host_usb(self.usb, serializer);
+    sse_encode_list_virt_host_pci(self.pci, serializer);
+    sse_encode_bool(self.iommu, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_host_pci(VirtHostPci self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.address, serializer);
+    sse_encode_opt_String(self.vendor, serializer);
+    sse_encode_opt_String(self.product, serializer);
+    sse_encode_opt_String(self.vendorName, serializer);
+    sse_encode_opt_String(self.productName, serializer);
+    sse_encode_opt_String(self.class_, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.iommuGroup, serializer);
+    sse_encode_u_32(self.groupSize, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_host_probe(
+    VirtHostProbe self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_opt_String(self.pve, serializer);
+    sse_encode_opt_String(self.container, serializer);
+    sse_encode_opt_box_autoadd_virt_version(self.libvirt, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_host_report(
+    VirtHostReport self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_host(self.host, serializer);
+    sse_encode_list_virt_guest_report(self.guests, serializer);
+    sse_encode_list_record_string_stats(self.stats, serializer);
+    sse_encode_capabilities(self.capabilities, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_host_usb(VirtHostUsb self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.vendor, serializer);
+    sse_encode_String(self.product, serializer);
+    sse_encode_opt_String(self.vendorName, serializer);
+    sse_encode_opt_String(self.productName, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.bus, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.device, serializer);
+    sse_encode_opt_String(self.port, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_hw_caps(VirtHwCaps self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_bool(self.efi, serializer);
+    sse_encode_bool(self.secureBoot, serializer);
+    sse_encode_bool(self.tpmEmulator, serializer);
+    sse_encode_list_String(self.graphics, serializer);
+    sse_encode_list_String(self.video, serializer);
+    sse_encode_list_String(self.diskBuses, serializer);
+    sse_encode_bool(self.hostdev, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_hw_change(VirtHwChange self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    switch (self) {
+      case VirtHwChange_Cpu(
+        sockets: final sockets,
+        cores: final cores,
+        current: final current,
+      ):
+        sse_encode_i_32(0, serializer);
+        sse_encode_u_32(sockets, serializer);
+        sse_encode_u_32(cores, serializer);
+        sse_encode_opt_box_autoadd_u_32(current, serializer);
+      case VirtHwChange_Memory(
+        memoryMib: final memoryMib,
+        currentMib: final currentMib,
+      ):
+        sse_encode_i_32(1, serializer);
+        sse_encode_u_64(memoryMib, serializer);
+        sse_encode_opt_box_autoadd_u_64(currentMib, serializer);
+      case VirtHwChange_GrowDisk(
+        target: final target,
+        bytes: final bytes,
+        path: final path,
+        live: final live,
+      ):
+        sse_encode_i_32(2, serializer);
+        sse_encode_String(target, serializer);
+        sse_encode_u_64(bytes, serializer);
+        sse_encode_opt_String(path, serializer);
+        sse_encode_bool(live, serializer);
+      case VirtHwChange_AddDisk(
+        pool: final pool,
+        volume: final volume,
+        gib: final gib,
+        format: final format,
+        target: final target,
+        bus: final bus,
+      ):
+        sse_encode_i_32(3, serializer);
+        sse_encode_String(pool, serializer);
+        sse_encode_String(volume, serializer);
+        sse_encode_u_64(gib, serializer);
+        sse_encode_String(format, serializer);
+        sse_encode_String(target, serializer);
+        sse_encode_String(bus, serializer);
+      case VirtHwChange_AttachVolume(
+        path: final path,
+        format: final format,
+        target: final target,
+        bus: final bus,
+      ):
+        sse_encode_i_32(4, serializer);
+        sse_encode_String(path, serializer);
+        sse_encode_String(format, serializer);
+        sse_encode_String(target, serializer);
+        sse_encode_String(bus, serializer);
+      case VirtHwChange_RemoveDisk(
+        target: final target,
+        deletePath: final deletePath,
+        config: final config,
+        live: final live,
+      ):
+        sse_encode_i_32(5, serializer);
+        sse_encode_String(target, serializer);
+        sse_encode_opt_String(deletePath, serializer);
+        sse_encode_bool(config, serializer);
+        sse_encode_bool(live, serializer);
+      case VirtHwChange_AddCdrom(
+        target: final target,
+        bus: final bus,
+        source: final source,
+      ):
+        sse_encode_i_32(6, serializer);
+        sse_encode_String(target, serializer);
+        sse_encode_String(bus, serializer);
+        sse_encode_opt_String(source, serializer);
+      case VirtHwChange_SetMedia(
+        target: final target,
+        source: final source,
+        config: final config,
+        live: final live,
+      ):
+        sse_encode_i_32(7, serializer);
+        sse_encode_String(target, serializer);
+        sse_encode_opt_String(source, serializer);
+        sse_encode_bool(config, serializer);
+        sse_encode_bool(live, serializer);
+      case VirtHwChange_AddNic(
+        kind: final kind,
+        source: final source,
+        model: final model,
+        mac: final mac,
+      ):
+        sse_encode_i_32(8, serializer);
+        sse_encode_String(kind, serializer);
+        sse_encode_String(source, serializer);
+        sse_encode_String(model, serializer);
+        sse_encode_String(mac, serializer);
+      case VirtHwChange_RemoveNic(
+        mac: final mac,
+        kind: final kind,
+        liveKind: final liveKind,
+      ):
+        sse_encode_i_32(9, serializer);
+        sse_encode_String(mac, serializer);
+        sse_encode_opt_String(kind, serializer);
+        sse_encode_opt_String(liveKind, serializer);
+      case VirtHwChange_UpdateNic(
+        mac: final mac,
+        kind: final kind,
+        source: final source,
+        model: final model,
+        linkUp: final linkUp,
+        bootOrder: final bootOrder,
+        liveBootOrder: final liveBootOrder,
+        config: final config,
+        live: final live,
+      ):
+        sse_encode_i_32(10, serializer);
+        sse_encode_String(mac, serializer);
+        sse_encode_String(kind, serializer);
+        sse_encode_String(source, serializer);
+        sse_encode_opt_String(model, serializer);
+        sse_encode_bool(linkUp, serializer);
+        sse_encode_opt_box_autoadd_u_32(bootOrder, serializer);
+        sse_encode_opt_box_autoadd_u_32(liveBootOrder, serializer);
+        sse_encode_bool(config, serializer);
+        sse_encode_bool(live, serializer);
+      case VirtHwChange_Boot(order: final order):
+        sse_encode_i_32(11, serializer);
+        sse_encode_list_String(order, serializer);
+      case VirtHwChange_Autostart(on_: final on_):
+        sse_encode_i_32(12, serializer);
+        sse_encode_bool(on_, serializer);
+      case VirtHwChange_Description(text: final text):
+        sse_encode_i_32(13, serializer);
+        sse_encode_String(text, serializer);
+      case VirtHwChange_Rename(name: final name):
+        sse_encode_i_32(14, serializer);
+        sse_encode_String(name, serializer);
+      case VirtHwChange_UpdateDisk(
+        target: final target,
+        newTarget: final newTarget,
+        bus: final bus,
+        cache: final cache,
+      ):
+        sse_encode_i_32(15, serializer);
+        sse_encode_String(target, serializer);
+        sse_encode_opt_String(newTarget, serializer);
+        sse_encode_opt_String(bus, serializer);
+        sse_encode_opt_String(cache, serializer);
+      case VirtHwChange_UpdateNicHardware(
+        mac: final mac,
+        newMac: final newMac,
+        model: final model,
+      ):
+        sse_encode_i_32(16, serializer);
+        sse_encode_String(mac, serializer);
+        sse_encode_opt_String(newMac, serializer);
+        sse_encode_opt_String(model, serializer);
+      case VirtHwChange_Firmware(efi: final efi, secureBoot: final secureBoot):
+        sse_encode_i_32(17, serializer);
+        sse_encode_bool(efi, serializer);
+        sse_encode_bool(secureBoot, serializer);
+      case VirtHwChange_Display(
+        graphics: final graphics,
+        listen: final listen,
+        video: final video,
+      ):
+        sse_encode_i_32(18, serializer);
+        sse_encode_opt_String(graphics, serializer);
+        sse_encode_opt_String(listen, serializer);
+        sse_encode_opt_String(video, serializer);
+      case VirtHwChange_AddDevice(device: final device):
+        sse_encode_i_32(19, serializer);
+        sse_encode_box_autoadd_virt_hw_new_device(device, serializer);
+      case VirtHwChange_RemoveDevice(key: final key):
+        sse_encode_i_32(20, serializer);
+        sse_encode_String(key, serializer);
+      case VirtHwChange_RevertLive(liveXml: final liveXml):
+        sse_encode_i_32(21, serializer);
+        sse_encode_String(liveXml, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_virt_hw_config(VirtHwConfig self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_virt_hw_cpu(self.cpu, serializer);
+    sse_encode_u_64(self.memoryKib, serializer);
+    sse_encode_u_64(self.currentMemoryKib, serializer);
+    sse_encode_list_virt_hw_disk(self.disks, serializer);
+    sse_encode_list_virt_hw_nic(self.nics, serializer);
+    sse_encode_list_String(self.boot, serializer);
+    sse_encode_bool(self.balloon, serializer);
+    sse_encode_bool(self.efi, serializer);
+    sse_encode_bool(self.secureBoot, serializer);
+    sse_encode_opt_String(self.machine, serializer);
+    sse_encode_opt_box_autoadd_virt_hw_graphics(self.graphics, serializer);
+    sse_encode_opt_String(self.video, serializer);
+    sse_encode_opt_box_autoadd_virt_hw_tpm(self.tpm, serializer);
+    sse_encode_list_virt_hw_hostdev(self.hostdevs, serializer);
+    sse_encode_opt_String(self.seed, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_hw_cpu(VirtHwCpu self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_32(self.sockets, serializer);
+    sse_encode_u_32(self.dies, serializer);
+    sse_encode_u_32(self.clusters, serializer);
+    sse_encode_u_32(self.cores, serializer);
+    sse_encode_u_32(self.threads, serializer);
+    sse_encode_u_32(self.max, serializer);
+    sse_encode_u_32(self.current, serializer);
+    sse_encode_bool(self.topology, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_hw_disk(VirtHwDisk self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.target, serializer);
+    sse_encode_String(self.device, serializer);
+    sse_encode_opt_String(self.bus, serializer);
+    sse_encode_opt_String(self.sourceType, serializer);
+    sse_encode_opt_String(self.source, serializer);
+    sse_encode_opt_String(self.format, serializer);
+    sse_encode_bool(self.readonly, serializer);
+    sse_encode_opt_box_autoadd_u_64(self.capacity, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.bootOrder, serializer);
+    sse_encode_opt_String(self.cache, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_hw_graphics(
+    VirtHwGraphics self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.kind, serializer);
+    sse_encode_opt_String(self.listen, serializer);
+    sse_encode_opt_box_autoadd_i_32(self.port, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_hw_hostdev(
+    VirtHwHostdev self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.key, serializer);
+    sse_encode_String(self.kind, serializer);
+    sse_encode_opt_String(self.vendor, serializer);
+    sse_encode_opt_String(self.product, serializer);
+    sse_encode_opt_String(self.address, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_hw_new_device(
+    VirtHwNewDevice self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    switch (self) {
+      case VirtHwNewDevice_Tpm(model: final model):
+        sse_encode_i_32(0, serializer);
+        sse_encode_String(model, serializer);
+      case VirtHwNewDevice_Usb(
+        vendor: final vendor,
+        product: final product,
+        bus: final bus,
+        device: final device,
+      ):
+        sse_encode_i_32(1, serializer);
+        sse_encode_opt_String(vendor, serializer);
+        sse_encode_opt_String(product, serializer);
+        sse_encode_opt_box_autoadd_u_32(bus, serializer);
+        sse_encode_opt_box_autoadd_u_32(device, serializer);
+      case VirtHwNewDevice_Pci(address: final address):
+        sse_encode_i_32(2, serializer);
+        sse_encode_String(address, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_virt_hw_nic(VirtHwNic self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.mac, serializer);
+    sse_encode_String(self.kind, serializer);
+    sse_encode_opt_String(self.source, serializer);
+    sse_encode_opt_String(self.model, serializer);
+    sse_encode_bool(self.linkUp, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.bootOrder, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_hw_outcome(
+    VirtHwOutcome self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_opt_String(self.liveError, serializer);
+    sse_encode_bool(self.volumeKept, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_hw_tpm(VirtHwTpm self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.model, serializer);
+    sse_encode_String(self.backend, serializer);
+    sse_encode_opt_String(self.version, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_net_ipv_4(VirtNetIpv4 self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.address, serializer);
+    sse_encode_u_8(self.prefix, serializer);
+    sse_encode_opt_String(self.dhcpStart, serializer);
+    sse_encode_opt_String(self.dhcpEnd, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_nic(VirtNic self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.kind, serializer);
+    sse_encode_opt_String(self.mac, serializer);
+    sse_encode_opt_String(self.source, serializer);
+    sse_encode_opt_String(self.model, serializer);
+    sse_encode_opt_String(self.target, serializer);
+  }
+
+  @protected
   void sse_encode_virt_overlay(VirtOverlay self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.target, serializer);
     sse_encode_String(self.path, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_pool(VirtPool self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.name, serializer);
+    sse_encode_opt_String(self.uuid, serializer);
+    sse_encode_opt_String(self.poolType, serializer);
+    sse_encode_bool(self.active, serializer);
+    sse_encode_bool(self.autostart, serializer);
+    sse_encode_opt_box_autoadd_u_64(self.capacity, serializer);
+    sse_encode_opt_box_autoadd_u_64(self.allocation, serializer);
+    sse_encode_opt_box_autoadd_u_64(self.available, serializer);
+    sse_encode_opt_String(self.target, serializer);
+    sse_encode_opt_String(self.source, serializer);
+    sse_encode_opt_list_virt_volume_ref(self.volumes, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_pool_volumes(
+    VirtPoolVolumes self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.pool, serializer);
+    sse_encode_list_volume(self.volumes, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_resource_op(
+    VirtResourceOp self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    switch (self) {
+      case VirtResourceOp_PoolCreate(
+        name: final name,
+        poolType: final poolType,
+        target: final target,
+        source: final source,
+        autostart: final autostart,
+      ):
+        sse_encode_i_32(0, serializer);
+        sse_encode_String(name, serializer);
+        sse_encode_String(poolType, serializer);
+        sse_encode_opt_String(target, serializer);
+        sse_encode_opt_String(source, serializer);
+        sse_encode_bool(autostart, serializer);
+      case VirtResourceOp_PoolStart(name: final name):
+        sse_encode_i_32(1, serializer);
+        sse_encode_String(name, serializer);
+      case VirtResourceOp_PoolStop(name: final name):
+        sse_encode_i_32(2, serializer);
+        sse_encode_String(name, serializer);
+      case VirtResourceOp_PoolAutostart(name: final name, on_: final on_):
+        sse_encode_i_32(3, serializer);
+        sse_encode_String(name, serializer);
+        sse_encode_bool(on_, serializer);
+      case VirtResourceOp_PoolRefresh(name: final name):
+        sse_encode_i_32(4, serializer);
+        sse_encode_String(name, serializer);
+      case VirtResourceOp_PoolDelete(
+        name: final name,
+        active: final active,
+        deleteStorage: final deleteStorage,
+      ):
+        sse_encode_i_32(5, serializer);
+        sse_encode_String(name, serializer);
+        sse_encode_bool(active, serializer);
+        sse_encode_bool(deleteStorage, serializer);
+      case VirtResourceOp_VolCreate(
+        pool: final pool,
+        name: final name,
+        bytes: final bytes,
+        format: final format,
+      ):
+        sse_encode_i_32(6, serializer);
+        sse_encode_String(pool, serializer);
+        sse_encode_String(name, serializer);
+        sse_encode_u_64(bytes, serializer);
+        sse_encode_String(format, serializer);
+      case VirtResourceOp_VolDelete(pool: final pool, name: final name):
+        sse_encode_i_32(7, serializer);
+        sse_encode_String(pool, serializer);
+        sse_encode_String(name, serializer);
+      case VirtResourceOp_VolResize(
+        pool: final pool,
+        name: final name,
+        bytes: final bytes,
+      ):
+        sse_encode_i_32(8, serializer);
+        sse_encode_String(pool, serializer);
+        sse_encode_String(name, serializer);
+        sse_encode_u_64(bytes, serializer);
+      case VirtResourceOp_VolClone(
+        pool: final pool,
+        name: final name,
+        newName: final newName,
+      ):
+        sse_encode_i_32(9, serializer);
+        sse_encode_String(pool, serializer);
+        sse_encode_String(name, serializer);
+        sse_encode_String(newName, serializer);
+      case VirtResourceOp_NetCreate(
+        name: final name,
+        mode: final mode,
+        bridge: final bridge,
+        ipv4: final ipv4,
+        autostart: final autostart,
+      ):
+        sse_encode_i_32(10, serializer);
+        sse_encode_String(name, serializer);
+        sse_encode_String(mode, serializer);
+        sse_encode_opt_String(bridge, serializer);
+        sse_encode_opt_box_autoadd_virt_net_ipv_4(ipv4, serializer);
+        sse_encode_bool(autostart, serializer);
+      case VirtResourceOp_NetStart(name: final name):
+        sse_encode_i_32(11, serializer);
+        sse_encode_String(name, serializer);
+      case VirtResourceOp_NetStop(name: final name):
+        sse_encode_i_32(12, serializer);
+        sse_encode_String(name, serializer);
+      case VirtResourceOp_NetAutostart(name: final name, on_: final on_):
+        sse_encode_i_32(13, serializer);
+        sse_encode_String(name, serializer);
+        sse_encode_bool(on_, serializer);
+      case VirtResourceOp_NetDelete(name: final name):
+        sse_encode_i_32(14, serializer);
+        sse_encode_String(name, serializer);
+    }
   }
 
   @protected
@@ -31106,12 +40590,56 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_virt_seed_read(VirtSeedRead self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_virt_cloud_init(self.cloudInit, serializer);
+    sse_encode_bool(self.foreign, serializer);
+    sse_encode_String(self.revision, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_storage(VirtStorage self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_virt_pool(self.pools, serializer);
+    sse_encode_list_virt_disk_use(self.disks, serializer);
+  }
+
+  @protected
   void sse_encode_virt_upload_entry_kind(
     VirtUploadEntryKind self,
     SseSerializer serializer,
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_version(VirtVersion self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_opt_String(self.libvirt, serializer);
+    sse_encode_opt_String(self.hypervisor, serializer);
+    sse_encode_opt_String(self.hypervisorVersion, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_vnc_console_info(
+    VirtVncConsoleInfo self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_opt_box_autoadd_virt_display(self.display, serializer);
+    sse_encode_opt_String(self.password, serializer);
+    sse_encode_bool(self.passwordKnown, serializer);
+  }
+
+  @protected
+  void sse_encode_virt_volume_ref(
+    VirtVolumeRef self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.name, serializer);
+    sse_encode_opt_String(self.path, serializer);
   }
 
   @protected
@@ -31134,6 +40662,29 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_opt_list_prim_u_8_strict(self.accessToken, serializer);
     sse_encode_opt_String(self.password, serializer);
     sse_encode_bool(self.shared, serializer);
+  }
+
+  @protected
+  void sse_encode_volume(Volume self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_opt_String(self.path, serializer);
+    sse_encode_opt_String(self.format, serializer);
+    sse_encode_opt_String(self.content, serializer);
+    sse_encode_opt_box_autoadd_u_64(self.capacity, serializer);
+    sse_encode_opt_box_autoadd_u_64(self.allocation, serializer);
+    sse_encode_opt_String(self.backing, serializer);
+    sse_encode_opt_box_autoadd_i_64(self.createdAt, serializer);
+    sse_encode_list_guest_ref(self.users, serializer);
+    sse_encode_list_String(self.backs, serializer);
+  }
+
+  @protected
+  void sse_encode_volume_ref(VolumeRef self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.pool, serializer);
+    sse_encode_String(self.volume, serializer);
   }
 
   @protected
@@ -31226,7 +40777,7 @@ class LibvirtRatesImpl extends RustOpaque implements LibvirtRates {
   /// `raw` is [`virt_overview_script`]'s output, `at_ms` when it was read.
   /// `pool_types` is [`parse_virt_pool_types`]'s answer; `upload` whether
   /// the channel carries bytes for `vol-upload`.
-  String view({
+  VirtHostReport view({
     required String raw,
     required PlatformInt64 atMs,
     List<String>? poolTypes,
@@ -31324,12 +40875,12 @@ class PveSessionImpl extends RustOpaque implements PveSession {
         RustLib.instance.api.rust_arc_decrement_strong_count_PveSessionPtr,
   );
 
-  /// The datacenter's jobs, `BackupJob` JSON.
-  Future<String> allBackupJobs() =>
+  /// The datacenter's jobs.
+  Future<List<BackupJob>> allBackupJobs() =>
       RustLib.instance.api.crateApiPvePveSessionAllBackupJobs(that: this);
 
-  /// Every online node's backup storages, `Pool` JSON.
-  Future<String> allBackupStorages() =>
+  /// Every online node's backup storages.
+  Future<List<ResourcePool>> allBackupStorages() =>
       RustLib.instance.api.crateApiPvePveSessionAllBackupStorages(that: this);
 
   /// The headers that authenticate a connection made outside the session
@@ -31337,66 +40888,69 @@ class PveSessionImpl extends RustOpaque implements PveSession {
   Future<List<PveHeader>> authHeaders() =>
       RustLib.instance.api.crateApiPvePveSessionAuthHeaders(that: this);
 
-  /// A backup of `guest` now, as `request_json` (a `BackupRequest`) asks,
-  /// waited for.
+  /// A backup of `guest` now, as `request` asks, waited for.
   Future<void> backup({
     required PveGuestRef guest,
-    required String requestJson,
+    required BackupRequest request,
   }) => RustLib.instance.api.crateApiPvePveSessionBackup(
     that: this,
     guest: guest,
-    requestJson: requestJson,
+    request: request,
   );
 
-  /// The jobs that take `guest`, `BackupJob` JSON.
-  Future<String> backupJobs({required PveGuestRef guest}) => RustLib
+  /// The jobs that take `guest`.
+  Future<List<BackupJob>> backupJobs({required PveGuestRef guest}) => RustLib
       .instance
       .api
       .crateApiPvePveSessionBackupJobs(that: this, guest: guest);
 
-  /// `node`'s storages that hold backups, `Pool` JSON.
-  Future<String> backupStorages({required String node}) => RustLib.instance.api
+  /// `node`'s storages that hold backups.
+  Future<List<ResourcePool>> backupStorages({required String node}) => RustLib
+      .instance
+      .api
       .crateApiPvePveSessionBackupStorages(that: this, node: node);
 
-  /// `guest`'s backups on its node's backup storages, `Backup` JSON.
-  Future<String> backups({required PveGuestRef guest}) => RustLib.instance.api
+  /// `guest`'s backups on its node's backup storages.
+  Future<List<Backup>> backups({required PveGuestRef guest}) => RustLib
+      .instance
+      .api
       .crateApiPvePveSessionBackups(that: this, guest: guest);
 
-  /// Makes `change_json` (a `Change`) from the read whose digest is
-  /// `revision`, checked first against the guest as it is now; `Outcome`
-  /// JSON.
-  Future<String> changeHardware({
+  /// Makes `change` from the read whose digest is `revision`, checked first
+  /// against the guest as it is now.
+  Future<Outcome> changeHardware({
     required PveGuestRef guest,
     String? revision,
-    required String changeJson,
+    required HwChange change,
   }) => RustLib.instance.api.crateApiPvePveSessionChangeHardware(
     that: this,
     guest: guest,
     revision: revision,
-    changeJson: changeJson,
+    change: change,
   );
 
-  /// What the host makes of `schedule`, `ScheduleCheck` JSON.
-  Future<String> checkSchedule({required String schedule}) => RustLib
+  /// What the host makes of `schedule`.
+  Future<ScheduleCheck> checkSchedule({required String schedule}) => RustLib
       .instance
       .api
       .crateApiPvePveSessionCheckSchedule(that: this, schedule: schedule);
 
-  /// Copies `guest` as `request_json` (a `CloneRequest`) asks, waited for;
-  /// the copy's id.
+  /// Copies `guest` as `request` asks, waited for; the copy's id.
   Future<String> cloneGuest({
     required PveGuestRef guest,
-    required String requestJson,
+    required CloneRequest request,
   }) => RustLib.instance.api.crateApiPvePveSessionCloneGuest(
     that: this,
     guest: guest,
-    requestJson: requestJson,
+    request: request,
   );
 
   void close() => RustLib.instance.api.crateApiPvePveSessionClose(that: this);
 
-  /// A VM's cloud-init settings, `CloudInitState` JSON.
-  Future<String> cloudInit({required PveGuestRef guest}) => RustLib.instance.api
+  /// A VM's cloud-init settings.
+  Future<CloudInitState> cloudInit({required PveGuestRef guest}) => RustLib
+      .instance
+      .api
       .crateApiPvePveSessionCloudInit(that: this, guest: guest);
 
   /// Pins the certificate the last refused connection presented; answers
@@ -31414,13 +40968,12 @@ class PveSessionImpl extends RustOpaque implements PveSession {
     kind: kind,
   );
 
-  /// Creates `spec_json` (a `CreateSpec`), checked first against what the
-  /// host lists now; `Created` JSON.
-  Future<String> create({required String specJson}) => RustLib.instance.api
-      .crateApiPvePveSessionCreate(that: this, specJson: specJson);
+  /// Creates `spec`, checked first against what the host lists now.
+  Future<Created> create({required CreateSpec spec}) =>
+      RustLib.instance.api.crateApiPvePveSessionCreate(that: this, spec: spec);
 
-  /// What a new VM can be given, `CreateOptions` JSON.
-  String createOptions() =>
+  /// What a new VM can be given.
+  CreateOptions createOptions() =>
       RustLib.instance.api.crateApiPvePveSessionCreateOptions(that: this);
 
   Future<void> createSnapshot({
@@ -31440,11 +40993,9 @@ class PveSessionImpl extends RustOpaque implements PveSession {
   Future<void> delete({required PveGuestRef guest}) => RustLib.instance.api
       .crateApiPvePveSessionDelete(that: this, guest: guest);
 
-  /// Deletes `backup_json`, waited for.
-  Future<void> deleteBackup({required String backupJson}) => RustLib
-      .instance
-      .api
-      .crateApiPvePveSessionDeleteBackup(that: this, backupJson: backupJson);
+  /// Deletes `backup`, waited for.
+  Future<void> deleteBackup({required Backup backup}) => RustLib.instance.api
+      .crateApiPvePveSessionDeleteBackup(that: this, backup: backup);
 
   Future<void> deleteSnapshot({
     required PveGuestRef guest,
@@ -31455,37 +41006,37 @@ class PveSessionImpl extends RustOpaque implements PveSession {
     name: name,
   );
 
-  /// `sbm_virt::model::GuestDetail` JSON.
-  Future<String> detail({required PveGuestRef guest}) => RustLib.instance.api
+  Future<VirtGuestDetailReport> detail({required PveGuestRef guest}) => RustLib
+      .instance
+      .api
       .crateApiPvePveSessionDetail(that: this, guest: guest);
 
-  /// `backup_json`'s notes and protection, as `edit_json` sets them.
-  Future<void> editBackup({
-    required String backupJson,
-    required String editJson,
-  }) => RustLib.instance.api.crateApiPvePveSessionEditBackup(
-    that: this,
-    backupJson: backupJson,
-    editJson: editJson,
-  );
+  /// `backup`'s notes and protection, as `edit` sets them.
+  Future<void> editBackup({required Backup backup, required BackupEdit edit}) =>
+      RustLib.instance.api.crateApiPvePveSessionEditBackup(
+        that: this,
+        backup: backup,
+        edit: edit,
+      );
 
-  /// Makes, edits or (`remove`) removes `edit_json` (a `BackupJobEdit`),
-  /// checked first.
+  /// Makes, edits or (`remove`) removes `edit`, checked first.
   Future<void> editBackupJob({
-    required String editJson,
+    required BackupJobEdit edit,
     required bool remove,
   }) => RustLib.instance.api.crateApiPvePveSessionEditBackupJob(
     that: this,
-    editJson: editJson,
+    edit: edit,
     remove: remove,
   );
 
-  /// `guest`'s hardware as it stands, `Hardware` JSON.
-  Future<String> hardware({required PveGuestRef guest}) => RustLib.instance.api
+  /// `guest`'s hardware as it stands.
+  Future<Hardware> hardware({required PveGuestRef guest}) => RustLib
+      .instance
+      .api
       .crateApiPvePveSessionHardware(that: this, guest: guest);
 
-  /// `sbm_virt::model::Stats` JSON list, oldest first.
-  Future<String> history({
+  /// Oldest first.
+  Future<List<Stats>> history({
     required PveGuestRef guest,
     required PveHistoryWindow window,
   }) => RustLib.instance.api.crateApiPvePveSessionHistory(
@@ -31494,14 +41045,13 @@ class PveSessionImpl extends RustOpaque implements PveSession {
     window: window,
   );
 
-  /// The devices `guest` can be given, `HostDevices` JSON.
-  Future<String> hostDevices({required PveGuestRef guest}) => RustLib
+  /// The devices `guest` can be given.
+  Future<HostDevices> hostDevices({required PveGuestRef guest}) => RustLib
       .instance
       .api
       .crateApiPvePveSessionHostDevices(that: this, guest: guest);
 
-  /// `sbm_virt::model::HostView` JSON.
-  Future<String> load() =>
+  Future<VirtHostReport> load() =>
       RustLib.instance.api.crateApiPvePveSessionLoad(that: this);
 
   /// Turns a stopped guest into a template, waited for.
@@ -31510,25 +41060,22 @@ class PveSessionImpl extends RustOpaque implements PveSession {
       .api
       .crateApiPvePveSessionMakeTemplate(that: this, guest: guest);
 
-  /// Makes `change_json` (a `Change`), checked first against what the host
-  /// lists now; `live` as for [`PveSession::networks`].
-  Future<void> manage({required String changeJson, String? live}) =>
-      RustLib.instance.api.crateApiPvePveSessionManage(
-        that: this,
-        changeJson: changeJson,
-        live: live,
-      );
+  /// Makes `change`, checked first against what the host lists now; `live`
+  /// as for [`PveSession::networks`].
+  Future<void> manage({required ResourceChange change, String? live}) => RustLib
+      .instance
+      .api
+      .crateApiPvePveSessionManage(that: this, change: change, live: live);
 
-  /// Each online node's pending network configuration,
-  /// `NetworkChanges` JSON.
-  Future<String> networkChanges() =>
+  /// Each online node's pending network configuration.
+  Future<List<NetworkChanges>> networkChanges() =>
       RustLib.instance.api.crateApiPvePveSessionNetworkChanges(that: this);
 
-  /// Every online node's interfaces, `Network` JSON. `live` is what
+  /// Every online node's interfaces. `live` is what
   /// [`super::resource::virt_pve_live_net_script`] printed on the server
   /// this session reaches PVE through; None protects every interface with
   /// an address.
-  Future<String> networks({String? live}) => RustLib.instance.api
+  Future<List<Network>> networks({String? live}) => RustLib.instance.api
       .crateApiPvePveSessionNetworks(that: this, live: live);
 
   /// The cluster's next free VMID.
@@ -31608,14 +41155,14 @@ class PveSessionImpl extends RustOpaque implements PveSession {
   Future<void> runBackupJob({required String id}) => RustLib.instance.api
       .crateApiPvePveSessionRunBackupJob(that: this, id: id);
 
-  /// Writes `edit_json` (a `CloudInitEdit`), and the drive at once.
+  /// Writes `edit`, and the drive at once.
   Future<void> setCloudInit({
     required PveGuestRef guest,
-    required String editJson,
+    required CloudInitEdit edit,
   }) => RustLib.instance.api.crateApiPvePveSessionSetCloudInit(
     that: this,
     guest: guest,
-    editJson: editJson,
+    edit: edit,
   );
 
   /// A new tunnel to the same address. Connections still open on the old
@@ -31625,8 +41172,7 @@ class PveSessionImpl extends RustOpaque implements PveSession {
       .api
       .crateApiPvePveSessionSetLoopback(that: this, port: port, token: token);
 
-  /// `sbm_virt::snapshot::Diff` JSON list.
-  Future<String> snapshotDiff({
+  Future<List<Diff>> snapshotDiff({
     required PveGuestRef guest,
     required String name,
   }) => RustLib.instance.api.crateApiPvePveSessionSnapshotDiff(
@@ -31646,12 +41192,13 @@ class PveSessionImpl extends RustOpaque implements PveSession {
       .api
       .crateApiPvePveSessionSnapshotSupported(that: this, guest: guest);
 
-  /// `sbm_virt::snapshot::Snapshot` JSON list.
-  Future<String> snapshots({required PveGuestRef guest}) => RustLib.instance.api
+  Future<List<Snapshot>> snapshots({required PveGuestRef guest}) => RustLib
+      .instance
+      .api
       .crateApiPvePveSessionSnapshots(that: this, guest: guest);
 
-  /// Every online node's storages, `sbm_virt::resource::Pool` JSON.
-  Future<String> storagePools() =>
+  /// Every online node's storages.
+  Future<List<ResourcePool>> storagePools() =>
       RustLib.instance.api.crateApiPvePveSessionStoragePools(that: this);
 
   Future<void> submitTfa({required String code}) => RustLib.instance.api
@@ -31663,9 +41210,9 @@ class PveSessionImpl extends RustOpaque implements PveSession {
   void updateLogin({required PveLogin login}) => RustLib.instance.api
       .crateApiPvePveSessionUpdateLogin(that: this, login: login);
 
-  /// The volumes on `pool_json` (a `Pool`), `Volume` JSON.
-  Future<String> volumes({required String poolJson}) => RustLib.instance.api
-      .crateApiPvePveSessionVolumes(that: this, poolJson: poolJson);
+  /// The volumes on `pool`.
+  Future<List<Volume>> volumes({required ResourcePool pool}) =>
+      RustLib.instance.api.crateApiPvePveSessionVolumes(that: this, pool: pool);
 
   /// Waits for the task `upid` on `node` to stop; its error is
   /// `actionFailed` with PVE's text.

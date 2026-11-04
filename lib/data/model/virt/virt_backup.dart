@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:server_box/core/extension/context/locale.dart';
@@ -124,7 +122,7 @@ abstract class VirtBackupJob with _$VirtBackupJob {
   /// that VMID, not `all`, not a pool. Such a job is the guest's own plan,
   /// which its Plan group edits; any other job is the datacenter's.
   bool takesOnly(int? vmid) => ffi.virtBackupJobTakesOnly(
-    jobJson: jsonEncode(VirtRust.backupJobJson(this)),
+    job: VirtRust.backupJobFfi(this),
     vmid: vmid,
   );
 }

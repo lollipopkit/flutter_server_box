@@ -6,9 +6,11 @@
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
 import 'package:server_box/src/rust/api/virt.dart';
+import 'package:server_box/src/rust/api/virt_model.dart';
+import 'package:server_box/src/rust/api/virt_view.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `from_json`, `power_action`, `to_json`
+// These functions are ignored because they are not marked as `pub`: `power_action`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `Loopback`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `clone`, `dial`, `eq`, `fmt`, `fmt`, `fmt`, `from`, `from`, `from`, `from`, `from`
 
@@ -27,55 +29,52 @@ abstract class PveConsoleChannel implements RustOpaqueInterface {
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PveSession>>
 abstract class PveSession implements RustOpaqueInterface {
-  /// The datacenter's jobs, `BackupJob` JSON.
-  Future<String> allBackupJobs();
+  /// The datacenter's jobs.
+  Future<List<BackupJob>> allBackupJobs();
 
-  /// Every online node's backup storages, `Pool` JSON.
-  Future<String> allBackupStorages();
+  /// Every online node's backup storages.
+  Future<List<ResourcePool>> allBackupStorages();
 
   /// The headers that authenticate a connection made outside the session
   /// (an upload), logging in first if needed.
   Future<List<PveHeader>> authHeaders();
 
-  /// A backup of `guest` now, as `request_json` (a `BackupRequest`) asks,
-  /// waited for.
+  /// A backup of `guest` now, as `request` asks, waited for.
   Future<void> backup({
     required PveGuestRef guest,
-    required String requestJson,
+    required BackupRequest request,
   });
 
-  /// The jobs that take `guest`, `BackupJob` JSON.
-  Future<String> backupJobs({required PveGuestRef guest});
+  /// The jobs that take `guest`.
+  Future<List<BackupJob>> backupJobs({required PveGuestRef guest});
 
-  /// `node`'s storages that hold backups, `Pool` JSON.
-  Future<String> backupStorages({required String node});
+  /// `node`'s storages that hold backups.
+  Future<List<ResourcePool>> backupStorages({required String node});
 
-  /// `guest`'s backups on its node's backup storages, `Backup` JSON.
-  Future<String> backups({required PveGuestRef guest});
+  /// `guest`'s backups on its node's backup storages.
+  Future<List<Backup>> backups({required PveGuestRef guest});
 
-  /// Makes `change_json` (a `Change`) from the read whose digest is
-  /// `revision`, checked first against the guest as it is now; `Outcome`
-  /// JSON.
-  Future<String> changeHardware({
+  /// Makes `change` from the read whose digest is `revision`, checked first
+  /// against the guest as it is now.
+  Future<Outcome> changeHardware({
     required PveGuestRef guest,
     String? revision,
-    required String changeJson,
+    required HwChange change,
   });
 
-  /// What the host makes of `schedule`, `ScheduleCheck` JSON.
-  Future<String> checkSchedule({required String schedule});
+  /// What the host makes of `schedule`.
+  Future<ScheduleCheck> checkSchedule({required String schedule});
 
-  /// Copies `guest` as `request_json` (a `CloneRequest`) asks, waited for;
-  /// the copy's id.
+  /// Copies `guest` as `request` asks, waited for; the copy's id.
   Future<String> cloneGuest({
     required PveGuestRef guest,
-    required String requestJson,
+    required CloneRequest request,
   });
 
   void close();
 
-  /// A VM's cloud-init settings, `CloudInitState` JSON.
-  Future<String> cloudInit({required PveGuestRef guest});
+  /// A VM's cloud-init settings.
+  Future<CloudInitState> cloudInit({required PveGuestRef guest});
 
   /// Pins the certificate the last refused connection presented; answers
   /// the pin as stored.
@@ -87,12 +86,11 @@ abstract class PveSession implements RustOpaqueInterface {
     required PveConsoleKind kind,
   });
 
-  /// Creates `spec_json` (a `CreateSpec`), checked first against what the
-  /// host lists now; `Created` JSON.
-  Future<String> create({required String specJson});
+  /// Creates `spec`, checked first against what the host lists now.
+  Future<Created> create({required CreateSpec spec});
 
-  /// What a new VM can be given, `CreateOptions` JSON.
-  String createOptions();
+  /// What a new VM can be given.
+  CreateOptions createOptions();
 
   Future<void> createSnapshot({
     required PveGuestRef guest,
@@ -104,58 +102,54 @@ abstract class PveSession implements RustOpaqueInterface {
   /// Deletes a stopped guest with its disks, waited for.
   Future<void> delete({required PveGuestRef guest});
 
-  /// Deletes `backup_json`, waited for.
-  Future<void> deleteBackup({required String backupJson});
+  /// Deletes `backup`, waited for.
+  Future<void> deleteBackup({required Backup backup});
 
   Future<void> deleteSnapshot({
     required PveGuestRef guest,
     required String name,
   });
 
-  /// `sbm_virt::model::GuestDetail` JSON.
-  Future<String> detail({required PveGuestRef guest});
+  Future<VirtGuestDetailReport> detail({required PveGuestRef guest});
 
-  /// `backup_json`'s notes and protection, as `edit_json` sets them.
-  Future<void> editBackup({
-    required String backupJson,
-    required String editJson,
+  /// `backup`'s notes and protection, as `edit` sets them.
+  Future<void> editBackup({required Backup backup, required BackupEdit edit});
+
+  /// Makes, edits or (`remove`) removes `edit`, checked first.
+  Future<void> editBackupJob({
+    required BackupJobEdit edit,
+    required bool remove,
   });
 
-  /// Makes, edits or (`remove`) removes `edit_json` (a `BackupJobEdit`),
-  /// checked first.
-  Future<void> editBackupJob({required String editJson, required bool remove});
+  /// `guest`'s hardware as it stands.
+  Future<Hardware> hardware({required PveGuestRef guest});
 
-  /// `guest`'s hardware as it stands, `Hardware` JSON.
-  Future<String> hardware({required PveGuestRef guest});
-
-  /// `sbm_virt::model::Stats` JSON list, oldest first.
-  Future<String> history({
+  /// Oldest first.
+  Future<List<Stats>> history({
     required PveGuestRef guest,
     required PveHistoryWindow window,
   });
 
-  /// The devices `guest` can be given, `HostDevices` JSON.
-  Future<String> hostDevices({required PveGuestRef guest});
+  /// The devices `guest` can be given.
+  Future<HostDevices> hostDevices({required PveGuestRef guest});
 
-  /// `sbm_virt::model::HostView` JSON.
-  Future<String> load();
+  Future<VirtHostReport> load();
 
   /// Turns a stopped guest into a template, waited for.
   Future<void> makeTemplate({required PveGuestRef guest});
 
-  /// Makes `change_json` (a `Change`), checked first against what the host
-  /// lists now; `live` as for [`PveSession::networks`].
-  Future<void> manage({required String changeJson, String? live});
+  /// Makes `change`, checked first against what the host lists now; `live`
+  /// as for [`PveSession::networks`].
+  Future<void> manage({required ResourceChange change, String? live});
 
-  /// Each online node's pending network configuration,
-  /// `NetworkChanges` JSON.
-  Future<String> networkChanges();
+  /// Each online node's pending network configuration.
+  Future<List<NetworkChanges>> networkChanges();
 
-  /// Every online node's interfaces, `Network` JSON. `live` is what
+  /// Every online node's interfaces. `live` is what
   /// [`super::resource::virt_pve_live_net_script`] printed on the server
   /// this session reaches PVE through; None protects every interface with
   /// an address.
-  Future<String> networks({String? live});
+  Future<List<Network>> networks({String? live});
 
   /// Nothing is sent until the first call. `port` and `token` are the
   /// app's authenticated loopback tunnel to the API's address.
@@ -216,18 +210,17 @@ abstract class PveSession implements RustOpaqueInterface {
   /// A job's "Run now", on its node or every online one, waited for.
   Future<void> runBackupJob({required String id});
 
-  /// Writes `edit_json` (a `CloudInitEdit`), and the drive at once.
+  /// Writes `edit`, and the drive at once.
   Future<void> setCloudInit({
     required PveGuestRef guest,
-    required String editJson,
+    required CloudInitEdit edit,
   });
 
   /// A new tunnel to the same address. Connections still open on the old
   /// one fail and are made again.
   void setLoopback({required int port, required List<int> token});
 
-  /// `sbm_virt::snapshot::Diff` JSON list.
-  Future<String> snapshotDiff({
+  Future<List<Diff>> snapshotDiff({
     required PveGuestRef guest,
     required String name,
   });
@@ -237,11 +230,10 @@ abstract class PveSession implements RustOpaqueInterface {
   /// PVE's own answer whether every disk snapshots; None where it cannot say.
   Future<bool?> snapshotSupported({required PveGuestRef guest});
 
-  /// `sbm_virt::snapshot::Snapshot` JSON list.
-  Future<String> snapshots({required PveGuestRef guest});
+  Future<List<Snapshot>> snapshots({required PveGuestRef guest});
 
-  /// Every online node's storages, `sbm_virt::resource::Pool` JSON.
-  Future<String> storagePools();
+  /// Every online node's storages.
+  Future<List<ResourcePool>> storagePools();
 
   Future<void> submitTfa({required String code});
 
@@ -250,8 +242,8 @@ abstract class PveSession implements RustOpaqueInterface {
   /// new tunnel: [`PveSession::set_loopback`].
   void updateLogin({required PveLogin login});
 
-  /// The volumes on `pool_json` (a `Pool`), `Volume` JSON.
-  Future<String> volumes({required String poolJson});
+  /// The volumes on `pool`.
+  Future<List<Volume>> volumes({required ResourcePool pool});
 
   /// Waits for the task `upid` on `node` to stop; its error is
   /// `actionFailed` with PVE's text.

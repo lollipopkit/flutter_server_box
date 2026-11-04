@@ -1,99 +1,80 @@
 //! Storage and networks FFI (sbm_virt::resource, sbm_virt::libvirt::host)
 //!
 //! The rules a change is checked by before it is sent, what a form offers
-//! for a pool, and libvirt's listings mapped onto `sbm_virt::resource`. A
-//! pool, a volume, a network and a change cross as their `sbm_virt` JSON
-//! (snake_case, the agent's wire format); a refusal crosses as [`PveError`]
-//! (`sbm_virt::error::Error`, its `detail_json` saying which rule).
+//! for a pool, and libvirt's listings mapped onto `sbm_virt::resource`. The
+//! models are `sbm_virt`'s own, mirrored ([`super::virt_model`]); a refusal
+//! crosses as [`PveError`] (`sbm_virt::error::Error`, its `detail_json`
+//! saying which rule), an issue as its [`ResourceIssue`].
 //!
 //! PVE's listings and changes are [`super::pve::PveSession`]'s.
 
-use sbm_virt::error::{Error, ErrorKind};
+use flutter_rust_bridge::frb;
 use sbm_virt::libvirt::{self, host};
 use sbm_virt::model::HostKind;
-use sbm_virt::resource::{self, Change, Listing, Network, Pool, Volume};
-use serde::de::DeserializeOwned;
+use sbm_virt::resource::{self, Listing};
 
 use super::pve::PveError;
-use super::virt::{VirtFfiError, json_err};
-
-fn read<T: DeserializeOwned>(json: &str) -> Result<T, PveError> {
-    serde_json::from_str(json).map_err(|e| Error::msg(ErrorKind::InvalidResponse, e.to_string()).into())
-}
-
-fn write<T: serde::Serialize>(value: &T) -> Result<String, PveError> {
-    serde_json::to_string(value).map_err(|e| Error::msg(ErrorKind::InvalidResponse, e.to_string()).into())
-}
+use super::virt::VirtFfiError;
+use super::virt_libvirt::VirtStorage;
+use super::virt_model::{Network, ResourceChange, ResourceIssue, ResourcePool, Volume};
 
 fn kind(pve: bool) -> HostKind {
     if pve { HostKind::Pve } else { HostKind::Libvirt }
 }
 
-fn issue_name(issue: resource::Issue) -> String {
-    serde_json::to_value(issue).ok().and_then(|v| v.as_str().map(str::to_owned)).unwrap_or_default()
-}
-
-/// Why `change_json` (a `Change`) cannot be made on the host, as the
-/// `Issue`'s name (`in_use`); None when it can. The lists are the host's:
-/// its pools and networks, and the volumes of the pool the change is to.
-#[flutter_rust_bridge::frb(sync)]
+/// Why `change` cannot be made on the host, or None when it can. The lists
+/// are the host's: its pools and networks, and the volumes of the pool the
+/// change is to.
+#[frb(sync)]
 pub fn virt_resource_issue(
-    change_json: String,
+    change: ResourceChange,
     pve: bool,
-    pools_json: String,
-    networks_json: String,
-    volumes_json: String,
-) -> Result<Option<String>, PveError> {
-    let change: Change = read(&change_json)?;
-    let pools: Vec<Pool> = read(&pools_json)?;
-    let networks: Vec<Network> = read(&networks_json)?;
-    let volumes: Vec<Volume> = read(&volumes_json)?;
-    Ok(resource::issue(&change, kind(pve), Listing { pools: &pools, networks: &networks, volumes: &volumes }).map(issue_name))
+    pools: Vec<ResourcePool>,
+    networks: Vec<Network>,
+    volumes: Vec<Volume>,
+) -> Option<ResourceIssue> {
+    resource::issue(&change, kind(pve), Listing { pools: &pools, networks: &networks, volumes: &volumes })
 }
 
-/// Why an upload of `name` into `pool_json` cannot start, as an `Issue`'s
-/// name; None when it can.
-#[flutter_rust_bridge::frb(sync)]
-pub fn virt_upload_issue(pool_json: String, name: String, size: u64, volumes_json: String) -> Result<Option<String>, PveError> {
-    let pool: Pool = read(&pool_json)?;
-    let volumes: Vec<Volume> = read(&volumes_json)?;
-    Ok(resource::upload_issue(&pool, &name, size, &volumes).map(issue_name))
+/// Why an upload of `name` into `pool` cannot start, or None when it can.
+#[frb(sync)]
+pub fn virt_upload_issue(pool: ResourcePool, name: String, size: u64, volumes: Vec<Volume>) -> Option<ResourceIssue> {
+    resource::upload_issue(&pool, &name, size, &volumes)
 }
 
-#[flutter_rust_bridge::frb(sync)]
-pub fn virt_pool_takes_media(pool_json: String) -> Result<bool, PveError> {
-    Ok(resource::pool_takes_media(&read(&pool_json)?))
+#[frb(sync)]
+pub fn virt_pool_takes_media(pool: ResourcePool) -> bool {
+    resource::pool_takes_media(&pool)
 }
 
 /// The formats a new volume in the pool can have, the first the default.
-#[flutter_rust_bridge::frb(sync)]
-pub fn virt_volume_formats(pool_json: String) -> Result<Vec<String>, PveError> {
-    let pool: Pool = read(&pool_json)?;
-    Ok(resource::volume_formats(&pool).iter().map(|f| (*f).to_owned()).collect())
+#[frb(sync)]
+pub fn virt_volume_formats(pool: ResourcePool) -> Vec<String> {
+    resource::volume_formats(&pool).iter().map(|f| (*f).to_owned()).collect()
 }
 
 /// PVE: the file a new volume is given, the format as its extension on a
 /// storage of files.
-#[flutter_rust_bridge::frb(sync)]
-pub fn virt_volume_file_name(pool_json: String, name: String, format: String) -> Result<String, PveError> {
-    Ok(resource::volume_file_name(&read(&pool_json)?, &name, &format))
+#[frb(sync)]
+pub fn virt_volume_file_name(pool: ResourcePool, name: String, format: String) -> String {
+    resource::volume_file_name(&pool, &name, &format)
 }
 
 /// Whether a volume of the pool is grown on its own.
-#[flutter_rust_bridge::frb(sync)]
-pub fn virt_volume_resizable(pool_json: String, pve: bool) -> Result<bool, PveError> {
-    Ok(resource::volume_resizable(&read(&pool_json)?, kind(pve)))
+#[frb(sync)]
+pub fn virt_volume_resizable(pool: ResourcePool, pve: bool) -> bool {
+    resource::volume_resizable(&pool, kind(pve))
 }
 
 /// The VMID a PVE volume name belongs to (`vm-105-disk-0`).
-#[flutter_rust_bridge::frb(sync)]
+#[frb(sync)]
 pub fn virt_pve_volume_vmid(name: String) -> Option<u32> {
     resource::pve_volume_vmid(&name)
 }
 
 /// The DHCP range a form offers for `cidr`, its two ends; None when `cidr`
 /// is not a usable one.
-#[flutter_rust_bridge::frb(sync)]
+#[frb(sync)]
 pub fn virt_default_dhcp_range(cidr: String) -> Option<Vec<String>> {
     resource::ipv4::default_dhcp_range(&cidr).map(|(a, b)| vec![a, b])
 }
@@ -101,46 +82,38 @@ pub fn virt_default_dhcp_range(cidr: String) -> Option<Vec<String>> {
 /// What a PVE node is asked about the interfaces it is using
 /// (`sbm_virt::pve::net::LIVE_NET_SCRIPT`), run on the server; its output
 /// goes to [`super::pve::PveSession::networks`] and `manage` as it is.
-#[flutter_rust_bridge::frb(sync)]
+#[frb(sync)]
 pub fn virt_pve_live_net_script() -> String {
     sbm_virt::pve::net::LIVE_NET_SCRIPT.to_owned()
 }
 
 // --- libvirt ---
 
-/// [`super::virt::parse_virt_storage_json`]'s storage as the host's pools
-/// (`Pool` JSON).
-#[flutter_rust_bridge::frb(sync)]
-pub fn virt_libvirt_pools(storage_json: String) -> Result<String, PveError> {
-    let storage: libvirt::VirtStorage = read(&storage_json)?;
-    write(&storage.pools.iter().map(host::pool_of).collect::<Vec<_>>())
+/// The storage read as the host's pools.
+#[frb(sync)]
+pub fn virt_libvirt_pools(storage: VirtStorage) -> Vec<ResourcePool> {
+    storage.pools.iter().map(host::pool_of).collect()
 }
 
-/// [`super::virt::virt_volumes_script`]'s output for `pool` as `Volume`
-/// JSON, with the domains whose disks each is (from `storage_json`).
-#[flutter_rust_bridge::frb(sync)]
-pub fn virt_libvirt_volumes(raw: String, pool: String, storage_json: String) -> Result<String, VirtFfiError> {
-    let storage: libvirt::VirtStorage = serde_json::from_str(&storage_json).map_err(json_err)?;
-    let read = libvirt::parse_volumes(&raw)?;
-    let volumes: Vec<Volume> = read.iter().map(|v| host::volume_of(v, &pool, &storage.disks)).collect();
-    serde_json::to_string(&volumes).map_err(json_err)
+/// [`super::virt::virt_volumes_script`]'s output for `pool`, with the
+/// domains whose disks each is (from `storage`).
+#[frb(sync)]
+pub fn virt_libvirt_volumes(raw: String, pool: String, storage: VirtStorage) -> Result<Vec<Volume>, VirtFfiError> {
+    Ok(libvirt::parse_volumes(&raw)?.iter().map(|v| host::volume_of(v, &pool, &storage.disks)).collect())
 }
 
-/// `volumes_json` with what is made on each: the volumes in `every_json`
-/// (every active pool's) whose backing file it is.
-#[flutter_rust_bridge::frb(sync)]
-pub fn virt_libvirt_with_backs(volumes_json: String, every_json: String) -> Result<String, PveError> {
-    let volumes: Vec<Volume> = read(&volumes_json)?;
-    let every: Vec<Volume> = read(&every_json)?;
-    write(&host::with_backs(volumes, &every))
+/// `volumes` with what is made on each: the volumes in `every` (every active
+/// pool's) whose backing file it is.
+#[frb(sync)]
+pub fn virt_libvirt_with_backs(volumes: Vec<Volume>, every: Vec<Volume>) -> Vec<Volume> {
+    host::with_backs(volumes, &every)
 }
 
-/// [`super::virt::virt_networks_script`]'s output as `Network` JSON.
-#[flutter_rust_bridge::frb(sync)]
-pub fn virt_libvirt_networks(raw: String) -> Result<String, VirtFfiError> {
+/// [`super::virt::virt_networks_script`]'s output as the host's networks.
+#[frb(sync)]
+pub fn virt_libvirt_networks(raw: String) -> Result<Vec<Network>, VirtFfiError> {
     let all = libvirt::parse_networks(&raw)?;
-    let networks: Vec<Network> = all.networks.iter().map(|n| host::network_of(n, &all)).collect();
-    serde_json::to_string(&networks).map_err(json_err)
+    Ok(all.networks.iter().map(|n| host::network_of(n, &all)).collect())
 }
 
 /// The script a change runs as on a libvirt host.
@@ -152,19 +125,15 @@ pub struct VirtResourceScript {
     pub net: bool,
 }
 
-/// `change_json` as the script that makes it, checked first against the
-/// host's lists, read for this change.
-#[flutter_rust_bridge::frb(sync)]
+/// `change` as the script that makes it, checked first against the host's
+/// lists, read for this change.
+#[frb(sync)]
 pub fn virt_libvirt_resource_script(
-    change_json: String,
-    pools_json: String,
-    networks_json: String,
-    volumes_json: String,
+    change: ResourceChange,
+    pools: Vec<ResourcePool>,
+    networks: Vec<Network>,
+    volumes: Vec<Volume>,
 ) -> Result<VirtResourceScript, PveError> {
-    let change: Change = read(&change_json)?;
-    let pools: Vec<Pool> = read(&pools_json)?;
-    let networks: Vec<Network> = read(&networks_json)?;
-    let volumes: Vec<Volume> = read(&volumes_json)?;
     let script = host::resource_script(&change, Listing { pools: &pools, networks: &networks, volumes: &volumes })?;
     let text = script.script().map_err(|e| host::error_of(&e, true))?;
     Ok(VirtResourceScript { script: text, net: matches!(script, host::ResourceScript::Net(_)) })

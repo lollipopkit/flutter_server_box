@@ -1,7 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'virt_detail.freezed.dart';
-part 'virt_detail.g.dart';
 
 /// The consoles a guest offers — see `VirtConsole` for what opening one gives.
 enum VirtConsoleKind {
@@ -14,12 +13,8 @@ enum VirtConsoleKind {
 }
 
 /// A disk, CD drive or container volume.
-///
-/// JSON keys are snake_case, `sbm_virt::libvirt::VirtDisk`'s, so libvirt's
-/// detail decodes straight into this.
 @freezed
 abstract class VirtDisk with _$VirtDisk {
-  @JsonSerializable(fieldRename: FieldRename.snake)
   const factory VirtDisk({
     /// `disk`, `cdrom`, `floppy`, `lun`; PVE containers: `rootfs`, `mp`.
     @Default('disk') String device,
@@ -41,15 +36,11 @@ abstract class VirtDisk with _$VirtDisk {
     /// Size in bytes, where the configuration says (PVE `size=`).
     int? size,
   }) = _VirtDisk;
-
-  factory VirtDisk.fromJson(Map<String, dynamic> json) =>
-      _$VirtDiskFromJson(json);
 }
 
 /// A network interface.
 @freezed
 abstract class VirtNic with _$VirtNic {
-  @JsonSerializable(fieldRename: FieldRename.snake)
   const factory VirtNic({
     /// libvirt `network`/`bridge`/`direct`/...; PVE `net0`, `net1`, ...
     @Default('') String kind,
@@ -65,15 +56,11 @@ abstract class VirtNic with _$VirtNic {
     /// interface name (`eth0`).
     String? target,
   }) = _VirtNic;
-
-  factory VirtNic.fromJson(Map<String, dynamic> json) =>
-      _$VirtNicFromJson(json);
 }
 
 /// A graphics device in the guest's configuration.
 @freezed
 abstract class VirtGraphics with _$VirtGraphics {
-  @JsonSerializable(fieldRename: FieldRename.snake)
   const factory VirtGraphics({
     /// `vnc`, `spice`, ...; PVE's `vga` type (`std`, `qxl`, `serial0`).
     @Default('') String kind,
@@ -83,15 +70,11 @@ abstract class VirtGraphics with _$VirtGraphics {
     String? listen,
     String? socket,
   }) = _VirtGraphics;
-
-  factory VirtGraphics.fromJson(Map<String, dynamic> json) =>
-      _$VirtGraphicsFromJson(json);
 }
 
 /// Where a running libvirt guest's display listens (`virsh domdisplay`).
 @freezed
 abstract class VirtDisplay with _$VirtDisplay {
-  @JsonSerializable(fieldRename: FieldRename.snake)
   const factory VirtDisplay({
     required String uri,
     required String protocol,
@@ -102,9 +85,6 @@ abstract class VirtDisplay with _$VirtDisplay {
     int? tlsPort,
     String? socket,
   }) = _VirtDisplay;
-
-  factory VirtDisplay.fromJson(Map<String, dynamic> json) =>
-      _$VirtDisplayFromJson(json);
 }
 
 /// Phase 1 guest detail: disks, NICs, display, and which consoles open.
@@ -124,5 +104,4 @@ abstract class VirtGuestDetail with _$VirtGuestDetail {
     /// libvirt machine type, or PVE `ostype`.
     String? machine,
   }) = _VirtGuestDetail;
-
 }

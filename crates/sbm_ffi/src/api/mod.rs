@@ -29,3 +29,6 @@ pub mod ssh_asym;
 pub mod tmux;
 pub mod users;
 pub mod virt;
+pub mod virt_libvirt;
+pub mod virt_model;
+pub mod virt_view;

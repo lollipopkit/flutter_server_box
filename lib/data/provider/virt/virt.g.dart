@@ -178,7 +178,7 @@ final class VirtHostsProvider
   }
 }
 
-String _$virtHostsHash() => r'de85bd282292f1a8e6e45780750b4d2b70e753bf';
+String _$virtHostsHash() => r'b0510fde851465760c88ef795579cb1b6d8c9b99';
 
 /// Which servers are virtualization hosts.
 ///

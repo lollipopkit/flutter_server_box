@@ -182,6 +182,7 @@ import 'package:server_box/data/provider/virt/libvirt_backend.dart';
 import 'package:server_box/data/provider/virt/pve_backend.dart';
 import 'package:server_box/src/rust/api/create.dart' as cr;
 import 'package:server_box/src/rust/api/virt.dart' as ffi;
+import 'package:server_box/src/rust/api/virt_libvirt.dart' as vl;
 
 import '../helpers/rust_lib_helper.dart';
 import '../helpers/spi_fixture.dart';
@@ -4484,22 +4485,20 @@ Future<void> _libvirtCloudImages() async {
       final seed = hw.disks.singleWhere((d) => d.cloudInit).source!;
       final one = await virt.cloudInit(g);
       expect(one.nics, 1);
-      final json = cr.virtLibvirtCloudInit(
-        ciJson: jsonEncode(
-          VirtRust.cloudInitJson(
-            VirtCloudInit(user: 'sbxe', password: login.password, sshKeys: login.publicKey, hostname: g.name),
-          ),
+      final ci = cr.virtLibvirtCloudInit(
+        ci: VirtRust.cloudInitFfi(
+          VirtCloudInit(user: 'sbxe', password: login.password, sshKeys: login.publicKey, hostname: g.name),
         ),
         name: g.name,
         mac: mac1,
-        extraNetworksJson: jsonEncode([
-          {
-            'mac': mac2,
-            'ipv4': {'address': '10.231.79.10/24', 'gateway': null},
-            'dns': <String>[],
-            'search': <String>[],
-          },
-        ]),
+        extraNetworks: [
+          vl.VirtCiNetwork(
+            mac: mac2,
+            ipv4: const vl.VirtCiIpv4(address: '10.231.79.10/24'),
+            dns: const [],
+            search: const [],
+          ),
+        ],
         passwordExpire: false,
       );
       final out = (await execSshE2e(
@@ -4508,7 +4507,7 @@ Future<void> _libvirtCloudImages() async {
         Uint8List.fromList(utf8.encode(ffi.virtSeedUpdateScript(
           seed: seed,
           revision: one.revision,
-          cloudInitJson: json,
+          cloudInit: ci,
         ))),
       )).stdout;
       ffi.parseVirtSeedUpdate(raw: out);

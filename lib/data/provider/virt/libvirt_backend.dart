@@ -10,7 +10,6 @@ import 'package:server_box/core/utils/privileged_exec.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
-import 'package:server_box/data/model/virt/libvirt.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_backup.dart';
 import 'package:server_box/data/model/virt/virt_backup_schedule.dart';
@@ -29,6 +28,9 @@ import 'package:server_box/src/rust/api/pve.dart' show PveError;
 import 'package:server_box/src/rust/api/resource.dart' as res;
 import 'package:server_box/src/rust/api/script.dart' as script_ffi;
 import 'package:server_box/src/rust/api/virt.dart' as ffi;
+import 'package:server_box/src/rust/api/virt_libvirt.dart' as vl;
+import 'package:server_box/src/rust/api/virt_model.dart' as vm;
+import 'package:server_box/src/rust/api/virt_view.dart' as vv;
 
 /// libvirt through `virsh`, run by `ServerNotifier.ensureExec()` — so over
 /// SSH, over a monitor agent that grants access, or on this device.
@@ -161,24 +163,21 @@ class LibvirtBackend implements VirtBackend {
   /// A daemon refusing this account still makes this a libvirt host: the
   /// error is thrown, and the host list counts [VirtErrType.permissionDenied]
   /// and the sudo types as "found".
-  Future<VirtHostProbeResult> probe() async {
-    final json = await _run(ffi.virtProbeScript(), ffi.parseVirtProbeJson);
-    return VirtHostProbeResult.fromJson(_decode(json));
-  }
+  Future<vl.VirtHostProbe> probe() => _run(ffi.virtProbeScript(), ffi.virtLibvirtProbe);
 
   @override
   Future<VirtSnapshot> load() async {
-    // Parsed here as well as by [_rates] below: the parse is what tells a
+    // Checked here as well as by [_rates] below: the check is what tells a
     // refusal [_run] answers with sudo from a listing.
     final raw = await _run(ffi.virtOverviewScript(), ({required String raw}) async {
-      await ffi.parseVirtOverviewJson(raw: raw);
+      await ffi.virtOverviewCheck(raw: raw);
       return raw;
     });
     final at = _now();
     await _readPoolTypes();
-    final String json;
+    final vv.VirtHostReport view;
     try {
-      json = _rates.view(
+      view = _rates.view(
         raw: raw,
         atMs: at.millisecondsSinceEpoch,
         poolTypes: _poolTypes,
@@ -187,7 +186,7 @@ class LibvirtBackend implements VirtBackend {
     } on ffi.VirtFfiError catch (e) {
       throw _toErr(e);
     }
-    return VirtRust.snapshot(jsonDecode(json), serverId: serverId);
+    return VirtRust.snapshot(view, serverId: serverId);
   }
 
   @override
@@ -241,11 +240,9 @@ class LibvirtBackend implements VirtBackend {
 
   @override
   Future<VirtGuestDetail> detail(VirtGuest guest) async => VirtRust.detail(
-    _decode(
-      await _run(
-        ffi.virtDomainDetailScript(domain: guest.id),
-        ({required String raw}) async => ffi.virtLibvirtGuestDetail(raw: raw),
-      ),
+    await _run(
+      ffi.virtDomainDetailScript(domain: guest.id),
+      ({required String raw}) async => ffi.virtLibvirtGuestDetail(raw: raw),
     ),
   );
 
@@ -258,14 +255,7 @@ class LibvirtBackend implements VirtBackend {
           needsRoot: _viaSudo,
         );
       case VirtConsoleKind.vnc:
-        final info = LibvirtVncConsoleInfo.fromJson(
-          _decode(
-            await _run(
-              ffi.virtVncConsoleScript(domain: guest.id),
-              ffi.parseVirtVncConsoleJson,
-            ),
-          ),
-        );
+        final info = await _run(ffi.virtVncConsoleScript(domain: guest.id), ffi.virtLibvirtVncConsole);
         final display = info.display;
         final port = display?.port;
         if (display == null || display.protocol != 'vnc' || port == null) {
@@ -298,9 +288,9 @@ class LibvirtBackend implements VirtBackend {
 
   @override
   Future<List<VirtGuestSnapshot>> snapshots(VirtGuest guest) async =>
-      VirtRust.snapshots(jsonDecode(await _snapshotsJson(guest)));
+      VirtRust.snapshots(await _snapshotList(guest));
 
-  Future<String> _snapshotsJson(VirtGuest guest) => _run(
+  Future<List<vv.Snapshot>> _snapshotList(VirtGuest guest) => _run(
     ffi.virtSnapshotsScript(domain: guest.id),
     ({required String raw}) async => ffi.virtLibvirtSnapshots(raw: raw),
   );
@@ -309,7 +299,7 @@ class LibvirtBackend implements VirtBackend {
   Future<String> _chainRaw(VirtGuest guest) => _run(
     ffi.virtSnapChainScript(domain: guest.id),
     ({required String raw}) async {
-      await ffi.parseVirtSnapChainJson(raw: raw);
+      await ffi.virtSnapChainCheck(raw: raw);
       return raw;
     },
   );
@@ -321,7 +311,7 @@ class LibvirtBackend implements VirtBackend {
   @override
   Future<VirtSnapChain> snapshotChain(VirtGuest guest) async {
     final raw = await _chainRaw(guest);
-    final snaps = await _snapshotsJson(guest);
+    final snaps = await _snapshotList(guest);
     List<VirtStoragePool> pools;
     try {
       pools = await storagePools();
@@ -331,12 +321,10 @@ class LibvirtBackend implements VirtBackend {
     }
     try {
       return VirtRust.chain(
-        jsonDecode(
-          ffi.virtLibvirtChain(
-            chainRaw: raw,
-            snapshotsJson: snaps,
-            pools: [for (final p in pools) virtPoolRef(p)],
-          ),
+        ffi.virtLibvirtChain(
+          chainRaw: raw,
+          snapshots: snaps,
+          pools: [for (final p in pools) virtPoolRef(p)],
         ),
       );
     } on ffi.VirtFfiError catch (e) {
@@ -362,27 +350,12 @@ class LibvirtBackend implements VirtBackend {
   /// itself rather than anyone configuring them.
   @override
   Future<List<VirtSnapDiff>> snapshotDiff(VirtGuest guest, String name) async {
-    final json = await _run(
-      ffi.virtSnapDiffScript(domain: guest.id, name: name),
-      ffi.parseVirtSnapDiffJson,
+    return VirtRust.diff(
+      await _run(
+        ffi.virtSnapDiffScript(domain: guest.id, name: name),
+        ({required String raw}) async => ffi.virtLibvirtSnapDiff(raw: raw),
+      ),
     );
-    return [
-      for (final d in _decodeList(json))
-        VirtSnapDiff(
-          group: switch (LibvirtSnapDiff.fromJson(d).group) {
-            'cpu' => VirtSnapDiffGroup.cpu,
-            'memory' => VirtSnapDiffGroup.memory,
-            'disks' => VirtSnapDiffGroup.disks,
-            'interfaces' => VirtSnapDiffGroup.nics,
-            'firmware' => VirtSnapDiffGroup.firmware,
-            'boot' => VirtSnapDiffGroup.boot,
-            _ => VirtSnapDiffGroup.other,
-          },
-          key: LibvirtSnapDiff.fromJson(d).key,
-          before: LibvirtSnapDiff.fromJson(d).before,
-          after: LibvirtSnapDiff.fromJson(d).after,
-        ),
-    ];
   }
 
   /// An internal snapshot: with the memory of an active domain, which QEMU
@@ -413,27 +386,17 @@ class LibvirtBackend implements VirtBackend {
       );
       return;
     }
-    // One read of the chain answers both: whether an external snapshot can
-    // be taken, and the files the overlays go on.
-    final raw = await _chainRaw(guest);
-    final why = ffi.virtExternalSnapshotRefusal(
-      chainJson: await ffi.parseVirtSnapChainJson(raw: raw),
-    );
-    if (why != null) {
-      throw VirtErr(type: VirtErrType.unsupported, message: why);
-    }
     // Where the overlays go. **No pool picked: no `--diskspec` at all** —
     // libvirt then names each overlay `<disk>.<snapshot>` beside the disk it
     // backs. A pool the user picked is resolved to its directory once.
     final dir = overlayPool == null ? null : await _poolTarget(overlayPool);
-    final overlays = [
-      for (final o in ffi.virtLibvirtOverlays(
-        chainRaw: raw,
-        name: name,
-        dir: dir,
-      ))
-        (o.target, o.path),
-    ];
+    // One read of the chain answers both: whether an external snapshot can
+    // be taken, and the files the overlays go on.
+    final plan = ffi.virtLibvirtExternalSnapshot(chainRaw: await _chainRaw(guest), name: name, dir: dir);
+    if (plan.refusal case final why?) {
+      throw VirtErr(type: VirtErrType.unsupported, message: why);
+    }
+    final overlays = [for (final o in plan.overlays) (o.target, o.path)];
     await _action1(
       ffi.virtSnapshotExternalScript(
         domain: guest.id,
@@ -553,18 +516,16 @@ class LibvirtBackend implements VirtBackend {
   @override
   Future<VirtCreateOptions> createOptions() async {
     final (host, firmware) = await _createHost();
-    return VirtRust.createOptions(
-      jsonDecode(_rule(() => cr.virtLibvirtCreateOptions(hostJson: host, firmwareJson: firmware))),
-    );
+    return VirtRust.createOptions(cr.virtLibvirtCreateOptions(host: host, firmware: firmware));
   }
 
-  /// `domcapabilities` (`VirtCreateHost` JSON) and the firmware descriptors
-  /// (best effort: without them, Secure Boot is not offered).
-  Future<(String, String)> _createHost() async {
-    final host = await _run(ffi.virtCreateHostScript(), ffi.parseVirtCreateHostJson);
-    var firmware = '[]';
+  /// `domcapabilities` and the firmware descriptors (best effort: without
+  /// them, Secure Boot is not offered).
+  Future<(vl.VirtCreateHost, List<vl.FirmwareDescriptor>)> _createHost() async {
+    final host = await _run(ffi.virtCreateHostScript(), ffi.virtLibvirtCreateHost);
+    var firmware = const <vl.FirmwareDescriptor>[];
     try {
-      firmware = await _run(ffi.virtFirmwareScript(), ffi.parseVirtFirmwareJson);
+      firmware = await _run(ffi.virtFirmwareScript(), ffi.virtLibvirtFirmware);
     } catch (e, s) {
       Loggers.app.info('Virtualization firmware descriptors: $e', e, s);
     }
@@ -594,47 +555,45 @@ class LibvirtBackend implements VirtBackend {
     final pools = await storagePools();
     final networks = await this.networks();
     // The volumes the spec names, as their pools list them now.
-    Future<String?> volume(VirtPoolVolume? v) async {
+    Future<vm.Volume?> volume(VirtPoolVolume? v) async {
       if (v == null) return null;
       final pool = pools.firstWhereOrNull((p) => p.id == v.pool.id);
       if (pool == null) return null;
       final now = (await _volumes(pool)).$1.firstWhereOrNull((x) => x.id == v.volume.id);
-      return now == null ? null : jsonEncode(VirtRust.volumeJson(now));
+      return now == null ? null : VirtRust.volumeFfi(now);
     }
-    final mediaJson = await volume(spec.media);
-    final imageJson = await volume(spec.image);
+    final media = await volume(spec.media);
+    final image = await volume(spec.image);
     final lvSpec = _rule(
       () => cr.virtLibvirtCreateSpec(
-        specJson: jsonEncode(VirtRust.specJson(spec)),
-        hostJson: host,
-        firmwareJson: firmware,
-        guestsJson: jsonEncode([for (final g in guests) VirtRust.guestJson(g)]),
-        poolsJson: jsonEncode([for (final p in pools) VirtRust.poolJson(p)]),
-        networksJson: jsonEncode([for (final n in networks) VirtRust.networkJson(n)]),
-        mediaJson: mediaJson,
-        imageJson: imageJson,
+        spec: VirtRust.specFfi(spec),
+        host: host,
+        firmware: firmware,
+        guests: [for (final g in guests) VirtRust.guestFfi(g)],
+        pools: [for (final p in pools) VirtRust.poolFfi(p)],
+        networks: [for (final n in networks) VirtRust.networkFfi(n)],
+        media: media,
+        image: image,
         seedTools: seedTools,
       ),
     );
-    final String made;
+    final vl.VirtCreateVolumes made;
     try {
       made = await _run(
-        _script(() => ffi.virtCreateVolumeScript(specJson: lvSpec)),
-        ffi.parseVirtCreateVolumesJson,
+        _script(() => ffi.virtCreateVolumeScript(spec: lvSpec)),
+        ffi.virtLibvirtCreateVolumes,
         action: true,
       );
     } on VirtErr catch (e) {
       throw _existsOr(e);
     }
-    final defined = _rule(() => cr.virtLibvirtWithVolumes(specJson: lvSpec, madeJson: made));
+    final defined = cr.virtLibvirtWithVolumes(spec: lvSpec, made: made);
     final created = await _run(
-      _script(() => ffi.virtDefineScript(specJson: defined)),
-      ffi.parseVirtCreateJson,
+      _script(() => ffi.virtDefineScript(spec: defined)),
+      ffi.virtLibvirtDefineResult,
       action: true,
     );
-    return VirtRust.created(
-      jsonDecode(_rule(() => cr.virtLibvirtCreated(specJson: defined, madeJson: made, createdJson: created))),
-    );
+    return VirtRust.created(cr.virtLibvirtCreated(spec: defined, made: made, created: created));
   }
 
   /// Snapshots' metadata and a managed save go with it; with [removeDisks]
@@ -653,29 +612,27 @@ class LibvirtBackend implements VirtBackend {
     }
     var plan = const cr.VirtDeletePlan(targets: [], pools: [], files: [], kept: []);
     if (removeDisks) {
-      final detail = await _run(
-        ffi.virtDomainDetailScript(domain: guest.id),
-        ffi.parseVirtDomainDetailJson,
-      );
+      final detail = await _run(ffi.virtDomainDetailScript(domain: guest.id), ffi.virtLibvirtDomainDetail);
       final pools = await storagePools();
-      final storage = _storageJson!;
+      final storage = _storage!;
       final volumes = [
         for (final p in pools)
           if (p.active)
-            [p.id, [for (final v in (await _volumes(p)).$1) VirtRust.volumeJson(v)]],
+            cr.VirtPoolVolumes(
+              pool: p.id,
+              volumes: [for (final v in (await _volumes(p)).$1) VirtRust.volumeFfi(v)],
+            ),
       ];
-      final snapshots = await _snapshotsJson(guest);
-      final chain = _rule(() => cr.virtLibvirtDeleteNeedsChain(snapshotsJson: snapshots))
-          ? await _chainRaw(guest)
-          : null;
+      final snapshots = await _snapshotList(guest);
+      final chain = cr.virtLibvirtDeleteNeedsChain(snapshots: snapshots) ? await _chainRaw(guest) : null;
       plan = _rule(
         () => cr.virtLibvirtDeletePlan(
           id: guest.id,
           name: guest.name,
-          detailJson: detail,
-          storageJson: storage,
-          volumesJson: jsonEncode(volumes),
-          snapshotsJson: snapshots,
+          detail: detail,
+          storage: storage,
+          volumes: volumes,
+          snapshots: snapshots,
           chainRaw: chain,
         ),
       );
@@ -724,42 +681,35 @@ class LibvirtBackend implements VirtBackend {
     await storagePools();
     final spec = _rule(
       () => cr.virtLibvirtCloneSpec(
-        guestJson: jsonEncode(VirtRust.guestJson(guest)),
-        hardwareJson: hardware,
-        requestJson: jsonEncode(VirtRust.cloneRequestJson(request)),
-        guestsJson: jsonEncode([for (final g in guests) VirtRust.guestJson(g)]),
-        storageJson: _storageJson!,
+        guest: VirtRust.guestFfi(guest),
+        hardware: hardware,
+        request: VirtRust.cloneRequestFfi(request),
+        guests: [for (final g in guests) VirtRust.guestFfi(g)],
+        storage: _storage!,
       ),
     );
     final List<String> paths;
     try {
-      paths = [
-        for (final p in jsonDecode(
-          await _run(
-            _script(() => ffi.virtCloneVolumesScript(specJson: spec)),
-            ({required String raw}) async => jsonEncode(await ffi.parseVirtCloneVolumes(raw: raw)),
-            action: true,
-          ),
-        ) as List)
-          p as String,
-      ];
+      paths = await _run(
+        _script(() => ffi.virtCloneVolumesScript(spec: spec)),
+        ffi.parseVirtCloneVolumes,
+        action: true,
+      );
     } on VirtErr catch (e) {
       throw _existsOr(e);
     }
-    final created = _decode(
-      await _run(
-        _script(
-          () => ffi.virtCloneDefineScript(
-            baseXml: _decode(hardware)['config_xml'] as String,
-            name: request.name,
-            disksJson: _rule(() => cr.virtLibvirtCloneDisks(specJson: spec, paths: paths)),
-          ),
+    final created = await _run(
+      _script(
+        () => ffi.virtCloneDefineScript(
+          baseXml: hardware.configXml,
+          name: request.name,
+          disks: cr.virtLibvirtCloneDisks(spec: spec, paths: paths),
         ),
-        ffi.parseVirtCreateJson,
-        action: true,
       ),
+      ffi.virtLibvirtDefineResult,
+      action: true,
     );
-    return created['uuid'] as String? ?? request.name;
+    return created.uuid ?? request.name;
   }
 
   /// libvirt has no templates: a domain is a domain, and a copy of one is a
@@ -845,15 +795,13 @@ class LibvirtBackend implements VirtBackend {
   /// The last storage listing: which volumes each pool has and every
   /// domain's disks, which [volumes] needs and does not list again — as
   /// `sbm_virt` gave it, and read.
-  LibvirtStorage? _storage;
-  String? _storageJson;
+  vl.VirtStorage? _storage;
 
   @override
   Future<List<VirtStoragePool>> storagePools() async {
-    final json = await _run(ffi.virtStorageScript(), ffi.parseVirtStorageJson);
-    _storage = LibvirtStorage.fromJson(_decode(json));
-    _storageJson = json;
-    return VirtRust.pools(jsonDecode(res.virtLibvirtPools(storageJson: json)));
+    final storage = await _run(ffi.virtStorageScript(), ffi.virtLibvirtStorage);
+    _storage = storage;
+    return VirtRust.pools(res.virtLibvirtPools(storage: storage));
   }
 
   /// `vol-dumpxml` for each volume the last [storagePools] listed in [pool]
@@ -873,9 +821,7 @@ class LibvirtBackend implements VirtBackend {
     if (missing && pool.active) {
       await _run(
         _script(
-          () => ffi.virtResourceScript(
-            opJson: jsonEncode({'op': 'pool_refresh', 'name': pool.id}),
-          ),
+          () => ffi.virtResourceScript(op: vl.VirtResourceOp.poolRefresh(name: pool.id)),
         ),
         _parseResource,
         action: true,
@@ -891,54 +837,39 @@ class LibvirtBackend implements VirtBackend {
       every.addAll((await _volumes(p)).$1);
     }
     return VirtRust.volumes(
-      jsonDecode(
-        res.virtLibvirtWithBacks(
-          volumesJson: jsonEncode([for (final v in read) VirtRust.volumeJson(v)]),
-          everyJson: jsonEncode([for (final v in every) VirtRust.volumeJson(v)]),
-        ),
+      res.virtLibvirtWithBacks(
+        volumes: [for (final v in read) VirtRust.volumeFfi(v)],
+        every: [for (final v in every) VirtRust.volumeFfi(v)],
       ),
     );
   }
 
   /// The pools as the last listing has them, listed when there is none.
   Future<List<VirtStoragePool>> _pools() async {
-    final json = _storageJson;
-    if (json == null) return storagePools();
-    return VirtRust.pools(jsonDecode(res.virtLibvirtPools(storageJson: json)));
+    final storage = _storage;
+    if (storage == null) return storagePools();
+    return VirtRust.pools(res.virtLibvirtPools(storage: storage));
   }
 
   /// [pool]'s volumes as the last listing has them, and whether one of them
   /// did not read.
   Future<(List<VirtVolume>, bool)> _volumes(VirtStoragePool pool) async {
-    if (_storageJson == null) await storagePools();
-    final storageJson = _storageJson!;
-    final listed = _storage!.pools
-        .firstWhereOrNull((p) => p.name == pool.id)
-        ?.volumes;
+    if (_storage == null) await storagePools();
+    final storage = _storage!;
+    final listed = storage.pools.firstWhereOrNull((p) => p.name == pool.id)?.volumes;
     if (listed == null || listed.isEmpty) return (const <VirtVolume>[], false);
-    final json = await _run(
-      ffi.virtVolumesScript(
-        pool: pool.id,
-        names: [for (final v in listed) v.name],
-      ),
-      ({required String raw}) async => res.virtLibvirtVolumes(
-        raw: raw,
-        pool: pool.id,
-        storageJson: storageJson,
+    final read = VirtRust.volumes(
+      await _run(
+        ffi.virtVolumesScript(pool: pool.id, names: [for (final v in listed) v.name]),
+        ({required String raw}) async => res.virtLibvirtVolumes(raw: raw, pool: pool.id, storage: storage),
       ),
     );
-    final read = VirtRust.volumes(jsonDecode(json));
     return (read, read.length < listed.length);
   }
 
   @override
   Future<List<VirtNetwork>> networks() async => VirtRust.networks(
-    jsonDecode(
-      await _run(
-        ffi.virtNetworksScript(),
-        ({required String raw}) async => res.virtLibvirtNetworks(raw: raw),
-      ),
-    ),
+    await _run(ffi.virtNetworksScript(), ({required String raw}) async => res.virtLibvirtNetworks(raw: raw)),
   );
 
   // ---------------------------------------------------------------------------
@@ -969,10 +900,10 @@ class LibvirtBackend implements VirtBackend {
       final res.VirtResourceScript script;
       try {
         script = res.virtLibvirtResourceScript(
-          changeJson: jsonEncode(VirtRust.changeJson(change)),
-          poolsJson: jsonEncode([for (final p in pools) VirtRust.poolJson(p)]),
-          networksJson: jsonEncode([for (final n in networks) VirtRust.networkJson(n)]),
-          volumesJson: jsonEncode([for (final v in volumes) VirtRust.volumeJson(v)]),
+          change: VirtRust.changeFfi(change),
+          pools: [for (final p in pools) VirtRust.poolFfi(p)],
+          networks: [for (final n in networks) VirtRust.networkFfi(n)],
+          volumes: [for (final v in volumes) VirtRust.volumeFfi(v)],
         );
       } on PveError catch (e) {
         throw VirtRust.error(e);
@@ -987,7 +918,6 @@ class LibvirtBackend implements VirtBackend {
     } finally {
       // What a pool holds, and which, is listed again.
       _storage = null;
-      _storageJson = null;
     }
   }
 
@@ -1022,19 +952,15 @@ class LibvirtBackend implements VirtBackend {
       throw const VirtErr(type: VirtErrType.unsupported);
     }
     final pool = upload.pool.id;
-    Future<void> op(Map<String, Object?> json) => _run(
-      _script(() => ffi.virtResourceScript(opJson: jsonEncode(json))),
+    Future<void> op(vl.VirtResourceOp o) => _run(
+      _script(() => ffi.virtResourceScript(op: o)),
       _parseResource,
       action: true,
     );
     try {
-      await op({
-        'op': 'vol_create',
-        'pool': pool,
-        'name': upload.name,
-        'bytes': upload.size,
-        'format': 'raw',
-      });
+      await op(
+        vl.VirtResourceOp.volCreate(pool: pool, name: upload.name, bytes: BigInt.from(upload.size), format: 'raw'),
+      );
     } on VirtErr catch (e) {
       throw _existsOr(e);
     }
@@ -1084,10 +1010,9 @@ class LibvirtBackend implements VirtBackend {
       }
     } finally {
       _storage = null;
-      _storageJson = null;
       if (!done) {
         try {
-          await op({'op': 'vol_delete', 'pool': pool, 'name': upload.name});
+          await op(vl.VirtResourceOp.volDelete(pool: pool, name: upload.name));
         } catch (e, s) {
           Loggers.app.warning('Deleting the unfinished upload ${upload.name}', e, s);
         }
@@ -1271,7 +1196,6 @@ class LibvirtBackend implements VirtBackend {
   Future<void> reset() async {
     _rates.clear();
     _storage = null;
-    _storageJson = null;
   }
 
   @override
@@ -1279,7 +1203,6 @@ class LibvirtBackend implements VirtBackend {
     _sudoPassword = null;
     _rates.clear();
     _storage = null;
-    _storageJson = null;
   }
 
   // ---------------------------------------------------------------------------
@@ -1287,13 +1210,11 @@ class LibvirtBackend implements VirtBackend {
   // ---------------------------------------------------------------------------
 
   /// Both definitions, autostart, the host's CPUs and memory, and each
-  /// disk's size, in one round trip, as `sbm_virt` gave them
-  /// (`VirtHardwareInfo` JSON, which carries the display passwords and so
-  /// stays here). See `sbm_virt::libvirt::hardware_script`.
-  Future<String> _hardwareRead(VirtGuest guest) => _run(
-    ffi.virtHardwareScript(domain: guest.id),
-    ffi.parseVirtHardwareJson,
-  );
+  /// disk's size, in one round trip, as `sbm_virt` gave them (it carries the
+  /// display passwords, and so stays here). See
+  /// `sbm_virt::libvirt::hardware_script`.
+  Future<vl.VirtHardwareInfo> _hardwareRead(VirtGuest guest) =>
+      _run(ffi.virtHardwareScript(domain: guest.id), ffi.virtLibvirtHardwareRead);
 
   /// The persistent definition with what the running one has instead as
   /// pending (`sbm_virt::libvirt::hardware::hardware_of`); its revision is
@@ -1301,9 +1222,7 @@ class LibvirtBackend implements VirtBackend {
   @override
   Future<VirtHardware> hardware(VirtGuest guest) async {
     final info = await _hardwareRead(guest);
-    return VirtRust.hardware(
-      jsonDecode(_rule(() => hw.virtLibvirtHardware(infoJson: info, name: guest.name))),
-    );
+    return VirtRust.hardware(hw.virtLibvirtHardware(info: info, name: guest.name));
   }
 
   /// What [change] is checked against and made with: the host's pools, its
@@ -1348,32 +1267,28 @@ class LibvirtBackend implements VirtBackend {
     final (pools, networks, volumes) = await _hwListing(change);
     final made = _rule(
       () => hw.virtLibvirtHwChange(
-        infoJson: info,
+        info: info,
         name: guest.name,
         revision: base.revision,
-        changeJson: jsonEncode(VirtRust.hwChangeJson(change)),
-        poolsJson: jsonEncode([for (final p in pools) VirtRust.poolJson(p)]),
-        networksJson: jsonEncode([for (final n in networks) VirtRust.networkJson(n)]),
-        volumesJson: jsonEncode([for (final v in volumes) VirtRust.volumeJson(v)]),
+        change: VirtRust.hwChangeFfi(change),
+        pools: [for (final p in pools) VirtRust.poolFfi(p)],
+        networks: [for (final n in networks) VirtRust.networkFfi(n)],
+        volumes: [for (final v in volumes) VirtRust.volumeFfi(v)],
       ),
     );
-    final read = _decode(info);
-    return VirtRust.hwOutcome(
-      jsonDecode(
-        await _run(
-          _script(
-            () => ffi.virtHardwareChangeScript(
-              domain: guest.id,
-              running: read['live'] != null,
-              baseXml: read['config_xml'] as String?,
-              changeJson: made,
-            ),
-          ),
-          ffi.parseVirtHardwareChangeJson,
-          action: true,
+    final o = await _run(
+      _script(
+        () => ffi.virtHardwareChangeScript(
+          domain: guest.id,
+          running: info.live != null,
+          baseXml: info.configXml,
+          change: made,
         ),
       ),
+      ffi.virtLibvirtHardwareOutcome,
+      action: true,
     );
+    return VirtHwOutcome(liveError: o.liveError, volumeKept: o.volumeKept);
   }
 
   /// Discards every pending change: the definition is written again from
@@ -1381,20 +1296,17 @@ class LibvirtBackend implements VirtBackend {
   @override
   Future<void> revertPending(VirtGuest guest, VirtHardware base) async {
     final info = await _hardwareRead(guest);
-    final made = _rule(() => hw.virtLibvirtHwRevert(infoJson: info, revision: base.revision));
+    final made = _rule(() => hw.virtLibvirtHwRevert(info: info, revision: base.revision));
     await _run(
       _script(
         () => ffi.virtHardwareChangeScript(
           domain: guest.id,
           running: true,
-          baseXml: _decode(info)['config_xml'] as String?,
-          changeJson: made,
+          baseXml: info.configXml,
+          change: made,
         ),
       ),
-      ({required String raw}) async {
-        await ffi.parseVirtHardwareChangeJson(raw: raw);
-        return '';
-      },
+      ffi.virtLibvirtHardwareOutcome,
       action: true,
     );
   }
@@ -1402,33 +1314,24 @@ class LibvirtBackend implements VirtBackend {
   /// The domain's own seed, read back from its volume (`vol-download`, in
   /// one round trip), with the domain's NICs: the seed is what the system
   /// reads, so it is the source of what is shown.
-  Future<({String path, String read, List<String> macs})> _seedRead(VirtGuest guest) async {
-    final info = _decode(await _hardwareRead(guest));
-    final config = (info['config'] as Map).cast<String, dynamic>();
-    final path = config['seed'] as String?;
+  Future<({String path, vl.VirtSeedRead read, List<String> macs})> _seedRead(VirtGuest guest) async {
+    final config = (await _hardwareRead(guest)).config;
+    final path = config.seed;
     if (path == null) {
       throw VirtErr(
         type: VirtErrType.unsupported,
         message: '${guest.name} has no cloud-init seed of this app',
       );
     }
-    final read = await _run(
-      _script(() => ffi.virtSeedReadScript(seed: path)),
-      ffi.parseVirtSeedReadJson,
-    );
-    final macs = [
-      for (final n in (config['nics'] as List? ?? const []).whereType<Map>()) '${n['mac']}',
-    ];
-    return (path: path, read: read, macs: macs);
+    final read = await _run(_script(() => ffi.virtSeedReadScript(seed: path)), ffi.virtLibvirtSeedRead);
+    return (path: path, read: read, macs: [for (final n in config.nics) n.mac]);
   }
 
   /// The seed as the view shows it: never the hash, only that there is one.
   @override
   Future<VirtCloudInitState> cloudInit(VirtGuest guest) async {
     final seed = await _seedRead(guest);
-    return VirtRust.cloudInitState(
-      jsonDecode(_rule(() => hw.virtLibvirtCloudInitState(readJson: seed.read, macs: seed.macs))),
-    );
+    return VirtRust.cloudInitState(hw.virtLibvirtCloudInitState(read: seed.read, macs: seed.macs));
   }
 
   /// A new seed in place of the old, on the same volume (so the domain and
@@ -1445,10 +1348,10 @@ class LibvirtBackend implements VirtBackend {
     final seed = await _seedRead(guest);
     final ci = _rule(
       () => hw.virtLibvirtCloudInitUpdate(
-        readJson: seed.read,
+        read: seed.read,
         name: guest.name,
         macs: seed.macs,
-        editJson: jsonEncode(VirtRust.cloudInitEditJson(base, edit)),
+        edit: VirtRust.cloudInitEditFfi(base, edit),
       ),
     );
     await _run(
@@ -1456,7 +1359,7 @@ class LibvirtBackend implements VirtBackend {
         () => ffi.virtSeedUpdateScript(
           seed: seed.path,
           revision: base.revision,
-          cloudInitJson: ci,
+          cloudInit: ci,
           tools: seedTools,
         ),
       ),
@@ -1472,8 +1375,8 @@ class LibvirtBackend implements VirtBackend {
   /// guest. See `sbm_virt::libvirt::host_devices_script`.
   @override
   Future<VirtHostDevices> hostDevices(VirtGuest guest) async {
-    final json = await _run(ffi.virtHostDevicesScript(), ffi.parseVirtHostDevicesJson);
-    return VirtRust.hostDevices(jsonDecode(_rule(() => hw.virtLibvirtHostDevices(devicesJson: json))));
+    final devices = await _run(ffi.virtHostDevicesScript(), ffi.virtLibvirtHostDevicesRead);
+    return VirtRust.hostDevices(hw.virtLibvirtHostDevices(devices: devices));
   }
 
   // ---------------------------------------------------------------------------
@@ -1609,29 +1512,6 @@ class LibvirtBackend implements VirtBackend {
     );
   }
 
-  static Map<String, dynamic> _decode(String json) {
-    try {
-      return jsonDecode(json) as Map<String, dynamic>;
-    } catch (e) {
-      throw VirtErr(
-        type: VirtErrType.invalidResponse,
-        message: '$e',
-        cause: e,
-      );
-    }
-  }
-
-  static List<Map<String, dynamic>> _decodeList(String json) {
-    try {
-      return (jsonDecode(json) as List).cast<Map<String, dynamic>>();
-    } catch (e) {
-      throw VirtErr(
-        type: VirtErrType.invalidResponse,
-        message: '$e',
-        cause: e,
-      );
-    }
-  }
 
 }
 

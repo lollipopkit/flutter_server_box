@@ -8,6 +8,7 @@ import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/model/virt/virt_rust.dart';
+import 'package:server_box/src/rust/api/virt_model.dart' show VolumeRef;
 
 import '../../helpers/rust_lib_helper.dart';
 
@@ -58,18 +59,18 @@ void main() {
 
   test('a spec crosses by id: pool, volumes, keys by line, cloud-init', () {
     const iso = VirtVolume(id: 'd.iso', name: 'd.iso');
-    final json = VirtRust.specJson(
+    final spec = VirtRust.specFfi(
       _spec(
         media: (pool: _isoPool, volume: iso),
         sshKeys: ' ssh-ed25519 AAAA a \n\nssh-ed25519 BBBB b\n',
         cloudInit: const VirtCloudInit(user: 'u', sshKeys: 'ssh-ed25519 AAAA a'),
       ),
     );
-    expect(json['storage'], 'images');
-    expect(json['media'], {'pool': 'isos', 'volume': 'd.iso'});
-    expect(json['image'], isNull);
-    expect(json['ssh_keys'], ['ssh-ed25519 AAAA a', 'ssh-ed25519 BBBB b']);
-    expect((json['cloud_init']! as Map)['ssh_keys'], ['ssh-ed25519 AAAA a']);
+    expect(spec.storage, 'images');
+    expect(spec.media, const VolumeRef(pool: 'isos', volume: 'd.iso'));
+    expect(spec.image, isNull);
+    expect(spec.sshKeys, ['ssh-ed25519 AAAA a', 'ssh-ed25519 BBBB b']);
+    expect(spec.cloudInit!.sshKeys, ['ssh-ed25519 AAAA a']);
   });
 
   test('an issue name maps back; an unknown one is unsupported', () {
