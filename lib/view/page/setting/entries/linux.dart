@@ -1,5 +1,8 @@
 part of '../entry.dart';
 
+/// A toolbar button's glyph, which is what each of a profile's actions is.
+const _linuxActionIconSize = 18.0;
+
 /// The Linux systems on this device: which ones there are, and where they get
 /// their bytes.
 ///
@@ -29,35 +32,11 @@ extension _Linux on _AppSettingsPageState {
   /// them would rebuild that card alone.
   List<SettingsGroup> _buildLinux() {
     return [
-      SettingsGroup(libL10n.system, [
-        if (Feature.linux.beta) _buildLinuxBeta(),
-        _buildLinuxProfiles(),
-      ]),
+      SettingsGroup(libL10n.system, [_buildLinuxProfiles()]),
       if (_buildLinuxShell() case final shell?)
         SettingsGroup(libL10n.terminal, [shell]),
       SettingsGroup(libL10n.network, [_buildLinuxMirror(), _buildLinuxDns()]),
     ];
-  }
-
-  /// That this is beta, at the top of the page that manages it.
-  ///
-  /// A row of its own as well as the mark on the title. The settings list
-  /// that reached here already carries the mark, and what a mark cannot say
-  /// is the part that matters — that nothing here is guaranteed to work.
-  ///
-  /// Stays after the warning before an install has been dismissed: that one is
-  /// asked once and can be turned off, and this page would then be the only
-  /// place left that says it.
-  SettingsRow _buildLinuxBeta() {
-    return SettingsRow(
-      'Beta',
-      () => ListTile(
-        leading: const Icon(Icons.science_outlined),
-        title: const Text('Beta'),
-        subtitle: Text(l10n.betaTip, style: UIs.textGrey),
-      ),
-      keywords: l10n.betaTip,
-    );
   }
 
   /// Every system installed, and a row to add another.
@@ -75,15 +54,22 @@ extension _Linux on _AppSettingsPageState {
   Widget _buildLinuxProfileList() {
     final profiles = Rootfs.profiles;
     final selected = Rootfs.selected;
+    final scheme = Theme.of(context).colorScheme;
     return Column(
       children: [
         for (final profile in profiles)
           ListTile(
-            leading: Icon(
-              profile.id == selected?.id
-                  ? Icons.radio_button_checked
-                  : Icons.radio_button_unchecked,
+            // The distribution's mark, as the terminal tab draws the same
+            // system. The current one is the row's selected state, with a
+            // check on the mark so it is not said by colour alone; a check
+            // after the actions took a column from every row.
+            leading: _linuxProfileLeading(
+              profile,
+              scheme,
+              current: profile.id == selected?.id,
             ),
+            selected: profile.id == selected?.id,
+            selectedTileColor: scheme.secondaryContainer,
             title: Text(profile.label),
             // What it is, under what it is called: the label is the user's and
             // says nothing about which distribution or which release.
@@ -99,6 +85,7 @@ extension _Linux on _AppSettingsPageState {
               children: [
                 if (Rootfs.isOutdated(profile))
                   IconButton(
+                    iconSize: _linuxActionIconSize,
                     icon: const Icon(Icons.update),
                     tooltip: libL10n.update,
                     onPressed: () async {
@@ -107,6 +94,7 @@ extension _Linux on _AppSettingsPageState {
                     },
                   ),
                 IconButton(
+                  iconSize: _linuxActionIconSize,
                   icon: const Icon(Icons.edit_outlined),
                   tooltip: libL10n.rename,
                   onPressed: () async {
@@ -115,6 +103,7 @@ extension _Linux on _AppSettingsPageState {
                   },
                 ),
                 IconButton(
+                  iconSize: _linuxActionIconSize,
                   icon: const Icon(Icons.delete_outline),
                   tooltip: libL10n.delete,
                   // The one coloured thing on this page, and it means what it
@@ -146,6 +135,49 @@ extension _Linux on _AppSettingsPageState {
               : null,
           trailing: const Icon(Icons.keyboard_arrow_right),
           onTap: _addProfile,
+        ),
+      ],
+    );
+  }
+
+  /// A profile's mark, and the check on it when it is [current].
+  ///
+  /// With marks turned off there is no mark to put it on: the check stands
+  /// alone, and the other rows keep its width so the titles line up.
+  Widget _linuxProfileLeading(
+    LinuxProfile profile,
+    ColorScheme scheme, {
+    required bool current,
+  }) {
+    final mark = linuxDistIcon(profile.distro);
+    if (mark == null) {
+      return SizedBox(
+        width: 24,
+        child: current ? Icon(Icons.check, color: scheme.primary) : null,
+      );
+    }
+    if (!current) return mark;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        mark,
+        Positioned(
+          right: -5,
+          bottom: -5,
+          child: Container(
+            width: 13,
+            height: 13,
+            decoration: BoxDecoration(
+              color: scheme.primary,
+              shape: BoxShape.circle,
+              // Cut out of the mark by the row's own colour.
+              border: Border.all(
+                color: scheme.secondaryContainer,
+                width: 1.5,
+              ),
+            ),
+            child: Icon(Icons.check, size: 9, color: scheme.onPrimary),
+          ),
         ),
       ],
     );
@@ -378,28 +410,49 @@ extension _Linux on _AppSettingsPageState {
     );
   }
 
+  /// The distribution the mirror row is about: the selected system's, or the
+  /// one a first install would fetch.
+  ///
+  /// One getter for the row and its dialog. The row used to read
+  /// `linuxMirror()` with no argument, which is the distribution of the *next*
+  /// install — the last one added — so with Ubuntu selected after adding Rocky
+  /// it showed Rocky's mirror while the dialog edited Ubuntu's.
+  LinuxDistro get _linuxMirrorDistro =>
+      Rootfs.selected?.distro ?? Rootfs.nextDistro;
+
+  /// The mirror's name with its distribution's, as the dialog is titled: a
+  /// mirror belongs to one distribution, and the row would otherwise not say
+  /// which. A message of its own rather than the two words joined, since
+  /// lowercasing `mirror` to follow a name is wrong wherever nouns keep
+  /// their capital ("Alpine spiegelserver").
+  String _linuxMirrorLabel(LinuxDistro distro) =>
+      l10n.linuxMirrorOf(distro.label);
+
   SettingsRow _buildLinuxMirror() {
     final label = l10n.mirror;
     return SettingsRow(
       label,
-      () => ListTile(
-        leading: const Icon(Icons.cloud_download_outlined),
-        title: TipText(label, l10n.linuxNetTip),
-        subtitle: ValBuilder(
-          listenable: _setting.linuxMirrors.listenable(),
-          // The mirror in force, not the row stored for it: nothing stored
-          // means the distribution's own default, which is what is fetched.
-          builder: (_) => Text(
-            linuxMirror(),
-            style: UIs.textGrey,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+      () {
+        final distro = _linuxMirrorDistro;
+        return ListTile(
+          leading: const Icon(Icons.cloud_download_outlined),
+          title: TipText(_linuxMirrorLabel(distro), l10n.linuxMirrorTip),
+          subtitle: ValBuilder(
+            listenable: _setting.linuxMirrors.listenable(),
+            // The mirror in force, not the row stored for it: nothing stored
+            // means the distribution's own default, which is what is fetched.
+            builder: (_) => Text(
+              linuxMirror(distro),
+              style: UIs.textGrey,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-        ),
-        trailing: const Icon(Icons.keyboard_arrow_right),
-        onTap: _onTapLinuxMirror,
-      ),
-      keywords: l10n.linuxNetTip,
+          trailing: const Icon(Icons.keyboard_arrow_right),
+          onTap: _onTapLinuxMirror,
+        );
+      },
+      keywords: l10n.linuxMirrorTip,
     );
   }
 
@@ -408,7 +461,7 @@ extension _Linux on _AppSettingsPageState {
       'DNS',
       () => ListTile(
         leading: const Icon(Icons.dns_outlined),
-        title: TipText('DNS', l10n.linuxNetTip),
+        title: TipText('DNS', l10n.linuxDnsTip),
         subtitle: ValBuilder(
           listenable: _setting.linuxDns.listenable(),
           builder: (val) => Text(
@@ -421,7 +474,7 @@ extension _Linux on _AppSettingsPageState {
         trailing: const Icon(Icons.keyboard_arrow_right),
         onTap: _onTapLinuxDns,
       ),
-      keywords: l10n.linuxNetTip,
+      keywords: l10n.linuxDnsTip,
     );
   }
 
@@ -477,10 +530,10 @@ extension _Linux on _AppSettingsPageState {
   }
 
   void _onTapLinuxMirror() {
-    final distro = Rootfs.selected?.distro ?? Rootfs.nextDistro;
+    final distro = _linuxMirrorDistro;
     _showLinuxNetDialog(
       // Which distribution's mirror, since it is only that one's.
-      title: '${distro.label} ${l10n.mirror.toLowerCase()}',
+      title: _linuxMirrorLabel(distro),
       // What is stored, not what is in force: empty is how the default is
       // asked for, and pre-filling the default would make that impossible to
       // tell from having typed it.

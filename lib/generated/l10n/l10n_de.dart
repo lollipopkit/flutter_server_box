@@ -747,8 +747,17 @@ class AppLocalizationsDe extends AppLocalizations {
       'Mit welcher Shell ein Terminal startet. Leer stellt /bin/sh wieder her.';
 
   @override
-  String get linuxNetTip =>
+  String get linuxDnsTip =>
       'DNS-Server. Leer lassen, um die Standardeinstellungen zu verwenden.';
+
+  @override
+  String get linuxMirrorTip =>
+      'Paketspiegel der ausgewählten Distribution. Leer lassen, um den Standardspiegel zu verwenden.';
+
+  @override
+  String linuxMirrorOf(String distro) {
+    return '$distro-Spiegelserver';
+  }
 
   @override
   String madeWithLove(String myGithub) {

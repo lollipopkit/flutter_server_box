@@ -29,7 +29,12 @@ final class SettingsNode {
 
   /// [title] with its mark, for a row that lists this node.
   Widget titleWidget({TextStyle? style}) =>
-      MarkedTitle(title, style: style, mark: feature?.mark());
+      MarkedTitle(
+        title,
+        style: style,
+        // The same warning as the page's own title carries.
+        mark: feature?.mark(tip: l10n.betaTip),
+      );
 
   const SettingsNode.leaf({
     required this.id,

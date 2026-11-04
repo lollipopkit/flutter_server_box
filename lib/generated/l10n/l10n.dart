@@ -1417,11 +1417,23 @@ abstract class AppLocalizations {
   /// **'Which shell a terminal starts. Empty restores /bin/sh.'**
   String get linuxShellTip;
 
-  /// Help text for the linux net setting or action.
+  /// Help text for the Linux DNS setting.
   ///
   /// In en, this message translates to:
-  /// **'DNS servers. Empty restores the defaults'**
-  String get linuxNetTip;
+  /// **'DNS servers. Empty restores the defaults.'**
+  String get linuxDnsTip;
+
+  /// Help text for the Linux package mirror setting.
+  ///
+  /// In en, this message translates to:
+  /// **'Package mirror for the selected distribution. Empty restores the default.'**
+  String get linuxMirrorTip;
+
+  /// Name of one distribution's package mirror.
+  ///
+  /// In en, this message translates to:
+  /// **'{distro} mirror'**
+  String linuxMirrorOf(String distro);
 
   /// User-facing label or message for made with love.
   ///

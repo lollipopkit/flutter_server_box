@@ -712,7 +712,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get linuxShellTip => '터미널을 시작할 셸. 비우면 /bin/sh로 돌아갑니다.';
 
   @override
-  String get linuxNetTip => 'DNS 서버입니다. 비워 두면 기본 설정을 사용합니다.';
+  String get linuxDnsTip => 'DNS 서버입니다. 비워 두면 기본 설정을 사용합니다.';
+
+  @override
+  String get linuxMirrorTip => '선택한 배포판의 패키지 미러입니다. 비워 두면 기본 미러를 사용합니다.';
+
+  @override
+  String linuxMirrorOf(String distro) {
+    return '$distro 미러';
+  }
 
   @override
   String madeWithLove(String myGithub) {

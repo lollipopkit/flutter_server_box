@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:extended_image/extended_image.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_tty/fl_tty.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,6 +38,17 @@ Widget? distIcon(String serverId, {double size = 20}) =>
 /// [distIcon] for a caller that already knows the distribution.
 Widget? distIconOf(Dist? dist, {double size = 20}) =>
     Stores.setting.showDistMark.fetch() ? DistIconOf(dist, size: size) : null;
+
+/// [distIconOf] for a Linux system on this device.
+///
+/// By name, and no mark for anything unmatched: the two enums are separate
+/// lists that happen to overlap — one is what can be installed here, the
+/// other everything a server might report — and a system whose distribution
+/// has no mark simply gets no mark.
+Widget? linuxDistIcon(LinuxDistro distro, {double size = 20}) => distIconOf(
+  Dist.values.firstWhereOrNull((e) => e.name == distro.name),
+  size: size,
+);
 
 /// Which distribution a server runs, as the mark its own project publishes —
 /// fetched from wherever the person using this app pointed it.

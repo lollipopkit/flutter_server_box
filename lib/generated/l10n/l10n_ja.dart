@@ -712,7 +712,15 @@ class AppLocalizationsJa extends AppLocalizations {
   String get linuxShellTip => 'ターミナルを起動するシェル。空にすると /bin/sh に戻ります。';
 
   @override
-  String get linuxNetTip => 'DNS サーバー。空欄にすると既定の設定を使用します。';
+  String get linuxDnsTip => 'DNS サーバー。空欄にすると既定の設定を使用します。';
+
+  @override
+  String get linuxMirrorTip => '選択したディストリビューションのパッケージミラー。空欄にすると既定のミラーを使用します。';
+
+  @override
+  String linuxMirrorOf(String distro) {
+    return '$distro ミラー';
+  }
 
   @override
   String madeWithLove(String myGithub) {
