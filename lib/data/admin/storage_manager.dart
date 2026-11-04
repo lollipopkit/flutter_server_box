@@ -36,7 +36,7 @@ final class StorageUnreadable extends StorageFailure {
   const StorageUnreadable();
 
   @override
-  String toString() => 'unreadable';
+  String toString() => 'Unable to read storage';
 }
 
 /// The command ran and failed; [detail] is the last line it printed.

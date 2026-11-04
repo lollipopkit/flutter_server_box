@@ -1793,7 +1793,6 @@
   "storageInvalidLevel": "The RAID level or pool layout is invalid.",
   "storageTooFewDevices": "Not enough valid devices were selected.",
   "storageKeyRequired": "需要输入密码短语。",
-  "storageInvalidPassphrase": "该密码短语无法使用。",
   "storageExpand": "扩展",
   "storageExpandBody": "把 {device} 上的文件系统扩展到整个设备，期间保持挂载。",
   "storageGrowRaid": "扩容",

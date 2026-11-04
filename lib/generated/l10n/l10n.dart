@@ -10625,10 +10625,10 @@ abstract class AppLocalizations {
   /// **'At least 8 characters. Without it the data cannot be read: keep it safe.'**
   String get storagePassphraseHint;
 
-  /// Storage: the passphrase cannot be used.
+  /// Storage and sharing page text.
   ///
   /// In en, this message translates to:
-  /// **'This passphrase cannot be used.'**
+  /// **'The passphrase must be 8 to 512 characters, on one line.'**
   String get storageInvalidPassphrase;
 
   /// Storage and sharing page text.

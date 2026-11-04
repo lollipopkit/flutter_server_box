@@ -5853,7 +5853,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get storagePassphraseHint => '至少 8 个字符。没有它数据将无法读取，请妥善保管。';
 
   @override
-  String get storageInvalidPassphrase => '该密码短语无法使用。';
+  String get storageInvalidPassphrase => '密码短语需为 8 到 512 个字符，且不能换行。';
 
   @override
   String get storagePassphrasesDiffer => '两次输入的密码短语不一致。';
@@ -12731,7 +12731,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get storagePassphraseHint => '至少 8 個字元。沒有密語就無法讀取資料，請妥善保管。';
 
   @override
-  String get storageInvalidPassphrase => '該密碼短語無法使用。';
+  String get storageInvalidPassphrase => '密語必須是單行且介於 8 到 512 個字元。';
 
   @override
   String get storagePassphrasesDiffer => '兩次密語不相符。';

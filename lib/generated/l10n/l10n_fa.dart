@@ -6274,7 +6274,8 @@ class AppLocalizationsFa extends AppLocalizations {
       'At least 8 characters. Without it the data cannot be read: keep it safe.';
 
   @override
-  String get storageInvalidPassphrase => 'This passphrase cannot be used.';
+  String get storageInvalidPassphrase =>
+      'The passphrase must be 8 to 512 characters, on one line.';
 
   @override
   String get storagePassphrasesDiffer => 'The two passphrases differ.';

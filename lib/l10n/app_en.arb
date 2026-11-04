@@ -8225,10 +8225,6 @@
   "@storageKeyRequired": {
     "description": "Storage: an encrypted volume needs a passphrase."
   },
-  "storageInvalidPassphrase": "This passphrase cannot be used.",
-  "@storageInvalidPassphrase": {
-    "description": "Storage: the passphrase cannot be used."
-  },
   "storageExpand": "Expand",
   "@storageExpand": {
     "description": "Storage and sharing page text."
