@@ -5,11 +5,14 @@
 /// wrong the same silent way — the children cascading off the dropped table,
 /// the pragma left off, the indexes not coming back — and each has a test.
 ///
-/// Where the v35 database comes from: no SQLite fixture written by a release
-/// exists (`test/fixtures/` holds Hive boxes only), so the v35 `server` is
-/// today's DDL with `monitor_ignore_cert` put back where it stood
-/// (`serverDdlBeforeMonitorCertPin`). `hive_release_migration_test.dart` runs
-/// the whole chain, this step included, over boxes v1.0.1466/1480/1491 wrote.
+/// Where the v35 database comes from: no release has written one — the
+/// newest, v1.0.1856, is at v33, so an install reaches v35 only through m033
+/// and m034 on its way here — and no SQLite fixture written by a release
+/// exists (`test/fixtures/` holds Hive boxes only). The v35 `server` is
+/// therefore today's DDL with `monitor_ignore_cert` put back where it stood
+/// (`serverDdlBeforeMonitorCertPin`). Release-written data reaches this step
+/// through `hive_release_migration_test.dart`, which runs the whole chain,
+/// this step included, over boxes v1.0.1466/1480/1491 wrote.
 library;
 
 import 'package:fl_lib/fl_lib.dart';
