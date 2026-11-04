@@ -91,6 +91,8 @@
 		</array>
 		<key>LSSupportsOpeningDocumentsInPlace</key>
 		<true/>
+		<key>UIFileSharingEnabled</key>
+		<true/>
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true/>
 		<key>UIApplicationSceneManifest</key>

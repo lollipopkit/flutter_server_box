@@ -197,6 +197,9 @@ Future<void> _initApp(ProviderContainer container) async {
   // `PathDir` belongs to other apps on fl_lib, and creating them here would
   // only leave empty directories beside the boxes.
   //
+  // `iosFilesApp`: the device's files are what the Files app lists under On My
+  // iPhone (`UIFileSharingEnabled`), so the app's own data is not there.
+  //
   // `bakName` is versioned on purpose. Sync is a single shared file on
   // iCloud/WebDAV/Gist/a monitor agent, and a build that cannot read the
   // remote copy must never overwrite it. `SyncIface._sync` returns before
@@ -212,6 +215,7 @@ Future<void> _initApp(ProviderContainer container) async {
     bakName: Miscs.bakFileName,
     dirs: const {PathDir.img, PathDir.font},
     fileInUserDocuments: false,
+    iosFilesApp: true,
   );
   await CrashLog.attach(Paths.doc.joinPath('logs'));
   // Which release a report came from is the first thing asked about one and
@@ -343,7 +347,9 @@ Future<void> _initData() async {
   initThemeHost();
 
   // Before the fonts and the theme read the paths it fixes.
-  StoredPaths.repair(alsoRepair: [Stores.setting.fontPath]);
+  StoredPaths.repair(
+    alsoRepair: [Stores.setting.fontPath, Stores.setting.sshBgImage],
+  );
 
   // Not awaited: only the terminal uses it, and a broken font file is the
   // user's, not a defect to report — the settings page says it failed.
