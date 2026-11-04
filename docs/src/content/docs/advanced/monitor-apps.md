@@ -126,9 +126,9 @@ as a panel window does. From then on the browser talks to the proxy with a
 session of its own, so the ServerBox app may go to the background or be
 closed. Deploying, updating and removing apps stay in the panel.
 
-The browser checks the Monitor's TLS certificate itself: the app's **Ignore
-certificate** setting does not apply to it, so a self-signed certificate shows
-the browser's warning. The proxy ports (or the apps host below) must be
+The browser checks the Monitor's TLS certificate itself: a certificate trusted
+in the app is not trusted by the browser, so a self-signed one shows the
+browser's warning. The proxy ports (or the apps host below) must be
 reachable from the device.
 
 ## App windows and reverse proxies

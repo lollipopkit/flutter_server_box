@@ -563,9 +563,6 @@ class AppLocalizationsAz extends AppLocalizations {
       'Ana səhifədə görünən vərəqləri və onların sırasını fərdiləşdir';
 
   @override
-  String get ignoreCert => 'Sertifikatı nəzərə alma';
-
-  @override
   String get image => 'Obraz';
 
   @override
@@ -884,19 +881,7 @@ class AppLocalizationsAz extends AppLocalizations {
       'Hələ yoxlanılmayıb. Sertifikata baxmaq üçün toxun';
 
   @override
-  String get bmcCertReview =>
-      'Özü tərəfindən imzalanmış sertifikatdır. Qəbul etməzdən əvvəl müqayisə et. Bundan sonra yalnız məhz bu sertifikata etibar ediləcək.';
-
-  @override
-  String get bmcCertChanged => 'Sertifikat uyğun gəlmir. Onu yoxla.';
-
-  @override
   String get bmcCertExpired => 'Müddəti bitib.';
-
-  @override
-  String bmcCertWas(String fingerprint) {
-    return 'Əvvəllər qəbul edilib: $fingerprint';
-  }
 
   @override
   String get bmcAddrInvalid =>
@@ -937,10 +922,6 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get proxyCommandMobileTip =>
       'Telefonda əmr seçilmiş Linux sistemində işləyir. Əvvəlcə istifadə etdiyi alətləri (nc, socat, …) oraya quraşdırın.';
-
-  @override
-  String get pveIgnoreCertTip =>
-      'PVE standart öz-özünə imzalanmış sertifikatdan istifadə edirsə, bu seçimi aktivləşdirmək lazımdır. Bununla belə, bu, təhlükəsizlik riski yaradır.';
 
   @override
   String get pvePasswordRequired =>
@@ -3148,6 +3129,9 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get remoteDesktopTrustReconnect => 'Etibar et və yenidən qoşul';
+
+  @override
+  String get certTrust => 'Etibar et';
 
   @override
   String remoteDesktopDeleteProfile(String name) {

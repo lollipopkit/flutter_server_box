@@ -264,6 +264,6 @@ MonitorHttpCredential? _monitorCredential(
     addr: value.addr,
     legacyUser: value.user,
     pwd: value.pwd,
-    ignoreCert: value.ignoreCert,
+    // `ignoreCert` accepted any certificate unseen, so it pins none.
   );
 }

@@ -114,7 +114,7 @@ final class WidgetSync {
               addr: previous.endpoint,
               pwd: monitor.pwd,
               legacyUser: monitor.legacyUser,
-              ignoreCert: monitor.ignoreCert,
+              certSha256: monitor.certSha256,
               allowInsecure: monitor.allowInsecure,
             ),
           ).revokeWatchToken(widgetClientId(spi.id));
@@ -228,7 +228,9 @@ final class WidgetSync {
         if (token != null && !token.isEmpty && !token.opaque)
           'token': token.token,
         'expiresAt': token?.expiresAt ?? 0,
-        'ignoreCert': monitor.ignoreCert,
+        // The certificate this app accepted for a self-signed agent, checked
+        // natively where the system does not trust the certificate.
+        'certSha256': ?monitor.certSha256,
         // Whether this server was opted in to plaintext HTTP. The widget
         // asks the same question the app does before every request: Android's
         // `usesCleartextTraffic` lets the *process* speak plaintext, and is

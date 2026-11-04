@@ -523,9 +523,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeTabsCustomizeDesc => '自定义主页上显示的标签及其顺序';
 
   @override
-  String get ignoreCert => '忽略证书';
-
-  @override
   String get image => '镜像';
 
   @override
@@ -822,18 +819,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get bmcCertUnreviewed => '尚未确认，点击查看证书';
 
   @override
-  String get bmcCertReview => '收到自签名证书。请核对以下指纹，确认信任后将仅接受此证书。';
-
-  @override
-  String get bmcCertChanged => '证书指纹已变更，请重新核对。';
-
-  @override
   String get bmcCertExpired => '已过期。';
-
-  @override
-  String bmcCertWas(String fingerprint) {
-    return '原信任指纹：$fingerprint';
-  }
 
   @override
   String get bmcAddrInvalid => 'BMC 地址必须是 URL，例如 https://10.0.0.9';
@@ -872,9 +858,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get proxyCommandMobileTip =>
       '在手机上，该命令会在所选的 Linux 系统中运行。请先在其中安装命令用到的工具（nc、socat 等）。';
-
-  @override
-  String get pveIgnoreCertTip => '如果 PVE 使用默认的自签名证书，需要开启此选项；但这会带来安全风险。';
 
   @override
   String get pvePasswordRequired => '需要提供 PVE 密码，请在服务器设置中填写。';
@@ -2918,6 +2901,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get remoteDesktopTrustReconnect => '信任并重新连接';
+
+  @override
+  String get certTrust => '信任';
 
   @override
   String remoteDesktopDeleteProfile(String name) {
@@ -7396,9 +7382,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get homeTabsCustomizeDesc => '自訂主頁上顯示的標籤及其順序';
 
   @override
-  String get ignoreCert => '忽略憑證';
-
-  @override
   String get image => '映像檔';
 
   @override
@@ -7695,18 +7678,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get bmcCertUnreviewed => '尚未確認，點選查看憑證';
 
   @override
-  String get bmcCertReview => '收到自簽憑證。接受前請核對指紋；接受後將只信任這張憑證。';
-
-  @override
-  String get bmcCertChanged => '憑證不一致。請核對。';
-
-  @override
   String get bmcCertExpired => '已過期。';
-
-  @override
-  String bmcCertWas(String fingerprint) {
-    return '之前接受的：$fingerprint';
-  }
 
   @override
   String get bmcAddrInvalid => 'BMC 位址必須是 URL，例如 https://10.0.0.9';
@@ -7745,9 +7717,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get proxyCommandMobileTip =>
       '在手機上，該指令會在所選的 Linux 系統中執行。請先在其中安裝指令用到的工具（nc、socat 等）。';
-
-  @override
-  String get pveIgnoreCertTip => '如果 PVE 使用默認的自簽名證書，需要開啟此選項；但這會帶來安全風險。';
 
   @override
   String get pvePasswordRequired => '需要提供 PVE 密碼，請在伺服器設定中填寫。';
@@ -9789,6 +9758,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get remoteDesktopTrustReconnect => '信任並重新連線';
+
+  @override
+  String get certTrust => '信任';
 
   @override
   String remoteDesktopDeleteProfile(String name) {

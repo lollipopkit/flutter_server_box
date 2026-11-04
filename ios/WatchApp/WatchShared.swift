@@ -7,7 +7,9 @@
 //  no source file is shared across that boundary.
 //
 
+import CryptoKit
 import Foundation
+import Security
 
 /// Same identifier as the iOS side, duplicated because no source file is
 /// shared across the platform boundary.
@@ -80,7 +82,8 @@ struct WatchServer: Codable, Identifiable, Hashable {
     let name: String
     /// Base address of the agent, no trailing slash.
     let addr: String
-    let ignoreCert: Bool
+    /// The certificate accepted for this agent in the app; see `certPinAccepts`.
+    let certSha256: String?
     /// Whether this server was opted in to plaintext HTTP in the app.
     ///
     /// Checked before the token is sent (`MonitorClient`), never at storage
@@ -92,13 +95,13 @@ struct WatchServer: Codable, Identifiable, Hashable {
         id: String,
         name: String,
         addr: String,
-        ignoreCert: Bool = false,
+        certSha256: String? = nil,
         allowInsecure: Bool = false
     ) {
         self.id = id
         self.name = name
         self.addr = addr
-        self.ignoreCert = ignoreCert
+        self.certSha256 = certSha256
         self.allowInsecure = allowInsecure
     }
 
@@ -112,7 +115,7 @@ struct WatchServer: Codable, Identifiable, Hashable {
         id = try c.decode(String.self, forKey: .id)
         name = try c.decode(String.self, forKey: .name)
         addr = try c.decode(String.self, forKey: .addr)
-        ignoreCert = try c.decodeIfPresent(Bool.self, forKey: .ignoreCert) ?? false
+        certSha256 = try c.decodeIfPresent(String.self, forKey: .certSha256)
         allowInsecure = try c.decodeIfPresent(Bool.self, forKey: .allowInsecure) ?? false
     }
 }
@@ -181,4 +184,21 @@ func formatBytes(_ bytes: Double) -> String {
         idx += 1
     }
     return idx == 0 ? "\(Int(value))\(units[idx])" : String(format: "%.1f%@", value, units[idx])
+}
+
+/// Whether the leaf certificate of [trust] is the one [pin] names — SHA-256 of
+/// its DER form, in hex. Read as `sbm_redfish`'s `normalize_fingerprint`
+/// reads it — `:`, spaces and `-` dropped, case ignored — since the app
+/// accepts a pin typed or imported in the colon form `openssl` prints. Asked
+/// only once the system's own evaluation has failed, as the app does: an agent
+/// with a CA-signed certificate needs no pin.
+func certPinAccepts(_ trust: SecTrust, pin: String?) -> Bool {
+    guard let pin, !pin.isEmpty,
+          let chain = SecTrustCopyCertificateChain(trust) as? [SecCertificate],
+          let leaf = chain.first
+    else { return false }
+    let der = SecCertificateCopyData(leaf) as Data
+    let hex = SHA256.hash(data: der).map { String(format: "%02x", $0) }.joined()
+    let normalized = pin.filter { $0 != ":" && $0 != " " && $0 != "-" }.lowercased()
+    return hex == normalized
 }

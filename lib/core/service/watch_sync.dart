@@ -360,7 +360,7 @@ final class WatchSync {
             addr: revocationEndpoint,
             pwd: monitor.pwd,
             legacyUser: monitor.legacyUser,
-            ignoreCert: monitor.ignoreCert,
+            certSha256: monitor.certSha256,
             allowInsecure: monitor.allowInsecure,
           );
     final client = MonitorHttpClient(credential);
@@ -410,7 +410,9 @@ final class WatchSync {
         // ignores the key — it finds out a token has expired by being told
         // 401, which it cannot do anything about; renewing is this side's job.
         'expiresAt': token.expiresAt,
-        'ignoreCert': monitor.ignoreCert,
+        // The certificate this app accepted for a self-signed agent; the
+        // watch checks it where the system does not trust the certificate.
+        'certSha256': ?monitor.certSha256,
         // The watch refuses to send the token over plaintext without it, the
         // way this app and the home widget do. Not a storage decision made
         // here: the answer travels so the check can be made where the request

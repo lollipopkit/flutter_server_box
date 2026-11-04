@@ -562,9 +562,6 @@ class AppLocalizationsFa extends AppLocalizations {
       'سفارشی‌سازی تب‌های نمایش داده‌شده در صفحه اصلی و ترتیب آن‌ها';
 
   @override
-  String get ignoreCert => 'نادیده گرفتن گواهی';
-
-  @override
   String get image => 'ایمیج';
 
   @override
@@ -881,19 +878,7 @@ class AppLocalizationsFa extends AppLocalizations {
       'هنوز بررسی نشده است — برای مشاهده گواهی ضربه بزنید';
 
   @override
-  String get bmcCertReview =>
-      'یک گواهی خودامضا است. پیش از پذیرش آن را مقایسه کنید. پس از آن تنها دقیقاً همین گواهی مورد اعتماد خواهد بود.';
-
-  @override
-  String get bmcCertChanged => 'گواهی مطابقت ندارد. آن را بررسی کنید.';
-
-  @override
   String get bmcCertExpired => 'منقضی شده است.';
-
-  @override
-  String bmcCertWas(String fingerprint) {
-    return 'قبلاً پذیرفته شده: $fingerprint';
-  }
 
   @override
   String get bmcAddrInvalid =>
@@ -934,10 +919,6 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get proxyCommandMobileTip =>
       'در گوشی تلفن، این دستور در سیستم Linux انتخاب‌شده اجرا می‌شود. ابتدا ابزارهای مورد استفاده آن (nc، socat، …) را در آنجا نصب کنید.';
-
-  @override
-  String get pveIgnoreCertTip =>
-      'اگر PVE از گواهی خودامضای پیش‌فرض استفاده می‌کند، باید این گزینه را فعال کنید؛ اما این کار خطر امنیتی دارد.';
 
   @override
   String get pvePasswordRequired =>
@@ -3150,6 +3131,9 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get remoteDesktopTrustReconnect => 'اعتماد و اتصال مجدد';
+
+  @override
+  String get certTrust => 'اعتماد';
 
   @override
   String remoteDesktopDeleteProfile(String name) {

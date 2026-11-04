@@ -12,7 +12,7 @@ MonitorHttpCredential _$MonitorHttpCredentialFromJson(
   addr: json['addr'] as String,
   pwd: json['pwd'] as String?,
   legacyUser: json['user'] as String?,
-  ignoreCert: json['ignoreCert'] as bool? ?? false,
+  certSha256: json['certSha256'] as String?,
   allowInsecure: json['allowInsecure'] as bool? ?? false,
 );
 
@@ -22,6 +22,6 @@ Map<String, dynamic> _$MonitorHttpCredentialToJson(
   'addr': instance.addr,
   'pwd': ?instance.pwd,
   'user': ?instance.legacyUser,
-  'ignoreCert': instance.ignoreCert,
+  'certSha256': ?instance.certSha256,
   'allowInsecure': instance.allowInsecure,
 };

@@ -8,6 +8,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:meta/meta.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/service/monitor_login_devices.dart';
+import 'package:server_box/core/utils/cert_fingerprint.dart';
 import 'package:server_box/core/utils/secure_endpoint.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/monitor/monitor_agent.dart';
@@ -22,6 +23,7 @@ import 'package:server_box/data/model/server/monitor/monitor_overview.dart';
 import 'package:server_box/data/model/server/monitor/monitor_push.dart';
 import 'package:server_box/data/model/server/monitor/monitor_settings.dart';
 import 'package:server_box/data/model/server/monitor/monitor_stack.dart';
+import 'package:server_box/src/rust/api/bmc.dart' show certPinAccepts;
 import 'package:server_box/src/rust/api/protocol.dart';
 
 /// A [MonitorHttpClient] shared by every holder of a lease on the same
@@ -129,21 +131,42 @@ class MonitorHttpClient {
           )
           ..httpClientAdapter = IOHttpClientAdapter(
             createHttpClient: _httpClient,
-            validateCertificate: monitor.ignoreCert ? (_, _, _) => true : null,
           );
     _dio = dio;
     return dio;
   }
 
+  /// The certificate a handshake refused, for [_certErr]. Kept, not taken:
+  /// the pin is fixed for this client's life (a changed credential is a new
+  /// client), so a certificate refused once is refused on every connection,
+  /// and requests failing together all read it.
+  X509Certificate? _refusedCert;
+
+  /// Trusts what the system trusts, and otherwise only the certificate
+  /// [MonitorHttpCredential.certSha256] names — an agent's own self-signed
+  /// one, accepted by the user once (`sbm_redfish`'s `cert_pin_accepts`).
   HttpClient _httpClient() {
-    final client = HttpClient();
-    if (monitor.ignoreCert) {
-      Loggers.app.warning(
-        'Monitor ignoring TLS certificate for ${monitor.addr} — only use on trusted private network',
-      );
-      client.badCertificateCallback = (_, _, _) => true;
-    }
-    return client;
+    return HttpClient()
+      ..badCertificateCallback = (cert, _, _) {
+        if (certPinAccepts(pin: monitor.certSha256, der: cert.der)) return true;
+        _refusedCert = cert;
+        return false;
+      };
+  }
+
+  /// [cause] as the certificate refusal it is, when the handshake refused one.
+  MonitorHttpErr? _certErr(Object? cause) {
+    final cert = _refusedCert;
+    if (cert == null || cause is! HandshakeException) return null;
+    final info = certInfoOf(cert);
+    final pin = monitor.certSha256;
+    final changed = pin != null && pin.isNotEmpty;
+    return MonitorHttpErr(
+      type: changed ? MonitorHttpErrType.certChanged : MonitorHttpErrType.certUnconfirmed,
+      message: info.prettyFingerprint,
+      cert: info,
+      previousFingerprint: changed ? pin : null,
+    );
   }
 
   Future<void> _login() {
@@ -1219,8 +1242,9 @@ class MonitorHttpClient {
         );
       }
 
-      final socket =
-          await WebSocket.connect(
+      final WebSocket socket;
+      try {
+        socket = await WebSocket.connect(
             _wsUrl(_addr, path).toString(),
             // The ticket rides the subprotocol, not the query string. A URL is
             // what every access log, proxy and error message writes down, and
@@ -1229,8 +1253,8 @@ class MonitorHttpClient {
             // still sends it that way.
             protocols: [terminalWsProtocol(ticket)],
             headers: {MonitorProtocol.header: '${MonitorProtocol.current}'},
-            // Carries `ignoreCert` onto the upgrade: this is the same endpoint the
-            // status poll uses, so it has to trust the same certs
+            // The same endpoint the status poll uses, so it trusts the same
+            // certificate.
             customClient: _httpClient(),
           ).timeout(
             timeout ?? const Duration(seconds: 15),
@@ -1239,6 +1263,9 @@ class MonitorHttpClient {
               message: 'Timed out opening the monitor terminal',
             ),
           );
+      } on HandshakeException catch (e) {
+        throw _certErr(e) ?? e;
+      }
       return socket;
     });
   }
@@ -1258,6 +1285,7 @@ class MonitorHttpClient {
   bool matches(MonitorHttpCredential other) => monitor == other;
 
   MonitorHttpErr _toMonitorHttpErr(DioException e) {
+    if (_certErr(e.error) case final err?) return err;
     if (e.type == DioExceptionType.connectionError ||
         e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.sendTimeout ||

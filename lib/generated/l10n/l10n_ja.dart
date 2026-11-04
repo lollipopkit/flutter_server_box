@@ -536,9 +536,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeTabsCustomizeDesc => 'ホームページに表示するタブとその順序をカスタマイズします';
 
   @override
-  String get ignoreCert => '証明書を無視する';
-
-  @override
   String get image => 'イメージ';
 
   @override
@@ -839,18 +836,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get bmcCertUnreviewed => '未確認 — タップして証明書を表示';
 
   @override
-  String get bmcCertReview => '自己署名証明書です。受け入れる前に照合してください。以後はこの一枚だけが信頼されます。';
-
-  @override
-  String get bmcCertChanged => '証明書が一致しません。確認してください。';
-
-  @override
   String get bmcCertExpired => '期限切れです。';
-
-  @override
-  String bmcCertWas(String fingerprint) {
-    return '以前受け入れた証明書: $fingerprint';
-  }
 
   @override
   String get bmcAddrInvalid => 'BMC のアドレスは URL である必要があります(例: https://10.0.0.9)';
@@ -890,10 +876,6 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get proxyCommandMobileTip =>
       'スマートフォンでは、このコマンドは選択中の Linux システムで実行されます。使用するツール（nc、socat など）を先にそこへインストールしてください。';
-
-  @override
-  String get pveIgnoreCertTip =>
-      'PVE の既定の自己署名証明書を使用している場合は、このオプションを有効にする必要があります。ただし、有効にするとセキュリティ上のリスクがあります。';
 
   @override
   String get pvePasswordRequired => 'PVE のパスワードが必要です。サーバー設定で指定してください。';
@@ -2979,6 +2961,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get remoteDesktopTrustReconnect => '信頼して再接続';
+
+  @override
+  String get certTrust => '信頼する';
 
   @override
   String remoteDesktopDeleteProfile(String name) {

@@ -157,7 +157,9 @@ class Servers extends Table with SyncMeta {
   TextColumn get monitorAddr => text().nullable()();
   TextColumn get monitorUser => text().nullable()();
   TextColumn get monitorPwd => text().nullable()();
-  BoolColumn get monitorIgnoreCert => boolean().nullable()();
+  /// `MonitorHttpCredential.certSha256`: the certificate accepted for an
+  /// agent the system does not trust, lowercase hex.
+  TextColumn get monitorCertSha256 => text().nullable()();
   BoolColumn get monitorAllowInsecure => boolean().nullable()();
 
   TextColumn get wolMac => text().nullable()();

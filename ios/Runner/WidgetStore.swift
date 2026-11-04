@@ -19,7 +19,9 @@
 //  nothing.
 //
 
+import CryptoKit
 import Foundation
+import Security
 
 enum WidgetKeys {
     /// `[WidgetServer]`, JSON. Never contains a token.
@@ -40,7 +42,8 @@ struct WidgetServer: Codable, Identifiable, Hashable {
     let name: String
     /// Base address of the agent, no trailing slash.
     let addr: String
-    let ignoreCert: Bool
+    /// The certificate accepted for this agent in the app; see `certPinAccepts`.
+    let certSha256: String?
     /// Whether this server was opted in to plaintext HTTP in the app.
     ///
     /// Carried rather than inferred from the scheme, because the question is
@@ -243,4 +246,21 @@ enum WidgetStore {
         else { return [] }
         return entries.compactMap { $0[kSecAttrAccount as String] as? String }
     }
+}
+
+/// Whether the leaf certificate of [trust] is the one [pin] names — SHA-256 of
+/// its DER form, in hex. Read as `sbm_redfish`'s `normalize_fingerprint`
+/// reads it — `:`, spaces and `-` dropped, case ignored — since the app
+/// accepts a pin typed or imported in the colon form `openssl` prints. Asked
+/// only once the system's own evaluation has failed, as the app does: an agent
+/// with a CA-signed certificate needs no pin.
+func certPinAccepts(_ trust: SecTrust, pin: String?) -> Bool {
+    guard let pin, !pin.isEmpty,
+          let chain = SecTrustCopyCertificateChain(trust) as? [SecCertificate],
+          let leaf = chain.first
+    else { return false }
+    let der = SecCertificateCopyData(leaf) as Data
+    let hex = SHA256.hash(data: der).map { String(format: "%02x", $0) }.joined()
+    let normalized = pin.filter { $0 != ":" && $0 != " " && $0 != "-" }.lowercased()
+    return hex == normalized
 }

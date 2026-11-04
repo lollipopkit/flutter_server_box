@@ -35,7 +35,7 @@ void main() {
       const before = MonitorHttpCredential(
         addr: 'http://10.0.0.1:3770',
         pwd: 'secret',
-        ignoreCert: true,
+        certSha256: 'abababababababababababababababababababababababababababababababab',
       );
       final after = before.allowingInsecure();
 
@@ -43,7 +43,7 @@ void main() {
       expect(after.needsInsecureOptIn, isFalse);
       expect(after.addr, before.addr);
       expect(after.pwd, before.pwd);
-      expect(after.ignoreCert, before.ignoreCert);
+      expect(after.certSha256, before.certSha256);
       // A changed credential is what makes `Spi.shouldReconnect` fire, which
       // is what reconnects after the one-tap fix.
       expect(after, isNot(before));

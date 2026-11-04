@@ -178,10 +178,31 @@ enum MonitorHttpErrType {
   /// The Monitor would not relay: the stream's `forbidden`, sent when its
   /// password changed or the link may not act (plain HTTP).
   relayForbidden,
+
+  /// The agent's certificate is not one the system trusts, and none has been
+  /// accepted for it: [MonitorHttpErr.cert] is what it presented.
+  certUnconfirmed,
+
+  /// The agent's certificate is not the one accepted before:
+  /// [MonitorHttpErr.previousFingerprint] was pinned, [MonitorHttpErr.cert]
+  /// is presented.
+  certChanged,
 }
 
 class MonitorHttpErr extends Err<MonitorHttpErrType> {
-  const MonitorHttpErr({required super.type, super.message});
+  const MonitorHttpErr({
+    required super.type,
+    super.message,
+    this.cert,
+    this.previousFingerprint,
+  });
+
+  /// The certificate the agent presented, for [MonitorHttpErrType.certUnconfirmed]
+  /// and [MonitorHttpErrType.certChanged].
+  final CertInfo? cert;
+
+  /// The fingerprint that was pinned, for [MonitorHttpErrType.certChanged].
+  final String? previousFingerprint;
 
   @override
   String? get solution => switch (type) {
@@ -191,6 +212,8 @@ class MonitorHttpErr extends Err<MonitorHttpErrType> {
     MonitorHttpErrType.clientTooOld => l10n.monitorClientTooOld,
     MonitorHttpErrType.targetUnreachable => l10n.tcpTargetUnreachable,
     MonitorHttpErrType.relayForbidden => l10n.monitorRelayForbidden,
+    MonitorHttpErrType.certUnconfirmed => l10n.virtErrCertUnconfirmed,
+    MonitorHttpErrType.certChanged => l10n.virtErrCertChanged,
     _ => null,
   };
 }

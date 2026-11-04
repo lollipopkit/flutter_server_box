@@ -560,9 +560,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Ana sayfada görünecek sekmeleri ve sıralarını özelleştirin';
 
   @override
-  String get ignoreCert => 'Sertifikayı yok say';
-
-  @override
   String get image => 'Görüntü';
 
   @override
@@ -879,19 +876,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'Henüz incelenmedi — sertifikayı görmek için dokun';
 
   @override
-  String get bmcCertReview =>
-      'Kendinden imzalı bir sertifika. Kabul etmeden önce karşılaştır. Sonrasında yalnızca bu güvenilir.';
-
-  @override
-  String get bmcCertChanged => 'Sertifika eşleşmiyor. Kontrol et.';
-
-  @override
   String get bmcCertExpired => 'Süresi dolmuş.';
-
-  @override
-  String bmcCertWas(String fingerprint) {
-    return 'Daha önce kabul edilen: $fingerprint';
-  }
 
   @override
   String get bmcAddrInvalid =>
@@ -932,10 +917,6 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get proxyCommandMobileTip =>
       'Telefonda komut seçili Linux sisteminde çalışır. Kullandığı araçları (nc, socat, …) önce oraya kurun.';
-
-  @override
-  String get pveIgnoreCertTip =>
-      'PVE varsayılan self-signed sertifikasını kullanıyorsa bu seçeneği etkinleştirin. Bunun güvenlik riski oluşturduğunu unutmayın.';
 
   @override
   String get pvePasswordRequired =>
@@ -3130,6 +3111,9 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get remoteDesktopTrustReconnect => 'Güven ve yeniden bağlan';
+
+  @override
+  String get certTrust => 'Güven';
 
   @override
   String remoteDesktopDeleteProfile(String name) {

@@ -562,9 +562,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Настройте, какие вкладки появляются на главной странице и их порядок';
 
   @override
-  String get ignoreCert => 'Игнорировать сертификат';
-
-  @override
   String get image => 'Образ';
 
   @override
@@ -883,19 +880,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Ещё не проверен — нажмите, чтобы посмотреть сертификат';
 
   @override
-  String get bmcCertReview =>
-      'Самоподписанный сертификат. Сверьте его перед принятием. Дальше доверяется только он.';
-
-  @override
-  String get bmcCertChanged => 'Сертификат не совпадает. Проверьте.';
-
-  @override
   String get bmcCertExpired => 'Просрочен.';
-
-  @override
-  String bmcCertWas(String fingerprint) {
-    return 'Принят ранее: $fingerprint';
-  }
 
   @override
   String get bmcAddrInvalid =>
@@ -936,10 +921,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get proxyCommandMobileTip =>
       'На телефоне команда выполняется в выбранной системе Linux. Сначала установите в неё используемые инструменты (nc, socat, …).';
-
-  @override
-  String get pveIgnoreCertTip =>
-      'Включите этот параметр, если PVE использует стандартный самоподписанный сертификат. Это создаёт риск для безопасности.';
 
   @override
   String get pvePasswordRequired =>
@@ -3154,6 +3135,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get remoteDesktopTrustReconnect => 'Доверять и подключиться снова';
+
+  @override
+  String get certTrust => 'Доверять';
 
   @override
   String remoteDesktopDeleteProfile(String name) {

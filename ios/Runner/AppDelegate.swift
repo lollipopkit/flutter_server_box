@@ -311,7 +311,7 @@ import UserNotifications
                     id: id,
                     name: entry["name"] as? String ?? addr,
                     addr: addr,
-                    ignoreCert: entry["ignoreCert"] as? Bool ?? false,
+                    certSha256: entry["certSha256"] as? String,
                     allowInsecure: entry["allowInsecure"] as? Bool ?? false,
                     // Kept from the stored entry when this push brought no
                     // token, so a transient failure does not read as "the

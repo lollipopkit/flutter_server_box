@@ -223,11 +223,6 @@ extension _Actions on _ServerEditPageState {
 
   /// Fetches the certificate the BMC presents, shows it, and pins it if the
   /// user agrees.
-  ///
-  /// The connection here sends nothing — it exists only to read what the far
-  /// end offers — so an impostor at that address learns no password from it.
-  /// That is what makes it safe to accept any certificate for this one step,
-  /// and it is the only step that does.
   Future<void> _onTapBmcCert() async {
     final cfg = BmcCfg(addr: _bmcAddrCtrl.text.trim());
     final uri = cfg.uri;
@@ -236,54 +231,58 @@ extension _Actions on _ServerEditPageState {
       Toast.error(libL10n.fail, body: l10n.bmcAddrInvalid);
       return;
     }
+    final pin = await _reviewCert(uri.host, port, pinned: _bmcCert.value);
+    if (pin != null) _bmcCert.value = pin;
+  }
 
-    final CertInfo info;
-    try {
-      info = await bmcFetchServerCert(host: uri.host, port: port);
-    } on BmcError catch (e) {
-      Toast.error(libL10n.fail, body: e.message);
-      return;
-    } catch (e) {
-      Toast.error(libL10n.fail, body: '$e');
+  /// The same for the agent at the monitor URL; the pin is kept for that
+  /// address only ([_monitorCertAddr]).
+  Future<void> _onTapMonitorCert() async {
+    final addr = _monitorAddrCtrl.text.trim();
+    final uri = Uri.tryParse(addr);
+    if (uri == null || uri.host.isEmpty || !uri.isScheme('https')) {
+      Toast.error(libL10n.fail, body: l10n.monitorHttpsRequired);
       return;
     }
-    if (!mounted) return;
+    final pinned = _monitorCertAddr?.trim() == addr ? _monitorCert.value : null;
+    final pin = await _reviewCert(uri.host, uri.port, pinned: pinned);
+    if (pin == null) return;
+    _monitorCertAddr = addr;
+    _monitorCert.value = pin;
+  }
 
-    final pinned = _bmcCert.value;
-    final changed = pinned != null && pinned != info.fingerprint;
+  /// Reads the certificate [host]:[port] presents, shows it, and answers its
+  /// fingerprint if the user accepts it; null otherwise.
+  ///
+  /// The connection here sends nothing — it exists only to read what the far
+  /// end offers — so an impostor at that address learns no password from it.
+  /// That is what makes it safe to accept any certificate for this one step,
+  /// and it is the only step that does.
+  Future<String?> _reviewCert(String host, int port, {String? pinned}) async {
+    final CertInfo info;
+    try {
+      info = await bmcFetchServerCert(host: host, port: port);
+    } on BmcError catch (e) {
+      Toast.error(libL10n.fail, body: e.message);
+      return null;
+    } catch (e) {
+      Toast.error(libL10n.fail, body: '$e');
+      return null;
+    }
+    if (!mounted) return null;
 
-    final accepted = await context.showRoundDialog<bool>(
-      title: l10n.bmcCert,
-      barrierDismiss: false,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(changed ? l10n.bmcCertChanged : l10n.bmcCertReview),
-          const SizedBox(height: 12),
-          SelectableText('${libL10n.addr}: ${uri.host}:$port'),
-          SelectableText('Subject: ${info.subject}'),
-          SelectableText('Issuer: ${info.issuer}'),
-          SelectableText('SHA-256: ${info.prettyFingerprint}'),
-          if (info.isExpired) ...[
-            const SizedBox(height: 8),
-            Text(
-              l10n.bmcCertExpired,
-              style: const TextStyle(color: Colors.orange),
-            ),
-          ],
-          if (changed) ...[
-            const SizedBox(height: 8),
-            SelectableText(l10n.bmcCertWas(pinned)),
-          ],
-        ],
-      ),
-      actions: Btnx.cancelOk,
+    final accepted = await showCertTrustDialog(
+      context,
+      cert: info,
+      previous: pinned != info.fingerprint ? pinned : null,
+      source: '$host:$port',
+      // A form field is set; nothing connects until the form is saved.
+      reconnects: false,
     );
     // The dialog answers; this page acts on the answer and this page is what
     // holds the field — see the dialog rules in CLAUDE.md
-    if (accepted != true || !mounted) return;
-    _bmcCert.value = info.fingerprint;
+    if (!accepted || !mounted) return null;
+    return info.fingerprint;
   }
 
   /// What [_pveConfigToSave] answers when the form cannot be saved; it has
@@ -742,7 +741,10 @@ extension _Actions on _ServerEditPageState {
             legacyUser: spi?.monitorHttp?.addr == monitorAddr
                 ? spi?.monitorHttp?.legacyUser
                 : null,
-            ignoreCert: _monitorIgnoreCert.value,
+            // A pin names the certificate seen at one address: kept for that
+            // address only, so another agent's first connection asks rather
+            // than reporting a changed certificate.
+            certSha256: _monitorCertAddr?.trim() == monitorAddr.trim() ? _monitorCert.value : null,
             allowInsecure: _monitorAllowInsecure.value,
           );
 
@@ -1090,7 +1092,8 @@ extension _Utils on _ServerEditPageState {
     if (monitorHttp != null) {
       _monitorAddrCtrl.text = monitorHttp.addr;
       _monitorPwdCtrl.text = monitorHttp.pwd ?? '';
-      _monitorIgnoreCert.value = monitorHttp.ignoreCert;
+      _monitorCert.value = monitorHttp.certSha256;
+      _monitorCertAddr = monitorHttp.addr;
       _monitorAllowInsecure.value = monitorHttp.allowInsecure;
     }
 

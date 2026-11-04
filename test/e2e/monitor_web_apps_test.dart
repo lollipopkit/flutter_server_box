@@ -5,31 +5,32 @@
 /// Skipped unless set, in the environment or the workspace-root `.env`:
 ///
 /// - `SBM_E2E_MONITOR_WEBAPPS_ADDR`, `SBM_E2E_MONITOR_WEBAPPS_PASSWORD`.
-/// - `SBM_E2E_MONITOR_WEBAPPS_INSECURE=1` for an agent on plain HTTP,
-///   `SBM_E2E_MONITOR_WEBAPPS_IGNORE_CERT=1` for a self-signed one.
+/// - `SBM_E2E_MONITOR_WEBAPPS_INSECURE=1` for an agent on plain HTTP. A
+///   self-signed certificate is pinned as presented, as on a first connect.
 library;
 
 import 'dart:io';
 
+import 'package:crypto/crypto.dart' show sha256;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/provider/server/monitor_http.dart';
 
 import '../helpers/ssh_e2e.dart';
 
-void main() {
+Future<void> main() async {
   final addr = e2eEnv('SBM_E2E_MONITOR_WEBAPPS_ADDR');
   final pwd = e2eEnv('SBM_E2E_MONITOR_WEBAPPS_PASSWORD');
   if (addr == null || pwd == null) {
     test('web apps e2e', () {}, skip: 'SBM_E2E_MONITOR_WEBAPPS_ADDR / _PASSWORD not set');
     return;
   }
-  final ignoreCert = e2eEnv('SBM_E2E_MONITOR_WEBAPPS_IGNORE_CERT') == '1';
+  final pin = await e2eAgentCertSha256(addr);
   final client = MonitorHttpClient(
     MonitorHttpCredential(
       addr: addr,
       pwd: pwd,
-      ignoreCert: ignoreCert,
+      certSha256: pin,
       allowInsecure: e2eEnv('SBM_E2E_MONITOR_WEBAPPS_INSECURE') == '1',
     ),
   );
@@ -44,7 +45,8 @@ void main() {
     expect(uri.path, '/__sbm/enter');
 
     final http = HttpClient();
-    if (ignoreCert) http.badCertificateCallback = (_, _, _) => true;
+    // The pinned certificate only, as the app's own client.
+    http.badCertificateCallback = (cert, _, _) => sha256.convert(cert.der).toString() == pin;
     addTearDown(() => http.close(force: true));
 
     final enter = await (await http.getUrl(uri)..followRedirects = false).close();

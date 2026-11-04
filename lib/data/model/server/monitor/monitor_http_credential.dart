@@ -25,7 +25,11 @@ final class MonitorHttpCredential {
   @JsonKey(name: 'user')
   final String? legacyUser;
 
-  final bool ignoreCert;
+  /// SHA-256 of the certificate the user accepted for this agent, lowercase
+  /// hex. Read only when the system does not trust the certificate (an agent's
+  /// own self-signed one): a CA-valid agent needs none. Absent, such a
+  /// certificate is refused and shown for review rather than trusted.
+  final String? certSha256;
 
   /// Permit this connection to use plaintext HTTP away from loopback.
   ///
@@ -38,7 +42,7 @@ final class MonitorHttpCredential {
     required this.addr,
     this.pwd,
     this.legacyUser,
-    this.ignoreCert = false,
+    this.certSha256,
     this.allowInsecure = false,
   });
 
@@ -47,7 +51,7 @@ final class MonitorHttpCredential {
     addr: addr,
     pwd: pwd,
     legacyUser: user,
-    ignoreCert: ignoreCert,
+    certSha256: certSha256,
     allowInsecure: allowInsecure,
   );
 
@@ -56,7 +60,7 @@ final class MonitorHttpCredential {
     addr: addr,
     pwd: pwd,
     legacyUser: legacyUser,
-    ignoreCert: ignoreCert,
+    certSha256: certSha256,
     allowInsecure: allowInsecure,
   );
 
@@ -85,8 +89,17 @@ final class MonitorHttpCredential {
     addr: addr,
     pwd: pwd,
     legacyUser: legacyUser,
-    ignoreCert: ignoreCert,
+    certSha256: certSha256,
     allowInsecure: true,
+  );
+
+  /// The same connection trusting the certificate [pin] names.
+  MonitorHttpCredential withCertSha256(String? pin) => MonitorHttpCredential(
+    addr: addr,
+    pwd: pwd,
+    legacyUser: legacyUser,
+    certSha256: pin,
+    allowInsecure: allowInsecure,
   );
 
   @override
@@ -95,7 +108,7 @@ final class MonitorHttpCredential {
         other.addr == addr &&
         other.pwd == pwd &&
         other.legacyUser == legacyUser &&
-        other.ignoreCert == ignoreCert &&
+        other.certSha256 == certSha256 &&
         other.allowInsecure == allowInsecure;
   }
 
@@ -104,7 +117,7 @@ final class MonitorHttpCredential {
     addr,
     pwd,
     legacyUser,
-    ignoreCert,
+    certSha256,
     allowInsecure,
   );
 }

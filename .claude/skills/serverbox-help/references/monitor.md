@@ -70,8 +70,9 @@ minutes, which can look like a Monitor that does not answer.
 ## Adding it in the app
 
 **+** → enable **Monitor HTTP** → URL (`https://1.2.3.4:3770`), **Monitor
-Password**, and **Monitor Ignore certificate** only for a
-self-signed certificate → save. SSH can be on for the same server as well.
+Password** → save. A self-signed certificate is shown on the first connection
+(or under **Monitor Certificate**) to compare and trust; only that one is
+accepted afterwards. SSH can be on for the same server as well.
 
 A server with only Monitor HTTP has no SSH credentials: it can do what the
 Monitor's system account can do, and no SFTP at all. A server where the Monitor leads — the Monitor
@@ -144,7 +145,7 @@ account, with none of SSH's authentication in between.
 | No remote desktop or port forwarding, with a terminal | The Monitor predates the TCP relay; update it |
 | Remote forward greyed out, local and dynamic fine | The Monitor predates the listener; update it |
 | A command, file or port is refused by the system | The Monitor's system account lacks the right; that account is the limit |
-| Certificate error | Configure TLS or a proxy, or **Monitor Ignore certificate** for a self-signed one |
+| Certificate error | Configure TLS or a proxy; for a self-signed one, compare the SHA-256 and trust it |
 | Login refused, or the Monitor seems slow | Wrong password, throttled (per source address; a device that signed in before is never locked out by failures elsewhere); reset with `server_box_monitor password` |
 | Settings turned themselves off after an upgrade | A config from before August 2026 uses old flat keys (`terminal_enabled`...) that are no longer read; rewrite it against [`config.example.toml`](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/config.example.toml) |
 | A web panel on another origin cannot reach it | `cors_allowed_origins` in `config.toml`, or `SBM_CORS_ORIGINS` |

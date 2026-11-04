@@ -555,9 +555,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Customize which tabs appear on the home page and their order';
 
   @override
-  String get ignoreCert => 'Ignore certificate';
-
-  @override
   String get image => 'Image';
 
   @override
@@ -873,19 +870,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Not reviewed yet — tap to see the certificate';
 
   @override
-  String get bmcCertReview =>
-      'A self-signed certificate. Compare it before accepting. Only this exact one is trusted afterwards.';
-
-  @override
-  String get bmcCertChanged => 'The certificate does not match. Check it.';
-
-  @override
   String get bmcCertExpired => 'Expired.';
-
-  @override
-  String bmcCertWas(String fingerprint) {
-    return 'Previously accepted: $fingerprint';
-  }
 
   @override
   String get bmcAddrInvalid =>
@@ -926,10 +911,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get proxyCommandMobileTip =>
       'On a phone, the command runs in the selected Linux system. Install the tools it uses (nc, socat, …) there first.';
-
-  @override
-  String get pveIgnoreCertTip =>
-      'Not recommended to enable, beware of security risks! If you are using the default certificate from PVE, you need to enable this option.';
 
   @override
   String get pvePasswordRequired =>
@@ -3136,6 +3117,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get remoteDesktopTrustReconnect => 'Trust and reconnect';
+
+  @override
+  String get certTrust => 'Trust';
 
   @override
   String remoteDesktopDeleteProfile(String name) {

@@ -99,7 +99,9 @@ abstract final class SchemaVersion {
   /// v32: the Agent's conversations dropped, its chats being fl_pi_llm's now
   /// v33: `server.disk_counts_network`
   /// v34: `sync_record`, each synced record's newest stamp (the op log)
-  static const current = 35;
+  /// v35: `server_identity_file`, a server's `IdentityFile` paths
+  /// v36: `server.monitor_cert_sha256` replaces `monitor_ignore_cert`
+  static const current = 36;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

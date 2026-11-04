@@ -1108,24 +1108,7 @@ extension _Widgets on _ServerEditPageState {
               obscureText: true,
               suggestion: false,
             ),
-            if (!plain)
-              ListTile(
-                leading: const Icon(MingCute.certificate_line),
-                title: TipText(
-                  'Monitor ${l10n.ignoreCert}',
-                  l10n.pveIgnoreCertTip,
-                ),
-                trailing: _monitorIgnoreCert.listenVal(
-                  (v) => SwitchX(
-                    value: v,
-                    onChanged: (val) {
-                      _monitorIgnoreCert.value = val;
-                    },
-                  ),
-                ),
-              ).cardx
-            else
-              _buildPlainHttpCallout(),
+            if (!plain) _buildMonitorCert() else _buildPlainHttpCallout(),
           ],
         );
       },
@@ -1403,6 +1386,36 @@ extension _Widgets on _ServerEditPageState {
                 },
               ),
         onTap: _onTapBmcAccount,
+      ).cardx;
+    });
+  }
+
+  /// The certificate accepted for an agent the system does not trust. Tapping
+  /// reads the one it presents now; connecting asks too, so nothing has to be
+  /// set here.
+  Widget _buildMonitorCert() {
+    return _monitorCert.listenVal((stored) {
+      // Rebuilt with the URL field (`_buildMonitorHttpFields`): a pin taken
+      // at another address is not this one's.
+      final pinned = _monitorCertAddr?.trim() == _monitorAddrCtrl.text.trim() ? stored : null;
+      final has = pinned != null && pinned.isNotEmpty;
+      return ListTile(
+        leading: Icon(has ? Icons.verified_user : MingCute.certificate_line),
+        title: Text('Monitor ${l10n.bmcCert}'),
+        subtitle: has
+            ? SelectableText(
+                'SHA-256: ${prettyCertFingerprint(pinned)}',
+                style: UIs.textGrey,
+              )
+            : Text(l10n.pveCertUnpinned, style: UIs.textGrey),
+        trailing: has
+            ? Btn.icon(
+                text: libL10n.delete,
+                icon: const Icon(Icons.delete_outline),
+                onTap: () => _monitorCert.value = null,
+              )
+            : const Icon(Icons.keyboard_arrow_right),
+        onTap: _onTapMonitorCert,
       ).cardx;
     });
   }

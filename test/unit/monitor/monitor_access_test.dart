@@ -224,6 +224,7 @@ void main() {
       'addr': 'https://agent:3770',
       'user': 'admin',
       'pwd': 'pw',
+      // What an earlier build wrote: read past, since it pins nothing.
       'ignoreCert': true,
     });
     expect(
@@ -232,7 +233,6 @@ void main() {
         addr: 'https://agent:3770',
         pwd: 'pw',
         legacyUser: 'admin',
-        ignoreCert: true,
       ),
     );
     expect(cred.toJson()['user'], 'admin');

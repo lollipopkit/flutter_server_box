@@ -687,10 +687,6 @@
   "@homeTabsCustomizeDesc": {
     "description": "Description of the home tabs customize desc feature or option."
   },
-  "ignoreCert": "Ignore certificate",
-  "@ignoreCert": {
-    "description": "User-facing label or message for ignore cert."
-  },
   "image": "Image",
   "@image": {
     "description": "A container image, as in Docker. NOT a picture — do not replace this with libL10n.image, whose German is \"Bild\" and Japanese \"画像\"."
@@ -1105,26 +1101,9 @@
   "@bmcCertUnreviewed": {
     "description": "User-facing label or message for BMC cert unreviewed."
   },
-  "bmcCertReview": "A self-signed certificate. Compare it before accepting. Only this exact one is trusted afterwards.",
-  "@bmcCertReview": {
-    "description": "User-facing label or message for BMC cert review."
-  },
-  "bmcCertChanged": "The certificate does not match. Check it.",
-  "@bmcCertChanged": {
-    "description": "User-facing label or message for BMC cert changed."
-  },
   "bmcCertExpired": "Expired.",
   "@bmcCertExpired": {
     "description": "User-facing label or message for BMC cert expired."
-  },
-  "bmcCertWas": "Previously accepted: {fingerprint}",
-  "@bmcCertWas": {
-    "description": "User-facing label or message for BMC cert was.",
-    "placeholders": {
-      "fingerprint": {
-        "type": "String"
-      }
-    }
   },
   "bmcAddrInvalid": "The BMC address must be a URL, e.g. https://10.0.0.9",
   "@bmcAddrInvalid": {
@@ -1178,10 +1157,6 @@
   "proxyCommandMobileTip": "On a phone, the command runs in the selected Linux system. Install the tools it uses (nc, socat, …) there first.",
   "@proxyCommandMobileTip": {
     "description": "Note under the ProxyCommand field on Android and iOS."
-  },
-  "pveIgnoreCertTip": "Not recommended to enable, beware of security risks! If you are using the default certificate from PVE, you need to enable this option.",
-  "@pveIgnoreCertTip": {
-    "description": "Help text for the pve ignore cert setting or action."
   },
   "pvePasswordRequired": "PVE password is required. Please set it in server settings.",
   "@pvePasswordRequired": {
@@ -3888,6 +3863,10 @@
   "remoteDesktopCertificateUnverifiedTip": "The system could not verify this certificate. Verify its SHA-256 fingerprint before continuing.",
   "remoteDesktopReplaceTrust": "Replace trust",
   "remoteDesktopTrustReconnect": "Trust and reconnect",
+  "certTrust": "Trust",
+  "@certTrust": {
+    "description": "Accepts a certificate shown for review, where nothing reconnects at once (a form field is set)."
+  },
   "remoteDesktopDeleteProfile": "Delete remote desktop profile “{name}”?",
   "@remoteDesktopDeleteProfile": {
     "placeholders": {
