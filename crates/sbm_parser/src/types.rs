@@ -512,7 +512,6 @@ pub struct DiskSmart {
     pub serial: Option<String>,
     pub power_on_hours: Option<i64>,
     pub power_cycle_count: Option<i64>,
-    pub raw_data: serde_json::Value,
     pub smart_attributes: BTreeMap<String, SmartAttribute>,
 }
 

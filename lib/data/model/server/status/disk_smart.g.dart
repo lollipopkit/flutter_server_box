@@ -14,7 +14,6 @@ _DiskSmart _$DiskSmartFromJson(Map<String, dynamic> json) => _DiskSmart(
   serial: json['serial'] as String?,
   powerOnHours: (json['powerOnHours'] as num?)?.toInt(),
   powerCycleCount: (json['powerCycleCount'] as num?)?.toInt(),
-  rawData: json['rawData'] as Map<String, dynamic>,
   smartAttributes: (json['smartAttributes'] as Map<String, dynamic>).map(
     (k, e) => MapEntry(k, SmartAttribute.fromJson(e as Map<String, dynamic>)),
   ),
@@ -29,7 +28,6 @@ Map<String, dynamic> _$DiskSmartToJson(_DiskSmart instance) =>
       'serial': instance.serial,
       'powerOnHours': instance.powerOnHours,
       'powerCycleCount': instance.powerCycleCount,
-      'rawData': instance.rawData,
       'smartAttributes': instance.smartAttributes,
     };
 

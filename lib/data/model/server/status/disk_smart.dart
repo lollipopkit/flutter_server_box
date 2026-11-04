@@ -16,7 +16,6 @@ abstract class DiskSmart with _$DiskSmart {
     String? serial,
     int? powerOnHours,
     int? powerCycleCount,
-    required Map<String, dynamic> rawData,
     required Map<String, SmartAttribute> smartAttributes,
   }) = _DiskSmart;
 

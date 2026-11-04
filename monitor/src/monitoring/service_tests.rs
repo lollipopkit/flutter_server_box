@@ -492,7 +492,6 @@ fn adapt_status_uses_fresh_extended_fields_when_present() {
         serial: None,
         power_on_hours: None,
         power_cycle_count: None,
-        raw_data: serde_json::Value::Null,
         smart_attributes: Default::default(),
     }];
 

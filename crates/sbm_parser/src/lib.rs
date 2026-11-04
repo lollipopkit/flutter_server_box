@@ -24,6 +24,7 @@ pub mod common;
 pub mod container;
 pub mod container_backup;
 pub mod desktop;
+pub mod exec_session;
 pub mod files;
 pub mod firewall;
 pub mod cron;

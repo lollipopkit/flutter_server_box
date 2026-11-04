@@ -10,7 +10,6 @@ void main() {
   DiskSmart drive(Map<String, int> attributes, {bool? healthy}) => DiskSmart(
     device: 'sda',
     healthy: healthy,
-    rawData: const {},
     smartAttributes: {
       for (final e in attributes.entries)
         e.key: SmartAttribute(
@@ -52,7 +51,6 @@ void main() {
     final smart = DiskSmart(
       device: 'sdb',
       healthy: true,
-      rawData: const {},
       smartAttributes: {
         'Reallocated_Sector_Ct': const SmartAttribute(
           name: 'Reallocated_Sector_Ct',
@@ -71,7 +69,6 @@ void main() {
     final smart = DiskSmart(
       device: 'sdc',
       healthy: true,
-      rawData: const {},
       smartAttributes: {
         'Reallocated_Sector_Ct': const SmartAttribute(
           name: 'Reallocated_Sector_Ct',

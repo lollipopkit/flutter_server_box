@@ -11,26 +11,22 @@ import 'package:server_box/src/rust/api/files.dart' as ffi;
 /// One directory level.
 String shellListCommand(String path) => ffi.filesListCommand(path: path);
 
-/// One path, or a marker saying why not: "nothing there" and "you may not
-/// look", each said on stdout ([kShellStatAbsentMark], [kShellStatDeniedMark])
-/// and as an exit code ([kShellStatAbsent], [kShellStatDenied]).
-String shellStatCommand(String path) => ffi.filesStatCommand(path: path);
-
 final _markers = ffi.filesStatMarkers();
 
-/// What [shellStatCommand] prints when there is nothing at the path.
+/// What the stat command (`sbm_parser::files::stat_command`) prints when there
+/// is nothing at the path.
 final kShellStatAbsentMark = _markers.absentMark;
 
-/// What [shellStatCommand] prints when it could not look.
+/// What the stat command prints when it could not look.
 final kShellStatDeniedMark = _markers.deniedMark;
 
-/// [shellStatCommand] found nothing at the path.
+/// The stat command found nothing at the path.
 final kShellStatAbsent = _markers.absentExit;
 
-/// [shellStatCommand] could not look.
+/// The stat command could not look.
 final kShellStatDenied = _markers.deniedExit;
 
-/// Every entry [shellListCommand] or [shellStatCommand] printed.
+/// Every entry [shellListCommand] or the stat command printed.
 ///
 /// Throws [ShellFileRecordException] for output that is not a listing: one cut
 /// short, which would otherwise read as a complete one, or one that is not

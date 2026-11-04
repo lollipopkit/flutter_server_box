@@ -23,9 +23,6 @@ String? filesTerminalShellCwd({
 String filesListCommand({required String path}) =>
     RustLib.instance.api.crateApiFilesFilesListCommand(path: path);
 
-String filesStatCommand({required String path}) =>
-    RustLib.instance.api.crateApiFilesFilesStatCommand(path: path);
-
 /// `(mark, exit code)` for "nothing there" and for "could not look".
 FilesStatMarkers filesStatMarkers() =>
     RustLib.instance.api.crateApiFilesFilesStatMarkers();
@@ -140,6 +137,22 @@ CappedRead filesParseCappedRead({
 /// Replaces `path` with the base64 on stdin, staged in an exclusive temp file.
 String filesAtomicWriteCommand({required String path}) =>
     RustLib.instance.api.crateApiFilesFilesAtomicWriteCommand(path: path);
+
+/// `command` with its output between the marks a file browser reads it by.
+String filesFramedCommand({required String command}) =>
+    RustLib.instance.api.crateApiFilesFilesFramedCommand(command: command);
+
+/// What a framed command printed, or `None` when it did not finish.
+String? filesUnframe({required String output}) =>
+    RustLib.instance.api.crateApiFilesFilesUnframe(output: output);
+
+/// The stat command, opened by the mark only: its answer is its exit code too.
+String filesFramedStatCommand({required String path}) =>
+    RustLib.instance.api.crateApiFilesFilesFramedStatCommand(path: path);
+
+/// What came after the opening mark, or all of `output` without one.
+String filesAfterOutMark({required String output}) =>
+    RustLib.instance.api.crateApiFilesFilesAfterOutMark(output: output);
 
 /// What [`files_capped_read_command`] answered.
 class CappedRead {

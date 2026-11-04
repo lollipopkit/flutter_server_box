@@ -5,6 +5,7 @@ import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
+import 'package:server_box/src/rust/api/exec_session.dart' as es;
 
 typedef SshExecCollectedOutput = ({
   String stdout,
@@ -123,23 +124,11 @@ Future<SshExecCollectedOutput> collectSshExecOutput({
   );
 }
 
-/// The id of the session a command runs in, printed by the command itself.
-///
-/// sshd starts every command in a session of its own (`setsid()`), so its
-/// login shell's pid is the session id, and an `exec` keeps the pid. That id
-/// reaches every process the command started that did not leave the session
-/// — which a process group does not: `set -m`, a build tool or a shell's job
-/// control moves children into groups of their own, out of reach of the
-/// signal SSH delivers.
+/// The session a command runs in, which it prints itself: the programs are
+/// `sbm_parser::exec_session`'s ([es]); the nonce that ties a printed id to
+/// this run is drawn here.
 abstract final class SshSessionId {
-  /// The line [wrap] prints on stderr before anything of the command runs.
-  static final marker = RegExp('\x1esbm-sid:(\\d+)\x1e\n');
-
-  /// Exported by [wrap], with the run's own [nonce], to everything the
-  /// command starts: what ties a session id read off stderr to this run.
-  static const envName = 'SBM_EXEC_ID';
-
-  /// A fresh value for [envName].
+  /// A fresh value for `exec_session::ENV_NAME`.
   static String nonce() {
     final random = Random.secure();
     return List.generate(
@@ -147,58 +136,6 @@ abstract final class SshSessionId {
       (_) => random.nextInt(16).toRadixString(16),
     ).join();
   }
-
-  /// [command] run as before — by the login shell, `$SHELL` — after `sh` has
-  /// printed [marker] and exported [envName] as [nonce].
-  ///
-  /// The login shell need not be a POSIX one, so what it is handed is valid
-  /// in fish as well: one single-quoted program, and [command] single-quoted
-  /// with every `'` and `\` written as a `printf %b` escape — inside single
-  /// quotes fish reads only `\'` and `\\`, POSIX shells nothing at all. A
-  /// shell that rejects it anyway (cmd.exe, PowerShell, csh with a newline in
-  /// quotes) runs none of [command]: the marker is printed before it starts.
-  static String wrap(String command, String nonce) {
-    final arg = command
-        .replaceAll(r'\', r'\0134')
-        .replaceAll("'", r'\0047');
-    return r'''exec sh -c 'printf "\036sbm-sid:%s\036\n" $$ >&2; '''
-        'export $envName=$nonce; '
-        r'''exec "${SHELL:-sh}" -c "$(printf %b "$1")"' sbm '''
-        "'$arg'";
-  }
-
-  /// Kills every process left in session [id] and prints [gone] when none
-  /// is: POSIX `sh`, handed over in single quotes as [wrap] does, so that a
-  /// fish login shell can run it too. Signals the process group as well, for
-  /// a `pkill` without `-s`.
-  ///
-  /// Waits a moment only when there was something to kill, for it to be
-  /// gone from the process table.
-  static String kill(int id) =>
-      "sh -c 'kill -KILL -- -$id 2>/dev/null; "
-      'pkill -KILL -s $id 2>/dev/null && sleep 1; '
-      'pgrep -s $id >/dev/null 2>&1; '
-      "[ \$? -eq 1 ] && echo $gone'";
-
-  /// Prints [owned] when one of session [id]'s processes carries [envName]
-  /// as [nonce], read as the account — and so only from its own processes,
-  /// and not at all without `/proc`.
-  ///
-  /// The id comes off stderr, which the login shell's startup files write to
-  /// before the wrapper runs: nothing is killed by it until this has said the
-  /// session is this run's, so a forged one reaches neither another session
-  /// of the account nor, through its sudo password, one it could not have
-  /// touched. Asked before the signal, while the command's own shell still
-  /// carries the nonce: sudo resets the environment of what it runs, and the
-  /// signal ends sudo itself, which runs as the account.
-  static String owns(int id, String nonce) =>
-      "sh -c 'for p in \$(pgrep -s $id); do "
-      'tr "\\0" "\\n" </proc/\$p/environ 2>/dev/null '
-      '| grep -qx $envName=$nonce && echo $owned && exit 0; done\'';
-
-  static const owned = 'sbm-session-owned';
-
-  static const gone = 'sbm-session-gone';
 }
 
 /// [CommandExec] over an SSH connection.
@@ -209,7 +146,7 @@ abstract final class SshSessionId {
 ///
 /// Cancelling here really stops the command: the channel carries a signal,
 /// and what the signal missed is killed by its session id from a channel of
-/// its own — see [SshSessionId]. What is left of the output is what had
+/// its own — see `sbm_parser::exec_session`. What is left of the output is what had
 /// already arrived.
 class SshExec implements CommandByteExec {
   const SshExec(this.client, {this.sudoPassword});
@@ -271,7 +208,7 @@ class SshExec implements CommandByteExec {
     unawaited(cancel.then((_) => cancelled = true));
     final nonce = SshSessionId.nonce();
     final tracked = await exec(
-      SshSessionId.wrap(command, nonce),
+      es.execSessionWrap(command: command, nonce: nonce),
       nonce: nonce,
     );
     if (!tracked.refused || cancelled) return tracked.result;
@@ -292,7 +229,7 @@ class SshExec implements CommandByteExec {
     String? nonce,
   }) async {
     final session = await client.execute(command, environment: env);
-    // Tracked: run through [SshSessionId.wrap] with this [nonce].
+    // Tracked: run through `exec_session::wrap` with this [nonce].
     final track = nonce != null;
 
     // Until the marker has come or stderr has ended without it, nothing is
@@ -424,11 +361,11 @@ class SshExec implements CommandByteExec {
     await settled();
     final id = sessionId();
     // Before the signal, which ends what carries the nonce — see
-    // [SshSessionId.owns].
+    // `exec_session::owns_command`.
     final owned =
         id != null &&
         nonce != null &&
-        await _confirms(SshSessionId.owns(id, nonce), SshSessionId.owned);
+        await _confirms(es.execSessionOwnsCommand(id: id, nonce: nonce), es.execSessionOwned());
     // Not on a channel that has closed meanwhile: see [_exec].
     if (!ended()) {
       try {
@@ -457,15 +394,16 @@ class SshExec implements CommandByteExec {
       return refused() ? null : false;
     }
     if (!owned) return false;
-    final kill = SshSessionId.kill(id);
-    var gone = await _confirms(kill, SshSessionId.gone);
+    final kill = es.execSessionKillCommand(id: id);
+    final goneMark = es.execSessionGone();
+    var gone = await _confirms(kill, goneMark);
     if (!gone) {
       final password = await _sudoPassword();
       gone = password == null
-          ? await _confirms('sudo -n $kill', SshSessionId.gone)
+          ? await _confirms('sudo -n $kill', goneMark)
           : await _confirms(
               "sudo -S -p '' $kill",
-              SshSessionId.gone,
+              goneMark,
               stdin: '$password\n',
             );
     }
@@ -509,7 +447,7 @@ class SshExec implements CommandByteExec {
 
 typedef _Run = ({ExecResult result, bool refused});
 
-/// [stderr] without the [SshSessionId.marker] line, held back until it has
+/// [stderr] without the session marker line, held back until it has
 /// come or the stream has ended; [onId] gets the id it carried, [onRefused]
 /// is told when the stream ended without it.
 ///
@@ -519,6 +457,8 @@ typedef _Run = ({ExecResult result, bool refused});
 /// A transformer rather than an `async*` generator, here and in [_after]: a
 /// generator waiting in `await for` or on a future finishes cancelling only
 /// once it next yields, and a stream the server holds open never lets it.
+final _markerMax = es.execSessionMarkerMax();
+
 Stream<List<int>> _stripSessionId(
   Stream<Uint8List> stderr,
   Completer<void> decided, {
@@ -530,15 +470,17 @@ Stream<List<int>> _stripSessionId(
     StreamTransformer<Uint8List, List<int>>.fromHandlers(
       handleData: (chunk, sink) {
         if (decided.isCompleted) return sink.add(chunk);
+        // The new chunk and what of the old a split marker can still need:
+        // searching all of what was held each time would be quadratic in it.
+        final from = max(0, head.length - _markerMax);
         head.addAll(chunk);
-        // Latin-1: one char per byte, so the match's offsets are byte offsets.
-        final match = SshSessionId.marker.firstMatch(latin1.decode(head));
+        final match = es.execSessionFindMarker(head: Uint8List.fromList(head.sublist(from)));
         if (match == null) return;
-        onId(int.parse(match[1]!));
+        onId(match.id);
         decided.complete();
         final rest = [
-          ...head.sublist(0, match.start),
-          ...head.sublist(match.end),
+          ...head.sublist(0, from + match.start),
+          ...head.sublist(from + match.end),
         ];
         if (rest.isNotEmpty) sink.add(rest);
       },

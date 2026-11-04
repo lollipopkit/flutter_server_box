@@ -34,11 +34,6 @@ pub fn files_list_command(path: String) -> String {
     files::list_command(&path)
 }
 
-#[flutter_rust_bridge::frb(sync)]
-pub fn files_stat_command(path: String) -> String {
-    files::stat_command(&path)
-}
-
 /// `(mark, exit code)` for "nothing there" and for "could not look".
 #[flutter_rust_bridge::frb(sync)]
 pub fn files_stat_markers() -> FilesStatMarkers {
@@ -200,4 +195,28 @@ pub fn files_parse_capped_read(output: String, max_bytes: u32) -> Result<CappedR
 #[flutter_rust_bridge::frb(sync)]
 pub fn files_atomic_write_command(path: String) -> String {
     files::atomic_write_command(&path)
+}
+
+/// `command` with its output between the marks a file browser reads it by.
+#[flutter_rust_bridge::frb(sync)]
+pub fn files_framed_command(command: String) -> String {
+    files::framed_command(&command)
+}
+
+/// What a framed command printed, or `None` when it did not finish.
+#[flutter_rust_bridge::frb(sync)]
+pub fn files_unframe(output: String) -> Option<String> {
+    files::unframe(&output).map(str::to_owned)
+}
+
+/// The stat command, opened by the mark only: its answer is its exit code too.
+#[flutter_rust_bridge::frb(sync)]
+pub fn files_framed_stat_command(path: String) -> String {
+    files::framed_stat_command(&path)
+}
+
+/// What came after the opening mark, or all of `output` without one.
+#[flutter_rust_bridge::frb(sync)]
+pub fn files_after_out_mark(output: String) -> String {
+    files::after_out_mark(&output).to_owned()
 }

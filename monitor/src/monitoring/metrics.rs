@@ -130,7 +130,7 @@ pub struct CustomCmdOutput {
     pub output: String,
 }
 
-/// `sbm_parser::types::DiskSmart` trimmed for display: drops `raw_data` /
+/// `sbm_parser::types::DiskSmart` trimmed for display: drops
 /// `smart_attributes`, which would otherwise re-serialize a large SMART JSON
 /// blob on every `/api/metrics` poll even though it only changes once per
 /// extended collection cycle
