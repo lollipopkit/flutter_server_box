@@ -115,7 +115,6 @@ body {
   border: 1px solid color-mix(in srgb, var(--light-gray) 80%, transparent);
   background: color-mix(in srgb, var(--white) 78%, transparent);
   backdrop-filter: saturate(1.4) blur(14px);
-  -webkit-backdrop-filter: saturate(1.4) blur(14px);
   box-shadow: 0 6px 24px -14px rgba(26, 20, 24, 0.25);
 }
 
