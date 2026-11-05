@@ -120,6 +120,29 @@ void main() {
     expect(find.text(_l10n.discoveryAdded), findsNWidgets(2));
   });
 
+  testWidgets('select all takes the rows the filter shows', (tester) async {
+    await pump(
+      tester,
+      SshDiscoveryView.batch(
+        thisDevice: false,
+        probe: _noKey,
+        sources: [
+          _Source('lan', [
+            for (var i = 1; i <= 8; i++)
+              _host('10.0.0.$i', name: i.isEven ? 'web$i' : 'db$i'),
+          ]),
+        ],
+      ),
+    );
+    await tester.tap(find.text(_l10n.discoveryScan));
+    await tester.pump();
+    await tester.enterText(find.byType(TextField), 'web');
+    await tester.pump();
+    await tester.tap(find.text(_l10n.discoverySelectAll));
+    await tester.pump();
+    expect(find.text(_l10n.discoverySelected(4)), findsOneWidget);
+  });
+
   testWidgets('a tab per source; one that runs by itself starts when shown', (
     tester,
   ) async {
@@ -382,6 +405,26 @@ void main() {
       ], const []);
       expect(plan.add.map((e) => e.id), ['ts-b', 'id-10.0.0.1']);
       expect(plan.add.last.ssh!.resolvedJumpIds, ['ts-b']);
+    });
+
+    test('each server after its hops, along a chain', () {
+      const edge = Spi(
+        name: 'edge',
+        id: 'e',
+        ssh: SshCredential(ip: '10.0.0.1', jumpIds: ['b']),
+      );
+      final e = DiscoveredSshHost(key: 'edge', server: edge, via: [bastion]);
+      final d = DiscoveredSshHost(
+        key: 'db',
+        server: const Spi(
+          name: 'db',
+          id: 'd',
+          ssh: SshCredential(ip: '10.0.0.2', jumpIds: ['e']),
+        ),
+        via: [bastion, edge],
+      );
+      final plan = planDiscoveredServers([e, d], const []);
+      expect(plan.add.map((s) => s.id), ['b', 'e', 'd']);
     });
 
     test('names already taken get a suffix', () {

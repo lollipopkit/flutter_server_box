@@ -389,15 +389,23 @@ extension _Actions on _SshDiscoveryViewState {
       take(hop, user: true);
     }
   }
-  // Hops first in the order they are added: a server's jump must exist.
-  final hopIds = {
-    for (final h in hosts)
-      for (final hop in h.via) ids[hop.id],
-  };
-  final ordered = [
-    ...fresh.where((e) => hopIds.contains(e.id)),
-    ...fresh.where((e) => !hopIds.contains(e.id)),
-  ];
+  // Each server after the hops it jumps through: a jump must name a server
+  // that exists by the time it is added.
+  final byId = {for (final spi in fresh) spi.id: spi};
+  final ordered = <Spi>[];
+  final placed = <String>{};
+  void place(Spi spi, Set<String> visiting) {
+    if (placed.contains(spi.id) || !visiting.add(spi.id)) return;
+    for (final id in spi.ssh?.resolvedJumpIds ?? const <String>[]) {
+      if (byId[ids[id] ?? id] case final hop?) place(hop, visiting);
+    }
+    placed.add(spi.id);
+    ordered.add(spi);
+  }
+
+  for (final spi in fresh) {
+    place(spi, {});
+  }
   final pointed = [
     for (final spi in ordered)
       switch (spi.ssh) {

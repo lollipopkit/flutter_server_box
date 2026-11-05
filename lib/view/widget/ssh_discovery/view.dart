@@ -340,13 +340,6 @@ final class _SshDiscoveryViewState extends ConsumerState<SshDiscoveryView> {
     final servers = ref.watch(serversProvider).servers.values;
     bool exists(DiscoveredSshHost h) =>
         _known.contains(_keyOf(source, h)) || servers.any(h.isServer);
-    final free = [
-      for (final h in st.hosts)
-        if (!_added.contains(_keyOf(source, h)) && !exists(h)) h,
-    ];
-    final allSelected =
-        free.isNotEmpty &&
-        free.every((h) => _selected.containsKey(_keyOf(source, h)));
     final query = st.filter.text.trim().toLowerCase();
     final shown = query.isEmpty
         ? st.hosts
@@ -356,7 +349,15 @@ final class _SshDiscoveryViewState extends ConsumerState<SshDiscoveryView> {
               h.address,
               ?h.detail,
             ].any((e) => e.toLowerCase().contains(query)),
-          );
+          ).toList();
+    // What "select all" acts on: the rows on screen that can be checked.
+    final free = [
+      for (final h in shown)
+        if (!_added.contains(_keyOf(source, h)) && !exists(h)) h,
+    ];
+    final allSelected =
+        free.isNotEmpty &&
+        free.every((h) => _selected.containsKey(_keyOf(source, h)));
     return [
       if (st.hosts.length >= _filterFrom)
         Padding(
