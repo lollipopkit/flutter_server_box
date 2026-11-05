@@ -7369,4 +7369,15 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get syncKeyRotate => 'Sync-Schlüssel ersetzen';
+
+  @override
+  String get introWelcome =>
+      'Status, Terminal, Dateien und Container für Linux-, Unix- und Windows-Server, über SSH oder den Monitor.';
+
+  @override
+  String get introDefaults => 'Standardwerte';
+
+  @override
+  String get introSettingsLater =>
+      'All dies lässt sich später in den Einstellungen ändern.';
 }

@@ -2036,5 +2036,8 @@
   "transfersActive": "{count, plural, =1{1 transferência} other{{count} transferências}}",
   "syncKeyRotate": "Substituir a chave de sincronização",
   "remoteDesktopProtocolInvalid": "Protocolo não suportado.",
-  "storageKeyRequired": "É necessária uma frase-passe."
+  "storageKeyRequired": "É necessária uma frase-passe.",
+  "introWelcome": "Estado, terminal, ficheiros e contentores para servidores Linux, Unix e Windows, por SSH ou pelo Monitor.",
+  "introDefaults": "Predefinições",
+  "introSettingsLater": "Tudo isto pode ser alterado mais tarde nas Definições."
 }

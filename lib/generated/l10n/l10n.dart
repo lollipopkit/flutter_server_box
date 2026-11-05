@@ -12358,6 +12358,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Replace sync key'**
   String get syncKeyRotate;
+
+  /// Lead sentence on the first intro page, under the app name.
+  ///
+  /// In en, this message translates to:
+  /// **'Status, terminal, files and containers for Linux, Unix and Windows servers, over SSH or the Monitor.'**
+  String get introWelcome;
+
+  /// Label of the intro section holding default behaviour switches.
+  ///
+  /// In en, this message translates to:
+  /// **'Defaults'**
+  String get introDefaults;
+
+  /// Note under the first intro page's options.
+  ///
+  /// In en, this message translates to:
+  /// **'All of these can be changed later in Settings.'**
+  String get introSettingsLater;
 }
 
 class _AppLocalizationsDelegate

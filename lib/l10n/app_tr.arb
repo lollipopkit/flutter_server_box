@@ -2036,5 +2036,8 @@
   "transfersActive": "{count} aktarım",
   "syncKeyRotate": "Eşitleme anahtarını değiştir",
   "remoteDesktopProtocolInvalid": "Desteklenmeyen protokol.",
-  "storageKeyRequired": "Parola ifadesi gerekli."
+  "storageKeyRequired": "Parola ifadesi gerekli.",
+  "introWelcome": "Linux, Unix ve Windows sunucuları için durum, terminal, dosyalar ve konteynerler; SSH veya Monitor üzerinden.",
+  "introDefaults": "Varsayılanlar",
+  "introSettingsLater": "Bunların tümü daha sonra Ayarlar'dan değiştirilebilir."
 }

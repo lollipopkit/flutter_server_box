@@ -2036,5 +2036,8 @@
   "transfersActive": "{count, plural, =1{{count} передача} few{{count} передачи} many{{count} передач} other{{count} передачи}}",
   "syncKeyRotate": "Заменить ключ синхронизации",
   "remoteDesktopProtocolInvalid": "Неподдерживаемый протокол.",
-  "storageKeyRequired": "Требуется парольная фраза."
+  "storageKeyRequired": "Требуется парольная фраза.",
+  "introWelcome": "Состояние, терминал, файлы и контейнеры для серверов Linux, Unix и Windows — через SSH или Monitor.",
+  "introDefaults": "Значения по умолчанию",
+  "introSettingsLater": "Всё это можно изменить позже в настройках."
 }

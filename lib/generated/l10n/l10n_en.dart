@@ -7274,4 +7274,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get syncKeyRotate => 'Replace sync key';
+
+  @override
+  String get introWelcome =>
+      'Status, terminal, files and containers for Linux, Unix and Windows servers, over SSH or the Monitor.';
+
+  @override
+  String get introDefaults => 'Defaults';
+
+  @override
+  String get introSettingsLater =>
+      'All of these can be changed later in Settings.';
 }

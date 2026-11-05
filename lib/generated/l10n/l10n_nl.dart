@@ -7341,4 +7341,15 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get syncKeyRotate => 'Synchronisatiesleutel vervangen';
+
+  @override
+  String get introWelcome =>
+      'Status, terminal, bestanden en containers voor Linux-, Unix- en Windows-servers, via SSH of de Monitor.';
+
+  @override
+  String get introDefaults => 'Standaardwaarden';
+
+  @override
+  String get introSettingsLater =>
+      'Dit kan later allemaal in Instellingen worden gewijzigd.';
 }

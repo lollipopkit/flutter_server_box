@@ -7325,4 +7325,15 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get syncKeyRotate => 'Замінити ключ синхронізації';
+
+  @override
+  String get introWelcome =>
+      'Стан, термінал, файли та контейнери для серверів Linux, Unix і Windows — через SSH або Monitor.';
+
+  @override
+  String get introDefaults => 'Типові значення';
+
+  @override
+  String get introSettingsLater =>
+      'Усе це можна змінити пізніше в налаштуваннях.';
 }

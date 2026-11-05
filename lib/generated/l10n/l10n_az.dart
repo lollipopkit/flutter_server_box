@@ -7265,4 +7265,15 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get syncKeyRotate => 'Sinxronizasiya açarını əvəz et';
+
+  @override
+  String get introWelcome =>
+      'Linux, Unix və Windows serverləri üçün status, terminal, fayllar və konteynerlər — SSH və ya Monitor vasitəsilə.';
+
+  @override
+  String get introDefaults => 'Standart dəyərlər';
+
+  @override
+  String get introSettingsLater =>
+      'Bunların hamısını sonra Ayarlarda dəyişmək olar.';
 }

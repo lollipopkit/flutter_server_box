@@ -2036,5 +2036,8 @@
   "transfersActive": "{count} ötürmə",
   "syncKeyRotate": "Sinxronizasiya açarını əvəz et",
   "remoteDesktopProtocolInvalid": "Dəstəklənməyən protokol.",
-  "storageKeyRequired": "Parol ifadəsi tələb olunur."
+  "storageKeyRequired": "Parol ifadəsi tələb olunur.",
+  "introWelcome": "Linux, Unix və Windows serverləri üçün status, terminal, fayllar və konteynerlər — SSH və ya Monitor vasitəsilə.",
+  "introDefaults": "Standart dəyərlər",
+  "introSettingsLater": "Bunların hamısını sonra Ayarlarda dəyişmək olar."
 }

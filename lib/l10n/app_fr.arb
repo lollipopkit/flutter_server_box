@@ -2036,5 +2036,8 @@
   "transfersActive": "{count, plural, =1{1 transfert} other{{count} transferts}}",
   "syncKeyRotate": "Remplacer la clé de synchronisation",
   "remoteDesktopProtocolInvalid": "Protocole non pris en charge.",
-  "storageKeyRequired": "Une phrase secrète est requise."
+  "storageKeyRequired": "Une phrase secrète est requise.",
+  "introWelcome": "État, terminal, fichiers et conteneurs pour les serveurs Linux, Unix et Windows, via SSH ou le Monitor.",
+  "introDefaults": "Valeurs par défaut",
+  "introSettingsLater": "Tout cela peut être modifié plus tard dans les Paramètres."
 }

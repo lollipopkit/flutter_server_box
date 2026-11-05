@@ -9410,5 +9410,17 @@
       }
     }
   },
-  "syncKeyRotate": "Replace sync key"
+  "syncKeyRotate": "Replace sync key",
+  "introWelcome": "Status, terminal, files and containers for Linux, Unix and Windows servers, over SSH or the Monitor.",
+  "@introWelcome": {
+    "description": "Lead sentence on the first intro page, under the app name."
+  },
+  "introDefaults": "Defaults",
+  "@introDefaults": {
+    "description": "Label of the intro section holding default behaviour switches."
+  },
+  "introSettingsLater": "All of these can be changed later in Settings.",
+  "@introSettingsLater": {
+    "description": "Note under the first intro page's options."
+  }
 }

@@ -2036,5 +2036,8 @@
   "hostCertAuthorityExists": "已在清單中",
   "addToHomeScreen": "加入主畫面",
   "transfersActive": "{count} 個傳輸",
-  "syncKeyRotate": "更換同步金鑰"
+  "syncKeyRotate": "更換同步金鑰",
+  "introWelcome": "透過 SSH 或 Monitor 檢視 Linux、Unix 和 Windows 伺服器的狀態，並使用終端機、檔案和容器管理。",
+  "introDefaults": "預設設定",
+  "introSettingsLater": "以上設定均可稍後在設定中變更。"
 }

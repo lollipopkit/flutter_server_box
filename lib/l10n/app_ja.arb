@@ -2036,5 +2036,8 @@
   "transfersActive": "{count} 件の転送",
   "syncKeyRotate": "同期キーを置き換える",
   "remoteDesktopProtocolInvalid": "サポートされていないプロトコルです。",
-  "storageKeyRequired": "パスフレーズが必要です。"
+  "storageKeyRequired": "パスフレーズが必要です。",
+  "introWelcome": "SSH または Monitor 経由で、Linux・Unix・Windows サーバーのステータス、ターミナル、ファイル、コンテナを扱います。",
+  "introDefaults": "デフォルト",
+  "introSettingsLater": "これらはすべて後から設定で変更できます。"
 }

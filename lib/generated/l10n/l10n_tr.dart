@@ -7258,4 +7258,15 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get syncKeyRotate => 'Eşitleme anahtarını değiştir';
+
+  @override
+  String get introWelcome =>
+      'Linux, Unix ve Windows sunucuları için durum, terminal, dosyalar ve konteynerler; SSH veya Monitor üzerinden.';
+
+  @override
+  String get introDefaults => 'Varsayılanlar';
+
+  @override
+  String get introSettingsLater =>
+      'Bunların tümü daha sonra Ayarlar\'dan değiştirilebilir.';
 }

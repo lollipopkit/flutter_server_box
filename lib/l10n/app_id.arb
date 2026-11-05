@@ -2036,5 +2036,8 @@
   "transfersActive": "{count} transfer",
   "syncKeyRotate": "Ganti kunci sinkronisasi",
   "remoteDesktopProtocolInvalid": "Protokol tidak didukung.",
-  "storageKeyRequired": "Frasa sandi diperlukan."
+  "storageKeyRequired": "Frasa sandi diperlukan.",
+  "introWelcome": "Status, terminal, file, dan kontainer untuk server Linux, Unix, dan Windows, melalui SSH atau Monitor.",
+  "introDefaults": "Bawaan",
+  "introSettingsLater": "Semua ini dapat diubah nanti di Pengaturan."
 }

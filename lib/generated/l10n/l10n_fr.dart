@@ -7389,4 +7389,15 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get syncKeyRotate => 'Remplacer la clé de synchronisation';
+
+  @override
+  String get introWelcome =>
+      'État, terminal, fichiers et conteneurs pour les serveurs Linux, Unix et Windows, via SSH ou le Monitor.';
+
+  @override
+  String get introDefaults => 'Valeurs par défaut';
+
+  @override
+  String get introSettingsLater =>
+      'Tout cela peut être modifié plus tard dans les Paramètres.';
 }

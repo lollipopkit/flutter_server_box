@@ -1713,5 +1713,8 @@
   },
   "syncKeyRotate": "جایگزینی کلید همگام‌سازی",
   "remoteDesktopProtocolInvalid": "پروتکل پشتیبانی نمی‌شود.",
-  "storageKeyRequired": "عبارت عبور الزامی است."
+  "storageKeyRequired": "عبارت عبور الزامی است.",
+  "introWelcome": "وضعیت، ترمینال، فایل‌ها و کانتینرها برای سرورهای Linux، Unix و Windows، از طریق SSH یا Monitor.",
+  "introDefaults": "پیش‌فرض‌ها",
+  "introSettingsLater": "همهٔ این موارد را بعداً می‌توان در تنظیمات تغییر داد."
 }

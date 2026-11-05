@@ -6860,6 +6860,16 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get syncKeyRotate => '更换同步密钥';
+
+  @override
+  String get introWelcome =>
+      '通过 SSH 或 Monitor 查看 Linux、Unix 和 Windows 服务器的状态，并使用终端、文件和容器管理。';
+
+  @override
+  String get introDefaults => '默认设置';
+
+  @override
+  String get introSettingsLater => '以上设置均可稍后在设置中更改。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -13721,4 +13731,14 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get syncKeyRotate => '更換同步金鑰';
+
+  @override
+  String get introWelcome =>
+      '透過 SSH 或 Monitor 檢視 Linux、Unix 和 Windows 伺服器的狀態，並使用終端機、檔案和容器管理。';
+
+  @override
+  String get introDefaults => '預設設定';
+
+  @override
+  String get introSettingsLater => '以上設定均可稍後在設定中變更。';
 }

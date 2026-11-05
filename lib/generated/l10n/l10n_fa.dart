@@ -7321,4 +7321,15 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get syncKeyRotate => 'جایگزینی کلید همگام‌سازی';
+
+  @override
+  String get introWelcome =>
+      'وضعیت، ترمینال، فایل‌ها و کانتینرها برای سرورهای Linux، Unix و Windows، از طریق SSH یا Monitor.';
+
+  @override
+  String get introDefaults => 'پیش‌فرض‌ها';
+
+  @override
+  String get introSettingsLater =>
+      'همهٔ این موارد را بعداً می‌توان در تنظیمات تغییر داد.';
 }

@@ -6972,4 +6972,14 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get syncKeyRotate => '同期キーを置き換える';
+
+  @override
+  String get introWelcome =>
+      'SSH または Monitor 経由で、Linux・Unix・Windows サーバーのステータス、ターミナル、ファイル、コンテナを扱います。';
+
+  @override
+  String get introDefaults => 'デフォルト';
+
+  @override
+  String get introSettingsLater => 'これらはすべて後から設定で変更できます。';
 }

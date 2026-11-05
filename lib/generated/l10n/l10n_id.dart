@@ -7275,4 +7275,15 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get syncKeyRotate => 'Ganti kunci sinkronisasi';
+
+  @override
+  String get introWelcome =>
+      'Status, terminal, file, dan kontainer untuk server Linux, Unix, dan Windows, melalui SSH atau Monitor.';
+
+  @override
+  String get introDefaults => 'Bawaan';
+
+  @override
+  String get introSettingsLater =>
+      'Semua ini dapat diubah nanti di Pengaturan.';
 }

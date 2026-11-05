@@ -2036,5 +2036,8 @@
   "transfersActive": "{count, plural, =1{1 overdracht} other{{count} overdrachten}}",
   "syncKeyRotate": "Synchronisatiesleutel vervangen",
   "remoteDesktopProtocolInvalid": "Niet-ondersteund protocol.",
-  "storageKeyRequired": "Een wachtwoordzin is vereist."
+  "storageKeyRequired": "Een wachtwoordzin is vereist.",
+  "introWelcome": "Status, terminal, bestanden en containers voor Linux-, Unix- en Windows-servers, via SSH of de Monitor.",
+  "introDefaults": "Standaardwaarden",
+  "introSettingsLater": "Dit kan later allemaal in Instellingen worden gewijzigd."
 }

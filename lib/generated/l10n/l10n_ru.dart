@@ -7324,4 +7324,14 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get syncKeyRotate => 'Заменить ключ синхронизации';
+
+  @override
+  String get introWelcome =>
+      'Состояние, терминал, файлы и контейнеры для серверов Linux, Unix и Windows — через SSH или Monitor.';
+
+  @override
+  String get introDefaults => 'Значения по умолчанию';
+
+  @override
+  String get introSettingsLater => 'Всё это можно изменить позже в настройках.';
 }

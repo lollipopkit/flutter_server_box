@@ -6973,4 +6973,14 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get syncKeyRotate => '동기화 키 교체';
+
+  @override
+  String get introWelcome =>
+      'SSH 또는 Monitor를 통해 Linux, Unix, Windows 서버의 상태, 터미널, 파일, 컨테이너를 다룹니다.';
+
+  @override
+  String get introDefaults => '기본값';
+
+  @override
+  String get introSettingsLater => '이 항목은 모두 나중에 설정에서 변경할 수 있습니다.';
 }
