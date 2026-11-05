@@ -150,13 +150,15 @@ jobs:
       - name: Check out fl_pi_llm
         run: git submodule update --init --depth 1 packages/fl_pi_llm
 
-      - name: Install musl toolchain
+      - name: Build (Linux)
         if: matrix.platform == 'linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y musl-tools
+        uses: ./.github/actions/monitor-linux-build
+        with:
+          target: ${{ matrix.target }}
+          profile: release-monitor
 
       - name: Add Rust target
+        if: matrix.platform != 'linux'
         run: rustup target add ${{ matrix.target }}
 
       # `release-monitor`, not `release`: fat LTO and one codegen unit, which
@@ -164,6 +166,7 @@ jobs:
       # profile without slowing every app build. Defined in the workspace
       # Cargo.toml, which says what it costs and what it buys.
       - name: Build
+        if: matrix.platform != 'linux'
         shell: bash
         run: cargo build -p server_box_monitor --profile release-monitor --target ${{ matrix.target }}
 

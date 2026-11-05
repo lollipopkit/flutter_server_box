@@ -1,0 +1,62 @@
+name: Build the Monitor for Linux
+description: The static musl agent, built on Alpine and started on a CPU without AVX.
+
+# On Alpine rather than the runner: ubuntu-26.04 installs `musl-dev` as its
+# `amd64v3` variant on a host with AVX2, a libc built for x86-64-v3 that is
+# then linked into every binary. Monitor v0.3.0 shipped that way and died with
+# SIGILL on the first SQLite call on CPUs without AVX (#1875). Alpine's musl
+# is built for the baseline of each architecture; this is the image
+# `monitor/Dockerfile` builds in.
+#
+# Requires the repository, with its submodules, to be checked out first.
+inputs:
+  target:
+    description: "`x86_64-unknown-linux-musl` or `aarch64-unknown-linux-musl`, the runner's own"
+    required: true
+  profile:
+    description: Cargo profile
+    required: true
+outputs:
+  bin:
+    description: The binary's path
+    value: ${{ steps.build.outputs.bin }}
+runs:
+  using: composite
+  steps:
+    - id: build
+      shell: bash
+      run: |
+        set -euo pipefail
+        docker run --rm -v "$PWD:/src" -w /src \
+          -e SQLX_OFFLINE=true \
+          rust:1-alpine sh -euc \
+          'apk add --no-cache musl-dev >/dev/null && cargo build -p server_box_monitor --profile "$1" --target "$2"' \
+          sh "${{ inputs.profile }}" "${{ inputs.target }}"
+        sudo chown -R "$(id -u):$(id -g)" target
+        echo "bin=target/${{ inputs.target }}/${{ inputs.profile }}/server_box_monitor" >> "$GITHUB_OUTPUT"
+
+    # Started, not only `--version`: the SIGILL came from code that runs once
+    # the agent opens its database. A CPU model of each architecture's
+    # baseline: Nehalem has SSE4.2 and no AVX, Cortex-A53 is ARMv8.0. Still
+    # running when the timeout ends it is the pass.
+    - shell: bash
+      run: |
+        set -euo pipefail
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq qemu-user >/dev/null
+        case "${{ inputs.target }}" in
+          x86_64-*) qemu=qemu-x86_64; cpu=Nehalem ;;
+          aarch64-*) qemu=qemu-aarch64; cpu=cortex-a53 ;;
+        esac
+        dir="$(mktemp -d)"
+        cp "${{ steps.build.outputs.bin }}" "$dir/"
+        cd "$dir"
+        set +e
+        timeout 20 "$qemu" -cpu "$cpu" ./server_box_monitor > run.log 2>&1
+        code=$?
+        set -e
+        if [[ $code -ne 124 ]]; then
+          tail -n 20 run.log
+          echo "server_box_monitor exited with $code on a $cpu, not still running."
+          exit 1
+        fi
