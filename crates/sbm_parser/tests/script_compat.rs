@@ -165,6 +165,62 @@ fn custom_cmd_installer_keeps_an_interrupted_installs_backup() {
     let _ = std::fs::remove_dir_all(&home);
 }
 
+/// An encoder that fails is a failed listing, not a command with an empty
+/// body: read as one, a save would write the empty bodies over the real ones.
+#[cfg(unix)]
+#[test]
+fn custom_cmd_listing_fails_when_base64_does() {
+    use std::process::Command;
+    let home = std::env::temp_dir().join(format!("sbm-custom-cmds-read-{}", std::process::id()));
+    let dir = home.join(".config/server_box/custom_cmds");
+    let _ = std::fs::remove_dir_all(&home);
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(dir.join(script::custom_cmd_file_name(100, "up")), "uptime").unwrap();
+    let bin = home.join("bin");
+    std::fs::create_dir_all(&bin).unwrap();
+    std::fs::write(bin.join("base64"), "#!/bin/sh\nexit 127\n").unwrap();
+    Command::new("chmod").arg("+x").arg(bin.join("base64")).status().unwrap();
+
+    let out = Command::new("sh")
+        .args(["-c", &script::read_custom_cmds_script(SystemType::Linux)])
+        .env("HOME", &home)
+        .env("PATH", format!("{}:{}", bin.display(), std::env::var("PATH").unwrap_or_default()))
+        .output()
+        .unwrap();
+    let _ = std::fs::remove_dir_all(&home);
+
+    assert!(!out.status.success());
+    assert_eq!(
+        script::parse_custom_cmds_listing(&String::from_utf8_lossy(&out.stdout)),
+        None
+    );
+}
+
+/// The same script with a working encoder reads the file back.
+#[cfg(unix)]
+#[test]
+fn custom_cmd_listing_reads_a_real_directory() {
+    use std::process::Command;
+    let home = std::env::temp_dir().join(format!("sbm-custom-cmds-ok-{}", std::process::id()));
+    let dir = home.join(".config/server_box/custom_cmds");
+    let _ = std::fs::remove_dir_all(&home);
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(dir.join(script::custom_cmd_file_name(100, "up")), "uptime\necho hi").unwrap();
+
+    let out = Command::new("sh")
+        .args(["-c", &script::read_custom_cmds_script(SystemType::Linux)])
+        .env("HOME", &home)
+        .output()
+        .unwrap();
+    let _ = std::fs::remove_dir_all(&home);
+
+    assert!(out.status.success());
+    assert_eq!(
+        script::parse_custom_cmds_listing(&String::from_utf8_lossy(&out.stdout)),
+        Some(vec![(100, "up".to_string(), "uptime\necho hi".to_string())])
+    );
+}
+
 /// The directory does not follow the script.
 ///
 /// The script's own directory defaults to a temp one and is swapped at runtime
