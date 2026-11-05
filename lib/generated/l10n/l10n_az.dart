@@ -1167,22 +1167,7 @@ class AppLocalizationsAz extends AppLocalizations {
   }
 
   @override
-  String sshConfigAllExist(int duplicateCount) {
-    return 'Bütün serverlər artıq mövcuddur ($duplicateCount təkrar tapıldı)';
-  }
-
-  @override
-  String sshConfigDuplicatesSkipped(int duplicateCount) {
-    return '$duplicateCount təkrar ötürüləcək';
-  }
-
-  @override
   String get sshConfigFound => 'Sistemdə SSH konfiqurasiyası tapıldı.';
-
-  @override
-  String sshConfigFoundServers(int totalCount) {
-    return '$totalCount server tapıldı';
-  }
 
   @override
   String get sshConfigImport => 'SSH konfiqurasiyasını idxal et';
@@ -1194,11 +1179,6 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get sshConfigImportTip =>
       'İlk server yaradılarkən ~/.ssh/config faylını oxumaq üçün sorğu göstər';
-
-  @override
-  String sshConfigImported(int count) {
-    return 'SSH konfiqurasiyasından $count server idxal edildi.';
-  }
 
   @override
   String sshHostKeyChangedDesc(String serverName) {
@@ -1232,16 +1212,8 @@ class AppLocalizationsAz extends AppLocalizations {
       'SSH konfiqurasiya faylını əl ilə seçmək istəyirsən?';
 
   @override
-  String get sshConfigNoServers => 'SSH konfiqurasiyasında server tapılmadı';
-
-  @override
   String get sshConfigPermissionDenied =>
       'macOS icazələrinə görə SSH konfiqurasiya faylına daxil olmaq mümkün deyil.';
-
-  @override
-  String sshConfigServersToImport(int importCount) {
-    return '$importCount server idxal ediləcək';
-  }
 
   @override
   String get sshTermHelp =>
@@ -7249,4 +7221,45 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get security => 'Təhlükəsizlik';
+
+  @override
+  String get sshConfig => 'SSH konfiqurasiyası';
+
+  @override
+  String get tailscaleStopped => 'Tailscale işləmir';
+
+  @override
+  String get tailscaleStoppedTip =>
+      'Bu cihazda quraşdırılıb, lakin tailnet-ə qoşulmayıb.';
+
+  @override
+  String get cloudflareApiToken => 'API tokeni';
+
+  @override
+  String get cloudflareApiTokenTip =>
+      'Account · Cloudflare Tunnel · Read icazəsi lazımdır.';
+
+  @override
+  String get discoveryChooseFile => 'Fayl seç';
+
+  @override
+  String get discoveryOnline => 'Onlayn';
+
+  @override
+  String get discoveryOffline => 'Oflayn';
+
+  @override
+  String get discoverySelectAll => 'Hamısını seç';
+
+  @override
+  String get discoveryFilter => 'Ad və ya ünvana görə süz';
+
+  @override
+  String get discoverySameMachine => 'Eyni maşın, bir neçə ünvan';
+
+  @override
+  String get discoveryPrimaryAddress => 'Əsas ünvan';
+
+  @override
+  String get discoveryAlternateAddress => 'Ehtiyat ünvan';
 }

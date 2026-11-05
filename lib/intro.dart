@@ -56,10 +56,10 @@ final class _IntroPage extends StatelessWidget {
     return _setting.diagnosticsConsentVer.fetch() < kDiagnosticsConsentVer;
   }
 
-  /// A first launch, on a build with something to discover.
+  /// A first launch, on a device with something to discover.
   static Future<bool> _offersDiscovery() async =>
       await _isFirstLaunch() &&
-      (LocalServer.isSupported || SshDiscovery.available.isNotEmpty);
+      (LocalServer.isSupported || (await SshDiscovery.available()).isNotEmpty);
 
   // — Widget build ——————————————————————————————————————————————————
 

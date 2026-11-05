@@ -1104,22 +1104,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String sshConfigAllExist(int duplicateCount) {
-    return 'すべてのサーバーがすでに存在します（$duplicateCount個の重複が見つかりました）';
-  }
-
-  @override
-  String sshConfigDuplicatesSkipped(int duplicateCount) {
-    return '$duplicateCount個の重複がスキップされます';
-  }
-
-  @override
   String get sshConfigFound => 'システムに SSH 設定が見つかりました。';
-
-  @override
-  String sshConfigFoundServers(int totalCount) {
-    return '$totalCount個のサーバーが見つかりました';
-  }
 
   @override
   String get sshConfigImport => 'SSH設定のインポート';
@@ -1130,11 +1115,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get sshConfigImportTip => '初回サーバー作成時に~/.ssh/configの読み取りを促す';
-
-  @override
-  String sshConfigImported(int count) {
-    return 'SSH 設定から $count 台のサーバーをインポートしました。';
-  }
 
   @override
   String sshHostKeyChangedDesc(String serverName) {
@@ -1167,15 +1147,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sshConfigManualSelect => 'SSH設定ファイルを手動で選択しますか？';
 
   @override
-  String get sshConfigNoServers => 'SSH設定でサーバーが見つかりませんでした';
-
-  @override
   String get sshConfigPermissionDenied => 'macOSの権限により、SSH設定ファイルにアクセスできません。';
-
-  @override
-  String sshConfigServersToImport(int importCount) {
-    return '$importCount個のサーバーがインポートされます';
-  }
 
   @override
   String get sshTermHelp =>
@@ -6960,4 +6932,44 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get security => 'セキュリティ';
+
+  @override
+  String get sshConfig => 'SSH 設定';
+
+  @override
+  String get tailscaleStopped => 'Tailscale が実行されていません';
+
+  @override
+  String get tailscaleStoppedTip => 'このデバイスにインストール済みですが、tailnet に接続されていません。';
+
+  @override
+  String get cloudflareApiToken => 'API トークン';
+
+  @override
+  String get cloudflareApiTokenTip =>
+      'Account · Cloudflare Tunnel · Read 権限が必要です。';
+
+  @override
+  String get discoveryChooseFile => 'ファイルを選択';
+
+  @override
+  String get discoveryOnline => 'オンライン';
+
+  @override
+  String get discoveryOffline => 'オフライン';
+
+  @override
+  String get discoverySelectAll => 'すべて選択';
+
+  @override
+  String get discoveryFilter => '名前またはアドレスで絞り込み';
+
+  @override
+  String get discoverySameMachine => '同じマシンの複数のアドレス';
+
+  @override
+  String get discoveryPrimaryAddress => 'メインのアドレス';
+
+  @override
+  String get discoveryAlternateAddress => '予備のアドレス';
 }

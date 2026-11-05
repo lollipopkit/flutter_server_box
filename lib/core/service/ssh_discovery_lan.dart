@@ -8,6 +8,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/service/ssh_discovery.dart';
 import 'package:server_box/core/service/ssh_discovery_parse.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/ssh_credential.dart';
 
 /// Hosts on this device's local networks that answer on port 22: the ARP and
 /// NDP neighbours, every address of a /24 to /30 subnet, and mDNS `_ssh._tcp`.
@@ -32,6 +34,12 @@ final class LanSshDiscovery implements SshDiscovery {
   IconData get icon => Icons.wifi;
 
   @override
+  bool get auto => false;
+
+  @override
+  SshDiscoveryCredential? get credential => null;
+
+  @override
   Future<String?> scope() async {
     final cidrs = (await _localIPv4Cidrs()).where(_enumerated);
     return cidrs.isEmpty ? null : cidrs.join(', ');
@@ -40,7 +48,7 @@ final class LanSshDiscovery implements SshDiscovery {
   static bool _enumerated(DiscoveryCidr c) => c.prefix >= 24 && c.prefix <= 30;
 
   @override
-  Future<List<DiscoveredSshHost>> discover() async {
+  Future<SshDiscoveryRun> discover({String? input}) async {
     // mDNS takes seconds of listening; the tables are read meanwhile.
     final mdns = _mdnsSshCandidates();
     final (v4, v6, cidrs) = await (
@@ -68,14 +76,20 @@ final class LanSshDiscovery implements SshDiscovery {
     final scanner = _Scanner(timeout: _timeout, maxConcurrency: _maxConcurrency);
     final results = await scanner.scan(candidates.toList(growable: false));
     results.sort((a, b) => _compareAddr(a.addr, b.addr));
-    return [
+    final hosts = [
       for (final r in results)
         DiscoveredSshHost(
-          host: r.addr.address,
-          port: _sshPort,
+          key: r.addr.address,
+          server: Spi(
+            name: r.addr.address,
+            id: ShortId.generate(),
+            ssh: SshCredential(ip: r.addr.address, port: _sshPort),
+          ),
           detail: r.banner?.trim(),
         ),
     ];
+    final scope = cidrs.where(_enumerated);
+    return (hosts: hosts, scope: scope.isEmpty ? null : scope.join(', '));
   }
 
   /// Numeric, so `192.168.1.10` follows `192.168.1.9`.

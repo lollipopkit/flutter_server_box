@@ -1155,22 +1155,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String sshConfigAllExist(int duplicateCount) {
-    return 'All servers already exist ($duplicateCount duplicates found)';
-  }
-
-  @override
-  String sshConfigDuplicatesSkipped(int duplicateCount) {
-    return '$duplicateCount duplicates will be skipped';
-  }
-
-  @override
   String get sshConfigFound => 'We found SSH configuration on your system.';
-
-  @override
-  String sshConfigFoundServers(int totalCount) {
-    return 'Found $totalCount servers';
-  }
 
   @override
   String get sshConfigImport => 'SSH Config Import';
@@ -1182,11 +1167,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get sshConfigImportTip =>
       'Prompt to read ~/.ssh/config on first server creation';
-
-  @override
-  String sshConfigImported(int count) {
-    return 'Imported $count servers from SSH config';
-  }
 
   @override
   String sshHostKeyChangedDesc(String serverName) {
@@ -1220,16 +1200,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'Would you like to select the SSH config file manually?';
 
   @override
-  String get sshConfigNoServers => 'No servers found in SSH config';
-
-  @override
   String get sshConfigPermissionDenied =>
       'Cannot access SSH config file due to macOS permissions.';
-
-  @override
-  String sshConfigServersToImport(int importCount) {
-    return '$importCount servers will be imported';
-  }
 
   @override
   String get sshTermHelp =>
@@ -7259,4 +7231,45 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get security => 'Security';
+
+  @override
+  String get sshConfig => 'SSH config';
+
+  @override
+  String get tailscaleStopped => 'Tailscale is not running';
+
+  @override
+  String get tailscaleStoppedTip =>
+      'Installed on this device, but not connected to a tailnet.';
+
+  @override
+  String get cloudflareApiToken => 'API token';
+
+  @override
+  String get cloudflareApiTokenTip =>
+      'Needs Account · Cloudflare Tunnel · Read.';
+
+  @override
+  String get discoveryChooseFile => 'Choose file';
+
+  @override
+  String get discoveryOnline => 'Online';
+
+  @override
+  String get discoveryOffline => 'Offline';
+
+  @override
+  String get discoverySelectAll => 'Select all';
+
+  @override
+  String get discoveryFilter => 'Filter by name or address';
+
+  @override
+  String get discoverySameMachine => 'Same machine, more than one address';
+
+  @override
+  String get discoveryPrimaryAddress => 'Primary address';
+
+  @override
+  String get discoveryAlternateAddress => 'Alternate address';
 }

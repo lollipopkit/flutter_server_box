@@ -1171,22 +1171,7 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String sshConfigAllExist(int duplicateCount) {
-    return 'Всі сервери вже існують (знайдено $duplicateCount дублікатів)';
-  }
-
-  @override
-  String sshConfigDuplicatesSkipped(int duplicateCount) {
-    return '$duplicateCount дублікатів буде пропущено';
-  }
-
-  @override
   String get sshConfigFound => 'У системі знайдено конфігурацію SSH.';
-
-  @override
-  String sshConfigFoundServers(int totalCount) {
-    return 'Знайдено $totalCount серверів';
-  }
 
   @override
   String get sshConfigImport => 'Імпорт SSH Конфігурації';
@@ -1198,11 +1183,6 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get sshConfigImportTip =>
       'Пропозиція прочитати ~/.ssh/config при створенні першого сервера';
-
-  @override
-  String sshConfigImported(int count) {
-    return 'Імпортовано серверів із конфігурації SSH: $count.';
-  }
 
   @override
   String sshHostKeyChangedDesc(String serverName) {
@@ -1236,16 +1216,8 @@ class AppLocalizationsUk extends AppLocalizations {
       'Чи хочете ви вручну вибрати файл конфігурації SSH?';
 
   @override
-  String get sshConfigNoServers => 'Сервери не знайдені в SSH-конфігурації';
-
-  @override
   String get sshConfigPermissionDenied =>
       'Неможливо отримати доступ до файлу конфігурації SSH через дозволи macOS.';
-
-  @override
-  String sshConfigServersToImport(int importCount) {
-    return '$importCount серверів буде імпортовано';
-  }
 
   @override
   String get sshTermHelp =>
@@ -7309,4 +7281,45 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get security => 'Безпека';
+
+  @override
+  String get sshConfig => 'Конфіг SSH';
+
+  @override
+  String get tailscaleStopped => 'Tailscale не запущено';
+
+  @override
+  String get tailscaleStoppedTip =>
+      'Встановлено на цьому пристрої, але не підключено до tailnet.';
+
+  @override
+  String get cloudflareApiToken => 'API-токен';
+
+  @override
+  String get cloudflareApiTokenTip =>
+      'Потрібне право Account · Cloudflare Tunnel · Read.';
+
+  @override
+  String get discoveryChooseFile => 'Вибрати файл';
+
+  @override
+  String get discoveryOnline => 'У мережі';
+
+  @override
+  String get discoveryOffline => 'Не в мережі';
+
+  @override
+  String get discoverySelectAll => 'Вибрати все';
+
+  @override
+  String get discoveryFilter => 'Фільтр за назвою або адресою';
+
+  @override
+  String get discoverySameMachine => 'Одна машина, кілька адрес';
+
+  @override
+  String get discoveryPrimaryAddress => 'Основна адреса';
+
+  @override
+  String get discoveryAlternateAddress => 'Резервна адреса';
 }
