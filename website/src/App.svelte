@@ -597,13 +597,7 @@
     </section>
 
     <footer class="site-footer">
-      <div class="footer-brand-row">
-        <span>© 2026 lollipopkit</span>
-        <a class="pride-footer-badge" href={`/themes/?lang=${locale}#serverbox.pride`}>
-          <span class="pride-dot" aria-hidden="true"></span>
-          {$LL.pride.badge()}
-        </a>
-      </div>
+      <span>© 2026 lollipopkit</span>
       <div class="footer-links">
         <a href="#features" onclick={(event) => scrollToSection(event, 'features')}>{$LL.footer.features()}</a>
         <a href={`/os/?lang=${locale}`}>{$LL.nav.os()}<span class="beta-tag">{$LL.nav.beta()}</span></a>
