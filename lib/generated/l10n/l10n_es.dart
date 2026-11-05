@@ -2459,14 +2459,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'Esta plataforma no puede leer este dispositivo como servidor. Linux, Windows y la versión DMG de macOS sí pueden.';
 
   @override
-  String get remoteDesktopIntro =>
-      'Abre el escritorio RDP o VNC de un servidor dentro de la app. La conexión pasa por la conexión SSH del servidor o por su Monitor, así que el puerto del escritorio no tiene que ser accesible desde la red.';
-
-  @override
-  String get remoteDesktopIntroProfiles =>
-      'Guarda un perfil por escritorio desde el botón Escritorio remoto de un servidor o desde la pestaña Escritorio remoto.';
-
-  @override
   String get localServerIntro =>
       'Añade como servidor el dispositivo que ejecuta ServerBox. El estado, los procesos, los servicios, los contenedores, la terminal y los archivos funcionan sin SSH ni Monitor.';
 
@@ -3250,33 +3242,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get virtualization => 'Virtualización';
-
-  @override
-  String get virtIntro =>
-      'Gestiona máquinas virtuales y contenedores en hosts Proxmox VE y libvirt/KVM: su estado, acciones de energía y consolas.';
-
-  @override
-  String get virtIntroPveMoved =>
-      'Proxmox VE se ha movido de la página del servidor a esta pestaña. La tarjeta PVE de un servidor la abre aquí.';
-
-  @override
-  String get virtIntroLibvirt =>
-      'Un servidor con virsh de libvirt instalado aparece como host, con sus máquinas virtuales QEMU/KVM.';
-
-  @override
-  String get virtIntroTransports =>
-      'Ambos funcionan por SSH, a través del Monitor o en este dispositivo.';
-
-  @override
-  String get virtIntroTokens =>
-      'PVE puede iniciar sesión con un token de API en lugar de una contraseña. Se configura en la página de edición del servidor, en PVE.';
-
-  @override
-  String get virtIntroInBar => 'Se ha añadido a la barra de pestañas.';
-
-  @override
-  String get virtIntroInMore =>
-      'Está en Más. Pestañas de inicio, en Ajustes, puede moverla a la barra de pestañas.';
 
   @override
   String get virtGuests => 'Máquinas virtuales';

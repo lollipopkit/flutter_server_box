@@ -2429,14 +2429,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'This platform cannot read this device as a server. Linux, Windows and the macOS DMG build can.';
 
   @override
-  String get remoteDesktopIntro =>
-      'Open a server\'s RDP or VNC desktop inside the app. The connection goes through the server\'s SSH connection or its Monitor, so the desktop port does not have to be reachable from the network.';
-
-  @override
-  String get remoteDesktopIntroProfiles =>
-      'Save a profile per desktop from the Remote desktop button on a server, or from the Remote desktop tab.';
-
-  @override
   String get localServerIntro =>
       'Add the device running ServerBox as a server. Status, processes, services, containers, the terminal and files all work without SSH or the Monitor.';
 
@@ -3199,33 +3191,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get virtualization => 'Virtualization';
-
-  @override
-  String get virtIntro =>
-      'Manage virtual machines and containers on Proxmox VE and libvirt/KVM hosts: their state, power actions and consoles.';
-
-  @override
-  String get virtIntroPveMoved =>
-      'Proxmox VE has moved from the server page into this tab. A server\'s PVE card opens it there.';
-
-  @override
-  String get virtIntroLibvirt =>
-      'A server with libvirt\'s virsh installed shows up as a host, with its QEMU/KVM virtual machines.';
-
-  @override
-  String get virtIntroTransports =>
-      'Both work over SSH, through the Monitor, or on this device.';
-
-  @override
-  String get virtIntroTokens =>
-      'PVE can log in with an API token instead of a password. Set it in a server\'s edit page, under PVE.';
-
-  @override
-  String get virtIntroInBar => 'It has been added to the tab bar.';
-
-  @override
-  String get virtIntroInMore =>
-      'It is under More. Home Tabs in Settings can move it to the tab bar.';
 
   @override
   String get virtGuests => 'Virtual machines';

@@ -2441,14 +2441,6 @@ class AppLocalizationsPt extends AppLocalizations {
       'Esta plataforma não consegue ler este dispositivo como servidor. Linux, Windows e a versão DMG do macOS conseguem.';
 
   @override
-  String get remoteDesktopIntro =>
-      'Abre o ambiente de trabalho RDP ou VNC de um servidor dentro da app. A conexão passa pela conexão SSH do servidor ou pelo seu Monitor, por isso a porta do ambiente de trabalho não precisa de estar acessível a partir da rede.';
-
-  @override
-  String get remoteDesktopIntroProfiles =>
-      'Guarde um perfil por ambiente de trabalho a partir do botão Área de trabalho remota de um servidor ou do separador Área de trabalho remota.';
-
-  @override
   String get localServerIntro =>
       'Adiciona como servidor o dispositivo que executa o ServerBox. Estado, processos, serviços, contentores, terminal e ficheiros funcionam sem SSH nem o Monitor.';
 
@@ -3232,33 +3224,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get virtualization => 'Virtualização';
-
-  @override
-  String get virtIntro =>
-      'Gerencie máquinas virtuais e contêineres em hosts Proxmox VE e libvirt/KVM: estado, ações de energia e consoles.';
-
-  @override
-  String get virtIntroPveMoved =>
-      'O Proxmox VE saiu da página do servidor para esta aba. O cartão PVE de um servidor a abre aqui.';
-
-  @override
-  String get virtIntroLibvirt =>
-      'Um servidor com o virsh do libvirt instalado aparece como host, com suas máquinas virtuais QEMU/KVM.';
-
-  @override
-  String get virtIntroTransports =>
-      'Ambos funcionam por SSH, através do Monitor ou neste dispositivo.';
-
-  @override
-  String get virtIntroTokens =>
-      'O PVE pode entrar com um token de API em vez de uma senha. Configure-o na página de edição do servidor, em PVE.';
-
-  @override
-  String get virtIntroInBar => 'Ela foi adicionada à barra de abas.';
-
-  @override
-  String get virtIntroInMore =>
-      'Ela está em Mais. Abas iniciais, nas configurações, pode movê-la para a barra de abas.';
 
   @override
   String get virtGuests => 'Máquinas virtuais';

@@ -2452,14 +2452,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Auf dieser Plattform kann dieses Gerät nicht als Server gelesen werden. Linux, Windows und die macOS-DMG-Version unterstützen es.';
 
   @override
-  String get remoteDesktopIntro =>
-      'Öffnet den RDP- oder VNC-Desktop eines Servers in der App. Die Verbindung läuft über die SSH-Verbindung des Servers oder seinen Monitor, daher muss der Desktop-Port nicht aus dem Netzwerk erreichbar sein.';
-
-  @override
-  String get remoteDesktopIntroProfiles =>
-      'Speichere ein Profil pro Desktop über die Schaltfläche „Remotedesktop“ eines Servers oder über den Tab „Remotedesktop“.';
-
-  @override
   String get localServerIntro =>
       'Füge das Gerät, auf dem ServerBox läuft, als Server hinzu. Status, Prozesse, Dienste, Container, Terminal und Dateien funktionieren ohne SSH oder Monitor.';
 
@@ -3236,33 +3228,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get virtualization => 'Virtualisierung';
-
-  @override
-  String get virtIntro =>
-      'Verwalte virtuelle Maschinen und Container auf Proxmox-VE- und libvirt/KVM-Hosts: Status, Energieaktionen und Konsolen.';
-
-  @override
-  String get virtIntroPveMoved =>
-      'Proxmox VE ist von der Serverseite in diesen Tab umgezogen. Die PVE-Karte eines Servers öffnet ihn hier.';
-
-  @override
-  String get virtIntroLibvirt =>
-      'Ein Server mit installiertem virsh von libvirt erscheint als Host, mit seinen QEMU/KVM-VMs.';
-
-  @override
-  String get virtIntroTransports =>
-      'Beides funktioniert über SSH, über den Monitor oder auf diesem Gerät.';
-
-  @override
-  String get virtIntroTokens =>
-      'PVE kann sich mit einem API-Token statt eines Passworts anmelden. Einzustellen auf der Bearbeitungsseite eines Servers unter PVE.';
-
-  @override
-  String get virtIntroInBar => 'Er wurde der Tab-Leiste hinzugefügt.';
-
-  @override
-  String get virtIntroInMore =>
-      'Er befindet sich unter „Mehr“. Unter Home-Tabs in den Einstellungen lässt er sich in die Tab-Leiste verschieben.';
 
   @override
   String get virtGuests => 'Virtuelle Maschinen';

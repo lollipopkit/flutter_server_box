@@ -2439,14 +2439,6 @@ class AppLocalizationsUk extends AppLocalizations {
       'На цій платформі не можна читати цей пристрій як сервер. Підтримуються Linux, Windows і DMG-збірка для macOS.';
 
   @override
-  String get remoteDesktopIntro =>
-      'Відкриває робочий стіл RDP або VNC сервера просто в застосунку. З\'єднання йде через SSH-з\'єднання сервера або його Monitor, тому порт робочого столу не потрібно відкривати в мережу.';
-
-  @override
-  String get remoteDesktopIntroProfiles =>
-      'Зберігайте профіль для кожного робочого столу через кнопку «Віддалений робочий стіл» на сервері або на вкладці «Віддалений робочий стіл».';
-
-  @override
   String get localServerIntro =>
       'Додає пристрій, на якому працює ServerBox, як сервер. Стан, процеси, служби, контейнери, термінал і файли працюють без SSH і Monitor.';
 
@@ -3219,33 +3211,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get virtualization => 'Віртуалізація';
-
-  @override
-  String get virtIntro =>
-      'Керування віртуальними машинами й контейнерами на хостах Proxmox VE і libvirt/KVM: стан, керування живленням і консолі.';
-
-  @override
-  String get virtIntroPveMoved =>
-      'Proxmox VE перенесено зі сторінки сервера на цю вкладку. Картка PVE сервера відкриває її тут.';
-
-  @override
-  String get virtIntroLibvirt =>
-      'Сервер із встановленим virsh з libvirt показується як хост разом із його віртуальними машинами QEMU/KVM.';
-
-  @override
-  String get virtIntroTransports =>
-      'Обидва працюють через SSH, через Monitor або на цьому пристрої.';
-
-  @override
-  String get virtIntroTokens =>
-      'PVE може входити за допомогою API-токена замість пароля. Налаштовується на сторінці редагування сервера, у розділі PVE.';
-
-  @override
-  String get virtIntroInBar => 'Її додано на панель вкладок.';
-
-  @override
-  String get virtIntroInMore =>
-      'Вона в розділі «Більше». У домашніх вкладках у налаштуваннях її можна перенести на панель вкладок.';
 
   @override
   String get virtGuests => 'Віртуальні машини';

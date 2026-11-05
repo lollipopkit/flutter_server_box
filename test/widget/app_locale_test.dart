@@ -18,8 +18,6 @@ void main() {
   late SettingStore setting;
 
   setUp(() async {
-    // The tables, not only a connection: the intro's Virtualization page
-    // reads the PVE table to decide what to say.
     await openTestDb();
     setting = SettingStore('setting_test');
     getIt.registerSingleton<SettingStore>(setting);
@@ -38,7 +36,7 @@ void main() {
     await tester.pumpWidget(const ProviderScope(child: MyApp()));
     await tester.pumpAndSettle();
 
-    expect(find.text(libEn.init), findsOneWidget);
+    expect(find.text(libEn.language), findsOneWidget);
     expect(tester.widget<MaterialApp>(find.byType(MaterialApp)).locale, isNull);
 
     setting.locale.put('zh');
@@ -56,8 +54,8 @@ void main() {
       Localizations.localeOf(tester.element(find.byType(ListView).first)),
       const Locale('zh'),
     );
-    expect(find.text(libEn.init), findsNothing);
-    expect(find.text(libZh.init), findsOneWidget);
+    expect(find.text(libEn.language), findsNothing);
+    expect(find.text(libZh.language), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });

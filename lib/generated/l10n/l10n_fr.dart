@@ -2460,14 +2460,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'Cette plateforme ne peut pas lire cet appareil comme serveur. Linux, Windows et la version DMG de macOS le peuvent.';
 
   @override
-  String get remoteDesktopIntro =>
-      'Ouvre le bureau RDP ou VNC d’un serveur dans l’app. La connexion passe par la connexion SSH du serveur ou par son Monitor : le port du bureau n’a pas besoin d’être accessible depuis le réseau.';
-
-  @override
-  String get remoteDesktopIntroProfiles =>
-      'Enregistrez un profil par bureau depuis le bouton Bureau à distance d’un serveur ou depuis l’onglet Bureau à distance.';
-
-  @override
   String get localServerIntro =>
       'Ajoute l’appareil qui exécute ServerBox comme serveur. L’état, les processus, les services, les conteneurs, le terminal et les fichiers fonctionnent sans SSH ni Monitor.';
 
@@ -3256,33 +3248,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get virtualization => 'Virtualisation';
-
-  @override
-  String get virtIntro =>
-      'Gérez les machines virtuelles et conteneurs sur les hôtes Proxmox VE et libvirt/KVM : état, actions d\'alimentation et consoles.';
-
-  @override
-  String get virtIntroPveMoved =>
-      'Proxmox VE a quitté la page du serveur pour cet onglet. La carte PVE d\'un serveur l\'ouvre ici.';
-
-  @override
-  String get virtIntroLibvirt =>
-      'Un serveur où virsh de libvirt est installé apparaît comme hôte, avec ses machines virtuelles QEMU/KVM.';
-
-  @override
-  String get virtIntroTransports =>
-      'Les deux fonctionnent via SSH, via le Monitor ou sur cet appareil.';
-
-  @override
-  String get virtIntroTokens =>
-      'PVE peut se connecter avec un jeton d\'API au lieu d\'un mot de passe. Réglez-le dans la page de modification du serveur, sous PVE.';
-
-  @override
-  String get virtIntroInBar => 'Il a été ajouté à la barre d\'onglets.';
-
-  @override
-  String get virtIntroInMore =>
-      'Il se trouve sous Plus. Onglets d\'accueil, dans les réglages, permet de le déplacer dans la barre d\'onglets.';
 
   @override
   String get virtGuests => 'Machines virtuelles';

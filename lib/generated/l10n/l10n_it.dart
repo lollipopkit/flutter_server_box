@@ -2452,14 +2452,6 @@ class AppLocalizationsIt extends AppLocalizations {
       'Questa piattaforma non può leggere questo dispositivo come server. Linux, Windows e la versione DMG di macOS possono farlo.';
 
   @override
-  String get remoteDesktopIntro =>
-      'Apre il desktop RDP o VNC di un server nell’app. La connessione passa per la connessione SSH del server o per il suo Monitor, quindi la porta del desktop non deve essere raggiungibile dalla rete.';
-
-  @override
-  String get remoteDesktopIntroProfiles =>
-      'Salva un profilo per ogni desktop dal pulsante Desktop remoto di un server o dalla scheda Desktop remoto.';
-
-  @override
   String get localServerIntro =>
       'Aggiunge come server il dispositivo su cui gira ServerBox. Stato, processi, servizi, container, terminale e file funzionano senza SSH né Monitor.';
 
@@ -3236,33 +3228,6 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get virtualization => 'Virtualizzazione';
-
-  @override
-  String get virtIntro =>
-      'Gestisci macchine virtuali e container su host Proxmox VE e libvirt/KVM: stato, azioni di alimentazione e console.';
-
-  @override
-  String get virtIntroPveMoved =>
-      'Proxmox VE è passato dalla pagina del server a questa scheda. La scheda PVE di un server la apre qui.';
-
-  @override
-  String get virtIntroLibvirt =>
-      'Un server con virsh di libvirt installato compare come host, con le sue macchine virtuali QEMU/KVM.';
-
-  @override
-  String get virtIntroTransports =>
-      'Entrambi funzionano via SSH, tramite il Monitor o su questo dispositivo.';
-
-  @override
-  String get virtIntroTokens =>
-      'PVE può accedere con un token API invece di una password. Impostalo nella pagina di modifica del server, sotto PVE.';
-
-  @override
-  String get virtIntroInBar => 'È stata aggiunta alla barra delle schede.';
-
-  @override
-  String get virtIntroInMore =>
-      'Si trova in Altro. Schede home, nelle impostazioni, può spostarla nella barra delle schede.';
 
   @override
   String get virtGuests => 'Macchine virtuali';

@@ -2441,14 +2441,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'Dit platform kan dit apparaat niet als server uitlezen. Linux, Windows en de macOS-DMG-versie kunnen dat wel.';
 
   @override
-  String get remoteDesktopIntro =>
-      'Opent het RDP- of VNC-bureaublad van een server in de app. De verbinding loopt via de SSH-verbinding van de server of via zijn Monitor, dus de bureaubladpoort hoeft niet bereikbaar te zijn vanaf het netwerk.';
-
-  @override
-  String get remoteDesktopIntroProfiles =>
-      'Sla per bureaublad een profiel op via de knop Extern bureaublad van een server of via het tabblad Extern bureaublad.';
-
-  @override
   String get localServerIntro =>
       'Voegt het apparaat waarop ServerBox draait toe als server. Status, processen, services, containers, de terminal en bestanden werken zonder SSH of Monitor.';
 
@@ -3224,33 +3216,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get virtualization => 'Virtualisatie';
-
-  @override
-  String get virtIntro =>
-      'Beheer virtuele machines en containers op Proxmox VE- en libvirt/KVM-hosts: hun status, energieacties en consoles.';
-
-  @override
-  String get virtIntroPveMoved =>
-      'Proxmox VE is van de serverpagina naar dit tabblad verhuisd. De PVE-kaart van een server opent het hier.';
-
-  @override
-  String get virtIntroLibvirt =>
-      'Een server met virsh van libvirt geïnstalleerd verschijnt als host, met zijn QEMU/KVM-VM\'s.';
-
-  @override
-  String get virtIntroTransports =>
-      'Beide werken via SSH, via Monitor of op dit apparaat.';
-
-  @override
-  String get virtIntroTokens =>
-      'PVE kan aanmelden met een API-token in plaats van een wachtwoord. Stel het in op de bewerkpagina van een server, onder PVE.';
-
-  @override
-  String get virtIntroInBar => 'Het is aan de tabbalk toegevoegd.';
-
-  @override
-  String get virtIntroInMore =>
-      'Het staat onder Meer. Home-tabbladen in de instellingen kan het naar de tabbalk verplaatsen.';
 
   @override
   String get virtGuests => 'Virtuele machines';

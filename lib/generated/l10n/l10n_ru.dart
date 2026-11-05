@@ -2439,14 +2439,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'На этой платформе нельзя читать это устройство как сервер. Поддерживаются Linux, Windows и DMG-сборка для macOS.';
 
   @override
-  String get remoteDesktopIntro =>
-      'Открывает рабочий стол RDP или VNC сервера прямо в приложении. Подключение идёт через SSH-соединение сервера или его Monitor, поэтому порт рабочего стола не нужно открывать в сеть.';
-
-  @override
-  String get remoteDesktopIntroProfiles =>
-      'Сохраняйте профиль для каждого рабочего стола через кнопку «Удалённый рабочий стол» на сервере или на вкладке «Удалённый рабочий стол».';
-
-  @override
   String get localServerIntro =>
       'Добавляет устройство, на котором работает ServerBox, как сервер. Состояние, процессы, службы, контейнеры, терминал и файлы работают без SSH и Monitor.';
 
@@ -3217,33 +3209,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get virtualization => 'Виртуализация';
-
-  @override
-  String get virtIntro =>
-      'Управление виртуальными машинами и контейнерами на хостах Proxmox VE и libvirt/KVM: состояние, управление питанием и консоли.';
-
-  @override
-  String get virtIntroPveMoved =>
-      'Proxmox VE перенесён со страницы сервера в эту вкладку. Карточка PVE сервера открывает её здесь.';
-
-  @override
-  String get virtIntroLibvirt =>
-      'Сервер с установленным virsh из libvirt отображается как хост вместе с его виртуальными машинами QEMU/KVM.';
-
-  @override
-  String get virtIntroTransports =>
-      'Оба работают по SSH, через Monitor или на этом устройстве.';
-
-  @override
-  String get virtIntroTokens =>
-      'PVE может входить по API-токену вместо пароля. Задаётся на странице редактирования сервера, в разделе PVE.';
-
-  @override
-  String get virtIntroInBar => 'Она добавлена на панель вкладок.';
-
-  @override
-  String get virtIntroInMore =>
-      'Она находится в разделе «Ещё». Во вкладках дома в настройках её можно перенести на панель вкладок.';
 
   @override
   String get virtGuests => 'Виртуальные машины';

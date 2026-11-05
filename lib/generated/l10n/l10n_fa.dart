@@ -2441,14 +2441,6 @@ class AppLocalizationsFa extends AppLocalizations {
       'این پلتفرم نمی‌تواند این دستگاه را به‌عنوان سرور بخواند. لینوکس، ویندوز و نسخه DMG در macOS این قابلیت را دارند.';
 
   @override
-  String get remoteDesktopIntro =>
-      'دسکتاپ RDP یا VNC یک سرور را درون برنامه باز کنید. اتصال از طریق اتصال SSH سرور یا Monitor آن انجام می‌شود، بنابراین نیازی به در دسترس بودن پورت دسکتاپ از طریق شبکه نیست.';
-
-  @override
-  String get remoteDesktopIntroProfiles =>
-      'یک پروفایل برای هر دسکتاپ از طریق دکمه دسکتاپ راه دور در سرور، یا از برگه دسکتاپ راه دور ذخیره کنید.';
-
-  @override
   String get localServerIntro =>
       'دستگاهی را که ServerBox را اجرا می‌کند به‌عنوان سرور اضافه کنید. وضعیت، فرایندها، سرویس‌ها، کانتینرها، ترمینال و فایل‌ها همگی بدون SSH یا Monitor کار می‌کنند.';
 
@@ -3213,33 +3205,6 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get virtualization => 'مجازی‌سازی';
-
-  @override
-  String get virtIntro =>
-      'مدیریت ماشین‌های مجازی و کانتینرها در میزبان‌های Proxmox VE و libvirt/KVM: وضعیت، عملیات مربوط به برق و کنسول‌های آن‌ها.';
-
-  @override
-  String get virtIntroPveMoved =>
-      'بخش Proxmox VE از صفحه سرور به این برگه منتقل شده است. کارت PVE هر سرور آن را در اینجا باز می‌کند.';
-
-  @override
-  String get virtIntroLibvirt =>
-      'سروری که ابزار virsh متعلق به libvirt روی آن نصب باشد، به همراه ماشین‌های مجازی QEMU/KVM خود به عنوان میزبان نمایش داده می‌شود.';
-
-  @override
-  String get virtIntroTransports =>
-      'هر دو از طریق SSH، از طریق Monitor، یا روی همین دستگاه کار می‌کنند.';
-
-  @override
-  String get virtIntroTokens =>
-      'در PVE می‌توان به جای گذرواژه با یک توکن API وارد شد. آن را در صفحه ویرایش سرور، زیر بخش PVE تنظیم کنید.';
-
-  @override
-  String get virtIntroInBar => 'این بخش به نوار برگه‌ها افزوده شده است.';
-
-  @override
-  String get virtIntroInMore =>
-      'این بخش در «بیشتر» قرار دارد. از طریق «برگه‌های خانه» در تنظیمات می‌توان آن را به نوار برگه‌ها منتقل کرد.';
 
   @override
   String get virtGuests => 'ماشین‌های مجازی';

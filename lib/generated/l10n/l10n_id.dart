@@ -2430,14 +2430,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Platform ini tidak dapat membaca perangkat ini sebagai server. Linux, Windows, dan versi DMG macOS mendukungnya.';
 
   @override
-  String get remoteDesktopIntro =>
-      'Buka desktop RDP atau VNC sebuah server di dalam aplikasi. Koneksi melewati koneksi SSH server atau Monitor-nya, jadi port desktop tidak perlu dapat dijangkau dari jaringan.';
-
-  @override
-  String get remoteDesktopIntroProfiles =>
-      'Simpan satu profil per desktop dari tombol Desktop jarak jauh pada server, atau dari tab Desktop jarak jauh.';
-
-  @override
   String get localServerIntro =>
       'Tambahkan perangkat yang menjalankan ServerBox sebagai server. Status, proses, layanan, kontainer, terminal, dan berkas berfungsi tanpa SSH atau Monitor.';
 
@@ -3202,33 +3194,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get virtualization => 'Virtualisasi';
-
-  @override
-  String get virtIntro =>
-      'Kelola mesin virtual dan kontainer di host Proxmox VE dan libvirt/KVM: status, aksi daya, dan konsol.';
-
-  @override
-  String get virtIntroPveMoved =>
-      'Proxmox VE telah pindah dari halaman server ke tab ini. Kartu PVE sebuah server membukanya di sini.';
-
-  @override
-  String get virtIntroLibvirt =>
-      'Server dengan virsh dari libvirt terpasang muncul sebagai host, beserta mesin virtual QEMU/KVM-nya.';
-
-  @override
-  String get virtIntroTransports =>
-      'Keduanya bekerja lewat SSH, melalui Monitor, atau di perangkat ini.';
-
-  @override
-  String get virtIntroTokens =>
-      'PVE dapat masuk dengan token API alih-alih kata sandi. Atur di halaman edit server, pada bagian PVE.';
-
-  @override
-  String get virtIntroInBar => 'Tab ini telah ditambahkan ke bilah tab.';
-
-  @override
-  String get virtIntroInMore =>
-      'Tab ini ada di Lainnya. Tab Beranda di Pengaturan dapat memindahkannya ke bilah tab.';
 
   @override
   String get virtGuests => 'Mesin virtual';

@@ -2294,14 +2294,6 @@ class AppLocalizationsJa extends AppLocalizations {
       'このプラットフォームでは、このデバイスをサーバーとして読み取れません。Linux、Windows、macOS の DMG 版が対応しています。';
 
   @override
-  String get remoteDesktopIntro =>
-      'サーバーの RDP または VNC デスクトップをアプリ内で開きます。接続はサーバーの SSH 接続または Monitor を経由するため、デスクトップのポートをネットワークに公開する必要はありません。';
-
-  @override
-  String get remoteDesktopIntroProfiles =>
-      'サーバーの「リモートデスクトップ」ボタン、または「リモートデスクトップ」タブから、デスクトップごとにプロファイルを保存します。';
-
-  @override
   String get localServerIntro =>
       'ServerBox を実行しているデバイスをサーバーとして追加します。ステータス、プロセス、サービス、コンテナ、ターミナル、ファイルは SSH や Monitor なしで使えます。';
 
@@ -3040,31 +3032,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get virtualization => '仮想化';
-
-  @override
-  String get virtIntro =>
-      'Proxmox VE と libvirt/KVM ホスト上の仮想マシンとコンテナを管理します：状態、電源操作、コンソール。';
-
-  @override
-  String get virtIntroPveMoved =>
-      'Proxmox VE はサーバーページからこのタブに移動しました。サーバーの PVE カードからここを開けます。';
-
-  @override
-  String get virtIntroLibvirt =>
-      'libvirt の virsh がインストールされたサーバーは、QEMU/KVM 仮想マシンとともにホストとして表示されます。';
-
-  @override
-  String get virtIntroTransports => 'どちらも SSH、Monitor 経由、またはこのデバイス上で動作します。';
-
-  @override
-  String get virtIntroTokens =>
-      'PVE はパスワードの代わりに API トークンでログインできます。サーバーの編集ページの PVE で設定します。';
-
-  @override
-  String get virtIntroInBar => 'タブバーに追加されました。';
-
-  @override
-  String get virtIntroInMore => '「その他」にあります。設定のホームタブでタブバーに移動できます。';
 
   @override
   String get virtGuests => '仮想マシン';

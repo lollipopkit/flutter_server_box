@@ -2433,14 +2433,6 @@ class AppLocalizationsAz extends AppLocalizations {
       'Bu platforma bu cihazı server kimi oxuya bilmir. Linux, Windows və macOS DMG versiyası dəstəkləyir.';
 
   @override
-  String get remoteDesktopIntro =>
-      'Serverin RDP və ya VNC masaüstünü tətbiqin içində açır. Bağlantı serverin SSH bağlantısı və ya Monitor-u üzərindən keçir, ona görə masaüstü portunun şəbəkədən əlçatan olması lazım deyil.';
-
-  @override
-  String get remoteDesktopIntroProfiles =>
-      'Hər masaüstü üçün profili serverdəki Uzaq masaüstü düyməsindən və ya Uzaq masaüstü tabından saxlayın.';
-
-  @override
   String get localServerIntro =>
       'ServerBox işləyən cihazı server kimi əlavə edir. Status, proseslər, xidmətlər, konteynerlər, terminal və fayllar SSH və ya Monitor olmadan işləyir.';
 
@@ -3211,33 +3203,6 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get virtualization => 'Virtuallaşdırma';
-
-  @override
-  String get virtIntro =>
-      'Proxmox VE və libvirt/KVM hostlarında virtual maşınları və konteynerləri idarə edin: vəziyyət, enerji əməliyyatları və konsollar.';
-
-  @override
-  String get virtIntroPveMoved =>
-      'Proxmox VE server səhifəsindən bu vərəqə köçürüldü. Serverin PVE kartı onu burada açır.';
-
-  @override
-  String get virtIntroLibvirt =>
-      'libvirt-in virsh aləti quraşdırılmış server QEMU/KVM virtual maşınları ilə birlikdə host kimi görünür.';
-
-  @override
-  String get virtIntroTransports =>
-      'Hər ikisi SSH ilə, Monitor vasitəsilə və ya bu cihazda işləyir.';
-
-  @override
-  String get virtIntroTokens =>
-      'PVE parol əvəzinə API tokeni ilə daxil ola bilər. Bunu serverin redaktə səhifəsində, PVE bölməsində təyin edin.';
-
-  @override
-  String get virtIntroInBar => 'Vərəq panelinə əlavə edildi.';
-
-  @override
-  String get virtIntroInMore =>
-      'Daha çox bölməsindədir. Ayarlardakı Ana səhifə vərəqləri onu vərəq panelinə köçürə bilər.';
 
   @override
   String get virtGuests => 'Virtual maşınlar';

@@ -2418,14 +2418,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu platform bu cihazı sunucu olarak okuyamaz. Linux, Windows ve macOS DMG sürümü destekler.';
 
   @override
-  String get remoteDesktopIntro =>
-      'Bir sunucunun RDP veya VNC masaüstünü uygulama içinde açar. Bağlantı sunucunun SSH bağlantısı veya Monitor’ü üzerinden geçer; bu yüzden masaüstü bağlantı noktasının ağdan erişilebilir olması gerekmez.';
-
-  @override
-  String get remoteDesktopIntroProfiles =>
-      'Her masaüstü için bir profili, sunucudaki Uzak masaüstü düğmesinden veya Uzak masaüstü sekmesinden kaydedin.';
-
-  @override
   String get localServerIntro =>
       'ServerBox\'ı çalıştıran cihazı sunucu olarak ekler. Durum, işlemler, hizmetler, konteynerler, terminal ve dosyalar SSH veya Monitor olmadan çalışır.';
 
@@ -3193,33 +3185,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get virtualization => 'Sanallaştırma';
-
-  @override
-  String get virtIntro =>
-      'Proxmox VE ve libvirt/KVM ana makinelerindeki sanal makineleri ve kapsayıcıları yönetin: durum, güç işlemleri ve konsollar.';
-
-  @override
-  String get virtIntroPveMoved =>
-      'Proxmox VE sunucu sayfasından bu sekmeye taşındı. Bir sunucunun PVE kartı onu burada açar.';
-
-  @override
-  String get virtIntroLibvirt =>
-      'libvirt\'in virsh aracı kurulu bir sunucu, QEMU/KVM sanal makineleriyle birlikte ana makine olarak görünür.';
-
-  @override
-  String get virtIntroTransports =>
-      'İkisi de SSH üzerinden, Monitor aracılığıyla veya bu cihazda çalışır.';
-
-  @override
-  String get virtIntroTokens =>
-      'PVE, parola yerine bir API belirteciyle oturum açabilir. Sunucunun düzenleme sayfasında, PVE altında ayarlayın.';
-
-  @override
-  String get virtIntroInBar => 'Sekme çubuğuna eklendi.';
-
-  @override
-  String get virtIntroInMore =>
-      'Daha fazla altında. Ayarlardaki Ana Sayfa Sekmeleri ile sekme çubuğuna taşıyabilirsiniz.';
 
   @override
   String get virtGuests => 'Sanal makineler';

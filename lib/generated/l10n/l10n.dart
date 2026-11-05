@@ -4182,18 +4182,6 @@ abstract class AppLocalizations {
   /// **'This platform cannot read this device as a server. Linux, Windows and the macOS DMG build can.'**
   String get localServerUnsupported;
 
-  /// Introductory text for the remote desktop screen or section.
-  ///
-  /// In en, this message translates to:
-  /// **'Open a server\'s RDP or VNC desktop inside the app. The connection goes through the server\'s SSH connection or its Monitor, so the desktop port does not have to be reachable from the network.'**
-  String get remoteDesktopIntro;
-
-  /// User-facing label or message for remote desktop intro profiles.
-  ///
-  /// In en, this message translates to:
-  /// **'Save a profile per desktop from the Remote desktop button on a server, or from the Remote desktop tab.'**
-  String get remoteDesktopIntroProfiles;
-
   /// Introductory text for the local server screen or section.
   ///
   /// In en, this message translates to:
@@ -5501,48 +5489,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Virtualization'**
   String get virtualization;
-
-  /// Intro page text describing the Virtualization tab.
-  ///
-  /// In en, this message translates to:
-  /// **'Manage virtual machines and containers on Proxmox VE and libvirt/KVM hosts: their state, power actions and consoles.'**
-  String get virtIntro;
-
-  /// Intro page text telling Proxmox VE users where PVE moved.
-  ///
-  /// In en, this message translates to:
-  /// **'Proxmox VE has moved from the server page into this tab. A server\'s PVE card opens it there.'**
-  String get virtIntroPveMoved;
-
-  /// Intro page text about libvirt/KVM hosts.
-  ///
-  /// In en, this message translates to:
-  /// **'A server with libvirt\'s virsh installed shows up as a host, with its QEMU/KVM virtual machines.'**
-  String get virtIntroLibvirt;
-
-  /// Intro page text about the transports the Virtualization tab works over.
-  ///
-  /// In en, this message translates to:
-  /// **'Both work over SSH, through the Monitor, or on this device.'**
-  String get virtIntroTransports;
-
-  /// Intro page text about Proxmox VE API token support.
-  ///
-  /// In en, this message translates to:
-  /// **'PVE can log in with an API token instead of a password. Set it in a server\'s edit page, under PVE.'**
-  String get virtIntroTokens;
-
-  /// Intro page text saying the Virtualization tab is in the tab bar.
-  ///
-  /// In en, this message translates to:
-  /// **'It has been added to the tab bar.'**
-  String get virtIntroInBar;
-
-  /// Intro page text saying the Virtualization tab is under More.
-  ///
-  /// In en, this message translates to:
-  /// **'It is under More. Home Tabs in Settings can move it to the tab bar.'**
-  String get virtIntroInMore;
 
   /// Section of the Virtualization tab listing virtual machines.
   ///

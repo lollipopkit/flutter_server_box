@@ -2249,14 +2249,6 @@ class AppLocalizationsZh extends AppLocalizations {
       '当前平台不支持添加本机作为服务器（仅支持 Linux、Windows 及 macOS DMG 版）。';
 
   @override
-  String get remoteDesktopIntro =>
-      '在应用内打开服务器的 RDP 或 VNC 桌面。连接经由服务器的 SSH 连接或其 Monitor 转发，桌面端口无需对网络开放。';
-
-  @override
-  String get remoteDesktopIntroProfiles =>
-      '在服务器的「远程桌面」按钮或「远程桌面」标签页中，为每个桌面保存一个配置。';
-
-  @override
   String get localServerIntro =>
       '将运行 ServerBox 的设备添加为服务器。状态、进程、服务、容器、终端和文件都无需 SSH 或 Monitor。';
 
@@ -2979,31 +2971,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtualization => '虚拟化';
-
-  @override
-  String get virtIntro =>
-      '管理 Proxmox VE 和 libvirt/KVM 主机上的虚拟机和容器：查看状态、执行电源操作、打开控制台。';
-
-  @override
-  String get virtIntroPveMoved =>
-      'Proxmox VE 管理已整合至此标签页，点击服务器详情页中的 PVE 卡片也会跳转到这里。';
-
-  @override
-  String get virtIntroLibvirt =>
-      '安装了 libvirt（virsh）的服务器会自动识别为宿主机，并列出其上的 QEMU/KVM 虚拟机。';
-
-  @override
-  String get virtIntroTransports => '支持通过 SSH、Monitor 或本机直接连接。';
-
-  @override
-  String get virtIntroTokens =>
-      'PVE 可以使用 API token 登录，无需密码。在服务器编辑页面的 PVE 部分设置。';
-
-  @override
-  String get virtIntroInBar => '已添加到标签栏。';
-
-  @override
-  String get virtIntroInMore => '位于“更多”中。可在设置的“主页标签”中将其移到标签栏。';
 
   @override
   String get virtGuests => '虚拟机';
@@ -9116,14 +9083,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       '目前平台無法將本機作為伺服器讀取。Linux、Windows 和 macOS DMG 版本支援。';
 
   @override
-  String get remoteDesktopIntro =>
-      '在應用程式內開啟伺服器的 RDP 或 VNC 桌面。連線經由伺服器的 SSH 連線或其 Monitor 轉送，桌面連接埠無需對網路開放。';
-
-  @override
-  String get remoteDesktopIntroProfiles =>
-      '在伺服器的「遠端桌面」按鈕或「遠端桌面」分頁中，為每個桌面儲存一個設定檔。';
-
-  @override
   String get localServerIntro =>
       '將執行 ServerBox 的裝置新增為伺服器。狀態、程序、服務、容器、終端機和檔案都無需 SSH 或 Monitor。';
 
@@ -9846,30 +9805,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtualization => '虛擬化';
-
-  @override
-  String get virtIntro =>
-      '管理 Proxmox VE 與 libvirt/KVM 主機上的虛擬機器和容器：查看狀態、執行電源操作、開啟主控台。';
-
-  @override
-  String get virtIntroPveMoved => 'Proxmox VE 已從伺服器頁面移到此分頁。伺服器的 PVE 卡片會在這裡開啟它。';
-
-  @override
-  String get virtIntroLibvirt =>
-      '安裝了 libvirt 的 virsh 的伺服器會顯示為主機，並列出其 QEMU/KVM 虛擬機器。';
-
-  @override
-  String get virtIntroTransports => '兩者都可以透過 SSH、經由 Monitor 或在本裝置上使用。';
-
-  @override
-  String get virtIntroTokens =>
-      'PVE 可以使用 API token 登入，無需密碼。請在伺服器編輯頁面的 PVE 部分設定。';
-
-  @override
-  String get virtIntroInBar => '已新增到分頁列。';
-
-  @override
-  String get virtIntroInMore => '位於「更多」中。可在設定的「主頁標籤」中將其移到分頁列。';
 
   @override
   String get virtGuests => '虛擬機';

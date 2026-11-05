@@ -3146,14 +3146,6 @@
   "@localServerUnsupported": {
     "description": "User-facing label or message for local server unsupported."
   },
-  "remoteDesktopIntro": "Open a server's RDP or VNC desktop inside the app. The connection goes through the server's SSH connection or its Monitor, so the desktop port does not have to be reachable from the network.",
-  "@remoteDesktopIntro": {
-    "description": "Introductory text for the remote desktop screen or section."
-  },
-  "remoteDesktopIntroProfiles": "Save a profile per desktop from the Remote desktop button on a server, or from the Remote desktop tab.",
-  "@remoteDesktopIntroProfiles": {
-    "description": "User-facing label or message for remote desktop intro profiles."
-  },
   "localServerIntro": "Add the device running ServerBox as a server. Status, processes, services, containers, the terminal and files all work without SSH or the Monitor.",
   "@localServerIntro": {
     "description": "Introductory text for the local server screen or section."
@@ -3989,34 +3981,6 @@
   "virtualization": "Virtualization",
   "@virtualization": {
     "description": "Name of the Virtualization tab."
-  },
-  "virtIntro": "Manage virtual machines and containers on Proxmox VE and libvirt/KVM hosts: their state, power actions and consoles.",
-  "@virtIntro": {
-    "description": "Intro page text describing the Virtualization tab."
-  },
-  "virtIntroPveMoved": "Proxmox VE has moved from the server page into this tab. A server's PVE card opens it there.",
-  "@virtIntroPveMoved": {
-    "description": "Intro page text telling Proxmox VE users where PVE moved."
-  },
-  "virtIntroLibvirt": "A server with libvirt's virsh installed shows up as a host, with its QEMU/KVM virtual machines.",
-  "@virtIntroLibvirt": {
-    "description": "Intro page text about libvirt/KVM hosts."
-  },
-  "virtIntroTransports": "Both work over SSH, through the Monitor, or on this device.",
-  "@virtIntroTransports": {
-    "description": "Intro page text about the transports the Virtualization tab works over."
-  },
-  "virtIntroTokens": "PVE can log in with an API token instead of a password. Set it in a server's edit page, under PVE.",
-  "@virtIntroTokens": {
-    "description": "Intro page text about Proxmox VE API token support."
-  },
-  "virtIntroInBar": "It has been added to the tab bar.",
-  "@virtIntroInBar": {
-    "description": "Intro page text saying the Virtualization tab is in the tab bar."
-  },
-  "virtIntroInMore": "It is under More. Home Tabs in Settings can move it to the tab bar.",
-  "@virtIntroInMore": {
-    "description": "Intro page text saying the Virtualization tab is under More."
   },
   "virtGuests": "Virtual machines",
   "@virtGuests": {
