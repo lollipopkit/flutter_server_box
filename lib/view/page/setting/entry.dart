@@ -53,6 +53,7 @@ import 'package:server_box/view/page/setting/platform/platform_pub.dart';
 import 'package:server_box/view/page/setting/seq/known_hosts.dart';
 import 'package:server_box/view/page/setting/seq/srv_orders.dart';
 import 'package:server_box/view/page/setting/seq/virtual_key.dart';
+import 'package:server_box/view/page/setting/tiles.dart';
 import 'package:server_box/view/widget/crash_debug.dart';
 import 'package:server_box/view/widget/crash_report_dialog.dart';
 import 'package:server_box/view/widget/diagnostics_level_picker.dart';
@@ -63,7 +64,6 @@ import 'package:server_box/view/widget/group_title.dart';
 import 'package:server_box/view/widget/marked_title.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/rootfs_install.dart';
-import 'package:server_box/view/widget/setting_tiles.dart';
 
 part 'about.dart';
 part 'app_page.dart';

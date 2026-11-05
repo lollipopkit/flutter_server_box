@@ -9,7 +9,6 @@
 /// the other threw.
 library;
 
-import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/terminal/virtual_key.dart';
 import 'package:server_box/data/store/setting.dart';
@@ -26,7 +25,7 @@ void main() {
     setting = SettingStore('setting_test');
   });
 
-  tearDown(SqliteDb.close);
+  tearDown(closeTestDb);
 
   test('the default is two full rows, each pair in one column', () {
     const order = VirtualKeyX.defaultOrder;

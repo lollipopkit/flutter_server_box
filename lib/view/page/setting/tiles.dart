@@ -9,7 +9,7 @@ import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/url.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
-import 'package:server_box/view/widget/dmg_notice.dart';
+import 'package:server_box/view/page/notice/dmg_notice.dart';
 
 /// Rows shared by Settings and the intro. Each picks from a list (a sheet on a
 /// phone) and shows the value it holds.

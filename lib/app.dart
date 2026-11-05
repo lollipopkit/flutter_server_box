@@ -21,10 +21,10 @@ import 'package:server_box/view/agent/screen.dart';
 import 'package:server_box/view/page/home.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/page/setting/platform/platform_pub.dart';
+import 'package:server_box/view/page/setting/tiles.dart';
 import 'package:server_box/view/page/ssh/widget/session_keep_alive_notice.dart';
 import 'package:server_box/view/widget/column_inset.dart';
 import 'package:server_box/view/widget/diagnostics_level_picker.dart';
-import 'package:server_box/view/widget/setting_tiles.dart';
 import 'package:server_box/view/widget/ssh_discovery/view.dart';
 
 part 'intro.dart';
