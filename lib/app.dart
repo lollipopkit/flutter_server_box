@@ -1,11 +1,9 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/theme.dart';
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show LlmL10nX;
-import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/app_navigator.dart';
 import 'package:server_box/core/chan.dart';
@@ -14,7 +12,6 @@ import 'package:server_box/core/local/server.dart';
 import 'package:server_box/core/motion.dart';
 import 'package:server_box/core/service/diagnostics_upload.dart';
 import 'package:server_box/core/service/ssh_discovery.dart';
-import 'package:server_box/data/model/app/motion.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/data/res/url.dart';
@@ -25,7 +22,9 @@ import 'package:server_box/view/page/home.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/page/setting/platform/platform_pub.dart';
 import 'package:server_box/view/page/ssh/widget/session_keep_alive_notice.dart';
+import 'package:server_box/view/widget/column_inset.dart';
 import 'package:server_box/view/widget/diagnostics_level_picker.dart';
+import 'package:server_box/view/widget/setting_tiles.dart';
 import 'package:server_box/view/widget/ssh_discovery/view.dart';
 
 part 'intro.dart';

@@ -13,9 +13,7 @@ final class _IntroPage extends StatelessWidget {
 
   static final _setting = Stores.setting;
 
-  static const _kColumnPad = 17.0;
   static const _kHeadPad = EdgeInsets.symmetric(horizontal: 13);
-  static const _kStatusIntervals = [2, 3, 5, 10];
 
   /// Every step there is, in the order they are shown.
   static Future<List<_IntroStep>> get _steps async => [
@@ -112,14 +110,9 @@ final class _IntroPage extends StatelessWidget {
       bottom: false,
       child: LayoutBuilder(
         builder: (_, cons) {
-          final rest = (cons.maxWidth - PageColumns.columnWidth) / 2;
+          final inset = columnInset(cons.maxWidth);
           return ListView(
-            padding: EdgeInsets.fromLTRB(
-              math.max(rest, _kColumnPad),
-              0,
-              math.max(rest, _kColumnPad),
-              26,
-            ),
+            padding: EdgeInsets.fromLTRB(inset, 0, inset, 26),
             children: children,
           );
         },
@@ -158,7 +151,7 @@ final class _IntroPage extends StatelessWidget {
   }
 
   static Widget _note(BuildContext ctx, String text) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: _kColumnPad),
+    padding: const EdgeInsets.symmetric(horizontal: 17),
     child: Text(
       text,
       style: TextStyle(
@@ -184,7 +177,6 @@ final class _IntroPage extends StatelessWidget {
     final libL10n = ctx.libL10n;
     final l10n = ctx.l10n;
     final privacyBlur = PlatformPublicSettings.privacyBlur;
-    final themeLocked = ThemePackages.activeTheme?.lockedMode != null;
 
     return _introList(
       children: [
@@ -196,42 +188,17 @@ final class _IntroPage extends StatelessWidget {
           mark: Image.asset('assets/app_icon.png', width: 64, height: 64),
         ),
         _group(libL10n.general, [
-          SettingsRow(
-            libL10n.language,
-            () => ListTile(
-              leading: const Icon(IonIcons.language),
-              title: Text(libL10n.language),
-              onTap: () => _selectLocale(ctx),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(ctx.localeNativeName, style: UIs.text15),
-                  const Icon(Icons.chevron_right, size: 17),
-                ],
-              ),
-            ),
-          ),
-          SettingsRow(
-            libL10n.checkUpdate,
-            () => ListTile(
-              leading: const Icon(Icons.update),
-              title: Text(libL10n.checkUpdate),
-              subtitle: isAndroid
-                  ? Text(l10n.fdroidReleaseTip, style: UIs.textGrey)
-                  : null,
-              trailing: StoreSwitch(prop: _setting.autoCheckAppUpdate),
-            ),
-          ),
+          SettingsRow(libL10n.language, () => const LocaleTile()),
+          SettingsRow(libL10n.checkUpdate, () => const CheckUpdateTile()),
         ]),
         _group(libL10n.appearanceSettings, [
-          if (!themeLocked)
-            SettingsRow(libL10n.themeMode, () => _buildThemeMode(ctx)),
-          SettingsRow(l10n.reduceMotion, () => _buildReduceMotion(ctx)),
+          SettingsRow(libL10n.themeMode, () => const ThemeModeTile()),
+          SettingsRow(l10n.reduceMotion, () => const MotionPrefTile()),
         ]),
         _group(libL10n.servers, [
           SettingsRow(
             l10n.updateServerStatusInterval,
-            () => _buildStatusInterval(ctx),
+            () => const UpdateIntervalTile(),
           ),
         ]),
         if (bio || privacyBlur != null)
@@ -242,92 +209,6 @@ final class _IntroPage extends StatelessWidget {
               SettingsRow(privacyBlur.label, privacyBlur.build),
           ]),
       ],
-    );
-  }
-
-  static Widget _buildThemeMode(BuildContext ctx) {
-    final libL10n = ctx.libL10n;
-    final prop = ThemeHost.settings.themeMode;
-    return ListTile(
-      leading: const Icon(Icons.palette_outlined),
-      title: Text(libL10n.themeMode),
-      subtitle: _choices(
-        prop.listenable().listenVal(
-          (mode) => SegmentedTabs<int>(
-            selected: mode,
-            onSelected: (mode) {
-              prop.put(mode);
-              unawaited(RNodes.app.notify());
-            },
-            segments: [
-              SegmentedTab(
-                value: ThemeMode.system.index,
-                label: libL10n.followSystem,
-              ),
-              SegmentedTab(value: ThemeMode.light.index, label: libL10n.bright),
-              SegmentedTab(value: ThemeMode.dark.index, label: libL10n.dark),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// A row's choices on a line of their own under its title: beside it, three
-  /// labels in a long language leave the title no room on a phone.
-  static Widget _choices(Widget control) => Padding(
-    padding: const EdgeInsets.only(top: 7),
-    child: SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: control,
-    ),
-  );
-
-  /// Shows what motion is now, whichever preference says so; a change that
-  /// agrees with the device goes back to following it.
-  static Widget _buildReduceMotion(BuildContext ctx) {
-    final prop = _setting.motionPref;
-    return ListTile(
-      leading: const Icon(Icons.animation),
-      title: Text(ctx.l10n.reduceMotion),
-      trailing: ListenBuilder(
-        listenable: AppMotion.changes,
-        builder: () => Switch(
-          value: AppMotion.reduces,
-          onChanged: (on) => prop.put(
-            on == AppMotion.system.value
-                ? MotionPref.system
-                : on
-                ? MotionPref.reduce
-                : MotionPref.full,
-          ),
-        ),
-      ),
-    );
-  }
-
-  static Widget _buildStatusInterval(BuildContext ctx) {
-    final l10n = ctx.l10n;
-    final prop = _setting.serverStatusUpdateInterval;
-    return ListTile(
-      leading: const Icon(Icons.timer_outlined),
-      title: Text(l10n.updateServerStatusInterval),
-      subtitle: _choices(
-        prop.listenable().listenVal(
-          (val) => SegmentedTabs<int>(
-            selected: val,
-            onSelected: prop.put,
-            segments: [
-              // The stored value stays selectable when it is none of these.
-              for (final s in {..._kStatusIntervals, val}.toList()..sort())
-                SegmentedTab(
-                  value: s,
-                  label: s == 0 ? ctx.libL10n.manual : '$s${l10n.second}',
-                ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 
@@ -380,20 +261,6 @@ final class _IntroPage extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  // — Actions ———————————————————————————————————————————————————————
-
-  static Future<void> _selectLocale(BuildContext ctx) async {
-    final selected = await ctx.showPickSingleDialog(
-      title: ctx.libL10n.language,
-      items: AppLocalizations.supportedLocales,
-      display: (locale) => locale.nativeName,
-      initial: _setting.locale.fetch().toLocale,
-    );
-    if (selected == null || !ctx.mounted) return;
-
-    _setting.locale.put(selected.code);
   }
 }
 

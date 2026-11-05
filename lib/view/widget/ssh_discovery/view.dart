@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math' as math;
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +9,7 @@ import 'package:server_box/core/service/ssh_discovery.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/view/widget/column_inset.dart';
 
 part 'actions.dart';
 
@@ -101,7 +101,7 @@ final class _SshDiscoveryViewState extends ConsumerState<SshDiscoveryView> {
         final pad = width == null
             ? EdgeInsets.zero
             : EdgeInsets.symmetric(
-                horizontal: math.max((cons.maxWidth - width) / 2, _minPad),
+                horizontal: columnInset(cons.maxWidth, column: width),
               );
         final list = ListView(
           padding: pad.copyWith(bottom: width == null ? 0 : 26),
