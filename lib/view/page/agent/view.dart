@@ -1,6 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart'
-    show Chats, Composer, LlmConversation, LlmStores, MenuBtn, llmL10n;
+    show Chats, Composer, LlmConversation, LlmStores, MenuBtn;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
@@ -8,6 +8,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/provider/ai/adhoc_ssh.dart';
 import 'package:server_box/data/provider/ai/agent_scope.dart';
 import 'package:server_box/data/provider/ai/remote_agent.dart';
+import 'package:server_box/view/page/agent/activity.dart';
 import 'package:server_box/view/page/agent/history.dart';
 import 'package:server_box/view/page/agent/remote_composer.dart';
 import 'package:server_box/view/page/agent/remote_task.dart';
@@ -401,63 +402,6 @@ class AgentConversationView extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Whether [scope]'s chat is writing a reply, for the floating shell's ring:
-/// rebuilt as chats open and close, and as the one showing starts and ends a
-/// run.
-/// What a chat is doing, as the bar, the list and the floating pill show it.
-enum AgentActivity {
-  idle,
-
-  /// Writing a reply or running a tool.
-  running,
-
-  /// Waiting on the user: a call to approve, or a form to fill in. Apart
-  /// from [running] because only this one needs them.
-  waiting;
-
-  static AgentActivity of(String? chatId) {
-    if (chatId == null) return idle;
-    if (Chats.isWaiting(chatId)) return waiting;
-    if (Chats.isRunning(chatId)) return running;
-    return idle;
-  }
-}
-
-/// [AgentActivity] as a mark [size] across: a spinner while it runs, a dot
-/// while it waits on the user, nothing otherwise.
-class AgentActivityMark extends StatelessWidget {
-  const AgentActivityMark(this.activity, {super.key, this.size = 14});
-
-  final AgentActivity activity;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) => switch (activity) {
-    AgentActivity.idle => UIs.placeholder,
-    AgentActivity.running => SizedLoading(
-      size,
-      padding: 0,
-      builder: SizedLoading.circularBuilder,
-    ),
-    AgentActivity.waiting => Tooltip(
-      message: llmL10n.waitingForYou,
-      child: SizedBox.square(
-        dimension: size,
-        child: Center(
-          child: Container(
-            width: size * 0.6,
-            height: size * 0.6,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.tertiary,
-              shape: BoxShape.circle,
-            ),
-          ),
-        ),
-      ),
-    ),
-  };
 }
 
 /// [builder] with what the chat [scope] shows is doing.

@@ -341,6 +341,9 @@ class VirtHosts extends _$VirtHosts {
 abstract class VirtHostState with _$VirtHostState {
   const VirtHostState._();
 
+  /// The guests the last load listed; none before one.
+  List<VirtGuest> get guests => data?.guests ?? const [];
+
   const factory VirtHostState({
     required String serverId,
 

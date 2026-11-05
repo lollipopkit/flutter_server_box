@@ -8,7 +8,6 @@ import 'package:server_box/data/model/server/monitor/monitor_overview.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/monitor_overview.dart';
 import 'package:server_box/view/page/monitor/common.dart';
-import 'package:server_box/view/page/monitor/tab.dart';
 
 /// One agent's audit log, newest first: sign-ins, terminals, commands, file
 /// writes, deployments and the rest, each with where it came from. Read a

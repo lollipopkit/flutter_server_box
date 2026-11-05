@@ -19,7 +19,6 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/virt/virt.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/view/page/virt/common.dart';
-import 'package:server_box/view/page/virt/resources.dart';
 import 'package:server_box/view/widget/group_title.dart';
 import 'package:server_box/view/widget/progress_line.dart';
 

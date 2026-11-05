@@ -1,5 +1,5 @@
 import 'package:server_box/data/model/app/menu/server_func.dart';
-import 'package:server_box/data/provider/server/sort.dart';
+import 'package:server_box/data/model/server/server_sort.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/setting.dart';
 

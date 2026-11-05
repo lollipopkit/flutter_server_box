@@ -1,8 +1,8 @@
 import 'dart:async';
 
+import 'package:server_box/core/monitor/http.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
-import 'package:server_box/data/provider/server/monitor_http.dart';
 
 /// [FileBackend] over a `monitor` agent's `/api/v1/fs/*`.
 ///

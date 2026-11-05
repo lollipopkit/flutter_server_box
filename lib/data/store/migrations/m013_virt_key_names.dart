@@ -1,4 +1,3 @@
-import 'package:server_box/data/model/terminal/virtual_key.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/setting.dart';
 
@@ -13,9 +12,9 @@ import 'package:server_box/data/store/setting.dart';
 /// already kept by name.
 ///
 /// An index this build has no case for is dropped rather than guessed at, and
-/// so is a repeat, which is what [VirtualKeyX.loadFromStore] does with the same
+/// so is a repeat, which is what [SettingStore.virtualKeys] does with the same
 /// input. Converting them here rather than leaving them to that reader is what
-/// makes the old shape unreachable: `loadFromStore` is not the only reader, and
+/// makes the old shape unreachable: `SettingStore.virtualKeys` is not the only reader, and
 /// a shape two readers disagree about is the thing this removes.
 ///
 /// Also run after a restore, from `Backup.merge` and `BackupV2.merge`: a file
@@ -113,7 +112,7 @@ class VirtKeyNamesMigration implements SchemaMigration {
         final int index when index >= 0 && index < _indexed.length =>
           _indexed[index],
         // Already a name. Kept whatever it names: one this build has no case
-        // for is [VirtualKeyX.loadFromStore]'s to drop, and a newer build's key
+        // for is [SettingStore.virtualKeys]'s to drop, and a newer build's key
         // is not this step's to lose.
         final String s => s,
         _ => null,

@@ -11,7 +11,7 @@ import 'package:server_box/core/extension/bmc.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/local/server.dart';
 import 'package:server_box/core/route.dart';
-import 'package:server_box/core/service/ssh_discovery.dart';
+import 'package:server_box/core/service/ssh_discovery_sources.dart';
 import 'package:server_box/core/service/ssh_discovery_ssh_config.dart';
 import 'package:server_box/core/ssh/jump_chain.dart';
 import 'package:server_box/core/utils/cert_fingerprint.dart';
@@ -181,7 +181,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   final _jumpServers = <String>[].vn;
 
   /// Whether this device has a discovery source at all.
-  late final _discoverable = SshDiscovery.available().then(
+  late final _discoverable = availableSshDiscoveries().then(
     (sources) => sources.isNotEmpty,
   );
   /// `MonitorHttpCredential.certSha256`: the agent's own certificate,

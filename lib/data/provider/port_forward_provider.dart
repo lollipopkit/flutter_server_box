@@ -6,6 +6,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/monitor/http.dart';
 import 'package:server_box/core/monitor/listener.dart';
 import 'package:server_box/core/monitor/tunnel.dart';
 import 'package:server_box/core/ssh/local_tunnel.dart';
@@ -14,8 +15,8 @@ import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/provider/server/monitor_http.dart';
 import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/data/provider/server/tcp_dialer.dart';
 import 'package:server_box/data/store/stores.dart';
 
 part 'port_forward_provider.g.dart';
@@ -290,8 +291,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
 
   /// Dials per connection, over the agent alone where it leads — see
   /// [_viaAgent] — and otherwise over SSH, falling back to the agent.
-  ServerTcpDialer _dialer(ServerState server) => ServerTcpDialer.of(
-    ref,
+  ServerTcpDialer _dialer(ServerState server) => ref.serverTcpDialer(
     server.spi,
     transports: _viaAgent(server)
         ? const {ServerTransport.monitorHttp}

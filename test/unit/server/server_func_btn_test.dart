@@ -4,6 +4,7 @@ import 'package:server_box/data/model/server/monitor/monitor_access.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
+import 'package:server_box/data/store/migrations/build_features.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/view/page/server/widget/server_func_btns.dart';
@@ -11,7 +12,7 @@ import 'package:server_box/view/page/server/widget/server_func_btns.dart';
 import '../../helpers/test_db.dart';
 
 /// Two questions about the row of things that can be done to a server: what
-/// `ServerFuncBtn.autoAddNewFuncs` does to an arrangement across an upgrade,
+/// `addNewServerFuncs` does to an arrangement across an upgrade,
 /// and which entries a given connection can actually serve.
 void main() {
   late SettingStore setting;
@@ -27,6 +28,29 @@ void main() {
     await closeTestDb();
   });
 
+  group('withNewFuncs, on the row alone', () {
+    final shipped = [
+      for (final btn in ServerFuncBtn.values)
+        if (btn.introducedAfterBuild case final boundary?) (btn, boundary),
+    ];
+
+    test('an entry is added by the upgrade its boundary falls in, and no other', () {
+      for (final (btn, boundary) in shipped) {
+        expect(ServerFuncBtn.withNewFuncs(const [], boundary, boundary + 1), contains(btn.name), reason: btn.name);
+        expect(ServerFuncBtn.withNewFuncs(const [], boundary + 1, boundary + 2), isNot(contains(btn.name)), reason: btn.name);
+        expect(ServerFuncBtn.withNewFuncs(const [], boundary - 1, boundary), isNot(contains(btn.name)), reason: btn.name);
+      }
+    });
+
+    test('the row keeps its order, and nothing in it is added again', () {
+      final (btn, boundary) = shipped.first;
+      final row = [btn.name, ServerFuncBtn.terminal.name];
+      final next = ServerFuncBtn.withNewFuncs(row, boundary, boundary + 1);
+      expect(next.take(2), row);
+      expect(next.where((n) => n == btn.name), hasLength(1));
+    });
+  });
+
   /// The stored row, as names — what the setting actually holds.
   List<String> row() => setting.serverFuncBtns.get();
 
@@ -37,7 +61,7 @@ void main() {
       ServerFuncBtn.files.name,
     ]);
 
-    ServerFuncBtn.autoAddNewFuncs(1000, 1600);
+    addNewServerFuncs(1000, 1600);
 
     expect(row(), [
       ServerFuncBtn.terminal.name,
@@ -55,13 +79,13 @@ void main() {
     () async {
       setting.serverFuncBtns.put([ServerFuncBtn.terminal.name]);
 
-      ServerFuncBtn.autoAddNewFuncs(1051, 1070);
+      addNewServerFuncs(1051, 1070);
       expect(row(), [
         ServerFuncBtn.terminal.name,
         ServerFuncBtn.systemd.name,
       ]);
 
-      ServerFuncBtn.autoAddNewFuncs(1340, 1351);
+      addNewServerFuncs(1340, 1351);
       expect(row(), [
         ServerFuncBtn.terminal.name,
         ServerFuncBtn.systemd.name,
@@ -86,7 +110,7 @@ void main() {
     for (final (boundary, button) in boundaries) {
       setting.serverFuncBtns.put([ServerFuncBtn.terminal.name]);
 
-      ServerFuncBtn.autoAddNewFuncs(boundary - 1, boundary);
+      addNewServerFuncs(boundary - 1, boundary);
 
       expect(row(), isNot(contains(button.name)));
     }
@@ -98,7 +122,7 @@ void main() {
     // A window after the newest entry's boundary. It has to move whenever one
     // is added, which is the point: the assertion is about a window containing
     // no entry, not about two particular numbers.
-    ServerFuncBtn.autoAddNewFuncs(1580, 1600);
+    addNewServerFuncs(1580, 1600);
 
     expect(row(), [ServerFuncBtn.terminal.name]);
   });
@@ -106,7 +130,7 @@ void main() {
   test('adds remote desktop after the last build without it', () async {
     setting.serverFuncBtns.put([ServerFuncBtn.terminal.name]);
 
-    ServerFuncBtn.autoAddNewFuncs(1617, 1618);
+    addNewServerFuncs(1617, 1618);
 
     expect(row(), [
       ServerFuncBtn.terminal.name,
@@ -117,7 +141,7 @@ void main() {
   test('adds storage and shares after the last build without them', () async {
     setting.serverFuncBtns.put([ServerFuncBtn.terminal.name]);
 
-    ServerFuncBtn.autoAddNewFuncs(1719, 1720);
+    addNewServerFuncs(1719, 1720);
 
     expect(row(), [
       ServerFuncBtn.terminal.name,
@@ -137,7 +161,7 @@ void main() {
       ServerFuncBtn.systemd.name,
     ]);
 
-    ServerFuncBtn.autoAddNewFuncs(1580, 1600);
+    addNewServerFuncs(1580, 1600);
 
     expect(row(), [ServerFuncBtn.terminal.name, ServerFuncBtn.systemd.name]);
   });
@@ -148,7 +172,7 @@ void main() {
       ServerFuncBtn.terminal.name,
     ]);
 
-    ServerFuncBtn.autoAddNewFuncs(1000, 1536);
+    addNewServerFuncs(1000, 1536);
 
     expect(
       row().where((e) => e == ServerFuncBtn.power.name).length,
@@ -161,7 +185,7 @@ void main() {
     test('adds Power when upgrading from v$retainedBuild', () async {
       setting.serverFuncBtns.put([ServerFuncBtn.terminal.name]);
 
-      ServerFuncBtn.autoAddNewFuncs(retainedBuild, 1536);
+      addNewServerFuncs(retainedBuild, 1536);
 
       expect(row(), [ServerFuncBtn.terminal.name, ServerFuncBtn.power.name]);
     });
@@ -171,7 +195,7 @@ void main() {
   test('a fresh install gets the defaults untouched', () async {
     // lastVer is 0 on a first run, and the window is wide open — but the
     // defaults already list every entry, so nothing is appended to them.
-    ServerFuncBtn.autoAddNewFuncs(0, 1600);
+    addNewServerFuncs(0, 1600);
 
     expect(
       setting.get<List>('serverBtns'),

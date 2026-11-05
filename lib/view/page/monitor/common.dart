@@ -2,8 +2,54 @@ import 'dart:math' as math;
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/server/monitor/monitor_capabilities.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/view/widget/group_title.dart';
+
+/// What the Monitor tab shows, one at a time.
+enum MonitorSection {
+  overview,
+  apps,
+  notices,
+  audit,
+  live;
+
+  IconData get icon => switch (this) {
+    overview => Icons.dashboard_outlined,
+    apps => Icons.apps,
+    notices => Icons.notifications_none,
+    audit => Icons.receipt_long_outlined,
+    live => Icons.devices_outlined,
+  };
+
+  String get label => switch (this) {
+    overview => l10n.monitorOverview,
+    apps => l10n.webApps,
+    notices => l10n.monitorNotices,
+    audit => l10n.monitorAudit,
+    live => l10n.monitorLive,
+  };
+
+  /// Read from one server at a time: a log or a list of sessions is about one
+  /// machine, and several interleaved would hide which.
+  bool get scoped => this == audit || this == live;
+
+  /// The agent's `features` entry this needs; null for the overview, which
+  /// says what each agent offers.
+  String? get feature => switch (this) {
+    overview => null,
+    apps => MonitorFeature.stacks,
+    notices => MonitorFeature.desk,
+    audit => MonitorFeature.audit,
+    live => MonitorFeature.live,
+  };
+}
+
+/// The bar a section's page carries, made by the tab for the layout it is
+/// in: [actions] are the section's own.
+typedef MonitorBar =
+    PreferredSizeWidget Function(List<BarAction> actions, {InlineSearchController? search, String? searchHint});
 
 /// How wide a section's content grows: past it a row is too long to read.
 const monitorContentWidth = 980.0;

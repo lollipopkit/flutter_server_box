@@ -38,12 +38,12 @@ class _SSHVirtualKeySettingPageState extends State<SSHVirtualKeySettingPage> {
   }
 
   void _loadData() {
-    // Through [VirtualKeyX.loadFromStore], which is where a name this build
+    // Through [SettingStore.virtualKeys], which is where a name this build
     // cannot place is dropped. Read straight out of the store, one such entry —
     // a restore from a newer build — reached `VirtualKey.values[key]` below and
     // threw while the list was building, so the page came up as a red box
     // rather than as a list missing a row.
-    final keys = VirtualKeyX.loadFromStore();
+    final keys = Stores.setting.virtualKeys();
     final disabled = disabledProp.fetch();
     _order = List<VirtualKey>.from(keys);
     for (final name in disabled) {

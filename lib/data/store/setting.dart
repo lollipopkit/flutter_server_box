@@ -10,8 +10,8 @@ import 'package:server_box/data/model/app/motion.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/app/tray.dart';
 import 'package:server_box/data/model/server/host_cert_authority.dart';
+import 'package:server_box/data/model/server/server_sort.dart';
 import 'package:server_box/data/model/terminal/virtual_key.dart';
-import 'package:server_box/data/provider/server/sort.dart';
 import 'package:server_box/data/res/default.dart';
 import 'package:server_box/data/store/field_prop.dart';
 import 'package:server_box/data/store/migrations/m008_settings_fixups.dart';
@@ -232,12 +232,36 @@ class SettingStore extends SqliteStore with ThemeSettings {
   /// list of indices; [VirtKeyNamesMigration] is the one pass that converts.
   ///
   /// A name this build cannot place reads as absent rather than as a key,
-  /// which is what [VirtualKeyX.loadFromStore] drops.
+  /// which is what [virtualKeys] drops.
   late final sshVirtKeys = listProperty<String>(
     'sshVirtKeys',
     defaultValue: VirtualKeyX.defaultOrder.map((e) => e.name).toList(),
     fromObj: _virtKeyNames,
   );
+
+  /// [sshVirtKeys] as keys: [VirtualKeyX.fromNames], the default when nothing
+  /// in it is drawable.
+  ///
+  /// Only what was dropped is written back, and only when something was: the
+  /// unknown key is then gone for good, which is the price of not carrying a
+  /// name nothing can render. An empty result is a stored value that says
+  /// nothing at all, and falls back to the default without being saved over.
+  /// [persistRepairs] off reads without writing, for a caller that only wants
+  /// to know what is stored.
+  List<VirtualKey> virtualKeys({bool persistRepairs = true}) {
+    try {
+      final names = sshVirtKeys.fetch();
+      final keys = VirtualKeyX.fromNames(names);
+      if (keys.isEmpty) return VirtualKeyX.defaultOrder;
+      if (persistRepairs && keys.length != names.length) {
+        sshVirtKeys.put(keys.map((e) => e.name).toList());
+      }
+      return keys;
+    } catch (e, s) {
+      Loggers.app.warning('Failed to load sshVirtKeys', e, s);
+      return VirtualKeyX.defaultOrder;
+    }
+  }
 
   // Only valid on iOS
   late final autoUpdateHomeWidget = propertyDefault(

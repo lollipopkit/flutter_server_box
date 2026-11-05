@@ -13,6 +13,7 @@ import 'package:server_box/data/provider/virtual_keyboard.dart';
 import 'package:server_box/data/res/terminal.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/data/terminal/terminal_session.dart';
+import 'package:server_box/data/terminal/virtual_key_support.dart';
 import 'package:server_box/view/page/ssh/present_server.dart';
 import 'package:server_box/view/page/ssh/widget/virtual_key_semantics.dart';
 import 'package:server_box/view/widget/float_shell.dart';
@@ -138,7 +139,7 @@ extension _Utils on _FloatTerminalState {
   /// password, the tmux switcher — and every one of them opens a page or a
   /// dialog belonging to the terminal *page*, which is not what is in this
   /// window. Left in, they would be buttons that take a tap and do nothing,
-  /// which is the failure `VirtualKeyX.worksOn` exists to avoid; so they are not
+  /// which is the failure `VirtualKeySupport.worksOn` exists to avoid; so they are not
   /// drawn here, on the same terms.
   ///
   /// Read on every build rather than cached: this is a short list behind a
@@ -156,7 +157,7 @@ extension _Utils on _FloatTerminalState {
           spi,
           ref.readPresentServer(spi.id)?.agentAccess,
         );
-    return VirtualKeyX.loadFromStore(persistRepairs: false)
+    return Stores.setting.virtualKeys(persistRepairs: false)
         .where((key) => !disabled.contains(key.name))
         .where(
           (key) => key.worksOn(

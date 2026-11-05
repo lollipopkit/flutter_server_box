@@ -28,6 +28,7 @@ import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/src/rust/api/script.dart' as rust;
+import 'package:server_box/view/page/monitor/common.dart';
 import 'package:server_box/view/page/monitor/tab.dart';
 import 'package:server_box/view/page/web_apps/detail.dart';
 

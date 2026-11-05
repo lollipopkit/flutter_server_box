@@ -9,7 +9,6 @@ import 'package:server_box/data/model/server/monitor/monitor_overview.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/monitor_overview.dart';
 import 'package:server_box/view/page/monitor/common.dart';
-import 'package:server_box/view/page/monitor/tab.dart';
 
 /// What is signed in to one agent and open on it: terminal sessions,
 /// connections and ports relayed through it, the watches' and widgets'

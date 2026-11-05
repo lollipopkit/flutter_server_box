@@ -6,7 +6,7 @@ import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/ssh/key_passphrase.dart';
-import 'package:server_box/data/provider/store_reload.dart';
+import 'package:server_box/data/store/store_reload.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/data/store/sync_recorder.dart';
 import 'package:server_box/data/store/sync_records.dart';
@@ -622,12 +622,11 @@ abstract final class SyncAnnounce {
     }
     if (collections.contains(Stores.portForward.table)) Stores.portForward.invalidate();
     if (collections.contains(Stores.remoteDesktop.table)) Stores.remoteDesktop.invalidate();
-    StoreReload.after(
-      servers: servers,
-      containers: servers,
-      snippets: collections.contains(Stores.snippet.table),
-      keys: collections.contains(Stores.key.table),
-      bmcCredentials: collections.contains(Stores.bmcCredential.table),
-    );
+    StoreReload.after({
+      if (servers) ...{ReloadedStore.servers, ReloadedStore.containers},
+      if (collections.contains(Stores.snippet.table)) ReloadedStore.snippets,
+      if (collections.contains(Stores.key.table)) ReloadedStore.keys,
+      if (collections.contains(Stores.bmcCredential.table)) ReloadedStore.bmcCredentials,
+    });
   }
 }

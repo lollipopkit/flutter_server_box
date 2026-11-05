@@ -15,7 +15,6 @@ import 'package:server_box/data/provider/server/monitor_overview.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/server/web_apps.dart';
 import 'package:server_box/view/page/monitor/common.dart';
-import 'package:server_box/view/page/monitor/tab.dart';
 import 'package:server_box/view/page/monitor/update_agent.dart';
 
 /// The agents at a glance: a line of counts over them all, then a card per

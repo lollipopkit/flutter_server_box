@@ -59,7 +59,7 @@ final class _IntroPage extends StatelessWidget {
   /// A first launch, on a device with something to discover.
   static Future<bool> _offersDiscovery() async =>
       await _isFirstLaunch() &&
-      (LocalServer.isSupported || (await SshDiscovery.available()).isNotEmpty);
+      (LocalServer.isSupported || (await availableSshDiscoveries()).isNotEmpty);
 
   // — Widget build ——————————————————————————————————————————————————
 

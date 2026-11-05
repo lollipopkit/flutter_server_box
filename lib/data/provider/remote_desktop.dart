@@ -11,6 +11,7 @@ import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/server/tcp_dialer.dart';
 import 'package:server_box/data/provider/session_keep_alive.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/src/rust/api/remote_desktop.dart' as ffi;
@@ -706,8 +707,7 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
   Future<SshLocalTunnel?> _openTunnel(_SessionEntry entry) async {
     final spi = ref.read(serversProvider).servers[entry.profile.serverId];
     if (spi == null) return null;
-    final dialer = ServerTcpDialer.of(
-      ref,
+    final dialer = ref.serverTcpDialer(
       spi,
       transports: const {ServerTransport.ssh, ServerTransport.monitorHttp},
     );

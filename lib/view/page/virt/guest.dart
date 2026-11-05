@@ -546,7 +546,7 @@ VirtGuestViewKind.overview => _buildOverview(st, guest, state),
   /// The name, which of the host's guests it is when that is worth saying,
   /// and what can be done to it.
   PreferredSizeWidget _bar(VirtHostState st, VirtGuest? guest) {
-    final guests = st.data?.guests ?? const <VirtGuest>[];
+    final guests = st.guests;
     final at = guest == null ? -1 : guests.indexOf(guest);
     final actions = guest == null
         ? const <VirtPowerAction>{}
@@ -744,7 +744,7 @@ extension _GuestActions on _VirtGuestViewState {
 
   /// The host's other guests, for the layout with no list beside this.
   Future<void> _showGuests(VirtHostState st) async {
-    final guests = st.data?.guests ?? const <VirtGuest>[];
+    final guests = st.guests;
     final picked = await showRowsSheet<String>(
       context,
       rows: (ctx) => [

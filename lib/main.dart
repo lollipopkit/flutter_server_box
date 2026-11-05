@@ -32,6 +32,7 @@ import 'package:server_box/core/tty.dart';
 import 'package:server_box/core/utils/sandbox_import.dart';
 import 'package:server_box/core/utils/store_recovery.dart';
 import 'package:server_box/data/model/server/dist_license.dart';
+import 'package:server_box/data/provider/store_reload.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/terminal.dart';
@@ -173,6 +174,11 @@ Future<void> _initApp(ProviderContainer container) async {
   MethodChans.watchWindowControls();
   // Before anything connects: a host key question with no dialog is refused.
   installHostKeyDialog();
+  // Before anything restores or syncs, the two things a restore asks of the
+  // layers above it: providers reload what it rewrote, and theme packages kept
+  // on LK Cloud are fetched from there.
+  installStoreReload();
+  installThemeBlobs();
 
   // Before anything that can fail, so that a failure during startup is at
   // least recorded — the errors worth catching most are the ones that stop the
@@ -577,7 +583,7 @@ Future<void> _migrateStorage() async {
   //
   // First in this function, and not after the feature bump below, because that
   // refusal is only worth anything if nothing has been written yet. Run second,
-  // it left `autoAddNewCards`, `autoAddNewFuncs` and a rewritten `lastVer`
+  // it left `autoAddNewCards`, `addNewServerFuncs` and a rewritten `lastVer`
   // behind on a database it then declined to touch — so a downgrade destroyed
   // exactly the settings the refusal exists to protect.
   await SchemaVersion.migrate(kSchemaMigrations);

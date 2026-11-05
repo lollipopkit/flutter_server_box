@@ -67,7 +67,7 @@ void main() {
     await migration.apply();
 
     // `clipboard` comes across by name, and is dropped where every name this
-    // build has no case for is: by [VirtualKeyX.loadFromStore].
+    // build has no case for is: by [SettingStore.virtualKeys].
     expect(store.sshVirtKeys.fetch(), ['ime', 'clipboard', 'tmux']);
   });
 

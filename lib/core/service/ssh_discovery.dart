@@ -1,8 +1,4 @@
 import 'package:material_ui/material_ui.dart';
-import 'package:server_box/core/service/ssh_discovery_cloudflare.dart';
-import 'package:server_box/core/service/ssh_discovery_lan.dart';
-import 'package:server_box/core/service/ssh_discovery_ssh_config.dart';
-import 'package:server_box/core/service/ssh_discovery_tailscale.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 
 /// A host an [SshDiscovery] found, as the server adding it saves.
@@ -125,18 +121,4 @@ abstract interface class SshDiscovery {
   /// [input] is the [credential], or a picked file after
   /// [SshDiscoveryException.needsFile].
   Future<SshDiscoveryRun> discover({String? input});
-
-  /// The sources this build and device can run, in the order shown.
-  static Future<List<SshDiscovery>> available() async {
-    final (ssh, tailscale) = await (
-      SshConfigDiscovery.isAvailable(),
-      TailscaleDiscovery.find(),
-    ).wait;
-    return [
-      if (ssh) const SshConfigDiscovery(),
-      if (LanSshDiscovery.isSupported) const LanSshDiscovery(),
-      ?tailscale,
-      if (CloudflareDiscovery.isSupported) const CloudflareDiscovery(),
-    ];
-  }
 }

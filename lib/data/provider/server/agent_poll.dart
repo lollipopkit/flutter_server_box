@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/widgets.dart';
+import 'package:server_box/core/monitor/http.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
-import 'package:server_box/data/provider/server/monitor_http.dart';
 
 /// One server's agent read on a timer while a provider is alive: the server's
 /// shared client ([MonitorClientLease]), one read at a time, none while the

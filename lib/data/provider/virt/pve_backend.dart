@@ -9,7 +9,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/pve/console.dart';
 import 'package:server_box/core/ssh/local_tunnel.dart';
 import 'package:server_box/core/utils/cert_fingerprint.dart';
-import 'package:server_box/core/utils/server_tcp.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
@@ -25,6 +24,7 @@ import 'package:server_box/data/model/virt/virt_hardware.dart';
 import 'package:server_box/data/model/virt/virt_manage.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/data/provider/server/tcp_dialer.dart';
 import 'package:server_box/data/provider/virt/backend.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
@@ -81,7 +81,7 @@ class PveBackend implements VirtBackend {
   /// The backend for [spi], connecting through its `ServerTcpDialer` and
   /// writing a confirmed certificate to `Stores.pve`.
   factory PveBackend.of(Ref ref, Spi spi, PveConfig config) {
-    final dialer = ServerTcpDialer.of(ref, spi);
+    final dialer = ref.serverTcpDialer(spi);
     return PveBackend(
       serverId: spi.id,
       config: config,

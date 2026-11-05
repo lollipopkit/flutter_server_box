@@ -8,6 +8,7 @@ import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/model/terminal/virtual_key.dart';
 import 'package:server_box/data/terminal/terminal_session.dart';
 import 'package:server_box/data/terminal/terminal_source.dart';
+import 'package:server_box/data/terminal/virtual_key_support.dart';
 import 'package:server_box/view/page/storage/server_file.dart';
 
 /// What the order in the server editor actually decides.

@@ -7,7 +7,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/monitor/monitor_agent.dart';
 import 'package:server_box/data/provider/ai/agent_scope.dart';
 import 'package:server_box/data/provider/ai/remote_agent.dart';
-import 'package:server_box/view/page/agent/view.dart';
+import 'package:server_box/view/page/agent/activity.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 
 /// Opens [scope]'s chat list as a sheet, for the layouts too narrow to give it

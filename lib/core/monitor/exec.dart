@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/core/monitor/http.dart';
 import 'package:server_box/data/model/server/monitor/monitor_exec_output.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
-import 'package:server_box/data/provider/server/monitor_http.dart';
 
 /// [CommandExec] over a `monitor` agent's HTTP API.
 ///
