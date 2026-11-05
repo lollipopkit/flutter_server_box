@@ -13,6 +13,7 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/model/terminal/virtual_key.dart';
 import 'package:server_box/data/terminal/terminal_source.dart';
+import 'package:server_box/data/terminal/virtual_key_support.dart';
 
 Spi _ssh({String user = 'me'}) => Spi(
   id: 's-1',

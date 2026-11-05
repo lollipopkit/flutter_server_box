@@ -17,7 +17,7 @@ extension BackupV2Restore on BackupV2 {
     // theme that is there.
     final themeReport = themes.isEmpty
         ? null
-        : await ThemeBackup.restore(themes, blobs: LkcThemeBlobs.available);
+        : await ThemeBackup.restore(themes, blobs: BackupThemeBlobs.available());
     if (themeReport != null && themeReport.failed.isNotEmpty) {
       _loggerV2.warning('Themes not restored: ${themeReport.failed}');
     }

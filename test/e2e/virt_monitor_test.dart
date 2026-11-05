@@ -117,6 +117,7 @@ import 'package:server_box/data/model/virt/virt_manage.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/remote_desktop.dart';
 import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/data/provider/server/tcp_dialer.dart';
 import 'package:server_box/data/provider/virt/libvirt_backend.dart';
 import 'package:server_box/data/provider/virt/pve_backend.dart';
 import 'package:server_box/data/provider/virt/virt.dart';
@@ -4355,7 +4356,7 @@ Future<String> _relayGuestRun(
 
 /// The relay dialer for a server, as remote desktop and PVE get it.
 final _dialerProvider = riverpod.Provider.family<ServerTcpDialer, Spi>(
-  (ref, spi) => ServerTcpDialer.of(ref, spi),
+  (ref, spi) => ref.serverTcpDialer(spi),
 );
 
 /// Runs [op] again while PVE refuses it on the guest's config lock (`can't

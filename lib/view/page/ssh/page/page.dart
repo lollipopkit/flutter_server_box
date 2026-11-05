@@ -43,6 +43,7 @@ import 'package:server_box/data/terminal/terminal_status.dart';
 import 'package:server_box/data/terminal/terminal_status_alerts.dart';
 import 'package:server_box/data/terminal/tmux/tmux_export.dart';
 import 'package:server_box/data/terminal/tmux/tmux_ids.dart';
+import 'package:server_box/data/terminal/virtual_key_support.dart';
 import 'package:server_box/src/rust/api/files.dart';
 import 'package:server_box/view/page/agent/view.dart';
 import 'package:server_box/view/page/ssh/ask_ai_layout.dart';
@@ -296,7 +297,7 @@ class SSHPageState extends ConsumerState<SSHPage>
   late final TerminalController _terminalController = TerminalController();
   final List<List<VirtualKey>> _virtKeysList = [];
 
-  /// The keys this session cannot use — see [VirtualKeyX.worksOn]. Drawn
+  /// The keys this session cannot use — see [VirtualKeySupport.worksOn]. Drawn
   /// disabled in their place rather than left out: a key left out moved every
   /// one after it, and the last row came up a key short of the others.
   final Set<VirtualKey> _virtKeysUnavailable = {};

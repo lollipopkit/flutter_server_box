@@ -6,7 +6,7 @@ import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/ssh/key_passphrase.dart';
-import 'package:server_box/data/provider/store_reload.dart';
+import 'package:server_box/data/store/store_reload.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/data/store/sync_recorder.dart';
 import 'package:server_box/data/store/sync_records.dart';

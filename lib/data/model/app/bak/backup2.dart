@@ -11,7 +11,6 @@ import 'package:logging/logging.dart';
 import 'package:server_box/core/ssh/identities.dart';
 import 'package:server_box/core/ssh/key_passphrase.dart';
 import 'package:server_box/core/ssh/key_unlock.dart';
-import 'package:server_box/core/sync/lkc.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/file/backend/local.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
@@ -25,7 +24,6 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
-import 'package:server_box/data/provider/store_reload.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/store/migrations/m008_settings_fixups.dart';
 import 'package:server_box/data/store/migrations/m009_grouped_settings.dart';
@@ -35,6 +33,7 @@ import 'package:server_box/data/store/migrations/m021_home_tabs_bar.dart';
 import 'package:server_box/data/store/migrations/m030_pve_virt.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/store_reload.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/data/store/sync_recorder.dart';
 
@@ -43,6 +42,13 @@ part 'backup2.g.dart';
 part 'backup_restore.dart';
 
 final _loggerV2 = Logger('BackupV2');
+
+/// Where a restore fetches the theme packages a backup keeps apart. Set by
+/// the sync that keeps them (`installThemeBlobs`); none until then, as in a
+/// test without the app.
+abstract final class BackupThemeBlobs {
+  static ThemeBlobStore? Function() available = () => null;
+}
 
 @freezed
 abstract class BackupV2 with _$BackupV2 implements Mergeable {

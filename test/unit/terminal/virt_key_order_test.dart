@@ -13,24 +13,20 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/terminal/virtual_key.dart';
 import 'package:server_box/data/store/setting.dart';
-import 'package:server_box/data/store/stores.dart';
 
 import '../../helpers/test_db.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  late SettingStore setting;
+
   setUp(() async {
     await openTestDb();
-    // `loadFromStore` reads the singleton rather than a store handed to it,
-    // so the singleton is what has to point at the in-memory database.
-    getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
+    setting = SettingStore('setting_test');
   });
 
-  tearDown(() async {
-    await getIt.reset();
-    await SqliteDb.close();
-  });
+  tearDown(SqliteDb.close);
 
   test('the default is two full rows, each pair in one column', () {
     const order = VirtualKeyX.defaultOrder;
@@ -46,39 +42,39 @@ void main() {
 
   test('an order this build knows every key of is returned as it was', () {
     const order = [VirtualKey.tab, VirtualKey.ctrl, VirtualKey.esc];
-    Stores.setting.sshVirtKeys.put(order.map((e) => e.name).toList());
+    setting.sshVirtKeys.put(order.map((e) => e.name).toList());
 
-    expect(VirtualKeyX.loadFromStore(), order);
+    expect(setting.virtualKeys(), order);
   });
 
   test('a name this build has no case for is dropped, and the rest kept', () {
     // Written by a build with more keys than this one. Resetting to the
     // default instead — which is what it did — discards an arrangement that
     // was otherwise entirely readable.
-    Stores.setting.sshVirtKeys.put([
+    setting.sshVirtKeys.put([
       VirtualKey.tab.name,
       'somethingNewerBuildsHave',
       VirtualKey.ctrl.name,
     ]);
 
-    expect(VirtualKeyX.loadFromStore(), [VirtualKey.tab, VirtualKey.ctrl]);
+    expect(setting.virtualKeys(), [VirtualKey.tab, VirtualKey.ctrl]);
   });
 
   test('and what it dropped is written back, so it is not read again', () {
-    Stores.setting.sshVirtKeys.put([VirtualKey.esc.name, 'unknownKey']);
+    setting.sshVirtKeys.put([VirtualKey.esc.name, 'unknownKey']);
 
-    VirtualKeyX.loadFromStore();
+    setting.virtualKeys();
 
-    expect(Stores.setting.sshVirtKeys.fetch(), [VirtualKey.esc.name]);
+    expect(setting.sshVirtKeys.fetch(), [VirtualKey.esc.name]);
   });
 
   test('nothing readable at all falls back to the default, unsaved', () {
     // Unsaved matters: the stored value is the only record of what the user
     // arranged, and a build that cannot read it is not entitled to replace it.
-    Stores.setting.sshVirtKeys.put(['unknownA', 'unknownB']);
+    setting.sshVirtKeys.put(['unknownA', 'unknownB']);
 
-    expect(VirtualKeyX.loadFromStore(), VirtualKeyX.defaultOrder);
-    expect(Stores.setting.sshVirtKeys.fetch(), ['unknownA', 'unknownB']);
+    expect(setting.virtualKeys(), VirtualKeyX.defaultOrder);
+    expect(setting.sshVirtKeys.fetch(), ['unknownA', 'unknownB']);
   });
 
   test('a key named twice is drawn once', () {
@@ -86,14 +82,14 @@ void main() {
     // terminal sharing one `ValueKey` and one modifier state. First
     // occurrence wins, so the arrangement is otherwise untouched — the same
     // rule `AppTab.parseAppTabsFromObj` follows for the home tabs.
-    Stores.setting.sshVirtKeys.put([
+    setting.sshVirtKeys.put([
       VirtualKey.tab.name,
       VirtualKey.ctrl.name,
       VirtualKey.tab.name,
     ]);
 
-    expect(VirtualKeyX.loadFromStore(), [VirtualKey.tab, VirtualKey.ctrl]);
-    expect(Stores.setting.sshVirtKeys.fetch(), [
+    expect(setting.virtualKeys(), [VirtualKey.tab, VirtualKey.ctrl]);
+    expect(setting.sshVirtKeys.fetch(), [
       VirtualKey.tab.name,
       VirtualKey.ctrl.name,
     ]);
@@ -103,19 +99,19 @@ void main() {
     // The write is the part with a cost — it stamps the store, and a settings
     // sync then carries an edit nobody made.
     final order = VirtualKeyX.defaultOrder.map((e) => e.name).toList();
-    Stores.setting.sshVirtKeys.put(order);
-    final before = Stores.setting.lastUpdateTs;
+    setting.sshVirtKeys.put(order);
+    final before = setting.lastUpdateTs;
 
-    VirtualKeyX.loadFromStore();
+    setting.virtualKeys();
 
-    expect(Stores.setting.lastUpdateTs, before);
+    expect(setting.lastUpdateTs, before);
   });
 
   test('a row still holding indices reads as nothing rather than throwing', () {
     // `VirtKeyNamesMigration` is what stops this being reached. If one ever
     // is — a row a downgrade left behind — the page has to come up.
-    Stores.setting.set('sshVirtKeys', [0, 1, 2]);
+    setting.set('sshVirtKeys', [0, 1, 2]);
 
-    expect(VirtualKeyX.loadFromStore(), VirtualKeyX.defaultOrder);
+    expect(setting.virtualKeys(), VirtualKeyX.defaultOrder);
   });
 }

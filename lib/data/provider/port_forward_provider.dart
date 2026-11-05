@@ -16,6 +16,7 @@ import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/monitor_http.dart';
 import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/data/provider/server/tcp_dialer.dart';
 import 'package:server_box/data/store/stores.dart';
 
 part 'port_forward_provider.g.dart';
@@ -290,8 +291,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
 
   /// Dials per connection, over the agent alone where it leads — see
   /// [_viaAgent] — and otherwise over SSH, falling back to the agent.
-  ServerTcpDialer _dialer(ServerState server) => ServerTcpDialer.of(
-    ref,
+  ServerTcpDialer _dialer(ServerState server) => ref.serverTcpDialer(
     server.spi,
     transports: _viaAgent(server)
         ? const {ServerTransport.monitorHttp}

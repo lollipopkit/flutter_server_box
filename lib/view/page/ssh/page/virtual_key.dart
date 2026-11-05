@@ -178,7 +178,7 @@ extension _VirtualKey on SSHPageState {
           spi,
           ref.readPresentServer(spi.id)?.agentAccess,
         );
-    final virtKeys = VirtualKeyX.loadFromStore()
+    final virtKeys = Stores.setting.virtualKeys()
         .where((key) => !disabled.contains(key.name))
         .toList();
     _virtKeysUnavailable.addAll(

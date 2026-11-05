@@ -6,7 +6,6 @@ import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
 import 'package:server_box/data/model/server/monitor/monitor_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/store/stores.dart';
 
 enum ServerFuncBtn {
   terminal(),
@@ -41,8 +40,9 @@ enum ServerFuncBtn {
 
   const ServerFuncBtn([this.introducedAfterBuild]);
 
-  /// Puts entries that arrived during an upgrade into the user's row, which
-  /// was last written when they did not exist.
+  /// [names], the user's row, with the entries that arrived during an
+  /// upgrade added at its end: the row was last written when they did not
+  /// exist.
   ///
   /// The window is `(from, to]`, not "everything up to [to]". An entry the
   /// user has since taken *out* of the row was a decision, and a rule that
@@ -59,18 +59,13 @@ enum ServerFuncBtn {
   /// Driven by [introducedAfterBuild] over [values] rather than by a branch per entry:
   /// the old form needed three near-identical blocks, and a new entry was
   /// added by remembering to write a fourth.
-  static void autoAddNewFuncs(int from, int to) {
-    final prop = Stores.setting.serverFuncBtns;
-    final list = prop.fetch();
-    final added = [
-      for (final btn in values)
-        if (btn.introducedAfterBuild case final boundary?
-            when boundary >= from && boundary < to && !list.contains(btn.name))
-          btn.name,
-    ];
-    if (added.isEmpty) return;
-    prop.putSync([...list, ...added]);
-  }
+  static List<String> withNewFuncs(List<String> names, int from, int to) => [
+    ...names,
+    for (final btn in values)
+      if (btn.introducedAfterBuild case final boundary?
+          when boundary >= from && boundary < to && !names.contains(btn.name))
+        btn.name,
+  ];
 
   static final defaultNames = [
     terminal,

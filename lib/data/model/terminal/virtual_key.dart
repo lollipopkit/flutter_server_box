@@ -1,9 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/store/stores.dart';
-import 'package:server_box/data/terminal/terminal_source.dart';
 import 'package:xterm/core.dart';
 
 /// How many virtual keys go in one row.
@@ -209,61 +206,6 @@ extension VirtualKeyX on VirtualKey {
     _ => null,
   };
 
-  /// Whether a terminal on [source] can do what this key does.
-  ///
-  /// Some of these keys act on a *server*, and on a shell that is not on one
-  /// they returned without a word: the strip drew them, they took a tap, and
-  /// nothing happened. The strip now draws them disabled. Answered here beside
-  /// the rest of what a key is, rather
-  /// than in the page that draws them, so the toolbar and the strip cannot
-  /// come to different conclusions about the same button.
-  bool worksOn(TerminalSource source, {bool shellUsesAgent = false}) {
-    final spi = switch (source) {
-      ServerSource(:final spi) => spi,
-      LocalSource() || ConsoleSource() => null,
-    };
-    return switch (this) {
-      // Opens the files of the server this shell is on. This device has its own
-      // browser, in the files tab.
-      VirtualKey.sftp => spi != null,
-      // Inserts the password stored for this server. There is none for a shell
-      // that is not on one, none worth inserting for a session already root, and
-      // none at all on a server reached only through its monitor agent — `Spi.ssh`
-      // is where the password lives, and a monitor server carries no
-      // `SshCredential`. `isRoot` alone answered false for those, so the key was
-      // drawn on a terminal where tapping it could only show an empty result.
-      VirtualKey.sudo => spi?.ssh != null && !spi!.isRoot,
-      // Needs `ShellBackend.supportsTmux`: a POSIX `sh` run beside the
-      // terminal. SSH has one, and so does this device — its own shell, or a
-      // Linux system installed in the app — except on Windows, where a command
-      // is `cmd /C`, and on iOS for now. A monitor agent carries no exec
-      // channel at all, and a guest console is the guest's, not a shell to
-      // start tmux from.
-      //
-      // [shellUsesAgent] is `serverShellUsesAgent` — the same answer
-      // `TerminalSession.connect` acts on — so this says whether *this* shell
-      // has an exec channel rather than guessing from which transport leads.
-      // Read off `Spi.transport` it was wrong for the one server that is both:
-      // an agent that leads but refuses access falls back to SSH,
-      // which carries tmux perfectly well, and the key was hidden anyway.
-      //
-      // The grant is read before the first key is drawn, from the same provider
-      // the connect reads it from, so this is settled once — not a strip that
-      // rearranges itself under the user's thumb once something connects.
-      VirtualKey.tmux => switch (source) {
-        // TODO: iOS once the guest's realfs reports its files as root's; see
-        // `IshShellBackend.supportsTmux`.
-        LocalSource() => !isWindows && !isIOS,
-        ServerSource(:final spi) when spi.local => !isWindows,
-        ServerSource(:final spi) => spi.sshOn != null && !shellUsesAgent,
-        ConsoleSource() => false,
-      },
-      // Everything else is the terminal's own — keys, modifiers,
-      // the IME, and snippets, which are a script typed into whatever is there.
-      _ => true,
-    };
-  }
-
   bool get toggleable => switch (this) {
     VirtualKey.alt || VirtualKey.ctrl || VirtualKey.shift => true,
     _ => false,
@@ -316,7 +258,9 @@ extension VirtualKeyX on VirtualKey {
   static VirtualKey? byName(String name) =>
       VirtualKey.values.firstWhereOrNull((key) => key.name == name);
 
-  /// The user's order, with anything this build cannot name left out.
+  /// The keys [names] names, in that order: a name this build has no key for
+  /// is left out, and a repeat is dropped, keeping the first. Empty when none
+  /// of them is a key here.
   ///
   /// A name outside the enum is a key added by a newer build — a restored
   /// backup, or a downgrade — and there is nothing here to draw for it. It used
@@ -324,36 +268,18 @@ extension VirtualKeyX on VirtualKey {
   /// an arrangement that was otherwise entirely readable; and the settings page
   /// indexed the same list without the guard, so it threw while building.
   ///
-  /// A repeat is dropped too, keeping the first. A key can only be in one
-  /// place, so a stored order naming one twice drew two copies of it — each
-  /// with the same `ValueKey`, and each toggling the same modifier — and the
-  /// settings page offered two rows for the one key. Reachable from a merged
-  /// backup and from a reorder interrupted midway, neither of which the reader
-  /// can tell apart from a list that was always right.
-  ///
-  /// Only what was dropped is written back, and only when something was: the
-  /// unknown key is then gone for good, which is the price of not carrying a
-  /// name nothing can render. An empty result is a stored value that says
-  /// nothing at all, and falls back to the default without being saved over.
-  /// [persistRepairs] off reads without writing, for a caller that only wants
-  /// to know what is stored.
-  static List<VirtualKey> loadFromStore({bool persistRepairs = true}) {
-    try {
-      final names = Stores.setting.sshVirtKeys.fetch();
-      final seen = <VirtualKey>{};
-      final keys = [
-        for (final name in names)
-          if (byName(name) case final key?)
-            if (seen.add(key)) key,
-      ];
-      if (keys.isEmpty) return defaultOrder;
-      if (persistRepairs && keys.length != names.length) {
-        Stores.setting.sshVirtKeys.put(keys.map((e) => e.name).toList());
-      }
-      return keys;
-    } catch (e, s) {
-      Loggers.app.warning('Failed to load sshVirtKeys', e, s);
-    }
-    return defaultOrder;
+  /// A key can only be in one place, so a stored order naming one twice drew
+  /// two copies of it — each with the same `ValueKey`, and each toggling the
+  /// same modifier — and the settings page offered two rows for the one key.
+  /// Reachable from a merged backup and from a reorder interrupted midway,
+  /// neither of which a reader can tell apart from a list that was always
+  /// right.
+  static List<VirtualKey> fromNames(List<String> names) {
+    final seen = <VirtualKey>{};
+    return [
+      for (final name in names)
+        if (byName(name) case final key?)
+          if (seen.add(key)) key,
+    ];
   }
 }
