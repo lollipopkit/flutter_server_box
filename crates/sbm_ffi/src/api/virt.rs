@@ -13,6 +13,7 @@ use super::virt_libvirt::{
     VirtHardwareInfo, VirtHostDevices, VirtHostProbe, VirtHwChange, VirtHwOutcome, VirtResourceOp, VirtSeedRead, VirtStorage,
     VirtVncConsoleInfo,
 };
+use super::exec_session::SudoEntry;
 use super::virt_view::{Chain, Diff, Snapshot, VirtGuestDetailReport, VirtHostReport};
 
 /// Power actions (mirrors sbm_virt::libvirt::VirtAction)
@@ -706,27 +707,6 @@ pub fn virt_libvirt_host_devices_read(raw: String) -> Result<VirtHostDevices, Vi
     Ok(libvirt::parse_host_devices(&raw)?)
 }
 
-/// How the upload command reaches the daemon (mirrors
-/// sbm_virt::libvirt::manage::VirtUploadEntry)
-pub enum VirtUploadEntryKind {
-    /// As this account
-    Direct,
-    /// `sudo -n`
-    SudoNoPassword,
-    /// `sudo -S`, the password first on stdin
-    SudoPassword,
-}
-
-impl From<VirtUploadEntryKind> for manage::VirtUploadEntry {
-    fn from(kind: VirtUploadEntryKind) -> Self {
-        match kind {
-            VirtUploadEntryKind::Direct => manage::VirtUploadEntry::Direct,
-            VirtUploadEntryKind::SudoNoPassword => manage::VirtUploadEntry::SudoNoPassword,
-            VirtUploadEntryKind::SudoPassword => manage::VirtUploadEntry::SudoPassword,
-        }
-    }
-}
-
 /// One change to the host's storage or networks. Parse with [`parse_virt_resource`].
 #[flutter_rust_bridge::frb(sync)]
 pub fn virt_resource_script(op: VirtResourceOp) -> Result<String, VirtFfiError> {
@@ -746,9 +726,9 @@ pub fn parse_virt_resource(raw: String) -> Result<(), VirtFfiError> {
 pub fn virt_vol_upload_command(
     pool: String,
     name: String,
-    entry: VirtUploadEntryKind,
+    entry: SudoEntry,
 ) -> Result<String, VirtFfiError> {
-    Ok(manage::vol_upload_command(&pool, &name, entry.into())?)
+    Ok(manage::vol_upload_command(&pool, &name, entry)?)
 }
 
 /// [`virt_vol_upload_command`]'s output: `true` uploaded, `false` stopped

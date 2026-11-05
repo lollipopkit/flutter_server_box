@@ -23,6 +23,7 @@ import 'package:server_box/data/model/virt/virt_rust.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/virt/backend.dart';
 import 'package:server_box/src/rust/api/create.dart' as cr;
+import 'package:server_box/src/rust/api/exec_session.dart' show SudoEntry;
 import 'package:server_box/src/rust/api/hardware.dart' as hw;
 import 'package:server_box/src/rust/api/pve.dart' show PveError;
 import 'package:server_box/src/rust/api/resource.dart' as res;
@@ -972,10 +973,10 @@ class LibvirtBackend implements VirtBackend {
       // Decided by the volume just made: it went through sudo if libvirt
       // needed it.
       var entry = !_viaSudo
-          ? ffi.VirtUploadEntryKind.direct
+          ? SudoEntry.direct
           : _sudoPassword != null
-          ? ffi.VirtUploadEntryKind.sudoPassword
-          : ffi.VirtUploadEntryKind.sudoNoPassword;
+          ? SudoEntry.sudoPassword
+          : SudoEntry.sudoNoPassword;
       var result = await _stream(
         exec,
         upload,
@@ -986,8 +987,8 @@ class LibvirtBackend implements VirtBackend {
       // sudo did not ask for the password it was given (cached, or
       // NOPASSWD): nothing was written; once more without it.
       if (result == _Streamed.notStarted &&
-          entry == ffi.VirtUploadEntryKind.sudoPassword) {
-        entry = ffi.VirtUploadEntryKind.sudoNoPassword;
+          entry == SudoEntry.sudoPassword) {
+        entry = SudoEntry.sudoNoPassword;
         result = await _stream(
           exec,
           upload,
@@ -1025,7 +1026,7 @@ class LibvirtBackend implements VirtBackend {
   Future<_Streamed> _stream(
     CommandByteExec exec,
     VirtUpload upload,
-    ffi.VirtUploadEntryKind entry, {
+    SudoEntry entry, {
     void Function(int sent)? onProgress,
     Future<void>? cancel,
   }) async {
@@ -1064,7 +1065,7 @@ class LibvirtBackend implements VirtBackend {
         err.write(chunk);
         // A refused password: sudo asks again on the same stdin, and the go
         // line would be its next guess. Nothing more is sent.
-        if (entry == ffi.VirtUploadEntryKind.sudoPassword &&
+        if (entry == SudoEntry.sudoPassword &&
             !rejected &&
             script_ffi.sudoPasswordRejected(stderr: err.toString())) {
           rejected = true;
@@ -1100,7 +1101,7 @@ class LibvirtBackend implements VirtBackend {
     try {
       final password = _sudoPassword;
       try {
-        if (entry == ffi.VirtUploadEntryKind.sudoPassword &&
+        if (entry == SudoEntry.sudoPassword &&
             password != null) {
           await session.write(utf8.encode('$password\n'));
         }
@@ -1175,7 +1176,7 @@ class LibvirtBackend implements VirtBackend {
       if (e.kind == ffi.VirtErrorKind.malformed) {
         // Nothing of the script's: the shell or sudo itself refused.
         throw VirtErr(
-          type: entry == ffi.VirtUploadEntryKind.direct
+          type: entry == SudoEntry.direct
               ? VirtErrType.actionFailed
               : VirtErrType.permissionDenied,
           message: [stderr.trim(), 'exit $code'].where((m) => m.isNotEmpty).join('\n'),

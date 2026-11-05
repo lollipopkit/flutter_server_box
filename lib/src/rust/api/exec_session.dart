@@ -6,6 +6,10 @@
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
+/// [body], a command line, run the way [entry] says.
+String sudoEntry({required SudoEntry entry, required String body}) =>
+    RustLib.instance.api.crateApiExecSessionSudoEntry(entry: entry, body: body);
+
 String execSessionEnvName() =>
     RustLib.instance.api.crateApiExecSessionExecSessionEnvName();
 
@@ -21,8 +25,11 @@ String execSessionWrap({required String command, required String nonce}) =>
       nonce: nonce,
     );
 
-String execSessionKillCommand({required int id}) =>
-    RustLib.instance.api.crateApiExecSessionExecSessionKillCommand(id: id);
+String execSessionKillCommand({required int id, required SudoEntry entry}) =>
+    RustLib.instance.api.crateApiExecSessionExecSessionKillCommand(
+      id: id,
+      entry: entry,
+    );
 
 String execSessionOwnsCommand({required int id, required String nonce}) =>
     RustLib.instance.api.crateApiExecSessionExecSessionOwnsCommand(
@@ -62,4 +69,16 @@ class SessionMarker {
           start == other.start &&
           end == other.end &&
           id == other.id;
+}
+
+/// How a command reaches root (mirrors sbm_parser::sudo::SudoEntry).
+enum SudoEntry {
+  /// As this account
+  direct,
+
+  /// `sudo -n`
+  sudoNoPassword,
+
+  /// `sudo -S -p ''`, the password first on stdin
+  sudoPassword,
 }

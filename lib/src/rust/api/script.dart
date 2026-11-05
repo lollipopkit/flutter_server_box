@@ -4,6 +4,7 @@
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
+import 'package:server_box/src/rust/api/parser.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `wrap_for_default_shell`
@@ -12,7 +13,7 @@ import 'package:server_box/src/rust/frb_generated.dart';
 /// Build the full script for a system ("linux" | "bsd" | "windows").
 /// `disabled` uses the app's stored displayName format ("Linux.net", ...).
 String buildScript({
-  required String system,
+  required SystemType system,
   required List<String> disabled,
   required String buildNumber,
 }) => RustLib.instance.api.crateApiScriptBuildScript(
@@ -27,7 +28,7 @@ String buildScript({
 /// the commands travel encoded — see `install_custom_cmds_script`. The
 /// directory is fixed under the user's home, so there is no path to pass.
 String installCustomCmdsCommand({
-  required String system,
+  required SystemType system,
   required List<CustomCmd> cmds,
 }) => RustLib.instance.api.crateApiScriptInstallCustomCmdsCommand(
   system: system,
@@ -36,7 +37,7 @@ String installCustomCmdsCommand({
 
 /// Script that prints the custom-command directory back, for the editor to
 /// load. Output goes to `parse_custom_cmds_listing`.
-String readCustomCmdsCommand({required String system}) =>
+String readCustomCmdsCommand({required SystemType system}) =>
     RustLib.instance.api.crateApiScriptReadCustomCmdsCommand(system: system);
 
 /// The installed set, parsed from `read_custom_cmds_command`'s output.
@@ -50,7 +51,7 @@ List<CustomCmd>? parseCustomCmdsListing({required String raw}) =>
 /// Command that installs the script on the target (content piped via stdin,
 /// as produced by [`install_payload`] — not the bare script)
 String installCommand({
-  required String system,
+  required SystemType system,
   required String scriptDir,
   required String scriptPath,
 }) => RustLib.instance.api.crateApiScriptInstallCommand(
@@ -65,7 +66,7 @@ String installCommand({
 /// because Windows OpenSSH does not reliably deliver EOF to the child and
 /// waiting for one hangs the install indefinitely. This adds that line, so no
 /// caller has to know it exists; on Unix it returns `content` unchanged.
-String installPayload({required String system, required String content}) =>
+String installPayload({required SystemType system, required String content}) =>
     RustLib.instance.api.crateApiScriptInstallPayload(
       system: system,
       content: content,
@@ -73,7 +74,7 @@ String installPayload({required String system, required String content}) =>
 
 /// Command that runs one shell function of an installed script
 String execCommand({
-  required String system,
+  required SystemType system,
   required String scriptPath,
   required ShellFuncKind func,
 }) => RustLib.instance.api.crateApiScriptExecCommand(

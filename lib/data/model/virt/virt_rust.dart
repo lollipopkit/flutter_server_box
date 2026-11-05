@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:server_box/core/extension/context/locale.dart';
@@ -1027,7 +1026,7 @@ abstract final class VirtRust {
   };
 
   /// `sbm_virt::error::Error` as this app phrases it. What `sbm_virt` leaves
-  /// to the caller (`detail_json`) is said in the user's language; the
+  /// to the caller ([PveError.detail]) is said in the user's language; the
   /// host's own words otherwise.
   static VirtErr error(PveError e) {
     final type = switch (e.kind) {
@@ -1048,62 +1047,40 @@ abstract final class VirtRust {
       VirtFailure.sudoPasswordRejected => VirtErrType.sudoPasswordRejected,
       VirtFailure.closed || VirtFailure.unknown => VirtErrType.unknown,
     };
-    final detail = e.detailJson == null ? null : jsonDecode(e.detailJson!);
-    final message = switch (detail) {
-      {'code': 'no_user'} => 'No user to log in to PVE as. Use an API token.',
-      {'code': 'password_required'} => l10n.pvePasswordRequired,
-      {'code': 'token_incomplete'} => 'The PVE API token is incomplete',
-      {'code': 'otp_required'} => l10n.pveOtpRequired,
-      {'code': 'otp_empty'} => l10n.pveOtpCodeRequired,
-      {'code': 'otp_rejected'} => l10n.pveOtpVerificationFailed,
-      {'code': 'invalid_body'} => l10n.pveInvalidResponseBody,
-      {'code': 'invalid_data'} => l10n.pveInvalidResponseData,
-      {'code': 'missing_ticket'} => l10n.pveMissingAuthTicket,
-      {
-        'code': 'no_privileges',
-        'token': final bool token,
-        'account': final String account,
-        'command': final String command,
-      } =>
+    final message = switch (e.detail) {
+      null => e.message,
+      vm.Detail_NoUser() => 'No user to log in to PVE as. Use an API token.',
+      vm.Detail_PasswordRequired() => l10n.pvePasswordRequired,
+      vm.Detail_TokenIncomplete() => 'The PVE API token is incomplete',
+      vm.Detail_OtpRequired() => l10n.pveOtpRequired,
+      vm.Detail_OtpEmpty() => l10n.pveOtpCodeRequired,
+      vm.Detail_OtpRejected() => l10n.pveOtpVerificationFailed,
+      vm.Detail_InvalidBody() => l10n.pveInvalidResponseBody,
+      vm.Detail_InvalidData() => l10n.pveInvalidResponseData,
+      vm.Detail_MissingTicket() => l10n.pveMissingAuthTicket,
+      vm.Detail_NoPrivileges(:final token, :final account, :final command) =>
         token
             ? l10n.pveTokenNoPrivileges(account, command)
             : l10n.pveUserNoPrivileges(account, command),
-      {
-        'code': 'task_still_running',
-        'node': final String node,
-        'upid': final String upid,
-        'minutes': final int minutes,
-      } =>
+      vm.Detail_TaskStillRunning(:final node, :final upid, :final minutes) =>
         'Still running on $node after $minutes min; '
             'its task log on the host says how it ends: $upid',
-      {
-        'code': 'needs_privilege',
-        'account': final String account,
-        'privilege': final String privilege,
-        'path': final String path,
-        'command': final String command,
-      } =>
+      vm.Detail_NeedsPrivilege(:final account, :final privilege, :final path, :final command) =>
         l10n.pveNeedsPrivilege(account, privilege, path, command),
-      {'code': 'refused', 'issue': final String issue} =>
-        virtResIssueText(VirtResIssue.ofRust(issue)),
-      {'code': 'create_refused', 'issue': final String issue} =>
-        virtCreateIssueText(VirtCreateIssue.ofRust(issue)),
-      {'code': 'hardware_refused', 'issue': final String issue} =>
-        virtHwIssueText(VirtHwIssue.ofRust(issue)),
-      {'code': 'backup_refused', 'issue': final String issue} =>
-        virtBackupIssueText(issue),
-      {'code': 'apply_touches_management', 'ifaces': final List ifaces} =>
+      vm.Detail_Refused(:final issue) => virtResIssueText(VirtResIssue.of(issue)),
+      vm.Detail_CreateRefused(:final issue) => virtCreateIssueText(VirtCreateIssue.of(issue)),
+      vm.Detail_HardwareRefused(:final issue) => virtHwIssueText(VirtHwIssue.of(issue)),
+      vm.Detail_BackupRefused(:final issue) => virtBackupIssueText(issue),
+      vm.Detail_ApplyTouchesManagement(:final ifaces) =>
         'The pending configuration changes ${ifaces.join(', ')}, which '
             "carries the host's management traffic: apply it from the "
             "host's console or PVE's own interface",
-      {'code': 'apply_unreadable'} =>
+      vm.Detail_ApplyUnreadable() =>
         'Which interfaces the pending configuration changes cannot be told '
             "from its diff: apply it from the host's console or PVE's own "
             'interface',
-      {'code': 'cert_not_presented'} =>
-        'That certificate was not presented by this server',
-      {'code': 'not_offered'} => 'Not offered for this guest',
-      _ => e.message,
+      vm.Detail_CertNotPresented() => 'That certificate was not presented by this server',
+      vm.Detail_NotOffered() => 'Not offered for this guest',
     };
     final cert = e.cert;
     return VirtErr(

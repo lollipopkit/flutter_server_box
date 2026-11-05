@@ -8,6 +8,7 @@ import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/model/virt/virt_rust.dart';
+import 'package:server_box/src/rust/api/virt_model.dart' as fm;
 import 'package:server_box/src/rust/api/virt_model.dart' show VolumeRef;
 
 import '../../helpers/rust_lib_helper.dart';
@@ -73,12 +74,10 @@ void main() {
     expect(spec.cloudInit!.sshKeys, ['ssh-ed25519 AAAA a']);
   });
 
-  test('an issue name maps back; an unknown one is unsupported', () {
-    expect(VirtCreateIssue.ofRust('name_taken'), VirtCreateIssue.nameTaken);
-    expect(VirtCreateIssue.ofRust('clone_storage_shared'), VirtCreateIssue.cloneStorageShared);
-    expect(VirtCreateIssue.ofRust('is_template'), VirtCreateIssue.isTemplate);
-    expect(VirtCreateIssue.ofRust('something_new'), VirtCreateIssue.unsupported);
-    expect(VirtCreateIssue.ofRust(null), isNull);
+  test('an issue maps back from sbm_virt; each one is said', () {
+    expect(VirtCreateIssue.of(fm.CreateIssue.nameTaken), VirtCreateIssue.nameTaken);
+    expect(VirtCreateIssue.of(fm.CreateIssue.cloneStorageShared), VirtCreateIssue.cloneStorageShared);
+    expect(VirtCreateIssue.of(null), isNull);
     for (final i in VirtCreateIssue.values) {
       expect(virtCreateIssueText(i), isNotEmpty, reason: i.name);
     }

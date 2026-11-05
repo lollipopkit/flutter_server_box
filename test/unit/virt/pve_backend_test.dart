@@ -26,6 +26,7 @@ import 'package:server_box/data/model/virt/virt_hardware.dart';
 import 'package:server_box/data/model/virt/virt_manage.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/virt/pve_backend.dart';
+import 'package:server_box/src/rust/api/virt_model.dart' show BackupIssue;
 
 import '../../helpers/pve_tunnel.dart';
 import '../../helpers/rust_lib_helper.dart';
@@ -580,7 +581,7 @@ void main() {
       expect(form(api.bodies[api.paths.indexOf('POST /nodes/pve/vzdump')]), containsPair('mode', 'stop'));
       final notHere = await _err(pve.backup(vm, const VirtBackupRequest(storage: 'nas')));
       expect(notHere.type, VirtErrType.unsupported);
-      expect(notHere.message, virtBackupIssueText('storage'));
+      expect(notHere.message, virtBackupIssueText(BackupIssue.storage));
 
       final local = (await pve.backups(vm)).last;
       await pve.restoreBackup(vm, local);
@@ -600,7 +601,7 @@ void main() {
       // Over a running guest: refused before any request.
       final running = backupHost(vmState: 'running');
       final e = await _err(running.backend(token).restoreBackup(vm, local));
-      expect(e.message, virtBackupIssueText('not_stopped'));
+      expect(e.message, virtBackupIssueText(BackupIssue.notStopped));
       expect(running.paths, isNot(contains('POST /nodes/pve/qemu')));
     });
 
@@ -621,7 +622,7 @@ void main() {
       await pve.editBackupJob(edit('sat 03:00'));
       expect(form(api.bodies[api.paths.indexOf('PUT /cluster/backup/any')]), containsPair('schedule', 'sat 03:00'));
       final bad = await _err(pve.editBackupJob(edit('02:30 mon')));
-      expect(bad.message, virtBackupIssueText('schedule_invalid'));
+      expect(bad.message, virtBackupIssueText(BackupIssue.scheduleInvalid));
       expect(api.paths.where((p) => p == 'PUT /cluster/backup/any'), hasLength(1));
 
       final check = await pve.checkSchedule('02:00');
@@ -642,7 +643,7 @@ void main() {
       );
       api.routes['GET /cluster/backup/j'] = (_) => {'id': 'j', 'type': 'vzdump', 'node': 'pve3', 'all': 1};
       final off = await _err(pve.runBackupJob(const VirtBackupJob(id: 'j')));
-      expect(off.message, virtBackupIssueText('node_offline'));
+      expect(off.message, virtBackupIssueText(BackupIssue.nodeOffline));
     });
   });
 

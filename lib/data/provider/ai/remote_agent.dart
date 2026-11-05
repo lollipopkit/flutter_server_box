@@ -255,6 +255,8 @@ abstract final class RemoteAgentTasks {
     if (tasks.value.containsKey(serverId)) tasks.value = {...tasks.value}..remove(serverId);
     if (more.value.containsKey(serverId)) more.value = {...more.value}..remove(serverId);
     if (modes.value.containsKey(serverId)) modes.value = {...modes.value}..remove(serverId);
+    // A server no longer listed has nothing to say why it is not.
+    if (errors.value.containsKey(serverId)) errors.value = {...errors.value}..remove(serverId);
     if (selected.value?.serverId == serverId) selected.value = null;
   }
 
@@ -268,6 +270,14 @@ abstract final class RemoteAgentTasks {
     }
     _links.clear();
     _followers = 0;
+    _serversSub?.close();
+    _serversSub = null;
+    for (final s in _serverSubs.values) {
+      s.close();
+    }
+    _serverSubs.clear();
+    _loadingMore.clear();
+    newOn.value = null;
     tasks.value = const {};
     errors.value = const {};
     more.value = const {};
@@ -306,7 +316,11 @@ final class _Link {
         RemoteAgentTasks._onEvent(serverId, e);
         events.add(e);
       },
-      onError: (Object e) => Loggers.app.warning('Agent events of $serverId', e),
+      // An error ends the subscription without `onDone`: it reconnects too.
+      onError: (Object e) {
+        Loggers.app.warning('Agent events of $serverId', e);
+        _again();
+      },
       onDone: _again,
       cancelOnError: true,
     );
@@ -323,16 +337,24 @@ final class _Link {
     _backoff = next > const Duration(seconds: 30) ? const Duration(seconds: 30) : next;
   }
 
-  void stop() {
+  void stop() => unawaited(_stop());
+
+  Future<void> _stop() async {
     _running = false;
     _retry?.cancel();
-    unawaited(_sub?.cancel());
+    final sub = _sub;
     _sub = null;
+    try {
+      await sub?.cancel();
+    } catch (e) {
+      // The request ends with the stream, and ending it closes the
+      // connection: that is what was asked for, not a failure.
+      Loggers.app.fine('Agent events of $serverId closed', e);
+    }
   }
 
-  /// [stop], and lets go of the client.
-  void close() {
-    stop();
-    _lease.release();
-  }
+  /// [stop], and lets go of the client once the stream has let go of its
+  /// response: released first, the client's forced close broke the response
+  /// still being read, and that error had no listener left to go to.
+  void close() => unawaited(_stop().whenComplete(_lease.release));
 }

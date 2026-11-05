@@ -9,6 +9,7 @@ pub use sbm_virt::hardware::{Hardware, Cpu, Memory as HwMemory, DiskKind, HwDisk
 pub use sbm_virt::backup::{Backup, BackupJob, BackupJobEdit, BackupRequest, BackupEdit, ScheduleCheck, Issue as BackupIssue};
 pub use sbm_virt::resource::{Pool as ResourcePool, GuestRef, Volume, Network, NetworkChanges, Change as ResourceChange, Issue as ResourceIssue};
 pub use sbm_virt::resource::NetHost;
+pub use sbm_virt::error::Detail;
 pub use super::virt_view::GuestKind;
 
 #[frb(mirror(VolumeRef))]
@@ -684,4 +685,30 @@ pub struct _NetHost {
     pub mac: String,
     pub ip: String,
     pub name: Option<String>,
+}
+
+/// What a client phrases itself when no host text says it (mirrors
+/// sbm_virt::error::Detail).
+#[frb(mirror(Detail))]
+pub enum _Detail {
+    NoUser,
+    PasswordRequired,
+    TokenIncomplete,
+    OtpRequired,
+    OtpEmpty,
+    OtpRejected,
+    InvalidBody,
+    InvalidData,
+    MissingTicket,
+    NoPrivileges { token: bool, account: String, command: String },
+    NotOffered,
+    TaskStillRunning { node: String, upid: String, minutes: u64 },
+    CertNotPresented,
+    NeedsPrivilege { account: String, privilege: String, path: String, command: String },
+    Refused { issue: ResourceIssue },
+    CreateRefused { issue: CreateIssue },
+    HardwareRefused { issue: HwIssue },
+    BackupRefused { issue: BackupIssue },
+    ApplyTouchesManagement { ifaces: Vec<String> },
+    ApplyUnreadable,
 }

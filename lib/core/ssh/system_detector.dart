@@ -22,16 +22,14 @@ class SystemDetector {
 
     try {
       final uname = await client.runSafe(ffi.systemProbeUname(), logLabel: 'uname detection for ${spi.oldId}');
-      final unix = SystemType.fromWire(ffi.systemFromUname(output: uname));
-      if (unix != null) return unix;
+      if (ffi.systemFromUname(output: uname) case final unix?) return SystemType.of(unix);
 
       final ver = await client.runSafe(
         ffi.systemProbeVer(),
         systemType: SystemType.windows,
         logLabel: 'ver detection for ${spi.oldId}',
       );
-      final windows = SystemType.fromWire(ffi.systemFromVer(output: ver));
-      if (windows != null) return windows;
+      if (ffi.systemFromVer(output: ver) case final windows?) return SystemType.of(windows);
     } catch (e, stackTrace) {
       Loggers.app.warning('System detection failed for ${spi.oldId}: $e\n$stackTrace');
     }

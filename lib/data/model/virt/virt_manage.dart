@@ -501,14 +501,6 @@ enum VirtResIssue {
     final i => values.asNameMap()[i.name] ?? unsupported,
   };
 
-  /// The issue `sbm_virt` names (`in_use`).
-  static VirtResIssue? ofRust(String? name) => switch (name) {
-    null => null,
-    _ => values.firstWhere(
-      (i) => i.name == name.replaceAllMapped(RegExp('_([a-z])'), (m) => m[1]!.toUpperCase()),
-      orElse: () => unsupported,
-    ),
-  };
 }
 
 /// What a [VirtResIssue] says, for a field's error line or a toast.

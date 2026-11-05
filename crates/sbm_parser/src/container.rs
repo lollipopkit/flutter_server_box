@@ -41,6 +41,7 @@ use serde::{Deserialize, Serialize};
 
 /// One argument-quoting rule for the whole crate.
 use crate::script::shell_quote_unix as single_quote;
+use crate::sudo::SudoEntry;
 
 /// The prefix of the marker line this module's caller echoes between batched
 /// commands, so their outputs can be told apart.
@@ -223,7 +224,7 @@ pub fn build_runtime_command(
         environment.push(format!("{}={}", ty.host_var(), single_quote(host)));
     }
     if sudo {
-        return format!("sudo -S env {} {command}", environment.join(" "));
+        return SudoEntry::SudoPassword.wrap(&format!("env {} {command}", environment.join(" ")));
     }
     let exports = environment
         .iter()
@@ -1860,7 +1861,7 @@ mod tests {
             true,
         );
         assert!(command.contains(
-            "sudo -S env LANG=en_US.UTF-8 DOCKER_HOST='ssh://docker.example/run.sock' docker ps"
+            "sudo -S -p '' env LANG=en_US.UTF-8 DOCKER_HOST='ssh://docker.example/run.sock' docker ps"
         ));
         assert!(!command.contains("export DOCKER_HOST"));
     }

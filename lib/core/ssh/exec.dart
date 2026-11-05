@@ -394,15 +394,15 @@ class SshExec implements CommandByteExec {
       return refused() ? null : false;
     }
     if (!owned) return false;
-    final kill = es.execSessionKillCommand(id: id);
+    String kill(es.SudoEntry entry) => es.execSessionKillCommand(id: id, entry: entry);
     final goneMark = es.execSessionGone();
-    var gone = await _confirms(kill, goneMark);
+    var gone = await _confirms(kill(es.SudoEntry.direct), goneMark);
     if (!gone) {
       final password = await _sudoPassword();
       gone = password == null
-          ? await _confirms('sudo -n $kill', goneMark)
+          ? await _confirms(kill(es.SudoEntry.sudoNoPassword), goneMark)
           : await _confirms(
-              "sudo -S -p '' $kill",
+              kill(es.SudoEntry.sudoPassword),
               goneMark,
               stdin: '$password\n',
             );

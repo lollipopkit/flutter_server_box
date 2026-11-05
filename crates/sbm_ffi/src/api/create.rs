@@ -5,7 +5,7 @@
 //! libvirt's steps decided from what the app read. The models are
 //! `sbm_virt`'s own, mirrored ([`super::virt_model`], [`super::virt_libvirt`]);
 //! a refusal crosses as [`PveError`] (`sbm_virt::error::Error`, its
-//! `detail_json` saying which rule), an issue as its [`CreateIssue`].
+//! `detail` saying which rule), an issue as its [`CreateIssue`].
 //!
 //! PVE's calls are [`super::pve::PveSession`]'s.
 

@@ -45,6 +45,7 @@ pub mod smart;
 pub mod snippet;
 pub mod stack;
 pub mod storage;
+pub mod sudo;
 pub mod system;
 pub mod tailscale;
 pub mod tmux;

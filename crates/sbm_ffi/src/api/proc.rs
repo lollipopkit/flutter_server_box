@@ -13,7 +13,7 @@ pub use sbm_parser::proc::{
     Proc, ProcColumns, ProcKillOutcome, ProcLoad, ProcRow, ProcSignal, ProcSortMode, PsParseFailure, PsParseIssue, PsResult, PsView,
 };
 
-use super::parser::parse_system_or_err;
+use super::parser::SystemType;
 
 // --- Mirrors -----------------------------------------------------------------
 
@@ -140,31 +140,28 @@ fn result_of(view: PsView) -> PsResult {
 /// returned it; `sampled_at_millis` is when `raw` was produced.
 pub fn proc_view(
     raw: String,
-    system: String,
+    system: SystemType,
     sort: Option<ProcSortMode>,
     ascending: Option<bool>,
     previous: Option<PsView>,
     sampled_at_millis: i64,
-) -> Result<PsView, String> {
-    let system = parse_system_or_err(&system)?;
+) -> PsView {
     let previous = previous.map(result_of);
     let result = PsResult::parse(&raw, sort.unwrap_or(ProcSortMode::Cpu), ascending, previous.as_ref(), sampled_at_millis);
-    Ok(PsView::of(&result, system, sort, ascending))
+    PsView::of(&result, system, sort, ascending)
 }
 
 /// A reading [`proc_view`] returned, ordered again.
-pub fn proc_sorted(view: PsView, system: String, sort: Option<ProcSortMode>, ascending: Option<bool>) -> Result<PsView, String> {
-    let system = parse_system_or_err(&system)?;
-    Ok(PsView::of(&result_of(view), system, sort, ascending))
+pub fn proc_sorted(view: PsView, system: SystemType, sort: Option<ProcSortMode>, ascending: Option<bool>) -> PsView {
+    PsView::of(&result_of(view), system, sort, ascending)
 }
 
 /// The command that sends `signal` to `pid` once its start identity is still
 /// `start_id`, or `None` where the platform cannot check it. What it prints
 /// is read by [`proc_kill_outcome`].
 #[frb(sync)]
-pub fn proc_kill_command(pid: i64, start_id: Option<String>, system: String, signal: ProcSignal) -> Result<Option<String>, String> {
-    let system = parse_system_or_err(&system)?;
-    Ok(proc::kill_command(pid, start_id.as_deref(), system, signal))
+pub fn proc_kill_command(pid: i64, start_id: Option<String>, system: SystemType, signal: ProcSignal) -> Option<String> {
+    proc::kill_command(pid, start_id.as_deref(), system, signal)
 }
 
 /// What a stop printed.

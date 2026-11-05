@@ -4,7 +4,7 @@
 //! script content, install/exec command strings, and output segment splitting
 //! all come from here so app and monitor share one implementation.
 
-use super::parser::parse_system_or_err;
+use super::parser::SystemType;
 
 /// Custom status command; a Vec preserves the Dart map's insertion order,
 /// which affects script bytes
@@ -41,13 +41,12 @@ impl From<ShellFuncKind> for sbm_parser::script::ShellFunc {
 /// `disabled` uses the app's stored displayName format ("Linux.net", ...).
 #[flutter_rust_bridge::frb(sync)]
 pub fn build_script(
-    system: String,
+    system: SystemType,
     disabled: Vec<String>,
     build_number: String,
-) -> Result<String, String> {
-    let system = parse_system_or_err(&system)?;
+) -> String {
     let opts = sbm_parser::script::ScriptOptions { disabled, build_number };
-    Ok(sbm_parser::script::build_script(system, &opts))
+    sbm_parser::script::build_script(system, &opts)
 }
 
 /// Script that replaces the custom-command directory.
@@ -57,10 +56,9 @@ pub fn build_script(
 /// directory is fixed under the user's home, so there is no path to pass.
 #[flutter_rust_bridge::frb(sync)]
 pub fn install_custom_cmds_command(
-    system: String,
+    system: SystemType,
     cmds: Vec<CustomCmd>,
-) -> Result<String, String> {
-    let system = parse_system_or_err(&system)?;
+) -> String {
     let cmds: Vec<(u32, String, String)> = cmds
         .into_iter()
         .enumerate()
@@ -75,15 +73,14 @@ pub fn install_custom_cmds_command(
         })
         .collect();
     let script = sbm_parser::script::install_custom_cmds_script(system, &cmds);
-    Ok(wrap_for_default_shell(system, script))
+    wrap_for_default_shell(system, script)
 }
 
 /// Script that prints the custom-command directory back, for the editor to
 /// load. Output goes to `parse_custom_cmds_listing`.
 #[flutter_rust_bridge::frb(sync)]
-pub fn read_custom_cmds_command(system: String) -> Result<String, String> {
-    let system = parse_system_or_err(&system)?;
-    Ok(wrap_for_default_shell(system, sbm_parser::script::read_custom_cmds_script(system)))
+pub fn read_custom_cmds_command(system: SystemType) -> String {
+    wrap_for_default_shell(system, sbm_parser::script::read_custom_cmds_script(system))
 }
 
 /// Windows gets a complete command line, base64-wrapped, for the same reason
@@ -118,12 +115,11 @@ pub fn parse_custom_cmds_listing(raw: String) -> Option<Vec<CustomCmd>> {
 /// as produced by [`install_payload`] — not the bare script)
 #[flutter_rust_bridge::frb(sync)]
 pub fn install_command(
-    system: String,
+    system: SystemType,
     script_dir: String,
     script_path: String,
-) -> Result<String, String> {
-    let system = parse_system_or_err(&system)?;
-    Ok(sbm_parser::script::install_command(system, &script_dir, &script_path))
+) -> String {
+    sbm_parser::script::install_command(system, &script_dir, &script_path)
 }
 
 /// What to write to [`install_command`]'s stdin for `content`.
@@ -133,20 +129,18 @@ pub fn install_command(
 /// waiting for one hangs the install indefinitely. This adds that line, so no
 /// caller has to know it exists; on Unix it returns `content` unchanged.
 #[flutter_rust_bridge::frb(sync)]
-pub fn install_payload(system: String, content: String) -> Result<String, String> {
-    let system = parse_system_or_err(&system)?;
-    Ok(sbm_parser::script::install_payload(system, &content))
+pub fn install_payload(system: SystemType, content: String) -> String {
+    sbm_parser::script::install_payload(system, &content)
 }
 
 /// Command that runs one shell function of an installed script
 #[flutter_rust_bridge::frb(sync)]
 pub fn exec_command(
-    system: String,
+    system: SystemType,
     script_path: String,
     func: ShellFuncKind,
-) -> Result<String, String> {
-    let system = parse_system_or_err(&system)?;
-    Ok(sbm_parser::script::exec_command(system, &script_path, func.into()))
+) -> String {
+    sbm_parser::script::exec_command(system, &script_path, func.into())
 }
 
 /// Command-line flag of a shell function ("s", "e", "p", "sd", "r", "sp");

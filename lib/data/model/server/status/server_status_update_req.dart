@@ -47,14 +47,8 @@ class ServerStatusUpdateReq {
 /// (cpu/netSpeed/diskIO).
 Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
   final ss = _createWorkingStatus(req.ss, req.system);
-  final systemStr = switch (req.system) {
-    SystemType.linux => 'linux',
-    SystemType.bsd => 'bsd',
-    SystemType.windows => 'windows',
-  };
-
   final status = await ffi.parseStatus(
-    system: systemStr,
+    system: req.system.ffi,
     raw: req.parsedOutput,
     tempDivisor: req.tempDivisor,
     countNetwork: req.diskCountsNetwork,

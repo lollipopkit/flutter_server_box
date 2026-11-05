@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
@@ -67,13 +68,124 @@ class TermSessionInfo {
   };
 }
 
+/// The sessions [TermSessionManager] shows, and which one is on screen: the
+/// state alone, with nothing of the platforms it is pushed to.
+///
+/// Each change answers whether anything changed, which is what decides that
+/// the notification and the Live Activity are told.
+final class TermSessionRegistry {
+  final _entries = <String, TermSessionEntry>{};
+  String? _activeId;
+
+  /// Every session, by id, in the order they were added.
+  Map<String, TermSessionEntry> get entries => UnmodifiableMapView(_entries);
+
+  /// The session on screen, for the iOS Live Activity.
+  String? get activeId => _activeId;
+
+  void add(TermSessionInfo info, VoidCallback disconnect, {bool setAsActive = false}) {
+    _entries[info.id] = TermSessionEntry(info, disconnect, hasTerminalUI: true);
+    if (setAsActive) _activeId = info.id;
+  }
+
+  bool updateStatus(String id, TermSessionStatus status) {
+    final old = _entries[id];
+    if (old == null || old.info.status == status) return false;
+    _entries[id] = TermSessionEntry(
+      old.info.copyWith(status: status),
+      old.disconnect,
+      hasTerminalUI: old.hasTerminalUI,
+    );
+    return true;
+  }
+
+  bool updateProgram(String id, ProgramState? state, String? text) {
+    final old = _entries[id];
+    if (old == null) return false;
+    if (old.info.programState == state && old.info.program == text) return false;
+    _entries[id] = TermSessionEntry(
+      old.info.copyWith(program: (state, text)),
+      old.disconnect,
+      hasTerminalUI: old.hasTerminalUI,
+    );
+    return true;
+  }
+
+  /// The entry whose programs report the most urgent state, if any do.
+  TermSessionEntry? get mostUrgentProgram {
+    TermSessionEntry? best;
+    for (final entry in _entries.values) {
+      final state = entry.info.programState;
+      if (state == null || entry.info.program == null) continue;
+      final bestState = best?.info.programState;
+      if (bestState == null || state.index < bestState.index) best = entry;
+    }
+    return best;
+  }
+
+  void remove(String id) {
+    _entries.remove(id);
+    if (_activeId == id) _activeId = _entries.keys.firstOrNull;
+  }
+
+  /// Marks [id] as the session on screen; answers whether it is a session.
+  bool setActive(String id, {bool hasTerminal = true}) {
+    _activeId = id;
+    final old = _entries[id];
+    if (old == null) return false;
+    _entries[id] = TermSessionEntry(old.info, old.disconnect, hasTerminalUI: hasTerminal);
+    return true;
+  }
+
+  /// Marks [id]'s terminal as hidden without making another one active.
+  bool hideTerminal(String id) {
+    final old = _entries[id];
+    if (old == null) return false;
+    _entries[id] = TermSessionEntry(old.info, old.disconnect, hasTerminalUI: false);
+    if (_activeId == id) _activeId = null;
+    return true;
+  }
+
+  /// Forgets every session.
+  void clear() {
+    _entries.clear();
+    _activeId = null;
+  }
+}
+
 /// Singleton to track active SSH sessions and sync to Android notifications.
 abstract final class TermSessionManager {
-  static final Map<String, _Entry> _entries = {};
-  static String? _activeId; // For iOS Live Activity
+  static var _registry = TermSessionRegistry();
+
+  @visibleForTesting
+  static TermSessionRegistry get registry => _registry;
+
+  static Map<String, TermSessionEntry> get _entries => _registry.entries;
+  static String? get _activeId => _registry.activeId;
   static Timer? _updateTimer; // Timer for iOS Live Activity updates
   static Future<void>? _syncing;
   static bool _syncDirty = false;
+
+  /// What a drain pushes each time: the platforms, outside tests.
+  static Future<void> Function() _push = _syncLatest;
+
+  @visibleForTesting
+  static set push(Future<void> Function() push) => _push = push;
+
+  /// Back to how the process starts: no sessions, no flags, nothing pending.
+  @visibleForTesting
+  static void reset() {
+    _registry = TermSessionRegistry();
+    _updateTimer?.cancel();
+    _updateTimer = null;
+    _syncing = null;
+    _syncDirty = false;
+    _push = _syncLatest;
+    _stoodDown = false;
+    _backgrounded = false;
+    _transferring = false;
+    _hasServers = false;
+  }
   static const _updateInterval = Duration(
     seconds: 5,
   ); // 5-second update interval
@@ -82,7 +194,7 @@ abstract final class TermSessionManager {
     if (isAndroid) {
       MethodChans.registerHandler(
         (id) async {
-          _entries[id]?.disconnect?.call();
+          _entries[id]?.disconnect();
         },
         // Stop all connections when notification "Stop All" is pressed
         onStopAll: stopAllConnections,
@@ -113,17 +225,11 @@ abstract final class TermSessionManager {
 
   /// Called when Android notification "Stop All" button is pressed
   static void stopAllConnections() {
-    // Disconnect all sessions
-    final disconnectCallbacks = _entries.values
-        .map((e) => e.disconnect)
-        .where((cb) => cb != null)
-        .toList();
-    for (final disconnect in disconnectCallbacks) {
-      disconnect!();
+    // Disconnect all sessions, then forget them
+    for (final disconnect in [for (final e in _entries.values) e.disconnect]) {
+      disconnect();
     }
-    // Clear all entries
-    _entries.clear();
-    _activeId = null;
+    _registry.clear();
     // And stand down, rather than letting the keep-alive put the notification
     // straight back: pressing Stop All in the background would otherwise clear
     // every session and then start the service again for [_backgrounded], so
@@ -162,56 +268,22 @@ abstract final class TermSessionManager {
       startTimeMs: startTimeMs,
       status: status,
     );
-    _entries[id] = _Entry(info, disconnect, hasTerminalUI: true);
-    if (setAsActive) {
-      _activeId = id;
-    }
+    _registry.add(info, disconnect, setAsActive: setAsActive);
     _sync();
   }
 
   static void updateStatus(String id, TermSessionStatus status) {
-    final old = _entries[id];
-    if (old == null) return;
-    if (old.info.status == status) return;
-    _entries[id] = _Entry(
-      old.info.copyWith(status: status),
-      old.disconnect,
-      hasTerminalUI: old.hasTerminalUI,
-    );
-    _sync();
+    if (_registry.updateStatus(id, status)) _sync();
   }
 
   /// What session [id]'s programs report, for the notification and the Live
   /// Activity: a program waiting is worth reading off the lock screen.
   static void updateProgram(String id, ProgramState? state, String? text) {
-    final old = _entries[id];
-    if (old == null) return;
-    if (old.info.programState == state && old.info.program == text) return;
-    _entries[id] = _Entry(
-      old.info.copyWith(program: (state, text)),
-      old.disconnect,
-      hasTerminalUI: old.hasTerminalUI,
-    );
-    _sync();
-  }
-
-  /// The entry whose programs report the most urgent state, if any do.
-  static _Entry? get _mostUrgentProgram {
-    _Entry? best;
-    for (final entry in _entries.values) {
-      final state = entry.info.programState;
-      if (state == null || entry.info.program == null) continue;
-      final bestState = best?.info.programState;
-      if (bestState == null || state.index < bestState.index) best = entry;
-    }
-    return best;
+    if (_registry.updateProgram(id, state, text)) _sync();
   }
 
   static void remove(String id) {
-    _entries.remove(id);
-    if (_activeId == id) {
-      _activeId = _entries.keys.firstOrNull;
-    }
+    _registry.remove(id);
     _sync();
   }
 
@@ -236,7 +308,7 @@ abstract final class TermSessionManager {
     try {
       while (_syncDirty) {
         _syncDirty = false;
-        await _syncLatest();
+        await _push();
       }
     } finally {
       _syncing = null;
@@ -410,7 +482,7 @@ abstract final class TermSessionManager {
       final payload = jsonEncode({
         'id': 'multi_connections',
         'title': '$connectionCount',
-        'subtitle': switch (_mostUrgentProgram) {
+        'subtitle': switch (_registry.mostUrgentProgram) {
           final urgent? => '${urgent.info.title}: ${urgent.info.program}',
           null => _entries.values.map((e) => e.info.title).join(' · '),
         },
@@ -425,34 +497,19 @@ abstract final class TermSessionManager {
 
   /// Mark which session is actively displayed in UI (for iOS Live Activity).
   static void setActive(String id, {bool hasTerminal = true}) {
-    _activeId = id;
-    final old = _entries[id];
-    if (old != null) {
-      _entries[id] = _Entry(
-        old.info,
-        old.disconnect,
-        hasTerminalUI: hasTerminal,
-      );
-      _sync();
-    }
+    if (_registry.setActive(id, hasTerminal: hasTerminal)) _sync();
   }
 
   /// Mark a session's terminal UI as hidden without promoting it to active.
   static void hideTerminal(String id) {
-    final old = _entries[id];
-    if (old == null) return;
-
-    _entries[id] = _Entry(old.info, old.disconnect, hasTerminalUI: false);
-    if (_activeId == id) {
-      _activeId = null;
-    }
-    _sync();
+    if (_registry.hideTerminal(id)) _sync();
   }
 }
 
-class _Entry {
+/// One session as [TermSessionRegistry] holds it.
+class TermSessionEntry {
   final TermSessionInfo info;
-  final VoidCallback? disconnect;
+  final VoidCallback disconnect;
   final bool hasTerminalUI;
-  _Entry(this.info, this.disconnect, {this.hasTerminalUI = true});
+  TermSessionEntry(this.info, this.disconnect, {this.hasTerminalUI = true});
 }

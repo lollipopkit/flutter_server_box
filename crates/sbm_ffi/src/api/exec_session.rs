@@ -5,12 +5,30 @@
 use flutter_rust_bridge::frb;
 use sbm_parser::exec_session as es;
 pub use sbm_parser::exec_session::SessionMarker;
+pub use sbm_parser::sudo::SudoEntry;
 
 #[frb(mirror(SessionMarker))]
 pub struct _SessionMarker {
     pub start: u32,
     pub end: u32,
     pub id: u32,
+}
+
+/// How a command reaches root (mirrors sbm_parser::sudo::SudoEntry).
+#[frb(mirror(SudoEntry))]
+pub enum _SudoEntry {
+    /// As this account
+    Direct,
+    /// `sudo -n`
+    SudoNoPassword,
+    /// `sudo -S -p ''`, the password first on stdin
+    SudoPassword,
+}
+
+/// [body], a command line, run the way [entry] says.
+#[frb(sync)]
+pub fn sudo_entry(entry: SudoEntry, body: String) -> String {
+    entry.wrap(&body)
 }
 
 #[frb(sync)]
@@ -34,8 +52,8 @@ pub fn exec_session_wrap(command: String, nonce: String) -> String {
 }
 
 #[frb(sync)]
-pub fn exec_session_kill_command(id: u32) -> String {
-    es::kill_command(id)
+pub fn exec_session_kill_command(id: u32, entry: SudoEntry) -> String {
+    es::kill_command(id, entry)
 }
 
 #[frb(sync)]
