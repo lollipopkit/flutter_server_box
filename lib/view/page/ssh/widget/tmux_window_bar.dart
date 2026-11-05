@@ -19,6 +19,7 @@ final class TmuxWindowBar extends StatelessWidget {
   final VoidCallback? onNewWindow;
   final ValueChanged<TmuxControlWindow>? onCloseWindow;
   final ValueChanged<TmuxControlPane>? onClosePane;
+  final VoidCallback? onToggleZoom;
 
   /// What each pane's programs report, marked on its window and in the pane
   /// menu: a pane out of sight is where a program waiting is easy to miss.
@@ -33,6 +34,7 @@ final class TmuxWindowBar extends StatelessWidget {
     this.onNewWindow,
     this.onCloseWindow,
     this.onClosePane,
+    this.onToggleZoom,
   });
 
   @override
@@ -59,6 +61,8 @@ final class TmuxWindowBar extends StatelessWidget {
               onNewWindow: onNewWindow,
               onCloseWindow: onCloseWindow,
               onClosePane: onClosePane,
+              onToggleZoom: onToggleZoom ??
+                  () => unawaited(controlClient.toggleZoom()),
             );
             final status_ = status;
             if (status_ == null) return view();
@@ -81,6 +85,7 @@ final class _TmuxWindowBarView extends StatelessWidget {
   final VoidCallback? onNewWindow;
   final ValueChanged<TmuxControlWindow>? onCloseWindow;
   final ValueChanged<TmuxControlPane>? onClosePane;
+  final VoidCallback? onToggleZoom;
 
   const _TmuxWindowBarView({
     required this.state,
@@ -90,6 +95,7 @@ final class _TmuxWindowBarView extends StatelessWidget {
     this.onNewWindow,
     this.onCloseWindow,
     this.onClosePane,
+    this.onToggleZoom,
   });
 
   @override
@@ -183,6 +189,23 @@ final class _TmuxWindowBarView extends StatelessWidget {
                   status: status,
                   onSelectPane: onSelectPane,
                   onClosePane: onClosePane,
+                ),
+                const SizedBox(width: 2),
+              ],
+              if ((panes.length > 1 || active?.zoomed == true) &&
+                  onToggleZoom != null) ...[
+                IconButton(
+                  tooltip: active?.zoomed == true
+                      ? l10n.fullScreenExit
+                      : l10n.fullScreen,
+                  onPressed: onToggleZoom,
+                  icon: Icon(
+                    active?.zoomed == true
+                        ? Icons.fullscreen_exit_outlined
+                        : Icons.fullscreen_outlined,
+                    size: 18,
+                  ),
+                  visualDensity: VisualDensity.compact,
                 ),
                 const SizedBox(width: 2),
               ],

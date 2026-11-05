@@ -295,6 +295,17 @@ extension _Init on SSHPageState {
     }
   }
 
+  Future<void> _toggleTmuxZoom() async {
+    final control = _tmuxControl;
+    if (control == null) return;
+    try {
+      await control.toggleZoom();
+    } catch (e, st) {
+      Loggers.app.warning('Failed to toggle tmux zoom', e, st);
+      if (mounted) Toast.error(libL10n.fail);
+    }
+  }
+
   Future<ShellSession?> _openForegroundSession() async {
     final plan = await _resolveForegroundLaunchPlan();
 

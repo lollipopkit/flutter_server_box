@@ -178,7 +178,24 @@ final class TmuxControlClient {
   }
 
   Future<void> selectPane(TmuxPaneId paneId) async {
-    await runRequired("select-pane -t '$paneId'");
+    final targetWindowId = _snapshot?.paneWindows[paneId];
+    if (targetWindowId != null && targetWindowId != _snapshot?.activeWindowId) {
+      await runRequired("select-window -t '$targetWindowId'");
+    }
+    final targetWindow = _snapshot?.windows
+        .where((w) => w.id == (targetWindowId ?? _snapshot?.activeWindowId))
+        .firstOrNull;
+    final isZoomed =
+        targetWindow?.zoomed ?? _snapshot?.activeWindow?.zoomed ?? false;
+    final zoomFlag = isZoomed ? ' -Z' : '';
+    await runRequired("select-pane$zoomFlag -t '$paneId'");
+    await refreshState(captureActivePane: true);
+  }
+
+  Future<void> toggleZoom({TmuxPaneId? paneId}) async {
+    final target = paneId ?? _snapshot?.activePaneId;
+    if (target == null) return;
+    await runRequired("resize-pane -Z -t '$target'");
     await refreshState(captureActivePane: true);
   }
 
@@ -409,7 +426,7 @@ final class TmuxControlClient {
       ),
       runRequired(
         "list-windows -F '#{window_id}\t#{window_index}"
-        "\t#{q:window_name}\t#{window_active}'",
+        "\t#{q:window_name}\t#{window_active}\t#{window_zoomed_flag}'",
       ),
       // Panes only of the active window: they exist to make splits
       // addressable in the UI, and inactive windows stay summaries until
@@ -506,6 +523,7 @@ final class TmuxControlClient {
       index: activeWindow.index,
       name: activeWindow.name,
       active: true,
+      zoomed: activeWindow.zoomed,
       panes: panes,
     );
     final windowsWithPanes = [
@@ -652,11 +670,14 @@ final class TmuxControlClient {
     final index = int.tryParse(unescapeTmuxField(fields[1]));
     final active = int.tryParse(unescapeTmuxField(fields[3]));
     if (id == null || index == null || active == null) return null;
+    final zoomed = fields.length > 4 &&
+        (int.tryParse(unescapeTmuxField(fields[4])) ?? 0) > 0;
     return TmuxControlWindow(
       id: id,
       index: index,
       name: unescapeTmuxField(fields[2]),
       active: active > 0,
+      zoomed: zoomed,
     );
   }
 
