@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:server_box/src/rust/api/virt_view.dart' as vv;
 
 part 'virt_detail.freezed.dart';
 
@@ -104,4 +105,56 @@ abstract class VirtGuestDetail with _$VirtGuestDetail {
     /// libvirt machine type, or PVE `ostype`.
     String? machine,
   }) = _VirtGuestDetail;
+}
+
+extension GuestDetailVirt on vv.VirtGuestDetailReport {
+  /// As `sbm_virt::model::GuestDetail` says it.
+  VirtGuestDetail get virt => VirtGuestDetail(
+    disks: [
+      for (final k in disks)
+        VirtDisk(
+          device: k.device,
+          sourceType: k.sourceType,
+          source: k.source,
+          target: k.target,
+          bus: k.bus,
+          format: k.format,
+          readonly: k.readonly,
+          size: k.size?.toInt(),
+        ),
+    ],
+    nics: [for (final n in nics) VirtNic(kind: n.kind, mac: n.mac, source: n.source, model: n.model, target: n.target)],
+    graphics: [
+      for (final g in graphics)
+        VirtGraphics(
+          kind: g.kind,
+          port: g.port,
+          tlsPort: g.tlsPort,
+          autoport: g.autoport,
+          listen: g.listen,
+          socket: g.socket,
+        ),
+    ],
+    display: switch (display) {
+      null => null,
+      final v => VirtDisplay(
+        uri: v.uri,
+        protocol: v.protocol,
+        host: v.host,
+        port: v.port,
+        tlsPort: v.tlsPort,
+        socket: v.socket,
+      ),
+    },
+    consoles: {
+      for (final c in consoles)
+        switch (c) {
+          vv.ConsoleKind.text => VirtConsoleKind.text,
+          vv.ConsoleKind.vnc => VirtConsoleKind.vnc,
+        },
+    },
+    description: description,
+    arch: arch,
+    machine: machine,
+  );
 }

@@ -7,7 +7,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
-import 'package:server_box/data/model/virt/virt_rust.dart';
 import 'package:server_box/src/rust/api/virt_model.dart' as fm;
 import 'package:server_box/src/rust/api/virt_model.dart' show VolumeRef;
 
@@ -60,13 +59,11 @@ void main() {
 
   test('a spec crosses by id: pool, volumes, keys by line, cloud-init', () {
     const iso = VirtVolume(id: 'd.iso', name: 'd.iso');
-    final spec = VirtRust.specFfi(
-      _spec(
-        media: (pool: _isoPool, volume: iso),
-        sshKeys: ' ssh-ed25519 AAAA a \n\nssh-ed25519 BBBB b\n',
-        cloudInit: const VirtCloudInit(user: 'u', sshKeys: 'ssh-ed25519 AAAA a'),
-      ),
-    );
+    final spec = _spec(
+      media: (pool: _isoPool, volume: iso),
+      sshKeys: ' ssh-ed25519 AAAA a \n\nssh-ed25519 BBBB b\n',
+      cloudInit: const VirtCloudInit(user: 'u', sshKeys: 'ssh-ed25519 AAAA a'),
+    ).ffi;
     expect(spec.storage, 'images');
     expect(spec.media, const VolumeRef(pool: 'isos', volume: 'd.iso'));
     expect(spec.image, isNull);

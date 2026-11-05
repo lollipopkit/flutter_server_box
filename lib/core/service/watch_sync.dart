@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/service/scoped_token.dart';
+import 'package:server_box/core/utils/coalesced.dart';
 import 'package:server_box/data/model/server/monitor/agent_endpoint.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -60,8 +61,7 @@ final class WatchSync {
   StreamSubscription<Map<String, dynamic>>? _activationSub;
   StreamSubscription<dynamic>? _serverStoreSub;
   Timer? _pushDebouncer;
-  Future<void>? _pushing;
-  bool _pushDirty = false;
+  late final _pushes = Coalesced(_pushOnce);
 
   /// Completes once [_wc] is either connected or known to be unavailable, so
   /// callers racing app startup wait rather than silently doing nothing.
@@ -86,21 +86,9 @@ final class WatchSync {
   /// Rebuilds the payload and hands it to the watch.
   Future<void> push() {
     if (!isIOS) return Future.value();
-    _pushDirty = true;
-    return _pushing ??= _drainPush();
+    return _pushes();
   }
 
-  Future<void> _drainPush() async {
-    try {
-      while (_pushDirty) {
-        _pushDirty = false;
-        await _pushOnce();
-      }
-    } finally {
-      _pushing = null;
-      if (_pushDirty) _pushing = _drainPush();
-    }
-  }
 
   Future<void> _pushOnce() async {
     await _setupOnce();
@@ -483,7 +471,7 @@ final class WatchSync {
   void dispose() {
     _pushDebouncer?.cancel();
     _pushDebouncer = null;
-    _pushDirty = false;
+    _pushes.cancelPending();
     unawaited(_activationSub?.cancel());
     _activationSub = null;
     unawaited(_serverStoreSub?.cancel());

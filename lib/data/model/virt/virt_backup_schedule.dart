@@ -38,7 +38,7 @@
 library;
 
 import 'package:server_box/src/rust/api/backup.dart' as ffi;
-import 'package:server_box/src/rust/api/virt_model.dart' show BackupIssue;
+import 'package:server_box/src/rust/api/virt_model.dart' show BackupIssue, ScheduleCheck;
 
 /// Why [schedule] cannot be a backup job's schedule, or null when it has the
 /// shape of one PVE would take. A value this accepts can still be refused by
@@ -72,4 +72,12 @@ final class VirtScheduleCheck {
   final List<DateTime> next;
 
   bool get ok => error == null;
+}
+
+extension ScheduleCheckVirt on ScheduleCheck {
+  /// The next runs, in UTC.
+  VirtScheduleCheck get virt => VirtScheduleCheck(
+    error: error,
+    next: [for (final t in next) DateTime.fromMillisecondsSinceEpoch(t.toInt() * 1000, isUtc: true)],
+  );
 }

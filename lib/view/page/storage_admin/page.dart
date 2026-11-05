@@ -15,6 +15,7 @@ import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/provider/server/reading_fmt.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/view/page/storage_admin/helpers.dart';
+import 'package:server_box/view/widget/pullable_issue.dart';
 
 enum _StorageTab { disks, raid, zfs }
 
@@ -110,20 +111,7 @@ extension on _StoragePageState {
 
   Widget _body() {
     if (_failure case final failure?) {
-      return ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        children: [
-          SizedBox(
-            height: MediaQuery.sizeOf(context).height * .65,
-            child: PageIssueView(
-              title: libL10n.fail,
-              detail: failure,
-              icon: Icons.error_outline,
-              onRetry: _refresh,
-            ),
-          ),
-        ],
-      );
+      return PullableIssueView(title: libL10n.fail, detail: failure, onRetry: _refresh);
     }
     final view = _view;
     if (view == null) {

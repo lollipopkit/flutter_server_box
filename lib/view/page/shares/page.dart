@@ -17,6 +17,7 @@ import 'package:server_box/data/model/server/sudo_error.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/system_user.dart';
 import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/view/widget/pullable_issue.dart';
 
 final class SharesPage extends ConsumerStatefulWidget {
   const SharesPage({super.key, required this.args});
@@ -103,13 +104,15 @@ final class _SharesPageState extends ConsumerState<SharesPage> {
 extension on _SharesPageState {
   Widget _body() {
     if (_unsupported) {
-      return _issue(
+      return PullableIssueView(
         title: libL10n.unsupported,
         explain: l10n.sharingConnectionsLinuxOnly,
+        icon: Icons.not_interested,
+        onRetry: _refresh,
       );
     }
     if (_failure case final failure?) {
-      return _issue(title: libL10n.fail, detail: _failureDetail ?? failure);
+      return PullableIssueView(title: libL10n.fail, detail: _failureDetail ?? failure, onRetry: _refresh);
     }
     final view = _view;
     if (view == null) {
@@ -147,23 +150,6 @@ extension on _SharesPageState {
       ],
     );
   }
-
-  Widget _issue({String? explain, String? detail, required String title}) =>
-      ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        children: [
-          SizedBox(
-            height: MediaQuery.sizeOf(context).height * .65,
-            child: PageIssueView(
-              title: title,
-              explain: explain,
-              detail: detail,
-              icon: Icons.error_outline,
-              onRetry: _refresh,
-            ),
-          ),
-        ],
-      );
 
   List<Widget> _smbContent(Shares view) {
     if (!view.tools.contains('smbd')) {

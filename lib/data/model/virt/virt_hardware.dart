@@ -1,9 +1,9 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/virt/ffi_num.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
-import 'package:server_box/data/model/virt/virt_rust.dart';
 import 'package:server_box/src/rust/api/hardware.dart' as ffi;
 import 'package:server_box/src/rust/api/virt_model.dart' as vm;
 
@@ -728,7 +728,7 @@ enum VirtHwIssue {
 
 /// Whether [disk] can be grown from here (`sbm_virt::hardware::disk_growable`).
 bool virtHwDiskGrowable(VirtHwDisk disk) =>
-    ffi.virtHwDiskGrowable(disk: VirtRust.hwDiskFfi(disk));
+    ffi.virtHwDiskGrowable(disk: disk.ffi);
 
 /// Whether [device] can be given by its address: the host said where it
 /// sits.
@@ -737,7 +737,7 @@ bool virtUsbHasAddress(VirtHostDevice device) =>
 
 /// The address [device] is given by, as its backend writes it.
 String? virtUsbAddress(VirtHostDevice device, VirtHostKind host) => ffi.virtUsbAddress(
-  device: VirtRust.hostDeviceFfi(device),
+  device: device.ffi,
   pve: host == VirtHostKind.pve,
 );
 
@@ -762,16 +762,16 @@ VirtHwIssue? virtHwIssue(
   VirtHwChange change, {
   VirtHostKind? host,
 }) {
-  final (pools, networks, volumes) = VirtRust.hwListing(change);
-  final hardware = VirtRust.hardwareFfi(hw);
-  final ffiChange = VirtRust.hwChangeFfi(change);
+  final (pools, networks, volumes) = change.listing;
+  final hardware = hw.ffi;
+  final ffiChange = change.ffi;
   vm.HwIssue? on(bool pve) => ffi.virtHwIssue(
     hardware: hardware,
     change: ffiChange,
     pve: pve,
-    pools: [for (final p in pools) VirtRust.poolFfi(p)],
-    networks: [for (final n in networks) VirtRust.networkFfi(n)],
-    volumes: [for (final v in volumes) VirtRust.volumeFfi(v)],
+    pools: [for (final p in pools) p.ffi],
+    networks: [for (final n in networks) n.ffi],
+    volumes: [for (final v in volumes) v.ffi],
   );
 
   return VirtHwIssue.of(switch (host) {
@@ -816,5 +816,281 @@ String? virtHwIssueText(
     VirtHwIssue.notOffered => l10n.virtCreateNotOffered,
     VirtHwIssue.notFound => l10n.virtResNotFound,
     VirtHwIssue.unsupported => l10n.virtResUnsupported,
+  };
+}
+
+// --- FFI: `sbm_virt::hardware` ---
+
+extension HardwareVirt on vm.Hardware {
+  VirtHardware get virt => VirtHardware(
+    kind: kind.virt,
+    running: running,
+    cpu: VirtHwCpu(
+      sockets: cpu.sockets,
+      cores: cpu.cores,
+      threads: cpu.threads,
+      online: cpu.online,
+      type: cpu.cpuType,
+    ),
+    memory: VirtHwMemory(
+      mib: memory.mib.toInt(),
+      minMib: memory.minMib?.toInt(),
+      balloon: memory.balloon,
+      swapMib: memory.swapMib?.toInt(),
+    ),
+    disks: [for (final d in disks) d.virt],
+    nics: [
+      for (final n in nics)
+        VirtHwNic(
+          key: n.key,
+          mac: n.mac,
+          type: n.nicType,
+          source: n.source,
+          model: n.model,
+          linkUp: n.linkUp,
+          firewall: n.firewall,
+          name: n.name,
+        ),
+    ],
+    boot: boot,
+    autostart: autostart,
+    name: name,
+    description: description,
+    protection: protection,
+    renameRunning: renameRunning,
+    pending: [
+      for (final p in pending) VirtPendingField(key: p.key, current: p.current, pending: p.pending, delete: p.delete),
+    ],
+    revision: revision,
+    limits: VirtHwLimits(hostCpus: limits.hostCpus, hostMemoryBytes: limits.hostMemoryBytes?.toInt()),
+    cpuTypes: cpuTypes,
+    configText: configText,
+    firmware: switch (firmware) {
+      final f? => VirtHwFirmware(uefi: f.uefi, secureBoot: f.secureBoot, varsStorage: f.varsStorage),
+      null => null,
+    },
+    display: switch (display) {
+      final d? => VirtHwDisplay(protocol: d.protocol, listen: d.listen, gpu: d.gpu, port: d.port),
+      null => null,
+    },
+    devices: [
+      for (final d in devices)
+        VirtHwDevice(key: d.key, kind: VirtHwDeviceKind.values.byName(d.kind.name), detail: d.detail, mapping: d.mapping),
+    ],
+    support: VirtHwSupport(
+      buses: support.buses,
+      caches: support.caches,
+      nicModels: support.nicModels,
+      mac: support.mac,
+      protocols: support.protocols,
+      listen: support.listen,
+      gpus: support.gpus,
+      uefi: support.uefi,
+      secureBoot: support.secureBoot,
+      tpm: support.tpm,
+      usb: support.usb,
+      pci: support.pci,
+    ),
+  );
+}
+
+extension VirtHardwareFfi on VirtHardware {
+  /// As `sbm_virt::hardware::Hardware`, what the rules are given.
+  vm.Hardware get ffi => vm.Hardware(
+    kind: kind.ffi,
+    running: running,
+    cpu: vm.Cpu(sockets: cpu.sockets, cores: cpu.cores, threads: cpu.threads, online: cpu.online, cpuType: cpu.type),
+    memory: vm.HwMemory(
+      mib: BigInt.from(memory.mib),
+      minMib: memory.minMib?.big,
+      balloon: memory.balloon,
+      swapMib: memory.swapMib?.big,
+    ),
+    disks: [for (final d in disks) d.ffi],
+    nics: [
+      for (final n in nics)
+        vm.HwNic(
+          key: n.key,
+          mac: n.mac,
+          nicType: n.type,
+          source: n.source,
+          model: n.model,
+          linkUp: n.linkUp,
+          firewall: n.firewall,
+          name: n.name,
+        ),
+    ],
+    boot: boot,
+    autostart: autostart,
+    name: name,
+    description: description,
+    protection: protection,
+    renameRunning: renameRunning,
+    pending: [
+      for (final p in pending) vm.PendingField(key: p.key, current: p.current, pending: p.pending, delete: p.delete),
+    ],
+    revision: revision,
+    limits: vm.Limits(hostCpus: limits.hostCpus, hostMemoryBytes: limits.hostMemoryBytes?.big),
+    cpuTypes: cpuTypes,
+    configText: configText,
+    firmware: switch (firmware) {
+      final f? => vm.Firmware(uefi: f.uefi, secureBoot: f.secureBoot, varsStorage: f.varsStorage),
+      null => null,
+    },
+    display: switch (display) {
+      final d? => vm.HwDisplay(protocol: d.protocol, listen: d.listen, gpu: d.gpu, port: d.port),
+      null => null,
+    },
+    devices: [
+      for (final d in devices)
+        vm.HwDevice(key: d.key, kind: vm.DeviceKind.values.byName(d.kind.name), detail: d.detail, mapping: d.mapping),
+    ],
+    support: vm.Support(
+      buses: support.buses,
+      caches: support.caches,
+      nicModels: support.nicModels,
+      mac: support.mac,
+      protocols: support.protocols,
+      listen: support.listen,
+      gpus: support.gpus,
+      uefi: support.uefi,
+      secureBoot: support.secureBoot,
+      tpm: support.tpm,
+      usb: support.usb,
+      pci: support.pci,
+    ),
+  );
+}
+
+extension HwDiskVirt on vm.HwDisk {
+  VirtHwDisk get virt => VirtHwDisk(
+    key: key,
+    kind: VirtHwDiskKind.values.byName(kind.name),
+    source: source,
+    size: size?.toInt(),
+    storage: storage,
+    mountPoint: mountPoint,
+    bus: bus,
+    format: format,
+    readonly: readonly,
+    cache: cache,
+    cloudInit: cloudInit,
+    resizable: resizable,
+  );
+}
+
+extension VirtHwDiskFfi on VirtHwDisk {
+  vm.HwDisk get ffi => vm.HwDisk(
+    key: key,
+    kind: vm.DiskKind.values.byName(kind.name),
+    source: source,
+    size: size?.big,
+    storage: storage,
+    mountPoint: mountPoint,
+    bus: bus,
+    format: format,
+    readonly: readonly,
+    cache: cache,
+    cloudInit: cloudInit,
+    resizable: resizable,
+  );
+}
+
+extension HostDeviceVirt on vm.HostDevice {
+  VirtHostDevice get virt => VirtHostDevice(
+    id: id,
+    label: label,
+    detail: detail,
+    mapping: mapping,
+    usbBus: usbBus,
+    usbPort: usbPort,
+    usbDevice: usbDevice,
+    iommuGroup: iommuGroup,
+    groupSize: groupSize,
+  );
+}
+
+extension VirtHostDeviceFfi on VirtHostDevice {
+  vm.HostDevice get ffi => vm.HostDevice(
+    id: id,
+    label: label,
+    detail: detail,
+    mapping: mapping,
+    usbBus: usbBus,
+    usbPort: usbPort,
+    usbDevice: usbDevice,
+    iommuGroup: iommuGroup,
+    groupSize: groupSize,
+  );
+}
+
+extension HostDevicesVirt on vm.HostDevices {
+  VirtHostDevices get virt => VirtHostDevices(
+    usb: [for (final u in usb) u.virt],
+    pci: [for (final p in pci) p.virt],
+    iommu: iommu,
+    mappingsOnly: mappingsOnly,
+  );
+}
+
+extension OutcomeVirt on vm.Outcome {
+  VirtHwOutcome get virt => VirtHwOutcome(liveError: liveError, volumeKept: volumeKept);
+}
+
+extension VirtHwChangeFfi on VirtHwChange {
+  /// As `sbm_virt::hardware::Change`: what it names, by id.
+  vm.HwChange get ffi => switch (this) {
+    VirtHwSetCpu(:final sockets, :final cores, :final online, :final type) =>
+      vm.HwChange.setCpu(sockets: sockets, cores: cores, online: online, cpuType: type),
+    VirtHwSetMemory(:final mib, :final minMib, :final swapMib) =>
+      vm.HwChange.setMemory(mib: BigInt.from(mib), minMib: minMib?.big, swapMib: swapMib?.big),
+    VirtHwGrowDisk(:final key, :final bytes) => vm.HwChange.growDisk(key: key, bytes: BigInt.from(bytes)),
+    VirtHwAddDisk(:final storage, :final gib, :final mountPoint) =>
+      vm.HwChange.addDisk(pool: storage.id, gib: BigInt.from(gib), mountPoint: mountPoint),
+    VirtHwAttachVolume(:final storage, :final volume, :final mountPoint) => vm.HwChange.attachVolume(
+      volume: vm.VolumeRef(pool: storage.id, volume: volume.id),
+      mountPoint: mountPoint,
+    ),
+    VirtHwRemoveDisk(:final key, :final deleteVolume) => vm.HwChange.removeDisk(key: key, deleteVolume: deleteVolume),
+    VirtHwAddCdrom(:final media) => vm.HwChange.addCdrom(media: media?.ffi),
+    VirtHwSetMedia(:final key, :final media) => vm.HwChange.setMedia(key: key, media: media?.ffi),
+    VirtHwAddNic(:final network, :final model) => vm.HwChange.addNic(network: network.id, model: model),
+    VirtHwRemoveNic(:final key) => vm.HwChange.removeNic(key: key),
+    VirtHwUpdateNic(:final key, :final network, :final linkUp, :final firewall) =>
+      vm.HwChange.updateNic(key: key, network: network?.id, linkUp: linkUp, firewall: firewall),
+    VirtHwSetBoot(:final order) => vm.HwChange.setBoot(order: order),
+    VirtHwSetAutostart(:final on) => vm.HwChange.setAutostart(on_: on),
+    VirtHwSetName(:final name) => vm.HwChange.setName(name: name),
+    VirtHwSetDescription(:final text) => vm.HwChange.setDescription(text: text),
+    VirtHwSetProtection(:final on) => vm.HwChange.setProtection(on_: on),
+    VirtHwUpdateDisk(:final key, :final bus, :final cache) => vm.HwChange.updateDisk(key: key, bus: bus, cache: cache),
+    VirtHwSetNicHardware(:final key, :final model, :final mac) =>
+      vm.HwChange.setNicHardware(key: key, model: model, mac: mac),
+    VirtHwSetFirmware(:final uefi, :final secureBoot, :final storage) =>
+      vm.HwChange.setFirmware(uefi: uefi, secureBoot: secureBoot, storage: storage?.id),
+    VirtHwSetDisplay(:final protocol, :final listen, :final gpu) =>
+      vm.HwChange.setDisplay(protocol: protocol, listen: listen, gpu: gpu),
+    VirtHwAddDevice(:final kind, :final host, :final storage, :final usbNaming) => vm.HwChange.addDevice(
+      kind: vm.DeviceKind.values.byName(kind.name),
+      host: host?.ffi,
+      storage: storage?.id,
+      usbNaming: vm.UsbNaming.values.byName(usbNaming.name),
+    ),
+    VirtHwRemoveDevice(:final key) => vm.HwChange.removeDevice(key: key),
+    VirtHwRevert(:final keys) => vm.HwChange.revert(keys: keys),
+    // Its own call (`VirtBackend.revertPending`), never a change.
+    VirtHwRevertPending() => const vm.HwChange.revert(keys: []),
+  };
+
+  /// What this change names, as it carries them: the pools, networks and
+  /// volumes a check of it is made against.
+  (List<VirtStoragePool>, List<VirtNetwork>, List<VirtVolume>) get listing => switch (this) {
+    VirtHwAddDisk(:final storage) => ([storage], const [], const []),
+    VirtHwAttachVolume(:final storage, :final volume) => ([storage], const [], [volume]),
+    VirtHwAddCdrom(media: final m?) || VirtHwSetMedia(media: final m?) => ([m.pool], const [], [m.volume]),
+    VirtHwAddNic(:final network) => (const [], [network], const []),
+    VirtHwUpdateNic(network: final n?) => (const [], [n], const []),
+    VirtHwSetFirmware(storage: final s?) || VirtHwAddDevice(storage: final s?) => ([s], const [], const []),
+    _ => (const [], const [], const []),
   };
 }

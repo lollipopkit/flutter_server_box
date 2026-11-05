@@ -1,7 +1,6 @@
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
-import 'package:server_box/data/model/virt/virt_rust.dart';
 import 'package:server_box/src/rust/api/create.dart' as ffi;
 import 'package:server_box/src/rust/api/virt_model.dart' as vm;
 
@@ -426,28 +425,28 @@ VirtCreateIssue? virtCreateIssue(
 }) {
   return VirtCreateIssue.of(
     ffi.virtCreateIssue(
-      spec: VirtRust.specFfi(spec),
+      spec: spec.ffi,
       pve: host == VirtHostKind.pve,
-      guests: [for (final g in guests) VirtRust.guestFfi(g)],
+      guests: [for (final g in guests) g.ffi],
       nodes: [
         for (final n in nodes.isEmpty && spec.node != null ? [VirtNode(name: spec.node!)] : nodes)
-          VirtRust.nodeFfi(n),
+          n.ffi,
       ],
       pools: [
-        for (final p in pools ?? {spec.storage, ?spec.media?.pool, ?spec.image?.pool}) VirtRust.poolFfi(p),
+        for (final p in pools ?? {spec.storage, ?spec.media?.pool, ?spec.image?.pool}) p.ffi,
       ],
       networks: [
-        for (final n in networks ?? [?spec.network]) VirtRust.networkFfi(n),
+        for (final n in networks ?? [?spec.network]) n.ffi,
       ],
       media: switch (spec.media) {
-        final m? => VirtRust.volumeFfi(m.volume),
+        final m? => m.volume.ffi,
         null => null,
       },
       image: switch (spec.image) {
-        final i? => VirtRust.volumeFfi(i.volume),
+        final i? => i.volume.ffi,
         null => null,
       },
-      options: VirtRust.createOptionsFfi(options ?? VirtCreateOptions.asked(spec)),
+      options: (options ?? VirtCreateOptions.asked(spec)).ffi,
     ),
   );
 }
@@ -462,7 +461,7 @@ VirtCreateIssue? virtCloudInitIssue(
   bool keepsPassword = false,
 }) => VirtCreateIssue.of(
   ffi.virtCloudInitIssue(
-    ci: VirtRust.cloudInitFfi(ci),
+    ci: ci.ffi,
     pve: host == VirtHostKind.pve,
     keepsPassword: keepsPassword,
   ),
@@ -485,7 +484,7 @@ List<VirtStoragePool> _byIds(List<VirtStoragePool> pools, List<String> ids) => [
     if (ids.contains(p.id)) p,
 ];
 
-List<vm.ResourcePool> _poolsFfi(List<VirtStoragePool> pools) => [for (final p in pools) VirtRust.poolFfi(p)];
+List<vm.ResourcePool> _poolsFfi(List<VirtStoragePool> pools) => [for (final p in pools) p.ffi];
 
 /// Where cloud images are found on [host] ([node] for PVE): a PVE storage
 /// with `import` content (what `import-from` takes, PVE 8.2+); every active
@@ -501,7 +500,7 @@ List<VirtStoragePool> virtImageStorages(
 
 /// Whether [volume] is a disk image a new VM can be a copy of.
 bool virtIsCloudImage(VirtVolume volume, VirtHostKind host) => ffi.virtIsCloudImage(
-  volume: VirtRust.volumeFfi(volume),
+  volume: volume.ffi,
   pve: host == VirtHostKind.pve,
 );
 
@@ -540,7 +539,7 @@ List<VirtStoragePool> virtMediaStorages(
 
 /// Whether [volume] is install media ([kind] VM) or a template (container).
 bool virtIsMedia(VirtVolume volume, VirtGuestKind kind) => ffi.virtIsMedia(
-  volume: VirtRust.volumeFfi(volume),
+  volume: volume.ffi,
   lxc: kind == VirtGuestKind.lxc,
 );
 
@@ -552,7 +551,7 @@ List<VirtNetwork> virtCreateNetworks(
   String? node,
 }) {
   final ids = ffi.virtCreateNetworks(
-    networks: [for (final n in networks) VirtRust.networkFfi(n)],
+    networks: [for (final n in networks) n.ffi],
     pve: host == VirtHostKind.pve,
     node: node,
   );
@@ -626,7 +625,7 @@ VirtCreateIssue? virtCloneNodeIssue({
   required String? sourceNode,
 }) => VirtCreateIssue.of(
   ffi.virtCloneNodeIssue(
-    nodes: [for (final n in nodes) VirtRust.nodeFfi(n)],
+    nodes: [for (final n in nodes) n.ffi],
     targetNode: targetNode,
     sourceNode: sourceNode,
   ),
@@ -639,4 +638,127 @@ VirtCreateIssue? virtCloneNameIssue(String name, VirtHostKind? kind) {
   return ffi.virtGuestNameOk(name: name, pve: kind == VirtHostKind.pve)
       ? null
       : VirtCreateIssue.nameInvalid;
+}
+
+// --- FFI: `sbm_virt::create` ---
+
+extension VirtPoolVolumeFfi on VirtPoolVolume {
+  vm.VolumeRef get ffi => vm.VolumeRef(pool: pool.id, volume: volume.id);
+}
+
+List<String> _lines(String? text) => [
+  for (final l in (text ?? '').split('\n'))
+    if (l.trim().isNotEmpty) l.trim(),
+];
+
+extension VirtCreateSpecFfi on VirtCreateSpec {
+  /// As `sbm_virt::create::CreateSpec`: what it names, by id. Its passwords
+  /// go in it as typed; it is sent to the host, never logged.
+  vm.CreateSpec get ffi => vm.CreateSpec(
+    kind: kind.ffi,
+    name: name,
+    node: node,
+    vmid: vmid,
+    cores: cores,
+    memoryMib: BigInt.from(memoryMiB),
+    storage: storage.id,
+    diskGib: BigInt.from(diskGiB),
+    media: media?.ffi,
+    image: image?.ffi,
+    network: network?.id,
+    password: password,
+    sshKeys: _lines(sshKeys),
+    unprivileged: unprivileged,
+    bus: bus,
+    nicModel: nicModel,
+    uefi: uefi,
+    secureBoot: secureBoot,
+    tpm: tpm,
+    cloudInit: cloudInit?.ffi,
+    start: start,
+  );
+}
+
+extension VirtCloudInitFfi on VirtCloudInit {
+  /// As `sbm_virt::create::CloudInit`.
+  vm.CloudInit get ffi => vm.CloudInit(
+    user: user,
+    password: password,
+    sshKeys: keys,
+    hostname: hostname,
+    address: address,
+    gateway: gateway,
+    dns: dns,
+    searchDomains: searchDomains,
+  );
+}
+
+extension VirtCloneRequestFfi on VirtCloneRequest {
+  /// As `sbm_virt::create::CloneRequest`.
+  vm.CloneRequest get ffi => vm.CloneRequest(
+    name: name,
+    full: full,
+    vmid: vmid,
+    storage: storage,
+    targetNode: targetNode,
+    targetPool: targetPool,
+  );
+}
+
+extension CreateOptionsVirt on vm.CreateOptions {
+  VirtCreateOptions get virt => VirtCreateOptions(
+    buses: buses,
+    nicModels: nicModels,
+    uefi: uefi,
+    secureBoot: secureBoot,
+    tpm: tpm,
+    cloudImages: cloudImages,
+    cloudInit: cloudInit,
+    cloudInitMissing: cloudInitMissing,
+  );
+}
+
+extension VirtCreateOptionsFfi on VirtCreateOptions {
+  vm.CreateOptions get ffi => vm.CreateOptions(
+    buses: buses,
+    nicModels: nicModels,
+    uefi: uefi,
+    secureBoot: secureBoot,
+    tpm: tpm,
+    cloudImages: cloudImages,
+    cloudInit: cloudInit,
+    cloudInitMissing: cloudInitMissing,
+  );
+}
+
+extension CreatedVirt on vm.Created {
+  VirtCreated get virt => VirtCreated(id: id, startError: startError, diskKeptBytes: diskKeptBytes?.toInt());
+}
+
+extension CloudInitStateVirt on vm.CloudInitState {
+  VirtCloudInitState get virt => VirtCloudInitState(
+    user: user,
+    sshKeys: sshKeys,
+    hostname: hostname,
+    address: address,
+    gateway: gateway,
+    dns: dns,
+    searchDomains: searchDomains,
+    nics: nics,
+    passwordSet: passwordSet,
+    passwordExpires: passwordExpires,
+    network: network,
+    foreign: foreign,
+    revision: revision,
+  );
+}
+
+extension VirtCloudInitEditFfi on VirtCloudInitEdit {
+  /// This edit, made from [base], as `sbm_virt::hardware::CloudInitEdit`.
+  vm.CloudInitEdit ffiFrom(VirtCloudInitState base) => vm.CloudInitEdit(
+    values: values.ffi,
+    removePassword: removePassword,
+    passwordExpires: passwordExpires,
+    revision: base.revision,
+  );
 }

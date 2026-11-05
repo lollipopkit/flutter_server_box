@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:server_box/core/chan.dart';
+import 'package:server_box/core/utils/coalesced.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/data/terminal/android_service_policy.dart';
 import 'package:server_box/data/terminal/ios_live_activity_policy.dart';
@@ -163,8 +164,7 @@ abstract final class TermSessionManager {
   static Map<String, TermSessionEntry> get _entries => _registry.entries;
   static String? get _activeId => _registry.activeId;
   static Timer? _updateTimer; // Timer for iOS Live Activity updates
-  static Future<void>? _syncing;
-  static bool _syncDirty = false;
+  static var _syncs = Coalesced(() => _push());
 
   /// What a drain pushes each time: the platforms, outside tests.
   static Future<void> Function() _push = _syncLatest;
@@ -178,8 +178,8 @@ abstract final class TermSessionManager {
     _registry = TermSessionRegistry();
     _updateTimer?.cancel();
     _updateTimer = null;
-    _syncing = null;
-    _syncDirty = false;
+    _syncs.cancelPending();
+    _syncs = Coalesced(() => _push());
     _push = _syncLatest;
     _stoodDown = false;
     _backgrounded = false;
@@ -288,8 +288,7 @@ abstract final class TermSessionManager {
   }
 
   static void _sync() {
-    _syncDirty = true;
-    _syncing ??= _drainSync();
+    unawaited(_syncs());
   }
 
   /// Re-decides whether a Live Activity should be up, after the setting that
@@ -302,18 +301,6 @@ abstract final class TermSessionManager {
   static void syncLiveActivity() {
     if (!isIOS) return;
     _sync();
-  }
-
-  static Future<void> _drainSync() async {
-    try {
-      while (_syncDirty) {
-        _syncDirty = false;
-        await _push();
-      }
-    } finally {
-      _syncing = null;
-      if (_syncDirty) _syncing = _drainSync();
-    }
   }
 
   /// Whether the activity is paused, from its native `onPause`/`onResume`.
