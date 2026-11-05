@@ -86,6 +86,7 @@ final class TmuxControlClient {
   Stream<TmuxControlSnapshot> get snapshots => _stateController.stream;
   Stream<TmuxControlPaneOutput> get paneOutput => _paneOutputController.stream;
   TmuxControlSnapshot? get snapshot => _snapshot;
+  bool get isClosed => _commands.isClosed;
 
   /// Waits for the command which launched the CC client, then builds the first
   /// snapshot and, by default, captures the active pane's existing screen.
@@ -179,6 +180,13 @@ final class TmuxControlClient {
 
   Future<void> selectPane(TmuxPaneId paneId) async {
     await runRequired("select-pane -t '$paneId'");
+    await refreshState(captureActivePane: true);
+  }
+
+  Future<void> toggleZoom({TmuxPaneId? paneId}) async {
+    final target = paneId ?? _snapshot?.activePaneId;
+    if (target == null) return;
+    await runRequired('resize-pane -Z -t $target');
     await refreshState(captureActivePane: true);
   }
 
@@ -409,7 +417,7 @@ final class TmuxControlClient {
       ),
       runRequired(
         "list-windows -F '#{window_id}\t#{window_index}"
-        "\t#{q:window_name}\t#{window_active}'",
+        "\t#{q:window_name}\t#{window_active}\t#{window_zoomed_flag}'",
       ),
       // Panes only of the active window: they exist to make splits
       // addressable in the UI, and inactive windows stay summaries until
@@ -506,6 +514,7 @@ final class TmuxControlClient {
       index: activeWindow.index,
       name: activeWindow.name,
       active: true,
+      zoomed: activeWindow.zoomed,
       panes: panes,
     );
     final windowsWithPanes = [
@@ -652,11 +661,14 @@ final class TmuxControlClient {
     final index = int.tryParse(unescapeTmuxField(fields[1]));
     final active = int.tryParse(unescapeTmuxField(fields[3]));
     if (id == null || index == null || active == null) return null;
+    final zoomed = fields.length > 4 &&
+        (int.tryParse(unescapeTmuxField(fields[4])) ?? 0) > 0;
     return TmuxControlWindow(
       id: id,
       index: index,
       name: unescapeTmuxField(fields[2]),
       active: active > 0,
+      zoomed: zoomed,
     );
   }
 
