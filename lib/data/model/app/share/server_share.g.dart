@@ -14,9 +14,9 @@ _ServerShare _$ServerShareFromJson(Map<String, dynamic> json) => _ServerShare(
           ?.map((e) => PrivateKeyInfo.fromJson(e as Map<String, dynamic>))
           .toList() ??
       const <PrivateKeyInfo>[],
-  pve: _readSharedPve(json, 'pve') == null
+  pve: json['pve'] == null
       ? null
-      : PveConfig.fromJson(_readSharedPve(json, 'pve') as Map<String, dynamic>),
+      : PveConfig.fromJson(json['pve'] as Map<String, dynamic>),
   expiresAt: (json['expiresAt'] as num?)?.toInt(),
 );
 

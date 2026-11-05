@@ -1,7 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:server_box/data/model/server/custom.dart';
-import 'package:server_box/data/model/server/ssh_credential.dart';
 
 part 'pve_config.freezed.dart';
 part 'pve_config.g.dart';
@@ -73,21 +71,18 @@ abstract class PveConfig with _$PveConfig {
     tokenSecret: 'token-secret',
   );
 
-  /// The configuration a server record in an import or a share carries: the
-  /// `pve` object beside the server's own fields, or — from an older build —
-  /// the flat fields inside `custom`.
+  /// The configuration a server record in an import carries: the `pve`
+  /// object beside the server's own fields.
   static PveConfig? fromServerRecord(Object? record) {
     if (record is! Map) return null;
     final pve = record['pve'];
-    if (pve is Map) {
-      try {
-        return PveConfig.fromJson(Map<String, dynamic>.from(pve));
-      } catch (e, s) {
-        Loggers.app.warning('Unreadable PVE configuration was skipped', e, s);
-        return null;
-      }
+    if (pve is! Map) return null;
+    try {
+      return PveConfig.fromJson(Map<String, dynamic>.from(pve));
+    } catch (e, s) {
+      Loggers.app.warning('Unreadable PVE configuration was skipped', e, s);
+      return null;
     }
-    return fromLegacyRecord(record);
   }
 
   /// What PVE accepts as an API token id: a user id (`name@realm`), `!`, and
@@ -119,96 +114,4 @@ abstract class PveConfig with _$PveConfig {
   String toString() =>
       'PveConfig(addr: $addr, auth: ${auth.name}, tokenId: $tokenId, '
       'pinned: ${certSha256 != null})';
-
-  /// The PVE fields a server record carried inside `custom` before they had a
-  /// table of their own — what a backup, a sync file, a bulk import or a
-  /// share written by an older build still holds. [record] is the whole
-  /// server record, since whether `pvePwd` means anything depends on its SSH
-  /// key ([ownsPassword]); the key sits under `ssh` or, in the pre-v3 flat
-  /// layout, at the top.
-  ///
-  /// `pveIgnoreCert` is read and dropped: it accepted any certificate, and
-  /// what replaces it is confirming one on the next connection, which is what
-  /// no pin means.
-  // TODO(migration): remove after 5 releases from v1.0.1715, with every caller.
-  static PveConfig? fromLegacyRecord(Object? record) {
-    if (record is! Map) return null;
-    final custom = record['custom'];
-    if (custom is! Map) return null;
-    final addr = custom['pveAddr'];
-    if (addr is! String || addr.trim().isEmpty) return null;
-    final keyId = switch (record['ssh']) {
-      final Map ssh => ssh['pubKeyId'],
-      // `Spi.toJson` leaves nested models as they are.
-      final SshCredential ssh => ssh.keyId,
-      _ => record['pubKeyId'],
-    };
-    final pwd = custom['pvePwd'];
-    return PveConfig(
-      addr: addr,
-      pwd:
-          ownsPassword(sshKeyId: keyId is String ? keyId : null) &&
-              pwd is String &&
-              pwd.isNotEmpty
-          ? pwd
-          : null,
-    );
-  }
-
-  /// This configuration in the fields an older build reads from a server
-  /// record's `custom` — written beside [toJson] into every sync file, backup
-  /// and share while builds without `server_pve` may read them. An older build
-  /// ignores the `pve` section and writes back only what it read, so without
-  /// these a round trip through it would carry the server back without PVE.
-  ///
-  /// `pveIgnoreCert` is always false. A pin authorizes one certificate, and
-  /// the only thing an older build can express is accepting every
-  /// certificate — which would send the login to whoever answers. An older
-  /// build reaching a self-signed host needs its user to opt in there.
-  // TODO(migration): remove after 5 releases from v1.0.1715, with [mergeLegacy].
-  Map<String, Object?> toLegacyCustom() => {
-    'pveAddr': addr,
-    'pveIgnoreCert': false,
-    'pvePwd': ?pwd,
-  };
-
-  /// [server] — a server record, as `Spi.toJson` or decoded JSON — with
-  /// [cfg]'s [toLegacyCustom] fields written into its `custom`.
-  // TODO(migration): remove after 5 releases from v1.0.1715, with [toLegacyCustom].
-  static Map<String, Object?> withLegacyCustom(Map server, PveConfig cfg) {
-    final out = Map<String, Object?>.from(server);
-    final custom = out['custom'];
-    final Map<String, Object?> fields = switch (custom) {
-      final Map map => Map<String, Object?>.from(map),
-      final ServerCustom custom => custom.toJson(),
-      _ => <String, Object?>{},
-    };
-    out['custom'] = {...fields, ...cfg.toLegacyCustom()};
-    return out;
-  }
-
-  /// What a server record from an older build ([legacy], read by
-  /// [fromLegacyRecord]) makes of the configuration this device has
-  /// ([existing]).
-  ///
-  /// The legacy fields express an address and a password and nothing else, so
-  /// they are applied to what is here rather than replacing it: an older
-  /// build handing back a record it received from this one must not turn a
-  /// token login into a password login or drop a confirmed certificate.
-  ///
-  /// - A different address is [legacy] alone. The pin names a certificate
-  ///   seen at the old address, and the API token was never on the older
-  ///   device: carried along, it would be sent to a host nobody here chose.
-  /// - The same address keeps the auth method, token and pin; the password
-  ///   is the legacy one for a password login, and a token login has none
-  ///   and keeps none.
-  // TODO(migration): remove after 5 releases from v1.0.1715, with [toLegacyCustom].
-  static PveConfig mergeLegacy(PveConfig? existing, PveConfig legacy) {
-    if (existing == null) return legacy;
-    if (existing.addr.trim() != legacy.addr.trim()) return legacy;
-    return existing.copyWith(
-      addr: legacy.addr,
-      pwd: existing.auth == PveAuth.password ? legacy.pwd : existing.pwd,
-    );
-  }
 }

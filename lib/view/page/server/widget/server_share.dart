@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/utils/app_auth.dart';
 import 'package:server_box/core/utils/server_share.dart';
 import 'package:server_box/data/model/app/share/server_share.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -33,6 +34,8 @@ abstract final class ServerShareUi {
     // a payload is cheap next to the key derivation.
     final probe = ServerShare.of(spi, ttl: ShareCarrier.qr.ttl);
     final fits = ServerShareCodec.fitsInQr(probe);
+    if (probe.carriesSecret && !await AppAuth.confirm()) return;
+    if (!context.mounted) return;
 
     final carrier = await context.showRoundDialog<ShareCarrier>(
       title: l10n.shareVia,

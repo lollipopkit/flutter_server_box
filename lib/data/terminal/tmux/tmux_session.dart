@@ -56,8 +56,8 @@ final class TmuxSession {
   /// Whether tmux is available on the remote server.
   Future<bool> get isAvailable => _scanner.isTmuxAvailable();
 
-  /// Discover available sessions.
-  Future<List<TmuxSessionInfo>> get sessions => _scanner.listSessions();
+  /// Discover available sessions; null when listing them failed.
+  Future<List<TmuxSessionInfo>?> get sessions => _scanner.tryListSessions();
 
   /// List windows while preserving command failure as null.
   Future<List<TmuxWindowInfo>?> tryListWindows(String sessionTarget) =>

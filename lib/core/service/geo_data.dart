@@ -10,6 +10,16 @@ import 'package:server_box/core/service/geo_bundle.dart';
 import 'package:server_box/data/model/app/geo_manifest.dart';
 import 'package:server_box/data/res/url.dart';
 
+/// A geo download or its staged installation failed a check.
+final class GeoDownloadFailure implements Exception {
+  const GeoDownloadFailure(this.message);
+
+  final String message;
+
+  @override
+  String toString() => 'GeoDownloadFailure: $message';
+}
+
 /// The city-level data as something installed, rather than something fetched.
 ///
 /// **The whole thing is downloaded once and every lookup after that is local.**
@@ -283,9 +293,11 @@ final class GeoData {
         // all bytes in the abandoned staging directory are discarded.
         onReceive: (got) => onProgress?.call(done + got, total),
       );
-      if (packed == null) throw StateError('${asset.name} did not arrive');
+      if (packed == null) {
+        throw GeoDownloadFailure('${asset.name} did not arrive');
+      }
       if (packed.length != asset.bytes) {
-        throw StateError(
+        throw GeoDownloadFailure(
           '${asset.name} is ${packed.length} bytes, manifest says '
           '${asset.bytes}',
         );
@@ -298,7 +310,7 @@ final class GeoData {
       // there is nothing in it that this app executes.
       final digest = sha256.convert(packed).toString();
       if (digest != asset.sha256) {
-        throw StateError('${asset.name} hashes to $digest');
+        throw GeoDownloadFailure('${asset.name} hashes to $digest');
       }
       // Decoded against a ceiling rather than decoded and then measured.
       // `gzip.decode` materialises the whole output first, so a 64 MB
@@ -317,7 +329,9 @@ final class GeoData {
           bundle.month == manifest.month;
       bundle?.close();
       if (!valid) {
-        throw StateError('${asset.name} is not the bundle in the manifest');
+        throw GeoDownloadFailure(
+          '${asset.name} is not the bundle in the manifest',
+        );
       }
       done += packed.length;
       onProgress?.call(done, total);
@@ -327,7 +341,9 @@ final class GeoData {
       _manifestAt(_stagingDir),
     ).writeAsString(jsonEncode(manifest.toJson()), flush: true);
     if (_readInstalledAt(_stagingDir) == null) {
-      throw StateError('the staged geo installation is incomplete');
+      throw const GeoDownloadFailure(
+        'the staged geo installation is incomplete',
+      );
     }
     return _activateStaging(manifest);
   }
@@ -456,7 +472,7 @@ final class GeoData {
     // Short is the other direction and cannot be caught above: a truncated
     // archive simply stops.
     if (raw.length != expected) {
-      throw StateError(
+      throw GeoDownloadFailure(
         '$name unpacks to ${raw.length}, manifest says $expected',
       );
     }
@@ -505,7 +521,7 @@ final class GeoData {
           // check after the body is already a `List<int>` cannot prevent
           // the allocation it exists to prevent.
           if (got > maxBytes && !token.isCancelled) {
-            token.cancel(StateError('$url is over $maxBytes bytes'));
+            token.cancel(GeoDownloadFailure('$url is over $maxBytes bytes'));
           }
         },
       );
@@ -546,7 +562,9 @@ class _CappedBytes implements Sink<List<int>> {
   @override
   void add(List<int> chunk) {
     if (builder.length + chunk.length > limit) {
-      throw StateError('$name unpacks past the $limit bytes it declares');
+      throw GeoDownloadFailure(
+        '$name unpacks past the $limit bytes it declares',
+      );
     }
     builder.add(chunk);
   }

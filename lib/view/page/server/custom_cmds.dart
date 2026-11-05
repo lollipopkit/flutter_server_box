@@ -5,8 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
-import 'package:server_box/data/model/app/scripts/shell_func.dart';
-import 'package:server_box/data/model/server/server_exec.dart';
+import 'package:server_box/data/admin/custom_cmd_manager.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/src/rust/api/script.dart' as ffi;
@@ -98,7 +97,9 @@ final class _CustomCmdsPageState extends ConsumerState<CustomCmdsPage> {
 extension on _CustomCmdsPageState {
   Widget _buildBody() {
     final err = _err;
-    if (err != null) return _buildErr(err);
+    if (err != null) {
+      return PageIssueView(title: libL10n.error, detail: err, onRetry: _load);
+    }
 
     final cmds = _cmds;
     if (cmds == null) return UIs.centerLoading;
@@ -148,23 +149,6 @@ extension on _CustomCmdsPageState {
     );
   }
 
-  Widget _buildErr(String err) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(libL10n.error, style: UIs.text18),
-          UIs.height13,
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 27),
-            child: Text(err, style: UIs.textGrey, textAlign: TextAlign.center),
-          ),
-          UIs.height13,
-          Btn.text(text: libL10n.retry, onTap: _load),
-        ],
-      ),
-    );
-  }
 }
 
 // --- Actions ---
@@ -178,17 +162,7 @@ extension on _CustomCmdsPageState {
     try {
       final system = ref.read(serverProvider(_spi.id)).status.system;
       final exec = await ref.read(serverProvider(_spi.id).notifier).ensureExec();
-      final res = await exec.run(
-        ShellFuncManager.readCustomCmds(systemType: system),
-        entry: ShellFuncManager.customCmdsEntry(system),
-      );
-      if (!res.succeeded) {
-        throw CommandFailed('custom commands', res);
-      }
-      // A directory that does not exist yet reads as no commands: the first
-      // save creates it. Telling the two apart matters to the migration, not
-      // here.
-      final parsed = ShellFuncManager.parseCustomCmds(res.stdout) ?? const [];
+      final parsed = await CustomCmdManager.list(exec, system);
       if (!mounted) return;
       setState(() {
         _cmds = [for (final c in parsed) (name: c.name, cmd: c.cmd)];
@@ -207,16 +181,9 @@ extension on _CustomCmdsPageState {
     try {
       final system = ref.read(serverProvider(_spi.id)).status.system;
       final exec = await ref.read(serverProvider(_spi.id).notifier).ensureExec();
-      final res = await exec.run(
-        ShellFuncManager.installCustomCmds(
-          [for (final c in cmds) ffi.CustomCmd(name: c.name, cmd: c.cmd)],
-          systemType: system,
-        ),
-        entry: ShellFuncManager.customCmdsEntry(system),
-      );
-      if (!res.succeeded) {
-        throw CommandFailed('custom commands', res);
-      }
+      await CustomCmdManager.save(exec, system, [
+        for (final c in cmds) ffi.CustomCmd(name: c.name, cmd: c.cmd),
+      ]);
       if (!mounted) return;
       setState(() => _dirty = false);
       Toast.show(libL10n.saved);

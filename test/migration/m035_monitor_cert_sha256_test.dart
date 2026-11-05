@@ -42,6 +42,7 @@ Future<void> _createV35() async {
   final db = SqliteDb.instance;
   db.execute('PRAGMA foreign_keys = ON;');
   await createTables(db);
+  createServerCustomCmdTable();
   replaceServerTable(serverDdlBeforeMonitorCertPin(freshServerDdl()));
 }
 

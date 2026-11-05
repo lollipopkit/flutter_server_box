@@ -54,6 +54,7 @@ Future<void> _createV30() async {
   final db = SqliteDb.instance;
   db.execute('PRAGMA foreign_keys = ON;');
   await createTables(db);
+  createServerCustomCmdTable();
   replaceServerTable(serverDdlBeforePveTable(freshServerDdl()));
   db.execute('DROP TABLE server_pve;');
 }

@@ -70,3 +70,11 @@ void replaceServerTable(String ddl) {
   db.execute('PRAGMA legacy_alter_table = OFF;');
   db.execute('PRAGMA foreign_keys = ON;');
 }
+
+/// `server_custom_cmd` as Drift created it from v4 to v36; m036 drops it.
+void createServerCustomCmdTable() => SqliteDb.instance.execute(
+  'CREATE TABLE IF NOT EXISTS "server_custom_cmd" ('
+  '"server_id" TEXT NOT NULL REFERENCES server (id) ON DELETE CASCADE, '
+  '"name" TEXT NOT NULL, "cmd" TEXT NOT NULL, '
+  'PRIMARY KEY ("server_id", "name")) WITHOUT ROWID;',
+);

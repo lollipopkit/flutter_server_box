@@ -285,10 +285,20 @@ extension _Open on _SftpPageState {
         .read(serverProvider(spi.id).notifier)
         .ensureShellClient();
     _client = client;
+    bool rememberPwd() => Stores.setting.rememberPwdInMem.fetch();
     _sudoHelper = SftpSudoHelper(
-      client: client,
       spi: spi,
-      contextProvider: () => mounted ? context : null,
+      exec: client.execWithPwd,
+      rememberPwd: rememberPwd,
+      askPassword: () async {
+        if (!mounted) return null;
+        return context.showPwdDialog(
+          title: l10n.trySudo,
+          label: spi.ssh?.user,
+          id: '${spi.id}_sftp_sudo',
+          remember: rememberPwd(),
+        );
+      },
     );
     _escalation = _SudoEscalation(
       helper: _sudoHelper,
@@ -505,7 +515,7 @@ extension _Actions on _SftpPageState {
       // Asked before the transfer starts rather than after it fails: an upload
       // is a queued job, and a job that dies on the far side reports its
       // refusal in a list nobody is looking at.
-      if (await _canWrite(handle.path)) {
+      if (await _sudoHelper.canWrite(handle.path)) {
         ref
             .read(fileTransferProvider.notifier)
             .add(
@@ -521,11 +531,6 @@ extension _Actions on _SftpPageState {
 
     final ok = await _uploadViaSudo(local: local, remote: remote, name: name);
     if (ok) await handle.refresh();
-  }
-
-  Future<bool> _canWrite(String dir) async {
-    final result = await _client.execWithPwd(files.filesWritableCommand(dir: dir));
-    return result.exitCode == 0;
   }
 
   /// Uploads somewhere this user cannot write: to `/tmp` as themselves, then
@@ -556,37 +561,22 @@ extension _Actions on _SftpPageState {
       // No timeout: this waits for a transfer, whose length is the file's
       // business and not this dialog's.
       timeout: null,
-      fn: () async {
-        // The two checks answer different questions. A failed transfer leaves
-        // its error on the row; a cancelled one takes the row with it, and
-        // only the completer's own answer says so. Renaming after either would
-        // put a partial file — or nothing at all — over the destination as
-        // root.
-        final finished = await completer.future;
-        final status = ref.read(fileTransferProvider.notifier).get(reqId);
-        if (status?.error != null) throw status!.error!;
-        if (!finished) return false;
-        await _sudoHelper.rename(staging, remote, password: pwd);
-        return true;
-      },
-    );
-    if (moved == true && err == null) {
-      _sudoMode.value = true;
-      return true;
-    }
-
-    try {
-      await _sudoHelper.delete(
+      fn: () => _sudoHelper.finishUploadAsRoot(
         staging,
-        isDir: false,
-        recursive: false,
+        remote,
         password: pwd,
-      );
-    } catch (_) {
-      // Best effort: a leftover in `/tmp` is not worth a second error dialog
-      // over the one the user is already reading.
-    }
-    return false;
+        // A failed transfer leaves its error on the row; a cancelled one takes
+        // the row with it, and only the completer's own answer says so.
+        staged: completer.future.then((finished) {
+          final status = ref.read(fileTransferProvider.notifier).get(reqId);
+          if (status?.error != null) throw status!.error!;
+          return finished;
+        }),
+      ),
+    );
+    if (moved != true || err != null) return false;
+    _sudoMode.value = true;
+    return true;
   }
 
   Future<void> _decompress(
@@ -670,13 +660,31 @@ extension _Edit on _SftpPageState {
     );
   }
 
-  /// The size, or null if the user gave up on the way to finding it out.
+  /// The size, or null if it could not be found out or the user gave up on
+  /// the way to finding it out.
   Future<int?> _sizeFor(
     FileEntry entry,
     String remotePath, {
     required bool useSudo,
   }) async {
-    if (!useSudo) return entry.size ?? 0;
+    if (!useSudo) {
+      // A link's listed size is the link's own, not its target's.
+      if (entry.size case final size? when entry.kind != FileKind.link) {
+        return size;
+      }
+      // A listing may leave the size out; never guess it is small enough.
+      final (size, err) = await context.showLoadingDialog(fn: () async {
+        final result = await _client.execWithPwd(
+          files.filesSizeCommand(path: remotePath),
+        );
+        if (result.exitCode != 0) return null;
+        return files.filesParseSize(output: result.stdout);
+      });
+      if (err == null && size == null) {
+        Toast.error('${libL10n.fail}: ${entry.name}');
+      }
+      return err == null ? size : null;
+    }
     final pwd = await _sudoHelper.ensurePassword();
     if (pwd == null || !mounted) return null;
     final (size, err) = await context.showLoadingDialog(

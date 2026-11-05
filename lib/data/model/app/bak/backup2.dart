@@ -25,11 +25,7 @@ import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
 import 'package:server_box/data/res/misc.dart';
-import 'package:server_box/data/store/migrations/m008_settings_fixups.dart';
-import 'package:server_box/data/store/migrations/m009_grouped_settings.dart';
-import 'package:server_box/data/store/migrations/m011_virt_key_rows.dart';
-import 'package:server_box/data/store/migrations/m013_virt_key_names.dart';
-import 'package:server_box/data/store/migrations/m021_home_tabs_bar.dart';
+import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/migrations/m030_pve_virt.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/setting.dart';
@@ -145,7 +141,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     return BackupV2(
       version: formatVer,
       date: DateTimeX.timestamp,
-      spis: _withLegacyPve(Stores.server.getAllMap(), Stores.pve.fetchAll()),
+      spis: Stores.server.getAllMap(),
       snippets: Stores.snippet.getAllMap(),
       keys: Stores.key.getAllMap(),
       bmcCredentials: Stores.bmcCredential.getAllMap(),
@@ -354,24 +350,6 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
   /// a [pve] section that is the complete state: every server with PVE has an
   /// entry, and one without an entry has none.
   bool get carriesPveSection => version > PveVirtMigration.appliedAt;
-
-  /// [spis] with each server's PVE configuration also written into its
-  /// record's `custom`, where a build from before `server_pve` reads it —
-  /// see `PveConfig.toLegacyCustom`. Such a build ignores the [pve] section
-  /// and writes back only what it read.
-  // TODO(migration): remove after 5 releases from v1.0.1715.
-  static Map<String, Object?> _withLegacyPve(
-    Map<String, Object?> spis,
-    Map<String, PveConfig> pve,
-  ) => {
-    for (final MapEntry(:key, :value) in spis.entries)
-      key: switch ((value, pve[key])) {
-        (final Map record, final PveConfig cfg) =>
-          PveConfig.withLegacyCustom(record, cfg),
-        _ => value,
-      },
-  };
-
 }
 
 /// Keeps the per-record modification map needed by sync, but not device-local

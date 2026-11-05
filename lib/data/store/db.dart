@@ -314,23 +314,6 @@ class ServerDisabledCmds extends Table {
   Set<Column> get primaryKey => {serverId, cmdType};
 }
 
-/// `ServerCustom.cmds`, a map of name -> command.
-@DataClassName('ServerCustomCmdRow')
-class ServerCustomCmds extends Table {
-  @override
-  String get tableName => 'server_custom_cmd';
-  @override
-  bool get withoutRowId => true;
-
-  TextColumn get serverId =>
-      text().references(Servers, #id, onDelete: KeyAction.cascade)();
-  TextColumn get name => text()();
-  TextColumn get cmd => text()();
-
-  @override
-  Set<Column> get primaryKey => {serverId, name};
-}
-
 /// Was a JSON map in `setting` keyed `<serverId>::<keyType>`, so deleting a
 /// server left its trusted fingerprints behind for ever with nothing to say
 /// whose they were.
@@ -758,7 +741,6 @@ class SyncRecords extends Table {
     ServerJumps,
     ServerIdentityFiles,
     ServerDisabledCmds,
-    ServerCustomCmds,
     KnownHosts,
     Snippets,
     SnippetTags,

@@ -5,7 +5,10 @@ import 'package:server_box/data/model/file/backend/scp.dart';
 import 'package:server_box/data/model/file/backend/sftp.dart';
 import 'package:server_box/data/model/file/backend/sftp_escalation.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
+import 'package:server_box/data/model/file/file_issue.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
+
+export 'package:server_box/data/model/file/file_issue.dart' show SftpUnavailable;
 
 /// The one place that turns an SSH connection into a [FileBackend].
 ///
@@ -56,15 +59,3 @@ Future<FileBackend> openSshFileBackend(
   }
 }
 
-/// The SFTP subsystem would not open on a connection that is otherwise up.
-///
-/// [toString] is the original's, so the detail shown on screen is unchanged and
-/// `classifyFileError` reads the same words it always did.
-final class SftpUnavailable implements Exception {
-  const SftpUnavailable(this.cause);
-
-  final Object cause;
-
-  @override
-  String toString() => '$cause';
-}

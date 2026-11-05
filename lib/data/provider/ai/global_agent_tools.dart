@@ -6,6 +6,7 @@ import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart' hide Provider;
+import 'package:fl_pi_llm/fl_pi_llm.dart' show LlmException;
 import 'package:fl_tty/fl_tty.dart';
 import 'package:meta/meta.dart';
 import 'package:riverpod/riverpod.dart';
@@ -665,7 +666,7 @@ class AgentToolExecutionResult {
 /// Told as a way forward rather than as a refusal: the machine is reachable
 /// and `cat` and `tee` are right there, so a model that reads this can finish
 /// the job instead of reporting the server unusable.
-final _noSftp = StateError(
+const _noSftp = LlmException(
   'Reading and writing files here needs a byte stream, which travels over '
   'SSH. This server is reached only through its Monitor, which carries '
   'none. Use run_shell_command instead — `cat path` to read, and a heredoc '
@@ -766,12 +767,12 @@ class GlobalAgentToolService {
   AgentShellHandle _thisDevice() {
     final exec = LocalExec.forThisDevice();
     if (exec == null) {
-      throw StateError(
+      throw LlmException(
         'This build cannot run commands on the device it is installed on.',
       );
     }
     if (!Stores.setting.agentLocalExec.fetch()) {
-      throw StateError(
+      throw LlmException(
         'Running commands on this device is turned off. The user can enable '
         'it in ServerBox settings; do not ask again in this conversation if '
         'they decline.',
@@ -783,7 +784,7 @@ class GlobalAgentToolService {
     // filesystem with none of that in it, and it was built to be that
     // boundary.
     if (exec.inRootfs && !Rootfs.isReady) {
-      throw StateError(
+      throw LlmException(
         'This device runs Agent commands inside its Linux userland, and there '
         'is none installed. The user can install it from the terminal tab; do '
         'not propose commands for this device until they have.',
@@ -811,14 +812,14 @@ class GlobalAgentToolService {
   AgentShellHandle _adHocSession(String sessionId) {
     final session = _ref.read(adHocSshSessionsProvider)[sessionId];
     if (session == null) {
-      throw StateError(
+      throw LlmException(
         'No open connection with id $sessionId. Ad-hoc connections are not '
         'kept across app restarts; open a new one with ssh_connect.',
       );
     }
     if (session.client.isClosed) {
       _ref.read(adHocSshSessionsProvider.notifier).close(sessionId);
-      throw StateError(
+      throw LlmException(
         'The connection to ${session.label} has closed. Open a new one with '
         'ssh_connect.',
       );
@@ -879,12 +880,13 @@ class GlobalAgentToolService {
       exec = await notifier.ensureExec(
         onSshDial: () => _ref.read(agentShellProvider.notifier).show(),
       );
-    } catch (e) {
-      throw StateError('Cannot run commands on ${state.spi.name}: $e');
+    } catch (e, s) {
+      Loggers.app.warning('Agent ensureExec on ${state.spi.name}', e, s);
+      throw LlmException('Cannot run commands on ${state.spi.name}: $e');
     }
     final stored = _ref.read(serversProvider).servers[serverId];
     if (stored != spi || !notifier.isExecCurrent(exec, spi)) {
-      throw StateError('${spi.name} changed while connecting; try again.');
+      throw LlmException('${spi.name} changed while connecting; try again.');
     }
     return (
       exec: exec,
@@ -904,16 +906,16 @@ class GlobalAgentToolService {
     final notifier = _ref.read(serverProvider(serverId).notifier);
     final stored = _ref.read(serversProvider).servers[serverId];
     if (stored != spi || !notifier.isExecCurrent(handle.exec, spi)) {
-      throw StateError('${spi.name} changed while the operation was running.');
+      throw LlmException('${spi.name} changed while the operation was running.');
     }
   }
 
   ServerState _server(String? serverId) {
     if (serverId == null || serverId.isEmpty) {
-      throw const FormatException('server_id is required');
+      throw const LlmException('server_id is required');
     }
     if (!_ref.read(serversProvider).servers.containsKey(serverId)) {
-      throw StateError('Configured server not found: $serverId');
+      throw LlmException('Configured server not found: $serverId');
     }
     return _ref.read(serverProvider(serverId));
   }
@@ -934,7 +936,7 @@ class GlobalAgentToolService {
     final exec = handle.exec;
     final serverId = handle.serverId;
     final command = proposal.argumentString('command');
-    if (command == null) throw const FormatException('command is required');
+    if (command == null) throw const LlmException('command is required');
 
     final stdoutCapture = _BoundedTextAccumulator(_maxShellOutputCharacters);
     final stderrCapture = _BoundedTextAccumulator(_maxShellOutputCharacters);
@@ -1025,7 +1027,7 @@ class GlobalAgentToolService {
     final client = handle.client;
     final serverId = handle.serverId;
     final path = proposal.path;
-    if (path == null) throw const FormatException('path is required');
+    if (path == null) throw const LlmException('path is required');
     if (exec is LocalExec) return _readLocalFile(proposal, watch, path, exec);
     if (client == null) throw _noSftp;
     // Through the backend rather than through `client.sftp()` directly, which
@@ -1041,8 +1043,8 @@ class GlobalAgentToolService {
       _requireCurrent(handle);
       final entry = await backend.stat(path);
       _requireCurrent(handle);
-      if (entry == null) throw StateError('No such file: $path');
-      if (entry.isDir) throw StateError('$path is a directory, not a file.');
+      if (entry == null) throw LlmException('No such file: $path');
+      if (entry.isDir) throw LlmException('$path is a directory, not a file.');
       final size = entry.size;
       final bytes = BytesBuilder(copy: false);
       // Bounded per chunk. The SFTP path this replaced read with an explicit
@@ -1101,7 +1103,7 @@ class GlobalAgentToolService {
   }) async {
     final host = await exec.hostPathOf(path, forWrite: forWrite);
     if (host == null) {
-      throw StateError(
+      throw LlmException(
         'This device only exposes its Linux userland, and $path is not inside '
         'it. Use a path within the container.',
       );
@@ -1133,7 +1135,7 @@ class GlobalAgentToolService {
       // absence — and a model told a file does not exist goes and creates it.
       size = await file.length();
     } on PathNotFoundException {
-      throw StateError('No such file on this device: $path');
+      throw LlmException('No such file on this device: $path');
     }
     final truncated = size > _maxReadBytes;
     // Only what is going to be shown. A log the size of memory is a plausible
@@ -1171,17 +1173,17 @@ class GlobalAgentToolService {
       files.filesCappedReadCommand(path: path, maxBytes: _maxReadBytes),
     );
     if (result.outputIncomplete) {
-      throw StateError('The Linux userland returned incomplete file data.');
+      throw LlmException('The Linux userland returned incomplete file data.');
     }
     final [isDirExit, missingExit] = files.filesCappedReadExits();
     if (result.exitCode == isDirExit) {
-      throw StateError('$path is a directory, not a file.');
+      throw LlmException('$path is a directory, not a file.');
     }
     if (result.exitCode == missingExit) {
-      throw StateError('No such file on this device: $path');
+      throw LlmException('No such file on this device: $path');
     }
     if (result.exitCode != 0) {
-      throw StateError(
+      throw LlmException(
         result.stderr.trim().isEmpty
             ? 'Could not read $path inside the Linux userland.'
             : result.stderr.trim(),
@@ -1195,7 +1197,7 @@ class GlobalAgentToolService {
         maxBytes: _maxReadBytes,
       );
     } on String catch (e) {
-      throw StateError('The Linux userland returned $e.');
+      throw LlmException('The Linux userland returned $e.');
     }
     final size = read.size;
     final data = read.data;
@@ -1234,7 +1236,7 @@ class GlobalAgentToolService {
     LocalExec exec,
   ) async {
     if (bytes.length > _maxWriteBytes) {
-      throw StateError(
+      throw LlmException(
         'File content exceeds the $_maxWriteBytes byte Agent limit.',
       );
     }
@@ -1284,7 +1286,7 @@ class GlobalAgentToolService {
       stdin: base64.encode(bytes),
     );
     if (result.outputIncomplete || result.exitCode != 0) {
-      throw StateError(
+      throw LlmException(
         result.stderr.trim().isEmpty
             ? 'Could not write $path inside the Linux userland.'
             : result.stderr.trim(),
@@ -1310,15 +1312,15 @@ class GlobalAgentToolService {
     final serverId = handle.serverId;
     final path = proposal.path;
     final content = proposal.arguments['content'];
-    if (path == null) throw const FormatException('path is required');
-    if (content is! String) throw const FormatException('content is required');
+    if (path == null) throw const LlmException('path is required');
+    if (content is! String) throw const LlmException('content is required');
     final bytes = Uint8List.fromList(utf8.encode(content));
     if (exec is LocalExec) {
       return _writeLocalFile(proposal, watch, path, bytes, exec);
     }
     if (client == null) throw _noSftp;
     if (bytes.length > _maxWriteBytes) {
-      throw StateError(
+      throw LlmException(
         'File content exceeds the $_maxWriteBytes byte Agent limit.',
       );
     }
@@ -1371,12 +1373,12 @@ class GlobalAgentToolService {
   ) async {
     final host = proposal.argumentString('host');
     final user = proposal.argumentString('user');
-    if (host == null) throw const FormatException('host is required');
-    if (user == null) throw const FormatException('user is required');
+    if (host == null) throw const LlmException('host is required');
+    if (user == null) throw const LlmException('user is required');
     final rawPort = proposal.arguments['port'];
     final port = rawPort is num ? rawPort.toInt() : 22;
     if (port <= 0 || port > 65535) {
-      throw FormatException('port $port is not a port');
+      throw LlmException('port $port is not a port');
     }
 
     // Before the dialogs, not after: this may be running while the Agent tab
@@ -1424,11 +1426,12 @@ class GlobalAgentToolService {
       // `genClient` hands back a client before it has authenticated; without
       // this a wrong password is a session id that fails on first use.
       await opened.authenticated;
-    } catch (e) {
+    } catch (e, s) {
       // The socket is up by the time authentication fails, and nothing else
       // holds this client — it never reached the registry.
       opened?.close();
-      throw StateError('Cannot connect to $user@$host:$port: $e');
+      Loggers.app.warning('Agent ssh_connect', e, s);
+      throw LlmException('Cannot connect to $user@$host:$port: $e');
     }
     final client = opened;
 
@@ -1462,7 +1465,7 @@ class GlobalAgentToolService {
   ) {
     final sessionId = proposal.sessionId;
     if (sessionId == null) {
-      throw const FormatException('session_id is required');
+      throw const LlmException('session_id is required');
     }
     final session = _ref.read(adHocSshSessionsProvider)[sessionId];
     _ref.read(adHocSshSessionsProvider.notifier).close(sessionId);
@@ -1495,11 +1498,11 @@ class GlobalAgentToolService {
   ) async {
     final sessionId = proposal.sessionId;
     if (sessionId == null) {
-      throw const FormatException('session_id is required for add_server');
+      throw const LlmException('session_id is required for add_server');
     }
     final session = _ref.read(adHocSshSessionsProvider)[sessionId];
     if (session == null) {
-      throw StateError(
+      throw LlmException(
         'No open connection with id $sessionId. Ad-hoc connections are not '
         'kept across app restarts; open a new one with ssh_connect.',
       );
@@ -1512,7 +1515,7 @@ class GlobalAgentToolService {
         .where((spi) => spi.isSameAs(session.spi))
         .firstOrNull;
     if (existing != null) {
-      throw StateError(
+      throw LlmException(
         '${session.label} is already configured as "${existing.name}" '
         '(id ${existing.id}). Use that server instead of adding it again.',
       );
@@ -1658,7 +1661,7 @@ class GlobalAgentToolService {
           data: _statusJson(disconnected),
         );
       default:
-        throw FormatException('Unsupported serverbox action: $action');
+        throw LlmException('Unsupported serverbox action: $action');
     }
   }
 

@@ -39,6 +39,12 @@ abstract interface class SchemaMigration {
   Future<void> apply();
 }
 
+/// A step that rewrites only `setting` rows, synchronously, so a restore can
+/// run it inside its own transaction on the settings a file brought back.
+abstract interface class SettingsMigration implements SchemaMigration {
+  void applySync();
+}
+
 /// Version of the app's *local storage* layout.
 ///
 /// Distinct from `BuildData.build` (which gates one-off feature toggles via
@@ -101,7 +107,8 @@ abstract final class SchemaVersion {
   /// v34: `sync_record`, each synced record's newest stamp (the op log)
   /// v35: `server_identity_file`, a server's `IdentityFile` paths
   /// v36: `server.monitor_cert_sha256` replaces `monitor_ignore_cert`
-  static const current = 36;
+  /// v37: `server_custom_cmd` dropped, custom commands living on the server
+  static const current = 37;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

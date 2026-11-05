@@ -257,8 +257,7 @@ __SBM_GPU_END__
   test('the editor reads back what the installer wrote', () {
     // The two halves of the editor, checked against each other: what the
     // listing script prints is what the parser turns back into commands. A
-    // directory that does not exist is a different answer from an empty one —
-    // the migration seeds the first and must leave the second alone.
+    // directory that does not exist is a different answer from an empty one.
     final read = script.readCustomCmdsCommand(system: SystemType.linux);
     expect(read, contains(r'$HOME/.config/server_box/custom_cmds'));
     expect(read, contains('base64'));

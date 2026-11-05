@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/store/setting.dart';
@@ -325,7 +326,10 @@ final anySelected = find.textContaining(
         {
           '/home': [_file('there.txt')],
         },
-        failWith: 'status code of 403',
+        failWith: const MonitorHttpErr(
+          type: MonitorHttpErrType.forbidden,
+          message: 'HTTP 403',
+        ),
         roots: const ['/home', '/etc'],
       );
 

@@ -325,6 +325,7 @@ extension _Widgets on _ServerEditPageState {
     final password = Input(
       controller: _passwordController,
       obscureText: true,
+      onReveal: _revealStored(_passwordController),
       type: TextInputType.text,
       label: libL10n.pwd,
       icon: Icons.password,
@@ -967,6 +968,7 @@ extension _Widgets on _ServerEditPageState {
           label: l10n.pveTokenSecret,
           hint: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
           obscureText: true,
+          onReveal: _revealStored(_pveTokenSecretCtrl),
           suggestion: false,
         ),
       ],
@@ -986,6 +988,7 @@ extension _Widgets on _ServerEditPageState {
         label: l10n.pvePassword,
         hint: l10n.pvePasswordHint,
         obscureText: true,
+        onReveal: _revealStored(_pvePwdCtrl),
         suggestion: false,
       );
     });
@@ -1106,6 +1109,7 @@ extension _Widgets on _ServerEditPageState {
               icon: MingCute.lock_line,
               label: 'Monitor ${libL10n.pwd}',
               obscureText: true,
+              onReveal: _revealStored(_monitorPwdCtrl),
               suggestion: false,
             ),
             if (!plain) _buildMonitorCert() else _buildPlainHttpCallout(),
@@ -1469,6 +1473,7 @@ extension _Widgets on _ServerEditPageState {
           controller: _wolPwdCtrl,
           type: TextInputType.text,
           obscureText: true,
+          onReveal: _revealStored(_wolPwdCtrl),
           label: libL10n.pwd,
           icon: Icons.password,
           suggestion: false,

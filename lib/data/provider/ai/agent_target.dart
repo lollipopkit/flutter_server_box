@@ -3,6 +3,7 @@
 library;
 
 import 'package:dartssh2/dartssh2.dart';
+import 'package:fl_pi_llm/fl_pi_llm.dart' show LlmException;
 import 'package:fl_tty/fl_tty.dart';
 import 'package:meta/meta.dart';
 import 'package:server_box/core/local/device.dart';
@@ -63,7 +64,7 @@ sealed class AgentSshTarget {
     final serverId = proposal.serverId;
     final sessionId = proposal.sessionId;
     if (serverId != null && sessionId != null) {
-      throw const FormatException(
+      throw const LlmException(
         'Name either server_id or session_id, not both. Drop the one that is '
         'not the machine you mean and call this again.',
       );
@@ -75,7 +76,7 @@ sealed class AgentSshTarget {
     // tool's output and it is the whole of what it gets to work from. An
     // omitted argument and an empty one arrive here the same way, so neither
     // is worth naming separately.
-    throw const FormatException(
+    throw const LlmException(
       'Name the machine this is for: server_id for a server in the list, or '
       'session_id for a connection opened with ssh_connect. Exactly one of '
       'the two, and not an empty string.',

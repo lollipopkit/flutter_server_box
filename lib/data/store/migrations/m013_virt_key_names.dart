@@ -20,7 +20,7 @@ import 'package:server_box/data/store/setting.dart';
 /// Also run after a restore, from `Backup.merge` and `BackupV2.merge`: a file
 /// written before this carries the indices, and the version has long since
 /// moved past the point where the migrator would look.
-class VirtKeyNamesMigration implements SchemaMigration {
+class VirtKeyNamesMigration implements SettingsMigration {
   const VirtKeyNamesMigration();
 
 
@@ -90,6 +90,7 @@ class VirtKeyNamesMigration implements SchemaMigration {
   Future<void> apply() async => applySync();
 
   /// Runs the conversion inside a caller-owned SQLite transaction.
+  @override
   void applySync() {
     final store = SettingStore.instance;
     _convert(store, orderKey);

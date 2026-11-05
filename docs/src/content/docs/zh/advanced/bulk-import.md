@@ -79,7 +79,7 @@ SSH 配置位于 `ssh` 对象内。App 导出文件与导入对话框中的示�
 | `pwd` | 否 | `password` 模式下使用：SSH 用户在 `pam` 域下的 PVE 密码。省略时默认使用 SSH 密码 |
 | `certSha256` | 否 | 受信任证书的 SHA-256 指纹（小写十六进制）。省略时首次连接会提示确认证书 |
 
-旧版导出文件可能将 `pveAddr`、`pveIgnoreCert` 和 `pvePwd` 放在 `custom` 对象中；导入时会自动转换为未绑定证书的密码认证配置。新版导出统一使用 `pve` 对象。
+旧版导出文件将 `pveAddr`、`pveIgnoreCert` 和 `pvePwd` 放在 `custom` 对象中，导入时会忽略。如需保留 PVE，请改写为 `pve` 对象。
 
 每台服务器至少需配置一种连接方式。若同时省略 `ssh` 和 `monitorHttp`，导入后将无法连接该主机。
 

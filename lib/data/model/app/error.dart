@@ -81,6 +81,18 @@ class LocalServerErr extends Err<LocalServerErrType> {
   };
 }
 
+enum ScriptErrType { writeScript }
+
+/// The status script could not be written, whichever transport carried it.
+class ScriptErr extends Err<ScriptErrType> {
+  const ScriptErr({required super.type, super.message});
+
+  @override
+  String? get solution => switch (type) {
+    ScriptErrType.writeScript => l10n.writeScriptFailTip,
+  };
+}
+
 enum ContainerErrType {
   unknown,
   noClient,

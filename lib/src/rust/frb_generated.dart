@@ -100,7 +100,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => -1884184734;
+  int get rustContentHash => 1655124280;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -1351,11 +1351,12 @@ abstract class RustLibApi extends BaseApi {
     required bool succeeded,
   });
 
-  TmuxSessionListingItem crateApiTmuxTmuxParseSessions({
-    required String output,
-  });
-
   List<TmuxWindowItem> crateApiTmuxTmuxParseWindows({required String output});
+
+  TmuxSessionListingItem? crateApiTmuxTmuxReadSessions({
+    required String output,
+    required int exitCode,
+  });
 
   String crateApiFirewallUfwDirectionToken({required UfwDirection direction});
 
@@ -11931,38 +11932,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   );
 
   @override
-  TmuxSessionListingItem crateApiTmuxTmuxParseSessions({
-    required String output,
-  }) {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(output, serializer);
-          return pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 306,
-          )!;
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_tmux_session_listing_item,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiTmuxTmuxParseSessionsConstMeta,
-        argValues: [output],
-        apiImpl: this,
-      ),
-    );
-  }
-
-  TaskConstMeta get kCrateApiTmuxTmuxParseSessionsConstMeta =>
-      const TaskConstMeta(
-        debugName: 'tmux_parse_sessions',
-        argNames: ['output'],
-      );
-
-  @override
   List<TmuxWindowItem> crateApiTmuxTmuxParseWindows({required String output}) {
     return handler.executeSync(
       SyncTask(
@@ -11972,7 +11941,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 307,
+            funcId: 306,
           )!;
         },
         codec: SseCodec(
@@ -11990,6 +11959,41 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(
         debugName: 'tmux_parse_windows',
         argNames: ['output'],
+      );
+
+  @override
+  TmuxSessionListingItem? crateApiTmuxTmuxReadSessions({
+    required String output,
+    required int exitCode,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(output, serializer);
+          sse_encode_i_32(exitCode, serializer);
+          return pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 307,
+          )!;
+        },
+        codec: SseCodec(
+          decodeSuccessData:
+              sse_decode_opt_box_autoadd_tmux_session_listing_item,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiTmuxTmuxReadSessionsConstMeta,
+        argValues: [output, exitCode],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTmuxTmuxReadSessionsConstMeta =>
+      const TaskConstMeta(
+        debugName: 'tmux_read_sessions',
+        argNames: ['output', 'exitCode'],
       );
 
   @override
@@ -17394,6 +17398,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  TmuxSessionListingItem dco_decode_box_autoadd_tmux_session_listing_item(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_tmux_session_listing_item(raw);
+  }
+
+  @protected
   int dco_decode_box_autoadd_u_16(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as int;
@@ -20344,6 +20356,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   SystemType? dco_decode_opt_box_autoadd_system_type(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_system_type(raw);
+  }
+
+  @protected
+  TmuxSessionListingItem? dco_decode_opt_box_autoadd_tmux_session_listing_item(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null
+        ? null
+        : dco_decode_box_autoadd_tmux_session_listing_item(raw);
   }
 
   @protected
@@ -24761,6 +24783,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  TmuxSessionListingItem sse_decode_box_autoadd_tmux_session_listing_item(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_tmux_session_listing_item(deserializer);
+  }
+
+  @protected
   int sse_decode_box_autoadd_u_16(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return sse_decode_u_16(deserializer);
@@ -29123,6 +29153,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
     if (sse_decode_bool(deserializer)) {
       return sse_decode_box_autoadd_system_type(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  TmuxSessionListingItem? sse_decode_opt_box_autoadd_tmux_session_listing_item(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_box_autoadd_tmux_session_listing_item(deserializer);
     } else {
       return null;
     }
@@ -34316,6 +34359,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_tmux_session_listing_item(
+    TmuxSessionListingItem self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_tmux_session_listing_item(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_u_16(int self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_u_16(self, serializer);
@@ -38015,6 +38067,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_bool(self != null, serializer);
     if (self != null) {
       sse_encode_box_autoadd_system_type(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_tmux_session_listing_item(
+    TmuxSessionListingItem? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_tmux_session_listing_item(self, serializer);
     }
   }
 

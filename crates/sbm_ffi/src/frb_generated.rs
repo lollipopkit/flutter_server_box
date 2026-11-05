@@ -27,11 +27,11 @@
 
 // Section: imports
 
-use crate::api::ssh_crypto::*;
-use crate::api::remote_desktop::*;
-use crate::api::pve::*;
 use crate::api::bmc::*;
-use crate::api::virt::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::pve::*;
+use crate::api::remote_desktop::*;
+use crate::api::virt::*;
+use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};
 
@@ -43,7 +43,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
                     default_rust_auto_opaque = RustAutoOpaqueMoi,
                 );
                 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-                pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1884184734;
+                pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1655124280;
             
 
 // Section: executor
@@ -3549,14 +3549,6 @@ let api_succeeded = <bool>::sse_decode(&mut deserializer);deserializer.end();
                 transform_result_sse::<_, ()>((move || {
                      let output_ok = Ok::<_, ()>(crate::api::tmux::tmux_parse_find(api_output, api_succeeded))?;   std::result::Result::Ok(output_ok)
                 })()) })
-            }fn wire__crate__api__tmux__tmux_parse_sessions_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "tmux_parse_sessions", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
-            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
-            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_output = <String>::sse_decode(&mut deserializer);deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::tmux::tmux_parse_sessions(api_output))?;   std::result::Result::Ok(output_ok)
-                })()) })
             }fn wire__crate__api__tmux__tmux_parse_windows_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
                 FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "tmux_parse_windows", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
             let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
@@ -3564,6 +3556,15 @@ let api_succeeded = <bool>::sse_decode(&mut deserializer);deserializer.end();
             let api_output = <String>::sse_decode(&mut deserializer);deserializer.end();
                 transform_result_sse::<_, ()>((move || {
                      let output_ok = Ok::<_, ()>(crate::api::tmux::tmux_parse_windows(api_output))?;   std::result::Result::Ok(output_ok)
+                })()) })
+            }fn wire__crate__api__tmux__tmux_read_sessions_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "tmux_read_sessions", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_output = <String>::sse_decode(&mut deserializer);
+let api_exit_code = <i32>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, ()>((move || {
+                     let output_ok = Ok::<_, ()>(crate::api::tmux::tmux_read_sessions(api_output, api_exit_code))?;   std::result::Result::Ok(output_ok)
                 })()) })
             }fn wire__crate__api__firewall__ufw_direction_token_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
                 FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "ufw_direction_token", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
@@ -9365,6 +9366,15 @@ return crate::api::parser::NvidiaSmiItem{name: var_name, temp: var_temp, power: 
             }}
                 }
                 
+                impl SseDecode for Option<crate::api::tmux::TmuxSessionListingItem> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {if (<bool>::sse_decode(deserializer)) {
+                return Some(<crate::api::tmux::TmuxSessionListingItem>::sse_decode(deserializer));
+            } else {
+                return None;
+            }}
+                }
+                
                 impl SseDecode for Option<u16> {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {if (<bool>::sse_decode(deserializer)) {
@@ -12429,8 +12439,8 @@ return crate::api::ssh_asym::X25519KeyPair{private_key: var_privateKey, public_k
 303 => wire__crate__api__tmux__tmux_list_windows_command_impl(ptr, rust_vec_len, data_len),
 304 => wire__crate__api__tmux__tmux_new_session_or_attach_command_impl(ptr, rust_vec_len, data_len),
 305 => wire__crate__api__tmux__tmux_parse_find_impl(ptr, rust_vec_len, data_len),
-306 => wire__crate__api__tmux__tmux_parse_sessions_impl(ptr, rust_vec_len, data_len),
-307 => wire__crate__api__tmux__tmux_parse_windows_impl(ptr, rust_vec_len, data_len),
+306 => wire__crate__api__tmux__tmux_parse_windows_impl(ptr, rust_vec_len, data_len),
+307 => wire__crate__api__tmux__tmux_read_sessions_impl(ptr, rust_vec_len, data_len),
 308 => wire__crate__api__firewall__ufw_direction_token_impl(ptr, rust_vec_len, data_len),
 309 => wire__crate__api__firewall__ufw_log_token_impl(ptr, rust_vec_len, data_len),
 310 => wire__crate__api__firewall__ufw_parse_impl(ptr, rust_vec_len, data_len),
@@ -21463,6 +21473,14 @@ crate::api::virt_model::HwIssue::Unsupported => { 20 }
                 }}
                 }
                 
+                impl SseEncode for Option<crate::api::tmux::TmuxSessionListingItem> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<bool>::sse_encode(self.is_some(), serializer);
+                if let Some(value) = self {
+                    <crate::api::tmux::TmuxSessionListingItem>::sse_encode(value, serializer);
+                }}
+                }
+                
                 impl SseEncode for Option<u16> {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<bool>::sse_encode(self.is_some(), serializer);
@@ -23895,11 +23913,11 @@ crate::api::virt_libvirt::VirtResourceOp::NetDelete{name} => { <i32>::sse_encode
 
 // Section: imports
 
-use crate::api::ssh_crypto::*;
-use crate::api::remote_desktop::*;
-use crate::api::pve::*;
 use crate::api::bmc::*;
-use crate::api::virt::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::pve::*;
+use crate::api::remote_desktop::*;
+use crate::api::virt::*;
+use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};use super::*;
 
@@ -24030,11 +24048,11 @@ flutter_rust_bridge::frb_generated_boilerplate_io!();
 
 // Section: imports
 
-use crate::api::ssh_crypto::*;
-use crate::api::remote_desktop::*;
-use crate::api::pve::*;
 use crate::api::bmc::*;
-use crate::api::virt::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::pve::*;
+use crate::api::remote_desktop::*;
+use crate::api::virt::*;
+use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};use super::*;
                 use flutter_rust_bridge::for_generated::wasm_bindgen;

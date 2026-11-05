@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:fl_pi_llm/fl_pi_llm.dart' show LlmException;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/local/device.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
@@ -153,7 +154,7 @@ void main() {
     test('a call that names no machine is refused', () {
       expect(
         () => AgentSshTarget.fromArguments(shell({'command': 'uptime'})),
-        throwsA(isA<FormatException>()),
+        throwsA(isA<LlmException>()),
       );
     });
 
@@ -164,7 +165,7 @@ void main() {
         () => AgentSshTarget.fromArguments(
           shell({'server_id': '   ', 'command': 'uptime'}),
         ),
-        throwsA(isA<FormatException>()),
+        throwsA(isA<LlmException>()),
       );
     });
 
@@ -178,7 +179,7 @@ void main() {
 
       expect(
         () => AgentSshTarget.fromArguments(proposal),
-        throwsA(isA<FormatException>()),
+        throwsA(isA<LlmException>()),
       );
     });
   });
@@ -211,7 +212,7 @@ void main() {
             'command': 'uptime',
           }),
         ),
-        throwsA(isA<FormatException>()),
+        throwsA(isA<LlmException>()),
       );
     });
 
@@ -242,7 +243,7 @@ void main() {
         () => AgentSshTarget.fromArguments(
           shell({'server_id': null, 'session_id': null, 'command': 'uptime'}),
         ),
-        throwsA(isA<FormatException>()),
+        throwsA(isA<LlmException>()),
       );
     });
 

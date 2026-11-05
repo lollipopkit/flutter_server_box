@@ -229,7 +229,9 @@ final class _MonitorSettingsViewState extends State<MonitorSettingsView> {
 extension on _MonitorSettingsViewState {
   Widget _buildBody() {
     final err = _err;
-    if (err != null) return _buildErr(err);
+    if (err != null) {
+      return PageIssueView(title: libL10n.error, detail: err, onRetry: _load);
+    }
     if (_refused) return _buildRefused();
 
     final settings = _settings;
@@ -291,24 +293,6 @@ extension on _MonitorSettingsViewState {
               style: UIs.textGrey,
               textAlign: TextAlign.center,
             ),
-          ),
-          UIs.height13,
-          Btn.text(text: libL10n.retry, onTap: _load),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildErr(String err) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(libL10n.error, style: UIs.text18),
-          UIs.height13,
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 27),
-            child: Text(err, style: UIs.textGrey, textAlign: TextAlign.center),
           ),
           UIs.height13,
           Btn.text(text: libL10n.retry, onTap: _load),

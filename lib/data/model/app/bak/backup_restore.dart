@@ -22,16 +22,6 @@ extension BackupV2Restore on BackupV2 {
       _loggerV2.warning('Themes not restored: ${themeReport.failed}');
     }
 
-    late bool keysChanged;
-    late bool credsChanged;
-    late bool serversChanged;
-    late bool snippetsChanged;
-    late bool forwardsChanged;
-    late bool remoteDesktopsChanged;
-    late bool containerChanged;
-    late Set<String> historyNotifications;
-    late Set<String> settingNotifications;
-
     // Every store shares this SQLite connection. Keep the reference order, but
     // commit the whole restore as one unit so a later failure cannot leave the
     // earlier stores visible without it.
@@ -42,31 +32,31 @@ extension BackupV2Restore on BackupV2 {
     // (`SyncRecorder.applying`).
     T asChanged<T>(T Function() write) =>
         force ? write() : SyncRecorder.applying(write);
-    asChanged(() => SqliteStore.transact(() {
-      keysChanged = Stores.key.merge(keys, force: force, notify: false);
-      credsChanged = Stores.bmcCredential.merge(
+    final changed = asChanged(() => SqliteStore.transact(() {
+      final keysChanged = Stores.key.merge(keys, force: force, notify: false);
+      final credsChanged = Stores.bmcCredential.merge(
         bmcCredentials,
         force: force,
         notify: false,
       );
       final appliedServerIds = <String>{};
-      serversChanged = Stores.server.merge(
+      var serversChanged = Stores.server.merge(
         restored.servers,
         force: force,
         notify: false,
         appliedIds: appliedServerIds,
       );
-      snippetsChanged = Stores.snippet.merge(
+      final snippetsChanged = Stores.snippet.merge(
         _snippetsWithRestoredServerIds(restored.serverIds),
         force: force,
         notify: false,
       );
-      forwardsChanged = Stores.portForward.merge(
+      final forwardsChanged = Stores.portForward.merge(
         _portForwardsWithRestoredServerIds(restored.serverIds),
         force: force,
         notify: false,
       );
-      remoteDesktopsChanged = Stores.remoteDesktop.merge(
+      final remoteDesktopsChanged = Stores.remoteDesktop.merge(
         _remoteDesktopsWithRestoredServerIds(restored.serverIds),
         force: force,
         notify: false,
@@ -75,7 +65,7 @@ extension BackupV2Restore on BackupV2 {
       final restoredContainer = _containerWithRestoredServerIds(
         restored.serverIds,
       );
-      containerChanged = false;
+      var containerChanged = false;
       final containerIds = <String>{
         for (final key in restored.servers.keys)
           if (!_isInternalStoreKey(key)) key,
@@ -105,19 +95,14 @@ extension BackupV2Restore on BackupV2 {
       final restoredPve = _pveWithRestoredServerIds(restored.serverIds);
       for (final serverId in containerIds.union(restoredPve.keys.toSet())) {
         if (!appliedServerIds.contains(serverId)) continue;
-        final value = _pveToRestore(
-          serverId,
-          restoredPve,
-          restored.servers[serverId],
-          force: force,
-        );
+        final value = _pveToRestore(serverId, restoredPve, force: force);
         if (value == null) continue;
         if (Stores.pve.restoreOne(serverId, value, notify: false)) {
           serversChanged = true;
         }
       }
 
-      historyNotifications = _mergeSqliteStore(
+      final historyNotifications = _mergeSqliteStore(
         Stores.history,
         _mergeDataForStore(
           Stores.history,
@@ -125,7 +110,7 @@ extension BackupV2Restore on BackupV2 {
         ),
         force: force,
       );
-      settingNotifications = settings.isEmpty
+      final settingNotifications = settings.isEmpty
           ? const <String>{}
           : _mergeSqliteStore(
               Stores.setting,
@@ -136,18 +121,27 @@ extension BackupV2Restore on BackupV2 {
       // shapes in version order before this transaction can commit, so a
       // failed conversion rolls the entire restore back with it.
       if (settings.isNotEmpty) {
-        const SettingsFixupsMigration().applySync();
-        const GroupedSettingsMigration().applySync();
-        const VirtKeyRowsMigration().applySync();
-        const VirtKeyNamesMigration().applySync();
-        const HomeTabsBarMigration().applySync();
+        for (final step in kRestoreSettingsMigrations) {
+          step.applySync();
+        }
       }
+      return (
+        keys: keysChanged,
+        creds: credsChanged,
+        servers: serversChanged,
+        snippets: snippetsChanged,
+        forwards: forwardsChanged,
+        remoteDesktops: remoteDesktopsChanged,
+        container: containerChanged,
+        history: historyNotifications,
+        settings: settingNotifications,
+      );
     }));
 
     // Notifications and provider reloads happen only after the outer
     // transaction commits, so a failed restore leaves every store as it was.
     // The themes installed before it stay installed, selected by nothing.
-    if (keysChanged) {
+    if (changed.keys) {
       Stores.key.invalidate();
       PrivateKeyUnlock.forgetAll();
       forgetParsedIdentities();
@@ -158,32 +152,32 @@ extension BackupV2Restore on BackupV2 {
         ),
       );
     }
-    if (credsChanged) Stores.bmcCredential.invalidate();
-    if (serversChanged) {
+    if (changed.creds) Stores.bmcCredential.invalidate();
+    if (changed.servers) {
       Stores.server.invalidate();
       // A server tombstone cascades these rows even when their own merge pass
       // has no later write to announce.
       Stores.portForward.invalidate();
       Stores.remoteDesktop.invalidate();
       Stores.snippet.invalidate();
-      // A PVE write sets [serversChanged]; a deleted server's row cascades
+      // A PVE write sets `servers`; a deleted server's row cascades
       // without one, since `restoreOne` answers false for a server not here.
       Stores.pve.invalidate();
     }
-    if (snippetsChanged && !serversChanged) Stores.snippet.invalidate();
-    if (forwardsChanged && !serversChanged) Stores.portForward.invalidate();
-    if (remoteDesktopsChanged && !serversChanged) {
+    if (changed.snippets && !changed.servers) Stores.snippet.invalidate();
+    if (changed.forwards && !changed.servers) Stores.portForward.invalidate();
+    if (changed.remoteDesktops && !changed.servers) {
       Stores.remoteDesktop.invalidate();
     }
-    _notifySqliteStore(Stores.history, historyNotifications);
-    _notifySqliteStore(Stores.setting, settingNotifications);
+    _notifySqliteStore(Stores.history, changed.history);
+    _notifySqliteStore(Stores.setting, changed.settings);
 
     StoreReload.after({
-      if (serversChanged) ReloadedStore.servers,
-      if (snippetsChanged) ReloadedStore.snippets,
-      if (keysChanged) ReloadedStore.keys,
-      if (credsChanged) ReloadedStore.bmcCredentials,
-      if (containerChanged) ReloadedStore.containers,
+      if (changed.servers) ReloadedStore.servers,
+      if (changed.snippets) ReloadedStore.snippets,
+      if (changed.keys) ReloadedStore.keys,
+      if (changed.creds) ReloadedStore.bmcCredentials,
+      if (changed.container) ReloadedStore.containers,
     });
 
     // After the settings: it points what they restored at this device's
@@ -372,38 +366,20 @@ extension BackupV2Restore on BackupV2 {
   /// truth: its entry, or none, which removes the row. That is how removing
   /// PVE on one device reaches the others.
   ///
-  /// **A file from an older build** has no section; its server records carry
-  /// the legacy `custom.pveAddr`/`pvePwd` instead, which express an address
-  /// and a password and nothing else.
-  /// - Present: applied onto the row here with `PveConfig.mergeLegacy`, so
-  ///   an older device handing back a record it got from this build leaves
-  ///   the token and the pinned certificate alone.
-  /// - Absent: in a sync, the row is left alone. An older build writes no
-  ///   PVE fields for a server whose record it has not seen with them, and
-  ///   cannot say "removed" in any other way than it says "never had", so
-  ///   reading absence as removal lets one old device delete what a new one
-  ///   configured. The cost is that removing PVE *on an older build* does not
-  ///   reach newer ones. [force] (restoring a backup) is the exception: the
-  ///   user asked for the file's state, and at the time it was written the
-  ///   server had no PVE.
-  // TODO(migration): after 5 releases from v1.0.1715 every file has the section; reduce this
-  // to its first branch, with `PveConfig.fromLegacyRecord` and `mergeLegacy`.
+  /// **A file from an older build** has no section and cannot say "removed"
+  /// any other way than it says "never had", so a sync leaves the row alone.
+  /// Restoring one ([force]) is the file's state, and at the time it was
+  /// written the server had no PVE here. The `custom.pveAddr`/`pvePwd` such a
+  /// file may carry are not read.
   Object? _pveToRestore(
     String serverId,
-    Map<String, Object?> restoredPve,
-    Object? server, {
+    Map<String, Object?> restoredPve, {
     required bool force,
   }) {
-    if (carriesPveSection) {
-      // A malformed entry is passed on for `PveStore.restoreOne` to skip:
-      // read as "none", it would delete the credentials here.
-      return restoredPve[serverId] ?? const <String, Object?>{};
-    }
-    final legacy = PveConfig.fromLegacyRecord(server);
-    if (legacy != null) {
-      return PveConfig.mergeLegacy(Stores.pve.fetch(serverId), legacy).toJson();
-    }
-    return force ? const <String, Object?>{} : null;
+    if (!carriesPveSection) return force ? const <String, Object?>{} : null;
+    // A malformed entry is passed on for `PveStore.restoreOne` to skip:
+    // read as "none", it would delete the credentials here.
+    return restoredPve[serverId] ?? const <String, Object?>{};
   }
 
   Map<String, Object?> _historyWithRestoredServerIds(

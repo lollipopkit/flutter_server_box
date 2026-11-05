@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/widgets.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/sudo_error.dart';
 
 /// A server's sudo password, wherever something asks for it.
 ///
@@ -92,6 +93,32 @@ abstract final class SudoPassword {
     return result;
   }
 
+  /// [retry] for an [attempt] that throws [SudoRejected] rather than
+  /// answering a result that says so. Only [SudoRejected] moves on to the next
+  /// password; the last one is rethrown, and every other exception propagates
+  /// at once. Null when the user declined to type one.
+  static Future<T?> retryOnRejected<T extends Object>(
+    BuildContext context,
+    String serverId, {
+    required Future<T> Function(String? password) attempt,
+    String? label,
+  }) async {
+    final outcome = await retry<_Tried<T>>(
+      context,
+      serverId,
+      label: label,
+      attempt: (password) async {
+        try {
+          return _Tried.value(await attempt(password));
+        } on SudoRejected catch (e, s) {
+          return _Tried.rejected(e, s);
+        }
+      },
+      rejected: (tried) => tried.rejection != null,
+    );
+    return outcome?.unwrap();
+  }
+
   static SecureProp secureProp(String serverId) {
     return SecureProp('sudo_pwd_$serverId');
   }
@@ -150,5 +177,22 @@ abstract final class SudoPassword {
         .replaceAll(RegExp(r'\x1B\[[0-?]*[ -/]*[@-~]'), '')
         .replaceAll('\r\n', '\n')
         .replaceAll('\r', '\n');
+  }
+}
+
+final class _Tried<T extends Object> {
+  const _Tried.value(T this.value) : rejection = null, stackTrace = null;
+  const _Tried.rejected(SudoRejected this.rejection, StackTrace this.stackTrace)
+    : value = null;
+
+  final T? value;
+  final SudoRejected? rejection;
+  final StackTrace? stackTrace;
+
+  T unwrap() {
+    if (rejection case final rejection?) {
+      Error.throwWithStackTrace(rejection, stackTrace!);
+    }
+    return value!;
   }
 }

@@ -2,20 +2,23 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
-import 'package:material_ui/material_ui.dart';
-import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/extension/ssh_client.dart';
+import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/sudo_error.dart';
-import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/src/rust/api/files.dart' as files;
 
 final class SftpSudoHelper {
-  final SSHClient client;
   final Spi spi;
-  final BuildContext? Function() contextProvider;
+
+  /// Runs a script on the server's stdin as this user (`execWithPwd`).
+  final Future<SudoExecResult> Function(String script) exec;
+
+  /// Asks for the sudo password; null when the user declines.
+  final Future<String?> Function() askPassword;
+
+  /// Whether a password may be kept in memory for a while.
+  final bool Function() rememberPwd;
 
   String? _cachedPassword;
   Timer? _cacheTimer;
@@ -37,35 +40,26 @@ final class SftpSudoHelper {
   }
 
   SftpSudoHelper({
-    required this.client,
     required this.spi,
-    required this.contextProvider,
+    required this.exec,
+    required this.askPassword,
+    required this.rememberPwd,
   });
 
   bool get enabled => !spi.isRoot;
-
-  bool get _rememberPwd => Stores.setting.rememberPwdInMem.fetch();
 
   Future<String?> ensurePassword({bool force = false}) async {
     if (!enabled) return '';
 
     if (force) {
       clearCache();
-    } else if (_rememberPwd && _cachedPassword != null) {
+    } else if (rememberPwd() && _cachedPassword != null) {
       return _cachedPassword;
     }
 
-    final context = contextProvider();
-    if (context == null || !context.mounted) return null;
-
-    final pwd = await context.showPwdDialog(
-      title: l10n.trySudo,
-      label: spi.ssh?.user,
-      id: '${spi.id}_sftp_sudo',
-      remember: _rememberPwd,
-    );
+    final pwd = await askPassword();
     if (pwd == null || pwd.isEmpty) return null;
-    if (_rememberPwd) {
+    if (rememberPwd()) {
       _cachedPassword = pwd;
       _scheduleCacheExpiry();
     }
@@ -80,12 +74,21 @@ final class SftpSudoHelper {
   /// to run it.
   Future<String> runAsRoot(String command) => _runAndRead(command);
 
+  /// Whether this user, without sudo, may create files in [dir].
+  Future<bool> canWrite(String dir) async =>
+      (await exec(files.filesWritableCommand(dir: dir))).exitCode == 0;
+
   Future<int> getFileSize(String remotePath, {String? password}) async {
     final output = await _runAndRead(
       files.filesSizeCommand(path: remotePath),
       password: password,
     );
-    return files.filesParseSize(output: output) ?? 0;
+    final size = files.filesParseSize(output: output);
+    if (size == null) {
+      final printed = output.trim();
+      throw SftpSudoFailed(printed.isEmpty ? null : printed);
+    }
+    return size;
   }
 
   Future<void> downloadTextFile(
@@ -146,16 +149,49 @@ final class SftpSudoHelper {
     );
   }
 
+  /// Moves an upload staged at [staging] (somewhere this user can write) into
+  /// [remote] as root once [staged] says the transfer finished. Answers whether
+  /// [remote] now holds it; whatever else happens, the staging copy is removed.
+  Future<bool> finishUploadAsRoot(
+    String staging,
+    String remote, {
+    required Future<bool> staged,
+    String? password,
+  }) async {
+    try {
+      // Renaming after a failed or cancelled transfer would put a partial
+      // file, or nothing at all, over the destination as root.
+      if (await staged) {
+        await rename(staging, remote, password: password);
+        return true;
+      }
+    } catch (_) {
+      await _discard(staging, password);
+      rethrow;
+    }
+    await _discard(staging, password);
+    return false;
+  }
+
+  Future<void> _discard(String staging, String? password) async {
+    try {
+      await delete(staging, isDir: false, recursive: false, password: password);
+    } catch (e) {
+      // A leftover in `/tmp` is not worth a second error over the first.
+      Loggers.app.warning('SFTP sudo: staging $staging left behind', e);
+    }
+  }
+
   Future<String> _runAndRead(String innerCommand, {String? password}) async {
     final pwd = password ?? await ensurePassword();
     if (pwd == null) throw const SudoCancelled();
 
-    var result = await client.execWithPwd(_buildSudoCommand(innerCommand, pwd));
+    var result = await exec(_buildSudoCommand(innerCommand, pwd));
     if (result.rejected) {
       clearCache();
       final retryPwd = await ensurePassword(force: true);
       if (retryPwd == null) throw const SudoCancelled();
-      result = await client.execWithPwd(_buildSudoCommand(innerCommand, retryPwd));
+      result = await exec(_buildSudoCommand(innerCommand, retryPwd));
       if (result.rejected) {
         clearCache();
         throw const SudoRejected();
