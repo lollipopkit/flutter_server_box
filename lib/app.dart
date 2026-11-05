@@ -12,6 +12,7 @@ import 'package:server_box/core/local/server.dart';
 import 'package:server_box/core/motion.dart';
 import 'package:server_box/core/service/diagnostics_upload.dart';
 import 'package:server_box/core/service/ssh_discovery.dart';
+import 'package:server_box/core/service/ssh_discovery_sources.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/data/res/url.dart';

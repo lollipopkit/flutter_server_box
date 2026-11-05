@@ -7,6 +7,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/local/server.dart';
 import 'package:server_box/core/service/ssh_discovery.dart';
+import 'package:server_box/core/service/ssh_discovery_sources.dart';
 import 'package:server_box/core/ssh/host_key_probe.dart';
 import 'package:server_box/core/ssh/host_keys.dart';
 import 'package:server_box/core/utils/server_dedup.dart';
@@ -111,7 +112,7 @@ final class _SshDiscoveryViewState extends ConsumerState<SshDiscoveryView> {
     if (given != null) {
       _setSources(given);
     } else {
-      SshDiscovery.available().then((sources) {
+      availableSshDiscoveries().then((sources) {
         if (mounted) setState(() => _setSources(sources));
       });
     }
