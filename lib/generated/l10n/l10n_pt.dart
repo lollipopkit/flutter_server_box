@@ -446,9 +446,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get discoveryFailed => 'Descoberta falhou';
 
   @override
-  String get discoverySettings => 'Configurações de descoberta';
-
-  @override
   String get distro => 'Distribuição';
 
   @override
@@ -471,20 +468,11 @@ class AppLocalizationsPt extends AppLocalizations {
       'Remova os dados não utilizados para liberar espaço em disco';
 
   @override
-  String get dockerStatistics => 'Estatísticas do Docker';
-
-  @override
   String get editVirtKeys => 'Teclas virtuais';
 
   @override
   String get editorHighlightTip =>
       'O desempenho do destaque de código atualmente é ruim, pode optar por desativá-lo para melhorar.';
-
-  @override
-  String get enableMdns => 'Ativar mDNS';
-
-  @override
-  String get enableMdnsDesc => 'Usar mDNS/Bonjour para descobrir serviços SSH';
 
   @override
   String get envVars => 'Variável de ambiente';
@@ -756,9 +744,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String madeWithLove(String myGithub) {
     return 'Feito por $myGithub com ❤️';
   }
-
-  @override
-  String get maxConcurrency => 'Concorrência máxima';
 
   @override
   String get maxRetryCount =>
@@ -2441,25 +2426,6 @@ class AppLocalizationsPt extends AppLocalizations {
       'Esta plataforma não consegue ler este dispositivo como servidor. Linux, Windows e a versão DMG do macOS conseguem.';
 
   @override
-  String get remoteDesktopIntro =>
-      'Abre o ambiente de trabalho RDP ou VNC de um servidor dentro da app. A conexão passa pela conexão SSH do servidor ou pelo seu Monitor, por isso a porta do ambiente de trabalho não precisa de estar acessível a partir da rede.';
-
-  @override
-  String get remoteDesktopIntroProfiles =>
-      'Guarde um perfil por ambiente de trabalho a partir do botão Área de trabalho remota de um servidor ou do separador Área de trabalho remota.';
-
-  @override
-  String get localServerIntro =>
-      'Adiciona como servidor o dispositivo que executa o ServerBox. Estado, processos, serviços, contentores, terminal e ficheiros funcionam sem SSH nem o Monitor.';
-
-  @override
-  String get localServerAdd => 'Adicionar este dispositivo';
-
-  @override
-  String get localServerIntroFooter =>
-      'Também pode ser ativado mais tarde, na página de edição de um servidor, em Conexão.';
-
-  @override
   String get transportSectionOff =>
       'Desligado. Os campos abaixo ficam guardados para quando você ligar de novo.';
 
@@ -3232,33 +3198,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get virtualization => 'Virtualização';
-
-  @override
-  String get virtIntro =>
-      'Gerencie máquinas virtuais e contêineres em hosts Proxmox VE e libvirt/KVM: estado, ações de energia e consoles.';
-
-  @override
-  String get virtIntroPveMoved =>
-      'O Proxmox VE saiu da página do servidor para esta aba. O cartão PVE de um servidor a abre aqui.';
-
-  @override
-  String get virtIntroLibvirt =>
-      'Um servidor com o virsh do libvirt instalado aparece como host, com suas máquinas virtuais QEMU/KVM.';
-
-  @override
-  String get virtIntroTransports =>
-      'Ambos funcionam por SSH, através do Monitor ou neste dispositivo.';
-
-  @override
-  String get virtIntroTokens =>
-      'O PVE pode entrar com um token de API em vez de uma senha. Configure-o na página de edição do servidor, em PVE.';
-
-  @override
-  String get virtIntroInBar => 'Ela foi adicionada à barra de abas.';
-
-  @override
-  String get virtIntroInMore =>
-      'Ela está em Mais. Abas iniciais, nas configurações, pode movê-la para a barra de abas.';
 
   @override
   String get virtGuests => 'Máquinas virtuais';
@@ -6931,11 +6870,6 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String monitorAgentVersion(String version) {
-    return 'Monitor $version';
-  }
-
-  @override
   String monitorAgentUpdate(String version) {
     return '$version disponível';
   }
@@ -7342,4 +7276,56 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get syncKeyRotate => 'Substituir a chave de sincronização';
+
+  @override
+  String get discoverIntro =>
+      'Encontre máquinas para adicionar como servidores.';
+
+  @override
+  String get lan => 'LAN';
+
+  @override
+  String get discoveryScan => 'Verificar';
+
+  @override
+  String get discoveryScanAgain => 'Verificar novamente';
+
+  @override
+  String get discoveryScanning => 'Verificando…';
+
+  @override
+  String discoveryFound(int count) {
+    return '$count encontrados';
+  }
+
+  @override
+  String discoverySelected(int count) {
+    return '$count selecionados';
+  }
+
+  @override
+  String discoveryAddN(int count) {
+    return 'Adicionar $count';
+  }
+
+  @override
+  String discoveryAddedN(int count) {
+    return '$count adicionados';
+  }
+
+  @override
+  String get discoveryAdded => 'Adicionado';
+
+  @override
+  String get discoveryExists => 'Já existe';
+
+  @override
+  String get localServerNoSsh => 'Sem SSH';
+
+  @override
+  String get introWelcome =>
+      'Estado, terminal, arquivos e contêineres para servidores Linux, Unix e Windows, por SSH ou pelo Monitor.';
+
+  @override
+  String get security => 'Segurança';
 }

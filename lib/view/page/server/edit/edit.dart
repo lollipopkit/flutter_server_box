@@ -11,6 +11,7 @@ import 'package:server_box/core/extension/bmc.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/local/server.dart';
 import 'package:server_box/core/route.dart';
+import 'package:server_box/core/service/ssh_discovery.dart';
 import 'package:server_box/core/ssh/config.dart';
 import 'package:server_box/core/ssh/jump_chain.dart';
 import 'package:server_box/core/utils/cert_fingerprint.dart';
@@ -21,7 +22,6 @@ import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/bmc_credential.dart';
 import 'package:server_box/data/model/server/custom.dart';
-import 'package:server_box/data/model/server/discovery_result.dart';
 import 'package:server_box/data/model/server/geo.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
@@ -42,7 +42,7 @@ import 'package:server_box/view/page/private_key/edit.dart';
 import 'package:server_box/view/page/server/custom_cmds.dart';
 import 'package:server_box/view/widget/cert_dialog.dart';
 import 'package:server_box/view/widget/group_title.dart';
-import 'package:server_box/view/widget/ssh_discovery/dialog.dart';
+import 'package:server_box/view/widget/ssh_discovery/view.dart';
 
 part 'actions.dart';
 part 'widget.dart';
@@ -339,7 +339,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
       // Only while adding. Sweeping the network for hosts is how someone with
       // an empty form finds what to put in it; on a server that already exists
       // it answers a question nobody is asking.
-      if (spi == null) _buildDiscoverBtn(),
+      if (spi == null && SshDiscovery.available.isNotEmpty) _buildDiscoverBtn(),
       _buildWriteScriptTip(),
       if (spi != null) _buildDelBtn(),
       // In the bar, beside the rest of what is done to this page rather than

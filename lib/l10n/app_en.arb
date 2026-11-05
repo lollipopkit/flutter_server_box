@@ -534,10 +534,6 @@
   "@discoveryFailed": {
     "description": "Error message shown when discovery failed."
   },
-  "discoverySettings": "Discovery Settings",
-  "@discoverySettings": {
-    "description": "User-facing label or message for discovery settings."
-  },
   "distro": "Distribution",
   "@distro": {
     "description": "User-facing label or message for distro."
@@ -567,10 +563,6 @@
   "@dockerPruneTip": {
     "description": "Help text for the docker prune setting or action."
   },
-  "dockerStatistics": "Docker Statistics",
-  "@dockerStatistics": {
-    "description": "User-facing label or message for docker statistics."
-  },
   "editVirtKeys": "Virtual keys",
   "@editVirtKeys": {
     "description": "Action label for edit virt keys."
@@ -578,14 +570,6 @@
   "editorHighlightTip": "The current code highlighting performance is not ideal and can be optionally turned off to improve.",
   "@editorHighlightTip": {
     "description": "Help text for the editor highlight setting or action."
-  },
-  "enableMdns": "Enable mDNS",
-  "@enableMdns": {
-    "description": "Action label for enable mDNS."
-  },
-  "enableMdnsDesc": "Use mDNS/Bonjour to discover SSH services",
-  "@enableMdnsDesc": {
-    "description": "Description of the enable mDNS desc feature or option."
   },
   "envVars": "Environment variable",
   "@envVars": {
@@ -947,10 +931,6 @@
         "type": "String"
       }
     }
-  },
-  "maxConcurrency": "Max Concurrency",
-  "@maxConcurrency": {
-    "description": "User-facing label or message for max concurrency."
   },
   "maxRetryCount": "Number of server reconnections",
   "@maxRetryCount": {
@@ -3146,26 +3126,6 @@
   "@localServerUnsupported": {
     "description": "User-facing label or message for local server unsupported."
   },
-  "remoteDesktopIntro": "Open a server's RDP or VNC desktop inside the app. The connection goes through the server's SSH connection or its Monitor, so the desktop port does not have to be reachable from the network.",
-  "@remoteDesktopIntro": {
-    "description": "Introductory text for the remote desktop screen or section."
-  },
-  "remoteDesktopIntroProfiles": "Save a profile per desktop from the Remote desktop button on a server, or from the Remote desktop tab.",
-  "@remoteDesktopIntroProfiles": {
-    "description": "User-facing label or message for remote desktop intro profiles."
-  },
-  "localServerIntro": "Add the device running ServerBox as a server. Status, processes, services, containers, the terminal and files all work without SSH or the Monitor.",
-  "@localServerIntro": {
-    "description": "Introductory text for the local server screen or section."
-  },
-  "localServerAdd": "Add this device",
-  "@localServerAdd": {
-    "description": "User-facing label or message for local server add."
-  },
-  "localServerIntroFooter": "It can also be turned on later, in a server's edit page under Connection.",
-  "@localServerIntroFooter": {
-    "description": "User-facing label or message for local server intro footer."
-  },
   "transportSectionOff": "Off. The fields below are kept for when you turn it back on.",
   "@transportSectionOff": {
     "description": "User-facing label or message for transport section off."
@@ -3989,34 +3949,6 @@
   "virtualization": "Virtualization",
   "@virtualization": {
     "description": "Name of the Virtualization tab."
-  },
-  "virtIntro": "Manage virtual machines and containers on Proxmox VE and libvirt/KVM hosts: their state, power actions and consoles.",
-  "@virtIntro": {
-    "description": "Intro page text describing the Virtualization tab."
-  },
-  "virtIntroPveMoved": "Proxmox VE has moved from the server page into this tab. A server's PVE card opens it there.",
-  "@virtIntroPveMoved": {
-    "description": "Intro page text telling Proxmox VE users where PVE moved."
-  },
-  "virtIntroLibvirt": "A server with libvirt's virsh installed shows up as a host, with its QEMU/KVM virtual machines.",
-  "@virtIntroLibvirt": {
-    "description": "Intro page text about libvirt/KVM hosts."
-  },
-  "virtIntroTransports": "Both work over SSH, through the Monitor, or on this device.",
-  "@virtIntroTransports": {
-    "description": "Intro page text about the transports the Virtualization tab works over."
-  },
-  "virtIntroTokens": "PVE can log in with an API token instead of a password. Set it in a server's edit page, under PVE.",
-  "@virtIntroTokens": {
-    "description": "Intro page text about Proxmox VE API token support."
-  },
-  "virtIntroInBar": "It has been added to the tab bar.",
-  "@virtIntroInBar": {
-    "description": "Intro page text saying the Virtualization tab is in the tab bar."
-  },
-  "virtIntroInMore": "It is under More. Home Tabs in Settings can move it to the tab bar.",
-  "@virtIntroInMore": {
-    "description": "Intro page text saying the Virtualization tab is under More."
   },
   "virtGuests": "Virtual machines",
   "@virtGuests": {
@@ -8878,15 +8810,6 @@
       }
     }
   },
-  "monitorAgentVersion": "Monitor {version}",
-  "@monitorAgentVersion": {
-    "description": "Overview card: the Monitor's version.",
-    "placeholders": {
-      "version": {
-        "type": "String"
-      }
-    }
-  },
   "monitorAgentUpdate": "{version} available",
   "@monitorAgentUpdate": {
     "description": "Overview card: a newer Monitor release exists.",
@@ -9410,5 +9333,81 @@
       }
     }
   },
-  "syncKeyRotate": "Replace sync key"
+  "syncKeyRotate": "Replace sync key",
+  "discoverIntro": "Find machines to add as servers.",
+  "@discoverIntro": {
+    "description": "Intro / server discovery: Find machines to add as servers."
+  },
+  "lan": "LAN",
+  "@lan": {
+    "description": "Intro / server discovery: LAN"
+  },
+  "discoveryScan": "Scan",
+  "@discoveryScan": {
+    "description": "Intro / server discovery: Scan"
+  },
+  "discoveryScanAgain": "Scan again",
+  "@discoveryScanAgain": {
+    "description": "Intro / server discovery: Scan again"
+  },
+  "discoveryScanning": "Scanning…",
+  "@discoveryScanning": {
+    "description": "Intro / server discovery: Scanning…"
+  },
+  "discoveryFound": "Found {count}",
+  "@discoveryFound": {
+    "description": "Intro / server discovery: Found {count}",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "discoverySelected": "{count} selected",
+  "@discoverySelected": {
+    "description": "Intro / server discovery: {count} selected",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "discoveryAddN": "Add {count}",
+  "@discoveryAddN": {
+    "description": "Intro / server discovery: Add {count}",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "discoveryAddedN": "{count} added",
+  "@discoveryAddedN": {
+    "description": "Intro / server discovery: {count} added",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "discoveryAdded": "Added",
+  "@discoveryAdded": {
+    "description": "Intro / server discovery: Added"
+  },
+  "discoveryExists": "Exists",
+  "@discoveryExists": {
+    "description": "Intro / server discovery: Exists"
+  },
+  "localServerNoSsh": "Runs without SSH",
+  "@localServerNoSsh": {
+    "description": "Intro / server discovery: Runs without SSH"
+  },
+  "introWelcome": "Status, terminal, files and containers for Linux, Unix and Windows servers, over SSH or the Monitor.",
+  "@introWelcome": {
+    "description": "Intro / server discovery: Status, terminal, files and containers for Linux, Unix and Windows servers, over SSH or the Monitor."
+  },
+  "security": "Security",
+  "@security": {
+    "description": "Intro / server discovery: Security"
+  }
 }

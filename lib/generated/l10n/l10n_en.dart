@@ -442,9 +442,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get discoveryFailed => 'Discovery failed';
 
   @override
-  String get discoverySettings => 'Discovery Settings';
-
-  @override
   String get distro => 'Distribution';
 
   @override
@@ -466,20 +463,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dockerPruneTip => 'Remove unused data to free up disk space';
 
   @override
-  String get dockerStatistics => 'Docker Statistics';
-
-  @override
   String get editVirtKeys => 'Virtual keys';
 
   @override
   String get editorHighlightTip =>
       'The current code highlighting performance is not ideal and can be optionally turned off to improve.';
-
-  @override
-  String get enableMdns => 'Enable mDNS';
-
-  @override
-  String get enableMdnsDesc => 'Use mDNS/Bonjour to discover SSH services';
 
   @override
   String get envVars => 'Environment variable';
@@ -751,9 +739,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String madeWithLove(String myGithub) {
     return 'Made with ❤️ by $myGithub';
   }
-
-  @override
-  String get maxConcurrency => 'Max Concurrency';
 
   @override
   String get maxRetryCount => 'Number of server reconnections';
@@ -2429,25 +2414,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'This platform cannot read this device as a server. Linux, Windows and the macOS DMG build can.';
 
   @override
-  String get remoteDesktopIntro =>
-      'Open a server\'s RDP or VNC desktop inside the app. The connection goes through the server\'s SSH connection or its Monitor, so the desktop port does not have to be reachable from the network.';
-
-  @override
-  String get remoteDesktopIntroProfiles =>
-      'Save a profile per desktop from the Remote desktop button on a server, or from the Remote desktop tab.';
-
-  @override
-  String get localServerIntro =>
-      'Add the device running ServerBox as a server. Status, processes, services, containers, the terminal and files all work without SSH or the Monitor.';
-
-  @override
-  String get localServerAdd => 'Add this device';
-
-  @override
-  String get localServerIntroFooter =>
-      'It can also be turned on later, in a server\'s edit page under Connection.';
-
-  @override
   String get transportSectionOff =>
       'Off. The fields below are kept for when you turn it back on.';
 
@@ -3199,33 +3165,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get virtualization => 'Virtualization';
-
-  @override
-  String get virtIntro =>
-      'Manage virtual machines and containers on Proxmox VE and libvirt/KVM hosts: their state, power actions and consoles.';
-
-  @override
-  String get virtIntroPveMoved =>
-      'Proxmox VE has moved from the server page into this tab. A server\'s PVE card opens it there.';
-
-  @override
-  String get virtIntroLibvirt =>
-      'A server with libvirt\'s virsh installed shows up as a host, with its QEMU/KVM virtual machines.';
-
-  @override
-  String get virtIntroTransports =>
-      'Both work over SSH, through the Monitor, or on this device.';
-
-  @override
-  String get virtIntroTokens =>
-      'PVE can log in with an API token instead of a password. Set it in a server\'s edit page, under PVE.';
-
-  @override
-  String get virtIntroInBar => 'It has been added to the tab bar.';
-
-  @override
-  String get virtIntroInMore =>
-      'It is under More. Home Tabs in Settings can move it to the tab bar.';
 
   @override
   String get virtGuests => 'Virtual machines';
@@ -6864,11 +6803,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String monitorAgentVersion(String version) {
-    return 'Monitor $version';
-  }
-
-  @override
   String monitorAgentUpdate(String version) {
     return '$version available';
   }
@@ -7274,4 +7208,55 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get syncKeyRotate => 'Replace sync key';
+
+  @override
+  String get discoverIntro => 'Find machines to add as servers.';
+
+  @override
+  String get lan => 'LAN';
+
+  @override
+  String get discoveryScan => 'Scan';
+
+  @override
+  String get discoveryScanAgain => 'Scan again';
+
+  @override
+  String get discoveryScanning => 'Scanning…';
+
+  @override
+  String discoveryFound(int count) {
+    return 'Found $count';
+  }
+
+  @override
+  String discoverySelected(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String discoveryAddN(int count) {
+    return 'Add $count';
+  }
+
+  @override
+  String discoveryAddedN(int count) {
+    return '$count added';
+  }
+
+  @override
+  String get discoveryAdded => 'Added';
+
+  @override
+  String get discoveryExists => 'Exists';
+
+  @override
+  String get localServerNoSsh => 'Runs without SSH';
+
+  @override
+  String get introWelcome =>
+      'Status, terminal, files and containers for Linux, Unix and Windows servers, over SSH or the Monitor.';
+
+  @override
+  String get security => 'Security';
 }

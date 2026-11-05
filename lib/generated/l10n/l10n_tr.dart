@@ -445,9 +445,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get discoveryFailed => 'Keşif başarısız';
 
   @override
-  String get discoverySettings => 'Keşif Ayarları';
-
-  @override
   String get distro => 'Dağıtım';
 
   @override
@@ -470,21 +467,11 @@ class AppLocalizationsTr extends AppLocalizations {
       'Disk alanını boşaltmak için kullanılmayan verileri kaldırın';
 
   @override
-  String get dockerStatistics => 'Docker İstatistikleri';
-
-  @override
   String get editVirtKeys => 'Sanal tuşlar';
 
   @override
   String get editorHighlightTip =>
       'Mevcut kod vurgulama performansı ideal değil ve isteğe bağlı olarak kapatılabilir.';
-
-  @override
-  String get enableMdns => 'mDNS\'yi Etkinleştir';
-
-  @override
-  String get enableMdnsDesc =>
-      'SSH hizmetlerini keşfetmek için mDNS/Bonjour kullan';
 
   @override
   String get envVars => 'Ortam değişkeni';
@@ -757,9 +744,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String madeWithLove(String myGithub) {
     return '$myGithub tarafından ❤️ ile yapıldı';
   }
-
-  @override
-  String get maxConcurrency => 'Maksimum Eşzamanlılık';
 
   @override
   String get maxRetryCount =>
@@ -2418,25 +2402,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu platform bu cihazı sunucu olarak okuyamaz. Linux, Windows ve macOS DMG sürümü destekler.';
 
   @override
-  String get remoteDesktopIntro =>
-      'Bir sunucunun RDP veya VNC masaüstünü uygulama içinde açar. Bağlantı sunucunun SSH bağlantısı veya Monitor’ü üzerinden geçer; bu yüzden masaüstü bağlantı noktasının ağdan erişilebilir olması gerekmez.';
-
-  @override
-  String get remoteDesktopIntroProfiles =>
-      'Her masaüstü için bir profili, sunucudaki Uzak masaüstü düğmesinden veya Uzak masaüstü sekmesinden kaydedin.';
-
-  @override
-  String get localServerIntro =>
-      'ServerBox\'ı çalıştıran cihazı sunucu olarak ekler. Durum, işlemler, hizmetler, konteynerler, terminal ve dosyalar SSH veya Monitor olmadan çalışır.';
-
-  @override
-  String get localServerAdd => 'Bu cihazı ekle';
-
-  @override
-  String get localServerIntroFooter =>
-      'Bu, daha sonra bir sunucunun düzenleme sayfasında Bağlantı altında da açılabilir.';
-
-  @override
   String get transportSectionOff =>
       'Kapalı. Aşağıdaki alanlar, yeniden açtığınızda kullanılmak üzere saklanıyor.';
 
@@ -3193,33 +3158,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get virtualization => 'Sanallaştırma';
-
-  @override
-  String get virtIntro =>
-      'Proxmox VE ve libvirt/KVM ana makinelerindeki sanal makineleri ve kapsayıcıları yönetin: durum, güç işlemleri ve konsollar.';
-
-  @override
-  String get virtIntroPveMoved =>
-      'Proxmox VE sunucu sayfasından bu sekmeye taşındı. Bir sunucunun PVE kartı onu burada açar.';
-
-  @override
-  String get virtIntroLibvirt =>
-      'libvirt\'in virsh aracı kurulu bir sunucu, QEMU/KVM sanal makineleriyle birlikte ana makine olarak görünür.';
-
-  @override
-  String get virtIntroTransports =>
-      'İkisi de SSH üzerinden, Monitor aracılığıyla veya bu cihazda çalışır.';
-
-  @override
-  String get virtIntroTokens =>
-      'PVE, parola yerine bir API belirteciyle oturum açabilir. Sunucunun düzenleme sayfasında, PVE altında ayarlayın.';
-
-  @override
-  String get virtIntroInBar => 'Sekme çubuğuna eklendi.';
-
-  @override
-  String get virtIntroInMore =>
-      'Daha fazla altında. Ayarlardaki Ana Sayfa Sekmeleri ile sekme çubuğuna taşıyabilirsiniz.';
 
   @override
   String get virtGuests => 'Sanal makineler';
@@ -6854,11 +6792,6 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String monitorAgentVersion(String version) {
-    return 'Monitor $version';
-  }
-
-  @override
   String monitorAgentUpdate(String version) {
     return '$version mevcut';
   }
@@ -7258,4 +7191,55 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get syncKeyRotate => 'Eşitleme anahtarını değiştir';
+
+  @override
+  String get discoverIntro => 'Sunucu olarak eklenecek makineleri bulun.';
+
+  @override
+  String get lan => 'Yerel ağ';
+
+  @override
+  String get discoveryScan => 'Tara';
+
+  @override
+  String get discoveryScanAgain => 'Yeniden tara';
+
+  @override
+  String get discoveryScanning => 'Taranıyor…';
+
+  @override
+  String discoveryFound(int count) {
+    return '$count bulundu';
+  }
+
+  @override
+  String discoverySelected(int count) {
+    return '$count seçildi';
+  }
+
+  @override
+  String discoveryAddN(int count) {
+    return '$count ekle';
+  }
+
+  @override
+  String discoveryAddedN(int count) {
+    return '$count eklendi';
+  }
+
+  @override
+  String get discoveryAdded => 'Eklendi';
+
+  @override
+  String get discoveryExists => 'Zaten var';
+
+  @override
+  String get localServerNoSsh => 'SSH gerekmez';
+
+  @override
+  String get introWelcome =>
+      'Linux, Unix ve Windows sunucuları için durum, terminal, dosyalar ve konteynerler; SSH veya Monitor üzerinden.';
+
+  @override
+  String get security => 'Güvenlik';
 }

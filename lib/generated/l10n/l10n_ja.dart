@@ -424,9 +424,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get discoveryFailed => '発見に失敗';
 
   @override
-  String get discoverySettings => '発見設定';
-
-  @override
   String get distro => 'ディストリビューション';
 
   @override
@@ -448,20 +445,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get dockerPruneTip => '未使用のデータを削除してディスク容量を解放します';
 
   @override
-  String get dockerStatistics => 'Docker 統計';
-
-  @override
   String get editVirtKeys => '仮想キー';
 
   @override
   String get editorHighlightTip =>
       '現在のコードハイライトのパフォーマンスはかなり悪いため、改善するために無効にすることを選択できます。';
-
-  @override
-  String get enableMdns => 'mDNSを有効化';
-
-  @override
-  String get enableMdnsDesc => 'mDNS/BonjourでSSHサービスを発見';
 
   @override
   String get envVars => '環境変数';
@@ -723,9 +711,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String madeWithLove(String myGithub) {
     return '$myGithub が ❤️ を込めて作成';
   }
-
-  @override
-  String get maxConcurrency => '最大同時実行数';
 
   @override
   String get maxRetryCount => 'サーバーへの再接続試行回数の上限';
@@ -2294,24 +2279,6 @@ class AppLocalizationsJa extends AppLocalizations {
       'このプラットフォームでは、このデバイスをサーバーとして読み取れません。Linux、Windows、macOS の DMG 版が対応しています。';
 
   @override
-  String get remoteDesktopIntro =>
-      'サーバーの RDP または VNC デスクトップをアプリ内で開きます。接続はサーバーの SSH 接続または Monitor を経由するため、デスクトップのポートをネットワークに公開する必要はありません。';
-
-  @override
-  String get remoteDesktopIntroProfiles =>
-      'サーバーの「リモートデスクトップ」ボタン、または「リモートデスクトップ」タブから、デスクトップごとにプロファイルを保存します。';
-
-  @override
-  String get localServerIntro =>
-      'ServerBox を実行しているデバイスをサーバーとして追加します。ステータス、プロセス、サービス、コンテナ、ターミナル、ファイルは SSH や Monitor なしで使えます。';
-
-  @override
-  String get localServerAdd => 'このデバイスを追加';
-
-  @override
-  String get localServerIntroFooter => '後からサーバーの編集ページの「接続」でも有効にできます。';
-
-  @override
   String get transportSectionOff => '無効です。再び有効にするときのために、以下の項目はそのまま保持されます。';
 
   @override
@@ -3040,31 +3007,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get virtualization => '仮想化';
-
-  @override
-  String get virtIntro =>
-      'Proxmox VE と libvirt/KVM ホスト上の仮想マシンとコンテナを管理します：状態、電源操作、コンソール。';
-
-  @override
-  String get virtIntroPveMoved =>
-      'Proxmox VE はサーバーページからこのタブに移動しました。サーバーの PVE カードからここを開けます。';
-
-  @override
-  String get virtIntroLibvirt =>
-      'libvirt の virsh がインストールされたサーバーは、QEMU/KVM 仮想マシンとともにホストとして表示されます。';
-
-  @override
-  String get virtIntroTransports => 'どちらも SSH、Monitor 経由、またはこのデバイス上で動作します。';
-
-  @override
-  String get virtIntroTokens =>
-      'PVE はパスワードの代わりに API トークンでログインできます。サーバーの編集ページの PVE で設定します。';
-
-  @override
-  String get virtIntroInBar => 'タブバーに追加されました。';
-
-  @override
-  String get virtIntroInMore => '「その他」にあります。設定のホームタブでタブバーに移動できます。';
 
   @override
   String get virtGuests => '仮想マシン';
@@ -6575,11 +6517,6 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String monitorAgentVersion(String version) {
-    return 'Monitor $version';
-  }
-
-  @override
   String monitorAgentUpdate(String version) {
     return '$version を利用可能';
   }
@@ -6972,4 +6909,55 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get syncKeyRotate => '同期キーを置き換える';
+
+  @override
+  String get discoverIntro => 'サーバーとして追加できるマシンを探します。';
+
+  @override
+  String get lan => 'LAN';
+
+  @override
+  String get discoveryScan => 'スキャン';
+
+  @override
+  String get discoveryScanAgain => '再スキャン';
+
+  @override
+  String get discoveryScanning => 'スキャン中…';
+
+  @override
+  String discoveryFound(int count) {
+    return '$count 台見つかりました';
+  }
+
+  @override
+  String discoverySelected(int count) {
+    return '$count 台を選択';
+  }
+
+  @override
+  String discoveryAddN(int count) {
+    return '$count 台を追加';
+  }
+
+  @override
+  String discoveryAddedN(int count) {
+    return '$count 台を追加しました';
+  }
+
+  @override
+  String get discoveryAdded => '追加済み';
+
+  @override
+  String get discoveryExists => '登録済み';
+
+  @override
+  String get localServerNoSsh => 'SSH 不要';
+
+  @override
+  String get introWelcome =>
+      'SSH または Monitor 経由で、Linux・Unix・Windows サーバーのステータス、ターミナル、ファイル、コンテナを扱えます。';
+
+  @override
+  String get security => 'セキュリティ';
 }
