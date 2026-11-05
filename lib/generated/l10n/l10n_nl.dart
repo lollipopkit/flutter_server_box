@@ -445,9 +445,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get discoveryFailed => 'Ontdekking mislukt';
 
   @override
-  String get discoverySettings => 'Ontdekkingsinstellingen';
-
-  @override
   String get distro => 'Distributie';
 
   @override
@@ -470,21 +467,11 @@ class AppLocalizationsNl extends AppLocalizations {
       'Verwijder ongebruikte gegevens om schijfruimte vrij te maken';
 
   @override
-  String get dockerStatistics => 'Docker-statistieken';
-
-  @override
   String get editVirtKeys => 'Virtuele toetsen';
 
   @override
   String get editorHighlightTip =>
       'De huidige codehighlighting-prestaties zijn slechter en kunnen optioneel worden uitgeschakeld om te verbeteren.';
-
-  @override
-  String get enableMdns => 'mDNS inschakelen';
-
-  @override
-  String get enableMdnsDesc =>
-      'Gebruik mDNS/Bonjour om SSH-services te ontdekken';
 
   @override
   String get envVars => 'Omgevingsvariabele';
@@ -758,9 +745,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String madeWithLove(String myGithub) {
     return 'Gemaakt door $myGithub met ❤️';
   }
-
-  @override
-  String get maxConcurrency => 'Maximale gelijktijdigheid';
 
   @override
   String get maxRetryCount =>
@@ -2441,25 +2425,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'Dit platform kan dit apparaat niet als server uitlezen. Linux, Windows en de macOS-DMG-versie kunnen dat wel.';
 
   @override
-  String get remoteDesktopIntro =>
-      'Opent het RDP- of VNC-bureaublad van een server in de app. De verbinding loopt via de SSH-verbinding van de server of via zijn Monitor, dus de bureaubladpoort hoeft niet bereikbaar te zijn vanaf het netwerk.';
-
-  @override
-  String get remoteDesktopIntroProfiles =>
-      'Sla per bureaublad een profiel op via de knop Extern bureaublad van een server of via het tabblad Extern bureaublad.';
-
-  @override
-  String get localServerIntro =>
-      'Voegt het apparaat waarop ServerBox draait toe als server. Status, processen, services, containers, de terminal en bestanden werken zonder SSH of Monitor.';
-
-  @override
-  String get localServerAdd => 'Dit apparaat toevoegen';
-
-  @override
-  String get localServerIntroFooter =>
-      'Dit kan ook later worden ingeschakeld, op de bewerkpagina van een server onder Verbinding.';
-
-  @override
   String get transportSectionOff =>
       'Uit. De velden hieronder blijven bewaard voor wanneer u het weer aanzet.';
 
@@ -3224,33 +3189,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get virtualization => 'Virtualisatie';
-
-  @override
-  String get virtIntro =>
-      'Beheer virtuele machines en containers op Proxmox VE- en libvirt/KVM-hosts: hun status, energieacties en consoles.';
-
-  @override
-  String get virtIntroPveMoved =>
-      'Proxmox VE is van de serverpagina naar dit tabblad verhuisd. De PVE-kaart van een server opent het hier.';
-
-  @override
-  String get virtIntroLibvirt =>
-      'Een server met virsh van libvirt geïnstalleerd verschijnt als host, met zijn QEMU/KVM-VM\'s.';
-
-  @override
-  String get virtIntroTransports =>
-      'Beide werken via SSH, via Monitor of op dit apparaat.';
-
-  @override
-  String get virtIntroTokens =>
-      'PVE kan aanmelden met een API-token in plaats van een wachtwoord. Stel het in op de bewerkpagina van een server, onder PVE.';
-
-  @override
-  String get virtIntroInBar => 'Het is aan de tabbalk toegevoegd.';
-
-  @override
-  String get virtIntroInMore =>
-      'Het staat onder Meer. Home-tabbladen in de instellingen kan het naar de tabbalk verplaatsen.';
 
   @override
   String get virtGuests => 'Virtuele machines';
@@ -6928,11 +6866,6 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String monitorAgentVersion(String version) {
-    return 'Monitor $version';
-  }
-
-  @override
   String monitorAgentUpdate(String version) {
     return '$version beschikbaar';
   }
@@ -7341,4 +7274,55 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get syncKeyRotate => 'Synchronisatiesleutel vervangen';
+
+  @override
+  String get discoverIntro => 'Vind machines om als server toe te voegen.';
+
+  @override
+  String get lan => 'LAN';
+
+  @override
+  String get discoveryScan => 'Scannen';
+
+  @override
+  String get discoveryScanAgain => 'Opnieuw scannen';
+
+  @override
+  String get discoveryScanning => 'Scannen…';
+
+  @override
+  String discoveryFound(int count) {
+    return '$count gevonden';
+  }
+
+  @override
+  String discoverySelected(int count) {
+    return '$count geselecteerd';
+  }
+
+  @override
+  String discoveryAddN(int count) {
+    return '$count toevoegen';
+  }
+
+  @override
+  String discoveryAddedN(int count) {
+    return '$count toegevoegd';
+  }
+
+  @override
+  String get discoveryAdded => 'Toegevoegd';
+
+  @override
+  String get discoveryExists => 'Bestaat al';
+
+  @override
+  String get localServerNoSsh => 'Zonder SSH';
+
+  @override
+  String get introWelcome =>
+      'Status, terminal, bestanden en containers voor Linux-, Unix- en Windows-servers, via SSH of de Monitor.';
+
+  @override
+  String get security => 'Beveiliging';
 }

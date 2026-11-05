@@ -109,27 +109,18 @@ extension _Tags on _ServerEditPageState {
 }
 
 extension _Discovery on _ServerEditPageState {
-  /// Sweeps the network and fills this form in from what is picked.
-  ///
-  /// Only the fields the sweep actually knows: an address and a port. It
-  /// cannot know an account, a key or what you call the machine, so it does
-  /// not guess at them — except the name, and only while that field is still
-  /// empty, where the address is a better starting point than nothing and is
-  /// what someone would have typed anyway.
+  /// Fills this form in from a discovered host: only what the source knew,
+  /// and the name only while it is still empty.
   Future<void> _onTapDiscover() async {
-    final SshDiscoveryResult? found;
-    try {
-      found = await SshDiscoveryDialog.show(context);
-    } catch (e, s) {
-      if (!mounted) return;
-      context.showErrDialog(e, s);
-      return;
-    }
+    final found = await pickDiscoveredHost(context);
     if (!mounted || found == null) return;
 
-    _ipController.text = found.ip;
+    _ipController.text = found.host;
     _portController.text = '${found.port}';
-    if (_nameController.text.isEmpty) _nameController.text = found.ip;
+    if (found.user case final user?) _usernameController.text = user;
+    if (_nameController.text.isEmpty) {
+      _nameController.text = found.name ?? found.host;
+    }
   }
 
   void _initWithDraft(ServerDraft draft) {

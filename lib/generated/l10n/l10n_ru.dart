@@ -447,9 +447,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get discoveryFailed => 'Обнаружение не удалось';
 
   @override
-  String get discoverySettings => 'Настройки обнаружения';
-
-  @override
   String get distro => 'Дистрибутив';
 
   @override
@@ -472,21 +469,11 @@ class AppLocalizationsRu extends AppLocalizations {
       'Удалите неиспользуемые данные, чтобы освободить место на диске';
 
   @override
-  String get dockerStatistics => 'Статистика Docker';
-
-  @override
   String get editVirtKeys => 'Виртуальные клавиши';
 
   @override
   String get editorHighlightTip =>
       'Текущая производительность подсветки кода неудовлетворительна, можно отключить для улучшения.';
-
-  @override
-  String get enableMdns => 'Включить mDNS';
-
-  @override
-  String get enableMdnsDesc =>
-      'Использовать mDNS/Bonjour для обнаружения SSH служб';
 
   @override
   String get envVars => 'Переменная окружения';
@@ -760,9 +747,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String madeWithLove(String myGithub) {
     return 'Сделано $myGithub с ❤️';
   }
-
-  @override
-  String get maxConcurrency => 'Максимальная параллельность';
 
   @override
   String get maxRetryCount =>
@@ -2439,25 +2423,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'На этой платформе нельзя читать это устройство как сервер. Поддерживаются Linux, Windows и DMG-сборка для macOS.';
 
   @override
-  String get remoteDesktopIntro =>
-      'Открывает рабочий стол RDP или VNC сервера прямо в приложении. Подключение идёт через SSH-соединение сервера или его Monitor, поэтому порт рабочего стола не нужно открывать в сеть.';
-
-  @override
-  String get remoteDesktopIntroProfiles =>
-      'Сохраняйте профиль для каждого рабочего стола через кнопку «Удалённый рабочий стол» на сервере или на вкладке «Удалённый рабочий стол».';
-
-  @override
-  String get localServerIntro =>
-      'Добавляет устройство, на котором работает ServerBox, как сервер. Состояние, процессы, службы, контейнеры, терминал и файлы работают без SSH и Monitor.';
-
-  @override
-  String get localServerAdd => 'Добавить это устройство';
-
-  @override
-  String get localServerIntroFooter =>
-      'Это можно включить и позже на странице редактирования сервера, в разделе «Подключение».';
-
-  @override
   String get transportSectionOff =>
       'Выключено. Поля ниже сохраняются на случай, если вы включите его снова.';
 
@@ -3217,33 +3182,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get virtualization => 'Виртуализация';
-
-  @override
-  String get virtIntro =>
-      'Управление виртуальными машинами и контейнерами на хостах Proxmox VE и libvirt/KVM: состояние, управление питанием и консоли.';
-
-  @override
-  String get virtIntroPveMoved =>
-      'Proxmox VE перенесён со страницы сервера в эту вкладку. Карточка PVE сервера открывает её здесь.';
-
-  @override
-  String get virtIntroLibvirt =>
-      'Сервер с установленным virsh из libvirt отображается как хост вместе с его виртуальными машинами QEMU/KVM.';
-
-  @override
-  String get virtIntroTransports =>
-      'Оба работают по SSH, через Monitor или на этом устройстве.';
-
-  @override
-  String get virtIntroTokens =>
-      'PVE может входить по API-токену вместо пароля. Задаётся на странице редактирования сервера, в разделе PVE.';
-
-  @override
-  String get virtIntroInBar => 'Она добавлена на панель вкладок.';
-
-  @override
-  String get virtIntroInMore =>
-      'Она находится в разделе «Ещё». Во вкладках дома в настройках её можно перенести на панель вкладок.';
 
   @override
   String get virtGuests => 'Виртуальные машины';
@@ -6912,11 +6850,6 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String monitorAgentVersion(String version) {
-    return 'Monitor $version';
-  }
-
-  @override
   String monitorAgentUpdate(String version) {
     return 'доступна $version';
   }
@@ -7324,4 +7257,56 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get syncKeyRotate => 'Заменить ключ синхронизации';
+
+  @override
+  String get discoverIntro =>
+      'Поиск машин, которые можно добавить как серверы.';
+
+  @override
+  String get lan => 'Локальная сеть';
+
+  @override
+  String get discoveryScan => 'Сканировать';
+
+  @override
+  String get discoveryScanAgain => 'Сканировать снова';
+
+  @override
+  String get discoveryScanning => 'Сканирование…';
+
+  @override
+  String discoveryFound(int count) {
+    return 'Найдено: $count';
+  }
+
+  @override
+  String discoverySelected(int count) {
+    return 'Выбрано: $count';
+  }
+
+  @override
+  String discoveryAddN(int count) {
+    return 'Добавить: $count';
+  }
+
+  @override
+  String discoveryAddedN(int count) {
+    return 'Добавлено: $count';
+  }
+
+  @override
+  String get discoveryAdded => 'Добавлен';
+
+  @override
+  String get discoveryExists => 'Уже есть';
+
+  @override
+  String get localServerNoSsh => 'Без SSH';
+
+  @override
+  String get introWelcome =>
+      'Состояние, терминал, файлы и контейнеры серверов Linux, Unix и Windows — через SSH или Monitor.';
+
+  @override
+  String get security => 'Безопасность';
 }

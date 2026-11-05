@@ -895,12 +895,6 @@ abstract class AppLocalizations {
   /// **'Discovery failed'**
   String get discoveryFailed;
 
-  /// User-facing label or message for discovery settings.
-  ///
-  /// In en, this message translates to:
-  /// **'Discovery Settings'**
-  String get discoverySettings;
-
   /// User-facing label or message for distro.
   ///
   /// In en, this message translates to:
@@ -937,12 +931,6 @@ abstract class AppLocalizations {
   /// **'Remove unused data to free up disk space'**
   String get dockerPruneTip;
 
-  /// User-facing label or message for docker statistics.
-  ///
-  /// In en, this message translates to:
-  /// **'Docker Statistics'**
-  String get dockerStatistics;
-
   /// Action label for edit virt keys.
   ///
   /// In en, this message translates to:
@@ -954,18 +942,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The current code highlighting performance is not ideal and can be optionally turned off to improve.'**
   String get editorHighlightTip;
-
-  /// Action label for enable mDNS.
-  ///
-  /// In en, this message translates to:
-  /// **'Enable mDNS'**
-  String get enableMdns;
-
-  /// Description of the enable mDNS desc feature or option.
-  ///
-  /// In en, this message translates to:
-  /// **'Use mDNS/Bonjour to discover SSH services'**
-  String get enableMdnsDesc;
 
   /// User-facing label or message for env vars.
   ///
@@ -1434,12 +1410,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Made with ❤️ by {myGithub}'**
   String madeWithLove(String myGithub);
-
-  /// User-facing label or message for max concurrency.
-  ///
-  /// In en, this message translates to:
-  /// **'Max Concurrency'**
-  String get maxConcurrency;
 
   /// User-facing label or message for max retry count.
   ///
@@ -4182,36 +4152,6 @@ abstract class AppLocalizations {
   /// **'This platform cannot read this device as a server. Linux, Windows and the macOS DMG build can.'**
   String get localServerUnsupported;
 
-  /// Introductory text for the remote desktop screen or section.
-  ///
-  /// In en, this message translates to:
-  /// **'Open a server\'s RDP or VNC desktop inside the app. The connection goes through the server\'s SSH connection or its Monitor, so the desktop port does not have to be reachable from the network.'**
-  String get remoteDesktopIntro;
-
-  /// User-facing label or message for remote desktop intro profiles.
-  ///
-  /// In en, this message translates to:
-  /// **'Save a profile per desktop from the Remote desktop button on a server, or from the Remote desktop tab.'**
-  String get remoteDesktopIntroProfiles;
-
-  /// Introductory text for the local server screen or section.
-  ///
-  /// In en, this message translates to:
-  /// **'Add the device running ServerBox as a server. Status, processes, services, containers, the terminal and files all work without SSH or the Monitor.'**
-  String get localServerIntro;
-
-  /// User-facing label or message for local server add.
-  ///
-  /// In en, this message translates to:
-  /// **'Add this device'**
-  String get localServerAdd;
-
-  /// User-facing label or message for local server intro footer.
-  ///
-  /// In en, this message translates to:
-  /// **'It can also be turned on later, in a server\'s edit page under Connection.'**
-  String get localServerIntroFooter;
-
   /// User-facing label or message for transport section off.
   ///
   /// In en, this message translates to:
@@ -5501,48 +5441,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Virtualization'**
   String get virtualization;
-
-  /// Intro page text describing the Virtualization tab.
-  ///
-  /// In en, this message translates to:
-  /// **'Manage virtual machines and containers on Proxmox VE and libvirt/KVM hosts: their state, power actions and consoles.'**
-  String get virtIntro;
-
-  /// Intro page text telling Proxmox VE users where PVE moved.
-  ///
-  /// In en, this message translates to:
-  /// **'Proxmox VE has moved from the server page into this tab. A server\'s PVE card opens it there.'**
-  String get virtIntroPveMoved;
-
-  /// Intro page text about libvirt/KVM hosts.
-  ///
-  /// In en, this message translates to:
-  /// **'A server with libvirt\'s virsh installed shows up as a host, with its QEMU/KVM virtual machines.'**
-  String get virtIntroLibvirt;
-
-  /// Intro page text about the transports the Virtualization tab works over.
-  ///
-  /// In en, this message translates to:
-  /// **'Both work over SSH, through the Monitor, or on this device.'**
-  String get virtIntroTransports;
-
-  /// Intro page text about Proxmox VE API token support.
-  ///
-  /// In en, this message translates to:
-  /// **'PVE can log in with an API token instead of a password. Set it in a server\'s edit page, under PVE.'**
-  String get virtIntroTokens;
-
-  /// Intro page text saying the Virtualization tab is in the tab bar.
-  ///
-  /// In en, this message translates to:
-  /// **'It has been added to the tab bar.'**
-  String get virtIntroInBar;
-
-  /// Intro page text saying the Virtualization tab is under More.
-  ///
-  /// In en, this message translates to:
-  /// **'It is under More. Home Tabs in Settings can move it to the tab bar.'**
-  String get virtIntroInMore;
 
   /// Section of the Virtualization tab listing virtual machines.
   ///
@@ -11669,12 +11567,6 @@ abstract class AppLocalizations {
   /// **'firing for {duration}'**
   String monitorFiringFor(String duration);
 
-  /// Overview card: the Monitor's version.
-  ///
-  /// In en, this message translates to:
-  /// **'Monitor {version}'**
-  String monitorAgentVersion(String version);
-
   /// Overview card: a newer Monitor release exists.
   ///
   /// In en, this message translates to:
@@ -12358,6 +12250,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Replace sync key'**
   String get syncKeyRotate;
+
+  /// Intro / server discovery: Find machines to add as servers.
+  ///
+  /// In en, this message translates to:
+  /// **'Find machines to add as servers.'**
+  String get discoverIntro;
+
+  /// Intro / server discovery: LAN
+  ///
+  /// In en, this message translates to:
+  /// **'LAN'**
+  String get lan;
+
+  /// Intro / server discovery: Scan
+  ///
+  /// In en, this message translates to:
+  /// **'Scan'**
+  String get discoveryScan;
+
+  /// Intro / server discovery: Scan again
+  ///
+  /// In en, this message translates to:
+  /// **'Scan again'**
+  String get discoveryScanAgain;
+
+  /// Intro / server discovery: Scanning…
+  ///
+  /// In en, this message translates to:
+  /// **'Scanning…'**
+  String get discoveryScanning;
+
+  /// Intro / server discovery: Found {count}
+  ///
+  /// In en, this message translates to:
+  /// **'Found {count}'**
+  String discoveryFound(int count);
+
+  /// Intro / server discovery: {count} selected
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String discoverySelected(int count);
+
+  /// Intro / server discovery: Add {count}
+  ///
+  /// In en, this message translates to:
+  /// **'Add {count}'**
+  String discoveryAddN(int count);
+
+  /// Intro / server discovery: {count} added
+  ///
+  /// In en, this message translates to:
+  /// **'{count} added'**
+  String discoveryAddedN(int count);
+
+  /// Intro / server discovery: Added
+  ///
+  /// In en, this message translates to:
+  /// **'Added'**
+  String get discoveryAdded;
+
+  /// Intro / server discovery: Exists
+  ///
+  /// In en, this message translates to:
+  /// **'Exists'**
+  String get discoveryExists;
+
+  /// Intro / server discovery: Runs without SSH
+  ///
+  /// In en, this message translates to:
+  /// **'Runs without SSH'**
+  String get localServerNoSsh;
+
+  /// Intro / server discovery: Status, terminal, files and containers for Linux, Unix and Windows servers, over SSH or the Monitor.
+  ///
+  /// In en, this message translates to:
+  /// **'Status, terminal, files and containers for Linux, Unix and Windows servers, over SSH or the Monitor.'**
+  String get introWelcome;
+
+  /// Intro / server discovery: Security
+  ///
+  /// In en, this message translates to:
+  /// **'Security'**
+  String get security;
 }
 
 class _AppLocalizationsDelegate

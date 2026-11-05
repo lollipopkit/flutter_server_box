@@ -426,9 +426,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get discoveryFailed => '검색 실패';
 
   @override
-  String get discoverySettings => '검색 설정';
-
-  @override
   String get distro => '배포판';
 
   @override
@@ -450,20 +447,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get dockerPruneTip => '사용하지 않는 데이터를 제거하여 디스크 공간을 확보합니다';
 
   @override
-  String get dockerStatistics => 'Docker 통계';
-
-  @override
   String get editVirtKeys => '가상 키';
 
   @override
   String get editorHighlightTip =>
       '현재 코드 하이라이팅 성능이 이상적이지 않습니다. 성능 향상을 위해 선택적으로 끌 수 있습니다.';
-
-  @override
-  String get enableMdns => 'mDNS 활성화';
-
-  @override
-  String get enableMdnsDesc => 'mDNS/Bonjour를 사용하여 SSH 서비스 검색';
 
   @override
   String get envVars => '환경 변수';
@@ -723,9 +711,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String madeWithLove(String myGithub) {
     return '$myGithub가 ❤️를 담아 만들었습니다.';
   }
-
-  @override
-  String get maxConcurrency => '최대 동시 실행 수';
 
   @override
   String get maxRetryCount => '서버 재연결 시도 최대 횟수';
@@ -2297,24 +2282,6 @@ class AppLocalizationsKo extends AppLocalizations {
       '이 플랫폼에서는 이 기기를 서버로 읽을 수 없습니다. Linux, Windows, macOS DMG 버전에서 지원됩니다.';
 
   @override
-  String get remoteDesktopIntro =>
-      '서버의 RDP 또는 VNC 데스크톱을 앱 안에서 엽니다. 연결은 서버의 SSH 연결이나 Monitor를 거치므로 데스크톱 포트를 네트워크에 열어 둘 필요가 없습니다.';
-
-  @override
-  String get remoteDesktopIntroProfiles =>
-      '서버의 원격 데스크톱 버튼이나 원격 데스크톱 탭에서 데스크톱마다 프로필을 저장합니다.';
-
-  @override
-  String get localServerIntro =>
-      'ServerBox를 실행 중인 기기를 서버로 추가합니다. 상태, 프로세스, 서비스, 컨테이너, 터미널, 파일을 SSH나 Monitor 없이 사용할 수 있습니다.';
-
-  @override
-  String get localServerAdd => '이 기기 추가';
-
-  @override
-  String get localServerIntroFooter => '나중에 서버 편집 페이지의 연결에서도 켤 수 있습니다.';
-
-  @override
   String get transportSectionOff => '꺼져 있습니다. 다시 켤 때를 위해 아래 항목은 그대로 보관됩니다.';
 
   @override
@@ -3044,31 +3011,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get virtualization => '가상화';
-
-  @override
-  String get virtIntro =>
-      'Proxmox VE 및 libvirt/KVM 호스트의 가상 머신과 컨테이너를 관리합니다: 상태, 전원 작업, 콘솔.';
-
-  @override
-  String get virtIntroPveMoved =>
-      'Proxmox VE가 서버 페이지에서 이 탭으로 이동했습니다. 서버의 PVE 카드를 누르면 여기서 열립니다.';
-
-  @override
-  String get virtIntroLibvirt =>
-      'libvirt의 virsh가 설치된 서버는 QEMU/KVM 가상 머신과 함께 호스트로 표시됩니다.';
-
-  @override
-  String get virtIntroTransports => '둘 다 SSH, Monitor 또는 이 기기에서 작동합니다.';
-
-  @override
-  String get virtIntroTokens =>
-      'PVE는 비밀번호 대신 API 토큰으로 로그인할 수 있습니다. 서버 편집 페이지의 PVE에서 설정하세요.';
-
-  @override
-  String get virtIntroInBar => '탭 바에 추가되었습니다.';
-
-  @override
-  String get virtIntroInMore => '\'더보기\'에 있습니다. 설정의 홈 탭에서 탭 바로 옮길 수 있습니다.';
 
   @override
   String get virtGuests => '가상 머신';
@@ -6578,11 +6520,6 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String monitorAgentVersion(String version) {
-    return 'Monitor $version';
-  }
-
-  @override
   String monitorAgentUpdate(String version) {
     return '$version 사용 가능';
   }
@@ -6973,4 +6910,55 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get syncKeyRotate => '동기화 키 교체';
+
+  @override
+  String get discoverIntro => '서버로 추가할 수 있는 머신을 찾습니다.';
+
+  @override
+  String get lan => 'LAN';
+
+  @override
+  String get discoveryScan => '스캔';
+
+  @override
+  String get discoveryScanAgain => '다시 스캔';
+
+  @override
+  String get discoveryScanning => '스캔 중…';
+
+  @override
+  String discoveryFound(int count) {
+    return '$count대 발견';
+  }
+
+  @override
+  String discoverySelected(int count) {
+    return '$count대 선택됨';
+  }
+
+  @override
+  String discoveryAddN(int count) {
+    return '$count대 추가';
+  }
+
+  @override
+  String discoveryAddedN(int count) {
+    return '$count대 추가됨';
+  }
+
+  @override
+  String get discoveryAdded => '추가됨';
+
+  @override
+  String get discoveryExists => '이미 있음';
+
+  @override
+  String get localServerNoSsh => 'SSH 없이 실행';
+
+  @override
+  String get introWelcome =>
+      'SSH 또는 Monitor를 통해 Linux, Unix, Windows 서버의 상태, 터미널, 파일, 컨테이너를 다룹니다.';
+
+  @override
+  String get security => '보안';
 }
