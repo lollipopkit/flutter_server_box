@@ -178,7 +178,8 @@ extension _App on _AppSettingsPageState {
         onTap: () async {
           final val = await context.showPickSingleDialog(
             title: libL10n.setting,
-            items: List.generate(10, (idx) => idx == 1 ? null : idx),
+            // 10 too: the intro offers it.
+            items: List.generate(11, (idx) => idx == 1 ? null : idx),
             initial: _setting.serverStatusUpdateInterval.fetch(),
             display: (p0) => p0 == 0 ? libL10n.manual : '$p0 ${l10n.second}',
           );

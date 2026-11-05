@@ -446,9 +446,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get discoveryFailed => 'Penemuan gagal';
 
   @override
-  String get discoverySettings => 'Pengaturan Penemuan';
-
-  @override
   String get distro => 'Distribusi';
 
   @override
@@ -471,21 +468,11 @@ class AppLocalizationsId extends AppLocalizations {
       'Hapus data yang tidak digunakan untuk mengosongkan ruang disk';
 
   @override
-  String get dockerStatistics => 'Statistik Docker';
-
-  @override
   String get editVirtKeys => 'Kunci virtual';
 
   @override
   String get editorHighlightTip =>
       'Performa penyorotan kode saat ini lebih buruk, dan dapat dimatikan secara opsional untuk perbaikan.';
-
-  @override
-  String get enableMdns => 'Aktifkan mDNS';
-
-  @override
-  String get enableMdnsDesc =>
-      'Gunakan mDNS/Bonjour untuk menemukan layanan SSH';
 
   @override
   String get envVars => 'Variabel lingkungan';
@@ -759,9 +746,6 @@ class AppLocalizationsId extends AppLocalizations {
   String madeWithLove(String myGithub) {
     return 'Dibuat dengan ❤️ oleh $myGithub';
   }
-
-  @override
-  String get maxConcurrency => 'Konkurensi Maksimum';
 
   @override
   String get maxRetryCount =>
@@ -2430,25 +2414,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Platform ini tidak dapat membaca perangkat ini sebagai server. Linux, Windows, dan versi DMG macOS mendukungnya.';
 
   @override
-  String get remoteDesktopIntro =>
-      'Buka desktop RDP atau VNC sebuah server di dalam aplikasi. Koneksi melewati koneksi SSH server atau Monitor-nya, jadi port desktop tidak perlu dapat dijangkau dari jaringan.';
-
-  @override
-  String get remoteDesktopIntroProfiles =>
-      'Simpan satu profil per desktop dari tombol Desktop jarak jauh pada server, atau dari tab Desktop jarak jauh.';
-
-  @override
-  String get localServerIntro =>
-      'Tambahkan perangkat yang menjalankan ServerBox sebagai server. Status, proses, layanan, kontainer, terminal, dan berkas berfungsi tanpa SSH atau Monitor.';
-
-  @override
-  String get localServerAdd => 'Tambahkan perangkat ini';
-
-  @override
-  String get localServerIntroFooter =>
-      'Ini juga bisa diaktifkan nanti, di halaman edit server pada bagian Koneksi.';
-
-  @override
   String get transportSectionOff =>
       'Nonaktif. Kolom di bawah disimpan untuk saat Anda mengaktifkannya lagi.';
 
@@ -3202,33 +3167,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get virtualization => 'Virtualisasi';
-
-  @override
-  String get virtIntro =>
-      'Kelola mesin virtual dan kontainer di host Proxmox VE dan libvirt/KVM: status, aksi daya, dan konsol.';
-
-  @override
-  String get virtIntroPveMoved =>
-      'Proxmox VE telah pindah dari halaman server ke tab ini. Kartu PVE sebuah server membukanya di sini.';
-
-  @override
-  String get virtIntroLibvirt =>
-      'Server dengan virsh dari libvirt terpasang muncul sebagai host, beserta mesin virtual QEMU/KVM-nya.';
-
-  @override
-  String get virtIntroTransports =>
-      'Keduanya bekerja lewat SSH, melalui Monitor, atau di perangkat ini.';
-
-  @override
-  String get virtIntroTokens =>
-      'PVE dapat masuk dengan token API alih-alih kata sandi. Atur di halaman edit server, pada bagian PVE.';
-
-  @override
-  String get virtIntroInBar => 'Tab ini telah ditambahkan ke bilah tab.';
-
-  @override
-  String get virtIntroInMore =>
-      'Tab ini ada di Lainnya. Tab Beranda di Pengaturan dapat memindahkannya ke bilah tab.';
 
   @override
   String get virtGuests => 'Mesin virtual';
@@ -6870,11 +6808,6 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String monitorAgentVersion(String version) {
-    return 'Monitor $version';
-  }
-
-  @override
   String monitorAgentUpdate(String version) {
     return '$version tersedia';
   }
@@ -7275,4 +7208,55 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get syncKeyRotate => 'Ganti kunci sinkronisasi';
+
+  @override
+  String get discoverIntro => 'Temukan mesin untuk ditambahkan sebagai server.';
+
+  @override
+  String get lan => 'LAN';
+
+  @override
+  String get discoveryScan => 'Pindai';
+
+  @override
+  String get discoveryScanAgain => 'Pindai lagi';
+
+  @override
+  String get discoveryScanning => 'Memindai…';
+
+  @override
+  String discoveryFound(int count) {
+    return '$count ditemukan';
+  }
+
+  @override
+  String discoverySelected(int count) {
+    return '$count dipilih';
+  }
+
+  @override
+  String discoveryAddN(int count) {
+    return 'Tambah $count';
+  }
+
+  @override
+  String discoveryAddedN(int count) {
+    return '$count ditambahkan';
+  }
+
+  @override
+  String get discoveryAdded => 'Ditambahkan';
+
+  @override
+  String get discoveryExists => 'Sudah ada';
+
+  @override
+  String get localServerNoSsh => 'Tanpa SSH';
+
+  @override
+  String get introWelcome =>
+      'Status, terminal, file, dan kontainer untuk server Linux, Unix, dan Windows, melalui SSH atau Monitor.';
+
+  @override
+  String get security => 'Keamanan';
 }

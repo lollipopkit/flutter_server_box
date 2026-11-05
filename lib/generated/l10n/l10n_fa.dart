@@ -446,9 +446,6 @@ class AppLocalizationsFa extends AppLocalizations {
   String get discoveryFailed => 'شناسایی ناموفق بود';
 
   @override
-  String get discoverySettings => 'تنظیمات شناسایی';
-
-  @override
   String get distro => 'توزیع';
 
   @override
@@ -471,21 +468,11 @@ class AppLocalizationsFa extends AppLocalizations {
       'حذف داده‌های استفاده‌نشده برای آزادسازی فضای دیسک';
 
   @override
-  String get dockerStatistics => 'آمارهای Docker';
-
-  @override
   String get editVirtKeys => 'کلیدهای مجازی';
 
   @override
   String get editorHighlightTip =>
       'عملکرد فعلی برجسته‌سازی کد بهینه نیست و برای بهبود سرعت می‌توانید آن را به‌صورت اختیاری غیرفعال کنید.';
-
-  @override
-  String get enableMdns => 'فعال‌سازی mDNS';
-
-  @override
-  String get enableMdnsDesc =>
-      'استفاده از mDNS/Bonjour برای شناسایی سرویس‌های SSH';
 
   @override
   String get envVars => 'متغیرهای محیطی';
@@ -759,9 +746,6 @@ class AppLocalizationsFa extends AppLocalizations {
   String madeWithLove(String myGithub) {
     return 'ساخته‌شده با ❤️ توسط $myGithub';
   }
-
-  @override
-  String get maxConcurrency => 'حداکثر هم‌زمانی';
 
   @override
   String get maxRetryCount => 'حداکثر تعداد تلاش برای اتصال دوباره به سرور';
@@ -2441,25 +2425,6 @@ class AppLocalizationsFa extends AppLocalizations {
       'این پلتفرم نمی‌تواند این دستگاه را به‌عنوان سرور بخواند. لینوکس، ویندوز و نسخه DMG در macOS این قابلیت را دارند.';
 
   @override
-  String get remoteDesktopIntro =>
-      'دسکتاپ RDP یا VNC یک سرور را درون برنامه باز کنید. اتصال از طریق اتصال SSH سرور یا Monitor آن انجام می‌شود، بنابراین نیازی به در دسترس بودن پورت دسکتاپ از طریق شبکه نیست.';
-
-  @override
-  String get remoteDesktopIntroProfiles =>
-      'یک پروفایل برای هر دسکتاپ از طریق دکمه دسکتاپ راه دور در سرور، یا از برگه دسکتاپ راه دور ذخیره کنید.';
-
-  @override
-  String get localServerIntro =>
-      'دستگاهی را که ServerBox را اجرا می‌کند به‌عنوان سرور اضافه کنید. وضعیت، فرایندها، سرویس‌ها، کانتینرها، ترمینال و فایل‌ها همگی بدون SSH یا Monitor کار می‌کنند.';
-
-  @override
-  String get localServerAdd => 'افزودن این دستگاه';
-
-  @override
-  String get localServerIntroFooter =>
-      'این مورد را بعداً نیز می‌توان در صفحه ویرایش سرور و زیر بخش «اتصال» فعال کرد.';
-
-  @override
   String get transportSectionOff =>
       'خاموش. فیلدهای زیر برای زمانی که آن را دوباره روشن کنید حفظ می‌شوند.';
 
@@ -3213,33 +3178,6 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get virtualization => 'مجازی‌سازی';
-
-  @override
-  String get virtIntro =>
-      'مدیریت ماشین‌های مجازی و کانتینرها در میزبان‌های Proxmox VE و libvirt/KVM: وضعیت، عملیات مربوط به برق و کنسول‌های آن‌ها.';
-
-  @override
-  String get virtIntroPveMoved =>
-      'بخش Proxmox VE از صفحه سرور به این برگه منتقل شده است. کارت PVE هر سرور آن را در اینجا باز می‌کند.';
-
-  @override
-  String get virtIntroLibvirt =>
-      'سروری که ابزار virsh متعلق به libvirt روی آن نصب باشد، به همراه ماشین‌های مجازی QEMU/KVM خود به عنوان میزبان نمایش داده می‌شود.';
-
-  @override
-  String get virtIntroTransports =>
-      'هر دو از طریق SSH، از طریق Monitor، یا روی همین دستگاه کار می‌کنند.';
-
-  @override
-  String get virtIntroTokens =>
-      'در PVE می‌توان به جای گذرواژه با یک توکن API وارد شد. آن را در صفحه ویرایش سرور، زیر بخش PVE تنظیم کنید.';
-
-  @override
-  String get virtIntroInBar => 'این بخش به نوار برگه‌ها افزوده شده است.';
-
-  @override
-  String get virtIntroInMore =>
-      'این بخش در «بیشتر» قرار دارد. از طریق «برگه‌های خانه» در تنظیمات می‌توان آن را به نوار برگه‌ها منتقل کرد.';
 
   @override
   String get virtGuests => 'ماشین‌های مجازی';
@@ -6911,11 +6849,6 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
-  String monitorAgentVersion(String version) {
-    return 'Monitor $version';
-  }
-
-  @override
   String monitorAgentUpdate(String version) {
     return '$version available';
   }
@@ -7321,4 +7254,56 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get syncKeyRotate => 'جایگزینی کلید همگام‌سازی';
+
+  @override
+  String get discoverIntro =>
+      'ماشین‌هایی را که می‌توان به‌عنوان سرور افزود پیدا کنید.';
+
+  @override
+  String get lan => 'شبکه محلی';
+
+  @override
+  String get discoveryScan => 'اسکن';
+
+  @override
+  String get discoveryScanAgain => 'اسکن دوباره';
+
+  @override
+  String get discoveryScanning => 'در حال اسکن…';
+
+  @override
+  String discoveryFound(int count) {
+    return '$count مورد پیدا شد';
+  }
+
+  @override
+  String discoverySelected(int count) {
+    return '$count مورد انتخاب شد';
+  }
+
+  @override
+  String discoveryAddN(int count) {
+    return 'افزودن $count';
+  }
+
+  @override
+  String discoveryAddedN(int count) {
+    return '$count مورد افزوده شد';
+  }
+
+  @override
+  String get discoveryAdded => 'افزوده شد';
+
+  @override
+  String get discoveryExists => 'موجود است';
+
+  @override
+  String get localServerNoSsh => 'بدون SSH';
+
+  @override
+  String get introWelcome =>
+      'وضعیت، ترمینال، فایل‌ها و کانتینرهای سرورهای Linux، Unix و Windows، از طریق SSH یا Monitor.';
+
+  @override
+  String get security => 'امنیت';
 }

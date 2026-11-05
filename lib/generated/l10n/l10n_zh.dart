@@ -414,9 +414,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get discoveryFailed => '发现失败';
 
   @override
-  String get discoverySettings => '发现设置';
-
-  @override
   String get distro => '发行版';
 
   @override
@@ -438,19 +435,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dockerPruneTip => '清理未使用的数据以释放磁盘空间';
 
   @override
-  String get dockerStatistics => 'Docker 统计';
-
-  @override
   String get editVirtKeys => '虚拟按键';
 
   @override
   String get editorHighlightTip => '代码高亮功能可能影响性能，可选择关闭。';
-
-  @override
-  String get enableMdns => '启用mDNS';
-
-  @override
-  String get enableMdnsDesc => '使用mDNS/Bonjour发现SSH服务';
 
   @override
   String get envVars => '环境变量';
@@ -707,9 +695,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String madeWithLove(String myGithub) {
     return '由 $myGithub 用 ❤️ 制作';
   }
-
-  @override
-  String get maxConcurrency => '最大并发数';
 
   @override
   String get maxRetryCount => '服务器重连尝试次数上限';
@@ -2249,24 +2234,6 @@ class AppLocalizationsZh extends AppLocalizations {
       '当前平台不支持添加本机作为服务器（仅支持 Linux、Windows 及 macOS DMG 版）。';
 
   @override
-  String get remoteDesktopIntro =>
-      '在应用内打开服务器的 RDP 或 VNC 桌面。连接经由服务器的 SSH 连接或其 Monitor 转发，桌面端口无需对网络开放。';
-
-  @override
-  String get remoteDesktopIntroProfiles =>
-      '在服务器的「远程桌面」按钮或「远程桌面」标签页中，为每个桌面保存一个配置。';
-
-  @override
-  String get localServerIntro =>
-      '将运行 ServerBox 的设备添加为服务器。状态、进程、服务、容器、终端和文件都无需 SSH 或 Monitor。';
-
-  @override
-  String get localServerAdd => '添加本机';
-
-  @override
-  String get localServerIntroFooter => '之后也可以在服务器编辑页的「连接方式」中开启。';
-
-  @override
   String get transportSectionOff => '当前未启用，下方配置将保留以便日后重新开启。';
 
   @override
@@ -2979,31 +2946,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtualization => '虚拟化';
-
-  @override
-  String get virtIntro =>
-      '管理 Proxmox VE 和 libvirt/KVM 主机上的虚拟机和容器：查看状态、执行电源操作、打开控制台。';
-
-  @override
-  String get virtIntroPveMoved =>
-      'Proxmox VE 管理已整合至此标签页，点击服务器详情页中的 PVE 卡片也会跳转到这里。';
-
-  @override
-  String get virtIntroLibvirt =>
-      '安装了 libvirt（virsh）的服务器会自动识别为宿主机，并列出其上的 QEMU/KVM 虚拟机。';
-
-  @override
-  String get virtIntroTransports => '支持通过 SSH、Monitor 或本机直接连接。';
-
-  @override
-  String get virtIntroTokens =>
-      'PVE 可以使用 API token 登录，无需密码。在服务器编辑页面的 PVE 部分设置。';
-
-  @override
-  String get virtIntroInBar => '已添加到标签栏。';
-
-  @override
-  String get virtIntroInMore => '位于“更多”中。可在设置的“主页标签”中将其移到标签栏。';
 
   @override
   String get virtGuests => '虚拟机';
@@ -6469,11 +6411,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String monitorAgentVersion(String version) {
-    return 'Monitor $version';
-  }
-
-  @override
   String monitorAgentUpdate(String version) {
     return '可更新到 $version';
   }
@@ -6860,6 +6797,57 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get syncKeyRotate => '更换同步密钥';
+
+  @override
+  String get discoverIntro => '找到可以添加为服务器的机器。';
+
+  @override
+  String get lan => '局域网';
+
+  @override
+  String get discoveryScan => '扫描';
+
+  @override
+  String get discoveryScanAgain => '重新扫描';
+
+  @override
+  String get discoveryScanning => '正在扫描…';
+
+  @override
+  String discoveryFound(int count) {
+    return '找到 $count 台';
+  }
+
+  @override
+  String discoverySelected(int count) {
+    return '已选 $count 台';
+  }
+
+  @override
+  String discoveryAddN(int count) {
+    return '添加 $count 台';
+  }
+
+  @override
+  String discoveryAddedN(int count) {
+    return '已添加 $count 台';
+  }
+
+  @override
+  String get discoveryAdded => '已添加';
+
+  @override
+  String get discoveryExists => '已存在';
+
+  @override
+  String get localServerNoSsh => '无需 SSH';
+
+  @override
+  String get introWelcome =>
+      '通过 SSH 或 Monitor 查看 Linux、Unix 和 Windows 服务器的状态，并使用终端、文件和容器管理。';
+
+  @override
+  String get security => '安全';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -7273,9 +7261,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get discoveryFailed => '發現失敗';
 
   @override
-  String get discoverySettings => '發現設定';
-
-  @override
   String get distro => '發行版';
 
   @override
@@ -7297,19 +7282,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get dockerPruneTip => '清理未使用的資料以釋放磁碟空間';
 
   @override
-  String get dockerStatistics => 'Docker 統計';
-
-  @override
   String get editVirtKeys => '虛擬按鍵';
 
   @override
   String get editorHighlightTip => '程式碼高亮功能可能影響效能，可選擇性關閉。';
-
-  @override
-  String get enableMdns => '啟用mDNS';
-
-  @override
-  String get enableMdnsDesc => '使用mDNS/Bonjour發現SSH服務';
 
   @override
   String get envVars => '環境變數';
@@ -7566,9 +7542,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String madeWithLove(String myGithub) {
     return '由 $myGithub 用 ❤️ 製作';
   }
-
-  @override
-  String get maxConcurrency => '最大並發數';
 
   @override
   String get maxRetryCount => '伺服器重連嘗試次數上限';
@@ -9106,24 +9079,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       '目前平台無法將本機作為伺服器讀取。Linux、Windows 和 macOS DMG 版本支援。';
 
   @override
-  String get remoteDesktopIntro =>
-      '在應用程式內開啟伺服器的 RDP 或 VNC 桌面。連線經由伺服器的 SSH 連線或其 Monitor 轉送，桌面連接埠無需對網路開放。';
-
-  @override
-  String get remoteDesktopIntroProfiles =>
-      '在伺服器的「遠端桌面」按鈕或「遠端桌面」分頁中，為每個桌面儲存一個設定檔。';
-
-  @override
-  String get localServerIntro =>
-      '將執行 ServerBox 的裝置新增為伺服器。狀態、程序、服務、容器、終端機和檔案都無需 SSH 或 Monitor。';
-
-  @override
-  String get localServerAdd => '新增本機';
-
-  @override
-  String get localServerIntroFooter => '之後也可以在伺服器編輯頁的「連線方式」中開啟。';
-
-  @override
   String get transportSectionOff => '已關閉。下面的欄位會保留，供你再次開啟時使用。';
 
   @override
@@ -9836,30 +9791,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtualization => '虛擬化';
-
-  @override
-  String get virtIntro =>
-      '管理 Proxmox VE 與 libvirt/KVM 主機上的虛擬機器和容器：查看狀態、執行電源操作、開啟主控台。';
-
-  @override
-  String get virtIntroPveMoved => 'Proxmox VE 已從伺服器頁面移到此分頁。伺服器的 PVE 卡片會在這裡開啟它。';
-
-  @override
-  String get virtIntroLibvirt =>
-      '安裝了 libvirt 的 virsh 的伺服器會顯示為主機，並列出其 QEMU/KVM 虛擬機器。';
-
-  @override
-  String get virtIntroTransports => '兩者都可以透過 SSH、經由 Monitor 或在本裝置上使用。';
-
-  @override
-  String get virtIntroTokens =>
-      'PVE 可以使用 API token 登入，無需密碼。請在伺服器編輯頁面的 PVE 部分設定。';
-
-  @override
-  String get virtIntroInBar => '已新增到分頁列。';
-
-  @override
-  String get virtIntroInMore => '位於「更多」中。可在設定的「主頁標籤」中將其移到分頁列。';
 
   @override
   String get virtGuests => '虛擬機';
@@ -13330,11 +13261,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String monitorAgentVersion(String version) {
-    return 'Monitor $version';
-  }
-
-  @override
   String monitorAgentUpdate(String version) {
     return '可更新至 $version';
   }
@@ -13721,4 +13647,55 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get syncKeyRotate => '更換同步金鑰';
+
+  @override
+  String get discoverIntro => '找到可以新增為伺服器的機器。';
+
+  @override
+  String get lan => '區域網路';
+
+  @override
+  String get discoveryScan => '掃描';
+
+  @override
+  String get discoveryScanAgain => '重新掃描';
+
+  @override
+  String get discoveryScanning => '正在掃描…';
+
+  @override
+  String discoveryFound(int count) {
+    return '找到 $count 台';
+  }
+
+  @override
+  String discoverySelected(int count) {
+    return '已選 $count 台';
+  }
+
+  @override
+  String discoveryAddN(int count) {
+    return '新增 $count 台';
+  }
+
+  @override
+  String discoveryAddedN(int count) {
+    return '已新增 $count 台';
+  }
+
+  @override
+  String get discoveryAdded => '已新增';
+
+  @override
+  String get discoveryExists => '已存在';
+
+  @override
+  String get localServerNoSsh => '無需 SSH';
+
+  @override
+  String get introWelcome =>
+      '透過 SSH 或 Monitor 檢視 Linux、Unix 和 Windows 伺服器的狀態，並使用終端機、檔案和容器管理。';
+
+  @override
+  String get security => '安全性';
 }
