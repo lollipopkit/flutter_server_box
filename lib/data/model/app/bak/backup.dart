@@ -113,25 +113,18 @@ class BackupV1 implements Mergeable {
 
       if (settings_ != null) {
         _restoreInto(Stores.setting, settings_);
+        // A restore is neither a launch nor a version bump, so nothing else
+        // converts what just landed; inside the transaction, so a failed step
+        // rolls the restore back. This format predates every step. Only when
+        // the file brought settings: a file carrying none leaves the local
+        // ones alone.
+        if (settings_.isNotEmpty) {
+          for (final step in kRestoreSettingsMigrations) {
+            step.applySync();
+          }
+        }
       }
     });
-
-    // Outside the transaction, and for the reason the v2 path does it too: a
-    // restore is neither a launch nor a version bump, so nothing else will
-    // look at what just landed. This format predates the grouped settings
-    // entirely, so its settings map is always the old per-field keys — and,
-    // being older still, the pre-`virtualKeyRows` switch and the `int`
-    // `sshConnectionMode` as well.
-    //
-    // Only when the file brought settings, for the reason [BackupV2.merge]
-    // records: these convert what arrived, and a file carrying none leaves the
-    // local settings alone.
-    //
-    if (settings_ != null && settings_.isNotEmpty) {
-      for (final step in kRestoreSettingsMigrations) {
-        step.applySync();
-      }
-    }
 
     // After the commit, since the rows were written without announcing it.
     Stores.pve.invalidate();

@@ -55,7 +55,7 @@ void main() {
   ].join('\n');
 
   test('an absent directory lists as none', () async {
-    final exec = _QueueExec([_ok('')]);
+    final exec = _QueueExec([_ok('SrvBoxCusCmdDirMissing\n')]);
 
     expect(await CustomCmdManager.list(exec, SystemType.linux), isEmpty);
     expect(
@@ -63,6 +63,16 @@ void main() {
       ffi.readCustomCmdsCommand(system: SystemType.linux.ffi),
     );
     expect(exec.entries.single, 'sh');
+  });
+
+  test('output that is not a listing throws instead of listing none', () async {
+    // Read as none, the editor would save over the real commands.
+    final exec = _QueueExec([_ok('sh: base64: not found\n')]);
+
+    await expectLater(
+      CustomCmdManager.list(exec, SystemType.linux),
+      throwsA(isA<CommandFailed>()),
+    );
   });
 
   test('an empty directory lists as none', () async {

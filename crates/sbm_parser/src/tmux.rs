@@ -310,8 +310,10 @@ pub fn parse_sessions(output: &str) -> TmuxSessionListing {
 /// What [`list_sessions_command`] answered, exit code included: `None` when
 /// the listing failed. tmux exits 1 when no server is up (`no server running
 /// on <socket>`, or `error connecting to <socket> (<reason>)` for a stale
-/// socket; 1.x says `failed to connect to server`), which is no sessions
-/// rather than a failure — unless the socket refused this user.
+/// socket; 1.x says `failed to connect to server: <reason>`), which is no
+/// sessions rather than a failure — but only when the reason says the socket
+/// is missing or refused. Any other reason (denied, a path too long, out of
+/// descriptors) is a server this listing could not reach.
 pub fn read_sessions(output: &str, exit_code: i32) -> Option<TmuxSessionListing> {
     if exit_code == 0 {
         return Some(parse_sessions(output));
@@ -319,10 +321,13 @@ pub fn read_sessions(output: &str, exit_code: i32) -> Option<TmuxSessionListing>
     let no_server = output.lines().map(str::trim).any(|line| {
         line.starts_with("no server running on")
             || ((line.starts_with("error connecting to") || line.starts_with("failed to connect to server"))
-                && !line.to_ascii_lowercase().contains("permission denied"))
+                && NO_SERVER_REASONS.iter().any(|reason| line.contains(reason)))
     });
     (exit_code == 1 && no_server).then(TmuxSessionListing::default)
 }
+
+/// `strerror` for a socket that is not there and one nothing listens on.
+const NO_SERVER_REASONS: [&str; 2] = ["No such file or directory", "Connection refused"];
 
 fn parse_session(line: &str) -> Option<TmuxSession> {
     let fields = split_fields(line);
@@ -615,6 +620,13 @@ mod tests {
             None
         );
         assert_eq!(read_sessions("failed to connect to server: Permission denied", 1), None);
+        for reason in ["File name too long", "Too many open files", "Not a directory"] {
+            assert_eq!(
+                read_sessions(&format!("error connecting to /tmp/tmux-1000/default ({reason})"), 1),
+                None,
+                "{reason}"
+            );
+        }
     }
 
     #[test]

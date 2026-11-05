@@ -16,6 +16,9 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/store/migrations/all.dart';
+import 'package:server_box/data/store/migrations/m008_settings_fixups.dart';
+import 'package:server_box/data/store/migrations/m009_grouped_settings.dart';
+import 'package:server_box/data/store/migrations/m021_home_tabs_bar.dart';
 import 'package:server_box/data/store/migrations/m022_ai_endpoint_version.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/stores.dart';
@@ -689,6 +692,37 @@ void main() {
       ]);
     });
 
+    test('a settings step runs only on a file older than it', () async {
+      // m021 reads any bar of exactly the old five tabs as the old default;
+      // on a file written after it, that bar is the user's choice.
+      const five = ['server', 'ssh', 'file', 'snippet', 'agent'];
+      BackupV2 withTabs(int version) => BackupV2(
+        version: version,
+        date: 1,
+        spis: const {},
+        snippets: const {},
+        keys: const {},
+        container: const {},
+        history: const {},
+        settings: {
+          'homeTabs': five,
+          Stores.setting.lastUpdateTsKey: <String, int>{},
+        },
+      );
+
+      await withTabs(BackupV2.formatVer).merge(force: true);
+      expect(
+        [for (final t in Stores.setting.homeTabs.fetch()) t.name],
+        five,
+      );
+
+      await withTabs(HomeTabsBarMigration.appliedAt).merge(force: true);
+      expect(
+        [for (final t in Stores.setting.homeTabs.fetch()) t.name],
+        five.take(4),
+      );
+    });
+
     test('does not apply device-local markers from an older backup', () async {
       const importMarker = '${StoreDefaults.prefixKey}hiveImported';
       Stores.setting.set(importMarker, true, updateLastUpdateTsOnSet: false);
@@ -719,7 +753,7 @@ void main() {
       await Stores.setting.agentShell.width.set(999);
 
       final backup = BackupV2(
-        version: BackupV2.formatVer,
+        version: const GroupedSettingsMigration().from,
         date: 1,
         spis: const {},
         snippets: const {},
@@ -1042,7 +1076,7 @@ void main() {
         END;
       ''');
       final backup = BackupV2(
-        version: BackupV2.formatVer,
+        version: SettingsFixupsMigration.appliedAt,
         date: 1,
         spis: {'srv-conversion-atomic': stored},
         snippets: const {},

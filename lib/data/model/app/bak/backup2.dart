@@ -96,10 +96,9 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
 
     /// Each server's `PveConfig`, by server id — `PveStore.getAllMap`.
     ///
-    /// Absent from files written before PVE had a table of its own. Those
-    /// carry it inside the server record's `custom` instead — and so does
-    /// every file this build writes, for those builds to read. What [merge]
-    /// makes of either is `_pveToRestore`'s rule.
+    /// The only place a file carries PVE. One written before PVE had a table
+    /// of its own has no such section and restores without PVE; see
+    /// `_pveToRestore`.
     @Default(<String, Object?>{}) Map<String, Object?> pve,
 
     /// The installed theme packages, by installation id — see

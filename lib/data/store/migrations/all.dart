@@ -113,3 +113,10 @@ const kRestoreSettingsMigrations = <SettingsMigration>[
   // turns into a provider at the next launch that then answers 404.
   AiEndpointVersionMigration(),
 ];
+
+/// The [kRestoreSettingsMigrations] a file written at schema [fileVersion]
+/// still needs. A file written after a step already has its shape, and the
+/// step's match would misread a current value: m021 takes any bar of exactly
+/// the old five tabs for the old default.
+Iterable<SettingsMigration> restoreSettingsMigrationsFor(int fileVersion) =>
+    kRestoreSettingsMigrations.where((step) => fileVersion <= step.from);

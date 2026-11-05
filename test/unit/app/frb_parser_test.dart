@@ -277,6 +277,7 @@ __SBM_GPU_END__
     expect(parsed.first.cmd, 'echo hi\necho there');
 
     expect(script.parseCustomCmdsListing(raw: ''), isNull);
+    expect(script.parseCustomCmdsListing(raw: 'SrvBoxCusCmdDirMissing\n'), isEmpty);
     expect(
       script.parseCustomCmdsListing(
         raw: 'SrvBoxCusCmdDir\nSrvBoxCusCmdDirEnd\n',

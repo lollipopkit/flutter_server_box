@@ -18,7 +18,9 @@ abstract final class CustomCmdManager {
       entry: _entry(system),
     );
     if (!res.succeeded) throw CommandFailed('read custom commands', res);
-    return ffi.parseCustomCmdsListing(raw: res.stdout) ?? const [];
+    final cmds = ffi.parseCustomCmdsListing(raw: res.stdout);
+    if (cmds == null) throw CommandFailed('read custom commands', res);
+    return cmds;
   }
 
   /// Replaces the set in one round trip. Each file's name carries its position

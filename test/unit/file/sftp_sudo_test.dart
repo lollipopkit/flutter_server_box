@@ -167,6 +167,21 @@ void main() {
       expect(server.scripts.single, contains('/tmp/staged'));
     });
 
+    test('removing the staging copy never asks for a password', () async {
+      // The copy is this user's own; a cleanup that prompted would put a
+      // password dialog after a cancelled upload.
+      final moved = await helper().finishUploadAsRoot(
+        '/tmp/staged',
+        '/etc/x',
+        staged: Future.value(false),
+      );
+
+      expect(moved, isFalse);
+      expect(asked, 0);
+      expect(server.scripts.single, contains('/tmp/staged'));
+      expect(server.scripts.single, isNot(contains('sudo')));
+    });
+
     test('a failed transfer is rethrown after removing the staging copy', () async {
       await expectLater(
         helper().finishUploadAsRoot(

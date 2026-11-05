@@ -275,12 +275,10 @@ fn custom_cmd_listing_round_trips() {
     );
 }
 
-/// A directory that does not exist and one that is empty are different
-/// answers: the first means the app has never installed here and should seed
-/// from what it still holds, the second means the user deleted them all and it
-/// must not resurrect them.
+/// A missing directory is no commands; output that is not a listing is not:
+/// read as empty, the editor would save over the real ones.
 #[test]
-fn custom_cmd_listing_tells_missing_from_empty() {
+fn custom_cmd_listing_tells_missing_from_unreadable() {
     assert_eq!(script::parse_custom_cmds_listing(""), None);
     assert_eq!(
         script::parse_custom_cmds_listing("sh: base64: not found\n"),
@@ -296,6 +294,11 @@ fn custom_cmd_listing_tells_missing_from_empty() {
     );
     assert_eq!(
         script::parse_custom_cmds_listing(&format!("{}\n", script::CUSTOM_CMD_DIR_MISSING_MARKER,)),
+        Some(vec![]),
+    );
+    // Cut off after the start marker.
+    assert_eq!(
+        script::parse_custom_cmds_listing(&format!("{}\n00100_eA ZWNobw==\n", script::CUSTOM_CMD_DIR_MARKER)),
         None,
     );
 }

@@ -396,7 +396,10 @@ pub fn read_custom_cmds_script(system: SystemType) -> String {
 /// The directory [`read_custom_cmds_script`] printed, as `(order, name, cmd)`
 /// in file-name order.
 ///
-/// `None` when the directory does not exist. Files that are not ours — a name
+/// Empty when the directory does not exist: nothing is installed yet. `None`
+/// when the output is not a listing (no marker pair: a missing `base64`, a
+/// cut-off channel), which is not "no commands" — an editor that took it for
+/// that would save over the real ones. Files that are not ours — a name
 /// without an order prefix, content that is not valid base64 — are skipped
 /// rather than failing the whole listing: the directory is on someone's
 /// server, and a stray file in it should not cost them the editor.
@@ -415,7 +418,7 @@ pub fn parse_custom_cmds_listing(raw: &str) -> Option<Vec<(u32, String, String)>
         .iter()
         .rposition(|line| line.trim() == CUSTOM_CMD_DIR_MISSING_MARKER);
     if last_missing.is_some_and(|missing| last_end.is_none_or(|end| missing > end)) {
-        return None;
+        return Some(Vec::new());
     }
     let end = last_end?;
     let start = lines[..end]

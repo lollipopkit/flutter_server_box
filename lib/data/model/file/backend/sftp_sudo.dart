@@ -166,16 +166,26 @@ final class SftpSudoHelper {
         return true;
       }
     } catch (_) {
-      await _discard(staging, password);
+      await _discard(staging);
       rethrow;
     }
-    await _discard(staging, password);
+    await _discard(staging);
     return false;
   }
 
-  Future<void> _discard(String staging, String? password) async {
+  /// The staging copy is this user's own, so no sudo: a cleanup never asks
+  /// for a password.
+  Future<void> _discard(String staging) async {
     try {
-      await delete(staging, isDir: false, recursive: false, password: password);
+      final result = await exec(
+        files.filesRemoveCommand(
+          path: staging,
+          isDir: false,
+          recursive: false,
+          force: true,
+        ),
+      );
+      if (result.exitCode != 0) throw SftpSudoFailed(result.stdout.trim());
     } catch (e) {
       // A leftover in `/tmp` is not worth a second error over the first.
       Loggers.app.warning('SFTP sudo: staging $staging left behind', e);

@@ -121,7 +121,7 @@ extension BackupV2Restore on BackupV2 {
       // shapes in version order before this transaction can commit, so a
       // failed conversion rolls the entire restore back with it.
       if (settings.isNotEmpty) {
-        for (final step in kRestoreSettingsMigrations) {
+        for (final step in restoreSettingsMigrationsFor(version)) {
           step.applySync();
         }
       }
