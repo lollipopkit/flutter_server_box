@@ -399,8 +399,12 @@ body {
   transition: border-color 0.25s ease;
 }
 
-.tour-list li:has(.tour-item.active) {
-  border-left-color: var(--brand);
+/* Only the list beside the phone marks the shown item; below 860px every card
+   is its own picture. */
+@media (min-width: 861px) {
+  .tour-list li:has(.tour-item.active) {
+    border-left-color: var(--brand);
+  }
 }
 
 .tour-item {
