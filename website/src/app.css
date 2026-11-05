@@ -115,7 +115,6 @@ body {
   border: 1px solid color-mix(in srgb, var(--light-gray) 80%, transparent);
   background: color-mix(in srgb, var(--white) 78%, transparent);
   backdrop-filter: saturate(1.4) blur(14px);
-  -webkit-backdrop-filter: saturate(1.4) blur(14px);
   box-shadow: 0 6px 24px -14px rgba(26, 20, 24, 0.25);
 }
 
@@ -149,8 +148,10 @@ body {
   transition: color 0.2s ease;
 }
 
-.site-nav nav a:hover {
-  color: var(--black);
+@media (hover: hover) {
+  .site-nav nav a:hover {
+    color: var(--black);
+  }
 }
 
 .nav-actions {
@@ -221,8 +222,10 @@ body {
   transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-.nav-cta:hover {
-  opacity: 0.9;
+@media (hover: hover) {
+  .nav-cta:hover {
+    opacity: 0.9;
+  }
 }
 
 .page-section {
@@ -262,17 +265,6 @@ body {
   flex-direction: column;
   align-items: flex-start;
   gap: 1.4rem;
-}
-
-.hero-platforms {
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  letter-spacing: 0.02em;
-  color: var(--stone);
-  padding: 0.35rem 0.8rem;
-  border: 1px solid var(--light-gray);
-  border-radius: var(--radius-pill);
-  background: var(--white);
 }
 
 .hero h1 {
@@ -343,13 +335,15 @@ body {
     opacity 0.2s ease;
 }
 
-.screenshot-stack:hover .screenshot-card {
-  box-shadow: 0 28px 60px -18px rgba(26, 20, 24, 0.4);
-  transform:
-    translate3d(calc(-50% + (var(--hover-slot) * var(--spread)) + var(--move-x)), calc(-50% + var(--move-y)), 0)
-    rotateZ(var(--hover-r))
-    rotateX(var(--tilt-x))
-    rotateY(var(--tilt-y));
+@media (hover: hover) {
+  .screenshot-stack:hover .screenshot-card {
+    box-shadow: 0 28px 60px -18px rgba(26, 20, 24, 0.4);
+    transform:
+      translate3d(calc(-50% + (var(--hover-slot) * var(--spread)) + var(--move-x)), calc(-50% + var(--move-y)), 0)
+      rotateZ(var(--hover-r))
+      rotateX(var(--tilt-x))
+      rotateY(var(--tilt-y));
+  }
 }
 
 
@@ -404,8 +398,12 @@ body {
   transition: border-color 0.25s ease;
 }
 
-.tour-list li:has(.tour-item.active) {
-  border-left-color: var(--brand);
+/* Only the list beside the phone marks the shown item; below 860px every card
+   is its own picture. */
+@media (min-width: 861px) {
+  .tour-list li:has(.tour-item.active) {
+    border-left-color: var(--brand);
+  }
 }
 
 .tour-item {
@@ -423,8 +421,10 @@ body {
   transition: border-color 0.25s ease, background 0.2s ease;
 }
 
-.tour-item:hover {
-  background: color-mix(in srgb, var(--snow) 65%, transparent);
+@media (hover: hover) {
+  .tour-item:hover {
+    background: color-mix(in srgb, var(--snow) 65%, transparent);
+  }
 }
 
 .tour-item.active {
@@ -529,8 +529,10 @@ body {
   transition: border-color 0.2s ease;
 }
 
-.feature-card:hover {
-  border-color: var(--border-light);
+@media (hover: hover) {
+  .feature-card:hover {
+    border-color: var(--border-light);
+  }
 }
 
 .feature-card h3 {
@@ -591,10 +593,6 @@ body {
 
 .os-hero h1 span {
   color: var(--brand);
-}
-
-.os-hero .hero-platforms {
-  justify-self: start;
 }
 
 /* A command is one line; the block scrolls sideways when it is too wide. */
@@ -661,10 +659,16 @@ body {
   border-color: transparent transparent transparent var(--white);
 }
 
-.os-video-play:hover .os-video-icon,
 .os-video-play:focus-visible .os-video-icon {
   opacity: 1;
   transform: translate(-50%, -50%) scale(1.06);
+}
+
+@media (hover: hover) {
+  .os-video-play:hover .os-video-icon {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.06);
+  }
 }
 
 .os-video-foot {
@@ -885,8 +889,10 @@ body {
   transition: transform 0.2s ease;
 }
 
-.theme-strip-item:hover {
-  transform: translateY(-3px);
+@media (hover: hover) {
+  .theme-strip-item:hover {
+    transform: translateY(-3px);
+  }
 }
 
 /* A theme's own page. */
@@ -1143,9 +1149,11 @@ body {
   transition: border-color 0.2s ease, color 0.2s ease;
 }
 
-.protocol-badge:hover {
-  border-color: var(--brand);
-  color: var(--black);
+@media (hover: hover) {
+  .protocol-badge:hover {
+    border-color: var(--brand);
+    color: var(--black);
+  }
 }
 
 .code-block {
@@ -1264,9 +1272,11 @@ body {
     border-color 0.2s ease;
 }
 
-.download-icon-btn:hover {
-  background: var(--brand-tint);
-  border-color: var(--brand);
+@media (hover: hover) {
+  .download-icon-btn:hover {
+    background: var(--brand-tint);
+    border-color: var(--brand);
+  }
 }
 
 .download-icon-btn span {
@@ -1332,8 +1342,10 @@ body {
   transition: border-color 0.2s ease, background 0.2s ease;
 }
 
-.cta-command:hover {
-  border-color: var(--brand);
+@media (hover: hover) {
+  .cta-command:hover {
+    border-color: var(--brand);
+  }
 }
 
 .cta-command code {
@@ -1386,13 +1398,16 @@ body {
   transition: color 0.2s ease;
 }
 
-.site-footer a:hover {
-  color: var(--black);
+@media (hover: hover) {
+  .site-footer a:hover {
+    color: var(--black);
+  }
 }
 
 .footer-links {
   display: flex;
-  gap: 1.5rem;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.5rem;
 }
 
 @media (max-width: 960px) {
@@ -1649,10 +1664,12 @@ body {
   transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
 }
 
-.hero-os-pill:hover {
-  border-color: var(--brand);
-  background: var(--brand-tint);
-  transform: translateY(-1px);
+@media (hover: hover) {
+  .hero-os-pill:hover {
+    border-color: var(--brand);
+    background: var(--brand-tint);
+    transform: translateY(-1px);
+  }
 }
 
 .hero-os-pill-badge {
@@ -1674,6 +1691,27 @@ body {
 .hero-os-pill-arrow {
   color: var(--brand);
   font-weight: 700;
+}
+
+/* Too narrow for one line: a card, the name above, the note aligned with it. */
+@media (max-width: 480px) {
+  .hero-os-pill {
+    display: inline-grid;
+    grid-template-columns: auto auto;
+    justify-content: start;
+    gap: 0.5rem 0.45rem;
+    padding: 0.5rem 0.9rem 0.65rem 0.5rem;
+    border-radius: 1.25rem;
+  }
+
+  .hero-os-pill-badge {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .hero-os-pill-meta {
+    padding-left: 0.6rem;
+  }
 }
 
 /* /os/ identity and monitor migration callout. */
@@ -1708,7 +1746,7 @@ body {
   max-width: 68ch;
 }
 
-/* Pride & LGBTQ+ support banner in Themes and badge in Footer. */
+/* Pride & LGBTQ+ support banner in Themes. */
 .pride-banner {
   position: relative;
   overflow: hidden;
@@ -1812,9 +1850,11 @@ body {
   transition: border-color 0.2s ease, transform 0.2s ease;
 }
 
-.pride-chip:hover {
-  border-color: var(--brand);
-  transform: translateY(-1px);
+@media (hover: hover) {
+  .pride-chip:hover {
+    border-color: var(--brand);
+    transform: translateY(-1px);
+  }
 }
 
 .pride-swatch {
@@ -1855,25 +1895,6 @@ body {
     #9c59d1 66%,
     #2c2c2c 100%
   );
-}
-
-.footer-brand-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.85rem;
-}
-
-.pride-footer-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.22rem 0.65rem;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--light-gray);
-  background: var(--snow);
-  font-size: 0.78rem;
-  font-weight: 500;
 }
 
 /* More services & apps section. */
@@ -1932,8 +1953,10 @@ body {
   transition: color 0.2s ease;
 }
 
-.other-app-title-link:hover {
-  color: var(--brand);
+@media (hover: hover) {
+  .other-app-title-link:hover {
+    color: var(--brand);
+  }
 }
 
 @media (max-width: 768px) {

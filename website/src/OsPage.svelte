@@ -102,7 +102,6 @@
 
   <section class="page-section os-hero">
     <div class="os-identity-row">
-      <p class="hero-platforms">Linux · x64 · arm64</p>
       <span class="os-formerly-badge">{$LL.os.formerlyMonitor()}</span>
     </div>
     <h1>{$LL.os.heroTitle()}<span class="beta-tag beta-tag--hero">{$LL.nav.beta()}</span><br /><span>{$LL.os.tagline()}</span></h1>
@@ -217,13 +216,7 @@
   </section>
 
   <footer class="site-footer">
-    <div class="footer-brand-row">
-      <span>© 2026 lollipopkit</span>
-      <a class="pride-footer-badge" href={`/themes/?lang=${locale}#serverbox.pride`}>
-        <span class="pride-dot" aria-hidden="true"></span>
-        {$LL.pride.badge()}
-      </a>
-    </div>
+    <span>© 2026 lollipopkit</span>
     <div class="footer-links">
       <a href={`/?lang=${locale}`}>ServerBox</a>
       <a href="https://github.com/lollipopkit/flutter_server_box/tree/main/monitor">monitor/</a>

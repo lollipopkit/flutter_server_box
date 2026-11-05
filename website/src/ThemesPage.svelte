@@ -524,13 +524,7 @@
   {/if}
 
   <footer class="site-footer">
-    <div class="footer-brand-row">
-      <span>© 2026 lollipopkit</span>
-      <a class="pride-footer-badge" href={`/themes/?lang=${locale}#serverbox.pride`}>
-        <span class="pride-dot" aria-hidden="true"></span>
-        {$LL.pride.badge()}
-      </a>
-    </div>
+    <span>© 2026 lollipopkit</span>
     <div class="footer-links">
       <a href={`/?lang=${locale}`}>ServerBox</a>
       <a href={docsHref(locale)}>{$LL.nav.docs()}</a>
