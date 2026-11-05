@@ -1105,22 +1105,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String sshConfigAllExist(int duplicateCount) {
-    return '모든 서버가 이미 존재합니다 (중복 $duplicateCount개 발견)';
-  }
-
-  @override
-  String sshConfigDuplicatesSkipped(int duplicateCount) {
-    return '중복 $duplicateCount개가 건너뛰어집니다';
-  }
-
-  @override
   String get sshConfigFound => '시스템에서 SSH 설정을 찾았습니다.';
-
-  @override
-  String sshConfigFoundServers(int totalCount) {
-    return '서버 $totalCount개를 발견했습니다';
-  }
 
   @override
   String get sshConfigImport => 'SSH 설정 가져오기';
@@ -1131,11 +1116,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get sshConfigImportTip => '첫 서버 생성 시 ~/.ssh/config 읽기 안내';
-
-  @override
-  String sshConfigImported(int count) {
-    return 'SSH 설정에서 서버 $count대를 가져왔습니다.';
-  }
 
   @override
   String sshHostKeyChangedDesc(String serverName) {
@@ -1168,16 +1148,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sshConfigManualSelect => 'SSH 설정 파일을 수동으로 선택하시겠습니까?';
 
   @override
-  String get sshConfigNoServers => 'SSH 설정에서 서버를 찾을 수 없습니다';
-
-  @override
   String get sshConfigPermissionDenied =>
       'macOS 권한으로 인해 SSH 설정 파일에 접근할 수 없습니다.';
-
-  @override
-  String sshConfigServersToImport(int importCount) {
-    return '서버 $importCount개가 가져오기됩니다';
-  }
 
   @override
   String get sshTermHelp =>
@@ -6961,4 +6933,44 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get security => '보안';
+
+  @override
+  String get sshConfig => 'SSH 설정';
+
+  @override
+  String get tailscaleStopped => 'Tailscale이 실행 중이 아닙니다';
+
+  @override
+  String get tailscaleStoppedTip => '이 기기에 설치되어 있지만 tailnet에 연결되어 있지 않습니다.';
+
+  @override
+  String get cloudflareApiToken => 'API 토큰';
+
+  @override
+  String get cloudflareApiTokenTip =>
+      'Account · Cloudflare Tunnel · Read 권한이 필요합니다.';
+
+  @override
+  String get discoveryChooseFile => '파일 선택';
+
+  @override
+  String get discoveryOnline => '온라인';
+
+  @override
+  String get discoveryOffline => '오프라인';
+
+  @override
+  String get discoverySelectAll => '모두 선택';
+
+  @override
+  String get discoveryFilter => '이름 또는 주소로 필터';
+
+  @override
+  String get discoverySameMachine => '같은 머신, 여러 주소';
+
+  @override
+  String get discoveryPrimaryAddress => '기본 주소';
+
+  @override
+  String get discoveryAlternateAddress => '대체 주소';
 }

@@ -1165,22 +1165,7 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
-  String sshConfigAllExist(int duplicateCount) {
-    return 'همه سرورها از قبل وجود دارند ($duplicateCount مورد تکراری پیدا شد)';
-  }
-
-  @override
-  String sshConfigDuplicatesSkipped(int duplicateCount) {
-    return 'از $duplicateCount مورد تکراری صرف‌نظر خواهد شد';
-  }
-
-  @override
   String get sshConfigFound => 'پیکربندی SSH در این سیستم پیدا شد.';
-
-  @override
-  String sshConfigFoundServers(int totalCount) {
-    return '$totalCount سرور یافت شد';
-  }
 
   @override
   String get sshConfigImport => 'وارد کردن پیکربندی SSH';
@@ -1192,11 +1177,6 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get sshConfigImportTip =>
       'درخواست خواندن ~/.ssh/config در زمان ایجاد نخستین سرور';
-
-  @override
-  String sshConfigImported(int count) {
-    return '$count سرور از پیکربندی SSH وارد شد.';
-  }
 
   @override
   String sshHostKeyChangedDesc(String serverName) {
@@ -1231,16 +1211,8 @@ class AppLocalizationsFa extends AppLocalizations {
       'آیا مایلید فایل پیکربندی SSH را به‌صورت دستی انتخاب کنید؟';
 
   @override
-  String get sshConfigNoServers => 'هیچ سروری در پیکربندی SSH یافت نشد';
-
-  @override
   String get sshConfigPermissionDenied =>
       'به دلیل مجوزهای macOS دسترسی به فایل پیکربندی SSH امکان‌پذیر نیست.';
-
-  @override
-  String sshConfigServersToImport(int importCount) {
-    return '$importCount سرور وارد خواهد شد';
-  }
 
   @override
   String get sshTermHelp =>
@@ -7306,4 +7278,45 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get security => 'امنیت';
+
+  @override
+  String get sshConfig => 'پیکربندی SSH';
+
+  @override
+  String get tailscaleStopped => 'Tailscale در حال اجرا نیست';
+
+  @override
+  String get tailscaleStoppedTip =>
+      'روی این دستگاه نصب است، اما به tailnet متصل نیست.';
+
+  @override
+  String get cloudflareApiToken => 'توکن API';
+
+  @override
+  String get cloudflareApiTokenTip =>
+      'به مجوز Account · Cloudflare Tunnel · Read نیاز دارد.';
+
+  @override
+  String get discoveryChooseFile => 'انتخاب فایل';
+
+  @override
+  String get discoveryOnline => 'آنلاین';
+
+  @override
+  String get discoveryOffline => 'آفلاین';
+
+  @override
+  String get discoverySelectAll => 'انتخاب همه';
+
+  @override
+  String get discoveryFilter => 'فیلتر بر اساس نام یا نشانی';
+
+  @override
+  String get discoverySameMachine => 'یک ماشین، چند نشانی';
+
+  @override
+  String get discoveryPrimaryAddress => 'نشانی اصلی';
+
+  @override
+  String get discoveryAlternateAddress => 'نشانی جایگزین';
 }

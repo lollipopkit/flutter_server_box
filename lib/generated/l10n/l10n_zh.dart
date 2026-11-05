@@ -1084,22 +1084,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String sshConfigAllExist(int duplicateCount) {
-    return '所有服务器已存在（发现 $duplicateCount 个重复项）';
-  }
-
-  @override
-  String sshConfigDuplicatesSkipped(int duplicateCount) {
-    return '$duplicateCount 个重复项将被跳过';
-  }
-
-  @override
   String get sshConfigFound => '在系统中发现了 SSH 配置。';
-
-  @override
-  String sshConfigFoundServers(int totalCount) {
-    return '发现 $totalCount 个服务器';
-  }
 
   @override
   String get sshConfigImport => 'SSH 配置导入';
@@ -1109,11 +1094,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sshConfigImportTip => '首次创建服务器时提示读取 ~/.ssh/config';
-
-  @override
-  String sshConfigImported(int count) {
-    return '已从 SSH 配置导入 $count 台服务器';
-  }
 
   @override
   String sshHostKeyChangedDesc(String serverName) {
@@ -1146,15 +1126,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sshConfigManualSelect => '是否要手动选择 SSH 配置文件？';
 
   @override
-  String get sshConfigNoServers => 'SSH 配置中未找到服务器';
-
-  @override
   String get sshConfigPermissionDenied => '由于 macOS 权限限制，无法访问 SSH 配置文件。';
-
-  @override
-  String sshConfigServersToImport(int importCount) {
-    return '$importCount 个服务器将被导入';
-  }
 
   @override
   String get sshTermHelp =>
@@ -6848,6 +6820,46 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get security => '安全';
+
+  @override
+  String get sshConfig => 'SSH 配置';
+
+  @override
+  String get tailscaleStopped => 'Tailscale 未运行';
+
+  @override
+  String get tailscaleStoppedTip => '本机已安装 Tailscale，但未连接到 tailnet。';
+
+  @override
+  String get cloudflareApiToken => 'API 令牌';
+
+  @override
+  String get cloudflareApiTokenTip =>
+      '需要 Account · Cloudflare Tunnel · Read 权限。';
+
+  @override
+  String get discoveryChooseFile => '选择文件';
+
+  @override
+  String get discoveryOnline => '在线';
+
+  @override
+  String get discoveryOffline => '离线';
+
+  @override
+  String get discoverySelectAll => '全选';
+
+  @override
+  String get discoveryFilter => '按名称或地址筛选';
+
+  @override
+  String get discoverySameMachine => '同一台机器，多个地址';
+
+  @override
+  String get discoveryPrimaryAddress => '主地址';
+
+  @override
+  String get discoveryAlternateAddress => '备用地址';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -7931,22 +7943,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String sshConfigAllExist(int duplicateCount) {
-    return '所有伺服器均已存在（發現$duplicateCount個重複項）';
-  }
-
-  @override
-  String sshConfigDuplicatesSkipped(int duplicateCount) {
-    return '將跳過$duplicateCount個重複項';
-  }
-
-  @override
   String get sshConfigFound => '在系統中發現了 SSH 設定。';
-
-  @override
-  String sshConfigFoundServers(int totalCount) {
-    return '發現$totalCount個伺服器';
-  }
 
   @override
   String get sshConfigImport => '匯入SSH設定';
@@ -7956,11 +7953,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get sshConfigImportTip => '在建立第一個伺服器時提示讀取 ~/.ssh/config';
-
-  @override
-  String sshConfigImported(int count) {
-    return '已從 SSH 設定導入 $count 臺伺服器';
-  }
 
   @override
   String sshHostKeyChangedDesc(String serverName) {
@@ -7993,15 +7985,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get sshConfigManualSelect => '是否要手動選擇 SSH 設定檔案？';
 
   @override
-  String get sshConfigNoServers => 'SSH設定中未找到伺服器';
-
-  @override
   String get sshConfigPermissionDenied => '由於 macOS 權限限制，無法存取 SSH 設定檔案。';
-
-  @override
-  String sshConfigServersToImport(int importCount) {
-    return '將匯入$importCount個伺服器';
-  }
 
   @override
   String get sshTermHelp =>
@@ -13698,4 +13682,44 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get security => '安全性';
+
+  @override
+  String get sshConfig => 'SSH 設定';
+
+  @override
+  String get tailscaleStopped => 'Tailscale 未執行';
+
+  @override
+  String get tailscaleStoppedTip => '本機已安裝 Tailscale，但未連線到 tailnet。';
+
+  @override
+  String get cloudflareApiToken => 'API 權杖';
+
+  @override
+  String get cloudflareApiTokenTip =>
+      '需要 Account · Cloudflare Tunnel · Read 權限。';
+
+  @override
+  String get discoveryChooseFile => '選擇檔案';
+
+  @override
+  String get discoveryOnline => '線上';
+
+  @override
+  String get discoveryOffline => '離線';
+
+  @override
+  String get discoverySelectAll => '全選';
+
+  @override
+  String get discoveryFilter => '依名稱或位址篩選';
+
+  @override
+  String get discoverySameMachine => '同一台機器，多個位址';
+
+  @override
+  String get discoveryPrimaryAddress => '主要位址';
+
+  @override
+  String get discoveryAlternateAddress => '備用位址';
 }

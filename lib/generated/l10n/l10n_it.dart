@@ -1173,23 +1173,8 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String sshConfigAllExist(int duplicateCount) {
-    return 'Tutti i server esistono già ($duplicateCount duplicati trovati)';
-  }
-
-  @override
-  String sshConfigDuplicatesSkipped(int duplicateCount) {
-    return '$duplicateCount duplicati verranno saltati';
-  }
-
-  @override
   String get sshConfigFound =>
       'È stata trovata una configurazione SSH nel sistema.';
-
-  @override
-  String sshConfigFoundServers(int totalCount) {
-    return 'Trovati $totalCount server';
-  }
 
   @override
   String get sshConfigImport => 'Importa configurazione SSH';
@@ -1201,11 +1186,6 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get sshConfigImportTip =>
       'Chiedi di leggere ~/.ssh/config alla prima creazione del server';
-
-  @override
-  String sshConfigImported(int count) {
-    return 'Importati $count server dalla configurazione SSH.';
-  }
 
   @override
   String sshHostKeyChangedDesc(String serverName) {
@@ -1240,17 +1220,8 @@ class AppLocalizationsIt extends AppLocalizations {
       'Vuoi selezionare manualmente il file di configurazione SSH?';
 
   @override
-  String get sshConfigNoServers =>
-      'Nessun server trovato nella configurazione SSH';
-
-  @override
   String get sshConfigPermissionDenied =>
       'Impossibile accedere al file di configurazione SSH a causa dei permessi macOS.';
-
-  @override
-  String sshConfigServersToImport(int importCount) {
-    return '$importCount server verranno importati';
-  }
 
   @override
   String get sshTermHelp =>
@@ -7335,4 +7306,45 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get security => 'Sicurezza';
+
+  @override
+  String get sshConfig => 'Config SSH';
+
+  @override
+  String get tailscaleStopped => 'Tailscale non è in esecuzione';
+
+  @override
+  String get tailscaleStoppedTip =>
+      'Installato su questo dispositivo, ma non connesso a una tailnet.';
+
+  @override
+  String get cloudflareApiToken => 'Token API';
+
+  @override
+  String get cloudflareApiTokenTip =>
+      'Richiede Account · Cloudflare Tunnel · Read.';
+
+  @override
+  String get discoveryChooseFile => 'Scegli file';
+
+  @override
+  String get discoveryOnline => 'Online';
+
+  @override
+  String get discoveryOffline => 'Offline';
+
+  @override
+  String get discoverySelectAll => 'Seleziona tutto';
+
+  @override
+  String get discoveryFilter => 'Filtra per nome o indirizzo';
+
+  @override
+  String get discoverySameMachine => 'Stessa macchina, più indirizzi';
+
+  @override
+  String get discoveryPrimaryAddress => 'Indirizzo principale';
+
+  @override
+  String get discoveryAlternateAddress => 'Indirizzo alternativo';
 }

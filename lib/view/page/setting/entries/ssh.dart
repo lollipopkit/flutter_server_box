@@ -49,7 +49,10 @@ extension _SSH on _AppSettingsPageState {
         leading: const Icon(MingCute.file_import_line),
         title: Text(label),
         trailing: const Icon(Icons.keyboard_arrow_right),
-        onTap: _onTapSSHConfigImport,
+        onTap: () => showSshDiscoverySheet(
+          context,
+          sources: const [SshConfigDiscovery()],
+        ),
       ),
     );
   }
@@ -59,133 +62,6 @@ extension _SSH on _AppSettingsPageState {
   // Backup. Both are ways of acquiring a server, and which one a person needs
   // depends on what the sender picked — so they now sit together behind the
   // server list's add button. See `_onTapAddServer`.
-
-  Future<void> _onTapSSHConfigImport() async {
-    try {
-      final servers = await SSHConfig.parseConfig();
-      if (!mounted) return;
-      if (servers.isEmpty) {
-        Toast.show(l10n.sshConfigNoServers);
-        return;
-      }
-
-      await _confirmAndImportServers(servers);
-    } catch (e, s) {
-      if (!mounted) return;
-      await _onSSHConfigImportError(e, s);
-    }
-  }
-
-  Future<void> _confirmAndImportServers(List<Spi> servers) async {
-    final existing = Stores.server.fetch();
-    final deduplicated = ServerDeduplication.deduplicateServers(
-      servers,
-      existingServers: existing,
-    );
-    final resolved = ServerDeduplication.resolveNameConflicts(
-      deduplicated,
-      existingServers: existing,
-    );
-    final summary = ServerDeduplication.getImportSummary(servers, resolved);
-
-    if (!summary.hasItemsToImport) {
-      if (!mounted) return;
-      Toast.show(l10n.sshConfigAllExist(summary.duplicates));
-      return;
-    }
-
-    final shouldImport = await context.showRoundDialog<bool>(
-      title: l10n.sshConfigImport,
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l10n.sshConfigFoundServers(summary.total)),
-            if (summary.hasDuplicates)
-              Text(
-                l10n.sshConfigDuplicatesSkipped(summary.duplicates),
-                style: UIs.textGrey,
-              ),
-            Text(l10n.sshConfigServersToImport(summary.toImport)),
-            const SizedBox(height: 16),
-            ...resolved.map((s) => Text('• ${s.name} (${s.displayAddr})')),
-          ],
-        ),
-      ),
-      actions: Btnx.cancelOk,
-    );
-
-    if (!mounted) return;
-
-    if (shouldImport == true) {
-      await importServersWithNotification(
-        ref: ref,
-        context: context,
-        resolvedServers: resolved,
-        originalCount: summary.total,
-        allExistMessage: l10n.sshConfigAllExist,
-        importedMessage: l10n.sshConfigImported,
-      );
-    }
-  }
-
-  Future<void> _onSSHConfigImportError(
-    Object e,
-    StackTrace s,
-  ) async {
-    dprint('Error importing SSH config: $e');
-    if (e is PathAccessException ||
-        e.toString().contains('Operation not permitted')) {
-      final useFilePicker = await context.showRoundDialog<bool>(
-        title: l10n.sshConfigImport,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l10n.sshConfigPermissionDenied),
-            const SizedBox(height: 8),
-            Text(l10n.sshConfigManualSelect),
-          ],
-        ),
-        actions: Btnx.cancelOk,
-      );
-
-      if (!mounted) return;
-
-      if (useFilePicker == true) {
-        await _onTapSSHImportWithFilePicker();
-      }
-    } else {
-      if (!mounted) return;
-      context.showErrDialog(e, s);
-    }
-  }
-
-  Future<void> _onTapSSHImportWithFilePicker() async {
-    try {
-      final picked = await FilePicker.pickFile(
-        type: FileType.any,
-        dialogTitle: l10n.sshConfigImport,
-      );
-
-      if (!mounted) return;
-
-      if (picked?.path case final path?) {
-        final servers = await SSHConfig.parseConfig(path);
-        if (!mounted) return;
-        if (servers.isEmpty) {
-          Toast.show(l10n.sshConfigNoServers);
-          return;
-        }
-
-        await _confirmAndImportServers(servers);
-      }
-    } catch (e, s) {
-      if (!mounted) return;
-      context.showErrDialog(e, s);
-    }
-  }
 
   SettingsRow _buildSSHVirtualKeyAutoOff() {
     final label = l10n.sshVirtualKeyAutoOff;

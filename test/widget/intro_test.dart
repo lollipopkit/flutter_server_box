@@ -10,8 +10,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/app.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
-import 'package:server_box/core/local/server.dart';
-import 'package:server_box/core/service/ssh_discovery.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/data/store/stores.dart';
@@ -35,9 +33,6 @@ void main() {
     await getIt.reset();
     await closeTestDb();
   });
-
-  final discovers =
-      LocalServer.isSupported || SshDiscovery.available.isNotEmpty;
 
   test('a finished intro shows nothing more', () async {
     setting.introVer.put(1);
@@ -82,10 +77,7 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 500));
       }
-      expect(
-        find.text(en.discoverIntro),
-        discovers ? findsOneWidget : findsNothing,
-      );
+      expect(find.text(en.discoverIntro), findsOneWidget);
 
       // The real sources read this device's interfaces with a timeout.
       await tester.pumpWidget(const SizedBox.shrink());

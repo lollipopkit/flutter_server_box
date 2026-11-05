@@ -1168,22 +1168,7 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String sshConfigAllExist(int duplicateCount) {
-    return 'Semua server sudah ada (ditemukan $duplicateCount duplikat)';
-  }
-
-  @override
-  String sshConfigDuplicatesSkipped(int duplicateCount) {
-    return '$duplicateCount duplikat akan dilewati';
-  }
-
-  @override
   String get sshConfigFound => 'Konfigurasi SSH ditemukan di sistem Anda.';
-
-  @override
-  String sshConfigFoundServers(int totalCount) {
-    return 'Ditemukan $totalCount server';
-  }
 
   @override
   String get sshConfigImport => 'Impor Konfigurasi SSH';
@@ -1195,11 +1180,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get sshConfigImportTip =>
       'Prompt untuk membaca ~/.ssh/config saat pembuatan server pertama';
-
-  @override
-  String sshConfigImported(int count) {
-    return 'Berhasil mengimpor $count server dari konfigurasi SSH.';
-  }
 
   @override
   String sshHostKeyChangedDesc(String serverName) {
@@ -1234,17 +1214,8 @@ class AppLocalizationsId extends AppLocalizations {
       'Apakah Anda ingin memilih file konfigurasi SSH secara manual?';
 
   @override
-  String get sshConfigNoServers =>
-      'Tidak ada server yang ditemukan dalam konfigurasi SSH';
-
-  @override
   String get sshConfigPermissionDenied =>
       'Tidak dapat mengakses file konfigurasi SSH karena izin macOS.';
-
-  @override
-  String sshConfigServersToImport(int importCount) {
-    return '$importCount server akan diimpor';
-  }
 
   @override
   String get sshTermHelp =>
@@ -7259,4 +7230,45 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get security => 'Keamanan';
+
+  @override
+  String get sshConfig => 'Konfigurasi SSH';
+
+  @override
+  String get tailscaleStopped => 'Tailscale tidak berjalan';
+
+  @override
+  String get tailscaleStoppedTip =>
+      'Terpasang di perangkat ini, tetapi tidak terhubung ke tailnet.';
+
+  @override
+  String get cloudflareApiToken => 'Token API';
+
+  @override
+  String get cloudflareApiTokenTip =>
+      'Memerlukan Account · Cloudflare Tunnel · Read.';
+
+  @override
+  String get discoveryChooseFile => 'Pilih file';
+
+  @override
+  String get discoveryOnline => 'Online';
+
+  @override
+  String get discoveryOffline => 'Offline';
+
+  @override
+  String get discoverySelectAll => 'Pilih semua';
+
+  @override
+  String get discoveryFilter => 'Saring menurut nama atau alamat';
+
+  @override
+  String get discoverySameMachine => 'Mesin yang sama, beberapa alamat';
+
+  @override
+  String get discoveryPrimaryAddress => 'Alamat utama';
+
+  @override
+  String get discoveryAlternateAddress => 'Alamat cadangan';
 }

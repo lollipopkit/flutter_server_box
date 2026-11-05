@@ -110,17 +110,36 @@ extension _Tags on _ServerEditPageState {
 
 extension _Discovery on _ServerEditPageState {
   /// Fills this form in from a discovered host: only what the source knew,
-  /// and the name only while it is still empty.
+  /// and the name only while it is still empty. Its hops are added as
+  /// servers, the ones that are not already, and become its jump servers.
   Future<void> _onTapDiscover() async {
     final found = await pickDiscoveredHost(context);
     if (!mounted || found == null) return;
+    final ssh = found.server.ssh;
+    if (ssh == null) return;
 
-    _ipController.text = found.host;
-    _portController.text = '${found.port}';
-    if (found.user case final user?) _usernameController.text = user;
-    if (_nameController.text.isEmpty) {
-      _nameController.text = found.name ?? found.host;
+    if (found.via.isNotEmpty) {
+      final notifier = ref.read(serversProvider.notifier);
+      final plan = planDiscoveredServers([
+        found,
+      ], ref.read(serversProvider).servers.values.toList());
+      try {
+        for (final hop in plan.add) {
+          if (hop.id != found.server.id) await notifier.addServer(hop);
+        }
+      } catch (e, s) {
+        if (mounted) context.showErrDialog(e, s);
+        return;
+      }
+      _jumpServers.value = [
+        for (final id in ssh.resolvedJumpIds) plan.ids[id] ?? id,
+      ];
     }
+    _ipController.text = ssh.ip;
+    _portController.text = '${ssh.port}';
+    if (found.userKnown) _usernameController.text = ssh.user;
+    if (ssh.proxyCommand case final cmd?) _proxyCommandCtrl.text = cmd;
+    if (_nameController.text.isEmpty) _nameController.text = found.server.name;
   }
 
   void _initWithDraft(ServerDraft draft) {
@@ -895,64 +914,46 @@ extension _Utils on _ServerEditPageState {
     Stores.setting.firstTimeReadSSHCfg.put(false);
   }
 
+  /// Offers `~/.ssh/config` once, for the first server, when it has hosts:
+  /// in the discovery sheet, where they are picked and their jumps come with
+  /// them.
   Future<void> _checkSSHConfigImport() async {
     final hasExistingServers = ref.read(serversProvider).servers.isNotEmpty;
-    if (hasExistingServers) {
+    var hasHosts = false;
+    if (!hasExistingServers && await SshConfigDiscovery.isAvailable()) {
+      try {
+        hasHosts = (await const SshConfigDiscovery().discover()).hosts.isNotEmpty;
+      } catch (e) {
+        // Unreadable here, the sandboxed build's case: nothing to offer
+        // unasked. Settings → SSH config import picks the file by hand.
+        dprint('Reading SSH config for the first server: $e');
+      }
+    }
+    if (!hasHosts) {
       _markSSHConfigImportHandled();
       return;
     }
+    if (!mounted) return;
 
-    try {
-      final servers = await SSHConfig.parseConfig();
-      if (!mounted) return;
-      if (servers.isEmpty) {
-        _markSSHConfigImportHandled();
-        return;
-      }
-
-      final shouldImport = await context.showRoundDialog<bool>(
-        title: l10n.sshConfigImport,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l10n.sshConfigFound),
-            const SizedBox(height: 8),
-            Text(l10n.sshConfigImportPermission),
-          ],
-        ),
-        actions: Btnx.cancelOk,
-      );
-
-      if (!mounted) return;
-
-      _markSSHConfigImportHandled();
-
-      if (shouldImport == true) {
-        await importServersWithNotification(
-          servers: servers,
-          ref: ref,
-          context: context,
-          allExistMessage: l10n.sshConfigAllExist,
-          importedMessage: l10n.sshConfigImported,
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      if (e is PathAccessException ||
-          e.toString().contains('Operation not permitted')) {
-        _markSSHConfigImportHandled();
-        Toast.show(
-          '${l10n.sshConfigPermissionDenied} ${l10n.sshConfigManualSelect}',
-        );
-      } else {
-        dprint('Error checking SSH config: $e');
-        _markSSHConfigImportHandled();
-        if (e is SpiValidationException) {
-          Toast.error(_validationErrorMessage(e.error));
-        }
-      }
-    }
+    final shouldImport = await context.showRoundDialog<bool>(
+      title: l10n.sshConfigImport,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.sshConfigFound),
+          const SizedBox(height: 8),
+          Text(l10n.sshConfigImportPermission),
+        ],
+      ),
+      actions: Btnx.cancelOk,
+    );
+    _markSSHConfigImportHandled();
+    if (shouldImport != true || !mounted) return;
+    await showSshDiscoverySheet(
+      context,
+      sources: const [SshConfigDiscovery()],
+    );
   }
 
   Future<void> _showCmdTypesDialog(Set<ShellCmdType> allCmdTypes) {
