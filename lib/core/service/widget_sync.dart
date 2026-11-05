@@ -5,6 +5,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/service/scoped_token.dart';
+import 'package:server_box/core/utils/coalesced.dart';
 import 'package:server_box/data/model/server/monitor/agent_endpoint.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -50,8 +51,7 @@ final class WidgetSync {
 
   StreamSubscription<dynamic>? _serverStoreSub;
   Timer? _pushDebouncer;
-  Future<void>? _pushing;
-  bool _pushDirty = false;
+  late final _pushes = Coalesced(_pushOnce);
 
   bool get _supported => isIOS || isAndroid;
 
@@ -68,21 +68,9 @@ final class WidgetSync {
   /// those.
   Future<void> push() {
     if (!_supported) return Future.value();
-    _pushDirty = true;
-    return _pushing ??= _drainPush();
+    return _pushes();
   }
 
-  Future<void> _drainPush() async {
-    try {
-      while (_pushDirty) {
-        _pushDirty = false;
-        await _pushOnce();
-      }
-    } finally {
-      _pushing = null;
-      if (_pushDirty) _pushing = _drainPush();
-    }
-  }
 
   Future<void> _pushOnce() async {
     final servers = monitorServers();
@@ -281,7 +269,7 @@ final class WidgetSync {
   void dispose() {
     _pushDebouncer?.cancel();
     _pushDebouncer = null;
-    _pushDirty = false;
+    _pushes.cancelPending();
     unawaited(_serverStoreSub?.cancel());
     _serverStoreSub = null;
   }

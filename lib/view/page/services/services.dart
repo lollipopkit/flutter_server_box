@@ -7,6 +7,7 @@ import 'package:server_box/data/model/server/service.dart';
 import 'package:server_box/data/provider/services.dart';
 import 'package:server_box/view/page/services/detail.dart';
 import 'package:server_box/view/widget/actions_sink.dart';
+import 'package:server_box/view/widget/pullable_issue.dart';
 import 'package:server_box/view/widget/search_pill.dart';
 
 /// Below this the columns leave a unit's name nothing to be read in, and each
@@ -144,15 +145,7 @@ extension on _ServicesPageState {
     if (failure != null) {
       return RefreshIndicator(
         onRefresh: _refresh,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: [
-            SizedBox(
-              height: MediaQuery.sizeOf(context).height * 0.6,
-              child: isBusy ? UIs.centerLoading : _buildFailure(failure),
-            ),
-          ],
-        ),
+        child: isBusy ? UIs.centerLoading : _buildFailure(failure),
       );
     }
 
@@ -201,7 +194,7 @@ extension on _ServicesPageState {
       ServiceIssue.listFailed => (l10n.serviceListFailed, null),
       ServiceIssue.unreachable => (l10n.serverUnreachable, null),
     };
-    return PageIssueView(
+    return PullableIssueView(
       title: title,
       explain: explain,
       detail: failure.detail,

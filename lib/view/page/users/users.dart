@@ -14,6 +14,7 @@ import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/view/page/users/group_detail.dart';
 import 'package:server_box/view/page/users/user_detail.dart';
 import 'package:server_box/view/page/users/widgets.dart';
+import 'package:server_box/view/widget/pullable_issue.dart';
 
 enum _Subject { users, groups }
 
@@ -167,17 +168,19 @@ extension on _UsersPageState {
 
   Widget _buildBody() {
     if (_unsupported) {
-      return _issueBody(
+      return PullableIssueView(
         title: libL10n.unsupported,
         explain: l10n.userManagerLinuxOnly,
         icon: Icons.not_interested,
+        onRetry: _refresh,
       );
     }
     if (_failure case final failure?) {
-      return _issueBody(
+      return PullableIssueView(
         title: libL10n.fail,
         detail: failure,
         icon: Icons.error_outline,
+        onRetry: _refresh,
       );
     }
     final catalog = _catalog;
@@ -220,29 +223,6 @@ extension on _UsersPageState {
           ],
         );
       },
-    );
-  }
-
-  Widget _issueBody({
-    required String title,
-    required IconData icon,
-    String? explain,
-    String? detail,
-  }) {
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      children: [
-        SizedBox(
-          height: MediaQuery.sizeOf(context).height * 0.65,
-          child: PageIssueView(
-            title: title,
-            explain: explain,
-            detail: detail,
-            icon: icon,
-            onRetry: _refresh,
-          ),
-        ),
-      ],
     );
   }
 

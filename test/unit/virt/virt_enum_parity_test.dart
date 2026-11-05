@@ -1,5 +1,5 @@
 /// The app's virtualization enums and the `sbm_virt` ones the FFI mirrors
-/// are mapped by name (`VirtRust`): a variant one side gains and the other
+/// are mapped by name (the `ffi`/`virt` extensions): a variant one side gains and the other
 /// does not fails here rather than at run time.
 library;
 

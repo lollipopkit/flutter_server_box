@@ -12,6 +12,7 @@ import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/view/widget/pullable_issue.dart';
 
 part 'common.dart';
 part 'firewalld.dart';
@@ -72,24 +73,21 @@ final class _FirewallPageState extends ConsumerState<FirewallPage> {
 
     final Widget body;
     if (_unsupported) {
-      body = _issueBody(
-        context,
+      body = PullableIssueView(
         title: libL10n.unsupported,
         explain: l10n.firewallLinuxOnly,
         icon: Icons.not_interested,
         onRetry: _runProbe,
       );
     } else if (_failure case final failure?) {
-      body = _issueBody(
-        context,
+      body = PullableIssueView(
         title: libL10n.fail,
         detail: failure,
         icon: Icons.error_outline,
         onRetry: _runProbe,
       );
     } else if (probe != null) {
-      body = _issueBody(
-        context,
+      body = PullableIssueView(
         title: libL10n.unsupported,
         explain: l10n.firewallNoneInstalled,
         icon: Icons.shield_outlined,

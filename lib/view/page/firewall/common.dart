@@ -414,8 +414,7 @@ mixin _FirewallView<T extends ConsumerStatefulWidget> on ConsumerState<T> {
   /// or null when it is.
   Widget? issue() {
     if (needsRoot) {
-      return _issueBody(
-        context,
+      return PullableIssueView(
         title: libL10n.fail,
         explain: l10n.firewallNeedsRoot,
         icon: Icons.lock_outline,
@@ -423,8 +422,7 @@ mixin _FirewallView<T extends ConsumerStatefulWidget> on ConsumerState<T> {
       );
     }
     if (failure case final failure?) {
-      return _issueBody(
-        context,
+      return PullableIssueView(
         title: libL10n.fail,
         detail: failure,
         icon: Icons.error_outline,
@@ -475,28 +473,3 @@ String _accessName(FirewallAccess access) => switch (access.via) {
   FirewallAccessVia.ssh => 'SSH (TCP ${access.port})',
   FirewallAccessVia.monitor => 'Monitor (TCP ${access.port})',
 };
-
-Widget _issueBody(
-  BuildContext context, {
-  required String title,
-  required IconData icon,
-  required Future<void> Function() onRetry,
-  String? explain,
-  String? detail,
-}) {
-  return ListView(
-    physics: const AlwaysScrollableScrollPhysics(),
-    children: [
-      SizedBox(
-        height: MediaQuery.sizeOf(context).height * 0.65,
-        child: PageIssueView(
-          title: title,
-          explain: explain,
-          detail: detail,
-          icon: icon,
-          onRetry: onRetry,
-        ),
-      ),
-    ],
-  );
-}

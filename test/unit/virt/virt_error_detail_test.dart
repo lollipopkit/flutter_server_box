@@ -1,10 +1,10 @@
-/// `VirtRust.error`: every `sbm_virt::error::Detail` is said in the app's
+/// `PveError.virt`: every `sbm_virt::error::Detail` is said in the app's
 /// words, and the host's own words are kept where there is none.
 library;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/virt/virt_backup.dart';
-import 'package:server_box/data/model/virt/virt_rust.dart';
+import 'package:server_box/data/model/virt/virt_error.dart';
 import 'package:server_box/src/rust/api/pve.dart';
 import 'package:server_box/src/rust/api/virt_model.dart';
 
@@ -40,19 +40,19 @@ void main() {
 
   test('every detail is said, never as the host words', () {
     for (final d in details) {
-      final said = VirtRust.error(_err(d)).message;
+      final said = _err(d).virt.message;
       expect(said, isNotEmpty, reason: '$d');
       expect(said, isNot('host words'), reason: '$d');
     }
   });
 
   test('the values a detail carries are in what it says', () {
-    expect(VirtRust.error(_err(details[11])).message, allOf(contains('pve'), contains('5 min'), contains('UPID:pve:1')));
-    expect(VirtRust.error(_err(details[18])).message, contains('vmbr0'));
-    expect(VirtRust.error(_err(details[17])).message, virtBackupIssueText(BackupIssue.storage));
+    expect(_err(details[11]).virt.message, allOf(contains('pve'), contains('5 min'), contains('UPID:pve:1')));
+    expect(_err(details[18]).virt.message, contains('vmbr0'));
+    expect(_err(details[17]).virt.message, virtBackupIssueText(BackupIssue.storage));
   });
 
   test('no detail keeps the host words', () {
-    expect(VirtRust.error(_err(null)).message, 'host words');
+    expect(_err(null).virt.message, 'host words');
   });
 }

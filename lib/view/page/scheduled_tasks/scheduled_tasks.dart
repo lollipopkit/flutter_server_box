@@ -11,6 +11,7 @@ import 'package:server_box/data/model/server/cron.dart';
 import 'package:server_box/data/model/server/cron_schedule.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/view/widget/pullable_issue.dart';
 import 'package:server_box/view/widget/search_pill.dart';
 
 /// From here a task is one line — what it does, the command, and when it next
@@ -147,25 +148,28 @@ final class _ScheduledTasksPageState extends ConsumerState<ScheduledTasksPage> {
 extension on _ScheduledTasksPageState {
   Widget _buildBody({required bool wide}) {
     if (_unsupported) {
-      return _issueBody(
+      return PullableIssueView(
         title: libL10n.unsupported,
         explain: l10n.scheduledTaskLinuxOnly,
         icon: Icons.not_interested,
+        onRetry: _refresh,
       );
     }
     if (_unavailable) {
-      return _issueBody(
+      return PullableIssueView(
         title: libL10n.unsupported,
         explain: l10n.scheduledTaskUnavailable,
         detail: _failure,
         icon: Icons.timer_off_outlined,
+        onRetry: _refresh,
       );
     }
     if (_failure case final failure?) {
-      return _issueBody(
+      return PullableIssueView(
         title: libL10n.fail,
         detail: failure,
         icon: Icons.error_outline,
+        onRetry: _refresh,
       );
     }
     final catalog = _catalog;
@@ -188,29 +192,6 @@ extension on _ScheduledTasksPageState {
           child: RefreshIndicator(
             onRefresh: _refresh,
             child: _buildList(catalog, wide: wide),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _issueBody({
-    required String title,
-    required IconData icon,
-    String? explain,
-    String? detail,
-  }) {
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      children: [
-        SizedBox(
-          height: MediaQuery.sizeOf(context).height * 0.65,
-          child: PageIssueView(
-            title: title,
-            explain: explain,
-            detail: detail,
-            icon: icon,
-            onRetry: _refresh,
           ),
         ),
       ],

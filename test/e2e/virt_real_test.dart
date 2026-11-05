@@ -177,7 +177,6 @@ import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/model/virt/virt_hardware.dart';
 import 'package:server_box/data/model/virt/virt_manage.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
-import 'package:server_box/data/model/virt/virt_rust.dart';
 import 'package:server_box/data/provider/virt/libvirt_backend.dart';
 import 'package:server_box/data/provider/virt/pve_backend.dart';
 import 'package:server_box/src/rust/api/create.dart' as cr;
@@ -4486,9 +4485,7 @@ Future<void> _libvirtCloudImages() async {
       final one = await virt.cloudInit(g);
       expect(one.nics, 1);
       final ci = cr.virtLibvirtCloudInit(
-        ci: VirtRust.cloudInitFfi(
-          VirtCloudInit(user: 'sbxe', password: login.password, sshKeys: login.publicKey, hostname: g.name),
-        ),
+        ci: VirtCloudInit(user: 'sbxe', password: login.password, sshKeys: login.publicKey, hostname: g.name).ffi,
         name: g.name,
         mac: mac1,
         extraNetworks: [

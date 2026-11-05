@@ -217,13 +217,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.3.2"
-  circle_chart:
-    dependency: "direct main"
-    description:
-      path: "packages/circle_chart"
-      relative: true
-    source: path
-    version: "1.1.0"
   cli_config:
     dependency: transitive
     description:
