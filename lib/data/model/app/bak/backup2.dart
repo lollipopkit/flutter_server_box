@@ -339,31 +339,6 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
   /// entry, and one without an entry has none.
   bool get carriesPveSection => version > PveVirtMigration.appliedAt;
 
-  /// What restoring [serverId]'s PVE configuration writes: an entry for
-  /// `PveStore.restoreOne` (empty removes the row, unreadable is skipped
-  /// there), or null to leave the row as it is.
-  ///
-  /// **A file with a [pve] section** ([carriesPveSection]) is the whole
-  /// truth: its entry, or none, which removes the row. That is how removing
-  /// PVE on one device reaches the others.
-  ///
-  /// **A file from an older build** has no section; its server records carry
-  /// the legacy `custom.pveAddr`/`pvePwd` instead, which express an address
-  /// and a password and nothing else.
-  /// - Present: applied onto the row here with `PveConfig.mergeLegacy`, so
-  ///   an older device handing back a record it got from this build leaves
-  ///   the token and the pinned certificate alone.
-  /// - Absent: in a sync, the row is left alone. An older build writes no
-  ///   PVE fields for a server whose record it has not seen with them, and
-  ///   cannot say "removed" in any other way than it says "never had", so
-  ///   reading absence as removal lets one old device delete what a new one
-  ///   configured. The cost is that removing PVE *on an older build* does not
-  ///   reach newer ones. [force] (restoring a backup) is the exception: the
-  ///   user asked for the file's state, and at the time it was written the
-  ///   server had no PVE.
-  // TODO(migration): after 5 releases from v1.0.1715 every file has the section; reduce this
-  // to its first branch, with `PveConfig.fromLegacyRecord` and `mergeLegacy`.
-
   /// [spis] with each server's PVE configuration also written into its
   /// record's `custom`, where a build from before `server_pve` reads it —
   /// see `PveConfig.toLegacyCustom`. Such a build ignores the [pve] section

@@ -1053,7 +1053,11 @@ class MonitorHttpClient {
                 if (sseData(frame) case final e?) out.add(e);
               }
             },
-            onError: out.addError,
+            // `cancelOnError` skips `onDone`: the error ends the stream too.
+            onError: (Object e, StackTrace s) {
+              if (!cancel.isCancelled) out.addError(e, s);
+              unawaited(out.close());
+            },
             onDone: out.close,
             cancelOnError: true,
           );
