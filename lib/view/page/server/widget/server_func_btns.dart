@@ -7,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
-import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
@@ -653,7 +652,7 @@ Future<bool> _ensure(
     Loggers.app.warning('Connect $id for a server function', e, s);
     if (context.mounted) {
       Toast.error(
-        e is SSHErr ? (e.message ?? e.type.name) : e.toString(),
+        e is Err ? (e.message ?? e.type.name) : e.toString(),
       );
     }
     return false;

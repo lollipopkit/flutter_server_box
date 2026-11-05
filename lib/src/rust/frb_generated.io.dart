@@ -584,6 +584,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   SystemUser dco_decode_box_autoadd_system_user(dynamic raw);
 
   @protected
+  TmuxSessionListingItem dco_decode_box_autoadd_tmux_session_listing_item(
+    dynamic raw,
+  );
+
+  @protected
   int dco_decode_box_autoadd_u_16(dynamic raw);
 
   @protected
@@ -1550,6 +1555,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   SystemType? dco_decode_opt_box_autoadd_system_type(dynamic raw);
+
+  @protected
+  TmuxSessionListingItem? dco_decode_opt_box_autoadd_tmux_session_listing_item(
+    dynamic raw,
+  );
 
   @protected
   int? dco_decode_opt_box_autoadd_u_16(dynamic raw);
@@ -2788,6 +2798,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   SystemUser sse_decode_box_autoadd_system_user(SseDeserializer deserializer);
 
   @protected
+  TmuxSessionListingItem sse_decode_box_autoadd_tmux_session_listing_item(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   int sse_decode_box_autoadd_u_16(SseDeserializer deserializer);
 
   @protected
@@ -3952,6 +3967,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   SystemType? sse_decode_opt_box_autoadd_system_type(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  TmuxSessionListingItem? sse_decode_opt_box_autoadd_tmux_session_listing_item(
     SseDeserializer deserializer,
   );
 
@@ -5408,6 +5428,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_box_autoadd_system_user(
     SystemUser self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_tmux_session_listing_item(
+    TmuxSessionListingItem self,
     SseSerializer serializer,
   );
 
@@ -6902,6 +6928,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_opt_box_autoadd_system_type(
     SystemType? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_tmux_session_listing_item(
+    TmuxSessionListingItem? self,
     SseSerializer serializer,
   );
 

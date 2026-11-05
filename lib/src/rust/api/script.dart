@@ -42,9 +42,8 @@ String readCustomCmdsCommand({required SystemType system}) =>
 
 /// The installed set, parsed from `read_custom_cmds_command`'s output.
 ///
-/// `None` means the directory does not exist — distinct from `Some([])`, an
-/// existing directory the user has emptied. The app seeds the first case from
-/// what it still holds locally and must not touch the second.
+/// Empty when the directory does not exist; `None` when the output is not a
+/// listing, which the caller reports rather than reading as no commands.
 List<CustomCmd>? parseCustomCmdsListing({required String raw}) =>
     RustLib.instance.api.crateApiScriptParseCustomCmdsListing(raw: raw);
 

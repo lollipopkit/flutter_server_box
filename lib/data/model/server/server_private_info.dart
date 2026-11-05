@@ -331,13 +331,6 @@ extension Spix on Spi {
   }
 
   /// Returns true if the connection should be re-established.
-  ///
-  /// [ServerCustom.cmds] used to count: custom commands were spliced into the
-  /// generated script, so changing one meant reinstalling the script, and the
-  /// reconnect is what did that. They are files on the server now, written on
-  /// their own, and reconnecting for them would only cost the user their
-  /// session — including during the one-time migration, which edits this very
-  /// field while the connection it would tear down is being set up.
   bool shouldReconnect(Spi old) {
     return !isSameAs(old) ||
         ssh?.alterUrl != old.ssh?.alterUrl ||
@@ -374,7 +367,6 @@ extension Spix on Spi {
     tags: ['tag1', 'tag2'],
     autoConnect: true,
     custom: ServerCustom(
-      cmds: {'echo': 'echo hello'},
       preferTempDev: 'nvme-pci-0400',
       logoUrl: 'https://example.com/logo.png',
     ),

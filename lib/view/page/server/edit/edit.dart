@@ -14,6 +14,7 @@ import 'package:server_box/core/route.dart';
 import 'package:server_box/core/service/ssh_discovery_sources.dart';
 import 'package:server_box/core/service/ssh_discovery_ssh_config.dart';
 import 'package:server_box/core/ssh/jump_chain.dart';
+import 'package:server_box/core/utils/app_auth.dart';
 import 'package:server_box/core/utils/cert_fingerprint.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/app/feature.dart';
@@ -234,14 +235,6 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   final _diskCountsNetwork = ValueNotifier(false);
   final _env = <String, String>{}.vn;
 
-  /// Custom commands an older version of the app stored here, carried through
-  /// a save unchanged so that editing anything else on this page does not
-  /// discard them before the first connection moves them to the server.
-  ///
-  /// Not edited here any more — the editor writes the server directly, since
-  /// the directory there is the only copy.
-  // TODO(migration): delete with [ServerCustom.cmds].
-  final _unmigratedCmds = <String, String>{}.vn;
   final _tags = <String>{}.vn;
 
   /// Tag renames made in the tag editor, from the old name to the new one,
@@ -252,6 +245,9 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   final _disabledCmdTypes = <String>{}.vn;
   final _hasStoredSudoPassword = ValueNotifier<bool?>(null);
   String? _pendingSudoPassword;
+
+  /// Fields [_initWithSpi] filled with a saved secret; see [_revealStored].
+  final _storedSecrets = <TextEditingController>{};
   bool _sudoPasswordDirty = false;
 
   @override
@@ -320,7 +316,6 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     _tempIsCelsius.dispose();
     _diskCountsNetwork.dispose();
     _env.dispose();
-    _unmigratedCmds.dispose();
     _tags.dispose();
     _systemType.dispose();
     _disabledCmdTypes.dispose();

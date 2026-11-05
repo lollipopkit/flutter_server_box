@@ -6,6 +6,8 @@
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
+// These functions are ignored because they are not marked as `pub`: `listing_item`
+
 String tmuxFindCommand() => RustLib.instance.api.crateApiTmuxTmuxFindCommand();
 
 String? tmuxParseFind({required String output, required bool succeeded}) =>
@@ -49,8 +51,15 @@ String tmuxNewSessionOrAttachCommand({
   name: name,
 );
 
-TmuxSessionListingItem tmuxParseSessions({required String output}) =>
-    RustLib.instance.api.crateApiTmuxTmuxParseSessions(output: output);
+/// What `tmux list-sessions` answered; `None` when the listing failed (no
+/// server running is an empty listing).
+TmuxSessionListingItem? tmuxReadSessions({
+  required String output,
+  required int exitCode,
+}) => RustLib.instance.api.crateApiTmuxTmuxReadSessions(
+  output: output,
+  exitCode: exitCode,
+);
 
 List<TmuxWindowItem> tmuxParseWindows({required String output}) =>
     RustLib.instance.api.crateApiTmuxTmuxParseWindows(output: output);

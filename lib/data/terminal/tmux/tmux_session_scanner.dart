@@ -43,31 +43,40 @@ final class TmuxSessionScanner {
     }
   }
 
-  /// List all tmux sessions on the remote server.
-  Future<List<TmuxSessionInfo>> listSessions() async {
+  /// The tmux sessions on the remote server, or null when listing them failed.
+  ///
+  /// Empty where tmux is absent or no server is running: neither has sessions.
+  Future<List<TmuxSessionInfo>?> tryListSessions() async {
     try {
-      if (!await _ensureTmuxResolved()) return [];
+      if (!await _ensureTmuxResolved()) return const [];
       final result = await _shell.run(
         TmuxCommandBuilder.listSessionsCmd(tmuxBin: _tmuxBin!),
         timeout: const Duration(seconds: 5),
       );
-      if (result.exitCode != 0) return [];
-      final listing = ffi.tmuxParseSessions(output: result.output);
+      final exitCode = result.exitCode;
+      final listing = exitCode == null
+          ? null
+          : ffi.tmuxReadSessions(output: result.output, exitCode: exitCode);
+      if (listing == null) {
+        Loggers.app.warning(
+          'tmux list-sessions exited $exitCode',
+          result.output.split('\n').take(3).join('\n'),
+        );
+        return null;
+      }
       if (listing.unreadable > 0 && listing.sessions.isEmpty) {
-        // A successful command whose every line fails to parse is not "no
-        // sessions"; it is a broken discovery contract, and returning silently
-        // would hide that from both the user and the logs.
         Loggers.app.warning(
           'tmux list-sessions returned ${listing.unreadable} unparseable line(s)',
           result.output.split('\n').take(3).join('\n'),
         );
+        return null;
       }
       return listing.sessions
           .map(TmuxSessionInfo.fromFfi)
           .toList(growable: false);
     } catch (e, st) {
       Loggers.app.warning('Failed to list tmux sessions', e, st);
-      return [];
+      return null;
     }
   }
 

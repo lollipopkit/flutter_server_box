@@ -30,6 +30,7 @@ import 'package:server_box/data/store/migrations/m032_disk_counts_network.dart';
 import 'package:server_box/data/store/migrations/m033_sync_record.dart';
 import 'package:server_box/data/store/migrations/m034_identity_files.dart';
 import 'package:server_box/data/store/migrations/m035_monitor_cert_sha256.dart';
+import 'package:server_box/data/store/migrations/m036_drop_server_custom_cmd.dart';
 import 'package:server_box/data/store/schema.dart';
 
 /// Every migration, ordered, in the one place that names them.
@@ -82,4 +83,40 @@ const kSchemaMigrations = <SchemaMigration>[
   SyncRecordMigration(),
   IdentityFilesMigration(),
   MonitorCertSha256Migration(),
+  DropServerCustomCmdMigration(),
 ];
+
+/// The steps a restore runs on the settings it brought back, in schema order.
+///
+/// A restore is neither a launch nor a version bump, so the migrator never
+/// looks at a file older than this install: each listed step converts a shape
+/// such a file can still carry.
+///
+/// Not listed:
+/// - `EnumNamesMigration` (m023): every read of those rows takes either shape.
+/// - m012, m016, m030: their input is a table or this device's preferences,
+///   which no backup carries.
+/// - m015: a newer file still carries the selection it converted, so running
+///   it there would overwrite the exclusions that file restored.
+const kRestoreSettingsMigrations = <SettingsMigration>[
+  // An `int` `sshConnectionMode` and the flag-gated Agent home tab.
+  SettingsFixupsMigration(),
+  // The per-field keys from before the grouped settings.
+  GroupedSettingsMigration(),
+  // The switch from before `virtualKeyRows`.
+  VirtKeyRowsMigration(),
+  // Virtual keys stored by index.
+  VirtKeyNamesMigration(),
+  // The five-tab home bar of older builds.
+  HomeTabsBarMigration(),
+  // An `askAi.baseUrl` without its API version, which `LegacyAskAiMigration`
+  // turns into a provider at the next launch that then answers 404.
+  AiEndpointVersionMigration(),
+];
+
+/// The [kRestoreSettingsMigrations] a file written at schema [fileVersion]
+/// still needs. A file written after a step already has its shape, and the
+/// step's match would misread a current value: m021 takes any bar of exactly
+/// the old five tabs for the old default.
+Iterable<SettingsMigration> restoreSettingsMigrationsFor(int fileVersion) =>
+    kRestoreSettingsMigrations.where((step) => fileVersion <= step.from);

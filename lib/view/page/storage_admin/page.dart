@@ -719,42 +719,34 @@ extension on _StoragePageState {
         }
         return;
       }
-      final result = await SudoPassword.retry<_HealthAttempt>(
-        context,
-        widget.args.spi.id,
-        label: widget.args.spi.ssh?.user,
-        attempt: (password) async {
-          try {
-            return _HealthAttempt.value(
-              await StorageManager.health(
-                await _exec(),
-                isRoot: _isRoot,
-                password: password,
-              ),
-            );
-          } on StorageFailure catch (e) {
-            return _HealthAttempt.failure(e);
-          } on SudoRejected catch (e) {
-            return _HealthAttempt.failure(e);
-          }
-        },
-        rejected: (attempt) => attempt.error is SudoRejected,
-      );
-      if (result?.disks case final disks?) {
-        if (mounted) {
-          _rebuild(() {
-            _health = disks;
-            _healthLocked = false;
-          });
-          _syncHealthPoll();
-        }
-      } else if (result?.error case final error?) {
+      final List<DiskHealth>? disks;
+      try {
+        disks = await SudoPassword.retryOnRejected(
+          context,
+          widget.args.spi.id,
+          label: widget.args.spi.ssh?.user,
+          attempt: (password) async => StorageManager.health(
+            await _exec(),
+            isRoot: _isRoot,
+            password: password,
+          ),
+        );
+      } on Exception catch (error) {
+        if (error is! StorageFailure && error is! SudoRejected) rethrow;
         if (mounted) {
           _rebuild(() => _healthLocked = true);
           _healthPoll?.cancel();
           _healthPoll = null;
           _showActionError(error);
         }
+        return;
+      }
+      if (disks case final disks? when mounted) {
+        _rebuild(() {
+          _health = disks;
+          _healthLocked = false;
+        });
+        _syncHealthPoll();
       }
     } catch (e, s) {
       Loggers.app.warning('Read storage health on ${widget.args.spi.id}', e, s);
@@ -778,12 +770,13 @@ extension on _StoragePageState {
     if (!confirmed || !mounted) return;
     _rebuild(() => _busy = true);
     try {
-      final result = await SudoPassword.retry<_ActionAttempt>(
-        context,
-        widget.args.spi.id,
-        label: widget.args.spi.ssh?.user,
-        attempt: (password) async {
-          try {
+      final bool? done;
+      try {
+        done = await SudoPassword.retryOnRejected(
+          context,
+          widget.args.spi.id,
+          label: widget.args.spi.ssh?.user,
+          attempt: (password) async {
             await StorageManager.act(
               await _exec(),
               action,
@@ -791,20 +784,15 @@ extension on _StoragePageState {
               password: password,
               passphrase: passphrase,
             );
-            return const _ActionAttempt.success();
-          } on StorageFailure catch (e) {
-            return _ActionAttempt.failure(e);
-          } on SudoRejected catch (e) {
-            return _ActionAttempt.failure(e);
-          }
-        },
-        rejected: (attempt) => attempt.error is SudoRejected,
-      );
-      if (result == null) return;
-      if (result.error case final error?) {
+            return true;
+          },
+        );
+      } on Exception catch (error) {
+        if (error is! StorageFailure && error is! SudoRejected) rethrow;
         _showActionError(error);
         return;
       }
+      if (done == null) return;
       if (mounted) Toast.success(libL10n.success);
       await _refreshAfterAction();
     } catch (e, s) {
@@ -1252,21 +1240,6 @@ extension on _StoragePageState {
       ],
     );
   }
-}
-
-final class _HealthAttempt {
-  const _HealthAttempt.value(this.disks) : error = null;
-  const _HealthAttempt.failure(this.error) : disks = null;
-
-  final List<DiskHealth>? disks;
-  final Exception? error;
-}
-
-final class _ActionAttempt {
-  const _ActionAttempt.success() : error = null;
-  const _ActionAttempt.failure(this.error);
-
-  final Exception? error;
 }
 
 final class _CreateDraft {

@@ -9,8 +9,8 @@ import 'package:server_box/src/rust/frb_generated.dart';
 // These functions are ignored because they are not marked as `pub`: `whole`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `from`, `from`
 
-/// Parses all output of one collection round. `system`: "linux" | "bsd" |
-/// "windows"; see `ParseOptions` for `temp_divisor`. Async: runs on the Rust
+/// Parses all output of one collection round; see `ParseOptions` for
+/// `temp_divisor`. Async: runs on the Rust
 /// thread pool without blocking the UI isolate.
 Future<StatusReport> parseStatus({
   required SystemType system,

@@ -445,13 +445,7 @@ class KvToTablesMigration implements SchemaMigration {
         cmd,
       ]);
     }
-    (custom['cmds'] as Map? ?? const {}).forEach((k, val) {
-      _db.execute('INSERT OR IGNORE INTO server_custom_cmd VALUES (?, ?, ?);', [
-        id,
-        '$k',
-        '$val',
-      ]);
-    });
+    // `custom.cmds` is not carried: custom commands live on the server.
 
     // Held back: a jump host is a server, so the row it points at may not have
     // been inserted yet — and its id may not be known yet either.

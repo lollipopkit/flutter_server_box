@@ -8,6 +8,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/utils/app_auth.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
@@ -67,6 +68,9 @@ class _RemoteDesktopProfileEditPageState
   late bool _shared;
   late bool _savePassword;
 
+  /// Opened with a saved password, shown only after [AppAuth.confirm].
+  late final bool _storedPassword;
+
   /// The id this form will be saved under, made once.
   ///
   /// Not per save: connecting from here opens a session keyed by the profile's
@@ -91,6 +95,7 @@ class _RemoteDesktopProfileEditPageState
     _viewOnly = existing?.viewOnly ?? false;
     _shared = existing?.shared ?? true;
     _savePassword = existing?.password != null;
+    _storedPassword = existing?.password?.isNotEmpty ?? false;
   }
 
   @override
@@ -196,6 +201,7 @@ extension _Widgets on _RemoteDesktopProfileEditPageState {
                     : null,
                 icon: Icons.password,
                 obscureText: true,
+                onReveal: _storedPassword ? AppAuth.confirm : null,
                 suggestion: false,
               ),
               _buildSwitch(

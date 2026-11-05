@@ -57,16 +57,14 @@ pub async fn list(
 
     let (sessions, error) =
         match run(&sbm_parser::tmux::list_sessions_command(&bin), None, None, exec).await {
-            Ok(out) if out.exit_code == Some(0) => {
-                (sbm_parser::tmux::parse_sessions(&out.stdout).sessions, None)
-            }
-            // The machine has tmux and nothing running, which is not a failure.
-            Ok(out) if out.stderr.contains("no server running") => (Vec::new(), None),
-            Ok(out) => {
-                let reason = failure_reason(&out);
-                tracing::warn!("tmux list-sessions: {reason}");
-                (Vec::new(), Some(reason))
-            }
+            Ok(out) => match read_listing(&out) {
+                Some(listing) => (listing.sessions, None),
+                None => {
+                    let reason = failure_reason(&out);
+                    tracing::warn!("tmux list-sessions: {reason}");
+                    (Vec::new(), Some(reason))
+                }
+            },
             Err(e) => {
                 tracing::warn!("tmux: could not list the sessions: {e}");
                 (Vec::new(), Some(e.to_string()))
@@ -77,6 +75,13 @@ pub async fn list(
         "sessions": sessions,
         "error": error,
     })))
+}
+
+/// The listing, or `None` when it failed; no server running is no sessions.
+fn read_listing(out: &ExecResponse) -> Option<sbm_parser::tmux::TmuxSessionListing> {
+    let code = out.exit_code?;
+    let output = if code == 0 { &out.stdout } else { &out.stderr };
+    sbm_parser::tmux::read_sessions(output, code)
 }
 
 /// A one-line reason a listing failed, for the panel to show under its own

@@ -125,3 +125,24 @@ fn a_bashrc_banner_is_not_the_path() {
     // An absolute path in the banner is not an executable called tmux.
     assert_eq!(parse_find("/usr/bin/tmux\n/tmp/banner\n", true).as_deref(), Some("/usr/bin/tmux"));
 }
+
+/// A real tmux with no server up exits 1, which reads as no sessions.
+#[test]
+fn a_real_tmux_with_no_server_has_no_sessions() {
+    if Command::new("tmux").arg("-V").output().map(|o| !o.status.success()).unwrap_or(true) {
+        eprintln!("skipped: tmux is not installed");
+        return;
+    }
+    let dir = tempfile::tempdir().unwrap();
+    let out = Command::new("/bin/sh")
+        .env("TMUX_TMPDIR", dir.path())
+        .env("TMUX", "")
+        .env("LC_ALL", "C")
+        .arg("-c")
+        .arg(format!("{} 2>&1", list_sessions_command("tmux")))
+        .output()
+        .unwrap();
+    let output = String::from_utf8_lossy(&out.stdout);
+    let code = out.status.code().unwrap();
+    assert_eq!(read_sessions(&output, code), Some(TmuxSessionListing::default()), "{code}: {output}");
+}

@@ -98,9 +98,8 @@ fn wrap_for_default_shell(system: sbm_parser::SystemType, script: String) -> Str
 
 /// The installed set, parsed from `read_custom_cmds_command`'s output.
 ///
-/// `None` means the directory does not exist — distinct from `Some([])`, an
-/// existing directory the user has emptied. The app seeds the first case from
-/// what it still holds locally and must not touch the second.
+/// Empty when the directory does not exist; `None` when the output is not a
+/// listing, which the caller reports rather than reading as no commands.
 #[flutter_rust_bridge::frb(sync)]
 pub fn parse_custom_cmds_listing(raw: String) -> Option<Vec<CustomCmd>> {
     sbm_parser::script::parse_custom_cmds_listing(&raw).map(|cmds| {

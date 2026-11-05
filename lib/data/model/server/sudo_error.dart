@@ -3,8 +3,9 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 
 /// Sudo refused the password it was given (or was given none), for a feature
-/// whose failures are exceptions ([SudoRefusal.throwIfSudoRejected]); one that
-/// hands back its result reads [SudoRejection.sudoRejected] instead.
+/// whose failures are exceptions ([SudoRefusal.throwIfSudoRejected]), retried
+/// with `SudoPassword.retryOnRejected`; one that hands back its result reads
+/// [SudoRejection.sudoRejected] instead, retried with `SudoPassword.retry`.
 final class SudoRejected implements Exception {
   const SudoRejected();
 

@@ -46,7 +46,7 @@ class LocalFileBackend implements FileBackend {
     // to create something here". [list] has always reported links as links;
     // this is the same question and gives the same answer.
     final type = await FileSystemEntity.type(native, followLinks: false);
-    if (type == FileSystemEntityType.notFound) return null;
+    if (type == FileSystemEntityType.notFound) return _absentAt(native);
     // A link is reported as a link and nothing more. Its own size and time
     // describe the link, the target's describe the target, and neither is an
     // answer about this entry. The SFTP backend says the same.
@@ -58,16 +58,35 @@ class LocalFileBackend implements FileBackend {
       );
     }
     final stat = await FileStat.stat(native);
-    // `FileStat.stat` answers `notFound` both for something absent and for a
-    // path whose parent cannot be traversed. Only the first is null here; the
-    // second surfaces when the caller does something with it.
-    if (stat.type == FileSystemEntityType.notFound) return null;
+    if (stat.type == FileSystemEntityType.notFound) return _absentAt(native);
     return FileEntry(
       name: p.basename(native),
       kind: _kindOf(stat.type),
       size: stat.size < 0 ? null : stat.size,
       modified: stat.modified,
     );
+  }
+
+  /// Null if nothing is at [native], else throws.
+  ///
+  /// `dart:io` answers `notFound` for any failed lstat, so a path whose parent
+  /// cannot be traversed reads as absent. `readlink` fails with the errno that
+  /// says which. Windows reports different codes; there it stays null.
+  Future<FileEntry?> _absentAt(String native) async {
+    if (Platform.isWindows) return null;
+    try {
+      final target = await Link(native).target();
+      // A link appeared in between.
+      return FileEntry(
+        name: p.basename(native),
+        kind: FileKind.link,
+        linkTarget: target,
+      );
+    } on FileSystemException catch (e) {
+      const enoent = 2, enotdir = 20;
+      if (e.osError?.errorCode case enoent || enotdir) return null;
+      rethrow;
+    }
   }
 
   @override

@@ -69,9 +69,14 @@ pub fn tmux_new_session_or_attach_command(bin: String, name: String) -> String {
     tmux::new_session_or_attach_command(&bin, &name)
 }
 
+/// What `tmux list-sessions` answered; `None` when the listing failed (no
+/// server running is an empty listing).
 #[flutter_rust_bridge::frb(sync)]
-pub fn tmux_parse_sessions(output: String) -> TmuxSessionListingItem {
-    let listing = tmux::parse_sessions(&output);
+pub fn tmux_read_sessions(output: String, exit_code: i32) -> Option<TmuxSessionListingItem> {
+    tmux::read_sessions(&output, exit_code).map(listing_item)
+}
+
+fn listing_item(listing: tmux::TmuxSessionListing) -> TmuxSessionListingItem {
     TmuxSessionListingItem {
         unreadable: listing.unreadable as u32,
         sessions: listing

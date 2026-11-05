@@ -177,7 +177,6 @@ void main() {
               auth: PveAuth.password,
             ),
           );
-          expect(custom.cmds, {'uptime': 'uptime -p', 'who': 'w'});
           expect(custom.preferTempDev, 'coretemp');
           expect(custom.tempIsCelsius, isFalse);
           expect(custom.logoUrl, 'https://example.com/logo.png');

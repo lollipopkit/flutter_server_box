@@ -297,8 +297,10 @@ class LegacyServerCustomV1 {
   ///
   /// Without the PVE fields, which today's model does not have: they are a
   /// `server_pve` row now. [toJson] is what keeps them.
+  ///
+  /// [cmds] are read so the box opens, and dropped: custom commands live on
+  /// the server now.
   ServerCustom toCustom() => ServerCustom(
-    cmds: cmds,
     preferTempDev: preferTempDev,
     tempIsCelsius: tempIsCelsius,
     logoUrl: logoUrl,
