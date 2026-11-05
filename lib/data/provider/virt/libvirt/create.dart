@@ -100,8 +100,8 @@ mixin _Create on _LibvirtCore, _Storage, _Snapshots {
     var plan = const cr.VirtDeletePlan(targets: [], pools: [], files: [], kept: []);
     if (removeDisks) {
       final detail = await _run(ffi.virtDomainDetailScript(domain: guest.id), ffi.virtLibvirtDomainDetail);
-      final pools = await storagePools();
-      final storage = _storage!;
+      final storage = await _listStorage();
+      final pools = res.virtLibvirtPools(storage: storage).virt;
       final volumes = [
         for (final p in pools)
           if (p.active)

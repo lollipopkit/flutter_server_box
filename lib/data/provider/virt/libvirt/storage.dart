@@ -8,10 +8,16 @@ mixin _Storage on _LibvirtCore {
   vl.VirtStorage? _storage;
 
   @override
-  Future<List<VirtStoragePool>> storagePools() async {
+  Future<List<VirtStoragePool>> storagePools() async =>
+      res.virtLibvirtPools(storage: await _listStorage()).virt;
+
+  /// Lists the storage, keeps it as [_storage] and returns this listing:
+  /// what a caller goes on with after the `await`, by which time a change
+  /// finishing elsewhere may have cleared [_storage].
+  Future<vl.VirtStorage> _listStorage() async {
     final storage = await _run(ffi.virtStorageScript(), ffi.virtLibvirtStorage);
     _storage = storage;
-    return res.virtLibvirtPools(storage: storage).virt;
+    return storage;
   }
 
   /// `vol-dumpxml` for each volume the last [storagePools] listed in [pool]
@@ -55,16 +61,13 @@ mixin _Storage on _LibvirtCore {
 
   /// The pools as the last listing has them, listed when there is none.
   Future<List<VirtStoragePool>> _pools() async {
-    final storage = _storage;
-    if (storage == null) return storagePools();
-    return res.virtLibvirtPools(storage: storage).virt;
+    return res.virtLibvirtPools(storage: _storage ?? await _listStorage()).virt;
   }
 
   /// [pool]'s volumes as the last listing has them, and whether one of them
   /// did not read.
   Future<(List<VirtVolume>, bool)> _volumes(VirtStoragePool pool) async {
-    if (_storage == null) await storagePools();
-    final storage = _storage!;
+    final storage = _storage ?? await _listStorage();
     final listed = storage.pools.firstWhereOrNull((p) => p.name == pool.id)?.volumes;
     if (listed == null || listed.isEmpty) return (const <VirtVolume>[], false);
     final read = (await _run(

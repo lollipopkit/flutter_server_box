@@ -18,14 +18,14 @@ mixin _Clone on _LibvirtCore, _Storage, _Hardware {
     }
     final hardware = await _hardwareRead(guest);
     final guests = (await load()).guests;
-    await storagePools();
+    final storage = await _listStorage();
     final spec = _rule(
       () => cr.virtLibvirtCloneSpec(
         guest: guest.ffi,
         hardware: hardware,
         request: request.ffi,
         guests: [for (final g in guests) g.ffi],
-        storage: _storage!,
+        storage: storage,
       ),
     );
     final List<String> paths;
