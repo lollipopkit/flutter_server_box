@@ -1690,6 +1690,27 @@ body {
   font-weight: 700;
 }
 
+/* Too narrow for one line: a card, the name above, the note aligned with it. */
+@media (max-width: 480px) {
+  .hero-os-pill {
+    display: inline-grid;
+    grid-template-columns: auto auto;
+    justify-content: start;
+    gap: 0.5rem 0.45rem;
+    padding: 0.5rem 0.9rem 0.65rem 0.5rem;
+    border-radius: 1.25rem;
+  }
+
+  .hero-os-pill-badge {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .hero-os-pill-meta {
+    padding-left: 0.6rem;
+  }
+}
+
 /* /os/ identity and monitor migration callout. */
 .os-identity-row {
   display: flex;
