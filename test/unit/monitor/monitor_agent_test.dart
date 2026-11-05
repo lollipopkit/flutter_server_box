@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/monitor/http.dart';
 import 'package:server_box/data/model/server/monitor/monitor_agent.dart';
-import 'package:server_box/data/provider/server/monitor_http.dart';
 
 void main() {
   group('agent events', () {

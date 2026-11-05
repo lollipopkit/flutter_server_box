@@ -3,10 +3,10 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/core/monitor/http.dart';
 import 'package:server_box/core/monitor/ws_frames.dart';
 import 'package:server_box/core/ssh/local_tunnel.dart';
 import 'package:server_box/data/model/app/error.dart';
-import 'package:server_box/data/provider/server/monitor_http.dart';
 
 /// A TCP connection carried by a `monitor` agent's relay.
 ///

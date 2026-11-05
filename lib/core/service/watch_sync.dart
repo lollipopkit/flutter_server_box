@@ -3,12 +3,12 @@ import 'dart:async';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:server_box/core/diag.dart';
+import 'package:server_box/core/monitor/http.dart';
 import 'package:server_box/core/service/scoped_token.dart';
 import 'package:server_box/core/utils/coalesced.dart';
 import 'package:server_box/data/model/server/monitor/agent_endpoint.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/provider/server/monitor_http.dart';
 import 'package:server_box/data/store/stores.dart';
 import 'package:watch_connectivity/watch_connectivity.dart';
 

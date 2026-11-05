@@ -938,7 +938,7 @@ extension _Utils on _ServerEditPageState {
       _markSSHConfigImportHandled();
 
       if (shouldImport == true) {
-        await ServerDeduplication.importServersWithNotification(
+        await importServersWithNotification(
           servers: servers,
           ref: ref,
           context: context,

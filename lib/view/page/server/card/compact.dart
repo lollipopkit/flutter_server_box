@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/extension/server.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/provider/server/metric.dart';
 import 'package:server_box/data/provider/server/reading_fmt.dart';
@@ -13,6 +12,7 @@ import 'package:server_box/view/page/server/card/name_hero.dart';
 import 'package:server_box/view/page/server/card/pressure.dart';
 import 'package:server_box/view/page/server/card/sizes.dart';
 import 'package:server_box/view/page/server/card/title.dart';
+import 'package:server_box/view/page/server/state_ui.dart';
 
 /// A line's share of the same bar: the least it is drawn at, the width of one
 /// reading's name and number after it, and the gap before each.

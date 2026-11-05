@@ -136,7 +136,7 @@ extension _HomePageLifecycle on _HomePageState {
       if (hasText) {
         await ServerShareUi.consume(context, ref, text, digitsOnly: false);
       }
-      if (link != null && mounted) await AppLinkUi.open(context, ref, link);
+      if (link != null && mounted) await AppLinkRouter.open(context, ref, link);
       if (incoming != null && mounted) {
         final taken = incoming;
         incoming = null;

@@ -7,9 +7,9 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/monitor/http.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
-import 'package:server_box/data/provider/server/monitor_http.dart';
 import 'package:server_box/src/rust/api/protocol.dart';
 
 import '../../helpers/rust_lib_helper.dart';

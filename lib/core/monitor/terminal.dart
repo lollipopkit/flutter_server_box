@@ -4,11 +4,11 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/core/monitor/http.dart';
 import 'package:server_box/core/monitor/ws_frames.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
-import 'package:server_box/data/provider/server/monitor_http.dart';
 
 /// A shell from a `monitor` agent, with no SSH anywhere in it.
 ///

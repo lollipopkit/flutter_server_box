@@ -172,7 +172,7 @@ final class LkcThemeBlobs implements ThemeBlobStore {
 }
 
 /// Restores fetch the theme packages a backup keeps apart from LK Cloud.
-void installThemeBlobs() => BackupThemeBlobs.available = () => LkcThemeBlobs.available;
+void installThemeBlobs() => BackupThemeBlobs.source = () => LkcThemeBlobs.available;
 
 /// While LK Cloud is the sync destination and the app is in the foreground
 /// (on a desktop, running), listens for other devices' writes of the backup

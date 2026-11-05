@@ -43,11 +43,21 @@ part 'backup_restore.dart';
 
 final _loggerV2 = Logger('BackupV2');
 
-/// Where a restore fetches the theme packages a backup keeps apart. Set by
-/// the sync that keeps them (`installThemeBlobs`); none until then, as in a
-/// test without the app.
+/// Where a restore fetches the theme packages a backup keeps apart, from the
+/// sync that keeps them, which installs [source] at start
+/// (`installThemeBlobs`).
 abstract final class BackupThemeBlobs {
-  static ThemeBlobStore? Function() available = () => null;
+  static ThemeBlobStore? Function()? source;
+
+  /// None while signed out of where they are kept.
+  static ThemeBlobStore? get available {
+    final source = BackupThemeBlobs.source;
+    if (source == null) {
+      Loggers.app.warning('Themes restored before installThemeBlobs');
+      return null;
+    }
+    return source();
+  }
 }
 
 @freezed

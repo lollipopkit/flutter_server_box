@@ -45,6 +45,7 @@ import 'package:server_box/data/terminal/tmux/tmux_export.dart';
 import 'package:server_box/data/terminal/tmux/tmux_ids.dart';
 import 'package:server_box/data/terminal/virtual_key_support.dart';
 import 'package:server_box/src/rust/api/files.dart';
+import 'package:server_box/view/page/agent/activity.dart';
 import 'package:server_box/view/page/agent/view.dart';
 import 'package:server_box/view/page/ssh/ask_ai_layout.dart';
 import 'package:server_box/view/page/ssh/metrics_bar.dart';

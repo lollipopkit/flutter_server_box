@@ -9,7 +9,6 @@ import 'package:server_box/data/model/server/monitor/monitor_stack.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/web_apps.dart';
 import 'package:server_box/view/page/monitor/common.dart';
-import 'package:server_box/view/page/monitor/tab.dart';
 import 'package:server_box/view/page/web_apps/detail.dart';
 import 'package:server_box/view/page/web_apps/status.dart';
 

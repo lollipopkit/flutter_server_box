@@ -1,19 +1,23 @@
+import 'package:fl_lib/fl_lib.dart';
+
+/// A store a restore or a sync rewrites, whose providers then read it again.
+enum ReloadedStore { servers, snippets, keys, bmcCredentials, containers }
+
 /// Tells whoever reads the stores a restore or a sync just rewrote to read
 /// them again.
-typedef StoreReloader =
-    void Function({bool servers, bool snippets, bool keys, bool bmcCredentials, bool containers});
-
-/// Said by the layer that wrote the stores; done by the providers, which
-/// install [after] at start (`installStoreReload`), so a store never imports
-/// them. Until then, as in a test without the app, nothing reloads.
+///
+/// Said by the layer that wrote them; done by the providers, which install
+/// [reload] at start (`installStoreReload`), so a store never imports them.
 abstract final class StoreReload {
-  static StoreReloader after = _none;
+  static void Function(Set<ReloadedStore> rewritten)? reload;
 
-  static void _none({
-    bool servers = false,
-    bool snippets = false,
-    bool keys = false,
-    bool bmcCredentials = false,
-    bool containers = false,
-  }) {}
+  static void after(Set<ReloadedStore> rewritten) {
+    if (rewritten.isEmpty) return;
+    final reload = StoreReload.reload;
+    if (reload == null) {
+      Loggers.app.warning('Stores rewritten before installStoreReload: $rewritten');
+      return;
+    }
+    reload(rewritten);
+  }
 }

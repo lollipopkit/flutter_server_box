@@ -1,8 +1,8 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:meta/meta.dart';
+import 'package:server_box/core/monitor/http.dart';
 import 'package:server_box/data/model/server/monitor/agent_endpoint.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/provider/server/monitor_http.dart';
 
 /// A read-only credential this app obtained from one `monitor` agent on behalf
 /// of a second surface — an Apple Watch, or a home-screen widget.

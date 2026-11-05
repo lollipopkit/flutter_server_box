@@ -622,12 +622,11 @@ abstract final class SyncAnnounce {
     }
     if (collections.contains(Stores.portForward.table)) Stores.portForward.invalidate();
     if (collections.contains(Stores.remoteDesktop.table)) Stores.remoteDesktop.invalidate();
-    StoreReload.after(
-      servers: servers,
-      containers: servers,
-      snippets: collections.contains(Stores.snippet.table),
-      keys: collections.contains(Stores.key.table),
-      bmcCredentials: collections.contains(Stores.bmcCredential.table),
-    );
+    StoreReload.after({
+      if (servers) ...{ReloadedStore.servers, ReloadedStore.containers},
+      if (collections.contains(Stores.snippet.table)) ReloadedStore.snippets,
+      if (collections.contains(Stores.key.table)) ReloadedStore.keys,
+      if (collections.contains(Stores.bmcCredential.table)) ReloadedStore.bmcCredentials,
+    });
   }
 }

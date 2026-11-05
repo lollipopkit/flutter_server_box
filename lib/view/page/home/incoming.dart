@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:server_box/core/chan.dart';
+import 'package:server_box/core/incoming.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/view/page/snippet/edit.dart';
 import 'package:server_box/view/page/storage/send_to.dart';
@@ -45,18 +45,7 @@ abstract final class IncomingUi {
   /// For [incoming] taken from the inbox but never [open]ed: its copies.
   static void discard(Map<String, Object?> incoming) {
     if (incoming case {'kind': 'files', 'paths': final List<Object?> raw}) {
-      unawaited(MethodChans.discardIncoming(raw.whereType<String>().toList()));
+      unawaited(discardIncomingAfter(raw.whereType<String>().toList(), null));
     }
   }
-}
-
-/// Deletes the copies `IncomingFiles` made of [paths] once [ends] are all
-/// answered — at once when nothing was queued. What counts as a copy is
-/// decided natively (`IncomingFiles.discardBatch`), never from these paths.
-Future<void> discardIncomingAfter(
-  List<String> paths,
-  List<Future<bool>>? ends,
-) async {
-  if (ends != null) await Future.wait(ends);
-  await MethodChans.discardIncoming(paths);
 }

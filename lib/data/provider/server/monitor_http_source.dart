@@ -1,4 +1,5 @@
 import 'package:server_box/core/monitor/exec.dart';
+import 'package:server_box/core/monitor/http.dart';
 import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/monitor/monitor_capabilities.dart';
 import 'package:server_box/data/model/server/monitor/monitor_metrics_mapper.dart';
@@ -6,7 +7,6 @@ import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/status/status_history.dart';
 import 'package:server_box/data/provider/server/data_source.dart';
-import 'package:server_box/data/provider/server/monitor_http.dart';
 
 /// Reads status from a `monitor` agent's HTTP API.
 ///

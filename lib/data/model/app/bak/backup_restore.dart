@@ -17,7 +17,7 @@ extension BackupV2Restore on BackupV2 {
     // theme that is there.
     final themeReport = themes.isEmpty
         ? null
-        : await ThemeBackup.restore(themes, blobs: BackupThemeBlobs.available());
+        : await ThemeBackup.restore(themes, blobs: BackupThemeBlobs.available);
     if (themeReport != null && themeReport.failed.isNotEmpty) {
       _loggerV2.warning('Themes not restored: ${themeReport.failed}');
     }
@@ -178,13 +178,13 @@ extension BackupV2Restore on BackupV2 {
     _notifySqliteStore(Stores.history, historyNotifications);
     _notifySqliteStore(Stores.setting, settingNotifications);
 
-    StoreReload.after(
-      servers: serversChanged,
-      snippets: snippetsChanged,
-      keys: keysChanged,
-      bmcCredentials: credsChanged,
-      containers: containerChanged,
-    );
+    StoreReload.after({
+      if (serversChanged) ReloadedStore.servers,
+      if (snippetsChanged) ReloadedStore.snippets,
+      if (keysChanged) ReloadedStore.keys,
+      if (credsChanged) ReloadedStore.bmcCredentials,
+      if (containerChanged) ReloadedStore.containers,
+    });
 
     // After the settings: it points what they restored at this device's
     // installations, and falls back where a theme did not come back.

@@ -1,18 +1,13 @@
-import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/model/app/error.dart';
-import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/virt/virt.dart';
-import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/view/page/virt/common.dart';
 import 'package:server_box/view/page/virt/guest.dart';
 import 'package:server_box/view/page/virt/hardware.dart';
-import 'package:server_box/view/widget/progress_line.dart';
 
 /// The Storage and Network sections of the Virtualization tab: a host's
 /// storage pools with their volumes, and its networks with the guests on
@@ -24,44 +19,6 @@ import 'package:server_box/view/widget/progress_line.dart';
 /// a new one is a form in the detail's place ([VirtPoolCreateView],
 /// [VirtNetworkCreateView]) or pushed ([VirtResourceCreatePage]). Both halves
 /// watch the same provider, so one refresh serves both.
-
-/// The guest [ref] names, among [st]'s guests.
-VirtGuest? virtGuestOf(VirtHostState st, VirtGuestRef ref) {
-  final guests = st.data?.guests ?? const <VirtGuest>[];
-  final id = ref.guestId;
-  if (id != null) return guests.firstWhereOrNull((g) => g.id == id);
-  final vmid = ref.vmid;
-  if (vmid == null) return null;
-  return guests.firstWhereOrNull((g) => g.vmid == vmid);
-}
-
-/// [ref]'s guest by name, or what the host said of it when it is not in the
-/// list (a guest this account may not see).
-String virtGuestLabel(VirtHostState st, VirtGuestRef ref) =>
-    virtGuestOf(st, ref)?.name ??
-    ref.vmid?.toString() ??
-    ref.guestId?.split('-').first ??
-    '?';
-
-extension VirtNetworkModeUi on VirtNetwork {
-  /// libvirt's forward modes by what they do; PVE's interface types by
-  /// PVE's own names for them.
-  String get modeLabel => switch (mode) {
-    'nat' => 'NAT',
-    'isolated' => l10n.virtNetIsolated,
-    'bridge' when node == null => l10n.virtNetBridged,
-    'route' => l10n.virtNetRouted,
-    'bridge' => 'Linux Bridge',
-    'bond' => 'Linux Bond',
-    'vlan' => 'Linux VLAN',
-    'eth' => 'Ethernet',
-    final m => m,
-  };
-
-  /// Guests attach here: every libvirt network, and a PVE bridge.
-  bool get takesGuests =>
-      node == null || mode == 'bridge' || mode == 'OVSBridge';
-}
 
 // -----------------------------------------------------------------------------
 // Lists
@@ -188,221 +145,9 @@ class VirtNetworkList extends ConsumerWidget {
   }
 }
 
-/// A list under the section pills: progress, failure, rows, pull to refresh.
-class VirtResourceColumn extends StatelessWidget {
-  const VirtResourceColumn({
-    super.key,
-    required this.loading,
-    required this.error,
-    required this.onRefresh,
-    required this.children,
-  });
-
-  final bool loading;
-  final Object? error;
-  final Future<void> Function() onRefresh;
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    final err = error;
-    return Column(
-      children: [
-        SizedBox(height: 3, child: loading ? const ProgressLine() : null),
-        Expanded(
-          child: RefreshIndicator(
-            onRefresh: onRefresh,
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(9, 5, 9, 17),
-              children: [
-                if (err != null) VirtErrCard(err, onRetry: onRefresh),
-                if (loading && children.isEmpty && err == null)
-                  const Padding(
-                    padding: EdgeInsets.all(27),
-                    child: Center(child: SizedLoading.medium),
-                  ),
-                ...children,
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// A failure where a list or a card would be, with a way to ask again.
-class VirtErrCard extends StatelessWidget {
-  const VirtErrCard(this.error, {super.key, this.onRetry});
-
-  final Object error;
-  final Future<void> Function()? onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    final e = error;
-    final retry = onRetry;
-    return VirtCard(
-      icon: Icons.error_outline,
-      title: e is VirtErr ? e.title : libL10n.error,
-      trailing: retry == null
-          ? null
-          : Btn.icon(
-              text: libL10n.retry,
-              icon: const Icon(Icons.refresh, size: 18),
-              onTap: () async {
-                try {
-                  await retry();
-                } catch (_) {
-                  // A retry that fails again is this card's error, shown by
-                  // whatever it comes from.
-                }
-              },
-            ),
-      children: [
-        if (e is! VirtErr)
-          Text('$e', style: UIs.text12Grey)
-        else if (e.detail case final d?)
-          Text(d, style: UIs.text12Grey),
-      ],
-    );
-  }
-}
-
-/// A pool or a network in the list column, drawn like a guest row.
-class VirtResourceRow extends StatelessWidget {
-  const VirtResourceRow({
-    super.key,
-    required this.icon,
-    required this.active,
-    required this.name,
-    required this.meta,
-    required this.sub,
-    required this.selected,
-    required this.onTap,
-    this.metaIcon,
-  });
-
-  final IconData icon;
-  final bool active;
-  final String name;
-  final String meta;
-  final IconData? metaIcon;
-  final String sub;
-  final bool selected;
-  final VoidCallback onTap;
-
-  static final _radius = BorderRadius.circular(9);
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final fg = selected ? scheme.onSecondaryContainer : scheme.onSurface;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 1),
-      child: Material(
-        color: selected ? scheme.secondaryContainer : Colors.transparent,
-        borderRadius: _radius,
-        child: InkWell(
-          borderRadius: _radius,
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(13, 8, 11, 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      icon,
-                      size: 15,
-                      color: active ? StatePalette.running : StatePalette.idle,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: fg,
-                        ),
-                      ),
-                    ),
-                    UIs.width7,
-                    if (metaIcon case final i?) ...[
-                      Icon(i, size: 13, color: Colors.grey),
-                      const SizedBox(width: 3),
-                    ],
-                    Text(
-                      meta,
-                      maxLines: 1,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                        fontFeatures: [FontFeature.tabularFigures()],
-                      ),
-                    ),
-                  ],
-                ),
-                if (sub.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(left: 23, top: 2),
-                    child: Text(
-                      sub,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: UIs.text11Grey,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 // -----------------------------------------------------------------------------
 // Details (the views themselves: `storage.dart`, `network.dart`)
 // -----------------------------------------------------------------------------
-
-/// The bar of a pool or network detail, or of a form for a new one: its name
-/// — which opens the others where [onSwitch] is given — its [actions], and a
-/// refresh where [onRefresh] is given.
-PreferredSizeWidget virtResourceBar({
-  required String name,
-  required IconData icon,
-  Widget? leading,
-  int? position,
-  int total = 0,
-  VoidCallback? onSwitch,
-  List<BarAction> actions = const [],
-  VoidCallback? onRefresh,
-}) {
-  return SwitcherBar(
-    leading: leading,
-    switcher: SessionSwitcherLabel(
-      name: name,
-      icon: icon,
-      position: position,
-      total: total,
-      onTap: onSwitch,
-    ),
-    actions: [
-      ...actions,
-      if (onRefresh != null)
-        BarAction(
-          icon: Icons.refresh,
-          label: libL10n.refresh,
-          onTap: onRefresh,
-        ),
-    ],
-  );
-}
 
 // -----------------------------------------------------------------------------
 // Pages, for one column

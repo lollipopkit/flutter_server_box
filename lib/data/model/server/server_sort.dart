@@ -36,6 +36,8 @@ enum ServerSortField {
   static ServerSortField fromStored(Object? stored) => switch (stored) {
     final String name =>
       values.firstWhereOrNull((field) => field.name == name) ?? manual,
+    // TODO(migration): remove 5 releases after v1.0.1856, once no device syncs
+    // the index.
     final int index when index >= 0 && index < values.length => values[index],
     _ => manual,
   };

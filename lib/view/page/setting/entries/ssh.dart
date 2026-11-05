@@ -119,7 +119,7 @@ extension _SSH on _AppSettingsPageState {
     if (!mounted) return;
 
     if (shouldImport == true) {
-      await ServerDeduplication.importServersWithNotification(
+      await importServersWithNotification(
         ref: ref,
         context: context,
         resolvedServers: resolved,

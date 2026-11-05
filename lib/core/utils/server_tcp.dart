@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/local/server.dart';
+import 'package:server_box/core/monitor/http.dart';
 import 'package:server_box/core/monitor/tunnel.dart';
 import 'package:server_box/core/ssh/local_tunnel.dart';
 import 'package:server_box/data/model/app/error.dart';
@@ -11,7 +12,6 @@ import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/monitor/monitor_access.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/provider/server/monitor_http.dart';
 
 /// An open SSH connection, as far as [ServerTcpDialer] needs one: a way to
 /// open a direct-tcpip channel, and the connection's end.
