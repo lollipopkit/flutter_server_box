@@ -102,7 +102,6 @@
 
   <section class="page-section os-hero">
     <div class="os-identity-row">
-      <p class="hero-platforms">Linux · x64 · arm64</p>
       <span class="os-formerly-badge">{$LL.os.formerlyMonitor()}</span>
     </div>
     <h1>{$LL.os.heroTitle()}<span class="beta-tag beta-tag--hero">{$LL.nav.beta()}</span><br /><span>{$LL.os.tagline()}</span></h1>

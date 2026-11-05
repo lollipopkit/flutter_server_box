@@ -304,7 +304,6 @@
 
     <section class="hero" id="hero">
       <div class="hero-copy">
-        <p class="hero-platforms">iOS · Android · macOS · Linux · Windows</p>
         <h1>{$LL.hero.titlePrefix()}<br /><span>{$LL.hero.titleSuffix()}</span></h1>
         <p class="hero-subtitle">
           {$LL.hero.subtitle()}

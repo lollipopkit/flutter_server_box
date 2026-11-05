@@ -264,17 +264,6 @@ body {
   gap: 1.4rem;
 }
 
-.hero-platforms {
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  letter-spacing: 0.02em;
-  color: var(--stone);
-  padding: 0.35rem 0.8rem;
-  border: 1px solid var(--light-gray);
-  border-radius: var(--radius-pill);
-  background: var(--white);
-}
-
 .hero h1 {
   font-family: var(--font-display);
   font-size: clamp(2.8rem, 6vw, 4.8rem);
@@ -591,10 +580,6 @@ body {
 
 .os-hero h1 span {
   color: var(--brand);
-}
-
-.os-hero .hero-platforms {
-  justify-self: start;
 }
 
 /* A command is one line; the block scrolls sideways when it is too wide. */
