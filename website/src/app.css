@@ -1392,7 +1392,8 @@ body {
 
 .footer-links {
   display: flex;
-  gap: 1.5rem;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.5rem;
 }
 
 @media (max-width: 960px) {
