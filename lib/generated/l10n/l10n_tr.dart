@@ -1164,22 +1164,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String sshConfigAllExist(int duplicateCount) {
-    return 'Tüm sunucular zaten mevcut ($duplicateCount kopya bulundu)';
-  }
-
-  @override
-  String sshConfigDuplicatesSkipped(int duplicateCount) {
-    return '$duplicateCount kopya atlanacak';
-  }
-
-  @override
   String get sshConfigFound => 'Sistemde SSH yapılandırması bulundu.';
-
-  @override
-  String sshConfigFoundServers(int totalCount) {
-    return '$totalCount sunucu bulundu';
-  }
 
   @override
   String get sshConfigImport => 'SSH Yapılandırma İçe Aktarma';
@@ -1191,11 +1176,6 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get sshConfigImportTip =>
       'İlk sunucu oluşturulurken ~/.ssh/config okuma istemi';
-
-  @override
-  String sshConfigImported(int count) {
-    return 'SSH yapılandırmasından $count sunucu içe aktarıldı.';
-  }
 
   @override
   String sshHostKeyChangedDesc(String serverName) {
@@ -1230,16 +1210,8 @@ class AppLocalizationsTr extends AppLocalizations {
       'SSH yapılandırma dosyasını manuel olarak seçmek ister misiniz?';
 
   @override
-  String get sshConfigNoServers => 'SSH yapılandırmasında sunucu bulunamadı';
-
-  @override
   String get sshConfigPermissionDenied =>
       'macOS izinleri nedeniyle SSH yapılandırma dosyasına erişilemiyor.';
-
-  @override
-  String sshConfigServersToImport(int importCount) {
-    return '$importCount sunucu içe aktarılacak';
-  }
 
   @override
   String get sshTermHelp =>
@@ -7242,4 +7214,36 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get security => 'Güvenlik';
+
+  @override
+  String get sshConfig => 'SSH yapılandırması';
+
+  @override
+  String get tailscaleStopped => 'Tailscale çalışmıyor';
+
+  @override
+  String get tailscaleStoppedTip =>
+      'Bu cihazda kurulu, ancak bir tailnet\'e bağlı değil.';
+
+  @override
+  String get cloudflareApiToken => 'API belirteci';
+
+  @override
+  String get cloudflareApiTokenTip =>
+      'Account · Cloudflare Tunnel · Read izni gerekir.';
+
+  @override
+  String get discoveryChooseFile => 'Dosya seç';
+
+  @override
+  String get discoveryOnline => 'Çevrimiçi';
+
+  @override
+  String get discoveryOffline => 'Çevrimdışı';
+
+  @override
+  String get discoverySelectAll => 'Tümünü seç';
+
+  @override
+  String get discoveryFilter => 'Ada veya adrese göre filtrele';
 }

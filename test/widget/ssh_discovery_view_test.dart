@@ -1,5 +1,6 @@
-/// The discovery view: one tab per source, a scan per source, hosts that are
-/// already servers marked, and the checked ones added in one go.
+/// The discovery view: one tab per source, each started the way it asks,
+/// hosts that are already servers marked, and the checked ones added in one
+/// go with the servers they jump through.
 library;
 
 import 'package:fl_lib/fl_lib.dart';
@@ -17,16 +18,37 @@ import 'package:server_box/view/widget/ssh_discovery/view.dart';
 
 final _l10n = AppLocalizationsEn();
 
+DiscoveredSshHost _host(
+  String ip, {
+  int port = 22,
+  String? name,
+  String? detail,
+  List<Spi> via = const [],
+}) => DiscoveredSshHost(
+  key: '$ip:$port',
+  server: Spi(
+    name: name ?? ip,
+    id: 'id-$ip',
+    ssh: SshCredential(
+      ip: ip,
+      port: port,
+      jumpIds: [for (final v in via) v.id],
+    ),
+  ),
+  detail: detail,
+  via: via,
+);
+
 void main() {
   const existing = Spi(
     name: 'nas',
     id: 'nas',
     ssh: SshCredential(ip: '192.168.1.10'),
   );
-  const hosts = [
-    DiscoveredSshHost(host: '192.168.1.2', detail: 'SSH-2.0-OpenSSH_9.6'),
-    DiscoveredSshHost(host: '192.168.1.10'),
-    DiscoveredSshHost(host: '192.168.1.23', port: 2222, name: 'pi'),
+  final hosts = [
+    _host('192.168.1.2', detail: 'SSH-2.0-OpenSSH_9.6'),
+    _host('192.168.1.10'),
+    _host('192.168.1.23', port: 2222, name: 'pi'),
   ];
 
   late _Servers servers;
@@ -56,10 +78,7 @@ void main() {
   testWidgets('one source: no tabs, its scope, then its hosts', (tester) async {
     await pump(
       tester,
-      const SshDiscoveryView.batch(
-        thisDevice: false,
-        sources: [_Source('lan', hosts)],
-      ),
+      SshDiscoveryView.batch(thisDevice: false, sources: [_Source('lan', hosts)]),
     );
     expect(find.byType(SegmentedTabs<String>), findsNothing);
     expect(find.text('10.0.0.0/24'), findsOneWidget);
@@ -68,7 +87,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('10.0.0.0/24 · ${_l10n.discoveryFound(3)}'), findsOneWidget);
-    expect(find.text('192.168.1.2:22'), findsOneWidget);
+    expect(find.text('192.168.1.2'), findsOneWidget);
     expect(find.text('pi'), findsOneWidget);
     // Already a server: no checkbox to tick.
     expect(find.text(_l10n.discoveryExists), findsOneWidget);
@@ -78,17 +97,12 @@ void main() {
   testWidgets('checked hosts are added as servers', (tester) async {
     await pump(
       tester,
-      const SshDiscoveryView.batch(
-        thisDevice: false,
-        sources: [_Source('lan', hosts)],
-      ),
+      SshDiscoveryView.batch(thisDevice: false, sources: [_Source('lan', hosts)]),
     );
     await tester.tap(find.text(_l10n.discoveryScan));
     await tester.pump();
 
-    expect(find.text(_l10n.discoveryAddN(1)), findsNothing);
-    await tester.tap(find.text('192.168.1.2:22'));
-    await tester.tap(find.text('pi'));
+    await tester.tap(find.text(_l10n.discoverySelectAll));
     await tester.pump();
     expect(find.text(_l10n.discoverySelected(2)), findsOneWidget);
 
@@ -101,28 +115,71 @@ void main() {
       {('192.168.1.2', '192.168.1.2', 22), ('pi', '192.168.1.23', 2222)},
     );
     expect(find.text(_l10n.discoveryAdded), findsNWidgets(2));
-    expect(find.text(_l10n.discoveryAddN(2)), findsNothing);
   });
 
-  testWidgets('a tab per source', (tester) async {
+  testWidgets('a tab per source; one that runs by itself starts when shown', (
+    tester,
+  ) async {
+    final auto = _Source('auto', [_host('example.com')], auto: true);
     await pump(
       tester,
-      const SshDiscoveryView.batch(
+      SshDiscoveryView.batch(
         thisDevice: false,
-        sources: [
-          _Source('lan', hosts),
-          _Source('other', [DiscoveredSshHost(host: 'example.com')]),
-        ],
+        sources: [_Source('lan', hosts), auto],
       ),
     );
     expect(find.byType(SegmentedTabs<String>), findsOneWidget);
+    expect(auto.runs, 0);
 
-    await tester.tap(find.text('other'));
+    await tester.tap(find.text('auto'));
     await tester.pump();
-    await tester.tap(find.text(_l10n.discoveryScan));
     await tester.pump();
-    expect(find.text('example.com:22'), findsOneWidget);
-    expect(find.text('other 1'), findsOneWidget);
+    expect(auto.runs, 1);
+    expect(find.text('example.com'), findsOneWidget);
+    expect(find.text('auto 1'), findsOneWidget);
+  });
+
+  testWidgets('a token source runs with what was typed, and forgets it', (
+    tester,
+  ) async {
+    final source = _Source('cf', [_host('ssh.example.com')], token: true);
+    await pump(
+      tester,
+      SshDiscoveryView.batch(thisDevice: false, sources: [source]),
+    );
+    expect(find.text('needs read'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), 'secret');
+    await tester.tap(find.text(_l10n.connect));
+    await tester.pump();
+    expect(source.inputs, ['secret']);
+    expect(find.text('ssh.example.com'), findsOneWidget);
+
+    await tester.tap(find.text(_l10n.disconnect));
+    await tester.pump();
+    expect(find.text('ssh.example.com'), findsNothing);
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).controller!.text,
+      isEmpty,
+    );
+  });
+
+  testWidgets('a failed run says why, and offers a file when it can', (
+    tester,
+  ) async {
+    final source = _Source(
+      'cfg',
+      const [],
+      auto: true,
+      error: const SshDiscoveryException('denied', tip: 'pick', needsFile: true),
+    );
+    await pump(
+      tester,
+      SshDiscoveryView.batch(thisDevice: false, sources: [source]),
+    );
+    await tester.pump();
+    expect(find.text('denied'), findsOneWidget);
+    expect(find.text(_l10n.discoveryChooseFile), findsOneWidget);
   });
 
   testWidgets('pick hands one host back', (tester) async {
@@ -131,7 +188,7 @@ void main() {
       tester,
       SshDiscoveryView.pick(
         onPick: (h) => picked = h,
-        sources: const [_Source('lan', hosts)],
+        sources: [_Source('lan', hosts)],
       ),
     );
     await tester.tap(find.text(_l10n.discoveryScan));
@@ -141,14 +198,111 @@ void main() {
     await tester.tap(find.text('pi'));
     expect(picked, hosts[2]);
   });
+
+  group('planDiscoveredServers', () {
+    const bastion = Spi(
+      name: 'bastion',
+      id: 'b',
+      ssh: SshCredential(ip: 'bastion.example.com'),
+    );
+
+    test('a host brings its hops first, once', () {
+      final a = _host('10.0.0.1', via: [bastion]);
+      final b = _host('10.0.0.2', via: [bastion]);
+      final plan = planDiscoveredServers([a, b], const []);
+      expect(plan.add.map((e) => e.id), ['b', 'id-10.0.0.1', 'id-10.0.0.2']);
+    });
+
+    test('a hop that is a server already is pointed at, not added', () {
+      const kept = Spi(
+        name: 'jump',
+        id: 'kept',
+        ssh: SshCredential(ip: 'bastion.example.com'),
+      );
+      final plan = planDiscoveredServers([
+        _host('10.0.0.1', via: [bastion]),
+      ], [kept]);
+      expect(plan.add.map((e) => e.id), ['id-10.0.0.1']);
+      expect(plan.add.single.ssh!.resolvedJumpIds, ['kept']);
+      expect(plan.ids['b'], 'kept');
+    });
+
+    test('one machine picked from two sources is added once', () {
+      final lan = _host('192.168.1.5');
+      final cfg = DiscoveredSshHost(
+        key: 'nas',
+        server: const Spi(
+          name: 'nas',
+          id: 'cfg-nas',
+          ssh: SshCredential(ip: '192.168.1.5'),
+        ),
+        userKnown: true,
+      );
+      final plan = planDiscoveredServers([lan, cfg], const []);
+      expect(plan.add.map((e) => e.id), ['id-192.168.1.5']);
+      expect(plan.ids['cfg-nas'], 'id-192.168.1.5');
+    });
+
+    test('names already taken get a suffix', () {
+      const nas = Spi(name: 'pi', id: 'x', ssh: SshCredential(ip: '1.1.1.1'));
+      final plan = planDiscoveredServers([
+        _host('10.0.0.3', name: 'pi'),
+      ], [nas]);
+      expect(plan.add.single.name, isNot('pi'));
+    });
+  });
+
+  testWidgets('a host whose hop fails to add is not added', (tester) async {
+    const bastion = Spi(
+      name: 'bastion',
+      id: 'b',
+      ssh: SshCredential(ip: 'bastion.example.com'),
+    );
+    await pump(
+      tester,
+      SshDiscoveryView.batch(
+        thisDevice: false,
+        sources: [
+          _Source('cfg', [_host('10.0.0.1', name: 'web', via: [bastion])]),
+        ],
+      ),
+    );
+    servers.refuse.add('b');
+    await tester.tap(find.text(_l10n.discoveryScan));
+    await tester.pump();
+    await tester.tap(find.text('web'));
+    await tester.pump();
+    await tester.tap(find.text(_l10n.discoveryAddN(1)));
+    await tester.pump();
+    expect(servers.state.servers.keys, ['nas']);
+    // Still checked, to try again.
+    expect(find.text(_l10n.discoverySelected(1)), findsOneWidget);
+  });
 }
 
 final class _Source implements SshDiscovery {
-  const _Source(this.id, this.hosts);
+  _Source(
+    this.id,
+    this.hosts, {
+    this.auto = false,
+    bool token = false,
+    this.error,
+  }) : credential = token
+           ? const SshDiscoveryCredential(label: 'Token', hint: 'needs read')
+           : null;
 
   @override
   final String id;
   final List<DiscoveredSshHost> hosts;
+  final SshDiscoveryException? error;
+  int runs = 0;
+  final inputs = <String?>[];
+
+  @override
+  final bool auto;
+
+  @override
+  final SshDiscoveryCredential? credential;
 
   @override
   String get label => id;
@@ -160,7 +314,12 @@ final class _Source implements SshDiscovery {
   Future<String?> scope() async => '10.0.0.0/24';
 
   @override
-  Future<List<DiscoveredSshHost>> discover() async => hosts;
+  Future<SshDiscoveryRun> discover({String? input}) async {
+    runs++;
+    inputs.add(input);
+    if (error case final e?) throw e;
+    return (hosts: hosts, scope: null);
+  }
 }
 
 final class _Servers extends ServersNotifier {
@@ -172,8 +331,11 @@ final class _Servers extends ServersNotifier {
   ServersState build() =>
       ServersState(servers: {initial.id: initial}, serverOrder: [initial.id]);
 
+  final refuse = <String>{};
+
   @override
   Future<void> addServer(Spi spi) async {
+    if (refuse.contains(spi.id)) throw StateError('refused');
     state = state.copyWith(
       servers: {...state.servers, spi.id: spi},
       serverOrder: [...state.serverOrder, spi.id],

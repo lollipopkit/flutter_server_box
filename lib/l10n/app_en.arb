@@ -1463,36 +1463,9 @@
       }
     }
   },
-  "sshConfigAllExist": "All servers already exist ({duplicateCount} duplicates found)",
-  "@sshConfigAllExist": {
-    "description": "User-facing label or message for SSH config all exist.",
-    "placeholders": {
-      "duplicateCount": {
-        "type": "int"
-      }
-    }
-  },
-  "sshConfigDuplicatesSkipped": "{duplicateCount} duplicates will be skipped",
-  "@sshConfigDuplicatesSkipped": {
-    "description": "User-facing label or message for SSH config duplicates skipped.",
-    "placeholders": {
-      "duplicateCount": {
-        "type": "int"
-      }
-    }
-  },
   "sshConfigFound": "We found SSH configuration on your system.",
   "@sshConfigFound": {
     "description": "User-facing label or message for SSH config found."
-  },
-  "sshConfigFoundServers": "Found {totalCount} servers",
-  "@sshConfigFoundServers": {
-    "description": "User-facing label or message for SSH config found servers.",
-    "placeholders": {
-      "totalCount": {
-        "type": "int"
-      }
-    }
   },
   "sshConfigImport": "SSH Config Import",
   "@sshConfigImport": {
@@ -1505,15 +1478,6 @@
   "sshConfigImportTip": "Prompt to read ~/.ssh/config on first server creation",
   "@sshConfigImportTip": {
     "description": "Help text for the SSH config import setting or action."
-  },
-  "sshConfigImported": "Imported {count} servers from SSH config",
-  "@sshConfigImported": {
-    "description": "User-facing label or message for SSH config imported.",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
   },
   "sshHostKeyChangedDesc": "The SSH host key changed for {serverName}. Only continue if you trust this server.",
   "@sshHostKeyChangedDesc": {
@@ -1562,22 +1526,9 @@
   "@sshConfigManualSelect": {
     "description": "User-facing label or message for SSH config manual select."
   },
-  "sshConfigNoServers": "No servers found in SSH config",
-  "@sshConfigNoServers": {
-    "description": "User-facing label or message for SSH config no servers."
-  },
   "sshConfigPermissionDenied": "Cannot access SSH config file due to macOS permissions.",
   "@sshConfigPermissionDenied": {
     "description": "User-facing label or message for SSH config permission denied."
-  },
-  "sshConfigServersToImport": "{importCount} servers will be imported",
-  "@sshConfigServersToImport": {
-    "description": "User-facing label or message for SSH config servers to import.",
-    "placeholders": {
-      "importCount": {
-        "type": "int"
-      }
-    }
   },
   "sshTermHelp": "When the terminal is scrollable, dragging horizontally can select text. Clicking the keyboard button turns the keyboard on/off. The file icon opens the current path SFTP. The clipboard button copies the content when text is selected, and pastes content from the clipboard into the terminal when no text is selected and there is content on the clipboard. The code icon pastes code snippets into the terminal and executes them.",
   "@sshTermHelp": {
@@ -9409,5 +9360,45 @@
   "security": "Security",
   "@security": {
     "description": "Intro / server discovery: Security"
+  },
+  "sshConfig": "SSH config",
+  "@sshConfig": {
+    "description": "Server discovery: SSH config"
+  },
+  "tailscaleStopped": "Tailscale is not running",
+  "@tailscaleStopped": {
+    "description": "Server discovery: Tailscale is not running"
+  },
+  "tailscaleStoppedTip": "Installed on this device, but not connected to a tailnet.",
+  "@tailscaleStoppedTip": {
+    "description": "Server discovery: Installed on this device, but not connected to a tailnet."
+  },
+  "cloudflareApiToken": "API token",
+  "@cloudflareApiToken": {
+    "description": "Server discovery: API token"
+  },
+  "cloudflareApiTokenTip": "Needs Account · Cloudflare Tunnel · Read.",
+  "@cloudflareApiTokenTip": {
+    "description": "Server discovery: the permission the Cloudflare API token needs."
+  },
+  "discoveryChooseFile": "Choose file",
+  "@discoveryChooseFile": {
+    "description": "Server discovery: Choose file"
+  },
+  "discoveryOnline": "Online",
+  "@discoveryOnline": {
+    "description": "Server discovery: Online"
+  },
+  "discoveryOffline": "Offline",
+  "@discoveryOffline": {
+    "description": "Server discovery: Offline"
+  },
+  "discoverySelectAll": "Select all",
+  "@discoverySelectAll": {
+    "description": "Server discovery: Select all"
+  },
+  "discoveryFilter": "Filter by name or address",
+  "@discoveryFilter": {
+    "description": "Server discovery: Filter by name or address"
   }
 }

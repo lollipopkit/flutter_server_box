@@ -2112,29 +2112,11 @@ abstract class AppLocalizations {
   /// **'Spent time: {time}'**
   String spentTime(String time);
 
-  /// User-facing label or message for SSH config all exist.
-  ///
-  /// In en, this message translates to:
-  /// **'All servers already exist ({duplicateCount} duplicates found)'**
-  String sshConfigAllExist(int duplicateCount);
-
-  /// User-facing label or message for SSH config duplicates skipped.
-  ///
-  /// In en, this message translates to:
-  /// **'{duplicateCount} duplicates will be skipped'**
-  String sshConfigDuplicatesSkipped(int duplicateCount);
-
   /// User-facing label or message for SSH config found.
   ///
   /// In en, this message translates to:
   /// **'We found SSH configuration on your system.'**
   String get sshConfigFound;
-
-  /// User-facing label or message for SSH config found servers.
-  ///
-  /// In en, this message translates to:
-  /// **'Found {totalCount} servers'**
-  String sshConfigFoundServers(int totalCount);
 
   /// User-facing label or message for SSH config import.
   ///
@@ -2153,12 +2135,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Prompt to read ~/.ssh/config on first server creation'**
   String get sshConfigImportTip;
-
-  /// User-facing label or message for SSH config imported.
-  ///
-  /// In en, this message translates to:
-  /// **'Imported {count} servers from SSH config'**
-  String sshConfigImported(int count);
 
   /// Description of the SSH host key changed desc feature or option.
   ///
@@ -2208,23 +2184,11 @@ abstract class AppLocalizations {
   /// **'Would you like to select the SSH config file manually?'**
   String get sshConfigManualSelect;
 
-  /// User-facing label or message for SSH config no servers.
-  ///
-  /// In en, this message translates to:
-  /// **'No servers found in SSH config'**
-  String get sshConfigNoServers;
-
   /// User-facing label or message for SSH config permission denied.
   ///
   /// In en, this message translates to:
   /// **'Cannot access SSH config file due to macOS permissions.'**
   String get sshConfigPermissionDenied;
-
-  /// User-facing label or message for SSH config servers to import.
-  ///
-  /// In en, this message translates to:
-  /// **'{importCount} servers will be imported'**
-  String sshConfigServersToImport(int importCount);
 
   /// User-facing label or message for SSH term help.
   ///
@@ -12334,6 +12298,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Security'**
   String get security;
+
+  /// Server discovery: SSH config
+  ///
+  /// In en, this message translates to:
+  /// **'SSH config'**
+  String get sshConfig;
+
+  /// Server discovery: Tailscale is not running
+  ///
+  /// In en, this message translates to:
+  /// **'Tailscale is not running'**
+  String get tailscaleStopped;
+
+  /// Server discovery: Installed on this device, but not connected to a tailnet.
+  ///
+  /// In en, this message translates to:
+  /// **'Installed on this device, but not connected to a tailnet.'**
+  String get tailscaleStoppedTip;
+
+  /// Server discovery: API token
+  ///
+  /// In en, this message translates to:
+  /// **'API token'**
+  String get cloudflareApiToken;
+
+  /// Server discovery: the permission the Cloudflare API token needs.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs Account · Cloudflare Tunnel · Read.'**
+  String get cloudflareApiTokenTip;
+
+  /// Server discovery: Choose file
+  ///
+  /// In en, this message translates to:
+  /// **'Choose file'**
+  String get discoveryChooseFile;
+
+  /// Server discovery: Online
+  ///
+  /// In en, this message translates to:
+  /// **'Online'**
+  String get discoveryOnline;
+
+  /// Server discovery: Offline
+  ///
+  /// In en, this message translates to:
+  /// **'Offline'**
+  String get discoveryOffline;
+
+  /// Server discovery: Select all
+  ///
+  /// In en, this message translates to:
+  /// **'Select all'**
+  String get discoverySelectAll;
+
+  /// Server discovery: Filter by name or address
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by name or address'**
+  String get discoveryFilter;
 }
 
 class _AppLocalizationsDelegate

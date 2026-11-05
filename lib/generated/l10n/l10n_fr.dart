@@ -1175,23 +1175,8 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String sshConfigAllExist(int duplicateCount) {
-    return 'Tous les serveurs existent déjà ($duplicateCount doublons trouvés)';
-  }
-
-  @override
-  String sshConfigDuplicatesSkipped(int duplicateCount) {
-    return '$duplicateCount doublons seront ignorés';
-  }
-
-  @override
   String get sshConfigFound =>
       'Une configuration SSH a été trouvée sur le système.';
-
-  @override
-  String sshConfigFoundServers(int totalCount) {
-    return '$totalCount serveurs trouvés';
-  }
 
   @override
   String get sshConfigImport => 'Importation de configuration SSH';
@@ -1203,11 +1188,6 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get sshConfigImportTip =>
       'Proposer de lire ~/.ssh/config lors de la première création de serveur';
-
-  @override
-  String sshConfigImported(int count) {
-    return '$count serveurs importés depuis la configuration SSH.';
-  }
 
   @override
   String sshHostKeyChangedDesc(String serverName) {
@@ -1241,17 +1221,8 @@ class AppLocalizationsFr extends AppLocalizations {
       'Souhaitez-vous sélectionner manuellement le fichier de configuration SSH ?';
 
   @override
-  String get sshConfigNoServers =>
-      'Aucun serveur trouvé dans la configuration SSH';
-
-  @override
   String get sshConfigPermissionDenied =>
       'Impossible d\'accéder au fichier de configuration SSH en raison des permissions macOS.';
-
-  @override
-  String sshConfigServersToImport(int importCount) {
-    return '$importCount serveurs seront importés';
-  }
 
   @override
   String get sshTermHelp =>
@@ -7373,4 +7344,36 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get security => 'Sécurité';
+
+  @override
+  String get sshConfig => 'Config SSH';
+
+  @override
+  String get tailscaleStopped => 'Tailscale n\'est pas lancé';
+
+  @override
+  String get tailscaleStoppedTip =>
+      'Installé sur cet appareil, mais connecté à aucun tailnet.';
+
+  @override
+  String get cloudflareApiToken => 'Jeton API';
+
+  @override
+  String get cloudflareApiTokenTip =>
+      'Nécessite Account · Cloudflare Tunnel · Read.';
+
+  @override
+  String get discoveryChooseFile => 'Choisir un fichier';
+
+  @override
+  String get discoveryOnline => 'En ligne';
+
+  @override
+  String get discoveryOffline => 'Hors ligne';
+
+  @override
+  String get discoverySelectAll => 'Tout sélectionner';
+
+  @override
+  String get discoveryFilter => 'Filtrer par nom ou adresse';
 }
