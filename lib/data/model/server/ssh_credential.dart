@@ -108,15 +108,6 @@ final class SshCredential {
   /// still negotiates it and only one with nothing else falls through.
   final bool allowLegacyAlgorithms;
 
-  /// Carry the SSH byte stream over this server's `monitor` agent instead of
-  /// connecting to [ip]:[port] directly, for hosts whose SSH port isn't
-  /// reachable but whose monitor endpoint is.
-  ///
-  /// A peer of [proxyCommand] and [jumpIds]: all three answer "where does the
-  /// socket come from", so at most one may be set. The SSH session on top is
-  /// unchanged — same authentication, and this app still verifies the host
-  /// key itself, so the agent in the middle can't impersonate the server.
-  ///
   const SshCredential({
     required this.ip,
     this.port = 22,

@@ -75,7 +75,8 @@ Password** → save. A self-signed certificate is shown on the first connection
 accepted afterwards. SSH can be on for the same server as well.
 
 A server with only Monitor HTTP has no SSH credentials: it can do what the
-Monitor's system account can do, and no SFTP at all. A server where the Monitor leads — the Monitor
+Monitor's system account can do, files included (through its file API, not
+SFTP). A server where the Monitor leads — the Monitor
 alone, or both with the Monitor preferred — runs every port forward through the
 Monitor and never falls back to SSH.
 
@@ -141,7 +142,6 @@ account, with none of SSH's authentication in between.
 | Symptom | Cause |
 |---|---|
 | Only charts, no terminal or controls | The app reaches it over plain HTTP from another machine; use TLS or a same-host proxy |
-| No SFTP | Never through the Monitor; add SSH to the same server |
 | No remote desktop or port forwarding, with a terminal | The Monitor predates the TCP relay; update it |
 | Remote forward greyed out, local and dynamic fine | The Monitor predates the listener; update it |
 | A command, file or port is refused by the system | The Monitor's system account lacks the right; that account is the limit |

@@ -89,7 +89,7 @@ ServerBox App 中未显示 <host> 上 Monitor 的 <功能>。请先排查原因�
 
 - App 根据 Monitor 上报的 capabilities 展示功能。登录后请求 `GET /api/v1/capabilities`，检查 `access.ok` 及 `access.why`（若为 `insecure_transport`，说明需要启用 TLS、走同机反向代理，或配置 `[remote_access] allow_insecure`），并查看 `features` 列表。
 - 登录后可执行的操作受限于 Monitor 运行所用的系统账户；该账户无权访问的命令、文件或端口均会执行失败。
-- Monitor HTTP 连接不支持 SFTP，如需使用 SFTP，请在 App 中同时为该服务器配置 SSH。
+- 文件的浏览和传输通过 Monitor 的文件 API 完成，不需要 SSH，与终端一样要求 HTTPS 或本机回环访问。
 - 旧版 Monitor 若未包含 relay 或监听端点，则不支持端口转发和远程桌面，需升级 Monitor。
 - Monitor 的 SQLite 数据库 `access_log` 表记录了访问时间、来源地址、请求资源与结果（不含敏感凭据），可用于辅助排查。
 ```
@@ -103,8 +103,7 @@ ServerBox App 中未显示 <host> 上 Monitor 的 <功能>。请先排查原因�
 | 需要在服务器上安装额外软件 | 否 | 是 |
 | 查看状态和图表 | 支持 | 支持 |
 | 查看 App 连接前的历史数据 | 不支持 | 支持 |
-| 终端、命令和文件浏览 | 支持 | 支持，以 Monitor 运行所用的账户执行 |
-| SFTP 传输 | 支持 | 不支持 |
+| 终端、命令、文件浏览和传输 | 支持 | 支持，以 Monitor 运行所用的账户执行 |
 | 端口转发（本地、动态、远程）和远程桌面 | 支持 | 支持 |
 | 推送告警、主屏幕小组件和 Watch App | 不支持 | 支持 |
 
@@ -279,11 +278,9 @@ Monitor 保存的外部凭据（BMC 与 Proxmox VE 密码、Agent 模式的模�
 
 ## 不支持的功能
 
-Monitor HTTP 连接不支持 SFTP（SFTP 依赖 SSH 通道）。不过文件标签页可通过 Monitor 的文件 API 正常浏览和传输文件。
-
 对于优先使用 Monitor 连接的服务器（仅配置了 Monitor，或同时配置了 SSH 但将 Monitor 设为优先连接方式），所有端口转发均通过 Monitor 建立，不会自动回退到 SSH。动态端口转发会在本机启动 SOCKS5 代理，并由服务器侧发起实际连接。
 
-如需使用 SFTP，请在 App 中同时为该服务器配置 SSH。若旧版 Monitor 提示不支持远程桌面或端口转发，请将其升级至最新版本。
+若旧版 Monitor 提示不支持远程桌面或端口转发，请将其升级至最新版本。
 
 ## 小组件、推送和 Watch App
 
