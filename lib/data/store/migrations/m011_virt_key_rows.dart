@@ -11,7 +11,7 @@ import 'package:server_box/data/store/setting.dart';
 /// TODO: delete this step, [SettingStore.removeRetiredKeys]'s entry for
 /// [legacyKey], and the key itself, once no install and no backup can still be
 /// carrying it.
-class VirtKeyRowsMigration implements SchemaMigration {
+class VirtKeyRowsMigration implements SettingsMigration {
   const VirtKeyRowsMigration();
 
 
@@ -30,6 +30,7 @@ class VirtKeyRowsMigration implements SchemaMigration {
   Future<void> apply() async => applySync();
 
   /// Runs the conversion inside a caller-owned SQLite transaction.
+  @override
   void applySync() {
     final store = SettingStore.instance;
     // Already converted, or set by hand since. A second pass is what a process

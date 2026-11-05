@@ -108,7 +108,6 @@ void main() {
     db.execute("INSERT INTO server_tag VALUES ('srv', 'prod');");
     db.execute("INSERT INTO server_env VALUES ('srv', 'TERM', 'xterm');");
     db.execute("INSERT INTO server_disabled_cmd VALUES ('srv', 'sensors');");
-    db.execute("INSERT INTO server_custom_cmd VALUES ('srv', 'up', 'uptime');");
     db.execute(
       "INSERT INTO known_host VALUES ('srv', 'ssh-ed25519', 'SHA256:x');",
     );
@@ -132,7 +131,6 @@ void main() {
       'server_tag',
       'server_env',
       'server_disabled_cmd',
-      'server_custom_cmd',
       'known_host',
       'port_forward',
       'remote_desktop_profile',

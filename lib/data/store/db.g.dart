@@ -4177,264 +4177,6 @@ class ServerDisabledCmdsCompanion
   }
 }
 
-class $ServerCustomCmdsTable extends ServerCustomCmds
-    with TableInfo<$ServerCustomCmdsTable, ServerCustomCmdRow> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $ServerCustomCmdsTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _serverIdMeta = const VerificationMeta(
-    'serverId',
-  );
-  @override
-  late final GeneratedColumn<String> serverId = GeneratedColumn<String>(
-    'server_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES server (id) ON DELETE CASCADE',
-    ),
-  );
-  static const VerificationMeta _nameMeta = const VerificationMeta('name');
-  @override
-  late final GeneratedColumn<String> name = GeneratedColumn<String>(
-    'name',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _cmdMeta = const VerificationMeta('cmd');
-  @override
-  late final GeneratedColumn<String> cmd = GeneratedColumn<String>(
-    'cmd',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  @override
-  List<GeneratedColumn> get $columns => [serverId, name, cmd];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'server_custom_cmd';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<ServerCustomCmdRow> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('server_id')) {
-      context.handle(
-        _serverIdMeta,
-        serverId.isAcceptableOrUnknown(data['server_id']!, _serverIdMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_serverIdMeta);
-    }
-    if (data.containsKey('name')) {
-      context.handle(
-        _nameMeta,
-        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_nameMeta);
-    }
-    if (data.containsKey('cmd')) {
-      context.handle(
-        _cmdMeta,
-        cmd.isAcceptableOrUnknown(data['cmd']!, _cmdMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_cmdMeta);
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {serverId, name};
-  @override
-  ServerCustomCmdRow map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return ServerCustomCmdRow(
-      serverId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}server_id'],
-      )!,
-      name: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}name'],
-      )!,
-      cmd: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}cmd'],
-      )!,
-    );
-  }
-
-  @override
-  $ServerCustomCmdsTable createAlias(String alias) {
-    return $ServerCustomCmdsTable(attachedDatabase, alias);
-  }
-
-  @override
-  bool get withoutRowId => true;
-}
-
-class ServerCustomCmdRow extends DataClass
-    implements Insertable<ServerCustomCmdRow> {
-  final String serverId;
-  final String name;
-  final String cmd;
-  const ServerCustomCmdRow({
-    required this.serverId,
-    required this.name,
-    required this.cmd,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['server_id'] = Variable<String>(serverId);
-    map['name'] = Variable<String>(name);
-    map['cmd'] = Variable<String>(cmd);
-    return map;
-  }
-
-  ServerCustomCmdsCompanion toCompanion(bool nullToAbsent) {
-    return ServerCustomCmdsCompanion(
-      serverId: Value(serverId),
-      name: Value(name),
-      cmd: Value(cmd),
-    );
-  }
-
-  factory ServerCustomCmdRow.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return ServerCustomCmdRow(
-      serverId: serializer.fromJson<String>(json['serverId']),
-      name: serializer.fromJson<String>(json['name']),
-      cmd: serializer.fromJson<String>(json['cmd']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'serverId': serializer.toJson<String>(serverId),
-      'name': serializer.toJson<String>(name),
-      'cmd': serializer.toJson<String>(cmd),
-    };
-  }
-
-  ServerCustomCmdRow copyWith({String? serverId, String? name, String? cmd}) =>
-      ServerCustomCmdRow(
-        serverId: serverId ?? this.serverId,
-        name: name ?? this.name,
-        cmd: cmd ?? this.cmd,
-      );
-  ServerCustomCmdRow copyWithCompanion(ServerCustomCmdsCompanion data) {
-    return ServerCustomCmdRow(
-      serverId: data.serverId.present ? data.serverId.value : this.serverId,
-      name: data.name.present ? data.name.value : this.name,
-      cmd: data.cmd.present ? data.cmd.value : this.cmd,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('ServerCustomCmdRow(')
-          ..write('serverId: $serverId, ')
-          ..write('name: $name, ')
-          ..write('cmd: $cmd')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(serverId, name, cmd);
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is ServerCustomCmdRow &&
-          other.serverId == this.serverId &&
-          other.name == this.name &&
-          other.cmd == this.cmd);
-}
-
-class ServerCustomCmdsCompanion extends UpdateCompanion<ServerCustomCmdRow> {
-  final Value<String> serverId;
-  final Value<String> name;
-  final Value<String> cmd;
-  const ServerCustomCmdsCompanion({
-    this.serverId = const Value.absent(),
-    this.name = const Value.absent(),
-    this.cmd = const Value.absent(),
-  });
-  ServerCustomCmdsCompanion.insert({
-    required String serverId,
-    required String name,
-    required String cmd,
-  }) : serverId = Value(serverId),
-       name = Value(name),
-       cmd = Value(cmd);
-  static Insertable<ServerCustomCmdRow> custom({
-    Expression<String>? serverId,
-    Expression<String>? name,
-    Expression<String>? cmd,
-  }) {
-    return RawValuesInsertable({
-      if (serverId != null) 'server_id': serverId,
-      if (name != null) 'name': name,
-      if (cmd != null) 'cmd': cmd,
-    });
-  }
-
-  ServerCustomCmdsCompanion copyWith({
-    Value<String>? serverId,
-    Value<String>? name,
-    Value<String>? cmd,
-  }) {
-    return ServerCustomCmdsCompanion(
-      serverId: serverId ?? this.serverId,
-      name: name ?? this.name,
-      cmd: cmd ?? this.cmd,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (serverId.present) {
-      map['server_id'] = Variable<String>(serverId.value);
-    }
-    if (name.present) {
-      map['name'] = Variable<String>(name.value);
-    }
-    if (cmd.present) {
-      map['cmd'] = Variable<String>(cmd.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('ServerCustomCmdsCompanion(')
-          ..write('serverId: $serverId, ')
-          ..write('name: $name, ')
-          ..write('cmd: $cmd')
-          ..write(')'))
-        .toString();
-  }
-}
-
 class $KnownHostsTable extends KnownHosts
     with TableInfo<$KnownHostsTable, KnownHostRow> {
   @override
@@ -9915,9 +9657,6 @@ abstract class _$AppDb extends GeneratedDatabase {
       $ServerIdentityFilesTable(this);
   late final $ServerDisabledCmdsTable serverDisabledCmds =
       $ServerDisabledCmdsTable(this);
-  late final $ServerCustomCmdsTable serverCustomCmds = $ServerCustomCmdsTable(
-    this,
-  );
   late final $KnownHostsTable knownHosts = $KnownHostsTable(this);
   late final $SnippetsTable snippets = $SnippetsTable(this);
   late final $SnippetTagsTable snippetTags = $SnippetTagsTable(this);
@@ -9950,7 +9689,6 @@ abstract class _$AppDb extends GeneratedDatabase {
     serverJumps,
     serverIdentityFiles,
     serverDisabledCmds,
-    serverCustomCmds,
     knownHosts,
     snippets,
     snippetTags,
@@ -10024,13 +9762,6 @@ abstract class _$AppDb extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('server_disabled_cmd', kind: UpdateKind.delete)],
-    ),
-    WritePropagation(
-      on: TableUpdateQuery.onTableName(
-        'server',
-        limitUpdateKind: UpdateKind.delete,
-      ),
-      result: [TableUpdate('server_custom_cmd', kind: UpdateKind.delete)],
     ),
     WritePropagation(
       on: TableUpdateQuery.onTableName(
@@ -10958,26 +10689,6 @@ final class $$ServersTableReferences
     );
   }
 
-  static MultiTypedResultKey<$ServerCustomCmdsTable, List<ServerCustomCmdRow>>
-  _serverCustomCmdsRefsTable(_$AppDb db) => MultiTypedResultKey.fromTable(
-    db.serverCustomCmds,
-    aliasName: 'server__id__server_custom_cmd__server_id',
-  );
-
-  $$ServerCustomCmdsTableProcessedTableManager get serverCustomCmdsRefs {
-    final manager = $$ServerCustomCmdsTableTableManager(
-      $_db,
-      $_db.serverCustomCmds,
-    ).filter((f) => f.serverId.id.sqlEquals($_itemColumn<String>('id')!));
-
-    final cache = $_typedResult.readTableOrNull(
-      _serverCustomCmdsRefsTable($_db),
-    );
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
-    );
-  }
-
   static MultiTypedResultKey<$KnownHostsTable, List<KnownHostRow>>
   _knownHostsRefsTable(_$AppDb db) => MultiTypedResultKey.fromTable(
     db.knownHosts,
@@ -11499,31 +11210,6 @@ class $$ServersTableFilterComposer extends Composer<_$AppDb, $ServersTable> {
           }) => $$ServerDisabledCmdsTableFilterComposer(
             $db: $db,
             $table: $db.serverDisabledCmds,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
-  Expression<bool> serverCustomCmdsRefs(
-    Expression<bool> Function($$ServerCustomCmdsTableFilterComposer f) f,
-  ) {
-    final $$ServerCustomCmdsTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.serverCustomCmds,
-      getReferencedColumn: (t) => t.serverId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ServerCustomCmdsTableFilterComposer(
-            $db: $db,
-            $table: $db.serverCustomCmds,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -12331,31 +12017,6 @@ class $$ServersTableAnnotationComposer
     return f(composer);
   }
 
-  Expression<T> serverCustomCmdsRefs<T extends Object>(
-    Expression<T> Function($$ServerCustomCmdsTableAnnotationComposer a) f,
-  ) {
-    final $$ServerCustomCmdsTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.serverCustomCmds,
-      getReferencedColumn: (t) => t.serverId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ServerCustomCmdsTableAnnotationComposer(
-            $db: $db,
-            $table: $db.serverCustomCmds,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
   Expression<T> knownHostsRefs<T extends Object>(
     Expression<T> Function($$KnownHostsTableAnnotationComposer a) f,
   ) {
@@ -12629,7 +12290,6 @@ class $$ServersTableTableManager
             bool serverEnvsRefs,
             bool serverIdentityFilesRefs,
             bool serverDisabledCmdsRefs,
-            bool serverCustomCmdsRefs,
             bool knownHostsRefs,
             bool snippetAutoRunOnRefs,
             bool portForwardsRefs,
@@ -12833,7 +12493,6 @@ class $$ServersTableTableManager
                 serverEnvsRefs = false,
                 serverIdentityFilesRefs = false,
                 serverDisabledCmdsRefs = false,
-                serverCustomCmdsRefs = false,
                 knownHostsRefs = false,
                 snippetAutoRunOnRefs = false,
                 portForwardsRefs = false,
@@ -12852,7 +12511,6 @@ class $$ServersTableTableManager
                     if (serverEnvsRefs) db.serverEnvs,
                     if (serverIdentityFilesRefs) db.serverIdentityFiles,
                     if (serverDisabledCmdsRefs) db.serverDisabledCmds,
-                    if (serverCustomCmdsRefs) db.serverCustomCmds,
                     if (knownHostsRefs) db.knownHosts,
                     if (snippetAutoRunOnRefs) db.snippetAutoRunOn,
                     if (portForwardsRefs) db.portForwards,
@@ -12989,27 +12647,6 @@ class $$ServersTableTableManager
                                 table,
                                 p0,
                               ).serverDisabledCmdsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.serverId == item.id,
-                              ),
-                          typedResults: items,
-                        ),
-                      if (serverCustomCmdsRefs)
-                        await $_getPrefetchedData<
-                          ServerRow,
-                          $ServersTable,
-                          ServerCustomCmdRow
-                        >(
-                          currentTable: table,
-                          referencedTable: $$ServersTableReferences
-                              ._serverCustomCmdsRefsTable(db),
-                          managerFromTypedResult: (p0) =>
-                              $$ServersTableReferences(
-                                db,
-                                table,
-                                p0,
-                              ).serverCustomCmdsRefs,
                           referencedItemsForCurrentItem:
                               (item, referencedItems) => referencedItems.where(
                                 (e) => e.serverId == item.id,
@@ -13253,7 +12890,6 @@ typedef $$ServersTableProcessedTableManager =
         bool serverEnvsRefs,
         bool serverIdentityFilesRefs,
         bool serverDisabledCmdsRefs,
-        bool serverCustomCmdsRefs,
         bool knownHostsRefs,
         bool snippetAutoRunOnRefs,
         bool portForwardsRefs,
@@ -14699,286 +14335,6 @@ typedef $$ServerDisabledCmdsTableProcessedTableManager =
       $$ServerDisabledCmdsTableUpdateCompanionBuilder,
       (ServerDisabledCmdRow, $$ServerDisabledCmdsTableReferences),
       ServerDisabledCmdRow,
-      PrefetchHooks Function({bool serverId})
-    >;
-typedef $$ServerCustomCmdsTableCreateCompanionBuilder =
-    ServerCustomCmdsCompanion Function({
-      required String serverId,
-      required String name,
-      required String cmd,
-    });
-typedef $$ServerCustomCmdsTableUpdateCompanionBuilder =
-    ServerCustomCmdsCompanion Function({
-      Value<String> serverId,
-      Value<String> name,
-      Value<String> cmd,
-    });
-
-final class $$ServerCustomCmdsTableReferences
-    extends
-        BaseReferences<_$AppDb, $ServerCustomCmdsTable, ServerCustomCmdRow> {
-  $$ServerCustomCmdsTableReferences(
-    super.$_db,
-    super.$_table,
-    super.$_typedResult,
-  );
-
-  static $ServersTable _serverIdTable(_$AppDb db) =>
-      db.servers.createAlias('server_custom_cmd__server_id__server__id');
-
-  $$ServersTableProcessedTableManager get serverId {
-    final $_column = $_itemColumn<String>('server_id')!;
-
-    final manager = $$ServersTableTableManager(
-      $_db,
-      $_db.servers,
-    ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_serverIdTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-}
-
-class $$ServerCustomCmdsTableFilterComposer
-    extends Composer<_$AppDb, $ServerCustomCmdsTable> {
-  $$ServerCustomCmdsTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<String> get name => $composableBuilder(
-    column: $table.name,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get cmd => $composableBuilder(
-    column: $table.cmd,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  $$ServersTableFilterComposer get serverId {
-    final $$ServersTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.serverId,
-      referencedTable: $db.servers,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ServersTableFilterComposer(
-            $db: $db,
-            $table: $db.servers,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$ServerCustomCmdsTableOrderingComposer
-    extends Composer<_$AppDb, $ServerCustomCmdsTable> {
-  $$ServerCustomCmdsTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<String> get name => $composableBuilder(
-    column: $table.name,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get cmd => $composableBuilder(
-    column: $table.cmd,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  $$ServersTableOrderingComposer get serverId {
-    final $$ServersTableOrderingComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.serverId,
-      referencedTable: $db.servers,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ServersTableOrderingComposer(
-            $db: $db,
-            $table: $db.servers,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$ServerCustomCmdsTableAnnotationComposer
-    extends Composer<_$AppDb, $ServerCustomCmdsTable> {
-  $$ServerCustomCmdsTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<String> get name =>
-      $composableBuilder(column: $table.name, builder: (column) => column);
-
-  GeneratedColumn<String> get cmd =>
-      $composableBuilder(column: $table.cmd, builder: (column) => column);
-
-  $$ServersTableAnnotationComposer get serverId {
-    final $$ServersTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.serverId,
-      referencedTable: $db.servers,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ServersTableAnnotationComposer(
-            $db: $db,
-            $table: $db.servers,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$ServerCustomCmdsTableTableManager
-    extends
-        RootTableManager<
-          _$AppDb,
-          $ServerCustomCmdsTable,
-          ServerCustomCmdRow,
-          $$ServerCustomCmdsTableFilterComposer,
-          $$ServerCustomCmdsTableOrderingComposer,
-          $$ServerCustomCmdsTableAnnotationComposer,
-          $$ServerCustomCmdsTableCreateCompanionBuilder,
-          $$ServerCustomCmdsTableUpdateCompanionBuilder,
-          (ServerCustomCmdRow, $$ServerCustomCmdsTableReferences),
-          ServerCustomCmdRow,
-          PrefetchHooks Function({bool serverId})
-        > {
-  $$ServerCustomCmdsTableTableManager(_$AppDb db, $ServerCustomCmdsTable table)
-    : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$ServerCustomCmdsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$ServerCustomCmdsTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$ServerCustomCmdsTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<String> serverId = const Value.absent(),
-                Value<String> name = const Value.absent(),
-                Value<String> cmd = const Value.absent(),
-              }) => ServerCustomCmdsCompanion(
-                serverId: serverId,
-                name: name,
-                cmd: cmd,
-              ),
-          createCompanionCallback:
-              ({
-                required String serverId,
-                required String name,
-                required String cmd,
-              }) => ServerCustomCmdsCompanion.insert(
-                serverId: serverId,
-                name: name,
-                cmd: cmd,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map(
-                (e) => (
-                  e.readTable(table),
-                  $$ServerCustomCmdsTableReferences(db, table, e),
-                ),
-              )
-              .toList(),
-          prefetchHooksCallback: ({serverId = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [],
-              addJoins:
-                  <
-                    T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic
-                    >
-                  >(state) {
-                    if (serverId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.serverId,
-                                referencedTable:
-                                    $$ServerCustomCmdsTableReferences
-                                        ._serverIdTable(db),
-                                referencedColumn:
-                                    $$ServerCustomCmdsTableReferences
-                                        ._serverIdTable(db)
-                                        .id,
-                              )
-                              as T;
-                    }
-
-                    return state;
-                  },
-              getPrefetchedDataCallback: (items) async {
-                return [];
-              },
-            );
-          },
-        ),
-      );
-}
-
-typedef $$ServerCustomCmdsTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDb,
-      $ServerCustomCmdsTable,
-      ServerCustomCmdRow,
-      $$ServerCustomCmdsTableFilterComposer,
-      $$ServerCustomCmdsTableOrderingComposer,
-      $$ServerCustomCmdsTableAnnotationComposer,
-      $$ServerCustomCmdsTableCreateCompanionBuilder,
-      $$ServerCustomCmdsTableUpdateCompanionBuilder,
-      (ServerCustomCmdRow, $$ServerCustomCmdsTableReferences),
-      ServerCustomCmdRow,
       PrefetchHooks Function({bool serverId})
     >;
 typedef $$KnownHostsTableCreateCompanionBuilder =
@@ -19564,8 +18920,6 @@ class $AppDbManager {
       $$ServerIdentityFilesTableTableManager(_db, _db.serverIdentityFiles);
   $$ServerDisabledCmdsTableTableManager get serverDisabledCmds =>
       $$ServerDisabledCmdsTableTableManager(_db, _db.serverDisabledCmds);
-  $$ServerCustomCmdsTableTableManager get serverCustomCmds =>
-      $$ServerCustomCmdsTableTableManager(_db, _db.serverCustomCmds);
   $$KnownHostsTableTableManager get knownHosts =>
       $$KnownHostsTableTableManager(_db, _db.knownHosts);
   $$SnippetsTableTableManager get snippets =>

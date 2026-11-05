@@ -48,8 +48,7 @@ pub const CUSTOM_CMD_DIR_WINDOWS: &str =
     "(Join-Path $env:USERPROFILE '.config\\server_box\\custom_cmds')";
 
 /// First line of [`read_custom_cmds_script`]'s output when the directory
-/// exists. Absent means it does not — which is not the same as an empty
-/// directory, and the app's migration relies on telling those apart.
+/// exists; [`CUSTOM_CMD_DIR_MISSING_MARKER`] when it does not.
 pub const CUSTOM_CMD_DIR_MARKER: &str = "SrvBoxCusCmdDir";
 pub const CUSTOM_CMD_DIR_END_MARKER: &str = "SrvBoxCusCmdDirEnd";
 pub const CUSTOM_CMD_DIR_MISSING_MARKER: &str = "SrvBoxCusCmdDirMissing";
@@ -351,9 +350,9 @@ pub fn install_custom_cmds_script(system: SystemType, cmds: &[(u32, String, Stri
 /// user typed, including newlines, and a line-oriented format that carried it
 /// raw would be a format the content can forge.
 ///
-/// Prints nothing at all when the directory does not exist, which the caller
-/// must distinguish from a directory that exists and is empty — the first
-/// means "never installed here", the second means "the user deleted them all".
+/// Prints [`CUSTOM_CMD_DIR_MISSING_MARKER`] when the directory does not exist.
+/// A file that cannot be encoded (no `base64`) exits non-zero before the end
+/// marker: an empty encoding would read as a command with no body.
 pub fn read_custom_cmds_script(system: SystemType) -> String {
     match system {
         SystemType::Windows => format!(
@@ -384,8 +383,9 @@ pub fn read_custom_cmds_script(system: SystemType) -> String {
              \t[ ${{#o}} -eq 5 ] || continue\n\
              \tcase \"$o\" in *[!0-9]*) continue;; esac\n\
              \tcase \"$e\" in ''|*[!A-Za-z0-9_=-]*) continue;; esac\n\
+             \tb=$(base64 < \"$f\") || exit 1\n\
              \tprintf '%s ' \"$n\"\n\
-             \tbase64 < \"$f\" | tr -d '\\n'\n\
+             \tprintf '%s' \"$b\" | tr -d '\\n'\n\
              \techo\n\
              done\n\
              echo {CUSTOM_CMD_DIR_END_MARKER}\n"
@@ -396,7 +396,10 @@ pub fn read_custom_cmds_script(system: SystemType) -> String {
 /// The directory [`read_custom_cmds_script`] printed, as `(order, name, cmd)`
 /// in file-name order.
 ///
-/// `None` when the directory does not exist. Files that are not ours — a name
+/// Empty when the directory does not exist: nothing is installed yet. `None`
+/// when the output is not a listing (no marker pair: a missing `base64`, a
+/// cut-off channel), which is not "no commands" — an editor that took it for
+/// that would save over the real ones. Files that are not ours — a name
 /// without an order prefix, content that is not valid base64 — are skipped
 /// rather than failing the whole listing: the directory is on someone's
 /// server, and a stray file in it should not cost them the editor.
@@ -415,7 +418,7 @@ pub fn parse_custom_cmds_listing(raw: &str) -> Option<Vec<(u32, String, String)>
         .iter()
         .rposition(|line| line.trim() == CUSTOM_CMD_DIR_MISSING_MARKER);
     if last_missing.is_some_and(|missing| last_end.is_none_or(|end| missing > end)) {
-        return None;
+        return Some(Vec::new());
     }
     let end = last_end?;
     let start = lines[..end]

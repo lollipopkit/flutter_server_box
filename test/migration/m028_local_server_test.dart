@@ -38,6 +38,7 @@ void main() {
   Future<void> createV28Schema() async {
     final db = SqliteDb.instance;
     await createTables(db);
+    createServerCustomCmdTable();
     final fresh = serverDdlBeforePveTable(serverDdl());
     const localColumn =
         '"is_local" INTEGER NOT NULL DEFAULT 0 CHECK ("is_local" IN (0, 1)), ';

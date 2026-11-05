@@ -135,6 +135,28 @@ void main() {
         contains(ServerShareOmission.bmcCredential),
       );
     });
+
+    test('carriesSecret: a password, token or key goes by value', () {
+      final bare = Spi(
+        id: 'srv1',
+        name: 'web',
+        ssh: const SshCredential(ip: '10.0.0.1', port: 22, user: 'root'),
+      );
+      expect(ServerShare.of(bare).carriesSecret, isFalse);
+      expect(ServerShare.of(_spi()).carriesSecret, isTrue);
+
+      Stores.server.put(bare);
+      Stores.pve.put(
+        bare.id,
+        const PveConfig(
+          addr: PveConfig.localAddr,
+          auth: PveAuth.token,
+          tokenId: 'root@pam!sb',
+          tokenSecret: 's',
+        ),
+      );
+      expect(ServerShare.of(bare).carriesSecret, isTrue);
+    });
   });
 
   group('codec', () {
@@ -327,7 +349,7 @@ void main() {
       expect(Stores.pve.fetch(result.spi.id), pve);
     });
 
-    test('a payload from before its table reads it out of custom', () {
+    test('a payload from before its table comes without PVE', () {
       final json = ServerShare(version: 1, spi: _spi()).toJson();
       final spiJson = Map<String, dynamic>.from(
         jsonDecode(jsonEncode(json['spi'])) as Map,
@@ -344,12 +366,11 @@ void main() {
       final share = ServerShare.fromJson(
         jsonDecode(jsonEncode(json)) as Map<String, dynamic>,
       );
-      // No PVE password: SSH logs in with a password here, and that is what
-      // a PVE login sends (`PveConfig.loginPassword`).
-      expect(share.pve, const PveConfig(addr: 'https://10.0.0.9:8006'));
+      expect(share.pve, isNull);
+      expect(share.spi.name, _spi().name);
     });
 
-    test('a clear-text QR from an older build keeps its PVE', () {
+    test('a clear-text QR from an older build installs without PVE', () {
       final record = Map<String, dynamic>.from(
         jsonDecode(jsonEncode(_spi(name: 'old').toJson())) as Map,
       );
@@ -359,29 +380,23 @@ void main() {
       };
 
       final share = ServerShareCodec.decode(jsonEncode(record));
-      expect(share.pve, const PveConfig(addr: 'https://10.0.0.9:8006'));
+      expect(share.pve, isNull);
 
       final result = ServerShareInstaller.install(share);
-      expect(
-        Stores.pve.fetch(result.spi.id),
-        const PveConfig(addr: 'https://10.0.0.9:8006'),
-        reason: 'no pin: the next connection asks, whatever pveIgnoreCert said',
-      );
+      expect(result.spi.name, 'old');
+      expect(Stores.pve.fetch(result.spi.id), isNull);
     });
 
-    test('an older build reads it out of custom, so it is written there', () {
+    test('is written only beside the server, never into its custom', () {
       final spi = _spi();
       Stores.server.put(spi);
       Stores.pve.put(spi.id, pve.copyWith(certSha256: 'ab12'));
 
       final wire =
-          jsonDecode(jsonEncode(ServerShare.of(spi).toWireJson()))
+          jsonDecode(jsonEncode(ServerShare.of(spi).toJson()))
               as Map<String, dynamic>;
-      final custom = (wire['spi'] as Map)['custom'] as Map;
-      expect(custom['pveAddr'], pve.addr);
-      // A pin is one certificate; an older build can only say "any".
-      expect(custom['pveIgnoreCert'], isFalse);
-      // This build still reads the `pve` object first.
+      final custom = (wire['spi'] as Map)['custom'] as Map?;
+      expect(custom?['pveAddr'], isNull);
       expect(
         ServerShare.fromJson(wire).pve,
         pve.copyWith(certSha256: 'ab12'),

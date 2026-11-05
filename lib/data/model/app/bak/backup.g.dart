@@ -22,11 +22,6 @@ BackupV1 _$BackupV1FromJson(Map<String, dynamic> json) => BackupV1(
   history: json['history'] as Map<String, dynamic>,
   settings: json['settings'] as Map<String, dynamic>?,
   lastModTime: (json['lastModTime'] as num?)?.toInt(),
-  legacyPve:
-      (BackupV1._readLegacyPve(json, 'legacyPve') as List<dynamic>?)
-          ?.map((e) => e as Map<String, dynamic>?)
-          .toList() ??
-      const [],
 );
 
 Map<String, dynamic> _$BackupV1ToJson(BackupV1 instance) => <String, dynamic>{

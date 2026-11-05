@@ -8,14 +8,9 @@ import 'package:server_box/core/ssh/identities.dart';
 import 'package:server_box/core/ssh/key_passphrase.dart';
 import 'package:server_box/core/ssh/key_unlock.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
-import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
-import 'package:server_box/data/store/migrations/m008_settings_fixups.dart';
-import 'package:server_box/data/store/migrations/m009_grouped_settings.dart';
-import 'package:server_box/data/store/migrations/m011_virt_key_rows.dart';
-import 'package:server_box/data/store/migrations/m013_virt_key_names.dart';
-import 'package:server_box/data/store/migrations/m021_home_tabs_bar.dart';
+import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/data/store/stores.dart';
 
@@ -46,23 +41,6 @@ class BackupV1 implements Mergeable {
   final int? lastModTime;
   final Map<String, dynamic>? settings;
 
-  /// The PVE configuration of each entry of [spis], by position, read out of
-  /// the raw records: this format predates `server_pve` and kept PVE inside
-  /// each server's `custom`, which [Spi] no longer reads.
-  // TODO(migration): remove after 5 releases from v1.0.1715, with
-  // `PveConfig.fromLegacyRecord`.
-  @JsonKey(readValue: _readLegacyPve, includeToJson: false)
-  final List<Map<String, dynamic>?> legacyPve;
-
-  static Object? _readLegacyPve(Map json, String _) {
-    final spis = json['spis'];
-    if (spis is! List) return const <Object?>[];
-    return [
-      for (final spi in spis)
-        spi is Map ? PveConfig.fromServerRecord(spi)?.toJson() : null,
-    ];
-  }
-
   const BackupV1({
     required this.version,
     required this.date,
@@ -73,7 +51,6 @@ class BackupV1 implements Mergeable {
     required this.history,
     required this.settings,
     this.lastModTime,
-    this.legacyPve = const [],
   });
 
   factory BackupV1.fromJson(Map<String, dynamic> json) => _$BackupV1FromJson(json);
@@ -123,12 +100,12 @@ class BackupV1 implements Mergeable {
       Stores.server.replaceAll(restoredSpis);
       Stores.snippet.replaceAll(snippets);
       Stores.container.restoreLegacyMap(container);
-      // The file is the complete state, so a server without PVE has none.
-      // TODO(migration): remove after 5 releases from v1.0.1715, with [legacyPve].
-      for (final (i, spi) in restoredSpis.indexed) {
+      // The file is the complete state and predates `server_pve`, so no
+      // restored server has PVE.
+      for (final spi in restoredSpis) {
         Stores.pve.restoreOne(
           Stores.server.reconcile(spi).id,
-          legacyPve.elementAtOrNull(i),
+          null,
           notify: false,
         );
       }
@@ -136,28 +113,18 @@ class BackupV1 implements Mergeable {
 
       if (settings_ != null) {
         _restoreInto(Stores.setting, settings_);
+        // A restore is neither a launch nor a version bump, so nothing else
+        // converts what just landed; inside the transaction, so a failed step
+        // rolls the restore back. This format predates every step. Only when
+        // the file brought settings: a file carrying none leaves the local
+        // ones alone.
+        if (settings_.isNotEmpty) {
+          for (final step in kRestoreSettingsMigrations) {
+            step.applySync();
+          }
+        }
       }
     });
-
-    // Outside the transaction, and for the reason the v2 path does it too: a
-    // restore is neither a launch nor a version bump, so nothing else will
-    // look at what just landed. This format predates the grouped settings
-    // entirely, so its settings map is always the old per-field keys — and,
-    // being older still, the pre-`virtualKeyRows` switch and the `int`
-    // `sshConnectionMode` as well.
-    //
-    // Only when the file brought settings, for the reason [BackupV2.merge]
-    // records: these convert what arrived, and a file carrying none leaves the
-    // local settings alone.
-    //
-    // In version order, which is the order the migrator would have run them in.
-    if (settings_ != null && settings_.isNotEmpty) {
-      await const SettingsFixupsMigration().apply();
-      await const GroupedSettingsMigration().apply();
-      await const VirtKeyRowsMigration().apply();
-      await const VirtKeyNamesMigration().apply();
-      await const HomeTabsBarMigration().apply();
-    }
 
     // After the commit, since the rows were written without announcing it.
     Stores.pve.invalidate();

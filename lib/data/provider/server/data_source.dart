@@ -38,7 +38,7 @@ abstract interface class ServerDataSource {
   /// everything it has for the buffer to discard on arrival; the agent
   /// averages over wider buckets, which keeps spikes that dropping rows loses.
   /// The defaults are named here as well as on both implementations, so what
-  /// a caller holding a [DataSource] gets by omitting them is a property of
+  /// a caller holding a [ServerDataSource] gets by omitting them is a property of
   /// the interface rather than of whichever source it happens to be.
   Future<List<StatusHistorySample>> fetchHistory({
     int minutes = 60,

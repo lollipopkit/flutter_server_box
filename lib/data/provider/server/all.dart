@@ -40,6 +40,14 @@ abstract class ServersState with _$ServersState {
   }) = _ServersState;
 }
 
+/// The server was changed elsewhere since the caller read it.
+class ServerChangedConcurrently implements Exception {
+  const ServerChangedConcurrently();
+
+  @override
+  String toString() => '${libL10n.server}: ${libL10n.retry}';
+}
+
 @Riverpod(keepAlive: true)
 class ServersNotifier extends _$ServersNotifier {
   static const _maxConcurrentRefreshes = 4;
@@ -473,7 +481,7 @@ class ServersNotifier extends _$ServersNotifier {
     newSpi.validateOrThrow();
 
     if (state.servers[old.id] != old) {
-      throw StateError('${libL10n.server}: ${libL10n.retry}');
+      throw const ServerChangedConcurrently();
     }
 
     if (old != newSpi) {

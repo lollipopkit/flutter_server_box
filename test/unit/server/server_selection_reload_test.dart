@@ -108,9 +108,9 @@ void main() {
     await expectLater(
       notifier.updateServer(original, stale),
       throwsA(
-        isA<StateError>().having(
-          (error) => error.message,
-          'message',
+        isA<ServerChangedConcurrently>().having(
+          (error) => error.toString(),
+          'toString',
           allOf(contains(libL10n.server), contains(libL10n.retry)),
         ),
       ),

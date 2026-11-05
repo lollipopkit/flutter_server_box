@@ -54,6 +54,28 @@ void main() {
       expect(await backend.stat(at('missing')), isNull);
     });
 
+    test('is null beneath a file', () async {
+      await File(at('a.txt')).writeAsString('hello');
+
+      expect(await backend.stat(at('a.txt/child')), isNull);
+    });
+
+    test(
+      'throws, not null, beneath a directory it cannot traverse',
+      () async {
+        await Directory(at('locked')).create();
+        await File(at('locked/a.txt')).writeAsString('hello');
+        await Process.run('chmod', ['000', at('locked')]);
+        addTearDown(() => Process.run('chmod', ['755', at('locked')]));
+
+        await expectLater(
+          backend.stat(at('locked/a.txt')),
+          throwsA(isA<FileSystemException>()),
+        );
+      },
+      skip: Platform.isWindows,
+    );
+
     test('reports a file it can see', () async {
       await File(at('a.txt')).writeAsString('hello');
 

@@ -31,7 +31,7 @@ import 'package:server_box/data/store/setting.dart';
 /// provider configuration and the Agent's placement would read as defaults
 /// with the real values sitting in rows no code looks at. `Backup.restore`
 /// and `BackupV2.merge` call [apply] for that reason.
-class GroupedSettingsMigration implements SchemaMigration {
+class GroupedSettingsMigration implements SettingsMigration {
   const GroupedSettingsMigration();
 
 
@@ -46,6 +46,7 @@ class GroupedSettingsMigration implements SchemaMigration {
   Future<void> apply() async => applySync();
 
   /// Runs the conversion inside a caller-owned SQLite transaction.
+  @override
   void applySync() {
     final store = SettingStore.instance;
     _groupAskAi(store);

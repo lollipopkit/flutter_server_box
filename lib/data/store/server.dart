@@ -100,11 +100,6 @@ class ServerStore extends EntityStore<Spi> {
       'key',
       'value',
     );
-    final cmds = _pairs(
-      'SELECT server_id, name, cmd FROM server_custom_cmd;',
-      'name',
-      'cmd',
-    );
 
     return [
       for (final row in rows)
@@ -115,7 +110,6 @@ class ServerStore extends EntityStore<Spi> {
           jumps: jumps[row['id']],
           identityFiles: identityFiles[row['id']],
           envs: envs[row['id']],
-          cmds: cmds[row['id']],
         ),
     ];
   }
@@ -144,7 +138,6 @@ class ServerStore extends EntityStore<Spi> {
     List<String>? jumps,
     List<String>? identityFiles,
     Map<String, String>? envs,
-    Map<String, String>? cmds,
   }) {
     final sshIp = row['ssh_ip'] as String?;
     final monitorAddr = row['monitor_addr'] as String?;
@@ -217,7 +210,7 @@ class ServerStore extends EntityStore<Spi> {
               credId: row['bmc_cred_id'] as String?,
               certSha256: row['bmc_cert_sha256'] as String?,
             ),
-      custom: _customOf(row, cmds),
+      custom: _customOf(row),
     );
   }
 
@@ -226,7 +219,7 @@ class ServerStore extends EntityStore<Spi> {
   /// `temp_is_celsius` always has a value — it is `NOT NULL` with a default —
   /// so building a [ServerCustom] unconditionally would give every server a
   /// non-null `custom` it did not have before, and put it in every backup.
-  static ServerCustom? _customOf(Row row, Map<String, String>? cmds) {
+  static ServerCustom? _customOf(Row row) {
     const strings = [
       'prefer_temp_dev',
       'logo_url',
@@ -247,15 +240,13 @@ class ServerStore extends EntityStore<Spi> {
     // Field by field rather than against `const ServerCustom()`: that value's
     // `tempIsCelsius` is false, while the column's default — and what an empty
     // record means here — is true, so the two would never match.
-    if (cmds == null &&
-        tempIsCelsius &&
+    if (tempIsCelsius &&
         !diskCountsNetwork &&
         geo == null &&
         strings.every((c) => row[c] == null)) {
       return null;
     }
     return ServerCustom(
-      cmds: cmds,
       preferTempDev: row['prefer_temp_dev'] as String?,
       tempIsCelsius: tempIsCelsius,
       logoUrl: row['logo_url'] as String?,
@@ -371,7 +362,6 @@ class ServerStore extends EntityStore<Spi> {
       'server_jump',
       'server_identity_file',
       'server_disabled_cmd',
-      'server_custom_cmd',
     ]) {
       db.execute('DELETE FROM $t WHERE server_id = ?;', [item.id]);
     }
@@ -403,13 +393,6 @@ class ServerStore extends EntityStore<Spi> {
         cmd,
       ]);
     }
-    (custom?.cmds ?? const <String, String>{}).forEach((k, v) {
-      db.execute('INSERT OR IGNORE INTO server_custom_cmd VALUES (?, ?, ?);', [
-        item.id,
-        k,
-        v,
-      ]);
-    });
   }
 
   /// A jump host is a server, so the row it names may not have been written

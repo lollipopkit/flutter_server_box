@@ -25,11 +25,7 @@ import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
 import 'package:server_box/data/res/misc.dart';
-import 'package:server_box/data/store/migrations/m008_settings_fixups.dart';
-import 'package:server_box/data/store/migrations/m009_grouped_settings.dart';
-import 'package:server_box/data/store/migrations/m011_virt_key_rows.dart';
-import 'package:server_box/data/store/migrations/m013_virt_key_names.dart';
-import 'package:server_box/data/store/migrations/m021_home_tabs_bar.dart';
+import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/migrations/m030_pve_virt.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/setting.dart';
@@ -100,10 +96,9 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
 
     /// Each server's `PveConfig`, by server id — `PveStore.getAllMap`.
     ///
-    /// Absent from files written before PVE had a table of its own. Those
-    /// carry it inside the server record's `custom` instead — and so does
-    /// every file this build writes, for those builds to read. What [merge]
-    /// makes of either is `_pveToRestore`'s rule.
+    /// The only place a file carries PVE. One written before PVE had a table
+    /// of its own has no such section and restores without PVE; see
+    /// `_pveToRestore`.
     @Default(<String, Object?>{}) Map<String, Object?> pve,
 
     /// The installed theme packages, by installation id — see
@@ -145,7 +140,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     return BackupV2(
       version: formatVer,
       date: DateTimeX.timestamp,
-      spis: _withLegacyPve(Stores.server.getAllMap(), Stores.pve.fetchAll()),
+      spis: Stores.server.getAllMap(),
       snippets: Stores.snippet.getAllMap(),
       keys: Stores.key.getAllMap(),
       bmcCredentials: Stores.bmcCredential.getAllMap(),
@@ -354,24 +349,6 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
   /// a [pve] section that is the complete state: every server with PVE has an
   /// entry, and one without an entry has none.
   bool get carriesPveSection => version > PveVirtMigration.appliedAt;
-
-  /// [spis] with each server's PVE configuration also written into its
-  /// record's `custom`, where a build from before `server_pve` reads it —
-  /// see `PveConfig.toLegacyCustom`. Such a build ignores the [pve] section
-  /// and writes back only what it read.
-  // TODO(migration): remove after 5 releases from v1.0.1715.
-  static Map<String, Object?> _withLegacyPve(
-    Map<String, Object?> spis,
-    Map<String, PveConfig> pve,
-  ) => {
-    for (final MapEntry(:key, :value) in spis.entries)
-      key: switch ((value, pve[key])) {
-        (final Map record, final PveConfig cfg) =>
-          PveConfig.withLegacyCustom(record, cfg),
-        _ => value,
-      },
-  };
-
 }
 
 /// Keeps the per-record modification map needed by sync, but not device-local

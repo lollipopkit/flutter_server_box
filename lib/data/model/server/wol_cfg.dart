@@ -49,4 +49,14 @@ final class WakeOnLanCfg {
       _$WakeOnLanCfgFromJson(json);
 
   Map<String, dynamic> toJson() => _$WakeOnLanCfgToJson(this);
+
+  @override
+  bool operator ==(Object other) =>
+      other is WakeOnLanCfg &&
+      other.mac == mac &&
+      other.ip == ip &&
+      other.pwd == pwd;
+
+  @override
+  int get hashCode => Object.hash(mac, ip, pwd);
 }

@@ -8,6 +8,7 @@ import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
+import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/store/stores.dart';
@@ -182,6 +183,35 @@ void main() {
       expect(restored, isNotNull, reason: 'the restore failed outright');
       expect(restored!.ssh?.keyId, Stores.key.fetchByName('mykey')?.id);
       expect(Stores.key.fetchOneRaw(restored.ssh!.keyId!), isNotNull);
+    });
+
+    test('leaves every restored server without PVE', () async {
+      const spi = Spi(id: 'srv-1', name: 'pve', ssh: SshCredential(ip: '10.0.0.1'));
+      Stores.server.put(spi);
+      Stores.pve.put(spi.id, const PveConfig(addr: 'https://h:8006'));
+      final record = json.decode(json.encode(spi.toJson())) as Map;
+      // What that build kept inside `custom`; not read any more.
+      record['custom'] = {'pveAddr': 'https://10.0.0.9:8006', 'pvePwd': 'p'};
+
+      final backup = BackupV1.fromJson(
+        json.decode(
+          json.encode({
+            'version': 1,
+            'date': '',
+            'spis': [record],
+            'snippets': [],
+            'keys': [],
+            'container': {},
+            'history': {},
+            'settings': null,
+            'lastModTime': DateTime.now().millisecondsSinceEpoch,
+          }),
+        ) as Map<String, dynamic>,
+      );
+      await backup.merge(force: true);
+
+      expect(Stores.server.fetchOneRaw(spi.id)?.name, 'pve');
+      expect(Stores.pve.fetchAll(), isEmpty);
     });
   });
 

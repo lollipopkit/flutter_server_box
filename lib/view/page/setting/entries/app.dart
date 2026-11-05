@@ -449,15 +449,21 @@ extension _App on _AppSettingsPageState {
             _showInvalidDialog();
             return;
           }
-        } catch (e, stack) {
-          final msg =
-              e.toString().contains('Failed to decrypt') ||
-                  e.toString().contains('incorrect password')
-              ? l10n.backupPasswordWrong
-              : '${libL10n.error}:\n$e';
+        } on WrongPasswordException catch (e, stack) {
           Loggers.app.warning('Decrypt raw settings failed', e, stack);
           if (!mounted) return;
-          await context.showRoundDialog(title: libL10n.fail, child: Text(msg));
+          await context.showRoundDialog(
+            title: libL10n.fail,
+            child: Text(l10n.backupPasswordWrong),
+          );
+          return;
+        } catch (e, stack) {
+          Loggers.app.warning('Decrypt raw settings failed', e, stack);
+          if (!mounted) return;
+          await context.showRoundDialog(
+            title: libL10n.fail,
+            child: Text('${libL10n.error}:\n$e'),
+          );
           return;
         }
       }

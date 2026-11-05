@@ -523,33 +523,22 @@ extension on _SharesPageState {
     }
   }
 
-  Future<_ShareResult<T>> _withSudo<T>(
-    Future<T> Function(CommandExec exec, String? password) run, {
-    bool quiet = false,
-  }) async {
+  Future<_ShareResult<T>> _withSudo<T extends Object>(
+    Future<T> Function(CommandExec exec, String? password) run,
+  ) async {
     try {
-      var finalError = <Exception>[];
-      final result = await SudoPassword.retry<_ShareAttempt<T>>(
+      final value = await SudoPassword.retryOnRejected(
         context,
         widget.args.spi.id,
         label: widget.args.spi.ssh?.user,
-        attempt: (password) async {
-          try {
-            return _ShareAttempt.value(await run(await _exec(), password));
-          } on SharesFailure catch (e) {
-            finalError = [e];
-            return _ShareAttempt.failure(e);
-          } on SudoRejected catch (e) {
-            finalError = [e];
-            return _ShareAttempt.failure(e);
-          }
-        },
-        rejected: (attempt) => attempt.error is SudoRejected,
+        attempt: (password) async => run(await _exec(), password),
       );
-      if (result?.value case final value?) return _ShareResult.value(value);
-      final error = result?.error ?? finalError.firstOrNull;
-      if (error != null) return _ShareResult.failure(error);
-      return const _ShareResult.failure(SudoCancelled());
+      if (value == null) return const _ShareResult.failure(SudoCancelled());
+      return _ShareResult.value(value);
+    } on SharesFailure catch (e) {
+      return _ShareResult.failure(e);
+    } on SudoRejected catch (e) {
+      return _ShareResult.failure(e);
     } catch (e, s) {
       Loggers.app.warning('Privileged share action on ${widget.args.spi.id}', e, s);
       return _ShareResult.failure(SharesCommandFailed('$e'));
@@ -918,14 +907,6 @@ extension on _SharesPageState {
       }
     });
   }
-}
-
-final class _ShareAttempt<T> {
-  const _ShareAttempt.value(this.value) : error = null;
-  const _ShareAttempt.failure(this.error) : value = null;
-
-  final T? value;
-  final Exception? error;
 }
 
 final class _ShareResult<T> {

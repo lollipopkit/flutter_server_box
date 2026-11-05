@@ -21,9 +21,8 @@ mixin _$ServerShare {
 /// list because the field is what makes the payload self-contained and a
 /// server growing a second key reference should not need a format change.
  List<PrivateKeyInfo> get keys;/// [spi]'s PVE configuration, which is a table of its own rather than
-/// part of [Spi]. A payload from before that carries it inside
-/// `spi.custom`, which [_readSharedPve] reads instead.
-@JsonKey(readValue: _readSharedPve) PveConfig? get pve;/// Unix milliseconds, or null for a payload with no deadline.
+/// part of [Spi].
+ PveConfig? get pve;/// Unix milliseconds, or null for a payload with no deadline.
 ///
 /// Set for the QR flavour and not for the file one, which is the whole
 /// difference between them: a QR is shown on a screen in a room, and the
@@ -63,7 +62,7 @@ abstract mixin class $ServerShareCopyWith<$Res>  {
   factory $ServerShareCopyWith(ServerShare value, $Res Function(ServerShare) _then) = _$ServerShareCopyWithImpl;
 @useResult
 $Res call({
- int version, Spi spi, List<PrivateKeyInfo> keys,@JsonKey(readValue: _readSharedPve) PveConfig? pve, int? expiresAt
+ int version, Spi spi, List<PrivateKeyInfo> keys, PveConfig? pve, int? expiresAt
 });
 
 
@@ -193,7 +192,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int version,  Spi spi,  List<PrivateKeyInfo> keys, @JsonKey(readValue: _readSharedPve)  PveConfig? pve,  int? expiresAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int version,  Spi spi,  List<PrivateKeyInfo> keys,  PveConfig? pve,  int? expiresAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ServerShare() when $default != null:
 return $default(_that.version,_that.spi,_that.keys,_that.pve,_that.expiresAt);case _:
@@ -214,7 +213,7 @@ return $default(_that.version,_that.spi,_that.keys,_that.pve,_that.expiresAt);ca
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int version,  Spi spi,  List<PrivateKeyInfo> keys, @JsonKey(readValue: _readSharedPve)  PveConfig? pve,  int? expiresAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int version,  Spi spi,  List<PrivateKeyInfo> keys,  PveConfig? pve,  int? expiresAt)  $default,) {final _that = this;
 switch (_that) {
 case _ServerShare():
 return $default(_that.version,_that.spi,_that.keys,_that.pve,_that.expiresAt);case _:
@@ -234,7 +233,7 @@ return $default(_that.version,_that.spi,_that.keys,_that.pve,_that.expiresAt);ca
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int version,  Spi spi,  List<PrivateKeyInfo> keys, @JsonKey(readValue: _readSharedPve)  PveConfig? pve,  int? expiresAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int version,  Spi spi,  List<PrivateKeyInfo> keys,  PveConfig? pve,  int? expiresAt)?  $default,) {final _that = this;
 switch (_that) {
 case _ServerShare() when $default != null:
 return $default(_that.version,_that.spi,_that.keys,_that.pve,_that.expiresAt);case _:
@@ -249,7 +248,7 @@ return $default(_that.version,_that.spi,_that.keys,_that.pve,_that.expiresAt);ca
 @JsonSerializable()
 
 class _ServerShare extends ServerShare {
-  const _ServerShare({required this.version, required this.spi, final  List<PrivateKeyInfo> keys = const <PrivateKeyInfo>[], @JsonKey(readValue: _readSharedPve) this.pve, this.expiresAt}): _keys = keys,super._();
+  const _ServerShare({required this.version, required this.spi, final  List<PrivateKeyInfo> keys = const <PrivateKeyInfo>[], this.pve, this.expiresAt}): _keys = keys,super._();
   factory _ServerShare.fromJson(Map<String, dynamic> json) => _$ServerShareFromJson(json);
 
 @override final  int version;
@@ -270,9 +269,8 @@ class _ServerShare extends ServerShare {
 }
 
 /// [spi]'s PVE configuration, which is a table of its own rather than
-/// part of [Spi]. A payload from before that carries it inside
-/// `spi.custom`, which [_readSharedPve] reads instead.
-@override@JsonKey(readValue: _readSharedPve) final  PveConfig? pve;
+/// part of [Spi].
+@override final  PveConfig? pve;
 /// Unix milliseconds, or null for a payload with no deadline.
 ///
 /// Set for the QR flavour and not for the file one, which is the whole
@@ -315,7 +313,7 @@ abstract mixin class _$ServerShareCopyWith<$Res> implements $ServerShareCopyWith
   factory _$ServerShareCopyWith(_ServerShare value, $Res Function(_ServerShare) _then) = __$ServerShareCopyWithImpl;
 @override @useResult
 $Res call({
- int version, Spi spi, List<PrivateKeyInfo> keys,@JsonKey(readValue: _readSharedPve) PveConfig? pve, int? expiresAt
+ int version, Spi spi, List<PrivateKeyInfo> keys, PveConfig? pve, int? expiresAt
 });
 
 

@@ -89,9 +89,8 @@ The following fields belong inside `pve`:
 | `pwd` | No | For `password`: the PVE password of the SSH user in the `pam` realm. Omit it to reuse the SSH password |
 | `certSha256` | No | SHA-256 of the certificate to trust, lowercase hex. Omit it to confirm the certificate on the first connection |
 
-Older exports may put `pveAddr`, `pveIgnoreCert`, and `pvePwd` inside
-`custom`; imports convert them to password authentication without a pinned
-certificate. Current exports use `pve`.
+Older exports put `pveAddr`, `pveIgnoreCert`, and `pvePwd` inside `custom`;
+imports ignore them. Move them into a `pve` object to keep PVE.
 
 A server needs at least one connection method. If both `ssh` and
 `monitorHttp` are omitted, the imported record cannot connect to a host.

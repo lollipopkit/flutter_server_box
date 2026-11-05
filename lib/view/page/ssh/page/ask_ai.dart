@@ -155,7 +155,10 @@ extension _AskAi on SSHPageState {
   }) async {
     final client = _client;
     if (client == null || client.isClosed) {
-      throw StateError('SSH client is not connected.');
+      throw const SSHErr(
+        type: SSHErrType.connect,
+        message: 'SSH client is not connected.',
+      );
     }
 
     final startedAt = DateTime.now();

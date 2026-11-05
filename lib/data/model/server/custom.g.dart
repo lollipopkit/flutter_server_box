@@ -7,9 +7,6 @@ part of 'custom.dart';
 // **************************************************************************
 
 ServerCustom _$ServerCustomFromJson(Map<String, dynamic> json) => ServerCustom(
-  cmds: (json['cmds'] as Map<String, dynamic>?)?.map(
-    (k, e) => MapEntry(k, e as String),
-  ),
   preferTempDev: json['preferTempDev'] as String?,
   tempIsCelsius: json['tempIsCelsius'] as bool? ?? false,
   logoUrl: json['logoUrl'] as String?,
@@ -21,7 +18,6 @@ ServerCustom _$ServerCustomFromJson(Map<String, dynamic> json) => ServerCustom(
 
 Map<String, dynamic> _$ServerCustomToJson(ServerCustom instance) =>
     <String, dynamic>{
-      'cmds': ?instance.cmds,
       'preferTempDev': ?instance.preferTempDev,
       'tempIsCelsius': instance.tempIsCelsius,
       'logoUrl': ?instance.logoUrl,

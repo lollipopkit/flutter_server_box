@@ -177,6 +177,11 @@ extension _Actions on _ServerEditPageState {
         _pendingSudoPassword != null && _pendingSudoPassword!.isNotEmpty;
   }
 
+  /// [Input.onReveal] for [ctrl]: a saved secret shows only after
+  /// [AppAuth.confirm]; one typed on this page shows freely.
+  Future<bool> Function() _revealStored(TextEditingController ctrl) =>
+      () async => !_storedSecrets.contains(ctrl) || await AppAuth.confirm();
+
   Future<void> _setPendingSudoPassword(String? value) async {
     _pendingSudoPassword = value;
     _sudoPasswordDirty = true;
@@ -397,6 +402,7 @@ extension _Actions on _ServerEditPageState {
   Future<void> _onTapSudoPassword() async {
     final controller = TextEditingController();
     controller.text = _pendingSudoPassword ?? '';
+    final stored = !_sudoPasswordDirty && controller.text.isNotEmpty;
     if (!mounted) return;
 
     // Disposed by the tree, not after this `await`: the dialog's future
@@ -409,6 +415,7 @@ extension _Actions on _ServerEditPageState {
           controller: controller,
           type: TextInputType.visiblePassword,
           obscureText: true,
+          onReveal: stored ? AppAuth.confirm : null,
           label: libL10n.pwd,
           icon: Icons.password,
           suggestion: false,
@@ -723,9 +730,7 @@ extension _Actions on _ServerEditPageState {
   Spi _buildSpi(_SaveForm form) {
     final (:local, :selectedKey, :geo, :wol, :bmc, useSsh: _, useMonitorHttp: _, pve: _) = form;
     final proxyCommandText = _proxyCommandCtrl.text.trim();
-    final customCmds = _unmigratedCmds.value;
     final custom = ServerCustom(
-      cmds: customCmds.isEmpty ? null : customCmds,
       preferTempDev: _preferTempDevCtrl.text.selfNotEmptyOrNull,
       tempIsCelsius: _tempIsCelsius.value,
       logoUrl: _logoUrlCtrl.text.selfNotEmptyOrNull,
@@ -1049,7 +1054,6 @@ extension _Utils on _ServerEditPageState {
 
     final custom = spi.custom;
     if (custom != null) {
-      _unmigratedCmds.value = custom.cmds ?? {};
       _preferTempDevCtrl.text = custom.preferTempDev ?? '';
       _tempIsCelsius.value = custom.tempIsCelsius;
       _diskCountsNetwork.value = custom.diskCountsNetwork;
@@ -1102,6 +1106,16 @@ extension _Utils on _ServerEditPageState {
       _wolIpCtrl.text = wol.ip;
       _wolPwdCtrl.text = wol.pwd ?? '';
     }
+
+    _storedSecrets.addAll(
+      [
+        _passwordController,
+        _pvePwdCtrl,
+        _pveTokenSecretCtrl,
+        _monitorPwdCtrl,
+        _wolPwdCtrl,
+      ].where((c) => c.text.isNotEmpty),
+    );
 
     _env.value = spi.envs ?? {};
 

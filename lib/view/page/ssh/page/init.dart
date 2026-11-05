@@ -971,11 +971,15 @@ extension _Init on SSHPageState {
       if (!available) return false;
 
       final tmuxBin = control.scanner.tmuxBin ?? 'tmux';
-      final List<TmuxSessionInfo> sessions;
+      final List<TmuxSessionInfo>? sessions;
       try {
         sessions = await control.sessions;
       } catch (e, st) {
         Loggers.app.warning('tmux list sessions on reconnect failed', e, st);
+        return false;
+      }
+      if (sessions == null) {
+        Loggers.app.warning('tmux list sessions on reconnect failed');
         return false;
       }
       TmuxSessionInfo? restoredSession;
@@ -1134,6 +1138,12 @@ extension _Init on SSHPageState {
       }
       final tmuxBin = tmuxSession.scanner.tmuxBin ?? 'tmux';
       final sessions = await _loadTmuxSessions(tmuxSession);
+      // A listing that failed is not "no sessions": the shell opens plainly
+      // rather than a picker that reads as an empty server.
+      if (sessions == null) {
+        Toast.error('tmux: ${libL10n.fail}');
+        return const TmuxLaunchPlan.none();
+      }
 
       final restoredPlan = await _buildRestoredForegroundLaunchPlan(
         tmuxSession,
@@ -1152,15 +1162,17 @@ extension _Init on SSHPageState {
     }
   }
 
-  Future<List<TmuxSessionInfo>> _loadTmuxSessions(
+  /// Null when the listing failed.
+  Future<List<TmuxSessionInfo>?> _loadTmuxSessions(
     TmuxSession tmuxSession,
   ) async {
     try {
-      return await tmuxSession.sessions;
+      if (await tmuxSession.sessions case final sessions?) return sessions;
+      Loggers.app.warning('tmux list sessions failed');
     } catch (e, st) {
       Loggers.app.warning('tmux list sessions failed', e, st);
-      return const [];
     }
+    return null;
   }
 
   Future<TmuxLaunchPlan> _buildRestoredForegroundLaunchPlan(
@@ -1322,6 +1334,10 @@ extension _Init on SSHPageState {
 
       final sessions = await tmuxSession.sessions;
       if (!mounted) return;
+      if (sessions == null) {
+        Toast.error(libL10n.fail);
+        return;
+      }
 
       final defaultName = Stores.setting.tmuxSessionName.fetch();
       final sessionName = defaultName.isEmpty ? 'server_box' : defaultName;
