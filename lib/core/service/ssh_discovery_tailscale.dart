@@ -124,7 +124,11 @@ final class TailscaleDiscovery implements SshDiscovery {
         ),
       );
     }
-    hosts.sort((a, b) => a.server.name.compareTo(b.server.name));
+    // Online first: the ones that can be reached now.
+    hosts.sort((a, b) {
+      final on = (b.online == true ? 1 : 0) - (a.online == true ? 1 : 0);
+      return on != 0 ? on : a.server.name.compareTo(b.server.name);
+    });
     return (
       hosts: hosts,
       scope:

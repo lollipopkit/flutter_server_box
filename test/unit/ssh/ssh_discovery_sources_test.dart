@@ -40,15 +40,15 @@ void main() {
       final run = ts.parse(status());
       expect(run.scope, 'example.ts.net');
       expect(run.hosts.map((e) => (e.server.name, e.host, e.online)), [
-        ('desk', 'desk.example.ts.net', false),
         ('nas', 'nas.example.ts.net', true),
+        ('desk', 'desk.example.ts.net', false),
       ]);
-      expect(run.hosts.last.detail, '100.64.0.3 · linux');
+      expect(run.hosts.first.detail, '100.64.0.3 · linux');
     });
 
     test('by IPv4 without MagicDNS', () {
       final run = ts.parse(status(magicDns: false));
-      expect(run.hosts.map((e) => e.host), ['100.64.0.4', '100.64.0.3']);
+      expect(run.hosts.map((e) => e.host), ['100.64.0.3', '100.64.0.4']);
     });
 
     test('a backend not running is an error, not an empty list', () {

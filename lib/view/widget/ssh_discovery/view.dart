@@ -433,25 +433,26 @@ final class _SshDiscoveryViewState extends ConsumerState<SshDiscoveryView> {
     void toggle() => setState(() {
       if (_selected.remove(key) == null) _selected[key] = h;
     });
-    final scheme = Theme.of(context).colorScheme;
+    final offline = h.online == false;
     final online = switch (h.online) {
-      true => Text(
-        l10n.discoveryOnline,
-        style: TextStyle(fontSize: 12, color: scheme.primary),
-      ),
-      false => Text(l10n.discoveryOffline, style: UIs.text12Grey),
       null => null,
+      final on => _OnlineState(on),
     };
+    // Faded, the whole row: a state worth reading at a glance down a list.
+    Widget dim(Widget child) =>
+        offline ? Opacity(opacity: .5, child: child) : child;
     return ListTile(
-      leading: const Icon(Icons.dns_outlined),
-      title: Text(h.server.name, style: h.unnamed ? _mono : null),
+      leading: dim(const Icon(Icons.dns_outlined)),
+      title: dim(Text(h.server.name, style: h.unnamed ? _mono : null)),
       subtitle: subtitle.isEmpty
           ? null
-          : Text(
-              subtitle,
-              style: UIs.textGrey,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+          : dim(
+              Text(
+                subtitle,
+                style: UIs.textGrey,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -554,6 +555,42 @@ final class _SshDiscoveryViewState extends ConsumerState<SshDiscoveryView> {
           ?footer,
         ],
       ),
+    );
+  }
+}
+
+/// A dot and a word: filled in the accent when online, hollow when not.
+final class _OnlineState extends StatelessWidget {
+  const _OnlineState(this.online);
+
+  final bool online;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final color = online ? scheme.primary : scheme.outline;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: online ? color : null,
+            border: online ? null : Border.all(color: color, width: 1.5),
+          ),
+        ),
+        const SizedBox(width: 5),
+        Text(
+          online ? l10n.discoveryOnline : l10n.discoveryOffline,
+          style: TextStyle(
+            fontSize: 12,
+            color: color,
+            fontWeight: online ? FontWeight.w500 : null,
+          ),
+        ),
+      ],
     );
   }
 }
