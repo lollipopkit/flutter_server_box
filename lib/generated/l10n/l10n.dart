@@ -12358,6 +12358,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Filter by name or address'**
   String get discoveryFilter;
+
+  /// Server discovery: Same machine, more than one address
+  ///
+  /// In en, this message translates to:
+  /// **'Same machine, more than one address'**
+  String get discoverySameMachine;
+
+  /// Server discovery: Primary address
+  ///
+  /// In en, this message translates to:
+  /// **'Primary address'**
+  String get discoveryPrimaryAddress;
+
+  /// Server discovery: Alternate address
+  ///
+  /// In en, this message translates to:
+  /// **'Alternate address'**
+  String get discoveryAlternateAddress;
 }
 
 class _AppLocalizationsDelegate

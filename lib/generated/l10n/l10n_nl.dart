@@ -7329,4 +7329,13 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get discoveryFilter => 'Filteren op naam of adres';
+
+  @override
+  String get discoverySameMachine => 'Dezelfde machine, meerdere adressen';
+
+  @override
+  String get discoveryPrimaryAddress => 'Primair adres';
+
+  @override
+  String get discoveryAlternateAddress => 'Alternatief adres';
 }

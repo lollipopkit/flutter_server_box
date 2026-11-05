@@ -7,12 +7,16 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/local/server.dart';
 import 'package:server_box/core/service/ssh_discovery.dart';
+import 'package:server_box/core/ssh/host_key_probe.dart';
+import 'package:server_box/core/ssh/host_keys.dart';
 import 'package:server_box/core/utils/server_dedup.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/view/widget/column_inset.dart';
 
 part 'actions.dart';
+part 'same_machine.dart';
 
 enum _Phase { idle, running, done, failed }
 
@@ -39,10 +43,12 @@ final class SshDiscoveryView extends ConsumerStatefulWidget {
     this.columnWidth,
     this.thisDevice = true,
     this.sources,
+    @visibleForTesting this.probe,
   }) : onPick = null;
 
   const SshDiscoveryView.pick({super.key, required this.onPick, this.sources})
-    : header = const [],
+    : probe = null,
+      header = const [],
       columnWidth = null,
       thisDevice = false;
 
@@ -61,6 +67,10 @@ final class SshDiscoveryView extends ConsumerStatefulWidget {
   /// [SshDiscovery.available] when null.
   final List<SshDiscovery>? sources;
 
+  /// [probeHostKey] when null.
+  final Future<HostKeyId?> Function(SshCredential ssh, {String? prefer})?
+  probe;
+
   bool get _picking => onPick != null;
 
   @override
@@ -75,6 +85,9 @@ final class _SshDiscoveryViewState extends ConsumerState<SshDiscoveryView> {
   /// Keyed by [_keyOf].
   final _selected = <String, DiscoveredSshHost>{};
   final _added = <String>{};
+
+  /// Checked hosts whose host key turned out to be a server's already.
+  final _known = <String>{};
   bool _selfSelected = false;
   bool _selfAdded = false;
   bool _adding = false;
@@ -325,7 +338,8 @@ final class _SshDiscoveryViewState extends ConsumerState<SshDiscoveryView> {
     _SourceState st,
   ) {
     final servers = ref.watch(serversProvider).servers.values;
-    bool exists(DiscoveredSshHost h) => servers.any(h.isServer);
+    bool exists(DiscoveredSshHost h) =>
+        _known.contains(_keyOf(source, h)) || servers.any(h.isServer);
     final free = [
       for (final h in st.hosts)
         if (!_added.contains(_keyOf(source, h)) && !exists(h)) h,

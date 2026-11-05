@@ -6851,6 +6851,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get discoveryFilter => '按名称或地址筛选';
+
+  @override
+  String get discoverySameMachine => '同一台机器，多个地址';
+
+  @override
+  String get discoveryPrimaryAddress => '主地址';
+
+  @override
+  String get discoveryAlternateAddress => '备用地址';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -13704,4 +13713,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get discoveryFilter => '依名稱或位址篩選';
+
+  @override
+  String get discoverySameMachine => '同一台機器，多個位址';
+
+  @override
+  String get discoveryPrimaryAddress => '主要位址';
+
+  @override
+  String get discoveryAlternateAddress => '備用位址';
 }

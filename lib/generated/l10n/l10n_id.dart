@@ -7262,4 +7262,13 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get discoveryFilter => 'Saring menurut nama atau alamat';
+
+  @override
+  String get discoverySameMachine => 'Mesin yang sama, beberapa alamat';
+
+  @override
+  String get discoveryPrimaryAddress => 'Alamat utama';
+
+  @override
+  String get discoveryAlternateAddress => 'Alamat cadangan';
 }

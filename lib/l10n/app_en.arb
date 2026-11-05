@@ -9400,5 +9400,17 @@
   "discoveryFilter": "Filter by name or address",
   "@discoveryFilter": {
     "description": "Server discovery: Filter by name or address"
+  },
+  "discoverySameMachine": "Same machine, more than one address",
+  "@discoverySameMachine": {
+    "description": "Server discovery: Same machine, more than one address"
+  },
+  "discoveryPrimaryAddress": "Primary address",
+  "@discoveryPrimaryAddress": {
+    "description": "Server discovery: Primary address"
+  },
+  "discoveryAlternateAddress": "Alternate address",
+  "@discoveryAlternateAddress": {
+    "description": "Server discovery: Alternate address"
   }
 }

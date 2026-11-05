@@ -1714,5 +1714,8 @@
   "discoveryOnline": "آنلاین",
   "discoveryOffline": "آفلاین",
   "discoverySelectAll": "انتخاب همه",
-  "discoveryFilter": "فیلتر بر اساس نام یا نشانی"
+  "discoveryFilter": "فیلتر بر اساس نام یا نشانی",
+  "discoverySameMachine": "یک ماشین، چند نشانی",
+  "discoveryPrimaryAddress": "نشانی اصلی",
+  "discoveryAlternateAddress": "نشانی جایگزین"
 }

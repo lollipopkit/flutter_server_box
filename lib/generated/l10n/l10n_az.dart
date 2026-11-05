@@ -7253,4 +7253,13 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get discoveryFilter => 'Ad və ya ünvana görə süz';
+
+  @override
+  String get discoverySameMachine => 'Eyni maşın, bir neçə ünvan';
+
+  @override
+  String get discoveryPrimaryAddress => 'Əsas ünvan';
+
+  @override
+  String get discoveryAlternateAddress => 'Ehtiyat ünvan';
 }

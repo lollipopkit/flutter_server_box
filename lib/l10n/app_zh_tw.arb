@@ -2036,5 +2036,8 @@
   "discoveryOnline": "線上",
   "discoveryOffline": "離線",
   "discoverySelectAll": "全選",
-  "discoveryFilter": "依名稱或位址篩選"
+  "discoveryFilter": "依名稱或位址篩選",
+  "discoverySameMachine": "同一台機器，多個位址",
+  "discoveryPrimaryAddress": "主要位址",
+  "discoveryAlternateAddress": "備用位址"
 }

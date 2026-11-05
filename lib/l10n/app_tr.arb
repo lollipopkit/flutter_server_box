@@ -2036,5 +2036,8 @@
   "discoveryOnline": "Çevrimiçi",
   "discoveryOffline": "Çevrimdışı",
   "discoverySelectAll": "Tümünü seç",
-  "discoveryFilter": "Ada veya adrese göre filtrele"
+  "discoveryFilter": "Ada veya adrese göre filtrele",
+  "discoverySameMachine": "Aynı makine, birden çok adres",
+  "discoveryPrimaryAddress": "Birincil adres",
+  "discoveryAlternateAddress": "Yedek adres"
 }

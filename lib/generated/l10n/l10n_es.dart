@@ -7363,4 +7363,13 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get discoveryFilter => 'Filtrar por nombre o dirección';
+
+  @override
+  String get discoverySameMachine => 'La misma máquina en varias direcciones';
+
+  @override
+  String get discoveryPrimaryAddress => 'Dirección principal';
+
+  @override
+  String get discoveryAlternateAddress => 'Dirección alternativa';
 }

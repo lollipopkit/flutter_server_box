@@ -7376,4 +7376,13 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get discoveryFilter => 'Filtrer par nom ou adresse';
+
+  @override
+  String get discoverySameMachine => 'Même machine, plusieurs adresses';
+
+  @override
+  String get discoveryPrimaryAddress => 'Adresse principale';
+
+  @override
+  String get discoveryAlternateAddress => 'Adresse de secours';
 }

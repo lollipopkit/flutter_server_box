@@ -2036,5 +2036,8 @@
   "discoveryOnline": "Online",
   "discoveryOffline": "Offline",
   "discoverySelectAll": "Seleziona tutto",
-  "discoveryFilter": "Filtra per nome o indirizzo"
+  "discoveryFilter": "Filtra per nome o indirizzo",
+  "discoverySameMachine": "Stessa macchina, più indirizzi",
+  "discoveryPrimaryAddress": "Indirizzo principale",
+  "discoveryAlternateAddress": "Indirizzo alternativo"
 }

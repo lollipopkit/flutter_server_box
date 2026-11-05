@@ -2036,5 +2036,8 @@
   "discoveryOnline": "オンライン",
   "discoveryOffline": "オフライン",
   "discoverySelectAll": "すべて選択",
-  "discoveryFilter": "名前またはアドレスで絞り込み"
+  "discoveryFilter": "名前またはアドレスで絞り込み",
+  "discoverySameMachine": "同じマシンの複数のアドレス",
+  "discoveryPrimaryAddress": "メインのアドレス",
+  "discoveryAlternateAddress": "予備のアドレス"
 }

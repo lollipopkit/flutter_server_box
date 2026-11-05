@@ -7313,4 +7313,13 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get discoveryFilter => 'Фільтр за назвою або адресою';
+
+  @override
+  String get discoverySameMachine => 'Одна машина, кілька адрес';
+
+  @override
+  String get discoveryPrimaryAddress => 'Основна адреса';
+
+  @override
+  String get discoveryAlternateAddress => 'Резервна адреса';
 }

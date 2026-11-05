@@ -2036,5 +2036,8 @@
   "discoveryOnline": "Onlayn",
   "discoveryOffline": "Oflayn",
   "discoverySelectAll": "Hamısını seç",
-  "discoveryFilter": "Ad və ya ünvana görə süz"
+  "discoveryFilter": "Ad və ya ünvana görə süz",
+  "discoverySameMachine": "Eyni maşın, bir neçə ünvan",
+  "discoveryPrimaryAddress": "Əsas ünvan",
+  "discoveryAlternateAddress": "Ehtiyat ünvan"
 }

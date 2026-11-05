@@ -2036,5 +2036,8 @@
   "discoveryOnline": "Online",
   "discoveryOffline": "Offline",
   "discoverySelectAll": "Alles selecteren",
-  "discoveryFilter": "Filteren op naam of adres"
+  "discoveryFilter": "Filteren op naam of adres",
+  "discoverySameMachine": "Dezelfde machine, meerdere adressen",
+  "discoveryPrimaryAddress": "Primair adres",
+  "discoveryAlternateAddress": "Alternatief adres"
 }

@@ -2036,5 +2036,8 @@
   "discoveryOnline": "온라인",
   "discoveryOffline": "오프라인",
   "discoverySelectAll": "모두 선택",
-  "discoveryFilter": "이름 또는 주소로 필터"
+  "discoveryFilter": "이름 또는 주소로 필터",
+  "discoverySameMachine": "같은 머신, 여러 주소",
+  "discoveryPrimaryAddress": "기본 주소",
+  "discoveryAlternateAddress": "대체 주소"
 }

@@ -6964,4 +6964,13 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get discoveryFilter => '이름 또는 주소로 필터';
+
+  @override
+  String get discoverySameMachine => '같은 머신, 여러 주소';
+
+  @override
+  String get discoveryPrimaryAddress => '기본 주소';
+
+  @override
+  String get discoveryAlternateAddress => '대체 주소';
 }

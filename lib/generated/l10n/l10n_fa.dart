@@ -7310,4 +7310,13 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get discoveryFilter => 'فیلتر بر اساس نام یا نشانی';
+
+  @override
+  String get discoverySameMachine => 'یک ماشین، چند نشانی';
+
+  @override
+  String get discoveryPrimaryAddress => 'نشانی اصلی';
+
+  @override
+  String get discoveryAlternateAddress => 'نشانی جایگزین';
 }

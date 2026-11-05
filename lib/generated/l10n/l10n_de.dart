@@ -7357,4 +7357,13 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get discoveryFilter => 'Nach Name oder Adresse filtern';
+
+  @override
+  String get discoverySameMachine => 'Derselbe Rechner unter mehreren Adressen';
+
+  @override
+  String get discoveryPrimaryAddress => 'Hauptadresse';
+
+  @override
+  String get discoveryAlternateAddress => 'Ausweichadresse';
 }

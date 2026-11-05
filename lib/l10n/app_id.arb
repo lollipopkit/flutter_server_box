@@ -2036,5 +2036,8 @@
   "discoveryOnline": "Online",
   "discoveryOffline": "Offline",
   "discoverySelectAll": "Pilih semua",
-  "discoveryFilter": "Saring menurut nama atau alamat"
+  "discoveryFilter": "Saring menurut nama atau alamat",
+  "discoverySameMachine": "Mesin yang sama, beberapa alamat",
+  "discoveryPrimaryAddress": "Alamat utama",
+  "discoveryAlternateAddress": "Alamat cadangan"
 }

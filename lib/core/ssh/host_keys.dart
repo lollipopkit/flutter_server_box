@@ -350,7 +350,6 @@ String _fingerprintToHex(Uint8List fingerprint) {
 final _openSshSha256 = RegExp(r'^SHA256:[A-Za-z0-9+/]{43}$');
 final _colonHexFingerprint = RegExp(r'^(?:[0-9a-fA-F]{2}:)*[0-9a-fA-F]{2}$');
 
-@visibleForTesting
 String fingerprintToOpenSsh(Uint8List fingerprint) {
   try {
     final encoded = utf8.decode(fingerprint);
@@ -467,3 +466,30 @@ Future<bool> showHostKeyPrompt(
   BuildContext? context,
 }) => promptHostKeyExclusively(info, () => HostKeyDialog.show(info, context));
 
+/// The host key a server presents, as its type and OpenSSH fingerprint.
+typedef HostKeyId = ({String type, String fingerprint});
+
+/// The servers in [servers] whose remembered host key is [key].
+///
+/// Only those: a key filed under an id no server has, from a session that was
+/// never kept, says nothing about what is already here.
+Set<String> serversWithHostKey(
+  HostKeyId key,
+  Map<String, String> known,
+  Set<String> servers,
+) => {
+  for (final MapEntry(key: storageKey, value: stored) in known.entries)
+    if (splitHostKeyStorageKey(storageKey) case (final id, final type)
+        when servers.contains(id) &&
+            type == key.type &&
+            normalizeStoredFingerprint(stored) == key.fingerprint)
+      id,
+};
+
+/// The key types remembered for any of [servers].
+Set<String> hostKeyTypesOf(Map<String, String> known, Set<String> servers) => {
+  for (final storageKey in known.keys)
+    if (splitHostKeyStorageKey(storageKey) case (final id, final type)
+        when servers.contains(id))
+      type,
+};

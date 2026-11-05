@@ -33,6 +33,15 @@ final class DiscoveredSshHost {
   /// The source names the account, rather than [server] carrying the default.
   final bool userKnown;
 
+  DiscoveredSshHost withServer(Spi server) => DiscoveredSshHost(
+    key: key,
+    server: server,
+    detail: detail,
+    online: online,
+    via: via,
+    userKnown: userKnown,
+  );
+
   String get host => server.ssh?.ip ?? '';
   int get port => server.ssh?.port ?? 22;
   String get address => '$host:$port';

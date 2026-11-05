@@ -2036,5 +2036,8 @@
   "discoveryOnline": "У мережі",
   "discoveryOffline": "Не в мережі",
   "discoverySelectAll": "Вибрати все",
-  "discoveryFilter": "Фільтр за назвою або адресою"
+  "discoveryFilter": "Фільтр за назвою або адресою",
+  "discoverySameMachine": "Одна машина, кілька адрес",
+  "discoveryPrimaryAddress": "Основна адреса",
+  "discoveryAlternateAddress": "Резервна адреса"
 }

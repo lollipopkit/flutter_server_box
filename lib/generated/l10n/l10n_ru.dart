@@ -7313,4 +7313,13 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get discoveryFilter => 'Фильтр по имени или адресу';
+
+  @override
+  String get discoverySameMachine => 'Одна машина, несколько адресов';
+
+  @override
+  String get discoveryPrimaryAddress => 'Основной адрес';
+
+  @override
+  String get discoveryAlternateAddress => 'Резервный адрес';
 }

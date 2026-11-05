@@ -2036,5 +2036,8 @@
   "discoveryOnline": "В сети",
   "discoveryOffline": "Не в сети",
   "discoverySelectAll": "Выбрать все",
-  "discoveryFilter": "Фильтр по имени или адресу"
+  "discoveryFilter": "Фильтр по имени или адресу",
+  "discoverySameMachine": "Одна машина, несколько адресов",
+  "discoveryPrimaryAddress": "Основной адрес",
+  "discoveryAlternateAddress": "Резервный адрес"
 }

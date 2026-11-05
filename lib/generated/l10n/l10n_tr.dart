@@ -7246,4 +7246,13 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get discoveryFilter => 'Ada veya adrese göre filtrele';
+
+  @override
+  String get discoverySameMachine => 'Aynı makine, birden çok adres';
+
+  @override
+  String get discoveryPrimaryAddress => 'Birincil adres';
+
+  @override
+  String get discoveryAlternateAddress => 'Yedek adres';
 }

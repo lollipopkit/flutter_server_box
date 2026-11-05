@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
 import 'package:server_box/core/service/ssh_discovery.dart';
+import 'package:server_box/core/ssh/host_keys.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/provider/server/all.dart';
@@ -17,6 +18,8 @@ import 'package:server_box/generated/l10n/l10n_en.dart';
 import 'package:server_box/view/widget/ssh_discovery/view.dart';
 
 final _l10n = AppLocalizationsEn();
+
+Future<HostKeyId?> _noKey(SshCredential _, {String? prefer}) async => null;
 
 DiscoveredSshHost _host(
   String ip, {
@@ -78,7 +81,7 @@ void main() {
   testWidgets('one source: no tabs, its scope, then its hosts', (tester) async {
     await pump(
       tester,
-      SshDiscoveryView.batch(thisDevice: false, sources: [_Source('lan', hosts)]),
+      SshDiscoveryView.batch(thisDevice: false, probe: _noKey, sources: [_Source('lan', hosts)]),
     );
     expect(find.byType(SegmentedTabs<String>), findsNothing);
     expect(find.text('10.0.0.0/24'), findsOneWidget);
@@ -97,7 +100,7 @@ void main() {
   testWidgets('checked hosts are added as servers', (tester) async {
     await pump(
       tester,
-      SshDiscoveryView.batch(thisDevice: false, sources: [_Source('lan', hosts)]),
+      SshDiscoveryView.batch(thisDevice: false, probe: _noKey, sources: [_Source('lan', hosts)]),
     );
     await tester.tap(find.text(_l10n.discoveryScan));
     await tester.pump();
@@ -125,6 +128,7 @@ void main() {
       tester,
       SshDiscoveryView.batch(
         thisDevice: false,
+        probe: _noKey,
         sources: [_Source('lan', hosts), auto],
       ),
     );
@@ -145,7 +149,7 @@ void main() {
     final source = _Source('cf', [_host('ssh.example.com')], token: true);
     await pump(
       tester,
-      SshDiscoveryView.batch(thisDevice: false, sources: [source]),
+      SshDiscoveryView.batch(thisDevice: false, probe: _noKey, sources: [source]),
     );
     expect(find.text('needs read'), findsOneWidget);
 
@@ -175,7 +179,7 @@ void main() {
     );
     await pump(
       tester,
-      SshDiscoveryView.batch(thisDevice: false, sources: [source]),
+      SshDiscoveryView.batch(thisDevice: false, probe: _noKey, sources: [source]),
     );
     await tester.pump();
     expect(find.text('denied'), findsOneWidget);
@@ -197,6 +201,123 @@ void main() {
     expect(find.byType(Checkbox), findsNothing);
     await tester.tap(find.text('pi'));
     expect(picked, hosts[2]);
+  });
+
+  testWidgets('one machine at two addresses becomes one server, as picked', (
+    tester,
+  ) async {
+    Future<HostKeyId?> sameKey(SshCredential ssh, {String? prefer}) async =>
+        (type: 'ssh-ed25519', fingerprint: 'SHA256:same');
+    final ts = DiscoveredSshHost(
+      key: 'nas-ts',
+      server: const Spi(
+        name: 'nas',
+        id: 'ts-nas',
+        ssh: SshCredential(ip: 'nas.example.ts.net'),
+      ),
+    );
+    await pump(
+      tester,
+      SshDiscoveryView.batch(
+        thisDevice: false,
+        probe: sameKey,
+        sources: [
+          _Source('lan', [_host('192.168.1.5')]),
+          _Source('tailscale', [ts]),
+        ],
+      ),
+    );
+    await tester.tap(find.text(_l10n.discoveryScan));
+    await tester.pump();
+    await tester.tap(find.text('192.168.1.5'));
+    await tester.tap(find.text('tailscale'));
+    await tester.pump();
+    await tester.tap(find.text(_l10n.discoveryScan));
+    await tester.pump();
+    await tester.tap(find.text('nas'));
+    await tester.pump();
+    await tester.tap(find.text(_l10n.discoveryAddN(2)));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text(_l10n.discoverySameMachine), findsOneWidget);
+    // The first source leads by default; pick the tailnet address instead.
+    await tester.tap(find.text('nas · nas.example.ts.net:22').first);
+    await tester.pump();
+    await tester.tap(find.text(libL10n.ok));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    final added = servers.state.servers.values.where((e) => e.id != 'nas');
+    expect(added.map((e) => (e.ssh?.ip, e.ssh?.alterUrl)), [
+      ('nas.example.ts.net', 'root@192.168.1.5:22'),
+    ]);
+  });
+
+  group('groupByHostKey', () {
+    const a = (type: 'ssh-ed25519', fingerprint: 'SHA256:a');
+    const b = (type: 'ssh-ed25519', fingerprint: 'SHA256:b');
+    const srv = Spi(name: 'srv', id: 'srv', ssh: SshCredential(ip: '10.0.0.9'));
+    final known = {'srv::ssh-ed25519': 'SHA256:b'};
+
+    test('a server\'s key is a server already; a shared one groups', () {
+      final got = groupByHostKey(
+        {
+          'lan/1': (ids: [a], user: null),
+          'ts/1': (ids: [a], user: null),
+          'lan/2': (ids: [b], user: null),
+        },
+        known,
+        {'srv': srv},
+      );
+      expect(got.known, {'lan/2'});
+      expect(got.groups, [
+        ['lan/1', 'ts/1'],
+      ]);
+    });
+
+    test('a key under no server is no server', () {
+      final got = groupByHostKey(
+        {'lan/2': (ids: [b], user: null)},
+        known,
+        const {},
+      );
+      expect(got.known, isEmpty);
+    });
+
+    test('another account on a known machine is a new server', () {
+      final got = groupByHostKey(
+        {'cfg/git': (ids: [b], user: 'git')},
+        known,
+        {'srv': srv},
+      );
+      expect(got.known, isEmpty);
+    });
+
+    test('two named accounts stay apart; an unnamed one joins the first', () {
+      final got = groupByHostKey(
+        {
+          'cfg/root': (ids: [a], user: 'root'),
+          'cfg/git': (ids: [a], user: 'git'),
+          'lan/1': (ids: [a], user: null),
+        },
+        const {},
+        const {},
+      );
+      expect(got.groups, [
+        ['cfg/root', 'lan/1'],
+      ]);
+    });
+
+    test('a key of another type matches the one remembered', () {
+      const ecdsa = (type: 'ecdsa-sha2-nistp256', fingerprint: 'SHA256:e');
+      final got = groupByHostKey(
+        {'lan/3': (ids: [a, ecdsa], user: null)},
+        {'srv::ecdsa-sha2-nistp256': 'SHA256:e'},
+        {'srv': srv},
+      );
+      expect(got.known, {'lan/3'});
+    });
   });
 
   group('planDiscoveredServers', () {
@@ -243,6 +364,26 @@ void main() {
       expect(plan.ids['cfg-nas'], 'id-192.168.1.5');
     });
 
+    test('a hop at a merged-away address is the server it went into', () {
+      final merged = DiscoveredSshHost(
+        key: 'bastion',
+        server: const Spi(
+          name: 'bastion',
+          id: 'ts-b',
+          ssh: SshCredential(
+            ip: 'bastion.example.ts.net',
+            alterUrl: 'root@bastion.example.com:22',
+          ),
+        ),
+      );
+      final plan = planDiscoveredServers([
+        merged,
+        _host('10.0.0.1', via: [bastion]),
+      ], const []);
+      expect(plan.add.map((e) => e.id), ['ts-b', 'id-10.0.0.1']);
+      expect(plan.add.last.ssh!.resolvedJumpIds, ['ts-b']);
+    });
+
     test('names already taken get a suffix', () {
       const nas = Spi(name: 'pi', id: 'x', ssh: SshCredential(ip: '1.1.1.1'));
       final plan = planDiscoveredServers([
@@ -262,6 +403,7 @@ void main() {
       tester,
       SshDiscoveryView.batch(
         thisDevice: false,
+        probe: _noKey,
         sources: [
           _Source('cfg', [_host('10.0.0.1', name: 'web', via: [bastion])]),
         ],

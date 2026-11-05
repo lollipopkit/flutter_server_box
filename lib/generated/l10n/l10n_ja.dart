@@ -6963,4 +6963,13 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get discoveryFilter => '名前またはアドレスで絞り込み';
+
+  @override
+  String get discoverySameMachine => '同じマシンの複数のアドレス';
+
+  @override
+  String get discoveryPrimaryAddress => 'メインのアドレス';
+
+  @override
+  String get discoveryAlternateAddress => '予備のアドレス';
 }
