@@ -620,7 +620,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
             ),
             trailing: const Icon(Icons.chevron_right),
             onTap: () =>
-                LkcAccountPage.route.go(context, LkcPageArgs(Lkc.client, teamApps: const [Lkc.app])),
+                LkcAccountPage.route.go(context, LkcPageArgs(Lkc.client)),
           ),
           ListTile(
             title: Text(libL10n.auto),

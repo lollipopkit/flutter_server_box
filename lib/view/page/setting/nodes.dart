@@ -11,7 +11,7 @@ List<SettingsNode> _buildNodes() {
         title: libL10n.lkcAccount,
         icon: Icons.account_circle_outlined,
         page: () =>
-            LkcAccountPage(args: LkcPageArgs(Lkc.client, embedded: true, teamApps: const [Lkc.app])),
+            LkcAccountPage(args: LkcPageArgs(Lkc.client, embedded: true)),
         leading: (size) => LkcAvatar(client: Lkc.client, size: size),
         subtitle: () =>
             LkcAccountSummary(client: Lkc.client, style: UIs.text12Grey),
