@@ -167,6 +167,13 @@ import UserNotifications
             }
         })
 
+        // Sent synchronously from `sendAction`, so it is queued before the
+        // text view's insert of the same paste.
+        let textInputChannel = FlutterMethodChannel(name: "tech.lolli.toolbox/text_input", binaryMessenger: binaryMessenger)
+        SBApplication.onPaste = { text in
+            textInputChannel.invokeMethod("paste", arguments: text)
+        }
+
         let mainChannel = FlutterMethodChannel(name: "tech.lolli.toolbox/main_chan", binaryMessenger: binaryMessenger)
         mainChannel.setMethodCallHandler({(call: FlutterMethodCall, result: @escaping FlutterResult) -> Void in
             switch call.method {
@@ -415,5 +422,29 @@ private enum InFlightWork {
         guard id != .invalid else { return }
         UIApplication.shared.endBackgroundTask(id)
         if task == id { task = .invalid }
+    }
+}
+
+/// The app's `UIApplication`, for the one action it has to see first: paste.
+///
+/// The system edit menu's Paste and ⌘V reach Flutter's text view as
+/// `insertText` of the clipboard, which Dart cannot tell from typing. The
+/// terminal has to: a paste is sent bracketed, so a shell does not run its
+/// lines as it receives them. Told here, before `super` delivers the action,
+/// the message reaches Dart ahead of the insert it describes.
+@objc(SBApplication)
+final class SBApplication: UIApplication {
+    static var onPaste: ((String) -> Void)?
+
+    override func sendAction(_ action: Selector, to target: Any?, from sender: Any?, for event: UIEvent?) -> Bool {
+        // Read in the paste the user asked for, as the text view's own read
+        // is, so no permission prompt. The text is what lets Dart tell the
+        // insert from an update that comes before it.
+        if action == #selector(UIResponderStandardEditActions.paste(_:)),
+           UIPasteboard.general.hasStrings,
+           let text = UIPasteboard.general.string {
+            SBApplication.onPaste?(text)
+        }
+        return super.sendAction(action, to: target, from: sender, for: event)
     }
 }
