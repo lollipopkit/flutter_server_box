@@ -74,12 +74,15 @@ extension _SettingsLayout on _SettingsPageState {
     // and a row of tabs starting above the menu points at nothing there.
     final level = _levelFor(nodes, selected.id);
     final actions = _buildActions();
+    final pushed = !(ModalRoute.of(context)?.isFirst ?? true);
     final header = _SettingsContentHeader(
       title: _branchOf(nodes, selected.id)?.title ?? selected.title,
       nodes: level,
       selectedId: selected.id,
       onTap: _onSelect,
       actions: actions,
+      // Shown in place, the home rail is the way out.
+      leading: pushed ? BackButton(onPressed: _leave) : null,
     );
 
     final scaffold = Scaffold(
@@ -274,6 +277,13 @@ extension _SettingsLayout on _SettingsPageState {
       ),
     ),
   );
+
+  /// Out of the settings rather than out of the level on screen, which is
+  /// where platform back goes while the content has one.
+  void _leave() {
+    final nav = Navigator.of(context);
+    if (nav.canPop()) nav.pop();
+  }
 
   Widget _buildSearchField() => _SettingsSearchField(
     controller: _searchCtrl,
