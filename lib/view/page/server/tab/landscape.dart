@@ -26,7 +26,8 @@ extension _Widgets on _ServerPageState {
               left: 0,
               child: IconButton(
                 tooltip: libL10n.setting,
-                onPressed: () => SettingsPage.route.go(context),
+                onPressed: () =>
+                    ref.read(settingsRequestProvider.notifier).go(),
                 icon: const Icon(Icons.settings, color: Colors.grey),
               ),
             ),

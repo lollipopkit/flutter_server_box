@@ -37,7 +37,10 @@ const _firewall = AppRouteArg<void, SpiRequiredArgs>(
   page: _page,
   path: '/firewall',
 );
-const _settings = AppRouteNoArg<void>(page: _plain, path: '/settings');
+const _transfers = AppRouteNoArg<void>(
+  page: _plain,
+  path: '/files/transfers',
+);
 
 void main() {
   setUp(() async {
@@ -130,9 +133,9 @@ void main() {
     expect(at(), contains('server "web-prod" (server_id: s1)'));
 
     // Over every tab.
-    unawaited(_settings.go(root.currentContext!));
+    unawaited(_transfers.go(root.currentContext!));
     await settle();
-    expect(at(), 'On screen: the settings.');
+    expect(at(), 'On screen: the transfer list.');
     root.currentState!.pop();
     tab.currentState!
       ..pop()

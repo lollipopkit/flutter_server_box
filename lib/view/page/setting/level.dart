@@ -235,14 +235,9 @@ final class _SettingsContentHeader extends StatelessWidget {
     required this.selectedId,
     required this.onTap,
     required this.actions,
-    this.leading,
   });
 
   final String title;
-
-  /// Before [title]: the way out of settings pushed onto a wide window, which
-  /// has no bar.
-  final Widget? leading;
 
   /// The pages inside [title]. One of them — a subject that is a page — gets
   /// no tabs: a row with one tab on it says what the title just said.
@@ -279,7 +274,6 @@ final class _SettingsContentHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          if (leading case final leading?) ...[leading, UIs.width7],
           Text(
             title,
             maxLines: 1,

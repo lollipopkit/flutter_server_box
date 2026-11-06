@@ -4,7 +4,8 @@ import 'dart:math' as math;
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/theme.dart';
-import 'package:flutter/foundation.dart' show kReleaseMode, visibleForTesting;
+import 'package:flutter/foundation.dart'
+    show SynchronousFuture, kReleaseMode, visibleForTesting;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
@@ -112,13 +113,6 @@ class _HomePageState extends ConsumerState<HomePage>
   /// both, and it is null exactly when there is no strip to point at.
   final _navKey = GlobalKey();
 
-  /// Whether the window is too narrow for a rail, read from the last build.
-  ///
-  /// A field because the callbacks that need it — see
-  /// [_HomePageSettings._openSettings] — run outside the `LayoutBuilder` that
-  /// works it out.
-  bool _narrow = false;
-
   /// Whether the settings are what the content area is showing.
   ///
   /// Not an `AppTab`: it is never arranged, never stored and never one of the
@@ -154,6 +148,10 @@ class _HomePageState extends ConsumerState<HomePage>
   /// keeps its own. Built for the first time only when asked for, because
   /// most launches never go near them.
   bool _settingsSeen = false;
+
+  /// The putting away in progress, which every other way out waits on rather
+  /// than asking again.
+  Future<bool>? _closingSettings;
 
   /// Whether the guide over that strip has been dealt with this launch.
   ///
@@ -468,8 +466,14 @@ class _HomePageState extends ConsumerState<HomePage>
                 ),
           ],
         ),
+        // The settings fill the room the tabs had, so the bar leaves with the
+        // tabs; their own bar is the way out.
         bottomNavigationBar: narrow && !_wantsWindow && column == null
-            ? _buildBottomBar()
+            ? SizeTransition(
+                sizeFactor: ReverseAnimation(_settingsAnim),
+                alignment: Alignment.topCenter,
+                child: _buildBottomBar(),
+              )
             : null,
       ),
     );
@@ -514,7 +518,6 @@ class _HomePageState extends ConsumerState<HomePage>
           final narrow =
               constraints.maxWidth - (column == null ? _kRailWidth : 0) <
               AdaptivePanes.kSplitWidth;
-          _narrow = narrow;
           return Stack(
             children: [
               mainContent(narrow, column, constraints.biggest),
@@ -525,25 +528,9 @@ class _HomePageState extends ConsumerState<HomePage>
       ),
     );
 
-    // Back, while the settings are shown in place of a tab, puts them away.
-    //
-    // On a phone they are a page and back pops it. Here they are not a route
-    // at all, so back went to the only route there is — this one — and on a
-    // wide Android window that is the app closing from inside its settings.
-    //
-    // What the settings have pushed goes first: their navigator asks for the
-    // gesture itself while it has somewhere to go, and every scope on a route
-    // is told of a back that was refused, so without asking it this would put
-    // the settings away from under the page that was being left.
-    final withBack = PopScope(
-      canPop: !_settingsOpen,
-      onPopInvokedWithResult: (didPop, _) {
-        if (didPop) return;
-        if (_settingsNavKey.currentState?.canPop() ?? false) return;
-        _closeSettings();
-      },
-      child: withShell,
-    );
+    // While the settings are shown, back is theirs (`SettingsPage.onLeave`),
+    // never the app's to close.
+    final withBack = PopScope(canPop: !_settingsOpen, child: withShell);
 
     // The shortcuts, on every desktop. macOS additionally gets a menu bar,
     // which is where a shortcut is *discovered* — but the menu bar is a macOS

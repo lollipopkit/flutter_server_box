@@ -38,9 +38,9 @@ extension _HomePageSettings on _HomePageState {
                 key: const ValueKey('settings'),
                 navigatorKey: _settingsNavKey,
                 observers: [AgentScreen.settingsObserver],
-                rootBuilder: (_) => const SafeArea(
+                rootBuilder: (_) => SafeArea(
                   bottom: false,
-                  child: SettingsPage(),
+                  child: SettingsPage(onLeave: _closeSettings),
                 ),
               ),
             ),
@@ -76,24 +76,31 @@ extension _HomePageSettings on _HomePageState {
     );
   }
 
-  /// Puts the settings away, where they are shown in place of a tab.
-  void _closeSettings() {
-    if (!_settingsOpen) return;
+  /// Puts the settings away once what they hold agreed to go; false when
+  /// something refused.
+  Future<bool> _closeSettings() {
+    if (!_settingsOpen) return SynchronousFuture(true);
+    return _closingSettings ??= _putSettingsAway().whenComplete(
+      () => _closingSettings = null,
+    );
+  }
+
+  Future<bool> _putSettingsAway() async {
+    if (!_settingsOpen) return true;
+    final nav = _settingsNavKey.currentState;
+    // What was agreed to be dropped goes; the rest keeps its place for the
+    // next opening, as a tab does.
+    if (nav != null && !await PopGuard.leave(nav)) return false;
+    if (!mounted || !_settingsOpen) return true;
     setState(() => _settingsOpen = false);
     AgentScreen.settingsOpen = false;
     _settingsCtrl.reverse();
+    return true;
   }
 
-  /// Shows the settings where a tab is shown, rather than over everything.
-  ///
-  /// Only where there is a rail to keep on screen. A phone has none to cover,
-  /// and no room for a second strip under the settings' own floating one — so
-  /// there they stay a page, with the bar's back button as the way out.
+  /// Shows the settings where a tab is shown, at every width: one form, so a
+  /// rotation or a resize changes the layout around them and nothing else.
   void _openSettings() {
-    if (_narrow) {
-      SettingsPage.route.go(context);
-      return;
-    }
     if (_settingsOpen) return;
     setState(() {
       _settingsOpen = true;
