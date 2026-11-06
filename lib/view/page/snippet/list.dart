@@ -14,11 +14,6 @@ class SnippetListPage extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<SnippetListPage> createState() => _SnippetListPageState();
-
-  static const route = AppRouteNoArg(
-    page: SnippetListPage.new,
-    path: '/snippets',
-  );
 }
 
 /// What the editor pane is on when it is not on a saved snippet.

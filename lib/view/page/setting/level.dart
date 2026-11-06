@@ -279,7 +279,7 @@ final class _SettingsContentHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          ?leading,
+          if (leading case final leading?) ...[leading, UIs.width7],
           Text(
             title,
             maxLines: 1,

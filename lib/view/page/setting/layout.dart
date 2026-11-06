@@ -74,7 +74,7 @@ extension _SettingsLayout on _SettingsPageState {
     // and a row of tabs starting above the menu points at nothing there.
     final level = _levelFor(nodes, selected.id);
     final actions = _buildActions();
-    final pushed = !(ModalRoute.of(context)?.isFirst ?? true);
+    final pushed = ModalRoute.canPopOf(context) ?? false;
     final header = _SettingsContentHeader(
       title: _branchOf(nodes, selected.id)?.title ?? selected.title,
       nodes: level,
@@ -280,10 +280,7 @@ extension _SettingsLayout on _SettingsPageState {
 
   /// Out of the settings rather than out of the level on screen, which is
   /// where platform back goes while the content has one.
-  void _leave() {
-    final nav = Navigator.of(context);
-    if (nav.canPop()) nav.pop();
-  }
+  void _leave() => Navigator.of(context).pop();
 
   Widget _buildSearchField() => _SettingsSearchField(
     controller: _searchCtrl,
