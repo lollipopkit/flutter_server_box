@@ -137,16 +137,6 @@ final class SshPageArgs {
   final GlobalKey<TerminalViewState>? terminalKey;
   final FocusNode? focusNode;
   final ValueListenable<bool>? visibleListenable;
-  final String? tmuxSession;
-  final int? tmuxWindow;
-  final VoidCallback? onTmuxStateChanged;
-
-  /// Distinguishes this page's saved state from another page's.
-  ///
-  /// Defaults to the server's id, which is only unique while one shell per
-  /// server is open. A host that can open several — the SSH tab — passes
-  /// something per session instead.
-  final String? restorationId;
 
   /// The home tab a page shown in place ([notFromTab] false) lives in: what
   /// "on screen" is checked against, with [visibleListenable].
@@ -168,10 +158,6 @@ final class SshPageArgs {
     this.terminalKey,
     this.focusNode,
     this.visibleListenable,
-    this.tmuxSession,
-    this.tmuxWindow,
-    this.onTmuxStateChanged,
-    this.restorationId,
     this.homeTab = AppTab.ssh,
   }) : assert(
          notFromTab || visibleListenable != null,
@@ -187,7 +173,6 @@ final class SshPageArgs {
     required ValueListenable<bool> visible,
     FocusNode? focusNode,
     VoidCallback? onSessionEnd,
-    String? restorationId,
   }) => SshPageArgs(
     source: source,
     initCmd: initCmd,
@@ -202,7 +187,6 @@ final class SshPageArgs {
     terminalKey: terminalKey,
     focusNode: focusNode,
     visibleListenable: visible,
-    restorationId: restorationId,
     homeTab: homeTab,
   );
 }
@@ -243,7 +227,6 @@ class SSHPageState extends ConsumerState<SSHPage>
         ..answersSudo = widget.args.initCmdSudo);
 
   late final TmuxPageController _tmuxPageController = TmuxPageController(
-    onSnapshot: (_) => widget.args.onTmuxStateChanged?.call(),
     onPhaseChanged: (_) => redrawTmuxWindowBar(),
   );
 
@@ -452,12 +435,6 @@ class SSHPageState extends ConsumerState<SSHPage>
       _connectionFailureDetail = detail;
     });
   }
-
-  /// Current tmux session name (for state restoration)
-  String? get tmuxCurrentSession => _tmuxCurrentSession;
-
-  /// Current tmux window index (for state restoration)
-  int? get tmuxCurrentWindow => _tmuxCurrentWindow;
 
   /// Used to activate the wake lock while at least one terminal page exists.
   static var _sshConnCount = 0;
@@ -911,7 +888,6 @@ class SSHPageState extends ConsumerState<SSHPage>
           toolbarBuilder: _buildTerminalToolbar,
           onCopied: _onTerminalCopied,
           onSelectAll: _onTerminalSelectAll,
-          onPaste: _onTerminalPaste,
         ),
       ),
     );
@@ -1307,34 +1283,21 @@ class SSHPageState extends ConsumerState<SSHPage>
     );
   }
 
-  void _onTerminalCopied() {
-    _showClipboardSuccess();
-    _terminalController.clearSelection();
-  }
+  void _onTerminalCopied() => _terminalController.clearSelection();
 
   void _onTerminalSelectAll() {
     if (!mounted) return;
     _termKey.currentState?.renderTerminal.selectAll();
   }
 
-  Future<void> _onTerminalPaste() async {
-    final value = await Clipboard.getData(Clipboard.kTextPlain);
-    if (!mounted) return;
-    final text = value?.text;
-    if (text == null) return;
-    // `paste`, not `textInput`: it brackets the text when the program asked for
-    // that (DECSET 2004), which is what stops an editor auto-indenting every
-    // line of it and a shell running the newlines as commands.
-    _terminal.paste(text);
-    _terminalController.clearSelection();
-  }
+  Future<void> _onTerminalPaste() =>
+      pasteClipboard(_terminal, _terminalController);
 
   Future<void> _onClipboardAction() async {
     if (_terminalController.selection != null) {
       final selectedText = _termKey.currentState?.renderTerminal.selectedText;
       if (selectedText != null && selectedText.isNotEmpty) {
         await Clipboard.setData(ClipboardData(text: selectedText));
-        _showClipboardSuccess();
         _terminalController.clearSelection();
         return;
       }
@@ -1427,11 +1390,6 @@ class SSHPageState extends ConsumerState<SSHPage>
   void _handleVirtKeySettingsChanged() {
     if (!mounted) return;
     setState(_reloadVirtKeys);
-  }
-
-  void _showClipboardSuccess() {
-    if (!mounted) return;
-    Toast.success(libL10n.success);
   }
 
   Future<void> _insertSudoPassword() async {

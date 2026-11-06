@@ -513,7 +513,6 @@ class ServersNotifier extends _$ServersNotifier {
           newManualDisconnected.add(newSpi.id);
         }
         Stores.setting.serverOrder.put(newOrder);
-        Stores.history.renameSshServer(old.id, newSpi.id);
         ref.read(workspacesProvider.notifier).renameServer(old.id, newSpi.id);
         // Device-local derived state follows the same stable server identity.
         // Keeping the old key would retain an orphan and make the renamed

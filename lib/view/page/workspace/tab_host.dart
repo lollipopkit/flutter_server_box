@@ -174,9 +174,6 @@ class WsTabHost extends ConsumerWidget {
           onSessionEnd: () => workspaces.closeTab(paneId, tab.id),
           focusNode: runtime.focus,
           visibleListenable: runtime.visible,
-          // Per tab: two shells on one server would otherwise share one
-          // restoration bucket.
-          restorationId: 'ws_${tab.id}',
           homeTab: AppTab.workspace,
         ),
       ),

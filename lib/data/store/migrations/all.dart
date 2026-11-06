@@ -31,6 +31,7 @@ import 'package:server_box/data/store/migrations/m033_sync_record.dart';
 import 'package:server_box/data/store/migrations/m034_identity_files.dart';
 import 'package:server_box/data/store/migrations/m035_monitor_cert_sha256.dart';
 import 'package:server_box/data/store/migrations/m036_drop_server_custom_cmd.dart';
+import 'package:server_box/data/store/migrations/m037_drop_tab_sessions.dart';
 import 'package:server_box/data/store/schema.dart';
 
 /// Every migration, ordered, in the one place that names them.
@@ -84,6 +85,7 @@ const kSchemaMigrations = <SchemaMigration>[
   IdentityFilesMigration(),
   MonitorCertSha256Migration(),
   DropServerCustomCmdMigration(),
+  DropTabSessionsMigration(),
 ];
 
 /// The steps a restore runs on the settings it brought back, in schema order.

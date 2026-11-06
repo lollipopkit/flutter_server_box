@@ -398,20 +398,11 @@ extension BackupV2Restore on BackupV2 {
           serverIds['${entry.key}'] ?? '${entry.key}': entry.value,
       };
     }
-    for (final key in const ['sshTabs', 'fileTabs']) {
-      final value = restored[key];
-      if (value is! String || value.isEmpty) continue;
-      try {
-        restored[key] = json.encode(
-          _jsonWithRestoredServerIds(json.decode(value), serverIds),
-        );
-      } catch (e, s) {
-        // Tabs that name servers by their old ids point at nothing: none
-        // rather than those.
-        Loggers.app.warning('Restore: $key unreadable, dropped', e, s);
-        restored.remove(key);
-      }
-    }
+    // The terminal and file tabs' saved sessions, which a cold start no longer
+    // reopens (m037).
+    // TODO: Remove once supported backups can no longer contain these keys.
+    restored.remove('sshTabs');
+    restored.remove('fileTabs');
     return restored;
   }
 }
@@ -498,26 +489,6 @@ Object? _recordWithRestoredServerId(
   final id = record['serverId'];
   if (id is String) record['serverId'] = serverIds[id] ?? id;
   return record;
-}
-
-Object? _jsonWithRestoredServerIds(
-  Object? value,
-  Map<String, String> serverIds,
-) {
-  if (value is List) {
-    return [
-      for (final item in value) _jsonWithRestoredServerIds(item, serverIds),
-    ];
-  }
-  if (value is! Map) return value;
-  return {
-    for (final entry in value.entries)
-      '${entry.key}': switch ('${entry.key}') {
-        'sourceId' || 'serverId' when entry.value is String =>
-          serverIds[entry.value] ?? entry.value,
-        _ => _jsonWithRestoredServerIds(entry.value, serverIds),
-      },
-  };
 }
 
 Map<String, Object?> _mergeDataForStore(

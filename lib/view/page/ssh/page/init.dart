@@ -1030,7 +1030,6 @@ extension _Init on SSHPageState {
   /// longer be restored, e.g. after it was killed server-side).
   void _clearTmuxState() {
     _tmuxPageController.clear();
-    widget.args.onTmuxStateChanged?.call();
   }
 
   /// After a reconnect that did not restore the terminal — see
@@ -1060,21 +1059,16 @@ extension _Init on SSHPageState {
 
   void _writeLn(String p0) => _sess.writeLn(p0);
 
-  TmuxRestoreState get _restoreTmuxState {
-    return resolveTmuxRestoreState(
-      argsSession: widget.args.tmuxSession,
-      argsWindow: widget.args.tmuxWindow,
-      restorableSession: _tmuxPageController.restorableSessionName,
-      restorableWindow: _tmuxPageController.restorableWindowIndex,
-    );
-  }
+  TmuxRestoreState get _restoreTmuxState => TmuxRestoreState(
+    sessionName: _tmuxPageController.restorableSessionName,
+    windowIndex: _tmuxPageController.restorableWindowIndex,
+  );
 
   void _saveTmuxState({required String sessionName, int? windowIndex}) {
     _tmuxPageController.saveState(
       sessionName: sessionName,
       windowIndex: windowIndex,
     );
-    widget.args.onTmuxStateChanged?.call();
   }
 
   /// Only where [_canTmux] says so — every caller checks, and the null

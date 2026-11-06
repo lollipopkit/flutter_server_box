@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -7,7 +5,6 @@ import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
-import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/view/agent/screen.dart';
 import 'package:server_box/view/page/server/widget/server_side_tile.dart';
 import 'package:server_box/view/page/storage/file_pane.dart';
@@ -38,13 +35,6 @@ class FileTabPage extends ConsumerStatefulWidget {
 /// nothing else the tab cares about, which is why they are two shapes of one
 /// session rather than two kinds of tab.
 sealed class FileSession {
-  FileSession({this.initialPath});
-
-  /// Where the page opens. Separate from [currentPath] because the page reads
-  /// it once, when it is created; changing it later would do nothing and
-  /// pretending otherwise invites someone to try.
-  final String? initialPath;
-
   /// Where the browser is now, reported as it moves. Null until the first
   /// listing lands.
   String? currentPath;
@@ -56,22 +46,11 @@ sealed class FileSession {
   /// a shared sink would have them overwriting each other.
   final actions = ValueNotifier<List<BarAction>>(const []);
 
-  String? get path => currentPath ?? initialPath;
-
-  /// Written with an explicit `kind`, because "local is the one with no
-  /// serverId" was a rule the reader had to know and the writer never stated.
-  Map<String, dynamic> toRestorable();
-
   void dispose() => actions.dispose();
 }
 
 /// This device's own files.
-final class LocalFileSession extends FileSession {
-  LocalFileSession({super.initialPath});
-
-  @override
-  Map<String, dynamic> toRestorable() => {'kind': _kindLocal, 'path': path};
-}
+final class LocalFileSession extends FileSession {}
 
 /// A server's files, however they are reached.
 ///
@@ -79,20 +58,10 @@ final class LocalFileSession extends FileSession {
 /// capability when the page opens, and a server that gains sshd later changes
 /// backend without changing what kind of tab it is.
 final class ServerFileSession extends FileSession {
-  ServerFileSession({required this.spi, super.initialPath});
+  ServerFileSession({required this.spi});
 
   final Spi spi;
-
-  @override
-  Map<String, dynamic> toRestorable() => {
-    'kind': _kindServer,
-    'serverId': spi.id,
-    'path': path,
-  };
 }
-
-const _kindLocal = 'local';
-const _kindServer = 'server';
 
 class _FileTabPageState extends ConsumerState<FileTabPage>
     with AutomaticKeepAliveClientMixin {
@@ -130,18 +99,6 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
   @override
   bool get wantKeepAlive => true;
 
-  /// Whether there is saved state on its way back, known before anything
-  /// decides this tab is empty.
-  ///
-  /// Read from the store rather than from Flutter's restoration, which this
-  /// page used until it was measured: `restoreState` ran with a null bucket,
-  /// so nothing registered with it was ever written and "reopens where it was
-  /// left" had never worked. The terminal tab moved to the same store for the
-  /// same reason — and a store survives what saved instance state does not,
-  /// which is the app being killed in the background.
-  late final bool _hasSavedSessions =
-      Stores.history.fileTabs.fetch().isNotEmpty;
-
   /// Whether this page has already chosen what to open with. Once, on the way
   /// to the first frame; an empty tab after that is one the user emptied.
   bool _chosenInitial = false;
@@ -153,8 +110,8 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
       () {
         final at = switch (_sessions.current?.data) {
           final ServerFileSession s =>
-            'the files of ${AgentScreen.server(s.spi)}${_at(s.path)}',
-          final s? => "this device's files${_at(s.path)}",
+            'the files of ${AgentScreen.server(s.spi)}${_at(s.currentPath)}',
+          final s? => "this device's files${_at(s.currentPath)}",
           null => null,
         };
         // The column is drawn only while split, and left set when it stops.
@@ -164,11 +121,6 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
             : 'the transfer list, over $at';
       },
     );
-    if (_hasSavedSessions) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _restore();
-      });
-    }
     // Anything queued before this tab existed — tabs are built when first
     // visited, so a request from the server list arrives before there is
     // anything here to receive it.
@@ -183,10 +135,8 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
     if (_chosenInitial) return;
     _chosenInitial = true;
 
-    // What was saved comes back, and what was asked for while this tab did not
-    // exist is about to be drained. Either way this page is not empty and has
-    // nothing to default to.
-    if (_hasSavedSessions) return;
+    // What was asked for while this tab did not exist is about to be drained:
+    // this page is not empty and has nothing to default to.
     if (ref.read(sftpRequestsProvider).isNotEmpty) return;
 
     // Open on this device. Answering "which files" with a picker made the
@@ -293,7 +243,7 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
       appBar: split ? _sessionBar : _tabBar,
       body: SessionTabsView<FileSession>(
         controller: _sessions,
-        // Restored sessions land while another tab may be the one on screen.
+        // Sessions can open while another tab is the one on screen.
         mayFocus: () => ref.read(currentHomeTabProvider) == AppTab.file,
         // Page 0 is the picker's on one column. Beside a rail it is the empty
         // surface, and not the picker: the rail is already that list.
@@ -305,14 +255,12 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
           void onPathChanged(String path) {
             if (session.currentPath == path) return;
             session.currentPath = path;
-            _save();
           }
 
           return switch (session) {
             LocalFileSession() => LocalFilePage(
               key: ValueKey(tab.id),
               args: LocalFilePageArgs(
-                initDir: session.initialPath,
                 actionsSink: session.actions,
                 onPathChanged: onPathChanged,
               ),
@@ -321,7 +269,6 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
               key: ValueKey(tab.id),
               args: SftpPageArgs(
                 spi: spi,
-                initPath: session.initialPath,
                 actionsSink: session.actions,
                 onPathChanged: onPathChanged,
               ),
@@ -389,36 +336,18 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
   /// What a session's row in the sheet says under the name: where that browser
   /// is. Two tabs on one server are told apart by this and by nothing else.
   String? _sessionPath(int index) =>
-      _sessions.tabs.elementAtOrNull(index - 1)?.data.path;
+      _sessions.tabs.elementAtOrNull(index - 1)?.data.currentPath;
 }
 
 extension _Sessions on _FileTabPageState {
-  void _openLocal({String? initialPath, bool select = true}) {
-    _add(
-      preferred: libL10n.device,
-      session: LocalFileSession(initialPath: initialPath),
-      select: select,
-    );
-  }
+  void _openLocal() =>
+      _add(preferred: libL10n.device, session: LocalFileSession());
 
-  void _openRemote(Spi spi, {String? initialPath, bool select = true}) {
-    _add(
-      preferred: spi.name,
-      session: ServerFileSession(spi: spi, initialPath: initialPath),
-      select: select,
-    );
-  }
+  void _openRemote(Spi spi) =>
+      _add(preferred: spi.name, session: ServerFileSession(spi: spi));
 
-  /// [select] is off while restoring: selecting each as it arrives would
-  /// animate through every session to land on the last.
-  void _add({
-    required String preferred,
-    required FileSession session,
-    required bool select,
-  }) {
+  void _add({required String preferred, required FileSession session}) {
     final tab = _sessions.add(preferred: preferred, build: (_, _, _) => session);
-    if (!select) return;
-    _save();
     _sessions.select(_sessions.names.indexOf(tab.name));
   }
 
@@ -447,72 +376,6 @@ extension _Sessions on _FileTabPageState {
     // After the controller has let go of it, and after the frame in which the
     // page view still has the page that writes to it.
     WidgetsBinding.instance.addPostFrameCallback((_) => session.dispose());
-    if (mounted) _save();
-  }
-
-  void _save() {
-    Stores.history.fileTabs.put(
-      jsonEncode([for (final tab in _sessions.tabs) tab.data.toRestorable()]),
-    );
-  }
-
-  /// Reopens what was being browsed, where it was being browsed.
-  ///
-  /// Unlike a terminal there is nothing still alive on the far side — a remote
-  /// tab reconnects. What this restores is the intent: which places, and where
-  /// in them.
-  void _restore() {
-    final List<dynamic> entries;
-    try {
-      entries = jsonDecode(Stores.history.fileTabs.fetch()) as List;
-    } catch (e, st) {
-      Loggers.app.warning('Unreadable file tab state', e, st);
-      return;
-    }
-
-    // Read once, not once per tab.
-    final servers = {for (final spi in Stores.server.fetch()) spi.id: spi};
-
-    var restored = 0;
-    for (final entry in entries) {
-      if (entry is! Map) continue;
-      // Tested rather than cast: `as String?` throws on a value that is neither
-      // and takes every remaining tab with it, which is what reading each entry
-      // on its own is meant to avoid.
-      final rawPath = entry['path'];
-      final path = rawPath is String ? rawPath : null;
-      final serverId = entry['serverId'];
-      // A record written before `kind` existed says nothing, and local was
-      // implied by the absence of a server. Both shapes read the same way.
-      // TODO: drop the `serverId == null` fallback once no saved tab set
-      // predates the `kind` field.
-      final isLocal = entry['kind'] == _kindLocal || serverId == null;
-      if (isLocal) {
-        _openLocal(initialPath: path, select: false);
-      } else {
-        final spi = servers[serverId];
-        // Only "the server is gone". It used to also require `_canBrowse`,
-        // which for a monitor server is the agent's own answer and is false
-        // until the first poll comes back — so restoring on the first frame
-        // dropped those tabs, and the `_save()` below then wrote the shortened
-        // list back and lost them for good. `ServerFilePage` already says so
-        // when a server genuinely cannot serve files, which is the right place
-        // for an answer that arrives later than this.
-        if (spi == null) continue;
-        _openRemote(spi, initialPath: path, select: false);
-      }
-      restored++;
-    }
-
-    // Everything it remembered is gone — every server deleted, or switched to
-    // a connection that cannot carry SFTP. That is the empty tab this page no
-    // longer opens with, so it falls back to the same default a first run gets.
-    if (restored == 0) {
-      _openLocal();
-      return;
-    }
-    _save();
-    _sessions.select(1);
   }
 }
 
