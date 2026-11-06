@@ -74,18 +74,19 @@ extension _SettingsLayout on _SettingsPageState {
     // and a row of tabs starting above the menu points at nothing there.
     final level = _levelFor(nodes, selected.id);
     final actions = _buildActions();
-    final pushed = ModalRoute.canPopOf(context) ?? false;
+    // While searching it names the results it is over, as the narrow bar does,
+    // and keeps the way out.
     final header = _SettingsContentHeader(
-      title: _branchOf(nodes, selected.id)?.title ?? selected.title,
-      nodes: level,
+      title: _searching
+          ? libL10n.search
+          : _branchOf(nodes, selected.id)?.title ?? selected.title,
+      nodes: _searching ? const [] : level,
       selectedId: selected.id,
       onTap: _onSelect,
       actions: actions,
-      // Shown in place, the home rail is the way out.
-      leading: pushed ? BackButton(onPressed: _leave) : null,
     );
 
-    final scaffold = Scaffold(
+    final page = Scaffold(
       // None on a wide window. The menu says which subject, the header over
       // the content says which page and carries the two buttons that act on
       // the settings as a whole, and the settings are shown beside the rail
@@ -115,7 +116,7 @@ extension _SettingsLayout on _SettingsPageState {
                   ? BackButton(
                       onPressed: _searching ? _clearSearch : _onTabBack,
                     )
-                  : null,
+                  : BackButton(onPressed: _leave),
               actions: actions,
             ),
       // The same column every other list-beside-content page has, rather than
@@ -150,12 +151,10 @@ extension _SettingsLayout on _SettingsPageState {
             surfaceBuilder: (ctx, split) => split
                 ? Column(
                     children: [
-                      // Hidden rather than taken out of the tree: `Offstage`
-                      // in a column takes no height, and a `Column` whose
-                      // children come and go rebuilds what is under them —
-                      // which here is the navigator, and rebuilding that is
-                      // losing every page in it.
-                      Offstage(offstage: _searching, child: header),
+                      // Always here, never `if`: a child of this `Column`
+                      // coming and going rebuilds the navigator under it,
+                      // and every page in it with it.
+                      header,
                       Expanded(
                         child: Stack(
                           children: [
@@ -206,6 +205,17 @@ extension _SettingsLayout on _SettingsPageState {
           ),
         ),
       ),
+    );
+
+    // Back is this page's while the pane is the one in use. Put away, it lets
+    // back through, or the app would claim every back and the system's own
+    // animation home would never show.
+    final scaffold = PopScope(
+      canPop: !BackScope.of(context),
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _onBack();
+      },
+      child: page,
     );
 
     // The chord the field advertises, actually bound. `Focus` so the binding
@@ -278,9 +288,21 @@ extension _SettingsLayout on _SettingsPageState {
     ),
   );
 
-  /// Out of the settings rather than out of the level on screen, which is
-  /// where platform back goes while the content has one.
-  void _leave() => Navigator.of(context).pop();
+  /// Out of the settings, rather than out of the level on screen.
+  void _leave() => unawaited(widget.onLeave());
+
+  /// Back, in the order it means here: the search over everything, then what
+  /// the content can go back from, then out of the settings.
+  void _onBack() {
+    final content = _contentNav.currentState;
+    if (_searching) {
+      _clearSearch();
+    } else if (content != null && content.canPop()) {
+      unawaited(content.maybePop());
+    } else {
+      _leave();
+    }
+  }
 
   Widget _buildSearchField() => _SettingsSearchField(
     controller: _searchCtrl,
@@ -363,8 +385,9 @@ extension _SettingsLayout on _SettingsPageState {
     // Platform back belongs to this stack while it has somewhere to go. Without
     // a pop handler the enclosing navigator removes the whole settings route,
     // skipping whichever level or manually pushed page is currently on top.
-    return NavigatorPopHandler(
-      onPopWithResult: (_) => _contentNav.currentState?.pop(),
+    return NotificationListener<NavigationNotification>(
+      // Answered for the whole page by the `PopScope` around it.
+      onNotification: (_) => true,
       // One column keeps the settings' bar over this navigator, so a page with
       // a bar of its own pushed here showed two, and the settings' actions sat
       // over the page's own (#1819). It goes over the whole window instead.
@@ -400,11 +423,9 @@ extension _SettingsLayout on _SettingsPageState {
     final reduceMotion = context.reduceMotion;
 
     return Stack(
-      // Nothing here should reach past the floor of this box — the page is
-      // pushed into the home tab's navigator, and the `Scaffold` paints its
-      // bottom bar after the body, so anything that does is covered rather than
-      // shown. `none` only keeps the clip from being what cuts it: the bar
-      // carries its own margin, so it stops short of the floor on its own.
+      // Nothing here should reach past the floor of this box. `none` only keeps
+      // the clip from being what cuts it: the bar carries its own margin, so it
+      // stops short of the floor on its own.
       clipBehavior: Clip.none,
       children: [
         MediaQuery(

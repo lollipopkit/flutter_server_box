@@ -10,6 +10,7 @@
 library;
 
 import 'dart:async';
+import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,7 +43,7 @@ void _useWideView(WidgetTester tester) {
   addTearDown(tester.view.reset);
 }
 
-Widget _app() => ProviderScope(
+Widget _app({Future<bool> Function()? onLeave}) => ProviderScope(
   child: MaterialApp(
     locale: const Locale('en'),
     localizationsDelegates: const [
@@ -53,7 +54,7 @@ Widget _app() => ProviderScope(
       builder: (context) {
         app_locale.l10n = AppLocalizations.of(context)!;
         context.setLibL10n();
-        return const SettingsPage();
+        return SettingsPage(onLeave: onLeave ?? () async => true);
       },
     ),
   ),
@@ -88,6 +89,12 @@ NavigatorState _contentNav(WidgetTester tester) {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  // The search builds the rows, and one of them reads `Paths.doc`.
+  setUpAll(() {
+    Paths.doc = Directory.systemTemp.createTempSync('server-box-pane-').path;
+  });
+  tearDownAll(() => Directory(Paths.doc).deleteSync(recursive: true));
 
   setUp(() async {
     await openTestDb();
@@ -215,5 +222,167 @@ void main() {
       isNull,
       reason: 'the content navigator still has a page in it',
     );
+  });
+
+  testWidgets('a pushed page with unsaved edits is asked, and can refuse', (
+    tester,
+  ) async {
+    _useWideView(tester);
+    await tester.pumpWidget(_app());
+    await tester.pump(const Duration(milliseconds: 300));
+
+    var answer = false;
+    var asked = 0;
+    unawaited(
+      _contentNav(tester).push(
+        MaterialPageRoute<void>(
+          builder: (_) => PopGuard(
+            enabled: true,
+            confirm: () async {
+              asked++;
+              return answer;
+            },
+            child: const Scaffold(body: Text('dirty editor')),
+          ),
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+
+    await tester.tap(find.text(libL10n.about).first);
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(asked, 1);
+    expect(find.text('dirty editor'), findsOneWidget);
+
+    // Platform back reaches the editor rather than skipping past it.
+    await tester.binding.handlePopRoute();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(asked, 2);
+    expect(find.text('dirty editor'), findsOneWidget);
+
+    answer = true;
+    await tester.tap(find.text(libL10n.about).first);
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(asked, 3);
+    expect(find.text('dirty editor'), findsNothing);
+  });
+
+  group('in the home pane', () {
+    for (final (name, width) in [('wide', 1400.0), ('narrow', 400.0)]) {
+      testWidgets('$name: back and its button put the settings away', (
+        tester,
+      ) async {
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = Size(width, 900);
+        addTearDown(tester.view.reset);
+        var left = 0;
+        await tester.pumpWidget(
+          _app(
+            onLeave: () async {
+              left++;
+              return true;
+            },
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+
+        await tester.binding.handlePopRoute();
+        await tester.pump();
+        expect(left, 1);
+
+        // Wide, the home rail beside the settings is the way out.
+        if (width < 1000) {
+          await tester.tap(find.byType(BackButton).hitTestable().first);
+          await tester.pump();
+          expect(left, 2);
+        } else {
+          expect(find.byType(BackButton), findsNothing);
+        }
+      });
+    }
+
+    testWidgets('back leaves a pushed page and a search before the settings', (
+      tester,
+    ) async {
+      _useWideView(tester);
+      var left = 0;
+      await tester.pumpWidget(
+        _app(
+          onLeave: () async {
+            left++;
+            return true;
+          },
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+
+      unawaited(
+        _contentNav(tester).push(
+          MaterialPageRoute<void>(
+            builder: (_) => const Scaffold(body: Text('pushed editor')),
+          ),
+        ),
+      );
+      for (var i = 0; i < 6; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      await tester.binding.handlePopRoute();
+      for (var i = 0; i < 6; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(find.text('pushed editor'), findsNothing);
+      expect(left, 0);
+
+      await tester.enterText(find.byType(TextField).first, 'zzzz');
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.binding.handlePopRoute();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(left, 0);
+      expect(
+        tester.widget<TextField>(find.byType(TextField).first).controller!.text,
+        isEmpty,
+      );
+
+      await tester.binding.handlePopRoute();
+      await tester.pump();
+      expect(left, 1);
+    });
+
+    testWidgets('put away, the settings let back through', (tester) async {
+      _useWideView(tester);
+      var left = 0;
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            localizationsDelegates: const [
+              ...app_locale.appLocalizationsDelegates,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Builder(
+              builder: (context) {
+                app_locale.l10n = AppLocalizations.of(context)!;
+                context.setLibL10n();
+                return BackScope(
+                  enabled: false,
+                  child: SettingsPage(
+                    onLeave: () async {
+                      left++;
+                      return true;
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final route = ModalRoute.of(tester.element(find.byType(SettingsPage)))!;
+      expect(route.popDisposition, isNot(RoutePopDisposition.doNotPop));
+      expect(left, 0);
+    });
   });
 }

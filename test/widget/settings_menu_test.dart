@@ -146,7 +146,14 @@ void main() {
             body: Builder(
               builder: (ctx) => TextButton(
                 onPressed: () => Navigator.of(ctx).push(
-                  MaterialPageRoute<void>(builder: (_) => const SettingsPage()),
+                  MaterialPageRoute<void>(
+                    builder: (page) => SettingsPage(
+                      onLeave: () async {
+                        Navigator.of(page).pop();
+                        return true;
+                      },
+                    ),
+                  ),
                 ),
                 child: const Text('open'),
               ),
@@ -175,63 +182,37 @@ void main() {
     expect(find.byKey(settingsTabsKey), findsNothing);
   });
 
-  testWidgets('pushed onto a wide window, the header leads back out', (
+  testWidgets('wide, beside the rail, the header has no way back', (
     tester,
   ) async {
-    // A wide window has no bar; pushed, nothing beside it leads out (#1886).
     await pump(tester, width: 1200);
 
     expect(find.byType(AppBar), findsNothing);
-    expect(headerBack, findsOneWidget);
-
-    await tester.tap(headerBack);
-    await settle(tester, 40);
-    expect(find.byType(SettingsPage), findsNothing);
-    expect(find.text('open'), findsOneWidget);
+    expect(headerBack, findsNothing);
   });
 
-  testWidgets('shown in place, the wide menu has no way back of its own', (
-    tester,
-  ) async {
-    tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(1200, 900);
-    addTearDown(tester.view.reset);
-    await tester.pumpWidget(
-      ProviderScope(
-        child: MaterialApp(
-          localizationsDelegates: appLocalizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          builder: (context, child) =>
-              ResponsivePoints.builder(context, child!),
-          home: const SettingsPage(),
-        ),
-      ),
-    );
-    await settle(tester);
-    addTearDown(() => tester.pumpWidget(const SizedBox.shrink()));
-
-    expect(backBtn, findsNothing);
-  });
-
-  testWidgets('a page opened narrow keeps a way back once widened', (
+  testWidgets('narrow, the bar leads out of the settings at their root', (
     tester,
   ) async {
     await pump(tester, width: 600);
-    expect(backBtn, findsOneWidget);
 
-    tester.view.physicalSize = const Size(1200, 900);
-    await settle(tester);
-
-    expect(find.byType(AppBar), findsNothing);
-    expect(headerBack, findsOneWidget);
+    await tester.tap(backBtn);
+    await settle(tester, 40);
+    expect(find.byType(SettingsPage), findsNothing);
   });
 
-  testWidgets('with the menu folded, the way back stays', (tester) async {
-    Stores.setting.paneListCollapsed.put(true);
+  testWidgets('searching names the results over the content', (tester) async {
     await pump(tester, width: 1200);
+    await tester.enterText(find.byType(TextField).first, 'zzzz');
+    await settle(tester);
 
-    expect(find.byKey(settingsMenuKey).hitTestable(), findsNothing);
-    expect(headerBack, findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(settingsHeaderKey),
+        matching: find.text(libL10n.search),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('the wide menu is a rail, not a list of cards', (tester) async {

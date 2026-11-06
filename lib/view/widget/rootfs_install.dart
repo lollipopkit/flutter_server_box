@@ -181,7 +181,7 @@ Future<bool> _confirmBeta(BuildContext context) async {
                 value: noMore,
                 onChanged: (v) => setState(() => noMore = v ?? false),
               ),
-              Text(l10n.noPromptAgain),
+              Expanded(child: Text(l10n.noPromptAgain)),
             ],
           ),
         ),
