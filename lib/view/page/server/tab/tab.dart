@@ -62,8 +62,6 @@ class ServerPage extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<ServerPage> createState() => _ServerPageState();
-
-  static const route = AppRouteNoArg(page: ServerPage.new, path: '/servers');
 }
 
 /// How long a card takes to grow into the page, and to shrink back.

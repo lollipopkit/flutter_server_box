@@ -84,7 +84,12 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     super.build(context);
 
     final section = widget.section;
-    if (section == null) return Scaffold(body: SafeArea(child: _buildBody));
+    if (section == null) {
+      return Scaffold(
+        appBar: CustomAppBar(title: Text(libL10n.backup)),
+        body: SafeArea(child: _buildBody),
+      );
+    }
 
     // Shown in the settings content pane, which brings the Scaffold and the
     // bar. No heading either, for the reason [AppSettingsPage] gives: the menu

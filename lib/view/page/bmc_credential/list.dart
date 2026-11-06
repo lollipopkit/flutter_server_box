@@ -14,11 +14,6 @@ import 'package:server_box/view/page/bmc_credential/edit.dart';
 class BmcCredentialsListPage extends ConsumerWidget {
   const BmcCredentialsListPage({super.key});
 
-  static const route = AppRouteNoArg(
-    page: BmcCredentialsListPage.new,
-    path: '/bmc_credential',
-  );
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final creds = ref.watch(bmcCredentialProvider).creds;

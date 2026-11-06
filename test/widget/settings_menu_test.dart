@@ -88,6 +88,12 @@ void main() {
   /// the screen — the tabs show the level and nothing else.
   final backBtn = find.byType(BackButton);
 
+  /// The way out of settings pushed onto a wide window.
+  final headerBack = find.descendant(
+    of: find.byKey(settingsHeaderKey),
+    matching: find.byType(BackButton),
+  );
+
   String barTitle(WidgetTester tester) => tester
       .widget<Text>(
         find
@@ -167,6 +173,65 @@ void main() {
     // The one level of nesting there is stays shut until asked for.
     expect(menuRow(libL10n.sequence), findsNothing);
     expect(find.byKey(settingsTabsKey), findsNothing);
+  });
+
+  testWidgets('pushed onto a wide window, the header leads back out', (
+    tester,
+  ) async {
+    // A wide window has no bar; pushed, nothing beside it leads out (#1886).
+    await pump(tester, width: 1200);
+
+    expect(find.byType(AppBar), findsNothing);
+    expect(headerBack, findsOneWidget);
+
+    await tester.tap(headerBack);
+    await settle(tester, 40);
+    expect(find.byType(SettingsPage), findsNothing);
+    expect(find.text('open'), findsOneWidget);
+  });
+
+  testWidgets('shown in place, the wide menu has no way back of its own', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1200, 900);
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          localizationsDelegates: appLocalizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          builder: (context, child) =>
+              ResponsivePoints.builder(context, child!),
+          home: const SettingsPage(),
+        ),
+      ),
+    );
+    await settle(tester);
+    addTearDown(() => tester.pumpWidget(const SizedBox.shrink()));
+
+    expect(backBtn, findsNothing);
+  });
+
+  testWidgets('a page opened narrow keeps a way back once widened', (
+    tester,
+  ) async {
+    await pump(tester, width: 600);
+    expect(backBtn, findsOneWidget);
+
+    tester.view.physicalSize = const Size(1200, 900);
+    await settle(tester);
+
+    expect(find.byType(AppBar), findsNothing);
+    expect(headerBack, findsOneWidget);
+  });
+
+  testWidgets('with the menu folded, the way back stays', (tester) async {
+    Stores.setting.paneListCollapsed.put(true);
+    await pump(tester, width: 1200);
+
+    expect(find.byKey(settingsMenuKey).hitTestable(), findsNothing);
+    expect(headerBack, findsOneWidget);
   });
 
   testWidgets('the wide menu is a rail, not a list of cards', (tester) async {

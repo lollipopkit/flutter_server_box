@@ -75,6 +75,10 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> {
   Widget build(BuildContext context) {
     return FutureWidget<String>(
       future: _root,
+      // Pushed, nothing around these leads back; the browser brings its own
+      // bar once the root is there.
+      loading: _framed(SizedLoading.medium),
+      error: (e, s) => _framed(ErrorView.es(e, s)),
       success: (root) => FileBrowserPage(
         args: FileBrowserArgs(
           backend: _backend,
@@ -96,6 +100,13 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> {
       ),
     );
   }
+
+  Widget _framed(Widget child) => widget.args?.actionsSink != null
+      ? child
+      : Scaffold(
+          appBar: CustomAppBar(title: Text(libL10n.device)),
+          body: Center(child: child),
+        );
 
   List<BarAction> _actions(FileBrowserHandle handle) => [
     if (isDesktop || isIOS)

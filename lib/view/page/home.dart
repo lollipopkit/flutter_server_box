@@ -50,8 +50,6 @@ class HomePage extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<HomePage> createState() => _HomePageState();
-
-  static const route = AppRouteNoArg(page: HomePage.new, path: '/');
 }
 
 class _HomePageState extends ConsumerState<HomePage>

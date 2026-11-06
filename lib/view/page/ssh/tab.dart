@@ -36,8 +36,6 @@ class SSHTabPage extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<SSHTabPage> createState() => _SSHTabPageState();
-
-  static const route = AppRouteNoArg(page: SSHTabPage.new, path: '/ssh');
 }
 
 /// What a terminal tab is, beyond the name, focus and visibility that

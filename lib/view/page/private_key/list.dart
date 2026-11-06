@@ -17,11 +17,6 @@ class PrivateKeysListPage extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<PrivateKeysListPage> createState() => _PrivateKeyListState();
-
-  static const route = AppRouteNoArg(
-    page: PrivateKeysListPage.new,
-    path: '/private_key',
-  );
 }
 
 class _PrivateKeyListState extends ConsumerState<PrivateKeysListPage>
