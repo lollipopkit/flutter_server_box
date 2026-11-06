@@ -36,6 +36,8 @@ final class TmuxControlShellSession implements ShellSession {
   StreamSubscription<TmuxControlSnapshot>? _snapshotSubscription;
   Future<void> _done = Future.value();
   bool _closed = false;
+  bool _autoZoomed = false;
+  bool _autoZoomApplied = false;
   TmuxPaneId? _normalizedPaneId;
 
   /// A pane's program status report, progress bar or shell integration mark.
@@ -69,6 +71,19 @@ final class TmuxControlShellSession implements ShellSession {
   void resizeTerminal(int width, int height) {
     if (_closed) return;
     _session.resizeTerminal(width, height);
+    final activeWindow = _client.snapshot?.activeWindow;
+    if (!_autoZoomApplied &&
+        activeWindow != null &&
+        activeWindow.panes.length > 1 &&
+        !activeWindow.zoomed &&
+        width < 80) {
+      final activePane = _client.snapshot?.activePaneId;
+      if (activePane != null) {
+        _autoZoomed = true;
+        _autoZoomApplied = true;
+        _client.send('resize-pane -Z -t $activePane');
+      }
+    }
     _client.resizeWindow(width, height);
   }
 
@@ -78,6 +93,16 @@ final class TmuxControlShellSession implements ShellSession {
   @override
   void close() {
     if (_closed) return;
+    final activeWindow = _client.snapshot?.activeWindow;
+    if (_autoZoomed &&
+        !_client.isClosed &&
+        activeWindow != null &&
+        activeWindow.zoomed) {
+      final activePane = _client.snapshot?.activePaneId;
+      if (activePane != null) {
+        _client.send('resize-pane -Z -t $activePane');
+      }
+    }
     _flushOutputNormalizer();
     _closed = true;
     unawaited(_client.dispose());

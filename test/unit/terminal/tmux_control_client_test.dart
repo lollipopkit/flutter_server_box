@@ -45,7 +45,7 @@ void main() {
       expect(
         shell.writes,
         contains(
-          r"list-windows -F '#{window_id}	#{window_index}	#{q:window_name}	#{window_active}'",
+          r"list-windows -F '#{window_id}	#{window_index}	#{q:window_name}	#{window_active}	#{window_zoomed_flag}'",
         ),
       );
       expect(shell.writes, contains("capture-pane -p -e -S -1000 -t '%0'"));
@@ -519,6 +519,20 @@ void main() {
       expect(client.snapshot!.activePaneId, TmuxPaneId('%3'));
       expect(client.snapshot!.activeWindow!.panes.last.active, isTrue);
       expect(shell.writes, contains("capture-pane -p -e -S -1000 -t '%3'"));
+      await client.dispose();
+      shell.close();
+    });
+
+    test('toggles pane zoom with resize-pane -Z', () async {
+      final shell = _FakeTmuxShell();
+      final client = TmuxControlClient(shell);
+      final initialized = client.initialize();
+      shell.emit('\x1bP1000p%begin 1 100 1\n%end 1 100 1\n');
+      await initialized;
+      await _pumpEventQueue();
+
+      await client.toggleZoom(paneId: TmuxPaneId('%0'));
+      expect(shell.writes, contains('resize-pane -Z -t %0'));
       await client.dispose();
       shell.close();
     });
