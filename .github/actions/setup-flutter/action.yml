@@ -64,12 +64,21 @@ runs:
         key: ${{ steps.where.outputs.CACHE-KEY }}
 
     - name: Restore the pub cache
+      id: pub
       if: inputs.cache == 'true' && inputs.step == 'restore'
       uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: ${{ steps.where.outputs.PUB-CACHE-PATH }}
         key: ${{ steps.where.outputs.PUB-CACHE-KEY }}-${{ hashFiles('**/pubspec.lock') }}
         restore-keys: ${{ steps.where.outputs.PUB-CACHE-KEY }}-
+
+    # A pub cache from another lock: pub resolves a git package whose locked
+    # commit its clone lacks without that package's dependencies, and
+    # `package_graph.json` then fails to parse. Cloned again, it is whole.
+    - name: Drop git packages from an older pub cache
+      if: inputs.cache == 'true' && inputs.step == 'restore' && steps.pub.outputs.cache-hit != 'true'
+      shell: bash
+      run: rm -rf "${{ steps.where.outputs.PUB-CACHE-PATH }}/git"
 
     # Skips the download when the SDK was restored above.
     - if: inputs.step == 'restore'
