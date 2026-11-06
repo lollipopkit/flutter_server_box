@@ -62,7 +62,7 @@ void main() {
   });
 
   /// Everything the terminal was told to send upstream, which is where a
-  /// paste lands: `_onTerminalPaste` calls `Terminal.textInput`.
+  /// paste lands: `pasteClipboard` calls `Terminal.paste`.
   late List<String> typed;
 
   Future<TerminalSession> pump(WidgetTester tester) async {

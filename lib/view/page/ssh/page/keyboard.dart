@@ -46,8 +46,8 @@ extension _Keyboard on SSHPageState {
     if (event is KeyDownEvent) {
       // The clipboard chords are deliberately *not* here. `TerminalView` binds
       // all of them already — Cmd+C/V, Ctrl+Shift+C/V and Ctrl+V, in
-      // `defaultTerminalShortcuts` — and its intents call the same
-      // `onPaste`/`onCopied` this page passes it. Handling them here as well
+      // `defaultTerminalShortcuts` — and its intents paste and copy for this
+      // page (`onCopied` is the one it passes). Handling them here as well
       // ran both: this is a `HardwareKeyboard` handler and that is the focus
       // tree, two paths that each see every event, so one Cmd+V pasted twice.
       //

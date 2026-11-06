@@ -367,7 +367,6 @@ class _VirtConsolesState extends ConsumerState<_VirtConsoles> {
     AppTab.virt,
     visible: _textVisible,
     focusNode: _textFocus,
-    restorationId: 'virt_$_textId',
     // The console hung up, or failed to connect: back to "Connect".
     onSessionEnd: () {
       if (mounted) setState(() => _text = null);

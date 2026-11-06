@@ -942,9 +942,7 @@ void main() {
           'tcp://10.0.0.2:2375',
         );
         expect(Stores.history.get<List>('sshServerHistory'), isNull);
-        expect(json.decode(Stores.history.sshTabs.fetch()) as List, [
-          {'sourceId': local.id},
-        ]);
+        expect(Stores.history.get<String>('sshTabs'), isNull);
       },
     );
 

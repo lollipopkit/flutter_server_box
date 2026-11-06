@@ -117,7 +117,6 @@ class _FloatTerminalState extends ConsumerState<_FloatTerminal> {
                 // and paste when nothing is.
                 onSecondaryTapUp: (_, _) => unawaited(_clipboardAction()),
                 onCopied: _onCopied,
-                onPaste: _paste,
                 onSelectAll: () =>
                     _termKey.currentState?.renderTerminal.selectAll(),
                 autofocus: false,
@@ -294,20 +293,9 @@ extension _Actions on _FloatTerminalState {
     }
   }
 
-  void _onCopied() {
-    if (mounted) Toast.success(libL10n.success);
-    _controller.clearSelection();
-  }
+  void _onCopied() => _controller.clearSelection();
 
-  Future<void> _paste() async {
-    final value = await Clipboard.getData(Clipboard.kTextPlain);
-    final text = value?.text;
-    if (text == null) return;
-    // `paste`, not `textInput`: it brackets the text when the program asked
-    // for that (DECSET 2004).
-    _terminal.paste(text);
-    _controller.clearSelection();
-  }
+  Future<void> _paste() => pasteClipboard(_terminal, _controller);
 
   Future<void> _clipboardAction() async {
     if (_controller.selection != null) {

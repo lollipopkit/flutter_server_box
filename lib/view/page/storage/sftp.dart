@@ -316,11 +316,9 @@ extension _Open on _SftpPageState {
     return _SftpStart(
       backend: backend,
       home: home,
-      // Checked like the other three. The file tab restores a session by
-      // passing its saved directory as `initPath`, and one that has since been
+      // Checked like the other three: an `initPath` that has since been
       // deleted or become unreadable opened the browser straight onto a
-      // listing error with nothing to press — for as long as the tab was
-      // remembered, which is every launch.
+      // listing error with nothing to press.
       path:
           await _openable(backend, widget.args.initPath) ??
           await _lastPath(backend) ??

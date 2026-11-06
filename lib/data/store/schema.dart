@@ -108,7 +108,8 @@ abstract final class SchemaVersion {
   /// v35: `server_identity_file`, a server's `IdentityFile` paths
   /// v36: `server.monitor_cert_sha256` replaces `monitor_ignore_cert`
   /// v37: `server_custom_cmd` dropped, custom commands living on the server
-  static const current = 37;
+  /// v38: the terminal and file tabs' saved sessions dropped
+  static const current = 38;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

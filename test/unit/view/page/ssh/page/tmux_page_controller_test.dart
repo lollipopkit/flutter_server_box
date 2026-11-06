@@ -12,10 +12,7 @@ void main() {
       final shell = _FakeShellSession();
       final client = TmuxControlClient(shell);
       final phases = <TmuxPageLifecyclePhase>[];
-      final controller = TmuxPageController(
-        onSnapshot: (_) {},
-        onPhaseChanged: phases.add,
-      );
+      final controller = TmuxPageController(onPhaseChanged: phases.add);
 
       controller.attach(client);
       expect(controller.phase, TmuxPageLifecyclePhase.attached);
