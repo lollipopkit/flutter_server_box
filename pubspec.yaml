@@ -51,8 +51,10 @@ dependencies:
   riverpod_annotation: ^4.0.2
   # Direct, though `SqliteStore` lives in fl_lib: `hooks.user_defines` below is
   # only honoured for this package's own dependencies, and the Hive migration
-  # opens the database from here too.
-  sqlite3: ^3.6.0
+  # opens the database from here too. 3.7.1 or later: SQLite 3.54.0, which
+  # opens a WAL database on Windows while another process maps its `-shm`
+  # (#1860).
+  sqlite3: ^3.8.0
   # Storage layer over the same encrypted connection: `NativeDatabase.opened`
   # takes the `sqlite3` Database this app already opens and keys itself, so
   # sqlite3mc and the build-hook bundling below are untouched.

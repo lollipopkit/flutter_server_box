@@ -126,8 +126,8 @@ changing anything.
   under `features`.
 - Signing in allows what the system account the Monitor runs as may do. A
   command, file or port that account cannot reach fails.
-- SFTP is never available through the Monitor: it needs SSH configured for
-  the same server in the app.
+- Files are browsed and transferred through the Monitor's file API, without
+  SSH. Like the terminal, it needs TLS or a loopback caller.
 - A Monitor older than the relay or the listener offers no port forwarding
   or remote desktop. Update it.
 - The `access_log` table in the Monitor's SQLite database records the visitor,
@@ -143,8 +143,7 @@ changing anything.
 | Requires additional software on the server | No | Yes |
 | Status and charts | Yes | Yes |
 | History from before the App connected | No | Yes |
-| Terminal, commands, and file browsing | Yes | Yes, as the account the Monitor runs as |
-| SFTP transfers | Yes | No |
+| Terminal, commands, file browsing and transfers | Yes | Yes, as the account the Monitor runs as |
 | Port forwarding (local, dynamic, remote) and remote desktop | Yes | Yes |
 | Push alerts, home-screen widgets, and Watch app | No | Yes |
 
@@ -478,18 +477,13 @@ For path validation, endpoint behavior, and error codes, see
 
 ## Unsupported features
 
-A Monitor HTTP connection cannot provide SFTP: it runs through an SSH channel.
-The file API supports **browsing** by transferring file contents; it does not
-provide a general-purpose byte stream.
-
 A server where the Monitor leads (the Monitor alone, or both with the Monitor preferred)
 runs every port forward through the Monitor and never falls back to SSH. A
 dynamic forward is a SOCKS5 proxy on your device; each connection it carries
 is dialled from the server.
 
-To use SFTP, also configure SSH for that server in the App. A Monitor older than
-the relay or the listener offers no remote desktop or port forwarding; update
-it.
+A Monitor older than the relay or the listener offers no remote desktop or
+port forwarding; update it.
 
 ## Widgets, push, and the Watch app
 
