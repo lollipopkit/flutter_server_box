@@ -518,6 +518,7 @@ Future<void> _startBackgroundServices() async {
   // iOS settings page. Pushing at launch is what makes a freshly installed or
   // restored watch configure itself.
   if (isIOS) {
+    MethodChans.listenPastes();
     unawaited(
       (() async {
         try {

@@ -887,6 +887,7 @@ class SSHPageState extends ConsumerState<SSHPage>
           },
           toolbarBuilder: _buildTerminalToolbar,
           onCopied: _onTerminalCopied,
+          onCopyFailed: (e, s) => context.showErrDialog(e, s, libL10n.copy),
           onSelectAll: _onTerminalSelectAll,
         ),
       ),
@@ -1297,8 +1298,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     if (_terminalController.selection != null) {
       final selectedText = _termKey.currentState?.renderTerminal.selectedText;
       if (selectedText != null && selectedText.isNotEmpty) {
-        await Clipboard.setData(ClipboardData(text: selectedText));
-        _terminalController.clearSelection();
+        _termKey.currentState?.copySelection();
         return;
       }
       return;

@@ -203,6 +203,29 @@ void main() {
     expect(typed.join(), contains('pasted from the clipboard'));
   });
 
+  testWidgets('a refused copy is shown, and the selection stays', (
+    tester,
+  ) async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+          if (call.method == 'Clipboard.setData') {
+            throw PlatformException(code: 'busy');
+          }
+          return null;
+        });
+    final session = await pump(tester);
+    session.terminal.write('the selected line\r\n');
+    await tester.pump(const Duration(milliseconds: 50));
+    selectAll(tester);
+    await tester.pump(const Duration(milliseconds: 50));
+
+    await secondaryTap(tester);
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(controllerOf(tester).selection, isNotNull);
+    expect(find.textContaining('busy'), findsOneWidget);
+  });
+
   testWidgets('an empty clipboard types nothing', (tester) async {
     // `Clipboard.getData` answers null when there is nothing to paste, and
     // `textInput('')` would be a no-op anyway — but the guard is what stops a
