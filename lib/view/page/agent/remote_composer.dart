@@ -70,6 +70,9 @@ class _RemoteComposerState extends State<RemoteComposer> {
   /// write over each other.
   bool _savingMode = false;
 
+  /// A new task waits for the mode being saved: it starts in the one shown.
+  bool get _holdNewTask => widget.flow == null && _savingMode;
+
   /// As many files as one task takes at once (the agent's `MAX_PER_TASK`).
   static const _maxFiles = 10;
 
@@ -163,7 +166,7 @@ class _RemoteComposerState extends State<RemoteComposer> {
   Future<void> _send() async {
     final text = _text.text.trim();
     final client = RemoteAgentTasks.client(widget.serverId);
-    if ((text.isEmpty && _files.isEmpty) || client == null || _sending || widget.blocked) return;
+    if ((text.isEmpty && _files.isEmpty) || client == null || _sending || widget.blocked || _holdNewTask) return;
     setState(() => _sending = true);
     try {
       final ids = [for (final f in _files) await client.agentUpload(File(f))];
@@ -257,7 +260,7 @@ class _RemoteComposerState extends State<RemoteComposer> {
               ? const SizedBox(width: 32, height: 32, child: SizedLoading(20, padding: 6, builder: SizedLoading.circularBuilder))
               : widget.onStop != null && empty
               ? ComposerButton.stop(scheme, onTap: widget.onStop)
-              : ComposerButton.send(scheme, onTap: blocked ? null : () => unawaited(_send())),
+              : ComposerButton.send(scheme, onTap: blocked || _holdNewTask ? null : () => unawaited(_send())),
         );
       },
     );

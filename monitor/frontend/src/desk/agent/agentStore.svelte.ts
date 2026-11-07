@@ -70,6 +70,9 @@ export class AgentStore {
   /// The default mode being saved: one at a time, and a task started
   /// meanwhile waits for it, so it starts in the mode shown.
   #modeSave: Promise<void> = Promise.resolve()
+  /// Bumped as a mode save starts: a listing asked for before it does not
+  /// put the old mode back.
+  #modeSeq = 0
 
   constructor(entry: ServerEntry) {
     this.entry = { ...entry }
@@ -103,13 +106,14 @@ export class AgentStore {
   }
 
   async refresh(): Promise<void> {
+    const modeSeq = this.#modeSeq
     try {
       const list = await agentApi.list(this.entry)
       this.flows = list.flows
       this.configured = list.configured
       this.hostname = list.hostname
       this.maxRunning = list.maxRunning
-      this.defaultMode = list.defaultMode ?? 'manual'
+      if (modeSeq === this.#modeSeq) this.defaultMode = list.defaultMode ?? 'manual'
       this.bypassAllowed = list.bypassAllowed ?? true
       this.error = null
       if (list.configured) void this.#loadChoices()
@@ -205,6 +209,7 @@ export class AgentStore {
   /// Makes [mode] the one new tasks start in, as the permissions page does.
   setDefaultMode(mode: PermissionMode): Promise<void> {
     const save = this.#modeSave.then(async () => {
+      this.#modeSeq++
       const prev = this.defaultMode
       this.defaultMode = mode
       try {
