@@ -20,6 +20,7 @@ import 'package:server_box/data/store/stores.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/agent/screen.dart';
 import 'package:server_box/view/page/home.dart';
+import 'package:server_box/view/page/server/full_screen.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/page/setting/platform/platform_pub.dart';
 import 'package:server_box/view/page/setting/tiles.dart';
@@ -144,6 +145,7 @@ class _MyAppState extends State<MyApp> {
     required ThemeData dark,
   }) {
     final themeMode = ThemePackages.effectiveMode;
+    ServerFullScreenTheme.dark = dark;
     final locale = Stores.setting.locale.fetch().toLocale;
 
     return MaterialApp(

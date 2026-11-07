@@ -51,8 +51,24 @@ extension _HomePageTabs on _HomePageState {
                   // three of them put a `Scaffold` *inside* a pane splitter, so the
                   // splitter's own divider is above any app bar that could have
                   // spent the inset.
-                  rootBuilder: (_) =>
-                      SafeArea(bottom: false, child: _tabs[index].page),
+                  //
+                  // Full screen takes the insets itself, so its black reaches
+                  // the window's edges.
+                  rootBuilder: (_) => Consumer(
+                    child: _tabs[index].page,
+                    builder: (_, ref, page) {
+                      final whole =
+                          _tabs[index] == AppTab.server &&
+                          ref.watch(serverFullScreenProvider);
+                      return SafeArea(
+                        bottom: false,
+                        top: !whole,
+                        left: !whole,
+                        right: !whole,
+                        child: page!,
+                      );
+                    },
+                  ),
                 ),
               ),
               onPageChanged: (value) {

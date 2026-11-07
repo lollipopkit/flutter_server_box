@@ -479,10 +479,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fallbackSshDest => 'Fallback SSH destination';
 
   @override
-  String get fdroidReleaseTip =>
-      'If you downloaded this app from F-Droid, it is recommended to turn off this option.';
-
-  @override
   String fileTooLarge(String file, String size, String sizeMax) {
     return 'File \'$file\' too large $size, max $sizeMax';
   }
@@ -502,10 +498,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fullScreen => 'Full screen';
 
   @override
-  String get fullScreenJitter => 'Full screen jitter';
+  String get fullScreenAllServers => 'All servers';
 
   @override
-  String get fullScreenJitterHelp => 'To avoid screen burn-in';
+  String get fullScreenOneServer => 'One server';
+
+  @override
+  String fullScreenConnectedFmt(int connected, int total) {
+    return '$connected / $total connected';
+  }
+
+  @override
+  String get fullScreenExit => 'Exit full screen';
+
+  @override
+  String get fullScreenJitter => 'Burn-in protection';
 
   @override
   String get fullScreenTip =>

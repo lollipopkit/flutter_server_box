@@ -237,13 +237,12 @@ extension _HomePageLifecycle on _HomePageState {
   }
 
   bool get _isServerFullscreenMode {
-    if (!Stores.setting.fullScreen.fetch()) return false;
     if (_tabs.isEmpty) return false;
     final selectedIndex = _selectIndex.value;
     if (selectedIndex < 0 || selectedIndex >= _tabs.length) return false;
-    final isLandscape =
-        MediaQuery.orientationOf(context) == Orientation.landscape;
-    return isLandscape && _tabs[selectedIndex] == AppTab.server;
+    return _tabs[selectedIndex] == AppTab.server &&
+        _serverFullScreen &&
+        !_settingsOpen;
   }
 
   void _syncFullscreenSystemUi({bool? forceHide}) {

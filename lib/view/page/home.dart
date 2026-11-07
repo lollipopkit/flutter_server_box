@@ -164,6 +164,10 @@ class _HomePageState extends ConsumerState<HomePage>
   /// [_selectIndex], which is not a build this state's `ref` may watch from.
   AppTab? _immersiveTab;
 
+  /// Whether the server tab is in full screen by its button — see
+  /// [_isServerFullscreenMode].
+  bool _serverFullScreen = false;
+
   /// Whether the tab on screen is the one asking for the window.
   ///
   /// The claim names a tab rather than being a flag because a tab is kept alive
@@ -384,6 +388,7 @@ class _HomePageState extends ConsumerState<HomePage>
     // decided in [_wantsWindow], which also has to know *which* tab is on
     // screen.
     _immersiveTab = ref.watch(immersiveTabProvider);
+    _serverFullScreen = ref.watch(serverFullScreenProvider);
     _syncFullscreenSystemUi();
 
     // No `appBar`, deliberately. It used to hold an empty box the height of

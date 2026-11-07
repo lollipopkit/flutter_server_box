@@ -463,9 +463,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get fallbackSshDest => '대체 SSH 대상';
 
   @override
-  String get fdroidReleaseTip => 'F-Droid에서 이 앱을 다운로드한 경우, 이 옵션을 끄는 것을 권장합니다.';
-
-  @override
   String fileTooLarge(String file, String size, String sizeMax) {
     return '파일 “$file”의 크기 $size이(가) 최대 크기 $sizeMax을(를) 초과합니다.';
   }
@@ -485,10 +482,21 @@ class AppLocalizationsKo extends AppLocalizations {
   String get fullScreen => '전체 화면';
 
   @override
-  String get fullScreenJitter => '전체 화면 지터';
+  String get fullScreenAllServers => '모든 서버';
 
   @override
-  String get fullScreenJitterHelp => '화면 번인 방지';
+  String get fullScreenOneServer => '서버 하나';
+
+  @override
+  String fullScreenConnectedFmt(int connected, int total) {
+    return '$connected / $total 연결됨';
+  }
+
+  @override
+  String get fullScreenExit => '전체 화면 종료';
+
+  @override
+  String get fullScreenJitter => '번인 방지';
 
   @override
   String get fullScreenTip =>

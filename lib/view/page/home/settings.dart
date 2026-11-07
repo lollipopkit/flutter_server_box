@@ -38,9 +38,20 @@ extension _HomePageSettings on _HomePageState {
                 key: const ValueKey('settings'),
                 navigatorKey: _settingsNavKey,
                 observers: [AgentScreen.settingsObserver],
-                rootBuilder: (_) => SafeArea(
-                  bottom: false,
-                  child: SettingsPage(onLeave: _closeSettings),
+                // The window's bottom inset, which the `Scaffold` takes from
+                // its body for the bottom bar — and that bar has left with
+                // the tabs, so without this the settings' own tabs sat on
+                // the home indicator.
+                rootBuilder: (ctx) => MediaQuery(
+                  data: MediaQuery.of(ctx).copyWith(
+                    padding: MediaQuery.paddingOf(ctx).copyWith(
+                      bottom: MediaQuery.paddingOf(context).bottom,
+                    ),
+                  ),
+                  child: SafeArea(
+                    bottom: false,
+                    child: SettingsPage(onLeave: _closeSettings),
+                  ),
                 ),
               ),
             ),

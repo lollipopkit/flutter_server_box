@@ -484,10 +484,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get fallbackSshDest => 'Destino SSH de fallback';
 
   @override
-  String get fdroidReleaseTip =>
-      'Se você baixou este aplicativo do F-Droid, é recomendado desativar esta opção.';
-
-  @override
   String fileTooLarge(String file, String size, String sizeMax) {
     return 'O arquivo “$file” tem $size, acima do limite de $sizeMax.';
   }
@@ -507,10 +503,21 @@ class AppLocalizationsPt extends AppLocalizations {
   String get fullScreen => 'Tela cheia';
 
   @override
-  String get fullScreenJitter => 'Tremulação em tela cheia';
+  String get fullScreenAllServers => 'Todos os servidores';
 
   @override
-  String get fullScreenJitterHelp => 'Prevenir burn-in de tela';
+  String get fullScreenOneServer => 'Um servidor';
+
+  @override
+  String fullScreenConnectedFmt(int connected, int total) {
+    return '$connected / $total conectados';
+  }
+
+  @override
+  String get fullScreenExit => 'Sair da tela cheia';
+
+  @override
+  String get fullScreenJitter => 'Proteção contra burn-in';
 
   @override
   String get fullScreenTip =>

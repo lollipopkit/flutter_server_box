@@ -78,6 +78,17 @@ class ImmersiveTab extends _$ImmersiveTab {
   }
 }
 
+/// Whether the server tab is in full screen, by its button or by a phone
+/// turned to landscape: the status bar, the navigation and the tab's insets
+/// follow it.
+@Riverpod(keepAlive: true)
+class ServerFullScreen extends _$ServerFullScreen {
+  @override
+  bool build() => false;
+
+  void set(bool on) => state = on;
+}
+
 /// A server waiting to be opened on the server tab.
 ///
 /// A request rather than a call for two reasons. The tab may not exist yet —

@@ -961,12 +961,6 @@ abstract class AppLocalizations {
   /// **'Fallback SSH destination'**
   String get fallbackSshDest;
 
-  /// Help text for the F-Droid release setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'If you downloaded this app from F-Droid, it is recommended to turn off this option.'**
-  String get fdroidReleaseTip;
-
   /// User-facing label or message for file too large.
   ///
   /// In en, this message translates to:
@@ -997,17 +991,35 @@ abstract class AppLocalizations {
   /// **'Full screen'**
   String get fullScreen;
 
+  /// Full screen showing every server at once
+  ///
+  /// In en, this message translates to:
+  /// **'All servers'**
+  String get fullScreenAllServers;
+
+  /// Full screen showing one server at a time
+  ///
+  /// In en, this message translates to:
+  /// **'One server'**
+  String get fullScreenOneServer;
+
+  /// How many of the servers shown are connected
+  ///
+  /// In en, this message translates to:
+  /// **'{connected} / {total} connected'**
+  String fullScreenConnectedFmt(int connected, int total);
+
+  /// Leaves full screen
+  ///
+  /// In en, this message translates to:
+  /// **'Exit full screen'**
+  String get fullScreenExit;
+
   /// User-facing label or message for full screen jitter.
   ///
   /// In en, this message translates to:
-  /// **'Full screen jitter'**
+  /// **'Burn-in protection'**
   String get fullScreenJitter;
-
-  /// User-facing label or message for full screen jitter help.
-  ///
-  /// In en, this message translates to:
-  /// **'To avoid screen burn-in'**
-  String get fullScreenJitterHelp;
 
   /// Help text for the full screen setting or action.
   ///

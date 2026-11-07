@@ -79,16 +79,14 @@ List<SettingsNode> _buildNodes() {
             page: () => const DesktopSettingsPage(embedded: true),
           ),
 
-        // Fullscreen mode lets a mobile device serve as a dedicated status
-        // display.
-        if (isMobile)
-          SettingsNode.leaf(
-            id: 'app.fullScreen',
-            title: l10n.fullScreen,
-            icon: Icons.fullscreen,
-            page: () =>
-                const AppSettingsPage(section: SettingsSection.fullScreen),
-          ),
+        // Full screen lets a device serve as a dedicated status display.
+        SettingsNode.leaf(
+          id: 'app.fullScreen',
+          title: l10n.fullScreen,
+          icon: Icons.fullscreen,
+          page: () =>
+              const AppSettingsPage(section: SettingsSection.fullScreen),
+        ),
       ],
     ),
     SettingsNode.leaf(
