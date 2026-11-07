@@ -9,6 +9,19 @@ extension _FullScreen on _ServerPageState {
   bool get _fsShowsAll =>
       _fsAll ?? MediaQuery.sizeOf(context).shortestSide >= 600;
 
+  /// Says whether full screen is on, for the window's chrome to follow — see
+  /// [ServerFullScreen]. Applied after the frame, as [_publishImmersive] is.
+  void _publishFullScreen(bool on) {
+    if (_fsPublished == on) return;
+    _fsPublished = on;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      // Every time in, the screen is the readings alone.
+      if (on) _fsBar.value = false;
+      ref.read(serverFullScreenProvider.notifier).set(on);
+    });
+  }
+
   Widget _buildFullScreen({required bool manual}) {
     _publishImmersive(true);
     final burnIn = Stores.setting.fullScreenJitter.fetch();
@@ -47,16 +60,25 @@ extension _FullScreen on _ServerPageState {
                       child: Stack(
                         fit: StackFit.expand,
                         children: [
-                          ValueListenableBuilder<double>(
+                          ValueListenableBuilder<Offset>(
                             valueListenable: _offsetNotifier,
                             builder: (context, offset, child) => Padding(
-                              padding: EdgeInsets.all(offset.abs()),
+                              padding: const EdgeInsets.all(_kBurnInShift),
                               child: Transform.translate(
-                                offset: Offset(offset, offset),
+                                offset: offset,
                                 child: child,
                               ),
                             ),
-                            child: SafeArea(child: _buildFullScreenBody(order)),
+                            // Clear of the bar while it is showing, so it
+                            // covers nothing.
+                            child: AnimatedPadding(
+                              duration: const Duration(milliseconds: 200),
+                              curve: Curves.easeOutCubic,
+                              padding: EdgeInsets.only(
+                                top: _fsBar.value ? ServerFullScreenBar.height : 0,
+                              ),
+                              child: SafeArea(child: _buildFullScreenBody(order)),
+                            ),
                           ),
                           if (_fsBar.value)
                             Positioned(
@@ -278,9 +300,7 @@ extension _FullScreen on _ServerPageState {
 
 extension _FullScreenActions on _ServerPageState {
   Future<void> _enterFullScreen() async {
-    _fsBar.value = false;
     _fsManual.value = true;
-    ref.read(serverFullScreenProvider.notifier).set(true);
     // Deliberately, as [_keys] is: this tab is kept alive behind the others.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _fsKeys.requestFocus();
@@ -298,7 +318,6 @@ extension _FullScreenActions on _ServerPageState {
   Future<void> _exitFullScreen({bool window = true}) async {
     if (!_fsManual.value) return;
     _fsManual.value = false;
-    ref.read(serverFullScreenProvider.notifier).set(false);
     if (!isDesktop || !window || _fsWindowWasFull) return;
     try {
       await windowManager.setFullScreen(false);

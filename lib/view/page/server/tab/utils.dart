@@ -251,12 +251,13 @@ extension _Utils on _ServerPageState {
     setState(() {});
   }
 
+  /// Moves full screen's content to somewhere else within
+  /// [_kBurnInShift] of its place, so no pixel holds one colour for long.
   void _updateOffset() {
     if (!Stores.setting.fullScreenJitter.fetch()) return;
-    final x = MediaQuery.sizeOf(context).height * 0.03;
-    final r = math.Random().nextDouble();
-    final n = math.Random().nextBool() ? 1 : -1;
-    _offsetNotifier.value = x * r * n;
+    final r = math.Random();
+    double next() => (r.nextDouble() * 2 - 1) * _kBurnInShift;
+    _offsetNotifier.value = Offset(next(), next());
   }
 
   void _startAvoidJitterTimer() {

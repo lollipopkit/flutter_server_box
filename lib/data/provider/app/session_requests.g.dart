@@ -328,21 +328,21 @@ abstract class _$ImmersiveTab extends $Notifier<AppTab?> {
   }
 }
 
-/// Whether the server tab is in full screen by its bar's button: the status
-/// bar and the navigation follow it as they follow a phone turned to
-/// landscape.
+/// Whether the server tab is in full screen, by its button or by a phone
+/// turned to landscape: the status bar, the navigation and the tab's insets
+/// follow it.
 
 @ProviderFor(ServerFullScreen)
 final serverFullScreenProvider = ServerFullScreenProvider._();
 
-/// Whether the server tab is in full screen by its bar's button: the status
-/// bar and the navigation follow it as they follow a phone turned to
-/// landscape.
+/// Whether the server tab is in full screen, by its button or by a phone
+/// turned to landscape: the status bar, the navigation and the tab's insets
+/// follow it.
 final class ServerFullScreenProvider
     extends $NotifierProvider<ServerFullScreen, bool> {
-  /// Whether the server tab is in full screen by its bar's button: the status
-  /// bar and the navigation follow it as they follow a phone turned to
-  /// landscape.
+  /// Whether the server tab is in full screen, by its button or by a phone
+  /// turned to landscape: the status bar, the navigation and the tab's insets
+  /// follow it.
   ServerFullScreenProvider._()
     : super(
         from: null,
@@ -372,9 +372,9 @@ final class ServerFullScreenProvider
 
 String _$serverFullScreenHash() => r'6c4da2ea2892dc06ef054823678b442926880a9b';
 
-/// Whether the server tab is in full screen by its bar's button: the status
-/// bar and the navigation follow it as they follow a phone turned to
-/// landscape.
+/// Whether the server tab is in full screen, by its button or by a phone
+/// turned to landscape: the status bar, the navigation and the tab's insets
+/// follow it.
 
 abstract class _$ServerFullScreen extends $Notifier<bool> {
   bool build();

@@ -136,12 +136,15 @@ Widget _viewSwapTransition(Widget child, Animation<double> animation) {
 Widget _viewSwapLayout(Widget? current, List<Widget> previous) =>
     Stack(fit: StackFit.expand, children: [...previous, ?current]);
 
+/// How far burn-in protection moves full screen's content, each way.
+const _kBurnInShift = 7.0;
+
 class _ServerPageState extends ConsumerState<ServerPage>
     with
         AutomaticKeepAliveClientMixin,
         TickerProviderStateMixin,
         WindowListener {
-  final ValueNotifier<double> _offsetNotifier = ValueNotifier(1);
+  final _offsetNotifier = ValueNotifier(Offset.zero);
   PageController? _landscapeController;
   String? _landscapeSeenId;
 
@@ -162,6 +165,9 @@ class _ServerPageState extends ConsumerState<ServerPage>
   /// Whether the window was full screen before the button made it so, and so
   /// stays that way after.
   bool _fsWindowWasFull = false;
+
+  /// What [ServerFullScreen] has last been told.
+  bool _fsPublished = false;
 
   /// Between [deactivate] and [activate]: no timer is started.
   bool _inactive = false;
@@ -248,7 +254,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
       _updateOffset();
       if (!_inactive) _startAvoidJitterTimer();
     } else {
-      _offsetNotifier.value = 0;
+      _offsetNotifier.value = Offset.zero;
     }
     setState(() {});
   }
@@ -540,6 +546,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
               isMobile &&
               orientation == Orientation.landscape &&
               Stores.setting.fullScreen.fetch();
+          _publishFullScreen(manual || turned);
           if (manual || turned) return _buildFullScreen(manual: manual);
           return _buildPortrait();
         },

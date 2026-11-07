@@ -151,17 +151,20 @@ class ServerFullScreenOne extends StatelessWidget {
           UIs.height13,
           Expanded(
             child: LayoutBuilder(
-              builder: (_, cons) => RepaintBoundary(
-                child: MetricChart(
-                  MetricChartSpec(
-                    series: series,
-                    format: m.format,
-                    times: m.times,
-                    window: window,
-                    binaryScale: m.binary,
-                    height: cons.maxHeight,
-                    fill: true,
-                    axis: 0,
+              // A tap here is for the controls, like anywhere else that is
+              // not a control.
+              builder: (_, cons) => IgnorePointer(
+                child: RepaintBoundary(
+                  child: MetricChart(
+                    MetricChartSpec(
+                      series: series,
+                      format: m.format,
+                      times: m.times,
+                      window: window,
+                      binaryScale: m.binary,
+                      height: cons.maxHeight,
+                      fill: true,
+                    ),
                   ),
                 ),
               ),
@@ -212,6 +215,7 @@ class ServerFullScreenOne extends StatelessWidget {
                     height: 48,
                     child: Center(
                       child: MetricRow(
+                        openness: 0,
                         icon: m.icon,
                         label: m.label,
                         color: ChartPalette.accent,
@@ -256,6 +260,9 @@ class ServerFullScreenBar extends StatelessWidget {
   final Widget leading;
   final List<Widget> actions;
 
+  /// Below the top inset.
+  static const height = 40.0;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -267,10 +274,10 @@ class ServerFullScreenBar extends StatelessWidget {
       child: SafeArea(
         bottom: false,
         child: SizedBox(
-          height: 40,
+          height: height,
           child: Row(
             children: [
-              UIs.width7,
+              UIs.width13,
               Expanded(
                 child: Align(alignment: Alignment.centerLeft, child: leading),
               ),

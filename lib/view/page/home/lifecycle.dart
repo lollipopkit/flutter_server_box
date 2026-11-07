@@ -240,10 +240,9 @@ extension _HomePageLifecycle on _HomePageState {
     if (_tabs.isEmpty) return false;
     final selectedIndex = _selectIndex.value;
     if (selectedIndex < 0 || selectedIndex >= _tabs.length) return false;
-    if (_tabs[selectedIndex] != AppTab.server) return false;
-    if (_serverFullScreen) return !_settingsOpen;
-    if (!isMobile || !Stores.setting.fullScreen.fetch()) return false;
-    return MediaQuery.orientationOf(context) == Orientation.landscape;
+    return _tabs[selectedIndex] == AppTab.server &&
+        _serverFullScreen &&
+        !_settingsOpen;
   }
 
   void _syncFullscreenSystemUi({bool? forceHide}) {
