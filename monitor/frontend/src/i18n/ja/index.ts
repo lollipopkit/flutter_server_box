@@ -1950,7 +1950,7 @@ const ja = {
 	settingsAgentRulesDeny: '拒否',
 	settingsAgentRulesAsk: '確認',
 	settingsAgentRulesAllow: '許可',
-	settingsAgentRulesHint: '1 行に 1 つ。* は任意の文字列です（例: systemctl status *、apt-get install *）。末尾の :* は「 *」と同じです。連結されたコマンドは部分ごとに照合し、拒否と確認はどれか 1 つが一致すれば、許可はすべての部分が一致したときだけ適用されます。ルールは書かれた文字列に一致するもので（/bin/rm は rm * に一致しません）、セキュリティ境界ではありません。',
+	settingsAgentRulesHint: '1 行に 1 つ。* は任意の文字列です（例: systemctl status *、apt-get install *）。末尾の :* は「 *」と同じです。連結されたコマンドは部分ごとに照合し、拒否と確認はどれか 1 つが一致すれば、許可はすべての部分が一致したときだけ適用されます。ルールは書かれた文字列に一致するもので（sh -c \'rm …\' は rm * に一致しません）、セキュリティ境界ではありません。',
 	settingsAgentAutoRules: '自動モードルール',
 	settingsAgentAutoHint: 'モデルが判断に使う自然文のルールです。空欄なら組み込みのルールを使います。$defaults の行を書くと組み込みを残して追加できます。順序: ハード拒否 → ソフト拒否（許可ルールかあなたの明確な依頼で解除）→ 許可。',
 	settingsAgentAutoEnvironment: '環境',

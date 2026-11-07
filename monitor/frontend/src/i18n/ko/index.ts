@@ -1950,7 +1950,7 @@ const ko = {
 	settingsAgentRulesDeny: '거부',
 	settingsAgentRulesAsk: '확인',
 	settingsAgentRulesAllow: '허용',
-	settingsAgentRulesHint: '한 줄에 하나씩. *는 임의의 텍스트입니다(예: systemctl status *, apt-get install *). 끝의 :*는 " *"와 같습니다. 연결된 명령은 부분마다 대조하며, 거부와 확인은 한 부분만 맞아도, 허용은 모든 부분이 맞을 때만 적용됩니다. 규칙은 작성된 문자열과 대조하므로(/bin/rm은 rm *에 맞지 않음) 보안 경계가 아닙니다.',
+	settingsAgentRulesHint: '한 줄에 하나씩. *는 임의의 텍스트입니다(예: systemctl status *, apt-get install *). 끝의 :*는 " *"와 같습니다. 연결된 명령은 부분마다 대조하며, 거부와 확인은 한 부분만 맞아도, 허용은 모든 부분이 맞을 때만 적용됩니다. 규칙은 작성된 문자열과 대조하므로(sh -c \'rm …\'은 rm *에 맞지 않음) 보안 경계가 아닙니다.',
 	settingsAgentAutoRules: '자동 모드 규칙',
 	settingsAgentAutoHint: '모델이 판단에 쓰는 자연어 규칙입니다. 비워 두면 기본 규칙을 쓰고, $defaults 줄을 쓰면 기본 규칙을 유지하며 추가합니다. 순서: 하드 거부 → 소프트 거부(허용 규칙이나 명시적 요청으로 해제) → 허용.',
 	settingsAgentAutoEnvironment: '환경',

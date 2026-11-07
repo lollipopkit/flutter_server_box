@@ -1950,7 +1950,7 @@ const nl = {
 	settingsAgentRulesDeny: 'Weigeren',
 	settingsAgentRulesAsk: 'Vragen',
 	settingsAgentRulesAllow: 'Toestaan',
-	settingsAgentRulesHint: 'Eén per regel. * is willekeurige tekst, zoals systemctl status * of apt-get install *; een :* aan het eind is gelijk aan ‘ *’. Een gekoppelde opdracht wordt per deel gecontroleerd: weigeren en vragen gelden als één deel past, toestaan alleen als elk deel gedekt is. Regels passen op de geschreven tekst (/bin/rm past niet op rm *); ze zijn geen beveiligingsgrens.',
+	settingsAgentRulesHint: 'Eén per regel. * is willekeurige tekst, zoals systemctl status * of apt-get install *; een :* aan het eind is gelijk aan ‘ *’. Een gekoppelde opdracht wordt per deel gecontroleerd: weigeren en vragen gelden als één deel past, toestaan alleen als elk deel gedekt is. Regels passen op de geschreven tekst (sh -c \'rm …\' past niet op rm *); ze zijn geen beveiligingsgrens.',
 	settingsAgentAutoRules: 'Regels voor de automatische modus',
 	settingsAgentAutoHint: 'Regels in gewone taal waarop het model oordeelt. Leeg gebruikt de ingebouwde lijst; een regel $defaults houdt die en voegt de jouwe toe. Volgorde: harde weigering, dan zachte weigering (op te heffen door een toestaanregel of je eigen expliciete verzoek), dan toestaan.',
 	settingsAgentAutoEnvironment: 'Omgeving',

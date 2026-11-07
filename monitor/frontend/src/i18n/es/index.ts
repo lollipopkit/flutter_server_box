@@ -1950,7 +1950,7 @@ const es = {
 	settingsAgentRulesDeny: 'Denegar',
 	settingsAgentRulesAsk: 'Preguntar',
 	settingsAgentRulesAllow: 'Permitir',
-	settingsAgentRulesHint: 'Una por línea. * es cualquier texto, como systemctl status * o apt-get install *; un :* final equivale a « *». Un comando encadenado se comprueba por partes: denegar y preguntar se aplican si alguna parte coincide, permitir solo si todas están cubiertas. Las reglas coinciden con el texto escrito (/bin/rm no coincide con rm *); no son un límite de seguridad.',
+	settingsAgentRulesHint: 'Una por línea. * es cualquier texto, como systemctl status * o apt-get install *; un :* final equivale a « *». Un comando encadenado se comprueba por partes: denegar y preguntar se aplican si alguna parte coincide, permitir solo si todas están cubiertas. Las reglas coinciden con el texto escrito (sh -c \'rm …\' no coincide con rm *); no son un límite de seguridad.',
 	settingsAgentAutoRules: 'Reglas del modo automático',
 	settingsAgentAutoHint: 'Reglas en lenguaje natural para el juicio del modelo. Vacío usa la lista integrada; una línea $defaults la conserva y añade las tuyas. Orden: denegación estricta, luego denegación suave (la levanta una regla de permiso o tu petición explícita), luego permitir.',
 	settingsAgentAutoEnvironment: 'Entorno',

@@ -137,7 +137,7 @@ are three lists: **Deny**, **Ask**, and **Allow**. Write one pattern per line.
 - A trailing `:*` has the same meaning as ` *`.
 - A chained command, such as `a && b`, is checked part by part. Deny and ask
   apply when any part matches. Allow applies only when every part is covered.
-- Rules match the command as written. `/bin/rm` does not match `rm *`.
+- Deny and ask rules also see a command with `env`, `timeout` and the like taken off, and a program named by its path by its name: `/bin/rm` matches `rm *` there. Otherwise rules match the command as written: `sh -c 'rm …'` does not match `rm *`.
 - Rules are not a security boundary.
 
 The rules are checked in this order: deny, then ask, then allow.

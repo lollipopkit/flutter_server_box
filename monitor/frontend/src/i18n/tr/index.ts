@@ -1950,7 +1950,7 @@ const tr = {
 	settingsAgentRulesDeny: 'Reddet',
 	settingsAgentRulesAsk: 'Sor',
 	settingsAgentRulesAllow: 'İzin ver',
-	settingsAgentRulesHint: 'Satır başına bir tane. * herhangi bir metindir; örn. systemctl status * ya da apt-get install *; sondaki :* “ *” ile aynıdır. Zincirli bir komut parça parça denetlenir: reddet ve sor herhangi bir parça eşleşirse, izin ver yalnızca her parça kapsanırsa geçerlidir. Kurallar yazılan metinle eşleşir (/bin/rm, rm * ile eşleşmez); güvenlik sınırı değildir.',
+	settingsAgentRulesHint: 'Satır başına bir tane. * herhangi bir metindir; örn. systemctl status * ya da apt-get install *; sondaki :* “ *” ile aynıdır. Zincirli bir komut parça parça denetlenir: reddet ve sor herhangi bir parça eşleşirse, izin ver yalnızca her parça kapsanırsa geçerlidir. Kurallar yazılan metinle eşleşir (sh -c \'rm …\', rm * ile eşleşmez); güvenlik sınırı değildir.',
 	settingsAgentAutoRules: 'Otomatik mod kuralları',
 	settingsAgentAutoHint: 'Modelin karar verirken kullandığı düz dilde kurallar. Boş bırakılırsa yerleşik liste kullanılır; $defaults satırı onu korur ve sizinkileri ekler. Sıra: kesin ret, sonra yumuşak ret (bir izin kuralı ya da açık isteğiniz kaldırır), sonra izin.',
 	settingsAgentAutoEnvironment: 'Ortam',

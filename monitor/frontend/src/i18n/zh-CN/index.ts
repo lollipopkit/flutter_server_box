@@ -1949,7 +1949,7 @@ const zh_CN = {
 	settingsAgentRulesDeny: '拒绝',
 	settingsAgentRulesAsk: '询问',
 	settingsAgentRulesAllow: '允许',
-	settingsAgentRulesHint: '每行一条。* 代表任意文本，如 systemctl status * 或 apt-get install *；末尾的 :* 与“ *”相同。组合命令会拆开逐段匹配：拒绝和询问只要有一段命中就生效，允许要求每一段都被覆盖。规则按命令文本匹配（/bin/rm 不会命中 rm *），不是安全边界。',
+	settingsAgentRulesHint: '每行一条。* 代表任意文本，如 systemctl status * 或 apt-get install *；末尾的 :* 与“ *”相同。组合命令会拆开逐段匹配：拒绝和询问只要有一段命中就生效，允许要求每一段都被覆盖。规则按命令文本匹配（sh -c \'rm …\' 不会命中 rm *），不是安全边界。',
 	settingsAgentAutoRules: '自动模式规则',
 	settingsAgentAutoHint: '用自然语言写，供模型判断。留空使用内置规则；写一行 $defaults 可以保留内置规则并追加自己的。顺序：硬拒绝 → 软拒绝（允许规则或你明确要求的操作可以放行）→ 允许。',
 	settingsAgentAutoEnvironment: '环境',

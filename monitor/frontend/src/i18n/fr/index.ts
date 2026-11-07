@@ -1950,7 +1950,7 @@ const fr = {
 	settingsAgentRulesDeny: 'Refuser',
 	settingsAgentRulesAsk: 'Demander',
 	settingsAgentRulesAllow: 'Autoriser',
-	settingsAgentRulesHint: 'Une par ligne. * représente n’importe quel texte, comme systemctl status * ou apt-get install * ; un :* final équivaut à « * ». Une commande enchaînée est vérifiée partie par partie : refuser et demander s’appliquent si une partie correspond, autoriser seulement si chaque partie est couverte. Les règles portent sur le texte écrit (/bin/rm ne correspond pas à rm *) ; ce n’est pas une frontière de sécurité.',
+	settingsAgentRulesHint: 'Une par ligne. * représente n’importe quel texte, comme systemctl status * ou apt-get install * ; un :* final équivaut à « * ». Une commande enchaînée est vérifiée partie par partie : refuser et demander s’appliquent si une partie correspond, autoriser seulement si chaque partie est couverte. Les règles portent sur le texte écrit (sh -c \'rm …\' ne correspond pas à rm *) ; ce n’est pas une frontière de sécurité.',
 	settingsAgentAutoRules: 'Règles du mode auto',
 	settingsAgentAutoHint: 'Des règles en langage naturel pour le jugement du modèle. Vide utilise la liste intégrée ; une ligne $defaults la garde et ajoute les vôtres. Ordre : refus strict, puis refus souple (levé par une règle d’autorisation ou votre demande explicite), puis autorisation.',
 	settingsAgentAutoEnvironment: 'Environnement',

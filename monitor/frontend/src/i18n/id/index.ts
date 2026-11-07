@@ -1950,7 +1950,7 @@ const id = {
 	settingsAgentRulesDeny: 'Tolak',
 	settingsAgentRulesAsk: 'Tanya',
 	settingsAgentRulesAllow: 'Izinkan',
-	settingsAgentRulesHint: 'Satu per baris. * berarti teks apa pun, misalnya systemctl status * atau apt-get install *; :* di akhir sama dengan “ *”. Perintah berantai diperiksa per bagian: tolak dan tanya berlaku jika satu bagian cocok, izinkan hanya jika setiap bagian tercakup. Aturan mencocokkan teks yang ditulis (/bin/rm tidak cocok dengan rm *); ini bukan batas keamanan.',
+	settingsAgentRulesHint: 'Satu per baris. * berarti teks apa pun, misalnya systemctl status * atau apt-get install *; :* di akhir sama dengan “ *”. Perintah berantai diperiksa per bagian: tolak dan tanya berlaku jika satu bagian cocok, izinkan hanya jika setiap bagian tercakup. Aturan mencocokkan teks yang ditulis (sh -c \'rm …\' tidak cocok dengan rm *); ini bukan batas keamanan.',
 	settingsAgentAutoRules: 'Aturan mode otomatis',
 	settingsAgentAutoHint: 'Aturan dalam bahasa biasa untuk penilaian model. Kosong memakai daftar bawaan; baris $defaults mempertahankannya dan menambahkan milik Anda. Urutan: tolak keras, lalu tolak lunak (dibatalkan oleh aturan izin atau permintaan eksplisit Anda), lalu izinkan.',
 	settingsAgentAutoEnvironment: 'Lingkungan',

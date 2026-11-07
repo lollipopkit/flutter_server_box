@@ -1950,7 +1950,7 @@ const zh_TW = {
 	settingsAgentRulesDeny: '拒絕',
 	settingsAgentRulesAsk: '詢問',
 	settingsAgentRulesAllow: '允許',
-	settingsAgentRulesHint: '每行一條。* 代表任意文字，如 systemctl status * 或 apt-get install *；結尾的 :* 與「 *」相同。組合命令會拆開逐段比對：拒絕和詢問只要有一段命中就生效，允許要求每一段都被涵蓋。規則依命令文字比對（/bin/rm 不會命中 rm *），不是安全邊界。',
+	settingsAgentRulesHint: '每行一條。* 代表任意文字，如 systemctl status * 或 apt-get install *；結尾的 :* 與「 *」相同。組合命令會拆開逐段比對：拒絕和詢問只要有一段命中就生效，允許要求每一段都被涵蓋。規則依命令文字比對（sh -c \'rm …\' 不會命中 rm *），不是安全邊界。',
 	settingsAgentAutoRules: '自動模式規則',
 	settingsAgentAutoHint: '以自然語言撰寫，供模型判斷。留空使用內建規則；寫一行 $defaults 可保留內建規則並追加自己的。順序：硬拒絕 → 軟拒絕（允許規則或你明確要求的操作可以放行）→ 允許。',
 	settingsAgentAutoEnvironment: '環境',

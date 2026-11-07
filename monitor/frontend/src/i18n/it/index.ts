@@ -1950,7 +1950,7 @@ const it = {
 	settingsAgentRulesDeny: 'Nega',
 	settingsAgentRulesAsk: 'Chiedi',
 	settingsAgentRulesAllow: 'Consenti',
-	settingsAgentRulesHint: 'Una per riga. * è qualsiasi testo, come systemctl status * o apt-get install *; un :* finale equivale a « *». Un comando concatenato è controllato parte per parte: nega e chiedi valgono se una parte corrisponde, consenti solo se ogni parte è coperta. Le regole confrontano il testo scritto (/bin/rm non corrisponde a rm *); non sono un confine di sicurezza.',
+	settingsAgentRulesHint: 'Una per riga. * è qualsiasi testo, come systemctl status * o apt-get install *; un :* finale equivale a « *». Un comando concatenato è controllato parte per parte: nega e chiedi valgono se una parte corrisponde, consenti solo se ogni parte è coperta. Le regole confrontano il testo scritto (sh -c \'rm …\' non corrisponde a rm *); non sono un confine di sicurezza.',
 	settingsAgentAutoRules: 'Regole della modalità automatica',
 	settingsAgentAutoHint: 'Regole in linguaggio naturale per il giudizio del modello. Vuoto usa l’elenco integrato; una riga $defaults lo mantiene e aggiunge le tue. Ordine: divieto rigido, poi divieto morbido (lo toglie una regola di consenso o una tua richiesta esplicita), poi consenso.',
 	settingsAgentAutoEnvironment: 'Ambiente',

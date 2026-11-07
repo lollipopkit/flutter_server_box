@@ -258,7 +258,7 @@ impl RunCommand {
                         return Err(permissions::block_message(&rule, &reason));
                     }
                     // No verdict: the person decides.
-                    None => Decision::Ask { danger: false, allow_rule: fl_pi_llm::permissions::rules::suggest(&command) },
+                    None => Decision::Ask { danger: false, by_rule: false, allow_rule: fl_pi_llm::permissions::rules::suggest(&command) },
                 },
                 d => d,
             };
@@ -268,7 +268,7 @@ impl RunCommand {
                     return Err(permissions::deny_message(&rule));
                 }
                 Decision::Run | Decision::Judge => None,
-                Decision::Ask { danger: false, allow_rule } => Some({
+                Decision::Ask { danger: false, allow_rule, .. } => Some({
                     let mut v = pending("confirm", call, title.clone());
                     v.steps = vec![super::PlanStep { text: title.clone(), command: Some(command.clone()) }];
                     v.command = Some(command.clone());

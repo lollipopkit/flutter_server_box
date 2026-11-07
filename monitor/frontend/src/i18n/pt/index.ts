@@ -1950,7 +1950,7 @@ const pt = {
 	settingsAgentRulesDeny: 'Negar',
 	settingsAgentRulesAsk: 'Perguntar',
 	settingsAgentRulesAllow: 'Permitir',
-	settingsAgentRulesHint: 'Uma por linha. * é qualquer texto, como systemctl status * ou apt-get install *; um :* final equivale a “ *”. Um comando encadeado é verificado parte a parte: negar e perguntar valem se alguma parte coincide, permitir só se todas forem cobertas. As regras comparam o texto escrito (/bin/rm não coincide com rm *); não são uma fronteira de segurança.',
+	settingsAgentRulesHint: 'Uma por linha. * é qualquer texto, como systemctl status * ou apt-get install *; um :* final equivale a “ *”. Um comando encadeado é verificado parte a parte: negar e perguntar valem se alguma parte coincide, permitir só se todas forem cobertas. As regras comparam o texto escrito (sh -c \'rm …\' não coincide com rm *); não são uma fronteira de segurança.',
 	settingsAgentAutoRules: 'Regras do modo automático',
 	settingsAgentAutoHint: 'Regras em linguagem natural para o julgamento do modelo. Vazio usa a lista embutida; uma linha $defaults a mantém e acrescenta as suas. Ordem: negação rígida, depois negação suave (uma regra de permissão ou seu pedido explícito a libera), depois permitir.',
 	settingsAgentAutoEnvironment: 'Ambiente',

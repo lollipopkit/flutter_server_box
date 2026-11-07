@@ -1950,7 +1950,7 @@ const de = {
 	settingsAgentRulesDeny: 'Verbieten',
 	settingsAgentRulesAsk: 'Fragen',
 	settingsAgentRulesAllow: 'Erlauben',
-	settingsAgentRulesHint: 'Eine pro Zeile. * steht für beliebigen Text, z. B. systemctl status * oder apt-get install *; ein abschließendes :* entspricht „ *“. Verkettete Befehle werden teilweise geprüft: Verbieten und Fragen greifen, wenn ein Teil passt, Erlauben nur, wenn jeder Teil abgedeckt ist. Regeln passen auf den geschriebenen Befehl (/bin/rm passt nicht auf rm *) und sind keine Sicherheitsgrenze.',
+	settingsAgentRulesHint: 'Eine pro Zeile. * steht für beliebigen Text, z. B. systemctl status * oder apt-get install *; ein abschließendes :* entspricht „ *“. Verkettete Befehle werden teilweise geprüft: Verbieten und Fragen greifen, wenn ein Teil passt, Erlauben nur, wenn jeder Teil abgedeckt ist. Regeln passen auf den geschriebenen Befehl (sh -c \'rm …\' passt nicht auf rm *) und sind keine Sicherheitsgrenze.',
 	settingsAgentAutoRules: 'Regeln des automatischen Modus',
 	settingsAgentAutoHint: 'Regeln in Klartext, nach denen das Modell urteilt. Leer nutzt die eingebaute Liste; eine Zeile $defaults behält sie und ergänzt Ihre. Reihenfolge: hartes Verbot, dann weiches Verbot (eine Erlaubnisregel oder Ihre ausdrückliche Bitte hebt es auf), dann Erlauben.',
 	settingsAgentAutoEnvironment: 'Umgebung',
