@@ -510,10 +510,21 @@ class AppLocalizationsEs extends AppLocalizations {
   String get fullScreen => 'Pantalla completa';
 
   @override
-  String get fullScreenJitter => 'Temblores en modo pantalla completa';
+  String get fullScreenAllServers => 'Todos los servidores';
 
   @override
-  String get fullScreenJitterHelp => 'Prevención de quemaduras de pantalla';
+  String get fullScreenOneServer => 'Un servidor';
+
+  @override
+  String fullScreenConnectedFmt(int connected, int total) {
+    return '$connected / $total conectados';
+  }
+
+  @override
+  String get fullScreenExit => 'Salir de pantalla completa';
+
+  @override
+  String get fullScreenJitter => 'Protección contra quemado';
 
   @override
   String get fullScreenTip =>

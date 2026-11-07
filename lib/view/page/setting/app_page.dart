@@ -72,7 +72,6 @@ enum SettingsSection {
   /// The search walks every one of them, and a group the menu never offers is
   /// one whose rows cannot be reached from a result either.
   bool get available => switch (this) {
-    SettingsSection.fullScreen => isMobile,
     SettingsSection.linux => Rootfs.isAvailable,
     _ => true,
   };

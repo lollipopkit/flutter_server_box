@@ -484,10 +484,21 @@ class AppLocalizationsJa extends AppLocalizations {
   String get fullScreen => 'フルスクリーン';
 
   @override
-  String get fullScreenJitter => 'フルスクリーンモードのジッター';
+  String get fullScreenAllServers => 'すべてのサーバー';
 
   @override
-  String get fullScreenJitterHelp => '焼き付き防止';
+  String get fullScreenOneServer => '1 台のサーバー';
+
+  @override
+  String fullScreenConnectedFmt(int connected, int total) {
+    return '$connected / $total 台接続中';
+  }
+
+  @override
+  String get fullScreenExit => '全画面表示を終了';
+
+  @override
+  String get fullScreenJitter => '焼き付き防止';
 
   @override
   String get fullScreenTip =>

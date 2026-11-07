@@ -623,13 +623,33 @@
   "@fullScreen": {
     "description": "User-facing label or message for full screen."
   },
-  "fullScreenJitter": "Full screen jitter",
+  "fullScreenAllServers": "All servers",
+  "@fullScreenAllServers": {
+    "description": "Full screen showing every server at once"
+  },
+  "fullScreenOneServer": "One server",
+  "@fullScreenOneServer": {
+    "description": "Full screen showing one server at a time"
+  },
+  "fullScreenConnectedFmt": "{connected} / {total} connected",
+  "@fullScreenConnectedFmt": {
+    "description": "How many of the servers shown are connected",
+    "placeholders": {
+      "connected": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "fullScreenExit": "Exit full screen",
+  "@fullScreenExit": {
+    "description": "Leaves full screen"
+  },
+  "fullScreenJitter": "Burn-in protection",
   "@fullScreenJitter": {
     "description": "User-facing label or message for full screen jitter."
-  },
-  "fullScreenJitterHelp": "To avoid screen burn-in",
-  "@fullScreenJitterHelp": {
-    "description": "User-facing label or message for full screen jitter help."
   },
   "fullScreenTip": "Should full-screen mode be enabled when the device is rotated to landscape mode? This option only applies to the server tab.",
   "@fullScreenTip": {

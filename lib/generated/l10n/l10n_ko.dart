@@ -485,10 +485,21 @@ class AppLocalizationsKo extends AppLocalizations {
   String get fullScreen => '전체 화면';
 
   @override
-  String get fullScreenJitter => '전체 화면 지터';
+  String get fullScreenAllServers => '모든 서버';
 
   @override
-  String get fullScreenJitterHelp => '화면 번인 방지';
+  String get fullScreenOneServer => '서버 하나';
+
+  @override
+  String fullScreenConnectedFmt(int connected, int total) {
+    return '$connected / $total 연결됨';
+  }
+
+  @override
+  String get fullScreenExit => '전체 화면 종료';
+
+  @override
+  String get fullScreenJitter => '번인 방지';
 
   @override
   String get fullScreenTip =>

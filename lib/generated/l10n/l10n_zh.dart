@@ -472,10 +472,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fullScreen => '全屏';
 
   @override
-  String get fullScreenJitter => '全屏模式抖动';
+  String get fullScreenAllServers => '全部服务器';
 
   @override
-  String get fullScreenJitterHelp => '用于防止屏幕烧屏';
+  String get fullScreenOneServer => '单台服务器';
+
+  @override
+  String fullScreenConnectedFmt(int connected, int total) {
+    return '$connected / $total 已连接';
+  }
+
+  @override
+  String get fullScreenExit => '退出全屏';
+
+  @override
+  String get fullScreenJitter => '防烧屏';
 
   @override
   String get fullScreenTip => '当设备旋转为横屏时，是否开启全屏模式。此选项仅作用于服务器 Tab 页。';
@@ -7331,10 +7342,21 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get fullScreen => '全螢幕';
 
   @override
-  String get fullScreenJitter => '全螢幕模式抖動';
+  String get fullScreenAllServers => '全部伺服器';
 
   @override
-  String get fullScreenJitterHelp => '防止螢幕烙印';
+  String get fullScreenOneServer => '單台伺服器';
+
+  @override
+  String fullScreenConnectedFmt(int connected, int total) {
+    return '$connected / $total 已連線';
+  }
+
+  @override
+  String get fullScreenExit => '結束全螢幕';
+
+  @override
+  String get fullScreenJitter => '防烙印';
 
   @override
   String get fullScreenTip => '當設備旋轉為橫向時，是否開啟全螢幕模式？此選項僅適用於伺服器分頁。';

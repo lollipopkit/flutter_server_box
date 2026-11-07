@@ -507,10 +507,21 @@ class AppLocalizationsPt extends AppLocalizations {
   String get fullScreen => 'Tela cheia';
 
   @override
-  String get fullScreenJitter => 'Tremulação em tela cheia';
+  String get fullScreenAllServers => 'Todos os servidores';
 
   @override
-  String get fullScreenJitterHelp => 'Prevenir burn-in de tela';
+  String get fullScreenOneServer => 'Um servidor';
+
+  @override
+  String fullScreenConnectedFmt(int connected, int total) {
+    return '$connected / $total conectados';
+  }
+
+  @override
+  String get fullScreenExit => 'Sair da tela cheia';
+
+  @override
+  String get fullScreenJitter => 'Proteção contra burn-in';
 
   @override
   String get fullScreenTip =>

@@ -510,10 +510,21 @@ class AppLocalizationsIt extends AppLocalizations {
   String get fullScreen => 'Schermo intero';
 
   @override
-  String get fullScreenJitter => 'Jitter schermo intero';
+  String get fullScreenAllServers => 'Tutti i server';
 
   @override
-  String get fullScreenJitterHelp => 'Per evitare il burn-in dello schermo';
+  String get fullScreenOneServer => 'Un server';
+
+  @override
+  String fullScreenConnectedFmt(int connected, int total) {
+    return '$connected / $total connessi';
+  }
+
+  @override
+  String get fullScreenExit => 'Esci da schermo intero';
+
+  @override
+  String get fullScreenJitter => 'Protezione burn-in';
 
   @override
   String get fullScreenTip =>

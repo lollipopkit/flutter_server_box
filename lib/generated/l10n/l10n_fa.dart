@@ -507,11 +507,21 @@ class AppLocalizationsFa extends AppLocalizations {
   String get fullScreen => 'تمام‌صفحه';
 
   @override
-  String get fullScreenJitter => 'لرزش تمام‌صفحه';
+  String get fullScreenAllServers => 'همه سرورها';
 
   @override
-  String get fullScreenJitterHelp =>
-      'برای جلوگیری از ماندگاری تصویر روی صفحه (Burn-in)';
+  String get fullScreenOneServer => 'یک سرور';
+
+  @override
+  String fullScreenConnectedFmt(int connected, int total) {
+    return '$connected / $total متصل';
+  }
+
+  @override
+  String get fullScreenExit => 'خروج از تمام‌صفحه';
+
+  @override
+  String get fullScreenJitter => 'محافظت در برابر سوختگی صفحه';
 
   @override
   String get fullScreenTip =>

@@ -506,10 +506,21 @@ class AppLocalizationsNl extends AppLocalizations {
   String get fullScreen => 'Volledig scherm';
 
   @override
-  String get fullScreenJitter => 'Volledig scherm trilling';
+  String get fullScreenAllServers => 'Alle servers';
 
   @override
-  String get fullScreenJitterHelp => 'Om inbranden van het scherm te voorkomen';
+  String get fullScreenOneServer => 'Eén server';
+
+  @override
+  String fullScreenConnectedFmt(int connected, int total) {
+    return '$connected / $total verbonden';
+  }
+
+  @override
+  String get fullScreenExit => 'Volledig scherm afsluiten';
+
+  @override
+  String get fullScreenJitter => 'Inbrandbescherming';
 
   @override
   String get fullScreenTip =>

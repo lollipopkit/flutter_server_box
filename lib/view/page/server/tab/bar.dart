@@ -245,6 +245,11 @@ extension _Bar on _ServerPageState {
           onTap: _toggleGlobe,
         ),
       ),
+    BarAction(
+      icon: Icons.fullscreen,
+      label: l10n.fullScreen,
+      onTap: _enterFullScreen,
+    ),
     BarAction.menu(
       icon: Icons.add,
       label: libL10n.add,

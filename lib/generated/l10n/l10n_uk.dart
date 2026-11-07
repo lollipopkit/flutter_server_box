@@ -508,10 +508,21 @@ class AppLocalizationsUk extends AppLocalizations {
   String get fullScreen => 'Повний екран';
 
   @override
-  String get fullScreenJitter => 'Тремтіння в повноекранному режимі';
+  String get fullScreenAllServers => 'Усі сервери';
 
   @override
-  String get fullScreenJitterHelp => 'Щоб уникнути вигоряння екрану';
+  String get fullScreenOneServer => 'Один сервер';
+
+  @override
+  String fullScreenConnectedFmt(int connected, int total) {
+    return '$connected / $total підключено';
+  }
+
+  @override
+  String get fullScreenExit => 'Вийти з повноекранного режиму';
+
+  @override
+  String get fullScreenJitter => 'Захист від вигорання';
 
   @override
   String get fullScreenTip =>

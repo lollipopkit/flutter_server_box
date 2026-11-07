@@ -508,11 +508,21 @@ class AppLocalizationsAz extends AppLocalizations {
   String get fullScreen => 'Tam ekran';
 
   @override
-  String get fullScreenJitter => 'Tam ekranda kiçik yerdəyişmələr';
+  String get fullScreenAllServers => 'Bütün serverlər';
 
   @override
-  String get fullScreenJitterHelp =>
-      'Ekranda qalıcı iz yaranmasının qarşısını almaq üçün';
+  String get fullScreenOneServer => 'Bir server';
+
+  @override
+  String fullScreenConnectedFmt(int connected, int total) {
+    return '$connected / $total qoşulub';
+  }
+
+  @override
+  String get fullScreenExit => 'Tam ekrandan çıx';
+
+  @override
+  String get fullScreenJitter => 'Ekran yanmasından qoruma';
 
   @override
   String get fullScreenTip =>

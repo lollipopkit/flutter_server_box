@@ -24,10 +24,9 @@ mixin _$BackupV2 {
 /// carry restores with the address and no account, which the editor shows.
  Map<String, Object?> get bmcCredentials;/// Each server's `PveConfig`, by server id — `PveStore.getAllMap`.
 ///
-/// Absent from files written before PVE had a table of its own. Those
-/// carry it inside the server record's `custom` instead — and so does
-/// every file this build writes, for those builds to read. What [merge]
-/// makes of either is `_pveToRestore`'s rule.
+/// The only place a file carries PVE. One written before PVE had a table
+/// of its own has no such section and restores without PVE; see
+/// `_pveToRestore`.
  Map<String, Object?> get pve;/// The installed theme packages, by installation id — see
 /// [ThemeBackup]. Only beside [settings]: they are what the theme
 /// settings point at. Absent from files written before themes were
@@ -322,17 +321,15 @@ class _BackupV2 extends BackupV2 {
 
 /// Each server's `PveConfig`, by server id — `PveStore.getAllMap`.
 ///
-/// Absent from files written before PVE had a table of its own. Those
-/// carry it inside the server record's `custom` instead — and so does
-/// every file this build writes, for those builds to read. What [merge]
-/// makes of either is `_pveToRestore`'s rule.
+/// The only place a file carries PVE. One written before PVE had a table
+/// of its own has no such section and restores without PVE; see
+/// `_pveToRestore`.
  final  Map<String, Object?> _pve;
 /// Each server's `PveConfig`, by server id — `PveStore.getAllMap`.
 ///
-/// Absent from files written before PVE had a table of its own. Those
-/// carry it inside the server record's `custom` instead — and so does
-/// every file this build writes, for those builds to read. What [merge]
-/// makes of either is `_pveToRestore`'s rule.
+/// The only place a file carries PVE. One written before PVE had a table
+/// of its own has no such section and restores without PVE; see
+/// `_pveToRestore`.
 @override@JsonKey() Map<String, Object?> get pve {
   if (_pve is EqualUnmodifiableMapView) return _pve;
   // ignore: implicit_dynamic_type

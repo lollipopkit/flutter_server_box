@@ -4,7 +4,7 @@ extension _Fullscreen on _AppSettingsPageState {
   List<SettingsGroup> _buildFullScreen() {
     return [
       SettingsGroup(libL10n.general, [
-        _buildFullScreenSwitch(),
+        if (isMobile) _buildFullScreenSwitch(),
         _buildFullScreenJitter(),
       ]),
     ];
@@ -33,15 +33,10 @@ extension _Fullscreen on _AppSettingsPageState {
       () => ListTile(
         leading: const Icon(AntDesign.shake_outline),
         title: Text(label),
-        subtitle: Text(l10n.fullScreenJitterHelp, style: UIs.textGrey),
         trailing: StoreSwitch(
           prop: _setting.fullScreenJitter,
-          callback: (_) {
-            Toast.show(l10n.needRestart);
-          },
         ),
       ),
-      keywords: l10n.fullScreenJitterHelp,
     );
   }
 }
