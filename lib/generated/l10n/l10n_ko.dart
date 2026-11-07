@@ -1577,7 +1577,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'ServerBox가 실행 중인 이 기기에서 Agent가 작업하게 합니다. 읽기 전용 명령도 검토가 필요합니다';
+      'ServerBox를 실행하는 기기에서 Agent가 작업하도록 허용합니다. 명령은 권한 모드를 따릅니다';
 
   @override
   String get agentLocalExecRootfsTip =>

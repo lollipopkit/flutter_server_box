@@ -1678,7 +1678,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'Membiarkan Agent bekerja di mesin yang menjalankan ServerBox. Perintah hanya-baca pun ditinjau';
+      'Mengizinkan Agent bekerja di mesin yang menjalankan ServerBox. Perintahnya mengikuti mode izin';
 
   @override
   String get agentLocalExecRootfsTip =>

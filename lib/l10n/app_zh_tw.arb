@@ -439,7 +439,7 @@
   "continueInTerminal": "在終端機中繼續",
   "askAiRiskUnknown": "未判定",
   "agentLocalExec": "在本機執行命令",
-  "agentLocalExecTip": "允許 Agent 在執行 ServerBox 的這台機器上工作。唯讀的命令也需要審核",
+  "agentLocalExecTip": "允許 Agent 在目前裝置上執行本機指令，指令依權限模式處理",
   "agentLocalExecRootfsTip": "讓 Agent 在本機執行，但只能操作 ServerBox 安裝的 Linux 容器。",
   "macDmgImportedPartly": "已匯入先前安裝版本的資料。下載的檔案仍保留在 {path}。",
   "bmcAccount": "帳戶",

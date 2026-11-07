@@ -436,7 +436,7 @@
   "continueInTerminal": "터미널에서 계속하기",
   "askAiRiskUnknown": "분류되지 않음",
   "agentLocalExec": "이 기기에서 명령 실행",
-  "agentLocalExecTip": "ServerBox가 실행 중인 이 기기에서 Agent가 작업하게 합니다. 읽기 전용 명령도 검토가 필요합니다",
+  "agentLocalExecTip": "ServerBox를 실행하는 기기에서 Agent가 작업하도록 허용합니다. 명령은 권한 모드를 따릅니다",
   "agentLocalExecRootfsTip": "Agent를 로컬에서 동작하게 하며, 범위는 ServerBox가 설치한 Linux 컨테이너 안으로 제한됩니다",
   "macDmgImportedPartly": "이전에 설치된 빌드의 데이터를 가져왔습니다. 다운로드한 파일은 {path}에 그대로 있습니다.",
   "bmcAccount": "계정",

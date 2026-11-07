@@ -436,7 +436,7 @@
   "continueInTerminal": "Terminalde devam et",
   "askAiRiskUnknown": "Sınıflandırılmadı",
   "agentLocalExec": "Bu cihazda komut çalıştır",
-  "agentLocalExecTip": "Agent’ın ServerBox’ın çalıştığı makinede çalışmasına izin verir. Salt okunur komutlar da incelenir",
+  "agentLocalExecTip": "Agent'ın ServerBox'ı çalıştıran makinede çalışmasına izin verir. Komutları izin moduna göre işlenir",
   "agentLocalExecRootfsTip": "Agent’ın yerelde, ServerBox’ın kurduğu Linux konteynerinin içinde çalışmasına izin verir",
   "macDmgImportedPartly": "Daha önce yüklü sürümün verileri içe aktarıldı. İndirilen dosyalar {path} konumunda kaldı.",
   "bmcAccount": "Hesap",

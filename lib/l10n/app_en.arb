@@ -2104,7 +2104,7 @@
   "@agentLocalExec": {
     "description": "User-facing label or message for agent local exec."
   },
-  "agentLocalExecTip": "Lets the Agent work on the machine running ServerBox. Even read-only commands are reviewed",
+  "agentLocalExecTip": "Lets the Agent work on the machine running ServerBox. Its commands go by the permission mode",
   "@agentLocalExecTip": {
     "description": "Help text for the agent local exec setting or action."
   },

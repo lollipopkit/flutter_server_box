@@ -1696,7 +1696,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'Lässt den Agent auf dem Rechner arbeiten, auf dem ServerBox läuft. Auch lesende Befehle werden geprüft';
+      'Lässt den Agent auf dem Rechner arbeiten, auf dem ServerBox läuft. Seine Befehle richten sich nach dem Berechtigungsmodus';
 
   @override
   String get agentLocalExecRootfsTip =>

@@ -1681,7 +1681,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'Agentin ServerBox işləyən kompüterdə işləməsinə icazə verir. Yalnız oxuma əmrləri də yoxlanılır';
+      'Agent-ə ServerBox-un işlədiyi maşında işləməyə icazə verir. Əmrləri icazə rejiminə görə işlənir';
 
   @override
   String get agentLocalExecRootfsTip =>

@@ -67,6 +67,9 @@ export class AgentStore {
   #retry = RETRY_MIN_MS
   #noticeTimer: ReturnType<typeof setTimeout> | null = null
   #detailSeq = 0
+  /// The default mode being saved: one at a time, and a task started
+  /// meanwhile waits for it, so it starts in the mode shown.
+  #modeSave: Promise<void> = Promise.resolve()
 
   constructor(entry: ServerEntry) {
     this.entry = { ...entry }
@@ -200,20 +203,25 @@ export class AgentStore {
   }
 
   /// Makes [mode] the one new tasks start in, as the permissions page does.
-  async setDefaultMode(mode: PermissionMode): Promise<void> {
-    const prev = this.defaultMode
-    this.defaultMode = mode
-    try {
-      const v = await agentApi.permissions(this.entry)
-      this.defaultMode = (await agentApi.savePermissions(this.entry, { ...v.permissions, defaultMode: mode })).permissions.defaultMode
-    } catch (e) {
-      this.defaultMode = prev
-      throw e
-    }
+  setDefaultMode(mode: PermissionMode): Promise<void> {
+    const save = this.#modeSave.then(async () => {
+      const prev = this.defaultMode
+      this.defaultMode = mode
+      try {
+        const v = await agentApi.permissions(this.entry)
+        this.defaultMode = (await agentApi.savePermissions(this.entry, { ...v.permissions, defaultMode: mode })).permissions.defaultMode
+      } catch (e) {
+        this.defaultMode = prev
+        throw e
+      }
+    })
+    this.#modeSave = save.catch(() => {})
+    return save
   }
 
   /// A new task, in the mode new tasks start in.
   async startFlow(prompt: string, files: string[] = [], choice: TaskChoice = {}): Promise<Flow> {
+    await this.#modeSave
     const f = await agentApi.start(this.entry, prompt, undefined, files, choice)
     this.#upsert(f)
     return f

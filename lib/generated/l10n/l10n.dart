@@ -2937,7 +2937,7 @@ abstract class AppLocalizations {
   /// Help text for the agent local exec setting or action.
   ///
   /// In en, this message translates to:
-  /// **'Lets the Agent work on the machine running ServerBox. Even read-only commands are reviewed'**
+  /// **'Lets the Agent work on the machine running ServerBox. Its commands go by the permission mode'**
   String get agentLocalExecTip;
 
   /// Help text for the agent local exec rootfs setting or action.

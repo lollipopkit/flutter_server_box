@@ -66,6 +66,10 @@ class _RemoteComposerState extends State<RemoteComposer> {
   MonitorAgentModel? _model;
   String? _thinking;
 
+  /// A mode is being saved: the next waits for it, so two picks cannot
+  /// write over each other.
+  bool _savingMode = false;
+
   /// As many files as one task takes at once (the agent's `MAX_PER_TASK`).
   static const _maxFiles = 10;
 
@@ -117,13 +121,16 @@ class _RemoteComposerState extends State<RemoteComposer> {
   Future<void> _pickMode(LlmPermissionMode mode) async {
     final serverId = widget.serverId;
     final client = RemoteAgentTasks.client(serverId);
-    if (client == null) return;
+    if (client == null || _savingMode) return;
+    setState(() => _savingMode = true);
     try {
       final view = await client.agentPermissions();
       final saved = await client.saveAgentPermissions(view.permissions.copyWith(defaultMode: mode));
       RemoteAgentTasks.setDefaultMode(serverId, saved.permissions.mode);
     } catch (e) {
       if (mounted) context.showErrDialog(e);
+    } finally {
+      if (mounted) setState(() => _savingMode = false);
     }
   }
 
@@ -237,7 +244,7 @@ class _RemoteComposerState extends State<RemoteComposer> {
             if (!blocked)
               AttachButton(onPicked: (paths) => setState(() => _files = [..._files, ...paths].take(_maxFiles).toList())),
             if (server != null && mode != null)
-              PermissionModeChip(mode: mode, bypassAllowed: server.bypassAllowed, onPick: blocked ? null : _pickMode),
+              PermissionModeChip(mode: mode, bypassAllowed: server.bypassAllowed, onPick: blocked || _savingMode ? null : _pickMode),
             if (_effectiveModel case final m?) Flexible(child: ComposerModelChip(name: m.label, onTap: blocked ? null : _pickModel)),
             if (_effectiveModel?.reasoning ?? false)
               ComposerThinkingChip(

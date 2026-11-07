@@ -436,7 +436,7 @@
   "continueInTerminal": "Continuar en la terminal",
   "askAiRiskUnknown": "Sin clasificar",
   "agentLocalExec": "Ejecutar comandos en este dispositivo",
-  "agentLocalExecTip": "Deja que el Agent trabaje en la máquina que ejecuta ServerBox. Incluso los comandos de solo lectura se revisan",
+  "agentLocalExecTip": "Permite que el Agent trabaje en la máquina donde se ejecuta ServerBox. Sus comandos siguen el modo de permisos",
   "agentLocalExecRootfsTip": "Deja que el Agent trabaje en local, limitado al contenedor Linux que instaló ServerBox",
   "macDmgImportedPartly": "Se importaron los datos de la versión instalada anteriormente. Los archivos descargados se quedaron en {path}.",
   "bmcAccount": "Cuenta",

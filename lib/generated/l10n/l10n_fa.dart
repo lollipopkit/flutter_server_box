@@ -1679,7 +1679,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'به Agent امکان می‌دهد روی دستگاهی که ServerBox را اجرا می‌کند کار کند. حتی دستورهای فقط‌خواندنی نیز بررسی می‌شوند';
+      'به Agent اجازه می‌دهد روی دستگاهی که ServerBox را اجرا می‌کند کار کند. فرمان‌هایش طبق حالت مجوز انجام می‌شوند';
 
   @override
   String get agentLocalExecRootfsTip =>

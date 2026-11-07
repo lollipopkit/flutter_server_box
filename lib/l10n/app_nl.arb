@@ -436,7 +436,7 @@
   "continueInTerminal": "Doorgaan in terminal",
   "askAiRiskUnknown": "Niet ingedeeld",
   "agentLocalExec": "Opdrachten op dit apparaat uitvoeren",
-  "agentLocalExecTip": "Laat de Agent werken op de machine waarop ServerBox draait. Ook alleen-lezen commando’s worden beoordeeld",
+  "agentLocalExecTip": "Laat de Agent werken op de machine waarop ServerBox draait. Zijn commando's volgen de toestemmingsmodus",
   "agentLocalExecRootfsTip": "Laat de Agent lokaal werken, beperkt tot de Linux-container die ServerBox installeerde",
   "macDmgImportedPartly": "De gegevens van de eerder geïnstalleerde versie zijn geïmporteerd. Gedownloade bestanden zijn achtergebleven in {path}.",
   "bmcAccount": "Account",

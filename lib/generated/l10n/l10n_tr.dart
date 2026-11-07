@@ -1672,7 +1672,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'Agent’ın ServerBox’ın çalıştığı makinede çalışmasına izin verir. Salt okunur komutlar da incelenir';
+      'Agent\'ın ServerBox\'ı çalıştıran makinede çalışmasına izin verir. Komutları izin moduna göre işlenir';
 
   @override
   String get agentLocalExecRootfsTip =>

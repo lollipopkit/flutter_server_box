@@ -1685,7 +1685,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'Laat de Agent werken op de machine waarop ServerBox draait. Ook alleen-lezen commando’s worden beoordeeld';
+      'Laat de Agent werken op de machine waarop ServerBox draait. Zijn commando\'s volgen de toestemmingsmodus';
 
   @override
   String get agentLocalExecRootfsTip =>

@@ -1695,7 +1695,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'Lascia che l’Agent lavori sulla macchina che esegue ServerBox. Anche i comandi di sola lettura sono esaminati';
+      'Consente all’Agent di lavorare sulla macchina che esegue ServerBox. I suoi comandi seguono la modalità di permessi';
 
   @override
   String get agentLocalExecRootfsTip =>

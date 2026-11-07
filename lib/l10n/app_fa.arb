@@ -477,7 +477,7 @@
   "continueInTerminal": "ادامه در ترمینال",
   "askAiRiskUnknown": "طبقه‌بندی‌نشده",
   "agentLocalExec": "اجرای دستورها روی این دستگاه",
-  "agentLocalExecTip": "به Agent امکان می‌دهد روی دستگاهی که ServerBox را اجرا می‌کند کار کند. حتی دستورهای فقط‌خواندنی نیز بررسی می‌شوند",
+  "agentLocalExecTip": "به Agent اجازه می‌دهد روی دستگاهی که ServerBox را اجرا می‌کند کار کند. فرمان‌هایش طبق حالت مجوز انجام می‌شوند",
   "agentLocalExecRootfsTip": "به Agent امکان می‌دهد به‌صورت محلی و محدود به کانتینر لینوکسی که ServerBox نصب کرده است کار کند",
   "macDmgImportedPartly": "داده‌های نسخه نصب‌شده قبلی وارد شد. فایل‌های دانلودشده در همان محل در {path} باقی ماندند.",
   "bmcAccount": "حساب کاربری",

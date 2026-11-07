@@ -436,7 +436,7 @@
   "continueInTerminal": "ターミナルで続ける",
   "askAiRiskUnknown": "判定不能",
   "agentLocalExec": "このデバイスでコマンドを実行",
-  "agentLocalExecTip": "ServerBox が動いているこの端末上で Agent に作業させます。読み取り専用のコマンドも確認が必要です",
+  "agentLocalExecTip": "ServerBox を実行しているマシンで Agent が作業できるようにします。コマンドは権限モードに従います",
   "agentLocalExecRootfsTip": "Agent をローカルで動かします。範囲は ServerBox が入れた Linux コンテナ内に限られます",
   "macDmgImportedPartly": "以前インストールされていたビルドのデータを取り込みました。ダウンロードしたファイルは {path} に残っています。",
   "bmcAccount": "アカウント",

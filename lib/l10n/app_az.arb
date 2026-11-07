@@ -439,7 +439,7 @@
   "continueInTerminal": "Terminalda davam et",
   "askAiRiskUnknown": "Təsnif edilməyib",
   "agentLocalExec": "Bu cihazda əmrlər icra et",
-  "agentLocalExecTip": "Agentin ServerBox işləyən kompüterdə işləməsinə icazə verir. Yalnız oxuma əmrləri də yoxlanılır",
+  "agentLocalExecTip": "Agent-ə ServerBox-un işlədiyi maşında işləməyə icazə verir. Əmrləri icazə rejiminə görə işlənir",
   "agentLocalExecRootfsTip": "Agentin yerli olaraq, ServerBox tərəfindən quraşdırılmış Linux konteyneri daxilində işləməsinə icazə verir",
   "macDmgImportedPartly": "Əvvəllər quraşdırılmış versiyanın məlumatları idxal edildi. Endirilmiş fayllar əvvəlki yerində, {path} qovluğunda saxlanıldı.",
   "bmcAccount": "Hesab",

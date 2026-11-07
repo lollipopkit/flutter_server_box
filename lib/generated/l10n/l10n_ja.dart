@@ -1572,7 +1572,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'ServerBox が動いているこの端末上で Agent に作業させます。読み取り専用のコマンドも確認が必要です';
+      'ServerBox を実行しているマシンで Agent が作業できるようにします。コマンドは権限モードに従います';
 
   @override
   String get agentLocalExecRootfsTip =>

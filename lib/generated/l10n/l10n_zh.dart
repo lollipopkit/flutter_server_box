@@ -1539,7 +1539,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentLocalExec => '在本机执行命令';
 
   @override
-  String get agentLocalExecTip => '允许 Agent 在当前设备上执行本机命令（所有命令执行前均需你确认）';
+  String get agentLocalExecTip => '允许 Agent 在当前设备上执行本机命令，命令按权限模式处理';
 
   @override
   String get agentLocalExecRootfsTip =>
@@ -8390,7 +8390,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get agentLocalExec => '在本機執行命令';
 
   @override
-  String get agentLocalExecTip => '允許 Agent 在執行 ServerBox 的這台機器上工作。唯讀的命令也需要審核';
+  String get agentLocalExecTip => '允許 Agent 在目前裝置上執行本機指令，指令依權限模式處理';
 
   @override
   String get agentLocalExecRootfsTip =>

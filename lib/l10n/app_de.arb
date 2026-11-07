@@ -436,7 +436,7 @@
   "continueInTerminal": "Im Terminal fortfahren",
   "askAiRiskUnknown": "Nicht eingestuft",
   "agentLocalExec": "Befehle auf diesem Gerät ausführen",
-  "agentLocalExecTip": "Lässt den Agent auf dem Rechner arbeiten, auf dem ServerBox läuft. Auch lesende Befehle werden geprüft",
+  "agentLocalExecTip": "Lässt den Agent auf dem Rechner arbeiten, auf dem ServerBox läuft. Seine Befehle richten sich nach dem Berechtigungsmodus",
   "agentLocalExecRootfsTip": "Lässt den Agent lokal arbeiten, begrenzt auf den von ServerBox installierten Linux-Container",
   "macDmgImportedPartly": "Die Daten der zuvor installierten Version wurden importiert. Heruntergeladene Dateien sind unter {path} geblieben.",
   "bmcAccount": "Konto",

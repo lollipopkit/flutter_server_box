@@ -1691,7 +1691,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get agentLocalExecTip =>
-      'Позволяет агенту работать на машине, где запущен ServerBox. Даже команды только для чтения проверяются';
+      'Позволяет Agent работать на машине, где запущен ServerBox. Его команды идут по режиму разрешений';
 
   @override
   String get agentLocalExecRootfsTip =>

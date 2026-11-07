@@ -176,8 +176,8 @@ your other server credentials.
 ## Run commands on this device
 
 **Run commands on this device** is a separate option at **Settings → Application → AI**
-and is off by default. Enabling it does not allow unattended commands: every
-local command goes by the permission mode.
+and is off by default. Once on, local commands go by the permission mode like
+any other: **Allow all** runs them unasked.
 
 The command target depends on the platform:
 
