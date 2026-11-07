@@ -93,7 +93,6 @@
   "envVars": "Variabel lingkungan",
   "extraArgs": "Args ekstra",
   "fallbackSshDest": "Tujuan SSH mundur",
-  "fdroidReleaseTip": "Jika Anda mengunduh aplikasi ini dari F-Droid, disarankan untuk mematikan opsi ini.",
   "fileTooLarge": "Ukuran berkas “{file}” adalah {size}, melebihi batas {sizeMax}.",
   "fileChangedOverwrite": "'{file}' berubah di server setelah dibuka. Timpa?",
   "fileDirGone": "Folder ini sudah tidak ada",

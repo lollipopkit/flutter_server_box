@@ -483,10 +483,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get fallbackSshDest => 'Yedek SSH hedefi';
 
   @override
-  String get fdroidReleaseTip =>
-      'Bu uygulamayı F-Droid\'den indirdiyseniz, bu seçeneği kapatmanız önerilir.';
-
-  @override
   String fileTooLarge(String file, String size, String sizeMax) {
     return '“$file” dosyası $size boyutunda ve $sizeMax sınırını aşıyor.';
   }

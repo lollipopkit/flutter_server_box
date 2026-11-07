@@ -479,10 +479,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fallbackSshDest => 'Fallback SSH destination';
 
   @override
-  String get fdroidReleaseTip =>
-      'If you downloaded this app from F-Droid, it is recommended to turn off this option.';
-
-  @override
   String fileTooLarge(String file, String size, String sizeMax) {
     return 'File \'$file\' too large $size, max $sizeMax';
   }

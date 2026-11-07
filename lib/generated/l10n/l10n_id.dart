@@ -484,10 +484,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get fallbackSshDest => 'Tujuan SSH mundur';
 
   @override
-  String get fdroidReleaseTip =>
-      'Jika Anda mengunduh aplikasi ini dari F-Droid, disarankan untuk mematikan opsi ini.';
-
-  @override
   String fileTooLarge(String file, String size, String sizeMax) {
     return 'Ukuran berkas “$file” adalah $size, melebihi batas $sizeMax.';
   }

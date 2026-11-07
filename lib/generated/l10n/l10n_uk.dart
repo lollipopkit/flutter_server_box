@@ -485,10 +485,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get fallbackSshDest => 'Резервна SSH адреса';
 
   @override
-  String get fdroidReleaseTip =>
-      'Якщо ви завантажили цей застосунок з F-Droid, рекомендується відключити цю опцію.';
-
-  @override
   String fileTooLarge(String file, String size, String sizeMax) {
     return 'Розмір файла «$file» — $size, що перевищує обмеження $sizeMax.';
   }

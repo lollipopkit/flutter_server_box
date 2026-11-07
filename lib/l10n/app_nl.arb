@@ -93,7 +93,6 @@
   "envVars": "Omgevingsvariabele",
   "extraArgs": "Extra argumenten",
   "fallbackSshDest": "Fallback SSH-bestemming",
-  "fdroidReleaseTip": "Als u deze app van F-Droid heeft gedownload, wordt aanbevolen deze optie uit te schakelen.",
   "fileTooLarge": "Bestand “{file}” is {size} groot en overschrijdt de limiet van {sizeMax}.",
   "fileChangedOverwrite": "'{file}' is op de server gewijzigd nadat het werd geopend. Overschrijven?",
   "fileDirGone": "Deze map is er niet meer",

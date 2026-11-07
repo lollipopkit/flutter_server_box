@@ -62,10 +62,7 @@ final class CheckUpdateTile extends StatelessWidget {
             _ when val > BuildData.build => libL10n.versionHasUpdate(val),
             _ => libL10n.versionUpdated(BuildData.build),
           };
-          return Text(
-            isAndroid ? '$display\n${l10n.fdroidReleaseTip}' : display,
-            style: UIs.textGrey,
-          );
+          return Text(display, style: UIs.textGrey);
         },
       ),
       onTap: () => Fns.throttle(

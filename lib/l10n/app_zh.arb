@@ -134,7 +134,6 @@
   "envVars": "环境变量",
   "extraArgs": "额外参数",
   "fallbackSshDest": "备选 SSH 目标",
-  "fdroidReleaseTip": "如果你是从 F-Droid 下载的本应用，推荐关闭此选项",
   "fileTooLarge": "文件“{file}”大小为 {size}，超过上限 {sizeMax}。",
   "fileChangedOverwrite": "'{file}' 在打开后已被服务器上的其他操作修改。要覆盖吗？",
   "fileDirGone": "此文件夹已不存在",

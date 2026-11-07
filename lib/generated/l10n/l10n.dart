@@ -961,12 +961,6 @@ abstract class AppLocalizations {
   /// **'Fallback SSH destination'**
   String get fallbackSshDest;
 
-  /// Help text for the F-Droid release setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'If you downloaded this app from F-Droid, it is recommended to turn off this option.'**
-  String get fdroidReleaseTip;
-
   /// User-facing label or message for file too large.
   ///
   /// In en, this message translates to:

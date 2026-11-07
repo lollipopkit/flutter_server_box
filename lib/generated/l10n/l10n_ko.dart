@@ -463,9 +463,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get fallbackSshDest => '대체 SSH 대상';
 
   @override
-  String get fdroidReleaseTip => 'F-Droid에서 이 앱을 다운로드한 경우, 이 옵션을 끄는 것을 권장합니다.';
-
-  @override
   String fileTooLarge(String file, String size, String sizeMax) {
     return '파일 “$file”의 크기 $size이(가) 최대 크기 $sizeMax을(를) 초과합니다.';
   }

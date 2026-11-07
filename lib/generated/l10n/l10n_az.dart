@@ -485,10 +485,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String get fallbackSshDest => 'Ehtiyat SSH təyinatı';
 
   @override
-  String get fdroidReleaseTip =>
-      'Bu tətbiqi F-Droid vasitəsilə endirmisənsə, bu seçimi söndürmək tövsiyə olunur.';
-
-  @override
   String fileTooLarge(String file, String size, String sizeMax) {
     return '“$file” faylının ölçüsü $size-dir və $sizeMax həddini keçir.';
   }

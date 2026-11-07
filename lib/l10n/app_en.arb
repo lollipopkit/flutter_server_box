@@ -583,10 +583,6 @@
   "@fallbackSshDest": {
     "description": "User-facing label or message for fallback SSH dest."
   },
-  "fdroidReleaseTip": "If you downloaded this app from F-Droid, it is recommended to turn off this option.",
-  "@fdroidReleaseTip": {
-    "description": "Help text for the F-Droid release setting or action."
-  },
   "fileTooLarge": "File '{file}' too large {size}, max {sizeMax}",
   "fileChangedOverwrite": "'{file}' changed on the server after it was opened. Overwrite it?",
   "@fileChangedOverwrite": {

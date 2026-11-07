@@ -450,9 +450,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fallbackSshDest => '备选 SSH 目标';
 
   @override
-  String get fdroidReleaseTip => '如果你是从 F-Droid 下载的本应用，推荐关闭此选项';
-
-  @override
   String fileTooLarge(String file, String size, String sizeMax) {
     return '文件“$file”大小为 $size，超过上限 $sizeMax。';
   }
@@ -7318,9 +7315,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get fallbackSshDest => '備選 SSH 目標';
-
-  @override
-  String get fdroidReleaseTip => '如果你是從 F-Droid 下載的本App，推薦關閉此選項';
 
   @override
   String fileTooLarge(String file, String size, String sizeMax) {

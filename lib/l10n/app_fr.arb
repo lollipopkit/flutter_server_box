@@ -93,7 +93,6 @@
   "envVars": "Variable d’environnement",
   "extraArgs": "Arguments supplémentaires",
   "fallbackSshDest": "Destination SSH de secours",
-  "fdroidReleaseTip": "Si vous avez téléchargé cette application depuis F-Droid, il est recommandé de désactiver cette option.",
   "fileTooLarge": "Le fichier « {file} » fait {size}, ce qui dépasse la limite de {sizeMax}.",
   "fileChangedOverwrite": "'{file}' a été modifié sur le serveur après son ouverture. L'écraser ?",
   "fileDirGone": "Ce dossier n'est plus là",

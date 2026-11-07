@@ -134,7 +134,6 @@
   "envVars": "Mühit dəyişəni",
   "extraArgs": "Əlavə arqumentlər",
   "fallbackSshDest": "Ehtiyat SSH təyinatı",
-  "fdroidReleaseTip": "Bu tətbiqi F-Droid vasitəsilə endirmisənsə, bu seçimi söndürmək tövsiyə olunur.",
   "fileTooLarge": "“{file}” faylının ölçüsü {size}-dir və {sizeMax} həddini keçir.",
   "fileChangedOverwrite": "'{file}' açıldıqdan sonra serverdə dəyişdirilib. Üzərinə yazılsın?",
   "fileDirGone": "Bu qovluq artıq burada yoxdur",

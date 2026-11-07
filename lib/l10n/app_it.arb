@@ -93,7 +93,6 @@
   "envVars": "Variabile d'ambiente",
   "extraArgs": "Argomenti extra",
   "fallbackSshDest": "Destinazione SSH di fallback",
-  "fdroidReleaseTip": "Se hai scaricato questa app da F-Droid, si consiglia di disattivare questa opzione.",
   "fileTooLarge": "Il file “{file}” è di {size}, oltre il limite di {sizeMax}.",
   "fileChangedOverwrite": "'{file}' è stato modificato sul server dopo l'apertura. Sovrascriverlo?",
   "fileDirGone": "Questa cartella non è più qui",
