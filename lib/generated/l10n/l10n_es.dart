@@ -7379,4 +7379,80 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get discoveryAlternateAddress => 'Dirección alternativa';
+
+  @override
+  String get agentPermsGroup => 'Agent';
+
+  @override
+  String get agentPermsTitle => 'Permisos de comandos';
+
+  @override
+  String get agentPermsDefaultMode =>
+      'Modo predeterminado de las tareas nuevas';
+
+  @override
+  String get agentPermsManualNote =>
+      'Se te pregunta por los cambios que ninguna regla cubre.';
+
+  @override
+  String get agentPermsAutoNote =>
+      'Los cambios que ninguna regla cubre los juzga el modelo según las reglas del modo automático de abajo: si se permite, se ejecuta; si se bloquea, el agente recibe el motivo; sin veredicto, se te pregunta.';
+
+  @override
+  String get agentPermsBypassNote =>
+      'Cada paso se ejecuta sin preguntar, incluidos borrados, reinicios y cambios de configuración. Las reglas de denegar y preguntar siguen aplicándose.';
+
+  @override
+  String get agentPermsDisableBypass => 'Desactivar «Permitir todo»';
+
+  @override
+  String get agentPermsDisableBypassSub =>
+      'Ninguna tarea se ejecuta en «Permitir todo»; una iniciada así pregunta como en manual.';
+
+  @override
+  String get agentPermsDangerAsks =>
+      'Salvo en una tarea que lo permite todo, un comando que no se puede deshacer (borrar datos, particiones) te pide escribir el nombre del servidor.';
+
+  @override
+  String get agentPermsRules => 'Reglas de comandos';
+
+  @override
+  String get agentPermsDeny => 'Denegar';
+
+  @override
+  String get agentPermsAsk => 'Preguntar';
+
+  @override
+  String get agentPermsAllow => 'Permitir';
+
+  @override
+  String get agentPermsRulesHint =>
+      'Una por línea. * es cualquier texto, como systemctl status * o apt-get install *; un :* final equivale a « *». Un comando encadenado se comprueba por partes: denegar y preguntar se aplican si alguna parte coincide, permitir solo si todas están cubiertas. Las reglas coinciden con el texto escrito (/bin/rm no coincide con rm *); no son un límite de seguridad.';
+
+  @override
+  String get agentPermsAutoRules => 'Reglas del modo automático';
+
+  @override
+  String get agentPermsAutoHint =>
+      'Reglas en lenguaje natural para el juicio del modelo. Vacío usa la lista integrada; una línea \$defaults la conserva y añade las tuyas. Orden: denegación estricta, luego denegación suave (la levanta una regla de permiso o tu petición explícita), luego permitir.';
+
+  @override
+  String get agentPermsEnvironment => 'Entorno';
+
+  @override
+  String get agentPermsSoftDeny => 'Denegación suave';
+
+  @override
+  String get agentPermsHardDeny => 'Denegación estricta';
+
+  @override
+  String get agentPermsBuiltIn => 'Reglas integradas';
+
+  @override
+  String agentPermsShowDefaults(int n) {
+    return 'Reglas integradas ($n)';
+  }
+
+  @override
+  String get discardUnsaved => '¿Descartar los cambios sin guardar?';
 }

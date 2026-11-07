@@ -7354,4 +7354,80 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get discoveryAlternateAddress => 'Indirizzo alternativo';
+
+  @override
+  String get agentPermsGroup => 'Agent';
+
+  @override
+  String get agentPermsTitle => 'Permessi dei comandi';
+
+  @override
+  String get agentPermsDefaultMode =>
+      'Modalità predefinita delle nuove attività';
+
+  @override
+  String get agentPermsManualNote =>
+      'Le modifiche non coperte da regole ti vengono chieste.';
+
+  @override
+  String get agentPermsAutoNote =>
+      'Le modifiche non coperte da regole le giudica il modello secondo le regole della modalità automatica qui sotto: se consentite vengono eseguite, se bloccate l\'agente ne riceve il motivo; senza verdetto ti viene chiesto.';
+
+  @override
+  String get agentPermsBypassNote =>
+      'Ogni passaggio viene eseguito senza chiedere, comprese eliminazioni, riavvii e modifiche alla configurazione. Le regole nega e chiedi restano valide.';
+
+  @override
+  String get agentPermsDisableBypass => 'Disattiva «Consenti tutto»';
+
+  @override
+  String get agentPermsDisableBypassSub =>
+      'Nessuna attività gira in «Consenti tutto»; una avviata così chiede come in manuale.';
+
+  @override
+  String get agentPermsDangerAsks =>
+      'Tranne nelle attività che consentono tutto, un comando irreversibile (eliminare dati, partizioni) chiede di digitare il nome del server.';
+
+  @override
+  String get agentPermsRules => 'Regole dei comandi';
+
+  @override
+  String get agentPermsDeny => 'Nega';
+
+  @override
+  String get agentPermsAsk => 'Chiedi';
+
+  @override
+  String get agentPermsAllow => 'Consenti';
+
+  @override
+  String get agentPermsRulesHint =>
+      'Una per riga. * è qualsiasi testo, come systemctl status * o apt-get install *; un :* finale equivale a « *». Un comando concatenato è controllato parte per parte: nega e chiedi valgono se una parte corrisponde, consenti solo se ogni parte è coperta. Le regole confrontano il testo scritto (/bin/rm non corrisponde a rm *); non sono un confine di sicurezza.';
+
+  @override
+  String get agentPermsAutoRules => 'Regole della modalità automatica';
+
+  @override
+  String get agentPermsAutoHint =>
+      'Regole in linguaggio naturale per il giudizio del modello. Vuoto usa l’elenco integrato; una riga \$defaults lo mantiene e aggiunge le tue. Ordine: divieto rigido, poi divieto morbido (lo toglie una regola di consenso o una tua richiesta esplicita), poi consenso.';
+
+  @override
+  String get agentPermsEnvironment => 'Ambiente';
+
+  @override
+  String get agentPermsSoftDeny => 'Divieto morbido';
+
+  @override
+  String get agentPermsHardDeny => 'Divieto rigido';
+
+  @override
+  String get agentPermsBuiltIn => 'Regole integrate';
+
+  @override
+  String agentPermsShowDefaults(int n) {
+    return 'Regole integrate ($n)';
+  }
+
+  @override
+  String get discardUnsaved => 'Scartare le modifiche non salvate?';
 }

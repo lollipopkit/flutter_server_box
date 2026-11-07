@@ -52,6 +52,7 @@ import 'package:server_box/view/page/server/connection_stats.dart';
 import 'package:server_box/view/page/server/custom_cmds.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
+import 'package:server_box/view/page/server/monitor_settings/agent_permissions.dart';
 import 'package:server_box/view/page/server/monitor_settings/lists.dart';
 import 'package:server_box/view/page/server/monitor_settings/page.dart';
 import 'package:server_box/view/page/server/monitor_settings/push_edit.dart';
@@ -192,6 +193,10 @@ void main() {
     'KeybindingsPage': (c) => KeybindingsPage.route.go(c),
     'KnownHostsPage': (c) => KnownHostsPage.route.go(c),
     'LocalFilePage': (c) => LocalFilePage.route.go(c),
+    'MonitorAgentPermissionsPage': (c) => MonitorAgentPermissionsPage.route.go(
+      c,
+      MonitorHttpCredential(addr: 'http://127.0.0.1:9', pwd: 'p'),
+    ),
     'MonitorCorsPage': (c) => MonitorCorsPage.route.go(
       c,
       MonitorCorsArgs(origins: const [], onChanged: (_) {}),

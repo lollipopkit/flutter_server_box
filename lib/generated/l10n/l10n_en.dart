@@ -7279,4 +7279,79 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get discoveryAlternateAddress => 'Alternate address';
+
+  @override
+  String get agentPermsGroup => 'Agent';
+
+  @override
+  String get agentPermsTitle => 'Command permissions';
+
+  @override
+  String get agentPermsDefaultMode => 'Default mode';
+
+  @override
+  String get agentPermsManualNote =>
+      'New tasks ask about changes no rule covers.';
+
+  @override
+  String get agentPermsAutoNote =>
+      'New tasks have changes no rule covers judged by the model against the auto mode rules below: allowed runs it, blocked tells the agent why; with no verdict you are asked.';
+
+  @override
+  String get agentPermsBypassNote =>
+      'New tasks run every step unasked, deleting, restarting and config changes included. Deny and ask rules still apply.';
+
+  @override
+  String get agentPermsDisableBypass => 'Turn off Allow all';
+
+  @override
+  String get agentPermsDisableBypassSub =>
+      'No task runs in Allow all; one started in it asks as in Manual.';
+
+  @override
+  String get agentPermsDangerAsks =>
+      'Unless a task allows all, a command that cannot be undone (deleting data, partitions) asks you to type the server\'s name.';
+
+  @override
+  String get agentPermsRules => 'Command rules';
+
+  @override
+  String get agentPermsDeny => 'Deny';
+
+  @override
+  String get agentPermsAsk => 'Ask';
+
+  @override
+  String get agentPermsAllow => 'Allow';
+
+  @override
+  String get agentPermsRulesHint =>
+      'One per line. * is any text, as in systemctl status * or apt-get install *; a trailing :* is the same as \" *\". A chained command is checked part by part: deny and ask apply when any part matches, allow only when every part is covered. Rules match the command as written (/bin/rm does not match rm *); they are not a security boundary.';
+
+  @override
+  String get agentPermsAutoRules => 'Auto mode rules';
+
+  @override
+  String get agentPermsAutoHint =>
+      'Plain-language rules the model judges by. Empty uses the built-in list; a line \$defaults keeps it and adds yours. Order: hard deny, then soft deny (an allow rule or your own explicit request clears it), then allow.';
+
+  @override
+  String get agentPermsEnvironment => 'Environment';
+
+  @override
+  String get agentPermsSoftDeny => 'Soft deny';
+
+  @override
+  String get agentPermsHardDeny => 'Hard deny';
+
+  @override
+  String get agentPermsBuiltIn => 'Built-in rules';
+
+  @override
+  String agentPermsShowDefaults(int n) {
+    return 'Built-in rules ($n)';
+  }
+
+  @override
+  String get discardUnsaved => 'Discard unsaved changes?';
 }

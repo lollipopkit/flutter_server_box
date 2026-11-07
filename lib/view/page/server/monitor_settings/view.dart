@@ -5,9 +5,11 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/monitor/http.dart';
+import 'package:server_box/data/model/server/monitor/monitor_capabilities.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/monitor/monitor_push.dart';
 import 'package:server_box/data/model/server/monitor/monitor_settings.dart';
+import 'package:server_box/view/page/server/monitor_settings/agent_permissions.dart';
 import 'package:server_box/view/page/server/monitor_settings/lists.dart';
 import 'package:server_box/view/page/server/monitor_settings/password.dart';
 import 'package:server_box/view/page/server/monitor_settings/widgets.dart';
@@ -100,6 +102,9 @@ final class _MonitorSettingsViewState extends State<MonitorSettingsView> {
   /// after the credential was edited under this view, which the tab's key does
   /// not catch because the server is the same — must not land in the form.
   var _loadGeneration = 0;
+
+  /// Whether the agent offers Agent mode to this account.
+  bool _agentMode = false;
 
   final _intervalCtrl = TextEditingController();
   final _extendedCtrl = TextEditingController();
@@ -258,7 +263,24 @@ extension on _MonitorSettingsViewState {
         _buildAlerts(settings),
         _buildRetention(),
         _buildCors(),
+        if (_agentMode) _buildAgent(),
         _buildAccess(),
+      ],
+    );
+  }
+
+  /// How the agent's Agent tasks run commands, saved on its own page.
+  Widget _buildAgent() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CenterGreyTitle(l10n.agentPermsGroup),
+        ListTile(
+          leading: const Icon(Icons.rule),
+          title: Text(l10n.agentPermsTitle),
+          trailing: const Icon(Icons.keyboard_arrow_right),
+          onTap: () => MonitorAgentPermissionsPage.route.go(context, widget.monitor),
+        ).cardx,
       ],
     );
   }
@@ -515,8 +537,10 @@ extension on _MonitorSettingsViewState {
     try {
       // First: over a refused connection every request below is a 403, which
       // would be shown as an error rather than as the reason.
-      final access = (await client.capabilities()).access;
+      final caps = await client.capabilities();
+      final access = caps.access;
       if (!mounted || generation != _loadGeneration) return;
+      _agentMode = caps.features.contains(MonitorFeature.agentMode);
       if (!access.ok) {
         setState(() => _refused = true);
         _syncController();

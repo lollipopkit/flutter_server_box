@@ -272,12 +272,15 @@ class MonitorHttpClient {
   Future<Map<String, dynamic>> _object(
     String path, {
     Object? post,
+    Object? put,
     Map<String, dynamic>? query,
   }) async {
     final dio = _session();
-    final resp = post == null
-        ? await dio.get<dynamic>(path, queryParameters: query)
-        : await dio.post<dynamic>(path, data: post, queryParameters: query);
+    final resp = switch ((post, put)) {
+      (final Object post, _) => await dio.post<dynamic>(path, data: post, queryParameters: query),
+      (_, final Object put) => await dio.put<dynamic>(path, data: put, queryParameters: query),
+      _ => await dio.get<dynamic>(path, queryParameters: query),
+    };
     final data = resp.data;
     if (data is Map<String, dynamic>) return data;
     throw MonitorHttpErr(
@@ -968,6 +971,18 @@ class MonitorHttpClient {
     () async => MonitorAgentChoices.fromJson(await _object('/api/v1/agent/choices')),
   );
 
+  /// How the server's Agent tasks have their commands approved.
+  Future<MonitorAgentPermissionsView> agentPermissions() => _authed(
+    () async => MonitorAgentPermissionsView.fromJson(await _object('/api/v1/agent/permissions')),
+  );
+
+  /// Replaces [agentPermissions] with [p]; answers what the agent kept.
+  Future<MonitorAgentPermissionsView> saveAgentPermissions(MonitorAgentPermissions p) => _authed(
+    () async => MonitorAgentPermissionsView.fromJson(
+      await _object('/api/v1/agent/permissions', put: p.toJson()),
+    ),
+  );
+
   /// The most one attachment may be, as the agent takes it.
   static const agentUploadMax = 20 << 20;
 
@@ -1338,7 +1353,7 @@ class MonitorHttpClient {
     }
     final status = e.response?.statusCode;
     final data = e.response?.data;
-    final said = data is Map ? data['message'] ?? data['error'] : null;
+    final said = data is Map ? data['message'] ?? data['reason'] ?? data['error'] : null;
     final message = [
       if (status != null) 'HTTP $status',
       if (said is String && said.isNotEmpty) said else ?e.message,

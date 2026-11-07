@@ -7373,4 +7373,79 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get discoveryAlternateAddress => 'Ausweichadresse';
+
+  @override
+  String get agentPermsGroup => 'Agent';
+
+  @override
+  String get agentPermsTitle => 'Befehlsberechtigungen';
+
+  @override
+  String get agentPermsDefaultMode => 'Standardmodus für neue Aufgaben';
+
+  @override
+  String get agentPermsManualNote =>
+      'Änderungen, die keine Regel abdeckt, werden erfragt.';
+
+  @override
+  String get agentPermsAutoNote =>
+      'Änderungen, die keine Regel abdeckt, beurteilt das Modell anhand der Regeln des automatischen Modus unten: Erlaubt wird ausgeführt, blockiert erfährt der Agent den Grund; ohne Urteil wirst du gefragt.';
+
+  @override
+  String get agentPermsBypassNote =>
+      'Jeder Schritt läuft ohne Nachfrage, auch Löschen, Neustarts und Konfigurationsänderungen. Verweigern- und Fragen-Regeln gelten weiter.';
+
+  @override
+  String get agentPermsDisableBypass => '„Alles erlauben“ abschalten';
+
+  @override
+  String get agentPermsDisableBypassSub =>
+      'Keine Aufgabe läuft mit „Alles erlauben“; eine so gestartete fragt wie im manuellen Modus.';
+
+  @override
+  String get agentPermsDangerAsks =>
+      'Außer in Aufgaben mit „Alles erlauben“ verlangt ein Befehl, der sich nicht rückgängig machen lässt (Daten löschen, Partitionen), dass du den Servernamen eingibst.';
+
+  @override
+  String get agentPermsRules => 'Befehlsregeln';
+
+  @override
+  String get agentPermsDeny => 'Verbieten';
+
+  @override
+  String get agentPermsAsk => 'Fragen';
+
+  @override
+  String get agentPermsAllow => 'Erlauben';
+
+  @override
+  String get agentPermsRulesHint =>
+      'Eine pro Zeile. * steht für beliebigen Text, z. B. systemctl status * oder apt-get install *; ein abschließendes :* entspricht „ *“. Verkettete Befehle werden teilweise geprüft: Verbieten und Fragen greifen, wenn ein Teil passt, Erlauben nur, wenn jeder Teil abgedeckt ist. Regeln passen auf den geschriebenen Befehl (/bin/rm passt nicht auf rm *) und sind keine Sicherheitsgrenze.';
+
+  @override
+  String get agentPermsAutoRules => 'Regeln des automatischen Modus';
+
+  @override
+  String get agentPermsAutoHint =>
+      'Regeln in Klartext, nach denen das Modell urteilt. Leer nutzt die eingebaute Liste; eine Zeile \$defaults behält sie und ergänzt Ihre. Reihenfolge: hartes Verbot, dann weiches Verbot (eine Erlaubnisregel oder Ihre ausdrückliche Bitte hebt es auf), dann Erlauben.';
+
+  @override
+  String get agentPermsEnvironment => 'Umgebung';
+
+  @override
+  String get agentPermsSoftDeny => 'Weiches Verbot';
+
+  @override
+  String get agentPermsHardDeny => 'Hartes Verbot';
+
+  @override
+  String get agentPermsBuiltIn => 'Eingebaute Regeln';
+
+  @override
+  String agentPermsShowDefaults(int n) {
+    return 'Eingebaute Regeln ($n)';
+  }
+
+  @override
+  String get discardUnsaved => 'Ungespeicherte Änderungen verwerfen?';
 }

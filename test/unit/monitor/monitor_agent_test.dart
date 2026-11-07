@@ -108,4 +108,89 @@ void main() {
       expect(ask.options.map((o) => (o.label, o.hint)), [('A', 'first'), ('B', null)]);
     });
   });
+
+  group('agent permissions', () {
+    // As `monitor/src/agent_mode/permissions.rs` writes it.
+    const answer = {
+      'permissions': {
+        'defaultMode': 'auto',
+        'disableBypass': true,
+        'rules': {
+          'allow': ['systemctl status *'],
+          'ask': [],
+          'deny': ['rm -rf *'],
+        },
+        'autoMode': {
+          'soft_deny': [r'$defaults', 'no reboots'],
+        },
+      },
+      'defaults': {
+        'environment': ['a'],
+        'allow': ['b', 'c'],
+        'soft_deny': ['d'],
+        'hard_deny': ['e'],
+      },
+    };
+
+    test('is read as the agent wrote it', () {
+      final view = MonitorAgentPermissionsView.fromJson(answer);
+      final p = view.permissions;
+      expect(p.defaultMode, AgentPermissionMode.auto);
+      expect(p.disableBypass, isTrue);
+      expect(p.allow, ['systemctl status *']);
+      expect(p.deny, ['rm -rf *']);
+      expect(p.autoMode, {
+        AgentAutoRuleKind.softDeny: [r'$defaults', 'no reboots'],
+      });
+      expect(view.defaults[AgentAutoRuleKind.allow], ['b', 'c']);
+    });
+
+    test('goes back in the shape the agent takes', () {
+      final p = MonitorAgentPermissionsView.fromJson(answer).permissions;
+      // The agent refuses unknown fields; an absent auto list is the
+      // built-in one, so only those set are sent.
+      expect(p.toJson(), {
+        'defaultMode': 'auto',
+        'disableBypass': true,
+        'rules': {
+          'allow': ['systemctl status *'],
+          'ask': <String>[],
+          'deny': ['rm -rf *'],
+        },
+        'autoMode': {
+          'soft_deny': [r'$defaults', 'no reboots'],
+        },
+      });
+    });
+
+    test('what this app does not know goes back as it came', () {
+      final p = MonitorAgentPermissions.fromJson(const {
+        'defaultMode': 'plan',
+        'judgeModel': 'x',
+        'rules': {'allow': [], 'ask': [], 'deny': [], 'sudo': ['apt *']},
+        'autoMode': {'extra': ['y']},
+      });
+      expect(p.defaultMode, isNull);
+      final sent = p.copyWith(allow: ['ls *']).toJson();
+      expect(sent['defaultMode'], 'plan');
+      expect(sent['judgeModel'], 'x');
+      expect(sent['rules'], {
+        'allow': ['ls *'],
+        'ask': <String>[],
+        'deny': <String>[],
+        'sudo': ['apt *'],
+      });
+      expect(sent['autoMode'], {
+        'extra': ['y'],
+      });
+      expect(p.copyWith(defaultMode: AgentPermissionMode.auto).toJson()['defaultMode'], 'auto');
+    });
+
+    test('an agent that has none is the defaults', () {
+      final p = MonitorAgentPermissionsView.fromJson(const {}).permissions;
+      expect(p.defaultMode, AgentPermissionMode.manual);
+      expect(p.disableBypass, isFalse);
+      expect(p.autoMode, isEmpty);
+    });
+  });
 }

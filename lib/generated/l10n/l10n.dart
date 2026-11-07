@@ -12388,6 +12388,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Alternate address'**
   String get discoveryAlternateAddress;
+
+  /// Agent command permissions: Agent
+  ///
+  /// In en, this message translates to:
+  /// **'Agent'**
+  String get agentPermsGroup;
+
+  /// Agent command permissions: Command permissions
+  ///
+  /// In en, this message translates to:
+  /// **'Command permissions'**
+  String get agentPermsTitle;
+
+  /// Agent command permissions: Default mode
+  ///
+  /// In en, this message translates to:
+  /// **'Default mode'**
+  String get agentPermsDefaultMode;
+
+  /// Agent command permissions: New tasks ask about changes no rule covers.
+  ///
+  /// In en, this message translates to:
+  /// **'New tasks ask about changes no rule covers.'**
+  String get agentPermsManualNote;
+
+  /// Agent command permissions: New tasks have changes no rule covers judged by the model ag
+  ///
+  /// In en, this message translates to:
+  /// **'New tasks have changes no rule covers judged by the model against the auto mode rules below: allowed runs it, blocked tells the agent why; with no verdict you are asked.'**
+  String get agentPermsAutoNote;
+
+  /// Agent command permissions: New tasks run every step unasked, deleting, restarting and c
+  ///
+  /// In en, this message translates to:
+  /// **'New tasks run every step unasked, deleting, restarting and config changes included. Deny and ask rules still apply.'**
+  String get agentPermsBypassNote;
+
+  /// Agent command permissions: Turn off Allow all
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off Allow all'**
+  String get agentPermsDisableBypass;
+
+  /// Agent command permissions: No task runs in Allow all; one started in it asks as in Manu
+  ///
+  /// In en, this message translates to:
+  /// **'No task runs in Allow all; one started in it asks as in Manual.'**
+  String get agentPermsDisableBypassSub;
+
+  /// Agent command permissions: Unless a task allows all, a command that cannot be undone (d
+  ///
+  /// In en, this message translates to:
+  /// **'Unless a task allows all, a command that cannot be undone (deleting data, partitions) asks you to type the server\'s name.'**
+  String get agentPermsDangerAsks;
+
+  /// Agent command permissions: Command rules
+  ///
+  /// In en, this message translates to:
+  /// **'Command rules'**
+  String get agentPermsRules;
+
+  /// Agent command permissions: Deny
+  ///
+  /// In en, this message translates to:
+  /// **'Deny'**
+  String get agentPermsDeny;
+
+  /// Agent command permissions: Ask
+  ///
+  /// In en, this message translates to:
+  /// **'Ask'**
+  String get agentPermsAsk;
+
+  /// Agent command permissions: Allow
+  ///
+  /// In en, this message translates to:
+  /// **'Allow'**
+  String get agentPermsAllow;
+
+  /// Agent command permissions: One per line. * is any text, as in systemctl status * or apt
+  ///
+  /// In en, this message translates to:
+  /// **'One per line. * is any text, as in systemctl status * or apt-get install *; a trailing :* is the same as \" *\". A chained command is checked part by part: deny and ask apply when any part matches, allow only when every part is covered. Rules match the command as written (/bin/rm does not match rm *); they are not a security boundary.'**
+  String get agentPermsRulesHint;
+
+  /// Agent command permissions: Auto mode rules
+  ///
+  /// In en, this message translates to:
+  /// **'Auto mode rules'**
+  String get agentPermsAutoRules;
+
+  /// Agent command permissions: Plain-language rules the model judges by. Empty uses the bui
+  ///
+  /// In en, this message translates to:
+  /// **'Plain-language rules the model judges by. Empty uses the built-in list; a line \$defaults keeps it and adds yours. Order: hard deny, then soft deny (an allow rule or your own explicit request clears it), then allow.'**
+  String get agentPermsAutoHint;
+
+  /// Agent command permissions: Environment
+  ///
+  /// In en, this message translates to:
+  /// **'Environment'**
+  String get agentPermsEnvironment;
+
+  /// Agent command permissions: Soft deny
+  ///
+  /// In en, this message translates to:
+  /// **'Soft deny'**
+  String get agentPermsSoftDeny;
+
+  /// Agent command permissions: Hard deny
+  ///
+  /// In en, this message translates to:
+  /// **'Hard deny'**
+  String get agentPermsHardDeny;
+
+  /// Agent command permissions: Built-in rules
+  ///
+  /// In en, this message translates to:
+  /// **'Built-in rules'**
+  String get agentPermsBuiltIn;
+
+  /// Agent command permissions: Built-in rules ({n})
+  ///
+  /// In en, this message translates to:
+  /// **'Built-in rules ({n})'**
+  String agentPermsShowDefaults(int n);
+
+  /// Asked before leaving a page with unsaved edits
+  ///
+  /// In en, this message translates to:
+  /// **'Discard unsaved changes?'**
+  String get discardUnsaved;
 }
 
 class _AppLocalizationsDelegate

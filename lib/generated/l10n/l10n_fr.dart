@@ -7392,4 +7392,80 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get discoveryAlternateAddress => 'Adresse de secours';
+
+  @override
+  String get agentPermsGroup => 'Agent';
+
+  @override
+  String get agentPermsTitle => 'Autorisations des commandes';
+
+  @override
+  String get agentPermsDefaultMode => 'Mode par défaut des nouvelles tâches';
+
+  @override
+  String get agentPermsManualNote =>
+      'Les changements qu\'aucune règle ne couvre vous sont demandés.';
+
+  @override
+  String get agentPermsAutoNote =>
+      'Les changements qu\'aucune règle ne couvre sont jugés par le modèle selon les règles du mode automatique ci-dessous : autorisé, il s\'exécute ; bloqué, l\'agent en reçoit la raison ; sans verdict, on vous demande.';
+
+  @override
+  String get agentPermsBypassNote =>
+      'Chaque étape s\'exécute sans demander, suppressions, redémarrages et modifications de configuration compris. Les règles refuser et demander restent appliquées.';
+
+  @override
+  String get agentPermsDisableBypass => 'Désactiver « Tout autoriser »';
+
+  @override
+  String get agentPermsDisableBypassSub =>
+      'Aucune tâche ne tourne en « Tout autoriser » ; une tâche lancée ainsi demande comme en manuel.';
+
+  @override
+  String get agentPermsDangerAsks =>
+      'Sauf dans une tâche « Tout autoriser », une commande irréversible (suppression de données, partitions) vous demande de saisir le nom du serveur.';
+
+  @override
+  String get agentPermsRules => 'Règles de commandes';
+
+  @override
+  String get agentPermsDeny => 'Refuser';
+
+  @override
+  String get agentPermsAsk => 'Demander';
+
+  @override
+  String get agentPermsAllow => 'Autoriser';
+
+  @override
+  String get agentPermsRulesHint =>
+      'Une par ligne. * représente n’importe quel texte, comme systemctl status * ou apt-get install * ; un :* final équivaut à « * ». Une commande enchaînée est vérifiée partie par partie : refuser et demander s’appliquent si une partie correspond, autoriser seulement si chaque partie est couverte. Les règles portent sur le texte écrit (/bin/rm ne correspond pas à rm *) ; ce n’est pas une frontière de sécurité.';
+
+  @override
+  String get agentPermsAutoRules => 'Règles du mode auto';
+
+  @override
+  String get agentPermsAutoHint =>
+      'Des règles en langage naturel pour le jugement du modèle. Vide utilise la liste intégrée ; une ligne \$defaults la garde et ajoute les vôtres. Ordre : refus strict, puis refus souple (levé par une règle d’autorisation ou votre demande explicite), puis autorisation.';
+
+  @override
+  String get agentPermsEnvironment => 'Environnement';
+
+  @override
+  String get agentPermsSoftDeny => 'Refus souple';
+
+  @override
+  String get agentPermsHardDeny => 'Refus strict';
+
+  @override
+  String get agentPermsBuiltIn => 'Règles intégrées';
+
+  @override
+  String agentPermsShowDefaults(int n) {
+    return 'Règles intégrées ($n)';
+  }
+
+  @override
+  String get discardUnsaved =>
+      'Abandonner les modifications non enregistrées ?';
 }

@@ -7329,4 +7329,79 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get discoveryAlternateAddress => 'Резервный адрес';
+
+  @override
+  String get agentPermsGroup => 'Agent';
+
+  @override
+  String get agentPermsTitle => 'Разрешения команд';
+
+  @override
+  String get agentPermsDefaultMode => 'Режим новых задач по умолчанию';
+
+  @override
+  String get agentPermsManualNote =>
+      'Изменения, не покрытые правилами, требуют подтверждения.';
+
+  @override
+  String get agentPermsAutoNote =>
+      'Изменения, не покрытые правилами, оценивает модель по правилам автоматического режима ниже: разрешённое выполняется, заблокированное — агенту сообщается причина; без решения спрашивают вас.';
+
+  @override
+  String get agentPermsBypassNote =>
+      'Все шаги выполняются без вопросов, включая удаление, перезапуск и изменение конфигурации. Правила запрета и вопроса продолжают действовать.';
+
+  @override
+  String get agentPermsDisableBypass => 'Отключить «Разрешить всё»';
+
+  @override
+  String get agentPermsDisableBypassSub =>
+      'Задачи не могут работать в «Разрешить всё»; запущенная так задача спрашивает, как в ручном режиме.';
+
+  @override
+  String get agentPermsDangerAsks =>
+      'Кроме задач с «Разрешить всё», необратимая команда (удаление данных, разделы) требует ввести имя сервера.';
+
+  @override
+  String get agentPermsRules => 'Правила команд';
+
+  @override
+  String get agentPermsDeny => 'Запретить';
+
+  @override
+  String get agentPermsAsk => 'Спрашивать';
+
+  @override
+  String get agentPermsAllow => 'Разрешить';
+
+  @override
+  String get agentPermsRulesHint =>
+      'По одному в строке. * — любой текст, например systemctl status * или apt-get install *; :* в конце равносильно « *». Составная команда проверяется по частям: запрет и запрос действуют, если совпала любая часть, разрешение — только если покрыта каждая. Правила сравнивают написанный текст (/bin/rm не совпадает с rm *) и не являются границей безопасности.';
+
+  @override
+  String get agentPermsAutoRules => 'Правила автоматического режима';
+
+  @override
+  String get agentPermsAutoHint =>
+      'Правила на обычном языке, по которым судит модель. Пусто — встроенный список; строка \$defaults сохраняет его и добавляет ваши. Порядок: жёсткий запрет, затем мягкий (снимается правилом разрешения или вашей явной просьбой), затем разрешение.';
+
+  @override
+  String get agentPermsEnvironment => 'Окружение';
+
+  @override
+  String get agentPermsSoftDeny => 'Мягкий запрет';
+
+  @override
+  String get agentPermsHardDeny => 'Жёсткий запрет';
+
+  @override
+  String get agentPermsBuiltIn => 'Встроенные правила';
+
+  @override
+  String agentPermsShowDefaults(int n) {
+    return 'Встроенные правила ($n)';
+  }
+
+  @override
+  String get discardUnsaved => 'Отменить несохранённые изменения?';
 }

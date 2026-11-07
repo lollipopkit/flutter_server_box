@@ -6981,4 +6981,78 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get discoveryAlternateAddress => '대체 주소';
+
+  @override
+  String get agentPermsGroup => 'Agent';
+
+  @override
+  String get agentPermsTitle => '명령 권한';
+
+  @override
+  String get agentPermsDefaultMode => '새 작업의 기본 모드';
+
+  @override
+  String get agentPermsManualNote => '규칙에 없는 변경은 모두 확인을 요청합니다.';
+
+  @override
+  String get agentPermsAutoNote =>
+      '규칙에 없는 변경은 아래 자동 모드 규칙에 따라 모델이 판단합니다. 허용이면 실행하고, 차단이면 이유를 Agent에 알리며, 판단이 없으면 확인을 요청합니다.';
+
+  @override
+  String get agentPermsBypassNote =>
+      '삭제, 재시작, 설정 변경을 포함한 모든 단계를 묻지 않고 실행합니다. 거부 및 확인 규칙은 계속 적용됩니다.';
+
+  @override
+  String get agentPermsDisableBypass => '모두 허용 끄기';
+
+  @override
+  String get agentPermsDisableBypassSub =>
+      '작업을 모두 허용으로 실행할 수 없습니다. 이미 그 모드로 시작한 작업은 수동으로 처리합니다.';
+
+  @override
+  String get agentPermsDangerAsks =>
+      '모두 허용 작업이 아니면 되돌릴 수 없는 명령(데이터 삭제, 파티션 등)은 서버 이름을 입력해야 실행됩니다.';
+
+  @override
+  String get agentPermsRules => '명령 규칙';
+
+  @override
+  String get agentPermsDeny => '거부';
+
+  @override
+  String get agentPermsAsk => '확인';
+
+  @override
+  String get agentPermsAllow => '허용';
+
+  @override
+  String get agentPermsRulesHint =>
+      '한 줄에 하나씩. *는 임의의 텍스트입니다(예: systemctl status *, apt-get install *). 끝의 :*는 \" *\"와 같습니다. 연결된 명령은 부분마다 대조하며, 거부와 확인은 한 부분만 맞아도, 허용은 모든 부분이 맞을 때만 적용됩니다. 규칙은 작성된 문자열과 대조하므로(/bin/rm은 rm *에 맞지 않음) 보안 경계가 아닙니다.';
+
+  @override
+  String get agentPermsAutoRules => '자동 모드 규칙';
+
+  @override
+  String get agentPermsAutoHint =>
+      '모델이 판단에 쓰는 자연어 규칙입니다. 비워 두면 기본 규칙을 쓰고, \$defaults 줄을 쓰면 기본 규칙을 유지하며 추가합니다. 순서: 하드 거부 → 소프트 거부(허용 규칙이나 명시적 요청으로 해제) → 허용.';
+
+  @override
+  String get agentPermsEnvironment => '환경';
+
+  @override
+  String get agentPermsSoftDeny => '소프트 거부';
+
+  @override
+  String get agentPermsHardDeny => '하드 거부';
+
+  @override
+  String get agentPermsBuiltIn => '기본 규칙 사용';
+
+  @override
+  String agentPermsShowDefaults(int n) {
+    return '기본 규칙 ($n개)';
+  }
+
+  @override
+  String get discardUnsaved => '저장하지 않은 변경 사항을 버릴까요?';
 }
