@@ -34,6 +34,18 @@ const agentSheetAnimation = AnimationStyle(
   reverseDuration: Durations.short4,
 );
 
+/// The Agent's settings, from the history list and from a one-column bar.
+BarAction agentSettingsAction(BuildContext context) => BarAction(
+  key: const ValueKey('agent-settings'),
+  icon: Icons.settings_outlined,
+  label: libL10n.setting,
+  onTap: () => SettingsSectionPage.route.go(
+    context,
+    SettingsSection.ai,
+    target: NavTarget.root,
+  ),
+);
+
 /// [scope]'s chats, as a sheet you opened or as the column that is always
 /// beside the page — see [AgentChats].
 ///
@@ -336,16 +348,7 @@ class _AgentHistoryPanelState extends State<AgentHistoryPanel> {
           ),
           // Over the sheet rather than in place of it: back returns
           // to the list it was opened from.
-          BarAction(
-            key: const ValueKey('agent-settings'),
-            icon: Icons.settings_outlined,
-            label: libL10n.setting,
-            onTap: () => SettingsSectionPage.route.go(
-              context,
-              SettingsSection.ai,
-              target: NavTarget.root,
-            ),
-          ),
+          agentSettingsAction(context),
         ];
         final head = <Widget>[
               SideBarSection(context.l10n.askAiHistory),

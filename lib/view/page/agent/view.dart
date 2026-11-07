@@ -293,6 +293,8 @@ class AgentConversationView extends StatelessWidget {
               onTap: () => _showAdHocSessions(context),
             ),
           ?headerAction,
+          // The list's own way in is out of sight here too.
+          if (compact) agentSettingsAction(context),
         ];
         return ListenableBuilder(
           listenable: LlmStores.chat.changes,

@@ -70,4 +70,14 @@ void main() {
     );
     expect(icon.size, 18);
   });
+
+  testWidgets('the settings are where the list is: in it, or in the bar', (
+    tester,
+  ) async {
+    const settings = ValueKey('agent-settings');
+    await pump(tester, compact: false);
+    expect(find.byKey(settings), findsNothing);
+    await pump(tester, compact: true);
+    expect(find.byKey(settings), findsOneWidget);
+  });
 }
