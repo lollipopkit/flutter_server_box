@@ -19,7 +19,7 @@ abstract final class Lkc {
 
   /// Whether the account shows in settings and the client runs at launch.
   // TODO: rm once the LK Cloud account ships in ServerBox.
-  static const enabled = true;
+  static const enabled = false;
 
   static final client = LkcClient(
     oidc: LkcOidc(clientId: 'serverbox', redirectUrl: redirectUrl),
