@@ -85,13 +85,6 @@ class AppLocalizationsFa extends AppLocalizations {
   String get askAiRiskDestructive => 'خطر بالا';
 
   @override
-  String get askAiAutoRunSafeCommands => 'اجرای خودکار دستورهای فقط‌خواندنی';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip =>
-      'فقط زمانی اجرا می‌شود که هم مدل و هم بررسی محلی آن را فقط‌خواندنی تشخیص دهند';
-
-  @override
   String get askAiHistory => 'تاریخچه گفتگو';
 
   @override
@@ -6632,21 +6625,6 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
-  String get agentPermissionMode => 'Permission mode';
-
-  @override
-  String get agentModeAuto => 'Auto';
-
-  @override
-  String get agentModeManual => 'Manual';
-
-  @override
-  String get agentModeBypass => 'Allow all';
-
-  @override
-  String get agentModeBypassOff => 'Turned off on this server';
-
-  @override
   String get agentModeBypassWarn =>
       'Allow all: deleting, restarting and config changes run directly, without asking.';
 
@@ -7328,75 +7306,6 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get agentPermsGroup => 'Agent';
-
-  @override
-  String get agentPermsTitle => 'مجوزهای فرمان';
-
-  @override
-  String get agentPermsDefaultMode => 'حالت پیش‌فرض کارهای جدید';
-
-  @override
-  String get agentPermsManualNote =>
-      'برای تغییراتی که هیچ قاعده‌ای پوشش نمی‌دهد از شما پرسیده می‌شود.';
-
-  @override
-  String get agentPermsAutoNote =>
-      'تغییراتی که هیچ قاعده‌ای پوشش نمی‌دهد را مدل بر اساس قواعد حالت خودکار زیر داوری می‌کند: اگر مجاز باشد اجرا می‌شود، اگر مسدود شود دلیلش به Agent گفته می‌شود؛ بدون نتیجه از شما پرسیده می‌شود.';
-
-  @override
-  String get agentPermsBypassNote =>
-      'کارهای جدید همهٔ مراحل را بدون پرسش اجرا می‌کنند، از جمله حذف، راه‌اندازی مجدد و تغییر پیکربندی. قواعد رد و پرسش همچنان اعمال می‌شوند.';
-
-  @override
-  String get agentPermsDisableBypass => 'خاموش کردن «اجازه به همه»';
-
-  @override
-  String get agentPermsDisableBypassSub =>
-      'هیچ کاری با «اجازه به همه» اجرا نمی‌شود؛ کاری که با آن شروع شده مانند حالت دستی می‌پرسد.';
-
-  @override
-  String get agentPermsDangerAsks =>
-      'جز در کاری که به همه اجازه می‌دهد، فرمانی که برگشت‌پذیر نیست (حذف داده، پارتیشن‌ها) از شما می‌خواهد نام سرور را تایپ کنید.';
-
-  @override
-  String get agentPermsRules => 'قواعد فرمان';
-
-  @override
-  String get agentPermsDeny => 'رد';
-
-  @override
-  String get agentPermsAsk => 'پرسش';
-
-  @override
-  String get agentPermsAllow => 'اجازه';
-
-  @override
-  String get agentPermsRulesHint =>
-      'هر خط یک قاعده. * یعنی هر متنی، مانند systemctl status * یا apt-get install *؛ :* در انتها همان \" *\" است. فرمان زنجیره‌ای بخش به بخش بررسی می‌شود: رد و پرسش وقتی هر بخشی مطابقت داشته باشد اعمال می‌شوند، اجازه فقط وقتی همهٔ بخش‌ها پوشش داده شوند. قواعد با متن نوشته‌شدهٔ فرمان مطابقت دارند (/bin/rm با rm * مطابقت ندارد)؛ مرز امنیتی نیستند.';
-
-  @override
-  String get agentPermsAutoRules => 'قواعد حالت خودکار';
-
-  @override
-  String get agentPermsAutoHint =>
-      'قواعدی به زبان ساده که مدل بر اساس آن‌ها داوری می‌کند. خالی یعنی فهرست داخلی؛ خط \$defaults آن را نگه می‌دارد و قواعد شما را اضافه می‌کند. ترتیب: رد قطعی، سپس رد نرم (قاعدهٔ اجازه یا درخواست صریح شما آن را برطرف می‌کند)، سپس اجازه.';
-
-  @override
-  String get agentPermsEnvironment => 'محیط';
-
-  @override
-  String get agentPermsSoftDeny => 'رد نرم';
-
-  @override
-  String get agentPermsHardDeny => 'رد قطعی';
-
-  @override
-  String get agentPermsBuiltIn => 'قواعد داخلی';
-
-  @override
-  String agentPermsShowDefaults(int n) {
-    return 'قواعد داخلی ($n)';
-  }
 
   @override
   String get discardUnsaved => 'تغییرات ذخیره‌نشده کنار گذاشته شود؟';

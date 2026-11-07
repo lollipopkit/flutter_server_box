@@ -85,14 +85,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String get askAiRiskDestructive => 'Yüksək risk';
 
   @override
-  String get askAiAutoRunSafeCommands =>
-      'Yalnız oxuma əmrlərini avtomatik icra et';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip =>
-      'Yalnız həm model, həm də yerli yoxlama əmri yalnız oxuma kimi qiymətləndirdikdə icra olunur';
-
-  @override
   String get askAiHistory => 'Söhbət tarixçəsi';
 
   @override
@@ -6583,21 +6575,6 @@ class AppLocalizationsAz extends AppLocalizations {
   }
 
   @override
-  String get agentPermissionMode => 'İcazə rejimi';
-
-  @override
-  String get agentModeAuto => 'Avtomatik';
-
-  @override
-  String get agentModeManual => 'Əl ilə';
-
-  @override
-  String get agentModeBypass => 'Hamısına icazə ver';
-
-  @override
-  String get agentModeBypassOff => 'Bu serverdə deaktiv edilib';
-
-  @override
   String get agentModeBypassWarn =>
       'Hamısına icazə ver: silmə, yenidən başlatma və konfiqurasiya dəyişiklikləri soruşulmadan icra olunur.';
 
@@ -7271,75 +7248,6 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get agentPermsGroup => 'Agent';
-
-  @override
-  String get agentPermsTitle => 'Əmr icazələri';
-
-  @override
-  String get agentPermsDefaultMode => 'Yeni tapşırıqların standart rejimi';
-
-  @override
-  String get agentPermsManualNote =>
-      'Heç bir qaydanın əhatə etmədiyi dəyişikliklər üçün sizdən soruşulur.';
-
-  @override
-  String get agentPermsAutoNote =>
-      'Heç bir qaydanın əhatə etmədiyi dəyişiklikləri model aşağıdakı avtomatik rejim qaydalarına görə qiymətləndirir: icazə verilərsə icra olunur, bloklanarsa səbəb Agent-ə bildirilir; qərar olmadıqda sizdən soruşulur.';
-
-  @override
-  String get agentPermsBypassNote =>
-      'Yeni tapşırıqlar hər addımı soruşmadan icra edir, silmə, yenidən başlatma və konfiqurasiya dəyişiklikləri daxil olmaqla. Rədd və soruş qaydaları yenə də tətbiq olunur.';
-
-  @override
-  String get agentPermsDisableBypass => 'Hamısına icazəni söndür';
-
-  @override
-  String get agentPermsDisableBypassSub =>
-      'Heç bir tapşırıq \"Hamısına icazə\" rejimində işləmir; bu rejimdə başladılmış tapşırıq Əl ilə rejimdəki kimi soruşur.';
-
-  @override
-  String get agentPermsDangerAsks =>
-      'Tapşırıq hamısına icazə vermirsə, geri qaytarıla bilməyən əmr (məlumatın silinməsi, bölmələr) serverin adını yazmağınızı tələb edir.';
-
-  @override
-  String get agentPermsRules => 'Əmr qaydaları';
-
-  @override
-  String get agentPermsDeny => 'Rədd et';
-
-  @override
-  String get agentPermsAsk => 'Soruş';
-
-  @override
-  String get agentPermsAllow => 'İcazə ver';
-
-  @override
-  String get agentPermsRulesHint =>
-      'Hər sətirdə bir qayda. * istənilən mətndir, məsələn systemctl status * və ya apt-get install *; sondakı :* \" *\" ilə eynidir. Zəncirvari əmr hissə-hissə yoxlanılır: rədd və soruş hər hansı hissə uyğun gəldikdə, icazə isə yalnız bütün hissələr əhatə olunduqda tətbiq olunur. Qaydalar əmri yazıldığı kimi uyğunlaşdırır (/bin/rm rm * ilə uyğun gəlmir); təhlükəsizlik sərhədi deyil.';
-
-  @override
-  String get agentPermsAutoRules => 'Avtomatik rejim qaydaları';
-
-  @override
-  String get agentPermsAutoHint =>
-      'Modelin qiymətləndirdiyi adi dildə qaydalar. Boş olduqda daxili siyahı istifadə olunur; \$defaults sətri onu saxlayır və sizinkiləri əlavə edir. Sıra: sərt rədd, sonra yumşaq rədd (icazə qaydası və ya açıq tələbiniz onu aradan qaldırır), sonra icazə.';
-
-  @override
-  String get agentPermsEnvironment => 'Mühit';
-
-  @override
-  String get agentPermsSoftDeny => 'Yumşaq rədd';
-
-  @override
-  String get agentPermsHardDeny => 'Sərt rədd';
-
-  @override
-  String get agentPermsBuiltIn => 'Daxili qaydalar';
-
-  @override
-  String agentPermsShowDefaults(int n) {
-    return 'Daxili qaydalar ($n)';
-  }
 
   @override
   String get discardUnsaved => 'Yadda saxlanmamış dəyişikliklər atılsın?';

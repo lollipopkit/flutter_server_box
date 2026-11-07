@@ -1898,6 +1898,7 @@ dependencies = [
  "reqwest 0.13.5",
  "rquickjs",
  "rusqlite",
+ "serde",
  "serde_json",
  "sqlite3mc-src",
  "tokio",

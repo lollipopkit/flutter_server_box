@@ -85,14 +85,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get askAiRiskDestructive => 'Risiko tinggi';
 
   @override
-  String get askAiAutoRunSafeCommands =>
-      'Jalankan otomatis perintah hanya-baca';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip =>
-      'Hanya jalan jika model dan pemeriksaan lokal sama-sama menyebutnya hanya-baca';
-
-  @override
   String get askAiHistory => 'Riwayat percakapan';
 
   @override
@@ -6590,21 +6582,6 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get agentPermissionMode => 'Mode izin';
-
-  @override
-  String get agentModeAuto => 'Otomatis';
-
-  @override
-  String get agentModeManual => 'Manual';
-
-  @override
-  String get agentModeBypass => 'Izinkan semua';
-
-  @override
-  String get agentModeBypassOff => 'Dinonaktifkan di server ini';
-
-  @override
   String get agentModeBypassWarn =>
       'Izinkan semua: penghapusan, mulai ulang, dan perubahan konfigurasi dijalankan tanpa konfirmasi.';
 
@@ -7281,75 +7258,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get agentPermsGroup => 'Agent';
-
-  @override
-  String get agentPermsTitle => 'Izin perintah';
-
-  @override
-  String get agentPermsDefaultMode => 'Mode bawaan tugas baru';
-
-  @override
-  String get agentPermsManualNote =>
-      'Perubahan yang tidak dicakup aturan akan ditanyakan.';
-
-  @override
-  String get agentPermsAutoNote =>
-      'Perubahan yang tidak dicakup aturan dinilai model berdasarkan aturan mode otomatis di bawah: diizinkan akan dijalankan, diblokir memberi tahu agent alasannya; tanpa keputusan Anda akan ditanya.';
-
-  @override
-  String get agentPermsBypassNote =>
-      'Setiap langkah dijalankan tanpa bertanya, termasuk menghapus, memulai ulang, dan mengubah konfigurasi. Aturan tolak dan tanya tetap berlaku.';
-
-  @override
-  String get agentPermsDisableBypass => 'Matikan Izinkan semua';
-
-  @override
-  String get agentPermsDisableBypassSub =>
-      'Tidak ada tugas yang berjalan dengan Izinkan semua; tugas yang dimulai begitu akan bertanya seperti mode manual.';
-
-  @override
-  String get agentPermsDangerAsks =>
-      'Kecuali pada tugas yang mengizinkan semua, perintah yang tidak bisa dibatalkan (menghapus data, partisi) meminta Anda mengetik nama server.';
-
-  @override
-  String get agentPermsRules => 'Aturan perintah';
-
-  @override
-  String get agentPermsDeny => 'Tolak';
-
-  @override
-  String get agentPermsAsk => 'Tanya';
-
-  @override
-  String get agentPermsAllow => 'Izinkan';
-
-  @override
-  String get agentPermsRulesHint =>
-      'Satu per baris. * berarti teks apa pun, misalnya systemctl status * atau apt-get install *; :* di akhir sama dengan “ *”. Perintah berantai diperiksa per bagian: tolak dan tanya berlaku jika satu bagian cocok, izinkan hanya jika setiap bagian tercakup. Aturan mencocokkan teks yang ditulis (/bin/rm tidak cocok dengan rm *); ini bukan batas keamanan.';
-
-  @override
-  String get agentPermsAutoRules => 'Aturan mode otomatis';
-
-  @override
-  String get agentPermsAutoHint =>
-      'Aturan dalam bahasa biasa untuk penilaian model. Kosong memakai daftar bawaan; baris \$defaults mempertahankannya dan menambahkan milik Anda. Urutan: tolak keras, lalu tolak lunak (dibatalkan oleh aturan izin atau permintaan eksplisit Anda), lalu izinkan.';
-
-  @override
-  String get agentPermsEnvironment => 'Lingkungan';
-
-  @override
-  String get agentPermsSoftDeny => 'Tolak lunak';
-
-  @override
-  String get agentPermsHardDeny => 'Tolak keras';
-
-  @override
-  String get agentPermsBuiltIn => 'Aturan bawaan';
-
-  @override
-  String agentPermsShowDefaults(int n) {
-    return 'Aturan bawaan ($n)';
-  }
 
   @override
   String get discardUnsaved => 'Buang perubahan yang belum disimpan?';

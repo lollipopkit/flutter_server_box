@@ -92,14 +92,6 @@
   "@askAiRiskDestructive": {
     "description": "User-facing label or message for ask AI risk destructive."
   },
-  "askAiAutoRunSafeCommands": "Auto-run read-only commands",
-  "@askAiAutoRunSafeCommands": {
-    "description": "User-facing label or message for ask AI auto run safe commands."
-  },
-  "askAiAutoRunSafeCommandsTip": "Runs only when both the model and the local check call it read-only",
-  "@askAiAutoRunSafeCommandsTip": {
-    "description": "Help text for the ask AI auto run safe commands setting or action."
-  },
   "askAiHistory": "Conversation history",
   "@askAiHistory": {
     "description": "User-facing label or message for ask AI history."
@@ -8476,26 +8468,6 @@
       }
     }
   },
-  "agentPermissionMode": "Permission mode",
-  "@agentPermissionMode": {
-    "description": "Agent: what a server's agent may run in a new task without asking."
-  },
-  "agentModeAuto": "Auto",
-  "@agentModeAuto": {
-    "description": "Agent permission mode: the model allows or refuses each step."
-  },
-  "agentModeManual": "Manual",
-  "@agentModeManual": {
-    "description": "Agent permission mode: steps go by the server's rules; others wait for confirmation."
-  },
-  "agentModeBypass": "Allow all",
-  "@agentModeBypass": {
-    "description": "Agent permission mode: every step runs without asking."
-  },
-  "agentModeBypassOff": "Turned off on this server",
-  "@agentModeBypassOff": {
-    "description": "Agent: the server's admin turned the allow-all mode off."
-  },
   "agentModeBypassWarn": "Allow all: deleting, restarting and config changes run directly, without asking.",
   "@agentModeBypassWarn": {
     "description": "Agent: warning shown while the allow-all mode is picked for a new task."
@@ -9432,91 +9404,6 @@
   "agentPermsGroup": "Agent",
   "@agentPermsGroup": {
     "description": "Agent command permissions: Agent"
-  },
-  "agentPermsTitle": "Command permissions",
-  "@agentPermsTitle": {
-    "description": "Agent command permissions: Command permissions"
-  },
-  "agentPermsDefaultMode": "Default mode",
-  "@agentPermsDefaultMode": {
-    "description": "Agent command permissions: Default mode"
-  },
-  "agentPermsManualNote": "New tasks ask about changes no rule covers.",
-  "@agentPermsManualNote": {
-    "description": "Agent command permissions: New tasks ask about changes no rule covers."
-  },
-  "agentPermsAutoNote": "New tasks have changes no rule covers judged by the model against the auto mode rules below: allowed runs it, blocked tells the agent why; with no verdict you are asked.",
-  "@agentPermsAutoNote": {
-    "description": "Agent command permissions: New tasks have changes no rule covers judged by the model ag"
-  },
-  "agentPermsBypassNote": "New tasks run every step unasked, deleting, restarting and config changes included. Deny and ask rules still apply.",
-  "@agentPermsBypassNote": {
-    "description": "Agent command permissions: New tasks run every step unasked, deleting, restarting and c"
-  },
-  "agentPermsDisableBypass": "Turn off Allow all",
-  "@agentPermsDisableBypass": {
-    "description": "Agent command permissions: Turn off Allow all"
-  },
-  "agentPermsDisableBypassSub": "No task runs in Allow all; one started in it asks as in Manual.",
-  "@agentPermsDisableBypassSub": {
-    "description": "Agent command permissions: No task runs in Allow all; one started in it asks as in Manu"
-  },
-  "agentPermsDangerAsks": "Unless a task allows all, a command that cannot be undone (deleting data, partitions) asks you to type the server's name.",
-  "@agentPermsDangerAsks": {
-    "description": "Agent command permissions: Unless a task allows all, a command that cannot be undone (d"
-  },
-  "agentPermsRules": "Command rules",
-  "@agentPermsRules": {
-    "description": "Agent command permissions: Command rules"
-  },
-  "agentPermsDeny": "Deny",
-  "@agentPermsDeny": {
-    "description": "Agent command permissions: Deny"
-  },
-  "agentPermsAsk": "Ask",
-  "@agentPermsAsk": {
-    "description": "Agent command permissions: Ask"
-  },
-  "agentPermsAllow": "Allow",
-  "@agentPermsAllow": {
-    "description": "Agent command permissions: Allow"
-  },
-  "agentPermsRulesHint": "One per line. * is any text, as in systemctl status * or apt-get install *; a trailing :* is the same as \" *\". A chained command is checked part by part: deny and ask apply when any part matches, allow only when every part is covered. Rules match the command as written (/bin/rm does not match rm *); they are not a security boundary.",
-  "@agentPermsRulesHint": {
-    "description": "Agent command permissions: One per line. * is any text, as in systemctl status * or apt"
-  },
-  "agentPermsAutoRules": "Auto mode rules",
-  "@agentPermsAutoRules": {
-    "description": "Agent command permissions: Auto mode rules"
-  },
-  "agentPermsAutoHint": "Plain-language rules the model judges by. Empty uses the built-in list; a line $defaults keeps it and adds yours. Order: hard deny, then soft deny (an allow rule or your own explicit request clears it), then allow.",
-  "@agentPermsAutoHint": {
-    "description": "Agent command permissions: Plain-language rules the model judges by. Empty uses the bui"
-  },
-  "agentPermsEnvironment": "Environment",
-  "@agentPermsEnvironment": {
-    "description": "Agent command permissions: Environment"
-  },
-  "agentPermsSoftDeny": "Soft deny",
-  "@agentPermsSoftDeny": {
-    "description": "Agent command permissions: Soft deny"
-  },
-  "agentPermsHardDeny": "Hard deny",
-  "@agentPermsHardDeny": {
-    "description": "Agent command permissions: Hard deny"
-  },
-  "agentPermsBuiltIn": "Built-in rules",
-  "@agentPermsBuiltIn": {
-    "description": "Agent command permissions: Built-in rules"
-  },
-  "agentPermsShowDefaults": "Built-in rules ({n})",
-  "@agentPermsShowDefaults": {
-    "description": "Agent command permissions: Built-in rules ({n})",
-    "placeholders": {
-      "n": {
-        "type": "int"
-      }
-    }
   },
   "discardUnsaved": "Discard unsaved changes?",
   "@discardUnsaved": {

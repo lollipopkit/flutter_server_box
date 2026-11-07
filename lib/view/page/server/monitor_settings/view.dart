@@ -1,6 +1,7 @@
 // ignore_for_file: invalid_use_of_protected_member
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show llmL10n;
 import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
@@ -9,7 +10,7 @@ import 'package:server_box/data/model/server/monitor/monitor_capabilities.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/monitor/monitor_push.dart';
 import 'package:server_box/data/model/server/monitor/monitor_settings.dart';
-import 'package:server_box/view/page/server/monitor_settings/agent_permissions.dart';
+import 'package:server_box/view/page/agent/permissions.dart';
 import 'package:server_box/view/page/server/monitor_settings/lists.dart';
 import 'package:server_box/view/page/server/monitor_settings/password.dart';
 import 'package:server_box/view/page/server/monitor_settings/widgets.dart';
@@ -277,9 +278,9 @@ extension on _MonitorSettingsViewState {
         CenterGreyTitle(l10n.agentPermsGroup),
         ListTile(
           leading: const Icon(Icons.rule),
-          title: Text(l10n.agentPermsTitle),
+          title: Text(llmL10n.permTitle),
           trailing: const Icon(Icons.keyboard_arrow_right),
-          onTap: () => MonitorAgentPermissionsPage.route.go(context, widget.monitor),
+          onTap: () => AgentPermissions.route.go(context, MonitorPermissionsSource(widget.monitor)),
         ).cardx,
       ],
     );

@@ -85,14 +85,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get askAiRiskDestructive => 'Високий ризик';
 
   @override
-  String get askAiAutoRunSafeCommands =>
-      'Автоматично виконувати команди лише для читання';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip =>
-      'Виконується, лише коли і модель, і локальна перевірка вважають команду лише для читання';
-
-  @override
   String get askAiHistory => 'Історія розмов';
 
   @override
@@ -6636,21 +6628,6 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get agentPermissionMode => 'Режим дозволів';
-
-  @override
-  String get agentModeAuto => 'Авто';
-
-  @override
-  String get agentModeManual => 'Вручну';
-
-  @override
-  String get agentModeBypass => 'Дозволити все';
-
-  @override
-  String get agentModeBypassOff => 'Вимкнено на цьому сервері';
-
-  @override
   String get agentModeBypassWarn =>
       'Дозволити все: видалення, перезапуск і зміни конфігурації виконуються без підтвердження.';
 
@@ -7332,75 +7309,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get agentPermsGroup => 'Agent';
-
-  @override
-  String get agentPermsTitle => 'Дозволи команд';
-
-  @override
-  String get agentPermsDefaultMode => 'Типовий режим нових завдань';
-
-  @override
-  String get agentPermsManualNote =>
-      'Зміни, не покриті правилами, потребують підтвердження.';
-
-  @override
-  String get agentPermsAutoNote =>
-      'Зміни, не покриті правилами, оцінює модель за правилами автоматичного режиму нижче: дозволене виконується, заблоковане — агентові повідомляють причину; без рішення запитують вас.';
-
-  @override
-  String get agentPermsBypassNote =>
-      'Усі кроки виконуються без запитань, зокрема видалення, перезапуск і зміна конфігурації. Правила заборони й запиту й далі діють.';
-
-  @override
-  String get agentPermsDisableBypass => 'Вимкнути «Дозволити все»';
-
-  @override
-  String get agentPermsDisableBypassSub =>
-      'Завдання не можуть працювати в «Дозволити все»; запущене так завдання запитує, як у ручному режимі.';
-
-  @override
-  String get agentPermsDangerAsks =>
-      'Окрім завдань із «Дозволити все», незворотна команда (видалення даних, розділи) вимагає ввести ім’я сервера.';
-
-  @override
-  String get agentPermsRules => 'Правила команд';
-
-  @override
-  String get agentPermsDeny => 'Заборонити';
-
-  @override
-  String get agentPermsAsk => 'Питати';
-
-  @override
-  String get agentPermsAllow => 'Дозволити';
-
-  @override
-  String get agentPermsRulesHint =>
-      'По одному в рядку. * — будь-який текст, наприклад systemctl status * або apt-get install *; :* у кінці рівнозначне « *». Складена команда перевіряється частинами: заборона й запит діють, якщо збіглася будь-яка частина, дозвіл — лише якщо покрита кожна. Правила порівнюють написаний текст (/bin/rm не збігається з rm *) і не є межею безпеки.';
-
-  @override
-  String get agentPermsAutoRules => 'Правила автоматичного режиму';
-
-  @override
-  String get agentPermsAutoHint =>
-      'Правила звичайною мовою, за якими судить модель. Порожньо — вбудований список; рядок \$defaults зберігає його й додає ваші. Порядок: жорстка заборона, потім м’яка (знімається правилом дозволу чи вашим явним проханням), потім дозвіл.';
-
-  @override
-  String get agentPermsEnvironment => 'Оточення';
-
-  @override
-  String get agentPermsSoftDeny => 'М’яка заборона';
-
-  @override
-  String get agentPermsHardDeny => 'Жорстка заборона';
-
-  @override
-  String get agentPermsBuiltIn => 'Вбудовані правила';
-
-  @override
-  String agentPermsShowDefaults(int n) {
-    return 'Вбудовані правила ($n)';
-  }
 
   @override
   String get discardUnsaved => 'Скасувати незбережені зміни?';

@@ -1,3 +1,4 @@
+import 'package:fl_pi_llm/fl_pi_llm.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/monitor/http.dart';
 import 'package:server_box/data/model/server/monitor/monitor_agent.dart';
@@ -44,7 +45,7 @@ void main() {
       });
       expect(list.configured, isTrue);
       expect(list.next, isNull, reason: 'an agent that does not page lists it all');
-      expect(list.defaultMode, AgentPermissionMode.auto);
+      expect(list.defaultMode, LlmPermissionMode.auto);
       final f = list.flows.single;
       expect((f.id, f.title, f.status, f.waiting), ('f1', 'Disk usage', MonitorAgentStatus.waiting, 'sudo'));
       expect(f.status.active, isTrue);
@@ -133,20 +134,20 @@ void main() {
     };
 
     test('is read as the agent wrote it', () {
-      final view = MonitorAgentPermissionsView.fromJson(answer);
+      final view = LlmPermissionsView.fromJson(answer);
       final p = view.permissions;
-      expect(p.defaultMode, AgentPermissionMode.auto);
+      expect(p.defaultMode, LlmPermissionMode.auto);
       expect(p.disableBypass, isTrue);
       expect(p.allow, ['systemctl status *']);
       expect(p.deny, ['rm -rf *']);
       expect(p.autoMode, {
-        AgentAutoRuleKind.softDeny: [r'$defaults', 'no reboots'],
+        LlmAutoRuleKind.softDeny: [r'$defaults', 'no reboots'],
       });
-      expect(view.defaults[AgentAutoRuleKind.allow], ['b', 'c']);
+      expect(view.defaults[LlmAutoRuleKind.allow], ['b', 'c']);
     });
 
     test('goes back in the shape the agent takes', () {
-      final p = MonitorAgentPermissionsView.fromJson(answer).permissions;
+      final p = LlmPermissionsView.fromJson(answer).permissions;
       // The agent refuses unknown fields; an absent auto list is the
       // built-in one, so only those set are sent.
       expect(p.toJson(), {
@@ -164,7 +165,7 @@ void main() {
     });
 
     test('what this app does not know goes back as it came', () {
-      final p = MonitorAgentPermissions.fromJson(const {
+      final p = LlmPermissions.fromJson(const {
         'defaultMode': 'plan',
         'judgeModel': 'x',
         'rules': {'allow': [], 'ask': [], 'deny': [], 'sudo': ['apt *']},
@@ -183,12 +184,12 @@ void main() {
       expect(sent['autoMode'], {
         'extra': ['y'],
       });
-      expect(p.copyWith(defaultMode: AgentPermissionMode.auto).toJson()['defaultMode'], 'auto');
+      expect(p.copyWith(defaultMode: LlmPermissionMode.auto).toJson()['defaultMode'], 'auto');
     });
 
     test('an agent that has none is the defaults', () {
-      final p = MonitorAgentPermissionsView.fromJson(const {}).permissions;
-      expect(p.defaultMode, AgentPermissionMode.manual);
+      final p = LlmPermissionsView.fromJson(const {}).permissions;
+      expect(p.defaultMode, LlmPermissionMode.manual);
       expect(p.disableBypass, isFalse);
       expect(p.autoMode, isEmpty);
     });

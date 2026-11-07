@@ -85,14 +85,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get askAiRiskDestructive => 'Alto risco';
 
   @override
-  String get askAiAutoRunSafeCommands =>
-      'Executar automaticamente comandos somente leitura';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip =>
-      'Só executa se o modelo e a verificação local o considerarem só de leitura';
-
-  @override
   String get askAiHistory => 'Histórico de conversas';
 
   @override
@@ -6650,21 +6642,6 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get agentPermissionMode => 'Modo de permissões';
-
-  @override
-  String get agentModeAuto => 'Automático';
-
-  @override
-  String get agentModeManual => 'Manual';
-
-  @override
-  String get agentModeBypass => 'Permitir tudo';
-
-  @override
-  String get agentModeBypassOff => 'Desativado neste servidor';
-
-  @override
   String get agentModeBypassWarn =>
       'Permitir tudo: exclusões, reinicializações e alterações de configuração são executadas sem perguntar.';
 
@@ -7350,75 +7327,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get agentPermsGroup => 'Agent';
-
-  @override
-  String get agentPermsTitle => 'Permissões de comandos';
-
-  @override
-  String get agentPermsDefaultMode => 'Modo padrão das novas tarefas';
-
-  @override
-  String get agentPermsManualNote =>
-      'Mudanças que nenhuma regra cobre são perguntadas.';
-
-  @override
-  String get agentPermsAutoNote =>
-      'Mudanças que nenhuma regra cobre são julgadas pelo modelo segundo as regras do modo automático abaixo: permitida, é executada; bloqueada, o agente recebe o motivo; sem veredito, você é perguntado.';
-
-  @override
-  String get agentPermsBypassNote =>
-      'Cada passo é executado sem perguntar, incluindo exclusões, reinícios e mudanças de configuração. As regras de negar e perguntar continuam valendo.';
-
-  @override
-  String get agentPermsDisableBypass => 'Desativar «Permitir tudo»';
-
-  @override
-  String get agentPermsDisableBypassSub =>
-      'Nenhuma tarefa roda em «Permitir tudo»; uma iniciada assim pergunta como no manual.';
-
-  @override
-  String get agentPermsDangerAsks =>
-      'Exceto em tarefas que permitem tudo, um comando irreversível (apagar dados, partições) pede que você digite o nome do servidor.';
-
-  @override
-  String get agentPermsRules => 'Regras de comandos';
-
-  @override
-  String get agentPermsDeny => 'Negar';
-
-  @override
-  String get agentPermsAsk => 'Perguntar';
-
-  @override
-  String get agentPermsAllow => 'Permitir';
-
-  @override
-  String get agentPermsRulesHint =>
-      'Uma por linha. * é qualquer texto, como systemctl status * ou apt-get install *; um :* final equivale a “ *”. Um comando encadeado é verificado parte a parte: negar e perguntar valem se alguma parte coincide, permitir só se todas forem cobertas. As regras comparam o texto escrito (/bin/rm não coincide com rm *); não são uma fronteira de segurança.';
-
-  @override
-  String get agentPermsAutoRules => 'Regras do modo automático';
-
-  @override
-  String get agentPermsAutoHint =>
-      'Regras em linguagem natural para o julgamento do modelo. Vazio usa a lista embutida; uma linha \$defaults a mantém e acrescenta as suas. Ordem: negação rígida, depois negação suave (uma regra de permissão ou seu pedido explícito a libera), depois permitir.';
-
-  @override
-  String get agentPermsEnvironment => 'Ambiente';
-
-  @override
-  String get agentPermsSoftDeny => 'Negação suave';
-
-  @override
-  String get agentPermsHardDeny => 'Negação rígida';
-
-  @override
-  String get agentPermsBuiltIn => 'Regras embutidas';
-
-  @override
-  String agentPermsShowDefaults(int n) {
-    return 'Regras embutidas ($n)';
-  }
 
   @override
   String get discardUnsaved => 'Descartar as alterações não salvas?';

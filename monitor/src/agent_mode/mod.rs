@@ -20,7 +20,7 @@
 //! The model calls three tools (`tools.rs`): `run_command`, `propose_plan`,
 //! `ask_user`. The configured command rules come first; then a command runs
 //! unasked when both readers call it a read: the model's `effect` and
-//! `sbm_parser::command_risk`. Anything else goes by the task's mode
+//! `fl_pi_llm::permissions::risk`. Anything else goes by the task's mode
 //! (`permissions`): asked, judged by the model, or run — a plan the account
 //! approved covers the commands the plan listed, word for word — and outside
 //! `bypass` a command that cannot be undone asks for the machine's name to
@@ -472,7 +472,7 @@ impl AgentMode {
 
     /// The built-in auto mode lists, for this machine.
     pub fn auto_defaults(&self) -> Value {
-        permissions::defaults(&self.hostname, &prompt::os_name(), &prompt::system_user())
+        permissions::defaults(permissions::machine_environment(&self.hostname, &prompt::os_name(), &prompt::system_user()))
     }
 
     /// The network Agent mode uses: for MCP servers and skill downloads too.

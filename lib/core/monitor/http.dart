@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_pi_llm/fl_pi_llm.dart' show LlmPermissionMode, LlmPermissions, LlmPermissionsView;
 import 'package:meta/meta.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/service/monitor_login_devices.dart';
@@ -924,7 +925,7 @@ class MonitorHttpClient {
   /// ([agentUpload]).
   Future<MonitorAgentFlow> agentStart(
     String prompt, {
-    AgentPermissionMode? mode,
+    LlmPermissionMode? mode,
     List<String> files = const [],
     MonitorAgentModel? model,
     String? thinkingLevel,
@@ -972,13 +973,13 @@ class MonitorHttpClient {
   );
 
   /// How the server's Agent tasks have their commands approved.
-  Future<MonitorAgentPermissionsView> agentPermissions() => _authed(
-    () async => MonitorAgentPermissionsView.fromJson(await _object('/api/v1/agent/permissions')),
+  Future<LlmPermissionsView> agentPermissions() => _authed(
+    () async => LlmPermissionsView.fromJson(await _object('/api/v1/agent/permissions')),
   );
 
   /// Replaces [agentPermissions] with [p]; answers what the agent kept.
-  Future<MonitorAgentPermissionsView> saveAgentPermissions(MonitorAgentPermissions p) => _authed(
-    () async => MonitorAgentPermissionsView.fromJson(
+  Future<LlmPermissionsView> saveAgentPermissions(LlmPermissions p) => _authed(
+    () async => LlmPermissionsView.fromJson(
       await _object('/api/v1/agent/permissions', put: p.toJson()),
     ),
   );

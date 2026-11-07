@@ -97,10 +97,9 @@ final class SnippetTool extends ToolFunc {
   @override
   String summary(Map<String, Object?> args) => [args['action'], ?_str(args, 'name'), ?_str(args, 'id')].join(' · ');
 
-  /// Reading them is the app's own data; changing them waits for a yes.
+  /// Reading them is the app's own data; a change goes by the mode.
   @override
-  LlmApproval? preApprove(Map<String, Object?> args, String chatId) =>
-      args['action'] == 'list' ? const LlmApproval.allow() : null;
+  LlmEffect effect(Map<String, Object?> args) => args['action'] == 'list' ? LlmEffect.read : LlmEffect.change;
 
   /// A snippet is a script the user later runs on a server: every change to
   /// one is asked about, never allowed for good.
@@ -350,8 +349,8 @@ final class BenchmarkTool extends ToolFunc {
   String summary(Map<String, Object?> args) => [args['action'], ?_str(args, 'server_id'), ?_str(args, 'run_id')].join(' · ');
 
   @override
-  LlmApproval? preApprove(Map<String, Object?> args, String chatId) =>
-      const {'list', 'read'}.contains(args['action']) ? const LlmApproval.allow() : null;
+  LlmEffect effect(Map<String, Object?> args) =>
+      const {'list', 'read'}.contains(args['action']) ? LlmEffect.read : LlmEffect.change;
 
   static String _server(Map<String, Object?> a) {
     final id = _str(a, 'server_id') ?? (throw const LlmException('server_id is required'));
@@ -507,8 +506,7 @@ final class RemoteDesktopTool extends ToolFunc {
   String summary(Map<String, Object?> args) => [args['action'], ?_str(args, 'profile_id'), ?_str(args, 'server_id')].join(' · ');
 
   @override
-  LlmApproval? preApprove(Map<String, Object?> args, String chatId) =>
-      args['action'] == 'list' ? const LlmApproval.allow() : null;
+  LlmEffect effect(Map<String, Object?> args) => args['action'] == 'list' ? LlmEffect.read : LlmEffect.change;
 
   /// A connection opens a session on the user's machine with their saved
   /// credentials: asked each time, as the other tools that act on a server.

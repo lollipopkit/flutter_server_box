@@ -7,15 +7,14 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use fl_pi_llm::host::{BoxFuture, Cancel, Tool, ToolCall, ToolDef, ToolResult};
-use sbm_parser::command_risk::{self, CommandRisk};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use tokio::sync::mpsc;
 
 use super::command::{self, Stream};
-use super::permissions::{self, AutoMode, Judgment, Mode};
+use super::permissions::{self, AutoMode, Decision, Effect, Judgment, Mode};
 use super::{Answer, Flow, MAX_PROMPT, PendingView, first_line, prompt};
-use sbm_parser::command_rules::RuleVerdict;
+use fl_pi_llm::permissions::rules::RuleVerdict;
 use crate::api::authz;
 use crate::api::server::AppState;
 use crate::api::ws::audit::{Action, Event, Kind, Outcome};
@@ -151,40 +150,6 @@ struct RunCommand {
     flow: Option<Arc<Flow>>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-enum Effect {
-    Read,
-    Change,
-    Danger,
-}
-
-impl Effect {
-    fn parse(s: &str) -> Effect {
-        match s {
-            "read" => Effect::Read,
-            "danger" => Effect::Danger,
-            // Anything else is not a claim of a read.
-            _ => Effect::Change,
-        }
-    }
-
-    fn of(risk: CommandRisk) -> Effect {
-        match risk {
-            CommandRisk::ReadOnly => Effect::Read,
-            CommandRisk::Unknown | CommandRisk::Caution => Effect::Change,
-            CommandRisk::Destructive => Effect::Danger,
-        }
-    }
-
-    fn as_str(self) -> &'static str {
-        match self {
-            Effect::Read => "read",
-            Effect::Change => "change",
-            Effect::Danger => "danger",
-        }
-    }
-}
-
 impl Tool for RunCommand {
     fn def(&self) -> ToolDef {
         ToolDef {
@@ -273,57 +238,43 @@ impl RunCommand {
             // Both readers: the model's claim and the command's shape. The
             // higher one counts.
             let claimed = Effect::parse(args["effect"].as_str().unwrap_or("change"));
-            let effect = claimed.max(Effect::of(command_risk::classify(&command)));
+            let effect = Effect::of_command(claimed, &command);
             // Then the operator's rules and mode (`permissions`).
             let perms = permissions::load(&state.db).await.map_err(|e| format!("reading the permissions: {e}"))?;
-            let verdict = perms.rules.verdict(&command);
-            if let RuleVerdict::Deny(rule) = &verdict {
-                record(state, &format!("denied by rule `{rule}`: {}", first_line(&command, 200)), Outcome::Denied).await;
-                return Err(format!("Refused: this machine's rule `{rule}` forbids it. Nothing was run; do not run it another way."));
+            let picked = flow.view.locked().mode;
+            let decision = permissions::decide(&perms, picked, Some(&command), effect, hub.approved(&flow, &command));
+            if perms.mode_for(picked) == Mode::Bypass && decision == Decision::Run && effect != Effect::Read {
+                record(state, &format!("bypass: ran {}", first_line(&command, 200)), Outcome::Ok).await;
             }
-            let mode = perms.mode_for(flow.view.locked().mode);
-            let ask_rule = matches!(verdict, RuleVerdict::Ask(_));
-            let confirm = match mode {
-                // Bypass: only the operator's ask rules stop it.
-                Mode::Bypass => {
-                    if !ask_rule && effect != Effect::Read {
-                        record(state, &format!("bypass: ran {}", first_line(&command, 200)), Outcome::Ok).await;
-                    }
-                    ask_rule
-                }
-                _ if effect == Effect::Danger || ask_rule => true,
-                _ if verdict != RuleVerdict::None || effect != Effect::Change || hub.approved(&flow, &command) => false,
-                Mode::Manual => true,
-                Mode::Auto => match judge(state, &flow, &command, &title, claimed.as_str(), sudo, &perms.auto_mode).await {
+            let decision = match decision {
+                Decision::Judge => match judge(state, &flow, &command, &title, claimed.as_str(), sudo, &perms.auto_mode).await {
                     Some(Judgment::Allow) => {
                         record(state, &format!("auto: allowed {}", first_line(&command, 200)), Outcome::Ok).await;
-                        false
+                        Decision::Run
                     }
                     Some(Judgment::Block { rule, reason }) => {
                         record(state, &format!("auto: blocked [{rule}] {}", first_line(&command, 200)), Outcome::Denied).await;
-                        let label = if rule.is_empty() { String::new() } else { format!(" [{rule}]") };
-                        return Err(format!(
-                            "Blocked by auto mode{label}: {reason} Nothing was run. Do not try to reach the same end another way; \
-                             if it is needed, tell the person, who can ask for it in their own words or change the rules."
-                        ));
+                        return Err(permissions::block_message(&rule, &reason));
                     }
                     // No verdict: the person decides.
-                    None => true,
+                    None => Decision::Ask { danger: false, allow_rule: fl_pi_llm::permissions::rules::suggest(&command) },
                 },
+                d => d,
             };
-            let ask = match effect {
-                _ if !confirm => None,
-                Effect::Read | Effect::Change => Some({
+            let ask = match decision {
+                Decision::Deny { rule } => {
+                    record(state, &format!("denied by rule `{rule}`: {}", first_line(&command, 200)), Outcome::Denied).await;
+                    return Err(permissions::deny_message(&rule));
+                }
+                Decision::Run | Decision::Judge => None,
+                Decision::Ask { danger: false, allow_rule } => Some({
                     let mut v = pending("confirm", call, title.clone());
                     v.steps = vec![super::PlanStep { text: title.clone(), command: Some(command.clone()) }];
                     v.command = Some(command.clone());
-                    // An ask rule outranks any allow rule: nothing to offer.
-                    if !ask_rule {
-                        v.allow_rule = sbm_parser::command_rules::suggest(&command);
-                    }
+                    v.allow_rule = allow_rule;
                     v
                 }),
-                Effect::Danger => Some({
+                Decision::Ask { danger: true, .. } => Some({
                     let mut v = pending("danger", call, title.clone());
                     v.summary = first_line(&str_arg(args, "reason"), 300);
                     v.command = Some(command.clone());
@@ -822,7 +773,7 @@ mod tests {
 
     #[test]
     fn the_higher_reading_counts() {
-        let effect = |claimed: &str, cmd: &str| Effect::parse(claimed).max(Effect::of(command_risk::classify(cmd)));
+        let effect = |claimed: &str, cmd: &str| Effect::of_command(Effect::parse(claimed), cmd);
         assert_eq!(effect("read", "df -h"), Effect::Read);
         assert_eq!(effect("read", "apt-get -y upgrade"), Effect::Change);
         assert_eq!(effect("read", "docker volume rm x"), Effect::Danger);

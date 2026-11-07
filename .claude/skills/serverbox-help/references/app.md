@@ -40,11 +40,13 @@ Under **Settings → App → AI**:
 - **Skills** — instructions for particular tasks, installed from `owner/repo`,
   a GitHub or GitLab link, a site, a folder or a `.zip`, or a pasted
   `npx skills add …` command; **Check for updates** fetches them again.
-- **Auto-run read-only commands** — off by default; when on, a server command
-  that both you and the app judge read-only runs without asking, at most three
-  times per message. Never for commands on this device.
-- **Run commands on this device** — off by default; every such command is
-  asked about.
+- **Command permissions** — the mode (**Manual**, **Auto**, **Allow all**; also
+  switched under the message box, for every chat), deny / ask / allow command
+  rules and the auto mode judge's rules — the same page and logic as a
+  Monitor's Agent mode. Read-only actions run in every mode; one that loses
+  something for good asks unless all is allowed.
+- **Run commands on this device** — off by default; such commands go by the
+  mode and never count as read-only.
 
 A terminal's own chat (the AI button in a terminal) sees only that terminal:
 it can read the screen and run commands in that session. The Agent tab

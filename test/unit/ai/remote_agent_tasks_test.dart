@@ -7,10 +7,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:fl_pi_llm/fl_pi_llm.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/monitor/monitor_access.dart';
-import 'package:server_box/data/model/server/monitor/monitor_agent.dart';
 import 'package:server_box/data/model/server/monitor/monitor_capabilities.dart';
 import 'package:server_box/data/model/server/monitor/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server.dart';
@@ -210,7 +210,7 @@ void main() {
 
     expect(ids('a'), hasLength(RemoteAgentTasks.pageSize));
     expect(ids('a').first, _Agent.id(0));
-    expect(RemoteAgentTasks.modes.value['a'], (defaultMode: AgentPermissionMode.auto, bypassAllowed: true));
+    expect(RemoteAgentTasks.modes.value['a'], (defaultMode: LlmPermissionMode.auto, bypassAllowed: true));
     expect(RemoteAgentTasks.more.value['a'], _Agent.id(RemoteAgentTasks.pageSize - 1));
     expect(RemoteAgentTasks.loading.value, isEmpty);
   });

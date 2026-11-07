@@ -85,14 +85,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get askAiRiskDestructive => 'Yüksek risk';
 
   @override
-  String get askAiAutoRunSafeCommands =>
-      'Salt okunur komutları otomatik çalıştır';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip =>
-      'Yalnızca hem model hem yerel kontrol salt okunur derse çalışır';
-
-  @override
   String get askAiHistory => 'Konuşma geçmişi';
 
   @override
@@ -6575,21 +6567,6 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get agentPermissionMode => 'İzin modu';
-
-  @override
-  String get agentModeAuto => 'Otomatik';
-
-  @override
-  String get agentModeManual => 'Manuel';
-
-  @override
-  String get agentModeBypass => 'Tümüne izin ver';
-
-  @override
-  String get agentModeBypassOff => 'Bu sunucuda devre dışı';
-
-  @override
   String get agentModeBypassWarn =>
       'Tümüne izin ver: silme, yeniden başlatma ve yapılandırma değişiklikleri sorulmadan yapılır.';
 
@@ -7265,75 +7242,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get agentPermsGroup => 'Agent';
-
-  @override
-  String get agentPermsTitle => 'Komut izinleri';
-
-  @override
-  String get agentPermsDefaultMode => 'Yeni görevlerin varsayılan modu';
-
-  @override
-  String get agentPermsManualNote =>
-      'Hiçbir kuralın kapsamadığı değişiklikler size sorulur.';
-
-  @override
-  String get agentPermsAutoNote =>
-      'Hiçbir kuralın kapsamadığı değişiklikleri model aşağıdaki otomatik mod kurallarına göre değerlendirir: izin verilirse çalışır, engellenirse agent nedenini öğrenir; karar yoksa size sorulur.';
-
-  @override
-  String get agentPermsBypassNote =>
-      'Silme, yeniden başlatma ve yapılandırma değişiklikleri dahil her adım sormadan çalışır. Reddet ve sor kuralları geçerli kalır.';
-
-  @override
-  String get agentPermsDisableBypass => 'Tümüne izin ver seçeneğini kapat';
-
-  @override
-  String get agentPermsDisableBypassSub =>
-      'Hiçbir görev Tümüne izin ver modunda çalışmaz; böyle başlatılan görev el ile modundaki gibi sorar.';
-
-  @override
-  String get agentPermsDangerAsks =>
-      'Tümüne izin veren görevler dışında, geri alınamayan bir komut (veri silme, bölümler) sunucu adını yazmanızı ister.';
-
-  @override
-  String get agentPermsRules => 'Komut kuralları';
-
-  @override
-  String get agentPermsDeny => 'Reddet';
-
-  @override
-  String get agentPermsAsk => 'Sor';
-
-  @override
-  String get agentPermsAllow => 'İzin ver';
-
-  @override
-  String get agentPermsRulesHint =>
-      'Satır başına bir tane. * herhangi bir metindir; örn. systemctl status * ya da apt-get install *; sondaki :* “ *” ile aynıdır. Zincirli bir komut parça parça denetlenir: reddet ve sor herhangi bir parça eşleşirse, izin ver yalnızca her parça kapsanırsa geçerlidir. Kurallar yazılan metinle eşleşir (/bin/rm, rm * ile eşleşmez); güvenlik sınırı değildir.';
-
-  @override
-  String get agentPermsAutoRules => 'Otomatik mod kuralları';
-
-  @override
-  String get agentPermsAutoHint =>
-      'Modelin karar verirken kullandığı düz dilde kurallar. Boş bırakılırsa yerleşik liste kullanılır; \$defaults satırı onu korur ve sizinkileri ekler. Sıra: kesin ret, sonra yumuşak ret (bir izin kuralı ya da açık isteğiniz kaldırır), sonra izin.';
-
-  @override
-  String get agentPermsEnvironment => 'Ortam';
-
-  @override
-  String get agentPermsSoftDeny => 'Yumuşak ret';
-
-  @override
-  String get agentPermsHardDeny => 'Kesin ret';
-
-  @override
-  String get agentPermsBuiltIn => 'Yerleşik kurallar';
-
-  @override
-  String agentPermsShowDefaults(int n) {
-    return 'Yerleşik kurallar ($n)';
-  }
 
   @override
   String get discardUnsaved => 'Kaydedilmemiş değişiklikler atılsın mı?';

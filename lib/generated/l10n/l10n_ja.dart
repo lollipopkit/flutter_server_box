@@ -82,12 +82,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get askAiRiskDestructive => '高リスク';
 
   @override
-  String get askAiAutoRunSafeCommands => '読み取り専用コマンドを自動実行';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip => 'モデルとローカルの検査がどちらも読み取り専用と判断したときだけ実行';
-
-  @override
   String get askAiHistory => '会話履歴';
 
   @override
@@ -6304,21 +6298,6 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get agentPermissionMode => '権限モード';
-
-  @override
-  String get agentModeAuto => '自動';
-
-  @override
-  String get agentModeManual => '手動';
-
-  @override
-  String get agentModeBypass => 'すべて許可';
-
-  @override
-  String get agentModeBypassOff => 'このサーバーでは無効';
-
-  @override
   String get agentModeBypassWarn => 'すべて許可：削除、再起動、設定変更は確認なしで実行されます。';
 
   @override
@@ -6982,74 +6961,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get agentPermsGroup => 'Agent';
-
-  @override
-  String get agentPermsTitle => 'コマンドの権限';
-
-  @override
-  String get agentPermsDefaultMode => '新しいタスクの既定モード';
-
-  @override
-  String get agentPermsManualNote => 'ルールにない変更は毎回確認します。';
-
-  @override
-  String get agentPermsAutoNote =>
-      'ルールにない変更は、下の自動モードのルールに沿ってモデルが判断します。許可なら実行、ブロックなら理由を Agent に伝え、判断がなければ確認します。';
-
-  @override
-  String get agentPermsBypassNote =>
-      '削除、再起動、設定変更を含め、すべての手順を確認なしで実行します。拒否と確認のルールは引き続き有効です。';
-
-  @override
-  String get agentPermsDisableBypass => 'すべて許可をオフにする';
-
-  @override
-  String get agentPermsDisableBypassSub =>
-      'すべて許可ではタスクを実行できません。すでにそのモードで始めたタスクは手動として扱います。';
-
-  @override
-  String get agentPermsDangerAsks =>
-      'すべて許可のタスク以外では、元に戻せないコマンド（データ削除、パーティション操作など）はサーバー名の入力が必要です。';
-
-  @override
-  String get agentPermsRules => 'コマンドルール';
-
-  @override
-  String get agentPermsDeny => '拒否';
-
-  @override
-  String get agentPermsAsk => '確認';
-
-  @override
-  String get agentPermsAllow => '許可';
-
-  @override
-  String get agentPermsRulesHint =>
-      '1 行に 1 つ。* は任意の文字列です（例: systemctl status *、apt-get install *）。末尾の :* は「 *」と同じです。連結されたコマンドは部分ごとに照合し、拒否と確認はどれか 1 つが一致すれば、許可はすべての部分が一致したときだけ適用されます。ルールは書かれた文字列に一致するもので（/bin/rm は rm * に一致しません）、セキュリティ境界ではありません。';
-
-  @override
-  String get agentPermsAutoRules => '自動モードルール';
-
-  @override
-  String get agentPermsAutoHint =>
-      'モデルが判断に使う自然文のルールです。空欄なら組み込みのルールを使います。\$defaults の行を書くと組み込みを残して追加できます。順序: ハード拒否 → ソフト拒否（許可ルールかあなたの明確な依頼で解除）→ 許可。';
-
-  @override
-  String get agentPermsEnvironment => '環境';
-
-  @override
-  String get agentPermsSoftDeny => 'ソフト拒否';
-
-  @override
-  String get agentPermsHardDeny => 'ハード拒否';
-
-  @override
-  String get agentPermsBuiltIn => '組み込みのルール';
-
-  @override
-  String agentPermsShowDefaults(int n) {
-    return '組み込みのルール（$n 件）';
-  }
 
   @override
   String get discardUnsaved => '保存していない変更を破棄しますか？';

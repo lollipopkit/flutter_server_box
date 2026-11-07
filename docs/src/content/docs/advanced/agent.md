@@ -3,9 +3,8 @@ title: Agent
 description: Configure providers, tools, and action approval for Agent
 ---
 
-Agent connects a language model to your servers. It suggests an action, shows
-you what it plans to do, and runs it only after you approve — unless you let
-read-only commands run by themselves (see [Review actions](#review-actions)).
+Agent connects a language model to your servers. The permission mode decides
+which actions run without asking you (see [Review actions](#review-actions)).
 
 Before the first message, add a provider at **Settings → Application → AI →
 Providers**: pick one of the built-in providers (OpenAI, Anthropic, Google and
@@ -128,20 +127,29 @@ file API.
 
 ## Review actions
 
-Before a server action runs, the App shows the command, its risk level, and
-the model's explanation. Read-only commands that meet the auto-run rules below
-skip this approval step. Review each command before allowing or denying it. A
-denial is sent to the model so it can respond to your feedback. In a terminal
-chat, you can insert the proposed command, edit it, and run it yourself. The
-model's safety label is advisory; make your own assessment.
+The permission mode is **Manual**, **Auto** or **Allow all**, picked under the
+message box or under **Settings → Application → AI → Command permissions**;
+either one changes it for every chat. That page has the same rules and logic
+as a Monitor's [Agent mode](/docs/advanced/monitor-agent-mode/), whose message
+box changes that server's mode for new tasks the same way.
 
-Server actions outside the auto-run rules require approval every time; there is
-no "always allow" option for them. **Auto-run read-only commands** is under
-**Settings → Application → AI**. A server command runs without approval only if
-both the model and the App's local check classify it as read-only, idempotent,
-and non-destructive. The limit is three commands per message. This setting is
-off by default and never applies to commands on this device. Other tools offer
-"always allow" on the approval card; revoke it under **Tools**.
+Every action goes through the command rules first: **Deny**, then **Ask**, then
+**Allow**. Then:
+
+- A read-only action runs: the model and the App's local check must both call
+  it read-only. On this device and on a host connected during the chat, nothing
+  counts as read-only.
+- An action that loses something for good asks, except in **Allow all**.
+- Anything else goes by the mode. **Manual** asks. **Auto** has the chat's
+  model judge it against the auto mode rules: allowed runs, blocked is told to
+  the Agent, no verdict asks. MCP tools count as read-only when their server
+  marks them so. **Allow all** runs it; deny and ask rules still
+  apply, and **Turn off Allow all** removes the mode.
+
+When the App asks, it shows the command, its risk level and the model's
+explanation. A denial is sent to the model so it can respond. In a terminal
+chat, you can insert the proposed command, edit it and run it yourself. The
+model's safety label is advisory; make your own assessment.
 
 ## When the Agent asks you
 
@@ -172,8 +180,7 @@ your other server credentials.
 
 **Run commands on this device** is a separate option at **Settings → Application → AI**
 and is off by default. Enabling it does not allow unattended commands: every
-local command requires your confirmation, even if it appears read-only or
-**Auto-run read-only commands** is enabled.
+local command goes by the permission mode, and none counts as read-only.
 
 The command target depends on the platform:
 

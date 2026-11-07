@@ -476,20 +476,12 @@ class SettingStore extends SqliteStore with ThemeSettings {
   /// Whether collapse UI items by default
   late final collapseUIDefault = propertyDefault('collapseUIDefault', true);
 
-  /// Whether a command the Agent proposes may run on a *server* without being
-  /// asked, when it is clearly read-only — see `AskAiCommand.canAutoRun`.
-  /// Running on this device is [agentLocalExec], and never runs unasked.
-  late final agentAutoRunSafe = propertyDefault('agentAutoRunSafe', false);
-
   /// Whether the Agent may run commands on this device.
   ///
   /// Off until asked for, unlike a configured server. A server was added
   /// deliberately and is somewhere else; this machine is where the app's own
   /// stores, private keys and keychain live, and nobody opted into a model
   /// touching those by adding a server.
-  ///
-  /// Auto-running stays off here whatever [agentAutoRunSafe] says — that
-  /// setting is about servers. See `AskAiCommand.canAutoRun`.
   ///
   /// Device-local — see [deviceLocalKeys]: this is what the app will let a
   /// model do to this machine, and a restore should not carry it.

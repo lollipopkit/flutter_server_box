@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:fl_pi_llm/fl_pi_llm.dart' show LlmPermissionMode;
 
 /// A task of a monitor agent's Agent mode, as `GET /api/v1/agent/flows`
 /// lists it.
@@ -25,7 +26,7 @@ final class MonitorAgentFlow {
     title: j['title'] as String? ?? '',
     status: MonitorAgentStatus.of(j['status'] as String?),
     line: j['line'] as String? ?? '',
-    mode: AgentPermissionMode.of(j['mode']),
+    mode: LlmPermissionMode.of(j['mode']),
     createdAt: _time(j['createdAt']) ?? DateTime.fromMillisecondsSinceEpoch(0),
     updatedAt: _time(j['updatedAt']) ?? DateTime.fromMillisecondsSinceEpoch(0),
     finishedAt: _time(j['finishedAt']),
@@ -42,7 +43,7 @@ final class MonitorAgentFlow {
   final String line;
 
   /// `manual`, `auto` or `bypass`.
-  final AgentPermissionMode mode;
+  final LlmPermissionMode mode;
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime? finishedAt;
@@ -149,7 +150,7 @@ final class MonitorAgentFlows {
         if (f is Map<String, dynamic>) MonitorAgentFlow.fromJson(f),
     ],
     configured: j['configured'] == true,
-    defaultMode: AgentPermissionMode.of(j['defaultMode']),
+    defaultMode: LlmPermissionMode.of(j['defaultMode']),
     bypassAllowed: j['bypassAllowed'] == true,
     next: j['next'] as String?,
   );
@@ -160,7 +161,7 @@ final class MonitorAgentFlows {
   /// that does not page.
   final String? next;
   final bool configured;
-  final AgentPermissionMode defaultMode;
+  final LlmPermissionMode defaultMode;
   final bool bypassAllowed;
 }
 
@@ -261,126 +262,3 @@ final class MonitorAgentOutput {
       if (l is List && l.length == 2 && l[1] is String) l[1] as String,
   ];
 }
-
-/// How a server's Agent task asks before it acts: `auto` decides by itself,
-/// `manual` asks by the server's rules, `bypass` never asks.
-enum AgentPermissionMode {
-  auto,
-  manual,
-  bypass;
-
-  /// [manual] for none and for a mode this app does not know: the safe one.
-  static AgentPermissionMode of(Object? name) =>
-      values.firstWhereOrNull((m) => m.name == name) ?? manual;
-}
-
-/// One of the auto mode judge's prose lists, by its key in `autoMode`.
-enum AgentAutoRuleKind {
-  environment('environment'),
-  allow('allow'),
-  softDeny('soft_deny'),
-  hardDeny('hard_deny');
-
-  const AgentAutoRuleKind(this.key);
-  final String key;
-}
-
-/// How the commands a server's Agent tasks run are approved, for every
-/// account (`/api/v1/agent/permissions`). Sent back whole on save.
-final class MonitorAgentPermissions {
-  const MonitorAgentPermissions({
-    this.defaultMode = AgentPermissionMode.manual,
-    this.disableBypass = false,
-    this.allow = const [],
-    this.ask = const [],
-    this.deny = const [],
-    this.autoMode = const {},
-    this.raw = const {},
-  });
-
-  factory MonitorAgentPermissions.fromJson(Map<String, dynamic> j) {
-    final rules = j['rules'] as Map? ?? const {};
-    final auto = j['autoMode'] as Map? ?? const {};
-    final mode = j['defaultMode'];
-    return MonitorAgentPermissions(
-      defaultMode: mode == null
-          ? AgentPermissionMode.manual
-          : AgentPermissionMode.values.firstWhereOrNull((m) => m.name == mode),
-      disableBypass: j['disableBypass'] == true,
-      allow: _strings(rules['allow']),
-      ask: _strings(rules['ask']),
-      deny: _strings(rules['deny']),
-      autoMode: {
-        for (final k in AgentAutoRuleKind.values)
-          if (auto[k.key] is List) k: _strings(auto[k.key]),
-      },
-      raw: j,
-    );
-  }
-
-  /// Null for a mode this app does not know, which is sent back as it came.
-  final AgentPermissionMode? defaultMode;
-  final bool disableBypass;
-  final List<String> allow;
-  final List<String> ask;
-  final List<String> deny;
-
-  /// A list absent is the built-in one.
-  final Map<AgentAutoRuleKind, List<String>> autoMode;
-
-  /// What the agent sent, so a field this app does not know survives a save.
-  final Map<String, dynamic> raw;
-
-  MonitorAgentPermissions copyWith({
-    AgentPermissionMode? defaultMode,
-    bool? disableBypass,
-    List<String>? allow,
-    List<String>? ask,
-    List<String>? deny,
-    Map<AgentAutoRuleKind, List<String>>? autoMode,
-  }) => MonitorAgentPermissions(
-    defaultMode: defaultMode ?? this.defaultMode,
-    disableBypass: disableBypass ?? this.disableBypass,
-    allow: allow ?? this.allow,
-    ask: ask ?? this.ask,
-    deny: deny ?? this.deny,
-    autoMode: autoMode ?? this.autoMode,
-    raw: raw,
-  );
-
-  Map<String, dynamic> toJson() {
-    final rules = raw['rules'] is Map ? Map<String, dynamic>.of(raw['rules'] as Map<String, dynamic>) : <String, dynamic>{};
-    final auto = raw['autoMode'] is Map ? Map<String, dynamic>.of(raw['autoMode'] as Map<String, dynamic>) : <String, dynamic>{};
-    for (final k in AgentAutoRuleKind.values) {
-      auto.remove(k.key);
-    }
-    return {
-      ...raw,
-      'defaultMode': defaultMode?.name ?? raw['defaultMode'],
-      'disableBypass': disableBypass,
-      'rules': {...rules, 'allow': allow, 'ask': ask, 'deny': deny},
-      'autoMode': {...auto, for (final e in autoMode.entries) e.key.key: e.value},
-    };
-  }
-}
-
-/// [MonitorAgentPermissions] with the built-in auto mode lists.
-final class MonitorAgentPermissionsView {
-  const MonitorAgentPermissionsView({required this.permissions, required this.defaults});
-
-  factory MonitorAgentPermissionsView.fromJson(Map<String, dynamic> j) {
-    final defaults = j['defaults'] as Map? ?? const {};
-    return MonitorAgentPermissionsView(
-      permissions: MonitorAgentPermissions.fromJson(j['permissions'] as Map<String, dynamic>? ?? const {}),
-      defaults: {for (final k in AgentAutoRuleKind.values) k: _strings(defaults[k.key])},
-    );
-  }
-
-  final MonitorAgentPermissions permissions;
-  final Map<AgentAutoRuleKind, List<String>> defaults;
-}
-
-List<String> _strings(Object? raw) => [
-  for (final s in raw as List? ?? const [])
-    if (s is String) s,
-];

@@ -80,12 +80,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiRiskDestructive => '高风险';
 
   @override
-  String get askAiAutoRunSafeCommands => '自动执行只读命令';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip => '仅当模型与本地安全检查都判定命令为只读时自动执行';
-
-  @override
   String get askAiHistory => '对话历史';
 
   @override
@@ -6203,21 +6197,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get agentPermissionMode => '权限模式';
-
-  @override
-  String get agentModeAuto => '自动';
-
-  @override
-  String get agentModeManual => '手动';
-
-  @override
-  String get agentModeBypass => '全部放行';
-
-  @override
-  String get agentModeBypassOff => '此服务器已关闭';
-
-  @override
   String get agentModeBypassWarn => '全部放行：删除、重启和修改配置都会直接执行，不再询问。';
 
   @override
@@ -6873,71 +6852,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentPermsGroup => 'Agent';
 
   @override
-  String get agentPermsTitle => '命令权限';
-
-  @override
-  String get agentPermsDefaultMode => '新任务的默认模式';
-
-  @override
-  String get agentPermsManualNote => '规则没有覆盖的改动都会询问你。';
-
-  @override
-  String get agentPermsAutoNote =>
-      '规则没有覆盖的改动交给模型按下面的自动模式规则判断：允许就执行，拦截就把原因告诉 Agent；没有结论时询问你。';
-
-  @override
-  String get agentPermsBypassNote => '所有步骤直接执行，包括删除、重启和改配置，不再询问。拒绝和询问规则仍然生效。';
-
-  @override
-  String get agentPermsDisableBypass => '关闭全部放行';
-
-  @override
-  String get agentPermsDisableBypassSub => '任务不能以全部放行运行；已经以它发起的任务按手动处理。';
-
-  @override
-  String get agentPermsDangerAsks => '除全部放行的任务外，无法撤销的命令（删除数据、分区等）都需要你输入服务器名确认。';
-
-  @override
-  String get agentPermsRules => '命令规则';
-
-  @override
-  String get agentPermsDeny => '拒绝';
-
-  @override
-  String get agentPermsAsk => '询问';
-
-  @override
-  String get agentPermsAllow => '允许';
-
-  @override
-  String get agentPermsRulesHint =>
-      '每行一条。* 代表任意文本，如 systemctl status * 或 apt-get install *；末尾的 :* 与“ *”相同。组合命令会拆开逐段匹配：拒绝和询问只要有一段命中就生效，允许要求每一段都被覆盖。规则按命令文本匹配（/bin/rm 不会命中 rm *），不是安全边界。';
-
-  @override
-  String get agentPermsAutoRules => '自动模式规则';
-
-  @override
-  String get agentPermsAutoHint =>
-      '用自然语言写，供模型判断。留空使用内置规则；写一行 \$defaults 可以保留内置规则并追加自己的。顺序：硬拒绝 → 软拒绝（允许规则或你明确要求的操作可以放行）→ 允许。';
-
-  @override
-  String get agentPermsEnvironment => '环境';
-
-  @override
-  String get agentPermsSoftDeny => '软拒绝';
-
-  @override
-  String get agentPermsHardDeny => '硬拒绝';
-
-  @override
-  String get agentPermsBuiltIn => '使用内置规则';
-
-  @override
-  String agentPermsShowDefaults(int n) {
-    return '内置规则（$n 条）';
-  }
-
-  @override
   String get discardUnsaved => '放弃未保存的修改？';
 }
 
@@ -7016,12 +6930,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get askAiRiskDestructive => '高風險';
-
-  @override
-  String get askAiAutoRunSafeCommands => '自動執行唯讀指令';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip => '僅當模型與本機安全檢查都判定命令為唯讀時自動執行';
 
   @override
   String get askAiHistory => '對話歷史';
@@ -13144,21 +13052,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get agentPermissionMode => '權限模式';
-
-  @override
-  String get agentModeAuto => '自動';
-
-  @override
-  String get agentModeManual => '手動';
-
-  @override
-  String get agentModeBypass => '全部允許';
-
-  @override
-  String get agentModeBypassOff => '此伺服器已關閉';
-
-  @override
   String get agentModeBypassWarn => '全部允許：刪除、重新啟動和設定變更都會直接執行，不再詢問。';
 
   @override
@@ -13812,73 +13705,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get agentPermsGroup => 'Agent';
-
-  @override
-  String get agentPermsTitle => '命令權限';
-
-  @override
-  String get agentPermsDefaultMode => '新任務的預設模式';
-
-  @override
-  String get agentPermsManualNote => '規則沒有涵蓋的變更都會詢問你。';
-
-  @override
-  String get agentPermsAutoNote =>
-      '規則沒有涵蓋的變更交給模型按下面的自動模式規則判斷：允許就執行，攔截就把原因告訴 Agent；沒有結論時詢問你。';
-
-  @override
-  String get agentPermsBypassNote =>
-      '所有步驟直接執行，包括刪除、重新啟動和修改設定，不再詢問。拒絕和詢問規則仍然生效。';
-
-  @override
-  String get agentPermsDisableBypass => '關閉全部放行';
-
-  @override
-  String get agentPermsDisableBypassSub => '任務不能以全部放行執行；已經以它發起的任務按手動處理。';
-
-  @override
-  String get agentPermsDangerAsks =>
-      '除全部放行的任務外，無法復原的命令（刪除資料、分割區等）都需要你輸入伺服器名稱確認。';
-
-  @override
-  String get agentPermsRules => '命令規則';
-
-  @override
-  String get agentPermsDeny => '拒絕';
-
-  @override
-  String get agentPermsAsk => '詢問';
-
-  @override
-  String get agentPermsAllow => '允許';
-
-  @override
-  String get agentPermsRulesHint =>
-      '每行一條。* 代表任意文字，如 systemctl status * 或 apt-get install *；結尾的 :* 與「 *」相同。組合命令會拆開逐段比對：拒絕和詢問只要有一段命中就生效，允許要求每一段都被涵蓋。規則依命令文字比對（/bin/rm 不會命中 rm *），不是安全邊界。';
-
-  @override
-  String get agentPermsAutoRules => '自動模式規則';
-
-  @override
-  String get agentPermsAutoHint =>
-      '以自然語言撰寫，供模型判斷。留空使用內建規則；寫一行 \$defaults 可保留內建規則並追加自己的。順序：硬拒絕 → 軟拒絕（允許規則或你明確要求的操作可以放行）→ 允許。';
-
-  @override
-  String get agentPermsEnvironment => '環境';
-
-  @override
-  String get agentPermsSoftDeny => '軟拒絕';
-
-  @override
-  String get agentPermsHardDeny => '硬拒絕';
-
-  @override
-  String get agentPermsBuiltIn => '使用內建規則';
-
-  @override
-  String agentPermsShowDefaults(int n) {
-    return '內建規則（$n 條）';
-  }
 
   @override
   String get discardUnsaved => '放棄未儲存的修改？';

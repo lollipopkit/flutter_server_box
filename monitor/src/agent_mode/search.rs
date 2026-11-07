@@ -16,8 +16,8 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use fl_pi_llm::host::{BoxFuture, Cancel, OpenSession, Tool, ToolCall, ToolDef, ToolResult};
-use sbm_parser::command_risk::{self, CommandRisk};
-use sbm_parser::command_rules::RuleVerdict;
+use fl_pi_llm::permissions::risk::{self as command_risk, CommandRisk};
+use fl_pi_llm::permissions::rules::RuleVerdict;
 use serde::Serialize;
 use serde_json::{Value, json};
 use tokio::sync::mpsc;

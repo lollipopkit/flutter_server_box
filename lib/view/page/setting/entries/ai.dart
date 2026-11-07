@@ -14,7 +14,7 @@ extension _AI on _AppSettingsPageState {
         _buildAgentSkills(l10n),
       ]),
       SettingsGroup(l10n.agentPermissions, [
-        _buildAskAiAutoRun(l10n),
+        _buildAgentCommandPermissions(l10n),
         // Absent where it could not be honoured: the sandboxed macOS build is
         // the App Store one, and an iOS build without the engine has no guest
         // to run in. Where the local target *is* a userland, a build that
@@ -71,16 +71,17 @@ extension _AI on _AppSettingsPageState {
     );
   }
 
-  SettingsRow _buildAskAiAutoRun(AppLocalizations l10n) {
-    final label = l10n.askAiAutoRunSafeCommands;
+  SettingsRow _buildAgentCommandPermissions(AppLocalizations l10n) {
+    final label = llmL10n.permTitle;
     return SettingsRow(
       label,
       () => ListTile(
-        leading: const Icon(Icons.verified_user_outlined),
-        title: TipText(label, l10n.askAiAutoRunSafeCommandsTip),
-        trailing: StoreSwitch(prop: _setting.agentAutoRunSafe),
+        leading: const Icon(Icons.rule),
+        title: Text(label),
+        trailing: const Icon(Icons.keyboard_arrow_right),
+        onTap: () => AgentPermissions.route.go(context, LocalPermissionsSource()),
       ),
-      keywords: l10n.askAiAutoRunSafeCommandsTip,
+      keywords: '${llmL10n.permDefaultMode} ${llmL10n.permModeAuto} ${llmL10n.permModeManual} ${llmL10n.permModeBypass}',
     );
   }
 

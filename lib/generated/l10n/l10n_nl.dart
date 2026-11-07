@@ -85,14 +85,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get askAiRiskDestructive => 'Hoog risico';
 
   @override
-  String get askAiAutoRunSafeCommands =>
-      'Alleen-lezen commando\'s automatisch uitvoeren';
-
-  @override
-  String get askAiAutoRunSafeCommandsTip =>
-      'Draait alleen als model én lokale controle het alleen-lezen noemen';
-
-  @override
   String get askAiHistory => 'Gespreksgeschiedenis';
 
   @override
@@ -6649,21 +6641,6 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String get agentPermissionMode => 'Machtigingsmodus';
-
-  @override
-  String get agentModeAuto => 'Automatisch';
-
-  @override
-  String get agentModeManual => 'Handmatig';
-
-  @override
-  String get agentModeBypass => 'Alles toestaan';
-
-  @override
-  String get agentModeBypassOff => 'Uitgeschakeld op deze server';
-
-  @override
   String get agentModeBypassWarn =>
       'Alles toestaan: verwijderen, opnieuw starten en configuratiewijzigingen worden zonder bevestiging uitgevoerd.';
 
@@ -7348,75 +7325,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get agentPermsGroup => 'Agent';
-
-  @override
-  String get agentPermsTitle => 'Opdrachtmachtigingen';
-
-  @override
-  String get agentPermsDefaultMode => 'Standaardmodus voor nieuwe taken';
-
-  @override
-  String get agentPermsManualNote =>
-      'Wijzigingen die geen regel dekt, worden gevraagd.';
-
-  @override
-  String get agentPermsAutoNote =>
-      'Wijzigingen die geen regel dekt, beoordeelt het model aan de hand van de regels van de automatische modus hieronder: toegestaan wordt uitgevoerd, geblokkeerd vertelt de agent waarom; zonder oordeel word je gevraagd.';
-
-  @override
-  String get agentPermsBypassNote =>
-      'Elke stap wordt zonder vragen uitgevoerd, ook verwijderen, herstarten en configuratiewijzigingen. Weiger- en vraagregels blijven gelden.';
-
-  @override
-  String get agentPermsDisableBypass => 'Alles toestaan uitschakelen';
-
-  @override
-  String get agentPermsDisableBypassSub =>
-      'Geen taak draait met Alles toestaan; een taak die zo is gestart vraagt zoals handmatig.';
-
-  @override
-  String get agentPermsDangerAsks =>
-      'Behalve in taken die alles toestaan, vraagt een onomkeerbare opdracht (gegevens wissen, partities) om de servernaam te typen.';
-
-  @override
-  String get agentPermsRules => 'Opdrachtregels';
-
-  @override
-  String get agentPermsDeny => 'Weigeren';
-
-  @override
-  String get agentPermsAsk => 'Vragen';
-
-  @override
-  String get agentPermsAllow => 'Toestaan';
-
-  @override
-  String get agentPermsRulesHint =>
-      'Eén per regel. * is willekeurige tekst, zoals systemctl status * of apt-get install *; een :* aan het eind is gelijk aan ‘ *’. Een gekoppelde opdracht wordt per deel gecontroleerd: weigeren en vragen gelden als één deel past, toestaan alleen als elk deel gedekt is. Regels passen op de geschreven tekst (/bin/rm past niet op rm *); ze zijn geen beveiligingsgrens.';
-
-  @override
-  String get agentPermsAutoRules => 'Regels voor de automatische modus';
-
-  @override
-  String get agentPermsAutoHint =>
-      'Regels in gewone taal waarop het model oordeelt. Leeg gebruikt de ingebouwde lijst; een regel \$defaults houdt die en voegt de jouwe toe. Volgorde: harde weigering, dan zachte weigering (op te heffen door een toestaanregel of je eigen expliciete verzoek), dan toestaan.';
-
-  @override
-  String get agentPermsEnvironment => 'Omgeving';
-
-  @override
-  String get agentPermsSoftDeny => 'Zachte weigering';
-
-  @override
-  String get agentPermsHardDeny => 'Harde weigering';
-
-  @override
-  String get agentPermsBuiltIn => 'Ingebouwde regels';
-
-  @override
-  String agentPermsShowDefaults(int n) {
-    return 'Ingebouwde regels ($n)';
-  }
 
   @override
   String get discardUnsaved => 'Niet-opgeslagen wijzigingen verwerpen?';

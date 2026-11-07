@@ -199,8 +199,22 @@ export class AgentStore {
     }
   }
 
-  async startFlow(prompt: string, mode?: PermissionMode, files: string[] = [], choice: TaskChoice = {}): Promise<Flow> {
-    const f = await agentApi.start(this.entry, prompt, mode, files, choice)
+  /// Makes [mode] the one new tasks start in, as the permissions page does.
+  async setDefaultMode(mode: PermissionMode): Promise<void> {
+    const prev = this.defaultMode
+    this.defaultMode = mode
+    try {
+      const v = await agentApi.permissions(this.entry)
+      this.defaultMode = (await agentApi.savePermissions(this.entry, { ...v.permissions, defaultMode: mode })).permissions.defaultMode
+    } catch (e) {
+      this.defaultMode = prev
+      throw e
+    }
+  }
+
+  /// A new task, in the mode new tasks start in.
+  async startFlow(prompt: string, files: string[] = [], choice: TaskChoice = {}): Promise<Flow> {
+    const f = await agentApi.start(this.entry, prompt, undefined, files, choice)
     this.#upsert(f)
     return f
   }

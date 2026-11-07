@@ -68,11 +68,12 @@ composer. The list shows the models of custom endpoints and of built-in
 providers with a key set. If you change them while a task runs, the change
 applies from the next request to the model.
 
-### Permission mode per task
+### Permission mode
 
-Each task has a permission mode. Choose it in the composer, or press Shift+Tab
-to switch it. The mode applies to the task and is set when the task starts.
-See [Permission modes](#permission-modes).
+The mode new tasks start in is picked in the composer, or switched with
+Shift+Tab; it is the same setting as **Default mode** under the command
+permissions, so the App's composer changes it too. A task keeps the mode it
+started in. See [Permission modes](#permission-modes).
 
 ### Queue
 

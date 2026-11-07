@@ -1,8 +1,8 @@
 import 'dart:convert';
 
+import 'package:fl_pi_llm/fl_pi_llm.dart' show LlmCommandRisk, LlmEffect, LlmPermissionRules;
 import 'package:meta/meta.dart';
 import 'package:server_box/core/local/device.dart';
-import 'package:server_box/src/rust/api/command_risk.dart';
 
 /// How much of a command the local check could actually establish.
 ///
@@ -270,7 +270,7 @@ class AskAiCommand {
   /// what has not been vetted. `caution` would say "changes the system" over a
   /// command the model has just described as not doing that, and `unknown`
   /// would say nothing was recognised when something was. All the lift does is
-  /// withhold [canAutoRun].
+  /// withhold a read's [claimedEffect].
   AskAiCommandRisk _unvettedFloor(AskAiCommandRisk risk) {
     if (sessionId == null) return risk;
     return risk == AskAiCommandRisk.readOnly
@@ -278,16 +278,19 @@ class AskAiCommand {
         : risk;
   }
 
-  /// Never on this device, whatever the command looks like.
-  ///
-  /// `askAiAutoRunSafeCommands` is a convenience for machines the user added
-  /// on purpose and that are somewhere else. This one holds the app's own
-  /// stores, the user's keys and their files, and a read-only command there is
-  /// still a command they did not see.
+  /// This device holds the app's own stores, the user's keys and their
+  /// files: a read-only command there is still one they did not see.
   bool get onThisDevice => serverId == LocalDevice.id;
 
-  bool get canAutoRun =>
-      modelSafeToRun && risk == AskAiCommandRisk.readOnly && !onThisDevice;
+  /// What the call is said to do, for the permissions: a read only when the
+  /// model calls it safe, nothing about it says otherwise and it is not on
+  /// this device; a danger when either reader says so. The command's shape is
+  /// weighed again there.
+  LlmEffect get claimedEffect => switch (risk) {
+    AskAiCommandRisk.destructive => LlmEffect.danger,
+    AskAiCommandRisk.readOnly when modelSafeToRun && !onThisDevice => LlmEffect.read,
+    _ => LlmEffect.change,
+  };
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -299,15 +302,15 @@ class AskAiCommand {
     'model_destructive': modelDestructive,
   };
 
-  /// The command's shape as `sbm_parser::command_risk` reads it: the same
-  /// reading the monitor agent's Agent mode asks by.
+  /// The command's shape as `fl_pi_llm::permissions::risk` reads it: the
+  /// same reading the monitor agent's Agent mode asks by.
   @visibleForTesting
   static AskAiCommandRisk classifyRisk(String command) =>
-      switch (classifyCommand(command: command)) {
-        CommandRisk.readOnly => AskAiCommandRisk.readOnly,
-        CommandRisk.unknown => AskAiCommandRisk.unknown,
-        CommandRisk.caution => AskAiCommandRisk.caution,
-        CommandRisk.destructive => AskAiCommandRisk.destructive,
+      switch (LlmPermissionRules.classify(command)) {
+        LlmCommandRisk.readOnly => AskAiCommandRisk.readOnly,
+        LlmCommandRisk.unknown => AskAiCommandRisk.unknown,
+        LlmCommandRisk.caution => AskAiCommandRisk.caution,
+        LlmCommandRisk.destructive => AskAiCommandRisk.destructive,
       };
 }
 
