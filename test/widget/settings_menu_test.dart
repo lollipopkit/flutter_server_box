@@ -88,6 +88,12 @@ void main() {
   /// the screen — the tabs show the level and nothing else.
   final backBtn = find.byType(BackButton);
 
+  /// The way out of settings pushed onto a wide window.
+  final headerBack = find.descendant(
+    of: find.byKey(settingsHeaderKey),
+    matching: find.byType(BackButton),
+  );
+
   String barTitle(WidgetTester tester) => tester
       .widget<Text>(
         find
@@ -140,7 +146,14 @@ void main() {
             body: Builder(
               builder: (ctx) => TextButton(
                 onPressed: () => Navigator.of(ctx).push(
-                  MaterialPageRoute<void>(builder: (_) => const SettingsPage()),
+                  MaterialPageRoute<void>(
+                    builder: (page) => SettingsPage(
+                      onLeave: () async {
+                        Navigator.of(page).pop();
+                        return true;
+                      },
+                    ),
+                  ),
                 ),
                 child: const Text('open'),
               ),
@@ -167,6 +180,39 @@ void main() {
     // The one level of nesting there is stays shut until asked for.
     expect(menuRow(libL10n.sequence), findsNothing);
     expect(find.byKey(settingsTabsKey), findsNothing);
+  });
+
+  testWidgets('wide, beside the rail, the header has no way back', (
+    tester,
+  ) async {
+    await pump(tester, width: 1200);
+
+    expect(find.byType(AppBar), findsNothing);
+    expect(headerBack, findsNothing);
+  });
+
+  testWidgets('narrow, the bar leads out of the settings at their root', (
+    tester,
+  ) async {
+    await pump(tester, width: 600);
+
+    await tester.tap(backBtn);
+    await settle(tester, 40);
+    expect(find.byType(SettingsPage), findsNothing);
+  });
+
+  testWidgets('searching names the results over the content', (tester) async {
+    await pump(tester, width: 1200);
+    await tester.enterText(find.byType(TextField).first, 'zzzz');
+    await settle(tester);
+
+    expect(
+      find.descendant(
+        of: find.byKey(settingsHeaderKey),
+        matching: find.text(libL10n.search),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('the wide menu is a rail, not a list of cards', (tester) async {

@@ -254,6 +254,12 @@ final class _SettingsContentHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return WindowControlsInset(
+      child: _buildRow(context),
+    );
+  }
+
+  Widget _buildRow(BuildContext context) {
     return Container(
       key: settingsHeaderKey,
       height: 40,

@@ -117,6 +117,8 @@ class _FloatTerminalState extends ConsumerState<_FloatTerminal> {
                 // and paste when nothing is.
                 onSecondaryTapUp: (_, _) => unawaited(_clipboardAction()),
                 onCopied: _onCopied,
+                onCopyFailed: (e, s) =>
+                    context.showErrDialog(e, s, libL10n.copy),
                 onSelectAll: () =>
                     _termKey.currentState?.renderTerminal.selectAll(),
                 autofocus: false,
@@ -301,8 +303,7 @@ extension _Actions on _FloatTerminalState {
     if (_controller.selection != null) {
       final selected = _termKey.currentState?.renderTerminal.selectedText;
       if (selected != null && selected.isNotEmpty) {
-        await Clipboard.setData(ClipboardData(text: selected));
-        _onCopied();
+        _termKey.currentState?.copySelection();
       }
       return;
     }

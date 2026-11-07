@@ -6,6 +6,8 @@
 		<string>$(AppIdentifierPrefix)</string>
 		<key>CADisableMinimumFrameDurationOnPhone</key>
 		<true />
+		<key>NSPrincipalClass</key>
+		<string>SBApplication</string>
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleExecutable</key>

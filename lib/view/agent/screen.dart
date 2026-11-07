@@ -146,7 +146,6 @@ abstract final class AgentScreen {
     '/files/transfers': 'the transfer list',
     '/sftp': 'the files',
     '/files/server': 'the files',
-    '/settings': 'the settings',
   };
 
   static const _views = {

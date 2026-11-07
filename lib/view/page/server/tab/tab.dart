@@ -44,7 +44,6 @@ import 'package:server_box/view/page/server/tab/strip.dart';
 import 'package:server_box/view/page/server/text_scale.dart';
 import 'package:server_box/view/page/server/widget/server_globe.dart';
 import 'package:server_box/view/page/server/widget/server_side_tile.dart';
-import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/tag_switcher.dart';
 
@@ -62,8 +61,6 @@ class ServerPage extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<ServerPage> createState() => _ServerPageState();
-
-  static const route = AppRouteNoArg(page: ServerPage.new, path: '/servers');
 }
 
 /// How long a card takes to grow into the page, and to shrink back.

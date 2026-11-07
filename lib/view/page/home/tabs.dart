@@ -101,8 +101,15 @@ extension _HomePageTabs on _HomePageState {
     if (index < 0 || index >= _tabs.length) return;
     // A tab is a tab even when the settings are the thing on screen: picking
     // one has to put them away, which is the same move as picking the tab you
-    // were already on.
-    _closeSettings();
+    // were already on — once what they hold agreed to go.
+    if (_settingsOpen) {
+      unawaited(
+        _closeSettings().then((left) {
+          if (left && mounted) _onDestinationSelected(index);
+        }),
+      );
+      return;
+    }
     if (_selectIndex.value == index) return;
     _selectIndex.value = index;
     _rememberTab(index);

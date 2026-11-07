@@ -6,9 +6,23 @@ import 'package:flutter/services.dart';
 import 'package:server_box/core/utils/drop_zones.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/store/stores.dart';
+import 'package:xterm/xterm.dart' show CustomTextEditState;
 
 abstract final class MethodChans {
   static const _channel = MethodChannel('${Miscs.pkgName}/main_chan');
+
+  /// iOS tells of every paste, and what it holds, before the text view
+  /// inserts it (the app's `sendAction`), so the terminal sends it as one.
+  static void listenPastes() {
+    const MethodChannel(
+      '${Miscs.pkgName}/text_input',
+    ).setMethodCallHandler((call) async {
+      final text = call.arguments;
+      if (call.method == 'paste' && text is String) {
+        CustomTextEditState.expectPaste(text);
+      }
+    });
+  }
 
   /// Tells the system file picker the installed Linux systems changed, so the
   /// roots it lists for them follow (`LinuxDocumentsProvider`, and the Files

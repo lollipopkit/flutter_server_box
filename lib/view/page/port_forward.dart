@@ -58,7 +58,7 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
                       Stores.setting.portForwardBetaWarned.put(noMore);
                     },
                   ),
-                  Text(l10n.noPromptAgain),
+                  Expanded(child: Text(l10n.noPromptAgain)),
                 ],
               );
             },
