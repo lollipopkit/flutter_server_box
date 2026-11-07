@@ -178,6 +178,10 @@ final class TmuxControlClient {
   }
 
   Future<void> selectPane(TmuxPaneId paneId) async {
+    final targetWindow = _snapshot?.paneWindows[paneId];
+    if (targetWindow != null && targetWindow != _snapshot?.activeWindowId) {
+      await runRequired("select-window -t '$targetWindow'");
+    }
     await runRequired("select-pane -t '$paneId'");
     await refreshState(captureActivePane: true);
   }
